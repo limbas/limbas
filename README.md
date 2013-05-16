@@ -1,0 +1,89 @@
+This is a release of LIMBAS, a Database Tool with GPL license.
+======
+
+(More licence information is provided in the file PUBLIC and in the
+in the folder ./limbas_src/help).
+
+The latest information and documentation about LIMBAS can be found at:
+
+        http://www.limbas.org/
+
+LIMBAS is brought to you by the LIMBAS team at LIMBAS GmbH.
+
+For a list of developers and other contributors, see the Credits
+appendix in the manual.
+
+Like Access, from basic features such as table management, form and report generator as well as charting and workflow features it can be dynamically modeled with one another to any product solution. Limbas is based on PHP
+
+=== QUICKINSTALL =======================================================
+
+- Limbas Server only works on Unix Systems like Linux or BSD
+- you need at least apache with php and unixodbc support for used database or build-in odbc driver if supported from php. (for PostgreSQL use "postgreSQL ODBC" driver, not "unixodbc Driver for PostgreSQL")
+- extract the complete LIMBAS package (not only the source) to an available apache web directory
+- make directory "/dependent" recursive writable for apacheuser
+- be shure the symbolic links are correct set from "limbas_src" to "dependent" directory
+- call up the setup script in [INSTALLPATH]/dependent/admin/install/setup.php
+- fill in the formular and select the empty database (clean) or demo database (demo) then press install
+- the root path to limbas is always [INSTALLPATH]/dependent/
+
+=== UPDATE =======================================================
+
+update from 2.x
+- download latest "LIMBAS source"
+- replace or add the new LIMBAS source directory "limbas_src_2.x"
+- rebuild the symlink "limbas_src" to the new source directory (ln -s limbas_src_2.x limbas_src)
+- login to limbas - limbas will redirect you to the "system update page" - select the Systemupdate script "up_2.x.php" and run the update with "OK". If your release is older than one release you have to run all updates up to your release.
+- go to the root directory ([INSTALLPATH]/dependent/) and reset your system
+- replace the "independent" directory with its newest version if necessary. Available as "independent.tar" archive or over subversion.
+
+=== GIT / SUBVERSION =======================================================
+
+You can download the actual developer release with git or subversion. This current snapshot is NOT a released version but may be usefull for using newest bugfixes.
+It contains a packed "independent.tar" archive. You should overwrite your old "independent" directory!
+To update use the instuctions above.
+
+https://github.com/limbas/
+http://limbas.svn.sourceforge.net/viewvc/limbas/trunk
+
+=== DOCUMENTATION ===================================================
+
+A detailed description of how to perform a new INSTALLATION is
+provided at
+http://www.limbas.org/wiki/
+
+The UPDATE process is documented in
+http://www.limbas.org/wiki/
+
+The default URL of your LIMBAS installation is:
+
+        http://localhost/openlimbas/dependent/index.php
+
+
+=== IMPORTANT =======================================================
+
+Please send bug (error) reports, questions and comments to the
+mailing list at:
+
+        http://sourceforge.net/projects/limbas/
+
+=== APPLIANCES =======================================================
+
+ following pre-build appliances are available for LIMBAS
+
+ - USB stick / hard disk image
+ - Live CD/DVD (.iso)
+ - VMware / VirtualBox / KVM (.vmdk)
+ - OVF virtual machine (.ovf)
+ - Xen guest
+ - Preload ISO (.iso)
+
+
+ === default PASSWORDS =======================================================
+
+ as default admin-user for the first login in LIMBAS use:
+ user: admin
+ password: limbas
+
+ for root user in appliances use
+ user: root
+ pass: linux
