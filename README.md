@@ -6,7 +6,7 @@ in the folder ./limbas_src/help).
 
 The latest information and documentation about LIMBAS can be found at:
 
-        http://www.limbas.org/
+http://www.limbas.org/
 
 LIMBAS is brought to you by the LIMBAS team at LIMBAS GmbH.
 
@@ -43,6 +43,7 @@ It contains a packed "independent.tar" archive. You should overwrite your old "i
 To update use the instuctions above.
 
 https://github.com/limbas/
+
 http://limbas.svn.sourceforge.net/viewvc/limbas/trunk
 
 === DOCUMENTATION ===================================================
@@ -56,7 +57,7 @@ http://www.limbas.org/wiki/
 
 The default URL of your LIMBAS installation is:
 
-        http://localhost/openlimbas/dependent/index.php
+http://localhost/openlimbas/dependent/index.php
 
 
 === IMPORTANT =======================================================
@@ -64,7 +65,7 @@ The default URL of your LIMBAS installation is:
 Please send bug (error) reports, questions and comments to the
 mailing list at:
 
-        http://sourceforge.net/projects/limbas/
+http://sourceforge.net/projects/limbas/
 
 === APPLIANCES =======================================================
 
