@@ -1,4 +1,4 @@
-# Limbas
+# ![Limbarine] Limbas
 
 ## Introduction
 Limbas is a database framework for creating database-driven business applications.
@@ -22,3 +22,5 @@ As a graphical database front-end, it enables the efficient processing of data s
 * [Website](https://www.limbas.com/en/)
 * [Documentation](http://www.limbas.org/wiki/-CentOS/en)
 * [More Downloads](https://sourceforge.net/projects/limbas/files/)
+
+[Limbarine]: ./Limbarine.png "Limbarine"
