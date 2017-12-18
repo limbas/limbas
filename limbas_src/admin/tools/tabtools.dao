@@ -1,0 +1,61 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 156
+ */
+
+
+if(!$sqlexecnum){$sqlexecnum = 100;}else{$sqlexecnum = parse_db_int($sqlexecnum);}
+
+if($empty AND $table){
+        $sqlquery = "DELETE FROM $table";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if($rs){$result = $lang[1069];}else{$result = $lang[1070];}
+}elseif($delete AND $table){
+		$sqlquery0 = dbq_12(array($DBA["DBSCHEMA"],$table));
+		$rs = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		if(odbc_fetch_row($rs)){
+			$sqlquery = "DROP VIEW ".dbf_4($table);
+		}else{
+			$sqlquery = "DROP TABLE ".dbf_4($table);
+		}
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        
+        if($rs){$result = $lang[1071];}else{$result = $lang[1072];}
+}elseif($sqlexec AND $sqlvalue){
+		$zeit_main1 = gettime();
+		
+		$sqlvalue_ = explode('//',$sqlvalue);
+		foreach ($sqlvalue_ as $key => $sqlquery){
+        	$rssql = odbc_exec($db,$sqlquery);
+        	$count += odbc_num_rows($rssql);
+		}
+ 
+		$sqlquery = $sqlvalue;
+        $zeit_main2 = gettime();
+		$zeit = $zeit_main2 - $zeit_main1;
+        if($rssql){$result = "<FONT COLOR=\"green\" SIZE=\"2\">$lang[1073]!</FONT>&nbsp;[$zeit sec.]&nbsp;&nbsp;&nbsp;count&nbsp;[$count]<BR><BR>";}else{$result = "<FONT COLOR=\"red\">$lang[1074]!</FONT><BR>".odbc_errormsg($db);}
+}
+
+if($sqlquery){
+	$rf = fopen("TEMP/log/sql_manager.log","a");
+	fputs($rf,date("Y-m-d H:i:s")."\t".$session["username"]."\t".str_replace(chr(10)," ",str_replace(chr(13)," ",$sqlquery))."\n");
+	fclose($rf);
+}
+
+?>

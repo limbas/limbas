@@ -1,0 +1,595 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 113
+ */
+
+set_time_limit(10000);
+
+
+if($relation_extension){
+	$prepare_string = "UPDATE LMB_CONF_FIELDS SET RELEXT = ? WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+	if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($relation_value)),__FILE__,__LINE__)){$commit = 1;}
+}
+
+
+if($fieldid AND $tabid){
+	# -------- Verkndaten auslesen ---------------
+	$sqlquery =  "SELECT * FROM LMB_CONF_FIELDS WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+
+	if(odbc_result($rs, "VERKNSEARCH")){$verknsearchid = explode(",",odbc_result($rs, "VERKNSEARCH"));}
+	if(odbc_result($rs, "VERKNVIEW")){$verknviewid_ = explode("?",odbc_result($rs, "VERKNVIEW"));$verknviewid = explode(",",$verknviewid_[0]); $viewidcut = $verknviewid_[1];}
+	if(odbc_result($rs, "VERKNFIND")){$verknfindid_ = explode("?",odbc_result($rs, "VERKNFIND"));$verknfindid = explode(",",$verknfindid_[0]); $findidcut = $verknfindid_[1];}
+	$verkntyp = odbc_result($rs, "FIELD_TYPE");
+	$verkntabid = odbc_result($rs, "VERKNTABID");
+	$veknfieldid = odbc_result($rs, "VERKNFIELDID");
+	$verknparams = odbc_result($rs, "VERKNPARAMS");
+	$md5tab = odbc_result($rs, "MD5TAB");
+	$refint = odbc_result($rs, "REFINT");
+	$datatype = odbc_result($rs, "DATA_TYPE");
+	$verkntabletype = odbc_result($rs, "VERKNTABLETYPE");
+	$fieldspelling = $lang[odbc_result($rs, "SPELLING")];
+	$groupid = odbc_result($rs, "TAB_GROUP");
+	$relext = odbc_result($rs, "RELEXT");
+	$fieldname = odbc_result($rs, "FIELD_NAME");
+	$verkntree = odbc_result($rs, "VERKNTREE");
+
+	#$sqlquery =  "SELECT FIELD_NAME,MD5TAB FROM LMB_CONF_FIELDS WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+	#$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	#if(!$rs) {$commit = 1;}
+	#$fieldname = odbc_result($rs, "FIELD_NAME");
+	#$md5tab = odbc_result($rs, "MD5TAB");
+}
+
+
+$sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES";
+$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(odbc_fetch_row($rs)){
+	$tab[odbc_result($rs,"TAB_ID")] = odbc_result($rs,"TABELLE");
+}
+
+$tabname = $tab[$tabid];
+$verkntabname = $tab[$verkntabid];
+
+
+# --- TabellenName ----------------------------------------------
+if($verkntabid){
+	$sqlquery =  "SELECT TABELLE,BESCHREIBUNG FROM LMB_CONF_TABLES WHERE TAB_ID = $verkntabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}		
+	$verkntabname = odbc_result($rs, "TABELLE");
+	$verkntabdesc = $lang[odbc_result($rs, "BESCHREIBUNG")];
+	
+	
+	# --- ref Integrität prüfen ----------------------------------------------
+	$fkys = lmb_getForeignKeys();
+	if($fkys["keyname"]){
+	foreach ($fkys["keyname"] as $key => $value){
+		if($fkys["tablename"][$key] == dbf_4($md5tab) AND $fkys["columnname"][$key] == dbf_4("ID") AND $fkys["reftablename"][$key] == dbf_4($tabname) AND $fkys["refcolumnname"][$key] == dbf_4("ID")){
+			$f1 = $fkys["keyname"][$key];
+		}elseif($fkys["tablename"][$key] == dbf_4($md5tab) AND $fkys["columnname"][$key] == dbf_4("VERKN_ID") AND $fkys["reftablename"][$key] == dbf_4($verkntabname) AND $fkys["refcolumnname"][$key] == dbf_4("ID")){
+			$f2 = $fkys["keyname"][$key];
+		}
+	}}
+}
+
+/* --- Verknüpfungs-Tabelle eintragen --------------------------------------------- */
+if($new_verkntabid){
+	$sqlquery =  "SELECT TAB_ID,TAB_GROUP,TABELLE,BESCHREIBUNG,TYP FROM LMB_CONF_TABLES WHERE TAB_ID = $new_verkntabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$verkntabname = odbc_result($rs, "TABELLE");
+	$verkntabdesc = $lang[odbc_result($rs, "BESCHREIBUNG")];
+	$tab_group = odbc_result($rs, "TAB_GROUP");
+	$tabtyp = odbc_result($rs, "TYP");
+	$verkntabid = $new_verkntabid;
+
+	if($tabtyp == 2){
+		$insv = ",EXT_TYPE = 'extendedCalender'";
+	}elseif($tabtyp == 3){
+		$insv = ",EXT_TYPE = 'extendedFileManager'";
+	}elseif($tabtyp == 6){
+		$insv = ",EXT_TYPE = 'extendedMessages'";
+	}
+	
+	$sqlquery =  "UPDATE LMB_CONF_FIELDS SET VERKNTABID = ".$new_verkntabid.",VERKNGROUP = $tab_group $insv WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	
+	# ---- für Explorer-Tabelle -----------------
+	if($tabtyp == 3){
+		require_once("extra/explorer/filestructure.lib");
+		require_once("admin/tools/add_filestruct.lib");
+		# ---- Upload Ordnerstruktur anlegen -----------------
+		create_fs_tab_dir($tabid,$groupid,$fieldid,$fieldspelling,7);
+		
+		# ---- md5tab ändern -----------------
+		$sqlquery1 =  "ALTER TABLE $md5tab ADD LID ".LMB_DBTYPE_FIXED."(10)";
+		$rs1 = odbc_exec($db,$sqlquery1);
+	}
+}
+
+
+# --- Verknüpfungs-Feld eintragen -----------------
+if($set_verknfieldid AND $new_verknfieldid){
+
+	$sqlquery =  "SELECT FIELD_NAME,MD5TAB FROM LMB_CONF_FIELDS WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$fieldname = odbc_result($rs, "FIELD_NAME");
+	$md5tab = odbc_result($rs, "MD5TAB");
+
+	$sqlquery =  "UPDATE LMB_CONF_FIELDS SET VERKNFIELDID = $new_verknfieldid WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}else{
+		$veknfieldid = $new_verknfieldid;
+	}
+	
+	$sqlquery =  "SELECT ID,MD5TAB,FIELD_NAME FROM LMB_CONF_FIELDS WHERE VERKNTABID = $tabid AND TAB_ID = $verkntabid AND FIELD_ID = $new_verknfieldid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	
+	if(!$verkntree){
+	
+	# back view relation
+	if(odbc_result($rs, "MD5TAB")){
+		$recursrelation = 1;
+		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],$md5tab,"'TABLE'"));
+		if($odbc_table) {
+			$sqlquery2 =  "DROP TABLE ".dbf_4($md5tab);
+			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+			if(!$rs2) {$commit = 1;}else{
+				lmb_updateTrigger();
+			}
+		}
+	    
+	    if(lmb_createView("SELECT KEYID,ERSTDATUM,ERSTUSER,ID AS VERKN_ID,VERKN_ID AS ID,SORT FROM ".odbc_result($rs, "MD5TAB"),dbf_4($md5tab))){
+	    	if($datatype == 27){$unique = ",ISUNIQUE = ".LMB_DBDEF_TRUE;}
+			$sqlquery2 =  "UPDATE LMB_CONF_FIELDS SET HASRECVERKN = $new_verknfieldid, VERKNTABLETYPE = 2 $unique WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+			$sqlquery2 =  "UPDATE LMB_CONF_FIELDS SET HASRECVERKN = $fieldid WHERE FIELD_ID = $new_verknfieldid AND TAB_ID = $verkntabid";
+			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+			
+			$verkntabletype = 2;
+			# trigger count value
+			lmb_relationTrigger(odbc_result($rs, "MD5TAB"),$verkntabname,odbc_result($rs, "FIELD_NAME"),$tabname,$fieldname);
+			lmb_updateTrigger();
+	    }else{
+	    	$commit = 1;
+	    }
+	}elseif(!$drop_viev){
+		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],$md5tab,"'TABLE'"));
+		if(!$odbc_table) {
+
+			$sqlquery2 = "SELECT MD5TAB,FIELD_NAME,TAB_ID FROM LMB_CONF_FIELDS WHERE HASRECVERKN = (SELECT FIELD_ID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".dbf_4($md5tab)."' AND VERKNTABLETYPE = 2)";
+			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+			$basemd5 = dbf_4(odbc_result($rs2, "MD5TAB"));
+			$basefield = dbf_4(odbc_result($rs2, "FIELD_NAME"));
+			
+	    	#$basetable = lmb_getViewInfo($md5tab);
+	    	lmb_dropView($md5tab);
+	    	lmb_deleteTriggerForTable($basemd5);
+	    	lmb_deleteTriggerForTable($md5tab);
+	    	lmb_relationTrigger($basemd5,$verkntabname,$basefield,0,0);
+	    	lmb_relationTrigger($md5tab,$tabname,$fieldname,0,0);
+
+	    	if($datatype == 24){
+	    		# --- Verknüpfungstabelle n:m erstellen --------
+	    		$sqlquery = "CREATE TABLE ".dbf_4($md5tab)." (KEYID ".LMB_DBTYPE_FIXED."(18) NOT NULL,ERSTDATUM ".LMB_DBTYPE_TIMESTAMP." DEFAULT ".LMB_DBDEF_TIMESTAMP.", ERSTUSER SMALLINT, ID ".LMB_DBTYPE_FIXED."(18),VERKN_ID ".LMB_DBTYPE_FIXED."(18),".LMB_DBFUNC_PRIMARY_KEY." (KEYID))";
+	    		$rs3 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	    		if(!$rs3) {$commit = 1;}
+	    		# --- Verknüpfungstabelle 1:n erstellen --------
+	    	}elseif($datatype == 27){
+	    		$sqlquery = "CREATE TABLE ".dbf_4($md5tab)." (KEYID ".LMB_DBTYPE_FIXED."(18) NOT NULL,ERSTDATUM ".LMB_DBTYPE_TIMESTAMP." DEFAULT ".LMB_DBDEF_TIMESTAMP.", ERSTUSER SMALLINT, ID ".LMB_DBTYPE_FIXED."(18),VERKN_ID ".LMB_DBTYPE_FIXED."(18) UNIQUE,".LMB_DBFUNC_PRIMARY_KEY." (KEYID))";
+	    		$rs3 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	    		if(!$rs3) {$commit = 1;}
+	    	}
+	    	
+	    	$sqlquery2 =  "UPDATE LMB_CONF_FIELDS SET HASRECVERKN = 0,VERKNTABLETYPE = 1 WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+			$sqlquery2 =  "UPDATE LMB_CONF_FIELDS SET HASRECVERKN = 0 WHERE HASRECVERKN = $fieldid AND TAB_ID = $verkntabid";
+			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+			$verkntabletype = 1;
+
+			lmb_updateTrigger();
+	    }else{
+	    	lmb_relationTrigger($md5tab,$tabname,$fieldname,0,0);
+	    	lmb_updateTrigger();
+
+	    }
+	}
+	}
+}
+
+if($vknsave){
+	# --- Verknüpfungsfeld (search) in LMB_CONF_FIELDS eintragen -----------------
+	if(is_array($new_verknsearchid)){$new_verknsearchid = implode(",",$new_verknsearchid);}
+	if(is_array($new_verknviewid)){
+		asort($verknsort);
+		foreach ($verknsort as $key => $value) {
+			if($value){
+				$vviewid[] = $new_verknviewid[$key];
+			}
+		}
+		$new_verknviewid = implode(",",$vviewid).'?'.$viewidCut;
+	}
+	
+	if(is_array($new_verknfindid)){
+		asort($verknsortf);
+		foreach ($verknsortf as $key => $value) {
+			if($value){
+				$vfiewid[] = $new_verknfindid[$key];
+			}
+		}
+		$new_verknfindid = implode(",",$vfiewid).'?'.$findidCut;
+	}
+	
+	#if(is_array($new_verknfindid)){$new_verknfindid = implode(",",$new_verknfindid).'?'.$findidCut;}
+	
+	$sqlquery =  "UPDATE LMB_CONF_FIELDS SET VERKNSEARCH = '".parse_db_string($new_verknsearchid,20)."',VERKNVIEW = '".parse_db_string($new_verknviewid,20)."',VERKNFIND = '".parse_db_string($new_verknfindid,20)."' WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}else{
+	$verknsearchid = explode(",",$new_verknsearchid);
+	$verknviewid_ = explode("?",$new_verknviewid);$verknviewid = explode(",",$verknviewid_[0]); $viewidcut = $verknviewid_[1];
+	$verknfindid_ = explode("?",$new_verknfindid);$verknfindid = explode(",",$verknfindid_[0]); $findidcut = $verknfindid_[1];
+	}
+}
+
+/* --- Verknüpfungen neu eintragen --------------------------------------------- */
+if($verknrefresh AND $verkntabid){
+	/* --- Transaktion START ------------------------------------------------ */
+	#lmb_StartTransaction();
+
+	$sqlquery = "DELETE FROM $md5tab";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	
+	$sqlquery =  "SELECT ID,$v_field1 FROM $tabname";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	while(odbc_fetch_row($rs)) {
+		$ID = odbc_result($rs, "ID");
+		if(odbc_result($rs, $v_field1)){
+			$sqlquery1 =  "SELECT ID FROM $verkntabname WHERE ".$v_field2." = '".odbc_result($rs, $v_field1)."'";
+			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			if(!$rs1) {$commit = 1;}
+			$bzm1 = 0;
+			while(odbc_fetch_row($rs1)) {
+				$NEXTID = next_db_id("$md5tab","KEYID",1);
+				$sqlquery3 =  "INSERT INTO $md5tab (KEYID,ERSTUSER,ID,VERKN_ID) VALUES ($NEXTID,".$session["user_id"].",".$ID.",".odbc_result($rs1, "ID").")";
+				$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+				if(!$rs3) {$commit = 1;}
+				$bzm1++;
+			}
+			if($bzm1 > 0){
+				$sqlquery3 =  "UPDATE $tabname SET $fieldname = $bzm1 WHERE ID = $ID";
+				$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+				if(!$rs3) {$commit = 1;}
+			}
+		}
+		$bzm++;
+	}
+	$message2 = "<B><FONT COLOR=\"green\">$NEXTID</FONT></B> $lang[939] <B>$md5tab</B> $lang[940]!<BR><HR>";
+
+	# --- Transaktion ENDE --------
+	#lmb_EndTransaction(!$commit);
+}
+		
+		
+/* --- Referentielle Integrität ändern ---------------------------------------------*/
+if($veknfieldid AND $new_refint_rule AND !$recursrelation){
+	
+	# add
+	if($new_refint AND !$refint){
+		if(lmb_rebuildForeignKey(null,array($tabid),1)){
+			$new_refint = LMB_DBDEF_TRUE;
+			$refint = 1;
+			$message1 = "$lang[941] <B><FONT COLOR=\"green\">$lang[942]</FONT></B><BR>";
+			
+			$sqlquery = "UPDATE LMB_CONF_FIELDS SET REFINT = $new_refint WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			if(!$rs) {$commit = 1;}
+		}else{
+			$message1 = "$lang[941] <B><FONT COLOR=\"red\">$lang[942]</FONT> failed!</B><BR>";
+		}
+	# drop
+	}elseif(!$new_refint AND $refint){
+		if($f1){
+			lmb_dropForeignKey($md5tab,$f1);
+		}
+		if($f2){
+			lmb_dropForeignKey($md5tab,$f2);
+		}
+
+		$new_refint = LMB_DBDEF_FALSE;
+		$refint = 0;
+		$message1 = "$lang[941] <B><FONT COLOR=\"green\">$lang[938]</FONT></B><BR>";
+	
+		$sqlquery = "UPDATE LMB_CONF_FIELDS SET REFINT = $new_refint WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}	
+	}
+}
+    
+
+/* --- Relation Tree --------------------------------------------- */
+if ($fieldid and $tabid and $relationtree) {
+    createRecRelation($tabid, $fieldid, $relationtree, $md5tab);
+    $verkntabletype = 3;
+}
+
+
+/* --- Verknüpfungs Parametrisierung ---------------------------------------------*/
+/**
+ * Enter description here...
+ *
+ * @param unknown_type $md5tab
+ * @param unknown_type $groupid
+ */
+function createRelationParams($new_vparams,$verknparams,$md5tab,$groupid,$fieldspelling,$fieldid,$tabid){
+	global $db;
+	global $umgvar;
+	global $session;
+	
+	require_once('admin/setup/language.lib');
+	require_once('admin/tables/tab.lib');
+	require_once('admin/tools/import.dao');
+	
+	# drop relation params
+	if($verknparams AND $verknparams){
+		$sqlquery = "UPDATE LMB_CONF_FIELDS SET VERKNPARAMS = 0 WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+	# create relation params
+	}else{
+		
+		# check if table exists
+		$sqlquery = "SELECT TAB_ID FROM LMB_CONF_TABLES WHERE TABELLE = '$md5tab'";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if($new_gtabid = odbc_result($rs, "TAB_ID")){
+			$GLOBALS['message'] = "--> table $md5tab already exists!";
+		}else{
+			# convert relation table to limbas table 
+			$fieldspelling = $fieldspelling.'_params';
+			if(!$new_gtabid = import_create($md5tab,$groupid,$fieldspelling,null,null,1,'tab')){
+				return false;
+			}
+		}
+		
+		$sqlquery = "UPDATE LMB_CONF_FIELDS SET VERKNPARAMS = ".parse_db_int($new_gtabid)." WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		
+		$sqlquery = "UPDATE LMB_CONF_TABLES SET KEYFIELD = 'KEYID' WHERE TABELLE = '$md5tab'";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		
+		return $new_gtabid;
+	}
+	return false;
+}
+
+
+
+/* --- Recusive Verknüpfung ---------------------------------------------*/
+
+function createRecRelation($tabid,$fieldid,$relationtree,$md5tab){
+	global $db;
+	global $DBA;
+	global $umgvar;
+	global $value;
+	global $verkntree;
+	
+	$tree = explode(',',$relationtree);
+	$tree_identifier = md5($relationtree);
+
+	if($tree){
+		$i = 1;
+		$c = count($tree);
+		foreach ($tree as $key => $verkntab){
+
+			$from[] = $verkntab;
+			# first relation
+			if($i == 1){
+				$select[] = $verkntab.'.ID AS ID';
+			# last relation
+			}elseif($i == $c){
+				$select[] = '1 AS KEYID';
+				$select[] = 'NULL AS ERSTDATUM';
+				$select[] = 'NULL AS ERSTUSER';
+				$select[] = $verkntab.'.VERKN_ID AS VERKN_ID';
+				$select[] = $verkntab.'.SORT AS SORT';
+			}
+			if($i > 1){
+				$where[] = $prevmd5tab.'.VERKN_ID = '.$verkntab.'.ID';
+			}
+			$prevmd5tab = $verkntab;
+			$i++;
+		}
+	}
+	
+	$from = implode(',',$from);
+	$select = implode(',',$select);
+	$where = implode(' AND ',$where);
+	
+	# drop TABLE
+	if($odbc_table = dbf_20(array($DBA["DBSCHEMA"],$md5tab,"'TABLE'"))){
+		$sqlquery = "DROP TABLE $md5tab";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs){echo odbc_errormsg($db).'<br>';}
+	}
+	# drop VIEW
+	elseif($odbc_table = dbf_20(array($DBA["DBSCHEMA"],$md5tab,"'VIEW'"))){
+		$sqlquery = dbq_20(array($md5tab));
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs){echo odbc_errormsg($db).'<br>';}
+	}
+
+	$sqlquery = "CREATE VIEW $md5tab AS SELECT DISTINCT $select FROM $from WHERE $where";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+	if($rs){
+		$sqlquery0 = "UPDATE LMB_CONF_FIELDS SET VERKNTREE = '".parse_db_string($tree_identifier,32)."',VERKNTABLETYPE = 3 WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+		$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+		
+		$verkntree = $tree_identifier;
+	}else{
+		echo odbc_errormsg($db);
+	}
+
+
+	
+}
+
+
+
+/*
+ * Checks if given array contains duplicates.
+ * Returns boolean
+ */
+function lmb_has_duplicates($array){
+	$dupe_array = array();
+	foreach($array as $val){
+		if(++$dupe_array[$val] > 1){
+			return true;
+		}
+	}
+	return false;
+}
+
+/*
+* Checks if there is a duplicate in arr and removes the matching entry in arr2
+* Returns part-array of arr2
+*/
+function removeDuplicates($arr,$arr2){
+	$newarr = array();
+	for($i = 0; $i < count($arr); $i++){
+		$arraystr = implode(",",$arr[$i]);
+		for($u = $i + 1; $u < count($arr); $u++){
+			$array2str = implode(",",$arr[$u]);
+			if($arraystr == $array2str){
+				continue 2;
+			}
+		}
+		array_push($newarr,$arr2[$i]);
+	}
+	return $newarr;
+}
+
+
+
+
+/*
+* Returns array of all verkntabs from tabid to verkntabid
+*/
+function recrelationtree(){
+	global $tabid;
+
+	// Collect data
+	$branches = recrelationsubtree(2,$tabid);
+	// List of verkntabs -> List of tables ids
+	$branchesFiltered = array();
+	$branchesIds = array();
+	foreach($branches as $branch){
+		$tabids = array();
+		array_push($tabids,$tabid);
+		foreach($branch as $key => $md5tab){
+			array_push($tabids, getTabFromMd5($md5tab));
+		}
+		if(!lmb_has_duplicates($tabids)){
+			array_shift($tabids);
+			if(!in_array($gtabid,$tabids)){
+				array_push($branchesFiltered,$branch);
+				array_push($branchesIds,$tabids);
+			}
+		}
+	}
+	return removeDuplicates($branchesIds,$branchesFiltered);
+}
+
+/*
+* Recursive function for recrelationtree()
+*/
+function recrelationsubtree($first,$gtabid,$searched=null){
+	global $gfield;
+	global $gtab;
+	global $verkntabid;
+
+	if($searched==null){
+		$searched=array();
+	}
+	//Ich = gesuchte Tabelle?
+	if(($gtabid == $verkntabid && $first != 1) || in_array($gtabid,$searched)){
+		return;
+	}else{
+		array_push($searched,$gtabid);
+		$vtables = array();
+		//Für jede Verknüpfte Tabelle
+		foreach($gfield[$gtabid]['verkntabid'] as $fieldid => $reltabid){
+			//Wenn keine Rückwärtige Verknüpfung
+			#if($gfield[$gtabid]['verkntabletype'][$fieldid] != 2){
+			//Rekursiver Aufruf
+			$branch = recrelationsubtree($first - 1,$reltabid,$searched);
+			if(!is_array($branch)){
+				//Verknüpfte Tabelle ist die gesuchte Tabelle
+				$r = array();
+				array_push($r,$gfield[$gtabid]['md5tab'][$fieldid]);
+				array_push($vtables, $r);
+			}else{
+				foreach($branch as $entry){
+					array_unshift($entry,$gfield[$gtabid]['md5tab'][$fieldid]);
+					array_push($vtables, $entry);
+				}
+			}
+			#}
+		}
+		return $vtables;
+	}
+}
+
+
+
+function getTabFromMd5($md5tab){
+	global $db;
+
+	$sqlquery =  "SELECT VERKNTABID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".strtolower($md5tab)."'";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	return odbc_result($rs, "VERKNTABID");
+
+}
+
+/*
+create view VERK_df0d711a42747 as
+select  distinct
+1 as keyid,
+VERK_17e64eb8914c6.id as id,
+VERK_ed4cbeb1c927c.verkn_id as verkn_id,
+null as erstdatum,
+VERK_ed4cbeb1c927c.erstuser as erstuser,
+VERK_ed4cbeb1c927c.sort as sort
+from 
+VERK_17e64eb8914c6,
+kontakte,
+VERK_ed4cbeb1c927c
+where
+VERK_17e64eb8914c6.verkn_id = kontakte.id 
+AND kontakte.id = VERK_ed4cbeb1c927c.id
+
+*/
+
+
+
+?>

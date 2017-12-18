@@ -1,0 +1,1119 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID:
+ */
+
+function paintTextToImageSetColor($img){
+	global $farbschema;
+	$rgb[0] = ImageColorAllocate ($img, 0, 0, 0);
+	$rgb[2] = ImageColorAllocate ($img, 255, 255, 255);
+	$RGB = explode(",",hexdec(substr($farbschema[WEB8], 1, 2)).",".hexdec(substr($farbschema[WEB8], 3, 2)).",".hexdec(substr($farbschema[WEB8], 5, 2)));
+	$rgb[1] = imagecolorallocate($img, $RGB[0], $RGB[1], $RGB[2]);
+	return $rgb;
+}
+	
+	
+function paintTextToImage($text,$size=12,$font=null){
+
+	global $umgvar;
+	global $session;
+	global $farbschema;
+	
+	if(!$font){
+		if(file_exists($umgvar["pfad"]."/inc/fonts/DejaVuSans.ttf")){
+			$font = $umgvar["pfad"]."/inc/fonts/DejaVuSans.ttf";
+		}else{
+		    lmb_alert('failure in textToImage - no font (DejaVuSans) available!');
+			return false;
+		}
+	}elseif($font){
+		if(strpos($font,"/") === false){
+			$font = $umgvar["pfad"]."/inc/fonts/$font";
+		}
+	}
+
+	if($box = imagettfbbox($size,0,$font,$text)){
+			$x = abs($box[2]) + 5;
+			$y = abs($box[5]) + 5;
+			$img = imagecreate($x,$y);
+			$rgb = paintTextToImageSetColor($img);
+			imagefill($img, 0, 0, $rgb[2]);
+			imagettftext($img, $size, 0, 0, ($y - 3), $rgb[0], $font, $text);
+			$ok = imagepng($img, $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/textimage.png");
+			imagedestroy($img);
+	}
+	
+	if(file_exists($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/textimage.png")){
+		return $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/textimage.png";
+	}else{
+		return false;
+	}
+
+}
+
+function make_fileArchive($path,$name){
+	global $umgvar;
+	global $session;
+	
+	#$path,"export_bundle")
+	
+	if(substr($path,strlen($path),1) != "/"){
+		$path = $path."/";
+	}
+	
+	$url = $path;
+	$path = $umgvar["pfad"]."/".$path;
+
+	if($folderval = read_dir($path)){
+		foreach($folderval["name"] as $key => $value){
+			if($folderval["typ"][$key] == "file"){
+				$exp_files .= $value." ";
+			}
+		}
+	}
+
+	$systemquery = "tar -c -z -C ".$path." -f ".$path."/$name.tar.gz ".$exp_files;
+	$sys = exec($systemquery);
+	
+	# delete temporary files
+	foreach($folderval["name"] as $key => $value){
+		if($folderval["typ"][$key] == "file" AND $value != $name.'.tar.gz'){
+			unlink($path.$value);
+		}
+	}
+	
+	if(file_exists($url.$name.".tar.gz")){return $url.$name.".tar.gz";}else{return false;}
+}
+
+# grouplist
+function viewgrouptree($LEVEL,$l,$select){
+	static $grouptree;
+	global $db;
+
+
+	if(!$grouptree){
+		$sqlquery = "SELECT GROUP_ID,NAME,LEVEL,LOWER(NAME),DESCRIPTION FROM LMB_GROUPS WHERE DEL = ".LMB_DBDEF_FALSE." ORDER BY GROUP_ID";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$grouptree = array();
+		$bzm = 1;
+		while(odbc_fetch_row($rs, $bzm)){
+			$grouptree["id"][] = odbc_result($rs, "GROUP_ID");
+			$grouptree["name"][] = odbc_result($rs, "NAME");
+			$grouptree["level"][] = odbc_result($rs, "LEVEL");
+		$bzm++;
+		}
+	}
+
+	if($LEVEL){$l .= "--";}
+
+	$bzm = 0;
+	foreach($grouptree["id"] as $key => $value){
+		if($grouptree["level"][$key] == $LEVEL){
+			if($select){if(in_array($grouptree["id"][$key],$select)){$SELECTED="SELECTED";}else{$SELECTED="";}}
+			echo "<OPTION VALUE=\"".$grouptree["id"][$key]."\" $SELECTED>".$l.$grouptree["name"][$key]."</OPTION>";
+
+			if(in_array($grouptree["id"][$key],$grouptree["level"])){
+				viewgrouptree($grouptree["id"][$key],$l,$select);
+			}
+		}
+	}
+}
+
+
+
+# ------------- htaccess ---------------
+function lmb_htaccess($ID,$user,$pass){
+	global $db;
+	global $session;
+	global $umgvar;
+
+	$sqlquery = "SELECT USERNAME,PASSWORT,CLEARPASS FROM LMB_USERDB WHERE USER_ID = $ID";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	if(odbc_fetch_row($rs, 1)) {
+
+		if(!$user){$user = odbc_result($rs, "USERNAME");}
+		if(!$pass){$pass = odbc_result($rs, "CLEARPASS");}
+
+		if(!$user){return false;}
+
+		$path = $umgvar["path"]."/USER/".$ID;
+
+		######## single htaccess for userdirectory ##########
+		
+		# --- htaccess ---
+		$htaccess_file = fopen($path."/.htaccess","w");
+		$value = "AuthName \"$user\"\nAuthType Basic\nAuthUserFile ".$path."/.htpasswd\nrequire valid-user\nallow from all";
+		fputs($htaccess_file,$value);
+		fclose($htaccess_file);
+
+		# --- htpasswd ---
+		if(is_file($path."/.htpasswd") AND !$pass){
+			return file_get_contents($path."/.htpasswd");
+		}elseif(!is_file($path."/.htpasswd") AND !$pass AND file_exists($path."/.htaccess")){
+			#unlink($path."/.htaccess");
+			$htaccess_file = fopen($path."/.htaccess","w");
+			$value = "allow from all";
+			fputs($htaccess_file,$value);
+			fclose($htaccess_file);
+		}else{
+			if($pass){
+				$htpasswd_file = fopen($path."/.htpasswd","w");
+				$pass = crypt($pass);
+				$value = "{$user}:{$pass}\n";
+				fputs($htpasswd_file,$value);
+				fclose($htpasswd_file);
+				return "{$user}:{$pass}";
+			}elseif(file_exists($path."/.htaccess")){
+				#unlink($path."/.htaccess");
+				$htaccess_file = fopen($path."/.htaccess","w");
+				$value = "allow from all";
+				fputs($htaccess_file,$value);
+				fclose($htaccess_file);
+			}
+		}
+	}
+	return false;
+}
+
+
+/**
+ * htpasswd for TEMP Directory
+ *
+ * @param unknown_type $user
+ * @param unknown_type $pass
+ */
+function lmb_htaccessGroup(){
+
+	global $db;
+	global $umgvar;
+	
+	$path = $umgvar["pfad"]."/TEMP";
+	
+	$sqlquery = "SELECT USER_ID FROM LMB_USERDB WHERE DEL = FALSE AND LMLOCK = FALSE";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	while(odbc_fetch_row($rs)) {
+		
+		$userid = odbc_result($rs, "ID");
+		
+		if($pass AND $user){
+			$pass = crypt($pass);
+			$passgrp[] = "{$user}:{$pass}\n";
+		}
+		
+		if($passgrp){
+			$htaccess_file = fopen($path."/.htaccess","w");
+			$value = "AuthName \"$user\"\nAuthType Basic\nAuthUserFile ".$path."/.htpasswd\nrequire valid-user\nallow from all";
+			fputs($htaccess_file,$value);
+			fclose($htaccess_file);
+
+			$value = implode("\n",$passgrp);
+			$htpasswd_file = fopen($path."/.htpasswd","w");
+			fputs($htpasswd_file,$value);
+			fclose($htpasswd_file);
+		}else{
+			$htaccess_file = fopen($path."/.htaccess","w");
+			$value = "allow from all";
+			fputs($htaccess_file,$value);
+			fclose($htaccess_file);
+		}
+		
+		
+	}
+		
+}
+
+
+
+# --- User Verzeichnis hinzufügen -------
+function create_user_folder($ID,$username,$passwort){
+
+	if(!file_exists("USER/$ID")){
+		$sys1 = mkdir("USER/$ID",0777);
+		if(!$sys1){$commit = 1;}
+		$sys1 = mkdir("USER/$ID/menuicons",0777);
+		if(!$sys1){$commit = 1;}
+		$sys1 = mkdir("USER/$ID/temp",0777);
+		if(!$sys1){$commit = 1;}
+		$sys1 = mkdir("USER/$ID/download",0777);
+		if(!$sys1){$commit = 1;}
+	}
+
+	# --- htaccess ---------
+	lmb_htaccess($ID,$username,$passwort);
+
+	if(file_exists("USER/$ID")){return true;}else{return false;}
+}
+
+
+# Type-Extensions
+function getTypeExensions(){
+	global $gLmbExt;
+        
+	if($gLmbExt){
+            foreach($gLmbExt["ext_type.inc"] as $key => $value){
+                    $file = fopen($value,"r");
+                    while($line = fgets($file, 100000)){
+                            if($fline = stristr($line,"function")){
+                                    $na = trim(substr($fline,9,(strpos($fline,"(")-9)));
+                                    if(stristr($line,"lmbd_")){
+                                            $name[] = preg_replace("/lmbd_/","",$na);
+                                    }
+                            }
+                    }
+                    fclose($file);
+            }
+        }
+	
+	return $name;
+}
+
+
+
+
+
+# grouplist
+function GroupTreeList($name,$items,$selected,$LEVEL=0,$l=null){
+	global $grouptree;
+	global $db;
+	
+	if(!$LEVEL){
+		$sqlquery = "SELECT GROUP_ID,NAME,LEVEL,LOWER(NAME),DESCRIPTION FROM LMB_GROUPS WHERE DEL = ".LMB_DBDEF_FALSE." ORDER BY GROUP_ID";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$grouptree = array();
+		$bzm = 1;
+		while(odbc_fetch_row($rs, $bzm)){
+			$grouptree["id"][] = odbc_result($rs, "GROUP_ID");
+			$grouptree["name"][] = odbc_result($rs, "NAME");
+			$grouptree["level"][] = odbc_result($rs, "LEVEL");
+			$bzm++;
+		}
+	}
+
+	if($LEVEL){$l .= "&nbsp;&nbsp;&nbsp;";}
+
+	foreach($grouptree["id"] as $key => $value){
+		if($grouptree["level"][$key] == $LEVEL){
+			echo "<TR>";
+			echo "<TD nowrap>".$l.$grouptree["name"][$key]."</TD>";
+			foreach ($items["name"] as $ikey => $ival){
+				if(!$items["typ"][$ikey]){$items["typ"][$ikey] = "checkbox";}
+				$CHECKED="";
+				if($selected[$ival]){if(in_array($grouptree["id"][$key],$selected[$ival])){$CHECKED="CHECKED";}}
+				echo "<TD nowrap align=\"center\"><input type=\"".$items["typ"][$ikey]."\" NAME=\"grouptreelist[".$ival."][]\" VALUE=\"".$grouptree["id"][$key]."\" $CHECKED></TD>";
+			}
+			echo "</TR>";
+			if(in_array($grouptree["id"][$key],$grouptree["level"])){
+				GroupTreeList($name,$items,$selected,$grouptree["id"][$key],$l);
+			}
+		}
+	}
+}
+
+function getGroupTree($name,$items,$selected=null,$LEVEL=0,$l=null){
+
+	echo "<DIV ID=\"".$name."\" class=\"lmbContextMenu\" STYLE=\"position:absolute;z-index:999;display:none;\" OnClick=\"activ_menu = 1;\">";
+	pop_closetop($name);
+	pop_left($mwidth);
+	echo "<TABLE BORDER=\"0\" cellspacing=\"0\" cellpadding=\"0\"><TR><TD></TD>";
+	if($items["header"]){
+	foreach ($items["header"] as $ikey => $ival){
+		echo "<TD align=\"center\">$ival</TD>";
+	}}
+	echo "<TR>";
+	GroupTreeList($name,$items,$selected,$LEVEL,$l);
+	pop_right();
+	echo "</TABLE>";
+	pop_bottom($mwidth);
+	
+	echo "</DIV>";
+}
+
+
+
+
+
+################### trigger #############################
+
+
+/*
+trigger name = LMB_TRG_md5(TABNAME_EVENT)
+*/
+function lmb_updateTrigger(){
+	global $db;
+	global $DBA;
+
+	#lmb_dropAllDBTrigger("LMB_TRG_%");
+	lmb_dropAllDBTrigger();
+
+	$sqlquery = "SELECT * FROM LMB_TRIGGER WHERE ACTIVE = ".LMB_DBDEF_TRUE." AND TYPE IS NOT NULL AND INTERN = ".LMB_DBDEF_FALSE." ORDER BY TABLE_NAME,TYPE";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+	while(odbc_fetch_row($rs)){
+		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],odbc_result($rs,"TABLE_NAME"),"'TABLE'"));
+		if(!$odbc_table){
+			lmb_deleteTriggerForTable(odbc_result($rs,"TABLE_NAME"));
+		}else{
+			$triggers["name"][] = odbc_result($rs,"NAME");
+			$triggers["table"][] = odbc_result($rs,"TABLE_NAME");
+			$triggers["type"][] = odbc_result($rs,"TYPE");
+			$triggers["value"][] = odbc_result($rs,"TRIGGER_VALUE");
+			$triggers["vendor"][] = odbc_result($rs,"DBVENDOR");
+			$triggers["position"][] = odbc_result($rs,"POSITION");
+		}
+	}
+
+	if($triggers){
+		foreach($triggers["name"] as $key => $value){
+			if($triggers["value"][$key] AND $triggers["name"][$key] AND strtolower($triggers["vendor"][$key]) == strtolower($DBA["DB"])){
+				if(!$triggers["position"][$key]){$triggers["position"][$key] = "AFTER";}
+				$sqlquery = dbq_13(array($DBA["DBSCHEMA"],$triggers["name"][$key],$triggers["table"][$key],$triggers["type"][$key],$triggers["value"][$key],$triggers["position"][$key]));
+				@odbc_exec($db,$sqlquery) or $errorTrigger[$triggers["table"][$key]] = odbc_errormsg($db);
+			}
+		}
+	}
+	if($errorTrigger){
+		echo "<br>Error during update of triggers, please review the trigger content for the following tables:";
+		foreach ($errorTrigger as $key => $val){
+			echo "<br>- $key: ($val)<br>";
+		}
+		echo "</b><br>. The other triggers have been updated successfully.";
+		return false;
+	}else{
+		return true;
+	}
+}
+
+function lmb_dropAllDBTrigger($triggername=null,$delData=false){
+	global $db;
+	global $DBA;
+	
+	# delete database trigger
+	if($triggerlist = dbf_3(array($DBA["DBSCHEMA"],$triggername))){
+		foreach ($triggerlist["triggername"] as $tkey => $tname){
+			#if(substr($tname,0,12) == "INSERT_VERK_" AND substr($tname,0,12) == "INSERT_VERK_"){continue;}
+			$sqlquery = dbq_10(array($triggerlist["triggername"][$tkey],$triggerlist["tablename"][$tkey]));
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			if(!$rs) {$commit = 1;}
+		}
+	}
+	# delete limbas trigger
+	if($delData){
+		if($triggername){$where = "AND NAME LIKE '$triggername'";}
+		$sqlquery = "DELETE FROM LMB_TRIGGER WHERE INTERN = ".LMB_DBDEF_FALSE." AND (DESCRIPTION LIKE 'INSERT_VERK_%' OR DESCRIPTION LIKE 'DELETE_VERK_%') ".$where;
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+	}
+	
+	if($commit){return false;}else{return true;}
+}
+
+function lmb_addTrigger($desc,$type,$table,$value,$intern=null,$position="AFTER",$replace=null){
+	global $db;
+	global $session;
+	global $DBA;
+
+	if(!$position){$position = "AFTER";}
+	
+	// check for duplicates in DB Trigger
+	if(!$intern){
+    	$sqlquery0 = "SELECT ID FROM LMB_TRIGGER WHERE LOWER(TABLE_NAME) = '".strtolower(parse_db_string($table,20))."' AND TYPE = '$type' AND POSITION = '$position' AND INTERN = ".LMB_DBDEF_FALSE;
+    	$rs0 = odbc_exec($db,$sqlquery0);
+    	while(odbc_fetch_row($rs0)){
+    		if($replace){
+    			$sqlquery1 = "DELETE FROM LMB_TRIGGER WHERE ID = ".odbc_result($rs0,"ID");
+    			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+    		}else{
+    			if($GLOBALS["action"] == "setup_trigger"){
+    				lmb_alert("trigger already exists!");
+    			}
+    			return false;  ### check for database if supported!
+    		}
+    	}
+	}
+	
+	$md5Hash = md5($table . "_" . $type . "_" . $position);
+	$trigerName = substr("LMB_TRG_" . $md5Hash ,0,18);
+	$nextid = next_db_id("LMB_TRIGGER");
+	$sqlquery = "INSERT INTO LMB_TRIGGER (ID,ERSTDATUM,EDITDATUM,EDITUSER,ERSTUSER,NAME,TABLE_NAME,TYPE,TRIGGER_VALUE,DESCRIPTION,ACTIVE,INTERN,SORT,DBVENDOR,POSITION) VALUES ($nextid,".LMB_DBDEF_TIMESTAMP.",".LMB_DBDEF_TIMESTAMP.",".$session["user_id"].",".$session["user_id"].",'".parse_db_string(strtoupper($trigerName),25)."','".parse_db_string(strtoupper($table),50)."','".parse_db_string($type,20)."','".parse_db_string($value,4000)."','".parse_db_string($desc,50)."',".LMB_DBDEF_TRUE.",".parse_db_bool($intern).",0,'".parse_db_string($DBA["DB"],15)."','".parse_db_string($position,6)."')";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs){
+		return false;
+	}
+
+	return true;
+}
+
+function lmb_deleteTriggerForTable($tablename){
+	global $db;
+	$sqlquery = "DELETE FROM LMB_TRIGGER WHERE LOWER(TABLE_NAME) = '".strtolower(parse_db_string($tablename,40))."' AND INTERN = ".LMB_DBDEF_FALSE;
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+function lmb_relationTrigger($verknTabName,$elternTab,$elternFeld,$kindTab,$kindFeld){
+	global $db;
+	global $DBA;
+
+	$userdb = $DBA["DBSCHEMA"];
+		
+	# recusiv relation (view)
+	if($kindFeld){
+		$trigger_add_func = dbq_14(array(dbf_4($userdb.".".$verknTabName),dbf_4($userdb.".".$elternTab),dbf_4($elternFeld),'+',dbf_4($userdb.".".$kindTab),dbf_4($kindFeld)));
+		$trigger_del_func = dbq_14(array(dbf_4($userdb.".".$verknTabName),dbf_4($userdb.".".$elternTab),dbf_4($elternFeld),'-',dbf_4($userdb.".".$kindTab),dbf_4($kindFeld)));
+	}else{
+		$trigger_add_func = dbq_14(array(dbf_4($userdb.".".$verknTabName),dbf_4($userdb.".".$elternTab),dbf_4($elternFeld),'+'));
+		$trigger_del_func = dbq_14(array(dbf_4($userdb.".".$verknTabName),dbf_4($userdb.".".$elternTab),dbf_4($elternFeld),'-'));
+	}
+	
+	
+	$success1 = lmb_addTrigger("INSERT_".$verknTabName,"INSERT",$verknTabName,$trigger_add_func,0,0,1);
+	$success2 = lmb_addTrigger("DELETE_".$verknTabName,"DELETE",$verknTabName,$trigger_del_func,0,0,1);
+	
+	if($success1 AND $success2){
+		return true;
+	}else{
+		return false;
+	}
+	
+}
+
+
+/**
+ * rebuild limbas specific triggers
+ *
+ * @param array $gtabid
+ */
+function lmb_rebuildTrigger($deleteall=null,$onlytabs=null){
+	global $db;
+	
+	if(!LMB_DBFUNC_PROCEDUREHANDLE){return true;}
+	
+	# drop all limbas trigger
+	if($deleteall){
+		#lmb_dropAllDBTrigger("LMB_TRG_%",1);
+		lmb_dropAllDBTrigger(null,1);
+	}
+	
+	$sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(odbc_fetch_row($rs)){
+		$tab[odbc_result($rs,"TAB_ID")] = odbc_result($rs,"TABELLE");
+	}
+	
+	if(is_array($onlytabs)){$qu = "WHERE TAB_ID IN (".implode(",",$onlytabs).")";}
+	$sqlquery = "SELECT TAB_ID,TABELLE,VERKN,TYP FROM LMB_CONF_TABLES $qu";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(odbc_fetch_row($rs)){
+
+		$tablename = odbc_result($rs,"TABELLE");
+		$tableid = odbc_result($rs,"TAB_ID");
+		$sverkn = odbc_result($rs,"VERKN");
+		$typ = odbc_result($rs,"TYP");
+		
+		# Calendar Trigger
+		if($typ == 2){
+			# kalendar trigger lastmodified
+			lmb_addTrigger("LMB_LASTMODIFIED_".$tableid,"UPDATE",$tablename,dbq_27(array($GLOBALS['DBA']["DBSCHEMA"],$tableid)),0,0,1);
+		}
+				
+		# Relation Trigger
+		$sqlquery1 = "SELECT FIELD_ID,FIELD_NAME,DATA_TYPE,FIELD_TYPE,MD5TAB,VERKNTABID,VERKNFIELDID,VERKNTABLETYPE,REFINT,HASRECVERKN FROM LMB_CONF_FIELDS WHERE TAB_ID = $tableid";
+		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		while(odbc_fetch_row($rs1)){
+			# limbas relations
+			if(odbc_result($rs1,"FIELD_TYPE") == 11 AND odbc_result($rs1,"VERKNTABID") AND odbc_result($rs1,"MD5TAB")){
+				if(odbc_result($rs1,"VERKNTABLETYPE") == 1){
+					# relation trigger
+					$ptable = $tab[odbc_result($rs1,"VERKNTABID")];
+					$ftable = odbc_result($rs1,"MD5TAB");
+						
+					if(odbc_result($rs1,"HASRECVERKN")){
+						$sqlquery2 = "SELECT FIELD_NAME FROM LMB_CONF_FIELDS WHERE TAB_ID = ".odbc_result($rs1,"VERKNTABID")." AND FIELD_ID = ".odbc_result($rs1,"HASRECVERKN");
+						$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+						$pfieldname = odbc_result($rs2,"FIELD_NAME");
+						if($pfieldname){
+							$updtrigg = 1;
+							if(!lmb_relationTrigger($ftable,$tablename,odbc_result($rs1,"FIELD_NAME"),$ptable,$pfieldname)){
+								$commit = 1;
+							}
+						}else{
+							$updtrigg = 1;
+							if(!$success = lmb_relationTrigger($ftable,$tablename,odbc_result($rs1,"FIELD_NAME"),0,0)){
+								$commit = 1;
+							}
+						}
+					}else{
+						$updtrigg = 1;
+						if(!lmb_relationTrigger($ftable,$tablename,odbc_result($rs1,"FIELD_NAME"),0,0)){
+							$commit = 1;
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	if($updtrigg AND !$commit){
+		if(lmb_updateTrigger()){
+			return true;
+		}else{
+			return false;
+		}
+	}elseif($commit){
+		return false;
+	}
+	
+	return true;
+}
+
+################### views #############################
+
+# --- create view  -----------------------------------
+function lmb_createView($query,$name){
+	global $db;
+	global $session;
+	global $DBA;
+	
+	if($query AND $name){
+		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],$name,"'VIEW'"));
+		if($odbc_table) {
+			lmb_alert("View $name already exists!");
+			return true;
+		}else{
+			$sqlquery = "CREATE VIEW ".dbf_4($name)." AS ".$query;
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			if($rs){return true;}else{return  false;}
+		}
+	}
+}
+
+# --- drop view -----------------------------------
+function lmb_dropView($name=null){
+	global $db;
+	global $DBA;
+	
+	if($name){
+		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],$name,"'VIEW'"));
+		if($odbc_table) {
+			$sqlquery1 = dbq_20(array(dbf_4($name)));
+			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			if($rs1){return true;}else{return  false;}
+		}
+	}else{
+		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'VIEW'"));
+		if($odbc_table["table_name"]){
+			foreach($odbc_table["table_name"] as $tkey => $tvalue) {
+				$sqlquery1 = dbq_20(array(dbf_4($tvalue)));
+				$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+				if(!$rs1){$commit = 1;}
+			}
+		}
+		if($commit){return false;}else{return true;}
+	}
+	return true;
+}
+
+# --- get view info -----------------------------------
+function lmb_getViewInfo($name){
+	global $db;
+	#global $DBA;
+	
+	$sqlquery = "SELECT MD5TAB FROM LMB_CONF_FIELDS WHERE HASRECVERKN = (SELECT FIELD_ID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".dbf_4($name)."' AND VERKNTABLETYPE = 2)";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	return dbf_4(odbc_result($rs, "MD5TAB"));
+	
+	/*
+	$sqlquery = dbq_12(array($DBA["DBSCHEMA"],$name));
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(odbc_fetch_row($rs)) {
+		return dbf_4(odbc_result($rs, "TABLENAME"));
+	}
+	*/
+}
+
+
+# --- get view definition-----------------------------------
+function lmb_getViewDef($name){
+	global $db;
+	global $DBA;
+
+	if(!$name){return false;}
+	$sqlquery = dbq_8(array($DBA["DBSCHEMA"],$name));
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(odbc_fetch_row($rs)) {
+		return odbc_result($rs, "DEFINITION");
+	}
+}
+
+
+
+################### foreign key #############################
+
+
+/**
+ * rebuild limbas specific foreign keys and triggers
+ *
+ * @param array $gtabid
+ */
+function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$forcerefint=null){
+	global $db;
+	
+	# limbas keyname syntax:  "LMB_[parent-tableid]_[parent-fieldid]_V/ID_[child-tableid]"
+	# for 1:1 relation parent-fieldid = "0"
+	
+	# drop all foreign keys
+	if($deleteall){
+		#lmb_dropALLForeignKeys("LMB_KEY_%");
+		lmb_dropALLForeignKeys();
+	}
+
+	
+	# get all foreign keys
+	$fkys = lmb_getForeignKeys();
+
+	#if(!$fkeylist){$fkeylist = array();}
+	
+	
+	$sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(odbc_fetch_row($rs)){
+		$tab[odbc_result($rs,"TAB_ID")] = odbc_result($rs,"TABELLE");
+	}
+	
+	if(is_array($onlytabs)){$qu = "WHERE TAB_ID IN (".implode(",",$onlytabs).")";}
+	$sqlquery = "SELECT TAB_ID,TABELLE,VERKN FROM LMB_CONF_TABLES $qu";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	
+	while(odbc_fetch_row($rs)){
+		$f0 = null;
+		$f1 = null;
+		$f2 = null;
+		$tablename = odbc_result($rs,"TABELLE");
+		$tableid = odbc_result($rs,"TAB_ID");
+		$sverkn = odbc_result($rs,"VERKN");
+
+		# 1:1 relation
+		if($sverkn != $tableid){
+			$ftable = $tab[$tableid];
+			$ffield = "ID";
+			$ptable = $tab[$sverkn];
+			$pfield = "ID";
+			#$fkname = "LMB_".$tableid."_0_ID_".$sverkn;
+			
+			# search foreign key
+			if($fkys["keyname"]){
+			foreach ($fkys["keyname"] as $key => $value){
+				if($fkys["tablename"][$key] == dbf_4($ftable) AND $fkys["columnname"][$key] == dbf_4($ffield) AND $fkys["reftablename"][$key] == dbf_4($ptable) AND $fkys["refcolumnname"][$key] == dbf_4($pfield)){
+					$f0 = $fkys["keyname"][$key];
+				}
+			}}
+
+			# add foreign key
+			if(!$f0){
+				$f0 = "LMB_KEY_".substr(md5($ftable."_".$ffield."_".$ptable."_".$pfield),0,18);
+				if(!lmb_addForeignKey($ftable,$ffield,$ptable,$pfield,$f0)){
+					$commit = 1;
+				}
+			}
+		}
+		
+		$sqlquery1 = "SELECT FIELD_ID,FIELD_NAME,DATA_TYPE,FIELD_TYPE,MD5TAB,VERKNTABID,VERKNFIELDID,VERKNTABLETYPE,REFINT,HASRECVERKN FROM LMB_CONF_FIELDS WHERE TAB_ID = $tableid";
+		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		while(odbc_fetch_row($rs1)){
+			
+			# foreign keys
+			if(odbc_result($rs1,"DATA_TYPE") == 27 AND odbc_result($rs1,"VERKNTABID") AND odbc_result($rs1,"MD5TAB")){
+				if(odbc_result($rs1,"VERKNTABLETYPE") == 1){
+					# foreign keys 
+					if(odbc_result($rs1,"REFINT") OR $forcerefint){
+						$ftable = odbc_result($rs1,"MD5TAB");
+						$ffield = "VERKN_ID";
+						$ptable = $tab[odbc_result($rs1,"VERKNTABID")];
+						$pfield = "ID";
+						#$fkname = "LMB_".$tableid."_".odbc_result($rs1,"FIELD_ID")."_VID_".odbc_result($rs1,"VERKNTABID");
+						# search foreign key
+						
+						if($fkys["keyname"]){
+						foreach ($fkys["keyname"] as $key => $value){
+							if($fkys["tablename"][$key] == dbf_4($ftable) AND $fkys["columnname"][$key] == dbf_4($ffield) AND $fkys["reftablename"][$key] == dbf_4($ptable) AND $fkys["refcolumnname"][$key] == dbf_4($pfield)){
+								$f1 = $fkys["keyname"][$key];
+							}
+						}}
+						# add foreign key
+						if(!$f1){
+							$f1 = "LMB_KEY_".substr(md5($ftable."_".$ffield."_".$ptable."_".$pfield),0,18);
+							if(!lmb_addForeignKey($ftable,$ffield,$ptable,$pfield,$f1)){
+								$commit = 1;
+							}
+						}
+	
+						$ftable = odbc_result($rs1,"MD5TAB");
+						$ffield = "ID";
+						$ptable = $tab[$tableid];
+						$pfield = "ID";
+						#$fkname = "LMB_".$tableid."_".odbc_result($rs1,"FIELD_ID")."_ID_".odbc_result($rs1,"VERKNTABID");
+						# search foreign key
+						if($fkys["keyname"]){
+						foreach ($fkys["keyname"] as $key => $value){
+							if($fkys["tablename"][$key] == dbf_4($ftable) AND $fkys["columnname"][$key] == dbf_4($ffield) AND $fkys["reftablename"][$key] == dbf_4($ptable) AND $fkys["refcolumnname"][$key] == dbf_4($pfield)){
+								$f2 = $fkys["keyname"][$key];
+							}
+						}}
+						# add foreign key
+						if(!$f2){
+							$f2 = "LMB_KEY_".substr(md5($ftable."_".$ffield."_".$ptable."_".$pfield),0,18);
+							if(!lmb_addForeignKey($ftable,$ffield,$ptable,$pfield,$f2)){
+								$commit = 1;
+							}
+						}
+					}
+				}
+				$ffieldname = odbc_result($rs1,"FIELD_NAME");
+			}
+		}
+	}
+	
+	if($commit){return false;}else{return true;}
+}
+
+
+/**
+ * add foreign key
+ *
+ * @param string $ftable
+ * @param string $ffield
+ * @param string $ptable
+ * @param string $pfield
+ * @param string $fkname
+ * @return success
+ */
+function lmb_addForeignKey($ftable,$ffield,$ptable,$pfield,$fkname){
+	global $db;
+	
+	$sqlquery = dbq_11(array($ftable,$ffield,$ptable,$pfield,$fkname));
+	$rs = @odbc_exec($db,$sqlquery);
+	if(!$rs){
+		echo "error in execute: ".$sqlquery."<br>".odbc_errormsg($db)."<br><br>";
+	}
+	if($rs){return true;}else{return false;}
+}
+
+
+/**
+ * drop all foreign keys found in db
+ * @return successunknown_type
+ *
+ */
+function lmb_dropAllForeignKeys($only_lmb=null){
+	global $db;
+	global $DBA;
+	
+	if($only_lmb){$qu = dbf_4("LMB_%");}else{$qu = null;}
+	$sqlquery = dbq_3(array($DBA["DBSCHEMA"],null,$qu));
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(odbc_fetch_row($rs)){
+		lmb_dropForeignKey(odbc_result($rs,"TABLENAME"),odbc_result($rs,"FKEYNAME"));
+	}
+	if($rs){return true;}
+}
+
+/**
+ * drop foreign key
+ *
+ * @param string $ftable
+ * @param string $fkname
+ * @return success
+ */
+function lmb_dropForeignKey($ftable,$fkname){
+	global $db;
+	
+	$sqlquery = dbq_6(array($ftable,$fkname));
+	$rs = @odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if($rs){return true;}
+}
+
+
+
+/**
+ * get foreign keys
+ *
+ * @param array $ftable
+ * @param array $fkname
+ * @return array
+ */
+function lmb_getForeignKeys($ftable=null,$fkname=null){
+	global $db;
+	global $DBA;
+	
+	# get foreign keys
+	$sqlquery = dbq_3(array($DBA["DBSCHEMA"],$ftable,$fkname));
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(odbc_fetch_row($rs)){
+		$fk["keyname"][] = dbf_4(odbc_result($rs,"FKEYNAME"));
+		$fk["tablename"][] = dbf_4(odbc_result($rs,"TABLENAME"));
+		$fk["columnname"][] = dbf_4(odbc_result($rs,"COLUMNNAME"));
+		$fk["reftablename"][] = dbf_4(odbc_result($rs,"REFTABLENAME"));
+		$fk["refcolumnname"][] = dbf_4(odbc_result($rs,"REFCOLUMNNAME"));
+	}
+	return $fk;
+}
+
+
+
+/**
+ * rebulid sequences
+ *
+ * @return unknown
+ */
+function lmb_rebuildSequences($tablename=null,$field=null){
+	global $db;
+	global $DBA;
+	
+	if(!LMB_DBFUNC_SEQUENCE){return false;}
+	
+	if($tablename AND $field){
+		$table = array(array($tablename,$field));
+	}else{
+	
+		# system tables
+		$table = array(array('LMB_HISTORY_ACTION','ID'),array('LMB_HISTORY_UPDATE','ID'),array('LMB_HISTORY_USER','ID'),array('LMB_WFL_INST','ID'),array('LMB_REMINDER','ID'));
+		
+		# project tables
+		$sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES WHERE TYP != 5";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		while(odbc_fetch_row($rs)){
+			$table[] = array(odbc_result($rs,"TABELLE"),'ID');
+		}
+		
+		# relation tables
+		$rellist = dbf_20(array($DBA["DBSCHEMA"],dbf_4("VERK_%"),"'TABLE'"));
+		foreach ($rellist["table_name"] as $rkey => $rval){
+			$table[] = array($rval,'KEYID');
+		}
+	
+	}
+
+	# create sequence
+	foreach ($table as $key => $value){
+
+		$tablename = $value[0];
+		$field = $value[1];
+
+		$lastid = next_db_id($tablename,$field);
+		# first drop sequence
+		dbf_22(array("",dbf_4("SEQ_".$tablename."_".$field)));
+		# add new sequence
+		if(!dbf_21(array("",dbf_4("SEQ_".$tablename."_".$field),$lastid))){
+			$error = 1;
+		}
+	}
+	
+	
+
+	if(!$error){return true;}else{return false;}
+}
+
+
+
+/**
+ * # sorting config Tables
+ *
+ * @param unknown_type $act
+ * @param unknown_type $sortid
+ * @param unknown_type $table
+ * @param unknown_type $field
+ * @param unknown_type $filter
+ */
+function lmb_sortConf($act,$sortid,$table,$field='SORT',$filter=null){
+	global $db;
+	
+	if($filter){$filter = "WHERE $filter";}
+	
+	$sqlquery = "SELECT ID,$field FROM $table $filter ORDER BY $field";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	
+	$bzm = 0;
+	while(odbc_fetch_row($rs)){
+		$bzm = $bzm+2;
+		$sort[odbc_result($rs, 'ID')] = $bzm;
+	}
+	
+	if($act == 'up'){
+		$sort[$sortid] = $sort[$sortid]-3;
+	}elseif($act == 'down'){
+		$sort[$sortid] = $sort[$sortid]+3;
+	}
+	
+	asort($sort);
+	
+	$bzm = 1;
+	foreach ($sort as $key => $value){
+		$sqlquery = "UPDATE $table SET $field = $bzm WHERE ID = $key";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		$bzm++;
+	}
+	
+}
+
+
+
+/**
+ * find maching fieldtype
+ *
+ * @param string $fype_type
+ * @param string $fype_size
+ * @param string $field_name
+ * @return field_type
+ */
+function translate_fieldtype($fype_type,$fype_size,$fype_scale,$field_name){
+
+	if(strtoupper($field_name) == "ID"){
+		return 19;
+	}elseif(strtoupper($field_name) == "ERSTUSER"){
+		return 36;
+	}elseif(strtoupper($field_name) == "EDITUSER"){
+		return 37;
+	}elseif(strtoupper($field_name) == "ERSTDATUM"){
+		return 38;
+	}elseif(strtoupper($field_name) == "EDITDATUM"){
+		return 39;
+	}
+
+	if(constant("LMB_DBRETYPE_".trim(strtoupper($fype_type)))){
+		$realtype = constant("LMB_DBRETYPE_".trim(strtoupper($fype_type)));
+	}else{
+		$realtype = $fype_type;
+	}
+	
+	if(stripos($realtype,"INTEGER") !== false OR stripos($realtype,"SMALLINT") !== false OR stripos($realtype,"FIXED") !== false){
+		if($fype_scale){	# if scale detected
+			return 5;
+		}else{
+			return 2;
+		}
+	}elseif(stripos($realtype,"NUMERIC") !== false){
+		return 5;
+	}elseif(stripos($realtype,"FLOAT") !== false){
+		return 56;
+	}elseif(stripos($realtype,"CHAR") !== false){
+		if($fype_size < 399){return 13;}
+		elseif($fype_size <= 1000){return 15;}
+		else{return 41;}
+	}elseif(stripos($realtype,"TIMESTAMP") !== false){
+		return 16;
+	}elseif(stripos($realtype,"TIME") !== false){
+		return 43;
+	}elseif(stripos($realtype,"DATE") !== false){
+		return 44;
+	}elseif(stripos($realtype,"BOOLEAN") !== false){
+		return 17;
+	}elseif(stripos($realtype,"LONG") !== false OR stripos($realtype,"TEXT") !== false){
+		return 41;
+	}
+
+}
+
+
+/**
+ * parse default database fields
+ *
+ * @param unknown_type $domain_columns
+ * @param unknown_type $key1
+ * @param unknown_type $value1
+ * @return unknown
+ */
+function lmb_parseImport($value,$domain_columns,$key1){
+
+	# TIMESTAMP
+	if(constant("LMB_DBRETYPE_".strtoupper($domain_columns["datatype"][$key1])) == 'TIMESTAMP'){
+		if($value){
+			$qu_value = "'".$value."'";
+		}else{
+			$qu_value = 'NULL';
+		}
+	# boolean
+	}elseif(constant("LMB_DBRETYPE_".strtoupper($domain_columns["datatype"][$key1])) == 'BOOLEAN'){
+		$qu_value = parse_db_bool($value);
+	# string
+	}elseif(constant("LMB_DBRETYPE_".strtoupper($domain_columns["datatype"][$key1])) == 'VARCHAR' OR
+	constant("LMB_DBRETYPE_".strtoupper($domain_columns["datatype"][$key1])) == 'CHAR' OR
+	constant("LMB_DBRETYPE_".strtoupper($domain_columns["datatype"][$key1])) == 'LONG'){
+		$qu_value = "'".parse_db_string($value,$domain_columns["length"][$key1])."'";
+	# numeric
+	}else{
+		$qu_value = parse_db_int($value,$domain_columns["length"][$key1]);
+	}
+
+	return $qu_value;
+
+}
+
+
+/**
+ * fgetcsv - for different php versions
+ * 
+ * @param unknown $table_datei
+ * @param unknown $line
+ */
+function lmb_fgetcsv(&$handle, $length = 0, $delimiter = ",", $enclosure = '"', $escape = "\\"){
+    
+    if($delimiter == '\t'){$delimiter = chr(9);}
+    
+    // check if php support csv ecape
+    if ($GLOBALS['phpvok']) {
+        return fgetcsv($handle, $length, $delimiter, $enclosure, $escape);
+    } else {
+        return fgetcsv($handle, $length, $delimiter, $enclosure);
+    }
+}
+ 
+/**
+ * fputcsv - for different php versions
+ * 
+ * @param unknown $table_datei
+ * @param unknown $line
+ */
+function lmb_fputcsv(&$table_datei, $line, $intern=0) {
+    global $umgvar;
+    static $csv_delimiter;
+    static $csv_enclosure;
+    static $csv_escape;
+    
+    if(!$csv_delimiter){
+        if(!$intern){
+            $csv_delimiter = $umgvar['csv_delimiter'];
+            $csv_enclosure = $umgvar['csv_enclosure'];
+            $csv_escape = $umgvar['csv_escape'];
+        }
+        if(!$csv_delimiter){$csv_delimiter = ',';}
+        if(!$csv_enclosure){$csv_enclosure = '"';}
+        if(!$csv_escape){$csv_escape = '\\';}
+        if($csv_delimiter == '\t'){$csv_delimiter = chr(9);}
+    }
+
+    // check if php support csv ecape
+    if ($GLOBALS['phpvok']) {
+        fputcsv($table_datei, $line, $csv_delimiter, $csv_enclosure, $csv_escape);
+    } else {
+        fputcsv($table_datei, $line, $csv_delimiter, $csv_enclosure);
+    }
+}
+ 
+?>

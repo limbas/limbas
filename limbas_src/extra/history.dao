@@ -1,0 +1,155 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 85
+ */
+
+# check for permissions
+$gresult = get_gresult($tab,1,null,null,null,null,$ID);
+$hasresult = $gresult[$tab]["id"][0];
+
+if($hasresult){
+	
+
+/* --- Liste --------------------------------------------- */
+$where = "";
+$from = "";
+
+if($order == 1){
+	$order = "LMB_HISTORY_UPDATE.ID DESC";
+}elseif($order == 2){
+	$order = "LMB_HISTORY_UPDATE.USERID,LMB_HISTORY_UPDATE.ID DESC";
+}elseif($order == 3){
+	$order = "LMB_HISTORY_UPDATE.FIELD,LMB_HISTORY_UPDATE.ID DESC";
+}else{
+	$order = "LMB_HISTORY_UPDATE.ID DESC";
+}
+
+
+if($history_typ == 2){
+	# next timeperiod
+	if($gonext == 2 AND $breakid){
+
+		$previd_ = explode(",",$previd);
+		$previd_[] = $startid;
+		$previd = implode(",",$previd_);
+
+		$where[] = "LMB_HISTORY_UPDATE.ID < ".parse_db_int($breakid,18);
+	}
+	# prev timeperiod
+	elseif($gonext == 1 AND $previd){
+
+		$previd_ = explode(",",$previd);
+		$breakid = array_pop($previd_);
+		$previd = implode(",",$previd_);
+
+		$where[] = "LMB_HISTORY_UPDATE.ID <= ".parse_db_int($breakid,18);
+	}
+
+	elseif($startid){$where[] = "LMB_HISTORY_UPDATE.ID <= ".parse_db_int($startid,18);}
+}
+
+
+if($s_field){
+	$from .= ",LMB_CONF_FIELDS,LMB_LANG_DEPEND";
+	$where[] = "LMB_HISTORY_UPDATE.FIELD = LMB_CONF_FIELDS.FIELD_ID AND
+	LMB_CONF_FIELDS.SPELLING = LMB_LANG_DEPEND.ELEMENT_ID AND 
+	LMB_LANG_DEPEND.LANGUAGE_ID = ".$session["language"]." AND 
+	LOWER(LMB_LANG_DEPEND.WERT) LIKE '%".strtolower(parse_db_string($s_field,20))."%'";
+}
+
+if($s_user){
+	$from .= ",LMB_USERDB";
+	$where[] = "LMB_HISTORY_UPDATE.USERID = LMB_USERDB.USER_ID AND
+	LOWER(LMB_USERDB.VORNAME & ' ' & LMB_USERDB.NAME & ' ' & LMB_USERDB.USERNAME) LIKE '%".strtolower(parse_db_string($s_user,20))."%'";
+}
+
+if($s_date){
+	if(preg_match("/[<>=]/",$s_date)){
+		$s_date = preg_replace("/[ ]{1,}/","",$s_date);
+		$s_date = preg_replace("/>|<|>=|<=|!=|=/","\\0 ",$s_date);
+		$splitdate = explode(" ",$s_date);
+		if($splitdate[0] == "!=" OR $splitdate[0] == ">" OR $splitdate[0] == "<" OR $splitdate[0] == "<=" OR $splitdate[0] == ">=" OR $splitdate[0] == "="){
+			$d = $splitdate[0];
+			$v = $splitdate[1];
+		}
+	}else{
+		$d = "=";
+		$v = $s_date;
+	}
+	$where[] = LMB_DBFUNC_DATE."LMB_HISTORY_UPDATE.ERSTDATUM) $d '".convert_date($v)."'";
+}
+
+
+if($where){
+	$where = "AND ".implode(" AND ",$where);
+}
+
+$sqlquery = "
+SELECT DISTINCT 
+LMB_HISTORY_UPDATE.ID,
+LMB_HISTORY_UPDATE.ERSTDATUM,
+LMB_HISTORY_UPDATE.FIELDVALUE,
+LMB_HISTORY_UPDATE.FIELD,
+LMB_HISTORY_UPDATE.TAB,
+LMB_HISTORY_UPDATE.USERID
+FROM LMB_HISTORY_UPDATE,LMB_RULES_FIELDS $from
+WHERE 
+LMB_HISTORY_UPDATE.DATAID = ".parse_db_int($ID,16)." 
+AND LMB_HISTORY_UPDATE.TAB = ".parse_db_int($tab,4)."
+AND LMB_RULES_FIELDS.TAB_ID = ".parse_db_int($tab,4)." 
+AND (LMB_RULES_FIELDS.GROUP_ID = ".implode(" OR LMB_RULES_FIELDS.GROUP_ID = ",$session["subgroup"]).")
+AND LMB_HISTORY_UPDATE.TAB = LMB_RULES_FIELDS.TAB_ID
+AND LMB_HISTORY_UPDATE.FIELD = LMB_RULES_FIELDS.FIELD_ID
+AND LMB_RULES_FIELDS.LMVIEW = TRUE
+$where
+ORDER BY $order LIMIT 200";
+
+$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$bzm = 1;
+while(odbc_fetch_row($rs, $bzm)) {
+
+	if($history_typ == 2){
+		if($bzm == 1){
+			$startid = odbc_result($rs, "ID");
+			$startdate = get_date(odbc_result($rs, "ERSTDATUM"),1);
+		}else{
+			if(odbc_result($rs, "USERID") != $prevuser OR $startdate != get_date(odbc_result($rs, "ERSTDATUM"),1)){
+				break;
+			}
+		}
+	}
+
+	$result_history["id"][] = odbc_result($rs, "ID");
+	$result_history["field_type"][] = $gfield[odbc_result($rs, "TAB")][field_type][odbc_result($rs, "FIELD")];
+	$result_history["editdatum"][] = get_date(odbc_result($rs, "ERSTDATUM"),2);
+	$result_history["field"][] = $gfield[odbc_result($rs, "TAB")]["spelling"][odbc_result($rs, "FIELD")];
+	$result_history["tabid"][] = odbc_result($rs, "TAB");
+	$result_history["fieldid"][] = odbc_result($rs, "FIELD");
+	$result_history["fieldvalue"][] = odbc_result($rs, "FIELDVALUE");
+	$result_history["user"][] = odbc_result($rs, "USERID");
+
+
+	$prevuser = odbc_result($rs, "USERID");
+	$breakid = odbc_result($rs, "ID");
+	$breakstamp = odbc_result($rs, "ERSTDATUM");
+
+	$bzm++;
+}
+
+}
+?>

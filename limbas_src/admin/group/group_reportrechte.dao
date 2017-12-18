@@ -1,0 +1,229 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 223
+ */
+
+
+if($action=='setup_group_reportrechte'){$ruletype = 1;}
+elseif($action=='setup_group_forms'){$ruletype = 2;}
+elseif($action=='setup_group_diags'){$ruletype = 3;}
+elseif($action=='setup_group_reminder'){$ruletype = 4;}
+elseif($action=='setup_group_workfl'){$ruletype = 5;}
+else{return false;}
+
+/* --- Übergruppe --------------------------------------------- */
+$sqlquery = "SELECT LEVEL FROM LMB_GROUPS WHERE GROUP_ID = $ID";
+$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+if(odbc_result($rs, "LEVEL")){$group_level = odbc_result($rs, "LEVEL");}else{$group_level = 0;}
+
+function resullist_($typ,$myrule=null){
+	global $db;
+	global $session;
+	global $ruletype;
+
+	if($typ == 1){
+		$sqlquery = "SELECT DISTINCT LMB_REPORT_LIST.ID,LMB_REPORT_LIST.GROUPLIST,LMB_REPORT_LIST.NAME,LMB_REPORT_LIST.REFERENZ_TAB
+		FROM LMB_REPORT_LIST
+		UNION
+		SELECT DISTINCT LMB_REPORT_LIST.ID,LMB_REPORT_LIST.GROUPLIST,LMB_REPORT_LIST.NAME,LMB_REPORT_LIST.REFERENZ_TAB
+		FROM LMB_REPORT_LIST
+		WHERE LMB_REPORT_LIST.REFERENZ_TAB = -1
+		ORDER BY REFERENZ_TAB,NAME";
+	}elseif($typ == 2){
+		$sqlquery = "SELECT LMB_FORM_LIST.NAME,LMB_FORM_LIST.ID,LMB_FORM_LIST.REDIRECT,LMB_FORM_LIST.FORM_TYP,LMB_FORM_LIST.REFERENZ_TAB
+		FROM LMB_FORM_LIST
+		ORDER BY REFERENZ_TAB,NAME";
+	}elseif($typ == 3){
+		$sqlquery = "SELECT LMB_CHART_LIST.ID,LMB_CHART_LIST.TAB_ID AS REFERENZ_TAB,LMB_CHART_LIST.DIAG_NAME AS NAME,LMB_CHART_LIST.DIAG_DESC,LMB_CHART_LIST.TEMPLATE FROM LMB_CHART_LIST";
+	}elseif($typ == 4){
+		$sqlquery = "SELECT LMB_REMINDER_LIST.ID,LMB_REMINDER_LIST.TAB_ID AS REFERENZ_TAB,LMB_REMINDER_LIST.NAME FROM LMB_REMINDER_LIST";
+	}elseif($typ == 5){
+		$sqlquery = "SELECT LMB_WFL.ID, LMB_WFL.NAME FROM LMB_WFL";
+	}
+	
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$bzm = 1;
+
+	if($ruletype == 5){
+		while(odbc_fetch_row($rs)) {
+			$key = odbc_result($rs, "ID");
+			if($myrule[$key] OR !$myrule){
+				$gformlist["id"][$key] = odbc_result($rs, "ID");
+				$gformlist["name"][$key] = odbc_result($rs, "NAME");
+			}
+		}
+	}else{
+		while(odbc_fetch_row($rs)) {
+			$key = odbc_result($rs, "ID");
+			$gtabid = parse_db_int(odbc_result($rs, "REFERENZ_TAB"));
+			if($gtabid <= 0){$gtabid = 0;}
+			if($myrule[$key] OR !$myrule){
+				$gformlist[$gtabid]["id"][$key] = odbc_result($rs, "ID");
+				$gformlist[$gtabid]["name"][$key] = odbc_result($rs, "NAME");
+			}
+		}
+	}
+
+	return $gformlist;
+}
+
+function group_list($ID,$first,$addsubgroup,$typ){
+	global $db;
+	global $action;
+	
+	if($ID){
+		$sqlquery = "SELECT GROUP_ID FROM LMB_GROUPS WHERE LEVEL = $ID";
+	    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	    if(!$rs) {$commit = 1;}
+		$bzm = 1;
+	    while(odbc_fetch_row($rs, $bzm)) {
+			group_list(odbc_result($rs, "GROUP_ID"),0,$addsubgroup,$typ);
+		$bzm++;
+		}
+	}
+	
+	if($typ == 5){
+		set_rules5($ID,$first,$addsubgroup,$typ);
+	}else{
+		set_rules($ID,$first,$addsubgroup,$typ);
+	}
+	
+}
+
+function set_rules($ID,$first,$addsubgroup,$typ){
+	global $db;
+	global $setrule;
+	global $sethidden;
+	global $gtab;
+
+	$rulelist = resullist_($typ);
+
+	if($rulelist){
+	foreach ($rulelist as $key => $value){
+		if($value["id"]){
+		foreach ($value["id"] as $key2 => $value2){
+			if($value2){
+				if($addsubgroup != 1 AND !$first AND ($sethidden[$value2] OR $setrule[$value2])){continue;}
+				# neu anlegen
+				$sqlquery = "SELECT ID FROM LMB_RULES_REPFORM WHERE GROUP_ID = $ID AND REPFORM_ID = $value2 AND TYP = $typ";
+				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs) {$commit = 1;}
+				if(!odbc_fetch_row($rs,1) AND $setrule[$value2]){
+					$NEXTID = next_db_id("LMB_RULES_REPFORM");
+					$sqlquery = "INSERT INTO LMB_RULES_REPFORM (ID,TYP,GROUP_ID,LMVIEW,REPFORM_ID) VALUES ($NEXTID,$typ,$ID,".LMB_DBDEF_TRUE.",$value2)";
+					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					if(!$rs) {$commit = 1;}
+				}elseif(odbc_fetch_row($rs,1) AND !$setrule[$value2]){
+					$sqlquery = "DELETE FROM LMB_RULES_REPFORM WHERE GROUP_ID = $ID AND REPFORM_ID = $value2 AND TYP = $typ";
+					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					if(!$rs) {$commit = 1;}
+				}elseif(odbc_fetch_row($rs,1) AND $sethidden[$value2]){
+					$sqlquery = "UPDATE LMB_RULES_REPFORM SET HIDDEN = ".LMB_DBDEF_TRUE." WHERE GROUP_ID = $ID AND REPFORM_ID = $value2 AND TYP = $typ";
+					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					if(!$rs) {$commit = 1;}
+				}elseif(odbc_fetch_row($rs,1) AND !$sethidden[$value2]){
+					$sqlquery = "UPDATE LMB_RULES_REPFORM SET HIDDEN = ".LMB_DBDEF_FALSE." WHERE GROUP_ID = $ID AND REPFORM_ID = $value2 AND TYP = $typ";
+					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					if(!$rs) {$commit = 1;}
+				}
+			}
+		}}
+	}}
+}
+
+
+function set_rules5($ID,$first,$addsubgroup,$typ){
+	global $db;
+	global $setrule;
+	global $sethidden;
+	global $gtab;
+	
+	$rulelist = resullist_($typ);
+	
+	if($rulelist){
+		foreach ($rulelist['id'] as $key => $value){
+			if($addsubgroup != 1 AND !$first AND ($sethidden[$value] OR $setrule[$value])){continue;}
+			# neu anlegen
+			$sqlquery = "SELECT ID FROM LMB_RULES_REPFORM WHERE GROUP_ID = $ID AND REPFORM_ID = $value AND TYP = $typ";
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			if(!$rs) {$commit = 1;}
+			if(!odbc_fetch_row($rs,1) AND $setrule[$value]){
+				$NEXTID = next_db_id("LMB_RULES_REPFORM");
+				$sqlquery = "INSERT INTO LMB_RULES_REPFORM (ID,TYP,GROUP_ID,LMVIEW,REPFORM_ID) VALUES ($NEXTID,$typ,$ID,".LMB_DBDEF_TRUE.",$value)";
+				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs) {$commit = 1;}
+			}elseif(odbc_fetch_row($rs,1) AND !$setrule[$value]){
+				$sqlquery = "DELETE FROM LMB_RULES_REPFORM WHERE GROUP_ID = $ID AND REPFORM_ID = $value AND TYP = $typ";
+				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs) {$commit = 1;}
+			}elseif(odbc_fetch_row($rs,1) AND $sethidden[$value]){
+				$sqlquery = "UPDATE LMB_RULES_REPFORM SET HIDDEN = ".LMB_DBDEF_TRUE." WHERE GROUP_ID = $ID AND REPFORM_ID = $value AND TYP = $typ";
+				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs) {$commit = 1;}
+			}elseif(odbc_fetch_row($rs,1) AND !$sethidden[$value]){
+				$sqlquery = "UPDATE LMB_RULES_REPFORM SET HIDDEN = ".LMB_DBDEF_FALSE." WHERE GROUP_ID = $ID AND REPFORM_ID = $value AND TYP = $typ";
+				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs) {$commit = 1;}
+			}
+		}
+	}
+}
+
+if($change_rules){
+	group_list($ID,1,$addsubgroup,$ruletype);
+}
+
+if($group_level){
+	$sqlquery = "SELECT ID,REPFORM_ID,TYP,LMVIEW,HIDDEN FROM LMB_RULES_REPFORM WHERE GROUP_ID = $group_level AND TYP = $ruletype";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$bzm = 1;
+	while(odbc_fetch_row($rs, $bzm)) {
+		$id = odbc_result($rs, "REPFORM_ID");
+		$levelrule["hasview"][$id] = odbc_result($rs, "LMVIEW");
+	$bzm++;
+	}
+}
+
+$sqlquery = "SELECT ID,REPFORM_ID,TYP,LMVIEW,HIDDEN FROM LMB_RULES_REPFORM WHERE GROUP_ID = $ID AND TYP = $ruletype";
+$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$bzm = 1;
+while(odbc_fetch_row($rs, $bzm)) {
+	$id = odbc_result($rs, "REPFORM_ID");
+	$grouprule["hasview"][$id] = odbc_result($rs, "LMVIEW");
+	$grouprule["hashidden"][$id] = odbc_result($rs, "HIDDEN");
+$bzm++;
+}
+
+if($session["user_id"] != 1){
+	$sqlquery = "SELECT ID,REPFORM_ID,TYP,LMVIEW,HIDDEN FROM LMB_RULES_REPFORM WHERE GROUP_ID = ".$session["group_id"]." AND TYP = $ruletype";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$bzm = 1;
+	while(odbc_fetch_row($rs, $bzm)) {
+		$id = odbc_result($rs, "REPFORM_ID");
+		$myrule[$id] = odbc_result($rs, "LMVIEW");
+	$bzm++;
+	}
+}else{
+	$group_level = 0;
+}
+
+
+$rulelist_ = resullist_($ruletype,$myrule);
+
+?>

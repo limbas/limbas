@@ -1,0 +1,500 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID:
+ */
+
+
+
+
+/**
+ * Invalidate the snapshot in the session in order to be reloaded
+ *
+ */
+function SNAP_invalidate(){
+	global $db;
+	global $action;
+
+	$sqlquery = "UPDATE LMB_SESSION SET SNAP_CHANGED = ".LMB_DBDEF_TRUE;
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+
+
+# already done in gtab_array.lib (SNAP_loadInSession)
+
+/**
+ * validate snapshot fields against existing fields
+ *
+ * @return snapshot
+ */
+/*
+function SNAP_revalidate($snapshot,$gtabid,$snapid){
+	global $db;
+	global $gfield;
+	global $session;
+	global $gsnap;
+	
+	
+	if(!$owner = $gsnap[$gtabid]["owner"][$snapid] AND $session["user_group"] != 1){return false;}
+
+	$snap = unserialize($snapshot);
+
+	# filter order (delete not existing order field)
+	if($snap["order"]){
+		$order = explode("&",$snap["order"]);
+		if(!$gfield[$order[0]]["sort"][$order[1]]){
+			#unset($snap["hidecols"]);
+			$update = 1;
+		}
+	}
+
+	# filter sort (add new field if not exist)
+
+	if($snap["sort"]){
+		$maxval = max($snap["sort"]);
+		foreach ($gfield[$gtabid]["sort"] as $key => $value){
+			$maxval++;
+			if(!$snap["sort"][$key]){
+				$snap["sort"][$key] = $maxval;
+				$snap["hidecols"][$key] = 1;
+				$update = 1;
+			}
+		}
+
+	# other filter must come!!
+	
+	$snapshot = serialize($snap);
+
+	if($update){
+		$prepare_string = "UPDATE LMB_SNAP SET FILTER = ? WHERE ID = ".$snapid." AND USER_ID = " . $session["user_id"];
+		if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($snapshot)),__FILE__,__LINE__)){$commit = 1;}
+	}
+
+	return $snapshot;
+}
+*/
+
+/**
+ * validate snapshot fields against existing fields
+ *
+ * @return snapshot
+ */
+/*
+function SNAP_validate($gtabid,&$snapfilter){
+	global $db;
+	global $gfield;
+	global $session;
+	global $gsnap;
+
+	#$GLOBALS["gfield"][$gtabid]["sort"] = $snapfilter["sort"];
+	# filter order (delete not existing order field)
+	if($snapfilter["sort"]){
+		foreach ($snapfilter["sort"] as $key => $value){
+			if(!$gfield[$gtabid]["sort"][$key]){
+				unset($snapfilter["sort"][$key]);
+			}
+		}
+	}
+	
+	#lmbGetGtabWidth($gtabid,$snapfilter["hidecols"]);
+}
+*/
+
+
+/**
+ * Load the snapshot in session in order to accelarate
+ *
+ * @return unknown the gsnap array that contains the description of the snapshots
+ */
+function SNAP_loadInSession($snap_changed=null,$admin=null){
+
+	global $session;
+	global $db;
+	global $action;
+	global $gfield;
+
+	$sqlquery = "SELECT 
+					LMB_SNAP.ID,
+					LMB_SNAP.USER_ID,
+					LMB_SNAP.TABID,
+					LMB_SNAP.NAME,
+					LMB_SNAP.GLOBAL,
+					LMB_SNAP.FILTER,
+					LMB_SNAP.EXT,
+					LMB_SNAP_SHARED.ENTITY_TYPE,
+					LMB_SNAP_SHARED.ENTITY_ID,
+					LMB_SNAP_SHARED.EDIT,
+					LMB_SNAP_SHARED.DEL
+					";
+	
+	if($admin == 1){
+				$sqlquery .= "FROM LMB_SNAP, LMB_SNAP_SHARED
+				WHERE LMB_SNAP.ID = LMB_SNAP_SHARED.SNAPSHOT_ID ORDER BY LMB_SNAP.USER_ID,LMB_SNAP.NAME";
+	}elseif($admin == 2){
+				$sqlquery .= "FROM LMB_SNAP LEFT OUTER JOIN LMB_SNAP_SHARED ON(LMB_SNAP.ID = LMB_SNAP_SHARED.SNAPSHOT_ID)
+				ORDER BY LMB_SNAP.USER_ID,LMB_SNAP.NAME";
+	}else{
+				$sqlquery .= "FROM LMB_SNAP left outer join LMB_SNAP_SHARED ON LMB_SNAP.ID = LMB_SNAP_SHARED.SNAPSHOT_ID
+				WHERE LMB_SNAP.USER_ID = " . $session["user_id"] ."
+				OR (LMB_SNAP_SHARED.entity_type = 'U' AND LMB_SNAP_SHARED.entity_id = ".$session["user_id"].")
+				OR GLOBAL = ".LMB_DBDEF_TRUE;
+				foreach ($session["subgroup"] as $key => $groupid) {
+					$sqlquery = $sqlquery . " OR (LMB_SNAP_SHARED.entity_type = 'G' AND LMB_SNAP_SHARED.entity_id = ".$groupid.")";
+				}
+				$sqlquery .= "ORDER BY LMB_SNAP.NAME";
+	}
+
+	$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+	while(odbc_fetch_row($rs1)){
+		$resort = 0;
+		$snaptabid = odbc_result($rs1,"TABID");
+		$snapid = odbc_result($rs1,"ID");
+		$gsnap[$snaptabid]["filter"][$snapid] = unserialize(odbc_result($rs1,"FILTER"));
+		#SNAP_validate($snaptabid,$gsnap[$snaptabid]["filter"][$snapid]);
+		
+		$gsnap[$snaptabid]["id"][$snapid] = $snapid;
+		$gsnap[$snaptabid]["user_id"][$snapid] = odbc_result($rs1,"USER_ID");
+		$gsnap[$snaptabid]["name"][$snapid] = odbc_result($rs1,"NAME");
+		$gsnap[$snaptabid]["glob"][$snapid] = odbc_result($rs1,"GLOBAL");
+		$gsnap[$snaptabid]["del"][$snapid] = odbc_result($rs1,"DEL");
+		$gsnap[$snaptabid]["edit"][$snapid] = odbc_result($rs1,"EDIT");
+		
+		###### check for changes/permissions #######
+		
+		# drop fields
+		foreach ($gsnap[$snaptabid]["filter"][$snapid]['sort'] as $key => $value){
+			if(!$gfield[$snaptabid]['sort'][$key]){
+				unset($gsnap[$snaptabid]["filter"][$snapid]['sort'][$key]);
+				unset($gsnap[$snaptabid]["filter"][$snapid]['hidecols'][$key]);
+				unset($gsnap[$snaptabid]["filter"][$snapid]["gsr"][$key]);
+			}
+		}
+
+		# add fields
+		foreach ($gfield[$snaptabid]['sort'] as $key => $value){
+			if(!$gsnap[$snaptabid]["filter"][$snapid]['sort'][$key]){
+				$gsnap[$snaptabid]["filter"][$snapid]['hidecols'][$key] = 1;
+				$gsnap[$snaptabid]["filter"][$snapid]['sort'][$key] = $value;
+				$resort = 1;
+			}
+		}
+		
+		# resort if needed
+		if($resort){
+			asort($gsnap[$snaptabid]["filter"][$snapid]['sort']);
+		}
+
+
+		# Extension
+		#$e2xt = odbc_result($rs1,"EXT");
+		#if($ext){
+		#	eval($ext);
+		#	$gsnap[$snaptabid]["ext"][$snapid] = $extension;
+		#
+		$gsnap[$snaptabid]["ext"][$snapid] = odbc_result($rs1,"EXT");
+		#}
+		
+		#$gsnap["tab"][$snapid] = $snaptabid;
+		if(odbc_result($rs1,"USER_ID") == $session["user_id"]){
+			$gsnap[$snaptabid]["owner"][$snapid] = 1;
+		}
+		if(odbc_result($rs1,"ENTITY_TYPE")){
+			$gsnap[$snaptabid]["shared"][$snapid] = 1;
+		}
+	}
+
+	if($snap_changed){
+		$sqlquery = "UPDATE LMB_SESSION SET SNAP_CHANGED = ".LMB_DBDEF_FALSE." WHERE USER_ID = " . $session["user_id"];
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	}
+	
+	return $gsnap;
+}
+
+/**
+ * Share a snapshot with a user or group
+ *
+ * @param unknown_type $destUser the user whom the snapshot will shared to
+ * @param unknown_type $snapshotId the snapshot id
+ */
+function SNAP_share($destUser,$snapshotId,$del,$edit,$drop){
+	global $action;
+	global $db;
+	global $LINK;
+	global $session;
+
+	$uid = explode("_",$destUser);
+	if(!$uid[0] OR !$uid[1]){return false;}
+	
+	$sqlquery = "SELECT ID,ENTITY_ID,EDIT,DEL FROM LMB_SNAP_SHARED WHERE ENTITY_ID=".$uid[0]." AND ENTITY_TYPE='".strtoupper($uid[1])."' AND SNAPSHOT_ID=".$snapshotId;
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$entity_id = odbc_result($rs,"ENTITY_ID");
+	$can_del = odbc_result($rs,"DEL");
+	$can_edit = odbc_result($rs,"EDIT");
+	
+	$sqlquery = "SELECT TABID FROM LMB_SNAP WHERE ID=".$snapshotId;
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$snaptabid = odbc_result($rs,"TABID");
+	
+	if(!$LINK[225] AND !$gsnap[$snaptabid]["owner"][$snapshotId]){lmb_alert("you have no permission to share this snapshot!");return false;}
+	
+	if($drop AND $entity_id){
+		$sqlquery = "DELETE FROM LMB_SNAP_SHARED WHERE ENTITY_ID=".$uid[0]." AND ENTITY_TYPE='".strtoupper($uid[1])."' AND SNAPSHOT_ID=".$snapshotId;
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+	}elseif($edit AND $entity_id){
+		if($can_edit){$bool = LMB_DBDEF_FALSE;
+		}else{$bool = LMB_DBDEF_TRUE;}
+		$sqlquery = "UPDATE LMB_SNAP_SHARED SET EDIT = ".$bool." WHERE ENTITY_ID=".$uid[0]." AND ENTITY_TYPE='".strtoupper($uid[1])."' AND SNAPSHOT_ID=".$snapshotId;
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+	}elseif($del AND $entity_id){
+		if($can_del){$bool = LMB_DBDEF_FALSE;
+		}else{$bool = LMB_DBDEF_TRUE;}
+		$sqlquery = "UPDATE LMB_SNAP_SHARED SET DEL = ".$bool." WHERE ENTITY_ID=".$uid[0]." AND ENTITY_TYPE='".strtoupper($uid[1])."' AND SNAPSHOT_ID=".$snapshotId;
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+	}elseif(!$entity_id AND $session["user_id"] != $uid[0]){
+		lmb_StartTransaction();
+		$nextId = next_db_id("LMB_SNAP_SHARED");
+		$sqlquery = "INSERT INTO LMB_SNAP_SHARED(ID,ENTITY_TYPE,ENTITY_ID,SNAPSHOT_ID) VALUES ($nextId,'".strtoupper($uid[1])."',".$uid[0].",$snapshotId)";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		lmb_EndTransaction(!$commit);
+		$nextId = $nextId+1;
+	}
+
+	if(!$commit){SNAP_invalidate();return true;}else{return false;}
+}
+
+function SNAP_getParam($id)
+{
+	global $db;
+	global $action;
+
+	$result;
+
+	$sqlquery = "SELECT * FROM LMB_SNAP WHERE ID=$id";
+
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+
+	if(odbc_fetch_row($rs))
+	{
+		$result["name"] = odbc_result($rs,"NAME");
+		$result["id"] = odbc_result($rs,"ID");
+		$result["tabid"] = odbc_result($rs,"TABID");
+		$result["global"] = odbc_result($rs,"GLOBAL");
+		$result["filter"] = odbc_result($rs,"FILTER");
+		$result["owner"] = odbc_result($rs,"USER_ID");
+	}
+
+	return $result;
+}
+
+/**
+	 * delete a snapshot
+	 *
+	 * @param unknown_type $id if of the snapshot
+	 * @return unknown
+	 */
+function SNAP_delete($id,$gtabid)
+{
+	global $db;
+	global $session;
+	global $filter;
+	global $gsr;
+	global $gfield;
+	global $gsnap;
+	
+	if(!$gsnap[$gtabid]["owner"][$id] AND !$gsnap[$gtabid]["del"][$id]){return false;}
+
+	if($id>0)
+	{
+		$sqlquery = "DELETE FROM LMB_SNAP WHERE ID = ".$id;
+		$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs1) {$commit = 1;}
+		$sqlquery = "DELETE FROM LMB_SNAP_SHARED WHERE SNAPSHOT_ID = ".$id;
+		$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs1) {$commit = 1;}
+		unset($gsnap[$gtabid]["id"][$id]);
+		return true;
+	}
+	else
+	return false;
+}
+
+
+//from gtab_erg.dao
+# --------Schnapschuß eintragen ------------
+function SNAP_save($gtabid,$name,$id,$snapf = "null"){
+	global $db;
+	global $session;
+	global $filter;
+	global $gsr;
+	global $gfield;
+	global $gsnap;
+	global $LINK;
+	
+	$name = trim($name);
+	
+	if($id AND !$gsnap[$gtabid]["owner"][$id] AND !$gsnap[$gtabid]["edit"][$id]){return false;}
+	if($id == 0 AND !$LINK[188]){return false;}
+	
+	if($snapf == "null"){
+		$snapfilter["order"] = $filter["order"][$gtabid]; //[$gtabid]
+		$snapfilter["popups"] = $filter["popups"][$gtabid];
+		$snapfilter["unhide"] = $filter["unhide"][$gtabid];
+		$snapfilter["hidecols"] = $filter["hidecols"][$gtabid];
+		$snapfilter["form"] = $filter["form"][$gtabid];
+		$snapfilter["gsr"] = $gsr[$gtabid];
+		$snapfilter["sort"] = $gfield[$gtabid]["sort"]; # unknown
+		$snapf = serialize($snapfilter);
+	}
+	
+	// update the snapshot
+	if($id>0)
+	{
+		$prepare_string = "UPDATE LMB_SNAP SET FILTER = ? WHERE ID = ".$id;
+		if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($snapf)),__FILE__,__LINE__)){$commit = 1;}
+
+		# invalidate Session for other users
+		SNAP_invalidate();
+	}
+
+	// save a new snapshot for a user
+	elseif ($name){
+		#$_SESSION["gsnap"] = null;
+
+		$sqlquery = "SELECT ID FROM LMB_SNAP WHERE NAME = '".parse_db_string(str_replace(";",",",$name),30)."' AND TABID = $gtabid AND USER_ID = " .$session["user_id"];
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		if(odbc_fetch_row($rs,1)){
+			$prepare_string = "UPDATE LMB_SNAP SET FILTER = ? WHERE ID = ".odbc_result($rs,"ID");
+			if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($snapf)),__FILE__,__LINE__)){$commit = 1;}
+
+		}else{
+			lmb_StartTransaction();
+			$NEXTID = next_db_id("LMB_SNAP");
+			$sqlquery1 = "INSERT INTO LMB_SNAP (ID,USER_ID,TABID,NAME) VALUES ($NEXTID,".$session["user_id"] . ",$gtabid,'".parse_db_string(str_replace(";",",",$name),30)."')";
+			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			if(!$rs1) {$commit = 1;}
+			$prepare_string = "UPDATE LMB_SNAP SET FILTER = ? WHERE ID = ".$NEXTID;
+			if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob(parse_db_blob($snapf))),__FILE__,__LINE__)){$commit = 1;}
+			lmb_EndTransaction(!$commit);
+		}
+
+		# save snapshot in session
+		$gsnap[$gtabid]["id"][$NEXTID] = $NEXTID;
+		$gsnap[$gtabid]["user_id"][$NEXTID] = $session["user_id"];
+		$gsnap[$gtabid]["name"][$NEXTID] = $name;
+		$gsnap[$gtabid]["filter"][$NEXTID] = $snapf;
+		$gsnap[$gtabid]["glob"][$NEXTID] = 0;
+		$gsnap[$gtabid]["owner"][$NEXTID] = 1;
+		$gsnap[$gtabid]["shared"][$NEXTID] = 0;
+		# invalidate Session for other users
+		SNAP_invalidate();
+	}
+
+	// if no Id and no name then this is a new system snapshot
+	else
+	{
+		lmb_StartTransaction();
+		$NEXTID = next_db_id("LMB_SNAP");
+		$sqlquery1 = "INSERT INTO LMB_SNAP (ID,USER_ID,TABID,GLOBAL) VALUES ($NEXTID,0,$gtabid,true)";
+		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		if(!$rs1) {$commit = 1;}
+		$prepare_string = "UPDATE LMB_SNAP SET FILTER = ? WHERE ID = ".$NEXTID;
+		if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob(parse_db_blob($snapf))),__FILE__,__LINE__)){$commit = 1;}
+		lmb_EndTransaction(!$commit);
+	}
+
+	if(!$commit){
+		return $NEXTID;
+	}
+
+}
+
+
+# get_snapshot_filter
+function SNAP_get_filter($snap_id,$gtabid){
+
+	global $gsnap;
+	global $filter;
+	global $gsr;
+
+	//get filter from snapshot
+	$snapfilter = $gsnap[$gtabid]["filter"][$snap_id];
+	$GLOBALS["filter"]["snapisset"][$snap_id] = $snap_id;
+	$GLOBALS["filter"]["snapid"][$gtabid] = $snap_id;
+	$GLOBALS["filter"]["order"][$gtabid] = $snapfilter["order"];
+	$GLOBALS["filter"]["popups"][$gtabid] = $snapfilter["popups"];
+	$GLOBALS["filter"]["unhide"][$gtabid] = $snapfilter["unhide"];
+	$GLOBALS["filter"]["hidecols"][$gtabid] = $snapfilter["hidecols"];
+	$GLOBALS["filter"]["form"][$gtabid] = $snapfilter["form"];
+		if($gsnap[$gtabid]["ext"][$snap_id]){
+			eval($gsnap[$gtabid]["ext"][$snap_id]);
+			$GLOBALS["filter"]["extension"][$gtabid] = $extension;
+		}
+	
+	#$GLOBALS["filter"]["extension"][$gtabid] = $gsnap[$gtabid]["ext"][$snap_id];
+	if($snapfilter["sort"]){$GLOBALS["gfield"][$gtabid]["sort"] = $snapfilter["sort"];} # unknown 
+	if($snapfilter["gsr"]){$GLOBALS["gsr"][$gtabid] = $snapfilter["gsr"];}
+	//speichern der filter und gsr in session
+}
+
+# remember original table filter
+function SNAP_set_reminder($gtabid){
+
+	$filter["order"] = $GLOBALS["filter"]["order"][$gtabid];
+	$filter["popups"] = $GLOBALS["filter"]["popups"][$gtabid];
+	$filter["unhide"] = $GLOBALS["filter"]["unhide"][$gtabid];
+	$filter["hidecols"] = $GLOBALS["filter"]["hidecols"][$gtabid];
+	$filter["form"] = $GLOBALS["filter"]["form"][$gtabid];
+	$filter["sort"] = $GLOBALS["gfield"][$gtabid]["sort"]; # unknown 
+	$filter["gsr"] = $GLOBALS["gsr"][$gtabid];
+	
+	$GLOBALS["session"]["snapreminder"][$gtabid] = $filter;
+}
+
+# restore original table filter
+function SNAP_get_reminder($gtabid){
+
+	if($GLOBALS["session"]["snapreminder"][$gtabid]){
+		$GLOBALS["filter"]["order"][$gtabid] = $GLOBALS["session"]["snapreminder"][$gtabid]["order"];
+		$GLOBALS["filter"]["popups"][$gtabid] = $GLOBALS["session"]["snapreminder"][$gtabid]["popups"];
+		$GLOBALS["filter"]["unhide"][$gtabid] = $GLOBALS["session"]["snapreminder"][$gtabid]["unhide"];
+		$GLOBALS["filter"]["hidecols"][$gtabid] = $GLOBALS["session"]["snapreminder"][$gtabid]["hidecols"];
+		$GLOBALS["filter"]["form"][$gtabid] = $GLOBALS["session"]["snapreminder"][$gtabid]["form"];
+		$GLOBALS["gfield"][$gtabid]["sort"] = $GLOBALS["session"]["snapreminder"][$gtabid]["sort"]; # unknown 
+		$GLOBALS["gsr"][$gtabid] = $GLOBALS["session"]["snapreminder"][$gtabid]["gsr"];
+		$GLOBALS["filter"]["extension"][$gtabid] = null;
+	}
+	
+	$GLOBALS["session"]["snapreminder"][$gtabid] = null;
+}
+
+
+
+
+
+
+?>

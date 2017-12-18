@@ -1,0 +1,240 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 161
+ */
+
+# simple shortcut -> readable code
+function db_ex($sqlquery) {
+    global $db;
+    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    return $rs;
+}
+
+# check if admin_mode is on
+$supervisor = $umgvar["admin_mode"];
+
+# system language
+$rs = db_ex("SELECT ELEMENT_ID,WERT FROM LMB_LANG WHERE TYP = 2 AND LANGUAGE_ID = ".$session["language"]);
+$bzm = 1;
+while(odbc_fetch_row($rs, $bzm)) {
+	$systemlang[odbc_result($rs, "ELEMENT_ID")] = odbc_result($rs, "WERT");
+        $bzm++;
+}
+
+/* --- modify existing record  --------------------------------------------- */
+if($change){
+        $func = function($n) {return parse_db_int($n, 10);};
+        $change = array_map($func, array_filter(explode(";", $change))); # delete null values and parse db int
+        
+        # foreach id to change
+        foreach($change as $id) {
+            # check destination
+            if($id >= 1000 OR !$supervisor){
+                $typ = "_DEPEND";
+            }else{
+                $typ = "";
+            }
+            
+            # add copy to local table if not existent
+            if(!$supervisor) {
+                $id_exists_rs = db_ex("SELECT ID FROM LMB_FIELD_TYPES_DEPEND WHERE ID = $id");
+                if(!odbc_fetch_row($id_exists_rs, 1)) {
+                    db_ex("INSERT INTO LMB_FIELD_TYPES_DEPEND (SELECT * FROM LMB_FIELD_TYPES WHERE ID = $id)");
+                }
+            }
+            
+            # parse given data
+            if(${"field_type_".$id} AND is_numeric(${"field_type_".$id})){$field_type = ${"field_type_".$id};}else{$field_type = "0";}
+            if(${"parse_type_".$id} AND is_numeric(${"parse_type_".$id})){$parse_type = ${"parse_type_".$id};}else{$parse_type = "0";}
+            if(${"data_type_".$id} AND is_numeric(${"data_type_".$id})){$data_type = ${"data_type_".$id};}else{$data_type = "0";}
+            if(${"funcid_".$id} AND is_numeric(${"funcid_".$id})){$funcid = ${"funcid_".$id};}else{$funcid = "0";}
+            if(${"size_".$id} AND is_numeric(${"size_".$id})){$size = ${"size_".$id};}else{$size = "0";}
+            if(${"data_type_exp_".$id}){$data_type_exp = preg_replace("/ {2,}/"," ",str_replace("'","", ${"data_type_exp_".$id}));}else{$data_type_exp = "";}
+            if(${"datentyp_".$id}){$datentyp = preg_replace("/ {2,}/"," ",str_replace("'","", ${"datentyp_".$id}));}else{$datentyp = "0";}
+            if(${"rule_".$id}){$rule = preg_replace("/ {2,}/"," ",str_replace("'","", ${"rule_".$id}));}else{$rule = "";}
+            if(${"format_".$id}){$format = preg_replace("/ {2,}/"," ",str_replace("'","", ${"format_".$id}));}else{$format = "";}
+
+            # get lang ids
+            $lang_rs = db_ex("SELECT ID,DATA_TYPE_EXP,FORMAT FROM LMB_FIELD_TYPES$typ WHERE ID=$id");
+            $ft_data_type_exp = odbc_result($lang_rs, "DATA_TYPE_EXP");
+            $ft_format = odbc_result($lang_rs, "FORMAT");
+             
+            # update
+            $update_query = "UPDATE LMB_FIELD_TYPES$typ SET PARSE_TYPE = ".parse_db_int($parse_type,5).",FIELD_TYPE = ".parse_db_int($field_type,5).",DATA_TYPE = ".parse_db_int($data_type,5).",FUNCID = ".parse_db_int($funcid,5).",SIZE = ".parse_db_int($size,5).",DATENTYP = '".parse_db_string($datentyp,20)."',LMRULE = '".parse_db_string($rule,300)."'WHERE ID = $id";
+            db_ex($update_query);
+            
+            if(!$supervisor) {
+                # add copy of lang to language_local
+                $lang_exists = db_ex("SELECT ID,ELEMENT_ID FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = $ft_data_type_exp");
+                if(!odbc_fetch_row($lang_exists, 1)) {
+                    db_ex("INSERT INTO LMB_LANG_DEPEND (SELECT * FROM LMB_LANG WHERE ELEMENT_ID = $ft_data_type_exp)");
+                }
+                
+                $lang_exists = db_ex("SELECT ID,ELEMENT_ID FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = $ft_format");
+                if(!odbc_fetch_row($lang_exists, 1)) {
+                    db_ex("INSERT INTO LMB_LANG_DEPEND (SELECT * FROM LMB_LANG WHERE ELEMENT_ID = $ft_format)");
+                }                
+            }
+            
+            # language update
+            echo "changing from " . $data_type . " of " . $ft_data_type_exp;
+            lang_change(null, $ft_data_type_exp, $data_type_exp, $session["language"], $typ, 2);
+            lang_change(null, $ft_format, $format, $session["language"], $typ, 2);
+        }
+                
+}
+
+/* --- add new record  --------------------------------------------- */
+if($add){
+        # get next id and decide whether to add to local or system table
+        if(!$supervisor) {
+            $ID = max(next_db_id("LMB_FIELD_TYPES_DEPEND"), 1000); # beginning from 1000
+            $typ = "_DEPEND";
+        } else {
+            $ID = next_db_id("LMB_FIELD_TYPES");
+            $typ = "";
+        }
+
+        # add language entries
+	if(!$data_type_exp){ $data_type_exp = "-"; }
+	$data_type_exp = lang_add($session["language"], 2, 0, $data_type_exp, $typ);
+	if(!$format){$format = "-";}
+	$format = lang_add($session["language"], 2, 0, $format, $typ);
+
+        # add fieldtype values
+	$sqlquery = "INSERT INTO LMB_FIELD_TYPES$typ (ID,FIELD_TYPE,DATA_TYPE,FUNCID,DATA_TYPE_EXP,DATENTYP,SIZE,LMRULE,SORT,FORMAT,PARSE_TYPE) VALUES (
+            $ID,
+            ".parse_db_int($field_type,5).",
+            ".parse_db_int($data_type,5).",
+            '".parse_db_int($funcid,5)."',
+            '".parse_db_string($data_type_exp,50)."',
+            '".parse_db_string($datentyp,20)."',
+            ".parse_db_int($size,10).",
+            '".parse_db_string($rule,300)."',
+            $ID,
+            '".parse_db_string($format,50)."',
+            ".parse_db_int($parse_type,5).")";
+        db_ex($sqlquery);
+}
+
+/* --- delete record  --------------------------------------------- */
+if($del){
+        $del = parse_db_int($del, 10);
+                
+        # get language ids of system table
+        $lang_rs = db_ex("SELECT DATA_TYPE_EXP,FORMAT FROM LMB_FIELD_TYPES WHERE ID = $del");
+        if(odbc_fetch_row($lang_rs, 1)) {
+            $ft_data_type_exp = odbc_result($lang_rs,"DATA_TYPE_EXP");
+            $ft_format = odbc_result($lang_rs,"FORMAT");
+        } else {
+            # get language ids of local table
+            $lang_rs = db_ex("SELECT DATA_TYPE_EXP,FORMAT FROM LMB_FIELD_TYPES_DEPEND WHERE ID = $del");
+            if(odbc_fetch_row($lang_rs, 1)) {
+                $ft_data_type_exp = odbc_result($lang_rs,"DATA_TYPE_EXP");
+                $ft_format = odbc_result($lang_rs,"FORMAT");
+            } else {
+                $ft_data_type_exp = 0;
+                $ft_format = 0;
+            }
+        }      
+        
+        # check if local entry exists
+        $local_exists_rs = db_ex("SELECT ID FROM LMB_FIELD_TYPES_DEPEND WHERE ID = $del");
+        if(odbc_fetch_row($local_exists_rs, 1)) {
+            # delete language and fieldtype in local table
+            lang_delete($ft_data_type_exp, "_depend");
+            lang_delete($ft_format, "_depend");
+            db_ex("DELETE FROM LMB_FIELD_TYPES_DEPEND WHERE ID = $del"); 
+            
+            # save language in session        
+            $_SESSION['lang'][$ft_data_type_exp] = $systemlang[$ft_data_type_exp];
+            $_SESSION['lang'][$ft_format] = $systemlang[$ft_format]; 
+            
+            # save language for display
+            $lang[$ft_data_type_exp] = $systemlang[$ft_data_type_exp];
+            $lang[$ft_format] = $systemlang[$ft_format];
+        } else if($supervisor) {
+            # delete language and fieldtype in system table
+            lang_delete($ft_data_type_exp, "");
+            lang_delete($ft_format, "");
+            db_ex("DELETE FROM LMB_FIELD_TYPES WHERE ID = $del");         
+        }        
+        
+}
+
+/* --- list records --------------------------------------------- */
+$rs = db_ex("SELECT ID,PARSE_TYPE,FIELD_TYPE,DATA_TYPE,FUNCID,DATA_TYPE_EXP,DATENTYP,SIZE,LMRULE,FORMAT FROM LMB_FIELD_TYPES ORDER BY SORT");
+$bzm = 1;
+while(odbc_fetch_row($rs, $bzm)) {
+        $id = odbc_result($rs, "ID");
+	$result_ftype["id"][$id] = $id;
+	$result_ftype["parse_type"][$id] = odbc_result($rs, "PARSE_TYPE");
+	$result_ftype["field_type"][$id] = odbc_result($rs, "FIELD_TYPE");
+	$result_ftype["data_type"][$id] = odbc_result($rs, "DATA_TYPE");
+	$result_ftype["funcid"][$id] = odbc_result($rs, "FUNCID");
+	$result_ftype["data_type_exp"][$id] = $lang[odbc_result($rs, "DATA_TYPE_EXP")];
+	$result_ftype["data_type_exp_id"][$id] = odbc_result($rs, "DATA_TYPE_EXP");
+	$result_ftype["datentyp"][$id] = odbc_result($rs, "DATENTYP");
+	$result_ftype["size"][$id] = odbc_result($rs, "SIZE");
+	$result_ftype["rule"][$id] = trim(odbc_result($rs, "LMRULE"));  # longtext handle
+	$result_ftype["format"][$id] = $lang[odbc_result($rs, "FORMAT")];
+	$result_ftype["format_id"][$id] = odbc_result($rs, "FORMAT");
+        $bzm++;
+}
+
+
+/* --- list local records -----------------------------------------*/
+$rs = db_ex("SELECT ID,PARSE_TYPE,FIELD_TYPE,DATA_TYPE,FUNCID,DATA_TYPE_EXP,DATENTYP,SIZE,LMRULE,FORMAT FROM LMB_FIELD_TYPES_DEPEND ORDER BY SORT");
+$bzm = 1;
+while(odbc_fetch_row($rs, $bzm)) {
+        $id = odbc_result($rs, "ID");
+        # set local
+        if($result_ftype["id"][$id]) {
+                $result_ftype["local"][$id] = 1;
+                # preserve system values
+                foreach($result_ftype as $key => $value){
+                        $result_ftype["system_".$key][$id] = $result_ftype[$key][$id];
+                }
+                $result_ftype["system_data_type_exp"][$id] = $systemlang[$result_ftype["data_type_exp_id"][$id]];
+                $result_ftype["system_format"][$id] = $systemlang[$result_ftype["format_id"][$id]];
+        }else{
+		$result_ftype["local"][$id] = 2;
+	}
+             
+        # overwrite system values
+	$result_ftype["id"][$id] = $id;
+	$result_ftype["parse_type"][$id] = odbc_result($rs, "PARSE_TYPE");
+	$result_ftype["field_type"][$id] = odbc_result($rs, "FIELD_TYPE");
+	$result_ftype["data_type"][$id] = odbc_result($rs, "DATA_TYPE");
+	$result_ftype["funcid"][$id] = odbc_result($rs, "FUNCID");
+	$result_ftype["data_type_exp"][$id] = $lang[odbc_result($rs, "DATA_TYPE_EXP")];
+	$result_ftype["datentyp"][$id] = odbc_result($rs, "DATENTYP");
+	$result_ftype["size"][$id] = odbc_result($rs, "SIZE");
+	$result_ftype["rule"][$id] = trim(odbc_result($rs, "LMRULE"));  # longtext handle
+	$result_ftype["format"][$id] = $lang[odbc_result($rs, "FORMAT")];
+        $bzm++;
+}
+
+/* --- get max entries? -----------------------------------------*/
+$rs = db_ex("Select MAX(FIELD_TYPE)+1 AS MAXFTYPE, MAX(DATA_TYPE)+1 AS MAXDTYPE, MAX(FUNCID)+1 AS MAXFID FROM LMB_FIELD_TYPES WHERE FIELD_TYPE != 100");
+$result_ftype["maxftype"] = odbc_result($rs, "MAXFTYPE");
+$result_ftype["maxdtype"] = odbc_result($rs, "MAXDTYPE");
+$result_ftype["maxfid"] = odbc_result($rs, "MAXFID");
+
+?>
+

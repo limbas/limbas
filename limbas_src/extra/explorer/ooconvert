@@ -1,0 +1,64 @@
+#!/bin/sh
+
+DIR=$(pwd)
+DOC=$DIR/$1
+
+#soffice -invisible "macro:///Standard.Module1.ConvertAllToPDF($DOC)"
+
+PATH="/usr/local/bin:/usr/bin:/bin:/usr/bin/X11:/usr/X11R6/bin:/usr/games:/opt/kde3/bin:/usr/lib/jvm/jre/bin:/usr/lib/mit/bin:/usr/lib/mit/sbin"
+
+oowriter -invisible "macro:///Standard.LMB_Convert.ConvertAllToPDF(/usr/local/httpd/htdocs/projekte/limbas/dependent/USER/1/temp/convert.doc)"
+
+
+
+
+************************************************************************************
+Sub ConvertAllToPDF(strFile as string)
+   Dim oDoc as Object
+   Dim strFilterSubName as String
+   strUrl = ConvertToUrl( strFile )
+   oDoc = StarDesktop.loadComponentFromURL( strUrl, "_blank", 0, array(MakePropertyValue("Hidden",true)))
+   
+   If not IsNull(oDoc) Then
+      strFilterSubName = ""
+      ' select appropriate filter
+      If oDoc.SupportsService("com.sun.star.presentation.PresentationDocument") Then
+         strFilterSubName = "impress_pdf_Export"
+      ElseIf oDoc.SupportsService("com.sun.star.sheet.SpreadsheetDocument") Then
+         strFilterSubName = "calc_pdf_Export"
+      ElseIf oDoc.SupportsService("com.sun.star.text.WebDocument") Then
+         strFilterSubName = "writer_web_pdf_Export"
+      ElseIf oDoc.SupportsService("com.sun.star.text.GlobalDocument") Then
+         strFilterSubName = "writer_globaldocument_pdf_Export"
+      ElseIf oDoc.SupportsService("com.sun.star.text.TextDocument") Then
+         strFilterSubName = "writer_pdf_Export"
+      ElseIf oDoc.SupportsService("com.sun.star.drawing.DrawingDocument") Then
+         strFilterSubName = "draw_pdf_Export"
+      ElseIf oDoc.SupportsService("com.sun.star.formula.FormulaProperties") Then
+         strFilterSubName = "math_pdf_Export"
+      ElseIf oDoc.SupportsService("com.sun.star.chart.ChartDocument") Then
+         strFilterSubName = "chart_pdf_Export"
+      Else
+         '
+      EndIf
+   EndIf
+   
+   If Len(strFilterSubName) > 0 Then
+      oDoc.storeToUrl( ConvertToUrl( strFile & ".pdf" ), array(MakePropertyValue("FilterName", strFilterSubName ),MakePropertyValue("CompressMode", "1" )))
+   EndIf
+   
+   oDoc.close(True)
+   'Stardesktop.terminate()
+End Sub
+
+Function MakePropertyValue( Optional cName As String, Optional uValue ) As com.sun.star.beans.PropertyValue
+   oPropertyValue = createUnoStruct( "com.sun.star.beans.PropertyValue" )
+   If Not IsMissing( cName ) Then
+      oPropertyValue.Name = cName
+   EndIf
+   If Not IsMissing( uValue ) Then
+      oPropertyValue.Value = uValue
+   EndIf
+   MakePropertyValue() = oPropertyValue
+End Function 
+************************************************************************************

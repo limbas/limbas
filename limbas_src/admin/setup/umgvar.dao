@@ -1,0 +1,93 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 165
+ */
+
+/* --- umgvar ändern --------------------------------------------- */
+if($change AND $changecat){
+	
+	$ctval = explode(",",$changecat);
+	$ctval = array_unique($ctval);
+	
+	foreach ($ctval as $key => $umgvar_id){
+		if(is_numeric($umgvar_id)){
+			$sqlquery = "SELECT DISTINCT * FROM LMB_UMGVAR WHERE ID = $umgvar_id";
+   			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$umgvar_id = odbc_result($rs, "ID");
+			$name = odbc_result($rs, "FORM_NAME");
+			$val = odbc_result($rs, "NORM");
+			$norm = preg_replace("/ {2,}/"," ",${"umg_".$umgvar_id} );
+			$sql = "";
+			if($umgvar["admin_mode"]){$sql =",CATEGORY = ".parse_db_int($cat[$umgvar_id]);}
+			$sqlquery1 = "UPDATE LMB_UMGVAR SET NORM = '".parse_db_string($norm,100)."' $sql WHERE ID = $umgvar_id";
+			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+	        $_SESSION["umgvar"][$name] = $norm;
+	        if($name == "thumbsize"){
+	        	/* --- Thumpnails löschen --------------------------------------------- */
+	        	$rsc = "rm $umgvar[pfad]/TEMP/thumpnails/*";
+	        	system($rsc);
+	        }
+		}
+	}
+}
+
+/* --- umgvar hinzufügen --------------------------------------------- */
+if($add){
+	$name = preg_replace("/ {2,}/"," ",str_replace("'","", str_replace("\"","",$name )));
+	$norm = preg_replace("/ {2,}/"," ",str_replace("'","", $norm ));
+	$beschreibung = preg_replace("/ {2,}/"," ",str_replace("'","", str_replace("\"","",$beschreibung )));
+	
+	$sort = next_db_id("LMB_UMGVAR","SORT");
+	
+	if($category == ""){
+		$newcategory = preg_replace("/ {2,}/"," ",str_replace("'","", str_replace("\"","",$newcategory )));
+
+		include("language.lib");
+		global $session;
+		$category = lang_add($session['language'],3,'umgvar',$newcategory,'_DEPEND');		
+	}
+	
+	/* --- Next ID ---------------------------------------- */
+	$NEXTID = next_db_id("LMB_UMGVAR");
+    
+	$sqlquery = "INSERT INTO LMB_UMGVAR (ID,SORT,FORM_NAME,NORM,BESCHREIBUNG,CATEGORY) VALUES ($NEXTID,$sort,'".strtolower($name)."','$norm','$beschreibung',".parse_db_int($category).")";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+/* --- umgvar löschen --------------------------------------------- */
+if($del){
+	$sqlquery = "DELETE FROM LMB_UMGVAR WHERE ID = $id";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+/* --- Tabellen-Liste --------------------------------------------- */
+	$sqlquery = "Select DISTINCT * from LMB_UMGVAR ORDER BY CATEGORY,SORT";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$bzm = 1;
+	while(odbc_fetch_row($rs, $bzm)) {
+		$result_umgvar["id"][] = odbc_result($rs, "ID");
+		$result_umgvar["form_name"][] = odbc_result($rs, "FORM_NAME");
+		$result_umgvar["norm"][] = odbc_result($rs, "NORM");
+		$result_umgvar["beschreibung"][] = odbc_result($rs, "BESCHREIBUNG");
+		$result_umgvar["category"][] = odbc_result($rs, "CATEGORY");
+	$bzm++;
+	}
+	$result_category = array_unique($result_umgvar["category"]); //Fehlt: ImageMagick,ghostscript,System
+	//$result_category = array(0=>$lang[1893],1=>$lang[1894],2=>$lang[1895],3=>$lang[1896],4=>$lang[1898],12=>$lang[2700],5=>$lang[1899],6=>$lang[1900],11=>"System",7=>$lang[1995],8=>"ImageMagick",10=>"ghostscript");
+?>
+

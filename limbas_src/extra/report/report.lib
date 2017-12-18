@@ -1,0 +1,449 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID:
+ */
+
+#class pdf_report extends AlphaPDF / HTML2FPDF {
+class pdf_report extends HTML2FPDF {
+
+	var $widths;
+	var $rp;
+	var $report;
+	var $report_id;
+	var $ID;
+	var $notInsertLn;
+	var $files = array();
+	
+	
+	
+	
+	# -------------- concat pdf ---------------------
+
+	function concat_pdf($orientation='P',$unit='mm',$format='A4') {
+		fpdi($orientation,$unit,$format);
+	}
+
+	function setFiles($files) {
+		$this->files = $files;
+	}
+
+	function concat() {
+		foreach($this->files AS $file) {
+			$pagecount = $this->setSourceFile($file);
+			for ($i = 1; $i <= $pagecount; $i++) {
+				$tplidx = $this->ImportPage($i);
+				$this->AddPage();
+				$this->useTemplate($tplidx);
+			}
+		}
+	}
+	
+	
+
+	# -------------- Kreis/Ellipsenfunction ---------------------
+	function Circle($x,$y,$r,$style='')
+	{
+		$this->Ellipse($x,$y,$r,$r,$style);
+	}
+
+	function Ellipse($x,$y,$rx,$ry,$style='D')
+	{
+		if($style=='F')
+		$op='f';
+		elseif($style=='FD' or $style=='DF')
+		$op='B';
+		else
+		$op='S';
+		$lx=4/3*(M_SQRT2-1)*$rx;
+		$ly=4/3*(M_SQRT2-1)*$ry;
+		$k=$this->k;
+		$h=$this->h;
+		$this->_out(sprintf('%.2f %.2f m %.2f %.2f %.2f %.2f %.2f %.2f c',
+		($x+$rx)*$k,($h-$y)*$k,
+		($x+$rx)*$k,($h-($y-$ly))*$k,
+		($x+$lx)*$k,($h-($y-$ry))*$k,
+		$x*$k,($h-($y-$ry))*$k));
+		$this->_out(sprintf('%.2f %.2f %.2f %.2f %.2f %.2f c',
+		($x-$lx)*$k,($h-($y-$ry))*$k,
+		($x-$rx)*$k,($h-($y-$ly))*$k,
+		($x-$rx)*$k,($h-$y)*$k));
+		$this->_out(sprintf('%.2f %.2f %.2f %.2f %.2f %.2f c',
+		($x-$rx)*$k,($h-($y+$ly))*$k,
+		($x-$lx)*$k,($h-($y+$ry))*$k,
+		$x*$k,($h-($y+$ry))*$k));
+		$this->_out(sprintf('%.2f %.2f %.2f %.2f %.2f %.2f c %s',
+		($x+$lx)*$k,($h-($y+$ry))*$k,
+		($x+$rx)*$k,($h-($y+$ly))*$k,
+		($x+$rx)*$k,($h-$y)*$k,
+		$op));
+	}
+
+
+	# in work -- try to make upper text/signs
+	function subWrite($h, $txt, $link='',$subFontSize=5, $subOffset=0)
+	{
+	    // resize font
+	    $subFontSizeold = $this->FontSizePt;
+	    $this->SetFontSize($subFontSize);
+	    
+	    // reposition y
+	    $subOffset = ((($subFontSize - $subFontSizeold) / $this->k) * 0.3) + ($subOffset / $this->k);
+	    $subX        = $this->x;
+	    $subY        = $this->y;
+	    $this->SetXY($subX, $subY - $subOffset);
+	
+	    //Output text
+	    $this->Write($h, $txt, $link);
+	
+	    // restore y position
+	    $subX        = $this->x;
+	    $subY        = $this->y;
+	    $this->SetXY($subX,  $subY + $subOffset);
+	
+	    // restore font size
+	    $this->SetFontSize($subFontSizeold);
+	}
+
+	// rotate text / Author: Olivier, License: FPDF
+	function Rotate($angle,$x=-1,$y=-1)
+	{
+	    if($x==-1)
+	        $x=$this->x;
+	    if($y==-1)
+	        $y=$this->y;
+	    if($this->angle!=0)
+	        $this->_out('Q');
+	    $this->angle=$angle;
+	    if($angle!=0)
+	    {
+	        $angle*=M_PI/180;
+	        $c=cos($angle);
+	        $s=sin($angle);
+	        $cx=$x*$this->k;
+	        $cy=($this->h-$y)*$this->k;
+	        $this->_out(sprintf('q %.5F %.5F %.5F %.5F %.2F %.2F cm 1 0 0 1 %.2F %.2F cm',$c,$s,-$s,$c,$cx,$cy,-$cx,-$cy));
+	    }
+	}
+
+	# RGB Color ----------------------------
+	function make_color($val){
+		$col[0] = hexdec(substr($val, 0, 2));
+		$col[1] = hexdec(substr($val, 2, 2));
+		$col[2] = hexdec(substr($val, 4, 2));
+		return $col;
+	}
+
+	# TextScaling ----------------------------
+	function SetTextScaling($ts) {
+		$this->_out('BT '.$ts.' Tz ET');
+	}
+
+	# Font Style ----------------------------
+	function GetFontStyle($style) {
+		$font = substr($style[4],0,1).substr($style[1],0,1).substr($style[7],0,1);
+		$font = str_replace("N","",strtoupper($font));
+		# font ----------------------------
+		if($style[3]){
+			$this->SetFont($style[0],$font,$style[3]);
+		}
+
+		return $font;
+	}
+
+	# Font Align ----------------------------
+	function GetFontAlign($align) {
+		if($align){$align = strtoupper(substr($align,0,1));}else{$align = "J";}
+		return $align;
+	}
+
+	# Font Valign ----------------------------
+	function GetFontValign($valign) {
+		if($valign){$valign = strtoupper(substr($valign,0,1));}else{$valign = "T";}
+		return $valign;
+	}
+
+	# Border Type ----------------------------
+	function GetBorderType($style) {
+		if($style[14] AND $style[14] != "none" AND $style[16]){
+		if($style[17] != 'none'){$border .= 'L';}
+		if($style[18] != 'none'){$border .= 'R';}
+		if($style[19] != 'none'){$border .= 'T';}
+		if($style[20] != 'none'){$border .= 'B';}
+		if(!$border){$border = 1;}
+		}else{return false;}
+
+		return $border;
+	}
+
+	# Kopf Elemente
+	function Header()
+	{
+		list_elements_pdf($this,$this->ID,$this->rp["header"]);
+	}
+
+	# Fuß Elemente
+	function Footer()
+	{
+		list_elements_pdf($this,$this->ID,$this->rp["footer"]);
+	}
+	
+	# Hintergrund
+	function Background(){
+		$sy = $this->GetY();
+		$sx = $this->GetX();
+		list_elements_pdf($this,$this->ID,$this->rp["background"]);
+		# position ----------------------------
+		$this->SetY($sy);
+		$this->SetX($sx);
+	}
+
+	# printcell ----------------------------
+	function printcell($prv){
+		global $tablay;
+
+		$val = $prv[0];
+		$x = $prv[1];
+		$y = $prv[2];
+		$w = $prv[3];
+		$h = $prv[4];
+		$style = $prv[5];
+		$typ = $prv[6];
+
+		if($typ == 'tab'){
+			$tablay['style'] = $style;
+			$tablay['height'] = $h;
+		}
+
+		unset($par);
+
+		# Linien/Kreise ----------------------------
+		if($typ == 'line' OR $typ == 'ellipse'){
+			$style[15] = $style[9];
+			$style[16] = $style[3];
+		}
+
+		# Linie spiegeln ----------------------------
+		if($style[25] == 'true' AND $typ == 'line'){
+			$y = ($y+$h);
+			$h = ($y-$h+1);
+			$w = ($w+$x+1);
+		}elseif($style[25] != 'true' AND $typ == 'line'){
+			$w = ($w+$x-1);
+			$h = ($h+$y-1);
+		}
+
+		# padding
+		$this->cMargin = $style[22];
+
+		# opacity ----------------------------
+		if($style[24]){$this->SetAlpha($style[24]);}else{$this->SetAlpha(1);}
+		
+		# rotate ----------------------------
+		if($style[43]){$this->Rotate($style[43],$x,$y);}else{$this->Rotate(0);}
+
+		# font ----------------------------
+		$this->GetFontStyle($style);
+
+		# font-color ----------------------------
+		if($style[9]){
+			$par[c] = $this->make_color($style[9]);
+			$this->SetTextColor($par[c][0],$par[c][1],$par[c][2]);
+		}else{$this->SetTextColor(0,0,0);}
+
+
+		# textscaling not used ----------------------------
+		#if(is_numeric($style[?]) AND $style[?] > 0){
+		#	$this->_out('BT '.($style[?]*100).' Tz ET');
+		#}else{
+		#	$this->_out('BT 100 Tz ET');
+		#}
+
+		# charspacing - does not work exactly (incorrect calculate multicell) ----------------------------
+		if(is_numeric($style[6]) AND $style[6] > 0){
+			$this->_out(sprintf('BT '.$style[6].' Tc ET',$this->k));
+		}else{
+			$this->_out(sprintf('BT 0 Tc ET',$this->k));
+		}
+
+
+		# fill-color ----------------------------
+		if($style[21] AND $style[21] != 'transparent'){
+			$par[c] = $this->make_color($style[21]);
+			$this->SetFillColor($par[c][0],$par[c][1],$par[c][2]);
+			$par[f] = 1;
+			$par[rf] = 'F';
+		}else{
+			$par[f] = 0;
+			$par[rf] = '';
+			$this->FillColor = null;
+		}
+
+		# border-color ----------------------------
+		if($style[15]){
+			$par[c] = $this->make_color($style[15]);
+			$this->SetDrawColor($par[c][0],$par[c][1],$par[c][2]);
+		}
+
+		# border-width ----------------------------
+		if($style[16]){$this->SetLineWidth($style[16]);}
+
+		# border ----------------------------
+		$par[b] = $this->GetBorderType($style);
+
+		if(!$par[b]){
+			$par[b] = 0;
+			$par[rd] = '';
+		}else{$par[rd] = 'D';}
+
+		# font-transform ----------------------------
+		if($style[8] == 'uppercase'){$val = strtoupper($val);}
+		elseif($style[8] == 'lowercase'){$val = strtolower($val);}
+
+		# position ----------------------------
+		if($y){$this->SetY($y);}
+		if($x){$this->SetX($x);}
+
+		#if($x AND $y){$this->SetXY($x,$y);}
+
+		# height ----------------------------
+		if($style[11]){$par[h] = intval($style[11]);}else{$par[h] = $style[3] + 3;}
+
+		# align ----------------------------
+		if($style[12]){
+			$par[a] = $this->GetFontAlign($style[12]);
+		}
+
+		$out = array($x,$y,$w,$h,$par["h"],$val,$par[b],$par[a],$par[f],$typ,$style,$par[rf],$par[rd]);
+		return $out;
+
+	}
+
+	/*------- Style ---------*/
+	function set_style($textstyle){
+		global $styletyp;
+		
+		if(!$styletyp){$styletyp = explode(";", "font-family:;font-style:;font-variant:;font-size:;font-weight:;word-spacing:;letter-spacing:;text-decoration:;text-transform:;color:;text-shadow:;line-height:;text-align:;border:;border-left:;border-right:;border-top:;border-bottom:;border-color:;border-width:;background-color:;");}
+		
+		$bzm1 = 0;
+		while($styletyp[$bzm1]){
+			if(($textstyle[$bzm1] OR $textstyle[$bzm1] == '0') AND $textstyle[$bzm1] != " "){
+				$stylevalue .= $styletyp[$bzm1].$textstyle[$bzm1].";";
+			}
+			$bzm1++;
+		}
+		return $stylevalue;
+	}
+
+
+	# Print-Element ----------------------------
+	function print_element($par){
+		
+		$absposy = $this->GetY();
+
+		if($par[9] == 'bild'){
+			# Bildgröße in Rahmen einpassen
+			$cmd = "identify -format '%w,%h' ".$par[5]."[0]";
+			$picinf = explode(",",`$cmd`);
+			
+			# proportional
+			if($par[10][26]){
+				$par[2] = "";
+			# dynamic
+			}else{
+				if(trim($picinf[0]) > trim($picinf[1])){
+					$par[3] = "";
+				}else{
+					$par[2] = "";
+				}
+			}
+			# picture ----------------------------
+			$pityp = substr($par[5],(strlen($par[5])-3),3);
+			$this->Image($par[5],$par[0],$par[1],$par[2],$par[3],$pityp);
+			# Hintergrund-Rechteck ----------------------------
+			if(!$par[2] OR !$par[3]){
+				$imsize = getimagesize($par[5]);
+				$iw = $imsize[0];
+				$ih = $imsize[1];
+				if($par[2]){
+					$par[3] = ($par[2]*$ih)/$iw;
+				}elseif($par[3]){
+					$par[2] = ($par[3]*$iw)/$ih;
+				}else{
+					$par[2] = $iw;
+					$par[3] = $ih;
+				}
+				$par[2] = $par[2]+$par[10][22];
+				$par[3] = $par[3]+$par[10][22]+4;
+			}
+			if($par[6]){$this->Rect($par[0]-$par[10][19]/2,$par[1]-$par[10][19]/2,$par[2]+$par[10][19],$par[3]+$par[10][19]);}
+		}elseif($par[9] == 'dbdat'){
+			# multicell ----------------------------
+			$this->MultiCell($par[2],$par[4],$par[5],$par[6],$par[7],$par[8]);
+		}elseif($par[9] == 'html'){
+			# html ----------------------------
+			$this->report["par"][2] = $par[2];
+			$this->SetLeftMargin($this->GetX());
+			$this->SetRightMargin($this->report["page_style"][0]-$par[0]-$par[2]+($this->report["page_style"][4]+$this->report["page_style"][5]));
+			$this->WriteHTML($par);
+			$this->SetLeftMargin($this->report["page_style"][4]);
+			$this->SetRightMargin($this->report["page_style"][5]);
+			#$this->MultiCell($par[2],$par[4],$par[5],$par[6],$par[7],$par[8]);
+		}elseif($par[9] == 'rect'){
+			# Rechteck ----------------------------
+			if($par[10][36]){
+				$posy = $absposy;
+			}else{
+				$posy = $par[1]-$par[10][19]/2;
+			}
+			$this->Rect($par[0]-$par[10][19]/2,$posy,$par[2]+$par[10][19],$par[3]+$par[10][19],$par[11].$par[12]);
+		}elseif($par[9] == 'line'){
+			# Linie ----------------------------
+			$this->Line($par[0],$par[1],$par[2],$par[3]);
+		}elseif($par[9] == 'ellipse'){
+			# Ellipse ----------------------------
+			$this->Ellipse(($par[0]+($par[2]/2)),($par[1]+($par[3]/2)),($par[2]/2),($par[3]/2),$par[11].'D');
+		}else{
+			# Hintergrund-Rechteck ----------------------------
+			#if($par[6]){$this->Rect($par[0]-$par[10][19]/2,$par[1]-$par[10][19]/2,$par[2]+$par[10][19],$par[3]+$par[10][19],'FD');
+
+			# multicell ----------------------------
+			$this->MultiCell($par[2],$par[4],$par[5],$par[6],$par[7],$par[8]);
+		}
+	}
+
+
+	/*------- Add-Font ---------*/
+	function add_font($font){
+		global $sysfont;
+		error_log(print_r($sysfont,1));
+		if(!$sysfont){$sysfont = get_fonts();}
+
+		if($sysfont["family"][$font][0]){
+			# Font eintragen
+			foreach ($sysfont["family"][$font] as $key => $val){
+				if(!isset($this->fonts[$font.$sysfont["style"][$font][$key]])){
+					$this->AddFont($font,$sysfont["style"][$font][$key],$sysfont["name"][$font][$key].".php");
+				}
+			}
+		}
+	}
+
+}
+
+
+?>

@@ -1,0 +1,99 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 206
+ */
+
+
+
+
+function find_quest_type(){
+
+
+}
+
+
+
+
+
+
+function create_quest($quest,$tab_id){
+	global $db;
+
+	$sqlquery = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE TAB_ID = $tab_id";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$view_name = odbc_result($rs,"TABELLE");
+
+	$prepare_string = "UPDATE LMB_CONF_TABLES SET QUEST = ? WHERE TAB_ID = $tab_id";
+	if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($quest)),__FILE__,__LINE__)){$commit = 1;}
+
+	# search views
+	$sqlquery = dbq_12(array($DBA["DBSCHEMA"],$view_name));
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	
+	if(odbc_fetch_row($rs)){
+		# drop view
+		$sqlquery1 = dbq_20(array($view_name));
+		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		if(!$rs1) {$commit = 1;}
+	}
+	
+	# create view
+	$sqlquery = dbq_19(array($view_name,$quest));
+	$rs = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+
+	
+	
+	
+}
+
+function update_quest(){
+	
+	
+	
+}
+
+
+function delete_quest(){
+	
+	
+	
+}
+
+
+
+
+
+if($update_quest){
+	create_quest($quest_sqlvalue,$tabid);
+}
+
+
+
+
+$sqlquery = "SELECT QUEST FROM LMB_CONF_TABLES WHERE TAB_ID = $tabid";
+$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+if(!$rs) {$commit = 1;}
+$bzm = 1;
+if(odbc_fetch_row($rs,1)) {
+	$quest_sqlvalue = odbc_result($rs,"QUEST");
+}
+
+
+?>

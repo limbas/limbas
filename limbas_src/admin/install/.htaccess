@@ -1,0 +1,6 @@
+# .htaccess
+
+<Files ~ "(\.gif|\.jpg|\.png|\.js|\.css|\.htm|index.php)$">
+order deny,allow
+allow from all
+</Files>

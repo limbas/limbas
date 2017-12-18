@@ -1,0 +1,8 @@
+<files "*.*">
+deny from all
+</files>
+
+<Files ~ "(\.js|\.css)$">
+order deny,allow
+allow from all
+</Files>

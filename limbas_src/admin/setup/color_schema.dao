@@ -1,0 +1,93 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 159
+ */
+
+/* --- colors hinzufügen --------------------------------------------- */
+if($add){
+	$name = preg_replace("/ {2,}/"," ",str_replace("'","", str_replace("\"","",$name )));
+	$wert = preg_replace("/ {2,}/"," ",str_replace("'","", str_replace("\"","",$wert )));
+	$name = trim($name)." (".$layout.")";
+	
+    /* --- Next ID ---------------------------------------- */
+    $NEXTID = next_db_id("LMB_COLORSCHEMES");
+	$sqlquery = "INSERT INTO LMB_COLORSCHEMES (ID,NAME,WEB1,WEB2,WEB3,WEB4,WEB5,WEB6,WEB7,WEB8,WEB9,WEB10,WEB11,WEB12,WEB13,WEB14) VALUES ($NEXTID,'$name','$FARBE1','$FARBE2','$FARBE3','$FARBE4','$FARBE5','$FARBE6','$FARBE7','$FARBE8','$FARBE9','$FARBE10','$FARBE11','$FARBE12','$FARBE13','$FARBE14')";
+    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+/* --- colors löschen --------------------------------------------- */
+if($del AND $id){
+	$sqlquery = "DELETE FROM LMB_COLORSCHEMES WHERE ID = $id";
+    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+if($def){
+	$sqlquery = "UPDATE LMB_COLORSCHEMES SET NORM = ".LMB_DBDEF_FALSE;
+    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$sqlquery = "UPDATE LMB_COLORSCHEMES SET NORM = ".LMB_DBDEF_TRUE." WHERE ID = $def";
+    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+if($change){
+	$sqlquery = "SELECT ID FROM LMB_COLORSCHEMES";
+    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$bzm = 1;
+	while(odbc_fetch_row($rs, $bzm)) {
+		$id = odbc_result($rs, "ID");
+		unset($query);
+		for($i=1;$i<=14;$i++){
+			$query[] = "WEB$i = '".${"c_".$id."_".$i}."'";
+		}
+
+		if($query){
+			$sqlquery1 = "UPDATE LMB_COLORSCHEMES SET ".implode(",",$query)." WHERE ID = $id";
+	    	$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		}
+    	$bzm++;
+	}
+
+}
+
+/* --- Tabellen-Liste --------------------------------------------- */
+	$sqlquery = "SELECT DISTINCT * FROM LMB_COLORSCHEMES ORDER BY ID";
+    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$bzm = 1;
+	while(odbc_fetch_row($rs, $bzm)) {
+		$result_colors["NAME"][] = odbc_result($rs, "NAME");
+		$result_colors["WEB1"][] = odbc_result($rs, "WEB1");
+		$result_colors["WEB2"][] = odbc_result($rs, "WEB2");
+		$result_colors["WEB3"][] = odbc_result($rs, "WEB3");
+		$result_colors["WEB4"][] = odbc_result($rs, "WEB4");
+		$result_colors["WEB5"][] = odbc_result($rs, "WEB5");
+		$result_colors["WEB6"][] = odbc_result($rs, "WEB6");
+		$result_colors["WEB7"][] = odbc_result($rs, "WEB7");
+		$result_colors["WEB8"][] = odbc_result($rs, "WEB8");
+        $result_colors["WEB9"][] = odbc_result($rs, "WEB9");
+        $result_colors["WEB10"][] = odbc_result($rs, "WEB10");
+        $result_colors["WEB11"][] = odbc_result($rs, "WEB11");
+        $result_colors["WEB12"][] = odbc_result($rs, "WEB12");
+        $result_colors["WEB13"][] = odbc_result($rs, "WEB13");
+        $result_colors["WEB14"][] = odbc_result($rs, "WEB14");
+		$result_colors["NORM"][] = odbc_result($rs, "NORM");
+		$result_colors["id"][] = odbc_result($rs, "ID");
+	$bzm++;
+	}
+
+
+?>
+

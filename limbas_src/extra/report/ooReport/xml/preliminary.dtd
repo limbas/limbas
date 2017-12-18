@@ -1,0 +1,35 @@
+<!ELEMENT report (item)+>
+<!ATTLIST report
+   name   CDATA #IMPLIED
+   xmlns  CDATA #FIXED 'http://www.limbas.org/XML/2.0/report'
+>
+<!ELEMENT item (imgres|imgurl|text|table)+>
+<!ATTLIST item
+   id   CDATA #IMPLIED
+>
+
+<!ELEMENT imgurl EMPTY>
+<!ATTLIST imgurl
+   name   CDATA #REQUIRED
+   src    CDATA #REQUIRED
+>
+
+<!ELEMENT imgres EMPTY>
+<!ATTLIST imgres
+   name   CDATA #REQUIRED
+   src    CDATA #REQUIRED
+   width  CDATA #IMPLIED
+   height CDATA #IMPLIED
+>
+
+<!ELEMENT text (#PCDATA)>
+<!ATTLIST text
+   name   CDATA #REQUIRED
+>
+
+<!ELEMENT table (row)+>
+<!ATTLIST table
+   name   CDATA #REQUIRED
+>
+
+<!ELEMENT row (imgurl|imgres|text)+>

@@ -1,0 +1,159 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID:
+ */
+
+ini_set("display_errors","0");
+
+
+$cmd = "fc-list \":scalable=true\" family file foundry style";
+$flist = explode(chr(10),`$cmd`);
+
+foreach ($flist as $key => $value){
+	$fnt = explode(":",$value);
+	$fontex[family][] = trim($fnt[1]);
+	$fontex[file][] = $fnt[0];
+	$tmp = explode("=",$fnt[3]);
+	$fontex[foundry][] = $tmp[1];
+	$tmp = explode("=",$fnt[2]);
+	$tmp = explode(",",$tmp[1]);
+	$fontex[style][] = $tmp[0];
+	$fontex[type][] = substr($fnt[0],(strlen($fnt[0])-3),3);
+	$fontname = explode("/",$fnt[0]);
+	$fontname = $fontname[(count($fontname)-1)];
+	$fontex[filename][] = substr($fontname,0,(strlen($fontname)-4));
+	$fontex[filename_php][] = substr($fontname,0,(strlen($fontname)-4)).".php";
+	$fontname = "";
+}
+
+asort($fontex[family]);
+
+chdir($umgvar["pfad"]."/TEMP/fonts");
+$cmd = "rm ".$umgvar["pfad"]."/TEMP/fonts/*";
+exec($cmd);
+
+if($preview){
+	$text = substr($preview,0,60);
+}else{
+	$text = "hallo LIMBAS";
+}
+
+$size = 12;
+
+
+if($set_fonts){
+	require($umgvar["pfad"]."/extern/fpdf/font/makefont/makefont.php");
+
+	foreach ($fontex[family] as $key => $value){
+
+		$fontname = explode("/",$fontex[file][$key]);
+		$fontname1 = $fontname[(count($fontname)-1)];
+		$fontname2 = substr($fontname1,0,(strlen($fontname1)-4));
+
+		if($nfnt[$key]){
+			if(!file_exists($umgvar["pdfpfad"].$fontname2.".php")){
+				# -- generate postscript font ---
+				chdir($umgvar["pdfpfad"]);
+				$cmd = "ttf2pt1 -a ".$fontex["file"][$key]." ".$fontname2;
+				exec($cmd);
+
+				# -- generate fpdf font ---
+				MakeFont($fontex[file][$key],$umgvar["pdfpfad"].$fontname2.".afm",'cp1252');
+				# ttf kopieren
+				copy($fontex[file][$key],$umgvar["pdfpfad"].$fontname1);
+			}
+		}else{
+			if(file_exists($umgvar["pdfpfad"].$fontname2.".afm")){
+				unlink($umgvar["pdfpfad"].$fontname2.".afm");
+			}
+			if(file_exists($umgvar["pdfpfad"].$fontname2.".t1a")){
+				unlink($umgvar["pdfpfad"].$fontname2.".t1a");
+			}
+			if(file_exists($umgvar["pdfpfad"].$fontname2.".z")){
+				unlink($umgvar["pdfpfad"].$fontname2.".z");
+			}
+			if(file_exists($umgvar["pdfpfad"].$fontname2.".php")){
+				unlink($umgvar["pdfpfad"].$fontname2.".php");
+			}
+			if(file_exists($umgvar["pdfpfad"].$fontname2.".ttf")){
+				unlink($umgvar["pdfpfad"].$fontname2.".ttf");
+			}
+		}
+
+		if(file_exists($umgvar["pdfpfad"].$fontname2.".php")){
+			$fontex[name][$key] = $fontname2;
+		}
+	}
+
+	# --- DB Eintrag ---
+	$sqlquery = "DELETE FROM LMB_FONTS";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+
+	foreach ($fontex[family] as $key => $value){
+		if($fontex[name][$key]){
+			if($fontex[style][$key] == "Regular"){$fstyle = "";}
+			elseif(strtolower($fontex[style][$key]) == "italic" OR strtolower($fontex[style][$key]) == "recursiv" OR strtolower($fontex[style][$key]) == "oblique"){$fstyle = "I";}
+			elseif(strtolower($fontex[style][$key]) == "bold" OR strtolower($fontex[style][$key]) == "bold"){$fstyle = "B";}
+			elseif(strtolower($fontex[style][$key]) == "bold italic" OR strtolower($fontex[style][$key]) == "bold oblique"){$fstyle = "BI";}
+			else{
+				$name = "";
+				require_once($umgvar["pdfpfad"].$fontex[filename_php][$key]);
+				if($name){
+					if(strpos($name,"BoldItalic")){
+						$fstyle = "BI";
+					}elseif (strpos($name,"Bold")){
+						$fstyle = "B";
+					}elseif (strpos($name,"Italic")){
+						$fstyle = "I";
+					}else{
+						$fstyle = "";
+					}
+				}else{
+					echo "can not define font style of ".$fontex[name][$key].".. skip ... <br>";
+					continue;
+				}
+			}
+
+			$sqlquery0 = "SELECT ID FROM LMB_FONTS WHERE LOWER(NAME) = '".strtolower(parse_db_string($fontex[family][$key],30))."' AND STYLE = '".$fstyle."'";
+			$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+			if(odbc_fetch_row($rs0,1)){
+					echo "can not add font ".$fontex[name][$key].".. font already exists .. skip ... <br>";
+					continue;
+			}else{
+				$NEXTID = next_db_id("LMB_FONTS");
+				$sqlquery = "INSERT INTO LMB_FONTS (ID,FAMILY,NAME,STYLE) VALUES($NEXTID,'".parse_db_string($fontex[family][$key],30)."','".parse_db_string($fontex[name][$key],30)."','".$fstyle."')";
+				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs) {$commit = 1;}
+			}
+		}
+	}
+}
+
+
+
+$sqlquery = "SELECT NAME FROM LMB_FONTS";
+$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+if(!$rs) {$commit = 1;}
+$bzm = 1;
+while(odbc_fetch_row($rs,$bzm)){
+	$ifont[odbc_result($rs,"NAME")] = 1;
+	$bzm++;
+}
+
+?>

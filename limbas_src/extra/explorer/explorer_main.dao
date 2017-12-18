@@ -1,0 +1,429 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 97
+ */
+
+/*
+Typ 1 = public-files
+Typ 2 = messgages
+Typ 3 = tables
+Typ 4 = table relation
+*/
+
+# --- root Level ---
+if(!is_numeric($LID)){$LID = 0;}
+
+# ------- Ordnerschema auslesen -------
+#if(!$gfile){$gfile = resultfiles();}
+if(!$gfile){die("<BR><BR><center><b>no table permission for LDMS_FILES OR LDMS_META!</b></center>");}
+
+unset($onload);
+
+/*
+# ---- Tabellen Zusatz ---
+if($gtabid AND $ID){
+	$f_tabid = $gtabid;
+	$f_datid = $ID;
+
+	$ffilter["f_tabid"] = $gtabid;
+	$ffilter["f_datid"] = $ID;
+	$typ = 3;
+}else{
+	$ffilter["f_tabid"] = 0;
+	$ffilter["f_datid"] = 0;
+	$ffilter["f_fieldid"] = 0;
+
+	$f_tabid = 0;
+	$f_datid = 0;
+	$f_fieldid = 0;
+}
+*/
+
+
+# ----- zeige Felder ------
+get_userShow($LID,1,$ffilter);
+
+# --- Default Anzahl ----
+if(!$ffilter['anzahl'][$LID] AND $ffilter['anzahl']['def']){
+	$ffilter['anzahl'][$LID] = $ffilter['anzahl']['def'];
+}
+
+# ----------- Filterkriterien zurücksetzen ---------------
+if($reset){
+	$_ffilter['tabsize'] = $ffilter['tabsize'];
+	$_ffilter['rowsize'] = $ffilter['rowsize'];
+	$_ffilter['anzahl'] = $ffilter['anzahl'];
+	unset($ffilter);
+	$ffilter['tabsize'] = $_ffilter['tabsize'];
+	$ffilter['rowsize'] = $_ffilter['rowsize'];
+	$ffilter['anzahl'] = $_ffilter['anzahl'];
+	$gsr = null;
+}
+
+# ----- Spaltenbreite ---
+if($rowsize){
+	$rowsize = explode(";",$rowsize);
+	foreach ($rowsize as $key => $value){
+		$part = explode(",",$value);
+		if($part[0] == 't'){
+			$ffilter["tabsize"][$LID] = $part[1];
+		}else{
+			$ffilter["rowsize"][$LID][$part[0]] = $part[1];
+		}
+	}
+}
+
+# -------------------------------------- Filterkriterien -------------------------------------------
+if($ffilter_glob == "true"){
+	$ffilter["glob"] = 1;
+}elseif($ffilter_glob == "false"){
+	$ffilter["glob"] = 0;
+}
+# filter ID
+if($ffilter["glob"]){$fid = 0;}else{$fid = $LID;}
+
+# --- anzuzeigende Felder
+if($ffilter_fl_show){
+	$ffilter_fl_show = explode(";",$ffilter_fl_show);
+	foreach ($ffilter_fl_show as $key => $value){
+		$gfile['show'][$LID][$value] = 1;
+	}
+	$ffilter["tabsize"][$LID] = "";
+}
+if($ffilter_fl_hide){
+	$ffilter_fl_hide = explode(";",$ffilter_fl_hide);
+	foreach ($ffilter_fl_hide as $key => $value){
+		unset($gfile['show'][$LID][$value]);
+	}
+	$ffilter["tabsize"][$LID] = "";
+}
+
+if(!$ffilter["tabsize"][$LID]){$ffilter["tabsize"][$LID] = 600;}
+
+# --------------------------------------------
+
+if($ffilter_anzahl){
+	$ffilter["anzahl"][$fid] = $ffilter_anzahl;
+}
+if($ffilter_page){
+	$ffilter_page_ = explode("/",$ffilter_page);
+	$ffilter["page"][$LID] = $ffilter_page_[0];
+}
+if($ffilter_viewmode){
+	$ffilter["viewmode"][$fid] = $ffilter_viewmode;
+}
+if(!$ffilter["viewmode"][$fid]){$ffilter["viewmode"][$fid] = 1;}
+
+if($ffilter_order){
+	if($ffilter["order"][$fid][0] == $ffilter_order AND !$ffilter["order"][$fid][1]){
+		$ffilter["order"][$fid][1] = 'DESC';
+	}else{
+		$ffilter["order"][$fid][1] = null;
+	}
+	$ffilter["order"][$fid][0] = $ffilter_order;
+}
+if($ffilter_sub == "true"){
+	$ffilter["sub"] = 1;
+}elseif($ffilter_sub == "false"){
+	$ffilter["sub"] = null;
+}
+if($ffilter_onlymeta == "true"){
+	$ffilter["onlymeta"][$fid] = 1;
+}elseif($ffilter_onlymeta == "false"){
+	$ffilter["onlymeta"][$fid] = null;
+}
+if($ffilter_force_delete == "true"){
+	$ffilter["force_delete"] = 1;
+}elseif($ffilter_force_delete == "false"){
+	$ffilter["force_delete"] = null;
+}
+if($ffilter_dublicates){
+	if($ffilter["view_dublicates"]){
+		$ffilter["view_dublicates"] = null;
+	}else{
+		$ffilter["view_dublicates"] = 1;
+	}
+}
+
+# ------------- Suchmaschienen Indexsuche ------------------
+
+if(isset($ffilter_content)){
+	$ffilter["content"][$fid] = substr(str_replace("\"","",$ffilter_content),0,100);
+}
+# Bei Exploreransicht Inhaltssuche leeren
+if($ffilter["viewmode"][$fid] == 1){$ffilter["content"][$fid] = null;}
+
+if($ffilter_content_cs == "true"){
+	$ffilter["content_cs"][$fid] = 1;
+}elseif($ffilter_content_cs == "false"){
+	$ffilter["content_cs"][$fid] = null;
+}
+if($ffilter_content_ts == "true"){
+	$ffilter["content_ts"][$fid] = 1;
+}elseif($ffilter_content_ts == "false"){
+	$ffilter["content_ts"][$fid] = null;
+}
+if($ffilter_content_se == "true"){
+	$ffilter["content_se"][$fid] = 1;
+}elseif($ffilter_content_se == "false"){
+	$ffilter["content_se"][$fid] = null;
+}
+if($ffilter_content_mf == "true"){
+	$ffilter["content_mf"][$fid] = 1;
+}elseif($ffilter_content_mf == "false"){
+	$ffilter["content_mf"][$fid] = null;
+}
+if($ffilter_content_andor){
+	$ffilter["content_andor"][$fid] = $ffilter_content_andor;
+}else{
+	$ffilter["content_andor"][$fid] = 1;
+}
+
+
+# ---------------------------- Suchkriterien -------------------------
+
+# ---------------- Suchformular ----------------------
+if($supersearch AND $gs){
+	$gsr = $gs;
+}
+
+# ------------- Schnellsuche -------------------------------
+foreach ($gfile['id'] as $key => $val){
+	if($gfile['field_type'][$key] != 100){
+		if($fs[$key][$fid][0] != $ffilter[$key][$fid][0] AND !$supersearch AND $ffilter["prev_lid"] == $LID){
+			$ffilter[$key][$fid] = $fs[$key][$fid];
+			$gsr[$gfile["tabid"][$key]][$gfile["fid"][$key]] = $ffilter[$key][$fid];
+		}elseif($gs[$gfile["tabid"][$key]][$gfile["fid"][$key]][0]){
+			$ffilter[$key][$fid] = $gs[$gfile["tabid"][$key]][$gfile["fid"][$key]];
+		}
+		if($ffilter[$key][$fid] != $gsr[$gfile["tabid"][$key]][$gfile["fid"][$key]]){
+			$gsr[$gfile["tabid"][$key]][$gfile["fid"][$key]] = $ffilter[$key][$fid];
+		}
+	}
+}
+
+$ffilter["gsr"] = $gsr;
+# -------------------------------------------------------------------------
+
+
+# ---------------- Symbolleiste ----------------------
+if($view_symbolbar){
+	if($session["symbolbar"]){$session["symbolbar"] = 0;
+	}else{$session["symbolbar"] = 1;}
+}
+
+
+# ---------------- User-Einstellungen speichern ----------------------
+if($save_setting){
+	save_userShow($LID,$save_setting,$ffilter);
+}
+
+
+# get filestructure
+get_filestructure();
+$level = $filestruct["level"][$LID];
+if(!$typ){
+	if(!$typ = $filestruct["typ"][$LID]){$typ = 2;}
+}
+
+$file_url = " /".set_url($level,$LID);
+
+# ---------------------------------------- Aktionen -------------------------------------------
+
+# edit id : f = folder, d = file
+$edit_element = explode(";",$edit_id);
+
+# ---------------- Datei/Ordner umbenennen -----------------------
+if($rename_file AND $LINK[116]){
+	# file
+	if($edit_element[1] == "d"){
+		if(!rename_file($edit_element[0],$rename_file,$LID)){lmb_EndTransaction(0);}else{lmb_EndTransaction(1);}
+	# folder
+	}elseif($edit_element[1] == "f"){
+		if(!rename_dir($edit_element[0],$rename_file,$LID)){lmb_EndTransaction(0);}else{lmb_EndTransaction(1);get_filestructure();$onload = "parent.explorer_tree.document.form_menu.submit();\n";}
+	}
+}
+
+# ---------------- Ordner hinzufügen -----------------------
+if(($add_file AND $LINK[119]) AND ($LID OR ($LID == 0 AND $session["user_id"] == 1))){
+	if(add_file($LID,$add_file)){lmb_EndTransaction(1);$onload = "parent.explorer_tree.document.form_menu.submit();\n";}else{lmb_EndTransaction(0);}
+	get_filestructure();
+}
+
+# ---------- Sortieren ---------------------
+if($sortvalue AND $ID){
+	if(sort_file($ID,$sortvalue)){lmb_EndTransaction(1);}else{lmb_EndTransaction(0);}
+}
+
+# --- refresh thumbs ----
+if($refresh_file AND $LINK[200] AND $filestruct["edit"][$LID]){
+	refresh_thumbnails($LID);
+}
+
+
+# ---------- upload ---------------------
+if(is_numeric($LID) AND $LINK[128] AND $_FILES){
+	require_once('extra/explorer/explorer_upload.php');
+}
+
+# ---------------- copy move dublicates -----------------------
+if($dublicate["type"][0]){
+	$dublct = explode(";",$dublicate["type"][0]);
+	$dublcs = explode(";",$dublicate["subj"][0]);
+	$bzm = 0;
+	foreach ($dublct as $k => $v){
+		$dbl[$bzm]["type"] = $v;
+		$dbl[$bzm]["subj"] = $dublcs[$k];
+		$bzm++;
+	}
+	$dublicate = $dbl;
+}
+
+# ---------- verschieben ---------------------
+if($move_file AND $LINK[130]){
+	$move_files = explode(";",$move_file);
+	$bzm = 0;
+	foreach($move_files as $key => $value){
+		if($dublicate["type"][$bzm] == "skip"){$bzm++;continue;}
+		$move_typ = substr($value,0,1);
+		$move_fid = substr($value,1,20);
+		# file
+		if($move_typ == "d"){
+			lmb_StartTransaction();
+			if(!move_file($move_fid,$LID,$dublicate[$bzm])){lmb_EndTransaction(0);}else{lmb_EndTransaction(1);}
+		# folder
+		}elseif($move_typ == "f"){
+			lmb_StartTransaction();
+			if(!move_dir($move_fid,$LID,$dublicate[$bzm])){lmb_EndTransaction(0);}else{lmb_EndTransaction(1);get_filestructure();$onload = "parent.explorer_tree.document.form_menu.submit();\n";}
+		}
+		$bzm++;
+	}
+}
+
+# ---------- kopieren ---------------------
+if($copy_file AND $LINK[129]){
+	$copy_files = explode(";",$copy_file);
+	$bzm = 0;
+	foreach($copy_files as $key => $value){
+		if($dublicate[$bzm]["type"] == "skip"){$bzm++;continue;}
+		$copy_typ = substr($value,0,1);
+		$copy_fid = substr($value,1,20);
+		# file
+		if($copy_typ == "d"){
+			lmb_StartTransaction();
+			if(!copy_file($copy_fid,$LID,$dublicate[$bzm])){lmb_EndTransaction(0);}else{lmb_EndTransaction(1);}
+		# folder
+		}elseif($copy_typ == "f"){
+			lmb_StartTransaction();
+			if(!copy_dir($copy_fid,$LID,$dublicate[$bzm])){lmb_EndTransaction(0);}else{lmb_EndTransaction(1);get_filestructure();$onload = "parent.explorer_tree.document.form_menu.submit();\n";}
+		}
+		$bzm++;
+	}
+}
+
+/* --- Actionliste Dateien --------------------------------------------- */
+#$files = $files[$LID];
+$files = $activelist["d"][$LID];
+if($files){
+	if(in_array("1",$files)){
+		if($ffilter["force_delete"]){$forceDelnm = array("#all#");}else{$forceDelnm = null;}
+		foreach($files as $key => $value){
+			if($value){
+				lmb_StartTransaction();
+				if($value == 1){
+					# --- Datei löschen ----
+					if($del_file AND $LINK[171] AND $filestruct["del"][$LID]){
+						if(del_file($key,$forceDelnm)){lmb_EndTransaction(1);}else{lmb_EndTransaction(0);}
+					}
+					# --- Datei in Favoriten ----
+					elseif($favorite_file AND $LINK[247]){
+						if(favorite_file($key,$session["user_id"],1,0)){lmb_EndTransaction(1);}else{lmb_EndTransaction(0);}
+					}
+					# --- convert ----
+					elseif($convert_file AND $LINK[203]){
+						if(preview_archive(array($key),$convert_file,null,null,1)){lmb_EndTransaction(1);}else{lmb_EndTransaction(0);}
+					}
+					# --- ocr ----
+					elseif($ocr_file AND $LINK[262] AND $umgvar["ocr_enable"]){
+						require_once("extra/explorer/explorer_ocr.lib");
+						if(LmEntGenerate_ocr($key,$LID,$ocr_destination,$ocr_format)){lmb_EndTransaction(1);}
+						else{lmb_EndTransaction(0);lmb_alert("for details check ocr_error.log");}
+					}
+				}elseif($value == 2 AND $filestruct["edit"][$LID]){
+					# --- Datei sortieren ----
+					if($files_order){
+						if(sort_file($key,$files_order[$key])){lmb_EndTransaction(1);}else{lmb_EndTransaction(0);}
+					}elseif ($files_status){
+						# --- Datei Status ----
+						if(set_status($key,$files_status[$key])){lmb_EndTransaction(1);}else{lmb_EndTransaction(0);}
+					}
+				}
+			}
+		}
+	}
+}
+
+/* --- Actionliste Ordner --------------------------------------------- */
+$files = $activelist["f"][$LID];
+if($files){
+	if(in_array("1",$files)){
+		foreach($files as $key => $value){
+			if($value){
+				lmb_StartTransaction();
+				if($value == 1){
+					# --- Ordner löschen ----
+					if($del_file AND $LINK[171] AND $filestruct["del"][$key]){
+						if(delete_dir($key)){lmb_EndTransaction(1);}else{lmb_EndTransaction(0);}
+					}
+					# --- Datei in Favoriten ----
+					elseif($favorite_file AND $LINK[247]){
+						if(favorite_file($key,$session["user_id"],1,1)){lmb_EndTransaction(1);}else{lmb_EndTransaction(0);}
+					}
+					# --- ocr ----
+					elseif($ocr_file AND $LINK[262] AND $umgvar["ocr_enable"]){
+						require_once("extra/explorer/explorer_ocr.lib");
+						$flist = get_file_list($LEVEL,0);
+						foreach ($flist as $key0 => $value0){
+							if(LmEntGenerate_ocr($key0,$LID,$ocr_destination,$ocr_format)){lmb_EndTransaction(1);}else{lmb_EndTransaction(0);}
+						}
+					}
+				}
+			}
+		}
+		if($del_file){$onload = "parent.explorer_tree.document.form_menu.submit();\n";}
+	}
+}
+
+
+/* --- favorites reload--------------------------------------------- */
+if($favorite_file){
+	echo "<script language=\"JavaScript\">
+	top.multiframe.limbasMultiframePreview(top.multiframe.document.getElementsByName('multiframeType_Explorer')[0].value,'Explorer');
+	</SCRIPT>";
+}
+
+
+# --- Abfrage starten ---
+if($query = get_fwhere($LID,$ffilter,$typ)){
+	$ffile = get_ffile($query,$ffilter,$LID,$typ);
+}
+
+
+
+$ffilter["prev_lid"] = $LID;
+?>

@@ -1,0 +1,405 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 141
+ */
+
+
+/* --- Versionierung -------------------------------------- */
+function set_version($tabid,$tabname,$versioning){
+	global $db;
+	global $DBA;
+	
+	if($versioning == -1){$versioning = 0;}
+
+	$sqlquery =  "UPDATE LMB_CONF_TABLES SET VERSIONING = $versioning WHERE TAB_ID = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	
+	$odbc_column = dbf_5(array($DBA["DBSCHEMA"],$tabname,"VID"));
+	if($versioning AND !$odbc_column){
+		$sqlquery1 =  "ALTER TABLE $tabname ".LMB_DBFUNC_ADD_COLUMN_FIRST." VID ".LMB_DBTYPE_SMALLINT." DEFAULT 1, ".LMB_DBFUNC_ADD_COLUMN_NEXT." VPID ".LMB_DBTYPE_FIXED."(18), ".LMB_DBFUNC_ADD_COLUMN_NEXT." VACT ".LMB_DBTYPE_BOOLEAN." DEFAULT ".LMB_DBDEF_TRUE.", ".LMB_DBFUNC_ADD_COLUMN_NEXT." VDESC ".LMB_DBTYPE_VARCHAR."(399)";
+		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		if(!$rs1) {$commit = 1;}
+	}elseif(!$versioning){
+		$sqlquery1 =  "ALTER TABLE $tabname ".LMB_DBFUNC_DROP_COLUMN_FIRST." VID, ".LMB_DBFUNC_DROP_COLUMN_NEXT." VPID, ".LMB_DBFUNC_DROP_COLUMN_NEXT." VACT , ".LMB_DBFUNC_DROP_COLUMN_NEXT." VDESC";
+		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		if(!$rs1) {$commit = 1;}
+	}
+
+	if($versioning){
+		# $sqlquery1 =  "UPDATE $tabname SET VID = 1, VPID = ID, VACT = ".LMB_DBDEF_TRUE." WHERE VPID IS NULL";
+		$sqlquery1 =  "UPDATE $tabname SET VID = 1, VPID = ID, VACT = ".LMB_DBDEF_TRUE;
+		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		if(!$rs1) {$commit = 1;}
+	}
+
+	
+}
+
+
+
+
+# --- Transaktion START ------
+lmb_StartTransaction();
+
+
+
+/* ---------------------- Gruppen ------------------------ */
+/* ------------------------------------------------------------ */
+
+/* --- Gruppensortierung / Name ändern -------------------------------------- */
+if(is_numeric($group_change)){
+	
+	if($gup) {
+		lmb_sortConf('up',$sort_id,'LMB_CONF_GROUPS');
+	}elseif($gdown) {
+		lmb_sortConf('down',$sort_id,'LMB_CONF_GROUPS');
+	}else{
+		require_once("admin/setup/language.lib");
+
+		$sqlquery = "SELECT NAME,BESCHREIBUNG FROM LMB_CONF_GROUPS WHERE ID = $group_change";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		$name_id = odbc_result($rs,"NAME");
+		$desc_id = odbc_result($rs,"BESCHREIBUNG");
+
+		/* --- Sprachtabelle -------- */
+		$name = parse_db_string(${"group_name_".$group_change},40);
+		$desc = parse_db_string(${"group_desc_".$group_change},60);
+
+		lang_change(null,$name_id,$name,$session["language"],"_DEPEND");
+		lang_change(null,$desc_id,$desc,$session["language"],"_DEPEND");
+	}
+}
+
+# Untergruppe für Tabelle ändern
+if(is_numeric($subgroup_change)){
+	$sqlquery = "UPDATE LMB_CONF_GROUPS SET LEVEL = ".${"subgroup_".$subgroup_change}." WHERE ID = $subgroup_change";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
+# Untergruppe für Tabelle ändern
+if(is_numeric($icongroup_change)){
+	$sqlquery = "UPDATE LMB_CONF_GROUPS SET ICON = '".parse_db_string(${"icongroup_".$icongroup_change},250)."' WHERE ID = $icongroup_change";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
+
+
+
+/* --- Gruppe anlegen -------------------------------------- */
+if($group_name AND $group_add){
+	add_tabgroup($group_name,$group_desc);
+}
+
+/* --- Gruppe löschen -------------------------------------- */
+if($group_del){
+	$GLOBALS["filestruct"][admin] = 1;
+	if(!delete_tabgroup($group_del)){
+	 	$commit = 1;
+	}
+}
+
+/* --- Tabellen-Bezeichnung ändern -------------------------------------- */
+if($tabid AND $desc){
+
+	$sqlquery = "SELECT BESCHREIBUNG FROM LMB_CONF_TABLES WHERE TAB_ID = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$desc_id = odbc_result($rs,"BESCHREIBUNG");
+
+	lang_change(null,$desc_id,trim($desc),$session["language"],"_DEPEND");
+}
+
+
+/* --- Tabellen-Name ändern -------------------------------------- */
+if($tabid AND $tabname){
+	lmb_renameTable($tabid,trim($tabname));
+}
+
+
+/* ---------------------- Tabellen ------------------------ */
+/* ------------------------------------------------------------ */
+
+/* --- Tabellen Hauptgruppe ändern -------------------------------------- */
+$setmaingroup = trim($setmaingroup);
+if($tabid AND is_numeric(trim($setmaingroup)) AND $setmaingroup > 0){
+	$sqlquery = "UPDATE LMB_CONF_TABLES SET TAB_GROUP = ".$setmaingroup." WHERE TAB_ID = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$sqlquery = "UPDATE LMB_CONF_FIELDS SET TAB_GROUP = ".$setmaingroup." WHERE TAB_ID = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$sqlquery = "UPDATE LMB_RULES_TABLES SET TAB_GROUP = ".$setmaingroup." WHERE TAB_ID = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
+
+if($up AND $fieldid > 1) {
+	lmb_sortConf('up',$fieldid,'LMB_CONF_TABLES','SORT',"TAB_GROUP = $tab_group");
+}
+
+if($down) {
+	lmb_sortConf('down',$fieldid,'LMB_CONF_TABLES','SORT',"TAB_GROUP = $tab_group");
+}
+
+/* --- Lockable -------------------------------------- */
+if($lockable) {
+        if($lockable == 1){$lockable = LMB_DBDEF_TRUE;}else{$lockable = LMB_DBDEF_FALSE;}
+		$sqlquery =  "UPDATE LMB_CONF_TABLES SET LOCKABLE = $lockable WHERE TAB_ID = $tabid";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+}
+
+/* --- Lockable -------------------------------------- */
+if($ajaxpost) {
+        if($ajaxpost == 1){$ajaxpost = LMB_DBDEF_TRUE;}else{$ajaxpost = LMB_DBDEF_FALSE;}
+		$sqlquery =  "UPDATE LMB_CONF_TABLES SET AJAXPOST = $ajaxpost WHERE TAB_ID = $tabid";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+}
+
+/* --- Logging -------------------------------------- */
+if($logging) {
+        if($logging == 1){$logging = LMB_DBDEF_TRUE;}else{$logging = LMB_DBDEF_FALSE;}
+		$sqlquery =  "UPDATE LMB_CONF_TABLES SET LOGGING = $logging WHERE TAB_ID = $tabid";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+}
+
+/* --- reserveid -------------------------------------- */
+if($reserveid) {
+        if($reserveid == 1){$reserveid = LMB_DBDEF_TRUE;}else{$reserveid = LMB_DBDEF_FALSE;}
+		$sqlquery =  "UPDATE LMB_CONF_TABLES SET RESERVEID = $reserveid WHERE TAB_ID = $tabid";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+}
+
+/* --- Zeilenfarbe -------------------------------------- */
+if($linecolor) {
+        if($linecolor == 1){$linecolor = LMB_DBDEF_TRUE;}else{$linecolor = LMB_DBDEF_FALSE;}
+		$sqlquery =  "UPDATE LMB_CONF_TABLES SET LINECOLOR = $linecolor WHERE TAB_ID = $tabid";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+}
+
+/* --- User rechte -------------------------------------- */
+if($userrules) {
+	if($userrules == 1){$userrules = LMB_DBDEF_TRUE;}else{$userrules = LMB_DBDEF_FALSE;}
+	$sqlquery =  "UPDATE LMB_CONF_TABLES SET USERRULES = $userrules WHERE TAB_ID = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	if($userrules == "TRUE"){
+		add_erstuserRules($tabid);
+	}else{
+		del_erstuserRules($tabid,1);
+	}
+}
+
+/* --- Versionierung -------------------------------------- */
+if($versioning) {
+	$sqlquery =  "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES WHERE VERKN = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$bzm = 1;
+	while(odbc_fetch_row($rs, $bzm)) {
+		set_version(odbc_result($rs,"TAB_ID"),odbc_result($rs,"TABELLE"),trim($versioning));
+		$bzm++;
+	}
+}
+
+/* --- ErgenisAnzahl -------------------------------------- */
+if($numrowcalc) {
+	$numrowcalc = trim($numrowcalc);
+	if($numrowcalc == -1){$numrowcalc = 0;}
+	$sqlquery =  "UPDATE LMB_CONF_TABLES SET NUMROWCALC = ".parse_db_int($numrowcalc,1)." WHERE TAB_ID = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
+/* --- Gruppierung -------------------------------------- */
+if($groupable) {
+	if($groupable == 1){$groupable = 1;}else{$groupable = 0;}
+	$sqlquery =  "UPDATE LMB_CONF_TABLES SET GROUPABLE = $groupable WHERE TAB_ID = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
+/* --- Trigger -------------------------------------- */
+$trg = $GLOBALS['tab_trigger_'.$trigger];
+if($trigger OR is_array($trg)) {
+	if(!is_array($trg)){$trg = array();}
+	$sqlquery =  "UPDATE LMB_CONF_TABLES SET LMTRIGGER = '".parse_db_string(implode(",",$trg),20)."' WHERE TAB_ID = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
+/* --- marcolor -------------------------------------- */
+if($markcolor AND $tabid) {
+	if($markcolor == "transparent"){$markcolor = "";}
+	$sqlquery =  "UPDATE LMB_CONF_TABLES SET MARKCOLOR = '".parse_db_string($markcolor,7)."' WHERE TAB_ID = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
+/* --- indicator -------------------------------------- */
+if($indicator AND $tabid) {
+	$sqlquery =  "UPDATE LMB_CONF_TABLES SET INDICATOR = '".trim(parse_db_string($indicator,250))."' WHERE TAB_ID = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
+/* --- params1 -------------------------------------- */
+if($params1 AND $tabid) {
+	$sqlquery =  "UPDATE LMB_CONF_TABLES SET PARAMS1 = '".parse_db_int(trim($params1),5)."' WHERE TAB_ID = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
+/* --- params2 -------------------------------------- */
+if($params2 AND $tabid) {
+	if($param2){$param2 = serialize($param2);}
+	$sqlquery =  "UPDATE LMB_CONF_TABLES SET PARAMS2 = '".parse_db_blob(trim($param2))."' WHERE TAB_ID = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
+
+/* --- temprefresh -------------------------------------- */
+if($tablesync AND $tabid) {
+	require_once("admin/tools/multiselect_refresh.lib");
+	multiselectRefreshCount($tabid);
+    relationRefreshCount($tabid);
+}
+
+
+/* --- Tabelle kopieren -------------------------------------- */
+if($copy AND $add AND $gtable) {
+	$commit = lmb_copy_table($copy,$gtable,$tab_group,$beschreibung,$add_permission);
+	$new_gtabid = $new_gtabid[0];
+/* --- Tabelle hinzufügen -------------------------------------- */
+}elseif($add AND $gtable) {
+	if(!$new_gtabid = add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,'default',$viewtyp,$use_serial)){$commit =1;}
+	$new_gtabid = $new_gtabid[0];
+	#sort_tables($tab_group);
+}
+
+
+/* --- Tabelle löschen -------------------------------------- */
+if($del AND $gtable) {
+	$GLOBALS["filestruct"]["admin"] = 1;
+	if(!delete_tab($tabid,$drop_physical)){
+	 	$commit = 1;
+	}
+	#sort_tables($tab_group);
+}
+
+
+# --- Transaktion ENDE --------
+lmb_EndTransaction(!$commit);
+
+
+if(!$import){
+	/* --- Tabellengruppen --------------------------------------------- */
+	$sqlquery = "SELECT * FROM LMB_CONF_GROUPS ORDER BY SORT";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	unset($tabgroup_);
+	while(odbc_fetch_row($rs)) {
+		$tabgroupid = odbc_result($rs, "ID");
+		$tabgroup_["id"][$tabgroupid] = odbc_result($rs, "ID");
+		$tabgroup_["name"][$tabgroupid] = $lang[odbc_result($rs,"NAME")];
+		$tabgroup_["beschreibung"][$tabgroupid] = $lang[odbc_result($rs,"BESCHREIBUNG")];
+		$tabgroup_["sort"][$tabgroupid] = odbc_result($rs,"SORT");
+		$tabgroup_["level"][$tabgroupid] = odbc_result($rs,"LEVEL");
+		$tabgroup_["icon"][$tabgroupid] = odbc_result($rs,"ICON");
+		
+		$sqlquery2 = "SELECT COUNT(*) AS ANZAHL FROM LMB_CONF_TABLES WHERE TAB_GROUP = ".odbc_result($rs, "ID");
+		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		$tabgroup_["tabellen"][$tabgroupid] = odbc_result($rs2, "ANZAHL");
+
+		$sqlquery2 = "SELECT ID FROM LMB_CONF_TABLES WHERE (TABELLE = 'LDMS_FILES' OR TABELLE = 'LDMS_META') AND TAB_GROUP = ".odbc_result($rs, "ID");
+		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		if(odbc_fetch_row($rs2,1)){$tabgroup_["systemtab"][$tabgroupid] = 1;}else{$tabgroup_["systemtab"][$tabgroupid] = 0;}
+	}
+
+	/* --- Tabellen-Liste --------------------------------------------- */
+	foreach($tabgroup_["id"] as $bzm1 => $value){
+	        $sqlquery = "SELECT * FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_GROUP = ".$tabgroup_["id"][$bzm1]." ORDER BY LMB_CONF_TABLES.SORT ".LMB_DBFUNC_FOR_REUSE;
+	        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	        $bzm = 1;
+	        while(odbc_fetch_row($rs, $bzm)) {
+	        	$result_gtab[$tabgroup_["id"][$bzm1]]["ID"][$bzm] = odbc_result($rs, "ID");
+	        	$result_gtab[$tabgroup_["id"][$bzm1]]["id"][$bzm] = odbc_result($rs, "TAB_ID");
+	        	$result_gtab[$tabgroup_["id"][$bzm1]]["sort"][$bzm] = odbc_result($rs, "SORT");
+	        	$result_gtab[$tabgroup_["id"][$bzm1]]["tabelle"][$bzm] = odbc_result($rs, "TABELLE");
+	        	$result_gtab[$tabgroup_["id"][$bzm1]]["beschreibung"][$bzm] = $lang[odbc_result($rs, "BESCHREIBUNG")];
+	        	$result_gtab[$tabgroup_["id"][$bzm1]]["lockable"][$bzm] = odbc_result($rs, "LOCKABLE");
+	        	$result_gtab[$tabgroup_["id"][$bzm1]]["groupable"][$bzm] = odbc_result($rs, "GROUPABLE");
+	        	$result_gtab[$tabgroup_["id"][$bzm1]]["markcolor"][$bzm] = odbc_result($rs, "MARKCOLOR");
+	        	$result_gtab[$tabgroup_["id"][$bzm1]]["linecolor"][$bzm] = odbc_result($rs, "LINECOLOR");
+	        	$result_gtab[$tabgroup_["id"][$bzm1]]["userrules"][$bzm] = odbc_result($rs, "USERRULES");
+	        	$result_gtab[$tabgroup_["id"][$bzm1]]["logging"][$bzm] = odbc_result($rs, "LOGGING");
+	        	$result_gtab[$tabgroup_["id"][$bzm1]]["versioning"][$bzm] = odbc_result($rs, "VERSIONING");
+	        	$result_gtab[$tabgroup_["id"][$bzm1]]["typ"][$bzm] = odbc_result($rs, "TYP");
+	        	$result_gtab[$tabgroup_["id"][$bzm1]]["verknid"][$bzm] = odbc_result($rs, "VERKN");
+	        	$result_gtab[$tabgroup_["id"][$bzm1]]["trigger"][$bzm] = explode(",",odbc_result($rs, "LMTRIGGER"));
+				$result_gtab[$tabgroup_["id"][$bzm1]]["indicator"][$bzm] = odbc_result($rs, "INDICATOR");
+				$result_gtab[$tabgroup_["id"][$bzm1]]["ajaxpost"][$bzm] = odbc_result($rs, "AJAXPOST");
+				$result_gtab[$tabgroup_["id"][$bzm1]]["numrowcalc"][$bzm] = odbc_result($rs, "NUMROWCALC");
+				$result_gtab[$tabgroup_["id"][$bzm1]]["reserveid"][$bzm] = odbc_result($rs, "RESERVEID");
+				$result_gtab[$tabgroup_["id"][$bzm1]]["argresult"][odbc_result($rs, "TAB_ID")] = $bzm;
+				$result_gtab[$tabgroup_["id"][$bzm1]]["maingroup"][$bzm] = $tabgroup_["id"][$bzm1];
+				$result_gtab[$tabgroup_["id"][$bzm1]]["params1"][$bzm] = odbc_result($rs, "PARAMS1");
+				$result_gtab[$tabgroup_["id"][$bzm1]]["params2"][$bzm] = unserialize(odbc_result($rs, "PARAMS2"));
+				
+	        	if(odbc_result($rs, "VERKN")){
+	        		$sqlquery2 = "SELECT BESCHREIBUNG FROM LMB_CONF_TABLES WHERE TAB_ID = ".odbc_result($rs, "VERKN");
+	        		$rs1 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+	        		$result_gtab[$tabgroup_["id"][$bzm1]]["verkn"][$bzm] = $lang[odbc_result($rs1, "BESCHREIBUNG")];
+	        	}
+	        	
+	        	if(odbc_result($rs, "TYP") == 5){
+	        		$sqlquery2 = "SELECT VIEWTYPE FROM LMB_CONF_VIEWS WHERE ID = ".odbc_result($rs, "ID");
+	        		$rs1 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+	        		$result_gtab[$tabgroup_["id"][$bzm1]]["viewtype"][$bzm] = odbc_result($rs1, "VIEWTYPE");
+	        	}
+
+		        $sqlquery2 = "SELECT ID FROM LMB_CONF_FIELDS WHERE TAB_ID = ".odbc_result($rs, "TAB_ID")." AND VERKNTABID = ".odbc_result($rs, "TAB_ID");
+		        $rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		        if(odbc_result($rs2,"ID")) {
+		        	$result_gtab[$tabgroup_["id"][$bzm1]]["sverkn"][$bzm] = 1;
+		        }
+
+	        	$sqlquery2 = "SELECT COUNT(*) AS ANZAHL FROM LMB_CONF_FIELDS WHERE TAB_GROUP = ".$tabgroup_["id"][$bzm1]." AND TAB_ID = ".odbc_result($rs, "TAB_ID");
+	        	$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+	        	$result_gtab[$tabgroup_["id"][$bzm1]]["num_gtab"][$bzm] = odbc_result($rs2, "ANZAHL");
+	        	
+	        	
+	        	
+	        	$bzm++;
+	        }
+
+	$bzm1++;
+	}
+
+}
+
+?>

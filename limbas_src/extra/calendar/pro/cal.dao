@@ -1,0 +1,569 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 199
+ */
+
+
+define("LMCAf_SUBJECT",$gfield[$gtabid]["argresult_name"]["SUBJECT"]);
+define("LMCAf_STARTSTAMP",$gfield[$gtabid]["argresult_name"]["STARTSTAMP"]);
+define("LMCAf_ENDSTAMP",$gfield[$gtabid]["argresult_name"]["ENDSTAMP"]);
+
+# Zeitzone
+if(!is_numeric($subh)){$subh = 15;}
+# Ansicht 1:Tag 2:Woche 3:Monat
+if(!is_numeric($viewtype)){$viewtype = $umgvar["calendar_viewmode"];}
+# Tages Ansicht
+if($viewtype == 1){
+	$view_days = 1;
+	if($session[browser] == "ns"){$viewwidth = round(100*0.8);}else{$viewwidth = round(100*0.9);}
+	$tabwidth = "90%";
+# Wochen Ansicht
+}elseif($viewtype == 2){
+	$view_days = 5;
+	if($session[browser] == "ns"){$viewwidth = round(20*0.65);}else{$viewwidth = round(90);}
+	$tabwidth = "100%";
+# Monats Ansicht
+}elseif($viewtype == 3){
+	$view_days = 7;
+	$tabwidth = "100%";
+}
+
+
+#
+if(!$gtabid){
+	die();
+}
+
+
+# benutzes Formular
+if($gtab["tab_view_tform"][$gtabid]){
+	$fformid = $gtab["tab_view_tform"][$gtabid];
+}
+
+
+
+
+
+# Termin erstellen
+function create_termin($gtabid,$new_term,$verkn=null){
+	global $db;
+	global $gtab;
+
+	foreach ($new_term as $key => $value){
+		lmb_StartTransaction();
+		# --- anlegen ---
+		$time = explode("_",$key);
+		if(is_array($time) AND $ID = new_record($gtabid,$verkn["verknpf"],$verkn["fieldid"],$verkn["tabid"],$verkn["id"],0,0)){
+			# --- subject ---
+		    $tkey = "$gtabid,".LMCAf_SUBJECT.",$ID";
+	    	$change_kal[$tkey] = $value;
+			# --- startdate ---
+			$tkey = "$gtabid,".LMCAf_STARTSTAMP.",$ID";
+	    	$change_kal[$tkey] = stampToDate($time[0],0);
+			# --- enddate ---
+			$tkey = "$gtabid,".LMCAf_ENDSTAMP.",$ID";
+	    	$change_kal[$tkey] = stampToDate($time[1],0);
+			if(update_data($change_kal,3,0)){
+				lmb_EndTransaction(1);
+			}else{
+				lmb_EndTransaction(0);
+			}
+		}else{
+			lmb_EndTransaction(0);
+		}
+	}
+}
+
+# Termin löschen
+function delete_termin($delete_el,$gtabid,$verkn_tabid=null,$verkn_fieldid=null,$verkn_ID=null){
+	global $db;
+	global $gtab;
+
+	$delete_el = explode(";",$delete_el);
+	foreach ($delete_el as $key => $tid){
+		if(is_numeric($tid)){
+			
+			# if part of relation
+			if($verkn_tabid AND $verkn_fieldid AND $verkn_ID){
+				$verkn = set_verknpf($verkn_tabid,$verkn_fieldid,$verkn_ID,0,$tid,0,0);
+				set_joins($gtabid,$verkn);
+			}
+			
+			$sqlquery = "SELECT ID,STARTSTAMP,ENDSTAMP FROM ".$gtab["table"][$gtabid]." WHERE ID = ".$tid;
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			if(!$rs) {$commit = 1;}
+			if(odbc_result($rs, "ID")){
+				del_data($gtabid,odbc_result($rs,"ID"),'delete');
+			}
+		}
+	}
+}
+
+
+# Termin ändern
+function change_termin($change_el,$gtabid){
+	global $db;
+	global $gtab;
+
+	$change_el = explode(";",$change_el);
+	foreach ($change_el as $key => $tid){
+		if(is_numeric($tid)){
+			$sqlquery = "SELECT ID,STARTSTAMP,ENDSTAMP FROM ".$gtab[table][$gtabid]." WHERE ID = ".$tid;
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			if(!$rs) {$commit = 1;}
+			if(odbc_result($rs, "ID")){
+				$sqlquery1 = "UPDATE ".$gtab[table][$gtabid]." SET SUBJECT = '".parse_db_string($GLOBALS["lt_".$tid],$gfield[$gtabid]["size"][LMCAf_SUBJECT])."' WHERE ID = ".odbc_result($rs, "ID");
+				$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+				if(!$rs1) {$commit = 1;}
+			}
+		}
+	}
+}
+
+# Termin verschieben / vergrößern / verkleinern
+function movesize_termin($drag_el,$subh,$gtabid,$move){
+	global $db;
+	global $gtab;
+
+	$drag_el = explode(";",$drag_el);
+	foreach ($drag_el as $key => $termin){
+		$t = explode(",",$termin);
+		$tid = $t[0];
+		if(is_numeric($tid) AND is_numeric($t[1])){
+			if($t[1] != 0){
+				$sqlquery = "SELECT ID,STARTSTAMP,ENDSTAMP FROM ".$gtab[table][$gtabid]." WHERE ID = ".$tid;
+				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs) {$commit = 1;}
+				if(odbc_result($rs, "ID")){
+
+					if($move){$startstamp = get_stamp(odbc_result($rs, "STARTSTAMP"));}
+					$endstamp = get_stamp(odbc_result($rs, "ENDSTAMP"));
+					if($move){$newstart = mktime(date("H",$startstamp),date("i",$startstamp) + $t[1]*$subh,date("s",$startstamp),date("m",$startstamp),date("d",$startstamp),date("Y",$startstamp));}
+					$newsend = mktime(date("H",$endstamp),date("i",$endstamp) + $t[1]*$subh,date("s",$endstamp),date("m",$endstamp),date("d",$endstamp),date("Y",$endstamp));
+					if($move){$startquery = "STARTSTAMP = '".convert_stamp($newstart)."',";}
+
+					$sqlquery1 = "UPDATE ".$gtab[table][$gtabid]." SET $startquery ENDSTAMP = '".convert_stamp($newsend)."' WHERE ID = ".odbc_result($rs, "ID");
+					$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+					if(!$rs1) {$commit = 1;}
+				}
+			}
+		}
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+# ---------------------------- Termin Abfrage -------------------------------
+function get_termin($gtabid,$show_date,$viewtype,$verkn=null){
+	global $gtab;
+	global $gfield;
+	global $gsr;
+	global $LMCAf;
+	global $view_days;
+	
+	# Sortierung nach Datum
+	$filter["order"][$gtabid] = $gtabid."&2&ASC";
+	$GLOBALS['umgvar']["resultspace"] = 500;
+
+	# Suche nach Datum
+	if($show_date){
+		$show_date_part = explode("-",$show_date);
+		if(checkdate($show_date_part[1], $show_date_part[2], $show_date_part[0])){
+			$show_stamp = mktime(0,0,0,$show_date_part[1],$show_date_part[2],$show_date_part[0]);
+		}else{$show_stamp = local_stamp(1);}
+		# Zeige Heute
+	}else{
+		$show_stamp = local_stamp(1);
+	}
+
+	$filter["anzahl"][$gtabid] = "all";
+	
+	# Abfragekriterien
+	if($viewtype == 1){
+		$gsr[$gtabid][LMCAf_STARTSTAMP][0] = stampToDate($show_stamp,0);$gsr[$gtabid][LMCAf_STARTSTAMP]["num"][0] = 4;
+		$gsr[$gtabid][LMCAf_ENDSTAMP][0] = stampToDate($show_stamp,0);$gsr[$gtabid][LMCAf_ENDSTAMP][andor][0] = 1;$gsr[$gtabid][LMCAf_ENDSTAMP]["num"][0] = 5;
+	}elseif($viewtype == 2){
+		$gsr[$gtabid][LMCAf_STARTSTAMP][0] = stampToDate($show_stamp + (86400*$view_days-1),0);$gsr[$gtabid][LMCAf_STARTSTAMP]["num"][0] = 4;
+		$gsr[$gtabid][LMCAf_ENDSTAMP][0] = stampToDate($show_stamp,0);$gsr[$gtabid][LMCAf_ENDSTAMP][andor][0] = 1;$gsr[$gtabid][LMCAf_ENDSTAMP]["num"][0] = 5;
+	}elseif($viewtype == 3){
+		$gsr[$gtabid][LMCAf_STARTSTAMP][0] = stampToDate($show_stamp + 3369600,0);$gsr[$gtabid][LMCAf_STARTSTAMP]["num"][0] = 4;
+		$gsr[$gtabid][LMCAf_ENDSTAMP][0] = stampToDate($show_stamp,0);$gsr[$gtabid][LMCAf_ENDSTAMP][andor][0] = 1;$gsr[$gtabid][LMCAf_ENDSTAMP]["num"][0] = 5;
+	}
+
+	# Query ausführen
+	#$fieldlist[$gtabid] = array(1,2,3,4,5);
+	
+	
+	
+	$filter["order"][$gtabid] = "$gtabid&8&ASC";
+	$gresult = get_gresult($gtabid,1,$filter,$gsr,$verkn);
+	$gresult["show_stamp"] = $show_stamp;
+
+	return $gresult;
+}
+
+
+# Monat Liste lange Termine
+function list_month_ltermin(&$gresult,$dstamp){
+	global $view_days;
+	global $gtabid;
+	global $gfield;
+	global $LMCAf;
+
+	$show_stamp = $dstamp;
+
+	$bzm = 0;
+	while($bzm < $gresult[$gtabid]["res_viewcount"]) {
+		$st_st = get_stamp(substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],0,17)."00");
+		$en_st = get_stamp(substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,17)."00");
+		# größer 24h
+		if($en_st-$st_st >= 86400){
+
+			if(($st_st <= ($dstamp+(86400*$view_days)) AND $en_st >= $dstamp)){
+
+				$tresult["l"]["st_st"][] = $st_st;
+				$tresult["l"]["en_st"][] = $en_st;
+				$st_st_ = get_stamp(substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],0,10));
+				$en_st_ = get_stamp(substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,10));
+
+				# Terminanfang kleiner Anzeige
+				if($st_st_ < $show_stamp){
+					$st_per = $show_stamp;$tresult["l"]["is_begin"][] = '<--';
+				}else{
+					$st_per = $st_st_;$tresult["l"]["is_begin"][] = strftime("%R",$st_st);
+				}
+
+				# Terminende größer Anzeige
+				$en_per = ($show_stamp+($view_days*86400));
+				if($en_st_ >= $en_per){
+					$en_per = $en_per;$tresult["l"]["is_end"][] = '-->';
+				}else{
+					$en_per = $en_st_;$tresult["l"]["is_end"][] = strftime("%R",$en_st);
+				}
+
+				$per_st = ceil((($st_per-$show_stamp)/86400)); //Greg +1
+				$tresult["l"]["per_st"][] = $per_st;
+				$per_len = ceil((($en_per-$st_per)/86400)+1);
+				if(($per_st+$per_len-1) > $view_days){
+					$tresult["l"]["per_len"][] = ($per_len-1);
+				}else{
+					$tresult["l"]["per_len"][] = $per_len;
+				}
+				$tresult["l"]["bzm"][] = $bzm;
+				$tresult["l"]["id"][] = $gresult[$gtabid]["id"][$bzm];
+				$tresult["l"]["subject"][] = $gresult[$gtabid][LMCAf_SUBJECT][$bzm];
+			}
+		}
+		$bzm++;
+	}
+	
+	return $tresult;
+}
+
+# Monat Liste kurze Ternine
+function list_month_termin(&$gresult,$gtabid){
+	global $view_days;
+	global $gfield;
+	global $LMCAf;
+
+	$show_stamp = $gresult["show_stamp"];
+	$tresult["show_stamp"]	= $show_stamp;
+	$bzm = 0;
+	while($bzm < $gresult[$gtabid]["res_viewcount"]) {
+		$st_st = get_stamp(substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],0,17)."00");
+		$en_st = get_stamp(substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,17)."00");
+		# kleiner 24h
+		if($en_st-$st_st < 86400){
+			$doy = date("z",get_stamp($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm]));
+			$tresult["st_st"][$doy][] = get_stamp($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm]);
+			$tresult["en_st"][$doy][] = get_stamp($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm]);
+			$tresult["id"][$doy][] = $gresult[$gtabid]["id"][$bzm];
+			$tresult["subject"][$doy][] = trim($gresult[$gtabid][LMCAf_SUBJECT][$bzm]);
+			$tresult["marker"][$doy][] = average_color($gresult[$gtabid]["GCOLOR"][$gresult[$gtabid]["id"][$bzm]]);
+		}
+		$bzm++;
+	}
+	return $tresult;
+}
+
+
+function getFieldPermissions($fid,$gtabid,$i,&$gresult){
+	global $gfield;
+	global $session;
+	global $umgvar;
+
+	$noedit = 0;
+
+	foreach ($fid as $key => $value){
+		# ----------- Edit Permission -----------
+		if(!$gfield[$gtabid]["perm_edit"][$value]){$noedit = 1;break;}
+		# ----------- Editrule -----------
+		if($gfield[$gtabid]["editrule"][$value]){
+			$noedit = eval(trim($gfield[$gtabid]["editrule"][$value]).";");
+			if($noedit){break;}
+		}
+	}
+
+	return $noedit;
+}
+
+
+# search for argument icons
+function get_argument_icons(&$gresult,$gtabid,$ID){
+
+	global $gfield;
+	global $gtab;
+
+	foreach ($gfield[$gtabid]["sort"] as $key => $value){
+		# PHP Argument
+		if($gfield[$gtabid]["argument_typ"][$key] == 15){
+		require_once("gtab/gtab_type_erg.lib");
+			$res = cftyp_13($ID,$gresult,$key,$gtabid,0,0,0);
+			if ($res){$arg_result[] = "'".cftyp_13($ID,$gresult,$key,$gtabid,0,0,0)."'";}
+		}
+	}
+
+	if($arg_result){return $arg_result;}else{return false;}
+}
+
+
+# Tag / Woche Liste
+function list_dayweek_termin(&$gresult,$gtabid,$show_date,$viewtype,$subh,$view_days){
+	global $gfield;
+	global $LMCAf;
+	
+	$gid = 1;
+	$gc = 1;
+	$bzm = 0;
+	$gcount[$gid] = $gc;
+	$show_stamp = $gresult["show_stamp"];
+	$tresult["show_stamp"]	= $show_stamp;
+	
+	while($bzm < $gresult[$gtabid]["res_count"]) {
+
+		# Ampel-Hintergrundfarbe
+		if($gresult[$gtabid]["GCOLOR"][$gresult[$gtabid]["id"][$bzm]]){
+			$BGCOLOR = "#".average_color($gresult[$gtabid]["GCOLOR"][$gresult[$gtabid]["id"][$bzm]]);
+		}else{
+			$BGCOLOR = "blue";
+		}
+
+		# search for argument icons
+		$arg_result = get_argument_icons($gresult,$gtabid,$gresult[$gtabid]["id"][$bzm]);
+
+		# Termin über mehrere Tage
+		if(substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],8,2) != substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],8,2)){
+
+			# Tagesschleife
+			$st_st = get_stamp(substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],0,17)."00");
+			$en_st = get_stamp(substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,17)."00");
+			# größer 24h
+			if($en_st-$st_st >= 86400){
+				$tresult["l"]["st_st"][] = $st_st;
+				$tresult["l"]["en_st"][] = $en_st;
+				$st_st_ = get_stamp(substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],0,10));
+				$en_st_ = get_stamp(substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,10));
+
+				if($viewtype != 1 OR ($viewtype == 1 AND $st_st_ <= $show_stamp)){
+					# Terminanfang kleiner Anzeige
+					if($st_st_ < $show_stamp){$st_per = $show_stamp;$tresult["l"]["is_begin"][] = '<--';}else{$st_per = $st_st_;$tresult["l"]["is_begin"][] = strftime("%R",$st_st);}
+					# Terminende größer Anzeige
+					$en_per = ($show_stamp+($view_days*86400));
+					if($en_st_ >= $en_per){$en_per = $en_per;$tresult["l"]["is_end"][] = '-->';}else{$en_per = $en_st_;$tresult["l"]["is_end"][] = strftime("%R",$en_st);}
+
+					$per_st = ceil((($st_per-$show_stamp)/86400));
+					$tresult["l"]["per_st"][] = $per_st;
+					$per_len = ceil((($en_per-$st_per)/86400)+1);
+					if(($per_st+$per_len-1) > $view_days){$tresult["l"]["per_len"][] = ($per_len-1);}else{$tresult["l"]["per_len"][] = $per_len;}
+					$tresult["l"]["bzm"][] = $bzm;
+					$tresult["l"]["id"][] = $gresult[$gtabid]["id"][$bzm];
+					$tresult["l"]["subject"][] = $gresult[$gtabid][LMCAf_SUBJECT][$bzm];
+					$tresult["l"]["marker"][] = $BGCOLOR;
+					$tresult["l"]["subject_noedit"][] = getFieldPermissions(array(1),$gtabid,$bzm,$gresult);
+					$tresult["l"]["date_noedit"][] = getFieldPermissions(array(2,5),$gtabid,$bzm,$gresult);
+					if($arg_result){$tresult["symbols"][] = implode(",",$arg_result);}
+				}
+				# kleiner 24h
+			}else{
+				$tresult["bzm"][] = $bzm;
+				$tresult["id"][] = $gresult[$gtabid]["id"][$bzm];
+				$tresult["subject"][] = $gresult[$gtabid][LMCAf_SUBJECT][$bzm];
+				$tresult["st_st"][] = $st_st;
+				$tresult["en_st"][] = get_stamp(substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,11)."23:59:00");
+				$tresult["marker"][] = $BGCOLOR;
+				$tresult["subject_noedit"][] = getFieldPermissions(array(1),$gtabid,$bzm,$gresult);
+				$tresult["date_noedit"][] = getFieldPermissions(array(2,5),$gtabid,$bzm,$gresult);
+				$tresult["symbols"][] = "'<i class=\"lmb-icon lmb-user-alt\" title=\"täterätää\">','<i class=\"lmb-icon lmb-clock\" title=\"täterätää\">'";
+				if(substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],11,5) != "00:00"){
+					$tresult["bzm"][] = $bzm;
+					$tresult["id"][] = $gresult[$gtabid]["id"][$bzm];
+					$tresult["subject"][] = $gresult[$gtabid][LMCAf_SUBJECT][$bzm];
+					$tresult["marker"][] = $BGCOLOR;
+					$tresult["st_st"][] = get_stamp(substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,11)."00:00:00");
+					$tresult["en_st"][] = $en_st;
+					$tresult["subject_noedit"][] = getFieldPermissions(array(1),$gtabid,$bzm,$gresult);
+					$tresult["date_noedit"][] = getFieldPermissions(array(2,5),$gtabid,$bzm,$gresult);
+					if($arg_result){$tresult["symbols"][] = implode(",",$arg_result);}
+				}
+			}
+			# Termin in einem Tag
+		}else{
+			$tresult["bzm"][] = $bzm;
+			$tresult["id"][] = $gresult[$gtabid]["id"][$bzm];
+			$tresult["subject"][] = $gresult[$gtabid][LMCAf_SUBJECT][$bzm];
+			$tresult["marker"][] = $BGCOLOR;
+			$tresult["st_st"][] = get_stamp(substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],0,17)."00");
+			$last_st = get_stamp(substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,17)."00");
+			if($last_st == $show_stamp+86400){$last_st--;}
+			$tresult["en_st"][] = $last_st;
+			$tresult["subject_noedit"][] = getFieldPermissions(array(1),$gtabid,$bzm,$gresult);
+			$tresult["date_noedit"][] = getFieldPermissions(array(2,5),$gtabid,$bzm,$gresult);
+			if($arg_result){$tresult["symbols"][] = implode(",",$arg_result);}
+		}
+
+
+		$bzm++;
+	}
+
+	if($tresult["id"]){
+		asort($tresult["st_st"]);
+	}
+
+	return $tresult;
+}
+
+
+
+# ---------------------------- Termin Gruppieren -------------------------------
+function group_dayweek_termin($gtabid,$show_date,$viewtype,$subh,$view_days,$verkn=null){
+	global $gtab;
+
+	$gresult = get_termin($gtabid,$show_date,$viewtype,$verkn);
+	$tresult = list_dayweek_termin($gresult,$gtabid,$show_date,$viewtype,$subh,$view_days);
+
+	# Gruppen bilden
+	$gid = 1;
+	$gc = 1;
+	$tresult["count"][$gid] = $gc;
+	if($tresult["bzm"]){
+	foreach ($tresult["bzm"] as $key => $value){
+
+		# Zeitstempel an Zone anpassen
+		# Ende
+		$min_en = date("i",$tresult["en_st"][$key]);
+		if(($min_en/$subh) != round($min_en/$subh)){
+			# Fall A
+			if($min_en < $subh) {
+				$addm = ($subh - $min_en);
+			# Fall B
+			}else{
+				$addm = ($subh*round($min_en/$subh)) - $min_en;
+			}
+			$tresult["en_st"][$key] += ($addm*60);
+		}
+		# Start
+		$min_st = date("i",$tresult["st_st"][$key]);
+		if(($min_st/$subh) != round($min_st/$subh)){
+			# Fall A
+			if($min_st < $subh) {
+				$addm = -$min_st;
+				# Fall B
+			}else{
+				$addm = ($subh*round($min_st/$subh)) - $min_st - $subh;
+			}
+			$tresult["st_st"][$key] += ($addm*60);
+		}
+
+		if($tresult["st_st"][$key] >= $prev_st AND $tresult["st_st"][$key] < $prev_en){
+			$gid = $gid;
+			$gc++;
+			if($prev_en < $tresult["en_st"][$key]){$prev_en = $tresult["en_st"][$key];}
+		}else{
+			$gid++;
+			$prev_st = $tresult["st_st"][$key];
+			$prev_en = $tresult["en_st"][$key];
+			$gc = 1;
+		}
+
+		# prüfen ob Termin in Angezeigter Range
+		if($tresult["st_st"][$key] < $tresult["show_stamp"] OR $tresult["en_st"][$key] > ($tresult["show_stamp"]+($GLOBALS["view_days"]*86400))){
+			$tresult["bzm"][$key] = -1;
+		}
+
+		# Termin liegt am Tagesende
+		if((($tresult["en_st"][$key] - $tresult["show_stamp"]) / 86400) == round(($tresult["en_st"][$key] - $tresult["show_stamp"]) / 86400)){$tresult["en_st"][$key]--;}
+
+		$tresult["group"][$key] = $gid;
+		$tresult["count"][$gid] = $gc;
+
+	}
+	}
+	return $tresult;
+}
+
+
+/* --- Transaktion START --------------------------------------------- */
+lmb_StartTransaction();
+
+
+
+# Datensatz anlegen
+if($new_term AND $gtabid AND $LINK[1] AND $gtab["add"][$gtabid]){
+	# if part of relation
+	if($verkn_tabid AND $verkn_fieldid AND $verkn_ID){
+		$verkn = set_verknpf($verkn_tabid,$verkn_fieldid,$verkn_ID,0,0,1,1);
+	}
+	create_termin($gtabid,$new_term,$verkn);
+}
+# Termin verschieben
+if($drag_el){movesize_termin($drag_el,$subh,$gtabid,1);}
+# Termin vergößern/verkleinern
+if($resize_el){movesize_termin($resize_el,$subh,$gtabid,0);}
+# Termin ändern
+if($change_el){change_termin($change_el,$gtabid);}
+# Termin löschen
+if($delete_el){
+	delete_termin($delete_el,$gtabid,$verkn_tabid,$verkn_fieldid,$verkn_ID);
+}
+
+
+if($viewtype == 3){
+	$gresult = get_termin($gtabid,$show_date,$viewtype,$verkn);
+	$tresult = list_month_termin($gresult,$gtabid);
+}else{
+	$tresult = group_dayweek_termin($gtabid,$show_date,$viewtype,$subh,$view_days,$verkn);
+}
+
+
+# --- Transaktion ENDE --------
+if($commit == 1){
+	lmb_EndTransaction(0,$lang[115]);
+} else {
+	lmb_EndTransaction(1);
+}
+?>

@@ -1,0 +1,238 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID:
+ */
+
+function add_tabletree($new_tabletree,$new_treename,$new_treetable){
+	global $db;
+	global $session;
+	
+	$NEXT_TREEID = next_db_id("LMB_TABLETREE","TREEID");
+	$NEXT_ID = next_db_id("LMB_TABLETREE");
+	$sqlquery = "INSERT INTO LMB_TABLETREE (ID,TREEID,ERSTUSER,ERSTDATUM,TABID,POOLNAME) VALUES($NEXT_ID,$NEXT_TREEID,".$session["user_id"].",".LMB_DBDEF_TIMESTAMP.",".parse_db_int($new_treetable,5).",'".parse_db_string($new_treename,50)."')";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+function delete_tabletree($delid){
+	global $db;
+	$sqlquery = "DELETE FROM LMB_TABLETREE WHERE TREEID = ".parse_db_int($delid);
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+
+function get_tabletree(){
+	global $db;
+
+	$sqlquery = "SELECT * FROM LMB_TABLETREE WHERE RELATIONID IS NULL";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	while(odbc_fetch_row($rs)) {
+		$id = odbc_result($rs, "ID");
+		$tid = odbc_result($rs, "TABID");
+		$tabletree[$tid]["id"][$id] = $id;
+		$tabletree[$tid]["tabid"][$id] = $tid;
+		$tabletree[$tid]["treeid"][$id] = odbc_result($rs, "TREEID");
+		$tabletree[$tid]["poolname"][$id] = odbc_result($rs, "POOLNAME");
+		$tabletree[$tid]["erstdatum"][$id] = odbc_result($rs, "ERSTDATUM");
+		$tabletree[$tid]["erstuser"][$id] = odbc_result($rs, "ERSTUSER");
+		$tabletree[$tid]["target_formid"][$id] = odbc_result($rs, "TARGET_FORMID");
+		$tabletree[$tid]["target_snap"][$id] = odbc_result($rs, "TARGET_SNAP");
+		$tabletree[$tid]["display_field"][$id] = odbc_result($rs, "DISPLAY_FIELD");
+		$tabletree[$tid]["display_icon"][$id] = odbc_result($rs, "DISPLAY_ICON");
+		$tabletree[$tid]["display_title"][$id] = odbc_result($rs, "DISPLAY_TITLE");
+		$tabletree[$tid]["display_rule"][$id] = odbc_result($rs, "DISPLAY_RULE");
+	}
+	return $tabletree;
+}
+
+
+function show_tabletreeSettings($params){
+	global $gformlist;
+	global $gfield;
+	global $gsnap;
+	global $db;
+	global $lang;
+	
+	$treetab = $params['treetab'];
+	$itemtab = $params['itemtab'];
+	$treeid = $params['treeid'];
+	$relationid = $params['relationid'];
+	$changetyp = $params['changetyp'];
+	$changeval = lmb_utf8_decode($params['changeval']);
+	
+	if($changetyp){
+		
+		$sqlquery = "SELECT ID,RELATIONID FROM LMB_TABLETREE WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!odbc_result($rs,'RELATIONID')){
+			$NEXTID = next_db_id("LMB_TABLETREE");
+			$sqlquery1 = "INSERT INTO LMB_TABLETREE (ID,RELATIONID,TABID,TREEID,ITEMTAB) VALUES($NEXTID,'$relationid',$treetab,$treeid,$itemtab)";
+			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		}
+		
+	
+		if($changetyp == 'form'){
+			$sqlquery = "UPDATE LMB_TABLETREE SET TARGET_FORMID = ".parse_db_int($changeval)." WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		}
+		if($changetyp == 'field'){
+			$sqlquery = "UPDATE LMB_TABLETREE SET DISPLAY_FIELD = ".parse_db_int($changeval)." WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		}
+		if($changetyp == 'icon'){
+			$sqlquery = "UPDATE LMB_TABLETREE SET DISPLAY_ICON = '".parse_db_string($changeval,250)."' WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		}
+		if($changetyp == 'title'){
+			$sqlquery = "UPDATE LMB_TABLETREE SET DISPLAY_TITLE = ".parse_db_int($changeval)." WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		}
+		if($changetyp == 'snap'){
+			$sqlquery = "UPDATE LMB_TABLETREE SET TARGET_SNAP = ".parse_db_int($changeval)." WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		}
+		if($changetyp == 'display'){
+			$sqlquery = "UPDATE LMB_TABLETREE SET DISPLAY = ".parse_db_bool($changeval)." WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		}
+		if($changetyp == 'sort'){
+			$sqlquery = "UPDATE LMB_TABLETREE SET DISPLAY_SORT = ".parse_db_int($changeval)." WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		}
+		if($changetyp == 'rule'){
+			$sqlquery = "UPDATE LMB_TABLETREE SET DISPLAY_RULE = '".parse_db_string($changeval,250)."' WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		}
+		
+	}
+
+	$sqlquery = "SELECT * FROM LMB_TABLETREE WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(odbc_fetch_row($rs)){
+		$tform = odbc_result($rs,"TARGET_FORMID");
+		$tsnap = odbc_result($rs,"TARGET_SNAP");
+		$ttitle = odbc_result($rs,"DISPLAY_TITLE");
+		$ticon = odbc_result($rs,"DISPLAY_ICON");
+		$tfield = odbc_result($rs,"DISPLAY_FIELD");
+		$tdisplay = odbc_result($rs,"DISPLAY");
+		$tsort = odbc_result($rs,"DISPLAY_SORT");
+		$trule = odbc_result($rs,"DISPLAY_RULE");
+		if($tdisplay){$tdisplay = "checked";}
+	}
+
+	echo "
+	
+	<form action=\"main_dyns_admin.php\" method=\"post\" name=\"form2\">
+	<input type=\"hidden\" name=\"val\">
+	</form>
+	
+	<table border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"width:420px;\">
+	
+	<tr><td>
+	<table border=\"0\" cellspacing=\"0\" cellpadding=\"0\" width=\"100%\"><tr class=\"tabpoolItemTR\">
+	<td nowrap class=\"tabpoolItemActive\">Optionen</td>
+	<td class=\"tabpoolItemSpace\">&nbsp;</td>
+	</tr></table>
+	</td></tr>
+	
+	<tr><td valign=\"top\" class=\"tabpoolfringe\">
+
+	
+	<table>
+	
+	";
+
+	# Formular
+	echo "<tr><td>".$lang[2714]."</td><td>";
+	if($gformlist[$itemtab]["name"]){
+		echo "<select onchange=\"ajaxEditTree(null,$treeid,$itemtab,$itemtab,'$relationid','form',this.value)\"><option></option>";
+		foreach ($gformlist[$itemtab]["name"] as $key => $value){
+			if($tform == $key){$selected = "selected";}else{$selected = "";}
+			echo "<option value=\"$key\" $selected>".$value."</option>";
+		}
+		echo "</select>";
+	}else{
+		echo "defaultformular";
+	}
+	echo "</td></tr>";
+	
+	# Field
+	echo "<tr><td>".$lang[2715]."</td><td>";
+	if($gfield[$itemtab]["spelling"]){
+		echo "<select onchange=\"ajaxEditTree(null,$treeid,$itemtab,$itemtab,'$relationid','field',this.value)\"><option></option>";
+		foreach ($gfield[$itemtab]["spelling"] as $key => $value){
+			if($gfield[$itemtab]["field_type"][$key] >= 100){continue;}
+			if($tfield == $key){$selected = "selected";}else{$selected = "";}
+			echo "<option value=\"$key\" $selected>".$value."</option>";
+		}
+		echo "</select>";
+	}
+	echo "</td></tr>";
+	
+	# Title
+	echo "<tr><td>".$lang[2716]."</td><td>";
+	if($gfield[$itemtab]["spelling"]){
+		echo "<select onchange=\"ajaxEditTree(null,$treeid,$itemtab,$itemtab,'$relationid','title',this.value)\"><option></option>";
+		foreach ($gfield[$itemtab]["spelling"] as $key => $value){
+			if($gfield[$itemtab]["field_type"][$key] >= 100){continue;}
+			if($ttitle == $key){$selected = "selected";}else{$selected = "";}
+			echo "<option value=\"$key\" $selected>".$value."</option>";
+		}
+		echo "</select>";
+	}
+	echo "</td></tr>";
+	
+	# Order
+	echo "<tr><td>".$lang[2717]."</td><td>";
+	if($gfield[$itemtab]["spelling"]){
+		echo "<select onchange=\"ajaxEditTree(null,$treeid,$itemtab,$itemtab,'$relationid','sort',this.value)\"><option></option>";
+		foreach ($gfield[$itemtab]["spelling"] as $key => $value){
+			if($gfield[$itemtab]["field_type"][$key] >= 100){continue;}
+			if($tsort == $key){$selected = "selected";}else{$selected = "";}
+			echo "<option value=\"$key\" $selected>".$value."</option>";
+		}
+		echo "</select>";
+	}
+	echo "</td></tr>";
+
+	# Snap
+	/*
+	echo "<tr><td>Schnapschuß</td><td>";
+	if($gsnap[$itemtab]["name"]){
+		echo "<select onchange=\"ajaxEditTree(null,$treeid,$itemtab,$itemtab,'$relationid','snap',this.value)\"><option></option>";
+		foreach ($gsnap[$itemtab]["name"] as $key => $value){
+			if($tsnap == $key){$selected = "selected";}else{$selected = "";}
+			echo "<option value=\"$key\" $selected>".$value."</option>";
+		}
+		echo "</select>";
+	}
+	echo "</td></tr>";
+	*/
+	
+	
+	echo "<tr><td>".$lang[2718]."</td><td><input type=\"text\" STYLE=\"width:100%\" value=\"".htmlentities($ticon,ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" onchange=\"ajaxEditTree(null,$treeid,$treetab,$itemtab,'$relationid','icon',encodeURIComponent(this.value))\"></td></tr>";
+	
+	echo "<tr><td>".$lang[2719]."</td><td><textarea style=\"width: 100%; height: 18px; overflow: visible;\" onblur=\"this.style.height='18px';\" onfocus=\"this.style.height='60px';\" onchange=\"ajaxEditTree(null,$treeid,$treetab,$itemtab,'$relationid','rule',encodeURIComponent(this.value))\">".htmlentities($trule,ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</textarea></td></tr>";
+	
+	echo "<tr><td>".$lang[2720]."</td><td><input type=\"checkbox\" onchange=\"ajaxEditTree(null,$treeid,$treetab,$itemtab,'$relationid','display',this.checked)\" $tdisplay></td></tr>";
+
+	echo "</table>";
+
+}
+	
+?>

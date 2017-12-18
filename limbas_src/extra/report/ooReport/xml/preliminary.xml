@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE preliminary SYSTEM "preliminary.dtd">
+<report xmlns="http://www.limbas.org/XML/2.0/report"
+ name="Berichtname">
+<item id="123">
+	<imgurl name="logo" src="http://limbas.com/de/proxy.php?url=bWFpbi5waHA/YWN0aW9uPWRvd25sb2FkJklEPTMwMg%3D%3D" />
+	<imgurl name="teaser" src="http://limbas.com/de/proxy.php?url=bWFpbi5waHA%2FYWN0aW9uPWRvd25sb2FkJklEPTI5OA%3D%3D" />
+
+	<imgres name="mandarine" src="http://limbas.com/de/proxy.php?url=bWFpbi5waHA%2FYWN0aW9uPWRvd25sb2FkJklEPTY5OA%3D%3D" />
+	<imgres name="Try-it-Again-Sam" src="http://dgfire.de/Try-it-Again-Sam.jpg" />
+
+	<text name="überschrift">1LIMBAS -
+Ihr Spezialist für Unternehmenslösungen
+und Fachverfahren auf Basis freier Software!</text>
+	<text name="rechnung_summe">76543,21</text>
+
+	<text name="vorname">Hans</text>
+	<text name="nachname">Wurst</text>
+	<text name="strasse">Testweg</text>
+	<text name="hausnr">7</text>
+	<text name="plz">76543</text>
+	<text name="ort">Demodorf</text>
+
+	<table name="position">
+		<row>
+			<text name="anzahl">1</text>
+			<text name="artnr">1234567890121</text>
+			<imgurl name="bildurl" src="http://limbas.com/de/pics/limbas_solutions.png" />
+			<text name="bezeichnung">Testbild1a</text>
+			<text name="preis">12,80</text>
+		</row>
+		<row>
+			<text name="anzahl">12</text>
+			<text name="artnr">1234567890122</text>
+			<imgurl name="bildurl" src="http://limbas.com/de/proxy.php?url=bWFpbi5waHA%2FYWN0aW9uPWRvd25sb2FkJklEPTI5OA%3D%3D" />
+			<text name="bezeichnung">Testbild2a</text>
+			<text name="preis">120,80</text>
+		</row>
+		<row>
+			<text name="anzahl">123</text>
+			<text name="artnr">1234567890123</text>
+			<imgurl name="bildurl" src="http://limbas.com/de/pics/limbas_solutions.png" />
+			<text name="bezeichnung">Testbild3a</text>
+			<text name="preis">1280,80</text>
+		</row>
+	</table>
+	<table name="bilderliste">
+		<row>
+			<text name="artnr">1234567890120</text>
+			<imgurl name="bildurl" src="http://limbas.com/de/pics/limbas_solutions.png" />
+		</row>
+		<row>
+			<text name="artnr">1234567890121</text>
+			<imgurl name="bildurl" src="http://limbas.com/de/pics/limbas_solutions.png" />
+		</row>
+		<row>
+			<text name="artnr">1234567890122</text>
+			<imgurl name="bildurl" src="http://limbas.com/de/pics/limbas_solutions.png" />
+		</row>
+		<row>
+			<text name="artnr">1234567890123</text>
+			<imgurl name="bildurl" src="http://limbas.com/de/pics/limbas_solutions.png" />
+		</row>
+	</table>
+</item>
+<item id="12345">
+	<imgurl name="logo" src="http://limbas.com/de/proxy.php?url=bWFpbi5waHA/YWN0aW9uPWRvd25sb2FkJklEPTMwMg%3D%3D" />
+	<imgurl name="teaser" src="http://limbas.com/de/proxy.php?url=bWFpbi5waHA%2FYWN0aW9uPWRvd25sb2FkJklEPTI5OA%3D%3D" />
+
+	<imgres name="mandarine" src="http://limbas.com/de/proxy.php?url=bWFpbi5waHA%2FYWN0aW9uPWRvd25sb2FkJklEPTY5OA%3D%3D" />
+	<imgres name="Try-it-Again-Sam" src="http://dgfire.de/Try-it-Again-Sam.jpg" />
+
+	<text name="überschrift">2LIMBAS -
+Ihr Spezialist für Unternehmenslösungen
+und Fachverfahren auf Basis freier Software!</text>
+	<text name="rechnung_summe">76543,21</text>
+
+	<text name="vorname">Hans</text>
+	<text name="nachname">Wurst</text>
+	<text name="strasse">Testweg</text>
+	<text name="hausnr">7</text>
+	<text name="plz">76543</text>
+	<text name="ort">Demodorf</text>
+
+	<table name="position">
+		<row>
+			<text name="anzahl">1</text>
+			<text name="artnr">1234567890121</text>
+			<imgurl name="bildurl" src="http://limbas.com/de/pics/limbas_solutions.png" />
+			<text name="bezeichnung">Testbild1a</text>
+			<text name="preis">12,80</text>
+		</row>
+		<row>
+			<text name="anzahl">12</text>
+			<text name="artnr">1234567890122</text>
+			<imgurl name="bildurl" src="http://limbas.com/de/proxy.php?url=bWFpbi5waHA%2FYWN0aW9uPWRvd25sb2FkJklEPTI5OA%3D%3D" />
+			<text name="bezeichnung">Testbild2a</text>
+			<text name="preis">120,80</text>
+		</row>
+		<row>
+			<text name="anzahl">123</text>
+			<text name="artnr">1234567890123</text>
+			<imgurl name="bildurl" src="http://limbas.com/de/pics/limbas_solutions.png" />
+			<text name="bezeichnung">Testbild3a</text>
+			<text name="preis">1280,80</text>
+		</row>
+	</table>
+	<table name="bilderliste">
+		<row>
+			<text name="artnr">1234567890120</text>
+			<imgurl name="bildurl" src="http://limbas.com/de/pics/limbas_solutions.png" />
+		</row>
+		<row>
+			<text name="artnr">1234567890121</text>
+			<imgurl name="bildurl" src="http://limbas.com/de/pics/limbas_solutions.png" />
+		</row>
+		<row>
+			<text name="artnr">1234567890122</text>
+			<imgurl name="bildurl" src="http://limbas.com/de/pics/limbas_solutions.png" />
+		</row>
+		<row>
+			<text name="artnr">1234567890123</text>
+			<imgurl name="bildurl" src="http://limbas.com/de/pics/limbas_solutions.png" />
+		</row>
+	</table>
+</item>
+</report>

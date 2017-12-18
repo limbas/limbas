@@ -1,0 +1,162 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 181
+ */
+
+
+
+/* ---Sprach-Liste --------------------------------------------- */
+function get_language_list($langtyp=null){
+	global $db;
+
+	$sqlquery = "SELECT DISTINCT LANGUAGE,LANGUAGE_ID FROM LMB_LANG ORDER BY LANGUAGE";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(odbc_fetch_row($rs)) {
+		$sqlquery1 = "SELECT COUNT(*) AS RES FROM LMB_LANG$langtyp WHERE EDIT = ".LMB_DBDEF_FALSE." AND LANGUAGE_ID = ".odbc_result($rs, "LANGUAGE_ID");
+		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		
+		$lid = odbc_result($rs, "LANGUAGE_ID");
+		$result_language["edit"][$lid] = odbc_result($rs1, "RES");
+	    $result_language["language"][$lid] = odbc_result($rs, "LANGUAGE");
+	    $result_language["language_id"][$lid] = odbc_result($rs, "LANGUAGE_ID");
+	}
+
+	return $result_language;
+}
+
+
+/* --- löschen --------------------------------------------- */
+function lang_delete($del,$langtyp=null){
+	global $db;
+	global $lang;
+
+	if(is_numeric($del)){
+		$sqlquery1 = "DELETE FROM LMB_LANG$langtyp WHERE ELEMENT_ID = $del";
+		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		if(!$rs1) {$commit = 1;}
+
+		# update Session
+		unset($_SESSION["lang"][$del]);
+	}
+}
+
+/* --- ändern --------------------------------------------- */
+function lang_change($id,$element_id,$new_value,$language_id,$langtyp,$typ=1,$file="unknown"){
+	global $db;
+	global $lang;
+	global $session;
+
+	if($id){
+		$sqlquery = "UPDATE LMB_LANG$langtyp SET WERT = '".parse_db_string($new_value,249)."',EDIT = ".LMB_DBDEF_TRUE." WHERE ID = $id";
+	}elseif($element_id){
+		$sqlquery0 = "SELECT ID FROM LMB_LANG$langtyp WHERE ELEMENT_ID = $element_id";
+		$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+		# no element found
+		if(!odbc_fetch_row($rs0,1)){
+			lang_add($session["language"],$typ,$file,$new_value,$langtyp,$element_id);
+		}
+		$sqlquery = "UPDATE LMB_LANG$langtyp SET WERT = '".parse_db_string($new_value,249)."',EDIT = ".LMB_DBDEF_TRUE." WHERE ELEMENT_ID = $element_id AND LANGUAGE_ID = ".$session["language"];
+	}else{return false;}
+
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+	if($language_id == 1){
+		if(!$element_id){
+			$sqlquery1 = "SELECT ELEMENT_ID FROM LMB_LANG$langtyp WHERE ID = $id";
+			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$element_id = odbc_result($rs1, "ELEMENT_ID");
+		}
+		$sqlquery1 = "UPDATE LMB_LANG$langtyp SET EDIT = ".LMB_DBDEF_FALSE." WHERE NOT LANGUAGE_ID = 1 AND ELEMENT_ID = ".$element_id;
+		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+	}
+
+	# update Session
+	$_SESSION["lang"][$element_id] = $new_value;
+	$lang[$element_id] = $new_value;
+}
+
+/* --- ändern js --------------------------------------------- */
+function lang_changejs($id,$new_js,$language_id,$langtyp){
+	global $db;
+
+	if($id){
+		$sqlquery = "UPDATE LMB_LANG$langtyp SET JS = ".parse_db_bool($new_js)." WHERE ID = $id";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	}
+
+}
+
+/* ---hinzufügen --------------------------------------------- */
+function lang_add($language_id,$typ,$file,$wert,$langtyp=null,$element_id=null){
+	global $db;
+	global $lang;
+	global $umgvar;
+
+	$result_language = get_language_list($langtyp);
+
+	// set default language
+	$language_id = $umgvar['default_language'];
+	
+	$NEXTID1 = next_db_id("LMB_LANG$langtyp");
+	$NEXTID2 = next_db_id("LMB_LANG$langtyp","ELEMENT_ID");
+
+	# beginning from 10000
+	if($langtyp){
+		if($NEXTID2 < 10000){
+			$NEXTID2 = 10000;
+			$NEXTID1 = 100000;
+		}
+		if($element_id){
+			$NEXTID2 = $element_id;
+		}
+	}
+
+
+	foreach ($result_language["language_id"] as $bzm => $lval){
+
+		if($result_language["language_id"][$bzm] == $language_id){
+		    $ed = LMB_DBDEF_TRUE;
+			$wrt = stripcslashes(parse_db_string($wert,249));
+			# update Session
+			$_SESSION["lang"][$NEXTID2] = $wrt;
+		}else{
+		    $ed = LMB_DBDEF_FALSE;
+		    $wrt = "";
+		}
+		
+		if(!$file){$file = "0";}
+		$sqlquery = "INSERT INTO LMB_LANG$langtyp (ID,LANGUAGE_ID,ELEMENT_ID,TYP,LMFILE,LANGUAGE,EDIT,WERT) VALUES ($NEXTID1,".$result_language["language_id"][$bzm].",$NEXTID2,$typ,'".parse_db_string($file,250)."','".$result_language["language"][$bzm]."',$ed,'".$wrt."')";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+		$NEXTID1++;
+	}
+
+	# update Session
+	$_SESSION["lang"][$NEXTID2] = $wert;
+	$lang[$NEXTID2] = $wert;
+	
+	if($NEXTID2){
+		return $NEXTID2;
+	}else{
+		return false;
+	}
+}
+
+
+
+?>

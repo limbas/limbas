@@ -1,0 +1,113 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 187
+ */
+
+set_time_limit(2400); #40min
+# -------- Verkndaten auslesen ---------------
+$sqlquery =  "SELECT * FROM LMB_CONF_TABLES WHERE TAB_ID = $tabid";
+$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$tabname = odbc_result($rs, "TABELLE");
+
+
+
+/* --- Verknüpfungen neu eintragen --------------------------------------------- */
+if($newupload AND $uploadfield AND $sourcepath){
+
+	$cdir = dir($sourcepath);
+	unset($pfad);
+
+
+	if($path = read_dir($sourcepath)){
+		foreach($path["name"] as $key => $entry){
+
+			#--------------------------
+			$zs = explode("##",$entry);
+			rename($sourcepath."/".$entry,$sourcepath."/".$zs[0]);
+			$entry = $zs[0];
+			#-----------------------
+
+
+			$filepath = str_replace("//","/",$sourcepath."/".$entry);
+			if(file_exists($filepath)){
+				$ext = substr(strrchr($entry,"."),1,10);
+				$filename = substr($entry,0,strlen($entry-strpos(".",$entry)));
+
+				if($uploadfield == "ID"){
+					$filename = preg_replace("/[^0-9]/","_",$filename);
+					$pos = strpos("_",$filename);
+					if($pos){
+						$fileval = substr($filename,0,strlen($filename-$pos));
+					}else{
+						$fileval = $filename;
+					}
+					#--------------------------
+					$file_desc = $zs[3]."_".$zs[2].".".$ext;
+					#$file_desc = "File ".$filename.".".$ext;
+
+				}else{
+					$file_desc = $entry;
+					#$fileval = $filename;
+					$fileval = $filename.".".$ext;
+				}
+
+				$id = find_dat($fileval,$uploadfield);
+				if($id){
+					$file[0] = $filepath;
+					$file_name[0] = $file_desc;
+					$file_type[0] = 0;
+					$file_archiv[0] = 0;
+					$level = 6;
+
+					$file["file"] = $file;$file["file_name"] = $file_name;$file["file_type"] = $file_type;$file["file_archiv"] = $file_archiv;
+					if($ufileId = upload($file,$level,array("datid" => $id,"gtabid" => $tabid,"fieldid" => $fieldid),1)){
+						$sum_ok++;
+					}
+
+				}else{$sum_false++;}
+			}
+		}
+	}
+}
+
+
+function find_dat($filename,$uploadfield){
+	global $db;
+	global $tabname;
+
+	if($uploadfield == "ID"){
+		$sqlquery = "SELECT ID FROM $tabname WHERE ID = $filename";
+	}else{
+		$sqlquery = "SELECT $uploadfield,ID FROM $tabname WHERE LOWER($uploadfield) = '".strtolower(str_replace("'","''",$filename))."'";
+	}
+	$rs = odbc_exec($db,$sqlquery);
+	#if(!$rs){echo "<BR>".$sqlquery."<BR>";}
+
+	if(odbc_fetch_row($rs, 1)){
+		return odbc_result($rs, "ID");
+	}
+
+	return false;
+}
+
+
+
+
+
+?>
+

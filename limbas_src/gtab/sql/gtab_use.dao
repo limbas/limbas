@@ -1,0 +1,345 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 25
+ */
+
+# --- Datensatz anlegen ------
+if($action == "gtab_neu" AND isset($gtabid)){
+	if($LINK[1] AND $gtab["add"][$gtabid]){
+		# --- anlegen ---
+		if($gtab['reserveid'][$gtabid]){
+			$ID = 0;
+		}else{
+			lmb_StartTransaction();
+			$ID = new_record($gtabid,$verknpf,$verkn_fieldid,$verkn_tabid,$verkn_ID,0,0);
+			if(!$ID){
+				lmb_EndTransaction(0);
+				#if($db){odbc_close($db);}
+				#die("\n\n<BODY BGCOLOR=\"$farbschema[WEB8]\">\n<Script Language=\"JavaScript\">\nalert('".$alert.$lang[1317]."');\nfunction inusetime(){};\nvar jsvar = 0;\n</SCRIPT></BODY>");
+			}else{
+				lmb_EndTransaction(1);
+			}
+		}
+	}else{
+		lmb_alert($lang[114]);
+	}
+}
+# --- Datensatz kopieren ------
+elseif($use_typ == 'copy' AND $use_record){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+	foreach ($use as $key => $value){
+		$use_ = explode("_",$use[$key]);
+		$ID_ = $use_[0];
+		$gtabid_ = $use_[1];
+		if($gtab["add"][$gtabid_] AND $gtab["copy"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[201]){
+			lmb_StartTransaction();
+			# --- anlegen ---
+			if(!$ID = new_record($gtabid_,$verknpf,$verkn_fieldid,$verkn_tabid,$verkn_ID,$ID_,0)){
+				lmb_EndTransaction(0,"ID ".$ID_);
+				#if($db){odbc_close($db);}
+				#die("\n\n<BODY BGCOLOR=\"$farbschema[WEB8]\">\n<Script Language=\"JavaScript\">\nalert('".$alert.$lang[1317]."');\nfunction inusetime(){};\nvar jsvar = 0;\n</SCRIPT></BODY>");
+			}else{
+				lmb_EndTransaction(1);
+				$history_fields = updateHistoryFields($history_fields,$gtabid_,$ID_,$ID);
+				$useetecount++;
+			}
+		}else{
+			lmb_alert($lang[114]);
+		}
+	}
+
+	if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[2151]);}
+	elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[2150]);}
+}
+# --- Datensatz versionieren ------
+elseif($use_typ == 'versioning' AND $use_record){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+	foreach ($use as $key => $value){
+		$use_ = explode("_",$use[$key]);
+		$ID_ = $use_[0];
+		$gtabid_ = $use_[1];
+		if($gtab["ver"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[235]){
+			lmb_StartTransaction();
+			# --- anlegen ---
+			if(!$ID = new_record($gtabid_,$verknpf,$verkn_fieldid,$verkn_tabid,$verkn_ID,$ID_,1)){
+				lmb_EndTransaction(0,"ID ".$ID_);
+				#if($db){odbc_close($db);}
+				#die("\n\n<BODY BGCOLOR=\"$farbschema[WEB8]\">\n<Script Language=\"JavaScript\">\nalert('".$alert.$lang[1317]."');\nfunction inusetime(){};\nvar jsvar = 0;\n</SCRIPT></BODY>");
+			}elseif($ID == $ID_){
+				lmb_EndTransaction(0,$lang[2152]."\\nID ".$ID_);
+			}else{
+				lmb_EndTransaction(1);
+				$history_fields = updateHistoryFields($history_fields,$gtabid_,$ID_,$ID);
+				$useetecount++;
+			}
+		}else{
+			lmb_alert($lang[114]);
+		}
+	}
+
+	if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[2149]);}
+	elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[2148]);}
+
+}
+# --- Datensatz löschen ------
+elseif($use_typ == 'delete' AND $use_record){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$usec = count($use);
+	$useetecount = 0;
+	$bzm = 1;
+	foreach ($use as $key => $value){
+		$use_ = explode("_",$use[$key]);
+		$ID_ = $use_[0];
+		$gtabid_ = $use_[1];
+		if($gtab["delete"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[11]){
+			
+			# falls letztes Element - vorherigen Datensatz zum anzeigen berechnen
+			if($action != 'gtab_erg' AND $bzm == $usec){
+				if(!$falsecount){
+					$ID = scroll_to('prev',$gtabid,$ID,$null,$filter,$verkn);
+				}
+			}
+
+			lmb_StartTransaction();
+			$forceDelnm = $filter["force_delete"][$gtabid_];
+			if(!$LINK[276]){$forceDelnm = 0;}
+			if(del_data($gtabid_,$ID_,$use_typ,$forceDelnm)){
+				lmb_EndTransaction(1);
+				$useetecount++;
+			}else{
+				lmb_EndTransaction(0,"ID ".$ID_);
+				$falsecount++;
+			}
+		}else{
+			lmb_alert($lang[114]);
+		}
+		$bzm++;
+	}
+
+	if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[1325]);}
+	elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[116]);}
+	
+}
+# --- Datensatz archivieren ------
+elseif($use_typ == 'hide' AND $use_record){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+	foreach ($use as $key => $value){
+		$use_ = explode("_",$use[$key]);
+		$ID_ = $use_[0];
+		$gtabid_ = $use_[1];
+		if($gtab["hide"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[164]){
+			lmb_StartTransaction();
+			if(hide_data($gtabid_,$ID_,$use_typ)){
+				lmb_EndTransaction(1);
+				$useetecount++;
+			}else{
+				lmb_EndTransaction(0,"ID ".$ID_);
+				$falsecount++;
+			}
+		}else{
+			lmb_alert($lang[114]);
+		}
+	}
+
+	if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[1326]);}
+	elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[1312]);}
+
+}
+# --- Datensatz wiederherstellen ------
+elseif($use_typ == 'unhide' AND $use_record){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+	foreach ($use as $key => $value){
+		$use_ = explode("_",$use[$key]);
+		$ID_ = $use_[0];
+		$gtabid_ = $use_[1];
+		if($gtab["hide"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[166]){
+			lmb_StartTransaction();
+			if(hide_data($gtabid_,$ID_,$use_typ)){
+				lmb_EndTransaction(1);
+				$useetecount++;
+			}else{
+				lmb_EndTransaction(0,"ID ".$ID_);
+				$falsecount++;
+			}
+		}else{
+			lmb_alert($lang[114]);
+		}
+	}
+
+	if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[1327]);}
+	elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[1313]);}
+}
+# --- Datensatz Verknüpfung hinzufügen ------
+elseif($use_typ == 'link' AND $use_record AND $verknpf){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+	unset($verkn_add_ID);
+	if($LINK[157] AND $gfield[$verkn_tabid]["perm_edit"][$verkn_fieldid]){
+
+		foreach ($use as $key => $value){
+			$use_ = explode("_",$use[$key]);
+			$ID_ = $use_[0];
+			$gtabid_ = $use_[1];
+			if($ID_ AND $gtabid_){
+				$verkn_add_ID[] = $ID_;
+			}else{
+				lmb_alert($lang[114]);
+			}
+		}
+
+		if($verkn_add_ID){
+			$verkn_add_ID = implode(",",$verkn_add_ID);
+			$verkn = set_verknpf($verkn_tabid,$verkn_fieldid,$verkn_ID,$verkn_add_ID,0,$verkn_showonly,$verknpf);
+			if($verkn AND $verkn["typ"] AND $verkn["id"] AND $verkn["add_id"]){
+				if($useetecount = set_joins($gtabid,$verkn)){
+					if($useetecount > 1 OR !$useetecount){
+						lmb_alert($useetecount." ".$lang[2183]);
+					}elseif($useetecount == 1){
+						lmb_alert($useetecount." ".$lang[2182]);
+					}
+				}
+			}
+			$verkn["showonly"] = 1;
+			$verkn_showonly = 1;
+		}
+
+	}else{
+		lmb_alert($lang[114]);
+	}
+}
+# --- Datensatz Verknüpfung entfernen ------
+elseif($use_typ == 'unlink' AND $use_record AND $verknpf){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+	unset($verkn_del_ID);
+	if($LINK[158] AND $gfield[$verkn_tabid]["perm_edit"][$verkn_fieldid]){
+		foreach ($use as $key => $value){
+			$use_ = explode("_",$use[$key]);
+			$ID_ = $use_[0];
+			$gtabid_ = $use_[1];
+			if($ID_ AND $gtabid_){
+				$verkn_del_ID[] = $ID_;
+				$useetecount++;
+			}
+		}
+
+		if($verkn_del_ID){
+			$verkn_del_ID = implode(",",$verkn_del_ID);
+			$verkn = set_verknpf($verkn_tabid,$verkn_fieldid,$verkn_ID,0,$verkn_del_ID,$verkn_showonly,$verknpf);
+			if($verkn AND $verkn["typ"] AND $verkn["id"] AND $verkn["del_id"]){
+				if($useetecount = set_joins($gtabid,$verkn)){
+					if($useetecount > 1 OR !$useetecount){
+						lmb_alert($useetecount." ".$lang[2185]);
+					}elseif($useetecount == 1){
+						lmb_alert($useetecount." ".$lang[2184]);
+					}
+				}
+			}
+			$verkn["showonly"] = 1;
+			$verkn_showonly = 1;
+		}
+
+	}else{
+		lmb_alert($lang[114]);
+	}
+}
+
+# --- Datensatz sperren ------
+elseif($use_typ == 'lock' AND $use_record){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+	if($lockingtime){$lockingtime = explode("|",$lockingtime);}
+	foreach ($use as $key => $value){
+		$use_ = explode("_",$use[$key]);
+		$ID_ = $use_[0];
+		$gtabid_ = $use_[1];
+		if($gtab["lock"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[270]){
+			$lock = lock_data_check($gtabid_,$ID_,$session["user_id"]);
+			if($lock["isselflocked"] OR !$lock){
+				if(lock_data_set($gtabid_,$ID_,$session["user_id"],$lockingtime)){
+					$useetecount++;
+				}else{
+					$falsecount++;
+				}
+			}else{
+				$falsecount++;
+			}
+		}else{
+			lmb_alert($lang[114]);
+		}
+	}
+
+	if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[2436]);}
+	elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[2435]);}
+}
+
+# --- Datensatz entsperren ------
+elseif($use_typ == 'unlock' AND $use_record){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+	foreach ($use as $key => $value){
+		$use_ = explode("_",$use[$key]);
+		$ID_ = $use_[0];
+		$gtabid_ = $use_[1];
+		if($gtab["lock"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[271]){
+			$lock = lock_data_check($gtabid_,$ID_,$session["user_id"]);
+			if($lock["isselflocked"] OR !$lock){
+				if(lock_data_set($gtabid_,$ID_,$session["user_id"],"unlock")){
+					$useetecount++;
+				}else{
+					$falsecount++;
+				}
+			}else{
+				$falsecount++;
+			}
+		}else{
+			lmb_alert($lang[114]);
+		}
+	}
+
+	if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[2438]);}
+	elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[2437]);}
+}
+
+# --- Datenatz-Update -----------------------------------
+if($change_ok AND $history_fields AND $LINK[3]){
+	if($old_action == "gtab_erg"){$chtyp = 2;}else{$chtyp = 1;}
+	lmb_StartTransaction();
+	if($cid = update_data($history_fields,$chtyp,0)){
+		if(is_numeric($cid)){$ID = $cid;}
+		lmb_EndTransaction(1);
+	}else{
+		lmb_EndTransaction(0);
+	}
+}
+
+
+?>

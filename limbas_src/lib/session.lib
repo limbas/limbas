@@ -1,0 +1,188 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 38
+ */
+
+$lmb_transaction = 0;
+$auth_digest = 0;
+
+$auth_user = $_REQUEST["auth_user"];
+$auth_pass = $_REQUEST["auth_pass"];
+$auth_realm = 'Limbas Enterprise Unifying Framework';
+$auth_group = null;
+
+#if($_SERVER['PHP_AUTH_DIGEST']){
+#	if(!$auth_digest = http_digest_parse($_SERVER['PHP_AUTH_DIGEST'])) die('Wrong Credentials!');
+#	if(!$auth_user){$auth_user = $auth_digest['username'];}
+#	if(!$auth_pass){$auth_pass = $auth_digest['nonce'];}
+#}else{
+	if(!$auth_user){$auth_user = $_SERVER['PHP_AUTH_USER'];}
+	if(!$auth_pass){$auth_pass = $_SERVER['PHP_AUTH_PW'];}
+#}
+
+$rslogout = $_REQUEST["logout"];
+$session_name = "limbas_".rtrim(base64_encode($auth_user),"=");
+$sess_refresh = $_REQUEST["sess_refresh"];
+$auth_user = parse_db_string($auth_user,30);
+$auth_pass = parse_db_string($auth_pass,30);
+
+/* --- Session-Initialisierung --------------------------------------- */
+$action = preg_replace("[^A-Za-z0-9_]","_",$_REQUEST["action"]);
+if($action == 'report_html'){session_cache_limiter('private');Header('Pragma: public');}
+
+# --- Datenbankverbindung -------------------------------------------
+$db = dbq_0($DBA["DBHOST"],$DBA["DBNAME"],$DBA["DBUSER"],$DBA["DBPASS"],$DBA["ODBCDRIVER"],$DBA["PORT"]);
+
+# --- Session -------------------------------------------
+if($auth_user AND $auth_pass){
+	if(!isset($_COOKIE[$session_name]) AND !isset($_REQUEST[$session_name])){
+	    // check for session lifetime
+		$sqlquery2 = "SELECT * FROM LMB_USERDB WHERE USERNAME = '".$auth_user."' AND PASSWORT = '".md5($auth_pass)."'";
+		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		if($gc_lifetime = odbc_result($rs2,"GC_MAXLIFETIME")){
+			ini_set("session.cookie_lifetime",$gc_lifetime);
+		}
+		
+		if(defined('IS_WSDL')){
+			$sqlquery3 = "SELECT ID FROM LMB_SESSION WHERE USER_ID = ".odbc_result($rs2,"USER_ID")." ORDER BY ERSTDATUM ASC";
+			$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+			
+			if(odbc_result($rs3,"ID") AND $HTTP_RAW_POST_DATA){
+				session_id(odbc_result($rs3,"ID"));
+			}
+		}
+	}
+	
+	session_name($session_name);
+	session_start();
+
+	extract($_GET, EXTR_SKIP);
+	extract($_POST, EXTR_SKIP);
+	extract($_COOKIE, EXTR_SKIP);
+	extract($_SERVER, EXTR_SKIP);
+	extract($_SESSION, EXTR_SKIP);
+	
+	$globvars = array("session","umgvar","userdat","groupdat","user_colors","lmcurrency","lmfieldtype","LINK","LINK_ID","LINK_ACTION","farbschema","lang","gsr","filter","mfilter","ffilter","popc","popg","gsnap","gform","gformlist","greportlist","gdiaglist","gtabletree","tabgroup","gtab","grule","gfield","gverkn","gfile","ufile","filestruct","verknpool","gmimetypes","gtrigger","greminder","gwfl","gLmbExt");
+	assign_sessionvars($globvars);
+	
+	# logout
+	if ($rslogout AND $session["username"]) {
+		setcookie($session_name, '', time()-42000, '/');
+		session_unset();
+		session_destroy();
+	}
+}
+
+/* --- Session löschen --------------------------------------------- */
+if($sess_refresh){
+	if($sess_refresh == $session["user_id"]){
+		$sqlquery = "DELETE FROM LMB_SESSION WHERE USER_ID = ".$session["user_id"];
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	}
+	foreach ($globvars as $key => $gvar) {
+		$GLOBALS[$gvar] = array();
+	}
+}
+
+/* --- Prüfung ob Session vorhanden ----------------------------------- */
+$sqlquery = "SELECT ID,IP,FILESTRUCT_CHANGED,TABLE_CHANGED,SNAP_CHANGED FROM LMB_SESSION WHERE ID = '".session_id()."'";
+$rs = @odbc_exec($db,$sqlquery);
+if(!$rs){
+	if(strpos(odbc_errormsg($db),"Unknown table name") > 0){
+		die("<Script language=\"JavaScript\">\ndocument.location.href='admin/install/setup.php';\n</Script>\n");
+	}
+}elseif($snap_id AND odbc_result($rs,"SNAP_CHANGED")){
+	require_once("extra/snapshot/snapshot.lib");
+	$gsnap = SNAP_loadInSession(1);
+}
+
+
+if(odbc_result($rs,"ID") AND !$rslogout AND $session){
+
+	setlocale(LC_ALL, $session["setlocale"]);
+	date_default_timezone_set($session["timezone"]);
+	
+	if(strtoupper($umgvar["charset"]) == "UTF-8"){
+		ini_set("mbstring.func_overload",7);
+		ini_set("mbstring.internal_encoding",$umgvar["charset"]);
+		ini_set('default_charset', 'utf-8');
+	}else{
+		ini_set("mbstring.func_overload",0);
+		ini_set('default_charset', strtoupper($umgvar["charset"]));
+	}
+	
+	# --- time library -------------------------------------------
+	if($umgvar["use_datetimeclass"]){
+		require_once("lib/include_DateTime.lib");
+	}else{
+		require_once("lib/include_datetime.lib");
+	}
+	
+	if($session["debug"]){
+		error_reporting(E_ALL & ~E_NOTICE & ~E_DEPRECATED & ~E_STRICT & ~E_WARNING);
+		ini_set("display_errors","1");
+	}else{
+		ini_set("display_errors","0");
+	}
+
+	/* --- Userstatistik eintragen ---------------------------------------- */
+    $sqlquery1 = "UPDATE LMB_HISTORY_USER SET UPDATE_DATE = '".convert_stamp(time())."',LOGIN_TIME = ".(date("U") - $session["login_date"])." WHERE SESSIONID = '".session_id()."' AND USERID = ".$session["user_id"]." AND LOGIN_DATE >= '".convert_stamp($session["login_date"])."'";
+    $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+
+    # check for some change in filestructure
+    $umgvar["get_new_filestruct"] = odbc_result($rs,"FILESTRUCT_CHANGED");
+
+    # check for some change in tables
+    $umgvar["get_new_tablestruct"] = odbc_result($rs,"TABLE_CHANGED");
+    
+    # php.ini set
+    if($umgvar["ini_defaultlrl"]){
+    	ini_set("defaultlrl",$umgvar["ini_defaultlrl"]);
+    }
+    if($umgvar["ini_maxsize"]){
+    	ini_set("upload_max_filesize",$umgvar["ini_maxsize"]."M");
+    	ini_set("post_max_size",$umgvar["ini_maxsize"]."M");
+    }
+
+}else{
+
+	# --- time library -------------------------------------------
+	$tmp = "lib/session_auth.lib";
+	require_once($tmp);
+	
+	if(strtoupper($umgvar["charset"]) == "UTF-8"){
+		ini_set("mbstring.func_overload",7);
+		ini_set("mbstring.internal_encoding",$umgvar["charset"]);
+		ini_set('default_charset', strtoupper($umgvar["charset"]));
+	}else{
+		ini_set("mbstring.func_overload",0);
+		ini_set('default_charset', strtoupper($umgvar["charset"]));
+	}
+	
+}
+
+/* --- Prüfung ob Backend gesperrt --------------------------------- */
+if($session["lockbackend"]){
+
+	if(!defined('IS_SOAP') AND !defined('IS_WEBDAV') AND defined('IS_WSDL') AND !strpos($umgvar["allowed_proxys"],$_SERVER["REMOTE_ADDR"])){
+		require ("extra/lock.php");
+		session_destroy();
+		die();
+	}
+}
+?>

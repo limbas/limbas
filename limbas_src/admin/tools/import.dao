@@ -1,0 +1,1454 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 149
+ */
+
+set_time_limit(12000); #200min
+ob_implicit_flush();
+
+if(!$lang){
+	$lang[985] = "deleted";
+	$lang[1010] = "wrong datatype";
+	$lang[1011] = "inserts";
+	$lang[1012] = "failed";
+	$lang[1013] = "finished";
+	$lang[1014] = "test installation";
+	$lang[1015] = "inserting rows";
+	$lang[1016] = "failure on rows";
+	$lang[1017] = "inserts";
+	$lang[1018] = "created";
+	$lang[1019] = "failure";
+	$lang[1020] = "creating table";
+	$lang[1021] = "deleting table";
+	$lang[1023] = "table";
+	$lang[1024] = "indexed";
+	$lang[1025] = "indexing table";
+	$lang[1026] = "add foreign key";
+	$lang[2215] = "View";
+	$lang[2216] = "Trigger";
+}
+
+$phpvok = version_compare(PHP_VERSION, '5.3.0') >= 0;
+if(!$GLOBALS['umgvar']['csv_escape']){
+    $GLOBALS['umgvar']['csv_escape'] = "\\";
+    $phpvok = false;
+}
+
+/* --- Transaktion START -------------------------------------- */
+lmb_StartTransaction();
+
+
+$info = "
+Copyright notice
+(c) 1998-2014 Axel Westhagen (support@limbas.org)
+All rights reserved
+This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+Or
+In a Propritary Software Licence http://limbas.com/
+The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+This copyright notice MUST APPEAR in all copies of the script!
+
+";
+
+
+/* -------------------- Pfadinfos------------------- */
+if($setup_path_project){
+	$umgvar["pfad"] = $setup_path_project;
+	$session["user_id"] = 1;
+	$imageurl = "../../pic/";
+}else{
+	$imageurl = "pic/";
+}
+
+
+if(file_exists("../tables/tab.lib")){
+	require_once("../tables/tab.lib");
+}else{
+	require_once("admin/tables/tab.lib");
+}
+
+# --------- errorlist------------
+function errorlist($line,$value,$id){
+
+
+}
+    
+
+// TEXT import and creation of new limbas - tables
+function import_create($tab_name, $tab_group, $tab_spelling, $verkn = null, $new_gtabid = null, $add_permission = null, $import_typ = null, $ifield_name = null, $ifield_select = null, $ifield_id = null, $ifield_typ = null, $ifield_size = null, $ifield_desc = null, $ifield_spelling = null, $ifield_ext = null, $ifield_data = null, $txt_terminate = null, $txt_encode = null, $txt_enclosure = null)
+{
+    global $db;
+    global $session;
+    global $umgvar;
+    global $lang;
+    global $DBA;
+    global $lmcurrency;
+    global $message;
+
+    
+    echo "<br>";
+    
+    /* --- Tabelle erstellen -------------------------------------- */
+    if (! $new_ = add_tab($tab_name, $tab_group, $tab_spelling, $verkn, 1, $add_permission, $import_typ)) {
+        $commit = 1;
+        echo "--> " . $lang[164] . " <b>" . $tab_name . "</b> " . $lang[1018] . " " . $lang[1019] . "<br>";
+        return false;
+    }
+    
+    if ($import_typ != 'tab') {
+        echo "<br>";
+        echo "--> " . $lang[164] . " <b>" . $tab_name . "</b> " . $lang[1018] . "<br>";
+    }
+    
+    $new_gtabid = $new_[0];
+    $new_gtab = $new_[1];
+    
+    // sort_tables($tab_group);
+    
+    /* --- Felder erstellen -------------------------------------- */
+    if ($ifield_name) {
+        foreach ($ifield_name as $bzm9 => $value9) {
+            if ($ifield_select[$bzm9] == "on" and $ifield_typ[$bzm9] != "system") {
+                $ifield_id[$bzm9] = 1;
+                $add = 1;
+                $field_name = $ifield_name[$bzm9];
+                $typ = $ifield_typ[$bzm9];
+                $beschreibung = $ifield_desc[$bzm9];
+                $spellingf = $ifield_spelling[$bzm9];
+                
+                $ifield_name[$bzm9] = parse_db_syntax($ifield_name[$bzm9], 0);
+                
+                // Feld hinzufügen
+                if (add_field($ifield_name[$bzm9], $new_gtabid, $ifield_typ[$bzm9], 0, $ifield_size[$bzm9], $ifield_id, $beschreibung, $ifield_spelling[$bzm9], 0, 0, 0, 0, 0, $import_typ)) {
+                    echo "--> " . $lang[168] . " <b>" . $ifield_name[$bzm9] . "</b> " . $lang[1018] . "<br>";
+                }
+                
+                /* --- Feldtyp ermitteln -------------------------------------- */
+                $sqlquery = "SELECT FIELD_TYPE,SIZE,DATENTYP,LMRULE,DATA_TYPE FROM LMB_FIELD_TYPES WHERE ID = " . $ifield_typ[$bzm9];
+                $rs = odbc_exec($db, $sqlquery);
+                if (! $rs) {
+                    $commit = 1;
+                }
+                $ifield_fieldtype[$bzm9] = odbc_result($rs, "FIELD_TYPE");
+                $ifield_datatype[$bzm9] = odbc_result($rs, "DATA_TYPE");
+                $ifield_datentyp[$bzm9] = odbc_result($rs, "DATENTYP");
+                $ifield_rule[$bzm9] = odbc_result($rs, "LMRULE");
+                if ($ifield_size[$bzm9]) {
+                    $ifield_rule[$bzm9] = str_replace("xxx", ($ifield_size[$bzm9] + 1), $ifield_rule[$bzm9]);
+                    $ifield_rule[$bzm9] = str_replace("xx", $ifield_size[$bzm9], $ifield_rule[$bzm9]);
+                } else {
+                    $ifield_size[$bzm9] = odbc_result($rs, "SIZE");
+                    $ifield_rule[$bzm9] = str_replace("xx", "", $ifield_rule[$bzm9]);
+                }
+                
+                if ($ifield_fieldtype[$bzm9] == 5 or $ifield_fieldtype[$bzm9] == 12 or $ifield_fieldtype[$bzm9] == 10 or $ifield_fieldtype[$bzm9] == 6) {
+                    $ifield_ext[$bzm9] = "";
+                } else {
+                    $ifield_ext[$bzm9] = "'";
+                }
+            }
+        }
+    }
+    
+    if ($import_typ == "tab") {
+        return $new_gtabid;
+    }
+    
+    /* --- Datensätze einfügen -------------------------------------- */
+    if ($ifield_data == "2") {
+        
+        echo <<<EOD
+<div style="width:300px;">
+	<div style="height:16px;">$lang[1015] ...</div>
+	<div id="{$new_gtabid}_container" style="background-color:#eeeeee;border:solid 1px silver;">
+		<div style="background-color:green;color:white;height:16px;width:18px;" id="$new_gtabid">0%</div>
+	</div>
+</div>
+EOD;
+        echo "\n<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";
+        
+        /* --- aus Textdatei -------------------------------------- */
+        if ($import_typ == "txt") {
+            
+            $NEXTID = 1;
+            /* ---------------------- Seperator ---------------------- */
+            if (! $txt_terminate) {$txt_terminate = ',';}
+            if (! $txt_enclosure) {$txt_enclosure = '"';}
+            
+            // count of rows
+            $filelist = file($umgvar["pfad"] . "/USER/" . $session["user_id"] . "/temp/txtimport.txt");
+            $maxline = count($filelist);
+            unset($filelist);
+            
+            /* --- Datei_Erstellung ----------------------------------- */
+            $logpath = $umgvar["pfad"] . "/USER/" . $session["user_id"] . "/temp/" . $exptable[$bzm0] . "." . $ext . ".log";
+            $logfile = fopen($logpath, "w+");
+            /* ---------------------- Textdatei öffnen ---------------------- */
+            $pfad = $umgvar["pfad"] . "/USER/" . $session["user_id"] . "/temp/txtimport.txt";
+            $txtdat = fopen($pfad, "r");
+            /* ---------------------- Zeilenausgabe ---------------------- */
+            $INSERT_OK = "0";
+            $INSERT_FALSE = "0";
+            $bzm0 = 1;
+            
+            while ($line = lmb_fgetcsv($txtdat, 0, $txt_terminate, $txt_enclosure, $umgvar['csv_escape'])) {
+                
+                // while($line = fgets($txtdat)){
+                unset($insert_);
+                unset($value_);
+                if ($bzm0 != 1) {
+                    // $dline = explode($txt_terminate,$line);
+                    $bzm = 0;
+                    
+                    // csv
+                    // if($txt_terminate == ";"){
+                    // $dline[$bzm] = trim($dline[$bzm],"\"");
+                    // }
+                    
+                    while (isset($line[$bzm])) {
+                        if ($ifield_id[$bzm]) {
+                            $line[$bzm] = trim($line[$bzm]);
+                            /* ---------------------- Datum ---------------------- */
+                            if ($ifield_fieldtype[$bzm] == 2) {
+                                if ($line[$bzm]) {
+                                    // TIMESTAMP
+                                    if ($ifield_datatype[$bzm] == 11) {
+                                        $line[$bzm] = convert_date($line[$bzm]);
+                                        // DATE
+                                    } elseif ($ifield_datatype[$bzm] == 40) {
+                                        $line[$bzm] = substr(convert_date($line[$bzm], 0, 10));
+                                    }
+                                }
+                                /* ---------------------- Währung ---------------------- */
+                            } elseif ($ifield_datatype[$bzm] == 30) {
+                                if ($line[$bzm]) {
+                                    
+                                    // Währungstabelle
+                                    if (strpos($line[$bzm], chr(128))) { // euro
+                                        $ccode = "EUR";
+                                    } else {
+                                        foreach ($lmcurrency["code"] as $ckey => $cvalue) {
+                                            if (strpos($line[$bzm], $cvalue)) {
+                                                $ccode = $cvalue;
+                                            }
+                                        }
+                                    }
+                                    
+                                    $line[$bzm] = str_replace(",", ".", $line[$bzm]);
+                                    $dline[$bzm] = preg_replace("/[^0-9\.]/", "", $line[$bzm]);
+                                    if (! preg_match("/" . $ifield_rule[$bzm] . "/", $line[$bzm])) {
+                                        errorlist($line[$bzm], "$lang[1010] (" . $ifield_datentyp[$bzm] . ")", $NEXTID);
+                                        $line[$bzm] = "";
+                                    } elseif ($line[$bzm]) {
+                                        $value_[] = "'" . $ccode . "'";
+                                        $insert_[] = $ifield_name[$bzm] . "_c";
+                                    }
+                                }
+                                /* ---------------------- Zeit ---------------------- */
+                            } elseif ($ifield_fieldtype[$bzm] == 7) {
+                                if ($line[$bzm]) {
+                                    $line[$bzm] = convert_time($line[$bzm]);
+                                }
+                                /* ---------------------- Boolean ---------------------- */
+                            } elseif ($ifield_fieldtype[$bzm] == 10) {
+                                // if($NEXTID == 2){$boolean = $dline[$bzm];}
+                                // if($dline[$bzm] == $boolean){$dline[$bzm] = LMB_DBDEF_TRUE;}else{$dline[$bzm] = LMB_DBDEF_FALSE;}
+                                if (! $line[$bzm]) {
+                                    $line[$bzm] = LMB_DBDEF_FALSE;
+                                } else {
+                                    $line[$bzm] = LMB_DBDEF_TRUE;
+                                }
+                                /* ---------------------- Zahlen ---------------------- */
+                            } elseif ($ifield_fieldtype[$bzm] == 5 or $ifield_fieldtype[$bzm] == 6 or $ifield_fieldtype[$bzm] == 11 or $ifield_fieldtype[$bzm] == 14) {
+                                $line[$bzm] = str_replace(",", ".", $line[$bzm]);
+                                if (! preg_match("/" . $ifield_rule[$bzm] . "/", $line[$bzm])) {
+                                    errorlist($line[$bzm], "$lang[1010] (" . $ifield_datentyp[$bzm] . ")", $NEXTID);
+                                    $line[$bzm] = "0";
+                                }
+                                /* ---------------------- Text ---------------------- */
+                            } else {
+                                // decode/encode utf8
+                                $line[$bzm] = parse_db_string($line[$bzm]);
+                                if ($txt_encode) {
+                                    if ($umgvar["charset"] == "UTF-8") {
+                                        $line[$bzm] = utf8_encode($line[$bzm]);
+                                    } else {
+                                        $line[$bzm] = iconv("UTF-8", $GLOBALS["umgvar"]["charset"], $line[$bzm]);
+                                    }
+                                }
+                                // $line[$bzm] = str_replace("#NEXTLINE#","\n",$line[$bzm]);
+                                if (! preg_match("/" . $ifield_rule[$bzm] . "/", $line[$bzm])) {
+                                    errorlist($line[$bzm], "$lang[1010] (" . $ifield_datentyp[$bzm] . ")", $NEXTID);
+                                    $line[$bzm] = "";
+                                }
+                            }
+                            
+                            // $line[$bzm] = str_replace("'","''",$line[$bzm]);
+                            if ($line[$bzm]) {
+                                $erstuser = $session["user_id"];
+                                // DBID
+                                if ($ifield_datatype[$bzm] == 22) {
+                                    $NEXTID = parse_db_int($ifield_ext[$bzm] . $line[$bzm] . $ifield_ext[$bzm], 19);
+                                    // ERSTUSER
+                                } elseif ($ifield_datatype[$bzm] == 34 or strtoupper($ifield_name[$bzm]) == "ERSTUSER") {
+                                    $erstuser = parse_db_int($ifield_ext[$bzm] . $line[$bzm] . $ifield_ext[$bzm], 5);
+                                } else {
+                                    $value_[] = $ifield_ext[$bzm] . $line[$bzm] . $ifield_ext[$bzm];
+                                    $insert_[] = $ifield_name[$bzm];
+                                }
+                            }
+                        }
+                        $bzm ++;
+                    }
+                    if ($insert_) {
+                        $insert = implode(",", $insert_);
+                    }
+                    if ($value_) {
+                        $value = implode(",", $value_);
+                    }
+                    // if($ifield_name){$insert = implode(",",$ifield_name);}
+                    // if($value){$value = implode(",",$value);}
+                    /* --- Datensatz eintragen -------------------------------------- */
+                    if ($insert and $value) {
+                        $sqlquery = "INSERT INTO $new_gtab (ID,ERSTUSER,$insert) VALUES ($NEXTID," . $erstuser . ",$value)";
+                        $rs = odbc_exec($db, $sqlquery) or errorlist(odbc_errormsg($db), $sqlquery, $NEXTID);
+                        if ($rs) {
+                            $INSERT_OK ++;
+                        } else {
+                            $INSERT_FALSE ++;
+                            fputs($logfile, $sqlquery . "\n");
+                        }
+                    }
+                    $NEXTID ++;
+                }
+
+                if (intval($maxline / 100) > 0) {
+                    if ((($bzm0) % ($maxline / 100)) == 0) {
+                        $progress_last = round(($bzm0) * 100 / $maxline);
+                        echo "<script language=\"javascript\" type=\"text/javascript\">//<!--\nshowprogress('$new_gtabid','$progress_last');\n//--></script>\n";
+                        flush();
+                        ob_flush();
+                    }
+                }
+                $bzm0 ++;
+            }
+            
+            // set sequence table
+            lmb_rebuildSequences($new_gtab);
+            
+            echo "<script language=\"javascript\" type=\"text/javascript\">//<!--\nshowprogress('$new_gtabid','100');\n//--></script>\n";
+            
+            fclose($logfile);
+            fclose($txtdat);
+        }
+    }
+    
+    if ($INSERT_FALSE) {
+        $message .= "
+		<p style=\"color:red;\">&nbsp;&nbsp;$INSERT_FALSE " . $lang[1012] . "</p><br>
+		<p style=\"color:green;\">&nbsp;&nbsp;$INSERT_OK " . $lang[1017] . "</p>";
+        return false;
+    } else {
+        $message .= "<p style=\"color:green;\">&nbsp;&nbsp;$INSERT_OK " . $lang[1017] . "</p>";
+        return $new_gtabid;
+    }
+    if ($GLOBALS["action"]) {
+        echo "<HR>";
+    }
+}
+
+
+# Import aus Pool
+function import_tab_pool($import_typ,$import_overwrite,$import_count,$partimport,$fileatm,$fileatm_name,$filexml,$tablegrouplist,$prefix=null,$txt_encode=null,$txt_terminate=null,$txt_enclosure=null){
+	global $db;
+	global $session;
+	global $umgvar;
+	global $DBA;
+	
+	/* ---------------------- Seperator ---------------------- */
+	if(!$txt_terminate){$txt_terminate = ',';}
+	if(!$txt_enclosure){$txt_enclosure = '"';}
+	
+	#xml test mutli table
+	if($import_typ == "xml"){
+		$import_count = "single";
+	}elseif($fileatm_name != "export.tar.gz" AND !$import_count){
+		$import_count = "single";
+	}
+
+	if($import_typ=="xml"){
+		do_importXML($filexml);
+	}elseif($import_typ == "atm"){
+
+		/* --- Liste vorhandener Tabellen --------------------------------------------- */
+		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'TABLE','VIEW'"));
+		foreach($odbc_table["table_name"] as $tkey => $tvalue) {
+			$existingtabs[] = strtoupper($tvalue);
+		}
+
+		/* --- falls Tabellengruppe -------------------------------------- */
+		if($import_count == "group"){
+			$pfad = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/";
+			if($folderval = read_dir($pfad)){
+				foreach($folderval["name"] as $key => $value){
+					$value_ = explode(".",$value);
+					if($folderval["typ"][$key] == "file"){
+						$tabname = preg_replace("/^[^0-9a-zA-z_]$/","",$value_[0]);
+						if($tablegrouplist[strtoupper($tabname)] OR $tablegrouplist[strtolower($tabname)]){
+							$imptabgroup[] = $tabname;
+						}
+					}
+				}
+			}
+			if($imptabgroup){sort($imptabgroup);}
+			/* --- falls Einzeltabelle -------------------------------------- */
+		}elseif($import_count == "single"){
+			$tmp = explode(".",$fileatm_name);
+			$imptabgroup[0] = strtoupper(preg_replace("/^[^0-9a-zA-z_]$/","",$tmp[0]));
+			$pfad = $umgvar["pfad"]."/USER/".$session[user_id]."/temp/";
+			rmdirr($umgvar["pfad"]."/USER/".$session[user_id]."/temp");
+			$copy = copy ($fileatm, $pfad.$imptabgroup[0].".tar.gz");
+		}
+
+		$bzm = 0;
+		while($imptabgroup[$bzm]){
+
+			unset($table);
+			unset($typ);
+			
+			
+			if(trim(strtoupper(substr($imptabgroup[$bzm],0,4))) == "LMB_"){
+				$prefix_ = $prefix;
+			}else{
+				$prefix_ = "";
+			}
+			
+			/* ----------- Extrahiere export.conf;export.dat ------------- */
+			$sys = system("tar -x -z -C ".$pfad." -f ".$pfad.$imptabgroup[$bzm].".tar.gz");
+			
+			/* ----------- prüfen ob Tabelle schon vorhanden ------------- */
+			if(in_array(strtoupper($prefix_.$imptabgroup[$bzm]),$existingtabs)){
+				/* ----------- Tabelle schon vorhanden ------------- */
+				$table = dbf_4($imptabgroup[$bzm]);
+			}else{
+				/* ----------- Tabelle noch nicht vorhanden ------------- */
+				$typ = "new";
+				$table = dbf_4($prefix_.$imptabgroup[$bzm]);
+			}
+			
+			/* ----------- neue Tabelle anlegen / anhängen / umbenennen ------------- */
+			if($typ == "new" OR $import_overwrite == "rename" OR $import_overwrite == "add" OR $import_overwrite == "add_with_ID"){
+				import($partimport,$import_overwrite,$prefix_,$txt_encode,$txt_terminate,$txt_enclosure);
+			/* ----------- Tabelle überschreiben ------------- */
+			}elseif($import_overwrite == "over"){
+				deleteExistingTab($table);
+                import($partimport,$import_overwrite,$prefix_,$txt_encode,$txt_terminate,$txt_enclosure);
+			}
+			$bzm++;
+		}
+	}
+
+	return array($imptabgroup,$existingtabs);
+}
+
+
+# Komplett Import
+function import_complete($del_all,$txt_encode=null, $txt_terminate=null,$txt_enclosure=null){
+	global $db;
+	global $lang;
+	global $setup_dbuser;
+	global $DBA;
+	
+	/* ---------------------- Seperator ---------------------- */
+	if(!$txt_terminate){$txt_terminate = ',';}
+	if(!$txt_enclosure){$txt_enclosure = '"';}
+
+	if($DBA["DBUSER"]){$setup_dbuser = $DBA["DBUSER"];}
+
+	if($del_all){
+
+		# delete all trigger
+		if(LMB_DBFUNC_PROCEDUREHANDLE){
+			if(lmb_dropAllDBTrigger()){
+				echo "drop existing trigges ... <b>done</b><br>";
+			}
+		}
+	
+		# delete all constrains
+		if(LMB_DBFUNC_FKEYHANDLE){
+			if(lmb_dropAllForeignKeys()){
+				echo "drop existing constraints ... <b>done</b><br>";
+			}
+		}
+		
+		# drop views
+		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'VIEW'"));
+		if($odbc_table){
+			foreach($odbc_table["table_name"] as $tkey => $tvalue) {
+				$sqlquery1 = "DROP VIEW ".dbf_4($tvalue);
+				$vrs1 = odbc_exec($db,$sqlquery1);
+				if(!$vrs1) {$commit = 1;}
+			}
+			echo "drop existing tables ... <b>done</b><br>";
+		}
+		
+		# drop tables
+		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'TABLE'"));
+		if($odbc_table){
+			foreach($odbc_table["table_name"] as $tkey => $tvalue) {
+				$sqlquery1 = "DROP TABLE ".dbf_4($tvalue);
+				$vrs1 = odbc_exec($db,$sqlquery1);
+				if(!$vrs1) {$commit = 1;}
+			}
+			echo "drop existing views ... <b>done</b><br><br>";
+		}
+	}
+	
+	# fullimport
+	import('','over',null,$txt_encode, $txt_terminate,$txt_enclosure);
+	
+	# create foreign keys and trigger
+	if(lmb_rebuildForeignKey(1)){
+		if($GLOBALS["action"]){
+			echo "rebuild foreign keys... <b>done</b><br>";
+		}
+	}else{
+		if($GLOBALS["action"]){
+			echo "rebuild foreign keys... <b><font style=\"color:red\">failed</font></b><br>";
+		}
+	}
+	
+	# procedures
+	if(LMB_DBFUNC_PROCEDUREHANDLE){
+		# drop functions
+		dbq_21(array($DBA["DBSCHEMA"]));
+
+		# add functions
+		if(!dbq_16(array($DBA["DBSCHEMA"]))){
+			echo "<span style=\"color:red\">error by adding stored procedures!</span><br>";
+		}else{
+			echo "adding stored procedures ... <b>done</b><br>";
+		}
+	}
+	
+	# Trigger
+	if(lmb_rebuildTrigger(1)){
+		if($GLOBALS["action"]){
+			echo "rebuild trigger... <b>done</b><br>";
+		}
+	}else{
+		if($GLOBALS["action"]){
+			echo "rebuild trigger... <b><font style=\"color:red\">failed</font></b><br>";
+		}
+	}
+	
+	# Sequences
+	if(lmb_rebuildSequences()){
+		if($GLOBALS["action"]){
+			echo "rebuild Sequences... <b>done</b><br>";
+		}
+	}else{
+		if($GLOBALS["action"]){
+			echo "rebuild Sequences... <b><font style=\"color:red\">failed</font></b><br>";
+		}
+	}
+
+	if($GLOBALS["action"]){
+		echo "<BR><BR><HR><H2>&nbsp;&nbsp;...$lang[1013], <a href=\"../../\">$lang[1014].</A></H2>(default-user: <b>admin</b> | default password: <b>limbas</b>)<BR><BR><BR>";
+		echo "\n<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";
+	}
+}
+
+
+# TEXT import and attach to table
+function import_attach_file($ifield,$gtabid,$txt_terminate=null,$txt_encode=null,$txt_enclosure=null){
+	global $umgvar;
+	global $session;
+	global $gfield;
+	global $lang;
+	
+	if(!$gtabid OR !$ifield){return false;}
+	
+
+		echo <<<EOD
+<div style="width:300px;">
+	<div style="height:16px;">$lang[1015] ...</div>
+	<div id="{$gtabid}_container" style="background-color:#eeeeee;border:solid 1px silver;">
+		<div style="background-color:green;color:white;height:16px;width:18px;" id="$gtabid">0%</div>
+	</div>
+</div>
+EOD;
+		echo "\n<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";
+	
+	
+	/* ---------------------- Seperator ---------------------- */
+	if(!$txt_terminate){$txt_terminate = ',';}
+	if(!$txt_enclosure){$txt_enclosure = '"';}
+
+	# count of rows
+	$file = file($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/txtimport.txt");
+	$maxline = count($file);
+	unset($file);
+	
+	/* ---------------------- Textdatei öffnen ---------------------- */
+	$pfad = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/txtimport.txt";
+	$txtdat = fopen($pfad,"r");
+	
+	$headerset =  lmb_fgetcsv($txtdat,0,$txt_terminate,$txt_enclosure,$umgvar['csv_escape']);
+	
+	#$headerline = fgets($txtdat,10000);
+	#$headerset = explode($txt_terminate,$headerline);
+	
+	
+	if(!$ifield["used"]){
+		lmb_alert("no fields selected!");
+		return false;
+	}
+	
+	if($ifield["used"]){
+	foreach ($ifield["used"] as $fkey => $value){
+		if($value == "on" AND $ifield["colname"][$fkey]){
+			foreach ($headerset as $hkey => $hval){
+				if(strtolower(trim($hval)) == strtolower(trim($ifield["colname"][$fkey]))){
+					$fieldlist[$hkey] = $fkey;
+				}
+			}
+		}
+	}}
+
+	$bzm = 1;
+	#while($line = fgets($txtdat, 1000000)){
+	while ($lineset = lmb_fgetcsv($txtdat,0,$txt_terminate,$txt_enclosure,$umgvar['csv_escape'])) {
+			
+		/*
+		if($txt_encode){
+			if($umgvar["charset"] == "UTF-8"){
+				$line = utf8_encode($line);
+			}else{
+				$line = iconv("UTF-8",$GLOBALS["umgvar"]["charset"],$line);
+			}
+		}*/
+		
+		
+		
+		#$lineset = explode($txt_terminate,$line);
+		
+		$history_fields = array();
+		foreach ($fieldlist as $filekey => $gfieldid){
+			if($lineset[$filekey] AND $lineset[$filekey] != "NULL"){
+				
+				if($txt_encode){
+					if($umgvar["charset"] == "UTF-8"){
+						$lineset[$filekey] = utf8_encode($lineset[$filekey]);
+					}else{
+						$lineset[$filekey] = iconv("UTF-8",$GLOBALS["umgvar"]["charset"],$lineset[$filekey]);
+					}
+				}
+				
+				#$history_fields["$gtabid,$gfieldid,0"] = $dline[$bzm] = str_replace("#NEXTLINE#","\n",$lineset[$filekey]);
+				$history_fields["$gtabid,$gfieldid,0"] = $dline[$bzm] = $lineset[$filekey];
+			}
+		}
+
+		if(update_data($history_fields)){
+			$INSERT_OK++;
+		}else{
+			$INSERT_FALSE++;
+		}
+
+		if(intval($maxline/100) > 0){
+			if((($bzm)%($maxline/100))==0){
+				$progress_last = round(($bzm)*100/$maxline);
+				echo "<script language=\"javascript\" type=\"text/javascript\">//<!--\nshowprogress('$gtabid','$progress_last');\n//--></script>\n";
+				flush();
+				ob_flush();
+			}
+		}
+		$bzm++;
+	}
+	
+	echo "<script language=\"javascript\" type=\"text/javascript\">//<!--\nshowprogress('$gtabid','100');\n//--></script>\n";
+	if($INSERT_FALSE){
+		echo "
+		<p style=\"color:red;\">&nbsp;&nbsp;<a href=\"main_admin.php?action=setup_error_msg&log_typ=1\">$INSERT_FALSE ".$lang[1012]."</a></p><br>
+		<p style=\"color:green;\">&nbsp;&nbsp;$INSERT_OK ".$lang[1017]."</p>";
+		return false;
+	}else{
+		echo "<p style=\"color:green;\">&nbsp;&nbsp;$INSERT_OK ".$lang[1017]."</p>";
+		return true;
+	}
+}
+
+#----------XML Import functions -----------------
+function checkFormatNUMBER($data,$param){
+	if(is_numeric($data))
+		return $data;
+	else
+		return "null";
+
+}
+
+function checkFormatTEXT($data,$param){
+	if(strlen($data)>$param){
+		return substr($data,0,$param);
+	}else{
+		return $data;
+	}
+}
+
+
+/**
+ * xml function
+ *
+ * @param unknown_type $parser
+ * @param unknown_type $name
+ * @param unknown_type $attrs
+ */
+function do_importXML($xmlFile){
+		global $gfield;
+		global $gtab;
+		global $db;
+			if(file_exists($xmlFile)){
+
+			$xmlRoot = simplexml_load_file($xmlFile);
+
+			$bzm = 0;
+
+			$tables = $xmlRoot->DEFINITION->TABLE;
+
+			$fieldStruct = Array();
+
+			foreach ($tables as $keyTable => $tableElt) {
+
+				$tableName = strval($tableElt["NAME"]);
+				$tableStruct["NAME"][] = strval($tableElt["NAME"]);
+
+				$result["countImport"][$tableName] = 0;
+
+				foreach ($gtab["table"] as $keyTableId => $tableNameVal) {
+					if($tableNameVal == $tableName){
+						$tableStruct["ID"][strval($tableElt["NAME"])] = $keyTableId;
+					}
+				}
+
+				$fields = $tableElt->FIELD;
+
+				unset($fieldTable);
+				unset($fieldType);
+				unset($fieldId);
+
+				foreach ($fields as $keyFields => $fieldElt) {
+					if(strval($fieldElt["NAME"])!="ID"){
+						$fieldTable[] = strval($fieldElt["NAME"]);
+						$fieldType[ strval($fieldElt["NAME"])] = strval($fieldElt["TYPE"]);
+						foreach ($gfield[$tableStruct["ID"][$tableName]]["field_name"] as $keyFieldId => $valueFieldName) {
+							if($valueFieldName == strval($fieldElt["NAME"]) ){
+								$fieldId[ strval($fieldElt["NAME"])] = $keyFieldId;
+								break;
+							}
+						}
+
+					}
+				}
+
+
+
+				$fieldStruct[strval($tableName)]["NAME"] = $fieldTable;
+				$fieldStruct[strval($tableName)]["TYPE"] = $fieldType;
+				$fieldStruct[strval($tableName)]["ID"] = $fieldId;
+
+			}
+
+			$relations = $xmlRoot->DEFINITION->RELATION;
+
+			foreach ($relations as $relation) {
+				$tableStruct[strval($relation["PARENT"])]["RELATION"][] = strval($relation["CHILD"]);
+				$relationStruct[strval($relation["PARENT"])][strval($relation["CHILD"])] = "VERK_e33c64522e514";
+
+
+			}
+
+
+			foreach ($tableStruct["NAME"] as  $tableKey => $tableName) {
+
+				$lines = $xmlRoot->DATA->$tableName;
+				$result = proceedXmlImportLines($lines,$tableName,$tableStruct,$fieldStruct,$relationStruct,$result);
+			}
+
+			foreach ($tableStruct["NAME"] as $tableNameKey => $tableName) {
+				if($GLOBALS["action"]){echo "<br>" . $result["countImport"][$tableName] . " records imported successfully in table $tableName ";}
+
+				if($warningImport)
+					if($GLOBALS["action"]){echo "<br><font color='orange'>Warning: </font><br>". implode("<br>", $result["warningImport"][$tableName]);
+					echo "<hr>";}
+
+			}
+
+			$sqlquery = "INSERT INTO XMLIMPORTLOG(ID,WARNING,TABLES,RESULT) values(" . next_db_id('XMLIMPORTLOG','ID') . "," . ($result["warningImport"] ? "'" . parse_db_string(serialize($result["warningImport"]),1000) . "'" : "null" ) . ",'" . parse_db_string(serialize($tableStruct["NAME"]),1000) . "','" . parse_db_string(serialize($result["countImport"]),1000) . "')";
+			odbc_exec($db,$sqlquery);
+		}
+
+}
+
+
+function proceedXmlImportLines($lines,$tableName,$tableStruct,$fieldStruct,$relationStruct,$result,$relationParam = null){
+	global $gfield;
+	global $db;
+	global $session;
+
+		foreach ($lines as $keyLine => $line){
+			unset($fieldValue);
+
+			# define the ID
+			# use ID from import
+			#if($hold_id == 1){
+				if(! $line->ID == ""){
+					$NEXTID = strval($line->ID);
+				}elseif ($field = $line["ID"]){
+					$NEXTID = $line["ID"];
+				}else{
+					$NEXTID = next_db_id(strval($tableName),"ID");
+				}
+			#}else{
+			# new ID
+			#		$NEXTID = next_db_id(strval($tableName),"ID");
+			#}
+
+			# update
+
+			foreach ($fieldStruct[strval($tableName)]["NAME"] as $keyField => $fieldName){
+
+				if($fieldStruct[strval($tableName)]["TYPE"][$fieldName]=="FILE"){
+					if(strval($line->$fieldName)!=""){
+						if(strval($line->{$fieldName}["NAME"])!=""){
+							$filename[] = $line->{$fieldName}["NAME"];
+						}else{
+							$filename[] = "importFile_" . time() . ".msg";
+						}
+
+						$secname[] = "/tmp/" . md5(time() . $filename[count($filename) - 1]);
+
+						file_put_contents($secname[count($secname) - 1],base64_decode(strval($line->$fieldName)));
+
+						$fieldValue[] = "1";
+					}else{ $fieldValue[] = "0";}
+				}else{
+
+					if($fieldStruct[strval($tableName)]["TYPE"][$fieldName]!="NUMBER"){
+						$quote = "'";
+					}else{
+						$quote = "";
+					}
+
+
+					if(! $line->$fieldName == ""){
+						if(preg_match("/".$gfield[$tableStruct["ID"][$tableName]]["regel"][$fieldStruct[strval($tableName)]["ID"][$fieldName]]."/",$line->$fieldName) !=1){
+							$fieldValue = "null";
+							$result["warningImport"][$tableName][] = "Tablename: $tableName ; ID: " . $NEXTID . "; Fieldname: $fieldName, Value: " . $line->$fieldName . "<BR>";
+						}else
+							$fieldValue[] = $quote . $line->$fieldName . $quote;
+					}elseif ($field = $line[$fieldName]){
+						if(preg_match("/".$gfield[$tableStruct["ID"][$tableName]]["regel"][$fieldStruct[strval($tableName)]["ID"][$fieldName]]."/",$line[$fieldName]) !=1 ){
+							$fieldValue[] = "null";
+							$result["warningImport"][$tableName][] = "Tablename: $tableName ; ID: " . $NEXTID . "; Fieldname: $fieldName, Value: " . $line[$fieldName] . "<BR>";
+						}else
+							$fieldValue[] =  $quote . strval($field) . $quote;
+					}else{
+						$fieldValue[] = "null";
+					}
+				}
+
+			}
+
+			$fieldList = implode(",",$fieldStruct[strval($tableName)]["NAME"]);
+			$valueList = implode(",",$fieldValue);
+
+			$sqlquery = "INSERT INTO $tableName (ID,ERSTUSER,$fieldList) VALUES ($NEXTID,$session[user_id],$valueList)";
+			odbc_exec($db,$sqlquery) or print_r($sqlquery);#$errorImport .=  odbc_error($db);
+			$result["countImport"][$tableName]++;
+
+			// relation
+			if($relationParam){
+				$sqlquery = "INSERT INTO " . $relationStruct[$relationParam["PARENT"]][$tableName] . "(KEYID,ID,VERKN_ID) values(" . next_db_id($relationStruct[$relationParam["PARENT"]][$tableName],"KEYID",1) . "," . $relationParam["ID"] . ",$NEXTID)";
+				odbc_exec($db,$sqlquery) or$result["warningImport"][$tableName][] = "Error relation between to tables: $sqlquery";
+			}
+
+			if($tableStruct[$tableName]["RELATION"]){
+				foreach ($tableStruct[$tableName]["RELATION"] as $keyRelation => $childTable) {
+
+					$childs = $line->$childTable;
+
+					$relationParamTogive["PARENT"] = $tableName;
+					$relationParamTogive["ID"] = $NEXTID;
+					$result = proceedXmlImportLines($childs,$childTable,$tableStruct,$fieldStruct,$relationStruct,$result,$relationParamTogive);
+
+				}
+			}
+		}
+		return $result;
+}
+
+#----- End XML function
+
+
+/* --- fill Systemtables ------- */
+function fill($tab,$file,$ctyp,$ktyp,$cname,$kkey,$partimport,$import_overwrite,$txt_encode=null,$txt_terminate=null,$txt_enclosure=null){
+	global $umgvar;
+	global $table;
+	global $backupdir;
+	global $setup;
+	global $session;
+	global $db;
+	global $imageurl;
+	global $install;
+	global $lang;
+    global $syncimport;
+        
+	/* ---------------------- Seperator ---------------------- */
+	if(!$txt_terminate){$txt_terminate = ',';}
+	if(!$txt_enclosure){$txt_enclosure = '"';}
+	
+	/* --- Tabelle füllen------- */
+	if($setup){
+		if($install == "install" OR $install == "reinstall"){
+			$pfad2 = $umgvar["pfad"]."/BACKUP/".$backupdir."/$file";
+		}
+	}elseif(
+		$partimport){$pfad2 = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.dat";
+	}elseif($syncimport)
+        {
+            $pfad2 = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/sync/export.dat";
+        }
+        else    
+        {
+		$pfad2 = $umgvar["pfad"]."/BACKUP/".$backupdir."/$file";
+	}
+
+	/* --- Max Zeilenanzahl auslesen für aktuellen Status ------- */
+	$tab_datei = fopen($pfad2,"r");
+	$maxline = 1;
+	while(!feof($tab_datei)){
+		fgets($tab_datei);
+		$maxline++;
+	}
+	$maxline = ($maxline - 3);
+
+	fclose($tab_datei);
+
+	/* --- Max ID Festlegen falls ID angehängt werden soll ------- */
+	if($import_overwrite == "add"){
+		$startid = next_db_id($tab,$kkey);
+	}else{
+		$startid = 1;
+	}
+
+	/* --- Datei zum lesen öffnen ------- */
+	$tab_datei = fopen($pfad2,"r");
+
+		/* --- Prozessposition zeigen ------- */
+	if($GLOBALS["action"]){
+		echo <<<EOD
+<div style="width:300px;">
+	<div style="height:16px;">$lang[1015] ...</div>
+	<div id="{$tab}_container" style="background-color:#eeeeee;border:solid 1px silver;">
+		<div style="background-color:green;color:white;height:16px;width:18px;" id="$tab">0%</div>
+	</div>
+</div>
+EOD;
+		echo "\n<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";
+	}
+
+	$count_ok = "0";
+	$count_false = "0";
+	$bzm4 = 1;
+	//while($line2 = fgets($tab_datei, 1000000)){
+	while ($ccont = lmb_fgetcsv($tab_datei,0)) {
+	    
+		if($bzm4 == 1){
+			//$cheader = explode("\t",$line2);
+			$cheader = $ccont;
+		}else{
+			unset($values);
+			unset($coll);
+			//$ccont = explode("\t",$line2);
+			$bzm3 = 0;
+			while($cheader[$bzm3]){
+				//$ccont[$bzm3] = stripslashes($ccont[$bzm3]);
+				//$ccont[$bzm3] = str_replace("#NEXTLINE#","\n",$ccont[$bzm3]);
+				//$ccont[$bzm3] = str_replace("#TAB#","\t",$ccont[$bzm3]);
+				//$ccont[$bzm3] = str_replace("#BACKSL#",LMB_DBFUNC_UMASCB,$ccont[$bzm3]);
+				//if($ctyp[$bzm3] != 4){$ccont[$bzm3] = str_replace("'","''",$ccont[$bzm3]);}
+				if(($ccont[$bzm3] OR $ccont[$bzm3] == "0") AND $cname[$bzm3]){
+				    
+				    	// mask \"
+				    	$ccont[$bzm3] = str_replace("#BSLQUT#",'\\"',$ccont[$bzm3]);
+				    
+					#if($ktyp[$bzm3] AND $hold_id != 1){$values[] = "$id";}
+
+					# decode/encode utf8
+					if($txt_encode AND ($ctyp[$bzm3] == 4 OR $ctyp[$bzm3] == 1)){
+						if($umgvar["charset"] == "UTF-8"){
+							$ccont[$bzm3] = utf8_encode($ccont[$bzm3]);
+						}else{
+							$ccont[$bzm3] = iconv("UTF-8",$GLOBALS["umgvar"]["charset"],$ccont[$bzm3]);
+						}
+					}
+
+					# next ID
+					if(strtoupper($cheader[$bzm3]) == "ID" AND strtoupper($tab) != "LMB_SESSION" AND strtoupper($tab) != "LMB_FORM_LIST"){
+						if($import_overwrite == "add_with_ID"){
+							$prepare_long["id"][$bzm4] = $ccont[$bzm3];
+							$values[] = $ccont[$bzm3];
+						}elseif($import_overwrite == "add"){
+							$values[] = $startid;
+							$prepare_long["id"][$bzm4] = $startid;
+							$startid++;
+						}else{
+							$values[] = $ccont[$bzm3];
+							$prepare_long["id"][$bzm4] = $ccont[$bzm3];
+						}
+					}
+					# --- LONG ---
+					elseif($ctyp[$bzm3] == 4){
+						$values[] = "''";
+						$prepare_long["field"][$bzm4][] = $cheader[$bzm3];
+						$prepare_long["value"][$bzm4][] = $ccont[$bzm3];
+					}
+					# --- STRING ---
+					elseif($ctyp[$bzm3] == 1){$values[] = "'".parse_db_string($ccont[$bzm3])."'";}
+					# --- BOOLEAN ---
+					elseif($ctyp[$bzm3] == 2){if($ccont[$bzm3] == 1){$ccont[$bzm3] = LMB_DBDEF_TRUE;}else{$ccont[$bzm3] = LMB_DBDEF_FALSE;} $values[] = $ccont[$bzm3];}
+					# --- NUMBER ---
+					elseif($ctyp[$bzm3] == 3){$ccont[$bzm3] = str_replace(",",".",trim($ccont[$bzm3]));if(!$ccont[$bzm3]){$ccont[$bzm3] = "0";}$values[] = $ccont[$bzm3];}
+					# --- DATETIME ---
+					elseif($ctyp[$bzm3] == 5){$values[] = ($dts = convert_date($ccont[$bzm3])) ? "'".$dts."'" : LMB_DBDEF_DTNULL;}
+					# --- DATE ---
+					elseif($ctyp[$bzm3] == 6){$values[] = ($dt = convert_date($ccont[$bzm3],1)) ? "'".$dt."'" : LMB_DBDEF_DTNULL;}
+					
+					# --- Collumn ---
+					$coll[] = $cname[$bzm3];
+
+				}else{
+					if($ktyp[$bzm3]){
+						$values[] = "$id";
+						$coll[] = $cname[$bzm3];
+					}elseif(strtoupper($cname[$bzm3]) == "ERSTUSER" ){
+						$values[] = "1";
+						$coll[] = $cname[$bzm3];
+					}elseif(strtoupper($cname[$bzm3]) == "ERSTDATUM"){
+						$values[] = "'".convert_stamp(local_stamp(),$t=0)."'";
+						$coll[] = $cname[$bzm3];
+					}
+
+				}
+				$bzm3++;
+			}
+			$values = implode(",",$values);
+			$coll = implode(",",$coll);
+			$sqlquery2 = "INSERT INTO $tab ($coll) VALUES($values)";
+			if($bzm4 > 1){
+				$rs3 = odbc_exec($db,$sqlquery2);
+				if(!$rs3) {
+					$commit = 1;
+					$count_false++;
+					if($GLOBALS["action"]){echo "<BR><BR>".$sqlquery2."<BR><BR>";}
+				}else{
+					if($GLOBALS["action"]){
+						if(intval($maxline/100) > 0){
+						if((($bzm4)%($maxline/100))==0){
+							$progress_last = round(($bzm4)*100/$maxline);
+							echo "<script language=\"javascript\" type=\"text/javascript\">//<!--\nshowprogress('$tab','$progress_last');\n//--></script>\n";
+							flush();
+							ob_flush();
+						}}
+					}
+					$count_ok++;
+				}
+			}
+		}
+		
+		# --- Long Felder füllen ----
+		if($prepare_long["field"][$bzm4]){
+		foreach($prepare_long["field"][$bzm4] as $lkey => $lval){
+			if($prepare_long["id"][$bzm4]){
+				$prepare_string = "UPDATE ".$tab." SET ".$prepare_long["field"][$bzm4][$lkey]." = ? WHERE ID = ".$prepare_long["id"][$bzm4];
+				if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($prepare_long["value"][$bzm4][$lkey])),__FILE__,__LINE__)){
+					echo $prepare_long["value"][$bzm4][$lkey]."<br><br>"; $commit = 1;
+				}
+			}
+		}}
+		unset($prepare_long);
+
+		$bzm4++;
+		$id++;
+	}
+	
+	
+	# set sequence table
+	lmb_rebuildSequences($tab);
+	
+	if($count_false){
+		if($GLOBALS["action"]){echo "<p style=\"color:red;\">&nbsp;&nbsp;$count_false $lang[1016]!</p>";}
+	}else{
+		if($GLOBALS["action"]){echo "<p style=\"color:green;\">&nbsp;&nbsp;$maxline $lang[1017].</p>";}
+	}
+	if($GLOBALS["action"]){echo "<script language=\"javascript\" type=\"text/javascript\">//<!--\nshowprogress('".$tab."','100');\n//--></script>\n";}
+
+}
+
+
+
+/* --- Tabelle anlegen------- */
+function create($tab,$sqlquery,$key){
+	global $umgvar;
+	global $table;
+	global $session;
+	global $db;
+	global $lang;
+	
+	$sqlquery = $sqlquery.$key;
+	$sqlquery = substr($sqlquery,0,strlen($sqlquery) - 1).")";
+	$rs2 = odbc_exec($db,$sqlquery);
+	if(!$rs2) {
+		echo $sqlquery."<br>";
+		$commit = 1;
+	}
+	if($rs2){
+		if($GLOBALS["action"]){echo "<div>$lang[1023] <FONT COLOR=\"#0033CC\">$tab</FONT> <b>$lang[1018].</b></div>\n";}
+		return true;
+	}else {
+		if($GLOBALS["action"]){echo "<div style=\"color:red;\">$lang[1020] <FONT COLOR=\"#0033CC\">$tab</FONT> $lang[1012]!</div>\n";}
+		return false;
+	}
+}
+
+/* --- Tabelle löschen------- */
+function deleteExistingTab($tab){
+	global $umgvar;
+	global $table;
+	global $session;
+	global $db;
+	global $lang;
+	$sqlquery = "DROP TABLE ".dbf_4($tab);
+	$rs2 = odbc_exec($db,$sqlquery);
+	if(!$rs2){
+		if($GLOBALS["action"]){echo "<div style=\"color:red;\">$lang[1021] <FONT COLOR=\"#0033CC\">$tab</FONT> $lang[1012]!</div>\n";}
+	}else{
+		if($GLOBALS["action"]){echo "<div>$lang[1023] <FONT COLOR=\"#0033CC\">$tab</FONT> <B>$lang[985]</B></div>\n";}
+	}
+}
+
+/* --- System Import ------- */
+function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $txt_terminate=null,$txt_enclosure=null,$tab_name=''){
+	global $umgvar;
+	global $table;
+	global $backupdir;
+	global $setup;
+	global $session;
+	global $db;
+	global $install;
+	global $lang;
+	global $DBA;
+    global $syncimport;
+
+	/* ---------------------- Seperator ---------------------- */
+	if(!$txt_terminate){$txt_terminate = ',';}
+	if(!$txt_enclosure){$txt_enclosure = '"';}
+			
+	#if($GLOBALS["action"]){echo "<BR><B><U><H4>$lang[1022]</H4></U></B><HR>";}
+	
+	# Komplett-Import aus Backupverzeichniss
+	if($setup){
+		if(!$umgvar["pfad"]){die("No Path defined! Check \$umgvar[\"path\"]");}
+
+		# ------ alte Verzeichnisse löschen -------
+		$path = $umgvar["pfad"]."/BACKUP/";
+		$folderval = read_dir($path);
+		foreach($folderval["name"] as $key => $value){
+			if($folderval["typ"][$key] == "dir"){
+				rmdirr($folderval["path"][$key],1,0,1);
+			}
+		}
+
+		# ------ Archiv entpacken -------
+		$sys = system("tar -x -z -C ".$umgvar["pfad"]."/BACKUP/"." -f ".$umgvar["pfad"]."/BACKUP/".$backupdir);
+
+		# ------ Archiv-Verzeichniss auswählen -------
+		$folderval = read_dir($path);
+		foreach($folderval["name"] as $key => $value){
+			if($folderval["typ"][$key] == "dir"){
+				$backupdir = $value;
+			}
+		}
+
+		if($install == "install" OR $install == "reinstall"){
+			$pfad = $umgvar["pfad"]."/BACKUP/".$backupdir."/export.conf";
+		}
+	}
+	# Einzel-Import
+	elseif($partimport){
+		$pfad = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.conf";}
+        elseif($tab_name != '')
+        {
+            $syncimport = true;
+            $pfad = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/sync/$tab_name.conf";
+        }
+	else
+        {
+		$pfad = $umgvar["pfad"]."/BACKUP/".$backupdir."/export.conf";
+	}
+
+	$config_datei = fopen($pfad,"r");
+
+	while($line = fgets($config_datei, 100000)){
+		if(substr($line,0,1) != "#" AND substr($line,0,1) != " "){
+
+			if(substr($line,0,22) == "<begin indexdefinition"){
+				$definition = "index";
+			} elseif(substr($line,0,20) == "<end indexdefinition"){
+				$definition = "";
+
+			} elseif(substr($line,0,20) == "<begin keydefinition"){
+				$definition = "key";
+			} elseif(substr($line,0,18) == "<end keydefinition"){
+				$definition = "";
+
+			} elseif(substr($line,0,21) == "<begin viewdefinition"){
+				$definition = "view";
+			} elseif(substr($line,0,19) == "<end viewdefinition"){
+				$definition = "";
+
+			} elseif(substr($line,0,24) == "<begin triggerdefinition"){
+				$definition = "trigger";
+			} elseif(substr($line,0,22) == "<end triggerdefinition"){
+				$definition = "";
+
+			} elseif(substr($line,0,22) == "<begin tabledefinition"){
+				$definition = "table";
+
+				unset($ctyp);
+				unset($cname);
+				unset($key);
+				unset($kkey);
+				unset($cdf);
+				unset($ktyp);
+
+				$tab = substr($line,24);
+				$tab = substr($tab,0,strlen($tab) - 2);
+				$filename = ($tab_name != '' && $tab_name != 'export') ? '' : $tab;
+				$tabname = $prefix.$tab;
+				$oldtabname = $tabname;
+				$tabname = parse_db_syntax($tabname,1);
+				$newtabname[strtoupper($tab)] = $tabname;
+				$tab = $tabname;
+
+				$sqlquery = "CREATE TABLE ".dbf_4($tab)." (";
+
+			} elseif(substr($line,0,20) == "<end tabledefinition"){
+				$definition = "";
+				/* --- Tabelle anlegen------- */
+				if($import_overwrite == "rename" OR $import_overwrite == "over"){
+					$iscreated = create($tab,$sqlquery,$key);
+				}elseif ($import_overwrite == "add" OR $import_overwrite == "add_with_ID"){
+					$tab = $oldtabname;
+					# check for dublicate table names
+					$odbc_table = dbf_20(array($DBA["DBSCHEMA"],$tab,"'TABLE','VIEW'"));
+					if($odbc_table) {
+						$iscreated = 1;
+					}else{
+						$iscreated = create($tab,$sqlquery,$key);
+					}
+				}
+				
+				# falls kein Primary Key vorhanden
+				if(!$kkey){$kkey = "ID";}
+
+				/* --- Tabelle füllen------- */
+				if($iscreated && $filename != ''){fill($tab,$filename,$ctyp,$ktyp,$cname,$kkey,$partimport,$import_overwrite,$txt_encode,$txt_terminate,$txt_enclosure);}
+
+			}elseif($definition == "table"){
+				unset($columndef);
+				unset($default);
+				unset($cdf);
+
+				$cdf = explode("::",$line);
+				$cdf[0]= parse_db_syntax($cdf[0],2);	# fieldname
+				$cdf[1]= trim($cdf[1]);					# datatype
+				$cdf[2]= trim($cdf[2]);					# codetype
+				$cdf[3]= trim($cdf[3]);					# fieldlength
+				$cdf[4]= trim($cdf[4]);					# scale
+				$cdf[5]= trim($cdf[5]);					# mode
+				$cdf[6]= trim($cdf[6]);					# default
+				$cdf[7]= constant("LMB_DBTYPE_".trim($cdf[1]));	# database specific datatype
+				if($cdf[2]){$cdf[8]= constant("LMB_DBTYPE_".trim($cdf[2]));}	# database specific codetype
+				
+				if($cdf[0] == "NEXT" OR $cdf[0] == "ORDER"){$cdf[0] = "\"".$cdf[0]."\"";} # only for reserved names (should be extended)
+				if($cdf[6] OR $cdf[6] == "0"){
+					if (defined("LMB_DBDEF_".trim(str_replace("DEFAULT ","",$cdf[6])))){
+						$default = constant("LMB_DBDEF_".trim(str_replace("DEFAULT ","",$cdf[6]))); # database specific default
+					}else{
+						$default = trim(str_replace("DEFAULT ","",$cdf[6]));
+					}
+					// only if default without " ' "
+					#if($cdf[1] == "DATE" OR $cdf[1] == "TIME"){
+					#	$default = "DEFAULT '".$default."'";
+					
+					// default value is real date
+					if($cdf[1] == "DATE" AND $cdf[6] != 'DATE'){
+						$default = "DEFAULT '".$default."'";	
+					// default value is real time
+					}elseif($cdf[1] == "TIME" AND $cdf[6] != 'TIME'){
+						$default = "DEFAULT '".$default."'";
+					// default value is real timestamp
+					}elseif($cdf[1] == "TIMESTAMP" AND $cdf[6] != 'TIMESTAMP'){
+					    $default = "DEFAULT '".$default."'";
+					}elseif($cdf[1] == "TIMESTAMP" OR $cdf[1] == "BOOLEAN" OR $cdf[1] == "INTEGER" OR $cdf[1] == "SMALLINT" OR $cdf[1] == "BIGINT" OR $cdf[1] == "FIXED" OR $cdf[1] == "FLOAT" OR $cdf[1] == "DECIMAL" OR $cdf[1] == "NUMERIC" OR $cdf[1] == "DATE" OR $cdf[1] == "TIME"){
+						$default = "DEFAULT ".$default;
+					}else{
+						$default = "DEFAULT '".parse_db_string($default)."'";
+					}
+				}
+				if($cdf[1] == "TIMESTAMP" OR $cdf[1] == "DATE" OR $cdf[1] == "TIME" OR $cdf[1] == "BOOLEAN" OR $cdf[1] == "INTEGER" OR $cdf[1] == "SMALLINT" OR $cdf[1] == "BIGINT" OR $cdf[1] == "FLOAT" OR $cdf[1] == "DECIMAL" OR (($cdf[1] == "FIXED" OR $cdf[1] == "NUMERIC") AND (!$cdf[3] OR $cdf[3] == 28))){
+					$sqlquery .= $cdf[0]." ".$cdf[7].$cdf[8]." ".$default;
+				}elseif($cdf[1] == "LONG"){
+					$sqlquery .= $cdf[0]." ".$cdf[7]." ".$default;
+				# with scale
+				}elseif($cdf[4]){
+					$sqlquery .= $cdf[0]." ".$cdf[7]."(".($cdf[3]+$cdf[4]).",".$cdf[4].") ".$cdf[8]." ".$default;
+				}else{
+					$sqlquery .= $cdf[0]." ".$cdf[7]."(".$cdf[3].") ".$cdf[8]." ".$default;
+				}
+				if(strpos($cdf[5],"KEY") !== false){
+					$key = LMB_DBFUNC_PRIMARY_KEY."(".$cdf[0]."),"; $ktyp[] = $cdf[0];$kkey = $cdf[0];
+					$sqlquery .= " NOT NULL,";
+				}
+				else{
+					$ktyp[] = 0;
+					$sqlquery .= ",";
+				}
+				
+				
+				
+				if($cdf[1] == "LONG"){$ctyp[] = 4;}
+				elseif($cdf[1] == "TIMESTAMP"){$ctyp[] = 5;} 
+				elseif($cdf[1] == "DATE"){$ctyp[] = 6;} 
+				elseif($cdf[1] == "BOOLEAN"){$ctyp[] = 2;} 
+				elseif($cdf[1] == "VARCHAR" OR $cdf[1] == "CHAR" OR $cdf[2] == "BYTE" OR $cdf[2] == "ASCII" OR $cdf[1] == "TIME"){$ctyp[] = 1;} 
+				else{$ctyp[] = 3;}
+				
+				$cname[] = $cdf[0];
+
+			}elseif($definition == "index"){
+				unset($cdf);
+
+				$cdf = explode("::",$line);
+				$cdf[0] = $newtabname[strtoupper($cdf[0])];
+				
+				$indname = "LMBIND_".substr(md5($cdf[0]."_".$cdf[1]),0,12);
+				
+				$odbc_table = dbf_20(array($DBA["DBSCHEMA"],$cdf[0],"'TABLE'"));
+				if($odbc_table) {
+					$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$cdf[0],$cdf[1]));
+					$rs4 = odbc_exec($db,$sqlquery);
+					if(!$rs4) {$commit = 1;}
+					if($rs4){
+						if($GLOBALS["action"]){echo "<div>$lang[1023] <FONT COLOR=\"#0033CC\">".$cdf[0]." (".$cdf[1].")</FONT> <b>$lang[1024]</b>.</div>\n";
+						echo "\n<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";}
+					}else{
+						if($GLOBALS["action"]){echo "<div style=\"color:red;\">$lang[1025] <FONT COLOR=\"#0033CC\">".$cdf[0]." (".$cdf[1].")</FONT> <b>$lang[1019]!</b></div>\n";
+						echo "\n<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";}
+					}
+				}else{
+					if($GLOBALS["action"]){echo "<div style=\"color:red;\">$lang[1025] <FONT COLOR=\"#0033CC\">".$cdf[0]." (".$cdf[1].")</FONT> <br>$lang[1019]</b>, table does not exist!</div>\n";
+					echo "\n<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";}
+				}
+
+			}elseif($definition == "view"){
+				unset($cdf);
+
+				$cdf[0] = substr($line,0,strpos($line,"::"));
+				$cdf[1] = substr($line,strpos($line,"::")+2,strlen($line));
+				
+				if($cdf){
+					$sqlquery = dbq_19($cdf);
+					
+					
+				
+					#foreach ($newtabname as $tkey => $tval){
+					#	$sqlquery = str_replace($tkey,$tval,$cdf[1]);
+					#}
+					
+					$rs4 = odbc_exec($db,$sqlquery);
+					if(!$rs4) {echo $sqlquery;$commit = 1;}
+					
+					$outdesc1 = "<div>$lang[2215] <FONT COLOR=\"#0033CC\">".$cdf[0]."</FONT> <B>$lang[1018]</B>.</div>\n".
+						"<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";
+					$outdesc2 = "<div style=\"color:red;\">$lang[2215] <FONT COLOR=\"#0033CC\">".$cdf[0]."</FONT> $lang[1019]!</div>\n".
+						"<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";
+					if($rs4){
+						if($GLOBALS["action"]){echo $outdesc1."\n";}
+					}else{
+						$GLOBALS["LAST_SQL"]["sql"][] = $sqlquery;
+						$GLOBALS["LAST_SQL"]["desc1"][] = $outdesc1;
+						$GLOBALS["LAST_SQL"]["desc2"][] = $outdesc2;
+						if($GLOBALS["action"]){echo $outdesc2."\n";}
+					}
+					
+				}
+
+			}elseif($definition == "key"){
+				/*
+				unset($cdf);
+
+				$cdf = explode("::",$line);
+				$sqlquery = "ALTER TABLE ".$newtabname[$cdf[0]]." ADD FOREIGN KEY(".$cdf[1].") REFERENCES ".$cdf[2]."(".$cdf[3].") ON DELETE RESTRICT";
+				$rs5 = odbc_exec($db,$sqlquery);
+				$outdesc1 = "<div>$lang[1026] <FONT COLOR=\"#0033CC\">".$newtabname[$cdf[0]]."</FONT></div>\n<Script language=\"JavaScript\">scrolldown();</SCRIPT>\n";
+				$outdesc2 = "<div style=\"color:red;\">$lang[1026] <FONT COLOR=\"#0033CC\">".$newtabname[$cdf[0]]."</FONT> $lang[1019]</div>\n<Script language=\"JavaScript\">scrolldown();</SCRIPT>\n";
+				if($rs5){
+					if($GLOBALS["action"]){echo $outdesc1."\n";}
+				}else{
+					$GLOBALS["LAST_SQL"]["sql"][] = $sqlquery;
+					$GLOBALS["LAST_SQL"]["desc1"][] = $outdesc1;
+					$GLOBALS["LAST_SQL"]["desc2"][] = $outdesc2;
+					if($GLOBALS["action"]){echo $outdesc2."\n";}
+				}
+				*/
+			} else {
+				$definition = "";
+			}
+
+		}
+	}
+
+	if(is_dir($umgvar["pfad"]."/BACKUP/".$backupdir) AND $backupdir){
+		system("rm -r ".$umgvar["pfad"]."/BACKUP/".$backupdir);
+	}
+
+}
+
+# --- Transaktion ENDE --------
+lmb_EndTransaction(!$commit);
+
+
+
+ 
+?>

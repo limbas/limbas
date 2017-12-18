@@ -1,0 +1,201 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID:
+ */
+
+
+$fileatm = $_FILES['fileatm']['tmp_name'];
+$fileatm_name = $_FILES['fileatm']['name'];
+$fileatm_error = $_FILES['fileatm']['error'];
+
+
+function import_parse_uploadfile($txt_terminate=',',$txt_calculate=100,$txt_enclosure='"'){
+	
+	global $session;
+	global $umgvar;
+	
+	/* ---------------------- Seperator ---------------------- */
+	if(!$txt_enclosure){$txt_enclosure = '"';}
+	if(!$txt_terminate){$txt_terminate = ",";}
+
+	/* ---------------------- Textdatei öffnen ---------------------- */
+	$pfad = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/";
+	
+	$filename = $_FILES["filetxt"]["name"];
+	$file_origin = $pfad.$filename;
+	$filename = rtrim($filename,'.gz');
+	$filename = rtrim($filename,'.zip');
+
+	if($_FILES["filetxt"]["tmp_name"]){$copy = copy ($_FILES["filetxt"]["tmp_name"], $file_origin);}
+	
+	# unzip file if needed
+	$ext = substr($file_origin,strrpos($file_origin,".")+1);
+	if($ext == 'zip'){
+		exec('unzip -p '.$file_origin.' > '.$pfad.'txtimport.txt');
+	}elseif($ext == 'gz'){
+		exec('gzip -dc '.$file_origin.' > '.$pfad.'txtimport.txt');
+	}else{
+		rename($file_origin,$pfad.'txtimport.txt');
+	}
+	
+	$file_origin = $pfad.'txtimport.txt';
+	
+	# get table name
+	$tabname = substr($filename,0,strrpos($filename,"."));
+	$tabname = parse_db_syntax($tabname,1);
+
+
+	
+	# open file
+	$txtdat = fopen($file_origin,"r");
+
+	/* ---------------------- Kopfzeile ---------------------- */
+	#if($line = fgets($txtdat)){
+	#	$header = explode($txt_terminate,$line);
+	#	$rowcount = count($header);
+	#}
+	
+	$header = lmb_fgetcsv($txtdat,0,$txt_terminate,$txt_enclosure,$umgvar['csv_escape']);
+	$rowcount = count($header);
+
+	/* ---------------------- Feldtyp vorschlagen ---------------------- */
+	# ---------------------- Grundtyp feststellen für Reihe ----------------------
+	if($txt_calculate){
+		$bzm = 0;
+		#while($line = fgets($txtdat) AND $bzm <= $txt_calculate){
+		while ($zeile = lmb_fgetcsv($txtdat,0,$txt_terminate,$txt_enclosure,$umgvar['csv_escape']) AND $bzm <= $txt_calculate) {
+
+			#$zeile = explode($txt_terminate,$line);
+			for($i = 0; $i < $rowcount; $i++){
+				$cellval = $zeile[$i];
+
+				# csv
+				if($txt_terminate == ";"){
+					$cellval = trim($cellval,"\"");
+				}
+
+				if($e["length"][$i] < strlen($cellval)){$e["length"][$i] = strlen($cellval);}
+				# Ganzzahlen
+				if(preg_match("/^[0-9]{0,18}$/",$cellval)){
+					$e["typ"][$i][] = 1;
+					# Kommazahlen
+				}elseif(preg_match("/^[0-9,]{0,20}$/",$cellval)){
+					$e["typ"][$i][] = 2;
+					# Datum
+				}elseif(preg_match("/^[0-3]{0,1}[0-9]{1}.([0-1]{0,1}[0-9]{1}|[A-Za-z]{3,9}).[12]{0,1}[90]{0,1}[0-9]{0,1}[0-9]{1}(.?|.[0-2]{0,1}[0-9]{0,1}.[0-5]{0,1}[0-9]{0,1}.[0-5]{0,1}[0-9]{0,1})$/",$cellval)){
+					$e["typ"][$i][] = 3;
+				}else{
+					$e["typ"][$i][] = 4;
+				}
+			}
+			$bzm++;
+		}
+
+		# ---------------------- Grundtyp feststellen für Spalte ----------------------
+		for($i = 0; $i < $rowcount; $i++){
+			$e["field_type"][$i] = array_unique($e["typ"][$i]);
+			if(count($e["field_type"][$i]) > 1){
+				if(in_array("1",$e["field_type"][$i]) AND in_array("2",$e["field_type"][$i]) AND !in_array("3",$e["field_type"][$i]) AND !in_array("4",$e["field_type"][$i])){
+					$e["field_type"][$i] = "FLOAT";
+				}else{
+					$e["field_type"][$i] = "VARCHAR";
+				}
+			}else{
+				if($e["field_type"][$i][0] == 1){$e["field_type"][$i] = "INTEGER";}
+				elseif($e["field_type"][$i][0] == 2){$e["field_type"][$i] = "FLOAT";}
+				elseif($e["field_type"][$i][0] == 3){$e["field_type"][$i] = "TIMESTAMP";}
+				else{$e["field_type"][$i] = "VARCHAR";}
+			}
+		}
+	}
+	
+	$parsefile["header"] = $header;
+	$parsefile["findtype"] = $e;
+	$parsefile["tabname"] = $tabname;
+	
+	
+	return $parsefile;
+
+}
+
+# precheck of uploaded archive
+if($fileatm){
+	if(is_uploaded_file($fileatm)){
+		$pfad = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/";
+		rmdirr($pfad);
+		$copy = copy ($_FILES['fileatm']['tmp_name'], $pfad.$fileatm_name);
+		$sys = "tar -tz -C ".$pfad." -f ".$pfad."/".$fileatm_name;
+		$out = `$sys`;
+		if($out){
+			$out = explode("\n",$out);
+			if(in_array("export.conf",$out) AND in_array("export.dat",$out)){
+				$import_count = "single";
+			}elseif(count($out) > 1){
+				$import_count = "group";
+			}
+		}else{
+			echo "error while unpacking archiv using the following command: <br><i>$sys</i>!";
+		}
+	}elseif($fileatm OR $fileatm_error){
+		echo "error while uploading archiv! $fileatm_error";
+	}
+}
+
+# import
+if($import_create){
+	if(!import_create($tab_name,$tab_group,$tab_spelling,$verkn,$new_gtabid,$add_permission,$import_typ,$ifield_name,$ifield_select,$ifield_id,$ifield_typ,$ifield_size,$ifield_desc,$ifield_spelling,$ifield_ext,$ifield_data,$txt_terminate,$txt_encode,$txt_enclosure)){
+		echo $message;
+	}else{
+		echo $message;
+	}
+	return;
+# attach
+}elseif($import_attach){
+	require_once("gtab/gtab.lib");
+	import_attach_file($ifield,$attach_gtabid,$txt_terminate,$txt_encode,$txt_enclosure);
+# Teil-Import aus Uploadfile
+}elseif($partimport AND ($import_typ == "atm" || $import_typ == "xml")){
+	$result = import_tab_pool($import_typ,$import_overwrite,$import_count,$partimport,$fileatm,$fileatm_name,$filexml,$tablegrouplist,null,$txt_encode,$txt_terminate,$txt_enclosure);
+	$imptabgroup = $result[0];
+	$existingfields = $result[1];
+}
+
+# prüfen und Vorauswahl zeigen
+# GUI für Textimport zum anhängen
+if($import_typ == "txt"  AND $partimport AND $attach_gtabid){require_once("admin/tools/import_attach.php");}
+# GUI für Textimport mit Feldtypauswahl
+elseif($import_typ == "txt" AND $partimport){require_once("admin/tools/import_create.php");}
+# GUI für mehrfach Tabellenimport mit Tabellenauswahl
+elseif($import_typ == "atm" AND $import_count == "group" AND !$hold_id){require_once("admin/tools/import_group.php");}
+
+if($message){echo "<BR><HR>".$message;}
+if($errormessage){echo "<BR><HR><TABLE BORDER=\"1\" WIDTH=\"700\"><TR><TD>failure</TD><TD>SQL_Query</TD><TD>ID</TD>".$errormessage."</TABLE>";}
+
+# start remoteimport
+if($remoteimport){require_once("admin/tools/import_remote.php");}
+# start syncimport
+elseif($syncimport OR $confirm_syncimport){require_once("admin/tools/import_sync.php");}
+# start convertimport
+elseif($convertimport AND $tabname){require_once("admin/tools/import_create.php");}
+
+if($kompimport){
+	import_complete(1,$txt_encode);
+}
+
+echo "</TD></TR></TABLE></DIV>";
+?>

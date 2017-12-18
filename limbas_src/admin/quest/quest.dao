@@ -1,0 +1,108 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID:
+ */
+
+
+
+/* --- Abfrage löschen ---------------------------------------- */
+if($del AND $quest_id){
+        $sqlquery = "DELETE FROM CONF_QUEST WHERE ID = $quest_id";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $sqlquery = "DELETE FROM USER_SICHTEN WHERE REF_TAB = '$quest_id' AND TYP = 2";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $sqlquery = "DROP VIEW VIEW_$quest_id";
+        $rs = odbc_exec($db,$sqlquery);
+        /* ------------ Session löschen ----------------------------------- */
+        require("admin/tools/session_refresh.php");
+}
+
+
+
+/* --- neue Abfrage ---------------------------------------- */
+if($new_quest){
+        /* --- Prüfung ---------------------------------------- */
+        /* --- Feld umbenennen ------------- */
+        $beschreibung = $quest_name;
+        $quest_name = preg_replace("/[^A_Za-z0-9]/","_",$quest_name);
+        $quest_name = substr(preg_replace("/[_]{1,}/","_",$quest_name),0,18);
+        if(!$quest_name){
+                die("<BR><BR>&nbsp;&nbsp;&nbsp;Es wurde kein Name vergeben!");
+        }elseif(!preg_match("/^[a-zA-z0-9]/",$quest_name) OR strlen($quest_name) > 18){
+                die("&nbsp;&nbsp;&nbsp;Der gewählte Name darf nur Buchstaben des Alphabets besitzen\nund 18 Stellen nicht überschreiten!");
+        }
+        /* --- Next ID ---------------------------------------- */
+        $NEXTID = next_db_id("CONF_QUEST");
+        /* --- Abfrage-Datensatz ------------------------------- */
+        $sqlquery = "INSERT INTO CONF_QUEST (ID,ERSTUSER,QUEST_NAME) VALUES($NEXTID,$session[user_id],'".str_replace("'","''",$quest_name)."')";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $quest_id = $NEXTID1;
+}
+
+
+/* --- Abfrage ändern ------------------------------------------- */
+if($query AND $check){
+
+}elseif($query AND $insert){
+
+        /* --- Next ID ---------------------------------------- */
+        $NEXT_SICHT_ID = next_db_id("USER_SICHTEN","SICHT_ID");
+        $sqlquery = "UPDATE CONF_QUEST SET QUERY = '".str_replace("'","''",$query)."'";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+        $sqlquery = "SELECT VIEWNAME FROM DOMAIN.VIEWS WHERE VIEWNAME = 'VIEW_$quest_id'";
+        $rs = odbc_exec($db,$sqlquery);
+        if(odbc_result($rs, "VIEWNAME")){
+                $sqlquery = "DROP VIEW VIEW_$quest_id";
+                $rs1 = odbc_exec($db,$sqlquery);
+        }
+
+        $sqlquery = "DELETE FROM USER_SICHTEN WHERE REF_TAB = '$quest_id' AND TYP = 2";
+        $rs = odbc_exec($db,$sqlquery);
+
+        $sqlquery = "CREATE VIEW VIEW_$quest_id AS ".str_replace("'","''",$query);
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if($rs){
+                /* --- Felder Zuordnen ---------------------------------------- */
+                $sqlquery = "SELECT TABLENAME,COLUMNNAME,VIEWCOLUMNNAME FROM DOMAIN.VIEWCOLUMNS WHERE VIEWNAME = 'VIEW_$quest_id'";
+                $rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                $bzm = 1;
+                while(odbc_fetch_row($rs1, $bzm)) {
+                        $sqlquery = "SELECT TAB_ID,TAB_GROUP FROM LMB_CONF_TABLES WHERE TABELLE = '".odbc_result($rs1, "TABLENAME")."'";
+                        $rs2 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                        $group_id = odbc_result($rs2, "TAB_GROUP");
+                        $tab_id = odbc_result($rs2, "TAB_ID");
+
+                        $sqlquery = "SELECT FIELD_ID FROM LMB_CONF_FIELDS WHERE FIELD_NAME = '".odbc_result($rs1, "COLUMNNAME")."' AND TAB_GROUP = $group_id AND TAB_ID = $tab_id";
+                        $rs2 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                        $field_id = odbc_result($rs2, "FIELD_ID");
+
+                        /* --- Felder in USER_ESSION eintragen ---------------------------------------- */
+                        if($field_id){
+                        $NEXTID = next_db_id("USER_SICHTEN");
+                        $sqlquery = "INSERT INTO USER_SICHTEN (ID,USER_ID,SICHT,SORT,TAB_ID,FIELD_ID,TAB_GROUP,REF_TAB,TAB,FIELD,SICHT_ID,TYP,ARG_HIDE) VALUES ($NEXTID,0,'$quest_name',$bzm,$tab_id,$field_id,$group_id,'$quest_id','VIEW_".$quest_id."','".odbc_result($rs1, "VIEWCOLUMNNAME")."',$NEXT_SICHT_ID,2,".LMB_DBDEF_FALSE.")";
+                        $rs2 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                        }
+                $bzm++;
+                }
+        /* ------------ Session löschen ----------------------------------- */
+        require("admin/tools/session_refresh.php");
+
+        }
+}
+?>

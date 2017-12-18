@@ -1,0 +1,2245 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 41
+ */
+
+
+ini_set("short_open_tag",1);
+#ini_set("magic_quotes_gpc",0);
+
+
+/**
+ * set global variables from session
+ *
+ * @param unknown_type $globvars
+ */
+function assign_sessionvars($globvars){
+	foreach ($globvars as $key => $gvar) {
+		$GLOBALS[$gvar] = $_SESSION[$gvar];
+	}
+}
+
+/**
+ * init session variables
+ *
+ * @param unknown_type $globvars
+ */
+function init_sessionvars($globvars){
+	foreach ($globvars as $key => $gvar) {
+		$_SESSION[$gvar] = array();
+	}
+}
+
+/**
+ * save session variables
+ *
+ * @param unknown_type $globvars
+ */
+function save_sessionvars($globvars){
+	foreach ($globvars as $key => $gvar) {
+		$_SESSION[$gvar] = $GLOBALS[$gvar];
+	}
+}
+
+
+# --- Zeitmessung ---------------------------------------------------
+function gettime(){
+	list($usec, $sec) = explode(" ",microtime());
+	return ((float)$usec + (float)$sec);
+}
+
+
+# remove directories recursiv
+function rmdirr($dir,$recursiv=1,$onlyfile=0,$self=0) {
+	if(!$recursiv AND $self){return;}
+	if ($handle = opendir($dir)) {
+		while ($file = readdir($handle)) {
+			if ($file != "." && $file != ".." AND stristr($dir."/".$file,$GLOBALS["umgvar"]["pfad"])) {
+				$filepath = $dir."/".$file;
+				is_dir($filepath)? rmdirr($filepath,$recursiv,$onlyfile,1) : unlink($filepath);
+			}
+		}
+		if($self AND !$onlyfile){
+			rmdir($dir);
+		}
+	}
+}
+
+
+# ------ Verzeichnis Inhalte -------
+function read_dir($path,$rec=null,&$arr=array()){
+
+	if(substr($path,strlen($path)-1,1) != "/"){$path = $path."/";}
+	$handle=opendir($path);
+	while ($file = readdir($handle)) {
+		if (substr($file,0,1) != "." && is_dir($path.$file)) {
+			$sub_dir = $path . $file . "/" ;
+			$arr["path"][] = $sub_dir;
+			$arr["name"][] = $file;
+			$arr["typ"][] = "dir";
+			$arr["isdir"][] = 1;
+			$arr["ext"][] = null;
+			$carr = $arr["path"];
+			end($carr);
+			$arr["group"][$sub_dir][] = key($carr);
+			if($rec){read_dir($sub_dir,$rec++,$arr);}
+		}elseif(is_file($path.$file)){
+			$ext = explode(".",$file);
+			$arr["path"][] = $path;
+			$arr["name"][] = $file;
+			$arr["typ"][] = "file";
+			$arr["isfile"][] = 1;
+			$arr["ext"][] = $ext[count($ext)-1];
+			$carr = $arr["path"];
+			end($carr);
+			$arr["group"][$path][] = key($carr);
+		}
+	}
+	closedir($handle);
+	return $arr;
+}
+
+
+function lmb_alert($add_alert){
+	global $alert;
+	global $action;
+	global $umgvar;
+	global $session;
+	
+	if($umgvar['debug_messages']){
+		$logpath = $umgvar["pfad"]."/TEMP/log/messages.log";
+		$value = date("Y-m-d H:i:s")."\t".$session["username"]."\t".$action."\t".str_replace("\\n"," ",lmb_utf8_encode($add_alert))."\n";
+		$rf = fopen($logpath,"a");
+		fputs($rf,$value);
+		fclose($rf);
+	}
+
+	if($alert){
+		if(!is_array($alert)){$alert = array($alert);}
+		array_unique($GLOBALS["alert"]);
+	}else{
+		$alert = array();
+	}
+	$GLOBALS["alert"][] = $add_alert;
+
+}
+
+
+function colorHexToDecArray($color){
+	$red = hexdec(substr($color,0,2));
+	$green = hexdec(substr($$color,2,2));
+	$blue = hexdec(substr($color,4,2));
+	$colorArray["red"] = $red;
+	$colorArray["green"] = $green;
+	$colorArray["blue"] = $blue;
+	return $colorArray;
+}
+
+
+function colorDecArrayToHex($colorArray){
+	$color = dechex($colorArray["red"]);
+	$color .= dechex($colorArray["green"]);
+	$color .= dechex($colorArray["blue"]);
+	return $color;
+}
+
+
+/**
+*	Function that make an average of an array of color
+*	used for instance to set the color of a cell that should have more than one color
+* 	@param color_array 	an array of String that hold the list of color in hexadecimal format (for instance: {"FFFFFF","FCF345"}
+*	@return return the color in hexadecimal format
+*/
+function average_color($color_array)
+{
+	if(!$color_array)
+		return "";
+
+	$avg_red=0;
+	$avg_green=0;
+	$avg_blue=0;
+
+	foreach ($color_array as $cur_color)
+	{
+		$avg_red += hexdec(substr($cur_color,0,2));
+		$avg_green += hexdec(substr($cur_color,2,2));
+		$avg_blue += hexdec(substr($cur_color,4,2));
+	}
+
+	$avg_red /= count($color_array);
+	$avg_green /= count($color_array);
+	$avg_blue /= count($color_array);
+
+	return "".sprintf("%02s",dechex($avg_red)).sprintf("%02s",dechex($avg_green)).sprintf("%02s",dechex($avg_blue));
+}
+
+
+
+function parse_db_string($value,$length=null){
+	if($length){
+		return dbf_7(substr($value,0,$length));
+	}
+	return dbf_7($value);
+}
+
+function parse_db_blob($value){
+	return dbf_6($value);
+}
+
+function parse_db_int($value,$length=100){
+	if(!$value OR strlen($value) > $length OR !is_numeric($value)){return "0";}else{return str_replace(",",".",$value);}
+}
+
+function parse_db_float($value,$length=100,$scale=0){
+	if($value){$value = strtoupper(str_replace(",",".",$value));}else{return 0;}
+	
+	# more then one .
+	if(substr_count($value,".") > 1){
+		$pos = strpos($value,".");
+		$value = str_replace(".","",$value);
+		$value = substr($value,0,$pos).".".substr($value,$pos,20);
+	}
+	
+	if(!$value){return 0;}
+	$part = explode('.',$value);
+	
+	# with scale
+	if($scale){
+		if(strlen($part[0]) > ($length-$scale)){return 0;}
+		if(strlen($part[1]) > $scale){
+			$value = str_replace(",",".",round($value,$scale));
+		}
+	}else{
+		if(strlen($part[0])+strlen($part[1]) > $length){return "0";}
+	}
+	if(!preg_match("/[0-9.-]/",$value)){return "0";}
+
+	return $value;
+}
+
+
+function parse_db_bool($value){
+	$value = trim($value);
+	if(strtoupper($value) == "NULL"){return LMB_DBDEF_NULL;}
+	elseif(strtoupper($value) == "TRUE" OR strtoupper($value) == "ON" OR $value == 1){return LMB_DBDEF_TRUE;}
+	elseif(strtoupper($value) == "FALSE" OR strtoupper($value) == "OFF" OR $value == 0 OR !$value){return LMB_DBDEF_FALSE;}
+	else{return LMB_DBDEF_TRUE;}
+}
+
+function convert_Checkbox($value){
+	if($value == 'true'){return true;}else{return false;}
+	return false;
+}
+
+function convert_NumberFormat($value,$format){
+	if(!$format){return $value;}
+	$value = parse_db_float($value);
+	if (!is_numeric($value)) {
+		return $value;
+	}if($value == 0){return null;}
+	return eval("return number_format($value,$format);");
+}
+
+function convert_FloatToScientific($value,$dec=0){
+	$value = str_replace(",",".",$value);
+	if(strpos($value,"E")){return strval($value);}
+	if(strlen($value) <= $dec OR !$dec){return $value;}
+	$value = sprintf("%.10e",$value);
+	$value = preg_replace("/\.[0]{1,}e/","E",$value);
+	$value = preg_replace("/[0]{1,}e/","E",$value);
+	if(is_numeric($value)){return $value;}else{return 0;}
+}
+
+# not used
+function convert_ScientificToFloat($value,$dec){
+	$value = sprintf("%.".$dec."F",$value);
+	$value = preg_replace("/[0]{1,}$/","",$value);
+	if(is_numeric($value)){return $value;}else{return 0;}
+}
+
+function convert_FloatRound($value){
+	if(!$value OR LMB_DBFUNC_FLOATHANDLE){return $value;}
+	
+	if($pos = strpos(strtoupper($value),"E")){
+		$epart = substr($value,$pos);
+		$value = substr($value,0,$pos);
+	}
+	
+	$value = parse_db_float($value);
+	$value .= strpos($value,".") === false ? "." : "";
+	$value = sprintf("%-018s",$value);
+	$value = floatval(substr($value,0,strlen($value)-2));
+	$value = $value.$epart;
+	
+	return $value;
+}
+
+/**
+ * Get the next available ID for table
+ *
+ * @param string	$tab	the tablename
+ * @return string	$field	the fieldname
+ */
+function next_db_id($tab,$field="ID",$sequence=null,$filter=null){
+	global $db;
+	global $umgvar;
+	global $gtab;
+	
+	if(!$tab){return false;}
+	if($GLOBALS['lmb_useSequence'] === false){$lmb_useSequence = 0;}
+
+	if(LMB_DBFUNC_SEQUENCE AND $sequence){
+		return dbf_8("SEQ_".$tab."_".$field);
+	}else{
+		#if(LMB_DBFUNC_MAXHANDLE){$isnn = " WHERE $field IS NOT NULL";}
+		$sqlquery = "SELECT MAX($field) AS NEXTID FROM $tab";
+		if($filter){$sqlquery .= " WHERE $filter";}
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+		if($NEXTID = odbc_result($rs,"NEXTID")+1){
+			return $NEXTID;
+		}
+	}
+	
+	return false;
+}
+
+/**
+ * Get the next available ID with namespace
+ *
+ * @param string	$tab	the tablename
+ * @return string	$field	the fieldname
+ */
+function next_conf_id($tab,$field="ID",$ext=null,$allocate=null){
+	global $db;
+	global $umgvar;
+
+	if($umgvar["allocate_namespace"] AND !$allocate){
+		$range = explode("-",$umgvar["allocate_namespace"]);
+		$from = parse_db_int($range[0]);
+		$to = parse_db_int($range[1]);
+	}else{
+		$from = 1;
+		$to = 999+$allocate;
+	}
+
+	if($from AND $to){
+		if($umgvar["allocate_freeid"] AND !$allocate){
+			$sqlquery = "SELECT $field FROM $tab WHERE $field <= $to AND $field >= $from $ext ORDER BY $field";
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+
+			if(odbc_result($rs, $field) > $from){   
+				$NEXTID = $from;
+			}else{
+				$bzm = 1;
+				$kid_ = 0;
+				while(odbc_fetch_row($rs,$bzm)){
+					$kid = odbc_result($rs, $field);
+					if(($kid-$kid_) > 1 AND $kid_){
+						$NEXTID = $kid_+1;
+						break;
+					}
+					$kid_ = $kid;
+					$bzm++;
+				}
+			}
+		}
+
+		if(!$NEXTID){
+
+			$sqlquery = "SELECT MAX($field) AS NEXTID FROM $tab WHERE $field <= $to AND $field >= $from $ext";
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+			$NEXTID = odbc_result($rs,"NEXTID")+1;
+
+			if($allocate AND $NEXTID < $allocate){
+				$NEXTID = $NEXTID+$allocate;
+			}
+			
+
+		}
+
+		if($NEXTID == 1){
+			$NEXTID = $from;
+		}elseif($NEXTID > $to){
+			lmb_alert("no namespace ID left!");
+			return next_db_id($tab,$field);
+		}
+
+		if($NEXTID){return $NEXTID;}
+
+	}
+	
+
+	return next_db_id($tab,$field);
+}
+
+
+/**
+ * get rowcount
+ *
+ * @param unknown_type $rs
+ * @param unknown_type $query
+ * @param unknown_type $counttype  0=select-count, 1=fetch-rows, 2=NOcount
+ * @return unknown
+ */
+function lmb_num_rows($rs,&$query=null,$counttype=null) {
+	global $db;
+	global $umgvar;
+	$ct = 0;
+	
+	$count = -1;
+	if(LMB_DBFUNC_NUMROWS){
+		$count = odbc_num_rows($rs);
+	}
+	
+	# ---------------- Anzahl Ergebnisse neu berechnen -------------
+	if($count < 0){
+		if($counttype == 2){
+			return $umgvar["resultspace"];
+		}elseif($counttype == 1){
+			while(odbc_fetch_row($rs)){
+				$ct++;
+			}
+			$count = $ct;
+		}elseif($query){
+			$rs1 = odbc_exec($db,$query) or errorhandle(odbc_errormsg($db),$query,'count_query',__FILE__,__LINE__);
+			$count =  odbc_result($rs1, "RESULT");
+	   		odbc_free_result($rs1);
+		}
+	}
+    return $count;
+}
+
+/**
+ * SQL - prepare
+ *
+ * @param string $query_string
+ * @param array $value
+ * @return bolean
+ */
+function lmb_PrepareSQL($prepare_string,$bindvalue,$FILE=null,$LINE=null) {
+	global $db;
+	
+	#$leng = strlen($prepare_string);
+	#ini_set("odbc.defaultlrl",$leng);
+	
+	if(LMB_DBFUNC_PREPAREHANDLE){
+		$sql_prep = odbc_prepare($db,$prepare_string);
+		$rs = @odbc_execute($sql_prep,$bindvalue) or errorhandle(odbc_errormsg($db),$prepare_string,"odbc_prepare",$FILE,$LINE);
+		if(!$rs) {$commit = 1;}
+	}else{
+		$prepsplit = explode("?",$prepare_string);
+		foreach ($prepsplit as $key => $value){
+			if(isset($bindvalue[$key]) AND count($prepsplit) > 1){$sqlquery .= $value."'".$bindvalue[$key]."'";}
+			else{$sqlquery .= $value;}
+		}
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"odbc_prepare",$FILE,$LINE);
+	}
+	
+	#ini_set("odbc.defaultlrl","4096");
+	
+	if($rs){return true;}else{return false;}
+}
+
+/**
+ * array merge with replace also keys
+ *
+ * @param unknown_type $arr1
+ * @param unknown_type $arr2
+ * @return unknown
+ */
+function lmb_array_merge($arr1, $arr2){
+	foreach ($arr2 as $key => $value){
+		$arr1[$key] = $value;
+	}
+	return $arr1;
+}
+
+
+function lmb_array_sum($arr){
+
+	if(!$arr){return false;}
+	
+	foreach ($arr as $key => $val){
+		$sum += parse_db_float($val);
+	}
+
+	return $sum;
+}
+
+
+/* ---- Javascript Sonderzeichen-Behandlung ----------------------- */
+function htmljs($value) {
+	$value = str_replace("\"","\\\"",$value);
+	$value = str_replace("'","\'",$value);
+	$value = str_replace("\r\n","\\n",$value);
+	$value = str_replace("\n","\\n",$value);
+	$value = str_replace("\r","\\n",$value);
+	return $value;
+}
+
+/* ---- own serialize for hidden form values ----------------------- */
+function seriamize($value) {
+	return base64_encode(gzcompress(serialize($value)));
+}
+
+function unseriamize($value) {
+	return unserialize(@gzuncompress(base64_decode($value)));
+}
+
+
+/**
+ * limbas error reporting
+ *
+ * @param string $value
+ */
+function lmb_error_log($value){
+	error_log($value);
+}
+
+/**
+ * limbas sql error reporting
+ *
+ * @param unknown_type $FEHLER
+ * @param unknown_type $QUERY
+ * @param unknown_type $ACTION
+ * @param unknown_type $FILE
+ * @param unknown_type $LINE
+ */
+function errorhandle($FEHLER,$QUERY,$ACTION,$FILE,$LINE){
+	global $db;
+	global $session;
+	global $umgvar;
+	
+	if($ACTION == 'result_query'){
+		if(function_exists("filter_reset")){filter_reset();}
+		$ACTION = 'gtab_erg';
+	}
+	if(!$ACTION){$ACTION = $GLOBALS["action"];}
+	
+	$logpath = $umgvar["pfad"]."/TEMP/log/sql_error.log";
+	$value = date("Y-m-d H:i:s")."\t".$session["username"]."\t".$ACTION."\t".$FILE."\t".$LINE."\t".str_replace("\n"," ",$FEHLER)."\t".str_replace("\n"," ",$QUERY)."\n";
+	$rf = fopen($logpath,"a");
+	fputs($rf,$value);
+	fclose($rf);
+			
+	#odbc_rollback($db);
+	#odbc_autocommit($db, 1);
+	
+	/* --- Next ID ---------------------------------------- */
+	#$NEXTID = next_db_id("LMB_ERRORS","ID");
+	#$sqlquery = "INSERT INTO LMB_ERRORS (ID,MELDUNG,SQLQUERY,USERID,ACTION,LMFILE,LINE) VALUES ($NEXTID,'".parse_db_string($FEHLER)."','".parse_db_string($QUERY)."','".$session["user_id"]."','$ACTION','$FILE','$LINE')";
+	#$rs = odbc_exec($db,$sqlquery);
+	#odbc_commit($db);
+	#odbc_autocommit($db, 1);
+	
+	return;
+}
+
+# ------------- Dateigröße anzeigen -------------
+function file_size($size) {
+	if(!$size){return;}
+	$sizes = Array('B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB');
+	$ext = $sizes[0];
+	for ($i=1; (($i < count($sizes)) && ($size >= 1024)); $i++) {
+		$size = $size / 1024;
+		$ext  = $sizes[$i];
+	}
+	
+	return number_format($size,2,'.','')." ".$ext;
+}
+
+# ------------- Dateigröße berechnen -------------
+function file_size_convert($size) {
+
+	$fl = parse_db_float($size);
+	if(stripos($size,"k") OR stripos($size,"kb") OR stripos($size,"kilobyte")){$size = ($fl * 1024);}
+	elseif(stripos($size,"m") OR stripos($size,"mb") OR stripos($size,"megabyte")){$size = ($fl * 1024 * 1024);}
+	elseif(stripos($size,"g") OR stripos($size,"gb") OR stripos($size,"gigabyte")){$size = ($fl * 1024 * 1024 * 1024);}
+	elseif(stripos($size,"t") OR stripos($size,"tb") OR stripos($size,"terrabyte")){$size = ($fl * 1024 * 1024 * 1024 * 1024);}
+	elseif(stripos($size,"p") OR stripos($size,"pb")){$size = ($fl * 1024 * 1024 * 1024 * 1024 * 1024);}
+	elseif(stripos($size,"b") OR stripos($size,"byte")){$size = ($fl);}
+	$size = sprintf("%.0f",$size);
+
+	if(is_numeric($size)){return $size;}else{return 0;}
+}
+
+
+# ------------- Downloadzeiten in Minuten -------------
+function dltime($size, $speed){
+	$zeit = $size / 1024;
+	$zeit = $zeit * 8;
+	$zeit = $zeit / $speed;
+	$zeit = $zeit / 60;
+	$zeit = number_format($zeit,2,'.','');
+	return $zeit;
+}
+
+# ------------- Mimetype -------------
+if (!function_exists ("mime_content_type")) {
+	function mime_content_type ($file) {
+		return exec ("file -bi " . escapeshellcmd($file));
+	}
+}
+
+/**
+ * ImageMagick convert thumbs
+ *
+ * @param unknown_type $file			optional file_id or array of fileinfos (id,name,mimetype,thum_ok)
+ * @param unknown_type $file_path		optional path of source file
+ * @param unknown_type $dest_path		optional path of destination	
+ * @param unknown_type $dest_format 	optional format to convert
+ * @param unknown_type $width			optional widh to convert
+ * @param unknown_type $height			optional height to convert
+ * @param unknown_type $prop			optional force proportion with white overflow
+ * @param unknown_type $watermark		optional use watermark (file_id of image or Text)
+ * @param unknown_type $rebuild			optional force to rebuild thumpnail
+ * @return unknown
+ */
+
+function IMACK_ConvertThumbs($file=null,$width=null,$height=null,$prop=null,$dest_format=null,$dest_path=null,$watermark=null,$rebuild=null){
+	global $umgvar;
+	global $session;
+	global $db;
+	global $gmimetypes;
+	
+	# file from id or array
+	if(is_numeric($file) OR is_array($file)){
+		if(is_numeric($file)){
+			$sqlquery = "SELECT ID,SECNAME,MIMETYPE,THUMB_OK FROM LDMS_FILES WHERE ID = $file AND THUMB_OK = ".LMB_DBDEF_TRUE;
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+			if(!odbc_result($rs, "SECNAME")){return false;}
+			$file_id = odbc_result($rs, "ID");
+			$secname = odbc_result($rs, "SECNAME");
+			$mimeid = odbc_result($rs, "MIMETYPE");
+			$thumb_ok = odbc_result($rs, "THUMB_OK");
+		}elseif(is_array($file)){
+			$file_id = $file[0];
+			$secname = $file[1];
+			$mimeid = $file[2];
+			$thumb_ok = $file[3];
+		}
+		
+		if(!$thumb_ok AND !$rebuild){return false;}
+
+		$mimeext = $gmimetypes["ext"][$mimeid];
+		if(!$mimetype = $gmimetypes["mimetype"][$mimeid] AND $file_id){
+			IMACK_NoSuccess($file_id);
+			return false;
+		}
+		# file path
+		$file_path = $umgvar["uploadpfad"].$secname.".".$mimeext;
+		# file name
+		$file_name = explode("/",$file_path);
+		$file_name = end($file_name);
+	
+	# file from path
+	}elseif(is_string($file)){
+
+		if (substr($file,0,1) != "/") {
+			$file_path = $umgvar["pfad"]."/".$file;
+		}else{
+			$file_path = $file;
+		}
+		
+		if(!is_file($file_path)){
+			return false;
+		}
+
+		# mime type
+		$file_type = explode(".",$file_path);
+		$file_type = strtolower(end($file_type));
+		
+		foreach ($gmimetypes["ext"] as $key => $val){
+			if($val == $file_type){
+				$mimetype = $gmimetypes["mimetype"][$key];
+			}
+		}
+		if(!$mimetype){return false;}
+		
+		# file name
+		$file_name = explode("/",$file_path);
+		$file_name = end($file_name);
+	}else{
+		return false;
+	}
+	
+	#mimetype
+	$mime = explode("/",trim($mimetype));
+	
+	# proportional
+	if($prop){
+		if(!$width){$width = "";$width=$height;}
+		if(!$height){$height = "";$height=$width;}
+		$nameext .= "p";
+	}
+	
+	# watermark
+	if($watermark){
+		if(is_numeric($watermark)){$w = $watermark;}else{$w = substr(md5($watermark),0,6);}
+		$nameext .= "w_$w";
+	}
+	
+	# size
+	if($width AND $height){$size = $width."x".$height;}
+	elseif($width){$size = $width."x";}
+	elseif($height){$size = "x".$height;}
+	
+	# $dest_format
+	if(!$dest_format){
+		$dest_format = $umgvar["thumbnail_type"];
+	}
+	foreach ($gmimetypes["ext"] as $key => $val){
+		if($val == $dest_format){
+			$dest_format_ok = 1;
+		}
+	}
+	if(!$dest_format_ok){return false;}
+	
+	# destination
+	$default_dest = $umgvar["temp"]."/thumpnails/";
+	if($dest_path){
+		if (substr($dest_path,0,1) != "/") {
+			$dest_path = $umgvar["pfad"]."/".$dest_path;
+		}
+	}else{
+		$dest_path = $default_dest;
+	}
+	
+	if(is_dir($dest_path) AND strpos($dest_path,$umgvar["pfad"]) !== false){
+		$dest_name = explode(".",$file_name);
+		$dest_name = $dest_name[0].$size.$nameext.".".$dest_format;
+		$dest_path = $dest_path.$dest_name;
+		$dest_url = ltrim(str_replace($umgvar["pfad"],"",$dest_path),"/");
+	}else{
+		$dest_path_ = explode("/",$dest_path);
+		unset($dest_path_[count($dest_path_)-1]);
+		$dest_path_ = implode("/",$dest_path_);
+		if(is_dir($dest_path_) AND strpos($dest_path,$umgvar["pfad"]) !== false){
+			$dest_url = ltrim(str_replace($umgvar["pfad"],"",$dest_path),"/");
+		}
+	}
+	
+	$img = 0;
+	if(!file_exists($dest_path) OR $rebuild){
+		$out = 1;
+		if($mime[0] == "image" OR $mime[0] == "text" OR ($mime[1] == "pdf" AND $umgvar["imagemagickpdf"])){
+		
+			#if($mime[1] == "pdf" OR $mime[1] == "gif"){$page = "'[0]'";}
+			$page = "'[0]'";
+
+			# proportional
+			if($prop AND $size){
+				$cmd = $umgvar["imagemagick"]."/convert ".$umgvar["imagemagicklimit"]." -auto-orient -thumbnail '".$size.">' -gravity center -extent ".$size." ".$file_path.$page." ".$dest_path;
+			# normal
+			}elseif($size){
+				$cmd = $umgvar["imagemagick"]."/convert ".$umgvar["imagemagicklimit"]." -thumbnail $size ".$file_path.$page." ".$dest_path;
+			}else{
+				$cmd = $umgvar["imagemagick"]."/convert ".$umgvar["imagemagicklimit"]." ".$file_path.$page." ".$dest_path;
+			}
+			
+			system($cmd,$out);
+			
+			# watermark
+			if($watermark){
+				IMACK_Watermark($dest_path,$watermark);
+			}
+
+			if(file_exists($dest_path)){
+				return $dest_url;
+			}elseif($file_id){
+				IMACK_NoSuccess($file_id);
+				return false;
+			}
+		}else{
+			if($file_id){
+				IMACK_NoSuccess($file_id);
+				return false;
+			}
+		}
+		return false;
+	}else{
+		return $dest_url;
+	}
+
+	return false;
+}
+
+function IMACK_NoSuccess($file_id){
+	global $db;
+	
+	if(is_numeric($file_id)){
+		$sqlquery = "UPDATE LDMS_FILES SET THUMB_OK = ".LMB_DBDEF_FALSE." WHERE ID = $file_id";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+	}
+				
+}
+
+
+# ImageMagick create watermark
+function IMACK_Watermark($dest,$watermark){
+	global $umgvar;
+	global $session;
+	global $db;
+	global $gmimetypes;
+
+	if(file_exists($dest)){
+		if(is_numeric($watermark)){
+			$sqlquery1 = "SELECT SECNAME,MIMETYPE FROM LDMS_FILES WHERE ID = $watermark";
+			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
+			if(odbc_result($rs1, "SECNAME")){
+				$wmark = $umgvar["uploadpfad"].odbc_result($rs1, "SECNAME").".".$gmimetypes["ext"][odbc_result($rs1, "MIMETYPE")];
+				$cmd = $umgvar["imagemagick"]."/composite -dissolve 25% -gravity northeast $wmark $dest $dest";
+				system($cmd,$out);
+			}
+		}else{
+			$cmd = $umgvar["imagemagick"]."/convert $dest -font Arial -pointsize 20 -draw \"gravity northeast fill black  text 0,12 '$watermark' fill white  text 1,11 '$watermark'\"  $dest";
+			system($cmd,$out);
+		}
+	}
+}
+
+# ------------- Bildinformationen -------------
+function image_info(&$inf){
+	unset($picinf);
+	for($i=0;$i<=50;$i++){
+		$info = explode(": ",$inf[$i]);
+		$picinf[strtolower(trim($info[0]))] = trim($info[1]);
+	}
+	return $picinf;
+}
+
+
+# colorschema darkness
+function lmbSuggestColor($color,$wc="FFFFFF",$bc="000000"){
+	if(!$color){return $bc;}
+	
+    $o = round(((hexdec(substr($color, 1, 2)) * 299) + (hexdec(substr($color, 3, 2)) * 587) + (hexdec(substr($color, 5, 2)) * 114)) / 1000);
+
+    if($o > 125) {
+        return "#$bc";
+    }else{ 
+        return"#$wc";
+    }
+
+}
+
+
+/**
+ * recursive List of Groups
+ *
+ * @param unknown_type $groupid
+ * @param unknown_type $direction
+ * @param unknown_type $grplist
+ * @return unknown
+ */
+function lmbUserGroupTree($groupid,$direction=1,&$grplist=array()){
+	global $groupdat;
+
+	if($groupid==0) return;
+
+	$grplist[] = $groupid;
+	
+	foreach($groupdat["name"] as $key => $value){
+		$level = intval($groupdat["level"][$key]);
+		if($direction==0){# parents
+			if($key == $groupid) lmbUserGroupTree($level,$direction,$grplist);
+		}elseif($direction==1){# children
+			if($level == $groupid) lmbUserGroupTree($key,$direction,$grplist);
+		}
+	}
+
+	return $grplist;
+}
+
+
+
+
+
+
+
+
+# --- History List ---------
+function lhist($lhist){
+	foreach($lhist["linkid"] as $key => $value){
+		# --- History-Eintrag (history_action) ---------
+		$actionid = history_action($lhist["gtabid"][$key][0],$lhist["datid"][$key][0],$key,$lhist["level"][$key][0]);
+		if($actionid){
+			foreach($lhist[val][$key] as $key1 => $value1){
+				$com = history_update($lhist["gtabid"][$key][0],$lhist["fieldid"][$key][0],$lhist["datid"][$key][0],$actionid,$value1,0);
+			}
+		}
+	}
+}
+
+/* --- History-Eintrag (LMB_HISTORY_ACTION) ---------------------------------------- */
+function history_action($tabid,$datid,$link_id,$level){
+	global $db;
+	global $session;
+	global $lwf_id;
+	global $lwf_inid;
+	global $lwf_prid;
+	
+	if($link_id){
+	
+		# workflow hack for new instances
+		if($lwf_inid == -1){$lwf_inid = $datid;}
+		
+		if(!$tabid){$tabid = 0;}
+		if(!$datid){$datid = 0;}
+		$level = parse_db_int($level,1);
+		$NEXTID = next_db_id('LMB_HISTORY_ACTION','ID',1);
+		$sqlquery1 = "INSERT INTO LMB_HISTORY_ACTION (ID,USERID,TAB,DATAID,ACTION,LOGLEVEL,LWF_ID,LWF_PRID,LWF_INID) VALUES ($NEXTID,".$session["user_id"].",".parse_db_int($tabid,5).",".parse_db_int($datid,16).",".parse_db_int($link_id,5).",".parse_db_int($level,5).",".parse_db_int($lwf_id,2).",".parse_db_int($lwf_prid,2).",".parse_db_int($lwf_inid,16).")";
+		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
+		if(!$rs1) {$commit = 1;}
+		$GLOBALS["ltmp"]["history_action"] = 1;
+
+		return $NEXTID;
+	}else{
+		return false;
+	}
+}
+
+/* --- History-Eintrag (LMB_HISTORY_UPDATE) ---------------------------------------- */
+function history_update($tabid,$fieldid,$datid,$actionid,$value,$oldvalue){
+	global $db;
+	global $session;
+	global $umgvar;
+	global $lang;
+	global $groupdat;
+	global $userdat;
+	global $gfield;
+	global $lwf_id;
+	global $lwf_inid;
+	global $lwf_prid;
+
+	$data_typ = $gfield[$tabid]["data_type"][$fieldid];
+	$field_typ = $gfield[$tabid]["field_type"][$fieldid];
+
+	# --- wysiwyg ----
+	if($gfield[$tabid]["wysiwyg"][$fieldid]){
+		# html2text
+		if($umgvar["use_html2text"]){
+			# new value
+			$sourceapth = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/html2text_n.html";
+			$destpath = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/html2text_n.txt";
+			$rf = fopen($sourceapth,"w");
+			fputs($rf,$value);
+			fclose($rf);
+			if(file_exists($sourceapth)){
+				# -style pretty 
+				$sys = "html2text -o ".$destpath." ".$sourceapth;
+				$out = `$sys`;
+				if(file_exists($destpath)){
+					$value = file_get_contents($destpath);
+				}
+			}
+			
+			# old value
+			$sourceapth = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/html2text_o.html";
+			$destpath = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/html2text_o.txt";
+			$rf = fopen($sourceapth,"w");
+			fputs($rf,$oldvalue);
+			fclose($rf);
+			if(file_exists($sourceapth)){
+				# -style pretty 
+				$sys = "html2text -o ".$destpath." ".$sourceapth;
+				$out = `$sys`;
+				if(file_exists($destpath)){
+					$oldvalue = file_get_contents($destpath);
+				}
+			}
+		# strip_tags
+		}else{
+			$tobr = array("<br />","</tr>","</p>","<br>");
+			$value = str_replace($tobr,"\n",$value);
+			$oldvalue = str_replace($tobr,"\n",$oldvalue);
+			$value = html_entity_decode  (strip_tags($value));
+			$oldvalue = html_entity_decode  (strip_tags($oldvalue));
+		}
+	# --- plain text ----
+	}elseif($field_typ == 3){
+		$tobr = array(".","!","?");
+		$value = str_replace($tobr,"\n",$value);
+		$oldvalue = str_replace($tobr,"\n",$oldvalue);
+	}
+
+	$value = str_replace("\r\n","\n",$value);
+	$oldvalue = str_replace("\r\n","\n",$oldvalue);
+
+	
+
+	# ------- Verknüpfung --------
+	if($field_typ == 11){
+		
+	}
+	# ------- Textarea --------
+	elseif($field_typ == 3){
+		$value = textDiff($value,$oldvalue,"short");
+	}
+	# ------- Boolean --------
+	elseif($data_typ == 20){
+		if($value){$value = $lang[1506];}else{$value = $lang[1507];}
+	}
+	# ------- User/Gruppen --------
+	elseif($data_typ == 38){
+		$guid = substr($value,1,6);
+		if(substr($value,0,1) == "u"){
+			$guname = "U:".$userdat["bezeichnung"][$guid];
+			$value = $userdat[bezeichnung][$guid];
+		}elseif(substr($value,0,1) == "g"){
+			$guname = "G:".$groupdat["beschreibung"][$guid];
+			$value = $groupdat[name][$guid];
+		}
+	}elseif(is_array($value) AND ($data_typ == 31 OR $data_typ == 32 OR $data_typ == 18)){
+		$value_ = array();
+		foreach($value as $key => $val){
+			if($val)
+			$value_[] = $val;
+		}
+		$value = implode("\n",$value_);
+	}elseif(is_array($value)){
+		foreach($value as $key => $val){
+			if($val)
+			$value_[] = "> ".$val;
+		}
+		$value = implode("\n",$value_);
+	}
+
+	if($data_typ == 31 AND is_array($value)){$value = implode("\n",$value);}
+
+	# --- History-Eintrag (LMB_HISTORY_UPDATE) --------------
+	$NEXTID = next_db_id('LMB_HISTORY_UPDATE','ID',1);
+	# ---------- Max länge auf 250 Zeichen reduzieren -----------
+	if(strlen($value) > 990){$value = $value."...";}
+	$value = parse_db_string($value,990);
+	$sqlquery1 = "INSERT INTO LMB_HISTORY_UPDATE (ID,USERID,TAB,DATAID,FIELD,FIELDVALUE,ACTION_ID,LWF_ID,LWF_PRID,LWF_INID) VALUES ($NEXTID,".$session["user_id"].",".parse_db_int($tabid,5).",".parse_db_int($datid,18).",".parse_db_int($fieldid,5).",'".$value."',".parse_db_int($actionid,16).",".parse_db_int($lwf_id,2).",".parse_db_int($lwf_prid,2).",".parse_db_int($lwf_inid,16).")";
+	$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
+	if(!$rs1) {$commit = 1;}
+
+	return $commit;
+}
+
+
+/**
+ * create side by side diff using gnu sdiff
+ * 
+ * @param string $value
+ * @param string $oldvalue
+ * @param number $format - 1 show all - 2 show changed
+ * @return string
+ */
+function gnuDiff($value,$oldvalue,$format=1){
+	global $umgvar;
+	global $session;
+
+	$path = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/";
+
+	$diff1 = fopen($path."diffn","w+");
+	fputs($diff1,$value);
+	fclose($diff1);
+	$diff2 = fopen($path."diffo","w+");
+	fputs($diff2,$oldvalue);
+	fclose($diff2);
+	if($format == 1){
+		//$cmd = "diff -EbBaty ".$path."diffo ".$path."diffn";
+	    $cmd = "sdiff ".$path."diffo ".$path."diffn";
+	}elseif($format == 2){
+		$cmd = "sdiff --suppress-common-lines ".$path."diffo ".$path."diffn";
+		//$cmd = "diff -EbBaty --suppress-common-lines ".$path."diffo ".$path."diffn";
+	}
+
+	$diff = trim(`$cmd`);
+
+	return $diff;
+	
+}
+
+
+/**
+ * shows diff in table
+ * 
+ * @param string $target1
+ * @param string $target2
+ * @param string $name
+ * @param string $vcount1
+ * @param string $vcount2
+ * @param number $format - 1 show all - 2 show changed
+ * @param number $coloring - 1 using textDiff
+ * @return html
+ */
+function tableDiff($target1,$target2,$name=null,$vcount1=null,$vcount2=null,$format=1,$coloring=0){
+	global $umgvar;
+	global $session;
+	global $lang;
+	global $farbschema;
+
+	//$tobr = array(".","!","?","\r\n"); ?????
+	$target1 = str_replace($tobr,"\n",$target1);
+	$target2 = str_replace($tobr,"\n",$target2);
+	$diff = gnuDiff($target1,$target2,$format);
+	if($diff){
+		$diffrows = explode("\n",$diff);
+		if($diff){
+			foreach($diffrows as $key => $value){
+				$value = preg_replace("/[ ]{1,}/"," ",$value);
+				$value_ = '';
+				
+				if(strpos($value,"|")){
+				    $value_ = explode('|', $value);
+				}elseif(strpos($value,"\\") !== false){
+				    $value_ = explode('\\', $value);
+				}elseif(strpos($value,"/") !== false){
+				    $value_ = explode('/', $value);
+				}elseif(strpos($value,">") !== false){
+				    $value_ = explode('>', $value);
+				}elseif(strpos($value,"<") !== false){
+				    $value_ = explode('<', $value);
+				}
+				
+				$value_[0] = trim($value_[0]);
+				$value_[1] = trim($value_[1]);
+				
+				if($coloring){
+				    if($diff = textDiff($value_[0],$value_[1])){
+				        $out .= "<TR><TD STYLE=\"border:1px solid #CCCCCC\">".textDiff($value_[0],$value_[1])."</td></tr>";
+				    }
+				}else{
+				    if($vcount1){$out .= "<TR BGCOLOR=\"$farbschema[WEB7]\"><TD STYLE=\"border:1px solid #CCCCCC;color:blue;\">$lang[1784] <B>$vcount2</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD STYLE=\"border:1px solid #CCCCCC;color:blue;\">$lang[1784] <B>$vcount1</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD></tr>";}
+				    $out .= "<TR><TD STYLE=\"border:1px solid #CCCCCC\">".htmlentities($value_[0],ENT_QUOTES,$umgvar["charset"])."</TD><TD STYLE=\"border:1px solid #CCCCCC\">".htmlentities($value_[1])."</td></tr>";
+				}
+				
+			}
+            if ($out) {
+                if ($name) {
+                    $outh = "<B>" . $name . "</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<SPAN STYLE=\"color:blue\">" . $lang[1784] . "<B> " . $vcount1 . "</B> -> " . $lang[1784] . "<B> " . $vcount2 . "</B></SPAN><BR><hr>";
+                }
+                $out = $outh."<TABLE BORDER=\"0\" cellspacing=\"0\" cellpadding=\"2\" STYLE=\"border-collapse:collapse;width:100%\">".$outh.$out."</TABLE>\n";
+			}
+		}
+		
+		return $out;
+	}
+
+}
+
+
+/**
+ *  create colored diff in html format from text
+ * 
+ * @param string $result1
+ * @param string $result2
+ * @param string $format
+ * @return html
+ */
+function textDiff($result1,$result2,$format=null){
+	global $umgvar;
+
+	chdir($umgvar["pfad"]);
+	$require = "extern/pear/inline-diff/inline_function.php";
+	require_once($require);
+
+	$nl = '#**#';
+	ob_start();
+	inline_diff(strip_tags($result2),strip_tags($result1),$nl);
+	if($output = ob_get_contents()){
+		ob_end_clean();
+		
+		if($format == "short"){
+			$part = preg_replace("%.{0,}(<del.*del>).{0,}%msi","$1",$output);
+			if($part !== $output){
+				$out[] = $part;
+			}
+			$part = preg_replace("%.{0,}(<ins.*ins>).{0,}%msi","$1",$output);
+			if($part !== $output){
+				$out[] = $part;
+			}
+			
+			if($out){
+				return str_replace($nl,"<br>",implode(" ",$out));
+			}
+
+		}else{
+			$output = str_replace($nl,"<br>",$output);
+			return $output;
+		}
+	}
+}
+
+
+/**
+ * create colored diff in html format from array
+ * 
+ * @param array $result1
+ * @param array $result2
+ * @return html
+ */
+function arrayDiff($result1,$result2){
+
+	if(!$result1){$result1 = array();}
+	if(!$result2){$result2 = array();}
+
+	if($del = array_diff($result1,$result2)){
+		$output = "<del>".implode("</del><br><del>",$del)."</del> ";
+	}
+
+	if($add = array_diff($result2,$result1)){
+		$output .= "<ins>".implode("</ins><br><ins>",$add)."</ins> ";
+	}
+	
+	if($del AND $add){$output .= "<br>";}
+
+	return $output;
+}
+
+
+
+
+
+function historyGetEdituser($gtabid,$fieldid,$datid){
+	global $userdat;
+	global $db;
+
+	if(!$gtabid OR !$fieldid OR !$datid){return false;}
+	if(LMB_DBFUNC_LIMIT){$limit = LMB_DBFUNC_LIMIT." 2";}
+	if(LMB_DBFUNC_ROWNO){$where = "AND ".LMB_DBFUNC_ROWNO." < 2";}
+
+	$sqlquery = "SELECT USERID FROM LMB_HISTORY_UPDATE WHERE TAB = ".parse_db_int($gtabid,5)." AND FIELD = ".parse_db_int($fieldid,5)." AND DATAID = ".parse_db_int($datid,10)." $where ORDER BY ERSTDATUM DESC $limit";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+
+	if(odbc_fetch_row($rs,1)){
+		$uid = odbc_result($rs,"USERID");
+		return $userdat["bezeichnung"][$uid];
+	}else{
+		return false;
+	}
+}
+
+
+function get_currency_symbol($currency){
+	if($currency == "EUR"){
+		$symbol = chr(128);
+	}elseif($currency == "USD"){
+		$symbol = "\$";
+	}else{return false;}
+
+	return $symbol;
+}
+
+
+function fgrep_text($file,$searchval,$m,$w,$i){
+	if($searchval){
+		foreach ($searchval as $key => $value) {
+			$gval[] = preg_quote(substr($value,0,50));
+		}
+		if($w){$w = "";}else{$w = "-w";}
+		if($i){$i = "";}else{$i = "-i";}
+		$gval = implode("\n",$gval);
+		$sys = "fgrep -h $i $w -m$m \"$gval\" $file";
+		$out = `$sys`;
+	}
+	return $out;
+}
+
+/**
+* Dateikonvertierung der Formate: text|word|pdf in reinen Text
+* @global umgvar Array Umgebungvariablen
+* @global session Array Session
+* @param file Dateiname
+* @param ext Dateiendung
+* @param mimetyp Mimetype
+* @return textvalue Ausgabe in plain text
+* @internal benötigte externe Scripts:
+* EXTENSION - ext_convert2Text() für eigene Erweiterungen
+* 
+* 
+*/
+function convert_to_text($file,$ext,$mimetype,$fid,$split,$getstream,$renew){
+	global $umgvar;
+	global $session;
+        
+	# File-Header
+	if($umgvar["indize_header"] AND $fid){
+		if($meta = getmeta_from_db($fid,1)){
+			$meta = trim(implode("\n",$meta));
+		}
+	}
+        
+        // build in functions
+        if (! $mime = explode('/', $mimetype)) {
+            return false;
+        }
+
+        # Temporärer txt Pfad
+        $resultpath = $umgvar["pfad"]."/TEMP/txt/".$file.".txt";
+
+        # temporäre Textdatei erneuern
+        if($renew){
+                if(file_exists($resultpath)){
+                        unlink($resultpath);
+                }
+        }
+
+        # prüfen ob Textdatei schon vorhanden
+        if(file_exists($resultpath)){
+                if($getstream){return strip_tags(implode("",file($resultpath)));}else{return true;}
+        }
+        
+        
+        # file to convert to text
+        $inputfile = $umgvar["uploadpfad"].$file.".".$ext;
+
+        # set output encoding to limbas encoding
+        if($umgvar['charset'] == 'UTF-8') {
+            $encoding = 'UTF-8';
+        } else {
+            $encoding = 'Latin1';
+        }
+
+        # apply filters to output
+        $filter1 = "tr '\011' ' '";     # tab to one space
+        $filter2 = "tr -s ' '";         # multiple spaces to one
+        $filter3 = "tr -s '\012\015'";  # multiple newlines to one
+        
+        # --- PDF ---
+        if($mime[1] == "pdf"){
+
+                $sys = "pdftotext -enc \"$encoding\" \"$inputfile\" \"$resultpath\" | $filter1 | $filter2 | $filter3";
+                $out = `$sys`;
+                
+        # --- TEXT/HTML/XML ---
+        }elseif($mime[0] == "text"){
+
+                if($umgvar["use_html2text"]){
+                        $sys = "html2text -o \"$resultpath\" \"$inputfile\" | $filter1 | $filter2 | $filter3";
+                        $out = `$sys`;
+                }else{
+                        $handle = fopen($umgvar["uploadpfad"].$file.".".$ext,"r");
+                        $rf = fopen($resultpath,"w");
+                        while($line = fgets($handle, 100000)){
+                                $line = preg_replace("/^[ ]{1,}$/"," ",$line);
+                                $textres .= html_entity_decode(strip_tags($line."\n"));
+                        }
+                        fputs($rf,$textres);
+                        fclose($handle);
+                        fclose($rf);
+                }
+        # --- ANYTHING WITH TIKA ENABLED ---
+        }elseif($umgvar['indize_tika']){
+            # location of the tika jar
+            $jarlocation = "/opt/tika/tika.jar";
+            
+            static $tikaInstalled = false;
+            if($tikaInstalled || file_exists($jarlocation)) {         
+                $tikaInstalled = true;
+                
+                # generate command
+                $sys = "java -jar $jarlocation --encoding=\"$encoding\" --text \"$inputfile\" | $filter1 | $filter2 | $filter3 > $resultpath";
+
+                # execute
+                $out = `$sys`;
+            } else {
+                error_log("'tika.jar' not found in '/opt/tika/'! Please put it there or deactivate indize_tika in the LIMBAS environment variables!");
+            }
+        }
+        # EXTENSIONS
+        #if(function_exists('ext_convert2Text')){
+        #    if(!$out = ext_convert2Text($fid,$file,$ext,$mimetype,$resultpath)){
+        #        return false;
+        #    }      
+
+
+	# --- Text Datei lesen ----------------------------------
+	if(file_exists($resultpath)){
+
+		# erfolgreiche konvertierung
+		if(!$split){if($getstream){return strip_tags(implode("",file($resultpath)));}else{return true;}}
+
+		# zusätzlich lange Texte splitten
+		$maxlen = 100;
+		$stream = file($resultpath);
+		foreach ($stream as $key => $value){
+			if(strlen($value) > $maxlen){
+				$line = explode(" ",$value);
+				$part = array_chunk($line,10);
+				foreach ($part as $key1 => $value1){
+					$partstream[] = implode(" ",$value1);
+				}
+			}else{
+				$partstream[] = $value;
+			}
+		}
+		if($partstream){
+			$tf = fopen($resultpath,"w");
+			# Metadaten am Anfang einfügen
+			if($meta){fputs($tf,$meta."\n");}
+			fputs($tf,implode("\n",$partstream));
+			fclose($tf);
+			if($getstream){return strip_tags(implode("",file($resultpath)));}else{return true;}
+		}
+	# falls nur Metadaten vorhanden
+	}elseif($meta){
+		$tf = fopen($resultpath,"w");
+		fputs($tf,$meta);
+		fclose($tf);
+		if($getstream){return strip_tags(implode("",file($resultpath)));}else{return 2;}
+	}
+	return false;
+}
+
+# --- path to URL -----------
+function pathToURL($path){
+
+	global $umgvar;
+
+	if($path){
+		$url = explode($umgvar["pfad"],$path);
+		$url = substr($url[1],1,100);
+	}
+
+	return $url;
+}
+
+function mimetype($file)
+{
+	$fp = popen("file -bin $file","r");
+
+	if(!$fp)
+	{
+		$mimetype="application/octet-stream";
+	}
+	else
+	{
+		while($string=fgets($fp, 1024))
+		{
+			$mimetype .= $string;
+		}
+		pclose($fp);
+	}
+	return $mimetype;
+}
+
+
+/**
+ * set date format
+ *
+ * @param number $format
+ * @param number $cl 0=date, 1=DateClass, 2=Datepicker
+ * @return format string
+ */
+function setDateFormat($format,$cl=0){
+	global $session;
+ 	// german
+	if($session["dateformat"] == 1){
+		if($format == 1){
+			if($cl==1){return "d.m.Y";}
+			if($cl==2){return "dd.mm.yy";}
+			return "%d.%m.%Y";
+		}elseif($format == 2){
+			if($cl==1){return "l - j F Y";}
+			if($cl==2){return "DD - m MM yy";}
+			return "%A - %e %B %Y";
+		}elseif($format == 3){
+			if($cl==1){return "l d.m.y H:i";}
+			if($cl==2){return "DD - dd.mm.y HH:mm";}
+			return "%A %d.%m.%y %H:%M";
+		}elseif($format == 4){
+			if($cl==1){return "d.m.Y H:i";}
+			if($cl==2){return "dd.mm.yy HH:mm";}
+			return "%d.%m.%Y %H:%M";
+		}else{
+			if($cl==1){return "d.m.Y H:i:s";}
+			if($cl==2){return "dd.mm.yy HH:mm:ss";}
+			return "%d.%m.%Y %H:%M:%S";
+		}
+	// US
+	}elseif($session["dateformat"] == 2){
+		if($format == 1){
+			if($cl==1){return "Y-m-d";}
+			if($cl==2){return "yy-mm-dd";}
+			return "%Y-%m-%d";
+		}elseif($format == 2){
+			if($cl==1){return "l - Y F j";}
+			if($cl==2){return "DD - yy MM d";}
+			return "%A - %Y %B %e";
+		}elseif($format == 3){
+			if($cl==1){return "l y-m-d H:i";}
+			if($cl==2){return "DD y-mm-dd HH:mm";}
+			return "%A %y-%m-%d %H:%M";
+		}elseif($format == 4){
+			if($cl==1){return "Y-m-d H:i";}
+			if($cl==2){return "yy-mm-dd HH:mm";}
+			return "%Y-%m-%d %H:%M";
+		}else{
+			if($cl==1){return "Y-m-d H:i:s";}
+			if($cl==2){return "yy-mm-dd HH:mm:ss";}
+			return "%Y-%m-%d %H:%M:%S";
+		}
+	// fra
+	}elseif($session["dateformat"] == 3){
+		if($format == 1){
+			if($cl==1){return "m-d-Y";}
+			if($cl==2){return "mm-dd-yy";}
+			return "%m-%d-%Y";
+		}elseif($format == 2){
+			if($cl==1){return "l - F j Y";}
+			if($cl==2){return "DD - MM d yy";}
+			return "%A - %B %e %Y";
+		}elseif($format == 3){
+			if($cl==1){return "l m-d-y H:i";}
+			if($cl==2){return "DD mm-dd-y HH:mm";}
+			return "%A %m-%d-%y %H:%M";
+		}elseif($format == 4){
+			if($cl==1){return "m-d-Y H:i";}
+			if($cl==2){return "mm-dd-yy HH:mm";}
+			return "%m-%d-%Y %H:%M";
+		}else{
+			if($cl==1){return "m-d-Y H:i:s";}
+			if($cl==2){return "mm-dd-yy HH:mm:ss";}
+			return "%m-%d-%Y %H:%M:%S";
+		}
+	}
+}
+
+
+function dateStringToDatepicker($dateString)
+{
+	$pattern = array(
+
+	//day
+	'd',	//day of the month
+	'j',	//3 letter name of the day
+	'l',	//full name of the day
+	'z',	//day of the year
+
+	//month
+	'F',	//Month name full
+	'M',	//Month name short
+	'n',	//numeric month no leading zeros
+	'm',	//numeric month leading zeros
+
+	//year
+	'Y', //full numeric year
+	'y',	//numeric year: 2 digit
+	
+	//Time
+	'H', 
+	'i',
+	's'
+	);
+	$replace = array(
+	'dd','d','DD','o',
+	'MM','M','m','mm',
+	'yy','y','HH','mm','ss'
+	);
+	foreach($pattern as &$p)
+	{
+		$p = '/'.$p.'/';
+	}
+	return preg_replace($pattern,$replace,$dateString);
+}
+
+/**
+ * Encodes an string to UTF-8
+ *
+ * @param string $value
+ * @return string
+ */
+function lmb_utf8_encode($value){
+	if($GLOBALS["umgvar"]["charset"] == "UTF-8"){
+		return $value;
+	}else{
+		#return utf8_encode($value);
+		return iconv($GLOBALS["umgvar"]["charset"],"UTF-8//IGNORE",$value);
+	}
+}
+
+/**
+ * Decode UTF-8 to iso string
+ *
+ * @param string $value
+ * @return string
+ */
+function lmb_utf8_decode($value,$recursive=null){
+	if($recursive){
+		if($GLOBALS["umgvar"]["charset"] == "UTF-8"){
+			#return utf8_decode($value);
+			return iconv("UTF-8","CP1252//IGNORE",$value);
+		}else{
+			return $value;
+		}
+	}else{
+		if($GLOBALS["umgvar"]["charset"] == "UTF-8"){
+			return $value;
+		}else{
+			#return utf8_decode($value);
+			return iconv("UTF-8",$GLOBALS["umgvar"]["charset"].'//IGNORE',$value);
+		}
+	}
+}
+
+
+function lmb_arrayDecode(array $array,$toISO=null) {
+	if($GLOBALS["umgvar"]["charset"] == "UTF-8"){return $array;}
+	$convertedArray = array();
+	foreach($array as $key => $value) {
+		if(is_array($value)){
+			$value = lmb_arrayDecode($value,$toISO);
+		}else{
+			if(!is_numeric($value)){
+				if($toISO){
+					$value = iconv("UTF-8",$GLOBALS["umgvar"]["charset"],$value);
+				}else{
+					$value = lmb_utf8_encode($value);
+				}
+			}
+		}
+		$convertedArray[$key] = $value;
+	}
+	return $convertedArray;
+}
+
+
+# check if UTF-8
+function lmb_utf8_check($value) {
+        return (iconv('UTF-8', 'UTF-8', $value) == $value);
+}
+
+/**
+ * Encodes utf8 to unicode
+ *
+ * @param string $value
+ * @return string
+ */
+function utf8ToUnicode ($source) {
+   // array used to figure what number to decrement from character order value
+   // according to number of characters used to map unicode to ascii by utf-8
+   $decrement[4] = 240;
+   $decrement[3] = 224;
+   $decrement[2] = 192;
+   $decrement[1] = 0;
+
+   // the number of bits to shift each charNum by
+   $shift[1][0] = 0;
+   $shift[2][0] = 6;
+   $shift[2][1] = 0;
+   $shift[3][0] = 12;
+   $shift[3][1] = 6;
+   $shift[3][2] = 0;
+   $shift[4][0] = 18;
+   $shift[4][1] = 12;
+   $shift[4][2] = 6;
+   $shift[4][3] = 0;
+
+   $pos = 0;
+   $len = strlen ($source);
+   $encodedString = '';
+   while ($pos < $len) {
+       $asciiPos = ord (substr ($source, $pos, 1));
+       if (($asciiPos >= 240) && ($asciiPos <= 255)) {
+           // 4 chars representing one unicode character
+           $thisLetter = substr ($source, $pos, 4);
+           $pos += 4;
+       }
+       else if (($asciiPos >= 224) && ($asciiPos <= 239)) {
+           // 3 chars representing one unicode character
+           $thisLetter = substr ($source, $pos, 3);
+           $pos += 3;
+       }
+       else if (($asciiPos >= 192) && ($asciiPos <= 223)) {
+           // 2 chars representing one unicode character
+           $thisLetter = substr ($source, $pos, 2);
+           $pos += 2;
+       }
+       else {
+           // 1 char (lower ascii)
+           $thisLetter = substr ($source, $pos, 1);
+           $pos += 1;
+       }
+
+       // process the string representing the letter to a unicode entity
+       $thisLen = strlen ($thisLetter);
+       $thisPos = 0;
+       $decimalCode = 0;
+       while ($thisPos < $thisLen) {
+           $thisCharOrd = ord (substr ($thisLetter, $thisPos, 1));
+           if ($thisPos == 0) {
+               $charNum = intval ($thisCharOrd - $decrement[$thisLen]);
+               $decimalCode += ($charNum << $shift[$thisLen][$thisPos]);
+           }
+           else {
+               $charNum = intval ($thisCharOrd - 128);
+               $decimalCode += ($charNum << $shift[$thisLen][$thisPos]);
+           }
+
+           $thisPos++;
+       }
+
+       if ($thisLen == 1)
+           $encodedLetter = "&#". str_pad($decimalCode, 3, "0", STR_PAD_LEFT) . ';';
+       else
+           $encodedLetter = "&#". str_pad($decimalCode, 5, "0", STR_PAD_LEFT) . ';';
+
+       $encodedString .= $encodedLetter;
+   }
+
+   return $encodedString;
+}
+
+
+
+
+/**
+ * display a string with a specified maximum lenght
+ * for example: "my string" and 5 will display "my st..."
+ *
+ * @param unknown_type $string the string to display
+ * @param unknown_type $size the size of the string to dispay
+ * @return unknown hte string cut if needed
+ */
+function string_dispSubstr($string,$size)
+{
+	if(strlen($string)>$size)
+		return substr($string,0,$size)."...";
+	else
+		return $string;
+}
+
+/**
+ * Return the number of record for a specified snapshot
+ *
+ *
+ * @param unknown_type $snapid the snapshot id that we want to have the count
+ */
+function getCountForSnapshot($snapid){
+	global $gsr;
+	$null = null;
+
+	require_once("extra/snapshot/snapshot.lib");
+	require_once("gtab/gtab.lib");
+
+	$snapdetail = SNAP_getParam($snapid);
+	$tabid = $snapdetail["tabid"];
+
+	$filter = unserialize($snapdetail["filter"]);
+
+	$mygsr[$tabid] = $filter["gsr"];
+
+	$gresult = get_gresult($gtabid,1,$null,$mygsr,$null);
+
+	return $gresult[$tabid]["res_count"];
+}
+
+/**
+ * get an array of ids in a snapshot
+ *
+ * @param unknown_type $snapid
+ */
+function getAllIdFromSnapshot($snapid){
+	global $gsr;
+	$null = null;
+
+	require_once("extra/snapshot/snapshot.lib");
+	require_once("gtab/gtab.lib");
+
+	$snapdetail = SNAP_getParam($snapid);
+	$tabid = $snapdetail["tabid"];
+
+	$filter = unserialize($snapdetail["filter"]);
+
+	$mygsr[$tabid] = $filter["gsr"];
+
+	$gresult = get_gresult($gtabid,1,$null,$mygsr,$null);
+
+
+	return $gresult[$tabid]["id"];
+}
+
+
+function set2Digit($val){
+
+	if(is_integer($val)){
+		if($val>-1 && $val<10)
+			return "0" . $val;
+		else
+			return $val;
+	}else{
+		return $val;
+	}
+
+}
+
+
+/**
+ * get the user id of the user that has created the record
+ *
+ * @param unknown_type $tabid
+ * @param unknown_type $recordid
+ * @return unknown the ID of the user
+ */
+function getFirstUserForRecord($tabid,$recid){
+	global $db;
+	global $action;
+	global $gtab;
+
+	$tabname = $gtab["table"][$tabid];
+
+	$sqlquery = "select ERSTUSER from $tabname where ID = $recid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(odbc_fetch_row($rs)){
+		return odbc_result($rs,"ERSTUSER");
+	}
+}
+
+
+function USER_getDisplay($userid){
+
+
+	global $action;
+	global $db;
+
+	if($userid){
+		$sqlquery = "select VORNAME,NAME from LMB_USERDB where USER_ID = $userid";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(odbc_fetch_row($rs)){
+			return odbc_result($rs,"VORNAME") . " " . odbc_result($rs,"NAME");
+		}
+	}
+}
+
+function USER_display($userList,$carriageReturn = "<BR>"){
+
+
+	$userList = explode(";",$userList);
+
+	if($userList){
+		foreach ($userList as $key => $id) {
+			if($id){
+				$id = substr($id,1);
+				$result[] = USER_getDisplay($id);
+			}
+		}
+		return implode($carriageReturn,$result);
+	}
+}
+
+# Transaktion Start
+function lmb_StartTransaction(){
+	global $db;
+	
+	if($GLOBALS["lmb_transaction"]){
+		$GLOBALS["lmb_transaction"]++;
+		return false;
+	}else{
+		$GLOBALS["lmb_transaction"]++;
+	}
+
+	odbc_autocommit($db, 0);
+	return true;
+}
+
+# Transaktion Ende
+function lmb_EndTransaction($success,$message=null){
+	global $db;
+	global $lang;
+	global $alert;
+	$GLOBALS["lmb_transaction"]--;
+
+	if($GLOBALS["lmb_transaction"]){
+		return false;
+	}
+
+	if($success){
+		odbc_commit($db);
+		if($message AND $message != 'none'){lmb_alert($message);}
+	} else {
+		odbc_rollback($db);
+			if($message != 'none'){
+			if(!$alert){
+				lmb_alert($lang[56]);
+				lmb_alert($lang[115]);
+			}
+			if($message){lmb_alert($message);}
+		}
+	}
+	odbc_autocommit($db, 1);
+}
+
+
+# simple odbc tablelist
+function ODBCResourceToHTML($res, $sTable, $sRow, $numrows=100){
+	$cFields = odbc_num_fields($res);
+	$strTable = "<table $sTable ><tr><td>nr</td>";
+	for ($n=1; $n<=$cFields; $n++){
+		$strTable .= "<td $sRow><b>". str_replace("_", " ", odbc_field_name($res, $n)) . "</b></td>";
+	}
+	$strTable .= "</tr>";
+	$bzm = 1;
+	while(odbc_fetch_row($res)){
+		$strTable .= "<tr><td>$bzm</td>";
+		for ($n=1; $n<=$cFields; $n++)
+		{$cell = htmlentities(odbc_result($res, $n),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+		if ($cell=='') {$strTable .= "<td $sRow>&nbsp;</td>";}
+		else {$strTable .= "<td $sRow>". $cell . "</td>";}}
+		$strTable .= "</tr>";
+		$bzm++;
+		if($bzm > $numrows){break;}
+	}
+	$strTable .= "</table>";
+	return $strTable;
+} 
+
+
+# ini wysiwyg editor
+function lmb_ini_wysiwyg($elid,$params=null,$changeEvent=null,$advanced=null){
+	global $umgvar;
+	global $session;
+	
+	$out = "<script type=\"text/javascript\">\n";
+	if($umgvar["wysiwygeditor"] == "openwysiwyg"){
+		if(!$params){$params = "StatusBarEnabled=false;Width='100%';removeToolbarElement('headings');removeToolbarElement('save');removeToolbarElement('maximize');removeToolbarElement('font');";}
+		$out .= "lmb_iniWYSIWYG(\"".$elid."\",\"$params\");\n";
+	}elseif($umgvar["wysiwygeditor"] == "TinyMCE"){	
+		if($changeEvent){$params .= ", setup: function(editor) { editor.on('change', function(e) {".$changeEvent.";});}";}
+		if($session['language'] != 2){$lang = "language: \"lang_".$session['language']."\",";}
+		
+		if($advanced == 1){
+				$out .= "
+			tinymce.init({
+				$lang
+				selector: \"textarea#$elid\",
+				width: \"100%\",
+				plugins: [
+				\"advlist autolink lists link image charmap print preview anchor\",
+				\"searchreplace visualblocks code fullscreen\",
+				\"insertdatetime media table contextmenu paste\"
+				],
+				toolbar: \"styleselect | fontselect | fontsizeselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image\"
+				$params
+			});";
+		}elseif($advanced){
+				$out .= "
+			tinymce.init({
+				$lang
+				selector: \"textarea#$elid\",
+				width: \"100%\",
+				$advanced
+				$params
+			});";
+		}else{
+				$out .= "
+			tinymce.init({
+				$lang
+				selector: \"textarea#$elid\",
+				width: \"100%\",
+				toolbar: false
+				$params
+			});
+			";
+		}
+
+	}
+	$out .= "</script>\n";
+	
+	return $out;
+}
+
+
+/**
+ * log entry
+ *
+ * @param unknown_type $logfile
+ * @param unknown_type $msg
+ * @param unknown_type $time
+ */
+function lmb_loghandle($logfile,$msg,$time=null){
+	global $umgvar;
+	
+	# open Logfiles
+	if(!$logfile){
+		$logfile = "limbas.log";
+	}
+	$log = fopen($umgvar["pfad"]."/TEMP/log/$logfile","a");
+	
+	if($time){
+		$time_now = gettime();
+		$time = number_format((($time_now - $time)/60),1,'.','')." min. : ";
+	}
+	
+	fputs($log,date("Y-m-d H:i:s")." : ".$time.$msg."\n");
+	fclose($log);
+}
+
+
+function lmb_getRowColor(){
+	static $bzm;
+	global $farbschema;
+	
+	$bzm++;
+	
+	if ($bzm&1){return $farbschema['WEB13'];}else{return $farbschema['WEB14'];}
+}
+
+
+# ---------- Spaltenbreiten ----------------
+function lmbGetGtabWidth($gtabid,&$filter){
+	global $gfield;
+	
+	$difhc = $gfield[$gtabid]["rowsize"][0]+2;
+	foreach ($gfield[$gtabid]["sort"] as $key => $value){
+		if($filter[$key] OR $gfield[$gtabid]["field_type"] >= 100){continue;}
+		$difhc += $gfield[$gtabid]["rowsize"][$key]+4;
+	}
+	$filter[0] = $difhc;
+	return $difhc;
+}
+
+function lmbGetMenuSetting(){
+	global $db;
+	global $session;
+	
+	$sqlquery = "SELECT M_SETTING FROM LMB_USERDB WHERE USER_ID = ".$session["user_id"];
+	if($rs = odbc_exec($db,$sqlquery)){
+		return unserialize(odbc_result($rs, "M_SETTING"));
+	}
+}
+
+
+
+function lmb_PHPMailer($to, $from, $subject, $message, $attachement=null){
+    global $session;
+    global $userdat;
+    
+    require_once('extern/PHPMailer/class.phpmailer.php');
+     
+    
+    $from_mail = $from;
+    $from_name = null;
+    if(!$from){
+        $from[0] = $session['email'];
+        $from[1] = $userdat["bezeichnung"][$session['user_id']];
+    }
+    if(is_array($from)){
+        $from_mail = $from[0];
+        $from_name = $from[1];
+    }
+    
+    $to_mail = $to;
+    $to_name = null;
+    if(is_array($to)){
+        $to_mail = $to[0];
+        $to_name = $to[1];
+    }
+    
+    $mail = new PHPMailer();
+    $mail -> CharSet = "UTF-8";
+    $mail->AddReplyTo($from_mail,$from_name);
+    $mail->SetFrom($from_mail, $from_name);   
+    $mail->AddAddress($to_mail, $to_name);
+    $mail->Subject = lmb_utf8_encode($subject);
+    $mail->MsgHTML(lmb_utf8_encode($message));
+    
+    #$mail->AltBody = "To view the message, please use an HTML compatible email viewer!";
+    #$mail->AltBody = strip_tags(str_replace('<br>','\n',str_replace('<p>','\n',$message)));
+
+    if($attachement){
+        if(!is_array($attachement)){$attachement[] = $attachement;}
+        foreach($attachement as $key => $value){
+            $mail->AddAttachment($value);      // attachment
+        }
+    }
+    
+    if(!$mail->Send()) {
+        lmb_alert($mail->ErrorInfo);
+        return false;
+    } else {
+        return true;
+    }
+}
+
+
+/* send Mail with attachment
+ * @param string $to
+ * @param string $from
+ * @param string $subject
+ * @param string $message
+ * @param path / array $attachment
+ * @param string / array $cc
+ * @param string / array $bcc
+ */
+function lmb_sendMail($to,$from,$subject,$message,$attachment=null,$cc=null,$bcc=null){
+	global $session;
+	global $umgvar;
+	
+
+	// use PHPMailer
+	if($umgvar['use_phpmailer']){
+	   return lmb_PHPMailer($to, $from, $subject, $message, $attachement);
+	}
+
+	$reply = $from;
+	
+	if(!$subject){$subject = 'no subject';}
+	
+	$subject = '=?utf-8?B?'.base64_encode($subject).'?=';
+
+	if($attachment){
+	require_once("gtab/gtab.lib");
+	require_once("extra/explorer/filestructure.lib");
+	}
+
+	$mime_boundary = "------------" . md5(uniqid(mt_rand(), 1));
+	$mime_boundary2 = "------------" . md5(uniqid(mt_rand(), 1));
+	
+	#$header  ="From:".$from."<".$from.">\n";
+	$header  ="From:".$from."\n";
+	$header .= "Reply-To: ".$reply."\n";
+
+	$header.= "MIME-Version: 1.0\n";
+	$header.= "Content-Type: multipart/mixed; boundary=\"".$mime_boundary."\"\n\n";
+	if($cc){
+	    if(is_array($cc)){
+	       foreach($cc as $cc_key => $cc_val){
+	           $header .= 'Cc: '.$cc_val."\n";
+	       }
+	    }else{
+	       $header .= 'Cc: '.$cc."\n";
+	    }
+	}
+	if($bcc){
+	    if(is_array($bcc)){
+	       foreach($bcc as $bcc_key => $bcc_val){
+	           $header .= 'Bcc: '.$bcc_val."\n";
+	       }
+	    }else{
+	       $header .= 'Bcc: '.$bcc."\n";
+	    }
+	}
+
+	$content = "This is a multi-part message in MIME format.\n";
+	
+	$content.= "--".$mime_boundary."\n";
+	$content.= "Content-Type: multipart/alternative; boundary=\"".$mime_boundary2."\"\n\n";
+	
+	$content.= "--".$mime_boundary2."\n";
+	$content.= "Content-Type: text/plain; charset=utf-8; format=flowed\n";
+	$content.= "Content-Transfer-Encoding: quoted-printable\n";
+	$content.= "Content-Transfer-Encoding: 8bit\n\n";
+	$content.= strip_tags($message)."\n\n";
+	
+	$content.= "--".$mime_boundary2."\n";
+	$content.= "Content-Type: text/html charset=utf-8\n";
+	$content.= "Content-Transfer-Encoding: quoted-printable\n";
+	$content.= "Content-Transfer-Encoding: 8bit\n\n";
+	$content.= $message."\n\n";
+	$content.= "--".$mime_boundary2."--\n";
+	
+	if(!is_array($attachment)){
+		$attachment = array($attachment);
+	}
+	
+	if(is_array($attachment)){
+		$bzm=1000;
+		foreach($attachment as $ID){
+			
+			# file from disc
+			if(file_exists($ID)){
+				$file_ = explode("/",$ID);
+				$file['name'] = $file_[count($file_)-1];
+				$fileE = explode('.',$file['name']);
+				$fileE = $fileE[count($fileE)-1];
+				$file['size'] = filesize($ID);
+				if($fileE == 'ics'){
+					$file['mimetype'] = 'text/calendar';
+				}else{
+					$file['mimetype'] = mime_content_type($ID);
+				}
+				$file["path"] = $ID;
+			# file-id from limbas
+			}elseif(is_numeric($ID) AND $file = file_download($ID)){
+				$file['size'] = filesize($file["path"]);
+			}else{
+				continue;
+			}
+			
+			$content.= "--".$mime_boundary."\n";
+			$content.= "Content-Type: ".$file['mimetype']."; name=\"".$file['name']."\"\n";
+			$content.= "Content-ID:$bzm\n";
+			$content.= "Content-Disposition: attachment; filename=\"".$file['name']."\"\n";
+			$content.= "Content-Length: .".$file['size']."\n";
+			$content.= "Content-Transfer-Encoding: base64\n\n";
+			$content.= chunk_split(base64_encode(file_get_contents($file["path"])))."\n";
+		    $bzm++;
+		}
+		$content .= "--".$mime_boundary."--\n";
+	}
+
+
+	if(@mail($to, $subject, $content, $header)) return true;
+	else return false;
+}
+
+
+// function to parse the http auth header
+function http_digest_parse($txt)
+{
+
+	// protect against missing data
+	$needed_parts = array('nonce'=>1, 'nc'=>1, 'cnonce'=>1, 'qop'=>1, 'username'=>1, 'uri'=>1, 'response'=>1);
+	$authdigest = array();
+	$keys = implode('|', array_keys($needed_parts));
+
+	preg_match_all('@(' . $keys . ')=(?:([\'"])([^\2]+?)\2|([^\s,]+))@', $txt, $matches, PREG_SET_ORDER);
+
+	foreach ($matches as $m) {
+		$authdigest[$m[1]] = $m[3] ? $m[3] : $m[4];
+		unset($needed_parts[$m[1]]);
+	}
+
+	return $needed_parts ? false : $authdigest;
+}
+
+// download progres status
+function lmb_ajaxProgresStatus($total,$progress){
+	static $buffer;
+	static $lastprogr;
+	
+	# flush buffer
+	if(!$buffer){
+		ob_end_clean();
+		ob_end_clean();
+		ob_implicit_flush(true);
+		header('Content-Length: 100');
+	}
+	
+	
+	$p = round(($progress/$total)*100);
+	
+	if($p > $lastprogr){
+		$buffer = $p - $lastprogr;
+		$lastprogr = $p;
+		
+		# in bytes
+		for($i=1;$i<=$buffer;$i++){
+			$out = $out.'1';
+		}
+		
+		echo $out;
+	}
+
+}
+?>

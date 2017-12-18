@@ -1,0 +1,132 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 210
+ */
+
+ob_implicit_flush(true);
+ob_end_flush();
+
+if(!$GLOBALS["cronjob"]){
+echo "
+<Script language=\"JavaScript\">
+function showprocess(id,value,acc){
+	if(document.getElementById(id)){
+		document.getElementById(id).style.width = Math.round(value);
+		document.getElementById(\"accval\").firstChild.nodeValue = Math.round(acc)+'%';
+	}
+	document.getElementById(\"indcontainer\").style.display='';
+}
+</SCRIPT>
+";
+
+echo "<div id=\"indcontainer\"  class=\"lmbContextMenu\" style=\"z-index:99;left:60px;top:60px;width:250px;display:none;\">";
+pop_closetop('indcontainer');
+pop_left();
+}
+
+$jobdir = read_dir($umgvar["pfad"]."/admin/tools/jobs",0);
+foreach ($jobdir["name"] as $key => $value){
+	$kat = explode(".",$jobdir["name"][$key]);
+	$kat = strtoupper($kat[0]);
+	if($kategorie == $jobdir["name"][$key]){$req = $jobdir["path"][$key].$jobdir["name"][$key];$kategoriedesc = $kat;}
+}
+
+if($kategorie AND $req){
+	require_once($req);
+}
+
+
+# -------- Interaktiver Job --------
+if($run_job){
+	$job = $run_job;
+	$sqlquery = "SELECT ID,VAL FROM LMB_CRONTAB WHERE ID = $run_job";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	if($cronval = odbc_result($rs,"VAL")){
+		lmb_loghandle(strtolower($kategoriedesc).".log","starting job \t(".odbc_result($rs,"ID").")");
+		periodic_job($cronval);
+		lmb_loghandle(strtolower($kategoriedesc).".log","ending job \t(".odbc_result($rs,"ID").")");
+	}
+}
+
+# -------- Umgebungvaiablen auslesen --------
+if(!$umgvar){
+	$bzm = 1;
+	$sqlquery = "SELECT FORM_NAME,NORM FROM LMB_UMGVAR";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	while(odbc_fetch_row($rs, $bzm)) {
+		$umgvar[odbc_result($rs,"FORM_NAME")] = odbc_result($rs,"NORM");
+		$bzm++;
+	}
+}
+
+# -------- delete job action --------
+if($del_index){
+	$handle = explode("_",$del_index);
+	delede_dir_job($handle,$subdir);
+}
+
+# --- refresh job -----
+if($refresh_index){
+	$handle = explode("_",$refresh_index);
+	refresh_job($handle,$subdir);
+}
+
+# ---- Cron Job löschen ----
+if($del_job){
+	$sqlquery = "DELETE FROM LMB_CRONTAB WHERE ID = $del_job AND KATEGORY = '$kategoriedesc'";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	#if(!update_crontab()){lmb_alert("no permission to /etc/crontab\\ncheck it manualy");};
+}
+
+# ---- Cron Job deactivate / activate ----
+if($activate_job){
+	$sqlquery = "SELECT ACTIV FROM LMB_CRONTAB WHERE ID = $activate_job AND KATEGORY = '$kategoriedesc'";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	if(odbc_result($rs,"ACTIV")){$bool = LMB_DBDEF_FALSE;}else{$bool = LMB_DBDEF_TRUE;}
+	$sqlquery = "UPDATE LMB_CRONTAB SET ACTIV = $bool WHERE ID = $activate_job AND KATEGORY = '$kategoriedesc'";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	#if(!update_crontab()){lmb_alert("no permission to /etc/crontab\\ncheck it manualy");};
+}
+
+
+if($add_job){add_job($kategoriedesc,$job_desc,$job_template,$cron,$ifile,$subdir);}
+
+
+if($commit){
+	lmb_alert($lang[115]."\\n".$alert2);
+} elseif($alert2) {
+	lmb_alert($alert2);
+}
+unset($commit);
+
+# close Logfile
+if($error_logfile){fclose($error_logfile);}
+if($logfile){fclose($logfile);}
+
+if(!$GLOBALS["cronjob"]){
+pop_right();
+pop_bottom();
+echo "</div>";
+}
+
+?>

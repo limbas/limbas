@@ -1,0 +1,14 @@
+# project specific
+/dependent/
+/public/
+
+# dependencies
+/independent/
+
+# assets
+*.svg
+*.png
+*.gif
+*.png
+*.jpg
+*.swf

@@ -1,0 +1,642 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 116
+ */
+
+
+
+
+
+
+/**
+ * Enter description here...
+ *
+ */
+function delete_subGroupFromUser($groupid){
+	global $db;
+	
+	/* --- User löschen --------------------------------------------- */
+	$sqlquery = "SELECT USER_ID,SUB_GROUP FROM LMB_USERDB";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(odbc_fetch_row($rs)){
+	
+		$newsgl = array();
+		$update = 0;
+		$userid = odbc_result($rs, "USER_ID");
+		$subgroup = odbc_result($rs, "SUB_GROUP");
+
+		if($subgroup){
+			$subglist = explode(";",$subgroup);
+			foreach ($subglist as $key => $value){
+				if($value != $groupid){
+					$newsgl[] = $value;
+				}else{
+					$update = 1;
+				}
+			}
+			
+			if($update){
+				$newsgl = implode(";",$newsgl);
+				$sqlquery1 = "UPDATE LMB_USERDB SET SUB_GROUP = '$newsgl' WHERE USER_ID = $userid";
+				$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			}
+		}
+	}
+
+}
+
+
+
+/* --- Gruppe löschen ---------------------------- */
+function delete_group($ID){
+	global $db;
+	global $umgvar;
+	global $lang;
+
+	if($ID){
+	    $sqlquery = "SELECT NAME FROM LMB_GROUPS WHERE GROUP_ID = $ID";
+	    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$group_name = odbc_result($rs, "NAME");
+
+        /* --- User löschen --------------------------------------------- */
+        $sqlquery = "SELECT USER_ID FROM LMB_USERDB WHERE GROUP_ID = $ID";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $bzm = 1;
+        while(odbc_fetch_row($rs,$bzm)){
+        	delete_user(odbc_result($rs, "USER_ID"));
+        	$bzm++;
+        }
+
+
+        lmb_StartTransaction();
+
+        $sqlquery = "DELETE FROM LMB_RULES_FIELDS WHERE GROUP_ID = $ID";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+        $sqlquery = "DELETE FROM LMB_RULES_TABLES WHERE GROUP_ID = $ID";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+        $sqlquery = "DELETE FROM LDMS_RULES WHERE GROUP_ID = $ID";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+        $sqlquery = "DELETE FROM LMB_RULES_REPFORM WHERE GROUP_ID = $ID";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+        $sqlquery = "DELETE FROM LMB_RULES_ACTION WHERE GROUP_ID = $ID";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+        $sqlquery = "DELETE FROM LMB_GTAB_GROUPDAT WHERE GROUP_ID = $ID";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+        $sqlquery = "DELETE FROM LMB_SESSION WHERE GROUP_ID = $ID";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+        $sqlquery = "DELETE FROM LMB_GROUPS WHERE GROUP_ID = $ID";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+        $sqlquery = "DELETE FROM LMB_REMINDER WHERE GROUP_ID = $ID";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+        
+        if(!$commit){
+        	delete_subGroupFromUser($ID);
+        }
+
+        /* --- Transaktion ENDE -------------------------------------- */
+        if($commit){
+        	lmb_EndTransaction(0);
+        	return false;
+        } else {
+        	echo "<SCRIPT LANGUAGE=\"JavaScript\">alert('".$group_name." ".$lang[1513]."');</SCRIPT>";
+        	lmb_EndTransaction(1);
+        	return true;
+        }
+
+	}
+}
+
+
+/* --- Gruppe und Untergruppen löschen ---------------------------- */
+function delete_group_list($ID){
+	global $db;
+	static $noError;
+	$noError = true;
+
+	if($ID){
+		$sqlquery = "SELECT GROUP_ID FROM LMB_GROUPS WHERE LEVEL = $ID";
+	    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	    if(!$rs) {$commit = 1;}
+		$bzm = 1;
+	    while(odbc_fetch_row($rs, $bzm)) {
+	    	if($noError)
+				if(delete_group_list(odbc_result($rs, "GROUP_ID"))){
+					$noError = false;
+					return $noError;
+				}
+			$bzm++;
+		}
+	}
+
+	if(!delete_group($ID)){$commit = 1;}
+	if($commit){return false;}
+
+	return true;
+}
+
+
+
+
+# Dateirechte von Obergruppe übernehmen
+function updateParentFilesettings($ID,$group_level,$use_parent_filesettings){
+	global $db;
+	
+	if(!$group_level){return false;}
+
+	/* --- Dateirechte ------------------------ */
+	$sqlquery = "DELETE FROM LDMS_RULES WHERE GROUP_ID = $ID";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+	$sqlquery = "SELECT * FROM LDMS_RULES WHERE GROUP_ID = $group_level ORDER BY ID";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$bzm = 1;
+	while(odbc_fetch_row($rs, $bzm)) {
+		/* --- Next ID ---------------------------------------- */
+		$NEXTID1 = next_db_id("LDMS_RULES");
+		if($use_parent_filesettings){
+			$sqlquery1 = "INSERT INTO LDMS_RULES (ID,ERSTDATUM,GROUP_ID,FILE_ID,FILE_TYP,LMVIEW,LMADD,DEL,ADDF,EDIT) VALUES (".$NEXTID1.",".LMB_DBDEF_TIMESTAMP.",".$ID.",".parse_db_int(odbc_result($rs, "FILE_ID"),16).",".parse_db_int(odbc_result($rs, "FILE_TYP"),5).",".parse_db_bool(odbc_result($rs, "LMVIEW")).",".parse_db_bool(odbc_result($rs, "LMADD")).",".parse_db_bool(odbc_result($rs, "DEL")).",".parse_db_bool(odbc_result($rs, "ADDF")).",".parse_db_bool(odbc_result($rs, "EDIT")).")";
+		}else{
+			$sqlquery1 = "INSERT INTO LDMS_RULES (ID,ERSTDATUM,GROUP_ID,FILE_ID,FILE_TYP,LMVIEW,LMADD,DEL,ADDF,EDIT) VALUES (".$NEXTID1.",".LMB_DBDEF_TIMESTAMP.",".$ID.",".parse_db_int(odbc_result($rs, "FILE_ID"),16).",".parse_db_int(odbc_result($rs, "FILE_TYP"),5).",".LMB_DBDEF_FALSE.",".LMB_DBDEF_FALSE.",".LMB_DBDEF_FALSE.",".LMB_DBDEF_FALSE.",".LMB_DBDEF_FALSE.")";
+		}
+		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		if(!$rs1) {$commit = 1;}
+		$bzm++;
+	}
+
+	if($commit){return false;}else{return true;}
+}
+
+
+
+# --- Menürechte von Obergruppe übernehmen ------------------------
+function updateParentMenusettings($ID,$group_level,$use_parent_menusettings){
+	global $db;
+	
+	if(!$group_level){return false;}
+
+	$sqlquery = "DELETE FROM LMB_RULES_ACTION WHERE GROUP_ID = $ID";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+	if($use_parent_menusettings){
+		$sqlquery = "SELECT * FROM LMB_RULES_ACTION WHERE GROUP_ID = $group_level ORDER BY ID";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		$bzm = 1;
+		while(odbc_fetch_row($rs, $bzm)) {
+			/* --- Next ID ---------------------------------------- */
+			$NEXTID1 = next_db_id("LMB_RULES_ACTION");
+			$sqlquery1 = "INSERT INTO LMB_RULES_ACTION (ID,LINK_ID,GROUP_ID,PERM,SORT) VALUES (".$NEXTID1.",".parse_db_int(odbc_result($rs,"LINK_ID"),10).",$ID,".parse_db_int(odbc_result($rs,"PERM"),10).",".parse_db_int(odbc_result($rs,"SORT"),5).")";
+			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			if(!$rs1) {$commit = 1;}
+			$bzm++;
+		}
+	}else{
+		$sqlquery = "SELECT ID FROM LMB_ACTION UNION SELECT ID FROM LMB_ACTION_DEPEND";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		$bzm = 1;
+		while(odbc_fetch_row($rs, $bzm)) {
+			/* --- Next ID ---------------------------------------- */
+			$NEXTID1 = next_db_id("LMB_RULES_ACTION");
+			#if(odbc_result($rs,"MAINGROUP") != 2){$perm = 2;}else{$perm = 1;}
+			$perm = 1;
+			$sqlquery1 = "INSERT INTO LMB_RULES_ACTION (ID,LINK_ID,GROUP_ID,PERM) VALUES (".$NEXTID1.",'".odbc_result($rs,"ID")."','".$ID."','$perm')";
+			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			if(!$rs1) {$commit = 1;}
+			$bzm++;
+		}
+	}
+}
+
+
+# --- Formularrechte von Obergruppe übernehmen ------------------------
+function updateParentFormsettings($ID,$group_level,$use_parent_formsettings){
+	global $db;
+	
+	if(!$group_level){return false;}
+
+	$sqlquery = "DELETE FROM LMB_RULES_REPFORM WHERE GROUP_ID = $ID";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+	if($use_parent_formsettings){
+		$sqlquery = "SELECT ID,TYP,REPFORM_ID,LMVIEW FROM LMB_RULES_REPFORM WHERE GROUP_ID = $group_level ORDER BY ID";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		$bzm = 1;
+		while(odbc_fetch_row($rs, $bzm)) {
+			/* --- Next ID ---------------------------------------- */
+			$NEXTID1 = next_db_id("LMB_RULES_REPFORM");
+			$sqlquery1 = "INSERT INTO LMB_RULES_REPFORM (ID,TYP,GROUP_ID,REPFORM_ID,LMVIEW) VALUES (".$NEXTID1.",".parse_db_int(odbc_result($rs,"TYP"),1).",$ID,".parse_db_int(odbc_result($rs,"REPFORM_ID"),5).",".parse_db_bool(odbc_result($rs,"LMVIEW")).")";
+			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			if(!$rs1) {$commit = 1;}
+			$bzm++;
+		}
+	}
+}
+
+
+# --- Tabellenrechte von Obergruppe übernehmen ------------------------
+function updateParentTabsettings($ID,$group_level,$use_parent_tabsettings){
+	global $db;
+	
+	if(!$group_level){return false;}
+
+	$sqlquery = "DELETE FROM LMB_RULES_TABLES WHERE GROUP_ID = $ID";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+
+	$sqlquery = "SELECT ID,EDIT,LMVIEW,DEL,HIDE,LMADD,TAB_ID,VIEW_FORM,TAB_GROUP,VIEW_TFORM,VIEW_PERIOD,VIEW_PERIOD,LMTRIGGER FROM LMB_RULES_TABLES WHERE GROUP_ID = $group_level";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$bzm = 1;
+	while(odbc_fetch_row($rs, $bzm)){
+		if(odbc_result($rs, "EDIT")){$edit = LMB_DBDEF_TRUE;}else{$edit = LMB_DBDEF_FALSE;}
+		if(odbc_result($rs, "LMVIEW")){$view = LMB_DBDEF_TRUE;}else{$view = LMB_DBDEF_FALSE;}
+		if(odbc_result($rs, "DEL")){$delete = LMB_DBDEF_TRUE;}else{$delete = LMB_DBDEF_FALSE;}
+		if(odbc_result($rs, "HIDE")){$hide = LMB_DBDEF_TRUE;}else{$hide = LMB_DBDEF_FALSE;}
+		if(odbc_result($rs, "LMADD")){$add = LMB_DBDEF_TRUE;}else{$add = LMB_DBDEF_FALSE;}
+		
+		$NEXTID = next_db_id("LMB_RULES_TABLES");
+		if($use_parent_tabsettings){
+			$sqlquery1 = "INSERT INTO LMB_RULES_TABLES (ID,GROUP_ID,TAB_ID,TAB_GROUP,EDIT,LMVIEW,DEL,HIDE,LMADD,VIEW_FORM,VIEW_TFORM,VIEW_PERIOD,LMTRIGGER) VALUES ($NEXTID, $ID,".odbc_result($rs, "TAB_ID").",".odbc_result($rs, "TAB_GROUP").",".$edit.",".$view.",".$delete.",".$hide.",".$add.",".parse_db_int(odbc_result($rs, "VIEW_FORM"),5).",".parse_db_int(odbc_result($rs, "VIEW_TFORM"),5).",".parse_db_int(odbc_result($rs, "VIEW_PERIOD"),5).",'".parse_db_string(odbc_result($rs, "LMTRIGGER"),20)."')";
+		}else{
+			$sqlquery1 = "INSERT INTO LMB_RULES_TABLES (ID,GROUP_ID,TAB_ID,TAB_GROUP,EDIT,LMVIEW,DEL,HIDE,LMADD) VALUES ($NEXTID, $ID,".odbc_result($rs, "TAB_ID").",".odbc_result($rs, "TAB_GROUP").",".$edit.",".$view.",".$delete.",".$hide.",".$add.")";
+		}
+		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		if(!$rs1) {$commit = 1;}
+
+		$bzm++;
+	}
+
+
+	/*------------------------------ LMB_RULES_FIELDS ------------------------------------*/
+	$sqlquery = "DELETE FROM LMB_RULES_FIELDS WHERE GROUP_ID =  $ID";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$sqlquery = "SELECT * FROM LMB_RULES_FIELDS WHERE GROUP_ID = $group_level";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$bzm = 1;
+	while(odbc_fetch_row($rs, $bzm)) {
+		if(odbc_result($rs, "EDIT")){$edit = LMB_DBDEF_TRUE;}else{$edit = LMB_DBDEF_FALSE;}
+		if(odbc_result($rs, "LMVIEW")){$view = LMB_DBDEF_TRUE;}else{$view = LMB_DBDEF_FALSE;}
+		if(odbc_result($rs, "COPY")){$copy = LMB_DBDEF_TRUE;}else{$copy = LMB_DBDEF_FALSE;}
+		if(odbc_result($rs, "NEED")){$need = LMB_DBDEF_TRUE;}else{$need = LMB_DBDEF_FALSE;}
+		if(odbc_result($rs,"SORT")){$sort = odbc_result($rs,"SORT");}else{$sort = 0;}
+		
+		$NEXTID = next_db_id("LMB_RULES_FIELDS");
+		if($use_parent_tabsettings){
+			$sqlquery1 = "INSERT INTO LMB_RULES_FIELDS (ID,GROUP_ID,TAB_GROUP,TAB_ID,FIELD_ID,LMVIEW,EDIT,COPY,NEED,COLOR,FILTER,FILTERTYP,SORT,LMTRIGGER,NFORMAT,CURRENCY,EXT_TYPE,DEFLT) VALUES ($NEXTID, $ID,".odbc_result($rs, "TAB_GROUP").",".odbc_result($rs, "TAB_ID").",".odbc_result($rs,"FIELD_ID").",$view,$edit,$copy,$need,'".parse_db_string(odbc_result($rs, "COLOR"),8)."','".parse_db_string(odbc_result($rs, "FILTER"),499)."','".parse_db_int(odbc_result($rs, "FILTERTYP"),1)."','".parse_db_int($sort,5)."','".parse_db_string(odbc_result($rs, "LMTRIGGER"),20)."','".parse_db_string(odbc_result($rs, "NFORMAT"),30)."','".parse_db_string(odbc_result($rs, "CURRENCY"),5)."','".parse_db_string(odbc_result($rs, "EXT_TYPE"),50)."','".parse_db_string(odbc_result($rs, "DEFLT"),25)."')";
+		}else{
+			$sqlquery1 = "INSERT INTO LMB_RULES_FIELDS (ID,GROUP_ID,TAB_GROUP,TAB_ID,FIELD_ID,LMVIEW,EDIT,SORT) VALUES ($NEXTID, $ID,".odbc_result($rs, "TAB_GROUP").",".odbc_result($rs, "TAB_ID").",".odbc_result($rs,"FIELD_ID").",$view,$edit,$sort)";
+		}
+		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		if(!$rs1) {$commit = 1;}
+
+		$bzm++;
+	}
+
+}
+
+
+
+
+
+
+# Gruppe anlegen
+function add_group($group_name,$group_beschr,$group_level,$use_parent_filesettings,$use_parent_menusettings,$use_parent_tabsettings,$use_parent_formsettings){
+	global $db;
+	global $lang;
+	global $groupdat;
+
+	/* --- SUCHE ob schon vorhanden --------------------------------------------- */
+	$sqlquery = "SELECT GROUP_ID FROM LMB_GROUPS WHERE NAME = '".parse_db_string($group_name)."'";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS["action"],__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	if(odbc_fetch_row($rs, 1)) {
+		lmb_alert("$lang[599] \"$group_name\" $lang[600]");
+		$ID = $group_level;
+	}else{
+		/* --- Transaktion START -------------------------------------- */
+		lmb_StartTransaction();
+
+		/* --- Gruppe hinzufügen in LMB_GROUPS --------------------------------------------- */
+		$group_name = parse_db_string(str_replace(" ","",$group_name),50);
+
+		/* --- Next ID ---------------------------------------- */
+		$NEXTID = next_db_id("LMB_GROUPS","GROUP_ID");
+
+		$sqlquery = "INSERT INTO LMB_GROUPS (GROUP_ID,NAME,DESCRIPTION,LEVEL,DEL) VALUES($NEXTID,'$group_name','$group_beschr',$group_level,".LMB_DBDEF_FALSE.")";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS["action"],__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		$ID = $NEXTID;
+
+		$sqlquery = "SELECT LEVEL FROM LMB_GROUPS WHERE GROUP_ID = $ID";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS["action"],__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		if(odbc_result($rs, "LEVEL")){
+			$group_level = odbc_result($rs, "LEVEL");
+		}else{
+			$group_level = 0;
+			check_grouprights1($ID);
+			check_grouprights($ID);
+		}
+
+		# if parent group
+		if($group_level){
+			/* --- Tabrechte ------------------------ */
+			if($use_parent_tabsettings){
+				$commit = updateParentTabsettings($ID,$group_level,$use_parent_tabsettings);
+			}else{
+				check_grouprights1($ID);
+			}
+			
+			/* --- Menürechte ------------------------ */
+			if($use_parent_menusettings){
+				$commit = updateParentMenusettings($ID,$group_level,$use_parent_menusettings);
+			}else{
+				check_grouprights($ID);
+			}
+			
+			/* --- Dateirechte ------------------------ */
+			$commit = updateParentFilesettings($ID,$group_level,$use_parent_filesettings);
+	
+			/* --- Formularrechte ------------------------ */
+			$commit = updateParentFormsettings($ID,$group_level,$use_parent_formsettings);
+		}
+
+		/* --- Transaktion ENDE -------------------------------------- */
+		if($commit == 1){
+			lmb_EndTransaction(0);
+		} else {
+			lmb_EndTransaction(1);
+			$groupdat["id"][$NEXTID-1] = $NEXTID;
+			$groupdat["name"][$NEXTID] = $group_name;
+			$groupdat["beschreibung"][$NEXTID] = $group_beschr;
+			$_SESSION["groupdat"] = $groupdat;
+			echo "<SCRIPT LANGUAGE=\"JavaScript\">parent.user_tree.location.href='main_admin.php?<?=SID?>&action=setup_user_tree';</SCRIPT>";
+		}
+	}
+
+	return $ID;
+
+}
+
+/*------------------------------ Tabellen/Spalten-Rechte ------------------------------------*/
+function check_grouprights1($group_id,$group_name="",$num_group=0,$check_table=0){
+
+	global $db;
+	global $lang;
+	global $farbschema;
+	global $num;
+
+	if(is_numeric($check_table) AND $check_table){$check_table = " WHERE LMB_CONF_TABLES.TAB_ID = $check_table ";}else{$check_table = '';}
+	
+	$sqlquery = "SELECT LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.TAB_ID,LMB_CONF_TABLES.BESCHREIBUNG,LMB_CONF_TABLES.TAB_GROUP,LMB_CONF_VIEWS.VIEWTYPE
+FROM LMB_CONF_TABLES LEFT OUTER JOIN LMB_CONF_VIEWS ON (LMB_CONF_TABLES.ID = LMB_CONF_VIEWS.ID)
+$check_table
+ORDER BY TAB_GROUP,TAB_ID";
+	
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$bzm = 1;
+	while(odbc_fetch_row($rs,$bzm)) {
+		if(!odbc_result($rs,"VIEWTYPE") OR odbc_result($rs,"VIEWTYPE") == 1){
+			$gtab[table][] = odbc_result($rs,"TABELLE");
+			$gtab[tab_id][] = odbc_result($rs,"TAB_ID");
+			$gtab[desc][] = $lang[odbc_result($rs,"BESCHREIBUNG")];
+			$gtab[tab_group][] = odbc_result($rs,"TAB_GROUP");
+		}
+	$bzm++;
+	}
+	$num_tab = $bzm;
+	
+	echo "<Script language=\"JavaScript\">showprocess('status_group','$group_name','');</Script>";
+	flush();ob_flush();
+	
+	if($group_id == 1){
+		$BOOL = LMB_DBDEF_TRUE;
+		$atid = 2; $perm = 2;
+	}else{
+		$BOOL = LMB_DBDEF_FALSE;
+		$atid = 2; $perm = 1;
+	}
+	
+	$bzm = 0;
+    foreach($gtab['tab_id'] as $bzm => $tab_id) {      	   	
+
+		echo "<Script language=\"JavaScript\">showprocess('status_table','".$gtab['desc'][$bzm]."','');</Script>";
+		flush();ob_flush();
+		 
+		/*------------------------------ Tabellenrechte ------------------------------------*/
+		$sqlquery = "SELECT ID FROM LMB_RULES_TABLES WHERE TAB_ID = ".$gtab['tab_id'][$bzm]." AND GROUP_ID = $group_id";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!odbc_fetch_row($rs, 1)){
+			$NEXTID = next_db_id("LMB_RULES_TABLES");            
+            $sqlquery1 = "INSERT INTO LMB_RULES_TABLES (ID,GROUP_ID,TAB_ID,TAB_GROUP,EDIT,LMVIEW,DEL,HIDE,LMADD,NEED,VIEW_FORM,VIEW_PERIOD) VALUES ($NEXTID,$group_id,".$gtab[tab_id][$bzm].",".$gtab[tab_group][$bzm].",$BOOL,$BOOL,$BOOL,$BOOL,$BOOL,".LMB_DBDEF_FALSE.",0,0)";
+            $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			#if($group_name){echo "<span style=\"width:100px;color:green\">$lang[983]</span><BR>\n";}
+		}
+		#else{
+			#if($group_name){echo "<span style=\"width:100px;color:orange\">$lang[986]</span><BR>\n";}
+		#}
+            
+		/*------------------------------ Spaltenrechte ------------------------------------*/
+		$sqlquery = "SELECT * FROM LMB_CONF_FIELDS WHERE TAB_GROUP = ".$gtab[tab_group][$bzm]." AND TAB_ID = ".$gtab[tab_id][$bzm]." ORDER BY TAB_GROUP,TAB_ID,FIELD_ID";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$bzm1 = 1;
+		while(odbc_fetch_row($rs, $bzm1)) {
+			$sqlquery2 = "SELECT ID FROM LMB_RULES_FIELDS WHERE FIELD_ID = ".odbc_result($rs,"FIELD_ID")." AND TAB_ID = ".$gtab[tab_id][$bzm]." AND TAB_GROUP = ".$gtab[tab_group][$bzm]." AND GROUP_ID = $group_id";
+			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+			if (!odbc_fetch_row($rs2, 1)) {
+				$NEXTID = next_db_id("LMB_RULES_FIELDS");				
+				$sqlquery3 = "INSERT INTO LMB_RULES_FIELDS (ID,GROUP_ID,TAB_GROUP,TAB_ID,FIELD_ID,LMVIEW,EDIT,COLOR,FILTER,SORT) VALUES ($NEXTID,$group_id,".$gtab[tab_group][$bzm].",".$gtab[tab_id][$bzm].",".odbc_result($rs,"FIELD_ID").",$BOOL,$BOOL,'','',0)";
+				$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+				if($rs3){
+					#if($group_name){echo "<span style=\"width:200px;\">&nbsp;&nbsp;&nbsp;&nbsp;$lang[984] ".$lang[odbc_result($rs,"SPELLING")]."</span><span style=\"width:100px;color:green;\">$lang[983]</span><BR>\n";}
+				}
+			}
+			#else{
+				#if($group_name){echo "<span style=\"width:200px;\">&nbsp;&nbsp;&nbsp;&nbsp;$lang[984] ".$lang[odbc_result($rs,"SPELLING")]."</span><span style=\"width:100px;color:orange;\">$lang[986]</span><BR>\n";}
+			#}
+		$bzm1++;
+		}
+		
+	$bzm++;
+	$num++;
+	if($group_name AND $num_group){
+		echo "<Script language=\"JavaScript\">
+		showprocess('overall','".(($num*500)/($num_tab*$num_group))."','width');
+		//document.body.scrollTop='99999';
+		</Script>";
+		flush();ob_flush();
+	}
+	}
+}
+
+/*------------------------------ Tabellen/Spalten-Rechte / Übernehme Rechte von Obergruppe ------------------------------------*/
+function check_grouprights2($group_id,$group_name="",$num_group=0){
+	global $db;
+	global $lang;
+	global $num_tab;
+	global $farbschema;
+	global $num;
+	
+	#if($group_name){echo "<span style=\"width:500px;background-color:".$farbschema[WEB6].";\">$lang[981] <B>$group_name</B></span><BR>";}
+	echo "<Script language=\"JavaScript\">showprocess('status_group','$group_name','');</Script>";
+			
+	$sqlquery = "SELECT LEVEL FROM LMB_GROUPS WHERE GROUP_ID = $group_id";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(odbc_result($rs, "LEVEL")){$group_level = odbc_result($rs, "LEVEL");}else{$group_level = 1;}
+
+	$sqlquery = "DELETE FROM LMB_RULES_TABLES WHERE GROUP_ID = $group_id";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	   
+	/*------------------------------ Tabellenrechte ------------------------------------*/
+	$sqlquery = "SELECT * FROM LMB_RULES_TABLES WHERE GROUP_ID = $group_level";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$bzm = 1;
+	while(odbc_fetch_row($rs, $bzm)){
+		if(odbc_result($rs, "EDIT")){$edit = LMB_DBDEF_TRUE;}else{$edit = LMB_DBDEF_FALSE;}
+		if(odbc_result($rs, "LMVIEW")){$view = LMB_DBDEF_TRUE;}else{$view = LMB_DBDEF_FALSE;}
+		if(odbc_result($rs, "DEL")){$delete = LMB_DBDEF_TRUE;}else{$delete = LMB_DBDEF_FALSE;}
+		if(odbc_result($rs, "HIDE")){$hide = LMB_DBDEF_TRUE;}else{$hide = LMB_DBDEF_FALSE;}
+		
+		$NEXTID = next_db_id("LMB_RULES_TABLES");
+		$sqlquery1 = "INSERT INTO LMB_RULES_TABLES (ID,GROUP_ID,TAB_ID,TAB_GROUP,EDIT,LMVIEW,DEL,HIDE,VIEW_FORM,VIEW_PERIOD) VALUES ($NEXTID,$group_id,".odbc_result($rs, "TAB_ID").",".odbc_result($rs, "TAB_GROUP").",".$edit.",".$view.",".$delete.",".$hide.",".odbc_result($rs, "VIEW_FORM").",".odbc_result($rs, "VIEW_PERIOD").")";
+		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);			
+	$bzm++;
+	}
+	#if($group_name){echo "<span style=\"width:200px;\">&nbsp;&nbsp;<B>$bzm</B>&nbsp;$lang[982] </span><span style=\"width:100px;color:green;\">$lang[983]</span><BR>\n";}
+            
+	/*------------------------------ Spaltenrechte ------------------------------------*/
+	$sqlquery = "DELETE FROM LMB_RULES_FIELDS WHERE GROUP_ID = $group_id";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$sqlquery = "SELECT * FROM LMB_RULES_FIELDS WHERE GROUP_ID = $group_level";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$bzm = 1;
+	while(odbc_fetch_row($rs, $bzm)) {
+		if(odbc_result($rs, "EDIT")){$edit = LMB_DBDEF_TRUE;}else{$edit = LMB_DBDEF_FALSE;}
+		if(odbc_result($rs, "LMVIEW")){$view = LMB_DBDEF_TRUE;}else{$view = LMB_DBDEF_FALSE;}
+		if(odbc_result($rs,"SORT")){$sort = odbc_result($rs,"SORT");}else{$sort = 0;}
+		
+		$NEXTID = next_db_id("LMB_RULES_FIELDS");		
+		$sqlquery1 = "INSERT INTO LMB_RULES_FIELDS (ID,GROUP_ID,TAB_GROUP,TAB_ID,FIELD_ID,LMVIEW,EDIT,COLOR,FILTER,SORT) VALUES ($NEXTID,$group_id,".odbc_result($rs, "TAB_GROUP").",".odbc_result($rs, "TAB_ID").",".odbc_result($rs,"FIELD_ID").",$view,$edit,'".odbc_result($rs,"COLOR")."','".str_replace("'","''",odbc_result($rs,"FILTER"))."',".$sort.")";
+		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+	$bzm++;
+	}
+	#if($group_name){echo "<span style=\"width:200px;\">&nbsp;&nbsp;<B>$bzm</B>&nbsp;$lang[984] </span><span style=\"width:100px;color:green;\">$lang[983]</span><BR>\n";}
+
+	$num++;
+	if($group_name AND $num_group){
+		echo "<BR>
+		<Script language=\"JavaScript\">showprocess('overall','".(($num*500)/($num_group))."','width')</SCRIPT>";
+	}
+}
+
+/*------------------------------ Menue-Rechte ------------------------------------*/
+function check_grouprights($groupid,$groupname="",$num_group=0){
+	global $db;
+	global $bzm5;
+	global $lang;
+	
+	if($groupid){
+		$group_name = $groupname;
+
+		if($GLOBALS["action"] AND $group_name){
+			#echo "<div><B><U>$lang[1042] ".$group_name."</U></B></div>";
+			echo "<Script language=\"JavaScript\">showprocess('status_group','$group_name','');</Script>";
+		}
+
+		$sqlquery = "SELECT ID FROM LMB_ACTION UNION SELECT ID FROM LMB_ACTION_DEPEND";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$bzm = 1;
+		while(odbc_fetch_row($rs, $bzm)) {
+			$link_id = odbc_result($rs,"ID");
+			$sqlquery2 = "SELECT ID FROM LMB_RULES_ACTION WHERE LINK_ID = ".$link_id." AND GROUP_ID = ".$groupid;
+			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+			if(!odbc_fetch_row($rs2, 1)) {
+				/* --- Next ID ---------------------------------------- */
+				$NEXTID = next_db_id("LMB_RULES_ACTION");
+				if($groupid == 1){$perm = 2;}else{$perm = 1;}
+				$sqlquery4 = "INSERT INTO LMB_RULES_ACTION (ID,LINK_ID,GROUP_ID,PERM) VALUES (".$NEXTID.",".$link_id.",".$groupid.",$perm)";
+				$rs4 = odbc_exec($db,$sqlquery4) or errorhandle(odbc_errormsg($db),$sqlquery4,$action,__FILE__,__LINE__);
+				$add_link++;
+			}
+			$bzm++;
+		}
+
+		if($GLOBALS["action"] AND $group_name){
+			#if($add_link > 0){
+				#echo "<span style=\"width:200px\"><FONT COLOR=\"#339900\"><U>$add_link</U> $lang[1043]</FONT></span><BR>";
+			#}
+			#if($change_link > 0){
+				#echo "<span style=\"width:200px\"><FONT COLOR=\"#339900\"><U>$change_link</U> $lang[1044]</FONT></span><BR>";
+			#}
+
+			$progress_last = round(($bzm5)*100/$num_group);
+			echo "\n<script language=\"javascript\" type=\"text/javascript\">//<!--\nshowprogress('overall','$progress_last','width');\n//--></script>\n";
+			flush();
+			ob_flush();
+		}
+	}
+	$bzm5++;
+}
+
+function del_grouprights($groupid,$groupname="",$num_group=0){
+	global $db;
+	global $lang;
+
+	$sqlquery = "Select COUNT(*) AS ANZAHL from LMB_GROUPS";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$num_group = odbc_result($rs,"ANZAHL");
+
+	$sqlquery = "SELECT LINK_ID FROM LMB_RULES_ACTION WHERE GROUP_ID = ".$groupid;
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$bzm = 1;
+	while(odbc_fetch_row($rs, $bzm)) {
+		$link_id = odbc_result($rs,"LINK_ID");
+		if($link_id < 1000){
+			$sqlquery2 = "SELECT ID FROM LMB_ACTION WHERE ID = ".$link_id;
+		}else{
+			$sqlquery2 = "SELECT ID FROM LMB_ACTION_DEPEND WHERE ID = ".$link_id;
+		}
+		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		if (!odbc_fetch_row($rs2, 1)) {
+			$sqlquery3 = "DELETE FROM LMB_RULES_ACTION WHERE LINK_ID = ".$link_id." AND GROUP_ID = ".$groupid;
+			$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+			$del_link++;
+		}
+		$bzm++;
+	}
+
+	#if($GLOBALS["action"] AND $group_name){
+		#if($del_link > 0){echo "<span style=\"width:200px\"><FONT COLOR=\"#339900\"><U>$del_link</U> $lang[1045]</FONT></span><BR>";}
+	#}
+}
+?>

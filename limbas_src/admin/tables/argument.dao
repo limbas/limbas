@@ -1,0 +1,130 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 102
+ */
+
+
+if($argument_change){
+	$argument = trim(parse_db_string($argument));
+	$sqlquery = "UPDATE LMB_CONF_FIELDS".$tab." SET ARGUMENT = '$argument' WHERE FIELD_ID = $fieldid AND TAB_GROUP = $tab_group AND TAB_ID = $tab_id";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+/* --- Tabellen-Liste --------------------------------------------- */
+$sqlquery = "SELECT ARGUMENT_TYP,ARGUMENT,ID FROM LMB_CONF_FIELDS WHERE FIELD_ID = $fieldid AND TAB_GROUP = $tab_group AND TAB_ID = $tab_id";
+$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+if(odbc_fetch_row($rs, 1)) {
+	$result_argument["argument"] = odbc_result($rs, "ARGUMENT");
+	$result_argument["argument_typ"] = odbc_result($rs, "ARGUMENT_TYP");
+	$result_argument["id"] = odbc_result($rs, "ID");
+}
+
+
+if($result_argument["argument"] AND $argument_refresh){
+	$erg = arg_refresh($tab_id,$fieldid,$result_argument[argument]);
+}
+
+/* -------------------------- Argument --------------------------------- */
+function arg_refresh($tab_id,$fieldid,$argument) {
+	global $session;
+	global $db;
+	global $gfield;
+	global $gtab;
+	
+	set_time_limit(900); #15min
+	
+	if(!$gfield[$tab_id][field_name][$fieldid]){
+		echo "<CENTER><FONT COLOR=\"red\">please reset session!</FONT></CENTER><BR>";
+	}else{
+	
+		/* --- Alle Daten aktualisieren --------------------------------------------- */
+		$sqlquery = "SELECT * FROM ".$gtab["table"][$tab_id]." WHERE DEL = ".LMB_DBDEF_FALSE;
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$bzm = 1;
+		while(odbc_fetch_row($rs, $bzm)) {
+			
+			unset($arg_result);
+			unset($result);
+			$val = "";
+			$ID = odbc_result($rs, "ID");
+			$arg = explode("#", $argument);
+			
+			foreach($arg as $key => $value){
+				if(substr($arg[$key],0,1) == '*'){
+					$gf_id = substr($value,1,3);
+					$gf_typ = $gfield[$tab_id]["field_type"][$gf_id];
+					$gf_dtyp = $gfield[$tab_id]["data_type"][$gf_id];
+					$gf_name = $gfield[$tab_id]["field_name"][$gf_id];
+					# --- date ---
+					if($gf_typ == 2){
+						$value = get_date(odbc_result($rs, $gf_name),1);
+					# --- currency ---
+					}elseif($gf_dtyp == 30){
+						$value = odbc_result($rs, $gf_name)." ".odbc_result($rs, $gf_name."_C");
+					# --- System Date ---
+					}elseif($gf_dtyp == 15){
+						$value = get_date(odbc_result($rs, $gf_name),1);
+					}else{
+						$value = odbc_result($rs, $gf_name);
+					}
+					$value = str_replace("\"","\\\"",$value);
+					if(!$value AND ($gf_typ == 5 OR $gf_typ == 17)){$value = 0;}
+				}
+				$result .= $value;
+			}
+			
+			$result = trim($result);
+			
+			if($result OR $arg == "0"){
+				$arg_result = eval($result.";");
+				$arg_result = trim($arg_result);
+			}
+			
+			# date
+			if($gfield[$tab_id]["parse_type"][$fieldid] == 4){
+				$arg_result = "'".convert_date($arg_result)."'";
+			# integer
+			}elseif($gfield[$tab_id]["parse_type"][$fieldid] == 1){
+				$arg_result = parse_db_int($arg_result,$gfield[$tab_id]["size"][$fieldid]);
+			# float
+			}elseif($gfield[$tab_id]["parse_type"][$fieldid] == 6){
+				$arg_result = parse_db_float($arg_result,$gfield[$tab_id]["size"][$fieldid]);
+			# boolean
+			}elseif($gfield[$tab_id]["parse_bool"][$fieldid] == 3){
+				$arg_result = parse_db_bool($arg_result);
+			# string
+			}else{
+				$arg_result = "'".parse_db_string($arg_result,$gfield[$tab_id]["size"][$fieldid])."'";
+			}
+			
+			$sqlquery1 = "UPDATE ".$gtab["table"][$tab_id]." SET ".$gfield[$tab_id]["field_name"][$fieldid]." = $arg_result WHERE ID = $ID";
+			$rs1 = odbc_exec($db,$sqlquery1);
+			
+	
+			$bzm++;
+		}
+		
+		
+		
+		echo "<CENTER><FONT COLOR=\"red\">rebulid komplete!</FONT></CENTER><BR>";
+	
+	}
+	return true;
+}
+?>
+

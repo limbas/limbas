@@ -1,0 +1,143 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 217
+ */
+
+if($trigger_typ == 2){
+	$intern = 1;
+}else{
+	$trigger_typ = 1;
+	$intern = 0;
+}
+
+
+if($sortup_definition OR $sortdown_definition){
+
+	$sqlquery = "SELECT ID,SORT FROM LMB_TRIGGER WHERE INTERN = ".parse_db_bool($intern)." ORDER BY SORT ".LMB_DBFUNC_FOR_REUSE;
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$bzm = 1;
+	while(odbc_fetch_row($rs, $bzm)) {
+	
+	
+		if($sortup_definition == odbc_result($rs,"ID")){
+			$orderres[odbc_result($rs,"ID")] = ($bzm-1.1);
+		}elseif($sortdown_definition == odbc_result($rs,"ID")){
+			$orderres[odbc_result($rs,"ID")] = ($bzm+1.1);
+		}else{
+			$orderres[odbc_result($rs,"ID")] = $bzm;
+		}
+
+		$bzm++;
+	}
+	
+	asort($orderres);
+	
+	$bzm = 1;
+	foreach ($orderres as $key => $value){
+		$sqlquery = "UPDATE LMB_TRIGGER SET SORT = $bzm WHERE ID = ".$key." AND INTERN = ".parse_db_bool($intern);
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$bzm++;
+	}
+
+}
+
+
+if($change AND $trigger_definition){
+	foreach ($trigger_definition as $key => $value){
+		if(${"definition_change_$key"} == 1){
+			$sqlquery = "UPDATE LMB_TRIGGER SET TRIGGER_VALUE = '".parse_db_string($value,4000)."',ACTIVE = " . ($active[$key]=="on"?LMB_DBDEF_TRUE:LMB_DBDEF_FALSE) . "  WHERE ID = $key AND INTERN = ".parse_db_bool($intern);
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		}elseif(${"definition_change_$key"} == 2){
+			$sqlquery = "DELETE FROM LMB_TRIGGER WHERE ID = $key AND INTERN = ".parse_db_bool($intern);
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		}
+	}
+	
+	if($trigger_typ == 1){
+		lmb_updateTrigger();
+	}
+
+}
+
+if($add AND $add_trigger_table AND $add_trigger_name){
+	
+	lmb_addTrigger($add_trigger_name,$add_trigger_type,$add_trigger_table,'',$intern,$add_trigger_pos);
+	
+	$nextid = next_db_id("LMB_TRIGGER");
+	if($intern){
+		$key = $nextid;
+		$tabid = $gtab["argresult_id"][$add_trigger_table];
+		$gtrigger[$tabid]["id"][$key] = $nextid;
+		$gtrigger[$tabid]["table_name"][$key] = $add_trigger_table;
+		$gtrigger[$tabid]["type"][$key] = $add_trigger_type;
+		$gtrigger[$tabid]["trigger_name"][$key] = $add_trigger_name;
+	}
+}
+
+if($syncronize){
+	$nextId = next_db_id("LMB_TRIGGER");
+	
+	if($triggerlist = dbf_3(array($DBA["DBSCHEMA"]))){
+
+	foreach ($triggerlist["triggername"] as $tkey => $tname){
+	
+		$tableName = $triggerlist["tablename"][$tkey];
+		$trigerName = $triggerlist["triggername"][$tkey];
+		$definition = explode(LMB_DBFUNC_SPLIT_TRIGGER,$triggerlist["definition"][$tkey]);
+		unset($definition[0]);
+		$definition = implode(LMB_DBFUNC_SPLIT_TRIGGER,$definition);
+		$definition = trim($definition);
+
+		$desc = strtoupper($triggerlist["event"][$tkey])."_".$triggerlist["tablename"][$tkey];
+		$sqlquery0 = "select ID from LMB_TRIGGER where lower(NAME) = '".strtolower(parse_db_string($trigerName,25))."' AND LOWER(TABLE_NAME) = '".strtolower($triggerlist["tablename"][$tkey])."' AND LOWER(TYPE) = '".strtolower($triggerlist["event"][$tkey])."'";
+		
+		$rs0 = odbc_exec($db,$sqlquery0);
+		if(!odbc_fetch_row($rs0,1)){
+			$sqlquery1 = "insert into LMB_TRIGGER(ID,ERSTDATUM,EDITDATUM,EDITUSER,ERSTUSER,NAME,TABLE_NAME,TYPE,TRIGGER_VALUE,ACTIVE,DESCRIPTION) values(" . $nextId++ . ",".LMB_DBDEF_TIMESTAMP.",".LMB_DBDEF_TIMESTAMP.",".$session["user_id"].",".$session["user_id"].",'".parse_db_string($trigerName,25)."','".$triggerlist["tablename"][$tkey]."','INSERT','" . ltrim(rtrim(parse_db_string($definition,4000),")"),"(") .  "',".LMB_DBDEF_TRUE.",'".parse_db_string($desc,50)."')";
+			odbc_exec($db,$sqlquery1);
+		}
+	}}
+
+	lmb_updateTrigger();
+}
+
+
+$result_trigger = array();
+
+$sqlquery = "SELECT * FROM LMB_TRIGGER WHERE INTERN = ".parse_db_bool($intern)." ORDER BY SORT,ERSTDATUM";
+$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$bzm = 1;
+while(odbc_fetch_row($rs, $bzm)) {
+	$result_trigger[odbc_result($rs, "TABLE_NAME")]["id"][] = odbc_result($rs, "ID");
+	$result_trigger[odbc_result($rs, "TABLE_NAME")]["erstdatum"][] = odbc_result($rs, "ERSTDATUM");
+	$result_trigger[odbc_result($rs, "TABLE_NAME")]["erstuser"][] = odbc_result($rs, "ERSTUSER");
+	$result_trigger[odbc_result($rs, "TABLE_NAME")]["editdatum"][] = odbc_result($rs, "EDITDATUM");
+	$result_trigger[odbc_result($rs, "TABLE_NAME")]["edituser"][] = odbc_result($rs, "EDITUSER");
+	$result_trigger[odbc_result($rs, "TABLE_NAME")]["tablename"][] = odbc_result($rs, "TABLE_NAME");
+	$result_trigger[odbc_result($rs, "TABLE_NAME")]["type"][] = odbc_result($rs, "TYPE");
+	$result_trigger[odbc_result($rs, "TABLE_NAME")]["value"][] = trim(odbc_result($rs, "TRIGGER_VALUE")); # longtext handle
+	$result_trigger[odbc_result($rs, "TABLE_NAME")]["active"][] = odbc_result($rs, "ACTIVE");
+	$result_trigger[odbc_result($rs, "TABLE_NAME")]["name"][] = odbc_result($rs, "DESCRIPTION");
+	$result_trigger[odbc_result($rs, "TABLE_NAME")]["intern"][] = odbc_result($rs, "INTERN");
+	$result_trigger[odbc_result($rs, "TABLE_NAME")]["position"][] = odbc_result($rs, "POSITION");
+$bzm++;
+}
+
+
+
+?>

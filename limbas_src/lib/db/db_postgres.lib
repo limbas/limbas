@@ -1,0 +1,243 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID:
+ */
+
+
+# LMB_DBTYPE #
+define("LMB_DBTYPE_CHAR","CHAR");
+define("LMB_DBTYPE_VARCHAR","VARCHAR");
+define("LMB_DBTYPE_INTEGER","INTEGER");
+define("LMB_DBTYPE_SMALLINT","SMALLINT");
+define("LMB_DBTYPE_BIGINT","BIGINT");
+define("LMB_DBTYPE_FLOAT","FLOAT");
+define("LMB_DBTYPE_NUMERIC","NUMERIC");
+define("LMB_DBTYPE_FIXED","NUMERIC");
+define("LMB_DBTYPE_BOOLEAN","BOOLEAN");
+define("LMB_DBTYPE_DATE","DATE");
+define("LMB_DBTYPE_TIME","TIME");
+define("LMB_DBTYPE_TIMESTAMP","TIMESTAMP");
+define("LMB_DBTYPE_LONG","TEXT");
+define("LMB_DBTYPE_ASCII","");
+define("LMB_DBTYPE_BYTE","");
+define("LMB_DBTYPE_SERIAL","SERIAL");
+
+
+# LMB_DBDEF #
+define("LMB_DBDEF_TIME","CURRENT_TIME");
+define("LMB_DBDEF_DATE","CURRENT_DATE");
+define("LMB_DBDEF_TIMESTAMP","CURRENT_TIMESTAMP");
+define("LMB_DBDEF_FALSE","FALSE");
+define("LMB_DBDEF_TRUE","TRUE");
+define("LMB_DBDEF_NULL","NULL");
+define("LMB_DBDEF_DTNULL","NULL");
+
+# LMB_DBRETYPE #
+define("LMB_DBRETYPE_CHAR","CHAR");
+define("LMB_DBRETYPE_VARCHAR","VARCHAR");
+define("LMB_DBRETYPE_BPCHAR","CHAR");
+define("LMB_DBRETYPE_INT8","INTEGER");
+define("LMB_DBRETYPE_INT4","INTEGER");
+define("LMB_DBRETYPE_INT2","SMALLINT");
+define("LMB_DBRETYPE_FLOAT4","FLOAT");
+define("LMB_DBRETYPE_FLOAT8","FLOAT");
+define("LMB_DBRETYPE_NUMERIC","FIXED");
+define("LMB_DBRETYPE_BOOL","BOOLEAN");
+define("LMB_DBRETYPE_DATE","DATE");
+define("LMB_DBRETYPE_TIME","TIME");
+define("LMB_DBRETYPE_TIMESTAMP","TIMESTAMP");
+define("LMB_DBRETYPE_TIMESTAMPTZ","TIMESTAMP");
+define("LMB_DBRETYPE_TEXT","LONG");
+
+# LMB_DBREDEF #
+define("LMB_DBREDEF_NOW()","TIMESTAMP");
+define("LMB_DBREDEF_CURRENT_TIMESTAMP","TIMESTAMP");
+define("LMB_DBREDEF_FALSE","FALSE");
+define("LMB_DBREDEF_TRUE","TRUE");
+
+# LMB_DBFUNC #
+define("LMB_DBFUNC_ISNULL","IS NULL");
+define("LMB_DBFUNC_PRIMARY_KEY","PRIMARY KEY");
+define("LMB_DBFUNC_UNIQUE","UNIQUE");
+define("LMB_DBFUNC_CONCAT","||");
+#define("LMB_DBFUNC_UMASCB","\\");
+define("LMB_DBFUNC_FOR_REUSE","");
+define("LMB_DBFUNC_LIMIT","LIMIT");
+define("LMB_DBFUNC_ROWNO","");
+define("LMB_DBFUNC_SPLIT_TRIGGER","EXECUTE PROCEDURE");
+define("LMB_DBFUNC_ADD_COLUMN_FIRST","ADD COLUMN");
+define("LMB_DBFUNC_ADD_COLUMN_NEXT","ADD COLUMN");
+define("LMB_DBFUNC_DROP_COLUMN_FIRST","DROP COLUMN");
+define("LMB_DBFUNC_DROP_COLUMN_NEXT","DROP COLUMN");
+define("LMB_DBFUNC_DATE","DATE(");
+define("LMB_DBFUNC_TIME","TIME(");
+define("LMB_DBFUNC_YEAR","EXTRACT(YEAR FROM ");
+define("LMB_DBFUNC_MONTH","EXTRACT(MONTH FROM ");
+define("LMB_DBFUNC_DAY","EXTRACT(DAY FROM ");
+define("LMB_DBFUNC_HOUR","EXTRACT(HOUR FROM ");
+define("LMB_DBFUNC_MINUTE","EXTRACT(MINUTE FROM ");
+
+define("LMB_DBFUNC_LONGHANDLE",1);
+define("LMB_DBFUNC_PROCEDUREHANDLE",1);
+define("LMB_DBFUNC_FKEYHANDLE",1);
+define("LMB_DBFUNC_FLOATHANDLE",0);
+define("LMB_DBFUNC_PREPAREHANDLE",0);
+define("LMB_DBFUNC_TIMEHANDLE",1);
+define("LMB_DBFUNC_NUMROWS",1);
+define("LMB_DBFUNC_VIEWGALIAS",0);
+define("LMB_DBFUNC_SEQUENCE",1);
+
+
+
+# workaround for postgresql versions
+if($DBA['VERSION'] < 90100){
+	define("LMB_DBFUNC_UMASCB","\\\\");
+}else{
+	define("LMB_DBFUNC_UMASCB","\\");
+}
+
+# DBCURSOR #
+#define("LMB_DBCURSOR",0);
+
+#require_once("lib/db/db_pdo.lib");
+
+# odbc connect:
+function dbq_0($host,$database,$dbuser,$dbpass,$dbdriver=null,$port=null){
+	if($dbdriver){
+		$dsn = "Driver=$dbdriver;Server=$host;Port=$port;Database=$database;ReadOnly=No";
+		#SQL_CUR_USE_ODBC
+		#SQL_CUR_DEFAULT
+		#SQL_CUR_USE_DRIVER
+		$db = odbc_pconnect ($dsn, $dbuser, $dbpass) or
+			die("<h1>Database connection failed</h1><p>($dsn)<BR>".odbc_errormsg()."</p>");
+	}else{
+		$db = odbc_pconnect($database,$dbuser,$dbpass) or 
+			die("<BR><BR><CENTER>Database connection failed!<BR>".odbc_errormsg($db)."</CENTER>");
+	}
+	return $db;
+}
+
+/**
+ * convert stamp for db
+ *
+ * @param number $p
+ * @return string
+ */
+function dbf_1($p,$t=0){
+	global $umgvar;
+	
+	if($umgvar["use_datetimeclass"]){
+		if($t){
+			if(!is_object($p)){return date("Y-m-d",1);}
+			return $p->format("Y-m-d");
+		}else{
+			if(!is_object($p)){return date("Y-m-d H:i:s",1);}
+			return $p->format("Y-m-d H:i:s");
+		}
+	}else{
+		if($t){
+			if(!is_numeric($p)){return date("Y-m-d",1);}
+			return date("Y-m-d",$p);
+		}else{
+			if(!is_numeric($p)){return date("Y-m-d H:i:s",1);}
+			return date("Y-m-d H:i:s",$p);
+		}
+	}
+}
+
+/**
+ * convert date from db to stamp
+ *
+ * @param string $p
+ * @return number
+ */
+function dbf_2($p){
+	if(!$p){return false;}
+	$db_date = substr($p,0,19);
+	$db_date = preg_replace("/[^0-9]/",";",$db_date);
+	$db_date = explode(";",$db_date);
+	if(is_numeric($db_date[0])){
+		$result_stamp = mktime($db_date[3],$db_date[4],$db_date[5],$db_date[1],$db_date[2],$db_date[0]);
+	}else{$result_stamp = 0;}
+	return $result_stamp;
+}
+
+/**
+ * parse blob
+ *
+ * @param string $p
+ * @return string
+ */
+function dbf_6($p){
+	return str_replace("\\",LMB_DBFUNC_UMASCB,str_replace("'","''",$p));
+}
+
+/**
+ * parse string
+ *
+ * @param string $p
+ * @return string
+ */
+function dbf_7($p){
+	return str_replace("\\",LMB_DBFUNC_UMASCB,str_replace("'","''",$p));
+}
+
+
+/**
+ * get sequence
+ *
+ * @param array $p[0]=name
+ */
+function dbf_8($p){
+	global $db;
+
+	$rs = odbc_exec($db,"SELECT NEXTVAL('".dbf_4($p)."') AS NEXTSEQ") or errorhandle(odbc_errormsg($db),$prepare_string,"get next sequence",$FILE,$LINE);
+	return odbc_result($rs,"NEXTSEQ");
+}
+
+/**
+ * case sensitive
+ *
+ * @param string $p
+ * @return string
+ */
+function dbf_4($p){
+	return strtolower($p);
+}
+
+/**
+ * timediff
+ *
+ * @param array $p
+ * @return string
+ */
+function dbf_9($p){
+	return "(".$p[1]."-".$p[0].")";
+}
+
+/**
+ * datediff
+ *
+ * @param array $p
+ * @return string
+ */
+function dbf_10($p){
+	return "(".$p[1]."-".$p[0].")";
+}
+
+?>

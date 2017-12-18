@@ -1,0 +1,116 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 188
+ */
+
+
+
+function add_reminder($new_remindername,$new_remindertable,$new_reminderform){
+	global $db;
+	global $session;
+
+	require_once("admin/setup/language.lib");
+	
+	// language
+	$name_id = lang_add($session["language"],4,"Reminder: ".$new_remindername,$new_remindername,"_DEPEND");
+	
+	$NEXT_ID = next_db_id("LMB_REMINDER_LIST");
+	$NEXTSORT = next_db_id("LMB_REMINDER_LIST","SORT");
+	$sqlquery = "INSERT INTO LMB_REMINDER_LIST (ID,ERSTUSER,ERSTDATUM,NAME,TAB_ID,FORML_ID,FORMD_ID,SORT) VALUES($NEXT_ID,".$session["user_id"].",".LMB_DBDEF_TIMESTAMP.",'".parse_db_int($name_id)."',".parse_db_int($new_remindertable,5).",".parse_db_int($new_reminderforml,5).",".parse_db_int($new_reminderformd,5).",$NEXTSORT)";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+function delete_reminder($delid){
+	global $db;
+	
+	require_once("admin/setup/language.lib");
+	
+	$reminder = get_reminder();
+	$name_id = $reminder['name_id'][$delid];
+	
+	$sqlquery = "DELETE FROM LMB_REMINDER_LIST WHERE ID = ".parse_db_int($delid);
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+	// language
+	lang_delete($name_id,"_DEPEND");
+}
+
+function get_reminder(){
+	global $db;
+        global $lang;
+    
+	$sqlquery = "SELECT * FROM LMB_REMINDER_LIST ORDER BY TAB_ID,SORT";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(odbc_fetch_row($rs)){
+		$key = odbc_result($rs, "ID");
+		$tabid = odbc_result($rs, "TAB_ID");
+		$reminder[$tabid]['name'][$key] = $lang[odbc_result($rs, "NAME")];
+		$reminder[$tabid]['forml_id'][$key] = odbc_result($rs, "FORML_ID");
+		$reminder[$tabid]['formd_id'][$key] = odbc_result($rs, "FORMD_ID");
+		$reminder[$tabid]['groupbased'][$key] = odbc_result($rs, "GROUPBASED");
+                $reminder['name_id'][$key] = odbc_result($rs, "NAME");
+	}
+	return $reminder;
+}
+
+
+function edit_reminder($id){
+	global $db;
+	global $reminderforml;
+	global $reminderformd;
+	global $remindername;
+	global $remindergrouping;
+	global $session;
+	
+	require_once("admin/setup/language.lib");
+	
+	$reminder = get_reminder();
+	$name_id = $reminder['name_id'][$id];
+
+        // language
+	if($name = $remindername[$id]){
+	   lang_change(null,$name_id,$name,$session["language"],"_DEPEND");
+	}
+	
+	$sqlquery = "UPDATE LMB_REMINDER_LIST SET FORML_ID = ".parse_db_int($reminderforml[$id]).",FORMD_ID = ".parse_db_int($reminderformd[$id]).", GROUPBASED = ".parse_db_bool($remindergrouping[$id])." where ID = $id";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+if($sort AND $sortid){
+	lmb_sortConf($sort,$sortid,'LMB_REMINDER_LIST','SORT',"TAB_ID = $tabid");
+}
+
+if($new_reminder AND $new_remindername){
+	if(!$new_remindertable){
+	    lmb_alert('no table selected!');
+	    return false;
+	}
+	add_reminder($new_remindername,$new_remindertable,$new_reminderform);
+}
+
+if(is_numeric($delid)){
+	delete_reminder($delid);
+}
+
+if(is_numeric($editid)){
+	edit_reminder($editid);
+}
+
+$reminder = get_reminder();
+	
+?>

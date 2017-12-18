@@ -1,0 +1,186 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 56
+ */
+$ID = $session["user_id"];
+
+
+# ------------- htaccess ---------------
+function htuseraccess($ID,$user,$pass){
+	global $db;
+	global $session;
+	global $umgvar;
+
+	$sqlquery = "SELECT USERNAME,PASSWORT,CLEARPASS FROM LMB_USERDB WHERE USER_ID = $ID";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	if(odbc_fetch_row($rs, 1)) {
+
+		if(!$user){$user = odbc_result($rs, "USERNAME");}
+		if(!$pass){$pass = odbc_result($rs, "CLEARPASS");}
+
+		if(!$user){return false;}
+
+		$path = $umgvar["pfad"]."/USER/".$ID;
+
+		# --- htaccess ---
+		$htaccess_file = fopen($path."/.htaccess","w");
+		$value = "AuthName \"$user\"\nAuthType Basic\nAuthUserFile ".$path."/.htpasswd\nrequire valid-user";
+		fputs($htaccess_file,$value);
+		fclose($htaccess_file);
+
+		# --- htpasswd ---
+		if(is_file($path."/.htpasswd") AND !$pass){
+
+		}elseif(!is_file($path."/.htpasswd") AND !$pass AND file_exists($path."/.htaccess")){
+			unlink($path."/.htaccess");
+		}else{
+			if($pass){
+				$htpasswd_file = fopen($path."/.htpasswd","w");
+				$pass = crypt($pass);
+				$value = "{$user}:{$pass}\n";
+				fputs($htpasswd_file,$value);
+				fclose($htpasswd_file);
+			}elseif(file_exists($path."/.htaccess")){
+				unlink($path."/.htaccess");
+			}
+		}
+	}
+}
+
+/* --- User ändern --------------------------------------------- */
+if($user_change) {
+		$sqlquery = "UPDATE LMB_USERDB SET ";
+		
+		if($session["change_pass"]){
+			if($passwort){
+				$sqlquery .= "PASSWORT = '".md5($passwort)."',";htuseraccess($session["user_id"],$username,$passwort);
+				if($umgvar["clear_password"]){
+					$sqlquery .= "CLEARPASS = '".$passwort."',";
+				}
+			}
+			if($vorname){$sqlquery .= "VORNAME = '$vorname',";}
+	        if($name){$sqlquery .= "NAME = '$name',";}
+	        if($email){$sqlquery .= "EMAIL = '$email',";}
+		}
+        
+        if(!$layout && $farbe){$sqlquery .= "FARBSCHEMA = '$farbe',";}
+        if($language){$sqlquery .= "LANGUAGE = '$language',";}
+        if($layout){
+            $sqlquery .= "LAYOUT = '$layout',";
+            
+            $indexColor = strpos($farbschema['NAME'], '(');
+            $schemaName = substr($farbschema['NAME'], 0, $indexColor);
+            
+            
+             // basic(comet)
+            $sqlquery2 = "SELECT ID FROM LMB_COLORSCHEMES WHERE NAME='" . $schemaName . "(" . $layout . ")' LIMIT 1";
+            $rs1 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+            odbc_fetch_row($rs1, 1);
+            $id = odbc_result($rs1, 'ID');
+            
+            if($id) {
+                $sqlquery .= "FARBSCHEMA= '$id',";
+            }
+
+        }
+        if($data_display){$sqlquery .= "DATA_DISPLAY = $data_display,";}
+        if($dateformat){$sqlquery .= "DATEFORMAT = ".parse_db_int($dateformat,1).",";}
+        if($tel){$sqlquery .= "TEL = '".parse_db_string($tel,25)."',";}
+        if($fax){$sqlquery .= "FAX = '".parse_db_string($fax,25)."',";}
+        if($position){$sqlquery .= "POSITION = '".parse_db_string($position,50)."',";}
+		$sqlquery .= "SYMBOLBAR = ".parse_db_bool($symbolbar,1);
+        $sqlquery .= " WHERE USER_ID = $ID";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+        if(is_array($e_setting)){
+			$prepare_string = "UPDATE LMB_USERDB SET E_SETTING = ? WHERE USER_ID = ".$ID;
+			lmb_PrepareSQL($prepare_string,array(parse_db_blob(serialize($e_setting))),__FILE__,__LINE__);
+        }
+	
+        /* --- session löschen ----*/
+        #$sqlquery = "DELETE FROM LMB_SESSION WHERE ID = '".session_id()."' AND USER_ID = $ID";
+        #$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+if($farbe_change == 1){
+		/* --- Farbschema auslesen ------------------- */
+		$sqlquery4 = "SELECT * FROM LMB_COLORSCHEMES WHERE ID = $farbe";
+        $rs4 = odbc_exec($db,$sqlquery4) or errorhandle(odbc_errormsg($db),$sqlquery4,$action,__FILE__,__LINE__);
+		$bin4 = odbc_binmode($rs4,2);
+		if(odbc_fetch_row($rs4, 1)) {
+			$session[farbschema] = odbc_result($rs4,"ID");
+			$farbschema["NAME"] = odbc_result($rs4,"NAME");
+			$farbschema["WEB1"] = odbc_result($rs4,"WEB1");
+			$farbschema["WEB2"] = odbc_result($rs4,"WEB2");
+			$farbschema["WEB3"] = odbc_result($rs4,"WEB3");
+			$farbschema["WEB4"] = odbc_result($rs4,"WEB4");
+			$farbschema["WEB5"] = odbc_result($rs4,"WEB5");
+			$farbschema["WEB6"] = odbc_result($rs4,"WEB6");
+			$farbschema["WEB7"] = odbc_result($rs4,"WEB7");
+			$farbschema["WEB8"] = odbc_result($rs4,"WEB8");
+			$farbschema["WEB9"] = odbc_result($rs4,"WEB9");
+			$farbschema["WEB10"] = odbc_result($rs4,"WEB10");
+			$farbschema["WEB11"] = odbc_result($rs4,"WEB11");
+			$farbschema["WEB12"] = odbc_result($rs4,"WEB12");	
+		}
+        require_once("layout/$session[layout]/menuicons.php");
+        /* --- session löschen ----*/
+        $sqlquery = "DELETE FROM LMB_SESSION WHERE ID = '".session_id()."' AND USER_ID = $ID";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        
+        rmdirr($umgvar["pfad"]."/USER/".$session["user_id"]."/menuicons/");
+        
+}
+
+
+/* --- Select SQL-Query --------------------------------------------- */
+$sqlquery = "SELECT LMB_USERDB.TEL,LMB_USERDB.FAX,LMB_USERDB.POSITION,LMB_USERDB.DATEFORMAT,LMB_USERDB.SYMBOLBAR,LMB_USERDB.USERNAME,LMB_USERDB.SOUNDLIST,LMB_USERDB.E_SETTING,LMB_USERDB.T_SETTING,LMB_USERDB.LAYOUT,LMB_USERDB.DATA_DISPLAY,LMB_USERDB.LANGUAGE,LMB_USERDB.PASSWORT,LMB_USERDB.USER_ID,LMB_USERDB.VORNAME,LMB_USERDB.NAME,LMB_USERDB.EMAIL,LMB_USERDB.FARBSCHEMA,LMB_USERDB.ERSTDATUM,LMB_USERDB.EDITDATUM,LMB_GROUPS.NAME AS GROUPNAME,LMB_GROUPS.GROUP_ID FROM LMB_USERDB,LMB_GROUPS WHERE LMB_USERDB.GROUP_ID = LMB_GROUPS.GROUP_ID AND USER_ID = $ID";
+$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+if(odbc_fetch_row($rs, 1)) {
+    $result_user["username"] = odbc_result($rs, "USERNAME");
+    $result_user["passwort"] = odbc_result($rs, "PASSWORT");
+    $result_user["user_id"] = odbc_result($rs, "USER_ID");
+    $result_user["vorname"] = odbc_result($rs, "VORNAME");
+	$result_user["name"] = odbc_result($rs, "NAME");
+	$result_user["email"] = odbc_result($rs, "EMAIL");
+	$result_user["tel"] = odbc_result($rs, "TEL");
+	$result_user["fax"] = odbc_result($rs, "FAX");
+	$result_user["position"] = odbc_result($rs, "POSITION");
+	$result_user["gruppe"] = odbc_result($rs, "GROUPNAME");
+	$result_user["gruppen_id"] = odbc_result($rs, "GROUP_ID");
+    $result_user["data_display"] = odbc_result($rs, "DATA_DISPLAY");
+	$result_user["farbschema"] = odbc_result($rs, "FARBSCHEMA");
+	$result_user["language"] = odbc_result($rs, "LANGUAGE");
+    $result_user["layout"] = odbc_result($rs, "LAYOUT");
+	$result_user["symbolbar"] = odbc_result($rs, "SYMBOLBAR");
+	$result_user["dateformat"] = odbc_result($rs, "DATEFORMAT");
+	#if(odbc_result($rs, "SOUNDLIST")){$result_user["soundlist"] = explode(";",odbc_result($rs, "SOUNDLIST"));}
+	$eset = odbc_result($rs, "E_SETTING");
+	if($eset){
+    	$result_user["e_setting"] = unserialize($eset);
+	}
+	#if(odbc_result($rs, "T_SETTING")){$result_user["t_setting"] = explode(";",odbc_result($rs, "T_SETTING"));}
+    $result_user["erstdatum"] = get_date(odbc_result($rs, "ERSTDATUM"),2);
+	$result_user["editdatum"] = get_date(odbc_result($rs, "EDITDATUM"),2);
+}
+
+
+?>
+

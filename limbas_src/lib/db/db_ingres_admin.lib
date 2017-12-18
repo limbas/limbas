@@ -1,0 +1,522 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID:
+ */
+
+############# Domain Tables ########################
+
+$DBA["DOMAINTABLE"] = array("iitables","iiviews","iicolumns","iirules","iiconstraints","iiindexes");
+$DBA["DOMAINSCHEMA"] = array("\$ingres","\$ingres","\$ingres","\$ingres","\$ingres","\$ingres","\$ingres","\$ingres","\$ingres","\$ingres","\$ingres");
+
+
+# db version
+function dbf_version(){
+	global $db;
+
+	return 0;
+}
+
+############# indexes ########################
+
+/** existing indexes
+ * 
+ *
+ * @param array $p [0]=schema, [1]=tablename, [2]=indexname, [3]: 1=no primary, 2=only primary, [4]=fieldname
+ * @return sql string
+ */
+
+
+
+function dbq_2($p){
+	
+	$sql = "SELECT 
+			trim(index_name) as indexname,
+			trim(base_name) as tablename,
+			trim(attname) as columnname,
+			1 AS INDEX_USED,
+			case unique_rule when 'U' then 'Unique' else null end as type
+			FROM 
+				iiindexes left join iiconstraints on index_name = constraint_name, iirelation, iiattribute 
+			WHERE 
+				relid = index_name and reltidx > 0 and attrelid = reltid and
+				attrelidx = reltidx and attname <> 'tidp' and
+				relowner = '".$p[0]."'
+				";
+	
+	if($p[1]){
+		$sql .= " AND LOWER(base_name) = '".strtolower($p[1])."'";
+	}
+	if($p[4]){
+		$sql .= " AND LOWER(attname) = '".strtolower($p[4])."'";
+	}
+	if($p[2]){
+		$sql .= " AND LOWER(index_name) = '".strtolower($p[2])."'";
+	}
+	if($p[3] == 1){
+		$sql .= "and (constraint_type != 'P' OR constraint_type is null)";
+	}elseif($p[3] == 2){
+		$sql .= "and constraint_type = 'P'";
+	}
+	
+	$sql .= " ORDER BY base_name,index_name";
+
+	return $sql;
+
+}
+
+/**
+ * create index
+ *
+ * @param array $p [0]=schema, [1]=indexname, [2]=tablename, [3]=fieldname
+ * @return sql string
+ */
+function dbq_4($p){
+	return "CREATE INDEX ".$p[1]." ON ".$p[2]."(".$p[3].")";
+}
+
+/**
+ * drop index
+ *
+ * @param array $p [0]=schema, [1]=indexname, [2]=tablename
+ * @return sql string
+ */
+function dbq_5($p){
+	return "DROP INDEX ".$p[1];
+}
+
+
+
+############# primary keys ########################
+
+/**
+ * get primary keys
+ *
+ * @param array $p [0]=schema, [1]=table, [2]=dbname
+ * @return sql string
+ */
+function dbq_23($p){
+	global $db;
+	
+	$rs = odbc_primarykeys($db, $p[2], $p[0], $p[1]);
+	while(odbc_fetch_row($rs)){
+		$pri_key["COLUMN_NAME"][] = odbc_result($rs,"COLUMN_NAME");
+		$pri_key["PK_NAME"][] = odbc_result($rs,"PK_NAME");
+	}
+	return  $pri_key;
+}
+
+/**
+ * create primary key
+ *
+ * @param array $p [0]=table, [1]=field
+ * @return sql string
+ */
+function dbq_17($p){
+	return "ALTER TABLE ".$p[0]." ADD PRIMARY KEY (".$p[1].")";
+}
+
+/**
+ * drop primary key
+ *
+ * @param array $p [0]=table
+ * @return sql string
+ */
+function dbq_18($p){
+	global $db;
+	global $DBA;
+	
+	$sql = dbq_2(array($DBA["DBUSER"],$p[0],null,2));
+	$rs = odbc_exec($db,$sql);
+	$indexname = odbc_result($rs, "INDEXNAME");
+	if($indexname){
+		return "ALTER TABLE ".$p[0]." DROP CONSTRAINT ".$indexname;
+	}
+	return false;
+}
+
+############# foreign keys ########################
+
+/**
+ * get details for foreign keys for specific table or keyname
+ *
+ * @param array $p [0]=schema, [1]=tablename, [2]=keyname
+ * @return sql string
+ */
+function dbq_3($p){
+
+$sql = "
+select trim(f.relid) as REFTABLENAME,
+        trim(g.relid) as TABLENAME,
+        trim(d.consname) as FKEYNAME,
+        trim(h.attname) as REFCOLUMNNAME,
+        trim(i.attname) as COLUMNNAME,
+        d.consdelrule as \"delete rule\", d.consupdrule as \"update rule\"
+from iikey a, iikey b, iiintegrity c, iiintegrity d, iidbdepends e,
+        iirelation f, iirelation g, iiattribute h, iiattribute i
+     where e.itype = 149 and e.dtype = 149 and
+        e.inid1 = c.inttabbase and e.inid2 = c.inttabidx and
+        c.consid1 = a.key_consid1 and c.consid2 = a.key_consid2 and
+        e.deid1 = d.inttabbase and e.deid2 = d.inttabidx and
+        e.qid = d.intnumber and e.i_qid = c.intnumber and
+        d.consid1 = b.key_consid1 and d.consid2 = b.key_consid2 and
+        d.consflags = 4 and
+        f.reltid = c.inttabbase and f.reltidx = 0 and
+        g.reltid = d.inttabbase and g.reltidx = 0 and
+        h.attrelid = f.reltid and h.attrelidx = 0 and
+        i.attrelid = g.reltid and i.attrelidx = 0 and
+        a.key_attid = h.attid and b.key_attid = i.attid and
+        a.key_position = b.key_position
+     order by 1, 2, 3";
+
+return $sql;
+}
+
+
+/**
+ * add foreign key
+ *
+ * @param array $p [0]=parent-tablename, [1]=parent-fieldname, [2]=child-tablename, [3]=child-fieldname, [4]=keyname
+ * @return sql string
+ */
+function dbq_11($p){
+	$p[5] = "DELETE RESTRICT";
+	
+	return "ALTER TABLE ".$p[0]." 
+		ADD CONSTRAINT ".$p[4]." FOREIGN KEY (".$p[1].") 
+		REFERENCES ".$p[2]."(".$p[3].") 
+		ON ".$p[5];
+}
+
+
+/**
+ * drop foreign key
+ *
+ * @param array $p [0]=tablename, [1]=keyname
+ * @return sql string
+ */
+function dbq_6($p){
+	return " ALTER TABLE ".$p[0]." DROP CONSTRAINT ".$p[1]." CASCADE";
+}
+
+
+############# trigger ########################
+
+
+/**
+ * get information about database trigger
+ *
+ * @param array $p [0]=schema, [1]=triggername
+ * @return array
+ */
+function dbf_3($p){
+	global $db;	
+
+	$sql = "SELECT iirules.rule_name AS TRIGGERNAME, iirules.text_segment AS DEFINITION, iirule.RULE_STATEMENT AS EVENT, iirules.table_name AS TABLENAME
+		FROM
+		 	iirules,iirule
+		WHERE iirules.rule_name = iirule.rule_name
+		AND iirules.rule_owner = '".$p[0]."'
+		AND iirules.system_use = 'U'
+		 	";
+	if($p[1]){
+		$sql .= " AND LOWER(rule_name) LIKE '".strtolower($p[1])."'";
+	}
+	
+	$rs = odbc_exec($db,$sql);
+	while(odbc_fetch_row($rs)){
+		$res["triggername"][] = odbc_result($rs,"TRIGGERNAME");
+		$res["definition"][] = odbc_result($rs,"DEFINITION");
+		$res["tablename"][] = odbc_result($rs,"TABLENAME");
+		
+		$ev = odbc_result($rs,"EVENT");
+		if($ev == 1){
+			$res["event"][] = "DELETE";
+		}elseif($ev == 2){
+			$res["event"][] = "INSERT";
+		}elseif($ev == 4){
+			$res["event"][] = "UPDATE";
+		}
+		
+		
+	}
+	return $res;
+}
+
+
+/**
+ * drop database trigger
+ *
+ * @param array $p [0]=schema, [1]=triggername
+ * @return sql string
+ */
+function dbq_10($p){
+	return "DROP RULE \"".$p[0]."\"";
+}
+
+/**
+ * create trigger
+ *
+ * @param array $p [0]=schema, [1]=triggername, [2]=tablename, [3]=action, [4]=value, [5]=position
+ * @return sql string
+ */
+function dbq_13($p){
+	$sql = "CREATE RULE ".$p[1]." ".$p[5]." ".$p[3]." ON ".dbf_4($p[2])." FOR EACH ROW EXECUTE PROCEDURE ".$p[4];
+	return $sql;
+}
+
+/**
+ * limbas specific trigger function for limbas relation schema
+ *
+ * @param array $p [0]=schema, [1]=triggername, [2]=tablename, [3]=action, [4]=value
+ * @return sql string
+ */
+function dbq_14($p){
+	if($p[2] == "+"){$act = ":NEW.ID,:NEW.VERKN_ID";}else{$act = ":OLD.ID,:OLD.VERKN_ID";}
+	return "lmb_vkn(".$act.",'".$p[0]."','".$p[1]."','".$p[2]."','".$p[3]."','".$p[4]."');";
+}
+
+############# view ########################
+
+
+/**
+ * get view definition
+ *
+ * @param array $p [1]=viewname
+ * @return sql string
+ */
+function dbq_8($p){
+	return "SELECT table_name, text_segment 
+			FROM 
+				iiviews
+			WHERE 
+				table_owner = '".$p[0]."'
+				AND table_name = '".dbf_4($p[1])."'";
+}
+
+
+/**
+ * existing views
+ *
+ * @param array $p [0]=schema, [1]=viewname
+ * @return sql string
+ */
+function dbq_12($p){
+	$qu = "SELECT table_name AS VIEWNAME
+		FROM 
+			iiviews 
+		WHERE 
+			table_owner = '".$p[0]."'";
+	if($p[1]){
+		$qu .= " AND lower(table_name) = '".strtolower($p[1])."'";
+	}
+	return $qu;
+}
+
+/**
+ * create view
+ *
+ * @param array $p [0]=view name, [1]=definition
+ * @return sql string
+ */
+function dbq_19($p){
+	if(stripos($p[1],"CREATE VIEW") !== false){
+		$qu = $p[1];
+	}else{
+		$qu = "CREATE VIEW ".$p[0]." AS (".rtrim(trim($p[1]),";").")";
+	}
+	
+	return $qu;
+}
+
+/**
+ * drop view
+ *
+ * @param array $p [0]=view name
+ * @return sql string
+ */
+function dbq_20($p){
+
+	$qu = "DROP VIEW ".$p[0];
+
+	return $qu;
+}
+
+
+############# tables ########################
+
+/**
+ * rename table
+ *
+ * @param array $p [0]=old tablename, [0]=new tablename
+ * @return sql string
+ */
+function dbf_17($p){
+	return false;
+	return "ALTER TABLE ".dbf_4($p[0])." RENAME TO ".dbf_4($p[1]);
+}
+	
+/**
+ * list of tables / views
+ *
+ * @param array $p [0]=schema, [1]=name, [2]=typ
+ * @return sql string
+ */
+function dbf_20($p){
+	global $db;
+
+	if(!$p[1]){$p[1] = "%";}
+	$rs = odbc_tables($db,null,$p[0],dbf_4($p[1]),$p[2]);
+	while(odbc_fetch_row($rs)){
+		$odbc_table["table_name"][] = odbc_result($rs,"TABLE_NAME");
+		$odbc_table["table_type"][] = odbc_result($rs,"TABLE_TYPE");
+	}
+	
+	if(!$odbc_table){
+		return false;
+	}else{
+		return $odbc_table;
+	}
+
+}
+
+############# columns ########################
+
+
+/**
+ * existing columns
+ *
+ * @param array $p [0]=schema, [1]=tablename, [2]=fieldname, [3]=with key
+ * @return sql string
+ */
+function dbf_5($p,$mode=null){
+	global $db;
+	
+	
+	if($p[2]){
+		$rs = odbc_columns($db,null,$p[0],dbf_4($p[1]),dbf_4($p[2]));
+	}else{
+		$rs = odbc_columns($db,null,$p[0],dbf_4($p[1]));
+	}
+	
+	if($p[3]){return $rs;}
+	
+	if($mode){
+		$sql2 = dbq_2(array($p[0],$p[1],null,2,null));
+		$rs2 = odbc_exec($db,$sql2);
+		while(odbc_fetch_row($rs2)) {
+			if(odbc_result($rs2, "INDEXNAME")){
+				$key[odbc_result($rs2, "COLUMNNAME")] = 1;
+			}
+		}
+	}
+
+	$sql = "SELECT * FROM IICOLUMNS WHERE TABLE_OWNER = '".$p[0]."' AND LOWER(TABLE_NAME) = '".strtolower($p[1])."'";
+	if($p[2]){
+		$sql .= " AND LOWER(COLUMN_NAME) = '".strtolower($p[2])."'";
+	}
+	$rs = odbc_exec($db,$sql);
+	while(odbc_fetch_row($rs)) {
+		$col["tablename"][] = dbf_4(trim(odbc_result($rs, "TABLE_NAME")));
+		$col["columnname"][] = dbf_4(trim(odbc_result($rs, "COLUMN_NAME")));
+		$col["columnname_lower"][] = dbf_4(trim(odbc_result($rs, "COLUMN_NAME")));
+		$col["datatype"][] = str_replace(" ","_",trim(odbc_result($rs, "COLUMN_DATATYPE")));
+		$col["length"][] = trim(odbc_result($rs, "COLUMN_LENGTH"));
+		$col["default"][] = trim(odbc_result($rs, "COLUMN_DEFAULT_VAL"));
+		
+		if($mode){
+			if($key[trim(odbc_result($rs, "COLUMN_NAME"))]){
+				$col["mode"][] = "KEY";
+			}else{
+				$col["mode"][] = null;
+			}
+		}
+	}
+	
+	if($col){
+		return $col;
+	}else{
+		return false;
+	}
+}
+
+/**
+ * modify column default
+ *
+ * @param array $p [0]=schema, [1]=tablename, [2]=columnname, [3]=value
+ * @return sql string
+ */
+function dbq_9($p){
+	return "ALTER TABLE ".dbf_4($p[1])." ALTER ".dbf_4($p[2])." DEFAULT ".$p[3];
+}
+
+/**
+ * rename column 
+ *
+ * @param array $p [0]=schema, [1]=tablename, [2]=old columnname, [3]=new columnname
+ * @return sql string
+ */
+function dbq_7($p){
+	return false;
+	return "ALTER TABLE ".dbf_4($p[1])." RENAME ".dbf_4($p[2])." TO ".dbf_4($p[3]);
+}
+
+/**
+ * modify column type 
+ *
+ * @param array $p [0]=schema, [1]=tablename, [2]=columnname, [3]=value
+ * @return sql string
+ */
+function dbq_15($p){
+	return "ALTER TABLE ".dbf_4($p[1])." ALTER COLUMN ".dbf_4($p[2])." ".dbf_4($p[3]);
+}
+
+/**
+ * drop column
+ *
+ * @param array $p [0]=schema, [1]=tablename, [2]=columnname
+ * @return sql string
+ */
+function dbq_22($p){
+	"ALTER TABLE ".dbf_4($p[1])." DROP ".dbf_4($p[2])." CASCADE";
+}
+
+############# stored procedures ########################
+
+
+/**
+ * limbas based lmb_vkn procedure 
+ *
+ * @param
+ * @return sql string
+ */
+function dbq_16($p=null){
+	return false;
+}
+
+/**
+ * drop limbas based lmb_vkn procedure 
+ *
+ * @param
+ * @return bool
+ */
+function dbq_21(){
+	return false;
+}
+
+
+?>

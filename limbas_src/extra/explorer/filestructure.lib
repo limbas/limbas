@@ -1,0 +1,3518 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID:
+ */
+
+# ---- typ: 1 = public directory
+# ---- typ: 2 = messages
+# ---- typ: 3 = tables
+# ---- typ: 4 = user directory
+# ---- typ: 5 = reports
+# ---- typ: 6 = dash
+# ---- typ: 7 = table relation
+
+
+# EXTENSIONS
+if($GLOBALS["gLmbExt"]["ext_explorer.inc"]){
+	foreach ($GLOBALS["gLmbExt"]["ext_explorer.inc"] as $key => $extfile){
+		require_once($extfile);
+	}
+}
+
+if($action == "message_tree"){$typ = 2;}
+
+/**
+ * get path from level
+ *
+ * @param unknown_type $LEVEL
+ * @param unknown_type $ID
+ * @return array - path
+ */
+function set_path($LEVEL,$ID){
+	global $filestruct;
+
+	$file_url[$ID] = $filestruct["name"][$ID];
+	while($filestruct["id"][$LEVEL]){
+		$file_url[$LEVEL] = $filestruct["name"][$LEVEL];
+		$LEVEL = $filestruct["level"][$LEVEL];
+	}
+
+	return $file_url;
+}
+
+
+/**
+ * set path from level
+ *
+ * @param unknown_type $LEVEL
+ * @param unknown_type $ID
+ * @return string - path
+ */
+function set_url($LEVEL,$ID){
+	global $filestruct;
+
+	$file_url = set_path($LEVEL,$ID);
+	$file_url = implode("/",array_reverse($file_url));
+	return $file_url;
+}
+
+# ------------- LEVEL aus Pfad -------------
+/**
+ * get level from path
+ *
+ * @param unknown_type $path
+ * @return num - level
+ */
+function parse_path($path){
+	global $filestruct;
+
+	if(!$filestruct){
+		get_filestructure();
+		global $filestruct;
+	}
+	if($path){
+		$path = trim($path,"/");
+		$path_el = explode("/",$path);
+		# Als Datei identifizieren
+		$level = 0;
+		$path_level = 0;
+		foreach ($path_el as $key => $name){
+			foreach ($filestruct["id"] as $key1 => $lvalue){
+				# AND $count <= $parts
+				if($filestruct["level"][$key1] == $level AND $filestruct["name"][$key1] == $name AND $name){
+					$path_level = $lvalue;
+					$count++;
+				}
+			}
+			$level = $path_level;
+		}
+	}
+	return $path_level;
+}
+
+
+/**
+ * get list of sub-directories
+ *
+ * @param unknown_type $LEVEL
+ * @param unknown_type $s
+ * @return array - directory id
+ */
+function get_subdir($LEVEL,$s){
+	global $filestruct;
+	static $subd;
+
+	if(!$filestruct){
+		get_filestructure();
+	}
+
+	if($s){
+		$subd = array();
+	}
+
+	if($s){$subd[] = $LEVEL;}
+
+	foreach($filestruct["id"] as $key => $value){
+		if($filestruct["level"][$key] == $LEVEL AND $filestruct["view"][$key]){
+			$subd[] = $filestruct["id"][$key];
+			if(in_array($filestruct["id"][$key],$filestruct[level])){
+				get_subdir($filestruct["id"][$key],0);
+			}
+		}
+	}
+	return $subd;
+}
+
+# --- Datei ID aus Name und LEVEL -----------------------------
+function parse_name($level,$name){
+	global $db;
+
+	if($level AND $name){
+		$sqlquery = "SELECT ID FROM LDMS_FILES WHERE LEVEL = $level AND NAME = '".parse_db_string($name,128)."'";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs){$commit = 1;}
+		if(odbc_result($rs,"ID")){
+			return odbc_result($rs,"ID");
+		}else{
+			return false;
+		}
+	}else{return false;}
+}
+
+# --- Datei Name aus ID -----------------------------
+function get_NameFromID($ID){
+	global $db;
+
+	if(is_numeric($ID)){
+		$sqlquery = "SELECT NAME FROM LDMS_FILES WHERE ID = $ID";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs){$commit = 1;}
+		if(odbc_result($rs,"NAME")){
+			return odbc_result($rs,"NAME");
+		}else{
+			return false;
+		}
+	}else{return false;}
+}
+
+# --- Typ-Einschränkung ------
+function set_typequery($typ){
+	global $session;
+
+	# admin erzwingen
+	if($GLOBALS["filestruct"][admin]){return 'LDMS_STRUCTURE.ERSTUSER != 0';}
+
+	# Nachrichten
+	#if($typ == 2){
+	#	$typequery = "LDMS_STRUCTURE.TYP = 2 AND LDMS_STRUCTURE.ERSTUSER = $session[user_id]";
+	#}else{
+		$typequery = "(LDMS_STRUCTURE.TYP = 1 OR LDMS_STRUCTURE.TYP = 3 OR LDMS_STRUCTURE.TYP = 5 OR LDMS_STRUCTURE.TYP = 7 OR ((LDMS_STRUCTURE.TYP = 2 OR LDMS_STRUCTURE.TYP = 4) AND LDMS_STRUCTURE.ERSTUSER = $session[user_id]))";
+	#}
+	return $typequery;
+}
+
+# --- Ordnerstruktur als geändert markieren ------
+function flag_filestructure(){
+	global $db;
+	global $session;
+	global $filestructure;
+
+	if(!$GLOBALS["umgvar"]["get_new_filestruct"]){
+		$sqlquery = "UPDATE LMB_SESSION SET FILESTRUCT_CHANGED = ".LMB_DBDEF_TRUE." WHERE USER_ID != ".$session["user_id"];
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	}
+	$GLOBALS["umgvar"]["get_new_filestruct"] = 1;
+	get_filestructure();
+}
+
+# --- Rechte neu setzen ------
+function rebuild_file_permission($fid,$level){
+	global $db;
+	global $session;
+	global $groupdat;
+
+	# all groups
+	foreach ($groupdat["id"] as $key => $value){
+		$NEXTID = next_db_id('LDMS_RULES');
+		$sqlquery1 = "SELECT LDMS_STRUCTURE.ID,LDMS_RULES.LMADD,LDMS_RULES.ADDF,LDMS_RULES.DEL,LDMS_RULES.EDIT,LDMS_RULES.LMLOCK FROM LDMS_STRUCTURE,LDMS_RULES WHERE LDMS_STRUCTURE.ID = LDMS_RULES.FILE_ID AND LDMS_STRUCTURE.ID = ".$level." AND LDMS_RULES.GROUP_ID = ".$value." AND LDMS_RULES.LMVIEW = ".LMB_DBDEF_TRUE;
+		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		if(odbc_result($rs1, "ID")){
+			$sqlquery2 = "INSERT INTO LDMS_RULES (ID,ERSTDATUM,GROUP_ID,FILE_ID,FILE_TYP,LMVIEW,LMADD,DEL,ADDF,EDIT,LMLOCK) VALUES ($NEXTID,".LMB_DBDEF_TIMESTAMP.",".$value.",".$fid.",NULL,".LMB_DBDEF_TRUE.",".parse_db_bool(odbc_result($rs1, "LMADD")).",".parse_db_bool(odbc_result($rs1, "DEL")).",".parse_db_bool(odbc_result($rs1, "ADDF")).",".parse_db_bool(odbc_result($rs1, "EDIT")).",".parse_db_bool(odbc_result($rs1, "LMLOCK")).")";
+			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+			if(!$rs2){$commit = 1;}
+			$NEXTID++;
+		}
+	}
+
+	return $commit;
+}
+
+
+
+
+# ----- Globale Defaultanzeige ------
+function get_userShow($LID,$show_details,&$ffilter=null){
+	global $db;
+	global $session;
+	global $ufile;
+	global $gfile;
+	global $gtab;
+	global $gfield;
+	
+	$ftabid = $gtab["argresult_id"]["LDMS_FILES"];
+
+	if($show_details){
+		# Userspezifische Anzeige
+		if(!$ufile){
+			$sqlquery = "SELECT UFILE FROM LMB_USERDB WHERE USER_ID = ".$session["user_id"];
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$ufile = unserialize(odbc_result($rs,"UFILE"));
+			if($ufile){
+				$gfile['show'] = $ufile[0];
+				$ffilter['tabsize'] = $ufile[1];
+				$ffilter['rowsize'] = $ufile[2];
+				$ffilter['anzahl'] = $ufile[3];
+				$ffilter['viewmode'] = $ufile[4];
+				$ffilter['order'] = $ufile[5];
+				$ffilter['search'] = $ufile[6];
+			}
+			$ufile = 1;
+		}
+
+		# Globale Defaultanzeige
+		if(!$gfile['show'][$LID] AND $gfile['show']['def']){
+			$gfile['show'][$LID] = $gfile['show']['def'];
+			$ffilter['tabsize'][$LID] = $ffilter['tabsize']['def'];
+			$ffilter['rowsize'][$LID] = $ffilter['rowsize']['def'];
+			$ffilter['anzahl'][$LID] = $ffilter['anzahl']['def'];
+		# minimum Felder
+		}elseif(!$gfile['show'][$LID]){
+			$alrd = 1;
+		}
+	}else{
+		$alrd = 1;
+	}
+	
+	if($alrd){
+		# minimum Felder
+		$fkey = $gfield[$ftabid]["argresult_name"]["NAME"];
+		$gfile['show'][$LID][$ftabid."_".$fkey] = 1;
+		$ffilter['rowsize'][$LID][$ftabid."_".$fkey] = 300;
+		$fkey = $gfield[$ftabid]["argresult_name"]["SIZE"];
+		$gfile['show'][$LID][$ftabid."_".$fkey] = 1;
+		$ffilter['rowsize'][$LID][$ftabid."_".$fkey] = 100;
+		$fkey = $gfield[$ftabid]["argresult_name"]["ERSTUSER"];
+		$gfile['show'][$LID][$ftabid."_".$fkey] = 1;
+		$ffilter['rowsize'][$LID][$ftabid."_".$fkey] = 150;
+		$ffilter['tabsize'][$LID] = 100;
+	}
+
+	# Name wird immer angezeigt
+	$gfile['show'][$LID][$ftabid."_11"] = 1;
+	
+	#return $ffilter;
+}
+
+
+
+# ----- Globale Defaultanzeige ------
+function save_userShow($LID,$save_setting){
+	global $db;
+	global $LINK;
+	global $gfile;
+	global $gfield;
+	global $ufile;
+	global $session;
+	global $ffilter;
+
+	# ---------------- User-Einstellungen speichern ----------------------
+	if($save_setting == 1 AND $LINK[220]){
+		# verschobene Felder nicht mehr speichern
+		foreach($gfile['show'][$LID] as $key => $value){
+			if(!$gfield[$gfile["tabid"][$key]]["id"][$gfile["fid"][$key]] OR $gfield[$gfile["tabid"][$key]]["field_id"][$gfile["fid"][$key]] == 100){
+				unset($gfile['show'][$LID][$key]);
+			}
+		}
+		$ufile = array($gfile['show'],$ffilter['tabsize'],$ffilter['rowsize'],$ffilter['anzahl'],$ffilter['viewmode'],$ffilter['order'],$ffilter['search']);
+		# --- prepare ---
+		$prepare_string = "UPDATE LMB_USERDB SET UFILE = ? WHERE USER_ID = ".$session["user_id"];
+		if(!lmb_PrepareSQL($prepare_string,array(serialize($ufile)),__FILE__,__LINE__)){lmb_alert("Settings are not saved sucessfully!");}
+
+		$ufile = 0;
+	# ---------------- User-Einstellungen Global speichern ----------------------
+	}elseif($save_setting == 2 AND $LINK[221]){
+		unset($ufile);
+		$ufile[0]['def'] = $gfile['show'][$LID];
+		$ufile[1]['def'] = $ffilter['tabsize'][$LID];
+		$ufile[2]['def'] = $ffilter['rowsize'][$LID];
+		$ufile[3]['def'] = $ffilter['anzahl'][$LID];
+	
+		unset($gfile['show'],$ffilter['tabsize'],$ffilter['rowsize'],$ffilter['anzahl']);
+	
+		$gfile['show'][$LID] = $ufile[0]['def'];
+		$ffilter['tabsize'][$LID] = $ufile[1]['def'];
+		$ffilter['rowsize'][$LID] = $ufile[2]['def'];
+		$ffilter['anzahl'][$LID] = $ufile[3]['def'];
+	
+		$gfile['show']['def'] = $ufile[0]['def'];
+		$ffilter['tabsize']['def'] = $ufile[1]['def'];
+		$ffilter['rowsize']['def'] = $ufile[2]['def'];
+		$ffilter['anzahl']['def'] = $ufile[3]['def'];
+		
+		# --- prepare ---
+		$prepare_string = "UPDATE LMB_USERDB SET UFILE = ? WHERE USER_ID = ".$session["user_id"];
+		if(!lmb_PrepareSQL($prepare_string,array(serialize($ufile)),__FILE__,__LINE__)){lmb_alert("Settings are not saved sucessfully!");}
+
+		$ufile = 1;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# --- Ordnerstruktur auslesen ------
+function get_filestructure($reset=null){
+	global $db;
+	global $session;
+	global $action;
+	global $filestruct;
+	
+	if(!$filestruct["id"] OR $GLOBALS["umgvar"]["get_new_filestruct"] OR $reset){
+	
+		$filestruct = array();
+
+		# set session change
+		if($GLOBALS["umgvar"]["get_new_filestruct"]){
+			$sqlquery = "UPDATE LMB_SESSION SET FILESTRUCT_CHANGED = ".LMB_DBDEF_FALSE." WHERE ID = '".$session["s_id"]."'";
+		    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		    $GLOBALS["umgvar"]["get_new_filestruct"] = 0;
+		}
+
+		$sqlquery = "SELECT LDMS_STRUCTURE.ID,LDMS_STRUCTURE.NAME,LOWER(LDMS_STRUCTURE.NAME) AS LNAME,LDMS_STRUCTURE.LEVEL,LDMS_STRUCTURE.ERSTUSER,LDMS_STRUCTURE.TYP,LDMS_STRUCTURE.FIX AS LMBFIX,LDMS_STRUCTURE.MAIL_LEVEL,LDMS_STRUCTURE.TABGROUP_ID,LDMS_STRUCTURE.TAB_ID,LDMS_STRUCTURE.FIELD_ID,LDMS_STRUCTURE.ERSTDATUM,LDMS_STRUCTURE.EDITDATUM,LDMS_STRUCTURE.READONLY AS LMBREADONLY,LDMS_STRUCTURE.SORT,LDMS_RULES.LMVIEW AS LMVIEW,LDMS_RULES.LMADD AS LMADD,LDMS_RULES.ADDF AS ADDF,LDMS_RULES.EDIT AS EDIT,LDMS_RULES.DEL AS DEL,LDMS_RULES.LMLOCK AS LMLOCK
+		FROM LDMS_STRUCTURE,LDMS_RULES
+		WHERE LDMS_STRUCTURE.ID = LDMS_RULES.FILE_ID 
+		    AND (LDMS_RULES.GROUP_ID = ".implode(" OR LDMS_RULES.GROUP_ID = ",$session["subgroup"]).") 
+		    AND LDMS_RULES.LMVIEW = ".LMB_DBDEF_TRUE."
+		    AND (LDMS_STRUCTURE.TYP = 1 OR LDMS_STRUCTURE.TYP = 3 OR LDMS_STRUCTURE.TYP = 5 OR LDMS_STRUCTURE.TYP = 7 
+		          OR ((LDMS_STRUCTURE.TYP = 2 OR LDMS_STRUCTURE.TYP = 4) AND LDMS_STRUCTURE.ERSTUSER = $session[user_id]))";
+
+		    #AND (LDMS_STRUCTURE.TYP = 1 OR LDMS_STRUCTURE.TYP = 3 OR LDMS_STRUCTURE.TYP = 5 OR LDMS_STRUCTURE.TYP = 7)";
+
+		#$sqlquery2 = "SELECT LDMS_STRUCTURE.ID,LDMS_STRUCTURE.NAME,LOWER(LDMS_STRUCTURE.NAME) AS LNAME,LDMS_STRUCTURE.LEVEL,LDMS_STRUCTURE.ERSTUSER,LDMS_STRUCTURE.TYP,LDMS_STRUCTURE.FIX AS LMBFIX,LDMS_STRUCTURE.MAIL_LEVEL,LDMS_STRUCTURE.TABGROUP_ID,LDMS_STRUCTURE.TAB_ID,LDMS_STRUCTURE.FIELD_ID,LDMS_STRUCTURE.ERSTDATUM,LDMS_STRUCTURE.EDITDATUM,LDMS_STRUCTURE.READONLY AS LMBREADONLY,LDMS_STRUCTURE.SORT,".LMB_DBDEF_TRUE." AS LMVIEW,".LMB_DBDEF_TRUE." AS LMADD,".LMB_DBDEF_TRUE." AS ADDF,".LMB_DBDEF_TRUE." AS EDIT,".LMB_DBDEF_TRUE." AS DEL,".LMB_DBDEF_TRUE." AS LMLOCK
+		#FROM LDMS_STRUCTURE
+		#WHERE  (LDMS_STRUCTURE.TYP = 2 OR LDMS_STRUCTURE.TYP = 4) AND LDMS_STRUCTURE.ERSTUSER = $session[user_id]";
+		#$sqlquery = "SELECT * FROM ((".$sqlquery1.") UNION (".$sqlquery2.")) AS QUWA ORDER BY SORT,TYP,LNAME";
+		#$sqlquery = "SELECT * FROM (".$sqlquery1." UNION ".$sqlquery2.") AS QUWA ORDER BY SORT,TYP,LNAME";
+
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs){$commit = 1;}
+
+		$bzm = 1;
+		while(odbc_fetch_row($rs, $bzm)) {
+		    
+		    $typ = odbc_result($rs, "TYP");
+		    
+		    
+			# Fehlerhafte Ordner löschen
+			if(odbc_result($rs, "ID") == odbc_result($rs, "LEVEL")){
+				#$sqlquery = "DELETE FROM LDMS_STRUCTURE WHERE ID = ".odbc_result($rs, "ID");
+				#$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				#if(!$rs){$commit = 1;}
+			}else{
+				#if($ID == odbc_result($rs, "ID")){
+				#	$filestruct[akt_ordnername] = odbc_result($rs, "NAME");
+				#	$filestruct[akt_level] = odbc_result($rs, "LEVEL");
+				#}
+
+				$id = odbc_result($rs, "ID");
+
+				# --- Rechte setzen ---
+				$filestruct["view"][0] = 1;
+				if(odbc_result($rs, "LMVIEW")){$filestruct["view"][$id] = 1;}else{$filestruct["view"][$id] = 0;}
+				if(odbc_result($rs, "LMADD")){$filestruct["add"][$id] = 1;}
+				if(odbc_result($rs, "ADDF")){$filestruct["addf"][$id] = 1;}
+				if(odbc_result($rs, "DEL")){$filestruct["del"][$id] = 1;}
+				if(odbc_result($rs, "EDIT")){$filestruct["edit"][$id] = 1;}
+				if(odbc_result($rs, "LMLOCK")){$filestruct["lock"][$id] = 1;}
+
+				if(!$filestruct["id"][$id]){
+					$filestruct["id"][$id] = $id;
+				    $filestruct["name"][$id] = odbc_result($rs, "NAME");
+				    $filestruct["path"][$id] = 0;
+				    $filestruct["level"][$id] = odbc_result($rs, "LEVEL");
+				    $filestruct["typ"][$id] = odbc_result($rs, "TYP");
+				    $filestruct["fix"][$id] = odbc_result($rs, "LMBFIX");
+				    $filestruct["readonly"][$id] = odbc_result($rs, "LMBREADONLY");
+				    $filestruct["erstdatum"][$id] = get_date(odbc_result($rs, "ERSTDATUM"),2);
+				    $filestruct["editdatum"][$id] = get_date(odbc_result($rs, "EDITDATUM"),2);
+				    $filestruct["erstuser"][$id] = odbc_result($rs, "ERSTUSER");
+				    $filestruct["tab_id"][$id] = odbc_result($rs, "TAB_ID");
+				    $filestruct["field_id"][$id] = odbc_result($rs, "FIELD_ID");
+				    $filestruct["tabid"][$id] = 0;
+				    
+				    // home directory
+				    if($typ == 2 OR $typ == 4){
+				        $filestruct["view"][$id] = 1;
+				        $filestruct["addf"][$id] = 1;
+				        $filestruct["del"][$id] = 1;
+				        $filestruct["edit"][$id] = 1;
+				        $filestruct["lock"][$id] = 1;
+				    }
+				}
+
+			$bzm++;
+			}
+		}
+	}
+
+}
+
+
+# Datei Kopie Namen vergeben
+function filecopy_rename($name,$LID,$c,$datid=null){
+	global $db;
+	global $gtab;
+	global $lang;
+	global $filestruct;
+
+	$oldname = parse_db_string($name,128);
+
+	# if versioning
+	if($gtab["versioning"][$gtab["argresult_id"]["LDMS_FILES"]]){$quver = "LDMS_FILES.VACT = ".LMB_DBDEF_TRUE." AND ";}
+	
+	# auf Duplikate prüfen
+	if($filestruct["typ"][$LID] == 7 AND $datid){
+		$verkn_ = set_verknpf($filestruct["tab_id"][$LID],$filestruct["field_id"][$LID],0,0,0,0,0);
+		$sqlquery = "SELECT LDMS_FILES.ID FROM LDMS_FILES,".$verkn_["md5tab"]." WHERE $quver LDMS_FILES.DEL = ".LMB_DBDEF_FALSE." AND ".$verkn_["md5tab"].".VERKN_ID = LDMS_FILES.ID AND ".$verkn_["md5tab"].".ID = ".$datid." AND NAME = '$oldname'";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	}else{
+		$sqlquery = "SELECT ID FROM LDMS_FILES WHERE NAME = '".$oldname."' AND LEVEL = $LID";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	}
+
+	if(odbc_fetch_row($rs,1)){
+		if($c == 1){
+			$name = $lang[1679]." ".$name;
+		}elseif(is_numeric(substr($name,0,1))){
+			$name = $c." ".substr($name,1,128);
+		}else{
+			$name = $c." ".$name;
+		}
+		$name = filecopy_rename($name,$LID,($c+1),$datid);
+	}
+
+	return $name;
+}
+
+
+/**
+ * read parameter from existing file
+ *
+ * @param unknown_type $name
+ * @param unknown_type $level
+ * @param unknown_type $datid
+ * @return unknown
+ */
+function check_duplicateFile($name,$LID,$tabrelation=null){
+
+	global $db;
+	global $lang;
+	global $gtab;
+	global $filestruct;
+	
+	if(is_numeric($tabrelation)){
+		$datid = $tabrelation;
+	}elseif (is_array($tabrelation)){
+		$datid = $tabrelation["datid"];
+	}
+	if(!is_numeric($datid)){$datid = 0;}
+
+	$name = parse_db_string($name,128);
+
+	# if versioning
+	if($gtab["versioning"][$gtab["argresult_id"]["LDMS_FILES"]]){$quver = "LDMS_FILES.VACT = ".LMB_DBDEF_TRUE." AND ";}
+
+	if($filestruct["typ"][$LID] == 3 AND $tabrelation["datid"] AND $tabrelation["fieldid"] AND $tabrelation["gtabid"]){
+		$sqlquery = "SELECT ID,NAME,SECNAME,VPID,VID,LEVEL,LMLOCK,LOCKUSER,LOCKDATE,MIMETYPE FROM LDMS_FILES WHERE $quver NAME = '$name' AND LEVEL = $LID AND TABID = ".$tabrelation["gtabid"]." AND FIELDID = ".$tabrelation["fieldid"]." AND DATID = ".$tabrelation["datid"];
+	}elseif($filestruct["typ"][$LID] == 7 AND $datid){
+		$verkn_ = set_verknpf($filestruct["tab_id"][$LID],$filestruct["field_id"][$LID],0,0,0,0,0);
+		$sqlquery = "SELECT LDMS_FILES.ID,LDMS_FILES.NAME,LDMS_FILES.SECNAME,LDMS_FILES.VPID,LDMS_FILES.VID,LDMS_FILES.LEVEL,LDMS_FILES.LMLOCK,LDMS_FILES.LOCKUSER,LDMS_FILES.LOCKDATE,LDMS_FILES.MIMETYPE FROM LDMS_FILES,".$verkn_["md5tab"]." WHERE $quver LDMS_FILES.DEL = ".LMB_DBDEF_FALSE." AND ".$verkn_["md5tab"].".VERKN_ID = LDMS_FILES.ID AND ".$verkn_["md5tab"].".ID = ".$datid." AND NAME = '$name'";
+	}else{
+		if($datid){$where = " AND DATID = $datid";}
+		$sqlquery = "SELECT ID,NAME,SECNAME,VPID,VID,LEVEL,LMLOCK,LOCKUSER,LOCKDATE,MIMETYPE FROM LDMS_FILES WHERE $quver NAME = '$name' AND LEVEL = $LID $where";
+	}
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+	if(odbc_fetch_row($rs)){
+		$existingFile["id"] = odbc_result($rs, "ID");
+		$existingFile["name"] = odbc_result($rs, "NAME");
+		$existingFile["level"] = odbc_result($rs, "LEVEL");
+		$existingFile["vpid"] = odbc_result($rs, "VPID");
+		$existingFile["vid"] = odbc_result($rs, "VID");
+		$existingFile["secname"] = odbc_result($rs, "SECNAME");
+		$existingFile["lock"] = odbc_result($rs, "LMLOCK");
+		$existingFile["lockuser"] = odbc_result($rs, "LOCKUSER");
+		$existingFile["lockdate"] = odbc_result($rs, "LOCKDATE");
+		$existingFile["mimetype_id"] = odbc_result($rs, "MIMETYPE");
+		return $existingFile;
+	}
+
+	return false;
+}
+
+/**
+ * check permission to move file
+ *
+ * @param unknown_type $file
+ * @return boolean
+ */
+function file_permission($file){
+	global $session;
+	global $lang;
+	global $userdat;
+	global $filestruct;
+	global $umgvar;
+
+	# check if locked
+	if($file["lock"] AND $file["lockuser"] != $session["user_id"]){
+		lmb_alert($file["name"]." - ".$lang[1688]." (".$userdat["bezeichnung"][$file["lockuser"]]." - ".get_date($file["lockdate"],2).")");
+		return false;
+	# check if permission to overwrite
+	}elseif(!$filestruct["del"][$file["level"]]){
+		lmb_alert($file["name"]." - ".$lang[2189]);
+		return false;
+	}else{
+		return true;
+	}
+
+}
+
+
+# ---------------------- Aktionen ---------------------------
+# -----------------------------------------------------------
+
+
+/**
+ * versioning file
+ *
+ * @param string $note
+ * @return true by success
+ */
+function create_fileversion($existingFile,$fl,$note){
+	global $db;
+	global $gtab;
+
+	if(version_record($gtab["argresult_id"]["LDMS_FILES"],$existingFile["id"],$fl["nextid"])){
+		if($note){
+			$sqlquery = "UPDATE LDMS_FILES SET VDESC = '".parse_db_string($note,180)."' WHERE ID = ".$fl["nextid"];
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			if($rs) {return true;}
+		}
+		return true;
+	}
+
+	return false;
+}
+
+
+/**
+ * file import from local server Path
+ *
+ * @param unknown_type $level
+ * @param unknown_type $path
+ * @param unknown_type $type / ignore, rename, overwrite, versioning
+ * @param unknown_type $tabrelation
+ * @return unknown
+ */
+function upload_fromPath($level,$path=null,$type=null,$tabrelation=null,$backup=null){
+	global $umgvar;
+	global $session;
+	global $filestruct;
+	
+	# read directory
+	if(!$path){$path = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp";}
+	$path = $umgvar["pfad"].'/'.ltrim(str_replace('..','',$path),'/');
+
+	if(!file_exists($path)){lmb_alert('path not found');return false;}
+
+	$files = read_dir($path,1);
+	$filecount = count($files["isfile"]);
+	chdir($umgvar["pfad"]);
+	
+	# create needed folders recusive
+	if(is_array($files["path"])){
+		foreach ($files["path"] as $key => $pathName){
+			if(!$verzeichniss["name"][$pathName]){
+				$tmpFolder = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp";
+				$pathDest = substr($pathName,strlen($tmpFolder));
+				$LID = getLID($pathDest,$level);
+				if(!$LID){
+					$pathTab = explode("/",$pathDest);
+					if(count($pathTab)>1){
+						$LID = add_file_recursive($level,$pathDest) ;
+					}else {
+						$LID = add_file($level,$files["name"][$key]) ;
+					}
+				}
+				$verzeichniss["id"][$LID] = $pathName;
+				$verzeichniss["name"][$pathName] = $LID;
+			}
+		}
+	}
+
+	# insert files
+	if(is_array($verzeichniss["id"])){
+		foreach ($verzeichniss["id"] as $folderid => $foldername){
+
+			unset($LID);
+			unset($addfile);
+
+			if($files["group"][$foldername]){
+
+				foreach ($files["group"][$foldername] as $key => $id){
+					$addfile = array();
+					if($files["typ"][$id] == "file"){
+						$LID = $verzeichniss["name"][$foldername];
+						$addfile["file"][0] = $files["path"][$id].$files["name"][$id];
+						$addfile["file_name"][0] = $files["name"][$id];
+						$dublicate["type"][0] = $type;
+						if($LID){
+							# create file
+							if($ufileId = upload($addfile,$LID,$tabrelation,2,$dublicate)){
+								# set relations
+								if($tabrelation['gtabid'] AND $tabrelation['fieldid'] AND $tabrelation['datid']){
+									$verkn = set_verknpf($tabrelation['gtabid'],$tabrelation['fieldid'],$tabrelation['datid'],$ufileId,0,0,0);
+									$verkn["linkParam"]["LID"] = $LID;
+									set_joins($tabrelation['gtabid'],$verkn);
+								}
+								# status bar
+								$progress++;
+								if(!defined('IS_CRON')){
+									lmb_ajaxProgresStatus($filecount,$progress);
+								}else{
+									lmb_alert('file uploaded: '.$files["path"][$id].$files["name"][$id]);
+									#if($ufileId == -1){
+									#	lmb_alert('file already exists! '.$files["path"][$id].$files["name"][$id]);
+									#	continue;
+									#}
+								}
+								
+								// backup
+								if($backup){
+								    if(is_dir($umgvar['path'].'/dependent/'.$backup)){
+								        rename($files["path"][$id].$files["name"][$id], $umgvar['path'].'/dependent/'.$backup.'/'.$files["name"][$id]);
+								    }
+								}
+								
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	return true;
+
+}
+
+
+
+
+
+/**
+ * upload filearchiv
+ *
+ * @param unknown_type $file
+ * @param unknown_type $level
+ * @param unknown_type $tabrelation
+ * @return unknown
+ */
+function upload_archiv($file,$level,$tabrelation=null){
+	global $umgvar;
+	global $session;
+	global $lang;
+	global $filestruct;
+
+	$file_name = $file["file_name"];
+	$file = $file["file"];
+
+	# ------------- Temp Verzeichnis löschen --------------
+	chdir($umgvar["pfad"]."/USER/".$session["user_id"]."/temp");
+	rmdirr($umgvar["pfad"]."/USER/".$session["user_id"]."/temp");
+
+	if(copy($file, $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/archiv")){
+		# ------------- zip --------------
+		if(substr($file_name,(strlen($file_name)-3),3) == "zip"){
+			$sys = exec("unzip ".$umgvar[pfad]."/USER/".$session[user_id]."/temp/archiv",$cmd);
+		}
+		# ------------- tar --------------
+		if(substr($file_name,(strlen($file_name)-3),3) == "tar"){
+			$sys = exec("tar xf ".$umgvar[pfad]."/USER/".$session[user_id]."/temp/archiv",$cmd);
+		}
+		# ------------- rar --------------
+		if(substr($file_name,(strlen($file_name)-3),3) == "rar"){
+			$sys = exec("unrar e ".$umgvar[pfad]."/USER/".$session[user_id]."/temp/archiv",$cmd);
+		}
+		# ------------- tar --------------
+		if(substr($file_name,(strlen($file_name)-6),6) == "tar.gz" OR substr($file_name,(strlen($file_name)-3),3) == "tgz"){
+			$sys = exec("tar xfz ".$umgvar[pfad]."/USER/".$session[user_id]."/temp/archiv",$cmd);
+		}
+		# ------------- gzip --------------
+		if(substr($file_name,(strlen($file_name)-2),2) == "gz"){
+			$sys = exec("gzip -d ".$umgvar[pfad]."/USER/".$session[user_id]."/temp/archiv",$cmd);
+		}
+		# ------------- bzip2 --------------
+		if(substr($file_name,(strlen($file_name)-2),2) == "bz2" OR $ext == "bz"){
+			$sys = exec("bzi2 -d ".$umgvar[pfad]."/USER/".$session[user_id]."/temp/archiv",$cmd);
+		}
+
+		# ------------- Archiv löschen --------------
+		if(file_exists($umgvar["pfad"]."/USER/".$session[user_id]."/temp/archiv")){
+			unlink($umgvar["pfad"]."/USER/".$session[user_id]."/temp/archiv");
+		}
+
+		
+		upload_fromPath($level,null,null,$tabrelation);
+
+	}else{
+		lmb_alert($lang[128]);
+		return false;
+	}
+}
+
+function add_file_recursive($level,$path){
+	global $filestruct;
+
+	$pathTab = explode("/",$path);
+
+	unset($pathTab[0]);
+
+
+	if(!$newLevel = getLID($pathTab[1],$level)){
+		$newLevel = add_file($level,$pathTab[1]);
+
+		$filestruct["view"][$newLevel] = 1;
+		$filestruct["add"][$newLevel] = 1;
+		$filestruct["addf"][$newLevel] = 1;
+		$filestruct["edit"][$newLevel] = 1;
+	}
+
+
+
+	unset($pathTab[1]);
+
+	$path = implode("/",$pathTab);
+	$path = "/" . $path ;
+
+
+	if($path != "/")
+		$newLevel = add_file_recursive($newLevel,$path) ;
+
+	return $newLevel;
+
+}
+
+/**
+ *
+ * soll geandert werden
+ *
+ * @param unknown_type $path
+ */
+function getLID($path,$level){
+	global $db;
+
+
+	$pathTab = explode("/",$path);
+
+	$act_lid = $level;
+
+	foreach ($pathTab as $key => $folderName){
+
+		if($folderName == "")
+			continue;
+
+		$sqlquery = "SELECT ID FROM LDMS_STRUCTURE WHERE NAME = '" . $folderName . "'";
+
+		if($act_lid){
+			$sqlquery .= " and LEVEL = " . $act_lid ;
+		}
+
+		$rs = odbc_exec($db, $sqlquery);
+
+		if(odbc_fetch_row($rs)){
+			$act_lid = odbc_result($rs,"ID");
+		}else{
+		$act_lid = null;
+			break;
+		}
+	}
+	return $act_lid;
+}
+
+
+/**
+ * create new filename
+ *
+ */
+function new_filename($nextid,$filename,$ext){
+	global $umgvar;
+	static $count;
+
+	$secname = $nextid.substr(md5($nextid.date("U").$filename),0,12);
+
+	if(file_exists($umgvar["uploadpfad"].$secname.".".$ext)){
+		$count++;
+		$secname = new_filename($nextid,$filename.$count,$ext);
+	}else{
+		return $secname;
+	}
+
+	if($secname){
+		return $secname;
+	}else{
+		return false;
+	}
+
+}
+
+
+/**
+ * search for md5 dublicates
+ *
+ * @param unknown_type $md5
+ */
+function checkMD5Dublicates($md5,$LID){
+	global $db;
+	
+	if($subd = get_subdir(0,1)){
+		# WHERE IN Limit
+		$splc = 500;
+		$subda = array_chunk($subd,$splc);
+		foreach ($subda as $key => $value){
+			$query[] = "LDMS_FILES.LEVEL IN (".implode(",",$value).")";
+		}
+		$query = "(".implode(" OR ",$query).")";
+
+		$sqlquery = "SELECT ID,NAME,LEVEL FROM LDMS_FILES WHERE MD5 = '".parse_db_string($md5,32)."' AND LEVEL != $LID AND $query";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$bzm = 1;
+		while(odbc_fetch_row($rs,$bzm)){
+			$res["path"][] = "- ".set_url(odbc_result($rs, "LEVEL"),odbc_result($rs, "ID")).odbc_result($rs, "NAME");
+			$bzm++;
+		}
+		if($res){return $res;}
+	}
+	return false;
+}
+
+
+
+/**
+* preperation of the file upload
+*
+* @param string $filepath: upload path
+* @param string $filename: file name
+* @param num $level: path level
+* @param bool $noupload: if 0 only browser upload possible if 1 also file upload possible
+* @param string $dublicate: possible types are overwrite, rename, versioning and skip
+*/ 
+function insert_file($filepath,$filename,$level,$noupload=1,$dublicate=null,$relation=null){
+
+	if(file_exists($filepath)){
+
+		$file["file_name"][0] = $filename;
+		$file["file"][0] = $filepath;
+		$file["file_archiv"][0] = 0;
+	    $dubl['type'][0] = $dublicate;
+		
+		$id = upload($file,$level,$relation,$noupload,$dubl);
+		
+		if($id AND $relation){
+		      $relation_ = init_relation($relation['gtabid'],$relation['fieldid'],$relation['datid'],$id);
+              set_relation($relation_);
+		}
+		
+		return $id;
+	}
+	
+	return false;
+
+}
+
+
+
+/**
+* upload files
+*
+* @param  array $file: [file] string uploadpath / [file_name]null,null, string name / [file_type] mimetype file_type / [file_archiv] boolean file_archiv
+* @param  num $level: path level
+* @param  bool $noupload: ignore http_upload if true / for internal upload
+* @param  array $dublicate: [copymove] move, copy / [type] overwrite, rename, versioning, skip / [subj] / [copyvpid] / [copyid] /[forceDelnm]
+* @return array new file id
+*/
+
+function upload($file,$level,$tabrelation,$noupload=0,$dublicate=array()){
+    
+	global $db;
+	global $session;
+	global $lang;
+	global $umgvar;
+	global $filestruct;
+	global $lmdav; # webdav
+	global $gtab;
+	global $gfield;
+	global $gmimetypes;
+	
+	# benötigte Libs
+	$require = "extra/explorer/metadata.lib";require_once($require);
+	$require = "gtab/gtab.lib";require_once($require);
+
+	$datid = $tabrelation["datid"];
+	$gtabid = $tabrelation["gtabid"];
+	$fieldid = $tabrelation["fieldid"];
+	$file_name = $file["file_name"];
+	$file_type = $file["file_type"];
+	$file_archiv = $file["file_archiv"];
+	$filepath = $file["file"];
+	$dublicate["typ"] = null;
+
+	/* --- Upload_Größe ----------------------------------------- */
+	if($session["uploadsize"]){
+		$uploadsize = ($session['uploadsize']/1024/1024);
+		#ini_set("memory_limit",($uploadsize + (16 * 1024 * 1024)));
+	}
+
+	# --- TYP-Prüfung ----
+	if(($filestruct["typ"][$level] == 2 OR $filestruct["typ"][$level] == 3 OR $filestruct["typ"][$level] == 5) AND !$fieldid AND !$umgvar["write_systemfolders"]){
+		lmb_alert($lang[1697]);
+		return true;
+	}
+	# --- Rechte ---
+	if(!$filestruct){get_filestructure();}
+	if(!$filestruct){$filestruct["add"][$level] = 1;}
+	if($filestruct["add"][$level]){
+		if(is_array($filepath)){
+			foreach($filepath as $key => $filevalue){
+				
+				if($dublicate["type"][$key] == "skip"){continue;}
+				if($filevalue){
+				if(file_exists($filevalue)){
+					if($dublicate["type"][$key]){$dublicate["typ"] = $dublicate["type"][$key];}
+					elseif ($dublicate["typ"]){$dublicate["typ"] = $dublicate["typ"];}
+					else{$dublicate["typ"] = $umgvar["dubl_type"];}
+
+					$fl = array();
+					$fl["filesize"] = filesize($filevalue);
+					
+					# from ajax html5 upload
+					if(lmb_utf8_check($file_name[$key])){
+						$fl["filename"] = lmb_utf8_decode($file_name[$key]);
+					# from form post
+					}else{
+						$fl["filename"] = $file_name[$key];
+					}
+					$fl["filetype"] = $file_type[$key];
+					$fl["filearchiv"] = $file_archiv[$key];
+					$fl["thumb_ok"] = LMB_DBDEF_TRUE;
+					$fl["lock"] = LMB_DBDEF_FALSE;
+					$fl["im_colors"] = 0;
+					if(!$level){$fl["level"] = 0;}else{$fl["level"] = $level;}
+					if(!$datid){$datid = 0;}
+					if(!$gtabid){$gtabid = 0;}
+					if(!$fieldid){$fieldid = 0;}
+					$nometa = 0;
+					$insert = 0;
+					$noupdate = 0;
+					$commit = 0;
+					
+					# ---------- Einzeldatei ----------------
+					if($fl["filearchiv"] !== 'true'){
+						
+						# check for files with same name
+						$existingFile = check_duplicateFile($fl["filename"],$fl["level"],$tabrelation);
+						if($existingFile AND $dublicate["typ"] == "ignore"){continue;}
+
+						lmb_StartTransaction();
+						# ---------------- Syntaxprüfung -----------------------
+						if((is_uploaded_file($filevalue) OR $noupload) AND strlen($fl["filename"]) <= 128 AND $fl["filesize"] > 0){
+						
+							# md5
+							if(is_uploaded_file($filevalue) OR $noupload == 2){
+								if($umgvar["use_md5"]){
+									$fl["md5"] = md5_file($filevalue);
+									if($md5res = checkMD5Dublicates($fl["md5"],$level)){
+										$md5path = implode("\\n",$md5res["path"]);
+										lmb_alert($lang[2375].":\\n".$md5path);
+									}
+								}
+							}
+						
+							# --- Mimetype ----------------------------------------
+							if(($session["browser"] != 'ie' OR $noupload) AND $umgvar["checkmime"]){
+								$fl["filetype"] = mime_content_type($filevalue);
+							}
+							# --- Mimetype aus filetype festlegen ----------------------------------------
+							if($umgvar["checkmime"]){
+								$sqlquery0 = "SELECT ID,EXT,MIMETYPE FROM LMB_MIMETYPES WHERE LOWER(MIMETYPE) = '".strtolower(trim($fl["filetype"]))."'";
+								# --- Mimetype aus Endung festlegen ----------------------------------------
+							}else{
+								$pos1 = strrpos($fl["filename"],'.');
+								$ext = strtolower(trim(substr($fl["filename"],$pos1+1,4)));
+								$sqlquery0 = "SELECT ID,EXT,MIMETYPE FROM LMB_MIMETYPES WHERE LOWER(EXT) = '$ext'";
+							}
+							$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+							if(!$rs0) {$commit = 1;}
+							if(!odbc_result($rs0, "ID")){
+								# --- falscher Mimetype -----
+								$commit = 1;
+								lmb_alert($lang[133]);
+								lmb_alert($fl["filename"]."(".$fl["filetype"].")");
+							}else{
+								$fl["mimetype_id"] = odbc_result($rs0, "ID");
+								$fl["mimetype"] = odbc_result($rs0, "MIMETYPE");
+								# --- Größe Prüfen -----
+								if($fl["filesize"] <= $session["uploadsize"]){
+									$gtabid_files = $gtab["argresult_id"]["LDMS_FILES"];
+									$gtabid_filesmeta = $gtab["argresult_id"]["LDMS_META"];
+									# Datei Name
+									$nextid = next_db_id('LDMS_FILES','id',1);
+									$fl["secname"] = new_filename($nextid,$fl["filename"],odbc_result($rs0, "EXT"));
+									#$fl["secname"] = $nextid.substr(md5($nextid.date("U").$fl["filename"]),0,12);
+									$uploadfile = $umgvar["uploadpfad"].$fl["secname"].".".odbc_result($rs0, "EXT");
+
+									# Datei in UPLOAD Kopieren
+									if($dublicate["copymove"] != "move"){
+										if(file_exists($uploadfile)){
+											# --- Kopiervorgang fehlgeschlagen ----------
+											$commit = 1;
+											lmb_alert($lang[2313]);
+											lmb_alert("file: ".$fl["filename"]);
+										}
+											
+										# move uploaded file
+										if(!move_uploaded_file($filevalue, $uploadfile)){
+											copy($filevalue, $uploadfile);
+										}
+
+										# upload / copy failure
+										if(!file_exists($uploadfile)){
+											# --- Kopiervorgang fehlgeschlagen ----------
+											$commit = 1;
+											lmb_alert($lang[128]);
+											lmb_alert("file: ".$fl["filename"]);
+										}
+									}
+
+									if(!$commit){
+										# -------- file already exists and overwrite --------
+										if($existingFile AND $dublicate["typ"] == "overwrite"){
+											if(file_permission($existingFile)){
+
+												# source = destination
+												if($dublicate["copyid"][$key] == $existingFile["id"]){
+													$fl["nextid"] = $existingFile["id"];
+													$nometa = 1;
+													$noupdate = 1;
+													# delete old file
+													unlink($uploadfile);
+													#continue;
+												# intern move
+												}elseif($dublicate["copymove"] == "move"){
+													# delete old file
+													if(del_file($existingFile["id"],$dublicate["forceDelnm"][$key])){
+														# --- move  -------------
+														if(!$dublicate["copyvpid"][$key]){lmb_alert($lang[56]);lmb_alert("file: ".$fl["filename"]);lmb_EndTransaction(0);continue;}
+														$fl["filename"] = null;
+														$fl["secname"] = null;
+														$fl["filesize"] = null;
+														$fl["thumb_ok"] = null;
+														$fl["lock"] = null;
+														$fl["mimetype_id"] = null;
+														$fl["nextid"] = $dublicate["copyvpid"][$key];
+														$nometa = 1;
+													}else{
+														continue;
+													}
+												# intern copy
+												}elseif ($dublicate["copymove"] == "copy"){
+													# delete old file
+													if(del_file($existingFile["id"],$dublicate["forceDelnm"][$key])){
+														# copy record
+														if(!$dublicate["copyid"][$key]){lmb_alert($lang[56]);lmb_alert("file: ".$fl["filename"]);lmb_EndTransaction(0);continue;}
+														if(!$fl["nextid"] = new_record($gtabid_files,0,0,0,0,$dublicate["copyid"][$key],0)){
+															lmb_alert($lang[56]);lmb_alert("file: ".$fl["filename"]);lmb_EndTransaction(0);continue;
+														}
+														$fl["vpid"] = $fl["nextid"];
+														$fl["thumb_ok"] = LMB_DBDEF_TRUE;
+														$nometa = 1;
+														$insert = 1;
+													}else{
+														# delete old file
+														unlink($uploadfile);
+														continue;
+													}
+												# upload
+												}else{
+													# delete old file
+													if(del_file($existingFile["id"],1)){
+														# new record
+														if(!$fl["nextid"] = new_record($gtabid_files,0,0,0,0,0,0,$existingFile["id"])){
+															unlink($umgvar["uploadpfad"].$fl["secname"].".".$gmimetypes["ext"][$fl["mimetype_id"]]);
+															lmb_alert($lang[56]);lmb_alert("file: ".$fl["filename"]);
+															lmb_EndTransaction(0);
+															continue;
+														}else{
+															$fl["vpid"] = $fl["nextid"];
+															$insert = 1;
+														}
+													}else{
+														# delete old file
+														unlink($uploadfile);
+														continue;
+													}
+												}
+
+											}else{
+												unlink($umgvar["uploadpfad"].$fl["secname"].".".$gmimetypes["ext"][$fl["mimetype_id"]]);
+												continue;
+											}
+										# -------- file already exists and rename in "copy of" --------
+										}elseif($existingFile AND $dublicate["typ"] == "rename"){
+											# intern move
+											if($dublicate["copymove"] == "move"){
+												# --- move  -------------
+												if(!$dublicate["copyvpid"][$key]){lmb_alert($lang[56]);lmb_alert("file: ".$fl["filename"]);lmb_EndTransaction(0);continue;}
+												$fl["secname"] = null;
+												$fl["filesize"] = null;
+												$fl["thumb_ok"] = null;
+												$fl["lock"] = null;
+												$fl["mimetype_id"] = null;
+												$fl["nextid"] = $dublicate["copyvpid"][$key];
+												$fl["filename"] = filecopy_rename($fl["filename"],$fl["level"],1,$datid);
+												$nometa = 1;
+											# intern copy
+											}elseif ($dublicate["copymove"] == "copy"){
+												# copy record
+												if(!$dublicate["copyid"][$key]){lmb_alert($lang[56]);lmb_alert("file: ".$fl["filename"]);lmb_EndTransaction(0);continue;}
+												if(!$fl["nextid"] = new_record($gtabid_files,0,0,0,0,$dublicate["copyid"][$key],0)){
+													lmb_alert($lang[56]);lmb_alert("file: ".$fl["filename"]);lmb_EndTransaction(0);continue;
+												}
+												$fl["filename"] = filecopy_rename($fl["filename"],$fl["level"],1,$datid);
+												$fl["thumb_ok"] = LMB_DBDEF_TRUE;
+												$nometa = 1;
+												$insert = 1;
+											# upload
+											}else{
+												# new record
+												if(!$fl["nextid"] = new_record($gtabid_files,0,0,0,0,0,0)){
+													unlink($umgvar["uploadpfad"].$fl["secname"].".".$gmimetypes["ext"][$fl["mimetype_id"]]);
+													lmb_alert($lang[56]);lmb_alert("file: ".$fl["filename"]);
+													lmb_EndTransaction(0);
+													continue;
+												}
+												$fl["vpid"] = $fl["nextid"];
+												# rename name
+												$fl["filename"] = filecopy_rename($fl["filename"],$fl["level"],1,$datid);
+												$insert = 1;
+											}
+										# -------- file alredy exists and versioning --------
+										}elseif($existingFile AND $dublicate["typ"] == "versioning"){
+											if(file_permission($existingFile)){
+												# intern move
+												if($dublicate["copymove"] == "move"){
+													# move
+													if(!$dublicate["copyvpid"][$key]){lmb_alert($lang[56]);lmb_alert("file: ".$fl["filename"]);lmb_EndTransaction(0);continue;}
+													$fl["secname"] = null;
+													$fl["filename"] = null;
+													$fl["filesize"] = null;
+													$fl["thumb_ok"] = null;
+													$fl["lock"] = null;
+													$fl["mimetype_id"] = null;
+													$fl["nextid"] = $dublicate["copyid"][$key];
+													$nometa = 1;
+													# versioning file
+													if(!create_fileversion($existingFile,$fl,$dublicate["subj"][$key])){
+														lmb_alert($lang[56]);lmb_alert("file: ".$fl["filename"]);
+														lmb_EndTransaction(0);
+														continue;
+													}
+												# intern copy
+												}elseif ($dublicate["copymove"] == "copy"){
+													# copy record
+													if(!$dublicate["copyid"][$key]){lmb_alert($lang[56]);lmb_alert("file: ".$fl["filename"]);lmb_EndTransaction(0);continue;}
+													if(!$fl["nextid"] = new_record($gtabid_files,0,0,0,0,$dublicate["copyid"][$key],0)){
+														lmb_alert($lang[56]);lmb_alert("file: ".$fl["filename"]);lmb_EndTransaction(0);continue;
+													}
+													#$fl["vpid"] = $fl["nextid"];
+													# versioning file
+													if(!create_fileversion($existingFile,$fl,$dublicate["subj"][$key])){
+														lmb_alert($lang[56]);lmb_alert("file: ".$fl["filename"]);
+														lmb_EndTransaction(0);
+														continue;
+													}
+													$nometa = 1;
+													$insert = 1;
+												# upload
+												}else{
+													# copy new record from existing record
+													if($fl["nextid"] = new_record($gtabid_files,0,0,0,0,$existingFile["id"],0)){
+														# versioning file
+														if(!create_fileversion($existingFile,$fl,$dublicate["subj"][$key])){
+															lmb_alert($lang[56]);lmb_alert("file: ".$fl["filename"]);
+															lmb_EndTransaction(0);
+															continue;
+														}else{
+															$fl["vpid"] = $existingFile["vpid"];
+															$insert = 1;
+														}
+													}else{
+														unlink($umgvar["uploadpfad"].$fl["secname"].".".$gmimetypes["ext"][$fl["mimetype_id"]]);
+														lmb_alert($lang[56]);lmb_alert("file: ".$fl["filename"]);
+														lmb_EndTransaction(0);
+														continue;
+													}
+												}
+											}else{
+												unlink($umgvar["uploadpfad"].$fl["secname"].".".$gmimetypes["ext"][$fl["mimetype_id"]]);
+												lmb_EndTransaction(0);
+												continue;
+											}
+										# -------- file alredy exists and ignore --------
+										}elseif($existingFile AND $dublicate["typ"] == "ignore"){
+											$fl["nextid"] = -1;
+											lmb_EndTransaction(0);
+											continue;
+										# -------- file not exist --------
+										}else{
+											# intern move
+											if($dublicate["copymove"] == "move"){
+												# --- move  -------------
+												if(!$dublicate["copyvpid"][$key]){lmb_alert($lang[56]);lmb_alert("file: ".$fl["filename"]);lmb_EndTransaction(0);continue;}
+												$fl["filename"] = null;
+												$fl["secname"] = null;
+												$fl["filesize"] = null;
+												$fl["thumb_ok"] = null;
+												$fl["lock"] = null;
+												$fl["mimetype_id"] = null;
+												$fl["nextid"] = $dublicate["copyid"][$key];
+												$nometa = 1;
+											# intern copy
+											}elseif ($dublicate["copymove"] == "copy"){
+												# copy record
+												if(!$dublicate["copyid"][$key]){lmb_alert($lang[56]);lmb_alert("file: ".$fl["filename"]);lmb_EndTransaction(0);continue;}
+												if(!$fl["nextid"] = new_record($gtabid_files,0,0,0,0,$dublicate["copyid"][$key],0)){
+													unlink($umgvar["uploadpfad"].$fl["secname"].".".$gmimetypes["ext"][$fl["mimetype_id"]]);
+													lmb_alert($lang[56]);lmb_alert("file: ".$fl["filename"]);lmb_EndTransaction(0);continue;
+												}
+												# md5 Feld muß Kopierrechte haben
+												$fl["vpid"] = $fl["nextid"];
+												$nometa = 1;
+												$insert = 1;
+											# upload
+											}else{
+												# new record
+												if(!$fl["nextid"] = new_record($gtabid_files,0,0,0,0,0,0)){
+													unlink($umgvar["uploadpfad"].$fl["secname"].".".$gmimetypes["ext"][$fl["mimetype_id"]]);
+													lmb_alert($lang[56]);lmb_alert("file: ".$fl["filename"]);
+													lmb_EndTransaction(0);
+													continue;
+												}
+												$fl["vpid"] = $fl["nextid"];
+												$insert = 1;
+											}
+										}
+										
+										/*
+										# ------- Erweiterte Werte eintragen ---------
+										$update = Array();
+										$update[] = "ERSTUSER = ".parse_db_int($session["user_id"],5);
+										$update[] = "ERSTGROUP = ".parse_db_string($session["group_id"],5);
+										$update[] = "LOCKUSER = ".parse_db_int($session["user_id"],5);
+										$update[] = "TYP = ".parse_db_int($filestruct["typ"][$level],5);
+										$update[] = "VACT = ".LMB_DBDEF_TRUE;
+										$update[] = "DEL = ".LMB_DBDEF_FALSE;
+										if($fl["lock"]){$update[] = "LMLOCK = ".$fl["lock"];}
+										if($fl["secname"]){$update[] = "SECNAME = '".parse_db_string($fl["secname"],20)."'";}
+										if($fl["filename"]){$update[] = "NAME = '".parse_db_string($fl["filename"],128)."'";}
+										if($fl["thumb_ok"]){$update[] = "THUMB_OK = ".$fl["thumb_ok"];}
+										if($fl["filesize"]){$update[] = "SIZE = ".parse_db_int($fl["filesize"],10);}
+										if($fl["mimetype_id"]){$update[] = "MIMETYPE = ".parse_db_int($fl["mimetype_id"],5);}
+										if($fl["level"]){$update[] = "LEVEL = ".parse_db_int($fl["level"],10);}
+										if($fl["vpid"]){$update[] = "VPID=".parse_db_int($fl["vpid"],18);}
+										if($fl["md5"]){$update[] = "MD5 = '".parse_db_string($fl["md5"],32)."'";}
+										if($gtabid){$update[] = "TABID = ".parse_db_int($gtabid,5);}
+										if($datid){$update[] = "DATID = ".parse_db_int($datid,18);}
+										if($fieldid){$update[] = "FIELDID = ".parse_db_int($fieldid,5);}
+										if($dublicate["copymeta"][$key]){$update[] = "META=".parse_db_bool($dublicate["copymeta"][$key]);}
+
+										$sqlquery1 = "UPDATE LDMS_FILES SET ".implode(",",$update)." WHERE ID = ".$fl["nextid"];
+										*/
+										
+										$ID_ = $fl['nextid'];
+										
+										$update = array();
+										$update["$gtabid_files,25,$ID_"] = LMB_DBDEF_TRUE;								# VACT
+										$update["$gtabid_files,2,$ID_"] = $session["group_id"];							# ERSTGROUP
+										$update["$gtabid_files,18,$ID_"] = $session["user_id"];							# LOCKUSER
+										$update["$gtabid_files,6,$ID_"] = $filestruct["typ"][$level];					# TYP
+										if($fl["lock"]){$update["$gtabid_files,17,$ID_"] = $fl["lock"];} 				#LMLOCK
+										if($fl["secname"]){$update["$gtabid_files,12,$ID_"] = $fl["secname"];} 			#SECNAME
+										if($fl["filename"]){$update["$gtabid_files,11,$ID_"] = $fl["filename"];} 		#NAME
+										if($fl["thumb_ok"]){$update["$gtabid_files,28,$ID_"] = $fl["thumb_ok"];} 		#THUMB_OK
+										if($fl["filesize"]){$update["$gtabid_files,14,$ID_"] = $fl["filesize"];} 		#SIZE
+										if($fl["mimetype_id"]){$update["$gtabid_files,13,$ID_"] = $fl["mimetype_id"];} 	#MIMETYPE
+										if($fl["level"]){$update["$gtabid_files,5,$ID_"] = $fl["level"];} 				#LEVEL
+										if($fl["vpid"]){$update["$gtabid_files,27,$ID_"] = $fl["vpid"];} 				#VPID
+										if($fl["md5"]){$update["$gtabid_files,32,$ID_"] = $fl["md5"];} 					#MD5
+										if($gtabid){$update["$gtabid_files,9,$ID_"] = $gtabid;} 						#TABID
+										if($datid){$update["$gtabid_files,8,$ID_"] = $datid;} 							#DATID
+										if($fieldid){$update["$gtabid_files,10,$ID_"] = $fieldid;} 						#FIELDID
+										if($dublicate["copymeta"][$key]){$update["$gtabid_files,29,$ID_"] = $dublicate["copymeta"][$key];} 	#META
+
+										$GLOBALS["lmb_trigger_off"][$gtabid] = 0; # Trigger after update ausführen
+										update_data($update, 1);
+										
+
+										if(!$noupdate AND $fl["nextid"]){
+											#$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+
+											if(update_data($update, 1)){
+											
+												# --- Metadaten auslesen ----
+												if(!$nometa){
+													if($meta = getmeta_from_file($umgvar["uploadpfad"].$fl["secname"].".".odbc_result($rs0, "EXT"),$fl["mimetype"],2)){
+														$GLOBALS["create_new_file"] = 1;
+														# Metadaten eintragen
+														if(!putmeta_to_db($fl["nextid"],$meta)){lmb_alert($lang[1901]);lmb_alert("file: ".$fl["filename"]);}
+													}
+												}
+
+												# --- History-Array ---------
+												if($session["logging"]){
+													$url = set_url($filestruct["level"][$fl["level"]],$fl["level"]);
+													$GLOBALS["lhist"]["val"][128][] = "/".$url."/".$fl["filename"];
+													$GLOBALS["lhist"]["gtabid"][128][] = $gtabid;
+													$GLOBALS["lhist"]["fieldid"][128][] = $fieldid;
+													$GLOBALS["lhist"]["datid"][128][] = $datid;
+													$GLOBALS["lhist"]["level"][128][] = 1;
+													$GLOBALS["lhist"]["linkid"][128] = 128;
+												}
+
+											}else{
+												if(!$dublicate["copymove"]){
+													unlink($umgvar["uploadpfad"].$fl["secname"].".".$gmimetypes["ext"][$fl["mimetype_id"]]);
+												}
+												lmb_alert($lang[2293]);lmb_alert("file: ".$fl["filename"]);
+												$commit = 1;
+											}
+										}
+									}
+								}else{
+									# --- falsche Dateigröße -----
+									$commit = 1;
+									lmb_alert($lang[129]);
+									lmb_alert(file_size($session["uploadsize"])." | ".$fl["filename"]." (".file_size($fl["filesize"]).")");
+								}
+							}
+
+						}else{
+							# --- Kopiervorgang fehlgeschlagen -----
+							$commit = 1;
+							if(strlen($fl["filename"]) >= 128){
+								lmb_alert($lang[2531]);
+							}else{
+								lmb_alert($lang[129]." ".(file_size($session["uploadsize"])));
+							}
+							lmb_alert("file: ".$fl["filename"]);
+						}
+
+						lmb_EndTransaction(!$commit);
+					}else{
+						
+						# ---------- Archiv ----------------
+						if($fl["filesize"] <= $session["uploadsize"]){
+							if(!upload_archiv(array("file" => $filevalue, "file_name" => $fl["filename"]),$fl["level"],array("datid" => $datid,"gtabid" => $gtabid,"fieldid" => $fieldid))){
+							#if(!upload_archiv($filevalue,$fl["filename"],$fl[level],$datid,$gtabid,$fieldid)){
+								return false;
+							}
+						}else{
+							# --- falsche Dateigröße -----
+							$commit = 1;
+							lmb_alert($lang[129]);
+							lmb_alert(file_size($session["uploadsize"])." | ".$fl["filename"]." (".file_size($fl["filesize"]).")");
+						}
+					}
+
+				}else{
+					lmb_alert($lang[1726]);
+				}}
+			}
+
+			# ----------- Anzahl Dateien in Datensatz ----------
+			if($filestruct["typ"][$level] == 3 AND $gtabid AND $fieldid AND $datid){
+				check_filecount($gtabid,$fieldid,$datid);
+			}
+		}
+	}else{
+		lmb_alert($lang[1710]);
+		return false;
+	}
+
+	if(!$commit){return $fl["nextid"];}else{$GLOBALS["commit"] = 1;return false;}
+}
+
+
+/**
+* Datei löschen
+*
+* @param  num  file ID
+* @param  num  user ID / if user set, erstuser is checked
+* @param  num  1 = delete / 2 = hide
+* @param  num  fileversion
+* @return true on success
+*/
+function del_file($ID,$forceDelnm=null){
+	global $gtab;
+	global $LINK;
+
+	lmb_StartTransaction();
+	# benötigte Libs
+	require_once("gtab/gtab.lib");
+	# Tabellen-ID
+	$gtabid = $gtab["argresult_id"]["LDMS_FILES"];
+	# --- Datensatz löschen ----
+	if(!$LINK[276]){$forceDelnm = 0;}
+	if(!del_data($gtabid,$ID,'delete',$forceDelnm)){
+		lmb_EndTransaction(false,$lang[56]);
+		return false;
+	}
+
+	lmb_EndTransaction(1);
+	return true;
+}
+
+
+/**
+ * extends del_data() for deleting documents
+ *
+ * @param unknown_type $ID
+ * @return boolean
+ */
+function del_document($ID){
+
+	global $db;
+	global $lang;
+	global $session;
+	global $gmimetypes;
+	global $umgvar;
+	global $filestruct;
+
+	if(!$filestruct){
+		get_filestructure();
+	}
+	
+	lmb_StartTransaction();
+
+	$sqlquery = "SELECT LEVEL,NAME,LMLOCK,LOCKUSER,LOCKDATE,SECNAME,MIMETYPE,TABID,FIELDID,DATID,TYP FROM LDMS_FILES WHERE ID = ".$ID;
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {return false;}
+
+	# keine Rechte
+	if(!$filestruct["del"][odbc_result($rs, "LEVEL")] AND !$filestruct["admin"]){
+		lmb_alert(odbc_result($rs, "NAME")." - ".$lang[1317]);
+		return false;
+	}
+
+	# gesperrt
+	if(odbc_result($rs, "LMLOCK") AND odbc_result($rs, "LOCKUSER") != $session["user_id"] AND !$filestruct["admin"]){
+		lmb_alert(odbc_result($rs, "NAME")." - ".$lang[1688]." (".$userdat["bezeichnung"][odbc_result($rs, "LOCKUSER")]." - ".get_date(odbc_result($rs, "LOCKDATE"),2).")");
+		return false;
+	}
+
+	$secname = odbc_result($rs, "SECNAME");
+	$ext = $gmimetypes["ext"][ odbc_result($rs, "MIMETYPE")];
+
+	# --- Index löschen ----
+	$sqlquery2 = "DELETE FROM LMB_INDIZE_F WHERE FID = ".$ID;
+	$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+	if(!$rs2) {$commit = 1;}
+
+	# --- Index löschen ----
+	$sqlquery2 = "DELETE FROM LMB_INDIZE_FS WHERE FID = ".$ID;
+	$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+	if(!$rs2) {$commit = 1;}
+
+	# --- Favoriten löschen ----
+	$sqlquery2 = "DELETE FROM LDMS_FAVORITES WHERE FILE_ID = ".$ID;
+	$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+	if(!$rs2) {$commit = 1;}
+
+	if(!$commit){
+		# --- Physische Datei löschen ----
+		if(file_exists($umgvar["uploadpfad"].$secname.".".$ext)){
+			if(!unlink($umgvar["uploadpfad"].$secname.".".$ext)){$commit = 1;}
+		}
+		
+		# --- IMG-Thumbs löschen ----
+		foreach (glob($umgvar["pfad"]."/TEMP/thumpnails/".$secname."*.jpg") as $filename) {
+			unlink($filename);
+		}
+		
+		# --- TXT-Thumbs löschen ----
+		if(file_exists($umgvar["pfad"]."/TEMP/txt/".$secname.".txt")){
+			if(!unlink($umgvar["pfad"]."/TEMP/txt/".$secname.".txt")){$commit = 1;}
+		}
+
+		# --- History-Array ---------
+		if($session["logging"] AND !$commit){
+			$url = set_url($filestruct[level][odbc_result($rs, "LEVEL")],odbc_result($rs, "LEVEL"));
+			$GLOBALS["lhist"]["val"][171][] = "/".$url."/".odbc_result($rs, "NAME");
+			$GLOBALS["lhist"]["gtabid"][171][] = odbc_result($rs, "TABID");
+			$GLOBALS["lhist"]["fieldid"][171][] = odbc_result($rs, "FIELDID");
+			$GLOBALS["lhist"]["datid"][171][] = odbc_result($rs, "DATID");
+			$GLOBALS["lhist"]["level"][171][] = 1;
+			$GLOBALS["lhist"]["linkid"][171] = 171;
+		}
+
+		# ----------- Anzahl Dateien in Datensatz ----------
+		if(odbc_result($rs, "TYP") == 3 AND odbc_result($rs, "TABID") AND odbc_result($rs, "FIELDID") AND odbc_result($rs, "DATID")){
+			check_filecount(odbc_result($rs, "TABID"),odbc_result($rs, "FIELDID"),odbc_result($rs, "DATID"));
+		}
+
+	}
+
+	lmb_EndTransaction(!$commit);
+	
+	if(!$commit){return true;}else{return false;}
+
+}
+
+
+/**
+ * update countview of files in gtab dataset type upload
+ *
+ * @param unknown_type $gtabid
+ * @param unknown_type $fieldid
+ * @param unknown_type $datid
+ * @return boolean
+ */
+function check_filecount($gtabid,$fieldid,$datid){
+	global $db;
+	global $gtab;
+	global $gfield;
+	global $umgvar;
+	
+	$sqlquery = "SELECT COUNT(*) AS ANZAHL FROM LDMS_FILES WHERE TABID = $gtabid AND FIELDID = $fieldid AND DATID = $datid AND TYP = 3";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	if(!$count = odbc_result($rs, "ANZAHL")){$count = 0;}
+
+	if($gtab["table"][$gtabid] AND $gfield[$gtabid]["field_name"][$fieldid] AND $count){
+		# Thumb name eintragen
+		if($count == 1){
+			$sqlquery1 = "SELECT LDMS_FILES.ID,LDMS_FILES.SECNAME,LDMS_FILES.MIMETYPE,LMB_MIMETYPES.PIC,LMB_MIMETYPES.EXT,LDMS_FILES.THUMB_OK
+			FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND  LDMS_FILES.TABID = $gtabid AND LDMS_FILES.FIELDID = $fieldid AND LDMS_FILES.DATID = $datid AND TYP = 3 AND VID = 1 AND DEL = ".LMB_DBDEF_FALSE;
+			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			if(odbc_fetch_row($rs1,1)){
+				$size = explode("x",$umgvar["thumbsize1"]);
+				if($img = IMACK_ConvertThumbs(array(odbc_result($rs1, "ID"),odbc_result($rs1, "SECNAME"),odbc_result($rs1, "MIMETYPE"),odbc_result($rs1, "THUMB_OK")),$size[0],$size[1],1)){
+					$vagt = explode("/",$img);
+					$value = $vagt[count($vagt)-1];
+				}else{
+					$value = odbc_result($rs1, "PIC");
+				}
+			}
+
+		# Anzahl eintragen
+		}else{
+			$value = $count;
+		}
+		$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = '$value' WHERE ID = $datid";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+	}
+
+	if(!$commit){return true;}else{$GLOBALS["commit"] = 1;return false;}
+}
+
+/**
+ * handle File-Favorites
+ *
+ * @param unknown_type $ID
+ * @param unknown_type $user_id
+ * @param unknown_type $act
+ * @return boolean
+ */
+function favorite_file($ID,$user_id,$act,$folder){
+	global $db;
+	global $session;
+	global $filestruct;
+
+	if($act == 1){
+		if($folder){
+			if(!$filestruct["id"][$ID] ){return false;}
+		}else{
+			$sqlquery = "SELECT LEVEL FROM LDMS_FILES WHERE ID = $ID";
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			if(!$filestruct["id"][odbc_result($rs,"LEVEL")] ){return false;}
+		}
+
+		$netdbid = next_db_id('LDMS_FAVORITES');
+		$sqlquery0 = "SELECT ID FROM LDMS_FAVORITES WHERE ID = ".parse_db_int($ID,16)." AND USER_ID = ".parse_db_int($user_id,3)." AND FOLDER = ".parse_db_bool($folder);
+		$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+		if(!odbc_result($rs0,"ID")){
+			$sqlquery = "INSERT INTO LDMS_FAVORITES (ID,USER_ID,FILE_ID,FOLDER) VALUES ($netdbid,".parse_db_int($user_id,3).",".parse_db_int($ID,16).",".parse_db_bool($folder).")";
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		}
+	}else{
+		$sqlquery = "DELETE FROM LDMS_FAVORITES WHERE FILE_ID = ".parse_db_int($ID,16)." AND USER_ID = ".parse_db_int($user_id,3)." AND FOLDER = ".parse_db_bool($folder);
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	}
+
+	if($rs){return true;}else {return false;}
+}
+
+
+
+/**
+ * list of files in folder
+ *
+ * @param unknown_type $LEVEL
+ * @param unknown_type $sub
+ * @return unknown
+ */
+function get_file_list($LEVEL,$sub){
+	global $db;
+
+	$list = array();
+
+	$sqlquery = "SELECT ID FROM LDMS_FILES WHERE LEVEL = $LEVEL";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$bzm = 1;
+	while(odbc_fetch_row($rs, $bzm)) {
+		$list[] = odbc_result($rs,"ID");
+		$bzm++;
+	}
+
+	return $list;
+}
+
+
+
+# ---------------------- Ordner ---------------------------
+# ---------------------------------------------------------
+
+
+# Ordner Kopie Namen vergeben
+function foldercopy_rename($name,$LID,$c){
+	global $db;
+	global $lang;
+	global $filestruct;
+
+	# auf Duplikate prüfen
+	$sqlquery = "SELECT ID FROM LDMS_STRUCTURE WHERE NAME = '".parse_db_string($name,128)."' AND LEVEL = $LID";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+	if(odbc_fetch_row($rs,1)){
+		if($c == 1){
+			$name = $lang[1679]." ".$name;
+		}elseif(is_numeric(substr($name,0,1))){
+			$name = $c." ".substr($name,1,128);
+		}else{
+			$name = $c." ".$name;
+		}
+		$name = foldercopy_rename($name,$LID,($c+1));
+	}
+
+	return $name;
+}
+
+/**
+ * chech dublicate file or folder
+ *
+ * @param unknown_type $level
+ * @param unknown_type $name
+ * @param unknown_type $datid
+ * @param unknown_type $usetab
+ * @return boolean
+ */
+function check_duplicateFolder($level,$name,$dublicate=null){
+	global $db;
+	global $lang;
+
+	$sqlquery = "SELECT ID FROM LDMS_STRUCTURE WHERE LEVEL = $level AND NAME = '".parse_db_string($name,128)."'";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+
+	if(odbc_fetch_row($rs,1)){
+		if($dublicate["type"] == "overwrite"){
+			if(delete_dir(odbc_result($rs,"ID"))){
+				return true;
+			}
+		}elseif($dublicate["type"] == "rename"){
+			$name = foldercopy_rename($name,$level,1);
+			return $name;
+		}else{
+			lmb_alert($name.": ".$lang[1684]);
+			return false;
+		}
+	}elseif(!$commit){
+		return $name;
+	}
+	return false;
+}
+
+# ---------------- Ordner umbenennen -----------------------
+/**
+* rename folder
+* @global handler database recource
+* @global array session
+* @global array language
+* @global array folder-structure
+* @param num folder ID
+* @param string new name of folder
+* @param num destination Level
+* @return boolean true by access
+*/
+function rename_dir($ID,$rename_file,$level){
+	global $db;
+	global $session;
+	global $lang;
+	global $filestruct;
+
+	$typ = $filestruct["typ"][$ID];
+	if($filestruct["edit"][$ID] AND !$filestruct["readonly"][$ID] AND !$filestruct["fix"][$ID]){
+		if(preg_match("/^[\w]+$/im",$rename_file) AND $rename_file){
+			# --- auf Duplikate prüfen -------
+			if(check_duplicateFolder($level,$rename_file)){
+				$sqlquery = "UPDATE LDMS_STRUCTURE SET NAME = '$rename_file',EDITDATUM = ".LMB_DBDEF_TIMESTAMP." WHERE ID = $ID AND FIX = ".LMB_DBDEF_FALSE." AND (".set_typequery($typ).")";
+				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs) {$commit = 1;}else{
+					# --- History-Array ---------
+					if($session[logging]){
+						$url = set_url($filestruct[level][$ID],$ID)."\n --> ".set_url($filestruct[level][$level],$level)."/".$rename_file;
+						$GLOBALS["lhist"][val][116][] = "/".$url;
+						$GLOBALS["lhist"][gtabid][116][] = 0;
+						$GLOBALS["lhist"][fieldid][116][] = 0;
+						$GLOBALS["lhist"][datid][116][] = 0;
+						$GLOBALS["lhist"][level][116][] = 1;
+						$GLOBALS["lhist"][linkid][116] = 116;
+					}
+				}
+			}else{return true;}
+		}else{lmb_alert($lang[1627]);}
+	}else{
+		lmb_alert($lang[1317]);
+	}
+	if(!$commit){flag_filestructure();return true;}else{$GLOBALS["commit"] = 1;return false;}
+}
+
+# ---------------- Ordner hinzufügen --------------
+/**
+* add new folder
+* @global handler database recource
+* @global array session
+* @global array language
+* @global array environment
+* @global array folder-structure
+* @param ID: num folder ID
+* @param add_file: string name of new folder
+* @return number folder ID by access or false
+*/
+function add_file($LEVEL,$folder_name){
+	global $db;
+	global $session;
+	global $lang;
+	global $umgvar;
+	global $filestruct;
+	
+	lmb_StartTransaction();
+
+	$typ = $filestruct["typ"][$LEVEL];
+	if(!$LEVEL){$LEVEL = "0";}
+	if($filestruct["addf"][$LEVEL] AND !$filestruct["readonly"][$LEVEL]){
+		if(preg_match("/^[\w ]+$/im",$folder_name) AND $folder_name){
+			# --- auf Duplikate prüfen -------
+			if(check_duplicateFolder($LEVEL,$folder_name)){
+				$sqlquery0 = "SELECT ID,TYP,TAB_ID,FIELD_ID FROM LDMS_STRUCTURE WHERE ID = $LEVEL AND (".set_typequery($typ).")";
+				$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+				if(!$rs0) {$commit = 1;}
+				if(odbc_fetch_row($rs0,1)){
+					$NEXTID = next_db_id('LDMS_STRUCTURE');
+					if((odbc_result($rs0,"TYP") == 3 OR odbc_result($rs0,"TYP") == 7) AND odbc_result($rs0,"TAB_ID") AND odbc_result($rs0,"FIELD_ID")){
+						$insert = ",TAB_ID,FIELD_ID";
+						$values = ",".parse_db_int(odbc_result($rs0,"TAB_ID"),5).",".parse_db_int(odbc_result($rs0,"FIELD_ID"),5);
+					}
+					$sqlquery = "INSERT INTO LDMS_STRUCTURE (ID,NAME,LEVEL,ERSTUSER,ERSTGROUP,TYP,FIX $insert) VALUES($NEXTID,'$folder_name',$LEVEL,".$session["user_id"].",".$session["group_id"].",".odbc_result($rs0,"TYP").",".LMB_DBDEF_FALSE." $values)";
+					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					if(!$rs) {$commit = 1;}else{
+						# --- Rechte neu setzen ------
+						$commit = rebuild_file_permission($NEXTID,$LEVEL);
+
+						# --- History-Array ---------
+						if($session["logging"] AND !$commit){
+							$url = set_url($filestruct[level][$LEVEL],$LEVEL)."/".$folder_name;
+							$GLOBALS["lhist"]["val"][119][] = "/".$url;
+							$GLOBALS["lhist"]["gtabid"][119][] = 0;
+							$GLOBALS["lhist"]["fieldid"][119][] = 0;
+							$GLOBALS["lhist"]["datid"][119][] = 0;
+							$GLOBALS["lhist"]["level"][119][] = 1;
+							$GLOBALS["lhist"]["linkid"][119] = 119;
+						}
+					}
+				}else{lmb_alert($folder_name.": ".$lang[1317]);lmb_EndTransaction(0);return false;}
+			}else{lmb_EndTransaction(1);return true;}
+		}else{lmb_alert($folder_name.": ".$lang[1627]);lmb_EndTransaction(0);return false;}
+	}else{lmb_alert($folder_name.": ".$lang[1317]);lmb_EndTransaction(0);return false;}
+
+	if(!$commit){
+		flag_filestructure();
+		lmb_EndTransaction(1);
+		return $NEXTID;
+	}else{
+		lmb_EndTransaction(0);
+		return false;
+	}
+}
+
+
+/**
+ * delete folder - list of subfolders
+ *
+ * @param unknown_type $LEVEL
+ * @return boolean
+ */
+function delete_dir_list($LEVEL){
+	global $db;
+	global $session;
+	global $umgvar;
+	global $filestruct;
+	global $lang;
+
+	$typ = $filestruct["typ"][$LEVEL];
+	if(($filestruct["del"][$LEVEL] AND !$filestruct["fix"][$LEVEL] AND !$filestruct["readonly"][$LEVEL]) OR $filestruct["admin"]){
+		# ----- Unterordner -------
+		$sqlquery = "SELECT ID,TYP FROM LDMS_STRUCTURE WHERE LEVEL = $LEVEL AND (".set_typequery($typ).")";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		$bzm = 1;
+		while(odbc_fetch_row($rs, $bzm)) {
+			if($filestruct[del][odbc_result($rs, "ID")] OR $filestruct[admin]){
+				if(!delete_dir(odbc_result($rs, "ID"))){return false;};
+			}
+			$bzm++;
+		}
+	}else{
+		lmb_alert($lang[1317]);
+		return false;
+	}
+
+	if(!$commit){return true;}else{$GLOBALS["commit"] = 1;return false;}
+}
+
+
+/**
+ * delete folder
+ *
+ * @param unknown_type $ID
+ * @return boolean
+ */
+function delete_dir($ID,$force=null){
+	global $db;
+	global $session;
+	global $filestruct;
+	global $lang;
+	global $gfield;
+
+	$typ = $filestruct["typ"][$ID];
+	if(delete_dir_list($ID)){
+
+		if($filestruct["typ"][$ID] == 7 AND !$gfield[$filestruct["tab_id"][$ID]]["perm_edit"][$filestruct["field_id"][$ID]]){
+			lmb_alert($lang[114]."\\n".$lang[1574]);
+			return false;
+		}
+
+		lmb_StartTransaction();
+
+		if(!$filestruct["admin"]){$zr = "AND FIX = ".LMB_DBDEF_FALSE;}
+		# ------- Ordner löschen ----------
+		$sqlquery = "DELETE FROM LDMS_STRUCTURE WHERE ID = $ID AND (".set_typequery($typ).") ".$zr;
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		# ------- Rechte löschen ----------
+		$sqlquery = "DELETE FROM LDMS_RULES WHERE FILE_ID = $ID";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		# --------- Lösche Dateien -----------
+		if(!$commit){
+			$sqlquery = "SELECT ID FROM LDMS_FILES WHERE LEVEL = $ID";
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			if(!$rs) {$commit = 1;}
+			$bzm = 1;
+			while(odbc_fetch_row($rs, $bzm)) {
+				if(!del_file(odbc_result($rs, "ID"),$force)){$commit = 1;}
+				$bzm++;
+			}
+
+			# lösche Verknüpfungen
+			if($filestruct["typ"][$ID] == 7){
+				global $gfield;
+				$md5tab = $gfield[$filestruct["tab_id"][$ID]]["md5tab"][$filestruct["field_id"][$ID]];
+				$sqlquery = "DELETE FROM ".strtoupper($md5tab)." WHERE LID = $ID";
+				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs) {$commit = 1;}
+			}
+
+			# --- History-Array ---------
+			if($session["logging"]){
+				$url = set_url($filestruct["level"][$ID],$ID);
+				$GLOBALS["lhist"]["val"][171][] = "/".$url;
+				$GLOBALS["lhist"]["gtabid"][171][] = 0;
+				$GLOBALS["lhist"]["fieldid"][171][] = 0;
+				$GLOBALS["lhist"]["datid"][171][] = 0;
+				$GLOBALS["lhist"]["level"][171][] = 1;
+				$GLOBALS["lhist"]["linkid"][171] = 171;
+			}
+		}
+
+		lmb_EndTransaction(!$commit);
+		if($commit){return false;}
+
+		if(!$commit){
+			if(!$filestruct["admin"]){flag_filestructure();}
+			return true;
+		}else{
+			$GLOBALS["commit"] = 1;
+			return false;
+		}
+	}else{return false;}
+}
+
+
+/**
+* Ordner verschieben
+*
+* @global handler database recource
+* @global array language
+* @global array session
+* @global array environment
+* @global array folder-structure
+* @param  array list of directories (ID) to move
+* @param  num destination Level
+* @return array on success
+*/
+function move_dir($move_file,$LEVEL,$dublicate=null){
+	global $db;
+	global $lang;
+	global $session;
+	global $umgvar;
+	global $filestruct;
+
+	lmb_StartTransaction();
+	
+	$typ = $filestruct["typ"][$LEVEL];
+
+	$GLOBALS["ffilter"]["copyContext"] = 0;
+
+	if(is_numeric($move_file)){$move_file = array($move_file);}
+
+	foreach($move_file as $key => $value){
+		# --- Rechte ----
+		if($filestruct["add"][$LEVEL] AND !$filestruct["readonly"][$LEVEL] AND $filestruct["del"][$value] AND !$filestruct["fix"][$value] AND !$filestruct["readonly"][$value]){
+			# ID und Level gleich
+			if($LEVEL == $value){lmb_alert($lang[1317]);lmb_EndTransaction(0);return false;}
+			# --- auf Duplikate prüfen -------
+			if($new_name = check_duplicateFolder($LEVEL,$filestruct["name"][$value],$dublicate)){
+				if(is_string($new_name)){$sqlset = ",NAME = '".parse_db_string($new_name,128)."'";}
+				$sqlquery = "UPDATE LDMS_STRUCTURE SET LEVEL = $LEVEL,TYP = $typ,EDITDATUM = ".LMB_DBDEF_TIMESTAMP." $sqlset WHERE ID = $value";
+				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs) {$commit = 1;}else{
+					# Rechte löschen
+					$sqlquery1 = "DELETE FROM LDMS_RULES WHERE FILE_ID = $value AND GROUP_ID = ".$session["group_id"];
+					$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+					# --- Rechte neu setzen ------
+					$commit = rebuild_file_permission($value,$LEVEL);
+
+					# --- History-Array ---------
+					if($session["logging"]){
+						$url1 = set_url($filestruct[level][$value],$value);
+						$url2 = set_url($filestruct[level][$LEVEL],$LEVEL);
+						$GLOBALS["lhist"][val][130][] = "/".$url1."\n --> /".$url2;
+						$GLOBALS["lhist"][gtabid][130][] = 0;
+						$GLOBALS["lhist"][fieldid][130][] = 0;
+						$GLOBALS["lhist"][datid][130][] = 0;
+						$GLOBALS["lhist"][level][130][] = 1;
+						$GLOBALS["lhist"][linkid][130] = 130;
+					}
+				}
+			}else{lmb_EndTransaction(1);return true;}
+		}else{lmb_alert($lang[1317]);}
+	}
+	if(!$commit){
+		lmb_EndTransaction(1);
+		flag_filestructure();
+		return true;
+	}else{
+		lmb_EndTransaction(0);
+		$GLOBALS["commit"] = 1;
+		return false;
+	}
+}
+
+
+/**
+* Ordner kopieren
+*
+* @global array language
+* @global array session
+* @global array folder-structure
+* @param  array list of folders (ID) to copy
+* @param  num destination Level
+* @param  num  id of table
+* @param  num  id of field
+* @param  num  id of dataset
+* @return array on success
+*/
+function copy_dir($copy_dir,$LEVEL,$dublicate){
+	global $filestruct;
+	global $lang;
+	global $session;
+	
+	lmb_StartTransaction();
+
+	$typ = $filestruct["typ"][$LEVEL];
+
+	$GLOBALS["ffilter"]["copyContext"] = 0;
+	$fst = $filestruct;
+
+	if(is_numeric($copy_dir)){$copy_dir = array($copy_dir);}
+
+	foreach($copy_dir as $key => $value){
+		if($filestruct["addf"][$LEVEL] AND $filestruct["add"][$LEVEL] AND $filestruct["view"][$value]){
+			# Ordner erstellen
+			if($sublevel = copy_dir_create($value,$LEVEL,$dublicate)){
+				# Unterordner
+				if(copy_dir_level($value,$sublevel,$fst,$dublicate)){
+					# --- History-Array ---------
+					if($session["logging"]){
+						# --- Rechte neu setzen ------
+						$commit = rebuild_file_permission($value,$LEVEL);
+
+						$url1 = set_url($filestruct["level"][$value],$value);
+						$url2 = set_url($filestruct["level"][$sublevel],$sublevel);
+						$GLOBALS["lhist"]["val"][129][] = "/".$url1."\n --> /".$url2;
+						$GLOBALS["lhist"]["gtabid"][129][] = $f_tabid;
+						$GLOBALS["lhist"]["fieldid"][129][] = $f_fieldid;
+						$GLOBALS["lhist"]["datid"][129][] = $f_datid;
+						$GLOBALS["lhist"]["level"][129][] = 1;
+						$GLOBALS["lhist"]["linkid"][129] = 129;
+					}
+				}
+			}
+
+			$GLOBALS["umgvar"]["get_new_filestruct"] = 1;
+		}else{
+			lmb_alert($lang[1317]);
+		}
+	}
+
+	if(!$commit){
+		get_filestructure();
+		flag_filestructure();
+		lmb_EndTransaction(1);
+		return true;
+	}else{
+		lmb_EndTransaction(0);
+		$GLOBALS["commit"] = 1;
+		return false;
+	}
+}
+
+
+/**
+ * copy recusive list of subfolders
+ *
+ * @param unknown_type $LEVEL
+ * @param unknown_type $ID
+ * @param unknown_type $f_tabid
+ * @param unknown_type $f_fieldid
+ * @param unknown_type $f_datid
+ * @return boolean
+ */
+function copy_dir_level($LEVEL,$ID,$fst,$dublicate){
+
+	foreach($fst["id"] as $key => $value){
+		if($fst["level"][$key] == $LEVEL){
+			if($sublevel = copy_dir_create($key,$ID,$dublicate)){
+				if(in_array($key,$fst["level"]) AND $sublevel){
+					copy_dir_level($key,$sublevel,$fst,$dublicate);
+				}
+			}else{return false;}
+		}
+	}
+
+	return true;
+}
+
+/**
+ * paste folder
+ *
+ * @param unknown_type $file_id
+ * @param unknown_type $level
+ * @param unknown_type $f_tabid
+ * @param unknown_type $f_fieldid
+ * @param unknown_type $f_datid
+ * @return unknown
+ */
+function copy_dir_create($file_id,$level,$dublicate){
+	global $filestruct;
+	global $gfield;
+	global $session;
+	global $lang;
+	global $db;
+
+	lmb_StartTransaction();
+
+	$typ = $filestruct["typ"][$level];
+
+	$sqlquery = "SELECT ID,NAME FROM LDMS_STRUCTURE WHERE ID = $file_id AND (".set_typequery($typ).")";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	if(odbc_fetch_row($rs,1)){
+		# --- auf Duplikate prüfen -------
+		if($new_name = check_duplicateFolder($level,odbc_result($rs, "NAME"),$dublicate)){
+			#---- Dateiliste ----
+			$sqlquery1 = "SELECT ID FROM LDMS_FILES WHERE LEVEL = $file_id AND DEL = ".LMB_DBDEF_FALSE;
+			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			if(!$rs1) {$commit = 1;}
+			$bzm = 1;
+			while(odbc_fetch_row($rs1, $bzm)) {
+				$filelist[] = odbc_result($rs1, "ID");
+				$bzm++;
+			}
+			if($NEXTID = add_file($level,$new_name)){
+				if($filelist){
+					#---- Dateien kopieren ----
+					$GLOBALS["filestruct"]["add"][$NEXTID] = 1;
+					copy_file($filelist,$NEXTID);
+				}
+			}else{$commit = 1;}
+
+		}else{$commit = 1;}
+	}
+
+	lmb_EndTransaction(!$commit);
+
+	if(!$commit){flag_filestructure();return $NEXTID;}else{$GLOBALS["commit"] = 1;return false;}
+}
+
+
+/**
+ * convert file for preview
+ *
+ * @param unknown_type $files
+ * @param unknown_type $method
+ * @param unknown_type $searchval
+ * @return array - preview link
+ */
+function preview_archive($files,$method,$searchval=null,$format=null,$save=null){
+	global $db;
+	global $session;
+	global $umgvar;
+	global $lang;
+	global $filestruct;
+	global $gmimetypes;
+
+	if(strlen($method) > 3){
+		$d_ = explode("-",$method);
+		$destformat = $d_[0];
+		$destsize = explode("x",$d_[1]);
+		$prop = $d_[2];
+	}else{
+		$destformat = $method;
+	}
+
+	if(!$filestruct){
+		get_filestructure();
+	}
+
+	# --- temp-Verzeichnis leeren -------------
+	rmdirr($umgvar["pfad"]."/USER/".$session["user_id"]."/temp");
+
+	$bzm = 1;
+	$bzm0 = 0;
+	foreach($files as $key => $value){
+		$sqlquery = "SELECT LDMS_FILES.SIZE,LDMS_FILES.SECNAME,LDMS_FILES.NAME,LDMS_FILES.LEVEL,LDMS_FILES.TABID,LDMS_FILES.FIELDID,LDMS_FILES.DATID,LDMS_FILES.THUMB_OK,LDMS_FILES.LMLOCK,LDMS_FILES.LOCKUSER,LDMS_FILES.LOCKDATE,LDMS_FILES.MIMETYPE
+		FROM LDMS_FILES
+		WHERE LDMS_FILES.ID = $value";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		$mimetype = $gmimetypes["mimetype"][odbc_result($rs, "MIMETYPE")];
+		$mime = explode("/",$gmimetypes["mimetype"][odbc_result($rs, "MIMETYPE")]);
+		$mimeid = odbc_result($rs, "MIMETYPE");
+		$ext = $gmimetypes["ext"][odbc_result($rs, "MIMETYPE")];
+		$secname = odbc_result($rs,"SECNAME");
+		$level = odbc_result($rs,"LEVEL");
+		$filename = odbc_result($rs,"NAME");
+		
+		$preview_link['mimetype'][$bzm0] = $mimetype;
+		$preview_link['name'][$bzm0] = odbc_result($rs,"NAME");
+		$preview_link['size'][$bzm0] = odbc_result($rs,"SIZE");
+
+		# Ordner Rechte
+		if($filestruct["view"][$level]){
+			if($bzm <= $umgvar["maxdownloads"]){
+				# use unoconv
+				if($umgvar['use_unoconv'] AND substr($method,0,3) == 'uc_'){
+					$destformat = substr($destformat,3);
+					$newfile = convert_unoconv(null,$secname,$filename,$ext,$destformat);
+				}else{
+					# ocr
+					if($method == "ocr" AND $umgvar["ocr_enable"]){
+						require_once("extra/explorer/explorer_ocr.lib");
+						$newfile = LmEntGenerate_ocr($value,$level,'preview',$format);
+					# image/pdf to thumbnail
+					}elseif(($mime[0] == "image" OR ($mime[1] == "pdf" AND $umgvar["imagemagickpdf"])) AND $filestruct["view"][$level] AND $destformat != "html"){
+						$newfile = IMACK_ConvertThumbs(array($value,$secname,$mimeid,odbc_result($rs,"THUMB_OK")),$destsize[0],$destsize[1],$prop,$destformat,null,null,null,null);
+						$newfile = $umgvar['path'].'/'.$newfile;
+					# pdf/word to html
+					}elseif(($mime[1] == "pdf" OR $mime[1] == "msword") AND $destformat == "html"){
+						$newfile = convert_to_html($secname,odbc_result($rs,"NAME"),$ext,$mimetype,$searchval);
+						$newfile = $umgvar['path'].'/'.$newfile;
+					}else{lmb_alert($lang[1909]);return false;}
+				}
+
+				# --- History-Array ---------
+				if($session["logging"] == 2){
+					$url = set_url($filestruct["level"][$level],$level);
+					$GLOBALS["lhist"]["val"][203][] = "/".$url."/".$filename;
+					$GLOBALS["lhist"]["gtabid"][203][] = odbc_result($rs,"TABID");
+					$GLOBALS["lhist"]["fieldid"][203][] = odbc_result($rs,"FIELDID");
+					$GLOBALS["lhist"]["datid"][203][] = odbc_result($rs,"DATID");
+					$GLOBALS["lhist"]["level"][203][] = 2;
+					$GLOBALS["lhist"]["linkid"][203] = 203;
+				}
+
+				if($newfile){
+					if($save){
+						$newfilename = substr($filename,0,strrpos($filename,'.')).'.'.$destformat;
+						$file["file"][] = $newfile;
+						$file["file_name"][] = $newfilename;
+						if(!upload($file,$level,0,1)){lmb_alert($lang[2113].'\\n'.$newfilename);}
+					}else{
+						$preview_link[$bzm0] = pathToURL($newfile);
+					}
+					
+				}else{
+					lmb_alert($lang[2113].'\\n'.$filename);
+				}
+
+			}else{lmb_alert($lang[1689]." (".$umgvar["maxdownloads"].")");return false;}
+		}else{lmb_alert($lang[114]);}
+		$bzm++;
+		$bzm0++;
+	}
+	if(!$commit AND $preview_link){return $preview_link;}else{$GLOBALS["commit"] = 1;return false;}
+}
+
+
+/**
+ * convert file to html
+ *
+ * @param unknown_type $file
+ * @param unknown_type $name
+ * @param unknown_type $ext
+ * @param unknown_type $mimetyp
+ * @param unknown_type $searchval
+ * @return boolean
+ */
+function convert_to_html($file,$name,$ext,$mimetyp,$searchval){
+	global $umgvar;
+	global $session;
+
+	# Temporärer txt Pfad
+	$rname = "preview";
+	$resultdir = $umgvar[pfad]."/USER/".$session[user_id]."/temp/";
+	$resultdest = $resultdir.$rname.".html";
+	$resultpath = $resultdir.$rname.".html";
+	$resulturl = "USER/".$session[user_id]."/temp/".$rname.".html";
+	$mime = explode("/",$mimetyp);
+
+	function create_sv($var) {
+		return "/(".$var.")/i";
+	}
+	function create_rv($var) {
+		return "<span style=\"background-color:".$var."\">\$0</span>";
+	}
+	$col = array('#ffff66','#A0FFFF','#99ff99','#ff9999','#ff66ff','#880000','#00aa00','#886800');
+	# --- PDF ---
+	if($mime[1] == "pdf"){
+		# Parameter '-hidden'
+		$sys = "pdftohtml -c ".$umgvar["uploadpfad"].$file.".".$ext." ".$resultdest;
+		$out = `$sys`;
+
+		if(file_exists($resultpath)) {
+			if($searchval[0]){
+				$sv = array_map("create_sv",$searchval);
+				$rv = array_map("create_rv",$col);
+				$i = 1;
+				while(file_exists($resultdir.$rname."-$i.html")){
+					$mainframe = $resultdir.$rname."-$i.html";
+					$streamarray = file($mainframe);
+					$tf = fopen($mainframe,"w");
+					foreach ($streamarray as $key => $value){
+						fputs($tf,preg_replace($sv,$rv,$value));
+					}
+					fclose($tf);
+					$i++;
+				}
+			}
+			return $resulturl;
+		}else{
+			lmb_alert($GLOBALS["lang"][2113]);
+			return false;
+		}
+	# --- Word ---
+	}elseif($mime[1] == "msword"){
+		$resultdest = $rname.".html";
+		$resulturl = "USER/".$session[user_id]."/temp/".$rname.".html";
+		$resultpath = $resultdir.$rname.".html";
+		$sys = "wvHtml --targetdir=$resultdir ".$umgvar[uploadpfad].$file.".".$ext." ".$resultdest;
+		$out = `$sys`;
+		if(file_exists($resultpath)) {
+			if($searchval[0]){
+				$sv = array_map("create_sv",$searchval);
+				$rv = array_map("create_rv",$col);
+				$mainframe = $resultdir.$rname.".html";
+				$streamarray = file($mainframe);
+				$tf = fopen($mainframe,"w");
+				foreach ($streamarray as $key => $value){
+					fputs($tf,preg_replace($sv,$rv,$value));
+				}
+				fclose($tf);
+			}
+			return $resulturl;
+		}
+	}
+	return false;
+}
+
+
+
+# ---------------- OpenOffice Konvertierung -----------------------
+function convert_unoconv($ID,$file,$name,$ext,$destformat){
+	global $umgvar;
+	global $session;
+	global $gmimetypes;
+	global $db;
+	
+	# if no file params
+	if($ID){
+		$sqlquery = "SELECT LDMS_FILES.SIZE,LDMS_FILES.SECNAME,LDMS_FILES.NAME,LDMS_FILES.LEVEL,LDMS_FILES.TABID,LDMS_FILES.FIELDID,LDMS_FILES.DATID,LDMS_FILES.THUMB_OK,LDMS_FILES.LMLOCK,LDMS_FILES.LOCKUSER,LDMS_FILES.LOCKDATE,LDMS_FILES.MIMETYPE
+		FROM LDMS_FILES
+		WHERE LDMS_FILES.ID = $ID";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+
+		$ext = $gmimetypes["ext"][odbc_result($rs, "MIMETYPE")];
+		$file = odbc_result($rs,"SECNAME");
+		$level = odbc_result($rs,"LEVEL");
+		$name = odbc_result($rs,"NAME");
+	}
+
+	$name  = substr($name,0,strrpos($name,'.'));
+	$originFilePath = $umgvar["uploadpfad"].$file.".".$ext;
+	$outputDirPath = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/".$name.".".$destformat;
+	
+    /**
+    * Basic converter method
+    * 
+    * @param string $originFilePath Origin File Path
+    * @param string $toFormat       Format to export To
+    * @param string $outputDirPath  Output directory path
+    */
+    function convert($originFilePath, $outputDirPath, $toFormat){
+        $command = 'unoconv --format %s --output %s %s';
+        $command = sprintf($command, $toFormat, $outputDirPath, $originFilePath);
+        #$command = "unoconv --output $outputDirPath $originFilePath";
+        #error_log($command);
+        system($command, $output);
+        return ($output==0);
+    }
+	
+	if (convert($originFilePath, $outputDirPath, $destformat)){
+		return $outputDirPath;
+	}
+	else{
+		return false;
+	}
+}
+
+
+# ---------------- Datei sortieren -----------------------
+function sort_file($ID,$value){
+	global $db;
+
+	if(!$ID){return false;}
+
+	if(is_numeric($value) AND $GLOBALS["gfile"]["id"][9]){
+		$sqlquery = "UPDATE LDMS_FILES SET SORT = ".parse_db_int($value,6)." WHERE ID = $ID";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		if(!$commit){return true;}else{$GLOBALS["commit"] = 1;return false;}
+	}else{return false;}
+}
+
+# ---------------- Status ändern -----------------------
+function set_status($ID,$files_status){
+	global $db;
+	global $session;
+	global $filestruct;
+
+	if(!$ID){return false;}
+
+	$typ = $filestruct["typ"][$ID];
+
+	$sqlquery = "SELECT LDMS_FILES.LMLOCK,LDMS_FILES.PERM,LDMS_FILES.CHECKED,LDMS_FILES.LOCKDATE,LDMS_FILES.LOCKUSER,LDMS_FILES.NAME,LDMS_FILES.LEVEL,LDMS_FILES.TABID,LDMS_FILES.FIELDID,LDMS_FILES.DATID FROM LDMS_FILES,LDMS_STRUCTURE WHERE LDMS_FILES.ID = $ID AND LDMS_FILES.LEVEL = LDMS_STRUCTURE.ID AND (".set_typequery($typ).")";
+	$rs0 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs0) {$commit = 1;}
+
+	# --- gespert ----
+	if(!odbc_result($rs0, "LMLOCK") OR odbc_result($rs0, "LOCKUSER") == $session[user_id] OR $session[group_id] == 1){
+		if($files_status["checked"]){$query[] = "CHECKED = ".LMB_DBDEF_TRUE.",CHECKUSER = ".$session[user_id].",CHECKDATE = ".LMB_DBDEF_TIMESTAMP;$hist_c = 1;}else{$query[] = "CHECKED = ".LMB_DBDEF_FALSE;$hist_c = 0;}
+		if($files_status["perm"]){$query[] = "PERM = ".LMB_DBDEF_TRUE.",PERMUSER = ".$session[user_id].",PERMDATE = ".LMB_DBDEF_TIMESTAMP;$hist[] = "perm";$hist_p = 1;}else{$query[] = "PERM = ".LMB_DBDEF_FALSE;$hist_p = 0;}
+		if($files_status["lock"]){$query[] = "LMLOCK = ".LMB_DBDEF_TRUE.",LOCKUSER = ".$session[user_id].",LOCKDATE = ".LMB_DBDEF_TIMESTAMP;$hist[] = "lock";$hist_l = 1;}else{$query[] = "LMLOCK = ".LMB_DBDEF_FALSE;$hist_l = 0;}
+
+		$query = implode(",",$query);
+		$sqlquery = "UPDATE LDMS_FILES SET $query WHERE ID = $ID";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}else{
+			# --- History-Array ---------
+			if($session[logging]){
+				if(odbc_result($rs0,"CHECKED") != $hist_c) {$stat = "\ncheck ->".$hist_c;}
+				if(odbc_result($rs0,"PERM") != $hist_p) {$stat .= "\nperm ->".$hist_p;}
+				if(odbc_result($rs0,"CHECKED") != $hist_l) {$stat .= "\nlock ->".$hist_l;}
+
+				$url = set_url($filestruct[level][odbc_result($rs0,"LEVEL")],odbc_result($rs0,"LEVEL"));
+				$GLOBALS["lhist"][val][195][] = "/".$url."/".odbc_result($rs0,"NAME").$stat;
+				$GLOBALS["lhist"][gtabid][195][] = odbc_result($rs0,"TABID");
+				$GLOBALS["lhist"][fieldid][195][] = odbc_result($rs0,"FIELDID");
+				$GLOBALS["lhist"][datid][195][] = odbc_result($rs0,"DATID");
+				$GLOBALS["lhist"][level][195][] = 1;
+				$GLOBALS["lhist"][linkid][195] = 195;
+			}
+		}
+	}else{lmb_alert($lang[1688]."\\n".get_date(odbc_result($rs0, "LOCKDATE"),2)." ".$userdat[vorname][odbc_result($rs0, "LOCKUSER")]." ".$userdat[name][odbc_result($rs0, "LOCKUSER")]);}
+
+	if(!$rs) {$commit = 1;}
+	if(!$commit){return true;}else{$GLOBALS["commit"] = 1;return false;}
+}
+
+# ---------------- Thumbs neu berechnen -----------------------
+function refresh_thumbnails($LEVEL){
+	global $db;
+	global $umgvar;
+	global $session;
+
+	$typ = $filestruct["typ"][$ID];
+
+	$sqlquery = "SELECT LDMS_FILES.ID,LDMS_FILES.SECNAME,LDMS_FILES.NAME,LDMS_FILES.LEVEL,LDMS_FILES.TABID,LDMS_FILES.FIELDID,LDMS_FILES.DATID FROM LDMS_FILES,LDMS_STRUCTURE WHERE LDMS_FILES.LEVEL = $LEVEL AND LDMS_FILES.LEVEL = LDMS_STRUCTURE.ID AND (".set_typequery($typ).")";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$bzm = 1;
+	while(odbc_fetch_row($rs,$bzm)){
+		$sys = exec("rm ".$umgvar["pfad"]."/TEMP/thumpnails/".odbc_result($rs,"SECNAME")."*");
+		$sqlquery0 = "UPDATE LDMS_FILES SET THUMB_OK = ".LMB_DBDEF_TRUE." WHERE ID = ".odbc_result($rs,"ID");
+		$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+		if(!$rs0) {$commit = 1;}
+		$bzm++;
+	}
+
+	if(!$commit){return true;}else{$GLOBALS["commit"] = 1;return false;}
+}
+
+# ---------------- Datei umbenennen -----------------------
+/**
+* rename file
+* @global handler database recource
+* @global array session
+* @global array language
+* @global array folder-structure
+* @global array user / groups
+* @param num file ID
+* @param string new name of file
+* @param num destination Level
+* @return boolean true by access
+*/
+function rename_file($edit_id,$newname,$ID){
+	global $db;
+	global $session;
+	global $lang;
+	global $filestruct;
+	global $userdat;
+
+	lmb_StartTransaction();
+
+	$typ = $filestruct["typ"][$ID];
+
+	$sqlquery0 = "SELECT LDMS_FILES.ID,LDMS_FILES.NAME,LDMS_FILES.LMLOCK,LDMS_FILES.LOCKDATE,LDMS_FILES.LOCKUSER,LDMS_FILES.LEVEL,LDMS_FILES.TABID,LDMS_FILES.FIELDID,LDMS_FILES.DATID FROM LDMS_FILES,LDMS_STRUCTURE WHERE LDMS_FILES.ID = $edit_id AND LDMS_FILES.LEVEL = LDMS_STRUCTURE.ID AND (".set_typequery($typ).")";
+	$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+	if(!$rs0) {$commit = 1;}
+	if(odbc_fetch_row($rs0,1)){
+
+		# --- Rechte ----
+		if($filestruct["edit"][$ID] AND !$filestruct["readonly"][$ID]){
+			# --- gespert ----
+			if(!odbc_result($rs0, "LMLOCK") OR odbc_result($rs0, "LOCKUSER") == $session["user_id"] OR $filestruct["admin"]){
+				$newname = parse_db_string(trim(preg_replace("/\s{1,}/"," ",$newname)),128);
+				$sqlquery = "SELECT ID FROM LDMS_FILES WHERE LEVEL = $ID AND NAME = '$newname'";
+				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs) {$commit = 1;}
+				if(odbc_fetch_row($rs,1)){
+					lmb_alert($lang[1683]);
+					return true;
+				}elseif(!$commit){
+					# Dateiendung unverändert lassen
+					$ext = substr(odbc_result($rs0,"NAME"),strrpos(odbc_result($rs0,"NAME"),"."),10);
+					if(strrpos($newname,".")){
+						$newname = substr($newname,0,strrpos($newname,".")).$ext;
+					}else{
+						$newname = $newname.$ext;
+					}
+
+					$sqlquery1 = "UPDATE LDMS_FILES SET NAME = '$newname' WHERE ID = $edit_id";
+					$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+					if(!$rs1) {$commit = 1;}else{
+
+						# --- History-Array ---------
+						if($session[logging]){
+							$url = set_url($filestruct[level][odbc_result($rs0,"LEVEL")],odbc_result($rs0,"LEVEL"));
+							$GLOBALS["lhist"][val][116][] = "/".$url."/".odbc_result($rs0,"NAME")."\n -> $newname";
+							$GLOBALS["lhist"][gtabid][116][] = odbc_result($rs0,"TABID");
+							$GLOBALS["lhist"][fieldid][116][] = odbc_result($rs0,"FIELDID");
+							$GLOBALS["lhist"][datid][116][] = odbc_result($rs0,"DATID");
+							$GLOBALS["lhist"][level][116][] = 1;
+							$GLOBALS["lhist"][linkid][116] = 116;
+						}
+					}
+				}
+				if(!$rs) {$commit = 1;}
+			}else{lmb_alert(odbc_result($rs, "NAME")." - ".$lang[1688]." (".$userdat["bezeichnung"][odbc_result($rs, "LOCKUSER")]." - ".get_date(odbc_result($rs, "LOCKDATE"),2).")");}
+		}else{lmb_alert(odbc_result($rs, "NAME")." - ".$lang[1317]);}
+	}
+
+	lmb_EndTransaction(!$commit);
+	if(!$commit){return true;}else{$GLOBALS["commit"] = 1;return false;}
+}
+
+
+
+# ---------------- Datei download -----------------------
+function lock_file($ID){
+	global $db;
+	global $session;
+
+	$sqlquery = "UPDATE LDMS_FILES SET LMLOCK = ".LMB_DBDEF_TRUE.",LOCKUSER = ".$session["user_id"].",LOCKDATE = ".LMB_DBDEF_TIMESTAMP." WHERE ID = $ID AND LMLOCK = ".LMB_DBDEF_FALSE;
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if($rs){return true;}else{$GLOBALS["commit"] = 1;return false;}
+}
+
+# --- Datei Download --------
+function file_download($ID){
+	global $db;
+	global $session;
+	global $umgvar;
+	global $filestruct;
+	global $lang;
+	global $userdat;
+	global $gmimetypes;
+
+	if(!$ID){return false;}
+	
+	if(!$filestruct){
+		get_filestructure();
+	}
+
+	clearstatcache();
+
+	$sqlquery = "SELECT LDMS_FILES.SIZE,LDMS_FILES.ID,LDMS_FILES.LEVEL,LDMS_FILES.MIMETYPE,LDMS_FILES.SECNAME,LDMS_FILES.VACT,LDMS_FILES.VID,LDMS_FILES.NAME,LDMS_FILES.LMLOCK,LDMS_FILES.LOCKUSER,LDMS_FILES.LOCKDATE FROM LDMS_FILES WHERE LDMS_FILES.ID = $ID";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+
+	if(odbc_fetch_row($rs,1) AND $filestruct["view"][odbc_result($rs, "LEVEL")] == 1){
+
+		if(!odbc_result($rs, "VACT")){$vcount = "V".odbc_result($rs, "VID")."_";}else{$vcount = "";}
+		$target = $umgvar["uploadpfad"].odbc_result($rs, "SECNAME").".".$gmimetypes["ext"][odbc_result($rs, "MIMETYPE")];
+		$link = $umgvar[pfad]."/USER/".$session[user_id]."/download/".$vcount.odbc_result($rs, "NAME");
+
+		$dirlist = read_dir($umgvar["pfad"]."/USER/".$session["user_id"]."/download",0);
+		if($dirlist){
+			# clear directory after 30 min.
+			foreach ($dirlist["path"] as $key => $value){
+				$ltat = lstat($value.$dirlist["name"][$key]);
+				if(time() - $ltat[9] > 1800){
+					unlink($value.$dirlist["name"][$key]);
+				}
+			}}
+
+			# ---  Lock File ---------
+			if($filestruct["lock"][odbc_result($rs, "LEVEL")] AND $filestruct["edit"][odbc_result($rs, "LEVEL")]){
+				lock_file(odbc_result($rs, "ID"));
+			}
+
+			# --- is allready locked ---------
+			if(odbc_result($rs, "LMLOCK") AND odbc_result($rs, "LOCKUSER") != $session["user_id"] AND $filestruct["edit"][odbc_result($rs, "LEVEL")]){
+				lmb_alert($lang[1688]." : (".$userdat["bezeichnung"][odbc_result($rs, "LOCKUSER")]." - ".get_date(odbc_result($rs, "LOCKDATE"),2).")");
+			}
+
+			if(is_link($link) AND !file_exists($link)){
+				unlink($link);
+			}
+
+			if(!is_link($link)){
+				symlink($target,$link);
+			}
+			
+			if(is_link($link)){
+				$file["url"] = "USER/".$session[user_id]."/download/".rawurlencode($vcount.odbc_result($rs, "NAME"));
+				$file["path"] = "USER/".$session[user_id]."/download/".$vcount.odbc_result($rs, "NAME");
+				$file["name"] = odbc_result($rs, "NAME");
+				$file["length"] = odbc_result($rs, "SIZE");
+				$file["mimetype"] = $gmimetypes["mimetype"][odbc_result($rs, "MIMETYPE")];
+				return $file;
+			}else{
+				return false;
+			}
+	}else{
+		lmb_alert($lang[2189]." : (".odbc_result($rs, "NAME").")");
+	}
+}
+
+
+
+
+
+# ---------------- Archiv download -----------------------
+/**
+ *
+ *
+ * @param array $filellist is an array of IDs of files or folders (d1,f1)
+ * @param int $method 1=zip 2=tgz 3=tbz2 4=7z
+ * @return success
+ */
+function download_archive($filellist,$LEVEL,$method){
+	global $db;
+	global $session;
+	global $umgvar;
+	global $lang;
+	global $filestruct;
+	global $userdat;
+
+	function download_archive_file($id,$path){
+		global $db;
+		global $session;
+		global $umgvar;
+		global $lang;
+		global $filestruct;
+		global $userdat;
+
+		#if($bzm > $umgvar["maxdownloads"]){lmb_alert($lang[1689]." (".$umgvar["maxdownloads"].")");return false;}
+
+		$sqlquery = "SELECT LDMS_FILES.ID,LDMS_FILES.NAME,LDMS_FILES.SECNAME,LDMS_FILES.LEVEL,LDMS_FILES.TABID,LDMS_FILES.FIELDID,LDMS_FILES.DATID,LDMS_FILES.LMLOCK,LDMS_FILES.LOCKDATE,LDMS_FILES.LOCKUSER,LMB_MIMETYPES.EXT FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.ID = $id AND LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		# ---- Rechte ----
+		if(odbc_fetch_row($rs,1)){
+			$level = odbc_result($rs,"LEVEL");
+			# --- is allready locked ---------
+			if($filestruct["view"][$level] == 1){
+				if(!odbc_result($rs, "LMLOCK") OR odbc_result($rs, "LOCKUSER") == $session["user_id"] OR $filestruct["admin"]){
+					if(!copy($umgvar["uploadpfad"].odbc_result($rs, "SECNAME").".".odbc_result($rs, "EXT"), $path."/".odbc_result($rs, "NAME"))) {
+						return false;
+					}else{
+						$archive_list[] = odbc_result($rs, "NAME");
+
+						# ---  Lock File ---------
+						#if($filestruct["lock"][$level]){
+							#lock_file(odbc_result($rs, "ID"));
+						#}
+
+						# --- History-Array ---------
+						if($session["logging"] == 2){
+							$url = set_url($filestruct["level"][$level],$level);
+							$GLOBALS["lhist"]["val"][190][] = "/".$url."/".odbc_result($rs,"NAME");
+							$GLOBALS["lhist"]["gtabid"][190][] = odbc_result($rs,"TABID");
+							$GLOBALS["lhist"]["fieldid"][190][] = odbc_result($rs,"FIELDID");
+							$GLOBALS["lhist"]["datid"][190][] = odbc_result($rs,"DATID");
+							$GLOBALS["lhist"]["level"][190][] = 2;
+							$GLOBALS["lhist"]["linkid"][190] = 190;
+						}
+						$bzm++;
+					}
+				}else{
+					lmb_alert(odbc_result($rs, "NAME")." - ".$lang[1688]." : ".$userdat["bezeichnung"][odbc_result($rs, "LOCKUSER")]." - ".get_date(odbc_result($rs, "LOCKDATE"),2).")");
+				}
+			}else{
+				lmb_alert($lang[2189]." : (".odbc_result($rs, "NAME").")");
+			}
+		}else{
+			lmb_alert($lang[1726]." : (".odbc_result($rs, "NAME").")");
+		}
+
+	}
+
+
+	function download_archive_sub($level,$path){
+		global $db;
+		global $filestruct;
+		global $umgvar;
+		global $session;
+
+		if(!$path OR !$level){return false;}
+		$path = $path."/".$filestruct["name"][$level];
+		mkdir($path);
+
+		foreach($filestruct["id"] as $key => $value){
+			if($filestruct["level"][$key] == $level AND $filestruct["view"][$key]){
+				download_archive_sub($value,$path);
+			}
+		}
+
+		$sqlquery = "SELECT LDMS_FILES.ID FROM LDMS_FILES WHERE LEVEL = $level";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+
+		$bzm = 1;
+		while(odbc_fetch_row($rs,$bzm)){
+			download_archive_file(odbc_result($rs, "ID"),$path);
+			$bzm++;
+		}
+	}
+
+	if(!$LEVEL OR !$filestruct){
+		return false;
+	}
+
+	# --- temp-Verzeichnis leeren -------------
+	rmdirr($umgvar["pfad"]."/USER/".$session["user_id"]."/temp");
+	$path = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/".$filestruct["name"][$LEVEL];
+	mkdir($path);
+
+	if($filellist["d"]){
+	foreach($filellist["d"] as $L => $list){
+		foreach($list as $key => $value){
+			if($value){
+				download_archive_file($key,$path);
+			}
+		}
+	}}
+
+	if($filellist["f"]){
+	foreach($filellist["f"] as $L => $list){
+		foreach($list as $key => $value){
+			if($value){
+				download_archive_sub($key,$path);
+			}
+		}
+	}}
+
+
+	#$sys = exec("cd ".$umgvar["pfad"]."/USER/".$session["user_id"]."/download/; gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=../temp/pdfarchiv.pdf \"".implode("\" \"",$archive_list)."\"");
+
+	if(file_exists($path)){
+		if($method == 1){
+			# ------------- zip --------------
+			$sys = exec("cd ".$umgvar["pfad"]."/USER/".$session["user_id"]."/temp; zip -r '".$filestruct["name"][$LEVEL]."' '".$filestruct["name"][$LEVEL]."'",$cmd);
+			$download_archive_link = "USER/".$session["user_id"]."/temp/".$filestruct["name"][$LEVEL].".zip";
+		}elseif($method == 2){
+			# ------------- tar gz --------------
+			$sys = exec("cd ".$umgvar["pfad"]."/USER/".$session["user_id"]."/temp; tar cfz '".$filestruct["name"][$LEVEL]."'.tar.gz '".$filestruct["name"][$LEVEL]."'",$cmd);
+			$download_archive_link = "USER/".$session["user_id"]."/temp/".$filestruct["name"][$LEVEL].".tar.gz";
+		}elseif($method == 3){
+			# ------------- tar bzip --------------
+			$sys = exec("cd ".$umgvar["pfad"]."/USER/".$session["user_id"]."/temp; tar --use-compress-program=bzip2 -cf '".$filestruct["name"][$LEVEL].".tar.bz2' '".$filestruct["name"][$LEVEL]."'",$cmd);
+			$download_archive_link = "USER/".$session["user_id"]."/temp/".$filestruct["name"][$LEVEL].".tar.bz2";
+		}elseif($method == 4){
+			# ------------- 7-zip --------------
+			$sys = exec("cd ".$umgvar["pfad"]."/USER/".$session["user_id"]."/temp; 7z '".$filestruct["name"][$LEVEL]."' '".$filestruct["name"][$LEVEL]."'",$cmd);
+			$download_archive_link = "USER/".$session["user_id"]."/temp/".$filestruct["name"][$LEVEL].".7z";
+
+		}else{$GLOBALS["commit"] = 1;return false;}
+
+		if(file_exists($download_archive_link)){return $download_archive_link;}else{return false;}
+	}
+
+	return false;
+}
+
+
+/**
+ * move file
+ *
+ * @param array $move_file
+ * @param num $level
+ * @return boolean
+ */
+function move_file($move_file,$level,$dublicates=null){
+	global $db;
+	global $lang;
+	global $session;
+	global $userdat;
+	global $umgvar;
+	global $filestruct;
+	global $userdat;
+	global $gmimetypes;
+
+	if(!$filestruct){
+		get_filestructure();
+		global $filestruct;
+	}
+
+	# rights for systemfolders
+	if(($filestruct["typ"][$level] == 2 OR $filestruct["typ"][$level] == 3 OR $filestruct["typ"][$level] == 5) AND !$umgvar["write_systemfolders"]){
+		lmb_alert($lang[1697]);
+		return true;
+	}
+
+	# rights for adding file in new folder
+	if(!$filestruct["add"][$level] AND !$filestruct["readonly"][$level]){
+		lmb_alert($lang[2310]);
+		lmb_alert($lang[2309].": ".$filestruct["name"][$level]);
+		return true;
+	}
+
+	$GLOBALS["ffilter"]["copyContext"] = 0;
+
+	$typ = $filestruct["typ"][$level];
+
+	if(is_numeric($move_file)){
+		$move_file = array($move_file);
+		$dublicates = array($dublicates);
+	}
+	
+	lmb_StartTransaction();
+
+	if($move_file){
+		# Liste zu kopierender Dateien
+		foreach($move_file as $key => $ID){
+			if($ID){
+				$sqlquery = "SELECT LDMS_FILES.ID,LDMS_FILES.VPID,LDMS_FILES.MIMETYPE,LDMS_FILES.LEVEL,LDMS_FILES.NAME,LDMS_FILES.SECNAME,LDMS_FILES.LMLOCK,LDMS_FILES.LOCKDATE,LDMS_FILES.LOCKUSER,LDMS_FILES.TABID,LDMS_FILES.FIELDID,LDMS_FILES.DATID FROM LDMS_FILES,LDMS_STRUCTURE WHERE LDMS_FILES.LEVEL = LDMS_STRUCTURE.ID AND LDMS_FILES.ID = $ID AND (".set_typequery($typ).")";
+				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs) {$commit = 1;}
+				if(odbc_fetch_row($rs,1)){
+					# rights for locked files
+					if(odbc_result($rs, "LMLOCK") AND odbc_result($rs, "LOCKUSER") != $session["user_id"] AND !$filestruct["admin"]){
+						lmb_alert(odbc_result($rs, "NAME")." - ".$lang[1688]." (".$userdat["bezeichnung"][odbc_result($rs, "LOCKUSER")]." - ".get_date(odbc_result($rs, "LOCKDATE"),2).")");
+						continue;
+					}
+					# rights for moving original files
+					if(!$filestruct["del"][odbc_result($rs, "LEVEL")]){
+						lmb_alert(odbc_result($rs, "NAME")." - ".$lang[2311]);
+						continue;
+					}
+
+					$file["file"][] = $umgvar["uploadpfad"].odbc_result($rs, "SECNAME").".".$gmimetypes["ext"][odbc_result($rs, "MIMETYPE")];
+					$file["file_name"][] = odbc_result($rs, "NAME");
+					$file["file_type"][] = $gmimetypes["ext"][odbc_result($rs, "MIMETYPE")];
+					$dublicate["copyid"][] = odbc_result($rs, "ID");
+					$dublicate["copyvpid"][] = odbc_result($rs, "VPID");
+					$dublicate["type"][] = $dublicates[$key]["type"];
+					$dublicate["subj"][] = $dublicates[$key]["subj"];
+
+					# --- History-Array ---------
+					if($session["logging"] AND !$commit){
+						$url1 = set_url($filestruct["level"][odbc_result($rs, "LEVEL")],odbc_result($rs, "LEVEL"));
+						$url2 = set_url($filestruct["level"][$level],$level);
+						$GLOBALS["lhist"]["val"][130][] = "/".$url1."/".odbc_result($rs, "NAME")."\n --> /".$url2;
+						$GLOBALS["lhist"]["gtabid"][129][] = odbc_result($rs, "TABID");
+						$GLOBALS["lhist"]["fieldid"][129][] = odbc_result($rs, "FIELDID");
+						$GLOBALS["lhist"]["datid"][129][] = odbc_result($rs, "DATID");
+						$GLOBALS["lhist"]["level"][130][] = 1;
+						$GLOBALS["lhist"]["linkid"][130] = 130;
+					}
+				}
+			}
+		}
+	}
+
+	$dublicate["copymove"] = "move";
+
+	if($file){
+		if(upload($file,$level,0,1,$dublicate)){
+			lmb_EndTransaction(1);
+			return true;
+		}
+	}else{
+		lmb_EndTransaction(1);
+		return false;
+	}
+
+}
+
+
+/**
+ * copy file
+ *
+ * @param array $copy_file
+ * @param num $level
+ * @param array $dublicate
+ * @return unknown
+ */
+function copy_file($copy_file,$level,$dublicates=null,$tabrelation=null){
+	global $db;
+	global $lang;
+	global $umgvar;
+	global $filestruct;
+	global $gfield;
+	global $gtab;
+	global $gmimetypes;
+	global $session;
+
+	if(!$filestruct){
+		get_filestructure();
+		global $filestruct;
+	}
+
+	$GLOBALS["ffilter"]["copyContext"] = 0;
+
+
+	# rights for systemfolders
+	if(($filestruct["typ"][$level] == 2 OR $filestruct["typ"][$level] == 3 OR $filestruct["typ"][$level] == 5) AND !$umgvar["write_systemfolders"]){
+		lmb_alert($lang[1697]);
+		return true;
+	}
+
+	# rights for adding file in new folder
+	if(!$filestruct["add"][$level] AND !$filestruct["readonly"][$level]){
+		lmb_alert($lang[2310]);
+		lmb_alert($lang[2309].": ".$filestruct["name"][$level]);
+		return true;
+	}
+
+	$typ = $filestruct["typ"][$level];
+
+	if(is_numeric($copy_file)){
+		$copy_file = array($copy_file);
+		$dublicates = array($dublicates);
+	}
+
+	# no group-rights for copy dataset in Table "Files"
+	if(!in_array(1,$gfield[$gtab["argresult_id"]["LDMS_FILES"]]["copy"])){lmb_alert($lang[1317]);return true;}
+
+	lmb_StartTransaction();
+	
+	if($copy_file){
+		# Liste zu kopierender Dateien
+		foreach($copy_file as $key => $ID){
+			if($ID){
+				$sqlquery = "SELECT LDMS_FILES.ID,LDMS_FILES.TYP,LDMS_FILES.VPID,LDMS_FILES.META,LDMS_FILES.MIMETYPE,LDMS_FILES.LEVEL,LDMS_FILES.NAME,LDMS_FILES.SECNAME,LDMS_FILES.LMLOCK,LDMS_FILES.LOCKDATE,LDMS_FILES.LOCKUSER,LDMS_FILES.TABID,LDMS_FILES.FIELDID,LDMS_FILES.DATID FROM LDMS_FILES,LDMS_STRUCTURE WHERE LDMS_FILES.LEVEL = LDMS_STRUCTURE.ID AND LDMS_FILES.ID = $ID AND (".set_typequery($typ).")";
+				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs) {$commit = 1;}
+				if(odbc_fetch_row($rs,1)){
+
+					if($ID == $existingFile["id"]){continue;}
+
+					# rights for locked files
+					if(odbc_result($rs, "LMLOCK") AND odbc_result($rs, "LOCKUSER") != $session["user_id"] AND !$filestruct["admin"]){
+						lmb_alert(odbc_result($rs, "NAME")." - ".$lang[1688]." (".$userdat["bezeichnung"][odbc_result($rs, "LOCKUSER")]." - ".get_date(odbc_result($rs, "LOCKDATE"),2).")");
+						continue;
+					}
+
+					$file["file"][] = $umgvar["uploadpfad"].odbc_result($rs, "SECNAME").".".$gmimetypes["ext"][odbc_result($rs, "MIMETYPE")];
+					$file["file_name"][] = odbc_result($rs, "NAME");
+					$file["file_type"][] = $gmimetypes["ext"][odbc_result($rs, "MIMETYPE")];
+					$dublicate["copyid"][] = odbc_result($rs, "ID");
+					$dublicate["copyvpid"][] = odbc_result($rs, "VPID");
+					$dublicate["copymeta"][] = odbc_result($rs, "META");
+					$dublicate["type"][] = $dublicates[$key]["type"];
+					$dublicate["subj"][] = $dublicates[$key]["subj"];
+
+					# --- History-Array ---------
+					if($session["logging"] AND !$commit){
+						if($filestruct["level"][$level]){
+							$url1 = set_url($filestruct["level"][odbc_result($rs, "LEVEL")],odbc_result($rs, "LEVEL"));
+							$url2 = set_url($filestruct["level"][$level],$level);
+							$GLOBALS["lhist"]["val"][129][] = "/".$url1."/".odbc_result($rs, "NAME")."\n --> /".$url2;
+							$GLOBALS["lhist"]["gtabid"][129][] = odbc_result($rs, "TABID");
+							$GLOBALS["lhist"]["fieldid"][129][] = odbc_result($rs, "FIELDID");
+							$GLOBALS["lhist"]["datid"][129][] = odbc_result($rs, "DATID");
+							$GLOBALS["lhist"]["level"][129][] = 1;
+							$GLOBALS["lhist"]["linkid"][129] = 129;
+						}
+					}
+				}else{
+					lmb_alert($lang[2317]);
+				}
+			}
+		}
+
+		$dublicate["copymove"] = "copy";
+
+		if($file){
+			if($res = upload($file,$level,$tabrelation,1,$dublicate)){
+				lmb_EndTransaction(1);
+				return $res;
+			}
+		}else{
+			lmb_EndTransaction(0);
+			return false;
+		}
+
+	}
+}
+
+
+# ----- Where Klausel ---------
+function get_fwhere($LID,$ffilter,$typ,$verkn=null){
+	global $gfile;
+	global $session;
+	global $umgvar;
+	global $gtab;
+	global $filestruct;
+	global $lang;
+	static $quwac;
+
+	$query["select"] = array();
+	$query["from"] = array();
+	$query["order"] = array();
+	$query["where"] = array();
+	$gtabid = $gtab["argresult_id"]["LDMS_FILES"];
+
+	if(!$ffilter){$ffilter = array();}
+	# filter ID
+	if($ffilter["glob"]){$fid = 0;}else{$fid = $LID;}
+	
+	# show fields
+	if($gfile['show'][$LID]){
+		foreach ($gfile['show'][$LID] as $key1 => $val1){
+			if($gfile['name'][$key1] AND $gfile['field_type'][$key1] != 100){
+				$onlyfield[$gfile['tabid'][$key1]][] = $gfile['fid'][$key1];
+			}
+		}
+	}
+
+	# order
+	if($key = $ffilter["order"][$fid]){
+		$ffilter["order"] = null;
+		$ffilter["order"][$gtabid][0] = array($gfile['tabid'][$key[0]],$gfile['fid'][$key[0]],$key[1]);
+	}
+
+	$query = get_sqlquery($gtabid,1,$ffilter,$ffilter["gsr"],0,$onlyfield);
+
+	#$query["from"] = null;
+	#$query["select"] = null;
+	#$query["order"] = null;
+	$query["ordersel"] = null;
+	$query["distinct"] = null;
+
+	# ---------------- Schlagwort Abfrage  --------------------------
+	if($ffilter["content"][$fid]){
+
+		# Wortliste
+		$tmp = explode(" ",$ffilter["content"][$fid]);
+		$tmp = array_slice ($tmp, 0, 4);
+		$ffilter["content"][$fid] = implode(" ",$tmp);
+
+		# ganzer Satz
+		$s = "S";
+		if($ffilter["content_se"][$fid]){$s = "";}
+		# Index Level
+		if($umgvar["indize_level"] == 1){$s = "S";}
+		# TextSensitiv
+		if($ffilter["content_ts"][$fid]){$ts = "%";}else{$ts = "";}
+		# ----- nur Metadaten zeigen ... veraltet ---
+		#if($ffilter["onlymeta"][$fid]){$wom = "AND LMB_INDIZE_F$s.META = TRUE";}
+		# default andor
+		if(!$ffilter["content_andor"][$fid]){$ffilter["content_andor"][$fid] = 1;}
+
+		foreach($tmp as $key => $value){
+			$val = parse_db_string($value,40);
+			# Metaphone
+			if($ffilter["content_mf"][$fid]){
+				$mf = "METAPHONE";$GLOBALS["ffilter"]["content_ts"][$fid] = "";$GLOBALS["ffilter"]["content_cs"][$fid] = "";$val = soundex($val);$ts=null;
+			}
+			# Case Sensitiv
+			elseif($umgvar["indize_cs"]){
+				if($ffilter["content_cs"][$fid]){
+					$mf = "VAL";
+				}else{
+					$mf = "UPPERVAL";$val = strtoupper($val);
+				}
+			}else{
+				$mf = "VAL";$val = strtolower($val);
+			}
+			
+			# Textsensitiv
+			if($ts){$ml = "LIKE";}else{$ml = "=";}
+
+			$view_orquery2[$key] = "LMB_INDIZE_W.$mf $ml '$ts".$val."$ts'";
+
+			# UND Abfrage
+			if($ffilter["content_andor"][$fid] == 1){
+				$view_orquery[] = "SELECT DISTINCT LMB_INDIZE_F$s.FID AS LMB_INDIZE_FS_FID FROM LMB_INDIZE_F$s,(SELECT ID AS LMB_INDIZE_W_ID FROM LMB_INDIZE_W WHERE ".$view_orquery2[$key].") AS QUWA".($quwac++)." WHERE LMB_INDIZE_W_ID = LMB_INDIZE_F$s.WID";
+			}
+		}
+
+
+		# ODER Abfrage
+		if($ffilter["content_andor"][$fid] == 2 AND $view_orquery2){
+			$view_orquery[] = "SELECT DISTINCT LMB_INDIZE_F$s.FID AS LMB_INDIZE_FS_FID FROM LMB_INDIZE_F$s ,(SELECT ID AS LMB_INDIZE_W_ID FROM LMB_INDIZE_W WHERE ".implode(" OR ",$view_orquery2).") AS QUWB WHERE LMB_INDIZE_W_ID = LMB_INDIZE_F$s.WID";
+		}
+
+		$query["from"][] = "((".implode(") INTERSECT (",$view_orquery).")) AS QUWC".($quwac++);
+		$query["where"][] = "LDMS_FILES.ID = LMB_INDIZE_FS_FID";
+	}
+
+
+	# ---------------- Ordner-Rechte prüfen --------------------------
+	if(!$typ){$typ = $filestruct["typ"][$LID];}
+
+	# keine Rechte
+	if(!$filestruct["view"][$LID] OR (!$typ AND $LID != 0)){
+		lmb_alert($lang[2294]);
+		$LID = -1;
+	}
+	
+	if($typ != 7 OR ($typ == 7 AND $ffilter["viewmode"][$fid] != 5)){
+		# ------ Unterordner einbeziehen -------
+		if($ffilter["sub"]){
+			# check if searchvalue present
+			global $cwbool;
+			$cwbool = 0;
+			function walkSearchVal(&$item, &$key){
+				if($item){$GLOBALS["cwbool"] = 1;}
+			}
+			
+			if($ffilter["gsr"]){
+				array_walk_recursive($ffilter["gsr"],'walkSearchVal');
+			}
+			
+			if($cwbool OR $ffilter["content"][$fid] OR $ffilter["sub"] == 'all'){
+				$subd = get_subdir($LID,1);
+				# WHERE IN Limit
+				$splc = 500;
+				$subda = array_chunk($subd,$splc);
+				foreach ($subda as $key => $value){
+					$query_[] = "LDMS_FILES.LEVEL IN (".implode(",",$value).")";
+				}
+				$query["where"][] = "(".implode(" OR ",$query_).")";
+			}else{
+				$query["where"][] = "LDMS_FILES.LEVEL = $LID";
+			}
+			#$query["where"][] = "LDMS_FILES.LEVEL IN (".implode(",",$subd).")";
+			# ------ Einzelordner -------
+		}else{
+			$query["where"][] = "LDMS_FILES.LEVEL = $LID";
+		}
+	}
+
+	# -------------  SQL - Query ---------------
+	if(!$filestruct["view"][$LID]){lmb_alert($lang[1317]);return false;}
+
+	# ------------- Tabellen - Verknüpfungen -------------------------------
+	#}else
+	if($typ == 7 AND $ffilter["viewmode"][$fid] == 5){
+		$verkn_ = set_verknpf($filestruct["tab_id"][$LID],$filestruct["field_id"][$LID],0,0,0,0,0);
+		$query["from"][] = $verkn_["md5tab"];
+
+		# where with Data ID
+		if($verkn["parent_datid"] AND $typ == 7){
+			$query["where"][] = $verkn_["md5tab"].".ID = ".$verkn["parent_datid"];
+		}
+
+		# where without LDMS_FILES.LEVEL
+		if($query["where"]){
+			foreach ($query["where"] as $wkey => $wvalue){
+				if(strpos($wvalue,"LDMS_FILES.LEVEL") === 0){
+					unset($query["where"][$wkey]);
+				}
+			}
+		}
+
+		# subfolder
+		if($ffilter["sub"]){
+			$subd = get_subdir($LID,1);
+			if($subd){
+				$query["where"][] = $verkn_["md5tab"].".LID IN (".implode(",",$subd).")";
+			}
+		}else{
+			$query["where"][] = $verkn_["md5tab"].".LID = $LID";
+		}
+
+		$query["select"] = array_merge($query["select"],array("LDMS_FILES.VID","LDMS_FILES.VPID","LDMS_FILES.SIZE","LDMS_FILES.MIMETYPE","LDMS_FILES.META","LDMS_FILES.TYP","LDMS_FILES.ERSTGROUP","LDMS_FILES.PERMUSER","LDMS_FILES.CHECKUSER","LDMS_FILES.LEVEL","LDMS_FILES.LOCKUSER","LDMS_FILES.LOCKDATE","LDMS_FILES.LMLOCK","LDMS_FILES.CHECKED","LDMS_FILES.PERM","LDMS_FILES.SECNAME","LDMS_FILES.NAME","LDMS_FILES.THUMB_OK","LDMS_FILES.SORT","LDMS_FILES.TABID","LDMS_FILES.DATID","LDMS_FILES.FIELDID","LDMS_FILES.INDD","LDMS_FILES.INDT","LDMS_FILES.INDC","LDMS_FILES.IND","LDMS_FILES.OCR","LDMS_FILES.OCRT","LDMS_FILES.OCRS","LDMS_FILES.MD5"));
+		if($query["where"]){$where = " AND ".implode(" AND ",$query["where"]);}
+		if($query["from"]){$from = implode(",",array_unique($query["from"]));}
+		if($query["order"]){$order = "ORDER BY ".implode(",",array_unique($query["order"]));}
+		if($query["select"]){$select = implode(",",array_unique($query["select"]));}
+		
+		$query2 = "SELECT $select FROM $from WHERE ".$verkn_["md5tab"].".VERKN_ID = LDMS_FILES.ID $where";
+		$query_["value"] = "$query2 ".LMB_DBFUNC_FOR_REUSE." $order";
+		# Query Anzahl Datensätze
+		$query_["count"] = "SELECT COUNT(*) AS RESULT FROM $from WHERE ".$verkn_["md5tab"].".VERKN_ID = LDMS_FILES.ID $where";
+
+	# -------------  Öffentlicher Ordner $typ == 1 OR $typ == 5 OR $typ == 4 OR $typ == 3 -------------------------------
+	}else{
+		# where construct
+		$query["select"] = array_merge($query["select"],array("LDMS_FILES.VID","LDMS_FILES.VPID","LDMS_FILES.SIZE","LDMS_FILES.MIMETYPE","LDMS_FILES.META","LDMS_FILES.TYP","LDMS_FILES.ERSTGROUP","LDMS_FILES.PERMUSER","LDMS_FILES.CHECKUSER","LDMS_FILES.LEVEL","LDMS_FILES.LOCKUSER","LDMS_FILES.LOCKDATE","LDMS_FILES.LMLOCK","LDMS_FILES.CHECKED","LDMS_FILES.PERM","LDMS_FILES.SECNAME","LDMS_FILES.NAME","LDMS_FILES.THUMB_OK","LDMS_FILES.SORT","LDMS_FILES.TABID","LDMS_FILES.DATID","LDMS_FILES.FIELDID","LDMS_FILES.INDD","LDMS_FILES.INDT","LDMS_FILES.INDC","LDMS_FILES.IND","LDMS_FILES.OCR","LDMS_FILES.OCRT","LDMS_FILES.OCRS","LDMS_FILES.MD5"));
+		if($query["where"]){$where = "AND ".implode(" AND ",$query["where"]);}
+		if($typ == 4){$where .= " AND LDMS_FILES.ERSTUSER = ".$session["user_id"];}
+		if($ffilter["f_datid"]){$where .= " AND LDMS_FILES.DATID = ".$ffilter["f_datid"]." ";}
+		if($ffilter["f_tabid"]){$where .= " AND LDMS_FILES.TABID = ".$ffilter["f_tabid"]." ";}
+		if($query["from"]){$from = implode(",",array_unique($query["from"]));}
+		if($query["order"]){$order = "ORDER BY ".implode(",",array_unique($query["order"]));}
+		if($query["select"]){$select = implode(",",array_unique($query["select"]));}
+		# Query Anzahl Datensätze
+		$query_["count"] = "SELECT COUNT(*) AS RESULT FROM $from WHERE TYP != 2 $where";
+		# Query
+		$query_["value"] = "SELECT $select FROM $from WHERE TYP != 2 $where ".LMB_DBFUNC_FOR_REUSE." $order";
+	}
+
+	if(!$query_["value"]){return false;}
+
+	#echo $query_["value"];
+	return $query_;
+}
+
+
+
+# Query - Result
+function get_ffile($query,$ffilter,$LID,$typ){
+	global $db;
+	global $umgvar;
+	global $session;
+	global $userdat;
+	global $groupdat;
+	global $gtab;
+	global $gfield;
+	global $gfile;
+	global $gmimetypes;
+	global $filestruct;
+
+	if(!is_numeric($LID)){return false;}
+
+	# filter ID
+	if($ffilter["glob"]){$fid = 0;}else{$fid = $LID;}
+
+	#if($ffile["max_result"][0]){
+	#	asort($ffile["max_result"]);
+	#	$ffile["max"] = $ffile["max_result"][0];
+	#}
+
+	$zeit_main = gettime();
+	#echo $query["value"];
+	# ---------------- SQL ausführen -------------
+	$rs = odbc_exec($db,$query["value"]) or errorhandle(odbc_errormsg($db),$query["value"],$action,__FILE__,__LINE__);
+
+	# ---------------- Anzahl Reihen -------------
+	$num_rows = lmb_num_rows($rs,$query["count"],$gtab["numrowcalc"][$gtab["argresult_id"]["LDMS_FILES"]]);
+	$ffile["res_count"] = $num_rows;
+	
+	# ---------------- Anzahl Ergebnisse -------------
+	if($num_rows >= $umgvar["resultspace"] AND !$ffilter["content_se"][$fid]){
+		if($gtab["numrowcalc"][$gtab["argresult_id"]["LDMS_FILES"]] == 2){
+			$ffile["over_limit"] = 2;
+		}elseif($ffilter["nolimit"][$fid]){
+			$ffile["over_limit"] = 0;
+		}else{
+			$ffile["over_limit"] = 1;
+		}
+	}
+
+	$zeit_now = gettime();
+	$ffile["need_time"] = round(($zeit_now - $zeit_main),3);
+
+	# VIEWS löschen
+	#if(!$rs) {$commit = 1;}else{drop_views();}
+
+	# Max. Anzahl Ergebnisse in resultcache;
+	if($ffile["res_count"] > $umgvar["resultspace"] AND !$ffilter["nolimit"][$fid]){
+		$ffile["max_count"] = $umgvar["resultspace"];
+	}else{
+		$ffile["max_count"] = $ffile["res_count"];
+	}
+
+	# ---- Max. Anzahl anzuzeigender Datensätze
+	if(!$ffilter["anzahl"][$fid]){$ffilter["anzahl"][$fid] = $session["maxresult"];$GLOBALS["ffilter"]["anzahl"][$fid] = $session["maxresult"];}
+	elseif($ffilter["anzahl"][$fid] == "all"){$ffilter["anzahl"][$fid] = $ffile["res_count"];}
+	
+	if(!$ffile["res_count"]){return $ffile;}
+	
+	# ---- anzuzeigende Seite
+	if (!$ffilter["page"][$LID] OR $ffilter["page"][$LID] < 1 OR $ffilter["page"][$LID] > (ceil($ffile["max_count"]/$ffilter["anzahl"][$fid]))){$GLOBALS["ffilter"]["page"][$LID] = 1;$ffilter["page"][$LID] = 1;}
+	# ---- Zählerbeginn
+	$ffile["res_next"] = ($ffilter["anzahl"][$fid] * $ffilter["page"][$LID] - $ffilter["anzahl"][$fid] + 1);
+	$bzm = $ffile["res_next"];
+
+	if($ffilter["nolimit"][$fid]){
+		$rescount = $ffile["max_count"];
+	}else{
+		$rescount = $ffilter["anzahl"][$fid];
+	}
+
+	$ftabid = $gtab["argresult_id"]["LDMS_FILES"];
+
+	for($i=0; $i < $rescount; $i++) {
+
+		# --- Googleansicht ---
+		if($ffilter["viewmode"][$fid] == 2 AND !$ffilter["content"][$fid]){break;}
+
+		if(odbc_fetch_row($rs, $bzm)) {
+
+			$id = odbc_result($rs, "ID");
+			$level = odbc_result($rs, "LEVEL");
+
+			if(!$filestruct["view"][$level]){
+				$bzm++;
+				continue;
+			}
+
+			$ffile["url"][$id] = " /".set_url(odbc_result($rs, "LEVEL"),0);
+			$ffile["id"][$id] = $id;
+			$ffile["level"][$id] = odbc_result($rs, "LEVEL");
+			$ffile["name"][$id] = odbc_result($rs, "NAME");
+			#if($typ == 2){$ffile["pathname"][$id] = odbc_result($rs, "NAME");}else{$ffile["pathname"][$id] = $ffile["url"][$id].$ffile["name"][$id];}
+			$ffile["pathname"][$id] = $ffile["url"][$id].$ffile["name"][$id];
+			$ffile["secname"][$id] = odbc_result($rs, "SECNAME");
+			$ffile["md5"][$id] = odbc_result($rs, "MD5");
+
+			$ffile["erstdatum"][$id] = get_date(odbc_result($rs, "ERSTDATUM"),2);
+			$ffile["editdatum"][$id] = get_date(odbc_result($rs, "EDITDATUM"),2);
+			$ffile["erstuser"][$id] = $userdat["bezeichnung"][odbc_result($rs, "ERSTUSER")];
+			$ffile["erstgroup"][$id] = $groupdat["name"][odbc_result($rs, "ERSTGROUP")];
+
+			$ffile["indize"][$id] = odbc_result($rs, "IND");
+			$ffile["indize_time"][$id] = odbc_result($rs, "INDD");
+			$ffile["indize_needtime"][$id] = odbc_result($rs, "INDT");
+			$ffile["indize_count"][$id] = odbc_result($rs, "INDC");
+
+			$ffile["ocr"][$id] = odbc_result($rs, "OCR");
+			$ffile["ocr_needtime"][$id] = odbc_result($rs, "OCRT");
+			$ffile["ocr_source"][$id] = odbc_result($rs, "OCRS");
+
+			$ffile["thumb_ok"][$id] = odbc_result($rs, "THUMB_OK");
+			$ffile["typ"][$id] = odbc_result($rs, "TYP");
+			$ffile["meta"][$id] = odbc_result($rs, "META");
+			$ffile["vid"][$id] = odbc_result($rs, "VID");
+			$ffile["vpid"][$id] = odbc_result($rs, "VPID");
+			$ffile["size"][$id] = odbc_result($rs,"SIZE");
+
+			# Mimetypes
+			$ffile["mimeid"][$id] = odbc_result($rs, "MIMETYPE");
+			$ffile["mimetype"][$id] = $gmimetypes["mimetype"][odbc_result($rs, "MIMETYPE")];
+			$ffile["ext"][$id] = $gmimetypes["ext"][odbc_result($rs, "MIMETYPE")];
+			$ffile["pic"][$id] = $gmimetypes["pic"][odbc_result($rs, "MIMETYPE")];
+			
+			# realname
+			$ffile["realname"][$id] = $ffile["secname"][$id].'.'.$ffile["ext"][$id];
+
+			# Feldschleife Metadaten
+			if($gfile['show'][$LID]){
+
+				# LOCK
+				$ffile[$gfile['form_name'][$ftabid."_22"]][$id] = odbc_result($rs, "LMLOCK");
+				$ffile["LOCK"][$id] = odbc_result($rs, "LMLOCK");
+				$ffile["LOCKUSER"][$id] = odbc_result($rs, "LOCKUSER");
+				$ffile["LOCKDATE"][$id] = odbc_result($rs, "LOCKDATE");
+
+				# UNLOCK
+				if($ffile["LOCK"][$id]){
+					if(local_stamp(2) - get_stamp($ffile["LOCKDATE"][$id]) > ($umgvar["lock_timeout"]*60)){
+						$ffile["LOCK"][$id] = 0;
+						$sqlquery1 = "UPDATE LDMS_FILES SET LMLOCK = ".LMB_DBDEF_FALSE." WHERE ID = ".$ffile["id"][$id];
+						$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+						if(!$rs1) {$commit = 1;}
+					}
+				}
+
+				foreach ($gfile['show'][$LID] as $key1 => $val1){
+
+					# Schlüssel (gtabid_fieldid)
+					$gkey = $gfile['tabid'][$key1]."_".$gfile['fid'][$key1];
+
+						# ERSTUSER
+					if($gfile["name"][$gkey] == "ERSTUSER"){
+						$ffile[$gkey][$id] = $userdat["vorname"][odbc_result($rs, "ERSTUSER")]." ".$userdat["name"][odbc_result($rs, "ERSTUSER")];
+						# CHECHED
+					}elseif($gfile["name"][$gkey] == "CHECKED"){
+						$ffile[$gkey][$id] = odbc_result($rs, "CHECKED");
+						$ffile["CHECKEDUSER"][$id] = $userdat["vorname"][odbc_result($rs, "CHECKUSER")]." ".$userdat["name"][odbc_result($rs, "CHECKUSER")];
+						# PERM
+					}elseif($gfile["name"][$gkey] == "PERM"){
+						$ffile[$gkey][$id] = odbc_result($rs, "PERM");
+						$ffile["PERMUSER"][$id] = $userdat["vorname"][odbc_result($rs, "PERMUSER")]." ".$userdat["name"][odbc_result($rs, "PERMUSER")];
+						# all DATE
+					}elseif($gfile['typ'][$key1] == 4){
+						$ffile[$gkey][$id] = get_date(odbc_result($rs, $gfile["form_name"][$key1]),1);
+						# Mimetype
+					}elseif($gfile['data_type'][$key1] == 45){
+						$ffile[$gkey][$id] = $gmimetypes["mimetype"][odbc_result($rs, $gfile["form_name"][$key1])];
+						# SIZE
+					}elseif($gfile['data_type'][$key1] == 44){
+						$ffile[$gkey][$id] = file_size(odbc_result($rs, $gfile["form_name"][$key1]));
+						# Memo
+					}elseif($gfile["data_type"][$key1] == 39){
+						$gresult_[$gfile["tabid"][$key1]]["id"][0] = $id;
+						$ffile[$gkey][$id] = cftyp_22(0,$gfile["fid"][$key1],$gfile["tabid"][$key1],3,$gresult_,null);
+					}elseif($gfile['typ'][$key1]){
+						$ffile[$gkey][$id] = odbc_result($rs, $gfile["form_name"][$key1]);
+					}
+				}
+			}
+
+			# ------- Message -----------
+			#if($typ == 2){
+			#	$ffile["e_subjekt"][$id] = odbc_result($rs, "SUBJEKT");
+			#	$ffile["e_id"][$id] = odbc_result($rs, "E_ID");
+			#	$ffile["e_mid"][$id] = odbc_result($rs, "M_ID");
+			#	$ffile["e_from"][$id] = odbc_result($rs, "FROM_ADDR");
+			#	$ffile["e_to"][$id] = odbc_result($rs, "TO_ADDR");
+			#}else
+			
+			if($typ == 3){
+			# ------- Tabellen -----------
+				$ffile["d_tabid"][$id] = odbc_result($rs, "TABID");
+				$ffile["d_tab"][$id] = $gtab[desc][odbc_result($rs, "TABID")];
+				$ffile["d_field"][$id] = $gfield[odbc_result($rs, "TABID")][spelling][odbc_result($rs, "FIELDID")];
+				$ffile["d_id"][$id] = odbc_result($rs, "DATID");
+			}
+			# ------- Dublicates -----------
+			if($ffilter["view_dublicates"]){
+				$sqlquery1 = "SELECT ID,LEVEL,ERSTUSER,ERSTDATUM FROM LDMS_FILES WHERE MD5 = '".odbc_result($rs,"MD5")."' AND ID != $id";
+				$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+				if(!$rs1) {$commit = 1;}
+				while(odbc_fetch_row($rs1)) {
+					if($filestruct["id"][odbc_result($rs,"LEVEL")]){
+						$ffile["dublicates"][$id]++;
+					}
+				}
+			}
+			
+			# ------- Googleansicht -----------
+			if($ffilter["viewmode"][$fid] == 2){
+				$textpath = $umgvar["pfad"]."/TEMP/txt/".$ffile["secname"][$id].".txt";
+				$searchval = explode(" ",$ffilter["content"][$fid]);
+				$gval = implode("|",$searchval);
+				if(convert_to_text($ffile["secname"][$id],$ffile["ext"][$id],$ffile["mimetype"][$id],odbc_result($rs, "ID"),1,0,0)){
+					$context = fgrep_text($textpath,$searchval,2,$ffilter["content_cs"][$fid],$ffilter["content_ts"][$fid]);
+					$partcontext = explode("\n",$context);
+					unset($pcontext);
+					foreach ($partcontext as $key => $val){
+						$pcontext[] = $val;
+					}
+					$context = implode(" ... ",$pcontext);
+
+					$context = preg_replace("/(".$gval.")/i","<B>$0</B>",$context);
+					if($context){
+						$ffile["context"][$id] = $context;
+					}else{
+						$ffile["context"][$id] = " ";
+					}
+				}
+			}
+
+			$ffile["res_viewcount"]++;
+		}
+		$bzm++;
+
+	}
+
+	return $ffile;
+}
+
+?>

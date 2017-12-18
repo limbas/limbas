@@ -1,0 +1,214 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 214
+ */
+
+
+
+function check_editRules($groupid){
+	global $db;
+	global $frule;
+	global $chsub;
+	global $file_struct;
+
+	$filerules = get_filerules($groupid);
+	
+	
+	foreach ($file_struct["id"] as $key => $value) {  # besser mit $frule
+
+		if(parse_db_bool($filerules[$key]["view"]) != parse_db_bool($frule["v"][$key])){
+			if(!$frule["v"][$key]){$chsub["v"] = 1;}
+			$erule["v"][$key] = 1;
+		}
+		if(parse_db_bool($filerules[$key]["add"]) != parse_db_bool($frule["a"][$key])){
+			if(!$frule["a"][$key]){$chsub["a"] = 1;}
+			$erule["a"][$key] = 1;
+		}
+		if(parse_db_bool($filerules[$key]["addf"]) != parse_db_bool($frule["c"][$key])){
+			if(!$frule["c"][$key]){$chsub["c"] = 1;}
+			$erule["c"][$key] = 1;
+		}
+		if(parse_db_bool($filerules[$key]["edit"]) != parse_db_bool($frule["e"][$key])){
+			if(!$frule["e"][$key]){$chsub["e"] = 1;}
+			$erule["e"][$key] = 1;
+		}
+		if(parse_db_bool($filerules[$key]["del"]) != parse_db_bool($frule["d"][$key])){
+			if(!$frule["d"][$key]){$chsub["d"] = 1;}
+			$erule["d"][$key] = 1;
+		}
+		if(parse_db_bool($filerules[$key]["lock"]) != parse_db_bool($frule["l"][$key])){
+			if(!$frule["l"][$key]){$chsub["l"] = 1;}
+			$erule["l"][$key] = 1;
+		}
+	}
+
+	return $erule;
+
+}
+
+
+function add_rules($ID,$groupid,&$frule,&$filerules,&$erule){
+	global $db;
+	global $chsub;
+	global $file_struct;
+
+	$NEXTID = next_db_id("LDMS_RULES");
+	
+	foreach ($file_struct["id"] as $key => $value) {
+			
+		unset($qu,$ch,$tr);
+		
+		if($erule["v"][$key] AND ($chsub["v"] OR $chsub["all"] OR $ID == $groupid)){
+			if($frule["v"][$key]){$ch["LMVIEW"] = LMB_DBDEF_TRUE;$tr = 1;}else{$ch["LMVIEW"] = LMB_DBDEF_FALSE;}
+		}
+		if($erule["a"][$key] AND ($chsub["a"] OR $chsub["all"] OR $ID == $groupid)){
+			if($frule["a"][$key]){$ch["LMADD"] = LMB_DBDEF_TRUE;$tr = 1;}else{$ch["LMADD"] = LMB_DBDEF_FALSE;}
+		}
+		if($erule["c"][$key] AND ($chsub["c"] OR $chsub["all"] OR $ID == $groupid)){
+			if($frule["c"][$key]){$ch["ADDF"] = LMB_DBDEF_TRUE;$tr = 1;}else{$ch["ADDF"] = LMB_DBDEF_FALSE;}
+		}
+		if($erule["e"][$key] AND ($chsub["e"] OR $chsub["all"] OR $ID == $groupid)){
+			if($frule["e"][$key]){$ch["EDIT"] = LMB_DBDEF_TRUE;$tr = 1;}else{$ch["EDIT"] = LMB_DBDEF_FALSE;}
+		}
+		if($erule["d"][$key] AND ($chsub["d"] OR $chsub["all"] OR $ID == $groupid)){
+			if($frule["d"][$key]){$ch["DEL"] = LMB_DBDEF_TRUE;$tr = 1;}else{$ch["DEL"] = LMB_DBDEF_FALSE;}
+		}
+		if($erule["l"][$key] AND ($chsub["l"] OR $chsub["all"] OR $ID == $groupid)){
+			if($frule["l"][$key]){$ch["LMLOCK"] = LMB_DBDEF_TRUE;$tr = 1;}else{$ch["LMLOCK"] = LMB_DBDEF_FALSE;}
+		}
+
+		if($ch["LMVIEW"] == LMB_DBDEF_FALSE OR $filerules[$key]["view"] == "0"){
+			$sqlquery = "DELETE FROM LDMS_RULES WHERE GROUP_ID = $groupid AND FILE_ID = $key";
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		}
+
+		if(is_array($ch)){
+			if($filerules[$key]){
+				foreach ($ch as $k => $v){
+					$qu[] = $k."=".$v;
+				}
+				$qu = implode(",",$qu);
+				$sqlquery = "UPDATE LDMS_RULES SET $qu WHERE FILE_ID = $key AND GROUP_ID = $groupid";
+				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs){$commit = 1;}
+			}elseif($tr){
+				foreach ($ch as $k => $v){
+					$qu["i"][] = $k;
+					$qu["t"][] = $v;
+				}
+				$sqlquery = "INSERT INTO LDMS_RULES (ID,GROUP_ID,FILE_ID,".implode(",",$qu["i"]).") VALUES($NEXTID,$groupid,$key,".implode(",",$qu["t"]).")";
+				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs){$commit = 1;}
+				$NEXTID++;
+			}
+		}
+		
+	}
+}
+
+function get_filerules($ID){
+	global $db;
+	
+	# --- Rechte lesen ------
+	$sqlquery = "SELECT * FROM LDMS_RULES WHERE GROUP_ID = $ID ORDER BY FILE_ID";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs){$commit = 1;}
+	
+	$filerules = array();
+
+	while(odbc_fetch_row($rs)) {
+		if($id == odbc_result($rs, "FILE_ID")){
+			$sqlquery1 = "DELETE FROM LDMS_RULES WHERE GROUP_ID = $ID AND ID = ".odbc_result($rs, "ID");
+			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		}
+		
+		$id = odbc_result($rs, "FILE_ID");
+		$filerules[$id]["view"] = odbc_result($rs, "LMVIEW");
+		$filerules[$id]["add"] = odbc_result($rs, "LMADD");
+		$filerules[$id]["addf"] = odbc_result($rs, "ADDF");
+		$filerules[$id]["edit"] = odbc_result($rs, "EDIT");
+		$filerules[$id]["del"] = odbc_result($rs, "DEL");
+		$filerules[$id]["lock"] = odbc_result($rs, "LMLOCK");
+	}
+	
+	return $filerules;
+}
+
+function group_list($ID,&$grouplist){
+	global $db;
+	global $commit;
+	global $rules;
+
+	if($ID){
+		$sqlquery = "SELECT GROUP_ID FROM LMB_GROUPS WHERE LEVEL = $ID";
+	    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	    if(!$rs) {$commit = 1;}
+	    while(odbc_fetch_row($rs)) {
+	    	$grouplist[] = odbc_result($rs, "GROUP_ID");
+			group_list(odbc_result($rs, "GROUP_ID"),$grouplist);
+		}
+	}
+
+	return $grouplist;
+}
+
+
+
+
+$sqlquery = "SELECT * FROM LDMS_STRUCTURE WHERE TYP = 1 OR TYP = 3 OR TYP = 7 OR TYP = 5 ORDER BY TYP,NAME";
+$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+if(!$rs){$commit = 1;}
+
+# ------------ Öffentlicher Ordner ------------------------------
+$bzm = 1;
+while(odbc_fetch_row($rs, $bzm)) {
+	$id = odbc_result($rs, "ID");
+    $file_struct["id"][$id] = $id;
+    $file_struct["name"][$id] = odbc_result($rs, "NAME");
+    $file_struct["level"][$id] = odbc_result($rs, "LEVEL");
+    $file_struct["typ"][$id] = odbc_result($rs, "TYP");
+$bzm++;
+}
+
+
+# Rechte schreiben
+if($update_rules){
+
+	if($change_subgroup){$chsub["all"] = 1;}
+
+	# check for changed values
+	$erule = check_editRules($ID);
+	# incl Untergruppen
+	if($chsub){
+		$groupl = array($ID);
+		$grouplist = group_list($ID,$groupl);
+	}else{
+		$grouplist = array($ID);
+	}
+	
+	foreach ($grouplist as $key => $subgroup){
+		$filerules = get_filerules($subgroup);
+		add_rules($ID,$subgroup,$frule,$filerules,$erule);
+	}
+}
+	
+$filerules = get_filerules($ID);
+
+
+
+?>

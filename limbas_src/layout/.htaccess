@@ -1,0 +1,8 @@
+<files "*.*">
+deny from all
+</files>
+
+<Files ~ "(\.ico|\.gif|\.jpg|\.png|\.js|\.css|\.woff|\.woff2|\.ttf)$">
+order deny,allow
+allow from all
+</Files>

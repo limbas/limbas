@@ -1,0 +1,119 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID:
+ */
+
+
+# ------ Datenbank User ----------
+$LIM["username"] = "website";
+$LIM["pass"] = "webpass";
+
+$LIM["im"] = "/usr/bin";
+$LIM["lmpath"] = "/usr/local/httpd/htdocs/projekte/company/dependent";
+
+$LIM["lim_server"] = "192.168.5.11";
+$LIM["lim_urlPath"] = "company/dependent";
+$LIM["lim_url"] = "http://" . $LIM["lim_server"] . "/". $LIM["lim_urlPath"];
+
+$LIM["session_soap_name"] = "limbassoap_".$LIM["username"];
+$LIM["session_name"] = "limbas_".$LIM["username"];
+$LIM["use_soap"] = 1;
+$LIM["use_cookie"] = 1;
+
+
+$LIM["PHP_AUTH_USER"] = $_SERVER['PHP_AUTH_USER'];
+$LIM["PHP_AUTH_PW"] = $_SERVER['PHP_AUTH_PW'];
+
+////////////////////////////////////////////////////
+############# CACHING PARAMETERS ###################
+////////////////////////////////////////////////////
+
+$LIM["cookieCache_name"] = "lmbCookie";
+$LIM["cache_home"] = "/usr/local/httpd/htdocs/projekte/company/public/limbas_de/website/";
+$LIM["cookie_path"] = $LIM["cache_home"]."db/".$LIM["cookieCache_name"];
+$LIM["cacheFolder"] = "cache/";
+$LIM["dbFolder"] = "db"; 							// path to the cache database
+$LIM["cacheFile"] = 1; 								// if true file are cached and download fronm cache when available
+$LIM["cacheQuery"] = 1; 							// if true file are cached and download fronm cache when available
+$LIM["cacheSizeLimit"] = 200; 						// Max size in MB for the cache
+#$LIM["cacheMinExpiration"] =  (48 * 60 * 60); 		// seconds without checking if a new version of the file exists
+$LIM["cacheMinExpiration"] = 0;
+$LIM["cacheToFree"] = 20; 							// %
+$LIM["key"] = "PASWORD";							// for md5 encryption of url
+
+define("DEBUG",false);
+define("DEBUG_CSS",false);
+
+
+define("CMS_index","index.php");
+
+define("CMS_fileTabid",53);
+define("CMS_categoryTabid",61);
+define("CMS_categoryEnTabid",73);
+define("CMS_categoryFrTabid",74);
+define("CMS_categoryDeTabid",75);
+define("CMS_articleTabid",62);
+define("CMS_websiteTabid",63);
+define("CMS_frTabLanguage",65);
+define("CMS_deTabLanguage",66);
+define("CMS_enTabLanguage",64);
+define("CMS_menuTabid",68);
+define("CMS_templateTabid",69);
+define("CMS_linkTabid",70);
+define("CMS_limbastableTabid",71);
+
+################################################################################
+define("CMS_searchResultCountPerPage",5);
+
+define("CMS_scriptDirectory",'template/EXTENSIONS');
+define("CMS_picDirectory",'lmb_pics');
+define("CMS_cssDirectory",'css');
+
+define("CMS_sitemapFilename",'sitemap.xml');
+define("CMS_jsFilename",'template/EXTENSIONS/script/limbas.js');
+
+define("CMS_commonCategory",319);
+define("CMS_logoArticle",536);
+define("CMS_footArticle",540);
+define("CMS_menuArticle",537);
+define("CMS_submenuArticle",538);
+define("CMS_subsubmenuArticle",539);
+
+define("CMS_tangerineCategory",349);
+define("CMS_searchResultCategory",401);
+define("CMS_contactResponseCategory",402);
+define("CMS_errorCategory",403);
+define("CMS_articleTemplate",102);
+define("CMS_categoryTemplate",103);
+
+define("CMS_logoPictureTemplate",116);
+
+define("CMS_newsflashTemplate",108);
+define("CMS_1_4_articleTemplate",113);
+define("CMS_1_2_articleTemplate",114);
+define("CMS_sitemapTemplate",121);
+define("CMS_redirectArticleTemplate",119);
+
+define("CMS_sendContactRequestTo",'kw@limbas.com');
+
+global $alang;
+# enabled languages as indexed array
+# dont forget to create lang tables before setting this constant
+$alang = array('de','en','fr');
+
+?>

@@ -1,0 +1,1186 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 223
+ */
+
+
+
+/*
+class pdf_report extends HTML2FPDF					--> extra/report/report.lib
+class HTML2FPDF extends html2pdf_tpl				--> extern/html2pdf/html2fpdf.php
+class html2pdf_tpl extends AlphaPDF					--> extern/html2pdf/html2pdf_tpl.php
+class AlphaPDF extends fpdt							--> extern/fpdf_classes/fpdf_alpha.php
+class fpdt extends FPDF_MULTICELLTAG				--> extern/fpdf_classes/fpdf_table.php
+class FPDF_MULTICELLTAG extends fpdi				--> extern/fpdf_classes/multi_cell_tag.php
+class fpdi extends fpdf_tpl							--> extern/fpdi/fpdi.php
+class fpdf_tpl extends fpdf							--> extern/fpdi/fpdf_tpl.php
+class FPDF											--> extern/fpdf/fpdf.php
+*/
+
+require_once('extern/fpdf/fpdf.php');
+require_once('extern/fpdi/fpdi.php');
+require_once("extern/fpdf_classes/string_tags.php");
+require_once("extern/fpdf_classes/multi_cell_tag.php");
+require_once('extern/fpdf_classes/fpdf_table.php');
+require_once('extern/fpdf_classes/fpdf_alpha.php');
+require_once('extern/html2pdf/html2pdf_tpl.php');
+require_once('extern/html2pdf/html2fpdf.php');
+require_once('extra/report/report.lib');
+require_once('gtab/gtab.lib');
+
+/*------- Text ---------*/
+function print_text($pdf,$ID,$report,$el){
+	#global $pdf;
+	$style = $report["style"][$el];
+	if(!hide_element($pdf,$style[29])){
+		# as HTML
+		if($style[42] == "true"){
+			# print border
+			if(substr($style[16],0,strlen($style[16])-2)){
+				$prv = array('',$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'rect');
+				$pdf->print_element($pdf->printcell($prv),$el);
+			}
+			$prv = array($report["value"][$el],$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'html');
+			$pdf->print_element($pdf->printcell($prv));
+		}else{
+			$prv = array($report["value"][$el],$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'text');
+			$pdf->print_element($pdf->printcell($prv));
+		}
+		
+	}
+	$GLOBALS['glob_el'][$report["id"][$el]] = $report["value"][$el];
+}
+
+/*------- Rechteck ---------*/
+function print_rect($pdf,$ID,$report,$el){
+	#global $pdf;
+	if(!hide_element($pdf,$report["style"][$el][29])){
+		$prv = array('',$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'rect');
+		$pdf->print_element($pdf->printcell($prv));
+	}
+}
+
+/*------- Linie ---------*/
+function print_line($pdf,$ID,$report,$el){
+	#global $pdf;
+	if(!hide_element($pdf,$report["style"][$el][29])){
+		$prv = array('',$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'line');
+		$pdf->print_element($pdf->printcell($prv));
+	}
+}
+
+/*------- Ellipse ---------*/
+function print_ellipse($pdf,$ID,$report,$el){
+	#global $pdf;
+	if(!hide_element($pdf,$report["style"][$el][29])){
+		$prv = array('',$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'ellipse');
+		$pdf->print_element($pdf->printcell($prv));
+	}
+}
+
+/*------- Bericht Nr ---------*/
+function print_bnr($pdf,$ID,$report,$el){
+	#global $pdf;
+	#global $element;
+	global $NEXT_B_NR;
+	if(!hide_element($pdf,$report["style"][$el][29])){
+		$prv = array($NEXT_B_NR,$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'bnr');
+		$pdf->print_element($pdf->printcell($prv));
+	}
+	$GLOBALS['glob_el'][$report["id"][$el]] = $NEXT_B_NR;
+}
+
+/*------- Datum ---------*/
+function print_datum($pdf,$ID,$report,$el){
+	#global $pdf;
+	#global $element;
+	global $umgvar;
+	if(!hide_element($pdf,$report["style"][$el][29])){
+		$prv = array(local_date(1),$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'datum');
+		$pdf->print_element($pdf->printcell($prv));
+	}
+	$GLOBALS['glob_el'][$report["id"][$el]] = local_date(1);
+}
+
+/*------- Seiten-Nummer ---------*/
+function print_snr($pdf,$ID,$report,$el){
+	#global $pdf;
+	#global $element;
+	global $umgvar;
+	if(!hide_element($pdf,$report["style"][$el][29])){
+		$prv = array($pdf->PageNo(),$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'snr');
+		$pdf->print_element($pdf->printcell($prv));
+	}
+	$GLOBALS['glob_el'][$report["id"][$el]] = $pdf->PageNo();
+}
+
+/*------- Unterbericht ---------*/
+function print_ureport($pdf,$ID,$report,$el){
+	global $greportlist;
+	global $gfield;
+	
+	$subreportid = $report["pic_res"][$el];
+	$parent_gtabid = $report["referenz_tab"];
+	$gtabid = $greportlist["argresult_tabid"][$subreportid];
+	
+	# Bericht einbetten
+	if($report["pic_typ"][$el] == 1){
+
+		# ID Array
+		if(substr($report["parameter"][$el],0,6) == "return"){
+			eval(str_replace("return","\$arg_result = ",$report["parameter"][$el]));
+			foreach ($arg_result as $key => $value){
+				merge_subReport($pdf,$value,$subreportid);
+			}
+		# gresult erzeugen
+		}else{
+
+			$filter["anzahl"][$gtabid] = "all";
+			$filter["nolimit"][$gtabid] = 1;
+
+			# versuche Verknüpfung automatisch aufzulösen
+			if($relation = array_keys($gfield[$parent_gtabid]['verkntabid'],$gtabid)){
+				$relation = $relation[0];
+				$verkn = set_verknpf($parent_gtabid,$relation,$ID,null,null,1,1);
+			}
+			# Parameter einbinden
+			if($report["parameter"][$el]){
+				eval($report["parameter"][$el]);
+			}
+
+			$gresult = get_gresult($gtabid,1,$filter,$gsr,$verkn,'ID',null,$extension);
+			foreach ($gresult[$gtabid]['id'] as $key => $value){
+				merge_subReport($pdf,$value,$subreportid);
+			}
+		}
+		
+
+	# Bericht einhängen per fpdi
+	}elseif($report["pic_typ"][$el] == 2){
+		append_subReport($pdf,$report,$ID,$el,$subreportid,$report["width"][$el],$report["height"][$el]);
+	}
+
+}
+
+/*------- Formel ---------*/
+function print_formel($pdf,$ID,&$report,$el){
+	#global $pdf;
+	global $glob_el;
+	global $gtab;
+	global $gfield;
+	global $session;
+	global $umgvar;
+	global $userdat;
+	#global $notInsertLn;
+	global $report_ext;
+	
+	$style = $report["style"][$el];
+	
+	# eval
+	$report_value = trim($report["value"][$el]);
+	if($report_value OR $report_value == "0"){
+		if(substr($report_value,0,6) == "return"){
+			eval(str_replace("return","\$arg_result = ",$report_value));
+		}else{
+			eval($report_value);
+		}
+	}
+	
+	# hidden
+	if(!hide_element($pdf,$style[29]) AND $arg_result){
+		# as HTML
+		if($style[42] == "true"){
+			# print border
+			if(substr($style[16],0,strlen($style[16])-2)){
+				$prv = array('',$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'rect');
+				$pdf->print_element($pdf->printcell($prv),$el);
+			}
+			$prv = array($arg_result,$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'html');
+			$pdf->print_element($pdf->printcell($prv));
+		}else{
+			$prv = array($arg_result,$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'formel');
+			$pdf->print_element($pdf->printcell($prv));
+		}
+	}else{
+		$pdf->notInsertLn = 1;
+	}
+	if($garg_result){
+		$GLOBALS['glob_el'][$report["id"][$el]] = $garg_result;
+	}else{
+		$GLOBALS['glob_el'][$report["id"][$el]] = $arg_result;
+	}
+}
+
+/*------- Db Inhalte ---------*/
+function print_dbdat($pdf,$ID,$report,$el){
+	#global $pdf;
+	#global $element;
+	#global $notInsertLn;
+
+	if(!$report["dbvalue"][$el]){$pdf->notInsertLn = 1;return true;}
+
+	$dbvalue = $report["dbvalue"][$el];
+	$style = $report["style"][$el];
+
+	if($style[40]){
+		$seperator = str_replace("\\\\t","\t",str_replace("\\\\n","\n",$style[40]));
+		$report_dbvalue = trim(implode($seperator,$dbvalue));
+	}else{
+		$report_dbvalue = implode("\n",$dbvalue);
+	}
+	
+	$GLOBALS['glob_el'][$report["id"][$el]] = $dbvalue;
+	$report_dbvalue = explode("#*#",$report_dbvalue);
+	if($report_dbvalue[1]){
+		$valuetype = $report_dbvalue[0];
+		$value = $report_dbvalue[1];
+	}else{
+		$value = $report_dbvalue[0];
+	}
+		
+	# hidden
+	if(!hide_element($pdf,$report["style"][$el][29])){
+		if(!$value){$pdf->notInsertLn = 1;return true;}
+		
+		if($valuetype == "IMAGE"){
+			$prv = array($value,$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'bild');
+			$pdf->print_element($pdf->printcell($prv));
+		}elseif($valuetype == "PDF"){
+			$pagecount = $pdf->setSourceFile($value);
+			$tplidx = $pdf->ImportPage(1);
+			$pdf->useTemplate($tplidx,$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el]);
+		}elseif($valuetype == "HTML"){
+			# print border
+			if(substr($style[16],0,strlen($style[16])-2)){
+				$prv = array('',$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'rect');
+				$pdf->print_element($pdf->printcell($prv),$el);
+			}
+			$prv = array($value,$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'html');
+			$pdf->print_element($pdf->printcell($prv));
+		}elseif($valuetype == "SCTCNR"){
+			$prv = array($value,$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'html');
+			$pdf->print_element($pdf->printcell($prv));
+		}else{
+			# hidden
+			$prv = array($value,$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'dbdat');
+			$pdf->print_element($pdf->printcell($prv));
+		}
+	
+	}else{
+		if(!$value){$pdf->notInsertLn = 1;}
+	}
+}
+
+
+/*------- Bild ---------*/
+function print_bild($pdf,$ID,$report,$el){
+	#global $pdf;
+	global $db;
+	global $umgvar;
+
+	$pic_orgname = $report["tab_size"][$el];
+	$pic_name = $report["pic_name"][$el];
+	$report_value = $report["value"][$el];
+	$pic_quality = $report["data_type"][$el];
+	$pic_style = $report["pic_style"][$el];
+	
+	#$pic_typ = $report["pic_typ"][$el];
+	#$pic_size = $report["pic_size"][$el];
+	#$pic_res = $report["pic_res"][$el];
+
+	$org_extension = explode(".",$pic_orgname);
+	$org_extension = $org_extension[count($org_extension)-1];
+	
+	if(hide_element($pdf,$report["style"][$el][29])){return true;}
+
+	# PDF Integration
+	if(strtolower($org_extension) == "pdf"){
+		if(strpos($pic_orgname,$umgvar['path']) === false){
+			$report_value = $umgvar['uploadpfad']."report/".$pic_orgname;
+		}else{
+			$report_value = $pic_orgname;
+		}
+		$pagecount = $pdf->setSourceFile($report_value);
+		$tplidx = $pdf->ImportPage(1);
+		$pdf->useTemplate($tplidx,$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el]);
+
+		# Hintergrund-Rechteck ----------------------------
+		$prv = array($report_value,$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'bild');
+		$par = $pdf->printcell($prv);
+		if(!$par[2] OR !$par[3]){
+			$imsize = $pdf->getTemplateSize ( $tplidx, $par[2], $par[3]);
+			if(!$par[2]){$par[2] = $imsize['w']+$par[10][22];}
+			if(!$par[3]){$par[3] = $imsize['h']+$par[10][22]+4;}
+		}
+		if($par[6]){$pdf->Rect($par[0]-$par[10][19]/2,$par[1]-$par[10][19]/2,$par[2]+$par[10][19],$par[3]+$par[10][19]);}
+		
+	# Bilder
+	}else{
+		$stylevalue = $pdf->set_style($report["style"][$el]);
+		if($pic_style AND file_exists($umgvar["uploadpfad"]."report/".$pic_orgname)){
+			if(!file_exists($umgvar[pfad]."/TEMP/thumpnails/report/r_".$pic_name)){
+				$target = $umgvar[pfad]."/TEMP/thumpnails/report/r_".$pic_name;
+				copy($umgvar["uploadpfad"]."report/".$pic_orgname,$target);
+				$picstyle = explode(";",$pic_style);
+				foreach($picstyle as $key => $value){
+					$cmd = $umgvar[imagemagick]."/convert ".$umgvar["imagemagicklimit"]." -quality ".$pic_quality." $value -strip ".$target." ".$target;
+					system($cmd,$out);
+				}
+				if(file_exists($target)){$report_value = "TEMP/thumpnails/report/r_".$pic_name;}
+			}else{
+				$report_value = "TEMP/thumpnails/report/r_".$pic_name;
+			}
+		}else{
+			$report_value = "UPLOAD/report/$pic_orgname";
+		}
+		$prv = array($report_value,$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'bild');
+		$pdf->print_element($pdf->printcell($prv));
+	}
+}
+
+
+function GetDefaultType(){
+
+    $default["header"] = array(
+					'WIDTH' => 100,
+					'T_COLOR' => array(0,0,0),
+					'T_SIZE' => 10,
+					'T_FONT' => 'Arial',
+					'T_ALIGN' => 'L',
+					'V_ALIGN' => 'T',
+					'T_TYPE' => 'B',
+					'LN_SIZE' => 10,
+					'BG_COLOR' => 'transparent', #'BG_COLOR' => array(255,255,255),
+					'BRD_TYPE_NEW_PAGE' => '',
+					'TEXT' => '',
+					);
+	$default["data"] = array(
+					'T_COLOR' => array(0,0,0),
+					'T_SIZE' => 10,
+					'T_FONT' => 'Arial',
+					'T_ALIGN' => 'L',
+					'V_ALIGN' => 'T',
+					'T_TYPE' => '',
+					'LN_SIZE' => 10,
+					'BG_COLOR' => 'transparent', #'BG_COLOR' => array(255,255,255),
+					'BRD_TYPE_NEW_PAGE' => '',
+					);
+	$default["table"] = array(
+					'TB_ALIGN'=>'L',
+					'L_MARGIN' => 0,
+					'BRD_COLOR' => array(255,255,255),
+					'BRD_SIZE' => '0',
+					'LN_SIZE' => 10
+					);
+
+	return $default;
+}
+
+/*------- Tabellen ---------*/
+function print_tab($pdf,$ID,$report,$el){
+	global $db;
+	global $umgvar;
+	global $glob_el;
+	global $glob_rowel;
+	
+	#$report_id = $pdf->report_id;
+	$report_id = $report["report_id"];
+	
+	$report_ID = $report["id"][$el];
+	$report_style = $report["style"][$el];
+	$report_tab = $report["tab"][$el];
+	$report_tab_size = $report["tab_size"][$el];
+
+	# position
+	if($report["posx"][$el]){$pdf->SetX($report["posx"][$el]);}
+	if($report["posy"][$el]){$pdf->SetY($report["posy"][$el]);}
+	# opacity ----------------------------
+	if($report_style[24]){$pdf->SetAlpha($report_style[24]);}else{$pdf->SetAlpha(1);}
+	# rotate ----------------------------
+	if($report_style[43]){$pdf->Rotate($report_style[43],$report["posx"][$el],$report["posy"][$el]);}else{$pdf->Rotate(0);}
+
+	# position ----------------------------
+	$tab_size = explode(";",$report_tab_size);
+	$report_tab_cells = $tab_size[0];
+	$report_tab_rows = $tab_size[1];
+
+	# default values
+	$default = GetDefaultType();
+	$columns = $report_tab_cells;
+
+	# Linke Tabellenposition
+	$default["table"]['L_MARGIN'] = ($report["posx"][$el] - $report["page_style"][4]);
+	# Border
+	if(doubleval($report_style[16]) AND $report_style[15] AND $report_style[14] != "none"){
+		$default["table"]["BRD_COLOR"] = explode(",",hexdec(substr($report_style[15], 1, 2)).",".hexdec(substr($report_style[15], 3, 2)).",".hexdec(substr($report_style[15], 5, 2)));
+		$default["table"]["BRD_SIZE"] = $report_style[16];
+	}else{
+		$default["table"]["BRD_COLOR"] = 0;
+		$default["table"]["BRD_SIZE"] = 0;
+	}
+	
+	if($report_style[21]){
+		#$default["table"]["BG_COLOR"] = explode(",",hexdec(substr($report_style[21], 1, 2)).",".hexdec(substr($report_style[21], 3, 2)).",".hexdec(substr($report_style[21], 5, 2)));
+	}
+
+	# DEFAULT cellpadding
+	if($report_style[22]){$default["header"]['LN_SIZE'] = ($report_style[22]*3);}
+	if($report_style[22]){$default["data"]['LN_SIZE'] = ($report_style[22]*3);}
+
+	# we initialize the table class
+	$pdf->Table_Init($columns, true, true);
+
+	# DEFAULT TABLE SETTINGS
+	$pdf->Set_Table_Type($default["table"]);
+
+	# userdefined Table-Tags
+	require_once("EXTENSIONS/system/report_tab_tags.inc");
+
+
+	//DEFAULT TABLE HEADER SETTINGS
+	for($i=0; $i<$columns; $i++) $header_type[$i] = $default["header"];
+
+    //DEFAULT TABLE DATA SETTINGS
+	$data_type = Array();//reset the array
+	for ($i=0; $i<$columns; $i++) $data_type[$i] = $default["data"];
+    # ------------------------------------------------------------------------------------------------------------
+
+	# first get cellsize of first hidden line
+	$sqlquery = "SELECT TAB_EL_COL,TAB_EL_COL_SIZE FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB_EL_ROW = 0 AND TYP = 'tabhead' AND TAB = ".$report_tab." ORDER BY TAB_EL_COL";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$bzm = 1;
+	while(odbc_fetch_row($rs, $bzm)) {
+		$firstrow_width[$bzm] = odbc_result($rs, "TAB_EL_COL_SIZE");
+		$bzm++;
+	}
+
+	/*------- Schleife Zeilen (Original-Tabelle) ---------*/
+	$current_row = 1;
+	$bzm2 = 1;
+	$rowid = 1;
+	while($bzm2 <= $report_tab_rows){ # tabrows = Anzahl Zeilen
+		unset($tab_row);
+		unset($cell_value);
+		$seperator = null;
+
+		/*------- Zeileninhalte aus Datensätzen (alle Felder einer Zeile als ganze Abfrage) / ODER aus externer Datenquelle ---------*/
+		$dataArray = get_dataArray($ID,$report_id,$report_tab,$report,$report_tab_cells,$bzm2,$rowid);
+		#error_log(print_r($dataArray,1));
+		if($dataArray["count"]){
+			$max_count = $dataArray["count"]; # Anzahl gefundener Datensätze
+			$rowid = $dataArray["rowid"]; # rowid wird auf neuen Wert gesetzt
+		}else{$max_count = 1;}
+
+		/*------- Schleife Spalten (Original-Tabelle) ---------*/
+		$bzm3 = 1;
+		$bzm5 = 0;
+		$has_row = 0;
+		while($bzm3 <= $report_tab_cells){
+			
+			# Auslesen einzelner Zellenparameter
+			$sqlquery = "SELECT * FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB = ".$report_tab." AND TAB_EL_ROW = ".$bzm2." AND TAB_EL_COL = ".$bzm3." ORDER BY EL_ID ".LMB_DBFUNC_FOR_REUSE;
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			if(odbc_fetch_row($rs,1)){
+				$has_row = 1;
+			}
+
+			$cell_par[$bzm3] = array('',odbc_result($rs, "POSX"),odbc_result($rs, "POSY"),$firstrow_width[$bzm3],odbc_result($rs, "HEIGHT"),explode(";",odbc_result($rs, "STYLE")),odbc_result($rs, "TYP"),odbc_result($rs, "TAB"));
+
+			if($has_row){
+				/*------- Alle Elemente einer Zelle (für Datenihalte) ---------*/
+				$bzm4 = 1;
+				while(odbc_fetch_row($rs, $bzm4)) {
+					$typ = odbc_result($rs, "TYP");
+					$dbelstyle = explode(";",odbc_result($rs, "STYLE"));
+					if($bzm4 == 1 AND $dbelstyle[40]){
+						$seperator[$bzm2."_".$bzm3] = $dbelstyle[40];
+					}
+
+					#--------- Bei Typ Dateninhalt Zellenzeile auffüllen aus Datenabfrage / ODER Formel für externe Datenquelle--------------
+					if($typ == "dbdat" OR ($typ == "formel" and $dbelstyle[33] == 'true')){
+						$cell_value[$bzm3][$bzm4] = $dataArray[$bzm5]; # auffüllen
+						$GLOBALS["glob_el"][odbc_result($rs, "EL_ID")] = $cell_value[$bzm3][$bzm4];
+						# Element verstecken
+						if(hide_element($pdf,$dbelstyle[29])){
+							$cell_value[$bzm3][$bzm4] = null;
+						}
+						$bzm5++;
+					}
+					#if($max_count < count($cell_value[$bzm3][$bzm4])){
+					#	$max_count = count($cell_value[$bzm3][$bzm4]);
+					#}
+					$bzm4++;
+				}
+
+				/*------- Alle Elemente einer Zelle (für Einzelelemente z.B. TEXT/Formel) ---------*/
+				$bzm4 = 1;
+				while(odbc_fetch_row($rs, $bzm4)) {
+					$value = lmb_utf8_decode(trim(odbc_result($rs, "INHALT")),1); # longtext handle
+					$typ = odbc_result($rs, "TYP");
+					$dbelstyle = explode(";",odbc_result($rs, "STYLE"));
+					
+					# Datum
+					if($typ == "datum"){
+						for($i=1; $i<=$max_count; $i++){
+							$cell_value[$bzm3][$bzm4][] = local_date(1);
+						}
+					# Formel
+					}elseif($typ == "formel" and $dbelstyle[33] != 'true'){
+						# nochmalige Schleife aller vorher eingetragener Dateninhalte und auf Formel prüfen
+						for($i=0; $i<$max_count; $i++){
+							$ROWNR = ($i + $current_row); # in Formel zu verwendende ROWNR
+							$rtab_value = trim($value);
+							if($rtab_value OR $rtab_value == "0"){
+								$arg_result = null;
+								if(substr($rtab_value,0,6) == "return"){
+									eval(str_replace("return","\$arg_result = ",$rtab_value));
+								}else{
+									eval($rtab_value);
+								}
+								$GLOBALS["glob_el"][odbc_result($rs, "EL_ID")][$ROWNR] = $arg_result;
+							}
+							$cell_value[$bzm3][$bzm4][] = $arg_result;
+						}
+					# Text/Sonstiges
+					}elseif($typ != "dbdat" AND !($typ == "formel" and $dbelstyle[33] == 'true')){
+						for($i=1; $i<=$max_count; $i++){
+							$cell_value[$bzm3][$bzm4][] = $value;
+						}
+					}
+					$cell_value["count"][$bzm3] = $bzm4;
+					$bzm4++;
+				}
+
+
+			}else{
+				$cell_value[$bzm3][1][] = " ";
+			}
+			$bzm3++;
+		}
+
+		
+		# call extension for table array
+		if($call_extFct AND function_exists($call_extFct)){
+			$cell_value = $call_extFct($cell_value,$max_count);
+			$call_extFct=null;
+		}
+		
+		# ------------------------------------------------------------------------------------------------------------
+		$bzm5 = 0;
+		# Zeilen --------------
+		for($bzm5=0; $bzm5 < $max_count;$bzm5++){
+			$data = array();
+			#unset($tab_row["value"]);
+			$HIDEROW = 0;
+			$col = 0;
+			# Spalten -------------
+			for($i=1; $i<=$report_tab_cells;$i++){
+				# Inhalt
+				$thiscell_par = $cell_par[$i];
+				unset($cellvalue);
+				unset($ISVALUE);
+				for($c=1; $c<=$cell_value["count"][$i];$c++){
+					$cellvalue[] = $cell_value[$i][$c][$bzm5];
+					if($cell_value[$i][$c][$bzm5] == "#HIDEROW"){$HIDEROW = 1;break;}
+					if($cell_style[$i][$c][$bzm5]){$thiscell_par[5] = lmb_array_merge($thiscell_par[5],$cell_style[$i][$c][$bzm5]);}
+					if($cell_value[$i][$c][$bzm5]){$ISVALUE = 1;}
+				}
+
+				if($cellvalue){
+					if($seperator[$bzm2."_".$i] AND substr($seperator[$bzm2."_".$i],0,1) != "#"){
+						$seperator_ = str_replace("\\\\t","\t",str_replace("\\\\n","\n",$seperator[$bzm2."_".$i]));
+						$cellvalue = trim(implode($seperator_,$cellvalue));
+					}else{
+						$cellvalue = trim(implode(" ",$cellvalue));
+					}
+				}
+
+				# Header
+				if($current_row == 1){
+					$header_type[$col]['WIDTH'] = $cell_par[$i][3];
+					$header_type = set_elstyle($pdf,$header_type,$thiscell_par,$col,$report_style,$ISVALUE);
+			    	$header_type[$col]['TEXT'] = $cellvalue;
+			    	$colsp = $header_type[$col]['COLSPAN'];
+				# Data
+				}else{
+					# default cell style
+					$data = set_elstyle($pdf,$data,$thiscell_par,$col,$report_style,$ISVALUE);
+					# extendet style for line
+					if($cell_value["style"][$i][$bzm5]){
+						$data[$col] = array_merge($data[$col],$cell_value["style"][$i][$bzm5]);
+					}
+					$data[$col]['TEXT'] = $cellvalue;
+					$colsp = $data[$col]['COLSPAN'];
+				}
+
+				# Colspan
+				if($colspan){
+					$colspan=($colspan-1);
+					if($colspan){
+						$col++;
+						continue;
+					}
+					$colspan = $colsp;
+				}
+
+				$col++;
+			}
+			# ------ Header Zeile schreiben --------
+			if(!$HIDEROW){
+				if($current_row == 1){
+					//set the header type
+					$pdf->Set_Header_Type($header_type);
+					$pdf->Set_Table_SplitMode(false);
+					$pdf->Draw_Header();
+				# ------ Data Zeile schreiben --------
+				}else{
+					if($current_row == 2){
+						$pdf->Set_Data_Type($data_type);
+					}
+					$pdf->Set_Table_SplitMode(false);
+					$pdf->Draw_Data($data);
+				}
+
+				# ------ leere Data Zeile falls nur 1 Seite --------
+				if($report_tab_rows == 1){
+					$pdf->Set_Data_Type($data_type);
+					$pdf->Set_Table_SplitMode(false);
+					$pdf->Draw_Data($data);
+				}
+			}
+			$current_row++;
+		}
+		$bzm2++;
+		$rowid++;
+	}
+
+	#$pdf->Draw_Data(array());
+	if($report_tab_rows > 0){
+    	$pdf->Draw_Table_Border();
+	}else{
+		$pdf->Draw_Data(array());
+	}
+	
+	$pdf->setTagMod(0);
+}
+
+# Style Übersetzung Tab
+function set_elstyle($pdf,$value_type,$cell_par,$col,$report_style,$ISVALUE){
+	#global $pdf;
+
+	$style = $cell_par[5];
+
+	# Style ----------------------------
+	if($style[41] == "true" OR $style[41] == 1){$value_type[$col]['TAGMOD'] = 1;}
+	if($style[40]){$value_type[$col]['LISTMOD'] = $style[40];}
+	$style[3] = str_replace("px","",$style[3]);
+	$style[11] = str_replace("px","",$style[11]);
+	if($style[0]){$value_type[$col]['T_FONT'] = $style[0];}
+	if($style[9]){$value_type[$col]['T_COLOR'] = $pdf->make_color($style[9]);}
+	if($style[3]){$value_type[$col]['T_SIZE'] = $style[3];}
+	if($style[4]){$value_type[$col]['T_TYPE'] = $pdf->GetFontStyle($style);}
+	if($style[12]){$value_type[$col]['T_ALIGN'] = $pdf->GetFontAlign($style[12]);}
+	if($style[23]){$value_type[$col]['V_ALIGN'] = $pdf->GetFontValign($style[23]);}
+	if($ISVALUE){
+		if($style[11]){
+			$value_type[$col]['LN_SIZE'] = $style[11];
+		}else{
+			$value_type[$col]['LN_SIZE'] = $style[3];
+		}
+	}
+	if($style[21]){$value_type[$col]['BG_COLOR'] = $pdf->make_color($style[21]);}
+	if($style[37]){$value_type[$col]['COLSPAN'] = $style[37];}
+	if($style[22]){$value_type[$col]['CMARGIN'] = intval($style[22]);}
+	if($style[24]){
+		$value_type[$col]['OPACITY'] = $style[24];
+	}elseif($report_style[24]){
+		$value_type[$col]['OPACITY'] = $report_style[24];
+	}
+	if($style[21] == "transparent"){$value_type[$col]['BG_COLOR'] = "";}
+
+
+	if($style[14] AND $style[14] != "none" AND $style[16]){
+		if($style[15]){$value_type[$col]['BRD_COLOR'] = $pdf->make_color($style[15]);}
+		if($style[16]){$value_type[$col]['BRD_SIZE'] = $style[16];}
+		$value_type[$col]['BRD_TYPE'] = $pdf->GetBorderType($style);
+	}
+
+	return $value_type;
+}
+
+
+/**
+ * hide element
+ *
+ */
+function hide_element($pdf,$hide){
+	#global $pdf;
+	
+	# dont display hidden
+	$pagenr = $pdf->PageNo();
+	if($pagenr % 2 != 0){$odd = true;}else{$odd = false;}
+	if($hide == 1 OR $hide == "true" OR ($hide == 2 AND $pagenr == 1) OR ($hide == 3 AND $pagenr > 1) OR ($hide == 4 AND $odd) OR ($hide == 5 AND !$odd)) {
+		return true;
+	}else{
+		return false;
+	}
+
+}
+
+/*----------------- Element-Schleife PDF -------------------*/
+function list_elements_pdf(&$pdf,$ID,$report,$subform=null){
+	#global $pdf;
+	#global $notInsertLn;
+	static $lastposy;
+	
+	if($report["id"]){
+		foreach ($report["id"] as $bzm => $value){
+		
+			# tagmode on
+			if($report["style"][$bzm][41]){$pdf->setTagMod(1);}
+
+			# background
+			if($report["background"][$bzm]){
+				if(!hide_element($pdf,$report["background"][$bzm])){continue;}
+			}
+			# dont display if no value
+			if($report["style"][$bzm][39] AND !$report["dbvalue"][$report["arg_result"][$report["style"][$bzm][39]]][0]){
+				# speichere Y Position Elements
+				$lastposy[$bzm] = $pdf->GetY();
+				continue;
+			}
+
+			# PageBreak before
+			if($report["style"][$bzm][35] == 'true'){$pdf->SetAutoPageBreak(false,0);}
+			if($report["style"][$bzm][34] == 1){$pdf->AddPage('P');$report["posy"][$bzm] = 0;}
+			
+			
+			# is subform
+			if($subform){
+				$report["posy"][$bzm] = $report["posy"][$bzm]+$subform;
+			}
+			
+			# has relative position
+			if($report["style"][$bzm][36]){
+				# setze Position auf letzte posy des relativen Elternelements
+				$pdf->setY($lastposy[$report["arg_result"][$report["style"][$bzm][36]]]);
+				# Zeilenabstand berechnen
+				$ln = (-$report["posyabs"][$report["arg_result"][$report["style"][$bzm][36]]] - $report["height"][$report["arg_result"][$report["style"][$bzm][36]]] + $report["posyabs"][$bzm]);
+				$pdf->Ln($ln);
+				$report["posy"][$bzm] = 0;
+			}
+			# element function
+			$pdf->notInsertLn = 0;
+			$fname = "print_".$report["typ"][$bzm];
+
+			# print element
+			$fname($pdf,$ID,$report,$bzm);
+
+			# PageBreak after
+			if($report["style"][$bzm][35] == 'true'){$pdf->SetAutoPageBreak(true,$report["footerpos"]);}
+			if($report["style"][$bzm][34] == 2){$pdf->AddPage('P');}
+
+			# save Y position of element
+			$lastposy[$bzm] = $pdf->GetY();
+
+			# tagmode off
+			if($report["style"][$bzm][41]){$pdf->setTagMod(0);}
+			unset($stylevalue);
+			unset($textstyle);
+		}
+	}
+}
+
+/*----------------- Einzel Element -------------------*/
+function list_element_pdf($ID,$report,$report_id){
+	$fname = "print_".$report["typ"][$report_id];
+	$fname($ID,$report,$report_id);
+}
+
+# Fußumbruch bei vorhandenen Fußelementen
+function SetPageBreak($pdf,$footerpos,&$report){
+	#global $pdf;
+	
+	if($footerpos){
+		$pdf->SetAutoPageBreak(true,($footerpos));
+	# Fußumbruch bei vorhandenem Seitenrahmen
+	}elseif($report["page_style"][4]){
+		$footerpos = $report["page_style"][3];
+		$pdf->SetAutoPageBreak(true,$footerpos);
+	# kein Fußumbruch
+	}else{
+		$pdf->SetAutoPageBreak(false,0);
+	}
+}
+
+
+
+
+# -------------------------------------------------------------------------------------
+# -------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+# --- PDF erzeugen ---------------------------------
+function create_pdf($report,$ID){
+	#global $pdf;
+	#global $rp;
+
+	#Header - Elemente
+	$rp["header"] = element_list($ID,$report,'header');
+	#Footer - Elemente
+	$rp["footer"] = element_list($ID,$report,'footer');
+	#Background - Elemente
+	$rp["background"] = element_list($ID,$report,'background');
+	
+	# --- neues PDF -----------------------------------
+	$size = array($report["page_style"][0],$report["page_style"][1]);
+	$pdf = new pdf_report('P','pt',$size);
+	
+	$pdf->rp = $rp;
+	$pdf->report = $report;
+	$pdf->report_id = $report["report_id"];
+	$pdf->ID = $ID;
+	
+	# tagmod-variable für Table Klasse
+	$pdf->setTagMod($report["tagmod"]);
+
+	$pdf->Open();
+	$pdf->SetMargins($report["page_style"][4],$report["page_style"][2],$report["page_style"][5]);
+	
+	# set all needed fonts
+	set_fonts($pdf,$report["report_id"]);
+	
+	$pdf->AddPage('P');
+	$pdf->SetSubject($report["name"]." ".date("Y.m.d"));
+	$pdf->SetTitle($report["name"]." ".date("Y.m.d"));
+	$pdf->SetCompression(true);
+	$pdf->SetCreator("LIMBAS");
+
+	# Fußumbruch bei vorhandenen Fußelementen
+	SetPageBreak($pdf,$report["footerpos"],$report);
+
+	# --> $data_type = (Bild-ID)
+	# --> $tabsize = (Bild-TYP)
+	# --> $value = (Bildinformation)
+	# --> $tab = (Auflösung)
+	# --> $tab_el_col_size = (Bildkompression)
+	# --> $verkn_baum = (Bild-Style ImageMagig)
+	# --> $dbfield = (Original Bildgröße)
+
+	return $pdf;
+}
+
+# --- PDF füllen ---------------------------------
+function fill_pdf(&$pdf,$report,$ID,$subform=0){
+	#global $pdf;
+
+	$rep = element_list($ID,$report,'');
+	list_elements_pdf($pdf,$ID,$rep,$subform);
+}
+
+# --- PDF ausgeben ---------------------------------
+function store_pdf(&$pdf,$report,$ID,$report_rename=null){
+	global $session;
+	global $umgvar;
+	#global $pdf;
+
+	# ------- PDF Name ---------
+	$name = reportSavename($report["name"],$report["savename"],$ID,"pdf",$report_rename);
+	$out = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/".$name;
+	# ------- pdf schreiben ---------
+	$pdf->Output(lmb_utf8_encode($out)); # save as utf8
+
+	# use postscript to compress
+	if($umgvar["use_gs"] AND file_exists($out)){
+		rename($out,$out."gs");
+		$sys = exec("cd ".$umgvar["pfad"]."/USER/".$session["user_id"]."/temp/; gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$name ".$out."gs");
+		unlink($out."gs");
+	}
+
+	return $out;
+}
+
+
+
+
+
+
+# verbinde Berichte
+function merge_report($filelist,$ID,$report_rename=null){
+	global $session;
+	global $umgvar;
+
+	$report_name = reportSavename($GLOBALS["report_name"],$GLOBALS["report_savename"],$ID,"pdf",$report_rename);
+	
+	# use gs
+	if($umgvar["use_gs"]){
+		# use postcsript
+		if($umgvar["ps_compatibilitylevel"] <= 1){$ps_comp = "1.4";}else{$ps_comp = $umgvar["ps_compatibilitylevel"];}
+		if($umgvar["ps_output"]){$ps_output = $umgvar["ps_output"];}else{$ps_output = "default";}
+		if($umgvar["ps_downsample"]){
+			$ps_downsample = " -dDownsampleColorImages=true -dColorImageDownsampleType=/Average -dColorImageDownsampleThreshold=1.3";
+			if($umgvar["ps_imageresolution"]){$ps_downsample .= " -dColorImageResolution=".$umgvar["ps_imageresolution"];}
+		}
+		$sys = exec("cd ".$umgvar["pfad"]."/USER/".$session["user_id"]."/temp/; gs -dNOPAUSE -dBATCH -dCompatibilityLevel=$ps_comp -dPDFSETTINGS=/$ps_output $ps_downsample -sDEVICE=pdfwrite -sOutputFile=$report_name ".implode(" ",$filelist));
+	# use fpdi
+	}else{
+		$pdfx = new pdf_report();
+		$pdfx->setFiles($filelist);
+		$pdfx->concat();
+		$pdfx->Output($umgvar["pfad"]."/USER/".$session[user_id]."/temp/$report_name");
+	}
+
+	if(file_exists($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/$report_name")){
+		return $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/$report_name";
+	}else{
+		return false;
+	}
+}
+
+
+# Liste aller zu schreibender Berichte
+/*
+function get_report_group($report_id){
+	global $grouplist;
+
+	$report = get_report($report_id,1);
+	if($report["grouplist"]){$glist = $report["grouplist"];}else{$glist = array($report["report_id"]);}
+
+	foreach ($glist as $key => $value){
+		$report_ = get_report($value,0);
+		if($report_["grouplist"]){
+			get_report_group($value);
+		}else{
+			$grouplist[] = $value;
+		}
+	}
+
+	return $grouplist;
+}
+*/
+
+# PDF anhängen
+function append_pdf($pdf,$file,$page=1,$posx=0,$posy=0){
+    
+    if($page == 'all'){
+    	@exec('pdfinfo ' . $file . ' | awk \'/Pages/ {print $2}\'', $output);
+    	$pages = $output[0];
+    	for ($i = 1; $i <= $pages; $i++) {
+        	append_pdf($pdf,$file,$i,$posx,$posy);
+    	}
+    	return;
+    }
+
+	$pageCount = $pdf->setSourceFile($file);
+	$tplIdx = $pdf->importPage($page);
+	$pdf->addPage();
+	$pdf->useTemplate($tplIdx, $posx, $posy);
+}
+
+
+# Bericht anhängen
+function append_report($pdf,$report_id,$ID){
+
+	#$prevreportid = $pdf->report_id;
+
+	$pdf->AddPage('P');
+	$pdf->SetXY(0,0);
+	
+	#$pdf->report_id = $report_id;
+	$report = get_report($report_id,0);
+	fill_pdf($pdf,$report,$ID);
+	#$pdf->report_id = $prevreportid;
+}
+
+
+# Unterbericht einfügen
+function append_subReport($pdf,$report,$ID,$el,$report_id,$height=0,$width=0){
+
+	$report_rename = "temp_".$report_id.".pdf";
+	$subreportfile = generate_pdf($report_id,$ID,0,"temp_".$report_id.".pdf");
+	$report["tab_size"][$el] = $subreportfile;
+	if($width){$report["height"][$el] = 0;}
+	if($height){$report["width"][$el] = 0;}
+	print_bild($pdf,$ID,$report,$el);
+	return;
+
+}
+
+
+# Unterbericht integrieren
+function merge_subReport($pdf,$ID,$report_id){
+
+	$report_ = get_report($report_id,0);
+	# fill pdf with elements
+	fill_pdf($pdf,$report_,$ID,$pdf->GetY());
+	return;
+}
+
+
+# Diagramm einbinden
+function append_subChart($pdf,$report,$ID,$el,$chart_id,$height=0,$width=0){
+	global $gdiaglist;
+	global $umgvar;
+        global $gsr;
+        global $filter;
+        
+        $gtabid = $gdiaglist['gtabid'][$chart_id];
+        if ($gdiaglist[$gtabid]["id"][$chart_id]) {
+                /* use a template */
+                if ($gdiaglist[$gtabid]["template"][$chart_id] AND file_exists($umgvar["pfad"] . $gdiaglist[$gtabid]["template"][$chart_id])) {
+                    require_once ($umgvar["path"] . $gdiaglist[$gtabid]["template"][$chart_id]);
+                    $link = "USER/".$session['user_id']."/temp/chart_$chart_id.png";
+
+                /* use the diagram editor */
+                } else {
+                    require_once ('extra/diagram/diagram.php');
+                    $link = lmb_createDiagram($chart_id, $gsr, $filter); 
+                }
+
+                $h = $report["height"][$el];
+                $w = $report["width"][$el];
+                if($height){$w = 0;}
+                if($width){$h = 0;}
+
+                sleep(1);
+                if(file_exists($link)){
+                        $prv = array(
+                                $link,
+                                $report["posx"][$el],
+                                $report["posy"][$el],
+                                $w,
+                                $h,
+                                $report["style"][$el],
+                                'bild'
+                        );
+                        $pdf->print_element($pdf->printcell($prv));
+                }
+        }        
+}
+
+
+# Generiere Berichte
+function generate_pdf($report_id,$ID,$report_output,$report_rename=null){
+
+	$report = get_report($report_id,0);
+	if($pdf = create_pdf($report,$ID)){
+		# fill pdf with elements
+		fill_pdf($pdf,$report,$ID);
+		if(!$temp_file_path = store_pdf($pdf,$report,$ID,$report_rename)){
+			$pdf->Close();
+			foreach ($pdf as &$value) {
+				$value = null;
+			}
+			$pdf = null;
+			unset($pdf);
+			return false;
+		}
+
+		# clear memory (workaround)
+		$pdf->Close();
+		foreach ($pdf as &$value) {
+			$value = null;
+		}
+		$pdf = null;
+		unset($pdf);
+	}
+
+	# Archivieren
+	$GLOBALS['archiv_file_id'] = reportArchiv($pdf,$temp_file_path,$report,$ID,$report_output);
+	
+	return $temp_file_path;
+}
+
+
+
+
+# --- alle Berichte einer Tabelle -----------------------------------
+function LMB_pdfReportAll($gtabid,$report_id,$report_output,&$filter,&$gsr,&$verkn,$report_rename=null){
+	global $gresult;
+	
+	# Abfrage
+	$filter["anzahl"][$gtabid] = "all";
+	$gresult = get_gresult($gtabid,1,$filter,$gsr,$verkn);
+	#$grouplist = get_report_group($report_id,array());
+	
+	$report = get_report($report_id,1);
+	if($report["grouplist"]){$glist = $report["grouplist"];}else{$glist = array($report["report_id"]);}
+
+	$bzm = 0;
+	while($bzm < $gresult[$gtabid]["res_count"]) {
+		#if($RID = relationResult($gtabid,$report_id,$gresult[$gtabid]["id"][$bzm])){$ID = $RID;}else{$ID = $gresult[$gtabid]["id"][$bzm];}
+		$ID = $gresult[$gtabid]["id"][$bzm];
+		#$GLOBALS["ID"] = $ID;
+		$generated_file_path = generate_pdf($report_id,$ID,$report_output,$report_rename);
+		$filelist[] = $generated_file_path;
+		$bzm++;
+	}
+	if(count($filelist) > 1){
+		$mergefile = merge_report($filelist,'0',$report_rename);
+		return ($mergefile);
+	}elseif($generated_file_path){
+		return ($generated_file_path);
+	}
+}
+
+# --- Berichtsliste mehrerer Datensätze -----------------------------------
+function LMB_pdfReportRecords($gtabid,$report_id,$report_output,$use_record,$report_rename=null){
+	$use_record = explode(";",$use_record);
+	$use_record = array_unique($use_record);
+	#$grouplist = get_report_group($report_id,array());
+	foreach ($use_record as $key => $value){
+		$recel = explode("_",$value);
+		if($recel[1] == $gtabid){
+			#if($RID = relationResult($gtabid,$report_id,$recel[0])){$ID = $RID;}else{$ID = $recel[0];}
+			$ID = $recel[0];
+			#$GLOBALS["ID"] = $ID;
+			$generated_file_path = generate_pdf($report_id,$ID,$report_output,$report_rename);
+			$filelist[] = $generated_file_path;
+		}
+	}
+	if(count($filelist) > 1){
+		$mergefile = merge_report($filelist,'0',$report_rename);
+		return ($mergefile);
+	}elseif($generated_file_path){
+		return ($generated_file_path);
+	}
+}
+
+# --- Einzelbericht eines Datensatzes -----------------------------------
+function LMB_pdfReportUnit($gtabid,$report_id,$report_output,$ID,$report_rename=null){
+	# try to get $gtabid
+	#if(!$gtabid){
+	#	global $greportlist;
+	#	$gtabid = $greportlist["argresult_tabid"][$report_id];
+	#}
+
+	#if($gtabid > 0 AND $ID){
+		#if($RID = relationResult($gtabid,$report_id,$ID)){$ID = $RID;}
+	#}
+
+	#$grouplist = get_report_group($report_id,array());
+	$generated_file_path = generate_pdf($report_id,$ID,$report_output,$report_rename);
+	return ($generated_file_path);
+}
+
+?>

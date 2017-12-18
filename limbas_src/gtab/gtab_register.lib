@@ -1,0 +1,336 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID: 40
+ */
+
+/* --- Session Register-Variablen ----------------------------------- */
+
+function filter_reset($gtabid){
+	#$GLOBALS['filter'] = null;
+	$GLOBALS['popc'][$gtabid] = null;
+	$GLOBALS['popg'][$gtabid] = null;
+	$GLOBALS['gs'][$gtabid] = null;
+	$GLOBALS['gsr'][$gtabid] = null;
+	$GLOBALS["filter"]["hidecols"][$gtabid] = null;
+	$GLOBALS["filter"]["order"][$gtabid] = null;
+	$GLOBALS['filter']['reminder_from'] = null;
+	$GLOBALS['filter']['reminder_to'] = null;
+	$GLOBALS['filter']['reminder_create'] = null;
+	$GLOBALS['view_version_status'] = null;
+}
+
+# ----- Snapshot --------------
+if(!$form_id){
+	if($snap_id AND $gsnap[$gtabid]["id"][$snap_id]){
+		if(!$filter_reset AND (!$filter["snapisset"][$snap_id] OR $filter["snapid"][$gtabid] != $snap_id)){
+			if(!$filter["snapid"][$gtabid]){
+				SNAP_set_reminder($gtabid);
+			}
+			SNAP_get_filter($snap_id,$gtabid);
+		}elseif($filter_reset){
+			filter_reset($gtabid);
+			SNAP_get_filter($snap_id,$gtabid);
+		}
+	}else{
+		if($filter["snapid"][$gtabid]){
+			filter_reset($gtabid);
+			SNAP_get_reminder($gtabid);
+		}
+		$filter["snapid"][$gtabid] = 0;
+	}
+}
+
+
+
+/* --- Variablen zurücksetzen ------*/
+if($filter_reset AND !$snap_id){
+	filter_reset($gtabid);
+	$next = 1;
+	$anzahl = $session["anzahl"];
+}else{
+	/* --- Variablen eintragen ------*/
+	# Spalten Sortierung
+	if($td_sort){
+		$td_sort = explode(";",$td_sort);
+		$pidf = $td_sort[0];
+		$pidt = $td_sort[1];
+
+		if($pidt > 0 AND $pidf > 0 AND $pidt != $pidf){
+			$pid0 = $gfield[$gtabid]["sort"][$pidt];
+			$pid1 = $gfield[$gtabid]["sort"][$pidf];
+			$pid = 0;
+			foreach($gfield[$gtabid]["sort"] As $key => $value){
+				$pid++;
+				# von
+				if($key == $pidf){
+					$gfield[$gtabid]["sort"][$key] = $pid0;
+					$pid--;
+				# nach
+				}elseif($key == $pidt){
+					if($pid1 > $pid0){$pid++;}
+					$gfield[$gtabid]["sort"][$key] = $pid;
+					if($pid1 < $pid0){$pid++;}
+				}else{
+					$gfield[$gtabid]["sort"][$key] = $pid;
+				}
+			}
+			asort($gfield[$gtabid]['sort'],SORT_NUMERIC);
+		}
+	}
+
+	# only for link based order # $filter_order[1][2]=desc
+	if(is_array($filter_order)){
+		foreach ($filter_order as $order_gtabid => $okval){
+			if(is_array($okval)){
+				foreach ($okval as $order_field => $ofval){
+					if(is_numeric($order_gtabid) AND is_numeric($order_field)){
+						$filter["order"][$order_gtabid][$order_field] = array($gtabid,$order_field,$ofval);
+					}
+				}
+			}
+		}
+	}
+	
+	if($order){
+		$tmp = null;
+		#$tmp0 = explode("#",$order);
+		if($tmp0 = explode("#",$order)){
+			if($tmp0[1] == "+"){
+				$ordval = explode("&",$tmp0[0]);
+				$filter["order"][$ordval[0]][$ordval[1]] = $ordval;
+			}else{
+				$filter["order"][$gtabid] = null;
+				foreach ($tmp0 as $k => $v){
+					$ordval = explode("&",$v);
+					$filter["order"][$ordval[0]][$ordval[1]] = $ordval;
+				}
+			}
+		}
+		#$filter_page[$gtabid] = 1;
+	}
+	if($filter_popups){
+		$tmp = explode("|",$filter_popups);
+		$bzm = 0;
+		while($tmp[$bzm]){
+			$tmp1 = explode("_",$tmp[$bzm]);
+			if($tmp1[3]){
+				$filter["popups"][$tmp1[0]][$tmp1[1]][$tmp1[2]] = $tmp1[3];
+			}else{
+				unset($filter["popups"][$tmp1[0]][$tmp1[1]][$tmp1[2]]);
+			}
+			$bzm++;
+		}
+	}
+	if($filter_indicator){
+		$filter["indicator_set"][$gtabid] = trim($filter_indicator);
+	}
+	if($filter_nosverkn){
+		if($filter["nosverkn"][$gtabid]){$filter["nosverkn"][$gtabid] = 0;}
+		else{$filter["nosverkn"][$gtabid] = 1;}
+	}
+	if($filter_unhide){
+		if($filter["unhide"][$gtabid]){$filter["unhide"][$gtabid] = 0;}
+		else{$filter["unhide"][$gtabid] = 1;}
+	}
+	if($filter_groupheader){
+		if($filter["groupheader"][$gtabid]){$filter["groupheader"][$gtabid] = 0;}
+		else{$filter["groupheader"][$gtabid] = 1;}
+	}
+	if($filter_groupheaderKey){
+		$filter["groupheaderKey"][$gtabid] = $filter_groupheaderKey;
+	}
+	if($filter_tabulatorKey){
+		$tabulators = explode(";",$filter_tabulatorKey);
+		foreach ($tabulators as $tkey => $tval){
+			$tabulator = explode("_",$tval);
+			if($tabulator[0] AND $tabulator[1]){
+				$filter["tabulatorKey"][$gtabid][$tabulator[0]] = $tabulator[1];
+			}
+		}	
+	}
+	if($filter_gwidth){
+		$filter["gwidth"][$gtabid] = $filter_gwidth;
+	}
+	if($filter_sum){
+		if($filter["show_sum"][$gtabid]){$filter["show_sum"][$gtabid] = 0;}
+		else{$filter["show_sum"][$gtabid] = 1;}
+	}
+	if($filter_hidelocked){
+		if($filter["hidelocked"][$gtabid]){$filter["hidelocked"][$gtabid] = 0;}
+		else{$filter["hidelocked"][$gtabid] = 1;}
+	}
+	if($filter_locked){
+		if($filter["locked"][$gtabid]){$filter["locked"][$gtabid] = 0;}
+		else{$filter["locked"][$gtabid] = 1;}
+	}
+	if($filter_version){
+		if($filter["viewversion"][$gtabid]){$filter["viewversion"][$gtabid] = 0;}
+		else{$filter["viewversion"][$gtabid] = 1;}
+	}
+	if($filter_nolimit){
+		if($filter["nolimit"][$gtabid]){$filter["nolimit"][$gtabid] = 0;
+		}else{$filter["nolimit"][$gtabid] = 1;}
+	}
+
+	if($filter_hidecols){
+		$filter_hidecols_ = explode(";",$filter_hidecols);
+		foreach($filter_hidecols_ as $key => $value){
+			$hidecols = explode("_",$filter_hidecols_[$key]);
+			if($filter["hidecols"][$hidecols[0]][$hidecols[1]]){
+				unset($filter["hidecols"][$hidecols[0]][$hidecols[1]]);
+			}else{
+				$filter["hidecols"][$hidecols[0]][$hidecols[1]] = 1;
+			}
+		}
+		lmbGetGtabWidth($gtabid,$filter["hidecols"][$gtabid]);
+	}
+	if($filter_alter){
+		if($filter["alter"][$gtabid]){$filter["alter"][$gtabid] = 0;}
+		else{$filter["alter"][$gtabid] = 1;}
+	}
+
+	if($filter_userrules){
+		if($filter["userrules"][$gtabid]){$filter["userrules"][$gtabid] = 0;}
+		else{$filter["userrules"][$gtabid] = 1;}
+	}
+
+	if($filter_anzahl){
+		if(is_numeric($filter_anzahl[key($filter_anzahl)])){
+                        if($filter_anzahl[key($filter_anzahl)] <= 0){
+                            $filter_anzahl[key($filter_anzahl)] = 1;
+                        }
+			$filter["anzahl"][key($filter_anzahl)] = $filter_anzahl[key($filter_anzahl)];
+		}
+	}
+
+	if($filter_page){
+		$filter_page_ = explode("/",$filter_page[key($filter_page)]);
+		$filter["page"][key($filter_page)] = $filter_page_[0];
+	}
+		
+	if($filter_force_delete){
+		if($filter["force_delete"][$gtabid]){
+			unset($filter["force_delete"][$gtabid]);
+		}else{
+			$filter["force_delete"][$gtabid] = array("#all#");
+		}
+	}
+	
+	# --- aktives Formular -----------------------------------
+	if($set_form OR $set_form == "0"){
+		$form_id = $set_form;
+	}
+	$filter["form"][$gtabid] = $form_id;
+	
+	if($form_id){
+		if(($gformlist[$gtabid]["typ"][$form_id] == 2 AND $action != "gtab_erg") OR ($gformlist[$gtabid]["typ"][$form_id] == 1 AND $action == "gtab_erg")){
+			$form_id = null;
+		}
+	}
+
+	if($gfrist){
+		$filter["reminder"][$gtabid] = $gfrist;
+
+		if($filter_reminder_from){
+			$filter['reminder_from'][$gfrist] = trim($filter_reminder_from);
+		}
+		if($filter_reminder_to){
+			$filter['reminder_to'][$gfrist] = trim($filter_reminder_to);
+		}
+		if($filter_reminder_create){
+			$filter['reminder_create'][$gfrist] = trim($filter_reminder_create);
+		}
+		
+	}else{$filter["reminder"][$gtabid] = 0;}
+	
+	# --- Für Feldinhalte(Suchbegriffe) ------
+	if($gs){
+		if($history_search){
+			$history_search = explode(";",$history_search);
+			foreach($history_search as $key => $value){
+				$search_el = explode(",",$history_search[$key]);
+				$gsr[$search_el[0]][$search_el[1]][0] = $gs[$search_el[0]][$search_el[1]][0];
+			}
+		# suche ohne history_search
+		}elseif($supersearch OR $gssearch){
+			$gsr = $gs;
+		}
+	}
+	
+	# gsf => nur für Formulare ohne Session-Speicherung
+	
+
+	if($view_symbolbar){
+		if($session["symbolbar"]){
+			$session["symbolbar"] = 0;
+		}else{
+			$session["symbolbar"] = 1;
+		}
+	}
+
+
+	/* --- Für Sub-choice-anzeigen ------*/
+	if($pop_choice){
+		$pop_choice = explode("|",$pop_choice);
+		$bzm = 1;
+		$popc[$gtabid]["aktiv"] = 0;
+		while($pop_choice[$bzm]){
+			$pop_choice_ = explode(";",$pop_choice[$bzm]);
+			$tmp = explode("_",$pop_choice_[0]);
+			$pop_choice_[0] = $tmp[1];
+			if($pop_choice_[0] AND $pop_choice_[1]){
+				$popc[$pop_choice_[0]][$pop_choice_[1]] = $pop_choice_[2];
+			}else{
+				$popc[$pop_choice_[0]][$pop_choice_[1]] = 0;
+			}
+			$bzm++;
+		}
+	}
+
+	/* --- Für Grouping-choice-anzeigen ------*/
+	# [0] = gtabid
+	# [3] = ebene
+	# [2] = 0/1 ausgewählt?
+	# [4] = Gruppierungszeile
+	# [1] = field_id
+	if($grp_choice){
+		$grp_choice = explode("|",$grp_choice);
+		$bzm = 1;
+		while($grp_choice[$bzm]){
+			if($grp_choice[$bzm]){
+				$grp_choice_ = explode(";",$grp_choice[$bzm]);
+				$tmp = explode("_",$grp_choice_[0]);
+				$grp_choice_[0] = $tmp[1];
+				$grp_choice_[3] = $tmp[2];
+				$grp_choice_[4] = $tmp[3];
+				if($grp_choice_[0] AND $grp_choice_[1]){
+					$popg[$grp_choice_[0]][$grp_choice_[3]][$grp_choice_[4]][$grp_choice_[1]] = $grp_choice_[2];
+				}else{
+					$popg[$grp_choice_[0]][$grp_choice_[3]][$grp_choice_[4]][$grp_choice_[1]] = 0;
+				}
+			}
+			$bzm++;
+		}
+	}
+
+}
+
+
+
+
+?>

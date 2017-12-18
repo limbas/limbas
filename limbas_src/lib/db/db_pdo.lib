@@ -1,0 +1,143 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID:
+ */
+$db_pdo_queries = array('rand' => 0);
+
+function limbas_pdo_connect($host,$database,$dbuser,$dbpass,$dbdriver) {
+	
+	#if($dbdriver){
+	#	$dsn = "Driver=$dbdriver;Server=$host;Database=$database;ReadOnly=No";
+	#}else{
+		$dsn = "odbc:$database";
+	#}
+
+	try {
+		$db_pdo = new PDO($dsn, $dbuser, $dbpass);
+		$db_pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+	} catch (PDOException $e) {
+		throw new Exception('PDO: ' . $e->getMessage(), $e->getCode());
+	}
+
+	return $db_pdo;
+}
+
+function limbas_odbc_exec(&$db_null,&$sql) {
+	global $db_pdo;
+	global $db_pdo_queries;
+	
+	if (!is_null($db_pdo)) {
+		$stm = $db_pdo->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_SCROLL));
+		#$stm = $db_pdo->prepare($sql);
+		$stm->execute();
+		if($stm) {
+			$db_pdo_queries['rand']++;
+			$key = $db_pdo_queries['rand'];
+			$query = array('stm' => $stm, 'row' => null);
+			$db_pdo_queries[$key]['offset'] = 0;
+			$db_pdo_queries[$key] = $query;
+			return $key;
+		}
+	}
+	//throw new Exception('PDO: No pdo connection found!', -1);
+	return false;
+}
+
+function limbas_odbc_fetch_row($key, $offset=null) {
+	global $db_pdo_queries;
+	
+	if (isset($db_pdo_queries[$key])) {
+		try{
+			if(!$offset){
+				$db_pdo_queries[$key]['offset']++;
+				$offset = $db_pdo_queries[$key]['offset'];
+			}
+			$row = $db_pdo_queries[$key]['stm']->fetch(PDO::FETCH_ASSOC, PDO::FETCH_ORI_ABS, $offset);
+			#$row = $db_pdo_queries[$key]['stm']->fetch(PDO::FETCH_ASSOC);
+		}
+		catch (PDOException $e){
+			if('HY106' == $e->getCode()){
+				$row = null;
+			}
+		}
+		
+		if($row){
+			$db_pdo_queries[$key]['row'] = $row;
+			return true;
+		}else{
+			$db_pdo_queries[$key]['row'] = false;
+		}
+	}
+	
+	//throw new Exception('PDO: Pdo query "' . $key . '" not found!', -1);
+	return false;
+}
+
+function limbas_odbc_result($key, $name) {
+	global $db_pdo_queries;
+
+	if(!isset($db_pdo_queries[$key]['row'])){
+		limbas_odbc_fetch_row($key, 1);
+	}
+
+	if ($db_pdo_queries[$key]['row'] !== false) {
+		return $db_pdo_queries[$key]['row'][strtolower($name)];
+	}
+
+	throw new Exception('PDO: No pdo row found ('. $key . ')!', -1);
+	//return false;
+}
+
+function limbas_odbc_errormsg($db_pdo){
+	return $db_pdo->errorCode();
+}
+
+function limbas_odbc_num_rows($key,&$query=null,$counttype=null) {
+	global $db_pdo;
+	global $db_pdo_queries;
+	global $umgvar;
+	
+	$count = -1;
+	if(LMB_DBFUNC_NUMROWS){
+		$count = $db_pdo_queries[$key]['stm']->rowCount();
+	}
+
+	# ---------------- Anzahl Ergebnisse neu berechnen -------------
+	if($count < 0){
+		if($counttype == 2){
+			return $umgvar["resultspace"];
+		}elseif($counttype == 1){
+			while(limbas_odbc_fetch_row($key)){
+				$ct++;
+			}
+			$count = $ct;
+		}elseif($query){
+			$key1 = limbas_odbc_exec($db_pdo,$query) or errorhandle(limbas_odbc_errormsg($db_pdo),$query,'count_query',__FILE__,__LINE__);
+			$count =  limbas_odbc_result($key1, "RESULT");
+	   		limbas_odbc_free_result($key1);
+		}
+	}
+    return $count;
+}
+
+
+function limbas_odbc_free_result($key){
+	unset($GLOABLS["db_pdo"]);
+	unset($GLOABLS["db_pdo_queries"][$key]);
+}
+?>
