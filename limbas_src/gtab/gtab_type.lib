@@ -390,7 +390,7 @@ function dftyp_2($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$ev
 	if($typ == 1){
 		# inherit
 		if($gfield[$gtabid]["inherit_tab"][$bzm] AND $gfield[$gtabid]["inherit_search"][$bzm]){
-			dftyp_inherit($ID,$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$event=null);
+			dftyp_inherit($ID,$gresult,$bzm,$gtabid,$class,"STYLE=\"$style\"",$pos,$typ,$z_index,$event=null);
 		# text
 		}else{
 			// multilang
@@ -1455,7 +1455,7 @@ function dftyp_12($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 		$width = $gform[$gformid]["width"][$formid];
 		$height = $gform[$gformid]["height"][$formid];
 		while(odbc_fetch_row($rs1, $bzm1)) {
-			if($img2 = IMACK_ConvertThumbs(array(odbc_result($rs1, "ID"),odbc_result($rs1, "SECNAME"),odbc_result($rs1, "MIMETYPE"),odbc_result($rs1, "THUMB_OK")),($width-2),$height,1)){
+			if($img2 = IMACK_ConvertThumbs(array(odbc_result($rs1, "ID"),odbc_result($rs1, "SECNAME"),odbc_result($rs1, "MIMETYPE"),odbc_result($rs1, "THUMB_OK"),odbc_result($rs1, "LEVEL")),($width-2),$height,1)){
 				$img_sn[odbc_result($rs1, "ID")] = $img2;
 			}
 			$bzm1++;
@@ -1584,20 +1584,24 @@ function dftyp_32($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 	global $gfield;
 	global $gmimetypes;
 	global $umgvar;
+	global $filestruct;
+
+    if(!$filestruct){get_filestructure();}
 
 	$secname_id = $gfield[$gtabid]["argresult_name"]["SECNAME"];
 	$mimetype_id = $gfield[$gtabid]["argresult_name"]["MIMETYPE"];
 	$filename_id = $gfield[$gtabid]["argresult_name"]["NAME"];
-
+    $level_id = $gfield[$gtabid]["argresult_name"]["LEVEL"];
 
 	$secname = $gresult[$gtabid][$secname_id][0];
 	$mimetype = $gresult[$gtabid][$mimetype_id][0];
 	$filename = $gresult[$gtabid][$filename_id][0];
+	$level = $gresult[$gtabid][$level_id][0];
 	$ext = $gmimetypes["ext"][$mimetype];
 	$refenrence = $secname.".".$ext;
 
 
-	if(file_exists($umgvar["uploadpfad"]."/".$refenrence)){
+	if(file_exists($umgvar["uploadpfad"].$filestruct['path'][$level]."/".$refenrence)){
 		echo "<A HREF=\"main.php?".SID."&action=download&ID=$ID\" TARGET=\"new\">".$filename."</A>";
 	}else{
 		echo "no referenz found, file does not exist!";
@@ -1851,7 +1855,7 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 				if(count($vgresult[$vgtabid]['id']) == 1){
 					echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" border=\"0\" title=\"$lang[1298]\" style=\"cursor:pointer;$sdpl\" onclick=\"newwin7('$action','".$linklevel["tabid"]."','".$gtabid."','".$bzm."','".$ID."','$vid','$dest_formid','$dimsn');\"></i><div></div>";
 				}else{
-					echo "&nbsp;<<i class=\"lmb-icon lmb-edit-caret\" border=\"0\" title=\"$lang[1298]\" style=\"cursor:pointer;$sdpl\" onclick=\"newwin5('".$verkn["vtabid"]."','".$gtabid."','".$bzm."','".$ID."');\"></i>";
+					echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" border=\"0\" title=\"$lang[1298]\" style=\"cursor:pointer;$sdpl\" onclick=\"newwin5('".$verkn["vtabid"]."','".$gtabid."','".$bzm."','".$ID."');\"></i>";
 				}}
 				
 				echo '</td></tr></table>';

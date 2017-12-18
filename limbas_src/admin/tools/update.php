@@ -23,6 +23,8 @@ ob_implicit_flush();
 
 
 ?>
+
+<link rel="stylesheet" href="extern/bootstrap/bootstrap.min.css">
 <div class="lmbPositionContainerMain small">
 <?php
 
@@ -39,50 +41,85 @@ if($umgvar["lock"]){
 }
 
 
-
-
 ?>
 
 <FORM ACTION="main_admin.php" METHOD="post" name="form1">
 <INPUT TYPE="hidden" NAME="action" VALUE="setup_update">
 
 
-<TABLE class="tabfringe" BORDER="0" width="600" cellspacing="2" cellpadding="2">
-<TR><TD class="tabHeader" colspan="2" align="center"><?echo "current Source-Version: <b>".$umgvar["version"]."</b> - current Systemtables-Version: <b>".$umgvar["db-version"]."</b>";?><br><br></TD></TR>
-<TR class="tabBody"><TD><?=$lang[1847]?>&nbsp;<SELECT NAME="update_file"><OPTION>
+<table class="tabfringe" BORDER="0" width="550" cellspacing="2" cellpadding="2">
+
+<TR><TD class="tabHeader" align="left" style="width:200px"><?echo "current Source-Version:</td><td><b>".$umgvar["version"]."</b>";?></TD><td></td></TR>
+<TR><TD class="tabHeader" align="left"><?echo "current Systemtables-Version:</td><td><b>".$umgvar["db-version"]."</b>";?></TD><td></td></TR>
+<TR><TD class="tabHeader" align="left">&nbsp;</td></TR>
+
 <?php
 
-
-
-$rd = explode(".",$umgvar["version"]);
+// database version
+$rd = explode(".",$umgvar["db-version"]);
+$rd[0] = intval($rd[0]);
 $rd[1] = intval($rd[1]);
 $rd[2] = intval($rd[2]);
+$db_version = floatval($rd[0].'.'.str_pad($rd[1], 2 ,'0', STR_PAD_LEFT) );
 
+// source version
+$rs = explode(".",$umgvar["version"]);
+$rs[0] = intval($rs[0]);
+$rs[1] = intval($rs[1]);
+$rs[2] = intval($rs[2]);
+$source_version= floatval($rs[0].'.'.str_pad($rs[1], 2 ,'0', STR_PAD_LEFT) );
 
+// available update scripts
 if($path = read_dir($umgvar["pfad"]."/admin/UPDATE")){
-foreach($path["name"] as $key => $value){
-	$value_ = explode(".",$value);
-	if($path["typ"][$key] == "file" AND $value_[1] == "php"){
-		$vd = explode("_",$value);
-		$vd[1] = intval($vd[1]);
-		$vd[2] = intval(str_replace('.php','',$vd[2]));
+    
+    foreach($path["name"] as $key => $value){
+    	$value_ = explode(".",$value);
+    	if($path["typ"][$key] == "file" AND $value_[1] == "php"){
+    		$vd = explode("_",$value);
+    		$vd[1] = intval($vd[1]);
+    		$vd[2] = intval(str_replace('.php','',$vd[2]));
+    		$vd[3] = str_pad($vd[2], 2 ,'0', STR_PAD_LEFT);
+    		$vd[0] = floatval($vd[1].'.'.$vd[3]);
+    		$up_scripts[$value] = $vd[0];
+    	}
+    }
+    
+    asort($up_scripts);
 
-		if($vd[1] >= $rd[0] AND $vd[2] >= $rd[1]){
-			$upl[] = $value;
-		}
-	}
-}
+    foreach($up_scripts as $file => $file_version) {
+        if($file_version > $db_version AND $source_version >= $file_version){
+            $upl[] = $file;
+        }
+    }
+    
+    if(!$upl AND $rs[0].'.'.$rs[1].'.'.$rs[2] != $umgvar["db-version"]){
+        end($up_scripts);
+    	$upl[] = key($up_scripts);
+    }
+    
 }
 
-sort($upl);
+
+
 if($upl){
+    echo '<TR class="tabBody"><TD>'.$lang[1847].'</td><td><SELECT NAME="update_file"><OPTION>';
+    $vcount=0;
 	foreach ($upl as $key => $value){
-		echo "<OPTION VALUE=\"".$value."\">".$value;
+		echo "<OPTION VALUE=\"".$value."\">".$vcount.')&nbsp;&nbsp;&nbsp;'.$value;
+		$vcount++;
 	}
+	echo '</SELECT></TD><TD ALIGN="CENTER"><INPUT TYPE="submit" VALUE="ok!"></TD></TR>';
+}else{
+    echo '<TR class="tabBody"><TD colspan="2"><b style="color:green">nothin to do ... systemtables are synchronous to source!</b></td></tr>';
 }
+
 
 ?>
-</SELECT></TD><TD ALIGN="CENTER"><INPUT TYPE="submit" VALUE="ok!"></TD></TR>
+
+
+
+
+
 <TR><TD class="tabFooter" colspan="2"></TR>
 </TABLE>
 
@@ -109,35 +146,41 @@ if($update_file){
 		}
 		session_destroy();
 		session_unset();
-		echo "<br><hr><a href=\"JavaScript:top.document.location.href='index.php'\" style=\"color:blue\">back to mainpage..</a>";
+		echo "<hr><input type=\"button\" onclick=\"top.document.location.href='index.php'\" class=\"btn btn-info pull-right\" value=\"finished .. back to LIMBAS\"<br><br>";
 	}
-}
-
-/* --- Version auslesen ------------------- */
-$sqlquery3 = "SELECT REVISION,VERSION FROM LMB_DBPATCH WHERE ID = (SELECT MAX(ID) FROM LMB_DBPATCH)";
-$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
-if(!$rs3) {$commit = 1;}
-$version = odbc_result($rs3,"VERSION").".".odbc_result($rs3,"REVISION");
+}else{
 
 /* --- revision check --------------------------------- */
-if(file_exists("lib/version.inf")){
-	$vers = file("lib/version.inf");
-	$revisionnr = trim($vers[0]);
-	$revision = substr($revisionnr,0,strrpos($revisionnr,"."));
-}
-
-if(trim($umgvar["db-version"]) != $revision){
-	echo "<br><br><div style=\"border:2px solid red;width:600px\">
-	The version of systemtables (<b>".$umgvar["db-version"]."</b>) is different with the revision number of the <i>lib/version.inf</i> file (<b>".$revision."</b>)!
-	You can edit <i>version.inf</i> or make shure the update was successfully finished.
+if($vcount){
+	echo "<br><div style=\"border:2px solid red;width:600px;padding:3px\">
+    <b>".$vcount." updates found ! You have to run all update scripts in their sequence !</b>
 	</div>
 	";
-}else{
-	#echo "<br><br><div style=\"border:2px solid green;width:600px\">
-	#The version of systemtables and source is the same.
-	#</div>";
+}
+
 }
 ?>
 
 </FORM>
+
+<br><br>
+
+<div class="alert alert-warning small" role="alert" style="font-size:12">
+<b>Steps to update your system:</b><br><br>
+
+<li>download latest "LIMBAS source"
+<li>backup your system!
+<li>replace or add the new LIMBAS source directory "limbas_src_x.x"
+<li>rebuild the symlink "limbas_src" to the new source directory (<i>ln -s limbas_src_x.x limbas_src</i>)
+<li>login to limbas 
+<li>limbas will redirect you to the "system update page" (this page)
+<li>select the systemupdate script "up_3.x.php" and run the update with "OK". If your release is older than one release you have to run all updates up to your release.
+<li>reset your system
+<li>replace the "independent" directory with its newest version if necessary. Available as "independent.tar" archive in source.
+          
+</div>  
+
+
+
+
 </div>

@@ -24,7 +24,7 @@
 <div class="tabfringe lmbinfo">
 
 
-<h2>LIMBAS-<?php echo '3.0';// $umgvar["version"]; ?></h2>
+<h2>LIMBAS-<?php echo $umgvar["version"];// $umgvar["version"]; ?></h2>
 <div class="infonav">
 	<?
 	if(file_exists("EXTENSIONS/customization/logo_small.png")){
@@ -47,7 +47,7 @@ if(!$view){
 
 <table border="0" cellpadding="2" cellspacing="0" width="100%">
 <TR class="tabHeader"><TD class="tabHeaderItem" colspan="2">info</td></tr>
-<tr><td valign="top"><?php echo $lang[2];   ?>:</td><td style="color:#999999"><?php echo '3.0';//$umgvar['version']; ?></td></tr>
+<tr><td valign="top"><?php echo $lang[2];   ?>:</td><td style="color:#999999"><?php echo $umgvar["version"];//$umgvar['version']; ?></td></tr>
 <tr><td valign="top"><?php echo $lang[3];   ?>:</td><td style="color:#999999"><?php echo $session['username']; ?></td></tr>
 <tr><td valign="top"><?php echo $lang[4];   ?>:</td><td style="color:#999999"><?php echo "{$session['vorname']} {$session['name']}"; ?></td></tr>
 <tr><td valign="top"><?php echo $lang[11];  ?>:</td><td style="color:#999999"><?php echo $umgvar['company']; ?></td></tr>
@@ -75,11 +75,9 @@ if(!$view){
 <TABLE CELLPADDING="1" CELLSPACING="3" WIDTH="100%">
 <TR class="tabHeader"><TD class="tabHeaderItem" colspan="2">credits</td></tr>
 <TR><TD>Silk Icons</TD><TD><A href="http://www.famfamfam.com/lab/icons/silk/">http://www.famfamfam.com/lab/icons/silk/</A></TD></TR>
-<TR><TD>pear inline diff package</TD><TD><A href="http://pear.php.net">http://pear.php.net</A></TD></TR>
-<TR><TD>jscalendar</TD><TD><A href="http://dynarch.com/mishoo/">http://dynarch.com/mishoo/</A></TD></TR>
 <TR><TD>fpdi</TD><TD><A href="http://fpdi.setasign.de/">http://fpdi.setasign.de/</A></TD></TR>
 <TR><TD>fpdf</TD><TD><A href="http://www.fpdf.org">http://www.fpdf.org</A></TD></TR>
-<TR><TD>interpid</TD><TD><A href="http://www.interpid.eu/fpdf-components">http://www.interpid.eu/fpdf-components</A></TD></TR>
+<TR><TD>interpid</TD><TD><A href="http://www.interpid.eu">http://www.interpid.eu</A></TD></TR>
 <TR><TD>ExifTool</TD><TD><A href="http://www.sno.phy.queensu.ca/~phil/exiftool/">http://www.sno.phy.queensu.ca/~phil/exiftool/</A></TD></TR>
 <TR><TD>EXIF</TD><TD><A href="http://electronics.ozhiker.com">http://electronics.ozhiker.com</A></TD></TR>
 <TR><TD>codemirror</TD><TD><A href="http://codemirror.net">http://codemirror.net</A></TD></TR>
@@ -101,15 +99,21 @@ if(!$view){
 
 <TR class="tabHeader"><TD class="tabHeaderItem" colspan="3">release notes 3.0 - main features</td></tr>
 
-<TR>
-<TD valign=top class="bord">Changes</TD>
-<TD valign=top class="bord">major release changed to V3</TD>
-</TR>
 
 <TR>
 <TD valign=top class="bord">Added</TD>
-<TD valign=top class="bord">new layout</TD>
-<TD valign=top class="bord">added new layout 'comet' with font bases icons</TD>
+<TD valign=top class="bord">multilanguage</TD>
+<TD valign=top class="bord">multilanguage support for independent selectpools in formular</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Bugfix</TD>
+<TD valign=top class="bord">install process</TD>
+<TD valign=top class="bord">fixing install process for php < 3.5</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Bugfix</TD>
+<TD valign=top class="bord">file explorer</TD>
+<TD valign=top class="bord">bugfix union query in filestructure</TD>
 </TR>
 
 

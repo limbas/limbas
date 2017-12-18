@@ -18,7 +18,6 @@
  * ID:
  */
 
-
 $phpvok = version_compare(PHP_VERSION, '5.5.4') >= 0;
 if(!$GLOBALS['umgvar']['csv_escape']){
     $GLOBALS['umgvar']['csv_escape'] = "\\";
@@ -622,14 +621,13 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
  * @param unknown_type $format
  * @return unknown
  */
-function lmbExport_Dump($format){
+function lmbExport_Dump($format,$struct_only=false){
 	global $umgvar;
 	global $session;
 	global $db;
 	global $DBA;
 	global $result_exp_tabs;
 	global $result_exp_dat;
-
 	
 	/* --- Verzeichnis Prüfen ------- */
 	unset($ext);
@@ -709,38 +707,40 @@ function lmbExport_Dump($format){
 		/* ---> conf */ fputs($config_datei,"<end tabledefinition>\n\n");
 
 		/* --- Inhalt_Liste --------------------------------------------- */
-		if(substr($table,0,10) != "LMB_INDIZE" AND substr($table,0,11) != "LMB_HISTORY"){
-			$sqlquery = "Select * from $table ".LMB_DBFUNC_FOR_REUSE;
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			if(!$rs) {$commit = 1;}
-			$bzm1 = 1;
-			while(odbc_fetch_row($rs, $bzm1)) {
-				$line = array();
-				$bzm2 = 0;
-				while(isset($COLUM[$bzm2])){
-					//$erg = str_replace("\t","#TAB#",odbc_result($rs, $COLUM[$bzm2]));
-					//$erg = str_replace("\r\n","#NEXTLINE#",$erg);
-					//$erg = str_replace("\n","#NEXTLINE#",$erg);
-					//$erg = str_replace("\\","#BACKSL#",$erg);
-					
-					$erg = odbc_result($rs, $COLUM[$bzm2]);
-                        
-                    // mask \" for fputcsv
-                    if (!$GLOBALS['phpvok']) {
-                        $erg = str_replace('\\"', '#BSLQUT#', $erg);
+                    if(substr($table,0,10) != "LMB_INDIZE" AND substr($table,0,11) != "LMB_HISTORY"){
+                        if (!$struct_only OR strtolower(substr($table,0,4)) == 'lmb_' OR strtolower(substr($table,0,5)) == 'ldms_') {
+                            $sqlquery = "Select * from $table ".LMB_DBFUNC_FOR_REUSE;
+                            $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                            if(!$rs) {$commit = 1;}
+                            $bzm1 = 1;
+                            while(odbc_fetch_row($rs, $bzm1)) {
+                                    $line = array();
+                                    $bzm2 = 0;
+                                    while(isset($COLUM[$bzm2])){
+                                            //$erg = str_replace("\t","#TAB#",odbc_result($rs, $COLUM[$bzm2]));
+                                            //$erg = str_replace("\r\n","#NEXTLINE#",$erg);
+                                            //$erg = str_replace("\n","#NEXTLINE#",$erg);
+                                            //$erg = str_replace("\\","#BACKSL#",$erg);
+
+                                            $erg = odbc_result($rs, $COLUM[$bzm2]);
+
+                        // mask \" for fputcsv
+                        if (!$GLOBALS['phpvok']) {
+                            $erg = str_replace('\\"', '#BSLQUT#', $erg);
+                        }
+
+                                            if($GLOBALS['DBA']['DB'] == 'mysql' AND $erg == '0000-00-00 00:00:00'){$erg = '';}
+                                            #/* ---> tab  */ fputs($table_datei,$erg."\t");
+                                            $line[] = $erg;
+                                            $bzm2++;
+                                    }
+                                    #/* ---> tab  */ fputs($table_datei,"\n");
+                                    /* ---> tab  */ lmb_fputcsv($table_datei, $line, 1);
+                                    $result_exp_dat++;
+                                    $bzm1++;
+                            }
+                        }
                     }
-					
-					if($GLOBALS['DBA']['DB'] == 'mysql' AND $erg == '0000-00-00 00:00:00'){$erg = '';}
-					#/* ---> tab  */ fputs($table_datei,$erg."\t");
-					$line[] = $erg;
-					$bzm2++;
-				}
-				#/* ---> tab  */ fputs($table_datei,"\n");
-				/* ---> tab  */ lmb_fputcsv($table_datei, $line, 1);
-				$result_exp_dat++;
-				$bzm1++;
-			}
-		}
 
 
 		$result_exp_tabs = $bzm;

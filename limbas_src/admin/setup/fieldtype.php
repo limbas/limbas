@@ -39,7 +39,7 @@ function del_field(id) {
 <div class="lmbPositionContainerMain">
 
 <TABLE class="tabfringe" BORDER="0" cellspacing="1" cellpadding="1" WIDTH="100%">
-<TR class="tabHeader" BGCOLOR="<?echo $farbschema["WEB6"];?>">
+<TR class="tabHeader">
 <TD class="tabHeaderItem" nowrap><B>&nbsp;<?=$lang[1076]?> &nbsp;</B></TD>
 <TD class="tabHeaderItem" nowrap><B>&nbsp;parse_type &nbsp;</B></TD>
 <TD class="tabHeaderItem" nowrap><B>&nbsp;<?=$lang[1516]?> &nbsp;</B></TD>

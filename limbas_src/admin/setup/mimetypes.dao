@@ -1,0 +1,60 @@
+<?php
+
+/* --- mimetype ändern --------------------------------------------- */
+if($change && $changeIds){	
+	$changeIds = explode(";", $changeIds);
+	$changeIds = array_unique($changeIds);
+	
+	foreach ($changeIds as $key => $id){
+		if(is_numeric($id)){
+                        $id = parse_db_int($id);
+                        $mimetype = parse_db_string( cleanMimetype( ${"mimetype_".$id} ) );
+                        $ext = parse_db_string( cleanMimetype( ${"ext_".$id} ) );
+                        $pic = parse_db_string( cleanMimetype( ${"pic_".$id} ) );
+                        
+                        $sqlquery = "UPDATE LMB_MIMETYPES SET MIMETYPE='$mimetype', EXT='$ext', PIC='$pic' WHERE ID = $id";
+   			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);        
+		}
+	}
+}
+
+/* --- mimetype hinzufügen --------------------------------------------- */
+if($add){                
+        $nextId = next_db_id("LMB_MIMETYPES");
+        $new_mimetype = parse_db_string( cleanMimetype($new_mimetype) , 255);
+        $new_ext = parse_db_string( cleanMimetype($new_ext) , 255);
+        $new_pic = parse_db_string( cleanMimetype($new_pic) , 255);
+                
+        $sqlquery = "INSERT INTO LMB_MIMETYPES (ID, MIMETYPE, EXT, PIC) VALUES ($nextId, '$new_mimetype', '$new_ext', '$new_pic')";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+/* --- mimetype löschen --------------------------------------------- */
+if($del){
+        $del = parse_db_int($del);
+	$sqlquery = "DELETE FROM LMB_MIMETYPES WHERE ID = $del";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+
+
+/* --- Mimetype-Liste --------------------------------------------- */
+$sqlquery = "SELECT ID, MIMETYPE, EXT, PIC FROM LMB_MIMETYPES ORDER BY MIMETYPE";
+$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+$result_mimetypes = array();
+$bzm = 1;
+while(odbc_fetch_row($rs, $bzm)) {
+    $result_mimetypes['id'][] = odbc_result($rs, 'ID');
+    $result_mimetypes['mimetype'][] = odbc_result($rs, 'MIMETYPE');
+    $result_mimetypes['ext'][] = odbc_result($rs, 'EXT');
+    $result_mimetypes['pic'][] = odbc_result($rs, 'PIC');
+    $bzm++;
+}
+
+function cleanMimetype($mimetype) {
+    // removes all characters that are not a-z, -, /, _, 0-9
+    return preg_replace('/[^a-z_\/\-0-9]/', '', $mimetype);
+}
+
+?>

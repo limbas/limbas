@@ -334,6 +334,11 @@ elseif ($action == "setup_fieldselect" AND $LINK[setup_gtab_ftype] == 1) {
 	$require3 = "admin/tables/fieldselect.php";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
+elseif ($action == "setup_mimetypes" AND $LINK[$action] == 1) {
+	$require2 = "admin/setup/mimetypes.dao";
+	$require3 = "admin/setup/mimetypes.php";
+	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
+}
 elseif ($action == "setup_genlink" AND $LINK[setup_gtab_ftype] == 1) {
 	$require2 = "admin/tables/genlink.dao";
 	$require3 = "admin/tables/genlink.php";
@@ -396,8 +401,8 @@ elseif ($action == "setup_form_main" AND $LINK["setup_form"] == 1) {
 	$require3 = "admin/form/form_main.php";
 	$ONKEYDOWN = "OnKeydown=\"movex(event);\"";
 	$ONLOAD = "OnLoad=\"window.setTimeout('create_list()',500)\"";
-	$ONCLICK = "OnClick=\"formBodyClick(event)\"";
-        $BODYHEADER = $lang[$LINK["desc"][$LINK_ID["setup_form"]]];
+	#$ONCLICK = "OnClick=\"formBodyClick(event)\"";
+    $BODYHEADER = $lang[$LINK["desc"][$LINK_ID["setup_form"]]];
 }
 elseif ($action == "setup_form_menu" AND $LINK["setup_form"] == 1) {
 	$require1 = "extra/explorer/filestructure.lib";
@@ -424,8 +429,8 @@ elseif ($action == "setup_report_main" AND $LINK["setup_report_select"] == 1) {
 	$require2 = "admin/report/report_main.php";
 	$ONKEYDOWN = "OnKeydown=\"movex(event);\"";
 	$ONLOAD = "OnLoad=\"window.setTimeout('create_list()',500)\"";
-	$ONCLICK = "OnClick=\"reportBodyClick('menu')\"";
-        $BODYHEADER = $lang[$LINK["desc"][$LINK_ID["setup_report_select"]]];
+	#$ONCLICK = "OnClick=\"reportBodyClick('menu')\"";
+    $BODYHEADER = $lang[$LINK["desc"][$LINK_ID["setup_report_select"]]];
 }
 elseif ($action == "setup_report_menu" AND $LINK["setup_report_select"] == 1) {
 	$require1 = "extra/explorer/filestructure.lib";

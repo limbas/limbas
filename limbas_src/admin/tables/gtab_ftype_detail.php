@@ -429,14 +429,14 @@ echo "</form>";
 	
 	
 	# --- multi language ------
-	if(!$isview){
+
 	if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 1 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 3 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 4){
 		echo "<tr><td valign=\"top\">".$lang[2895]."</td><td>";
 		if($result_fieldtype[$table_gtab[$bzm]]["multilang"][1] == 1){$collreplacevalue = "CHECKED";} else{$collreplacevalue = "";}
 		echo "<INPUT TYPE=\"CHECKBOX\" onclick=\"document.form2.val.value=this.checked;ajaxEditField('$fieldid','multilang')\"".$collreplacevalue.">";
 		echo "<br><i style=\"color:#AAAAAA\">".$lang[2896]."</i>";
 		echo "</td></tr>";
-	}}
+	}
 	
 	
 	/* --- Argument --------------------------------------- */

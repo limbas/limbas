@@ -349,9 +349,9 @@ function dyns_saveDiagDetail($par){
 	$diag_tab_id = $par['diag_tab_id'];
 	$field_id = $par['field_id'];
 	$show = $par['show']=="true";
-	$axis = $par['axis'];
+	$axis = ($par['axis']) == null ? 0 : $par['axis'];
 	$color = $par['color'];
-
+        
 	lmb_updateData($diag_id,$field_id,$show,$axis,$color);
 }
 
@@ -396,19 +396,21 @@ ob_start();
 
 # --- Funktions-Aufruf -----------
 if($actid AND function_exists("dyns_".$actid)){
-
-		if($_REQUEST)
-		
-		{
-			unset($params);
-			
-			foreach ($_REQUEST as $keyR=>$valR)
-			{
-				$params[$keyR] = $valR;
-			}
-		}
-		$functionName = "dyns_".$actid;
-		$functionName($params);
+    if ($_REQUEST){
+        unset($params);
+        foreach ($_REQUEST as $keyR => $valR) {
+            if ($keyR and $valR) {
+                if (is_string($valR)) {
+                    $_REQUEST[$keyR] = lmb_utf8_decode($valR);
+                } elseif (is_array($valR)) {
+                    $_REQUEST[$keyR] = lmb_arrayDecode($valR, 1);
+                }
+                $params[$keyR] = $_REQUEST[$keyR];
+            }
+        }
+    }
+	$functionName = "dyns_".$actid;
+	$functionName($params);
 	
 }else{
 	echo "function not available";

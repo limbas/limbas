@@ -36,32 +36,35 @@ function sendkeydown(evt) {
 
 function resetmenu(){
 		document.getElementById('new_ureport_area').style.display = 'none';
+		document.getElementById('new_chart_area').style.display = 'none';
         document.getElementById('new_bild_area').style.display = 'none';
         document.getElementById('bild').style.borderStyle = 'outset';
-        document.getElementById('bild').style.backgroundColor = '<?=$farbschema[WEB7]?>';
+        document.getElementById('bild').style.backgroundColor = '';
         document.getElementById('new_dbdat_area').style.display = 'none';
         <?if($referenz_tab > 0){?>document.getElementById('dbdat').style.borderStyle = 'outset';
-        document.getElementById('dbdat').style.backgroundColor = '<?=$farbschema[WEB7]?>';<?}?>
+        document.getElementById('dbdat').style.backgroundColor = '';<?}?>
         document.getElementById('text').style.borderStyle = 'outset';
-        document.getElementById('text').style.backgroundColor = '<?=$farbschema[WEB7]?>';
+        document.getElementById('text').style.backgroundColor = '';
         <?if($umgvar["use_jsgraphics"]){?>
         document.getElementById('line').style.borderStyle = 'outset';
-        document.getElementById('line').style.backgroundColor = '<?=$farbschema[WEB7]?>';
+        document.getElementById('line').style.backgroundColor = '';
         document.getElementById('ellipse').style.borderStyle = 'outset';
-        document.getElementById('ellipse').style.backgroundColor = '<?=$farbschema[WEB7]?>';
+        document.getElementById('ellipse').style.backgroundColor = '';
         <?}?>
         document.getElementById('ureport').style.borderStyle = 'outset';
-        document.getElementById('ureport').style.backgroundColor = '<?=$farbschema[WEB7]?>';
+        document.getElementById('ureport').style.backgroundColor = '';
+        document.getElementById('chart').style.borderStyle = 'outset';
+        document.getElementById('chart').style.backgroundColor = '';
         document.getElementById('rect').style.borderStyle = 'outset';
-        document.getElementById('rect').style.backgroundColor = '<?=$farbschema[WEB7]?>';
+        document.getElementById('rect').style.backgroundColor = '';
         document.getElementById('tab').style.borderStyle = 'outset';
-        document.getElementById('tab').style.backgroundColor = '<?=$farbschema[WEB7]?>';
+        document.getElementById('tab').style.backgroundColor = '';
         document.getElementById('datum').style.borderStyle = 'outset';
-        document.getElementById('datum').style.backgroundColor = '<?=$farbschema[WEB7]?>';
+        document.getElementById('datum').style.backgroundColor = '';
         document.getElementById('snr').style.borderStyle = 'outset';
-        document.getElementById('snr').style.backgroundColor = '<?=$farbschema[WEB7]?>';
+        document.getElementById('snr').style.backgroundColor = '';
         document.getElementById('formel').style.borderStyle = 'outset';
-        document.getElementById('formel').style.backgroundColor = '<?=$farbschema[WEB7]?>';
+        document.getElementById('formel').style.backgroundColor = '';
 }
 
 function pressbutton(id,st,col){
@@ -82,11 +85,11 @@ function actbutton(id,st,opt){
 	if(stati.style.display == 'none'){
 		stati.style.display = '';
 		objst.borderStyle = 'inset';
-		objst.backgroundColor = '<?=$farbschema[WEB10]?>';
+		objst.backgroundColor = '<?=$farbschema[WEB7]?>';
 	}else{
 		stati.style.display = 'none';
 		objst.borderStyle = 'outset';
-		objst.backgroundColor = '<?=$farbschema[WEB7]?>';
+		objst.backgroundColor = '<?=$farbschema[WEB10]?>';
 	}
 }
 
@@ -160,12 +163,19 @@ function send() {
 		document.form1.report_add.value = "bild";
 		parent.report_main.document.form1.report_add.value='';
 		document.form1.submit();
+	}else if(obj == 'chart' && document.form1.chart_id.value){
+		document.getElementById('new_chart_area').style.display = '';
+		document.form1.report_add.value = '';
+		parent.report_main.document.form1.report_add.value='chart';
+		parent.report_main.document.form1.report_chart_id.value=document.form1.chart_id.value;
+		parent.report_main.document.form1.submit();
 	}else{
 		parent.report_main.window.set_posxy();
 		parent.report_main.document.form1.report_posxy_edit.value = '1';
 		parent.report_main.document.form1.new_text.value = 'TEXTBLOCK';
 		parent.report_main.document.form1.submit();
 	}
+	resetmenu();
 }
 
 function getElement(ev) {
@@ -330,25 +340,24 @@ foreach($sysfont as $key => $value){
 <TD VALIGN="TOP"><i ID="datum" class="lmb-icon lmb-rep-date btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1156]?>" VALUE="datum" OnMouseDown="pressbutton('datum','inset','<?echo $farbschema[WEB10];?>');" OnMouseUp="pressbutton('datum','outset','<?echo $farbschema[WEB7];?>');parent.report_main.document.form1.report_add.value='datum';send();"></i></TD>
 <TD VALIGN="TOP"><i ID="ureport" class="lmb-icon-cus lmb-rep-uform btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1171]?>" VALUE="ureport" OnMouseDown="pressbutton('ureport','inset','<?echo $farbschema[WEB10];?>');" OnMouseUp="pressbutton('ureport','outset','<?echo $farbschema[WEB7];?>');parent.report_main.document.form1.report_add.value='ureport';actbutton('ureport','new_ureport_area',0);"></i></TD>
 </TR><TR >
+<TD VALIGN="TOP"><i ID="chart" class="lmb-icon lmb-line-chart btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1171]?>" VALUE="chart" OnMouseDown="pressbutton('chart','inset','<?echo $farbschema[WEB10];?>');" OnClick="parent.report_main.document.form1.report_add.value='chart';actbutton('chart','new_chart_area',0);"></i></TD>
 <TD VALIGN="TOP"><i ID="snr" class="lmb-icon lmb-rep-snr btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1157]?>" VALUE="snr" OnMouseDown="pressbutton('snr','inset','<?echo $farbschema[WEB10];?>');" OnMouseUp="pressbutton('snr','outset','<?echo $farbschema[WEB7];?>');parent.report_main.document.form1.report_add.value='snr';send();"></i></TD>
-<TD VALIGN="TOP"><i ID="formel" class="lmb-icon lmb-rep-formel btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1159]?>" VALUE="formel" OnMouseDown="pressbutton('formel','inset','<?echo $farbschema[WEB10];?>');" OnMouseUp="pressbutton('formel','outset','<?echo $farbschema[WEB7];?>');parent.report_main.document.form1.report_add.value='formel';send();"></i></TD>
+<TD VALIGN="TOP"><i ID="formel" class="lmb-icon lmb-rep-php btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1772]?>" VALUE="formel" OnMouseDown="pressbutton('formel','inset','<?echo $farbschema[WEB10];?>');" OnMouseUp="pressbutton('formel','outset','<?echo $farbschema[WEB7];?>');parent.report_main.document.form1.report_add.value='formel';send();"></i></TD>
 </TR></TABLE>
 </TD></TR></TABLE>
 
 
 <div ID="new_bild_area" style="display:none;">
 <br>
-<TABLE  cellspacing="0" cellpadding="2" STYLE="border:1px solid grey;width:210px">
-<TR><TD colspan="2" BGCOLOR="<?echo $farbschema[WEB6];?>" STYLE="border:1px grey;height:15px;color:white" align="center"></TD></TR>
+<TABLE  cellspacing="0" cellpadding="2" class="formeditorPanel">
+<TR><TD colspan="2" class="formeditorPanelHead" align="center"></TD></TR>
 <TR><TD HEIGHT="25" colspan="2"><INPUT TYPE="FILE" NAME="new_pic" SIZE="20" STYLE="background-color:<?echo $farbschema[WEB7];?>;width:200px;height:17px;"></TD></TR>
-
 <TR><TD><?=$lang[925]?></td>
 <td><SELECT STYLE="width:60px;" NAME="pic_type">
 <OPTION VALUE="jpg">jpg
 <OPTION VALUE="png">png
 </SELECT>
 </td></tr>
-
 <TR><TD><?=$lang[1176]?></td>
 <td><SELECT STYLE="width:60px;" NAME="pic_compress">
 <OPTION VALUE="30">30%<
@@ -370,8 +379,8 @@ foreach($sysfont as $key => $value){
 
 <div ID="new_dbdat_area" style="display:none;">
 <br>
-<TABLE  cellspacing="0" cellpadding="2" STYLE="border:1px solid grey;width:210px">
-<TR><TD BGCOLOR="<?echo $farbschema[WEB6];?>" STYLE="border:1px grey;height:15px;color:white" align="center"><?=$lang[972]?></TD></TR>
+<TABLE  cellspacing="0" cellpadding="2" class="formeditorPanel">
+<TR><TD class="formeditorPanelHead" align="center"><?=$lang[972]?></TD></TR>
 <tr><td>
 <SELECT NAME="source_table" style="width:200px;" onchange="LmAdm_getFields(this.value,0,'')">"><OPTION VALUE="-1"></OPTION>
 <?php
@@ -396,11 +405,26 @@ include_once("admin/report/report_tabliste.php");
 ?>
 </div>
 </td></tr></table>
-
-
 </div>
 
 
+<div ID="new_chart_area" style="display:none;">
+<br>
+<TABLE  cellspacing="0" cellpadding="2" class="formeditorPanel">
+<TR><TD class="formeditorPanelHead" align="center"><?=$lang[972]?></TD></TR>
+<tr><td>
+<SELECT NAME="chart_id" style="width:200px;"><OPTION VALUE="-1"></OPTION>
+<?php
+foreach ($gdiaglist as $keyk => $valuek) {
+    foreach ($valuek["name"] as $key => $value) {
+        echo "<OPTION VALUE=\"" . $key . "\">" . $value;
+    }
+}
+?>
+</SELECT>
+</td></tr>
+</table>
+</div>
 
 
 <div ID="new_ureport_area" style="display:none;">

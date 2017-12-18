@@ -80,6 +80,10 @@ function startDrag(evt) {
 
 function drag(evt){
 	
+	if(currentdiv != 'menu'){
+		$("#menu").hide();
+	}
+	
 	if(currentdiv == 'menu'){
 		dragEl(evt,document.getElementById('menu'));
 	}else{
@@ -138,6 +142,8 @@ function endDrag(e) {
 	
 	// enable selectable function
 	$('#innenramen').selectable("enable");
+	
+	$("#menu").not(":visible").show('fast');
 	
 	if(browser_ns5){document.releaseEvents(Event.MOUSEMOVE);}
 	document.onmousemove = null;
@@ -787,6 +793,8 @@ function reportBodyClick(){
 
 // show multimenu if more selected
 function lmb_multiMenu(evt){
+	divclose();
+	divclose();
 	if(lmbGetUISelected()){
 		if($(".ui-selected").filter('[id^="div"]').get(0).onmousedown){
 			$(".ui-selected").filter('[id^="div"]').get(0).onmousedown();
@@ -986,7 +994,7 @@ function limbasMenuOpen(evt,el,ID,STYLE,TYP,VALUE,PICSTYLE,tab_element,dbdat_tab
 
 	//Typanzeige im Hauptmenü
 	parent.report_menu.resetmenu();
-	parent.report_menu.document.getElementById(TYP).style.backgroundColor = jsvar["WEB10"];
+	parent.report_menu.document.getElementById(TYP).style.backgroundColor = jsvar["WEB7"];
 	//parent.report_menu.document.form1.default_size.value = parseInt(document.getElementById(div).style.fontSize) + 'px';
 	//parent.report_menu.document.form1.default_font.value = document.getElementById(div).style.fontFamily;
 	//document.getElementById("menu").style.visibility='visible';

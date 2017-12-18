@@ -354,6 +354,27 @@ function print_bild($pdf,$ID,$report,$el){
 }
 
 
+/*------- Chart ---------*/
+function print_chart($pdf,$ID,$report,$el){
+	global $umgvar;
+
+    if(hide_element($pdf,$report["style"][$el][29])){return true;}
+    
+	require_once('extra/diagram/diagram.php');
+	
+	$width = $report["width"][$el];
+	$height = $report["height"][$el];
+	$diag_id = $report["pic_res"][$el];
+	#if($report["style"][$el][21]){$bgcolor = $report["style"][$el][21];}
+	if($report["parameter"][$el]){eval($report["parameter"][$el]);}
+
+	if($url = lmb_createDiagram($diag_id, $gsr, $filter, $verkn, $extension, ($width*3), ($height*3), $report["style"][$el])){
+	   $prv = array($url,$report["posx"][$el],$report["posy"][$el],$width,$height,$report["style"][$el],'bild');
+	   $pdf->print_element($pdf->printcell($prv));
+	}
+}
+
+
 function GetDefaultType(){
 
     $default["header"] = array(

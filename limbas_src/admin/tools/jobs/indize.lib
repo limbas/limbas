@@ -189,7 +189,7 @@ function prepare_filelevel_indize($level,$indi){
 	if(!$GLOBALS["cronjob"]){echo "<span id=\"".$stat_name."_name\">$filename: </span><div style=\"width:200px;height:15px;border:1px solid black;\"><span style=\"position:absolute;\" ID=\"accval\">&nbsp;&nbsp;&nbsp;$jobsum</span><IMG ID=\"$stat_name\" SRC=\"pic/point_g.gif\" WIDTH=\"0\" HEIGHT=\"15\"></div><BR>\n";}
 
 	if($umgvar[indize_header]){$indw = "(IND = ".LMB_DBDEF_FALSE." OR INDM = ".LMB_DBDEF_FALSE.")";}else{$indw = "IND = ".LMB_DBDEF_FALSE;}
-	$sqlquery = "SELECT DISTINCT LDMS_FILES.ID,LDMS_FILES.NAME,LDMS_FILES.IND,LDMS_FILES.INDM,LDMS_FILES.SECNAME,LMB_MIMETYPES.MIMETYPE,LMB_MIMETYPES.EXT FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.LEVEL = $level AND LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND DEL = ".LMB_DBDEF_FALSE." AND $indw";
+	$sqlquery = "SELECT DISTINCT LDMS_FILES.ID,LDMS_FILES.LEVEL,LDMS_FILES.NAME,LDMS_FILES.IND,LDMS_FILES.INDM,LDMS_FILES.SECNAME,LMB_MIMETYPES.MIMETYPE,LMB_MIMETYPES.EXT FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.LEVEL = $level AND LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND DEL = ".LMB_DBDEF_FALSE." AND $indw";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$bzm = 1;
@@ -215,8 +215,8 @@ function prepare_filelevel_indize($level,$indi){
 
 		# Datei-Inhalt
 
-		if(($umgvar['indize_filetype'][0] == 1 OR in_array($ext,$umgvar['indize_filetype'])) 
-                        AND $ctt = convert_to_text(odbc_result($rs,"SECNAME"),$ext,odbc_result($rs,"MIMETYPE"),odbc_result($rs, "ID"),1,0,1)){
+		if(($umgvar['indize_filetype'][0] == 1 OR in_array($ext,$umgvar['indize_filetype']))
+                        AND $ctt = convert_to_text(odbc_result($rs,"SECNAME"),$ext,odbc_result($rs,"MIMETYPE"),odbc_result($rs, "ID"),1,0,1,odbc_result($rs, "LEVEL"))){
 
                         $indi["NEXTID_D"] = next_db_id("LMB_INDIZE_D");
                         $indi["NEXTID_DS"] = next_db_id("LMB_INDIZE_DS");

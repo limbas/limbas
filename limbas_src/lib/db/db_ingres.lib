@@ -106,13 +106,12 @@ function dbq_0($host,$database,$dbuser,$dbpass,$dbdriver=null){
 		#SQL_CUR_USE_DRIVER
 		#SQL_CUR_USE_IF_NEEDED
 		#SQL_ODBC_CURSORS
-		$db = odbc_pconnect ($dsn, $dbuser, $dbpass) or
-			die("<h1>Database connection failed</h1><p>($dsn)<BR>".odbc_errormsg()."</p>");
+		$db = odbc_pconnect ($dsn, $dbuser, $dbpass);
 	}else{
-		$db = odbc_pconnect($database,$dbuser,$dbpass) or
-			die("<BR><BR><CENTER>Database connection failed!<BR>".odbc_errormsg($db)."</CENTER>");
+		$db = odbc_pconnect($database,$dbuser,$dbpass);
 	}
-	return $db;
+	if($db){return $db;}
+	else{echo("<h1>Database connection failed</h1><p>($dsn)<BR>".odbc_errormsg()."</p>"); return false;}
 }
 
 /**

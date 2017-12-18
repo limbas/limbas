@@ -412,13 +412,12 @@ function lmbGlistHeader($gtabid,&$gresult,$utyp,$subtab=null){
         if(($gtab["groupable"][$gtabid] AND $gverkn[$gtabid]["id"]) OR in_array("1",$gfield[$gtabid]["groupable"])){
 		if(grouping_menu($gtabid,'null',0)){
 			//echo "<img src=\"pic/silk_icons/table_godown.gif\" title=\"$lang[865]\" alt=\"$lang[865]\" border=\"0\" height=\"14\" onclick=\"div6(event,this,'".$gtabid."','null','0');\" style=\"cursor:pointer;padding-left:2px;pointer;padding-right:2px;\">";
-			echo "<i class=\"lmb-icon lmb-table-godown\" title=\"$lang[865]\" alt=\"$lang[865]\" border=\"0\" height=\"14\" onclick=\"div6(event,this,'".$gtabid."','null','0');\" style=\"cursor:pointer;margin-left:2px;pointer;margin-right:2px;\"></i>";
-                   
-                }
+			echo "<i class=\"lmb-icon lmb-table-godown\" title=\"$lang[865]\" alt=\"$lang[865]\" border=\"0\" height=\"14\" onclick=\"div6(event,this,'".$gtabid."','null','0');\" style=\"cursor:pointer;margin-left:2px;pointer;margin-right:2px;\"></i>";   
+        }
 	}
 	
 	if($filter['reminder'][$gtabid]){
-		echo "<i class=\"lmb-icon lmb-bell\" title=\"$lang[425]\" border=\"0\" height=\"14\" onclick=\"limbasDivShowReminder(event,this);return false;\" style=\"cursor:pointer;padding-left:2px;pointer;padding-right:2px;\"></i>";
+		echo "<i class=\"lmb-icon lmb-bell\" title=\"$lang[425]\" border=\"0\" height=\"14\" onclick=\"limbasDivShowReminderFilter(event,this);return false;\" style=\"cursor:pointer;padding-left:2px;pointer;padding-right:2px;\"></i>";
 	}
 
 	echo "</td>";
@@ -464,10 +463,10 @@ function lmbGlistHeaderDetail($gtabid,&$gresult,$key,$rowkey,$gformid,$utyp,$sty
 	if($gfield[$gtabid]["field_type"][$key] != 3 AND $gfield[$gtabid]["data_type"][$key] != 31 AND $gfield[$gtabid]["data_type"][$key] != 32 AND $gfield[$gtabid]["field_type"][$key] != 6 AND $gfield[$gtabid]["field_type"][$key] != 11){
 
 		if($filter["order"][$gtabid][$key][2] == "DESC"){
-			echo "<i class=\"lmb-icon lmb-caret-up\" border=\"0\" title=\"$lang[861]\" style=\"cursor:pointer;margin:5px;float:left;$picdesc\" onclick=\"lmbFieldSort(event,'$tmp_sortid','&ASC','".$gresult[$gtabid]["res_next"]."');\"></i>";
+			echo "<i class=\"lmb-icon lmb-textsort-down\" border=\"0\" title=\"$lang[861]\" style=\"cursor:pointer;margin:5px;float:left;$picdesc\" onclick=\"lmbFieldSort(event,'$tmp_sortid','&ASC','".$gresult[$gtabid]["res_next"]."');\"></i>";
 		}
 		if($filter["order"][$gtabid][$key][2] == "ASC"){
-			echo "<i class=\"lmb-icon lmb-caret-down\" border=\"0\" title=\"$lang[862]\" style=\"cursor:pointer;margin:5px;float:left;$picasc\" onclick=\"lmbFieldSort(event,'$tmp_sortid','&DESC','".$gresult[$gtabid]["res_next"]."');\"></i>";
+			echo "<i class=\"lmb-icon lmb-textsort-up\" border=\"0\" title=\"$lang[862]\" style=\"cursor:pointer;margin:5px;float:left;$picasc\" onclick=\"lmbFieldSort(event,'$tmp_sortid','&DESC','".$gresult[$gtabid]["res_next"]."');\"></i>";
 		}
 
 		if($gfield[$gtabid]["collreplace"][$key]){$collReplace = $key;}
@@ -605,7 +604,7 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 		/* ---------------- begin row -------------------- */
 		/*----------------- <TR> -------------------*/
 		echo "
-		<tr $title class=\"gtabBodyTR $BGCLASS\" id=\"elrow_".$ID."_".$gtabid."\" style=\"background-color:$BGCOLOR;\" lmbbgcolor=\"$BGCOLOR\"
+		<tr $title class=\"gtabBodyTR $BGCLASS\" id=\"elrow_".$ID."_".$gtabid."\" style=\"background-color:$BGCOLOR;cursor:context-menu\" lmbbgcolor=\"$BGCOLOR\"
 		onmouseover=\"lmb_tableRowColor(this,'".$farbschema["WEB7"]."',1)\"
 		onmouseout=\"lmb_tableRowColor(this,null,1)\" 
 		oncontextmenu=\"return div1(event,this,'".$ID."','$gtabid','".$gresult[$gtabid]["ERSTDATUM"][$bzm]."','".$gresult[$gtabid]["EDITDATUM"][$bzm]."','".$userdat["bezeichnung"][$gresult[$gtabid]["ERSTUSER"][$bzm]]."','".$userdat["bezeichnung"][$gresult[$gtabid]["EDITUSER"][$bzm]]."','$prev_id','$prev_gtabid','$prev_fieldid','$prev_typ');\" 

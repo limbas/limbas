@@ -34,8 +34,8 @@ pop_left();
 echo "&nbsp;<span id=\"menu_name\" style=\"font-weight:bold;width:100px;overflow:hidden;\">-</span>";
 pop_right();
 pop_line();
-pop_menu(119,'','');pop_line();
-pop_submenu(116,'','');pop_line();
+pop_menu(119,'','');
+pop_line();
 if($action != "message_tree"){
 pop_menu(130,'','');
 pop_menu(129,'','');
@@ -56,17 +56,7 @@ pop_bottom();
 ?>
 </DIV>
 
-<DIV ID="rename" class="lmbContextMenu" style="visibility:hidden;z-index:2" OnClick="activ_menu = 1;">
-<form name="form_rename" ACTION="main.php" METHOD="post">
-<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
-<input type="hidden" name="action" VALUE="<?=$action?>">
-<INPUT TYPE="hidden" NAME="LID">
-<?
-pop_top('rename');
-pop_input(0,'document.form_rename.submit();','rename_file','',0);
-pop_bottom();
-?>
-</form></DIV>
+
 
 
 
@@ -80,8 +70,8 @@ jsvar["copycache"] = "<?=$umgvar[copycache]?>";
 jsvar["WEB7"] = "<?=$farbschema[WEB7]?>";
 jsvar["WEB4"] = "<?=$farbschema[WEB4]?>";
 
-img3=new Image();img3.src="pic/outliner/plusonly.gif";
-img4=new Image();img4.src="pic/outliner/minusonly.gif";
+icon3 = 'lmb-icon-cus lmb-plusonly';
+icon4 = 'lmb-icon-cus lmb-minusonly';
 
 icon1 = 'lmb-folder2-closed';
 icon2 = 'lmb-folder2-open';
@@ -179,15 +169,15 @@ function popup(ID,LEVEL,TABID,TYP){
 	if(browser_ns5){cli = ".nextSibling";}else{cli = "";}
 	eval("var nested = document.getElementById('f_"+ID+"').nextSibling"+cli);
 	var picname = "i" + ID;
-	if(document.images[picname].src == img4.src) {
-		document.images[picname].src = img3.src;
-		nested.style.display="none";
+        if($('[name="' + picname + '"]').hasClass(icon4)) {
+                $('[name="' + picname + '"]').removeClass(icon4).addClass(icon3);
+                nested.style.display="none";
 		dspl["id" + ID] = '';
-	}else{
-		document.images[picname].src = img4.src;
-		nested.style.display='';
+        }else{
+                $('[name="' + picname + '"]').removeClass(icon3).addClass(icon4);
+                nested.style.display='';
 		dspl["id" + ID] = ID;
-	}
+        }           
 
 	var cookTab=new Array();
 	// ---- cookie setzen ------
@@ -210,7 +200,7 @@ function rebuild_tree(){
 				var picname = "i" + list[i];
 				if(document.images[picname]){
 					eval("var nested = document.getElementById('f_"+list[i]+"').nextSibling"+cli);
-					document.images[picname].src = img4.src;
+                                        $('[name="' + picname + '"]').removeClass(icon3).addClass(icon4);
 					nested.style.display='';
 					dspl["id"+list[i]] = list[i];
 				}else{
@@ -247,7 +237,6 @@ var activ_menu = null;
 function LmEx_divclose() {
         if(!activ_menu){
 	document.getElementById("filemenu").style.visibility='hidden';
-	document.getElementById("rename").style.visibility='hidden';
 	document.getElementById("cachelist").style.visibility='hidden';
 	}
 	activ_menu = 0;
@@ -255,9 +244,7 @@ function LmEx_divclose() {
 
 function open_filemenu(evt,file,id,typ,level){
 	activ_menu = 1;
-	document.form_rename.rename_file.value = file;
 	document.form_menu.LID.value = id;
-	document.form_rename.LID.value = id;
 	LmEx_edit_id = id;
 	var_file = file;
 	var_typ = typ;
@@ -329,10 +316,10 @@ function files1($LEVEL,$start,$only_typ){
 		if($filestruct["level"][$key] == $LEVEL AND $filestruct["view"][$key] AND ($filestruct["typ"][$key] == $typ OR $typ != $only_typ)){
 			if(in_array($filestruct["id"][$key],$filestruct["level"])){
 				$next = 1;
-				$pic = "<IMG SRC=\"pic/outliner/plusonly.gif\" NAME=\"i".$filestruct["id"][$key]."\" OnClick=\"popup('".$filestruct["id"][$key]."','$LEVEL','".$filestruct[tabid][$key]."','".$filestruct[typ][$key]."')\" STYLE=\"cursor:hand\">";
+				$pic = "<i class=\"lmb-icon-cus lmb-plusonly\" NAME=\"i".$filestruct["id"][$key]."\" OnClick=\"popup('".$filestruct["id"][$key]."','$LEVEL','".$filestruct[tabid][$key]."','".$filestruct[typ][$key]."')\" STYLE=\"cursor:hand\"></i>";
 			}else{
 				$next = 0;
-				$pic = "<IMG SRC=\"pic/outliner/blank.gif\">";
+				$pic = "<i class=\"lmb-icon-cus\"></i>";
 			}
 			if($filestruct["readonly"][$key] OR ($action == "explorer_tree" AND $filestruct["typ"][$key] == 2)){$filterpic = "4";}elseif($filestruct["typ"][$key] == 7){$filterpic = "3";}else{$filterpic = "2";}
 			# ---- Persönlicher Ordner ----
@@ -342,8 +329,8 @@ function files1($LEVEL,$start,$only_typ){
 			#	echo ">&nbsp;".$filestruct[name][$key]."</TD></TR></TABLE></div>\n";
 			#	# ---- Limbas-Verzeichnis ----
 			#}else{
-				echo "<div ID=\"f_".$filestruct["id"][$key]."\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR TITLE=\"(".$filestruct["id"][$key].")\"><TD>$pic</TD><TD><i class=\"lmb-icon lmb-folder" .$filterpic. "-closed\" ID=\"p".$filestruct["id"][$key]."\" NAME=\"p".$filestruct["id"][$key]."\" OnClick=\"open_filemenu(event,'".$filestruct[name][$key]."','".$filestruct["id"][$key]."','".$filestruct[typ][$key]."','$LEVEL');\" STYLE=\"cursor:hand\"></i></TD><TD ";
-                                echo "style=\"cursor:pointer;\" OnMouseOver=\"this.style.color='blue';\" OnMouseOut=\"this.style.color='black';\" OnClick=\"listlmdata('".$filestruct["id"][$key]."','$LEVEL','".$filestruct["typ"][$key]."')\"";
+				echo "<div ID=\"f_".$filestruct["id"][$key]."\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR TITLE=\"(".$filestruct["id"][$key].")\"><TD>$pic</TD><TD><i STYLE=\"cursor:context-menu\" class=\"lmb-icon lmb-folder" .$filterpic. "-closed\" ID=\"p".$filestruct["id"][$key]."\" NAME=\"p".$filestruct["id"][$key]."\" OnClick=\"open_filemenu(event,'".$filestruct[name][$key]."','".$filestruct["id"][$key]."','".$filestruct[typ][$key]."','$LEVEL');\" STYLE=\"cursor:pointer\"></i></TD><TD ";
+                echo "style=\"cursor:pointer;\" OnMouseOver=\"this.style.color='blue';\" OnMouseOut=\"this.style.color='{$farbschema['WEB2']}';\" OnClick=\"listlmdata('".$filestruct["id"][$key]."','$LEVEL','".$filestruct["typ"][$key]."')\"";
 				echo ">&nbsp;".$filestruct[name][$key]."</TD></TR></TABLE></div>\n";
 			#}
 

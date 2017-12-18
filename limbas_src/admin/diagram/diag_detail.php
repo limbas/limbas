@@ -88,10 +88,8 @@ $( document ).ready(function() {
 			}
 		})
 		.done(function( msg ) {
-			if(ajaxEvalScript(msg) === false){
-    			if(msg){				
+			if(ajaxEvalScript(msg) === false && msg){
     			    diagramm = open(msg+'?'+Date.now() ,"Diagram");
-    			}
 			}
 		});
 	});
@@ -162,6 +160,25 @@ function setColor(value) {
 	$('#color_'+actid).css('background-color', '#'+value);
 	saveDetail(actid);
 }
+
+$(function() {
+    $("input[id^='auto_']").change(function() {
+        var id = $(this).attr('id');
+        var input = $('#' + id.replace('auto_', ''));
+        
+        // if auto-calculation-checkbox is checked
+        if($(this).attr('checked')) {
+            // disable corresponding input and set value to 'auto'
+            input.prop('disabled', true);
+            input.val('auto');
+        } else {
+            // enable corresponding input and clear value
+            input.prop('disabled', false);
+            input.val('');
+        }
+    });
+});
+
 </script>
 
 <!-- Color Settings Div -->
@@ -248,28 +265,34 @@ function setColor(value) {
         <td class="vAlignTop" style="margin-left:20px; margin-right:10px; padding-left: 10px; border-left:1px solid #ccc;">
             <table BORDER="0" cellspacing="0" cellpadding="2" class="tabfringe">
                 <tr class="tabHeader">
-                    <TD class="tabHeaderItem"><?=$lang[2891]?></td>
-                    <TD class="tabHeaderItem"><?=$lang[2892]?></td>
+                    <td class="tabHeaderItem"><?=$lang[2891]?></td>
+                    <td class="tabHeaderItem"><?=$lang[2892]?></td>
+                    <td class="tabHeaderItem">Auto-calculation</td>
                 </tr>
                 <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
                     <td><?=$lang[2870]?>:</td>
                     <td><input type="text" id="diag_width" value="<?=$settings['DIAG_WIDTH']?>"> px</td>
+                    <td></td>
                 </tr>
                 <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
                     <td><?=$lang[2871]?>:</td>
                     <td><input type="text" id="diag_height" value="<?=$settings['DIAG_HEIGHT']?>"> px</td>
+                    <td></td>
                 </tr>	
                 <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
                     <td><?=$lang[2872]?>:</td>
                     <td><input type="text" id="font_size" value="<?=$settings['FONT_SIZE']?>"> pt</td>
+                    <td></td>
                 </tr>
                 <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
                     <td><?=$lang[2873]?>:</td>
-                    <td><input type="text" id="padding_left" value="<?=$settings['PADDING_LEFT']?>"> px</td>
+                    <td><input type="text" id="padding_left" value="<?=$settings['PADDING_LEFT']==null ? 'auto" disabled="disabled' : $settings['PADDING_LEFT']?>"> px</td>
+                    <td><input type="checkbox" id="auto_padding_left" <?=$settings['PADDING_LEFT']==null ? 'checked' : ''?>></td>
                 </tr>
                 <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
                     <td><?=$lang[2874]?>:</td>
-                    <td><input type="text" id="padding_top" value="<?=$settings['PADDING_TOP']?>"> px</td>
+                    <td><input type="text" id="padding_top" value="<?=$settings['PADDING_TOP']==null ? 'auto" disabled="disabled' : $settings['PADDING_TOP']?>"> px</td>
+                    <td><input type="checkbox" id="auto_padding_top" <?=$settings['PADDING_TOP']==null ? 'checked' : ''?>></td>
                 </tr>
 	
 <?php 
@@ -278,27 +301,33 @@ function setColor(value) {
 
                     <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
                         <td><?=$lang[2875]?>:</td>
-                        <td><input type="text" id="padding_right" value="<?=$settings['PADDING_RIGHT']?>"> px</td>
+                        <td><input type="text" id="padding_right" value="<?=$settings['PADDING_RIGHT']==null ? 'auto" disabled="disabled' : $settings['PADDING_RIGHT']?>"> px</td>
+                        <td><input type="checkbox" id="auto_padding_right" <?=$settings['PADDING_RIGHT']==null ? 'checked' : ''?>></td>
                     </tr>
                     <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
                         <td><?=$lang[2876]?>:</td>
-                        <td><input type="text" id="padding_bottom" value="<?=$settings['PADDING_BOTTOM']?>"> px</td>
+                        <td><input type="text" id="padding_bottom" value="<?=$settings['PADDING_BOTTOM']==null ? 'auto" disabled="disabled' : $settings['PADDING_BOTTOM']?>"> px</td>
+                        <td><input type="checkbox" id="auto_padding_bottom" <?=$settings['PADDING_BOTTOM']==null ? 'checked' : ''?>></td>
                     </tr>
                     <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
                         <td><?=$lang[2877]?>:</td>
                         <td><input type="text" id="text_x" value="<?=$settings['TEXT_X']?>"></td>
+                        <td></td>
                     </tr>
                     <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
                         <td><?=$lang[2878]?>:</td>
                         <td><input type="text" id="text_y" value="<?=$settings['TEXT_Y']?>"></td>
+                        <td></td>
                     </tr>
                     <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
                         <td><?=$lang[2879]?>:</td>
-                        <td><input type="text" id="legend_x" value="<?=$settings['LEGEND_X']?>"> px</td>
+                        <td><input type="text" id="legend_x" value="<?=$settings['LEGEND_X']==null ? 'auto" disabled="disabled' : $settings['LEGEND_X']?>"> px</td>
+                        <td><input type="checkbox" id="auto_legend_x" <?=$settings['LEGEND_X']==null ? 'checked' : ''?>></td>
                     </tr>
                     <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
                         <td><?=$lang[2880]?>:</td>
-                        <td><input type="text" id="legend_y" value="<?=$settings['LEGEND_Y']?>"> px</td>
+                        <td><input type="text" id="legend_y" value="<?=$settings['LEGEND_Y']==null ? 'auto" disabled="disabled' : $settings['LEGEND_Y']?>"> px</td>
+                        <td><input type="checkbox" id="auto_legend_y" <?=$settings['LEGEND_Y']==null ? 'checked' : ''?>></td>
                     </tr>
                     <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
                         <td><?=$lang[2881]?>:</td>
@@ -309,6 +338,7 @@ function setColor(value) {
                                 <option value="horizontal" <?=($settings['LEGEND_MODE']=="horizontal")?"SELECTED":""?>><?=$lang[2884]?></option>
                             </select> 
                         </td>
+                        <td></td>
                     </tr>
 	
 <?php 
@@ -325,27 +355,31 @@ function setColor(value) {
                                 <option value="percent" <?=($settings['PIE_WRITE_VALUES']=="percent")?"SELECTED":""?>><?=$lang[2888]?></option>
                             </select> 
                         </td>
+                        <td></td>
                     </tr>
                     <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
                         <td><?=$lang[2889]?>:</td>
-                        <td><input type="text" id="pie_radius" value="<?=$settings['PIE_RADIUS']?>"> px</td>
+                        <td><input type="text" id="pie_radius" value="<?=$settings['PIE_RADIUS']==null ? 'auto" disabled="disabled' : $settings['PIE_RADIUS']?>"> px</td>
+                        <td><input type="checkbox" id="auto_pie_radius" <?=$settings['PIE_RADIUS']==null ? 'checked' : ''?>></td>
                     </tr>
 <?php
                 }       
 ?>
                 <!-- Submit- and Preview- Buttons -->
-                <tr><td colspan=2><hr style="display: block; height: 1px;border: 0; border-top: 1px solid #ccc; padding: 0;"></td></tr>
+                <tr><td colspan=3><hr style="display: block; height: 1px;border: 0; border-top: 1px solid #ccc; padding: 0;"></td></tr>
                 <tr>
                     <td></td>
                     <td>
                         <input type="button" id="save_diag_settings" value="<?=$lang[2894]?>">
                     </td>
+                    <td></td>
                 </tr>
                 <tr>
                     <td></td>
                     <td>
                         <input type="button" id="create_diag" value="<?=$lang[2890]?>">
                     </td>
+                    <td></td>
                 </tr>
 
             </table>

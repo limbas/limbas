@@ -48,6 +48,7 @@ if($argv[2] AND $argv[3]){
 	$session["uploadsize"] = 104857600; # 100MB
 	$session["pfad"] = $lpath;
 	$session["path"] = $lpath;
+	$umgvar["use_datetimeclass"] = 1;
 }
 
 $cronjob = 1;

@@ -159,7 +159,7 @@ function formListElements($action,$gtabid,$ID,&$gresult,$gformid,$ellist=null,$f
 					echo "</td></tr></table>";
 
 				}
-				# check if mainmenu
+			# check if mainmenu
 			}elseif($gform[$gformid]["typ"][$key] == "menue"){
 
 				$mbgcolor = $stylearray[21];
@@ -387,6 +387,29 @@ function form_bild($key,$gformid,$pos,$style,$class,$ID,$gtabid){
 	if($url){
 		#$style = "style=\"position:absolute; left:".$gform[$gformid][posx][$key]."; top:".$gform[$gformid][posy][$key].";$size; z-index:".$gform[$gformid][z_index][$key]."; ".$stylevalue."\"";
 		echo "<IMG SRC=\"".$url."\" ID=\"pic".$key."_".$gformid."\" $class $style $event title=\"".htmlentities($gform[$gformid]["title"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\">";
+	}
+}
+
+#------------ chart ---------------------
+function form_chart($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id,$tab_id,&$gresult){
+	global $gform;
+	global $gtab;
+	global $umgvar;
+	
+	require_once('extra/diagram/diagram.php');
+
+	if($event = dftyp_events($typ,$gform[$gformid][event][$key],null,null,null,null,null,$null,$gtabid,null)){$style .= ";cursor:pointer;";}
+	$width = $gform[$gformid]["width"][$key];
+	$height = $gform[$gformid]["height"][$key];
+	$diag_id = $gform[$gformid]["tab_id"][$key];
+	$style_ = "STYLE=\"".$pos.$style."\"";
+	$stylearray = explode(";",$gform[$gformid]["style"][$key]);
+	if($gform[$gformid]["parameters"][$key]){eval($gform[$gformid]["parameters"][$key]);}
+	
+	$url = lmb_createDiagram($diag_id, $gsr, $filter, $verkn, $extension, $width, $height, $stylearray);
+
+	if($url){
+		echo "<IMG SRC=\"".$url."\" ID=\"pic".$key."_".$gformid."\" $class $style_ $event title=\"".htmlentities($gform[$gformid]["title"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\">";
 	}
 }
 
@@ -830,6 +853,8 @@ function form_inparea($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$fiel
 function form_inpselect($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id,$tab_id,&$gresult,$z_index,$collapse,$readonly){
 	global $gform;
 	global $db;
+	global $session;
+	global $umgvar;
 
 	if($readonly == 1){$readonly = 'readonly';}
 	$event = dftyp_events(1,$gform[$gformid][event][$key],null,null,null,null,null,$null,$gtabid,null);
@@ -837,14 +862,21 @@ function form_inpselect($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$fi
 	echo "<SELECT ID=\"element".$gform[$gformid]["fid"][$key]."\" TYPE=\"TEXT\" NAME=\"lfel[".$gform[$gformid][fid][$key]."]\" $readonly $class $style $event TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\" TITLE=\"".htmlentities($gform[$gformid]["title"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\">";
 
 	if(is_numeric($gform[$gformid]['inhalt'][$key])){
-		$sqlquery = "SELECT ID,WERT,HIDE,DEF FROM LMB_SELECT_W WHERE POOL = ".$gform[$gformid]['inhalt'][$key]." ORDER BY SORT";
+		
+		// multilang
+		$field_name = 'WERT';
+		if($umgvar['multi_language'] AND $session['language'] != $umgvar['default_language']){
+		      $field_name = 'LANG'.$session['language'].'_WERT';
+		}
+		    
+		$sqlquery = "SELECT ID,$field_name,HIDE,DEF FROM LMB_SELECT_W WHERE POOL = ".$gform[$gformid]['inhalt'][$key]." ORDER BY SORT";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		$bzm1 = 1;
 		echo "<OPTION>";
 		while(odbc_fetch_row($rs, $bzm1)) {
 			if(odbc_result($rs, "HIDE")){continue;}
 			if(odbc_result($rs, "DEF")){$selected = 'SELECTED';}
-			$sval = htmlentities(odbc_result($rs, "WERT"),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+			$sval = htmlentities(odbc_result($rs, $field_name),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
 			echo "<OPTION $selected>$sval";
 			$bzm1++;
 		}

@@ -616,22 +616,28 @@ function IMACK_ConvertThumbs($file=null,$width=null,$height=null,$prop=null,$des
 	global $session;
 	global $db;
 	global $gmimetypes;
+	global $filestruct;
 	
 	# file from id or array
 	if(is_numeric($file) OR is_array($file)){
+	    
+	    if(!$filestruct){get_filestructure();}
+	    
 		if(is_numeric($file)){
-			$sqlquery = "SELECT ID,SECNAME,MIMETYPE,THUMB_OK FROM LDMS_FILES WHERE ID = $file AND THUMB_OK = ".LMB_DBDEF_TRUE;
+			$sqlquery = "SELECT ID,SECNAME,MIMETYPE,THUMB_OK,LEVEL FROM LDMS_FILES WHERE ID = $file AND THUMB_OK = ".LMB_DBDEF_TRUE;
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 			if(!odbc_result($rs, "SECNAME")){return false;}
 			$file_id = odbc_result($rs, "ID");
 			$secname = odbc_result($rs, "SECNAME");
 			$mimeid = odbc_result($rs, "MIMETYPE");
 			$thumb_ok = odbc_result($rs, "THUMB_OK");
+			$level = odbc_result($rs, "LEVEL");
 		}elseif(is_array($file)){
 			$file_id = $file[0];
 			$secname = $file[1];
 			$mimeid = $file[2];
 			$thumb_ok = $file[3];
+			$level = $file[4];
 		}
 		
 		if(!$thumb_ok AND !$rebuild){return false;}
@@ -642,7 +648,7 @@ function IMACK_ConvertThumbs($file=null,$width=null,$height=null,$prop=null,$des
 			return false;
 		}
 		# file path
-		$file_path = $umgvar["uploadpfad"].$secname.".".$mimeext;
+		$file_path = $umgvar["uploadpfad"].$filestruct['path'][$level].$secname.".".$mimeext;
 		# file name
 		$file_name = explode("/",$file_path);
 		$file_name = end($file_name);
@@ -796,13 +802,18 @@ function IMACK_Watermark($dest,$watermark){
 	global $session;
 	global $db;
 	global $gmimetypes;
+	global $filestruct;
 
 	if(file_exists($dest)){
+	    
+	   if(!$filestruct){get_filestructure();}
+	    
 		if(is_numeric($watermark)){
-			$sqlquery1 = "SELECT SECNAME,MIMETYPE FROM LDMS_FILES WHERE ID = $watermark";
+		    $level = odbc_result($rs1, "SECNAME");
+			$sqlquery1 = "SELECT SECNAME,MIMETYPE,LEVEL FROM LDMS_FILES WHERE ID = $watermark";
 			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
 			if(odbc_result($rs1, "SECNAME")){
-				$wmark = $umgvar["uploadpfad"].odbc_result($rs1, "SECNAME").".".$gmimetypes["ext"][odbc_result($rs1, "MIMETYPE")];
+				$wmark = $umgvar["uploadpfad"].$filestruct['path'][$level].odbc_result($rs1, "SECNAME").".".$gmimetypes["ext"][odbc_result($rs1, "MIMETYPE")];
 				$cmd = $umgvar["imagemagick"]."/composite -dissolve 25% -gravity northeast $wmark $dest $dest";
 				system($cmd,$out);
 			}
@@ -1268,16 +1279,19 @@ function fgrep_text($file,$searchval,$m,$w,$i){
 * 
 * 
 */
-function convert_to_text($file,$ext,$mimetype,$fid,$split,$getstream,$renew){
+function convert_to_text($file,$ext,$mimetype,$fid,$split,$getstream,$renew,$level){
 	global $umgvar;
 	global $session;
+	global $filestruct;
+	
+        if(!$filestruct){get_filestructure();}
         
-	# File-Header
-	if($umgvar["indize_header"] AND $fid){
-		if($meta = getmeta_from_db($fid,1)){
-			$meta = trim(implode("\n",$meta));
-		}
-	}
+    	# File-Header
+    	if($umgvar["indize_header"] AND $fid){
+    		if($meta = getmeta_from_db($fid,1)){
+    			$meta = trim(implode("\n",$meta));
+    		}
+    	}
         
         // build in functions
         if (! $mime = explode('/', $mimetype)) {
@@ -1301,7 +1315,7 @@ function convert_to_text($file,$ext,$mimetype,$fid,$split,$getstream,$renew){
         
         
         # file to convert to text
-        $inputfile = $umgvar["uploadpfad"].$file.".".$ext;
+        $inputfile = $umgvar["uploadpfad"].$filestruct['path'][$level].$file.".".$ext;
 
         # set output encoding to limbas encoding
         if($umgvar['charset'] == 'UTF-8') {
@@ -1328,7 +1342,7 @@ function convert_to_text($file,$ext,$mimetype,$fid,$split,$getstream,$renew){
                         $sys = "html2text -o \"$resultpath\" \"$inputfile\" | $filter1 | $filter2 | $filter3";
                         $out = `$sys`;
                 }else{
-                        $handle = fopen($umgvar["uploadpfad"].$file.".".$ext,"r");
+                        $handle = fopen($inputfile,"r");
                         $rf = fopen($resultpath,"w");
                         while($line = fgets($handle, 100000)){
                                 $line = preg_replace("/^[ ]{1,}$/"," ",$line);

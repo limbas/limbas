@@ -67,7 +67,7 @@ function uftyp_9($gtab_id,$field_id,$ID,&$change_value) {
     global $db;
     
 	// multilang
-	if($gfield[$gtab_id]['multilang'][$field_id] AND $umgvar['multi_language']){
+	if($gfield[$gtab_id]['multilang'][$field_id] AND $umgvar['multi_language'] AND $change_value){
 	    
 	    // get language select values
             foreach($umgvar['multi_language'] as $lkey => $lval){

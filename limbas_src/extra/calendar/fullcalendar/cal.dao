@@ -19,15 +19,29 @@
  */
 
 
-if(!$lmbCalFields){
-	$lmbCalFields = array('SUBJECT'=>'SUBJECT','STARTSTAMP'=>'STARTSTAMP','ENDSTAMP'=>'ENDSTAMP','COLOR'=>'COLOR','ALLDAY'=>'ALLDAY','REPETITION'=>'REPETITION','REPEATUNTIL'=>'REPEATUNTIL','INTERVAL'=>'INTERVAL');
-}
-
-foreach ($lmbCalFields as $key => $value){
-	$lmbCalFieldsID[$key] = $gfield[$gtabid]["argresult_name"][$value];
-}
     
 class lmb_calendar {
+    
+	// default fieldnames for calendar - change this array in own class
+	protected $lmbCalFields = array('SUBJECT'=>'SUBJECT','STARTSTAMP'=>'STARTSTAMP','ENDSTAMP'=>'ENDSTAMP','COLOR'=>'COLOR','ALLDAY'=>'ALLDAY','REPETITION'=>'REPETITION','REPEATUNTIL'=>'REPEATUNTIL','INTERVAL'=>'INTERVAL');
+	
+	protected $lmbCalFieldsID = array();
+	
+	
+	function __construct($gtabid){
+		global $gfield;
+		foreach ($this->lmbCalFields as $key => $value){
+			$this->lmbCalFieldsID[$key] = $gfield[$gtabid]["argresult_name"][$value];
+		}
+	}
+	
+	function lmb_getlmbCalFields(){
+	   return $this->lmbCalFields;
+	}
+	
+	function lmb_getlmbCalFieldsID(){
+	   return $this->lmbCalFieldsID;
+	}
 
 	/**
 	 * add event from default formular
@@ -38,21 +52,20 @@ class lmb_calendar {
 	 * @param unknown_type $end
 	 * @param unknown_type $allDay
 	 */
-	function lmb_addEvent($gtabid,$title,$start,$end,$allDay,$resource,$verkn){
+	function lmb_addEvent($gtabid,$title,$start,$end,$allDay,$resource,$verkn,$params=null){
 		global $gtab;
-		global $lmbCalFieldsID;
 		global $gfield;
 		
 		lmb_StartTransaction();
 		if($ID = new_record($gtabid,$verkn["verknpf"],$verkn["fieldid"],$verkn["tabid"],$verkn["id"],0,0)){
 			# --- subject ---
-			$tkey = "$gtabid,".$lmbCalFieldsID['SUBJECT'].",$ID";
+			$tkey = "$gtabid,".$this->lmbCalFieldsID['SUBJECT'].",$ID";
 			$change_kal[$tkey] = $title;
 			# --- startdate ---
-			$tkey = "$gtabid,".$lmbCalFieldsID['STARTSTAMP'].",$ID";
+			$tkey = "$gtabid,".$this->lmbCalFieldsID['STARTSTAMP'].",$ID";
 			$change_kal[$tkey] = stampToDate($start);
 			# --- enddate ---
-			$tkey = "$gtabid,".$lmbCalFieldsID['ENDSTAMP'].",$ID";
+			$tkey = "$gtabid,".$this->lmbCalFieldsID['ENDSTAMP'].",$ID";
 			$change_kal[$tkey] = stampToDate($end);
 			# --- resource ---
 			if($resource AND $gtab['params1'][$gtabid]){
@@ -60,6 +73,11 @@ class lmb_calendar {
 				set_relation($relation);
 			}
 			
+		    # Extension
+		    if(method_exists($this, 'lmb_addEventExtend')){
+		      $this->lmb_addEventExtend($ID,$params,$change_kal);
+		    }
+		    
 			if(update_data($change_kal,3,0)){
 				lmb_EndTransaction(1);
 				return $ID;
@@ -70,8 +88,22 @@ class lmb_calendar {
 			lmb_EndTransaction(0);
 		}
 	}
+
+
+	/**
+	 * add event EXTENSION
+	 *
+	 * @param unknown_type $gtabid
+	 * @param unknown_type $filter
+	 * @param unknown_type $extension
+	 * @param unknown_type $params
+	 *
+
+	   function lmb_addEventExtend($ID,&$params,&$update_values){ }
 	
+	*/
 	
+
 	/**
 	 * move event
 	 *
@@ -85,23 +117,21 @@ class lmb_calendar {
 		global $db;
 		global $gtab;
 		global $gfield;
-		global $lmbCalFields;
-		global $lmbCalFieldsID;
-		
-		$sqlquery = "SELECT ID,".$lmbCalFields['STARTSTAMP'].",".$lmbCalFields['ENDSTAMP']." FROM ".$gtab["table"][$gtabid]." WHERE ID = ".$ID;
+
+		$sqlquery = "SELECT ID,".$this->lmbCalFields['STARTSTAMP'].",".$this->lmbCalFields['ENDSTAMP']." FROM ".$gtab["table"][$gtabid]." WHERE ID = ".$ID;
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		if(odbc_result($rs, "ID") AND ($dayDelta OR $minuteDelta OR $resource)){
 			
-			$startstamp = get_stamp(odbc_result($rs, $lmbCalFields['STARTSTAMP']));
-			$endstamp = get_stamp(odbc_result($rs, $lmbCalFields['ENDSTAMP']));
+			$startstamp = get_stamp(odbc_result($rs, $this->lmbCalFields['STARTSTAMP']));
+			$endstamp = get_stamp(odbc_result($rs, $this->lmbCalFields['ENDSTAMP']));
 			if($startstamp > $endstamp){return false;}
 			
-			# new start date
+			# drop event  - new start date
 			if($action == "drop"){
 				if($dayDelta OR $minuteDelta){
 					$newstart = mktime(date("H",$startstamp),date("i",$startstamp) + $minuteDelta,date("s",$startstamp),date("m",$startstamp),date("d",$startstamp) + $dayDelta,date("Y",$startstamp));
-					#$sqlstart = $lmbCalFields['STARTSTAMP']." = '".convert_stamp($newstart)."',";
+					#$sqlstart = $this->lmbCalFields['STARTSTAMP']." = '".convert_stamp($newstart)."',";
 				}
 
 				# --- resource ---
@@ -126,20 +156,21 @@ class lmb_calendar {
 				
 			}
 			
+			# resize event - new end date
 			if($dayDelta OR $minuteDelta){
 				$newend = mktime(date("H",$endstamp),date("i",$endstamp) + $minuteDelta,date("s",$endstamp),date("m",$endstamp),date("d",$endstamp) + $dayDelta,date("Y",$endstamp));
 				if($newstart > $newend){return false;}
 			}
                 
                 // if($newend){
-                // $sqlend = $lmbCalFields['ENDSTAMP']." = '".convert_stamp($newend)."'";
+                // $sqlend = $this->lmbCalFields['ENDSTAMP']." = '".convert_stamp($newend)."'";
                 // }
                 
             // if($sqlend OR $sqlstart){
             if ($newend or $newstart) {
 				
-				if($newstart){$update["$gtabid,".$lmbCalFieldsID['STARTSTAMP'].",$ID"] = stampToDate($newstart);}
-				if($newend){$update["$gtabid,".$lmbCalFieldsID['ENDSTAMP'].",$ID"] = stampToDate($newend);}
+				if($newstart){$update["$gtabid,".$this->lmbCalFieldsID['STARTSTAMP'].",$ID"] = stampToDate($newstart);}
+				if($newend){$update["$gtabid,".$this->lmbCalFieldsID['ENDSTAMP'].",$ID"] = stampToDate($newend);}
 				if(!update_data($update)){$commit=1;}
 
 				#$sqlquery1 = "UPDATE ".$gtab["table"][$gtabid]." SET $sqlstart $sqlend WHERE ID = $ID";
@@ -165,22 +196,7 @@ class lmb_calendar {
 		}
 	}
 	
-	
-	
-	/*
-	# edit evend
-	function lmb_editEvent($gtabid,$ID,$start,$end,$title){
-		global $db;
-		
-		$update = array();
-		$update["$gtabid,".LMCAf_SUBJECT.",$ID"] = $title;
-		$update["$gtabid,".LMCAf_STARTSTAMP.",$ID"] = $start;
-		$update["$gtabid,".LMCAf_ENDSTAMP.",$ID"] = $end;
-		update_data($update);
-	}
-	*/
-	
-	
+
 	
 	/**
 	 * get event gsr
@@ -197,8 +213,6 @@ class lmb_calendar {
 		global $gfield;
 		global $LMCAf;
 		global $umgvar;
-		global $lmbCalFields;
-		global $lmbCalFieldsID;
 		
 		$startstamp = $params["start"];
 		$endstamp = $params["end"];
@@ -206,6 +220,7 @@ class lmb_calendar {
 		$verkn = $params["verkn"];
 		$gsr = $params["gs"];
 		$recurrent = $params["recurrent"];
+		$fieldlist[$gtabid] = $gfield[$gtabid]["sort"];
 	
 		# Zeige Heute
 		if(!$startstamp){
@@ -226,28 +241,26 @@ class lmb_calendar {
 		
 		$extension['where'][0] = "
 			(
-			($tab.".$lmbCalFields['STARTSTAMP']." >= '".convert_stamp($startstamp,0)."' AND $tab.".$lmbCalFields['STARTSTAMP']." <= '".convert_stamp($endstamp,0)."') OR
-			($tab.".$lmbCalFields['ENDSTAMP']." >= '".convert_stamp($startstamp,0)."' AND $tab.".$lmbCalFields['ENDSTAMP']." <= '".convert_stamp($endstamp,0)."') OR
-			($tab.".$lmbCalFields['STARTSTAMP']." < '".convert_stamp($startstamp,0)."' AND $tab.".$lmbCalFields['ENDSTAMP']." > '".convert_stamp($endstamp,0)."')
+			($tab.".$this->lmbCalFields['STARTSTAMP']." >= '".convert_stamp($startstamp,0)."' AND $tab.".$this->lmbCalFields['STARTSTAMP']." <= '".convert_stamp($endstamp,0)."') OR
+			($tab.".$this->lmbCalFields['ENDSTAMP']." >= '".convert_stamp($startstamp,0)."' AND $tab.".$this->lmbCalFields['ENDSTAMP']." <= '".convert_stamp($endstamp,0)."') OR
+			($tab.".$this->lmbCalFields['STARTSTAMP']." < '".convert_stamp($startstamp,0)."' AND $tab.".$this->lmbCalFields['ENDSTAMP']." > '".convert_stamp($endstamp,0)."')
 			)
 			";
 		
 		# use calendar_repetition
 		if($umgvar['calendar_repetition']){
-			$extension['where'][0] = "((".$extension['where'][0]." AND $tab.".$lmbCalFields['REPETITION']." = 0)";
-			#$extension['where'][0] = "(($tab.".$lmbCalFields['STARTSTAMP']." >= '".convert_stamp($startstamp,0)."' AND $tab.".$lmbCalFields['ENDSTAMP']." <= '".convert_stamp($endstamp,0)."' AND $tab.".$lmbCalFields['REPETITION']." = 0)";
+			$extension['where'][0] = "((".$extension['where'][0]." AND $tab.".$this->lmbCalFields['REPETITION']." = 0)";
+			#$extension['where'][0] = "(($tab.".$this->lmbCalFields['STARTSTAMP']." >= '".convert_stamp($startstamp,0)."' AND $tab.".$this->lmbCalFields['ENDSTAMP']." <= '".convert_stamp($endstamp,0)."' AND $tab.".$this->lmbCalFields['REPETITION']." = 0)";
 			if($recurrent){
-				$extension['where'][0] .= " OR ($tab.".$lmbCalFields['REPETITION']." > 0)";
+				$extension['where'][0] .= " OR ($tab.".$this->lmbCalFields['REPETITION']." > 0)";
 			}
 			$extension['where'][0] .= ")";
 		}else{
 			#$extension['where'][0] = "
-			#($tab.".$lmbCalFields['STARTSTAMP']." >= '".convert_stamp($startstamp,0)."' AND $tab.".$lmbCalFields['STARTSTAMP']." <= '".convert_stamp($endstamp,0)."') OR
-			#($tab.".$lmbCalFields['ENDSTAMP']." >= '".convert_stamp($startstamp,0)."' AND $tab.".$lmbCalFields['ENDSTAMP']." <= '".convert_stamp($endstamp,0)."')
+			#($tab.".$this->lmbCalFields['STARTSTAMP']." >= '".convert_stamp($startstamp,0)."' AND $tab.".$this->lmbCalFields['STARTSTAMP']." <= '".convert_stamp($endstamp,0)."') OR
+			#($tab.".$this->lmbCalFields['ENDSTAMP']." >= '".convert_stamp($startstamp,0)."' AND $tab.".$this->lmbCalFields['ENDSTAMP']." <= '".convert_stamp($endstamp,0)."')
 			#";
 		}
-		
-		$fieldlist = null;
 		
 		# resource
 		if($gfield[$gtabid]["md5tab"][$gtab['params1'][$gtabid]]){
@@ -302,7 +315,6 @@ class lmb_calendar {
 					$extension['from'][] = $gtab["table"][$rgtabid];
 					$extension['where'][] = $gfield[$gtabid]["md5tab"][$rfieldid].'.VERKN_ID = '.$gtab["table"][$rgtabid].'.id';
 				}
-				#error_log(print_r($where,1));
 			}
 
 		}
@@ -310,11 +322,13 @@ class lmb_calendar {
 		# Query ausführen
 		$filter["anzahl"][$gtabid] = 'all';
 		$filter["nolimit"][$gtabid] = 1;
-		$filter["order"][$gtabid] = "$gtabid&".$lmbCalFieldsID['STARTSTAMP']."&ASC";
+		$filter["order"][$gtabid] = "$gtabid&".$this->lmbCalFieldsID['STARTSTAMP']."&ASC";
 		
 		# Extension
-		$this->lmb_getEventGSRExtend($gtabid,$filter,$fieldlist,$extension,$params);
-
+		if(method_exists($this, 'lmb_getEventGSRExtend')){
+		  $this->lmb_getEventGSRExtend($gtabid,$filter,$fieldlist,$extension,$params);
+		}
+		
 		$gresult = get_gresult($gtabid,1,$filter,$gsr,$verkn,$fieldlist,null,$extension);
 	
 		return $gresult;
@@ -322,17 +336,17 @@ class lmb_calendar {
 
 
 	/**
-	 * get event extended gsr
+	 * get event gsr EXTENSION
 	 *
 	 * @param unknown_type $gtabid
 	 * @param unknown_type $filter
 	 * @param unknown_type $extension
 	 * @param unknown_type $params
-	 */
-	function lmb_getEventGSRExtend($gtabid,&$filter,&$extension,&$params){
-
-
-	}
+	 *
+	 
+	   function lmb_getEventGSRExtend($gtabid,&$filter,&$extension,&$params){	}
+	
+	*/
 
 
 	
@@ -348,7 +362,6 @@ class lmb_calendar {
 	 * @return unknown
 	 */
 	function lmb_getEvent(&$tresult,&$params){
-		global $lmbCalFieldsID;
 		
 		$gtabid = $params["gtabid"];
 		$recurrent = $params["recurrent"];
@@ -358,8 +371,8 @@ class lmb_calendar {
 		if($gresult[$gtabid]["id"]){
 		foreach ($gresult[$gtabid]["id"] as $key => $value){
 			
-			$stst = get_stamp(substr($gresult[$gtabid][$lmbCalFieldsID['STARTSTAMP']][$key],0,17)."00");
-			$endst = get_stamp(substr($gresult[$gtabid][$lmbCalFieldsID['ENDSTAMP']][$key],0,17)."00");
+			$stst = get_stamp(substr($gresult[$gtabid][$this->lmbCalFieldsID['STARTSTAMP']][$key],0,17)."00");
+			$endst = get_stamp(substr($gresult[$gtabid][$this->lmbCalFieldsID['ENDSTAMP']][$key],0,17)."00");
 			if($stst AND $endst AND $endst >= $stst){
 
 				$this->lmb_getEventBasic($tresult,$gresult,$gtabid,$key,$bzm,$stst,$endst,$recurrent);
@@ -386,13 +399,12 @@ class lmb_calendar {
 	function lmb_getEventBasic(&$tresult,&$gresult,$gtabid,$key,$bzm,$stst,$endst,$recurrent){
 		global $umgvar;
 		global $gtab;
-		global $lmbCalFieldsID;
 		
 		$color = null;
 
 		# row-color from field
-		if($gresult[$gtabid][$lmbCalFieldsID['COLOR']][$key]){
-			$color = $gresult[$gtabid][$lmbCalFieldsID['COLOR']][$key];
+		if($gresult[$gtabid][$this->lmbCalFieldsID['COLOR']][$key]){
+			$color = $gresult[$gtabid][$this->lmbCalFieldsID['COLOR']][$key];
 			# row-color from indicator
 		}elseif(is_array($gresult[$gtabid]["indicator"]["color"][$key])){
 			$color = average_color($gresult[$gtabid]["indicator"]["color"][$key]);
@@ -421,12 +433,12 @@ class lmb_calendar {
 		}
 
 		$tresult[$bzm]["id"] = $gresult[$gtabid]["id"][$key];
-		$tresult[$bzm]["title"] = substr($gresult[$gtabid][$lmbCalFieldsID['SUBJECT']][$key],0,$umgvar['memolength']);
+		$tresult[$bzm]["title"] = substr($gresult[$gtabid][$this->lmbCalFieldsID['SUBJECT']][$key],0,$umgvar['memolength']);
 		$tresult[$bzm]["start"] = date("Y-m-d H:i:s",$stst);
 		$tresult[$bzm]["end"]= date("Y-m-d H:i:s",$endst);
 		$tresult[$bzm]["subject_noedit"] = $this->getFieldPermissions($value,array(1),$gtabid,$key,$gresult);
 		$tresult[$bzm]["date_noedit"] = $this->getFieldPermissions($value,array(2,5),$gtabid,$key,$gresult);
-		if($gresult[$gtabid][$lmbCalFieldsID['ALLDAY']][$key] OR (substr($tresult[$bzm]["start"],11,8) == '00:00:00' AND substr( $tresult[$bzm]["end"],11,8) == '00:00:00')){$tresult[$bzm]["allDay"] = true;}else{$tresult[$bzm]["allDay"] = false;}
+		if($gresult[$gtabid][$this->lmbCalFieldsID['ALLDAY']][$key] OR (substr($tresult[$bzm]["start"],11,8) == '00:00:00' AND substr( $tresult[$bzm]["end"],11,8) == '00:00:00')){$tresult[$bzm]["allDay"] = true;}else{$tresult[$bzm]["allDay"] = false;}
 		if($color){$tresult[$bzm]["color"] = $color;}
 		if($border_color){$tresult[$bzm]["borderColor"] = $border_color;}
 		if($text_color){$tresult[$bzm]["textColor"] = $text_color;}
@@ -437,22 +449,23 @@ class lmb_calendar {
 			$tresult[$bzm]["allDay"]= true;
 		}
 		# recuring event
-		if($gresult[$gtabid][$lmbCalFieldsID['REPETITION']][$key] AND $recurrent){
-			$tresult[$bzm]["repeat"] = intval($gresult[$gtabid][$lmbCalFieldsID['REPETITION']][$key]);
-			if($gresult[$gtabid][$lmbCalFieldsID['REPEATUNTIL']][$key]){$tresult[$bzm]["repeatEnd"] = get_format_date($gresult[$gtabid][$lmbCalFieldsID['REPEATUNTIL']][$key],'Y-m-d H:i:s');}
+		if($gresult[$gtabid][$this->lmbCalFieldsID['REPETITION']][$key] AND $recurrent){
+			$tresult[$bzm]["repeat"] = intval($gresult[$gtabid][$this->lmbCalFieldsID['REPETITION']][$key]);
+			if($gresult[$gtabid][$this->lmbCalFieldsID['REPEATUNTIL']][$key]){$tresult[$bzm]["repeatEnd"] = get_format_date($gresult[$gtabid][$this->lmbCalFieldsID['REPEATUNTIL']][$key],'Y-m-d H:i:s');}
 		}
 		# resource
 		$tresult[$bzm]["resource"] = $gresult[$gtabid]['RESOURCE_'.$gtab['params1'][$gtabid]][$key];
 		
-		
-		$this->lmb_getEventExtend($tresult,$gresult,$gtabid,$key,$bzm,$stst,$endst);
+		if(method_exists($this, 'lmb_getEventExtend')){
+		  $this->lmb_getEventExtend($tresult,$gresult,$gtabid,$key,$bzm,$stst,$endst);
+		}
 		
 		
 	}
 
 
 	/**
-	 * get events extended
+	 * get events EXTENSION
 	 *
 	 * @param unknown_type $gtabid
 	 * @param unknown_type $startstamp
@@ -460,11 +473,10 @@ class lmb_calendar {
 	 * @param unknown_type $viewtype
 	 * @param unknown_type $verkn
 	 * @return unknown
-	 */
-	function lmb_getEventExtend(&$tresult,&$gresult,$gtabid,$key,$bzm,$stst,$endst){
-		
-		
-	}
+
+	   function lmb_getEventExtend(&$tresult,&$gresult,$gtabid,$key,$bzm,$stst,$endst){ }
+	
+	/*
 	
 	
 	/**
@@ -522,8 +534,9 @@ class lmb_calendar {
 			
 		}
 		
-		
-		$this->lmb_getResourcesExtend($gtabid,$params,$gresult,$r);
+		if(method_exists($this, 'lmb_getResourcesExtend')){
+		  $this->lmb_getResourcesExtend($gtabid,$params,$gresult,$r);
+		}
 
 		if($r){
 			return $r;
@@ -533,17 +546,18 @@ class lmb_calendar {
 	
 	}
 	
-	/**
-	 * Enter description here...
-	 *
-	 * @param unknown_type $gtabid
-	 * @param unknown_type $params
+    /**
+     * get Resources EXTENSION
+     * 
+     * @param unknown $gtabid
+     * @param unknown $params
+     * @param unknown $gresult
+     * @param unknown $r
+
+	   function lmb_getResourcesExtend($gtabid,&$params,&$gresult,&$r){	}
+
 	 */
-	function lmb_getResourcesExtend($gtabid,&$params,&$gresult,&$r){
-		
-	}
-	
-	
+
 	
 	
 	
@@ -712,7 +726,7 @@ class lmb_calendar {
 	function lmb_confirmBulkDate($gtabid,&$insStart,&$insEnd,&$params){
 		echo "<script>
 				if(confirm('Sollen ".count($insStart)." Termine angelegt werden?')){
-					send_form('','','','create');
+					send_form('','','','','create');
 				}
 				</script>";
 	}

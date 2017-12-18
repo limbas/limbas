@@ -200,7 +200,7 @@ function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$p
 		if($gformid){$height = "height:".($GLOBALS["gform"][$gformid]["height"][$formid]+40);}
 		echo "<div style=\"width:100%;$bt\" id=\"extRelationFieldsTab_".$gtabid."_".$fieldid."\">";
 		
-		echo "<TABLE BORDER=\"0\" ID=\"filetab\" CELLSPACING=\"0\" CELLPADDING=\"1\" STYLE=\"width:100%;border-collapse:collapse;\">";
+		echo "<TABLE BORDER=\"0\" ID=\"filetab\" CELLSPACING=\"0\" CELLPADDING=\"1\" STYLE=\"width:100%;border-collapse:collapse;table-layout:fixed;\">";
 		echo "<input type=\"hidden\" ID=\"ExtFileManager_LID_".$gtabid."_".$fieldid."\" value=\"$LID\">";
 
 		# ----- Ordnerstruktur ------
@@ -299,7 +299,7 @@ function extendedExplPicShow(&$ffile,$gtabid,$field_id,$ID,$gformid,$formid,$pic
 			$width = $size[0];
 			$height = $size[1];
 		}
-		$dest = IMACK_ConvertThumbs(array($cfid,$ffile["secname"][$cfid],$ffile["mimeid"][$cfid],$ffile["thumb_ok"][$cfid]),$width,$height,1);
+		$dest = IMACK_ConvertThumbs(array($cfid,$ffile["secname"][$cfid],$ffile["mimeid"][$cfid],$ffile["thumb_ok"][$cfid],$ffile["level"][$cfid]),$width,$height,1);
 	}
 
 	echo "<TR><TD><TABLE CELLSPACING=\"0\" CELLPADDING=\"0\"><TR BGCOLOR=\"".$farbschema[WEB6]."\"><TD>&nbsp;</TD><TD><i TITLE=\"$lang[857]\" ALT=\"$lang[857]\" class=\"lmb-icon lmb-first\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3','$edittype',$ID,'','','','',1,'".$formid."','','','')\"></i></TD>";

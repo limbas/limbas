@@ -422,11 +422,27 @@ function dyns_extRelationFields($params){
  * @param unknown_type $gformid
  * @param unknown_type $formid
  */
-function dyns_14_b($searchvalue,$form_name,$vgtabid,$vfieldid,$gtabid,$fieldid,$ID,$typ,$gformid,$formid,$nextpage){
+
+# \$form_value,\$form_name,\$par1,\$par2,\$par3,\$par4,\$par5,\$par6,\$gformid,\$formid,\$nextpage
+# function dyns_14_b($searchvalue,$form_name,$vgtabid,$vfieldid,$gtabid,$fieldid,$ID,$typ,$gformid,$formid,$nextpage){
+function dyns_14_b($params){
+
 	global $farbschema;
 	global $gfield;
 	global $gtab;
 	global $lang;
+	
+	$searchvalue = $params['form_value'];
+	$form_name = $params['form_name'];
+	$vgtabid = $params['par1'];
+	$vfieldid = $params['par2'];
+	$gtabid = $params['par3'];
+	$fieldid = $params['par4'];
+	$ID = $params['par5'];
+	$typ = $params['par6'];
+	$gformid = $params['gformid'];
+	$formid = $params['formid'];
+	$nextpage = $params['nextpage'];
 	
 	$require = "gtab/gtab.lib";require_once($require);
 	$require = "gtab/sql/gtab_erg.dao";require_once($require);
@@ -791,14 +807,29 @@ function dyns_limbasExtMultipleSelect($params){
 }
 
 # ---- Auswahlfeld --------
-function dyns_11_a($value,$form_name,$page,$null,$gtabid,$fieldid,$ID,$typ,$level=0,$exclude=array()){
+# \$form_value,\$form_name,\$par1,\$par2,\$par3,\$par4,\$par5,\$par6,\$gformid,\$formid,\$nextpage
+#$value,$form_name,$page,$null,$gtabid,$fieldid,$ID,$typ,$level=0,$exclude=array()){
+function dyns_11_a($params){
 	global $farbschema;
 	global $gfield;
 	global $db;
 	global $umgvar;
 	global $session;
-
-
+	
+	$value = $params['form_value'];
+	$form_name = $params['form_name'];
+	$page = $params['par1'];
+	$null = $params['par2'];
+	$gtabid = $params['par3'];
+	$fieldid = $params['par4'];
+	$ID = $params['par5'];
+	$typ = $params['par6'];
+	$level = $params['gformid'];
+	$exclude = $params['formid'];
+	
+	if(!$level){$level = 0;}
+    if(!$exclude){$exclude = array();}
+	
 	# SELECT / ATTRIBUTE
 	if($gfield[$gtabid]["field_type"][$fieldid] == 19){$tabtyp = "LMB_ATTRIBUTE";}else{$tabtyp = "LMB_SELECT";}
 	# attribute
@@ -1065,7 +1096,7 @@ function dyns_gtabQuickSearch($params){
 
 	$gtabid = $params["gtabid"];
 	$fieldid = $params["fieldid"];
-	$value = lmb_utf8_decode($params["value"]);
+	$value = $params["value"];
 
 	$gsr[$gtabid][$fieldid][0] = $value;
 	$gsr[$gtabid][$fieldid]["txt"][0] = 1;
@@ -1357,7 +1388,7 @@ function dyns_showReminder($params){
 		echo "<tr><td valign=\"top\">$lang[1977]:</td><td><textarea name=\"REMINDER_BEMERKUNG\" style=\"width:190px;height:20px;\" onkeyup=\"limbasResizeTextArea(this,5);\"></textarea></td></tr>";
 		echo "<tr title=\"".$lang[2577]."\"><td valign=\"top\">$lang[612]:</td><td><input type=\"checkbox\" name=\"REMINDER_MAIL\"></td></tr>";
 		if($greminder[$gtabid]['name']){
-			echo "<tr><td valign=\"top\">Kategorie:</td><td colspan=\"5\"><input type=\"radio\" name=\"REMINDER_CATEGORY\" value=\"0\" checked>&nbsp;ohne<br>";
+			echo "<tr><td valign=\"top\">Kategorie:</td><td colspan=\"5\"><input type=\"radio\" name=\"REMINDER_CATEGORY\" value=\"0\" checked>&nbsp;default<br>";
 			foreach ($greminder[$gtabid]['name'] as $rkey => $rval){
 				echo "<input type=\"radio\" name=\"REMINDER_CATEGORY\" value=\"$rkey\">&nbsp;".$rval."<br>";
 			}
@@ -1386,7 +1417,7 @@ function dyns_showReminder($params){
 		";
 	    foreach ($reminder["id"] as $remkey => $remval){
 				echo "<tr>
-				<td title=\"".$reminder["desc"][$remkey]."\">".$reminder["name"][$remkey]."</td>
+				<td title=\"".$reminder["desc"][$remkey]."\">".$lang[$reminder['name'][$remkey]]."</td>
 				<td>".substr($reminder["datum"][$remkey],0,13)."</td>
 				<td><i class=\"lmb-icon lmb-close-alt\" style=\"cursor:pointer;\" OnClick=\"javascript:limbasDivShowReminder(event,'','','$remval');\" Title=\"".$lang[721]."\"></i></td>";
 				if($reminder["from"][$remkey]){echo "<br><i>".$userdat["bezeichnung"][$reminder["from"][$remkey]]."</i>";}
@@ -2585,7 +2616,7 @@ function dyns_searchInherit($params){
 	$ID = $destId;
 	$sourceGtabid = $params["gtabid"];
 	$sourceGfieldid = $params["gfieldid"];
-	$value = lmb_utf8_decode($params["value"]);
+	$value = $params["value"];
 	$destGfield = $params["dest_gfieldid"];
 	$destGtabid = $params["dest_gtabid"];
 	$sourcefilter = $gfield[$destGtabid]["inherit_filter"][$destGfield];
@@ -3034,12 +3065,13 @@ function dyns_fileVersionDiff($params){
 	global $db;
 	global $lang;
 	global $umgvar;
+	global $filestruct;
 
 	if(!$GLOBALS["LINK"][205]){return;}
 
-	$require = "extra/explorer/metadata.lib";
-	require_once($require);
-
+	require_once("extra/explorer/metadata.lib");
+    if(!$filestruct){get_filestructure();}
+	
 	$file1 = $params["file1"];
 	$file2 = $params["file2"];
 	$typ = $params["typ"];
@@ -3052,9 +3084,10 @@ function dyns_fileVersionDiff($params){
 		if(!$rs) {$commit = 1;}
 		
 		if(odbc_fetch_row($rs)){
-			$target = $umgvar["uploadpfad"].odbc_result($rs, "SECNAME").".".odbc_result($rs, "EXT");
+		    $level = odbc_result($rs, "LEVEL");
+			$target = $umgvar["uploadpfad"].$filestruct['path'][$level].odbc_result($rs, "SECNAME").".".odbc_result($rs, "EXT");
 			if(file_exists($target)){
-				$target1 = str_replace($toba," ",convert_to_text(odbc_result($rs, "SECNAME"),odbc_result($rs, "EXT"),odbc_result($rs, "MIMETYPE"),$file1,0,1,0));
+				$target1 = str_replace($toba," ",convert_to_text(odbc_result($rs, "SECNAME"),odbc_result($rs, "EXT"),odbc_result($rs, "MIMETYPE"),$file1,0,1,0,odbc_result($rs, "LEVEL")));
 				$vcount1 = odbc_result($rs, "VID");
 				if(lmb_utf8_check(substr($target1,0,200))){
 					$target1 = lmb_utf8_decode($target1);
@@ -3068,9 +3101,10 @@ function dyns_fileVersionDiff($params){
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		if(odbc_fetch_row($rs)){
-			$target = $umgvar["uploadpfad"].odbc_result($rs, "SECNAME").".".odbc_result($rs, "EXT");
+		    $level = odbc_result($rs, "LEVEL");
+			$target = $umgvar["uploadpfad"].$filestruct['path'][$level].odbc_result($rs, "SECNAME").".".odbc_result($rs, "EXT");
 			if(file_exists($target)){
-				$target2 = str_replace($toba," ",convert_to_text(odbc_result($rs, "SECNAME"),odbc_result($rs, "EXT"),odbc_result($rs, "MIMETYPE"),$file2,0,1,0));
+				$target2 = str_replace($toba," ",convert_to_text(odbc_result($rs, "SECNAME"),odbc_result($rs, "EXT"),odbc_result($rs, "MIMETYPE"),$file2,0,1,0,odbc_result($rs, "LEVEL")));
 				$vcount2 = odbc_result($rs, "VID");
 				if(lmb_utf8_check(substr($target2,0,200))){
 					$target2 = lmb_utf8_decode($target2);
@@ -3126,7 +3160,7 @@ function dyns_menuReportOption($params){
 	$report_medium = $params["report_medium"];
 	$report_output = $params["report_output"];
 	$report_ext = $params["report_ext"];
-	$report_rename = lmb_utf8_decode($params["report_rename"]);
+	$report_rename = $params["report_rename"];
 	$gtabid = $params["gtabid"];
 	$use_record = $params["use_record"];
 	$ID = $params["ID"];
@@ -3882,6 +3916,17 @@ function calendarPreview($gtabid){
 
 	require_once("gtab/gtab.lib");
 	require_once("extra/calendar/fullcalendar/cal.dao");
+	$lmb_calendar = new lmb_calendar($gtabid);
+	
+    # EXTENSIONS
+    if($GLOBALS["gLmbExt"]["ext_calendar.inc"]){
+    	foreach ($GLOBALS["gLmbExt"]["ext_calendar.inc"] as $key => $extfile){
+    		require_once($extfile);
+    	}
+    }
+    
+    $lmbCalFields = $lmb_calendar->lmb_getlmbCalFields();
+    $lmbCalFieldsID = $lmb_calendar->lmb_getlmbCalFieldsID();
 
 	$onlyfield[$gtabid] = array($gfield[$gtabid]["argresult_name"]["ID"],$lmbCalFieldsID['STARTSTAMP'],$lmbCalFieldsID['SUBJECT']);
 	$filter["order"][$gtabid][0] = array($gtabid,$lmbCalFieldsID['STARTSTAMP'],"ASC");
@@ -4125,20 +4170,12 @@ ob_start();
 # --- Funktions-Aufruf -----------
 $actid = $_REQUEST["actid"];
 if($actid AND function_exists("dyns_".$actid)){
-	
-	if($actid=="14_b" || $actid== "11_a" || $actid== "explorerRelationSearch"){
-		eval("dyns_".$actid."(\$form_value,\$form_name,\$par1,\$par2,\$par3,\$par4,\$par5,\$par6,\$gformid,\$formid,\$nextpage);");
-	}else{
-		if($_GET){
-			unset($params);
-			foreach ($_GET as $keyR=>$valR){
-				if($keyR AND $valR){
-					$params[$keyR] = $valR;
-				}
-			}
-		}
-		if($_POST){
-			foreach ($_POST as $keyR=>$valR){
+
+	#if($actid=="14_b" || $actid== "11_a" || $actid== "explorerRelationSearch"){
+	#	eval("dyns_".$actid."(\$form_value,\$form_name,\$par1,\$par2,\$par3,\$par4,\$par5,\$par6,\$gformid,\$formid,\$nextpage);");
+	#}else{
+		if($_REQUEST){
+			foreach ($_REQUEST as $keyR=>$valR){
 				if($keyR AND $valR){
 					if(is_string($valR)){
 						$_REQUEST[$keyR] = lmb_utf8_decode($valR);
@@ -4152,7 +4189,7 @@ if($actid AND function_exists("dyns_".$actid)){
 		
 		$functionName = "dyns_".$actid;
 		$functionName($params);
-	}
+	#}
 	
 	# save session variables
 	save_sessionvars($GLOBALS["globvars"]);

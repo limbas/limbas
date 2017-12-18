@@ -73,7 +73,7 @@ function show_tabletreeSettings($params){
 	$treeid = $params['treeid'];
 	$relationid = $params['relationid'];
 	$changetyp = $params['changetyp'];
-	$changeval = lmb_utf8_decode($params['changeval']);
+	$changeval = $params['changeval'];
 	
 	if($changetyp){
 		
@@ -225,9 +225,9 @@ function show_tabletreeSettings($params){
 	*/
 	
 	
-	echo "<tr><td>".$lang[2718]."</td><td><input type=\"text\" STYLE=\"width:100%\" value=\"".htmlentities($ticon,ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" onchange=\"ajaxEditTree(null,$treeid,$treetab,$itemtab,'$relationid','icon',encodeURIComponent(this.value))\"></td></tr>";
+	echo "<tr><td>".$lang[2718]."</td><td><input type=\"text\" STYLE=\"width:100%\" value=\"".htmlentities($ticon,ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" onchange=\"ajaxEditTree(null,$treeid,$treetab,$itemtab,'$relationid','icon',this.value)\"></td></tr>";
 	
-	echo "<tr><td>".$lang[2719]."</td><td><textarea style=\"width: 100%; height: 18px; overflow: visible;\" onblur=\"this.style.height='18px';\" onfocus=\"this.style.height='60px';\" onchange=\"ajaxEditTree(null,$treeid,$treetab,$itemtab,'$relationid','rule',encodeURIComponent(this.value))\">".htmlentities($trule,ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</textarea></td></tr>";
+	echo "<tr><td>".$lang[2719]."</td><td><textarea style=\"width: 100%; height: 18px; overflow: visible;\" onblur=\"this.style.height='18px';\" onfocus=\"this.style.height='60px';\" onchange=\"ajaxEditTree(null,$treeid,$treetab,$itemtab,'$relationid','rule',this.value)\">".htmlentities($trule,ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</textarea></td></tr>";
 	
 	echo "<tr><td>".$lang[2720]."</td><td><input type=\"checkbox\" onchange=\"ajaxEditTree(null,$treeid,$treetab,$itemtab,'$relationid','display',this.checked)\" $tdisplay></td></tr>";
 

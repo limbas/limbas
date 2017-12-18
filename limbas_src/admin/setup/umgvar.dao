@@ -33,29 +33,31 @@ if($change AND $changecat){
 			$val = odbc_result($rs, "NORM");
 			$norm = preg_replace("/ {2,}/"," ",${"umg_".$umgvar_id} );
 			$sql = "";
-			if($umgvar["admin_mode"]){$sql =",CATEGORY = ".parse_db_int($cat[$umgvar_id]);}
+			if($umgvar["admin_mode"]){
+                                $sql =",CATEGORY = ".parse_db_int($cat[$umgvar_id]);                                
+                        }
 			$sqlquery1 = "UPDATE LMB_UMGVAR SET NORM = '".parse_db_string($norm,100)."' $sql WHERE ID = $umgvar_id";
 			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-	        $_SESSION["umgvar"][$name] = $norm;
-	        if($name == "thumbsize"){
-	        	/* --- Thumpnails löschen --------------------------------------------- */
-	        	$rsc = "rm $umgvar[pfad]/TEMP/thumpnails/*";
-	        	system($rsc);
-	        }
+                        $_SESSION["umgvar"][$name] = $norm;
+                        if($name == "thumbsize"){
+                                /* --- Thumpnails löschen --------------------------------------------- */
+                                $rsc = "rm $umgvar[pfad]/TEMP/thumpnails/*";
+                                system($rsc);
+                        }
 		}
 	}
 }
 
 /* --- umgvar hinzufügen --------------------------------------------- */
 if($add){
-	$name = preg_replace("/ {2,}/"," ",str_replace("'","", str_replace("\"","",$name )));
-	$norm = preg_replace("/ {2,}/"," ",str_replace("'","", $norm ));
-	$beschreibung = preg_replace("/ {2,}/"," ",str_replace("'","", str_replace("\"","",$beschreibung )));
+	$name = parse_db_string( cleanUmgvar($name) );
+	$norm = parse_db_string( preg_replace("/ {2,}/"," ", $norm) );
+	$beschreibung = parse_db_string( preg_replace("/ {2,}/"," ", $beschreibung) );
 	
 	$sort = next_db_id("LMB_UMGVAR","SORT");
 	
 	if($category == ""){
-		$newcategory = preg_replace("/ {2,}/"," ",str_replace("'","", str_replace("\"","",$newcategory )));
+		$newcategory = parse_db_string(preg_replace("/ {2,}/", " ", $newcategory));
 
 		include("language.lib");
 		global $session;
@@ -71,23 +73,31 @@ if($add){
 
 /* --- umgvar löschen --------------------------------------------- */
 if($del){
+        $id = parse_db_int($id);
 	$sqlquery = "DELETE FROM LMB_UMGVAR WHERE ID = $id";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 /* --- Tabellen-Liste --------------------------------------------- */
-	$sqlquery = "Select DISTINCT * from LMB_UMGVAR ORDER BY CATEGORY,SORT";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$bzm = 1;
-	while(odbc_fetch_row($rs, $bzm)) {
-		$result_umgvar["id"][] = odbc_result($rs, "ID");
-		$result_umgvar["form_name"][] = odbc_result($rs, "FORM_NAME");
-		$result_umgvar["norm"][] = odbc_result($rs, "NORM");
-		$result_umgvar["beschreibung"][] = odbc_result($rs, "BESCHREIBUNG");
-		$result_umgvar["category"][] = odbc_result($rs, "CATEGORY");
-	$bzm++;
-	}
-	$result_category = array_unique($result_umgvar["category"]); //Fehlt: ImageMagick,ghostscript,System
-	//$result_category = array(0=>$lang[1893],1=>$lang[1894],2=>$lang[1895],3=>$lang[1896],4=>$lang[1898],12=>$lang[2700],5=>$lang[1899],6=>$lang[1900],11=>"System",7=>$lang[1995],8=>"ImageMagick",10=>"ghostscript");
+$sqlquery = "Select DISTINCT * from LMB_UMGVAR ORDER BY CATEGORY,SORT";
+$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$bzm = 1;
+while(odbc_fetch_row($rs, $bzm)) {
+        $result_umgvar["id"][] = odbc_result($rs, "ID");
+        $result_umgvar["form_name"][] = odbc_result($rs, "FORM_NAME");
+        $result_umgvar["norm"][] = odbc_result($rs, "NORM");
+        $result_umgvar["beschreibung"][] = odbc_result($rs, "BESCHREIBUNG");
+        $result_umgvar["category"][] = odbc_result($rs, "CATEGORY");
+$bzm++;
+}
+$result_category = array_unique($result_umgvar["category"]); //Fehlt: ImageMagick,ghostscript,System
+//$result_category = array(0=>$lang[1893],1=>$lang[1894],2=>$lang[1895],3=>$lang[1896],4=>$lang[1898],12=>$lang[2700],5=>$lang[1899],6=>$lang[1900],11=>"System",7=>$lang[1995],8=>"ImageMagick",10=>"ghostscript");
+
+        
+function cleanUmgvar($umgvar) {
+    // removes all characters that are not a-z, -, /, _, 0-9
+    return preg_replace('/[^a-z_\/\-0-9]/', '', $umgvar);
+}        
+        
 ?>
 

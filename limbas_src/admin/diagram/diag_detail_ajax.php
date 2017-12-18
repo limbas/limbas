@@ -17,14 +17,7 @@
 /*
  * ID:
  */
-	
-	/*
-		Änderungen in: 
-			main_dyns_admin.php (dyns_saveDiagDetail, dyns_createDiag, dyns_saveSettings),
-			main_admin.php (setup_diag) (weiß nicht warum)
-			diagramm.php
-	*/
-	
+
 	// pchart and jqplot
 	function lmb_updateData($diag_id,$field_id,$show,$axis,$color){
 		global $db;
@@ -83,17 +76,25 @@
 	// pchart
 	function lmb_saveCustomizationSettings($par){
 		global $db;
-		
-		$sqlquery = "UPDATE LMB_CHART_LIST SET ";
-		foreach($par as $key => $part){
-			if($key != "actid" && $key != "diag_id"){
-				$sqlquery .= parse_db_string(strtoupper($key)) . "='" . parse_db_string($part) . "',";
-			}
-		}
-		$sqlquery = rtrim($sqlquery,",");
-		$sqlquery .= " WHERE ID=".$par['diag_id'].";";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);		
-
-	}
+                		
+		$sqlquery = "UPDATE LMB_CHART_LIST SET "
+                        . "DIAG_WIDTH=" . parse_db_int($par['diag_width']) . ","
+                        . "DIAG_HEIGHT=" . parse_db_int($par['diag_height']) . ","
+                        . "TEXT_X='" . parse_db_string($par['text_x']) . "',"
+                        . "TEXT_Y='" . parse_db_string($par['text_y']) . "',"
+                        . "FONT_SIZE=" . parse_db_int($par['font_size']) . ","
+                        . "PADDING_LEFT=" . ($par['padding_left']=='auto' ? 'null' : parse_db_int($par['padding_left'])) . ","
+                        . "PADDING_TOP=" . ($par['padding_top']=='auto' ? 'null' : parse_db_int($par['padding_top'])) . ","
+                        . "PADDING_RIGHT=" . ($par['padding_right']=='auto' ? 'null' : parse_db_int($par['padding_right'])) . ","
+                        . "PADDING_BOTTOM=" . ($par['padding_bottom']=='auto' ? 'null' : parse_db_int($par['padding_bottom'])) . ","
+                        . "LEGEND_X=" . ($par['legend_x']=='auto' ? 'null' : parse_db_int($par['legend_x'])) . ","
+                        . "LEGEND_Y=" . ($par['legend_y']=='auto' ? 'null' : parse_db_int($par['legend_y'])) . ","
+                        . "LEGEND_MODE='" . parse_db_string($par['legend_mode']) . "',"
+                        . "PIE_WRITE_VALUES='" . parse_db_string($par['pie_write_values']) . "',"
+                        . "PIE_RADIUS=" . ($par['pie_radius']=='auto' ? 'null' : parse_db_int($par['pie_radius']));
+                
+		$sqlquery .= " WHERE ID=" . parse_db_int($par['diag_id']);                
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        }
 	
 ?>

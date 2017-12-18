@@ -57,7 +57,7 @@ function startDrag(evt) {
 	}
 	
 	multiselect = lmbGetUISelected();
-	
+
 	if(browser_ns5){
 		// Schleife über alle selectable elemente
 		$(".ui-selected").each(function() {
@@ -92,6 +92,7 @@ function drag(evt){
 	if(currentdiv == 'menu'){
 		dragEl(evt,document.getElementById('menu'));
 	}else{
+		$("#menu").hide();
 		$(".ui-selected").each(function() {
 			dragEl(evt,$( this ).get(0));
 		});
@@ -99,7 +100,7 @@ function drag(evt){
 }
 
 function dragEl(evt,el) {
-	
+
 	if (objid = el.id) {
 
 		if(parent.form_menu.document.form1.raster.value > 0){var raster = parent.form_menu.document.form1.raster.value;}
@@ -140,8 +141,8 @@ function dragEl(evt,el) {
 
 
 function endDrag(e) {
-        // prevent shadow of menu
-        $('#menu').removeClass('ui-selected');
+    // prevent shadow of menu
+    $('#menu').removeClass('ui-selected');
 
 	// Schleife über alle selectable elemente
 	$(".ui-selected").each(function() {
@@ -150,6 +151,10 @@ function endDrag(e) {
 	
 	// enable selectable function
 	$('#innerframe').selectable("enable");
+	
+	if(mainisactive){
+		$("#menu").not(":visible").show('fast');
+	}
 	
 	if(browser_ns5){document.releaseEvents(Event.MOUSEMOVE);}
 	document.onmousemove = null;
@@ -854,24 +859,31 @@ function el_change_id(id){
 }
 
 function formBodyClick(evt){
-	window.setTimeout("divclose()", 500);
-	document.getElementById("menu").style.zIndex = zIndexTop + 10000;
+	//window.setTimeout("divclose()", 500);
+	//document.getElementById("menu").style.zIndex = zIndexTop + 10000;
 }
 
 // show multimenu if more selected
-function lmb_multiMenu(evt){
-        if(lmbGetUISelected()){
-                // remove hauptmenu/tabulator/gruppierungsrahmen/uform from selection
-                $(".ui-selected").filter('[lmbtype="frame"], [lmbtype="menue"], [lmbtype="tabulator"], [lmbtype="uform"]').removeClass("ui-selected");
-                      
-                // remove non-visible elements
-                $(".ui-selected").not(":visible").removeClass("ui-selected");
-            
-            
+function lmb_multiMenu(evt,ui){
+	
+	divclose();
+	divclose();
+	if(lmbGetUISelected()){
+		// remove hauptmenu/tabulator/gruppierungsrahmen/uform from selection
+		$(".ui-selected").filter('[lmbtype="frame"], [lmbtype="menue"], [lmbtype="tabulator"], [lmbtype="uform"]').removeClass("ui-selected");
+
+		// remove non-visible elements
+		$(".ui-selected").not(":visible").removeClass("ui-selected");
+
+		// remove elements in background
+		if(touchedElement.id){
+			$(".ui-selected").not($(touchedElement).children()).removeClass("ui-selected");
+		}
+
 		if($(".ui-selected").filter('[id^="div"]').get(0).onmousedown){
 			$(".ui-selected").filter('[id^="div"]').get(0).onmousedown();
 		}
-	}     
+	}
 }
 
 
@@ -881,7 +893,7 @@ function aktivate(evt,el,id,TYP) {
 	picid = "pic"+id;
 	var ctrlk = 0;
 
-	if(TYP == 'tab' || TYP == 'bild' || TYP == 'frame'|| TYP == 'tabulator'|| TYP == 'menue'|| TYP == 'scroll'|| TYP == 'menue'){
+	if(TYP == 'tab' || TYP == 'bild' || TYP == 'frame'|| TYP == 'tabulator'|| TYP == 'menue'|| TYP == 'scroll'|| TYP == 'chart'|| TYP == 'menue'){
 		$('#innerframe').selectable("disable");
 	}
 	document.onmousedown = startDrag;
@@ -914,25 +926,17 @@ function aktivate(evt,el,id,TYP) {
 	
 	// controlKey for multiselect
 	if(evt && !evt.ctrlKey){
-		// deactive shadow
-                /*
-                var cc = null;
-		var ar = document.getElementsByTagName("*");
-		for (var i = ar.length; i > 0;) {
-			cc = ar[--i];
-			cc.style.boxShadow='';
+		// selectable reset all elements
+		if(lmbGetUISelected() <= 1){
+			$('.ui-selected').removeClass('ui-selected');
 		}
-                */
-		
-		// selectable reset all elements                
-                $('.ui-selected').removeClass('ui-selected');
 	}
 
 	// selectable only for active element
 	$("#"+divid).addClass('ui-selected');
 	//document.getElementById(divid).style.boxShadow = '3px 3px 3px #619A00';
 
-        limbasDivShow('','','menu');
+    limbasDivShow('','','menu');
 	
 	//Position und Höhe im Menu anzeigen
 	parent.form_menu.document.form1.HPOSI.value = parseInt(document.getElementById(divid).style.height);
@@ -996,12 +1000,14 @@ function lmb_dropEl(lang,id){
 // ------------- öffne Hauptmenü ----------------
 var mainisactive = 0;
 var prevElement = 0;
+var touchedElement = 0;
 var prevelBorder = new Array();
-function limbasMenuOpen(evt,el,id,dicoParams) {
 
+function limbasMenuOpen(evt,el,id,dicoParams) {
 
 	if(dicoParams.get("MAINELEMENT") && mainisactive){return;}
 	mainisactive = 1;
+	touchedElement = el;
 	
 	TYP = dicoParams.get("TYP");
 	STYLE = dicoParams.get("STYLE");
@@ -1217,12 +1223,12 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 		parent.form_menu.resetmenu();
 	}
 	if(parent.form_menu.document.getElementById(TYP)){
-		parent.form_menu.document.getElementById(TYP).style.backgroundColor = color[10];
+		parent.form_menu.document.getElementById(TYP).style.backgroundColor = color[7];
 	}
 	
-        // select multiple if ctrl key is pressed
-        if(evt.ctrlKey){
-                var OLDTYP = TYP;
+    // select multiple if ctrl key is pressed
+    if((evt && evt.ctrlKey) || lmbGetUISelected()){
+        var OLDTYP = TYP;
 		var TYP = 'multi';
 	}
 

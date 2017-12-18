@@ -27,7 +27,7 @@ if(!$lang){
 	$lang[1011] = "inserts";
 	$lang[1012] = "failed";
 	$lang[1013] = "finished";
-	$lang[1014] = "test installation";
+	$lang[1014] = "start LIMBAS";
 	$lang[1015] = "inserting rows";
 	$lang[1016] = "failure on rows";
 	$lang[1017] = "inserts";
@@ -176,12 +176,12 @@ function import_create($tab_name, $tab_group, $tab_spelling, $verkn = null, $new
     if ($ifield_data == "2") {
         
         echo <<<EOD
-<div style="width:300px;">
-	<div style="height:16px;">$lang[1015] ...</div>
-	<div id="{$new_gtabid}_container" style="background-color:#eeeeee;border:solid 1px silver;">
-		<div style="background-color:green;color:white;height:16px;width:18px;" id="$new_gtabid">0%</div>
-	</div>
-</div>
+        <div style="width:300px;">
+                <div>$lang[1015] ...</div>
+                <div id="{$new_gtabid}_container" class="progress">
+                        <div style="width:18px;" class="progress-bar" id="$new_gtabid">0%</div>
+                </div>
+        </div>
 EOD;
         echo "\n<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";
         
@@ -572,7 +572,9 @@ function import_complete($del_all,$txt_encode=null, $txt_terminate=null,$txt_enc
 	}
 
 	if($GLOBALS["action"]){
-		echo "<BR><BR><HR><H2>&nbsp;&nbsp;...$lang[1013], <a href=\"../../\">$lang[1014].</A></H2>(default-user: <b>admin</b> | default password: <b>limbas</b>)<BR><BR><BR>";
+		echo "<BR><BR><HR><H2>&nbsp;&nbsp;...$lang[1013],</H2>";
+		echo "<input type=\"button\" onclick=\"document.location.href='../../'\" class=\"btn btn-info pull-right\" value=\"$lang[1014]\"<br>
+        <div>(default-user: <b>admin</b> | default password: <b>limbas</b>)</div><BR><BR><BR>";
 		echo "\n<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";
 	}
 }
@@ -587,16 +589,16 @@ function import_attach_file($ifield,$gtabid,$txt_terminate=null,$txt_encode=null
 	
 	if(!$gtabid OR !$ifield){return false;}
 	
-
-		echo <<<EOD
-<div style="width:300px;">
-	<div style="height:16px;">$lang[1015] ...</div>
-	<div id="{$gtabid}_container" style="background-color:#eeeeee;border:solid 1px silver;">
-		<div style="background-color:green;color:white;height:16px;width:18px;" id="$gtabid">0%</div>
-	</div>
-</div>
+        
+        echo <<<EOD
+        <div style="width:300px;">
+                <div>$lang[1015] ...</div>
+                <div id="{$gtabid}_container" class="progress">
+                        <div style="width:18px;" class="progress-bar" id="$gtabid">0%</div>
+                </div>
+        </div>
 EOD;
-		echo "\n<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";
+        echo "\n<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";
 	
 	
 	/* ---------------------- Seperator ---------------------- */
@@ -965,13 +967,13 @@ function fill($tab,$file,$ctyp,$ktyp,$cname,$kkey,$partimport,$import_overwrite,
 
 		/* --- Prozessposition zeigen ------- */
 	if($GLOBALS["action"]){
-		echo <<<EOD
-<div style="width:300px;">
-	<div style="height:16px;">$lang[1015] ...</div>
-	<div id="{$tab}_container" style="background-color:#eeeeee;border:solid 1px silver;">
-		<div style="background-color:green;color:white;height:16px;width:18px;" id="$tab">0%</div>
-	</div>
-</div>
+	echo <<<EOD
+        <div style="width:300px;">
+                <div>$lang[1015] ...</div>
+                <div id="{$tab}_container" class="progress">
+                        <div style="width:18px;" class="progress-bar" id="$tab">0%</div>
+                </div>
+        </div>
 EOD;
 		echo "\n<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";
 	}

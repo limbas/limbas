@@ -590,7 +590,7 @@ function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0){
 	}
 	
 	if(!$GLOBALS["form_id"]){
-        echo "<TD class=\"gtabHeaderMenuTD\">&nbsp;&nbsp;<i class=\"lmb-icon lmb-arrow-left-caret u-color-3\" onclick=\"resizeElementStep('gtabDetail','left',document.form1.filter_gwidth,'650px');\"></i><i class=\"lmb-icon lmb-arrow-right-caret u-color-3\" onclick=\"resizeElementStep('gtabDetail','right',document.form1.filter_gwidth,'95%');\"></i></TD>";
+        echo "<TD class=\"gtabHeaderMenuTD\">&nbsp;&nbsp;<i class=\"lmb-icon lmb-arrow-left-caret u-color-3\" onclick=\"resizeElementStep('gtabDetail','left',document.form1.filter_gwidth,'700px');\"></i><i class=\"lmb-icon lmb-arrow-right-caret u-color-3\" onclick=\"resizeElementStep('gtabDetail','right',document.form1.filter_gwidth,'95%');\"></i></TD>";
 	}
 	echo "</TR></TABLE>";
 	echo "</TD></TR>";
@@ -872,7 +872,7 @@ function defaultView($gtabid,$ID,&$gresult,$readonly=0,&$filter=null){
 		return false;
 	}
 
-	if($filter["gwidth"][$gtabid]){$sw = $filter["gwidth"][$gtabid];}else{$sw = "650px";}
+	if($filter["gwidth"][$gtabid]){$sw = $filter["gwidth"][$gtabid];}else{$sw = "700px";}
 	echo "<TABLE class=\"lmbfringeGtab\" ID=\"gtabDetail\" BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\" style=\"width:$sw\">\n";
         echo "<tbody style=\"display: table; width: 100%;\">";
 	# Formularreiter
@@ -980,6 +980,15 @@ if($wind_force_close){
 				window.close();
 			}
 			";
+	}else{
+	   // calendar iframe window
+	   echo "
+	    $( document ).ready(function() {
+	    if($('#lmb_eventDetailFrame', window.parent.document).hasClass('ui-dialog-content')){
+	       parent.lmb_closeIframeDialog();
+	    }
+	    });
+	    ";
 	}
 	echo "
 	</script>

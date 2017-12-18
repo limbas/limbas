@@ -104,7 +104,7 @@ $fieldid = odbc_result($rs2, "FIELDID");
 $datid = odbc_result($rs2, "DATID");
 $filename = odbc_result($rs2, "NAME");
 $ext = $gmimetypes["ext"][odbc_result($rs2, "MIMETYPE")];
-$absfile = $umgvar[uploadpfad].odbc_result($rs2, "SECNAME").".".$ext;
+$absfile = $umgvar[uploadpfad].$filestruct['path'][$level].odbc_result($rs2, "SECNAME").".".$ext;
 
 # Rechte
 if(!$filestruct["view"][$level]){
@@ -247,7 +247,7 @@ if(odbc_fetch_row($rs, 1)){
 	}
 	
 	# ---------------- Metadaten aus Datei auslesen -----------------
-	$filename = $umgvar["uploadpfad"].$ffile[secname].".".$ffile["ext"];
+	$filename = $umgvar['uploadpfad'].$filestruct['path'][$level].$ffile[secname].".".$ffile['ext'];
 	# Sonderfall JPEG wegen EXIF Zusatzdaten
 	if(in_array($ffile["ext"],$umgvar["read_metadata"])){
     	if($exifdata = getmeta_struct($filename)){

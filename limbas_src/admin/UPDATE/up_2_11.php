@@ -57,7 +57,7 @@ function patch_3(){
 patch_scr(3,11,'patch_3','reminder language support',2);
 
 
-$sqlquery = "INSERT INTO LMB_FIELD_TYPES VALUES(23,1,33,2903,'VARCHAR',180,'^.{0,xx}$',27,2904,2,24,0)";
+$sqlquery = "INSERT INTO LMB_FIELD_TYPES VALUES(23,1,33,2903,'VARCHAR',180,'^.{0,xx}$',27,2904,2,24,".LMB_DBDEF_FALSE.")";
 patch_db(4,11,$sqlquery,'fieldtype picture',2);
 
 #echo "-->";

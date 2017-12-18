@@ -77,13 +77,14 @@ function endDrag(e) {
 	return false;
 }
 
-
 /* --- delete field ----------------------------------- */
 function delete_field(id,name,physical) {
 	ph = '';
 	if(physical){
+		physical = 1;
 		ph = '( <?=$lang[1727]?> ) ';
 	}else{
+		physical = 0;
 		ph = '( <?=$lang[2811]?> ) ';
 	}
 	var desc = confirm("<?=$lang[2019]?> "+ph+'\n### '+name+" ###");
@@ -306,7 +307,8 @@ function LIM_activate(el,elid){
 </SCRIPT>
 
 
-<div id="lmbAjaxContainer" class="ajax_container" style="position:absolute;visibility:hidden;" OnClick="activ_menu=1;"></div>
+<div id="lmbAjaxContainer" class="ajax_container"
+	style="position: absolute; visibility: hidden;" OnClick="activ_menu=1;"></div>
 
 <?php
 /* --- Tabellen-Liste --------------------------------------------- */
@@ -317,77 +319,70 @@ if($table_gtab[$bzm]) {
 	
 	/* --- Spaltenüberschriften --------------------------------------- */
 	?>
-	<FORM ACTION="main_admin.php" METHOD=post NAME="form1">
-	<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
-	<input type="hidden" name="action" value="setup_gtab_ftype">
-	<input type="hidden" name="new_gtab" value="<?echo $table_gtab[$bzm]?>">
-	<input type="hidden" name="new_conf_gtab" value="<?echo $conf_gtab[$bzm]?>">
-	<input type="hidden" name="tab_group" value="<?echo $tab_group?>">
-	<input type="hidden" name="tabelle">
-	<input type="hidden" name="fieldid">
-	<input type="hidden" name="spelling">
-	<input type="hidden" name="desc">
-	<input type="hidden" name="uniquefield">
+<FORM ACTION="main_admin.php" METHOD=post NAME="form1">
+	<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>"> 
+    <input type="hidden" name="action" value="setup_gtab_ftype"> 
+	<input type="hidden" name="new_gtab" value="<?echo $table_gtab[$bzm]?>"> 
+	<input type="hidden" name="new_conf_gtab" value="<?echo $conf_gtab[$bzm]?>"> 
+	<input type="hidden" name="tab_group" value="<?echo $tab_group?>"> 
+	<input type="hidden" name="tabelle"> <input type="hidden" name="fieldid"> 
+	<input type="hidden" name="spelling"> <input type="hidden" name="desc"> 
+	<input type="hidden" name="uniquefield"> 
 	<input type="hidden" name="column">
-	<input type="hidden" name="columnid">
-	<input type="hidden" name="keyfield">
-	<input type="hidden" name="mainfield">
-	<input type="hidden" name="fieldindex">
-	<input type="hidden" name="atid" VALUE="<?echo $bzm;?>">
-	<input type="hidden" name="def">
-	<input type="hidden" name="def_bool">
-    <input type="hidden" name="verk">
-    <input type="hidden" name="artleiste">
-    <input type="hidden" name="groupable">
-    <input type="hidden" name="dynsearch">
-    <input type="hidden" name="move_to">
-    <input type="hidden" name="argument_edit">
-    <input type="hidden" name="argument_search">
-    <input type="hidden" name="convert_value">
-    <input type="hidden" name="convert_size">
-    <input type="hidden" name="extend_value">
-    <input type="hidden" name="new_keyid">
-    <input type="hidden" name="memoindex">
-    <input type="hidden" name="nformat">
-    <input type="hidden" name="ncurrency">
-    <input type="hidden" name="wysiwyg">
-    <input type="hidden" name="select_cut">
-	<input type="hidden" name="trigger">
-	<input type="hidden" name="quicksearch">
-	<input type="hidden" name="view_rule">
-	<input type="hidden" name="edit_rule">
-	<input type="hidden" name="ajaxsave">
+	<input type="hidden" name="columnid"> 
+	<input type="hidden" name="keyfield"> <input type="hidden" name="mainfield"> 
+	<input type="hidden" name="fieldindex"> <input type="hidden" name="atid" VALUE="<?echo $bzm;?>"> 
+	<input type="hidden" name="def"> <input type="hidden" name="def_bool"> 
+    <input type="hidden" name="verk"> 
+    <input type="hidden" name="artleiste"> <input type="hidden" name="groupable">
+	<input type="hidden" name="dynsearch"> 
+	<input type="hidden" name="move_to"> <input type="hidden" name="argument_edit"> 
+	<input type="hidden" name="argument_search"> 
+	<input type="hidden" name="convert_value"> <input type="hidden" name="convert_size"> 
+	<input type="hidden" name="extend_value"> 
+	<input type="hidden" name="new_keyid"> 
+	<input type="hidden" name="memoindex"> 
+	<input type="hidden" name="nformat"> 
+	<input type="hidden" name="ncurrency"> 
+	<input type="hidden" name="wysiwyg"> 
+	<input type="hidden" name="select_cut">
+	<input type="hidden" name="trigger"> 
+	<input type="hidden" name="quicksearch"> <input type="hidden" name="view_rule"> 
+	<input type="hidden" name="edit_rule"> <input type="hidden" name="ajaxsave">
 	<input type="hidden" name="collreplace">
-	
-	
+
 	<div class="lmbPositionContainerMain">
 
-	<TABLE class="tabfringe" BORDER="0" cellspacing="1" cellpadding="2">
-	
-    <TR class="tabHeader"><TD class="tabHeaderItem" colspan="24" HEIGHT="20">
+		<TABLE class="tabfringe" BORDER="0" cellspacing="1" cellpadding="2">
+
+			<TR class="tabHeader">
+				<TD class="tabHeaderItem" colspan="24" HEIGHT="20">
     <?php
     echo $table_gtab[$bzm]." (".$beschreibung_gtab[$bzm].")";
     if($isview){echo "&nbsp;&nbsp;&nbsp;<a href=\"main_admin.php?&action=setup_gtab_view&viewid=$atid\"><i border=\"0\" style=\"cursor:pointer\" class=\"lmb-icon lmb-organisation-edit\"></i></a>";}
     ?>
     
-    </TD></TR>
+    </TD>
+			</TR>
 
-	<TR class="tabHeader">
-            <TD class="tabHeaderItem"></TD>
-            <TD class="tabHeaderItem">ID</TD>
-            <TD class="tabHeaderItem" <?php if(!$isview){?>colspan="2"<?php } ?>></TD>
-            <TD class="tabHeaderItem"><?=$lang[922]?></TD>
-            <TD class="tabHeaderItem"><?=$lang[923]?></TD>
-            <TD class="tabHeaderItem"><?=$lang[924]?></TD>
-            <TD class="tabHeaderItem"><?=$lang[925]?></TD>
-            <TD class="tabHeaderItem"><?=$lang[2654]?></TD>
+			<TR class="tabHeader">
+				<TD class="tabHeaderItem"></TD>
+				<TD class="tabHeaderItem">ID</TD>
+				<TD class="tabHeaderItem"></TD>
+				<?php if(!$isview){echo "<TD class=\"tabHeaderItem\">$lang[933]</TD>";}?>
+				<TD class="tabHeaderItem"><?=$lang[922]?></TD>
+				<TD class="tabHeaderItem"><?=$lang[923]?></TD>
+				<TD class="tabHeaderItem"><?=$lang[924]?></TD>
+				<TD class="tabHeaderItem"><?=$lang[925]?></TD>
+				<TD class="tabHeaderItem"><?=$lang[2654]?></TD>
             <?if(!$isview){?><TD class="tabHeaderItem"><?=$lang[928]?></TD><?}?>
-            <TD class="tabHeaderItem"><SPAN STYLE="width:90px;"><?=$lang[929]?></SPAN></TD>
-            <TD class="tabHeaderItem"><?=$lang[930]?></TD>
-            <TD class="tabHeaderItem"><?=$lang[2504]?></TD>
-            <TD class="tabHeaderItem"><?=$lang[2505]?></TD>
+            <TD class="tabHeaderItem"><SPAN STYLE="width: 90px;"><?=$lang[929]?></SPAN></TD>
+				<TD class="tabHeaderItem"><?=$lang[930]?></TD>
+				<TD class="tabHeaderItem"><?=$lang[2504]?></TD>
+				<TD class="tabHeaderItem"><?=$lang[2505]?></TD>
             <?if(!$isview){?><TD class="tabHeaderItem"><?=$lang[2570]?></TD><?}?>
-            <?if($gtrigger[$bzm] AND !$isview){?><TD class="tabHeaderItem"><?=$lang[2506]?></TD><?}?>
+            <?if($gtrigger[$bzm] AND !$isview){?><TD
+					class="tabHeaderItem"><?=$lang[2506]?></TD><?}?>
             <?#$lang[926]?>
             <TD class="tabbHeaderItem"><?=$lang[2235]?></TD>
             <?if(!$isview){?><TD class="tabHeaderItem"><?=$lang[1884]?></TD><?}?>
@@ -395,10 +390,10 @@ if($table_gtab[$bzm]) {
             <?if(!$isview){?><TD class="tabHeaderItem"><?=$lang[2639]?></TD><?}?>
             <?if(!$isview){?><TD class="tabHeaderItem"><?=$lang[2640]?></TD><?}?>
             <TD class="tabHeaderItem">&nbsp;<?=$lang[932]?></TD>
-            <TD class="tabHeaderItem"><?=$lang[2507]?></TD>
-            <TD class="tabHeaderItem"><?=$lang[1459]?></TD>
-            <TD class="tabHeaderItem"><?=$lang[2672]?></TD>
-	</TR>
+				<TD class="tabHeaderItem"><?=$lang[2507]?></TD>
+				<TD class="tabHeaderItem"><?=$lang[1459]?></TD>
+				<TD class="tabHeaderItem"><?=$lang[2672]?></TD>
+			</TR>
 
 	<?php  
     /* --- Ergebnisliste --------------------------------------- */
@@ -406,11 +401,13 @@ if($table_gtab[$bzm]) {
 	foreach ($result_fieldtype[$table_gtab[$bzm]]["field_id"] as $bzm1 => $val){
             ?>
 
-            <TR OnMouseOver="this.style.backgroundColor='<?=$farbschema["WEB7"]?>'" OnMouseOut="this.style.backgroundColor=''">
-            
-            <TD VALIGN="TOP"><?#<IMG SRC="pic/edit2.gif" BORDER="0" style="cursor:pointer">?></TD>
-            
-            <TD VALIGN="TOP"><?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?></TD>
+            <TR
+				OnMouseOver="this.style.backgroundColor='<?=$farbschema["WEB7"]?>'"
+				OnMouseOut="this.style.backgroundColor=''">
+
+				<TD VALIGN="TOP"><?#<IMG SRC="pic/edit2.gif" BORDER="0" style="cursor:pointer">?></TD>
+
+				<TD VALIGN="TOP"><?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?></TD>
             
             <?php
             # --- edit ------
@@ -420,25 +417,39 @@ if($table_gtab[$bzm]) {
             
 	       if(!$isview){
 	            # --- delete ------
-	            if((strtoupper($table_gtab[$bzm]) == "LDMS_FILES" AND $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] <= 33) OR (strtoupper($table_gtab[$bzm]) == "LDMS_META" AND $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] <= 37)){
-	            	echo "<TD></TD>";
-	            }else{
-		            echo "<TD VALIGN=\"TOP\" ALIGN=\"CENTER\">";
-					?>
-            <i OnClick="delete_field('<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>','<?=urlencode($result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1])?>')" class="lmb-icon lmb-trash" BORDER="0"></i></A>
+	            if((strtoupper($table_gtab[$bzm]) == "LDMS_FILES" AND $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] <= 33) or (strtoupper($table_gtab[$bzm]) == "LDMS_META" and $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] <= 37)) {
+                    echo "<TD></TD>";
+                } else {
+                    echo "<TD VALIGN=\"TOP\" ALIGN=\"CENTER\" style=\"cursor:pointer\">";
+                    ?>
+					<i class="lmb-icon lmb-trash" onclick="delete_field('<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>','<?=urlencode($result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1])?>')" style="cursor:pointer" border="0"></i>
+					<i class="lmb-icon lmb-minus-circle" onclick="delete_field('<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>','<?=urlencode($result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1])?>',1)" style="cursor:pointer;height:13px;vertical-align:bottom" border="0"></i>
 					<?php
-		            echo "</TD>";
-	            }
+                    echo "</TD>";
+                }
             }
             ?>
             
-            <TD VALIGN="TOP" OnMouseOver="this.style.backgroundColor = '<?=$farbschema["WEB6"]?>'" OnMouseOut="this.style.backgroundColor = ''" OnMouseUp="move_field('<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>')"  OnMouseDown="aktivate('<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>');">
-            <SPAN ID="field<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>" STYLE="position:relative;top:0;left:0;cursor:n-resize;color:blue">
+            <TD VALIGN="TOP"
+					OnMouseOver="this.style.backgroundColor = '<?=$farbschema["WEB6"]?>'"
+					OnMouseOut="this.style.backgroundColor = ''"
+					OnMouseUp="move_field('<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>')"
+					OnMouseDown="aktivate('<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>');">
+					<SPAN
+					ID="field<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>"
+					STYLE="position: relative; top: 0; left: 0; cursor: n-resize; color: blue">
             <?echo $result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1];?>
-            </SPAN>&nbsp;</TD>
-			<TD  VALIGN="TOP"><INPUT TYPE="TEXT" SIZE="25" NAME="DESC_<?echo $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1];?>" VALUE="<?echo $lang[$result_fieldtype[$table_gtab[$bzm]]["beschreibung_feld"][$bzm1]];?>" ONCHANGE="this.form.fieldid.value='<?echo $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1];?>';this.form.desc.value=this.form.DESC_<?echo $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1];?>.value;this.form.submit();"></TD>
-			<TD  VALIGN="TOP"><INPUT TYPE="TEXT" SIZE="16" NAME="SPELLING_<?echo $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1];?>" VALUE="<?echo $lang[$result_fieldtype[$table_gtab[$bzm]]["spelling"][$bzm1]];?>" ONCHANGE="this.form.fieldid.value='<?echo $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1];?>';this.form.spelling.value=this.form.SPELLING_<?echo $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1];?>.value;this.form.submit();"></TD>
-			<TD  VALIGN="TOP" nowrap>
+            </SPAN>&nbsp;
+				</TD>
+				<TD VALIGN="TOP"><INPUT TYPE="TEXT" SIZE="25"
+					NAME="DESC_<?echo $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1];?>"
+					VALUE="<?echo $lang[$result_fieldtype[$table_gtab[$bzm]]["beschreibung_feld"][$bzm1]];?>"
+					ONCHANGE="this.form.fieldid.value='<?echo $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1];?>';this.form.desc.value=this.form.DESC_<?echo $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1];?>.value;this.form.submit();"></TD>
+				<TD VALIGN="TOP"><INPUT TYPE="TEXT" SIZE="16"
+					NAME="SPELLING_<?echo $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1];?>"
+					VALUE="<?echo $lang[$result_fieldtype[$table_gtab[$bzm]]["spelling"][$bzm1]];?>"
+					ONCHANGE="this.form.fieldid.value='<?echo $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1];?>';this.form.spelling.value=this.form.SPELLING_<?echo $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1];?>.value;this.form.submit();"></TD>
+				<TD VALIGN="TOP" nowrap>
 			<?php
 			# Typ
 			if($result_fieldtype[$table_gtab[$bzm]]["argument_typ"][$bzm1]){
@@ -791,14 +802,21 @@ if($table_gtab[$bzm]) {
 	
 	if(!$isview){
 		?>
-		<tr><td colspan="25"><hr style="display: block; height: 1px;border: 0; border-top: 1px solid #ccc;margin: 1em 0; padding: 0;"></td></tr>
-		<TR class="tabBody">
-		<TD colspan="4">&nbsp;</TD>
-		<TD VALIGN="TOP"><INPUT TYPE="TEXT" SIZE="16" NAME="field_name" ONCHANGE="this.form.spellingf.value=this.form.field_name.value; this.form.beschreibung.value=this.form.field_name.value;"></TD>
-		<TD VALIGN="TOP"><INPUT TYPE="TEXT" SIZE="25" NAME="beschreibung"></TD>
-		<TD VALIGN="TOP"><INPUT TYPE="TEXT" SIZE="16" NAME="spellingf"></TD>
-		<TD VALIGN="TOP">
-		<SELECT NAME="typ" style="width:150px" OnChange="checkfiledtype(this,0)"><option></option>
+		
+			
+			
+			<tr>
+				<td colspan="25"><hr
+						style="display: block; height: 1px; border: 0; border-top: 1px solid #ccc; margin: 1em 0; padding: 0;"></td>
+			</tr>
+			<TR class="tabBody">
+				<TD colspan="4">&nbsp;</TD>
+				<TD VALIGN="TOP"><INPUT TYPE="TEXT" SIZE="16" NAME="field_name"
+					ONCHANGE="this.form.spellingf.value=this.form.field_name.value; this.form.beschreibung.value=this.form.field_name.value;"></TD>
+				<TD VALIGN="TOP"><INPUT TYPE="TEXT" SIZE="25" NAME="beschreibung"></TD>
+				<TD VALIGN="TOP"><INPUT TYPE="TEXT" SIZE="16" NAME="spellingf"></TD>
+				<TD VALIGN="TOP"><SELECT NAME="typ" style="width: 150px"
+					OnChange="checkfiledtype(this,0)"><option></option>
 		<?php
 		
 		
@@ -816,9 +834,10 @@ if($table_gtab[$bzm]) {
 		}
 		?>
 		</SELECT>
-	
-		<div id="argument_typ" style="display:none">
-	    <SELECT NAME="typ2" style="width:150px" OnChange="checkfiledtype(0,this)">
+
+					<div id="argument_typ" style="display: none">
+						<SELECT NAME="typ2" style="width: 150px"
+							OnChange="checkfiledtype(0,this)">
 	    <?php
 		foreach ($result_type["id"] as $key => $value){
 			if($result_type["id"][$key] <= 17 OR $result_type["id"][$key] == 41 OR $result_type["id"][$key] == 42 OR $result_type["id"][$key] == 21 OR $result_type["id"][$key] == 23){
@@ -826,11 +845,13 @@ if($table_gtab[$bzm]) {
 			}
 		}
 		?>
-	    </SELECT></div>
-	
-	
-		<div id="inherit_typ" style="display:none">
-	    <SELECT NAME="inherit_tab" style="width:150px;" OnChange="checkinherittype(this[this.selectedIndex].value)"><OPTION>
+	    </SELECT>
+					</div>
+
+
+					<div id="inherit_typ" style="display: none">
+						<SELECT NAME="inherit_tab" style="width: 150px;"
+							OnChange="checkinherittype(this[this.selectedIndex].value)"><OPTION>
 	    <?php
 		foreach ($gtab["tab_id"] as $key => $value){
 			if($key != $atid){
@@ -838,7 +859,8 @@ if($table_gtab[$bzm]) {
 			}
 		}
 		?>
-	    </SELECT></div>
+	    </SELECT>
+					</div>
 	
 	
 	    <?php
@@ -857,29 +879,42 @@ if($table_gtab[$bzm]) {
 		}
 		?>
 	    </TD>
-	    
-	    <TD VALIGN="TOP"><input type="text" id="typ_size" name="typ_size" style="width:40px;visibility:hidden"></TD>
-	    
-	    
-		<TD COLSPAN="14" VALIGN="TOP">
-		
-		<table><tr>
-		<td valign=top><INPUT TYPE="submit" NAME="add" VALUE="<?=$lang[937]?>">&nbsp;&nbsp;&nbsp;&nbsp;</td>
-		<td><table cellpadding="0" cellspacing="0">
-		<tr><td valign="center"><?=$lang[1263]?></td><td><INPUT TYPE="CHECKBOX" NAME="add_permission" VALUE="1" STYLE="border:none;background-color:transparent" CHECKED></td></tr>
-		</table></td>
 
-		</tr></table>
-		</TD></TR>
+				<TD VALIGN="TOP"><input type="text" id="typ_size" name="typ_size"
+					style="width: 40px; visibility: hidden"></TD>
+
+
+				<TD COLSPAN="14" VALIGN="TOP">
+
+					<table>
+						<tr>
+							<td valign=top><INPUT TYPE="submit" NAME="add"
+								VALUE="<?=$lang[937]?>">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+							<td><table cellpadding="0" cellspacing="0">
+									<tr>
+										<td valign="center"><?=$lang[1263]?></td>
+										<td><INPUT TYPE="CHECKBOX" NAME="add_permission" VALUE="1"
+											STYLE="border: none; background-color: transparent" CHECKED></td>
+									</tr>
+								</table></td>
+
+						</tr>
+					</table>
+				</TD>
+			</TR>
 	<?}?>
 	
-	<TR><TD COLSPAN="24" class="tabFooter"></TD></TR>
-	</FORM>
+	<TR>
+				<TD COLSPAN="24" class="tabFooter"></TD>
+			</TR>
+			</FORM>
 	<?
 $bzm++;
 }
 
 ?>
-<TR><TD COLSPAN="19" ALIGN="LEFT"><?=$message;?></TD></TR>
-</TABLE>
-</div>
+<TR>
+				<TD COLSPAN="19" ALIGN="LEFT"><?=$message;?></TD>
+			</TR>
+		</TABLE>
+	</div>

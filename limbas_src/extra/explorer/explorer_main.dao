@@ -409,6 +409,37 @@ if($files){
 	}
 }
 
+// change storage folder
+if($storage_folder AND $session['superadmin']){
+    $storage_folder = trim($storage_folder);
+    $old_path = $filestruct['path'][$LID];
+    if($storage_folder){
+        $new_path = 'STORAGE/'.$storage_folder.'/';
+    }else{
+        $new_path = '';
+    }
+    
+	$sqlquery = "UPDATE LDMS_STRUCTURE SET PATH = '".parse_db_string($storage_folder)."' WHERE ID = $LID";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+	get_filestructure(1);
+	flag_filestructure();
+        
+    // move files to directory
+    $subdirs = get_subdir($LID, 1);
+    if (is_array($subdirs)) {
+        $sqlquery1 = "SELECT SECNAME,EXT FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND LDMS_FILES.LEVEL IN (" . implode(',', $subdirs) . ')';
+        $rs1 = odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+        if (! $rs1) {
+            $commit = 1;
+        }
+        while (odbc_fetch_row($rs1)) {
+            if (file_exists($umgvar["uploadpfad"] . $old_path . odbc_result($rs1, "SECNAME") . "." . odbc_result($rs1, "EXT"))) {
+                rename($umgvar["uploadpfad"] . $old_path . odbc_result($rs1, "SECNAME") . "." . odbc_result($rs1, "EXT"), $umgvar["uploadpfad"] . $new_path . odbc_result($rs1, "SECNAME") . "." . odbc_result($rs1, "EXT"));
+            }
+        }
+    }
+}
+
 
 /* --- favorites reload--------------------------------------------- */
 if($favorite_file){

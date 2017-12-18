@@ -579,7 +579,7 @@ function gtabSetTablePosition(posx,posy){
         if($('#GtabTableFull')) {                
                 var overflowX = $(document).width() - $(window).width();
                 var currentWidth = $('#GtabTableFull').width();
-                $('#GtabTableFull').width(currentWidth - overflowX);
+                $('#GtabTableFull').css('min-width', (currentWidth - overflowX) + 'px');
         }
                 
         // set padding because of scrollbar

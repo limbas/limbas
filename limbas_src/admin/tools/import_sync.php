@@ -29,7 +29,7 @@
  * Führe Import und Anpassungen durch
  *
  */
-if(($syncimport AND !empty($_FILES["fileproject"])) OR $confirm_syncimport){
+if(($syncimport AND !empty($_FILES["filesync"])) OR $confirm_syncimport){
 	//Array for screen output
         $output = array();
         
@@ -63,7 +63,7 @@ if(($syncimport AND !empty($_FILES["fileproject"])) OR $confirm_syncimport){
             mkdir($path);
 
             # Datei in Tempverzeichnis (Sync) verschieben und import durchführen
-            if(!move_uploaded_file($_FILES['fileproject']['tmp_name'], $path.'export.tar.gz')){return;}
+            if(!move_uploaded_file($_FILES['filesync']['tmp_name'], $path.'export.tar.gz')){return;}
             # Datei entpacken
             $sys = exec("tar -x -C ".$path." -f ".$path."export.tar.gz");
 

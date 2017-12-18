@@ -102,16 +102,15 @@ define("LMB_DBCURSOR",1);
 # odbc connect:
 function dbq_0($host,$database,$dbuser,$dbpass,$dbdriver=null){
 	if($dbdriver == "DSN"){
-		$db = odbc_pconnect("$database","$dbuser","$dbpass") or
-			die("<BR><BR><CENTER>Database connection failed!<BR>".odbc_errormsg($db)."</CENTER>");
+		$db = odbc_pconnect("$database","$dbuser","$dbpass");
 	}elseif($dbdriver){
 		$dsn = "Driver=$dbdriver;ServerNode=$host;ServerDB=$database;ReadOnly=No";
-		$db = odbc_pconnect ($dsn, $dbuser, $dbpass) or
-			die("<h1>Database connection failed</h1><p>($dsn)<BR>".odbc_errormsg()."</p>");
+		$db = odbc_pconnect ($dsn, $dbuser, $dbpass);
 	}else{
-		$db = odbc_pconnect("$host:$database","$dbuser","$dbpass") or die("<BR><BR><CENTER>Database connection failed!<BR>".odbc_errormsg($db)."</CENTER>");
+		$db = odbc_pconnect("$host:$database","$dbuser","$dbpass");
 	}
-	return $db;
+	if($db){return $db;}
+	else{echo("<h1>Database connection failed</h1><p>($dsn)<BR>".odbc_errormsg()."</p>"); return false;}
 }
 
 #function dbq_0($host,$database,$dbuser,$dbpass,$odbcdriver=null){

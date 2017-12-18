@@ -90,7 +90,7 @@ function lmbAjax_dynsearch(evt,el,actid,fname,par1,par2,par3,par4,par5,par6,gfor
 	
 	dyns_value = el.value;
 	if(dyns_value.length > 1 || dyns_value == '*'){
-		dyns_value = encodeURIComponent(dyns_value);
+		dyns_value = dyns_value;
 		url = "main_dyns.php";
 		actid = actid+"&form_name="+fname+"&form_value="+dyns_value+"&par1="+par1+"&par2="+par2+"&par3="+par3+"&par4="+par4+"&par5="+par5+"&par6="+par6+"&gformid="+gformid+"&formid="+formid+"&nextpage="+nextpage;
 		mainfunc = function(result){lmbAjax_dynsearchPost(result,el);}
@@ -1226,7 +1226,7 @@ function limbasReportMenuOptions(evt,el,gtabid,reportid,ID,output,listmode,repor
 		use_record = '';
 		
 		if(!report_medium && document.report_form){report_medium = document.report_form.report_medium.value;}
-		if(!report_rename && document.report_form && document.report_form.report_rename){report_rename = encodeURIComponent(document.report_form.report_rename.value);}
+		if(!report_rename && document.report_form && document.report_form.report_rename){report_rename = document.report_form.report_rename.value;}
 		if(!report_rename){report_rename = '';}
 		
 		if(listmode){
@@ -1359,7 +1359,7 @@ function clear_send_form () {
 function limbasSearchInherit(desttabid,destgfieldid,gtabid,gfieldid,el,ID,showall){
 	if(el.value.length > 1 || el.value == '*'){
 		url = "main_dyns.php";
-		actid = "searchInherit&gtabid=" + gtabid + "&gfieldid=" + gfieldid + "&dest_gtabid=" + desttabid + "&dest_gfieldid=" + destgfieldid + "&showall=" + showall + "&ID=" + ID + "&value=" + encodeURIComponent(el.value);
+		actid = "searchInherit&gtabid=" + gtabid + "&gfieldid=" + gfieldid + "&dest_gtabid=" + desttabid + "&dest_gfieldid=" + destgfieldid + "&showall=" + showall + "&ID=" + ID + "&value=" + el.value;
 		mainfunc = function(result){limbasSearchInheritPost(result,el);}
 		ajaxGetWait(null,url,actid,null,"mainfunc",'',500);
 	}
@@ -1452,7 +1452,7 @@ var dyns_el = null;
 function lmbQuickSearch(evt,el,gtabid,fieldid)
 {
 	dyns_el = el;
-	actid = "gtabQuickSearch&gtabid=" + gtabid + "&fieldid=" + fieldid + "&value=" + encodeURIComponent(el.value);
+	actid = "gtabQuickSearch&gtabid=" + gtabid + "&fieldid=" + fieldid + "&value=" + el.value;
 	
 	if(el.value.length > 1){
 		if (dyns_time) {window.clearTimeout(dyns_time);}

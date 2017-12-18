@@ -48,11 +48,17 @@ if(!$umgvar){
 
 
 # ---- lösche Backups ----
-function delete_backup($server,$location,$path=null){
+function delete_backup($server,$location,$path=null,$job=null){
+    global $db;
+    $success = 1;
+    
 	if($location){
 		$location = str_replace("*","",$location);
 		if(file_exists($location)){
 			unlink($location);
+			if(file_exists($location)){
+			     $success = 0;
+			}
 		}elseif($path["server"]){
 			$p = explode(":",$location);
 			if($p[1]){
@@ -60,9 +66,14 @@ function delete_backup($server,$location,$path=null){
 				exec($cmd,$out,$ret);
 			}
 		}else{
-			lmb_alert("no php permission to\\n".$location);
-			return false;
+			error_log("file does not exist: ".$location);
 		}
+		
+		if($success AND $date AND $cron_id){
+            $sqlquery = "DELETE FROM LMB_HISTORY_BACKUP WHERE ID = '".parse_db_int($job)."'";
+            $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+		}
+		
 		return true;
 	}
 }
@@ -78,7 +89,7 @@ function delete_backup_list($days,$cron_id,$path){
 		if(!$rs) {$commit = 1;}
 		$bzm = 1;
 		while(odbc_fetch_row($rs, $bzm)) {
-			if(delete_backup(odbc_result($rs,"SERVER"),odbc_result($rs,"LOCATION"),$path)){
+			if(delete_backup(odbc_result($rs,"SERVER"),odbc_result($rs,"LOCATION"),$path,odbc_result($rs,"ID"))){
 				$sqlquery1 = "DELETE FROM LMB_HISTORY_BACKUP WHERE ID = ".odbc_result($rs,"ID");
 				$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 				if(!$rs1) {$commit = 1;}

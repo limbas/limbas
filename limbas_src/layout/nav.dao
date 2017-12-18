@@ -423,6 +423,7 @@ function menu_get_admin_setup(){
 	if($LINK[216]){$menu0 = menu_get_standard(216,6);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[294]){$menu0 = menu_get_standard(294,10);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[295]){$menu0 = menu_get_standard(295,10);$menu1 = array_merge($menu1,$menu0);}
+	if($LINK[298]){$menu0 = menu_get_standard(298,10);$menu1 = array_merge($menu1,$menu0);}
 	return $menu1;
 }
 

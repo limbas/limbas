@@ -111,6 +111,14 @@ function divclose() {
 	activ_menu = 0;
 }
 
+//used from gtab_change.dao - "save and close" funktion
+function lmb_closeIframeDialog() {
+    if(activeEvent && $('#lmb_eventDetailFrame').hasClass('ui-dialog-content')){
+       $('#lmb_eventDetailFrame').dialog('destroy');
+       lmb_calReload();
+    }
+}
+
 function lmb_localobj() {
   	this.monthNames = jsvar['jqmonth'];
 }
@@ -478,6 +486,7 @@ function lmb_calDetail(calEvent, jsEvent, id, act) {
 
 		// display in iframe
 		if(jsvar['iframe']){
+			$('#lmb_detailFrame').contents().find('body').html('');
 			$("#lmb_eventDetailFrame").css({'position':'relative','left':'0','top':'0'}).dialog({
 				width: w_,
 				height: h_,
@@ -680,7 +689,7 @@ function lmb_calReload(fullreload,detail_search){
 //}
 
 // override send_form from gtab_change.js
-function send_form(formid,ajax,need,calBulk_precalc) {
+function send_form(formid,ajax,need,wclose,calBulk_precalc) {
 
 	var needok = needfield(need);
 	if(typeof calBulk_precalc == 'undefined'){calBulk_precalc = '';}

@@ -128,6 +128,24 @@ pop_bottom();
 pop_top('limbasDivMenuSettings');
 if($ffilter["force_delete"]){$checked = "checked";}else{$checked = null;}
 pop_checkbox(276,"document.form1.ffilter_force_delete.value=this.checked;","",1,$checked,0);
+// storage path
+if($session['superadmin']){
+    $default = '--default--';
+    $opt = array(
+        'val' => array($default),
+        'desc' => array($default)
+    );
+    $dirpath = read_dir($umgvar['path'].'/UPLOAD/STORAGE',0);
+    $selected = $default;
+    foreach($dirpath['name'] as $dirkey => $dirname){
+        $opt['val'][] = $dirname;
+        $opt['desc'][] = $dirname;
+        if('STORAGE/'.$dirname.'/' == $filestruct['path'][$LID]){
+            $selected = $dirname;
+        }
+    }
+    pop_select('document.form1.storage_folder.value=this.value;LmEx_send_form(1);', $opt, $selected, '', '', 'storage folder', '', 'lmb-storage-folder');    
+}
 pop_bottom();
 ?>
 </DIV>
@@ -393,6 +411,7 @@ if($onload){
 <input type="hidden" name="rowsize">
 <input type="hidden" name="save_setting">
 <input type="hidden" name="view_symbolbar">
+<input type="hidden" name="storage_folder">
 
 <?/*
 <input type="hidden" name="f_fieldid" VALUE="<?=$f_fieldid?>">

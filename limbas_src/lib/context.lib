@@ -83,6 +83,7 @@ function pop_picmenu($id,$zl,$zv,$active=null,$evt=null,$altpic=null){
     if(($LINK[$id] OR $id == "0") AND $LINK["icon_url"][$id]){
     	if(!$evt){$evt = "OnClick=\"".$LINK["link_url"][$id]."\"";}
     	if($altpic){$pic = explode(".",$LINK["icon_url"][$id]);$pic = $pic[0].$altpic.".".$pic[1];}else{$pic = $LINK["icon_url"][$id];}
+        $pic = $LINK["icon_url"][$id];
     	if($active){$st = "style=\"opacity:0.3;filter:Alpha(opacity=30);\"";}
             echo "<td align=\"center\" style=\"cursor:pointer;width:20px;height:20px\"><i id=\"conextIcon_$id\" $st class=\"lmb-icon $pic\" $evt title=\"".$lang[$LINK["desc"][$id]]."\" OnMouseDown=\"this.style.border='1px solid black';\" OnMouseUp=\"this.style.border='';\"></i></td>\n";
     }
@@ -271,37 +272,52 @@ EOD;
 
 #"fill_style('0','fontFamily',this.value);",$opt,"",1,"input_fontface","Font",50
 
-function pop_select($zl,$opt,$sel,$size,$name,$title=null,$titlesize=null){
+function pop_select($zl,$opt,$sel,$size,$name,$title=null,$titlesize=null,$icon=null){
     global $farbschema;
 
     if(!is_array($opt) || empty($opt)) return;
 
-	if($titlesize){
-		$width = "width:".(144-$titlesize)."px;";
-	}
+    if($titlesize){
+        $width = "width:".(144-$titlesize)."px;";
+    }
 
-    if($title) $title = "<div style=\"float:left;\">$title</div>&nbsp;";
+    if($title && !$icon) {$title = "<div style=\"float:left;\">$title</div>&nbsp;";}
 
-	$options = "";
-	if($opt["val"]){
-	foreach($opt["val"] as $key => $value){
-		$selected = "";
-		if($sel == $value) $selected = "selected=\"selected\"";
-		if($opt["label"][$key]){
-			$options .= "<optgroup label=\"".$opt["label"][$key]."\">";
-		}
-		$options .= "<option value=\"$value\" $selected>{$opt["desc"][$key]}</option>";
-	}}
+    if($icon) {$icon = "<i class=\"lmbContextLeft lmb-icon $icon\"></i>";}
+    
+    $options = "";
+    if($opt["val"]){
+        foreach($opt["val"] as $key => $value){
+                $selected = "";
+                if($sel == $value) $selected = "selected=\"selected\"";
+                if($opt["label"][$key]){
+                        $options .= "<optgroup label=\"".$opt["label"][$key]."\">";
+                }
+                $options .= "<option value=\"$value\" $selected>{$opt["desc"][$key]}</option>";
+        }
+    }
 	
-	echo <<<EOD
-		<div class="lmbContextRow">
-			<div class="lmbContextItem" style="text-align:right">$title
-			<select class="contextmenu" name="$name" id="$name" size="$size" onchange="$zl" style="{$width}">
-				$options
-			</select>
-			</div>
-		</div>
+    if($icon){
+        echo <<<EOD
+            <div class="lmbContextRow">
+                    $icon
+                    <span class="lmbContextItemIcon" style="text-align:right">$title</span>            
+                    <select class="contextmenu" name="$name" id="$name" size="$size" onchange="$zl" style="{$width}">
+                            $options
+                    </select>
+            </div>
 EOD;
+    } else {
+        echo <<<EOD
+            <div class="lmbContextRow">
+                <div class="lmbContextItem" style="text-align:right">$title
+                    <select class="contextmenu" name="$name" id="$name" size="$size" onchange="$zl" style="{$width}">
+                        $options
+                    </select>
+                </div>
+            </div>
+EOD;
+    }
 }
 
 function pop_color($funcname=null,$fparams=null,$container=null){
@@ -327,7 +343,7 @@ function pop_color($funcname=null,$fparams=null,$container=null){
 	echo "</tr></table></div></div>\n";
 }
 
-function pop_icon($classname=null){
+function pop_icon($classname=nullz){
 	if(!$classname) $classname = "";
     echo "<i class=\"lmbContextLeft lmb-icon $classname\" border=\"0\"></i>";
 }

@@ -25,7 +25,7 @@ if ($gdiaglist[$gtabid]["id"][$diag_id]) {
         require_once ($umgvar["pfad"] . $gdiaglist[$gtabid]["template"][$diag_id]);
     } else {
         require_once ('extra/diagram/diagram.php');
-        $link = lmb_createDiagram($diag_id, $gsr, $filter);
+        $link = lmb_createDiagram($diag_id, $gsr, $filter, $verkn, $extension);
         ?>
             <style>
                 .diagramm-wrapper { 

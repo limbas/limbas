@@ -431,6 +431,11 @@ body.multiframe{
     padding: 11px 20px;
 }
     
+.lmbItemHeaderMain td {
+    color: {$farbschema['WEB12']};
+    font-size: {$fontsize14};
+}
+    
 .helplink {
     position: absolute;
     right: 20px;
@@ -1386,6 +1391,30 @@ DIV.ajax_container {
 	overflow:hidden;
 	border-radius: 4px;
 	border-right:1px solid {$farbschema['WEB5']};
+}
+
+.progress {
+    height:20px;
+    margin-bottom:20px;
+    overflow:hidden;
+    background-color:#f5f5f5;
+    border-radius:4px;
+    -webkit-box-shadow:inset 0 1px 2px rgba(0,0,0,.1);
+}
+
+.progress-bar {
+    float:left;
+    width:0;
+    height:100%;
+    font-size:12px;
+    line-height:20px;
+    color:#fff;
+    text-align:center;
+    background-color:#337ab7;
+    -webkit-box-shadow:inset 0 -1px 0 rgba(0,0,0,.15);
+    box-shadow:inset 0 -1px 0 rgba(0,0,0,.15);
+    -webkit-transition:width .6s ease;
+    -o-transition:width .6s ease;transition:width .6s ease;
 }
 
 .lmbUploadDragenter {

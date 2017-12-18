@@ -28,11 +28,12 @@ appendix in the manual.
 
 update from 2.x
 - download latest "LIMBAS source"
-- replace or add the new LIMBAS source directory "limbas_src_2.x"
-- rebuild the symlink "limbas_src" to the new source directory (ln -s limbas_src_2.x limbas_src)
-- login to limbas - limbas will redirect you to the "system update page" - select the Systemupdate script "up_2.x.php" and run the update with "OK". If your release is older than one release you have to run all updates up to your release.
-- go to the root directory ([INSTALLPATH]/dependent/) and reset your system 
-- replace the "independent" directory with its newest version if necessary. Available as "independent.tar" archive or over subversion.
+- replace or add the new LIMBAS source directory "limbas_src_3.x"
+- rebuild the symlink "limbas_src" to the new source directory (ln -s limbas_src_3.x limbas_src)
+- login to limbas - limbas will redirect you to the "system update page" 
+- select the Systemupdate script "up_x.x.php" and run the update with "OK". If your release is older than one release you have to run all updates up to your release.
+- reset your system 
+- replace the "independent" directory with its newest version if necessary. Available as "independent.tar" archive in source.
 
 === GIT / SUBVERSION =======================================================
 

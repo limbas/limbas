@@ -202,6 +202,7 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 	global $gfield;
 	global $dingbats_char_on;
 	global $dingbats_char_off;
+	global $filestruct;
 	
 	$referenz_tab = $report["referenz_tab"];
 	
@@ -476,16 +477,18 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 					$DBRESULT[$bzm3][$bzm0] = "HTML#*#".$oresult;
 					# --- Upload ---
 				}elseif($data_type == 13){
-					$sqlquery2 = "SELECT DISTINCT LDMS_FILES.SECNAME,LDMS_FILES.SORT,LDMS_FILES.NAME,LMB_MIMETYPES.EXT,LDMS_FILES.SIZE,LMB_MIMETYPES.PIC,LMB_MIMETYPES.MIMETYPE FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND LDMS_FILES.TABID = $gtabid AND LDMS_FILES.FIELDID = $fieldid AND LDMS_FILES.DATID = ".odbc_result($rs1, "IDALIAS_".$gtabid)." AND TYP = 3  AND VID = 1 AND DEL = ".LMB_DBDEF_FALSE." ORDER BY LDMS_FILES.SORT";
+					$sqlquery2 = "SELECT DISTINCT LDMS_FILES.SECNAME,LDMS_FILES.LEVEL,LDMS_FILES.SORT,LDMS_FILES.NAME,LMB_MIMETYPES.EXT,LDMS_FILES.SIZE,LMB_MIMETYPES.PIC,LMB_MIMETYPES.MIMETYPE FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND LDMS_FILES.TABID = $gtabid AND LDMS_FILES.FIELDID = $fieldid AND LDMS_FILES.DATID = ".odbc_result($rs1, "IDALIAS_".$gtabid)." AND TYP = 3  AND VID = 1 AND DEL = ".LMB_DBDEF_FALSE." ORDER BY LDMS_FILES.SORT";
 					$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 					$bzm2 = 1;
 					#while(odbc_fetch_row($rs2, $bzm2)) {
 					if(odbc_fetch_row($rs2, 1)) {
+					    if(!$filestruct){get_filestructure();}
+					    $level = odbc_result($rs2, "LEVEL");
 						$mime = explode("/",odbc_result($rs2, "MIMETYPE"));
 						if($mime[0] == "image"){
-							$DBRESULT[$bzm3][$bzm0] = "IMAGE#*#".$umgvar["uploadpfad"].odbc_result($rs2, "SECNAME").".".odbc_result($rs2, "EXT");
+							$DBRESULT[$bzm3][$bzm0] = "IMAGE#*#".$umgvar["uploadpfad"].$filestruct['path'][$level].odbc_result($rs2, "SECNAME").".".odbc_result($rs2, "EXT");
 						}elseif($mime[1] == "pdf"){
-							$DBRESULT[$bzm3][$bzm0] = "PDF#*#".$umgvar["uploadpfad"].odbc_result($rs2, "SECNAME").".".odbc_result($rs2, "EXT");
+							$DBRESULT[$bzm3][$bzm0] = "PDF#*#".$umgvar["uploadpfad"].$filestruct['path'][$level].odbc_result($rs2, "SECNAME").".".odbc_result($rs2, "EXT");
 						}
 
 						$bzm2++;

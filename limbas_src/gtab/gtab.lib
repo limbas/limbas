@@ -2601,6 +2601,7 @@ function update_data($history_fields,$typ=null,$verkn=null,$nometa=null,$decode=
 		# Tabellen
 		foreach($query_gtabid as $gtabid => $value0){
 			if($gtab["edit"][$gtabid]){
+
 				# Datensätze
 				foreach($query_dataid[$gtabid] as $dataid => $value1){
 					
@@ -2654,12 +2655,12 @@ function update_data($history_fields,$typ=null,$verkn=null,$nometa=null,$decode=
 						}
 					}
 					
-					# Versionierung prüfen
-					if($gtab["versioning"][$gtabid] AND !$old_gresult[$gtabid][VACT][0]){
-					    lmb_alert($lang[2147]);
-					    continue;
-				    }
-					
+				    // Versionierung prüfen
+                    if ($gtab["versioning"][$gtabid] and !$old_gresult[$gtabid][VACT][0]) {
+                        lmb_alert($lang[2147]);
+                        $commit = 1;
+                        continue;
+                    }
 
 					$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET $sqlquery";
 					$sqlquery .= "EDITDATUM = ".LMB_DBDEF_TIMESTAMP.",";

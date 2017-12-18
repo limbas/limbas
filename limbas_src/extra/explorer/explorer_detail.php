@@ -74,7 +74,7 @@ function show_part(part) {
 <div id="lmbAjaxContainer" class="ajax_container" style="position:absolute;visibility:hidden;" OnClick="activ_menu=1;"></div>
 
 <div class="lmbPositionContainerMain">
-<TABLE class="tabfringe" CELLPADDING="0" CELLSPACING="0" style="width:650px;">
+<TABLE class="tabfringe" CELLPADDING="0" CELLSPACING="0" style="width:660px;">
 
 <TR><TD>
 
@@ -264,7 +264,7 @@ if($dfile["id"]){
 
 <DIV ID="versioning" STYLE="display:none;">
 <TABLE BORDER="0" cellspacing="0" cellpadding="2" WIDTH="650px" STYLE="border-collapse:collapse;">
-<TR><TD></TD><TD BGCOLOR="<?=$farbschema["WEB7"]?>"><B>diff</B></TD><TD BGCOLOR="<?=$farbschema["WEB7"]?>"><B>Version</B></TD><TD BGCOLOR="<?=$farbschema["WEB7"]?>"><B>Datum</B></TD><TD BGCOLOR="<?=$farbschema["WEB7"]?>"><B>Ersteller</B></TD></TR>
+<TR><TD></TD><TD BGCOLOR="<?=$farbschema["WEB7"]?>" colspan="3"><B>diff</B></TD></TR>
 
 <?
 $maxvid = count($vfile[id]);

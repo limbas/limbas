@@ -509,8 +509,9 @@ function getScrollPos() {
 
 // set table position
 function gtabSetTablePosition(reset,scrolltoY){
+	
 
-        if(!document.getElementById("GtabTableBody")){return false;}
+    if(!document.getElementById("GtabTableBody")){return false;}
 	
 	// set window title
 	var mfn = "g_"+document.form1.gtabid.value+"_"+jsvar["mainfield"];

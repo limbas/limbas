@@ -18,9 +18,10 @@
  * ID:
  */
 
-$lmb_calendar = new lmb_calendar;
-$tresult = array();
 $gtabid = $params["gtabid"];
+$tresult = array();
+$lmb_calendar = new lmb_calendar($gtabid);
+
 
 # EXTENSIONS
 if($GLOBALS["gLmbExt"]["ext_calendar.inc"]){
@@ -40,14 +41,14 @@ if($params["action"] == "context"){
 }elseif($params["action"] == "drop" OR $params["action"] == "resize"){
 	$lmb_calendar->lmb_dropEvent($params["gtabid"],$params["ID"],$params["dayDelta"],$params["minuteDelta"],$params["action"],$params["resource"]);
 }elseif($params["action"] == "add"){
-	echo $lmb_calendar->lmb_addEvent($params["gtabid"],$params["title"],$params["start"],$params["end"],$params["allDay"],$params["resource"],$verkn);
+	echo $lmb_calendar->lmb_addEvent($params["gtabid"],$params["title"],$params["start"],$params["end"],$params["allDay"],$params["resource"],$verkn,$params);
 	#}elseif($params["action"] == "edit"){
 	#	lmb_editEvent($params["gtabid"],$params["ID"],$params["title"],$params["start"],$params["title"]);
 
 }elseif($params["action"] == "details" AND $params["form_id"]){
 	require_once('gtab/gtab_form.lib');
 	require_once('gtab/gtab_type.lib');
-	#require_once('gtab/sql/gtab_change.dao');
+	require_once('gtab/sql/gtab_change.dao');
 	
 	$ID = floor($params["ID"]);
 	
@@ -106,6 +107,8 @@ if($params["action"] == "context"){
 	
 	if($resources){
 		echo json_encode($resources);
+	}else{
+		echo 1;
 	}
 	
 	return;

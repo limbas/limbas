@@ -449,13 +449,16 @@ function putmeta_to_db($ID,$meta){
 function refreshmeta_to_db($ID){
 	global $db;
 	global $umgvar;
-
+	global $filestruct;
+	
 	if($GLOBALS["create_new_file"]){return true;}
+    if(!$filestruct){get_filestructure();}
 	# get Details
-	$sqlquery = "SELECT DISTINCT LDMS_FILES.SECNAME,LMB_MIMETYPES.MIMETYPE,LMB_MIMETYPES.EXT FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.ID = $ID AND LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID";
+	$sqlquery = "SELECT DISTINCT LDMS_FILES.SECNAME,LDMS_FILES.LEVEL,LMB_MIMETYPES.MIMETYPE,LMB_MIMETYPES.EXT FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.ID = $ID AND LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {return false;}
-	$absfile = $umgvar["uploadpfad"].odbc_result($rs,"SECNAME").".".odbc_result($rs,"EXT");
+	$level = odbc_result($rs,'LEVEL');
+	$absfile = $umgvar["uploadpfad"].$filestruct['path'][$level].odbc_result($rs,"SECNAME").".".odbc_result($rs,"EXT");
 	$mimetype = odbc_result($rs,"MIMETYPE");
 	$ext = odbc_result($rs,"EXT");
 

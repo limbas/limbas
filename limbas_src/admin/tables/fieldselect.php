@@ -113,7 +113,7 @@ if($viewtyp == "filter"){
 <?php	
 	$multi_language = $umgvar['multi_language'];
 	echo "<TR class=\"tabHeader\"><td class=\"tabHeaderItem\">ID</td><TD class=\"tabHeaderItem\">".$lang[1833]."</TD>";
-	if($gfield[$atid]['multilang'][$fieldid] AND $multi_language){
+	if(($gfield[$atid]['multilang'][$fieldid] OR !$fieldid) AND $multi_language){
 	    
 	    require_once('admin/setup/language.lib');
 	    $langdef = get_language_list();
@@ -152,7 +152,7 @@ EOD;
 	        
 			
 			// multilang
-			if($gfield[$atid]['multilang'][$fieldid] AND $multi_language){
+			if(($gfield[$atid]['multilang'][$fieldid] OR !$fieldid) AND $multi_language){
 			    foreach($multi_language as $lkey => $langid){
 			         echo "<TD><INPUT TYPE=\"text\" STYLE=\"width:130px;\" NAME=\"select_wert_".$langid."[".$result_fieldselect[id][$key]."]\" VALUE=\"".$result_fieldselect['wert_'.$langid][$key]."\"  OnChange=\"document.form1.select_change.value=document.form1.select_change.value+';".$result_fieldselect[id][$key]."';\"></TD>";;
 			    }

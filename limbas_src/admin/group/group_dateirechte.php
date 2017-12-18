@@ -207,7 +207,7 @@ function limbasShowGroupsPost(result){
 <TR><TD colspan="23"><HR></TD></TR>
 
 <TR><TD style="width: 100%">
-<?
+<?php
 function files1($LEVEL,$sub_view,$sub_add,$sub_addf,$sub_edit,$sub_del){
 	global $file_struct;
 	global $ffilter;
@@ -260,32 +260,32 @@ function files1($LEVEL,$sub_view,$sub_add,$sub_addf,$sub_edit,$sub_del){
 			echo "<TD ALIGN=\"RIGHT\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR>";
 			
                         # --- view ---
-                        echo "<TD class=\"lmbRightsCheckboxWrapper\"><INPUT ID=\"fv".$file_struct["id"][$bzm]."\" NAME=\"frule[v][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"checkb\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','v',this.checked)\"";
+                        echo "<TD class=\"lmbRightsCheckboxWrapper\"><INPUT ID=\"fv".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2295]\" NAME=\"frule[v][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"checkb\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','v',this.checked)\"";
                         if($filerules[$file_struct["id"][$bzm]]["view"]){echo " CHECKED";}
                         echo "><INPUT TYPE=\"hidden\" ID=\"hv".$file_struct["id"][$bzm]."\" NAME=\"hhv".$file_struct["level"][$bzm]."\" VALUE=\"".$file_struct["level"][$bzm]."\"></TD>";
 
                         # --- add ---
-                        echo "<TD class=\"lmbRightsCheckboxWrapper\"><INPUT ID=\"fa".$file_struct["id"][$bzm]."\" NAME=\"frule[a][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"checkb\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','a',this.checked)\"";
+                        echo "<TD class=\"lmbRightsCheckboxWrapper\"><INPUT ID=\"fa".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2296]\" NAME=\"frule[a][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"checkb\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','a',this.checked)\"";
                         if($filerules[$file_struct["id"][$bzm]]["add"]){echo " CHECKED";}
                         echo "><INPUT TYPE=\"hidden\" ID=\"ha".$file_struct["id"][$bzm]."\" NAME=\"hha".$file_struct["level"][$bzm]."\" VALUE=\"".$file_struct["level"][$bzm]."\"></TD>";
 
                         # --- addf ---
-                        echo "<TD class=\"lmbRightsCheckboxWrapper\"><INPUT ID=\"fc".$file_struct["id"][$bzm]."\" NAME=\"frule[c][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"checkb\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','c',this.checked)\"";
+                        echo "<TD class=\"lmbRightsCheckboxWrapper\"><INPUT ID=\"fc".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2297]\" NAME=\"frule[c][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"checkb\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','c',this.checked)\"";
                         if($filerules[$file_struct["id"][$bzm]]["addf"]){echo " CHECKED";}
                         echo "><INPUT TYPE=\"hidden\" ID=\"hc".$file_struct["id"][$bzm]."\" NAME=\"hhc".$file_struct["level"][$bzm]."\" VALUE=\"".$file_struct["level"][$bzm]."\"></TD>";
 
                         # --- edit ---
-                        echo "<TD class=\"lmbRightsCheckboxWrapper\"><INPUT ID=\"fe".$file_struct["id"][$bzm]."\" NAME=\"frule[e][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"checkb\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','e',this.checked)\"";
+                        echo "<TD class=\"lmbRightsCheckboxWrapper\"><INPUT ID=\"fe".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2299]\" NAME=\"frule[e][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"checkb\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','e',this.checked)\"";
                         if($filerules[$file_struct["id"][$bzm]]["edit"]){echo " CHECKED";}
                         echo "><INPUT TYPE=\"hidden\" ID=\"he".$file_struct["id"][$bzm]."\" NAME=\"hhe".$file_struct["level"][$bzm]."\" VALUE=\"".$file_struct["level"][$bzm]."\"></TD>";
 
                         # --- del ---
-                        echo "<TD class=\"lmbRightsCheckboxWrapper\"><INPUT ID=\"fd".$file_struct["id"][$bzm]."\" NAME=\"frule[d][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"checkb\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','d',this.checked)\"";
+                        echo "<TD class=\"lmbRightsCheckboxWrapper\"><INPUT ID=\"fd".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2298]\" NAME=\"frule[d][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"checkb\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','d',this.checked)\"";
                         if($filerules[$file_struct["id"][$bzm]]["del"]){echo " CHECKED";}
                         echo "><INPUT TYPE=\"hidden\" ID=\"hd".$file_struct["id"][$bzm]."\" NAME=\"hhd".$file_struct["level"][$bzm]."\" VALUE=\"".$file_struct["level"][$bzm]."\"></TD>";
 
                         # --- lock ---
-                        echo "<TD class=\"lmbRightsCheckboxWrapper\"><INPUT ID=\"fl".$file_struct["id"][$bzm]."\" NAME=\"frule[l][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"checkb\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','l',this.checked)\"";
+                        echo "<TD class=\"lmbRightsCheckboxWrapper\"><INPUT ID=\"fl".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2300]\" NAME=\"frule[l][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"checkb\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','l',this.checked)\"";
                         if($filerules[$file_struct["id"][$bzm]]["lock"]){echo " CHECKED";}
                         echo "><INPUT TYPE=\"hidden\" ID=\"hl".$file_struct["id"][$bzm]."\" NAME=\"hhl".$file_struct["level"][$bzm]."\" VALUE=\"".$file_struct["level"][$bzm]."\"></TD>";
 

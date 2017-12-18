@@ -85,6 +85,14 @@
     font-size: 2.6em;
 }
 
+.lmb-icon-cus.lmb-plusonly::before {
+    content: "\e948";
+}
+
+.lmb-icon-cus.lmb-minusonly::before {
+    content: "\e949";
+}
+
 .lmb-table-godown::before, .lmb-table::before, .lmb-table::before,
 .lmb-rep-table::before, .lmb-table-key::before, .lmb-table-alt::before { /* former .fa-table */
     content: "\f0ce";
@@ -167,8 +175,9 @@
 .lmb-plus-square::before { /* former .fa-plus-square-o */
     content: "\f196";
 }
-.lmb-query::before { /* former .fa-calendar */
-    content: "\f073";
+.lmb-query::before { /* former .fa-table */
+    content: "\f0ce";
+    color: gray;
 }
 .lmb-cog::before { /* former .fa-cog */
     content: "\f013";
@@ -580,7 +589,7 @@
 }
 .lmb-folder2-open::before { /* former .fa-folder-open-o */
     content: "\f115";
-    color: rgb(221, 196, 15); /* yellow/beige */
+    color: rgb(201, 76, 0); /* yellow/beige */
 }
 .lmb-folder3-open::before { /* former .fa-folder-open-o */
     content: "\f115";
@@ -1000,54 +1009,57 @@
     content: "\f0ec";
 }
 .lmb-fav::before { /* former .fa-star-o */ 
-  content: "\f006";
- }
- .lmb-search::before { /* former .fa-search */
+    content: "\f006";
+}
+.lmb-search::before { /* former .fa-search */
     content: "\f002";
- }
- .lmb-file-info::before { /* former .fa-info */
+}
+.lmb-file-info::before { /* former .fa-info */
     content: "\f129";
- }
+}
 
 .lmb-file-upload::before { /* former .fa-upload */ 
-  content: "\f093";
- }
- .lmb-icon-cus.lmb-save-dir-view::before { /* dir-cam */
-     content: "\e912";
- }
+    content: "\f093";
+}
+.lmb-icon-cus.lmb-save-dir-view::before { /* dir-cam */
+    content: "\e912";
+}
 .lmb-periodic::before { /* former .fa-calendar */ 
-  content: "\f073";
- }
+    content: "\f073";
+}
 .lmb-icon-cus.lmb-select-all::before { 
     content: "\e938";
- }
+}
 .lmb-new-window::before { /* former .fa-external-link */ 
-  content: "\f08e";
- }
+    content: "\f08e";
+}
 .lmb-icon-cus.lmb-list-edit::before { /* list-edit */
     content: "\e943";
- }
+}
 .lmb-icon-cus.lmb-view-archived::before { /* view-archived */ 
     content: "\e945";
- }
+}
 .lmb-icon-32.lmb-crm::before { /* former .fa-group */ 
-  content: "\f0c0";
- }
+    content: "\f0c0";
+}
 .lmb-icon-32.lmb-file-manager::before { /* former .fa-folder-open-o */ 
-  content: "\f115";
- }
+    content: "\f115";
+}
 .lmb-gantt::before { /* former .fa-calendar */ 
-  content: "\f073";
- }
- .lmb-icon-cus.lmb-file-text-black::before {
+    content: "\f073";
+}
+.lmb-icon-cus.lmb-file-text-black::before {
     content: "\e926";
- }
+}
 .lmb-icon-cus.lmb-icon-32.lmb-workflow-menu::before {
     content: "\e941";
- }
+}
 .lmb-forbidden::before { /* former .fa-lock */ 
     content: "\f023";
- }
+}
 .lmb-unlocked::before { /* former .fa-unlock */ 
     content: "\f09c";
- }
+}
+.lmb-storage-folder::before { /* former .fa-hdd-o */
+    content: "\f0a0";
+}

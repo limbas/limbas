@@ -46,9 +46,12 @@ function set_version($tabid,$tabname,$versioning){
 		$sqlquery1 =  "UPDATE $tabname SET VID = 1, VPID = ID, VACT = ".LMB_DBDEF_TRUE;
 		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
+		
+    	$sqlquery1 = dbq_9(array($DBA["DBSCHEMA"],$tabname,dbf_4('VACT'),LMB_DBDEF_TRUE));
+    	$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		if(!$rs1) {$commit = 1;}
 	}
 
-	
 }
 
 

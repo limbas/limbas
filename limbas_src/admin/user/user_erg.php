@@ -76,7 +76,7 @@ function select_all_user(el){
 
 <TABLE cellspacing="1" cellpadding="1" style="width:100%">
 <TR>
-<TD class="tabHeader"><INPUT TYPE="CHECKBOX" STYLE="border:none;background-color:transparent" onclick="select_all_user(this);"></TD>
+<TD class="tabHeader" ALIGN="CENTER"><INPUT TYPE="CHECKBOX" STYLE="border:none;background-color:transparent" onclick="select_all_user(this);"></TD>
 <TD class="tabHeader"><A HREF="Javascript:document.form1.order.value='LMB_USERDB.USERNAME';document.form1.submit();"><?=$lang[651]?></A></TD>
 <TD class="tabHeader"><?=$lang[652]?></TD>
 <TD class="tabHeader"><A HREF="Javascript:document.form1.order.value='LMB_GROUPS.NAME';document.form1.submit();"><?=$lang[654]?></TD>

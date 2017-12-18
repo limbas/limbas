@@ -1,119 +1,139 @@
 <html>
-<style>
-    
-.titleBar {
-    background: url("pic/frame_top.png") repeat-x scroll 0 0 #FFFFFF;
-    height: 80px;
-    text-align: left;
-    width: 100%;
-	display: block;
-}
-
-body{
-	background-color:#F5F5F5;
-        margin:0;
-        font-size: 12px;
-}
-
-#wrapper {
-    margin:20px auto;
-    width:800px;
-    border: 1px solid #c0c0c0;
-    background-color:#FFFFFF;
-    padding:5px;
-}
-
-h3 {
-    background-color: #eaf3ee;
-    padding:5px;
-    border: 1px solid #c0c0c0;
-}
-
-.footer {
-    background-color: #f5f5f5;
-    border-top: 1px solid #c0c0c0;
-    margin: -5px;
-    padding: 10px;
-    text-align: justify;
-}
-
-
-</style>
-
-
-<div id="wrapper">
-
-<div class="titleBar">
-	<img src="pic/logo_limbas_org.png">
-</div>
-
-<h3><img src="pic/info.png" border="0" title="Info" style="vertical-align: middle;"> INFO</h3>
-This is a release of LIMBAS, a Database Tool with GPL license.
-(More licence information is provided in the file PUBLIC and in the in the folder ./limbas_src/help).<br>
-The latest information and documentation about LIMBAS can be found at: <a href="http://www.limbas.org/" target="new">http://www.limbas.org/</a>.<br>
-LIMBAS is brought to you by the LIMBAS team at <a href="http://www.limbas.com/" target="new">LIMBAS GmbH</a>.
-For a list of developers and other contributors, see the Credits appendix in the manual.
-
-
-<h3><img src="pic/start.png" border="0" title="Start" style="vertical-align: middle;"> START</h3>
-You can access to the following applications:<br><br>
-
-<table border="0" cellpadding="2" cellspacing="0" width="70%">
-<tr><td rowspan="4" width="100px"></td></tr>
-<tr class="tabHeaderItem">
-<td><img border=0 src="pic/dot.gif"> <a href="index.php" target="new">LIMBAS framework</a></td>
-<td width="80px"></td>
-<td><img border=0 src="pic/dot.gif"> <a href="public/data_access.php" target="new">LIMBAS SOAP access</a><br></td>
-</tr>
-<tr><td colspan="4" height="15px"></td></tr>
-<tr class="tabHeaderItem">
-<td><img border=0 src="pic/dot.gif"> <a href="main_wsdl.php?Service=Artikel&WSDL" target="new">LIMBAS WSDL access</a></td>
-<td width="80px"></td>
-<td><img border=0 src="pic/dot.gif"> <a href="webdav/" target="new">LIMBAS WEBDAV access</a></td>
-</tr>
-</table>
-
-
-<h3><img src="pic/help.png" border="0" title="Documentation" style="vertical-align: middle;"> DOCUMENTATION</h3>
-A detailed description of how to perform a new INSTALLATION is provided at <a href="http://www.limbas.org" target="new">http://www.limbas.org</a>.<br>
-The UPDATE process is documented in <a href="http://www.limbas.org" target="new">http://www.limbas.org</a>.<br>
-The default URL of your LIMBAS installation is: http://localhost/openlimbas/dependent/index.php.<br>
-The default Installation PATH of Limbas is: "/srv/www/htdocs/openlimbas".
-
-<h3><img src="pic/important.png" border="0" title="Important" style="vertical-align: middle;"> IMPORTANT</h3>
-Please send bug (error) reports, questions and comments to the mailing list at: 
-<a href="http://sourceforge.net/projects/limbas/">http://sourceforge.net/projects/limbas/</a>.<br>
-
-<h3><img src="pic/password.png" border="0" title="default passwords" style="vertical-align: middle;"> default PASSWORDS</h3>
-As default admin-user for the first login in LIMBAS use:
-<ul>
-<li>user: admin 
-<li>password: limbas
-</ul>
-For root user in appliances use:
-<ul>
-<li>user: root
-<li>pass: linux
-</ul>
-
-<h3><img src="pic/suse.jpg" border="0" title="Appliance" style="vertical-align: middle;"> APPLIANCES</h3>
-Following pre-build appliances are available for LIMBAS: (please contact us: <a href="mailto:vertrieb@limbas.org">vertrieb@limbas.org</a>)
-<ul>
-<li>USB stick / hard disk image
-<li>Live CD/DVD (.iso)
-<li>VMware / VirtualBox / KVM (.vmdk)
-<li>OVF virtual machine (.ovf)
-<li>Xen guest
-<li>Preload ISO (.iso)
-</ul>
-
-
-<div class="footer">
-LIMBAS. Copyright&copy;1998-2016 Axel Westhagen (support@limbas.org). Extensions are copyright of their respective owners. Go to <a href="http://www.limbas.org/" title="LIMBAS Website" target="new">http://www.limbas.org/</a> for details. LIMBAS comes with ABSOLUTELY NO WARRANTY; This is free software, and you are welcome to redistribute it under certain conditions; Obstructing the appearance of this notice is prohibited by law.
-</div>
-
-
-</div>
-
-
+    <head>
+        <link rel="stylesheet" href="extern/bootstrap/bootstrap.min.css">
+        <link rel="stylesheet" href="layout/comet/icons.css">
+        <style>
+            .table tbody tr td a {
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            
+            <div class="row">
+                <div class="col-md-offset-4 col-md-4 text-center">
+                    <img src="pic/limbas-logo-R-grau_trans.png" style="margin-top: 15px; width: 100%;">
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="lmb-icon lmb-info-circle"></i>Info</h3>
+                    </div>
+                    <div class="panel-body">
+                        This is a release of LIMBAS, a Database Tool with GPL license.
+                        (More licence information is provided in the file PUBLIC and in the in the folder ./limbas_src/help).<br>
+                        The latest information and documentation about LIMBAS can be found at: <a href="http://www.limbas.org/" target="new">limbas.org</a>.<br>
+                        LIMBAS is brought to you by the LIMBAS team at <a href="http://www.limbas.com/" target="new">limbas.com</a>.<br>
+                        For a list of developers and other contributors, see the Credits appendix in the manual.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="panel panel-success">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="lmb-icon lmb-play-circle"></i>Start</h3>
+                    </div>
+                    <div class="panel-body">
+                        You can access to the following applications:
+                    </div>
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <td>
+                                    <a class="list-group-item" href="index.php" target="new">LIMBAS framework</a>
+                                </td>
+                                <td>
+                                    <a class="list-group-item" href="public/data_access.php" target="new">LIMBAS SOAP access</a>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <a class="list-group-item" href="main_wsdl.php?Service=Artikel&WSDL" target="new">LIMBAS WSDL access</a>
+                                </td>
+                                <td>
+                                    <a class="list-group-item" href="webdav/" target="new">LIMBAS WEBDAV access</a>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>                    
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="lmb-icon lmb-report"></i>Documentation</h3>
+                    </div>
+                    <div class="panel-body">
+                        A detailed description of how to perform a new INSTALLATION is provided at <a href="http://www.limbas.org" target="new">limbas.org</a>.<br>
+                        The UPDATE process is documented in <a href="http://www.limbas.org" target="new">limbas.org</a>.<br>
+                        The default URL of your LIMBAS installation is: http://localhost/openlimbas/dependent/index.php.<br>
+                        The default Installation PATH of Limbas is: "/srv/www/htdocs/openlimbas".
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="panel panel-danger">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="lmb-icon lmb-exclamation-triangle"></i>Important</h3>
+                    </div>
+                    <div class="panel-body">
+                        Please send bug (error) reports, questions and comments to the mailing list at: 
+                        <a href="http://sourceforge.net/projects/limbas/">sourceforge.net/projects/limbas/</a>.
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="lmb-icon lmb-unlocked"></i>Default Passwords</h3>
+                    </div>
+                    <div class="panel-body">
+                        As default admin-user for the first login in LIMBAS use:
+                        <ul>
+                            <li>user: admin 
+                            <li>password: limbas
+                        </ul>
+                        For root user in appliances use:
+                        <ul>
+                            <li>user: root
+                            <li>pass: linux
+                        </ul>                        
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="panel panel-info">
+                    <div class="panel-heading">
+                        <h3 class="panel-title"><i class="lmb-icon lmb-user-list"></i>Appliances</h3>
+                    </div>
+                    <div class="panel-body">
+                        Following pre-build appliances are available for LIMBAS: (please contact us: <a href="mailto:vertrieb@limbas.org">vertrieb@limbas.org</a>)
+                        <ul>
+                            <li>USB stick / hard disk image
+                            <li>Live CD/DVD (.iso)
+                            <li>VMware / VirtualBox / KVM (.vmdk)
+                            <li>OVF virtual machine (.ovf)
+                            <li>Xen guest
+                            <li>Preload ISO (.iso)
+                        </ul>                   
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="alert alert-warning">
+                    LIMBAS. Copyright&copy;1998-2016 Axel Westhagen (support@limbas.org). Extensions are copyright of their respective owners. Go to <a href="http://www.limbas.org/" title="LIMBAS Website" target="new">http://www.limbas.org/</a> for details. LIMBAS comes with ABSOLUTELY NO WARRANTY; This is free software, and you are welcome to redistribute it under certain conditions; Obstructing the appearance of this notice is prohibited by law.
+                </div>
+            </div>
+            
+        </div>
+    </body>
 </html>

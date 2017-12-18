@@ -263,7 +263,7 @@ foreach($odbc_table["table_name"] as $tkey => $tvalue) {
 <?/* --- Sync-import ------------------------------- */?>
 <TABLE ID="tab6" width="100%" cellspacing="2" cellpadding="1" class="tabBody" style="display:none;">
 <TR class="tabHeader"><TD class="tabHeaderItem" COLSPAN="5"><?=$lang[2860]?></TD></TR>
-<TR class="tabBody"><TD>File</TD><TD><input type="file" NAME="fileproject" style="width:250px;"></TD></TR>
+<TR class="tabBody"><TD>File</TD><TD><input type="file" NAME="filesync" style="width:250px;"></TD></TR>
 <TR class="tabBody"><TD></TD><TD><input type="button" value="<?=$lang[2243]?>" onclick="document.form1.precheck.value=1;document.form1.syncimport.value=1;document.form1.submit();"></TD></TR>
 <TR class="tabBody"><TD colspan="2" class="tabFooter"></TD></TR>
 </TABLE>

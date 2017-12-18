@@ -343,7 +343,7 @@ if($multilang){
     if($multilang == "false"){$multilang = LMB_DBDEF_FALSE;$m = 0;}else{$multilang = LMB_DBDEF_TRUE;$m = 1;}
     $sqlquery =  "UPDATE LMB_CONF_FIELDS SET MULTILANG = $multilang WHERE FIELD_ID = $fieldid AND TAB_GROUP = $tab_group AND TAB_ID = $atid";
     $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    if(!$rs) {$commit = 1;}else{
+    if(!$rs) {$commit = 1;}elseif($table_typ[$atid] != 5){
         lmb_set_multi_language($atid,$fieldid,$m);
     }
 }

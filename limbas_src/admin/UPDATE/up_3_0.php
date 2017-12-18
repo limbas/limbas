@@ -35,7 +35,7 @@ patch_scr(0,0,'patch_1','',3);
 
 
 #echo "-->";
-$impsystables = array("lmb_lang.tar.gz","lmb_action.tar.gz");
+#$impsystables = array("lmb_lang.tar.gz","lmb_action.tar.gz");
 
 ###########################
 

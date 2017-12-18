@@ -430,7 +430,6 @@ class pdf_report extends HTML2FPDF {
 	/*------- Add-Font ---------*/
 	function add_font($font){
 		global $sysfont;
-		error_log(print_r($sysfont,1));
 		if(!$sysfont){$sysfont = get_fonts();}
 
 		if($sysfont["family"][$font][0]){

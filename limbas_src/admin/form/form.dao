@@ -118,7 +118,7 @@ if($form_possize){
 			}elseif(${"text".$id_}){
 				$INHALT = ${"text".$id_};
 				$ia = "INHALT = ?,";
-			}elseif(strpos("_menu_bild_tab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_menue_scroll_tabmenu_uform",$typ_)){
+			}elseif(strpos("_chart_menu_bild_tab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_menue_scroll_tabmenu_uform",$typ_)){
 				$ia = "";
 			}else{
 				$INHALT = "";
@@ -243,7 +243,7 @@ function set_default_style($styles){
 /* --- Element hinzufügen --------------------------------------------- */
 function lmb_addElement($form_id,$form_add,$width=null,$height=null,$new_text=null,
 $form_tab=null,$form_tab_el=null,
-$uform_typ=null,$uform_style=null,$uform_set=null,$form_replace_element=null,$aktiv_tabcontainer=null,$subelement=null,
+$uform_typ=null,$uform_style=null,$uform_set=null,$form_replace_element=null,$aktiv_tabcontainer=null,$subelement=null,$form_chart_id=null,
 $default_font=null,$default_size=null,
 $form_stab_snapid=null,$form_stab_show=null,
 $form_add_tab=null,$form_add_field=null,$form_add_baum=null,
@@ -256,6 +256,7 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 	global $gtab;
 	global $form_typ;
 	global $lang;
+	global $gdiaglist;
 	
 	unset($height);
 	unset($width);
@@ -445,6 +446,9 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 		$value = "tabmenu";
 	}elseif($form_add == "submt"){
 		$value = "submit";
+	}elseif($form_add == "chart" AND $form_chart_id){
+		$value =  $gdiaglist[ $gdiaglist['gtabid'][$form_chart_id] ]["name"][$form_chart_id];
+		$tab_id = $form_chart_id;
 	}elseif($form_add == "button"){
 		$value = "button";
 	}elseif($form_add == "inptext"){
@@ -566,7 +570,7 @@ if($form_add){
 	foreach ($form_dbdat_fieldid as $key => $value){
 		lmb_addElement($form_id,$form_add,$width,$height,$new_text,
 		$form_tab,$form_tab_el,
-		$uform_typ,$uform_style,$uform_set,$form_replace_element,$aktiv_tabcontainer,$subelement,
+		$uform_typ,$uform_style,$uform_set,$form_replace_element,$aktiv_tabcontainer,$subelement,$form_chart_id,
 		$default_font,$default_size,
 		$form_stab_snapid,$form_stab_show,
 		$form_add_tab,$form_add_field,$form_add_baum,

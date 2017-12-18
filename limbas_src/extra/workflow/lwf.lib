@@ -53,7 +53,7 @@ function lmb_wfl_init($wfl_id,$wfl_inst,$task_id,$tab_id=null,$dat_id=null,$para
 		$next_task = $fnct($wfl_inst,$active_task,$tab_id,$dat_id,$params);
 		# success - next task is number
 		if(is_numeric($next_task)){
-			$task_id = lmb_wfl_setTask(1,$wfl_inst,$next_task,$tab_id,$dat_id);
+			$task_id = lmb_wfl_setTask($wfl_id,$wfl_inst,$next_task,$tab_id,$dat_id);
 			if($task_id === false){lmb_EndTransaction(0);return false;}else{
 				lmb_wfl_setHistory($wfl_id,$wfl_inst,$active_task,$task_id,$tab_id,$dat_id);
 				lmb_EndTransaction(1);

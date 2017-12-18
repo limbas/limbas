@@ -833,7 +833,7 @@ function getGtabLevel(&$lmpart,&$lmb,$action,$gtabid,$verkn=null,$rec=null){
 									$size = explode("x",$lmpart[$gtabid_]["thumbsize"][$key]);
 									if($piclist = $fresult[$rgtabid_][$did][$rkey]){
 										foreach($piclist["id"] as $key1 => $value1){
-											$piclist["url"][$key1] = IMACK_ConvertThumbs(array($key1,$piclist["secname"][$key1],$piclist["mimeid"][$key1],$piclist["thumb_ok"][$key1]),$size[0],$size[1],1);
+											$piclist["url"][$key1] = IMACK_ConvertThumbs(array($key1,$piclist["secname"][$key1],$piclist["mimeid"][$key1],$piclist["thumb_ok"][$key1],$piclist["level"][$key1]),$size[0],$size[1],1);
 										}
 										$fresult[$rgtabid_][$did][$rkey] = $piclist;
 									}

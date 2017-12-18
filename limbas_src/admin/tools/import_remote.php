@@ -97,7 +97,10 @@ if(($remoteimport AND !empty($_FILES["fileproject"])) OR $confirm_fileimport){
 		rmdirr($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/");
 		
 		# Datei in Tempverzeichnis verschieben und import durchführen
-		if(!move_uploaded_file($_FILES['fileproject']['tmp_name'], $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.tar.gz")){return;}
+		if(!move_uploaded_file($_FILES['fileproject']['tmp_name'], $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.tar.gz")){
+                    echo '<div>Dateiupload fehlgeschlagen</div>';
+                    return;
+                }
 		# Datei entpacken
 		$sys = exec("tar -x -C ".$umgvar["pfad"]."/USER/".$session["user_id"]."/temp/ -f ".$umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.tar.gz");
 		

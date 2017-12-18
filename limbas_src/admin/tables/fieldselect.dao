@@ -168,7 +168,7 @@ if($select_change AND $pool){
 			}
 			
 			// multilang
-			if($gfield[$atid]['multilang'][$fieldid] AND $multi_language){
+			if(($gfield[$atid]['multilang'][$fieldid] OR !$fieldid) AND $multi_language){
 			    foreach($multi_language as $lkey => $langid){
 			         $update['LANG'.$langid.'_WERT'] = parse_db_string(trim(str_replace("\t","",str_replace("\n","",${'select_wert_'.$langid}[$value]))),160);
 			         $oldvalue[$langid] = odbc_result($rs,'LANG'.$langid.'_WERT');
@@ -191,7 +191,7 @@ if($select_change AND $pool){
 			// update table entries
 			if($gfield[$atid]["data_type"][$fieldid] == 12 OR $gfield[$atid]["data_type"][$fieldid] == 14){
 			    foreach($oldvalue as $langid => $oval){
-			        if($gfield[$atid]['multilang'][$fieldid] AND $langid != $umgvar['default_language']){
+			        if(($gfield[$atid]['multilang'][$fieldid] OR !$fieldid) AND $langid != $umgvar['default_language']){
 			             if($oldvalue[$langid] == ${'select_wert_'.$langid}[$value]){continue;}
     			         $upd[] = 'LANG'.$langid.'_'.$gfield[$atid]["field_name"][$fieldid]." = '".parse_db_string(${'select_wert_'.$langid}[$value],160)."'";
 			        }else{
@@ -480,7 +480,7 @@ if($pool){
 		}
 		
 		$multi_language = $umgvar['multi_language'];
-		if($gfield[$atid]['multilang'][$fieldid] AND $multi_language){
+		if(($gfield[$atid]['multilang'][$fieldid] OR !$fieldid) AND $multi_language){
 			foreach($multi_language as $lkey => $langid){
 			    $result_fieldselect['wert_'.$langid][$bzm] = odbc_result($rs, 'LANG'.$langid.'_WERT');
 			}

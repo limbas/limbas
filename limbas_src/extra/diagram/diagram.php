@@ -22,55 +22,285 @@ require_once('gtab/gtab.lib');
 
 /*
  * Author: Peter
- * Creates png-image of diagram
- * Returns: img-dom-element as html-string
+ * Settings that will be needed to calculate the new settings: diag_width, diag_height, fontsize
+ * Uses the database settings specified in $src to automatically calculate settings like legend-position or padding
+ * $chartData is the data previously put into the chart in the pChart-data-format
+ * Returns: indexed array of automatically calculated settings
  */
-function lmb_createDiagram($diag_id,$gsr=null,$filter=null){
+function lmb_diagramAutoSettings($src, $chartData) {
+    global $isLine;
+    global $isBar;
+    global $isPie;
+    
+    // returned array
+    $dest = array(
+        'PADDING_LEFT' => $src['PADDING_LEFT'],
+        'PADDING_TOP' => $src['PADDING_TOP'],
+        'PADDING_RIGHT' => $src['PADDING_RIGHT'],
+        'PADDING_BOTTOM' => $src['PADDING_BOTTOM'],
+        'LEGEND_X' => $src['LEGEND_X'],
+        'LEGEND_Y' => $src['LEGEND_Y'],
+        'PIE_RADIUS' => $src['PIE_RADIUS']
+    );
+    
+    // pie chart
+    if($isPie) {
+        // diag_width = longestString + 2*radius + longestString
+        // diag_height = 2*radius + 2*stringheight
+        if(!$dest['PIE_RADIUS']) {
+            $sts = stringSize(getLongestAbscissaValue($chartData));
+            $longestStringWidth = $sts['w'];
+            $maxRadiusWidth = ($src['DIAG_WIDTH'] - 2 * $longestStringWidth) / 2 - 35;
+            $sts = stringSize("42");
+            $maxRadiusHeight = ($src['DIAG_HEIGHT'] - 2 * $sts['h']) / 2 - 45;
+            $dest['PIE_RADIUS'] = min($maxRadiusWidth, $maxRadiusHeight);
+        }
+        
+        $dest['PIE_RADIUS'] = max(1, $dest['PIE_RADIUS']);
+        
+        // pie should be centered
+        if(!$dest['PADDING_LEFT']) {
+            $dest['PADDING_LEFT'] = $src['DIAG_WIDTH'] / 2;
+        }
+        if(!$dest['PADDING_RIGHT']) {
+            $dest['PADDING_RIGHT'] = $src['DIAG_WIDTH'] / 2;
+        }
+        if(!$dest['PADDING_TOP']) {
+            $dest['PADDING_TOP'] = $src['DIAG_HEIGHT'] / 2;
+        }
+        if(!$dest['PADDING_BOTTOM']) {
+            $dest['PADDING_BOTTOM'] = $src['DIAG_HEIGHT'] / 2;        
+        }
+        
+    }
+    
+    // line chart / bar chart
+    if($isLine || $isBar) {
+        // basepadding on all 4 sides
+        $basePadding = 20;
+        
+        // legend size
+        $legendBoxSize = 10;
+        $legendWidth = 0;
+        $legendHeight = 0;
+        $legendNumRows = sizeof($chartData['Series']) - 1; // -1 for ignoring abscissa
+        if($src['LEGEND_MODE'] == 'vertical') {
+            $sts = stringSize(getLongestLegendEntry($chartData));
+            $legendWidth = $legendBoxSize + $sts['w'];
+            $sts = stringSize("42");
+            $legendHeight = ($sts['h'] + 2) * $legendNumRows; // +2 for space between lines
+        } else if($src['LEGEND_MODE'] == 'horizontal') {
+            $sts = stringSize(getLongestLegendEntry($chartData));
+            $legendWidth = ($legendBoxSize + $sts['w']) * $legendNumRows;
+            $sts = stringSize("42");
+            $legendHeight = $sts['h'];
+        }
+        
+        // right side: only basepadding
+        if(!$dest['PADDING_RIGHT']) {
+            $dest['PADDING_RIGHT'] = $basePadding;
+        }
+        
+        // top side: basepadding + half of maximum y-scale entry
+        if(!$dest['PADDING_TOP']) {
+            $sts = stringSize("42");
+            $dest['PADDING_TOP'] = $basePadding + $sts['h'] / 2;
+        }
+     
+        // bottom side: basepadding + height of rotated x-axis texts + height of x-axis description
+        $sts = stringSize(getLongestAbscissaValue($chartData), LABEL_ROTATION);
+        $xAxisTextHeight = $sts['h'];
+        $sts = stringSize($src['TEXT_X']);
+        $xAxisDescriptionHeight = $sts['h'];
+        if(!$dest['PADDING_BOTTOM']) {
+            $dest['PADDING_BOTTOM'] = $basePadding + $xAxisTextHeight + $xAxisDescriptionHeight;
+        }
+        
+        // left side: basepadding + legendWidth + basepadding + height of y-axis description + width of longest y-scale entry
+        $sts = stringSize($src['TEXT_Y']);
+        $yAxisDescriptionHeight = $sts['h'];
+        $sts = stringSize(getLongestYAxisValue($chartData));
+        $yAxisTextWidth = $sts['w'];
+        if(!$dest['PADDING_LEFT']) {
+            $dest['PADDING_LEFT'] = 2 * $basePadding + $legendWidth + $yAxisDescriptionHeight + $yAxisTextWidth;
+        }
+        
+        // center legend (use height of diagram without x-axis texts)
+        if(!$dest['LEGEND_Y']) {
+            $dest['LEGEND_Y'] = ($src['DIAG_HEIGHT'] - $legendHeight - $xAxisTextHeight) / 2;
+        }
+        if(!$dest['LEGEND_X']) {
+            $dest['LEGEND_X'] = $basePadding;
+        }
+    }
+    
+    return $dest;
+}
+
+function getLongestLegendEntry($chartData) {
+    $maxLength = 0;
+    $maxValue = "";
+    
+    foreach($chartData['Series'] as $seriesName => $bla) {
+        // abscissa has no entry in legend
+        if($seriesName == $chartData['Abscissa']) {
+            continue;
+        }    
+        
+        if(strlen($seriesName) > $maxLength) {
+            $maxLength = strlen($seriesName);
+            $maxValue = $seriesName;
+        }        
+    }
+    
+    return $maxValue;
+}
+
+function getLongestYAxisValue($chartData) {
+    $maxLength = 0;
+    $maxValue = "";
+    
+    foreach($chartData['Series'] as $seriesName => $seriesData) {
+        // abscissa has no values
+        if($seriesName == $chartData['Abscissa']) {
+            continue;
+        }
+        
+        if(strlen($seriesData['Max']) > $maxLength) {
+            $maxLength = strlen($seriesData['Max']);
+            $maxValue = $seriesData['Max'];
+        }
+    }
+    
+    return $maxValue;
+}
+
+function getLongestAbscissaValue($chartData) {
+    $abscissaName = $chartData['Abscissa'];
+    $abscissaValues = $chartData['Series'][$abscissaName]['Data'];
+    
+    // find longest entry
+    $maxLength = 0;
+    $maxValue = "";
+    foreach($abscissaValues as $value) {
+        if(strlen($value) > $maxLength) {
+            $maxLength = strlen($value);
+            $maxValue = $value;
+        }
+    }
+
+    return $maxValue;
+}
+
+function stringSize($text, $angle=0) {
+    global $fontsize;
+    global $umgvar;
+    global $fontlocation;
+    
+    $fontPath = $umgvar['path'] . '/' . $fontlocation;
+    $bBox = imagettfbbox($fontsize, $angle, $fontPath, $text);
+    
+    // calculate width and height. note: always take the maximum width, depending on the angle
+    // width: max of either distance[lower-right, upper-left] or distance[upper-right, lower-left]
+    $width = max(abs($bBox[2] - $bBox[6]), abs($bBox[4] - $bBox[0]));
+    
+    // height: max of either distance[upper-right, lower-left] or distance[lower-right, upper-left]
+    $height = max(abs($bBox[5] - $bBox[1]), abs($bBox[3] - $bBox[7]));
+    
+    return array(
+        'w' => $width,
+        'h' => $height
+    );
+}
+
+/*
+ * Author: Peter
+ * Creates png-image of diagram
+ * Returns: location of saved png-image
+ */
+$fontsize;
+$isLine;
+$isBar;
+$isPie;
+$fontlocation;
+        
+function lmb_createDiagram($diag_id, $gsr=null, $filter=null, $verkn=null, $extension=null, $width=null, $height=null, $style=array()){
 	global $db;
 	global $gfield;
 	global $gdiaglist;
 	global $session;
 	global $umgvar;
+        global $fontsize;
+        global $isLine;
+        global $isBar;
+        global $isPie;
+        global $fontlocation;
 
-	$gtabid = $gdiaglist['gtabid'][$diag_id];
+        // parse style
+        $bgcolor = $style[21] ? $style[21] : 'ffffff';
+        $fontsize = $style[3] ? $style[3] : null; // use fontsize from database
+        $fontlocation = lmb_getFontLocation($style);
+
+        $gtabid = $gdiaglist['gtabid'][$diag_id];
 	if(!$gdiaglist[$gtabid]['id'][$diag_id]){return false;}
 	
+        $settingNames = array(
+            'TAB_ID',
+            'DIAG_TYPE',
+            'DIAG_WIDTH',
+            'DIAG_HEIGHT',
+            'TEXT_X',
+            'TEXT_Y',
+            'FONT_SIZE',
+            'PADDING_LEFT',
+            'PADDING_TOP',
+            'PADDING_RIGHT',
+            'PADDING_BOTTOM',
+            'LEGEND_X',
+            'LEGEND_Y',
+            'LEGEND_MODE',
+            'PIE_WRITE_VALUES',
+            'PIE_RADIUS',
+            'TRANSPOSED'
+        );
 
 	/* Get customization-settings from database */	
-	$sqlquery = "SELECT TAB_ID,DIAG_TYPE,DIAG_WIDTH,DIAG_HEIGHT,TEXT_X,TEXT_Y,FONT_SIZE,PADDING_LEFT,PADDING_TOP,PADDING_RIGHT,PADDING_BOTTOM,LEGEND_X,LEGEND_Y,LEGEND_MODE,PIE_WRITE_VALUES,PIE_RADIUS,TRANSPOSED FROM LMB_CHART_LIST WHERE ID=$diag_id";
+	$sqlquery = "SELECT " . implode(',', $settingNames) . " FROM LMB_CHART_LIST WHERE ID=$diag_id";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	odbc_fetch_row($rs, 1);
-		
-	$width = odbc_result($rs, "DIAG_WIDTH");
-	$height = odbc_result($rs, "DIAG_HEIGHT");
+	
+        $dbSettings = array();
+        foreach($settingNames as $name) {
+             $dbSettings[$name] = odbc_result($rs, $name);
+        }
+        
+        // get width/height from parameters instead of database
+	if(!$width){$width = odbc_result($rs, "DIAG_WIDTH");}
+	if(!$height){$height = odbc_result($rs, "DIAG_HEIGHT");}
+	$dbSettings['DIAG_WIDTH'] = $width;
+	$dbSettings['DIAG_HEIGHT'] = $height;
+        
+        // fixed settings
 	$text_x = odbc_result($rs, "TEXT_X");
 	$text_y = odbc_result($rs, "TEXT_Y");
-	$fontsize = odbc_result($rs, "FONT_SIZE");
-	$padding_left = odbc_result($rs, "PADDING_LEFT");
-	$padding_top = odbc_result($rs, "PADDING_TOP");
-	$padding_right = odbc_result($rs, "PADDING_RIGHT");
-	$padding_bottom = odbc_result($rs, "PADDING_BOTTOM");
-	$legend_x = odbc_result($rs, "LEGEND_X");
-	$legend_y = odbc_result($rs, "LEGEND_Y");
+    if(!$fontsize){ $fontsize = odbc_result($rs, "FONT_SIZE"); }
 	$legend_mode = odbc_result($rs, "LEGEND_MODE");
-	$pie_write_values = odbc_result($rs, "PIE_WRITE_VALUES");
-	$pie_radius = odbc_result($rs, "PIE_RADIUS");
+	$pie_write_values = odbc_result($rs, "PIE_WRITE_VALUES");       
 	$diag_tab_id = odbc_result($rs, "TAB_ID");
 	$diag_type = odbc_result($rs, "DIAG_TYPE");
-	$diagname = $gdiaglist[$gtabid]["name"][$diag_id];
-	
+	$diagname = $gdiaglist[$gtabid]["name"][$diag_id];             
 	
 	/* Define transposed-mode */
-	define("TRANSPOSED", odbc_result($rs, "TRANSPOSED"));
+        $isTransposed = odbc_result($rs, "TRANSPOSED");
 
 	/* Define chart types */
-	define("LINE",$diag_type == "Line-Graph");
-	define("BAR",$diag_type == "Bar-Chart");
-	define("PIE",$diag_type == "Pie-Chart");
-	
+	$isLine = ($diag_type == "Line-Graph");
+        $isBar = ($diag_type == "Bar-Chart");
+        $isPie = ($diag_type == "Pie-Chart");
+        	
 	/* Define axis types */
-	define("DATA_AXIS","1");
-	define("CAPTION_AXIS","2");	
+	define("DATA_AXIS", "1");
+	define("CAPTION_AXIS", "2");	
 
 	/* Get fields from database */
 	$sqlquery = "SELECT CHART_ID, FIELD_ID, AXIS,COLOR FROM LMB_CHARTS WHERE CHART_ID = $diag_id";
@@ -98,26 +328,27 @@ function lmb_createDiagram($diag_id,$gsr=null,$filter=null){
 		$fieldids[] = $fields[$i]['field_id'];
 	}
 
-	$data = get_gresult($diag_tab_id, 1, $filter, $gsr, null, array($diag_tab_id => $fieldids));
+	$data = get_gresult($diag_tab_id, 1, $filter, $gsr, $verkn, array($diag_tab_id => $fieldids),null,$extension);
 	$data = $data[$diag_tab_id];
 
 	/* Check if number of selected axes matches diagram type */
 	$err_wrong_diag = false;
 	$err_wrong_axes_count = false;
 	$warning_too_much_data = false;
-	if(TRANSPOSED){
-		if(BAR || LINE){
+                
+	if($isTransposed){
+		if($isBar || $isLine){
 			$err_wrong_axes_count = ($num_data_axes == 0 || $num_caption_axes > 1);
-		}elseif(PIE){
+		}elseif($isPie){
 			$err_wrong_axes_count = ($num_data_axes == 0 || $num_caption_axes > 0);
-			$warning_too_much_data = PIE && $data['max_count'] > 1;
+			$warning_too_much_data = $isPie && $data['max_count'] > 1;
 		}else{
 			$err_wrong_diag = true;
 		}
 	}else{
-		if(BAR || LINE){
+		if($isBar || $isLine){
 			$err_wrong_axes_count = ($num_data_axes == 0 || $num_caption_axes > 1);
-		}elseif(PIE){
+		}elseif($isPie){
 			$err_wrong_axes_count = ($num_data_axes != 1 || $num_caption_axes > 1);
 		}else{
 			$err_wrong_diag = true;
@@ -143,15 +374,15 @@ function lmb_createDiagram($diag_id,$gsr=null,$filter=null){
 	$diagname = str_replace(lmb_utf8_decode("ß"),"ss",$diagname);
 	$diagname = preg_replace("/[^[:alnum:]\.]|[ ]/","_",$diagname);
 
-	define("FONTLOCATION", "inc/fonts/DejaVuSans.ttf");
-	define("SAVELOCATION", "USER/".$session['user_id']."/temp/".$diagname."_$diag_id.png");
-	define("LINETHICKNESS", 1);
-        if(!file_exists($umgvar['path'].'/'.FONTLOCATION)){
-            lmb_alert('missing font '.FONTLOCATION.'!');
+	$saveLocation = "USER/". $session['user_id'] ."/temp/" . $diagname . "_$diag_id.png";
+	define("LINETHICKNESS", null); // no linethickness means better antialiasing to pchart
+        define("LABEL_ROTATION", 15);
+        if(!file_exists($umgvar['path'].'/'.$fontlocation)){
+            lmb_alert('missing font '.$fontlocation.'!');
             return false;            
         }
 
-	/* Include chart classes */
+        /* Include chart classes */
 	require_once("extern/pChart/pDraw.class.php");
 	require_once("extern/pChart/pImage.class.php");
 	require_once("extern/pChart/pData.class.php");
@@ -171,12 +402,12 @@ function lmb_createDiagram($diag_id,$gsr=null,$filter=null){
 	$myData->setAxisName(0, $text_y);
 
 	/* Fill dataset object (TYPE NORMAL) */
-	if(!TRANSPOSED){		
+	if(!$isTransposed){		
 		foreach($fieldids as $fieldid){
 			$tmp_data = array();
 			for($i = 0; $i < count($data[$fieldid]); $i++){
 				/* Display values after caption name (PIE-Chart only) */
-				if(PIE && $fieldid == $captionid && $pie_write_values != "none"){
+				if($isPie && $fieldid == $captionid && $pie_write_values != "none"){
 					// Get id of data field
 					$dataid;
 					foreach($fieldids as $tmp_fieldid){
@@ -199,15 +430,15 @@ function lmb_createDiagram($diag_id,$gsr=null,$filter=null){
 					
 					
 				}else{
-					$tmp_data[$i] = $data[$fieldid][$i];
+					$tmp_data[$i] = lmb_convertFloatInternational($diag_tab_id, $fieldid, $data[$fieldid][$i]);
 				}
-			}
+			}                                                
 			$columnname = $gfield[$diag_tab_id]['spelling'][$fieldid];
 			$myData->addPoints($tmp_data, $columnname);
 			$myData->setSerieWeight($columnname, LINETHICKNESS);
 
 			/* Color values */
-			if(!PIE){
+			if(!$isPie){
 				// Find color of field
 				$hexcolor;
 				for($i = 0; $i < count($fields); $i++){
@@ -235,18 +466,18 @@ function lmb_createDiagram($diag_id,$gsr=null,$filter=null){
 	}
 	
 	/* Fill dataset object (TYPE TRANSPOSED) */
-	if(TRANSPOSED){
+	if($isTransposed){
 		/* fill data */
 		$tmp_data;
 		for($i = 0; $i < $data['max_count']; $i++){
 			$tmp_data = array();
 			foreach($fieldids as $fieldid){	
-				if($fieldid != $captionid){
-					$tmp_data[] = $data[$fieldid][$i];		
+				if($fieldid != $captionid){                                        
+					$tmp_data[] = lmb_convertFloatInternational($diag_tab_id, $fieldid, $data[$fieldid][$i]);		
 				}
 			}
 			/* get row name */
-			if((LINE || BAR) && $num_caption_axes == 1){
+			if(($isLine || $isBar) && $num_caption_axes == 1){
 				$myData->addPoints($tmp_data, $data[$captionid][$i]);
 				$myData->setSerieWeight($data[$captionid][$i], LINETHICKNESS);
 			}else{
@@ -260,14 +491,14 @@ function lmb_createDiagram($diag_id,$gsr=null,$filter=null){
 		foreach($fieldids as $fieldid){
 			if($fieldid != $captionid){
 				$text = $gfield[$diag_tab_id]['spelling'][$fieldid];
-				if(PIE && $pie_write_values == "percent"){
+				if($isPie && $pie_write_values == "percent"){
 					$sum = 0;
 					for($u = 0; $u < count($tmp_data); $u++){
 						$sum += $tmp_data[$u];
 					}
-					$text .= " (" . number_format((float)($tmp_data[$i] / $sum)*100,1) . "%)";
-				}elseif(PIE && $pie_write_values == "value"){
-					$text .= " (" . ($tmp_data[$i]) . ")";
+					$text .= " (" . str_replace('.', ',', number_format((float)($tmp_data[$i] / $sum)*100,1)) . "%)";
+				}elseif($isPie && $pie_write_values == "value"){
+					$text .= " (" . (lmb_convertFloatGerman($diag_tab_id, $fieldid, $tmp_data[$i])) . ")";
 				}
 				$abscissa[] = $text;		
 				$i++;
@@ -277,29 +508,43 @@ function lmb_createDiagram($diag_id,$gsr=null,$filter=null){
 		$myData->setAbscissa("abscissa");
 		$myData->setAbscissaName($text_x);
 	}
+        
+        /* calculate auto settings */
+        $settings = lmb_diagramAutoSettings($dbSettings, $myData->getData());      
 	
 	/* Init chart */
 	$myPicture = new pImage($width,$height,$myData);
-	$myPicture->setGraphArea($padding_left, $padding_top, $width-$padding_right, $height-$padding_bottom);
-	$myPicture->setFontProperties(array("FontName"=>FONTLOCATION,"FontSize"=>$fontsize));
-
+	$myPicture->setGraphArea($settings['PADDING_LEFT'], $settings['PADDING_TOP'], $width-$settings['PADDING_RIGHT'], $height-$settings['PADDING_BOTTOM']);
+	$myPicture->setFontProperties(array("FontName"=>$fontlocation,"FontSize"=>$fontsize));
+        
+        // draw background
+        if($bgcolor) {
+            $myPicture->drawFilledRectangle(0, 0, $width, $height, array(
+                "R" => hexdec(substr($bgcolor, 0, 2)),
+                "G" => hexdec(substr($bgcolor, 2, 2)),
+                "B" => hexdec(substr($bgcolor, 4, 2)),
+                "Surrounding" => 0,
+                "Alpha" => 255)
+            );
+        }
+        
 	/* Differ between chart types */
-	if(BAR || LINE){
-		$myPicture->drawScale();
+	if($isBar || $isLine){
+		$myPicture->drawScale(array('LabelRotation'=>LABEL_ROTATION));
 		if($legend_mode != "none"){
 			$legend_mode = ($legend_mode=="vertical")?690901:690902;
-			$myPicture->drawLegend($legend_x, $legend_y, array("Style"=>LEGEND_NOBORDER, "Mode"=>$legend_mode));
+			$myPicture->drawLegend($settings['LEGEND_X'], $settings['LEGEND_Y'], array("Style"=>LEGEND_NOBORDER, "Mode"=>$legend_mode));
 		}
-		if($diag_type == BAR){
+		if($isBar){
 			$myPicture->drawBarChart(array("Rounded"=>FALSE, "Orientation"=>ORIENTATION_HORIZONTAL));
-		}elseif($diag_type == LINE){
+		}elseif($isLine){
 			$myPicture->drawLineChart();
 		}
-	}elseif(PIE){
+	}elseif($isPie){
 		$PieChart = new pPie($myPicture,$myData);
 		
 		/* Pie-slice colors */
-		if(PIE && TRANSPOSED){
+		if($isPie && $isTransposed){
 			$hexcolor;
 			for($i = 0; $i < count($fields); $i++){
 				$hexcolor = $fields[$i]["color"];
@@ -307,20 +552,55 @@ function lmb_createDiagram($diag_id,$gsr=null,$filter=null){
 			}	
 		}		
 		
-		$PieChart->draw2DPie($padding_left, $padding_top, array("DrawLabels"=>TRUE,"Border"=>TRUE,"Radius"=>$pie_radius));		
+		$PieChart->draw2DPie($settings['PADDING_LEFT'], $settings['PADDING_TOP'], array("DrawLabels"=>TRUE,"Border"=>TRUE,"Radius"=>$settings['PIE_RADIUS']));		
 	}
 
-	/* Save and return image (use ?<time> to force browser to reload img) */
-	$myPicture->render(SAVELOCATION);
+	/* Save and return image */
+	$myPicture->render($saveLocation);
 	
-	if(file_exists($umgvar['path'].'/'.SAVELOCATION)){         
-	   return SAVELOCATION;
+	if(file_exists($umgvar['path'].'/'.$saveLocation)){         
+	   return $saveLocation;
 	}
-	#echo "<img src='" . SAVELOCATION . "?" . time() . "'></img>";
+}
+
+function lmb_getFontLocation($style) {
+    global $db;
+
+    // default font
+    $default = 'inc/fonts/DejaVuSans.ttf';
+    
+    // if no font family is specified, return default font
+    if(!$style[0]) {
+        return $default;
+    }
+    
+    // extract family, bold and italic from style array
+    $family = $style[0];
+    $b = $style[4] == 'bold' ? 'B' :'';
+    $i = $style[1] == 'italic' ? 'I' : '';
+    
+    // get name of font file from lmb_fonts
+    $sqlquery = "SELECT NAME FROM LMB_FONTS WHERE STYLE='$b$i' AND FAMILY='$family'";
+    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+    // abort if error
+    if(!$rs) {
+        return $default;
+    }
+    
+    odbc_fetch_row($rs, 1);	
+    $name = odbc_result($rs, 'NAME');
+    
+    // abort if no name was found
+    if(!$name) {
+        return $default;
+    }
+
+    return "inc/fonts/$name.ttf";
 }
 
 function lmb_getColorAsArray($hex){
-	return array("R"=>hexdec(substr($hex,0,2)),"G"=>hexdec(substr($hex,2,2)),"B"=>hexdec(substr($hex,4,2)),"Alpha"=>100);
+	return array("R"=>hexdec(substr($hex,0,2)),"G"=>hexdec(substr($hex,2,2)),"B"=>hexdec(substr($hex,4,2)),"Alpha"=>255);
 }
 
 function lmb_getNIntVals($n){
@@ -330,4 +610,28 @@ function lmb_getNIntVals($n){
 	}
 	return $int_vals;
 }
+
+// converts the decimal comma in $value to a decimal point, if the field $tabId->$fieldId is of data type float
+function lmb_convertFloatInternational($tabId, $fieldId, $value) {
+        global $gfield;
+        
+        // check if data type of field is float (49)
+        if($gfield[$tabId]['data_type'][ $gfield[$tabId]['id'][$fieldId] ] == "49") {
+                return str_replace(',', '.', $value);
+        } else {
+                return $value;
+        }
+}
+// converts the decimal point in $value to a decimal comma, if the field $tabId->$fieldId is of data type float
+function lmb_convertFloatGerman($tabId, $fieldId, $value) {
+        global $gfield;
+        
+        // check if data type of field is float (49)
+        if($gfield[$tabId]['data_type'][ $gfield[$tabId]['id'][$fieldId] ] == "49") {
+                return str_replace('.', ',', $value);
+        } else {
+                return $value;
+        }
+}
+
 ?>

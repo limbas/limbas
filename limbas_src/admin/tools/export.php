@@ -137,7 +137,8 @@ if ($dump_export)
 <TR class="tabHeader"><TD class="tabHeaderItem" COLSPAN="3">&nbsp;<B><?=$lang[966]?></B></TD></TR>
 
 <TR>
-<TD ALIGN="LEFT" COLSPAN="2"><IMG SRC="pic/limbasicon.gif" TITLE="<?=$lang[964]?>" ALT="<?=$lang[964]?>" Border="0"><INPUT TYPE="RADIO" NAME="format" STYLE="border:0px;" VALUE="system" CHECKED></TD>
+<TD ALIGN="LEFT"><IMG SRC="pic/limbasicon.gif" TITLE="<?=$lang[964]?>" ALT="<?=$lang[964]?>" Border="0"><INPUT TYPE="RADIO" NAME="format" STYLE="border:0px;" VALUE="system" CHECKED></TD>
+<TD ALIGN="LEFT"><INPUT TYPE="CHECKBOX" NAME="struct_only" STYLE="border:0px;" VALUE="1"> Nur Struktur</TD>
 <TD ALIGN="CENTER"><INPUT TYPE="submit" VALUE="<?=$lang[979]?>.." name="dump_export"></TD>
 </TR>
 </FORM>
@@ -258,8 +259,8 @@ if($dump_export) {
 	echo '<script language="JavaScript">
 	limbasWaitsymbol(false,false,true);
 	</script>';
-	
-	$path_backup = lmbExport_Dump($format);
+
+	$path_backup = lmbExport_Dump($format,$struct_only);
 	?>
 		<BR><BR>
         &nbsp;&nbsp;<FONT SIZE="2"><U><?=$lang[970]?>!</U></FONT><BR><BR>
