@@ -110,7 +110,7 @@ $line=<<<EOD
 <?php
 /*
 Copyright notice
-(c) 1998-2016 Axel Westhagen (support@limbas.org)
+(c) 1998-2017 LIMBAS GmbH (info@limbas.com)
 All rights reserved
 This script is part of the LIMBAS project. The LIMBAS project is free software;
 you can redistribute it and/or modify it on 2 Ways:

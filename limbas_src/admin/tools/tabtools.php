@@ -83,7 +83,7 @@ foreach ($DBA["DOMAINTABLE"] as $key => $val){
 
 <TR class="tabBody"><TD class="tabHeaderItem" HEIGHT="20" COLSPAN="5"><B>SQL-Query</B></TD></TR>
 <TR class="tabBody"><TD COLSPAN="5">
-    <TEXTAREA id="sqlvalue" NAME="sqlvalue"><?=$sqlvalue?></TEXTAREA>   
+    <TEXTAREA id="sqlvalue" NAME="sqlvalue"><?= (($show AND $table AND !$sqlvalue) ? "select * from $table" : $sqlvalue) ?></TEXTAREA>
     <Script language="JavaScript">
 
         var editor = CodeMirror.fromTextArea(document.getElementById("sqlvalue"), {
@@ -109,7 +109,28 @@ foreach ($DBA["DOMAINTABLE"] as $key => $val){
 <BR>
 <?php
 echo $result;
-if($rssql AND lmb_strtoupper(lmb_substr($sqlvalue,0,6)) == "SELECT"){echo ODBCResourceToHTML($rssql,"cellpadding=\"2\" cellspacing=\"0\" style=\"border-collapse:collapse;\"","style=\"border: 1px solid grey;\"",$sqlexecnum);}
+if($rssql AND lmb_strtoupper(lmb_substr($sqlvalue,0,6)) == "SELECT"){
+    echo ODBCResourceToHTML($rssql,"cellpadding=\"2\" cellspacing=\"0\" style=\"border-collapse:collapse;\"","style=\"border: 1px solid grey;\"",$sqlexecnum);
+}elseif(lmb_strtoupper(lmb_substr($sqlvalue,0,7)) == "EXPLAIN"){
+    $rs = odbc_exec($db,$sqlvalue);
+    echo "<table style=\"border-collapse:collapse\" cellpadding=\"3\">";
+    while($ra = odbc_fetch_array($rs)){
+        
+        if(!$bzm){
+            foreach($ra as $col=>$value){
+                echo "<td style=\"border:1px solid grey\"><b>$col</b></td>";
+            }
+        }
+        
+        echo "<tr>";
+        foreach($ra as $col=>$value){
+            echo "<td style=\"border:1px solid grey\">$value</td>";
+        }
+        echo "</tr>";
+        $bzm++;
+    }
+    echo "</table>";
+}
 
 
 $zeit0 = gettime();

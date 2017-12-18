@@ -290,7 +290,7 @@ function SNAP_getParam($id)
 	global $db;
 	global $action;
 
-	$result;
+	$result = array();
 
 	$sqlquery = "SELECT * FROM LMB_SNAP WHERE ID=$id";
 

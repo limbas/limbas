@@ -20,9 +20,10 @@
 
 /* 
 $argv[0] = path of script
-$argv[1] = jobID
+$argv[1] = jobID or filename in admin/tools/bash/
 $argv[2] = username [optional]
 $argv[3] = password [optional]
+$argv[4] = additional data if $argv[1] is filename
 */
 
 define("IS_CRON",1);
@@ -53,22 +54,23 @@ if($argv[2] AND $argv[3]){
 
 $cronjob = 1;
 
+
 require_once($lpath."inc/include_db.lib");
+require_once($lpath."lib/db/db_".$DBA["DB"]."_admin.lib");
 require_once($lpath."lib/include.lib");
-require_once("lib/db/db_".$DBA["DB"]."_admin.lib");
+require_once($lpath."lib/include_admin.lib");
 
 
+// session present
 if($auth_user){
 	require_once($lpath."lib/session.lib");
-}
-
-# --- Datenbankverbindung -------------------------------------------
-$db = dbq_0($DBA["DBHOST"],$DBA["DBNAME"],$DBA["DBUSER"],$DBA["DBPASS"],$DBA["ODBCDRIVER"],$DBA["PORT"]);
-
-require_once($lpath."gtab/gtab_array.lib");
-
-/* --- LMB_UMGVAR auslesen ------------------- */
-if(!$umgvar){
+// create needed vars
+}else{
+    
+    # --- Datenbankverbindung -------------------------------------------
+    $db = dbq_0($DBA["DBHOST"],$DBA["DBNAME"],$DBA["DBUSER"],$DBA["DBPASS"],$DBA["ODBCDRIVER"],$DBA["PORT"]);
+    
+    /* --- LMB_UMGVAR ------------------- */
 	$sqlquery = "SELECT FORM_NAME,NORM FROM LMB_UMGVAR";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
@@ -78,15 +80,16 @@ if(!$umgvar){
 		$bzm++;
 	}
 	$umgvar["pfad"] = $umgvar["path"];
-	
-    # --- mbstring include -------------------------------------------
-    if(strtoupper($umgvar["charset"]) == "UTF-8"){
-        require_once($lpath."lib/include_mbstring.lib");
-        ini_set('default_charset', 'utf-8');
-    }else{
-        require_once($lpath."lib/include_string.lib");
-        ini_set('default_charset', lmb_strtoupper($umgvar["charset"]));
-    }
+
+	# --- mbstring include -------------------------------------------
+	if(strtoupper($umgvar["charset"]) == "UTF-8"){
+	    require_once("lib/include_mbstring.lib");
+		ini_set('default_charset', 'utf-8');
+	}else{
+        require_once("lib/include_string.lib");
+		ini_set('default_charset', lmb_strtoupper($umgvar["charset"]));
+	}
+
 	# --- time library -------------------------------------------
 	if($umgvar["use_datetimeclass"]){
 		require_once($lpath."lib/include_DateTime.lib");
@@ -94,11 +97,32 @@ if(!$umgvar){
 		require_once($lpath."lib/include_datetime.lib");
 	}
 	
+	require_once($lpath."gtab/gtab_array.lib");
+	
 }
+
+
+
+
 $umgvar["IS_CRON"] = 1;
 $umgvar["uploadpfad"] = $umgvar["pfad"]."/UPLOAD/";
 
-
+# Include own bash extension
+if ($job && is_string($job) && !is_numeric($job)) {
+    $filename = basename($job);
+    $filepath = $umgvar['path'] . '/admin/tools/bash/' . $filename;
+    if (!file_exists($filepath)) {
+        error_log("Requested bash file '$filepath' doesn't exist!");
+        return;
+    }
+    $additionalCronData = null;
+    if ($argv[4]) {
+        $additionalCronData = $argv[4];
+    }
+    require_once($filepath);
+    if($db){odbc_close($db);}
+    return;
+}
 
 # EXTENSION Dateien einbinden (needed before jobs_ext.lib)
 if(!$auth_user){

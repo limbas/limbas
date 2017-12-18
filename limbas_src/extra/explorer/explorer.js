@@ -32,7 +32,7 @@ function LmEx_resultlimitShow(result) {
 
 //----------------- mark copy/paste symbols -------------------
 function LmEx_ajaxCopyPasteEvent(typ) {
-	var getstring = "&typ="+typ
+	var getstring = "&typ="+typ;
 	ajaxGet(null,'main_dyns.php','saveCopyPasteEvent' + getstring,null,'LmEx_ajaxResultCopyPasteEvent');
 }
 
@@ -156,7 +156,7 @@ function LmEx_multiupload(co,dest,LID,fp,gtabid,fieldid,ID){
 			<input type="hidden" name="dublicate[type]['+i+']">\
 			<input type="hidden" name="dublicate[subj]['+i+']">\
 			</td><td nowrap><div id="lmbUploadLayerSubmit_'+fp+'_'+i+'"><span id="lmbUploadStateUnzip_'+fp+'_'+i+'" style="display:none;padding-left:5px;padding-right:5px;vertical-align:text-top">'+jsvar['lng_1560']+':<input style="vertical-align:bottom" type="checkbox" id="file_archiv['+fp+'_'+i+']" name="file_archiv['+i+']"></span>';
-			if(i == 1){cont += '<input type="button" value="'+jsvar['lng_815']+'" style="vertical-align:middle" onclick="LmEx_CheckIfMultiUpload(\''+fp+'\',\''+LID+'\',\''+ID+'\',\''+dest+'\',\''+gtabid+'\',\''+fieldid+'\');">';}
+			if(i == 1){cont += '<input type="button" value="'+jsvar['lng_815']+'" style="vertical-align:middle" onclick="activ_menu=1;LmEx_CheckIfMultiUpload(\''+fp+'\',\''+LID+'\',\''+ID+'\',\''+dest+'\',\''+gtabid+'\',\''+fieldid+'\');">';}
 			cont += '</div></td><td width="100%"><div id="lmbUploadState_'+fp+'_'+i+'" class="lmbUploadProgress">\
 			<div id="lmbUploadState_'+fp+'_'+i+'Bar" class="lmbUploadProgressBar"></div></div>\
 			</td></tr>\
@@ -218,7 +218,7 @@ function LmEx_ajaxUploadCheck(filename,LID,fp) {
 	function( index, obj ) {
                 
 		if(navigator.hasxmlProgress){
-			var filename = obj.files[0].name
+			var filename = obj.files[0].name;
 			var filesize = obj.files[0].size
 		}else{
 			var filename = $(obj).val();
@@ -250,7 +250,7 @@ function LmEx_ajaxUploadCheck(filename,LID,fp) {
 		file = upl_file.join(";");
 		size = upl_size.join(";");
 		var getstring = "fileUploadCheck&level="+LID+"&name="+file+"&size="+size+"&ID="+ID+"&fp="+fp;
-		mainfunc = function(result){LmEx_ajaxUploadCheckPost(result,fp);}
+		mainfunc = function(result){LmEx_ajaxUploadCheckPost(result,fp);};
 		ajaxGet(null,'main_dyns.php',getstring,null,'mainfunc',null,null,1);
 	}
 }
@@ -362,7 +362,7 @@ function lmb_createStatusbar(fid)
 	this.setProgress = function(progress)
 	{
 		this.progressBar.width(progress+'%').html('&nbsp;'+this.filesize+'&nbsp;/&nbsp;'+progress + "% ");
-	}
+	};
 	this.setAbort = function(jqxhr)
 	{
 		var sb = this.statusbar;
@@ -407,7 +407,7 @@ function LmEx_dragFileUpload(files,fp,LID,ID,upllayer,gtabid,fieldid)
 		size = upl_size.join(";");
 		var getstring = "fileUploadCheck&level="+LID+"&name="+file+"&size="+size+"&ID="+ID+"&fp="+fp;
 		
-		mainfunc = function(result){LmEx_dragFileUploadPost(result,fp,files,LID,ID,gtabid,fieldid);}
+		mainfunc = function(result){LmEx_dragFileUploadPost(result,fp,files,LID,ID,gtabid,fieldid);};
 		ajaxGet(null,'main_dyns.php',getstring,null,'mainfunc',null,null,1);
 	}
 }
@@ -418,7 +418,7 @@ function LmEx_dragFileUploadPost(result,fp,files,LID,ID,gtabid,fieldid) {
 	
 	if(result){ajaxEvalScript(result)};
 
-	formel = document.form1
+	formel = document.form1;
 	
 	// file has dublicates - show parameters
 	if(result){
@@ -530,7 +530,7 @@ function LmEx_dynsearchGet(evt,el,actid,par1,par2) {
 			if(xmlhttp.readyState == 4){
 				LmEx_dynsShow(xmlhttp.responseText);
 			}
-		}
+		};
 		xmlhttp.send(null);
 	}
 	dyns_actid  = actid;
@@ -560,7 +560,7 @@ function LmEx_detailSearch(evt, fieldid, element){
         }           
         
 	actid = "gtabSearch&gtabid=" + jsvar["gtabid"] + "&fieldid=" + fieldid;
-	mainfunc = function(result){LmEx_detailSearchPost(result,fieldid);}
+	mainfunc = function(result){LmEx_detailSearchPost(result,fieldid);};
 	ajaxGet(null,"main_dyns.php",actid,null,"mainfunc");
 	limbasDivShow(element, evt,'limbasDetailSearch');
 }
@@ -679,18 +679,15 @@ function fieldlist(field){
 	var flshow = new Array();
 	var flhide = new Array();
 
-	var iconel = document.getElementById("dcp_"+field);
 	var textel = document.getElementById("dc_"+field);
-	
+
 	if(textel.style.color == 'green'){
-		iconel.style.display = 'none';
+		textel.previousSibling.style.visibility = 'hidden';
 		textel.style.color = '';
-		textel.className = 'lmbContextItem';
 		flhide.push(field);
 	}else{
-		iconel.style.display = '';
+        textel.previousSibling.style.visibility = '';
 		textel.style.color = 'green';
-		textel.className = 'lmbContextItemIcon';
 		flshow.push(field);
 	}
 	document.form1.ffilter_fl_show.value = flshow.join(";");
@@ -709,7 +706,7 @@ function LmEx_activate_file(evt,id,filename,lid,norm){
 
 	var prev_id = LmEx_edit_id;
 	var filestatus = "filestatus_"+norm+"_"+lid+"_"+id;
-	var elline = "elline_"+norm+"_"+lid+"_"+id
+	var elline = "elline_"+norm+"_"+lid+"_"+id;
 	var start = null;
 	var down = null;
 	var up = null;
@@ -937,7 +934,7 @@ function LmEx_uploadFromPath(el,LID){
 	
 	var status = new lmb_createStatusbar('lmbUploadFromPath');
 	status.filesize='import';
-	el.style.visibility = 'hidden'
+	el.style.visibility = 'hidden';
 	
 	$.ajax({
 		xhr: function()
@@ -1035,18 +1032,21 @@ function limbasFileVersionDiff(el,file1,file2,typ){
 }
 
 // Picture preview
-function LmEx_preview_thumbs(evt,url,close){   
+function LmEx_preview_thumbs(evt,url,close) {
     // create img to show as dialog if not existent
     var size = jsvar['thumbsize2'].split('x');
-    if( !$('#thumbPreviewLayer').length ) {
+    if(!$('#thumbPreviewLayer').length && !close) {
         $("body").append(
             '<img id="thumbPreviewLayer" onclick="LmEx_preview_thumbs(null,null,1)" autofocus="1" style="width:'+size[0]+'px; height:'+size[1]+'px; padding: 0px;">'
         );
-    }
+    } else if (close) {
+        $('#thumbPreviewLayer').dialog("close");
+        return;
+	}
 
     // set img url and show as dialog
-    $('#thumbPreviewLayer').attr('src', url);
     $('#thumbPreviewLayer')
+		.attr('src', url)
         .css({'position': 'relative', 'left': '0', 'top': '0', 'width': size[0], 'height': size[1]})
         .dialog({
             resizable: false,

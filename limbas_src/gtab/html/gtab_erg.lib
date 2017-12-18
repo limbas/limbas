@@ -18,8 +18,6 @@
  * ID: 5
  */
 
-
-
 /* --------------------------------- grouping / relation - Div ------------------------ */
 function grouping_menu($gtabid,$gval,$ebene){
 	global $farbschema;
@@ -31,6 +29,7 @@ function grouping_menu($gtabid,$gval,$ebene){
 	global $popg;
 	global $popc;
 	global $pophist;
+	static $popgrec;
 
 	$elementWidth = 140;
 	
@@ -48,11 +47,15 @@ function grouping_menu($gtabid,$gval,$ebene){
 		pop_left($elementWidth);
 		foreach($gfield[$gtabid]["sort"] as $key => $value){
 			if($gfield[$gtabid]["groupable"][$key]){
+			    // check if already used
+			    #if($popgrec[$gtabid][$key]){continue;}
 				if($popg[$gtabid][$ebene][$gval][$key]){$CHECKED = "CHECKED";}else{$CHECKED = "";}
 				echo "<div><input type=\"checkbox\" name=\"popgr_".$gtabid."_".$ebene."_".$gval."\" value=\"".$gfield[$gtabid]["field_id"][$key]."\" onclick=\"lmbPopRelation(event,this,'grp_choice');\" $CHECKED>".$gfield[$gtabid]["spelling"][$key]."</div>\n";
 				$div = " ";
+				#$popgrec[$gtabid][$key] = 1;
 			}
 		}
+
 		pop_right($elementWidth);
 		pop_bottom($elementWidth);
 		echo "</div>";
@@ -119,28 +122,30 @@ function lmbGlistTabs($gtabid,$verkn_poolid,$snap_id=0){
 	global $session;
 	global $gsnap;
 	global $greminder;
+	global $gsr;
 
 	echo "<tr><td>";
 	echo "<table class=\"GtabTableFringeHeader\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"border-collapse:collapse;width:100%\"><tr>";
-		# aus Verknpf Pool
-		if($verknpool[$verkn_poolid] AND $verkn_poolid != $gtabid AND $verkn_poolid != 'reset'){
-			foreach ($verknpool[$verkn_poolid] as $key => $value){
-				if($value[10]){$mst = "style=\"background-color:".$value[10]."\"";}else{$mst = null;}
-				if($gtabid == $value[0]){$class = "lmbGtabTabmenuActive";}else{$class = "lmbGtabTabmenuInactive";}
-				echo "<td nowrap class=\"".$class."\" $mst id=\"tabs_".$layoutVer["tabid"] = $gtabid."\" onclick=\"limbasLinkTags(event,'".$value[0]."','".$value[1]."','".$value[2]."','".$value[3]."','".$value[4]."','".$value[5]."','".$value[6]."','".$value[7]."','null','".$value[8]."')\">".$gtab["desc"][$value[0]]."&nbsp;".$value[9]."</td>";
-			}
-		# regulär
-		}else{
-			# --- Verknüpfungs Pool setzen -------------------------
-			$verknpool[$gtabid][] = array($gtabid,'null','null','null','null','null','null','null',$GLOBALS["form_id"],'null');
-			if($snap_id){$desc = $gsnap[$gtabid]["name"][$snap_id];
-			}else{$desc = $gtab["desc"][$gtabid];}
-			if($gtab["markcolor"][$gtabid]){$mst = "style=\"background-color:".$gtab["markcolor"][$gtabid]."\"";}else{$mst = null;}
-			echo "<td nowrap class=\"lmbGtabTabmenuActive\" $mst id=\"tabs_".$layoutVer["tabid"] = $gtabid."\" onclick=\"send_form('1');\">".$desc;
-			if($greminder[$gtabid]['name'][$GLOBALS['gfrist']]){echo "&nbsp;(<i>".$greminder[$gtabid]["name"][$GLOBALS['gfrist']]."</i>)";}
-			echo "</td>";
+	# aus Verknpf Pool
+	if($verknpool[$verkn_poolid] AND $verkn_poolid != $gtabid AND $verkn_poolid != 'reset'){
+		foreach ($verknpool[$verkn_poolid] as $key => $value){
+			if($value[10]){$mst = "style=\"background-color:".$value[10]."\"";}else{$mst = null;}
+			if($gtabid == $value[0]){$class = "lmbGtabTabmenuActive";}else{$class = "lmbGtabTabmenuInactive";}
+			echo "<td nowrap class=\"".$class."\" $mst id=\"tabs_".$layoutVer["tabid"] = $gtabid."\" onclick=\"limbasLinkTags(event,'".$value[0]."','".$value[1]."','".$value[2]."','".$value[3]."','".$value[4]."','".$value[5]."','".$value[6]."','".$value[7]."','null','".$value[8]."')\">".$gtab["desc"][$value[0]]."&nbsp;".$value[9]."</td>";
 		}
-	echo "<td class=\"lmbGtabTabmenuSpace\" width=\"100%\"></td></tr></table>";
+	# regulär
+	}else{
+		# --- Verknüpfungs Pool setzen -------------------------
+		$verknpool[$gtabid][] = array($gtabid,'null','null','null','null','null','null','null',$GLOBALS["form_id"],'null');
+		if($snap_id){$desc = $gsnap[$gtabid]["name"][$snap_id];
+		}else{$desc = $gtab["desc"][$gtabid];}
+		if($gtab["markcolor"][$gtabid]){$mst = "style=\"background-color:".$gtab["markcolor"][$gtabid]."\"";}else{$mst = null;}
+		echo "<td nowrap class=\"lmbGtabTabmenuActive\" $mst id=\"tabs_".$layoutVer["tabid"] = $gtabid."\" onclick=\"send_form('1');\">".$desc;
+		if($greminder[$gtabid]['name'][$GLOBALS['gfrist']]){echo "&nbsp;(<i>".$greminder[$gtabid]["name"][$GLOBALS['gfrist']]."</i>)";}
+		echo "</td>";
+	}
+
+    echo "<td class=\"lmbGtabTabmenuSpace\" width=\"100%\"></td></tr></table>";
 	echo "</td></tr>";
 }
 
@@ -155,14 +160,15 @@ function lmbGlistMenu($gtabid,$subtab=null){
 	global $session;
 	global $filter;
 	global $readonly;
-	
+	global $gsr;
+
 	if(!$subtab){$cl = "class=\"gtabHeaderMenuTR\"";}
 	
 	# -------- Menüleiste --------
 	echo "
 	<tr><td>
 	
-	<div $cl>
+	<div $cl style='float:left;'>
 	<table border=\"0\" cellpadding=\"0\" cellspacing=\"2\"><tr>
 	<td nowrap class=\"gtabHeaderMenuTD\" OnMouseOver=\"this.className='gtabHeaderMenuTDhover';\" OnMouseOut=\"this.className='gtabHeaderMenuTD';\" onclick=\"limbasDivShow(this,'','limbasDivMenuDatei');\" id=\"edit4\">$lang[1702]</td><td>&nbsp;|&nbsp;</td>
 	<td nowrap class=\"gtabHeaderMenuTD\" OnMouseOver=\"this.className='gtabHeaderMenuTDhover';\" OnMouseOut=\"this.className='gtabHeaderMenuTD';\" onclick=\"limbasDivShow(this,'','limbasDivMenuBearbeiten');\">$lang[1703]</td><td>&nbsp;|&nbsp;</td>
@@ -170,9 +176,9 @@ function lmbGlistMenu($gtabid,$subtab=null){
 	<td nowrap class=\"gtabHeaderMenuTD\" OnMouseOver=\"this.className='gtabHeaderMenuTDhover';\" OnMouseOut=\"this.className='gtabHeaderMenuTD';\" onclick=\"limbasDivShow(this,'','limbasDivMenuExtras');\">$lang[2159]</td>\n";
 	if($GLOBALS["view_version_status"]){echo "<td>&nbsp;|&nbsp;</td><td nowrap class=\"gtabHeaderMenuTD\" style=\"color:red;\">&nbsp;&nbsp;&nbsp;(".$lang[2172]." ".$GLOBALS["view_version_status"].")</td>";}
 	echo "<td width=\"100%\"></td></tr></table>
-	</div>
-	
-	</td></tr>";
+	</div>";
+
+    echo "</td></tr>";
 
 	
 	# -------- Symbolleiste --------
@@ -241,8 +247,14 @@ function lmbGlistMenu($gtabid,$subtab=null){
 
 		echo "<td>&nbsp;&nbsp;</td>";
 		pop_picmenu(28,'','');											# refresh
-		
-		# extension
+
+        # global search
+        echo "<td>&nbsp;&nbsp;</td>";
+        echo '<td>';
+        echo "<input type=\"text\" id=\"globalSearch\" onclick=\"event.stopPropagation();\" class=\"gtabHeaderInputINP\" name=\"gs[$gtabid][0][0]\" value=\"".$gsr[$gtabid][0][0]."\" onchange=\"checktyp(13,'gs[4][0][0]','FulltextSearch','0','$gtabid',this.value,'');\" style=\"background-color:{$farbschema['WEB10']};\">";
+		echo '</td>';
+
+        # extension
 		if(function_exists($GLOBALS["gLmbExt"]["menuListIcons"][$gtabid])){
 			$GLOBALS["gLmbExt"]["menuListIcons"][$gtabid]($gtabid,$gresult);
 		}
@@ -603,6 +615,7 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 		
 		/* ---------------- begin row -------------------- */
 		/*----------------- <TR> -------------------*/
+		// TODO onContextMenu: before: click
 		echo "
 		<tr $title class=\"gtabBodyTR $BGCLASS\" id=\"elrow_".$ID."_".$gtabid."\" style=\"background-color:$BGCOLOR;cursor:context-menu\" lmbbgcolor=\"$BGCOLOR\"
 		onmouseover=\"lmb_tableRowColor(this,'".$farbschema["WEB7"]."',1)\"
@@ -691,11 +704,16 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 			echo ">\n";
 
 			$noedit = 0;
+
 			if($edittyp == 1 AND $gfield[$gtabid]["editrule"][$key]){
 				$noedit = check_GtabRules($ID,$gtabid,$key,$gfield[$gtabid]["editrule"][$key],$bzm,$gresult);
 			}
 			
 			if($alterperm AND $gfield[$gtabid]["perm_edit"][$key] AND !$gresult[$gtabid]["LOCK"]["USER"][$ID] AND !$subversion AND !$noedit){$edittyp = 1;}else{$edittyp = 2;}
+			
+			if($gfield[$gtabid]["listedit"][$key] AND !$noedit){
+                $edittyp = 1;
+			}
 			
 			# PHP / SQL - Argument
 			if($gfield[$gtabid]["argument_typ"][$key]){
@@ -705,7 +723,7 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 				}
 			}
 
-			if($gresult[$gtabid][$key][$bzm] OR $gresult[$gtabid][$key][$bzm] == "0" OR $gfield[$gtabid]["field_type"][$key] == 11 OR $edittyp == 1){
+			if($gresult[$gtabid][$key][$bzm] OR $gresult[$gtabid][$key][$bzm] == "0" OR $gfield[$gtabid]["field_type"][$key] == 11 OR $gfield[$gtabid]["ext_type"][$key] OR $edittyp == 1){
 
 				/* ------------------ Default --------------------- */
 				$fname = "cftyp_".$gfield[$gtabid]["funcid"][$key];
@@ -715,6 +733,7 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 						$fname = "lmbc_".$gfield[$gtabid]["ext_type"][$key];
 					}
 				}
+
 				/* ------------------ Typefunction --------------------- */
 				$retrn = $fname($bzm,$key,$gtabid,$edittyp,$gresult,0);
 				/* ------------------ /Typefunction -------------------- */
@@ -852,7 +871,7 @@ function lmbGlistFooter($gtabid,&$gresult,$filter,$subtab=null,$style=null){
 		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-first\" style=\"cursor:pointer;\" border=\"0\" title=\"$lang[1294]\" onclick=\"document.form1.elements['filter_page[".$gtabid."]'].value='1';send_form(1,2);\"></i></td>\n";
 		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-previous\" style=\"cursor:pointer;font-size:1.5em;\" border=\"0\" title=\"$lang[1296]\" onclick=\"document.form1.elements['filter_page[".$gtabid."]'].value='".($filter["page"][$gtabid] - 1)."';send_form(1,2);\"></i></td>\n";
 	}
-	echo "<td class=\"gtabFooterTD\" nowrap style=\"width:20px;\"><input type=\"text\" style=\"width:60px;padding:0px;text-align:center;\" name=\"filter_page[".$gtabid."]\" value=\"".$filter["page"][$gtabid]."/".$maxpage."\"></td>\n";
+	echo "<td class=\"gtabFooterTD\" nowrap style=\"width:20px;\"><input type=\"text\" style=\"width:60px;padding:0;text-align:center;\" name=\"filter_page[".$gtabid."]\" value=\"".$filter["page"][$gtabid]."/".$maxpage."\"></td>\n";
 	if($filter["page"][$gtabid] == $maxpage){
 		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-next\" style=\"opacity:0.4;filter:Alpha(opacity=40);font-size:1.5em;\" border=\"0\" title=\"$lang[1297]\"></i></td>\n";
 		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-last\" style=\"opacity:0.4;filter:Alpha(opacity=40);\" border=\"0\" title=\"$lang[1295]\"></i></td>\n";
@@ -861,7 +880,7 @@ function lmbGlistFooter($gtabid,&$gresult,$filter,$subtab=null,$style=null){
 		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-last\" style=\"cursor:pointer;\" border=\"0\" title=\"$lang[1295]\" onclick=\"document.form1.elements['filter_page[".$gtabid."]'].value='".$maxpage."';send_form(1,2);\"></i></td>\n";
 	}
 	echo "<td class=\"gtabFooterTD\" nowrap style=\"width:15px;\">&nbsp;<b style=\"color:green;\">|</b>&nbsp;$lang[96]&nbsp;</td>\n";
-	echo "<td class=\"gtabFooterTD\" style=\"width:30px;\"><input type=\"text\" style=\"width:30px;padding:0px;text-align:center;\" value=\"".$filter["anzahl"][$gtabid]."\" name=\"filter_anzahl[".$gtabid."]\" maxlength=\"3\"></td>\n";
+	echo "<td class=\"gtabFooterTD\" style=\"width:30px;\"><input type=\"text\" style=\"width:30px;padding:0;text-align:center;\" value=\"".$filter["anzahl"][$gtabid]."\" name=\"filter_anzahl[".$gtabid."]\" maxlength=\"3\"></td>\n";
 	echo "<td class=\"gtabFooterTD\" style=\"width:30px;\">&nbsp;$lang[88]</td>\n\n";
 	echo "<td class=\"gtabFooterTD\" style=\"width:100px;color:#707070;\" nowrap>&nbsp;&nbsp;&nbsp;(".$gresult[$gtabid]["need_time"]." sec.)</td>\n";
 	echo "<td class=\"gtabFooterTD\" style=\"width:15px;\" nowrap>&nbsp;&nbsp;</TD>\n";

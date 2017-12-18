@@ -1,0 +1,620 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID:
+ */
+
+# db version
+function mysql_dbf_version($db){
+
+	return 0;
+}
+
+############# indexes ########################
+
+/** existing indexes
+ * 
+ *
+ * @param array $p [0]=schema, [1]=tablename, [2]=indexname, [3]=no primary
+ * @return sql string
+ */
+function mysql_dbq_2($p){
+	$sql = "select CARDINALITY AS INDEX_USED, 
+			table_name tablename,
+			CASE NON_UNIQUE WHEN 0 THEN 1 WHEN 1 THEN 0 END AS IS_UNIQUE,
+			column_name columnname,
+			index_name indexname,
+			IFNULL(cardinality,0),
+			index_type type
+			from
+			information_schema.statistics
+			WHERE 
+				index_schema = '".$p[0]."'";
+	
+	if($p[1]){
+		$sql .= " and lower(table_name) = '".lmb_strtolower($p[1])."'";
+	}
+	if($p[2]){
+		$sql .= " and lower(column_name) = '".lmb_strtolower($p[2])."'";
+	}
+	if($p[3]){
+		$sql .= "and not index_name = 'SYSPRIMARYKEYINDEX'";
+	}
+	
+	$sql .= " ORDER BY table_name, index_name";
+	
+	return $sql;
+}
+
+/**
+ * create index
+ *
+ * @param array $p [0]=schema, [1]=indexname, [2]=tablename, [3]=fieldname
+ * @return sql string
+ */
+function mysql_dbq_4($p){
+	return "CREATE INDEX ".$p[1]." ON ".$p[2]."(".$p[3].")";
+}
+
+/**
+ * drop index
+ *
+ * @param array $p [0]=schema, [1]=indexname
+ * @return sql string
+ */
+function mysql_dbq_5($p){
+	return "DROP INDEX ".$p[1];
+}
+
+
+############# constaints ########################
+
+/**
+ * get primary keys
+ *
+ * @param array $p [0]=schema, [1]=table, [2]=column
+ * @return sql string
+ */
+function mysql_dbq_23($db,$p=null){
+	
+	$sql = "SELECT
+	    CONSTRAINT_NAME, TABLE_NAME, COLUMN_NAME
+	FROM 
+		INFORMATION_SCHEMA.KEY_COLUMN_USAGE
+	WHERE 
+		CONSTRAINT_SCHEMA = '".mysql_dbf_4($p[0])."'
+		AND CONSTRAINT_NAME = 'PRIMARY'" ;
+	
+	if($p[1]){$sql .= " AND TABLE_NAME = '".mysql_dbf_4($p[1])."'";}
+	if($p[2]){$sql .= " AND COLUMN_NAME = '".mysql_dbf_4($p[2])."'";}
+
+	$rs = odbc_exec($db,$sql) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(odbc_fetch_row($rs)){
+		$contraint["TABLE_NAME"][] = odbc_result($rs,"TABLE_NAME");
+		$contraint["COLUMN_NAME"][] = odbc_result($rs,"COLUMN_NAME");
+		$contraint["PK_NAME"][] = odbc_result($rs,"CONSTRAINT_NAME");
+	}
+	return  $contraint;
+}
+
+/**
+ * get UNIQUE contraints
+ *
+ * @param array $p [0]=schema, [1]=table, [2]=dbname
+ * @return sql string
+ */
+function mysql_dbq_26($db,$p=null){
+
+	$sql = "SELECT
+	    KEY_COLUMN_USAGE.CONSTRAINT_NAME, KEY_COLUMN_USAGE.TABLE_NAME, KEY_COLUMN_USAGE.COLUMN_NAME, 
+	    KEY_COLUMN_USAGE.REFERENCED_TABLE_NAME AS FOREIGN_TABLE_NAME,
+	    KEY_COLUMN_USAGE.REFERENCED_COLUMN_NAME AS FOREIGN_COLUMN_NAME
+	FROM 
+		INFORMATION_SCHEMA.KEY_COLUMN_USAGE, INFORMATION_SCHEMA.TABLE_CONSTRAINTS
+	WHERE 
+		KEY_COLUMN_USAGE.CONSTRAINT_SCHEMA = '".mysql_dbf_4($p[0])."'
+		AND KEY_COLUMN_USAGE.CONSTRAINT_NAME = TABLE_CONSTRAINTS.CONSTRAINT_NAME
+		AND TABLE_CONSTRAINTS.CONSTRAINT_TYPE = 'UNIQUE'
+		" ;
+	
+	if($p[1]){$sql .= " AND TABLE_NAME = '".mysql_dbf_4($p[1])."'";}
+	if($p[2]){$sql .= " AND COLUMN_NAME = '".mysql_dbf_4($p[2])."'";}
+	
+	$rs = odbc_exec($db,$sql) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(odbc_fetch_row($rs)){
+		$contraint["TABLE_NAME"][] = odbc_result($rs,"TABLE_NAME");
+		$contraint["COLUMN_NAME"][] = odbc_result($rs,"COLUMN_NAME");
+		$contraint["PK_NAME"][] = odbc_result($rs,"CONSTRAINT_NAME");
+	}
+	return  $contraint;
+	
+}
+
+
+/**
+ * create primary key
+ *
+ * @param array $p [0]=table, [1]=field
+ * @return sql string
+ */
+
+function mysql_dbq_17($p){
+	return "ALTER TABLE ".$p[0]." ADD PRIMARY KEY (".$p[1].")";
+}
+
+
+/**
+ * create constraint
+ *
+ * @param array $p [0]=table, [1]=field
+ * @return sql string
+ */
+function mysql_dbq_24($p){
+	return "ALTER TABLE ".$p[0]." ADD CONSTRAINT ".$p[2]." UNIQUE (".$p[1].")";
+}
+ 
+/**
+ * drop primary key
+ *
+ * @param array $p [0]=table
+ * @return sql string
+ */
+function mysql_dbq_18($p){
+	return "ALTER TABLE ".$p[0]." DROP PRIMARY KEY";
+}
+
+
+############# foreign keys ########################
+
+/**
+ * get details for foreign keys for specific table or keyname
+ *
+ * @param array $p [0]=schema, [1]=tablename, [2]=keyname
+ * @return sql string
+ */
+function mysql_dbq_3($p){
+	$sql = "select information_schema.key_column_usage.table_name tablename,
+				information_schema.key_column_usage.column_name columnname,
+				information_schema.key_column_usage.referenced_table_name reftablename,
+				information_schema.key_column_usage.referenced_column_name refcolumnname,
+				information_schema.key_column_usage.constraint_name fkeyname,
+				information_schema.referential_constraints.delete_rule rule
+			FROM 
+				information_schema.key_column_usage,
+				 information_schema.referential_constraints
+			WHERE 
+				information_schema.referential_constraints.constraint_name = information_schema.key_column_usage.constraint_name
+				and information_schema.key_column_usage.constraint_schema = '".$p[0]."'";
+	
+	if($p[1]){
+		$sql .= " and lower(information_schema.key_column_usage.table_name) = '".lmb_strtolower($p[1])."'";
+	}
+	if($p[2]){
+		$sql .= " and lower(information_schema.key_column_usage.constraint_name) LIKE '".lmb_strtolower($p[2])."'";
+	}
+	
+	return $sql;
+}
+
+
+/**
+ * add foreign key
+ *
+ * @param array $p [0]=parent-tablename, [1]=parent-fieldname, [2]=child-tablename, [3]=child-fieldname, [4]=keyname
+ * @return sql string
+ */
+function mysql_dbq_11($p){
+	$p[5] = "DELETE RESTRICT";
+
+	return "ALTER TABLE ".$p[0]." 
+		ADD CONSTRAINT ".$p[4]." FOREIGN KEY (".$p[1].") 
+		REFERENCES ".$p[2]."(".$p[3].") 
+		ON ".$p[5];
+}
+
+
+function mysql_dbq_6($p){
+	return " ALTER TABLE ".$p[0]." DROP FOREIGN KEY ".$p[1];
+}
+
+
+############# trigger ########################
+
+
+/**
+ * get information about database trigger
+ *
+ * @param array $p [0]=schema, [1]=triggername
+ * @return array
+ */
+function mysql_dbf_3($db, $p){
+
+	$sql = "SELECT * FROM INFORMATION_SCHEMA.TRIGGERS";
+	if($p[1]){
+		$sql .= " WHERE LOWER(TRIGGER_NAME) LIKE '".lmb_strtolower($p[1])."'";
+	}
+	
+	$rs = odbc_exec($db,$sql);
+	while(odbc_fetch_row($rs)){
+		$res["triggername"][] = odbc_result($rs,"TRIGGER_NAME");
+		$res["definition"][] = odbc_result($rs,"ACTION_STATEMENT");
+		$res["tablename"][] = odbc_result($rs,"EVENT_OBJECT_TABLE");
+		$res["event"][] = odbc_result($rs,"EVENT_MANIPULATION");
+		$res["action"][] = odbc_result($rs,"ACTION_TIMING");
+	}
+	
+	return $res;
+}
+
+
+/**
+ * drop database trigger
+ *
+ * @param array $p [0]=schema, [1]=triggername
+ * @return sql string
+ */
+function mysql_dbq_10($p){
+	return "DROP TRIGGER IF EXISTS ".$p[0];
+}
+
+/**
+ * create trigger
+ *
+ * @param array $p [0]=schema, [1]=triggername, [2]=tablename, [3]=action, [4]=value
+ * @return sql string
+ */
+function mysql_dbq_13($p){
+	$sql = "CREATE TRIGGER ".$p[1]." AFTER ".$p[3]." ON ".$p[0].".".$p[2]. " FOR EACH ROW BEGIN ".$p[4]." END;";
+	return $sql;
+}
+
+/**
+ * limbas specific trigger function for limbas relation schema
+ *
+ * @param array $p [0]=schema, [1]=triggername, [2]=tablename, [3]=action, [4]=value, [5]=vtablename
+ * @return sql string
+ */
+function mysql_dbq_14($p){
+	
+	# vorwertige Verknüpfung
+	if($p[3] == "+"){
+		$out = "UPDATE ".$p[1]." SET ".$p[2]." = (SELECT COUNT(*) FROM ".$p[0]." WHERE ID = NEW.ID) WHERE ID = NEW.ID;";
+	}else{
+		$out = "UPDATE ".$p[1]." SET ".$p[2]." = (SELECT COUNT(*) FROM ".$p[0]." WHERE ID = OLD.ID) WHERE ID = OLD.ID;";
+	}
+	
+	# rückwertige Verknüpfung
+	if($p[4]){
+		if($p[3] == "+"){
+			$out .= "\nUPDATE ".$p[4]." SET ".$p[5]." = (SELECT COUNT(*) FROM ".$p[0]." WHERE VERKN_ID = NEW.VERKN_ID) WHERE ID = NEW.VERKN_ID;";
+		}else{
+			$out .= "\nUPDATE ".$p[4]." SET ".$p[5]." = (SELECT COUNT(*) FROM ".$p[0]." WHERE VERKN_ID = OLD.VERKN_ID) WHERE ID = OLD.VERKN_ID;";
+		}
+	}
+	
+	return $out;
+}
+
+/**
+ * limbas specific trigger function for lastmodified  // not implemented
+ *
+ * @param array $p [0]=schema, [2]=tableid
+ * @return sql string
+ */
+function mysql_dbq_27($p){
+	return ;
+	#return "lmb_lastmodified('".$p[1]."');";
+}
+
+############# view ########################
+
+/**
+ * get view definition
+ *
+ * @param array $p [0]=schema [1]=viewname
+ * @return sql string
+ */
+function mysql_dbq_8($p){
+	return "SELECT TABLE_NAME VIEWNAME, VIEW_DEFINITION DEFINITION 
+			FROM 
+				INFORMATION_SCHEMA.VIEWS
+			WHERE 
+				TABLE_SCHEMA = '".$p[0]."'
+				AND TABLE_NAME = '".mysql_dbf_4($p[1])."'";
+}
+
+/**
+ * existing views
+ *
+ * @param array $p [0]=schema, [1]=viewname
+ * @return sql string
+ */
+function mysql_dbq_12($p){
+	$qu = "SELECT TABLE_NAME VIEWNAME, VIEW_DEFINITION DEFINITION
+		FROM 
+			INFORMATION_SCHEMA.VIEWS
+		WHERE 
+			TABLE_SCHEMA = '".$p[0]."'";
+	if($p[1]){
+		$qu .= " AND LOWER(TABLE_NAME) = '".lmb_strtolower($p[1])."'";
+	}
+	return $qu;
+}
+
+/**
+ * create view
+ *
+ * @param array $p [0]=view name, [1]=definition
+ * @return sql string
+ */
+function mysql_dbq_19($p){
+	if(lmb_stripos($p[1],"CREATE VIEW") !== false){
+		$qu = $p[1];
+	}else{
+		$qu = "CREATE OR REPLACE VIEW ".$p[0]." AS (".rtrim(trim($p[1]),";").")";
+	}
+	
+	return $qu;
+}
+
+/*
+ * drop view
+ *
+ * @param array $p [0]=view name
+ * @return sql string
+ */
+function mysql_dbq_20($p){
+
+	$qu = "DROP VIEW ".$p[0];
+
+	return $qu;
+}
+
+
+############# tables ########################
+
+/**
+ * rename table
+ *
+ * @param array $p [0]=old tablename, [0]=new tablename
+ * @return sql string
+ */
+
+function mysql_dbf_17($p){
+	return "RENAME TABLE ".mysql_dbf_4($p[0])." TO ".mysql_dbf_4($p[1]);
+}
+
+/**
+ * list of tables / views
+ *
+ * @param array $p [0]=schema, [1]=name, [2]=typ
+ * @return sql string
+ */
+function mysql_dbf_20($db,$p){
+	
+	
+	$name = '%';
+	$type = "'TABLE','VIEW'";
+	
+	if($p[1]){$name = mysql_dbf_4($p[1]);}
+	if($p[2]){$type = $p[2];}
+	
+	$rs = odbc_tables($db,null,null,$name,$type);
+	
+	while(odbc_fetch_row($rs)){
+		$odbc_table["table_name"][] = odbc_result($rs,"TABLE_NAME");
+		$odbc_table["table_type"][] = odbc_result($rs,"TABLE_TYPE");
+	}
+	
+	if($odbc_table){
+		return $odbc_table;
+	}else{
+		return false;
+	}
+}
+
+
+############# SEQUENCE ########################
+
+/**
+ * create sequence
+ *
+ * @param array $p [0]=schema, [1]=name, [2]=start
+ */
+function mysql_dbf_21($db,$p){
+
+	mysql_dbf_22($p);
+
+	if(!$p[2]){$p[2] = 1;}
+	if($rs = odbc_exec($db,"SELECT seq_set('".mysql_dbf_4($p[1])."', ".$p[2].", 1);")){
+		return true;
+	}else{
+		return false;
+	}
+}
+
+/**
+ * drop sequence
+ *
+ * @param array $p [0]=schema, [1]=name
+ */
+function mysql_dbf_22($db,$p){
+
+	if($rs = odbc_exec($db,"DELETE FROM LMB_SEQUENCES WHERE SEQUENCE_NAME = '".$p[1]."'")){
+		return true;
+	}else{
+		return false;
+	}
+	return true;
+}
+
+
+
+############# columns ########################
+
+
+/**
+ * list of columns
+ *
+ * @param array $p [0]=schema, [1]=tablename, [2]=columnname
+ * @return sql string
+ */
+function mysql_dbf_5($db,$p,$mode=null){
+	
+	#select ifnull(numeric_precision, character_maximum_length) from information_schema.columns where table_name='kunden'; 
+	
+	$sql = "SELECT TABLE_NAME, COLUMN_NAME, COLUMN_DEFAULT, COLUMN_KEY, IFNULL(NUMERIC_PRECISION, CHARACTER_MAXIMUM_LENGTH) AS 'PRECISION', NUMERIC_SCALE AS 'SCALE', DATA_TYPE AS TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '".$p[0]."' AND LOWER(TABLE_NAME) = '".lmb_strtolower($p[1])."'";
+	if($p[2]){
+		$sql .= " AND LOWER(COLUMN_NAME) = '".lmb_strtolower($p[2])."'";
+	}
+	$rs = odbc_exec($db,$sql);
+
+	if($p[3]){return $rs;}
+
+	$rs = odbc_exec($db,$sql);
+	while(odbc_fetch_row($rs)) {
+
+		$col["tablename"][] = odbc_result($rs, "TABLE_NAME");
+		$col["columnname"][] = odbc_result($rs, "COLUMN_NAME");
+		$col["columnname_lower"][] = mysql_dbf_4(trim(odbc_result($rs, "COLUMN_NAME")));
+		$col["datatype"][] = odbc_result($rs, "TYPE_NAME");
+		$col["length"][] = odbc_result($rs, "PRECISION");
+		$col["default"][] = odbc_result($rs, "COLUMN_DEFAULT");
+		$col["scale"][] = trim(odbc_result($rs, "SCALE"));
+		if(odbc_result($rs, "COLUMN_KEY") == 'PRI'){$col["mode"][] = 'PRIMARY KEY';}
+		elseif(odbc_result($rs, "COLUMN_KEY") == 'UNI'){$col["mode"][] = 'UNIQUE';}
+		else{$col["mode"][] = '';}
+	}
+	
+	if($col){
+		return $col;
+	}else{
+		return false;
+	}
+}
+
+/**
+ * modify column default
+ *
+ * @param array $p [0]=schema, [1]=tablename, [2]=columnname, [3]=value
+ * @return sql string
+ */
+function mysql_dbq_9($p){
+	
+	$col = mysql_dbf_5(array($p[0],$p[1],$p[2]));
+	if($col["scale"][0]){
+		$ct = $col["datatype"][0].'('.$col["length"][0].','.$col["scale"][0].')';
+	}elseif($col["length"][0]){
+		$ct = $col["datatype"][0].'('.$col["length"][0].')';
+	}else{
+		$ct = $col["datatype"][0];
+	}
+	
+	return "ALTER TABLE ".mysql_dbf_4($p[1])." CHANGE COLUMN ".mysql_dbf_4($p[2])." ".mysql_dbf_4($p[2])." $ct DEFAULT ".$p[3];
+}
+
+
+/**
+ * rename column 
+ *
+ * @param array $p [0]=schema, [1]=tablename, [2]=old columnname, [3]=new columnname
+ * @return sql string
+ */
+function mysql_dbq_7($db,$p){
+	
+	$col = dbf_5(array($p[0],$p[1],$p[2]));
+	if($col["scale"][0]){
+		$ct = $col["datatype"][0].'('.$col["length"][0].','.$col["scale"][0].')';
+	}elseif($col["length"][0]){
+		$ct = $col["datatype"][0].'('.$col["length"][0].')';
+	}else{
+		$ct = $col["datatype"][0];
+	}
+	
+	return "ALTER TABLE ".mysql_dbf_4($p[1])." CHANGE COLUMN ".mysql_dbf_4($p[2])." ".mysql_dbf_4($p[3])." $ct";
+}
+
+/**
+ * modify column type
+ *
+ * @param array $p [0]=schema, [1]=tablename, [2]=columnname, [3]=value
+ * @return sql string
+ */
+function mysql_dbq_15($p){
+	return "ALTER TABLE ".mysql_dbf_4($p[1])." MODIFY ".mysql_dbf_4($p[2])." ".mysql_dbf_4($p[3]);
+}
+
+/**
+ * drop column
+ *
+ * @param array $p [0]=schema, [1]=tablename, [2]=columnname
+ * @return sql string
+ */
+function mysql_dbq_22($p){
+	return "ALTER TABLE ".mysql_dbf_4($p[0])." DROP ".mysql_dbf_4($p[1]);
+}
+
+
+############# stored procedures ########################
+
+
+/**
+ * limbas based lmb_vkn procedure 
+ *
+ * @param
+ * @return sql string
+ */
+function mysql_dbq_16($db,$p=null){
+	
+	# limbas relation procedure
+	if($p[1]){dbq_21($p);}
+	
+	# sequences workaround for mysql
+	if(!dbf_20(array($GLOBALS['DBA']['DBSCHEMA'],'LMB_SEQUENCES',"'TABLE'"))){
+	$sqlquery = "CREATE TABLE lmb_sequences ( sequence_name varchar(50) collate utf8_bin NOT NULL, current_value bigint(20) NOT NULL default '0', increment int(11) NOT NULL default '1', PRIMARY KEY (sequence_name) );";
+		if(!odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__)){$commit = 1;}
+	}
+	
+	dbq_21(array($GLOBALS['DBA']['DBSCHEMA']),'function','seq_nextval');
+	$sqlquery = "CREATE FUNCTION `seq_nextval`(seqname VARCHAR(100)) RETURNS int(11) BEGIN UPDATE lmb_sequences set current_value=(@ret:=current_value)+increment where sequence_name=seqname;RETURN @ret; END;";
+	if(!odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__)){$commit = 1;}
+	
+	dbq_21(array($GLOBALS['DBA']['DBSCHEMA']),'function','seq_set');
+	$sqlquery = "CREATE FUNCTION seq_set(seqname VARCHAR(100), cval int(11), inc int(11)) RETURNS int(11) BEGIN REPLACE INTO lmb_sequences(sequence_name, current_value, increment) VALUES(seqname, cval, inc); RETURN cval; END;";
+	if(!odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__)){$commit = 1;}
+
+	if($commit){return false;}
+	return true;
+
+}
+
+
+/**
+ * drop limbas based lmb_vkn procedure
+ *
+ * @param
+ * @return bool
+ */
+function mysql_dbq_21($db,$p,$t='procedure',$n='lmb_vkn'){
+	
+	$sqlquery = "drop $t ".$p[0].".".$n;
+	$rs = @odbc_exec($db,$sqlquery);
+}
+
+
+
+?>

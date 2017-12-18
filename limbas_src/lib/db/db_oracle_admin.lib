@@ -442,6 +442,16 @@ function dbf_24($p){
 	#kann nicht stimmen!!!!!!!!!!!!!!!!!!!!11
 }
 
+/**
+ * check view dependencies
+ *
+ * @param array $p [0]=schema, [1]=tablename, [2]=fieldname
+ * @return array
+ */
+function dbf_25($p){
+    return false;   
+}
+
 ############# tables ########################
 
 /**

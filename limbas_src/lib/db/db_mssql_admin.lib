@@ -421,6 +421,16 @@ function dbf_24($p){
 	return "EXEC sp_rename '".dbf_4($p[0])."', '".dbf_4($p[1])."'";
 }
 
+/**
+ * check view dependencies
+ *
+ * @param array $p [0]=schema, [1]=tablename, [2]=fieldname
+ * @return array
+ */
+function dbf_25($p){
+    return false;   
+}
+
 ############# tables ########################
 
 /**

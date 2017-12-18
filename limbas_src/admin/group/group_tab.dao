@@ -392,6 +392,26 @@ function set_rights($ID,$ismaingroup,$addsub){
 				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
 			}
+            # list edit
+			elseif($srule[2] == 33){
+				global ${"listeditrule_".$srule[0]."_".$srule[1]};
+                if(!$ismaingroup AND !$addsub){$bzm++;continue;}
+                $listedit_rule = ${"listeditrule_".$srule[0]."_".$srule[1]};
+                if($listedit_rule){$perm = LMB_DBDEF_TRUE;} else {$perm = LMB_DBDEF_FALSE;}
+                $sqlquery = "UPDATE LMB_RULES_FIELDS SET LISTEDIT = ".$perm." WHERE GROUP_ID = $ID AND TAB_ID = ".$srule[0]." AND FIELD_ID = ".$srule[1];
+                $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                if(!$rs) {$commit = 1;}
+            }
+            # list edit
+			elseif($srule[2] == 34){
+                global ${"speechrecrule_".$srule[0]."_".$srule[1]};
+                if(!$ismaingroup AND !$addsub){$bzm++;continue;}
+                $speechrec_rule = ${"speechrecrule_".$srule[0]."_".$srule[1]};
+                if($speechrec_rule){$perm = LMB_DBDEF_TRUE;} else {$perm = LMB_DBDEF_FALSE;}
+                $sqlquery = "UPDATE LMB_RULES_FIELDS SET SPEECHREC = ".$perm." WHERE GROUP_ID = $ID AND TAB_ID = ".$srule[0]." AND FIELD_ID = ".$srule[1];
+                $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                if(!$rs) {$commit = 1;}
+            }
 
 			$bzm++;
 		}
@@ -574,7 +594,9 @@ foreach($_gtab["tab_id"] as $key => $value){
 				LMB_RULES_FIELDS.VER,
 				LMB_RULES_FIELDS.CURRENCY,
 				LMB_RULES_FIELDS.EXT_TYPE,
-				LMB_RULES_FIELDS.NFORMAT
+				LMB_RULES_FIELDS.NFORMAT,
+				LMB_RULES_FIELDS.LISTEDIT,
+				LMB_RULES_FIELDS.SPEECHREC
                 FROM LMB_RULES_FIELDS,LMB_RULES_TABLES WHERE
         		LMB_RULES_FIELDS.TAB_ID = LMB_RULES_TABLES.TAB_ID
         		AND LMB_RULES_TABLES.GROUP_ID = $group_level
@@ -615,6 +637,8 @@ foreach($_gtab["tab_id"] as $key => $value){
                 $l_result[$key]["option"][$field_id] = odbc_result($rs, "FIELDOPTION");
                 $l_result[$key]["versionable"][$field_id] = odbc_result($rs, "VER");
                 $l_result[$key]["def"][$field_id] = odbc_result($rs, "DEFLT");
+                $l_result[$key]["listedit"][$field_id] = odbc_result($rs, "LISTEDIT");
+                $l_result[$key]["speechrec"][$field_id] = odbc_result($rs, "SPEECHREC");
                 $bzm1 ++;
             }
         }
@@ -661,6 +685,8 @@ foreach($_gtab["tab_id"] as $key => $value){
         		LMB_RULES_FIELDS.DEFLT,
         		LMB_RULES_FIELDS.VER,
         		LMB_RULES_FIELDS.EDITRULE,
+        		LMB_RULES_FIELDS.LISTEDIT,
+        		LMB_RULES_FIELDS.SPEECHREC,
         		LMB_RULES_TABLES.EDIT AS TABEDIT,
         		LMB_RULES_TABLES.LMVIEW AS TABVIEW,
         		LMB_RULES_TABLES.COPY AS TABCOPY,
@@ -758,6 +784,8 @@ foreach($_gtab["tab_id"] as $key => $value){
                 $f_result[$key]["data_type"][$field_id] = odbc_result($rs, "DATA_TYPE");
                 $f_result[$key]["def"][$field_id] = odbc_result($rs, "DEFLT");
                 $f_result[$key]["argument_typ"][$field_id] = odbc_result($rs, "ARGUMENT_TYP");
+                $f_result[$key]["listedit"][$field_id] = odbc_result($rs, "LISTEDIT");
+                $f_result[$key]["speechrec"][$field_id] = odbc_result($rs, "SPEECHREC");
             }
             $bzm1 ++;
         }

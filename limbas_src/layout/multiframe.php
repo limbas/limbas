@@ -175,19 +175,48 @@ var dropel = null;
 var dropel_width = null;
 var posx = null;
 var elwidth = null;
+var scrollbarWidth = null;
 function lmbIniDrag(evt,el) {
+    dropel = el;
+    document.onmouseup = lmbEndResizeFrame;
+    elwidth = el.offsetWidth;
+    if(browser_ns5){
+        posx = evt.screenX;
+    }else{
+        posx = window.event.screenX;
+    }
+    document.onmousemove = lmbResizeFrame;
 
-		dropel = el;
-		document.onmouseup = lmbEndResizeFrame;
-		elwidth = el.offsetWidth;
-		if(browser_ns5){
-			posx = evt.screenX;
-		}else{
-			posx = window.event.screenX;
-		}
-		document.onmousemove = lmbResizeFrame;
-	
+    var mainframe = top.document.getElementById("multiframe").contentWindow.document.documentElement;
+    scrollbarWidth = mainframe.scrollHeight > mainframe.clientHeight ? lmbGetScrollbarWidth() : 0;
+
 	return false;
+}
+
+// https://stackoverflow.com/questions/13382516/getting-scroll-bar-width-using-javascript
+function lmbGetScrollbarWidth() {
+    var outer = document.createElement("div");
+    outer.style.visibility = "hidden";
+    outer.style.width = "100px";
+    outer.style.msOverflowStyle = "scrollbar"; // needed for WinJS apps
+
+    document.body.appendChild(outer);
+
+    var widthNoScroll = outer.offsetWidth;
+    // force scrollbars
+    outer.style.overflow = "scroll";
+
+    // add innerdiv
+    var inner = document.createElement("div");
+    inner.style.width = "100%";
+    outer.appendChild(inner);
+
+    var widthWithScroll = inner.offsetWidth;
+
+    // remove divs
+    outer.parentNode.removeChild(outer);
+
+    return widthNoScroll - widthWithScroll;
 }
 
 function lmbEndResizeFrame() {
@@ -205,25 +234,40 @@ function lmbEndResizeFrame() {
 }
 
 function lmbResizeFrame(e) {
-	
-	if(browser_ns5){
-		evw = e.screenX - posx
-		dw = elwidth - evw;
-	}else{
-		evw = window.event.screenX - posx
-		dw = elwidth - evw;
-	}
+    var evw; // drag width
+    if(browser_ns5) {
+        evw = e.screenX - posx;
+    } else {
+        evw = window.event.screenX - posx;
+    }
 
-	if(dw > 400 || dw < 50){return false;}
-	
-	if(Math.abs((dw-elwidth)) < 5){return;}
-	
-	var pcols = top.document.getElementById("mainset").cols;
-	fcols = pcols.split(",");
-	var size = fcols[0]+",*,"+dw;
+    // 5px minimum drag distance
+    if(Math.abs(evw) < 5) { return false; }
 
-	
-	top.document.getElementById("mainset").cols = size;
+    // destination width
+    var dw = (elwidth + scrollbarWidth) - evw;
+    if (evw > 0) {
+        dw += 10;
+    }
+
+    // max/min width
+    if(dw > 400 || dw < 50) { return false; }
+
+    // catch click event after resize
+    var captureClick = function(e) {
+        e.stopPropagation(); // Stop the click from being propagated.
+        this.removeEventListener('click', captureClick, true); // cleanup
+    };
+    dropel.addEventListener(
+        'click',
+        captureClick,
+        true
+    );
+
+    // resize frame
+    var mainset = top.document.getElementById("mainset");
+	fcols = mainset.cols.split(",");
+    mainset.cols = fcols[0] + ",*," + dw;
 
 	return false;
 }
@@ -397,7 +441,7 @@ foreach($menu as $key1 => $menuType){
 		echo "</Script>\n";
 		
 		
-	}
+	}        
 	echo  "</div>";
 }
 

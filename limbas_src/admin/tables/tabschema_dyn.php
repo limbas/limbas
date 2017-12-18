@@ -27,7 +27,7 @@ function show_fieldinfo($gtabid,$fieldid){
 	
 	echo "<TABLE cellpadding=\"0\" cellspacing=\"0\" STYLE=\"border-collapse:collapse;overview:hidden;width:300px;\">";
 	echo "<TR><TD colspan=\"2\" valign=\"top\" align=\"right\" style=\"cursor:pointer;\"><i class=\"lmb-icon lmb-close\" border=\"0\" onclick=\"document.getElementById('fieldinfo').style.visibility='hidden';\"></i></TD></TR>";
-	echo "<TR><TD STYLE=\"border:1px solid grey;padding:1px;overflow:hidden;overflow:hidden;\" valign=\"top\" STYLE=\"width:100px;\"><B>ID</TD><TD STYLE=\"border:1px solid grey;padding:1px;overflow:hidden;\">".$fieldid."</TD></TD></TR>";
+	echo "<TR><TD STYLE=\"border:1px solid grey;padding:1px;overflow:hidden;\" valign=\"top\" STYLE=\"width:100px;\"><B>ID</TD><TD STYLE=\"border:1px solid grey;padding:1px;overflow:hidden;\">".$fieldid."</TD></TD></TR>";
 	echo "<TR><TD STYLE=\"border:1px solid grey;padding:1px;overflow:hidden;\" valign=\"top\"><B>".$lang[922]."</TD><TD STYLE=\"border:1px solid grey;padding:1px;overflow:hidden;\">".$gfield[$gtabid][field_name][$fieldid]."</TD></TD></TR>";
 	echo "<TR><TD STYLE=\"border:1px solid grey;padding:1px;overflow:hidden;\" valign=\"top\"><B>".$lang[923]."</TD><TD STYLE=\"border:1px solid grey;padding:1px;overflow:hidden;\">".$gfield[$gtabid][beschreibung][$fieldid]."</TD></TR>";
 	echo "<TR><TD STYLE=\"border:1px solid grey;padding:1px;overflow:hidden;\" valign=\"top\"><B>".$lang[924]."</TD><TD STYLE=\"border:1px solid grey;padding:1px;overflow:hidden;\">".$gfield[$gtabid][spelling][$fieldid]."</TD></TR>";

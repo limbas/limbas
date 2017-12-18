@@ -95,13 +95,13 @@ function make_fileArchive($path,$name){
 		if($folderval["typ"][$key] == "file" AND $value != $name.'.tar.gz'){
 			unlink($path.$value);
 		}
-	}
+	}    
 	
 	if(file_exists($url.$name.".tar.gz")){return $url.$name.".tar.gz";}else{return false;}
 }
 
 # grouplist
-function viewgrouptree($LEVEL,$l,$select){
+function viewgrouptree($LEVEL,$l,$select=null){
 	static $grouptree;
 	global $db;
 
@@ -283,10 +283,6 @@ function getTypeExensions(){
 	
 	return $name;
 }
-
-
-
-
 
 # grouplist
 function GroupTreeList($name,$items,$selected,$LEVEL=0,$l=null){
@@ -584,7 +580,7 @@ function lmb_rebuildTrigger($deleteall=null,$onlytabs=null){
 
 ################### views #############################
 
-# --- create view  -----------------------------------
+# --- create db view  -----------------------------------
 function lmb_createView($query,$name){
 	global $db;
 	global $session;
@@ -603,7 +599,34 @@ function lmb_createView($query,$name){
 	}
 }
 
-# --- drop view -----------------------------------
+/*
+// --- create limbas views -----------------------------------
+function lmb_createlmbViews($name=null){
+    global $DB;
+    global $db;
+    
+    if($name){$sql = "WHERE LOWER(TABELLE) = ".strtolower($name);}
+    $sqlquery = "SELECT TABELLE, TAB_ID, VIEWDEF FROM LMB_CONF_VIEWS INNER JOIN LMB_CONF_TABLES ON (LMB_CONF_VIEWS.ID = LMB_CONF_TABLES.TAB_ID) $sql";
+    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    while (odbc_fetch_row($rs)) {
+        $tabid = odbc_result($rs, "TAB_ID");
+        $viewname = odbc_result($rs, "TABELLE");
+        $viewdef = odbc_result($rs, "VIEWDEF");
+
+        // create view
+        $sqlquery2 = dbq_19(array($viewname,$viewdef));
+        $rs = odbc_exec($db, $sqlquery2) or errorhandle(odbc_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
+        if (! $rs) {
+            lmb_alert("cannot create view $viewname!");
+        }
+    }
+    
+    return true;
+
+}
+*/
+
+// --- drop db view -----------------------------------
 function lmb_dropView($name=null){
 	global $db;
 	global $DBA;
@@ -616,6 +639,18 @@ function lmb_dropView($name=null){
 			if($rs1){return true;}else{return  false;}
 		}
 	}else{
+	    
+	    if($viewlist = lmb_getViewDependency(1)){
+	        foreach ($viewlist as $key => $value){
+	            if(!lmb_dropView($key)){
+	               $commit = 1;
+	            }
+	        }
+	    }
+	    
+	    if($commit){return false;}else{return true;}
+	    
+	    /*
 		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'VIEW'"));
 		if($odbc_table["table_name"]){
 			foreach($odbc_table["table_name"] as $tkey => $tvalue) {
@@ -624,12 +659,42 @@ function lmb_dropView($name=null){
 				if(!$rs1){$commit = 1;}
 			}
 		}
-		if($commit){return false;}else{return true;}
+		*/
+		
 	}
 	return true;
 }
 
-# --- get view info -----------------------------------
+
+/*
+// --- drop limbas views -----------------------------------
+function lmb_droplmbViews($name=null,$config=null){
+    global $DB;
+    global $db;
+    
+    // drop views in order of field "SORT" for view relation
+    if($name){$sql = "WHERE LOWER(TABELLE) = ".strtolower($name);}
+    $sqlquery = "SELECT TABELLE, TAB_ID FROM LMB_CONF_VIEWS INNER JOIN LMB_CONF_TABLES ON (LMB_CONF_VIEWS.ID = LMB_CONF_TABLES.TAB_ID) $sql ORDER BY SORT DESC";
+    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    while (odbc_fetch_row($rs)) {
+        $tabid = odbc_result($rs, "TAB_ID");
+        $viewname = odbc_result($rs, "TABELLE");
+        
+        // drop view & config
+        if($config){
+            if(!delete_tab($tabid)){return false;}
+        // drop view
+        }else{
+            if(!lmb_dropView($viewname)){return false;}
+        }
+        
+        return true;
+    }
+
+}
+*/
+
+# --- get info for limbas relation views -----------------------------------
 function lmb_getViewInfo($name){
 	global $db;
 	#global $DBA;
@@ -661,6 +726,130 @@ function lmb_getViewDef($name){
 	}
 }
 
+
+
+# --- get dependency tree of views -----------------------------------
+function lmb_checkViewDependency($tablename,$fieldname=null,$clear=null,$rec=false){
+    static $dependency;
+    global $DBA;
+
+    if(!$dependency OR !$clear){$dependency = array();}
+    
+    if($dep = dbf_25(array($DBA['DBSCHEMA'],$tablename,$fieldname))){
+        foreach($dep as $key => $value){
+            if(!in_array($value,$dependency)){
+                array_push($dependency,$value);
+                if($rec){
+                    lmb_checkViewDependency($value,null,1,1);
+                }
+            }
+        }
+    }
+    
+    return array_unique($dependency);
+}
+
+
+function lmb_getSubView($value, $level, $clear = 0){
+    global $DBA;
+    static $dependency;
+    
+    if ($clear) {
+        $dependency = array();
+    }
+    
+    if ($dep = lmb_checkViewDependency($value)) {
+        $level ++;
+        foreach ($dep as $k => $v) {
+            $dependency[$v] = $level;
+            lmb_getSubView($v, $level);
+        }
+    }
+    return $dependency;
+}
+
+/*
+ * get dependent view list
+ */
+function lmb_getViewDependency($arsort=0){
+    global $DBA;
+
+    $tables = dbf_20(array($DBA['DBSCHEMA'],null,'TABLE'));
+    $tables = $tables["table_name"];
+    $dependency = array();
+    foreach($tables as $key => $value){
+        if($dep = lmb_checkViewDependency($value)){
+            $dependency_ = lmb_getSubView($value,0,1);
+            foreach($dependency_ as $dkey => $dval){
+                if(!$dependency[$dkey] OR $dependency[$dkey] < $dval){
+                    $dependency[$dkey] = $dval;
+                }
+            }
+        }
+    }
+    if($arsort){
+        arsort($dependency);
+    }else{
+        asort($dependency);
+    }
+    return $dependency;
+}
+
+
+/*
+ * remember & drop dependent views
+ */
+function lmb_dropDependViews($dep){
+
+    if(!$dep){return;}
+    lmb_StartTransaction();
+    
+    // sort by dependency
+    krsort($dep);
+
+    foreach ($dep as $key => $viewname) {
+        if ($def[$viewname] = lmb_getViewDef($viewname)) {
+            if (!lmb_dropView($viewname)) {
+                lmb_alert("drop view \"$viewname\" failed!\n try to drop it manually!");
+                $commit = 1;
+                break;
+            }
+            # else {
+            #    lmb_alert("drop view \"$viewname\"!");
+            #}
+        }
+    }
+    
+    if ($commit) {
+        lmb_EndTransaction(0);
+        return false;
+    } else {
+        lmb_EndTransaction(1);
+        return array_reverse($def);
+    }
+}
+
+
+/*
+ * remember & drop dependent views
+ */
+function lmb_addDependViews($viewdef){
+
+    if(!$viewdef){return;}
+    
+    foreach ($viewdef as $viewname => $query) {
+        if (!lmb_createView($query, $viewname)) {
+            lmb_alert("create view \"$viewname\" failed!\n try to create it manually!");
+            $commit = 1;
+        }
+        #else{
+        #    lmb_alert("add view \"$viewname\"!");
+        #}
+    }
+    
+    if($commit){return false;}
+    return true;
+}
 
 
 ################### foreign key #############################
@@ -930,6 +1119,106 @@ function lmb_rebuildSequences($tablename=null,$field=null){
 }
 
 
+# -------------------- Indizes prüfen ---------------
+function lmb_rebuildIndex(){
+	global $db;
+	global $gtab;
+	global $gfield;
+	global $DBA;
+	
+	$sqlquery = dbq_2(array($DBA["DBSCHEMA"]),null,null,1);
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs){$commit = 1;}
+
+	while(odbc_fetch_row($rs)){
+		$table = dbf_4(odbc_result($rs,"TABLENAME"));
+		$field = dbf_4(odbc_result($rs,"COLUMNNAME"));
+		$ind[$table][$field] = 1;
+	}
+
+	# Relation Indexes
+	foreach ($gfield as $gtabid => $value){
+		foreach ($gfield[$gtabid]["md5tab"] as $fieldid => $md5tab){
+			# only right relation
+			if($gfield[$gtabid]["verkntabletype"][$fieldid] == 1 AND !$gfield[$gtabid]["verkntree"][$fieldid]){
+				if(!$ind[dbf_4($md5tab)][dbf_4('ID')]){
+					$indname = "LMBINDV_".lmb_substr(md5($md5tab."_ID"),0,12);
+					$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$md5tab,"ID"));
+					$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					if(!$rs1) {$commit = 1;}else{
+						echo "index $indname for $md5tab ID added<br>";
+					}
+				}
+				if(!$ind[dbf_4($md5tab)][dbf_4('SORT')]){
+					$indname = "LMBINDV_".lmb_substr(md5($md5tab."_SORT"),0,12);
+					$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$md5tab,"SORT"));
+					$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					if(!$rs1) {$commit = 1;}else{
+						echo "index $indname for $md5tab SORT added<br>";
+					}
+				}
+				
+				if(!$ind[dbf_4($md5tab)][dbf_4('VERKN_ID')]){
+					$indname = "LMBINDV_".lmb_substr(md5($md5tab."_VERKN_ID"),0,12);
+					# only n:m
+					if($gfield[$gtabid]["data_type"][$fieldid] == 24){
+						$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$md5tab,"VERKN_ID"));
+						$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+						if(!$rs1) {$commit = 1;}else{
+							echo "index $indname for $md5tab VERKN_ID added<br>";
+						}
+					# only 1:n
+					}else{
+						# add constraint
+						$sqlquery =  dbq_24(array($md5tab,'VERKN_ID',$indname));
+						$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					}
+				}
+			}
+		}
+	}
+	
+	# System Indexes
+	$systemindex[] = array('lmb_gtab_groupdat'=>'dat_id');
+	$systemindex[] = array('lmb_indize_d'=>'ref');
+	$systemindex[] = array('lmb_indize_d'=>'wid');
+	$systemindex[] = array('lmb_indize_d'=>'sid');
+	$systemindex[] = array('lmb_indize_ds'=>'wid');
+	$systemindex[] = array('lmb_indize_ds'=>'sid');
+	$systemindex[] = array('lmb_indize_ds'=>'ref');
+	$systemindex[] = array('lmb_indize_f'=>'wid');
+	$systemindex[] = array('lmb_indize_f'=>'sid');
+	$systemindex[] = array('lmb_indize_f'=>'fid');
+	$systemindex[] = array('lmb_indize_fs'=>'sid');
+	$systemindex[] = array('lmb_indize_fs'=>'fid');
+	$systemindex[] = array('lmb_indize_fs'=>'wid');
+	$systemindex[] = array('lmb_indize_w'=>'metaphone');
+	$systemindex[] = array('lmb_indize_w'=>'val');
+	$systemindex[] = array('lmb_select_d'=>'dat_id');
+	$systemindex[] = array('lmb_select_d'=>'w_id');
+	$systemindex[] = array('lmb_select_w'=>'sort');
+	$systemindex[] = array('lmb_select_w'=>'pool');
+	$systemindex[] = array('lmb_select_w'=>'wert');
+
+	foreach ($systemindex as $key => $value){
+
+		$table = key($value);
+		$field = current($value);
+
+		if(!$ind[dbf_4($table)][dbf_4($field)]){
+			$indname = "LMBIND_".lmb_substr(md5($table."_".$field),0,12);
+			$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$table,$field));
+			$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			if(!$rs1) {$commit = 1;}else{
+				echo "index $indname for $table $field added<br>";
+			}
+		}
+	}
+
+	if(!$commit){return true;}else{return false;}
+}
+
+
 
 /**
  * # sorting config Tables
@@ -1115,5 +1404,65 @@ function lmb_fputcsv(&$table_datei, $line, $intern=0) {
         fputcsv($table_datei, $line, $csv_delimiter, $csv_enclosure);
     }
 }
- 
+
+/**
+ * soap client
+ *
+ * @param array $lmpar
+ * @return result array
+ */
+function soap_call_client($lmpar,$LIM){
+	global $lmbs;
+	
+	$lmpar["lmbs"] = $lmbs["session"]["s_id"]; # Session OK
+	
+	# ----- Aktion ausführen ----------
+	if($lmpar) {
+		
+		$client = new SoapClient(NULL,
+		array(
+		"login" =>$LIM["username"], 
+		"password" => $LIM["pass"], 
+		"location" => $LIM["lim_url"]."/main_soap.php",
+		"uri" => "urn:xmethodsSoapServer",
+		"style" => SOAP_RPC,
+		"use" => SOAP_ENCODED,
+		"compression" => SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_DEFLATE,
+		"encoding"=>"ISO-8859-1"
+		));
+		
+		#"location" => $LIM["lim_url"]."/main_soap.php?".$lmbs["session"]["s_name"]."=".$lmbs["session"]["s_id"],
+
+		try{
+			$lmb = $client->__call("runlmb", array(serialize($lmpar)), array("uri" => "urn:xmethodsLimbasServer","soapaction" => "urn:xmethodsLimbasServer"));
+		}catch(Exception $e){
+			lmb_alert('can not access to '.$LIM["lim_url"].'\n'.$e->getMessage());
+			return false;
+		}
+
+		if($lmb){$lmb = unserialize($lmb);}
+	
+		if(is_array($lmb) AND array_key_exists('session', $lmb) AND array_key_exists('s_id', $lmb["session"])){
+			$lmbs["session"] = $lmb["session"];
+			$_SESSION["lmbs"] = $lmbs;
+		}
+		
+	}
+	
+	return $lmb;
+}
+
+/**
+ * deletes ufile and ugtab from all users
+ *
+ * @return boolean success
+ */
+function lmb_delete_user_filesave(){
+	global $db;
+	
+	$prepare_string = "UPDATE LMB_USERDB SET UFILE = ?,UGTAB = ?";
+	return lmb_PrepareSQL($prepare_string, array('',''), __FILE__, __LINE__);		
+}
+
+
 ?>

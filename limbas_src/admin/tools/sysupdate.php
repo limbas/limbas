@@ -77,7 +77,7 @@ function create_default_dir($userid,$groupid,$username){
 		$info .= ".. public folder created for user <b>$username</b><br>";
 
 		# Dokumente
-		$sqlquery = "INSERT INTO LDMS_STRUCTURE (ID,NAME,LEVEL,ERSTUSER,ERSTGROUP,TYP,FIX,FIELD_ID,TAB_ID) VALUES (".($NEXTID+1).",'$lang[1705]',$NEXTID,1,$groupid,1,".LMB_DBDEF_TRUE.",0,0)";
+		$sqlquery = "INSERT INTO LDMS_STRUCTURE (ID,NAME,LEVEL,ERSTUSER,ERSTGROUP,TYP,FIX,FIELD_ID,TAB_ID) VALUES (".($NEXTID+1).",'$lang[1705]',$NEXTID,1,$groupid,1,".LMB_DBDEF_FALSE.",0,0)";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		$NEXTRID++;
 		$sqlquery = "INSERT INTO LDMS_RULES (ID,GROUP_ID,FILE_ID,LMVIEW,LMADD,DEL,ADDF,EDIT) VALUES ($NEXTRID,1,".($NEXTID+1).",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.")";
@@ -86,7 +86,7 @@ function create_default_dir($userid,$groupid,$username){
 		$info .= ".. document folder created for user <b>$username</b><br>";
 
 		# Bilder
-		$sqlquery = "INSERT INTO LDMS_STRUCTURE (ID,NAME,LEVEL,ERSTUSER,ERSTGROUP,TYP,FIX,FIELD_ID,TAB_ID) VALUES (".($NEXTID+2).",'$lang[1706]',$NEXTID,1,$groupid,1,".LMB_DBDEF_TRUE.",0,0)";
+		$sqlquery = "INSERT INTO LDMS_STRUCTURE (ID,NAME,LEVEL,ERSTUSER,ERSTGROUP,TYP,FIX,FIELD_ID,TAB_ID) VALUES (".($NEXTID+2).",'$lang[1706]',$NEXTID,1,$groupid,1,".LMB_DBDEF_FALSE.",0,0)";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		$NEXTRID++;
 		$sqlquery = "INSERT INTO LDMS_RULES (ID,GROUP_ID,FILE_ID,LMVIEW,LMADD,DEL,ADDF,EDIT) VALUES ($NEXTRID,1,".($NEXTID+2).",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.")";
@@ -305,6 +305,8 @@ if($newsystem){
 	$rs = @odbc_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_USRGRP_LST";
 	$rs = @odbc_exec($db,$sqlquery);
+	$sqlquery = "DELETE FROM LMB_REVISION";
+	$rs = @odbc_exec($db,$sqlquery);
 	
 	$sqlquery = "DELETE FROM LMB_WFL";
 	$rs = @odbc_exec($db,$sqlquery);
@@ -313,17 +315,6 @@ if($newsystem){
 	$sqlquery = "DELETE FROM LMB_WFL_INST";
 	$rs = @odbc_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_WFL_TASK";
-	$rs = @odbc_exec($db,$sqlquery);
-	
-	$sqlquery = "DELETE FROM LWF_ACTION";
-	$rs = @odbc_exec($db,$sqlquery);
-	$sqlquery = "DELETE FROM LWF_PROCESS";
-	$rs = @odbc_exec($db,$sqlquery);
-	$sqlquery = "DELETE FROM LWF_SCHEME";
-	$rs = @odbc_exec($db,$sqlquery);
-	$sqlquery = "DELETE FROM LWF_TODO";
-	$rs = @odbc_exec($db,$sqlquery);
-	$sqlquery = "DELETE FROM LWF_WORKFLOW";
 	$rs = @odbc_exec($db,$sqlquery);
 	
 	$sqlquery = "DELETE FROM LDMS_FAVORITES";
@@ -343,9 +334,6 @@ if($newsystem){
 
 	# Dateitabellen anlegen
 	create_default_files();
-
-	# Workflow Tabellen anlegen
-	#create_default_workflow();
 	
 	# Dateisystem neu anlegen für User 1
 	createDefaultDirs(1,1);
@@ -358,52 +346,6 @@ if($newsystem){
 	$delpath = array($umgvar["temp"]."/log/",$umgvar["temp"]."/thumpnails/",$umgvar["temp"]."/txt/");
 	foreach ($delpath as $key => $value){
 		rmdirr($value);
-	}
-
-}
-
-function create_default_workflow(){
-	global $db;
-	global $tabgroup;
-	global $sconf_tables;
-	
-	return true;
-
-	require_once("admin/tables/tab.lib");
-	
-	# Alte Tabellen löschen
-	$sqlquery = "SELECT TAB_ID,TABELLE,TAB_GROUP FROM LMB_CONF_TABLES WHERE LOWER(TABELLE) LIKE LOWER('LWF_%')";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$bzm = 1;
-	while(odbc_fetch_row($rs,$bzm)){
-		$sqlquery1 = "DELETE FROM ".odbc_result($rs,"TABELLE");
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-		$bzm++;
-	}
-	$bzm = 1;
-	while(odbc_fetch_row($rs,$bzm)){
-		delete_tab(odbc_result($rs,"TAB_ID"));
-		$group_id = odbc_result($rs,"TAB_GROUP");
-		$bzm++;
-	}
-	
-	if(!$group_id){$group_id = add_tabgroup("Workflow","Limbas Workflow Tables");}
-	
-	if($tab_id = add_tab("LWF_WORKFLOW",$group_id,"LWF_WORKFLOW",0,4,1)){
-		$nfield = extended_fields_workflow();
-		add_extended_fields($nfield,$tab_id[0],1);
-	}
-	if($tab_id = add_tab("LWF_SCHEME",$group_id,"LWF_SCHEME",0,4,1)){
-		$nfield = extended_fields_lwfscheme();
-		add_extended_fields($nfield,$tab_id[0],1);
-	}
-	if($tab_id = add_tab("LWF_PROCESS",$group_id,"LWF_PROCESS",0,4,1)){
-		$nfield = extended_fields_lwfprocess();
-		add_extended_fields($nfield,$tab_id[0],1);
-	}
-	if($tab_id = add_tab("LWF_ACTION",$group_id,"LWF_ACTION",0,4,1)){
-		$nfield = extended_fields_lwfaction();
-		add_extended_fields($nfield,$tab_id[0],1);
 	}
 
 }
@@ -486,19 +428,6 @@ function get_lockmessage(){
 	}
 }
 
-function delete_user_filesave(){
-	global $db;
-
-	$sqlquery = "SELECT USER_ID FROM LMB_USERDB";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$bzm = 1;
-	while(odbc_fetch_row($rs,$bzm)){
-		$prepare_string = "UPDATE LMB_USERDB SET UFILE = ?,UGTAB = ?  WHERE USER_ID = ".odbc_result($rs,"USER_ID");
-		lmb_PrepareSQL($prepare_string,array('',''),__FILE__,__LINE__);
-		$bzm++;
-	}
-}
-
 /*
 
 # already done in gtab_array.lib (SNAP_loadInSession)
@@ -573,112 +502,6 @@ function resortSelect(){
 
 
 
-# -------------------- Indizes prüfen ---------------
-function createDefaultIndex(){
-	global $db;
-	global $gtab;
-	global $gfield;
-	global $DBA;
-	
-	$sqlquery = dbq_2(array($DBA["DBSCHEMA"]),null,null,1);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs){$commit = 1;}
-
-	while(odbc_fetch_row($rs)){
-		$table = dbf_4(odbc_result($rs,"TABLENAME"));
-		$field = dbf_4(odbc_result($rs,"COLUMNNAME"));
-		$ind[$table][$field] = 1;
-	}
-
-	# Relation Indexes
-	foreach ($gfield as $gtabid => $value){
-		foreach ($gfield[$gtabid]["md5tab"] as $fieldid => $md5tab){
-			# only right relation
-			if($gfield[$gtabid]["verkntabletype"][$fieldid] == 1 AND !$gfield[$gtabid]["verkntree"][$fieldid]){
-				if(!$ind[dbf_4($md5tab)][dbf_4('ID')]){
-					$indname = "LMBINDV_".lmb_substr(md5($md5tab."_ID"),0,12);
-					$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$md5tab,"ID"));
-					$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-					if(!$rs1) {$commit = 1;}else{
-						echo "index $indname for $md5tab ID added<br>";
-					}
-				}
-				if(!$ind[dbf_4($md5tab)][dbf_4('SORT')]){
-					$indname = "LMBINDV_".lmb_substr(md5($md5tab."_SORT"),0,12);
-					$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$md5tab,"SORT"));
-					$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-					if(!$rs1) {$commit = 1;}else{
-						echo "index $indname for $md5tab SORT added<br>";
-					}
-				}
-				
-				if(!$ind[dbf_4($md5tab)][dbf_4('VERKN_ID')]){
-					$indname = "LMBINDV_".lmb_substr(md5($md5tab."_VERKN_ID"),0,12);
-					# only n:m
-					if($gfield[$gtabid]["data_type"][$fieldid] == 24){
-						$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$md5tab,"VERKN_ID"));
-						$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-						if(!$rs1) {$commit = 1;}else{
-							echo "index $indname for $md5tab VERKN_ID added<br>";
-						}
-					# only 1:n
-					}else{
-						# add constraint
-						$sqlquery =  dbq_24(array($md5tab,'VERKN_ID',$indname));
-						$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-					}
-				}
-			}
-		}
-	}
-	
-	# System Indexes
-	$systemindex[] = array('lmb_gtab_groupdat'=>'dat_id');
-	$systemindex[] = array('lmb_indize_d'=>'ref');
-	$systemindex[] = array('lmb_indize_d'=>'wid');
-	$systemindex[] = array('lmb_indize_d'=>'sid');
-	$systemindex[] = array('lmb_indize_ds'=>'wid');
-	$systemindex[] = array('lmb_indize_ds'=>'sid');
-	$systemindex[] = array('lmb_indize_ds'=>'ref');
-	$systemindex[] = array('lmb_indize_f'=>'wid');
-	$systemindex[] = array('lmb_indize_f'=>'sid');
-	$systemindex[] = array('lmb_indize_f'=>'fid');
-	$systemindex[] = array('lmb_indize_fs'=>'sid');
-	$systemindex[] = array('lmb_indize_fs'=>'fid');
-	$systemindex[] = array('lmb_indize_fs'=>'wid');
-	$systemindex[] = array('lmb_indize_w'=>'metaphone');
-	$systemindex[] = array('lmb_indize_w'=>'val');
-	$systemindex[] = array('lmb_select_d'=>'dat_id');
-	$systemindex[] = array('lmb_select_d'=>'w_id');
-	$systemindex[] = array('lmb_select_w'=>'sort');
-	$systemindex[] = array('lmb_select_w'=>'pool');
-	$systemindex[] = array('lmb_select_w'=>'wert');
-
-	foreach ($systemindex as $key => $value){
-
-		$table = key($value);
-		$field = current($value);
-
-		if(!$ind[dbf_4($table)][dbf_4($field)]){
-			$indname = "LMBIND_".lmb_substr(md5($table."_".$field),0,12);
-			$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$table,$field));
-			$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			if(!$rs1) {$commit = 1;}else{
-				echo "index $indname for $table $field added<br>";
-			}
-		}
-	}
-
-	if(!$commit){return true;}else{return false;}
-}
-
-
-
-
-
-
-
-
 
 if($mselect){
 	require_once("admin/tools/multiselect_refresh.lib");
@@ -709,11 +532,6 @@ if($filetabs){
 	create_default_files();
 }
 
-if($actionworkflow){
-	create_default_workflow();
-}
-
-
 # Default Ordner
 if($filestructure){
 	createDefaultDirs($session["user_id"],$session["group_id"]);
@@ -721,7 +539,7 @@ if($filestructure){
 
 
 if($deleteuserfilesave){
-	delete_user_filesave();
+    lmb_delete_user_filesave();
 }
 
 #if($snaprefresh){
@@ -763,7 +581,7 @@ if($refresh_procedures){
 }
 
 if($refresh_indexes){
-	if(!createDefaultIndex()){
+	if(!lmb_rebuildIndex()){
 		lmb_alert("ERROR by rebuild database indexes, check error logs..");
 	}
 }
@@ -940,14 +758,6 @@ function filetabs(evt) {
 	}
 }
 
-function actionworkflow(evt) {
-	link = confirm("<?=$lang[2034]?>");
-	if(link) {
-		limbasWaitsymbol(evt,1);
-		document.location.href="main_admin.php?action=setup_sysupdate&actionworkflow=1";
-	}
-}
-
 function newsystem(evt) {
 	link = confirm("<?=$lang[1594]?>");
 	if(link) {
@@ -1092,11 +902,6 @@ foreach ($gtabs["tabledesc"] as $key => $val){
 
 <TR class="tabBody"><TD valign="top"><?=$lang[1992]?></TD>
     <TD align="RIGHT" valign="top"><input type="button" value="OK" onclick="filetabs(event);" style="color:red"></TD></TR>
-
-<?/**?>
-<TR class="tabBody"><TD valign="top"><?=$lang[2029]?></TD>
-<TD align="RIGHT" valign="top"><input type="button" value="OK" onclick="actionworkflow(event);" style="color:red"></TD></TR>
-<?**/?>
 
 <TR class="tabBody"><TD valign="top"><?=$lang[1593]?></TD>
     <TD align="RIGHT" valign="top"><input type="button" value="OK" onclick="newsystem(event);" style="color:red"></TD></TR>

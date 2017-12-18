@@ -20,14 +20,23 @@
 
 /* --- Session Register-Variablen ----------------------------------- */
 
-function filter_reset($gtabid){
+function filter_reset($gtabid=null){
 	#$GLOBALS['filter'] = null;
-	$GLOBALS['popc'][$gtabid] = null;
-	$GLOBALS['popg'][$gtabid] = null;
-	$GLOBALS['gs'][$gtabid] = null;
-	$GLOBALS['gsr'][$gtabid] = null;
-	$GLOBALS["filter"]["hidecols"][$gtabid] = null;
-	$GLOBALS["filter"]["order"][$gtabid] = null;
+	if($gtabid){
+    	$GLOBALS['popc'][$gtabid] = null;
+    	$GLOBALS['popg'][$gtabid] = null;
+    	$GLOBALS['gs'][$gtabid] = null;
+    	$GLOBALS['gsr'][$gtabid] = null;
+    	$GLOBALS["filter"]["hidecols"][$gtabid] = null;
+    	$GLOBALS["filter"]["order"][$gtabid] = null;
+	}else{
+    	$GLOBALS['popc'] = null;
+    	$GLOBALS['popg'] = null;
+    	$GLOBALS['gs']= null;
+    	$GLOBALS['gsr'] = null;
+    	$GLOBALS["filter"]["hidecols"] = null;
+    	$GLOBALS["filter"]["order"] = null;
+	}
 	$GLOBALS['filter']['reminder_from'] = null;
 	$GLOBALS['filter']['reminder_to'] = null;
 	$GLOBALS['filter']['reminder_create'] = null;

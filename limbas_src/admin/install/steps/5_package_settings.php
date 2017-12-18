@@ -86,8 +86,8 @@ if($index = array_search("clean.tar.gz", $demoPaths)) {
                     </tr>
 
                     <?php
+                    $checked = '';
                 }
-                $checked = '';
             }
             }else{
                 

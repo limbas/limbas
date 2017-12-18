@@ -130,7 +130,7 @@ function lmb_alert($add_alert){
 	}else{
 		$alert = array();
 	}
-	$GLOBALS["alert"][] = $add_alert;
+	$GLOBALS["alert"][] = str_replace(chr(10),'\n',str_replace('\'',' ',$add_alert));
 
 }
 
@@ -238,7 +238,6 @@ function parse_db_bool($value){
 
 function convert_Checkbox($value){
 	if($value == 'true'){return true;}else{return false;}
-	return false;
 }
 
 function convert_NumberFormat($value,$format){
@@ -428,7 +427,7 @@ function lmb_num_rows($rs,&$query=null,$counttype=null) {
  */
 function lmb_PrepareSQL($prepare_string,$bindvalue,$FILE=null,$LINE=null) {
 	global $db;
-	
+
 	if(LMB_DBFUNC_PREPAREHANDLE){
 		$sql_prep = odbc_prepare($db,$prepare_string);
 		$rs = @odbc_execute($sql_prep,$bindvalue) or errorhandle(odbc_errormsg($db),$prepare_string,"odbc_prepare",$FILE,$LINE);
@@ -497,8 +496,32 @@ function unseriamize($value) {
  *
  * @param string $value
  */
-function lmb_error_log($value){
-	error_log($value);
+function lmb_error_log($source,$error,&$verbose=null,$alert=null){
+    global $session;
+    global $gtab;
+    global $gfield;
+    global $lang;
+    
+    $verbose[$source][] = $error;
+    
+    if($session['debug']){
+	   error_log(local_date(0).'\t'.$source.'\t'.print_r($error,1));
+    }
+    
+    if($alert){
+        
+        if($error['field']){$error['field'] = $gfield[$error['table']]['spelling'][$error['field']];}
+        if($error['table']){$error['table'] = $gtab['table'][$error['table']];}
+        
+        $msg = $lang[56].'\n\n';
+        $msg .= 'action:\t'.$source.'\n';
+        foreach($error as $key => $value){
+            $msg .= $key.':\t'.$value.'\n';
+        }
+        
+        
+        lmb_alert($msg);
+    }
 }
 
 /**
@@ -514,7 +537,7 @@ function errorhandle($FEHLER,$QUERY,$ACTION,$FILE,$LINE){
 	global $db;
 	global $session;
 	global $umgvar;
-	
+
 	if($ACTION == 'result_query'){
 		if(function_exists("filter_reset")){filter_reset();}
 		$ACTION = 'gtab_erg';
@@ -2024,7 +2047,7 @@ function lmbGetMenuSetting(){
 
 
 
-function lmb_PHPMailer($to, $from, $subject, $message, $attachement=null){
+function lmb_PHPMailer($to, $from, $subject, $message, $attachment=null){
     global $session;
     global $userdat;
     
@@ -2060,9 +2083,9 @@ function lmb_PHPMailer($to, $from, $subject, $message, $attachement=null){
     #$mail->AltBody = "To view the message, please use an HTML compatible email viewer!";
     #$mail->AltBody = strip_tags(str_replace('<br>','\n',str_replace('<p>','\n',$message)));
 
-    if($attachement){
-        if(!is_array($attachement)){$attachement[] = $attachement;}
-        foreach($attachement as $key => $value){
+    if($attachment){
+        if(!is_array($attachment)){$attachment[] = $attachment;}
+        foreach($attachment as $key => $value){
             $mail->AddAttachment($value);      // attachment
         }
     }
@@ -2112,9 +2135,8 @@ function lmb_sendMail($to,$from,$subject,$message,$attachment=null,$cc=null,$bcc
 	#$header  ="From:".$from."<".$from.">\n";
 	$header  ="From:".$from."\n";
 	$header .= "Reply-To: ".$reply."\n";
-
 	$header.= "MIME-Version: 1.0\n";
-	$header.= "Content-Type: multipart/mixed; boundary=\"".$mime_boundary."\"\n\n";
+	
 	if($cc){
 	    if(is_array($cc)){
 	       foreach($cc as $cc_key => $cc_val){
@@ -2133,9 +2155,9 @@ function lmb_sendMail($to,$from,$subject,$message,$attachment=null,$cc=null,$bcc
 	       $header .= 'Bcc: '.$bcc."\n";
 	    }
 	}
-
-	$content = "This is a multi-part message in MIME format.\n";
 	
+	$header.= "Content-Type: multipart/mixed; boundary=\"".$mime_boundary."\"\n\n";
+	$content = "This is a multi-part message in MIME format.\n";
 	$content.= "--".$mime_boundary."\n";
 	$content.= "Content-Type: multipart/alternative; boundary=\"".$mime_boundary2."\"\n\n";
 	
@@ -2246,4 +2268,118 @@ function lmb_ajaxProgresStatus($total,$progress){
 	}
 
 }
+
+class lmb_log
+{
+    /**
+     * @var array   $log    Holds information about the last logged errors
+     */
+    private static $log = array();
+
+    /**
+     * Instantiation not allowed
+     */
+    private function __construct() {
+        throw new Exception("Instantiation not allowed");
+    }
+
+    /**
+     * Logs an error:
+     * - into $log array,
+     * - to error_log (if $session['debug'] is true)
+     * - and shows the user (if $userMessage is set)
+     * @param string    $errorMessage   The message to log
+     * @param string    $userMessage    Is shown to the user, if set
+     * @param number    $tabid          Id of current table
+     * @param number    $fieldid        Id of current field
+     * @param number    $datid          Id of current dataset
+     */
+    public static function error($errorMessage, $userMessage=null, $tabid=null, $fieldid=null, $datid=null)
+    {
+        global $session;
+        global $lang;
+        global $gtab;
+        global $gfield;
+
+        // collect log messages as array
+        self::$log[] = array(
+            'message' => $errorMessage,
+            'tabid' => $tabid,
+            'fieldid' => $fieldid,
+            'datid' => $datid
+        );
+
+        // error log
+        if ($session['debug']) {
+            $debug = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
+            error_log(/*local_date(0) .*/"$errorMessage (tabid: $tabid, fieldid: $fieldid, datid: $datid)\n##### debug trace #####\n".print_r($debug,1));
+        }
+
+        // user alert
+        if ($userMessage AND IS_SOAP !== true AND IS_CRON !== true) {
+            // error message
+            $userMessage = $lang[56] . "\n" . $userMessage;
+
+            // add table name
+            if ($tabid) {
+                if(is_numeric($tabid)){$tabid = $gtab['table'][$tabid];}
+                $userMessage .= "\n - " . $lang[164] . ":\t\t" . $tabid;                
+            
+                // add field name
+                if ($fieldid) {
+                    if(is_numeric($fieldid)){$fieldid = $gfield[$tabid]['spelling'][$fieldid];}
+                    $userMessage .= "\n - " . $lang[168] . ":\t\t" . $fieldid;
+                }
+              
+                // add datid
+                if ($datid) {
+                    $userMessage .= "\n - " . $lang[722] . "\t" . $datid;
+                }
+            }            
+              
+            lmb_alert($userMessage);
+        }
+    }
+
+    /**
+     * Returns the $log array
+     * @param bool $clearLog    Clear the log afterwards
+     * @return array            [{'message', 'tabid', 'fieldid', 'datid'}]
+     */
+    public static function getLog($clearLog=false) {
+        $l = self::$log;
+        if ($clearLog) {
+            self::$log = array();
+        }
+        return $l;
+    }
+
+    /**
+     * Returns only the connected message of all log enties
+     * @param bool $clearLog
+     * @param string $delimiter
+     * @return string
+     */
+    public static function getLogMessage($clearLog=false,$delimiter="\n") {
+        $message = '';
+        foreach (self::$log as $entry){
+            $message .= $entry['message'].$delimiter;
+        }
+        if ($clearLog) {
+            self::$log = array();
+        }
+        return $message;
+    }
+
+
+
+    /**
+     * Clears the $log array
+     */
+    public static function clearLog() {
+        self::$log = array();
+    }
+
+}
+
 ?>

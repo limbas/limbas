@@ -414,7 +414,7 @@ if($gfield[$gtabid]["md5tab"][$gtab['params1'][$gtabid]]){?>
 
 <div id="lmbAjaxContextmenu" class="lmbContextMenu" style="position:absolute;display:none;z-index:2004;" OnClick="activ_menu=1;">
 <?php 
-pop_menu();
+pop_top();
 if($gtab["add"][$gtabid] AND $gtab["copy"][$gtabid]){pop_menu(0,'lmb_calCut(activeDiv,activeEvent)',$lang[2666],'','','lmb-icon-cus lmb-page-cut');}   # auschneiden
 if($gtab["edit"][$gtabid]){pop_menu(0,'lmb_calCopy(activeDiv,activeEvent)',$lang[817],'','','lmb-page-copy');}        # kopieren
 if($gtab["delete"][$gtabid]){pop_menu(0,"lmb_calDelete(event,$gtabid,activeEvent.id);",$lang[160],'','','lmb-icon-cus lmb-page-delete-fancy');}		# löschen
@@ -423,11 +423,11 @@ pop_bottom();
 </div>
 
 <div id="lmbAjaxContextPaste" class="lmbContextMenu" style="position:absolute;display:none;z-index:2004;" OnClick="activ_menu=1;">
-<?php 
-pop_menu();
+<?php
+pop_top();
 if($gtab["add"][$gtabid] AND $gtab["copy"][$gtabid]){
     echo '<div id="lmb_eventPaste">';
-    pop_menu(0,"lmb_calPaste(activeDate, activeRresource)",$lang[2667],'','','lmb-paste');
+    pop_menu(0,"lmb_calPaste(activeDate, activeResource)",$lang[2667],'','','lmb-paste');
     echo '</div>';
 }   # einfügen 
 pop_bottom();

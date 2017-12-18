@@ -172,6 +172,11 @@ class LimbasLogger {
 			$route->processException($exception);
 		}
 	}
+
+	public static function getLLString($logLevel) {
+	    return LimbasLogger::$llstrings[$logLevel];
+    }
+
 	/**
 	 * Format acutal time with micro seconds
 	 * 

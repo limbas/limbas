@@ -40,18 +40,19 @@ if($groupdat["redirect"][$session["group_id"]]){
 <HTML>
 <HEAD>
 <META NAME="Title" CONTENT="Limbas Enterprise Unifying Framework V <?php echo $umgvar["version"]?>">
-<meta NAME="author" content="Axel Westhagen">
-<META NAME="Publisher" CONTENT="Axel Westhagen">
-<META NAME="Copyright" CONTENT="Axel Westhagen">
+<meta NAME="author" content="LIMBAS GmbH">
+<META NAME="Publisher" CONTENT="LIMBAS GmbH">
+<META NAME="Copyright" CONTENT="LIMBAS GmbH">
 <meta NAME="description" content="Enterprise Unifying Framework">
 <meta NAME="version" content="<?php echo $umgvar["version"]?>">
-<meta NAME="date" content="2003-11-06">
+<meta NAME="date" content="2017-10-23">
 <meta HTTP-EQUIV="content-language" content="de">
 <meta HTTP-EQUIV="Content-Type" content="text/html; charset=<?php echo $umgvar["charset"]?>">
 <meta http-equiv="Content-Style-Type" content="text/css">
 <meta HTTP-EQUIV="Pragma" content="no-cache">
 <meta HTTP-EQUIV="Cache-Control" content="no-cache, no-store, post-check=0, pre-check=0, must-revalidate">
 <meta HTTP-EQUIV="Expires" content="0">
+<link rel="shortcut icon" href="favicon.ico" />
 </HEAD>
 
 <?php /* --- Frameset ---------------------------------------------------------- */

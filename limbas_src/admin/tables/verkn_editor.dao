@@ -366,7 +366,11 @@ function createRelationParams($new_vparams,$verknparams,$md5tab,$groupid,$fields
 		}else{
 			# convert relation table to limbas table 
 			$fieldspelling = $fieldspelling.'_params';
-			if(!$new_gtabid = import_create($md5tab,$groupid,$fieldspelling,null,null,1,'tab')){
+			#if(!$new_gtabid = import_create($md5tab,$groupid,$fieldspelling,null,null,1,'tab')){
+            $ifield['tablename'] = $md5tab;
+            $ifield['tablegroup'] = $groupid;
+            $ifield['tablespelling'] = $fieldspelling;
+			if(!$new_gtabid = import_create_addtable('convert',$ifield,1)){
 				return false;
 			}
 		}

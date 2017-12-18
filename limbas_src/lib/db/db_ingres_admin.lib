@@ -492,7 +492,7 @@ function dbq_15($p){
  * @return sql string
  */
 function dbq_22($p){
-	"ALTER TABLE ".dbf_4($p[1])." DROP ".dbf_4($p[2])." CASCADE";
+	return "ALTER TABLE ".dbf_4($p[1])." DROP ".dbf_4($p[2])." CASCADE";
 }
 
 ############# stored procedures ########################

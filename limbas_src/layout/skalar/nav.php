@@ -230,10 +230,10 @@ function lmbEndResizeFrame() {
 function lmbResizeFrame(e) {
 	
 	if(browser_ns5){
-		evw = e.screenX - posx
+		evw = e.screenX - posx;
 		dw = evw + elwidth;
 	}else{
-		evw = window.event.screenX - posx
+		evw = window.event.screenX - posx;
 		dw = evw + elwidth;
 	}
 	

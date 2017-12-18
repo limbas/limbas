@@ -76,7 +76,7 @@ function olIMAPUserInterface(e){
 			) + 'px';
 
 		$('mail_panel').style.display = 'block';
-	}
+	};
 
 	this._gui_init_win_message = function(){
 		var msg_initial_width  = Math.round(window.innerWidth  * .85); // percentage of body width

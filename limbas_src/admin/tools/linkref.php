@@ -34,31 +34,17 @@ if($GLOBALS["action"]){
 
 }
 
-
-
-$sqlquery = "Select COUNT(*) AS ANZAHL from LMB_GROUPS";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$num_group = odbc_result($rs,"ANZAHL");
-
-
 if($group){
 	# -----Einzelgruppe----------
 	$sqlquery = "SELECT GROUP_ID,NAME FROM LMB_GROUPS WHERE GROUP_ID = $group";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$bzm = 1;
 	if(odbc_fetch_row($rs, 1)) {
-		check_grouprights(odbc_result($rs,"GROUP_ID"),odbc_result($rs,"NAME"),$num_group);
+		check_grouprights(odbc_result($rs,"GROUP_ID"),odbc_result($rs,"NAME"),0,1);
 	}
 }else{
 	# -----Gruppenliste----------
-	$sqlquery = "SELECT GROUP_ID,NAME FROM LMB_GROUPS";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$bzm = 1;
-	while(odbc_fetch_row($rs, $bzm)) {
-		check_grouprights(odbc_result($rs,"GROUP_ID"),odbc_result($rs,"NAME"),$num_group);
-		del_grouprights(odbc_result($rs,"GROUP_ID"),odbc_result($rs,"NAME"),$num_group);
-	$bzm++;
-	}
+    check_grouprightsAll(1);
 }
 
 if($GLOBALS["action"]){

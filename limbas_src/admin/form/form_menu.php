@@ -67,6 +67,7 @@ if ($alert) {
             if($form["form_typ"] == 1 || $form["form_typ"] == 2) {
                 array_push($reset, 'wflhist','reminder','dbdat', 'dbdesc', 'dbnew', 'text', 'datum', 'scroll', 'js', 'php', 'submt', 'button', 'inptext', 'inparea', 'inpselect', 'inpcheck', 'inpradio', 'inphidden', 'chart');
                 echo "$('#new_dbdat_area').hide();";
+                echo "$('#new_wflhist_area').hide();";
             }
 
             foreach($reset as $id) {
@@ -201,6 +202,8 @@ if ($alert) {
                     } else if (document.form1.uform_typ.value == 3) {
                         parent.form_main.document.form1.uform_set.value = document.form1.uform_tab.value;
                     }
+                }else if(obj == 'wflhist') {
+                    parent.form_main.document.form1.uform_typ.value = document.form1.wfl_id.value;
                 }
                 if (obj == 'stab' && document.form1.stab_snap_id[document.form1.stab_snap_id.selectedIndex].value) {
                     parent.form_main.document.form1.form_stab_snapid.value = document.form1.stab_snap_id[document.form1.stab_snap_id.selectedIndex].value;
@@ -235,7 +238,7 @@ if ($alert) {
         //open_details(ev);
         var el = getElement(ev);
         var dv = el.id.substr(2, 10);
-        parent.form_main.lmb_dropEl('Element löschen', dv);
+        parent.form_main.lmb_dropEl('<?= $lang[84] ?>', dv);
     }
     function open_details(ev) {
 
@@ -522,7 +525,7 @@ if ($form["form_typ"] == 2 and $form["referenz_tab"]) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="dbnew"
-class="lmb-icon lmb-rep-dbnew btn" TITLE="<?= $lang[1774] ?>"
+class="lmb-icon lmb-rep-dbnew btn" TITLE="New dataset"
 VALUE="dbnew"
 OnClick="parent.form_main.document.form1.form_add.value = 'dbnew';
 actbutton('dbnew', 'new_dbdat_area', 0);add('dbnew');"></i></TD>
@@ -601,8 +604,8 @@ if ($form["form_typ"] == 2) {
                                             $st = "none";
                                         }
                                         ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i
-ID="stab" class="lmb-icon lmb-rep-table btn"
-TITLE="<?= $lang[1155] ?>" VALUE="stab"
+ID="stab" class="lmb-icon lmb-camera btn"
+TITLE="Snapshot table" VALUE="stab"
 OnClick="parent.form_main.document.form1.form_add.value = 'stab';
 actbutton('stab', 'new_stab_area', 0);
 add('stab');"></i></TD>
@@ -723,7 +726,7 @@ if ($form["form_typ"] == 2 and $form["referenz_tab"]) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="tabmenu"
-class="lmb-icon lmb-table btn" TITLE="<?= $lang[1173] ?>"
+class="lmb-icon lmb-rep-table-menu btn" TITLE="Table menu"
 VALUE="tabmenu"
 OnMouseDown="pressbutton('tabmenu', 'inset', '<? echo $farbschema[WEB10]; ?>');"
 OnMouseUp="pressbutton('tabmenu', 'outset', '<? echo $farbschema[WEB7]; ?>');add('tabmenu');send();"></i></TD>
@@ -836,8 +839,9 @@ OnMouseUp="pressbutton('reminder', 'outset', '<? echo $farbschema[WEB7]; ?>');ad
 <i ID="wflhist"
 class="lmb-icon lmb-icon-cus lmb-workflow-car btn" TITLE="<?= $lang[2035] ?> <?= $lang[1134]?>"
 VALUE="php"
-OnMouseDown="pressbutton('wflhist', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-OnMouseUp="pressbutton('wflhist', 'outset', '<? echo $farbschema[WEB7]; ?>');add('wflhist');send();"></i>
+OnClick="parent.form_main.document.form1.form_add.value = 'wflhist';
+actbutton('wflhist', 'new_wflhist_area', 0);
+add('wflhist');"></i>
 </TD>
 
 <?
@@ -1076,6 +1080,24 @@ if ($form["form_typ"] != 3 and $gfield[$gtabid]["id"]) {
 						</TR>
 					</TABLE>
 				</div>
+
+                <div id="new_wflhist_area" style="display:none;">
+                    <br>
+                    <table cellspacing="0" cellpadding="2" class="formeditorPanel">
+                        <tr><td class="formeditorPanelHead" align="center">Teststst</td></tr>
+                        <tr>
+                            <td>
+                                <select name="wfl_id" style="width:200px;">
+                                    <?php
+                                    foreach ($gwfl as $wflId => $wflData) {
+                                        echo '<option value="' . $wflId . '">' . $wflData['name'] . '</option>';
+                                    }
+                                    ?>
+                                </select>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
 
 				<TABLE cellspacing="0" cellpadding="0" class="formeditorPanel">
 					<TR>

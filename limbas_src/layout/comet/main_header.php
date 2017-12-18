@@ -29,7 +29,7 @@ if($BODYHEADER){
 	if($LINK["help_url"][$LINK_ID[$action]]){echo "<td align=\"right\"><a href=\"".$LINK["help_url"][$LINK_ID[$action]]."\" target=\"new\"><i class=\"lmb-icon lmb-help\"></i></a></td>";}
 	echo "</tr></table>";
 	echo "';\n";
-	echo "if(top.main_top && top.main_top.document.getElementById('main_top_value')){top.main_top.document.getElementById('main_top_value').innerHTML = val;}\n";
+	echo "if(top.main_top && top.main_top.document.getElementById('main_top_value')){top.main_top.document.getElementById('main_top_value').innerHTML = val;top.document.title=$('<p>$BODYHEADER</p>').text();}\n";
 	echo "</script>\n";
 }elseif($BODYHEADER != "0"){
 	echo "<script language=\"JavaScript\">\n";

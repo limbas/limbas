@@ -443,47 +443,50 @@ function lmb_editQuestFields($viewid,&$par){
 
 	}
         
-        lmb_addAliasToDuplicateNames();
+        lmb_addAliasToDuplicateNames($viewid);
 
 }
 
 /*
  * if there are duplicate names in a view, it adds an alias to the name with the higher id
  */
-function lmb_addAliasToDuplicateNames() {
+function lmb_addAliasToDuplicateNames($viewid) {
     global $db;
-    
-    // select pairs that have the same field name
-    $sqlquery = "select a.id as aid, a.viewid, a.qfield, a.qalias as aalias, b.qalias as balias
-                    from lmb_conf_viewfields a
-                    join lmb_conf_viewfields b on a.id>b.id and a.qfield=b.qfield";
+
+    # select pairs in a view that have the same alias
+    $viewidEsc = parse_db_int($viewid);
+    $sqlquery = "select a.id as aid, a.qfield 
+                from lmb_conf_viewfields a
+                join lmb_conf_viewfields b 
+                on a.id>b.id 
+                and a.viewid=b.viewid 
+                and (a.qalias=b.qalias or (a.qalias is null and b.qalias is null and a.qfield=b.qfield))
+                where a.viewid=$viewidEsc";
     $rsPairs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-    // fix each pair
+    # fix each pair
     $bzm = 1;
     while(odbc_fetch_row($rsPairs, $bzm)) {
-        $aAlias = odbc_result($rsPairs,"aalias");
-        $bAlias = odbc_result($rsPairs,"balias");
-        $aId = odbc_result($rsPairs,"aid");
-        $viewid = odbc_result($rsPairs, "viewid");
-        $field_name = odbc_result($rsPairs, "qfield");
+        $aid = odbc_result($rsPairs, "aid");
+        $oldName = odbc_result($rsPairs, "qfield");
 
-        if($aAlias == $bAlias) {
-            // find a name that isnt in use
-            $suffix_number = 0;
-            $new_name;
-            do {
-                $new_name = $field_name . ($suffix_number > 0 ? ("_" . $suffix_number) : "");
-
-                $sqlquery = "SELECT ID FROM LMB_CONF_VIEWFIELDS WHERE VIEWID=".parse_db_int($viewid)." AND QFIELD='".parse_db_string($new_name)."'";
-                $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                $suffix_number++; 
-            } while (odbc_num_rows($rs) > 0);
-
-            // update the table
-            $sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET QALIAS='" . parse_db_string($new_name) . "' WHERE ID=" . parse_db_int($aId);
+        # find a name that isn't in use
+        $suffixNumber = 0;
+        do {
+            $newAlias = $oldName . ($suffixNumber > 0 ? ("_" . $suffixNumber) : "");
+            $newAliasEsc = parse_db_string($newAlias);
+            $sqlquery = "select id from lmb_conf_viewfields
+                          where viewid=$viewidEsc  
+                          and (qfield='$newAliasEsc' or qalias='$newAliasEsc')";
             $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-        }   
+            $suffixNumber++;
+        } while (odbc_num_rows($rs) > 0);
+
+        # update the dataset
+        $sqlquery = "update lmb_conf_viewfields 
+                      set qalias='$newAliasEsc' 
+                      where id=$aid";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         $bzm++;
     }
         

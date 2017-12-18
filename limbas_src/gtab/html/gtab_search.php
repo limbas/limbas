@@ -42,8 +42,9 @@ if(!$fieldid){
 # ----------- Feldliste ------------
 foreach ($gfield[$gtabid]["sort"] as $key => $value){
 	if($gfield[$gtabid][field_type][$key] != 13){
-                /* removed, so the user has to select something. without selections, nothing was shown */
-		//if($key == $fieldid){$SELECTED = "SELECTED";}else{$SELECTED = "";}
+        /* removed, so the user has to select something. without selections, nothing was shown */
+        /* added again, because the above bug wasn't found anymore */
+		if($key == $fieldid){$SELECTED = "SELECTED";}else{$SELECTED = "";}
 		echo "<OPTION VALUE=\"$key\" $SELECTED>".$gfield[$gtabid][spelling][$key];
 	}
 }

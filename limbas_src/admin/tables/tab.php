@@ -320,6 +320,7 @@ if(!$tab_group){?>
 	<input type="hidden" name="ajaxpost">
 	<input type="hidden" name="numrowcalc">
 	<input type="hidden" name="reserveid">
+	<input type="hidden" name="datasync">
 	
 	
 	<?if($result_gtab[$tab_group]["id"]){?>
@@ -346,6 +347,7 @@ if(!$tab_group){?>
     <TD class="tabHeaderItem" nowrap><?=$lang[2640]?></TD>
     <TD class="tabHeaderItem" nowrap><?=$lang[1465]?></TD>
     <TD class="tabHeaderItem" nowrap><?=$lang[2703]?></TD>
+    <TD class="tabHeaderItem" nowrap>Sync</TD>
     <TD class="tabHeaderItem" nowrap><?=$lang[2132]?></TD>
     <TD class="tabHeaderItem" nowrap><?=$lang[2688]?></TD>
     <TD class="tabHeaderItem" nowrap><?=$lang[1255]?></TD>
@@ -469,7 +471,13 @@ if(!$tab_group){?>
             <TD class="vAlignMiddle txtAlignCenter">
             <?if(!$isview){?><INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="document.form2.tabid.value=<?echo $result_gtab[$tab_group]["id"][$bzm]?>;document.form2.tab_group.value=<?echo $tab_group?>;if(this.checked){document.form2.reserveid.value=1;}else{document.form2.reserveid.value=2;};document.form2.submit();"><?}?>
             </TD>
-
+            
+            <?if($result_gtab[$tab_group]["datasync"][$bzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}?>
+            <TD class="vAlignMiddle txtAlignCenter">
+            <?if(!$isview){?><INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="document.form2.tabid.value=<?echo $result_gtab[$tab_group]["id"][$bzm]?>;document.form2.tab_group.value=<?echo $tab_group?>;if(this.checked){document.form2.datasync.value=1;}else{document.form2.datasync.value=2;};document.form2.submit();"><?}?>
+            </TD>
+            
+            
             <?if($result_gtab[$tab_group]["id"][$bzm] == $result_gtab[$tab_group]["verknid"][$bzm] AND !$isview){?>
             <TD class="vAlignMiddle txtAlignCenter">
             <SELECT OnChange="set_versioning('<?php echo $result_gtab[$tab_group]["id"][$bzm]?>','<?php echo $tab_group?>',this.value);">
@@ -548,12 +556,15 @@ if(!$tab_group){?>
     <TD valign="top"><SELECT NAME="verkn"><OPTION VALUE="0">
     <?php
     foreach($tabgroup_["id"] as $key => $value){
-    	echo "<OPTION VALUE=\"0\">->".$tabgroup_[name][$key];
+        echo "<OPTGROUP label='{$tabgroup_[name][$key]}'>";
     	if($result_gtab[$tabgroup_["id"][$key]]["id"]){
-    	foreach($result_gtab[$tabgroup_["id"][$key]]["id"] as $key1 => $value){
-    		echo "<OPTION VALUE=\"".$result_gtab[$tabgroup_["id"][$key]]["id"][$key1]."\">&nbsp;&nbsp;&nbsp;".$result_gtab[$tabgroup_["id"][$key]]["beschreibung"][$key1];
+            foreach($result_gtab[$tabgroup_["id"][$key]]["id"] as $key1 => $value){
+                $desc = $result_gtab[$tabgroup_["id"][$key]]["beschreibung"][$key1];
+                if ($desc == null) { $desc = $result_gtab[$tabgroup_["id"][$key]]["tabelle"][$key1]; }
+                echo "<OPTION VALUE=\"".$result_gtab[$tabgroup_["id"][$key]]["id"][$key1]."\">$desc";
+            }
     	}
-    	}
+    	echo "</OPTGROUP>";
     }
     
     echo "<TD class=\"vAlignTop txtAlignLeft\"><select name=\"copy\" id=\"new_copy\"><option>";
@@ -571,6 +582,7 @@ if(!$tab_group){?>
     <?php
 	echo "<OPTION VALUE=\"1\">".$lang[1928];  # table
 	echo "<OPTION VALUE=\"2\">".$lang[1929];  # calendar
+    echo "<OPTION VALUE=\"7\">".'Kanban';
 	echo "<OPTION VALUE=\"6\">".$lang[2380]; # messages
 	echo "<OPTION VALUE=\"5\">".$lang[2023]; # view
 	?>

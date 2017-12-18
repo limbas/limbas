@@ -187,7 +187,7 @@ function ajax_linkPopup(el,gtabid,datid,previd,prevgtabid,prevfieldid,ebene,subt
 			var pophistg  = ph.join('-');
                         pi.classList.remove("lmb-small-arrow-right");
                         pi.classList.add("lmb-icon", "lmb-small-arrow-down", "u-color-4");
-			mainfunc = function(result){ajax_linkPopupPost(result,cell,na);}
+			mainfunc = function(result){ajax_linkPopupPost(result,cell,na);};
 			var actid = "linkPopup&gtabid=" + gtabid + "&datid=" + datid + "&previd=" + previd + "&ebene=" + ebene + "&pop_choice=" + document.form1.pop_choice.value + "&pophist=" + pophist + "&pophistg=" + pophistg;
 			ajaxGet(null,"main_dyns.php",actid,null,"mainfunc");
 		}else{
@@ -292,7 +292,7 @@ function limbasCollectiveReplace(evt,el,confirming)
 	
 	var query = ajaxFormToURL('form2');
 	actid = "gtabReplace&confirm=" + confirming + "&fieldid="+lmbCollReplaceField + "&" +query;
-	mainfunc = function(result){limbasCollectiveReplacePost(result,evt,el,confirming);}
+	mainfunc = function(result){limbasCollectiveReplacePost(result,evt,el,confirming);};
 	ajaxGet(null,"main_dyns.php",actid,null,"mainfunc","form11");
 }
 
@@ -536,7 +536,7 @@ function sendkeydown(evt) {
 		//set_focus();
 		document.form1.select.value=1;
 		if(limbasDivCloseTab.length == 0 || validEnter){
-			var etarget = (evt.target) ? evt.target : evt.srcElement
+			var etarget = (evt.target) ? evt.target : evt.srcElement;
 			if(etarget.onchange){
 				etarget.onchange();
 			}
@@ -573,7 +573,7 @@ function gtabSetTablePosition(posx,posy){
 	}
         
     // set height
-    lmb_setAutoHeight(document.getElementById('GtabTableBody'), 15);        
+    lmb_setAutoHeight(document.getElementById('GtabTableBody'), 20);
         
     // set width
     if($('#GtabTableFull')) {                
@@ -591,8 +591,8 @@ function gtabSetTablePosition(posx,posy){
                     $('#lmbGlistBodyTab > tbody > tr').find('td:last').css('-webkit-box-sizing', "border-box");
                     $('#lmbGlistBodyTab > tbody > tr').find('td:last').css('box-sizing', "border-box");
             }   
-    }   
-        
+    }
+
         /*
         // table height
         if(document.getElementById("lmbGlistBodyTab")){
@@ -848,10 +848,10 @@ function startDrag(evt,tabid,fieldid) {
 
 function drag(e) {
 	if(browser_ns5){
-		evw = e.pageX - posx
+		evw = e.pageX - posx;
 		tdw = evw + tdwidth;
 	}else{
-		evw = window.event.clientX - posx
+		evw = window.event.clientX - posx;
 		tdw = evw + tdwidth;
 	}
 	
@@ -910,15 +910,11 @@ function lmbShowColumn(tabid,fieldid){
 	document.form1.filter_hidecols.value = tabid+"_"+fieldid;
 	
 	if(menuitem.style.color == 'green'){
-		menuitem.previousSibling.style.display='none';
-                //menuitem.previousSibling.style.visibility='';
+		menuitem.previousSibling.style.visibility='hidden';
 		menuitem.style.color='';
-		menuitem.className='lmbContextItem';
 	}else{
-		menuitem.previousSibling.style.display='';
-                //menuitem.previousSibling.style.visibility='';
+		menuitem.previousSibling.style.visibility='';
 		menuitem.style.color='green';
-		menuitem.className='lmbContextItemIcon';
 	}
 
 	lmbAjax_resultGtab("form1",1,1,1,1);

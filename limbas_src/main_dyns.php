@@ -791,8 +791,20 @@ function dyns_multipleSelect($params){
 function dyns_limbasExtMultipleSelect($params){
 	global $gfield;
 
-	dyns_11_a(null,$gfield[$params["gtabid"]]["form_name"][$params["fieldid"]],null,null,$params["gtabid"],$params["fieldid"],$params["ID"],"c",$params["level"],explode(",",$params["exclude"]));
-	$tmp = ob_get_clean();
+    $new_params = array(
+        'gformid' => $params['level'],
+        'par1' => $params['page'],
+        'par3' => $params['gtabid'],
+        'par4' => $params['fieldid'],
+        'par5' => $params['ID'],
+		'form_name' => $params['form_name'],
+		'form_value' => $params['form_value']
+    );
+
+    ob_start();
+    dyns_11_a($new_params);
+    $tmp = ob_get_clean();
+
 	if(empty($tmp)) $tmp = "<div id=\"{$gfield[$params["gtabid"]]["form_name"][$params["fieldid"]]}_{$params["level"]}\"></div>";
 
 	echo "ok#L#$tmp";
@@ -807,7 +819,7 @@ function dyns_11_a($params){
 	global $db;
 	global $umgvar;
 	global $session;
-	
+
 	$value = $params['form_value'];
 	$form_name = $params['form_name'];
 	$page = $params['par1'];
@@ -885,7 +897,7 @@ function dyns_11_a($params){
 	if(!$rs) {$commit = 1;}
 
 	if($page and is_numeric($page)){
-		$bzm = ($page*$maxresult-90);
+		$bzm = ($page - 1) * $maxresult + 1;
 	}else{
 		$bzm = 1;
 		$page = 1;
@@ -904,7 +916,7 @@ function dyns_11_a($params){
 			echo "<div id=\"{$form_name}_dsl\">";
 		}
 		while(odbc_fetch_row($rs, $bzm) AND $bzm2 <= $maxresult) {
-			$id = odbc_result($rs, "ID");
+            $id = odbc_result($rs, "ID");
 			//if(in_array($id,$exclude)){$bzm++;continue;}
 
 			$font_weight = "bold";
@@ -934,19 +946,21 @@ EOD;
 				$img = $checked = $onclick = $font_weight = "";
 				$haslevel = odbc_result($rs, "HASLEVEL");
 				$checked = $present ? " checked=\"checked\"" : "";
-				$st = "vertical-align:top;white-space:nowrap;padding:2px;";
 				$check = "<input type=\"checkbox\" style=\"border:none;background-color:transparent;margin:0px;margin:0px;\" onclick=\"dyns_11_a(event,'".htmljs($rawwert)."','$id','$form_name','$fieldid','$gtabid','$ID','{$gfield[$gtabid]["select_cut"][$fieldid]}','$tabtyp','d','$level');\"$checked>";
 				if($haslevel){
-                                    $click = "onclick=\"return dyns_11_a(event,'','$id','$form_name','$fieldid','$gtabid','$ID','$page','$tabtyp','e','$level');\"";
-                                    $wert = "<a style = \"text-decoration:none;\" $click>&nbsp;$wert&nbsp;</a>";
-                                    $img = "<i $click class=\"lmb-icon lmb-edit-caret\" style=\"margin-left:8px;\" border=\"0\" align=\"right\" title=\"\"></i>";
-                                } else {
-                                    $wert = "<span>&nbsp;$wert&nbsp;</span>";
-                                }
-				$wert = "<table cellpadding=\"0\" cellspacing=\"0\"><tr><td style=\"width:16px;$st\">$check</td><td style=\"$st\">$wert</td><td style=\"width:12px;$st\">$img</td></tr></table>";
+					$click = "onclick=\"return dyns_11_a(event,'','$id','$form_name','$fieldid','$gtabid','$ID','$page','$tabtyp','e','$level');\"";
+					$wert = "<a style = \"text-decoration:none;\">&nbsp;$wert&nbsp;</a>";
+					$img = "<i class=\"lmb-icon lmb-edit-caret\" style=\"vertical-align:middle;\" border=\"0\" align=\"right\" title=\"\"></i>";
+					$cursor = "cursor:pointer";
+				} else {
+					$click = "";
+					$wert = "<span>&nbsp;$wert&nbsp;</span>";
+					$cursor = "cursor:default";
+				}
+				$wert = "<table cellpadding=\"0\" cellspacing=\"0\"><tr><td style=\"width:16px;\">$check</td><td $click>$wert&nbsp;$img</td></tr></table>";
 			}
 			pop_left();
-			echo "<span id=\"{$form_name}_{$level}_{$id}\" style=\"cursor:pointer;font-weight:$font_weight;\" onmouseover=\"$onmouseover\" onmouseout=\"$onmouseout\" $onclick title=\"".$keyword."\" id=\"view_{$form_name}_{$id}\">".$wert."</span>";
+			echo "<span id=\"{$form_name}_{$level}_{$id}\" style=\"$cursor;font-weight:$font_weight;\" onmouseover=\"$onmouseover\" onmouseout=\"$onmouseout\" $onclick title=\"".$keyword."\" id=\"view_{$form_name}_{$id}\">".$wert."</span>";
 			pop_right();
 			
 			$bzm++;
@@ -1408,8 +1422,8 @@ function dyns_showReminder($params){
                         </TABLE>
                         <div id=\"contWvUGList\" style=\"width:100%;background-color:".$farbschema["WEB9"]."\"></div>
                     </div>
-                    <div id=\"lmb_reminderAddUserGroupuser\" class=\"ajax_container\" style=\"visibility:hidden;position:absolute;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>
-                    <div id=\"lmb_reminderAddUserGroupgroup\" class=\"ajax_container\" style=\"text-align:left;visibility:hidden;position:absolute;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>
+                    <div id=\"lmb_reminderAddUserGroupuser\" class=\"ajax_container\" style=\"display:none;position:absolute;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>
+                    <div id=\"lmb_reminderAddUserGroupgroup\" class=\"ajax_container\" style=\"text-align:left;display:none;position:absolute;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>
                 </TD>
             </TR>";
         }
@@ -2714,7 +2728,7 @@ function dyns_searchInherit($params){
 	foreach ($gresult[$sourceGtabid][$sourceGfieldid] as $key => $value){
 		if($value){
 			echo "<TR>";
-			echo "<TD style=\"cursor:pointer\"><A href=\"#\" onClick=\"limbasInheritFrom(event, $sourceGtabid,".$gresult[$sourceGtabid]["id"][$key].", $destGtabid, $destGfield, $ID);\">".$value."</A></TD>";
+			echo "<TD style=\"cursor:pointer\"><A href=\"#\" onClick=\"limbasInheritFrom(event, $sourceGtabid,".$gresult[$sourceGtabid]["id"][$key].", $destGtabid, $destGfield, '$ID');\">".$value."</A></TD>";
 			echo "</TR>";
 		}
 	}
@@ -3250,7 +3264,7 @@ function dyns_menuReportOption($params){
 		require_once("extra/explorer/filestructure.lib");
 		require_once("extra/report/report_".lmb_substr($report_medium,0,3).".php");
 		if($report_output==1 OR $report_output==3){
-			$path = trim(str_replace($umgvar["pfad"],"",$generatedReport),"/");
+			$path = trim(str_replace($umgvar["pfad"],"",$generatedReport),"/") . '?v=' . date("U");
 			echo "<Script language=\"JavaScript\">
 			open(\"$path\");
 			</Script>
@@ -3269,7 +3283,7 @@ function dyns_menuReportOption($params){
 		$opt["desc"][] = "spreadsheet";
 	}
 	
-	$report_rename = reportSavename($report_name,$report_savename,$ID,$report_medium,$report_rename);
+	$report_rename = reportSavename($report_name,$report_savename,$ID,$report_medium,$report_rename, false);
 	
 	echo "<form name=\"report_form\">";
 	pop_top('limbasDivMenuReportOption');
@@ -3885,6 +3899,8 @@ function dyns_multiframePreview($params)
 		reminderPreview($session["user_id"],$params);
 	}elseif($params["limbasMultiframeItem"]=="Workflow"){
 		workflowPreview($session["user_id"]);
+        }elseif($params["limbasMultiframeItem"]=="Kanban" AND $params["gtabid"]){
+		kanbanPreview($params["gtabid"]);
 	}elseif(function_exists("LmbExt_".$params["limbasMultiframeItem"])){
 		$func = "LmbExt_".$params["limbasMultiframeItem"];
 		$func($params);
@@ -3896,7 +3912,7 @@ function dyns_multiframePreview($params)
 }
 
 /**
- * writte the preview of the files favorites for the multiframe menu
+ * write the preview of the files favorites for the multiframe menu
  *
  * @param unknown_type $userid
  */
@@ -3972,7 +3988,7 @@ function filesFavoritePreview($userid,$params){
 
 
 /**
- * writte the preview of the messages for the multiframe menu
+ * write the preview of the messages for the multiframe menu
  *
  * @param unknown_type $userid
  */
@@ -4046,9 +4062,34 @@ function calendarPreview($gtabid){
 
 }
 
+/**
+ * write the preview of the assigned kanban cards for the multiframe menu
+ *
+ */
+function kanbanPreview($gtabid){
+    global $lang;
+	global $session;
+	global $umgvar;
+
+    require_once("gtab/gtab.lib");
+    require_once("extra/kanban/kanban.dao");
+
+	$lmb_kanban = new lmb_kanban($gtabid);
+
+    # EXTENSIONS
+    if($GLOBALS["gLmbExt"]["ext_kanban.inc"]){
+        foreach ($GLOBALS["gLmbExt"]["ext_kanban.inc"] as $key => $extfile){
+            require_once($extfile);
+        }
+    }
+
+	echo $lmb_kanban->get_kanbanPreview();
+
+}
+
 
 /**
- * writte the preview of the reminder for the multiframe menu
+ * write the preview of the reminder for the multiframe menu
  *
  * @param unknown_type $userid
  */
@@ -4125,7 +4166,7 @@ function reminderPreview($userid,$params)
 
 
  /**
-  * writte the preview of the messages for the multiframe menu
+  * write the preview of the messages for the multiframe menu
   *
   * @param unknown_type $gtabid
   */
@@ -4135,7 +4176,7 @@ function messagePreview($gtabid){
  }
 
 /**
- * writte the preview of the workflow actions for the multiframe menu
+ * write the preview of the workflow actions for the multiframe menu
  *
  * @param unknown_type $userid
  *//*
@@ -4217,6 +4258,42 @@ function dyns_fullcalendar(&$params)
 	require_once("gtab/gtab.lib");
 	require_once("extra/calendar/fullcalendar/cal.dao");
 	require_once('extra/calendar/fullcalendar/cal_dyns.php');
+	
+}
+
+
+/**
+ * ajax events for kanban
+ *
+ * @param unknown_type $params
+ */
+function dyns_kanban(&$params)
+{
+	global $gfield;
+	global $session;
+	global $lang;
+	global $gtab;
+	global $gfield;
+	global $gform;
+	global $gformlist;
+	global $lmbCalFields;
+	global $lmbCalFieldsID;
+	global $gsr;
+	
+	$gtabid = $params["gtabid"];
+	
+    // register variables
+    if ($params["gs"]) {
+        $gsr = $params["gs"];
+    }
+    if ($params['filter_reset']) {
+        unset($gsr[$gtabid]);
+        unset($gsr[$gfield[$gtabid]['verkntabid'][$gtab["params1"][$gtabid]]]);
+    }
+
+	require_once("gtab/gtab.lib");
+	require_once("extra/kanban/kanban.dao");
+	require_once('extra/kanban/kanban_dyns.php');
 	
 }
 

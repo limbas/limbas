@@ -23,7 +23,7 @@
 function lmbAjax_resultPreView(evt,gtabid,gfieldid,ID){
 	var url = "main_dyns.php";
 	var actid = "gresultPreView&gtabid=" + gtabid + "&gfieldid=" + gfieldid + "&ID=" + ID;
-	dynfunc = function(result){lmbAjax_resultPreViewPost(result,evt);}
+	dynfunc = function(result){lmbAjax_resultPreViewPost(result,evt);};
 	ajaxGet(null,url,actid,null,"dynfunc");
 }
 
@@ -54,7 +54,7 @@ function lmbAjax_postHistoryResultPost(result){
 function limbasAjxColorSelect(evt,formname,gtabid,fieldid,id){
 	url = "main_dyns.php";
 	actid = "colorSelect&formname="+formname+"&gtabid="+gtabid+"&fieldid="+fieldid+"&id="+id+"&container=lmbAjaxContainer";
-	mainfunc = function(result){limbasAjxColorSelectPost(result,evt);}
+	mainfunc = function(result){limbasAjxColorSelectPost(result,evt);};
 	ajaxGet(null,url,actid,null,"mainfunc");
 }
 // Ajax color select output
@@ -90,10 +90,9 @@ function lmbAjax_dynsearch(evt,el,actid,fname,par1,par2,par3,par4,par5,par6,gfor
 	
 	dyns_value = el.value;
 	if(dyns_value.length > 1 || dyns_value == '*'){
-		dyns_value = dyns_value;
 		url = "main_dyns.php";
 		actid = actid+"&form_name="+fname+"&form_value="+dyns_value+"&par1="+par1+"&par2="+par2+"&par3="+par3+"&par4="+par4+"&par5="+par5+"&par6="+par6+"&gformid="+gformid+"&formid="+formid+"&nextpage="+nextpage;
-		mainfunc = function(result){lmbAjax_dynsearchPost(result,el);}
+		mainfunc = function(result){lmbAjax_dynsearchPost(result,el);};
 		ajaxGetWait(null,url,actid,null,"mainfunc",'',500);
 	}else if(dyns_value == ''){ // drop relation for ajax relation fields if empty
 		// ajax select
@@ -109,7 +108,7 @@ function lmbAjax_dynsearch(evt,el,actid,fname,par1,par2,par3,par4,par5,par6,gfor
 		document.getElementById(fname).value=d;
 		checktyp(24,fname,'',par4,par3,'',par5);
 	}
-	oMultipleSelectLoader = new multipleSelectShow("oMultipleSelectLoader");
+	oMultipleSelectLoader = new MultipleSelectShow("oMultipleSelectLoader");
 }
 
 /* --- dynsShow ----------------------------------- */
@@ -171,7 +170,7 @@ function LmExt_RelationFields(el,gtabid,gfieldid,viewmode,edittype,ID,orderfield
 	if(ajaxpost){
 		document.getElementById("myExtForms").innerHTML = "<input type='hidden' name='gfieldid' value='"+gfieldid+"'><input type='hidden' name='viewmode' value='"+viewmode+"'><input type='hidden' name='ExtAction' value='"+ExtAction+"'><input type='hidden' name='ExtValue' value='"+ExtValue+"'><input type='hidden' name='edittype' value='"+edittype+"'><input type='hidden' name='ID' value='"+ID+"'><input type='hidden' name='orderfield' value='"+orderfield+"'><input type='hidden' name='relationid' value='"+relationid+"'><input type='hidden' name='gformid' value='"+gformid+"'><input type='hidden' name='formid' value='"+formid+"'>";
 		var actid = "extRelationFields&gtabid="+gtabid+"&gfieldid="+gfieldid+"&ID="+ID; // overwrite form
-		dynfunc = function(result){LmExt_RelationFieldsPost(result,gtabid,gfieldid);}
+		dynfunc = function(result){LmExt_RelationFieldsPost(result,gtabid,gfieldid);};
 		ajaxGet(null,url,actid,null,"dynfunc","form1");
 		document.getElementById("myExtForms").innerHTML = "";
 	}else{
@@ -199,7 +198,7 @@ function LmExt_RelationFields(el,gtabid,gfieldid,viewmode,edittype,ID,orderfield
 		// ajax update GET of single relation
 		}else{
 			var actid = "extRelationFields&gtabid=" + gtabid + "&gfieldid=" + gfieldid + "&viewmode=" + viewmode + "&edittype=" + edittype +  "&ID=" + ID + "&orderfield=" + orderfield + "&relationid=" + relationid + "&ExtAction=" + ExtAction +"&ExtValue=" + ExtValue + "&gformid=" + gformid+ "&formid=" + formid;
-			dynfunc = function(result){LmExt_RelationFieldsPost(result,gtabid,gfieldid,viewmode,el,ID);}
+			dynfunc = function(result){LmExt_RelationFieldsPost(result,gtabid,gfieldid,viewmode,el,ID);};
 			ajaxGet(null,url,actid,null,"dynfunc");
 		}
 	}
@@ -449,6 +448,7 @@ function lmbAjax_multilang(el,gtabid,gfieldid,ID){
 function dyns_11_a(evt,el_value,el_id,form_name,fieldid,gtabid,ID,dash,attribute,action,level) {
 
 	// contextmenu
+	var contextel;
 	if(!level){
 		level = '';
 		contextel = form_name+'_dsl';
@@ -528,26 +528,29 @@ function value_in(search_in,search_on){
 
 /* --- dyns_11_a delete ----------------------------------- */
 function dyns_11_a_delete(evt,el,ID,gtabid,fieldid,el_id,form_name,select_cut){
-	
 	var val = document.form1[form_name].value;
 	if(val){
-		var e = 0;
-		var newval = new Array();
-		var valy = val.split(";");
-		for(i=0;i<valy.length;i++){
-			if(valy[i] != el_id){
-				newval[e] = valy[i];
-				e++;
-			}
-			newvalue = newval.join(";");
+		var ids = val.split(";");
+		var elIndex = ids.indexOf(el_id);
+		var color, textDecoration;
+		if (elIndex < 0) {
+            // element excluded -> include
+            ids.push(el_id);
+            color = '';
+            textDecoration = '';
+		} else {
+			// element included -> remove
+            ids.splice(elIndex, 1);
+            color = 'red';
+            textDecoration = 'line-through';
 		}
-		document.form1[form_name].value = newvalue;
+
+		document.form1[form_name].value = ids.join(";");
+        $(el).css('color', color);
+        $(el).css('text-decoration', textDecoration);
+
 		checktyp('32','',form_name,fieldid,gtabid,' ',ID);
 	}
-
-	el.style.color='red';
-	el.style.textDecoration='line-through';
-	
 }
 
 
@@ -643,6 +646,13 @@ function LmExt_RelationList(el,gtabid,gfieldid,ID){
 function lmb_relShowField(event,el,elname){
 	limbasDivShow(el,null,'lmbAjaxContainer','','',1);
 	document.getElementById("lmbAjaxContainer").innerHTML = document.getElementById(elname).innerHTML;
+
+	// put ajax container in front of jquery ui
+	var ui = $('.ui-front:visible');
+	if (ui) {
+		var uiZIndex = parseInt(ui.css("z-index"));
+		$("#lmbAjaxContainer").css("z-index", uiZIndex + 1);
+	}
 }
 
 
@@ -687,315 +697,40 @@ function create_new_verkn(gtabid,fieldid,vgtabid,ID,tablename,fdimsn,verknaddfro
 	}
 }
 
+var oMultipleSelectLoader = new MultipleSelectShow("oMultipleSelectLoader");
+function MultipleSelectShow(instance_name) {
+	this.cache = {};
 
+    this.load = function(evt, el_value, el_id, form_name, fieldid, gtabid, ID, dash, attribute, action, level) {
+    	var id = form_name + '_' + level + '_' + el_id;
+        var parent = $('#' + id);
+        var tBody = parent.children('table').children('tbody');
 
+        // already data in -> remove
+		if (tBody.children('tr').size() > 1) {
+			tBody.children('tr').not(':first').remove();
+			return;
+		}
 
-
-
-
-
-
-
-var oMultipleSelectLoader = new multipleSelectShow("oMultipleSelectLoader");
-function multipleSelectShow(instance_name) {
-    this.events = new Array();
-    var name = instance_name;
-    
-    /** returns the DOM-Element with the corresponding ID
-     * @param {string} id  The ID of the element
-     */
-    var dom = function (id) {
-        return document.getElementById(id);
-    };
-    this.get = function (property, value) {
-        if (this.events.length <= 0)
-            return false;
-        if (!property) {
-            if ((typeof this.events[this.events.length - 1]) !== "object")
-                return false;
-            return this.events[this.events.length - 1];
-        }
-        for (var i = 0; i < this.events.length; i++) {
-            if ((typeof this.events[i]) !== "object") {
-                continue;
-            }
-            if (this.events[i][property] == value) {
-                return this.events[i];
-            }
-        }
-        return false;
-    };
-    this.add = function (form_name, id, level, container_level) {
-        var tmp = this.get("id", id);
-        if (tmp && (typeof tmp) === "object") {
-            return tmp;
-        }
-
-        var eo = new Object();
-        eo.initialize = function (eid, peid, pceid, cid, fn, l, id) {
-            this.element = dom(eid);
-            this.parent_element = dom(peid+"_dsl") ? dom(peid+"_dsl") : dom(fn);
-            this.parent = dom(pceid);
-            this.child = cid ? cid+"_dsl" : "";
-            this.form_name = fn;
-            this.level = l;
-            this.id = id;
-        };
-        eo.isVisible = false;
-        eo.display = function (arg) {
-            var parentJQuery = $('#' + this.parent.id);
-            
-            if (arg === false) {
-                dom(this.element.id).style.textDecoration = "none";
-                dom(this.element.id).style.color = "black";
-                if (dom(this.child)) {
-                    $('#' + this.parent.id).width("-=" + dom(this.child).offsetWidth);
-                    dom(this.child).style.display = "none";
-                    this.isVisible = false;
-                }
-                return;
-            }
-            dom(this.element.id).style.textDecoration = "underline";
-            dom(this.element.id).style.color = "green";
-            if (dom(this.child)) {
-                dom(this.child).style.display = "";
-               
-                if (dom(this.element.id) && dom(this.parent_element.id)) {
-                    dom(this.child).style.position = "absolute";
-                    if (dom(this.child).style.left === "") {
-                        dom(this.child).style.left = 
-                            dom(this.element.id).offsetLeft + 
-                            dom(this.parent_element.id).offsetLeft + 
-                            $('#'+this.element.id).width() - 3;
-                        // TODO funktioniert nicht in Chrome, da das span in chrome width=0 hat!!
-                        // vgl. main_dyns.php :917
-                    }
-                    if (dom(this.child).style.top === "") {
-                        dom(this.child).style.top = 
-                            dom(this.element.id).offsetTop +
-                            dom(this.parent_element.id).offsetTop;
-                    }
-                    dom(this.child).style.zIndex = this.element.style.zIndex + 1;
-                    
-                    // preventing style-bugs
-                    $('#'+this.child).width($('#' + this.child).width());
-                    dom(this.child).style.display = "block";
-                    
-                    this.isVisible = true;
-                    
-                    // enlarge the container
-                    // TODO: may get a bit to big
-                    parentJQuery.width( "+=" + dom(this.child).offsetWidth);
-                }
-            }
-        };
-        eo.initialize(form_name + "_" + level + "_" + id, form_name + "_" + level, form_name + "_dsl", form_name + "_" + id, form_name, level, id);
-        this.events.push(eo);
-
-        if (dom(eo.child))
-            return eo;
-        return false;
-    };
-
-    this.display = function (elem) {
-        if (this.events.length < 1 || (typeof elem) !== "object")
+		// add to cache
+		if (id in this.cache) {
+            tBody.append('<tr><td colspan="3">' + this.cache[id] + '</td></tr>');
             return;
-        var exclude = new Array();
-        var include = new Array();
-        
-        //console.log("!");
-        //console.log(elem);
-        
-        
-        // hide if already displayed and the other way round
-        elem.display(!elem.isVisible);
-        
-        exclude[elem.level] = elem.child;
-        var ev = this.get("id", elem.level);
-        if (ev && (typeof ev) == "object") {
-            exclude[ev.level] = ev.child;
-            for (var i = 0; i < this.events.length; i++) {
-                if (!this.events[i] || (typeof this.events[i]) !== "object")
-                    continue;
-                if (exclude[this.events[i].level] && exclude[this.events[i].level] !== this.events[i].child) {
-                    ev = this.events[i];
-                    include.push(ev.id);
-                    while (ev = this.get("level", ev.id)) {
-                        include.push(ev.id);
-                    }
-                }
-            }
-        } else {
-            for (var i = 0; i < this.events.length; i++) {
-                if (!this.events[i] || (typeof this.events[i]) != "object")
-                    continue;
-                if ((exclude[this.events[i].level] && exclude[this.events[i].level] !== this.events[i].child) || (!exclude[this.events[i].level])) {
-                    include.push(this.events[i].id);
-                }
-            }
-        }
-
-        for (var y = 0; y < include.length; y++) {
-            for (var i = 0; i < this.events.length; i++) {
-                if (!this.events[i] || (typeof this.events[i]) != "object")
-                    continue;
-                if (this.events[i].id == include[y]) {
-                    this.events[i].display(false);
-                    delete this.events[i];
-                    break;
-                }
-            }
-        }
-        
-        //limbasDivShow(elem,elem.id,elem.parent_element.id,'',1);
-    };
-    this.load = function (e, el_value, el_id, form_name, fieldid, gtabid, ID, dash, attribute, action, element_level) {
-        var eo = this.add(form_name, el_id, element_level);
-        /*var tmp = $(form_name+"_0");
-         var exclude = new Array();
-         if(tmp && tmp.childNodes.length>0){for(var i=0;i<tmp.childNodes.length;i++){if(tmp.childNodes[i].id){var tmp1=tmp.childNodes[i].id.split("_");exclude.push(tmp1[tmp1.length-1]);}}}//+"&exclude="+exclude.join(",")*/
-        if (!eo) {
-            ajaxGet(null, "main_dyns.php", "limbasExtMultipleSelect&page=" + dash + "&gtabid=" + gtabid + "&fieldid=" + fieldid + "&ID=" + ID + "&level=" + el_id, null, name + ".post");
-        } else {
-            this.display(eo);
-        }
-    };
-
-    this.post = function (response) {
-        var tmp = response.split("#L#");
-        if (tmp[1]) {
-            var eo = this.get();
-            if (eo && (typeof eo) === "object" && eo.parent) {
-                eo.parent.innerHTML += tmp[1];
-                this.display(eo);
-            }
-        }
-        if (!eo || (typeof eo) !== "object")
-            delete this.events[this.events.length - 1];
-    };
-}
-
-/* ########################################################################## */
-
-
-
-
-var oMultipleSelectLoader_depr = new multipleSelectShow_depr("oMultipleSelectLoader_depr");
-function multipleSelectShow_depr(instance_name){
-	this.events = new Array();
-	var name = instance_name;
-	var $ = function(id){return document.getElementById(id);};
-	var $_ = function(name){return document.getElementsByName(name)[arguments[1] ? arguments[1] : 0];};
-	var _$ = function(name){return document.getElementsByTagName(name)[arguments[1] ? arguments[1] : 0];};
-	this.get = function(property,value){
-		if(this.events.length<=0) return false;
-		if(!property){
-			if((typeof this.events[this.events.length-1])!="object") return false;
-			return this.events[this.events.length-1];
 		}
-		for(var i=0;i<this.events.length;i++){
-			if((typeof this.events[i])!="object") continue;
-			if(this.events[i][property]==value) return this.events[i];
-		}
-		return false;
-	};
-	this.add = function(form_name,id,level,container_level){
-		var tmp = this.get("id",id);
-		if(tmp && (typeof tmp)=="object"){return tmp;}
 
-		var eo = new Object();
-		eo.initialize = function(eid,peid,pceid,cid,fn,l,id){
-			this.element = $(eid);
-			this.parent_element = $(peid) ? $(peid) : $(fn+"_0");
-			this.parent = $(pceid);
-			this.child = cid;this.form_name = fn;this.level = l;this.id = id;
+		var self = this;
+    	ajaxAdd = function(response) {
+            var tmp = response.split("#L#");
+            var html = tmp[1];
+
+            tBody.append('<tr><td colspan="3">' + html + '</td></tr>');
+            self.cache[id] = html;
 		};
-		eo.display = function(arg){
-			if(arg==false){
-				$(this.element.id).style.textDecoration = "none";
-				$(this.element.id).style.color = "black";
-				if($(this.child)) $(this.child).style.display = "none";
-				return;
-			}
-			$(this.element.id).style.textDecoration = "underline";
-			$(this.element.id).style.color = "green";
-			if($(this.child)){
-				$(this.child).style.display = "";
-				if($(this.element.id) && $(this.parent_element) && $(this.parent_element.id)){
-					$(this.child).style.position = "absolute";
-					if(!$(this.child).style.left)
-						$(this.child).style.left = $(this.element.id).offsetLeft + ($(this.child).style.left ? 0 : $(this.parent_element.id).offsetLeft) + $(this.element.id).offsetWidth-3;
-					if(!$(this.child).style.top)
-						$(this.child).style.top = $(this.element.id).offsetTop + ($(this.child).style.top ? 0 : $(this.parent_element.id).offsetTop);
-					$(this.child).style.zIndex = this.element.style.zIndex+1;
-				}
-			}
-		};
-		eo.initialize(form_name+"_"+level+"_"+id,form_name+"_"+level,form_name+"_dsl",form_name+"_"+id,form_name,level,id);
-		this.events.push(eo);
-		
-		if($(eo.child)) return eo;
-		return false;
-	};
-	
-	this.display = function(elem){
-		if(this.events.length<1 || (typeof elem)!="object") return;
-		var exclude = new Array();
-		var include = new Array();
-		
-		elem.display(true);
-		exclude[elem.level] = elem.child;
-		var ev = this.get("id",elem.level);
-		if(ev && (typeof ev)=="object"){
-			exclude[ev.level] = ev.child;
-			for(var i=0;i<this.events.length;i++){
-				if(!this.events[i] || (typeof this.events[i])!="object") continue;
-				if(exclude[this.events[i].level] && exclude[this.events[i].level]!==this.events[i].child){
-					ev = this.events[i];
-					include.push(ev.id);
-					while(ev=this.get("level",ev.id)){include.push(ev.id);}
-				}
-			}
-		}else{
-			for(var i=0;i<this.events.length;i++){
-				if(!this.events[i] || (typeof this.events[i])!="object") continue;
-				if((exclude[this.events[i].level] && exclude[this.events[i].level]!==this.events[i].child) || (!exclude[this.events[i].level])){include.push(this.events[i].id);}
-			}
-		}
 
-		for(var y=0;y<include.length;y++){
-			for(var i=0;i<this.events.length;i++){
-				if(!this.events[i] || (typeof this.events[i])!="object") continue;
-				if(this.events[i].id==include[y]){this.events[i].display(false);delete this.events[i];break;}
-			}
-		}
-	};
-	this.load = function(e,el_value,el_id,form_name,fieldid,gtabid,ID,dash,attribute,action,element_level){
-		var eo = this.add(form_name,el_id,element_level);
-		/*var tmp = $(form_name+"_0");
-		var exclude = new Array();
-		if(tmp && tmp.childNodes.length>0){for(var i=0;i<tmp.childNodes.length;i++){if(tmp.childNodes[i].id){var tmp1=tmp.childNodes[i].id.split("_");exclude.push(tmp1[tmp1.length-1]);}}}//+"&exclude="+exclude.join(",")*/
-		if(!eo){
-			ajaxGet(null,"main_dyns.php","limbasExtMultipleSelect&page="+dash+"&gtabid="+gtabid+"&fieldid="+fieldid+"&ID="+ID+"&level="+el_id,null,name+".post");
-		}else{
-			this.display(eo);
-		}
+        ajaxGet(null, "main_dyns.php", "limbasExtMultipleSelect&page=" + dash + "&gtabid=" + gtabid + "&fieldid=" + fieldid + "&ID=" + ID + "&level=" + el_id + "&form_name=" + form_name + "&form_value=" + el_value, null, "ajaxAdd");
 	};
 
-	this.post = function(response){
-		var tmp = response.split("#L#");
-		if(tmp[1]){
-			var eo = this.get();
-			if(eo && (typeof eo)=="object" && eo.parent){
-				eo.parent.innerHTML += tmp[1];
-				this.display(eo);
-			}
-		}
-		if(!eo || (typeof eo)!="object") delete this.events[this.events.length-1];
-	};
-	return this;
 }
-
 
 function checktypbool(data_type,fieldname,fielddesc,field_id,tab_id,obj,id) {
 	eval('var reg = RULE['+data_type+'];');
@@ -1023,7 +758,7 @@ function checktyp(data_type,fieldname,fielddesc,field_id,tab_id,obj,id,ajaxpost,
 
 	if(!data_type){obj = '';}
 	val = obj;
-	
+
 	var regexp = RULE[data_type];
 	if(fieldname.substr(0,2) == 'gs'){
 		val = obj.replace(/^(>|<|<=|>=|!=|#NOTNULL#|#NULL#|#NOT#)?( )?/g,'');
@@ -1083,11 +818,11 @@ function checktyp(data_type,fieldname,fielddesc,field_id,tab_id,obj,id,ajaxpost,
 			}
 		}
 	}
-	
+
 	if(isupdate){
 		limbasDuplicateForm(el,fieldname,val);
 	}
-	
+
 	if(isupdate && ajaxpost != 2 && id>0 && data_type != 13 && (ajaxpost == 1 || jsvar["ajaxpost"] == 1)){
 		send_form(1,1);
 		document.form1.history_fields.value = '';  //???? 0 war vorher; '' ist aber richtig
@@ -1186,7 +921,7 @@ function needfield(elid){
 			}
 
 		}
-	})
+	});
 	
 	// Checkboxen und Radiofelder
 	for (var z in radel){
@@ -1266,7 +1001,7 @@ function limbasReportMenuOptions(evt,el,gtabid,reportid,ID,output,listmode,repor
 	}
 	
 	actid = "menuReportOption&gtabid=" + gtabid + "&reportid=" + reportid + "&ID=" + ID + linkadd;
-	mainfunc = function(result){limbasReportMenuOptionsPost(result,el,output);}
+	mainfunc = function(result){limbasReportMenuOptionsPost(result,el,output);};
 	ajaxGet(null,"main_dyns.php",actid,null,"mainfunc","form1");
 }
 
@@ -1398,7 +1133,7 @@ function limbasSearchInherit(desttabid,destgfieldid,gtabid,gfieldid,el,ID,showal
 	if(el.value.length > 1 || el.value == '*'){
 		url = "main_dyns.php";
 		actid = "searchInherit&gtabid=" + gtabid + "&gfieldid=" + gfieldid + "&dest_gtabid=" + desttabid + "&dest_gfieldid=" + destgfieldid + "&showall=" + showall + "&ID=" + ID + "&value=" + el.value;
-		mainfunc = function(result){limbasSearchInheritPost(result,el);}
+		mainfunc = function(result){limbasSearchInheritPost(result,el);};
 		ajaxGetWait(null,url,actid,null,"mainfunc",'',500);
 	}
 }
@@ -1418,7 +1153,7 @@ function limbasInheritFrom(evt, sourceGtabid, sourceId, destGtabid, destGfieldid
 	limbasDivClose("");
 	url = "main_dyns.php";
 	actid = "inheritFrom&gtabid=" + destGtabid + "&dest_gfieldid=" + destGfieldid + "&source_id=" + sourceId + "&dest_id=" + destId;
-	mainfunc = function(result){limbasInheritFromPost(result,evt);}
+	mainfunc = function(result){limbasInheritFromPost(result,evt);};
 	ajaxGet(null,url,actid,null,"mainfunc");
 }
 
@@ -1730,7 +1465,7 @@ function newwin7(action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimension,v_
 	}
 	
 	// show in frame as iframe
-	if(!document.getElementById("lmb_gtabDetailFrame")){$( "body" ).append("<div id='lmb_gtabDetailFrame' style='position:absolute;display:none;z-index:9999;overflow:hidden;width:300px;height:300px;padding:0px;'><iframe id='lmb_gtabDetailIFrame' name='lmb_gtabDetailIFrame' style='width:100%;height:100%;border:none;overflow:auto;'></iframe></div>");}
+	if(!document.getElementById("lmb_gtabDetailFrame")){$( "body" ).append("<div id='lmb_gtabDetailFrame' style='position:absolute;display:none;z-index:9999;overflow:hidden;width:300px;height:300px;padding:0;'><iframe id='lmb_gtabDetailIFrame' name='lmb_gtabDetailIFrame' style='width:100%;height:100%;border:none;overflow:auto;'></iframe></div>");}
 	$("#lmb_gtabDetailFrame").css({'position':'relative','left':'0','top':'0'}).dialog({
 		width: x,
 		height: y,

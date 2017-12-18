@@ -799,7 +799,7 @@ function list_elements_pdf(&$pdf,$ID,$report,$subform=null){
 
 			# PageBreak before
 			if($report["style"][$bzm][35] == 'true'){$pdf->SetAutoPageBreak(false,0);}
-			if($report["style"][$bzm][34] == 1){$pdf->AddPage('P');$report["posy"][$bzm] = 0;}
+			if($report["style"][$bzm][34] == 1){$pdf->AddPage();$report["posy"][$bzm] = 0;}
 			
 			
 			# is subform
@@ -825,7 +825,7 @@ function list_elements_pdf(&$pdf,$ID,$report,$subform=null){
 
 			# PageBreak after
 			if($report["style"][$bzm][35] == 'true'){$pdf->SetAutoPageBreak(true,$report["footerpos"]);}
-			if($report["style"][$bzm][34] == 2){$pdf->AddPage('P');}
+			if($report["style"][$bzm][34] == 2){$pdf->AddPage();}
 
 			# save Y position of element
 			$lastposy[$bzm] = $pdf->GetY();
@@ -885,8 +885,10 @@ function create_pdf($report,$ID){
 	$rp["background"] = element_list($ID,$report,'background');
 	
 	# --- neues PDF -----------------------------------
-	$size = array($report["page_style"][0],$report["page_style"][1]);
-	$pdf = new pdf_report('P','pt',$size);
+    $width = $report["page_style"][0];
+    $height = $report["page_style"][1];
+    $orientation = ($width > $height) ? 'l' : 'p';
+	$pdf = new pdf_report($orientation, 'pt', array($width, $height));
 	
 	$pdf->rp = $rp;
 	$pdf->report = $report;
@@ -901,8 +903,8 @@ function create_pdf($report,$ID){
 	
 	# set all needed fonts
 	set_fonts($pdf,$report["report_id"]);
-	
-	$pdf->AddPage('P');
+
+	$pdf->AddPage();
 	$pdf->SetSubject($report["name"]." ".date("Y.m.d"));
 	$pdf->SetTitle($report["name"]." ".date("Y.m.d"));
 	$pdf->SetCompression(true);
@@ -931,13 +933,13 @@ function fill_pdf(&$pdf,$report,$ID,$subform=0){
 }
 
 # --- PDF ausgeben ---------------------------------
-function store_pdf(&$pdf,$report,$ID,$report_rename=null){
+function store_pdf(&$pdf,$report,$ID,$report_rename=null,$report_output=null){
 	global $session;
 	global $umgvar;
 	#global $pdf;
 
 	# ------- PDF Name ---------
-	$name = reportSavename($report["name"],$report["savename"],$ID,"pdf",$report_rename);
+	$name = reportSavename($report["name"],$report["savename"],$ID,"pdf",$report_rename, ($report_output >= 2) /* archive */);
 	$out = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/".$name;
 	# ------- pdf schreiben ---------
         if(lmb_strtoupper($umgvar['charset']) == 'UTF-8') {
@@ -966,7 +968,7 @@ function merge_report($filelist,$ID,$report_rename=null){
 	global $session;
 	global $umgvar;
 
-	$report_name = reportSavename($GLOBALS["report_name"],$GLOBALS["report_savename"],$ID,"pdf",$report_rename);
+	$report_name = reportSavename($GLOBALS["report_name"],$GLOBALS["report_savename"],$ID,"pdf",$report_rename, true);
 	
 	# use gs
 	if($umgvar["use_gs"]){
@@ -1039,7 +1041,7 @@ function append_report($pdf,$report_id,$ID){
 
 	#$prevreportid = $pdf->report_id;
 
-	$pdf->AddPage('P');
+	$pdf->AddPage();
 	$pdf->SetXY(0,0);
 	
 	#$pdf->report_id = $report_id;
@@ -1079,6 +1081,7 @@ function append_subChart($pdf,$report,$ID,$el,$chart_id,$height=0,$width=0){
 	global $umgvar;
         global $gsr;
         global $filter;
+        global $session;
         
         $gtabid = $gdiaglist['gtabid'][$chart_id];
         if ($gdiaglist[$gtabid]["id"][$chart_id]) {
@@ -1122,7 +1125,7 @@ function generate_pdf($report_id,$ID,$report_output,$report_rename=null){
 	if($pdf = create_pdf($report,$ID)){
 		# fill pdf with elements
 		fill_pdf($pdf,$report,$ID);
-		if(!$temp_file_path = store_pdf($pdf,$report,$ID,$report_rename)){
+		if(!$temp_file_path = store_pdf($pdf,$report,$ID,$report_rename, $report_output)){
 			$pdf->Close();
 			foreach ($pdf as &$value) {
 				$value = null;
@@ -1142,7 +1145,7 @@ function generate_pdf($report_id,$ID,$report_output,$report_rename=null){
 	}
 
 	# Archivieren
-	$GLOBALS['archiv_file_id'] = reportArchiv($pdf,$temp_file_path,$report,$ID,$report_output);
+	$GLOBALS['archiv_file_id'] = reportArchiv($temp_file_path,$report,$ID,$report_output);
 	
 	return $temp_file_path;
 }

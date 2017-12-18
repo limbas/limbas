@@ -19,13 +19,13 @@
  */
 
 
-
-
 $fieldid = $par["fieldid"];
 $gtabid = $par["gtabid"];
 $tab_group = $par["tab_group"];
 $act = $par["act"];
 $val = $par["val"];
+$solve_dependency = $par["solve_dependency"];
+
 if($act){
 	${$act} = $val;
 }
@@ -37,6 +37,7 @@ require_once("admin/tables/gtab_ftype.dao");
 
 echo "<form action=\"main_dyns_admin.php\" method=\"post\" name=\"form2\">";
 echo "<input type=\"hidden\" name=\"val\">";
+echo "<input type=\"hidden\" name=\"solve_dependency\">";
 echo "</form>";
 
 	
@@ -162,7 +163,7 @@ echo "</form>";
 		$SELECTED[$result_fieldtype[$table_gtab[$bzm]]["listing_viewmode"][1]] = 'selected';
 		echo "
 		<tr><td><hr></td><td><hr></td></tr>
-		<tr><td valign=\"top\">".$lang[2812]."</td><td><select style=\"width:100%\" onchange=\"document.form2.val.value=this.value+' ';ajaxEditField('$fieldid','relviewmode')\"><option value=\"1\" $SELECTED[1]>".$lang[2814]."</option><option value=\"2\" $SELECTED[2]>".$lang[2815]."</option></select>
+		<tr><td valign=\"top\">".$lang[2812]."</td><td><select style=\"width:100%\" onchange=\"document.form2.val.value=this.value+' ';ajaxEditField('$fieldid','relviewmode')\"><option value=\"1\" $SELECTED[1]>".$lang[2814]."</option><option value=\"2\" $SELECTED[2]>".$lang[2815]."</option><option value=\"3\" $SELECTED[3]>".$lang[2709]."</option><option value=\"4\" $SELECTED[4]>".$lang[2913]."</option></select>
 		<br><i style=\"color:#AAAAAA\">".$lang[2848]."</i>
 		</td></tr>
 		
@@ -254,7 +255,7 @@ echo "</form>";
 		$agregat_fk = array(1=>'AVG',2=>'COUNT',3=>'MAX',4=>'MIN',5=>'SUM');
 		foreach ($agregat_fk as $key => $value){
 			if(in_array($key,$result_fieldtype[$table_gtab[$bzm]]["aggregate"][1])){$CHECKED = "checked";}else{$CHECKED = "";}
-			echo "<div style=\"float:left\">$value <input type=\"checkbox\" onchange=\"document.form2.val.value=this.checked+'_$key';ajaxEditField('$fieldid','aggregate')\" style=\"vertical-align:text-top;margin:0px;margin-bottom:3px\" $CHECKED>&nbsp;&nbsp;</div>";
+			echo "<div style=\"float:left;width:36px;text-align:center\">$value<br><input type=\"checkbox\" onchange=\"document.form2.val.value=this.checked+'_$key';ajaxEditField('$fieldid','aggregate')\" style=\"vertical-align:text-top;margin:0px;margin-bottom:3px\" $CHECKED>&nbsp;&nbsp;</div>";
 		}
 		#echo "</SELECT>";
 		echo "<br style=\"clear:both\"><i style=\"color:#AAAAAA\">".$lang[2732]."</i>";
@@ -317,7 +318,7 @@ echo "</form>";
 	}
 	
 	# --- unique ------
-	if(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 15 AND $result_fieldtype[$table_gtab[1]]["fieldtype"][1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 12 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 18 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 6 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 10 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 9 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 13 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 3 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 16 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 19){
+	if(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 15 AND $result_fieldtype[$table_gtab[1]]["fieldtype"][1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 12 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 18 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 10 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 9 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 13 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 3 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 16 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 19){
 		echo "<tr><td valign=\"top\">".$lang[927]."</td><td>";
 		if($result_fieldtype[$table_gtab[$bzm]]["unique"][1] == 1){$unique = "CHECKED";} else{$unique = "";}
 		echo "<INPUT TYPE=\"CHECKBOX\" onclick=\"document.form2.val.value=this.checked;ajaxEditField('$fieldid','uniquefield')\"".$unique.">";
@@ -416,7 +417,15 @@ echo "</form>";
 		echo "</td></tr>";
 	}
 	
-	
+	# relation/grouping popup default
+    if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 11 OR $result_fieldtype[$table_gtab[$bzm]]["groupable"][1] == 1){
+        echo "<tr><td valign=\"top\">".$lang[2918]."</td><td>";
+        if($result_fieldtype[$table_gtab[$bzm]]["popupdefault"]){$checked = "CHECKED";} else{$checked = "";}
+        echo "<INPUT TYPE=\"CHECKBOX\" onclick=\"document.form2.val.value=this.checked;ajaxEditField('$fieldid','popupdefault')\" ".$checked.">";
+        echo "<br><i style=\"color:#AAAAAA\">".$lang[2919]."</i>";
+        echo "</td></tr>";
+    }
+    
 	/* --- Argument --------------------------------------- */
 	if($result_fieldtype[$table_gtab[$bzm]]["argument_typ"][1]){
 		echo "<tr><td colspan=\"2\"><hr></td><td>";
@@ -559,15 +568,14 @@ echo "</form>";
 		if($tablesync){echo " <i class=\"lmb-icon lmb-aktiv\"></i>";}
         echo "<br><i style=\"color:#AAAAAA\">".$lang[2030]."</i>
         </td></tr>";
-		
-		
+
 		echo "</td></tr>";
 	}
 	
 	# Verärbung
 	if($result_fieldtype[$table_gtab[$bzm]]["inherit_tab"][1]){
 		
-		echo "<tr><td colspan=\"2\" align=\"center\"><hr></td><td>";
+		echo "<tr><td colspan=\"2\" align=\"center\"><hr></td>";
 		echo "<tr><td colspan=\"2\" align=\"center\">".$lang[2611]."</td></tr>";
 		echo "<tr><td>".$lang[921]."</td><td>".$gtab["desc"][$result_fieldtype[$table_gtab[$bzm]]["inherit_tab"][1]]."</td></tr>";
 		echo "<tr><td>".$lang[1321]."</td><td>".$gfield[$result_fieldtype[$table_gtab[$bzm]]["inherit_tab"][1]]["spelling"][$result_fieldtype[$table_gtab[$bzm]]["inherit_field"][1]]."</td></tr>";
@@ -578,27 +586,54 @@ echo "</form>";
 			echo "<option value=\"$i\" $selected>$i</option>";
 		}
 		echo "</td></tr>";
-
-		if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 3){
-			echo "<tr><td>".$lang[2610]."</td><td align=\"center\">";
-			if($result_fieldtype[$table_gtab[$bzm]]["inherit_eval"][1] == 1){$checked = "CHECKED";} else{$checked = "";}
-			echo "<INPUT TYPE=\"CHECKBOX\" onclick=\"document.form2.val.value=this.checked;ajaxEditField('$fieldid','inherit_eval')\" ".$checked.">";
-			echo "</td></tr>";
-		}
 		
-		if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 1 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 5){
-			echo "<tr><td>".$lang[2609]."</td><td align=\"center\">";
-			if($result_fieldtype[$table_gtab[$bzm]]["inherit_search"][1] == 1){$checked = "CHECKED";} else{$checked = "";}
-			echo "<INPUT TYPE=\"CHECKBOX\" onclick=\"document.form2.val.value=this.checked;ajaxEditField('$fieldid','inherit_search')\" ".$checked.">";
-			echo "</td></tr>";
-		}
 		if($result_fieldtype[$table_gtab[$bzm]]["inherit_search"][1] == 1){
 			echo "<tr><td valign=\"top\">".$lang[2608]."</td><td>";
 			echo "<TEXTAREA onfocus=\"this.style.height='80px';this.style.width='250px';\" onblur=\"this.style.height='18px';this.style.width='120px';\" STYLE=\"width:120px;height:18px;overflow:visible\" onchange=\"document.form2.val.value=this.value+' ';ajaxEditField('$fieldid','inherit_filter')\">".$result_fieldtype[$table_gtab[$bzm]]["inherit_filter"][1]."</TEXTAREA>";
 			echo "</td></tr>";
 		}
 
+		if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 3){
+			echo "<tr><td>".$lang[2610]."</td><td>";
+			if($result_fieldtype[$table_gtab[$bzm]]["inherit_eval"][1] == 1){$checked = "CHECKED";} else{$checked = "";}
+			echo "<INPUT TYPE=\"CHECKBOX\" onclick=\"document.form2.val.value=this.checked;ajaxEditField('$fieldid','inherit_eval')\" ".$checked.">";
+			echo "</td></tr>";
+		}
+		
+		if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 1 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 5){
+			echo "<tr><td>".$lang[2609]."</td><td>";
+			if($result_fieldtype[$table_gtab[$bzm]]["inherit_search"][1] == 1){$checked = "CHECKED";} else{$checked = "";}
+			echo "<INPUT TYPE=\"CHECKBOX\" onclick=\"document.form2.val.value=this.checked;ajaxEditField('$fieldid','inherit_search')\" ".$checked.">";
+			echo "</td></tr>";
+		}
+		
+		echo "<tr><td valign=\"top\">".$lang[1879]."</td><td>";
+		if($result_fieldtype[$table_gtab[$bzm]]["argument_edit"][1] == 1){$argument_edit = "CHECKED";}else{$argument_edit = " ";}
+		echo "<INPUT TYPE=\"CHECKBOX\" onclick=\"document.form2.val.value='$argument_edit';ajaxEditField('$fieldid','argument_edit')\" $argument_edit>";
+
 	}
+	
+    if(LMB_DBFUNC_VIEWDEPENDENCY AND $depviews = lmb_checkViewDependency($gtab["table"][$gtabid],$result_fieldtype[$table_gtab[$bzm]]["field"][1])){
+       echo "<tr><td colspan=\"2\" align=\"center\"><hr></td></tr>";
+      
+       echo "<tr><td valign=\"top\">".$lang[2912]."</td><td>";
+       echo "<INPUT TYPE=\"CHECKBOX\" onclick=\"if(this.checked){document.form1.solve_dependency.value=1;document.form2.solve_dependency.value=1;}else{document.form1.solve_dependency.value='';document.form2.solve_dependency.value='';};\"><br>";
+	   echo "<i style=\"color:#AAAAAA\">".$lang[2911]."</i><br><hr>";
+       echo '- '.implode('<br>- ',$depviews);
+	   echo "</td></tr>";
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
 	
 	?>
 	</table>

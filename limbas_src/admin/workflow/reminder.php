@@ -22,6 +22,15 @@
 
 ?>
 
+<script language="JavaScript">
+    function deleteReminder(id, name) {
+        var desc = confirm('Delete reminder ' + id + ' (' + name + ')?');
+        if(desc){
+            document.location.href='main_admin.php?action=setup_reminder&delid=' + id;
+        }
+    }
+</script>
+
 <form action="main_admin.php" method="post" name="form1">
 <input type="hidden" name="action" value="setup_reminder">
 <input type="hidden" name="editid">
@@ -49,7 +58,7 @@ if($reminder){
 		foreach ($value['name'] as $id => $name){
 			echo "<tr clas=\"tabBody\">
 				<td>".$id."</td>
-				<td align=\"center\" style=\"width:20px;\"><a href=\"main_admin.php?action=setup_reminder&delid=$id\"><i class=\"lmb-icon lmb-trash\" style=\"cursor:pointer\" border=\"0\"></i></a></td>
+				<td align=\"center\" style=\"width:20px;\"><i class=\"lmb-icon lmb-trash\" onclick=\"deleteReminder(".$id.", '".$name."')\" style=\"cursor:pointer\" border=\"0\"></i></td>
 				
 				
 				<TD align=\"center\" style=\"width:30px;white-space: nowrap;\">

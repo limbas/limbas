@@ -102,7 +102,7 @@ function mail_folders(){
                 
                 
                 
-		var firstFolder = 'INBOX'
+		var firstFolder = 'INBOX';
 		//If no folder
                 if (C.get('mail_activefolder'))
                 {
@@ -243,7 +243,7 @@ function mail_print(mbox, uid){
 }
 
 function mail_delete_selection(mbox, sel){
-	var _cnt = sel.getCount()
+	var _cnt = sel.getCount();
 	switch (_cnt){
 		case 1:
 			_msg = "Nachricht wird";

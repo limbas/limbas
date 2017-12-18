@@ -124,13 +124,13 @@ class Limbas extends AbstractBackend {
 				$calendar = array (
 						'components' => 'VEVENT',
 						'id' => $calid,
-						'uri' => $calid,
+						'uri' => strval($calid),
 						'principaluri' => $principalUri,
 						'{' . CalDAV\Plugin::NS_CALENDARSERVER . '}getctag' => $ctag [$calid] ? $ctag [$calid] : '0',
-						'{' . CalDAV\Plugin::NS_CALDAV . '}supported-calendar-component-set' => new CalDAV\Property\SupportedCalendarComponentSet ( array (
+						'{' . CalDAV\Plugin::NS_CALDAV . '}supported-calendar-component-set' => new CalDAV\Xml\Property\SupportedCalendarComponentSet ( array (
 								'VEVENT' 
 						) ),
-						'{' . CalDAV\Plugin::NS_CALDAV . '}schedule-calendar-transp' => new CalDAV\Property\ScheduleCalendarTransp ( 'opaque' ),
+						'{' . CalDAV\Plugin::NS_CALDAV . '}schedule-calendar-transp' => new CalDAV\Xml\Property\ScheduleCalendarTransp ( 'opaque' ),
 						'{DAV:}displayname' => $gtab ['desc'] [$calid],
 						'{urn:ietf:params:xml:ns:caldav}calendar-description' => $gtab ['desc'] [$calid],
 						'{urn:ietf:params:xml:ns:caldav}calendar-timezone' => $umgvar ['default_timezone'],
@@ -194,10 +194,10 @@ class Limbas extends AbstractBackend {
 	 * (424 Failed Dependency) because the request needs to be atomic.
 	 *
 	 * @param string $calendarId        	
-	 * @param array $mutations        	
-	 * @return bool array
+	 * @param \Sabre\DAV\PropPatch $propPatch
+	 * @return void
 	 */
-	public function updateCalendar($calendarId, array $mutations) {
+	public function updateCalendar($calendarId, \Sabre\DAV\PropPatch $propPatch) {
 		// not possible
 	}
 	

@@ -224,6 +224,16 @@ function lmb_calEventRender(event, eventElement, view) {
 		lmb_calShowContext(event,eventElement.get(0));
 		return false;
     });
+    
+    // mouseover
+    eventElement.bind('mouseover', function() {
+    	$('.event_' + event.id).css('box-shadow','2px 2px red'); // #909090 #97C5AB
+    });
+    
+    // mouseout
+    eventElement.bind('mouseout', function() {
+    	$('.event_' + event.id).css('box-shadow','');
+    });
 }
 
 
@@ -236,7 +246,6 @@ function lmb_calDayRender(date, cell, resource){
     });
 	
 }
-
 
 // render resource
 function lmb_calResourceRender(resource, element, view) {
@@ -283,7 +292,7 @@ function lmb_calPaste(date, resource){
 	
 	divclose();
 	divclose();
-	lmb_calendar = sessionStorage.lmb_calendar
+	lmb_calendar = sessionStorage.lmb_calendar;
 	
 	if(lmb_calendar){
 		session_event = JSON.parse(lmb_calendar);
@@ -302,7 +311,7 @@ function lmb_calPaste(date, resource){
 					var len = cevent.end.getTime()/1000 - cevent.start.getTime()/1000;
 			
 					cevent.start = date;
-					cevent.end = date.getTime()/1000 + len
+					cevent.end = date.getTime()/1000 + len;
 					cevent.resource = resource;
 					
 					$('#calendar').fullCalendar('updateEvent', cevent);
@@ -414,19 +423,26 @@ function lmb_calResize(event, dayDelta, minuteDelta){
 }
 
 // calendar - drop event
-function lmb_calDrop(event, dayDelta, minuteDelta, allDay){
-	
-	var resource = '';
-	if(event.resource){
-		resource = event.resource;
-	}
-	
+function lmb_calDrop(event, dayDelta, minuteDelta, allDay, fx, ev ,ui, resource,origin_resource){
+
+	//origin_resource = '';
+	//if(event.resource){
+	//	origin_resource = event.resource;
+	//}else{
+	//	resource = '';
+	//}
+
 	$.ajax({
 		type: "POST",
 		url: "main_dyns.php",
-		data: "actid=fullcalendar&action=drop&gtabid="+jsvar['gtabid']+"&ID="+event.id+"&dayDelta="+dayDelta+"&minuteDelta="+minuteDelta+"&resource="+resource
+		data: "actid=fullcalendar&action=drop&gtabid="+jsvar['gtabid']+"&ID="+event.id+"&dayDelta="+dayDelta+"&minuteDelta="+minuteDelta+"&resource="+resource+"&origin_resource="+origin_resource
 	}).done(function(data) {
 		ajaxEvalScript(data);
+		// workaround - only for multible resources
+		if(resource != origin_resource){
+			event.resource = resource;
+			$('#calendar').fullCalendar( 'render' );
+		}
 	});
 }
 
@@ -440,16 +456,17 @@ function lmb_calDelete(evt,gtabid,ID){
 	  type: "POST",
 	  url: "main_dyns.php",
 	  data: "actid=fullcalendar&action=delete&gtabid="+gtabid+"&ID="+ID+"&verkn_ID="+jsvar['verkn_ID']+"&verkn_tabid="+jsvar['verkn_tabid']+"&verkn_fieldid="+jsvar['verkn_fieldid'],
-	  success: function(data){
-	  	if(data.substr(0,4) == 'true' && ID > 0){
+	  }).done(function(data){
+	  	if(data.trim().substr(0,4) == 'true' && ID > 0){
 	  		$('#calendar').fullCalendar( 'removeEvents', ID);
-	  		$("#lmbCalAjaxContainer").dialog('destroy');
+	  		if($("#lmbCalAjaxContainer").dialog()){
+	  			$("#lmbCalAjaxContainer").dialog('destroy');
+	  		}
 	  	}else{
 	  		ajaxEvalScript(data);
 	  	}
 	  	// reset history_fields
 		document.form1.history_fields.value='';
-	  }
 	});
 	}
 }
@@ -833,7 +850,7 @@ function send_form(formid,ajax,need,wclose,calBulk_precalc) {
 	if(needok){
 		alert(jsvar["lng_1509"]+"\n\n"+needok);
 	}else{
-		dynfunc = function(result){send_formPost(result,ajax);}
+		dynfunc = function(result){send_formPost(result,ajax);};
 		ajaxGet(null,'main_dyns.php','fullcalendar&action=saveDetails&calBulk_precalc='+calBulk_precalc,null,'dynfunc','form1',null,1);
 		if(calBulk_precalc == 'create' || !document.getElementById("bulk_terminserie")){
 			if(!ajax){

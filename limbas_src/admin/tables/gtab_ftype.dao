@@ -18,7 +18,6 @@
  * ID: 139
  */
 
-
 function get_fieldname($atid,$ftid){
 	global $db;
 	
@@ -28,25 +27,7 @@ function get_fieldname($atid,$ftid){
 }
 
 
-/* --- Feldtypen --------------------------------------------- */
-$sqlquery = "SELECT * FROM LMB_FIELD_TYPES ORDER BY SORT";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$bzm = 1;
-while(odbc_fetch_row($rs, $bzm)) {
-	$rid = odbc_result($rs, "ID");
-	$result_type["id"][$rid] = $rid;
-	$result_type["field_type"][$rid] = odbc_result($rs, "FIELD_TYPE");
-	$result_type["data_type"][$rid] = odbc_result($rs, "DATA_TYPE");
-	$result_type["parse_type"][$rid] = odbc_result($rs, "PARSE_TYPE");
-	$result_type["datentyp"][$rid] = odbc_result($rs, "DATENTYP");
-	$result_type["funcid"][$rid] = odbc_result($rs, "FUNCID");
-	$result_type["size"][$rid] = odbc_result($rs, "SIZE");
-	$result_type["hassize"][$rid] = odbc_result($rs, "HASSIZE");
-	$result_type["beschreibung"][$rid] = $lang[odbc_result($rs, "DATA_TYPE_EXP")];
-	$result_type["arg_result_datatype"][odbc_result($rs, "DATA_TYPE")] = $rid;
-	$bzm++;
-}
-
+$result_type = lmb_get_fieldtypes(1);
 
 $ext_fk = getTypeExensions("lmbd");
 
@@ -567,6 +548,14 @@ if($tablesync) {
 	echo 'sync complete!';
 }
 
+/* --- relation popup default -------------------------------------- */
+if($popupdefault) {
+    if($popupdefault == "true"){$popup = LMB_DBDEF_TRUE;}else{$popup = LMB_DBDEF_FALSE;}
+    $sqlquery =  "UPDATE LMB_CONF_FIELDS SET POPUPDEFAULT = $popup WHERE FIELD_ID = $fieldid AND TAB_ID = $atid";
+    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs) {$commit = 1;}
+}
+
 /* --- incl DATETIME  --------------------------------------------- */
 if(isset($datetime)){
 	$sqlquery =  "UPDATE LMB_CONF_FIELDS SET DATETIME = $datetime WHERE FIELD_ID = $fieldid AND TAB_GROUP = $tab_group AND TAB_ID = $atid";
@@ -587,7 +576,7 @@ if($new_keyid){
 }
 
 
-function convert_field($convert,$convert_size,$fieldid,$tabid,$table){
+function convert_field($convert,$convert_size,$fieldid,$tabid,$table,$solve_dependency=null){
 	global $db;
 	global $result_type;
 	global $action;
@@ -612,71 +601,10 @@ function convert_field($convert,$convert_size,$fieldid,$tabid,$table){
 	}else{return false;}
 	
 
-	# type conversion / size
-	function convert_type($convert,$convert_type,$fieldid,$tabid,$table,$origin,$raw=null){
-		global $db;
-		global $result_type;
-		global $action;
-		global $lang;
 
-		# try db-based modify
-		$sqlquery = dbq_15(array($DBA["DBSCHEMA"],$table,$origin["field_name"],$convert_type));
-		$rs = @odbc_exec($db,$sqlquery);
-		# manual modify
-		if(!$rs) {
-			if($result_type["parse_type"][$convert] == 1 OR $result_type["parse_type"][$convert] == 6){
-				$conversion = "NUM";
-			}else{
-				$conversion = "CHAR";
-			}
-
-			# copy
-			$sqlquery = "ALTER TABLE $table ".LMB_DBFUNC_ADD_COLUMN_FIRST." LMB_TEMP_CONVERT ".$convert_type;
-			$rs = @odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			if(!$rs){lmb_alert("unable to add temporay field!");return false;}
-			# db-based update
-			$sqlquery =  "UPDATE $table SET LMB_TEMP_CONVERT = $conversion(".$origin["field_name"].")";
-			$rs = @odbc_exec($db,$sqlquery);
-			
-			# Einträge in neues Tabellenfeld
-			if(!$rs AND ($result_type["data_type"][$convert] != 18 AND $result_type["data_type"][$convert] != 31 AND $result_type["data_type"][$convert] != 32 OR $raw)) {
-				$sqlquery =  "SELECT ID,".$origin["field_name"]." FROM $table";
-				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-				$bzm = 1;
-				while(odbc_fetch_row($rs,$bzm)){
-					# numeric
-					if($result_type["parse_type"][$convert] == 1 OR $result_type["parse_type"][$convert] == 6){
-						$value = parse_db_int(odbc_result($rs,$origin["field_name"]),$result_type["size"][$convert]);
-					# string
-					}else{
-						$value = parse_db_string(odbc_result($rs,$origin["field_name"]),$result_type["size"][$convert]);
-					}
-					$prepare_string = "UPDATE $table SET LMB_TEMP_CONVERT = ? WHERE ID = ".odbc_result($rs,"ID");
-					lmb_PrepareSQL($prepare_string,array(parse_db_blob($value)),__FILE__,__LINE__);
-	
-					$bzm++;
-				}
-				$GLOBALS["alert"] = $lang[2022];
-			}
-	
-			if(!$commit){
-				# drop origin
-				$sqlquery = dbq_22(array($table,$origin["field_name"]));
-				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-				if(!$rs) {$commit = 1;}
-				# rename copy
-				$sqlquery = dbq_7(array($DBA["DBSCHEMA"],$table,"LMB_TEMP_CONVERT",$origin["field_name"]));
-				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-				if(!$rs) {$commit = 1;}
-			}
-			
-		}
-
-		if($commit){return false;}else{return true;}
-	}
 
 	# --- convert to Select -----
-	function convert_to_select($convert,$convert_type,$fieldid,$tabid,$table,$origin,$withpool){
+	function convert_to_select($convert,$convert_type,$fieldid,$tabid,$table,$origin,$withpool,$solve_dependency=null){
 		global $db;
 		global $session;
 		global $result_type;
@@ -786,18 +714,20 @@ function convert_field($convert,$convert_size,$fieldid,$tabid,$table){
 			}
 		}
 		
-		convert_type($convert,$convert_type,$fieldid,$tabid,$table,$origin,1);
+		#lmb_convert_fieldtype($convert,$convert_type,$table,$origin,1,$solve_dependency);
+	    if(!lmb_convert_fieldtype($result_type["data_type"][$convert], $result_type["parse_type"][$convert], $origin["field_name"], $result_type["size"][$convert], $convert_type, $table, 1, $solve_dependency)){$commit = 1;}
 		
 		if($commit){return false;}else{return true;}
 	}
 
 	# --- convert from Select -----
-	function convert_from_select($convert,$convert_type,$fieldid,$tabid,$table,$origin,$toselect){
+	function convert_from_select($convert,$convert_type,$fieldid,$tabid,$table,$origin,$toselect,$solve_dependency=null){
 		global $db;
 		global $session;
 		global $result_type;
 
-		if(!convert_type($convert,$convert_type,$fieldid,$tabid,$table,$origin)){return false;}
+		#if(!lmb_convert_fieldtype($convert,$convert_type,$table,$origin,null,$solve_dependency)){return false;}
+	    if(!lmb_convert_fieldtype($result_type["data_type"][$convert], $result_type["parse_type"][$convert], $origin["field_name"], $result_type["size"][$convert], $convert_type, $table, null, $solve_dependency)){return false;}
 
 		# abbrechen bei single select
 		if($result_type[data_type][$convert] == 9 OR $result_type[data_type][$convert] == 15){return true;}
@@ -872,22 +802,24 @@ function convert_field($convert,$convert_size,$fieldid,$tabid,$table){
 		
 		# --- NOSELECT to SELECT -----
 		if($result_type["field_type"][$convert] == 4 AND $origin["field_type"] != 4){
-			if(!convert_to_select($convert,$convert_type,$fieldid,$tabid,$table,$origin,1)){$commit = 1;}
+			if(!convert_to_select($convert,$convert_type,$fieldid,$tabid,$table,$origin,1,$solve_dependency)){$commit = 1;}
 		# --- SINGLESELECT to NOSELECT -----
 		}elseif($result_type["field_type"][$convert] != 4 AND ($origin["data_type"] == 12 OR $origin["data_type"] == 14)){
-			if(!convert_type($convert,$convert_type,$fieldid,$tabid,$table,$origin)){$commit = 1;}
+			#if(!lmb_convert_fieldtype($convert,$convert_type,$table,$origin,null,$solve_dependency)){$commit = 1;}
+		    if(!lmb_convert_fieldtype($result_type["data_type"][$convert], $result_type["parse_type"][$convert], $origin["field_name"], $result_type["size"][$convert], $convert_type, $table, null, $solve_dependency)){$commit = 1;}
 		# --- MULTIELECT to NOSELECT -----
 		}elseif($result_type["field_type"][$convert] != 4 AND ($origin["data_type"] == 31 OR $origin["data_type"] == 32 OR $origin["data_type"] == 18)){
-			if(!convert_from_select($convert,$convert_type,$fieldid,$tabid,$table,$origin,0)){$commit = 1;}
+			if(!convert_from_select($convert,$convert_type,$fieldid,$tabid,$table,$origin,0,$solve_dependency)){$commit = 1;}
 		# --- SELECT to MULTISELECT -----
 		}elseif(($result_type["data_type"][$convert] == 31 OR $result_type["data_type"][$convert] == 32 OR $result_type["data_type"][$convert] == 18) AND ($origin["data_type"] == 12 OR $origin["data_type"] == 14)){
-			if(!convert_to_select($convert,$convert_type,$fieldid,$tabid,$table,$origin,0)){$commit = 1;}
+			if(!convert_to_select($convert,$convert_type,$fieldid,$tabid,$table,$origin,0,$solve_dependency)){$commit = 1;}
 		# --- MULTISELECT to SELECT -----
 		}elseif(($result_type["data_type"][$convert] == 12 OR $result_type["data_type"][$convert] == 14) AND ($origin["data_type"] == 31 OR $origin["data_type"] == 32 OR $origin["data_type"] == 18)){
-			if(!convert_from_select($convert,$convert_type,$fieldid,$tabid,$table,$origin,1)){$commit = 1;}
+			if(!convert_from_select($convert,$convert_type,$fieldid,$tabid,$table,$origin,1,$solve_dependency)){$commit = 1;}
 		# --- Text to Number OR Number to Text or only only size changed ---
 		}else{
-			if(!convert_type($convert,$convert_type,$fieldid,$tabid,$table,$origin)){$commit = 1;}
+			#if(!lmb_convert_fieldtype($convert,$convert_type,$table,$origin,null,$solve_dependency)){$commit = 1;}
+			if(!lmb_convert_fieldtype($result_type["data_type"][$convert], $result_type["parse_type"][$convert], $origin["field_name"], $result_type["size"][$convert], $convert_type, $table, null, $solve_dependency)){$commit = 1;}
 		}
 
 		# ------------- Sonderfälle --------------
@@ -930,10 +862,9 @@ function extend_field($extend_func,$fieldid,$tabid){
 	return true;
 }
 
-
 /* --- Feld Konvertieren ---------------------------------------------*/
 if($convert_value AND $fieldid){
-	if(!convert_field($convert_value,$convert_size,$fieldid,$atid,lmb_strtoupper($new_gtab))){$commit = 1;}
+	if(!convert_field($convert_value,$convert_size,$fieldid,$atid,lmb_strtoupper($new_gtab),$solve_dependency)){$commit = 1;}
 }
 
 /* --- Extension ---------------------------------------------*/
@@ -969,7 +900,7 @@ if($table_gtab[$bzm]) {
 	if($ftid AND is_numeric($ftid)){$sql = "AND LMB_CONF_FIELDS.FIELD_ID = $ftid";}
 	
 	/* --- Tabellen-Abfrage --------------------------------------------- */
-	$sqlquery = "SELECT LMB_CONF_FIELDS.MULTILANG,LMB_CONF_FIELDS.VERKNTREE,LMB_CONF_FIELDS.LISTING_VIEWMODE,LMB_CONF_FIELDS.LISTING_CUT,LMB_CONF_FIELDS.AGGREGATE,LMB_CONF_FIELDS.COLLREPLACE,LMB_CONF_FIELDS.FIELD_SIZE,LMB_CONF_FIELDS.RELEXT,LMB_CONF_FIELDS.AJAXPOST,LMB_CONF_FIELDS.POTENCY,LMB_CONF_FIELDS.EDITRULE,LMB_CONF_FIELDS.VIEWRULE,LMB_CONF_FIELDS.QUICKSEARCH,LMB_CONF_FIELDS.LMTRIGGER,LMB_CONF_FIELDS.DEFAULTVALUE,LMB_CONF_FIELDS.MAINFIELD,LMB_CONF_FIELDS.VERKNTABLETYPE,LMB_CONF_FIELDS.EXT_TYPE,LMB_CONF_FIELDS.INHERIT_TAB,LMB_CONF_FIELDS.INHERIT_EVAL,LMB_CONF_FIELDS.INHERIT_GROUP,LMB_CONF_FIELDS.INHERIT_SEARCH,LMB_CONF_FIELDS.INHERIT_FILTER,LMB_CONF_FIELDS.INHERIT_FIELD,LMB_CONF_FIELDS.INDEXED,LMB_CONF_FIELDS.SELECT_CUT,LMB_CONF_FIELDS.SELECT_POOL,LMB_CONF_FIELDS.VERKNSEARCH,LMB_CONF_FIELDS.WYSIWYG,LMB_CONF_FIELDS.DATETIME,LMB_CONF_FIELDS.MD5TAB,LMB_CONF_FIELDS.FIELD_ID,LMB_CONF_FIELDS.CURRENCY,LMB_CONF_FIELDS.NFORMAT,LMB_CONF_FIELDS.INDIZE,LMB_CONF_FIELDS.GROUPABLE,LMB_CONF_FIELDS.ARGUMENT_EDIT,LMB_CONF_FIELDS.VERKNTABID,LMB_CONF_FIELDS.ARGUMENT,LMB_CONF_FIELDS.DYNSEARCH,LMB_CONF_FIELDS.ISUNIQUE,LMB_CONF_FIELDS.FIELDKEY,LMB_CONF_FIELDS.GENLINK,LMB_CONF_FIELDS.FIELD_NAME,LMB_CONF_FIELDS.ARTLEISTE,LMB_CONF_FIELDS.VERKNFIELDID,LMB_CONF_FIELDS.BESCHREIBUNG,LMB_CONF_FIELDS.SPELLING,LMB_CONF_FIELDS.ARGUMENT_TYP,LMB_FIELD_TYPES.DATA_TYPE_EXP,LMB_FIELD_TYPES.FORMAT,LMB_FIELD_TYPES.FIELD_TYPE,LMB_FIELD_TYPES.DATA_TYPE,LMB_FIELD_TYPES.ID AS DATA_TYPE_ID
+	$sqlquery = "SELECT LMB_CONF_FIELDS.MULTILANG,LMB_CONF_FIELDS.VERKNTREE,LMB_CONF_FIELDS.LISTING_VIEWMODE,LMB_CONF_FIELDS.LISTING_CUT,LMB_CONF_FIELDS.AGGREGATE,LMB_CONF_FIELDS.COLLREPLACE,LMB_CONF_FIELDS.FIELD_SIZE,LMB_CONF_FIELDS.RELEXT,LMB_CONF_FIELDS.AJAXPOST,LMB_CONF_FIELDS.POTENCY,LMB_CONF_FIELDS.EDITRULE,LMB_CONF_FIELDS.VIEWRULE,LMB_CONF_FIELDS.QUICKSEARCH,LMB_CONF_FIELDS.LMTRIGGER,LMB_CONF_FIELDS.DEFAULTVALUE,LMB_CONF_FIELDS.MAINFIELD,LMB_CONF_FIELDS.VERKNTABLETYPE,LMB_CONF_FIELDS.EXT_TYPE,LMB_CONF_FIELDS.INHERIT_TAB,LMB_CONF_FIELDS.INHERIT_EVAL,LMB_CONF_FIELDS.INHERIT_GROUP,LMB_CONF_FIELDS.INHERIT_SEARCH,LMB_CONF_FIELDS.INHERIT_FILTER,LMB_CONF_FIELDS.INHERIT_FIELD,LMB_CONF_FIELDS.INDEXED,LMB_CONF_FIELDS.SELECT_CUT,LMB_CONF_FIELDS.SELECT_POOL,LMB_CONF_FIELDS.VERKNSEARCH,LMB_CONF_FIELDS.WYSIWYG,LMB_CONF_FIELDS.DATETIME,LMB_CONF_FIELDS.MD5TAB,LMB_CONF_FIELDS.FIELD_ID,LMB_CONF_FIELDS.CURRENCY,LMB_CONF_FIELDS.NFORMAT,LMB_CONF_FIELDS.INDIZE,LMB_CONF_FIELDS.GROUPABLE,LMB_CONF_FIELDS.ARGUMENT_EDIT,LMB_CONF_FIELDS.VERKNTABID,LMB_CONF_FIELDS.ARGUMENT,LMB_CONF_FIELDS.DYNSEARCH,LMB_CONF_FIELDS.ISUNIQUE,LMB_CONF_FIELDS.FIELDKEY,LMB_CONF_FIELDS.GENLINK,LMB_CONF_FIELDS.FIELD_NAME,LMB_CONF_FIELDS.ARTLEISTE,LMB_CONF_FIELDS.VERKNFIELDID,LMB_CONF_FIELDS.BESCHREIBUNG,LMB_CONF_FIELDS.SPELLING,LMB_CONF_FIELDS.ARGUMENT_TYP,LMB_FIELD_TYPES.DATA_TYPE_EXP,LMB_FIELD_TYPES.FORMAT,LMB_FIELD_TYPES.FIELD_TYPE,LMB_FIELD_TYPES.DATA_TYPE,LMB_FIELD_TYPES.ID AS DATA_TYPE_ID,LMB_CONF_FIELDS.POPUPDEFAULT
                     FROM LMB_CONF_FIELDS,LMB_FIELD_TYPES
 					WHERE LMB_CONF_FIELDS.DATA_TYPE = LMB_FIELD_TYPES.DATA_TYPE AND LMB_CONF_FIELDS.TAB_GROUP = $tab_group AND LMB_CONF_FIELDS.TAB_ID = $atid $sql
 					ORDER BY LMB_CONF_FIELDS.SORT";
@@ -1034,6 +965,7 @@ if($table_gtab[$bzm]) {
 		$result_fieldtype[$table_gtab[$bzm]]["scale"][$bzm1] = $result_fieldspecs[$fieldsp_name]["scale"];
 		$result_fieldtype[$table_gtab[$bzm]]["precision"][$bzm1] = $result_fieldspecs[$fieldsp_name]["precision"];
 		$result_fieldtype[$table_gtab[$bzm]]["type_name"][$bzm1] = $result_fieldspecs[$fieldsp_name]["type_name"];
+        if (odbc_result($rs, "POPUPDEFAULT")) {$result_fieldtype[$table_gtab[$bzm]]["popupdefault"][$bzm1] = 1;}
 
 		if(odbc_result($rs, "VERKNSEARCH")){$result_fieldtype[$table_gtab[$bzm]]["verknsearch"][$bzm1] = odbc_result($rs, "VERKNSEARCH");}else{$result_fieldtype[$table_gtab[$bzm]]["verknsearch"][$bzm1] = array();}
 
@@ -1049,6 +981,10 @@ if($table_gtab[$bzm]) {
 		}
 
 		if(odbc_result($rs, "ARGUMENT_TYP")){$gfield[$atid]["argument_typ"][odbc_result($rs, "FIELD_ID")] = odbc_result($rs, "ARGUMENT_TYP");}
+
+		if(LMB_DBFUNC_VIEWDEPENDENCY AND lmb_checkViewDependency($table_gtab[$bzm],$result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1])){
+		    $result_fieldtype[$table_gtab[$bzm]]["view_dependency"][$bzm1] = 1;
+		}
 
 		$bzm1++;
 	}

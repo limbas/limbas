@@ -178,7 +178,7 @@ while(odbc_fetch_row($rs, $bzm)){
 	$val0 = explode(";",$val);
 	if(odbc_result($rs,"KATEGORY") == "INDIZE"){$color = "#7AB491";}
 	if(odbc_result($rs,"ACTIV")){$activ = "CHECKED";}else{$activ = "";}
-	if(odbc_result($rs,"KATEGORY") == "TEMPLATE"){$template = "(".$val0[0].")";}else{$template = "";}
+	if(odbc_result($rs,"KATEGORY") == "TEMPLATE" OR odbc_result($rs,"KATEGORY") == "D"){$template = "(".$val0[0].")";}else{$template = "";}
 	echo "<TR class=\"tabBody\" OnClick=\"show_val('');show_val('".$val."');\">
 	<TD>&nbsp;".odbc_result($rs,"ID")."&nbsp;</TD>
 	<TD  BGCOLOR=\"$color\">&nbsp;".odbc_result($rs,"KATEGORY")."&nbsp;$template</TD>
@@ -331,6 +331,31 @@ if($kategoriedesc == "TEMPLATE"){
 	<?
 	
 }
+
+if($kategoriedesc == "DATASYNC"){
+	?>
+	<TABLE BORDER="0" cellspacing="0" cellpadding="2" class="tabfringe">
+	<TR class="tabHeader"><TD class="tabHeaderItem"><?=$lang[2207]?> (*.job)</TD><TD class="tabHeaderItem"><?=$lang[126]?></TD></TR>
+	<TR class="tabBody"><TD>
+	<SELECT STYLE="width:120px;" NAME="job_template" onchange="document.getElementById('job_desc').value=this.options[this.selectedIndex].text"><OPTION>
+	<?php
+    $sqlquery = "SELECT ID,NAME FROM LMB_SYNC_TEMPLATE WHERE TABID IS NULL OR TABID = 0 ORDER BY NAME";
+    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while(odbc_fetch_row($rs)) {
+    	echo "<OPTION VALUE=\"".odbc_result($rs, "ID")."\">".odbc_result($rs, "NAME");
+    }
+	?>
+	</SELECT>
+	</TD>
+	<TD><INPUT TYPE="TEXT" NAME="job_desc" ID="job_desc" STYLE="width:250px;"></TD>
+	</TR>
+	
+	<TR><TD class="tabFooter" colspan="2"></TR>
+	</TABLE>
+	<?
+	
+}
+
 ?>
 
 </TR></TABLE>

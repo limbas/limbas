@@ -19,7 +19,7 @@
  */
 
 
-function pop_top($el,$width=null){
+function pop_top($el=null,$width=null){
 	#if($width) $width = "width:".$width."px";
 	#echo "<div class=\"lmbContextTop\" onclick=\"limbasDivClose(limbasGetParentMenuId(document.getElementById('$el').id));hide_selects(2);\" ID=\"pop_menu_".$el."\" style=\"position:absolute;height:4px;".$width."\">&nbsp;</div>";
 }

@@ -650,10 +650,9 @@ function breakFooter($report_id){
 }
 
 # --- PDF name ---------------------------------
-function reportSavename($report_name,$report_savename,$ID,$report_medium,$report_rename=null){
+function reportSavename($report_name,$report_savename,$ID,$report_medium,$report_rename=null,$add_timestamp=false){
+    if($ID){$idpref = "_".$ID;}
 
-	if($ID){$idpref = "_".$ID;}
-	
 	# own name
 	if($report_rename){
 		$name = trim($report_rename);
@@ -662,7 +661,7 @@ function reportSavename($report_name,$report_savename,$ID,$report_medium,$report
 		$name = eval("return ".trim($report_savename).";");
 	# default name
 	}else{
-		$name = $report_name.$idpref."_".date("U").".".$report_medium;
+		$name = $report_name.$idpref. ($add_timestamp ? ('_' . date("U")) : '') . ".".$report_medium;
 	}
 	
 	$name = str_replace(lmb_utf8_decode("ä"),"ae",$name);
@@ -684,7 +683,7 @@ function reportSavename($report_name,$report_savename,$ID,$report_medium,$report
 
 
 # --- PDF archivieren ---------------------------------
-function reportArchiv($pdf,$temp_file_path,$report,$ID,$report_output){
+function reportArchiv($temp_file_path,$report,$ID,$report_output){
 	global $session;
 	global $umgvar;
 	global $db;

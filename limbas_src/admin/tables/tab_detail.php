@@ -288,6 +288,33 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 		echo "</table></td></tr>";
 
 	}
+
+    /* --------------------------------------------------------- */
+    /* ----------------- Kanban settings --------------------- */
+    if($result_gtab[$tabgroup]["typ"][$tbzm] == 7) {
+        echo "<tr><td><hr></td><td><hr></td></tr>
+		<tr><td colspan=\"2\" align=\"center\" class=\"tabHeaderItem\">".$lang[2852]."</td></tr>";
+        # search Kanban
+        echo "<tr><td valign=\"top\">Search Kanban</td><td><select multiple style=\"width:100%\" name=\"param2[searchKanban][]\" size=\"" . (count($gfield[$tabid]['field_name']) + 1) . "\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\"><option>";
+        foreach ($gfield[$tabid]['field_name'] as $key => $value){
+            echo "<option value=\"$key\" ";
+            if(is_array($result_gtab[$tabgroup]["params2"][$tbzm]['searchKanban']) AND in_array($key,$result_gtab[$tabgroup]["params2"][$tbzm]['searchKanban'])){echo 'selected';}
+            echo ">$value";
+        }
+        echo "</select></td></tr>";
+
+        # showactive
+        echo "<tr><td style=\"width:90px;\"  valign=\"top\">Show active filters</td><td style=\"width:50px;\" align=\"right\"><input type=\"checkbox\" value=\"1\" name=\"param2[showactive]\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\" ";
+        if($result_gtab[$tabgroup]["params2"][$tbzm]['showactive']){echo 'checked';}
+        echo "></td><td style=\"width:40px;\">&nbsp;</td>";
+
+        # showdefaultsearch
+        echo "<tr><td style=\"width:90px;\"  valign=\"top\">Show default search</td><td style=\"width:50px;\" align=\"right\"><input type=\"checkbox\" value=\"1\" name=\"param2[showdefaultsearch]\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\" ";
+        if($result_gtab[$tabgroup]["params2"][$tbzm]['showdefaultsearch']){echo 'checked';}
+        echo "></td><td style=\"width:40px;\">&nbsp;</td>";
+
+    }
+
 		
 		
 	echo "</table></td><td valign=\"top\"><table style=\"width:250px;\">";
@@ -327,6 +354,11 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 		# reserveid
 		if($result_gtab[$tabgroup]["reserveid"][$tbzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}
 		echo "<tr><td valign=\"top\">".$lang[2703]."</td><td valign=\"top\"><input type=\"checkbox\" value=\"1\" $CHECKED onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','reserveid')\">
+		<br><i style=\"color:#AAAAAA\">".$lang[2832]."</i>
+		</td></tr>";
+		# datasync
+		if($result_gtab[$tabgroup]["datasync"][$tbzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}
+		echo "<tr><td valign=\"top\">".$lang[2703]."</td><td valign=\"top\"><input type=\"checkbox\" value=\"1\" $CHECKED onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','datasync')\">
 		<br><i style=\"color:#AAAAAA\">".$lang[2832]."</i>
 		</td></tr>";
 	}

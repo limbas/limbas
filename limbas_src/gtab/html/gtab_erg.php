@@ -28,8 +28,8 @@ if($GLOBALS["gLmbExt"]["ext_gtab_erg.inc"]){
 ?>
 <div id="lmbAjaxContainer" class="ajax_container" style="position:absolute;display:none;z-index:999;" onclick="activ_menu=1;"></div>
 <div id="lmbAjaxContainer2" class="ajax_container" style="position:absolute;display:none;z-index:999;" onclick="activ_menu=1;"></div>
-<div id="limbasAjaxGtabContainer" class="ajax_container" style="padding:1px;position:absolute;visibility:hidden;z-index:999;" onclick="activ_menu=1;"></div>
-<div id="limbasDivMenuContext" class="lmbContextMenu" style="visibility:hidden;z-index:994;" OnClick="activ_menu = 1;">
+<div id="limbasAjaxGtabContainer" class="ajax_container" style="padding:1px;position:absolute;display:none;z-index:999;" onclick="activ_menu=1;"></div>
+<div id="limbasDivMenuContext" class="lmbContextMenu" style="display:none;z-index:994;" OnClick="activ_menu = 1;">
 <? 
 
 # check if is view
@@ -76,7 +76,7 @@ pop_bottom();
 </DIV>
 
 
-<div ID="limbasDivMenuInfo" class="lmbContextMenu" style="visibility:hidden;z-index:995" OnClick="activ_menu = 1;">
+<div ID="limbasDivMenuInfo" class="lmbContextMenu" style="display:none;z-index:995" OnClick="activ_menu = 1;">
 <FORM NAME="info_form">
 <? #----------------- Info-Menü -------------------2
 pop_menu2('','','lmbInfoCreate',"lmb-page-new");
@@ -97,7 +97,7 @@ pop_bottom();
 </FORM></div>
 
 
-<div ID="limbasDivMenuRahmen" class="lmbContextMenu" style="visibility:hidden;z-index:993" OnClick="activ_menu = 1;">
+<div ID="limbasDivMenuRahmen" class="lmbContextMenu" style="display:none;z-index:993" OnClick="activ_menu = 1;">
 <FORM NAME="frame_form">
 <? #----------------- Frameset-Menü -------------------
 unset($opt);
@@ -110,7 +110,7 @@ pop_bottom();
 ?>
 </FORM></div>
 
-<div ID="limbasDivMenuFarb" class="lmbContextMenu" style="visibility:hidden;z-index:995;" OnClick="activ_menu = 1;">
+<div ID="limbasDivMenuFarb" class="lmbContextMenu" style="display:none;z-index:995;" OnClick="activ_menu = 1;">
 <FORM NAME="fcolor_form">
 <? #----------------- Farb-Menü -------------------
 unset($opt);
@@ -129,7 +129,7 @@ pop_bottom();
 </FORM></div>
 
 
-<DIV ID="limbasDivMenuBericht" class="lmbContextMenu" style="visibility:hidden;z-index:993;" OnClick="activ_menu = 1;">
+<DIV ID="limbasDivMenuBericht" class="lmbContextMenu" style="display:none;z-index:993;" OnClick="activ_menu = 1;">
 <? #----------------- Berichts-Menü -------------------
 pop_top('limbasDivMenuBericht');
 
@@ -150,10 +150,10 @@ pop_bottom();
 ?>
 </DIV>
 
-<DIV ID="limbasDivMenuReportOption" class="lmbContextMenu" style="visibility:hidden;z-index:993;" OnClick="activ_menu = 1;"></DIV>
+<DIV ID="limbasDivMenuReportOption" class="lmbContextMenu" style="display:none;z-index:993;" OnClick="activ_menu = 1;"></DIV>
 
 
-<div ID="limbasDivMenuDiagramme" class="lmbContextMenu" style="visibility:hidden;z-index:992" OnClick="activ_menu = 1;">
+<div ID="limbasDivMenuDiagramme" class="lmbContextMenu" style="display:none;z-index:992" OnClick="activ_menu = 1;">
 <?php #----------------- Menü - bearbeiten -------------------
 if($gdiaglist[$gtabid]["id"]){
 	pop_top('limbasDivMenuDiagramme');
@@ -167,7 +167,7 @@ if($gdiaglist[$gtabid]["id"]){
 ?>
 </div>
 
-<div ID="limbasDivMenuExport" class="lmbContextMenu" style="visibility:hidden;z-index:994" OnClick="activ_menu = 1;">
+<div ID="limbasDivMenuExport" class="lmbContextMenu" style="display:none;z-index:994" OnClick="activ_menu = 1;">
 <FORM NAME="export_form">
 <? #----------------- Export-Menü -------------------
 unset($opt);
@@ -177,16 +177,16 @@ $opt[desc] = array($lang[2016],'CSV',$lang[2017]);
 pop_select('',$opt,'',1,'lmbFormExportTyp',$lang[2502]."&nbsp",'');
 pop_line();
 $zl = "divclose();this.checked='';gtab_export(1,document.export_form.lmbFormExportTyp[document.export_form.lmbFormExportTyp.selectedIndex].value);";
-pop_submenu2($lang[1342],$zl);
+pop_menu2($lang[1342], null, null, null, null, $zl);
 $zl = "divclose();this.checked='';gtab_export(2,document.export_form.lmbFormExportTyp[document.export_form.lmbFormExportTyp.selectedIndex].value);";
-pop_submenu2($lang[1461],$zl);
+pop_menu2($lang[1461], null, null, null, null, $zl);
 pop_bottom();
 ?>
 </FORM></div>
 
 
 
-<div ID="limbasDivMenuDatei" class="lmbContextMenu" style="visibility:hidden;z-index:992" OnClick="activ_menu = 1;">
+<div ID="limbasDivMenuDatei" class="lmbContextMenu" style="display:none;z-index:992" OnClick="activ_menu = 1;">
 <? #----------------- Menü - Datei -------------------
 $noLine = true;
 if($gtab["edit"][$gtabid]){pop_menu(197,'','',0,1);$noLine=false;}	# speichern
@@ -229,7 +229,7 @@ pop_bottom();
 </div>
 
 
-<div ID="limbasDivMenuBearbeiten" class="lmbContextMenu" style="visibility:hidden;z-index:992;" OnClick="activ_menu=1;">
+<div ID="limbasDivMenuBearbeiten" class="lmbContextMenu" style="display:none;z-index:992;" OnClick="activ_menu=1;">
 <? #----------------- Menü - bearbeiten -------------------
 pop_submenu(14,'','',0,1);											# suchen
 pop_menu(28,'','',0,1); 										# zurücksetzen
@@ -250,7 +250,7 @@ pop_bottom();
 ?>
 </div>
 
-<div ID="limbasDivMenuAnsicht" class="lmbContextMenu" style="visibility:hidden;z-index:992" OnClick="activ_menu = 1;">
+<div ID="limbasDivMenuAnsicht" class="lmbContextMenu" style="display:none;z-index:992" OnClick="activ_menu = 1;">
 <? #----------------- Menü - Ansicht -------------------
 pop_menu(240,'','',$session["symbolbar"],1);	# Symbolleiste
 if(!$filter["alter"][$gtabid]){
@@ -301,7 +301,7 @@ pop_bottom();
 ?>
 </div>
 
-<div ID="limbasDivMenuExtras" class="lmbContextMenu" style="visibility:hidden;z-index:992" OnClick="activ_menu = 1;">
+<div ID="limbasDivMenuExtras" class="lmbContextMenu" style="display:none;z-index:992" OnClick="activ_menu = 1;">
 <? #----------------- Menü - Extras -------------------
 #pop_submenu(132,'','');			# Formulare
 if($LINK[131] AND $GLOBALS["greportlist_exist"] AND ($LINK[175] OR $LINK[176])){
@@ -340,7 +340,7 @@ pop_bottom();
 ?>
 </div>
 
-<DIV ID="limbasDivMenuSettings" class="lmbContextMenu" style="visibility:hidden;z-index:993" OnClick="activ_menu = 1;">
+<DIV ID="limbasDivMenuSettings" class="lmbContextMenu" style="display:none;z-index:993" OnClick="activ_menu = 1;">
 <?
 pop_top('limbasDivMenuSettings');
 pop_menu(212,'','',$filter["nolimit"][$gtabid],0);			# Limit aufheben
@@ -352,7 +352,7 @@ pop_bottom();
 ?>
 </DIV>
 
-<DIV ID="limbasDivMenuLock" class="lmbContextMenu" style="position: absolute;visibility:hidden;z-index:992;" OnClick="activ_menu = 1;">
+<DIV ID="limbasDivMenuLock" class="lmbContextMenu" style="position: absolute;display:none;z-index:992;" OnClick="activ_menu = 1;">
 <FORM NAME="formular_lock">
 <? #----------------- Verknüpfungs-Menü -------------------
 pop_top('limbasDivMenuLock');
@@ -365,7 +365,7 @@ pop_bottom();
 
 
 
-<div ID="limbasDivMenuSnapshot" class="lmbContextMenu" style="visibility:hidden;z-index:992" OnClick="activ_menu = 1;">
+<div ID="limbasDivMenuSnapshot" class="lmbContextMenu" style="display:none;z-index:992" OnClick="activ_menu = 1;">
 <? #----------------- SubMenü - Schnapschuß -------------------
 pop_top("limbasDivMenuSnapshot");
 
@@ -389,12 +389,12 @@ pop_menu(189,"",$lang[2000]);
 if ($snap_id AND ($gsnap[$gtabid]["owner"][$snap_id] OR $gsnap[$gtabid]["del"][$snap_id])){
 	pop_menu(0,"limbasSnapshotDelete();",$lang[1999]);
 }
-# list off snapshots
+# list of snapshots
 if($gsnap[$gtabid]){
 	pop_line();
 	foreach($gsnap[$gtabid]["id"] as $key => $value){
 		$zl = "document.form1.snap_id.value=$key;send_form(1);";
-		pop_submenu2($gsnap[$gtabid]["name"][$key],$zl,null,null,null);
+		pop_menu2($gsnap[$gtabid]["name"][$key], null, null, null, null, $zl);
 	}
 }
 pop_bottom();
@@ -403,7 +403,7 @@ pop_bottom();
 </div>
 
 
-<div ID="limbasDivSnapshotSaveas" class="lmbContextMenu" style="visibility:hidden;z-index:992" OnClick="activ_menu = 1;">
+<div ID="limbasDivSnapshotSaveas" class="lmbContextMenu" style="display:none;z-index:992" OnClick="activ_menu = 1;">
 <? #----------------- SubMenü - Schnapschuß -------------------
 
 pop_top("limbasDivSnapshotSaveas");
@@ -418,38 +418,33 @@ pop_right();
 
 
 
-<div ID="limbasDivMenuFields" class="lmbContextMenu" style="visibility:hidden;top:-1000;z-index:992" OnClick="activ_menu = 1;">
+<div ID="limbasDivMenuFields" class="lmbContextMenu" style="display:none;top:-1000;z-index:992" OnClick="activ_menu = 1;">
 <?php #----------------- SubMenü - Schnapschuß -------------------
 
 pop_top("limbasDivMenuFields");
+pop_header(null, $lang[1634]);
 foreach ($gfield[$gtabid]["sort"] as $key => $value){
     
-    if($gfield[$gtabid]['field_type'][$key] >= 100){continue;}
-       
-    if($filter["hidecols"][$gtabid][$key]){
-            $color = "black";$class = "";$icdis = "hidden";
-	}else{
-            $color = "green";$class = "Icon";$icdis = "";
-	}
-    pop_menu2(
-            $gfield[$gtabid]["spelling"][$key], 
-            $gfield[$gtabid]["spelling"][$key], 
-            "lmbViewFieldItem_".$gtabid."_".$key."\" style=\"color:$color;cursor:pointer;", 
-            "lmb-icon lmb-check\" style=\"visibility: $icdis", 
-            null, 
+    if($gfield[$gtabid]['field_type'][$key] >= 100){
+        # sparte
+        pop_header(null, $gfield[$gtabid]['spelling'][$key]);
+    } else {
+        if ($filter["hidecols"][$gtabid][$key]) {
+            $color = "black";
+            $icdis = "hidden";
+        } else {
+            $color = "green";
+            $icdis = "";
+        }
+        pop_menu2(
+            $gfield[$gtabid]["spelling"][$key],
+            $gfield[$gtabid]["spelling"][$key],
+            "lmbViewFieldItem_" . $gtabid . "_" . $key . "\" style=\"color:$color;cursor:pointer;",
+            "lmb-icon lmb-check\" style=\"visibility: $icdis",
+            null,
             "lmbShowColumn($gtabid,$key);"
-    );    
-
-    /*
-        pop_left();
-	if($filter["hidecols"][$gtabid][$key]){
-		$color = "black";$class = "";$icdis = "none";
-	}else{
-		$color = "green";$class = "Icon";$icdis = "";
-	}
-	echo "<i class=\"lmbContextLeft lmb-icon lmb-check\" border=\"0\" style=\"display:$icdis;\"></i><span id=\"lmbViewFieldItem_".$gtabid."_".$key."\" class=\"lmbContextItem$class\" style=\"color:$color;cursor:pointer\" OnClick=\"lmbShowColumn($gtabid,$key);\">".$gfield[$gtabid]["spelling"][$key]."</span>";
-	pop_right();
-    */
+        );
+    }
 }
 pop_bottom();
 ?>
@@ -457,7 +452,7 @@ pop_bottom();
 
 
 
-<DIV ID="limbasDivRowSetting" class="lmbContextMenu" style="visibility:hidden;z-index:993" OnClick="activ_menu = 1;">
+<DIV ID="limbasDivRowSetting" class="lmbContextMenu" style="display:none;z-index:993" OnClick="activ_menu = 1;">
 <? #----------------- SubMenü - Rowsetting -------------------
 pop_top('limbasDivRowSetting');
 pop_menu2($lang[861],null,null,"lmb-textsort-up",null,"lmbFieldSort(event,lmbGlobVar['sortid'],'&ASC',lmbGlobVar['res_next'])");
@@ -479,7 +474,7 @@ pop_bottom();
 </DIV>
 
 <?if($gfrist){?>
-<div ID="limbasDivMenuReminder" class="lmbContextMenu" style="visibility:hidden;z-index:995" OnClick="activ_menu = 1;">
+<div ID="limbasDivMenuReminder" class="lmbContextMenu" style="display:none;z-index:995" OnClick="activ_menu = 1;">
 <FORM NAME="reminder_form">
 <? #----------------- Reminder-Menü -------------------
 pop_header(null,$lang[425],$elementWidth);

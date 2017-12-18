@@ -463,6 +463,54 @@ function dbf_24($p){
 }
 
 
+/**
+ * check view dependencies
+ *
+ * @param array $p [0]=schema, [1]=tablename, [2]=fieldname
+ * @return array
+ */
+function dbf_25($p){
+    global $db;
+    
+    if($p[1]){$w = " AND source_table.relname = '".dbf_4($p[1])."'";}
+    if($p[2]){$w .= " AND pg_attribute.attname = '".dbf_4($p[2])."'";}
+    
+    /*
+     dependent_ns.nspname as dependent_schema,
+     source_ns.nspname as source_schema,
+     source_table.relname as source_table,
+     pg_attribute.attname as column_name,
+    */
+    
+    $qu = "SELECT DISTINCT 
+    dependent_view.relname as dependent_view 
+    FROM pg_depend 
+    JOIN pg_rewrite ON pg_depend.objid = pg_rewrite.oid 
+    JOIN pg_class as dependent_view ON pg_rewrite.ev_class = dependent_view.oid 
+    JOIN pg_class as source_table ON pg_depend.refobjid = source_table.oid 
+    JOIN pg_attribute ON pg_depend.refobjid = pg_attribute.attrelid 
+    AND pg_depend.refobjsubid = pg_attribute.attnum 
+    JOIN pg_namespace dependent_ns ON dependent_ns.oid = dependent_view.relnamespace
+    JOIN pg_namespace source_ns ON source_ns.oid = source_table.relnamespace
+    WHERE 
+    source_ns.nspname = '".$p[0]."'
+    AND pg_attribute.attnum > 0 
+    $w";
+    
+    #error_log($qu);
+    
+    $dep = false;
+	$rs = odbc_exec($db,$qu);
+	while(odbc_fetch_row($rs)){
+		$dep[] = odbc_result($rs,"dependent_view");
+		#$dep["table"][] = odbc_result($rs,"source_table");
+		#$dep["field"][] = odbc_result($rs,"column_name");
+	}
+	
+	return $dep;
+}
+
+
 ############# tables ########################
 
 /**
@@ -634,8 +682,6 @@ function dbq_22($p){
 	return "ALTER TABLE ".dbf_4($p[0])." DROP ".dbf_4($p[1]);
 }
 
-
-
 ############# stored procedures ########################
 
 
@@ -729,6 +775,19 @@ function dbq_21($p){
 	$sqlquery = "drop function lmb_vkn()";
 	$rs = @odbc_exec($db,$sqlquery);
 }
+
+
+
+
+/*
+## show Postgresql stored procedure
+SELECT  *
+FROM    pg_catalog.pg_namespace n
+JOIN    pg_catalog.pg_proc p
+ON      pronamespace = n.oid
+WHERE   nspname = 'public'
+*/
+
 
 ################# BACKUP #################
 

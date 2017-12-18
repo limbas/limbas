@@ -31,7 +31,7 @@ pic_minusonly = new Image(); pic_minusonly.src = "pic/outliner/minusonly.gif";
 function LmAdm_getFields(gtabid,actel,$parentrel){
 	
 	var url = "main_dyns_admin.php";
-	dynfunc = function(result){LmAdm_reportTabFieldListPost(result,actel,gtabid,$parentrel);}
+	dynfunc = function(result){LmAdm_reportTabFieldListPost(result,actel,gtabid,$parentrel);};
 	actid = "reportTabFieldList&gtabid=" + gtabid + "&parentrel="+ $parentrel;
 	
 	if(!actel){

@@ -120,6 +120,29 @@ if($LINK[40]){
 }
 
 
+// kanban tables
+if($LINK[169]){
+	if($gtab["tab_id"]){
+	foreach ($gtab["tab_id"] as $key => $value){
+		if($gtab["typ"][$key] == 7){
+			unset($melements);
+			$melements["id"] = $elid++;
+			$melements["gtabid"] = $key;
+			$melements["name"] = $gtab["desc"][$key];
+			$melements["desc"] = $gtab["desc"][$key];
+			#$melements["count"] = multiframeGetCount("Calendar",$gtab["table"][$key]);
+			$melements["link"] = "main.php?&action=kanban&gtabid=$value";
+			$melements["target"] = "main";
+			$melements["preview"] = "Kanban";
+			
+			$melements["gicon"] = "lmb-icon-32 lmb-columns";
+                        
+			$menu[0][] = $melements;
+		}
+	}}
+}
+
+
 
 # EXTENSIONS
 if($gLmbExt["ext_multiframe.inc"]){

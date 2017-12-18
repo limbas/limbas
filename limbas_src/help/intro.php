@@ -99,134 +99,145 @@ if(!$view){
 
 <TABLE CELLPADDING="1" CELLSPACING="3" WIDTH="100%">
 
-<TR class="tabHeader"><TD class="tabHeaderItem" colspan="3">release notes - main features</td></tr>
+<TR class="tabHeader"><TD class="tabHeaderItem" colspan="3">release notes <?=$umgvar["version"]?> - main features</td></tr>
 
 
 <TR>
 <TD valign=top class="bord">Added</TD>
-<TD valign=top class="bord">UTF-8</TD>
-<TD valign=top class="bord">replace string/mb_string functions with abstraction layer</TD>
+<TD valign=top class="bord">kanban module</TD>
+<TD valign=top class="bord">adding kanban module</TD>
 </TR>
 <TR>
 <TD valign=top class="bord">Added</TD>
-<TD valign=top class="bord">report</TD>
-<TD valign=top class="bord">integrate fpdf V1.81 reportengine with utf8 support</TD>
+<TD valign=top class="bord">revision manager</TD>
+<TD valign=top class="bord">adding revision manager module</TD>
 </TR>
 <TR>
 <TD valign=top class="bord">Added</TD>
-<TD valign=top class="bord">report</TD>
-<TD valign=top class="bord">adding ttf font support</TD>
+<TD valign=top class="bord">data synchronisation</TD>
+<TD valign=top class="bord">adding data synchronisation module</TD>
 </TR>
 <TR>
 <TD valign=top class="bord">Added</TD>
-<TD valign=top class="bord">menu-tree</TD>
-<TD valign=top class="bord">adding mutilevel subgroups of tables</TD>
+<TD valign=top class="bord">odbc import</TD>
+<TD valign=top class="bord">adding odbc import module</TD>
 </TR>
 <TR>
 <TD valign=top class="bord">Added</TD>
-<TD valign=top class="bord">extension/SQL editor</TD>
-<TD valign=top class="bord">auto complete functionality</TD>
+<TD valign=top class="bord">user/group search</TD>
+<TD valign=top class="bord">adding searching for user/group ID in user/group field</TD>
 </TR>
 <TR>
 <TD valign=top class="bord">Added</TD>
-<TD valign=top class="bord">filexplorer</TD>
-<TD valign=top class="bord">storage definition for uploaded files</TD>
+<TD valign=top class="bord">full table search</TD>
+<TD valign=top class="bord">adding full table search for all fields in one table</TD>
 </TR>
 <TR>
 <TD valign=top class="bord">Added</TD>
-<TD valign=top class="bord">tables</TD>
-<TD valign=top class="bord">copy dataset with recursive relations</TD>
-</TR>
-<TR>
-<TD valign=top class="bord">Added</TD>
-<TD valign=top class="bord">diagram</TD>
-<TD valign=top class="bord">adding new diagram element to formular/report generator</TD>
-</TR>
-<TR>
-<TD valign=top class="bord">Added</TD>
-<TD valign=top class="bord">SOAP</TD>
-<TD valign=top class="bord">adding relation params to SOAP request</TD>
-</TR>
-<TR>
-<TD valign=top class="bord">Added</TD>
-<TD valign=top class="bord">formular</TD>
-<TD valign=top class="bord">adding relation params in formular editor</TD>
-</TR>
-<TR>
-<TD valign=top class="bord">Added</TD>
-<TD valign=top class="bord">reminder</TD>
-<TD valign=top class="bord">possibility to update/change reminder from user</TD>
-</TR>
-<TR>
-<TD valign=top class="bord">Added</TD>
-<TD valign=top class="bord">workflow</TD>
-<TD valign=top class="bord">adding reminder history to formular</TD>
-</TR>
-<TR>
-<TD valign=top class="bord">Added</TD>
-<TD valign=top class="bord">import</TD>
-<TD valign=top class="bord">adding diff in sync import for formular / reports</TD>
+<TD valign=top class="bord">speech record</TD>
+<TD valign=top class="bord">adding speech record for input fields (chrome)</TD>
 </TR>
 
 <TR>
-<TD valign=top class="bord">Bugfix</TD>
-<TD valign=top class="bord">filexplorer</TD>
-<TD valign=top class="bord">rename folder in list not work</TD>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">relation view</TD>
+<TD valign=top class="bord">show first or last relation mode</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">db resultset</TD>
+<TD valign=top class="bord">adding extension limit for database query</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">upload field type</TD>
+<TD valign=top class="bord">support unique upload in upload field type</TD>
+</TR>
+
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">gantt calendar multiple resources</TD>
+<TD valign=top class="bord">support using multiple resources for one event</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">relation default view</TD>
+<TD valign=top class="bord">preset relation default view in tablelist</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">table editmode</TD>
+<TD valign=top class="bord">adding editmode for single fields in tablelist</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">PHP7</TD>
+<TD valign=top class="bord">adding PHP7 support</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">DAV</TD>
+<TD valign=top class="bord">adding new version of sabredav for WEBDAV & CALDAV support</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">logging</TD>
+<TD valign=top class="bord">adding new class for unified error logging</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">raspberry</TD>
+<TD valign=top class="bord">adding raspberry support</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">favicon</TD>
+<TD valign=top class="bord">limbarine as favicon</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">report/form</TD>
+<TD valign=top class="bord">codemirror support for script elements</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Changed</TD>
+<TD valign=top class="bord">ttf2pt1</TD>
+<TD valign=top class="bord">ttf2pt1 not longer used</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Changed</TD>
+<TD valign=top class="bord">import module</TD>
+<TD valign=top class="bord">rebuild import module</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Changed</TD>
+<TD valign=top class="bord">DMS</TD>
+<TD valign=top class="bord">more intuitive folder colors</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Changed</TD>
+<TD valign=top class="bord">file names</TD>
+<TD valign=top class="bord">removed timestamp from temporary file names</TD>
 </TR>
 <TR>
 <TD valign=top class="bord">Bugfix</TD>
-<TD valign=top class="bord">filexplorer</TD>
-<TD valign=top class="bord">"own folder" was missing in folderlist</TD>
+<TD valign=top class="bord">UTF-encoding</TD>
+<TD valign=top class="bord">fixed UTF-8 encoding in different scenarios</TD>
 </TR>
 <TR>
 <TD valign=top class="bord">Bugfix</TD>
-<TD valign=top class="bord">formular generator</TD>
-<TD valign=top class="bord">selectable elements not selected</TD>
+<TD valign=top class="bord">calendar contextmenu</TD>
+<TD valign=top class="bord">fixed using additional calendar-contextmenu</TD>
 </TR>
 <TR>
 <TD valign=top class="bord">Bugfix</TD>
-<TD valign=top class="bord">formular generator</TD>
-<TD valign=top class="bord">selectable elements only selected in foreground</TD>
+<TD valign=top class="bord">MySQL</TD>
+<TD valign=top class="bord">fixed character encoding issues in MySQL</TD>
 </TR>
 <TR>
 <TD valign=top class="bord">Bugfix</TD>
-<TD valign=top class="bord">tables</TD>
-<TD valign=top class="bord">calculate correct cell width in Chrome & IE after resizing</TD>
-</TR>
-<TR>
-<TD valign=top class="bord">Bugfix</TD>
-<TD valign=top class="bord">rule manegement</TD>
-<TD valign=top class="bord">fixed inverse write permission rule for edit tablelist</TD>
-</TR>
-<TR>
-<TD valign=top class="bord">Bugfix</TD>
-<TD valign=top class="bord">tables</TD>
-<TD valign=top class="bord">new dataset without rules by using versioning & reserve ID</TD>
-</TR>
-<TR>
-<TD valign=top class="bord">Bugfix</TD>
-<TD valign=top class="bord">tables</TD>
-<TD valign=top class="bord">onunload message by leaving dataset</TD>
-</TR>
-<TR>
-<TD valign=top class="bord">Bugfix</TD>
-<TD valign=top class="bord">fileexplorer</TD>
-<TD valign=top class="bord">fixed multible upload in tables</TD>
-</TR>
-<TR>
-<TD valign=top class="bord">Bugfix</TD>
-<TD valign=top class="bord">colorschema</TD>
-<TD valign=top class="bord">fixed wrong color calculation</TD>
-</TR>
-<TR>
-<TD valign=top class="bord">Bugfix</TD>
-<TD valign=top class="bord">formular</TD>
-<TD valign=top class="bord">fixed "save and close" functionality</TD>
-</TR>
-<TR>
-<TD valign=top class="bord">Bugfix</TD>
-<TD valign=top class="bord">reminder</TD>
-<TD valign=top class="bord">show setted reminder in reminder details</TD>
+<TD valign=top class="bord">nav/multiframe</TD>
+<TD valign=top class="bord">fixed drag and drop jumps caused by scrollbar while resizing</TD>
 </TR>
 
 
@@ -248,7 +259,7 @@ if(!$view){
 
 <br><br>
 <div class="footer">
-LIMBAS. Copyright &copy; 1998-2016 Axel Westhagen (support@limbas.org). LIMBAS is free software; You can redistribute it and/or modify it under the terms of the GPL General Public License V2 as published by the Free Software Foundation; Go to <a href="http://www.limbas.org/" title="LIMBAS Website" target="new">http://www.limbas.org/</a> for details. LIMBAS comes with ABSOLUTELY NO WARRANTY; Please note that some external scripts are copyright of their respective owners, and are released under different licences.
+LIMBAS. Copyright &copy; 1998-2017 LIMBAS GmbH (info@limbas.com). LIMBAS is free software; You can redistribute it and/or modify it under the terms of the GPL General Public License V2 as published by the Free Software Foundation; Go to <a href="http://www.limbas.org/" title="LIMBAS Website" target="new">http://www.limbas.org/</a> for details. LIMBAS comes with ABSOLUTELY NO WARRANTY; Please note that some external scripts are copyright of their respective owners, and are released under different licences.
 </div>
 
 </div>

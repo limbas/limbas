@@ -19,7 +19,24 @@
  */
 ?>
 
+
+	<script src="extern/codemirror/lib/codemirror.js"></script>
+    <link rel="stylesheet" href="extern/codemirror/lib/codemirror.css">    
+	<script src="extern/codemirror/edit/matchbrackets.js"></script>
+	<script src="extern/codemirror/edit/matchtags.js"></script>
+	<script src="extern/codemirror/mode/htmlmixed/htmlmixed.js"></script>
+	<script src="extern/codemirror/mode/xml/xml.js"></script>
+	<script src="extern/codemirror/mode/javascript/javascript.js"></script>
+	<script src="extern/codemirror/mode/css/css.js"></script>
+	<script src="extern/codemirror/mode/clike/clike.js"></script>
+	<script src="extern/codemirror/mode/php/php.js"></script>
+	
+
 <STYLE>
+        .CodeMirror {
+            border: 1px solid <?=$farbschema['WEB3']?>;
+            height: 200px;
+        }
 
 TD TEXTAREA{
 	overflow:hidden;
@@ -96,7 +113,7 @@ if($form["id"]){
 
 
 <?/*----------------- Ramenwechsel-Grafik -------------------*/?>
-<div ID="border_move" style="position:absolute;top:0px;left:0px;cursor:crosshair;z-index:10004;display:none;" onMousedown="return aktivate_resize();">
+<div ID="border_move" style="position:absolute;top:0px;left:0px;cursor:se-resize;z-index:10004;display:none;" onMousedown="return aktivate_resize();">
     <i class="lmb-icon lmb-resizer" BORDER="0"></i>
 </div>
 
@@ -191,7 +208,7 @@ if($form["css"] AND $sysclass){
 $opt["val"] = $sysclass;
 $opt["desc"] = $sysclass;
 ?>
-<TR id="menu_multi_text_php_bild_chart_tab_datum_dbdat_dbdesc_dbnew_dbsearch_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_uform_tabuItem_frame_tabcell_" STYLE="display:none"><TD><?pop_select("fill_style('44','class',this.value);",$opt,"",1,"input_class","Class",50);?></TD></TR>
+<TR id="menu_multi_text_php_bild_chart_tab_datum_dbdat_dbdesc_dbnew_dbsearch_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_wflhist_uform_tabuItem_frame_tabcell_" STYLE="display:none"><TD><?pop_select("fill_style('44','class',this.value);",$opt,"",1,"input_class","Class",50);?></TD></TR>
 <?}?>
 <?
 $opt[val] = array("","0.05","0.1","0.15","0.2","0.25","0.3","0.35","0.4","0.45","0.5","0.55","0.6","0.65","0.7","0.75","0.8","0.85","0.9","0.95","1");
@@ -233,7 +250,7 @@ foreach($gformlist as $key0 => $value0){
 $opt[desc] = array($lang[1962],$lang[1963]);?>
 <?/*<TR id="menu_tab_" STYLE="display:none"><TD><?pop_select("fill_style('41','',this.value);",$opt,"",1,"input_tab_stab_choice",$lang[1961],50);?></TD></TR>*/?>
 
-<TR id="menu_frame_php_" STYLE="display:none"><TD><?pop_submenu2($lang[2660],"limbasDivShow(this,'menu','menu_value');",$lang[2660]);?></TD></TR>
+<TR id="menu_frame_php_js_" STYLE="display:none"><TD><?pop_submenu2($lang[2660],"limbasDivShow(this,'menu','menu_value');cmeditor.refresh();",$lang[2660]);?></TD></TR>
 <TR id="menu_uform_dbdat_inptext_inparea_inpselect_inpcheck_inpradio_chart_wflhist_reminder_" STYLE="display:none"><TD><?pop_submenu2($lang[2331],"limbasDivShow(this,'menu','menu_parameters');",$lang[2331]);?></TD></TR>
 <TR id="menu_text_php_datum_dbdesc_dbnew_dbsearch_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_uform_scroll_wflhist_reminder_tabmenu_tabcell_" STYLE="display:none"><TD><?pop_submenu2($lang[923],"limbasDivShow(this,'menu','menu_title');",$lang[923]);?></TD></TR>
 
@@ -401,7 +418,7 @@ $opt[desc] = array("1","2","3","4","5","6","7","8","9","10");?>
 
 <?/*----------------- Title DIV -------------------*/?>
 <DIV ID="menu_title" class="lmbContextMenu" style="display:none;position:absolute;top:<?=$menuposy?>;left:<?=$menuposx?>;z-index:10002;"  onclick="activ_menu=1"><FORM NAME="titles">
-<?$paramWidth = 250;pop_top('menu_parameters',$paramWidth);?>
+<?$paramWidth = 250;pop_top('menu_title',$paramWidth);?>
 <?pop_left($paramWidth);?>
 &nbsp;<TEXTAREA NAME="lmb_subform_title" STYLE="width:300px;height:150px;background-color:<?echo $farbschema[WEB8];?>;border:1px solid black;" OnChange="if(this.value){document.form1.form_title.value=this.value;}else{document.form1.form_title.value='null'};divclose();document.form1.submit();"></TEXTAREA>
 <?pop_right();?>
@@ -420,11 +437,27 @@ foreach ($snap["name"] as $key0 => $value0){
 </FORM></DIV>
 
 <?/*----------------- Value DIV -------------------*/?>
-<DIV ID="menu_value" class="lmbContextMenu" style="position:absolute;display:none;z-index:10001;padding:5px;width:170px;height:80px;" onclick="activ_menu=1">
+<DIV ID="menu_value" style="position:absolute;display:none;z-index:10001;padding:5px;width:300px;height:200px;" onclick="activ_menu=1">
 <FORM NAME="fvalue_form">
-<textarea id="lmb_subform_value" style="width:100%;height:100%;" OnChange="lmb_changeElValue(this);"></textarea>
+<textarea class="lmbContextMenu" id="lmb_subform_value" style="z-index:10002;width:100%;height:100%;" OnChange="lmb_changeElValue(this);"></textarea>
 </FORM>
 </DIV>
+
+<Script language="JavaScript">
+    var cmeditor = CodeMirror.fromTextArea(document.getElementById("lmb_subform_value"), {
+        lineNumbers: true,
+        matchBrackets: true,
+        mode: "text/x-php",
+        indentUnit: 4,
+        indentWithTabs: true,
+        enterMode: "indent",
+        tabMode: "shift"
+    });
+</Script>
+
+
+
+
 
 <?
 foreach ($snap["name"] as $key0 => $value0){
@@ -575,7 +608,7 @@ function print_tab($form_ID,$printParams){
 		$bzm3 = 0;
 		while($bzm3 < $form_tab_cells){
 			if(!$tdsize[$bzm3]){$tdsize[$bzm3] = '50px';}
-			echo "<th id=\"tab_el_".$form_ID."_0_".$bzm3."\" style=\"cursor:e-resize;width:".$tdsize[$bzm3].";height:15px;cursor:move\" $onMousedown>&nbsp;</th>";
+			echo "<th id=\"tab_el_".$form_ID."_0_".$bzm3."\" style=\"width:".$tdsize[$bzm3].";height:15px;cursor:move\" $onMousedown>&nbsp;</th>";
 		$bzm3++;
 		}
 		echo "</tr>";

@@ -25,7 +25,7 @@
 function ajaxEditTree(evt,treeid,treetab,itemtab,relationid,changetyp,changeval){
 	if(changetyp==null)changetyp = '';
 	if(changeval==null)changeval = '';
-	mainfunc = function(result){ajaxEditTreePost(result,evt);}
+	mainfunc = function(result){ajaxEditTreePost(result,evt);};
 	ajaxGet(null,"main_dyns_admin.php","editTableTree&treeid="+treeid+"&treetab="+treetab+"&itemtab="+itemtab+"&relationid="+relationid+"&changetyp="+changetyp+"&changeval="+changeval,null,"mainfunc");
 }
 

@@ -57,7 +57,7 @@ function olUpload(url, w, h, sid, maxlen, debug){
 		
 		$(this.el_inr).innerHTML = '<iframe class="'+this.el_res+'" id="'+this.el_res+'" src="about:blank" frameborder="0" vspace="0" hspace="0" marginwidth="0" marginheight="0" scrolling="auto"></iframe>';
 		this.pos = 0;
-	}
+	};
 
 	this.reset = function(){
 		this.clear();
@@ -83,7 +83,7 @@ function olUpload(url, w, h, sid, maxlen, debug){
 		var e = $(this.el_err);
 		e.innerHTML = '';
 		e.style.display = 'none';
-	},
+	};
 
 	this.start = function(c,s){
 		$(this.el_inr).style.display = 'block';
@@ -119,7 +119,7 @@ function olUpload(url, w, h, sid, maxlen, debug){
 	this._delayed_close = function(){
 		this.doc.writeln("</body></html>");  
 		this.doc.close(); 
-	},
+	};
 	
 	this.finished = function(complete, msg){
 		if (this.is_running){

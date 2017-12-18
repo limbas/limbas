@@ -244,7 +244,7 @@ function set_color(el,color){
 function lmbAjax_fieldinfo(evt,act,par1,par2,par3,par4){
 	url = "main_dyns_admin.php";
 	actid = "tabschemaInfos&act="+act+"&par1="+par1+"&par2="+par2+"&par3="+par3+"&par4="+par4;
-	dynfunc = function(result){lmbAjax_fieldinfoPost(result,evt,par4);}
+	dynfunc = function(result){lmbAjax_fieldinfoPost(result,evt,par4);};
 	ajaxGet(null,url,actid,null,"dynfunc");
 }
 

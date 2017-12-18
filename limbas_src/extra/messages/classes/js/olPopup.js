@@ -159,7 +159,7 @@ function olPopup(id, heading) {
 		self.container.style.width = self.width + 'px';
 		self.container.style.height = self.height + 'px';
 		self.el.style.height = (self.height-self.picker.offsetHeight-self.sizer.offsetHeight) + 'px';
-	}
+	};
 	
 	this.onWait = function(el,msg){
 		el.innerHTML = '<table style="margin:auto;" border="0"><tr><td><img src="'+_basePATH_+'images/wait.gif" '+
@@ -236,7 +236,7 @@ function olPopup(id, heading) {
 		self.offsetX = self.eventHandler.getX(e) - self.container.offsetLeft;
 		self.offsetY = self.eventHandler.getY(e) - self.container.offsetTop;
 		self.eventHandler.observe(document, 'mousemove', self._mousemove);
-	}
+	};
 
 	this._mousemove = function(e){
 		var x = self.eventHandler.getX(e) - self.offsetX;
@@ -245,15 +245,15 @@ function olPopup(id, heading) {
 		if (x<0) x=0;
 		self.container.style.top = y + 'px';
 		self.container.style.left = x + 'px';
-	}
+	};
 	
 	this._mouseup = function(e){
 		self.eventHandler.remove(document, 'mousemove', self._mousemove);
-	}
+	};
 
 	this._stop = function (e){
 		self.eventHandler.stop(e);
-	}
+	};
 	
 	this._initialize(id, heading);
 	return this;

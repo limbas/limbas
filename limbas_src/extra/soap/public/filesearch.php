@@ -189,7 +189,7 @@ INPUT.checkbox {
 <script language="JavaScript">
 
 function publicDownloadFile(url,md5){
-	proxywindow = open("" ,"download","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=500,height=600")
+	proxywindow = open("" ,"download","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=500,height=600");
 	proxywindow.location.href="proxy.php?key="+md5+"&url="+url;
 }
 

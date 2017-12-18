@@ -79,10 +79,12 @@ icon7 = 'lmb-folder3-closed';
 icon8 = 'lmb-folder3-open';
 icon9 = 'lmb-folder4-closed';
 icon10 = 'lmb-folder4-open';
+icon11 = 'lmb-folder5-closed';
+icon12 = 'lmb-folder5-open';
 
 //----------------- mark copy/paste symbols -------------------
 function LmEx_ajaxCopyPasteEvent(typ) {
-	var getstring = "&typ="+typ
+	var getstring = "&typ="+typ;
 	ajaxGet(null,'main_dyns.php','saveCopyPasteEvent' + getstring,null,'LmEx_ajaxResultCopyPasteEvent');
 }
 
@@ -137,6 +139,10 @@ function closefiles(){
                         icon.removeClass(icon10);
                         icon.addClass(icon9);
                 }
+                else if(icon.hasClass(icon12)){
+                    icon.removeClass(icon12);
+                    icon.addClass(icon11);
+                }
 	}
 }
 
@@ -154,9 +160,13 @@ function listlmdata(ID,LEVEL,TYP){
         }else if(icon.hasClass(icon9)){
                 icon.removeClass(icon9);
                 icon.addClass(icon10);
-        }        
-        
-	document.form2.LID.value = ID;
+        }else if(icon.hasClass(icon11)){
+            icon.removeClass(icon11);
+            icon.addClass(icon12);
+        }
+
+
+    document.form2.LID.value = ID;
 	document.form2.typ.value = TYP;
 		
 	parent.explorer_main.location.href='main.php?action=explorer_main&LID='+ID+'&typ='+TYP;
@@ -239,24 +249,25 @@ function setxypos(evt,el) {
 
 var activ_menu = null;
 function LmEx_divclose() {
-        if(!activ_menu){
+    //if(!activ_menu){
 	document.getElementById("filemenu").style.visibility='hidden';
 	document.getElementById("cachelist").style.visibility='hidden';
-	}
+	//}
 	activ_menu = 0;
 }
 
 function open_filemenu(evt,file,id,typ,level){
-	activ_menu = 1;
+//	activ_menu = 1;
 	document.form_menu.LID.value = id;
 	LmEx_edit_id = id;
 	var_file = file;
 	var_typ = typ;
 	var_id = id;
 	var_level = level;
-	setxypos(evt,'filemenu');
-	document.getElementById("filemenu").style.visibility='visible';
+//	setxypos(evt,'filemenu');
+//	document.getElementById("filemenu").style.visibility='visible';
 	document.getElementById("menu_name").firstChild.nodeValue = file;
+    limbasDivShow("",evt,"filemenu");
 }
 
 function body_click(){
@@ -309,6 +320,7 @@ function files1($LEVEL,$start,$only_typ){
 	global $ffilter;
 	global $action;
 	global $typ;
+	global $farbschema;
 
 	if($start){
 		if($LEVEL){$vis = "style=\"display:none\"";}else{$vis = "";}
@@ -325,7 +337,20 @@ function files1($LEVEL,$start,$only_typ){
 				$next = 0;
 				$pic = "<i class=\"lmb-icon-cus\"></i>";
 			}
-			if($filestruct["readonly"][$key] OR ($action == "explorer_tree" AND $filestruct["typ"][$key] == 2)){$filterpic = "4";}elseif($filestruct["typ"][$key] == 7){$filterpic = "3";}else{$filterpic = "2";}
+
+			# switch folder type
+            if ($filestruct['typ'][$key] == 1) { // public directory
+                $filterpic = '4'; // black
+            } else if ($filestruct['typ'][$key] == 3) { // tables
+                $filterpic = '2'; // gray
+            } else if ($filestruct['typ'][$key] == 4) { // user directory
+                $filterpic = '4'; // black
+            } else if ($filestruct['typ'][$key] == 5) { // reports
+                $filterpic = '5'; // blue
+            } else if ($filestruct['typ'][$key] == 7) { // table relation
+                $filterpic = '3'; // green
+            }
+
 			# ---- Persönlicher Ordner ----
 			#if($filestruct[typ][$key] == 4){
 			#	echo "<div ID=\"f_".$filestruct["id"][$key]."\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR TITLE=\"(".$filestruct["id"][$key].")\"><TD>$pic</TD><TD><IMG SRC=\"pic/outliner/box".$filterpic."_close.gif\" ID=\"p".$filestruct["id"][$key]."\" NAME=\"p".$filestruct["id"][$key]."\" OnClick=\"open_filemenu(event,'".$filestruct[name][$key]."','".$filestruct["id"][$key]."','".$filestruct[typ][$key]."','$LEVEL');\" STYLE=\"cursor:hand\"></TD><TD ";
@@ -333,7 +358,7 @@ function files1($LEVEL,$start,$only_typ){
 			#	echo ">&nbsp;".$filestruct[name][$key]."</TD></TR></TABLE></div>\n";
 			#	# ---- Limbas-Verzeichnis ----
 			#}else{
-				echo "<div ID=\"f_".$filestruct["id"][$key]."\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR TITLE=\"(".$filestruct["id"][$key].")\"><TD>$pic</TD><TD><i STYLE=\"cursor:context-menu\" class=\"lmb-icon lmb-folder" .$filterpic. "-closed\" ID=\"p".$filestruct["id"][$key]."\" NAME=\"p".$filestruct["id"][$key]."\" OnClick=\"open_filemenu(event,'".$filestruct[name][$key]."','".$filestruct["id"][$key]."','".$filestruct[typ][$key]."','$LEVEL');\" STYLE=\"cursor:pointer\"></i></TD><TD ";
+				echo "<div ID=\"f_".$filestruct["id"][$key]."\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR TITLE=\"(".$filestruct["id"][$key].")\" STYLE=\"cursor:context-menu\" ONCONTEXTMENU=\"limbasDivClose();open_filemenu(event,'".$filestruct[name][$key]."','".$filestruct["id"][$key]."','".$filestruct[typ][$key]."','$LEVEL');return false;\"><TD>$pic</TD><TD><i class=\"lmb-icon lmb-folder" .$filterpic. "-closed\" ID=\"p".$filestruct["id"][$key]."\" NAME=\"p".$filestruct["id"][$key]."\"></i></TD><TD ";
                 echo "style=\"cursor:pointer;\" OnMouseOver=\"this.style.color='blue';\" OnMouseOut=\"this.style.color='{$farbschema['WEB2']}';\" OnClick=\"listlmdata('".$filestruct["id"][$key]."','$LEVEL','".$filestruct["typ"][$key]."')\"";
 				echo ">&nbsp;".$filestruct[name][$key]."</TD></TR></TABLE></div>\n";
 			#}

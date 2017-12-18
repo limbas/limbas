@@ -36,6 +36,13 @@ require_once("extra/snapshot/snapshot.lib");
 
 #$STYLE = "style=\"border-left:1px inset black;border-top:1px inset black;\"";
 
+// EXTENSIONS add
+if ($gLmbExt["ext_main_admin.inc"]) {
+    foreach ($gLmbExt["ext_main_admin.inc"] as $key => $extfile) {
+        require_once ($extfile);
+    }
+}
+
 # body Layout
 $bodyclass = "main";
 
@@ -176,13 +183,17 @@ elseif ($action == "setup_export" AND $LINK[$action] == 1) {
 }
 elseif ($action == "setup_import" AND $LINK[$action] == 1) {
 	$require1 = "admin/setup/language.lib";
-	$require2 = "admin/tools/import.php";
-	$require3 = "admin/tools/import.dao";
-	$require4 = "admin/tools/import.lib";
+	$require2 = "admin/tools/import.dao";
+	$require3 = "admin/tools/imports.php";
+	#$require4 = "admin/tools/import.lib";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
 elseif ($action == "setup_error_msg" AND $LINK[$action] == 1) {
 	$require1 = "admin/tools/error_msg.php";
+	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
+}
+elseif ($action == "setup_revisioner" AND $LINK[$action] == 1) {
+	$require1 = "admin/tools/revisioner.php";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
 elseif ($action == "setup_backup_hist" AND $LINK[$action] == 1) {
@@ -212,6 +223,11 @@ elseif ($action == "setup_snap" AND $LINK[$action] == 1) {
 elseif ($action == "setup_trigger" AND $LINK[$action] == 1) {
 	$require1 = "admin/tools/trigger.dao";
 	$require2 = "admin/tools/trigger.php";
+	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
+}
+elseif ($action == "setup_datasync" AND $LINK[$action] == 1) {
+	$require1 = "admin/tools/datasync.dao";
+	$require2 = "admin/tools/datasync.php";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
 # AND $LINK[$action] == 1
@@ -512,12 +528,12 @@ if($BODY != 1){
 
 <head>
 <meta NAME="Title" CONTENT="Limbas Enterprise Unifying Framework V <?=$umgvar[version]?>">
-<meta NAME="author" content="Axel Westhagen">
-<meta NAME="Publisher" CONTENT="Axel Westhagen">
-<meta NAME="Copyright" CONTENT="Axel Westhagen">
+<meta NAME="author" content="LIMBAS GmbH">
+<meta NAME="Publisher" CONTENT="LIMBAS GmbH">
+<meta NAME="Copyright" CONTENT="LIMBAS GmbH">
 <meta NAME="description" content="Enterprise Unifying Framework">
 <meta NAME="version" content="<?=$umgvar[version]?>">
-<meta NAME="date" content="2010-03-05">
+<meta NAME="date" content="2017-10-23">
 <meta HTTP-EQUIV="content-language" content="de">
 <meta HTTP-EQUIV="Content-Type" content="text/html; charset=<?=$umgvar[charset]?>">
 <meta HTTP-EQUIV="Pragma" content="no-cache">
@@ -593,7 +609,8 @@ if($BODY != 1){
 	if(is_array($alert)){
 		if($alert AND !is_array($alert)){$alert = array($alert);}
 		array_unique($alert);
-		echo "showAlert('".implode("\\n",$alert)."');\n";
+		#echo "lmb_alert('".implode("\\n",$alert)."');\n";
+		echo "showAlert('".implode('\n',$alert)."');\n";
 	}
 
 	echo "</script>\n";

@@ -37,7 +37,7 @@ function olAjax() {
 			this.el.innerHTML = msg;
 		else
 			throw new Error(msg);
-	}
+	};
 
 	/* public : gets triggered when request was successful and data is available */
 	this.onComplete = function (msg){
@@ -45,7 +45,7 @@ function olAjax() {
 			this.el.innerHTML = msg;
 		else
 			throw new Error("onComplete handler not implemented!");
-	}
+	};
 	
 	/* public : send the HTTP Request */
 	this.send = function (url){
@@ -132,7 +132,7 @@ function olAjax() {
 				alert (e);
 			}
 		}
-	}
+	};
 
 	/* private */
 	this._createXMLHttpReq = function() {

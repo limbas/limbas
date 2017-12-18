@@ -39,7 +39,7 @@ if($params["action"] == "context"){
 }elseif($params["action"] == "delete"){
 	$lmb_calendar->lmb_deleteEvent($params["gtabid"],$params["ID"],$verkn);
 }elseif($params["action"] == "drop" OR $params["action"] == "resize"){
-	$lmb_calendar->lmb_dropEvent($params["gtabid"],$params["ID"],$params["dayDelta"],$params["minuteDelta"],$params["action"],$params["resource"]);
+	$lmb_calendar->lmb_dropEvent($params["gtabid"],$params["ID"],$params["dayDelta"],$params["minuteDelta"],$params["action"],$params["resource"],$params["origin_resource"]);
 }elseif($params["action"] == "move"){
 	$lmb_calendar->lmb_moveEvent($params["gtabid"],$params["ID"],$params["stamp"],$params["resource"]);
 }elseif($params["action"] == "copy"){

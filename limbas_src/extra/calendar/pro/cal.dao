@@ -261,7 +261,7 @@ function list_month_ltermin(&$gresult,$dstamp){
 				# Terminende größer Anzeige
 				$en_per = ($show_stamp+($view_days*86400));
 				if($en_st_ >= $en_per){
-					$en_per = $en_per;$tresult["l"]["is_end"][] = '-->';
+					$tresult["l"]["is_end"][] = '-->';
 				}else{
 					$en_per = $en_st_;$tresult["l"]["is_end"][] = strftime("%R",$en_st);
 				}
@@ -394,7 +394,7 @@ function list_dayweek_termin(&$gresult,$gtabid,$show_date,$viewtype,$subh,$view_
 					if($st_st_ < $show_stamp){$st_per = $show_stamp;$tresult["l"]["is_begin"][] = '<--';}else{$st_per = $st_st_;$tresult["l"]["is_begin"][] = strftime("%R",$st_st);}
 					# Terminende größer Anzeige
 					$en_per = ($show_stamp+($view_days*86400));
-					if($en_st_ >= $en_per){$en_per = $en_per;$tresult["l"]["is_end"][] = '-->';}else{$en_per = $en_st_;$tresult["l"]["is_end"][] = strftime("%R",$en_st);}
+					if($en_st_ >= $en_per){$tresult["l"]["is_end"][] = '-->';}else{$en_per = $en_st_;$tresult["l"]["is_end"][] = strftime("%R",$en_st);}
 
 					$per_st = ceil((($st_per-$show_stamp)/86400));
 					$tresult["l"]["per_st"][] = $per_st;
@@ -500,7 +500,6 @@ function group_dayweek_termin($gtabid,$show_date,$viewtype,$subh,$view_days,$ver
 		}
 
 		if($tresult["st_st"][$key] >= $prev_st AND $tresult["st_st"][$key] < $prev_en){
-			$gid = $gid;
 			$gc++;
 			if($prev_en < $tresult["en_st"][$key]){$prev_en = $tresult["en_st"][$key];}
 		}else{

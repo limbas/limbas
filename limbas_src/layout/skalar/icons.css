@@ -47,6 +47,10 @@
     background-repeat: no-repeat;
 }
 
+.lmb-icon.lmb-icon-on-input {
+    margin-left: -16px; /* width of .lmb-icon */
+}
+
 .lmb-icon-cus.lmb-plusonly {
     background-image: url("../../pic/outliner/plusonly.gif");
 }
@@ -90,7 +94,7 @@
 .lmb-icon.lmb-undo{
     background-image: url("../../pic/mini_icons/page_refresh.gif");
 }
-.lmb-icon.lmb-table{
+.lmb-icon.lmb-table, .lmb-icon.lmb-rep-table-menu{
     background-image: url("../../pic/8pxicons/table.gif");
 }
 .lmb-icon-8.lmb-table{
@@ -615,6 +619,9 @@
 .lmb-folder4-open{
     background-image: url("../../pic/outliner/box4_open.gif");
 }
+.lmb-folder5-open{
+    background-image: url("../../pic/outliner/box4_open.gif");
+}
 .lmb-folder-closed, .lmb-folder2-closed{
     background-image: url("../../pic/outliner/box_close.gif");
 }
@@ -622,6 +629,9 @@
     background-image: url("../../pic/outliner/box3_close.gif");
 }
 .lmb-folder4-closed{
+    background-image: url("../../pic/outliner/box4_close.gif");
+}
+.lmb-folder5-closed{
     background-image: url("../../pic/outliner/box4_close.gif");
 }
 .lmb-file-pdf{
@@ -685,6 +695,9 @@
     background-image: url("../../pic/silk_icons/user.gif");
 }
 .lmb-angle-down{
+    background-image: url("../../layout/skalar/pic/arrowDown.png");
+}
+.lmb-angle-double-down{
     background-image: url("../../layout/skalar/pic/arrowDown.png");
 }
 .lmb-angle-up{
@@ -1123,5 +1136,14 @@
     background-image: url("../../pic/silk_icons/arrow_left.gif");
 }
 .lmb-phone {
+    background-image: url("../../pic/silk_icons/telephone.gif");
+}
+.lmb-revisioner {
+
+}
+.lmb-microphone::before {
+    background-image: url("../../pic/silk_icons/telephone.gif");
+}
+.lmb-microphone-slash::before {
     background-image: url("../../pic/silk_icons/telephone.gif");
 }

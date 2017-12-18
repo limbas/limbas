@@ -35,19 +35,8 @@ echo "
 
 if($check_all){
 	# ------------------------------ Gruppenrechte ergänzen ------------------------------------
-	$sqlquery = "SELECT COUNT(*) AS ANZAHL FROM LMB_GROUPS";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	$num_group =  odbc_result($rs,"ANZAHL");
-		
-	$sqlquery = "SELECT GROUP_ID,NAME FROM LMB_GROUPS";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	$bzm = 1;
-	while(odbc_fetch_row($rs, $bzm)){
-		check_grouprights1(odbc_result($rs,"GROUP_ID"),odbc_result($rs,"NAME"),$num_group,$check_table);
-	$bzm++;
-	}
+	check_grouprights1All(1);
+	
 }elseif($group_id){
 	# ------------------------------ Gruppenrechte zurücksetzten ------------------------------------	
 	function group_list($group_id,$group_name){
@@ -62,7 +51,7 @@ if($check_all){
 			group_list(odbc_result($rs, "GROUP_ID"),odbc_result($rs,"NAME"));
 		$bzm++;	
 		}
-		check_grouprights2($group_id,$group_name,1);
+		check_grouprights2($group_id,$group_name,1,1);
 	}
 	group_list($group_id,$groupdat[name][$group_id]);
 }

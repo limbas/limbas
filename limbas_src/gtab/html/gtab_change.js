@@ -35,7 +35,7 @@ function limbasCollectiveReplace(evt,el,confirming,gtabid)
 
 	
 	actid = "gtabReplace&confirm=" + confirming + "&gtabid=" + gtabid;
-	mainfunc = function(result){limbasCollectiveReplacePost(result,evt,el,confirming);}
+	mainfunc = function(result){limbasCollectiveReplacePost(result,evt,el,confirming);};
 	ajaxGet(null,"main_dyns.php",actid,null,"mainfunc","form11");
 }
 
@@ -176,7 +176,7 @@ function limbasAjxLockDataPost(result){
 var containerElement = null;
 function lmb_UGtype(usgr,name,gtabid,fieldid,ID,parameter) {
 	actid = "UGtype&gtabid="+gtabid+"&fieldid="+fieldid+"&ID="+ID+"&usgr="+usgr;
-	dynfunc = function(result){lmb_UGtypePost(result,gtabid,fieldid);}
+	dynfunc = function(result){lmb_UGtypePost(result,gtabid,fieldid);};
 	ajaxGet(null,"main_dyns.php",actid,null,"dynfunc");
 }
 
@@ -217,7 +217,7 @@ function lmb_activate_file(evt,id,filename,lid,norm){
 
 	var prev_id = LmEx_edit_id;
 	var filestatus = "filestatus_"+norm+"_"+lid+"_"+id;
-	var elline = "elline_"+norm+"_"+lid+"_"+id
+	var elline = "elline_"+norm+"_"+lid+"_"+id;
 	var start = null;
 	var down = null;
 	var up = null;
@@ -548,8 +548,12 @@ function userecord(typ) {
 		if(vac){
 			var mess = jsvar["lng_2146"];
 			dele=prompt(mess,' ');
-			if(dele){document.form1.versdesc.value=dele;}
+			if(dele === null) {
+            	return;
+			}
+			document.form1.versdesc.value=dele;
 			mess = null;
+
 		}else{
 			alert(jsvar["lng_2147"]);
 			return;
@@ -765,7 +769,7 @@ function lmb_formpicdmove(id,way,max){
 function lmb_formpicdelete(fel,fp){
 	
 	if(confirm('delete file?')){
-		document.getElementsByName(fel+'_delete')[0].value += document.getElementById('formpicid_'+fp).value;
+		document.getElementsByName(fel+'_delete')[0].value = document.getElementById('formpicid_'+fp).value;
 		send_form(1);
 	}
 }
@@ -816,7 +820,7 @@ function setCenterPos(el) {
 	}
 
 
-	eltWidth = elt.style.width
+	eltWidth = elt.style.width;
 	if(eltWidth.indexOf("px")>0)
 		eltWidth=eltWidth.substring(0,eltWidth.length-2);
 
@@ -905,4 +909,71 @@ function report_archiv() {
 /*----------------- Diagramm -------------------*/
 function lmbDiagramm(diag_id,gtabid,ID) {
 	diagramm = open("main.php?action=diag_erg&gtabid=" + gtabid + "&diag_id="+ diag_id + "&data_id=" + ID ,"Diagramm","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=600,height=400");
+}
+
+/*----------------- Speech recognition -------------------*/
+var lmb_speechRec = window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition;
+lmb_speechRec = lmb_speechRec ? new lmb_speechRec() : null;
+var lmb_speechRecActive = false;
+var lmb_speechRecIcon = null;
+var lmb_speechRecInput = null;
+var lmb_speechRecTextPre = null;
+var lmb_speechRecTextPost = null;
+if (lmb_speechRec) {
+    lmb_speechRec.lang = "de";
+    lmb_speechRec.continuous = true;
+    lmb_speechRec.interimResults = true;
+
+    lmb_speechRec.onstart = function() {
+        lmb_speechRecIcon.removeClass('lmb-microphone').addClass('lmb-microphone-slash');
+        lmb_speechRecIcon.css('color', 'red');
+        lmb_speechRecInput.css('border-color', 'red');
+        lmb_speechRecActive = true;
+
+        // only replace selection -> store strings before and after selection
+        var selectionStart = lmb_speechRecInput.get(0).selectionStart;
+        var selectionEnd = lmb_speechRecInput.get(0).selectionEnd;
+        lmb_speechRecTextPre = lmb_speechRecInput.val().substring(0, selectionStart).trim();
+        if (lmb_speechRecTextPre !== '') {
+            lmb_speechRecTextPre += ' ';
+		}
+        lmb_speechRecTextPost = lmb_speechRecInput.val().substring(selectionEnd).trim();
+        if (lmb_speechRecTextPost !== '') {
+            lmb_speechRecTextPost = ' ' + lmb_speechRecTextPost;
+        }
+    };
+
+    lmb_speechRec.onend = function() {
+        lmb_speechRecIcon.removeClass('lmb-microphone-slash').addClass('lmb-microphone');
+        lmb_speechRecIcon.css('color', '');
+        lmb_speechRecInput.css('border-color', '');
+        lmb_speechRecInput.trigger('change');
+        lmb_speechRecActive = false;
+    };
+
+    lmb_speechRec.onresult = function(event) {
+        lmb_speechRecInput.val(lmb_speechRecTextPre + lmb_speechRecTextPost);
+        var wholeTranscript = "";
+        for (var i = 0; i < event.results.length; i++) {
+			wholeTranscript += event.results[i][0].transcript;
+        }
+        lmb_speechRecInput.val(lmb_speechRecTextPre + wholeTranscript + lmb_speechRecTextPost);
+    };
+}
+function lmb_addSpeechRecButton(inputID) {
+	if (lmb_speechRec) {
+        var inputs = $('input[name="' + inputID + '"]:visible');
+        if (!inputs.parent().has('i.lmb-icon.lmb-icon-on-input.lmb-microphone').length) {
+            inputs.parent().append('<i onclick="lmb_toggleSpeechRec(this, \'' + inputID + '\')" class="lmb-icon lmb-icon-on-input lmb-microphone" style="cursor:pointer;"></i>');
+		}
+    }
+}
+function lmb_toggleSpeechRec(icon, inputID) {
+    if (lmb_speechRecActive) {
+        lmb_speechRec.stop();
+    } else {
+        lmb_speechRecIcon = $(icon);
+        lmb_speechRecInput = $(icon).parent().children('#' + inputID);
+        lmb_speechRec.start()
+    }
 }

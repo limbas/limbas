@@ -21,7 +21,7 @@
 function LmExt_Ex_SelectFolder(LID,gtabid,gfieldid,ID){
 	var url = "main_dyns.php";
 	var actid = "extFileManager&gtabid=" + gtabid + "&gfieldid=" + gfieldid + "&ID=" + jsvar["ID"] + "&LID=" + LID;
-	mainfunc = function(result){LmExt_RelationFieldsPost(result,gtabid,gfieldid);}
+	mainfunc = function(result){LmExt_RelationFieldsPost(result,gtabid,gfieldid);};
 	ajaxGet(null,url,actid,null,"mainfunc");
 }
 
@@ -33,7 +33,7 @@ function LmExt_Ex_RelationFields(gtabid,gfieldid,viewmode,edittype,ID,orderfield
 	if(document.form1.form_id){var gformid = document.form1.form_id.value;}
 	if(typeof search == 'object'){var searchval = search.value;var searchfield = search.id;}else{var searchval = '';var searchfield = search;}
 	actid = "extFileManager&gtabid=" + gtabid + "&gfieldid=" + gfieldid + "&viewmode=" + viewmode + "&edittype=" + edittype + "&LID="+ LID +"&ID=" + ID + "&orderfield=" + orderfield + "&addrelation=" + addrelation + "&droprelation=" + droprelation + "&delrelation=" + delrelation + "&picshow=" + picshow + "&gformid=" + gformid + "&formid=" + formid + "&addfolder=" + addfolder+ "&viewsub=" + sub+ "&searchval=" + searchval+ "&searchfield=" + searchfield;
-	mainfunc = function(result){LmExt_RelationFieldsPost(result,gtabid,gfieldid,viewmode,textel);}
+	mainfunc = function(result){LmExt_RelationFieldsPost(result,gtabid,gfieldid,viewmode,textel);};
 	ajaxGet(null,url,actid,null,"mainfunc");
 }
 

@@ -200,18 +200,47 @@ var dropel = null;
 var dropel_width = null;
 var posx = null;
 var elwidth = null;
+var scrollbarWidth = null;
 function lmbIniDrag(evt,el) {
-		dropel = el;
-		document.onmouseup = lmbEndResizeFrame;
-		elwidth = el.offsetWidth;
-		if(browser_ns5){
-			posx = evt.screenX;
-		}else{
-			posx = window.event.screenX;
-		}
-		document.onmousemove = lmbResizeFrame;
-	
+    dropel = el;
+    document.onmouseup = lmbEndResizeFrame;
+    elwidth = el.offsetWidth;
+    if(browser_ns5){
+        posx = evt.screenX;
+    }else{
+        posx = window.event.screenX;
+    }
+    document.onmousemove = lmbResizeFrame;
+
+    var mainframe = top.document.getElementById("nav").contentWindow.document.documentElement;
+    scrollbarWidth = mainframe.scrollHeight > mainframe.clientHeight ? lmbGetScrollbarWidth() : 0;
 	return false;
+}
+
+// https://stackoverflow.com/questions/13382516/getting-scroll-bar-width-using-javascript
+function lmbGetScrollbarWidth() {
+    var outer = document.createElement("div");
+    outer.style.visibility = "hidden";
+    outer.style.width = "100px";
+    outer.style.msOverflowStyle = "scrollbar"; // needed for WinJS apps
+
+    document.body.appendChild(outer);
+
+    var widthNoScroll = outer.offsetWidth;
+    // force scrollbars
+    outer.style.overflow = "scroll";
+
+    // add innerdiv
+    var inner = document.createElement("div");
+    inner.style.width = "100%";
+    outer.appendChild(inner);
+
+    var widthWithScroll = inner.offsetWidth;
+
+    // remove divs
+    outer.parentNode.removeChild(outer);
+
+    return widthNoScroll - widthWithScroll;
 }
 
 function lmbEndResizeFrame() {
@@ -228,50 +257,55 @@ function lmbEndResizeFrame() {
 }
 
 function lmbResizeFrame(e) {
-	if(browser_ns5){
-		evw = e.screenX - posx
-		dw = evw + elwidth;
-	}else{
-		evw = window.event.screenX - posx
-		dw = evw + elwidth;
+    var evw; // drag width
+    if(browser_ns5) {
+		evw = e.screenX - posx;
+	} else {
+		evw = window.event.screenX - posx;
 	}
-	
-    // max/min width
-	if(dw > 400 || dw < 50){return false;}
-	
-	var pcols = top.document.getElementById("mainset").cols;
-	fcols = pcols.split(",");
-	if(fcols.length == 3){
-		var size = dw+",*,"+fcols[2];
-	}else{
-		var size = dw+",*";
-	}
-	dwme = (dw-115);
 
     // 5px minimum drag distance
-	if(Math.abs((dw-elwidth)) < 5){return;}
+    if(Math.abs(evw) < 5) { return false; }
+
+    // destination width
+    var dw = evw + elwidth + scrollbarWidth;
+    if (evw < 0) {
+        dw += 10;
+    }
+
+    // max/min width
+	if(dw > 400 || dw < 50) { return false; }
 	
-    // catch click event after resize
+	// catch click event after resize
     var captureClick = function(e) {
         e.stopPropagation(); // Stop the click from being propagated.
         this.removeEventListener('click', captureClick, true); // cleanup
-    }
+    };
     dropel.addEventListener(
         'click',
         captureClick,
         true
     );
-    
-	var ar = document.getElementsByTagName("div");
+
+    // resize divs
+    var dwme = (dw - 115);
+    var ar = document.getElementsByTagName("div");
 	for (var i = ar.length; i > 0;) {
 		cc = ar[--i];
 		var cid = cc.id.split("_");
-		if(cid[0] == "mel"){
+		if(cid[0] === "mel"){
 			cc.style.width = dwme;
 		}
 	}
-	
-	top.document.getElementById("mainset").cols = size;
+
+	// resize frame
+    var mainset = top.document.getElementById("mainset");
+    var fcols = mainset.cols.split(",");
+    if(fcols.length === 3){
+        mainset.cols = dw + ",*," + fcols[2];
+    }else{
+        mainset.cols = dw + ",*";
+    }
 
 	return false;
 }
@@ -583,7 +617,7 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
         echo "<tr><td>{$icon}</td>";
         
         # add title
-        echo "<td nowrap style=\"overflow:hidden;width:100%;background-color:{$entry['bg']}\" title=\"{$entry['desc']} ({$entry['id']})\">";
+        echo "<td nowrap style=\"overflow:hidden;width:100%;background-color:{$entry['bg']}\" title=\"{$entry['desc']}\">";
         $dwmeSub = $dwme - 115 - (25 * $entry['depth']); // -100 for first depth, -100 -25(img-width) for second depth ...
         echo "<a style=\"overflow:hidden;\" class=\"lmbMenuItemBodyNav\" {$onclick}>";
         echo "<div id=\"mel_{$data['depth1Id']}_{$entry['id']}\" style=\"width:{$dwmeSub}px;cursor:pointer; {$entry['style']}\">{$menuValue}</div>";

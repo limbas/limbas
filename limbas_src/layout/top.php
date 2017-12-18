@@ -42,10 +42,10 @@ if($menu_setting["frame"]["top"]){
 
 echo "<div class=\"lmbfringeFrameTop\" id=\"small_frame\">";
 if(file_exists($umgvar["pfad"]."/EXTENSIONS/customization/logo_small.png")){?>
-<div id="small_image" class="lmbItemInfoTop"><img src="EXTENSIONS/customization/logo_small.png"></div>
+<a target="_blank" href="index.php"><div id="small_image" class="lmbItemInfoTop"><img src="EXTENSIONS/customization/logo_small.png"></div></a>
 <div class="lmbItemUsernameTop"><?=$lang[2455]?>: <b><?php echo $session["vorname"]." ".$session["name"];?></b>
 <?php }else{?>
-<div id="small_image" class="lmbItemInfoTop"><b onclick="parent.main.location.href='main_admin.php?action=game'">L<span style="color:orange">I</span>MBAS</b> <?=$umgvar["company"]?></div>
+<a target="_blank" href="index.php"><div id="small_image" class="lmbItemInfoTop"><b>L<span style="color:orange">I</span>MBAS</b> <?=$umgvar["company"]?></div></a>
 <div class="lmbItemUsernameTop"><?=$lang[2455]?>: <b><?php echo $session["vorname"]." ".$session["name"];?></b>
 <?php }?>
 <?php if($umgvar["admin_mode"] AND $LINK[17] AND $session["group_id"] == 1){

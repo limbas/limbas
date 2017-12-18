@@ -78,7 +78,7 @@ color[10] = "<?=$farbschema[WEB10]?>";
 </script>
 
 <?/*----------------- Ramenwechsel-Grafik -------------------*/?>
-<div ID="border_move" style="position:absolute;top:0px;left:-100px;cursor:crosshair;z-index:10003;" onMousedown="aktivate_resize(event);">
+<div ID="border_move" style="position:absolute;top:0px;left:-100px;cursor:se-resize;z-index:10003;" onMousedown="aktivate_resize(event);">
     <i class="lmb-icon lmb-resizer" BORDER="0"></i>
 </div>
 

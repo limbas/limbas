@@ -64,7 +64,7 @@ function dynsearchGet() {
 			if(xmlhttp.readyState == 4){
 				dynsShow(xmlhttp.responseText);
 			}
-		}
+		};
 		xmlhttp.send(null);
 	}
 }
@@ -130,7 +130,7 @@ function ajaxGet(evt,url,actid,parameters,functionName) {
 					functionName = 'ajaxShow';
 				eval(functionName + "(xmlhttp.responseText)");
 			}
-		}
+		};
 		xmlhttp.send(null);
 	}
 }
@@ -139,9 +139,9 @@ function ajaxGet(evt,url,actid,parameters,functionName) {
 /* --- Browser ----------------------------------- */
 function browserType() {
   this.version = navigator.appVersion;			        //Version string
-  this.dom=document.getElementById?1:0			                //w3-dom
-  browser_ie5=(this.dom && this.version.indexOf('MSIE ') > -1)?1:0	     //IE5, IE6?
-  browser_ns5=(this.dom && this.version.indexOf('MSIE ') == -1)?1:0 //NS6, Mozilla5
+  this.dom=document.getElementById?1:0;			                //w3-dom
+  browser_ie5=(this.dom && this.version.indexOf('MSIE ') > -1)?1:0;	     //IE5, IE6?
+  browser_ns5=(this.dom && this.version.indexOf('MSIE ') == -1)?1:0; //NS6, Mozilla5
   browser_ie6=(this.dom && this.version.indexOf('MSIE 6')!=-1 && this.version.indexOf('MSIE 5')==-1)?1:0 //IE6
 }
 

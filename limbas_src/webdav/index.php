@@ -39,8 +39,7 @@ require_once('lib/include.lib');
 require_once('lib/session.lib');
 require_once('gtab/gtab.lib');
 require_once('extra/explorer/filestructure.lib');
-require_once('extern/SabreDAV/autoload.php');
-
+require_once('extern/SabreDAV/vendor/autoload.php');
 
 #webdav://localhost/limbas_dev/dependent/webdav.php
 
@@ -152,7 +151,7 @@ class MyCollection extends Sabre\DAV\Collection {
 
 	public function delete(){
 		if(!delete_dir($this->lid)){
-			throw new Exception\Forbidden('Permission denied to delete node');
+			throw new Sabre\DAV\Exception\Forbidden('Permission denied to delete node');
 		}else{
 			flag_filestructure();
 		}
@@ -168,7 +167,7 @@ class MyCollection extends Sabre\DAV\Collection {
 
 		$did = parse_path(lmb_utf8_decode(lmb_getPrevPath($this->myPath)));
 		if(!rename_dir($this->lid,lmb_utf8_decode($newName),$did)){
-			throw new Exception\Forbidden('Permission denied to rename node');
+			throw new Sabre\DAV\Exception\Forbidden('Permission denied to rename node');
 		}else{
 			flag_filestructure();
 		}
@@ -195,7 +194,7 @@ class MyCollection extends Sabre\DAV\Collection {
 			flag_filestructure();
 			return true;
 		}else{
-			throw new Exception\Forbidden('Permission denied to add node');
+			throw new Sabre\DAV\Exception\Forbidden('Permission denied to add node');
 		}
 	}
 	
@@ -212,7 +211,7 @@ class MyCollection extends Sabre\DAV\Collection {
 		
 		# size
 		if(filesize($tmppath) > $session["uploadsize"]){
-			throw new Exception\Forbidden('Insufficient Storage');
+			throw new Sabre\DAV\Exception\Forbidden('Insufficient Storage');
 			return false;
 		}
 		
@@ -237,7 +236,7 @@ class MyCollection extends Sabre\DAV\Collection {
 		
 		$did = parse_path(lmb_utf8_decode($destination));
 		if(!move_dir(array($this->lid),$did)){
-			throw new Exception\Forbidden('Permission denied to move node');
+			throw new Sabre\DAV\Exception\Forbidden('Permission denied to move node');
 		}else{
 			flag_filestructure();
 		}
@@ -249,7 +248,7 @@ class MyCollection extends Sabre\DAV\Collection {
 	
 		$did = parse_path(lmb_utf8_decode($destination));
 		if(!copy_dir(array($this->lid),$did,0,0,0)){
-			throw new Exception\Forbidden('Permission denied to copy node');
+			throw new Sabre\DAV\Exception\Forbidden('Permission denied to copy node');
 		}else{
 			flag_filestructure();
 		}
@@ -288,7 +287,7 @@ class MyFile extends \Sabre\DAV\File {
 		if($url = file_download($this->fid)){
 			return fopen($url["path"], "r");
 		}else{
-			throw new Exception\Forbidden('Permission denied to open file');
+			throw new Sabre\DAV\Exception\Forbidden('Permission denied to open file');
 		}
 		
 	}
@@ -296,7 +295,7 @@ class MyFile extends \Sabre\DAV\File {
 	function delete(){
 		
 		if(!del_file($this->fid,0,1,0)){
-			throw new Exception\Forbidden('Permission denied to delete file');
+			throw new Sabre\DAV\Exception\Forbidden('Permission denied to delete file');
 		}
 		
 	}
@@ -332,7 +331,7 @@ class MyFile extends \Sabre\DAV\File {
 		
 		# size
 		if(filesize($tmppath) > $session["uploadsize"]){
-		throw new Exception\Forbidden('Insufficient Storage');
+		throw new Sabre\DAV\Exception\Forbidden('Insufficient Storage');
 			return false;
 		}
 		
@@ -371,7 +370,7 @@ class MyFile extends \Sabre\DAV\File {
 	public function setName($newName){
 
 		if(!rename_file($this->fid,lmb_utf8_decode($newName),$this->lid)){
-			throw new Exception\Forbidden('Permission denied to rename file');
+			throw new Sabre\DAV\Exception\Forbidden('Permission denied to rename file');
 		}
 		
 	}
@@ -381,7 +380,7 @@ class MyFile extends \Sabre\DAV\File {
 		
 		$did = parse_path(lmb_getPrevPath(lmb_utf8_decode($destination)));
 		if(!move_file(array($this->fid),$did)){
-			throw new Exception\Forbidden('Permission denied to move file');
+			throw new Sabre\DAV\Exception\Forbidden('Permission denied to move file');
 		}
 		
 	}
@@ -391,7 +390,7 @@ class MyFile extends \Sabre\DAV\File {
 	
 		$did = parse_path(lmb_getPrevPath(lmb_utf8_decode($destination)));
 		if(!copy_file(array($this->fid),$did)){
-			throw new Exception\Forbidden('Permission denied to copy file');
+			throw new Sabre\DAV\Exception\Forbidden('Permission denied to copy file');
 		}
 
 	}
@@ -399,7 +398,7 @@ class MyFile extends \Sabre\DAV\File {
 }
 
 
-class MyObjectTree extends Sabre\DAV\ObjectTree {
+class MyObjectTree extends Sabre\DAV\Tree {
 	public function __construct(Sabre\DAV\ICollection $rootNode) {
 		parent::__construct($rootNode);
 	}
@@ -443,7 +442,7 @@ class MyObjectTree extends Sabre\DAV\ObjectTree {
 		$s->copy($destinationPath);
 
 	}
-	
+
 }
 
 

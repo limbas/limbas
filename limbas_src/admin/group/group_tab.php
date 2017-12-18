@@ -156,11 +156,9 @@ function pops(tab){
 	if(document.getElementById(ti).style.display){
 		document.getElementById(ti).style.display='';
 		eval("document."+pi+".src='pic/outliner/minusonly.gif';");
-		popups[tab] = 1;
 	}else{
 		document.getElementById(ti).style.display='none';
 		eval("document."+pi+".src='pic/outliner/plusonly.gif';");
-		popups[tab] = 0;
 	}
 }
 
@@ -171,7 +169,8 @@ var ftab;
 var ffield;
 var saverules = new Array();
 function save_rules(tab,field,typ,value){
-	eval("saverules['"+tab+"_"+field+"_"+typ+"'] = value;");
+    saverules[tab+"_"+field+"_"+typ] = value;
+//	eval("saverules['"+tab+"_"+field+"_"+typ+"'] = value;");
 }
 
 
@@ -182,13 +181,14 @@ function send(){
 	}
 	document.form1.rules.value = saval;
 
-	var popup = "";
-	for (var e in popups){
-		if(popups[e] == 1){
-			var popup = popup + e + ";";
-		}
-	}
-	document.form1.popup.value = popup;
+	var popup = new Array();
+	$.each($(".popicon"), function() {
+	    if($(this).attr('src') == 'pic/outliner/minusonly.gif'){
+	    	popup.push($(this).attr('tabid'));
+	    }
+	});
+	
+	document.form1.popup.value = popup.join(';');
 }
 
 
@@ -483,12 +483,20 @@ function viewrows($gtabid){
 		if($f_result[$gtabid]["tabcopy"]){echo " CHECKED";}
 		echo "></TD></TR></TABLE></TD>";
 	}
+    # --- list edit ---
+    if(!$isview){
+        echo "<TD ALIGN=\"CENTER\"><i class=\"lmb-icon-cus lmb-list-edit\" BORDER=\"0\" TITLE=\"$lang[1290]\"></i></TD>";
+    }
 	# --- options ---
 	if(!$isview){
-	   echo "<TD ALIGN=\"RIGHT\"><TABLE cellspacing=\"0\" cellpadding=\"0\" STYLE=\"width:35px\"><TR><TD ALIGN=\"RIGHT\" nowrap><i class=\"lmb-icon lmb-cog-alt\" BORDER=\"0\" TITLE=\"$lang[2795]\"></i><INPUT TYPE=\"checkbox\" NAME=\"tabcopy_".$gtabid."\" STYLE=\"background-color:transparent\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\" onclick=\"click_all('$gtabid','32',this)\"";
+	   echo "<TD ALIGN=\"RIGHT\"><TABLE cellspacing=\"0\" cellpadding=\"0\" STYLE=\"width:35px\"><TR><TD ALIGN=\"RIGHT\" nowrap><i class=\"lmb-icon lmb-cog-alt\" BORDER=\"0\" TITLE=\"$lang[2795]\"></i><INPUT TYPE=\"checkbox\" NAME=\"taboptions_".$gtabid."\" STYLE=\"background-color:transparent\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\" onclick=\"click_all('$gtabid','32',this)\"";
 	   if($f_result[$gtabid]["taboption"]){echo " CHECKED";}
 	   echo "></TD></TR></TABLE></TD>";
 	}
+    # --- speech recognition ---
+    if(!$isview){
+        echo "<TD ALIGN=\"RIGHT\"><i class=\"lmb-icon lmb-microphone\" BORDER=\"0\" TITLE=\"Speech recognition\"></i></TD>";
+    }
 	
 	# --- versioning ---
 	if(!$isview){
@@ -586,7 +594,18 @@ function viewrows($gtabid){
 					}
 					echo "</TD>";
 				}
-				
+
+                echo "<TD ALIGN=\"RIGHT\">";
+                # --- list edit ----
+                $noListEdit = array(1, 10, 18, 22, 31, 32, 34, 35, 36, 37, 39, 45, 46);
+                if(!in_array($f_result[$gtabid]["data_type"][$key], $noListEdit)){
+                    if($l_result[$gtabid]["listedit"][$key] OR !$l_result){
+                        echo "<INPUT TYPE=\"checkbox\" STYLE=\"border:none;\" NAME=\"listeditrule_".$gtabid."_".$f_result[$gtabid]["field_id"][$key]."\" Onclick=\"save_rules('$gtabid','".$f_result[$gtabid]["field_id"][$key]."',33)\" ";
+                        if($f_result[$gtabid]["listedit"][$key]){echo "CHECKED";}
+                        echo ">";
+                    }else{echo "<INPUT TYPE=\"checkbox\" readonly disabled style=\"opacity:0.3;filter:Alpha(opacity=30);\">";}
+                }
+                echo "</TD>";
 
 				echo "<TD ALIGN=\"RIGHT\">";
 				# --- option ----
@@ -599,6 +618,17 @@ function viewrows($gtabid){
 					}else{echo "<INPUT TYPE=\"checkbox\" readonly disabled style=\"opacity:0.3;filter:Alpha(opacity=30);\">";}
 				}
 				echo "</TD>";
+
+                echo "<TD ALIGN=\"RIGHT\">";
+                # --- speech recognition ----
+                if(in_array($f_result[$gtabid]["data_type"][$key], array(1 /* add more here */))){
+                    if($l_result[$gtabid]["speechrec"][$key] OR !$l_result){
+                        echo "<INPUT TYPE=\"checkbox\" STYLE=\"border:none;\" NAME=\"speechrecrule_".$gtabid."_".$f_result[$gtabid]["field_id"][$key]."\" Onclick=\"save_rules('$gtabid','".$f_result[$gtabid]["field_id"][$key]."',34)\" ";
+                        if($f_result[$gtabid]["speechrec"][$key]){echo "CHECKED";}
+                        echo ">";
+                    }else{echo "<INPUT TYPE=\"checkbox\" readonly disabled style=\"opacity:0.3;filter:Alpha(opacity=30);\">";}
+                }
+                echo "</TD>";
 				
 
 				# --- versioning ----
@@ -738,10 +768,12 @@ foreach($_tabgroup['id'] as $bzm => $val) {
 		if($_gtab["typ"][$key] == 5){$isview = 1;}else{$isview = 0;}
 		if($_gtab["tab_group"][$key] == $_tabgroup["id"][$bzm]){
 			if(!@in_array("1",$s_result[$key]["view"]) AND $session["user_id"] != 1 AND !$session["superadmin"]){continue;}
+			$icon = 'plusonly';
+		    if($is_popup AND in_array($key,$is_popup)){$icon = 'minusonly';}else{$icon = 'plusonly';}
 		?>
 						<TABLE BORDER="0" width="900" cellspacing="2" cellpadding="0">
 						<TR>
-						<TD width="20" align="left"><IMG SRC="pic/outliner/plusonly.gif" NAME="popicon_<?=$key?>" BORDER="0" STYLE="cursor:pointer" OnClick="pops('<?=$key?>')"></TD>
+						<TD width="20" align="left"><IMG SRC="pic/outliner/<?=$icon?>.gif" tabid="<?=$key?>" CLASS="popicon" NAME="popicon_<?=$key?>" BORDER="0" STYLE="cursor:pointer" OnClick="pops('<?=$key?>')"></TD>
 						<TD width="200" align="left"><FONT COLOR="green"><?=$_gtab[table][$key]?> (<?=$_gtab[desc][$key]?>)&nbsp;</TD>
 
 						
@@ -751,7 +783,7 @@ foreach($_tabgroup['id'] as $bzm => $val) {
 	
 			       			<?if(!$isview){?>
 				        		<table cellspacing="0" cellpadding="2" border=0><tr>
-                                                        <td nowrap><i class="lmb-icon lmb-pencil"></i><TEXTAREA NAME="edit_rule_<?=$key?>" readonly style="width:60px;height:17px;cursor:pointer;overflow:hidden;" OnClick="div6(this,'<?=$key?>')" title="<?=$lang[2573]?>"><?=$f_result[$key]["tabeditrule"]?></TEXTAREA></td>
+                                <td nowrap><i class="lmb-icon lmb-pencil"></i><TEXTAREA NAME="edit_rule_<?=$key?>" readonly style="width:60px;height:17px;cursor:pointer;overflow:hidden;" OnClick="div6(this,'<?=$key?>')" title="<?=$lang[2573]?>"><?=$f_result[$key]["tabeditrule"]?></TEXTAREA></td>
 				        		<td nowrap><i class="lmb-icon lmb-indicator-rule"></i><TEXTAREA NAME="indicator_rule_<?=$key?>" readonly style="width:60px;height:17px;cursor:pointer;overflow:hidden;" OnClick="div1(this,'<?=$key?>')" title="<?=$lang[1255]?>"><?=$f_result[$key]["indicator"]?></TEXTAREA></td>
 				        		</tr></table>
 							<?}?>
@@ -775,6 +807,18 @@ foreach($_tabgroup['id'] as $bzm => $val) {
                                 # calendar form selection
 								if($_gtab["typ"][$key] == 2){
 									echo "<i class=\"lmb-icon lmb-rep-date\" align=\"absbottom\"></i>&nbsp<SELECT NAME=\"view_tform_".$key."\" OnChange=\"save_rules('$key','',23)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">default";
+									$bzm1 = 1;
+									while(odbc_fetch_row($rs1,$bzm1)){
+										if($f_result[$key]["view_tform"] == odbc_result($rs1, "ID")){$SELECTED = "SELECTED";}else{$SELECTED = "";}
+										echo "<OPTION VALUE=\"".odbc_result($rs1, "ID")."\" $SELECTED>".odbc_result($rs1, "NAME");
+										$bzm1++;
+									}
+									echo "</SELECT>&nbsp";
+								}
+                                                                
+                                //kanban form selection
+                                if($_gtab["typ"][$key] == 7){
+									echo "<i class=\"lmb-icon lmb-columns\" align=\"absbottom\"></i>&nbsp<SELECT NAME=\"view_tform_".$key."\" OnChange=\"save_rules('$key','',23)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">default";
 									$bzm1 = 1;
 									while(odbc_fetch_row($rs1,$bzm1)){
 										if($f_result[$key]["view_tform"] == odbc_result($rs1, "ID")){$SELECTED = "SELECTED";}else{$SELECTED = "";}

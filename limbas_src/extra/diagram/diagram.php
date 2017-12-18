@@ -219,11 +219,11 @@ function stringSize($text, $angle=0) {
  * Creates png-image of diagram
  * Returns: location of saved png-image
  */
-$fontsize;
-$isLine;
-$isBar;
-$isPie;
-$fontlocation;
+$fontsize = null;
+$isLine = null;
+$isBar = null;
+$isPie = null;
+$fontlocation = null;
         
 function lmb_createDiagram($diag_id, $gsr=null, $filter=null, $verkn=null, $extension=null, $width=null, $height=null, $style=array()){
 	global $db;
@@ -411,7 +411,7 @@ function lmb_createDiagram($diag_id, $gsr=null, $filter=null, $verkn=null, $exte
 				/* Display values after caption name (PIE-Chart only) */
 				if($isPie && $fieldid == $captionid && $pie_write_values != "none"){
 					// Get id of data field
-					$dataid;
+					$dataid = null;
 					foreach($fieldids as $tmp_fieldid){
 						if($tmp_fieldid != $captionid){
 							$dataid = $tmp_fieldid;
@@ -442,7 +442,7 @@ function lmb_createDiagram($diag_id, $gsr=null, $filter=null, $verkn=null, $exte
 			/* Color values */
 			if(!$isPie){
 				// Find color of field
-				$hexcolor;
+				$hexcolor = null;
 				for($i = 0; $i < count($fields); $i++){
 					if($fields[$i]["field_id"] == $fieldid){
 						$hexcolor = $fields[$i]["color"];
@@ -470,7 +470,7 @@ function lmb_createDiagram($diag_id, $gsr=null, $filter=null, $verkn=null, $exte
 	/* Fill dataset object (TYPE TRANSPOSED) */
 	if($isTransposed){
 		/* fill data */
-		$tmp_data;
+		$tmp_data = null;
 		for($i = 0; $i < $data['max_count']; $i++){
 			$tmp_data = array();
 			foreach($fieldids as $fieldid){	
@@ -563,7 +563,6 @@ function lmb_createDiagram($diag_id, $gsr=null, $filter=null, $verkn=null, $exte
 
         /* Pie-slice colors */
 		if($isPie && $isTransposed){
-			$hexcolor;
 			for($i = 0; $i < count($fields); $i++){
 				$hexcolor = $fields[$i]["color"];
 				$PieChart->setSliceColor($i, lmb_getColorAsArray($hexcolor));

@@ -28,7 +28,7 @@ class lmb_calendar {
 	protected $lmbCalFieldsID = array();
 	
 	
-	function __construct($gtabid){
+	function __construct($gtabid=null){
 		global $gfield;
 		foreach ($this->lmbCalFields as $key => $value){
 			$this->lmbCalFieldsID[$key] = $gfield[$gtabid]["argresult_name"][$value];
@@ -113,7 +113,7 @@ class lmb_calendar {
 	 * @param unknown_type $minuteDelta
 	 * @return unknown
 	 */
-	function lmb_dropEvent($gtabid,$ID,$dayDelta,$minuteDelta,$action=null,$resource=null){
+	function lmb_dropEvent($gtabid,$ID,$dayDelta,$minuteDelta,$action=null,$resource=null,$origin_resource=null){
 		global $db;
 		global $gtab;
 		global $gfield;
@@ -135,17 +135,25 @@ class lmb_calendar {
 				}
 
 				# --- resource ---
-				if($resource AND $gtab['params1'][$gtabid]){
-					
-					$sqlquery0 = "SELECT KEYID,VERKN_ID FROM ".$gfield[$gtabid]['md5tab'][$gtab['params1'][$gtabid]]." WHERE ID = ".$ID;
-					$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
-					if(!$rs0) {$commit = 1;}
-					$recource_id = odbc_result($rs0, "VERKN_ID");
+				if($resource AND $origin_resource AND $gtab['params1'][$gtabid]){
 
-					# new rsource relation
-					if($recource_id != $resource){
+				    // event with one resource
+				    /*
+				    $recource_id = $origin_resource;
+				    if(!$origin_resource OR $resource == $origin_resource){
+				    	$sqlquery0 = "SELECT KEYID,VERKN_ID FROM ".$gfield[$gtabid]['md5tab'][$gtab['params1'][$gtabid]]." WHERE ID = ".$ID;
+    					$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+    					if(!$rs0) {$commit = 1;}
+    					$num = odbc_num_rows($rs0);
+    					if($num == 1){
+    					   $recource_id = odbc_result($rs0, "VERKN_ID");
+    					}
+				    }*/
+
+					# new resource relation
+					if($resource != $origin_resource){
 						# drop old resource
-						$relation = init_relation($gtabid,$gtab['params1'][$gtabid],$ID,null,$recource_id);
+						$relation = init_relation($gtabid,$gtab['params1'][$gtabid],$ID,null,$origin_resource);
 						set_relation($relation);
 						# add new resource
 						$relation = init_relation($gtabid,$gtab['params1'][$gtabid],$ID,$resource);
@@ -208,6 +216,7 @@ class lmb_calendar {
 		$resource = parse_db_int($resource);
 		if($resource AND $gtab['params1'][$gtabid]){
 		  $relation = init_relation($gtabid,$gtab['params1'][$gtabid],$ID,$resource);
+		  $relation['unique'] = 1;
 		  set_relation($relation);
 		}
 
@@ -218,7 +227,9 @@ class lmb_calendar {
 	    global $db;
 	    global $gtab;
 
+	    // copy dataset
 	    $newID = new_data($gtabid,null,$ID);
+	    // change dataset
 	    $this->lmb_moveEvent($gtabid,$newID,$movestamp,$resource);
 
 	}
@@ -476,6 +487,8 @@ class lmb_calendar {
 		$tresult[$bzm]["end"]= date("Y-m-d H:i:s",$endst);
 		$tresult[$bzm]["subject_noedit"] = $this->getFieldPermissions($value,array(1),$gtabid,$key,$gresult);
 		$tresult[$bzm]["date_noedit"] = $this->getFieldPermissions($value,array(2,5),$gtabid,$key,$gresult);
+		$tresult[$bzm]["className"] = "event_".$gresult[$gtabid]["id"][$key];
+
 		if($gresult[$gtabid][$this->lmbCalFieldsID['ALLDAY']][$key] OR (lmb_substr($tresult[$bzm]["start"],11,8) == '00:00:00' AND lmb_substr( $tresult[$bzm]["end"],11,8) == '00:00:00')){$tresult[$bzm]["allDay"] = true;}else{$tresult[$bzm]["allDay"] = false;}
 		if($color){$tresult[$bzm]["color"] = $color;}
 		if($border_color){$tresult[$bzm]["borderColor"] = $border_color;}

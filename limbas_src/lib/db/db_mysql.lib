@@ -105,6 +105,8 @@ define("LMB_DBFUNC_TIMEHANDLE",1);
 define("LMB_DBFUNC_NUMROWS",1);
 define("LMB_DBFUNC_VIEWGALIAS",0);
 define("LMB_DBFUNC_SEQUENCE",1);
+define("LMB_DBFUNC_VIEWDEPENDENCY",0);
+define("LMB_DBFUNC_UMASCB","\\\\");
 
 # DBCURSOR #
 define("LMB_DBCURSOR",0);
@@ -174,7 +176,7 @@ function dbf_2($p){
  * @return string
  */
 function dbf_6($p){
-	return $p;
+    return $p;
 }
 
 /**
@@ -184,7 +186,7 @@ function dbf_6($p){
  * @return string
  */
 function dbf_7($p){
-	return str_replace("'","''",$p);
+	return str_replace("\\", LMB_DBFUNC_UMASCB, str_replace("'", "''", $p));
 }
 
 

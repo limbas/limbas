@@ -42,7 +42,7 @@ require_once('inc/include_db.lib');
 require_once('lib/include.lib');
 require_once('lib/session.lib');
 require_once('gtab/gtab.lib');
-require_once('extern/SabreDAV/autoload.php');
+require_once('extern/SabreDAV/vendor/autoload.php');
 
 require_once 'PrincipalBackend.php';
 require_once 'CalendarBackend.php';
@@ -72,7 +72,7 @@ $calendarBackend = new CalDAV\Backend\Limbas();
 // Directory tree
 $tree = array(
         new DAVACL\PrincipalCollection($principalBackend),
-        new CalDAV\CalendarRootNode($principalBackend, $calendarBackend)
+        new CalDAV\CalendarRoot($principalBackend, $calendarBackend)
 );      
 
 // The object tree needs in turn to be passed to the server class

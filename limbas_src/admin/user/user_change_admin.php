@@ -117,7 +117,7 @@ function newwin2(USERID) {
 <input type="hidden" name="lockbackend">
 <input type="hidden" name="staticip">
 <input type="hidden" name="superadmin">
-<div class="lmbPositionContainerMain small">
+<div class="lmbPositionContainerMain small" style="overflow: visible;"><?php /* overwriting overflow to fully display the subgroup selection window which otherwise gets cut on long group names */ ?>
 
 
 
@@ -153,7 +153,7 @@ if(!$result_user["group_id"] OR !$groupdat["name"][$result_user["group_id"]]){$n
 echo "<TR class=\"tabBody\"><TD width=180 $needgroup>$lang[900]</TD><TD>";
 echo "<TABLE BORDER=\"0\" cellspacing=\"0\" cellpadding=\"0\" STYLE=\"width:259px;\"><TR><TD><li><b><a href=\"main_admin.php?action=setup_group_erg&ID=".$result_user["group_id"]."\">".$groupdat["name"][$result_user["group_id"]]."</a></b></li></TD><TD align=\"right\">";
 if($ID != 1){
-echo "<i class=\"lmb-icon lmb-pencil\" style=\"cursor:pointer\" OnClick=\"limbasDivShow(this,parent,'GroupSelect_main');setxypos(event,'GroupSelect_main');\"></i>";
+echo "<i class=\"lmb-icon lmb-pencil\" style=\"cursor:pointer\" OnClick=\"limbasDivShow(this,null,'GroupSelect_main');setxypos(event,'GroupSelect_main');\"></i>";
 $glitems["name"] = array("maingroup");
 $glitems["typ"] = array("radio");
 $glsel["maingroup"] = array($result_user["group_id"]);
@@ -172,7 +172,7 @@ foreach ($result_user["sub_group"] as $key => $value){
 	echo "<li><a href=\"main_admin.php?action=setup_group_erg&ID=".$value."\">".$groupdat["name"][$value]."</a></li>";
 }}
 echo "</TD><TD align=\"right\" valign=\"top\">";
-echo "<i class=\"lmb-icon lmb-pencil\" style=\"cursor:pointer\" OnClick=\"limbasDivShow(this,parent,'GroupSelect_sub');setxypos(event,'GroupSelect_sub');\"></i>";
+echo "<i class=\"lmb-icon lmb-pencil\" style=\"cursor:pointer\" OnClick=\"limbasDivShow(this,null,'GroupSelect_sub');setxypos(event,'GroupSelect_sub');\"></i>";
 $glitems["name"] = array("subgroup");
 $glitems["typ"] = array("checkbox");
 $glsel["subgroup"] = $result_user["sub_group"];

@@ -297,6 +297,7 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 	if(!odbc_result($rs2,"DATEFORMAT")){$session["dateformat"] = 1;}else{$session["dateformat"] = odbc_result($rs2,"DATEFORMAT");} #1=de, 2=usa, 3=fr}
 	if(!odbc_result($rs2,"SETLOCAL")){$session["setlocale"] = "de_DE";}else{$session["setlocale"] = odbc_result($rs2,"SETLOCAL");}
 	if(!odbc_result($rs2,"TIME_ZONE")){$session["timezone"] = "Europe/Berlin";}else{$session["timezone"] = odbc_result($rs2,"TIME_ZONE");}
+	if($session["superadmin"]){$session["debug"] = 1;}
 	
 	# use system language
 	if($session["language"] == -1){

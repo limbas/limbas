@@ -1,25 +1,162 @@
+Tue Nov 7 14:00:18 2017 +0100 - bugfix locking dataset in log_data_check
+Tue Nov 7 11:28:20 2017 +0100 Fixed bug: Empty table groups not showing
+Mon Nov 6 10:54:03 2017 +0100 Fixed DMS bug
+Fri Oct 27 11:09:01 2017 +0200 Updated release notes
+Fri Oct 27 10:55:18 2017 +0200 Fixed report bug and added timestamp to archive files again
+Thu Oct 26 15:58:15 2017 +0200 Fixed thumbnail preview closing
+Thu Oct 26 15:58:00 2017 +0200 Removed date from report filenames
+Thu Oct 26 15:20:26 2017 +0200 Improved drag and drop of nav and multiframe
+Thu Oct 26 13:39:45 2017 +0200 Removed error_log and fixed bug that caused kanban filter tab to close on second click
+Thu Oct 26 13:11:17 2017 +0200 Fixed kanban utf8 issues
+Thu Oct 26 13:01:28 2017 +0200 Improved global search to work on all field types
+Wed Oct 25 15:57:40 2017 +0200 Codemirror in form
+Wed Oct 25 15:51:28 2017 +0200 Global search positioning
+Wed Oct 25 13:26:56 2017 +0200 Fixed hardcoded language entry
+Wed Oct 25 13:20:40 2017 +0200 Fixed speech recognition bug
+Wed Oct 25 13:09:56 2017 +0200 - adding odemirror support in formeditor
+Wed Oct 25 10:44:35 2017 +0200 - formeditor script editor failure
+Wed Oct 25 10:18:31 2017 +0200 Moved global search input upwards
+Wed Oct 25 10:04:50 2017 +0200 Update script scrollbar
+Tue Oct 24 14:53:06 2017 +0200 Fixed installer and import bugs on MySQL
+Tue Oct 24 14:50:22 2017 +0200 - Bug import.dao iscreated === true
+Tue Oct 24 13:13:34 2017 +0200 Installer scrolling
+Mon Oct 23 16:40:01 2017 +0200 - update to 3.3
+Mon Oct 23 16:23:55 2017 +0200 Automatic title setting, updated copyright notices
+Mon Oct 23 15:32:03 2017 +0200 SQL editor prefill
+Mon Oct 23 13:57:50 2017 +0200 Changed folder colors in DMS again
+Mon Oct 23 13:49:53 2017 +0200 Conflicts: 	admin/tools/datasync.lib 	extra/soap/soap.lib
+Mon Oct 23 13:44:08 2017 +0200 Changed folder colors in DMS
+Mon Oct 23 13:43:36 2017 +0200 small fixes
+Thu Oct 19 19:48:03 2017 +0200 Merged filestructure queries into one
+Thu Oct 19 19:46:49 2017 +0200 PHP 7 bugfix
+Thu Oct 19 17:13:03 2017 +0200 2x Bugfix
+Thu Oct 19 16:03:03 2017 +0200 Speech recognition: Only replace selection or insert
+Thu Oct 19 15:17:35 2017 +0200 Added key authentication to socket datasync
+Thu Oct 19 13:23:01 2017 +0200 - datasync fixes
+Wed Oct 18 13:44:34 2017 +0200 Split filestructure query into two queries because of UNION bugs
+Thu Oct 12 15:49:04 2017 +0200 - datasync fixes
+Thu Oct 12 13:39:55 2017 +0200 - datasync socket support
+Thu Oct 12 11:17:45 2017 +0200 Added inclusion of files from bash in cron.php
+Thu Oct 12 10:50:48 2017 +0200 - add lmb_log to gtab.lib - add admin/tools/bash for sync process
+Wed Oct 11 14:20:43 2017 +0200 Highlighted dataset lock icon
+Wed Oct 11 14:02:49 2017 +0200 Re-Re-Commit of changes lost in merge
+Tue Oct 10 10:57:06 2017 +0200 Added Log class, forgot in last commit
+Tue Oct 10 10:53:38 2017 +0200 Added Log class, small bug fixes (again)
+Tue Oct 10 10:41:26 2017 +0200 - new relation extended param
+Wed Oct 4 16:51:16 2017 +0200 - sync process updatescripts
+Wed Oct 4 15:11:39 2017 +0200 Added Log class, small bug fixes
+Wed Oct 4 12:19:29 2017 +0200 - add sysnc mode to gui
+Wed Oct 4 11:32:22 2017 +0200 - Sync Trigger
+Wed Oct 4 11:26:03 2017 +0200 Merge remote-tracking branch 'origin/master'
+Wed Oct 4 11:25:38 2017 +0200 - datasync adjustments
+Thu Sep 28 15:08:26 2017 +0200 Re-commited changes lost in previous merge
+Thu Sep 28 13:13:25 2017 +0200 Integrated SabreDav v3.2.2. Needs latest source in independent/SabreDAV
+Thu Sep 21 18:36:41 2017 +0200 Removed LimbasLogger instances, code style
+Thu Sep 21 15:20:49 2017 +0200 Inverted odbc import icon for better understanding
+Thu Sep 21 13:16:26 2017 +0200 - odbc import postgresql fixes
+Thu Sep 21 13:06:06 2017 +0200 Fixed form_reminder bugs
+Thu Sep 21 12:20:10 2017 +0200 - session.lib bug
+Thu Sep 21 11:58:15 2017 +0200 Renamed psql_* functions to postgres_*
+Tue Sep 19 17:32:40 2017 +0200 Fixed smaller Kanban issues
+Tue Sep 19 12:58:46 2017 +0200 - version.inf
+Tue Sep 19 11:38:20 2017 +0200 - default popup in tablelist - default editmode in tablelist
+Tue Sep 19 10:58:23 2017 +0200 Fixed global search input field position
+Mon Sep 18 13:04:40 2017 +0200 - odbc import libs
+Mon Sep 18 13:02:26 2017 +0200 - new import files
+Mon Sep 18 13:01:52 2017 +0200 - datasync main process
+Mon Sep 18 12:42:41 2017 +0200 Merge remote-tracking branch 'origin/master'
+Mon Sep 18 12:41:59 2017 +0200 Changed kanban multiframe
+Mon Sep 18 12:39:20 2017 +0200 - datasync process -add  trigger
+Thu Sep 14 19:49:17 2017 +0200 - calender todos
+Thu Sep 14 17:57:25 2017 +0200 - bugfix : calender contextmenu - adding : gant-calender using multible resources
+Tue Sep 12 12:27:13 2017 +0200 - rebuild import funktions - odbc import
+Thu Aug 31 17:51:39 2017 +0200 Added default popup in table (backend only)
+Thu Aug 31 16:50:37 2017 +0200 Added speech recognition for text fields
+Thu Aug 31 12:22:09 2017 +0200 Added listedit backend
+Tue Aug 22 15:28:22 2017 +0200 Fixed jquery ui z-index bug
+Tue Aug 22 15:27:33 2017 +0200 Added first prototype of global search
+Tue Aug 22 14:06:41 2017 +0200 Added Optgroups to Selects
+Tue Aug 22 13:48:14 2017 +0200 Improved performance of table/group administration
+Mon Aug 7 11:51:12 2017 +0200 - adding import templates for text and odbc import
+Thu Aug 3 19:08:15 2017 +0200 - odbc-import with create tables
+Wed Aug 2 14:39:42 2017 +0200 Fixed äöü bug in report
+Wed Aug 2 10:33:37 2017 +0200 Fixed äöü bug in admin->language and probably elsewhere too
+Wed Aug 2 10:26:08 2017 +0200 Fixed detail search bug
+Wed Aug 2 10:22:03 2017 +0200 Code style
+Wed Jul 26 16:10:50 2017 +0200 - extend odbc import - extend inherit fieldtype with readonly flag
+Tue Jul 25 11:40:52 2017 +0200 Changed submenus into menus
+Tue Jul 18 17:22:55 2017 +0200 Fixed error in divclose
+Tue Jul 18 17:17:34 2017 +0200 Fixed ajax tree
+Tue Jul 18 13:03:32 2017 +0200 Improved workflow history in forms
+Tue Jul 18 11:37:10 2017 +0200 Added ids to tooltips of admin nav
+Tue Jul 11 15:33:37 2017 +0200 Fixed wrong icons and titles in list-form
+Tue Jul 11 14:56:57 2017 +0200 Fixed sync errors
+Tue Jul 11 12:40:44 2017 +0200 Fixed DMS right click bugs
+Fri Jul 7 12:05:05 2017 +0200 - datasync add files
+Fri Jul 7 09:56:32 2017 +0200 - change Header in send:mail for CC - adding odbc import - adding sync configuration wizzard
+Tue Jul 4 18:34:44 2017 +0200 Fixed user group selection
+Tue Jul 4 18:28:50 2017 +0200 Tried to get the ajax tree working
+Tue Jul 4 18:00:31 2017 +0200 Prevents overlapping context menus
+Tue Jul 4 17:51:30 2017 +0200 Exchanged some pop_left with pop_menu
+Tue Jul 4 14:39:14 2017 +0200 Changed cursor for resizing in form/report
+Tue Jul 4 13:07:47 2017 +0200 Fixed pdf page orientation bug
+Tue Jun 27 17:43:42 2017 +0200 Changed html-download language
+Tue Jun 27 17:38:34 2017 +0200 Fixed source code sync, works now
+Tue Jun 27 14:58:05 2017 +0200 Improved performance and algorithm of lmb_addAliasToDuplicateNames()
+Tue Jun 27 13:16:21 2017 +0200 Revisioner: Compare 2 versions
+Tue Jun 27 11:49:33 2017 +0200 Enabled "abort" when versioning, relates to #44
+Tue Jun 27 11:30:20 2017 +0200 Improved view dependency output generation
+Tue Jun 27 10:21:18 2017 +0200 Added confirm before deleting reminder
+Tue Jun 20 16:55:18 2017 +0200 last commit also: - "start remote export" button only shows after precheck - diff as html download
+Tue Jun 20 16:52:45 2017 +0200 - source code sync (not working because of memory problems)
+Tue Jun 20 13:08:40 2017 +0200 Fixed bug: Subgroup selection not visible due to overflow
+Tue Jun 20 12:43:12 2017 +0200 Added lmb_conf_tables|fields|views to sync import diff
+Tue Jun 20 11:26:57 2017 +0200 - syncimport - adding mode in *.conf files
+Tue Jun 13 15:15:05 2017 +0200 Fixed empty "Typ"-select in admin->import->convert
+Tue Jun 13 15:01:26 2017 +0200 - sync export can copy extensions - sync export can call extension function - sync export can display different column more handy - sync export compares more - sync export doesnt overwrite all umgvar - moved and enhanced function delete_user_filesave - sync export only secure now
+Fri Jun 9 11:31:59 2017 +0200 Merge remote-tracking branch 'origin/master'
+Fri Jun 9 11:16:33 2017 +0200 Changed kanban multiframe
+Mon Jun 5 19:15:43 2017 +0200 - advanced sync functions
+Mon May 29 15:17:38 2017 +0200 Added view definitions to export.php in sync export and import
+Mon May 29 14:44:11 2017 +0200 - Added new sync export types - Added return of 'success' variable from sync import
+Mon May 29 12:41:14 2017 +0200 - convert fields to type
+Mon May 29 12:39:06 2017 +0200 - syncexport adding types
+Mon May 29 10:24:46 2017 +0200 Minor bugfixes of sync import
+Mon May 29 10:04:43 2017 +0200 - adding view realtionschema - extend sysncimport
+Tue May 23 13:41:29 2017 +0200 - change css visibility to display
+Mon May 22 12:31:19 2017 +0200 Bugfix: Prevent contextmenus from being placed outside the window
+Fri May 19 13:15:50 2017 +0200 Working Kanban V1.0
+Fri May 19 12:54:50 2017 +0200 - adding revision manager modul
+Fri May 19 12:40:26 2017 +0200 - adding view dependencies for postgresql - fixed user/group search in table - adding user/group search in table with ID
+Thu May 18 09:40:50 2017 +0200 Reversed diff of revisioner
+Mon May 15 16:12:35 2017 +0200 - sync import / view handling
+Mon May 15 15:12:50 2017 +0200 Revision comparison with local db
+Mon May 15 12:37:53 2017 +0200 Replaced own Logger with already existing LimbasLogger
+Mon May 15 12:27:22 2017 +0200 - Added precheck to manual remote sync - Surrounded import_sync with function - Added secure version sync import using transactions - Improved comments and added logger for better error handling - Moved soap call of remote sync to own function in export.lib
+Mon May 15 12:18:14 2017 +0200 change parse_db_type in tab.lib to consider non variable data types
+Fri May 12 18:00:55 2017 +0200 - adding revision module
+Tue May 9 15:57:49 2017 +0200 Better filters + extended Limbas search
+Tue May 9 09:39:21 2017 +0200 Bugfix - show setted reminder in reminder details
+Fri May 5 15:58:43 2017 +0200 Working Filters
 Fri May 5 12:03:47 2017 +0200 - colorschema fixed wrong color calculation - formular fixed "save and close" functionality
+Thu May 4 09:20:48 2017 +0200 First not-working version of remote sync import
 Tue Apr 25 18:47:40 2017 +0200 Added expand-all button to sync import
 Tue Apr 25 17:40:55 2017 +0200 Fixed empty select fields in admin->language
 Tue Apr 25 17:34:03 2017 +0200 Further improved sync_import. Can now handle triggers, reports and outputs everything beautifully
 Tue Apr 25 13:07:45 2017 +0200 - improved syncimport
-Tue Apr 25 13:07:21 2017 +0200 Merge branch 'master' of git@192.168.1.114:axel/limbas.git
 Tue Apr 25 12:00:08 2017 +0200 Fixed layout bug
-Thu Apr 13 13:48:47 2017 +0200 Merge branch 'master' of git@192.168.1.114:axel/limbas.git
 Thu Apr 13 13:48:40 2017 +0200 - fixed multible fileupload in tables
 Thu Apr 13 11:44:06 2017 +0200 Corrected new-file-icon to file-upload-icon
 Thu Apr 13 11:29:41 2017 +0200 Improved documentation of sync import
 Thu Apr 13 11:24:46 2017 +0200 Improved sync import to better show diff to lmb_forms and lmb_form_list
 Wed Apr 12 17:00:46 2017 +0200 Import sync for forms
+Wed Apr 12 15:49:12 2017 +0200 added - lmb_kanban
 Wed Apr 12 11:33:11 2017 +0200 Now showing ID of table in title in nav
-Thu Mar 30 19:46:28 2017 +0200 Merge branch 'master' of git@192.168.1.114:axel/limbas.git
 Thu Mar 30 19:05:21 2017 +0200 [not working yet] Added base for new reminder-element in forms, to be continued by Axel
 Thu Mar 30 14:19:00 2017 +0200 Provided extension functionality for phone number dialing
-Tue Mar 28 11:22:25 2017 +0200 Merge branch 'master' of git@192.168.1.114:axel/limbas.git
 Tue Mar 28 11:22:09 2017 +0200 - bugfix lmbObject require_once gtab.lib - bugfix datetime.lib cut milliseconds
 Tue Mar 28 10:37:09 2017 +0200 Fixed ajax select bug that caused html to be inserted into a text input
 Mon Mar 27 10:36:29 2017 +0200 Fixed colorscheme/layout bug, closes #32
-Tue Mar 7 17:53:38 2017 +0100 Merge branch 'master' of git@192.168.1.114:axel/limbas.git
 Tue Mar 7 17:53:30 2017 +0100 - use makefont instead of ttf2pt1
 Tue Mar 7 14:02:45 2017 +0100 Added workflow history, relates to #13
 Tue Mar 7 09:49:10 2017 +0100 Added contextmenu cursor in dms
@@ -33,12 +170,9 @@ Mon Feb 27 13:06:35 2017 +0100 Fixed duplicate forms bug
 Mon Feb 27 12:21:31 2017 +0100 Fixed multiselect bug, closes #17
 Mon Feb 27 11:11:31 2017 +0100 moved relation details in contextmenu to right place and added icon, closes #25
 Fri Feb 24 18:24:04 2017 +0100 Removed black line on top of html, closes #22
-Thu Feb 23 19:19:46 2017 +0100 Merge branch 'master' of git@192.168.1.114:axel/limbas.git
 Mon Feb 20 13:10:57 2017 +0100 - adding relation parameter in formular editor - adding relation parameter in SOAP request - * changing lower/upper md5tab in gtab_array.lib & tab.lib verkn_editor.dao
 Tue Feb 14 18:01:10 2017 +0100 Minor js fix
-Tue Feb 14 17:22:33 2017 +0100 Merge branch 'master' of http://192.168.1.114/axel/limbas
 Tue Feb 14 17:22:26 2017 +0100 Beautified export, closes #26
-Tue Feb 14 15:13:33 2017 +0100 Merge branch 'master' of git@192.168.1.114:axel/limbas.git
 Tue Feb 14 15:13:18 2017 +0100 - copy dataset with recursive relation values
 Tue Feb 14 15:05:10 2017 +0100 Centered the close button in jquery UI, fixes #12
 Tue Feb 14 14:52:21 2017 +0100 Increased width of wysiwyg editor, fixes #18
@@ -61,24 +195,18 @@ Fri Feb 10 13:39:10 2017 +0100 Fixed bug in include_string
 Thu Feb 9 15:45:44 2017 +0100 - adding cut&paste with contextmenu in calenderview
 Wed Feb 1 11:07:55 2017 +0100 Quick fix: Now also works if no table tree is prese
 Tue Jan 31 21:08:36 2017 +0100 Sub-contextmenus now open to the left/top if there is not enough remaining space on the right/bottom
-Tue Jan 31 19:26:20 2017 +0100 Merge branch 'master' of git@192.168.1.114:axel/limbas.git
 Tue Jan 31 19:25:58 2017 +0100 - formular parameter menu part 1
 Tue Jan 31 18:40:23 2017 +0100 Styling in admin tables
 Tue Jan 31 17:42:33 2017 +0100 Minor changes: bold subgroup names, gray subgroup icons, mindistance of click prevention in nav
-Tue Jan 31 13:22:10 2017 +0100 Merge branch 'master' of http://192.168.1.114/axel/limbas
 Tue Jan 31 13:21:44 2017 +0100 Added subgroup functionality in tabletrees. To maintain backwards compatibility with Skalar layout I added the old nav.dao to the layout/skalar/ folder.
 Tue Jan 31 12:33:39 2017 +0100 - soap multilang support for selectpools
-Tue Jan 31 12:32:28 2017 +0100 Merge branch 'master' of git@192.168.1.114:axel/limbas.git
 Thu Jan 12 15:17:56 2017 +0100 fixed inverse write permission rule for edit tablelist
 Fri Dec 16 19:01:12 2016 +0100 New version of codemirror, now also integrated into the sql editor
 Fri Dec 16 15:43:47 2016 +0100 Added background to line/bar chart, moved default position of legend to top right corner
 Fri Dec 16 13:21:55 2016 +0100 Fixed 'Could not include font definition file'-Error in report
-Fri Dec 16 11:59:12 2016 +0100 Merge branch 'master' of git@192.168.1.114:axel/limbas.git
 Fri Dec 16 11:58:17 2016 +0100 UTF8 mb_string switch in session
 Fri Dec 16 10:47:36 2016 +0100 Added strtoupper to test for charset
-Fri Dec 16 10:43:49 2016 +0100 Merge branch 'master' of http://192.168.1.114/axel/limbas
 Fri Dec 16 10:43:42 2016 +0100 Fixed name-dependent html ids in multiframe
-Fri Dec 16 10:19:33 2016 +0100 Merge branch 'master' of git@192.168.1.114:axel/limbas.git
 Tue Dec 13 16:52:57 2016 +0100 Fixed typos
 Tue Dec 13 16:29:08 2016 +0100 Updated report generation for newer versions of fpdi/fpdf. Now supports UTF-8 using tfpdf. Fix bug in report.dao and changed icon in report editor.
 Thu Dec 8 10:23:30 2016 +0100 Replaced name in id of subelements in the nav with an increasing id
@@ -91,15 +219,12 @@ Mon Nov 28 17:07:52 2016 +0100 Set linethickness in diagram to 0.5, because it w
 Mon Nov 28 17:06:09 2016 +0100 Added arrow instead of '<< ...' in DMS
 Mon Nov 28 16:59:11 2016 +0100 modify mbstring functions
 Mon Nov 28 15:53:40 2016 +0100 adding mbstring functions
-Mon Nov 28 15:49:49 2016 +0100 Merge branch 'master' of git@192.168.1.114:axel/limbas.git
 Mon Nov 28 15:49:01 2016 +0100 adding mbstring functions
 Mon Nov 28 15:34:37 2016 +0100 Added mimetype icon. This needs: UPDATE LMB_ACTION SET ICON_URL='lmb-mimetype' WHERE ID=298
-Mon Nov 28 15:11:30 2016 +0100 Merge branch 'master' of http://192.168.1.114/axel/limbas
 Mon Nov 28 15:08:07 2016 +0100 Font color now settable in diagram
 Mon Nov 28 14:34:54 2016 +0100 mbstring replacement for independent utf-8 support
 Tue Nov 22 13:26:02 2016 +0100 - small export fixes
 Thu Nov 17 20:03:58 2016 +0100 - adding db-infos for installation tool
-Thu Nov 17 19:05:51 2016 +0100 Merge branch 'master' of git@192.168.1.114:axel/limbas.git
 Thu Nov 17 18:31:31 2016 +0100 - some installer fixes - lmb_lang lmb_action updates
 Thu Nov 17 18:13:17 2016 +0100 Diagram now accepts font-family, fontsize and backgroundcolor as parameters from form/report
 Thu Nov 17 17:57:36 2016 +0100 New intro.html with bootstrap; moved limbas logos to pic folder
@@ -107,12 +232,10 @@ Thu Nov 17 15:45:00 2016 +0100 fixed wrong color of text caused by hovering
 Thu Nov 17 15:39:56 2016 +0100 Added background color to diagrams. Fixed bug in diagram that caused 2nd diagram not to render properly
 Thu Nov 17 14:04:48 2016 +0100 - integrate charts in formular & report - small fixes in form/reportgenarator - adding new independent directory
 Wed Nov 16 17:55:43 2016 +0100 - chart integration to form editor
-Tue Nov 15 18:49:19 2016 +0100 Merge branch 'master' of git@192.168.1.114:axel/limbas.git
 Tue Nov 15 18:48:52 2016 +0100 - diagram height/width parameter
 Tue Nov 15 18:36:25 2016 +0100 Combined old pop_select and new pop_select_icon into one function for both
 Tue Nov 15 17:26:15 2016 +0100 Fixed bug in diagram-settings auto-calculation
 Tue Nov 15 16:18:03 2016 +0100 Added icon to storage-folder-selection using new method pop_select_icon in context.lib
-Tue Nov 15 15:03:48 2016 +0100 Merge branch 'master' of http://192.168.1.114/axel/limbas
 Tue Nov 15 15:02:56 2016 +0100 Replaced outliner-imgs in DMS with custom icons
 Tue Nov 15 14:54:55 2016 +0100 Replaced outliner-imgs in DMS with custom icons
 Tue Nov 15 13:05:30 2016 +0100 Example odbcinst/odbc.ini in installer now react to user-input
@@ -123,24 +246,19 @@ Fri Nov 11 21:25:52 2016 +0100 - update install procedure - diagramm autosize
 Fri Nov 11 16:44:01 2016 +0100 - Feature: storage definition for uploaded files - Bugfix: fileexplorer - rename folder in list not work - Bugfix: filexplorer - "own folder" was missing in folderlist - Bugfix: formular generator - selectable elements not selected - Bugfix: formular generator - selectable elements only selected in foreground
 Fri Nov 11 11:43:05 2016 +0100 - bugfix: selectable elements not selected - bugfix: selectable elements only selected in foreground - bugfix: rename folder in list not work - bugfix: own folder" was missing in folderlist
 Wed Nov 2 13:36:29 2016 +0100 - replace extendet functions with method_exists in fullcalendar class
-Wed Nov 2 13:32:59 2016 +0100 Merge branch 'master' of git@192.168.1.114:axel/limbas.git
 Thu Oct 27 19:19:36 2016 +0200 Removed unnecessary caret
 Fri Oct 21 19:32:21 2016 +0200 - fixed: deletion of expired backup files
-Thu Oct 20 16:28:51 2016 +0200 Merge origin/master
 Thu Oct 20 16:27:10 2016 +0200 Small fixes: - Changed calendar-icon of queries to a gray table-icon. - Added some db-parsing to the environment variables. - Removed bgcolor attribute, that is overwritten by css in field types.
 Thu Oct 20 16:23:06 2016 +0200 Added mimetype-page in admin->setup
 Thu Oct 20 12:41:52 2016 +0200 - adding multilang option to views
 Wed Oct 19 12:46:52 2016 +0200 - fixed updatescript 2.11 - fixed updateprocess / view and order of updatescripts
 Wed Oct 19 11:44:53 2016 +0200 Fixed bug in diagram, that caused wrong display of scale when the data was of type floating-point
-Tue Oct 18 17:30:17 2016 +0200 Merge branch 'master' of http://192.168.1.114/axel/limbas
 Tue Oct 18 17:29:05 2016 +0200 - Changed default width of std. form to 700px instead of 650px - Fixed bug in extended file manager: width now stays fixed when 	adding fields to show
 Tue Oct 18 17:21:02 2016 +0200 - Changed default width of std. form to 700px instead of 650px - Fixed bug in extended file manager: width now stays fixed when 	adding fields to show
 Mon Oct 17 15:24:10 2016 +0200 minor bugfixes: - fixed cropping of table in gtab_erg - fixed bug in diagram when trying to show a field in the editor
-Mon Oct 17 11:12:01 2016 +0200 Merge branch 'master' of git@192.168.1.114:axel/limbas.git
 Sun Oct 16 10:00:17 2016 +0200 bugfix - empty select values in multiple language
 Fri Oct 14 14:46:38 2016 +0200 bugfixes - info header font style - levelid in relation during insert_file added - complete export: structure only
 Fri Oct 7 17:44:57 2016 +0200 Fixed - Cache and Relationview in Tablelist, function cftyp_14 cftyp_14_gresult
-Wed Oct 5 15:47:29 2016 +0200 Merge origin/master
 Wed Oct 5 15:46:33 2016 +0200 bugfixes
 Wed Oct 5 12:23:15 2016 +0200 Fixed - ajax utf8 handling of firefox >= V48 Fixed - form style of inherit elements Fixed - calendar "close and save" details in iframe
 Wed Sep 21 14:36:19 2016 +0200 changed - utf8 decode for ajax Get replaced with encodURIComponent() in ajaxGet bugfix - worklfow_id hardcoded in lwf.lib lmb_wfl_init()
@@ -153,18 +271,13 @@ Fri Sep 9 11:36:58 2016 +0200 updated independet with fontawesome
 Fri Sep 9 11:33:25 2016 +0200 updated calendar style and layout - removed unnecessary files
 Fri Sep 9 10:45:17 2016 +0200 adding independent directory
 Fri Sep 9 09:42:10 2016 +0200 delete nav_old.php
-Fri Sep 9 09:16:40 2016 +0200 Merge branch 'master' of git@192.168.1.114:axel/limbas.git
 Thu Sep 8 14:12:34 2016 +0200 fixed some missing icons
-Thu Sep 8 13:59:23 2016 +0200 Merge origin/master
 Thu Sep 8 13:56:03 2016 +0200 the link with id 128 has to be changed: instead of LmEx_open_menu(this,'uploadmenu'); now limbasDivClose();LmEx_multiupload('1','','','','','','');
 Thu Sep 8 13:53:29 2016 +0200 implemented html5 multifile upload in explorer by reusing the existing functions for drag&drop multifile upload
 Thu Sep 8 12:06:19 2016 +0200 fixed jquery height calculation in lmb_setAutoHeight(). Had to separate calculation between gtab-change/erg and calendar.
-Thu Sep 8 09:20:55 2016 +0200 Merge branch 'master' of git@192.168.1.114:axel/limbas.git
 Thu Sep 8 09:20:40 2016 +0200 calendar bugfixes
 Wed Sep 7 15:50:12 2016 +0200 update calendar style
 Tue Sep 6 19:57:26 2016 +0200 fix table width with grouped fields
-Tue Sep 6 19:04:54 2016 +0200 Merge branch 'master' of git@192.168.1.114:axel/limbas.git
-Tue Sep 6 18:58:47 2016 +0200 add gitignore
 Tue Sep 6 18:34:22 2016 +0200 fixes jquery dialog not positioning at center in firefox
 Tue Sep 6 13:56:02 2016 +0200 adding layout V3
 Tue Sep 6 13:52:22 2016 +0200 added lost files

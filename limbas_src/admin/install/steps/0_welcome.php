@@ -1,5 +1,5 @@
 <div class="alert alert-warning small" role="alert">
-    LIMBAS. Copyright &copy; 1998-2016 Axel Westhagen. Go to <a href="http://www.limbas.org/" target="new">http://www.limbas.org/</a> for details.
+    LIMBAS. Copyright &copy; 1998-2017 LIMBAS GmbH. Go to <a href="http://www.limbas.org/" target="new">http://www.limbas.org/</a> for details.
     LIMBAS comes with ABSOLUTELY NO WARRANTY; This is free software, and you are welcome to redistribute it under
     certain conditions. Extensions are copyright of their respective owners.                        
 </div>    

@@ -973,6 +973,34 @@ function form_text($key,$gformid,$pos,$style,$class,$ID,$gtabid){
 	echo "</DIV>";
 }
 
+
+#------------ workflow-history ---------------------
+function form_wflhist($key,$gformid,$pos,$style,$class,$ID,$gtabid){
+	global $gform;
+	$style = "STYLE=\"".$pos.$style."\"";
+
+	# get workflow id
+	$wfl_id = $gform[$gformid]['uform_typ'][$key];
+
+	# parse parameters
+    if($gform[$gformid]["parameters"][$key]){eval($gform[$gformid]["parameters"][$key]);}
+
+    # use global wfl instance
+    if(!$wfl_inst){$wfl_inst = $GLOBALS['wfl_inst'];}
+
+
+    if($wfl_id AND $wfl_inst){
+        require_once('extra/workflow/lwf.lib');
+
+    	echo "<DIV ID=\"element".$gform[$gformid]["fid"][$key]."\" $class $style>";
+    	echo lmb_wfl_printHistory($wfl_id, $wfl_inst);
+    	echo "</DIV>";
+    }
+}
+
+
+
+
 #------------ J Script ---------------------
 function form_js($key,$gformid,$pos,$style,$class,$ID,$gtabid){
 	global $gform;
@@ -984,8 +1012,7 @@ function form_js($key,$gformid,$pos,$style,$class,$ID,$gtabid){
 #------------ PHP Script ---------------------
 function form_php($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id,$tab_id,&$gresult){
 	global $gform;
-	global $lfel;
-
+	global $lfel;	
 	if($rtrn = eval($gform[$gformid]["inhalt"][$key])){
 		if($rtrn === true){$rtrn = '';}
 		if($event = dftyp_events(1,$gform[$gformid]["event"][$key],null,null,null,null,null,$null,$gtabid,null)){$style .= ";cursor:pointer;";}
@@ -1003,6 +1030,8 @@ function form_dbnew($key,$gformid,$pos,$style,$class,$ID,$gtabid){
 
 #------------ reminder ------------------
 function form_reminder($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id,$tab_id) {
+	global $gform;
+
     /* config syntax:
      *
      * datetime => string | e.g. '16.03.2016 22:44'
@@ -1022,9 +1051,9 @@ function form_reminder($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$fie
         'hidecurrent' => 1
     );
      */
-    
-    $defaults = json_encode($gform[$gformid]["parameters"][$key]);   
-    
+
+    $defaults = json_encode(eval($gform[$gformid]["parameters"][$key]));
+
     if($event = dftyp_events(1,$gform[$gformid][event][$key],null,null,null,null,null,$null,$gtabid,null)){$style .= ";cursor:pointer;";}
 	$style = "STYLE=\"".$pos.$style."\"";
     echo "{$gform[$gformid]["inhalt"][$key]}<i class=\"lmb-icon lmb-bell\" ID=\"element".$gform[$gformid]["fid"][$key]."\" $class $style $event onclick=\"limbasDivShowReminder(event,this,null,null,null,null,'" . htmlentities($defaults) . "');\" onmousedown=\"this.style.border='1px solid black';\" onmouseup=\"this.style.border='';\"></i>";

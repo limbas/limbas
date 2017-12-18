@@ -405,5 +405,10 @@ function uftyp_31($gtab_id,$field_id,$ID,&$change_value) {
 	return false;
 }
 
+/* -------------------------- Sync-Slave --------------------------------- */
+function uftyp_35($gtab_id,$field_id,$ID,&$change_value) {
+
+	return uftyp_1($gtab_id,$field_id,$ID,$change_value);
+}
 
 ?>

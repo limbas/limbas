@@ -407,8 +407,33 @@ function add_group($group_name,$group_beschr,$group_level,$use_parent_filesettin
 
 }
 
+
+/*------------------------------ Für alle Gruppen - Tabellen/Spalten-Rechte ------------------------------------*/
+function check_grouprights1All($showstatus=null){
+    global $db;
+    
+    $commit = false;
+	$sqlquery = "SELECT COUNT(*) AS ANZAHL FROM LMB_GROUPS";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = true;}
+	$num_group =  odbc_result($rs,"ANZAHL");
+    
+	$sqlquery = "SELECT GROUP_ID,NAME FROM LMB_GROUPS";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = true;}
+	while(odbc_fetch_row($rs)){
+		if(!check_grouprights1(odbc_result($rs,"GROUP_ID"),odbc_result($rs,"NAME"),$num_group,null,$showstatus)){
+		      $commit = true;
+		}
+	}
+	
+	return !$commit;
+
+}
+
+
 /*------------------------------ Tabellen/Spalten-Rechte ------------------------------------*/
-function check_grouprights1($group_id,$group_name="",$num_group=0,$check_table=0){
+function check_grouprights1($group_id,$group_name="",$num_group=0,$check_table=0,$showstatus=null){
 
 	global $db;
 	global $lang;
@@ -436,8 +461,10 @@ ORDER BY TAB_GROUP,TAB_ID";
 	}
 	$num_tab = $bzm;
 	
-	echo "<Script language=\"JavaScript\">showprocess('status_group','$group_name','');</Script>";
-	flush();ob_flush();
+	if($showstatus){
+    	echo "<Script language=\"JavaScript\">showprocess('status_group','$group_name','');</Script>";
+    	flush();ob_flush();
+	}
 	
 	if($group_id == 1){
 		$BOOL = LMB_DBDEF_TRUE;
@@ -450,9 +477,11 @@ ORDER BY TAB_GROUP,TAB_ID";
 	$bzm = 0;
     foreach($gtab['tab_id'] as $bzm => $tab_id) {      	   	
 
-		echo "<Script language=\"JavaScript\">showprocess('status_table','".$gtab['desc'][$bzm]."','');</Script>";
-		flush();ob_flush();
-		 
+        if($showstatus){
+		  echo "<Script language=\"JavaScript\">showprocess('status_table','".$gtab['desc'][$bzm]."','');</Script>";
+		  flush();ob_flush();
+        }
+        
 		/*------------------------------ Tabellenrechte ------------------------------------*/
 		$sqlquery = "SELECT ID FROM LMB_RULES_TABLES WHERE TAB_ID = ".$gtab['tab_id'][$bzm]." AND GROUP_ID = $group_id";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -460,11 +489,8 @@ ORDER BY TAB_GROUP,TAB_ID";
 			$NEXTID = next_db_id("LMB_RULES_TABLES");            
             $sqlquery1 = "INSERT INTO LMB_RULES_TABLES (ID,GROUP_ID,TAB_ID,TAB_GROUP,EDIT,LMVIEW,DEL,HIDE,LMADD,NEED,VIEW_FORM,VIEW_PERIOD) VALUES ($NEXTID,$group_id,".$gtab[tab_id][$bzm].",".$gtab[tab_group][$bzm].",$BOOL,$BOOL,$BOOL,$BOOL,$BOOL,".LMB_DBDEF_FALSE.",0,0)";
             $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-			#if($group_name){echo "<span style=\"width:100px;color:green\">$lang[983]</span><BR>\n";}
 		}
-		#else{
-			#if($group_name){echo "<span style=\"width:100px;color:orange\">$lang[986]</span><BR>\n";}
-		#}
+
             
 		/*------------------------------ Spaltenrechte ------------------------------------*/
 		$sqlquery = "SELECT * FROM LMB_CONF_FIELDS WHERE TAB_GROUP = ".$gtab[tab_group][$bzm]." AND TAB_ID = ".$gtab[tab_id][$bzm]." ORDER BY TAB_GROUP,TAB_ID,FIELD_ID";
@@ -477,39 +503,34 @@ ORDER BY TAB_GROUP,TAB_ID";
 				$NEXTID = next_db_id("LMB_RULES_FIELDS");				
 				$sqlquery3 = "INSERT INTO LMB_RULES_FIELDS (ID,GROUP_ID,TAB_GROUP,TAB_ID,FIELD_ID,LMVIEW,EDIT,COLOR,FILTER,SORT) VALUES ($NEXTID,$group_id,".$gtab[tab_group][$bzm].",".$gtab[tab_id][$bzm].",".odbc_result($rs,"FIELD_ID").",$BOOL,$BOOL,'','',0)";
 				$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
-				if($rs3){
-					#if($group_name){echo "<span style=\"width:200px;\">&nbsp;&nbsp;&nbsp;&nbsp;$lang[984] ".$lang[odbc_result($rs,"SPELLING")]."</span><span style=\"width:100px;color:green;\">$lang[983]</span><BR>\n";}
-				}
 			}
-			#else{
-				#if($group_name){echo "<span style=\"width:200px;\">&nbsp;&nbsp;&nbsp;&nbsp;$lang[984] ".$lang[odbc_result($rs,"SPELLING")]."</span><span style=\"width:100px;color:orange;\">$lang[986]</span><BR>\n";}
-			#}
 		$bzm1++;
 		}
 		
-	$bzm++;
-	$num++;
-	if($group_name AND $num_group){
-		echo "<Script language=\"JavaScript\">
-		showprocess('overall','".(($num*500)/($num_tab*$num_group))."','width');
-		//document.body.scrollTop='99999';
-		</Script>";
-		flush();ob_flush();
-	}
+    	$bzm++;
+    	$num++;
+    	if($showstatus AND $group_name AND $num_group){
+    		echo "<Script language=\"JavaScript\">
+    		showprocess('overall','".(($num*500)/($num_tab*$num_group))."','width');
+    		//document.body.scrollTop='99999';
+    		</Script>";
+    		flush();ob_flush();
+    	}
 	}
 }
 
 /*------------------------------ Tabellen/Spalten-Rechte / Übernehme Rechte von Obergruppe ------------------------------------*/
-function check_grouprights2($group_id,$group_name="",$num_group=0){
+function check_grouprights2($group_id,$group_name="",$num_group=0,$showstatus=null){
 	global $db;
 	global $lang;
 	global $num_tab;
 	global $farbschema;
 	global $num;
 	
-	#if($group_name){echo "<span style=\"width:500px;background-color:".$farbschema[WEB6].";\">$lang[981] <B>$group_name</B></span><BR>";}
-	echo "<Script language=\"JavaScript\">showprocess('status_group','$group_name','');</Script>";
-			
+	if($showstatus){
+	   echo "<Script language=\"JavaScript\">showprocess('status_group','$group_name','');</Script>";
+	}
+	
 	$sqlquery = "SELECT LEVEL FROM LMB_GROUPS WHERE GROUP_ID = $group_id";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(odbc_result($rs, "LEVEL")){$group_level = odbc_result($rs, "LEVEL");}else{$group_level = 1;}
@@ -532,7 +553,7 @@ function check_grouprights2($group_id,$group_name="",$num_group=0){
 		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);			
 	$bzm++;
 	}
-	#if($group_name){echo "<span style=\"width:200px;\">&nbsp;&nbsp;<B>$bzm</B>&nbsp;$lang[982] </span><span style=\"width:100px;color:green;\">$lang[983]</span><BR>\n";}
+
             
 	/*------------------------------ Spaltenrechte ------------------------------------*/
 	$sqlquery = "DELETE FROM LMB_RULES_FIELDS WHERE GROUP_ID = $group_id";
@@ -550,17 +571,35 @@ function check_grouprights2($group_id,$group_name="",$num_group=0){
 		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 	$bzm++;
 	}
-	#if($group_name){echo "<span style=\"width:200px;\">&nbsp;&nbsp;<B>$bzm</B>&nbsp;$lang[984] </span><span style=\"width:100px;color:green;\">$lang[983]</span><BR>\n";}
+
 
 	$num++;
-	if($group_name AND $num_group){
+	
+	if($showstatus AND $group_name AND $num_group){
 		echo "<BR>
 		<Script language=\"JavaScript\">showprocess('overall','".(($num*500)/($num_group))."','width')</SCRIPT>";
 	}
 }
 
+
+function check_grouprightsAll($showstatus=null){
+    global $db;
+    
+    $sqlquery = "Select COUNT(*) AS ANZAHL from LMB_GROUPS";
+    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $num_group = odbc_result($rs,"ANZAHL");
+
+	$sqlquery = "SELECT GROUP_ID,NAME FROM LMB_GROUPS";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(odbc_fetch_row($rs)) {
+		check_grouprights(odbc_result($rs,"GROUP_ID"),odbc_result($rs,"NAME"),$num_group,$showstatus);
+		del_grouprights(odbc_result($rs,"GROUP_ID"),odbc_result($rs,"NAME"),$num_group);
+	}
+    
+}
+
 /*------------------------------ Menue-Rechte ------------------------------------*/
-function check_grouprights($groupid,$groupname="",$num_group=0){
+function check_grouprights($groupid,$groupname="",$num_group=0,$showstatus=null){
 	global $db;
 	global $bzm5;
 	global $lang;
@@ -568,8 +607,7 @@ function check_grouprights($groupid,$groupname="",$num_group=0){
 	if($groupid){
 		$group_name = $groupname;
 
-		if($GLOBALS["action"] AND $group_name){
-			#echo "<div><B><U>$lang[1042] ".$group_name."</U></B></div>";
+		if($showstatus AND $GLOBALS["action"] AND $group_name){
 			echo "<Script language=\"JavaScript\">showprocess('status_group','$group_name','');</Script>";
 		}
 
@@ -591,18 +629,11 @@ function check_grouprights($groupid,$groupname="",$num_group=0){
 			$bzm++;
 		}
 
-		if($GLOBALS["action"] AND $group_name){
-			#if($add_link > 0){
-				#echo "<span style=\"width:200px\"><FONT COLOR=\"#339900\"><U>$add_link</U> $lang[1043]</FONT></span><BR>";
-			#}
-			#if($change_link > 0){
-				#echo "<span style=\"width:200px\"><FONT COLOR=\"#339900\"><U>$change_link</U> $lang[1044]</FONT></span><BR>";
-			#}
-
-			$progress_last = round(($bzm5)*100/$num_group);
-			echo "\n<script language=\"javascript\" type=\"text/javascript\">//<!--\nshowprogress('overall','$progress_last','width');\n//--></script>\n";
-			flush();
-			ob_flush();
+		if($showstatus AND $GLOBALS["action"] AND $group_name){
+    		$progress_last = round(($bzm5)*100/$num_group);
+    		echo "\n<script language=\"javascript\" type=\"text/javascript\">//<!--\nshowprogress('overall','$progress_last','width');\n//--></script>\n";
+    		flush();
+    		ob_flush();
 		}
 	}
 	$bzm5++;
@@ -634,9 +665,5 @@ function del_grouprights($groupid,$groupname="",$num_group=0){
 		}
 		$bzm++;
 	}
-
-	#if($GLOBALS["action"] AND $group_name){
-		#if($del_link > 0){echo "<span style=\"width:200px\"><FONT COLOR=\"#339900\"><U>$del_link</U> $lang[1045]</FONT></span><BR>";}
-	#}
 }
 ?>

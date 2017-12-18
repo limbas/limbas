@@ -22,28 +22,15 @@ function explContextDetail(){
 	global $lang;
 	echo "\n\n<DIV ID=\"limbasDivMenuExplContext\" class=\"lmbContextMenu\" style=\"position: absolute;visibility:hidden;z-index:99994;\" OnClick=\"activ_menu = 1;\">";
 	pop_top('limbasDivMenuExplContext');
-
-	pop_left();
-	echo "<a href=\"#\" OnClick=\"LmEx_divclose();open('main.php?'+jsvar['SID']+'&action=explorer_detail&level='+jsvar['level']+'&LID='+jsvar['LID']+'&ID=' + LmEx_edit_id + '' ,'Info','toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650');\">&nbsp;".$lang[1693]."</a>";
-	pop_right();
+	pop_menu2("&nbsp;".$lang[1693], null, null, null, null, "LmEx_divclose();open('main.php?'+jsvar['SID']+'&action=explorer_detail&level='+jsvar['level']+'&LID='+jsvar['LID']+'&ID=' + LmEx_edit_id + '' ,'Info','toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650');\"");
 	pop_submenu(203,'','');	#konvertieren
 	pop_line();
-	pop_left();
-	echo "<a href=\"#\" OnClick=\"LmEx_divclose();open('main.php?'+jsvar['SID']+'&action=download&ID=' + LmEx_edit_id ,'download','toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650');\">&nbsp;".$lang[2321]."</a>";
-	pop_right();
-	pop_left();
-	echo "<a href=\"#\" OnClick=\"LmEx_divclose();document.location.href='main.php?&action=download&ID=' + LmEx_edit_id + '&sendas=a';\">&nbsp;".$lang[2322]."</a>";
-	pop_right();
+    pop_menu2("&nbsp;".$lang[2321], null, null, null, null, "LmEx_divclose();open('main.php?'+jsvar['SID']+'&action=download&ID=' + LmEx_edit_id ,'download','toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650');\"");
+    pop_menu2("&nbsp;".$lang[2322], null, null, null, null, "LmEx_divclose();document.location.href='main.php?&action=download&ID=' + LmEx_edit_id + '&sendas=a';\"");
 	pop_line();
-	pop_left();
-	echo "<a href=\"#\" OnClick=\"LmEx_divclose();LmEx_dynsearchGet(event,'files_meta_'+LmEx_edit_id,'fileMetaInfo',LmEx_edit_id,0);\">&nbsp;".$lang[2323]."</a>";
-	pop_right();
-	pop_left();
-	echo "<a href=\"#\" OnClick=\"LmEx_divclose();LmEx_dynsearchGet(event,'files_meta_'+LmEx_edit_id,'fileIndizeInfo',LmEx_edit_id,0);\">&nbsp;".$lang[2324]."</a>";
-	pop_right();
-	pop_left();
-	echo "<a href=\"#\" OnClick=\"LmEx_divclose();LmEx_dynsearchGet(event,'files_meta_'+LmEx_edit_id,'fileVersioningInfo',LmEx_edit_id,0);\">&nbsp;".$lang[2325]."</a>";
-	pop_right();
+    pop_menu2("&nbsp;".$lang[2323], null, null, null, null, "LmEx_divclose();LmEx_dynsearchGet(event,'files_meta_'+LmEx_edit_id,'fileMetaInfo',LmEx_edit_id,0);\"");
+    pop_menu2("&nbsp;".$lang[2324], null, null, null, null, "LmEx_divclose();LmEx_dynsearchGet(event,'files_meta_'+LmEx_edit_id,'fileIndizeInfo',LmEx_edit_id,0);\"");
+    pop_menu2("&nbsp;".$lang[2325], null, null, null, null, "LmEx_divclose();LmEx_dynsearchGet(event,'files_meta_'+LmEx_edit_id,'fileVersioningInfo',LmEx_edit_id,0);\"");
 	pop_bottom();
 	echo "</DIV>\n\n";
 }
@@ -172,8 +159,20 @@ function explFolders($LID,$fid,$MID,$level,&$ffilter,$redirect=null,$rootlevel=n
 		foreach($filestruct["id"] as $key => $value){
 			if($filestruct["level"][$key] == $LID AND $filestruct["view"][$key]){
 				if($redirect){$redirect_ = "LmExt_Ex_SelectFolder(".$key.",".$redirect.")";}else{$redirect_ = "LmEx_select_folder(event,'$key')";}
-				if($filestruct["readonly"][$key] OR ($action != "message_main" AND $filestruct[typ][$key] == 2)){$filterpic = "4";}elseif($filestruct[filter][$key] == 2){$filterpic = "3";}else{$filterpic = "2";}
-				echo "<TR class=\"gtabBodyTR\" ID=\"elline_f_".$LID."_".$key."\" STYLE=\"cursor:pointer;\" OnClick=\"LmEx_activate_file(event,'$key','".$filestruct["name"][$key]."','$LID','f')\" OnDblClick=\"$redirect_;\" OnMouseOver=\"LmEx_explorerLineOver(this,$key,1,'$LID','f')\" OnMouseOut=\"LmEx_explorerLineOver(this,$key,2,'$LID','f')\">";
+				#if($filestruct["readonly"][$key] OR ($action != "message_main" AND $filestruct[typ][$key] == 2)){$filterpic = "4";}elseif($filestruct[filter][$key] == 2){$filterpic = "3";}else{$filterpic = "2";}
+                # switch folder type
+                if ($filestruct['typ'][$key] == 1) { // public directory
+                    $filterpic = '4'; // black
+                } else if ($filestruct['typ'][$key] == 3) { // tables
+                    $filterpic = '2'; // gray
+                } else if ($filestruct['typ'][$key] == 4) { // user directory
+                    $filterpic = '4'; // black
+                } else if ($filestruct['typ'][$key] == 5) { // reports
+                    $filterpic = '5'; // blue
+                } else if ($filestruct['typ'][$key] == 7) { // table relation
+                    $filterpic = '3'; // green
+                }
+                echo "<TR class=\"gtabBodyTR\" ID=\"elline_f_".$LID."_".$key."\" STYLE=\"cursor:pointer;\" OnClick=\"LmEx_activate_file(event,'$key','".$filestruct["name"][$key]."','$LID','f')\" OnDblClick=\"$redirect_;\" OnMouseOver=\"LmEx_explorerLineOver(this,$key,1,'$LID','f')\" OnMouseOut=\"LmEx_explorerLineOver(this,$key,2,'$LID','f')\">";
 				echo "<TD class=\"gtabBodyTD\" NOWRAP ALIGN=\"LEFT\" STYLE=\"height:18px;\" colspan=\"$colspan\"><DIV ID=\"to_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;width:".$ffilter["rowsize"][$LID][1]."px;\"><i class=\"lmb-icon lmb-folder" .$filterpic. "-closed\" BORDER=\"0\"></i>&nbsp;&nbsp;".$filestruct["name"][$key]."</DIV></TD>";
                                 echo "<INPUT TYPE=\"HIDDEN\" NAME=\"activelist[f][$LID][$key]\" STYLE=\"border:none;background-color:transparent;\" ID=\"filestatus_f_".$LID."_".$key."\" VALUE=\"0\">";
 				echo "</TR>";
@@ -454,7 +453,7 @@ function explMainContent($ID,$LID,$MID,$fid,$typ,$level,$file_url,&$ffile,&$ffil
 		#	echo "</TD></TR></TABLE></TD></TR>";
 		if($ffilter["viewmode"][$LID] == 3){
 			echo "<TR><TD COLSPAN=\"".count($gfile['show'][$LID])."\">";
-			explPicSummery($ffile,0,0,0,0,0,0);
+			explPicSummery($ffile,0,0,0,0,0);
 			echo "</TD></TR>";
 		}else{
 			explFiles($LID,$fid,$level,$ffile,$ffilter);

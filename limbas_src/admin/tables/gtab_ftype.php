@@ -157,6 +157,8 @@ function ajaxEditFieldPost(result){
 	element.innerHTML = result;
 	limbasSetCenterPos(element);
 	element.style.left = '180px';
+	ajaxEvalScript(result);
+	
 	//hide_selects(1);
 }
 
@@ -350,7 +352,8 @@ if($table_gtab[$bzm]) {
 	<input type="hidden" name="quicksearch"> <input type="hidden" name="view_rule"> 
 	<input type="hidden" name="edit_rule"> <input type="hidden" name="ajaxsave">
 	<input type="hidden" name="collreplace">
-
+	<input type="hidden" name="solve_dependency">
+	
 	<div class="lmbPositionContainerMain">
 
 		<TABLE class="tabfringe" BORDER="0" cellspacing="1" cellpadding="2">
@@ -428,6 +431,7 @@ if($table_gtab[$bzm]) {
                     echo "</TD>";
                 }
             }
+            if($result_fieldtype[$table_gtab[$bzm]]["view_dependency"][$bzm1]){$color = '#d041f4';}else{$color = 'blue';}
             ?>
             
             <TD VALIGN="TOP"
@@ -437,7 +441,7 @@ if($table_gtab[$bzm]) {
 					OnMouseDown="aktivate('<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>');">
 					<SPAN
 					ID="field<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>"
-					STYLE="position: relative; top: 0; left: 0; cursor: n-resize; color: blue">
+					STYLE="position: relative; top: 0; left: 0; cursor: n-resize; color: <?=$color?>">
             <?echo $result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1];?>
             </SPAN>&nbsp;
 				</TD>
@@ -612,7 +616,6 @@ if($table_gtab[$bzm]) {
 
             /* --- Konvertieren --------------------------------------- */
            # if(!$isview){
-	       		
 	       		if($isview){
 					$result_type_allow_convert_ = array(1,5);
 					$result_type_deny_convert_ = array(22);
@@ -736,7 +739,7 @@ if($table_gtab[$bzm]) {
             # --- unique ------
             if(!$isview){
 	            echo "<TD  VALIGN=\"TOP\" ALIGN=\"CENTER\">";
-	            if(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][$bzm1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 15 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 12 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 18 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 6 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 10 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 9 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 13 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 3 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 19){
+	            if(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][$bzm1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 15 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 12 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 18 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 10 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 9 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 13 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 3 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 19){
 	            	if($result_fieldtype[$table_gtab[$bzm]]["unique"][$bzm1] == 1){$unique = "CHECKED";}else{$unique = "";}
 	            	echo "<CENTER><INPUT TYPE=\"CHECKBOX\" $unique NAME=\"UNIQUE_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" OnCLICK=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."'; this.form.uniquefield.value='uniquefield_$unique'; this.form.submit();\"></CENTER>";}
 	            echo "</TD>";
@@ -824,14 +827,21 @@ if($table_gtab[$bzm]) {
 		$sqlquery =  "SELECT VERKNPARAMS FROM LMB_CONF_FIELDS WHERE UPPER(MD5TAB) = '".lmb_strtoupper($table_gtab[$bzm])."' AND VERKNPARAMS > 0";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(odbc_result($rs, "VERKNPARAMS")){$verknparams = array(1,2,3,4,5,7,8,10,14,15,18,21);}
-		
+		$headerIds = array(1, 18, 48);
+
 		# Feldtypen
 		foreach ($result_type["id"] as $key => $value){
 			if($result_type["id"][$key] == 49 AND !$tab_versioning[$atid]){continue;}
 			if($verknparams AND !in_array($result_type["field_type"][$key],$verknparams)){continue;}
 			if($result_type["hassize"][$key]){$hs = "ID=\"".$result_type["size"][$key]."\"";}else{$hs = "";}
+			if(in_array($key, $headerIds)) {
+                if ($key != $headerIds[0]) { echo "</OPTGROUP>"; }
+                echo "<OPTGROUP label=\"" . $result_type["beschreibung"][$key] . "\">";
+                continue;
+            }
 			echo "<OPTION VALUE=\"".$result_type["id"][$key]."\" $hs>".$result_type["beschreibung"][$key]."</OPTION>";
 		}
+		echo "</OPTGROUP>";
 		?>
 		</SELECT>
 
@@ -879,13 +889,10 @@ if($table_gtab[$bzm]) {
 		}
 		?>
 	    </TD>
-
 				<TD VALIGN="TOP"><input type="text" id="typ_size" name="typ_size"
 					style="width: 40px; visibility: hidden"></TD>
 
-
 				<TD COLSPAN="14" VALIGN="TOP">
-
 					<table>
 						<tr>
 							<td valign=top><INPUT TYPE="submit" NAME="add"
@@ -893,8 +900,7 @@ if($table_gtab[$bzm]) {
 							<td><table cellpadding="0" cellspacing="0">
 									<tr>
 										<td valign="center"><?=$lang[1263]?></td>
-										<td><INPUT TYPE="CHECKBOX" NAME="add_permission" VALUE="1"
-											STYLE="border: none; background-color: transparent" CHECKED></td>
+										<td><INPUT TYPE="CHECKBOX" NAME="add_permission" VALUE="1" STYLE="border: none; background-color: transparent" CHECKED></td>
 									</tr>
 								</table></td>
 

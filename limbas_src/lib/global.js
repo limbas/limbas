@@ -18,6 +18,10 @@
  */
 
 // change focus before sending document
+
+
+
+
 function set_focus() {
 	if(browser_ie){
 		window.focus();
@@ -288,7 +292,7 @@ function limbasGlobalIsValueInSelect(selectName,value)
 		list = document.getElementsByName(selectName)[0];
 	}
 	else
-		return false
+		return false;
 
 	for(i=0;i<list.options.length;i++)
 		if(list.options[i].value == value)
@@ -327,7 +331,7 @@ function limbasGlobalGetIndexofValueInSelect(selectName,value)
 	}else if(document.getElementsByName(selectName)){
 		list = document.getElementsByName(selectName)[0];
 	}else
-		return -1
+		return -1;
 
 	for(i=0;i<list.options.length;i++)
 		if(list.options[i].value == value)
@@ -344,11 +348,11 @@ function browserType() {
 	
 
   this.version = navigator.appVersion;			        //Version string
-  this.dom=document.getElementById?1:0			                //w3-dom
+  this.dom = document.getElementById ? 1 : 0;			                //w3-dom
   if(this.dom){
 
-	browser_ns5=(this.version.indexOf('MSIE ') == -1)?1:0 //Mozilla / IE >= 10
-	browser_ie=(this.version.indexOf('MSIE ') > -1)?5:0	  //IE < 10
+	browser_ns5=(this.version.indexOf('MSIE ') == -1)?1:0; //Mozilla / IE >= 10
+	browser_ie=(this.version.indexOf('MSIE ') > -1)?5:0;	  //IE < 10
 	
 	if(this.version.indexOf('MSIE 8') > -1){
 		browser_ie = 8;
@@ -373,6 +377,28 @@ function showAlert(val) {
 	alert(val);
 }
 
+function showAlertXXX(output_msg, title_msg)
+{
+    if (!title_msg)
+        title_msg = 'Info';
+
+    if (!output_msg)
+        return;
+    
+    output_msg = output_msg.replace('\n','<br>');
+
+    $("<div></div>").html(output_msg).dialog({
+        title: title_msg,
+        resizable: false,
+        modal: true,
+        buttons: {
+            "Ok": function() 
+            {
+                $( this ).dialog( "destroy" );
+            }
+        }
+    });
+}
 
 
 
@@ -534,7 +560,7 @@ function ajaxGet(evt,url,actid,parameters,functionName,formname,tocontainer,sync
 
 		if(!syncron){syncron = true;}else{syncron = false;}
 		xmlhttp.open("POST", url,syncron);
-		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded')
+		xmlhttp.setRequestHeader('Content-Type','application/x-www-form-urlencoded');
 		xmlhttp.onreadystatechange = function(){
 			if(xmlhttp.readyState == 4){
 				if(functionName == undefined){
@@ -563,7 +589,7 @@ function ajaxGet(evt,url,actid,parameters,functionName,formname,tocontainer,sync
 					document.body.style.cursor = 'default';
 				}
 			}
-		}
+		};
 		xmlhttp.send(query);
 	}
 
@@ -636,7 +662,7 @@ function ajaxContainerPost(string,container)
 navigator.hasxmlProgress= (function(){
 	var r= window.XMLHttpRequest && new window.XMLHttpRequest() || '';
 	return 'onprogress' in r;
-})()
+})();
 
 
 
@@ -879,7 +905,7 @@ function lmb_datepicker(event,showsat,formname,value,dateformat,left,selected) {
 	var showtime = false;
 	var timeformat = '';
 	
-	pos = dateformat.indexOf(':')
+	pos = dateformat.indexOf(':');
 	if (pos > 0){
 		timeformat = dateformat.substr(pos-2,8);
 		dateformat = dateformat.substr(0,pos-3);
@@ -1167,7 +1193,10 @@ function limbasDivClose(parent){
 	}else{
 		var id=0;
 		var closeThemAll = false;
-		var popNumber = 0;
+        if ((typeof parent === 'string') && $('#'+parent).is(':hidden')) {
+			closeThemAll = true; // if parent isn't visible, call might come from a button (, not a context menu entry) -> close all other open menus
+        }
+        var popNumber = 0;
 		for(i=0;i<limbasDivCloseTab.length;i++){
 			divToClose = limbasDivCloseTab[i];
 			if(closeThemAll){
@@ -1376,6 +1405,7 @@ function limbasDivShow(el,parent,child,slide,display,abs,center,puttotop)
             
             // move it by its width to the left of the parent
             offset = $('#'+child).offset();
+            var initialLeft = offset.left;
             offset.left = $(parel).offset().left - $('#'+child).outerWidth(true) + 8; // 8px to get overlap effect
             $('#'+child).offset(offset);
             
@@ -1383,14 +1413,22 @@ function limbasDivShow(el,parent,child,slide,display,abs,center,puttotop)
             offset.left = $(parel).offset().left - $('#'+child).outerWidth(true) + 8;
             $('#'+child).offset(offset);
             
+            // prevent element to move outside the window to the left
+            if (offset.left < 5) {
+                offset.left = initialLeft;
+                $('#'+child).offset(offset);
+            }
+            
             $('#'+child).css('visibility', 'visible');
-        }        
+        }   
+        // move to top
         if(parel && !center && oldHeight < $(document).height()) {
             $('#'+child).css('visibility', 'hidden');
             
             // move it by its height upwards, maintain baseline with parent contextmenu entry
             offset = $('#'+child).offset();
             offset.top -= $('#'+child).outerHeight(true) - limbasGetElementHeight(typeof(el)=="string" ? document.getElementById(el) : el);
+            offset.top = Math.max(5, offset.top); // prevent element to move outside the window upwards
             $('#'+child).offset(offset);
             
             // TODO maybe do it twice here, too
@@ -1480,7 +1518,7 @@ function hide_selects(act){
 		this.add = limbasDictionaryAdd;
 		this.get = limbasDictionaryGet;
 		this.getKeys = limbasDictionaryGetKeys;
-		this.remove = limbasDictionaryRemove
+		this.remove = limbasDictionaryRemove;
 		this.MD5limbasKeys = new Array();
 
 		for (var c=0; c < limbasDictionary.arguments.length; c+=2) {
@@ -1727,7 +1765,7 @@ var lmb_hirarrules='';
 // parameter : free parameters seperate with ","
 function lmbAjax_showUserGroups(el,gtabid,ID,usefunction,parentel,parameter){
 	actid = "showUserGroups&gtabid=" + gtabid + "&ID=" + ID + "&usefunction=" + usefunction + "&parameter=" + parameter;
-	mainfunc = function(result){lmbAjax_showUserGroupsPost(result,el,parentel);}
+	mainfunc = function(result){lmbAjax_showUserGroupsPost(result,el,parentel);};
 	ajaxGet(null,"main_dyns.php",actid,null,"mainfunc");
 }
 
@@ -1738,7 +1776,7 @@ function lmbAjax_showUserGroupsPost(result,el,parentel){
 
 function lmbAjax_showUserGroupsSearch(evt,value,ID,gtabid,fieldid,usefunction,prefix,typ,parameter){
 	actid = "showUserGroupsSearch&gtabid=" + gtabid + "&fieldid=" + fieldid + "&ID=" + ID + "&value=" +value+ "&usefunction=" + usefunction + "&typ=" + typ + "&parameter=" + parameter;
-	mainfunc = function(result){lmbAjax_showUserGroupsSearchPost(result,evt,typ,usefunction,prefix);}
+	mainfunc = function(result){lmbAjax_showUserGroupsSearchPost(result,evt,typ,usefunction,prefix);};
 	ajaxGet(null,"main_dyns.php",actid,null,"mainfunc");
 }
 

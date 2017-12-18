@@ -121,7 +121,7 @@ if (lmb_substr($action, 0, 4) == "gtab") {
 }
 
 if ($action == "gtab_change" and $LINK[$action] != 1) {
-    $action == "gtab_deterg";
+    $action = "gtab_deterg";
 }
 
 // body Layout
@@ -143,10 +143,10 @@ if ($action == "layoutframe") {
     if (file_exists("layout/" . $session["layout"] . "/top.php")) {
         $require2 = "layout/" . $session["layout"] . "/top.php";
     }
-    $projekt_file = array(
-        1,
-        2
-    );
+    #$projekt_file = array(
+    #    1,
+    #    2
+    #);
     //$STYLE = "border-top:1px solid black;";
     $GLOBALS["ltmp"]["history_action"] = 1;
     $bodyclass = "top";
@@ -456,6 +456,15 @@ elseif ($action == "kalender" and $LINK[$action] == 1) {
     $require3 = "extra/calendar/fullcalendar/cal.dao";
     $require4 = "extra/calendar/fullcalendar/cal.php";
     $ONCLICK = "OnClick=\"body_click();\"";
+}/* ---------------------- Kanban -------------------------- */
+elseif ($action == "kanban") {// and $LINK[$action] == 1) {
+    $require1 = "gtab/html/gtab_erg.lib";
+    $require2 = "gtab/gtab_type.lib";
+    $require3 = "gtab/gtab.lib";
+    $require4 = "gtab/gtab_type_erg.lib";
+    $require5 = "extra/kanban/kanban.dao";
+    $require6 = "extra/kanban/kanban.php";
+    $ONCLICK = "OnClick=\"body_click();\"";
 }
 
 /* ---------------------- userstat -------------------------- */
@@ -564,12 +573,12 @@ if ($BODY != 1) {
 <!-- meta -->
 <META NAME="Title"
 	CONTENT="Limbas Enterprise Unifying Framework V <?=$umgvar["version"]?>">
-<meta NAME="author" content="Axel Westhagen">
-<META NAME="Publisher" CONTENT="Axel Westhagen">
-<META NAME="Copyright" CONTENT="Axel Westhagen">
+<meta NAME="author" content="LIMBAS GmbH">
+<META NAME="Publisher" CONTENT="LIMBAS GmbH">
+<META NAME="Copyright" CONTENT="LIMBAS GmbH">
 <meta NAME="description" content="Enterprise Unifying Framework">
 <meta NAME="version" content="<?=$umgvar["version"]?>">
-<meta NAME="date" content="2010-03-05">
+<meta NAME="date" content="2017-10-23">
 <meta HTTP-EQUIV="content-language" content="de">
 <meta HTTP-EQUIV="Content-Type"
 	content="text/html; charset=<?=$umgvar["charset"]?>">
@@ -586,7 +595,7 @@ if ($BODY != 1) {
 <script type="text/javascript" src="extern/jquery/jquery-1.11.0.min.js"></script>
 
 <?php
-    if ($action == "gtab_erg" or $action == "gtab_change" or $action == "gtab_deterg" or $action == "gtab_neu" or $action == "gtab_search" or $action == "gtab_form" or $action == "diag_erg" or $action == "diag_erg" or $action == "explorer_tree" or $action == "explorer_main" or $action == "message_detail" or $action == "message_main" or $action == "message_tree" or $action == "kalender") {
+    if ($action == "gtab_erg" or $action == "gtab_change" or $action == "gtab_deterg" or $action == "gtab_neu" or $action == "gtab_search" or $action == "gtab_form" or $action == "diag_erg" or $action == "diag_erg" or $action == "explorer_tree" or $action == "explorer_main" or $action == "message_detail" or $action == "message_main" or $action == "message_tree" or $action == "kalender" or $action == "kanban") {
         echo "
 	<script type=\"text/javascript\" src=\"extra/explorer/file-cache.js\"></script>\n
 	<script type=\"text/javascript\" src=\"EXTENSIONS/system/ext.js\"></script>\n
@@ -612,6 +621,15 @@ if ($BODY != 1) {
 	<link rel='stylesheet' type='text/css' href='extern/fullcalendar/fullcalendar.print.css' media='print' />
 	<script type='text/javascript' src='extern/fullcalendar/fullcalendar.js'></script>
 	<script type='text/javascript' src='extra/calendar/fullcalendar/cal.js'></script>  
+	";
+    }
+    
+    if ($action == "kanban") {
+        echo "
+	<script type=\"text/javascript\" src=\"gtab/html/gtab.js\"></script>\n
+	<script type=\"text/javascript\" src=\"gtab/html/gtab_change.js\"></script>\n
+    <link rel='stylesheet' type='text/css' href='extra/kanban/kanban.css' />
+	<script type='text/javascript' src='extra/kanban/kanban.js'></script>  
 	";
     }
     

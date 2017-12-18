@@ -61,7 +61,7 @@ function olEvent() {
 			el.style.top = y +'px';
 			el.style.display = 'block';
 		}
-	}
+	};
 	
 	this.center = function(el){
 		el.style.display = 'block';
@@ -69,7 +69,7 @@ function olEvent() {
 		var w = document.body.scrollLeft+document.body.clientWidth;
 		var x = (w-el.offsetWidth) >> 1;
 
-		var y = document.body.scrollTop + ((document.body.clientHeight-el.offsetHeight)>>1)
+		var y = document.body.scrollTop + ((document.body.clientHeight-el.offsetHeight)>>1);
 
 		if (x < 0) x = 0;
 		if (y < 0) y = 0;

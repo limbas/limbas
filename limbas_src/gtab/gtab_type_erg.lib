@@ -555,6 +555,40 @@ function cftyp_16($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
         }
 }
 
+# -------------------------- Farbauswahl -- Sync-Slave ---------------------------------
+function cftyp_35($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
+        global $db;
+        global $gtab;
+        global $gfield;
+        static $lmb_sync_slaves;
+        
+        if(!$lmb_sync_slaves){
+    	$sqlquery = "SELECT ID,NAME,SLAVE_URL FROM LMB_SYNC_SLAVES ORDER BY NAME";
+    	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    	while(odbc_fetch_row($rs)){
+    	   $lmb_sync_slaves[odbc_result($rs, 'ID')] = odbc_result($rs, 'NAME');
+    	}
+        }
+        
+        $events = cftyp_events($typ, $event, null, $gresult, $gtabid, $field_id, $bzm);
+        if($typ == 1){
+    		echo "<SELECT CLASS=\"gtabBodyINP\" ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%;\" $events><OPTION></OPTION>";
+            foreach ($lmb_sync_slaves as $key => $value){
+                echo "<OPTION value=\"$key\" ";
+                if($key == $gresult[$gtabid][$field_id][$bzm]){echo "selected";}
+                echo ">$value</OPTION>";
+            }
+            echo "</SELECT>";
+
+        }elseif($typ == 2){
+        	echo "<span $events style=\"$style\">".htmlentities($lmb_sync_slaves[$gresult[$gtabid][$field_id][$bzm]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."&nbsp;</span>";
+        }elseif($typ == 3 OR $typ == 4){
+        	return htmlentities($lmb_sync_slaves[$gresult[$gtabid][$field_id][$bzm]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+        }else{
+        	return $gresult[$gtabid][$field_id][$bzm];
+        }
+}
+
 # -------------------------- Select -- field_type 4 ---------------------------------
 function cftyp_9($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
         global $gtab;
@@ -802,13 +836,13 @@ function cftyp_12($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
  * @param unknown $typ
  * @param unknown $gresult
  * @param string $event
+ * @param int $viewmode 1=short,2=long,3=first,4=last
  * @return string
  */
 
-function cftyp_14_gresult($bzm, $field_id, $gtabid, $typ, &$gresult, $event = null){
+function cftyp_14_gresult($bzm, $field_id, $gtabid, $typ, &$gresult, $event = null, $viewmode = null){
     global $gtab;
     global $gfield;
-    #global $filter;
 
     $ID = $gresult[$gtabid]["id"][$bzm];
     $verkn = set_verknpf($gtabid, $field_id, $ID, 0, 0, 1, 1);
@@ -821,8 +855,18 @@ function cftyp_14_gresult($bzm, $field_id, $gtabid, $typ, &$gresult, $event = nu
         $afieldlist[$linklevel["tabid"]] = $showfields;
     }
     
+    
+    // viewmode
+    if($viewmode == 3){
+        $extension["order"][0] = $gfield[$gtabid]["md5tab"][$field_id].".ERSTDATUM ASC";
+        $extension['limit'][$vgtabid] = 1;
+    }elseif($viewmode == 4){
+        $extension["order"][0] = $gfield[$gtabid]["md5tab"][$field_id].".ERSTDATUM DESC";
+        $extension['limit'][$vgtabid] = 1;
+    }
+
     // relation gresult
-    $vgresult = sql_14_c($vgtabid, $verkn, $linklevel, null, null, null, $afieldlist);
+    $vgresult = sql_14_c($vgtabid, $verkn, $linklevel, null, null, null, $afieldlist, $extension);
 
     // view all relations
     if ($vgresult[$vgtabid]['id']) {
@@ -911,7 +955,7 @@ function cftyp_14($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$dest_formid
 	    if($typ == 1 AND $gfield[$gtabid]["unique"][$field_id] AND $gfield[$gtabid]["artleiste"][$field_id]){
 		    dftyp_14($ID,$gresult,$field_id,$gtabid,null,null,null,$typ,null,$event,null,-1,$dest_formid);
 	    // show rowcount
-	    }elseif($rscount > 1 AND $gfield[$gtabid]["listing_viewmode"][$field_id] != 2){
+	    }elseif($rscount > 1 AND ($gfield[$gtabid]["listing_viewmode"][$field_id] == 1 OR !$gfield[$gtabid]["listing_viewmode"][$field_id])){
 			$event2["click"] = "newwin5('".$gfield[$gtabid]["verkntabid"][$field_id]."','".$gtabid."','".$gfield[$gtabid]["field_id"][$field_id]."','".$gresult[$gtabid]["id"][$bzm]."')";
 			$events = cftyp_events(0,$event,$event2,$gresult,$gtabid,$field_id,$bzm);
 			echo "<a $events>".$rscount."&nbsp;$lang[86]</a>";
@@ -920,7 +964,7 @@ function cftyp_14($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$dest_formid
 				echo "&nbsp;<i border=\"0\" onclick=\"LmExt_RelationList(this,'$gtabid','$field_id','$ID')\" style=\"cursor:pointer;vertical-align:top;\" class=\"lmb-icon lmb-edit-caret\" title=\"".$gfield[$gtabid]['spelling'][$field_id].' -> '.$gresult[$gtabid][$gfield[$gtabid]["mainfield"]][$bzm]."\"></i>";
 			}
 	    // show details in cell (single or listing_viewmode == 2)
-		}elseif($vvalue = cftyp_14_gresult($bzm,$field_id,$gtabid,$typ,$gresult,$event)){
+		}elseif($vvalue = cftyp_14_gresult($bzm,$field_id,$gtabid,$typ,$gresult,$event,$gfield[$gtabid]["listing_viewmode"][$field_id])){
 			echo $vvalue;
 		}
 	# html exportmode

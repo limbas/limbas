@@ -187,7 +187,7 @@ class Limbas extends AbstractBackend {
 	 * @param array $mutations        	
 	 * @return array bool
 	 */
-	public function updatePrincipal($path, $mutations) {
+	public function updatePrincipal($path, \Sabre\DAV\PropPatch $propPatch) {
 		return false;
 	}
 	
@@ -219,7 +219,7 @@ class Limbas extends AbstractBackend {
 	 * @param array $searchProperties        	
 	 * @return array
 	 */
-	public function searchPrincipals($prefixPath, array $searchProperties) {
+	public function searchPrincipals($prefixPath, array $searchProperties, $test = 'allof') {
 		return array ();
 	}
 	

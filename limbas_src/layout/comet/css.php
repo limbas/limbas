@@ -78,6 +78,11 @@ body{
         height:calc(100% - 50px); 
 }
 
+/*special icon colors*/
+.lmb-query::before {
+    color: {$farbschema['WEB7']};
+}
+
 /*middle frame*/
 body.main{
 	margin:0px;
@@ -647,7 +652,6 @@ body.multiframe{
 	cursor:pointer;
 	padding-left:20px;
 	padding-right:20px;
-	cursor:pointer;
 	border:1px solid {$farbschema['WEB3']};
 }
 
@@ -690,7 +694,6 @@ body.multiframe{
 	padding-right:20px;
 	border:1px solid {$farbschema['WEB3']};
 	border-bottom:none;
-	cursor:pointer;
 	float:left;
 }
 
@@ -737,7 +740,6 @@ body.multiframe{
 	padding-left:20px;
 	padding-right:20px;
 	border:1px solid {$farbschema['WEB3']};
-	cursor:pointer;
 }
 
 .lmbGtabTabulatorLeftSpace{
@@ -806,6 +808,7 @@ body.multiframe{
         background-image: url("../../pic/find.png");
         padding-left:14px;
         background-repeat: no-repeat;
+        background-position: 2px 3px;
         margin: 3px 0;
         border:1px solid {$farbschema['WEB1']};
 }
@@ -873,7 +876,7 @@ body.multiframe{
 	background-color: {$farbschema['WEB8']};
 	border-collapse:collapse;
 	border-spacing:1px;
-	opacity: .8;
+	opacity: .9;
 }
 
 .gtabBodyTR{
@@ -975,7 +978,7 @@ body.multiframe{
 
 .gtabGrouping{
 	background-color:{$farbschema['WEB7']};
-        padding: 2px;
+    padding: 2px;
 }
 
 .gtabchange{
@@ -1164,7 +1167,6 @@ INPUT.gmultilang {
 	padding-left:20px;
 	padding-right:20px;
 	border:1px solid {$farbschema['WEB3']};
-	cursor:pointer;
 }
 
 .tabHpoolItemSpaceGtab{
@@ -1221,7 +1223,6 @@ INPUT.gmultilang {
 	padding-left:20px;
 	padding-right:20px;
 	border:1px solid {$farbschema['WEB3']};
-	cursor:pointer;
 }
 
 
@@ -1343,6 +1344,7 @@ DIV.ajax_container {
 	padding:5px;
 	background-color:{$farbschema['WEB8']};
 	border:1px solid {$farbschema['WEB3']};
+	border-radius: 3px 3px 3px 3px;
 }
 
 .lmbFileVersionDiff {
@@ -1843,8 +1845,25 @@ div.calendar tbody .rowhilite td.wn {
 }
      
         
+/* relation tree ------------------------------------------------------------------------*/
         
-        
+.rtree1 {
+    background: {$farbschema["WEB7"]};
+    color: white;
+    font-weight:bold;
+	border:1px solid {$farbschema['WEB4']};
+	border-radius: 3px 3px 3px 3px;
+	padding: 3px;
+}
+
+.rtree2 {
+    background: {$farbschema["WEB10"]};
+
+	border:1px solid {$farbschema['WEB12']};
+	border-radius: 3px 3px 3px 3px;
+	padding: 3px;
+	
+}
         
         
      

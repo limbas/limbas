@@ -57,16 +57,14 @@ function menu_get_standard($id, $bzm){
 
 # tables Snapshots
 function menu_get_snapshot($tabid, $depth = null){
-	global $session;
-	global $db;
 	global $gsnap;
 
 	$menu = array();
 	if($gsnap[$tabid]["id"]){
 	foreach ($gsnap[$tabid]["id"] as $key => $value){
-		$menu[$bzm0]["depth"] = $depth;
+        $menu[$bzm0]["depth"] = $depth;
 		$menu[$bzm0]["name"] = $gsnap[$tabid]["name"][$key];
-		$menu[$bzm0]["desc"] = $gsnap[$tabid]["name"][$key];
+		$menu[$bzm0]["desc"] = $gsnap[$tabid]["name"][$key] . " ($value)";
 		$menu[$bzm0]["link"] = "main.php?action=gtab_erg&gtabid=$tabid&snap_id=".$value."&frame_type=1";
 		//$menu[$bzm0]["icon"] = "pic/8pxicons/camera.gif";
                 $menu[$bzm0]["icon"] = " lmb-icon-8 lmb-camera ";
@@ -93,7 +91,7 @@ function menu_get_forms($tabid, $typ, $depth = null){
 			if($gformlist[$tabid]["typ"][$key] == "2"){
 				$menu[$bzm]["depth"] = $depth;
 				$menu[$bzm]["name"] = $gformlist[$tabid]["name"][$key];
-				$menu[$bzm]["desc"] = $gformlist[$tabid]["name"][$key];
+				$menu[$bzm]["desc"] = $gformlist[$tabid]["name"][$key] . " ($value)";
 				$menu[$bzm]["link"] = "main.php?action=gtab_erg&gtabid=$tabid&form_id=$value&HEADER=".urlencode($gformlist[$tabid]["name"][$key])."&ID=0";
 				//$menu[$bzm]["icon"] = "pic/8pxicons/application_form.gif";
                                 $menu[$bzm]["icon"] = " lmb-icon-cus lmb-icon-8 lmb-form ";
@@ -103,7 +101,7 @@ function menu_get_forms($tabid, $typ, $depth = null){
 		}else{
 			$menu[$bzm]["depth"] = $depth;
 			$menu[$bzm]["name"] = $gformlist[$tabid]["name"][$key];
-			$menu[$bzm]["desc"] = $gformlist[$tabid]["name"][$key];
+			$menu[$bzm]["desc"] = $gformlist[$tabid]["name"][$key] . " ($value)";
 			$menu[$bzm]["link"] = "main_admin.php?action=setup_form_frameset&form_typ=".$gformlist[$tabid]["typ"][$key]."&form_id=$value&referenz_tab=".$gformlist[$tabid]["ref_tab"][$key];
 			//$menu[$bzm]["icon"] = "pic/8pxicons/application_form.gif";
 			$menu[$bzm]["icon"] = " lmb-icon-cus lmb-icon-8 lmb-form ";
@@ -131,7 +129,7 @@ function menu_get_reports($tabid, $typ, $depth = null){
 			if($greportlist[$tabid]["listmode"][$key]){
 				$menu[$bzm]["depth"] = $depth;
 				$menu[$bzm]["name"] = $greportlist[$tabid]["name"][$key];
-				$menu[$bzm]["desc"] = $greportlist[$tabid]["name"][$key];
+				$menu[$bzm]["desc"] = $greportlist[$tabid]["name"][$key] . " ($value)";;
 				$menu[$bzm]["link"] = "print_report($tabid,$value,'".$greportlist[$tabid]["defformat"][$key]."');";
 				//$menu[$bzm]["icon"] = "pic/8pxicons/".$greportlist[$tabid]["defformat"][$key].".gif";
                                 if(in_array($greportlist[$tabid]["defformat"][$key], array("pdf", "odt", "xml"))){
@@ -145,7 +143,7 @@ function menu_get_reports($tabid, $typ, $depth = null){
 		}else{
 			$menu[$bzm]["depth"] = $depth;
 			$menu[$bzm]["name"] = $greportlist[$tabid]["name"][$key];
-			$menu[$bzm]["desc"] = $greportlist[$tabid]["name"][$key];
+			$menu[$bzm]["desc"] = $greportlist[$tabid]["name"][$key] . " ($value)";;
 			$menu[$bzm]["link"] = "main_admin.php?action=setup_report_frameset&report_id=$value&referenz_tab=$tabid";
 			//$menu[$bzm]["icon"] = "pic/8pxicons/".$greportlist[$tabid]["defformat"][$key].".gif";
                         if(in_array($greportlist[$tabid]["defformat"][$key], array("pdf", "odt", "xml"))){
@@ -175,7 +173,7 @@ function menu_get_diagramms($tabid, $typ, $depth = null){
 		if($gdiaglist[$tabid]["hidden"][$key]){continue;}
 		$menu[$bzm]["depth"] = $depth;
 		$menu[$bzm]["name"] = $gdiaglist[$tabid]["name"][$key];
-		$menu[$bzm]["desc"] = $gdiaglist[$tabid]["desc"][$key];
+		$menu[$bzm]["desc"] = $gdiaglist[$tabid]["desc"][$key] . " ($value)";;
 		if($typ == 1){
 			$menu[$bzm]["link"] = "main.php?action=diag_erg&diag_id=".$gdiaglist[$tabid]["id"][$key];
 		}else{
@@ -240,7 +238,7 @@ function menu_get_child_artifacts($isAdmin, $parentTabGroupId = 0, $depth=0) {
             # store depth, name and desc of table
             $allEntries[$bzm]['depth'] = $depth;
             $allEntries[$bzm]['name'] = $gtab['desc'][$tableKey];
-            $allEntries[$bzm]['desc'] = $gtab['desc'][$tableKey];        
+            $allEntries[$bzm]['desc'] = $gtab['desc'][$tableKey] . ($isAdmin ? " ($tableId)" : '');
             $allEntries[$bzm]['id'] = $tableId;
 
             # get correct link
@@ -300,7 +298,7 @@ function menu_get_child_artifacts($isAdmin, $parentTabGroupId = 0, $depth=0) {
         $allEntries[$bzm]['depth'] = $depth;
         $allEntries[$bzm]['parent'] = $tabgroup['level'][$tabGroupKey];
         $allEntries[$bzm]['name'] = $tabgroup['name'][$tabGroupKey];
-        $allEntries[$bzm]['desc'] = $tabgroup['beschreibung'][$tabGroupKey];
+        $allEntries[$bzm]['desc'] = $tabgroup['beschreibung'][$tabGroupKey] . ($isAdmin ? " ($tabGroupId)" : '');;
         $allEntries[$bzm]['link'] = $isAdmin ? ('main_admin.php?' . SID . '&action=setup_tab&tab_group=' . $tabGroupId) : '';
         $allEntries[$bzm]['icon'] = $tabgroup['icon'][$tabGroupKey];
         $allEntries[$bzm]['header'] = 1;
@@ -469,6 +467,7 @@ function menu_get_admin_tools(){
 
 	if($LINK[49]){$menu0 = menu_get_standard(49,5);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[48]){$menu0 = menu_get_standard(48,4);$menu1 = array_merge($menu1,$menu0);}
+    if($LINK[300]){$menu0 = menu_get_standard(300,6);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[215]){$menu0 = menu_get_standard(215,7);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[208]){$menu0 = menu_get_standard(208,3);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[259]){$menu0 = menu_get_standard(259,11);$menu1 = array_merge($menu1,$menu0);}
@@ -477,7 +476,8 @@ function menu_get_admin_tools(){
 	if($LINK[283]){$menu0 = menu_get_standard(283,9);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[102]){$menu0 = menu_get_standard(102,6);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[285]){$menu0 = menu_get_standard(285,11);$menu1 = array_merge($menu1,$menu0);}
-	if($LINK[57]){$menu0 = menu_get_standard(57,12);$menu1 = array_merge($menu1,$menu0);}
+    if($LINK[299]){$menu0 = menu_get_standard(299,12);$menu1 = array_merge($menu1,$menu0);}
+	if($LINK[57]){$menu0 = menu_get_standard(57,13);$menu1 = array_merge($menu1,$menu0);}
 
 	return $menu1;
 }

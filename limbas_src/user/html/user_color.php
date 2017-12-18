@@ -187,7 +187,7 @@ function make_list(kontainer) {
 }
 
 function create_list(){
-	del_body(document.getElementById("itemlist_area"))
+	del_body(document.getElementById("itemlist_area"));
 	make_list(document.getElementById("itemlist_area"));
 }
 

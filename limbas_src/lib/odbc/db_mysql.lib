@@ -1,0 +1,243 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.0
+ */
+
+/*
+ * ID:
+ */
+
+# constants
+function mysql_dbf_0($value){
+    
+    
+    # LMB_DBTYPE #
+    $LMB_DBTYPE_CHAR = 'CHAR';
+    $LMB_DBTYPE_VARCHAR = 'VARCHAR';
+    $LMB_DBTYPE_INTEGER = 'INTEGER';
+    $LMB_DBTYPE_SMALLINT = 'SMALLINT';
+    $LMB_DBTYPE_BIGINT = 'BIGINT';
+    $LMB_DBTYPE_FLOAT = 'FLOAT';
+    $LMB_DBTYPE_FIXED = 'DECIMAL';
+    $LMB_DBTYPE_NUMERIC = 'DECIMAL';
+    $LMB_DBTYPE_DECIMAL = 'DECIMAL';
+    $LMB_DBTYPE_BOOLEAN = 'BOOLEAN';
+    $LMB_DBTYPE_DATE = 'DATE';
+    $LMB_DBTYPE_TIME = 'TIME';
+    $LMB_DBTYPE_TIMESTAMP = 'TIMESTAMP';
+    $LMB_DBTYPE_LONG = 'TEXT';
+    $LMB_DBTYPE_ASCII = '';
+    $LMB_DBTYPE_BYTE = '';
+    $LMB_DBTYPE_SERIAL = '';
+    
+     
+    #http://dev.mysql.com/doc/refman/5.1/de/ix01.html
+    $LMB_DBDEF_TIME = 'CURTIME';
+    $LMB_DBDEF_DATE = 'CURDATE';
+    $LMB_DBDEF_TIMESTAMP = 'CURRENT_TIMESTAMP';
+    $LMB_DBDEF_FALSE = '0';
+    $LMB_DBDEF_TRUE = '1';
+    $LMB_DBDEF_NULL = 'NULL';
+    $LMB_DBDEF_DTNULL = '\'NULL\'';
+    
+    # LMB_DBRETYPE #
+    $LMB_DBRETYPE_CHAR = 'CHAR';
+    $LMB_DBRETYPE_VARCHAR = 'VARCHAR';
+    $LMB_DBRETYPE_INT = 'INTEGER';
+    $LMB_DBRETYPE_INTEGER = 'INTEGER';
+    $LMB_DBRETYPE_BIGINT = 'INTEGER';
+    $LMB_DBRETYPE_SMALLINT = 'SMALLINT';
+    $LMB_DBRETYPE_FLOAT = 'FLOAT';
+    $LMB_DBRETYPE_DECIMAL = 'FIXED';
+    $LMB_DBRETYPE_BOOL = 'BOOLEAN';
+    $LMB_DBRETYPE_DATE = 'DATE';
+    $LMB_DBRETYPE_TIME = 'TIME';
+    $LMB_DBRETYPE_DATETIME = 'DATETIME';
+    $LMB_DBRETYPE_TIMESTAMP = 'TIMESTAMP';
+    $LMB_DBRETYPE_CURRENT_TIMESTAMP = 'TIMESTAMP';
+    $LMB_DBRETYPE_TEXT = 'LONG';
+    $LMB_DBRETYPE_TINYINT = 'BOOLEAN';
+    
+    
+    # LMB_DBREDEF #
+    #'YYYY-MM-DD HH:MM:SS'
+    ${'LMB_DBREDEF_NOW()'} = 'DEFAULT TIMESTAMP';
+    $LMB_DBREDEF_CURRENT_TIMESTAMP = 'TIMESTAMP';
+    $LMB_DBREDEF_0 = 'FALSE';
+    $LMB_DBREDEF_1 = 'TRUE';
+    
+    
+    # LMB_DBFUNC #
+    $LMB_DBFUNC_ISNULL = 'IS NULL';
+    $LMB_DBFUNC_PRIMARY_KEY = 'PRIMARY KEY';
+    $LMB_DBFUNC_UNIQUE = 'UNIQUE';
+    $LMB_DBFUNC_CONCAT = '||';
+    $LMB_DBFUNC_FOR_REUSE = '';
+    $LMB_DBFUNC_LIMIT = 'LIMIT';
+    $LMB_DBFUNC_ROWNO = '';
+    $LMB_DBFUNC_SPLIT_TRIGGER = 'EXECUTE';
+    $LMB_DBFUNC_ADD_COLUMN_FIRST = 'ADD';
+    $LMB_DBFUNC_ADD_COLUMN_NEXT = 'ADD';
+    $LMB_DBFUNC_DROP_COLUMN_FIRST = 'DROP';
+    $LMB_DBFUNC_DROP_COLUMN_NEXT = 'DROP';
+    $LMB_DBFUNC_DATE = 'DATE(';
+    $LMB_DBFUNC_TIME = 'TIME(';
+    $LMB_DBFUNC_YEAR = 'YEAR(';
+    $LMB_DBFUNC_MONTH = 'MONTH(';
+    $LMB_DBFUNC_DAY = 'DAYOFMONTH(';#DAYOFMONTH('2001-11-00')
+    $LMB_DBFUNC_HOUR = 'HOUR(';
+    $LMB_DBFUNC_MINUTE = 'MINUTE(';
+    $LMB_DBFUNC_LONGHANDLE = 0;#Long gibt es nicht in mysql
+    $LMB_DBFUNC_PROCEDUREHANDLE = 1;
+    $LMB_DBFUNC_FKEYHANDLE = 1;
+    $LMB_DBFUNC_FLOATHANDLE = 1;
+    $LMB_DBFUNC_PREPAREHANDLE = 1;
+    
+    $LMB_DBFUNC_TIMEHANDLE = 1;
+    $LMB_DBFUNC_NUMROWS = 1;
+    $LMB_DBFUNC_VIEWGALIAS = 0;
+    $LMB_DBFUNC_SEQUENCE = 1;
+    $LMB_DBFUNC_VIEWDEPENDENCY = 0;
+    
+    # DBCURSOR #
+    $LMB_DBCURSOR = 0;
+    
+    return ${$value};
+
+}
+
+
+
+
+# odbc connect:
+function mysql_dbq_0($host,$database,$dbuser,$dbpass,$dbdriver=null,$port=null){
+	if($dbdriver){
+		$dsn = "Driver=$dbdriver;Server=$host;Database=$database;ReadOnly=No";
+		#SQL_CUR_USE_ODBC
+		#SQL_CUR_DEFAULT
+		#SQL_CUR_USE_DRIVER
+		$db = odbc_pconnect ($dsn, $dbuser, $dbpass);
+	}else{
+		$db = odbc_pconnect($database,$dbuser,$dbpass);
+	}
+	if($db){return $db;}
+	else{echo("<h1>Database connection failed</h1><p>($dsn)<BR>".odbc_errormsg()."</p>"); return false;}
+}
+
+/**
+ * convert stamp for db
+ *
+ * @param number $p
+ * @return string
+ */
+function mysql_dbf_1($p,$t=0){
+	global $umgvar;
+	
+	if(!$p){$p=1;}
+	if($umgvar["use_datetimeclass"]){
+		if($t){
+			return $p->format("Y-m-d");
+		}else{
+			return $p->format("Y-m-d H:i:s");
+		}
+	}else{
+		if($t){
+			return date("Y-m-d",$p);
+		}else{
+			return date("Y-m-d H:i:s",$p);
+		}
+	}
+}
+
+/**
+ * convert date from db to stamp
+ *
+ * @param string $p
+ * @return number
+ */
+function mysql_dbf_2($p){
+	if(!$p){return false;}
+	$db_date = lmb_substr($p,0,19);
+	$db_date = preg_replace("/[^0-9]/",";",$db_date);
+	$db_date = explode(";",$db_date);
+	if(is_numeric($db_date[0])){
+		$result_stamp = mktime($db_date[3],$db_date[4],$db_date[5],$db_date[1],$db_date[2],$db_date[0]);
+	}else{$result_stamp = 0;}
+	return $result_stamp;
+}
+
+/**
+ * parse blob
+ *
+ * @param string $p
+ * @return string
+ */
+function mysql_dbf_6($p){
+	return $p;
+}
+
+/**
+ * parse string
+ *
+ * @param string $p
+ * @return string
+ */
+function mysql_dbf_7($p){
+	return str_replace("'","''",$p);
+}
+
+
+/**
+ * get sequence
+ *
+ * @param array $p[0]=name
+ */
+function mysql_dbf_8($p){
+	global $db;
+
+	$rs = odbc_exec($db,"SELECT seq_nextval('".dbf_4($p)."') AS NEXTSEQ") or errorhandle(odbc_errormsg($db),$prepare_string,"get next sequence",$FILE,$LINE);
+	return odbc_result($rs,"NEXTSEQ");
+}
+
+/**
+ * case sensitive
+ *
+ * @param string $p
+ * @return string
+ */
+function mysql_dbf_4($p){
+	return lmb_strtolower($p);
+}
+
+/**
+ * timediff
+ *
+ * @param array $p
+ * @return string
+ */
+function mysql_dbf_9($p){
+	return "(".$p[1]."-".$p[0].")";
+}
+
+/**
+ * datediff
+ *
+ * @param array $p
+ * @return string
+ */
+function mysql_dbf_10($p){
+	return "(".$p[1]."-".$p[0].")";
+}
+
+?>

@@ -15,8 +15,23 @@
  */
 
 /*
- * ID:
+ * ID: 148
  */
+?>
+
+<TABLE ID="tab3" width="100%" cellspacing="2" cellpadding="1" class="tabBody importcontainer">
+<TR class="tabHeader"><TD class="tabHeaderItem" COLSPAN="5"><?=$lang[2208]?></TD></TR>
+<TR class="tabBody"><TD>File</TD><TD><input type="file" NAME="fileproject" style="width:250px;"></TD></TR>
+<TR class="tabBody"><TD>Host</TD><TD><input type="text" name="remote_host" value="<?=stripslashes($remote_host)?>" style="width:250px;"></TD></TR>
+<TR class="tabBody"><TD>User</TD><TD><input type="text" name="remote_user" value="<?=stripslashes($remote_user)?>"></TD></TR>
+<TR class="tabBody"><TD>Pass</TD><TD><input type="password" name="remote_pass"></TD></TR>
+<TR class="tabBody"><TD></TD><TD><input type="button" value="<?=$lang[2243]?>" onclick="document.form1.precheck.value=1;document.form1.remoteimport.value=1;document.form1.submit();"></TD></TR>
+<TR class="tabBody"><TD colspan="2" class="tabFooter"></TD></TR>
+</TABLE>
+
+
+<?php
+
 
 
 # ------ user / url ----------
@@ -33,54 +48,6 @@ $LIM["lim_url"] = $remote_host;
 
 #session_name("limbas_remote_import");
 #session_start();
-
-/**
- * soap client
- *
- * @param array $lmpar
- * @return result array
- */
-function call_client($lmpar,$LIM){
-	global $lmbs;
-	
-	$lmpar["lmbs"] = $lmbs["session"]["s_id"]; # Session OK
-	
-	# ----- Aktion ausführen ----------
-	if($lmpar) {
-		
-		$client = new SoapClient(NULL,
-		array(
-		"login" =>$LIM["username"], 
-		"password" => $LIM["pass"], 
-		"location" => $LIM["lim_url"]."/main_soap.php",
-		"uri" => "urn:xmethodsSoapServer",
-		"style" => SOAP_RPC,
-		"use" => SOAP_ENCODED,
-		"compression" => SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_DEFLATE,
-		"encoding"=>"ISO-8859-1"
-		));
-		
-		#"location" => $LIM["lim_url"]."/main_soap.php?".$lmbs["session"]["s_name"]."=".$lmbs["session"]["s_id"],
-
-		try{
-			$lmb = $client->__call("runlmb", array(serialize($lmpar)), array("uri" => "urn:xmethodsLimbasServer","soapaction" => "urn:xmethodsLimbasServer"));
-		}catch(Exception $e){
-			lmb_alert('can not access to '.$LIM["lim_url"].'\n'.$e->getMessage());
-			return false;
-		}
-
-		if($lmb){$lmb = unserialize($lmb);}
-	
-		if($lmb["session"]["s_id"]){
-			$lmbs["session"] = $lmb["session"];
-			$_SESSION["lmbs"] = $lmbs;
-		}
-		
-	}
-	
-	return $lmb;
-}
-
 
 # remoteimport with file
 if(($remoteimport AND !empty($_FILES["fileproject"])) OR $confirm_fileimport){
@@ -196,7 +163,7 @@ elseif($remoteimport AND $merge_import AND $exptable){
 		rmdirr($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/");
 		
 		# export soap Aufruf
-		$lmp = call_client($lmpar,$LIM);
+		$lmp = soap_call_client($lmpar,$LIM);
 		
 		# kopieren in USER temp
 		$lurl =parse_url($LIM["lim_url"]);
@@ -229,7 +196,7 @@ elseif($remoteimport AND $merge_import AND $exptable){
 	
 	# Soapaufruf
 	$lmpar[0]["action"] = "setup_remote_exportlist";
-	if($lmp = call_client($lmpar,$LIM)){
+	if($lmp = soap_call_client($lmpar,$LIM)){
 		
 		
 		echo "<FORM ACTION=\"main_admin.php\" METHOD=\"post\" name=\"form2\">
@@ -249,9 +216,6 @@ elseif($remoteimport AND $merge_import AND $exptable){
 	}
 
 }
-
-
-
 
 
 ?>

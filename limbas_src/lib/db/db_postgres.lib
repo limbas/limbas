@@ -101,7 +101,7 @@ define("LMB_DBFUNC_TIMEHANDLE",1);
 define("LMB_DBFUNC_NUMROWS",1);
 define("LMB_DBFUNC_VIEWGALIAS",0);
 define("LMB_DBFUNC_SEQUENCE",1);
-
+define("LMB_DBFUNC_VIEWDEPENDENCY",1);
 
 
 # workaround for postgresql versions

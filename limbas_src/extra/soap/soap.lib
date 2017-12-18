@@ -244,19 +244,19 @@ function parse_action($lmpar){
 			# --- file upload ---
 			}elseif($lmpart["action"] == "file_upload" AND $LINK[128]){
 			    if(is_array($lmpart["file"]["file"])){
-			    foreach($lmpart["file"]["file"] as $key => $filename){
-    				if($lmpart["file"]["content"][$key]){
-    				    $fpath = $umgvar['path'].'/USER/'.$session['user_id'].'/temp/'.$lmpart["file"]["file"][$key];
-    					$fp = fopen($fpath,'w');
-    					fputs($fp, base64_decode($lmpart["file"]["content"][$key]));
-    					fclose($fp);
-    					if(file_exists($fpath)){
-                            $lmb[$action][$key] = $lmpart["file"]["file"][$key];
-    					}else{
-    					    $lmb[$action][$key] = false;
-    					}
-    				}
-			    }
+                    foreach($lmpart["file"]["file"] as $key => $filename){
+                        if($lmpart["file"]["content"][$key]){
+                            $fpath = $umgvar['path'].'/USER/'.$session['user_id'].'/temp/'.$lmpart["file"]["file"][$key];
+                            $fp = fopen($fpath,'w');
+                            fputs($fp, base64_decode($lmpart["file"]["content"][$key]));
+                            fclose($fp);
+                            if(file_exists($fpath)){
+                                $lmb[$action][$key] = $lmpart["file"]["file"][$key];
+                            }else{
+                                $lmb[$action][$key] = false;
+                            }
+                        }
+                    }
 			    }
 			# admin - variables
 			}elseif($lmpart["action"] == "get_lmbvars" AND is_array($lmpart["lmbvars"])){
@@ -306,7 +306,128 @@ function parse_action($lmpar){
 				if($result_backup = lmbExport($lmpart["exptables"],'group',null,null)){
 					return true;
 				}
-			}
+			} elseif($lmpart['action'] == 'setup_remote_syncimport' && $session['group_id'] == 1 && $LINK[49]) {
+                # params: file_content, ?confirm_syncimport                
+                # check params
+                if(!$lmpart['file_content']) {
+                    error_log("Secure Remote Sync Import: Content of export file not sent!");
+                    return false;
+                }
+
+                # write content into file
+                $fpath = $umgvar['path'].'/USER/'.$session['user_id'].'/remote_sync_export_bundle.tar.gz';
+                $fp = fopen($fpath,'w');
+                fputs($fp, base64_decode($lmpart['file_content']));
+                fclose($fp);
+                if(!file_exists($fpath)){
+                    error_log("Secure Remote Sync Import: Export file could not be written!");
+                    return false;
+                }
+
+                # perform sync import
+                # TODO if lmpart["exptables"]?
+                # TODO imports
+                global $DBA;
+                require_once("lib/db/db_".$DBA["DB"]."_admin.lib");
+                require_once("lib/include_admin.lib");
+                require_once("admin/tables/tab.lib");
+                require_once("admin/tools/import_sync.php");
+                ob_start();
+                $result = secure_sync_import($fpath, false, $lmpart['precheck'], $lmpart['confirm_syncimport']);
+                $output = ob_get_clean();
+                return array(
+                    'errLog' => $result['errLog'],
+                    'output' => $output,
+                    'success' => $result['success']
+                );
+                /*
+                return json_encode(array(
+                    'errLog' => $result['errLog'],
+                    'output' => $output,
+                    'success' => $result['success']
+                ));*/
+            } elseif($lmpart['action'] == 'setup_datasync') { //TODO: Rechte
+                # check params
+                if(!$lmpart['sync_data']) {
+                    error_log("Data Sync: No data sent!");
+                    return false;
+                }
+
+                require_once("admin/tools/datasync.lib");
+
+                //load template
+                define ('LMB_SYNC_PROC',true);
+                global $sync_template;
+                global $sync_master;
+                global $sync_exceptions;
+
+                $sync_master = false;
+                $sync_exceptions = array();
+                $sync_template = $lmpart['sync_template'];
+
+                $newids = datasync_applyChangedData($lmpart['sync_data']);
+                $return = datasync_collectChangedData($newids);
+                $return['exceptions'] = $sync_exceptions;
+                return $return;
+            } elseif($lmpart['action'] == 'finish_datasync') {
+                # check params
+                if(!isset($lmpart['sync_exceptions']) || !isset($lmpart['sync_timestamp'])) {
+                    return false;
+                }
+
+                require_once("admin/tools/datasync.lib");
+
+                define ('LMB_SYNC_PROC',true);
+                global $sync_template;
+                global $sync_master;
+                global $sync_exceptions;
+
+                $sync_master = false;
+                $sync_template = $lmpart['sync_template'];
+                $sync_exceptions = $lmpart['sync_exceptions'];
+
+                //clean up cache
+                return datasync_resetCache($lmpart['sync_timestamp']);
+            } elseif($lmpart['action'] == 'socket_datasync') {
+			    $port = $umgvar['sync_port'];
+
+			    // generate secret key for authentication via socket
+                $authKey = bin2hex(openssl_random_pseudo_bytes(30));
+                if (!$authKey) {
+                    return false;
+                }
+
+			    // open socket server
+                $result = exec('php ' . $umgvar['path'] . '/cron.php datasync.lib admin limbas "' . $authKey. '" >/dev/null 2>&1 &');
+
+                // check status code
+                if ($result != 0) {
+                    return false;
+                }
+
+                // wait for connection to open
+                require_once($umgvar['path']."/extern/phpsocket/src/Factory.php");
+                require_once($umgvar['path']."/extern/phpsocket/src/Socket.php");
+                require_once($umgvar['path']."/extern/phpsocket/src/Exception.php");
+                $factory = new \Socket\Raw\Factory();
+                $success = false;
+                for ($tries = 0; $tries < $umgvar['sync_timeout']; $tries++) {
+                    try {
+                        $client = $factory->createClient("127.0.0.1:$port");
+                        $client->close();
+                        $success = true;
+                        break;
+                    } catch (Exception $e) {
+                        sleep(1);
+                        continue;
+                    }
+                    break;
+                }
+
+                $lmb[0]['success'] = $success;
+                $lmb[0]['port'] = $port;
+                $lmb[0]['authKey'] = $authKey;
+            }
 
 			# --- Extension ---
 			if($lmpart["extension"]){
@@ -894,12 +1015,6 @@ function getGtabLevel(&$lmpart,&$lmb,$action,$gtabid,$verkn=null,$rec=null){
 				}
 
 			}
-
-
-
-
-
-
 
 			# Verknüpfung absteigend
 			#if($gfield[$gtabid]["r_verkntabid"]){

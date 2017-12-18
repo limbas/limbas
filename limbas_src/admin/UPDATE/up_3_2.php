@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2017 Limbas GmbH (info@limbas.com)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -29,7 +29,7 @@ patch_db(1,2,$sqlquery,'update colorschema',3);
 
 
 echo "-->";
-$impsystables = array("lmb_lang.tar.gz","lmb_action.tar.gz");
+#$impsystables = array("lmb_lang.tar.gz","lmb_action.tar.gz","lmb_field_types_depend.tar.gz");
 
 ###########################
 

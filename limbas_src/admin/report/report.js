@@ -35,8 +35,8 @@ if(browser_ns5){document.captureEvents(Event.MOUSEDOWN | Event.MOUSEUP);}
 document.onmouseup = endDrag;
 
 function startDrag(evt) {
-	dx = new Array
-	dy = new Array
+	dx = new Array();
+	dy = new Array();
 	
 	if(currentdiv != 'menu'){
 		$("#menu").removeClass('ui-selected');
@@ -263,7 +263,7 @@ function resizeXXX(evt) {
 			if(evt.pageY - py + ey > 0 && evt.pageX - px + ex > 0){
 				if(parent.report_menu.document.form1.prop.checked || evt.shiftKey){
 					current.top = evt.pageY - dy;
-					current.left = px + ((evt.pageY - py) * xy) - 8
+					current.left = px + ((evt.pageY - py) * xy) - 8;
 					current_div.height = evt.pageY - py + ey;
 					current_div.width = (evt.pageY - py + ey) * xy;
 				}else{
@@ -302,7 +302,7 @@ function resize_pic(evt) {
 			if(evt.pageY - py + ey > 0 && evt.pageX - px + ex > 0){
 				if(parent.report_menu.document.form1.prop.checked == 1 || evt.shiftKey){
 					current.top = evt.pageY - dy;
-					current.left = px + ((evt.pageY - py) * xy) - 8
+					current.left = px + ((evt.pageY - py) * xy) - 8;
 					current_div.height = evt.pageY - py + ey;
 					current_pic.height = evt.pageY - py + ey;
 					current_div.width = (evt.pageY - py + ey) * xy;
@@ -320,7 +320,7 @@ function resize_pic(evt) {
 			if((window.event.clientY - py + ey) > 0 && (window.event.clientX - px + ex) > 0){
 				if(parent.report_menu.document.form1.prop.checked == 1){
 					current.top = window.event.clientY - dy;
-					current.left = px + ((window.event.clientY - py) * xy) - 8
+					current.left = px + ((window.event.clientY - py) * xy) - 8;
 					current_div.height = window.event.clientY - py + ey;
 					current_div.width = (window.event.clientY - py + ey) * xy;
 					current_pic.height = window.event.clientY - py + ey;
@@ -410,7 +410,7 @@ function dragTd(e) {
 function parentsetx(id){
 	var x = 0;
 	if(document.getElementById(id)){
-		var eltern = document.getElementById(id).offsetParent
+		var eltern = document.getElementById(id).offsetParent;
 		while(eltern){
 			var x = eltern.offsetLeft + x;
 			eltern = eltern.offsetParent;
@@ -568,7 +568,7 @@ function sizexy_change(X,Y) {
 		if(X){el.style.height = parseInt(X);}
 		if(Y){el.style.width = parseInt(Y);}
 		
-		fill_posxy(el.id)
+		fill_posxy(el.id);
 		if(!lmbGetUISelected()){return false;}
 	});
 }
@@ -643,8 +643,8 @@ function fill_style(STYLE_ID,STYLE,VAL) {
 	// Schleife über alle selectable elemente
 	$(".ui-selected").filter('[id^="div"]').each(function() {
 		div = $( this ).attr('id');
-		ID = div.substr(3,10)
-		el = document.getElementById(div).style
+		ID = div.substr(3,10);
+		el = document.getElementById(div).style;
 		if(!setstyle[ID]){setstyle[ID] = new Array();}
 		
 		switch(STYLE) {

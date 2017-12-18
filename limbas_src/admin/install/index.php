@@ -45,7 +45,7 @@ $msgWarnHeavy = '<font color="orange">' . $tooltips[4] . '</font>';
 $msgError = '<font color="red">' . $tooltips[3] . '</font>';
   
 # function to insert icons
-function insIcon($code) {
+function insIcon($code=null) {
     global $tooltips;    
     
     if($code) {        
@@ -81,18 +81,15 @@ $steps = array(
             .borderless td, .borderless th {
                 border: none !important; 
             }
-            
-            
-            
+
             .copyright-header img {
-               
 	            margin-top: 40px; 
-	           margin-bottom: 15px;
-            	width:90%
+	            margin-bottom: 15px;
+            	height: 90px;
             }
             
             .scrollcontainer {
-                max-height: calc(100% - 135px);
+                max-height: calc(100% - 5px);
                 overflow-y: auto;
             }     
             
@@ -171,11 +168,11 @@ $steps = array(
 
                 <div class="row copyright-header">
                     <div class="col-md-3 text-center">
-                        <img src="../../pic/limbas_logo_480_org.png" alt="LIMBAS Business Solutions">
+                        <img src="../../pic/Limbas-Mandarine-trans.png" alt="LIMBAS Business Solutions">
                     </div>                
                 </div>
 
-                <div class="row">
+                <div class="row" style="height: calc(100% - 165px - 1em)">
                     <div class="col-md-3">
                         <div class="list-group">
                             <?php      

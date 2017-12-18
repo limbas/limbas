@@ -25,7 +25,7 @@ ob_implicit_flush();
 ?>
 
 <link rel="stylesheet" href="extern/bootstrap/bootstrap.min.css">
-<div class="lmbPositionContainerMain small">
+<div id="scolldown" class="lmbPositionContainerMain small" style="max-height: 100%">
 <?php
 
 
@@ -126,10 +126,12 @@ if($upl){
 
 <br><br>
 
-<?
+<?php
+echo '<div>';
 # --- Systemupdate ----
-if($update_file){
-	echo "<hr>";
+if($update_file) {
+
+	echo '<hr>';
 	ob_end_flush();
 	ob_start();
 	require_once($umgvar["pfad"]."/admin/UPDATE/".$update_file);
@@ -140,24 +142,26 @@ if($update_file){
 	flush();
 	if(!$output){
 		echo "<b>all updates of this script allready done!</b>";
-	}else{
+        echo '</div>';
+    }else{
 		if($impsystables){
 			patch_import($impsystables);
 		}
 		session_destroy();
 		session_unset();
-		echo "<hr><input type=\"button\" onclick=\"top.document.location.href='index.php'\" class=\"btn btn-info pull-right\" value=\"finished .. back to LIMBAS\"<br><br>";
+        echo '</div>';
+        echo "<hr><input type=\"button\" onclick=\"top.document.location.href='index.php'\" class=\"btn btn-info pull-right\" value=\"finished .. back to LIMBAS\"<br><br>";
 	}
-}else{
 
-/* --- revision check --------------------------------- */
-if($vcount){
-	echo "<br><div style=\"border:2px solid red;width:600px;padding:3px\">
-    <b>".$vcount." updates found ! You have to run all update scripts in their sequence !</b>
-	</div>
-	";
-}
+} else {
 
+    /* --- revision check --------------------------------- */
+    if($vcount){
+        echo '<div class="alert alert-danger" role="alert">';
+        echo $vcount . (($vcount > 1) ? ' updates' : ' update') . ' found! You have to run all update scripts in the right order!';
+        echo '</div>';
+    }
+    echo '</div>';
 }
 ?>
 
@@ -165,22 +169,26 @@ if($vcount){
 
 <br><br>
 
-<div class="alert alert-warning small" role="alert" style="font-size:12">
-<b>Steps to update your system:</b><br><br>
+<div class="alert alert-warning" role="alert">
+    <b>Steps to update your system:</b>
+    <br><br>
+    <ul style="padding-left: 20px;">
+        <li>download latest "LIMBAS source"
+        <li>backup your system!
+        <li>replace or add the new LIMBAS source directory "limbas_src_x.x"
+        <li>rebuild the symlink "limbas_src" to the new source directory (<i>ln -s limbas_src_x.x limbas_src</i>)
+        <li>login to limbas
+        <li>limbas will redirect you to the "system update page" (this page)
+        <li>select the systemupdate script "up_3.x.php" and run the update with "OK". If your release is older than one release you have to run all updates up to your release.
+        <li>reset your system
+        <li>replace the "independent" directory with its newest version if necessary. Available as "independent.tar" archive in source.
+    </ul>
+</div>
 
-<li>download latest "LIMBAS source"
-<li>backup your system!
-<li>replace or add the new LIMBAS source directory "limbas_src_x.x"
-<li>rebuild the symlink "limbas_src" to the new source directory (<i>ln -s limbas_src_x.x limbas_src</i>)
-<li>login to limbas 
-<li>limbas will redirect you to the "system update page" (this page)
-<li>select the systemupdate script "up_3.x.php" and run the update with "OK". If your release is older than one release you have to run all updates up to your release.
-<li>reset your system
-<li>replace the "independent" directory with its newest version if necessary. Available as "independent.tar" archive in source.
-          
-</div>  
-
-
-
+<script language="JavaScript">
+    $(function() {
+        scrolldown();
+    });
+</script>
 
 </div>

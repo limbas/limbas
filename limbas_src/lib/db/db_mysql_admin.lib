@@ -496,7 +496,7 @@ function dbf_5($p,$mode=null){
 		$sql .= " AND LOWER(COLUMN_NAME) = '".lmb_strtolower($p[2])."'";
 	}
 	$rs = odbc_exec($db,$sql);
-	
+
 	if($p[3]){return $rs;}
 
 	$rs = odbc_exec($db,$sql);

@@ -84,8 +84,8 @@ if($gtab["typ"][$i] == 5){$action == "gtab_deterg";}
 ?>
 <div id="lmbAjaxContainer" class="ajax_container" style="position:absolute;display:none;" OnClick="activ_menu=1;"></div>
 <div id="lmbAjaxContainer2" class="ajax_container" style="position:absolute;display:none;z-index:999;" onclick="activ_menu=1;"></div>
-<div id="lmbZoomContainer" class="ajax_container" style="position:absolute;visibility:hidden;font-size:18;font-weight:bold" OnClick="activ_menu=1;"></div>
-<div id="dublicateCheckLayer" style="position:absolute;top:25%;left:25%;visibility:hidden;z-index:999"></div>
+<div id="lmbZoomContainer" class="ajax_container" style="position:absolute;display:none;font-size:18;font-weight:bold" OnClick="activ_menu=1;"></div>
+<div id="dublicateCheckLayer" style="position:absolute;top:25%;left:25%;display:none;z-index:999"></div>
 
 <Script language="JavaScript">
 // ----- Js-Script-Variablen --------
@@ -147,7 +147,10 @@ if($gformlist[$gtabid]["extension"][$form_id]){
 		
 		// relation parameters fields | parent relation fields
 		if($gform[$form_id]["parentrel"] OR $gform[$form_id]["paramrel"]){
-		    $verkn = set_verknpf($verkn_tabid,$verkn_fieldid,$verkn_ID,$verkn_add_ID,$verkn_del_ID,$verkn_showonly,$verknpf);
+		    $verkn = null;
+		    if($verkn_tabid AND $verkn_fieldid){
+                $verkn = set_verknpf($verkn_tabid,$verkn_fieldid,$verkn_ID,$verkn_add_ID,$verkn_del_ID,$verkn_showonly,$verknpf);
+		    }
 			form_gresult($ID,$gtabid,$form_id,$gresult,null,$verkn);
 		}
 		

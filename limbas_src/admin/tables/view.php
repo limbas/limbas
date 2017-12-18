@@ -47,7 +47,7 @@ var zoomKey = null;
 var zoomEl = null;
 function ZoomViewField(event,el,key) {
 	zoomKey = key;
-	zoomEl = el
+	zoomEl = el;
 	
 	document.getElementById("ZoomFieldArea").value = el.value;
 	limbasDivShow(el,null,'ZoomFieldContainer');
@@ -111,13 +111,14 @@ if($view_section == 1){
 	# save view definition
 	if($view_save){
 		if($view_public){
-			lmb_createQuestView($viewid,$view_def,$view_public,1);
+			lmb_createQuestView($viewid,$view_def,$view_public,1,$view_drop);
 		}elseif (!$view_public AND $gview["ispublic"]){
-			lmb_createQuestView($viewid,$view_def,0,1);
+			lmb_createQuestView($viewid,$view_def,0,1,$view_drop);
 		}else {
-			lmb_createQuestView($viewid,$view_def);
+			lmb_createQuestView($viewid,$view_def,0,0,$view_drop);
 		}
 		$gview["viewdef"] = $view_def;
+		$gview["viewdrop"] = $view_drop;
 		$gview["ispublic"] = $view_public;
 	}
 	
@@ -145,7 +146,8 @@ if($view_section == 1){
 
 	<TR class="tabBody"><TD><HR></TD></TR>
 	<TR class="tabBody"><TD align="right">
-	<?=$lang[2615]?> <input type="checkbox" NAME="view_public" <?if($gview["ispublic"]){echo "checked";}?>>
+	<?=$lang[2615]?> <input type="checkbox" NAME="view_public" <?if($gview["ispublic"]){echo "checked";}?>>&nbsp;&nbsp;
+	<?=$lang[2460]?> <input type="checkbox" NAME="view_drop" <?if($gview["viewdrop"]){echo "checked";}?>>
 	&nbsp;&nbsp;<input type="submit" NAME="view_save" value="<?=$lang[2614]?>">
 	</TD></TR>
 	<TR class="tabFooter"><TD></TD></TR>
@@ -167,13 +169,14 @@ if($view_section == 1){
 	if($view_save){
 		if($view_def = lmb_questCreateSQL($viewid)){
 			if($view_public){
-				lmb_createQuestView($viewid,$view_def,$view_public,1);
+				lmb_createQuestView($viewid,$view_def,$view_public,1,$view_drop);
 			}elseif (!$view_public AND $gview["ispublic"]){
-				lmb_createQuestView($viewid,$view_def,0,1);
+				lmb_createQuestView($viewid,$view_def,0,1,$view_drop);
 			}else {
-				lmb_createQuestView($viewid,$view_def);
+				lmb_createQuestView($viewid,$view_def,0,0,$view_drop);
 			}
 			$gview["viewdef"] = $view_def;
+			$gview["viewdrop"] = $view_drop;
 			$gview["ispublic"] = $view_public;
 		}
 	}
@@ -198,7 +201,7 @@ echo "<tr><td><hr><input type=\"checkbox\" OnClick=\"document.form1.showsystabs.
 </table>
 </div>
 
-<TABLE class="tabpool" BORDER="0" width="100%" height="95%" cellspacing="0" cellpadding="0"><TR><TD>
+<TABLE class="tabpool" BORDER="0" width="98%" height="95%" cellspacing="0" cellpadding="0"><TR><TD>
 <TABLE BORDER="0" cellspacing="0" cellpadding="0" width="100%"><TR class="tabpoolItemTR">
 <TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='1';document.form1.submit();"><?=$lang[2613]?></TD>
 <TD nowrap class="tabpoolItemActive"><?=$lang[2612]?></TD>
@@ -231,7 +234,8 @@ show_viewFields($viewid);
 
 <TR class="tabBody"><TD><HR></TD></TR>
 <TR class="tabBody"><TD align="right">
-<?=$lang[2615]?> <input type="checkbox" NAME="view_public" <?if($gview["ispublic"]){echo "checked";}?>>
+<?=$lang[2615]?> <input type="checkbox" NAME="view_public" <?if($gview["ispublic"]){echo "checked";}?>>&nbsp;
+	<?=$lang[2460]?> <input type="checkbox" NAME="view_drop" <?if($gview["viewdrop"]){echo "checked";}?>>
 &nbsp;&nbsp;<input type="button" value="<?=$lang[2614]?>" style="margin:5px;" OnClick="setDrag();document.form1.view_save.value=1;document.form1.submit();">
 </TD></TR>
 <TR class="tabFooter"><TD></TD></TR>

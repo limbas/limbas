@@ -19,19 +19,44 @@
  */
 ?>
 
-<div class="lmbPositionContainerMain" style="height:calc(100% - 50px);">
-<FORM ACTION="main_admin.php" METHOD="post" name="form1" style="float:
-left;z-index:10000;position:relative;"
-onmouseover="document.form1.view_save.style.visibility='visible';"
-onmouseout="document.form1.view_save.style.visibility='hidden';">
-+<FORM ACTION="main_admin.php" METHOD="post" name="form1">
- <input type="hidden" name="action" value="<?=$action?>">
- <input type="hidden" name="setdrag">
--<input type="submit" onclick="setDrag();ajaxGet(null,'main_admin.php', '&action=<?=$action?>&setdrag=' +document.form1.setdrag.value,null, 'void');return false;" value="<?=$lang[1997]?>" name="view_save">
- </FORM>
+
+<style>
+.clt, .clt ul, .clt li {
+	position: relative;
+}
+
+.clt ul {
+	list-style: none;
+	padding-left: 32px;
+}
+
+.clt li::before, .clt li::after {
+	content: "";
+	position: absolute;
+	left: -12px;
+}
+
+.clt li::before {
+	border-top: 1px solid #000;
+	top: 9px;
+	width: 8px;
+	height: 0;
+}
+
+.clt li::after {
+	border-left: 1px solid #000;
+	height: 100%;
+	width: 0px;
+	top: 2px;
+}
+
+.clt ul>li:last-child::after {
+	height: 8px;
+}
 
 
-<DIV class="ajax_container" ID="fieldinfo" style="width:300px;position:absolute;z-index:99999;border:1px solid black;padding:4px;visibility:hidden;background-color:<?=$farbschema[WEB11]?>"></DIV>
+</style>
+
 
 
 <?php
@@ -88,9 +113,154 @@ function schema_link($gtabid){
 	}
 	$GLOBALS["linknr"] = $bzm;
 }
+?>
 
 
 
+<DIV class="lmbPositionContainerMainTabPool" style="height:calc(100% - 50px);">
+
+
+
+<TABLE class="tabpool language-table" BORDER="0" cellspacing="0" cellpadding="0" width="98%"><TR><TD>
+
+<TABLE BORDER="0" cellspacing="0" cellpadding="0" width="100%"><TR class="tabpoolItemTR">
+<?
+if($typ == 2){
+	if($LINK[108]){echo "<TD class=\"tabpoolItemInactive\" NOWRAP OnClick=\"document.location.href='main_admin.php?action=setup_tabschema&typ=1'\">".$lang[$LINK["desc"][215]]."</TD>";}
+	if($LINK[258]){echo "<TD class=\"tabpoolItemActive\" NOWRAP OnClick=\"document.location.href='main_admin.php?action=setup_tabschema&typ=2'\">".$lang[2912]."</TD>";}
+}else{
+	if($LINK[108]){echo "<TD class=\"tabpoolItemActive\" NOWRAP OnClick=\"document.location.href='main_admin.php?action=setup_tabschema&typ=1'\">".$lang[$LINK["desc"][215]]."</TD>";}
+	if($LINK[258]){echo "<TD class=\"tabpoolItemInactive\" NOWRAP OnClick=\"document.location.href='main_admin.php?action=setup_tabschema&typ=2'\">".$lang[2912]."</TD>";}
+}
+?>
+<TD class="tabpoolItemSpace">&nbsp;</TD>
+</TR></TABLE>
+
+</TD></TR>
+<TR><TD class="tabpoolfringe">
+
+
+
+<?php
+
+//  ################# relation tree ######################
+
+if($typ == 2){
+
+    
+?>
+  
+<script language="JavaScript">
+
+function lmb_show_relations(name,filter){
+
+	$(":not(.view_"+name+")").css('color', '');
+	$(".view_"+name).css('color', 'red');
+
+    if(filter){
+    	$("li.roottree").removeAttr('hidetree');
+    	$(".view_"+name).closest('li.roottree').attr('hidetree','1');
+    	$("li.roottree:not(li[hidetree='1'])").hide();
+    }
+	
+}
+
+function lmb_search_relations(filter){
+
+	$("li.roottree").show();
+	$(".clt div").css('color', '');
+	$("li.roottree").removeAttr('hidetree');
+
+    if(filter){
+    	$('div.clt div:contains('+filter+')').css('color', 'red').closest('li.roottree').attr('hidetree','1');
+    	$("li.roottree:not(li[hidetree='1'])").hide();
+    }
+	
+}
+
+var claert;
+function lmb_search_pause(filter){
+	if(claert){clearTimeout(claert);}
+	claert = setTimeout(function(){lmb_search_relations(filter)},1500);
+}
+
+</script>
+
+
+<div style="margin:10px;margin-left:20px;">
+serach : <input type="text" onkeyup="lmb_search_pause(this.value)">
+</div>
+
+  
+<?php 
+
+$tables = dbf_20(array($DBA['DBSCHEMA'],null,'TABLE'));
+$tables = $tables["table_name"];
+
+
+function lmb_make_tree($value, $callTrace=array()){
+    static $outputCache;
+    # first call -> init output cache
+    if (!$outputCache) { $outputCache = array(); }
+    # return from cache if existent
+    if (array_key_exists($value, $outputCache)) { echo $outputCache[$value]; return; }
+    # prevent recursion
+    if (in_array($value, $callTrace)) { echo "<li>Recursive call to $value!</li>"; return; }
+
+    if($dep = lmb_checkViewDependency($value)) {
+        ob_start();
+        echo "<ul>";
+        foreach ($dep as $k => $v) {
+            echo "<li>";
+            echo "<div class=\"rtree2 view_$v\" title=\"hallo\" onclick=\"lmb_show_relations('$v')\" ondblclick=\"lmb_show_relations('$v',1)\">$v</div>";
+            $callTrace[] = $value;
+            lmb_make_tree($v, $callTrace);
+            echo "</li>";
+        }
+        echo "</ul>";
+        $output = ob_get_clean();
+        $outputCache[$value] = $output;
+        echo $output;
+        #return $dep;
+    }
+}
+
+
+echo "<div class=\"clt\">";
+echo "<ul>";
+
+foreach($tables as $key => $value){
+    #AND strtolower(substr($value,0,5)) != 'verk_'
+    if($dep = lmb_checkViewDependency($value)){
+        echo "<li class=\"roottree\">";
+        echo "<div class=\"rtree1\">$value</div>";
+        lmb_make_tree($value);
+        echo "</li>";
+    }
+}
+
+echo "</ul>";
+echo "</div>";
+
+
+
+
+}else{
+
+//  ################# table tree ######################
+    
+?>
+
+<script language="JavaScript">
+$(function() {
+	$('#container').height(($( window ).height()) - 100);
+});
+</script>
+
+<DIV class="ajax_container" ID="fieldinfo" style="width:300px;position:absolute;z-index:99999;border:1px solid black;padding:4px;visibility:hidden;background-color:<?=$farbschema[WEB11]?>"></DIV>
+
+<div ID="container" STYLE="position: relative; width: 100%; height: 500px; overflow: auto;">
+<?php
 
 if($setdrag){
 	lmb_SetTabschemaPattern($setdrag);
@@ -116,3 +286,20 @@ foreach ($gtab["tab_id"] as $key => $gtabid) {
 
 ?>
 </div>
+
+
+
+<FORM ACTION="main_admin.php" METHOD="post" name="form1" style="float:left;z-index:10000;position:relative;"onmouseover="document.form1.view_save.style.visibility='visible';"onmouseout="document.form1.view_save.style.visibility='hidden';">
+<FORM ACTION="main_admin.php" METHOD="post" name="form1">
+<input type="hidden" name="action" value="<?=$action?>">
+<input type="hidden" name="setdrag">
+<input type="submit" onclick="setDrag();ajaxGet(null,'main_admin.php', '&action=<?=$action?>&setdrag=' +document.form1.setdrag.value,null, 'void');return false;" value="<?=$lang[1997]?>" name="view_save">
+</FORM>
+
+</div>
+</FORM>
+
+<?php }?>
+
+
+</TD></TR></TABLE>

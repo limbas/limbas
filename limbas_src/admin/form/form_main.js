@@ -48,8 +48,8 @@ if(browser_ns5){document.captureEvents(Event.MOUSEDOWN | Event.MOUSEUP);}
 document.onmouseup = endDrag;
 
 function startDrag(evt) {
-	dx = new Array
-	dy = new Array
+	dx = new Array();
+	dy = new Array();
 	
 	if(currentdiv != 'menu'){
 		$("#menu").removeClass('ui-selected');
@@ -267,7 +267,7 @@ function resize_pic(evt) {
 			if(evt.pageY - py + ey > 0 && evt.pageX - px + ex > 0){
 				if(parent.form_menu.document.form1.prop.checked == 1 || evt.shiftKey){
 					current.top = evt.pageY - dy;
-					current.left = px + ((evt.pageY - py) * xy) - 8
+					current.left = px + ((evt.pageY - py) * xy) - 8;
 					current_div.height = evt.pageY - py + ey;
 					current_pic.height = evt.pageY - py + ey;
 					current_div.width = (evt.pageY - py + ey) * xy;
@@ -285,7 +285,7 @@ function resize_pic(evt) {
 			if((window.event.clientY - py + ey) > 0 && (window.event.clientX - px + ex) > 0){
 				if(parent.form_menu.document.form1.prop.checked == 1 || window.event.shiftKey){
 					current.top = window.event.clientY - dy;
-					current.left = px + ((window.event.clientY - py) * xy) - 8
+					current.left = px + ((window.event.clientY - py) * xy) - 8;
 					current_div.height = window.event.clientY - py + ey;
 					current_div.width = (window.event.clientY - py + ey) * xy;
 					current_pic.height = window.event.clientY - py + ey;
@@ -344,7 +344,7 @@ function setTabulator(mainel,tabuid){
 function parentsetx(id){
 	var x = 0;
 	if(document.getElementById(id)){
-		var eltern = document.getElementById(id).offsetParent
+		var eltern = document.getElementById(id).offsetParent;
 		while(eltern){
 			var x = eltern.offsetLeft + x;
 			eltern = eltern.offsetParent;
@@ -559,9 +559,10 @@ function movex(evt) {
 
 	}
 
-	if(evt.keyCode == 13){
-		setTimeout("enterfocus()",200);
-	}
+	// edit: uncommented to support codemirror
+	// if(evt.keyCode == 13){
+	// 	setTimeout("enterfocus()",200);
+	// }
 }
 
 
@@ -589,8 +590,8 @@ function fill_style(STYLE_ID,STYLE,VAL) {
 	// Schleife über alle selectable elemente
 	$(".ui-selected").filter('[id^="div"]').each(function() {
 		div = $( this ).attr('id');
-		ID = div.substr(3,10)
-		el = document.getElementById(div).style
+		ID = div.substr(3,10);
+		el = document.getElementById(div).style;
 		if(!setstyle[ID]){setstyle[ID] = new Array();}
 
 		switch(STYLE) {
@@ -1068,11 +1069,37 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	var style = STYLE.split(";");
         
 	// allgemeiner Inhalt
-        if( $('#fvalue'+id) && $('#fvalue'+id).value ) {
-            $('#lmb_subform_value').val( $('#fvalue'+id).value );
-        } else if( $('#div'+id) && $('#div'+id).value ) {
-            $('#lmb_subform_value').val( $('#div'+id).value );
-        }        
+	if(TYP == 'php' || TYP == 'js'){
+        // switch syntax highlighting
+        if (TYP === 'php') {
+            cmeditor.setOption("mode", "text/x-php");
+        } else if(TYP === 'js') {
+            cmeditor.setOption("mode", "text/javascript");
+        }
+
+        // initially, copy textarea content to codemirror
+	    if( $('#fvalue'+id) && $('#fvalue'+id).val() ) {
+            selectedInput = $('#fvalue'+id);
+	    	cmeditor.setValue(selectedInput.val());
+
+	    } else if( $('#div'+id) && $('#div'+id).val() ) {
+	    	selectedInput = $('#div'+id);
+            cmeditor.setValue(selectedInput.val());
+		}
+
+        // reload possible changes to textarea when focussing codemirror
+        cmeditor.on('focus', function() {
+            cmeditor.setValue(selectedInput.val());
+        });
+
+        // update textarea content on change
+        cmeditor.on('change', function() {
+            selectedInput.val(cmeditor.getValue());
+        });
+	}else{
+		$('#lmb_subform_value').val('');
+		$('#menu_value').hide();
+	}
 	
 	// bilder Infos
 	if(TYP == 'bild'){
@@ -1283,10 +1310,10 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	}
 	
 	if(TYP != 'tabuItem' && TYP != 'categorieItem'){
-                // prevent activation of tabuItems etc.
-                if(TYP != 'multi' || (OLDTYP != 'tabuItem' && OLDTYP != 'categorieItem')) {
-                        aktivate(evt,el,id,TYP);
-                }
+		// prevent activation of tabuItems etc.
+		if(TYP != 'multi' || (OLDTYP != 'tabuItem' && OLDTYP != 'categorieItem')) {
+				aktivate(evt,el,id,TYP);
+		}
 
 	}else{
 		limbasDivShow('','','menu');
@@ -1303,15 +1330,17 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 		parent.form_menu.document.form1.WPOSI.value = parseInt(document.getElementById(div).offsetWidth);
 	}
 	
-
+	// edit: uncommented to support codemirror
 	//Focus auf Element setzen (wichtig für Texteingabe bei Mozilla)
-	setTimeout("enterfocus()",200);
+	// setTimeout("enterfocus()",200);
+    document.getElementById(currentdiv).focus();
 }
+
 
 
 // bei ENTER fokus()
 function enterfocus(){
 	if((currenttyp == 'text' || currenttyp == 'php' || currenttyp == 'inptext' || currenttyp == 'submt' || currenttyp == 'button' || currenttyp == 'inphidden' || currenttyp == 'inparea' || currenttyp == 'inpselect' || currenttyp == 'inpcheck' || currenttyp == 'inpradio' || currenttyp == 'js') && currentdiv){
-            document.getElementById(currentdiv).focus();
-        }
+		document.getElementById(currentdiv).focus();
+	}
 }

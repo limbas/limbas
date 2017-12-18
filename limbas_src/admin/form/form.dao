@@ -390,6 +390,7 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 	}elseif($form_add == "reminder"){
 		$value = "reminder";
 	}elseif($form_add == "wflhist"){
+        # --> $uform_typ = (Workflow-ID)
 		$value = "wflhist";
 	}elseif($form_add == "datum"){
 		$value = "Datum";
@@ -419,7 +420,7 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 		lmb_addElement($form_id,'tabcell',null,null,null,$tab,'1;2');
 		$ZINDEX = $ZINDEX+2;
 		$NEXTID = $NEXTID+2;
-		$NEXTKEYID = $NEXTKEYID+2;
+		$NEXTKEYID = intval($NEXTKEYID)+2;
 		$height = 100;
 		$width = 200;
 	}elseif($form_add == "stab"){

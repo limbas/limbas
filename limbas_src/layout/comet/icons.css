@@ -68,7 +68,6 @@
 .lmb-icon-8{
     display: inline-block;
     font: normal normal normal 14px/1 FontAwesome;
-    font-size: inherit;
     text-rendering: auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -78,11 +77,14 @@
 .lmb-icon-32{
     display: inline-block;
     font: normal normal normal 14px/1 FontAwesome;
-    font-size: inherit;
     text-rendering: auto;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-size: 2.6em;
+}
+
+.lmb-icon.lmb-icon-on-input {
+    margin-left: -1.28571429em; /* width of .lmb-icon */
 }
 
 .lmb-icon-cus.lmb-plusonly::before {
@@ -106,8 +108,12 @@
     content: "\f0fe";
 }
 
-.lmb-page-copy::before, .lmb-application-double::before { /* former .fa-clone */
+.lmb-compare-version::before, .lmb-page-copy::before, .lmb-application-double::before { /* former .fa-clone */
     content: "\f24d";
+}
+
+.lmb-compare-version2::before { /* former .fa-columns */
+    content: "\f0db";
 }
 
 .lmb-page-key::before, .lmb-versioning::before, .lmb-page-key-green::before { /* former .fa-file-archive-o */
@@ -116,6 +122,10 @@
 
 .lmb-page-find::before, .lmb-rep-dbsearch::before, .lmb-mail-search::before { /* former .fa-search */
     content: "\f002";
+}
+
+.lmb-rep-table-menu::before { /* former .fa-cog */
+    content: "\f013";
 }
 
 .lmb-page-edit::before, .lmb-organisation-edit::before, .lmb-mail-new::before { /* former .fa-pencil-square-o */
@@ -177,7 +187,6 @@
 }
 .lmb-query::before { /* former .fa-table */
     content: "\f0ce";
-    color: gray;
 }
 .lmb-cog::before { /* former .fa-cog */
     content: "\f013";
@@ -409,8 +418,8 @@
 .lmb-rep-button::before { /* former .fa-hand-pointer-o */
     content: "\f25a";
 }
-.lmb-rep-scroll::before { /* former .fa-arrows-v */
-    content: "\f07d";
+.lmb-rep-scroll::before { /* former .fa-arrows-h */
+    content: "\f07e";
 }
 .lmb-rep-text::before { /* former .fa-mobile */
     content: "\f10b";
@@ -589,7 +598,7 @@
 }
 .lmb-folder2-open::before { /* former .fa-folder-open-o */
     content: "\f115";
-    color: rgb(201, 76, 0); /* yellow/beige */
+    color: #A3A3A3;
 }
 .lmb-folder3-open::before { /* former .fa-folder-open-o */
     content: "\f115";
@@ -598,12 +607,16 @@
 .lmb-folder4-open::before { /* former .fa-folder-open-o */
     content: "\f115";
 }
+.lmb-folder5-open::before { /* former .fa-folder-open-o */
+    content: "\f115";
+    color: #5996d6;
+}
 .lmb-folder-closed::before { /* former .fa-folder-o */
     content: "\f114";
 }
 .lmb-folder2-closed::before { /* former .fa-folder-o */
     content: "\f114";
-    color: rgb(221, 196, 15); /* yellow/beige */
+    color: #A3A3A3;
 }
 .lmb-folder3-closed::before { /* former .fa-folder-o */
     content: "\f114";
@@ -611,6 +624,10 @@
 }
 .lmb-folder4-closed::before { /* former .fa-folder-o */
     content: "\f114";
+}
+.lmb-folder5-closed::before { /* former .fa-folder-o */
+    content: "\f114";
+    color: #5996d6;
 }
 .lmb-pencil-alt::before { /* former .fa-pencil */
     content: "\f040";
@@ -701,9 +718,6 @@
 }
 .lmb-sign-out::before { /* former .fa-sign-out */
     content: "\f08b";
-}
-.lmb-sign-in::before { /* former .fa-sign-in */
-    content: "\f090";
 }
 .lmb-reset::before { /* former .fa-undo */
     content: "\f0e2";
@@ -1060,6 +1074,11 @@
 }
 .lmb-forbidden::before { /* former .fa-lock */ 
     content: "\f023";
+    color: red;
+}
+.lmb-forbidden {
+    border: 2px dashed red;
+    padding: 1px 6px 1px 6px;
 }
 .lmb-unlocked::before { /* former .fa-unlock */ 
     content: "\f09c";
@@ -1075,4 +1094,19 @@
 }
 .lmb-phone::before { /* former .fa-phone */
     content: "\f095";
+}
+.lmb-revisioner::before { /* former .fa-code-fork  */
+    content: "\f126";
+}
+.lmb-columns::before {
+    content: "\f0db";
+}
+.lmb-filter::before {
+    content: "\f0b0";
+}
+.lmb-microphone::before { /* former .fa-microphone */
+    content: "\f130";
+}
+.lmb-microphone-slash::before { /* former .fa-microphone-slash */
+    content: "\f131";
 }

@@ -29,10 +29,10 @@ function lmbExport_infotext(){
 
 	$info = "
 	# export.conf
-	# © LImbas GmbH - 2001-2015
-	# Copyright (c) 2000-2007 Hawest Gbr, , Germany.  All rights reserved.
+	# © LIMBAS GmbH - 2001-2017
+	# Copyright (c) 2001-2017 LIMBAS GmbH, Germany.  All rights reserved.
 	#
-	# Author: Axel Westhagen, 2015
+	# Author: LIMBAS GmbH
 	#
 	# Configuration_file for Export_DB
 	#
@@ -140,17 +140,18 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
 		
 		if(lmbExport_ToSystem($exptables,$exptable,$export_filter,$tableprefix)){
 			$path = "USER/".$session["user_id"]."/temp";
-			if($path_ = make_fileArchive($path,"export_bundle")){
-				echo  "<BR><BR>&nbsp;&nbsp;<I><A NAME=\"download\" HREF=\"$path_\">".$path_."</A> ($lang[975])</I><BR>";
-				echo '<script language="JavaScript">
-					limbasWaitsymbol(false,false,true);
-				</script>';
+			if($expfile = make_fileArchive($path,"export_bundle")){
+    			/*
+			    echo  "<div class=\"tabpool\">
+    			<i class=\"lmb-icon lmb-download\" style=\"font-size:20px\"></i><b> $lang[975]</b><br>
+    			&nbsp;<li><I><A NAME=\"download\" HREF=\"$path_\" style=\"color:green;\">".$path_."</A></I></li>
+    			</div>";
+    			echo '<script language="JavaScript">limbasWaitsymbol(false,false,true);</script>';
+    			*/
 			}
 		}
 		
-	}
-	elseif ($format == 'sync')
-	{
+	}elseif ($format == 'sync'){
 		//$includetabs = array('lmb_action_depend',    'lmb_form_list',    'lmb_field_types',    'lmb_conf_views',    'lmb_forms',    'lmb_currency',    'lmb_trigger',    'lmb_tabletree',    'lmb_conf_viewfields',    'lmb_gtab_status_save',    'lmb_fonts',    'lmb_colorschemes',    'lmb_wfl_task',    'lmb_conf_fields',    'lmb_gtab_pattern',    'lmb_sequences',    'lmb_action',    'lmb_report_list',    'lmb_conf_tables',    'lmb_user_colors',    'lmb_reminder_list',    'lmb_reports',    'lmb_lang',    'lmb_wfl',    'lmb_charts',    'lmb_crontab',    'lmb_lang_depend'); 
 	
 		//Users Groups
@@ -165,72 +166,248 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
 		
 		$exporttabs = in_array('tabs',$tableprefix);
 		
+		// tables
 		if ($exporttabs)
 		{
-			$tosync = array_merge($tosync, array('lmb_field_types',	'lmb_conf_groups','lmb_conf_views','lmb_trigger','lmb_tabletree','lmb_conf_viewfields','lmb_conf_fields','lmb_gtab_pattern','lmb_conf_tables','lmb_lang_depend') );
+			$tosync = array_merge($tosync, array('lmb_conf_groups','lmb_conf_tables','lmb_conf_fields','lmb_conf_views','lmb_conf_viewfields','lmb_gtab_pattern','lmb_trigger','lmb_tabletree','lmb_lang_depend','lmb_select_p','lmb_attribute_p','lmb_select_w','lmb_attribute_w','lmb_lang_depend') );
+			// rules
+    		if (in_array('group',$tableprefix)){
+    		    $tosync = array_merge($tosync, array('lmb_groups', 'lmb_rules_tables','lmb_rules_fields', 'lmb_rules_dataset'));
+    		}
 		}
 		
+		// forms
 		if (in_array('forms',$tableprefix))
 		{
 			$tosync = array_merge($tosync, array('lmb_form_list','lmb_forms') );
+			// rules
+    		if (in_array('group',$tableprefix)){
+    		    $tosync = array_merge($tosync, array('lmb_groups','lmb_rules_repform'));
+    		}
 		}
 		
+		// reports
 		if (in_array('rep',$tableprefix))
 		{
 			$tosync = array_merge($tosync, array('lmb_report_list','lmb_reports') );
+		    // rules
+    		if (in_array('group',$tableprefix)){
+    		    $tosync = array_merge($tosync, array('lmb_groups','lmb_rules_repform'));
+    		}
 		}
 		
+		// chart
+        if (in_array('charts',$tableprefix))
+        {
+            $tosync = array_merge($tosync, array('lmb_chart_list','lmb_charts') );
+        	// rules
+    		if (in_array('group',$tableprefix)){
+    		    $tosync = array_merge($tosync, array('lmb_groups','lmb_rules_repform'));
+    		}
+        }
+
+		// workflow
 		if (in_array('work',$tableprefix))
 		{
 			$tosync = array_merge($tosync, array('lmb_wfl_task','lmb_wfl') );
+			// rules
+    		if (in_array('group',$tableprefix)){
+    		    $tosync = array_merge($tosync, array('lmb_groups','lmb_rules_repform'));
+    		}
 		}
 		
-		if (in_array('group',$tableprefix))
+		
+		// DMS
+		if (in_array('dms',$tableprefix))
 		{
-			$tosync = array_merge($tosync, array('lmb_userdb',	'lmb_usrgrp_lst',	'lmb_rules_dataset',	'lmb_groups',    'lmb_rules_tables',	'lmb_rules_fields',    'lmb_rules_repform',	'lmb_rules_action') );
+			$tosync = array_merge($tosync, array('ldms_structure') );
+			// rules
+    		if (in_array('group',$tableprefix)){
+    		    $tosync = array_merge($tosync, array('lmb_groups','ldms_rules'));
+    		}
 		}
+
+		// === sonst ===
 		
-		if (in_array('sons',$tableprefix))
-		{
-			$tosync = array_merge($tosync, array('lmb_action_depend','lmb_currency','lmb_fonts','lmb_colorschemes','lmb_action','lmb_user_colors','lmb_reminder_list','lmb_lang','lmb_crontab','lmb_lang_depend')); 
+		
+		// snapshot
+        if (in_array('snapshots',$tableprefix))
+        {
+            $tosync = array_merge($tosync, array('lmb_snap','lmb_snap_shared') );
+        }
+
+		// reminder
+        if (in_array('reminder',$tableprefix))
+        {
+            $tosync = array_merge($tosync, array('lmb_reminder_list') );
+        	// rules
+    		if (in_array('group',$tableprefix)){
+    		    $tosync = array_merge($tosync, array('lmb_groups','lmb_rules_repform','lmb_rules_tables','lmb_rules_fields', 'lmb_rules_dataset','ldms_rules'));
+    		}
+        }
+
+        // currency
+        if (in_array('currency',$tableprefix))
+        {
+            $tosync = array_merge($tosync, array('lmb_currency') );
+        }
+
+        // colorscheme
+        if (in_array('colorscheme',$tableprefix))
+        {
+            $tosync = array_merge($tosync, array('lmb_colorschemes') );
+        }
+
+        // usercolors
+        if (in_array('usercolors',$tableprefix))
+        {
+            $tosync = array_merge($tosync, array('lmb_user_colors') );
+        }
+
+        // crontab
+        if (in_array('crontab',$tableprefix))
+        {
+            $tosync = array_merge($tosync, array('lmb_crontab') );
+        }
+	    
+	    // links
+        if (in_array('links',$tableprefix))
+        {
+            $tosync = array_merge($tosync, array('lmb_action_depend'));
+        	// rules
+    		if (in_array('group',$tableprefix)){
+    		    $tosync = array_merge($tosync, array('lmb_groups','lmb_rules_action'));
+    		}
+        }
+        
+	    // pools
+        if (in_array('pools',$tableprefix))
+        {
+            $tosync = array_merge($tosync, array('lmb_select_p', 'lmb_select_w', 'lmb_attribute_p', 'lmb_attribute_w'));
+        }
+        
+		// rules&groups
+        if (in_array('rules',$tableprefix))
+        {
+            $tosync = array_merge($tosync, array('lmb_groups','lmb_rules_action','lmb_rules_repform'));
+        }
+        
+	    // system
+        if (in_array('system',$tableprefix))
+        {
+            $tosync = array_merge($tosync, array('lmb_dbpatch','lmb_umgvar','lmb_field_types','lmb_fonts','lmb_mimetypes','lmb_lang','lmb_action') );
+        }
+
+        // === /sonst ===
+
+		// source code
+        $limbasSrcOutputFile = null;
+		if (in_array('sourcecode', $tableprefix)) {
+			# resolve admin-symlink in dependent to get location of limbas_src
+			$relPathLmbSrc = preg_replace('/admin$/', '', readlink($umgvar['path'] . '/admin'));
+			$pathLmb = $umgvar['path'] . '/' . $relPathLmbSrc . '../';
+
+            # put source into tar gz
+			$limbasSrcOutputFile = $pathLmb . 'limbas_src.tar.gz';
+            system("tar cz -C '$pathLmb' -f '$limbasSrcOutputFile' 'limbas_src/' --exclude='.git'", $returnCode);
+            if (!file_exists($limbasSrcOutputFile)) {
+                echo "There were errors while packing the sourcecode! (returncode $returnCode)";
+                return false;
+            }
 		}
-		
-		//error_log(print_r($tosync,1));
-		
-		
-                //Sammle alle nicht Systemtabellen
-                $expttabs = array();
-                
+
+        // extensions
+        $extensionOutputFile = null;
+        if (in_array('extensions', $tableprefix)) {
+            $extensionOutputFile = $umgvar['path'] . '/extensions.tar.gz';
+            
+            # put extensions into tar gz
+            system("tar cz -C '{$umgvar['path']}' -f '$extensionOutputFile' 'EXTENSIONS/'", $returnCode);
+            if (!file_exists($extensionOutputFile)) {
+                echo "There were errors while packing the extensions! (returncode $returnCode)";
+                return false;
+            }
+        }
+        
+        // call extension function
+        $callExtensionFunctionName = null;
+        $extensionFunctionArr = array_filter($tableprefix, function($elem) {
+            return lmb_stripos($elem, 'callextensionfunction') === 0;
+        });
+        if (count($extensionFunctionArr) > 0) {
+            # extract function name (remove 'callextensionfunction ')
+            $callExtensionFunctionName = lmb_substr(array_shift($extensionFunctionArr), 22);
+        }
+        
+		// always
+        #if (count($tosync) > 0) {
+            //$tosync = array_merge($tosync, array('lmb_dbpatch') );
+        #}
+
+		# ?? lmb_gtab_groupdat, verk_*
+
+		#error_log(print_r($tosync,1));
+
+        //Sammle alle nicht Systemtabellen
+        $expttabs = array();
+        $exptables = array();
 		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'TABLE'"));
 		foreach($odbc_table["table_name"] as $tkey => $table) {
 			//no  systemtables, system_files, ldms_* , dontinclude
 			if (in_array(lmb_strtolower($table), $tosync) || (lmb_strpos(lmb_strtolower($table),'lmb_') === false && lmb_strpos(lmb_strtolower($table),'systemtables') === false && lmb_strpos(lmb_strtolower($table),'system_files') === false && lmb_strpos(lmb_strtolower($table),'ldms_') === false && $exporttabs))
 			{
 				$exptables[] = $table;
-                                if (lmb_strpos(lmb_strtolower($table),'lmb_') === false && lmb_strpos(lmb_strtolower($table),'systemtables') === false && lmb_strpos(lmb_strtolower($table),'system_files') === false && lmb_strpos(lmb_strtolower($table),'ldms_') === false && $exporttabs) 
-                                {
-                                    $expttabs[] =  $table;
-                                }
+                if (lmb_strpos(lmb_strtolower($table),'lmb_') === false && lmb_strpos(lmb_strtolower($table),'systemtables') === false && lmb_strpos(lmb_strtolower($table),'system_files') === false && lmb_strpos(lmb_strtolower($table),'ldms_') === false && $exporttabs)
+                {
+                    $expttabs[] =  $table;
+                }
 			}
 		}
-		if(lmbExport_ToSystem($exptables,null,null,null,true)){
-                        
-			$path = "USER/".$session["user_id"]."/temp";
-                        
-                        //füge der bestehenden export.php das Array der nicht Systemtabellen an
-                        $str=file_get_contents($path.'/export.php');
-                        $var_str = var_export($expttabs, true);
-                        $str=str_replace('?>','$tosyn = '.$var_str.'; ?>',$str);
-                        $var_str2 = var_export($tableprefix, true);
-                        $str=str_replace('?>',"\n" . '$types = '.$var_str2.'; ?>',$str);
-                        file_put_contents($path.'/export.php', $str);
-                        
-                        //Erstelle Package
-			if($path_ = make_fileArchive($path,"sync_export_bundle")){
-				echo  "<BR><BR>&nbsp;&nbsp;<I><A NAME=\"download\" HREF=\"$path_\">".$path_."</A> ($lang[975])</I><BR>";
-				echo '<script language="JavaScript">
-					limbasWaitsymbol(false,false,true);
-				</script>';
+
+		# collect view definitions
+		$viewDefinitions = array();
+		if ($exporttabs){
+    		$viewNames = lmb_getViewDependency();
+            foreach ($viewNames as $viewName => $level) {
+                $viewDefinitions[$viewName] = lmb_getViewDef($viewName);
+            }
+		}
+		
+		$path = "/USER/".$session["user_id"]."/temp";
+		if(lmbExport_ToSystem($exptables,null,null,null,true) || (count($exptables) == 0 && file_exists($umgvar['pfad'] . $path.'/export.php'))){
+			//füge der bestehenden export.php das Array der nicht Systemtabellen an
+			$str=file_get_contents($umgvar['pfad'] . $path.'/export.php');
+			$var_str = var_export($expttabs, true);
+			$str=str_replace('?>','$tosyn = '.$var_str.'; ?>',$str);
+			$var_str2 = var_export($tableprefix, true);
+			$str=str_replace('?>',"\n" . '$types = '.$var_str2.'; ?>',$str);
+            $var_str2 = var_export($viewDefinitions, true);
+            $str=str_replace('?>',"\n" . '$viewDefinitions = '.$var_str2.'; ?>',$str);
+            $var_str2 = var_export($callExtensionFunctionName ? $callExtensionFunctionName : '', true);
+            $str=str_replace('?>',"\n" . '$callExtensionFunctionName = '.$var_str2.'; ?>',$str);            
+			file_put_contents($umgvar['pfad'] . $path.'/export.php', $str);
+
+			// put archived source into bundle
+            if ($limbasSrcOutputFile) {
+                rename($limbasSrcOutputFile, $umgvar['path'] . $path . '/limbas_src.tar.gz');
+            }
+
+			// put archived extensions into bundle
+			if ($extensionOutputFile) {
+                rename($extensionOutputFile, $umgvar['path'] . $path . '/extensions.tar.gz');			
+			}
+
+			//Erstelle Package
+			if($expfile = make_fileArchive(ltrim($path, "/"),"sync_export_bundle")){
+			    /*
+			    if(!$GLOBALS['remote_sync_precheck'] AND !$GLOBALS['remote_sync_export']){
+    				echo  "<div class=\"tabpool\">
+    				<i class=\"lmb-icon lmb-download\" style=\"font-size:20px\"></i><b> $lang[975]</b><br>
+    				&nbsp;<li><I><A NAME=\"download\" HREF=\"$path_\" style=\"color:green;\">".$path_."</A></I></li>
+    				</div>";
+    				echo '<script language="JavaScript">limbasWaitsymbol(false,false,true);</script>';
+			    }
+			    */
 			}
 		}
 	}
@@ -398,6 +575,8 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 			if($tableprefix){
 				$table_ = ltrim($table,"lmb_");
 				$table_ = ltrim($table_,"LMB_");
+				$table_ = ltrim($table,"ldms_");
+				$table_ = ltrim($table,"LDMS_");
 				$newtablename = $tableprefix.$table_;
 			}else{
 				$newtablename = $table;
@@ -408,7 +587,7 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 			unset($line);
 
 			$config_datei = fopen($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.conf","w+");
-			if (!$configonly || lmb_strtolower(lmb_substr($table,0,4)) == 'lmb_'){$table_datei = fopen($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.dat","w+");}
+			if (!$configonly OR lmb_strtolower(lmb_substr($table,0,4)) == 'lmb_' OR lmb_strtolower(lmb_substr($table,0,5)) == 'ldms_'){$table_datei = fopen($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.dat","w+");}
 			$pfad = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/";
 
 			$info = lmbExport_infotext();
@@ -462,7 +641,7 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 				}
 
 				/* ---> tab */
-				if (! $configonly || lmb_strtolower(lmb_substr($table, 0, 4)) == 'lmb_') {
+				if (! $configonly OR lmb_strtolower(lmb_substr($table, 0, 4)) == 'lmb_' OR lmb_strtolower(lmb_substr($table, 0, 5)) == 'ldms_') {
 					lmb_fputcsv($table_datei, $line, 1);
 				}
 			}
@@ -471,7 +650,7 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 			/* ---> conf */ fputs($config_datei,"<end tabledefinition>\n\n");
 
 			/* --- Inhalt_Liste --------------------------------------------- */
-			if (!$configonly || lmb_strtolower(lmb_substr($table,0,4)) == 'lmb_'){
+			if (!$configonly OR lmb_strtolower(lmb_substr($table,0,4)) == 'lmb_' OR lmb_strtolower(lmb_substr($table,0,5)) == 'ldms_'){
 				if($export_filter AND !is_array($export_filter)){$expf = $export_filter;}
 				elseif($export_filter[$bzm0]){$expf = $export_filter[$bzm0];}
 				else{$expf = "";}
@@ -547,7 +726,7 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 
 			fclose($config_datei);
 
-			if (!$configonly || lmb_strpos(lmb_strtolower($table),"lmb_") !== false)
+			if (!$configonly OR lmb_strtolower(lmb_substr($table,0,4)) == 'lmb_' OR lmb_strtolower(lmb_substr($table,0,5)) == 'ldms_')
 			{
 				fclose($table_datei);
 				$systemquery = "tar -c -z -C ".$pfad." -f ".$pfad.$newtablename.".tar.gz "."export.conf export.dat";
@@ -826,9 +1005,6 @@ function lmbExport_Dump($format,$struct_only=false){
  * selection of export elemets
  *
  * @param unknown_type $lmp
- * @param unknown_type $remote_user
- * @param unknown_type $remote_pass
- * @param unknown_type $remote_host
  */
 function lmbExport_groupSelection($lmp=null){
 	global $umgvar;
@@ -855,7 +1031,7 @@ function lmbExport_groupSelection($lmp=null){
 			echo "<TR title=\"table-group\">
 			<TD nowrap><b>".$rm_group["name"][$group_key]."</b></TD><TD width=\"80%\" align=\"right\">
 			<input class=\"checkb\" type=\"checkbox\" name=\"orderList[group][$group_key]\">
-			</TD>\n";
+			</TD>\n"; // TODO orderList is never used!
 			
 			if($rm_gtab);
 			foreach ($rm_gtab["tab_id"] as $gtab_key => $gtab_value){
@@ -882,6 +1058,49 @@ function lmbExport_groupSelection($lmp=null){
 
 }
 
+/**
+ * Performs a local sync export
+ * Passes the files to the remote limbas defined by host, user and pass
+ * Performs the diff/import on the remote system with a transaction
+ * 
+ * @param   array       $toSync             keywords that speficy what to sync, see LmbExport()
+ * @param   string      $remoteHost
+ * @param   string      $remoteUser
+ * @param   string      $remotePass
+ * @param   bool        $precheck           whether to do a diff or not, see import_sync.php
+ * @param   bool        $confirm_syncimport whether to do the import or not, see import_sync.php
+ * @return  false|array answer of soap call to remote limbas or false on error
+ */
+function lmbExport_remoteSync($toSync, $remoteHost, $remoteUser, $remotePass, $precheck, $confirm_syncimport) {
+    global $umgvar;
+    global $session;
 
+    # TODO
+    global $DBA;
+    require_once("lib/db/db_".$DBA["DB"]."_admin.lib");
+    require_once("lib/include_admin.lib");
+
+    # sync export
+    $exportFile = $umgvar['pfad'] . "/USER/" . $session['user_id'] . "/temp/sync_export_bundle.tar.gz";
+    if(lmbExport(null, 'sync', null, $toSync) === false) { # TODO params?
+        return false;
+    }
+
+	# config soap
+    $LIM = array(
+        'lim_url' => $remoteHost,
+        'username' => $remoteUser,
+        'pass' => $remotePass
+    );
+
+    # trigger sync import of tar.gz via soap
+    $lmpar[0]['action'] = 'setup_remote_syncimport';
+    $lmpar[0]['file_content'] = base64_encode(file_get_contents($exportFile));
+	$lmpar[0]['precheck'] = $precheck;
+	$lmpar[0]['confirm_syncimport'] = $confirm_syncimport;
+	$result = soap_call_client($lmpar, $LIM);
+	return $result;
+    #return json_decode($result, true);
+}
 
 ?>

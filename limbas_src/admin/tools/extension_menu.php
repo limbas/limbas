@@ -313,7 +313,7 @@ function moveFileDragAndDrop(src,dest,id){
     
     formData.append("src", src);
     formData.append("actid","extensionEditorUpload");
-    formData.append("dest",dest)
+    formData.append("dest",dest);
     formData.append("todo","moveFileDragAndDrop");
     
     client.onerror = function(e) {

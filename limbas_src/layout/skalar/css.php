@@ -753,7 +753,7 @@ i.btn {
 	background-color: {$farbschema['WEB11']};
 	border-collapse:collapse;
 	border-spacing:1px;
-	opacity: .8;
+	opacity: .9;
 }
 
 .gtabBodyTR{

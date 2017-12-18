@@ -257,7 +257,9 @@ function dftyp_inherit($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_ind
 	}else{
 		$inheritEvent = " OnKeyUp=\"limbasSearchInherit($gtabid,$bzm," . $gfield[$gtabid]["inherit_tab"][$bzm] . "," . $gfield[$gtabid]["inherit_field"][$bzm] . ",this,'$ID')\"";
 		$event_dblclick = "this.value='*';limbasSearchInherit($gtabid,$bzm," . $gfield[$gtabid]["inherit_tab"][$bzm] . "," . $gfield[$gtabid]["inherit_field"][$bzm] . ",this,'$ID')";
-		$event_change = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm]."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this.value,'".$ID."','".$gfield[$gtabid]["ajaxpost"][$bzm]."','".$gfield[$gtabid]["size"][$bzm]."')";
+		if($gfield[$gtabid]["argument_edit"][$bzm]){
+		  $event_change = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm]."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this.value,'".$ID."','".$gfield[$gtabid]["ajaxpost"][$bzm]."','".$gfield[$gtabid]["size"][$bzm]."')";
+		}
 		$events = dftyp_events($typ,$event,null,$event_dblclick,null,null,$event_change,$gresult,$gtabid,$bzm);
 		echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style TYPE=\"TEXT\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"".htmlentities($gresult[$gtabid][$bzm][0],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $inheritEvent $events>";
 	}
@@ -289,12 +291,13 @@ function dftyp_1($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$ev
 		# text
 		}else{
 			$event_change = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm]."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this.value,'$ID','".$gfield[$gtabid]["ajaxpost"][$bzm]."','".$gfield[$gtabid]["size"][$bzm]."')";
+		    if($gfield[$gtabid]["inherit_tab"][$bzm] AND !$gfield[$gtabid]["argument_edit"][$bzm]){$event_change = null; $readonly='readonly';}
 			$events = dftyp_events($typ,$event,null,null,null,null,$event_change,$gresult,$gtabid,$bzm);
 			# Potenz-Dartsellung
 			if($gfield[$gtabid]["potency"][$bzm]){
 				$result = convert_FloatToScientific($result,$gfield[$gtabid]["potency"][$bzm]);
 			}
-			echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style TYPE=\"TEXT\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"".$result.$proz."\" MAXLENGTH=\"".($gfield[$gtabid]["size"][$bzm]+6)."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events>";
+			echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style TYPE=\"TEXT\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"".$result.$proz."\" MAXLENGTH=\"".($gfield[$gtabid]["size"][$bzm]+6)."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $readonly $events>";
 		}
 	}elseif($typ == 2){
 		$events = dftyp_events($typ,$event,$event_click,null,null,null,null,$gresult,$gtabid,$bzm);
@@ -329,8 +332,9 @@ function dftyp_7($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$ev
 			$result = $result." ".$gresult[$gtabid][$bzm][0]['C'];
 		}
 		$event_change = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm]."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',document.getElementsByName('".$gfield[$gtabid]["form_name"][$bzm]."')[0].value,'$ID','".$gfield[$gtabid]["ajaxpost"][$bzm]."','".$gfield[$gtabid]["size"][$bzm]."')";
+	    if($gfield[$gtabid]["inherit_tab"][$bzm] AND !$gfield[$gtabid]["argument_edit"][$bzm]){$event_change = null; $readonly='readonly';}
 		$events = dftyp_events($typ,$event,null,null,null,null,$event_change,$gresult,$gtabid,$bzm);
-		echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" TYPE=\"TEXT\" STYLE=\"".$style."\" $class NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"".$result."\" MAXLENGTH=\"".($gfield[$gtabid]["size"][$bzm]+6)."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events>";
+		echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" TYPE=\"TEXT\" STYLE=\"".$style."\" $class NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"".$result."\" MAXLENGTH=\"".($gfield[$gtabid]["size"][$bzm]+6)."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $readonly $events>";
 
 		if($gresult[$gtabid][$bzm][0]['V'] AND $gfield[$gtabid]["option"][$bzm]){
 			if(preg_match('/display:none/',$style)){$sdpl="display:none;";}
@@ -362,8 +366,9 @@ function dftyp_28($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 	echo "<DIV $pos>";
 	if($typ == 1){
 		$event_change = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm]."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this.value,'$ID','".$gfield[$gtabid]["ajaxpost"][$bzm]."')";
+	    if($gfield[$gtabid]["inherit_tab"][$bzm] AND !$gfield[$gtabid]["argument_edit"][$bzm]){$event_change = null; $readonly='readonly';}
 		$events = dftyp_events($typ,$event,null,null,null,null,$event_change,$gresult,$gtabid,$bzm);
-		echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style TYPE=\"TEXT\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"".$gresult[$gtabid][$bzm][0]."\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events>";
+		echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style TYPE=\"TEXT\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"".$gresult[$gtabid][$bzm][0]."\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $readonly $events>";
 		if(preg_match('/display:none/',$style)){$sdpl="display:none;";}
 		if($gfield[$gtabid]["option"][$bzm]){echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" id=\"sel_$bzm\" ALIGN=\"middle\" BORDER=\"0\" TITLE=\"$lang[700]\" style=\"cursor:pointer;vertical-align:baseline;$sdpl\" Onclick=\"openPhone_".$session["t_setting"][0]."('".str_replace(" ","",$gresult[$gtabid][$bzm][0])."')\"></i>\n";}
 		}elseif($typ == 2){
@@ -393,10 +398,18 @@ function dftyp_2($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$ev
 		# text
 		}else{
 			// multilang
-            if($gfield[$gtabid]['multilang'][$fieldid]){$mlcl = 'gmultilang';}else{$mlcl = '';}
+//            if($gfield[$gtabid]['multilang'][$fieldid]){$mlcl = 'gmultilang';}else{$mlcl = '';}
             $event_change = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm]."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this.value,'".$ID."','".$gfield[$gtabid]["ajaxpost"][$bzm]."','".$gfield[$gtabid]["size"][$bzm]."')";
-			$events = dftyp_events($typ,$event,null,$event_dblclick,null,null,$event_change,$gresult,$gtabid,$bzm);
-			echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class STYLE=\"".$style."\" TYPE=\"TEXT\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"".htmlentities($gresult[$gtabid][$bzm][0],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $inheritEvent $events>";
+		    if($gfield[$gtabid]["inherit_tab"][$bzm] AND !$gfield[$gtabid]["argument_edit"][$bzm]){$event_change = null; $readonly='readonly';}
+            $events = dftyp_events($typ,$event,null,$event_dblclick,null,null,$event_change,$gresult,$gtabid,$bzm);
+			echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class STYLE=\"".$style."\" TYPE=\"TEXT\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"".htmlentities($gresult[$gtabid][$bzm][0],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $readonly $inheritEvent $events>";
+            if ($gfield[$gtabid]["speechrec"][$bzm]) {
+                echo '<script type="text/javascript">
+                    $(document).ready(function() {
+                    lmb_addSpeechRecButton(\'' . $gfield[$gtabid]["form_name"][$bzm] . '\');
+                });
+                </script>';
+            }
 		}
 		
 		// multilang
@@ -445,9 +458,11 @@ function dftyp_3($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$ev
 		$onkeyup .= "memokeypress(event,this,'".htmljs($gsr[$gtabid][$bzm][0])."');";
 		$onkeyup = "onkeydown=\"$onkeyup\"";
 		$event_change = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm]."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this.value,'$ID','".$gfield[$gtabid]["ajaxpost"][$bzm]."','".$gfield[$gtabid]["size"][$bzm]."')";
+		if($gfield[$gtabid]["inherit_tab"][$bzm] AND !$gfield[$gtabid]["argument_edit"][$bzm]){$event_change = null; $readonly='readonly';}
 		$onmouseover = "OnMouseover=\"setSelectedText(this,'".htmljs($gsr[$gtabid][$bzm][0])."')\"";
 		$events = dftyp_events($typ,$event,null,null,null,null,$event_change,$gresult,$gtabid,$bzm);
-		echo "<TEXTAREA ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class STYLE=\"".$style."\" ROWS=\"5\" WRAP=\"off\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $onkeyup $onblur $onmouseover $events>".htmlentities($gresult[$gtabid][$bzm][0],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</TEXTAREA>";
+
+		echo "<TEXTAREA ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class STYLE=\"".$style."\" ROWS=\"5\" WRAP=\"off\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $readonly $onkeyup $onblur $onmouseover $events>".htmlentities($gresult[$gtabid][$bzm][0],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</TEXTAREA>";
 		
 		// multilang
 		if($gfield[$gtabid]["multilang"][$bzm]){
@@ -510,8 +525,9 @@ function dftyp_22($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 		$onkeyup .= "memokeypress(event,this,'".htmljs($gsr[$gtabid][$bzm][0])."');";
 		$onkeyup = "onkeyup=\"$onkeyup\"";
 		$event_change = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm]."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this.value,'$ID',2)";
+	    if($gfield[$gtabid]["inherit_tab"][$bzm] AND !$gfield[$gtabid]["argument_edit"][$bzm]){$event_change = null; $readonly='readonly';}
 		$events = dftyp_events($typ,$event,null,null,null,null,$event_change,$gresult,$gtabid,$bzm);
-		
+	    
 		if($gfield[$gtabid]["wysiwyg"][$bzm]){
 			$formstyle=explode(";",$gform[$gformid]["style"][$formid]);
 			echo "<table cellpadding=0 cellspacing=0 style=\"width:100%;\"><tr>";
@@ -526,7 +542,7 @@ function dftyp_22($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 			if($gfield[$gtabid]["option"][$bzm]){echo "<td valign=\"top\">&nbsp;<i class=\"lmb-icon lmb-edit-caret\" ALIGN=\"middle\" BORDER=\"0\" id=\"sel_$bzm\" style=\"cursor:pointer;vertical-align:baseline;$sdpl\" Onclick=\"newwin9('".$bzm."','".$gtabid."','$ID')\"></i></td>";}
 			echo "</tr></table>";
 		}else{
-			echo "<textarea id=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style_ $onkeyup $onblur ROWS=\"5\" WRAP=\"off\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events>".htmlentities($gresult[$gtabid][$bzm][0],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</TEXTAREA>";
+			echo "<textarea id=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style_ $onkeyup $onblur ROWS=\"5\" WRAP=\"off\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $readonly $events>".htmlentities($gresult[$gtabid][$bzm][0],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</TEXTAREA>";
 			// multilang
     	    if($gfield[$gtabid]["multilang"][$bzm]){
     	       if(preg_match('/display:none/',$style)){$sdpl="display:none;";}
@@ -583,9 +599,10 @@ function dftyp_4($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$ev
 
 	if($typ == 1){
 		$event_change = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm]."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this.value,'$ID','".$gfield[$gtabid]["ajaxpost"][$bzm]."')";
+	    if($gfield[$gtabid]["inherit_tab"][$bzm] AND !$gfield[$gtabid]["argument_edit"][$bzm]){$event_change = null; $readonly='readonly';}
 		$event_dblclick = "this.value=limbasGetDate('".$dateformat."');$event_change";
 		$events = dftyp_events($typ,$event,null,$event_dblclick,null,null,$event_change,$gresult,$gtabid,$bzm);
-		echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $style $class TYPE=\"TEXT\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"".$value2."\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events>";
+		echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $style $class TYPE=\"TEXT\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"".$value2."\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $readonly $events>";
 		if(preg_match('/display:none/',$style)){$sdpl="display:none;";}
 		if($gfield[$gtabid]["option"][$bzm]){echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" id=\"sel_$bzm\" ALIGN=\"middle\" BORDER=\"0\" TITLE=\"$lang[700]\" style=\"cursor:pointer;vertical-align:baseline;$sdpl\" Onclick=\"lmb_datepicker(event,this,'','$value1','".dateStringToDatepicker($dateformat)."')\"></i>\n";}
 	}elseif($typ == 2){
@@ -609,9 +626,10 @@ function dftyp_25($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 
 	if($typ == 1){
 		$event_change = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm]."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this.value,'$ID','".$gfield[$gtabid]["ajaxpost"][$bzm]."')";
+	    if($gfield[$gtabid]["inherit_tab"][$bzm] AND !$gfield[$gtabid]["argument_edit"][$bzm]){$event_change = null; $readonly='readonly';}
 		$event_dblclick = "this.value=limbasGetDate(5);$event_change";
 		$events = dftyp_events($typ,$event,null,$event_dblclick,null,null,$event_change,$gresult,$gtabid,$bzm);
-		echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class$style TYPE=\"TEXT\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"".htmlentities($value,ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events>";
+		echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class$style TYPE=\"TEXT\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"".htmlentities($value,ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $readonly $events>";
 	}elseif($typ == 2){
 		$events = dftyp_events($typ,$event,$event_click,null,null,null,null,$gresult,$gtabid,$bzm);
 		echo "<div name=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style $events> ".htmlentities($value,ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</div>";
@@ -635,6 +653,7 @@ function dftyp_5($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$ev
 	
 	if($typ == 1){
 		$event_click = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm]."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this.checked,'$ID','".$gfield[$gtabid]["ajaxpost"][$bzm]."')";
+	    if($gfield[$gtabid]["inherit_tab"][$bzm] AND !$gfield[$gtabid]["argument_edit"][$bzm]){$event_click = '';}
 		$events = dftyp_events($typ,$event,$event_click,null,null,null,null,$gresult,$gtabid,$bzm);
 		if($gresult[$gtabid][$bzm][0] == 1){$checked = "CHECKED" ;} else { unset($checked);}
 		echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style TYPE=\"CHECKBOX\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"1\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events $checked>";
@@ -643,7 +662,6 @@ function dftyp_5($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$ev
 			$events = dftyp_events($typ,$event,null,null,null,null,null,$gresult,$gtabid,$bzm);
 			echo "<div id=\"".$gfield[$gtabid]["form_name"][$bzm]."\" name=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style $events><i class=\"lmb-icon lmb-check\" BORDER=\"0\"></i></div>";
 		}else{
-
 		    echo "<div id=\"".$gfield[$gtabid]["form_name"][$bzm]."\" name=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style_ $events>&nbsp;</div>";
 		}
 	}
@@ -807,8 +825,9 @@ function dftyp_17($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 	echo "<DIV $pos>";
 	if($typ == 1){
 		$event_change = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm]."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this.value,'$ID','".$gfield[$gtabid]["ajaxpost"][$bzm]."')";
+	    if($gfield[$gtabid]["inherit_tab"][$bzm] AND !$gfield[$gtabid]["argument_edit"][$bzm]){$event_change = null; $readonly='readonly';}
 		$events = dftyp_events($typ,$event,null,null,null,null,$event_change,$gresult,$gtabid,$bzm);
-		echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style TYPE=\"TEXT\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"".htmlentities($gresult[$gtabid][$bzm][0],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events>";
+		echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style TYPE=\"TEXT\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"".htmlentities($gresult[$gtabid][$bzm][0],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $readonly $events>";
 		if($gresult[$gtabid][$bzm][0]){
 			if(preg_match('/display:none/',$style)){$sdpl="display:none;";}
 			if($gfield[$gtabid]["option"][$bzm]){echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" BORDER=\"0\" TITLE=\"$lang[869]\" style=\"cursor:pointer;vertical-align:baseline;$sdpl\" Onclick=\"website=open('mailto:".urlencode($gresult[$gtabid][$bzm][0])."' ,'Website','toolbar=1,location=1,status=1,menubar=1,scrollbars=1,resizable=1,width=850,height=600');\"></i>";}
@@ -833,8 +852,9 @@ function dftyp_18($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 	echo "<DIV $pos>";
 	if($typ == 1){
 		$event_change = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm]."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this.value,'$ID','".$gfield[$gtabid]["ajaxpost"][$bzm]."')";
+	    if($gfield[$gtabid]["inherit_tab"][$bzm] AND !$gfield[$gtabid]["argument_edit"][$bzm]){$event_change = null; $readonly='readonly';}
 		$events = dftyp_events($typ,$event,null,null,null,null,$event_change,$gresult,$gtabid,$bzm);
-		echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style TYPE=\"TEXT\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"".htmlentities($gresult[$gtabid][$bzm][0],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events>";
+		echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style TYPE=\"TEXT\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"".htmlentities($gresult[$gtabid][$bzm][0],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $readonly $events>";
 		if($gresult[$gtabid][$bzm][0]){
 			if(preg_match('/display:none/',$style)){$sdpl="display:none;";}
 			if($gfield[$gtabid]["option"][$bzm]){echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" BORDER=\"0\" TITLE=\"$lang[870]\" style=\"cursor:pointer;vertical-align:baseline;$sdpl\" Onclick=\"website=open('".$gresult[$gtabid][$bzm][0]."' ,'Website','toolbar=1,location=1,status=1,menubar=1,scrollbars=1,resizable=1,width=850,height=600');\"></i>";}
@@ -881,8 +901,9 @@ function dftyp_16($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 	echo "<DIV $pos>";
 	if($typ == 1){
 		$event_change = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm]."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this.value,'".$ID."','".$gfield[$gtabid]["ajaxpost"][$bzm]."')";
+	    if($gfield[$gtabid]["inherit_tab"][$bzm] AND !$gfield[$gtabid]["argument_edit"][$bzm]){$event_change = null; $readonly='readonly';}
 		$events = dftyp_events($typ,$event,null,$event_dblclick,null,null,$event_change,$gresult,$gtabid,$bzm);
-		echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style TYPE=\"TEXT\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"".htmlentities($gresult[$gtabid][$bzm][0],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events>";
+		echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style TYPE=\"TEXT\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"".htmlentities($gresult[$gtabid][$bzm][0],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $readonly $events>";
 		if(preg_match('/display:none/',$style)){$sdpl="display:none;";}
 		if($gfield[$gtabid]["option"][$bzm]){echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" BORDER=\"0\" TITLE=\"$lang[870]\" style=\"cursor:pointer;vertical-align:baseline;$sdpl\" Onclick=\"limbasAjxColorSelect(event,'".$gfield[$gtabid]["form_name"][$bzm]."','$gtabid','$bzm','$ID')\"></i>";}
 	}elseif($typ == 2){
@@ -892,6 +913,45 @@ function dftyp_16($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 	echo "</DIV>";
 }
 
+
+/* -------------------------- Sync-Slave --------------------------------- */
+function dftyp_35($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$event=null) {
+	global $db;
+    global $gtab;
+	global $gfield;
+	global $lmb_sync_slaves;
+	
+	if(!$lmb_sync_slaves){
+	$sqlquery = "SELECT ID,NAME,SLAVE_URL FROM LMB_SYNC_SLAVES ORDER BY NAME";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(odbc_fetch_row($rs)){
+	   $lmb_sync_slaves[odbc_result($rs, 'ID')] = odbc_result($rs, 'NAME');
+	}
+	}
+	
+	if($pos){$pos = "STYLE=\"".$pos."\"";}
+	if($style){$style = "STYLE=\"".$style."\"";}
+	
+	echo "<DIV $pos>";
+	if($typ == 1){
+		$event_change = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm]."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this.value,'".$ID."','".$gfield[$gtabid]["ajaxpost"][$bzm]."')";
+	    if($gfield[$gtabid]["inherit_tab"][$bzm] AND !$gfield[$gtabid]["argument_edit"][$bzm]){$event_change = null; $readonly='readonly';}
+		$events = dftyp_events($typ,$event,null,$event_dblclick,null,null,$event_change,$gresult,$gtabid,$bzm);
+
+		echo "<SELECT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events><OPTION></OPTION>";
+        foreach ($lmb_sync_slaves as $key => $value){
+            echo "<OPTION value=\"$key\" ";
+            if($key == $gresult[$gtabid][$bzm][0]){echo "selected";}
+            echo ">$value</OPTION>";
+        }
+        echo "</SELECT>";
+	
+	}elseif($typ == 2){
+		$events = dftyp_events($typ,$event,$event_click,null,null,null,null,$gresult,$gtabid,$bzm);
+		echo "<div id=\"".$gfield[$gtabid]["form_name"][$bzm]."\" name=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style $events style=\"cursor:pointer;\"> ".htmlentities($lmb_sync_slaves[$gresult[$gtabid][$bzm][0]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</div>";
+	}
+	echo "</DIV>";
+}
 
 
 /* -------------------------- Select-Feld 1 --------------------------------- */
@@ -914,7 +974,13 @@ function dftyp_9($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$ev
 	if($typ == 1){
 		# --- Dynamic Search ----
 		if($gfield[$gtabid]["dynsearch"][$bzm]){
-			echo "<INPUT NAME=\"".$form_name."_ds\" ID=\"".$form_name."_ds\" $class TYPE=\"TEXT\" VALUE=\"".htmlentities($gresult[$gtabid][$bzm][0],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" OnKeyup=\"lmbAjax_dynsearch(event,this,'11_a','".$form_name."',0,0,'$gtabid','$bzm','$ID','$typ','','','".$gfield[$gtabid]["data_type"][$bzm]."')\" OnDblClick=\"this.value='*';lmbAjax_dynsearch(event,this,'11_a','".$form_name."',0,0,'$gtabid','$bzm','$ID','$typ','','','".$gfield[$gtabid]["data_type"][$bzm]."')\" $style $events>";
+			echo "<INPUT NAME=\"".$form_name."_ds\" ID=\"".$form_name."_ds\" $class TYPE=\"TEXT\" VALUE=\"".htmlentities($gresult[$gtabid][$bzm][0],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\"";
+			if($gfield[$gtabid]["inherit_tab"][$bzm] AND !$gfield[$gtabid]["argument_edit"][$bzm]){
+			     echo " readonly ";
+			}else{
+			     echo " OnKeyup=\"lmbAjax_dynsearch(event,this,'11_a','".$form_name."',0,0,'$gtabid','$bzm','$ID','$typ','','','".$gfield[$gtabid]["data_type"][$bzm]."')\" OnDblClick=\"this.value='*';lmbAjax_dynsearch(event,this,'11_a','".$form_name."',0,0,'$gtabid','$bzm','$ID','$typ','','','".$gfield[$gtabid]["data_type"][$bzm]."')\" ";
+			}
+			echo "$style $events>";
 			if($gfield[$gtabid]["select_pool"][$bzm] AND $GLOBALS["LINK"][8]){
 				if(preg_match('/display:none/',$style)){$sdpl="display:none;";}
 				if($gfield[$gtabid]["option"][$bzm]){echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" BORDER=\"0\" TITLE=\"$lang[715]\" STYLE=\"cursor:pointer;$sdpl\" Onclick=\"lmbAjax_multibleSelect(this,'$gtabid','$bzm','$ID')\"></i>";}
@@ -923,6 +989,7 @@ function dftyp_9($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$ev
 			echo "<DIV ID=\"".$form_name."_dsl\" class=\"ajax_container\" STYLE=\"position:absolute;z-index:9999;display:none;\"></DIV><INPUT TYPE=\"HIDDEN\" ID=\"".$form_name."\" NAME=\"".$form_name."\">";
 		}else{
 			$event_change = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$form_name."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this[this.selectedIndex].text,'$ID','".$gfield[$gtabid]["ajaxpost"][$bzm]."')";
+		    if($gfield[$gtabid]["inherit_tab"][$bzm] AND !$gfield[$gtabid]["argument_edit"][$bzm]){$event_change = null;}
 			$events = dftyp_events($typ,$event,null,null,null,null,$event_change,$gresult,$gtabid,$bzm);
 			echo "<SELECT $class $style NAME=\"".$form_name."\" ID=\"".$form_name."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events>";
 			
@@ -976,6 +1043,7 @@ function dftyp_15($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 	
 	if($typ == 1){
 		$event_change = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm]."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this.value,'$ID','".$gfield[$gtabid]["ajaxpost"][$bzm]."')";
+	    if($gfield[$gtabid]["inherit_tab"][$bzm] AND !$gfield[$gtabid]["argument_edit"][$bzm]){$event_change = null;}
 		$events = dftyp_events($typ,$event,null,null,null,null,$event_change,$gresult,$gtabid,$bzm);
 		
 		# extension
@@ -1066,6 +1134,7 @@ function dftyp_10($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 		# if unique
 		if(!$gfield[$gtabid]["unique"][$bzm]){$MULTIPLE = "MULTIPLE SIZE=\"".(count($mselct['value'])+1)."\"";}
 		$event_change = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$form_name."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this[this.selectedIndex].text,'$ID','".$gfield[$gtabid]["ajaxpost"][$bzm]."')";
+	    if($gfield[$gtabid]["inherit_tab"][$bzm] AND !$gfield[$gtabid]["argument_edit"][$bzm]){$event_change = null;}
 		$events = dftyp_events($typ,$event,null,null,null,null,$event_change,$gresult,$gtabid,$bzm);
 		echo "<INPUT TYPE=\"HIDDEN\" NAME=\"".$form_name."\">";
 		echo "<SELECT ID=\"".$form_name."\" $style $class $MULTIPLE  NAME=\"".$form_name."[]\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events><OPTION>";
@@ -1452,7 +1521,7 @@ function dftyp_12($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 		$min = odbc_result($rs1, "ID");
 		$width = $gform[$gformid]["width"][$formid];
 		$height = $gform[$gformid]["height"][$formid];
-		while(odbc_fetch_row($rs1, $bzm1)) {
+		while(odbc_fetch_row($rs1,$bzm1)) {
 			if($img2 = IMACK_ConvertThumbs(array(odbc_result($rs1, "ID"),odbc_result($rs1, "SECNAME"),odbc_result($rs1, "MIMETYPE"),odbc_result($rs1, "THUMB_OK"),odbc_result($rs1, "LEVEL")),($width-2),$height,1)){
 				$img_sn[odbc_result($rs1, "ID")] = $img2;
 			}
@@ -1491,16 +1560,27 @@ function dftyp_12($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 			<TD><i TITLE=\"$lang[859]\" title=\"$lang[160]\" class=\"lmb-icon lmb-page-delete-alt\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','','','".$bzm."','".$gtabid."','delete_file','$ID','".$gfield[$gtabid]["ajaxpost"][$bzm]."');lmb_formpicdelete('".$gfield[$gtabid]["form_name"][$bzm]."','$fp');\"></i></TD>
 			<TD><i TITLE=\"$lang[859]\" title=\"$lang[843]\" class=\"lmb-icon-cus lmb-folder-wrench\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"newwin4(document.getElementById('formpicid_".$fp."').value,'$LID')\"></i></TD>
 			<TD><i TITLE=\"$lang[859]\" title=\"$lang[2321]\" class=\"lmb-icon-cus lmb-folder-page\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"newwin13(document.getElementById('formpicid_".$fp."').value)\"></i></TD>
+			";
+			if(!$gfield[$gtabid]["unique"][$bzm] OR !$LID){
+    			echo "<TD width=\"100%\">&nbsp;</TD>
+    			<TD><i TITLE=\"$lang[857]\" title=\"$lang[857]\" class=\"lmb-icon lmb-first\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"lmb_formpicdmove('".$fp."','3','$max');\"></i></TD>
+    			<TD><i TITLE=\"$lang[860]\" title=\"$lang[860]\" class=\"lmb-icon lmb-previous\" STYLE=\"cursor:pointer;font-size:1.5em;\" BORDER=\"0\" OnClick=\"lmb_formpicdmove('".$fp."','2','$max');\"></i></TD>
+    			<TD><INPUT TYPE=\"TEXT\" ID=\"formpicid_".$fp."\" READONLY STYLE=\"width:60px;padding:1px;\" VALUE=\"$min\"></TD>
+    			<TD><i TITLE=\"$lang[859]\" title=\"$lang[859]\" class=\"lmb-icon lmb-next\" STYLE=\"cursor:pointer;font-size:1.5em;\" BORDER=\"0\" OnClick=\"lmb_formpicdmove('".$fp."','1','$max');\"></i></TD>
+    			<TD><i TITLE=\"$lang[858]\" title=\"$lang[858]\" class=\"lmb-icon lmb-last\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"lmb_formpicdmove('".$fp."','4','$max');\"></i></TD>
+    			";
+			}else{
+			     echo "<INPUT TYPE=\"hidden\" ID=\"formpicid_".$fp."\" VALUE=\"$min\">";
+			}
 			
-			<TD width=\"100%\">&nbsp;</TD>
-			<TD><i TITLE=\"$lang[857]\" title=\"$lang[857]\" class=\"lmb-icon lmb-first\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"lmb_formpicdmove('".$fp."','3','$max');\"></i></TD>
-			<TD><i TITLE=\"$lang[860]\" title=\"$lang[860]\" class=\"lmb-icon lmb-previous\" STYLE=\"cursor:pointer;font-size:1.5em;\" BORDER=\"0\" OnClick=\"lmb_formpicdmove('".$fp."','2','$max');\"></i></TD>
-			<TD><INPUT TYPE=\"TEXT\" ID=\"formpicid_".$fp."\" READONLY STYLE=\"width:60px;padding:1px;\" VALUE=\"$min\"></TD>
-			<TD><i TITLE=\"$lang[859]\" title=\"$lang[859]\" class=\"lmb-icon lmb-next\" STYLE=\"cursor:pointer;font-size:1.5em;\" BORDER=\"0\" OnClick=\"lmb_formpicdmove('".$fp."','1','$max');\"></i></TD>
-			<TD><i TITLE=\"$lang[858]\" title=\"$lang[858]\" class=\"lmb-icon lmb-last\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"lmb_formpicdmove('".$fp."','4','$max');\"></i></TD>
-			</TR>
-			<TR><TD colspan=\"9\"><INPUT ID=\"f_".$LID."_1\" type=\"file\" style=\"width:100%\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."[1]\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events></TD></TR>
-			</TABLE></TD></TR>
+			echo "</TR>";
+			
+			if(!$gfield[$gtabid]["unique"][$bzm] OR !$LID){
+			     echo "<TR><TD colspan=\"9\"><INPUT ID=\"f_".$LID."_1\" type=\"file\" style=\"width:100%\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."[1]\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events></TD></TR>";
+			}
+			
+			echo "</TABLE></TD></TR>
+
 			<TR><TD align=\"center\"><div style=\"height:".$height.";width:$width\"><div id=\"formpicname_".$fp."\"><IMG NAME=\"formpicname_".$fp."\" SRC=\"".$img_sn[$min]."\"></div></div></TD></TR>
 			<INPUT TYPE=\"hidden\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."_delete\" VALUE=\"\">";
 		}
@@ -1511,19 +1591,21 @@ function dftyp_12($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 		if($typ == 1){
 			$event_click = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm]."[1]','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this.value+'file','$ID','".$gfield[$gtabid]["ajaxpost"][$bzm]."')";
 			$events = dftyp_events($typ,$event,$event_click,null,null,null,null,$gresult,$gtabid,$bzm);
-			echo "<DIV $class $pos>";
-			echo "<TABLE class=\"gtabchange\" style=\"width:100%\"><TR><TD nowrap>";
-			echo "<INPUT ID=\"f_".$LID."_1\" type=\"file\" $calss NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."[1]\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events></TD>";
-			#echo "<TD nowrap>&nbsp;$lang[1560]:&nbsp;<INPUT TYPE=\"CHECKBOX\" STYLE=\"border:none;background-color:transparent;\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."_archiv[1]\"></TD>";
-			echo "<INPUT TYPE=\"hidden\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."_delete\" VALUE=\"\">";
-
-			# ---------  Uploadanzahl ---------
-			echo "<TD nowrap align=\"right\">&nbsp;&nbsp;<SELECT STYLE=\"width:40px;\" NAME=\"uploads[$gtabid][$bzm]\" OnChange=\"multiupload(this.value,'$LID');\">";
-			for ($i=1;$i<=10;$i++){
-				echo "<OPTION VALUE=\"$i\">$i";
+			echo "<DIV $class $pos>
+			<INPUT TYPE=\"hidden\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."_delete\" VALUE=\"\">
+			<TABLE class=\"gtabchange\" style=\"width:100%\">";
+			
+			if(!$gfield[$gtabid]["unique"][$bzm] OR !$LID){
+			     echo "<TR><TD nowrap>
+			         <INPUT ID=\"f_".$LID."_1\" type=\"file\" $calss NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."[1]\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events></TD>";
+			     # ---------  Uploadanzahl ---------
+			     echo "<TD nowrap align=\"right\">&nbsp;&nbsp;<SELECT STYLE=\"width:40px;\" NAME=\"uploads[$gtabid][$bzm]\" OnChange=\"multiupload(this.value,'$LID');\">";
+			     for ($i=1;$i<=10;$i++){
+				        echo "<OPTION VALUE=\"$i\">$i";
+			     }
+			     echo "</SELECT></TD></TR>";
 			}
-			echo "</SELECT></TD></TR>";
-
+			
 			$events = dftyp_events($typ,$event,null,null,null,null,null,$gresult,$gtabid,$bzm);
 			# ---------  Uploadfelder ---------
 			for ($i=2;$i<=10;$i++){
@@ -1531,8 +1613,9 @@ function dftyp_12($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 				#echo "<TD>&nbsp;$lang[1560]:&nbsp;<INPUT TYPE=\"CHECKBOX\" STYLE=\"border:none;background-color:transparent;\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."_archiv[$i]\"></TD><TD></TD></TR>";
 			}
 
-			echo "</TABLE>
-			<TABLE style=\"width:100%\" cellspacing=\"1\" cellpadding=\"0\" border=\"0\" class=\"gtabchange\">";
+			echo "
+			    </TABLE>
+			    <TABLE style=\"width:100%\" cellspacing=\"1\" cellpadding=\"0\" border=\"0\" class=\"gtabchange\">";
 		}else{
 			echo "<DIV $class $pos>";
 			echo "<TABLE style=\"width:100%\" cellspacing=\"1\" cellpadding=\"0\" border=\"0\" class=\"gtabchange\">";
@@ -1567,7 +1650,6 @@ function dftyp_12($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 				echo "</TR>";
 				$bzm1++;
 			}
-			$filesum = $bzm1-1;
 			echo "<input type=\"hidden\" name=\"uploaded_".$gfield[$gtabid]["form_name"][$bzm]."_1\" value=\"1\">";
 
 		}
@@ -1759,7 +1841,7 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 	}
 
 	# ------- 1:n / n:m Verknüpfung Select/Einzeldarstellung -----
-	if($gfield[$gtabid]["artleiste"][$bzm]){
+	if($gfield[$gtabid]["artleiste"][$bzm] OR $filter["ext_RelationFields"]['viewmode'][$vuniqueid]){
 		if($style){$style_abs = "STYLE=\"".$pos.$style."\"";}
 		$linklevel["norecursiv"] = 1; # do not resolve recursiv relations
 		
@@ -1786,7 +1868,7 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 		
 		if($typ == 1){
 			# --- Dynamic Ajax View Single ----
-			if($gfield[$gtabid]["dynsearch"][$bzm] AND $gfield[$gtabid]["unique"][$bzm]){
+			if(($gfield[$gtabid]["dynsearch"][$bzm] AND $gfield[$gtabid]["unique"][$bzm]) OR $filter["ext_RelationFields"]["viewmode"][$vuniqueid] == 'single_ajax'){
 				# get result
 				$vgresult = sql_14_c($vgtabid,$verkn,$linklevel,$gformid,null,$gsr,$afieldlist);
 				$vid = $vgresult[$vgtabid]["id"][0];
@@ -1817,7 +1899,7 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 				<input type=\"hidden\" id=\"".$gfield[$gtabid]["form_name"][$bzm].$fextend."\" name=\"".$gfield[$gtabid]["form_name"][$bzm].$fextend."\" value=\"$vid\">";
 			
 			# --- Dynamic Ajax View Multiple ----
-			}elseif($gfield[$gtabid]["dynsearch"][$bzm]){
+			}elseif($gfield[$gtabid]["dynsearch"][$bzm] OR $filter["ext_RelationFields"]["viewmode"][$vuniqueid] == 'multi_ajax'){
 				# get result
 				$vgresult = sql_14_c($vgtabid,$verkn,$linklevel,$gformid,null,$gsr,$afieldlist);
 				
@@ -1971,7 +2053,7 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 		}
 		
 		# Header
-		echo "<div $style_abs class=\"gtabFringeRelationBody\">\n";
+		echo "<div $style_abs class=\"gtabFringeRelationBody\" id=\"g_$gtabid_$bzm\">\n";
 		if(!$filter["ext_RelationFields"]["no_menu"][$vuniqueid]){
 			dftyp_14_header($gtabid,$bzm,$ID,$vuniqueid,$gformid,$formid,$typ,$linklevel,$z_index,$verkn,$filter);
 		}

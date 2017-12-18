@@ -31,7 +31,7 @@ if (is_numeric($ID)){
 			readfile($file["path"]);
 		}else{
 			header("HTTP/1.1 301 Moved Permanently",true);
-			header("Location: ".$file["url"]);
+			header("Location: ".$file["url"].'?v='.date('U'));
 		}
 	}else{
 		header("HTTP/1.1 401 Unauthorized",true);

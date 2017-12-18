@@ -122,7 +122,7 @@ $bzm = 0;
 $bzm1 = 1;
 while($user_colors[name][$bzm]) {
 	if($bzm1 == 6){$bzm1 = 1;echo "</TD></TR><TR><TD ALIGN=\"LEFT\">";}
-	?><SPAN><IMG SRC="pic/transp.gif" STYLE="width:6;height:20"></SPAN><SPAN STYLE="border:1px solid black;cursor:pointer;background-color:<?echo $user_colors[wert][$bzm];?>;" OnClick="setcolor('<?echo $user_colors[wert][$bzm];?>');"><IMG SRC="pic/transp.gif" STYLE="width:14px;height:14px"></SPAN><?
+	?><SPAN><IMG SRC="pic/transp.gif" STYLE="width:6px;height:20px"></SPAN><SPAN STYLE="border:1px solid black;cursor:pointer;background-color:<?echo $user_colors[wert][$bzm];?>;" OnClick="setcolor('<?echo $user_colors[wert][$bzm];?>');"><IMG SRC="pic/transp.gif" STYLE="width:14px;height:14px"></SPAN><?
 	$bzm++;
 	$bzm1++;
 }

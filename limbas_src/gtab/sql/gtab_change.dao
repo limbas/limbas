@@ -95,13 +95,13 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	<DIV ID="limbasDivMenuFormulare" class="lmbContextMenu" style="position: absolute;display:none;z-index:994;" OnClick="activ_menu = 1;">
 	<?php #----------------- Formular-Menü -------------------
 	pop_top('limbasDivMenuFormulare');
-	pop_submenu2($lang[2503],"document.form1.set_form.value='0';send_form('1');","","","lmb-icon lmb-icon-cus lmb-form");
+	pop_menu2($lang[2503], null, null, "lmb-icon lmb-icon-cus lmb-form", null, "document.form1.set_form.value='0';send_form('1');");
 	pop_line();
 	if($gformlist[$gtabid]["id"]){
 	foreach($gformlist[$gtabid]["id"] as $key => $value){
 		if($gformlist[$gtabid]["hidden"][$key]){continue;}
 		if($gformlist[$gtabid]["typ"][$key] == 1){
-			pop_submenu2($gformlist[$gtabid]["name"][$key],"document.form1.set_form.value='".$gformlist[$gtabid]["id"][$key]."';send_form('1');","","","lmb-icon lmb-icon-cus lmb-form");
+            pop_menu2($gformlist[$gtabid]["name"][$key], null, null, "lmb-icon lmb-icon-cus lmb-form", null, "document.form1.set_form.value='" . $gformlist[$gtabid]["id"][$key] . "';send_form('1');");
 			$GLOBALS["gformlist_exist"] = 1;
 		}
 	}}

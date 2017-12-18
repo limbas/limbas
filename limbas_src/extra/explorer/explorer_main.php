@@ -103,7 +103,7 @@ pop_menu(200,'',''); 	#thumbs neu berechnen
 pop_line();
 pop_submenu(203,'','');	#konvertieren
 pop_menu(247,'','');	#favoriten
-pop_submenu(269,'','');	#dublikate
+pop_menu(269,'','');	#duplikate
 if($umgvar["ocr_enable"]){pop_submenu(262,'','');}	#ocr
 if($LINK[297]){
 pop_line();
@@ -197,18 +197,10 @@ pop_left();
 echo "<span style=\"height:16px;cursor:default;\">&nbsp;<b>".$lang[1762]."</b></span>";
 pop_right();
 pop_line();
-pop_left();
-echo "<a href=\"#\" OnClick=\"LmEx_download_archive('1');\">&nbsp;zip <FONT COLOR=\"".$farbschema["WEB4"]."\">(windows)</font></a>";
-pop_right();
-pop_left();
-echo "<a href=\"#\" OnClick=\"LmEx_download_archive('2');\">&nbsp;tar.gz <FONT COLOR=\"".$farbschema["WEB4"]."\">(unix)</font></a>";
-pop_right();
-pop_left();
-echo "<a href=\"#\" OnClick=\"LmEx_download_archive('3');\">&nbsp;tar.bz2 <FONT COLOR=\"".$farbschema["WEB4"]."\">(unix)</font></a>";
-pop_right();
-pop_left();
-echo "<a href=\"#\" OnClick=\"LmEx_download_archive('4');\">&nbsp;7z <FONT COLOR=\"".$farbschema["WEB4"]."\">(all)</font></a>";
-pop_right();
+pop_menu(0, "LmEx_download_archive('1');", "&nbsp;zip <span style=\"color:".$farbschema["WEB4"].";\">(windows)</span>");
+pop_menu(0, "LmEx_download_archive('2');", "&nbsp;tar.gz <span style=\"color:".$farbschema["WEB4"].";\">(unix)</span>");
+pop_menu(0, "LmEx_download_archive('3');", "&nbsp;tar.bz2 <span style=\"color:".$farbschema["WEB4"].";\">(unix)</span>");
+pop_menu(0, "LmEx_download_archive('4');", "&nbsp;7z <span style=\"color:".$farbschema["WEB4"].";\">(all)</span>");
 pop_bottom();
 ?>
 </DIV>
@@ -261,7 +253,7 @@ echo "<tr id=\"convtopicdiv\" style=\"display:none\"><td>$lang[1141]:</td><td><i
 pop_right();
 
 pop_line();
-pop_submenu2($lang[2240],"LmEx_preview_archive(document.getElementById('convtoformat').value,document.getElementById('convtopicsize').value)",$lang[2240]);
+pop_menu2($lang[2240], $lang[2240], null, null, null, "LmEx_preview_archive(document.getElementById('convtoformat').value,document.getElementById('convtopicsize').value)");
 pop_bottom();
 ?>
 </DIV>
@@ -271,7 +263,7 @@ pop_bottom();
 if($umgvar["ocr_enable"] AND $LINK[262]){
 echo "<DIV ID=\"ocrmenu\" class=\"lmbContextMenu\" style=\"position:absolute;visibility:hidden;top:0;z-index:4\" OnClick=\"activ_menu = 1;\">";
 pop_top('ocrmenu');
-$opt["val"] = $umgvar["ocr_format_val"];
+$opt["val"] = $umgvar["ocr_format_val"]; // TODO not defined
 $opt["desc"] = $umgvar["ocr_format_desc"];
 pop_select("",$opt,"",1,"ocr_format",$lang[2648],50);
 $opt["val"] = $umgvar["ocr_quality_val"];
@@ -281,7 +273,7 @@ $opt["val"] = array("preview","rename","overwrite","versioning");
 $opt["desc"] = array($lang[2646],$lang[2191],$lang[2192],$lang[2193]);
 pop_select("",$opt,"",1,"ocr_destination","$lang[2647]",50);
 pop_line();
-pop_submenu2($lang[2314],"LmEx_ocrfile(document.getElementsByName('ocr_format')[0].value,document.getElementsByName('ocr_destination')[0].value,document.getElementsByName('ocr_quality')[0].value);",$lang[2314]);
+pop_menu2($lang[2314], $lang[2314], null, null, null, "LmEx_ocrfile(document.getElementsByName('ocr_format')[0].value,document.getElementsByName('ocr_destination')[0].value,document.getElementsByName('ocr_quality')[0].value);");
 pop_bottom();
 echo "</DIV>";
 }
@@ -311,24 +303,26 @@ pop_bottom();
 <DIV ID="fieldlist" class="lmbContextMenu" style="position:absolute;visibility:hidden;top:-500;z-index:4" OnClick="activ_menu = 1;">
 <?
 pop_top('fieldlist');
-pop_left();echo "&nbsp;<B>$lang[1634]</B>";pop_right();pop_line();
+pop_header(null, $lang[1634]);
 foreach ($gfile["id"] as $key => $value){
 	# Felder ohne Rechte
 	if(!$gfile["id"][$key] OR $gtab["argresult_id"]["LDMS_FILES"]."_11" == $key){continue;}
 	if($gfile['field_type'][$key] == 100){
-		pop_left();echo "&nbsp;<B title=\"".$gfile['desc'][$key]."\">".$gfile['title'][$key]."</B>";
-		pop_right();
-		pop_line();
+	    pop_header(null, $gfile['title'][$key]);
 	}else{
-		pop_left();
-		if($gfile['show'][$LID][$key]){
-			$color = "green";$class = "Icon";$icdis = "";
-		}else{
-			$color = "black";$class = "";$icdis = "none";
-		}
-		echo "<i id=\"dcp_$key\" class=\"lmbContextLeft lmb-icon lmb-aktiv\" border=\"0\" style=\"display:$icdis\"></i>";
-		echo "<span class=\"lmbContextItem$class\" title=\"".$gfile["tabid"][$key]."_".$gfile["fid"][$key]."\" id=\"dc_$key\" style=\"color:$color;cursor:pointer\" OnClick=\"fieldlist('$key');\">&nbsp;".$gfile['title'][$key]."</span>";
-		pop_right();
+        if($gfile['show'][$LID][$key]){
+            $color = "green";$icdis = "";
+        }else{
+            $color = "black";$icdis = "hidden";
+        }
+        pop_menu2(
+            "&nbsp;".$gfile['title'][$key],
+            $gfile["tabid"][$key]."_".$gfile["fid"][$key],
+            "dc_$key\" style=\"color: $color;",
+            "lmb-icon lmb-check\" style=\"visibility: $icdis",
+            null,
+            "fieldlist('$key');"
+        );
 	}
 }
 pop_bottom();
