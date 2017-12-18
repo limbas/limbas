@@ -195,19 +195,23 @@ function rebuild_tree(){
 	var treelist = holeCookie("limbas_explorer");
 	if(treelist){
 		var list = treelist.split("_");
-		for (var i in list){
-			if(list[i]){
-				var picname = "i" + list[i];
-				if(document.images[picname]){
-					eval("var nested = document.getElementById('f_"+list[i]+"').nextSibling"+cli);
-                                        $('[name="' + picname + '"]').removeClass(icon3).addClass(icon4);
-					nested.style.display='';
-					dspl["id"+list[i]] = list[i];
-				}else{
-					dspl["id"+list[i]] = '';
-				}
-			}
-		}
+		$.each(list, function(index, value) {
+            var icon = $('[name="i' + value + '"]');
+            if(icon){
+                //eval("var nested = document.getElementById('f_"+list[i]+"').nextSibling"+cli);
+                //nested.style.display='';
+
+                // show subelements
+                $('#f_' + value).next().show();
+                
+                // minus-icon instead of plus-icon
+                icon.removeClass(icon3).addClass(icon4);
+                
+                dspl["id"+value] = value;
+            }else{
+                dspl["id"+value] = '';
+            }
+        });     
 	}
 }
 
@@ -316,7 +320,7 @@ function files1($LEVEL,$start,$only_typ){
 		if($filestruct["level"][$key] == $LEVEL AND $filestruct["view"][$key] AND ($filestruct["typ"][$key] == $typ OR $typ != $only_typ)){
 			if(in_array($filestruct["id"][$key],$filestruct["level"])){
 				$next = 1;
-				$pic = "<i class=\"lmb-icon-cus lmb-plusonly\" NAME=\"i".$filestruct["id"][$key]."\" OnClick=\"popup('".$filestruct["id"][$key]."','$LEVEL','".$filestruct[tabid][$key]."','".$filestruct[typ][$key]."')\" STYLE=\"cursor:hand\"></i>";
+				$pic = "<i class=\"lmb-icon-cus lmb-plusonly\" NAME=\"i".$filestruct["id"][$key]."\" OnClick=\"popup('".$filestruct["id"][$key]."','$LEVEL','".$filestruct[tabid][$key]."','".$filestruct[typ][$key]."')\" STYLE=\"cursor:pointer\"></i>";
 			}else{
 				$next = 0;
 				$pic = "<i class=\"lmb-icon-cus\"></i>";

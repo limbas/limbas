@@ -100,7 +100,7 @@ foreach($result_history["id"] as $key => $value){
     	$links = explode(";",$result_history["fieldvalue"][$key]);
     	if($links){
     	foreach($links as $key1 => $value1){
-    		$lid = trim(substr($value1,1,16));
+    		$lid = trim(lmb_substr($value1,1,16));
     		$value1 = preg_replace("/^[<]{1}/","<b style=\"color:red\">< </b>",$value1);
     		$value1 = preg_replace("/^[>]{1}/","<b style=\"color:green\"> ></b>",$value1);
     		$val[] = "<A href=\"#\" OnClick=\"newwin('".$gfield[$result_history["tabid"][$key]]["verkntabid"][$result_history["fieldid"][$key]]."','".$lid."');\">".$value1."</A>";

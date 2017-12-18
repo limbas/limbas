@@ -96,7 +96,7 @@ function limbas_odbc_result($key, $name) {
 	}
 
 	if ($db_pdo_queries[$key]['row'] !== false) {
-		return $db_pdo_queries[$key]['row'][strtolower($name)];
+		return $db_pdo_queries[$key]['row'][lmb_strtolower($name)];
 	}
 
 	throw new Exception('PDO: No pdo row found ('. $key . ')!', -1);

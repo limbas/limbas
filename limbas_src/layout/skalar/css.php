@@ -185,6 +185,14 @@ body.multiframe{
 	text-decoration: none !important; 
 	display:block;
 	cursor:pointer;
+    
+    /* prevent selection of text */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 .lmbMenuItemspaceTop2{
@@ -289,6 +297,14 @@ i.btn {
 	margin-bottom:8px;
 	cursor:default;
 	/*box-shadow: -5px -5px 5px #FFFFFF inset;*/
+    
+    /* prevent selection of text */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 .lmbMenuHeaderNav{

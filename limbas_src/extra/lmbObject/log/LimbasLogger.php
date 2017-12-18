@@ -155,7 +155,7 @@ class LimbasLogger {
 // 		foreach(self::$log as $log) {
 // 			$parts = explode("\t", $log, 3);
 			
-// 			$str .= '<tr class="' . (0 === $i % 2 ? 'even' : 'odd') . '"><td>' . $parts[0] . '</td><td class="loglevel ' . strtolower($parts[1]) . '">' . $parts[1] . '</td><td class="message">'. $parts[2] . '</td></tr>';
+// 			$str .= '<tr class="' . (0 === $i % 2 ? 'even' : 'odd') . '"><td>' . $parts[0] . '</td><td class="loglevel ' . lmb_strtolower($parts[1]) . '">' . $parts[1] . '</td><td class="message">'. $parts[2] . '</td></tr>';
 // 			$i++;
 // 		}
 		

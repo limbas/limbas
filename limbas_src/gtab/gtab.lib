@@ -666,8 +666,6 @@ function updateMultiselectCount($gtabid,$field_id,$id) {
 }
 
 
-
-
 #------------------- Ansicht speichern --------------------------------
 function save_viewSettings($vuniqueid,$gtabid=null){
 	global $db;
@@ -766,8 +764,8 @@ function sql_14_sub($vgtabid,$vfieldid,$ext=array(),&$linklevel=array()) {
 	$linklevel["vtabid"] = $vgtabid;
 	$linklevel["vfieldid"] = $vfieldid;
 
-	$ext["from"][] = strtoupper($gtab["table"][$sverkntabid]);
-	$ext["from"][] = strtoupper($gfield[$vgtabid]["md5tab"][$vfieldid]);
+	$ext["from"][] = lmb_strtoupper($gtab["table"][$sverkntabid]);
+	$ext["from"][] = lmb_strtoupper($gfield[$vgtabid]["md5tab"][$vfieldid]);
 	
 	# Prüfe auf Selbstverknüpung
 	if($vgtabid != $sverkntabid){
@@ -813,7 +811,7 @@ function sql_14_c(&$vgtabid,$verkn,&$linklevel=array(),$gformid=null,$order=null
 	
 	# sql_14_sub ändert linklevel auf letzte Unter-Unterverknüpfung
 	$extension = sql_14_sub($verkn["tabid"],$verkn["fieldid"],null,$linklevel);
-	$extension["from"][] = strtoupper($verkn["tab"]);
+	$extension["from"][] = lmb_strtoupper($verkn["tab"]);
 
 	# ändere Suchtabelle bei Unter-Unterferknüpfung
 	if($linklevel["vtabid"] != $verkn["tabid"]){
@@ -897,9 +895,20 @@ function sql_14_c(&$vgtabid,$verkn,&$linklevel=array(),$gformid=null,$order=null
 			$onlyfield[$vgtabid_][] = $value;
 		}
 	}
-
-	# show all
+	
+	# default show all
 	$vfilter["anzahl"][$vgtabid] = "all";
+	
+	# show all
+	if($filter["ext_RelationFields"]["showall"][$vuniqueid]){
+	   $vfilter["anzahl"][$vgtabid] = "all";
+	# show count
+	}elseif($filter["ext_RelationFields"]["count"][$vuniqueid]){
+       $vfilter["anzahl"][$vgtabid] = $filter["ext_RelationFields"]["count"][$vuniqueid];
+	# show 1000
+	}elseif($GLOBALS['action'] == 'gtab_change'){
+	   $vfilter["anzahl"][$vgtabid] = 1000;
+	}
 	
 	$gresult = get_gresult($vgtabid,2,$vfilter,$gsr,$verkn_,$onlyfield,null,$extension);
 
@@ -988,15 +997,15 @@ function add_GtabUserRules($gtabid,$recordlist,$userpart,$newdataset=0) {
 		if($userpart[0]){$userpart[0] = $userdat["groupid"][$userpart[0]];}
 		$userpart[1] = "g";
 	}
-	
-	# list of records
+
+    # list of records
 	if(!$records){return true;}
 	foreach ($records as $datakey => $d_datid){
 
-		# check plausibility
-		if(!is_numeric($recordstab[$datakey]) OR !is_numeric($d_datid) OR !is_numeric($recordstab[$datakey]) OR !is_numeric($d_datid) OR $recordstab[$datakey] != $gtabid){continue;}
+        # check plausibility
+        if(!is_numeric($recordstab[$datakey]) OR !is_numeric($d_datid) OR $recordstab[$datakey] != $gtabid){continue;}
 
-		# check dataset
+        # check dataset
 		$sqlquery = "SELECT ID,ERSTUSER FROM ".$gtab["table"][$recordstab[$datakey]]." WHERE ID = ".$d_datid;
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 		if(!odbc_result($rs,"ID")){continue;}
@@ -1051,15 +1060,15 @@ function add_GtabUserRules($gtabid,$recordlist,$userpart,$newdataset=0) {
 								# extended parameters / v = view; e = edit ; d = delete;
 							}else{
 								$ed = LMB_DBDEF_FALSE;$del = LMB_DBDEF_FALSE;$sp=1;
-								if(strpos($gval,"e")){
+								if(lmb_strpos($gval,"e")){
 									$ed = LMB_DBDEF_TRUE;
 									$sp++;
 								}
-								if(strpos($gval,"d")){
+								if(lmb_strpos($gval,"d")){
 									$del = LMB_DBDEF_TRUE;
 									$sp++;
 								}
-								$gval_ = substr($gval,$sp,99);
+								$gval_ = lmb_substr($gval,$sp,99);
 							}
 
 							if(is_numeric($gval_)){
@@ -2089,7 +2098,7 @@ function setDefaultRelation($gtabid,$ID)
 
 
 # --- create new dataset ---------------------------------------
-function create_newdata($gtabid,$verkn,$verknpf,$copyid,$ID,$version){
+function create_newdata($gtabid,$verkn,$verknpf,$copyid,$ID,$version=null,$norelation=null){
 	global $db;
 	global $gtab;
 	global $gfield;
@@ -2109,7 +2118,7 @@ function create_newdata($gtabid,$verkn,$verknpf,$copyid,$ID,$version){
 				
 				# --- Datensatz kopieren -----
 				if($copyid){
-					if(!copy_record($gtabid,$copyid,$ID,$version)){$commit = 1;}
+					if(!copy_record($gtabid,$copyid,$ID,$version,$norelation)){$commit = 1;}
 				}
 				
 			}else{$commit = 1;}
@@ -2119,7 +2128,7 @@ function create_newdata($gtabid,$verkn,$verknpf,$copyid,$ID,$version){
 		if(insert_newdata($gtabid,$ID,$copyid,$version)){
 			# --- Datensatz kopieren -----
 			if($copyid){
-				if(copy_record($gtabid,$copyid,$ID,$version)){
+				if(copy_record($gtabid,$copyid,$ID,$version,$norelation)){
 					# Datensatz Versionieren
 					if($version AND !$commit AND $gtab["versioning"][$gtabid]){
 						if(!version_record($gtabid,$copyid,$ID,1)){$commit = 1;}
@@ -2148,7 +2157,7 @@ function new_data($gtabid,$relation=null,$copyid=null,$version=null,$forceNewID=
 }
 
 /* --- neuer Datensatz 1:1 Verknüpfungs Schleife --------------------------------------- */
-function new_record($gtabid,$verknpf=null,$verkn_fieldid=null,$verkn_tabid=null,$verkn_ID=null,$copyid=null,$version=null,$forceNewID=null){
+function new_record($gtabid,$verknpf=null,$verkn_fieldid=null,$verkn_tabid=null,$verkn_ID=null,$copyid=null,$version=null,$forceNewID=null,$norelation=null){
 	global $db;
 	global $gtab;
 	global $gfield;
@@ -2208,7 +2217,7 @@ function new_record($gtabid,$verknpf=null,$verkn_fieldid=null,$verkn_tabid=null,
 				}
 			}
 			# create data
-			if(create_newdata($value,$verkn,$verknpf_,$copyid,$ID,$version)){
+			if(create_newdata($value,$verkn,$verknpf_,$copyid,$ID,$version,$norelation)){
 				# --- Spezifische Userrechte hinzufügen --------------------------------------
 				if($gtab["has_userrules"][$gtabid]){
 					#$userpara = $session["user_id"]."_u_v__1";
@@ -2278,7 +2287,7 @@ function inherit_record($gtabid,$ID,$source_ID){
 }
 
 # -------- Datensatz kopieren --------------
-function copy_record($gtabid,$copyid,$ID,$version=null){
+function copy_record($gtabid,$copyid,$ID,$version=null,$norelation=null){
 	global $db;
 	global $gtab;
 	global $gfield;
@@ -2302,33 +2311,41 @@ function copy_record($gtabid,$copyid,$ID,$version=null){
 				if($gfield[$gtabid]["copy"][$key] AND $gfield[$gtabid]["data_type"][$key] != 43 AND $gfield[$gtabid]["data_type"][$key] != 22 AND $gfield[$gtabid]["field_type"][$key] != 14 AND $gfield[$gtabid]["field_type"][$key] != 15){
 					# --- Verknüpfung 1:n / n:m ---
 					if($gfield[$gtabid]["field_type"][$key] == 11){
-						if($gfield[$gtabid]["verkntabletype"][$key] == 1){
-							$sqlquery1 = "SELECT * FROM ".$gfield[$gtabid]["md5tab"][$key]." WHERE ID = $copyid";
+						#if($gfield[$gtabid]["verkntabletype"][$key] == 1){
+
+							# recursive view relation tab
+                        	if($gfield[$gtabid]["verkntabletype"][$key] == 2){
+                        		$ID_FIELD = "VERKN_ID";
+                        		$VKN_FIELD = "ID";
+                        		$VKN_TABLE = $gfield[$gfield[$gtabid]["verkntabid"][$key]]["md5tab"][$gfield[$gtabid]["hasrecverkn"][$key]];
+                        		$md5tab_fields = $gfield[$gfield[$gtabid]["verkntabid"][$key]]["md5tab_fields"][$gfield[$gtabid]["hasrecverkn"][$key]];
+                        	# default relation tab
+                        	}else{
+                        		$ID_FIELD = "ID";
+                        		$VKN_FIELD = "VERKN_ID";
+                        		$VKN_TABLE = $gfield[$gtabid]["md5tab"][$key];
+                        		$md5tab_fields = $gfield[$gtabid]["md5tab_fields"][$key];
+                        	}
+						    
+							$sqlquery1 = "SELECT * FROM $VKN_TABLE WHERE $ID_FIELD = $copyid";
 							$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
+							
 							if(!$rs1) {$commit = 1;}
 							$bzm1 = 1;
 							while(odbc_fetch_row($rs1, $bzm1)) {
 								# new dataset
-								$nextid = next_db_id($gfield[$gtabid]["md5tab"][$key],"KEYID",1);
+								$nextid = next_db_id($VKN_TABLE,"KEYID",1);
 								$VSORT = parse_db_int(odbc_result($rs1,"SORT"));
 								$keyid = odbc_result($rs1,"KEYID");
+								$VERKN_ID = odbc_result($rs1, $VKN_FIELD);
+
 								# Zusatzfelder der md5 verkn-Tabelle
 								$sql_i = array();
 								$sql_v = array();
-								if($gfield[$gtabid]["md5tab_fields"][$key]){
-									foreach ($gfield[$gtabid]["md5tab_fields"][$key] as $key1 => $value1){
-										
-										# TEST #
+								if($md5tab_fields){
+									foreach ($md5tab_fields as $key1 => $value1){
 										$sql_i[] = $value1;
-										$sql_v[] = "(SELECT $value1 FROM ".$gfield[$gtabid]["md5tab"][$key]." WHERE KEYID = $keyid AND ID = $copyid)";
-
-										#if($gfield[$gtabid]["md5tab_types"][$key][$key1] == "BOOLEAN"){
-										#	$sql_i[] = $value1;
-										#	$sql_v[] = parse_db_bool(odbc_result($rs1, $value1));
-										#}else{
-										#	$sql_i[] = $value1;
-										#	$sql_v[] = "'".odbc_result($rs1, $value1)."'";
-										#}
+										$sql_v[] = "(SELECT $value1 FROM $VKN_TABLE WHERE KEYID = $keyid)";
 									}
 								}
 								if($sql_i[0]){
@@ -2337,26 +2354,29 @@ function copy_record($gtabid,$copyid,$ID,$version=null){
 								}else{
 									$sql_i = "";$sql_v = "";
 								}
-
+								
 								# 1:n
 								if($gfield[$gtabid]["data_type"][$key] == 27){
 									# sets versioning typ to "fix"
 									$GLOBALS["ltmp_isRecursivVersion"] = 1;
-									$VERKN_ID = new_record($gfield[$gtabid]["verkntabid"][$key],0,0,0,0,odbc_result($rs1, "VERKN_ID"),$version);
+									# copy
+									$VERKN_ID = new_record($gfield[$gtabid]["verkntabid"][$key],0,0,0,0,$VERKN_ID,$version,null,$VKN_TABLE);
 									# reset versioning typ
 									$GLOBALS["ltmp_isRecursivVersion"] = 0;
-									$sqlquery2 = "INSERT INTO ".$gfield[$gtabid]["md5tab"][$key]." (KEYID,ERSTUSER,ERSTDATUM,ID,VERKN_ID,SORT $sql_i) VALUES($nextid,".$session["user_id"].",".LMB_DBDEF_TIMESTAMP.",$ID,".$VERKN_ID.",".$VSORT." $sql_v)";
+									$sqlquery2 = "INSERT INTO $VKN_TABLE (KEYID,ERSTUSER,ERSTDATUM,$ID_FIELD,$VKN_FIELD,SORT $sql_i) VALUES($nextid,".$session["user_id"].",".LMB_DBDEF_TIMESTAMP.",$ID,".$VERKN_ID.",".$VSORT." $sql_v)";
 								# n:m
 								}elseif($gfield[$gtabid]["data_type"][$key] == 24){
-									$VERKN_ID = odbc_result($rs1, "VERKN_ID");
-									$sqlquery2 = "INSERT INTO ".$gfield[$gtabid]["md5tab"][$key]." (KEYID,ERSTUSER,ERSTDATUM,ID,VERKN_ID,SORT $sql_i) VALUES($nextid,".$session["user_id"].",".LMB_DBDEF_TIMESTAMP.",$ID,".$VERKN_ID.",".$VSORT." $sql_v)";
+									$sqlquery2 = "INSERT INTO $VKN_TABLE (KEYID,ERSTUSER,ERSTDATUM,$ID_FIELD,$VKN_FIELD,SORT $sql_i) VALUES($nextid,".$session["user_id"].",".LMB_DBDEF_TIMESTAMP.",$ID,".$VERKN_ID.",".$VSORT." $sql_v)";
 								}
-								$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$GLOBALS['action'],__FILE__,__LINE__);
-								if(!$rs2) {$commit = 1;}
+								// protect relation endless loop
+								if($norelation != $VKN_TABLE){
+    								$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$GLOBALS['action'],__FILE__,__LINE__);
+    								if(!$rs2) {$commit = 1;}
+								}
 								$bzm1++;
 							}
-						}
-						# --- Auswahlfeld mehrfach ---
+						#}
+					# --- Auswahlfeld mehrfach ---
 					}elseif($gfield[$gtabid]["data_type"][$key] == 18 OR $gfield[$gtabid]["data_type"][$key] == 31 OR $gfield[$gtabid]["data_type"][$key] == 32 OR $gfield[$gtabid]["data_type"][$key] == 46){
 						# SELECT / ATTRIBUTE
 						if($gfield[$gtabid]["field_type"][$key] == 19){$tabtyp = "LMB_ATTRIBUTE";}else{$tabtyp = "LMB_SELECT";}
@@ -2908,7 +2928,7 @@ function get_where($key,$gtabid,$gsr,$vquery = null){
 					$gsrres_ = trim(preg_replace("/^[CKWckw]{2}[^\d]?/","",$gsrres));
 					$gsrres_ = preg_replace("/[^\d]/","-",$gsrres_);
 					$gsrres_ = explode("-",$gsrres_);
-					if(strlen($gsrres_[1]) == 2){$gsrres_[1] = "20".$gsrres_[1];}
+					if(lmb_strlen($gsrres_[1]) == 2){$gsrres_[1] = "20".$gsrres_[1];}
 					if(!$gsrres_[1]){$gsrres_[1] = date("Y");}
 					$gsrres_stamp = get_mondaykw($gsrres_[0],$gsrres_[1]);
 					$gsrres_m = convert_stamp($gsrres_stamp,$onlydate);
@@ -2938,7 +2958,7 @@ function get_where($key,$gtabid,$gsr,$vquery = null){
 						$whr[] = $like_neg." (".$tab.".".$gfield[$gtabid]["field_name"][$key]." >= '".$gsrres_m."' AND ".$tab.".".$gfield[$gtabid]["field_name"][$key]." <= '".$gsrres_s."') ";
 					}
 				# falls ganzes Datum mit Zeit
-				}elseif($gfield[$gtabid]["datetime"][$key] != 1 AND substr(convert_date($gsrres,$onlydate),11,8) != '00:00:00'){
+				}elseif($gfield[$gtabid]["datetime"][$key] != 1 AND lmb_substr(convert_date($gsrres,$onlydate),11,8) != '00:00:00'){
 					$whr[] = $like_neg." ".$tab.".".$gfield[$gtabid]["field_name"][$key]." $like_sens_b '".convert_date($gsrres,$onlydate)."' ";
 				# falls ganzes Datum ohne Zeit
 				}else{
@@ -2970,7 +2990,7 @@ function get_where($key,$gtabid,$gsr,$vquery = null){
 				}
 			# ------- BOOLEAN -------
 			}elseif($gfield[$gtabid]["field_type"][$key] == 10){
-				if(is_null($gsrres) OR $gsrres == "0" OR strtoupper($gsrres) === "FALSE"){$gsrres = LMB_DBDEF_FALSE;}
+				if(is_null($gsrres) OR $gsrres == "0" OR lmb_strtoupper($gsrres) === "FALSE"){$gsrres = LMB_DBDEF_FALSE;}
 				else{$gsrres = LMB_DBDEF_TRUE;}
 				if($gsrres=="#NULL#"){
 					$whr[] = $gtab["table"][$gtabid].".".$gfield[$gtabid]["field_name"][$key] . " IS NULL";
@@ -3109,9 +3129,9 @@ function get_where($key,$gtabid,$gsr,$vquery = null){
 				$whr[] = $tab.".".$gfield[$gtabid]["field_name"][$key]." = '".parse_db_string($gsrres,160)."'";
 			# --- User/Group List -----
 			}elseif($gfield[$gtabid]["field_type"][$key] == 16){
-				if(strpos($gsrres,"#") !== false){
-					if(strtolower(substr($gsrres,0,3)) == "#u#"){$gsrres = trim(substr($gsrres,2,99));$onlyuser=1;}
-					elseif(strtolower(substr($gsrres,0,3)) == "#g#"){$gsrres = trim(substr($gsrres,2,99));$onlygroup=1;}
+				if(lmb_strpos($gsrres,"#") !== false){
+					if(lmb_strtolower(lmb_substr($gsrres,0,3)) == "#u#"){$gsrres = trim(lmb_substr($gsrres,2,99));$onlyuser=1;}
+					elseif(lmb_strtolower(lmb_substr($gsrres,0,3)) == "#g#"){$gsrres = trim(lmb_substr($gsrres,2,99));$onlygroup=1;}
 				}
 				
 				if($onlygroup){
@@ -3218,10 +3238,10 @@ function get_where($key,$gtabid,$gsr,$vquery = null){
 						if($gsscs){
 							$mf = "VAL";
 						}else{
-							$mf = "UPPERVAL";$val = strtoupper($val);
+							$mf = "UPPERVAL";$val = lmb_strtoupper($val);
 						}
 					}else{
-						$mf = "VAL";$val = strtolower($val);
+						$mf = "VAL";$val = lmb_strtolower($val);
 					}
 					
 					# Casesensitiv
@@ -3326,7 +3346,7 @@ function get_queryrules($gtabid){
 			# manual filter
 			}elseif($gfield[$gtabid]["filtertyp"][$fieldid][$fkey] == 2){
 				# function based extension (return MyExt_)
-				if(substr($fval,0,6) == 'return'){
+				if(lmb_substr($fval,0,6) == 'return'){
 					$qu = eval($fval);
 					$where1 = $qu['where'];
 					if($qu['from']){$query['from'] = array_merge($query['from'],$qu['from']);}
@@ -3621,8 +3641,8 @@ function get_sqlquery($gtabid,$utyp,$filter,$gsr,$verkn,$onlyfield=null,$single=
 			
 			# specific date
 			if($filter['reminder_date'][$reminderID]){
-				if(substr($filter['reminder_date'][$reminderID],0,1) == '<' OR substr($filter['reminder_date'][$reminderID],0,1) == '>'){
-					$where[] = "LMB_REMINDER.FRIST ".substr($filter['reminder_date'][$reminderID],0,1)." '".trim(convert_date(substr($filter['reminder_date'][$reminderID],1)))."'";
+				if(lmb_substr($filter['reminder_date'][$reminderID],0,1) == '<' OR lmb_substr($filter['reminder_date'][$reminderID],0,1) == '>'){
+					$where[] = "LMB_REMINDER.FRIST ".lmb_substr($filter['reminder_date'][$reminderID],0,1)." '".trim(convert_date(substr($filter['reminder_date'][$reminderID],1)))."'";
 				}else{
 					$where[] = "LMB_REMINDER.FRIST = '".convert_date($filter['reminder_date'][$reminderID])."'";
 				}
@@ -3642,7 +3662,7 @@ function get_sqlquery($gtabid,$utyp,$filter,$gsr,$verkn,$onlyfield=null,$single=
  				}else{
 					$from[] = "LMB_USERDB";
 					$where[] = "LMB_REMINDER.FROMUSER = LMB_USERDB.USER_ID";
-					$where[] = "LOWER(LMB_USERDB.VORNAME".LMB_DBFUNC_CONCAT."' '".LMB_DBFUNC_CONCAT."LMB_USERDB.NAME) LIKE '%".strtolower(parse_db_string($filter['reminder_create'][$reminderID],30))."%'";
+					$where[] = "LOWER(LMB_USERDB.VORNAME".LMB_DBFUNC_CONCAT."' '".LMB_DBFUNC_CONCAT."LMB_USERDB.NAME) LIKE '%".lmb_strtolower(parse_db_string($filter['reminder_create'][$reminderID],30))."%'";
  				}
  			}
 			
@@ -3866,7 +3886,7 @@ function get_sqlquery($gtabid,$utyp,$filter,$gsr,$verkn,$onlyfield=null,$single=
 	if($ojoin){
 		$ojoin = array_unique($ojoin);
 		foreach ($ojoin as $jkey => $jval){
-			if(($joinkey = array_search(strtoupper($jkey),array_map('strtoupper',$from)))!==false){
+			if(($joinkey = array_search(lmb_strtoupper($jkey),array_map('strtoupper',$from)))!==false){
 				unset($from[$joinkey]);
 			}
 			$fromlj = array();
@@ -4003,7 +4023,7 @@ function get_sqlresult($gtabid,$query,$verkn,$filter=null,$onlyfield=null,$singl
 		$bzm = $gresult[$gtabid]["res_next"];
 
 		# Ferknüpfung anzeigen
-		if($verkn AND strpos($query["sql"],"VERKN_ID AS VERKN_ID")){
+		if($verkn AND lmb_strpos($query["sql"],"VERKN_ID AS VERKN_ID")){
 			$show_verkn = 1;
 		}
 	}
@@ -4451,6 +4471,33 @@ function lmb_dropReminder($rem_id,$gtabid=null,$category=null,$ID=null,$wfl_inst
     if(!$rs) {return false;}else{return true;}
 }
 
+/**
+* function changes datetime and description of a reminder (in table lmb_reminder)
+*
+* @param numeric $rem_id ID of the table lmb_reminder
+* @param timestamp $gfrist field frist (date of the reminder)
+* @param varchar $gfrist_desc field description
+* @return true if the reminder is changed, false if there is an error.
+*
+*/ 
+function lmb_changeReminder($rem_id, $gfrist,$gfrist_desc){
+    global $db;
+    
+    if($gfrist){$gfrist = convert_date($gfrist);}
+    if(!$gfrist){$gfrist = convert_stamp(time());}
+
+    $sqlquery = "
+            UPDATE
+                LMB_REMINDER
+            SET 
+                FRIST = '".convert_date($gfrist)."',
+                DESCRIPTION = '".parse_db_string($gfrist_desc,250)."'
+            WHERE 
+                ID = ".parse_db_int($rem_id);
+
+    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    if(!$rs) {return false;}else{return true;}    
+}
 
 /**
 * getter function for the active reminder
@@ -4566,12 +4613,12 @@ function lmb_appendView($source,$dest,$pid=array()){
 	#$fields = implode(",",$vfields["columnname"]);
 	
 	# is limbas table
-	if(LMB_DBFUNC_SEQUENCE AND $gtab["argresult_id"][strtoupper($dest)]){
+	if(LMB_DBFUNC_SEQUENCE AND $gtab["argresult_id"][lmb_strtoupper($dest)]){
 		$pid["s"][] = "ID";
 		$pid["s"][] = "ERSTUSER";
 		$pid["d"][] = "NEXTVAL('".dbf_4("seq_".$dest."_id'").")";
 		$pid["d"][] = $session["user_id"]." AS ERSTUSER";
-	}elseif($gtab["argresult_id"][strtoupper($dest)]){
+	}elseif($gtab["argresult_id"][lmb_strtoupper($dest)]){
 		$pid["s"][] = "ERSTUSER";
 		$pid["s"][] = "ERSTDATUM";
 		$pid["d"][] = $session["user_id"]." AS ERSTUSER";
@@ -4628,8 +4675,8 @@ function ftyp_13($ID,&$gresult,$fieldid,$gtabid,$class,$style,$pos,$typ,$bzm=0) 
 	if($gfield[$gtabid]["argument"][$fieldid]){
 		$arg = explode("#", $gfield[$gtabid]["argument"][$fieldid]);
 		foreach($arg as $key => $value){
-			if(substr($arg[$key],0,1) == '*'){
-				$arg_fieldid = substr($value,1,30);
+			if(lmb_substr($arg[$key],0,1) == '*'){
+				$arg_fieldid = lmb_substr($value,1,30);
 				# --- currency ----
 				if($gfield[$gtabid]["data_type"][$arg_fieldid] == 30){
 					$arg[$key] = str_replace("\"","\\\"",$gresult[$gtabid][$arg_fieldid][$bzm]["V"]." ".$gresult[$gtabid][$arg_fieldid][$bzm]["C"]);

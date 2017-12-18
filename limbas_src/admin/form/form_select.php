@@ -86,17 +86,17 @@ function lmb_formCopy($ID,$form_name,$referenz_tab,$form_extension){
 			$qu_field[] = $fieldname;
 			
 			# Key-ID
-			if(strtoupper($fieldname) == "ID"){
+			if(lmb_strtoupper($fieldname) == "ID"){
 				$qu_value[] = $new_fieldkeyid;
 			# FORM_ID
-			}elseif(strtoupper($fieldname) == "FORM_ID"){
+			}elseif(lmb_strtoupper($fieldname) == "FORM_ID"){
 				$qu_value[] = $new_formid;
 
 			/* ---- upload ------ */
-			}elseif(strtoupper($fieldname) == 'TYP' AND $value1 == 'bild'){
+			}elseif(lmb_strtoupper($fieldname) == 'TYP' AND $value1 == 'bild'){
 				$tab_size  = odbc_result($rs, 'TAB_SIZE');
 				$ext = explode(".",$tab_size);
-				$secname = substr(md5($new_fieldkeyid.date("U")),0,12).".".$ext[1];
+				$secname = lmb_substr(md5($new_fieldkeyid.date("U")),0,12).".".$ext[1];
 				$qu_value[] = lmb_parseImport($value1,$domain_columns,$key1);
 
 				if(file_exists($umgvar['path']."/UPLOAD/form/".$tab_size)){
@@ -106,7 +106,7 @@ function lmb_formCopy($ID,$form_name,$referenz_tab,$form_extension){
 					}
 				}else{unset($secname);}
 
-			}elseif(strtoupper($fieldname) == 'TAB_SIZE'){
+			}elseif(lmb_strtoupper($fieldname) == 'TAB_SIZE'){
 				$pic_key = $bzm;
 				$qu_value[] = lmb_parseImport($value1,$domain_columns,$key1);
 			}else{
@@ -241,7 +241,7 @@ if($formcopy){
 				while($gfield[$gtab[tab_id][$vgtabid]][field_id][$bzm1]) {
 					$posy = 10;
 					$height = 14;
-					$width = strlen($gfield[$gtab[tab_id][$vgtabid]][field_name][$bzm1]) * 8 + 40;
+					$width = lmb_strlen($gfield[$gtab[tab_id][$vgtabid]][field_name][$bzm1]) * 8 + 40;
 					
 					/* --- EingabeFeld eintragen ---------------------------------------- */
 					$sqlquery = "INSERT INTO LMB_FORMS (KEYID,KEYID,FORM_ID,ERSTUSER,TYP,POSX,POSY,HEIGHT,WIDTH,STYLE,INHALT,FIELD_ID,FORM_FRAME) VALUES ($NEXTKEYID,$NEXTID,$form_id,$session[user_id],'dbinput',$posx,$posy,$height,$width,'$style','".$gfield[$gtab[tab_id][$vgtabid]][spelling][$bzm1]."',".$gfield[$gtab[tab_id][$vgtabid]][field_id][$bzm1].",1)";
@@ -461,7 +461,7 @@ $extfiles = read_dir($umgvar["pfad"]."/EXTENSIONS",1);
 echo "<SELECT ID=\"zmenufiles\" NAME=\"form_extension\" style=\"width:100px;\"><OPTION>";
 foreach ($extfiles["name"] as $key1 => $filename){
 	if($extfiles["typ"][$key1] == "file" AND $extfiles["ext"][$key1] == "ext"){
-		$path = substr($extfiles["path"][$key1],strlen($umgvar["pfad"]),100);
+		$path = lmb_substr($extfiles["path"][$key1],lmb_strlen($umgvar["pfad"]),100);
 		if($result_links[ext][$bzm] == $path.$filename){$selected = "SELECTED";}else{$selected = "";}
 		echo "<OPTION VALUE=\"".$path.$filename."\" $selected>".str_replace("/EXTENSIONS/","",$path).$filename;
 	}

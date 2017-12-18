@@ -78,13 +78,13 @@ class olMail {
 
 	function _qpdecode_cb($enc, $trans, $data){
 		/* check for base64 transfer encoding, otherwise we assume quoted-printable*/
-		if (strtoupper($trans)=='B')
+		if (lmb_strtoupper($trans)=='B')
 			$data = base64_decode($data);
 		else
 			$data = imap_qprint(preg_replace('/_/', " ", $data));
 
 		/* return data without reencoding, if already utf-8 encoded */
-		if (strtoupper($enc)=='UTF-8')
+		if (lmb_strtoupper($enc)=='UTF-8')
 			return $data;
 	
 		/* reencode localized data in utf-8 */
@@ -173,12 +173,12 @@ class olMail {
 			 */
 			case 5: /* image */
 				header("Content-Disposition: inline; filename=\"{$fname}\"");
-				header("Content-Type: image/".strtolower($p->subtype)."; name=\"{$fname}\"");
+				header("Content-Type: image/".lmb_strtolower($p->subtype)."; name=\"{$fname}\"");
 				break;
 			case 3: /* application */
-				if (strtolower($p->subtype)=='pdf'){
+				if (lmb_strtolower($p->subtype)=='pdf'){
 					header("Content-Disposition: inline; filename=\"{$fname}\"");
-					header("Content-Type: application/".strtolower($p->subtype)."; name=\"{$fname}\"");
+					header("Content-Type: application/".lmb_strtolower($p->subtype)."; name=\"{$fname}\"");
 					break;
 				}
 			default:
@@ -271,7 +271,7 @@ class olMail {
 			$body = imap_body($this->con, $uid, FT_UID);
 		}
 		
-		$charset = strtoupper($this->_get_structure_param($s->parameters, 'charset'));
+		$charset = lmb_strtoupper($this->_get_structure_param($s->parameters, 'charset'));
 
 		switch($s->encoding){
 			case 3:	/* BASE64 */
@@ -416,7 +416,7 @@ class olMail {
 		$to = $this->_header_addr_decode($hdr[0]->to);
 		$subject = (isset($hdr[0]->subject)) ? $this->_qpdecode($hdr[0]->subject) : '';
 		$date = date("d.m.Y H:i:s", strtotime($hdr[0]->date));
-		$charset = strtoupper($this->_get_structure_param($s->parameters, 'charset'));
+		$charset = lmb_strtoupper($this->_get_structure_param($s->parameters, 'charset'));
 		
 		if ($charset=='')
 			$charset = "UTF-8";

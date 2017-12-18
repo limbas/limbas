@@ -22,7 +22,7 @@ global $umgvar;
 
 if(isset($todo)){
 	if($todo == "uploadFileFromDesktop"){
-		if(strrpos($fileDest,trim($umgvar["pfad"],"/"))===false){
+		if(lmb_strrpos($fileDest,trim($umgvar["pfad"],"/"))===false){
 			$fileDest = trim($umgvar["pfad"],"/") . "/" . trim($fileDest,"/");
 		}
 		if(is_file("/" . $fileDest)){
@@ -33,10 +33,10 @@ if(isset($todo)){
 		move_uploaded_file($_FILES['src']['tmp_name'], "/" . trim($fileDest,"/") . "/" . basename($_FILES['src']['name']));
 		
 	}elseif($todo == "moveFileDragAndDrop"){
-		if(strrpos($fileSrc,trim($umgvar["pfad"],"/"))===false){
+		if(lmb_strrpos($fileSrc,trim($umgvar["pfad"],"/"))===false){
 			$fileSrc = trim($umgvar["pfad"],"/") . "/" . trim($fileSrc,"/");
 		}
-		if(strrpos($fileDest,trim($umgvar["pfad"],"/"))===false){
+		if(lmb_strrpos($fileDest,trim($umgvar["pfad"],"/"))===false){
 			$fileDest = trim($umgvar["pfad"],"/") . "/" . trim($fileDest,"/");
 		}
 		rename("/" . trim($fileSrc,"/"), "/" . trim($fileDest,"/") . "/" . basename($fileSrc));
@@ -54,7 +54,7 @@ function readExtDirPeter($path,$open){
 	//if($open=='false'){return;}
 	
 	//Make sure path starts with path of installation
-	if(strrpos($path,$umgvar["pfad"])===false){
+	if(lmb_strrpos($path,$umgvar["pfad"])===false){
 		$path = $umgvar["pfad"] . "/" . trim($path,"/") . "/";
 	}
 	
@@ -64,7 +64,7 @@ function readExtDirPeter($path,$open){
 		//folders
 		$folders = array();
 		while($file = readdir($handle)) {
-			if(substr($file,0,1) != "." && is_dir($path.$file) && $file != "system") {
+			if(lmb_substr($file,0,1) != "." && is_dir($path.$file) && $file != "system") {
 				array_push($folders,$file);
 			}
 		}
@@ -73,7 +73,7 @@ function readExtDirPeter($path,$open){
 		rewinddir($handle);
 		$files = array();
 		while($file = readdir($handle)) {
-			  if(substr($file,0,1) != "." && is_file($path.$file)) {
+			  if(lmb_substr($file,0,1) != "." && is_file($path.$file)) {
 			      array_push($files,$file);
 			}
 		}

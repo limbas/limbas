@@ -30,16 +30,16 @@ function call_soap($res_next,$id,$name,$desc,$typ,$price,$order){
 		$gsr[23][1][0] = $id;
 	}
 	if($name){
-		$gsr[23][2][0] = trim(substr($name,0,128));
+		$gsr[23][2][0] = trim(lmb_substr($name,0,128));
 	}
 	if($desc){
-		$gsr[23][3][0] = trim(substr($desc,0,128));
+		$gsr[23][3][0] = trim(lmb_substr($desc,0,128));
 	}
 	if($typ){
-		$gsr[23][4][0] = trim(substr($typ,0,128));
+		$gsr[23][4][0] = trim(lmb_substr($typ,0,128));
 	}
 	if(is_numeric($price)){
-		$gsr[23][5][0] = trim(substr($price,0,128));
+		$gsr[23][5][0] = trim(lmb_substr($price,0,128));
 	}
 
 	# order

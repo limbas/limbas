@@ -149,9 +149,9 @@ foreach ($header as $bzm => $hval){
 		echo  "<TD><SELECT NAME=\"ifield_typ[$bzm]\">\n";
 		$ctype = $e["field_type"][$bzm]." (".$e["length"][$bzm].")";
 		$fype = explode("(",$ctype);
-		$fype_type = strtoupper(trim($fype[0]));
-		$fype_size = substr($fype[1],0,strlen($fype[1])-1);
-		if($import_typ == "tab"){$fype_type = constant("LMB_DBRETYPE_".trim(strtoupper($fype_type)));}
+		$fype_type = lmb_strtoupper(trim($fype[0]));
+		$fype_size = lmb_substr($fype[1],0,lmb_strlen($fype[1])-1);
+		if($import_typ == "tab"){$fype_type = constant("LMB_DBRETYPE_".trim(lmb_strtoupper($fype_type)));}
 		$result_typeid = translate_fieldtype($fype_type,$fype_size,0,$hval);
 		foreach($result_type["id"] as $bzm2 => $value2){
 			if($result_type["id"][$bzm2] == $result_typeid){$SELECTED = "selected";}else{$SELECTED = "";}

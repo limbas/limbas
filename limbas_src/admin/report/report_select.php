@@ -38,7 +38,7 @@ if($new_group AND $report_list) {
 				}
 				$NEXTID = next_conf_id("LMB_REPORT_LIST");
 				$report_name = preg_replace("/[^A_Za-z0-9]/","_",$group_name[$key]);
-				$report_name = substr(preg_replace("/[_]{1,}/","_",$report_name),0,18);
+				$report_name = lmb_substr(preg_replace("/[_]{1,}/","_",$report_name),0,18);
 				$group_list = implode(";",$group_list);
 
 				# Report
@@ -104,7 +104,7 @@ if($changeootemplate_id) {
 	
 	#$fname = get_NameFromID($report_ootemplate[$changeootemplate_id]);
 	#$fext = array_pop(explode(".",$fname));
-	#if(strtolower($fext) == "odt"){
+	#if(lmb_strtolower($fext) == "odt"){
 	#}else{
 	#	echo "only OpenOffice templates permitted!<br>";
 	#}
@@ -386,7 +386,7 @@ if($greportlist_){
 					echo "<SELECT NAME=\"report_extension[".$key."]\" OnChange=\"document.form1.changeext_id.value='$key';document.form1.action='main_admin.php';document.form1.action.value='setup_report_select';document.form1.submit();\" style=\"width:100px;\"><OPTION>";
 					foreach ($extfiles["name"] as $key1 => $filename){
 						if($extfiles["typ"][$key1] == "file" AND ($extfiles["ext"][$key1] == "ext" OR $extfiles["ext"][$key1] == "php")){
-							$path = substr($extfiles["path"][$key1],strlen($umgvar["pfad"]),100);
+							$path = lmb_substr($extfiles["path"][$key1],lmb_strlen($umgvar["pfad"]),100);
 							if($path.$filename == $greportlist_[$gtabid]["extension"][$key]){$SELECTED = "SELECTED";}else{$SELECTED = "";}
 							echo "<OPTION VALUE=\"".$path.$filename."\" $SELECTED>".str_replace("/EXTENSIONS/","",$path).$filename;
 						}

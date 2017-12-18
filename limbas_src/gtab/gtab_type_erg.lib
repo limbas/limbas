@@ -121,7 +121,7 @@ function cftyp_3($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
 	}
 
 	if($typ == 1 OR $typ == 2){
-		echo ($events ? "<div style=\"cursor:help;width:100%;height:100%;\" $events>":"").htmlentities(substr($gresult[$gtabid][$field_id][$bzm],0,$cut),ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."... ".($events ? "</div>":"");
+		echo ($events ? "<div style=\"cursor:help;width:100%;height:100%;\" $events>":"").htmlentities(lmb_substr($gresult[$gtabid][$field_id][$bzm],0,$cut),ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."... ".($events ? "</div>":"");
 	}elseif($typ == 3){
 		return nl2br(htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$umgvar["charset"]));
 	}elseif($typ == 4){
@@ -157,7 +157,7 @@ function cftyp_22($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
 	}
 
 	if($typ == 1 OR $typ == 2){
-		echo ($events ? "<span style=\"cursor:help;\" $events>":"")."<I>".htmlentities(substr($gresult[$gtabid][$field_id][$bzm],0,$cut),ENT_QUOTES,$umgvar["charset"])."... "."</I>".($events ? "</span>":"");
+		echo ($events ? "<span style=\"cursor:help;\" $events>":"")."<I>".htmlentities(lmb_substr($gresult[$gtabid][$field_id][$bzm],0,$cut),ENT_QUOTES,$umgvar["charset"])."... "."</I>".($events ? "</span>":"");
 	}elseif($gfield[$gtabid]["wysiwyg"][$field_id] OR $typ == 5){
 		return $gresult[$gtabid][$field_id][$bzm];
 	}elseif($typ == 3){
@@ -186,7 +186,7 @@ function cftyp_1($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
 		# Potenz-Dartsellung
 		if($gfield[$gtabid]["potency"][$field_id]){
 			$value = convert_FloatToScientific($result,$gfield[$gtabid]["potency"][$field_id]);
-			if(strpos($value,"E")){
+			if(lmb_strpos($value,"E")){
 				$value = explode("E",$value);
 				$result = ($value[0]*10)."<sup>".$value[1]."</sup>";
 			}
@@ -217,7 +217,7 @@ function cftyp_28($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
         	$events = cftyp_events($typ,$event,null,$gresult,$gtabid,$field_id,$bzm);
         	echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%;\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$field_id]."\" VALUE=\"".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$umgvar["charset"])."\" $events>";
         }elseif($typ == 2){
-        	$event2["click"] = "openPhone_".$session["t_setting"][0]."(".str_replace(" ","",$gresult[$gtabid][$field_id][$bzm]).")";
+        	$event2["click"] = "openPhone_".$session["t_setting"][0]."('".str_replace(" ","",$gresult[$gtabid][$field_id][$bzm])."')";
         	$events = cftyp_events($typ,$event,$event2,$gresult,$gtabid,$field_id,$bzm);
         	echo "<a href=\"#\" $events>".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$umgvar["charset"])."</a>&nbsp;";
         }elseif($typ == 3 OR $typ == 4){
@@ -293,7 +293,7 @@ function cftyp_25($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
 
         $value = $gresult[$gtabid][$field_id][$bzm];
         if(!LMB_DBFUNC_TIMEHANDLE){
-        	$value = substr($value,11,8);
+        	$value = lmb_substr($value,11,8);
         }
 
         if($typ == 1){

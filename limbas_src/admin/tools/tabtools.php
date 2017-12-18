@@ -18,6 +18,22 @@
  * ID: 155
  */
 ?>
+<!-- include codemirror with sql syntax highlighting and sql code completion -->
+<script src="extern/codemirror/lib/codemirror.js"></script>
+<script src="extern/codemirror/edit/matchbrackets.js"></script>
+<script src="extern/codemirror/edit/matchtags.js"></script>
+<script src="extern/codemirror/mode/sql/sql.js"></script>
+<script src="extern/codemirror/addon/hint/show-hint.js"></script>
+<link rel="stylesheet" href="extern/codemirror/addon/hint/show-hint.css">
+<script src="extern/codemirror/addon/hint/sql-hint.js"></script>
+<link rel="stylesheet" href="extern/codemirror/lib/codemirror.css">
+<style>
+    .CodeMirror {
+        border: 1px solid <?=$farbschema['WEB3']?>;
+        width:600px;
+        height:300px;
+    }
+</style>
 
 <DIV class="lmbPositionContainerMain">
 
@@ -39,7 +55,7 @@ foreach($odbc_table["table_name"] as $tkey => $tvalue) {
 	$domaintables["owner"][] = $odbc_table["table_owner"][$tkey];
 	$domaintables["type"][] = $odbc_table["table_type"][$tkey];
 	if($table == $odbc_table["table_name"][$tkey]){$SELECTED = "SELECTED";}else{$SELECTED = "";}
-	if(strtoupper($odbc_table["table_type"][$tkey]) == "VIEW"){$val = "VIEW :: ".$odbc_table["table_name"][$tkey];}else{$val = $odbc_table["table_name"][$tkey];}
+	if(lmb_strtoupper($odbc_table["table_type"][$tkey]) == "VIEW"){$val = "VIEW :: ".$odbc_table["table_name"][$tkey];}else{$val = $odbc_table["table_name"][$tkey];}
 	echo "<OPTION VALUE=\"".$odbc_table["table_name"][$tkey]."\" $SELECTED>".$val."\n";
 }
 ?>
@@ -54,7 +70,7 @@ foreach($odbc_table["table_name"] as $tkey => $tvalue) {
 <TR class="tabHeader"><TD class="tabHeaderItem" HEIGHT="20" COLSPAN="5"><B><?=$lang[1060]?></B></TD></TR>
 <TR class="tabBody"><TD ALIGN="LEFT">
 <SELECT NAME="domaintable" STYLE="width:200px;">
-<?
+<?php
 foreach ($DBA["DOMAINTABLE"] as $key => $val){
 	echo "<OPTION VALUE=\"".$DBA["DOMAINSCHEMA"][$key].".".$DBA["DOMAINTABLE"][$key]."\">".$DBA["DOMAINTABLE"][$key];
 }
@@ -66,14 +82,34 @@ foreach ($DBA["DOMAINTABLE"] as $key => $val){
 <TR><TD COLSPAN="5">&nbsp;</TD></TR>
 
 <TR class="tabBody"><TD class="tabHeaderItem" HEIGHT="20" COLSPAN="5"><B>SQL-Query</B></TD></TR>
-<TR class="tabBody"><TD COLSPAN="5"><TEXTAREA NAME="sqlvalue" STYLE="width:600px;height:300px;"><?echo $sqlvalue;?></TEXTAREA></TD></TR>
-<TR><TD colspan="5"><INPUT TYPE="submit" VALUE="<?=$lang[1065]?>" NAME="sqlexec"> <div style="float:right"><?=$lang[2770]?>: <input type="text" NAME="sqlexecnum" style="width:50px" value="<?=$sqlexecnum?>"></div></TD></TR>
+<TR class="tabBody"><TD COLSPAN="5">
+    <TEXTAREA id="sqlvalue" NAME="sqlvalue"><?=$sqlvalue?></TEXTAREA>   
+    <Script language="JavaScript">
+
+        var editor = CodeMirror.fromTextArea(document.getElementById("sqlvalue"), {
+            lineNumbers: true,
+            matchBrackets: true,
+            mode: "text/x-sql",
+            indentWithTabs: true,
+            smartIndent: true,
+            autofocus: true,
+            extraKeys: {
+                "Ctrl-Enter": function() {$("#sqlexec").trigger("click");},
+                "Ctrl-Space": "autocomplete"
+            }
+        });
+
+
+    </Script>    
+</TD></TR>
+<TR><TD colspan="5"><INPUT id="sqlexec" TYPE="submit" VALUE="<?=$lang[1065]?>" NAME="sqlexec"> <div style="float:right"><?=$lang[2770]?>: <input type="text" NAME="sqlexecnum" style="width:50px" value="<?=$sqlexecnum?>"></div></TD></TR>
 <TR><TD class="tabFooter" colspan="5"></TR>
 </FORM>
 </TABLE>
 <BR>
-<?echo $result;
-if($rssql AND strtoupper(substr($sqlvalue,0,6)) == "SELECT"){echo ODBCResourceToHTML($rssql,"cellpadding=\"2\" cellspacing=\"0\" style=\"border-collapse:collapse;\"","style=\"border: 1px solid grey;\"",$sqlexecnum);}
+<?php
+echo $result;
+if($rssql AND lmb_strtoupper(lmb_substr($sqlvalue,0,6)) == "SELECT"){echo ODBCResourceToHTML($rssql,"cellpadding=\"2\" cellspacing=\"0\" style=\"border-collapse:collapse;\"","style=\"border: 1px solid grey;\"",$sqlexecnum);}
 
 
 $zeit0 = gettime();
@@ -114,7 +150,7 @@ if(!$table AND !$showsys){
 </TD></TR>
 
 <TR><TD></TD><TD>
-<?
+<?php
 $zeit = gettime() - $zeit0;
 echo "<FONT COLOR=\"green\" SIZE=\"2\">complete execution time!</FONT>&nbsp;($zeit sec.)";
 ?>

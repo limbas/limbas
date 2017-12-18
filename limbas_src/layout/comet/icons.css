@@ -666,6 +666,9 @@
 .lmb-angle-down::before { /* former .fa-angle-down */
     content: "\f107";
 }
+.lmb-angle-double-down::before { /* former .fa-angle-double-down */
+    content: "\f103";
+}
 .lmb-angle-up::before { /* former .fa-angle-up */
     content: "\f106";
 }
@@ -684,9 +687,6 @@
 .lmb-plus::before { /* former .fa-plus */
     content: "\f067";
 }
-.lmb-download::before { /* former .fa-download */
-    content: "\f019";
-}
 .lmb-mail-forward::before { /* former .fa-mail-forward */
     content: "\f064";
 }
@@ -701,6 +701,9 @@
 }
 .lmb-sign-out::before { /* former .fa-sign-out */
     content: "\f08b";
+}
+.lmb-sign-in::before { /* former .fa-sign-in */
+    content: "\f090";
 }
 .lmb-reset::before { /* former .fa-undo */
     content: "\f0e2";
@@ -1039,7 +1042,8 @@
 .lmb-icon-cus.lmb-view-archived::before { /* view-archived */ 
     content: "\e945";
 }
-.lmb-icon-32.lmb-crm::before { /* former .fa-group */ 
+.lmb-icon-32.lmb-crm::before,
+.lmb-icon.lmb-crm::before{ /* former .fa-group */ 
     content: "\f0c0";
 }
 .lmb-icon-32.lmb-file-manager::before { /* former .fa-folder-open-o */ 
@@ -1062,4 +1066,13 @@
 }
 .lmb-storage-folder::before { /* former .fa-hdd-o */
     content: "\f0a0";
+}
+.lmb-mimetype::before { /* former .fa-file-image-o */
+    content: "\f1c5";
+}
+.lmb-folder-back::before { /* former .fa-long-arrow-left */
+    content: "\f177";
+}
+.lmb-phone::before { /* former .fa-phone */
+    content: "\f095";
 }

@@ -163,7 +163,7 @@ if($ffilter_dublicates){
 # ------------- Suchmaschienen Indexsuche ------------------
 
 if(isset($ffilter_content)){
-	$ffilter["content"][$fid] = substr(str_replace("\"","",$ffilter_content),0,100);
+	$ffilter["content"][$fid] = lmb_substr(str_replace("\"","",$ffilter_content),0,100);
 }
 # Bei Exploreransicht Inhaltssuche leeren
 if($ffilter["viewmode"][$fid] == 1){$ffilter["content"][$fid] = null;}
@@ -300,8 +300,8 @@ if($move_file AND $LINK[130]){
 	$bzm = 0;
 	foreach($move_files as $key => $value){
 		if($dublicate["type"][$bzm] == "skip"){$bzm++;continue;}
-		$move_typ = substr($value,0,1);
-		$move_fid = substr($value,1,20);
+		$move_typ = lmb_substr($value,0,1);
+		$move_fid = lmb_substr($value,1,20);
 		# file
 		if($move_typ == "d"){
 			lmb_StartTransaction();
@@ -321,8 +321,8 @@ if($copy_file AND $LINK[129]){
 	$bzm = 0;
 	foreach($copy_files as $key => $value){
 		if($dublicate[$bzm]["type"] == "skip"){$bzm++;continue;}
-		$copy_typ = substr($value,0,1);
-		$copy_fid = substr($value,1,20);
+		$copy_typ = lmb_substr($value,0,1);
+		$copy_fid = lmb_substr($value,1,20);
 		# file
 		if($copy_typ == "d"){
 			lmb_StartTransaction();

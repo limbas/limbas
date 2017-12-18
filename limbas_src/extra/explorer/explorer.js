@@ -131,31 +131,32 @@ function selectDublicateUploads(evt,num,fp){
 }
 
 // add file upload forms to formular
-function LmEx_multiupload(co,dest,lid,fp,gtabid,fieldid,ID){
+function LmEx_multiupload(co,dest,LID,fp,gtabid,fieldid,ID){
 	
 	if(!fp){fp = 1;}
 	if(!dest){dest = 'lmbUploadLayer';}
-	if(!lid){lid = jsvar["LID"];}
+	if(!LID){LID = jsvar["LID"];}
 	if(!gtabid){gtabid = '';}
 	if(!fieldid){fieldid = '';}
 	if(!ID){ID = '';}
 	var upllayer = document.getElementById(dest);
 
 	var cont = '<div class="gtabHeaderInputTR lmbUploadDiv" id="lmbUploadDiv_'+fp+'">\
-	<input type="hidden" name="f_LID" value="'+lid+'">\
+	<input type="hidden" name="f_LID" value="'+LID+'">\
 	<input type="hidden" name="f_datid" value="'+ID+'">\
 	<input type="hidden" name="f_gtabid" value="'+gtabid+'">\
 	<input type="hidden" name="f_fieldid" value="'+fieldid+'">\
 	<table>';
 
 	for (var i = 1; i <= co; i++) {
+                // ?????
 		if(!document.getElementById("lmbUploadLayer_'+i+'")){
 			cont += '<tr><td nowrap id="lmbUploadLayer_'+fp+'_'+i+'">\
 			<input type="file" multiple id="file['+fp+'_'+i+']" name="file['+i+']" size="20" onchange="LmEx_UploadArchivOption(this.value,\''+fp+'_'+i+'\')">\
 			<input type="hidden" name="dublicate[type]['+i+']">\
 			<input type="hidden" name="dublicate[subj]['+i+']">\
 			</td><td nowrap><div id="lmbUploadLayerSubmit_'+fp+'_'+i+'"><span id="lmbUploadStateUnzip_'+fp+'_'+i+'" style="display:none;padding-left:5px;padding-right:5px;vertical-align:text-top">'+jsvar['lng_1560']+':<input style="vertical-align:bottom" type="checkbox" id="file_archiv['+fp+'_'+i+']" name="file_archiv['+i+']"></span>';
-			if(i == 1){cont += '<input type="button" value="'+jsvar['lng_815']+'" style="vertical-align:middle" onclick="LmEx_CheckIfMultiUpload(\'\',\''+lid+'\',\''+fp+'\');">';}
+			if(i == 1){cont += '<input type="button" value="'+jsvar['lng_815']+'" style="vertical-align:middle" onclick="LmEx_CheckIfMultiUpload(\''+fp+'\',\''+LID+'\',\''+ID+'\',\''+dest+'\',\''+gtabid+'\',\''+fieldid+'\');">';}
 			cont += '</div></td><td width="100%"><div id="lmbUploadState_'+fp+'_'+i+'" class="lmbUploadProgress">\
 			<div id="lmbUploadState_'+fp+'_'+i+'Bar" class="lmbUploadProgressBar"></div></div>\
 			</td></tr>\
@@ -165,7 +166,7 @@ function LmEx_multiupload(co,dest,lid,fp,gtabid,fieldid,ID){
 
 	cont += '</table></div>\n';
 	
-	// fist drop all upload forms
+	// first drop all upload forms
 	$(".lmbUploadDiv").remove();
 	
 	upllayer.innerHTML = cont;
@@ -176,12 +177,15 @@ function LmEx_multiupload(co,dest,lid,fp,gtabid,fieldid,ID){
 }
 
 // html5 multi-file upload simulated with existing multi-file upload function for drag&drop
-function LmEx_CheckIfMultiUpload(filename, LID, fp){
+function LmEx_CheckIfMultiUpload( fp, LID, ID, upllayer, gtabid,fieldid){
         var fileInput = $('#lmbUploadDiv_'+fp+' input[type=file]').first().get(0);
+
         if(fileInput.files.length > 1) {
-            LmEx_dragFileUpload(fileInput.files, fp, LID, '', '', '', '');
+            // 5th argument: 'LmEx_Ex_uploadfile_' + fp
+            LmEx_dragFileUpload(fileInput.files, fp, LID, ID, upllayer, gtabid, fieldid);
+            
         } else {
-            LmEx_ajaxUploadCheck(filename, LID, fp);
+            LmEx_ajaxUploadCheck(fileInput, LID, fp);
         }
 }
 
@@ -377,7 +381,6 @@ function lmb_createStatusbar(fid)
 var isDragDrop = null;
 function LmEx_dragFileUpload(files,fp,LID,ID,upllayer,gtabid,fieldid)
 {
-
 	upl_file = new Array();
 	upl_size = new Array();
 	
@@ -1120,7 +1123,7 @@ function LmEx_drag(e) {
 
 		eltd.style.width = tdw;
 		if(elts){elts.style.width = tdw;}
-		document.getElementById('filetab').style.width = tbw;
+		document.getElementById('filetab').style.width = document.getElementById('GtabBodyTable').style.width;
 	}
 	rowsize = 1;
 	return false;
@@ -1195,11 +1198,14 @@ function LmEx_open_menu(evt,el,menu){
 
 
 function LmEx_open_menu(el,menu){
-	limbasDivShow(el,el.parentNode.id,menu,'',1);
+    limbasDivShow(el,el.parentNode.id,menu,'',1);
 }
 
 /* --- Detail-Fenster ----------------------------------- */
 function LmEx_open_detail(evt,ID,lid,detail) {
+        // close all contextmenues
+        limbasDivClose();
+        
 	if(!lid){lid = jsvar["LID"];}
 	LmEx_check_all(0,lid);
 

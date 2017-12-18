@@ -139,7 +139,7 @@ echo "<TR class=\"tabBody\"><TD width=180>user-id</TD><TD>".$result_user["user_i
 echo "<TR class=\"tabBody\"><TD width=180>$lang[608]</TD><TD><INPUT TYPE=TEXT STYLE=\"width:250px;\" name=\"userdata[username]\" STYLE=\"width:250px;\" VALUE=\"".$result_user["username"]."\" ";
 if($action != "setup_user_neu"){ echo "OnChange=\"alert('for change username, you need to set a password again!');\"";}
 echo "></TD></TR>";
-if($action == "setup_user_neu"){$pass = substr(md5(rand()),0,8);}
+if($action == "setup_user_neu"){$pass = lmb_substr(md5(rand()),0,8);}
 echo "<TR class=\"tabBody\"><TD width=180>$lang[609]</TD><TD><INPUT TYPE=TEXT name=\"userdata[passwort]\" value=\"$pass\" STYLE=\"width:250px;\">&nbsp;<i class=\"lmb-icon lmb-lock-file\" STYLE=\"cursor:pointer\" OnClick=\"createpass();\"></i></TD></TR>";
 echo "<TR class=\"tabBody\"><TD width=180>$lang[610]</TD><TD><INPUT TYPE=TEXT name=\"userdata[vorname]\" STYLE=\"width:250px;\" VALUE=\"".$result_user["vorname"]."\"></TD></TR>";
 echo "<TR class=\"tabBody\"><TD width=180>$lang[611]</TD><TD><INPUT TYPE=TEXT name=\"userdata[name]\" STYLE=\"width:250px;\" VALUE=\"".$result_user["name"]."\"></TD></TR>";

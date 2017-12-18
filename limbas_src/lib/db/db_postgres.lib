@@ -167,7 +167,7 @@ function dbf_1($p,$t=0){
  */
 function dbf_2($p){
 	if(!$p){return false;}
-	$db_date = substr($p,0,19);
+	$db_date = lmb_substr($p,0,19);
 	$db_date = preg_replace("/[^0-9]/",";",$db_date);
 	$db_date = explode(";",$db_date);
 	if(is_numeric($db_date[0])){
@@ -216,7 +216,7 @@ function dbf_8($p){
  * @return string
  */
 function dbf_4($p){
-	return strtolower($p);
+	return lmb_strtolower($p);
 }
 
 /**

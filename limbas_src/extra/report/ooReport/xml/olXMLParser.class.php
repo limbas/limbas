@@ -78,7 +78,7 @@ class olXMLParser {
 		$name = $this->_getAttr($node, 'name');
 		$type = "TEXT";
 
-		if (strlen($_V))
+		if (lmb_strlen($_V))
 			$this->table[$this->rowcounter][$name] = $node->nodeValue;
 		else
 			$this->template->addText($name, $node->nodeValue);
@@ -89,7 +89,7 @@ class olXMLParser {
 		$src =  $this->_getAttr($node, 'src');
 		$type = "IMGURL";
 
-		if (strlen($_V))
+		if (lmb_strlen($_V))
 			$this->table[$this->rowcounter][$name] = $src;
 		else
 			$this->template->addImage($name, $src);
@@ -111,7 +111,7 @@ class olXMLParser {
 		//if ($_fe != NULL)
 		//	var_dump($_fe);
 
-		if (strlen($_V))
+		if (lmb_strlen($_V))
 			$this->table[$this->rowcounter][$name] = $_fe; /* . (
 				($width && $height) ? " ({$width}x{$height})" : ""
 			);*/

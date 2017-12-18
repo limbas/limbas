@@ -40,10 +40,10 @@ if(count($fontex["family"]) == 0) {
     ";
 
     foreach ($fontex["family"] as $key => $value){
-            if($fontex["file"][$key] AND strtolower($fontex["type"][$key]) == "ttf"){
+            if($fontex["file"][$key] AND lmb_strtolower($fontex["type"][$key]) == "ttf"){
                     $fontname = explode("/",$fontex["file"][$key]);
                     $fontname = $fontname[(count($fontname)-1)];
-                    $fontname = substr($fontname,0,(strlen($fontname)-4));
+                    $fontname = lmb_substr($fontname,0,(lmb_strlen($fontname)-4));
                     if(!file_exists($umgvar["pfad"]."/TEMP/fonts/font_$key.gif")){
                             if($path = paintTextToImage($text,$size=12,$fontex["file"][$key])){
                                     copy($path,$umgvar["pfad"]."/TEMP/fonts/font_$key.gif");

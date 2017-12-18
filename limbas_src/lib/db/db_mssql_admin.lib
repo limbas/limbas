@@ -64,19 +64,19 @@ function dbq_2($p){
 	
 	
 	if($p[1]){
-		//$sql .= " AND LOWER(TABLENAME) = '".strtolower($p[1])."'";
-		$sql .= " AND LOWER(allobj.name) = '".strtolower($p[1])."'";
+		//$sql .= " AND LOWER(TABLENAME) = '".lmb_strtolower($p[1])."'";
+		$sql .= " AND LOWER(allobj.name) = '".lmb_strtolower($p[1])."'";
 	}
 	if($p[2]){
-		//$sql .= " AND LOWER(COLUMNNAME) = '".strtolower($p[2])."'";
-		$sql .= " AND LOWER(ind.name) = '".strtolower($p[2])."'";
+		//$sql .= " AND LOWER(COLUMNNAME) = '".lmb_strtolower($p[2])."'";
+		$sql .= " AND LOWER(ind.name) = '".lmb_strtolower($p[2])."'";
 	}
 	if($p[4]){
-		//$sql .= " AND LOWER(COLUMNNAME) = '".strtolower($p[2])."'";
-		$sql .= " AND LOWER(col.name) = '".strtolower($p[4])."'";
+		//$sql .= " AND LOWER(COLUMNNAME) = '".lmb_strtolower($p[2])."'";
+		$sql .= " AND LOWER(col.name) = '".lmb_strtolower($p[4])."'";
 	}
 	if($p[5]){
-		$sql .= " AND LOWER(ind.name) LIKE '".strtolower($p[5])."%'";
+		$sql .= " AND LOWER(ind.name) LIKE '".lmb_strtolower($p[5])."%'";
 	}
 	
 	if($p[3] == 1){
@@ -277,12 +277,12 @@ function dbq_3($p){
               AND forkeycol.referenced_column_id = cols.column_id";
 	
 	if($p[1]){
-		//$sql .= " AND LOWER(TABLENAME) = '".strtolower($p[1])."'";
-		$sql .= " AND LOWER(allobj.name) = '".strtolower($p[1])."'";
+		//$sql .= " AND LOWER(TABLENAME) = '".lmb_strtolower($p[1])."'";
+		$sql .= " AND LOWER(allobj.name) = '".lmb_strtolower($p[1])."'";
 	}
 	if($p[2]){
-		//$sql .= " AND LOWER(FKEYNAME) LIKE '".strtolower($p[2])."'";
-		$sql .= "AND LOWER(forkey.name) LIKE '".strtolower($p[2])."'";
+		//$sql .= " AND LOWER(FKEYNAME) LIKE '".lmb_strtolower($p[2])."'";
+		$sql .= "AND LOWER(forkey.name) LIKE '".lmb_strtolower($p[2])."'";
 	}
 		
 	return $sql;
@@ -361,7 +361,7 @@ function dbq_12($p){
                 WHERE 
                         OWNER = '".$p[0]."'";
         if($p[1]){
-                $qu .= " AND LOWER(VIEWNAME) = '".strtolower($p[1])."'";
+                $qu .= " AND LOWER(VIEWNAME) = '".lmb_strtolower($p[1])."'";
         }*/
         
         $qu = "select VIEW_NAME AS VIEWNAME,
@@ -369,7 +369,7 @@ function dbq_12($p){
            FROM INFORMATION_SCHEMA.VIEW_TABLE_USAGE
            WHERE TABLE_SCHEMA = '".$p[0]."'";
         if($p[1]){
-                $qu .= " AND LOWER(VIEW_NAME) = '".strtolower($p[1])."'";
+                $qu .= " AND LOWER(VIEW_NAME) = '".lmb_strtolower($p[1])."'";
         }
 
         return $qu;
@@ -385,7 +385,7 @@ function dbq_19($p)
 {
     global $db;
 
-    if (stripos($p[1], "CREATE VIEW") !== false) {
+    if (lmb_stripos($p[1], "CREATE VIEW") !== false) {
         $qu = $p[1];
     } else {
         
@@ -475,7 +475,7 @@ function dbf_5($p,$mode=null){
 	if($mode){
 		$rs1 = odbc_exec($db,dbq_2(array($DBA["DBSCHEMA"],dbf_4($p[1]),null,2)));
 		while(odbc_fetch_row($rs1)){
-			$key[strtolower(trim(odbc_result($rs1, "COLUMNNAME")))] = 'PRIMARY KEY';
+			$key[lmb_strtolower(trim(odbc_result($rs1, "COLUMNNAME")))] = 'PRIMARY KEY';
 		}
 	}
 	
@@ -493,7 +493,7 @@ function dbf_5($p,$mode=null){
 		$col["columnname_lower"][] = dbf_4(trim(odbc_result($rs, "COLUMN_NAME")));
 		$col["length"][] = trim(odbc_result($rs, "PRECISION"));
 		$col["scale"][] = trim(odbc_result($rs, "SCALE"));
-		$col["mode"][] = $key[strtolower(trim(odbc_result($rs, "COLUMN_NAME")))];
+		$col["mode"][] = $key[lmb_strtolower(trim(odbc_result($rs, "COLUMN_NAME")))];
 		
 		$datatype = explode(' ',trim(odbc_result($rs, "TYPE_NAME")));
 		$col["datatype"][] = $datatype[0];
@@ -620,8 +620,8 @@ function dbf_3($p){
             where trev.object_id = tr.object_id AND tr.parent_id = allobj.object_id AND tr.type = 'TR'";
 	
 	if($p[1]){
-//		$sql .= " WHERE LOWER(TRIGGERNAME) LIKE '".strtolower($p[1])."'";
-        $sql .= " AND LOWER(tr.name) LIKE '".strtolower($p[1])."'";
+//		$sql .= " WHERE LOWER(TRIGGERNAME) LIKE '".lmb_strtolower($p[1])."'";
+        $sql .= " AND LOWER(tr.name) LIKE '".lmb_strtolower($p[1])."'";
 	}
 	
 

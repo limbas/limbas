@@ -240,7 +240,7 @@ function act2(el){
 	}
 
 	<?//firefox without getElementByName
-	if(strpos($_SERVER["HTTP_USER_AGENT"],"MSIE")<1){?>
+	if(lmb_strpos($_SERVER["HTTP_USER_AGENT"],"MSIE")<1){?>
 	toDisplay = parent.nav.document.getElementsByName(menel)[0];
 
 	<?}else{?>

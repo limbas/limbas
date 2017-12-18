@@ -50,13 +50,13 @@ function dbq_2($p){
 				OWNER = '".$p[0]."'";
 	
 	if($p[1]){
-		$sql .= " AND LOWER(TABLENAME) = '".strtolower($p[1])."'";
+		$sql .= " AND LOWER(TABLENAME) = '".lmb_strtolower($p[1])."'";
 	}
 	if($p[2]){
-		$sql .= " AND LOWER(INDEXNAME) = '".strtolower($p[2])."'";
+		$sql .= " AND LOWER(INDEXNAME) = '".lmb_strtolower($p[2])."'";
 	}
 	if($p[4]){
-		$sql .= "AND LOWER(COLUMNNAME) = '".strtolower($p[4])."'";
+		$sql .= "AND LOWER(COLUMNNAME) = '".lmb_strtolower($p[4])."'";
 	}
 	if($p[3]){
 		$sql .= "AND NOT INDEXNAME = 'SYSPRIMARYKEYINDEX'";
@@ -206,10 +206,10 @@ function dbq_3($p){
 				OWNER = '".$p[0]."'";
 	
 	if($p[1]){
-		$sql .= " AND LOWER(TABLENAME) = '".strtolower($p[1])."'";
+		$sql .= " AND LOWER(TABLENAME) = '".lmb_strtolower($p[1])."'";
 	}
 	if($p[2]){
-		$sql .= " AND LOWER(FKEYNAME) LIKE '".strtolower($p[2])."'";
+		$sql .= " AND LOWER(FKEYNAME) LIKE '".lmb_strtolower($p[2])."'";
 	}
 	
 	return $sql;
@@ -258,7 +258,7 @@ function dbf_3($p){
 		FROM
 		 	DOMAIN.TRIGGERS";
 	if($p[1]){
-		$sql .= " WHERE LOWER(TRIGGERNAME) LIKE '".strtolower($p[1])."'";
+		$sql .= " WHERE LOWER(TRIGGERNAME) LIKE '".lmb_strtolower($p[1])."'";
 	}
 	
 	$rs = odbc_exec($db,$sql);
@@ -315,6 +315,15 @@ function dbq_14($p){
 	return "Call ".$DBA["DBSCHEMA"].".lmb_vkn(".$act.",'".$p[1]."','".$p[2]."','".$p[3]."','".$p[4]."','".$p[5]."','".$p[0]."');";
 }
 
+/**
+ * limbas specific trigger function for lastmodified
+ *
+ * @param array $p [0]=schema, [2]=tableid
+ * @return sql string
+ */
+function dbq_27($p){
+	return;
+}
 
 
 ############# view ########################
@@ -348,7 +357,7 @@ function dbq_12($p){
 		WHERE 
 			OWNER = '".$p[0]."'";
 	if($p[1]){
-		$qu .= " AND LOWER(VIEWNAME) = '".strtolower($p[1])."'";
+		$qu .= " AND LOWER(VIEWNAME) = '".lmb_strtolower($p[1])."'";
 	}
 	return $qu;
 }
@@ -360,7 +369,7 @@ function dbq_12($p){
  * @return sql string
  */
 function dbq_19($p){
-	if(stripos($p[1],"CREATE VIEW") !== false){
+	if(lmb_stripos($p[1],"CREATE VIEW") !== false){
 		$qu = $p[1];
 	}else{
 		$qu = "CREATE OR REPLACE VIEW ".$p[0]." AS (".rtrim(trim($p[1]),";").")";
@@ -486,9 +495,9 @@ function dbf_5($p,$mode=null){
 		return $rs;
 	}
 	
-	$sql = "SELECT * FROM DOMAIN.COLUMNS WHERE OWNER = '".$p[0]."' AND LOWER(TABLENAME) = '".strtolower($p[1])."'";
+	$sql = "SELECT * FROM DOMAIN.COLUMNS WHERE OWNER = '".$p[0]."' AND LOWER(TABLENAME) = '".lmb_strtolower($p[1])."'";
 	if($p[2]){
-		$sql .= " AND LOWER(COLUMNNAME) = '".strtolower($p[2])."'";
+		$sql .= " AND LOWER(COLUMNNAME) = '".lmb_strtolower($p[2])."'";
 	}
 
 	$rs = odbc_exec($db,$sql);

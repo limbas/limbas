@@ -38,8 +38,8 @@ $auth_group = null;
 $rslogout = $_REQUEST["logout"];
 $session_name = "limbas_".rtrim(base64_encode($auth_user),"=");
 $sess_refresh = $_REQUEST["sess_refresh"];
-$auth_user = parse_db_string($auth_user,30);
-$auth_pass = parse_db_string($auth_pass,30);
+$auth_user = dbf_7(substr($auth_user,0,30));
+$auth_pass = dbf_7(substr($auth_pass,0,30));
 
 /* --- Session-Initialisierung --------------------------------------- */
 $action = preg_replace("[^A-Za-z0-9_]","_",$_REQUEST["action"]);
@@ -103,7 +103,7 @@ if($sess_refresh){
 $sqlquery = "SELECT ID,IP,FILESTRUCT_CHANGED,TABLE_CHANGED,SNAP_CHANGED FROM LMB_SESSION WHERE ID = '".session_id()."'";
 $rs = @odbc_exec($db,$sqlquery);
 if(!$rs){
-	if(strpos(odbc_errormsg($db),"Unknown table name") > 0){
+	if(lmb_strpos(odbc_errormsg($db),"Unknown table name") > 0){
 		die("<Script language=\"JavaScript\">\ndocument.location.href='admin/install/setup.php';\n</Script>\n");
 	}
 }elseif($snap_id AND odbc_result($rs,"SNAP_CHANGED")){
@@ -111,19 +111,18 @@ if(!$rs){
 	$gsnap = SNAP_loadInSession(1);
 }
 
-
 if(odbc_result($rs,"ID") AND !$rslogout AND $session){
 
 	setlocale(LC_ALL, $session["setlocale"]);
 	date_default_timezone_set($session["timezone"]);
-	
+
+	# --- mbstring include -------------------------------------------
 	if(strtoupper($umgvar["charset"]) == "UTF-8"){
-		ini_set("mbstring.func_overload",7);
-		ini_set("mbstring.internal_encoding",$umgvar["charset"]);
+	    require_once("lib/include_mbstring.lib");
 		ini_set('default_charset', 'utf-8');
 	}else{
-		ini_set("mbstring.func_overload",0);
-		ini_set('default_charset', strtoupper($umgvar["charset"]));
+        require_once("lib/include_string.lib");
+		ini_set('default_charset', lmb_strtoupper($umgvar["charset"]));
 	}
 	
 	# --- time library -------------------------------------------
@@ -160,26 +159,13 @@ if(odbc_result($rs,"ID") AND !$rslogout AND $session){
     }
 
 }else{
-
-	# --- time library -------------------------------------------
-	$tmp = "lib/session_auth.lib";
-	require_once($tmp);
-	
-	if(strtoupper($umgvar["charset"]) == "UTF-8"){
-		ini_set("mbstring.func_overload",7);
-		ini_set("mbstring.internal_encoding",$umgvar["charset"]);
-		ini_set('default_charset', strtoupper($umgvar["charset"]));
-	}else{
-		ini_set("mbstring.func_overload",0);
-		ini_set('default_charset', strtoupper($umgvar["charset"]));
-	}
-	
+	require_once("lib/session_auth.lib");
 }
 
 /* --- Prüfung ob Backend gesperrt --------------------------------- */
 if($session["lockbackend"]){
 
-	if(!defined('IS_SOAP') AND !defined('IS_WEBDAV') AND defined('IS_WSDL') AND !strpos($umgvar["allowed_proxys"],$_SERVER["REMOTE_ADDR"])){
+	if(!defined('IS_SOAP') AND !defined('IS_WEBDAV') AND defined('IS_WSDL') AND !lmb_strpos($umgvar["allowed_proxys"],$_SERVER["REMOTE_ADDR"])){
 		require ("extra/lock.php");
 		session_destroy();
 		die();

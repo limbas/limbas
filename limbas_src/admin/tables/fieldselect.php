@@ -185,8 +185,8 @@ EOD;
 
 	<TR class="tabFooter"><td colspan="4">
         <i class="lmb-icon lmb-first" STYLE="cursor:pointer" OnClick="document.form1.start.value='1';document.form1.submit();"></i>
-	<i class="lmb-icon lmb-previous" STYLE="cursor:pointer"  OnClick="document.form1.start.value='<?=($start - $result_fieldselect["num_rows"])?>';document.form1.submit();"></i>&nbsp;
-	<i class="lmb-icon lmb-next" STYLE="cursor:pointer"  OnClick="document.form1.start.value='<?=($start + $result_fieldselect["num_rows"])?>';document.form1.submit();"></i>
+	<i class="lmb-icon lmb-previous" STYLE="cursor:pointer;font-size:1.5em;"  OnClick="document.form1.start.value='<?=($start - $result_fieldselect["num_rows"])?>';document.form1.submit();"></i>&nbsp;
+	<i class="lmb-icon lmb-next" STYLE="cursor:pointer;font-size:1.5em;"  OnClick="document.form1.start.value='<?=($start + $result_fieldselect["num_rows"])?>';document.form1.submit();"></i>
 	<i class="lmb-icon lmb-last" STYLE="cursor:pointer"  OnClick="document.form1.start.value='<?=($result_fieldselect["num_ges"] - $num_result)?>';document.form1.submit();"></i>
 	</TD>
 	<TD COLSPAN="2"><INPUT TYPE="SUBMIT" VALUE="<?=$lang[1997]?>">

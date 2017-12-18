@@ -430,7 +430,7 @@ class Limbas extends AbstractBackend {
 		if ($extraData != null) {
 			foreach ( $extraData as $key => $value ) {
 				foreach ( $value as $prop => $val ) {
-					$vevent->add ( strtoupper ( $val [0] ), ( array ) ($val [3]), get_object_vars ( $val [1] ) );
+					$vevent->add ( lmb_strtoupper ( $val [0] ), ( array ) ($val [3]), get_object_vars ( $val [1] ) );
 				}
 			}
 		}
@@ -445,7 +445,7 @@ class Limbas extends AbstractBackend {
 				'lastmodified' => $gresult ['EDITDATUM'] [0] ? $gresult ['EDITDATUM'] [0] : $gresult ['ERSTDATUM'] [0],
 				'etag' => '"' . md5 ( $data ) . '"',
 				'calendarid' => $calendarId,
-				'size' => strlen ( $data ),
+				'size' => lmb_strlen ( $data ),
 				'calendardata' => $data 
 		);
 		return $result;
@@ -530,7 +530,7 @@ class Limbas extends AbstractBackend {
 		$update ["$calendarId,8,$dataId"] = convert_stamp ( $extraData ['end'] );
 		$update ["$calendarId,9,$dataId"] = lmb_utf8_decode ( parse_db_string ( $extraData ['summary'], 399 ) );
 		$rule = null;
-		switch (strtoupper ( $extraData ['frequency'] )) {
+		switch (lmb_strtoupper ( $extraData ['frequency'] )) {
 			case 'DAILY' :
 				$rule = 'täglich';
 				break;
@@ -702,7 +702,7 @@ class Limbas extends AbstractBackend {
 		}
 		$result = array (
 				'etag' => md5 ( $calendarData ),
-				'size' => strlen ( $calendarData ),
+				'size' => lmb_strlen ( $calendarData ),
 				'componentType' => $componentType,
 				'start' => $start,
 				'end' => $eventEnd,

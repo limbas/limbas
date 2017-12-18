@@ -48,8 +48,8 @@ function select_list($gtabid,$field_id,$ID,$find_wert,$find_keyw,$num_result,&$s
 
 	if(!$num_result){$num_result = 30;}
 	if(!$gfield[$gtabid][select_sort][$field_id]){$gfield[$gtabid]["select_sort"][$field_id] = "SORT";}
-	if($find_wert){$where = " AND LOWER($fieldname) LIKE '%".parse_db_string(strtolower($find_wert),250)."%'";}
-	if($find_keyw){$where .= " AND LOWER(KEYWORDS) LIKE '%".parse_db_string(strtolower($find_keyw),250)."%'";}
+	if($find_wert){$where = " AND LOWER($fieldname) LIKE '%".parse_db_string(lmb_strtolower($find_wert),250)."%'";}
+	if($find_keyw){$where .= " AND LOWER(KEYWORDS) LIKE '%".parse_db_string(lmb_strtolower($find_keyw),250)."%'";}
 	$where .= " AND LEVEL=".parse_db_int($level_id);
 
 	if($ID){
@@ -279,7 +279,7 @@ function select_delete($del_id,$gtabid,$field_id){
 
 		$levels = $remove = array();
 		if($gfield[$gtabid]["data_type"][$field_id] == 32){
-			$msqlquery = "select w.id,w.level,d.id as d_id from ".strtolower($tabtyp)."_w as w
+			$msqlquery = "select w.id,w.level,d.id as d_id from ".lmb_strtolower($tabtyp)."_w as w
 				left join ".$tabtyp."_D as d on(d.w_id=w.id)
 				where pool=".$gfield[$gtabid]["select_pool"][$field_id];
 			$mrs = odbc_exec($db,$msqlquery) or errorhandle(odbc_errormsg($db),$msqlquery,$action,__FILE__,__LINE__);
@@ -539,8 +539,8 @@ function select_select($gtabid,$field_id,$ID,$fs_sel){
 		if($fs_sel){
 		foreach($fs_sel as $key => $value){
 			# --- hinzufügen ---
-			if(substr($value,0,1) == "a"){
-				$value = substr($value,1,10);
+			if(lmb_substr($value,0,1) == "a"){
+				$value = lmb_substr($value,1,10);
 			 	if(is_numeric($value)){
 					$NEXTID = next_db_id($tabtyp."_D");
 					$sqlquery1 = "INSERT INTO ".$tabtyp."_D (ID,TAB_ID,DAT_ID,FIELD_ID,W_ID,ERSTUSER) VALUES($NEXTID,$gtabid,$ID,$field_id,$value,".$session["user_id"].")";
@@ -555,8 +555,8 @@ function select_select($gtabid,$field_id,$ID,$fs_sel){
 			 	}
 
 			# löschen
-			}elseif (substr($value,0,1) == "d"){
-				$value = substr($value,1,10);
+			}elseif (lmb_substr($value,0,1) == "d"){
+				$value = lmb_substr($value,1,10);
 				if(is_numeric($value)){
 					$sqlquery1 = "DELETE FROM ".$tabtyp."_D WHERE TAB_ID = $gtabid AND FIELD_ID = $field_id AND DAT_ID = $ID AND W_ID = $value";
 					$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
@@ -570,7 +570,7 @@ function select_select($gtabid,$field_id,$ID,$fs_sel){
 				}
 
 			# Attribut-Inhalt
-			}elseif (substr($value,0,1) == "v" AND $gfield[$gtabid]["field_type"][$field_id] == 19){
+			}elseif (lmb_substr($value,0,1) == "v" AND $gfield[$gtabid]["field_type"][$field_id] == 19){
 
 				# Attribut-Wert
 				global ${$gfield[$gtabid]["form_name"][$field_id]."_att"};

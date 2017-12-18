@@ -187,9 +187,9 @@ if($view_section == 1){
 $odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'TABLE','VIEW'"));
 foreach($odbc_table["table_name"] as $tkey => $tvalue) {
         if(!$gview["showsystabs"]){
-                if(substr($odbc_table["table_name"][$tkey],0,4) == "lmb_" OR substr($odbc_table["table_name"][$tkey],0,5) == "ldms_"){continue;}
+                if(lmb_substr($odbc_table["table_name"][$tkey],0,4) == "lmb_" OR lmb_substr($odbc_table["table_name"][$tkey],0,5) == "ldms_"){continue;}
         }
-        if(strtoupper($odbc_table["table_type"][$tkey]) == "VIEW"){$val = "VIEW :: ".$odbc_table["table_name"][$tkey];}else{$val = $odbc_table["table_name"][$tkey];}
+        if(lmb_strtoupper($odbc_table["table_type"][$tkey]) == "VIEW"){$val = "VIEW :: ".$odbc_table["table_name"][$tkey];}else{$val = $odbc_table["table_name"][$tkey];}
         echo "<tr><td nowrap><a href=\"#\" OnClick=\"lmbAjax_ViewEditorPattern('".str_replace("=","",base64_encode($tvalue)).";20,20;'+document.getElementById('tablist').style.left+','+document.getElementById('tablist').style.top);divclose();\">".$val."</a></td></tr>";
 }
 if($gview["showsystabs"]){$CKECKED="CHECKED";$val = 2;}else{$val = 1;}

@@ -18,34 +18,6 @@
  * ID:
  */
 
-function adjustColor($color_code,$percent = 0) {
-    //$percentage_adjuster = round($percentage_adjuster/100,2);
-    
-    
-    $hex = str_replace("#","",$color_code);
-    $r = (strlen($hex) == 3)? hexdec(substr($hex,0,1).substr($hex,0,1)):hexdec(substr($hex,0,2));
-    $g = (strlen($hex) == 3)? hexdec(substr($hex,1,1).substr($hex,1,1)):hexdec(substr($hex,2,2));
-    $b = (strlen($hex) == 3)? hexdec(substr($hex,2,1).substr($hex,2,1)):hexdec(substr($hex,4,2));
-    
-    if (is_array($percent))
-    {
-        $r = round($r - ($r*$percent['r']));
-        $g = round($g - ($g*$percent['g']));
-        $b = round($b - ($b*$percent['b']));
-    }
-    else
-    {
-        $r = round($r - ($r*$percent));
-        $g = round($g - ($g*$percent));
-        $b = round($b - ($b*$percent));
-    }
- 
-    return "#".str_pad(dechex( max(0,min(255,$r)) ),2,"0",STR_PAD_LEFT).str_pad(dechex( max(0,min(255,$g)) ),2,"0",STR_PAD_LEFT).str_pad(dechex( max(0,min(255,$b)) ),2,"0",STR_PAD_LEFT);
-}
-
-$adjustColor = 'adjustColor';
-
-
 
 # frameset
 $topFrameSize = 25;
@@ -238,6 +210,14 @@ body.multiframe{
 	text-decoration: none;
 	display:block;
 	cursor:pointer;
+    
+    /* prevent selection of text */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
         
 .lmbMenuItemTop2:hover {
@@ -312,6 +292,14 @@ body.multiframe{
     color: {$farbschema['WEB12']};
     cursor: default;
     width: 100%;
+    
+    /* prevent selection of text */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 .lmbMenuHeaderNav {
@@ -354,6 +342,8 @@ body.multiframe{
     overflow: hidden;
     padding-left: 17px;
     padding-top: 8px;
+    padding-right: 3px;
+    padding-bottom: 3px;
     text-align: left;
     box-sizing: border-box;
 }
@@ -371,11 +361,11 @@ body.multiframe{
 .lmbMenuItemBodyNav{
 	text-align:left;
 	overflow:hidden;
-        display: inline-block;
-        line-height: 20px;
-        width: 150%;
+    display: inline-block;
+    line-height: 20px;
+    width: 150%;
 }
-
+    
 .lmbMenuItemBodyNav:hover{
 	text-align:left;
 	overflow:hidden;
@@ -1013,7 +1003,7 @@ INPUT.gtabchange, TEXTAREA.gtabchange, SELECT.gtabchange{
         padding:0px;
         margin:0px;
         font-size: {$umgvar['fontsize']}px;
-        opacity:0.7;
+        opacity:0.8;
         filter:Alpha(opacity=70);
         box-sizing: border-box;
         overflow: auto; /* fixes IE-Scrollbar-Bug */
@@ -1275,7 +1265,7 @@ INPUT.gmultilang {
 }
 
 .lmbContextLink:hover {
-    background-color: {$adjustColor($farbschema['WEB7'],array('r'=>-0.56, 'g'=>-0.24, 'b'=>-0.40))};
+    background-color: {$farbschema['WEB5']};
     color: {$farbschema['WEB2']};
     text-decoration: none;
 }
@@ -1347,13 +1337,7 @@ DIV.ajax_container {
     padding: 5px;
     position: absolute;
 }
-    
-/*File-Manager*/
-#filetab {
-    width: 100%;
-}
-
-
+ 
 /*container allgemein*/
 .lmb_container {
 	padding:5px;
@@ -1390,7 +1374,7 @@ DIV.ajax_container {
 	height:100%;
 	overflow:hidden;
 	border-radius: 4px;
-	border-right:1px solid {$farbschema['WEB5']};
+	border-right:1px solid {$farbschema['WEB3']};
 }
 
 .progress {
@@ -1646,12 +1630,13 @@ fc-widget-header,    /* <th>, usually */
 	color: #fff;               /* default TEXT color  */
 	font-size: .85em;
 	cursor: default;
+    border-radius: 3px;
 }
 
 a.fc-event {
 	text-decoration: none;
 }
-
+      
 .fc-ltr .fc-event-hori.fc-event-start,
 .fc-rtl .fc-event-hori.fc-event-end {
 	border-left-width: 1px;
@@ -1829,6 +1814,12 @@ th.fc-resourceName {
     content: "\\f137"; 
 }
     
+.ui-widget .ui-widget-header .ui-icon.ui-icon-closethick {
+    left: 0px;
+    margin-left: 0;
+    width: 100%;
+    height: 100%;
+}
 .ui-widget .ui-widget-header .ui-icon.ui-icon-closethick:before {
     content: "\\f00d"; 
 }

@@ -70,7 +70,7 @@ $bzm2 = 0;
 while(odbc_fetch_row($rs,$bzm)) {
 	$i = odbc_result($rs,"TAB_ID");
 	$gtab["tab_id"][$i] = $i;
-	$gtab["table"][$i] = strtoupper(odbc_result($rs,"TABELLE"));
+	$gtab["table"][$i] = lmb_strtoupper(odbc_result($rs,"TABELLE"));
 	if($lang[odbc_result($rs,"BESCHREIBUNG")]){$gtab["desc"][$i] = $lang[odbc_result($rs,"BESCHREIBUNG")];}else{$gtab["desc"][$i] = $gtab["table"][$i];}
 	if(defined('IS_SOAP')){$gtab["desc_lid"][$i] = odbc_result($rs,"BESCHREIBUNG");}
 	$gtab["tab_group"][$i] = odbc_result($rs,"TAB_GROUP");
@@ -93,7 +93,7 @@ while(odbc_fetch_row($rs,$bzm)) {
 	if($params2 = odbc_result($rs, "PARAMS2")){$gtab["params2"][$i] = unserialize($params2);}
 	if(odbc_result($rs, "GROUP_SORT") == 2){$maingroup = 1;}else{$maingroup = 0;}
 	if($event = odbc_result($rs, "EVENT")){$gtab["event"][$i] = $event;}
-	if(odbc_result($rs, "EDITRULE")){$gtab["editrule"][$i] = odbc_result($rs, "EDITRULE");}
+	if(odbc_result($rs, "EDITRULE")){$gtab["editrule"][$i][] = odbc_result($rs, "EDITRULE");}
 	if(odbc_result($rs, "HAS_USERRULES")){$gtab["has_userrules"][$i] = odbc_result($rs, "HAS_USERRULES");}
 	if(odbc_result($rs, "EDIT_USERRULES")){$gtab["edit_userrules"][$i] = odbc_result($rs, "EDIT_USERRULES");}
 	if(odbc_result($rs, "EDIT_OWNUSERRULES")){$gtab["edit_ownuserrules"][$i] = odbc_result($rs, "EDIT_OWNUSERRULES");}
@@ -118,13 +118,13 @@ while(odbc_fetch_row($rs,$bzm)) {
 		$bzm1 = 1;
 		while(odbc_fetch_row($rs1, $bzm1)) {
 			$gtab["raverkn"][odbc_result($rs, "VERKN")][odbc_result($rs1, "TAB_ID")] = odbc_result($rs1, "TAB_ID");
-			$gtab["table"][odbc_result($rs1, "TAB_ID")] = strtoupper(odbc_result($rs1,"TABELLE"));
+			$gtab["table"][odbc_result($rs1, "TAB_ID")] = lmb_strtoupper(odbc_result($rs1,"TABELLE"));
 			$gtab["versioning"][odbc_result($rs1, "TAB_ID")] = odbc_result($rs1, "VERSIONING");
 			$bzm1++;
 		}
 	}
 
-	$gtab["argresult_id"][strtoupper(odbc_result($rs,"TABELLE"))] = odbc_result($rs,"TAB_ID");
+	$gtab["argresult_id"][lmb_strtoupper(odbc_result($rs,"TABELLE"))] = odbc_result($rs,"TAB_ID");
 	if(odbc_result($rs,"DEL") == 1){$gtab["delete"][$i] = odbc_result($rs,"DEL");}
 	if(odbc_result($rs,"EDIT") == 1){$gtab["edit"][$i] = odbc_result($rs,"EDIT");}
 	if(odbc_result($rs,"HIDE") == 1){$gtab["hide"][$i] = odbc_result($rs,"HIDE");}
@@ -171,6 +171,9 @@ while(odbc_fetch_row($rs,$bzm)) {
 	$alrdone[$i] = 1;
 	$bzm++;
 }
+
+
+#error_log(print_r($gtab["editrule"],1));
 
 
 # ------- gfield Funktion aufrufen ------
@@ -285,7 +288,7 @@ function gfield_array($gtab,$gfield,$gtabid){
 			if(odbc_result($rs,"LMVIEW")){
 				$gfield[$gtabid]["field_id"][$bzm0] = $bzm0;
 				$gfield[$gtabid]["key"][$bzm0] = $bzm0;
-				$gfield[$gtabid]["field_name"][$bzm0] = strtoupper($field_name);
+				$gfield[$gtabid]["field_name"][$bzm0] = lmb_strtoupper($field_name);
 				if($lang[odbc_result($rs,"SPELLING")]){$gfield[$gtabid]["spelling"][$bzm0] = $lang[odbc_result($rs,"SPELLING")];}else{$gfield[$gtabid]["spelling"][$bzm0] = $gfield[$gtabid]["field_name"][$bzm0];}
 				if($lang[odbc_result($rs,"BESCHREIBUNG")]){$gfield[$gtabid]["beschreibung"][$bzm0] = $lang[odbc_result($rs,"BESCHREIBUNG")];}else{$gfield[$gtabid]["beschreibung"][$bzm0] = $gfield[$gtabid]["field_name"][$bzm0];}
 				$gfield[$gtabid]["field_type"][$bzm0] = odbc_result($rs,"FIELD_TYPE");
@@ -341,14 +344,14 @@ function gfield_array($gtab,$gfield,$gtabid){
 
 			$gfield[$gtabid]["id"][$bzm0] = $bzm0;
 			$gfield[$gtabid]["field_id"][$bzm0] = $bzm0;
-			$gfield[$gtabid]["field_name"][$bzm0] = strtoupper($field_name);
+			$gfield[$gtabid]["field_name"][$bzm0] = lmb_strtoupper($field_name);
 			$gfield[$gtabid]["field_type"][$bzm0] = odbc_result($rs,"FIELD_TYPE");
 			$gfield[$gtabid]["data_type"][$bzm0] = $data_type;
 			$gfield[$gtabid]["funcid"][$bzm0] = odbc_result($rs,"FUNCID");
 			$gfield[$gtabid]["parse_type"][$bzm0] = odbc_result($rs,"PARSE_TYPE");
 			$gfield[$gtabid]["data_type_exp"][$bzm0] = $lang[odbc_result($rs,"DATA_TYPE_EXP")];
 			$gfield[$gtabid]["format"][$bzm0] = $lang[odbc_result($rs,"FORMAT")];
-			$gfield[$gtabid]["argresult_name"][strtoupper($field_name)] = $bzm0;
+			$gfield[$gtabid]["argresult_name"][lmb_strtoupper($field_name)] = $bzm0;
             
 			
 			$lmrule = odbc_result($rs,"LMRULE");
@@ -383,7 +386,7 @@ function gfield_array($gtab,$gfield,$gtabid){
 			if(odbc_result($rs,"HASRECVERKN")){$gfield[$gtabid]["hasrecverkn"][$bzm0] = odbc_result($rs,"HASRECVERKN");}
 			if(odbc_result($rs,"VERKNTABLETYPE")){$gfield[$gtabid]["verkntabletype"][$bzm0] = odbc_result($rs,"VERKNTABLETYPE");}
 			if(odbc_result($rs,"VERKNTREE")){$gfield[$gtabid]["verkntree"][$bzm0] = odbc_result($rs,"VERKNTREE");}
-			if(odbc_result($rs,"MD5TAB")){$gfield[$gtabid]["md5tab"][$bzm0] = odbc_result($rs,"MD5TAB");}
+			if(odbc_result($rs,"MD5TAB")){$gfield[$gtabid]["md5tab"][$bzm0] = lmb_strtoupper(odbc_result($rs,"MD5TAB"));}
 			if($lmb_relext){$gfield[$gtabid]["relext"][$bzm0] = $lmb_relext;}
 			if(odbc_result($rs,"DYNSEARCH")){$gfield[$gtabid]["dynsearch"][$bzm0] = odbc_result($rs,"DYNSEARCH");}
 			if(odbc_result($rs,"ARTLEISTE")){$gfield[$gtabid]["artleiste"][$bzm0] = odbc_result($rs,"ARTLEISTE");}
@@ -513,12 +516,12 @@ function gfield_array($gtab,$gfield,$gtabid){
 				$gverkn[$gtabid]["id"][$bzm0] = $gfield[$gtabid]["verkntabid"][$bzm0];
 
 				# Zusatzfelder Verknüpfungstabelle
-				$rs1 = odbc_columns($db,null,$DBA["DBSCHEMA"],dbf_4($gfield[$gtabid]["md5tab"][$bzm0]));
+				$rs1 = odbc_columns($db,null,$DBA["DBSCHEMA"],lmb_strtoupper($gfield[$gtabid]["md5tab"][$bzm0]));
 				$deffields = array("ID","KEYID","VERKN_ID","ERSTDATUM","ERSTUSER","SORT");
 				$gfield[$gtabid]["md5tab_fields"][$bzm0] = null;
 				$gfield[$gtabid]["md5tab_types"][$bzm0] = null;
 				while(odbc_fetch_row($rs1)) {
-					if(!in_array(strtoupper(odbc_result($rs1, "COLUMN_NAME")),$deffields)){
+					if(!in_array(lmb_strtoupper(odbc_result($rs1, "COLUMN_NAME")),$deffields)){
 			  			$gfield[$gtabid]["md5tab_fields"][$bzm0][] = odbc_result($rs1, "COLUMN_NAME");
 			  			$gfield[$gtabid]["md5tab_types"][$bzm0][] = odbc_result($rs1, "TYPE_NAME");
 					}
@@ -757,7 +760,7 @@ function resultformlist(){
 		$gformlist[$gtabid]["redirect"][$key] = odbc_result($rs, "REDIRECT");
 		$gformlist[$gtabid]["ref_tab"][$key] = $gtabid;
 		$gformlist[$gtabid]["erstuser"][$key] = odbc_result($rs, "ERSTUSER");
-		$gformlist[$gtabid]["css"][$key] = substr(odbc_result($rs, "CSS"),1,120);
+		$gformlist[$gtabid]["css"][$key] = lmb_substr(odbc_result($rs, "CSS"),1,120);
 		$gformlist[$gtabid]["extension"][$key] = trim(odbc_result($rs, "EXTENSION"),"/");
 		if($gformlist[$gtabid]["typ"][$key] == 1){$gformlist[$gtabid]["dimension"][$key] = odbc_result($rs, "DIMENSION");}
 		if(odbc_result($rs, "HIDDEN") AND $gformlist[$gtabid]["hidden"][$key] !== 0){$gformlist[$gtabid]["hidden"][$key] = 1;}
@@ -820,9 +823,15 @@ function resultform($tableid,$formid,$fbzm,$gform){
 			$gform[$key]["mainellist"][$fbzm] = $fbzm;
 		}
 		
-		# is parentelement
+		# is parent relationelement
 		if($parentrel = odbc_result($rs, "PARENTREL")){
-			$gform[$key]["parentrel"][$parentrel][] = $gform[$key]["field_id"][$fbzm];
+		    // relation parameters fields
+			if($gform[$key]["field_id"][$fbzm] > 1000){
+                $gform[$key]["paramrel"][$parentrel][] = $gform[$key]["field_id"][$fbzm];
+			// parent relation fields
+			}else{
+                $gform[$key]["parentrel"][$parentrel][] = $gform[$key]["field_id"][$fbzm];
+			}
 		}
 		
 		# is table-cell
@@ -943,7 +952,7 @@ function resulttriggerlist(){
 	$bzm = 1;
 	while(odbc_fetch_row($rs, $bzm)) {
 		$key = odbc_result($rs, "ID");
-		$gtabid = $gtab["argresult_id"][strtoupper(odbc_result($rs, "TABLE_NAME"))];
+		$gtabid = $gtab["argresult_id"][lmb_strtoupper(odbc_result($rs, "TABLE_NAME"))];
 		$gtrigger[$gtabid]["id"][$key] = $key;
 		$gtrigger[$gtabid]["table_name"][$key] = odbc_result($rs, "TABLE_NAME");
 		$gtrigger[$gtabid]["type"][$key] = odbc_result($rs, "TYPE");

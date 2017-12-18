@@ -270,7 +270,7 @@ function lmb_wfl_setHistory($wfl_id,$wfl_inst,$old_task,$new_task,$tab_id=null,$
 }
 
 
-function lmb_wfl_getHistory($wfl_id,$wfl_inst,$task_id=null,$user_id=null,$tab_id=null,$dat_id=null){
+function lmb_wfl_getHistory($wfl_id,$wfl_inst,$task_id=null,$user_id=null,$tab_id=null,$dat_id=null,$order_by=null){
 	global $db;
 	global $session;
 	
@@ -295,10 +295,14 @@ function lmb_wfl_getHistory($wfl_id,$wfl_inst,$task_id=null,$user_id=null,$tab_i
 	}else{
 		return false;
 	}
+    
+    if(!$order_by){
+        $order_by = 'ID';
+    }
 	
 	$wfl['task_id'] = array();
 	
-	$sqlquery = "SELECT * FROM LMB_WFL_HISTORY WHERE WFL_ID = ".parse_db_int($wfl_id)." AND $where ORDER BY ID";
+	$sqlquery = "SELECT * FROM LMB_WFL_HISTORY WHERE WFL_ID = ".parse_db_int($wfl_id)." AND $where ORDER BY $order_by";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	while (odbc_fetch_row($rs)){
 		$wfl['task_id'][] = odbc_result($rs, "TASK_ID");
@@ -309,5 +313,81 @@ function lmb_wfl_getHistory($wfl_id,$wfl_inst,$task_id=null,$user_id=null,$tab_i
 	}
 
 	if($rs){return $wfl;}else{return false;}
+}
+
+function lmb_wfl_printHistory($wfl_id, $wfl_inst) {
+    global $gwfl;
+    global $userdat;
+    global $gtab;
+    global $gform;
+    
+    # get workflow data ordered by date
+    $history = lmb_wfl_getHistory($wfl_id, $wfl_inst, null, null, null, null, 'ERSTDATUM DESC');
+    
+    # map to readable values
+    foreach($history['task_id'] as $key => $task_id) {
+        # map task id to task name
+        $history['task'][$key] = $gwfl[$wfl_id]['task']['name'][$task_id];
+        
+        # map user id to description | full name | username
+        $user_id = $history['user_id'][$key];
+        $user_desc = $userdat['bezeichnung'][$user_id];
+        $user_full_name = $userdat['vorname'][$user_id] . " " . $userdat['name'][$user_id];
+        $user_username = $userdat['username'][$user_id];
+        $history['user'][$key] = $user_desc ? $user_desc : ($user_full_name ? $user_full_name : $user_username);
+        
+        # map table id to table name
+        $tab_id = $history['tab_id'][$key];
+        $history['tab'][$key] = $gtab['desc'][$tab_id];
+        
+        # map date to german format
+        $history['date'][$key] = get_date($history['date'][$key]);
+    }
+    
+    # set headers (title lang => $history index)
+    $headers = array(
+        "Date" => 'date',
+        "User" => 'user',
+        "Task" => 'task',
+        "Table" => 'tab'
+    );
+    
+    # print as table
+    $output = "<div class=\"gtabFringeRelationBody\" style=\"width:100%;height:100%;overflow-y:auto;\">";
+    $output.= "<table id=\"wflHistory_".$wfl_id."\" class=\"lmbfringeGtabBody\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"border:none;width:100%;\">
+	<thead>";
+		
+	# print headers
+	$output.= "<TR class=\"gtabHeaderTitleTR\">";	
+	foreach ($headers as $description => $key){		
+		$output.= "
+			<th nowrap align=\"left\" class=\"gtabHeaderTitleTD\" valign=\"top\" style=\"cursor:auto;\">
+			<div class=\"gtabHeaderTitleTDItem\" style=\"width:100%;text-align:left;\">$description</div>
+			</th>";
+        $bzmrk++;
+	}
+	$output.= "</TR>";	
+	$output.= "</thead><tbody>";
+
+	# print data		
+	foreach($history['date'] as $historyKey => $date) {
+		$output.= "<tr id=\"elrow_".$wfl_id."_".$historyKey."\" class=\"gtabBodyTR\"";		
+		$output.= "onmouseover=\"this.style.backgroundColor='".$farbschema["WEB7"]."'\" onmouseout=\"this.style.backgroundColor=''\" ";
+		$output.= ">";
+
+        foreach ($headers as $desctiption => $headerKey){
+            $output.= "<td class=\"gtabBodyTD\" align=\"left\">";
+            $output.= $history[$headerKey][$historyKey];
+            $output.= "</td>";
+        }
+		$output.= "</tr>";
+	}
+		
+	$output.= "</tbody><tfoot>";	
+	$output.= "<tr class=\"gtabBodyTR\"><td style=\"height:100%\" colspan=\"".$bzmrk."\"></td></tr>";	
+	$output.= "</tfoot></table>";
+	$output.= "</div>";
+    
+    return $output;    
 }
 ?>

@@ -1,6 +1,8 @@
 <?php
 # get all demos
 require_once("../../lib/include.lib");
+require_once("../../lib/include_string.lib");
+
 unset($demoPaths);
 if($folderval = read_dir($setup_path_project."/BACKUP")){
     foreach($folderval["name"] as $key => $value){
@@ -69,8 +71,8 @@ if($index = array_search("clean.tar.gz", $demoPaths)) {
             if(count($demoPaths) > 0){
             if($noCleanFound){$checked = 'checked';}
             foreach($demoPaths as $demoName) {
-                if(substr($demoName, -7) == '.tar.gz') {
-                    $demoFileName = substr($demoName, 0, strlen($demoName) - 7);
+                if(lmb_substr($demoName, -7) == '.tar.gz') {
+                    $demoFileName = lmb_substr($demoName, 0, lmb_strlen($demoName) - 7);
                     ?>
 
                     <tr>
@@ -98,7 +100,7 @@ if($index = array_search("clean.tar.gz", $demoPaths)) {
 </table>
 
 <div>    
-    <button type="button" class="btn btn-default" onclick="switchToStep('<?php $s=array_keys($steps); echo $s[4]?>')">Back</button>
+    <button type="button" class="btn btn-default" onclick="switchToStep('<?= array_keys($steps)[4] ?>')">Back</button>
     <?php 
     $nextStep = 6;
     $text = "Next step";
@@ -109,7 +111,7 @@ if($index = array_search("clean.tar.gz", $demoPaths)) {
         $text = "Reload";
     }
     ?>
-    <button type="submit" class="btn btn-info pull-right <?= $disabled ?>" <?= $tooltip ?> name="install" value="<?php $s=array_keys($steps); echo $s[$nextStep]?>"><?= $text ?></button>
+    <button type="submit" class="btn btn-info pull-right <?= $disabled ?>" <?= $tooltip ?> name="install" value="<?= array_keys($steps)[$nextStep] ?>"><?= $text ?></button>
 </div>
 
     

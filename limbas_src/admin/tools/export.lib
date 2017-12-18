@@ -115,7 +115,7 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
 						# falls Verknüpfung
 						if($gfield[$key]["md5tab"][$key1]){
 							# Verknüpfungstabelle hinzufügen
-							$exptables[] = strtoupper($gfield[$key]["md5tab"][$key1]);
+							$exptables[] = lmb_strtoupper($gfield[$key]["md5tab"][$key1]);
 						}
 					}
 				}
@@ -204,10 +204,10 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
 		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'TABLE'"));
 		foreach($odbc_table["table_name"] as $tkey => $table) {
 			//no  systemtables, system_files, ldms_* , dontinclude
-			if (in_array(strtolower($table), $tosync) || (strpos(strtolower($table),'lmb_') === false && strpos(strtolower($table),'systemtables') === false && strpos(strtolower($table),'system_files') === false && strpos(strtolower($table),'ldms_') === false && $exporttabs))
+			if (in_array(lmb_strtolower($table), $tosync) || (lmb_strpos(lmb_strtolower($table),'lmb_') === false && lmb_strpos(lmb_strtolower($table),'systemtables') === false && lmb_strpos(lmb_strtolower($table),'system_files') === false && lmb_strpos(lmb_strtolower($table),'ldms_') === false && $exporttabs))
 			{
 				$exptables[] = $table;
-                                if (strpos(strtolower($table),'lmb_') === false && strpos(strtolower($table),'systemtables') === false && strpos(strtolower($table),'system_files') === false && strpos(strtolower($table),'ldms_') === false && $exporttabs) 
+                                if (lmb_strpos(lmb_strtolower($table),'lmb_') === false && lmb_strpos(lmb_strtolower($table),'systemtables') === false && lmb_strpos(lmb_strtolower($table),'system_files') === false && lmb_strpos(lmb_strtolower($table),'ldms_') === false && $exporttabs) 
                                 {
                                     $expttabs[] =  $table;
                                 }
@@ -221,6 +221,8 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
                         $str=file_get_contents($path.'/export.php');
                         $var_str = var_export($expttabs, true);
                         $str=str_replace('?>','$tosyn = '.$var_str.'; ?>',$str);
+                        $var_str2 = var_export($tableprefix, true);
+                        $str=str_replace('?>',"\n" . '$types = '.$var_str2.'; ?>',$str);
                         file_put_contents($path.'/export.php', $str);
                         
                         //Erstelle Package
@@ -279,7 +281,7 @@ function lmbExport_ToText($exptable,$format,$export_filter=null,$txt_encode=null
 			if($export_filter AND !is_array($export_filter)){$expf = $export_filter;}
 			elseif($export_filter[$bzm0]){$expf = $export_filter[$bzm0];}
 			else{$expf = "";}
-			if($expf){if(substr(strtoupper($expf),0,5) != "WHERE"){$expf = "WHERE $expf";}}
+			if($expf){if(lmb_substr(lmb_strtoupper($expf),0,5) != "WHERE"){$expf = "WHERE $expf";}}
 			
 			$sqlquery = "SELECT * FROM ".$exptable[$bzm0]." ".$expf." ".LMB_DBFUNC_FOR_REUSE;
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -373,15 +375,15 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 	global $gtab;
 	global $DBA;
 	global $tabgroup;
-	
+
 	global $result_exp_dat;
 	global $result_exp_tabs;
-	
+
 	$bzm0 = 0;
 	if(is_array($exptable)){
-	
+
 		foreach ($exptable as $bzm0 => $table){
-		
+
 			# Tabellennamen auflösen
 			if(is_numeric($table)){
 				if($gtab["table"][$table]){
@@ -390,9 +392,9 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 					continue;
 				}
 			}
-			
+
 			$table = dbf_4($table);
-			
+
 			if($tableprefix){
 				$table_ = ltrim($table,"lmb_");
 				$table_ = ltrim($table_,"LMB_");
@@ -400,15 +402,15 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 			}else{
 				$newtablename = $table;
 			}
-		
+
 			/* --- Configurations_Datei ------- */
 			unset($COLUM);
 			unset($line);
 
 			$config_datei = fopen($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.conf","w+");
-			if (!$configonly || substr($table,0,4) == 'lmb_') $table_datei = fopen($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.dat","w+");
+			if (!$configonly || lmb_strtolower(lmb_substr($table,0,4)) == 'lmb_'){$table_datei = fopen($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.dat","w+");}
 			$pfad = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/";
-			
+
 			$info = lmbExport_infotext();
 			/* ---> conf */ fputs($config_datei,$info);
 
@@ -417,20 +419,20 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 			if($col = dbf_5(array($DBA["DBSCHEMA"],$table,null),1)){
 				foreach ($col["columnname"] as $ckey => $cname){
 					$COLUM[] = $col["columnname"][$ckey];
-					$DATATYPE = constant("LMB_DBRETYPE_".trim(strtoupper($col["datatype"][$ckey])));
+					$DATATYPE = constant("LMB_DBRETYPE_".trim(lmb_strtoupper($col["datatype"][$ckey])));
 					$LEN = $col["length"][$ckey];
-                                        if (strtolower($DATATYPE) == 'boolean')
-                                        {
-                                            $LEN = 1;
-                                        }
+					if (lmb_strtolower($DATATYPE) == 'boolean')
+					{
+						$LEN = 1;
+					}
 					$COLUMNNAME = $col["columnname"][$ckey];
 					$line[] = $col["columnname"][$ckey];
 					$CODETYPE = $col["codetype"][$ckey];
 					$SCALE = $col["scale"][$ckey];
 					$MODE = $col["mode"][$ckey];
-					$DEFAULT_ = explode("::",trim(strtoupper($col["default"][$ckey])));
+					$DEFAULT_ = explode("::",trim(lmb_strtoupper($col["default"][$ckey])));
 					$DEFAULT = trim($DEFAULT_[0],"'");
-					
+
 					if($DEFAULT OR $DEFAULT == '0'){
 						if($DATATYPE == "INTEGER" OR $DATATYPE == "SMALLINT" OR $DATATYPE == "FLOAT" OR $DATATYPE == "FIXED"){
 							$DEFAULT = parse_db_int($DEFAULT);
@@ -440,69 +442,69 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 							}
 						}
 					}
-					
+
 					/*
 					if(!preg_match("/[^[:alnum:]()]/",$DEFAULT)){
-						$const = @constant("LMB_DBREDEF_".$DEFAULT);
-						if($const){
-							$DEFAULT = $const;
-						}
+					$const = @constant("LMB_DBREDEF_".$DEFAULT);
+					if($const){
+					$DEFAULT = $const;
+					}
 					}*/
-					
+
 					# workaround for stupid timestamp default value
 					if($GLOBALS['DBA']['DB'] == 'mysql' AND $DEFAULT == '0000-00-00 00:00:00'){
 						$DEFAULT = '';
 					}
-                        
-                    /* ---> conf */
-                    fputs($config_datei, "$COLUMNNAME::$DATATYPE::$CODETYPE::$LEN::$SCALE::$MODE::$DEFAULT\n");
-                    // /* ---> tab */ fputs($table_datei,"$COLUMNNAME\t");
-                }
-                
-                /* ---> tab */
-                if (! $configonly || substr($table, 0, 4) == 'lmb_') {
-                    lmb_fputcsv($table_datei, $line, 1);
-                }
+
+					/* ---> conf */
+					fputs($config_datei, "$COLUMNNAME::$DATATYPE::$CODETYPE::$LEN::$SCALE::$MODE::$DEFAULT\n");
+					// /* ---> tab */ fputs($table_datei,"$COLUMNNAME\t");
+				}
+
+				/* ---> tab */
+				if (! $configonly || lmb_strtolower(lmb_substr($table, 0, 4)) == 'lmb_') {
+					lmb_fputcsv($table_datei, $line, 1);
+				}
 			}
 
 			#/* ---> tab  */ fputs($table_datei,"\n");
 			/* ---> conf */ fputs($config_datei,"<end tabledefinition>\n\n");
 
 			/* --- Inhalt_Liste --------------------------------------------- */
-			if (!$configonly || substr($table,0,4) == 'lmb_'){
-			if($export_filter AND !is_array($export_filter)){$expf = $export_filter;}
-			elseif($export_filter[$bzm0]){$expf = $export_filter[$bzm0];}
-			else{$expf = "";}
-			if($expf){if(substr(strtoupper(trim($expf)),0,5) != "WHERE"){$expf = "WHERE $expf";}}
-			$sqlquery = "SELECT * FROM $table ".$expf." ".LMB_DBFUNC_FOR_REUSE;
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			if(!$rs) {$commit = 1;}
-			$bzm1 = 1;
-			while(odbc_fetch_row($rs)) {
-				$line = array();
-				$bzm2 = 0;
-				while($COLUM[$bzm2]){
-					$erg = odbc_result($rs, $COLUM[$bzm2]);
-                            
-                    // mask \" for fputcsv
-                    if (! $GLOBALS['phpvok']) {
-                        $erg = str_replace('\\"', '#BSLQUT#', $erg);
-                    }
-					
-					if($GLOBALS['DBA']['DB'] == 'mysql' AND $erg == '0000-00-00 00:00:00'){$erg = '';}
-					#/* ---> tab  */ fputs($table_datei,$erg."\t");
-					/* ---> tab  */ $line[] = $erg;
-					$bzm2++;
+			if (!$configonly || lmb_strtolower(lmb_substr($table,0,4)) == 'lmb_'){
+				if($export_filter AND !is_array($export_filter)){$expf = $export_filter;}
+				elseif($export_filter[$bzm0]){$expf = $export_filter[$bzm0];}
+				else{$expf = "";}
+				if($expf){if(lmb_substr(lmb_strtoupper(trim($expf)),0,5) != "WHERE"){$expf = "WHERE $expf";}}
+				$sqlquery = "SELECT * FROM $table ".$expf." ".LMB_DBFUNC_FOR_REUSE;
+				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs) {$commit = 1;}
+				$bzm1 = 1;
+				while(odbc_fetch_row($rs)) {
+					$line = array();
+					$bzm2 = 0;
+					while($COLUM[$bzm2]){
+						$erg = odbc_result($rs, $COLUM[$bzm2]);
+
+						// mask \" for fputcsv
+						if (! $GLOBALS['phpvok']) {
+							$erg = str_replace('\\"', '#BSLQUT#', $erg);
+						}
+
+						if($GLOBALS['DBA']['DB'] == 'mysql' AND $erg == '0000-00-00 00:00:00'){$erg = '';}
+						#/* ---> tab  */ fputs($table_datei,$erg."\t");
+						/* ---> tab  */ $line[] = $erg;
+						$bzm2++;
+					}
+					#/* ---> tab  */ fputs($table_datei,"\n");
+					/* ---> tab  */ lmb_fputcsv($table_datei, $line, 1);
+
+
+					$result_exp_dat++;
+					$bzm1++;
 				}
-				#/* ---> tab  */ fputs($table_datei,"\n");
-				/* ---> tab  */ lmb_fputcsv($table_datei, $line, 1);
-                                
-				
-				$result_exp_dat++;
-				$bzm1++;
-			}
-			
-			odbc_free_result($rs);
+
+				odbc_free_result($rs);
 			}
 
 
@@ -545,32 +547,30 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 
 			fclose($config_datei);
 
-			if (!$configonly || strpos(strtolower($table),"lmb_") !== false)
+			if (!$configonly || lmb_strpos(lmb_strtolower($table),"lmb_") !== false)
 			{
 				fclose($table_datei);
-				$systemquery = "tar -c -z -C ".$pfad." -f ".$pfad."/".$newtablename.".tar.gz "."export.conf export.dat";
-                                $sys = exec($systemquery);
+				$systemquery = "tar -c -z -C ".$pfad." -f ".$pfad.$newtablename.".tar.gz "."export.conf export.dat";
+				#$sys = exec($systemquery);
+				system($systemquery,$t);
 			}
 			else if ($configonly)
 			{
-
-                            //$systemquery = "tar -c -z -C ".$pfad." -f ".$pfad."/".$newtablename.".tar.gz "."export.conf";
-                            rename($pfad."/export.conf", $pfad."/".$newtablename.".conf");
+				rename($pfad."export.conf", $pfad.$newtablename.".conf");
 			}
-			
+
 			# return link
-			if(file_exists($pfad."/".$newtablename.".tar.gz")){
+			if(file_exists($pfad.$newtablename.".tar.gz")){
 				$result_exp_tabs++;
 				$result_backup["name"][] = $newtablename.".tar.gz";
 				$result_backup["path"][] = "USER/".$session["user_id"]."/temp/".$newtablename.".tar.gz";
-			}else 
-                if ($configonly) {
-                    $result_exp_tabs ++;
-                    $result_backup["name"][] = $newtablename . ".conf";
-                    $result_backup["path"][] = "USER/" . $session["user_id"] . "/temp/" . $newtablename . ".conf";
-                }
+			}elseif ($configonly) {
+				$result_exp_tabs ++;
+				$result_backup["name"][] = $newtablename . ".conf";
+				$result_backup["path"][] = "USER/" . $session["user_id"] . "/temp/" . $newtablename . ".conf";
+			}
 		}
-		
+
 		/* --- alte Dateien löschen -------------------------------------- */
 		if(file_exists($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.conf")){
 			unlink($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.conf");
@@ -578,38 +578,38 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 		if(file_exists($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.dat")){
 			unlink($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.dat");
 		}
-		
+
 		/* ---------  save export params to config-file --------- */
 		if(is_array($explist['table'])){
-		foreach ($explist['table'] as $bzm0 => $table){
-			$tabgrp = $gtab["tab_group"][$table];
-			
-			$config_export['gtab']['table'][$table] = $gtab["table"][$table];
-			$config_export['gtab']['tab_id'][$table] = $table;
-			$config_export['gtab']['tab_group'][$table] = $gtab["tab_group"][$table];
-			
-			$config_export['tabgroup']['name'][$tabgrp] = $tabgroup["name"][$tabgrp];
-			$config_export['tabgroup']['beschreibung'][$tabgrp] = $tabgroup["beschreibung"][$tabgrp];
-			$config_export['tabgroup']['name_lid'][$tabgrp] = $tabgroup["name_lid"][$tabgrp];
-			$config_export['tabgroup']['beschreibung_lid'][$tabgrp] = $tabgroup["beschreibung_lid"][$tabgrp];
-			#$config_export['tabgroup']['argid'][$tabgrp] = $tabgrp;
-		}}
-		
-		#$config_export['gtab'] = $gtab;
-		#$config_export['tabgroup'] = $tabgroup;
-		$config_export['exptable'] = $explist;
-		$config_export['encoding'] = $GLOBALS["umgvar"]["charset"];
-		$var_str = var_export($config_export, true);
-		$var = "<?php\n\n\$export_conf = $var_str;\n\n?>";
-		$config_export_datei = fopen($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.php","w+");
-		fwrite($config_export_datei,$var);
-		fclose($config_export_datei);
-		
-		if($result_backup){
-			return $result_backup;
-		}else{
-			return false;
-		}
+			foreach ($explist['table'] as $bzm0 => $table){
+				$tabgrp = $gtab["tab_group"][$table];
+
+				$config_export['gtab']['table'][$table] = $gtab["table"][$table];
+				$config_export['gtab']['tab_id'][$table] = $table;
+				$config_export['gtab']['tab_group'][$table] = $gtab["tab_group"][$table];
+
+				$config_export['tabgroup']['name'][$tabgrp] = $tabgroup["name"][$tabgrp];
+				$config_export['tabgroup']['beschreibung'][$tabgrp] = $tabgroup["beschreibung"][$tabgrp];
+				$config_export['tabgroup']['name_lid'][$tabgrp] = $tabgroup["name_lid"][$tabgrp];
+				$config_export['tabgroup']['beschreibung_lid'][$tabgrp] = $tabgroup["beschreibung_lid"][$tabgrp];
+				#$config_export['tabgroup']['argid'][$tabgrp] = $tabgrp;
+			}}
+
+			#$config_export['gtab'] = $gtab;
+			#$config_export['tabgroup'] = $tabgroup;
+			$config_export['exptable'] = $explist;
+			$config_export['encoding'] = $GLOBALS["umgvar"]["charset"];
+			$var_str = var_export($config_export, true);
+			$var = "<?php\n\n\$export_conf = $var_str;\n\n?>";
+			$config_export_datei = fopen($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.php","w+");
+			fwrite($config_export_datei,$var);
+			fclose($config_export_datei);
+
+			if($result_backup){
+				return $result_backup;
+			}else{
+				return false;
+			}
 	}
 }
 
@@ -634,14 +634,14 @@ function lmbExport_Dump($format,$struct_only=false){
 	
 	if($folderval = read_dir($umgvar["pfad"]."/BACKUP")){
 		foreach($folderval["name"] as $key => $value){
-			$pfad[] = str_replace("_","",substr($value,6,2).substr($value,3,2).substr($value,0,2));
+			$pfad[] = str_replace("_","",substr($value,6,2).lmb_substr($value,3,2).lmb_substr($value,0,2));
 		}
 
 		$bzm = 0;
 		rsort($pfad);
 		while($pfad[$bzm]){
-			$pfad[$bzm] = substr($pfad[$bzm],4,2)."_".substr($pfad[$bzm],2,2)."_".substr($pfad[$bzm],0,2);
-			if(substr($pfad[$bzm],0,8) == date("d_m_y")){$ext++;}
+			$pfad[$bzm] = substr($pfad[$bzm],4,2)."_".lmb_substr($pfad[$bzm],2,2)."_".lmb_substr($pfad[$bzm],0,2);
+			if(lmb_substr($pfad[$bzm],0,8) == date("d_m_y")){$ext++;}
 			$bzm++;
 		}
 		if($ext){$ext = "-".$ext;}
@@ -671,14 +671,14 @@ function lmbExport_Dump($format,$struct_only=false){
 			foreach ($col["columnname"] as $ckey => $cname){
 				$COLUM[] = $col["columnname"][$ckey];
 				$COLUMNNAME = $col["columnname"][$ckey];
-				$DATATYPE = constant("LMB_DBRETYPE_".trim(strtoupper($col["datatype"][$ckey])));
+				$DATATYPE = constant("LMB_DBRETYPE_".trim(lmb_strtoupper($col["datatype"][$ckey])));
 				$LEN = $col["length"][$ckey];
 				$COLUMNNAME = $col["columnname"][$ckey];
 				$line[] = $col["columnname"][$ckey];
 				$CODETYPE = $col["codetype"][$ckey];
 				$SCALE = $col["scale"][$ckey];
 				$MODE = $col["mode"][$ckey];
-				$DEFAULT_ = explode("::",trim(strtoupper($col["default"][$ckey])));
+				$DEFAULT_ = explode("::",trim(lmb_strtoupper($col["default"][$ckey])));
 				$DEFAULT = trim($DEFAULT_[0],"'");
 
 				if($DEFAULT OR $DEFAULT == '0'){
@@ -707,8 +707,8 @@ function lmbExport_Dump($format,$struct_only=false){
 		/* ---> conf */ fputs($config_datei,"<end tabledefinition>\n\n");
 
 		/* --- Inhalt_Liste --------------------------------------------- */
-                    if(substr($table,0,10) != "LMB_INDIZE" AND substr($table,0,11) != "LMB_HISTORY"){
-                        if (!$struct_only OR strtolower(substr($table,0,4)) == 'lmb_' OR strtolower(substr($table,0,5)) == 'ldms_') {
+                    if(lmb_substr($table,0,10) != "LMB_INDIZE" AND lmb_substr($table,0,11) != "LMB_HISTORY"){
+                        if (!$struct_only OR lmb_strtolower(lmb_substr($table,0,4)) == 'lmb_' OR lmb_strtolower(lmb_substr($table,0,5)) == 'ldms_') {
                             $sqlquery = "Select * from $table ".LMB_DBFUNC_FOR_REUSE;
                             $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
                             if(!$rs) {$commit = 1;}
@@ -771,12 +771,12 @@ function lmbExport_Dump($format,$struct_only=false){
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$vname = array();
 	while(odbc_fetch_row($rs)) {
-		$VIEWNAME = strtoupper(odbc_result($rs, "VIEWNAME"));
+		$VIEWNAME = lmb_strtoupper(odbc_result($rs, "VIEWNAME"));
 		if(!$vname[$VIEWNAME]){
 			$vname[$VIEWNAME] = 1;
 			$DEFINITION = str_replace("\t"," ",str_replace("\n","",lmb_getViewDef($VIEWNAME)));
 			$DEFINITION = preg_replace("/[ ]{1,}/"," ",$DEFINITION);
-			if(strpos($DEFINITION,"CREATE VIEW $VIEWNAME AS") !== false){
+			if(lmb_strpos($DEFINITION,"CREATE VIEW $VIEWNAME AS") !== false){
 				$DEFINITION = str_replace("CREATE VIEW $VIEWNAME AS","",$DEFINITION);
 				$DEFINITION = str_replace($DBA["DBSCHEMA"].".","",$DEFINITION);
 				$DEFINITION = ltrim($DEFINITION,"(");

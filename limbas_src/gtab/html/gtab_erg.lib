@@ -350,10 +350,10 @@ function lmbGlistSearchDetail($gtabid,$key,$style=null,$event=null){
 						# --- User/Gruppen-Liste --
 					#}elseif($gfield[$gtabid]["field_type"][$key] == 16) {
 					#	if(odbc_result($rs, $gfield[$gtabid]["field_name"][$key]) == $gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0]){echo " SELECTED";}
-					#	if(substr(odbc_result($rs, $gfield[$gtabid]["field_name"][$key]),0,1) == "u"){
-					#		echo " VALUE=\"".odbc_result($rs, $gfield[$gtabid]["field_name"][$key])."\">U:".$userdat["bezeichnung"][substr(odbc_result($rs, $gfield[$gtabid]["field_name"][$key]),1,99)];
-					#	}elseif(substr(odbc_result($rs, $gfield[$gtabid]["field_name"][$key]),0,1) == "g"){
-					#		echo " VALUE=\"".odbc_result($rs, $gfield[$gtabid]["field_name"][$key])."\">G:".$groupdat["beschreibung"][substr(odbc_result($rs, $gfield[$gtabid]["field_name"][$key]),1,99)];
+					#	if(lmb_substr(odbc_result($rs, $gfield[$gtabid]["field_name"][$key]),0,1) == "u"){
+					#		echo " VALUE=\"".odbc_result($rs, $gfield[$gtabid]["field_name"][$key])."\">U:".$userdat["bezeichnung"][lmb_substr(odbc_result($rs, $gfield[$gtabid]["field_name"][$key]),1,99)];
+					#	}elseif(lmb_substr(odbc_result($rs, $gfield[$gtabid]["field_name"][$key]),0,1) == "g"){
+					#		echo " VALUE=\"".odbc_result($rs, $gfield[$gtabid]["field_name"][$key])."\">G:".$groupdat["beschreibung"][lmb_substr(odbc_result($rs, $gfield[$gtabid]["field_name"][$key]),1,99)];
 					#	}
 						# --- Erst/Edit-User --
 					}elseif($gfield[$gtabid]["field_type"][$key] == 14) {
@@ -541,7 +541,7 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 		# ----------- Edit Permission -----------
 		if($gtab["editrule"][$gtabid] AND $filter["alter"][$gtabid]){
 			#$rownr = $bzm;
-			$alterperm = check_GtabRules($ID,$gtabid,null,$gtab["editrule"][$gtabid],$bzm,$gresult);
+			$alterperm = !check_GtabRules($ID,$gtabid,null,$gtab["editrule"][$gtabid],$bzm,$gresult);
 		}
 
 		# --- check dataset-lock ---
@@ -847,21 +847,21 @@ function lmbGlistFooter($gtabid,&$gresult,$filter,$subtab=null,$style=null){
 	$maxpage = ceil($gresult[$gtabid]["max_count"]/$filter["anzahl"][$gtabid]);
 	if($filter["page"][$gtabid] == 1){
 		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-first\" style=\"opacity:0.4;filter:Alpha(opacity=40);\" border=\"0\" title=\"$lang[1294]\"></i></td>\n";
-		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-previous\" style=\"opacity:0.4;filter:Alpha(opacity=40);\" border=\"0\" title=\"$lang[1296]\"></i></td>\n";
+		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-previous\" style=\"opacity:0.4;filter:Alpha(opacity=40);font-size:1.5em;\" border=\"0\" title=\"$lang[1296]\"></i></td>\n";
 	}else{
 		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-first\" style=\"cursor:pointer;\" border=\"0\" title=\"$lang[1294]\" onclick=\"document.form1.elements['filter_page[".$gtabid."]'].value='1';send_form(1,2);\"></i></td>\n";
-		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-previous\" style=\"cursor:pointer;\" border=\"0\" title=\"$lang[1296]\" onclick=\"document.form1.elements['filter_page[".$gtabid."]'].value='".($filter["page"][$gtabid] - 1)."';send_form(1,2);\"></i></td>\n";
+		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-previous\" style=\"cursor:pointer;font-size:1.5em;\" border=\"0\" title=\"$lang[1296]\" onclick=\"document.form1.elements['filter_page[".$gtabid."]'].value='".($filter["page"][$gtabid] - 1)."';send_form(1,2);\"></i></td>\n";
 	}
-	echo "<td class=\"gtabFooterTD\" nowrap style=\"width:20px;\"><input type=\"text\" style=\"width:30px;height:20px;font-size:9px;padding:0px;text-align:center;\" name=\"filter_page[".$gtabid."]\" value=\"".$filter["page"][$gtabid]."/".$maxpage."\"></td>\n";
+	echo "<td class=\"gtabFooterTD\" nowrap style=\"width:20px;\"><input type=\"text\" style=\"width:60px;padding:0px;text-align:center;\" name=\"filter_page[".$gtabid."]\" value=\"".$filter["page"][$gtabid]."/".$maxpage."\"></td>\n";
 	if($filter["page"][$gtabid] == $maxpage){
-		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-next\" style=\"opacity:0.4;filter:Alpha(opacity=40);\" border=\"0\" title=\"$lang[1297]\"></i></td>\n";
+		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-next\" style=\"opacity:0.4;filter:Alpha(opacity=40);font-size:1.5em;\" border=\"0\" title=\"$lang[1297]\"></i></td>\n";
 		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-last\" style=\"opacity:0.4;filter:Alpha(opacity=40);\" border=\"0\" title=\"$lang[1295]\"></i></td>\n";
 	}else{
-		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-next\" style=\"cursor:pointer;\" border=\"0\" title=\"$lang[1297]\" onclick=\"document.form1.elements['filter_page[".$gtabid."]'].value='".($filter["page"][$gtabid] + 1)."';send_form(1,2);\"></i></td>\n";
+		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-next\" style=\"cursor:pointer;font-size:1.5em;\" border=\"0\" title=\"$lang[1297]\" onclick=\"document.form1.elements['filter_page[".$gtabid."]'].value='".($filter["page"][$gtabid] + 1)."';send_form(1,2);\"></i></td>\n";
 		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-last\" style=\"cursor:pointer;\" border=\"0\" title=\"$lang[1295]\" onclick=\"document.form1.elements['filter_page[".$gtabid."]'].value='".$maxpage."';send_form(1,2);\"></i></td>\n";
 	}
 	echo "<td class=\"gtabFooterTD\" nowrap style=\"width:15px;\">&nbsp;<b style=\"color:green;\">|</b>&nbsp;$lang[96]&nbsp;</td>\n";
-	echo "<td class=\"gtabFooterTD\" style=\"width:30px;\"><input type=\"text\" style=\"width:30px;height:20px;font-size:9px;padding:0px;text-align:center;\" value=\"".$filter["anzahl"][$gtabid]."\" name=\"filter_anzahl[".$gtabid."]\" maxlength=\"3\"></td>\n";
+	echo "<td class=\"gtabFooterTD\" style=\"width:30px;\"><input type=\"text\" style=\"width:30px;padding:0px;text-align:center;\" value=\"".$filter["anzahl"][$gtabid]."\" name=\"filter_anzahl[".$gtabid."]\" maxlength=\"3\"></td>\n";
 	echo "<td class=\"gtabFooterTD\" style=\"width:30px;\">&nbsp;$lang[88]</td>\n\n";
 	echo "<td class=\"gtabFooterTD\" style=\"width:100px;color:#707070;\" nowrap>&nbsp;&nbsp;&nbsp;(".$gresult[$gtabid]["need_time"]." sec.)</td>\n";
 	echo "<td class=\"gtabFooterTD\" style=\"width:15px;\" nowrap>&nbsp;&nbsp;</TD>\n";
@@ -946,18 +946,18 @@ function table_calculate($gtabid,&$gresult){
 		if($gfield[$gtabid]["field_type"][$key] >= 100 OR $filter["hidecols"][$gtabid][$key]){continue;}
 		if($aggregate = $gfield[$gtabid]["aggregate"][$key] AND is_array($gresult[$gtabid][$key])){
 			$field = $gfield[$gtabid]["field_name"][$key];
-			if(strpos($aggregate,'5') !== false){$sqls[] = "SUM($field) AS LS_$key";}
-			if(strpos($aggregate,'1') !== false){$sqls[] = "AVG($field) AS LA_$key";}
-			if(strpos($aggregate,'3') !== false){$sqls[] = "MAX($field) AS LMA_$key";}
-			if(strpos($aggregate,'4') !== false){$sqls[] = "MIN($field) AS LMI_$key";}
-			if(strpos($aggregate,'2') !== false){$count = 1;}
+			if(lmb_strpos($aggregate,'5') !== false){$sqls[] = "SUM($field) AS LS_$key";}
+			if(lmb_strpos($aggregate,'1') !== false){$sqls[] = "AVG($field) AS LA_$key";}
+			if(lmb_strpos($aggregate,'3') !== false){$sqls[] = "MAX($field) AS LMA_$key";}
+			if(lmb_strpos($aggregate,'4') !== false){$sqls[] = "MIN($field) AS LMI_$key";}
+			if(lmb_strpos($aggregate,'2') !== false){$count = 1;}
 		}
 	}
 	
 	#if(!$sqls){return;}
 	
 	$query = "SELECT ".implode(',',$sqls);
-	if($count){$query .= ','.substr($lmb_query["count"],7);}else{$query .= substr($lmb_query["count"],25);}
+	if($count){$query .= ','.lmb_substr($lmb_query["count"],7);}else{$query .= substr($lmb_query["count"],25);}
 	$rs = odbc_exec($db,$query) or errorhandle(odbc_errormsg($db),$query,'aggregate_query',__FILE__,__LINE__);
 
 	/* --- Feldschleife --------------------------------------- */
@@ -979,7 +979,7 @@ function table_calculate($gtabid,&$gresult){
 			}
 
 			# SUM
-			if(strpos($aggregate,'5') !== false){
+			if(lmb_strpos($aggregate,'5') !== false){
 				$sum = odbc_result($rs,"LS_$key");
 				if($gfield[$gtabid]["data_type"][$key] == 30){$gresult_[$gtabid][$key][0]['V'] = $sum;
 				}else{$gresult_[$gtabid][$key][0] = $sum;}
@@ -988,7 +988,7 @@ function table_calculate($gtabid,&$gresult){
 				echo "<td></tr>";
 			}
 			# AVG
-			if(strpos($aggregate,'1') !== false){
+			if(lmb_strpos($aggregate,'1') !== false){
 				#$avg = round(parse_db_float(odbc_result($rs,"LA_$key")),2);
 				$avg = odbc_result($rs,"LA_$key");
 				if($gfield[$gtabid]["data_type"][$key] == 30){$gresult_[$gtabid][$key][0]['V'] = $avg;
@@ -998,7 +998,7 @@ function table_calculate($gtabid,&$gresult){
 				echo "<td></tr>";
 			}
 			# MAX
-			if(strpos($aggregate,'3') !== false){
+			if(lmb_strpos($aggregate,'3') !== false){
 				$max = odbc_result($rs,"LMA_$key");
 				if($gfield[$gtabid]["data_type"][$key] == 30){$gresult_[$gtabid][$key][0]['V'] = $max;
 				}else{$gresult_[$gtabid][$key][0] = $max;}
@@ -1007,7 +1007,7 @@ function table_calculate($gtabid,&$gresult){
 				echo "<td></tr>";
 			}
 			# MIN
-			if(strpos($aggregate,'4') !== false){
+			if(lmb_strpos($aggregate,'4') !== false){
 				$min = odbc_result($rs,"LMI_$key");
 				if($gfield[$gtabid]["data_type"][$key] == 30){$gresult_[$gtabid][$key][0]['V'] = $min;
 				}else{$gresult_[$gtabid][$key][0] = $min;}
@@ -1016,7 +1016,7 @@ function table_calculate($gtabid,&$gresult){
 				echo "<td></tr>";
 			}
 			# COUNT
-			if(strpos($aggregate,'2') !== false){
+			if(lmb_strpos($aggregate,'2') !== false){
 				$count = odbc_result($rs,'RESULT');
 				echo "<tr><td>CNT:</td><td align=\"right\" nowrap>".$count."<td></tr>";
 			}

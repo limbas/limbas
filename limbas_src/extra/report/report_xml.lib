@@ -114,7 +114,7 @@ function print_tab($dom,$report_id,$item,$ID,$rkey,&$report){
 	}
 
 	$newTabElement = $dom->createElement("table");
-	$newTabElement->setAttribute('name',strtolower(lmb_utf8_encode($el_tablename)));
+	$newTabElement->setAttribute('name',lmb_strtolower(lmb_utf8_encode($el_tablename)));
 
 	/*------- Zeilen ---------*/
 	$bzm2 = 1;
@@ -237,7 +237,7 @@ function print_tab($dom,$report_id,$item,$ID,$rkey,&$report){
 							$cellvalue[] = $cell_value[$i][$c][$bzm5];
 						}
 
-						if($seperator[$bzm2."_".$i] AND substr($seperator[$bzm2."_".$i],0,1) != "#"){
+						if($seperator[$bzm2."_".$i] AND lmb_substr($seperator[$bzm2."_".$i],0,1) != "#"){
 							$seperator_ = str_replace("\\\\t","\t",str_replace("\\\\n","\n",$seperator[$bzm2."_".$i]));
 							$cellvalue = trim(implode($seperator_,$cellvalue));
 						}else{
@@ -283,7 +283,7 @@ function print_tab($dom,$report_id,$item,$ID,$rkey,&$report){
 # DOM Element hinzufügen
 function add_dom_element($dom,$item,$name,$value,$eltyp){
 	$newElement = $dom->createElement(lmb_utf8_encode($eltyp));
-	$newElement->setAttribute('name',strtolower(lmb_utf8_encode($name)));
+	$newElement->setAttribute('name',lmb_strtolower(lmb_utf8_encode($name)));
 	$newElement->appendChild($dom->createTextNode(lmb_utf8_encode($value)));
 	$item->appendChild($newElement);
 	return $item;

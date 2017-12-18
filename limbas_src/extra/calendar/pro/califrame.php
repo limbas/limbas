@@ -31,7 +31,7 @@ function month_date($wstamp,$gtabid){
 		echo "<div style=\"background-color:transparent;width:95%;border-left:margin:1px;overflow:hidden;cursor:pointer;$marker\"
 		title=\"".date("H:i:s",$tresult["st_st"][$doy][$key])." - ".date("H:i:s",$tresult["en_st"][$doy][$key])."\"
 		OnClick=\"open_detail('".$tresult["id"][$doy][$key]."');\">
-		&nbsp;".substr(htmlentities($tresult["subject"][$doy][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]),0,100)."</div>";
+		&nbsp;".lmb_substr(htmlentities($tresult["subject"][$doy][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]),0,100)."</div>";
 	}}
 }
 

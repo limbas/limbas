@@ -22,7 +22,7 @@
 # ------ user / url ----------
 $LIM["username"] = $remote_user;
 $LIM["pass"] = $remote_pass;
-if(substr($remote_host,0,5) == "https"){
+if(lmb_substr($remote_host,0,5) == "https"){
 	$protocol = "https";
 }else{
 	$protocol = "http";
@@ -117,14 +117,14 @@ if(($remoteimport AND !empty($_FILES["fileproject"])) OR $confirm_fileimport){
 		# Liste aller Tabellen im entpackten Verzeichnis
 		if($folderval = read_dir($path)){
 			foreach($folderval["name"] as $key => $file){
-				if($folderval["typ"][$key] == "file" AND substr($file,0,7) != "export."){
+				if($folderval["typ"][$key] == "file" AND lmb_substr($file,0,7) != "export."){
 					# Nur zu importierende Tabellen
 					$tablename = str_replace(".gz","",$file);
 					$tablename = str_replace(".tar","",$tablename);
 					$tablegrouplist[$tablename] = 1;
 					# Nur Projekt-Tabellen
-					#if(substr($tablename,0,10) != "LMBX_VERK_" AND substr($tablename,0,9) != "LMBX_LMB_"){
-					#	$tableprojektlist[strtoupper($tablename)] = 1;
+					#if(lmb_substr($tablename,0,10) != "LMBX_VERK_" AND lmb_substr($tablename,0,9) != "LMBX_LMB_"){
+					#	$tableprojektlist[lmb_strtoupper($tablename)] = 1;
 					#}
 				}
 			}

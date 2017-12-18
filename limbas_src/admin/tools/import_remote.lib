@@ -43,7 +43,7 @@ function clean_import_temp()
 	if(is_array($odbc_table)){
 		echo "<br><b>-----> remove temporary tables ... </b>";
 		foreach($odbc_table["table_name"] as $tkey => $tvalue) {
-			if(substr(strtoupper($tvalue),0,5) == "LMBX_"){
+			if(lmb_substr(lmb_strtoupper($tvalue),0,5) == "LMBX_"){
 				$sqlquery1 = "DROP TABLE ".dbf_4($tvalue) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 				$rs1 = odbc_exec($db,$sqlquery1);
 				echo $tvalue.", ";
@@ -225,7 +225,7 @@ function remote_mergeTables($lmbs,$path,$precheck){
 	# Liste neuer Tabellen IDs
 	foreach ($rm_gtab["tab_id"] as $key => $value){
 		# nur zu importierende Projekttabellen
-		#if($tableprojektlist[strtoupper($rm_gtab["table"][$key])]){
+		#if($tableprojektlist[lmb_strtoupper($rm_gtab["table"][$key])]){
 			$newTABID[$key] = $first_new_tabid;
 			$first_new_tabid++;
 		#}
@@ -253,7 +253,7 @@ function remote_mergeTables($lmbs,$path,$precheck){
 			if(!$rs) {$commit = 1;}
 			$bzm = 1;
 			while(odbc_fetch_row($rs, $bzm)) {
-				if(strtolower($lang[odbc_result($rs, "NAME")]) == strtolower($rm_gtabgroup["name"][$old_groupid])){
+				if(lmb_strtolower($lang[odbc_result($rs, "NAME")]) == lmb_strtolower($rm_gtabgroup["name"][$old_groupid])){
 					$new_groupid = odbc_result($rs, "ID");
 				}
 				$bzm++;
@@ -316,21 +316,21 @@ function remote_mergeTables($lmbs,$path,$precheck){
 
 				$qu_field[] = $fieldname;
 				# Key-ID
-				if(strtoupper($fieldname) == "ID"){
+				if(lmb_strtoupper($fieldname) == "ID"){
 					$qu_value[] = $new_tabkeyid;
 					# Table-ID
-				}elseif(strtoupper($fieldname) == "TAB_ID"){
+				}elseif(lmb_strtoupper($fieldname) == "TAB_ID"){
 					$qu_value[] = $new_tabid;
 					# TAB_GROUP
-				}elseif(strtoupper($fieldname) == "TAB_GROUP"){
+				}elseif(lmb_strtoupper($fieldname) == "TAB_GROUP"){
 					$qu_value[] = $new_groupid;
 					# Desc
-				}elseif(strtoupper($fieldname) == "BESCHREIBUNG"){
+				}elseif(lmb_strtoupper($fieldname) == "BESCHREIBUNG"){
 					# lang
 					$name_id = remote_mergeLang(odbc_result($rs, "BESCHREIBUNG"));
 					$qu_value[] = $name_id;
 					# 1:1 Verknüpfung
-				}elseif(strtoupper($fieldname) == "VERKN"){
+				}elseif(lmb_strtoupper($fieldname) == "VERKN"){
 					$qu_value[] = parse_db_int($newTABID[odbc_result($rs, "VERKN")],5);
 					# default values
 				}else{
@@ -374,26 +374,26 @@ function remote_mergeTables($lmbs,$path,$precheck){
 					
 					$qu_field[] = $fieldname;
 					# Key-ID
-					if(strtoupper($fieldname) == "ID"){
+					if(lmb_strtoupper($fieldname) == "ID"){
 						$qu_value[] = $new_fieldkeyid;
 					# TAB-ID
-					}elseif(strtoupper($fieldname) == "TAB_ID"){
+					}elseif(lmb_strtoupper($fieldname) == "TAB_ID"){
 						$qu_value[] = $new_tabid;
 					# GROUP-ID
-					}elseif(strtoupper($fieldname) == "TAB_GROUP"){
+					}elseif(lmb_strtoupper($fieldname) == "TAB_GROUP"){
 						$qu_value[] = $new_groupid;
 					# Desc
-					}elseif(strtoupper($fieldname) == "BESCHREIBUNG"){
+					}elseif(lmb_strtoupper($fieldname) == "BESCHREIBUNG"){
 						# lang
 						$desc_id = remote_mergeLang(odbc_result($rs, "BESCHREIBUNG"));
 						$qu_value[] = $desc_id;
 					# Desc
-					}elseif(strtoupper($fieldname) == "SPELLING"){
+					}elseif(lmb_strtoupper($fieldname) == "SPELLING"){
 						# lang
 						$name_id = remote_mergeLang(odbc_result($rs, "SPELLING"));
 						$qu_value[] = $name_id;
 					# Verknüpfungen
-					}elseif(strtoupper($fieldname) == "VERKNTABID"){
+					}elseif(lmb_strtoupper($fieldname) == "VERKNTABID"){
 						$qu_value[] = parse_db_int($newTABID[odbc_result($rs, "VERKNTABID")],5);
 					# default values
 					}else{
@@ -467,7 +467,7 @@ function remote_mergeTables($lmbs,$path,$precheck){
 	echo "<br><b>-----> remove temporary tables ... </b>";
 	$odbc_table = dbf_20(array($DBA["DBSCHEMA"],"LMBX_%","'TABLE'"));
 	foreach($odbc_table["table_name"] as $tkey => $tvalue) {
-		if(substr(strtoupper($tvalue),0,5) == "LMBX_"){
+		if(lmb_substr(lmb_strtoupper($tvalue),0,5) == "LMBX_"){
 			$sqlquery1 = "DROP TABLE ".dbf_4($tvalue) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			$rs1 = odbc_exec($db,$sqlquery1);
 			echo $tvalue.", ";
@@ -620,13 +620,13 @@ function remote_mergeForms(&$exptable,$precheck){
 
 				/* ---- value ------ */
 				# ID
-				if(strtoupper($fieldname) == "ID"){
+				if(lmb_strtoupper($fieldname) == "ID"){
 					$qu_value[] = $new_formid;
 				# REFERENZ_TAB
-				}elseif(strtoupper($fieldname) == "REFERENZ_TAB"){
+				}elseif(lmb_strtoupper($fieldname) == "REFERENZ_TAB"){
 					$qu_value[] = $referenz_tab;
 				/*# name
-				}elseif(strtoupper($value1) == "NAME"){
+				}elseif(lmb_strtoupper($value1) == "NAME"){
 					$qu_value[] = $referenz_tab;
 					*/
 				# default values
@@ -670,16 +670,16 @@ function remote_mergeForms(&$exptable,$precheck){
 				
 				$qu_field[] = $fieldname;
 				# Key-ID
-				if(strtoupper($fieldname) == "ID"){
+				if(lmb_strtoupper($fieldname) == "ID"){
 					$qu_value[] = $new_fieldkeyid;
 				# FORM_ID
-				}elseif(strtoupper($fieldname) == "FORM_ID"){
+				}elseif(lmb_strtoupper($fieldname) == "FORM_ID"){
 					$qu_value[] = $new_formid;
 				# TAB_ID
-				}elseif(strtoupper($fieldname) == "TAB_ID"){
+				}elseif(lmb_strtoupper($fieldname) == "TAB_ID"){
 					$qu_value[] = $referenz_tab; //$newTABID[odbc_result($rs, 'REFERENZ_TAB')];
 				# TAB_GROUP
-				}elseif(strtoupper($fieldname) == "TAB_GROUP"){
+				}elseif(lmb_strtoupper($fieldname) == "TAB_GROUP"){
 					$qu_value[] = $referenz_tab; //$newGROUPID[odbc_result($rs, 'REFERENZ_TAB')];
 				# default values
 				}else{
@@ -758,10 +758,10 @@ function remote_mergeReport(&$exptable,$precheck){
 
 				/* ---- value ------ */
 				# ID
-				if(strtoupper($fieldname) == "ID"){
+				if(lmb_strtoupper($fieldname) == "ID"){
 					$qu_value[] = $new_reportid;
 				# REFERENZ_TAB
-				}elseif(strtoupper($fieldname) == "REFERENZ_TAB"){
+				}elseif(lmb_strtoupper($fieldname) == "REFERENZ_TAB"){
 					$qu_value[] = $referenz_tab;
 				# default values
 				}else{
@@ -800,10 +800,10 @@ function remote_mergeReport(&$exptable,$precheck){
 				
 				$qu_field[] = $fieldname;
 				# Key-ID
-				if(strtoupper($fieldname) == "ID"){
+				if(lmb_strtoupper($fieldname) == "ID"){
 					$qu_value[] = $new_fieldkeyid;
 				# FORM_ID
-				}elseif(strtoupper($fieldname) == "BERICHT_ID"){
+				}elseif(lmb_strtoupper($fieldname) == "BERICHT_ID"){
 					$qu_value[] = $new_reportid;
 				# default values
 				}

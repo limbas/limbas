@@ -55,12 +55,12 @@ if($change_col){
 	}elseif($gfield[$gtabid][field_type][$fieldid] == 1){
 		if($change_col[2]){
 			if(preg_match("/".$gfield[$gtabid]["regel"][$fieldid]."/", $change_col[2])){
-				$where = "WHERE ".$gfield[$gtabid]["field_name"][$fieldid]." LIKE '".substr(str_replace("'","''",trim($change_col[2])),0,$gfield[$gtabid][size][$fieldid])."'";
+				$where = "WHERE ".$gfield[$gtabid]["field_name"][$fieldid]." LIKE '".lmb_substr(str_replace("'","''",trim($change_col[2])),0,$gfield[$gtabid][size][$fieldid])."'";
 			}else{echo "<B>$lang[58]</B>";}
 		}
 		if($change_col[1]){
 			if(preg_match("/".$gfield[$gtabid]["regel"][$fieldid]."/", $change_col[1])){
-				$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = '".substr(str_replace("'","''",trim($change_col[1])),0,$gfield[$gtabid][size][$fieldid])."' ".$where;
+				$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = '".lmb_substr(str_replace("'","''",trim($change_col[1])),0,$gfield[$gtabid][size][$fieldid])."' ".$where;
 			}else{echo "<B>$lang[58]</B>";}
 		}else{
 			$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = '' ".$where;	
@@ -74,7 +74,7 @@ if($change_col){
 				if($change_col[3] == 1){$change_col[3] = "=";}
 				if($change_col[3] == 2){$change_col[3] = ">";}
 				if($change_col[3] == 3){$change_col[3] = "<";}
-				$where = "WHERE ".$gfield[$gtabid]["field_name"][$fieldid]." ".$change_col[3]." ".substr($change_col[2],0,$gfield[$gtabid][size][$fieldid]);
+				$where = "WHERE ".$gfield[$gtabid]["field_name"][$fieldid]." ".$change_col[3]." ".lmb_substr($change_col[2],0,$gfield[$gtabid][size][$fieldid]);
 			}else{echo "<B>$lang[58]</B>";}
 		}
 		if($change_col[1]){
@@ -98,7 +98,7 @@ if($change_col){
 				if($change_col[3] == 1){$change_col[3] = "=";}
 				if($change_col[3] == 2){$change_col[3] = ">";}
 				if($change_col[3] == 3){$change_col[3] = "<";}
-				$where = "WHERE ".$gfield[$gtabid]["field_name"][$fieldid]." ".$change_col[3]." '".substr($change_col[2],0,$gfield[$gtabid][size][$fieldid])."'";
+				$where = "WHERE ".$gfield[$gtabid]["field_name"][$fieldid]." ".$change_col[3]." '".lmb_substr($change_col[2],0,$gfield[$gtabid][size][$fieldid])."'";
 			}else{echo "<B>$lang[58]</B>";}
 		}
 		if($change_col[1]){
@@ -120,12 +120,12 @@ if($change_col){
 	}elseif($gfield[$gtabid][field_type][$fieldid] == 4){
 		if($change_col[2]){
 			if(preg_match("/".$gfield[$gtabid]["regel"][$fieldid]."/", $change_col[2])){
-				$where = "WHERE ".$gfield[$gtabid]["field_name"][$fieldid]." LIKE '".substr(str_replace("'","''",trim($change_col[2])),0,$gfield[$gtabid][size][$fieldid])."'";
+				$where = "WHERE ".$gfield[$gtabid]["field_name"][$fieldid]." LIKE '".lmb_substr(str_replace("'","''",trim($change_col[2])),0,$gfield[$gtabid][size][$fieldid])."'";
 			}else{echo "<B>$lang[58]</B>";}
 		}
 		if($change_col[1]){
 			if(preg_match("/".$gfield[$gtabid]["regel"][$fieldid]."/", $change_col[1])){
-				$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = '".substr(str_replace("'","''",trim($change_col[1])),0,$gfield[$gtabid][size][$fieldid])."' ".$where;
+				$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = '".lmb_substr(str_replace("'","''",trim($change_col[1])),0,$gfield[$gtabid][size][$fieldid])."' ".$where;
 			}else{echo "<B>$lang[58]</B>";}
 		}else{
 			$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = '' ".$where;	

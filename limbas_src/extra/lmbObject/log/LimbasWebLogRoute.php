@@ -28,7 +28,7 @@ class LimbasWebLogRoute implements LimbasLogRoute {
 		$str .= '<tr><th>Timestamp</th><th>Level</th><th>Message</th></tr>';
 		$i = 0;
 		foreach($logs as $log) {
-			$str .= '<tr class="' . (0 === $i % 2 ? 'even' : 'odd') . '"><td>' . $log['timestamp'] . '</td><td class="loglevel ' . strtolower($log['level']) . '">' . $log['level'] . '</td><td class="message"><pre>'. $log['message'] . '</pre></td></tr>';
+			$str .= '<tr class="' . (0 === $i % 2 ? 'even' : 'odd') . '"><td>' . $log['timestamp'] . '</td><td class="loglevel ' . lmb_strtolower($log['level']) . '">' . $log['level'] . '</td><td class="message"><pre>'. $log['message'] . '</pre></td></tr>';
 			$i++;
 		}
 		
@@ -58,7 +58,7 @@ class LimbasWebLogRoute implements LimbasLogRoute {
 					case 'boolean' : $args[] = $arg ? 'TRUE' : 'FALSE'; break;
 					case 'integer' : $args[] = $arg; break;
 					case 'double'  : $args[] = $arg; break;
-					case 'string'  : $args[] = '\'' . (15 < strlen($arg) ? substr($arg, 0, 15) . '...' : $arg) . '\''; break;
+					case 'string'  : $args[] = '\'' . (15 < lmb_strlen($arg) ? lmb_substr($arg, 0, 15) . '...' : $arg) . '\''; break;
 					case 'array'   : $args[] = 'Array'; break;
 					case 'object'  : $args[] = get_class($arg); break;
 					case 'resource': $args[] = 'Resource id #' . $arg; break;

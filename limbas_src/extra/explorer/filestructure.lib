@@ -482,8 +482,8 @@ function filecopy_rename($name,$LID,$c,$datid=null){
 	if(odbc_fetch_row($rs,1)){
 		if($c == 1){
 			$name = $lang[1679]." ".$name;
-		}elseif(is_numeric(substr($name,0,1))){
-			$name = $c." ".substr($name,1,128);
+		}elseif(is_numeric(lmb_substr($name,0,1))){
+			$name = $c." ".lmb_substr($name,1,128);
 		}else{
 			$name = $c." ".$name;
 		}
@@ -629,7 +629,7 @@ function upload_fromPath($level,$path=null,$type=null,$tabrelation=null,$backup=
 		foreach ($files["path"] as $key => $pathName){
 			if(!$verzeichniss["name"][$pathName]){
 				$tmpFolder = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp";
-				$pathDest = substr($pathName,strlen($tmpFolder));
+				$pathDest = lmb_substr($pathName,lmb_strlen($tmpFolder));
 				$LID = getLID($pathDest,$level);
 				if(!$LID){
 					$pathTab = explode("/",$pathDest);
@@ -724,27 +724,27 @@ function upload_archiv($file,$level,$tabrelation=null){
 
 	if(copy($file, $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/archiv")){
 		# ------------- zip --------------
-		if(substr($file_name,(strlen($file_name)-3),3) == "zip"){
+		if(lmb_substr($file_name,(lmb_strlen($file_name)-3),3) == "zip"){
 			$sys = exec("unzip ".$umgvar[pfad]."/USER/".$session[user_id]."/temp/archiv",$cmd);
 		}
 		# ------------- tar --------------
-		if(substr($file_name,(strlen($file_name)-3),3) == "tar"){
+		if(lmb_substr($file_name,(lmb_strlen($file_name)-3),3) == "tar"){
 			$sys = exec("tar xf ".$umgvar[pfad]."/USER/".$session[user_id]."/temp/archiv",$cmd);
 		}
 		# ------------- rar --------------
-		if(substr($file_name,(strlen($file_name)-3),3) == "rar"){
+		if(lmb_substr($file_name,(lmb_strlen($file_name)-3),3) == "rar"){
 			$sys = exec("unrar e ".$umgvar[pfad]."/USER/".$session[user_id]."/temp/archiv",$cmd);
 		}
 		# ------------- tar --------------
-		if(substr($file_name,(strlen($file_name)-6),6) == "tar.gz" OR substr($file_name,(strlen($file_name)-3),3) == "tgz"){
+		if(lmb_substr($file_name,(lmb_strlen($file_name)-6),6) == "tar.gz" OR lmb_substr($file_name,(lmb_strlen($file_name)-3),3) == "tgz"){
 			$sys = exec("tar xfz ".$umgvar[pfad]."/USER/".$session[user_id]."/temp/archiv",$cmd);
 		}
 		# ------------- gzip --------------
-		if(substr($file_name,(strlen($file_name)-2),2) == "gz"){
+		if(lmb_substr($file_name,(lmb_strlen($file_name)-2),2) == "gz"){
 			$sys = exec("gzip -d ".$umgvar[pfad]."/USER/".$session[user_id]."/temp/archiv",$cmd);
 		}
 		# ------------- bzip2 --------------
-		if(substr($file_name,(strlen($file_name)-2),2) == "bz2" OR $ext == "bz"){
+		if(lmb_substr($file_name,(lmb_strlen($file_name)-2),2) == "bz2" OR $ext == "bz"){
 			$sys = exec("bzi2 -d ".$umgvar[pfad]."/USER/".$session[user_id]."/temp/archiv",$cmd);
 		}
 
@@ -841,7 +841,7 @@ function new_filename($nextid,$filename,$ext,$level){
 	global $umgvar;
 	static $count;
 
-	$secname = $nextid.substr(md5($nextid.date("U").$filename),0,12);
+	$secname = $nextid.lmb_substr(md5($nextid.date("U").$filename),0,12);
 
 	if(file_exists($umgvar['uploadpfad'].$filestruct['path'][$level].$secname.".".$ext)){
 		$count++;
@@ -1016,7 +1016,7 @@ function upload($file,$level,$tabrelation,$noupload=0,$dublicate=array()){
 
 						lmb_StartTransaction();
 						# ---------------- Syntaxprüfung -----------------------
-						if((is_uploaded_file($filevalue) OR $noupload) AND strlen($fl["filename"]) <= 128 AND $fl["filesize"] > 0){
+						if((is_uploaded_file($filevalue) OR $noupload) AND lmb_strlen($fl["filename"]) <= 128 AND $fl["filesize"] > 0){
 						
 							# md5
 							if(is_uploaded_file($filevalue) OR $noupload == 2){
@@ -1035,11 +1035,11 @@ function upload($file,$level,$tabrelation,$noupload=0,$dublicate=array()){
 							}
 							# --- Mimetype aus filetype festlegen ----------------------------------------
 							if($umgvar["checkmime"]){
-								$sqlquery0 = "SELECT ID,EXT,MIMETYPE FROM LMB_MIMETYPES WHERE LOWER(MIMETYPE) = '".strtolower(trim($fl["filetype"]))."'";
+								$sqlquery0 = "SELECT ID,EXT,MIMETYPE FROM LMB_MIMETYPES WHERE LOWER(MIMETYPE) = '".lmb_strtolower(trim($fl["filetype"]))."'";
 								# --- Mimetype aus Endung festlegen ----------------------------------------
 							}else{
-								$pos1 = strrpos($fl["filename"],'.');
-								$ext = strtolower(trim(substr($fl["filename"],$pos1+1,4)));
+								$pos1 = lmb_strrpos($fl["filename"],'.');
+								$ext = lmb_strtolower(trim(lmb_substr($fl["filename"],$pos1+1,4)));
 								$sqlquery0 = "SELECT ID,EXT,MIMETYPE FROM LMB_MIMETYPES WHERE LOWER(EXT) = '$ext'";
 							}
 							$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
@@ -1061,7 +1061,7 @@ function upload($file,$level,$tabrelation,$noupload=0,$dublicate=array()){
 									# Datei Name
 									$nextid = next_db_id('LDMS_FILES','id',1);
 									$fl["secname"] = new_filename($nextid,$fl["filename"],$fileext,$level);
-									#$fl["secname"] = $nextid.substr(md5($nextid.date("U").$fl["filename"]),0,12);
+									#$fl["secname"] = $nextid.lmb_substr(md5($nextid.date("U").$fl["filename"]),0,12);
 									$uploadfile = $umgvar['uploadpfad'].$filestruct['path'][$level].$fl['secname'].".".$fileext;
 
 									// move uploaded file from temp to UPLOAD
@@ -1411,7 +1411,7 @@ function upload($file,$level,$tabrelation,$noupload=0,$dublicate=array()){
 						}else{
 							# --- Kopiervorgang fehlgeschlagen -----
 							$commit = 1;
-							if(strlen($fl["filename"]) >= 128){
+							if(lmb_strlen($fl["filename"]) >= 128){
 								lmb_alert($lang[2531]);
 							}else{
 								lmb_alert($lang[129]." ".(file_size($session["uploadsize"])));
@@ -1711,8 +1711,8 @@ function foldercopy_rename($name,$LID,$c){
 	if(odbc_fetch_row($rs,1)){
 		if($c == 1){
 			$name = $lang[1679]." ".$name;
-		}elseif(is_numeric(substr($name,0,1))){
-			$name = $c." ".substr($name,1,128);
+		}elseif(is_numeric(lmb_substr($name,0,1))){
+			$name = $c." ".lmb_substr($name,1,128);
 		}else{
 			$name = $c." ".$name;
 		}
@@ -1953,7 +1953,7 @@ function delete_dir($ID,$force=null){
 			if($filestruct["typ"][$ID] == 7){
 				global $gfield;
 				$md5tab = $gfield[$filestruct["tab_id"][$ID]]["md5tab"][$filestruct["field_id"][$ID]];
-				$sqlquery = "DELETE FROM ".strtoupper($md5tab)." WHERE LID = $ID";
+				$sqlquery = "DELETE FROM ".lmb_strtoupper($md5tab)." WHERE LID = $ID";
 				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
 			}
@@ -2235,7 +2235,7 @@ function preview_archive($files,$method,$searchval=null,$format=null,$save=null)
 	global $filestruct;
 	global $gmimetypes;
 
-	if(strlen($method) > 3){
+	if(lmb_strlen($method) > 3){
 		$d_ = explode("-",$method);
 		$destformat = $d_[0];
 		$destsize = explode("x",$d_[1]);
@@ -2275,8 +2275,8 @@ function preview_archive($files,$method,$searchval=null,$format=null,$save=null)
 		if($filestruct["view"][$level]){
 			if($bzm <= $umgvar["maxdownloads"]){
 				# use unoconv
-				if($umgvar['use_unoconv'] AND substr($method,0,3) == 'uc_'){
-					$destformat = substr($destformat,3);
+				if($umgvar['use_unoconv'] AND lmb_substr($method,0,3) == 'uc_'){
+					$destformat = lmb_substr($destformat,3);
 					$newfile = convert_unoconv(null,$secname,$filename,$ext,$destformat);
 				}else{
 					# ocr
@@ -2307,7 +2307,7 @@ function preview_archive($files,$method,$searchval=null,$format=null,$save=null)
 
 				if($newfile){
 					if($save){
-						$newfilename = substr($filename,0,strrpos($filename,'.')).'.'.$destformat;
+						$newfilename = lmb_substr($filename,0,lmb_strrpos($filename,'.')).'.'.$destformat;
 						$file["file"][] = $newfile;
 						$file["file_name"][] = $newfilename;
 						if(!upload($file,$level,0,1)){lmb_alert($lang[2113].'\\n'.$newfilename);}
@@ -2434,7 +2434,7 @@ function convert_unoconv($ID,$file,$name,$ext,$destformat){
 		$name = odbc_result($rs,"NAME");
 	}else{return;}
 
-	$name  = substr($name,0,strrpos($name,'.'));
+	$name  = lmb_substr($name,0,lmb_strrpos($name,'.'));
 	$originFilePath = $umgvar['uploadpfad'].$filestruct['path'][$level].$file.".".$ext;
 	$outputDirPath = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/".$name.".".$destformat;
 	
@@ -2587,9 +2587,9 @@ function rename_file($edit_id,$newname,$ID){
 					return true;
 				}elseif(!$commit){
 					# Dateiendung unverändert lassen
-					$ext = substr(odbc_result($rs0,"NAME"),strrpos(odbc_result($rs0,"NAME"),"."),10);
-					if(strrpos($newname,".")){
-						$newname = substr($newname,0,strrpos($newname,".")).$ext;
+					$ext = lmb_substr(odbc_result($rs0,"NAME"),lmb_strrpos(odbc_result($rs0,"NAME"),"."),10);
+					if(lmb_strrpos($newname,".")){
+						$newname = lmb_substr($newname,0,lmb_strrpos($newname,".")).$ext;
 					}else{
 						$newname = $newname.$ext;
 					}
@@ -3157,10 +3157,10 @@ function get_fwhere($LID,$ffilter,$typ,$verkn=null){
 				if($ffilter["content_cs"][$fid]){
 					$mf = "VAL";
 				}else{
-					$mf = "UPPERVAL";$val = strtoupper($val);
+					$mf = "UPPERVAL";$val = lmb_strtoupper($val);
 				}
 			}else{
-				$mf = "VAL";$val = strtolower($val);
+				$mf = "VAL";$val = lmb_strtolower($val);
 			}
 			
 			# Textsensitiv
@@ -3244,7 +3244,7 @@ function get_fwhere($LID,$ffilter,$typ,$verkn=null){
 		# where without LDMS_FILES.LEVEL
 		if($query["where"]){
 			foreach ($query["where"] as $wkey => $wvalue){
-				if(strpos($wvalue,"LDMS_FILES.LEVEL") === 0){
+				if(lmb_strpos($wvalue,"LDMS_FILES.LEVEL") === 0){
 					unset($query["where"][$wkey]);
 				}
 			}

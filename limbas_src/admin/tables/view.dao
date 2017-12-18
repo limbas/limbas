@@ -150,11 +150,11 @@ function lmb_QuestConfig($viewid,$view_group,$view_name,$view_public){
 		$next_fieldid = next_conf_id("LMB_CONF_FIELDS","FIELD_ID","AND TAB_ID = $viewid");
 		
 		/* --- Sprachtabelle -------- */
-	    $description_id = lang_add($session["language"],4,$view_name.":".strtoupper($value),$value,"_DEPEND");
-	    $spellingf_id = lang_add($session["language"],4,$view_name.":".strtoupper($value),$value,"_DEPEND");
+	    $description_id = lang_add($session["language"],4,$view_name.":".lmb_strtoupper($value),$value,"_DEPEND");
+	    $spellingf_id = lang_add($session["language"],4,$view_name.":".lmb_strtoupper($value),$value,"_DEPEND");
 		
 		$sqlquery = "INSERT INTO LMB_CONF_FIELDS (ID,FIELD_ID,TAB_ID,TAB_GROUP,SORT,FIELD_NAME,FORM_NAME,BESCHREIBUNG,SPELLING,FIELD_TYPE,DATA_TYPE,FIELD_SIZE,NEED) VALUES
-			($next_confid,$next_fieldid,$viewid,$view_group,$sort,'".strtoupper(parse_db_string($value))."','".strtolower(parse_db_string($value))."',".parse_db_int($description_id).",".parse_db_int($spellingf_id).",".$field_type.",".$data_type.",".parse_db_int($field_size).",".LMB_DBDEF_FALSE.")";
+			($next_confid,$next_fieldid,$viewid,$view_group,$sort,'".lmb_strtoupper(parse_db_string($value))."','".lmb_strtolower(parse_db_string($value))."',".parse_db_int($description_id).",".parse_db_int($spellingf_id).",".$field_type.",".$data_type.",".parse_db_int($field_size).",".LMB_DBDEF_FALSE.")";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 
@@ -392,8 +392,8 @@ function lmb_editQuestFields($viewid,&$par){
 	}elseif($par["act"] == 'alias'){
 		$alias = preg_replace("/[^A-Za-z0-9]/","_",$par["view_alias_$formid"]);
 		$alias = preg_replace("/[_]{1,}/","_",$alias);
-		if(!preg_match("/[A-Za-z]/",substr($alias,0,1)) AND $alias){$alias = "L".$alias;}
-		$alias = substr($alias,0,50);
+		if(!preg_match("/[A-Za-z]/",lmb_substr($alias,0,1)) AND $alias){$alias = "L".$alias;}
+		$alias = lmb_substr($alias,0,50);
 		$sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET QALIAS = '".parse_db_string($alias,50)."' WHERE VIEWID = ".parse_db_int($viewid)." AND ID=".parse_db_int($field_name);
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}elseif($par["act"] == 'order'){
@@ -691,7 +691,7 @@ function lmb_questCreateSQL($viewid){
 			
 			# check for alias
 			$qftn = $qfields["tablename"][$fkey];
-			if(strpos($qftn,"#")){
+			if(lmb_strpos($qftn,"#")){
 				$qftn_ = explode("#",$qftn);
 				$qftn = str_replace("#","__",$qftn);
 				$qftnAlias = $qftn_[0]." AS ".$qftn;
@@ -762,20 +762,20 @@ function lmb_questCreateSQL($viewid){
 			if($fw OR $fw == "0"){
 				#$fw = parse_db_string(trim($qfields["filter"][$fkey]));
 				# filter starts with fieldname
-				if(strpos(strtolower($fw),strtolower($fn)) === 0){
-					#if(preg_match("/^".strtolower($fn)."/",strtolower($fw))){
+				if(lmb_strpos(lmb_strtolower($fw),lmb_strtolower($fn)) === 0){
+					#if(preg_match("/^".lmb_strtolower($fn)."/",lmb_strtolower($fw))){
 					#$fwhere = $fwhere;
 					# filter start with nothing
 				}elseif(preg_match("/^([<>=!]|NOT|LIKE|IS)/i",$fw)){
 					$fw = "$fn $fw";
 					# filter start with where
-				#}elseif(substr($fw,0,1) == "\"" AND substr($fw,strlen($fw)-1,1) == "\""){
-                #$fw = substr($fw,1,strlen($fw)-2); 
+				#}elseif(lmb_substr($fw,0,1) == "\"" AND lmb_substr($fw,lmb_strlen($fw)-1,1) == "\""){
+                #$fw = lmb_substr($fw,1,lmb_strlen($fw)-2); 
 				}elseif(preg_match("/^(WHERE)/i",$fw)){
 					$fw = preg_replace("/^(WHERE)/i","",$fw);
 					# filter start with expression
 				}else{
-					if(strtolower($fw) == 'false' OR strtolower($fw) == 'true'){$fw = "$fn = ".parse_db_bool($fw);}
+					if(lmb_strtolower($fw) == 'false' OR lmb_strtolower($fw) == 'true'){$fw = "$fn = ".parse_db_bool($fw);}
 					else{$fw = "$fn = '$fw'";}
 				}
 				$where[] = "(".$fw.")";

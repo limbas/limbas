@@ -143,7 +143,7 @@ if($report_possize){
 			if(${"text".odbc_result($rs, "EL_ID")}){
 				$ia = "INHALT = ?,";
 				$prvalue[] = parse_db_blob(${"text".odbc_result($rs, "EL_ID")});
-			}elseif(strpos("_menu_bild_tab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_menue_fmenue_scroll_usetime_ureport_chart",$typ_)){
+			}elseif(lmb_strpos("_menu_bild_tab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_menue_fmenue_scroll_usetime_ureport_chart",$typ_)){
 				$ia = "";
 			}else{
 				$ia = "INHALT = ?,";
@@ -208,7 +208,7 @@ function lmb_copy_report($report_id,$report_edit_id,$tab=null,$oldtab=null){
 		lmb_copy_report($report_id,$report_edit_id,$tab,odbc_result($rs,"TAB"));
 	}elseif($typ == 'bild'){
 		$ext = explode(".",$pic_name);
-		$secname = $report_edit_id.substr(md5($report_edit_id.date("U").odbc_result($rs,"PIC_NAME")),0,12).".".$ext[1];
+		$secname = $report_edit_id.lmb_substr(md5($report_edit_id.date("U").odbc_result($rs,"PIC_NAME")),0,12).".".$ext[1];
 		if(file_exists($umgvar['path']."/UPLOAD/report/".odbc_result($rs,"TAB_SIZE"))){
 			copy($umgvar['path']."/UPLOAD/report/".odbc_result($rs,"TAB_SIZE"),$umgvar['path']."/UPLOAD/report/".$secname);
 			if(file_exists($umgvar['path']."/TEMP/thumpnails/report/".odbc_result($rs,"TAB_SIZE"))){
@@ -348,7 +348,7 @@ $pic_type=null,$pic_compress=null,$posy=null){
 	$styles = array(0=>$default_font,1=>'normal',3=>$default_size,4=>'normal',5=>0,6=>0,7=>'none',8=>'none',9=>'#000000',12=>'left',17=>'none',18=>'none',19=>'none',20=>'none');
 	$style = set_default_style($styles);
 
-	if($report_add_tab AND $report_add_field){$dbfield = strtoupper($report_add_tab).";".strtoupper($report_add_field);}
+	if($report_add_tab AND $report_add_field){$dbfield = lmb_strtoupper($report_add_tab).";".lmb_strtoupper($report_add_field);}
 	if($report_add_baum){$dbbaum = parse_db_string($report_add_baum);}
 	
 	if($report_add == "text"){
@@ -373,8 +373,8 @@ $pic_type=null,$pic_compress=null,$posy=null){
 		
 		if(is_uploaded_file($file)){
 			# -------- Mimetype ---------
-			$pos1 = strrpos($filename,'.');
-			$ext = strtolower(trim(substr($filename,$pos1+1,4)));
+			$pos1 = lmb_strrpos($filename,'.');
+			$ext = lmb_strtolower(trim(lmb_substr($filename,$pos1+1,4)));
 			$sqlquery0 = "SELECT ID,EXT,MIMETYPE FROM LMB_MIMETYPES WHERE LOWER(EXT) = '$ext'";
 			$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
 			if(odbc_result($rs0, "ID")){
@@ -390,7 +390,7 @@ $pic_type=null,$pic_compress=null,$posy=null){
 			}else{
 				$mimetypeid = odbc_result($rs0, "ID");
 				$mimetype = odbc_result($rs0, "MIMETYPE");
-				$secname = $NEXTID.substr(md5($NEXTID.date("U").$filename),0,12);
+				$secname = $NEXTID.lmb_substr(md5($NEXTID.date("U").$filename),0,12);
 
 				/* --- Konvertiern in JPEG/PNG -------------------------------------------- */
 				$out = 1;
@@ -412,9 +412,9 @@ $pic_type=null,$pic_compress=null,$posy=null){
 					$width = 400;
 				}
 
-				if($pic_type != "png" OR $pic_type != "jpg"){$pic_type = "jpg";}
+                if($pic_type != "png" && $pic_type != "jpg"){$pic_type = "jpg";}
 
-				# --- Kopiere Orginalbild -----
+                                # --- Kopiere Orginalbild -----
 				if($mime[1] == "jpg" OR $mime[1] == "jpeg" OR $mime[1] == "png" OR $mime[1] == "pdf"){
 					$rupload = "UPLOAD/report/".$secname.".".$ext;
 					copy($file,$umgvar["pfad"]."/".$rupload);
@@ -431,7 +431,7 @@ $pic_type=null,$pic_compress=null,$posy=null){
 				if($rupload){
 					$rupload = $umgvar["pfad"]."/".$rupload;
 					$thumb = IMACK_ConvertThumbs($rupload,$width,null,null,$pic_type,"TEMP/thumpnails/report/".$secname.".".$pic_type,null,1);
-					if($thumb){
+                                        if($thumb){
 						# ----- Bildinfos -------
 						$pic_size = $width."x".$height;
 						$data_type = $pic_compress;
@@ -439,7 +439,7 @@ $pic_type=null,$pic_compress=null,$posy=null){
 						$pic_name = $secname.".".$pic_type;
 	
 						$img = 1;
-						$value = "Image: ".$filename."\\nFilesize: ".file_size($filesize)."\\nFormat: ".substr($meta["FORMAT"],0,strlen($meta["FORMAT"])-1)."\\nGeometry: ".$meta["GEOMETRY"]."\\nResolution: ".$meta["RESOLUTION"]."\\nDepth: ".$meta["DEPTH"]."\\nColors: ".$meta["COLORS"]."\\nType: ".$meta["TYPE"];
+						$value = "Image: ".$filename."\\nFilesize: ".file_size($filesize)."\\nFormat: ".lmb_substr($meta["FORMAT"],0,lmb_strlen($meta["FORMAT"])-1)."\\nGeometry: ".$meta["GEOMETRY"]."\\nResolution: ".$meta["RESOLUTION"]."\\nDepth: ".$meta["DEPTH"]."\\nColors: ".$meta["COLORS"]."\\nType: ".$meta["TYPE"];
 						lmb_alert($value);
 					}else{
 						if($pic_type == "pdf" AND !$umgvar["imagemagickpdf"]){
@@ -628,7 +628,7 @@ if($report_del AND $report_edit_id){
 
 /* --- Style Editieren --------------------------------------------- */
 if($report_setstyle){
-	$styles = explode("#;",substr($report_setstyle,2,99999));
+	$styles = explode("#;",lmb_substr($report_setstyle,2,99999));
 	$bzm = 0;
 	while($styles[$bzm]){
 		$styles1 = explode("#,",$styles[$bzm]);

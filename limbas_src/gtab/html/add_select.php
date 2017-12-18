@@ -50,8 +50,8 @@ if ($select_sort AND $select_sort_d AND $LINK[8]) {
 
 /* --- Werte auswählen --------------------------------------------- */
 #if($fs_sel AND $single){
-#	if(is_numeric(substr($fs_sel,1,16))){
-#		$sqlquery = "SELECT WERT FROM LMB_SELECT_W WHERE POOL = ".$gfield[$gtabid]["select_pool"][$field_id]." AND ID = ".substr($fs_sel,1,16);
+#	if(is_numeric(lmb_substr($fs_sel,1,16))){
+#		$sqlquery = "SELECT WERT FROM LMB_SELECT_W WHERE POOL = ".$gfield[$gtabid]["select_pool"][$field_id]." AND ID = ".lmb_substr($fs_sel,1,16);
 #		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 #		if(!$rs) {$commit = 1;}
 #		$val = odbc_result($rs, "WERT");
@@ -204,8 +204,8 @@ $result_fieldselect = select_list($gtabid, $field_id, $ID, $find_value, $find_ke
 
         <TR class="tabFooter"><?= $add ?><TD HEIGHT="30" COLSPAN="5"><INPUT TYPE="button" VALUE="<?= $lang[33] ?>" NAME="select_change" onclick="lmbAjax_multiSelect(1);">&nbsp;&nbsp;&nbsp;
                 <i class="lmb-icon lmb-first" STYLE="cursor:pointer" OnClick="document.form_fs.start.value = '1';lmbAjax_multiSelect();"></i>
-                <i class="lmb-icon lmb-previous" STYLE="cursor:pointer"  OnClick="document.form_fs.start.value = '<?= ($start - $num_result) ?>'; lmbAjax_multiSelect();"></i>&nbsp;
-                <i class="lmb-icon lmb-next" STYLE="cursor:pointer"  OnClick="document.form_fs.start.value = '<?= ($start + $num_result) ?>';lmbAjax_multiSelect();"></i>
+                <i class="lmb-icon lmb-previous" STYLE="cursor:pointer;font-size:1.5em;"  OnClick="document.form_fs.start.value = '<?= ($start - $num_result) ?>'; lmbAjax_multiSelect();"></i>&nbsp;
+                <i class="lmb-icon lmb-next" STYLE="cursor:pointer;font-size:1.5em;"  OnClick="document.form_fs.start.value = '<?= ($start + $num_result) ?>';lmbAjax_multiSelect();"></i>
                 <i class="lmb-icon lmb-last" STYLE="cursor:pointer"  OnClick="document.form_fs.start.value = '<?= ($result_fieldselect["num_ges"] - $num_result + 1) ?>'; lmbAjax_multiSelect();"></i>
             </TD></TR>
 

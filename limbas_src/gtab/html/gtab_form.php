@@ -22,7 +22,7 @@ if($gformlist[0]["extension"][$form_id]){
 	require_once($gformlist[0]["extension"][$form_id]);
 }else{
 	if(!$gform[$form_id]["id"]){return false;}
-	if($gformlist[0]["css"][$form_id] AND strpos($gformlist[0]["css"][$form_id],"USER/") === false){
+	if($gformlist[0]["css"][$form_id] AND lmb_strpos($gformlist[0]["css"][$form_id],"USER/") === false){
  		echo "<style type=\"text/css\">@import url(".$gformlist[0]["css"][$form_id].");</style>\n";
 	}
 	formListElements($action,0,$ID,$null,$form_id);

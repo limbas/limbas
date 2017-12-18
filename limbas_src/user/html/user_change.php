@@ -133,7 +133,7 @@ echo "<TR class=\"tabBody\"><TD width=150>$lang[2578]</TD><TD><SELECT STYLE=\"wi
 
 /* --- Farbschema Liste --------------------------------------------- */
 echo "<TR class=\"tabBody\"><TD width=150>$lang[696]</TD><TD><SELECT STYLE=\"width:160px;\" name=\"farbe\" OnChange=\"this.form.farbe_change.value='1';\">";
-$sqlquery = "SELECT * FROM LMB_COLORSCHEMES WHERE LOWER(NAME) LIKE '%".strtolower($result_user["layout"])."%' ORDER BY ID";
+$sqlquery = "SELECT * FROM LMB_COLORSCHEMES WHERE LOWER(NAME) LIKE '%".lmb_strtolower($result_user["layout"])."%' ORDER BY ID";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 $bzm = 1;
 while(odbc_fetch_row($rs, $bzm)) {

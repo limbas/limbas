@@ -405,4 +405,31 @@ if(!$import){
 
 }
 
+// finds the parents of the tabgroup with index $groupIndex
+// returns an array, where a 1 at index i means, that tabgroup with id i is a parent
+function getTabgroupParents($groupIndex) {
+    global $tabgroup;
+    
+    $parents = array();
+    $currentIndex = $groupIndex;
+    $visited = array();
+    
+    while($tabgroup['level'][$currentIndex] != 0) {
+        // prevent infinite recursion
+        if($visited[$currentIndex]) {
+            error_log('infinite recursion in tabgroup hierarchy!');
+            return $tabgroup['id'];
+        }
+        
+        // set current tabgroup as visited
+        $visited[$currentIndex] = 1;
+        
+        // set parent tabgroup as next current and save as parent
+        $currentIndex = $tabgroup['level'][$currentIndex];
+        $parents[$currentIndex] = 1;        
+    }
+    
+    return $parents;
+}
+
 ?>

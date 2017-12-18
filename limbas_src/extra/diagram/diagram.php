@@ -96,9 +96,9 @@ function lmb_diagramAutoSettings($src, $chartData) {
             $legendHeight = $sts['h'];
         }
         
-        // right side: only basepadding
+        // right side: basepadding + legendwidth + basepadding
         if(!$dest['PADDING_RIGHT']) {
-            $dest['PADDING_RIGHT'] = $basePadding;
+            $dest['PADDING_RIGHT'] = 2 * $basePadding + $legendWidth;
         }
         
         // top side: basepadding + half of maximum y-scale entry
@@ -116,21 +116,22 @@ function lmb_diagramAutoSettings($src, $chartData) {
             $dest['PADDING_BOTTOM'] = $basePadding + $xAxisTextHeight + $xAxisDescriptionHeight;
         }
         
-        // left side: basepadding + legendWidth + basepadding + height of y-axis description + width of longest y-scale entry
+        // left side: basepadding + height of y-axis description + width of longest y-scale entry + 5 (space added into pDraw class)
         $sts = stringSize($src['TEXT_Y']);
         $yAxisDescriptionHeight = $sts['h'];
         $sts = stringSize(getLongestYAxisValue($chartData));
         $yAxisTextWidth = $sts['w'];
         if(!$dest['PADDING_LEFT']) {
-            $dest['PADDING_LEFT'] = 2 * $basePadding + $legendWidth + $yAxisDescriptionHeight + $yAxisTextWidth;
+            $dest['PADDING_LEFT'] = $basePadding + $yAxisDescriptionHeight + $yAxisTextWidth + 5;
         }
         
         // center legend (use height of diagram without x-axis texts)
         if(!$dest['LEGEND_Y']) {
-            $dest['LEGEND_Y'] = ($src['DIAG_HEIGHT'] - $legendHeight - $xAxisTextHeight) / 2;
+            $sts = stringSize("42");
+            $dest['LEGEND_Y'] = $basePadding + $sts['h'] / 2 + $legendHeight / 2 - 1; //($src['DIAG_HEIGHT'] - $legendHeight - $xAxisTextHeight) / 2;
         }
         if(!$dest['LEGEND_X']) {
-            $dest['LEGEND_X'] = $basePadding;
+            $dest['LEGEND_X'] = $src['DIAG_WIDTH'] - $legendWidth - $basePadding - 1;
         }
     }
     
@@ -147,8 +148,8 @@ function getLongestLegendEntry($chartData) {
             continue;
         }    
         
-        if(strlen($seriesName) > $maxLength) {
-            $maxLength = strlen($seriesName);
+        if(lmb_strlen($seriesName) > $maxLength) {
+            $maxLength = lmb_strlen($seriesName);
             $maxValue = $seriesName;
         }        
     }
@@ -166,8 +167,8 @@ function getLongestYAxisValue($chartData) {
             continue;
         }
         
-        if(strlen($seriesData['Max']) > $maxLength) {
-            $maxLength = strlen($seriesData['Max']);
+        if(lmb_strlen($seriesData['Max']) > $maxLength) {
+            $maxLength = lmb_strlen($seriesData['Max']);
             $maxValue = $seriesData['Max'];
         }
     }
@@ -183,8 +184,8 @@ function getLongestAbscissaValue($chartData) {
     $maxLength = 0;
     $maxValue = "";
     foreach($abscissaValues as $value) {
-        if(strlen($value) > $maxLength) {
-            $maxLength = strlen($value);
+        if(lmb_strlen($value) > $maxLength) {
+            $maxLength = lmb_strlen($value);
             $maxValue = $value;
         }
     }
@@ -240,7 +241,8 @@ function lmb_createDiagram($diag_id, $gsr=null, $filter=null, $verkn=null, $exte
         $bgcolor = $style[21] ? $style[21] : 'ffffff';
         $fontsize = $style[3] ? $style[3] : null; // use fontsize from database
         $fontlocation = lmb_getFontLocation($style);
-
+        $fontColorArr = $style[9] ? lmb_getColorAsArray($style[9]) : array();
+            
         $gtabid = $gdiaglist['gtabid'][$diag_id];
 	if(!$gdiaglist[$gtabid]['id'][$diag_id]){return false;}
 	
@@ -375,7 +377,7 @@ function lmb_createDiagram($diag_id, $gsr=null, $filter=null, $verkn=null, $exte
 	$diagname = preg_replace("/[^[:alnum:]\.]|[ ]/","_",$diagname);
 
 	$saveLocation = "USER/". $session['user_id'] ."/temp/" . $diagname . "_$diag_id.png";
-	define("LINETHICKNESS", null); // no linethickness means better antialiasing to pchart
+	define("LINETHICKNESS", 0.5); // no linethickness means better antialiasing to pchart, but apparently does only work for tranposed graphs
         define("LABEL_ROTATION", 15);
         if(!file_exists($umgvar['path'].'/'.$fontlocation)){
             lmb_alert('missing font '.$fontlocation.'!');
@@ -509,31 +511,47 @@ function lmb_createDiagram($diag_id, $gsr=null, $filter=null, $verkn=null, $exte
 		$myData->setAbscissaName($text_x);
 	}
         
-        /* calculate auto settings */
-        $settings = lmb_diagramAutoSettings($dbSettings, $myData->getData());      
+    /* calculate auto settings */
+    $settings = lmb_diagramAutoSettings($dbSettings, $myData->getData());      
 	
 	/* Init chart */
 	$myPicture = new pImage($width,$height,$myData);
 	$myPicture->setGraphArea($settings['PADDING_LEFT'], $settings['PADDING_TOP'], $width-$settings['PADDING_RIGHT'], $height-$settings['PADDING_BOTTOM']);
-	$myPicture->setFontProperties(array("FontName"=>$fontlocation,"FontSize"=>$fontsize));
-        
-        // draw background
-        if($bgcolor) {
-            $myPicture->drawFilledRectangle(0, 0, $width, $height, array(
-                "R" => hexdec(substr($bgcolor, 0, 2)),
-                "G" => hexdec(substr($bgcolor, 2, 2)),
-                "B" => hexdec(substr($bgcolor, 4, 2)),
-                "Surrounding" => 0,
-                "Alpha" => 255)
-            );
-        }
-        
+	//$myPicture->setShadow(true);
+    
+    $fontProperties = $fontColorArr;
+    $fontProperties['FontName'] = $fontlocation;
+    $fontProperties['FontSize'] = $fontsize;
+    $myPicture->setFontProperties($fontProperties);
+    $myPicture->Antialias = TRUE;
+
+    // draw background
+    if($bgcolor) {
+        $bgColArr = lmb_getColorAsArray($bgcolor);
+        $bgColArr['Surrounding'] = 0;
+        $myPicture->drawFilledRectangle(0, 0, $width, $height, $bgColArr);
+    }
+    
+    // draw transparent black rectangle over graph area
+    $myPicture->drawFilledRectangle(
+            $settings['PADDING_LEFT'], $settings['PADDING_TOP'], $width-$settings['PADDING_RIGHT'], $height-$settings['PADDING_BOTTOM'],
+            array("R"=>0,"G"=>0,"B"=>0,"Surrounding"=>-255,"Alpha"=>5)
+    );
+    
+    // draw two black lines around the graph area
+    $myPicture->drawLine($settings['PADDING_LEFT'], $settings['PADDING_TOP'], $width-$settings['PADDING_RIGHT'], $settings['PADDING_TOP'],
+            array("R"=>0,"G"=>0,"B"=>0)
+    );
+    $myPicture->drawLine($width-$settings['PADDING_RIGHT'], $settings['PADDING_TOP'], $width-$settings['PADDING_RIGHT'], $height-$settings['PADDING_BOTTOM'],
+            array("R"=>0,"G"=>0,"B"=>0)
+    );
+    
 	/* Differ between chart types */
 	if($isBar || $isLine){
 		$myPicture->drawScale(array('LabelRotation'=>LABEL_ROTATION));
 		if($legend_mode != "none"){
 			$legend_mode = ($legend_mode=="vertical")?690901:690902;
-			$myPicture->drawLegend($settings['LEGEND_X'], $settings['LEGEND_Y'], array("Style"=>LEGEND_NOBORDER, "Mode"=>$legend_mode));
+			$myPicture->drawLegend($settings['LEGEND_X'], $settings['LEGEND_Y'], array("Style"=>LEGEND_BOX, "Mode"=>$legend_mode, "R"=>0,"G"=>0,"B"=>0, "Alpha"=>5, "BorderR"=>0, "BorderG"=>0, "BorderB"=>0));
 		}
 		if($isBar){
 			$myPicture->drawBarChart(array("Rounded"=>FALSE, "Orientation"=>ORIENTATION_HORIZONTAL));
@@ -542,8 +560,8 @@ function lmb_createDiagram($diag_id, $gsr=null, $filter=null, $verkn=null, $exte
 		}
 	}elseif($isPie){
 		$PieChart = new pPie($myPicture,$myData);
-		
-		/* Pie-slice colors */
+
+        /* Pie-slice colors */
 		if($isPie && $isTransposed){
 			$hexcolor;
 			for($i = 0; $i < count($fields); $i++){
@@ -552,14 +570,23 @@ function lmb_createDiagram($diag_id, $gsr=null, $filter=null, $verkn=null, $exte
 			}	
 		}		
 		
-		$PieChart->draw2DPie($settings['PADDING_LEFT'], $settings['PADDING_TOP'], array("DrawLabels"=>TRUE,"Border"=>TRUE,"Radius"=>$settings['PIE_RADIUS']));		
+		$PieChart->draw2DPie($settings['PADDING_LEFT'], $settings['PADDING_TOP'], 
+                array(
+                    "DrawLabels"=>TRUE,
+                    "Border"=>TRUE,
+                    "Radius"=>$settings['PIE_RADIUS'],
+                    "LabelR" => $fontColorArr['R'],
+                    "LabelG" => $fontColorArr['G'],
+                    "LabelB" => $fontColorArr['B'],
+                )
+        );		
 	}
 
 	/* Save and return image */
 	$myPicture->render($saveLocation);
 	
 	if(file_exists($umgvar['path'].'/'.$saveLocation)){         
-	   return $saveLocation;
+        return $saveLocation;
 	}
 }
 
@@ -600,7 +627,7 @@ function lmb_getFontLocation($style) {
 }
 
 function lmb_getColorAsArray($hex){
-	return array("R"=>hexdec(substr($hex,0,2)),"G"=>hexdec(substr($hex,2,2)),"B"=>hexdec(substr($hex,4,2)),"Alpha"=>255);
+	return array("R"=>hexdec(lmb_substr($hex,0,2)),"G"=>hexdec(lmb_substr($hex,2,2)),"B"=>hexdec(lmb_substr($hex,4,2)),"Alpha"=>255);
 }
 
 function lmb_getNIntVals($n){

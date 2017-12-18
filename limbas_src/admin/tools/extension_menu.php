@@ -23,7 +23,7 @@ $openToPath_Path="";
 $file=null;
 
 if($filename AND $todo){	
-	if(substr($filename,0,9) == 'EXTENSION' AND !strpos($filename,'..')){	
+	if(lmb_substr($filename,0,9) == 'EXTENSION' AND !lmb_strpos($filename,'..')){	
 		# new file or new folder
 		if($todo == 'addfile' || $todo == 'addfolder'){
 			$parts = explode("/",$filename);

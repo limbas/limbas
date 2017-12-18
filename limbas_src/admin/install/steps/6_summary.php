@@ -20,6 +20,6 @@
 </table>
 
 <div>
-    <button type="button" class="btn btn-default" onclick="switchToStep('<?php $s=array_keys($steps); echo $s[5]?>')">Back</button>
-    <button type="submit" class="btn btn-success pull-right" name="install" value="<?php $s=array_keys($steps); echo $s[7]?>"> Install Limbas now! </button>
+    <button type="button" class="btn btn-default" onclick="switchToStep('<?= array_keys($steps)[5] ?>')">Back</button>
+    <button type="submit" class="btn btn-success pull-right" name="install" value="<?= array_keys($steps)[7] ?>"> Install Limbas now! </button>
 </div>

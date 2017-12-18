@@ -225,12 +225,12 @@ while($b <= 255){
 		$r = 0;
 		while($r <= 255){
 			$rcol = dechex($r);
-			if(!$rcol){$rcol = "00";}elseif(strlen($rcol) == 1){$rcol = "0".$rcol;}
+			if(!$rcol){$rcol = "00";}elseif(lmb_strlen($rcol) == 1){$rcol = "0".$rcol;}
 			$gcol = dechex($g);
-			if(!$gcol){$gcol = "00";}elseif(strlen($gcol) == 1){$gcol = "0".$gcol;}
+			if(!$gcol){$gcol = "00";}elseif(lmb_strlen($gcol) == 1){$gcol = "0".$gcol;}
 			$bcol = dechex($b);
-			if(!$bcol){$bcol = "00";}elseif(strlen($bcol) == 1){$bcol = "0".$bcol;}
-			$col = strtoupper($rcol.$gcol.$bcol);		
+			if(!$bcol){$bcol = "00";}elseif(lmb_strlen($bcol) == 1){$bcol = "0".$bcol;}
+			$col = lmb_strtoupper($rcol.$gcol.$bcol);		
 			echo "<TD OnClick=\"addcolor('$col');\" OnMouseOver=\"sel_color('$col');\" STYLE=\"height:10px;width:10px;overflow:hidden;cursor:pointer;background-color:#$col\"></TD>";		
 			$r += 15;
 		}
@@ -253,7 +253,7 @@ $bbzm = 1;
 $b = 0;
 while($b <= 255){
 	$bcol = dechex($b);
-	if(!$bcol){$bcol = "00";}elseif(strlen($bcol) == 1){$bcol = "0".$bcol;}
+	if(!$bcol){$bcol = "00";}elseif(lmb_strlen($bcol) == 1){$bcol = "0".$bcol;}
 	$col = "0000".$bcol;
 	echo "<TR><TD STYLE=\"witdh:20px;heigh:20px;background-color:#$col;cursor:pointer\" OnMouseOver=\"cslice('slice_$bbzm')\"></TD></TR>";
 	$b += 30;

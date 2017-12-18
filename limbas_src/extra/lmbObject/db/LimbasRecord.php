@@ -124,7 +124,7 @@ class LimbasRecord extends LimbasComponent {
 	 */
 	public function __construct($table, $attributes=null) {
 		parent::__construct();
-		$this->_table = strtoupper($table);
+		$this->_table = lmb_strtoupper($table);
 		$this->log('LimbasRecord(' . $this->refId . ').__construct ' . $this->_table);
 		$this->createAttributes($attributes);
 	}
@@ -148,7 +148,7 @@ class LimbasRecord extends LimbasComponent {
 	 * @return LimbasRecord record model instance
 	 */
 	public static function model($tableName, $attributes=null) {
-		$tableName = ucfirst(strtolower($tableName));
+		$tableName = ucfirst(lmb_strtolower($tableName));
 		LimbasLogger::log('LimbasRecord::model(' . $tableName . ')');
 		if (!isset(self::$masterObjects[$tableName])) {
 			if (class_exists('Limbas' . $tableName)) {
@@ -196,7 +196,7 @@ class LimbasRecord extends LimbasComponent {
 			$gsr = array();
 			$gsr[$id] = array();
 			foreach ($criteria['attr'] as $key => $value) {
-				$key = strtoupper($key);
+				$key = lmb_strtoupper($key);
 				list($key, $relfield) = explode('.', $key);
 				//echo 'key: ' . var_export($key, true) . ', relfield: ' . var_export($relfield, true) . '<br/>';
 				//echo 'FIELD: ' . $key . '(' . $this->definitions[$key]['parse_type'] . ') : ' . print_r($value, true) . '<br/>';
@@ -311,7 +311,7 @@ class LimbasRecord extends LimbasComponent {
 */
 		if (isset($criteria['sort'])) { // !isset($criteria['sort']['function'])
 			foreach($criteria['sort'] as $key => $sort) {
-				$key = strtoupper($key);
+				$key = lmb_strtoupper($key);
 				if ($this->isAttribute($key) && (self::SD_ASC === $sort || self::SD_DESC === $sort)) {
 					$order[] = $this->definitions[$key]['id'] . ',' . $sort;
 				}
@@ -524,7 +524,7 @@ class LimbasRecord extends LimbasComponent {
 		$gsr = array();
 		$gsr[$tid] = array();
 		foreach ($criteriaAttr as $key => $value) {
-			$key = strtoupper($key);
+			$key = lmb_strtoupper($key);
 			list($key, $relfield) = explode('.', $key);
 			//echo 'key: ' . var_export($key, true) . ', relfield: ' . var_export($relfield, true) . '<br/>';
 			//echo 'FIELD: ' . $key . '(' . $this->definitions[$key]['parse_type'] . ') : ' . print_r($value, true) . '<br/>';
@@ -1052,7 +1052,7 @@ class LimbasRecord extends LimbasComponent {
 	 * @return multitype:|NULL
 	 */
 	public function getDefinition($name) {
-		$name = strtoupper($name);
+		$name = lmb_strtoupper($name);
 		if (isset($this->definitions[$name])) {
 			return $this->definitions[$name];
 		}
@@ -1108,7 +1108,7 @@ class LimbasRecord extends LimbasComponent {
 	 */
 	public function __get($name) {
 		$this->trace('LimbasRecord(' . $this->refId . ').__get(' . $this->_table . '.' . $name . ')');
-		$attrname = strtoupper($name);
+		$attrname = lmb_strtoupper($name);
 		//if(array_key_exists($attrname, $this->attributes)) {
 		if(isset($this->definitions[$attrname])) {
 			if (self::FT_RELATION == $this->definitions[$attrname]['field_type']) {
@@ -1134,7 +1134,7 @@ class LimbasRecord extends LimbasComponent {
 	 */
 	public function __set($name, $value) {
 		$this->trace('LimbasRecord(' . $this->refId . ').__set(' . $this->_table . '.' . $name . ', ' . $value . ')');
-		$attrname = strtoupper($name);
+		$attrname = lmb_strtoupper($name);
 		if ('id' === $name) {
 			$this->setId($id);
 			return;
@@ -1193,7 +1193,7 @@ class LimbasRecord extends LimbasComponent {
 	 */
 	public function __call($name, $args) {
 		$this->log('LimbasRecord(' . $this->refId . ').__call(' . $name . ')');
-		$name = strtoupper($name);
+		$name = lmb_strtoupper($name);
 		if ($this->isAttribute($name)) {
 			if ($this->isRelation($name)) {
 				if (is_null($this->attributes[$name])) {
@@ -1297,7 +1297,7 @@ class LimbasRecord extends LimbasComponent {
 	 * @return boolean true if there is an attribute, otherwise false
 	 */
 	public function isAttribute($name) {
-		return isset($this->definitions[strtoupper($name)]);
+		return isset($this->definitions[lmb_strtoupper($name)]);
 	}
 
 	/**
@@ -1308,7 +1308,7 @@ class LimbasRecord extends LimbasComponent {
 	 * @throws LimbasRecordException if the attribute is not known
 	 */
 	public function isUsableAttribute($name) {
-		$name = strtoupper($name);
+		$name = lmb_strtoupper($name);
 		if (!isset($this->definitions[$name])) {
 			throw new LimbasRecordException('Unknown attribute ' . $name . '!');
 		}
@@ -1322,7 +1322,7 @@ class LimbasRecord extends LimbasComponent {
 	 * @return boolean true if this attribute represents a relation, otherwise false
 	 */
 	public function isRelation($name) {
-		$name = strtoupper($name);
+		$name = lmb_strtoupper($name);
 		return isset($this->definitions[$name]) && LimbasRecord::FT_RELATION == $this->definitions[$name]['field_type'];
 	}
 
@@ -1410,7 +1410,7 @@ class LimbasRecord extends LimbasComponent {
 			}
 			
 			if (isset($gfield[$tid]['md5tab'][$fid])) {
-				$field['md5tab'] = strtoupper($gfield[$tid]['md5tab'][$fid]);
+				$field['md5tab'] = lmb_strtoupper($gfield[$tid]['md5tab'][$fid]);
 			}
 			
 			if (LimbasRecord::FT_SELECTION == $gfield[$tid]['field_type'][$fid]) {

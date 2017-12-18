@@ -72,7 +72,7 @@ if($trigger_typ == 1){
 	foreach ($result_trigger as $key1 => $value1){
 		
 		foreach ($value1["id"] as $key2 => $value2){
-			if(!$showsystr AND (substr($value1["name"][$key2],0,12) == "INSERT_VERK_" OR substr($value1["name"][$key2],0,12) == "UPDATE_VERK_" OR substr($value1["name"][$key2],0,16) == "LMB_LASTMODIFIED")) {continue 2;}
+			if(!$showsystr AND (lmb_substr($value1["name"][$key2],0,12) == "INSERT_VERK_" OR lmb_substr($value1["name"][$key2],0,12) == "UPDATE_VERK_" OR lmb_substr($value1["name"][$key2],0,16) == "LMB_LASTMODIFIED")) {continue 2;}
 		}
 		
 		echo "<TR class=\"tabSubHeader\"><TD colspan=\"7\" class=\"tabSubHeaderItem\">$lang[2268]: <b>".$key1."</b></TD></TR>";

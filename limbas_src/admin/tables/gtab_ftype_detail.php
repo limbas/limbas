@@ -54,7 +54,7 @@ echo "</form>";
 	<tr><td valign="top" class="tabpoolfringe">
 	<table ID="tab1"><tr><td valign="top">
 	<table>
-	<?
+	<?php
 	
 	#echo "<table style=\"background-color:".$farbschema["WEB11"].";width:420px;\"><tr><td valign=\"top\">";
 	
@@ -153,28 +153,6 @@ echo "</form>";
 		echo "<tr><td valign=\"top\">".$lang[2600]."</td><td>";
 		echo "<INPUT TYPE=\"TEXT\" STYLE=\"width:100%;\" VALUE=\"".$result_fieldtype[$table_gtab[$bzm]]["format"][1]."\" onchange=\"document.form2.val.value=this.value+' ';ajaxEditField('$fieldid','nformat')\">";
 		echo "<br><i style=\"color:#AAAAAA\">".$lang[2603]."</i>";
-		echo "</td></tr>";
-	}
-
-	/* --- relations --------------------------------------- */
-	if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 11){
-		echo "<tr><td>".$lang[2603]."</td><td>";
-		if($result_fieldtype[$table_gtab[$bzm]]["verkntabid"][1]){
-			$sqlquery = "SELECT BESCHREIBUNG FROM LMB_CONF_TABLES WHERE TAB_ID = ".$result_fieldtype[$table_gtab[$bzm]]["verkntabid"][1];
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			echo $lang[odbc_result($rs, "BESCHREIBUNG")]." | ";
-		}
-		if($result_fieldtype[$table_gtab[$bzm]]["verknfieldid"][1]){
-			$sqlquery = "SELECT SPELLING FROM LMB_CONF_FIELDS WHERE TAB_ID = ".$result_fieldtype[$table_gtab[$bzm]]["verkntabid"][1]." AND FIELD_ID = ".$result_fieldtype[$table_gtab[$bzm]]["verknfieldid"][1];
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			echo $lang[odbc_result($rs, "SPELLING")];
-		}
-		if($result_fieldtype[$table_gtab[$bzm]]["verkntabletype"][1] == 2){echo "&nbsp;(<span style=\"color:green;\">recursive</span>)";}
-		echo "</td></tr>";
-		
-		echo "<tr><td>".$lang[2604]."</td><td>";
-		echo $result_fieldtype[$table_gtab[$bzm]]["verkntab"][1]."&nbsp;";
-		if($result_fieldtype[$table_gtab[$bzm]]["verkntabletype"][1] == 2){echo "(<span style=\"color:green;\">view</span>)";}
 		echo "</td></tr>";
 	}
 	
@@ -546,10 +524,35 @@ echo "</form>";
 	}
 	
 	/* --- relations --------------------------------------- */
+    
+	/* --- relations --------------------------------------- */
 	if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 11){
 		echo "<tr><td colspan=\"2\"><hr></td><td>";
-		echo "<tr><td align=\"left\" colspan=\"2\"><b>".$result_fieldtype[$table_gtab[$bzm]]["beschreibung_typ"][1]."</td><td>";
-		echo "<tr><td><a href=# OnClick=\"newwin5('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][1]."','".$KEYID_gtab[$bzm]."','".$result_fieldtype[$table_gtab[$bzm]]["verkntabid"][1]."')\">".$lang[2593]."</a></td><td>";
+        echo "<tr><td align=\"left\" colspan=\"2\"><b>".$result_fieldtype[$table_gtab[$bzm]]["beschreibung_typ"][1]."</td><td>";
+
+        # target of relation
+        echo "<tr><td>".$lang[2603]."</td><td>";
+		if($result_fieldtype[$table_gtab[$bzm]]["verkntabid"][1]){
+			$sqlquery = "SELECT BESCHREIBUNG FROM LMB_CONF_TABLES WHERE TAB_ID = ".$result_fieldtype[$table_gtab[$bzm]]["verkntabid"][1];
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			echo $lang[odbc_result($rs, "BESCHREIBUNG")]." | ";
+		}
+		if($result_fieldtype[$table_gtab[$bzm]]["verknfieldid"][1]){
+			$sqlquery = "SELECT SPELLING FROM LMB_CONF_FIELDS WHERE TAB_ID = ".$result_fieldtype[$table_gtab[$bzm]]["verkntabid"][1]." AND FIELD_ID = ".$result_fieldtype[$table_gtab[$bzm]]["verknfieldid"][1];
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			echo $lang[odbc_result($rs, "SPELLING")];
+		}
+		if($result_fieldtype[$table_gtab[$bzm]]["verkntabletype"][1] == 2){echo "&nbsp;(<span style=\"color:green;\">recursive</span>)";}
+		echo "</td></tr>";
+        
+		# relation table
+		echo "<tr><td>".$lang[2604]."</td><td>";
+		echo $result_fieldtype[$table_gtab[$bzm]]["verkntab"][1]."&nbsp;";
+		if($result_fieldtype[$table_gtab[$bzm]]["verkntabletype"][1] == 2){echo "(<span style=\"color:green;\">view</span>)";}
+		echo "</td></tr>";
+        
+        # configure
+		echo "<tr><td valign=\"top\">".$lang[2593]."</td><td><i style=\"cursor:pointer\" class=\"lmb-icon-cus lmb-rel-edit\" title=\"$lang[1301]\" OnClick=\"newwin5('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][1]."','".$KEYID_gtab[$bzm]."','".$result_fieldtype[$table_gtab[$bzm]]["verkntabid"][1]."')\"></i></td>";
 		
 		# rebuild temp
         echo "<tr><td valign=\"top\">".$lang[2761]."</td><td><i style=\"cursor:pointer\" class=\"lmb-icon lmb-refresh\" onclick=\"document.form2.val.value=1;ajaxEditField('$fieldid','tablesync')\"></i>";

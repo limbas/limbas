@@ -67,7 +67,7 @@ if($add){
 	/* --- Next ID ---------------------------------------- */
 	$NEXTID = next_db_id("LMB_UMGVAR");
     
-	$sqlquery = "INSERT INTO LMB_UMGVAR (ID,SORT,FORM_NAME,NORM,BESCHREIBUNG,CATEGORY) VALUES ($NEXTID,$sort,'".strtolower($name)."','$norm','$beschreibung',".parse_db_int($category).")";
+	$sqlquery = "INSERT INTO LMB_UMGVAR (ID,SORT,FORM_NAME,NORM,BESCHREIBUNG,CATEGORY) VALUES ($NEXTID,$sort,'".lmb_strtolower($name)."','$norm','$beschreibung',".parse_db_int($category).")";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 

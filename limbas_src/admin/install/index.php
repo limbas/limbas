@@ -21,11 +21,6 @@
 extract($_SERVER, EXTR_SKIP);
 extract($_POST, EXTR_SKIP);
 
-ini_set("short_open_tag", 1);
-ini_set("magic_quotes_gpc", 0);
-ini_set("mbstring.func_overload", 7);
-ini_set("mbstring.internal_encoding", $setup_charset);
-
 # get path
 $pt = isset($_SERVER['PATH_TRANSLATED']) ? $_SERVER['PATH_TRANSLATED'] : $_SERVER['SCRIPT_FILENAME'];
 $path = explode("/", $pt);

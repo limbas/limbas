@@ -25,18 +25,18 @@ system($rsc);
 if($action == "user_change_admin"){$userid = $ID;} else {$userid = $session[user_id];}
 
 
-$RGB1 = explode(",",hexdec(substr($farbschema[WEB1], 1, 2)).",".hexdec(substr($farbschema[WEB1], 3, 2)).",".hexdec(substr($farbschema[WEB1], 5, 2)));
-$RGB2 = explode(",",hexdec(substr($farbschema[WEB2], 1, 2)).",".hexdec(substr($farbschema[WEB2], 3, 2)).",".hexdec(substr($farbschema[WEB2], 5, 2)));
-$RGB3 = explode(",",hexdec(substr($farbschema[WEB3], 1, 2)).",".hexdec(substr($farbschema[WEB3], 3, 2)).",".hexdec(substr($farbschema[WEB3], 5, 2)));
-$RGB4 = explode(",",hexdec(substr($farbschema[WEB4], 1, 2)).",".hexdec(substr($farbschema[WEB4], 3, 2)).",".hexdec(substr($farbschema[WEB4], 5, 2)));
-$RGB5 = explode(",",hexdec(substr($farbschema[WEB5], 1, 2)).",".hexdec(substr($farbschema[WEB5], 3, 2)).",".hexdec(substr($farbschema[WEB5], 5, 2)));
-$RGB6 = explode(",",hexdec(substr($farbschema[WEB6], 1, 2)).",".hexdec(substr($farbschema[WEB6], 3, 2)).",".hexdec(substr($farbschema[WEB6], 5, 2)));
-$RGB7 = explode(",",hexdec(substr($farbschema[WEB7], 1, 2)).",".hexdec(substr($farbschema[WEB7], 3, 2)).",".hexdec(substr($farbschema[WEB7], 5, 2)));
-$RGB8 = explode(",",hexdec(substr($farbschema[WEB8], 1, 2)).",".hexdec(substr($farbschema[WEB8], 3, 2)).",".hexdec(substr($farbschema[WEB8], 5, 2)));
-$RGB9 = explode(",",hexdec(substr($farbschema[WEB9], 1, 2)).",".hexdec(substr($farbschema[WEB9], 3, 2)).",".hexdec(substr($farbschema[WEB9], 5, 2)));
-$RGB10 = explode(",",hexdec(substr($farbschema[WEB10], 1, 2)).",".hexdec(substr($farbschema[WEB10], 3, 2)).",".hexdec(substr($farbschema[WEB10], 5, 2)));
-$RGB12 = explode(",",hexdec(substr($farbschema[WEB12], 1, 2)).",".hexdec(substr($farbschema[WEB12], 3, 2)).",".hexdec(substr($farbschema[WEB12], 5, 2)));
-$RGB14 = explode(",",hexdec(substr($farbschema[WEB14], 1, 2)).",".hexdec(substr($farbschema[WEB14], 3, 2)).",".hexdec(substr($farbschema[WEB14], 5, 2)));
+$RGB1 = explode(",",hexdec(lmb_substr($farbschema[WEB1], 1, 2)).",".hexdec(lmb_substr($farbschema[WEB1], 3, 2)).",".hexdec(lmb_substr($farbschema[WEB1], 5, 2)));
+$RGB2 = explode(",",hexdec(lmb_substr($farbschema[WEB2], 1, 2)).",".hexdec(lmb_substr($farbschema[WEB2], 3, 2)).",".hexdec(lmb_substr($farbschema[WEB2], 5, 2)));
+$RGB3 = explode(",",hexdec(lmb_substr($farbschema[WEB3], 1, 2)).",".hexdec(lmb_substr($farbschema[WEB3], 3, 2)).",".hexdec(lmb_substr($farbschema[WEB3], 5, 2)));
+$RGB4 = explode(",",hexdec(lmb_substr($farbschema[WEB4], 1, 2)).",".hexdec(lmb_substr($farbschema[WEB4], 3, 2)).",".hexdec(lmb_substr($farbschema[WEB4], 5, 2)));
+$RGB5 = explode(",",hexdec(lmb_substr($farbschema[WEB5], 1, 2)).",".hexdec(lmb_substr($farbschema[WEB5], 3, 2)).",".hexdec(lmb_substr($farbschema[WEB5], 5, 2)));
+$RGB6 = explode(",",hexdec(lmb_substr($farbschema[WEB6], 1, 2)).",".hexdec(lmb_substr($farbschema[WEB6], 3, 2)).",".hexdec(lmb_substr($farbschema[WEB6], 5, 2)));
+$RGB7 = explode(",",hexdec(lmb_substr($farbschema[WEB7], 1, 2)).",".hexdec(lmb_substr($farbschema[WEB7], 3, 2)).",".hexdec(lmb_substr($farbschema[WEB7], 5, 2)));
+$RGB8 = explode(",",hexdec(lmb_substr($farbschema[WEB8], 1, 2)).",".hexdec(lmb_substr($farbschema[WEB8], 3, 2)).",".hexdec(lmb_substr($farbschema[WEB8], 5, 2)));
+$RGB9 = explode(",",hexdec(lmb_substr($farbschema[WEB9], 1, 2)).",".hexdec(lmb_substr($farbschema[WEB9], 3, 2)).",".hexdec(lmb_substr($farbschema[WEB9], 5, 2)));
+$RGB10 = explode(",",hexdec(lmb_substr($farbschema[WEB10], 1, 2)).",".hexdec(lmb_substr($farbschema[WEB10], 3, 2)).",".hexdec(lmb_substr($farbschema[WEB10], 5, 2)));
+$RGB12 = explode(",",hexdec(lmb_substr($farbschema[WEB12], 1, 2)).",".hexdec(lmb_substr($farbschema[WEB12], 3, 2)).",".hexdec(lmb_substr($farbschema[WEB12], 5, 2)));
+$RGB14 = explode(",",hexdec(lmb_substr($farbschema[WEB14], 1, 2)).",".hexdec(lmb_substr($farbschema[WEB14], 3, 2)).",".hexdec(lmb_substr($farbschema[WEB14], 5, 2)));
 
 function setcolor($img){
 	global $RGB1;

@@ -63,16 +63,16 @@ WHERE t.schemaname='".$p[0]."'
 ";
 
 	if($p[1]){
-		$sql .= " AND LOWER(t.tablename) LIKE '".strtolower($p[1])."'";
+		$sql .= " AND LOWER(t.tablename) LIKE '".lmb_strtolower($p[1])."'";
 	}
 	if($p[2]){
-		$sql .= " AND LOWER(indexname) LIKE '".strtolower($p[2])."'";
+		$sql .= " AND LOWER(indexname) LIKE '".lmb_strtolower($p[2])."'";
 	}
 	if($p[3]){
 	 	$sql .= " AND foo.indisprimary = FALSE";
 	}
 	if($p[4]){
-	 	$sql .= " AND LOWER(foo.attname) LIKE '".strtolower($p[4])."'";
+	 	$sql .= " AND LOWER(foo.attname) LIKE '".lmb_strtolower($p[4])."'";
 	}
 
 	$sql .= " ORDER BY 1, 2;";
@@ -109,16 +109,16 @@ WHERE c.relhasindex = true
     AND pg_catalog.pg_table_is_visible(c.oid)";
 
 	if($p[1]){
-		$sql .= " AND LOWER(c.relname) LIKE '".strtolower($p[1])."'";
+		$sql .= " AND LOWER(c.relname) LIKE '".lmb_strtolower($p[1])."'";
 	}
 	if($p[2]){
-		$sql .= " AND LOWER(information_schema.referential_constraints.constraint_name) LIKE '".strtolower($p[2])."'";
+		$sql .= " AND LOWER(information_schema.referential_constraints.constraint_name) LIKE '".lmb_strtolower($p[2])."'";
 	}
 	if($p[3]){
 	 	$sql .= " AND i.indisprimary = FALSE";
 	}
 	if($p[4]){
-	 	$sql .= " AND LOWER(a.attname) LIKE '".strtolower($p[4])."'";
+	 	$sql .= " AND LOWER(a.attname) LIKE '".lmb_strtolower($p[4])."'";
 	}
 
 	$sql .= " ORDER BY 2, 3;";
@@ -333,7 +333,7 @@ function dbf_3($p){
 		 	INFORMATION_SCHEMA.TRIGGERS
 		WHERE TRIGGER_SCHEMA != 'pg_catalog'";
 	if($p[1]){
-		$sql .= " AND LOWER(TRIGGER_NAME) LIKE '".strtolower($p[1])."'";
+		$sql .= " AND LOWER(TRIGGER_NAME) LIKE '".lmb_strtolower($p[1])."'";
 	}
 	
 	$rs = odbc_exec($db,$sql);
@@ -417,7 +417,7 @@ function dbq_12($p){
 		WHERE 
 			view_schema = '".$p[0]."'";
 	if($p[1]){
-		$qu .= " AND lower(view_name) = '".strtolower($p[1])."'";
+		$qu .= " AND lower(view_name) = '".lmb_strtolower($p[1])."'";
 	}
 	return $qu;
 }
@@ -429,7 +429,7 @@ function dbq_12($p){
  * @return sql string
  */
 function dbq_19($p){
-	if(stripos($p[1],"CREATE VIEW") !== false){
+	if(lmb_stripos($p[1],"CREATE VIEW") !== false){
 		$qu = $p[1];
 	}else{
 		$qu = "CREATE OR REPLACE VIEW ".$p[0]." AS (".rtrim(trim($p[1]),";").")";

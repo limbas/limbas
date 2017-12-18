@@ -21,21 +21,31 @@
 
 
 /*
-class pdf_report extends HTML2FPDF					--> extra/report/report.lib
-class HTML2FPDF extends html2pdf_tpl				--> extern/html2pdf/html2fpdf.php
-class html2pdf_tpl extends AlphaPDF					--> extern/html2pdf/html2pdf_tpl.php
-class AlphaPDF extends fpdt							--> extern/fpdf_classes/fpdf_alpha.php
-class fpdt extends FPDF_MULTICELLTAG				--> extern/fpdf_classes/fpdf_table.php
-class FPDF_MULTICELLTAG extends fpdi				--> extern/fpdf_classes/multi_cell_tag.php
-class fpdi extends fpdf_tpl							--> extern/fpdi/fpdi.php
-class fpdf_tpl extends fpdf							--> extern/fpdi/fpdf_tpl.php
-class FPDF											--> extern/fpdf/fpdf.php
+class pdf_report extends HTML2FPDF				--> extra/report/report.lib
+class HTML2FPDF extends html2pdf_tpl			--> extern/html2pdf/html2fpdf.php
+class html2pdf_tpl extends AlphaPDF				--> extern/html2pdf/html2pdf_tpl.php
+class AlphaPDF extends fpdt                     --> extern/fpdf_classes/fpdf_alpha.php
+class fpdt extends FPDF_MULTICELLTAG			--> extern/fpdf_classes/fpdf_table.php
+class FPDF_MULTICELLTAG extends fpdi			--> extern/fpdf_classes/multi_cell_tag.php
+class fpdi extends fpdf_tpl                     --> extern/fpdi/fpdi.php
+class fpdf_tpl extends fpdf | tfpdf				--> extern/fpdi/fpdf_tpl.php
+class FPDF                                      --> extern/fpdf/fpdf.php
+class TFPDF                                     --> extern/tfpdf/tfpdf.php
 */
 
-require_once('extern/fpdf/fpdf.php');
+define('_SYSTEM_TTFONTS', 'inc/fonts/');
+define('FPDF_FONTPATH', 'inc/fonts/');
+
+# fpdi extends fpdf or tfpdf depending on charset of limbas installation
+if(lmb_strtoupper($umgvar['charset']) == 'UTF-8') {
+    require_once('extern/tfpdf/tfpdf.php');
+} else {
+    require_once('extern/fpdf/fpdf.php');
+}
+
 require_once('extern/fpdi/fpdi.php');
-require_once("extern/fpdf_classes/string_tags.php");
-require_once("extern/fpdf_classes/multi_cell_tag.php");
+require_once('extern/fpdf_classes/string_tags.php');
+require_once('extern/fpdf_classes/multi_cell_tag.php');
 require_once('extern/fpdf_classes/fpdf_table.php');
 require_once('extern/fpdf_classes/fpdf_alpha.php');
 require_once('extern/html2pdf/html2pdf_tpl.php');
@@ -51,7 +61,7 @@ function print_text($pdf,$ID,$report,$el){
 		# as HTML
 		if($style[42] == "true"){
 			# print border
-			if(substr($style[16],0,strlen($style[16])-2)){
+			if(lmb_substr($style[16],0,lmb_strlen($style[16])-2)){
 				$prv = array('',$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'rect');
 				$pdf->print_element($pdf->printcell($prv),$el);
 			}
@@ -142,7 +152,7 @@ function print_ureport($pdf,$ID,$report,$el){
 	if($report["pic_typ"][$el] == 1){
 
 		# ID Array
-		if(substr($report["parameter"][$el],0,6) == "return"){
+		if(lmb_substr($report["parameter"][$el],0,6) == "return"){
 			eval(str_replace("return","\$arg_result = ",$report["parameter"][$el]));
 			foreach ($arg_result as $key => $value){
 				merge_subReport($pdf,$value,$subreportid);
@@ -194,7 +204,7 @@ function print_formel($pdf,$ID,&$report,$el){
 	# eval
 	$report_value = trim($report["value"][$el]);
 	if($report_value OR $report_value == "0"){
-		if(substr($report_value,0,6) == "return"){
+		if(lmb_substr($report_value,0,6) == "return"){
 			eval(str_replace("return","\$arg_result = ",$report_value));
 		}else{
 			eval($report_value);
@@ -206,7 +216,7 @@ function print_formel($pdf,$ID,&$report,$el){
 		# as HTML
 		if($style[42] == "true"){
 			# print border
-			if(substr($style[16],0,strlen($style[16])-2)){
+			if(lmb_substr($style[16],0,lmb_strlen($style[16])-2)){
 				$prv = array('',$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'rect');
 				$pdf->print_element($pdf->printcell($prv),$el);
 			}
@@ -231,7 +241,7 @@ function print_dbdat($pdf,$ID,$report,$el){
 	#global $pdf;
 	#global $element;
 	#global $notInsertLn;
-
+        
 	if(!$report["dbvalue"][$el]){$pdf->notInsertLn = 1;return true;}
 
 	$dbvalue = $report["dbvalue"][$el];
@@ -252,8 +262,8 @@ function print_dbdat($pdf,$ID,$report,$el){
 	}else{
 		$value = $report_dbvalue[0];
 	}
-		
-	# hidden
+
+        # hidden
 	if(!hide_element($pdf,$report["style"][$el][29])){
 		if(!$value){$pdf->notInsertLn = 1;return true;}
 		
@@ -266,7 +276,7 @@ function print_dbdat($pdf,$ID,$report,$el){
 			$pdf->useTemplate($tplidx,$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el]);
 		}elseif($valuetype == "HTML"){
 			# print border
-			if(substr($style[16],0,strlen($style[16])-2)){
+			if(lmb_substr($style[16],0,lmb_strlen($style[16])-2)){
 				$prv = array('',$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'rect');
 				$pdf->print_element($pdf->printcell($prv),$el);
 			}
@@ -278,7 +288,7 @@ function print_dbdat($pdf,$ID,$report,$el){
 		}else{
 			# hidden
 			$prv = array($value,$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'dbdat');
-			$pdf->print_element($pdf->printcell($prv));
+                        $pdf->print_element($pdf->printcell($prv));
 		}
 	
 	}else{
@@ -309,16 +319,17 @@ function print_bild($pdf,$ID,$report,$el){
 	if(hide_element($pdf,$report["style"][$el][29])){return true;}
 
 	# PDF Integration
-	if(strtolower($org_extension) == "pdf"){
-		if(strpos($pic_orgname,$umgvar['path']) === false){
+	if(lmb_strtolower($org_extension) == "pdf"){
+		if(lmb_strpos($pic_orgname,$umgvar['path']) === false){
 			$report_value = $umgvar['uploadpfad']."report/".$pic_orgname;
 		}else{
 			$report_value = $pic_orgname;
 		}
-		$pagecount = $pdf->setSourceFile($report_value);
-		$tplidx = $pdf->ImportPage(1);
-		$pdf->useTemplate($tplidx,$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el]);
 
+		$pageCount = $pdf->setSourceFile($report_value);
+		$tplidx = $pdf->ImportPage(1);
+		$o = $pdf->useTemplate($tplidx,$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el]);
+		
 		# Hintergrund-Rechteck ----------------------------
 		$prv = array($report_value,$report["posx"][$el],$report["posy"][$el],$report["width"][$el],$report["height"][$el],$report["style"][$el],'bild');
 		$par = $pdf->printcell($prv);
@@ -381,7 +392,7 @@ function GetDefaultType(){
 					'WIDTH' => 100,
 					'T_COLOR' => array(0,0,0),
 					'T_SIZE' => 10,
-					'T_FONT' => 'Arial',
+					/*'T_FONT' => 'helvetica',*/
 					'T_ALIGN' => 'L',
 					'V_ALIGN' => 'T',
 					'T_TYPE' => 'B',
@@ -393,7 +404,7 @@ function GetDefaultType(){
 	$default["data"] = array(
 					'T_COLOR' => array(0,0,0),
 					'T_SIZE' => 10,
-					'T_FONT' => 'Arial',
+					/*'T_FONT' => 'arial',*/
 					'T_ALIGN' => 'L',
 					'V_ALIGN' => 'T',
 					'T_TYPE' => '',
@@ -448,7 +459,7 @@ function print_tab($pdf,$ID,$report,$el){
 	$default["table"]['L_MARGIN'] = ($report["posx"][$el] - $report["page_style"][4]);
 	# Border
 	if(doubleval($report_style[16]) AND $report_style[15] AND $report_style[14] != "none"){
-		$default["table"]["BRD_COLOR"] = explode(",",hexdec(substr($report_style[15], 1, 2)).",".hexdec(substr($report_style[15], 3, 2)).",".hexdec(substr($report_style[15], 5, 2)));
+		$default["table"]["BRD_COLOR"] = explode(",",hexdec(lmb_substr($report_style[15], 1, 2)).",".hexdec(lmb_substr($report_style[15], 3, 2)).",".hexdec(lmb_substr($report_style[15], 5, 2)));
 		$default["table"]["BRD_SIZE"] = $report_style[16];
 	}else{
 		$default["table"]["BRD_COLOR"] = 0;
@@ -456,7 +467,7 @@ function print_tab($pdf,$ID,$report,$el){
 	}
 	
 	if($report_style[21]){
-		#$default["table"]["BG_COLOR"] = explode(",",hexdec(substr($report_style[21], 1, 2)).",".hexdec(substr($report_style[21], 3, 2)).",".hexdec(substr($report_style[21], 5, 2)));
+		#$default["table"]["BG_COLOR"] = explode(",",hexdec(lmb_substr($report_style[21], 1, 2)).",".hexdec(lmb_substr($report_style[21], 3, 2)).",".hexdec(lmb_substr($report_style[21], 5, 2)));
 	}
 
 	# DEFAULT cellpadding
@@ -551,7 +562,7 @@ function print_tab($pdf,$ID,$report,$el){
 				/*------- Alle Elemente einer Zelle (für Einzelelemente z.B. TEXT/Formel) ---------*/
 				$bzm4 = 1;
 				while(odbc_fetch_row($rs, $bzm4)) {
-					$value = lmb_utf8_decode(trim(odbc_result($rs, "INHALT")),1); # longtext handle
+					$value = trim(odbc_result($rs, "INHALT")); # longtext handle
 					$typ = odbc_result($rs, "TYP");
 					$dbelstyle = explode(";",odbc_result($rs, "STYLE"));
 					
@@ -568,7 +579,7 @@ function print_tab($pdf,$ID,$report,$el){
 							$rtab_value = trim($value);
 							if($rtab_value OR $rtab_value == "0"){
 								$arg_result = null;
-								if(substr($rtab_value,0,6) == "return"){
+								if(lmb_substr($rtab_value,0,6) == "return"){
 									eval(str_replace("return","\$arg_result = ",$rtab_value));
 								}else{
 									eval($rtab_value);
@@ -623,7 +634,7 @@ function print_tab($pdf,$ID,$report,$el){
 				}
 
 				if($cellvalue){
-					if($seperator[$bzm2."_".$i] AND substr($seperator[$bzm2."_".$i],0,1) != "#"){
+					if($seperator[$bzm2."_".$i] AND lmb_substr($seperator[$bzm2."_".$i],0,1) != "#"){
 						$seperator_ = str_replace("\\\\t","\t",str_replace("\\\\n","\n",$seperator[$bzm2."_".$i]));
 						$cellvalue = trim(implode($seperator_,$cellvalue));
 					}else{
@@ -929,9 +940,13 @@ function store_pdf(&$pdf,$report,$ID,$report_rename=null){
 	$name = reportSavename($report["name"],$report["savename"],$ID,"pdf",$report_rename);
 	$out = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/".$name;
 	# ------- pdf schreiben ---------
-	$pdf->Output(lmb_utf8_encode($out)); # save as utf8
-
-	# use postscript to compress
+        if(lmb_strtoupper($umgvar['charset']) == 'UTF-8') {
+            $pdf->Output(lmb_utf8_encode($out), 'F'); // function of tfpdf
+        } else {
+            $pdf->Output('F', lmb_utf8_encode($out)); // function of fpdf
+        }
+        
+        # use postscript to compress
 	if($umgvar["use_gs"] AND file_exists($out)){
 		rename($out,$out."gs");
 		$sys = exec("cd ".$umgvar["pfad"]."/USER/".$session["user_id"]."/temp/; gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=$name ".$out."gs");

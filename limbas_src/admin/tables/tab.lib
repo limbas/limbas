@@ -63,18 +63,18 @@ function parse_db_syntax($name,$typ=0,$i=0){
 	global $gtab;
 	
 	if($i){
-		$end = substr($name,strlen($name)-2,2);
-		if(substr($end,0,1) == "_" AND is_numeric(substr($end,1,1))){
-			$i = substr($end,1,1)+1;
-			$name = substr($name,0,strlen($name)-2)."_".$i;
+		$end = lmb_substr($name,lmb_strlen($name)-2,2);
+		if(lmb_substr($end,0,1) == "_" AND is_numeric(lmb_substr($end,1,1))){
+			$i = lmb_substr($end,1,1)+1;
+			$name = lmb_substr($name,0,lmb_strlen($name)-2)."_".$i;
 		}else{
-			$name = substr($name,0,30)."_".$i;
+			$name = lmb_substr($name,0,30)."_".$i;
 		}
 	}else{
 		$name = preg_replace("/[^A-Za-z0-9]/","_",$name);
 		$name = preg_replace("/[_]{1,}/","_",$name);
-		if(!preg_match("/[A-Za-z]/",substr($name,0,1))){$name = "L".$name;}
-		$name = substr($name,0,32);
+		if(!preg_match("/[A-Za-z]/",lmb_substr($name,0,1))){$name = "L".$name;}
+		$name = lmb_substr($name,0,32);
 	}
 	
 	# Duplikate prüfen Tabelle
@@ -92,7 +92,7 @@ function parse_db_syntax($name,$typ=0,$i=0){
 		$sqlquery = "SELECT ID,SQL_92 FROM LMB_SQLRESERVED";
 		if($rs = @odbc_exec($db,$sqlquery)){
 			while(odbc_fetch_row($rs)){
-				$sqlreserved[] = strtoupper(odbc_result($rs, "SQL_92"));
+				$sqlreserved[] = lmb_strtoupper(odbc_result($rs, "SQL_92"));
 			}
 		}
 	}else{
@@ -100,7 +100,7 @@ function parse_db_syntax($name,$typ=0,$i=0){
 	}
 
 	
-	if(in_array(strtoupper($name),$sqlreserved) OR $odbc_res){
+	if(in_array(lmb_strtoupper($name),$sqlreserved) OR $odbc_res){
 		$i = $i+1;
 		$name = parse_db_syntax($name,$typ,$i);
 	}
@@ -280,7 +280,7 @@ function delete_field_table($atid,$column_id,$drop_physical=true) {
         
         // --------- auf rekursives Verknüpfungsview suchen -------------
         if ($hasrecverkn) {
-            $sqlquery2 = "SELECT MD5TAB,FIELD_NAME,FIELD_ID,TAB_ID FROM LMB_CONF_FIELDS WHERE HASRECVERKN = (SELECT FIELD_ID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '" . dbf_4($md5tab) . "' AND VERKNTABLETYPE = 2)";
+            $sqlquery2 = "SELECT MD5TAB,FIELD_NAME,FIELD_ID,TAB_ID FROM LMB_CONF_FIELDS WHERE HASRECVERKN = (SELECT FIELD_ID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '" . lmb_strtolower($md5tab) . "' AND VERKNTABLETYPE = 2)";
             $rs2 = odbc_exec($db, $sqlquery2) or errorhandle(odbc_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
             $basemd5 = dbf_4(odbc_result($rs2, "MD5TAB"));
             $basefield = dbf_4(odbc_result($rs2, "FIELD_NAME"));
@@ -366,14 +366,14 @@ function delete_field_table($atid,$column_id,$drop_physical=true) {
 			$md5tab = $odbc_table["table_name"][0];
 			if($md5tab) {
 				# --------- Verknüpfungstabelle löschen -------------
-				if($verkntabletype == 1 AND strtoupper($odbc_table["table_type"][0] == "TABLE")){
+				if($verkntabletype == 1 AND lmb_strtoupper($odbc_table["table_type"][0] == "TABLE")){
 					# drop sequence
 					if(LMB_DBFUNC_SEQUENCE){dbf_22(array("",dbf_4("SEQ_".dbf_4($md5tab)."_KEYID")));}
 					# drop table
 					$sqlquery1 = "DROP TABLE ".dbf_4($md5tab);
 					$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 					# --------- Verknüpfungsview löschen -------------
-				}elseif(($verkntabletype == 2 OR $verkntabletype == 3) AND strtoupper($odbc_table["table_type"][0] == "VIEW")){
+				}elseif(($verkntabletype == 2 OR $verkntabletype == 3) AND lmb_strtoupper($odbc_table["table_type"][0] == "VIEW")){
 					$viewinfo = lmb_getViewInfo($md5tab);
 					lmb_dropView($md5tab);
 			    	lmb_deleteTriggerForTable($viewinfo);
@@ -402,7 +402,7 @@ function delete_field_table($atid,$column_id,$drop_physical=true) {
                     $prefix = 'LANG' . $langID . '_';
                     
                     // drop fields
-                    if(in_array(strtolower($prefix.$field_name),$fielddev['columnname_lower'])){
+                    if(in_array(lmb_strtolower($prefix.$field_name),$fielddev['columnname_lower'])){
                         $sqlquery = dbq_22(array($del_tabelle,$prefix . $field_name));
                         $rs = @odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
                     }
@@ -413,7 +413,7 @@ function delete_field_table($atid,$column_id,$drop_physical=true) {
 	}
 	
 	// create EXIF conf
-	if(strtolower($del_tabelle) == 'ldms_meta'){
+	if(lmb_strtolower($del_tabelle) == 'ldms_meta'){
 	   require_once('extra/explorer/metadata.lib'); 
 	   create_exif_conf();
     }
@@ -500,13 +500,13 @@ function delete_tab($tabid,$drop_physical=true) {
 	
 	
 	# Tabelle löschen
-	if(substr($gtab,0,4) != "LMB_" AND $typ != 5){
+	if(lmb_substr($gtab,0,4) != "LMB_" AND $typ != 5){
 		if($drop_physical){
 			$sqlquery = "DROP TABLE ".dbf_4($gtab);
 			$rs1 = @odbc_exec($db,$sqlquery);
 		}
 	# View löschen
-	}elseif(substr($gtab,0,4) != "LMB_" AND $typ == 5){
+	}elseif(lmb_substr($gtab,0,4) != "LMB_" AND $typ == 5){
 		$sqlquery = "DELETE FROM LMB_CONF_VIEWS WHERE ID = $tabid";
 		$rs1 = @odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if($drop_physical){
@@ -681,8 +681,8 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 		foreach ($sysfields as $key => $value){
 			if(!in_array(dbf_4($value),$existing_columns["columnname"])){
 				$addfields[] = $value." ".$sysfieldtyp[$key];
-				#if(strtoupper($value) == "ID"){$new_prikey = 1;}
-				#if(strtoupper($value) == "DEL"){$new_del = 1;}
+				#if(lmb_strtoupper($value) == "ID"){$new_prikey = 1;}
+				#if(lmb_strtoupper($value) == "DEL"){$new_del = 1;}
 			}
 		}
 
@@ -737,7 +737,7 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 		$gtable_ = $gtable;
 		$gtable = parse_db_syntax($gtable,1);
 		
-		if(strtoupper($gtable) != strtoupper($gtable_)){
+		if(lmb_strtoupper($gtable) != lmb_strtoupper($gtable_)){
 			lmb_alert("table already exists or misspelled!\\ntable renamed to \\\"$gtable\\\"");
 		}
 
@@ -939,7 +939,7 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	$field_ = $field;
 	if($import_typ != "tab"){$field = parse_db_syntax($field,$table);}
 
-	if(strtoupper($field) != strtoupper($field_)){
+	if(lmb_strtoupper($field) != lmb_strtoupper($field_)){
 		lmb_alert("field already exists or misspelled!\\nfield renamed to \\\"$field\\\"");
 	}
 
@@ -1054,8 +1054,8 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	
 	/* Defaultwert*/
 	if($default){
-		if(@constant("LMB_DBDEF_".strtoupper($default))){
-			$default = "DEFAULT ".constant("LMB_DBDEF_".strtoupper($default));
+		if(@constant("LMB_DBDEF_".lmb_strtoupper($default))){
+			$default = "DEFAULT ".constant("LMB_DBDEF_".lmb_strtoupper($default));
 		}else{
 			$default = "DEFAULT $default";
 		}
@@ -1073,7 +1073,7 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	if($fieldtyp != 14 AND $fieldtyp != 15 AND $fieldtyp != 17 AND $datatyp != 22 AND $datatyp != 41 AND $parsetype != 100){
 		if(!$datentyp){return false;}
 		if($import_typ != "tab"){
-			$sqlquery =  "ALTER TABLE ".strtoupper($table)." ADD $field $datentyp $property $default";
+			$sqlquery =  "ALTER TABLE ".lmb_strtoupper($table)." ADD $field $datentyp $property $default";
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 		}
@@ -1100,8 +1100,8 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 
 
 	/* --- Sprachtabelle -------- */
-    $description_id = lang_add($session["language"],4,$table.":".strtoupper($field),$description,"_DEPEND");
-    $spellingf_id = lang_add($session["language"],4,$table.":".strtoupper($field),$spellingf,"_DEPEND");
+    $description_id = lang_add($session["language"],4,$table.":".lmb_strtoupper($field),$description,"_DEPEND");
+    $spellingf_id = lang_add($session["language"],4,$table.":".lmb_strtoupper($field),$spellingf,"_DEPEND");
 
 
 	$new_id = next_db_id("LMB_CONF_FIELDS");
@@ -1116,7 +1116,7 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	
 	if($field_id == 1){$fieldkey = LMB_DBDEF_TRUE;} else {$fieldkey = LMB_DBDEF_FALSE;}
 	/* --- Verknüpfungstabelle -------- */
-	if($datatyp == 24 OR $datatyp == 27){$newmd5tab = "VERK_".substr(md5(strtoupper($table).strtoupper($field).time()),0,13);}
+	if($datatyp == 24 OR $datatyp == 27){$newmd5tab = "VERK_".lmb_substr(md5(lmb_strtoupper($table).lmb_strtoupper($field).time()),0,13);}
 	if($sort){$new_sort = $sort;}else{
 		$sqlquery =  "SELECT MAX(SORT) AS NEXTID FROM LMB_CONF_FIELDS WHERE TAB_ID = $gtabid";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -1135,7 +1135,7 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	}
 	
 	$sqlquery = "INSERT INTO LMB_CONF_FIELDS (ID,FIELD_ID,TAB_ID,TAB_GROUP,SORT,FIELD_NAME,FORM_NAME,BESCHREIBUNG,FIELD_TYPE,DATA_TYPE,NEED,SPELLING,FIELDKEY,ARGUMENT,SELECT_SORT,NFORMAT,MD5TAB,INHERIT_TAB,INHERIT_FIELD,ARGUMENT_TYP,EXT_TYPE,SELECT_POOL $insd) VALUES
-	($new_id,$field_id,$gtabid,$groupid,$new_sort,'".strtoupper($field)."','".strtolower($field)."','$description_id',$fieldtyp,$datatyp,".LMB_DBDEF_FALSE.",'$spellingf_id',$fieldkey,'$argument','$select_sort','$nformat','$newmd5tab',$inherit_tab,$inherit_field,$argument_typ,'$extension',".parse_db_int($inherit_pool)." $insv)";
+	($new_id,$field_id,$gtabid,$groupid,$new_sort,'".lmb_strtoupper($field)."','".lmb_strtolower($field)."','$description_id',$fieldtyp,$datatyp,".LMB_DBDEF_FALSE.",'$spellingf_id',$fieldkey,'$argument','$select_sort','$nformat','$newmd5tab',$inherit_tab,$inherit_field,$argument_typ,'$extension',".parse_db_int($inherit_pool)." $insv)";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
@@ -1153,7 +1153,7 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 		lmb_rebuildSequences($newmd5tab,'KEYID');
 		/* --- Wärung -------- */
 	}elseif($datatyp == 30){
-		$sqlquery =  "ALTER TABLE ".strtoupper($table)." ADD ".$field."_C ".LMB_DBTYPE_VARCHAR."(5)";
+		$sqlquery =  "ALTER TABLE ".lmb_strtoupper($table)." ADD ".$field."_C ".LMB_DBTYPE_VARCHAR."(5)";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		# ---- Upload Ordnerstruktur anlegen -----------------
@@ -1166,16 +1166,16 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	/* --- build Index for relations ---- */
 	if($datatyp == 24 OR $datatyp == 27){
 		# ID
-		$sqlquery = dbq_4(array($DBA["DBSCHEMA"],"LMBINDV_".substr(md5($newmd5tab."_ID"),0,12),$newmd5tab,"ID"));
+		$sqlquery = dbq_4(array($DBA["DBSCHEMA"],"LMBINDV_".lmb_substr(md5($newmd5tab."_ID"),0,12),$newmd5tab,"ID"));
 		$rs3 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs3) {$commit = 1;}
 		# SORT
-		$sqlquery = dbq_4(array($DBA["DBSCHEMA"],"LMBINDV_".substr(md5($newmd5tab."_SORT"),0,12),$newmd5tab,"SORT"));
+		$sqlquery = dbq_4(array($DBA["DBSCHEMA"],"LMBINDV_".lmb_substr(md5($newmd5tab."_SORT"),0,12),$newmd5tab,"SORT"));
 		$rs3 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs3) {$commit = 1;}
 		
 		# VERKN_ID
-		$indname = "LMBINDV_".substr(md5($newmd5tab."_VERKN_ID"),0,12);
+		$indname = "LMBINDV_".lmb_substr(md5($newmd5tab."_VERKN_ID"),0,12);
 		# only n:m
 		if($datatyp == 24){
 			$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$newmd5tab,"VERKN_ID"));
@@ -1195,7 +1195,7 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	}
 	
 	// create EXIF conf
-	if(strtolower($table) == 'ldms_meta'){
+	if(lmb_strtolower($table) == 'ldms_meta'){
 	   require_once('extra/explorer/metadata.lib');
 	   create_exif_conf();
     }
@@ -1220,7 +1220,7 @@ function lmb_renameTable($tabid,$tabname){
 	$tabname_ = $tabname;
 	$tabname = parse_db_syntax($tabname,1);
 
-	if(strtoupper($tabname) != strtoupper($tabname_)){
+	if(lmb_strtoupper($tabname) != lmb_strtoupper($tabname_)){
 		lmb_alert("table already exists or misspelled!\\ntable renamed to \\\"$tabname\\\"");
 	}
 	
@@ -1262,7 +1262,7 @@ function lmb_renameField($tabid,$fieldid,$fieldname){
 	$fieldname_ = $fieldname;
 	$fieldname = parse_db_syntax($fieldname);
 
-	if(strtoupper($fieldname) != strtoupper($fieldname_)){
+	if(lmb_strtoupper($fieldname) != lmb_strtoupper($fieldname_)){
 		lmb_alert("table already exists or misspelled!\\ntable renamed to \\\"$fieldname\\\"");
 	}
 	
@@ -1542,10 +1542,10 @@ function lmb_set_multi_language($atid,$fieldid,$add,$langid=null){
             if($add){
                // long
                if($data_type == 39){
-                    $sqlquery =  "ALTER TABLE ".strtoupper($table_name)." ADD ".$prefix.$field_name." ".$fielddev['datatype'][0];
+                    $sqlquery =  "ALTER TABLE ".lmb_strtoupper($table_name)." ADD ".$prefix.$field_name." ".$fielddev['datatype'][0];
                //varchar
                }else{
-                    $sqlquery =  "ALTER TABLE ".strtoupper($table_name)." ADD ".$prefix.$field_name." ".$fielddev['datatype'][0]."(".$fielddev['length'][0].")";
+                    $sqlquery =  "ALTER TABLE ".lmb_strtoupper($table_name)." ADD ".$prefix.$field_name." ".$fielddev['datatype'][0]."(".$fielddev['length'][0].")";
                }
                $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     		
@@ -1795,7 +1795,7 @@ function parse_db_type($convert_type,$new_size,$default_size){
 
 	$ct = explode("(",$convert_type);
 	if(!$ct[0]){return false;}
-	$ct[0] = strtoupper($ct[0]);
+	$ct[0] = lmb_strtoupper($ct[0]);
 	if($ct[1]){$ext_datatype = "(".trim($ct[1]);}
 	$real_datatype = constant("LMB_DBTYPE_".trim($ct[0]));
 	$default_size = str_replace(".",",",$default_size);

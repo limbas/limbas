@@ -21,7 +21,7 @@
 
 require("include.lib");
 
-if(strpos($HTTP_USER_AGENT,"MSIE")){$browser = "ie";}else{$browser = "ns";}
+if(lmb_strpos($HTTP_USER_AGENT,"MSIE")){$browser = "ie";}else{$browser = "ns";}
 
 # ---- Select - Verkn�pfung --------
 function soapdyns_1($value,$form_name,$gtabid,$fieldid,$par3,$par4,$par5){

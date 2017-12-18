@@ -37,6 +37,6 @@
 
 <div>
     <input type="hidden" name="db_test" value="validate">
-    <button type="button" class="btn btn-default" onclick="switchToStep('<?php $s=array_keys($steps); echo $s[3]?>')">Back</button>
-    <button type="submit" class="btn btn-info pull-right" name="install" value="<?php $s=array_keys($steps); echo $s[5]?>">Next step</button>
+    <button type="button" class="btn btn-default" onclick="switchToStep('<?= array_keys($steps)[3] ?>')">Back</button>
+    <button type="submit" class="btn btn-info pull-right" name="install" value="<?= array_keys($steps)[5] ?>">Next step</button>
 </div>

@@ -20,7 +20,7 @@
 
 if (is_numeric($ID)){
 	if($file = file_download($ID,$convert)){
-		if($sendas OR substr($file["name"],strlen($file["name"])-3,3) == "php"){
+		if($sendas OR lmb_substr($file["name"],lmb_strlen($file["name"])-3,3) == "php"){
 		    header("Content-Type: ".$file["mimetype"]);
 		    header("Content-Length: ".filesize($file["path"]));
 		    if($sendas == "a"){

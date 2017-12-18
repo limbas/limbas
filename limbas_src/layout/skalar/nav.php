@@ -60,7 +60,7 @@ function listdata(ID,NR,TABLE_TOP){
 	// must be opened
 	}else{
 		<?//firefox without getElementByName
-		if(strpos($_SERVER["HTTP_USER_AGENT"],"MSIE")<1){?>
+		if(lmb_strpos($_SERVER["HTTP_USER_AGENT"],"MSIE")<1){?>
 		child = document.getElementsByName(NR);
 
 		for(i=0;i<child.length;i++){
@@ -427,6 +427,8 @@ if($menu_setting["frame"]["nav"] AND $menu_setting["frame"]["nav"] <= 30){
 <div style="clear:both;height:6px;overflow:hidden;"></div>
 
 <?php
+// index for #arrowSub{$tabGroupIndex} and #subElt_{$tabGroupIndex}
+$tabGroupIndex = 0;
 
 $defaultExpandMenu = "none";
 if(!$dwme = $menu_setting["frame"]["nav"]){
@@ -507,12 +509,12 @@ foreach($menu as $key1 => $menuType){
 						}else{$img ='';}
 
 						$cursor = "";
-						if(substr($element["link"],0,4) == 'main'){
+						if(lmb_substr($element["link"],0,4) == 'main'){
 							$onclick = "onclick=\"".$element["onclick"].";parent.main.location.href='".$element["link"]."'\"";
 						}elseif($element["link"]){
 							$onclick = "onclick=\"".$element["onclick"].";".$element["link"]."\"";
 						}else{
-							$onclick = "onclick=\"hideShowSub('$key1','" . $element["name"] . "')\"";
+							$onclick = "onclick=\"hideShowSub('$key1','" . $tabGroupIndex . "')\"";
 							$cursor = "cursor:default;";
 						}
 
@@ -520,12 +522,12 @@ foreach($menu as $key1 => $menuType){
 						$menuValue = (is_numeric($element["name"])?$lang[$element["name"]]:$element["name"]);
 						echo "<a style=\"overflow:hidden;\" class=\"lmbMenuItemBodyNav\" $onclick><div id=\"mel_".$firstLevel["id"]."_".$element["id"]."\" style=\"width:".($dwme-100)."px;cursor:pointer;".$element["style"]."\">".$menuValue."</div></a>";
 						
-						if($menu_setting["submenu"][$key1."_".$element["name"]]){$eldispl = "";}else{$eldispl = $defaultExpandMenu;}
+						if($menu_setting["submenu"][$key1."_".$tabGroupIndex]){$eldispl = "";}else{$eldispl = $defaultExpandMenu;}
 
 						if($element["child"]){
 							if($eldispl){$sadr = " lmb-caret-right ";}else{$sadr = " lmb-caret-down ";}
-							echo "<td class=\"lmbMenuItemBodyNav\" width=\"100%\" align=\"right\" onclick=\"hideShowSub('$key1','" . $element["name"] . "')\" style=\"cursor:pointer\">";
-                                                        echo "<i id=\"arrowSub" . $element["name"] . "\" class=\"lmb-icon $sadr\"></i>";
+							echo "<td class=\"lmbMenuItemBodyNav\" width=\"100%\" align=\"right\" onclick=\"hideShowSub('$key1','" . $tabGroupIndex . "')\" style=\"cursor:pointer\">";
+                                                        echo "<i id=\"arrowSub" . $tabGroupIndex . "\" class=\"lmb-icon $sadr\"></i>";
                                                         echo "</td>";
 						}else{
 							echo "<td>&nbsp;</td>";
@@ -535,7 +537,7 @@ foreach($menu as $key1 => $menuType){
 
 						foreach ($element["child"] as $key4 => $subelement) {
 							$cursor = "";
-							if(substr($subelement["link"],0,4) == 'main'){
+							if(lmb_substr($subelement["link"],0,4) == 'main'){
 								$onclick = "onclick=\"".$subelement["onclick"].";parent.main.location.href='".$subelement["link"]."'\"";
 							}elseif($subelement["link"]){
 								$onclick = "onclick=\"".$subelement["onclick"].";".$subelement["link"]."\"";
@@ -548,7 +550,7 @@ foreach($menu as $key1 => $menuType){
 								$img = "<i border=\"0\" class=\"lmb-icon " . $subelement["icon"] . "\" style=\"vertical-align:text-bottom\"></i>" ;
 							}else{$img = "";}
 							
-							echo "<tr id=\"subElt_" . $element["name"] . "\" style=\"display:$eldispl;overflow:hidden;width:100px\"><td>&nbsp;</td>";
+							echo "<tr id=\"subElt_" . $tabGroupIndex . "\" style=\"display:$eldispl;overflow:hidden;width:100px\"><td>&nbsp;</td>";
 							echo "<td colspan=\"2\" class=\"contentSub\" nowrap title=\"" . $subelement["desc"] . "\"><div id=\"mel_".$firstLevel["id"]."_".$element["id"]."_".$subelement["id"]."\" style=\"width:".($dwme-110).";".$subelement["style"]."\">";
 
 							$textToDisplay = (is_numeric($subelement["name"])?$lang[$subelement["name"]]:$subelement["name"]);
@@ -557,6 +559,8 @@ foreach($menu as $key1 => $menuType){
 							echo "</div></td></tr>";
 							$elnr++;
 						}
+                                                
+                                                $tabGroupIndex++;
 					}
 				}
 

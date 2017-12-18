@@ -20,7 +20,7 @@
 
 
 
-function menu_get_standard($id,$bzm){
+function menu_get_standard($id, $bzm){
 	global $LINK;
 	global $lang;
 
@@ -56,7 +56,7 @@ function menu_get_standard($id,$bzm){
 
 
 # tables Snapshots
-function menu_get_snapshot($tabid){
+function menu_get_snapshot($tabid, $depth = null){
 	global $session;
 	global $db;
 	global $gsnap;
@@ -64,6 +64,7 @@ function menu_get_snapshot($tabid){
 	$menu = array();
 	if($gsnap[$tabid]["id"]){
 	foreach ($gsnap[$tabid]["id"] as $key => $value){
+		$menu[$bzm0]["depth"] = $depth;
 		$menu[$bzm0]["name"] = $gsnap[$tabid]["name"][$key];
 		$menu[$bzm0]["desc"] = $gsnap[$tabid]["name"][$key];
 		$menu[$bzm0]["link"] = "main.php?action=gtab_erg&gtabid=$tabid&snap_id=".$value."&frame_type=1";
@@ -78,7 +79,7 @@ function menu_get_snapshot($tabid){
 }
 
 # tables formulars
-function menu_get_forms($tabid,$typ){
+function menu_get_forms($tabid, $typ, $depth = null){
 	global $gformlist;
 	global $session;
 
@@ -90,6 +91,7 @@ function menu_get_forms($tabid,$typ){
 		if($typ == 1){
 			if($gformlist[$tabid]["hidden"][$key]){continue;}
 			if($gformlist[$tabid]["typ"][$key] == "2"){
+				$menu[$bzm]["depth"] = $depth;
 				$menu[$bzm]["name"] = $gformlist[$tabid]["name"][$key];
 				$menu[$bzm]["desc"] = $gformlist[$tabid]["name"][$key];
 				$menu[$bzm]["link"] = "main.php?action=gtab_erg&gtabid=$tabid&form_id=$value&HEADER=".urlencode($gformlist[$tabid]["name"][$key])."&ID=0";
@@ -99,6 +101,7 @@ function menu_get_forms($tabid,$typ){
 				$bzm++;
 			}
 		}else{
+			$menu[$bzm]["depth"] = $depth;
 			$menu[$bzm]["name"] = $gformlist[$tabid]["name"][$key];
 			$menu[$bzm]["desc"] = $gformlist[$tabid]["name"][$key];
 			$menu[$bzm]["link"] = "main_admin.php?action=setup_form_frameset&form_typ=".$gformlist[$tabid]["typ"][$key]."&form_id=$value&referenz_tab=".$gformlist[$tabid]["ref_tab"][$key];
@@ -114,7 +117,7 @@ function menu_get_forms($tabid,$typ){
 }
 
 # tables reports
-function menu_get_reports($tabid,$typ){
+function menu_get_reports($tabid, $typ, $depth = null){
 	global $greportlist;
 	global $session;
 
@@ -123,9 +126,10 @@ function menu_get_reports($tabid,$typ){
 	$bzm = 0;
 	if($greportlist[$tabid]["id"]){
 	foreach ($greportlist[$tabid]["id"] as $key => $value){
-		if($typ == 1){
+        if($typ == 1){
 			if($greportlist[$tabid]["hidden"][$key]){continue;}
 			if($greportlist[$tabid]["listmode"][$key]){
+				$menu[$bzm]["depth"] = $depth;
 				$menu[$bzm]["name"] = $greportlist[$tabid]["name"][$key];
 				$menu[$bzm]["desc"] = $greportlist[$tabid]["name"][$key];
 				$menu[$bzm]["link"] = "print_report($tabid,$value,'".$greportlist[$tabid]["defformat"][$key]."');";
@@ -139,6 +143,7 @@ function menu_get_reports($tabid,$typ){
 				$bzm++;
 			}
 		}else{
+			$menu[$bzm]["depth"] = $depth;
 			$menu[$bzm]["name"] = $greportlist[$tabid]["name"][$key];
 			$menu[$bzm]["desc"] = $greportlist[$tabid]["name"][$key];
 			$menu[$bzm]["link"] = "main_admin.php?action=setup_report_frameset&report_id=$value&referenz_tab=$tabid";
@@ -158,7 +163,7 @@ function menu_get_reports($tabid,$typ){
 }
 
 # tables diagramms
-function menu_get_diagramms($tabid,$typ){
+function menu_get_diagramms($tabid, $typ, $depth = null){
 	global $session;
 	global $gdiaglist;
 
@@ -168,6 +173,7 @@ function menu_get_diagramms($tabid,$typ){
 	if($gdiaglist[$tabid]["id"]){
 	foreach ($gdiaglist[$tabid]["id"] as $key => $value){
 		if($gdiaglist[$tabid]["hidden"][$key]){continue;}
+		$menu[$bzm]["depth"] = $depth;
 		$menu[$bzm]["name"] = $gdiaglist[$tabid]["name"][$key];
 		$menu[$bzm]["desc"] = $gdiaglist[$tabid]["desc"][$key];
 		if($typ == 1){
@@ -186,12 +192,13 @@ function menu_get_diagramms($tabid,$typ){
 }
 
 # newdata
-function menu_get_newdata($tabid){
+function menu_get_newdata($tabid, $depth){
 	global $session;
 	global $lang;
 	
 	$menu = array();
 	$bzm = 0;
+	$menu[$bzm]["depth"] = $depth;
 	$menu[$bzm]["name"] = "<span style=\"color:green\">".$lang[349]."</span>";
 	$menu[$bzm]["desc"] = $lang[2741];
 	$menu[$bzm]["link"] = "main.php?action=gtab_neu&gtabid=$tabid";
@@ -203,182 +210,172 @@ function menu_get_newdata($tabid){
 	return $menu;
 }
 
+/*
+ * Returns an array of all child tables, reports, forms and diagrams
+ * 
+ * @param $isAdmin                  bool exchanges user/admin links
+ * @param $parentTabGroupId         int  id of parent tabgroup
+ * @param $depth                    int  used for saving the current resursion depth
+ */
+function menu_get_child_artifacts($isAdmin, $parentTabGroupId = 0, $depth=0) {
+    global $gtab;
+    global $tabgroup;
+    
+    # return values and index for $allEntries
+    $allEntries = array();    
+    $allReports = array();
+    $allForms = array();
+    $allDiags = array();
+    $bzm = 0;
+
+    # for every table
+    if($depth > 0) {
+        foreach($gtab['tab_id'] as $tableKey => $tableId) {
+            # skip tables that are not in the parent tab group
+            if($gtab['tab_group'][$tableKey] != $parentTabGroupId) { continue; }
+
+            # skip tables that are hidden
+            if($gtab['hidemenu'][$tableKey]) { continue; }
+
+            # store depth, name and desc of table
+            $allEntries[$bzm]['depth'] = $depth;
+            $allEntries[$bzm]['name'] = $gtab['desc'][$tableKey];
+            $allEntries[$bzm]['desc'] = $gtab['desc'][$tableKey];        
+            $allEntries[$bzm]['id'] = $tableId;
+
+            # get correct link
+            if(!$isAdmin) {
+                # user link
+                $allEntries[$bzm]['link'] = "main.php?action=gtab_erg&gtabid=$tableId&frame_type=1";
+            } else if($gtab['typ'][$tableKey] == 5) {
+                # admin link to query editor
+                $allEntries[$bzm]['link'] = "main_admin.php?&action=setup_gtab_view&viewid=$tableId";
+            } else {
+                # admin link to table
+                $allEntries[$bzm]['link'] = "main_admin.php?&action=setup_gtab_ftype&tab_group=$parentTabGroupId&atid=$tableId&HEADER=" . urlencode($gtab['desc'][$tableId]);
+            }
+
+            # get correct icon
+            if($gtab['typ'][$tableKey] == 5) {
+                $allEntries[$bzm]['icon'] = ' lmb-query '; # query icon
+            } else {
+                $allEntries[$bzm]['icon'] = ' lmb-table '; # table icon
+            }
+
+            # get 'new entry'
+            if($gtab['typ'][$tableKey] != 5 && $gtab['add'][$tableId]) {
+                $childNewEntry = menu_get_newdata($tableId, $depth);
+            } else {
+                $childNewEntry = array();
+            }
+
+            # get snapshots
+            $childSnapshots = menu_get_snapshot($tableId, $depth);
+
+            # get forms
+            $childForms = menu_get_forms($tableId, $isAdmin ? 2 : 1, $depth);
+            $allForms = array_merge($allForms, $childForms);
+
+            # get reports
+            $childReports = menu_get_reports($tableId, $isAdmin ? 2 : 1, $depth);
+            $allReports = array_merge($allReports, $childReports);
+
+            # get diagrams
+            $childDiags = menu_get_diagramms($tableId, $isAdmin ? 2 : 1, $depth);
+            $allDiags = array_merge($allDiags, $childDiags);
+
+            # store subchildren
+            $allEntries[$bzm]['child'] = array_merge($childNewEntry, $childSnapshots, $childForms, $childReports, $childDiags);
+
+            $bzm++;
+        }
+    }
+    
+    # for every sub-group
+    foreach($tabgroup['id'] as $tabGroupKey => $tabGroupId) {
+        # skip tab groups, that arent a sub group of the parent tab group
+        if($depth > 0 && (!$tabgroup['level'][$tabGroupKey] || $tabgroup['level'][$tabGroupKey] != $parentTabGroupId)) { continue; }
+
+        # store depth, parent id, name, desc, link, icon and header=1 meaning it is a subgroup
+        $allEntries[$bzm]['depth'] = $depth;
+        $allEntries[$bzm]['parent'] = $tabgroup['level'][$tabGroupKey];
+        $allEntries[$bzm]['name'] = $tabgroup['name'][$tabGroupKey];
+        $allEntries[$bzm]['desc'] = $tabgroup['beschreibung'][$tabGroupKey];
+        $allEntries[$bzm]['link'] = $isAdmin ? ('main_admin.php?' . SID . '&action=setup_tab&tab_group=' . $tabGroupId) : '';
+        $allEntries[$bzm]['icon'] = $tabgroup['icon'][$tabGroupKey];
+        $allEntries[$bzm]['header'] = 1;
+
+        # recursively get the child tabs/tabgroups, reports, forms, diags and add them to current arrays
+        $allChildEntries = menu_get_child_artifacts($isAdmin, $tabGroupId, $depth + 1);
+        $allEntries[$bzm]['child'] = $allChildEntries['allEntries'];
+        if($depth == 0){ # reports/forms/diags
+            $allReports = array_merge($allReports, $allChildEntries['allReports']);
+            $allForms = array_merge($allForms, $allChildEntries['allForms']);
+            $allDiags = array_merge($allDiags, $allChildEntries['allDiags']);
+        }
+
+        # remove tabgroup from array, if no children or only hidden children
+        if(!$allEntries[$bzm]['child']) {
+            unset($allEntries[$bzm]);
+        }
+        
+        $bzm++;
+    }
+    
+    # return all collected data
+    return array(
+        'allReports' => $allReports,
+        'allForms' => $allForms,
+        'allDiags' => $allDiags,
+        'allEntries' => $allEntries
+    );
+}
 
 # tables
-function menu_get_tables($typ){
-	global $gtab;
-	global $tabgroup;
-	global $LINK;
-	global $session;
+function menu_get_artifacts($isAdmin) {
+    global $gtab;
+    global $tabgroup;
+        
+    # get all reports / forms / diags / tables sorted into tab groups, tables both
+    # iteratively (meaning all tab groups are at depth 0) and
+    # recursively (meaning all tab groups are children of their parent tab groups)
+    $childArr = menu_get_child_artifacts($isAdmin);
+    
+    # for the admin nav, we dont want the tab group in a hierarchical structure, but in one array
+    if($isAdmin) {
+        # -> remove all tabgroups on depth > 0
+        foreach($childArr['allEntries'] as $tabKey => $tab) {
+            if($tab['header'] && $tab['header'] == 1 && $tab['child'] && is_array($tab['child'])) {
+                foreach($tab['child'] as $childKey => $child) {
+                    if($child['header'] && $child['header'] == 1 && $child['child']) {
+                        unset($childArr['allEntries'][$tabKey]['child'][$childKey]);
+                    } else {
+                        unset($childArr['allEntries'][$tabKey]['child'][$childKey]['child']);
+                    }
+                }
+            }
+        }
+    
+    # for the user nav, we want the tab groups to be in a hierarchical structure
+    } else {
+        # -> remove all tables on depth 0 with parent != 0
+        $childArr['allEntries'] = array_filter($childArr['allEntries'], function($elem) {
+            return $elem['parent'] == 0;
+        });
+    }
+   
+    return $childArr;
+}
 
-	$menu = array();
-	$allreps = array();
-	$allforms = array();
-	$alltabs = array();
-	$alldiags = array();
-
-	$bzm = 0;
-	if($tabgroup["id"]){
-	foreach ($tabgroup["id"] as $key => $value){
-		if($tabgroup["level"][$key]){continue;}	
-	
-		$tg = 0;
-		if($gtab["tab_id"]){
-		foreach ($gtab["tab_id"] as $key1 => $value1){
-			if($gtab["tab_group"][$key1] == $tabgroup["id"][$key] AND !$gtab["hidemenu"][$key1]){
-				$tg = 1;
-			}
-		}}
-
-		if($tg){
-		$menu[$bzm]["name"] = $tabgroup["name"][$key];
-		$menu[$bzm]["desc"] = $tabgroup["beschreibung"][$key];
-		$menu[$bzm]["gicon"] = $tabgroup["icon"][$key];
-		$menu[$bzm]["style"] = "font-weight:bold";
-		if($typ == 1){
-			$menu[$bzm]["link"] = "";
-		}else{
-			$menu[$bzm]["link"] = "main_admin.php?".SID."&action=setup_tab&tab_group=".$value;
-		}
-
-		# grouplist
-		$alltabs[$bzm] = $menu[$bzm];
-
-		# tables
-		$alltabs1 = array();
-		$menu1=array();
-		$bzm1 = 0;
-		
-		# list of tables in main group
-		foreach ($gtab["tab_id"] as $key1 => $value1){
-
-			if($typ == 1 AND $gtab["hidemenu"][$key1]){$hide = 1;}else{$hide = 0;}
-			if($gtab["tab_group"][$key1] == $tabgroup["id"][$key] AND !$hide){
-
-				$menu1[$bzm1]["name"] = $gtab["desc"][$key1];
-				$menu1[$bzm1]["desc"] = $gtab["desc"][$key1];
-				if($typ == 1){
-					$menu1[$bzm1]["link"] = "main.php?action=gtab_erg&gtabid=$value1&frame_type=1";
-				}else{
-					if($gtab["typ"][$key1] == 5){
-						$menu1[$bzm1]["link"] = "main_admin.php?&action=setup_gtab_view&viewid=$value1";
-					}else{
-						$menu1[$bzm1]["link"] = "main_admin.php?&action=setup_gtab_ftype&tab_group=$value&atid=$value1&HEADER=".urlencode($gtab["desc"][$key1]);
-					}
-				}
-				
-				if($gtab["typ"][$key1] == 5){
-					#$menu1[$bzm1]["style"] = "font-style:italic";
-					$menu1[$bzm1]["icon"] = " lmb-query ";
-				}else{
-					$menu1[$bzm1]["icon"] = " lmb-table ";
-				}
-
-				# tablist
-				$alltabs1[$bzm1] = $menu1[$bzm1];
-				
-				# new dataset
-				if($gtab["typ"][$key1] != 5 AND $gtab['add'][$value1]){
-					$child0 = menu_get_newdata($value1);
-				}else{
-					$child0 = array();
-				}
-				# snapshot
-				$child1 = menu_get_snapshot($value1);
-				# forms
-				$child2 = menu_get_forms($value1,$typ);
-				$allforms = array_merge($allforms,$child2);
-				# reports
-				$child3 = menu_get_reports($value1,$typ);
-				$allreps = array_merge($allreps,$child3);
-				# diagramms
-				$child4= menu_get_diagramms($value1,$typ);
-				$alldiags = array_merge($alldiags,$child4);
-
-				$child = array_merge($child0,$child1);
-				$child = array_merge($child,$child2);
-				$child = array_merge($child,$child3);
-				$child = array_merge($child,$child4);
-
-
-				$menu1[$bzm1]["child"] = $child;
-
-				$bzm1++;
-			}
-		}
-		
-		# list of sub-groups
-		foreach ($tabgroup["id"] as $key2 => $value2){
-			if($tabgroup["level"][$key2] AND $tabgroup["level"][$key2] == $value){
-				$menu1[$bzm1]["name"] = $tabgroup["name"][$key2];
-				$menu1[$bzm1]["desc"] = $tabgroup["beschreibung"][$key2];
-				$menu1[$bzm1]["header"] = 1;
-				$bzm1++;
-				
-				# list of tables in main sub-group
-				foreach ($gtab["tab_id"] as $key1 => $value1){
-				
-					if($typ == 1 AND $gtab["hidemenu"][$key1]){$hide = 1;}else{$hide = 0;}
-					if($gtab["tab_group"][$key1] == $tabgroup["id"][$key2] AND !$hide){
-						$menu1[$bzm1]["name"] = $gtab["desc"][$key1];
-						$menu1[$bzm1]["desc"] = $gtab["desc"][$key1];
-						if($typ == 1){
-							$menu1[$bzm1]["link"] = "main.php?action=gtab_erg&gtabid=$value1&frame_type=1";
-						}else{
-							if($gtab["typ"][$key1] == 5){
-								$menu1[$bzm1]["link"] = "main_admin.php?&action=setup_gtab_view&viewid=$value1";
-							}else{
-								$menu1[$bzm1]["link"] = "main_admin.php?&action=setup_gtab_ftype&tab_group=$value&atid=$value1&HEADER=".urlencode($gtab["desc"][$key1]);
-							}
-						}
-						$menu1[$bzm1]["icon"] = " lmb-icon lmb-table ";
-		
-						# tablist
-						$alltabs1[$bzm1] = $menu1[$bzm1];
-		
-						# snapshot
-						$child1 = menu_get_snapshot($value1);
-						# forms
-						$child2 = menu_get_forms($value1,$typ);
-						$allforms = array_merge($allforms,$child2);
-						# reports
-						$child3 = menu_get_reports($value1,$typ);
-						$allreps = array_merge($allreps,$child3);
-						# diagramms
-						$child4= menu_get_diagramms($value1,$typ);
-						$alldiags = array_merge($alldiags,$child4);
-				
-						$child = array_merge($child1,$child2);
-						$child = array_merge($child,$child3);
-						$child = array_merge($child,$child4);
-						
-						$menu1[$bzm1]["child"] = $child;
-		
-						$bzm1++;
-					}
-				}
-
-			}
-		}
-		
-		
-
-
-		$alltabs[$bzm]["child"] = $alltabs1;
-
-		$menu[$bzm]["child"] = $menu1;
-
-		$bzm++;
-	}
-	}
-	}
-
-	$GLOBALS["allforms"] = $allforms;
-	$GLOBALS["allreps"] = $allreps;
-	$GLOBALS["alltabs"] = $alltabs;
-	$GLOBALS["alldiags"] = $alldiags;
-
-	return $menu;
+function menu_get_tables($isAdmin) {
+    global $adminArtifacts;
+    global $userArtifacts;
+    
+    if($isAdmin) {
+        return $adminArtifacts['allEntries'];
+    } else {
+        return $userArtifacts['allEntries'];
+    }    
 }
 
 # calendar
@@ -523,26 +520,21 @@ function menu_get_admin_tabletree(){
 }
 
 
-
 # admin table
 function menu_get_admin_tables(){
-	global $LINK;
+	global $adminArtifacts;
 
-	menu_get_tables(2);
-
-	$menu1 = $GLOBALS["alltabs"];
-
+    $menu1 = $adminArtifacts['allEntries'];
+    
 	return $menu1;
 }
 
 
 # admin forms
 function menu_get_admin_forms(){
-	global $LINK;
+	global $adminArtifacts;
 
-	menu_get_tables(2);
-
-	$menu1 = $GLOBALS["allforms"];
+	$menu1 = $adminArtifacts['allForms'];
 
 	return $menu1;
 }
@@ -550,35 +542,21 @@ function menu_get_admin_forms(){
 
 # admin reports
 function menu_get_admin_reports(){
-	global $LINK;
+	global $adminArtifacts;
 
-	menu_get_tables(2);
-
-	$menu1 = $GLOBALS["allreps"];
+	$menu1 = $adminArtifacts['allReports'];
 
 	return $menu1;
 }
 
 # admin diagramms
 function menu_get_admin_diagramms(){
-	global $LINK;
+	global $adminArtifacts;
 
-	menu_get_tables(2);
-
-	$menu1 = $GLOBALS["alldiags"];
+	$menu1 = $adminArtifacts['allDiags'];
 
 	return $menu1;
 }
-
-# admin reminder
-function menu_get_admin_reminder(){
-	menu_get_tables(2);
-
-	$menu1 = $GLOBALS["alltrees"];
-
-	return $menu1;
-} 
-
 
 # admin workflow
 function menu_get_admin_workflow(){
@@ -594,38 +572,51 @@ function menu_get_admin_workflow(){
 
 # -------------------------------------------------------------------------------------------------------------
 
+$adminArtifacts = menu_get_artifacts(TRUE);
+$userArtifacts = menu_get_artifacts(FALSE);
+
 # ------------- summary -------------
 if($LINK[244]){
-	$menu[244] = menu_get_tables(1);
-}else{
-	menu_get_tables(1);
+	$menu[244] = menu_get_tables(FALSE);
 }
 
 # ------------- all tables -------------
 if($LINK[20]){
 	$menu1 = menu_get_standard(20,0);
-	$menu1[0]["child"]  = $alltabs;
+    
+    // map every element of the structure to the element without 'new entry'/forms/reports/...
+    function map($elem) {
+        if(!$elem['header']) {
+            $elem['child'] = null;
+        } else {
+            $elem['child'] = array_map('map', $elem['child']);
+        }
+        return $elem;
+    }    
+    $allTabs = array_map('map', $userArtifacts['allEntries']);
+            
+	$menu1[0]["child"]  = $allTabs;
 	$menu[20] = $menu1;
 }
 
 # ------------- all forms -------------
 if($LINK[110]){
 	$menu1 = menu_get_standard(110,0);
-	$menu1[0]["child"]  = $allforms;
+	$menu1[0]["child"]  = $userArtifacts['allForms'];
 	$menu[110] = $menu1;
 }
 
 # ------------- all reports -------------
 if($LINK[245]){
 	$menu1 = menu_get_standard(245,0);
-	$menu1[0]["child"]  = $allreps;
+	$menu1[0]["child"]  = $userArtifacts['allReports'];
 	$menu[245] = $menu1;
 }
 
 # ------------- all charts -------------
 if($LINK[113]){
 	$menu1 = menu_get_standard(113,0);
-	$menu1[0]["child"]  = $alldiags;
+	$menu1[0]["child"]  = $userArtifacts['allDiags'];
 	$menu[113] = $menu1;
 }
 

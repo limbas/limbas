@@ -84,7 +84,7 @@ if($select_del AND $pool){
 	$levels = $remove = array();
 	global $gfield;
 	if($gfield[$atid]["data_type"][$fieldid] == 32){
-		$msqlquery = "select w.id,w.level,d.id as d_id from ".strtolower($typ)."_w as w
+		$msqlquery = "select w.id,w.level,d.id as d_id from ".lmb_strtolower($typ)."_w as w
 			left join ".$typ."_D as d on(d.w_id=w.id)
 			where pool=".$gfield[$atid]["select_pool"][$fieldid];
 		$mrs = odbc_exec($db,$msqlquery) or errorhandle(odbc_errormsg($db),$msqlquery,$action,__FILE__,__LINE__);
@@ -459,8 +459,8 @@ if($pool){
 		}
 	}
 
-	if($find_wert){$where = " AND LOWER(WERT) LIKE '%".parse_db_string(strtolower($find_wert),250)."%'";}
-	if($find_keyw){$where .= " AND LOWER(KEYWORDS) LIKE '%".parse_db_string(strtolower($find_keyw),250)."%'";}
+	if($find_wert){$where = " AND LOWER(WERT) LIKE '%".parse_db_string(lmb_strtolower($find_wert),250)."%'";}
+	if($find_keyw){$where .= " AND LOWER(KEYWORDS) LIKE '%".parse_db_string(lmb_strtolower($find_keyw),250)."%'";}
 	$where .= " AND LEVEL=".parse_db_int($level_id);
 
 	$sqlquery = "SELECT * FROM ".$typ."_W WHERE POOL = $pool $where ORDER BY ".$result_fieldselect['sort'];

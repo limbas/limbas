@@ -22,7 +22,7 @@ date_default_timezone_set($session["timezone"]);
 
 # database spec
 if(!$setup_dbschema){
-        if(substr($DBA["DB"],0,5) == "maxdb"){$DBA["DBSCHEMA"] = strtoupper($setup_dbuser);}
+        if(lmb_substr($DBA["DB"],0,5) == "maxdb"){$DBA["DBSCHEMA"] = lmb_strtoupper($setup_dbuser);}
         elseif($DBA["DB"] == "postgres"){$DBA["DBSCHEMA"] = "public";}
         elseif($DBA["DB"] == "mysql"){$DBA["DBSCHEMA"] = $setup_database;}
         elseif($DBA["DB"] == "ingres"){$DBA["DBSCHEMA"] = "ingres";}
@@ -47,11 +47,18 @@ $GLOBALS["umgvar"]["pfad"] = $setup_path_project;
 
 require_once("../tools/import.dao");
 
-if($setup_charset == 'UTF-8'){
-                $umgvar["charset"] = $setup_charset;
-        $txt_encode = 1;
+
+if(strtoupper($setup_charset) == "UTF-8"){
+	    $umgvar["charset"] = $setup_charset;
+	    $txt_encode = 1;
+	    require_once("../../lib/include_mbstring.lib");
+		ini_set('default_charset', 'utf-8');
+}else{
+        require_once("../../lib/include_string.lib");
+		ini_set('default_charset', lmb_strtoupper($setup_charset));
 }
-        import_complete(1,$txt_encode);
+
+import_complete(1,$txt_encode);
 
 /* --- update umgvar ------------------------------------------------------ */
 $setup_version = parse_db_int(dbf_version());

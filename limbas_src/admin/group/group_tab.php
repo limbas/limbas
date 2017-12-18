@@ -759,15 +759,7 @@ foreach($_tabgroup['id'] as $bzm => $val) {
 					        </TD><TD nowrap>
 		
 							<?php
-							# Versioning Type
-							if($gtab["versioning"][$key] AND !$isview){
-								echo "<i class=\"lmb-icon lmb-versioning-type\" title=\"".$lang[2565]."\"></i>&nbsp<SELECT NAME=\"versioning_type_".$key."\" OnChange=\"save_rules('$key','',25)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">";
-								echo "<OPTION VALUE=\"1\" ";if($f_result[$key]["versioning_type"] == 1){echo "SELECTED";}echo ">".$lang[2144];
-								echo "<OPTION VALUE=\"2\" ";if($f_result[$key]["versioning_type"] == 2){echo "SELECTED";}echo ">".$lang[2145];
-								echo "</SELECT>&nbsp;";
-							}
-							
-	
+                            # form selection
 							$sqlquery = "SELECT ID,NAME FROM LMB_FORM_LIST WHERE REFERENZ_TAB = '".$_gtab["tab_id"][$key]."'";
 							$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 							$bzm1 = 1;
@@ -780,6 +772,7 @@ foreach($_tabgroup['id'] as $bzm => $val) {
 								}
 								echo "</SELECT>&nbsp;";
 	
+                                # calendar form selection
 								if($_gtab["typ"][$key] == 2){
 									echo "<i class=\"lmb-icon lmb-rep-date\" align=\"absbottom\"></i>&nbsp<SELECT NAME=\"view_tform_".$key."\" OnChange=\"save_rules('$key','',23)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">default";
 									$bzm1 = 1;
@@ -790,6 +783,14 @@ foreach($_tabgroup['id'] as $bzm => $val) {
 									}
 									echo "</SELECT>&nbsp";
 								}
+							}
+                            
+                            # Versioning Type
+							if($gtab["versioning"][$key] AND !$isview){
+								echo "<i class=\"lmb-icon lmb-versioning-type\" title=\"".$lang[2565]."\"></i>&nbsp<SELECT NAME=\"versioning_type_".$key."\" OnChange=\"save_rules('$key','',25)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">";
+								echo "<OPTION VALUE=\"1\" ";if($f_result[$key]["versioning_type"] == 1){echo "SELECTED";}echo ">".$lang[2144];
+								echo "<OPTION VALUE=\"2\" ";if($f_result[$key]["versioning_type"] == 2){echo "SELECTED";}echo ">".$lang[2145];
+								echo "</SELECT>&nbsp;";
 							}
 	
 							if(!$isview){

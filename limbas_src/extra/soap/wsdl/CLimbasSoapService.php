@@ -46,7 +46,7 @@ class CLimbasSoapService extends CLimbasSoapComponent
 	public function __construct($className, $baseUrl)
 	{
 		$this->className = $className;
-//		$this->objectName = ucfirst(strtolower($this->table));
+//		$this->objectName = ucfirst(lmb_strtolower($this->table));
 //		$this->limbasTable = $limbasTable; // new Personen(); //new CLimbasTable($table, $definition);
 		$this->soapProvider = new CLimbasSoapProvider($this->className);
 		$this->classMap = $this->soapProvider->getClassMap();
@@ -215,7 +215,7 @@ class CLimbasSoapService extends CLimbasSoapComponent
 				$restriction->setAttribute('base','soap-enc:Array');
 				$attribute=$dom->createElement('xsd:attribute');
 				$attribute->setAttribute('ref','soap-enc:arrayType');
-				$attribute->setAttribute('wsdl:arrayType', substr($phpType, 0, strlen($phpType) - 5) .'[]');
+				$attribute->setAttribute('wsdl:arrayType', lmb_substr($phpType, 0, lmb_strlen($phpType) - 5) .'[]');
 				$restriction->appendChild($attribute);
 				$complexContent->appendChild($restriction);
 				$complexType->appendChild($complexContent);
@@ -225,7 +225,7 @@ class CLimbasSoapService extends CLimbasSoapComponent
 				$element->setAttribute('name', 'items');
 				$element->setAttribute('minOccurs', '0');
 				$element->setAttribute('maxOccurs', 'unbounded');
-				$element->setAttribute('type', 'tns:' . substr($phpType, 0, strlen($phpType) - 5));
+				$element->setAttribute('type', 'tns:' . lmb_substr($phpType, 0, lmb_strlen($phpType) - 5));
 				$container->appendChild($element);
 				$complexType->appendChild($container);
 				

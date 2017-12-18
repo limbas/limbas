@@ -239,8 +239,8 @@ function list_month_ltermin(&$gresult,$dstamp){
 
 	$bzm = 0;
 	while($bzm < $gresult[$gtabid]["res_viewcount"]) {
-		$st_st = get_stamp(substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],0,17)."00");
-		$en_st = get_stamp(substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,17)."00");
+		$st_st = get_stamp(lmb_substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],0,17)."00");
+		$en_st = get_stamp(lmb_substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,17)."00");
 		# größer 24h
 		if($en_st-$st_st >= 86400){
 
@@ -248,8 +248,8 @@ function list_month_ltermin(&$gresult,$dstamp){
 
 				$tresult["l"]["st_st"][] = $st_st;
 				$tresult["l"]["en_st"][] = $en_st;
-				$st_st_ = get_stamp(substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],0,10));
-				$en_st_ = get_stamp(substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,10));
+				$st_st_ = get_stamp(lmb_substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],0,10));
+				$en_st_ = get_stamp(lmb_substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,10));
 
 				# Terminanfang kleiner Anzeige
 				if($st_st_ < $show_stamp){
@@ -295,8 +295,8 @@ function list_month_termin(&$gresult,$gtabid){
 	$tresult["show_stamp"]	= $show_stamp;
 	$bzm = 0;
 	while($bzm < $gresult[$gtabid]["res_viewcount"]) {
-		$st_st = get_stamp(substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],0,17)."00");
-		$en_st = get_stamp(substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,17)."00");
+		$st_st = get_stamp(lmb_substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],0,17)."00");
+		$en_st = get_stamp(lmb_substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,17)."00");
 		# kleiner 24h
 		if($en_st-$st_st < 86400){
 			$doy = date("z",get_stamp($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm]));
@@ -377,17 +377,17 @@ function list_dayweek_termin(&$gresult,$gtabid,$show_date,$viewtype,$subh,$view_
 		$arg_result = get_argument_icons($gresult,$gtabid,$gresult[$gtabid]["id"][$bzm]);
 
 		# Termin über mehrere Tage
-		if(substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],8,2) != substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],8,2)){
+		if(lmb_substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],8,2) != lmb_substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],8,2)){
 
 			# Tagesschleife
-			$st_st = get_stamp(substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],0,17)."00");
-			$en_st = get_stamp(substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,17)."00");
+			$st_st = get_stamp(lmb_substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],0,17)."00");
+			$en_st = get_stamp(lmb_substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,17)."00");
 			# größer 24h
 			if($en_st-$st_st >= 86400){
 				$tresult["l"]["st_st"][] = $st_st;
 				$tresult["l"]["en_st"][] = $en_st;
-				$st_st_ = get_stamp(substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],0,10));
-				$en_st_ = get_stamp(substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,10));
+				$st_st_ = get_stamp(lmb_substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],0,10));
+				$en_st_ = get_stamp(lmb_substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,10));
 
 				if($viewtype != 1 OR ($viewtype == 1 AND $st_st_ <= $show_stamp)){
 					# Terminanfang kleiner Anzeige
@@ -414,17 +414,17 @@ function list_dayweek_termin(&$gresult,$gtabid,$show_date,$viewtype,$subh,$view_
 				$tresult["id"][] = $gresult[$gtabid]["id"][$bzm];
 				$tresult["subject"][] = $gresult[$gtabid][LMCAf_SUBJECT][$bzm];
 				$tresult["st_st"][] = $st_st;
-				$tresult["en_st"][] = get_stamp(substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,11)."23:59:00");
+				$tresult["en_st"][] = get_stamp(lmb_substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,11)."23:59:00");
 				$tresult["marker"][] = $BGCOLOR;
 				$tresult["subject_noedit"][] = getFieldPermissions(array(1),$gtabid,$bzm,$gresult);
 				$tresult["date_noedit"][] = getFieldPermissions(array(2,5),$gtabid,$bzm,$gresult);
 				$tresult["symbols"][] = "'<i class=\"lmb-icon lmb-user-alt\" title=\"täterätää\">','<i class=\"lmb-icon lmb-clock\" title=\"täterätää\">'";
-				if(substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],11,5) != "00:00"){
+				if(lmb_substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],11,5) != "00:00"){
 					$tresult["bzm"][] = $bzm;
 					$tresult["id"][] = $gresult[$gtabid]["id"][$bzm];
 					$tresult["subject"][] = $gresult[$gtabid][LMCAf_SUBJECT][$bzm];
 					$tresult["marker"][] = $BGCOLOR;
-					$tresult["st_st"][] = get_stamp(substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,11)."00:00:00");
+					$tresult["st_st"][] = get_stamp(lmb_substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,11)."00:00:00");
 					$tresult["en_st"][] = $en_st;
 					$tresult["subject_noedit"][] = getFieldPermissions(array(1),$gtabid,$bzm,$gresult);
 					$tresult["date_noedit"][] = getFieldPermissions(array(2,5),$gtabid,$bzm,$gresult);
@@ -437,8 +437,8 @@ function list_dayweek_termin(&$gresult,$gtabid,$show_date,$viewtype,$subh,$view_
 			$tresult["id"][] = $gresult[$gtabid]["id"][$bzm];
 			$tresult["subject"][] = $gresult[$gtabid][LMCAf_SUBJECT][$bzm];
 			$tresult["marker"][] = $BGCOLOR;
-			$tresult["st_st"][] = get_stamp(substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],0,17)."00");
-			$last_st = get_stamp(substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,17)."00");
+			$tresult["st_st"][] = get_stamp(lmb_substr($gresult[$gtabid][LMCAf_STARTSTAMP][$bzm],0,17)."00");
+			$last_st = get_stamp(lmb_substr($gresult[$gtabid][LMCAf_ENDSTAMP][$bzm],0,17)."00");
 			if($last_st == $show_stamp+86400){$last_st--;}
 			$tresult["en_st"][] = $last_st;
 			$tresult["subject_noedit"][] = getFieldPermissions(array(1),$gtabid,$bzm,$gresult);

@@ -36,9 +36,9 @@ function show_attach_file($gtabid,$header){
 		echo "<td><select name=\"ifield[colname][".$key."]\" OnChange=\"document.getElementById('ifield_used_$key').checked=true;\"><option value=\"0\"></option>";
 		foreach ($header as $fkey => $fval){
 			if($ifield["colname"][$key]){
-				if(strtolower(trim($ifield["colname"][$key])) == strtolower(trim($fval))){$SELECTED = "SELECTED";}else{$SELECTED = "";}
+				if(lmb_strtolower(trim($ifield["colname"][$key])) == lmb_strtolower(trim($fval))){$SELECTED = "SELECTED";}else{$SELECTED = "";}
 			}else{
-				if(strtolower(trim($fval)) == strtolower(trim($gfield[$gtabid]["field_name"][$key])) OR strtolower(trim($fval)) == strtolower(trim($gfield[$gtabid]["field_name"][$key]))){$SELECTED = "SELECTED";}else{$SELECTED = "";}
+				if(lmb_strtolower(trim($fval)) == lmb_strtolower(trim($gfield[$gtabid]["field_name"][$key])) OR lmb_strtolower(trim($fval)) == lmb_strtolower(trim($gfield[$gtabid]["field_name"][$key]))){$SELECTED = "SELECTED";}else{$SELECTED = "";}
 			}
 			if($SELECTED){$isactive=1;}
 			echo "<option value=\"".$fval."\" $SELECTED>".$fval."</option>";

@@ -73,7 +73,7 @@ if ($rgsr) {
 }
 
 /* -------------------------------------------------------------- */
-if (substr($action, 0, 4) == "gtab") {
+if (lmb_substr($action, 0, 4) == "gtab") {
     if (! $gtab["tab_id"][$gtabid] and $action != 'gtab_form') {
         if ($db) {
             odbc_close($db);
@@ -147,7 +147,7 @@ if ($action == "layoutframe") {
         1,
         2
     );
-    $STYLE = "border-top:1px solid black;";
+    //$STYLE = "border-top:1px solid black;";
     $GLOBALS["ltmp"]["history_action"] = 1;
     $bodyclass = "top";
 } elseif ($action == "top2" and $LINK[252]) {
@@ -182,7 +182,7 @@ if ($action == "layoutframe") {
     if (file_exists("layout/" . $session["layout"] . "/multiframe.php")) {
         $require2 = "layout/" . $session["layout"] . "/multiframe.php";
     }
-    $STYLE = "border-top:1px solid " . $farbschema["WEB4"] . ";";
+    //$STYLE = "border-top:1px solid " . $farbschema["WEB4"] . ";";
     $STYLE = "";
     $GLOBALS["ltmp"]["history_action"] = 1;
     $ONCLICK = "OnClick=\"body_click();\"";
@@ -273,7 +273,7 @@ elseif ($action == "gtab_change" and $LINK[$action] == 1) {
     $ONKEYDOWN = "OnKeydown=\"sendkeydown(event);\"";
     $ONCLICK = "OnClick=\"body_click();\"";
     $ONLOAD = "inusetime('$gtabid','$ID');gtabSetTablePosition('','$posy')";
-    $ONUNLOAD = "OnUnLoad=\"check_change();\"";
+    $ONWINDOWUNLOAD = "function() { return check_change(); }";
     if ($uform) {
         $BODYHEADER = $HEADER;
     } elseif ($form_id != 'null') {
@@ -294,7 +294,7 @@ elseif ($action == "gtab_change" and $LINK[$action] == 1) {
     }
     $ONLOAD .= "gtabSetTablePosition();";
     if (! $gtab["reserveid"][$gtabid]) {
-        $ONUNLOAD .= "OnUnLoad=\"check_new();\"";
+        $ONWINDOWUNLOAD .= "function() { return check_new(); }";
     }
     if ($uform) {
         $BODYHEADER = $HEADER;
@@ -498,7 +498,7 @@ elseif ($action == "history" and $LINK[$action] == 1) {
     }
     $require1 = "extra/explorer/filestructure.lib";
     $require2 = "extra/report/report.dao";
-    $require3 = "extra/report/report_" . substr($report_medium, 0, 3) . ".php";
+    $require3 = "extra/report/report_" . lmb_substr($report_medium, 0, 3) . ".php";
     $ONLOAD = "window.focus();";
     $BODY = 1;
 } 
@@ -532,8 +532,26 @@ elseif ($action == "download" and $LINK[$action] == 1) {
     }
 }
 
-$ONLOAD = "OnLoad=\"browserType();$ONLOAD\"";
+// set onbeforeunload to execute the function in $ONWINDOWUNLOAD and set that string as a confirmation to the user to leave the page
+if($ONWINDOWUNLOAD) {
+    $ONWINDOWUNLOAD = "
+        window.onbeforeunload = function (e) {
+            var e = e || window.event;
+            var msg = $ONWINDOWUNLOAD();
+            if(msg) {
+                // For IE and Firefox
+                if (e) {
+                  e.returnValue = msg;
+                }
+                // For Safari
+                return msg;
+            }
+        };";
+} else {
+    $ONWINDOWUNLOAD = "";
+}
 
+$ONLOAD = "OnLoad=\"browserType();$ONLOAD;$ONWINDOWUNLOAD\"";
 if ($BODY != 1) {
     /* --------------------- KOPF --------------------------- */
     $STYLE = "STYLE=\"$STYLE\"";
@@ -654,7 +672,7 @@ if ($BODY != 1) {
 // ajax - without output
 if ($ajax) {
     for ($i = 1; $i <= 10; $i ++) {
-        if (substr(${"require" . $i}, strlen(${"require" . $i} - 3, 3)) == "php") {
+        if (lmb_substr(${"require" . $i}, lmb_strlen(${"require" . $i} - 3, 3)) == "php") {
             ${"require" . $i} = "";
         }
     }

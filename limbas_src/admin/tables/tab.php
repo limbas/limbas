@@ -249,34 +249,37 @@ if(!$tab_group){?>
         <?php
         foreach($tabgroup_["id"] as $bzm => $value){
         	echo "<TR class=\"tabBody\">";
-                echo "<TD class=\"vAlignMiddle txtAlignLeft\"><A HREF=\"main_admin.php?$_SID&action=setup_tab&group_bzm=$bzm&tab_group=".$tabgroup_["id"][$bzm]."\">&nbsp;".$tabgroup_["id"][$bzm]."&nbsp;</A></TD>";
-                echo "<TD class=\"vAlignMiddle txtAlignLeft\"><A HREF=\"main_admin.php?$_SID&action=setup_tab&group_bzm=$bzm&tab_group=".$tabgroup_["id"][$bzm]."\"><i class=\"lmb-icon lmb-pencil\" BORDER=\"0\" style=\"cursor:pointer\"></i></A></TD>";
-        	echo "<TD class=\"vAlignMiddle txtAlignLeft\"><i class=\"lmb-icon lmb-long-arrow-up\" BORDER=\"0\" OnClick=\"document.location.href='main_admin.php?".SID."&action=setup_tab&group_change=".$tabgroup_["id"][$bzm]."&sort_id=".$tabgroup_['id'][$bzm]."&gup=1'\"></i>&nbsp;<i class=\"lmb-icon lmb-long-arrow-down\" BORDER=\"0\" OnClick=\"document.location.href='main_admin.php?".SID."&action=setup_tab&group_change=".$tabgroup_["id"][$bzm]."&sort_id=".$tabgroup_['id'][$bzm]."&gdown=1'\"></i></TD>";
-                echo "<TD class=\"vAlignMiddle txtAlignLeft\">";
-        	if(!$tabgroup_["systemtab"][$bzm]){
-        		echo "<i class=\"lmb-icon lmb-trash\" BORDER=\"0\" style=\"cursor:pointer\" OnClick=\"group_delete('".$tabgroup_["id"][$bzm]."')\"></i>";
-        	}
-        	echo "</TD>";
+            echo "<TD class=\"vAlignMiddle txtAlignLeft\"><A HREF=\"main_admin.php?$_SID&action=setup_tab&group_bzm=$bzm&tab_group=".$tabgroup_["id"][$bzm]."\">&nbsp;".$tabgroup_["id"][$bzm]."&nbsp;</A></TD>";
+            echo "<TD class=\"vAlignMiddle txtAlignLeft\"><A HREF=\"main_admin.php?$_SID&action=setup_tab&group_bzm=$bzm&tab_group=".$tabgroup_["id"][$bzm]."\"><i class=\"lmb-icon lmb-pencil\" BORDER=\"0\" style=\"cursor:pointer\"></i></A></TD>";
+            echo "<TD class=\"vAlignMiddle txtAlignLeft\"><i class=\"lmb-icon lmb-long-arrow-up\" BORDER=\"0\" OnClick=\"document.location.href='main_admin.php?".SID."&action=setup_tab&group_change=".$tabgroup_["id"][$bzm]."&sort_id=".$tabgroup_['id'][$bzm]."&gup=1'\"></i>&nbsp;<i class=\"lmb-icon lmb-long-arrow-down\" BORDER=\"0\" OnClick=\"document.location.href='main_admin.php?".SID."&action=setup_tab&group_change=".$tabgroup_["id"][$bzm]."&sort_id=".$tabgroup_['id'][$bzm]."&gdown=1'\"></i></TD>";
+            echo "<TD class=\"vAlignMiddle txtAlignLeft\">";
+            if(!$tabgroup_["systemtab"][$bzm]){
+                echo "<i class=\"lmb-icon lmb-trash\" BORDER=\"0\" style=\"cursor:pointer\" OnClick=\"group_delete('".$tabgroup_["id"][$bzm]."')\"></i>";
+            }
+            echo "</TD>";
         	echo "<TD><INPUT TYPE=\"TEXT\" NAME=\"group_name_".$tabgroup_["id"][$bzm]."\" STYLE=\"width:130px;\" VALUE=\"".$tabgroup_["name"][$bzm]."\" OnChange=\"document.form1.group_change.value='".$tabgroup_["id"][$bzm]."';document.form1.submit();\"></TD>";
         	echo "<TD><INPUT TYPE=\"TEXT\" NAME=\"group_desc_".$tabgroup_["id"][$bzm]."\" STYLE=\"width:130px;\" VALUE=\"".$tabgroup_["beschreibung"][$bzm]."\" OnChange=\"document.form1.group_change.value='".$tabgroup_["id"][$bzm]."';document.form1.submit();\"></TD>";
         	
-        	echo "<TD>";
-        	if(!in_array($value,$tabgroup_["level"])){
+            // select parent subgroup
+        	echo "<TD>";            
         	echo "<SELECT STYLE=\"width:120px;\" NAME=\"subgroup_".$tabgroup_["id"][$bzm]."\" OnChange=\"document.form1.subgroup_change.value='".$tabgroup_["id"][$bzm]."';document.form1.submit();\"><OPTION VALUE=\"0\"></OPTION>";
         	foreach($tabgroup_["id"] as $bzm1 => $value1){
-        		if($value1 != $value AND $tabgroup_["level"][$bzm1] == 0){
-        			if($value1 == $tabgroup_["level"][$bzm]){$SELECTED = "SELECTED";}else{$SELECTED = "";}
-        			echo "<OPTION VALUE=\"$value1\" $SELECTED>".$tabgroup_["name"][$bzm1]."</OPTION>";
+                // dont show the current subgroup as option
+        		if($value1 != $value) {
+                    // dont show any tabgroup-children of the current subgroup as option
+                    if(!array_key_exists($value, getTabgroupParents($value1))){                
+                        if($value1 == $tabgroup_["level"][$bzm]){$SELECTED = "SELECTED";}else{$SELECTED = "";}
+                        echo "<OPTION VALUE=\"$value1\" $SELECTED>".$tabgroup_["name"][$bzm1]."</OPTION>";
+                    }
         		}
         	}
         	echo "</SELECT>";
-        	}
         	echo "</TD>";
         	
         	echo "<TD><INPUT TYPE=\"TEXT\" NAME=\"icongroup_".$tabgroup_["id"][$bzm]."\" STYLE=\"width:130px;\" VALUE=\"".$tabgroup_["icon"][$bzm]."\" OnChange=\"document.form1.icongroup_change.value='".$tabgroup_["id"][$bzm]."';document.form1.submit();\"></TD>";
         	
         	
-                echo "<TD class=\"vAlignMiddle txtAlignLeft\">".$tabgroup_["tabellen"][$bzm]."</TD>";
+            echo "<TD class=\"vAlignMiddle txtAlignLeft\">".$tabgroup_["tabellen"][$bzm]."</TD>";
         	echo "</TR>";
         	$bzm++;
         }
@@ -373,8 +376,8 @@ if(!$tab_group){?>
             <TD class="vAlignMiddle txtAlignCenter"><i class="lmb-icon lmb-long-arrow-up" BORDER="0" onclick="document.location.href='main_admin.php?<?=SID?>&action=setup_tab&tab_group=<?echo $tab_group;?>&up=1;?>&fieldid=<?echo $result_gtab[$tab_group]['ID'][$bzm];?>';"></i>&nbsp;<i class="lmb-icon lmb-long-arrow-down" BORDER="0" onclick="document.location.href='main_admin.php?<?=SID?>&action=setup_tab&tab_group=<?echo $tab_group;?>&down=1;&fieldid=<?echo $result_gtab[$tab_group]['ID'][$bzm];?>';"></i></TD>
             <TD class="vAlignMiddle txtAlignCenter">
             <?if($result_gtab[$tab_group]["tabelle"][$bzm] != "LDMS_FILES" AND $result_gtab[$tab_group]["tabelle"][$bzm] != "LDMS_META"){?>
-                <i class="lmb-icon lmb-trash" BORDER="0" style="cursor:pointer" OnClick="tab_delete('<?=$group_bzm?>','<?=$tab_group?>','<?=$bzm?>','<?=urlencode(strtoupper($result_gtab[$tab_group][tabelle][$bzm]))?>','<?=$result_gtab[$tab_group]["id"][$bzm]?>',0)"></i>
-                <i class="lmb-icon lmb-minus-circle" BORDER="0" style="cursor:pointer;height:13px;vertical-align:bottom" OnClick="tab_delete('<?=$group_bzm?>','<?=$tab_group?>','<?=$bzm?>','<?=urlencode(strtoupper($result_gtab[$tab_group][tabelle][$bzm]))?>','<?=$result_gtab[$tab_group]["id"][$bzm]?>',1)"></i>
+                <i class="lmb-icon lmb-trash" BORDER="0" style="cursor:pointer" OnClick="tab_delete('<?=$group_bzm?>','<?=$tab_group?>','<?=$bzm?>','<?=urlencode(lmb_strtoupper($result_gtab[$tab_group][tabelle][$bzm]))?>','<?=$result_gtab[$tab_group]["id"][$bzm]?>',0)"></i>
+                <i class="lmb-icon lmb-minus-circle" BORDER="0" style="cursor:pointer;height:13px;vertical-align:bottom" OnClick="tab_delete('<?=$group_bzm?>','<?=$tab_group?>','<?=$bzm?>','<?=urlencode(lmb_strtoupper($result_gtab[$tab_group][tabelle][$bzm]))?>','<?=$result_gtab[$tab_group]["id"][$bzm]?>',1)"></i>
             <?}?>
             </TD>
 

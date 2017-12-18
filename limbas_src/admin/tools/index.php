@@ -104,7 +104,7 @@ if(($rebuild OR $delete) AND $useindex){
 		
 		if($rebuild){
 			# create index
-			$indname = dbf_4("LMBINDV_".substr(md5($indt."_".$indf),0,12));
+			$indname = dbf_4("LMBINDV_".lmb_substr(md5($indt."_".$indf),0,12));
 			$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$indt,$indf));
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if($rs){lmb_alert("index $indname created");}
@@ -166,7 +166,7 @@ if($ind["name"]){
 			<TD align=\"center\"> ".$ind["unique"][$key]." </TD>
 			<TD align=\"center\"> ".$ind["used"][$key]." </TD>
 			<TD align=\"center\">";
-			#if(strpos($ind["name"][$key],"lmbconst_") === false){
+			#if(lmb_strpos($ind["name"][$key],"lmbconst_") === false){
 				echo "<input style=\"margin:0px\" type=\"checkbox\" name=\"useindex[".$ind["name"][$key]."]\" value=\"".$ind["table"][$key]."#".$ind["column"][$key]."\">";
 			#}
 			echo "</TD>

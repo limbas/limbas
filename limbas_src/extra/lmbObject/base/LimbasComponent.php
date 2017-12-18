@@ -135,7 +135,7 @@ abstract class LimbasComponent {
 		$ob = ob_get_clean();
 
 		$data = preg_replace('/^.+#(\d+).+refcount\((\d+)\).*$/', '$1;$2',
-			substr($ob, 31, strpos($ob, '{', 31) - 31) , 1) . "<br/>";
+			lmb_substr($ob, 31, lmb_strpos($ob, '{', 31) - 31) , 1) . "<br/>";
 		$data = explode(';', $data);
 		$data[1] -= 4;
 		return $data;

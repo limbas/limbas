@@ -73,22 +73,24 @@ if(!$view){
 ?>
 
 <TABLE CELLPADDING="1" CELLSPACING="3" WIDTH="100%">
+
 <TR class="tabHeader"><TD class="tabHeaderItem" colspan="2">credits</td></tr>
-<TR><TD>Silk Icons</TD><TD><A href="http://www.famfamfam.com/lab/icons/silk/">http://www.famfamfam.com/lab/icons/silk/</A></TD></TR>
-<TR><TD>fpdi</TD><TD><A href="http://fpdi.setasign.de/">http://fpdi.setasign.de/</A></TD></TR>
-<TR><TD>fpdf</TD><TD><A href="http://www.fpdf.org">http://www.fpdf.org</A></TD></TR>
-<TR><TD>interpid</TD><TD><A href="http://www.interpid.eu">http://www.interpid.eu</A></TD></TR>
-<TR><TD>ExifTool</TD><TD><A href="http://www.sno.phy.queensu.ca/~phil/exiftool/">http://www.sno.phy.queensu.ca/~phil/exiftool/</A></TD></TR>
-<TR><TD>EXIF</TD><TD><A href="http://electronics.ozhiker.com">http://electronics.ozhiker.com</A></TD></TR>
-<TR><TD>codemirror</TD><TD><A href="http://codemirror.net">http://codemirror.net</A></TD></TR>
+
 <TR><TD>jquery</TD><TD><A href="http://jquery.com">http://jquery.com</A></TD></TR>
-<TR><TD>colresizable</TD><TD><A href="http://quocity.com/colresizable/">http://quocity.com/colresizable/</A></TD></TR>
+<TR><TD>fpdf</TD><TD><A href="http://www.fpdf.org">http://www.fpdf.org</A></TD></TR>
+<TR><TD>fpdi</TD><TD><A href="http://fpdi.setasign.de/">http://fpdi.setasign.de/</A></TD></TR>
 <TR><TD>fullcalendar</TD><TD><A href="http://arshaw.com/fullcalendar/">http://arshaw.com/fullcalendar/</A></TD></TR>
-<TR><TD>html2fpdf</TD><TD><A href="http://html2fpdf.sourceforge.net">http://html2fpdf.sourceforge.net</A></TD></TR>
 <TR><TD>SabreDAV</TD><TD><A href="http://code.google.com/p/sabredav/">http://code.google.com/p/sabredav/</A></TD></TR>
 <TR><TD>PHPExcel</TD><TD><A href="http://phpexcel.codeplex.com">http://phpexcel.codeplex.com/</A></TD></TR>
-<TR><TD>adldap</TD><TD><A href="http://adldap.sourceforge.net">http://adldap.sourceforge.net/</A></TD></TR>
+<TR><TD>ExifTool</TD><TD><A href="http://www.sno.phy.queensu.ca/~phil/exiftool/">http://www.sno.phy.queensu.ca/~phil/exiftool/</A></TD></TR>
+<TR><TD>html2fpdf</TD><TD><A href="http://html2fpdf.sourceforge.net">http://html2fpdf.sourceforge.net</A></TD></TR>
 <TR><TD>fontawesome</TD><TD><A href="http://fontawesome.io/">http://fontawesome.io/</A></TD></TR>
+<TR><TD>Silk Icons</TD><TD><A href="http://www.famfamfam.com/lab/icons/silk/">http://www.famfamfam.com/lab/icons/silk/</A></TD></TR>
+<TR><TD>interpid</TD><TD><A href="http://www.interpid.eu">http://www.interpid.eu</A></TD></TR>
+<TR><TD>EXIF</TD><TD><A href="http://electronics.ozhiker.com">http://electronics.ozhiker.com</A></TD></TR>
+<TR><TD>codemirror</TD><TD><A href="http://codemirror.net">http://codemirror.net</A></TD></TR>
+<TR><TD>colresizable</TD><TD><A href="http://quocity.com/colresizable/">http://quocity.com/colresizable/</A></TD></TR>
+<TR><TD>adldap</TD><TD><A href="http://adldap.sourceforge.net">http://adldap.sourceforge.net/</A></TD></TR>
 </TABLE>
 
 <?php
@@ -97,23 +99,134 @@ if(!$view){
 
 <TABLE CELLPADDING="1" CELLSPACING="3" WIDTH="100%">
 
-<TR class="tabHeader"><TD class="tabHeaderItem" colspan="3">release notes 3.0 - main features</td></tr>
+<TR class="tabHeader"><TD class="tabHeaderItem" colspan="3">release notes - main features</td></tr>
 
 
 <TR>
 <TD valign=top class="bord">Added</TD>
-<TD valign=top class="bord">multilanguage</TD>
-<TD valign=top class="bord">multilanguage support for independent selectpools in formular</TD>
+<TD valign=top class="bord">UTF-8</TD>
+<TD valign=top class="bord">replace string/mb_string functions with abstraction layer</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">report</TD>
+<TD valign=top class="bord">integrate fpdf V1.81 reportengine with utf8 support</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">report</TD>
+<TD valign=top class="bord">adding ttf font support</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">menu-tree</TD>
+<TD valign=top class="bord">adding mutilevel subgroups of tables</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">extension/SQL editor</TD>
+<TD valign=top class="bord">auto complete functionality</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">filexplorer</TD>
+<TD valign=top class="bord">storage definition for uploaded files</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">tables</TD>
+<TD valign=top class="bord">copy dataset with recursive relations</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">diagram</TD>
+<TD valign=top class="bord">adding new diagram element to formular/report generator</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">SOAP</TD>
+<TD valign=top class="bord">adding relation params to SOAP request</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">formular</TD>
+<TD valign=top class="bord">adding relation params in formular editor</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">reminder</TD>
+<TD valign=top class="bord">possibility to update/change reminder from user</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">workflow</TD>
+<TD valign=top class="bord">adding reminder history to formular</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Added</TD>
+<TD valign=top class="bord">import</TD>
+<TD valign=top class="bord">adding diff in sync import for formular / reports</TD>
+</TR>
+
+<TR>
+<TD valign=top class="bord">Bugfix</TD>
+<TD valign=top class="bord">filexplorer</TD>
+<TD valign=top class="bord">rename folder in list not work</TD>
 </TR>
 <TR>
 <TD valign=top class="bord">Bugfix</TD>
-<TD valign=top class="bord">install process</TD>
-<TD valign=top class="bord">fixing install process for php < 3.5</TD>
+<TD valign=top class="bord">filexplorer</TD>
+<TD valign=top class="bord">"own folder" was missing in folderlist</TD>
 </TR>
 <TR>
 <TD valign=top class="bord">Bugfix</TD>
-<TD valign=top class="bord">file explorer</TD>
-<TD valign=top class="bord">bugfix union query in filestructure</TD>
+<TD valign=top class="bord">formular generator</TD>
+<TD valign=top class="bord">selectable elements not selected</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Bugfix</TD>
+<TD valign=top class="bord">formular generator</TD>
+<TD valign=top class="bord">selectable elements only selected in foreground</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Bugfix</TD>
+<TD valign=top class="bord">tables</TD>
+<TD valign=top class="bord">calculate correct cell width in Chrome & IE after resizing</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Bugfix</TD>
+<TD valign=top class="bord">rule manegement</TD>
+<TD valign=top class="bord">fixed inverse write permission rule for edit tablelist</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Bugfix</TD>
+<TD valign=top class="bord">tables</TD>
+<TD valign=top class="bord">new dataset without rules by using versioning & reserve ID</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Bugfix</TD>
+<TD valign=top class="bord">tables</TD>
+<TD valign=top class="bord">onunload message by leaving dataset</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Bugfix</TD>
+<TD valign=top class="bord">fileexplorer</TD>
+<TD valign=top class="bord">fixed multible upload in tables</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Bugfix</TD>
+<TD valign=top class="bord">colorschema</TD>
+<TD valign=top class="bord">fixed wrong color calculation</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Bugfix</TD>
+<TD valign=top class="bord">formular</TD>
+<TD valign=top class="bord">fixed "save and close" functionality</TD>
+</TR>
+<TR>
+<TD valign=top class="bord">Bugfix</TD>
+<TD valign=top class="bord">reminder</TD>
+<TD valign=top class="bord">show setted reminder in reminder details</TD>
 </TR>
 
 

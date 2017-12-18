@@ -15,6 +15,7 @@ if($db_test == 'validate') {
 
     require_once("../../lib/db/db_{$DBA['DB']}.lib");
     require_once("../../lib/include.lib");
+    require_once("../../lib/include_string.lib");
 
     /* --- test database --- */
     $db = dbq_0($setup_host,$setup_database,$setup_dbuser,$setup_dbpass,$setup_dbdriver,$setup_dbport);
@@ -275,7 +276,7 @@ if($db_test) {
     <?php
     
     
-    # Information
+# Information
 if($DBA['DB'] == 'postgres'){
 ?>
 
@@ -297,8 +298,30 @@ if($DBA['DB'] == 'postgres'){
     </table>
 
 <?php
-}
+}else
 
+# Information
+if($DBA['DB'] == 'mysql'){
+?>
+
+
+    <table class="table table-condensed">
+        <thead>
+            <tr>
+                <th colspan="3">
+                    Information
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr><td><i>do not forget to configure mysql with <b>lower_case_table_names = 1</b> in /etc/my.cnf. Otherwise ist results in installation error! Read <a href="http://www.limbas.org/wiki/MySQL">limbas documentation</a></i></td></tr>
+            <tr><td><i>you can improve performance by using <b>MYISAM</b> instead of <b>InnoDB</b> but be aware of losing transactions and foreign keys. Be aware and read <a href='http://www.limbas.org/wiki/MySQL'>limbas documentation</a></i></td></tr>
+			<tr><td><i>If you want to use <b>UTF-8</b> you have to configure mysql with <b>default-character-set=utf8</b>. <u>If not needed</u> it will better to use <b>default-character-set=latin1</b>. Read <a href="https://dev.mysql.com/doc/refman/5.7/en/charset-applications.html">mysql documentation</a></i></td></tr>
+        </tbody>            
+    </table>
+
+<?php
+}
 
 
     
@@ -337,11 +360,11 @@ if($db_test != 'valid'){
 <?php }?>
 
 <div>
-    <button type="button" class="btn btn-default" onclick="switchToStep('<?php $s=array_keys($steps); echo $s[2]?>')">Back</button>
+    <button type="button" class="btn btn-default" onclick="switchToStep('<?= array_keys($steps)[2] ?>')">Back</button>
     <?php if($db_test && $db_test == 'valid') { ?>
-        <button type="submit" class="btn btn-info pull-right" name="install" value="<?php $s=array_keys($steps); echo $s[4]?>">Next step</button>
+        <button type="submit" class="btn btn-info pull-right" name="install" value="<?= array_keys($steps)[4] ?>">Next step</button>
     <?php } else { ?>
         <input type="hidden" name="db_test" value="validate">
-        <button type="submit" class="btn btn-info pull-right" name="install" value="<?php $s=array_keys($steps); echo $s[3]?>">Check</button>
+        <button type="submit" class="btn btn-info pull-right" name="install" value="<?= array_keys($steps)[3] ?>">Check</button>
     <?php } ?>
 </div>

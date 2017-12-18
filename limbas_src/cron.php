@@ -56,10 +56,10 @@ $cronjob = 1;
 require_once($lpath."inc/include_db.lib");
 require_once($lpath."lib/include.lib");
 require_once("lib/db/db_".$DBA["DB"]."_admin.lib");
+
+
 if($auth_user){
 	require_once($lpath."lib/session.lib");
-}else{
-	require_once($lpath."lib/include_DateTime.lib");
 }
 
 # --- Datenbankverbindung -------------------------------------------
@@ -78,10 +78,26 @@ if(!$umgvar){
 		$bzm++;
 	}
 	$umgvar["pfad"] = $umgvar["path"];
+	
+    # --- mbstring include -------------------------------------------
+    if(strtoupper($umgvar["charset"]) == "UTF-8"){
+        require_once($lpath."lib/include_mbstring.lib");
+        ini_set('default_charset', 'utf-8');
+    }else{
+        require_once($lpath."lib/include_string.lib");
+        ini_set('default_charset', lmb_strtoupper($umgvar["charset"]));
+    }
+	# --- time library -------------------------------------------
+	if($umgvar["use_datetimeclass"]){
+		require_once($lpath."lib/include_DateTime.lib");
+	}else{
+		require_once($lpath."lib/include_datetime.lib");
+	}
+	
 }
-
 $umgvar["IS_CRON"] = 1;
 $umgvar["uploadpfad"] = $umgvar["pfad"]."/UPLOAD/";
+
 
 
 # EXTENSION Dateien einbinden (needed before jobs_ext.lib)
@@ -106,7 +122,7 @@ if(!$rs) {$commit = 1;}
 if(odbc_fetch_row($rs, 1)) {
 	$cronvalue = odbc_result($rs,"VAL");
 	$cron_id = odbc_result($rs,"ID");
-	$kattempl = strtolower(odbc_result($rs,"KATEGORY"));
+	$kattempl = lmb_strtolower(odbc_result($rs,"KATEGORY"));
 	
 	# -------- BACKUP ----------
 	if($kattempl == "backup" AND $cronvalue){

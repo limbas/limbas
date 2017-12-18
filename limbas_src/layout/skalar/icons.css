@@ -31,6 +31,10 @@
     background-repeat: no-repeat;
 }
 
+.lmb-icon-aw{
+    
+}
+
 .lmb-icon-8{
     padding-bottom: 8px;
     padding-right: 12px;
@@ -41,6 +45,14 @@
     padding-bottom: 32px;
     padding-right: 32px;
     background-repeat: no-repeat;
+}
+
+.lmb-icon-cus.lmb-plusonly {
+    background-image: url("../../pic/outliner/plusonly.gif");
+}
+
+.lmb-icon-cus.lmb-minusonly {
+    background-image: url("../../pic/outliner/minusonly.gif");
 }
 
 .lmb-icon.lmb-table-godown{
@@ -84,10 +96,10 @@
 .lmb-icon-8.lmb-table{
     background-image: url("../../pic/8pxicons/table.gif");
 }
-.lmb-icon.lmb-caret-square-down{
+.lmb-icon.lmb-caret-square-down, .lmb-icon.lmb-arrow-down-squared{
     background-image: url("../../layout/skalar/pic/arrowDown.png");
 }
-.lmb-icon.lmb-caret-square-up{
+.lmb-icon.lmb-caret-square-up, .lmb-icon.lmb-arrow-up-squared{
     background-image: url("../../layout/skalar/pic/arrowUp.png");
 }
 .lmb-icon.lmb-caret-left{
@@ -209,9 +221,6 @@
 }
 .lmb-job-history{
     background-image: url("../../pic/silk_icons/text_indent_hist.gif");
-}
-.lmb-download{
-    background-image: url("../../pic/silk_icons/arrow_in.gif");
 }
 .lmb-upload{
     background-image: url("../../pic/silk_icons/arrow_out.gif");
@@ -1103,4 +1112,16 @@
 }
 .lmb-unlocked{
     background-image: url("../../pic/silk_icons/lock_open.gif");
+}
+.lmb-storage-folder{
+    background-image: url("../../pic/silk_icons/folder_database.gif");
+}
+.lmb-mimetype{
+    background-image: url("../../pic/fileicons/default.gif");
+}
+.lmb-folder-back{
+    background-image: url("../../pic/silk_icons/arrow_left.gif");
+}
+.lmb-phone {
+    background-image: url("../../pic/silk_icons/telephone.gif");
 }

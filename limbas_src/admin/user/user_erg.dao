@@ -100,16 +100,16 @@ if($ufilter == "viewdel"){$where[] = "LMB_USERDB.DEL = ".LMB_DBDEF_TRUE;}
 if($ufilter == "lock"){$where[] = "LMB_USERDB.LMLOCK = ".LMB_DBDEF_TRUE." AND LMB_USERDB.DEL = ".LMB_DBDEF_FALSE;}
 
 if($ufilter_user){
-	$where[] = "LOWER(LMB_USERDB.USERNAME) LIKE '%".strtolower(parse_db_string($ufilter_user,50))."%'";
+	$where[] = "LOWER(LMB_USERDB.USERNAME) LIKE '%".lmb_strtolower(parse_db_string($ufilter_user,50))."%'";
 }
 if($ufilter_vorname){
-	$where[] = "LOWER(LMB_USERDB.VORNAME) LIKE '%".strtolower(parse_db_string($ufilter_vorname,50))."%'";
+	$where[] = "LOWER(LMB_USERDB.VORNAME) LIKE '%".lmb_strtolower(parse_db_string($ufilter_vorname,50))."%'";
 }
 if($ufilter_name){
-	$where[] = "LOWER(LMB_USERDB.NAME) LIKE '%".strtolower(parse_db_string($ufilter_name,50))."%'";
+	$where[] = "LOWER(LMB_USERDB.NAME) LIKE '%".lmb_strtolower(parse_db_string($ufilter_name,50))."%'";
 }
 if($ufilter_group){
-	$where[] = "LOWER(LMB_GROUPS.NAME) LIKE '%".strtolower(parse_db_string($ufilter_group,50))."%'";
+	$where[] = "LOWER(LMB_GROUPS.NAME) LIKE '%".lmb_strtolower(parse_db_string($ufilter_group,50))."%'";
 }
 
 # hope to change this in future
@@ -143,7 +143,7 @@ while(odbc_fetch_row($rs)) {
 	$view = 1;
 	
 	if($ufilter_group){
-		if(strtolower($ufilter_group) == strtolower(odbc_result($rs, "G_NAME"))){
+		if(lmb_strtolower($ufilter_group) == lmb_strtolower(odbc_result($rs, "G_NAME"))){
 			$view = 1;
 		}else{
 			$view = 0;
@@ -188,7 +188,7 @@ while(odbc_fetch_row($rs)) {
 		$result_user["erstdatum"][$bzm] = get_date(odbc_result($rs, "U_ERSTDATUM"),1);
 		$result_user["editdatum"][$bzm] = get_date(odbc_result($rs, "U_EDITDATUM"),1);
 		$result_user["lastklick"][$bzm] = odbc_result($rs, "LASTKLICK");
-		$lastklick = mktime(substr($result_user["lastklick"][$bzm],11,2), substr($result_user["lastklick"][$bzm],14,2) + $umgvar["session_length"], substr($result_user["lastklick"][$bzm],17,2), substr($result_user["lastklick"][$bzm],5,2), substr($result_user["lastklick"][$bzm],8,2), substr($result_user["lastklick"][$bzm],0,4));
+		$lastklick = mktime(lmb_substr($result_user["lastklick"][$bzm],11,2), lmb_substr($result_user["lastklick"][$bzm],14,2) + $umgvar["session_length"], lmb_substr($result_user["lastklick"][$bzm],17,2), lmb_substr($result_user["lastklick"][$bzm],5,2), lmb_substr($result_user["lastklick"][$bzm],8,2), lmb_substr($result_user["lastklick"][$bzm],0,4));
 		$stamp = local_stamp(2);
 		if($lastklick >= $stamp){$result_user["aktiv"][$bzm] = sprintf("%.2f",($lastklick - $stamp)/60);}
 	}

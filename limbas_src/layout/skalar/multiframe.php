@@ -55,7 +55,7 @@ function limbasMultiframePreviewPost(string){
 
 function hideShow(evt,id,name,gtabid,params,type,manual){
 	
-	var el = document.getElementById('CONTENT_' + name);
+	var el = document.getElementById('CONTENT_' + id);
 	if(document.getElementById('CONTENT2_' + id)){var el2 = document.getElementById('CONTENT2_' + id);}
 	if(el.style.display=='none'){
 		$(el).show('fast');
@@ -259,7 +259,7 @@ jsvar["user_id"] = "<?=$session["user_id"]?>";
 </SCRIPT>
 
 
-<?
+<?php
 $multfrdispl = "";
 $hiddendispl = "display:none";
 
@@ -282,14 +282,14 @@ if($menu_setting["frame"]["multiframe"] AND $menu_setting["frame"]["multiframe"]
 <div id="multiframe" style="<?=$multfrdispl?>">
 
 <div OnClick="activ_menu=1" id="frmlist" style="width:90%;background-color:<?=$farbschema["WEB7"]?>;border:1px solid <?=$farbschema["WEB12"]?>;font-size:12px;visibility:hidden;position:absolute;right:0px;top:3px;padding:2px;z-index:100;">
-<?
+<?php
 
 if($groupdat["multiframelist"][$session["group_id"]]){
 	foreach ($groupdat["multiframelist"][$session["group_id"]] as $key => $value){
 		if($value == $session["multiframe"]){
-			echo "&nbsp;<span style=\"color:green;\">".substr($value,0,strlen($value)-4)."</span><BR>";
+			echo "&nbsp;<span style=\"color:green;\">".lmb_substr($value,0,lmb_strlen($value)-4)."</span><BR>";
 		}else{
-			echo "&nbsp;<span style=\"color:".$farbschema["WEB12"].";\" OnClick=\"change_frame('".rawurlencode($value)."')\" style=\"cursor:pointer;\" onmouseout=\"this.style.fontWeight='normal';\" onmouseover=\"this.style.fontWeight='bold';\">".substr($value,0,strlen($value)-4)."</span><BR>";
+			echo "&nbsp;<span style=\"color:".$farbschema["WEB12"].";\" OnClick=\"change_frame('".rawurlencode($value)."')\" style=\"cursor:pointer;\" onmouseout=\"this.style.fontWeight='normal';\" onmouseover=\"this.style.fontWeight='bold';\">".lmb_substr($value,0,lmb_strlen($value)-4)."</span><BR>";
 		}
 	}
 }
@@ -345,7 +345,7 @@ foreach($menu as $key1 => $menuType){
 			if($firstLevel["target"]){
 				$onClick = "onClick = \"parent." . $firstLevel["target"] . ".location.href = '" . $firstLevel["link"] ."'\"";
 			}else{
-				if(substr($firstLevel["link"],0,11)=="javascript:"){
+				if(lmb_substr($firstLevel["link"],0,11)=="javascript:"){
 					$onClick = "onClick=" . $firstLevel["link"];
 				}else{
 					$onClick = "onClick=\"parent.main.location.href = '" . $firstLevel["link"] . "'\"";
@@ -382,7 +382,7 @@ foreach($menu as $key1 => $menuType){
 
 		echo "</td></tr>
 		<tr>
-		<td><div class=\"lmbMenuHeaderNavContent\" id=\"CONTENT_" . $firstLevel["name"] . "\" style=\"display:none\">
+		<td><div class=\"lmbMenuHeaderNavContent\" id=\"CONTENT_" . $firstLevel["id"] . "\" style=\"display:none\">
 		<div class=\"lmbMenuBodyNav\" id=\"limbasDivMultiframePreview" . $firstLevel["id"] . "\" style=\"width:100%;\">&nbsp;</div>
 		
 		<table width=\"100%\">

@@ -45,14 +45,14 @@ if($newupload AND $uploadfield AND $sourcepath){
 
 			$filepath = str_replace("//","/",$sourcepath."/".$entry);
 			if(file_exists($filepath)){
-				$ext = substr(strrchr($entry,"."),1,10);
-				$filename = substr($entry,0,strlen($entry-strpos(".",$entry)));
+				$ext = lmb_substr(lmb_strrchr($entry,"."),1,10);
+				$filename = lmb_substr($entry,0,lmb_strlen($entry-lmb_strpos(".",$entry)));
 
 				if($uploadfield == "ID"){
 					$filename = preg_replace("/[^0-9]/","_",$filename);
-					$pos = strpos("_",$filename);
+					$pos = lmb_strpos("_",$filename);
 					if($pos){
-						$fileval = substr($filename,0,strlen($filename-$pos));
+						$fileval = lmb_substr($filename,0,lmb_strlen($filename-$pos));
 					}else{
 						$fileval = $filename;
 					}
@@ -93,7 +93,7 @@ function find_dat($filename,$uploadfield){
 	if($uploadfield == "ID"){
 		$sqlquery = "SELECT ID FROM $tabname WHERE ID = $filename";
 	}else{
-		$sqlquery = "SELECT $uploadfield,ID FROM $tabname WHERE LOWER($uploadfield) = '".strtolower(str_replace("'","''",$filename))."'";
+		$sqlquery = "SELECT $uploadfield,ID FROM $tabname WHERE LOWER($uploadfield) = '".lmb_strtolower(str_replace("'","''",$filename))."'";
 	}
 	$rs = odbc_exec($db,$sqlquery);
 	#if(!$rs){echo "<BR>".$sqlquery."<BR>";}

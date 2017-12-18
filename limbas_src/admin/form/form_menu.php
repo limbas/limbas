@@ -65,7 +65,7 @@ if ($alert) {
             }
 
             if($form["form_typ"] == 1 || $form["form_typ"] == 2) {
-                array_push($reset, 'dbdat', 'dbdesc', 'dbnew', 'text', 'datum', 'scroll', 'js', 'php', 'submt', 'button', 'inptext', 'inparea', 'inpselect', 'inpcheck', 'inpradio', 'inphidden', 'chart');
+                array_push($reset, 'wflhist','reminder','dbdat', 'dbdesc', 'dbnew', 'text', 'datum', 'scroll', 'js', 'php', 'submt', 'button', 'inptext', 'inparea', 'inpselect', 'inpcheck', 'inpradio', 'inphidden', 'chart');
                 echo "$('#new_dbdat_area').hide();";
             }
 
@@ -350,7 +350,7 @@ if ($alert) {
 								<OPTION VALUE="NULL">
 								
 								<OPTION VALUE="/USER/<?= $session["user_id"] ?>/layout.css"
-									<? if (strpos($form["css"], "layout.css")) {
+									<? if (lmb_strpos($form["css"], "layout.css")) {
                                         echo "SELECTED";
                                     } ?>>layout.css
                                     <?
@@ -359,7 +359,7 @@ if ($alert) {
                                         if ($extfiles["name"]) {
                                             foreach ($extfiles["name"] as $key1 => $filename) {
                                                 if ($extfiles["typ"][$key1] == "file") {
-                                                    $path = substr($extfiles["path"][$key1], strlen($umgvar["pfad"]), 100);
+                                                    $path = lmb_substr($extfiles["path"][$key1], lmb_strlen($umgvar["pfad"]), 100);
                                                     if ($form["css"] == $path . $filename) {
                                                         $selected = "SELECTED";
                                                     } else {
@@ -372,6 +372,8 @@ if ($alert) {
                                     }
                                     ?>
                             
+						
+						
 						
 						
 						
@@ -464,43 +466,42 @@ foreach ($sysfont as $key => $value) {
 						<TD><TABLE BORDER="0" cellspacing="0" cellpadding="0">
 								<TR>
                                     <?
-                                    
 if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
-                                        $st = "";
-                                    } else {
-                                        $st = "none";
-                                    }
-                                    ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><I
-										ID="text" class="lmb-icon lmb-rep-txt btn"
-										TITLE="<?= $lang[1149] ?>" VALUE="text"
-										OnMouseDown="pressbutton('text', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('text', 'outset', '<? echo $farbschema[WEB7]; ?>');add('text');
-            send();"></i></TD>
-                                    <?
-                                    
+    $st = "";
+} else {
+    $st = "none";
+}
+?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><I
+ID="text" class="lmb-icon lmb-rep-txt btn"
+TITLE="<?= $lang[1149] ?>" VALUE="text"
+OnMouseDown="pressbutton('text', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('text', 'outset', '<? echo $farbschema[WEB7]; ?>');add('text');
+send();"></i></TD>
+                        <?
+
 if (($form["form_typ"] == 1 or $form["form_typ"] == 2) and $form["referenz_tab"]) {
-                                        $st = "";
-                                    } else {
-                                        $st = "none";
-                                    }
-                                    ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i
-										ID="dbdat" class="lmb-icon lmb-rep-db btn"
-										TITLE="<?= $lang[1150] ?>" VALUE="dbdat"
-										OnClick="parent.form_main.document.form1.form_add.value = 'dbdat';
-                actbutton('dbdat', 'new_dbdat_area', 0);
-                add('dbdat');"></i></TD>
-                                    <?
-                                    
+    $st = "";
+} else {
+    $st = "none";
+}
+?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i
+ID="dbdat" class="lmb-icon lmb-rep-db btn"
+TITLE="<?= $lang[1150] ?>" VALUE="dbdat"
+OnClick="parent.form_main.document.form1.form_add.value = 'dbdat';
+actbutton('dbdat', 'new_dbdat_area', 0);
+add('dbdat');"></i></TD>
+<?
+
 if (($form["form_typ"] == 1 or $form["form_typ"] == 2) and $form["referenz_tab"]) {
-                                        $st = "";
-                                    } else {
-                                        $st = "none";
-                                    }
-                                    ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i
-										ID="dbdesc" class="lmb-icon lmb-rep-dbdesc btn"
-										TITLE="<?= $lang[1773] ?>" VALUE="dbdesc"
-										OnClick="parent.form_main.document.form1.form_add.value = 'dbdesc';
-                    actbutton('dbdesc', 'new_dbdat_area', 0);add('dbdesc');"></i></TD>
+    $st = "";
+} else {
+    $st = "none";
+}
+?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i
+ID="dbdesc" class="lmb-icon lmb-rep-dbdesc btn"
+TITLE="<?= $lang[1773] ?>" VALUE="dbdesc"
+OnClick="parent.form_main.document.form1.form_add.value = 'dbdesc';
+actbutton('dbdesc', 'new_dbdat_area', 0);add('dbdesc');"></i></TD>
 <?
 
 if ($form["form_typ"] == 2 and $form["referenz_tab"]) {
@@ -509,10 +510,10 @@ if ($form["form_typ"] == 2 and $form["referenz_tab"]) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="dbsearch"
-										class="lmb-icon lmb-rep-dbsearch btn"
-										TITLE="<?= $lang[1774] ?>" VALUE="dbsearch"
-										OnClick="parent.form_main.document.form1.form_add.value = 'dbsearch';
-                        actbutton('dbsearch', 'new_dbdat_area', 0);add('dbsearch');"></i></TD>
+class="lmb-icon lmb-rep-dbsearch btn"
+TITLE="<?= $lang[1774] ?>" VALUE="dbsearch"
+OnClick="parent.form_main.document.form1.form_add.value = 'dbsearch';
+actbutton('dbsearch', 'new_dbdat_area', 0);add('dbsearch');"></i></TD>
 <?
 
 if ($form["form_typ"] == 2 and $form["referenz_tab"]) {
@@ -521,10 +522,10 @@ if ($form["form_typ"] == 2 and $form["referenz_tab"]) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="dbnew"
-										class="lmb-icon lmb-rep-dbnew btn" TITLE="<?= $lang[1774] ?>"
-										VALUE="dbnew"
-										OnClick="parent.form_main.document.form1.form_add.value = 'dbnew';
-                            actbutton('dbnew', 'new_dbdat_area', 0);add('dbnew');"></i></TD>
+class="lmb-icon lmb-rep-dbnew btn" TITLE="<?= $lang[1774] ?>"
+VALUE="dbnew"
+OnClick="parent.form_main.document.form1.form_add.value = 'dbnew';
+actbutton('dbnew', 'new_dbdat_area', 0);add('dbnew');"></i></TD>
 <?
 
 if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
@@ -533,11 +534,11 @@ if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="bild"
-										class="lmb-icon lmb-rep-pic btn" TITLE="<?= $lang[1151] ?>"
-										VALUE="bild"
-										OnClick="parent.form_main.document.form1.form_add.value = 'bild';
-                                actbutton('bild', 'new_bild_area', 0);
-                                add('bild');"></i></TD>
+class="lmb-icon lmb-rep-pic btn" TITLE="<?= $lang[1151] ?>"
+VALUE="bild"
+OnClick="parent.form_main.document.form1.form_add.value = 'bild';
+actbutton('bild', 'new_bild_area', 0);
+add('bild');"></i></TD>
 <?
 
 if ($form["form_typ"] == 1) {
@@ -546,10 +547,10 @@ if ($form["form_typ"] == 1) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="uform"
-										class="lmb-icon-cus lmb-rep-uform btn"
-										TITLE="<?= $lang[1171] ?>" VALUE="uform"
-										OnClick="parent.form_main.document.form1.form_add.value = 'uform';
-                                    actbutton('uform', 'new_uform_area', 0);add('uform');"></i></TD>
+class="lmb-icon-cus lmb-rep-uform btn"
+TITLE="<?= $lang[1171] ?>" VALUE="uform"
+OnClick="parent.form_main.document.form1.form_add.value = 'uform';
+actbutton('uform', 'new_uform_area', 0);add('uform');"></i></TD>
 <?
 
 if ($form["form_typ"] == 1) {
@@ -558,12 +559,12 @@ if ($form["form_typ"] == 1) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="tab"
-										class="lmb-icon lmb-rep-tab btn" TITLE="<?= $lang[1155] ?>"
-										VALUE="tab"
-										OnMouseDown="pressbutton('tab', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('tab', 'outset', '<? echo $farbschema[WEB7]; ?>');
-                                        add('tab');
-                                        send();"></i></TD>
+class="lmb-icon lmb-rep-tab btn" TITLE="<?= $lang[1155] ?>"
+VALUE="tab"
+OnMouseDown="pressbutton('tab', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('tab', 'outset', '<? echo $farbschema[WEB7]; ?>');
+add('tab');
+send();"></i></TD>
 <?
 
 if ($form["form_typ"] == 1) {
@@ -572,13 +573,13 @@ if ($form["form_typ"] == 1) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="datum"
-										class="lmb-icon lmb-rep-date btn" TITLE="<?= $lang[1156] ?>"
-										VALUE="datum"
-										OnMouseDown="pressbutton('datum', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('datum', 'outset', '<? echo $farbschema[WEB7]; ?>');
-                                            add('datum');send();"></i></TD>
-								</TR>
-								<TR>
+class="lmb-icon lmb-rep-date btn" TITLE="<?= $lang[1156] ?>"
+VALUE="datum"
+OnMouseDown="pressbutton('datum', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('datum', 'outset', '<? echo $farbschema[WEB7]; ?>');
+add('datum');send();"></i></TD>
+					</TR>
+					<TR>
 <?
 
 if ($form["form_typ"] == 2) {
@@ -587,12 +588,12 @@ if ($form["form_typ"] == 2) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="tab"
-										class="lmb-icon lmb-rep-table btn" TITLE="<?= $lang[1155] ?>"
-										VALUE="tab"
-										OnMouseDown="pressbutton('tab', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('tab', 'outset', '<? echo $farbschema[WEB7]; ?>');add('tab');
-            send();"></i></TD>
-                                        <?
+class="lmb-icon lmb-rep-table btn" TITLE="<?= $lang[1155] ?>"
+VALUE="tab"
+OnMouseDown="pressbutton('tab', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('tab', 'outset', '<? echo $farbschema[WEB7]; ?>');add('tab');
+send();"></i></TD>
+                            <?
                                         
 if ($form["form_typ"] == 2) {
                                             $st = "";
@@ -600,19 +601,19 @@ if ($form["form_typ"] == 2) {
                                             $st = "none";
                                         }
                                         ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i
-										ID="stab" class="lmb-icon lmb-rep-table btn"
-										TITLE="<?= $lang[1155] ?>" VALUE="stab"
-										OnClick="parent.form_main.document.form1.form_add.value = 'stab';
-                actbutton('stab', 'new_stab_area', 0);
-                add('stab');"></i></TD>
+ID="stab" class="lmb-icon lmb-rep-table btn"
+TITLE="<?= $lang[1155] ?>" VALUE="stab"
+OnClick="parent.form_main.document.form1.form_add.value = 'stab';
+actbutton('stab', 'new_stab_area', 0);
+add('stab');"></i></TD>
 <? if ($umgvar["use_jsgraphics"]) { ?>
-    <? if ($form["form_typ"] == 1) { ?><TD VALIGN="TOP"><i ID="ellipse"
-										class="lmb-icon lmb-rep-circle btn" TITLE="<?= $lang[1154] ?>"
-										VALUE="ellipse"
-										OnMouseDown="pressbutton('ellipse', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('ellipse', 'outset', '<? echo $farbschema[WEB7]; ?>');
-                add('ellipse');send();"></i></TD><? } ?>
-    <?
+<? if ($form["form_typ"] == 1) { ?><TD VALIGN="TOP"><i ID="ellipse"
+class="lmb-icon lmb-rep-circle btn" TITLE="<?= $lang[1154] ?>"
+VALUE="ellipse"
+OnMouseDown="pressbutton('ellipse', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('ellipse', 'outset', '<? echo $farbschema[WEB7]; ?>');
+add('ellipse');send();"></i></TD><? } ?>
+<?
     
 if ($form["form_typ"] == 1) {
         $st = "";
@@ -620,11 +621,11 @@ if ($form["form_typ"] == 1) {
         $st = "none";
     }
     ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="line"
-										class="lmb-icon lmb-rep-line btn" TITLE="<?= $lang[1152] ?>"
-										VALUE="line"
-										OnMouseDown="pressbutton('line', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('line', 'outset', '<? echo $farbschema[WEB7]; ?>');add('line');
-                send();"></i></TD>
+class="lmb-icon lmb-rep-line btn" TITLE="<?= $lang[1152] ?>"
+VALUE="line"
+OnMouseDown="pressbutton('line', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('line', 'outset', '<? echo $farbschema[WEB7]; ?>');add('line');
+send();"></i></TD>
 <? } ?>
 <?
 
@@ -635,10 +636,10 @@ if ($form["form_typ"] == 1) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="rect"
-										class="lmb-icon lmb-rep-rect btn" TITLE="<?= $lang[1153] ?>"
-										VALUE="rect"
-										OnMouseDown="pressbutton('rect', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('rect', 'outset', '<? echo $farbschema[WEB7]; ?>');add('rect');send();"></i></TD>
+class="lmb-icon lmb-rep-rect btn" TITLE="<?= $lang[1153] ?>"
+VALUE="rect"
+OnMouseDown="pressbutton('rect', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('rect', 'outset', '<? echo $farbschema[WEB7]; ?>');add('rect');send();"></i></TD>
 <?
 
 if ($form["form_typ"] == 1) {
@@ -647,11 +648,11 @@ if ($form["form_typ"] == 1) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="menue"
-										class="lmb-icon lmb-rep-menu btn" TITLE="<?= $lang[1946] ?>"
-										VALUE="menue"
-										OnMouseDown="pressbutton('menue', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('menue', 'outset', '<? echo $farbschema[WEB7]; ?>');
-                add('menue');send();"></i></TD>
+class="lmb-icon lmb-rep-menu btn" TITLE="<?= $lang[1946] ?>"
+VALUE="menue"
+OnMouseDown="pressbutton('menue', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('menue', 'outset', '<? echo $farbschema[WEB7]; ?>');
+add('menue');send();"></i></TD>
 <?
 
 if ($form["form_typ"] == 1) {
@@ -660,10 +661,10 @@ if ($form["form_typ"] == 1) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="tabulator"
-										class="lmb-icon lmb-rep-tab btn" TITLE="<?= $lang[2561] ?>"
-										VALUE="menue"
-										OnMouseDown="pressbutton('tabulator', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('tabulator', 'outset', '<? echo $farbschema[WEB7]; ?>');add('tabulator');send();"></i></TD>
+class="lmb-icon lmb-rep-tab btn" TITLE="<?= $lang[2561] ?>"
+VALUE="menue"
+OnMouseDown="pressbutton('tabulator', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('tabulator', 'outset', '<? echo $farbschema[WEB7]; ?>');add('tabulator');send();"></i></TD>
 <?
 
 if ($form["form_typ"] == 1) {
@@ -672,12 +673,12 @@ if ($form["form_typ"] == 1) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="frame"
-										class="lmb-icon lmb-rep-frame btn" TITLE="<?= $lang[2661] ?>"
-										VALUE="menue"
-										OnMouseDown="pressbutton('frame', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('frame', 'outset', '<? echo $farbschema[WEB7]; ?>');
-                        add('frame');send();"></i></TD>
-                                        <?
+class="lmb-icon lmb-rep-frame btn" TITLE="<?= $lang[2661] ?>"
+VALUE="menue"
+OnMouseDown="pressbutton('frame', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('frame', 'outset', '<? echo $farbschema[WEB7]; ?>');
+add('frame');send();"></i></TD>
+                <?
                                         
 if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
                                             $st = "";
@@ -685,10 +686,10 @@ if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
                                             $st = "none";
                                         }
                                         ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i
-										ID="submt" class="lmb-icon lmb-rep-submit btn"
-										TITLE="<?= $lang[1174] ?>" VALUE="submt"
-										OnMouseDown="pressbutton('submt', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('submt', 'outset', '<? echo $farbschema[WEB7]; ?>');add('submt');send();"></i></TD>
+ID="submt" class="lmb-icon lmb-rep-submit btn"
+TITLE="<?= $lang[1174] ?>" VALUE="submt"
+OnMouseDown="pressbutton('submt', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('submt', 'outset', '<? echo $farbschema[WEB7]; ?>');add('submt');send();"></i></TD>
 <?
 
 if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
@@ -697,12 +698,12 @@ if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="button"
-										class="lmb-icon lmb-rep-button btn" TITLE="Button"
-										VALUE="submt"
-										OnMouseDown="pressbutton('button', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('button', 'outset', '<? echo $farbschema[WEB7]; ?>');add('button');send();"></i></TD>
+class="lmb-icon lmb-rep-button btn" TITLE="Button"
+VALUE="submt"
+OnMouseDown="pressbutton('button', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('button', 'outset', '<? echo $farbschema[WEB7]; ?>');add('button');send();"></i></TD>
 
-                                        <?
+<?
                                         
 if (($form["form_typ"] == 1 or $form["form_typ"] == 2) and $form["referenz_tab"]) {
                                             $st = "";
@@ -710,10 +711,10 @@ if (($form["form_typ"] == 1 or $form["form_typ"] == 2) and $form["referenz_tab"]
                                             $st = "none";
                                         }
                                         ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i
-										ID="scroll" class="lmb-icon lmb-rep-scroll btn"
-										TITLE="<?= $lang[1173] ?>" VALUE="scroll"
-										OnMouseDown="pressbutton('scroll', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('scroll', 'outset', '<? echo $farbschema[WEB7]; ?>');add('scroll');send();"></i></TD>
+ID="scroll" class="lmb-icon lmb-rep-scroll btn"
+TITLE="<?= $lang[1173] ?>" VALUE="scroll"
+OnMouseDown="pressbutton('scroll', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('scroll', 'outset', '<? echo $farbschema[WEB7]; ?>');add('scroll');send();"></i></TD>
 <?
 
 if ($form["form_typ"] == 2 and $form["referenz_tab"]) {
@@ -722,12 +723,12 @@ if ($form["form_typ"] == 2 and $form["referenz_tab"]) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="tabmenu"
-										class="lmb-icon lmb-table btn" TITLE="<?= $lang[1173] ?>"
-										VALUE="tabmenu"
-										OnMouseDown="pressbutton('tabmenu', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('tabmenu', 'outset', '<? echo $farbschema[WEB7]; ?>');add('tabmenu');send();"></i></TD>
-								</TR>
-								<TR>
+class="lmb-icon lmb-table btn" TITLE="<?= $lang[1173] ?>"
+VALUE="tabmenu"
+OnMouseDown="pressbutton('tabmenu', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('tabmenu', 'outset', '<? echo $farbschema[WEB7]; ?>');add('tabmenu');send();"></i></TD>
+</TR>
+<TR>
 <?
 
 if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
@@ -736,12 +737,12 @@ if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="inptext"
-										class="lmb-icon lmb-rep-text btn" TITLE="<?= $lang[1947] ?>"
-										VALUE="inptext"
-										OnMouseDown="pressbutton('inptext', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('inptext', 'outset', '<? echo $farbschema[WEB7]; ?>');
-            add('inptext');send();"></i></TD>
-                                <?
+class="lmb-icon lmb-rep-text btn" TITLE="<?= $lang[1947] ?>"
+VALUE="inptext"
+OnMouseDown="pressbutton('inptext', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('inptext', 'outset', '<? echo $farbschema[WEB7]; ?>');
+add('inptext');send();"></i></TD>
+                    <?
                                 
 if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
                                     $st = "";
@@ -749,12 +750,12 @@ if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
                                     $st = "none";
                                 }
                                 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i
-										ID="inparea" class="lmb-icon lmb-rep-area btn"
-										TITLE="<?= $lang[1948] ?>" VALUE="inparea"
-										OnMouseDown="pressbutton('inparea', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('inparea', 'outset', '<? echo $farbschema[WEB7]; ?>');
-                add('inparea');
-                send();"></i></TD>
+ID="inparea" class="lmb-icon lmb-rep-area btn"
+TITLE="<?= $lang[1948] ?>" VALUE="inparea"
+OnMouseDown="pressbutton('inparea', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('inparea', 'outset', '<? echo $farbschema[WEB7]; ?>');
+add('inparea');
+send();"></i></TD>
 <?
 
 if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
@@ -763,10 +764,10 @@ if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="inpselect"
-										class="lmb-icon lmb-rep-select btn" TITLE="<?= $lang[1949] ?>"
-										VALUE="inpselect"
-										OnMouseDown="pressbutton('inpselect', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('inpselect', 'outset', '<? echo $farbschema[WEB7]; ?>');add('inpselect');send();"></i></TD>
+class="lmb-icon lmb-rep-select btn" TITLE="<?= $lang[1949] ?>"
+VALUE="inpselect"
+OnMouseDown="pressbutton('inpselect', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('inpselect', 'outset', '<? echo $farbschema[WEB7]; ?>');add('inpselect');send();"></i></TD>
 <?
 
 if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
@@ -775,10 +776,10 @@ if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="inpcheck"
-										class="lmb-icon lmb-rep-check btn" TITLE="<?= $lang[1950] ?>"
-										VALUE="inpcheck"
-										OnMouseDown="pressbutton('inpcheck', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('inpcheck', 'outset', '<? echo $farbschema[WEB7]; ?>');add('inpcheck');send();"></i></TD>
+class="lmb-icon lmb-rep-check btn" TITLE="<?= $lang[1950] ?>"
+VALUE="inpcheck"
+OnMouseDown="pressbutton('inpcheck', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('inpcheck', 'outset', '<? echo $farbschema[WEB7]; ?>');add('inpcheck');send();"></i></TD>
 <?
 
 if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
@@ -787,11 +788,11 @@ if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="inpradio"
-										class="lmb-icon lmb-rep-radio btn" TITLE="<?= $lang[1951] ?>"
-										VALUE="inpradio"
-										OnMouseDown="pressbutton('inpradio', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('inpradio', 'outset', '<? echo $farbschema[WEB7]; ?>');add('inpradio');
-                            send();"></i></TD>
+class="lmb-icon lmb-rep-radio btn" TITLE="<?= $lang[1951] ?>"
+VALUE="inpradio"
+OnMouseDown="pressbutton('inpradio', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('inpradio', 'outset', '<? echo $farbschema[WEB7]; ?>');add('inpradio');
+send();"></i></TD>
 <?
 
 if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
@@ -800,47 +801,78 @@ if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="inphidden"
-										class="lmb-icon lmb-rep-hidden btn" TITLE="<?= $lang[1968] ?>"
-										VALUE="inphidden"
-										OnMouseDown="pressbutton('inphidden', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('inphidden', 'outset', '<? echo $farbschema[WEB7]; ?>');add('inphidden');
-                                send();"></i></TD>
+class="lmb-icon lmb-rep-hidden btn" TITLE="<?= $lang[1968] ?>"
+VALUE="inphidden"
+OnMouseDown="pressbutton('inphidden', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('inphidden', 'outset', '<? echo $farbschema[WEB7]; ?>');add('inphidden');send();"></i>
+</TD>
 <?
 
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="chart"
-										class="lmb-icon lmb-line-chart btn" TITLE="<?= $lang[1171] ?>"
-										VALUE="chart"
-										OnClick="parent.form_main.document.form1.form_add.value = 'chart';
-                                    actbutton('chart', 'new_chart_area', 0);add('chart');"></i></TD>
-								</TR>
-								<TR>
-<?
+class="lmb-icon lmb-line-chart btn" TITLE="<?= $lang[2117] ?>"
+VALUE="chart"
+OnClick="parent.form_main.document.form1.form_add.value = 'chart';actbutton('chart', 'new_chart_area', 0);add('chart');"></i>
+</TD>
+</TR>
+<TR>
 
+<? if ($form["form_typ"] == 1) {
+    $st = "";
+} else {
+    $st = "none";
+} ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;">
+<i ID="reminder"
+class="lmb-icon lmb-reminder btn" TITLE="<?= $lang[425] ?> "
+VALUE="php"
+OnMouseDown="pressbutton('reminder', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('reminder', 'outset', '<? echo $farbschema[WEB7]; ?>');add('reminder');send();"></i>
+</TD>
+
+<? if ($form["form_typ"] == 1) {
+    $st = "";
+} else {
+    $st = "none";
+} ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;">
+<i ID="wflhist"
+class="lmb-icon lmb-icon-cus lmb-workflow-car btn" TITLE="<?= $lang[2035] ?> <?= $lang[1134]?>"
+VALUE="php"
+OnMouseDown="pressbutton('wflhist', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('wflhist', 'outset', '<? echo $farbschema[WEB7]; ?>');add('wflhist');send();"></i>
+</TD>
+
+<?
 if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {
     $st = "";
 } else {
     $st = "none";
 }
 ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="js"
-										class="lmb-icon lmb-rep-js btn" TITLE="<?= $lang[1505] ?>"
-										VALUE="js"
-										OnMouseDown="pressbutton('js', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('js', 'outset', '<? echo $farbschema[WEB7]; ?>');
-            add('js');
-            send();"></i></TD>
+class="lmb-icon lmb-rep-js btn" TITLE="<?= $lang[1505] ?>"
+VALUE="js"
+OnMouseDown="pressbutton('js', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('js', 'outset', '<? echo $farbschema[WEB7]; ?>');add('js');send();"></i>
+</TD>
+
 <? if ($form["form_typ"] == 1 OR $form["form_typ"] == 2) {
     $st = "";
 } else {
     $st = "none";
-} ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="php"
-										class="lmb-icon lmb-rep-php btn" TITLE="<?= $lang[1772] ?>"
-										VALUE="php"
-										OnMouseDown="pressbutton('php', 'inset', '<? echo $farbschema[WEB10]; ?>');"
-										OnMouseUp="pressbutton('php', 'outset', '<? echo $farbschema[WEB7]; ?>');add('php');send();"></i></TD>
-								</TR>
-							</TABLE></TD>
-					</TR>
-				</TABLE>
+} ?><TD VALIGN="TOP" STYLE="display:<?= $st ?>;">
+<i ID="php"
+class="lmb-icon lmb-rep-php btn" TITLE="<?= $lang[1772] ?>"
+VALUE="php"
+OnMouseDown="pressbutton('php', 'inset', '<? echo $farbschema[WEB10]; ?>');"
+OnMouseUp="pressbutton('php', 'outset', '<? echo $farbschema[WEB7]; ?>');add('php');send();"></i>
+</TD>
+
+
+
+
+
+</TR>
+</TABLE></TD>
+</TR>
+</TABLE>
 
 
 
@@ -1020,14 +1052,19 @@ if ($form["form_typ"] != 3 and $gfield[$gtabid]["id"]) {
 					</table>
 					<br>
 				</div>
-				
-				
-			
-<div id="new_chart_area" style="display: none; padding: 2px;">
-<TABLE cellspacing="0" cellpadding="0" STYLE="border: 1px solid grey; width: 210px">
-<TR><TD class="formeditorPanelHead"><?= $lang[2119] ?></TD></TR>
-<TR><TD BGCOLOR="<? echo $farbschema[WEB7]; ?>" VALIGN="TOP" style="padding: 2px;">
-<SELECT NAME="chart_chart_id" STYLE="width: 190px;"><option>
+
+
+
+				<div id="new_chart_area" style="display: none; padding: 2px;">
+					<TABLE cellspacing="0" cellpadding="0"
+						STYLE="border: 1px solid grey; width: 210px">
+						<TR>
+							<TD class="formeditorPanelHead"><?= $lang[2119] ?></TD>
+						</TR>
+						<TR>
+							<TD BGCOLOR="<? echo $farbschema[WEB7]; ?>" VALIGN="TOP"
+								style="padding: 2px;"><SELECT NAME="chart_chart_id"
+								STYLE="width: 190px;"><option>
 <?
     foreach ($gdiaglist as $keyk => $valuek) {
         foreach ($valuek["name"] as $key => $value) {
@@ -1035,11 +1072,10 @@ if ($form["form_typ"] != 3 and $gfield[$gtabid]["id"]) {
         }
     }
 ?>
-</SELECT>
-</TD>
-</TR>
-</TABLE>
-</div>
+</SELECT></TD>
+						</TR>
+					</TABLE>
+				</div>
 
 				<TABLE cellspacing="0" cellpadding="0" class="formeditorPanel">
 					<TR>

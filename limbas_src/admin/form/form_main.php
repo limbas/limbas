@@ -31,8 +31,8 @@ TEXTAREA {
 </STYLE>
 
 <?php
-if($form["css"] AND !strpos($form["css"],"USER/")){
- 	echo"<style type=\"text/css\">@import url(".substr($form["css"],1,120).");</style>\n";
+if($form["css"] AND !lmb_strpos($form["css"],"USER/")){
+ 	echo"<style type=\"text/css\">@import url(".lmb_substr($form["css"],1,120).");</style>\n";
 }
 
 ?>
@@ -105,16 +105,16 @@ if($form["id"]){
 <FORM NAME="form_menu">
 <TABLE BORDER="0" cellspacing="0" cellpadding="0">
 <TR><TD><?pop_movetop('menu');?></TD></TR>
-<TR id="menu_js_php_text_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_menue_tabulator_frame_scroll_tabmenu_uform_tabuItem_tabcell_" STYLE="display:none"><TD><?pop_input2("el_change_id(this.value)","input_id","","",$lang[1099],65)?></TD></TR>
-<TR id="menu_js_php_text_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_menue_tabulator_frame_scroll_tabmenu_uform_tabuItem_tabcell_" STYLE="display:none"><TD><?pop_input2('el_to_front(this.value)',"ZIndex","","",'ZIndex',65)?></TD></TR>
+<TR id="menu_js_php_text_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_menue_tabulator_frame_scroll_wflhist_reminder_tabmenu_uform_tabuItem_tabcell_" STYLE="display:none"><TD><?pop_input2("el_change_id(this.value)","input_id","","",$lang[1099],65)?></TD></TR>
+<TR id="menu_js_php_text_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_menue_tabulator_frame_scroll_wflhist_reminder_tabmenu_uform_tabuItem_tabcell_" STYLE="display:none"><TD><?pop_input2('el_to_front(this.value)',"ZIndex","","",'ZIndex',65)?></TD></TR>
 
 <TR id="menu_dbdat_" STYLE="display:none"><TD><?pop_line();?></TD></TR>
 <TR id="menu_dbdat_" STYLE="display:none;"><TD><?pop_input(0,'','input_infotable','','readonly');?></TD></TR>
 <TR id="menu_dbdat_" STYLE="display:none;"><TD><?pop_input(0,'','input_infofield','','readonly');?></TD></TR>
 
-<TR id="menu_js_php_text_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_menue_tabulator_frame_scroll_tabmenu_uform_tabuItem_tabcell_" STYLE="display:none"><TD><?pop_line();?></TD></TR>
-<TR id="menu_multi_js_php_text_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_menue_tabulator_frame_scroll_tabmenu_uform_tabuItem_" STYLE="display:none;"><TD><?pop_menu(0,'el_to_front(zIndexTop+1)',$lang[2064]);?></TD></TR>
-<TR id="menu_multi_js_php_text_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_menue_tabulator_frame_scroll_tabmenu_uform_tabuItem_" STYLE="display:none;"><TD><?pop_menu(0,'el_to_front(1)',$lang[2065]);?></TD></TR>
+<TR id="menu_js_php_text_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_menue_tabulator_frame_scroll_wflhist_reminder_tabmenu_uform_tabuItem_tabcell_" STYLE="display:none"><TD><?pop_line();?></TD></TR>
+<TR id="menu_multi_js_php_text_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_menue_tabulator_frame_scroll_wflhist_reminder_tabmenu_uform_tabuItem_" STYLE="display:none;"><TD><?pop_menu(0,'el_to_front(zIndexTop+1)',$lang[2064]);?></TD></TR>
+<TR id="menu_multi_js_php_text_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_menue_tabulator_frame_scroll_wflhist_reminder_tabmenu_uform_tabuItem_" STYLE="display:none;"><TD><?pop_menu(0,'el_to_front(1)',$lang[2065]);?></TD></TR>
 <TR id="menu_bild_menue_" STYLE="display:none"><TD><?pop_line();?></TD></TR>
 <TR id="menu_multi_js_php_text_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_" STYLE="display:none"><TD><?pop_line();?></TD></TR>
 <TR id="menu_multi_js_php_text_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_menue_tabulator_" STYLE="display:none"><TD><?pop_submenu2($lang[1489],"document.form1.form_copy.value='1';set_posxy();document.form1.submit();",$lang[1489]);?></TD></TR>
@@ -134,24 +134,24 @@ $opt[desc] = array("","1","2","3","4","5","6","7","8","9","10","11","12","13","1
 <TR id="menu_multi_text_php_datum_dbdat_dbdesc_dbnew_dbsearch_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_tabcell_" STYLE="display:none"><TD><?pop_submenu2($lang[1102],"limbasDivShow(this,'menu','menu_fontstyle');",$lang[1102]);?></TD></TR>
 <TR id="menu_multi_text_chart_php_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_" STYLE="display:none"><TD><?pop_submenu2($lang[1104],"limbasDivShow(this,'menu','menu_color');submenu_style('9;color');",$lang[1104]);?></TD></TR>
 <TR id="menu_multi_text_php_tab_datum_dbdat_dbdesc_dbnew_dbsearch_line_rect_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_uform_tabulator_frame_tabcell_chart_" STYLE="display:none"><TD><?pop_submenu2($lang[1107],"limbasDivShow(this,'menu','menu_color');submenu_style('21;backgroundColor');",$lang[1107]);?></TD></TR>
-<TR id="menu_multi_text_php_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_uform_scroll_tabmenu_tabcell_" STYLE="display:none"><TD><?pop_line();?></TD></TR>
-<TR id="menu_multi_text_php_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_scroll_tabmenu_uform_tabcell_" STYLE="display:none"><TD><?pop_submenu2($lang[1541],"limbasDivShow(this,'menu','menu_color');submenu_style('15;borderColor');",$lang[1541]);?></TD></TR>
+<TR id="menu_multi_text_php_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_uform_scroll_wflhist_reminder_tabmenu_tabcell_" STYLE="display:none"><TD><?pop_line();?></TD></TR>
+<TR id="menu_multi_text_php_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_scroll_wflhist_reminder_tabmenu_uform_tabcell_" STYLE="display:none"><TD><?pop_submenu2($lang[1541],"limbasDivShow(this,'menu','menu_color');submenu_style('15;borderColor');",$lang[1541]);?></TD></TR>
 <?$opt[val] = array("","none","solid","dotted","dashed","double","inset","outset");
 $opt[desc] = array("",$lang[1533],$lang[1534],$lang[1535],$lang[1536],$lang[1537],$lang[1538],$lang[1539]);?>
-<TR id="menu_multi_text_php_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_scroll_tabmenu_uform_tabcell_" STYLE="display:none"><TD><?pop_select("fill_style('14','borderStyle',this.value);",$opt,"",1,"input_borderstyle",$lang[1540],50);?></TD></TR>
+<TR id="menu_multi_text_php_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_scroll_wflhist_reminder_tabmenu_uform_tabcell_" STYLE="display:none"><TD><?pop_select("fill_style('14','borderStyle',this.value);",$opt,"",1,"input_borderstyle",$lang[1540],50);?></TD></TR>
 <?$opt[val] = array("0px","1px","2px","3px","4px","5px","6px","7px","8px","9px","10px");
 $opt[desc] = array("","1","2","3","4","5","6","7","8","9","10");?>
-<TR id="menu_multi_text_php_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_scroll_tabmenu_uform_tabcell_" STYLE="display:none"><TD><?pop_select("fill_style('16','borderWidth',this.value);",$opt,"",1,"input_borderwidth",$lang[1105],50);?></TD></TR>
+<TR id="menu_multi_text_php_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_scroll_wflhist_reminder_tabmenu_uform_tabcell_" STYLE="display:none"><TD><?pop_select("fill_style('16','borderWidth',this.value);",$opt,"",1,"input_borderwidth",$lang[1105],50);?></TD></TR>
 <?$opt[val] = array("","0","1px","2px","3px","4px","5px","6px","7px","8px","9px","10px");
 $opt[desc] = array("","0","1","2","3","4","5","6","7","8","9","10");?>
-<TR id="menu_multi_text_php_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_scroll_tabmenu_uform_tabcell_" STYLE="display:none"><TD><?pop_select("fill_style('27','borderRadius',this.value);divclose();set_posxy();",$opt,"",1,"input_borderradius",$lang[2757],50);?></TD></TR>
+<TR id="menu_multi_text_php_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_scroll_wflhist_reminder_tabmenu_uform_tabcell_" STYLE="display:none"><TD><?pop_select("fill_style('27','borderRadius',this.value);divclose();set_posxy();",$opt,"",1,"input_borderradius",$lang[2757],50);?></TD></TR>
 <?$opt[val] = array("","0","1px","2px","3px","4px","5px","6px","7px","8px","9px","10px");
 $opt[desc] = array("","0","1","2","3","4","5","6","7","8","9","10");?>
-<TR id="menu_multi_text_php_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_tab_stab_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_uform_scroll_tabmenu_tabcell_" STYLE="display:none"><TD><?pop_select("fill_style('22','padding',this.value);divclose();set_posxy();",$opt,"",1,"input_tabpadding",$lang[1111],50);?></TD></TR>
+<TR id="menu_multi_text_php_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_tab_stab_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_uform_scroll_wflhist_reminder_tabmenu_tabcell_" STYLE="display:none"><TD><?pop_select("fill_style('22','padding',this.value);divclose();set_posxy();",$opt,"",1,"input_tabpadding",$lang[1111],50);?></TD></TR>
 <?$opt[val] = array("","auto","visible","hidden","scroll");
 $opt[desc] = array("","auto",$lang[1776],$lang[1777],$lang[1778]);?>
 <TR id="menu_multi_menue_text_php_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_tab_stab_bild_chart_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_uform_tabcell_" STYLE="display:none"><TD><?pop_select("fill_style('24','overflow',this.value);divclose();set_posxy();",$opt,"",1,"input_overflow",$lang[1775],50);?></TD></TR>
-<TR id="menu_multi_text_php_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_uform_scroll_tabmenu_tabcell_" STYLE="display:none"><TD>
+<TR id="menu_multi_text_php_bild_chart_tab_stab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_uform_scroll_wflhist_reminder_tabmenu_tabcell_" STYLE="display:none"><TD>
 <?pop_left();?>
 &nbsp;&nbsp;&nbsp;&nbsp;l<INPUT TYPE="checkbox" STYLE="border:none" NAME="borderLeft" ID="borderLeft" OnClick="fill_style('17','border','borderLeft');">&nbsp;r<INPUT TYPE="checkbox" STYLE="border:none" NAME="borderRight" ID="borderRight" OnClick="fill_style('18','border','borderRight');">&nbsp;o<INPUT TYPE="checkbox" STYLE="border:none" NAME="borderTop" ID="borderTop" OnClick="fill_style('19','border','borderTop');">&nbsp;u<INPUT TYPE="checkbox" STYLE="border:none" NAME="borderBottom" ID="borderBottom" OnClick="fill_style('20','border','borderBottom');">
 <?pop_right();?>
@@ -186,8 +186,6 @@ $opt[desc] = array("","1","2","3","4","5","6","7","8","9","10","11","12","13","1
 $opt[desc] = array("","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40");?>
 <TR id="menu_tab_" STYLE="display:none"><TD><?pop_select("divclose();set_posxy();document.form1.form_tab_rows.value=this.value;document.form1.submit();",$opt,"",1,"input_tabrows",$lang[1110],50);?></TD></TR>
 <TR id="menu_tab_" STYLE="display:none"><TD><?pop_line();?></TD></TR>
-<TR id="menu_frame_php_" STYLE="display:none"><TD><?pop_submenu2($lang[2660],"limbasDivShow(this,'menu','menu_value');",$lang[2660]);?></TD></TR>
-<TR id="menu_multi_frame_" STYLE="display:none"><TD><?pop_line();?></TD></TR>
 <?
 if($form["css"] AND $sysclass){
 $opt["val"] = $sysclass;
@@ -234,8 +232,10 @@ foreach($gformlist as $key0 => $value0){
 <?$opt[val] = array("1","2");
 $opt[desc] = array($lang[1962],$lang[1963]);?>
 <?/*<TR id="menu_tab_" STYLE="display:none"><TD><?pop_select("fill_style('41','',this.value);",$opt,"",1,"input_tab_stab_choice",$lang[1961],50);?></TD></TR>*/?>
-<TR id="menu_uform_dbdat_inptext_inparea_inpselect_inpcheck_inpradio_chart_" STYLE="display:none"><TD><?pop_submenu2($lang[2331],"limbasDivShow(this,'menu','menu_parameters');",$lang[2331]);?></TD></TR>
-<TR id="menu_text_php_datum_dbdesc_dbnew_dbsearch_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_uform_scroll_tabmenu_tabcell_" STYLE="display:none"><TD><?pop_submenu2($lang[923],"limbasDivShow(this,'menu','menu_title');",$lang[923]);?></TD></TR>
+
+<TR id="menu_frame_php_" STYLE="display:none"><TD><?pop_submenu2($lang[2660],"limbasDivShow(this,'menu','menu_value');",$lang[2660]);?></TD></TR>
+<TR id="menu_uform_dbdat_inptext_inparea_inpselect_inpcheck_inpradio_chart_wflhist_reminder_" STYLE="display:none"><TD><?pop_submenu2($lang[2331],"limbasDivShow(this,'menu','menu_parameters');",$lang[2331]);?></TD></TR>
+<TR id="menu_text_php_datum_dbdesc_dbnew_dbsearch_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_uform_scroll_wflhist_reminder_tabmenu_tabcell_" STYLE="display:none"><TD><?pop_submenu2($lang[923],"limbasDivShow(this,'menu','menu_title');",$lang[923]);?></TD></TR>
 
 <?if(count($snap[name]) > 0){?><TR id="menu_uform_" STYLE="display:none"><TD><?pop_submenu2($lang[1967],"limbasDivShow(this,'menu','menu_snap');",$lang[1967]);?></TD></TR><?}?>
 
@@ -244,8 +244,8 @@ $opt[desc] = array($lang[1962],$lang[1963]);?>
 <TABLE cellpadding="0" cellspacing="0"><TR><TD STYLE="width:120px;">&nbsp;<SPAN><?=$lang[2460]?></SPAN></TD><TD><INPUT TYPE="checkbox" STYLE="border:none" ID="replace_element" NAME="replace_element" OnClick="if(this.checked){document.form1.form_replace_element.value=document.form1.form_edit_id.value;}else{document.form1.form_replace_element.value=''}"></TD></TR></TABLE>
 <?pop_right();?>
 </TD></TR>
-<TR id="menu_multi_js_php_text_bild_chart_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_menue_tabulator_frame_scroll_tabmenu_tab_stab_uform_tabuItem_" STYLE="display:none"><TD><?pop_line();?></TD></TR>
-<TR id="menu_multi_js_php_text_bild_chart_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_menue_tabulator_frame_scroll_tabmenu_tab_stab_uform_tabuItem_" STYLE="display:none"><TD><?pop_submenu2($lang[1133],"lmb_dropEl('".$lang[1099]." ".$lang[1133]."');",$lang[1133]);?></TD></TR>
+<TR id="menu_multi_js_php_text_bild_chart_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_menue_tabulator_frame_scroll_wflhist_reminder_tabmenu_tab_stab_uform_tabuItem_" STYLE="display:none"><TD><?pop_line();?></TD></TR>
+<TR id="menu_multi_js_php_text_bild_chart_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_menue_tabulator_frame_scroll_wflhist_reminder_tabmenu_tab_stab_uform_tabuItem_" STYLE="display:none"><TD><?pop_submenu2($lang[1133],"lmb_dropEl('".$lang[1099]." ".$lang[1133]."');",$lang[1133]);?></TD></TR>
 <TR><TD><?pop_bottom();?></TD></TR>
 </TABLE></FORM></DIV>
 
@@ -692,6 +692,7 @@ function printFormularElement($form_ID,$elementType,$printParams,$closediv=null,
 	$params = "$params,'CATEGORIE','".$printParams["CATEGORIE"]."'";
 	$params = "$params,'TABLE_NAME','".$printParams["TABLE_NAME"]."'";
 	$params = "$params,'FIELD_NAME','".$printParams["FIELD_NAME"]."'";
+	$params = "$params,'FIELD_TYPE','".$printParams["FIELD_TYPE"]."'";
 	$params = "$params,'TITLE','".htmljs($printParams["TITLE"])."'";
 
 	if($elementType == 'php' || $elementType == 'uform' || $elementType == 'dbsearch' || $elementType == 'dbnew' || $elementType == 'dbdesc' || $elementType == 'dbdat' || $elementType == 'bild' || $elementType == 'usetime' || $elementType == 'inpradio' || $elementType == 'text' || $elementType == 'tabuItem' || $elementType == "js" || $elementType == "rect" || $elementType == "line" || $elementType == "ellipse" || $elementType == "datum" || $elementType == "inptext" || $elementType == "inphidden" || $elementType == "inparea" || $elementType == "inpselect" || $elementType == "inpcheck" || $elementType == "submt" || $elementType == "button" || $elementType == "tabcell")
@@ -734,7 +735,7 @@ function printFormularElement($form_ID,$elementType,$printParams,$closediv=null,
 
 	//---- text js php rect line ellipse datum menue scroll tabmenu submt inptext inparea inpselect inpcheck inpradio usetime bild dbdat dbdesc dbnew dbsearch uform
 	
-	if($elementType == "bild" || $elementType == "chart" || $elementType == "line" || $elementType == "ellipse" || $elementType == "scroll" || $elementType == "tabmenu" || $elementType == "menue" || $elementType == "tabulator" || $elementType == "frame"){
+	if($elementType == "reminder" || $elementType == "wflhist" || $elementType == "bild" || $elementType == "chart" || $elementType == "line" || $elementType == "ellipse" || $elementType == "scroll" || $elementType == "tabmenu" || $elementType == "menue" || $elementType == "tabulator" || $elementType == "frame"){
 		echo "<div lmbtype=\"$elementType\" id=\"div".$form_ID."\" $onMousedown $class $style ";
 		if($elementType == "bild")
 		{
@@ -759,13 +760,21 @@ function printFormularElement($form_ID,$elementType,$printParams,$closediv=null,
 		else if($elementType == "scroll")
 		{
 			echo ">";
-			#echo "<IMG SRC=\"pic/scrollbeginning.gif\"><IMG SRC=\"pic/scrolleft.gif\"><IMG SRC=\"pic/scrollright.gif\"><IMG SRC=\"pic/scrollend.gif\">";
 			echo "<< scroll-menu >>";
+		}
+		else if($elementType == "reminder")
+		{
+			echo " >";
+			echo "<< reminder >>";
+		}
+		else if($elementType == "wflhist")
+		{
+			echo ">";
+			echo "<< workflow history >>";
 		}
 		else if($elementType == "tabmenu")
 		{
 			echo ">";
-			#echo "<IMG SRC=\"pic/scrollbeginning.gif\"><IMG SRC=\"pic/scrolleft.gif\"><IMG SRC=\"pic/scrollright.gif\"><IMG SRC=\"pic/scrollend.gif\">";
 			echo "<< table-menu >>";
 		}
 		
@@ -916,6 +925,7 @@ function formElementParams (&$form,$key){
 	$printParams["CATEGORIE"] = $form["categorie"][$key];
 	$printParams["TABLE_NAME"] = $gtab['desc'][$printParams["TAB_ID"]];
 	$printParams["FIELD_NAME"] = $gfield[$printParams["TAB_ID"]]['spelling'][$printParams["FIELD_ID"]];
+	$printParams["FIELD_TYPE"] = $gfield[$printParams["TAB_ID"]]['field_type'][$printParams["FIELD_ID"]];
 
 	return $printParams;
 }
@@ -1093,7 +1103,7 @@ if($GLOBALS['printedtabs']){
 <script language="JavaScript">
 
 $('#innerframe').selectable({
-	filter:'[lmbselectable="1"], [lmbtype="bild"], [lmbtype="line"], [lmbtype="ellipse"], [lmbtype="scroll"]',
+	filter:'[lmbselectable="1"], [lmbtype="bild"], [lmbtype="line"], [lmbtype="ellipse"], [lmbtype="scroll"], [lmbtype="reminder"], [lmbtype="wflhist"]',
 	stop: function( event, ui ) {lmb_multiMenu(event);}
 });
 

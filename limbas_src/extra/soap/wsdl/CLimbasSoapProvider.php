@@ -300,14 +300,14 @@ function getGtabLevel($model,$gtabid,$verkn=null,$id=null,$rec=null){
 
 				# parse text wildcards
 				foreach ($val_set['val'] as $keypart => $valpart){
-					if(substr($valpart,strlen($valpart)-1,1) == '*' AND substr($valpart,0,1) == '*'){
-						$gsr[$gtabid][$fid][0] = substr($valpart,1,strlen($valpart)-2);
+					if(lmb_substr($valpart,lmb_strlen($valpart)-1,1) == '*' AND lmb_substr($valpart,0,1) == '*'){
+						$gsr[$gtabid][$fid][0] = lmb_substr($valpart,1,lmb_strlen($valpart)-2);
 						$gsr[$gtabid][$fid]["txt"][0] = 1;
-					}elseif(substr($valpart,strlen($valpart)-1,1) == '*'){
-						$gsr[$gtabid][$fid][0] = substr($valpart,0,strlen($valpart)-1);
+					}elseif(lmb_substr($valpart,lmb_strlen($valpart)-1,1) == '*'){
+						$gsr[$gtabid][$fid][0] = lmb_substr($valpart,0,lmb_strlen($valpart)-1);
 						$gsr[$gtabid][$fid]["txt"][0] = 3;
-					}elseif(substr($valpart,0,1) == '*'){
-						$gsr[$gtabid][$fid][0] = substr($valpart,1,strlen($valpart));
+					}elseif(lmb_substr($valpart,0,1) == '*'){
+						$gsr[$gtabid][$fid][0] = lmb_substr($valpart,1,lmb_strlen($valpart));
 						$gsr[$gtabid][$fid]["txt"][0] = 5;
 					}else{
 						$gsr[$gtabid][$fid][0] = $valpart;
@@ -326,7 +326,7 @@ function getGtabLevel($model,$gtabid,$verkn=null,$id=null,$rec=null){
 			if(is_array($order)){
 				foreach ($order as $okey => $ovalue){
 					$soap_order = explode(" ",trim($ovalue));
-					$filter["order"][$gtabid][] = $gtabid."&".$gfield[$gtabid]["argresult_name"][strtoupper($soap_order[0])]."&".$soap_order[1];
+					$filter["order"][$gtabid][] = $gtabid."&".$gfield[$gtabid]["argresult_name"][lmb_strtoupper($soap_order[0])]."&".$soap_order[1];
 				}
 			}
 		}
@@ -410,7 +410,7 @@ function getGtabLevel($model,$gtabid,$verkn=null,$id=null,$rec=null){
 		if($gverkn[$gtabid]["id"]){
 			foreach($gverkn[$gtabid]["id"] as $key => $value){
 
-				#$reltabname = ucfirst(strtolower($gtab['table'][$value]));
+				#$reltabname = ucfirst(lmb_strtolower($gtab['table'][$value]));
 				$relfieldname = $gfield[$gtabid]['field_name'][$key];
 
 				# Abbruch bei Endlosverknüpfung
@@ -419,7 +419,7 @@ function getGtabLevel($model,$gtabid,$verkn=null,$id=null,$rec=null){
 				$verkn_ = set_verknpf($gtabid,$gfield[$gtabid]["field_id"][$key],$did,0,0,1,0);
 
 				#$relmodel = new $reltabname();
-				$relmodel = CLimbasSoapFactory::getInstance()->createTable(strtolower($gtab['table'][$value]));
+				$relmodel = CLimbasSoapFactory::getInstance()->createTable(lmb_strtolower($gtab['table'][$value]));
 
 				$obj->$relfieldname = getGtabLevel($relmodel,$gfield[$gtabid]["verkntabid"][$key],$verkn_,null,1);
 

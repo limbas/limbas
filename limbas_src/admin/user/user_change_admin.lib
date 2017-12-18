@@ -111,7 +111,7 @@ function create_user($userdata){
 	$passwort = str_replace(" ","",parse_db_string($passwort,50));
 
 	/* --- SUCHE ob schon vorhanden --------------------------------------------- */
-	$sqlquery = "SELECT USER_ID,NAME,VORNAME FROM LMB_USERDB WHERE LOWER(USERNAME) = '".strtolower($username)."'";
+	$sqlquery = "SELECT USER_ID,NAME,VORNAME FROM LMB_USERDB WHERE LOWER(USERNAME) = '".lmb_strtolower($username)."'";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	if(odbc_fetch_row($rs, 1)) {
@@ -156,7 +156,7 @@ function user_change($ID,$userdata,$file=0,$user_add=0){
 
 	if($userdata["passwort"] AND $userdata["username"]){
 		if(!$user_add){
-			$sqlquery1 = "SELECT USER_ID,NAME,VORNAME,GROUP_ID FROM LMB_USERDB WHERE LOWER(USERNAME) = '".strtolower($userdata["username"])."'";
+			$sqlquery1 = "SELECT USER_ID,NAME,VORNAME,GROUP_ID FROM LMB_USERDB WHERE LOWER(USERNAME) = '".lmb_strtolower($userdata["username"])."'";
 			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 			if(odbc_result($rs1,"USER_ID") AND odbc_result($rs1,"USER_ID") != $ID) {
@@ -269,7 +269,7 @@ function getUserDetails($ID){
 		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 		if(!$rs2) {$commit = 1;}
 		if(odbc_fetch_row($rs2, 1)){
-			$lastklick = mktime(substr(odbc_result($rs2, "LASTKLICK"),11,2), substr(odbc_result($rs2, "LASTKLICK"),14,2) + $umgvar[session_length], substr(odbc_result($rs2, "LASTKLICK"),17,2), substr(odbc_result($rs2, "LASTKLICK"),5,2), substr(odbc_result($rs2, "LASTKLICK"),8,2), substr(odbc_result($rs2, "LASTKLICK"),0,4));
+			$lastklick = mktime(lmb_substr(odbc_result($rs2, "LASTKLICK"),11,2), lmb_substr(odbc_result($rs2, "LASTKLICK"),14,2) + $umgvar[session_length], lmb_substr(odbc_result($rs2, "LASTKLICK"),17,2), lmb_substr(odbc_result($rs2, "LASTKLICK"),5,2), lmb_substr(odbc_result($rs2, "LASTKLICK"),8,2), lmb_substr(odbc_result($rs2, "LASTKLICK"),0,4));
 			$stamp = local_stamp(2);
 			if($lastklick >= $stamp){$result_user["aktiv"] = sprintf("%.2f",($lastklick - $stamp)/60);}
 		}
@@ -298,7 +298,7 @@ function mailUserInfo($result_user,$send_usermail,$userdata=null){
 	    if($result_user["sub_group"]){$group = $result_user["sub_group"];}
 		$group[] = $result_user["group_id"];
 		$group = array_unique($group);
-		$boundary = strtoupper(md5(uniqid(time())));
+		$boundary = lmb_strtoupper(md5(uniqid(time())));
 		
 		foreach ($group as $key => $value){
 			if($groupdat["name"][$value]){

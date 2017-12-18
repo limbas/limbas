@@ -40,10 +40,10 @@ if($new_quest){
         /* --- Feld umbenennen ------------- */
         $beschreibung = $quest_name;
         $quest_name = preg_replace("/[^A_Za-z0-9]/","_",$quest_name);
-        $quest_name = substr(preg_replace("/[_]{1,}/","_",$quest_name),0,18);
+        $quest_name = lmb_substr(preg_replace("/[_]{1,}/","_",$quest_name),0,18);
         if(!$quest_name){
                 die("<BR><BR>&nbsp;&nbsp;&nbsp;Es wurde kein Name vergeben!");
-        }elseif(!preg_match("/^[a-zA-z0-9]/",$quest_name) OR strlen($quest_name) > 18){
+        }elseif(!preg_match("/^[a-zA-z0-9]/",$quest_name) OR lmb_strlen($quest_name) > 18){
                 die("&nbsp;&nbsp;&nbsp;Der gewählte Name darf nur Buchstaben des Alphabets besitzen\nund 18 Stellen nicht überschreiten!");
         }
         /* --- Next ID ---------------------------------------- */

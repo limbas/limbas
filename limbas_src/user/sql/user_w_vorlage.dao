@@ -86,12 +86,12 @@ if(!$remdata){
 
 				$datum = get_date($remdata["frist"][$groupid][$tabid][$remid],2);
 				$date = $remdata["frist"][$groupid][$tabid][$remid];
-				$dhour = substr($date,11,2);
-				$dmin = substr($date,14,2);
-				$dsec = substr($date,17,2);
-				$dday = substr($date,8,2);
-				$dmonth = substr($date,5,2);
-				$dyear = substr($date,0,4);
+				$dhour = lmb_substr($date,11,2);
+				$dmin = lmb_substr($date,14,2);
+				$dsec = lmb_substr($date,17,2);
+				$dday = lmb_substr($date,8,2);
+				$dmonth = lmb_substr($date,5,2);
+				$dyear = lmb_substr($date,0,4);
 				//mktime ( [int Stunde [, int Minute [, int Sekunde [, int Monat [, int Tag [, int Jahr [, int is_dst]]]]]]] )
 
 				if($curDate - mktime($dhour,$dmin,$dsec,$dmonth,$dday,$dyear)<0){

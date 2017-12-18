@@ -42,7 +42,7 @@ pop_left();
 $jobdir = read_dir($umgvar["pfad"]."/admin/tools/jobs",0);
 foreach ($jobdir["name"] as $key => $value){
 	$kat = explode(".",$jobdir["name"][$key]);
-	$kat = strtoupper($kat[0]);
+	$kat = lmb_strtoupper($kat[0]);
 	if($kategorie == $jobdir["name"][$key]){$req = $jobdir["path"][$key].$jobdir["name"][$key];$kategoriedesc = $kat;}
 }
 
@@ -58,9 +58,9 @@ if($run_job){
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	if($cronval = odbc_result($rs,"VAL")){
-		lmb_loghandle(strtolower($kategoriedesc).".log","starting job \t(".odbc_result($rs,"ID").")");
+		lmb_loghandle(lmb_strtolower($kategoriedesc).".log","starting job \t(".odbc_result($rs,"ID").")");
 		periodic_job($cronval);
-		lmb_loghandle(strtolower($kategoriedesc).".log","ending job \t(".odbc_result($rs,"ID").")");
+		lmb_loghandle(lmb_strtolower($kategoriedesc).".log","ending job \t(".odbc_result($rs,"ID").")");
 	}
 }
 

@@ -45,7 +45,7 @@ var f_typ = new Array();
 //----------------- Element-Schleife -------------------
 if(!$report["id"]){$report["id"] = array();}
 foreach ($report["id"] as $key => $value){
-	if(strpos($report["value"][$key],";")){
+	if(lmb_strpos($report["value"][$key],";")){
 		$content = explode(";",$report["value"][$key]);
 		$content = $gfield[$content[0]]["field_name"][$content[1]]." (".$gtab["desc"][$content[0]].")";
 	}else{
@@ -53,8 +53,8 @@ foreach ($report["id"] as $key => $value){
 	}
 	echo "f_id[$value] = '".$report["id"][$key]."';\n";
 	echo "f_zindex[$value] = '".$report["zindex"][$key]."';\n";
-	echo "f_value[$value] = '".htmljs(substr($content,0,20));
-	if(strlen($content) > 20){echo "..';\n";}else{echo "';\n";}
+	echo "f_value[$value] = '".htmljs(lmb_substr($content,0,20));
+	if(lmb_strlen($content) > 20){echo "..';\n";}else{echo "';\n";}
 	echo "f_typ[$value] = '".$report["typ"][$key]."';\n";
 }
 ?>
@@ -567,7 +567,7 @@ function printBerichtElement($tab_el_type,$report_ID,$report_width,$report_heigh
 		$content = "<IMG SRC=\"".$path."\" ID=\"pic".$report_ID."\" $size1 style=\"z-index:".$report_zindex."\">";
 	}elseif($tab_el_type == "dbdat"){
 
-		if(strpos($report_value,";")){
+		if(lmb_strpos($report_value,";")){
 			$content = explode(";",$report_value);
 			$content = $gfield[$content[0]]["field_name"][$content[1]]." (".$gtab["desc"][$content[0]].")";
 		}else{

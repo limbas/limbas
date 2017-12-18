@@ -149,12 +149,12 @@ if($language_id AND $list){
 	# suchen
 	if($ID){$where[] = "ELEMENT_ID = $ID";}
 	if($TYP){$where[] = "TYP = $TYP";}
-	if($FILE){$where[] = "LMFILE LIKE '%".strtoupper($FILE)."%'";}
+	if($FILE){$where[] = "LMFILE LIKE '%".lmb_strtoupper($FILE)."%'";}
 	if($EDIT AND $EDIT != 'a'){
 	   $EDIT = parse_db_bool($EDIT);
 	   if($EDIT == LMB_DBDEF_TRUE){$where[] = "EDIT = ".LMB_DBDEF_TRUE;$EDIT = LMB_DBDEF_TRUE;}elseif($EDIT == LMB_DBDEF_FALSE){$where[] = "EDIT = ".LMB_DBDEF_FALSE;$EDIT = LMB_DBDEF_FALSE;}
 	}
-	if($WERT){$where[] = "LOWER(WERT) LIKE '%".str_replace("'","''",strtolower($WERT))."%'";}
+	if($WERT){$where[] = "LOWER(WERT) LIKE '%".str_replace("'","''",lmb_strtolower($WERT))."%'";}
 	if($JS){$where[] = "JS = ".LMB_DBDEF_TRUE;}
 	$where[] = "LANGUAGE_ID = $language_id";
 	if($where){$where  = " WHERE ".implode(" AND ",array_unique($where));}
@@ -191,7 +191,7 @@ if($language_id AND $list){
 		if($ID){$where[] = "ELEMENT_ID = $ID";}
 		if($TYP){$where[] = "TYP = $TYP";}
 		if($FILE){$where[] = "LMFILE = $FILE";}
-		$where[] = "LOWER(WERT) LIKE '%".str_replace("'","''",strtolower($REFWERT))."%'";
+		$where[] = "LOWER(WERT) LIKE '%".str_replace("'","''",lmb_strtolower($REFWERT))."%'";
 	}
 	
 	$where[] = "LANGUAGE_ID = $ref_id";
@@ -229,7 +229,7 @@ if($import AND $import_lang){
 			$sqlquery = "SELECT ID,WERT FROM LMB_LANG$langtyp WHERE LANGUAGE_ID = $import_lang AND ELEMENT_ID = ".$part[0];
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(odbc_result($rs, "ID") > 0){
-				$value = substr(str_replace("'","''",$part[1]),0,249);
+				$value = lmb_substr(str_replace("'","''",$part[1]),0,249);
 				$value = str_replace("\r\n"," ",$value);
 				$value = str_replace("\t"," ",$value);
 				$value = str_replace("\n"," ",$value);

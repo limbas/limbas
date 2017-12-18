@@ -96,7 +96,7 @@ function show_val(val) {
 		var ar = document.getElementsByTagName("input");
 		for (var i = ar.length; i > 0;) {
 			cc = ar[--i];
-			if(cc.type == "checkbox" && cc.name.substr(0,5) != "activ"){
+			if(cc.type == "checkbox" && cc.name.lmb_substr(0,5) != "activ"){
 				cc.checked = 0;
 			}
 		}
@@ -140,7 +140,7 @@ if(!$kategorie){
 	echo "<ul>";
 	foreach ($jobdir["name"] as $key => $value){
 		$kat = explode(".",$jobdir["name"][$key]);
-		$kat = strtoupper($kat[0]);
+		$kat = lmb_strtoupper($kat[0]);
 		echo "<li><a href=\"main_admin.php?action=setup_indize_db&kategorie=".$jobdir["name"][$key]."\"><input type=\"button\" style=\"width:150px;\" value=\"".$jobdir["name"][$key]."\"></a></li>";
 	}
 	echo "</ul></td></tr>";
@@ -149,7 +149,7 @@ if(!$kategorie){
 	echo "<SELECT NAME=\"kategorie\" onchange=\"document.form1.submit();\"><OPTION>";
 	foreach ($jobdir["name"] as $key => $value){
 		$kat = explode(".",$value);
-		$kat = strtoupper($kat[0]);
+		$kat = lmb_strtoupper($kat[0]);
 		if($kategorie == $value){$SELECTED = "SELECTED";$req = $jobdir["path"][$key].$value;$kategoriedesc = $kat;}else{$SELECTED = "";}
 		echo "<option value=\"".$value."\" $SELECTED>".$kat."</option>";
 	}
@@ -169,7 +169,7 @@ if($kategorie AND $req){
     <TD class="tabHeaderItem" align="center"><?=$lang[2073]?></TD>
 </TR>
 <?php
-$sqlquery = "SELECT * FROM LMB_CRONTAB WHERE KATEGORY = '".strtoupper($kategoriedesc)."' ORDER BY ERSTDATUM";
+$sqlquery = "SELECT * FROM LMB_CRONTAB WHERE KATEGORY = '".lmb_strtoupper($kategoriedesc)."' ORDER BY ERSTDATUM";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
 $bzm = 1;
@@ -315,8 +315,8 @@ if($kategoriedesc == "TEMPLATE"){
 	foreach ($extfiles["name"] as $key1 => $filename){
 		$ext = explode(".",$filename);
 		$ext = $ext[count($ext)-1];
-		if($extfiles["typ"][$key1] == "file" AND strtolower($ext) == "job"){
-			$path = substr($extfiles["path"][$key1],strlen($umgvar["pfad"]),100);
+		if($extfiles["typ"][$key1] == "file" AND lmb_strtolower($ext) == "job"){
+			$path = lmb_substr($extfiles["path"][$key1],lmb_strlen($umgvar["pfad"]),100);
 			echo "<OPTION VALUE=\"".$path.$filename."\">".str_replace("/EXTENSIONS/","",$path).$filename;
 		}
 	}

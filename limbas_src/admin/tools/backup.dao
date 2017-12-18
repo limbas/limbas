@@ -162,19 +162,19 @@ function set_backup_path($medium,$path1,$path2,$typ){
 
 	# --- File ---
 	if($medium == "1" AND $path1){
-		$pos = strpos($path1,":");
-		$path[server] = substr($path1,0,$pos);
+		$pos = lmb_strpos($path1,":");
+		$path[server] = lmb_substr($path1,0,$pos);
 		# remote Server
-		if((preg_match("/^[0-9]/",substr($path["server"],0,1)) OR preg_match("/@[0-9]/",$path["server"])) AND strtolower($path["server"]) != "localhost" AND $path["server"] != $DBA["LMHOST"]){
+		if((preg_match("/^[0-9]/",lmb_substr($path["server"],0,1)) OR preg_match("/@[0-9]/",$path["server"])) AND lmb_strtolower($path["server"]) != "localhost" AND $path["server"] != $DBA["LMHOST"]){
 			$path["path"] = $umgvar["pfad"]."/TEMP/".$path["filename"];
 			$path["scp"] = $path1."/";
 			$path["scppath"] = $path1."/".$path["filename"];
 		# lokaler Server
 		}else{
 			if($path["server"] == $DBA["LMHOST"]){
-				$path["path"] = substr($path1,$pos+1,200)."/".$path["filename"];
-			}elseif(strtolower($path[server]) == "localhost"){
-				$path["path"] = substr($path1,$pos+1,200)."/".$path["filename"];
+				$path["path"] = lmb_substr($path1,$pos+1,200)."/".$path["filename"];
+			}elseif(lmb_strtolower($path[server]) == "localhost"){
+				$path["path"] = lmb_substr($path1,$pos+1,200)."/".$path["filename"];
 			}else{
 				$path["path"] = "/".$path1."/".$path["filename"];
 				$path["path"] = str_replace("//","/",$path["path"]);
@@ -207,7 +207,7 @@ function update_backup_crontab(){
 		# --- lesen ----
 		$handle = fopen("/etc/crontab","r");
 			while($line = fgets($handle, 1000)){
-				if(!strpos($line,$umgvar["pfad"])){
+				if(!lmb_strpos($line,$umgvar["pfad"])){
 					$crontab[] = $line;
 				}
 			}
@@ -293,7 +293,7 @@ if($int_backup){
 		$path = set_backup_path(1,$path1,0,"TXT");
 		if($DBA["DBHOST"] != $DBA["LMHOST"]){
 			$path1 = "localhost:".$umgvar["pfad"]."/BACKUP";
-			$path["path"] = substr($path_backup,0,strlen($path_backup)-4);
+			$path["path"] = lmb_substr($path_backup,0,lmb_strlen($path_backup)-4);
 		}
 
 		$out[7] = filesize($path_backup);

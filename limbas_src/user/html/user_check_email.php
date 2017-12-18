@@ -59,7 +59,7 @@ function get_header($stream){
 		$from = str_replace("\"","",$from);
 
 		list($dayName,$day,$month,$year,$time) = split(" ",$date);
-		$time = substr($time,0,5);
+		$time = lmb_substr($time,0,5);
 		$date = $day ." ". $month ." ". $year . " ". $time;
 
 		if ($bgColor == "#F0F0F0") {
@@ -68,8 +68,8 @@ function get_header($stream){
 			$bgColor = "#F0F0F0";
 		}
 
-		if (strlen($subj) > 60) {
-			$subj = substr($subj,0,20) ."...";
+		if (lmb_strlen($subj) > 60) {
+			$subj = lmb_substr($subj,0,20) ."...";
 		}
 
 		echo "<tr bgcolor=\"$bgColor\"><td>$from</td><td>$subj</td><td class=\"tblContent\">$date</td></tr>\n";

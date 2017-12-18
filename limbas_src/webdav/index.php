@@ -101,7 +101,7 @@ class MyCollection extends Sabre\DAV\Collection {
 				if ($ffile['id']) {
 					foreach($ffile['name'] as $id => $name) {
 						$name = lmb_utf8_encode($name);
-						$this->collection[$name] = new MyFile($this->lid,$id, $this->myPath . (1 != strlen($this->myPath) ? '/' : '') . $name, $ffile['size'][$id], $ffile['mimetype'][$id], dateToStamp($ffile['editdatum'][$id]), $ffile['realname'][$id]);
+						$this->collection[$name] = new MyFile($this->lid,$id, $this->myPath . (1 != lmb_strlen($this->myPath) ? '/' : '') . $name, $ffile['size'][$id], $ffile['mimetype'][$id], dateToStamp($ffile['editdatum'][$id]), $ffile['realname'][$id]);
 					}
 				}
 			}
@@ -123,7 +123,7 @@ class MyCollection extends Sabre\DAV\Collection {
 		foreach($filestruct["id"] as $fid => $value){
 			if($filestruct["level"][$fid] == $this->lid AND $filestruct["view"][$fid]){
 				$name = lmb_utf8_encode($filestruct["name"][$fid]);
-				$this->collection[$name] = new MyCollection($fid, $this->myPath . (1 != strlen($this->myPath) ? '/' : '') . $name);
+				$this->collection[$name] = new MyCollection($fid, $this->myPath . (1 != lmb_strlen($this->myPath) ? '/' : '') . $name);
 			}
 		}
 	}
@@ -178,7 +178,7 @@ class MyCollection extends Sabre\DAV\Collection {
 	public function childExists($name) {
 		global $db;
 		
-		$sqlquery = "SELECT ID FROM LDMS_FILES WHERE LEVEL = ".$this->lid." AND LOWER(NAME) = '".parse_db_string(strtolower(lmb_utf8_decode($name)),40)."'";
+		$sqlquery = "SELECT ID FROM LDMS_FILES WHERE LEVEL = ".$this->lid." AND LOWER(NAME) = '".parse_db_string(lmb_strtolower(lmb_utf8_decode($name)),40)."'";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(odbc_result($rs, "ID")){
 			return true;
@@ -360,7 +360,7 @@ class MyFile extends \Sabre\DAV\File {
 		}
 		*/
 
-		#$custom_path=substr($this->myPath,0,strrpos($this->myPath,"/"));//<- the target folder
+		#$custom_path=lmb_substr($this->myPath,0,lmb_strrpos($this->myPath,"/"));//<- the target folder
 		#$obj=new MyDirectory($custom_path,$this->db); //<- my Collection extention class
 		#$obj->createFile(basename($this->myPath),$data);//<- filename from path
 		#throw new Sabre_DAV_Exception_Forbidden('');

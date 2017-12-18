@@ -100,7 +100,7 @@ for($key1=0;$key1<=($umgvar['searchcount']-1);$key1++){
 	                $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	                $key2 = 1;
 	                while(odbc_fetch_row($rs, $key2)) {
-	                        if(strtolower($gsrres) == strtolower(odbc_result($rs,"WERT"))){$SELECTED = "SELECTED";}else{$SELECTED = "";}
+	                        if(lmb_strtolower($gsrres) == lmb_strtolower(odbc_result($rs,"WERT"))){$SELECTED = "SELECTED";}else{$SELECTED = "";}
 	                        echo "<OPTION VALUE=\"".str_replace("\"","",odbc_result($rs,"WERT"))."\" $SELECTED>".odbc_result($rs,"WERT");
 	                $key2++;
 	                }

@@ -375,12 +375,12 @@ if($table_gtab[$bzm]) {
 				<TD class="tabHeaderItem"><?=$lang[924]?></TD>
 				<TD class="tabHeaderItem"><?=$lang[925]?></TD>
 				<TD class="tabHeaderItem"><?=$lang[2654]?></TD>
-            <?if(!$isview){?><TD class="tabHeaderItem"><?=$lang[928]?></TD><?}?>
-            <TD class="tabHeaderItem"><SPAN STYLE="width: 90px;"><?=$lang[929]?></SPAN></TD>
-				<TD class="tabHeaderItem"><?=$lang[930]?></TD>
-				<TD class="tabHeaderItem"><?=$lang[2504]?></TD>
-				<TD class="tabHeaderItem"><?=$lang[2505]?></TD>
-            <?if(!$isview){?><TD class="tabHeaderItem"><?=$lang[2570]?></TD><?}?>
+            <?if(!$isview){?><TD class="tabHeaderItem" ALIGN="right"><?=$lang[928]?></TD><?}?>
+            <TD class="tabHeaderItem" ALIGN="right"><SPAN STYLE="width: 90px;"><?=$lang[929]?></SPAN></TD>
+				<TD class="tabHeaderItem" ALIGN="center"><?=$lang[930]?></TD>
+				<TD class="tabHeaderItem" ALIGN="center"><?=$lang[2504]?></TD>
+				<TD class="tabHeaderItem" ALIGN="center"><?=$lang[2505]?></TD>
+            <?if(!$isview){?><TD class="tabHeaderItem" ALIGN="center"><?=$lang[2570]?></TD><?}?>
             <?if($gtrigger[$bzm] AND !$isview){?><TD
 					class="tabHeaderItem"><?=$lang[2506]?></TD><?}?>
             <?#$lang[926]?>
@@ -417,7 +417,7 @@ if($table_gtab[$bzm]) {
             
 	       if(!$isview){
 	            # --- delete ------
-	            if((strtoupper($table_gtab[$bzm]) == "LDMS_FILES" AND $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] <= 33) or (strtoupper($table_gtab[$bzm]) == "LDMS_META" and $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] <= 37)) {
+	            if((lmb_strtoupper($table_gtab[$bzm]) == "LDMS_FILES" AND $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] <= 33) or (lmb_strtoupper($table_gtab[$bzm]) == "LDMS_META" and $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] <= 37)) {
                     echo "<TD></TD>";
                 } else {
                     echo "<TD VALIGN=\"TOP\" ALIGN=\"CENTER\" style=\"cursor:pointer\">";
@@ -480,7 +480,7 @@ if($table_gtab[$bzm]) {
 			
 
 			if(!$isview){
-				echo "<TD  VALIGN=\"TOP\" ALIGN=\"CENTER\" nowrap>";
+				echo "<TD  VALIGN=\"TOP\" ALIGN=\"RIGHT\" nowrap>";
 				# defaultvalue
 				if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 11){
 
@@ -521,10 +521,10 @@ if($table_gtab[$bzm]) {
                 	if($result_fieldtype[$table_gtab[$bzm]]["argument_edit"][$bzm1] == 1){$argument_edit = "CHECKED";}else{$argument_edit = " ";}
                		echo $lang[1879]." <INPUT TYPE=\"CHECKBOX\" OnClick=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.argument_edit.value='$argument_edit';this.form.submit();\" $argument_edit>&nbsp;";
             	}
-			    echo "<A HREF=\"JAVASCRIPT: newwin3('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$KEYID_gtab[$bzm]."','$bzm','".$result_fieldtype[$table_gtab[$bzm]]["argument_typ"][$bzm1]."');\"><i class=\"lmb-icon lmb-pencil\" BORDER=\"0\" TITLE=\"".str_replace("\"","&quot;",$result_fieldtype[$table_gtab[$bzm]]["argument"][$bzm1])."\" ALT=\"".str_replace("\"","&quot;",$result_fieldtype[$table_gtab[$bzm]]["argument"][$bzm1])."\"></i></A>&nbsp;</TD>";
+			    echo "<A HREF=\"JAVASCRIPT: newwin3('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$KEYID_gtab[$bzm]."','$bzm','".$result_fieldtype[$table_gtab[$bzm]]["argument_typ"][$bzm1]."');\"><i class=\"lmb-icon lmb-pencil\" BORDER=\"0\" TITLE=\"".str_replace("\"","&quot;",$result_fieldtype[$table_gtab[$bzm]]["argument"][$bzm1])."\" ALT=\"".str_replace("\"","&quot;",$result_fieldtype[$table_gtab[$bzm]]["argument"][$bzm1])."\"></i></A></TD>";
             /* --- Selectauswahl --------------------------------------- */
             }elseif($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 16){
-				echo "<TD ALIGN=\"LEFT\" NOWRAP>";
+				echo "<TD ALIGN=\"RIGHT\" NOWRAP>";
             	echo "<INPUT TYPE=\"TEXT\" STYLE=\"width:50px;\" VALUE=\"".htmlentities($result_fieldtype[$table_gtab[$bzm]]["select_cut"][$bzm1],ENT_QUOTES,$umgvar["charset"])."\" OnChange=\"document.form1.select_cut.value=this.value;document.form1.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';document.form1.submit();\">";
 	
 			/* --- Selectauswahl --------------------------------------- */
@@ -545,7 +545,7 @@ if($table_gtab[$bzm]) {
 			    }
 
                 echo "&nbsp;<A HREF=\"JAVASCRIPT: newwin('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','$bzm','$pool','LMB_SELECT');\"><i class=\"lmb-icon lmb-pencil\" BORDER=\"0\"></i></A>";
-                echo "&nbsp;</TD>";
+                echo "</TD>";
 
             /* --- Attribut --------------------------------------- */
             }elseif($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 19){
@@ -560,10 +560,10 @@ if($table_gtab[$bzm]) {
 			    }
 
                 echo "&nbsp;<A HREF=\"JAVASCRIPT: newwin('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','$bzm','$pool','LMB_ATTRIBUTE');\"><i class=\"lmb-icon lmb-pencil\" BORDER=\"0\"></i></A>";
-                echo "&nbsp;</TD>";
+                echo "</TD>";
             /* --- Verknüpfung --------------------------------------- */
             }elseif($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 11){
-            	echo "<TD  VALIGN=\"TOP\" nowrap>".$result_fieldtype[$table_gtab[$bzm]]["verkntab"][$bzm1]."&nbsp;";
+            	echo "<TD  VALIGN=\"TOP\" ALIGN=\"RIGHT\" nowrap>".$result_fieldtype[$table_gtab[$bzm]]["verkntab"][$bzm1]."&nbsp;";
                 if($result_fieldtype[$table_gtab[$bzm]]["verkntabletype"][$bzm1] == 3){echo "<i style=\"vertical-align:text-bottom\" class=\"lmb-icon lmb-switch\"></i>";}
             	elseif($result_fieldtype[$table_gtab[$bzm]]["verkntabletype"][$bzm1] == 2){echo "<i style=\"vertical-align:text-bottom\" class=\"lmb-icon lmb-long-arrow-left\"></i>";}
             	echo "</TD>";
@@ -574,10 +574,10 @@ if($table_gtab[$bzm]) {
 			#    echo "<A HREF=\"JAVASCRIPT: newwin2('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".urlencode($table_gtab[$bzm])."','$bzm','".$result_fieldtype[$table_gtab[$bzm]][argument][$bzm1]."');\"><IMG SRC=\"pic/edit2.gif\" BORDER=\"0\" TITLE=\"".$result_fieldtype[$table_gtab[$bzm]][genlink][$bzm1]."\" ALT=\"".$result_fieldtype[$table_gtab[$bzm]][genlink][$bzm1]."\"></A></TD>";
             /* --- Zeitstempel --------------------------------------- */
             }elseif($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 2){
-            	echo "<TD  ALIGN=\"LEF\"><INPUT TYPE=\"TEXT\" STYLE=\"width:100px;\" NAME=\"FORMAT_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" VALUE=\"".$result_fieldtype[$table_gtab[$bzm]][format][$bzm1]."\" OnChange=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.nformat.value=this.value+' ';this.form.submit();\">";
+            	echo "<TD ALIGN=\"RIGHT\"><INPUT TYPE=\"TEXT\" STYLE=\"width:100px;\" NAME=\"FORMAT_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" VALUE=\"".$result_fieldtype[$table_gtab[$bzm]][format][$bzm1]."\" OnChange=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.nformat.value=this.value+' ';this.form.submit();\">";
             /* --- Zeit --------------------------------------- */
             }elseif($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 7){
-			    echo "<TD  ALIGN=\"LEF\"><INPUT TYPE=\"TEXT\" STYLE=\"width:100px;\" NAME=\"FORMAT_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" VALUE=\"".$result_fieldtype[$table_gtab[$bzm]][format][$bzm1]."\" OnChange=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.nformat.value=this.value+' ';this.form.submit();\"></TD>";
+			    echo "<TD ALIGN=\"RIGHT\"><INPUT TYPE=\"TEXT\" STYLE=\"width:100px;\" NAME=\"FORMAT_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" VALUE=\"".$result_fieldtype[$table_gtab[$bzm]][format][$bzm1]."\" OnChange=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.nformat.value=this.value+' ';this.form.submit();\"></TD>";
             /* --- Long --------------------------------------- */
             }elseif($result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 39){
             	if($result_fieldtype[$table_gtab[$bzm]][memoindex][$bzm1] == 1){$memoindexvalue = "CHECKED";} else{$memoindexvalue = "";}
@@ -586,7 +586,7 @@ if($table_gtab[$bzm]) {
 			    echo "<BR>".$lang[1885]." <INPUT TYPE=\"CHECKBOX\" NAME=\"WYSIWYG_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" OnClick=\"change_wysiwyg('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."',this);\" ".$wysiwygvalue."></TD>";
             /* --- NFORMAT --------------------------------------- */
             }elseif($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 5 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 22 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 44){
-				echo "<TD  VALIGN=\"TOP\"><INPUT TYPE=\"TEXT\" STYLE=\"width:100px;\" NAME=\"FORMAT_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" VALUE=\"".$result_fieldtype[$table_gtab[$bzm]][format][$bzm1]."\" OnChange=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.nformat.value=this.value+' ';this.form.submit();\">";
+				echo "<TD  VALIGN=\"TOP\" ALIGN=\"RIGHT\"><INPUT TYPE=\"TEXT\" STYLE=\"width:100px;\" NAME=\"FORMAT_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" VALUE=\"".$result_fieldtype[$table_gtab[$bzm]][format][$bzm1]."\" OnChange=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.nformat.value=this.value+' ';this.form.submit();\">";
 			    /* --- Währung --------------------------------------- */
 				if($result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 30){
 			    	echo "<SELECT STYLE=\"width:100px;\" ONCHANGE=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.ncurrency.value=this.value;this.form.submit();\"><OPTION VALUE=\" \">";
@@ -604,7 +604,7 @@ if($table_gtab[$bzm]) {
             }elseif($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 101){
                 echo "<TD NOWRAP ALIGN=\"right\">";
                 if($result_fieldtype[$table_gtab[$bzm]][genlink][$bzm1]){echo "Link";}
-			    echo "&nbsp;<A HREF=\"JAVASCRIPT: newwin7('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$bzm."');\"><i class=\"lmb-icon lmb-trash\" BORDER=\"0\"></i></A>";
+			    echo "&nbsp;<A HREF=\"JAVASCRIPT: newwin7('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$bzm."');\"><i class=\"lmb-icon lmb-edit\" BORDER=\"0\"></i></A>";
             }else{
 				echo "<TD >&nbsp;</TD>";
 			}
@@ -821,7 +821,7 @@ if($table_gtab[$bzm]) {
 		
 		
 		/* --- Vernüpfungsparameter-Tabelle -------- */
-		$sqlquery =  "SELECT VERKNPARAMS FROM LMB_CONF_FIELDS WHERE UPPER(MD5TAB) = '".strtoupper($table_gtab[$bzm])."' AND VERKNPARAMS > 0";
+		$sqlquery =  "SELECT VERKNPARAMS FROM LMB_CONF_FIELDS WHERE UPPER(MD5TAB) = '".lmb_strtoupper($table_gtab[$bzm])."' AND VERKNPARAMS > 0";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(odbc_result($rs, "VERKNPARAMS")){$verknparams = array(1,2,3,4,5,7,8,10,14,15,18,21);}
 		

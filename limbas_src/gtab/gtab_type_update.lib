@@ -70,7 +70,7 @@ function uftyp_9($gtab_id,$field_id,$ID,&$change_value) {
 	if($gfield[$gtab_id]['multilang'][$field_id] AND $umgvar['multi_language'] AND $change_value){
 	    
 	    // get language select values
-            foreach($umgvar['multi_language'] as $lkey => $lval){
+        foreach($umgvar['multi_language'] as $lkey => $lval){
 	        $sql_s[] = 'LANG'.$lval.'_WERT';
 	    }
 	    
@@ -157,7 +157,7 @@ function uftyp_7($gtab_id,$field_id,$ID,&$change_value) {
 			$cval = $change_value;
 		}else{
 			$cval = preg_replace("/[ A-Za-z]/","",$change_value);
-			$ccur = trim(strtoupper(preg_replace("/[0-9,.-]/","",$change_value)));
+			$ccur = trim(lmb_strtoupper(preg_replace("/[0-9,.-]/","",$change_value)));
 		}
 
 		if(!$lmcurrency["currency"][$ccur] AND $ccur){lmb_alert("currency $ccur not available!\\nuse EUR, USD ..");$ccur = "";}

@@ -30,7 +30,7 @@ if($path = read_dir($pfad)){
 foreach($path["name"] as $key => $value){
 	$value_ = explode(".",$value);
 	if($path["typ"][$key] == "file"){
-		$imptabgroup[] = strtoupper(preg_replace("/^[^0-9a-zA-z]$/","",$value_[0]));
+		$imptabgroup[] = lmb_strtoupper(preg_replace("/^[^0-9a-zA-z]$/","",$value_[0]));
 	}
 }
 }

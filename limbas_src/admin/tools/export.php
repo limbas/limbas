@@ -64,7 +64,7 @@ function LIM_setDefault(){
 <div class="lmbPositionContainerMainTabPool">
 
 
-<TABLE class="tabpool" BORDER="0" width="600" cellspacing="0" cellpadding="0"><TR><TD>
+<TABLE class="tabpool" BORDER="0" width="642" cellspacing="0" cellpadding="0"><TR><TD>
 
 <TABLE BORDER="0" cellspacing="0" cellpadding="0"><TR class="tabpoolItemTR">
 <TD nowrap ID="menu1" OnClick="LIM_activate(this,'1')" class="tabpoolItemActive"><?=$lang[965]?></TD>
@@ -248,7 +248,6 @@ LIM_setDefault();
 
 
 <?php
-
 ob_flush();
 flush();
 
@@ -262,38 +261,48 @@ if($dump_export) {
 
 	$path_backup = lmbExport_Dump($format,$struct_only);
 	?>
-		<BR><BR>
-        &nbsp;&nbsp;<FONT SIZE="2"><U><?=$lang[970]?>!</U></FONT><BR><BR>
-        &nbsp;&nbsp;<?=$lang[971]?>:<BR>
-        &nbsp;&nbsp;<B><?echo $result_exp_tabs;?></B> <?=$lang[950]?><BR>
-        &nbsp;&nbsp;<B><?echo $result_exp_dat;?></B> <?=$lang[972]?><BR>
-        &nbsp;&nbsp;<?=$lang[973]?><BR><BR>
-        &nbsp;&nbsp;<?=$lang[974]?>: <I><?echo $path_backup;?></I><BR><BR>
-        &nbsp;&nbsp;<A HREF="<?=$path_backup?>"><?=$path_backup?></A> (export dump)<BR>
+		<div class="lmbPositionContainerMain small">
+            <p><h4><?=$lang[970]?>!</h4></p>
+            <p>
+                <?=$lang[971]?> <?=$lang[973]?>:<BR>
+                <?=$lang[950]?>: <B><?=$result_exp_tabs?></B><BR>
+                <?=$lang[972]?>: <B><?=$result_exp_dat?></B>
+            </p>
+            <p>
+                <?=$lang[974]?>:<BR><BR>
+                <A HREF="<?=$path_backup?>"><i class="lmb-icon lmb-download"></i>&nbsp;<?=$path_backup?></A> (export dump)
+            </p>
+        </div>
    	<?php
 }elseif(($single_export OR $group_export) AND is_array($exptable)){
 	if($result_backup = lmbExport($exptable,$format,$export_filter,null,$txt_encode)){
 	?>
-		<BR><BR>
-        &nbsp;&nbsp;<FONT SIZE="2"><U><?=$lang[970]?>!</U></FONT><BR><BR>
-        &nbsp;&nbsp;<?=$lang[971]?> <?=$lang[973]?>:<BR>
-        &nbsp;&nbsp;<?=$lang[950]?>: <B><?echo $result_exp_tabs;?></B><BR>
-        &nbsp;&nbsp;<?=$lang[972]?>: <B><?echo $result_exp_dat;?></B><BR><BR>
-        
-        <?php
-        echo "&nbsp;&nbsp;$lang[976]:<BR>";
-        foreach ($result_backup["path"] as $key => $value){
-			echo  "&nbsp;&nbsp;<I><A NAME=\"download\" HREF=\"$value\">".$result_backup["name"][$key]."</A></I><BR>";
-        }
-        if(count($result_backup["path"]) > 1){
-        	echo "<BR><BR>&nbsp;&nbsp;<A HREF=\"Javascript:document.form1.make_package.value=1;document.form1.submit();\">$lang[977]!</A>";
-        }
+        <div class="lmbPositionContainerMain small">
+            <p><h4><?=$lang[970]?>!</h4></p>
+            <p>
+                <?=$lang[971]?> <?=$lang[973]?>:<BR>
+                <?=$lang[950]?>: <B><?=$result_exp_tabs?></B><BR>
+                <?=$lang[972]?>: <B><?=$result_exp_dat?></B>
+            </p>
+            <p>
+                <?=$lang[976]?>:<br>
+                <?php
+                foreach ($result_backup["path"] as $key => $value){
+                    echo  "<BR><A NAME=\"download\" HREF=\"$value\"><i class=\"lmb-icon lmb-download\"></i>&nbsp;".$result_backup["name"][$key]."</A>";
+                }
+                if(count($result_backup["path"]) > 1){
+                    echo "<BR><BR><A HREF=\"Javascript:document.form1.make_package.value=1;document.form1.submit();\">$lang[977]!</A>";
+                }
+                ?>
+            </p>
+        </div>
+    <?php
 	}
 
 }elseif($make_package){
 	$path = "USER/".$session["user_id"]."/temp";
 	if($path_ = make_fileArchive($path,"export_dump")){
-		echo  "<BR><BR>&nbsp;&nbsp;<I><A NAME=\"download\" HREF=\"$path_\">".$path_."</A> ($lang[975])</I><BR>";
+		echo  "<div class=\"lmbPositionContainerMain small\"><A NAME=\"download\" HREF=\"$path_\"><i class=\"lmb-icon lmb-download\"></i>&nbsp;".$path_."</A> ($lang[975])</div>";
 	}
 }
 elseif($sync_export)
@@ -314,24 +323,29 @@ elseif($sync_export)
 	}
 	if($result_backup = lmbExport(null,$format,null,$tosync,$txt_encode)){
 	?>
-		<BR><BR>
-        &nbsp;&nbsp;<FONT SIZE="2"><U><?=$lang[970]?>!</U></FONT><BR><BR>
-        &nbsp;&nbsp;<?=$lang[971]?> <?=$lang[973]?>:<BR>
-        &nbsp;&nbsp;<?=$lang[950]?>: <B><?echo $result_exp_tabs;?></B><BR>
-        &nbsp;&nbsp;<?=$lang[972]?>: <B><?echo $result_exp_dat;?></B><BR><BR>
-        
-        <?php
-        echo "&nbsp;&nbsp;$lang[976]:<BR>";
-        foreach ($result_backup["path"] as $key => $value){
-			echo  "&nbsp;&nbsp;<I><A NAME=\"download\" HREF=\"$value\">".$result_backup["name"][$key]."</A></I><BR>";
-        }
-        if(count($result_backup["path"]) > 1){
-        	echo "<BR><BR>&nbsp;&nbsp;<A HREF=\"Javascript:document.form1.make_package.value=1;document.form1.submit();\">$lang[977]!</A>";
-        }
+		<div class="lmbPositionContainerMain small">
+            <p><h4><?=$lang[970]?>!</h4></p>
+            <p>
+                <?=$lang[971]?> <?=$lang[973]?>:<BR>
+                <?=$lang[950]?>: <B><?=$result_exp_tabs?></B><BR>
+                <?=$lang[972]?>: <B><?=$result_exp_dat?></B>
+            </p>
+            <p>
+                <?=$lang[976]?>:<br>
+                <?php
+                foreach ($result_backup["path"] as $key => $value){
+                    echo  "<BR><A NAME=\"download\" HREF=\"$value\"><i class=\"lmb-icon lmb-download\"></i>&nbsp;".$result_backup["name"][$key]."</A>";
+                }
+                if(count($result_backup["path"]) > 1){
+                    echo "<BR><BR><A HREF=\"Javascript:document.form1.make_package.value=1;document.form1.submit();\"><i class=\"lmb-icon lmb-download\"></i>&nbsp;$lang[977]!</A>";
+                }
+                ?>
+            </p>
+        </div>
+    <?php
 	}
 }
 
 ?>
-
 
 </div>

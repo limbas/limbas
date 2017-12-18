@@ -27,7 +27,7 @@ class CLimbasSoapFactory {
 	private $objects = array();
 	
 	public function createTable($name) {
-		$name = ucfirst(strtolower($name));
+		$name = ucfirst(lmb_strtolower($name));
 		if (!isset($this->objects[$name])) {
 			$this->objects[$name] = new $name();
 		}
@@ -35,7 +35,7 @@ class CLimbasSoapFactory {
 	}
 
 	public function createArray($name) {
-		$name = ucfirst(strtolower($name));
+		$name = ucfirst(lmb_strtolower($name));
 		$name .= 'Array';
 		if (!isset($this->objects[$name])) {
 			$this->objects[$name] = new $name();
@@ -44,7 +44,7 @@ class CLimbasSoapFactory {
 	}
 
 	public function createQuery($name) {
-		$name = ucfirst(strtolower($name));
+		$name = ucfirst(lmb_strtolower($name));
 		$name .= 'Query';
 		if (!isset($this->objects[$name])) {
 			$this->objects[$name] = new $name();
@@ -53,7 +53,7 @@ class CLimbasSoapFactory {
 	}
 
 	public function createJoin($name) {
-		$name = ucfirst(strtolower($name));
+		$name = ucfirst(lmb_strtolower($name));
 		$name .= 'Join';
 		if (!isset($this->objects[$name])) {
 			$this->objects[$name] = new $name();
@@ -91,7 +91,7 @@ class CLimbasSoapFactory {
 		$filename = $umgvar['url'].'TEMP/wsdl/models/' . $className . '.class';
 		$fh = fopen($filename, 'w+');
 		if (false !== $fh) {
-			if (false !== strpos($className, 'Array')) {
+			if (false !== lmb_strpos($className, 'Array')) {
 				fwrite($fh, <<<EOS
 <?php
 /*
@@ -105,16 +105,16 @@ EOS
 );
 				fclose($fh);
 			} else {
-				if (false !== strpos($className, 'Query')) {
-					$tableName = strtoupper(substr($className, 0, strlen($className) - 5));
+				if (false !== lmb_strpos($className, 'Query')) {
+					$tableName = lmb_strtoupper(lmb_substr($className, 0, lmb_strlen($className) - 5));
 					$baseClass = 'CLimbasSoapQuery';
 				}		
-				elseif (false !== strpos($className, 'Join')) {
-					$tableName = strtoupper(substr($className, 0, strlen($className) - 4));
+				elseif (false !== lmb_strpos($className, 'Join')) {
+					$tableName = lmb_strtoupper(lmb_substr($className, 0, lmb_strlen($className) - 4));
 					$baseClass = 'CLimbasSoapJoin';		
 				}
 				else {
-					$tableName = strtoupper($className);
+					$tableName = lmb_strtoupper($className);
 					$baseClass = 'CLimbasSoapTable';
 				}
 			

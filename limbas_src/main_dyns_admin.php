@@ -24,6 +24,13 @@ require_once("lib/include.lib");
 require_once("lib/session.lib");
 
 
+# EXTENSIONS
+if($gLmbExt["ext_ajax_admin.inc"]){
+	foreach ($gLmbExt["ext_ajax_admin.inc"] as $key => $extfile){
+		require_once($extfile);
+	}
+}
+
 function dyns_fileGroupRules($para){
 	global $db;
 	global $groupdat;
@@ -142,9 +149,10 @@ function dyns_formTabFieldList($para){
 	global $gfield;
 	
 	$gtabid = $para["gtabid"];
-	$parentrel = $para["parentrel"];
-	
-	
+	$parent_tab = $para["parent_tab"];
+	$parent_field = $para["parent_field"];
+	$parentrel = $gfield[$parent_tab]["md5tab"][$parent_field];
+
 	echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">\n";
 	
 	$bzm = 1;
@@ -153,8 +161,8 @@ function dyns_formTabFieldList($para){
 		$parentrel2 = $gfield[$gtabid]["md5tab"][$key];
 		
 		if($bzm >= count($gfield[$gtabid]["sort"])){$outliner = "joinbottom";}else{$outliner = "join";}
-		
-		if($gfield[$gtabid]["field_type"][$key] >= 100){continue;}
+
+		if($gfield[$gtabid]["field_type"][$key] >= 100){$bzm++;continue;}
 		
 		if($gfield[$gtabid]["field_type"][$key] == 11 AND $gfield[$gtabid]["verkntabid"][$key]){
 		
@@ -164,9 +172,9 @@ function dyns_formTabFieldList($para){
 				
 				echo "<TR><TD>\n";
 				echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\"><TR><TD BACKGROUND=\"pic/outliner/line.gif\" VALIGN=\"top\"><IMG SRC=\"pic/outliner/".$outliner.".gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\"></TD><TD>\n";
-					
+
 				echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">\n";
-				echo "<TR><TD TITLE=\"table : ".$gtab["desc"][$valueskn]."\"><A HREF=\"Javascript:LmAdm_getFields(".$valueskn.",$globid,'$parentrel2')\"><IMG SRC=\"pic/outliner/plusonly.gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\" NAME=\"tab_".$globid."_plusminus\"><i class=\"lmb-icon lmb-folder-closed\" WIDTH=\"16\" HEIGHT=\"13\" ALIGN=\"TOP\" BORDER=\"0\" NAME=\"tab_".$globid."_box\"></i></A> <B title=\"".$gtab["table"][$keyskn]."\">".$gtab["desc"][$keyskn]."</B></TD></TR>\n";
+				echo "<TR><TD TITLE=\"table : ".$gtab["desc"][$valueskn]."\"><A HREF=\"Javascript:LmAdm_getFields(".$valueskn.",$globid,$gtabid,$key)\"><IMG SRC=\"pic/outliner/plusonly.gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\" NAME=\"tab_".$globid."_plusminus\"><i class=\"lmb-icon lmb-folder-closed\" WIDTH=\"16\" HEIGHT=\"13\" ALIGN=\"TOP\" BORDER=\"0\" NAME=\"tab_".$globid."_box\"></i></A> <B title=\"".$gtab["table"][$keyskn]."\">".$gtab["desc"][$keyskn]."</B></TD></TR>\n";
 				echo "<TR><TD ID=\"el_$globid\">";
 								
 				echo "</TR></TD>";
@@ -175,17 +183,62 @@ function dyns_formTabFieldList($para){
 				echo "</TD></TR></TABLE>\n";
 				echo "</TD></TR>\n";
 			}
-
 		}
-		
 
-		echo "<TR><TD><IMG SRC=\"pic/outliner/".$outliner.".gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\">&nbsp;";
-		echo "<A onclick=\"add_dbfield(this,event);\" title=\"".$gfield[$gtabid]["field_name"][$key]."\" lmfieldid=\"$key\" lmgtabid=\"$gtabid\" lmspelling=\"".$gfield[$gtabid]["field_name"][$key]."\" lmparentrel=\"$parentrel\" lmstabgroup=\"".$gtab["tab_group"][$gtabid]."\">".$gfield[$gtabid]["spelling"][$key]."</A>";
+		echo "<TR><TD><IMG SRC=\"pic/outliner/".$outliner.".gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\">";
+		if($gfield[$gtabid]["field_type"][$key] == 11 AND $gfield[$gtabid]["verkntabid"][$key]){echo "<IMG SRC=\"pic/outliner/hline.gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\">";}
+		echo "&nbsp;<A onclick=\"add_dbfield(this,event);\" title=\"".$gfield[$gtabid]["field_name"][$key]."\" lmfieldid=\"$key\" lmgtabid=\"$gtabid\" lmspelling=\"".$gfield[$gtabid]["field_name"][$key]."\" lmparentrel=\"$parentrel\" lmstabgroup=\"".$gtab["tab_group"][$gtabid]."\">".$gfield[$gtabid]["spelling"][$key]."</A>";
 		echo "</TD></TR>\n";
-		
-		
+
 		$bzm++;
 	}
+        
+    /* --- Fieldlist for extended relation params ------ */
+	$bzm = 1;
+    if ($r_verkntabid = $gfield[$gtabid]["r_verkntabid"]) {
+        foreach ($r_verkntabid as $key_ => $gtabid_) {
+            $r_verknfieldid = $gfield[$gtabid]['r_verknfieldid'][$key_];
+            if($verknparams = $gfield[$gtabid_]["verknparams"][$r_verknfieldid]){
+                
+                $globid = rand(1, 10000);
+                
+                echo "<TR><TD>\n";
+                echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\"><TR><TD BACKGROUND=\"pic/outliner/line.gif\" VALIGN=\"top\"><IMG SRC=\"pic/outliner/join.gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\"></TD><TD>\n";
+                
+                echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">\n";
+                echo "<TR><TD TITLE=\"table : " . $gtab["desc"][$gtabid_] . "\"><A HREF=\"Javascript:LmAdm_getFields(" . $verknparams . ",$globid,$gtabid_,$r_verknfieldid)\"><IMG SRC=\"pic/outliner/plusonly.gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\" NAME=\"tab_" . $globid . "_plusminus\"><i class=\"lmb-icon lmb-folder-closed\" WIDTH=\"16\" HEIGHT=\"13\" ALIGN=\"TOP\" BORDER=\"0\" NAME=\"tab_" . $globid . "_box\"></i></A> <B title=\"field: ".$gfield[$gtabid_]["spelling"][$r_verknfieldid]."\"><i>".$gtab["desc"][$verknparams]."</i></B></TD></TR>\n";
+                echo "<TR><TD ID=\"el_$globid\">";
+                
+                echo "</TR></TD>";
+                echo "</TABLE>\n";
+                
+                echo "</TD></TR></TABLE>\n";
+                echo "</TD></TR>\n";
+                $bzm++;
+            }
+        }
+    }
+        
+        
+	/* --- Fieldlist for extended relation params ------*/
+    /*
+    if($gfield[$parent_tab]["verknparams"][$parent_field]){
+        $vgtabid_ = $gfield[$parent_tab]["verknparams"][$parent_field];
+        $bzm_ = 1;
+        foreach ($gfield[$vgtabid_]["sort"] as $key_ => $value) {
+            
+            if($bzm_ >= count($gfield[$vgtabid_]["sort"])){$outliner_ = "joinbottom";}else{$outliner_ = "join";}
+
+            if ($gfield[$vgtabid_]["field_type"][$key_] >= 100) {continue;}
+            echo "<TR><TD><IMG SRC=\"pic/outliner/$outliner_.gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\">&nbsp;";
+            echo "<A onclick=\"add_dbfield(this,event);\" title=\"" . $gfield[$vgtabid_]["field_name"][$key_] . "\" lmfieldid=\"$key_\" lmgtabid=\"$vgtabid_\" lmspelling=\"" . $gfield[$vgtabid_]["field_name"][$key_] . "\" lmparentrel=\"$parentrel\" lmstabgroup=\"" . $gtab["tab_group"][$vgtabid_] . "\"><i>" . $gfield[$vgtabid_]["spelling"][$key_] . "</i></A>";
+            echo "</TD></TR>\n";
+            
+            $bzm_++;
+            // echo "<span class=\"lmbContextItem$class\" style=\"color:$color;cursor:pointer\" OnClick=\"LmExt_RelationFields(this,'$gtabid','$fieldid','$key','$edittyp','$ID','','','','','$gformid','$formid');\">".$gfield[$vgtabid_]["spelling"][$key]."</span>";
+        }
+    }
+	*/
 	
 	echo "</TABLE>\n";
 }

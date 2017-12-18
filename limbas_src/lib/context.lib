@@ -35,7 +35,7 @@ function pop_movetop($el,$width=null){
 	if($width) $width = "width:".$width."px";
 	echo "<div class=\"lmbContextRow\" onmousedown=\"aktivate_menu('$el');\"><div class=\"lmbContextItem\">
 	<div class=\"lmbContextTop\" id=\"pop_menu_".$el."\" style=\"cursor:move\">
-	<i class=\"lmbContextRight lmb-icon lmb-caret-square-down\" style=\"cursor:pointer\" onclick=\"document.getElementById('$el').style.visibility='hidden';\"></i>
+	<i class=\"lmbContextRight lmb-icon lmb-caret-square-down\" style=\"cursor:pointer\" onclick=\"document.getElementById('$el').style.display='none';\"></i>
 	</div></div></div>";
 }
 
@@ -43,8 +43,8 @@ function pop_closetop($el,$width=null){
 	if($width) $width = "width:".$width."px";
 	
 	echo "<div class=\"lmbContextRow\"><div class=\"lmbContextItem\">
-	<div class=\"lmbContextTop\" onclick=\"document.getElementById('$el').style.visibility='hidden';\">
-	<i onclick=\"document.getElementById('$el').style.visibility='hidden';\" class=\"lmbContextRight lmb-icon lmb-close\"></i>
+	<div class=\"lmbContextTop\" onclick=\"document.getElementById('$el').style.display='none';\">
+	<i onclick=\"document.getElementById('$el').style.display='none';\" class=\"lmbContextRight lmb-icon lmb-close\"></i>
 	</div></div></div>";
 }
 
@@ -101,7 +101,8 @@ function pop_menu($id,$zl=null,$zv=null,$active=null,$line=null,$imgclass=null){
 
     	if($active){
 		$activeicon = "<i class=\"lmbContextRight lmb-icon lmb-check\" border=\"0\"></i>";
-		$acst = "style=\"color:#AAAAAA\"";
+		#$acst = "style=\"color:#AAAAAA\"";
+		#$acst = "style=\"font-weight:bold;\"";
 	}
 
    	$class = "";

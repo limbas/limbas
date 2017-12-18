@@ -515,12 +515,8 @@ function dyns_14_b($params){
 		# Verknüpfung löschen
 		#if($isrelation){
 			$func = "if(confirm('".$lang[2776]."')){LmExt_RelationFields(this,'$gtabid','$fieldid','','$typ','$ID','','','unlinkall','','$gformid','$formid','".$gfield[$gtabid]["ajaxpost"][$fieldid]."',event);}";
-			pop_left();
-			echo "<i class=\"lmb-icon-cus lmb-rel-del\" style=\"height:12px;\" border=\"0\"></i><span style=\"cursor:pointer;\" class=\"lmbContextItemIcon\" OnMouseOver=\"this.style.color='red';\" OnMouseOut=\"this.style.color='black';\" OnClick=\"$func;\">".$lang[1283]."</span>";
-			pop_right();
-			pop_left();
-			echo "<hr style=\"clear:both\" class=\"lmbContextItemIcon\">";
-			pop_right();
+            pop_menu2($lang[1283], "", "", "lmb-icon-cus lmb-rel-del", "", $func);
+            pop_line();
 		#}
 		
 		foreach ($gresult[$vgtabid]["id"] as $key => $value) {
@@ -540,15 +536,11 @@ function dyns_14_b($params){
 				$func = "LmExt_RelationFields(this,'$gtabid','$fieldid','','$typ','$ID','','$value','link','','$gformid','$formid','".$gfield[$gtabid]["ajaxpost"][$fieldid]."',event);";
 			}
 			#if($gfield[$gtabid]["unique"][$fieldid]){$close = "document.getElementById(dyns_el.name+'l').innerHTML = '';document.getElementById('lmbAjaxContainer').style.visibility='hidden';";}
-			pop_left();
-			echo "<div style=\"cursor:pointer;\" OnMouseOver=\"this.style.color='blue';\" OnMouseOut=\"this.style.color='black';\"><i class=\"lmb-icon-cus lmb-rel-add\" style=\"height:12px;\" border=\"0\"></i><span class=\"lmbContextItemIcon\" OnClick=\"$func;\">".$path.$retrn."</span></div>";
-			pop_right();
+            pop_menu2($path.$retrn, "", "", "lmb-icon-cus lmb-rel-add", "", $func);            
 		}
 		if($gresult[$vgtabid]["res_count"] > $gresult[$vgtabid]["res_viewcount"]){
-			pop_line();
-			pop_left();
-			echo "<i class=\"lmb-icon lmb-next\" style=\"height:12px;\" border=\"0\"></i><span style=\"cursor:pointer;\" class=\"lmbContextItemIcon\" OnMouseOver=\"this.style.color='red';\" OnMouseOut=\"this.style.color='black';\" onclick=\"lmbAjax_dynsearch(event,null,'14_b','$form_name','$vgtabid','$vfieldid','$gtabid','$fieldid','$ID','$typ','$gformid','$formid','','$nextpage')\">... ".$lang[1297]."</span>";
-			pop_right();
+			pop_line();            
+            pop_menu2("... ".$lang[1297], "", "", "lmb-next", "", "lmbAjax_dynsearch(event,null,'14_b','$form_name','$vgtabid','$vfieldid','$gtabid','$fieldid','$ID','$typ','$gformid','$formid','','$nextpage');");
 		}
 	}else{
 		echo $lang[98];
@@ -865,7 +857,7 @@ function dyns_11_a($params){
 
 	$value = lmb_utf8_decode($value);
 	if($value AND $value != "*"){
-		$where = "AND (LOWER(".$tabtyp."_W.$field_name) LIKE '%".parse_db_string(strtolower($value),255)."%' OR LOWER(".$tabtyp."_W.KEYWORDS) LIKE '%".parse_db_string(strtolower($value),255)."%')";
+		$where = "AND (LOWER(".$tabtyp."_W.$field_name) LIKE '%".parse_db_string(lmb_strtolower($value),255)."%' OR LOWER(".$tabtyp."_W.KEYWORDS) LIKE '%".parse_db_string(lmb_strtolower($value),255)."%')";
 	}
 
 	if(LMB_DBFUNC_LIMIT){$limit = LMB_DBFUNC_LIMIT." ".$umgvar["resultspace"];}
@@ -1239,7 +1231,7 @@ function dyns_gtabReplace($params){
             }            
 
             // agregate numeric
-            elseif ($gfield[$gtabid]["field_type"][$chfid] == 5 and (substr($grplval, 0, 1) == '+' or substr($grplval, 0, 1) == '-') and is_numeric($grplval)) {
+            elseif ($gfield[$gtabid]["field_type"][$chfid] == 5 and (lmb_substr($grplval, 0, 1) == '+' or lmb_substr($grplval, 0, 1) == '-') and is_numeric($grplval)) {
 
                 foreach ($gresult[$gtabid]["id"] as $key => $value) {
                     
@@ -1290,13 +1282,16 @@ function dyns_showReminder($params){
 	$ID = $params["ID"];
 	$remid = $params["remid"];
 	$add = $params["add"];
+    $changeViewId = $params["changeViewId"];
+    $changeId = $params["changeId"];
 	$use_records = $params["use_records"];
 	$category = $params["REMINDER_CATEGORY"];
 	$gfrist = $params["gfrist"];
 	$listmode = $params["listmode"];
 	$mwidth = "";
-	
-	// listmode
+    $defaults = $params['defaults'] ? json_decode($params['defaults'], 1) : array();
+
+    // listmode
 	if($listmode AND $use_records){
         // use filter
 	    if($use_records == 'all'){
@@ -1344,97 +1339,173 @@ function dyns_showReminder($params){
             	$success ++;
             	$msg = $lang[2900];
     		}
-    	}
+    	}elseif($changeId){   
+            if(lmb_changeReminder($changeId, $params["REMINDER_DATE_TIME"], $params["REMINDER_BEMERKUNG"])){
+                $success ++;
+            	$msg = $lang[729] . " " . $lang[2006]; // TODO own lang entry
+            }
+        }
 	}
 	
 	if($success){
-	    $out = "<center><hr></center><span style=\"color:green\">$success $msg..</span>";
+	    $out = "<span style=\"color:green\">$success $msg</span><center><hr></center>";
 	}
 
-	echo "<FORM NAME=\"form_reminder\">
-		<input type=\"hidden\" ID=\"REMINDER_USERGROUP\" NAME=\"REMINDER_USERGROUP\">";
+	echo "<FORM NAME=\"form_reminder\">";
 
 	pop_top('lmbAjaxContainer',$mwidth);
+    
+    if($changeViewId AND $reminder = lmb_getReminder($gtabid,$ID,$category)) {
+        $changedate = $reminder["datum"][$changeViewId];
+        $changedesc = $reminder["desc"][$changeViewId];
+    }
 
-	pop_left($mwidth);
-	echo "<TABLE width='100%'><TR><TD nowrap>
-		&nbsp;$lang[1975] <INPUT onchange='javascript:setReminderDateTime(\"REMINDER_VALUE\",\"REMINDER_UNIT\",\"REMINDER_DATE_TIME\");' TYPE=\"TEXT\" NAME=\"REMINDER_VALUE\" STYLE=\"width:25px;\" MAX=4>
-		<SELECT NAME=REMINDER_UNIT onchange='javascript:setReminderDateTime(\"REMINDER_VALUE\",\"REMINDER_UNIT\",\"REMINDER_DATE_TIME\");' >
-		<OPTION VALUE=min>$lang[1980]</OPTION>
-		<OPTION VALUE=hour>$lang[1981]</OPTION>
-		<OPTION VALUE=day>$lang[1982]</OPTION>
-		<OPTION VALUE=week>$lang[1983]</OPTION>
-		<OPTION VALUE=month>$lang[1984]</OPTION>
-		<OPTION VALUE=year>$lang[1985]</OPTION>
-		</SELECT></TD>
-		<TD nowrap align='right'>$lang[1976]
-		<INPUT onchange='javascript:{setReminderValue(\"REMINDER_DATE_TIME\",\"REMINDER_VALUE\",\"REMINDER_UNIT\");}' TYPE=TEXT NAME=\"REMINDER_DATE_TIME\" STYLE=\"width:115px;\" VALUE=\"".local_date(1)."\" MAX=16>
-		<i class=\"lmb-icon lmb-caret-right\" style=\"cursor:pointer\" id=\"CALENDER_DISPLAY\" onclick=\"document.getElementsByName('REMINDER_UNIT')[0][2].selected=true; lmb_datepicker(event,this,'REMINDER_DATE_TIME',document.getElementsByName('REMINDER_DATE_TIME')[0].value,'".dateStringToDatepicker(setDateFormat(0,1))."',10);\"></i>&nbsp;&nbsp;</TD></TR></TABLE>";
-	pop_right();
+    # date time selection
+    if($defaults['datetime']) {
+		echo "<INPUT TYPE=\"hidden\" NAME=\"REMINDER_DATE_TIME\" VALUE=\"{$defaults['datetime']}\" MAX=16>";
+    } else {
+        pop_left($mwidth);
+        echo "<TABLE width='100%'><TR><TD nowrap>
+            &nbsp;$lang[1975] <INPUT onchange='javascript:setReminderDateTime(\"REMINDER_VALUE\",\"REMINDER_UNIT\",\"REMINDER_DATE_TIME\");' TYPE=\"TEXT\" NAME=\"REMINDER_VALUE\" STYLE=\"width:25px;\" MAX=4>
+            <SELECT NAME=REMINDER_UNIT onchange='javascript:setReminderDateTime(\"REMINDER_VALUE\",\"REMINDER_UNIT\",\"REMINDER_DATE_TIME\");' >
+            <OPTION VALUE=min>$lang[1980]</OPTION>
+            <OPTION VALUE=hour>$lang[1981]</OPTION>
+            <OPTION VALUE=day>$lang[1982]</OPTION>
+            <OPTION VALUE=week>$lang[1983]</OPTION>
+            <OPTION VALUE=month>$lang[1984]</OPTION>
+            <OPTION VALUE=year>$lang[1985]</OPTION>
+            </SELECT></TD>
+            <TD nowrap align='right'>$lang[1976]
+            <INPUT onchange='javascript:{setReminderValue(\"REMINDER_DATE_TIME\",\"REMINDER_VALUE\",\"REMINDER_UNIT\");}' TYPE=TEXT NAME=\"REMINDER_DATE_TIME\" STYLE=\"width:115px;\" VALUE=\"".($changeViewId ? $changedate : local_date(1))."\" MAX=16>
+            <i class=\"lmb-icon lmb-caret-right\" style=\"cursor:pointer\" id=\"CALENDER_DISPLAY\" onclick=\"document.getElementsByName('REMINDER_UNIT')[0][2].selected=true; lmb_datepicker(event,this,'REMINDER_DATE_TIME',document.getElementsByName('REMINDER_DATE_TIME')[0].value,'".dateStringToDatepicker(setDateFormat(0,1))."',10);\"></i>&nbsp;&nbsp;</TD></TR></TABLE>
+            <CENTER><hr></CENTER>";
+        pop_right();
+    }
+    
+    pop_left($mwidth);
+    echo "<TABLE>";
 
-	pop_left($mwidth);
-	echo "<CENTER><hr></CENTER>
-		<TABLE>
-		<TR><TD valign=top>$lang[2643]:</TD><TD>
-		<TABLE cellpadding=0 cellspacing=0 width=\"100%\"><TR><TD>
-		<TD nowrap><input type=\"text\" style=\"width:65px;\" OnKeyup=\"lmbAjax_showUserGroupsSearch(event,this.value,'".$ID."','".$gtabid."','','lmb_reminderAddUserGroup','','user','')\">&nbsp;<i class=\"lmb-icon lmb-user\" style=\"cursor:pointer;vertical-align:text-bottom\" OnClick=\"lmbAjax_showUserGroupsSearch(event,'*','".$ID."','".$gtabid."','','lmb_reminderAddUserGroup','','user')\"></i>
-		<div id=\"lmb_reminderAddUserGroupuser\" class=\"ajax_container\" style=\"visibility:hidden;position:absolute;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>
-		</TD><TD align=\"right\">
-		<input type=\"text\" style=\"width:65px;\" OnKeyup=\"lmbAjax_showUserGroupsSearch(event,this.value,'".$ID."','".$gtabid."','','lmb_reminderAddUserGroup','','group','')\">&nbsp;<i class=\"lmb-icon lmb-group\" style=\"cursor:pointer;vertical-align:text-bottom\" OnClick=\"lmbAjax_showUserGroupsSearch(event,'*','".$ID."','".$gtabid."','','lmb_reminderAddUserGroup','','group','')\"></i>
-		<div id=\"lmb_reminderAddUserGroupgroup\" class=\"ajax_container\" style=\"text-align:left;visibility:hidden;position:absolute;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>
-		</TD></TR></TABLE>
-		<div id=\"contWvUGList\" style=\"width:100%;background-color:".$farbschema["WEB9"]."\"></div>
-		</TD></TR>";
-		echo "<tr><td valign=\"top\">$lang[1977]:</td><td><textarea name=\"REMINDER_BEMERKUNG\" style=\"width:190px;height:20px;\" onkeyup=\"limbasResizeTextArea(this,5);\"></textarea></td></tr>";
-		echo "<tr title=\"".$lang[2577]."\"><td valign=\"top\">$lang[612]:</td><td><input type=\"checkbox\" name=\"REMINDER_MAIL\"></td></tr>";
-		if($greminder[$gtabid]['name']){
-			echo "<tr><td valign=\"top\">Kategorie:</td><td colspan=\"5\"><input type=\"radio\" name=\"REMINDER_CATEGORY\" value=\"0\" checked>&nbsp;default<br>";
-			foreach ($greminder[$gtabid]['name'] as $rkey => $rval){
-				echo "<input type=\"radio\" name=\"REMINDER_CATEGORY\" value=\"$rkey\">&nbsp;".$rval."<br>";
-			}
-			echo "</td></tr>";
-			/*
-			echo "<tr><td valign=\"top\">Kategorie:</td><td colspan=\"5\"><select name=\"REMINDER_CATEGORY\"><option>";
-			foreach ($greminder[$gtabid]['name'] as $rkey => $rval){
-				echo "<option value=\"$rkey\">".$rval;
-			}
-			echo "</select></td></tr>";
-			*/
-	}
-		
+    # user group selection    
+    if(!is_null($defaults['usergroups'])) {
+        echo "<tr style=\"display:none;\"><td><input type=\"hidden\" ID=\"REMINDER_USERGROUP\" NAME=\"REMINDER_USERGROUP\" VALUE=\"{$defaults['usergroups']}\"></td></tr>";
+    } else {
+        if(!$changeViewId) {        
+            echo "<TR>
+                <TD valign=top>$lang[2643]:</TD>
+                <TD>
+                    <div class=\"fgtabchange\">
+                        <TABLE cellpadding=0 cellspacing=0 width=\"100%\">
+                            <TR>
+                                <TD nowrap>
+                                    <input type=\"text\" style=\"width:65px;\" OnKeyup=\"lmbAjax_showUserGroupsSearch(event,this.value,'".$ID."','".$gtabid."','','lmb_reminderAddUserGroup','','user','')\" OnDblClick=\"this.value='*';$(this).keyup();\">&nbsp;
+                                    <i class=\"lmb-icon lmb-user\" style=\"cursor:pointer;vertical-align:text-bottom\" OnClick=\"lmbAjax_showUserGroupsSearch(event,'*','".$ID."','".$gtabid."','','lmb_reminderAddUserGroup','','user')\"></i>
+                                </TD>
+                                <TD align=\"right\">
+                                    <input type=\"text\" style=\"width:65px;\" OnKeyup=\"lmbAjax_showUserGroupsSearch(event,this.value,'".$ID."','".$gtabid."','','lmb_reminderAddUserGroup','','group','')\" OnDblClick=\"this.value='*';$(this).keyup();\">&nbsp;
+                                    <i class=\"lmb-icon lmb-group\" style=\"cursor:pointer;vertical-align:text-bottom\" OnClick=\"lmbAjax_showUserGroupsSearch(event,'*','".$ID."','".$gtabid."','','lmb_reminderAddUserGroup','','group','')\"></i>
+                                </TD>
+                            </TR>
+                        </TABLE>
+                        <div id=\"contWvUGList\" style=\"width:100%;background-color:".$farbschema["WEB9"]."\"></div>
+                    </div>
+                    <div id=\"lmb_reminderAddUserGroupuser\" class=\"ajax_container\" style=\"visibility:hidden;position:absolute;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>
+                    <div id=\"lmb_reminderAddUserGroupgroup\" class=\"ajax_container\" style=\"text-align:left;visibility:hidden;position:absolute;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>
+                </TD>
+            </TR>";
+        }
+    }
+    
+    # remark
+    if(!is_null($defaults['remark'])){
+        echo "<tr style=\"display:none;\"><td><textarea name=\"REMINDER_BEMERKUNG\">{$defaults['remark']}</textarea></td></tr>";
+    } else {
+        echo "<tr><td valign=\"top\">$lang[1977]:</td><td><textarea name=\"REMINDER_BEMERKUNG\" style=\"width:190px;height:20px;\" onkeyup=\"limbasResizeTextArea(this,5);\">" . ($changeViewId ? $changedesc : "") . "</textarea></td></tr>";
+    }
+    
+    # mail
+    if(!is_null($defaults['mail'])) {
+        echo "<tr style=\"display:none;\"><td><input type=\"hidden\" name=\"REMINDER_MAIL\" value=\"{$defaults['mail']}\"></td></tr>";
+    } else if(!$changeViewId){        
+        echo "<tr title=\"".$lang[2577]."\"><td valign=\"top\">$lang[612]:</td><td><input type=\"checkbox\" name=\"REMINDER_MAIL\"></td></tr>";
+    }
+    
+    # category selection
+    if(!is_null($defaults['category'])) {
+        echo "<tr style=\"display:none;\"><td><input type=\"hidden\" name=\"REMINDER_CATEGORY\" value=\"{$defaults['category']}\"></td></tr>";        
+    } else {        
+        if(!$changeViewId AND $greminder[$gtabid]['name']){
+            echo "<tr><td valign=\"top\">Kategorie:</td><td colspan=\"5\"><input type=\"radio\" name=\"REMINDER_CATEGORY\" value=\"0\" checked>&nbsp;default<br>";
+            foreach ($greminder[$gtabid]['name'] as $rkey => $rval){
+                echo "<input type=\"radio\" name=\"REMINDER_CATEGORY\" value=\"$rkey\">&nbsp;".$rval."<br>";
+            }
+            echo "</td></tr>";
+            /*
+            echo "<tr><td valign=\"top\">Kategorie:</td><td colspan=\"5\"><select name=\"REMINDER_CATEGORY\"><option>";
+            foreach ($greminder[$gtabid]['name'] as $rkey => $rval){
+                echo "<option value=\"$rkey\">".$rval;
+            }
+            echo "</select></td></tr>";
+            */
+        }       
+    }
+    
+    # separator
+    if(is_null($defaults['remark']) AND is_null($defaults['mail']) AND is_null($defaults['category'])) {
+        echo "<tr><td colspan=\"2\"><center><hr></center><td></tr>";
+    }
+    
 	# delete all in list
     if($listmode AND $gfrist){
-			echo "<tr><td colspan=\"2\"><center><hr></center><td></tr>
+			echo "
 			<tr><td valign=\"top\"><b>$lang[2644]:</b></td>
 			<td>".$greminder[$gtabid]["name"][$gfrist]."</td>
-			<td><img src=\"pic/close.gif\" style=\"cursor:pointer;\" OnClick=\"javascript:limbasDivShowReminder(event,'','','$gfrist');\" Title=\"".$lang[721]."\"></td>
+			<td><i class=\"lmb-icon lmb-close-alt\" style=\"cursor:pointer;\" OnClick=\"javascript:limbasDivShowReminder(event,'','','$gfrist');\" Title=\"".$lang[721]."\"></i></td>
 			</tr>";
 	# delete single category
-    }elseif($reminder = lmb_getReminder($gtabid,$ID,$category)){
-		echo "<tr><td colspan=\"2\"><center><hr></center><td></tr>
+    }elseif(!$changeViewId AND $reminder = lmb_getReminder($gtabid,$ID,$category) AND !$defaults['hidecurrent']){
+		echo "
 		<tr><td valign=\"top\"><b>$lang[2644]:</b></td><td>
 		<table cellpadding=2 cellspacing=0>
 		";
+
+        # sort reminder by group
+        $groups = array();
 	    foreach ($reminder["id"] as $remkey => $remval){
-				echo "<tr>
-				<td title=\"".$reminder["desc"][$remkey]."\">".$lang[$reminder['name'][$remkey]]."</td>
-				<td>".substr($reminder["datum"][$remkey],0,13)."</td>
+            if(!$groups[$reminder['name'][$remkey]]) {
+                $groups[$reminder['name'][$remkey]] = array();
+            }
+            $groups[$reminder['name'][$remkey]][] = $remkey;
+        }
+        
+        # display reminder sorted into groups
+        foreach ($groups as $groupLangId => $remKeyArr) {
+
+            # display group name
+            $groupname = $groupLangId ? $lang[$groupLangId] : "default";
+            echo "<tr><td><i>" . $groupname . "</i></td><td></td><td></td></tr>";
+            
+            # display reminders
+            foreach($remKeyArr as $notused => $remkey) {
+                $remval = $reminder["id"][$remkey];
+                echo "<tr>
+				<td></td>
+				<td><a href=\"#\" title=\"".$reminder["desc"][$remkey]."\" onclick=\"javascript:limbasDivShowReminder(event,'','','','$remval');\">".lmb_substr($reminder["datum"][$remkey],0,16)."</a></td>
 				<td><i class=\"lmb-icon lmb-close-alt\" style=\"cursor:pointer;\" OnClick=\"javascript:limbasDivShowReminder(event,'','','$remval');\" Title=\"".$lang[721]."\"></i></td>";
 				if($reminder["from"][$remkey]){echo "<br><i>".$userdat["bezeichnung"][$reminder["from"][$remkey]]."</i>";}
 				echo "</tr>";
-			}
-			echo "</table></td></tr>";
-		}
+            }
+        }
+        
+        echo "</table></td></tr>";
+    }
 
 	echo "</TABLE>
-		$out
-		<center><hr></center>
-		";
+		$out";
 	pop_right();
 
 
 	pop_left($mwidth);
-	echo "<CENTER><input type=button value=\"$lang[1979]\" onclick=\"limbasDivShowReminder(event,'','1');\">&nbsp;<input type=button value=$lang[1978] onClick='javascript:{activ_menu=0;divclose();}'></CENTER>";
+	echo "<CENTER><input type=button value=\"" . ($changeViewId ? $lang[2443] : $lang[1979]) . "\" onclick=\"" . ($changeViewId ? "limbasDivShowReminder(event,'','','','','$changeViewId');" : "limbasDivShowReminder(event,'','1');") . "\">&nbsp;<input type=button value=$lang[1978] onClick='javascript:{activ_menu=0;divclose();}'></CENTER>";
 	echo "<INPUT TYPE=HIDDEN NAME=WIEDERVORLAGENAME ID=WIEDERVORLAGEID>";
 	pop_right();
 
@@ -1660,7 +1731,7 @@ function dyns_fileUploadCheck($params){
 
 	foreach ($files as $key => $filename){
 		# check for mimetype
-		$ext = strtolower(trim(substr($filename,strrpos($filename,'.')+1,4)));
+		$ext = lmb_strtolower(trim(lmb_substr($filename,lmb_strrpos($filename,'.')+1,4)));
 		if(!in_array($ext,$gmimetypes["ext"])){
 			lmb_alert($lang[133]."\\n- ".$filename." (.".$ext.")");
 		# check for uploadsize
@@ -1697,8 +1768,8 @@ function dyns_filePasteCheck($params){
 	$filelist = explode(";",$params["filelist"]);
 
 	foreach ($filelist as $key => $value){
-		$typ = substr($value,0,1);
-		$fid = substr($value,1,20);
+		$typ = lmb_substr($value,0,1);
+		$fid = lmb_substr($value,1,20);
 		# file
 		if($typ == "d"){
 			$sqlquery = "SELECT ID,NAME,VID FROM LDMS_FILES WHERE LEVEL = ".$params["level"]." AND VACT = ".LMB_DBDEF_TRUE." AND NAME = (SELECT NAME FROM LDMS_FILES WHERE ID = ".$fid.")";
@@ -2375,33 +2446,33 @@ function dyns_snapshotShare($params){
 		//$subject ="new snapshot";
 
 
-		if(substr($valR,0,1)=="U")
+		if(lmb_substr($valR,0,1)=="U")
 		{
-			$sqlquery = "SELECT VORNAME,NAME FROM LMB_USERDB WHERE USER_ID = ".substr($valR,1);
+			$sqlquery = "SELECT VORNAME,NAME FROM LMB_USERDB WHERE USER_ID = ".lmb_substr($valR,1);
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 			if(odbc_fetch_row($rs, 1)) {
-				$toAddr = odbc_result($rs,"VORNAME")." ".odbc_result($rs,"NAME")." <u@local.".substr($valR,1).">";
+				$toAddr = odbc_result($rs,"VORNAME")." ".odbc_result($rs,"NAME")." <u@local.".lmb_substr($valR,1).">";
 			}
 			else
-				$toAddr = substr($valR,1);
+				$toAddr = lmb_substr($valR,1);
 
 
-			user_mail(0,substr($valR,1),$toAddr,$subject,$mess);
+			user_mail(0,lmb_substr($valR,1),$toAddr,$subject,$mess);
 
 		}
-		elseif (substr($valR,0,1)=="G")
+		elseif (lmb_substr($valR,0,1)=="G")
 		{
-			$sqlquery = "SELECT NAME FROM LMB_GROUPS WHERE GROUP_ID = ".substr($valR,1);
+			$sqlquery = "SELECT NAME FROM LMB_GROUPS WHERE GROUP_ID = ".lmb_substr($valR,1);
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 			if(odbc_fetch_row($rs, 1)) {
-				$toAddr = odbc_result($rs,"NAME")." <g@local.".substr($valR,1).">";
+				$toAddr = odbc_result($rs,"NAME")." <g@local.".lmb_substr($valR,1).">";
 			}
 			else
-				$toAddr = substr($valR,1);
+				$toAddr = lmb_substr($valR,1);
 
-			group_mail(0,substr($valR,1),$toAddr,$subject,$mess);
+			group_mail(0,lmb_substr($valR,1),$toAddr,$subject,$mess);
 		}
 
 	}
@@ -2534,7 +2605,7 @@ function dyns_completeTyping($params)
 	$inputDisplay = $params['limbasInputDisplay'];
 
 
-	$sqlquery = "select ".implode(",",$displayField).",$idField from ".$tableName." where UPPER(".implode(") like '".strtoupper($beginValue)."%' OR UPPER(",$fieldSearch).") like '".strtoupper($beginValue)."%'";
+	$sqlquery = "select ".implode(",",$displayField).",$idField from ".$tableName." where UPPER(".implode(") like '".lmb_strtoupper($beginValue)."%' OR UPPER(",$fieldSearch).") like '".lmb_strtoupper($beginValue)."%'";
 
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
@@ -3089,7 +3160,7 @@ function dyns_fileVersionDiff($params){
 			if(file_exists($target)){
 				$target1 = str_replace($toba," ",convert_to_text(odbc_result($rs, "SECNAME"),odbc_result($rs, "EXT"),odbc_result($rs, "MIMETYPE"),$file1,0,1,0,odbc_result($rs, "LEVEL")));
 				$vcount1 = odbc_result($rs, "VID");
-				if(lmb_utf8_check(substr($target1,0,200))){
+				if(lmb_utf8_check(lmb_substr($target1,0,200))){
 					$target1 = lmb_utf8_decode($target1);
 				}elseif($GLOBALS["umgvar"]["charset"] == "UTF-8"){
 					$target1 = lmb_utf8_encode($target1);
@@ -3106,7 +3177,7 @@ function dyns_fileVersionDiff($params){
 			if(file_exists($target)){
 				$target2 = str_replace($toba," ",convert_to_text(odbc_result($rs, "SECNAME"),odbc_result($rs, "EXT"),odbc_result($rs, "MIMETYPE"),$file2,0,1,0,odbc_result($rs, "LEVEL")));
 				$vcount2 = odbc_result($rs, "VID");
-				if(lmb_utf8_check(substr($target2,0,200))){
+				if(lmb_utf8_check(lmb_substr($target2,0,200))){
 					$target2 = lmb_utf8_decode($target2);
 				}elseif($GLOBALS["umgvar"]["charset"] == "UTF-8"){
 					$target2 = lmb_utf8_decode($target2);
@@ -3177,7 +3248,7 @@ function dyns_menuReportOption($params){
 		}
 		
 		require_once("extra/explorer/filestructure.lib");
-		require_once("extra/report/report_".substr($report_medium,0,3).".php");
+		require_once("extra/report/report_".lmb_substr($report_medium,0,3).".php");
 		if($report_output==1 OR $report_output==3){
 			$path = trim(str_replace($umgvar["pfad"],"",$generatedReport),"/");
 			echo "<Script language=\"JavaScript\">
@@ -3283,7 +3354,7 @@ function dyns_UGtype($params){
 
 	if($gres){
 		echo "<hr>";
-		if(!$gfield[$gtabid]["select_cut"][$fieldid] OR strtoupper($gfield[$gtabid]["select_cut"][$fieldid]) == "<OL>" OR strtoupper($gfield[$gtabid]["select_cut"][$fieldid]) == "<UL>" OR strtoupper($gfield[$gtabid]["select_cut"][$fieldid]) == "<LI>"){echo "<LI>";$cut = "<LI>";}else{$cut = $gfield[$gtabid]["select_cut"][$fieldid];}
+		if(!$gfield[$gtabid]["select_cut"][$fieldid] OR lmb_strtoupper($gfield[$gtabid]["select_cut"][$fieldid]) == "<OL>" OR lmb_strtoupper($gfield[$gtabid]["select_cut"][$fieldid]) == "<UL>" OR lmb_strtoupper($gfield[$gtabid]["select_cut"][$fieldid]) == "<LI>"){echo "<LI>";$cut = "<LI>";}else{$cut = $gfield[$gtabid]["select_cut"][$fieldid];}
 		echo implode($cut,$gres);
 	}
 }
@@ -3300,9 +3371,9 @@ function dyns_showUserGroups($params){
 	echo "<div style=\"padding:3px\"><TABLE cellpading=0 cellspacing=0 border=0 width=\"100%\">
 	<TR><TD COLSPAN=\"6\" NOWRAP>
 	<i class=\"lmb-icon lmb-user\" style=\"cursor:pointer\" OnClick=\"lmbAjax_showUserGroupsSearch(event,'*','".$params["ID"]."','".$params["gtabid"]."','".$params["fieldid"]."','".$params["usefunction"]."','".$params["prefix"]."','user','".$params["parameter"]."')\"></i>&nbsp;<input type=\"text\" style=\"width:115px;border:1px solid grey\" OnKeyup=\"lmbAjax_showUserGroupsSearch(event,this.value,'".$params["ID"]."','".$params["gtabid"]."','".$params["fieldid"]."','".$params["usefunction"]."','','user','".$params["parameter"]."')\">
-	<div id=\"".$params["prefix"].$params["usefunction"]."user\" class=\"ajax_container\" style=\"visibility:hidden;position:absolute;left:30px;top:25px;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>&nbsp;&nbsp;&nbsp;
+	<div id=\"".$params["prefix"].$params["usefunction"]."user\" class=\"ajax_container\" style=\"display:none;position:absolute;left:30px;top:25px;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>&nbsp;&nbsp;&nbsp;
 	<i class=\"lmb-icon lmb-group\" style=\"cursor:pointer\" OnClick=\"lmbAjax_showUserGroupsSearch(event,'*','".$params["ID"]."','".$params["gtabid"]."','".$params["fieldid"]."','".$params["usefunction"]."','".$params["prefix"]."','group','".$params["parameter"]."')\"></i>&nbsp;<input type=\"text\" style=\"width:115px;border:1px solid grey\" OnKeyup=\"lmbAjax_showUserGroupsSearch(event,this.value,'".$params["ID"]."','".$params["gtabid"]."','".$params["fieldid"]."','".$params["usefunction"]."','','group','".$params["parameter"]."')\">
-	<div id=\"".$params["prefix"].$params["usefunction"]."group\" class=\"ajax_container\" style=\"visibility:hidden;position:absolute;left:180px;top:25px;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>
+	<div id=\"".$params["prefix"].$params["usefunction"]."group\" class=\"ajax_container\" style=\"display:none;position:absolute;left:180px;top:25px;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>
 	</TD></TR>
 	</TABLE>
 	";
@@ -3342,41 +3413,39 @@ function dyns_showUserGroupsSearch($params){
 	$parameter = $params["parameter"];
 	
 	pop_closetop($usefunction.$typ);
-	pop_left();
 	
 	if($typ == "user"){
 		$sqlquery = "SELECT LMB_USERDB.USER_ID
 			FROM LMB_USERDB WHERE LMB_USERDB.DEL = ".LMB_DBDEF_FALSE;
 		if($searchvalue != "*"){
-			$sqlquery .= " AND (LOWER(LMB_USERDB.USERNAME) LIKE '%".strtolower($searchvalue)."%' OR LOWER(LMB_USERDB.VORNAME) LIKE '%".strtolower($searchvalue)."%' OR LOWER(LMB_USERDB.NAME) LIKE '%".strtolower($searchvalue)."%')";
+			$sqlquery .= " AND (LOWER(LMB_USERDB.USERNAME) LIKE '%".lmb_strtolower($searchvalue)."%' OR LOWER(LMB_USERDB.VORNAME) LIKE '%".lmb_strtolower($searchvalue)."%' OR LOWER(LMB_USERDB.NAME) LIKE '%".lmb_strtolower($searchvalue)."%')";
 		}
 		
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		$bzm = 1;
 		while(odbc_fetch_row($rs, $bzm)) {
-			$key = odbc_result($rs,"USER_ID");
-			echo "<a href=\"Javascript:$usefunction('".$key."_u','".$userdat["bezeichnung"][$key]."','$gtabid','$fieldid','$ID','$parameter');\">".$userdat["bezeichnung"][$key]."</a><br>";
+			$key = odbc_result($rs,"USER_ID");            
+            pop_menu2($userdat["bezeichnung"][$key], null, null, "lmb-user", null, "$usefunction('".$key."_u','".$userdat["bezeichnung"][$key]."','$gtabid','$fieldid','$ID','$parameter');");
 			$bzm++;
 		}
 	}elseif($typ == "group"){
 		$sqlquery = "SELECT LMB_GROUPS.GROUP_ID 
 			FROM LMB_GROUPS WHERE LMB_GROUPS.DEL = ".LMB_DBDEF_FALSE;
 		if($searchvalue != "*"){
-			$sqlquery .= " AND LOWER(LMB_GROUPS.NAME) LIKE '%".strtolower($searchvalue)."%'";
+			$sqlquery .= " AND LOWER(LMB_GROUPS.NAME) LIKE '%".lmb_strtolower($searchvalue)."%'";
 		}
 		
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		$bzm = 1;
 		while(odbc_fetch_row($rs, $bzm)) {
-			$key = odbc_result($rs,"GROUP_ID");
-			echo "<a href=\"Javascript:$usefunction('".$key."_g','".$groupdat["name"][$key]."','$gtabid','$fieldid','$ID','$parameter');\">".$groupdat["name"][$key]."</a><br>";
-			$bzm++;
+			$key = odbc_result($rs,"GROUP_ID");            
+            pop_menu2($groupdat["name"][$key], null, null, "lmb-group", null, "$usefunction('".$key."_g','".$groupdat["name"][$key]."','$gtabid','$fieldid','$ID','$parameter');");
+            $bzm++;
 		}
 	}
 	
-	pop_right();
 	pop_bottom();
 
 }
@@ -3402,9 +3471,9 @@ function dyns_showGtabRules($params){
 	require_once("gtab/gtab.lib");
 
 	$gtabid = $params["gtabid"];
-	$use_records = $params["use_records"];
+	$use_records = urldecode($params["use_records"]);
 	$recordlist = explode(";",$use_records);
-	$userpara = $params["parameter"];
+	$userpara = urldecode($params["parameter"]);
 	$userparams = explode("_",$userpara);
 
 	if((!$gtab["edit_userrules"][$gtabid] AND !$gtab["edit_ownuserrules"][$gtabid]) OR !$use_records){echo "<span style=\"background-color:#000000;color:#FFFFFF\">no permission!</span>";return false;}
@@ -3422,9 +3491,9 @@ function dyns_showGtabRules($params){
 
 	echo "<TABLE cellspan=0 cellspacing=0 border=0 width=\"100%\">";
 	echo "<TR><TD COLSPAN=\"6\" NOWRAP>
-	<i class=\"lmb-icon lmb-user\" style=\"cursor:pointer\" OnClick=\"limbasAjaxGtabRulesUsersearch('*','".$params["gtabid"]."','".$use_records."')\"></i>&nbsp;<input type=\"text\" style=\"width:115px;border:1px solid grey\" OnKeydown=\"limbasAjaxGtabRulesUsersearch(this.value,'".$params["gtabid"]."','".$use_records."')\"></i>
+	<i class=\"lmb-icon lmb-user\" style=\"cursor:pointer\" OnClick=\"limbasAjaxGtabRulesUsersearch('*','".$params["gtabid"]."','".$use_records."')\"></i>&nbsp;<input type=\"text\" style=\"width:115px;border:1px solid grey\" OnKeydown=\"limbasAjaxGtabRulesUsersearch(this.value,'".$params["gtabid"]."','".$use_records."')\">
 	<div id=\"ContainerGtabRulesUsersearch\" class=\"ajax_container\" style=\"visibility:hidden;position:absolute;left:30px;top:25px;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>&nbsp;&nbsp;&nbsp;
-	<i class=\"lmb-icon lmb-group\" style=\"cursor:pointer\" OnClick=\"limbasAjaxGtabRulesGroupsearch('*','".$params["gtabid"]."','".$use_records."')\">&nbsp;<input type=\"text\" style=\"width:115px;border:1px solid grey\" OnKeydown=\"limbasAjaxGtabRulesGroupsearch(this.value,'".$params["gtabid"]."','".$use_records."')\"></i>
+	<i class=\"lmb-icon lmb-group\" style=\"cursor:pointer\" OnClick=\"limbasAjaxGtabRulesGroupsearch('*','".$params["gtabid"]."','".$use_records."')\"></i>&nbsp;<input type=\"text\" style=\"width:115px;border:1px solid grey\" OnKeydown=\"limbasAjaxGtabRulesGroupsearch(this.value,'".$params["gtabid"]."','".$use_records."')\">
 	<div id=\"ContainerGtabRulesGroupsearch\" class=\"ajax_container\" style=\"visibility:hidden;position:absolute;left:180px;top:25px;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>
 	</TD></TR>
 	<TR><TD colspan=\"6\"><HR></TD></TR><TR>";
@@ -3537,7 +3606,7 @@ function dyns_showGtabRulesUsersearch($params){
 		$sqlquery = "SELECT USER_ID, 0 AS KEYID FROM LMB_USERDB WHERE LMB_USERDB.DEL = ".LMB_DBDEF_FALSE." ".$grpsql_u;
 	}
 	if($searchvalue != "*"){
-		$sqlquery .= " AND (LOWER(LMB_USERDB.USERNAME) LIKE '%".strtolower($searchvalue)."%' OR LOWER(LMB_USERDB.VORNAME) LIKE '%".strtolower($searchvalue)."%' OR LOWER(LMB_USERDB.NAME) LIKE '%".strtolower($searchvalue)."%')";
+		$sqlquery .= " AND (LOWER(LMB_USERDB.USERNAME) LIKE '%".lmb_strtolower($searchvalue)."%' OR LOWER(LMB_USERDB.VORNAME) LIKE '%".lmb_strtolower($searchvalue)."%' OR LOWER(LMB_USERDB.NAME) LIKE '%".lmb_strtolower($searchvalue)."%')";
 	}
 	
 	pop_closetop('ContainerGtabRulesUsersearch');
@@ -3605,7 +3674,7 @@ function dyns_showGtabRulesGroupsearch($params){
 		$sqlquery = "SELECT GROUP_ID, 0 AS KEYID FROM LMB_GROUPS WHERE DEL = ".LMB_DBDEF_FALSE." ".$grpsql_g;
 	}
 	if($searchvalue != "*"){
-		$sqlquery .= " AND LOWER(LMB_GROUPS.NAME) LIKE '%".strtolower($searchvalue)."%'";
+		$sqlquery .= " AND LOWER(LMB_GROUPS.NAME) LIKE '%".lmb_strtolower($searchvalue)."%'";
 	}
 
 	pop_closetop('ContainerGtabRulesGroupsearch');
@@ -3860,7 +3929,7 @@ function filesFavoritePreview($userid,$params){
 		if($has_row1){
 			$maxCount = $umgvar["favorite_limit"];
 			$bzm=1;
-			while(odbc_fetch_row($rs1,$bzm) && $maxCount>0){
+			while(odbc_fetch_row($rs1,$bzm) AND $maxCount>0){
 				$maxCount--;
 				if($dropitem == "f".odbc_result($rs1,"FILE_ID") AND $dropitem){
 					$sqlquery0 = "DELETE FROM LDMS_FAVORITES WHERE FILE_ID = ".parse_db_int(odbc_result($rs1,"FILE_ID"))." AND USER_ID=".$userid." AND FOLDER = ".LMB_DBDEF_TRUE;
@@ -3878,7 +3947,7 @@ function filesFavoritePreview($userid,$params){
 		if($has_row){
 			$maxCount = $umgvar["favorite_limit"];
 			$bzm=1;
-			while(odbc_fetch_row($rs,$bzm) && $maxCount>0){
+			while(odbc_fetch_row($rs,$bzm) AND $maxCount>0){
 				$maxCount--;
 				if($dropitem == "d".odbc_result($rs,"FILE_ID") AND $dropitem){
 					$sqlquery0 = "DELETE FROM LDMS_FAVORITES WHERE FILE_ID = ".parse_db_int(odbc_result($rs,"FILE_ID"))." AND USER_ID=".$userid." AND FOLDER = ".LMB_DBDEF_FALSE;
@@ -4031,14 +4100,14 @@ function reminderPreview($userid,$params)
 				echo "</TD></TR>";
 				$currentTabId=$gresult["LMBREM_TABID"][$key];
 			}
-			$datum = substr(get_date($gresult["LMBREM_FRIST"][$key],0),0,16);
+			$datum = lmb_substr(get_date($gresult["LMBREM_FRIST"][$key],0),0,16);
 			echo "<TR><TD style=\"padding-left:20px\" TITLE=\"".$gresult["LMBREM_CONTENT"][$key]."\">";
 			echo "<A TARGET=\"main\" HREF=\"main.php?&action=gtab_change&gtabid=".$gresult["LMBREM_TABID"][$key]."&ID=".$gresult["LMBREM_DATID"][$key]."&gfrist=$gfrist&form_id=".$greminder[$gtabid]["formd_id"][$category]."&wfl_id=".$gresult["LMBREM_WFLID"][$key]."\" style=\"color:green\">";
 			echo $datum."</A>&nbsp;";
 			if($gresult["LMBREM_USER"][$key] AND $gresult["LMBREM_USER"][$key] != $session["user_id"]){echo "<i class=\"lmb-icon lmb-tag\" title=\"".$userdat["bezeichnung"][$gresult["LMBREM_USER"][$key]]."\"></i>";}
 			echo "<br>";
-			if($gresult["LMBREM_DESCR"][$key]){echo "<i style=\"color:grey\">".substr($gresult["LMBREM_DESCR"][$key],0,25)."</i>";}
-			elseif($gresult["LMBREM_CONTENT"][$key]){echo "<span style=\"color:grey\">".substr($gresult["LMBREM_CONTENT"][$key],0,25)."</span>";}
+			if($gresult["LMBREM_DESCR"][$key]){echo "<i style=\"color:grey\">".lmb_substr($gresult["LMBREM_DESCR"][$key],0,25)."</i>";}
+			elseif($gresult["LMBREM_CONTENT"][$key]){echo "<span style=\"color:grey\">".lmb_substr($gresult["LMBREM_CONTENT"][$key],0,25)."</span>";}
 			echo "</TD>";
 			if(!$gresult["LMBREM_WFLINST"][$key]){
 				echo "<TD VALIGN=\"TOP\" ALIGN=\"RIGHT\" STYLE=\"width:10%;overflow:hidden\"><i class=\"lmb-icon lmb-close-alt\" BORDER=\"0\"  STYLE=\"cursor:pointer\" OnClick=\"limbasMultiframePreview(".$params["id"].",'Reminder',null,'".$gresult["LMBREM_ID"][$key]."',".$gresult["LMBREM_TABID"][$key].",'category=$category');\"></i></TD>";
@@ -4099,7 +4168,7 @@ function workflowPreview($params)
 			foreach($prvalue["id"] as $keyTask => $valueTask)
 			{
 				echo "<TR><TD title=\"".$prvalue["date"][$keyTask]."\">\n";
-				echo "&nbsp;&nbsp;&nbsp;<a target=\"main\" href=\"".$prvalue["link"][$keyTask]."\">* ".$prvalue["name"][$keyTask]."</a> <span style='font-size:9px'><I>(".substr($prvalue["date"][$keyTask],0,10).") ".$prvalue["status"][$keyTask]."</I></span>\n";
+				echo "&nbsp;&nbsp;&nbsp;<a target=\"main\" href=\"".$prvalue["link"][$keyTask]."\">* ".$prvalue["name"][$keyTask]."</a> <span style='font-size:9px'><I>(".lmb_substr($prvalue["date"][$keyTask],0,10).") ".$prvalue["status"][$keyTask]."</I></span>\n";
 				echo "</TD></TR>\n";
 			}
 		}
@@ -4163,6 +4232,21 @@ function dyns_messages($params){
 	$GLOBALS["noencode"] = 1;
 }
 
+/**
+ * calls extension function that handles number dialing
+ * @param array $params: ['phoneNr' => string]
+ * @return javascript to be executed, surrounded by script tags
+ */
+function dyns_dialNumber($params) {
+    global $umgvar;
+
+    $fnc = "LmbDialNumber_".$umgvar["dial_engine"];
+	if(function_exists($fnc)){
+		echo $fnc($params['phoneNr']);
+	}else{
+		echo '<script>alert("no phone is installed!");</script>';
+	}
+}
 
 # Buffer
 ob_start();

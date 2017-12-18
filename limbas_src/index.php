@@ -23,7 +23,7 @@ require_once("lib/session.lib");
 
 # redirect group 
 if($groupdat["redirect"][$session["group_id"]]){
-	if(strtolower(substr($groupdat["redirect"][$session["group_id"]],0,4)) == "http"){
+	if(lmb_strtolower(lmb_substr($groupdat["redirect"][$session["group_id"]],0,4)) == "http"){
 		header("HTTP/1.1 301 Moved Permanently");
 		header("Location: ".$groupdat["redirect"][$session["group_id"]]);
 		return;

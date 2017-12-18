@@ -48,7 +48,7 @@ while(odbc_fetch_row($rs, $bzm)) {
         echo"<TD>$bzm</TD>";
         echo"<TD>".get_date(odbc_result($rs,"LOGIN_DATE"),2)."&nbsp;&nbsp;</TD>";
         echo"<TD>".get_date(odbc_result($rs,"UPDATE_DATE"),2)."&nbsp;&nbsp;</TD>";
-        echo"<TD>".substr(odbc_result($rs,"DAUER"),0,19)."&nbsp;&nbsp;</TD>";
+        echo"<TD>".lmb_substr(odbc_result($rs,"DAUER"),0,19)."&nbsp;&nbsp;</TD>";
         echo"<TD>".odbc_result($rs,"IP")."&nbsp;&nbsp;</TD>";
         echo"<TD>".odbc_result($rs,"HOST")."&nbsp;&nbsp;</TD>";
         echo"</TR>";

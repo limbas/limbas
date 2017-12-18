@@ -38,15 +38,15 @@ function feasible_val($value){
 		$value = preg_replace("/^[^[:alnum:]]{1,}|[^[:alnum:]]{1,}$/","",$value);
 	}
 	
-	if(strlen($value) < $GLOBALS["umgvar"]["indize_length"]){
+	if(lmb_strlen($value) < $GLOBALS["umgvar"]["indize_length"]){
 		return false;
 	}
 		
 	if(!$GLOBALS["umgvar"]["indize_cs"]){
-		$value = strtolower($value);
+		$value = lmb_strtolower($value);
 	}
 
-	$len = strlen($value);
+	$len = lmb_strlen($value);
 	if($len < $GLOBALS["umgvar"]["indize_length"] OR !$GLOBALS["umgvar"]["indize_feasible"]){return false;}
 	$nonalpha = preg_match_all("/[^[:alnum:]]/",$value,$out);
 	if(!$nonalpha){return $value;}
@@ -254,9 +254,9 @@ function prepare_filelevel_indize($level,$indi){
 			 			$blob = trim(strip_tags($blob));
 			 			if($blob){
 			 				# Metadaten
-			 				if(substr($blob,0,5) == "meta:"){
+			 				if(lmb_substr($blob,0,5) == "meta:"){
 			 					$indi["meta"] = 1;
-			 					$blob = substr($blob,5);
+			 					$blob = lmb_substr($blob,5);
 			 				}else{
 			 					$indi["meta"] = 0;
 			 				}
@@ -317,7 +317,7 @@ function add_indexword($indi,$value){
 	global $db;
 	
 	if($GLOBALS["umgvar"]["indize_cs"]){
-		$upperval = strtoupper($value);
+		$upperval = lmb_strtoupper($value);
 	}
 	
 	$sqlquery = "INSERT INTO LMB_INDIZE_W (ID,VAL,METAPHONE,UPPERVAL) VALUES (".$indi["NEXTID_W"].",'".parse_db_string($value,60)."','".parse_db_string(soundex($value),60)."','".parse_db_string($upperval,60)."')";

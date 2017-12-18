@@ -30,7 +30,7 @@ if($reportcopy AND $new){
 	}
 
 	#$report_name = preg_replace("/[^A_Za-z0-9]/","_",$report_name);
-	#$report_name = substr(preg_replace("/[_]{1,}/","_",$report_name),0,18);
+	#$report_name = lmb_substr(preg_replace("/[_]{1,}/","_",$report_name),0,18);
 	$report_name = parse_db_string($report_name,160);
 
 	$sqlquery = "SELECT REFERENZ_TAB,PAGE_STYLE,TARGET,DEFFORMAT FROM LMB_REPORT_LIST WHERE ID = $reportcopy";
@@ -197,7 +197,7 @@ if($reportcopy AND $new){
 	lmb_StartTransaction();
 
 	#$report_name = preg_replace("/[^A-Za-z0-9]/","_",$report_name);
-	#$report_name = substr(preg_replace("/[_]{1,}/","_",$report_name),0,18);
+	#$report_name = lmb_substr(preg_replace("/[_]{1,}/","_",$report_name),0,18);
 	$report_name = parse_db_string($report_name,160);
 	
 	# ------- Next ID ----------

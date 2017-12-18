@@ -51,7 +51,7 @@ class olUpload {
 	
 	function _get_upload_max_filesize(){
 		$val = trim(ini_get('upload_max_filesize'));
-		$last = strtolower(substr($val, -1));
+		$last = lmb_strtolower(lmb_substr($val, -1));
 	   
 		if($last == 'g')
 			$val = $val * 1024 * 1024 * 1024;

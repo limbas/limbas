@@ -67,7 +67,7 @@ class olMimeMessage {
 	}
 	
 	function addAttachment($filename, $path){
-		switch(substr(strrchr($filename, '.'), 1)){
+		switch(lmb_substr(lmb_strrchr($filename, '.'), 1)){
 			case 'png':
 				$CONTENT_TYPE = 'image/png';
 				$CONTENT_DISPOSITION = 'inline';
@@ -110,8 +110,8 @@ class olMimeMessage {
 		$_name = '=?UTF-8?B?'.base64_encode($filename).'?=';
 		
 		$_filename = "UTF-8''"; /* TODO: fix syntax for long filenames */
-		for ($i=0; $i<strlen($filename); $i++)
-			$_filename .= sprintf("%%%02X", ord(substr($filename, $i, 1)));
+		for ($i=0; $i<lmb_strlen($filename); $i++)
+			$_filename .= sprintf("%%%02X", ord(lmb_substr($filename, $i, 1)));
 
 		/* ... and output part header and body. */
 		$this->_parts .= "--{$this->_boundary}\n".

@@ -242,7 +242,7 @@ function SNAP_share($destUser,$snapshotId,$del,$edit,$drop){
 	$uid = explode("_",$destUser);
 	if(!$uid[0] OR !$uid[1]){return false;}
 	
-	$sqlquery = "SELECT ID,ENTITY_ID,EDIT,DEL FROM LMB_SNAP_SHARED WHERE ENTITY_ID=".$uid[0]." AND ENTITY_TYPE='".strtoupper($uid[1])."' AND SNAPSHOT_ID=".$snapshotId;
+	$sqlquery = "SELECT ID,ENTITY_ID,EDIT,DEL FROM LMB_SNAP_SHARED WHERE ENTITY_ID=".$uid[0]." AND ENTITY_TYPE='".lmb_strtoupper($uid[1])."' AND SNAPSHOT_ID=".$snapshotId;
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$entity_id = odbc_result($rs,"ENTITY_ID");
@@ -257,25 +257,25 @@ function SNAP_share($destUser,$snapshotId,$del,$edit,$drop){
 	if(!$LINK[225] AND !$gsnap[$snaptabid]["owner"][$snapshotId]){lmb_alert("you have no permission to share this snapshot!");return false;}
 	
 	if($drop AND $entity_id){
-		$sqlquery = "DELETE FROM LMB_SNAP_SHARED WHERE ENTITY_ID=".$uid[0]." AND ENTITY_TYPE='".strtoupper($uid[1])."' AND SNAPSHOT_ID=".$snapshotId;
+		$sqlquery = "DELETE FROM LMB_SNAP_SHARED WHERE ENTITY_ID=".$uid[0]." AND ENTITY_TYPE='".lmb_strtoupper($uid[1])."' AND SNAPSHOT_ID=".$snapshotId;
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}elseif($edit AND $entity_id){
 		if($can_edit){$bool = LMB_DBDEF_FALSE;
 		}else{$bool = LMB_DBDEF_TRUE;}
-		$sqlquery = "UPDATE LMB_SNAP_SHARED SET EDIT = ".$bool." WHERE ENTITY_ID=".$uid[0]." AND ENTITY_TYPE='".strtoupper($uid[1])."' AND SNAPSHOT_ID=".$snapshotId;
+		$sqlquery = "UPDATE LMB_SNAP_SHARED SET EDIT = ".$bool." WHERE ENTITY_ID=".$uid[0]." AND ENTITY_TYPE='".lmb_strtoupper($uid[1])."' AND SNAPSHOT_ID=".$snapshotId;
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}elseif($del AND $entity_id){
 		if($can_del){$bool = LMB_DBDEF_FALSE;
 		}else{$bool = LMB_DBDEF_TRUE;}
-		$sqlquery = "UPDATE LMB_SNAP_SHARED SET DEL = ".$bool." WHERE ENTITY_ID=".$uid[0]." AND ENTITY_TYPE='".strtoupper($uid[1])."' AND SNAPSHOT_ID=".$snapshotId;
+		$sqlquery = "UPDATE LMB_SNAP_SHARED SET DEL = ".$bool." WHERE ENTITY_ID=".$uid[0]." AND ENTITY_TYPE='".lmb_strtoupper($uid[1])."' AND SNAPSHOT_ID=".$snapshotId;
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}elseif(!$entity_id AND $session["user_id"] != $uid[0]){
 		lmb_StartTransaction();
 		$nextId = next_db_id("LMB_SNAP_SHARED");
-		$sqlquery = "INSERT INTO LMB_SNAP_SHARED(ID,ENTITY_TYPE,ENTITY_ID,SNAPSHOT_ID) VALUES ($nextId,'".strtoupper($uid[1])."',".$uid[0].",$snapshotId)";
+		$sqlquery = "INSERT INTO LMB_SNAP_SHARED(ID,ENTITY_TYPE,ENTITY_ID,SNAPSHOT_ID) VALUES ($nextId,'".lmb_strtoupper($uid[1])."',".$uid[0].",$snapshotId)";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		lmb_EndTransaction(!$commit);

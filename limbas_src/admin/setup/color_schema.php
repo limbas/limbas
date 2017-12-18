@@ -44,20 +44,20 @@ function change_color(id,color){
 			<TR class="tabBody">
 			<TD><?=$lang[529]?></TD>
 
-			<TD BGCOLOR="<?echo $result_colors[WEB3][$bzm];?>"><?echo hexdec(substr($result_colors[WEB3][$bzm], 1, 2)).",".hexdec(substr($result_colors[WEB3][$bzm], 3, 2)).",".hexdec(substr($result_colors[WEB3][$bzm], 5, 2));?></TD>
-			<TD BGCOLOR="<?echo $result_colors[WEB5][$bzm];?>"><?echo hexdec(substr($result_colors[WEB5][$bzm], 1, 2)).",".hexdec(substr($result_colors[WEB5][$bzm], 3, 2)).",".hexdec(substr($result_colors[WEB5][$bzm], 5, 2));?></TD>
-			<TD BGCOLOR="<?echo $result_colors[WEB6][$bzm];?>"><?echo hexdec(substr($result_colors[WEB6][$bzm], 1, 2)).",".hexdec(substr($result_colors[WEB6][$bzm], 3, 2)).",".hexdec(substr($result_colors[WEB6][$bzm], 5, 2));?></TD>
-			<TD BGCOLOR="<?echo $result_colors[WEB1][$bzm];?>"><?echo hexdec(substr($result_colors[WEB1][$bzm], 1, 2)).",".hexdec(substr($result_colors[WEB1][$bzm], 3, 2)).",".hexdec(substr($result_colors[WEB1][$bzm], 5, 2));?></TD>
-			<TD BGCOLOR="<?echo $result_colors[WEB7][$bzm];?>"><?echo hexdec(substr($result_colors[WEB7][$bzm], 1, 2)).",".hexdec(substr($result_colors[WEB7][$bzm], 3, 2)).",".hexdec(substr($result_colors[WEB7][$bzm], 5, 2));?></TD>
-			<TD BGCOLOR="<?echo $result_colors[WEB9][$bzm];?>"><?echo hexdec(substr($result_colors[WEB9][$bzm], 1, 2)).",".hexdec(substr($result_colors[WEB9][$bzm], 3, 2)).",".hexdec(substr($result_colors[WEB9][$bzm], 5, 2));?></TD>
-			<TD BGCOLOR="<?echo $result_colors[WEB8][$bzm];?>"><?echo hexdec(substr($result_colors[WEB8][$bzm], 1, 2)).",".hexdec(substr($result_colors[WEB8][$bzm], 3, 2)).",".hexdec(substr($result_colors[WEB8][$bzm], 5, 2));?></TD>
-			<TD BGCOLOR="<?echo $result_colors[WEB12][$bzm];?>"><?echo hexdec(substr($result_colors[WEB12][$bzm], 1, 2)).",".hexdec(substr($result_colors[WEB12][$bzm], 3, 2)).",".hexdec(substr($result_colors[WEB12][$bzm], 5, 2));?></TD>
-			<TD BGCOLOR="<?echo $result_colors[WEB4][$bzm];?>"><?echo hexdec(substr($result_colors[WEB4][$bzm], 1, 2)).",".hexdec(substr($result_colors[WEB4][$bzm], 3, 2)).",".hexdec(substr($result_colors[WEB4][$bzm], 5, 2));?></TD>
-			<TD BGCOLOR="<?echo $result_colors[WEB2][$bzm];?>"><?echo hexdec(substr($result_colors[WEB2][$bzm], 1, 2)).",".hexdec(substr($result_colors[WEB2][$bzm], 3, 2)).",".hexdec(substr($result_colors[WEB2][$bzm], 5, 2));?></TD>
-			<TD BGCOLOR="<?echo $result_colors[WEB10][$bzm];?>"><?echo hexdec(substr($result_colors[WEB10][$bzm], 1, 2)).",".hexdec(substr($result_colors[WEB10][$bzm], 3, 2)).",".hexdec(substr($result_colors[WEB10][$bzm], 5, 2));?></TD>
-			<TD BGCOLOR="<?echo $result_colors[WEB11][$bzm];?>"><?echo hexdec(substr($result_colors[WEB11][$bzm], 1, 2)).",".hexdec(substr($result_colors[WEB11][$bzm], 3, 2)).",".hexdec(substr($result_colors[WEB11][$bzm], 5, 2));?></TD>
-			<TD BGCOLOR="<?echo $result_colors[WEB13][$bzm];?>"><?echo hexdec(substr($result_colors[WEB13][$bzm], 1, 2)).",".hexdec(substr($result_colors[WEB13][$bzm], 3, 2)).",".hexdec(substr($result_colors[WEB13][$bzm], 5, 2));?></TD>
-			<TD BGCOLOR="<?echo $result_colors[WEB14][$bzm];?>"><?echo hexdec(substr($result_colors[WEB14][$bzm], 1, 2)).",".hexdec(substr($result_colors[WEB14][$bzm], 3, 2)).",".hexdec(substr($result_colors[WEB14][$bzm], 5, 2));?></TD>
+			<TD BGCOLOR="<?echo $result_colors[WEB3][$bzm];?>"><?echo hexdec(lmb_substr($result_colors[WEB3][$bzm], 1, 2)).",".hexdec(lmb_substr($result_colors[WEB3][$bzm], 3, 2)).",".hexdec(lmb_substr($result_colors[WEB3][$bzm], 5, 2));?></TD>
+			<TD BGCOLOR="<?echo $result_colors[WEB5][$bzm];?>"><?echo hexdec(lmb_substr($result_colors[WEB5][$bzm], 1, 2)).",".hexdec(lmb_substr($result_colors[WEB5][$bzm], 3, 2)).",".hexdec(lmb_substr($result_colors[WEB5][$bzm], 5, 2));?></TD>
+			<TD BGCOLOR="<?echo $result_colors[WEB6][$bzm];?>"><?echo hexdec(lmb_substr($result_colors[WEB6][$bzm], 1, 2)).",".hexdec(lmb_substr($result_colors[WEB6][$bzm], 3, 2)).",".hexdec(lmb_substr($result_colors[WEB6][$bzm], 5, 2));?></TD>
+			<TD BGCOLOR="<?echo $result_colors[WEB1][$bzm];?>"><?echo hexdec(lmb_substr($result_colors[WEB1][$bzm], 1, 2)).",".hexdec(lmb_substr($result_colors[WEB1][$bzm], 3, 2)).",".hexdec(lmb_substr($result_colors[WEB1][$bzm], 5, 2));?></TD>
+			<TD BGCOLOR="<?echo $result_colors[WEB7][$bzm];?>"><?echo hexdec(lmb_substr($result_colors[WEB7][$bzm], 1, 2)).",".hexdec(lmb_substr($result_colors[WEB7][$bzm], 3, 2)).",".hexdec(lmb_substr($result_colors[WEB7][$bzm], 5, 2));?></TD>
+			<TD BGCOLOR="<?echo $result_colors[WEB9][$bzm];?>"><?echo hexdec(lmb_substr($result_colors[WEB9][$bzm], 1, 2)).",".hexdec(lmb_substr($result_colors[WEB9][$bzm], 3, 2)).",".hexdec(lmb_substr($result_colors[WEB9][$bzm], 5, 2));?></TD>
+			<TD BGCOLOR="<?echo $result_colors[WEB8][$bzm];?>"><?echo hexdec(lmb_substr($result_colors[WEB8][$bzm], 1, 2)).",".hexdec(lmb_substr($result_colors[WEB8][$bzm], 3, 2)).",".hexdec(lmb_substr($result_colors[WEB8][$bzm], 5, 2));?></TD>
+			<TD BGCOLOR="<?echo $result_colors[WEB12][$bzm];?>"><?echo hexdec(lmb_substr($result_colors[WEB12][$bzm], 1, 2)).",".hexdec(lmb_substr($result_colors[WEB12][$bzm], 3, 2)).",".hexdec(lmb_substr($result_colors[WEB12][$bzm], 5, 2));?></TD>
+			<TD BGCOLOR="<?echo $result_colors[WEB4][$bzm];?>"><?echo hexdec(lmb_substr($result_colors[WEB4][$bzm], 1, 2)).",".hexdec(lmb_substr($result_colors[WEB4][$bzm], 3, 2)).",".hexdec(lmb_substr($result_colors[WEB4][$bzm], 5, 2));?></TD>
+			<TD BGCOLOR="<?echo $result_colors[WEB2][$bzm];?>"><?echo hexdec(lmb_substr($result_colors[WEB2][$bzm], 1, 2)).",".hexdec(lmb_substr($result_colors[WEB2][$bzm], 3, 2)).",".hexdec(lmb_substr($result_colors[WEB2][$bzm], 5, 2));?></TD>
+			<TD BGCOLOR="<?echo $result_colors[WEB10][$bzm];?>"><?echo hexdec(lmb_substr($result_colors[WEB10][$bzm], 1, 2)).",".hexdec(lmb_substr($result_colors[WEB10][$bzm], 3, 2)).",".hexdec(lmb_substr($result_colors[WEB10][$bzm], 5, 2));?></TD>
+			<TD BGCOLOR="<?echo $result_colors[WEB11][$bzm];?>"><?echo hexdec(lmb_substr($result_colors[WEB11][$bzm], 1, 2)).",".hexdec(lmb_substr($result_colors[WEB11][$bzm], 3, 2)).",".hexdec(lmb_substr($result_colors[WEB11][$bzm], 5, 2));?></TD>
+			<TD BGCOLOR="<?echo $result_colors[WEB13][$bzm];?>"><?echo hexdec(lmb_substr($result_colors[WEB13][$bzm], 1, 2)).",".hexdec(lmb_substr($result_colors[WEB13][$bzm], 3, 2)).",".hexdec(lmb_substr($result_colors[WEB13][$bzm], 5, 2));?></TD>
+			<TD BGCOLOR="<?echo $result_colors[WEB14][$bzm];?>"><?echo hexdec(lmb_substr($result_colors[WEB14][$bzm], 1, 2)).",".hexdec(lmb_substr($result_colors[WEB14][$bzm], 3, 2)).",".hexdec(lmb_substr($result_colors[WEB14][$bzm], 5, 2));?></TD>
             </TR>
 
 			<TR class="tabBody">

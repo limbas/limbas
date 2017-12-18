@@ -133,7 +133,7 @@ class olIMAPdirect {
 			$buf = $this->_fetch_cmd($msgid, "BODY.PEEK[{$part}]<{$offset}.{$bufsz}>");
 			$offset += $bufsz;
 			
-			if (!$buf || (strlen($buf)==0))
+			if (!$buf || (lmb_strlen($buf)==0))
 				break;
 				
 			if (isset($mime["CONTENT-TRANSFER-ENCODING"]) &&
@@ -142,12 +142,12 @@ class olIMAPdirect {
 				$all = explode("\n", $buf);
 				foreach($all as $one){
 					$one = $pad.preg_replace('/\s/', '', $one);
-					$p = (strlen($one)%4);
+					$p = (lmb_strlen($one)%4);
 					
-					echo base64_decode(substr($one, 0, strlen($one)-$p));
+					echo base64_decode(lmb_substr($one, 0, lmb_strlen($one)-$p));
 				
 					if ($p)
-						$pad = substr($one, strlen($one)-$p, $p);
+						$pad = lmb_substr($one, lmb_strlen($one)-$p, $p);
 					else
 						$pad ='';
 				}
@@ -231,7 +231,7 @@ class olIMAPdirect {
 		$a = preg_split('/([a-z0-9\-]*):\s/i', $mime, -1, PREG_SPLIT_NO_EMPTY | PREG_SPLIT_DELIM_CAPTURE);
 		
 		for($i=0;$i<count($a);$i+=2)
-			$ret[strtoupper($a[$i])] = trim($a[$i+1]);
+			$ret[lmb_strtoupper($a[$i])] = trim($a[$i+1]);
 
 		return $ret;
 	}
@@ -290,7 +290,7 @@ class olIMAPdirect {
 				break;
 			}
 			$buf = fread($s, $count > $_bufsz ? $_bufsz : $count);
-			$read = strlen($buf);
+			$read = lmb_strlen($buf);
 			$count -= $read;
 			$ret .= $buf;
 			

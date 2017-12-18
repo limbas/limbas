@@ -317,7 +317,7 @@ if(!$isview){
 
 pop_submenu(7,'','',1); 				# export
 if($gtab["ver"][$gtabid] AND $LINK[242]){
-	pop_submenu2($lang[$LINK['name'][242]],"lmb_datepicker(event,this,'view_version_status',document.form1.view_version_status.value,'".dateStringToDatepicker(setDateFormat(1,1))."',120,'lmb_version_status')",$lang[$LINK['desc'][242]],null,$LINK['icon_url'][242]);
+	pop_submenu2($lang[$LINK['name'][242]],"lmb_datepicker(event,this,'view_version_status',document.form1.view_version_status.value,'".dateStringToDatepicker(setDateFormat(1,1))."',null,'lmb_version_status')",$lang[$LINK['desc'][242]],null,$LINK['icon_url'][242]);
 	#pop_submenu(242,'','',1); 			# Versionsstand
 }
 if(!$isview AND $greminder[$gtabid]){
@@ -643,7 +643,7 @@ if(!$filter["hidecols"][$gtabid][0]){
 
 # ----- Formular -------
 if($form_id AND $gformlist[$gtabid]["id"][$form_id] AND $gformlist[$gtabid]["typ"][$form_id] == 2){
-	if($gformlist[$gtabid]["css"][$form_id] AND strpos($gformlist[$gtabid]["css"][$gformid],"USER/") === false){
+	if($gformlist[$gtabid]["css"][$form_id] AND lmb_strpos($gformlist[$gtabid]["css"][$gformid],"USER/") === false){
 		echo"<style type=\"text/css\">@import url(".$gformlist[$gtabid]["css"][$form_id].");</style>\n";
 	}
 	form_ergview($gtabid,$gresult,$form_id);

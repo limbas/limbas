@@ -69,13 +69,13 @@ if($s_field){
 	$where[] = "LMB_HISTORY_UPDATE.FIELD = LMB_CONF_FIELDS.FIELD_ID AND
 	LMB_CONF_FIELDS.SPELLING = LMB_LANG_DEPEND.ELEMENT_ID AND 
 	LMB_LANG_DEPEND.LANGUAGE_ID = ".$session["language"]." AND 
-	LOWER(LMB_LANG_DEPEND.WERT) LIKE '%".strtolower(parse_db_string($s_field,20))."%'";
+	LOWER(LMB_LANG_DEPEND.WERT) LIKE '%".lmb_strtolower(parse_db_string($s_field,20))."%'";
 }
 
 if($s_user){
 	$from .= ",LMB_USERDB";
 	$where[] = "LMB_HISTORY_UPDATE.USERID = LMB_USERDB.USER_ID AND
-	LOWER(LMB_USERDB.VORNAME & ' ' & LMB_USERDB.NAME & ' ' & LMB_USERDB.USERNAME) LIKE '%".strtolower(parse_db_string($s_user,20))."%'";
+	LOWER(LMB_USERDB.VORNAME & ' ' & LMB_USERDB.NAME & ' ' & LMB_USERDB.USERNAME) LIKE '%".lmb_strtolower(parse_db_string($s_user,20))."%'";
 }
 
 if($s_date){

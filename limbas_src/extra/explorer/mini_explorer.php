@@ -205,7 +205,7 @@ foreach($file_path as $key => $value){
 <td><i class="lmb-icon-cus lmb-folder-up" style="cursor:pointer;" onclick="document.form1.LID.value='<?=$prev;?>';document.form1.submit();" title="<?=$lang[2225]?>"></i></td>
 <td><i class="lmb-icon lmb-home" style="cursor:pointer;" onclick="document.form1.LID.value='<?=$home?>';document.form1.submit();" title="<?=$lang[2230]?>"></i></td>
     <?if($LINK[119] AND $LID){?><td>&nbsp;</td><td><i class="lmb-icon-cus lmb-folder-add" style="cursor:pointer;" onclick="document.getElementById('uploadfile').style.display='none';document.getElementById('createfolder').style.display='';" title="<?=$lang[2231]?>"></i></td><?}?>
-    <?if($LINK[128] AND $LID){?><td><i class="lmb-icon-cus lmb-page-new" style="cursor:pointer;" onclick="document.getElementById('createfolder').style.display='none';document.getElementById('uploadfile').style.display='';document.getElementById('lmbUploadLayer').innerHTML='';LmEx_multiupload('1');" title="<?=$lang[2232]?>"></i></td><?}?>
+    <?if($LINK[128] AND $LID){?><td><i class="lmb-icon lmb-file-upload" style="cursor:pointer;" onclick="document.getElementById('createfolder').style.display='none';document.getElementById('uploadfile').style.display='';document.getElementById('lmbUploadLayer').innerHTML='';LmEx_multiupload('1');" title="<?=$lang[2232]?>"></i></td><?}?>
         <?if($LINK[171] AND $LID){?><td><i class="lmb-icon lmb-page-delete-alt" style="cursor:pointer;" onclick="LmEx_delfile();" title="<?=$lang[2318]?>"></i></td><?}?>
 
 <td>&nbsp;</td>

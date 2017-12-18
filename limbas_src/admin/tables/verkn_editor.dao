@@ -177,7 +177,7 @@ if($set_verknfieldid AND $new_verknfieldid){
 		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],$md5tab,"'TABLE'"));
 		if(!$odbc_table) {
 
-			$sqlquery2 = "SELECT MD5TAB,FIELD_NAME,TAB_ID FROM LMB_CONF_FIELDS WHERE HASRECVERKN = (SELECT FIELD_ID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".dbf_4($md5tab)."' AND VERKNTABLETYPE = 2)";
+			$sqlquery2 = "SELECT MD5TAB,FIELD_NAME,TAB_ID FROM LMB_CONF_FIELDS WHERE HASRECVERKN = (SELECT FIELD_ID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".lmb_strtolower($md5tab)."' AND VERKNTABLETYPE = 2)";
 			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 			$basemd5 = dbf_4(odbc_result($rs2, "MD5TAB"));
 			$basefield = dbf_4(odbc_result($rs2, "FIELD_NAME"));
@@ -565,7 +565,7 @@ function recrelationsubtree($first,$gtabid,$searched=null){
 function getTabFromMd5($md5tab){
 	global $db;
 
-	$sqlquery =  "SELECT VERKNTABID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".strtolower($md5tab)."'";
+	$sqlquery =  "SELECT VERKNTABID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".lmb_strtolower($md5tab)."'";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	return odbc_result($rs, "VERKNTABID");
 

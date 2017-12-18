@@ -370,7 +370,7 @@ function parentsety(id){
 /*---------------- get UI selected ---------------------*/
 function lmbGetUISelected(){
 	//if($(".ui-selected").filter('[id^="div"]').length > 1){
-	var len = $(".ui-selected").filter('[lmbselectable="1"], [lmbtype="bild"], [lmbtype="line"], [lmbtype="ellipse"], [lmbtype="scroll"]').length;
+	var len = $(".ui-selected").filter('[lmbselectable="1"], [lmbtype="bild"], [lmbtype="line"], [lmbtype="ellipse"], [lmbtype="scroll"], [lmbtype="reminder"], [lmbtype="wflhist"]').length;
 	if(len > 1){
 		return len;
 	}else{
@@ -864,26 +864,30 @@ function formBodyClick(evt){
 }
 
 // show multimenu if more selected
-function lmb_multiMenu(evt,ui){
-	
+function lmb_multiMenu(evt,ui){	
 	divclose();
 	divclose();
 	if(lmbGetUISelected()){
 		// remove hauptmenu/tabulator/gruppierungsrahmen/uform from selection
 		$(".ui-selected").filter('[lmbtype="frame"], [lmbtype="menue"], [lmbtype="tabulator"], [lmbtype="uform"]').removeClass("ui-selected");
 
-		// remove non-visible elements
+		// remove non-visible elements (e.g. in other tabs)
 		$(".ui-selected").not(":visible").removeClass("ui-selected");
 
-		// remove elements in background
-		if(touchedElement.id){
-			$(".ui-selected").not($(touchedElement).children()).removeClass("ui-selected");
-		}
-
-		if($(".ui-selected").filter('[id^="div"]').get(0).onmousedown){
-			$(".ui-selected").filter('[id^="div"]').get(0).onmousedown();
+                // touchedElement is the element on which the selection was started (mousedown)
+                // remove all elements that are not children of touchedElement
+		if(touchedElement && touchedElement.id){
+                        $(".ui-selected").not($(touchedElement).find('*')).removeClass("ui-selected");
+                }
+                
+                var selectedElement = $(".ui-selected").filter('[id^="div"]').get(0);
+		if(selectedElement && selectedElement.onmousedown){
+			selectedElement.onmousedown();
 		}
 	}
+        
+        // reset touched element, so that it can be assigned in the next event
+        touchedElement = null;
 }
 
 
@@ -893,7 +897,7 @@ function aktivate(evt,el,id,TYP) {
 	picid = "pic"+id;
 	var ctrlk = 0;
 
-	if(TYP == 'tab' || TYP == 'bild' || TYP == 'frame'|| TYP == 'tabulator'|| TYP == 'menue'|| TYP == 'scroll'|| TYP == 'chart'|| TYP == 'menue'){
+	if(TYP == 'tab' || TYP == 'bild' || TYP == 'frame'|| TYP == 'tabulator'|| TYP == 'menue'|| TYP == 'scroll'|| TYP == 'reminder'|| TYP == 'wflhist' || TYP == 'chart' || TYP == 'menue'){
 		$('#innerframe').selectable("disable");
 	}
 	document.onmousedown = startDrag;
@@ -1002,12 +1006,14 @@ var mainisactive = 0;
 var prevElement = 0;
 var touchedElement = 0;
 var prevelBorder = new Array();
+var active_field_type = 0;
 
 function limbasMenuOpen(evt,el,id,dicoParams) {
-
-	if(dicoParams.get("MAINELEMENT") && mainisactive){return;}
+        if(dicoParams.get("MAINELEMENT") && mainisactive){return;}
 	mainisactive = 1;
-	touchedElement = el;
+        // only get the first touched element, not its parents (which happens due to event propagation)
+	if(!touchedElement) { touchedElement = el; }    
+	active_field_type = dicoParams.get("FIELD_TYPE");
 	
 	TYP = dicoParams.get("TYP");
 	STYLE = dicoParams.get("STYLE");
@@ -1059,7 +1065,6 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 		limbasSetTabulator(id);
 	}
 
-	var fullborder = 0;
 	var style = STYLE.split(";");
         
 	// allgemeiner Inhalt
@@ -1099,7 +1104,7 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	document.form_menu.input_id.value = id;
 	document.form_menu.input_infotable.value = dicoParams.get("TABLE_NAME");
 	document.form_menu.input_infofield.value = dicoParams.get("FIELD_NAME");
-	
+
 	document.form_menu.ZIndex.value = document.getElementById(div).style.zIndex;
 	document.form_menu.input_fontface.value = document.getElementById(div).style.fontFamily;
 	document.form_menu.input_fontsize.value = document.getElementById(div).style.fontSize;
@@ -1219,9 +1224,7 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	//document.fstyle_form.input_textshadow.value = document.getElementById(div).style.textShadow;
 
 	//Typanzeige im Hauptmenü
-	if(TYP != 'menue' && TYP != 'tabulator'){
-		parent.form_menu.resetmenu();
-	}
+        parent.form_menu.resetmenu();
 	if(parent.form_menu.document.getElementById(TYP)){
 		parent.form_menu.document.getElementById(TYP).style.backgroundColor = color[7];
 	}
@@ -1273,7 +1276,7 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	for (var i = ar.length; i > 0;) {
 		cc = ar[--i];
 		if(cc.id == "fi" + id || cc.id == "fk" + id  || cc.id == "fv" + id ){
-			cc.style.backgroundColor = color[10].substring(1,7);//color[10]
+                        cc.style.backgroundColor = color[10].substring(1,7);//color[10]
 		}else if(cc.id.substring(0,1) == "f"){
 			cc.style.backgroundColor = color[8];
 		}

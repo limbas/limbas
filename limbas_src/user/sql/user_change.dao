@@ -79,25 +79,35 @@ if($user_change) {
 	        if($email){$sqlquery .= "EMAIL = '$email',";}
 		}
         
-        if(!$layout && $farbe){$sqlquery .= "FARBSCHEMA = '$farbe',";}
+        # layout not changed but new color scheme
+        if($layout == $session['layout'] && $farbe){$sqlquery .= "FARBSCHEMA = '$farbe',";}
         if($language){$sqlquery .= "LANGUAGE = '$language',";}
-        if($layout){
+        
+        # layout changed
+        if($layout != $session['layout']){
             $sqlquery .= "LAYOUT = '$layout',";
             
-            $indexColor = strpos($farbschema['NAME'], '(');
-            $schemaName = substr($farbschema['NAME'], 0, $indexColor);
-            
-            
-             // basic(comet)
+            # try to find color scheme with same name of new layout ( e.g. basic(skalar) -> basic(comet) )
+            $indexColor = lmb_strpos($farbschema['NAME'], '(');
+            $schemaName = lmb_substr($farbschema['NAME'], 0, $indexColor);            
+                        
             $sqlquery2 = "SELECT ID FROM LMB_COLORSCHEMES WHERE NAME='" . $schemaName . "(" . $layout . ")' LIMIT 1";
             $rs1 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
             odbc_fetch_row($rs1, 1);
             $id = odbc_result($rs1, 'ID');
             
+            if(!$id) {
+                # try to find any color scheme
+                $sqlquery3 = "SELECT ID FROM LMB_COLORSCHEMES WHERE NAME LIKE '%(" . $layout . ")' LIMIT 1";
+                $rs2 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+                odbc_fetch_row($rs2, 1);
+                $id = odbc_result($rs2, 'ID');
+            }
+                       
             if($id) {
                 $sqlquery .= "FARBSCHEMA= '$id',";
             }
-
+            
         }
         if($data_display){$sqlquery .= "DATA_DISPLAY = $data_display,";}
         if($dateformat){$sqlquery .= "DATEFORMAT = ".parse_db_int($dateformat,1).",";}
@@ -139,7 +149,12 @@ if($farbe_change == 1){
 			$farbschema["WEB11"] = odbc_result($rs4,"WEB11");
 			$farbschema["WEB12"] = odbc_result($rs4,"WEB12");	
 		}
-        require_once("layout/$session[layout]/menuicons.php");
+        
+        if (file_exists('layout/'.$session["layout"].'/menuicons.php')) {
+            $tmp = "layout/".$session["layout"]."/menuicons.php";
+            require($tmp);
+        }
+
         /* --- session löschen ----*/
         $sqlquery = "DELETE FROM LMB_SESSION WHERE ID = '".session_id()."' AND USER_ID = $ID";
         $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);

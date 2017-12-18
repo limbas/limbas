@@ -241,12 +241,12 @@ if($report){
 $sqlquery = "SELECT TABELLE FROM LMB_CONF_TABLES";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 while(odbc_fetch_row($rs)) {
-	$existing_tables[] = strtoupper(odbc_result($rs, "TABELLE"));
+	$existing_tables[] = lmb_strtoupper(odbc_result($rs, "TABELLE"));
 }
 
 $odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'TABLE','VIEW'"));
 foreach($odbc_table["table_name"] as $tkey => $tvalue) {
-	if(!in_array(strtoupper($tvalue),$existing_tables)){
+	if(!in_array(lmb_strtoupper($tvalue),$existing_tables)){
 		echo "<OPTION VALUE=\"".$tvalue."\">".$tvalue."</OPTION>\n";
 	}
 }

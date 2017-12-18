@@ -80,6 +80,7 @@ function lmb_calInit() {
 		eventAfterAllRender: function(view) {
 			$('#calendar').fullCalendar('renderHolidays', $('#calendar').fullCalendar('getView'));
 		},
+		dayRender: lmb_calDayRender,
 		//holidayRender: lmb_calholidayRender;
 		//weekendAsHoliday: true,
 		//weekendHolidayColor: '#123456',
@@ -113,7 +114,7 @@ function divclose() {
 
 //used from gtab_change.dao - "save and close" funktion
 function lmb_closeIframeDialog() {
-    if(activeEvent && $('#lmb_eventDetailFrame').hasClass('ui-dialog-content')){
+    if($('#lmb_eventDetailFrame').hasClass('ui-dialog-content')){
        $('#lmb_eventDetailFrame').dialog('destroy');
        lmb_calReload();
     }
@@ -220,10 +221,22 @@ function lmb_calEventRender(event, eventElement, view) {
 	
 	// contextmenu
     eventElement.bind('contextmenu', function() {
-		lmb_calShowContext(eventElement.get(0),event.id);
+		lmb_calShowContext(event,eventElement.get(0));
 		return false;
     });
 }
+
+
+function lmb_calDayRender(date, cell, resource){
+	
+	// contextmenu
+	cell.bind('contextmenu', function(event) {
+		lmb_calShowContext(event,cell,date,resource);
+		return false;
+    });
+	
+}
+
 
 // render resource
 function lmb_calResourceRender(resource, element, view) {
@@ -236,23 +249,97 @@ function lmb_calResourceRender(resource, element, view) {
 
 
 // get and show context window
-function lmb_calShowContext(el,evid){
-	limbasDivShow(el,'','lmbAjaxContextmenu','50x-5',1);
-	$.ajax({
-	  type: "POST",
-	  url: "main_dyns.php",
-	  data: "actid=fullcalendar&action=context&gtabid="+jsvar['gtabid']+"&ID="+evid,
-	  success: function(data){
-	  	 document.getElementById('lmbAjaxContextmenu').innerHTML=data;
-	  }
-	});
-}
-
-// calendar - dayClick
-function lmb_calGotoDay(date, allDay, jsEvent){
+function lmb_calShowContext(event,eventElement,date,resource){
+	divclose();
 	divclose();
 
-	if(jsEvent.shiftKey || jsEvent.ctrlKey){
+    if(date){
+		if(!sessionStorage.lmb_calendar){return;}
+		limbasDivShow('',event,'lmbAjaxContextPaste');
+		activeDate = date;
+		activeResource = resource;
+	}else{
+		limbasDivShow(eventElement,'','lmbAjaxContextmenu','50x-5',1);
+	}
+	activeEvent = event;
+	activeDiv = eventElement;
+
+    // no divclose trigger on right click
+    activ_menu = 0;
+
+	//$.ajax({
+	//  type: "POST",
+	//  url: "main_dyns.php",
+	// data: "actid=fullcalendar&action=context&gtabid="+jsvar['gtabid']+"&ID="+evid,
+	// success: function(data){
+	//  	 document.getElementById('lmbAjaxContextmenu').innerHTML=data;
+	// }
+	//});
+}
+
+
+// paste
+function lmb_calPaste(date, resource){
+	
+	divclose();
+	divclose();
+	lmb_calendar = sessionStorage.lmb_calendar
+	
+	if(lmb_calendar){
+		session_event = JSON.parse(lmb_calendar);
+
+		// get Event with ID
+		var cevent = $('#calendar').fullCalendar('clientEvents',session_event.id);
+		
+		if(confirm(jsvar['lng_1441']+' '+jsvar['lng_1615'] +' ? \n'+ session_event.title)){
+			
+			if(session_event.paste == 'move'){
+				// try to move event
+				if(cevent[0] && cevent[0].end){
+					cevent = cevent[0];
+			
+					// length of event
+					var len = cevent.end.getTime()/1000 - cevent.start.getTime()/1000;
+			
+					cevent.start = date;
+					cevent.end = date.getTime()/1000 + len
+					cevent.resource = resource;
+					
+					$('#calendar').fullCalendar('updateEvent', cevent);
+				}
+			}else if(session_event.paste == 'copy'){
+				
+			
+			}else{sessionStorage.removeItem("lmb_calendar");return;}
+
+			$.ajax({
+				  type: "GET",
+				  url: "main_dyns.php",
+				  data: "actid=fullcalendar&action="+session_event.paste+"&gtabid="+jsvar['gtabid']+"&ID="+session_event.id+"&resource="+resource+"&stamp="+(date.getTime()/1000),
+				  success: function(){
+					  if(!len){
+						  lmb_calReload();
+					  }
+				  }
+			});
+		}
+		
+		sessionStorage.removeItem("lmb_calendar");
+	}
+}
+
+
+// calendar - dayClick
+function lmb_calGotoDay(date, allDay, jsEvent, resource){
+	divclose();
+
+
+	// paste
+	if(jsEvent.ctrlKey && sessionStorage.lmb_calendar){
+		lmb_calPaste(date, resource.id);
+
+	// go to date
+	}else if(jsEvent.shiftKey || jsEvent.ctrlKey){
 		lmb_calView('agendaDay');
 		$('#calendar').fullCalendar( 'gotoDate', date );
 		lmb_calSetTitle();
@@ -346,6 +433,7 @@ function lmb_calDrop(event, dayDelta, minuteDelta, allDay){
 
 // calendar - delete event
 function lmb_calDelete(evt,gtabid,ID){
+	divclose();divclose();
 	var title = confirm(jsvar['lng_84']);
 	if(title){
 	$.ajax({
@@ -365,6 +453,32 @@ function lmb_calDelete(evt,gtabid,ID){
 	});
 	}
 }
+
+// calendar - cut event & store in sessionStorage
+function lmb_calCut(el,calEvent){
+	
+	divclose();divclose();
+	$( ".fc-event" ).css({'opacity':'1','boxShadow':'none'});
+	el.style.opacity = '0.5';
+	sessionStorage.removeItem("lmb_calendar");
+	calEvent.paste = 'move';
+	sessionStorage.setItem("lmb_calendar", JSON.stringify(calEvent));
+	
+}
+
+// calendar - copy event & store in sessionStorage
+function lmb_calCopy(el,calEvent){
+	
+	divclose();divclose();
+	$( ".fc-event" ).css({'opacity':'1','boxShadow':'none'});
+	el.style.boxShadow = '4px 4px #BBBBBB';
+	sessionStorage.removeItem("lmb_calendar");
+	calEvent.paste = 'copy';
+	sessionStorage.setItem("lmb_calendar", JSON.stringify(calEvent));
+	
+}
+
+
 
 // Post edit event
 function lmb_calEdit(event){
@@ -451,12 +565,15 @@ function lmb_calView(view){
 
 // calendar - open details
 var activeEvent;
+var activeDiv;
+var activeDate;
+var activeResource;
 var action;
 function lmb_calDetail(calEvent, jsEvent, id, act) {
-	action = act;
-	var bulk = '';
-	divclose();
 	
+	var bulk = '';
+	action = act;
+	divclose();
 	
 	if(!act){act = 'gtab_change';}
 	activeEvent = null;
@@ -466,8 +583,15 @@ function lmb_calDetail(calEvent, jsEvent, id, act) {
 		document.getElementById("eventID").value = id;
 		var title = calEvent.title;
 	}
+	
+	// cut&paste
+	if(jsEvent.ctrlKey){
+		lmb_calCut($(this).get(0),calEvent);
+		return;
+	}
+	
 	if(document.getElementById("bulkmenu")){
-		var bulk = "<div onclick=\"lmb_openBulkMenu()\" id=\"bulkmenuLink\" style=\"position:absolute;top:5px;right:20px;cursor:pointer;z-index:9999;\">&nbsp;Terminserie&nbsp;<i class=\"lmb-icon-cus lmb-cal-span\" style=\"vertical-align:text-bottom\"></i></div><br><hr>";
+		var bulk = "<div onclick=\"lmb_openBulkMenu()\" id=\"bulkmenuLink\" style=\"position:absolute;top:5px;right:20px;cursor:pointer;z-index:9999;\">&nbsp;Terminserie&nbsp;<i class=\"lmb-icon-cus lmb-cal-span\" style=\"vertical-align:text-bottom\"></i></div><br>";
 	}
 	var w_ = 430;
 	var h_ = 550;
@@ -514,7 +638,7 @@ function lmb_calDetail(calEvent, jsEvent, id, act) {
 	  }
 	});
 	
-	if(!jsvar['formid']){h_ = ($("#lmbCalAjaxContainer").height()+50);}
+	if(!jsvar['formid']){h_ = ($("#lmbCalAjaxContainer").height()+80);}
 	
 	if($("#lmbCalAjaxContainer").hasClass('ui-dialog-content')){
 		$("#lmbCalAjaxContainer").dialog('open');
@@ -645,11 +769,9 @@ function lmb_validateTime(el,type){
 
 
 function lmb_calChangeSettings(setting,val){
-
-	var e = document.getElementsByName("cal_" + setting)[0];
-	e.value = val;
+        $('[name=cal_' + setting + ']').val(val);
 	
-	lmb_calReload();
+	lmb_calReload(true);
 	
 	//$('#calendar').fullCalendar('option','slotMinutes', 120);
 	//$('#calendar').fullCalendar( setting, val);	

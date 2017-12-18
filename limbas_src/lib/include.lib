@@ -18,11 +18,6 @@
  * ID: 41
  */
 
-
-ini_set("short_open_tag",1);
-#ini_set("magic_quotes_gpc",0);
-
-
 /**
  * set global variables from session
  *
@@ -69,7 +64,7 @@ function rmdirr($dir,$recursiv=1,$onlyfile=0,$self=0) {
 	if(!$recursiv AND $self){return;}
 	if ($handle = opendir($dir)) {
 		while ($file = readdir($handle)) {
-			if ($file != "." && $file != ".." AND stristr($dir."/".$file,$GLOBALS["umgvar"]["pfad"])) {
+			if ($file != "." && $file != ".." AND lmb_stristr($dir."/".$file,$GLOBALS["umgvar"]["pfad"])) {
 				$filepath = $dir."/".$file;
 				is_dir($filepath)? rmdirr($filepath,$recursiv,$onlyfile,1) : unlink($filepath);
 			}
@@ -84,10 +79,10 @@ function rmdirr($dir,$recursiv=1,$onlyfile=0,$self=0) {
 # ------ Verzeichnis Inhalte -------
 function read_dir($path,$rec=null,&$arr=array()){
 
-	if(substr($path,strlen($path)-1,1) != "/"){$path = $path."/";}
+	if(lmb_substr($path,lmb_strlen($path)-1,1) != "/"){$path = $path."/";}
 	$handle=opendir($path);
 	while ($file = readdir($handle)) {
-		if (substr($file,0,1) != "." && is_dir($path.$file)) {
+		if (lmb_substr($file,0,1) != "." && is_dir($path.$file)) {
 			$sub_dir = $path . $file . "/" ;
 			$arr["path"][] = $sub_dir;
 			$arr["name"][] = $file;
@@ -141,9 +136,9 @@ function lmb_alert($add_alert){
 
 
 function colorHexToDecArray($color){
-	$red = hexdec(substr($color,0,2));
-	$green = hexdec(substr($$color,2,2));
-	$blue = hexdec(substr($color,4,2));
+	$red = hexdec(lmb_substr($color,0,2));
+	$green = hexdec(lmb_substr($$color,2,2));
+	$blue = hexdec(lmb_substr($color,4,2));
 	$colorArray["red"] = $red;
 	$colorArray["green"] = $green;
 	$colorArray["blue"] = $blue;
@@ -176,9 +171,9 @@ function average_color($color_array)
 
 	foreach ($color_array as $cur_color)
 	{
-		$avg_red += hexdec(substr($cur_color,0,2));
-		$avg_green += hexdec(substr($cur_color,2,2));
-		$avg_blue += hexdec(substr($cur_color,4,2));
+		$avg_red += hexdec(lmb_substr($cur_color,0,2));
+		$avg_green += hexdec(lmb_substr($cur_color,2,2));
+		$avg_blue += hexdec(lmb_substr($cur_color,4,2));
 	}
 
 	$avg_red /= count($color_array);
@@ -192,7 +187,7 @@ function average_color($color_array)
 
 function parse_db_string($value,$length=null){
 	if($length){
-		return dbf_7(substr($value,0,$length));
+		return dbf_7(lmb_substr($value,0,$length));
 	}
 	return dbf_7($value);
 }
@@ -202,17 +197,17 @@ function parse_db_blob($value){
 }
 
 function parse_db_int($value,$length=100){
-	if(!$value OR strlen($value) > $length OR !is_numeric($value)){return "0";}else{return str_replace(",",".",$value);}
+	if(!$value OR lmb_strlen($value) > $length OR !is_numeric($value)){return "0";}else{return str_replace(",",".",$value);}
 }
 
 function parse_db_float($value,$length=100,$scale=0){
-	if($value){$value = strtoupper(str_replace(",",".",$value));}else{return 0;}
+	if($value){$value = lmb_strtoupper(str_replace(",",".",$value));}else{return 0;}
 	
 	# more then one .
-	if(substr_count($value,".") > 1){
-		$pos = strpos($value,".");
+	if(lmb_substr_count($value,".") > 1){
+		$pos = lmb_strpos($value,".");
 		$value = str_replace(".","",$value);
-		$value = substr($value,0,$pos).".".substr($value,$pos,20);
+		$value = substr($value,0,$pos).".".lmb_substr($value,$pos,20);
 	}
 	
 	if(!$value){return 0;}
@@ -220,12 +215,12 @@ function parse_db_float($value,$length=100,$scale=0){
 	
 	# with scale
 	if($scale){
-		if(strlen($part[0]) > ($length-$scale)){return 0;}
-		if(strlen($part[1]) > $scale){
+		if(lmb_strlen($part[0]) > ($length-$scale)){return 0;}
+		if(lmb_strlen($part[1]) > $scale){
 			$value = str_replace(",",".",round($value,$scale));
 		}
 	}else{
-		if(strlen($part[0])+strlen($part[1]) > $length){return "0";}
+		if(lmb_strlen($part[0])+lmb_strlen($part[1]) > $length){return "0";}
 	}
 	if(!preg_match("/[0-9.-]/",$value)){return "0";}
 
@@ -235,9 +230,9 @@ function parse_db_float($value,$length=100,$scale=0){
 
 function parse_db_bool($value){
 	$value = trim($value);
-	if(strtoupper($value) == "NULL"){return LMB_DBDEF_NULL;}
-	elseif(strtoupper($value) == "TRUE" OR strtoupper($value) == "ON" OR $value == 1){return LMB_DBDEF_TRUE;}
-	elseif(strtoupper($value) == "FALSE" OR strtoupper($value) == "OFF" OR $value == 0 OR !$value){return LMB_DBDEF_FALSE;}
+	if(lmb_strtoupper($value) == "NULL"){return LMB_DBDEF_NULL;}
+	elseif(lmb_strtoupper($value) == "TRUE" OR lmb_strtoupper($value) == "ON" OR $value == 1){return LMB_DBDEF_TRUE;}
+	elseif(lmb_strtoupper($value) == "FALSE" OR lmb_strtoupper($value) == "OFF" OR $value == 0 OR !$value){return LMB_DBDEF_FALSE;}
 	else{return LMB_DBDEF_TRUE;}
 }
 
@@ -257,8 +252,8 @@ function convert_NumberFormat($value,$format){
 
 function convert_FloatToScientific($value,$dec=0){
 	$value = str_replace(",",".",$value);
-	if(strpos($value,"E")){return strval($value);}
-	if(strlen($value) <= $dec OR !$dec){return $value;}
+	if(lmb_strpos($value,"E")){return strval($value);}
+	if(lmb_strlen($value) <= $dec OR !$dec){return $value;}
 	$value = sprintf("%.10e",$value);
 	$value = preg_replace("/\.[0]{1,}e/","E",$value);
 	$value = preg_replace("/[0]{1,}e/","E",$value);
@@ -275,15 +270,15 @@ function convert_ScientificToFloat($value,$dec){
 function convert_FloatRound($value){
 	if(!$value OR LMB_DBFUNC_FLOATHANDLE){return $value;}
 	
-	if($pos = strpos(strtoupper($value),"E")){
-		$epart = substr($value,$pos);
-		$value = substr($value,0,$pos);
+	if($pos = lmb_strpos(lmb_strtoupper($value),"E")){
+		$epart = lmb_substr($value,$pos);
+		$value = lmb_substr($value,0,$pos);
 	}
 	
 	$value = parse_db_float($value);
-	$value .= strpos($value,".") === false ? "." : "";
+	$value .= lmb_strpos($value,".") === false ? "." : "";
 	$value = sprintf("%-018s",$value);
-	$value = floatval(substr($value,0,strlen($value)-2));
+	$value = floatval(lmb_substr($value,0,lmb_strlen($value)-2));
 	$value = $value.$epart;
 	
 	return $value;
@@ -434,9 +429,6 @@ function lmb_num_rows($rs,&$query=null,$counttype=null) {
 function lmb_PrepareSQL($prepare_string,$bindvalue,$FILE=null,$LINE=null) {
 	global $db;
 	
-	#$leng = strlen($prepare_string);
-	#ini_set("odbc.defaultlrl",$leng);
-	
 	if(LMB_DBFUNC_PREPAREHANDLE){
 		$sql_prep = odbc_prepare($db,$prepare_string);
 		$rs = @odbc_execute($sql_prep,$bindvalue) or errorhandle(odbc_errormsg($db),$prepare_string,"odbc_prepare",$FILE,$LINE);
@@ -449,9 +441,7 @@ function lmb_PrepareSQL($prepare_string,$bindvalue,$FILE=null,$LINE=null) {
 		}
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"odbc_prepare",$FILE,$LINE);
 	}
-	
-	#ini_set("odbc.defaultlrl","4096");
-	
+
 	if($rs){return true;}else{return false;}
 }
 
@@ -567,12 +557,12 @@ function file_size($size) {
 function file_size_convert($size) {
 
 	$fl = parse_db_float($size);
-	if(stripos($size,"k") OR stripos($size,"kb") OR stripos($size,"kilobyte")){$size = ($fl * 1024);}
-	elseif(stripos($size,"m") OR stripos($size,"mb") OR stripos($size,"megabyte")){$size = ($fl * 1024 * 1024);}
-	elseif(stripos($size,"g") OR stripos($size,"gb") OR stripos($size,"gigabyte")){$size = ($fl * 1024 * 1024 * 1024);}
-	elseif(stripos($size,"t") OR stripos($size,"tb") OR stripos($size,"terrabyte")){$size = ($fl * 1024 * 1024 * 1024 * 1024);}
-	elseif(stripos($size,"p") OR stripos($size,"pb")){$size = ($fl * 1024 * 1024 * 1024 * 1024 * 1024);}
-	elseif(stripos($size,"b") OR stripos($size,"byte")){$size = ($fl);}
+	if(lmb_stripos($size,"k") OR lmb_stripos($size,"kb") OR lmb_stripos($size,"kilobyte")){$size = ($fl * 1024);}
+	elseif(lmb_stripos($size,"m") OR lmb_stripos($size,"mb") OR lmb_stripos($size,"megabyte")){$size = ($fl * 1024 * 1024);}
+	elseif(lmb_stripos($size,"g") OR lmb_stripos($size,"gb") OR lmb_stripos($size,"gigabyte")){$size = ($fl * 1024 * 1024 * 1024);}
+	elseif(lmb_stripos($size,"t") OR lmb_stripos($size,"tb") OR lmb_stripos($size,"terrabyte")){$size = ($fl * 1024 * 1024 * 1024 * 1024);}
+	elseif(lmb_stripos($size,"p") OR lmb_stripos($size,"pb")){$size = ($fl * 1024 * 1024 * 1024 * 1024 * 1024);}
+	elseif(lmb_stripos($size,"b") OR lmb_stripos($size,"byte")){$size = ($fl);}
 	$size = sprintf("%.0f",$size);
 
 	if(is_numeric($size)){return $size;}else{return 0;}
@@ -656,7 +646,7 @@ function IMACK_ConvertThumbs($file=null,$width=null,$height=null,$prop=null,$des
 	# file from path
 	}elseif(is_string($file)){
 
-		if (substr($file,0,1) != "/") {
+		if (lmb_substr($file,0,1) != "/") {
 			$file_path = $umgvar["pfad"]."/".$file;
 		}else{
 			$file_path = $file;
@@ -668,7 +658,7 @@ function IMACK_ConvertThumbs($file=null,$width=null,$height=null,$prop=null,$des
 
 		# mime type
 		$file_type = explode(".",$file_path);
-		$file_type = strtolower(end($file_type));
+		$file_type = lmb_strtolower(end($file_type));
 		
 		foreach ($gmimetypes["ext"] as $key => $val){
 			if($val == $file_type){
@@ -696,7 +686,7 @@ function IMACK_ConvertThumbs($file=null,$width=null,$height=null,$prop=null,$des
 	
 	# watermark
 	if($watermark){
-		if(is_numeric($watermark)){$w = $watermark;}else{$w = substr(md5($watermark),0,6);}
+		if(is_numeric($watermark)){$w = $watermark;}else{$w = lmb_substr(md5($watermark),0,6);}
 		$nameext .= "w_$w";
 	}
 	
@@ -719,14 +709,14 @@ function IMACK_ConvertThumbs($file=null,$width=null,$height=null,$prop=null,$des
 	# destination
 	$default_dest = $umgvar["temp"]."/thumpnails/";
 	if($dest_path){
-		if (substr($dest_path,0,1) != "/") {
+		if (lmb_substr($dest_path,0,1) != "/") {
 			$dest_path = $umgvar["pfad"]."/".$dest_path;
 		}
 	}else{
 		$dest_path = $default_dest;
 	}
 	
-	if(is_dir($dest_path) AND strpos($dest_path,$umgvar["pfad"]) !== false){
+	if(is_dir($dest_path) AND lmb_strpos($dest_path,$umgvar["pfad"]) !== false){
 		$dest_name = explode(".",$file_name);
 		$dest_name = $dest_name[0].$size.$nameext.".".$dest_format;
 		$dest_path = $dest_path.$dest_name;
@@ -735,7 +725,7 @@ function IMACK_ConvertThumbs($file=null,$width=null,$height=null,$prop=null,$des
 		$dest_path_ = explode("/",$dest_path);
 		unset($dest_path_[count($dest_path_)-1]);
 		$dest_path_ = implode("/",$dest_path_);
-		if(is_dir($dest_path_) AND strpos($dest_path,$umgvar["pfad"]) !== false){
+		if(is_dir($dest_path_) AND lmb_strpos($dest_path,$umgvar["pfad"]) !== false){
 			$dest_url = ltrim(str_replace($umgvar["pfad"],"",$dest_path),"/");
 		}
 	}
@@ -829,7 +819,7 @@ function image_info(&$inf){
 	unset($picinf);
 	for($i=0;$i<=50;$i++){
 		$info = explode(": ",$inf[$i]);
-		$picinf[strtolower(trim($info[0]))] = trim($info[1]);
+		$picinf[lmb_strtolower(trim($info[0]))] = trim($info[1]);
 	}
 	return $picinf;
 }
@@ -839,7 +829,7 @@ function image_info(&$inf){
 function lmbSuggestColor($color,$wc="FFFFFF",$bc="000000"){
 	if(!$color){return $bc;}
 	
-    $o = round(((hexdec(substr($color, 1, 2)) * 299) + (hexdec(substr($color, 3, 2)) * 587) + (hexdec(substr($color, 5, 2)) * 114)) / 1000);
+    $o = round(((hexdec(lmb_substr($color, 1, 2)) * 299) + (hexdec(lmb_substr($color, 3, 2)) * 587) + (hexdec(lmb_substr($color, 5, 2)) * 114)) / 1000);
 
     if($o > 125) {
         return "#$bc";
@@ -1008,11 +998,11 @@ function history_update($tabid,$fieldid,$datid,$actionid,$value,$oldvalue){
 	}
 	# ------- User/Gruppen --------
 	elseif($data_typ == 38){
-		$guid = substr($value,1,6);
-		if(substr($value,0,1) == "u"){
+		$guid = lmb_substr($value,1,6);
+		if(lmb_substr($value,0,1) == "u"){
 			$guname = "U:".$userdat["bezeichnung"][$guid];
 			$value = $userdat[bezeichnung][$guid];
-		}elseif(substr($value,0,1) == "g"){
+		}elseif(lmb_substr($value,0,1) == "g"){
 			$guname = "G:".$groupdat["beschreibung"][$guid];
 			$value = $groupdat[name][$guid];
 		}
@@ -1036,7 +1026,7 @@ function history_update($tabid,$fieldid,$datid,$actionid,$value,$oldvalue){
 	# --- History-Eintrag (LMB_HISTORY_UPDATE) --------------
 	$NEXTID = next_db_id('LMB_HISTORY_UPDATE','ID',1);
 	# ---------- Max länge auf 250 Zeichen reduzieren -----------
-	if(strlen($value) > 990){$value = $value."...";}
+	if(lmb_strlen($value) > 990){$value = $value."...";}
 	$value = parse_db_string($value,990);
 	$sqlquery1 = "INSERT INTO LMB_HISTORY_UPDATE (ID,USERID,TAB,DATAID,FIELD,FIELDVALUE,ACTION_ID,LWF_ID,LWF_PRID,LWF_INID) VALUES ($NEXTID,".$session["user_id"].",".parse_db_int($tabid,5).",".parse_db_int($datid,18).",".parse_db_int($fieldid,5).",'".$value."',".parse_db_int($actionid,16).",".parse_db_int($lwf_id,2).",".parse_db_int($lwf_prid,2).",".parse_db_int($lwf_inid,16).")";
 	$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
@@ -1110,15 +1100,15 @@ function tableDiff($target1,$target2,$name=null,$vcount1=null,$vcount2=null,$for
 				$value = preg_replace("/[ ]{1,}/"," ",$value);
 				$value_ = '';
 				
-				if(strpos($value,"|")){
+				if(lmb_strpos($value,"|")){
 				    $value_ = explode('|', $value);
-				}elseif(strpos($value,"\\") !== false){
+				}elseif(lmb_strpos($value,"\\") !== false){
 				    $value_ = explode('\\', $value);
-				}elseif(strpos($value,"/") !== false){
+				}elseif(lmb_strpos($value,"/") !== false){
 				    $value_ = explode('/', $value);
-				}elseif(strpos($value,">") !== false){
+				}elseif(lmb_strpos($value,">") !== false){
 				    $value_ = explode('>', $value);
-				}elseif(strpos($value,"<") !== false){
+				}elseif(lmb_strpos($value,"<") !== false){
 				    $value_ = explode('<', $value);
 				}
 				
@@ -1255,7 +1245,7 @@ function get_currency_symbol($currency){
 function fgrep_text($file,$searchval,$m,$w,$i){
 	if($searchval){
 		foreach ($searchval as $key => $value) {
-			$gval[] = preg_quote(substr($value,0,50));
+			$gval[] = preg_quote(lmb_substr($value,0,50));
 		}
 		if($w){$w = "";}else{$w = "-w";}
 		if($i){$i = "";}else{$i = "-i";}
@@ -1318,7 +1308,7 @@ function convert_to_text($file,$ext,$mimetype,$fid,$split,$getstream,$renew,$lev
         $inputfile = $umgvar["uploadpfad"].$filestruct['path'][$level].$file.".".$ext;
 
         # set output encoding to limbas encoding
-        if($umgvar['charset'] == 'UTF-8') {
+        if(lmb_strtoupper($umgvar['charset']) == 'UTF-8') {
             $encoding = 'UTF-8';
         } else {
             $encoding = 'Latin1';
@@ -1387,7 +1377,7 @@ function convert_to_text($file,$ext,$mimetype,$fid,$split,$getstream,$renew,$lev
 		$maxlen = 100;
 		$stream = file($resultpath);
 		foreach ($stream as $key => $value){
-			if(strlen($value) > $maxlen){
+			if(lmb_strlen($value) > $maxlen){
 				$line = explode(" ",$value);
 				$part = array_chunk($line,10);
 				foreach ($part as $key1 => $value1){
@@ -1422,7 +1412,7 @@ function pathToURL($path){
 
 	if($path){
 		$url = explode($umgvar["pfad"],$path);
-		$url = substr($url[1],1,100);
+		$url = lmb_substr($url[1],1,100);
 	}
 
 	return $url;
@@ -1660,7 +1650,7 @@ function utf8ToUnicode ($source) {
    $shift[4][3] = 0;
 
    $pos = 0;
-   $len = strlen ($source);
+   $len = lmb_strlen ($source);
    $encodedString = '';
    while ($pos < $len) {
        $asciiPos = ord (substr ($source, $pos, 1));
@@ -1686,7 +1676,7 @@ function utf8ToUnicode ($source) {
        }
 
        // process the string representing the letter to a unicode entity
-       $thisLen = strlen ($thisLetter);
+       $thisLen = lmb_strlen ($thisLetter);
        $thisPos = 0;
        $decimalCode = 0;
        while ($thisPos < $thisLen) {
@@ -1727,8 +1717,8 @@ function utf8ToUnicode ($source) {
  */
 function string_dispSubstr($string,$size)
 {
-	if(strlen($string)>$size)
-		return substr($string,0,$size)."...";
+	if(lmb_strlen($string)>$size)
+		return lmb_substr($string,0,$size)."...";
 	else
 		return $string;
 }
@@ -1843,7 +1833,7 @@ function USER_display($userList,$carriageReturn = "<BR>"){
 	if($userList){
 		foreach ($userList as $key => $id) {
 			if($id){
-				$id = substr($id,1);
+				$id = lmb_substr($id,1);
 				$result[] = USER_getDisplay($id);
 			}
 		}

@@ -197,7 +197,7 @@ function dbf_8($p){
  * @return string
  */
 function dbf_4($p){
-	return strtoupper($p);
+	return lmb_strtoupper($p);
 }
 
 

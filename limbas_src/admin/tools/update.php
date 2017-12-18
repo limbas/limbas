@@ -110,7 +110,7 @@ if($upl){
 	}
 	echo '</SELECT></TD><TD ALIGN="CENTER"><INPUT TYPE="submit" VALUE="ok!"></TD></TR>';
 }else{
-    echo '<TR class="tabBody"><TD colspan="2"><b style="color:green">nothin to do ... systemtables are synchronous to source!</b></td></tr>';
+    echo '<TR class="tabBody"><TD colspan="2"><b style="color:green">nothing to do ... systemtables are synchronous to source!</b></td></tr>';
 }
 
 

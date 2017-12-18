@@ -118,7 +118,7 @@ if($form_possize){
 			}elseif(${"text".$id_}){
 				$INHALT = ${"text".$id_};
 				$ia = "INHALT = ?,";
-			}elseif(strpos("_chart_menu_bild_tab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_menue_scroll_tabmenu_uform",$typ_)){
+			}elseif(lmb_strpos("_chart_menu_bild_tab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_menue_scroll_tabmenu_uform",$typ_)){
 				$ia = "";
 			}else{
 				$INHALT = "";
@@ -289,7 +289,7 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 	$styles = array();
 	$style = set_default_style($styles);
 
-	if($form_add_tab AND $form_add_field){$dbfield = strtoupper($form_add_tab).";".strtoupper($form_add_field);}
+	if($form_add_tab AND $form_add_field){$dbfield = lmb_strtoupper($form_add_tab).";".lmb_strtoupper($form_add_field);}
 	if($form_add_baum){$dbbaum = parse_db_string($form_add_baum);}
 	
 	if($form_add == "bild"){
@@ -321,8 +321,8 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 		if(is_uploaded_file($file)){
 
 			# -------- Mimetype ---------
-			$pos1 = strrpos($filename,'.');
-			$ext = strtolower(trim(substr($filename,$pos1+1,4)));
+			$pos1 = lmb_strrpos($filename,'.');
+			$ext = lmb_strtolower(trim(lmb_substr($filename,$pos1+1,4)));
 			$sqlquery0 = "SELECT ID,EXT,MIMETYPE FROM LMB_MIMETYPES WHERE LOWER(EXT) = '$ext'";
 			$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
 			if(odbc_result($rs0, "ID")){
@@ -338,7 +338,7 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 			}else{
 				$mimetypeid = odbc_result($rs0, "ID");
 				$mimetype = odbc_result($rs0, "MIMETYPE");
-				$secname = $NEXTID.substr(md5($NEXTID.date("U").$filename),0,12);
+				$secname = $NEXTID.lmb_substr(md5($NEXTID.date("U").$filename),0,12);
 				$out = 1;
 				$mime = explode("/",$mimetype);
 
@@ -373,7 +373,7 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 					$tab_size = $secname.".".$pic_type;
 
 					$img = 1;
-					$value = "Image: ".$filename."\\nFilesize: ".file_size($filesize)."\\nFormat: ".substr($meta["FORMAT"],0,strlen($meta["FORMAT"])-1)."\\nGeometry: ".$meta["GEOMETRY"]."\\nResolution: ".$meta["RESOLUTION"]."\\nDepth: ".$meta["DEPTH"]."\\nColors: ".$meta["COLORS"]."\\nType: ".$meta["TYPE"];
+					$value = "Image: ".$filename."\\nFilesize: ".file_size($filesize)."\\nFormat: ".lmb_substr($meta["FORMAT"],0,lmb_strlen($meta["FORMAT"])-1)."\\nGeometry: ".$meta["GEOMETRY"]."\\nResolution: ".$meta["RESOLUTION"]."\\nDepth: ".$meta["DEPTH"]."\\nColors: ".$meta["COLORS"]."\\nType: ".$meta["TYPE"];
 					lmb_alert($value);
 				}else{
 					$commit = 1;lmb_alert("$lang[1167]!\\n$error");
@@ -387,6 +387,10 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 		$value = "// enter js-code";
 	}elseif($form_add == "php"){
 		$value = "# enter php-code";
+	}elseif($form_add == "reminder"){
+		$value = "reminder";
+	}elseif($form_add == "wflhist"){
+		$value = "wflhist";
 	}elseif($form_add == "datum"){
 		$value = "Datum";
 	}elseif($form_add == "uform"){
@@ -703,7 +707,7 @@ elseif($form_edit_value){
 /* --- Style Editieren --------------------------------------------- */
 if($form_setstyle){
 
-	$styles = explode(";",substr($form_setstyle,1,99999));
+	$styles = explode(";",lmb_substr($form_setstyle,1,99999));
 	$bzm = 0;
 	while($styles[$bzm]){
 		unset($zopt);
@@ -1119,8 +1123,8 @@ if(file_exists($umgvar["pfad"].$form["css"]) AND $form["css"]){
 	$handle = fopen ($umgvar["pfad"].$form["css"], "r");
 	while (!feof($handle)) {
 	    $buffer = fgets($handle, 4096);
-	    if(substr($buffer,0,1) == "#" OR substr($buffer,0,2) == "//"){continue;}
-	    if($buffer AND strpos($buffer,"*") === false AND !strpos($buffer,":") AND strpos($buffer,"{")){
+	    if(lmb_substr($buffer,0,1) == "#" OR lmb_substr($buffer,0,2) == "//"){continue;}
+	    if($buffer AND lmb_strpos($buffer,"*") === false AND !lmb_strpos($buffer,":") AND lmb_strpos($buffer,"{")){
 	    	$buffer = str_replace("{","",$buffer);
 	    	$buffer = explode(".",$buffer);
 	    	$buffer = $buffer[count($buffer)-1];

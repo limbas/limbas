@@ -721,10 +721,10 @@ foreach($_gtab["tab_id"] as $key => $value){
                     $f_result[$key]["specificprivilege"]["delete_$key"][] = $spval;
                 } else {
                     $f_result[$key]["specificprivilege"]["view_$key"][] = preg_replace("/[ved]/", "", $spval);
-                    if (strpos($spval, "e")) {
+                    if (lmb_strpos($spval, "e")) {
                         $f_result[$key]["specificprivilege"]["edit_$key"][] = preg_replace("/[ved]/", "", $spval);
                     }
-                    if (strpos($spval, "d")) {
+                    if (lmb_strpos($spval, "d")) {
                         $f_result[$key]["specificprivilege"]["delete_$key"][] = preg_replace("/[ved]/", "", $spval);
                     }
                 }

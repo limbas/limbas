@@ -82,7 +82,7 @@ function LmEntCheckOCRStatus($path,$ID,$mimetype){
 	global $umgvar;
 	global $session;
 
-	if(!strpos(";".$umgvar["ocr_filetypes"],$mimetype)){
+	if(!lmb_strpos(";".$umgvar["ocr_filetypes"],$mimetype)){
 		LmEntSetOCRStatus (-2,$ID);
 		return false;
 	}elseif($mimetype == "pdf"){
@@ -201,7 +201,7 @@ function LmEntGenerate_ocr($ID,$level,$ocr_destination=null,$ocr_format=null){
 	global $umgvar;
 	global $gmimetypes;
 
-	if(strpos($ocr_format,"&") !== false){
+	if(lmb_strpos($ocr_format,"&") !== false){
 		$params = explode("&",$ocr_format);
 		$ocr_params = $ocr_format;
 		$ocr_format = $params[0];
@@ -237,7 +237,7 @@ function LmEntGenerate_ocr($ID,$level,$ocr_destination=null,$ocr_format=null){
 				return $newpath;
 			}
 		# same output format
-		}elseif($mimetypeext == $ocr_format OR $mimetypeext == substr($ocr_format,0,3)){
+		}elseif($mimetypeext == $ocr_format OR $mimetypeext == lmb_substr($ocr_format,0,3)){
 			# save security-copy
 			#if($ocr_destination == "overwrite" AND $umgvar["ocr_save_copy"]){
 			if($umgvar["ocr_save_copy"] AND file_exists($umgvar["ocr_save_copy"])){
@@ -290,8 +290,8 @@ function LmEntGenerate_ocr($ID,$level,$ocr_destination=null,$ocr_format=null){
 			}
 		# different output format
 		}else{
-			$point = strrpos(odbc_result($rs, "NAME"),".");
-			$newname = substr(odbc_result($rs, "NAME"),0,$point);
+			$point = lmb_strrpos(odbc_result($rs, "NAME"),".");
+			$newname = lmb_substr(odbc_result($rs, "NAME"),0,$point);
 			if($ocr_format == "text"){
 				$newmime = "text/plain";
 				$newname = $newname.".txt";

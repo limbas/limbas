@@ -187,7 +187,7 @@ if((!$diag_id)or(!$diag_tab_id)){
                                             echo "<SELECT OnChange=\"document.form1.ID.value='".$gdiaglist[$gtabid]["id"][$key]."';document.form1.template.value=this.value;document.form1.submit();\" style=\"width:200px;\"><OPTION value=\" \">";
                                             foreach ($extfiles["name"] as $key1 => $filename){
                                                     if($extfiles["typ"][$key1] == "file" AND ($extfiles["ext"][$key1] == "php" OR $extfiles["ext"][$key1] == "inc")){
-                                                            $path = substr($extfiles["path"][$key1],strlen($umgvar["pfad"]),100);
+                                                            $path = lmb_substr($extfiles["path"][$key1],lmb_strlen($umgvar["pfad"]),100);
                                                             if($gdiaglist[$gtabid]["grouplist"][$key] == $path.$filename){$selected = "SELECTED";}else{$selected = "";}
                                                             echo "<OPTION VALUE=\"".$path.$filename."\" $selected>".str_replace("/EXTENSIONS/","",$path).$filename;
                                                     }

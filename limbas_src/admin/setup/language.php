@@ -88,12 +88,12 @@ if($language_typ == 1){
 	<OPTION VALUE="TRUE" <?if($EDIT == 'TRUE'){echo "SELECTED";}?>><?=$lang[1218]?>
 	</SELECT></TD>
 	<TD VALIGN="TOP" WIDTH="10"><SELECT NAME="language_id" OnChange="document.form1.submit();">
-    <?$bzm = 0;
-    while($result_language["language_id"][$bzm]){
-    	if($result_language["language_id"][$bzm] == $language_id){$SELECTED = "SELECTED";}else{$SELECTED = "";}
-        echo "<OPTION VALUE=\"".$result_language["language_id"][$bzm]."\" $SELECTED>".$result_language["language"][$bzm];
-    $bzm++;
-    }?>
+    <?php 
+    foreach($result_language['language_id'] as $key => $value) {
+        if($value == $language_id){$SELECTED = "SELECTED";}else{$SELECTED = "";}
+        echo "<OPTION VALUE=\"".$value."\" $SELECTED>".$result_language["language"][$key];
+    }
+    ?>
 	</SELECT></TD>
 	<TD VALIGN="TOP" WIDTH="10"><SELECT NAME="TYP" OnChange="document.form1.submit();">
 	<OPTION VALUE="0" <?if($TYP == 0){echo "SELECTED";}?>><?=$lang[1216]?>
@@ -104,12 +104,12 @@ if($language_typ == 1){
 	</SELECT></TD>
 	<TD VALIGN="TOP" WIDTH="5" STYLE="width:5"><INPUT TYPE="TEXT" SIZE="5" NAME="FILE" VALUE="<?=$FILE?>" OnChange="change_file(this.value)"></TD>
 	<TD VALIGN="TOP" nowrap><SELECT NAME="ref_id" OnChange="document.form1.submit();">
-    <?$bzm = 0;
-    while($result_language["language_id"][$bzm]){
-    	if($result_language["language_id"][$bzm] == $ref_id){$SELECTED = "SELECTED";}else{$SELECTED = "";}
-        echo "<OPTION VALUE=\"".$result_language["language_id"][$bzm]."\" $SELECTED>".$result_language["language"][$bzm];
-    $bzm++;
-    }?>
+    <?php
+    foreach($result_language['language_id'] as $key => $value) {
+        if($value == $ref_id){$SELECTED = "SELECTED";}else{$SELECTED = "";}
+        echo "<OPTION VALUE=\"".$value."\" $SELECTED>".$result_language["language"][$key];
+    }
+    ?>
 	</SELECT>
 	<INPUT TYPE="TEXT" SIZE="40" NAME="REFWERT" VALUE="<?=$REFWERT?>" OnChange="document.form1.submit();">&nbsp;
 	</TD>

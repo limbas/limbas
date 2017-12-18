@@ -234,7 +234,7 @@ EOD;
                                         $line[$bzm] = convert_date($line[$bzm]);
                                         // DATE
                                     } elseif ($ifield_datatype[$bzm] == 40) {
-                                        $line[$bzm] = substr(convert_date($line[$bzm], 0, 10));
+                                        $line[$bzm] = lmb_substr(convert_date($line[$bzm], 0, 10));
                                     }
                                 }
                                 /* ---------------------- Währung ---------------------- */
@@ -242,11 +242,11 @@ EOD;
                                 if ($line[$bzm]) {
                                     
                                     // Währungstabelle
-                                    if (strpos($line[$bzm], chr(128))) { // euro
+                                    if (lmb_strpos($line[$bzm], chr(128))) { // euro
                                         $ccode = "EUR";
                                     } else {
                                         foreach ($lmcurrency["code"] as $ckey => $cvalue) {
-                                            if (strpos($line[$bzm], $cvalue)) {
+                                            if (lmb_strpos($line[$bzm], $cvalue)) {
                                                 $ccode = $cvalue;
                                             }
                                         }
@@ -308,7 +308,7 @@ EOD;
                                 if ($ifield_datatype[$bzm] == 22) {
                                     $NEXTID = parse_db_int($ifield_ext[$bzm] . $line[$bzm] . $ifield_ext[$bzm], 19);
                                     // ERSTUSER
-                                } elseif ($ifield_datatype[$bzm] == 34 or strtoupper($ifield_name[$bzm]) == "ERSTUSER") {
+                                } elseif ($ifield_datatype[$bzm] == 34 or lmb_strtoupper($ifield_name[$bzm]) == "ERSTUSER") {
                                     $erstuser = parse_db_int($ifield_ext[$bzm] . $line[$bzm] . $ifield_ext[$bzm], 5);
                                 } else {
                                     $value_[] = $ifield_ext[$bzm] . $line[$bzm] . $ifield_ext[$bzm];
@@ -401,7 +401,7 @@ function import_tab_pool($import_typ,$import_overwrite,$import_count,$partimport
 		/* --- Liste vorhandener Tabellen --------------------------------------------- */
 		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'TABLE','VIEW'"));
 		foreach($odbc_table["table_name"] as $tkey => $tvalue) {
-			$existingtabs[] = strtoupper($tvalue);
+			$existingtabs[] = lmb_strtoupper($tvalue);
 		}
 
 		/* --- falls Tabellengruppe -------------------------------------- */
@@ -412,7 +412,7 @@ function import_tab_pool($import_typ,$import_overwrite,$import_count,$partimport
 					$value_ = explode(".",$value);
 					if($folderval["typ"][$key] == "file"){
 						$tabname = preg_replace("/^[^0-9a-zA-z_]$/","",$value_[0]);
-						if($tablegrouplist[strtoupper($tabname)] OR $tablegrouplist[strtolower($tabname)]){
+						if($tablegrouplist[lmb_strtoupper($tabname)] OR $tablegrouplist[lmb_strtolower($tabname)]){
 							$imptabgroup[] = $tabname;
 						}
 					}
@@ -422,7 +422,7 @@ function import_tab_pool($import_typ,$import_overwrite,$import_count,$partimport
 			/* --- falls Einzeltabelle -------------------------------------- */
 		}elseif($import_count == "single"){
 			$tmp = explode(".",$fileatm_name);
-			$imptabgroup[0] = strtoupper(preg_replace("/^[^0-9a-zA-z_]$/","",$tmp[0]));
+			$imptabgroup[0] = lmb_strtoupper(preg_replace("/^[^0-9a-zA-z_]$/","",$tmp[0]));
 			$pfad = $umgvar["pfad"]."/USER/".$session[user_id]."/temp/";
 			rmdirr($umgvar["pfad"]."/USER/".$session[user_id]."/temp");
 			$copy = copy ($fileatm, $pfad.$imptabgroup[0].".tar.gz");
@@ -435,7 +435,7 @@ function import_tab_pool($import_typ,$import_overwrite,$import_count,$partimport
 			unset($typ);
 			
 			
-			if(trim(strtoupper(substr($imptabgroup[$bzm],0,4))) == "LMB_"){
+			if(trim(lmb_strtoupper(lmb_substr($imptabgroup[$bzm],0,4))) == "LMB_"){
 				$prefix_ = $prefix;
 			}else{
 				$prefix_ = "";
@@ -445,7 +445,7 @@ function import_tab_pool($import_typ,$import_overwrite,$import_count,$partimport
 			$sys = system("tar -x -z -C ".$pfad." -f ".$pfad.$imptabgroup[$bzm].".tar.gz");
 			
 			/* ----------- prüfen ob Tabelle schon vorhanden ------------- */
-			if(in_array(strtoupper($prefix_.$imptabgroup[$bzm]),$existingtabs)){
+			if(in_array(lmb_strtoupper($prefix_.$imptabgroup[$bzm]),$existingtabs)){
 				/* ----------- Tabelle schon vorhanden ------------- */
 				$table = dbf_4($imptabgroup[$bzm]);
 			}else{
@@ -629,7 +629,7 @@ EOD;
 	foreach ($ifield["used"] as $fkey => $value){
 		if($value == "on" AND $ifield["colname"][$fkey]){
 			foreach ($headerset as $hkey => $hval){
-				if(strtolower(trim($hval)) == strtolower(trim($ifield["colname"][$fkey]))){
+				if(lmb_strtolower(trim($hval)) == lmb_strtolower(trim($ifield["colname"][$fkey]))){
 					$fieldlist[$hkey] = $fkey;
 				}
 			}
@@ -709,8 +709,8 @@ function checkFormatNUMBER($data,$param){
 }
 
 function checkFormatTEXT($data,$param){
-	if(strlen($data)>$param){
-		return substr($data,0,$param);
+	if(lmb_strlen($data)>$param){
+		return lmb_substr($data,0,$param);
 	}else{
 		return $data;
 	}
@@ -1015,7 +1015,7 @@ EOD;
 					}
 
 					# next ID
-					if(strtoupper($cheader[$bzm3]) == "ID" AND strtoupper($tab) != "LMB_SESSION" AND strtoupper($tab) != "LMB_FORM_LIST"){
+					if(lmb_strtoupper($cheader[$bzm3]) == "ID" AND lmb_strtoupper($tab) != "LMB_SESSION" AND lmb_strtoupper($tab) != "LMB_FORM_LIST"){
 						if($import_overwrite == "add_with_ID"){
 							$prepare_long["id"][$bzm4] = $ccont[$bzm3];
 							$values[] = $ccont[$bzm3];
@@ -1052,10 +1052,10 @@ EOD;
 					if($ktyp[$bzm3]){
 						$values[] = "$id";
 						$coll[] = $cname[$bzm3];
-					}elseif(strtoupper($cname[$bzm3]) == "ERSTUSER" ){
+					}elseif(lmb_strtoupper($cname[$bzm3]) == "ERSTUSER" ){
 						$values[] = "1";
 						$coll[] = $cname[$bzm3];
-					}elseif(strtoupper($cname[$bzm3]) == "ERSTDATUM"){
+					}elseif(lmb_strtoupper($cname[$bzm3]) == "ERSTDATUM"){
 						$values[] = "'".convert_stamp(local_stamp(),$t=0)."'";
 						$coll[] = $cname[$bzm3];
 					}
@@ -1127,7 +1127,7 @@ function create($tab,$sqlquery,$key){
 	global $lang;
 	
 	$sqlquery = $sqlquery.$key;
-	$sqlquery = substr($sqlquery,0,strlen($sqlquery) - 1).")";
+	$sqlquery = lmb_substr($sqlquery,0,lmb_strlen($sqlquery) - 1).")";
 	$rs2 = odbc_exec($db,$sqlquery);
 	if(!$rs2) {
 		echo $sqlquery."<br>";
@@ -1221,29 +1221,29 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 	$config_datei = fopen($pfad,"r");
 
 	while($line = fgets($config_datei, 100000)){
-		if(substr($line,0,1) != "#" AND substr($line,0,1) != " "){
+		if(lmb_substr($line,0,1) != "#" AND lmb_substr($line,0,1) != " "){
 
-			if(substr($line,0,22) == "<begin indexdefinition"){
+			if(lmb_substr($line,0,22) == "<begin indexdefinition"){
 				$definition = "index";
-			} elseif(substr($line,0,20) == "<end indexdefinition"){
+			} elseif(lmb_substr($line,0,20) == "<end indexdefinition"){
 				$definition = "";
 
-			} elseif(substr($line,0,20) == "<begin keydefinition"){
+			} elseif(lmb_substr($line,0,20) == "<begin keydefinition"){
 				$definition = "key";
-			} elseif(substr($line,0,18) == "<end keydefinition"){
+			} elseif(lmb_substr($line,0,18) == "<end keydefinition"){
 				$definition = "";
 
-			} elseif(substr($line,0,21) == "<begin viewdefinition"){
+			} elseif(lmb_substr($line,0,21) == "<begin viewdefinition"){
 				$definition = "view";
-			} elseif(substr($line,0,19) == "<end viewdefinition"){
+			} elseif(lmb_substr($line,0,19) == "<end viewdefinition"){
 				$definition = "";
 
-			} elseif(substr($line,0,24) == "<begin triggerdefinition"){
+			} elseif(lmb_substr($line,0,24) == "<begin triggerdefinition"){
 				$definition = "trigger";
-			} elseif(substr($line,0,22) == "<end triggerdefinition"){
+			} elseif(lmb_substr($line,0,22) == "<end triggerdefinition"){
 				$definition = "";
 
-			} elseif(substr($line,0,22) == "<begin tabledefinition"){
+			} elseif(lmb_substr($line,0,22) == "<begin tabledefinition"){
 				$definition = "table";
 
 				unset($ctyp);
@@ -1253,18 +1253,18 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 				unset($cdf);
 				unset($ktyp);
 
-				$tab = substr($line,24);
-				$tab = substr($tab,0,strlen($tab) - 2);
+				$tab = lmb_substr($line,24);
+				$tab = lmb_substr($tab,0,lmb_strlen($tab) - 2);
 				$filename = ($tab_name != '' && $tab_name != 'export') ? '' : $tab;
 				$tabname = $prefix.$tab;
 				$oldtabname = $tabname;
 				$tabname = parse_db_syntax($tabname,1);
-				$newtabname[strtoupper($tab)] = $tabname;
+				$newtabname[lmb_strtoupper($tab)] = $tabname;
 				$tab = $tabname;
 
 				$sqlquery = "CREATE TABLE ".dbf_4($tab)." (";
 
-			} elseif(substr($line,0,20) == "<end tabledefinition"){
+			} elseif(lmb_substr($line,0,20) == "<end tabledefinition"){
 				$definition = "";
 				/* --- Tabelle anlegen------- */
 				if($import_overwrite == "rename" OR $import_overwrite == "over"){
@@ -1338,7 +1338,7 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 				}else{
 					$sqlquery .= $cdf[0]." ".$cdf[7]."(".$cdf[3].") ".$cdf[8]." ".$default;
 				}
-				if(strpos($cdf[5],"KEY") !== false){
+				if(lmb_strpos($cdf[5],"KEY") !== false){
 					$key = LMB_DBFUNC_PRIMARY_KEY."(".$cdf[0]."),"; $ktyp[] = $cdf[0];$kkey = $cdf[0];
 					$sqlquery .= " NOT NULL,";
 				}
@@ -1362,9 +1362,9 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 				unset($cdf);
 
 				$cdf = explode("::",$line);
-				$cdf[0] = $newtabname[strtoupper($cdf[0])];
+				$cdf[0] = $newtabname[lmb_strtoupper($cdf[0])];
 				
-				$indname = "LMBIND_".substr(md5($cdf[0]."_".$cdf[1]),0,12);
+				$indname = "LMBIND_".lmb_substr(md5($cdf[0]."_".$cdf[1]),0,12);
 				
 				$odbc_table = dbf_20(array($DBA["DBSCHEMA"],$cdf[0],"'TABLE'"));
 				if($odbc_table) {
@@ -1386,8 +1386,8 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 			}elseif($definition == "view"){
 				unset($cdf);
 
-				$cdf[0] = substr($line,0,strpos($line,"::"));
-				$cdf[1] = substr($line,strpos($line,"::")+2,strlen($line));
+				$cdf[0] = lmb_substr($line,0,lmb_strpos($line,"::"));
+				$cdf[1] = lmb_substr($line,lmb_strpos($line,"::")+2,lmb_strlen($line));
 				
 				if($cdf){
 					$sqlquery = dbq_19($cdf);

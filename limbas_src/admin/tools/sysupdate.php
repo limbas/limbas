@@ -192,7 +192,7 @@ if($newsystem){
 	# Tabellen löschen
 	$odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'TABLE'"));
 	foreach($odbc_table["table_name"] as $tkey => $tablename) {
-		if(strtoupper(substr($tablename,0,4)) != "LMB_" AND strtoupper(substr($tablename,0,5)) != "LDMS_"){
+		if(lmb_strtoupper(lmb_substr($tablename,0,4)) != "LMB_" AND lmb_strtoupper(lmb_substr($tablename,0,5)) != "LDMS_"){
 			$sqlquery1 = "DROP TABLE ".dbf_4($tablename);
 			$rs1 = odbc_exec($db,$sqlquery1);
 		}
@@ -421,18 +421,18 @@ function create_default_files(){
 	$sqlquery = "SELECT TAB_ID,TABELLE,TAB_GROUP FROM LMB_CONF_TABLES WHERE UPPER(TABELLE) LIKE 'LDMS_%'";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	while(odbc_fetch_row($rs)){
-		if(strtoupper(odbc_result($rs,"TABELLE")) == strtoupper("LDMS_FILES")){delete_tab(odbc_result($rs,"TAB_ID"));}
-		elseif(strtoupper(odbc_result($rs,"TABELLE")) == strtoupper("LDMS_META")){delete_tab(odbc_result($rs,"TAB_ID"));}
+		if(lmb_strtoupper(odbc_result($rs,"TABELLE")) == lmb_strtoupper("LDMS_FILES")){delete_tab(odbc_result($rs,"TAB_ID"));}
+		elseif(lmb_strtoupper(odbc_result($rs,"TABELLE")) == lmb_strtoupper("LDMS_META")){delete_tab(odbc_result($rs,"TAB_ID"));}
 		$tab_group = odbc_result($rs,"TAB_GROUP");
 	}
 	
 	$odbc_table = dbf_20(array($DBA["DBSCHEMA"],"LDMS_%","'TABLE'"));
 	foreach($odbc_table["table_name"] as $tkey => $tablename) {
-		if(strtoupper($tablename) == "LDMS_FILES"){
+		if(lmb_strtoupper($tablename) == "LDMS_FILES"){
 			$sqlquery1 = "DROP TABLE LDMS_FILES";
 			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
-		if(strtoupper($tablename) == "LDMS_META"){
+		if(lmb_strtoupper($tablename) == "LDMS_META"){
 			$sqlquery1 = "DROP TABLE LDMS_META";
 			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
@@ -596,7 +596,7 @@ function createDefaultIndex(){
 			# only right relation
 			if($gfield[$gtabid]["verkntabletype"][$fieldid] == 1 AND !$gfield[$gtabid]["verkntree"][$fieldid]){
 				if(!$ind[dbf_4($md5tab)][dbf_4('ID')]){
-					$indname = "LMBINDV_".substr(md5($md5tab."_ID"),0,12);
+					$indname = "LMBINDV_".lmb_substr(md5($md5tab."_ID"),0,12);
 					$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$md5tab,"ID"));
 					$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					if(!$rs1) {$commit = 1;}else{
@@ -604,7 +604,7 @@ function createDefaultIndex(){
 					}
 				}
 				if(!$ind[dbf_4($md5tab)][dbf_4('SORT')]){
-					$indname = "LMBINDV_".substr(md5($md5tab."_SORT"),0,12);
+					$indname = "LMBINDV_".lmb_substr(md5($md5tab."_SORT"),0,12);
 					$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$md5tab,"SORT"));
 					$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					if(!$rs1) {$commit = 1;}else{
@@ -613,7 +613,7 @@ function createDefaultIndex(){
 				}
 				
 				if(!$ind[dbf_4($md5tab)][dbf_4('VERKN_ID')]){
-					$indname = "LMBINDV_".substr(md5($md5tab."_VERKN_ID"),0,12);
+					$indname = "LMBINDV_".lmb_substr(md5($md5tab."_VERKN_ID"),0,12);
 					# only n:m
 					if($gfield[$gtabid]["data_type"][$fieldid] == 24){
 						$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$md5tab,"VERKN_ID"));
@@ -660,7 +660,7 @@ function createDefaultIndex(){
 		$field = current($value);
 
 		if(!$ind[dbf_4($table)][dbf_4($field)]){
-			$indname = "LMBIND_".substr(md5($table."_".$field),0,12);
+			$indname = "LMBIND_".lmb_substr(md5($table."_".$field),0,12);
 			$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$table,$field));
 			$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}else{

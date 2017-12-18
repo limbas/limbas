@@ -33,11 +33,11 @@ foreach ($flist as $key => $value){
 	$tmp = explode("=",$fnt[2]);
 	$tmp = explode(",",$tmp[1]);
 	$fontex[style][] = $tmp[0];
-	$fontex[type][] = substr($fnt[0],(strlen($fnt[0])-3),3);
+	$fontex[type][] = lmb_substr($fnt[0],(lmb_strlen($fnt[0])-3),3);
 	$fontname = explode("/",$fnt[0]);
 	$fontname = $fontname[(count($fontname)-1)];
-	$fontex[filename][] = substr($fontname,0,(strlen($fontname)-4));
-	$fontex[filename_php][] = substr($fontname,0,(strlen($fontname)-4)).".php";
+	$fontex[filename][] = lmb_substr($fontname,0,(lmb_strlen($fontname)-4));
+	$fontex[filename_php][] = lmb_substr($fontname,0,(lmb_strlen($fontname)-4)).".php";
 	$fontname = "";
 }
 
@@ -48,7 +48,7 @@ $cmd = "rm ".$umgvar["pfad"]."/TEMP/fonts/*";
 exec($cmd);
 
 if($preview){
-	$text = substr($preview,0,60);
+	$text = lmb_substr($preview,0,60);
 }else{
 	$text = "hallo LIMBAS";
 }
@@ -57,25 +57,30 @@ $size = 12;
 
 
 if($set_fonts){
-	require($umgvar["pfad"]."/extern/fpdf/font/makefont/makefont.php");
+	require($umgvar["pfad"]."/extern/fpdf/makefont/makefont.php");
 
 	foreach ($fontex[family] as $key => $value){
 
 		$fontname = explode("/",$fontex[file][$key]);
 		$fontname1 = $fontname[(count($fontname)-1)];
-		$fontname2 = substr($fontname1,0,(strlen($fontname1)-4));
+		$fontname2 = lmb_substr($fontname1,0,(lmb_strlen($fontname1)-4));
 
 		if($nfnt[$key]){
 			if(!file_exists($umgvar["pdfpfad"].$fontname2.".php")){
 				# -- generate postscript font ---
-				chdir($umgvar["pdfpfad"]);
-				$cmd = "ttf2pt1 -a ".$fontex["file"][$key]." ".$fontname2;
-				exec($cmd);
+				#chdir($umgvar["pdfpfad"]);
+				#$cmd = "ttf2pt1 -a ".$fontex["file"][$key]." ".$fontname2;
+				#exec($cmd);
 
-				# -- generate fpdf font ---
-				MakeFont($fontex[file][$key],$umgvar["pdfpfad"].$fontname2.".afm",'cp1252');
 				# ttf kopieren
 				copy($fontex[file][$key],$umgvar["pdfpfad"].$fontname1);
+				
+				# -- generate fpdf font ---
+				#MakeFont($fontex[file][$key],$umgvar["pdfpfad"].$fontname2.".afm",'cp1252');
+				echo "<div class=\"lmbPositionContainerMain\"><b>$fontname2...</b><br>";
+				MakeFont($umgvar["pdfpfad"].$fontname1,'cp1252');
+				echo "</div>";
+
 			}
 		}else{
 			if(file_exists($umgvar["pdfpfad"].$fontname2.".afm")){
@@ -108,18 +113,18 @@ if($set_fonts){
 	foreach ($fontex[family] as $key => $value){
 		if($fontex[name][$key]){
 			if($fontex[style][$key] == "Regular"){$fstyle = "";}
-			elseif(strtolower($fontex[style][$key]) == "italic" OR strtolower($fontex[style][$key]) == "recursiv" OR strtolower($fontex[style][$key]) == "oblique"){$fstyle = "I";}
-			elseif(strtolower($fontex[style][$key]) == "bold" OR strtolower($fontex[style][$key]) == "bold"){$fstyle = "B";}
-			elseif(strtolower($fontex[style][$key]) == "bold italic" OR strtolower($fontex[style][$key]) == "bold oblique"){$fstyle = "BI";}
+			elseif(lmb_strtolower($fontex[style][$key]) == "italic" OR lmb_strtolower($fontex[style][$key]) == "recursiv" OR lmb_strtolower($fontex[style][$key]) == "oblique"){$fstyle = "I";}
+			elseif(lmb_strtolower($fontex[style][$key]) == "bold" OR lmb_strtolower($fontex[style][$key]) == "bold"){$fstyle = "B";}
+			elseif(lmb_strtolower($fontex[style][$key]) == "bold italic" OR lmb_strtolower($fontex[style][$key]) == "bold oblique"){$fstyle = "BI";}
 			else{
 				$name = "";
 				require_once($umgvar["pdfpfad"].$fontex[filename_php][$key]);
 				if($name){
-					if(strpos($name,"BoldItalic")){
+					if(lmb_strpos($name,"BoldItalic")){
 						$fstyle = "BI";
-					}elseif (strpos($name,"Bold")){
+					}elseif (lmb_strpos($name,"Bold")){
 						$fstyle = "B";
-					}elseif (strpos($name,"Italic")){
+					}elseif (lmb_strpos($name,"Italic")){
 						$fstyle = "I";
 					}else{
 						$fstyle = "";
@@ -130,7 +135,7 @@ if($set_fonts){
 				}
 			}
 
-			$sqlquery0 = "SELECT ID FROM LMB_FONTS WHERE LOWER(NAME) = '".strtolower(parse_db_string($fontex[family][$key],30))."' AND STYLE = '".$fstyle."'";
+			$sqlquery0 = "SELECT ID FROM LMB_FONTS WHERE LOWER(NAME) = '".lmb_strtolower(parse_db_string($fontex[family][$key],30))."' AND STYLE = '".$fstyle."'";
 			$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
 			if(odbc_fetch_row($rs0,1)){
 					echo "can not add font ".$fontex[name][$key].".. font already exists .. skip ... <br>";

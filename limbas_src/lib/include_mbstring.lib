@@ -1,0 +1,92 @@
+<?php
+
+function lmb_strlen($str){
+    return mb_strlen($str);
+}
+
+function lmb_strpos($haystack, $needle, $offset=null){
+    return mb_strpos($haystack, $needle, $offset);
+}
+
+function lmb_strrpos($haystack, $needle, $offset=null){
+    return mb_strrpos($haystack, $needle, $offset);
+}
+
+function lmb_substr($string, $start, $length=null){
+    return mb_substr($string, $start, $length);
+}
+
+function lmb_strtolower($string){
+    return mb_strtolower($string);
+}
+
+function lmb_strtoupper($string){
+    return mb_strtoupper($string);
+}
+
+function lmb_stripos($haystack, $needle, $offset=null){
+    return mb_stripos($haystack, $needle, $offset);
+}
+
+function lmb_strripos($haystack, $needle, $offset=null){
+    return mb_strripos($haystack, $needle, $offset);
+}
+
+function lmb_strstr($haystack, $needle, $before_needle=null){
+    return mb_strstr($haystack, $needle, $before_needle);
+}
+
+function lmb_stristr($haystack, $needle, $before_needle=null){
+    return mb_stristr($haystack, $needle, $before_needle);
+}
+
+function lmb_strrchr($haystack, $needle){
+    return mb_strrchr($haystack, $needle);
+}
+
+function lmb_substr_count($haystack, $needle, $offset=null, $length=null){
+    return mb_substr_count($haystack, $needle, $offset, $length);
+}
+
+function lmb_ereg($pattern, $string){
+    return mb_ereg($pattern, $string);
+}
+
+function lmb_eregi($pattern, $string){
+    return mb_eregi($pattern, $string);
+}
+
+function lmb_ereg_replace($pattern, $replacement, $string){
+    return mb_ereg_replace($pattern, $replacement, $string);
+}
+
+function lmb_eregi_replace($pattern, $replacement, $string){
+    return mb_eregi_replace($pattern, $replacement, $string);
+}
+
+function lmb_split($pattern, $string, $limit=null){
+    return mb_split($pattern, $string, $limit);
+}
+
+// http://floern.com/webscripting/mb-strrev-multibyte-string-umkehren
+function lmb_strrev($string) {
+    return mb_convert_encoding( strrev( mb_convert_encoding($str, 'UTF-16BE', 'UTF-8') ), 'UTF-8', 'UTF-16LE');
+}
+
+// http://php.net/manual/de/function.str-pad.php#116244
+function lmb_str_pad($str, $pad_len, $pad_str = ' ', $dir = STR_PAD_RIGHT)
+{
+    $encoding = 'UTF-8';
+    $padBefore = $dir === STR_PAD_BOTH || $dir === STR_PAD_LEFT;
+    $padAfter = $dir === STR_PAD_BOTH || $dir === STR_PAD_RIGHT;
+    $pad_len -= mb_strlen($str, $encoding);
+    $targetLen = $padBefore && $padAfter ? $pad_len / 2 : $pad_len;
+    $strToRepeatLen = mb_strlen($pad_str, $encoding);
+    $repeatTimes = ceil($targetLen / $strToRepeatLen);
+    $repeatedString = str_repeat($pad_str, max(0, $repeatTimes)); // safe if used with valid utf-8 strings
+    $before = $padBefore ? mb_substr($repeatedString, 0, floor($targetLen), $encoding) : '';
+    $after = $padAfter ? mb_substr($repeatedString, 0, ceil($targetLen), $encoding) : '';
+    return $before . $str . $after;
+}
+
+?>

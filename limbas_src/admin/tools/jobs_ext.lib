@@ -71,7 +71,7 @@ function write_status ($name,$jobsum,$count){
 	$GLOBALS["done"]++;
 	if($done == $maxc AND (($count*200)/$jobsum) <= 200){
 		$GLOBALS["done"] = 0;
-		if(!$GLOBALS["cronjob"]){echo "<Script language=\"JavaScript\">showprocess('".$name."','".round(($count*200)/$jobsum)."','".substr(round(($count*100)/$jobsum),0,3)."')</SCRIPT>\n";}
+		if(!$GLOBALS["cronjob"]){echo "<Script language=\"JavaScript\">showprocess('".$name."','".round(($count*200)/$jobsum)."','".lmb_substr(round(($count*100)/$jobsum),0,3)."')</SCRIPT>\n";}
 	}
 }
 
@@ -90,7 +90,7 @@ function update_crontab(){
 		# --- lesen ----
 		$handle = fopen($umgvar["crontab"],"r");
 			while($line = fgets($handle, 1000)){
-				if(!strpos($line,$umgvar[pfad])){
+				if(!lmb_strpos($line,$umgvar[pfad])){
 					$crontab[] = $line;
 				}
 			}
@@ -154,7 +154,7 @@ function add_job($kategorie,$job_desc,$job_template=null,$cron=null,$ifile=null,
 	if(!$job_desc){$job_desc = "$kategorie (".count($val).")";}
 	
 	if($val){
-		$val[] = strtolower($kategorie).",db";
+		$val[] = lmb_strtolower($kategorie).",db";
 		$val = implode(";",$val);
 
 		$NEXTID = next_db_id("LMB_CRONTAB");
@@ -296,7 +296,7 @@ function fill_history($typ,$res,$time,$inum,$jnum,$msg){
 	if(!$inum){$inum = 0;}
 	if(!$jnum){$jnum = 0;}
 	$NEXTID = next_db_id("LMB_INDIZE_HISTORY");
-	$sqlquery = "INSERT INTO LMB_INDIZE_HISTORY (ID,ACTION,RESULT,USED_TIME,MESSAGE,INUM,JNUM,JOB) VALUES($NEXTID,'$typ',$res,$time,'".str_replace("'","''",substr($msg,0,119))."',$inum,$jnum,$job)";
+	$sqlquery = "INSERT INTO LMB_INDIZE_HISTORY (ID,ACTION,RESULT,USED_TIME,MESSAGE,INUM,JNUM,JOB) VALUES($NEXTID,'$typ',$res,$time,'".str_replace("'","''",lmb_substr($msg,0,119))."',$inum,$jnum,$job)";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 }

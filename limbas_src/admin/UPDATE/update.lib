@@ -161,7 +161,7 @@ function patch_import($tables){
 	$tables_ = array();
 	if($tables){
 		foreach ($tables as $key => $value){
-			$tables_[] = strtoupper($value);
+			$tables_[] = lmb_strtoupper($value);
 		}
 	}
 	
@@ -177,8 +177,8 @@ function patch_import($tables){
 	# Liste aller Tabellen
 	if($folderval = read_dir($path)){
 		foreach($folderval["name"] as $key => $value){
-			if(in_array(strtoupper($value),$tables_)){
-				$tablename = substr($value,0,strlen($value)-7);
+			if(in_array(lmb_strtoupper($value),$tables_)){
+				$tablename = lmb_substr($value,0,lmb_strlen($value)-7);
 				$tablegrouplist[$tablename] = 1;
 			}
 		}

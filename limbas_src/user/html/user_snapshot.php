@@ -37,7 +37,7 @@ if($del AND $gtabid){
 if($snap_edit AND $gtabid AND $snapid){
 	if($snap_name = trim($snap_name)){
 		$update[] = "NAME = '".parse_db_string(str_replace(";",",",$snap_name),30)."'";
-		$gsnap[$gtabid][name][$snapid] = substr(str_replace(";",",",$snap_name),0,30);
+		$gsnap[$gtabid][name][$snapid] = lmb_substr(str_replace(";",",",$snap_name),0,30);
 	}
 	if($snap_global){
 		if($snap_global == 1){$v = LMB_DBDEF_TRUE;$vs = 1;}elseif($snap_global == 2){$v = LMB_DBDEF_FALSE;$vs = 0;}

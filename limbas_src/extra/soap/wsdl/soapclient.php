@@ -161,7 +161,7 @@ echo '</pre>';
 
 function getHeaderValues($header){
 
-	if(! strpos($header[0], '200')){
+	if(! lmb_strpos($header[0], '200')){
 		//echo '<pre>' . print_r($header, true) . '</pre>';
 		header($header[0], true);
 		exit;
@@ -170,10 +170,10 @@ function getHeaderValues($header){
 	$headers = array();
 	foreach($header as $key => $val){
 		$val = trim($val);
-		$pos = strpos($val, ':');
+		$pos = lmb_strpos($val, ':');
 		if (false !== $pos) {
-			$name = substr($val, 0, $pos);
-			$val = substr($val, $pos + 1);
+			$name = lmb_substr($val, 0, $pos);
+			$val = lmb_substr($val, $pos + 1);
 			echo $name . ': ' . $val . "\n";
 			$headers[$name] = $val;
 			if ('Set-Cookie' === $name) {

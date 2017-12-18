@@ -522,7 +522,7 @@ function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0){
 	global $farbschema;
 	global $action;
 	
-        echo "<div class=\"gtabHeaderMenuTR\">";
+    echo "<div class=\"gtabHeaderMenuTR\">";
 	
 	echo "<TABLE BORDER=\"0\" cellspacing=\"0\" cellpadding=\"0\" WIDTH=\"100%\">";
 	
@@ -636,9 +636,9 @@ function print_scroll($ID){
 	echo "<TABLE cellspacing=\"0\" cellpadding=\"0\"><TR>";
 	echo "<TD class=\"gtabFooterTD\">$lang[722]&nbsp;</TD>";
 	echo "<TD class=\"gtabFooterTD\"><i TITLE=\"$lang[857]\" class=\"lmb-icon lmb-first\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"document.form1.scrollto.value='start';send_form('1');\"></i></TD>";
-	echo "<TD class=\"gtabFooterTD\"><i TITLE=\"$lang[860]\" class=\"lmb-icon lmb-previous\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"document.form1.scrollto.value='prev';send_form('1');\"></i></TD>";
-	echo "<TD class=\"gtabFooterTD\"><INPUT TYPE=\"TEXT\" STYLE=\"width:30px;height:14px;font-size:9px;\" VALUE=\" $ID\" OnChange=\"document.form1.scrollto.value=this.value;send_form('1');\"></TD>";
-	echo "<TD class=\"gtabFooterTD\"><i TITLE=\"$lang[859]\" class=\"lmb-icon lmb-next\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"document.form1.scrollto.value='next';send_form('1');\"></i></TD>";
+	echo "<TD class=\"gtabFooterTD\"><i TITLE=\"$lang[860]\" class=\"lmb-icon lmb-previous\" STYLE=\"cursor:pointer;font-size:1.5em;\" BORDER=\"0\" OnClick=\"document.form1.scrollto.value='prev';send_form('1');\"></i></TD>";
+	echo "<TD class=\"gtabFooterTD\"><INPUT TYPE=\"TEXT\" STYLE=\"width:60px;\" VALUE=\" $ID\" OnChange=\"document.form1.scrollto.value=this.value;send_form('1');\"></TD>";
+	echo "<TD class=\"gtabFooterTD\"><i TITLE=\"$lang[859]\" class=\"lmb-icon lmb-next\" STYLE=\"cursor:pointer;font-size:1.5em;\" BORDER=\"0\" OnClick=\"document.form1.scrollto.value='next';send_form('1');\"></i></TD>";
 	echo "<TD class=\"gtabFooterTD\"><i TITLE=\"$lang[858]\" class=\"lmb-icon lmb-last\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"document.form1.scrollto.value='end';send_form('1');\"></i></TD>";
 	echo "</TR></TABLE>";
 }
@@ -651,15 +651,15 @@ function form_view($gtabid,$ID,&$gresult,$gformid,$readonly=0){
 	global $action;
 	global $gtab;
 	
-	# check for version
-	if($gtab["ver"][$gtabid] AND !$gresult[$gtabid]["VACT"][0] AND !$GLOBALS['filter']["force_delete"][$gtabid]){
+	# versioning activated & dataset exists & is not latest version & force delete deactivated -> readonly form
+	if($gtab["ver"][$gtabid] AND $gresult[$gtabid] AND !$gresult[$gtabid]["VACT"][0] AND !$GLOBALS['filter']["force_delete"][$gtabid]){
 		$action = 'gtab_deterg';
 	}
 	
 	# Formular
 	print_form();
 
-	if($gformlist[$gtabid]["css"][$gformid] AND strpos($gformlist[$gtabid]["css"][$gformid],"USER/") === false){
+	if($gformlist[$gtabid]["css"][$gformid] AND lmb_strpos($gformlist[$gtabid]["css"][$gformid],"USER/") === false){
  		echo "<style type=\"text/css\">@import url(".$gformlist[$gtabid]["css"][$gformid].");</style>\n";
 	}
 
@@ -828,7 +828,7 @@ function defaultViewElements($gtabid,$ID,&$gresult,$action='gtab_change',$readon
 			echo "<TR class=\"gtabBodyDetailTR\"><TD class=\"gtabBodyDetailTD\" VALIGN=\"TOP\" TITLE=\"".$gfield[$gtabid]["beschreibung"][$key]."\"";
 			if($edittyp){echo " OnClick=\"fieldtype('".$gfield[$gtabid]["data_type"][$key]."','".$gfield[$gtabid]["form_name"][$key]."','$indexed1');\"";}
 			echo ">";
-			echo "<span style=\"cursor:help;\">".$gfield[$gtabid]["spelling"][$key].$indexed2."<span class=\"gtabBodyDetailNeedTitle\">".substr($gfield[$gtabid]["need"][$key],0,1)."</span></span>";
+			echo "<span style=\"cursor:help;\">".$gfield[$gtabid]["spelling"][$key].$indexed2."<span class=\"gtabBodyDetailNeedTitle\">".lmb_substr($gfield[$gtabid]["need"][$key],0,1)."</span></span>";
 			echo "</TD><TD class=\"gtabBodyDetailValTD\">";
 			
 			/* ------------------ Change-Typfunction --------------------- */
@@ -854,8 +854,8 @@ function defaultView($gtabid,$ID,&$gresult,$readonly=0,&$filter=null){
 	global $gfield;
 	global $gtab;
 	
-	# check for version
-	if($gtab["ver"][$gtabid] AND !$gresult[$gtabid]["VACT"][0] AND !$filter["force_delete"][$gtabid]){
+	# versioning activated & dataset exists & is not latest version & force delete deactivated -> readonly form
+	if($gtab["ver"][$gtabid] AND $gresult[$gtabid] AND !$gresult[$gtabid]["VACT"][0] AND !$filter["force_delete"][$gtabid]){
 		$action = 'gtab_deterg';
 	}
 	

@@ -135,10 +135,26 @@ if($gformlist[$gtabid]["extension"][$form_id]){
 			$gresult = get_gresult($gtabid,1,$filter,$gsr,0,$gform[$form_id]["used_fields"],$ID);
 		}else{
 			$gresult = get_gresult($gtabid,null,null,null,0,$gform[$form_id]["used_fields"],$ID);
+			###############
+		    #$gresult = get_gresult($gtabid,null,null,null,$verkn,null,$ID);
+		    #$onlyfield = $gform[$form_id]["used_fields"];
+		    #$verkn['verknparams'] = 1;
+		    #$onlyfield[14][] = 1001;
+		    #$extension["where"][] = "VERK_F856251CAE88D.ID = 1 AND VERK_F856251CAE88D.VERKN_ID = ARTIKEL.ID";
+			#$gresult = get_gresult($gtabid,null,null,null,$verkn,$onlyfield,$ID,$extension);
+			#############
 		}
-		if($gform[$form_id]["parentrel"]){
-			form_gresult($ID,$gtabid,$form_id,$gresult);
+		
+		// relation parameters fields | parent relation fields
+		if($gform[$form_id]["parentrel"] OR $gform[$form_id]["paramrel"]){
+		    $verkn = set_verknpf($verkn_tabid,$verkn_fieldid,$verkn_ID,$verkn_add_ID,$verkn_del_ID,$verkn_showonly,$verknpf);
+			form_gresult($ID,$gtabid,$form_id,$gresult,null,$verkn);
 		}
+		
+		// parent relation values
+		#if($gform[$form_id]["parentrel"]){
+		#	form_gresult($ID,$gtabid,$form_id,$gresult);
+		#}
 	}
 	
 	$readonly = 0;

@@ -76,8 +76,8 @@ class CLimbasSoapQuery extends CLimbasSoapTable
 		$field_type = $field['field_type'];
 		switch ($field_type) {
 			case 11:
-				$field['soap_type'] = 'tns:' . ucfirst(strtolower($field['verkntabname'])) . 'Query';
-				$field['complex_type'] = ucfirst(strtolower($field['verkntabname'])) . 'Query';
+				$field['soap_type'] = 'tns:' . ucfirst(lmb_strtolower($field['verkntabname'])) . 'Query';
+				$field['complex_type'] = ucfirst(lmb_strtolower($field['verkntabname'])) . 'Query';
 				break;
 			default:
 				$field['soap_type'] = 'xsd:string';

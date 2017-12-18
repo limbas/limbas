@@ -40,6 +40,10 @@ if($params["action"] == "context"){
 	$lmb_calendar->lmb_deleteEvent($params["gtabid"],$params["ID"],$verkn);
 }elseif($params["action"] == "drop" OR $params["action"] == "resize"){
 	$lmb_calendar->lmb_dropEvent($params["gtabid"],$params["ID"],$params["dayDelta"],$params["minuteDelta"],$params["action"],$params["resource"]);
+}elseif($params["action"] == "move"){
+	$lmb_calendar->lmb_moveEvent($params["gtabid"],$params["ID"],$params["stamp"],$params["resource"]);
+}elseif($params["action"] == "copy"){
+	$lmb_calendar->lmb_copyEvent($params["gtabid"],$params["ID"],$params["stamp"],$params["resource"]);
 }elseif($params["action"] == "add"){
 	echo $lmb_calendar->lmb_addEvent($params["gtabid"],$params["title"],$params["start"],$params["end"],$params["allDay"],$params["resource"],$verkn,$params);
 	#}elseif($params["action"] == "edit"){

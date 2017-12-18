@@ -22,7 +22,7 @@ if(ini_get('max_input_vars') >= 10000){$msg[func_input_vars] .= ini_get('max_inp
 if(ini_get('odbc.defaultlrl')){$msg[func_ini_tlrl] .= ini_get('odbc.defaultlrl')." bytes";$msic[func_ini_tlrl] = "1";}else{$msg[func_ini_tlrl] .= $msgWarn;$msic[func_ini_tlrl] = "2";}
 # php-ini - mbstring
 if(function_exists("mb_strlen")){
-    if(ini_get('mbstring.func_overload') == 7){$msg[func_ini_mbstring] .= $msgOK;$msic[func_ini_mbstring] = "1";}else{$msg[func_ini_mbstring] .= "<font color=\"orange\"><b>Warning</b> .. mbstring present, but not enabled (need only for utf-8 instances)";$msic[func_ini_mbstring] = "2";$commit = 2;}
+    if(ini_get('mbstring.func_overload') > 0){$msg[func_ini_mbstring] .= "<font color=\"red\"><b>Warning</b> .. mbstring present, but func_overload > 0 (need set to 0)";$msic[func_ini_mbstring] = "3";$commit = 1;}else{$msg[func_ini_mbstring] .= $msgOK;$msic[func_ini_mbstring] = "1";}
 }else{
     $msg[func_ini_mbstring] .= "<font color=\"orange\"><b>Warning</b> .. mbstring not present (need only for utf-8 instances)";$msic[func_ini_mbstring] = "2";$commit = 2;                            
 }
@@ -109,7 +109,7 @@ if(is_writable($setup_path_project."/USER")){$msg['func_wr_user'] = $msgOK;$msic
 </table>
 
 <div>
-    <button type="button" class="btn btn-default" onclick="switchToStep('<?php $s=array_keys($steps); echo $s[0]?>')">Back</button>
+    <button type="button" class="btn btn-default" onclick="switchToStep('<?= array_keys($steps)[0] ?>')">Back</button>
     <?php 
     $nextStep = 2;
     $text = "Next step";
@@ -120,5 +120,5 @@ if(is_writable($setup_path_project."/USER")){$msg['func_wr_user'] = $msgOK;$msic
         $text = "Reload";
     }
     ?>
-    <button type="submit" class="btn btn-info pull-right <?= $disabled ?>" <?= $tooltip ?> name="install" value="<?php $s=array_keys($steps); echo $s[$nextStep]?>"><?= $text ?></button>
+    <button type="submit" class="btn btn-info pull-right <?= $disabled ?>" <?= $tooltip ?> name="install" value="<?= array_keys($steps)[$nextStep] ?>"><?= $text ?></button>
 </div>

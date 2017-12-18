@@ -49,7 +49,7 @@ function stampToDate($stamp,$format=0){
 	
 	if(!$pdt){return false;}
 	
-	#if(strlen($format) > 3){
+	#if(lmb_strlen($format) > 3){
 	#	return $format;
 	#}else{
 	#	$format = setDateFormat($format,1);
@@ -89,7 +89,7 @@ function dateToStamp($date_string,$getobj=0){
 	# translate month
 	foreach($months as $key => $value){
 		foreach ($value as $key2 => $value2){
-			if (stripos(strtolower($date_string),$value2) !== false) {
+			if (lmb_stripos(lmb_strtolower($date_string),$value2) !== false) {
 				$date_string = str_replace($value2,$key,$date_string);
 				break;
 			}
@@ -164,7 +164,7 @@ function get_format_date($db_date,$format){
  */
 function convert_time($db_time){
 	if($db_time){
-		$db_time = substr($db_time,0,19);
+		$db_time = lmb_substr($db_time,0,19);
 		$db_time = preg_replace("/[^0-9]/",";",$db_time);
 		$db_time = explode(";",$db_time);
 
@@ -223,7 +223,7 @@ function get_date($db_date,$typ=0){
 	if($typ == 2){$typ = 0;}
 	if(!$db_date OR $db_date == '0000-00-00 00:00:00'){return false;}
 	#$pdt = new DateTime($db_date);
-	$pdt = new DateTime(substr($db_date,0,26));
+	$pdt = new DateTime(lmb_substr($db_date,0,26));
 	return stampToDate($pdt,$typ);
 }
 
@@ -237,7 +237,7 @@ function get_date($db_date,$typ=0){
 function get_stamp($db_date){
 	if(!$db_date){return false;}
 	#$pdt = new DateTime($db_date);
-	$pdt = new DateTime(substr($db_date,0,26));
+	$pdt = new DateTime(lmb_substr($db_date,0,26));
 	$stamp = $pdt->format("U");
 	if(is_numeric($stamp)){
 		return $stamp;
@@ -257,20 +257,20 @@ function dateDeltaToday($filter){
 
 	if($filter[0]=="<" || $filter[0]==">")
 	{
-		$filter = substr($filter,1);
+		$filter = lmb_substr($filter,1);
 	}
 
 	if($filter[0]=="=")
 	{
-		$filter = substr($filter,1);
+		$filter = lmb_substr($filter,1);
 	}
 
-	if(strpos($filter,"DAY#")>0){
-		return date(mktime($today["hours"],$today["minutes"],1,$today["mon"],$today["mday"] + substr($filter,1,strpos($filter,"DAY#")),$today["year"]));
-	}elseif(strpos($filter,"MONTH#")>0){
-		return date(mktime($today["hours"],$today["minutes"],1,$today["mon"] + substr($filter,1,strpos($filter,"MONTH#")),$today["mday"],$today["year"]));
-	}elseif(strpos($filter,"YEAR#")>0){
-		return date(mktime($today["hours"],$today["minutes"],1,$today["mon"],$today["mday"],$today["year"] + substr($filter,1,strpos($filter,"YEAR#"))));
+	if(lmb_strpos($filter,"DAY#")>0){
+		return date(mktime($today["hours"],$today["minutes"],1,$today["mon"],$today["mday"] + lmb_substr($filter,1,lmb_strpos($filter,"DAY#")),$today["year"]));
+	}elseif(lmb_strpos($filter,"MONTH#")>0){
+		return date(mktime($today["hours"],$today["minutes"],1,$today["mon"] + lmb_substr($filter,1,lmb_strpos($filter,"MONTH#")),$today["mday"],$today["year"]));
+	}elseif(lmb_strpos($filter,"YEAR#")>0){
+		return date(mktime($today["hours"],$today["minutes"],1,$today["mon"],$today["mday"],$today["year"] + lmb_substr($filter,1,lmb_strpos($filter,"YEAR#"))));
 	}
 }
 

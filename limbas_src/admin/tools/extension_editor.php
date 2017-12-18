@@ -19,7 +19,7 @@
  */
 
 if($extsave AND $fvalue AND $fpath){
-	if(strpos($fpath,"EXTENSIONS/") != 1){echo "only permission to edit files in EXETNSIONS directory!";return;}
+	if(lmb_strpos($fpath,"EXTENSIONS/") != 1){echo "only permission to edit files in EXETNSIONS directory!";return;}
 	if(file_exists($umgvar["pfad"].$fpath)){
 		$fvalue = utf8_encode(str_replace(chr(13),'',$fvalue));
 		file_put_contents($umgvar["pfad"].$fpath,$fvalue);
@@ -37,14 +37,24 @@ if($extsave AND $fvalue AND $fpath){
     <title></title>
     <style type="text/css">@import url(USER/<?=$session["user_id"]?>/layout.css);</style>
 	<script src="extern/codemirror/lib/codemirror.js"></script>
-	<link rel="stylesheet" href="extern/codemirror/lib/codemirror.css">
-	<link rel="stylesheet" href="extern/codemirror/doc/docs.css">
+    <link rel="stylesheet" href="extern/codemirror/lib/codemirror.css">    
+	<script src="extern/codemirror/edit/matchbrackets.js"></script>
+	<script src="extern/codemirror/edit/matchtags.js"></script>
 	<script src="extern/codemirror/mode/htmlmixed/htmlmixed.js"></script>
 	<script src="extern/codemirror/mode/xml/xml.js"></script>
 	<script src="extern/codemirror/mode/javascript/javascript.js"></script>
 	<script src="extern/codemirror/mode/css/css.js"></script>
 	<script src="extern/codemirror/mode/clike/clike.js"></script>
 	<script src="extern/codemirror/mode/php/php.js"></script>
+    <style>
+        .CodeMirror {
+            border: 1px solid <?=$farbschema['WEB3']?>;
+            height: calc(100% - 20px);
+        }
+        #scrolldiv {
+            height: calc(100vh - 80px);
+        }
+    </style>
   </head>
 <body>
 
@@ -54,18 +64,19 @@ if($extsave AND $fvalue AND $fpath){
 <input type="hidden" name="fpath" value="<?=$fpath?>">
 
 <h2><?=$fpath?></h2>
+<div id="scrolldiv">
+    <textarea name="fvalue" id="extvalue" style="width:100%">
+    <?php
+        if(lmb_strpos($fpath,"EXTENSIONS/" != 1)){echo "only permission to edit files in EXETNSIONS directory!";return;}
 
-<textarea name="fvalue" id="extvalue" style="width:100%">
-<?php
-	if(strpos($fpath,"EXTENSIONS/" != 1)){echo "only permission to edit files in EXETNSIONS directory!";return;}
-	
-	if(file_exists($umgvar["pfad"].$fpath)){
-		$value = file_get_contents($umgvar["pfad"].$fpath);
+        if(file_exists($umgvar["pfad"].$fpath)){
+            $value = file_get_contents($umgvar["pfad"].$fpath);
 
-		echo htmlentities($value,ENT_QUOTES | ENT_SUBSTITUTE,'UTF-8');
-	}
-?>
-</textarea>
+            echo htmlentities($value,ENT_QUOTES | ENT_SUBSTITUTE,'UTF-8');
+        }
+    ?>
+    </textarea>
+</div>
 
 
 <input type="text" value="save" name="extsave" OnClick="document.form1.submit()" style="cursor:pointer;text-align:center">&nbsp;
@@ -81,10 +92,9 @@ if($extsave AND $fvalue AND $fpath){
         mode: "application/x-httpd-php",
         indentUnit: 4,
         indentWithTabs: true,
-        enterMode: "keep",
-        tabMode: "shift",
-        setSize: "100%, 100%"
-      })
+        enterMode: "indent",
+        tabMode: "shift"
+      });
 
 </Script>
 

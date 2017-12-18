@@ -19,7 +19,7 @@
  */
 
 
-$jsvar_ = array(24,49,50,51,56,84,93,101,134,164,721,744,745,813,815,822,1311,1318,1424,1504,1509,1560,1608,1733,1734,1709,1717,1760,1868,1913,2006,2007,2008,2009,2010,2082,2083,2114,2138,2139,2146,2147,2153,2154,2155,2156,2157,2158,2186,2187,2219,2359,2433,2454,2676,2794,2354,2902);
+$jsvar_ = array(24,49,50,51,56,84,93,101,134,164,721,744,745,813,815,822,1311,1318,1424,1441,1504,1509,1560,1608,1615,1733,1734,1709,1717,1760,1868,1913,2006,2007,2008,2009,2010,2082,2083,2114,2138,2139,2146,2147,2153,2154,2155,2156,2157,2158,2186,2187,2219,2359,2433,2454,2676,2794,2354,2902);
 foreach($jsvar_ as $key => $value){
 	$jsvar .= "jsvar['lng_".$value."'] = \"".$lang[$value]."\";\n";
 }
@@ -68,19 +68,19 @@ jsvar['WEB11'] = \"".$farbschema["WEB11"]."\";
 jsvar['WEB12'] = \"".$farbschema["WEB12"]."\";
 jsvar['WEB13'] = \"".$farbschema["WEB13"]."\";\n\n
 
-jsvar['RGB1'] = \"".strtolower($farbschema["RGB1"])."\";
-jsvar['RGB2'] = \"".strtolower($farbschema["RGB2"])."\";
-jsvar['RGB3'] = \"".strtolower($farbschema["RGB3"])."\";
-jsvar['RGB4'] = \"".strtolower($farbschema["RGB4"])."\";
-jsvar['RGB5'] = \"".strtolower($farbschema["RGB5"])."\";
-jsvar['RGB6'] = \"".strtolower($farbschema["RGB6"])."\";
-jsvar['RGB7'] = \"".strtolower($farbschema["RGB7"])."\";
-jsvar['RGB8'] = \"".strtolower($farbschema["RGB8"])."\";
-jsvar['RGB9'] = \"".strtolower($farbschema["RGB9"])."\";
-jsvar['RGB10'] = \"".strtolower($farbschema["RGB10"])."\";
-jsvar['RGB11'] = \"".strtolower($farbschema["RGB11"])."\";
-jsvar['RGB12'] = \"".strtolower($farbschema["RGB12"])."\";
-jsvar['RGB13'] = \"".strtolower($farbschema["RGB13"])."\";\n\n
+jsvar['RGB1'] = \"".lmb_strtolower($farbschema["RGB1"])."\";
+jsvar['RGB2'] = \"".lmb_strtolower($farbschema["RGB2"])."\";
+jsvar['RGB3'] = \"".lmb_strtolower($farbschema["RGB3"])."\";
+jsvar['RGB4'] = \"".lmb_strtolower($farbschema["RGB4"])."\";
+jsvar['RGB5'] = \"".lmb_strtolower($farbschema["RGB5"])."\";
+jsvar['RGB6'] = \"".lmb_strtolower($farbschema["RGB6"])."\";
+jsvar['RGB7'] = \"".lmb_strtolower($farbschema["RGB7"])."\";
+jsvar['RGB8'] = \"".lmb_strtolower($farbschema["RGB8"])."\";
+jsvar['RGB9'] = \"".lmb_strtolower($farbschema["RGB9"])."\";
+jsvar['RGB10'] = \"".lmb_strtolower($farbschema["RGB10"])."\";
+jsvar['RGB11'] = \"".lmb_strtolower($farbschema["RGB11"])."\";
+jsvar['RGB12'] = \"".lmb_strtolower($farbschema["RGB12"])."\";
+jsvar['RGB13'] = \"".lmb_strtolower($farbschema["RGB13"])."\";\n\n
 ");
 
 

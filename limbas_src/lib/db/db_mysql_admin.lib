@@ -52,10 +52,10 @@ function dbq_2($p){
 				index_schema = '".$p[0]."'";
 	
 	if($p[1]){
-		$sql .= " and lower(table_name) = '".strtolower($p[1])."'";
+		$sql .= " and lower(table_name) = '".lmb_strtolower($p[1])."'";
 	}
 	if($p[2]){
-		$sql .= " and lower(column_name) = '".strtolower($p[2])."'";
+		$sql .= " and lower(column_name) = '".lmb_strtolower($p[2])."'";
 	}
 	if($p[3]){
 		$sql .= "and not index_name = 'SYSPRIMARYKEYINDEX'";
@@ -209,10 +209,10 @@ function dbq_3($p){
 				and information_schema.key_column_usage.constraint_schema = '".$p[0]."'";
 	
 	if($p[1]){
-		$sql .= " and lower(information_schema.key_column_usage.table_name) = '".strtolower($p[1])."'";
+		$sql .= " and lower(information_schema.key_column_usage.table_name) = '".lmb_strtolower($p[1])."'";
 	}
 	if($p[2]){
-		$sql .= " and lower(information_schema.key_column_usage.constraint_name) LIKE '".strtolower($p[2])."'";
+		$sql .= " and lower(information_schema.key_column_usage.constraint_name) LIKE '".lmb_strtolower($p[2])."'";
 	}
 	
 	return $sql;
@@ -254,7 +254,7 @@ function dbf_3($p){
 
 	$sql = "SELECT * FROM INFORMATION_SCHEMA.TRIGGERS";
 	if($p[1]){
-		$sql .= " WHERE LOWER(TRIGGER_NAME) LIKE '".strtolower($p[1])."'";
+		$sql .= " WHERE LOWER(TRIGGER_NAME) LIKE '".lmb_strtolower($p[1])."'";
 	}
 	
 	$rs = odbc_exec($db,$sql);
@@ -360,7 +360,7 @@ function dbq_12($p){
 		WHERE 
 			TABLE_SCHEMA = '".$p[0]."'";
 	if($p[1]){
-		$qu .= " AND LOWER(TABLE_NAME) = '".strtolower($p[1])."'";
+		$qu .= " AND LOWER(TABLE_NAME) = '".lmb_strtolower($p[1])."'";
 	}
 	return $qu;
 }
@@ -372,7 +372,7 @@ function dbq_12($p){
  * @return sql string
  */
 function dbq_19($p){
-	if(stripos($p[1],"CREATE VIEW") !== false){
+	if(lmb_stripos($p[1],"CREATE VIEW") !== false){
 		$qu = $p[1];
 	}else{
 		$qu = "CREATE OR REPLACE VIEW ".$p[0]." AS (".rtrim(trim($p[1]),";").")";
@@ -491,9 +491,9 @@ function dbf_5($p,$mode=null){
 	
 	#select ifnull(numeric_precision, character_maximum_length) from information_schema.columns where table_name='kunden'; 
 	
-	$sql = "SELECT TABLE_NAME, COLUMN_NAME, COLUMN_DEFAULT, COLUMN_KEY, IFNULL(NUMERIC_PRECISION, CHARACTER_MAXIMUM_LENGTH) AS 'PRECISION', NUMERIC_SCALE AS 'SCALE', DATA_TYPE AS TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '".$p[0]."' AND LOWER(TABLE_NAME) = '".strtolower($p[1])."'";
+	$sql = "SELECT TABLE_NAME, COLUMN_NAME, COLUMN_DEFAULT, COLUMN_KEY, IFNULL(NUMERIC_PRECISION, CHARACTER_MAXIMUM_LENGTH) AS 'PRECISION', NUMERIC_SCALE AS 'SCALE', DATA_TYPE AS TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '".$p[0]."' AND LOWER(TABLE_NAME) = '".lmb_strtolower($p[1])."'";
 	if($p[2]){
-		$sql .= " AND LOWER(COLUMN_NAME) = '".strtolower($p[2])."'";
+		$sql .= " AND LOWER(COLUMN_NAME) = '".lmb_strtolower($p[2])."'";
 	}
 	$rs = odbc_exec($db,$sql);
 	

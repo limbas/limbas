@@ -9,5 +9,5 @@
 
     <img src="../../pic/limbas-logo-R-grau_trans.png" style="margin-left:15%; margin-right:15%; width: 70%;">
 
-    <button type="submit" class="btn btn-info pull-right" name="install" value="<?php $s=array_keys($steps); echo $s[1]?>">Start</button>
+    <button type="submit" class="btn btn-info pull-right" name="install" value="<?= array_keys($steps)[1] ?>">Start</button>
 </div>

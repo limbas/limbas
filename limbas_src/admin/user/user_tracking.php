@@ -166,8 +166,8 @@ if($typ == 3){$where2 .= " AND ".LMB_DBFUNC_DATE."ERSTDATUM) = '".date("Y-m-d",m
 else{
 	if(!$diag_von){$diag_von = date("d.m.Y");}
 	if(!$diag_bis){$diag_bis = date("d.m.Y");}
-	if(convert_date($diag_von)){$where = "AND ".LMB_DBFUNC_DATE."LOGIN_DATE) >= '".substr(convert_date($diag_von),0,10)."'";$where2 = "AND ".LMB_DBFUNC_DATE."ERSTDATUM) >= '".substr(convert_date($diag_von),0,10)."'";}else{$where = "AND ".LMB_DBFUNC_DATE."LOGIN_DATE) >= '".convert_date(date("Y-m-d 00:00:00."))."'";$where2 = "AND ".LMB_DBFUNC_DATE."ERSTDATUM) >= '".convert_date(date("Y-m-d 00:00:00."))."'";}
-	if(convert_date($diag_bis)){$where .= " AND ".LMB_DBFUNC_DATE."LOGIN_DATE) <= '".substr(convert_date($diag_bis),0,10)."'";$where2 .= " AND ".LMB_DBFUNC_DATE."ERSTDATUM) <= '".substr(convert_date($diag_bis),0,10)."'";}
+	if(convert_date($diag_von)){$where = "AND ".LMB_DBFUNC_DATE."LOGIN_DATE) >= '".lmb_substr(convert_date($diag_von),0,10)."'";$where2 = "AND ".LMB_DBFUNC_DATE."ERSTDATUM) >= '".lmb_substr(convert_date($diag_von),0,10)."'";}else{$where = "AND ".LMB_DBFUNC_DATE."LOGIN_DATE) >= '".convert_date(date("Y-m-d 00:00:00."))."'";$where2 = "AND ".LMB_DBFUNC_DATE."ERSTDATUM) >= '".convert_date(date("Y-m-d 00:00:00."))."'";}
+	if(convert_date($diag_bis)){$where .= " AND ".LMB_DBFUNC_DATE."LOGIN_DATE) <= '".lmb_substr(convert_date($diag_bis),0,10)."'";$where2 .= " AND ".LMB_DBFUNC_DATE."ERSTDATUM) <= '".lmb_substr(convert_date($diag_bis),0,10)."'";}
 }
 if($typ == 2){
 	if(!$loglevel){$loglevel = 1;}
@@ -192,7 +192,7 @@ if($typ == 1){
 	        echo"<TR BGCOLOR=\"$BGCOLOR\">";
 	        echo"  <TD NOWRAP>".get_date(odbc_result($rs,"LOGIN_DATE"),2)."&nbsp;&nbsp;</TD>";
 	        echo"  <TD NOWRAP>".get_date(odbc_result($rs,"UPDATE_DATE"),2)."&nbsp;&nbsp;</TD>";
-	        echo"  <TD NOWRAP>".substr(odbc_result($rs,"DAUER"),0,8)."&nbsp;&nbsp;</TD>";
+	        echo"  <TD NOWRAP>".lmb_substr(odbc_result($rs,"DAUER"),0,8)."&nbsp;&nbsp;</TD>";
 	        echo"  <TD NOWRAP>".odbc_result($rs,"IP")."&nbsp;&nbsp;</TD>";
 	        echo"</TR>";
 	$bzm++;
@@ -297,7 +297,7 @@ if($typ == 1){
 					$links = explode(";",odbc_result($rs1, "FIELDVALUE"));
 					if($links){
 						foreach($links as $key1 => $value1){
-							$lid = substr($value1,1,10);
+							$lid = lmb_substr($value1,1,10);
 							$val[] = "<A HREF=\"#\" OnClick=\"newwin('".$gfield[odbc_result($rs1, "TAB")]["verkntabid"][odbc_result($rs1, "FIELD")]."','".$lid."');\">$value1</A>";
 						}
 						echo "<TR><TD $nowr STYLE=\"width:50px\">&nbsp;</TD><TD STYLE=\"width:100px\" VALIGN=\"TOP\">".$lang[$fieldarray[odbc_result($rs,"TAB")][odbc_result($rs1, "FIELD")]]."</TD><TD $nowr>".implode("|",$val)."</TD></TR>";

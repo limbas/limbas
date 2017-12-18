@@ -50,7 +50,7 @@ $sheet->setShowGridlines(false);
 
 foreach ($sheetData as $rowkey => $row){
 	foreach ($row as $colkey => $value){
-		if(substr($value,0,2) == '${'){
+		if(lmb_substr($value,0,2) == '${'){
 		
 			$name = lmb_OOparseName($value);
 			$el = $dom->getElementByID($name);
@@ -213,7 +213,7 @@ function lmb_OOformatCell($sheet,$ncolkey,$nrowkey,$style){
 
 function lmb_OOparseName($name){
 	
-	return substr($name,2,strlen($name)-3);
+	return lmb_substr($name,2,lmb_strlen($name)-3);
 
 }
 

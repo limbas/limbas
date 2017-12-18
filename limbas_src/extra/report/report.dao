@@ -21,6 +21,7 @@
 set_time_limit(1200); #20min
 ini_set('memory_limit','1024M');
 
+
 # EXTENSIONS
 if($GLOBALS["gLmbExt"]["ext_report.inc"]){
 	foreach ($GLOBALS["gLmbExt"]["ext_report.inc"] as $key => $extfile){
@@ -264,7 +265,7 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 			#}
 			# --- extendet SQL ---
 			if($extvalue){
-				if(substr($extvalue,0,6) == "return"){
+				if(lmb_substr($extvalue,0,6) == "return"){
 					return eval($extvalue);
 				}else{
 					eval($extvalue.";");
@@ -394,9 +395,9 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 				#	$oresult = lmb_utf8_decode(odbc_result($rs1, $field),1);
 				#}
 
-				$oresult = lmb_utf8_decode(odbc_result($rs1, $field),1);
+				$oresult = odbc_result($rs1, $field);
 
-				if($data_type == 30){
+                                if($data_type == 30){
 					if(!$symbol = get_currency_symbol(odbc_result($rs1, $field."_C"))){$symbol = odbc_result($rs1, $field."_C");}
 					if($gfield[$gtabid]["nformat"][$fieldid]){
 						$DBRESULT[$bzm3][$bzm0] = convert_NumberFormat($oresult,$gfield[$gtabid]["nformat"][$fieldid])." ".$symbol;
@@ -413,7 +414,7 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 					}else{
 						$DBRESULT[$bzm3][$bzm0] = $oresult;
 					}
-					if(substr($DBRESULT[$bzm3][$bzm0],0,1) == "."){$DBRESULT[$bzm3][$bzm0] = "0".$DBRESULT[$bzm3][$bzm0];}
+					if(lmb_substr($DBRESULT[$bzm3][$bzm0],0,1) == "."){$DBRESULT[$bzm3][$bzm0] = "0".$DBRESULT[$bzm3][$bzm0];}
 
 					if($data_type == 21){
 						$DBRESULT[$bzm3][$bzm0] .= " %";
@@ -428,8 +429,8 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 					}
 					# --- User/Group ---
 				}elseif($data_type == 38){
-					$par = substr($oresult,0,1);
-					$val = substr($oresult,1,10);
+					$par = lmb_substr($oresult,0,1);
+					$val = lmb_substr($oresult,1,10);
 					if($par == "u"){
 						$DBRESULT[$bzm3][$bzm0] = $userdat['bezeichnung'][$val];
 					}elseif($par == "g"){
@@ -519,7 +520,7 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 	$DBRESULT["count"] = $bzm0;
 	$DBRESULT["rowid"] = $rowid-1;
 
-	return $DBRESULT;
+        return $DBRESULT;
 }
 
 /* --- Element-Liste --------------- */
@@ -564,7 +565,7 @@ function element_list($ID,$report,$TYP){
 	while(odbc_fetch_row($rs, $bzm)) {
 		$report["id"][$bzm0] = odbc_result($rs, "EL_ID");
 		$report["typ"][$bzm0] = odbc_result($rs, "TYP");
-		$report["value"][$bzm0] = lmb_utf8_decode(trim(odbc_result($rs, "INHALT")),1); # longtext handle
+		$report["value"][$bzm0] = trim(odbc_result($rs, "INHALT")); # longtext handle
 		$report["posx"][$bzm0] = odbc_result($rs, "POSX");
 		$report["posy"][$bzm0] = odbc_result($rs, "POSY");
 		$report["posyabs"][$bzm0] = odbc_result($rs, "POSY");
@@ -674,7 +675,7 @@ function reportSavename($report_name,$report_savename,$ID,$report_medium,$report
 	$name = str_replace(".xml","",$name);
 	$name = str_replace(".odt","",$name);
 	
-	if(strtolower(substr($name,(strlen($name)-strlen($report_medium)-1),5)) != ".".strtolower($report_medium)){
+	if(lmb_strtolower(lmb_substr($name,(lmb_strlen($name)-lmb_strlen($report_medium)-1),5)) != ".".lmb_strtolower($report_medium)){
 		$name .= ".".$report_medium;
 	}
 

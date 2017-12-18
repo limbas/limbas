@@ -29,8 +29,8 @@ class CLimbasSoapTable extends CLimbasSoapComponent
 
 	public function __construct($table)
 	{
-		$this->table = strtoupper($table);
-		$this->className = ucfirst(strtolower($table));
+		$this->table = lmb_strtoupper($table);
+		$this->className = ucfirst(lmb_strtolower($table));
 		$this->foundComplexTypes[] = $this->table;
 		$this->createAttributes();
 
@@ -139,7 +139,7 @@ class CLimbasSoapTable extends CLimbasSoapComponent
 			$this->setFieldSoapType($field);
 
 			if (isset($gfield[$tid]['md5tab'][$fid])) {
-				$field['md5tab'] = strtoupper($gfield[$tid]['md5tab'][$fid]);
+				$field['md5tab'] = lmb_strtoupper($gfield[$tid]['md5tab'][$fid]);
 			}
 			if (4 == $gfield[$tid]['field_type'][$fid]) {
 				if (isset($definition['gselect'][$tid]) && isset($definition['gselect'][$tid][$fid])) {
@@ -288,8 +288,8 @@ class CLimbasSoapTable extends CLimbasSoapComponent
 				if (20 == $data_type) $field['soap_type'] =  'xsd:boolean';
 				break;
 			case 11:
-				$field['soap_type'] = 'tns:' . ucfirst(strtolower($field['verkntabname'])) . 'Array';
-				$field['complex_type'] = ucfirst(strtolower($field['verkntabname']));
+				$field['soap_type'] = 'tns:' . ucfirst(lmb_strtolower($field['verkntabname'])) . 'Array';
+				$field['complex_type'] = ucfirst(lmb_strtolower($field['verkntabname']));
 				break;
 			case '14':
 				switch ($data_type) {

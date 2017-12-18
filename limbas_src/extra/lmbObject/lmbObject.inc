@@ -18,11 +18,11 @@
  * ID:
  */
 
-require('gtab/gtab.lib');
+require_once('gtab/gtab.lib');
 require_once("gtab/gtab_type_erg.lib");
 require_once("lib/include.lib");
 $use_soap = 0;
-require('extra/soap/soap.lib');
+require_once('extra/soap/soap.lib');
 
 require_once 'extra/lmbObject/log/LimbasLogger.php';
 

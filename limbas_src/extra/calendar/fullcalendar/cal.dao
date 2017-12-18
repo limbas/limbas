@@ -105,7 +105,7 @@ class lmb_calendar {
 	
 
 	/**
-	 * move event
+	 * drop event
 	 *
 	 * @param unknown_type $gtabid
 	 * @param unknown_type $ID
@@ -184,6 +184,44 @@ class lmb_calendar {
 		return true;
 	}
 	
+	# move event
+	function lmb_moveEvent($gtabid,$ID,$movestamp,$resource){
+	    global $db;
+	    global $gtab;
+
+		$sqlquery = "SELECT ".$this->lmbCalFields['STARTSTAMP'].",".$this->lmbCalFields['ENDSTAMP']." FROM ".$gtab["table"][$gtabid]." WHERE ID = ".$ID;
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+	    if(odbc_fetch_row($rs)){
+	          $startstamp = get_stamp(odbc_result($rs,$this->lmbCalFields['STARTSTAMP']));
+		      $endstamp = get_stamp(odbc_result($rs,$this->lmbCalFields['ENDSTAMP']));
+	    }
+	    $start = convert_stamp($movestamp);
+	    $len = ($endstamp - $startstamp);
+	    $end = convert_stamp($movestamp + $len);
+
+		$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$this->lmbCalFields['STARTSTAMP']." = '$start', ".$this->lmbCalFields['ENDSTAMP']." = '$end' WHERE ID = ".$ID;
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+
+		# --- resource ---
+		$resource = parse_db_int($resource);
+		if($resource AND $gtab['params1'][$gtabid]){
+		  $relation = init_relation($gtabid,$gtab['params1'][$gtabid],$ID,$resource);
+		  set_relation($relation);
+		}
+
+	}
+	
+	# copy event
+	function lmb_copyEvent($gtabid,$ID,$movestamp,$resource){
+	    global $db;
+	    global $gtab;
+
+	    $newID = new_data($gtabid,null,$ID);
+	    $this->lmb_moveEvent($gtabid,$newID,$movestamp,$resource);
+
+	}
 	
 	# delete event
 	function lmb_deleteEvent($gtabid,$ID,$verkn=null){
@@ -371,8 +409,8 @@ class lmb_calendar {
 		if($gresult[$gtabid]["id"]){
 		foreach ($gresult[$gtabid]["id"] as $key => $value){
 			
-			$stst = get_stamp(substr($gresult[$gtabid][$this->lmbCalFieldsID['STARTSTAMP']][$key],0,17)."00");
-			$endst = get_stamp(substr($gresult[$gtabid][$this->lmbCalFieldsID['ENDSTAMP']][$key],0,17)."00");
+			$stst = get_stamp(lmb_substr($gresult[$gtabid][$this->lmbCalFieldsID['STARTSTAMP']][$key],0,17)."00");
+			$endst = get_stamp(lmb_substr($gresult[$gtabid][$this->lmbCalFieldsID['ENDSTAMP']][$key],0,17)."00");
 			if($stst AND $endst AND $endst >= $stst){
 
 				$this->lmb_getEventBasic($tresult,$gresult,$gtabid,$key,$bzm,$stst,$endst,$recurrent);
@@ -433,12 +471,12 @@ class lmb_calendar {
 		}
 
 		$tresult[$bzm]["id"] = $gresult[$gtabid]["id"][$key];
-		$tresult[$bzm]["title"] = substr($gresult[$gtabid][$this->lmbCalFieldsID['SUBJECT']][$key],0,$umgvar['memolength']);
+		$tresult[$bzm]["title"] = lmb_substr($gresult[$gtabid][$this->lmbCalFieldsID['SUBJECT']][$key],0,$umgvar['memolength']);
 		$tresult[$bzm]["start"] = date("Y-m-d H:i:s",$stst);
 		$tresult[$bzm]["end"]= date("Y-m-d H:i:s",$endst);
 		$tresult[$bzm]["subject_noedit"] = $this->getFieldPermissions($value,array(1),$gtabid,$key,$gresult);
 		$tresult[$bzm]["date_noedit"] = $this->getFieldPermissions($value,array(2,5),$gtabid,$key,$gresult);
-		if($gresult[$gtabid][$this->lmbCalFieldsID['ALLDAY']][$key] OR (substr($tresult[$bzm]["start"],11,8) == '00:00:00' AND substr( $tresult[$bzm]["end"],11,8) == '00:00:00')){$tresult[$bzm]["allDay"] = true;}else{$tresult[$bzm]["allDay"] = false;}
+		if($gresult[$gtabid][$this->lmbCalFieldsID['ALLDAY']][$key] OR (lmb_substr($tresult[$bzm]["start"],11,8) == '00:00:00' AND lmb_substr( $tresult[$bzm]["end"],11,8) == '00:00:00')){$tresult[$bzm]["allDay"] = true;}else{$tresult[$bzm]["allDay"] = false;}
 		if($color){$tresult[$bzm]["color"] = $color;}
 		if($border_color){$tresult[$bzm]["borderColor"] = $border_color;}
 		if($text_color){$tresult[$bzm]["textColor"] = $text_color;}
@@ -581,7 +619,8 @@ class lmb_calendar {
 	
 		return $noedit;
 	}
-		
+
+	/*
 	function lmb_calContext($ID,$gtabid){
 		global $userdat;
 	
@@ -608,7 +647,7 @@ class lmb_calendar {
 		
 		# Header
 		$out .= "<div class=\"fc-contextInnerTop\" style=\"color:$text_color\">";
-		$out .= ''.substr(get_date($gresult[7][0]),11,5)." - ".substr(get_date($gresult[8][0]),11,5).'</b><br>';
+		$out .= ''.lmb_substr(get_date($gresult[7][0]),11,5)." - ".lmb_substr(get_date($gresult[8][0]),11,5).'</b><br>';
 		$out .= '</div>';
 
 		$out .= "<div style=\"background-color:#FFFFFF;padding-top:2px;padding-bottom:4px\"><div class=\"fc-contextInner\" style=\"padding:3px;\">";
@@ -623,6 +662,7 @@ class lmb_calendar {
 	
 		return $out;
 	}
+	*/
 	
 	
 	/**

@@ -42,7 +42,7 @@ function create_exif_conf() {
 	if($fields = dbf_5(array($DBA['DBSCHEMA'],'LDMS_META'))){
 	    foreach($fields['columnname'] as $key => $value){
 	        
-	        if(in_array(strtolower($value),$sysfields)){continue;}
+	        if(in_array(lmb_strtolower($value),$sysfields)){continue;}
 	        
 	        $val .= "           ".$value."=> {},\n";
 	    }
@@ -86,7 +86,7 @@ function putmeta_exif($absfile,$meta){
 
 	foreach ($meta as $key => $value){
 	    $value = str_replace('"','\"',$value);
-	    $val .= "-".strtolower($key)."=\"$value\" ";
+	    $val .= "-".lmb_strtolower($key)."=\"$value\" ";
 	}
 
 	$cmd = "exiftool -config ".$umgvar["pfad"]."/TEMP/conf/exiftool.conf -P -overwrite_original $val $absfile";
@@ -118,7 +118,7 @@ function putmeta_iptc($absfile,$meta){
  		$new_iptc_data[$bzm]["IPTC_Type"] = "2:120";
 		$new_iptc_data[$bzm]["RecName"] = "Caption/Abstract";
 		$new_iptc_data[$bzm]["RecDesc"] = "Caption/Abstract - Max 2000 Characters";
-		$new_iptc_data[$bzm]["RecData"] = substr($meta["DESCRIPTION"],0,2000);
+		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["DESCRIPTION"],0,2000);
 		$present_iptc_data[] = "2:120";
 		$bzm++;
 	}
@@ -126,7 +126,7 @@ function putmeta_iptc($absfile,$meta){
  		$new_iptc_data[$bzm]["IPTC_Type"] = "2:122";
 		$new_iptc_data[$bzm]["RecName"] = "Caption Writer/Editor";
 		$new_iptc_data[$bzm]["RecDesc"] = "Caption Writer/Editor - Max 32 Characters";
-		$new_iptc_data[$bzm]["RecData"] = substr($meta["CREATOR"],0,32);
+		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["CREATOR"],0,32);
 		$present_iptc_data[] = "2:122";
 		$bzm++;
 	}
@@ -134,7 +134,7 @@ function putmeta_iptc($absfile,$meta){
  		$new_iptc_data[$bzm]["IPTC_Type"] = "2:105";
 		$new_iptc_data[$bzm]["RecName"] = "Headline";
 		$new_iptc_data[$bzm]["RecDesc"] = "Headline - Max 256 Characters";
-		$new_iptc_data[$bzm]["RecData"] = substr($meta["NAME2"],0,256);
+		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["NAME2"],0,256);
 		$present_iptc_data[] = "2:105";
 		$bzm++;
 	}
@@ -142,7 +142,7 @@ function putmeta_iptc($absfile,$meta){
  		$new_iptc_data[$bzm]["IPTC_Type"] = "2:40";
 		$new_iptc_data[$bzm]["RecName"] = "Special Instructions";
 		$new_iptc_data[$bzm]["RecDesc"] = "Special Instructions - Max 256 Characters";
-		$new_iptc_data[$bzm]["RecData"] = substr($meta["INSTRUCTIONS"],0,256);
+		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["INSTRUCTIONS"],0,256);
 		$present_iptc_data[] = "2:40";
 		$bzm++;
 	}
@@ -150,7 +150,7 @@ function putmeta_iptc($absfile,$meta){
  		$new_iptc_data[$bzm]["IPTC_Type"] = "2:80";
 		$new_iptc_data[$bzm]["RecName"] = "By-Line (Author)";
 		$new_iptc_data[$bzm]["RecDesc"] = "By-Line (Author) - Max 32 Characters";
-		$new_iptc_data[$bzm]["RecData"] = substr($meta["PUBLISHER"],0,32);
+		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["PUBLISHER"],0,32);
 		$present_iptc_data[] = "2:80";
 		$bzm++;
 	}
@@ -158,7 +158,7 @@ function putmeta_iptc($absfile,$meta){
  		$new_iptc_data[$bzm]["IPTC_Type"] = "2:85";
 		$new_iptc_data[$bzm]["RecName"] = "By-Line Title (Author Position) [Not used in Photoshop 7]";
 		$new_iptc_data[$bzm]["RecDesc"] = "By-Line Title (Author Position) - Max 32 characters";
-		$new_iptc_data[$bzm]["RecData"] = substr($meta["TITLE"],0,32);
+		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["TITLE"],0,32);
 		$present_iptc_data[] = "2:85";
 		$bzm++;
 	}
@@ -166,7 +166,7 @@ function putmeta_iptc($absfile,$meta){
  		$new_iptc_data[$bzm]["IPTC_Type"] = "2:110";
 		$new_iptc_data[$bzm]["RecName"] = "Credit";
 		$new_iptc_data[$bzm]["RecDesc"] = "Credit - Max 32 Characters";
-		$new_iptc_data[$bzm]["RecData"] = substr($meta["CREDIT"],0,32);
+		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["CREDIT"],0,32);
 		$present_iptc_data[] = "2:110";
 		$bzm++;
 	}
@@ -174,7 +174,7 @@ function putmeta_iptc($absfile,$meta){
  		$new_iptc_data[$bzm]["IPTC_Type"] = "2:115";
 		$new_iptc_data[$bzm]["RecName"] = "Source";
 		$new_iptc_data[$bzm]["RecDesc"] = "Source - Max 32 Characters";
-		$new_iptc_data[$bzm]["RecData"] = substr($meta["SOURCE"],0,32);
+		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["SOURCE"],0,32);
 		$present_iptc_data[] = "2:115";
 		$bzm++;
 	}
@@ -182,12 +182,12 @@ function putmeta_iptc($absfile,$meta){
  		$new_iptc_data[$bzm]["IPTC_Type"] = "2:05";
 		$new_iptc_data[$bzm]["RecName"] = "Object Name (Title)";
 		$new_iptc_data[$bzm]["RecDesc"] = "Object Name (Title) - Max 64 characters";
-		$new_iptc_data[$bzm]["RecData"] = substr($meta["ORIGINNAME"],64);
+		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["ORIGINNAME"],64);
 		$present_iptc_data[] = "2:05";
 		$bzm++;
 	}
 	if($meta["CREATEDATE"]){
-		$createdate = preg_replace("/[^0-9]/","",substr(convert_date($meta["CREATEDATE"]),0,10));
+		$createdate = preg_replace("/[^0-9]/","",lmb_substr(convert_date($meta["CREATEDATE"]),0,10));
  		$new_iptc_data[$bzm]["IPTC_Type"] = "2:55";
 		$new_iptc_data[$bzm]["RecName"] = "Date Created";
 		$new_iptc_data[$bzm]["RecDesc"] = "Date Created - 8 numeric characters CCYYMMDD";
@@ -199,7 +199,7 @@ function putmeta_iptc($absfile,$meta){
  		$new_iptc_data[$bzm]["IPTC_Type"] = "2:90";
 		$new_iptc_data[$bzm]["RecName"] = "City";
 		$new_iptc_data[$bzm]["RecDesc"] = "City - Max 32 Characters";
-		$new_iptc_data[$bzm]["RecData"] = substr($meta["CITY"],0,32);
+		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["CITY"],0,32);
 		$present_iptc_data[] = "2:90";
 		$bzm++;
 	}
@@ -207,7 +207,7 @@ function putmeta_iptc($absfile,$meta){
  		$new_iptc_data[$bzm]["IPTC_Type"] = "2:95";
 		$new_iptc_data[$bzm]["RecName"] = "Province/State";
 		$new_iptc_data[$bzm]["RecDesc"] = "Province/State - Max 32 Characters";
-		$new_iptc_data[$bzm]["RecData"] = substr($meta["STATE"],0,32);
+		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["STATE"],0,32);
 		$present_iptc_data[] = "2:95";
 		$bzm++;
 	}
@@ -215,7 +215,7 @@ function putmeta_iptc($absfile,$meta){
  		$new_iptc_data[$bzm]["IPTC_Type"] = "2:101";
 		$new_iptc_data[$bzm]["RecName"] = "Country/Primary Location Name";
 		$new_iptc_data[$bzm]["RecDesc"] = "Country/Primary Location Name - Max 64 characters";
-		$new_iptc_data[$bzm]["RecData"] = substr($meta["COUNTRY"],0,64);
+		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["COUNTRY"],0,64);
 		$present_iptc_data[] = "2:101";
 		$bzm++;
 	}
@@ -223,7 +223,7 @@ function putmeta_iptc($absfile,$meta){
  		$new_iptc_data[$bzm]["IPTC_Type"] = "2:103";
 		$new_iptc_data[$bzm]["RecName"] = "Original Transmission Reference";
 		$new_iptc_data[$bzm]["RecDesc"] = "Original Transmission Reference - Max 32 characters";
-		$new_iptc_data[$bzm]["RecData"] = substr($meta["TRANSMISSION"],0,32);
+		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["TRANSMISSION"],0,32);
 		$present_iptc_data[] = "2:103";
 		$bzm++;
 	}
@@ -231,7 +231,7 @@ function putmeta_iptc($absfile,$meta){
  		$new_iptc_data[$bzm]["IPTC_Type"] = "2:15";
 		$new_iptc_data[$bzm]["RecName"] = "Category";
 		$new_iptc_data[$bzm]["RecDesc"] = "Category - Max 3 characters";
-		$new_iptc_data[$bzm]["RecData"] = substr($meta["CATEGORY"],0,3);
+		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["CATEGORY"],0,3);
 		$present_iptc_data[] = "2:15";
 		$bzm++;
 	}
@@ -241,7 +241,7 @@ function putmeta_iptc($absfile,$meta){
 	 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:20";
 			$new_iptc_data[$bzm]["RecName"] = "Supplemental Category";
 			$new_iptc_data[$bzm]["RecDesc"] = "Supplemental Category - Max 32 characters";
-			$new_iptc_data[$bzm]["RecData"] = substr($value,0,32);
+			$new_iptc_data[$bzm]["RecData"] = lmb_substr($value,0,32);
 			$present_iptc_data[] = "2:20";
 			$bzm++;
 		}
@@ -260,7 +260,7 @@ function putmeta_iptc($absfile,$meta){
 	 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:25";
 			$new_iptc_data[$bzm]["RecName"] = "Keywords";
 			$new_iptc_data[$bzm]["RecDesc"] = "Keywords - Max 64 characters";
-			$new_iptc_data[$bzm]["RecData"] = substr($value,0,64);
+			$new_iptc_data[$bzm]["RecData"] = lmb_substr($value,0,64);
 			$present_iptc_data[] = "2:25";
 			$bzm++;
 		}
@@ -269,7 +269,7 @@ function putmeta_iptc($absfile,$meta){
  		$new_iptc_data[$bzm]["IPTC_Type"] = "2:116";
 		$new_iptc_data[$bzm]["RecName"] = "Copyright Notice";
 		$new_iptc_data[$bzm]["RecDesc"] = "Copyright Notice - Max 128 Characters";
-		$new_iptc_data[$bzm]["RecData"] = substr($meta["COPYRIGHT"],128);
+		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["COPYRIGHT"],128);
 		$present_iptc_data[] = "2:116";
 		$bzm++;
 	}
@@ -424,7 +424,7 @@ function putmeta_to_db($ID,$meta){
 
 	# Suche ob Metafeld in DB vorhanden
 	foreach($meta as $key => $value){
-	    $field = strtoupper($key);
+	    $field = lmb_strtoupper($key);
 		if($k = array_search($field,$gfile["name"]) AND trim($value)){
 			# ignore systemfields from ldms_files
 		    if($gfile["tabid"][$k] == $gtab["argresult_id"]["LDMS_FILES"] AND $gfield[$gtab["argresult_id"]["LDMS_FILES"]][$gfile["fid"][$k]] <= 32){continue;}
@@ -516,7 +516,7 @@ function getmeta_iptc($absfile){
 		if($iptc_list["2:25"]){$iptc_list["2:25"] = implode(";",$iptc_list["2:25"]);}
 		$iptc_list["2:55"] = trim($iptc_list["2:55"]);
 
-		$createdate = substr($iptc_list["2:55"],6,2)."-".substr($iptc_list["2:55"],4,2)."-".substr($iptc_list["2:55"],0,4);
+		$createdate = substr($iptc_list["2:55"],6,2)."-".lmb_substr($iptc_list["2:55"],4,2)."-".lmb_substr($iptc_list["2:55"],0,4);
 		if($createdate = convert_date($createdate)){
 			$meta["CREATEDATE"] = $createdate;
 		}

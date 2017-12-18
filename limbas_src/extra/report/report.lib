@@ -142,9 +142,9 @@ class pdf_report extends HTML2FPDF {
 
 	# RGB Color ----------------------------
 	function make_color($val){
-		$col[0] = hexdec(substr($val, 0, 2));
-		$col[1] = hexdec(substr($val, 2, 2));
-		$col[2] = hexdec(substr($val, 4, 2));
+		$col[0] = hexdec(lmb_substr($val, 0, 2));
+		$col[1] = hexdec(lmb_substr($val, 2, 2));
+		$col[2] = hexdec(lmb_substr($val, 4, 2));
 		return $col;
 	}
 
@@ -155,8 +155,8 @@ class pdf_report extends HTML2FPDF {
 
 	# Font Style ----------------------------
 	function GetFontStyle($style) {
-		$font = substr($style[4],0,1).substr($style[1],0,1).substr($style[7],0,1);
-		$font = str_replace("N","",strtoupper($font));
+		$font = substr($style[4],0,1).lmb_substr($style[1],0,1).lmb_substr($style[7],0,1);
+		$font = str_replace("N","",lmb_strtoupper($font));
 		# font ----------------------------
 		if($style[3]){
 			$this->SetFont($style[0],$font,$style[3]);
@@ -167,13 +167,13 @@ class pdf_report extends HTML2FPDF {
 
 	# Font Align ----------------------------
 	function GetFontAlign($align) {
-		if($align){$align = strtoupper(substr($align,0,1));}else{$align = "J";}
+		if($align){$align = lmb_strtoupper(lmb_substr($align,0,1));}else{$align = "J";}
 		return $align;
 	}
 
 	# Font Valign ----------------------------
 	function GetFontValign($valign) {
-		if($valign){$valign = strtoupper(substr($valign,0,1));}else{$valign = "T";}
+		if($valign){$valign = lmb_strtoupper(lmb_substr($valign,0,1));}else{$valign = "T";}
 		return $valign;
 	}
 
@@ -311,8 +311,8 @@ class pdf_report extends HTML2FPDF {
 		}else{$par[rd] = 'D';}
 
 		# font-transform ----------------------------
-		if($style[8] == 'uppercase'){$val = strtoupper($val);}
-		elseif($style[8] == 'lowercase'){$val = strtolower($val);}
+		if($style[8] == 'uppercase'){$val = lmb_strtoupper($val);}
+		elseif($style[8] == 'lowercase'){$val = lmb_strtolower($val);}
 
 		# position ----------------------------
 		if($y){$this->SetY($y);}
@@ -352,8 +352,8 @@ class pdf_report extends HTML2FPDF {
 
 	# Print-Element ----------------------------
 	function print_element($par){
-		
-		$absposy = $this->GetY();
+
+                $absposy = $this->GetY();
 
 		if($par[9] == 'bild'){
 			# Bildgröße in Rahmen einpassen
@@ -372,7 +372,7 @@ class pdf_report extends HTML2FPDF {
 				}
 			}
 			# picture ----------------------------
-			$pityp = substr($par[5],(strlen($par[5])-3),3);
+			$pityp = lmb_substr($par[5],(lmb_strlen($par[5])-3),3);
 			$this->Image($par[5],$par[0],$par[1],$par[2],$par[3],$pityp);
 			# Hintergrund-Rechteck ----------------------------
 			if(!$par[2] OR !$par[3]){
@@ -428,15 +428,21 @@ class pdf_report extends HTML2FPDF {
 
 
 	/*------- Add-Font ---------*/
-	function add_font($font){
-		global $sysfont;
+    function add_font($font){
+		global $sysfont;  
+        global $umgvar;
+                
 		if(!$sysfont){$sysfont = get_fonts();}
 
 		if($sysfont["family"][$font][0]){
 			# Font eintragen
 			foreach ($sysfont["family"][$font] as $key => $val){
 				if(!isset($this->fonts[$font.$sysfont["style"][$font][$key]])){
-					$this->AddFont($font,$sysfont["style"][$font][$key],$sysfont["name"][$font][$key].".php");
+                    if(lmb_strtoupper($umgvar['charset']) == 'UTF-8') {
+                            $this->AddFont($font, $sysfont["style"][$font][$key], $sysfont["name"][$font][$key].".ttf", true); // function of tfpdf
+                    } else {
+                            $this->AddFont($font, $sysfont["style"][$font][$key], $sysfont["name"][$font][$key].".php"); // function of fpdf
+                    }
 				}
 			}
 		}

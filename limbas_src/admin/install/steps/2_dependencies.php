@@ -89,12 +89,12 @@ if(is_file($setup_path_project."/TEMP/test.pdf")){$msg[func_ghost] .= $msgOK;$ms
 if(file_exists($setup_path_project."/TEMP/test.pdf")){unlink($setup_path_project."/TEMP/test.pdf");}
 
 /* --- ttf2pt1 --- */
-chdir($setup_path_project."/TEMP");
-$cmd = "ttf2pt1 -a ".$setup_path_project."/admin/install/airmole.ttf airmole";
-exec($cmd);
-if(is_file($setup_path_project."/TEMP/airmole.afm") AND is_file($setup_path_project."/TEMP/airmole.t1a")){$msg[func_ttf2pt1] .= $msgOK;$msic[func_ttf2pt1] = "1";}else{$msg[func_ttf2pt1] .= $msgWarnHeavy;$msic[func_ttf2pt1] = "4";$commit = 2;}
-if(file_exists($setup_path_project."/TEMP/airmole.afm")){unlink($setup_path_project."/TEMP/airmole.afm");}
-if(file_exists($setup_path_project."/TEMP/airmole.t1a")){unlink($setup_path_project."/TEMP/airmole.t1a");}
+#chdir($setup_path_project."/TEMP");
+#$cmd = "ttf2pt1 -a ".$setup_path_project."/admin/install/airmole.ttf airmole";
+#exec($cmd);
+#if(is_file($setup_path_project."/TEMP/airmole.afm") AND is_file($setup_path_project."/TEMP/airmole.t1a")){$msg[func_ttf2pt1] .= $msgOK;$msic[func_ttf2pt1] = "1";}else{$msg[func_ttf2pt1] .= $msgWarnHeavy;$msic[func_ttf2pt1] = "4";$commit = 2;}
+#if(file_exists($setup_path_project."/TEMP/airmole.afm")){unlink($setup_path_project."/TEMP/airmole.afm");}
+#if(file_exists($setup_path_project."/TEMP/airmole.t1a")){unlink($setup_path_project."/TEMP/airmole.t1a");}
 
 /* --- php odbc --- */
 if(extension_loaded('odbc')) {
@@ -141,12 +141,11 @@ if(extension_loaded('odbc')) {
         <tr><?= insIcon($msic[func_pdftohtml]); ?><td>pdftohtml</td><td><?= $msg[func_pdftohtml] ?></td></tr>
         <tr><?= insIcon($msic[func_ghost]); ?><td>ghostscript</td><td><?= $msg[func_ghost] ?></td></tr>
         <tr><?= insIcon($msic[func_exiftool]); ?><td>exiftool</td><td><?= $msg[func_exiftool] ?></td></tr>
-        <tr><?= insIcon($msic[func_ttf2pt1]); ?><td>ttf2pt1</td><td><?= $msg[func_ttf2pt1] ?></td></tr>
     </tbody>
 </table>
 
 <div>
-    <button type="button" class="btn btn-default" onclick="switchToStep('<?php $s=array_keys($steps); echo $s[1]?>')">Back</button>
+    <button type="button" class="btn btn-default" onclick="switchToStep('<?= array_keys($steps)[1] ?>')">Back</button>
     <?php 
     $nextStep = 3;
     $text = "Next step";
@@ -157,5 +156,5 @@ if(extension_loaded('odbc')) {
         $text = "Reload";
     }
     ?>
-    <button type="submit" class="btn btn-info pull-right <?= $disabled ?>" <?= $tooltip ?> name="install" value="<?php $s=array_keys($steps); echo $s[$nextStep]?>"><?= $text ?></button>
+    <button type="submit" class="btn btn-info pull-right <?= $disabled ?>" <?= $tooltip ?> name="install" value="<?= array_keys($steps)[$nextStep] ?>"><?= $text ?></button>
 </div>

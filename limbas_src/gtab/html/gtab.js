@@ -175,15 +175,26 @@ function LmExt_RelationFields(el,gtabid,gfieldid,viewmode,edittype,ID,orderfield
 		ajaxGet(null,url,actid,null,"dynfunc","form1");
 		document.getElementById("myExtForms").innerHTML = "";
 	}else{
+        
+		if(el){
+			var text = el.innerHTML;
+		}
+	
+        // use text of child span .lmbContextItemIcon if the context menu functions were used
+        var contextChildren = $(el).children('.lmbContextItemIcon');
+        if(contextChildren.length > 0) {
+        	text = contextChildren.first().html();
+        }
+            
 		// no ajax update (userdefined formular) - use formid as formname
 		if(formid && isNaN(formid)){
 			document.getElementsByName(formid)[0].value = relationid;
-			document.getElementById(formid+"_ds").value = el.innerHTML;
+			document.getElementById(formid+"_ds").value = text;
 		// no ajax update (ajax based select)
 		}else if(document.getElementById("g_"+gtabid+"_"+gfieldid+"_ds") && el && !document.getElementById("extRelationFieldsTab_"+gtabid+"_"+gfieldid)){
 			document.getElementsByName("g_"+gtabid+"_"+gfieldid)[0].value = relationid;
 			checktyp('27','g_'+gtabid+'_'+gfieldid,'',gfieldid,gtabid,relationid,ID);
-			document.getElementById("g_"+gtabid+"_"+gfieldid+"_ds").value = el.innerHTML;
+			document.getElementById("g_"+gtabid+"_"+gfieldid+"_ds").value = text;
 			if(document.getElementById("g_"+gtabid+"_"+gfieldid+"_ds").onchange){document.getElementById("g_"+gtabid+"_"+gfieldid+"_ds").onchange();}
 		// ajax update GET of single relation
 		}else{
@@ -203,7 +214,7 @@ function LmExt_RelationFields(el,gtabid,gfieldid,viewmode,edittype,ID,orderfield
 
 // Ajax extended relation output
 function LmExt_RelationFieldsPost(result,gtabid,gfieldid,viewmode,textel,ID){
-        console.log(gtabid, gfieldid, viewmode, textel, ID);
+        //console.log(gtabid, gfieldid, viewmode, textel, ID);
 	
 	selected_rows = new Array();
 	var el = gtabid+"_"+gfieldid;
@@ -792,8 +803,8 @@ function multipleSelectShow(instance_name) {
         var exclude = new Array();
         var include = new Array();
         
-        console.log("!");
-        console.log(elem);
+        //console.log("!");
+        //console.log(elem);
         
         
         // hide if already displayed and the other way round
@@ -1285,12 +1296,12 @@ function limbasReportMenuOptionsPost(result,el,output){
 
 
 // Ajax reminder
-function limbasDivShowReminder(evt,el,add,remove) {
-	activ_menu = 1;
+function limbasDivShowReminder(evt,el,add,remove,changeView,change,defaults) {
+        activ_menu = 1;
 	if(el){
 		limbasDivShow(el,'limbasDivMenuExtras','lmbAjaxContainer');
 	}
-	
+        
 	var use_records = '';
 	var verkn = '';
 	var gfrist = '';
@@ -1299,39 +1310,44 @@ function limbasDivShowReminder(evt,el,add,remove) {
 	if(document.form1.action.value == 'gtab_erg'){var listmode = 1;}
 	
 	// listmode
+        // TODO auch für change/view?
 	if(listmode && (add || remove)){
-			listmode = 1;
-			var count =	countofActiveRows();
-			// use selected rows
-			if(count > 0){
-				var actrows = checkActiveRows(jsvar['gtabid']);
-				if(actrows.length > 0){
-					var use_records = actrows.join(";");
-				}else{alert(jsvar["lng_2083"]);return;}
-			// use filter
-			}else{
-				var use_records = 'all';
-				// if relation
-				if(document.form1.verkn_ID){
-					var verkn = '&verkn_tabid='+document.form1.verkn_tabid+'&verkn_fieldid='+document.form1.verkn_fieldid+'&verkn_ID='+document.form1.verkn_ID+'&verkn_showonly='+document.form1.verkn_showonly;
-				}
-				// get count from result
-				if(document.getElementById("GtabResCount")){var count = document.getElementById("GtabResCount").innerHTML;}else{var count = 'undefined'}
-			}
-			
-			if(count && !confirm(jsvar['lng_2676']+' '+count+'\n'+jsvar['lng_2902'])){
-				activ_menu = 0;
-				limbasDivClose();
-				return;
-			}
+                listmode = 1;
+                var count = countofActiveRows();
+                // use selected rows
+                if(count > 0){
+                        var actrows = checkActiveRows(jsvar['gtabid']);
+                        if(actrows.length > 0){
+                                var use_records = actrows.join(";");
+                        }else{alert(jsvar["lng_2083"]);return;}
+                // use filter
+                }else{
+                        var use_records = 'all';
+                        // if relation
+                        if(document.form1.verkn_ID){
+                                var verkn = '&verkn_tabid='+document.form1.verkn_tabid+'&verkn_fieldid='+document.form1.verkn_fieldid+'&verkn_ID='+document.form1.verkn_ID+'&verkn_showonly='+document.form1.verkn_showonly;
+                        }
+                        // get count from result
+                        if(document.getElementById("GtabResCount")){var count = document.getElementById("GtabResCount").innerHTML;}else{var count = 'undefined'}
+                }
+
+                if(count && !confirm(jsvar['lng_2676']+' '+count+'\n'+jsvar['lng_2902'])){
+                        activ_menu = 0;
+                        limbasDivClose();
+                        return;
+                }
 	}
 
 	if(add){
 		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+jsvar['gtabid']+'&ID='+jsvar['ID']+'&listmode='+listmode+gfrist+'&add=1'+verkn+'&use_records='+use_records,null,'limbasDivShowReminderPost','form_reminder');
 	}else if(remove){
 		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+jsvar['gtabid']+'&ID='+jsvar['ID']+'&listmode='+listmode+gfrist+'&remid='+remove+'&use_records='+use_records,null,'limbasDivShowReminderPost');
-	}else{
-		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+jsvar['gtabid']+'&ID='+jsvar['ID']+'&listmode='+listmode+gfrist,null,'limbasDivShowReminderPost');
+	}else if(changeView){
+		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+jsvar['gtabid']+'&ID='+jsvar['ID']+'&listmode='+listmode+gfrist+'&changeViewId='+changeView,null,'limbasDivShowReminderPost');
+        }else if(change){
+		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+jsvar['gtabid']+'&ID='+jsvar['ID']+'&listmode='+listmode+gfrist+'&changeId='+change,null,'limbasDivShowReminderPost','form_reminder');
+        }else {
+		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+jsvar['gtabid']+'&ID='+jsvar['ID']+'&listmode='+listmode+gfrist+'&defaults='+defaults,null,'limbasDivShowReminderPost');
 	}
 }
 
@@ -1341,9 +1357,31 @@ function limbasDivShowReminderPost(result){
 }
 
 // reminder
-function lmb_reminderAddUserGroup(uid,udesc,gtabid,ID,parameter){
-	document.getElementById('contWvUGList').innerHTML = document.getElementById('contWvUGList').innerHTML + "<i class='lmb-icon lmb-bullet-plus'></i> " + udesc + "<br>";
-	document.getElementById('REMINDER_USERGROUP').value = document.getElementById('REMINDER_USERGROUP').value + ";" + uid;
+function lmb_reminderAddUserGroup(uid,udesc,gtabid,fieldid,ID,parameter){
+        // display groups in italic
+        if(uid.endsWith('_g')) {
+            udesc = "<i>" + udesc + "</i>";
+        }
+        
+        // append name to list of users/groups
+        if($("#contWvUGList").children("#usergroup_" + uid).length == 0) {
+            $('#contWvUGList').append("<span id=\"usergroup_" + uid + "\" style=\"cursor:pointer;\" onmouseover=\"this.className='markForDelete'\" onmouseout=\"this.className=''\" onclick=\"lmb_reminderRemoveUserGroup('" + uid + "', '" + udesc + "');\">" + udesc + "</span><br>");
+            
+            // append uid to hidden input for form submit
+            var hiddenInp = $('#REMINDER_USERGROUP');
+            hiddenInp.val(hiddenInp.val() + ";" + uid);    
+        }
+}
+
+function lmb_reminderRemoveUserGroup(uid, udesc) {
+        // remove name from list of users/groups
+        var toRemove = $('#contWvUGList').children('#usergroup_' + uid);
+        toRemove.next().remove();
+        toRemove.remove();
+    
+        // remove uid from hidden input for form submit
+        var hiddenInp = $('#REMINDER_USERGROUP');
+        hiddenInp.val(hiddenInp.val().replace(";" + uid, ""));
 }
 
 // timeout for same form requests

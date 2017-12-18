@@ -22,7 +22,7 @@ function paintTextToImageSetColor($img){
 	global $farbschema;
 	$rgb[0] = ImageColorAllocate ($img, 0, 0, 0);
 	$rgb[2] = ImageColorAllocate ($img, 255, 255, 255);
-	$RGB = explode(",",hexdec(substr($farbschema[WEB8], 1, 2)).",".hexdec(substr($farbschema[WEB8], 3, 2)).",".hexdec(substr($farbschema[WEB8], 5, 2)));
+	$RGB = explode(",",hexdec(lmb_substr($farbschema[WEB8], 1, 2)).",".hexdec(lmb_substr($farbschema[WEB8], 3, 2)).",".hexdec(lmb_substr($farbschema[WEB8], 5, 2)));
 	$rgb[1] = imagecolorallocate($img, $RGB[0], $RGB[1], $RGB[2]);
 	return $rgb;
 }
@@ -42,7 +42,7 @@ function paintTextToImage($text,$size=12,$font=null){
 			return false;
 		}
 	}elseif($font){
-		if(strpos($font,"/") === false){
+		if(lmb_strpos($font,"/") === false){
 			$font = $umgvar["pfad"]."/inc/fonts/$font";
 		}
 	}
@@ -72,7 +72,7 @@ function make_fileArchive($path,$name){
 	
 	#$path,"export_bundle")
 	
-	if(substr($path,strlen($path),1) != "/"){
+	if(lmb_substr($path,lmb_strlen($path),1) != "/"){
 		$path = $path."/";
 	}
 	
@@ -270,9 +270,9 @@ function getTypeExensions(){
             foreach($gLmbExt["ext_type.inc"] as $key => $value){
                     $file = fopen($value,"r");
                     while($line = fgets($file, 100000)){
-                            if($fline = stristr($line,"function")){
-                                    $na = trim(substr($fline,9,(strpos($fline,"(")-9)));
-                                    if(stristr($line,"lmbd_")){
+                            if($fline = lmb_stristr($line,"function")){
+                                    $na = trim(lmb_substr($fline,9,(lmb_strpos($fline,"(")-9)));
+                                    if(lmb_stristr($line,"lmbd_")){
                                             $name[] = preg_replace("/lmbd_/","",$na);
                                     }
                             }
@@ -381,7 +381,7 @@ function lmb_updateTrigger(){
 
 	if($triggers){
 		foreach($triggers["name"] as $key => $value){
-			if($triggers["value"][$key] AND $triggers["name"][$key] AND strtolower($triggers["vendor"][$key]) == strtolower($DBA["DB"])){
+			if($triggers["value"][$key] AND $triggers["name"][$key] AND lmb_strtolower($triggers["vendor"][$key]) == lmb_strtolower($DBA["DB"])){
 				if(!$triggers["position"][$key]){$triggers["position"][$key] = "AFTER";}
 				$sqlquery = dbq_13(array($DBA["DBSCHEMA"],$triggers["name"][$key],$triggers["table"][$key],$triggers["type"][$key],$triggers["value"][$key],$triggers["position"][$key]));
 				@odbc_exec($db,$sqlquery) or $errorTrigger[$triggers["table"][$key]] = odbc_errormsg($db);
@@ -407,7 +407,7 @@ function lmb_dropAllDBTrigger($triggername=null,$delData=false){
 	# delete database trigger
 	if($triggerlist = dbf_3(array($DBA["DBSCHEMA"],$triggername))){
 		foreach ($triggerlist["triggername"] as $tkey => $tname){
-			#if(substr($tname,0,12) == "INSERT_VERK_" AND substr($tname,0,12) == "INSERT_VERK_"){continue;}
+			#if(lmb_substr($tname,0,12) == "INSERT_VERK_" AND lmb_substr($tname,0,12) == "INSERT_VERK_"){continue;}
 			$sqlquery = dbq_10(array($triggerlist["triggername"][$tkey],$triggerlist["tablename"][$tkey]));
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
@@ -433,7 +433,7 @@ function lmb_addTrigger($desc,$type,$table,$value,$intern=null,$position="AFTER"
 	
 	// check for duplicates in DB Trigger
 	if(!$intern){
-    	$sqlquery0 = "SELECT ID FROM LMB_TRIGGER WHERE LOWER(TABLE_NAME) = '".strtolower(parse_db_string($table,20))."' AND TYPE = '$type' AND POSITION = '$position' AND INTERN = ".LMB_DBDEF_FALSE;
+    	$sqlquery0 = "SELECT ID FROM LMB_TRIGGER WHERE LOWER(TABLE_NAME) = '".lmb_strtolower(parse_db_string($table,20))."' AND TYPE = '$type' AND POSITION = '$position' AND INTERN = ".LMB_DBDEF_FALSE;
     	$rs0 = odbc_exec($db,$sqlquery0);
     	while(odbc_fetch_row($rs0)){
     		if($replace){
@@ -449,9 +449,9 @@ function lmb_addTrigger($desc,$type,$table,$value,$intern=null,$position="AFTER"
 	}
 	
 	$md5Hash = md5($table . "_" . $type . "_" . $position);
-	$trigerName = substr("LMB_TRG_" . $md5Hash ,0,18);
+	$trigerName = lmb_substr("LMB_TRG_" . $md5Hash ,0,18);
 	$nextid = next_db_id("LMB_TRIGGER");
-	$sqlquery = "INSERT INTO LMB_TRIGGER (ID,ERSTDATUM,EDITDATUM,EDITUSER,ERSTUSER,NAME,TABLE_NAME,TYPE,TRIGGER_VALUE,DESCRIPTION,ACTIVE,INTERN,SORT,DBVENDOR,POSITION) VALUES ($nextid,".LMB_DBDEF_TIMESTAMP.",".LMB_DBDEF_TIMESTAMP.",".$session["user_id"].",".$session["user_id"].",'".parse_db_string(strtoupper($trigerName),25)."','".parse_db_string(strtoupper($table),50)."','".parse_db_string($type,20)."','".parse_db_string($value,4000)."','".parse_db_string($desc,50)."',".LMB_DBDEF_TRUE.",".parse_db_bool($intern).",0,'".parse_db_string($DBA["DB"],15)."','".parse_db_string($position,6)."')";
+	$sqlquery = "INSERT INTO LMB_TRIGGER (ID,ERSTDATUM,EDITDATUM,EDITUSER,ERSTUSER,NAME,TABLE_NAME,TYPE,TRIGGER_VALUE,DESCRIPTION,ACTIVE,INTERN,SORT,DBVENDOR,POSITION) VALUES ($nextid,".LMB_DBDEF_TIMESTAMP.",".LMB_DBDEF_TIMESTAMP.",".$session["user_id"].",".$session["user_id"].",'".parse_db_string(lmb_strtoupper($trigerName),25)."','".parse_db_string(lmb_strtoupper($table),50)."','".parse_db_string($type,20)."','".parse_db_string($value,4000)."','".parse_db_string($desc,50)."',".LMB_DBDEF_TRUE.",".parse_db_bool($intern).",0,'".parse_db_string($DBA["DB"],15)."','".parse_db_string($position,6)."')";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs){
 		return false;
@@ -462,7 +462,7 @@ function lmb_addTrigger($desc,$type,$table,$value,$intern=null,$position="AFTER"
 
 function lmb_deleteTriggerForTable($tablename){
 	global $db;
-	$sqlquery = "DELETE FROM LMB_TRIGGER WHERE LOWER(TABLE_NAME) = '".strtolower(parse_db_string($tablename,40))."' AND INTERN = ".LMB_DBDEF_FALSE;
+	$sqlquery = "DELETE FROM LMB_TRIGGER WHERE LOWER(TABLE_NAME) = '".lmb_strtolower(parse_db_string($tablename,40))."' AND INTERN = ".LMB_DBDEF_FALSE;
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
@@ -726,7 +726,7 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$forcerefint=null)
 
 			# add foreign key
 			if(!$f0){
-				$f0 = "LMB_KEY_".substr(md5($ftable."_".$ffield."_".$ptable."_".$pfield),0,18);
+				$f0 = "LMB_KEY_".lmb_substr(md5($ftable."_".$ffield."_".$ptable."_".$pfield),0,18);
 				if(!lmb_addForeignKey($ftable,$ffield,$ptable,$pfield,$f0)){
 					$commit = 1;
 				}
@@ -757,7 +757,7 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$forcerefint=null)
 						}}
 						# add foreign key
 						if(!$f1){
-							$f1 = "LMB_KEY_".substr(md5($ftable."_".$ffield."_".$ptable."_".$pfield),0,18);
+							$f1 = "LMB_KEY_".lmb_substr(md5($ftable."_".$ffield."_".$ptable."_".$pfield),0,18);
 							if(!lmb_addForeignKey($ftable,$ffield,$ptable,$pfield,$f1)){
 								$commit = 1;
 							}
@@ -777,7 +777,7 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$forcerefint=null)
 						}}
 						# add foreign key
 						if(!$f2){
-							$f2 = "LMB_KEY_".substr(md5($ftable."_".$ffield."_".$ptable."_".$pfield),0,18);
+							$f2 = "LMB_KEY_".lmb_substr(md5($ftable."_".$ffield."_".$ptable."_".$pfield),0,18);
 							if(!lmb_addForeignKey($ftable,$ffield,$ptable,$pfield,$f2)){
 								$commit = 1;
 							}
@@ -984,47 +984,47 @@ function lmb_sortConf($act,$sortid,$table,$field='SORT',$filter=null){
  */
 function translate_fieldtype($fype_type,$fype_size,$fype_scale,$field_name){
 
-	if(strtoupper($field_name) == "ID"){
+	if(lmb_strtoupper($field_name) == "ID"){
 		return 19;
-	}elseif(strtoupper($field_name) == "ERSTUSER"){
+	}elseif(lmb_strtoupper($field_name) == "ERSTUSER"){
 		return 36;
-	}elseif(strtoupper($field_name) == "EDITUSER"){
+	}elseif(lmb_strtoupper($field_name) == "EDITUSER"){
 		return 37;
-	}elseif(strtoupper($field_name) == "ERSTDATUM"){
+	}elseif(lmb_strtoupper($field_name) == "ERSTDATUM"){
 		return 38;
-	}elseif(strtoupper($field_name) == "EDITDATUM"){
+	}elseif(lmb_strtoupper($field_name) == "EDITDATUM"){
 		return 39;
 	}
 
-	if(constant("LMB_DBRETYPE_".trim(strtoupper($fype_type)))){
-		$realtype = constant("LMB_DBRETYPE_".trim(strtoupper($fype_type)));
+	if(constant("LMB_DBRETYPE_".trim(lmb_strtoupper($fype_type)))){
+		$realtype = constant("LMB_DBRETYPE_".trim(lmb_strtoupper($fype_type)));
 	}else{
 		$realtype = $fype_type;
 	}
 	
-	if(stripos($realtype,"INTEGER") !== false OR stripos($realtype,"SMALLINT") !== false OR stripos($realtype,"FIXED") !== false){
+	if(lmb_stripos($realtype,"INTEGER") !== false OR lmb_stripos($realtype,"SMALLINT") !== false OR lmb_stripos($realtype,"FIXED") !== false){
 		if($fype_scale){	# if scale detected
 			return 5;
 		}else{
 			return 2;
 		}
-	}elseif(stripos($realtype,"NUMERIC") !== false){
+	}elseif(lmb_stripos($realtype,"NUMERIC") !== false){
 		return 5;
-	}elseif(stripos($realtype,"FLOAT") !== false){
+	}elseif(lmb_stripos($realtype,"FLOAT") !== false){
 		return 56;
-	}elseif(stripos($realtype,"CHAR") !== false){
+	}elseif(lmb_stripos($realtype,"CHAR") !== false){
 		if($fype_size < 399){return 13;}
 		elseif($fype_size <= 1000){return 15;}
 		else{return 41;}
-	}elseif(stripos($realtype,"TIMESTAMP") !== false){
+	}elseif(lmb_stripos($realtype,"TIMESTAMP") !== false){
 		return 16;
-	}elseif(stripos($realtype,"TIME") !== false){
+	}elseif(lmb_stripos($realtype,"TIME") !== false){
 		return 43;
-	}elseif(stripos($realtype,"DATE") !== false){
+	}elseif(lmb_stripos($realtype,"DATE") !== false){
 		return 44;
-	}elseif(stripos($realtype,"BOOLEAN") !== false){
+	}elseif(lmb_stripos($realtype,"BOOLEAN") !== false){
 		return 17;
-	}elseif(stripos($realtype,"LONG") !== false OR stripos($realtype,"TEXT") !== false){
+	}elseif(lmb_stripos($realtype,"LONG") !== false OR lmb_stripos($realtype,"TEXT") !== false){
 		return 41;
 	}
 
@@ -1042,19 +1042,19 @@ function translate_fieldtype($fype_type,$fype_size,$fype_scale,$field_name){
 function lmb_parseImport($value,$domain_columns,$key1){
 
 	# TIMESTAMP
-	if(constant("LMB_DBRETYPE_".strtoupper($domain_columns["datatype"][$key1])) == 'TIMESTAMP'){
+	if(constant("LMB_DBRETYPE_".lmb_strtoupper($domain_columns["datatype"][$key1])) == 'TIMESTAMP'){
 		if($value){
 			$qu_value = "'".$value."'";
 		}else{
 			$qu_value = 'NULL';
 		}
 	# boolean
-	}elseif(constant("LMB_DBRETYPE_".strtoupper($domain_columns["datatype"][$key1])) == 'BOOLEAN'){
+	}elseif(constant("LMB_DBRETYPE_".lmb_strtoupper($domain_columns["datatype"][$key1])) == 'BOOLEAN'){
 		$qu_value = parse_db_bool($value);
 	# string
-	}elseif(constant("LMB_DBRETYPE_".strtoupper($domain_columns["datatype"][$key1])) == 'VARCHAR' OR
-	constant("LMB_DBRETYPE_".strtoupper($domain_columns["datatype"][$key1])) == 'CHAR' OR
-	constant("LMB_DBRETYPE_".strtoupper($domain_columns["datatype"][$key1])) == 'LONG'){
+	}elseif(constant("LMB_DBRETYPE_".lmb_strtoupper($domain_columns["datatype"][$key1])) == 'VARCHAR' OR
+	constant("LMB_DBRETYPE_".lmb_strtoupper($domain_columns["datatype"][$key1])) == 'CHAR' OR
+	constant("LMB_DBRETYPE_".lmb_strtoupper($domain_columns["datatype"][$key1])) == 'LONG'){
 		$qu_value = "'".parse_db_string($value,$domain_columns["length"][$key1])."'";
 	# numeric
 	}else{

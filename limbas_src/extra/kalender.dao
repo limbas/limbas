@@ -107,8 +107,8 @@ if($change_ok == 'eintragen' AND $ID AND $field AND $tab){
                 $sqlquery = "SELECT MIN(DATUM) AS FIRSTDATUM FROM DATE_".$gtab[tab_id][$gtabid]." WHERE FIELD = '".$field."' AND ID = $ID";
                 $rs_date3 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-                $lastdatum = explode("-",substr(odbc_result($rs_date2, "LASTDATUM"),0,10));
-                $firstdatum = explode("-",substr(odbc_result($rs_date3, "FIRSTDATUM"),0,10));
+                $lastdatum = explode("-",lmb_substr(odbc_result($rs_date2, "LASTDATUM"),0,10));
+                $firstdatum = explode("-",lmb_substr(odbc_result($rs_date3, "FIRSTDATUM"),0,10));
 
                 $sqlquery = "UPDATE ".$tab." SET ".$field." = '$lastdatum[2].$lastdatum[1].$lastdatum[0];$firstdatum[2].$firstdatum[1].$firstdatum[0];".odbc_result($rs_date1, "ANZAHL")."' WHERE ID = $ID";
                 $rs3 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);

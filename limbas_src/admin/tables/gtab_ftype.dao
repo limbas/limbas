@@ -67,7 +67,7 @@ if(!$rs) {$commit = 1;}
 $bzm = 1;
 while(odbc_fetch_row($rs,$bzm)) {
 	$table_id = odbc_result($rs,"TAB_ID");
-	$table_gtab[$table_id] = strtolower(odbc_result($rs,"TABELLE"));
+	$table_gtab[$table_id] = lmb_strtolower(odbc_result($rs,"TABELLE"));
 	$beschreibung_gtab[$table_id] = $lang[odbc_result($rs,"BESCHREIBUNG")];
 	$KEYID_gtab[$table_id] = odbc_result($rs,"TAB_ID");
 	$tabgroup_gtab[$table_id] = odbc_result($rs,"TAB_GROUP");
@@ -166,7 +166,7 @@ if($def){
 	}
 	
 	if(!$commit){
-		if(strtoupper($def) == "'NULL'"){$def = "";}
+		if(lmb_strtoupper($def) == "'NULL'"){$def = "";}
 		$sqlquery =  "UPDATE LMB_CONF_FIELDS SET DEFAULTVALUE = $def WHERE TAB_ID = $atid AND FIELD_ID = $fieldid";
 		$rs2 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs2) {$commit = 1;}
@@ -204,7 +204,7 @@ if($spelling){
 
 	lang_change(null,$spelling_id,$spelling,$session["language"],"_DEPEND",4,$filedesc);
 
-	$sqlquery =  "UPDATE LDMS_STRUCTURE SET NAME = '".str_replace("'","''",substr($spelling,0,50))."' WHERE FIELD_ID = $fieldid AND TABGROUP_ID = $tab_group AND TAB_ID = $atid AND FIX = ".LMB_DBDEF_TRUE." AND TYP = 3";
+	$sqlquery =  "UPDATE LDMS_STRUCTURE SET NAME = '".str_replace("'","''",lmb_substr($spelling,0,50))."' WHERE FIELD_ID = $fieldid AND TABGROUP_ID = $tab_group AND TAB_ID = $atid AND FIX = ".LMB_DBDEF_TRUE." AND TYP = 3";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 }
@@ -450,7 +450,7 @@ if($relviewmode){
 
 # --- relation cut ---------------------------------------------------
 if($relviewcut){
-	$relviewcut = substr($relviewcut,0,strlen($relviewcut)-1);
+	$relviewcut = lmb_substr($relviewcut,0,lmb_strlen($relviewcut)-1);
 	$sqlquery = "UPDATE LMB_CONF_FIELDS SET LISTING_CUT = '".parse_db_string($relviewcut,8)."' WHERE FIELD_ID = $fieldid AND TAB_ID = $atid";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
@@ -933,7 +933,7 @@ function extend_field($extend_func,$fieldid,$tabid){
 
 /* --- Feld Konvertieren ---------------------------------------------*/
 if($convert_value AND $fieldid){
-	if(!convert_field($convert_value,$convert_size,$fieldid,$atid,strtoupper($new_gtab))){$commit = 1;}
+	if(!convert_field($convert_value,$convert_size,$fieldid,$atid,lmb_strtoupper($new_gtab))){$commit = 1;}
 }
 
 /* --- Extension ---------------------------------------------*/
@@ -959,7 +959,7 @@ if($table_gtab[$bzm]) {
 	/* --- Datenbank Infos --------------------------------------------- */
 	$rs = dbf_5(array($DBA["DBSCHEMA"],$table_gtab[$atid],null,1),1);
 	while(odbc_fetch_row($rs)) {
-		$fieldsp_name = trim(strtoupper(odbc_result($rs, "COLUMN_NAME")));
+		$fieldsp_name = trim(lmb_strtoupper(odbc_result($rs, "COLUMN_NAME")));
 		$result_fieldspecs[$fieldsp_name]["precision"] = odbc_result($rs, "PRECISION");
 		$result_fieldspecs[$fieldsp_name]["scale"] = odbc_result($rs, "SCALE");
 		$result_fieldspecs[$fieldsp_name]["type_name"] = odbc_result($rs, "TYPE_NAME");
@@ -976,7 +976,7 @@ if($table_gtab[$bzm]) {
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$bzm1 = 1;
 	while(odbc_fetch_row($rs, $bzm1)) {
-		$fieldsp_name = strtoupper(odbc_result($rs, "FIELD_NAME"));
+		$fieldsp_name = lmb_strtoupper(odbc_result($rs, "FIELD_NAME"));
 		$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] = odbc_result($rs, "FIELD_ID");
 		$result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1] = $fieldsp_name;
 		$result_fieldtype[$table_gtab[$bzm]]["beschreibung_feld"][$bzm1] = odbc_result($rs, "BESCHREIBUNG");

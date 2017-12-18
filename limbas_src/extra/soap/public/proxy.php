@@ -85,7 +85,7 @@ function freeCache($path){
 
 function getHeaderValues($header){
 
-	if(! strpos($header[0],"200")){
+	if(! lmb_strpos($header[0],"200")){
 		header($header[0],true);
 		exit;
 	}

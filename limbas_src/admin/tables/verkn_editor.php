@@ -498,9 +498,9 @@ function rec_verknpf_tabs($gtabid,$verkntab){
 			$recmd5[] = $gfield[$gtabid]["md5tab"][$key];
 
 			if($gfield[$gtabid]["verkntabletype"][$key] == 1){
-				echo "</td><td style=\"color:blue;cursor:pointer\" OnCLick=\"document.getElementById('relation_preview').value='".$gtab["table"][$gtabid].".ID = ".strtoupper($gfield[$gtabid]["md5tab"][$key]).".ID \\nAND \\n".strtoupper($gfield[$gtabid]["md5tab"][$key]).".VERKN_ID = ".$gtab["table"][$gfield[$gtabid]["verkntabid"][$key]].".ID';\">".$gtab["desc"][$gtabid]."</td><td><i class=\"lmb-icon lmb-long-arrow-right\"></i></td><td>".$gtab["desc"][$gfield[$gtabid]["verkntabid"][$key]]."</td></tr>";
+				echo "</td><td style=\"color:blue;cursor:pointer\" OnCLick=\"document.getElementById('relation_preview').value='".$gtab["table"][$gtabid].".ID = ".lmb_strtoupper($gfield[$gtabid]["md5tab"][$key]).".ID \\nAND \\n".lmb_strtoupper($gfield[$gtabid]["md5tab"][$key]).".VERKN_ID = ".$gtab["table"][$gfield[$gtabid]["verkntabid"][$key]].".ID';\">".$gtab["desc"][$gtabid]."</td><td><i class=\"lmb-icon lmb-long-arrow-right\"></i></td><td>".$gtab["desc"][$gfield[$gtabid]["verkntabid"][$key]]."</td></tr>";
 			}else{
-				echo "</td><td style=\"color:blue;cursor:pointer\" OnCLick=\"document.getElementById('relation_preview').value='".$gtab["table"][$gtabid].".ID = ".strtoupper($gfield[$gtabid]["md5tab"][$key]).".ID \\nAND \\n".strtoupper($gfield[$gtabid]["md5tab"][$key]).".VERKN_ID = ".$gtab["table"][$gfield[$gtabid]["verkntabid"][$key]].".ID';\">".$gtab["desc"][$gtabid]."</td><td><i class=\"lmb-icon lmb-long-arrow-left\"></i></td><td>".$gtab["desc"][$gfield[$gtabid]["verkntabid"][$key]]."</td></tr>";
+				echo "</td><td style=\"color:blue;cursor:pointer\" OnCLick=\"document.getElementById('relation_preview').value='".$gtab["table"][$gtabid].".ID = ".lmb_strtoupper($gfield[$gtabid]["md5tab"][$key]).".ID \\nAND \\n".lmb_strtoupper($gfield[$gtabid]["md5tab"][$key]).".VERKN_ID = ".$gtab["table"][$gfield[$gtabid]["verkntabid"][$key]].".ID';\">".$gtab["desc"][$gtabid]."</td><td><i class=\"lmb-icon lmb-long-arrow-left\"></i></td><td>".$gtab["desc"][$gfield[$gtabid]["verkntabid"][$key]]."</td></tr>";
 			}
 			
 			rec_verknpf_tabs($gfield[$gtabid]["verkntabid"][$key],$verkntab);

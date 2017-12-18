@@ -30,9 +30,9 @@ $gtabid = 0;
 if($inp_create){
 	if($inp_from AND $inp_to AND $inp_title AND convert_date($inp_from) AND convert_date($inp_to) AND dateToStamp($inp_from) < dateToStamp($inp_to)){
 		$NEXTID = next_db_id("KALENDER");
-		$inp_title = str_replace("''","'",substr($inp_title,0,179));
-		$inp_desc = str_replace("''","'",substr($inp_desc,0,1999));
-		$inp_color = str_replace("''","'",substr($inp_color,0,7));
+		$inp_title = str_replace("''","'",lmb_substr($inp_title,0,179));
+		$inp_desc = str_replace("''","'",lmb_substr($inp_desc,0,1999));
+		$inp_color = str_replace("''","'",lmb_substr($inp_color,0,7));
 		if($inp_alert){$inp_alert = LMB_DBDEF_TRUE;}else{$inp_alert = LMB_DBDEF_FALSE;}
 		if(!$inp_typ){$inp_typ = "0";}
 		if(!$gtabid){$gtabid = "0";}
@@ -44,7 +44,7 @@ if($inp_create){
 		
 		# --- Anzahl Termnine in Datensatz schreiben ------
 		if($type == "tab" AND $where){
-			$sqlquery = "SELECT COUNT(ID) ANZAHL FROM KALENDER WHERE ".substr($where,4,99);
+			$sqlquery = "SELECT COUNT(ID) ANZAHL FROM KALENDER WHERE ".lmb_substr($where,4,99);
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 			$anzahl = odbc_result($rs,"ANZAHL");
@@ -60,12 +60,12 @@ if($inp_create){
 
 # --- Termin ändern ------
 if($inp_change AND $ID){
-	$inp_from_stamp = date("Y.m.d",mktime(substr(convert_date($inp_from_),11,2),substr(convert_date($inp_from),14,2),0,substr(convert_date($inp_from),5,2),substr(convert_date($inp_from),8,2),substr(convert_date($inp_from),0,4)));
-	$inp_to_stamp = date("Y.m.d",mktime(substr(convert_date($inp_to),11,2),substr(convert_date($inp_to),14,2),0,substr(convert_date($inp_to),5,2),substr(convert_date($inp_to),8,2),substr(convert_date($inp_to),0,4)));
+	$inp_from_stamp = date("Y.m.d",mktime(lmb_substr(convert_date($inp_from_),11,2),lmb_substr(convert_date($inp_from),14,2),0,lmb_substr(convert_date($inp_from),5,2),lmb_substr(convert_date($inp_from),8,2),lmb_substr(convert_date($inp_from),0,4)));
+	$inp_to_stamp = date("Y.m.d",mktime(lmb_substr(convert_date($inp_to),11,2),lmb_substr(convert_date($inp_to),14,2),0,lmb_substr(convert_date($inp_to),5,2),lmb_substr(convert_date($inp_to),8,2),lmb_substr(convert_date($inp_to),0,4)));
 	if($inp_from AND $inp_to AND $inp_title AND $ID AND convert_date($inp_from) AND convert_date($inp_to) AND $inp_from_stamp <= $inp_to_stamp){
-		$inp_title = str_replace("''","'",substr($inp_title,0,179));
-		$inp_desc = str_replace("''","'",substr($inp_desc,0,1999));
-		$inp_color = str_replace("''","'",substr($inp_color,0,7));
+		$inp_title = str_replace("''","'",lmb_substr($inp_title,0,179));
+		$inp_desc = str_replace("''","'",lmb_substr($inp_desc,0,1999));
+		$inp_color = str_replace("''","'",lmb_substr($inp_color,0,7));
 		if($inp_alert){$inp_alert = LMB_DBDEF_TRUE;}else{$inp_alert = LMB_DBDEF_FALSE;}
 		if(!$gtabid){$gtabid = "0";}
 		if(!$field_id){$field_id = "0";}
@@ -86,7 +86,7 @@ if($inp_del AND $ID){
 	
 	# --- Anzahl Termnine in Datensatz schreiben ------
 	if($type == "tab" AND $where){
-		$sqlquery = "SELECT COUNT(ID) AS ANZAHL FROM KALENDER WHERE ".substr($where,4,99);
+		$sqlquery = "SELECT COUNT(ID) AS ANZAHL FROM KALENDER WHERE ".lmb_substr($where,4,99);
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		$anzahl = odbc_result($rs,"ANZAHL");

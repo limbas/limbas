@@ -60,7 +60,7 @@ if($del_file AND $LID){
 
 # ---------------- Ordner kopieren -----------------------
 if($LID AND $copy_file){
-	$copy_file = substr($copy_file,1,5000);
+	$copy_file = lmb_substr($copy_file,1,5000);
 	$copy_file = explode(";",$copy_file);
 	if(!copy_dir($copy_file,$LID,0,0,0)){
 		lmb_alert($lang[56]);

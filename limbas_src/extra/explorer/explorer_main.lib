@@ -166,7 +166,7 @@ function explFolders($LID,$fid,$MID,$level,&$ffilter,$redirect=null,$rootlevel=n
 	if($ffilter["page"][$LID] <= 1 AND !$MID AND $ffilter["viewmode"][$LID] != 2){
 		if(($level OR $level == '0') AND $LID != $gfield[$f_tabid]["file_level"][$f_fieldid] AND $level != $rootlevel){
 			if($redirect){$redirect_ = "LmExt_Ex_SelectFolder(".$level.",".$redirect.")";}else{$redirect_ = "LmEx_select_folder(event,'$level')";}
-			echo "<TR class=\"gtabBodyTR\" OnClick=\"$redirect_;\" OnMouseOver=\"this.style.backgroundColor='".$farbschema["WEB6"]."'\" OnMouseOut=\"this.style.backgroundColor='".$farbschema["WEB8"]."'\"><TD STYLE=\"cursor:pointer;\" COLSPAN=\"$colspan\"><< ...</TD></TR>";
+			echo "<TR class=\"gtabBodyTR\" style=\"background-color:".$farbschema["WEB8"].";\" OnClick=\"$redirect_;\" OnMouseOver=\"this.style.backgroundColor='".$farbschema["WEB6"]."'\" OnMouseOut=\"this.style.backgroundColor='".$farbschema["WEB8"]."'\"><TD class=\"gtabBodyTD\" STYLE=\"cursor:pointer;\" COLSPAN=\"$colspan\"><i class=\"lmb-icon lmb-folder-back\"></i></TD></TR>";
 		}
 		$key2 = 1;
 		foreach($filestruct["id"] as $key => $value){
@@ -210,7 +210,7 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 	if($ffile["res_viewcount"]){
 		$key2 = 1;
 		foreach($ffile["id"] as $key => $value){
-			echo "<TR class=\"gtabBodyTR\" ID=\"elline_d_".$LID."_".$key."\" TITLE=\"".$ffile["url"][$key]."\"
+			echo "<TR class=\"gtabBodyTR\" ID=\"elline_d_".$LID."_".$key."\" TITLE=\"".$ffile["url"][$key]."\" style=\"cursor:context-menu\" 
 			OnClick=\"LmEx_activate_file(event,'$key','".preg_replace("/\'\"\//","",$ffile["name"][$key])."','$LID','d')\" 
 			ondblclick=\"LmEx_open_details(event,$value,$LID,$tabid_files,'".$gtab["tab_view_form"][$tabid_files]."','".$gformlist[$tabid_files]["dimension"][$gtab["tab_view_form"][$tabid_files]]."')\"
 			OnMouseOver=\"LmEx_explorerLineOver(this,$key,1,'$LID','d')\" OnMouseOut=\"LmEx_explorerLineOver(this,$key,2,'$LID','d')\" 
@@ -354,20 +354,20 @@ function explFooter($LID,$fid,&$ffile,&$ffilter){
 	$maxpage = ceil($ffile["max_count"]/$ffilter["anzahl"][$LID]);
 	if($ffilter["page"][$LID] == 1){
 		echo "<TD class=\"gtabFooterTD\" NOWRAP style=\"width:10px;\"><i class=\"lmb-icon lmb-first\" STYLE=\"opacity:0.4;filter:Alpha(opacity=40);\" BORDER=\"0\" TITLE=\"$lang[1294]\"></i></TD>\n";
-		echo "<TD class=\"gtabFooterTD\" NOWRAP style=\"width:10px;\"><i class=\"lmb-icon lmb-previous\" STYLE=\"opacity:0.4;filter:Alpha(opacity=40);\" BORDER=\"0\" TITLE=\"$lang[1296]\"></i></TD>\n";
+		echo "<TD class=\"gtabFooterTD\" NOWRAP style=\"width:10px;\"><i class=\"lmb-icon lmb-previous\" STYLE=\"opacity:0.4;filter:Alpha(opacity=40);font-size:1.5em;\" BORDER=\"0\" TITLE=\"$lang[1296]\"></i></TD>\n";
 	}else{
 		echo "<TD class=\"gtabFooterTD\" NOWRAP style=\"width:10px;\"><i class=\"lmb-icon lmb-first\" STYLE=\"cursor:pointer;\" BORDER=\"0\" TITLE=\"$lang[1294]\" OnClick=\"document.form1.ffilter_page.value='1';LmEx_send_form(1,1);\"></i></TD>\n";
-		echo "<TD class=\"gtabFooterTD\" NOWRAP style=\"width:10px;\"><i class=\"lmb-icon lmb-previous\" STYLE=\"cursor:pointer;\" BORDER=\"0\" TITLE=\"$lang[1296]\" OnClick=\"document.form1.ffilter_page.value='".($ffilter["page"][$LID] - 1)."';LmEx_send_form(1,1);\"></i></TD>\n";
+		echo "<TD class=\"gtabFooterTD\" NOWRAP style=\"width:10px;\"><i class=\"lmb-icon lmb-previous\" STYLE=\"cursor:pointer;font-size:1.5em;\" BORDER=\"0\" TITLE=\"$lang[1296]\" OnClick=\"document.form1.ffilter_page.value='".($ffilter["page"][$LID] - 1)."';LmEx_send_form(1,1);\"></i></TD>\n";
 	}
-	echo "<TD NOWRAP style=\"width:30px;\"><INPUT TYPE=\"TEXT\" STYLE=\"width:30px;height:20px;font-size:9;padding:0px;text-align:center;\" NAME=\"ffilter_page\" VALUE=\"".$ffilter["page"][$LID]."/".(ceil($ffile["max_count"]/$ffilter["anzahl"][$LID]))."\"></TD>\n";
+	echo "<TD NOWRAP style=\"width:30px;\"><INPUT TYPE=\"TEXT\" STYLE=\"width:60px;padding:0px;text-align:center;\" NAME=\"ffilter_page\" VALUE=\"".$ffilter["page"][$LID]."/".(ceil($ffile["max_count"]/$ffilter["anzahl"][$LID]))."\"></TD>\n";
 	if($ffilter["page"][$LID] == $maxpage OR !$maxpage){
-		echo "<TD class=\"gtabFooterTD\" NOWRAP style=\"width:10px;\"><i class=\"lmb-icon lmb-next\" STYLE=\"opacity:0.4;filter:Alpha(opacity=40);\" BORDER=\"0\" TITLE=\"$lang[1297]\"></i></TD>\n";
+		echo "<TD class=\"gtabFooterTD\" NOWRAP style=\"width:10px;\"><i class=\"lmb-icon lmb-next\" STYLE=\"opacity:0.4;filter:Alpha(opacity=40);font-size:1.5em;\" BORDER=\"0\" TITLE=\"$lang[1297]\"></i></TD>\n";
 		echo "<TD class=\"gtabFooterTD\" NOWRAP style=\"width:10px;\"><i class=\"lmb-icon lmb-last\" STYLE=\"opacity:0.4;filter:Alpha(opacity=40);\" BORDER=\"0\" TITLE=\"$lang[1295]\"></i></TD>\n";
 	}else{
-		echo "<TD class=\"gtabFooterTD\" NOWRAP style=\"width:10px;\"><i class=\"lmb-icon lmb-next\" STYLE=\"cursor:pointer;\" BORDER=\"0\" TITLE=\"$lang[1297]\" OnClick=\"document.form1.ffilter_page.value='".($ffilter["page"][$LID] + 1)."';LmEx_send_form(1,1);\"></i></TD>\n";
+		echo "<TD class=\"gtabFooterTD\" NOWRAP style=\"width:10px;\"><i class=\"lmb-icon lmb-next\" STYLE=\"cursor:pointer;font-size:1.5em;\" BORDER=\"0\" TITLE=\"$lang[1297]\" OnClick=\"document.form1.ffilter_page.value='".($ffilter["page"][$LID] + 1)."';LmEx_send_form(1,1);\"></i></TD>\n";
 		echo "<TD class=\"gtabFooterTD\" NOWRAP style=\"width:10px;\"><i class=\"lmb-icon lmb-last\" STYLE=\"cursor:pointer;\" BORDER=\"0\" TITLE=\"$lang[1295]\" OnClick=\"document.form1.ffilter_page.value='".$maxpage."';LmEx_send_form(1,1);\"></i></TD>\n";
 	}
-	echo "<TD NOWRAP>&nbsp;<B style=\"color:green;\">|</B>&nbsp;$lang[96]&nbsp;</TD><TD><INPUT TYPE=\"TEXT\" STYLE=\"width:30px;height:20px;font-size:9px;padding:0px;text-align:center;\" VALUE=\"".$ffilter["anzahl"][$fid]."\" NAME=\"ffilter_anzahl\" MAXLENGTH=\"3\"></TD><TD>&nbsp;$lang[88]</TD>\n";
+	echo "<TD NOWRAP>&nbsp;<B style=\"color:green;\">|</B>&nbsp;$lang[96]&nbsp;</TD><TD><INPUT TYPE=\"TEXT\" STYLE=\"width:30px;padding:0px;text-align:center;\" VALUE=\"".$ffilter["anzahl"][$fid]."\" NAME=\"ffilter_anzahl\" MAXLENGTH=\"3\"></TD><TD>&nbsp;$lang[88]</TD>\n";
 	echo "<TD NOWRAP style=\"color:#707070\">&nbsp;&nbsp;&nbsp;(".$ffile["need_time"]." sec.)</TD>";
 	echo "</TR><TR><TD STYLE=\"height:3px;\"></TD></TR></TABLE>";
 	echo "</TD></TR></TABLE></div>\n";
@@ -399,9 +399,9 @@ function explPicShow(&$ffile,$gtabid,$field_id,$ID,$gformid,$formid,$picshow){
 	}
 
 	echo "<TR><TD><TABLE CELLSPACING=\"0\" CELLPADDING=\"0\"><TR><TD>&nbsp;</TD><TD><i TITLE=\"$lang[857]\" class=\"lmb-icon lmb-first\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3',$ID,'','','',1,'".$formid."','','','')\"></i></TD>";
-	echo "<TD><i TITLE=\"$lang[860]\" class=\"lmb-icon lmb-previous\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3',$ID,'','','',".($i-1).",'".$formid."','','','')\"></i></TD>";
-	echo "<TD><INPUT TYPE=\"TEXT\" NAME=\"ExtFMPicShowCount_".$gtabid."_".$field_id."\" READONLY STYLE=\"width:30px;height:13px;font-size:8;text-align:center\" VALUE=\"$i\"></TD>";
-	echo "<TD><i TITLE=\"$lang[859]\" class=\"lmb-icon lmb-next\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3',$ID,'','','',".($i+1).",'".$formid."','','','')\"></i></TD>";
+	echo "<TD><i TITLE=\"$lang[860]\" class=\"lmb-icon lmb-previous\" STYLE=\"cursor:pointer;font-size:1.5em;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3',$ID,'','','',".($i-1).",'".$formid."','','','')\"></i></TD>";
+	echo "<TD><INPUT TYPE=\"TEXT\" NAME=\"ExtFMPicShowCount_".$gtabid."_".$field_id."\" READONLY STYLE=\"width:60px;text-align:center\" VALUE=\"$i\"></TD>";
+	echo "<TD><i TITLE=\"$lang[859]\" class=\"lmb-icon lmb-next\" STYLE=\"cursor:pointer;font-size:1.5em;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3',$ID,'','','',".($i+1).",'".$formid."','','','')\"></i></TD>";
 	echo "<TD><i TITLE=\"$lang[858]\" class=\"lmb-icon lmb-last\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3',$ID,'','','','$count','".$formid."','','','')\"></i></TD><TD width=90%></TD></TR></TABLE></TD></TR>";
 	echo "<TR><TD COLSPAN=\"6\" nowrap>&nbsp;<IMG SRC=\"".$pic."\" style=\"border:1px solid black;width:".$width."px;height:".$height."px;\" TITLE=\"".$ffile["name"][$cfid]."\"></TD></TR>";
 }
@@ -442,7 +442,7 @@ function explMainContent($ID,$LID,$MID,$fid,$typ,$level,$file_url,&$ffile,&$ffil
 	global $lang;
 	
 	if($typ){
-		echo "<table class=\"lmbfringeGtabBody\" id=\"GtabBodyTable\" cellpadding=\"0\" cellspacing=\"1\" border=\"0\" width=\"100%\">";
+		echo "<table class=\"lmbfringeGtabBody\" id=\"GtabBodyTable\" cellpadding=\"0\" cellspacing=\"1\" border=\"0\">";
 		
 		explSearch($LID,$fid,$ffilter);
 		explHeader($LID,$fid,$ffilter);

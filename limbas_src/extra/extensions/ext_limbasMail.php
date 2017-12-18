@@ -166,7 +166,7 @@ class limbasMail extends olMail{
 		$to = $this->_header_addr_decode($hdr[0]->to);
 		$subject = (isset($hdr[0]->subject)) ? $this->_qpdecode($hdr[0]->subject) : '';
 		$date = date("d.m.Y H:i:s", strtotime($hdr[0]->date));
-		$charset = strtoupper($this->_get_structure_param($s->parameters, 'charset'));
+		$charset = lmb_strtoupper($this->_get_structure_param($s->parameters, 'charset'));
 
 		if ($charset=='')
 			$charset = "UTF-8";

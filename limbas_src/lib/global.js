@@ -182,7 +182,7 @@ function limbasSetCenterPos(el){
 function limbasWaitsymbol(evt,inlay,hide){
 	
 	if(hide){
-		document.getElementById("limbasWaitsymbol").style.display='none';
+                $('#limbasWaitsymbol').hide();
 		return;
 	}
 	
@@ -235,7 +235,7 @@ function lmb_iniWYSIWYG(elname,params){
 
 /* --- Phone ----------------------------------- */
 function openPhone_(number) {
-	alert("no phone is installed!");
+        ajaxGet(null, "main_dyns.php", "dialNumber", {"phoneNr": number}, "ajaxEvalScript");	
 }
 
 function openPhone_skype(number) {
@@ -879,8 +879,6 @@ function lmb_datepicker(event,showsat,formname,value,dateformat,left,selected) {
 	var showtime = false;
 	var timeformat = '';
 	
-	if(!left){left = -150;}
-	
 	pos = dateformat.indexOf(':')
 	if (pos > 0){
 		timeformat = dateformat.substr(pos-2,8);
@@ -896,6 +894,9 @@ function lmb_datepicker(event,showsat,formname,value,dateformat,left,selected) {
 	}else if(showsat){
 		var sel = document.getElementById(showsat);
 	}
+        
+        // set to width of contextmenu
+        if(!left){left = $(sel).outerWidth();}
 	
 	if(typeof(formname) == 'object'){
 		cal_inputel = formname;
@@ -917,8 +918,8 @@ function lmb_datepicker(event,showsat,formname,value,dateformat,left,selected) {
         $.datepicker.regional['de'].prevText = '';
         $.datepicker.regional['de'].nextText = '';
         $.datepicker.setDefaults($.datepicker.regional['de']);
-        
-    if(timeformat){
+
+        if(timeformat){
 
 		$(cal_inputel).datetimepicker({
 			changeMonth: true,
@@ -1280,11 +1281,11 @@ var validEnter = false;
  * @param display (bool) use display instead visibility 
  * @param abs (bool) force absolute position (ignoring relative parent elements) to find XY position
  * @param center (bool) center element to window
- * @param center (puttotop) cut and paste child to body
+ * @param puttotop (bool) cut and paste child to body
 */
 function limbasDivShow(el,parent,child,slide,display,abs,center,puttotop)
 {
-    	validEnter = false;
+    validEnter = false;
 	activ_menu=1;
 	if(el || parent){limbasDivClose(parent); }
 
@@ -1293,7 +1294,8 @@ function limbasDivShow(el,parent,child,slide,display,abs,center,puttotop)
 		document.getElementById(child).style.display ='none';
 		document.getElementById(child).style.visibility ='visible';
 	}
-
+        
+    var parel;
 	if(parent !="" && parent != null)
 	{
 		//!="string")
@@ -1361,14 +1363,50 @@ function limbasDivShow(el,parent,child,slide,display,abs,center,puttotop)
 //		document.getElementById(child).style.left = offsetleft;
 //	}
 
-	// use jquery
-	if(center){
-		$('#'+child).show('fast',limbasSetCenterPos(childel));
+        // measure size of document before opening child
+        var oldWidth = $(document).width();
+        var oldHeight = $(document).height();
+        $('#'+child).show();
+                
+        // functionality to open child on the left of parent if too less space
+        // TODO doesnt work if typeof(parent)=="object"
+        var offset;
+        if(parel && !center && oldWidth < $(document).width()) {
+            $('#'+child).css('visibility', 'hidden');
+            
+            // move it by its width to the left of the parent
+            offset = $('#'+child).offset();
+            offset.left = $(parel).offset().left - $('#'+child).outerWidth(true) + 8; // 8px to get overlap effect
+            $('#'+child).offset(offset);
+            
+            // do it twice to also include width changes due to first movement
+            offset.left = $(parel).offset().left - $('#'+child).outerWidth(true) + 8;
+            $('#'+child).offset(offset);
+            
+            $('#'+child).css('visibility', 'visible');
+        }        
+        if(parel && !center && oldHeight < $(document).height()) {
+            $('#'+child).css('visibility', 'hidden');
+            
+            // move it by its height upwards, maintain baseline with parent contextmenu entry
+            offset = $('#'+child).offset();
+            offset.top -= $('#'+child).outerHeight(true) - limbasGetElementHeight(typeof(el)=="string" ? document.getElementById(el) : el);
+            $('#'+child).offset(offset);
+            
+            // TODO maybe do it twice here, too
+            
+            $('#'+child).css('visibility', 'visible');
+        }
+        $('#'+child).hide();
+
+        // open with animation
+        if(center){
+		$('#'+child).show('fast', limbasSetCenterPos(childel));
 	}else{
 		$('#'+child).show('fast');
 	}
-	
-	//document.getElementById(child).style.visibility = "visible";
+
+        //document.getElementById(child).style.visibility = "visible";
 	//if(center){limbasSetCenterPos(document.getElementById(child));}
 	//if(display){document.getElementById(child).style.display ='';}
 }
@@ -1535,15 +1573,23 @@ function decode_utf8(value) {
 		c = value.charCodeAt(i);
 		if (c<128) {
 			plaintext += String.fromCharCode(c);
-			i++;}
-			else if((c>191) && (c<224)) {
-				c2 = value.charCodeAt(i+1);
+			i++;
+		}else if((c>191) && (c<224)) {
+			c2 = value.charCodeAt(i+1);
+			
+			// ÄÖÜ Sonderfall - wird nicht von Funktion unterstützt
+			if(c2 == 339){plaintext += String.fromCharCode(220);}
+			else if(c2 == 8211){plaintext += String.fromCharCode(214);}
+			else if(c2 == 8222){plaintext += String.fromCharCode(196);}
+			else{
 				plaintext += String.fromCharCode(((c&31)<<6) | (c2&63));
-				i+=2;}
-				else {
-					c2 = value.charCodeAt(i+1); c3 = value.charCodeAt(i+2);
-					plaintext += String.fromCharCode(((c&15)<<12) | ((c2&63)<<6) | (c3&63));
-					i+=3;}
+			}
+			i+=2;
+		}else {
+			c2 = value.charCodeAt(i+1); c3 = value.charCodeAt(i+2);
+			plaintext += String.fromCharCode(((c&15)<<12) | ((c2&63)<<6) | (c3&63));
+			i+=3;
+		}
 	}
 	return plaintext;
 }
@@ -1697,9 +1743,9 @@ function lmbAjax_showUserGroupsSearch(evt,value,ID,gtabid,fieldid,usefunction,pr
 }
 
 function lmbAjax_showUserGroupsSearchPost(result,evt,typ,usefunction,prefix){
-	document.getElementById(prefix+usefunction+'user').style.visibility = 'hidden';
-	document.getElementById(prefix+usefunction+'group').style.visibility = 'hidden';
-	document.getElementById(prefix+usefunction+typ).style.visibility = 'visible';
+	document.getElementById(prefix+usefunction+'user').style.display = 'none';
+	document.getElementById(prefix+usefunction+'group').style.display = 'none';
+	document.getElementById(prefix+usefunction+typ).style.display = '';
 	document.getElementById(prefix+usefunction+typ).innerHTML = result;
 	limbasDivCloseTab.push(prefix+usefunction+typ);
 }

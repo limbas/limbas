@@ -103,8 +103,8 @@ if($syncronize){
 		$definition = implode(LMB_DBFUNC_SPLIT_TRIGGER,$definition);
 		$definition = trim($definition);
 
-		$desc = strtoupper($triggerlist["event"][$tkey])."_".$triggerlist["tablename"][$tkey];
-		$sqlquery0 = "select ID from LMB_TRIGGER where lower(NAME) = '".strtolower(parse_db_string($trigerName,25))."' AND LOWER(TABLE_NAME) = '".strtolower($triggerlist["tablename"][$tkey])."' AND LOWER(TYPE) = '".strtolower($triggerlist["event"][$tkey])."'";
+		$desc = lmb_strtoupper($triggerlist["event"][$tkey])."_".$triggerlist["tablename"][$tkey];
+		$sqlquery0 = "select ID from LMB_TRIGGER where lower(NAME) = '".lmb_strtolower(parse_db_string($trigerName,25))."' AND LOWER(TABLE_NAME) = '".lmb_strtolower($triggerlist["tablename"][$tkey])."' AND LOWER(TYPE) = '".lmb_strtolower($triggerlist["event"][$tkey])."'";
 		
 		$rs0 = odbc_exec($db,$sqlquery0);
 		if(!odbc_fetch_row($rs0,1)){

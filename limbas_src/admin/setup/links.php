@@ -148,7 +148,7 @@ function set_subgroup(val){
 	            	echo "<SELECT NAME=\"link_ext[".$result_links["id"][$bzm]."]\" style=\"width:100px;\" onchange=\"document.form1.change_link_".$result_links["id"][$bzm].".value='1'\"><OPTION>";
 					foreach ($extfiles["name"] as $key1 => $filename){
 						if($extfiles["typ"][$key1] == "file" AND $extfiles["ext"][$key1] == "ext"){
-							$path = substr($extfiles["path"][$key1],strlen($umgvar["pfad"]),100);
+							$path = lmb_substr($extfiles["path"][$key1],lmb_strlen($umgvar["pfad"]),100);
 							if($result_links[ext][$bzm] == $path.$filename){$selected = "SELECTED";}else{$selected = "";}
 							echo "<OPTION VALUE=\"".$path.$filename."\" $selected>".str_replace("/EXTENSIONS/","",$path).$filename;
 						}

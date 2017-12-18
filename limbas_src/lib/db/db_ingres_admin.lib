@@ -59,13 +59,13 @@ function dbq_2($p){
 				";
 	
 	if($p[1]){
-		$sql .= " AND LOWER(base_name) = '".strtolower($p[1])."'";
+		$sql .= " AND LOWER(base_name) = '".lmb_strtolower($p[1])."'";
 	}
 	if($p[4]){
-		$sql .= " AND LOWER(attname) = '".strtolower($p[4])."'";
+		$sql .= " AND LOWER(attname) = '".lmb_strtolower($p[4])."'";
 	}
 	if($p[2]){
-		$sql .= " AND LOWER(index_name) = '".strtolower($p[2])."'";
+		$sql .= " AND LOWER(index_name) = '".lmb_strtolower($p[2])."'";
 	}
 	if($p[3] == 1){
 		$sql .= "and (constraint_type != 'P' OR constraint_type is null)";
@@ -234,7 +234,7 @@ function dbf_3($p){
 		AND iirules.system_use = 'U'
 		 	";
 	if($p[1]){
-		$sql .= " AND LOWER(rule_name) LIKE '".strtolower($p[1])."'";
+		$sql .= " AND LOWER(rule_name) LIKE '".lmb_strtolower($p[1])."'";
 	}
 	
 	$rs = odbc_exec($db,$sql);
@@ -322,7 +322,7 @@ function dbq_12($p){
 		WHERE 
 			table_owner = '".$p[0]."'";
 	if($p[1]){
-		$qu .= " AND lower(table_name) = '".strtolower($p[1])."'";
+		$qu .= " AND lower(table_name) = '".lmb_strtolower($p[1])."'";
 	}
 	return $qu;
 }
@@ -334,7 +334,7 @@ function dbq_12($p){
  * @return sql string
  */
 function dbq_19($p){
-	if(stripos($p[1],"CREATE VIEW") !== false){
+	if(lmb_stripos($p[1],"CREATE VIEW") !== false){
 		$qu = $p[1];
 	}else{
 		$qu = "CREATE VIEW ".$p[0]." AS (".rtrim(trim($p[1]),";").")";
@@ -425,9 +425,9 @@ function dbf_5($p,$mode=null){
 		}
 	}
 
-	$sql = "SELECT * FROM IICOLUMNS WHERE TABLE_OWNER = '".$p[0]."' AND LOWER(TABLE_NAME) = '".strtolower($p[1])."'";
+	$sql = "SELECT * FROM IICOLUMNS WHERE TABLE_OWNER = '".$p[0]."' AND LOWER(TABLE_NAME) = '".lmb_strtolower($p[1])."'";
 	if($p[2]){
-		$sql .= " AND LOWER(COLUMN_NAME) = '".strtolower($p[2])."'";
+		$sql .= " AND LOWER(COLUMN_NAME) = '".lmb_strtolower($p[2])."'";
 	}
 	$rs = odbc_exec($db,$sql);
 	while(odbc_fetch_row($rs)) {

@@ -419,19 +419,19 @@ function jump_to_addfrom(KEY) {
 	}
 }
 
-//----------------- Neuen Datensatz auf Inhalt prüfen -------------------
+//---------- Returns confirmation question if the dataset is empty, used in onbeforeunload event ------------
 function check_new() {
 	if(jsvar){
 	if(jsvar["action"] == "gtab_neu"){
 		if(document.form1.history_fields.value == ''){
-			alert(jsvar["lng_1318"]);
+                        return jsvar["lng_1318"];
 		}
 	}}
 }
 
-//----------------- Änderungen speichern falls vergessen -------------------
-function check_change() {
-	if(jsvar){
+//---------- Returns confirmation question if changes to the dataset have not been saved, used in onbeforeunload event ------------
+function check_change() {        
+        if(jsvar){
 	if(!document.form1){return;}
 	if(document.form1.history_fields.value != '' && document.form1.change_ok.value != 1){
 		var history_fields = document.form1.history_fields.value.split(";");
@@ -454,11 +454,8 @@ function check_change() {
 			}
 		}
 		var confirm_text = jsvar["lng_1424"]+"\n"+cf;
-		var save = confirm(confirm_text);
-		if(save){
-			document.form1.change_ok.value='1'; document.form1.action.value='gtab_change'; send_form('1');
-		}
-	}}
+                return confirm_text;
+	}}        
 }
 
 //----------------- Infobox Feldtyp -------------------
@@ -519,9 +516,9 @@ function gtabSetTablePosition(reset,scrolltoY){
 		document.title = document.getElementsByName(mfn)[0].value;
 	}        
 
-        lmb_setAutoHeight(document.getElementById("GtabTableBody"), 20 /* px margin-bottom */, reset);
+    lmb_setAutoHeight(document.getElementById("GtabTableBody"), 20 /* px margin-bottom */, reset);
 
-        document.getElementById("GtabTableBody").scrollTop=scrolltoY;
+    document.getElementById("GtabTableBody").scrollTop=scrolltoY;
 	
 	if(!parent.main && document.form1.lmbSbmClose){document.form1.lmbSbmClose.style.display='';}
 }

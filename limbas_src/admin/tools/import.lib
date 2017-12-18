@@ -44,7 +44,7 @@ function import_parse_uploadfile($txt_terminate=',',$txt_calculate=100,$txt_encl
 	if($_FILES["filetxt"]["tmp_name"]){$copy = copy ($_FILES["filetxt"]["tmp_name"], $file_origin);}
 	
 	# unzip file if needed
-	$ext = substr($file_origin,strrpos($file_origin,".")+1);
+	$ext = lmb_substr($file_origin,lmb_strrpos($file_origin,".")+1);
 	if($ext == 'zip'){
 		exec('unzip -p '.$file_origin.' > '.$pfad.'txtimport.txt');
 	}elseif($ext == 'gz'){
@@ -56,7 +56,7 @@ function import_parse_uploadfile($txt_terminate=',',$txt_calculate=100,$txt_encl
 	$file_origin = $pfad.'txtimport.txt';
 	
 	# get table name
-	$tabname = substr($filename,0,strrpos($filename,"."));
+	$tabname = lmb_substr($filename,0,lmb_strrpos($filename,"."));
 	$tabname = parse_db_syntax($tabname,1);
 
 
@@ -89,7 +89,7 @@ function import_parse_uploadfile($txt_terminate=',',$txt_calculate=100,$txt_encl
 					$cellval = trim($cellval,"\"");
 				}
 
-				if($e["length"][$i] < strlen($cellval)){$e["length"][$i] = strlen($cellval);}
+				if($e["length"][$i] < lmb_strlen($cellval)){$e["length"][$i] = lmb_strlen($cellval);}
 				# Ganzzahlen
 				if(preg_match("/^[0-9]{0,18}$/",$cellval)){
 					$e["typ"][$i][] = 1;

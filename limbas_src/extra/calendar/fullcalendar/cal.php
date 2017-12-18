@@ -39,7 +39,7 @@ $fieldid = $gfield[$gtabid]["sort"][key($gfield[$gtabid]["sort"])];
 
 <script type='text/javascript'>
 
-<?
+<?php
 echo "
 jsvar['jqday'] = ['{$lang[873]}','{$lang[874]}','{$lang[875]}','{$lang[876]}','{$lang[877]}','{$lang[878]}','{$lang[879]}'];
 jsvar['jqmonth'] = ['{$lang[880]}','{$lang[881]}','{$lang[882]}','{$lang[883]}','{$lang[884]}','{$lang[885]}','{$lang[886]}','{$lang[887]}','{$lang[888]}','{$lang[889]}','{$lang[890]}','{$lang[891]}'];
@@ -257,19 +257,14 @@ EOD;
 <input type="hidden" name="cal_weekends" value="<?=$cal_weekends?>">
 <input type="hidden" name="filter_reset">
 
-
-
 <input type="text" id="hiddenfocus" style="width:1px;position:absolute;left:-100">
 
 <div class="lmbfringegtab" style="overflow:auto">
-    
-    <table cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;width:100%" class="GtabTableFringeHeader"><tbody><tr><td nowrap="" class="lmbGtabTabmenuActive" onclick="lmb_calReload(true,false)">
-                   <?php echo $gtab['desc'][$gtabid]; ?></td><td width="100%" class="lmbGtabTabmenuSpace"></td></tr></tbody></table>
+<table cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;width:100%" class="GtabTableFringeHeader"><tbody><tr><td nowrap="" class="lmbGtabTabmenuActive" onclick="lmb_calReload(true,false)">
+<?php echo $gtab['desc'][$gtabid]; ?></td><td width="100%" class="lmbGtabTabmenuSpace"></td></tr></tbody></table>
 
 <table width="99%"><tr><td valign="top" align="left" id="cal_searchFrameTD" style="width:230px;<?php $menu_setting=lmbGetMenuSetting();if(!$menu_setting["frame"]["cal"]){echo 'display:none';}?>">
-
 <div id="cal_searchFrame" style="<?php if(!$menu_setting["frame"]["cal"]){echo 'display:none';}?>">
-
 <div id="cal_datepicker" style="width:210px"></div>
 <br>
 <table id="extsearchtab" style="width:210px" cellpadding="2" cellspacing="0">
@@ -413,10 +408,39 @@ if($gfield[$gtabid]["md5tab"][$gtab['params1'][$gtabid]]){?>
 </table>
 </div>
 
-<div id="lmbAjaxContextmenu" class="lmbContextMenu" style="position:absolute;display:none;z-index:2004;" OnClick="activ_menu=1;"></div>
 <div id="lmbAjaxContainer" class="ajax_container" style="position:absolute;display:none;" OnClick="activ_menu=1;"></div>
 <div id="limbasAjaxGtabContainer" class="ajax_container" style="padding:1px;position:absolute;display:none;" onclick="activ_menu=1;"></div>
 <div id="lmbCalAjaxContainer" class="ajax_container" style="position:absolute;display:none;z-index:2003"></div>
+
+<div id="lmbAjaxContextmenu" class="lmbContextMenu" style="position:absolute;display:none;z-index:2004;" OnClick="activ_menu=1;">
+<?php 
+pop_menu();
+if($gtab["add"][$gtabid] AND $gtab["copy"][$gtabid]){pop_menu(0,'lmb_calCut(activeDiv,activeEvent)',$lang[2666],'','','lmb-icon-cus lmb-page-cut');}   # auschneiden
+if($gtab["edit"][$gtabid]){pop_menu(0,'lmb_calCopy(activeDiv,activeEvent)',$lang[817],'','','lmb-page-copy');}        # kopieren
+if($gtab["delete"][$gtabid]){pop_menu(0,"lmb_calDelete(event,$gtabid,activeEvent.id);",$lang[160],'','','lmb-icon-cus lmb-page-delete-fancy');}		# löschen
+pop_bottom();
+?>
+</div>
+
+<div id="lmbAjaxContextPaste" class="lmbContextMenu" style="position:absolute;display:none;z-index:2004;" OnClick="activ_menu=1;">
+<?php 
+pop_menu();
+if($gtab["add"][$gtabid] AND $gtab["copy"][$gtabid]){
+    echo '<div id="lmb_eventPaste">';
+    pop_menu(0,"lmb_calPaste(activeDate, activeRresource)",$lang[2667],'','','lmb-paste');
+    echo '</div>';
+}   # einfügen 
+pop_bottom();
+?>
+</div>
+
+
+
+
+
+
+
+
 
 <form action="main.php" method="post" name="form1" id ="form1" autocomplete="off">
 <input type="hidden" id="eventID" name="ID">

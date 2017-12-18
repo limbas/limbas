@@ -65,8 +65,8 @@ function arg_refresh($tab_id,$fieldid,$argument) {
 			$arg = explode("#", $argument);
 			
 			foreach($arg as $key => $value){
-				if(substr($arg[$key],0,1) == '*'){
-					$gf_id = substr($value,1,3);
+				if(lmb_substr($arg[$key],0,1) == '*'){
+					$gf_id = lmb_substr($value,1,3);
 					$gf_typ = $gfield[$tab_id]["field_type"][$gf_id];
 					$gf_dtyp = $gfield[$tab_id]["data_type"][$gf_id];
 					$gf_name = $gfield[$tab_id]["field_name"][$gf_id];
