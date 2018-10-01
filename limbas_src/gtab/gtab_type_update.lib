@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -52,11 +52,20 @@ function uftyp_2($gtab_id,$field_id,$ID,&$change_value) {
 	
 	$change_value = parse_db_string($change_value,$gfield[$gtab_id]["size"][$field_id]);
 	$sqlquery = $gfield[$gtab_id]["field_name"][$field_id]." = '".$change_value."'";
-	$sqlquery = str_replace("\n","",$sqlquery);
+	$sqlquery = str_replace(array("\n", "\r"),"",$sqlquery);
 	
 	return $sqlquery;
 }
 
+/* -------------------------- Textblock --------------------------------- */
+function uftyp_3($gtab_id, $field_id, $ID, &$change_value) {
+    global $gfield;
+
+    $change_value = parse_db_string($change_value,$gfield[$gtab_id]["size"][$field_id]);
+    $sqlquery = $gfield[$gtab_id]["field_name"][$field_id]." = '".$change_value."'";
+
+    return $sqlquery;
+}
 
 /* -------------------------- Select --------------------------------- */
 function uftyp_9($gtab_id,$field_id,$ID,&$change_value) {
@@ -91,7 +100,7 @@ function uftyp_9($gtab_id,$field_id,$ID,&$change_value) {
 	           $sql_t[] = $gfield[$gtab_id]['rawfield_name'][$field_id]." = '".parse_db_string(odbc_result($rs, 'WERT'),160)."'";
 	       }
 	       
-	       $sqlquery1 = "UPDATE ".$gtab['table'][$gtab_id]." SET ".implode(',',$sql_t)." WHERE ID = $ID";
+	       $sqlquery1 = "UPDATE ".$gtab['table'][$gtab_id]." SET ".implode(',',$sql_t)." WHERE ".$gtab['keyfield'][$gtab_id]." = $ID";
 	       $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 	       if(!$rs1) {$commit = 1;}
 	       
@@ -117,6 +126,7 @@ function uftyp_4($gtab_id,$field_id,$ID,&$change_value) {
 
 	if($gfield[$gtab_id]["data_type"][$field_id] == 40){$isdate = 1;}
 	$sqlquery = $gfield[$gtab_id]["field_name"][$field_id]." = ".LMB_DBDEF_DTNULL;
+
 	if ($change_value) {
 		if($datestr = convert_date($change_value,$isdate)){
 			$sqlquery = $gfield[$gtab_id]["field_name"][$field_id]." = '$datestr'";
@@ -147,33 +157,44 @@ function uftyp_5($gtab_id,$field_id,$ID,&$change_value) {
 
 
 /* -------------------------- Currency --------------------------------- */
-function uftyp_7($gtab_id,$field_id,$ID,&$change_value) {
-	global $gfield;
-	global $lmcurrency;
-	
-	if ($change_value) {
-		
-		if(is_numeric($change_value)){
-			$cval = $change_value;
-		}else{
-			$cval = preg_replace("/[ A-Za-z]/","",$change_value);
-			$ccur = trim(lmb_strtoupper(preg_replace("/[0-9,.-]/","",$change_value)));
-		}
+function uftyp_7($gtab_id, $field_id, $ID, &$change_value) {
+    global $gfield;
+    global $lmcurrency;
 
-		if(!$lmcurrency["currency"][$ccur] AND $ccur){lmb_alert("currency $ccur not available!\\nuse EUR, USD ..");$ccur = "";}
-		if(!$ccur){$ccur = $gfield[$gtab_id]["currency"][$field_id];}
-		$cval = parse_db_float($cval,$gfield[$gtab_id]["size"][$field_id],$gfield[$gtab_id]["scale"][$field_id]);
-		$sqlquery = $gfield[$gtab_id]["field_name"][$field_id]." = ".$cval;$query = 1;
-		$sqlquery .= ",".$gfield[$gtab_id]["field_name"][$field_id]."_C = '".parse_db_string($ccur,10)."'";
-	} else {
-		$sqlquery = $gfield[$gtab_id]["field_name"][$field_id]." = 0";
-	}
-	
-	if(!preg_match("/".$gfield[$gtab_id]["regel"][$field_id]."/",$cval)){
-		return false;
-	}
+    if ($change_value || trim($change_value) === '0') {
+        if (is_numeric($change_value)) {
+            $cval = $change_value;
+            $ccur = '';
+        } else {
+            $cval = preg_replace('/[ A-Za-z]/', '', $change_value);
+            $ccur = trim(lmb_strtoupper(preg_replace('/[0-9,.-]/', '', $change_value)));
+        }
 
-	return $sqlquery;
+        # check if currency is valid
+        if (!$lmcurrency['currency'][$ccur] AND $ccur) {
+            lmb_alert("currency $ccur not available!\\nuse EUR, USD...");
+            $ccur = '';
+        }
+
+        # use default currency
+        if (!$ccur) {
+            $ccur = $gfield[$gtab_id]['currency'][$field_id];
+        }
+
+        # check if value is valid
+        $cval = parse_db_float($cval, $gfield[$gtab_id]['size'][$field_id], $gfield[$gtab_id]['scale'][$field_id]);
+        if (!preg_match('/' . $gfield[$gtab_id]['regel'][$field_id] . '/', $cval)) {
+            return false;
+        }
+        $ccur = "'" . parse_db_string($ccur, 10) . "'";
+    } else {
+        $cval = LMB_DBDEF_NULL;
+        $ccur = LMB_DBDEF_NULL;
+    }
+
+    $sqlquery = $gfield[$gtab_id]['field_name'][$field_id] . ' = ' . $cval;
+    $sqlquery .= ',' . $gfield[$gtab_id]['field_name'][$field_id] . '_C = ' . $ccur;
+    return $sqlquery;
 }
 
 /* -------------------------- Multiple Choice / select --------------------------------- */
@@ -209,18 +230,19 @@ function uftyp_12($gtab_id,$field_id,$ID,&$change_value) {
 	$file["file_type"] = $_FILES[$fformname]['type'];
 	$file["file_archiv"] = $GLOBALS[$gfield[$gtab_id]["form_name"][$field_id]."_archiv"];
 	$level = $gfield[$gtab_id]["file_level"][$field_id];
-	if($file["file"]){
-	    
+	if(array_filter($file["file"])){
 	    $dublicate['type'][0] = 'rename';
-		$file_id = upload($file,$level,array("datid" => $ID,"gtabid" => $gtab_id,"fieldid" => $field_id),0,$dublicate);
+		if(!$file_id = upload($file,$level,array("datid" => $ID,"gtabid" => $gtab_id,"fieldid" => $field_id),0,$dublicate)){return false;}
+		/*
 		# trigger
 		if($gfield[$gtab_id]["trigger"][$field_id]){
 			$triggerResult = execute_trigger("UPDATE","AFTER",$gtab_id,$field_id,$gfield[$gtab_id]["trigger"][$field_id],$ID,$file);
 			if($triggerResult === false){return false;}
 		}
+		*/
 	}
 
-	return false;
+	return true;
 }
 
 /* -------------------------- PHP Argument --------------------------------- */
@@ -245,9 +267,9 @@ function uftyp_14($gtab_id,$field_id,$ID,&$change_value) {
 	}
 	
 	// set relation
-	set_joins($gtab_id,$verkn);
+	if(!set_joins($gtab_id,$verkn)){return false;}
 	
-	return false;
+	return true;
 }
 
 /* -------------------------- URL --------------------------------- */
@@ -277,22 +299,30 @@ function uftyp_22($gtab_id,$field_id,$ID,&$change_value) {
 	global $gtab;
 	global $gfield;
 
-	# --- alter Wert ---
-	$sqlquery1 = "SELECT ".$gfield[$gtab_id]["field_name"][$field_id]." FROM ".$gtab["table"][$gtab_id]." WHERE ID = $ID";
-	$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-	if($rs1){$oldvalue = odbc_result($rs1,$gfield[$gtab_id]["field_name"][$field_id]);}
+	// TODO
+	if(LMB_DBFUNC_LONGHANDLE AND !$gfield[$gtab_id]["indize"][$field_id]){
+        return uftyp_3($gtab_id,$field_id,$ID,$change_value);
+    }
+
+    # --- old value ----
+    if($gtab["trigger"][$gtab_id] OR $gtab["editrule"][$gtab_id] OR $gfield[$gtab_id]["editrule"] OR $gfield[$gtab_id]["trigger"] OR $gtab["logging"][$gtab_id] OR $gtab["versioning"][$gtab_id] OR $gtab["lockable"][$gtab_id] OR $gfield[$gtab_id]["sync"]){
+        $old_gresult = get_gresult($gtab_id,1,null,null,null,null,$ID);
+    }
 
 	# --- check if changed ---
-	if($oldvalue != $change_value){
-		# --- trigger before update field ----
-		if($gfield[$gtab_id]["trigger"][$field_id]){
-			execute_trigger("UPDATE","BEFORE",$gtab_id,$field_id,$gfield[$gtab_id]["trigger"][$field_id],$ID,$change_value,$oldvalue);
-		}
+	if($old_gresult[$gtab_id][$field_id][0] != $change_value){
+
+        // postcheck routine
+        $triggerResult = null;
+        $query_dataid = array($field_id => $change_value);
+        $query_result[$gtab_id][$ID][$field_id] = uftyp_2($gtab_id,$field_id,$ID,$change_value);
+
+        if(!update_data_precheck($gtab_id,$ID,$query_dataid,$query_result,$old_gresult,$triggerResult)){return false;}
+
 		# --- prepare ---
 		$prepare_string = "UPDATE ".$gtab["table"][$gtab_id]." SET EDITDATUM = ".LMB_DBDEF_TIMESTAMP.", EDITUSER = ".$session['user_id'].", ".$gfield[$gtab_id]["field_name"][$field_id]." = ? WHERE ID = $ID";
-		if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($change_value)),__FILE__,__LINE__)){$commit = 1;}
-							
-		if(!$rs1) {$commit = 1;}
+		if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($change_value)),__FILE__,__LINE__)){return false;}
+
 		if($gfield[$gtab_id]["indize"][$field_id]){
 			$sqlquery1 = "UPDATE ".$gtab["table"][$gtab_id]." SET IND_$field_id = ".LMB_DBDEF_FALSE." WHERE ID = $ID";
 			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
@@ -305,35 +335,14 @@ function uftyp_22($gtab_id,$field_id,$ID,&$change_value) {
 			if(!$rs) {$commit = 1;}
 		}
 
+        if(!$commit){
+            // postcheck routine
+            if(!update_data_postcheck($gtab_id,$ID,$query_dataid,$old_gresult,$triggerResult)){return false;}
+        }
 
-		if(!$commit){
-			# ---  LDMS_FILES & LDMS_META Zusatz ---------
-			if($gtab["typ"][$gtab_id] == 3 AND $gtab["table"][$gtab_id] != "LDMS_FILES"){
-				$require = "extra/explorer/metadata.lib";
-				require_once($require);
-				refreshmeta_to_db($ID);
-			}
-
-			# --- trigger ----
-			if($gfield[$gtab_id]["trigger"][$field_id]){
-				execute_trigger("UPDATE","BEFORE",$gtab_id,$field_id,$gfield[$gtab_id]["trigger"][$field_id],$ID,$change_value,$oldvalue);
-			}
-
-			# --- History-Eintrag (history_action) ---------
-			if($session["logging"]){$actionid = history_action($gtab_id,$ID,3,1);}
-			# --- History-Eintrag (history_update) ---------
-			if($actionid AND $gtab["logging"][$gtab_id] AND $session["logging"]){
-				$com = history_update($gtab_id,$field_id,$ID,$actionid,$change_value,$oldvalue);
-			}
-
-			# --- trigger after update field ----
-			if($gfield[$gtab_id]["trigger"][$field_id]){
-				execute_trigger("UPDATE","AFTER",$gtab_id,$field_id,$gfield[$gtab_id]["trigger"][$field_id],$ID,$change_value,$oldvalue);
-			}
-		}
 	}
 
-	return false;
+	return true;
 
 }
 
@@ -343,9 +352,9 @@ function uftyp_23($gtab_id,$field_id,$ID,&$change_value) {
 
 	$change_value = str_replace('#L#','',$change_value);
 	$require = "gtab/sql/add_select.dao";require_once($require);
-	select_select($gtab_id,$field_id,$ID,$change_value);
+	if(!select_select($gtab_id,$field_id,$ID,$change_value)){return false;}
 	
-	return false;
+	return true;
 }
 
 /* -------------------------- Time --------------------------------- */
@@ -402,7 +411,7 @@ function uftyp_30($gtab_id,$field_id,$ID,&$change_value) {
 /* -------------------------- SQL Argument --------------------------------- */
 function uftyp_31($gtab_id,$field_id,$ID,&$change_value) {
 
-	return false;
+	return null;
 }
 
 /* -------------------------- Sync-Slave --------------------------------- */

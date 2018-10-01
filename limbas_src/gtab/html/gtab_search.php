@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -41,11 +41,11 @@ if(!$fieldid){
 
 # ----------- Feldliste ------------
 foreach ($gfield[$gtabid]["sort"] as $key => $value){
-	if($gfield[$gtabid][field_type][$key] != 13){
+	if($gfield[$gtabid]['field_type'][$key] != 13){
         /* removed, so the user has to select something. without selections, nothing was shown */
         /* added again, because the above bug wasn't found anymore */
 		if($key == $fieldid){$SELECTED = "SELECTED";}else{$SELECTED = "";}
-		echo "<OPTION VALUE=\"$key\" $SELECTED>".$gfield[$gtabid][spelling][$key];
+		echo "<OPTION VALUE=\"$key\" $SELECTED>".$gfield[$gtabid]['spelling'][$key];
 	}
 }
 echo "</SELECT>";
@@ -60,7 +60,7 @@ for($key1=0;$key1<=($umgvar['searchcount']-1);$key1++){
 	# --------- AND / OR --------------------
 	foreach ($gfield[$gtabid]["sort"] as $key => $value){
 		echo "<div ID=\"gseo_".$key."_".$key1."\" style=\"display:none;\">";
-		if(!$gsr[$gtabid][$key][string][0]){
+		if(!$gsr[$gtabid][$key]['string'][0]){
 			if($key1 > 0){
 				echo "<SELECT ID=\"gdsandor_".$gtabid."_".$key."_".$key1."\" NAME=\"gs[".$gtabid."][".$key."][andor][".$key1."]\">";
 				echo "<OPTION VALUE=\"1\"";
@@ -80,9 +80,9 @@ for($key1=0;$key1<=($umgvar['searchcount']-1);$key1++){
 	# --------- INPUT --------------------
 	foreach ($gfield[$gtabid]["sort"] as $key => $value){
 		$gsrres = $gsr[$gtabid][$key][$key1];
-		if($gfield[$gtabid][field_type][$key] != 13){
+		if($gfield[$gtabid]['field_type'][$key] != 13){
 			#------- BOOLEAN -------
-	        if($gfield[$gtabid][field_type][$key] == 10){
+	        if($gfield[$gtabid]['field_type'][$key] == 10){
 	                echo "<div ID=\"gse_".$key."_".$key1."\" style=\"display:none;\">";
 	                echo "<INPUT TYPE=\"HIDDEN\" NAME=\"rules_$key1\" VALUE=\"num_rules\">";
 	                echo "<SELECT STYLE=\"width:200px;\" ID=\"gds_".$gtabid."_".$key."_".$key1."\" NAME=\"gs[".$gtabid."][".$key."][".$key1."]\"><OPTION>
@@ -93,11 +93,11 @@ for($key1=0;$key1<=($umgvar['searchcount']-1);$key1++){
 	                echo ">$lang[1507]</SELECT>";
 	                echo "</div>";
 	        # ------- Selectfelder -------
-	        }elseif($gfield[$gtabid][field_type][$key] == 4 AND $gfield[$gtabid][artleiste][$key]){
+	        }elseif($gfield[$gtabid]['field_type'][$key] == 4 AND $gfield[$gtabid]['artleiste'][$key]){
 	                echo "<div ID=\"gse_".$key."_".$key1."\" style=\"display:none;\">";
 	                echo "<SELECT STYLE=\"width:200px;\" ID=\"gds_".$gtabid."_".$key."_".$key1."\" NAME=\"gs[".$gtabid."][".$key."][".$key1."]\" onClick=\"setTimeout('this.focus()',100);\"><OPTION>";
-	                if(!$gfield[$gtabid][select_sort][$key]){$gfield[$gtabid][select_sort][$key] = "SORT";}
-	                $sqlquery = "SELECT DISTINCT WERT,".$gfield[$gtabid][select_sort][$key]." FROM LMB_SELECT_W WHERE POOL = ".$gfield[$gtabid][select_pool][$key]." ORDER BY ".$gfield[$gtabid][select_sort][$key];
+	                if(!$gfield[$gtabid]['select_sort'][$key]){$gfield[$gtabid]['select_sort'][$key] = "SORT";}
+	                $sqlquery = "SELECT DISTINCT WERT,".$gfield[$gtabid]['select_sort'][$key]." FROM LMB_SELECT_W WHERE POOL = ".$gfield[$gtabid]['select_pool'][$key]." ORDER BY ".$gfield[$gtabid]['select_sort'][$key];
 	                $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	                $key2 = 1;
 	                while(odbc_fetch_row($rs, $key2)) {
@@ -115,9 +115,9 @@ for($key1=0;$key1<=($umgvar['searchcount']-1);$key1++){
 	                	echo " OnChange=\"limbasCheckforindex(this.value,'$key','$gtabid')\">";
 	                }else{echo ">";}
 
-					if($gsr[$gtabid][$key][string][$key1] AND $gsr[$gtabid][$key][string][$key1+1]){$dspl = '';}else{$dspl = 'display:none;';}
+					if($gsr[$gtabid][$key]['string'][$key1] AND $gsr[$gtabid][$key]['string'][$key1+1]){$dspl = '';}else{$dspl = 'display:none;';}
 					echo "<i class=\"lmb-icon-cus lmb-pfeildown2\" ID=\"indpic_".$key."_".$key1."\" STYLE=\"$dspl\"></i>";
-					echo "<INPUT TYPE=\"HIDDEN\" ID=\"gds_".$gtabid."_".$key."_".$key1."\" NAME=\"gs[".$gtabid."][".$key."][string][".$key1."]\" VALUE=\"".$gsr[$gtabid][$key][string][$key1]."\">";
+					echo "<INPUT TYPE=\"HIDDEN\" ID=\"gds_".$gtabid."_".$key."_".$key1."\" NAME=\"gs[".$gtabid."][".$key."][string][".$key1."]\" VALUE=\"".$gsr[$gtabid][$key]['string'][$key1]."\">";
 					echo "</div>";
 	        }elseif($gfield[$gtabid]["field_type"][$key] != 8){
 	                echo "<div ID=\"gse_".$key."_".$key1."\" style=\"display:none;\">";
@@ -140,7 +140,7 @@ for($key1=0;$key1<=($umgvar['searchcount']-1);$key1++){
 	# --------- parameter --------------------
 	echo "<TD VALIGN=\"TOP\">\n";
 	foreach ($gfield[$gtabid]["sort"] as $key => $value){
-		if($gfield[$gtabid][field_type][$key] == 2 OR $gfield[$gtabid][field_type][$key] == 7 OR $gfield[$gtabid][field_type][$key] == 5 OR $gfield[$gtabid][field_type][$key] == 12 OR $gfield[$gtabid][field_type][$key] == 15){
+		if($gfield[$gtabid]['field_type'][$key] == 2 OR $gfield[$gtabid]['field_type'][$key] == 7 OR $gfield[$gtabid]['field_type'][$key] == 5 OR $gfield[$gtabid]['field_type'][$key] == 12 OR $gfield[$gtabid]['field_type'][$key] == 15){
 			echo "<div ID=\"gser_".$key."_".$key1."\" style=\"display:none;\">";
 			echo "<SELECT ID=\"gdsnum_".$gtabid."_".$key."_".$key1."\" NAME=\"gs[".$gtabid."][".$key."][num][".$key1."]\" STYLE=\"width:150px;\">";
 			echo "<OPTION VALUE=\"1\"";
@@ -206,15 +206,15 @@ for($key1=0;$key1<=($umgvar['searchcount']-1);$key1++){
 	# --------- CS --------------------
 	echo "<span>";
 	foreach ($gfield[$gtabid]["sort"] as $key => $value){
-		if($gfield[$gtabid][field_type][$key] == 2 OR $gfield[$gtabid][field_type][$key] == 7 OR $gfield[$gtabid][field_type][$key] == 5 OR $gfield[$gtabid][field_type][$key] == 15){
+		if($gfield[$gtabid]['field_type'][$key] == 2 OR $gfield[$gtabid]['field_type'][$key] == 7 OR $gfield[$gtabid]['field_type'][$key] == 5 OR $gfield[$gtabid]['field_type'][$key] == 15){
 			echo "<div ID=\"gsec_".$key."_".$key1."\" style=\"display:none;\">";
 			echo "</div>";
-		}elseif($gfield[$gtabid][field_type][$key] == 10){
+		}elseif($gfield[$gtabid]['field_type'][$key] == 10){
 			echo "<div ID=\"gsec_".$key."_".$key1."\" style=\"display:none;\">";
 			echo "</div>";
 		}else{
 			echo "<div ID=\"gsec_".$key."_".$key1."\" style=\"display:none\">";
-			if((($gfield[$gtabid]["data_type"][$key] == 39 OR $gfield[$gtabid]["data_type"][$key] == 13) AND $umgvar[indize_cs]) OR ($gfield[$gtabid]["data_type"][$key] != 39 AND $gfield[$gtabid]["data_type"][$key] != 13)){
+			if((($gfield[$gtabid]["data_type"][$key] == 39 OR $gfield[$gtabid]["data_type"][$key] == 13) AND $umgvar['indize_cs']) OR ($gfield[$gtabid]["data_type"][$key] != 39 AND $gfield[$gtabid]["data_type"][$key] != 13)){
 			echo "$lang[109]&nbsp;<INPUT TYPE=\"CHECKBOX\" VALUE=\"1\" ID=\"gdscs_".$gtabid."_".$key."_".$key1."\" NAME=\"gs[".$gtabid."][".$gfield[$gtabid]["field_id"][$key]."][cs][".$key1."]\" STYLE=\"border:none;\"";
 			if($gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]]["cs"][$key1] == 1){echo " CHECKED";}
 			echo ">";
@@ -232,12 +232,12 @@ for($key1=0;$key1<=($umgvar['searchcount']-1);$key1++){
 
 echo "<TR><TD COLSPAN=\"4\">&nbsp;</TD></TR>";
 
-if($gsr[$gtabid][andor] == 2){$or = "CHECKED";}else{$and = "CHECKED";}
+if($gsr[$gtabid]['andor'] == 2){$or = "CHECKED";}else{$and = "CHECKED";}
 echo "<TR><TD style=\"vertical-align:bottom;\"><B>$lang[1827]:</B></TD><TD>$lang[854]<INPUT TYPE=\"radio\" NAME=\"gs[".$gtabid."][andor]\" VALUE=\"1\" style=\"vertical-align:bottom;\" $and>&nbsp;$lang[855]<INPUT TYPE=\"radio\" NAME=\"gs[".$gtabid."][andor]\" VALUE=\"2\" style=\"vertical-align:bottom;\" $or></TD></TR>";
 
 ?>
 
-<TR><TD></TD><TD HEIGHT="50"><INPUT TYPE="button" VALUE="<?=$lang[110]?>" NAME="search" OnClick="LmGs_sendForm();">&nbsp;<INPUT TYPE="button" VALUE="reset" OnClick="LmGs_sendForm(1);"></TD></TR>
+<TR><TD></TD><TD HEIGHT="50"><INPUT TYPE="button" VALUE="<?=$lang[30]?>" NAME="search" OnClick="LmGs_sendForm();">&nbsp;<INPUT TYPE="button" VALUE="reset" OnClick="LmGs_sendForm(1);"></TD></TR>
 
 
 <tr><td colspan="2"><i style="cursor:pointer" onclick="document.getElementById('lmbsearchhelp').style.display='';" class="lmb-icon lmb-help"></i></td></tr>

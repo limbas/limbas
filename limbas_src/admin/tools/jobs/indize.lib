@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -51,11 +51,11 @@ function feasible_val($value){
 	$nonalpha = preg_match_all("/[^[:alnum:]]/",$value,$out);
 	if(!$nonalpha){return $value;}
 	$alphadiff = (($nonalpha*100)/$len);
-	if($alphadiff > $GLOBALS["umgvar"]["indize_feasible"]){return false;}else{
+	if($alphadiff > $GLOBALS["umgvar"]["indize_feasible"]){
+	    return false;
+	}else{
 		return $value;
 	}
-
-	return $value;
 }
 
 
@@ -73,12 +73,12 @@ function table_infos($tabid,$fieldid){
 	$indi["fieldid"] = $fieldid;
 
 	# -------- Tabellenname --------
-	$sqlquery = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE TAB_ID = ".$indi[tabid];
+	$sqlquery = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE TAB_ID = ".$indi['tabid'];
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$indi[tabname] = odbc_result($rs,"TABELLE");
+	$indi['tabname'] = odbc_result($rs,"TABELLE");
 	# -------- Feldinformationen --------
-	$sqlquery = "SELECT DISTINCT LMB_FIELD_TYPES.DATA_TYPE,LMB_FIELD_TYPES.FIELD_TYPE,LMB_CONF_FIELDS.FIELD_NAME FROM LMB_FIELD_TYPES,LMB_CONF_FIELDS WHERE LMB_CONF_FIELDS.FIELD_ID = ".$indi[fieldid]." AND LMB_CONF_FIELDS.TAB_ID = ".$indi[tabid]." AND LMB_CONF_FIELDS.DATA_TYPE = LMB_FIELD_TYPES.DATA_TYPE";
+	$sqlquery = "SELECT DISTINCT LMB_FIELD_TYPES.DATA_TYPE,LMB_FIELD_TYPES.FIELD_TYPE,LMB_CONF_FIELDS.FIELD_NAME FROM LMB_FIELD_TYPES,LMB_CONF_FIELDS WHERE LMB_CONF_FIELDS.FIELD_ID = ".$indi['fieldid']." AND LMB_CONF_FIELDS.TAB_ID = ".$indi['tabid']." AND LMB_CONF_FIELDS.DATA_TYPE = LMB_FIELD_TYPES.DATA_TYPE";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$indi["fieldname"] = odbc_result($rs,"FIELD_NAME");
@@ -113,9 +113,9 @@ function prepare_memo_indize($indi){
 
 	# --- Status ----
 	$stat_name = "tab_".$tabid."_".$fieldid;
-	if(!$GLOBALS["cronjob"]){echo "<span>Databased Memo: ".$gtab[desc][$tabid]." (".$gfield[$tabid][spelling][$fieldid].")  </span><div style=\"width:200px;height:15px;border:1px solid black;\"><span style=\"position:absolute;\" ID=\"accval\">&nbsp;&nbsp;&nbsp;$jobsum</span><IMG ID=\"$stat_name\" SRC=\"pic/point_g.gif\" WIDTH=\"0\" HEIGHT=\"15\"></div><BR>\n";}
+	if(!$GLOBALS["cronjob"]){echo "<span>Databased Memo: ".$gtab['desc'][$tabid]." (".$gfield[$tabid]['spelling'][$fieldid].")  </span><div style=\"width:200px;height:15px;border:1px solid black;\"><span style=\"position:absolute;\" ID=\"accval\">&nbsp;&nbsp;&nbsp;$jobsum</span><IMG ID=\"$stat_name\" SRC=\"pic/point_g.gif\" WIDTH=\"0\" HEIGHT=\"15\"></div><BR>\n";}
 
-	$sqlquery = "SELECT ID,$indi[fieldname] FROM ".$indi["tabname"]." WHERE IND_".$indi["fieldid"]." = ".LMB_DBDEF_FALSE." AND DEL = ".LMB_DBDEF_FALSE." ORDER BY ID";
+	$sqlquery = "SELECT ID,{$indi['fieldname']} FROM ".$indi["tabname"]." WHERE IND_".$indi["fieldid"]." = ".LMB_DBDEF_FALSE." AND DEL = ".LMB_DBDEF_FALSE." ORDER BY ID";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$bzm = 1;
@@ -188,7 +188,7 @@ function prepare_filelevel_indize($level,$indi){
 	$stat_name = "file_".$level;
 	if(!$GLOBALS["cronjob"]){echo "<span id=\"".$stat_name."_name\">$filename: </span><div style=\"width:200px;height:15px;border:1px solid black;\"><span style=\"position:absolute;\" ID=\"accval\">&nbsp;&nbsp;&nbsp;$jobsum</span><IMG ID=\"$stat_name\" SRC=\"pic/point_g.gif\" WIDTH=\"0\" HEIGHT=\"15\"></div><BR>\n";}
 
-	if($umgvar[indize_header]){$indw = "(IND = ".LMB_DBDEF_FALSE." OR INDM = ".LMB_DBDEF_FALSE.")";}else{$indw = "IND = ".LMB_DBDEF_FALSE;}
+	if($umgvar['indize_header']){$indw = "(IND = ".LMB_DBDEF_FALSE." OR INDM = ".LMB_DBDEF_FALSE.")";}else{$indw = "IND = ".LMB_DBDEF_FALSE;}
 	$sqlquery = "SELECT DISTINCT LDMS_FILES.ID,LDMS_FILES.LEVEL,LDMS_FILES.NAME,LDMS_FILES.IND,LDMS_FILES.INDM,LDMS_FILES.SECNAME,LMB_MIMETYPES.MIMETYPE,LMB_MIMETYPES.EXT FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.LEVEL = $level AND LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND DEL = ".LMB_DBDEF_FALSE." AND $indw";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
@@ -246,7 +246,7 @@ function prepare_filelevel_indize($level,$indi){
 			# Inhalt und Metadaten indizieren
 			}else{
 				# Temporärer TXT Pfad
-				$resultpath = $umgvar[pfad]."/TEMP/txt/".odbc_result($rs,"SECNAME").".txt";
+				$resultpath = $umgvar['pfad']."/TEMP/txt/".odbc_result($rs,"SECNAME").".txt";
 
 				if(file_exists($resultpath)){
 					$tf = fopen($resultpath,"r");
@@ -341,7 +341,7 @@ function indize_create_s(&$indi){
                         if($indi["typ"] == "field"){
                                 $indi["NEXTID_DS"]++;
                                 $sqlquery = "INSERT INTO LMB_INDIZE_DS (ID,SID,WID,REF,TABID,FIELDID) VALUES (".$indi["NEXTID_DS"].",".$value.",".$key.",".$indi["datid"].",".$indi["tabid"].",".$indi["fieldid"].")";
-                        }elseif($indi[typ] == "file"){
+                        }elseif($indi['typ'] == "file"){
                                 $indi["NEXTID_FS"]++;
                                 $sqlquery = "INSERT INTO LMB_INDIZE_FS (ID,SID,WID,FID,META) VALUES (".$indi["NEXTID_FS"].",".$value.",".$key.",".$indi["fileid"].",".parse_db_bool($indi["w_meta"][$key]).")";
                         }
@@ -586,14 +586,14 @@ function indize_create($blob,&$indi){
 function del_field_index($indi){
 	global $db;
 
-	$sqlquery = "DELETE FROM LMB_INDIZE_D WHERE TABID = ".$indi[tabid]." AND FIELDID = ".$indi[fieldid];
+	$sqlquery = "DELETE FROM LMB_INDIZE_D WHERE TABID = ".$indi['tabid']." AND FIELDID = ".$indi['fieldid'];
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$sqlquery = "DELETE FROM LMB_INDIZE_DS WHERE TABID = ".$indi[tabid]." AND FIELDID = ".$indi[fieldid];
+	$sqlquery = "DELETE FROM LMB_INDIZE_DS WHERE TABID = ".$indi['tabid']." AND FIELDID = ".$indi['fieldid'];
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
-	$sqlquery = "UPDATE ".$indi[tabname]." SET IND_".$indi[fieldid]." = ".LMB_DBDEF_FALSE;
+	$sqlquery = "UPDATE ".$indi['tabname']." SET IND_".$indi['fieldid']." = ".LMB_DBDEF_FALSE;
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 }
@@ -655,7 +655,7 @@ function periodic_job($cronval){
 				$indi = prepare_memo_indize($indi);
 				$typ[] = "Databased Index";
 				if($timeout){break;}
-			}elseif($indize[typ][$key] == 'file' AND $indize["file"][$key]){
+			}elseif($indize['typ'][$key] == 'file' AND $indize["file"][$key]){
 				$indi["tabid"] = 0;
 				$indi["fieldid"] = 0;
 				$indi = prepare_filelevel_indize($indize["file"][$key],$indi);

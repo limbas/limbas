@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -26,6 +26,13 @@ ob_implicit_flush();
 
 <link rel="stylesheet" href="extern/bootstrap/bootstrap.min.css">
 <div id="scolldown" class="lmbPositionContainerMain small" style="max-height: 100%">
+
+<style>
+    BODY{
+        background-color:<?=$farbschema['WEB14']?>
+    }
+</style>
+
 <?php
 
 
@@ -49,8 +56,8 @@ if($umgvar["lock"]){
 
 <table class="tabfringe" BORDER="0" width="550" cellspacing="2" cellpadding="2">
 
-<TR><TD class="tabHeader" align="left" style="width:200px"><?echo "current Source-Version:</td><td><b>".$umgvar["version"]."</b>";?></TD><td></td></TR>
-<TR><TD class="tabHeader" align="left"><?echo "current Systemtables-Version:</td><td><b>".$umgvar["db-version"]."</b>";?></TD><td></td></TR>
+<TR><TD class="tabHeader" align="left" style="width:200px">current Source-Version:</td><td><b><?= $umgvar["version"] ?></b></TD><td></td></TR>
+<TR><TD class="tabHeader" align="left">current Systemtables-Version:</td><td><b><?= $umgvar["db-version"] ?></b></TD><td></td></TR>
 <TR><TD class="tabHeader" align="left">&nbsp;</td></TR>
 
 <?php

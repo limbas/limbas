@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -19,43 +19,98 @@
  */
 
 
-if(!$sqlexecnum){$sqlexecnum = 100;}else{$sqlexecnum = parse_db_int($sqlexecnum);}
-
-if($empty AND $table){
-        $sqlquery = "DELETE FROM $table";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-        if($rs){$result = $lang[1069];}else{$result = $lang[1070];}
-}elseif($delete AND $table){
-		$sqlquery0 = dbq_12(array($DBA["DBSCHEMA"],$table));
-		$rs = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
-		if(!$rs) {$commit = 1;}
-		if(odbc_fetch_row($rs)){
-			$sqlquery = "DROP VIEW ".dbf_4($table);
-		}else{
-			$sqlquery = "DROP TABLE ".dbf_4($table);
-		}
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-        
-        if($rs){$result = $lang[1071];}else{$result = $lang[1072];}
-}elseif($sqlexec AND $sqlvalue){
-		$zeit_main1 = gettime();
-		
-		$sqlvalue_ = explode('//',$sqlvalue);
-		foreach ($sqlvalue_ as $key => $sqlquery){
-        	$rssql = odbc_exec($db,$sqlquery);
-        	$count += odbc_num_rows($rssql);
-		}
- 
-		$sqlquery = $sqlvalue;
-        $zeit_main2 = gettime();
-		$zeit = $zeit_main2 - $zeit_main1;
-        if($rssql){$result = "<FONT COLOR=\"green\" SIZE=\"2\">$lang[1073]!</FONT>&nbsp;[$zeit sec.]&nbsp;&nbsp;&nbsp;count&nbsp;[$count]<BR><BR>";}else{$result = "<FONT COLOR=\"red\">$lang[1074]!</FONT><BR>".odbc_errormsg($db);}
+if (!$sqlexecnum) {
+    $sqlexecnum = 100;
+} else {
+    $sqlexecnum = parse_db_int($sqlexecnum);
 }
 
-if($sqlquery){
-	$rf = fopen("TEMP/log/sql_manager.log","a");
-	fputs($rf,date("Y-m-d H:i:s")."\t".$session["username"]."\t".str_replace(chr(10)," ",str_replace(chr(13)," ",$sqlquery))."\n");
-	fclose($rf);
+if ($empty AND $table) {
+    $sqlquery = "DELETE FROM $table";
+    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if ($rs) {
+        $result = $lang[1069];
+    } else {
+        $result = $lang[1070];
+    }
+} elseif ($delete AND $delete == 'table' AND $table) {
+    $sqlquery0 = dbq_12(array($DBA['DBSCHEMA'], $table));
+    $rs = odbc_exec($db, $sqlquery0) or errorhandle(odbc_errormsg($db), $sqlquery0, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
+    if (odbc_fetch_row($rs)) {
+        $sqlquery = 'DROP VIEW ' . dbf_4($table);
+    } else {
+        $sqlquery = 'DROP TABLE ' . dbf_4($table);
+    }
+    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    if ($rs) {
+        $result = $lang[1071];
+    } else {
+        $result = $lang[1072];
+    }
+} elseif ($sqlexec AND $sqlvalue) {
+    $zeit_main1 = gettime();
+
+    $sqlvalue_ = explode('//', $sqlvalue);
+    foreach ($sqlvalue_ as $key => $sqlquery) {
+        $rssql = odbc_exec($db, $sqlquery);
+        $count += odbc_num_rows($rssql);
+    }
+
+    $sqlquery = $sqlvalue;
+    $zeit_main2 = gettime();
+    $zeit = number_format($zeit_main2 - $zeit_main1, 8, ',', '.');
+    if ($rssql) {
+        $result = "<span style='font-size: small; color: green'>$lang[1073]!</span>&nbsp;[$zeit sec.]&nbsp;&nbsp;&nbsp;count&nbsp;[$count]<br><br>";
+    } else {
+        $result = "<span style='color: red'>$lang[1012]!</span><br>" . odbc_errormsg($db);
+    }
+} elseif ($sqlFavoriteName and $sqlvalue) {
+    # add favorite
+    $nextID = next_db_id('lmb_sql_favorites');
+    $name = parse_db_string($sqlFavoriteName);
+
+    $prepareString = "INSERT INTO lmb_sql_favorites (id, name, statement) VALUES ($nextID, '$name', ?)";
+    lmb_PrepareSQL($prepareString, array(parse_db_blob($sqlvalue)), __FILE__, __LINE__);
+} elseif ($delete AND $delete == 'favorite' AND $favorite) {
+    # delete favorite
+    $sqlquery = 'DELETE FROM lmb_sql_favorites WHERE id=' . parse_db_int($favorite);
+    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+} elseif ($favorite AND $showFavorite) {
+    # load sql of favorite
+    $sqlquery = 'SELECT name, statement FROM lmb_sql_favorites WHERE id=' . parse_db_int($favorite);
+    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (odbc_fetch_row($rs)) {
+        $favoriteStatement = odbc_result($rs, 'statement');
+        $rssql = odbc_exec($db, $favoriteStatement);
+        $result = '<h3>' . odbc_result($rs, 'name') . '</h3>';
+    }
+}
+
+if ($sqlquery) {
+    $rf = fopen('TEMP/log/sql_manager.log', 'a');
+    fputs($rf, date('Y-m-d H:i:s') . "\t" . $session['username'] . "\t" . str_replace(array(chr(10), chr(13)), ' ', $sqlquery) . "\n");
+    fclose($rf);
+}
+
+# get all favorites
+$sqlFavorites = array();
+$sqlquery = 'SELECT id, name FROM lmb_sql_favorites';
+$rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+while (odbc_fetch_row($rs)) {
+    $sqlFavorites[odbc_result($rs, 'id')] = odbc_result($rs, 'name');
+}
+
+# sql value to show
+if (!$sqlvalue) {
+    if ($show AND $table) {
+        $sqlvalue = "select * from $table";
+    } elseif ($showFavorite AND $favorite AND $favoriteStatement) {
+        $sqlvalue = $favoriteStatement;
+    }
 }
 
 ?>

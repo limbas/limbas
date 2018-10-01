@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -81,8 +81,6 @@ function limbasVersionDiff(gtabid,formid,ID,VID,pdf){
 			});
 		}
 	});
-
-	return;
 }
 
 // change value of header-fields
@@ -130,19 +128,26 @@ function limbasSubheaderSelection(el,gtabid,fieldid,typ,formid,ID,form_subel,aja
 }
 
 // change value of grouping-fields
-function limbasGroupingFieldSelection(el,fid,grel){
-
-	var ar = document.getElementsByTagName("SPAN");
-	for (var i = ar.length; i > 0;) {
-		cc = ar[--i];
-		var grpart = cc.id.split("_");
-		if(grpart[0] == 'LmbGroupingPart' && grpart[1] == fid){
-			cc.style.display = 'none';
+function limbasGroupingFieldSelection(el,fid,grel) {
+	// for each tab body
+	$(el).parent('tr').parent('tbody').parent('table').next('.lmbGtabTabBody').children('span').each(function() {
+		const id = $(this).attr('id');
+		// this is tab being activated?
+		if (id === 'LmbGroupingPart_' + fid + '_' + grel) {
+			// already active tab?
+			if ($(this).is(':visible')) {
+				// show more/less content
+				const maxHeight = ($(this).parent().get(0).scrollHeight > $(this).parent().height()) ? '' : '120px';
+				$(this).parent().css('max-height', maxHeight);
+			} else {
+                $(this).show();
+            }
+		} else if (id.startsWith('LmbGroupingPart_' + fid + '_')) {
+			$(this).hide();
 		}
-	}
-	document.getElementById("LmbGroupingPart_"+fid+"_"+grel).style.display = '';
-	
-	limbasSetLayoutClassTabs(el,'lmbGtabTabmenuInactive','lmbGtabTabmenuActive');
+	});
+
+	limbasSetLayoutClassTabs(el,'lmbGtabTabInactive','lmbGtabTabActive');
 }
 
 // Ajax update locking of datasets
@@ -361,48 +366,7 @@ function send_form(id,ajax,need,wclose) {
 
 
 
-/*---------------- Tabulator-Element für Formular anzeigen ---------------------*/
-var lmbTabulatorKey = new Array();
-function lmbSwitchTabulator(el,mainel,elkey,vert){
-	
-	if(vert){
-		var hel = el.parentNode.parentNode.parentNode;
-		var stpos = vert;
-	}else{
-		var hel = el.parentNode;
-		var stpos = "";
-	}
-	
-	if(!hel){return;}
-	for(var i=0; i<hel.childNodes.length; i++){
-		if(vert){
-			divel =  hel.childNodes[i].firstChild.firstChild;
-		}else{
-			divel =  hel.childNodes[i];
-		}
-		
-		var mt = "LmbTabulatorHeader";
-		if(!divel.id || divel.id.substr(0,mt.length)!=mt) continue;
-		var dsp = "none";
-		var cl = "lmbGtabTabulator"+stpos+"Inactive";
-		var nodel = divel.id.replace(mt,"LmbTabulatorItem");
-		if(divel.id==el.id){
-			dsp = "";
-			cl="lmbGtabTabulator"+stpos+"Active";
-		}
-		divel.className = cl;
-		document.getElementById(nodel).style.display = dsp;
-	}
 
-	var tabKey = new Array();
-	lmbTabulatorKey[mainel] = elkey;
-	var e = 0;
-	for (var i in lmbTabulatorKey){
-		tabKey[e] = i+"_"+lmbTabulatorKey[i];
-		e++;
-	}
-	document.form1.filter_tabulatorKey.value = tabKey.join(";");
-}
 
 //----------------- springe zu Elternelement von neuen Verkn. Datensatz -------------------
 function jump_to_addfrom(KEY) {
@@ -431,31 +395,32 @@ function check_new() {
 
 //---------- Returns confirmation question if changes to the dataset have not been saved, used in onbeforeunload event ------------
 function check_change() {        
-        if(jsvar){
-	if(!document.form1){return;}
-	if(document.form1.history_fields.value != '' && document.form1.change_ok.value != 1){
-		var history_fields = document.form1.history_fields.value.split(";");
-		var cf = "";
-	 	var ft = new Array();
-		for (var i in history_fields){
-			var history_part = history_fields[i].split(",");
-			if(history_part[0] && history_part[1]){
-				var key = history_part[0]+"_"+history_part[1];
-				if(document.getElementsByName('g_'+history_part[0]+'_'+history_part[1])[0]){
-					ft[key] = document.getElementsByName('g_'+history_part[0]+'_'+history_part[1])[0].title;
-				}else if(document.getElementsByName('g_'+history_part[0]+'_'+history_part[1]+'[0]')[0]){
-					ft[key] = document.getElementsByName('g_'+history_part[0]+'_'+history_part[1]+'[0]')[0].title;
+	if(jsvar){
+		if(!document.form1){return;}
+		if(document.form1.history_fields.value != '' && document.form1.change_ok.value != 1){
+			var history_fields = document.form1.history_fields.value.split(";");
+			var cf = "";
+			var ft = new Array();
+			for (var i in history_fields){
+				var history_part = history_fields[i].split(",");
+				if(history_part[0] && history_part[1]){
+					var key = history_part[0]+"_"+history_part[1];
+					if(document.getElementsByName('g_'+history_part[0]+'_'+history_part[1])[0]){
+						ft[key] = document.getElementsByName('g_'+history_part[0]+'_'+history_part[1])[0].title;
+					}else if(document.getElementsByName('g_'+history_part[0]+'_'+history_part[1]+'[0]')[0]){
+						ft[key] = document.getElementsByName('g_'+history_part[0]+'_'+history_part[1]+'[0]')[0].title;
+					}
 				}
 			}
-		}
-		for (var i in ft){
-			if(ft[i] != 'undefined'){
-				var cf = cf+"\n-> "+ft[i];
+			for (var i in ft){
+				if(ft[i] != 'undefined'){
+					var cf = cf+"\n-> "+ft[i];
+				}
 			}
+			var confirm_text = jsvar["lng_1424"]+"\n"+cf;
+			return confirm_text;
 		}
-		var confirm_text = jsvar["lng_1424"]+"\n"+cf;
-                return confirm_text;
-	}}        
+	}
 }
 
 //----------------- Infobox Feldtyp -------------------
@@ -650,34 +615,6 @@ function inusetime(gtabid,ID) {
 	}
 }
 
-// ---- Suchkriterien markieren ----------
-var select_text = new Array();
-function setSelectedText(evt,el,val) {
-	if(val && el){
-		if(!select_text[el.id]){select_text[el] = 0;};
-		var posStart = el.value.indexOf(val,select_text[el.id]);
-		var posEnd = val.length + posStart;
-		select_text[el.id] = posEnd;
-
-		if(posStart > 0){
-		el.focus();
-		// Mozilla ---
-		if (el.setSelectionRange) {
-			el.setSelectionRange(posStart, posEnd);
-		}
-		// IE ---
-		else if (el.createTextRange) {
-			var range = el.createTextRange();
-			range.collapse(true);
-			range.moveEnd('character', posEnd);
-			range.moveStart('character', posStart);
-			range.select();
-		}
-		}
-	}
-}
-
-
 /*----------------- User Rechte -------------------*/
 function limbasGetGtabRules(gtabid,el) {
 	if(jsvar["ID"]){
@@ -694,26 +631,26 @@ function limbasSetNewCurrency(formname,value,crurency,fieldid){
 	document.form1.elements[formname].value = value+' '+crurency;
 	//document.form1.elements[formcurrency].value = crurency;
 	checktyp(30,formname,'',fieldid,jsvar["gtabid"],value,jsvar["ID"]);
+	limbasDivClose();
 }
 
 function limbasChangeCurrency(el,value,curr,formname,fieldid){
-	var infoval = "";
-	
 	if(!value){return;}
 	limbasDivShow(el,null,'lmbAjaxContainer','','',1);
 	value = value.replace(",",".");
 
-	for (var i = 0; i < jsvar["currency_code"].length; ++i) {
-		if(curr == jsvar["currency_code"][i]){
-			var currency_id = i;
-		}
+	const currentCurrencyIndex = jsvar["currency_code"].indexOf(curr);
+
+    var newHtml = "";
+    for (var i = 0; i < jsvar["currency_code"].length; ++i) {
+		const numbval = value.split(' ');
+		const calc = limbasRoundMath((1 / jsvar["currency_unit"][i]) * jsvar["currency_unit"][currentCurrencyIndex] * numbval[0]);
+
+        newHtml += '<a class="lmbContextLink" onclick="limbasSetNewCurrency(\''+formname+'\',\''+calc+'\',\''+jsvar["currency_code"][i]+'\',\''+fieldid+'\')">';
+        newHtml += jsvar["currency_code"][i] + "&nbsp;" + calc;
+        newHtml += '</a>';
 	}
-	for (var i = 0; i < jsvar["currency_code"].length; ++i) {
-		numbval = value.split(' ');
-		var calc = limbasRoundMath((1/jsvar["currency_unit"][i]) * jsvar["currency_unit"][currency_id] * numbval[0]);
-		infoval = infoval+"<tr OnClick=\"limbasSetNewCurrency('"+formname+"','"+calc+"','"+jsvar["currency_code"][i]+"','"+fieldid+"')\"><td>"+jsvar["currency_code"][i]+"</td><td>"+calc+"</td></tr>";
-	}
-	document.getElementById("lmbAjaxContainer").innerHTML = "<table OnClick=\"this.parentNode.innerHTML=''\" bgcolor=\""+jsvar['WEB1']+"\" style=\"border:1px solid black;cursor:pointer\"><tr bgcolor=\""+jsvar["WEB6"]+"\"><td colspan=\"2\" style=\"height:10px;\"></td></tr>"+infoval+"</table>";
+    $("#lmbAjaxContainer").html(newHtml);
 }
 
 
@@ -909,71 +846,4 @@ function report_archiv() {
 /*----------------- Diagramm -------------------*/
 function lmbDiagramm(diag_id,gtabid,ID) {
 	diagramm = open("main.php?action=diag_erg&gtabid=" + gtabid + "&diag_id="+ diag_id + "&data_id=" + ID ,"Diagramm","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=600,height=400");
-}
-
-/*----------------- Speech recognition -------------------*/
-var lmb_speechRec = window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition;
-lmb_speechRec = lmb_speechRec ? new lmb_speechRec() : null;
-var lmb_speechRecActive = false;
-var lmb_speechRecIcon = null;
-var lmb_speechRecInput = null;
-var lmb_speechRecTextPre = null;
-var lmb_speechRecTextPost = null;
-if (lmb_speechRec) {
-    lmb_speechRec.lang = "de";
-    lmb_speechRec.continuous = true;
-    lmb_speechRec.interimResults = true;
-
-    lmb_speechRec.onstart = function() {
-        lmb_speechRecIcon.removeClass('lmb-microphone').addClass('lmb-microphone-slash');
-        lmb_speechRecIcon.css('color', 'red');
-        lmb_speechRecInput.css('border-color', 'red');
-        lmb_speechRecActive = true;
-
-        // only replace selection -> store strings before and after selection
-        var selectionStart = lmb_speechRecInput.get(0).selectionStart;
-        var selectionEnd = lmb_speechRecInput.get(0).selectionEnd;
-        lmb_speechRecTextPre = lmb_speechRecInput.val().substring(0, selectionStart).trim();
-        if (lmb_speechRecTextPre !== '') {
-            lmb_speechRecTextPre += ' ';
-		}
-        lmb_speechRecTextPost = lmb_speechRecInput.val().substring(selectionEnd).trim();
-        if (lmb_speechRecTextPost !== '') {
-            lmb_speechRecTextPost = ' ' + lmb_speechRecTextPost;
-        }
-    };
-
-    lmb_speechRec.onend = function() {
-        lmb_speechRecIcon.removeClass('lmb-microphone-slash').addClass('lmb-microphone');
-        lmb_speechRecIcon.css('color', '');
-        lmb_speechRecInput.css('border-color', '');
-        lmb_speechRecInput.trigger('change');
-        lmb_speechRecActive = false;
-    };
-
-    lmb_speechRec.onresult = function(event) {
-        lmb_speechRecInput.val(lmb_speechRecTextPre + lmb_speechRecTextPost);
-        var wholeTranscript = "";
-        for (var i = 0; i < event.results.length; i++) {
-			wholeTranscript += event.results[i][0].transcript;
-        }
-        lmb_speechRecInput.val(lmb_speechRecTextPre + wholeTranscript + lmb_speechRecTextPost);
-    };
-}
-function lmb_addSpeechRecButton(inputID) {
-	if (lmb_speechRec) {
-        var inputs = $('input[name="' + inputID + '"]:visible');
-        if (!inputs.parent().has('i.lmb-icon.lmb-icon-on-input.lmb-microphone').length) {
-            inputs.parent().append('<i onclick="lmb_toggleSpeechRec(this, \'' + inputID + '\')" class="lmb-icon lmb-icon-on-input lmb-microphone" style="cursor:pointer;"></i>');
-		}
-    }
-}
-function lmb_toggleSpeechRec(icon, inputID) {
-    if (lmb_speechRecActive) {
-        lmb_speechRec.stop();
-    } else {
-        lmb_speechRecIcon = $(icon);
-        lmb_speechRecInput = $(icon).parent().children('#' + inputID);
-        lmb_speechRec.start()
-    }
 }

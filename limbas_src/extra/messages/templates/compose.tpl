@@ -3,7 +3,7 @@ $_path = $this->search('_path');
 $fwd_message = $this->search('fwd_message');
 if ($fwd_message)
 	$_additional_javascript_code = <<<EOD
-	var el = $('mail_upload_panel');
+	var el = document.getElementById('mail_upload_panel');
 	el.innerHTML = "<h3>Dateianhang</h3>";
 	__upload_add('{$fwd_message}');
 EOD;
@@ -59,10 +59,10 @@ function __upload_add(filename){
 	i.name = "attachment_" + filename;
 	i.value = filename;
 	i.type = "hidden";
-	$('compose_form').appendChild(i);
+	document.getElementById('compose_form').appendChild(i);
 
 	/* add an icon */
-	var el = $('mail_upload_panel');
+	var el = document.getElementById('mail_upload_panel');
 	el.innerHTML += '<div><i class="lmb-icon lmb-mail" border="0" align="top" hspace="4"></i>'+filename+'</div>';
 	el.style.display = 'block';
 }
@@ -112,7 +112,7 @@ function __upload_show(){
 					</tr>
 					<tr id="mail_error_panel" style="display:none;border-top:solid 1px gray;background-color:pink;">
 						<td style="overflow:hidden;" height="50">
-							<iframe width="400" height="50" style="border:none;display:none;" href="about:blank"
+							<iframe width="400" height="50" style="display:none;" href="about:blank"
 								id="compose_ifrm" name="ifrm"></iframe>
 						</td>
 					</tr>

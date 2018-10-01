@@ -10,7 +10,7 @@ if($change && $changeIds){
                         $id = parse_db_int($id);
                         $mimetype = parse_db_string( cleanMimetype( ${"mimetype_".$id} ) );
                         $ext = parse_db_string( cleanMimetype( ${"ext_".$id} ) );
-                        $pic = parse_db_string( cleanMimetype( ${"pic_".$id} ) );
+                        $pic = parse_db_string( ${"pic_".$id} );
                         
                         $sqlquery = "UPDATE LMB_MIMETYPES SET MIMETYPE='$mimetype', EXT='$ext', PIC='$pic' WHERE ID = $id";
    			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);        
@@ -23,7 +23,7 @@ if($add){
         $nextId = next_db_id("LMB_MIMETYPES");
         $new_mimetype = parse_db_string( cleanMimetype($new_mimetype) , 255);
         $new_ext = parse_db_string( cleanMimetype($new_ext) , 255);
-        $new_pic = parse_db_string( cleanMimetype($new_pic) , 255);
+        $new_pic = parse_db_string( $new_pic, 255);
                 
         $sqlquery = "INSERT INTO LMB_MIMETYPES (ID, MIMETYPE, EXT, PIC) VALUES ($nextId, '$new_mimetype', '$new_ext', '$new_pic')";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);

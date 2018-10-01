@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -67,8 +67,8 @@ else
  * global functions
  */
 function mail_folders(){
-	var info = $('mail_list');
-	var folders = $('mail_folders');
+	var info = document.getElementById('mail_list');
+	var folders = document.getElementById('mail_folders');
 	var ajax = new olAjax(_baseURL_);
 		
 	ajax.onComplete = function(){
@@ -137,7 +137,7 @@ function mail_folders(){
 
 function mail_list(mbox){
 	var _sort = arguments[1];
-	var el = $('mail_list');
+	var el = document.getElementById('mail_list');
 	var ajax = new olAjax(_baseURL_);
 	
         if (active_folder)
@@ -154,7 +154,7 @@ function mail_list(mbox){
 		var mailbox = el.getElementsByTagName("table")[0];
 		var messages = el.getElementsByTagName("tr");
 
-		$('mail_status').innerHTML = (mailbox && mailbox.id) ? 
+		document.getElementById('mail_status').innerHTML = (mailbox && mailbox.id) ?
 				'<b>' + (messages.length-2) + '</b> Nachrichten' : '&nbsp;';
 
 		/* instantiate a new list selection object. */
@@ -162,12 +162,12 @@ function mail_list(mbox){
 		
 		/* implement various handlers */
 		SEL.onContext = function (obj, evt, row) {
-			//$('mail_status').innerHTML = obj.getCount() + " Nachrichten markiert";
+			//document.getElementById('mail_status').innerHTML = obj.getCount() + " Nachrichten markiert";
 			olGUI.ctxMessage.show(evt, obj.table.id, row.id);
 		};
                
 		SEL.onAction = function (evt, tbl, row) { mail_get(tbl.id, row.id); };
-		SEL.onSelect = function(obj, row) { olGUI.buttons_show(obj.table.id, row.id); $('mail_status').innerHTML = obj.getCount() + " Nachrichten markiert"; };
+		SEL.onSelect = function(obj, row) { olGUI.buttons_show(obj.table.id, row.id); document.getElementById('mail_status').innerHTML = obj.getCount() + " Nachrichten markiert"; };
 		SEL.onUnselect = function(obj, row) { olGUI.buttons_hide(); };
 		
 		/* implement a customized DragDrop-Handler for moving
@@ -252,7 +252,7 @@ function mail_delete_selection(mbox, sel){
 			_msg = _cnt + " Nachrichten werden";
 	}
 	
-	$('mail_status').innerHTML = "Bitte warten, " + _msg + " gelöscht...";
+	document.getElementById('mail_status').innerHTML = "Bitte warten, " + _msg + " gelöscht...";
 	
 	var ajax = new olAjax(_baseURL_, true);
 	
@@ -265,13 +265,13 @@ function mail_delete_selection(mbox, sel){
 		this.el.innerHTML = (arguments[1]) ? arguments[1] : arguments[0];
 	};
 	
-	ajax.send('?mbox=' + mbox + '&del_range=' + sel.getUIDs(), $('mail_status'));
+	ajax.send('?mbox=' + mbox + '&del_range=' + sel.getUIDs(), document.getElementById('mail_status'));
 	sel.clear();
 	olGUI.buttons_hide();
 }
 
 function mail_delete(mbox, uid){
-	$('mail_status').innerHTML = "Bitte warten, Nachricht wird gelöscht...";
+	document.getElementById('mail_status').innerHTML = "Bitte warten, Nachricht wird gelöscht...";
 	
 	var ajax = new olAjax(_baseURL_, true);
 	
@@ -284,7 +284,7 @@ function mail_delete(mbox, uid){
 		this.el.innerHTML = (arguments[1]) ? arguments[1] : arguments[0];
 	};
 	
-	ajax.send('?mbox=' + mbox + '&del_uid=' + uid, $('mail_status'));
+	ajax.send('?mbox=' + mbox + '&del_uid=' + uid, document.getElementById('mail_status'));
 	olGUI.buttons_hide();
 }
 
@@ -303,7 +303,7 @@ function mail_arch(mbox, uid){
 	
 	mail_popup_status('Nachricht wird archiviert...', 'wait.gif');
 	
-	ajax.send('?mbox=' + mbox + '&uid=' + uid + '&arch=1', $('mail_status'));
+	ajax.send('?mbox=' + mbox + '&uid=' + uid + '&arch=1', document.getElementById('mail_status'));
 }
 
 function mail_move(mbox, uid, dst){
@@ -321,13 +321,13 @@ function mail_move(mbox, uid, dst){
 	olGUI.buttons_hide();
 	
 	mail_popup_status('Nachricht wird verschoben...', 'wait.gif');
-	ajax.send('?mbox=' + mbox + '&uid=' + uid + '&move=' + dst, $('mail_status'));
+	ajax.send('?mbox=' + mbox + '&uid=' + uid + '&move=' + dst, document.getElementById('mail_status'));
 }
 
 function mail_foldertoggle(id){
-	var elem = $('_' + id);
-	var togbox = $('toggle_' + id);
-        var folderpic = $('folderpic_' + id);
+	var elem = document.getElementById('_' + id);
+	var togbox = document.getElementById('toggle_' + id);
+        var folderpic = document.getElementById('folderpic_' + id);
 	var shown = (elem.style.display == 'table-row');
         
         //save toogled folders in cookie
@@ -413,7 +413,7 @@ function mail_search_column(e,el)
     }
     
     
-    $('mail_status').innerHTML = count + " Nachrichten"; 
+    document.getElementById('mail_status').innerHTML = count + " Nachrichten";
 }
 function mail_search_helper(row)
 {
@@ -431,7 +431,7 @@ function mail_search_helper(row)
 
 function mail_search(){
 	var _sort = arguments[1];
-	var el = $('mail_list');
+	var el = document.getElementById('mail_list');
 	var ajax = new olAjax(_baseURL_);
         
 	ajax.onComplete = function(){
@@ -439,7 +439,7 @@ function mail_search(){
 		var mailbox = el.getElementsByTagName("table")[0];
 		var messages = el.getElementsByTagName("tr");
 
-		$('mail_status').innerHTML = (mailbox && mailbox.id) ? 
+		document.getElementById('mail_status').innerHTML = (mailbox && mailbox.id) ?
 				'<b>' + (messages.length-2) + '</b> Nachrichten' : '&nbsp;';
 
 		/* instantiate a new list selection object. */
@@ -447,12 +447,12 @@ function mail_search(){
 		
 		/* implement various handlers */
 		SEL.onContext = function (obj, evt, row) {
-			//$('mail_status').innerHTML = obj.getCount() + " Nachrichten markiert";
+			//document.getElementById('mail_status').innerHTML = obj.getCount() + " Nachrichten markiert";
 			olGUI.ctxMessage.show(evt, obj.table.id, row.id);
 		};
                
 		SEL.onAction = function (evt, tbl, row) { mail_get(tbl.id, row.id); };
-		SEL.onSelect = function(obj, row) { olGUI.buttons_show(obj.table.id, row.id); $('mail_status').innerHTML = obj.getCount() + " Nachrichten markiert"; };
+		SEL.onSelect = function(obj, row) { olGUI.buttons_show(obj.table.id, row.id); document.getElementById('mail_status').innerHTML = obj.getCount() + " Nachrichten markiert"; };
 		SEL.onUnselect = function(obj, row) { olGUI.buttons_hide(); };
 		
 		/* implement a customized DragDrop-Handler for moving

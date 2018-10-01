@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -25,12 +25,12 @@ function arrayToTable($elem,$max_level=10,$print_nice_stack=array()){
 
     if(is_array($elem) || is_object($elem)){
         if(in_array($elem,$print_nice_stack,true)){
-            $out .= "<font color=red>RECURSION</font>";
+            $out .= "<span style=\"color:red;\">RECURSION</span>";
             return $out;
         }
         $print_nice_stack[]=&$elem;
         if($max_level<1){
-            $out .= "<font color=red>MAX</font>";
+            $out .= "<span style=\"color:red;\">MAX</span>";
             return $out;
         }
         $max_level--;
@@ -39,7 +39,7 @@ function arrayToTable($elem,$max_level=10,$print_nice_stack=array()){
             #$out .= '<tr><td colspan=2 style="background-color:#333333;"><strong><font color=white> </font></strong></td></tr>';
         }else{
             $out .= '<tr><td colspan=2 class="EXIF_Main_Heading"><strong>';
-            $out .= '<font color=white>OBJECT Type: '.get_class($elem).'</font></strong></td></tr>';
+            $out .= '<span style="color:white;">OBJECT Type: '.get_class($elem).'</span></strong></td></tr>';
         }
         $color=0;
         foreach($elem as $k => $v){
@@ -57,17 +57,17 @@ function arrayToTable($elem,$max_level=10,$print_nice_stack=array()){
         return $out;
     }
     if($elem === null){
-        $out .= "<font color=green>NULL</font>";
+        $out .= "<span style=\"color:green;\">NULL</span>";
     }elseif($elem === 0){
         $out .= "0";
     }elseif($elem === true){
-        $out .= "<font color=green>TRUE</font>";
+        $out .= "<span style=\"color:green;\">TRUE</span>";
     }elseif($elem === false){
-        $out .= "<font color=green>FALSE</font>";
+        $out .= "<span style=\"color:green;\">FALSE</span>";
     #}elseif($elem === ""){
     #    $out .= "<font color=green>EMPTY STRING</font>";
     }else{
-        $out .= str_replace("\n","<strong><font color=red>*</font></strong><br>\n",$elem);
+        $out .= str_replace("\n","<strong><span style=\"color:red;\">*</span></strong><br>\n",$elem);
     }
     
     
@@ -104,7 +104,7 @@ $fieldid = odbc_result($rs2, "FIELDID");
 $datid = odbc_result($rs2, "DATID");
 $filename = odbc_result($rs2, "NAME");
 $ext = $gmimetypes["ext"][odbc_result($rs2, "MIMETYPE")];
-$absfile = $umgvar[uploadpfad].$filestruct['path'][$level].odbc_result($rs2, "SECNAME").".".$ext;
+$absfile = $umgvar['uploadpfad'].$filestruct['path'][$level].odbc_result($rs2, "SECNAME").".".$ext;
 
 # Rechte
 if(!$filestruct["view"][$level]){
@@ -112,15 +112,15 @@ if(!$filestruct["view"][$level]){
 	die();
 }
 
-if($edit_fields AND ($filestruct[edit][odbc_result($rs2, "LEVEL")] AND (!odbc_result($rs2, "LMLOCK") OR odbc_result($rs2, "LOCKUSER") == $session[user_id]) OR $session[group_id] == 1)){
+if($edit_fields AND ($filestruct['edit'][odbc_result($rs2, "LEVEL")] AND (!odbc_result($rs2, "LMLOCK") OR odbc_result($rs2, "LOCKUSER") == $session['user_id']) OR $session['group_id'] == 1)){
 	# --- LDMS_FILES ---
 	$sqlquery = "UPDATE LDMS_FILES SET ";
-	if($checked == 'true'){$sqlquery .= "CHECKED = ".LMB_DBDEF_TRUE.",CHECKUSER = ".$session[user_id].",CHECKDATE = ".LMB_DBDEF_TIMESTAMP.",";}elseif($checked == 'false'){$sqlquery .= "CHECKED = ".LMB_DBDEF_FALSE.",";}
-	if($perm == 'true'){$sqlquery .= "PERM = ".LMB_DBDEF_TRUE.",PERMUSER = ".$session[user_id].",PERMDATE = ".LMB_DBDEF_TIMESTAMP.",";}elseif($perm == 'false'){$sqlquery .= "PERM = ".LMB_DBDEF_FALSE.",";}
+	if($checked == 'true'){$sqlquery .= "CHECKED = ".LMB_DBDEF_TRUE.",CHECKUSER = ".$session['user_id'].",CHECKDATE = ".LMB_DBDEF_TIMESTAMP.",";}elseif($checked == 'false'){$sqlquery .= "CHECKED = ".LMB_DBDEF_FALSE.",";}
+	if($perm == 'true'){$sqlquery .= "PERM = ".LMB_DBDEF_TRUE.",PERMUSER = ".$session['user_id'].",PERMDATE = ".LMB_DBDEF_TIMESTAMP.",";}elseif($perm == 'false'){$sqlquery .= "PERM = ".LMB_DBDEF_FALSE.",";}
 	if($lock == 'true'){
-		$sqlquery .= "LMLOCK = ".LMB_DBDEF_TRUE.",LOCKUSER = ".$session[user_id].",LOCKDATE = ".LMB_DBDEF_TIMESTAMP.",";
+		$sqlquery .= "LMLOCK = ".LMB_DBDEF_TRUE.",LOCKUSER = ".$session['user_id'].",LOCKDATE = ".LMB_DBDEF_TIMESTAMP.",";
 		#lock_data_set($gtab["argresult_id"]["LDMS_FILES"],$ID,$session["user_id"]);
-	}elseif($lock == 'false' AND odbc_result($rs2, "LOCKUSER") == $session[user_id] OR $session[group_id] == 1){
+	}elseif($lock == 'false' AND odbc_result($rs2, "LOCKUSER") == $session['user_id'] OR $session['group_id'] == 1){
 		$sqlquery .= "LMLOCK = ".LMB_DBDEF_FALSE.",";
 	}
 	$sqlquery .= "EDITDATUM = ".LMB_DBDEF_TIMESTAMP." WHERE ID = $ID";
@@ -151,20 +151,20 @@ if(odbc_fetch_row($rs, 1)){
 	$ffile["level"] = odbc_result($rs, "LEVEL");
 	$ffile["name"] = odbc_result($rs, "NAME");
 	$ffile["name2"] = odbc_result($rs, "NAME2");
-	$ffile["pathname"] = str_replace($file_url."/","",$ffile[url].$ffile[name]);
+	$ffile["pathname"] = str_replace($file_url."/","",$ffile['url'].$ffile['name']);
 	$ffile["secname"] = odbc_result($rs, "SECNAME");
 	$ffile["size"] = file_size(odbc_result($rs, "SIZE"));
 	$ffile["datum"] = get_date(odbc_result($rs, "ERSTDATUM"),2);
 	$ffile["erstuserid"] = odbc_result($rs, "ERSTUSER");
-	$ffile["erstuser"] = $userdat[vorname][odbc_result($rs, "ERSTUSER")]." ".$userdat["name"][odbc_result($rs, "ERSTUSER")];
-	$ffile["erstgroup"] = $groupdat[name][odbc_result($rs, "ERSTGROUP")];
+	$ffile["erstuser"] = $userdat['vorname'][odbc_result($rs, "ERSTUSER")]." ".$userdat["name"][odbc_result($rs, "ERSTUSER")];
+	$ffile["erstgroup"] = $groupdat['name'][odbc_result($rs, "ERSTGROUP")];
 	$ffile["checked"] = odbc_result($rs, "CHECKED");
 	$ffile["perm"] = odbc_result($rs, "PERM");
 	$ffile["lock"] = odbc_result($rs, "LMLOCK");
-	$ffile["lockuser"] = $userdat[vorname][odbc_result($rs, "LOCKUSER")]." ".$userdat["name"][odbc_result($rs, "LOCKUSER")];
+	$ffile["lockuser"] = $userdat['vorname'][odbc_result($rs, "LOCKUSER")]." ".$userdat["name"][odbc_result($rs, "LOCKUSER")];
 	$ffile["lockuserid"] = odbc_result($rs, "LOCKUSER");
-	$ffile["checkuser"] = $userdat[vorname][odbc_result($rs, "CHECKUSER")]." ".$userdat["name"][odbc_result($rs, "CHECKUSER")];
-	$ffile["permuser"] = $userdat[vorname][odbc_result($rs, "PERMUSER")]." ".$userdat["name"][odbc_result($rs, "PERMUSER")];
+	$ffile["checkuser"] = $userdat['vorname'][odbc_result($rs, "CHECKUSER")]." ".$userdat["name"][odbc_result($rs, "CHECKUSER")];
+	$ffile["permuser"] = $userdat['vorname'][odbc_result($rs, "PERMUSER")]." ".$userdat["name"][odbc_result($rs, "PERMUSER")];
 	$ffile["permdate"] = get_date(odbc_result($rs, "PERMDATE"),2);
 	$ffile["checkdate"] = get_date(odbc_result($rs, "CHECKDATE"),2);
 	$ffile["lockdate"] = get_date(odbc_result($rs, "LOCKDATE"),2);
@@ -197,11 +197,11 @@ if(odbc_fetch_row($rs, 1)){
 
 	# --- Tabellen ---
 	$ffile["d_tabid"] = odbc_result($rs, "TABID");
-	$ffile["d_tab"] = $gtab[desc][odbc_result($rs, "TABID")];
-	$ffile["d_field"] = $gfield[odbc_result($rs, "TABID")][spelling][odbc_result($rs, "FIELDID")];
+	$ffile["d_tab"] = $gtab['desc'][odbc_result($rs, "TABID")];
+	$ffile["d_field"] = $gfield[odbc_result($rs, "TABID")]['spelling'][odbc_result($rs, "FIELDID")];
 	$ffile["d_id"] = odbc_result($rs, "DATID");
 
-	$file_url = " /".set_url($ffile['level'],0).$ffile[name];
+	$file_url = " /".set_url($ffile['level'],0).$ffile['name'];
 
 	# Favorite
 	$sqlquery = "SELECT ID FROM LDMS_FAVORITES WHERE FILE_ID = ".parse_db_int($ID,16)." AND USER_ID = ".parse_db_int($session["user_id"],3);
@@ -212,7 +212,7 @@ if(odbc_fetch_row($rs, 1)){
 	}
 
 	# ---------------- Versionen -----------------
-	$sqlquery = "SELECT ID,NAME,VDESC,ERSTUSER,ERSTDATUM FROM LDMS_FILES WHERE VPID = ".$ffile[vparentid]." ORDER BY ERSTDATUM DESC";
+	$sqlquery = "SELECT ID,NAME,VDESC,ERSTUSER,ERSTDATUM FROM LDMS_FILES WHERE VPID = ".$ffile['vparentid']." ORDER BY ERSTDATUM DESC";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$bzm = 1;
@@ -220,7 +220,7 @@ if(odbc_fetch_row($rs, 1)){
 	    $vid = odbc_result($rs, "ID");
 		$vfile["id"][] = $vid;
 		$vfile["name"][] = odbc_result($rs, "NAME");
-		$vfile["erstuser"][] = $userdat[vorname][odbc_result($rs, "ERSTUSER")]." ".$userdat[name][odbc_result($rs, "ERSTUSER")];
+		$vfile["erstuser"][] = $userdat['vorname'][odbc_result($rs, "ERSTUSER")]." ".$userdat['name'][odbc_result($rs, "ERSTUSER")];
 		$vfile["erstdatum"][] = get_date(odbc_result($rs, "ERSTDATUM"),2);
 		$vfile["vnote"][] = odbc_result($rs, "VDESC");
 		$vfile["nr"][] = $bzm;
@@ -247,7 +247,7 @@ if(odbc_fetch_row($rs, 1)){
 	}
 	
 	# ---------------- Metadaten aus Datei auslesen -----------------
-	$filename = $umgvar['uploadpfad'].$filestruct['path'][$level].$ffile[secname].".".$ffile['ext'];
+	$filename = $umgvar['uploadpfad'].$filestruct['path'][$level].$ffile['secname'].".".$ffile['ext'];
 	# Sonderfall JPEG wegen EXIF Zusatzdaten
 	if(in_array($ffile["ext"],$umgvar["read_metadata"])){
     	if($exifdata = getmeta_struct($filename)){
@@ -299,6 +299,6 @@ if(odbc_fetch_row($rs, 1)){
 
 
 }else{
-	die("<br><br><center><h3>".$lang[1726]."</h3></center>");
+	die('<br><br><div style="text-align:center;"><h3>'.$lang[1726].'</h3></div>');
 }
 ?>

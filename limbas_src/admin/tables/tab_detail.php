@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -35,7 +35,7 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 	
 	<tr><td>
 	<table cellspacing="0" cellpadding="0" width="100%"><tr class="tabpoolItemTR">
-	<td nowrap id="menu1" onclick="LIM_activate(this,'1')" class="tabpoolItemActive"><?=$lang[2835]?></td>
+	<td nowrap id="menu1" onclick="LIM_activate(this,'1')" class="tabpoolItemActive"><?=$lang[2795]?></td>
 	<td nowrap id="menu2" onclick="LIM_activate(this,'2')" class="tabpoolItemInactive"><?=$lang[2836]?></td>
 	<td class="tabpoolItemSpace">&nbsp;</td>
 	</tr></table>
@@ -60,17 +60,17 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 	<br><i style=\"color:#AAAAAA\">".$lang[2834]."</i>
 	</td></tr>";
 	# tablegroup
-	echo "<tr><td valign=\"top\">".$lang[2586]."</td><td><SELECT STYLE=\"width:120px;\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','setmaingroup')\"><OPTION VALUE=\"0\"></OPTION>";
+	echo "<tr><td valign=\"top\">".$lang[900]."</td><td><SELECT STYLE=\"width:120px;\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','setmaingroup')\"><OPTION VALUE=\"0\"></OPTION>";
 	foreach($tabgroup_["id"] as $bzm1 => $value1){
 		if($value1 == $result_gtab[$tabgroup]["maingroup"][$tbzm]){$SELECTED = "SELECTED";}else{$SELECTED = "";}
 		echo "<OPTION VALUE=\"$value1\" $SELECTED>".$tabgroup_["name"][$bzm1]."</OPTION>";
 	}
 	echo "</SELECT></td></tr>";
 	# typ
-	echo "<tr><td valign=\"top\">".$lang[1930]."</td><td>";
-	if($result_gtab[$tabgroup]["typ"][$tbzm] == 1){echo $lang[1928]."&nbsp;";}
+	echo "<tr><td valign=\"top\">".$lang[925]."</td><td>";
+	if($result_gtab[$tabgroup]["typ"][$tbzm] == 1){echo $lang[164]."&nbsp;";}
 	elseif($result_gtab[$tabgroup]["typ"][$tbzm] == 2){echo $lang[1929]."&nbsp;";}
-	elseif($result_gtab[$tabgroup]["typ"][$tbzm] == 6){echo $lang[2380]."&nbsp;";}
+	elseif($result_gtab[$tabgroup]["typ"][$tbzm] == 6){echo $lang[767]."&nbsp;";}
 	elseif($result_gtab[$tabgroup]["typ"][$tbzm] == 5){
 		if($result_gtab[$tabgroup]["viewtype"][$tbzm] == 1){
 			echo $lang[2656]."&nbsp;";
@@ -132,7 +132,7 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 	# trigger
 	if($gtrigger[$tabid]["id"]){
 		echo "<tr><td><hr></td><td><hr></td></tr>";
-		echo "<tr><td valign=\"top\">".$lang[2452]."</td><td valign=\"top\"><div id=\"triggerpool\">";
+		echo "<tr><td valign=\"top\">".$lang[2216]."</td><td valign=\"top\"><div id=\"triggerpool\">";
 		foreach($gtrigger[$tabid]["id"] as $trid => $trval){
 			if(in_array($trid,$result_gtab[$tabgroup]["trigger"][$tbzm])){$CHECKED = "CHECKED";}else{$CHECKED = "";}
 			echo "<input type=\"checkbox\" id=\"trigger_$trid\" $CHECKED onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','trigger')\"> ".$gtrigger[$tabid]["trigger_name"][$trid]." (".$gtrigger[$tabid]["type"][$trid].")<br>";
@@ -328,7 +328,7 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 		</td></tr>";
 		# lockable
 		if($result_gtab[$tabgroup]["lockable"][$tbzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}
-		echo "<tr><td valign=\"top\">".$lang[955]."</td><td valign=\"top\"><input type=\"checkbox\" value=\"1\" $CHECKED onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','lockable')\">
+		echo "<tr><td valign=\"top\">".$lang[657]."</td><td valign=\"top\"><input type=\"checkbox\" value=\"1\" $CHECKED onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','lockable')\">
 		<br><i style=\"color:#AAAAAA\">".$lang[2827]."</i>
 		</td></tr>";
 		# linecolor
@@ -338,7 +338,7 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 		</td></tr>";
 		# userrules
 		if($result_gtab[$tabgroup]["userrules"][$tbzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}
-		echo "<tr><td valign=\"top\">".$lang[2336]."</td><td valign=\"top\"><input type=\"checkbox\" value=\"1\" $CHECKED onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','userrules')\">
+		echo "<tr><td valign=\"top\">".$lang[575]."</td><td valign=\"top\"><input type=\"checkbox\" value=\"1\" $CHECKED onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','userrules')\">
 		<br><i style=\"color:#AAAAAA\">".$lang[2829]."</i>
 		</td></tr>";
 		# ajaxpost
@@ -364,7 +364,7 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 	}
 
 	# rebuild rules
-	echo "<tr><td valign=\"top\">".$lang[575]."</td><td><i style=\"cursor:pointer\" clas=\"lmb-icon lmb-refresh\" onclick=\"open('main_admin.php?action=setup_grusrref&check_table=$tabid&check_all=1' ,'refresh','toolbar=0,location=0,status=1,menubar=0,scrollbars=1,resizable=1,width=550,height=400')\"></i>
+	echo "<tr><td valign=\"top\">".$lang[575]."</td><td><i style=\"cursor:pointer\" class=\"lmb-icon lmb-refresh\" onclick=\"open('main_admin.php?action=setup_grusrref&check_table=$tabid&check_all=1' ,'refresh','toolbar=0,location=0,status=1,menubar=0,scrollbars=1,resizable=1,width=550,height=400')\"></i>
 	<br><i style=\"color:#AAAAAA\">".$lang[1054]."</i>
 	</td></tr>";
 	
@@ -386,7 +386,7 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 	
 	<div id="tab2" style="width:420px;display:none;padding:5px;">
 	<table style="width:100%">
-	<?
+	<?php
 	if($col){
 		
 	foreach ($col['columnname'] as $tkey => $tvalue)

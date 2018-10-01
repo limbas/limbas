@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -115,7 +115,7 @@ function sendkeydown(evt) {
 <tr bgcolor="#FFFFCC"><td colspan="6" STYLE="height:1px;overflow:hidden;background-color:#CCCCCC;"></td></tr>
 
 <tr><td></td><td><b>id</td><td><b>name</td><td><b>desc</td><td><b>type</td><td><b>price</td></tr>
-<?
+<?php
 if($lmb[0]["fresult"][23]){
 $result = $lmb[0]["fresult"][23];
 foreach($result as $key => $value){
@@ -135,7 +135,7 @@ foreach($result as $key => $value){
 }
 echo "<TR><TD>&nbsp;</TD></TR>";
 echo "<tr bgcolor=\"#FFFFCC\"><td colspan=\"6\" STYLE=\"height:1px;overflow:hidden;background-color:#CCCCCC;\"></td></tr>";
-echo "<TR><td></td><TD COLSPAN=\"5\"><FONT STYLE=\"font-size:11px;\">Total <B>".$lmb[0]["result"]["res_count"][23]."</B> Fundstellen, Seite:&nbsp; <span style=\"cursor:pointer;color:blue;font-weight:bold;\" OnClick=\"document.form1.res_next.value='1';document.form1.submit();\">&lt;&lt;</span> &nbsp;<span style=\"cursor:pointer;color:blue;font-weight:bold;\" OnClick=\"document.form1.res_next.value='".($lmpar[0][23]["res_next"] - 1)."';document.form1.submit();\">&lt;</span>&nbsp; <B>".$lmb[0]["result"]["page"][23]."</B>&nbsp;&nbsp;<span style=\"cursor:pointer;color:blue;font-weight:bold;\" OnClick=\"document.form1.res_next.value='".($lmpar[0][23]["res_next"] + 1)."';document.form1.submit();\">&gt;</span> &nbsp;<span style=\"cursor:pointer;color:blue;font-weight:bold;\" OnClick=\"document.form1.res_next.value='".(ceil($lmb[0]["result"]["max_count"][23]/$lmpar[0][23]["count"]))."';document.form1.submit();\">&gt;&gt;</span> von <B>".(ceil($lmb[0]["result"]["max_count"][23]/$lmpar[0][23]["count"]))."</B> Seiten</FONT></TD></TR>";
+echo "<TR><td></td><TD COLSPAN=\"5\"><span style=\"font-size:11px;\">Total <B>".$lmb[0]["result"]["res_count"][23]."</B> Fundstellen, Seite:&nbsp; <span style=\"cursor:pointer;color:blue;font-weight:bold;\" OnClick=\"document.form1.res_next.value='1';document.form1.submit();\">&lt;&lt;</span> &nbsp;<span style=\"cursor:pointer;color:blue;font-weight:bold;\" OnClick=\"document.form1.res_next.value='".($lmpar[0][23]["res_next"] - 1)."';document.form1.submit();\">&lt;</span>&nbsp; <B>".$lmb[0]["result"]["page"][23]."</B>&nbsp;&nbsp;<span style=\"cursor:pointer;color:blue;font-weight:bold;\" OnClick=\"document.form1.res_next.value='".($lmpar[0][23]["res_next"] + 1)."';document.form1.submit();\">&gt;</span> &nbsp;<span style=\"cursor:pointer;color:blue;font-weight:bold;\" OnClick=\"document.form1.res_next.value='".(ceil($lmb[0]["result"]["max_count"][23]/$lmpar[0][23]["count"]))."';document.form1.submit();\">&gt;&gt;</span> von <B>".(ceil($lmb[0]["result"]["max_count"][23]/$lmpar[0][23]["count"]))."</B> Seiten</span></TD></TR>";
 ?>
 
 

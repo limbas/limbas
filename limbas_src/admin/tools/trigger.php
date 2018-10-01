@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -48,7 +48,7 @@ function delete_definition(id){
 
 <TABLE class="tabpool" BORDER="0" width="700" cellspacing="0" cellpadding="0"><TR><TD>
 
-<?
+<?php
 
 $odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'TABLE'"));
 $odbc_table =  $odbc_table["table_name"];
@@ -67,15 +67,15 @@ if($trigger_typ == 1){
 	
 	<TABLE BORDER="0" cellspacing="1" cellpadding="2" width="100%" class="tabBody">
 	
-	<TR class="tabHeader"><TD class="tabHeaderItem"><?=$lang[2267]?></TD><TD class="tabHeaderItem"><?=$lang[2270]?></TD><TD class="tabHeaderItem"><?=$lang[2271]?></TD><TD class="tabHeaderItem"><?=$lang[2272]?></TD><TD class="tabHeaderItem"><?=$lang[2269]?></TD><TD class="tabHeaderItem">aktiv</TD><TD class="tabHeaderItem"></TD></TR>
-	<?
+	<TR class="tabHeader"><TD class="tabHeaderItem"><?=$lang[4]?></TD><TD class="tabHeaderItem"><?=$lang[2270]?></TD><TD class="tabHeaderItem"><?=$lang[2271]?></TD><TD class="tabHeaderItem"><?=$lang[925]?></TD><TD class="tabHeaderItem"><?=$lang[2269]?></TD><TD class="tabHeaderItem">aktiv</TD><TD class="tabHeaderItem"></TD></TR>
+	<?php
 	foreach ($result_trigger as $key1 => $value1){
 		
 		foreach ($value1["id"] as $key2 => $value2){
 			if(!$showsystr AND (lmb_substr($value1["name"][$key2],0,12) == "INSERT_VERK_" OR lmb_substr($value1["name"][$key2],0,12) == "UPDATE_VERK_" OR lmb_substr($value1["name"][$key2],0,16) == "LMB_LASTMODIFIED")) {continue 2;}
 		}
 		
-		echo "<TR class=\"tabSubHeader\"><TD colspan=\"7\" class=\"tabSubHeaderItem\">$lang[2268]: <b>".$key1."</b></TD></TR>";
+		echo "<TR class=\"tabSubHeader\"><TD colspan=\"7\" class=\"tabSubHeaderItem\">$lang[164]: <b>".$key1."</b></TD></TR>";
 		foreach ($value1["id"] as $key2 => $value2){
 			if(!$value1["value"][$key2]){$displ = "";}else{$displ = "none";}
 			echo "<TR class=\"tabBody\" ID=\"trigger_".$value1["id"][$key2]."\">";
@@ -97,7 +97,7 @@ if($trigger_typ == 1){
 	echo "<TR class=\"tabBody\"><TD colspan=\"7\" align=\"right\">
 	show limbas trigger<input type=\"checkbox\" NAME=\"showsystr\" $showsystr onchange=\"this.form.submit();\">&nbsp;&nbsp;
 	<input type=\"submit\" NAME=\"syncronize\" value=\"$lang[2275]\">&nbsp;&nbsp;
-	<input type=\"submit\" NAME=\"change\" value=\"$lang[2273]\">
+	<input type=\"submit\" NAME=\"change\" value=\"$lang[842]\">
 	</TD></TR>";
 	echo "<TR class=\"tabBody\"><TD colspan=\"7\"><HR></TD></TR>";
 	echo "<TR class=\"tabBody\">
@@ -105,7 +105,7 @@ if($trigger_typ == 1){
 	<TD COLSPAN=\"2\"><SELECT NAME=\"add_trigger_table\"><OPTION><OPTION>".implode("<OPTION>",$odbc_table)."</TD>
 	<TD><SELECT NAME=\"add_trigger_pos\"><OPTION value=\"AFTER\">AFTER</OPTION><OPTION value=\"BEFORE\">BEFORE</OPTION></SELECT></TD>
 	<TD><SELECT NAME=\"add_trigger_type\"><OPTION value=\"INSERT\">INSERT</OPTION><OPTION value=\"UPDATE\">UPDATE</OPTION><OPTION value=\"DELETE\">DELETE</OPTION></SELECT>
-	</TD><TD align=\"right\" colspan=\"2\"><input type=\"submit\" NAME=\"add\" value=\"$lang[2274]\"></TD></TR>
+	</TD><TD align=\"right\" colspan=\"2\"><input type=\"submit\" NAME=\"add\" value=\"$lang[540]\"></TD></TR>
 	<TR class=\"tabFooter\"><TD colspan=\"7\"></TD></TR>
 	</TABLE>";
 	
@@ -123,10 +123,10 @@ if($trigger_typ == 1){
 	
 	<TABLE BORDER="0" cellspacing="1" cellpadding="2" width="100%" class="tabBody">
 	
-	<TR class="tabHeader"><TD class="tabHeaderItem"><?=$lang[2267]?></TD><TD class="tabHeaderItem"><?=$lang[2270]?></TD><TD class="tabHeaderItem"><?=$lang[2271]?></TD><TD class="tabHeaderItem"><?=$lang[2272]?></TD><TD class="tabHeaderItem"><?=$lang[2269]?></TD><TD class="tabHeaderItem">aktiv</TD><TD class="tabHeaderItem">order</TD><TD class="tabHeaderItem"></TD></TR>
-	<?
+	<TR class="tabHeader"><TD class="tabHeaderItem"><?=$lang[4]?></TD><TD class="tabHeaderItem"><?=$lang[2270]?></TD><TD class="tabHeaderItem"><?=$lang[2271]?></TD><TD class="tabHeaderItem"><?=$lang[925]?></TD><TD class="tabHeaderItem"><?=$lang[2269]?></TD><TD class="tabHeaderItem">aktiv</TD><TD class="tabHeaderItem">order</TD><TD class="tabHeaderItem"></TD></TR>
+	<?php
 	foreach ($result_trigger as $key1 => $value1){
-		echo "<TR class=\"tabSubHeader\"><TD colspan=\"8\" class=\"tabSubHeaderItem\">$lang[2268]: <b>".$key1."</b></TD></TR>";
+		echo "<TR class=\"tabSubHeader\"><TD colspan=\"8\" class=\"tabSubHeaderItem\">$lang[164]: <b>".$key1."</b></TD></TR>";
 		foreach ($value1["id"] as $key2 => $value2){
 			if(!$value1["value"][$key2]){$displ = "";}else{$displ = "none";}
 			echo "<TR class=\"tabBody\" ID=\"trigger_".$value1["id"][$key2]."\">";
@@ -149,14 +149,14 @@ if($trigger_typ == 1){
 	}
 	
 	echo "<TR class=\"tabBody\"><TD colspan=\"8\"><HR></TD></TR>";
-	echo "<TR class=\"tabBody\"><TD colspan=\"8\" align=\"right\"><input type=\"submit\" NAME=\"change\" value=\"$lang[2273]\"></TD></TR>";
+	echo "<TR class=\"tabBody\"><TD colspan=\"8\" align=\"right\"><input type=\"submit\" NAME=\"change\" value=\"$lang[842]\"></TD></TR>";
 	echo "<TR class=\"tabBody\"><TD colspan=\"8\"><HR></TD></TR>";
 	echo "<TR class=\"tabBody\">
 	<TD><INPUT TYPE=\"TEXT\" NAME=\"add_trigger_name\" style=\"width:120px;\"></TD>
 	<TD COLSPAN=\"2\"><SELECT NAME=\"add_trigger_table\"><OPTION><OPTION>".implode("<OPTION>",$odbc_table)."</TD>
 	<TD><SELECT NAME=\"add_trigger_pos\"><OPTION value=\"AFTER\">AFTER</OPTION><OPTION value=\"BEFORE\">BEFORE</OPTION></SELECT></TD>
 	<TD><SELECT NAME=\"add_trigger_type\"><OPTION value=\"INSERT\">INSERT</OPTION><OPTION value=\"UPDATE\">UPDATE</OPTION><OPTION value=\"DELETE\">DELETE</OPTION></SELECT></TD>
-	<TD align=\"right\" colspan=\"3\"><input type=\"submit\" NAME=\"add\" value=\"$lang[2274]\"></TD></TR>
+	<TD align=\"right\" colspan=\"3\"><input type=\"submit\" NAME=\"add\" value=\"$lang[540]\"></TD></TR>
 	<TR class=\"tabFooter\"><TD colspan=\"7\"></TD></TR>
 	</TABLE>";
 }

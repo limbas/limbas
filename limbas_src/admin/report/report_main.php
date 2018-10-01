@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -20,8 +20,15 @@
 ?>
 
 <STYLE>
+
+BODY{
+    background-color: white;
+}
+INPUT {
+    BACKGROUND-COLOR: #EEEEEE;
+}
 TEXTAREA {
-	BACKGROUND-COLOR: <?php echo $farbschema[WEB8]; ?>;
+	BACKGROUND-COLOR: #EEEEEE;
 }
 </STYLE>
 
@@ -31,17 +38,17 @@ TEXTAREA {
 jsvar["action"] = "<?=$action?>";
 jsvar["ID"] = "<?=$ID?>";
 jsvar["report_viewtab"] = "<?=$report_viewtab?>";
-jsvar["report_id"] = "<?if($report["id"]){echo implode(";",$report["id"]);}?>";
-jsvar["WEB7"] = "<?=$farbschema[WEB7]?>";
+jsvar["report_id"] = "<?php if($report["id"]){echo implode(";",$report["id"]);}?>";
+jsvar["WEB7"] = "<?=$farbschema['WEB7']?>";
 jsvar["lng_1099"] = "<?=$lang[1099]?>";
-jsvar["WEB10"] = "<?=$farbschema[WEB10]?>";
+jsvar["WEB10"] = "<?=$farbschema['WEB10']?>";
 
-<?echo $view_tab;?>
+<?= $view_tab ?>
 var zIndexTop = <?=$report["max_zindex"]?>;
 var f_id = new Array();
 var f_value = new Array();
 var f_typ = new Array();
-<?
+<?php
 //----------------- Element-Schleife -------------------
 if(!$report["id"]){$report["id"] = array();}
 foreach ($report["id"] as $key => $value){
@@ -62,27 +69,27 @@ foreach ($report["id"] as $key => $value){
 
 // --- Farben -----------------------------------
 var color = new Array();
-color[1] = "<?=$farbschema[WEB1]?>";
-color[2] = "<?=$farbschema[WEB2]?>";
-color[3] = "<?=$farbschema[WEB3]?>";
-color[4] = "<?=$farbschema[WEB4]?>";
-color[5] = "<?=$farbschema[WEB5]?>";
-color[6] = "<?=$farbschema[WEB6]?>";
-color[7] = "<?=$farbschema[WEB7]?>";
-color[8] = "<?=$farbschema[WEB8]?>";
-color[9] = "<?=$farbschema[WEB9]?>";
-color[10] = "<?=$farbschema[WEB10]?>";
+color[1] = "<?=$farbschema['WEB1']?>";
+color[2] = "<?=$farbschema['WEB2']?>";
+color[3] = "<?=$farbschema['WEB3']?>";
+color[4] = "<?=$farbschema['WEB4']?>";
+color[5] = "<?=$farbschema['WEB5']?>";
+color[6] = "<?=$farbschema['WEB6']?>";
+color[7] = "<?=$farbschema['WEB7']?>";
+color[8] = "<?=$farbschema['WEB8']?>";
+color[9] = "<?=$farbschema['WEB9']?>";
+color[10] = "<?=$farbschema['WEB10']?>";
 
 
 
 </script>
 
-<?/*----------------- Ramenwechsel-Grafik -------------------*/?>
+<?php /*----------------- Ramenwechsel-Grafik -------------------*/?>
 <div ID="border_move" style="position:absolute;top:0px;left:-100px;cursor:se-resize;z-index:10003;" onMousedown="aktivate_resize(event);">
     <i class="lmb-icon lmb-resizer" BORDER="0"></i>
 </div>
 
-<DIV ID="menu" class="lmbContextMenu" style="visibility:hidden;top:<?=$menuposy?>;left:<?=$menuposx?>;z-index:10002;">
+<DIV ID="menu" class="lmbContextMenu lmbContextMenuMove" style="visibility:hidden;top:<?=$menuposy?>;left:<?=$menuposx?>;z-index:10002;">
 <FORM NAME="form_menu">
 <TABLE BORDER="0" cellspacing="0" cellpadding="0">
 <TR><TD><?pop_movetop('menu');?></TD></TR>
@@ -100,29 +107,29 @@ color[10] = "<?=$farbschema[WEB10]?>";
 <TR id="menu_bild_" STYLE="display:none"><TD><?pop_submenu2($lang[1100],"limbasDivShow(this,'menu','pic_info')",$lang[1100]);?></TD></TR>
 <TR id="menu_bild_" STYLE="display:none"><TD><?pop_submenu2($lang[1102],"limbasDivShow(this,'menu','menu_picstyle');",$lang[1102]);?></TD></TR>
 <TR id="menu_multi_text_bild_chart_datum_dbdat_dbdesc_rect_line_ellipse_tab_snr_formel_" STYLE="display:none"><TD><?pop_line();?></TD></TR>
-<TR id="menu_text_bild_datum_dbdat_dbdesc_rect_line_ellipse_tab_snr_formel_" STYLE="display:none"><TD><?pop_submenu2($lang[1489],"document.form1.report_copy.value='1';document.form1.submit();",$lang[1489]);?></TD></TR>
+<TR id="menu_text_bild_datum_dbdat_dbdesc_rect_line_ellipse_tab_snr_formel_" STYLE="display:none"><TD><?pop_submenu2($lang[1464],"document.form1.report_copy.value='1';document.form1.submit();",$lang[1464]);?></TD></TR>
 <TR id="menu_text_datum_dbdat_dbdesc_tab_snr_formel_" STYLE="display:none"><TD><?pop_line();?></TD></TR>
-<?
+<?php
 $opt["val"] = $sysfont;
 $opt["desc"] = $sysfont;
 ?>
 <TR id="menu_text_chart_datum_dbdat_dbdesc_snr_formel_" STYLE="display:none"><TD><?pop_select("fill_style('0','fontFamily',this.value);",$opt,"",1,"input_fontface","Font",60);?></TD></TR>
-<?$opt[val] = array("5px","6px","7px","8px","9px","10px","11px","12px","13px","14px","15px","16px","17px","18px","19px","20px","21px","22px","23px","24px","25px","26px","27px","28px","29px","30px","35px","40px","45px","50px","55px","60px","70px","80px","90px");
-$opt[desc] = array("5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","35","40","45","50","55","60","70","80","90");?>
-<TR id="menu_multi_text_chart_datum_dbdat_dbdesc_snr_formel_" STYLE="display:none"><TD><?pop_select("fill_style('3','fontSize',this.value);",$opt,"",1,"input_fontsize",$lang[1103],60);?></TD></TR>
+<?php $opt['val'] = array("5px","6px","7px","8px","9px","10px","11px","12px","13px","14px","15px","16px","17px","18px","19px","20px","21px","22px","23px","24px","25px","26px","27px","28px","29px","30px","35px","40px","45px","50px","55px","60px","70px","80px","90px");
+$opt['desc'] = array("5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","35","40","45","50","55","60","70","80","90");?>
+<TR id="menu_multi_text_chart_datum_dbdat_dbdesc_snr_formel_" STYLE="display:none"><TD><?pop_select("fill_style('3','fontSize',this.value);",$opt,"",1,"input_fontsize",$lang[210],60);?></TD></TR>
 <TR id="menu_multi_text_chart_datum_dbdat_dbdesc_snr_formel_" STYLE="display:none"><TD><?pop_submenu2($lang[1102],"limbasDivShow(this,'menu','menu_fontstyle');",$lang[1102]);?></TD></TR>
 <TR id="menu_multi_text_datum_dbdat_dbdesc_snr_formel_" STYLE="display:none"><TD><?pop_submenu2($lang[1104],"limbasDivShow(this,'menu','menu_color');submenu_style('9;color');",$lang[1104]);?></TD></TR>
 <TR id="menu_multi_text_bild_chart_datum_dbdat_dbdesc_rect_line_ellipse_snr_formel_" STYLE="display:none"><TD><?pop_submenu2($lang[1107],"limbasDivShow(this,'menu','menu_color');submenu_style('21;backgroundColor');",$lang[1107]);?></TD></TR>
 <TR id="menu_multi_text_bild_chart_datum_dbdat_dbdesc_rect_line_ellipse_snr_formel_" STYLE="display:none"><TD><?pop_line();?></TD></TR>
 <TR id="menu_multi_text_bild_chart_datum_dbdat_dbdesc_rect_line_ellipse_tab_snr_formel_" STYLE="display:none"><TD><?pop_submenu2($lang[1541],"limbasDivShow(this,'menu','menu_color');submenu_style('15;borderColor');",$lang[1541]);?></TD></TR>
-<?$opt[val] = array("none","solid");
-$opt[desc] = array($lang[1533],$lang[1534]);?>
+<?php $opt['val'] = array("none","solid");
+$opt['desc'] = array($lang[1246],$lang[1534]);?>
 <TR id="menu_multi_text_bild_chart_datum_dbdat_dbdesc_rect_line_ellipse_tab_snr_formel_" STYLE="display:none"><TD><?pop_select("fill_style('14','borderStyle',this.value);",$opt,"",1,"input_borderstyle",$lang[1540],60);?></TD></TR>
-<?$opt[val] = array("0px","0.1px","0.2px","0.5px","1px","2px","3px","4px","5px","6px","7px","8px","9px","10px");
-$opt[desc] = array("0","0.1","0.2","0.5","1","2","3","4","5","6","7","8","9","10");?>
+<?php $opt['val'] = array("0px","0.1px","0.2px","0.5px","1px","2px","3px","4px","5px","6px","7px","8px","9px","10px");
+$opt['desc'] = array("0","0.1","0.2","0.5","1","2","3","4","5","6","7","8","9","10");?>
 <TR id="menu_multi_text_bild_chart_datum_dbdat_dbdesc_rect_line_ellipse_tab_snr_formel_" STYLE="display:none"><TD><?pop_select("fill_style('16','borderWidth',this.value);",$opt,"",1,"input_borderwidth",$lang[1105],60);?></TD></TR>
-<?$opt[val] = array("","1px","2px","3px","4px","5px","6px","7px","8px","9px","10px");
-$opt[desc] = array("","1","2","3","4","5","6","7","8","9","10");?>
+<?php $opt['val'] = array("","1px","2px","3px","4px","5px","6px","7px","8px","9px","10px");
+$opt['desc'] = array("","1","2","3","4","5","6","7","8","9","10");?>
 <TR id="menu_multi_text_bild_chart_datum_dbdat_dbdesc_tab_snr_formel_" STYLE="display:none"><TD><?pop_select("fill_style('22','padding',this.value);divclose();set_posxy();",$opt,"",1,"input_tabpadding",$lang[1111],60);?></TD></TR>
 <TR id="menu_multi_text_bild_chart_datum_dbdat_dbdesc_rect_line_ellipse_tab_snr_formel_" STYLE="display:none"><TD>
 <?pop_left();?>
@@ -135,39 +142,39 @@ $opt[desc] = array("","1","2","3","4","5","6","7","8","9","10");?>
 <TABLE cellpadding="0" cellspacing="0"><TR><TD STYLE="width:120px;">&nbsp;<SPAN><?=$lang[1108]?></SPAN></TD><TD><INPUT TYPE="checkbox" STYLE="border:none" ID="input_line_reverse_" NAME="input_line_reverse" OnClick="fill_style('25','',this.checked);"></TD></TR></TABLE>
 <?pop_right();?>
 </TD></TR>
-<?$opt[val] = array("","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50");
-$opt[desc] = array("","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50");?>
+<?php $opt['val'] = array("","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50");
+$opt['desc'] = array("","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","31","32","33","34","35","36","37","38","39","40","41","42","43","44","45","46","47","48","49","50");?>
 <TR id="menu_tab_" STYLE="display:none"><TD><?pop_select("divclose();set_posxy();document.form1.report_tab_cols.value=this.value;document.form1.submit();",$opt,"",1,"input_tabcols",$lang[1109],60);?></TD></TR>
-<TR id="menu_tab_" STYLE="display:none"><TD><?pop_select("divclose();set_posxy();document.form1.report_tab_rows.value=this.value;document.form1.submit();",$opt,"",1,"input_tabrows",$lang[1110],60);?></TD></TR>
-<?$opt[val] = array("","0.05","0.1","0.15","0.2","0.25","0.3","0.35","0.4","0.45","0.5","0.55","0.6","0.65","0.7","0.75","0.8","0.85","0.9","0.95","1");
-$opt[desc] = array("","5%","10%","15%","20%","25%","30%","35%","40%","45%","50%","55%","60%","65%","70%","75%","80%","85%","90%","95%","100%");?>
+<TR id="menu_tab_" STYLE="display:none"><TD><?pop_select("divclose();set_posxy();document.form1.report_tab_rows.value=this.value;document.form1.submit();",$opt,"",1,"input_tabrows",$lang[88],60);?></TD></TR>
+<?php $opt['val'] = array("","0.05","0.1","0.15","0.2","0.25","0.3","0.35","0.4","0.45","0.5","0.55","0.6","0.65","0.7","0.75","0.8","0.85","0.9","0.95","1");
+$opt['desc'] = array("","5%","10%","15%","20%","25%","30%","35%","40%","45%","50%","55%","60%","65%","70%","75%","80%","85%","90%","95%","100%");?>
 <TR id="menu_multi_text_bild_chart_datum_dbdat_dbdesc_rect_line_ellipse_tab_snr_formel_" STYLE="display:none"><TD><?pop_select("fill_style('24','opacity',this.value);",$opt,"",1,"input_opacity",$lang[2093],60);?></TD></TR>
-<?$opt[val] = array(0,1,2,3,4,5);
-$opt[desc] = array("",$lang[2445],$lang[2091],$lang[2092],$lang[2446],$lang[2447]);?>
+<?php $opt['val'] = array(0,1,2,3,4,5);
+$opt['desc'] = array("",$lang[2445],$lang[2091],$lang[2092],$lang[2446],$lang[2447]);?>
 <TR id="menu_multi_text_bild_chart_datum_dbdat_dbdesc_rect_line_ellipse_snr_formel_onlynotab_" STYLE="display:none"><TD><?pop_select("fill_style('32','bg',this.value);",$opt,"",1,"input_bg",$lang[2090],60);?></TD></TR>
-<?$opt[val] = array("0","1","2");
-$opt[desc] = array("",$lang[2098],$lang[2099]);?>
+<?php $opt['val'] = array("0","1","2");
+$opt['desc'] = array("",$lang[2098],$lang[2099]);?>
 <TR id="menu_text_bild_chart_datum_dbdat_dbdesc_rect_line_ellipse_tab_snr_formel_onlynotab_" STYLE="display:none"><TD><?pop_select("fill_style('34','pagebreak',this.value);",$opt,"",1,"input_pagebreak",$lang[2100],60);?></TD></TR>
-<?$opt[val] = array_merge(array(0),$report["id"]);
-$opt[desc] = array_merge(array(''),$report["id"]);?>
+<?php $opt['val'] = array_merge(array(0),$report["id"]);
+$opt['desc'] = array_merge(array(''),$report["id"]);?>
 <TR id="menu_text_bild_chart_datum_dbdat_dbdesc_rect_line_ellipse_tab_snr_formel_onlynotab_ureport_" STYLE="display:none"><TD><?pop_select("fill_style('36','relativepos',this.value);",$opt,"",1,"input_relativepos",$lang[2102],60);?></TD></TR>
-<?$opt[val] = array_merge(array(0),$report["id"]);
-$opt[desc] = array_merge(array(''),$report["id"]);?>
+<?php $opt['val'] = array_merge(array(0),$report["id"]);
+$opt['desc'] = array_merge(array(''),$report["id"]);?>
 <TR id="menu_text_bild_chart_datum_dbdat_dbdesc_rect_line_ellipse_snr_formel_onlynotab_" STYLE="display:none"><TD><?pop_select("fill_style('39','relativedisplay',this.value);",$opt,"",1,"input_relativedisplay",$lang[2198],60);?></TD></TR>
-<?$opt[val] = array("0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30");
-$opt[desc] = array("","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30");?>
+<?php $opt['val'] = array("0","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30");
+$opt['desc'] = array("","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30");?>
 <TR id="menu_tabel_" STYLE="display:none"><TD><?pop_select("fill_style('37','colspan',this.value);",$opt,"",1,"input_colspan",$lang[2178],60);?></TD></TR>
-<?$opt[val] = array(0,1,2,3,4,5);
-$opt[desc] = array("",$lang[2445],$lang[2091],$lang[2092],$lang[2446],$lang[2447]);?>
+<?php $opt['val'] = array(0,1,2,3,4,5);
+$opt['desc'] = array("",$lang[2445],$lang[2091],$lang[2092],$lang[2446],$lang[2447]);?>
 <TR id="menu_multi_text_bild_chart_datum_dbdat_dbdesc_rect_line_ellipse_tab_snr_formel_" STYLE="display:none"><TD><?pop_select("fill_style('29','',this.value);",$opt,"",1,"input_hide",$lang[2088],60);?></TD></TR>
 <TR id="menu_text_bild_chart_datum_dbdat_dbdesc_rect_line_ellipse_tab_snr_formel_" STYLE="display:none"><TD><?pop_input2("fill_style('43','rotate',parseInt(this.value));","input_rotate",null,null,$lang[2698],95);?></TD></TR>
 <TR id="menu_dbdat_dbdesc_datum_text_" STYLE="display:none"><TD><?pop_input2("fill_style('40','tr_seperator',this.value);","input_seperator","",0,$lang[2357],95);?></TD></TR>
 <TR id="menu_dbdat_dbdesc_datum_text_formel_onlytab_" STYLE="display:none"><TD><?pop_input2("set_tabcell_width(this.value)","input_tr_width","",null,$lang[2861],95);?></TD></TR>
-<?
+<?php
 #NAME="replace_element" OnClick="if(this.checked){document.form1.report_replace_element.value=document.form1.report_edit_id.value;}else{document.form1.report_replace_element.value=''}"
 
-#$opt[val] = array("","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30");
-#$opt[desc] = array("","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30");
+#$opt['val'] = array("","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30");
+#$opt['desc'] = array("","1","2","3","4","5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30");
 #echo "<TR id=\"menu_tabel\" STYLE=\"display:none\"><TD>";
 #pop_select("fill_style('38','rowspan',this.value);",$opt,"",1,"input_rowspan",$lang[2179],60);
 #echo "</TD></TR>";
@@ -225,59 +232,58 @@ $opt[desc] = array("",$lang[2445],$lang[2091],$lang[2092],$lang[2446],$lang[2447
 <TR id="menu_dbdat_ureport_chart_" STYLE="display:none"><TD><?pop_line();?></TD></TR>
 <TR id="menu_dbdat_ureport_chart_" STYLE="display:none"><TD><?pop_submenu2("Parameter","document.getElementById('extendet_input').value=document.getElementById('extendet_input_' + currentdiv).value;limbasDivShow(this,'menu','menu_extendet_input');","Parameter");?></TD></TR>
 <TR id="menu_multi_text_bild_chart_datum_dbdat_dbdesc_rect_line_ellipse_tab_snr_formel_ureport_" STYLE="display:none"><TD><?pop_line();?></TD></TR>
-<TR id="menu_multi_text_bild_chart_datum_dbdat_dbdesc_rect_line_ellipse_tab_snr_formel_ureport_" STYLE="display:none"><TD><?pop_submenu2($lang[1133],"lmb_dropEl('".$lang[1099]." ".$lang[1133]."');",$lang[1133]);?></TD></TR>
+<TR id="menu_multi_text_bild_chart_datum_dbdat_dbdesc_rect_line_ellipse_tab_snr_formel_ureport_" STYLE="display:none"><TD><?pop_submenu2($lang[160],"lmb_dropEl('".$lang[1099]." ".$lang[160]."');",$lang[160]);?></TD></TR>
 <TR><TD><?pop_bottom();?></TD></TR>
 </TABLE></FORM></DIV>
 
 
 
 
-<?/*----------------- Zeichensatz-Style DIV -------------------*/?>
+<?php /*----------------- Zeichensatz-Style DIV -------------------*/?>
 <DIV ID="menu_fontstyle" class="lmbContextMenu" style="visibility:hidden;position:absolute;top:<?=$menuposy?>;left:<?=$menuposx?>;z-index:10001;" onclick="activ_menu=1"><FORM NAME="fstyle_form"><TABLE BORDER="0" cellspacing="0" cellpadding="0">
 <TR><TD><?pop_top('menu_fontstyle');?></TD></TR>
 
-<?$opt[val] = array("normal","italic");
-$opt[desc] = array($lang[1123],$lang[1124]);?>
+<?php $opt['val'] = array("normal","italic");
+$opt['desc'] = array($lang[1123],$lang[1124]);?>
 <TR><TD><?pop_select("fill_style('1','fontStyle',this.value)",$opt,"",1,"input_fontstyle",$lang[1115],0);?></TD></TR>
 
-<?$opt[val] = array("normal","bold");
-$opt[desc] = array($lang[1123],$lang[1125]);?>
+<?php $opt['val'] = array("normal","bold");
+$opt['desc'] = array($lang[1123],$lang[1125]);?>
 <TR><TD><?pop_select("fill_style('4','fontWeight',this.value)",$opt,"",1,"input_fontweight",$lang[1116],0);?></TD></TR>
 
-<?$opt[val] = array("none","underline");
-$opt[desc] = array($lang[1123],$lang[1126]);?>
+<?php $opt['val'] = array("none","underline");
+$opt['desc'] = array($lang[1123],$lang[1126]);?>
 <TR><TD><?pop_select("fill_style('7','textDecoration',this.value)",$opt,"",1,"input_fontdeco",$lang[1117],0);?></TD></TR>
 
-<?$opt[val] = array("none","uppercase","lowercase");
-$opt[desc] = array($lang[1123],$lang[1127],$lang[1128]);?>
+<?php $opt['val'] = array("none","uppercase","lowercase");
+$opt['desc'] = array($lang[1123],$lang[1127],$lang[1128]);?>
 <TR><TD><?pop_select("fill_style('8','textTransform',this.value)",$opt,"",1,"input_fonttransf",$lang[1118],0);?></TD></TR>
 
-<?$opt[val] = array("justify","left","center","right");
-$opt[desc] = array($lang[1129],$lang[1130],$lang[1131],$lang[1132]);?>
+<?php $opt['val'] = array("justify","left","center","right");
+$opt['desc'] = array($lang[1129],$lang[1130],$lang[1131],$lang[1132]);?>
 <TR><TD><?pop_select("fill_style('12','textAlign',this.value)",$opt,"",1,"input_fontalign",$lang[1119],0);?></TD></TR>
 
-<?$opt[val] = array("top","middle","bottom","baseline","sub","super","text-top","text-bottom");
-$opt[desc] = array($lang[1490],$lang[1491],$lang[1492],$lang[1493],$lang[1494],$lang[1495],$lang[1496],$lang[1497]);?>
+<?php $opt['val'] = array("top","middle","bottom","baseline","sub","super","text-top","text-bottom");
+$opt['desc'] = array($lang[1490],$lang[1491],$lang[1492],$lang[1493],$lang[1494],$lang[1495],$lang[1496],$lang[1497]);?>
 <TR><TD><?pop_select("fill_style('23','verticalAlign',this.value)",$opt,"",1,"input_fontvalign",$lang[1119],0);?></TD></TR>
 
-<?$opt[val] = array("","-3px","-2px","-1px","0px","1px","2px","3px","4px","5px","6px","7px","8px","9px","10px");
-$opt[desc] = array("","-3","-2","-1","0","1","2","3","4","5","6","7","8","9","10");?>
+<?php $opt['val'] = array("","-3px","-2px","-1px","0px","1px","2px","3px","4px","5px","6px","7px","8px","9px","10px");
+$opt['desc'] = array("","-3","-2","-1","0","1","2","3","4","5","6","7","8","9","10");?>
 <TR><TD><?pop_select("fill_style('11','lineHeight',parseInt(this.value));",$opt,"",1,"input_lineheight",$lang[1120],95);?></TD></TR>
 
-<?$opt[val] = array("","1px","2px","3px","4px","5px","6px","7px","8px","9px","10px");
-$opt[desc] = array("","1","2","3","4","5","6","7","8","9","10");?>
+<?php $opt['val'] = array("","1px","2px","3px","4px","5px","6px","7px","8px","9px","10px");
+$opt['desc'] = array("","1","2","3","4","5","6","7","8","9","10");?>
 <TR><TD><?pop_select("fill_style('6','letterSpacing',parseInt(this.value));",$opt,"",1,"input_letterspacing",$lang[1121],95);?></TD></TR>
 
-<?/*
-<?$opt[val] = array("","1px","2px","3px","4px","5px","6px","7px","8px","9px","10px");
-$opt[desc] = array("","1","2","3","4","5","6","7","8","9","10");?>
+<?php /* $opt['val'] = array("","1px","2px","3px","4px","5px","6px","7px","8px","9px","10px");
+$opt['desc'] = array("","1","2","3","4","5","6","7","8","9","10");?>
 <TR><TD><?pop_select("fill_style('5','wordSpacing',parseInt(this.value));",$opt,"",1,"input_wordspacing",$lang[1122],95);?></TD></TR>
 */?>
 
 <TR><TD><?pop_bottom();?></TD></TR>
 </TABLE></FORM></DIV>
 
-<?/*----------------- Zeichensatz-Farbe DIV -------------------*/?>
+<?php /*----------------- Zeichensatz-Farbe DIV -------------------*/?>
 <DIV ID="menu_color" class="lmbContextMenu" style="position:absolute;visibility:hidden;z-index:10001;" onclick="activ_menu=1"><FORM NAME="fcolor_form"><TABLE BORDER="0" cellspacing="0" cellpadding="0">
 <TR><TD ><?pop_top('menu_color');?></TD></TR>
 <TR><TD>
@@ -286,7 +292,7 @@ $opt[desc] = array("","1","2","3","4","5","6","7","8","9","10");?>
 <TR><TD><?pop_bottom();?></TD></TR>
 </TABLE></FORM></DIV>
 
-<?/*----------------- Bild-Style DIV -------------------*/?>
+<?php /*----------------- Bild-Style DIV -------------------*/?>
 <DIV ID="menu_picstyle" class="lmbContextMenu" style="visibility:hidden;position:absolute;top:<?=$menuposy?>;left:<?=$menuposx?>;z-index:10001;" onclick="activ_menu=1"><FORM NAME="pstyle_form"><TABLE BORDER="0" cellspacing="0" cellpadding="0">
 <TR><TD ><?pop_top('menu_picstyle');?></TD></TR>
 <TR><TD><?pop_submenu2($lang[1134],"limbasDivShow(this,'menu_picstyle','menu_pichistory');",$lang[1134]);?></TD></TR>
@@ -304,60 +310,60 @@ $opt[desc] = array("","1","2","3","4","5","6","7","8","9","10");?>
 <TR><TD><?pop_input2("divclose();set_posxy();document.form1.report_pic_style.value='-paint:'+this.value;document.form1.submit();","pst_paint","","","Paint",90);?></TD></TR>
 <TR><TD><?pop_input2("divclose();set_posxy();document.form1.report_pic_style.value='-noise:'+this.value+' Gaussian';document.form1.submit();","pst_noise","","","Noise",90);?></TD></TR>
 <TR><TD><?pop_input2("divclose();set_posxy();document.form1.report_pic_style.value='-raise:'+this.value+'x'+this.value;document.form1.submit();","pst_raise","","","Raise",90);?></TD></TR>
-<?$opt[val] = array("","+contrast","-contrast");
-$opt[desc] = array("","+","-");?>
+<?php $opt['val'] = array("","+contrast","-contrast");
+$opt['desc'] = array("","+","-");?>
 <TR><TD><?pop_select("divclose();set_posxy();document.form1.report_pic_style.value=this.value+':';document.form1.submit();",$opt,"",1,"pst_contrast","Contrast",90);?></TD></TR>
-<?$opt[val] = array("","90","-90");
-$opt[desc] = array("","90","-90");?>
+<?php $opt['val'] = array("","90","-90");
+$opt['desc'] = array("","90","-90");?>
 <TR><TD><?pop_select("divclose();set_posxy();document.form1.report_pic_style.value='-rotate:'+this.value;document.form1.submit();",$opt,"",1,"","Rotate",90);?></TD></TR>
-<?$opt[val] = array("","-flip","-flop");
-$opt[desc] = array("","Horizontal","Vertikal");?>
+<?php $opt['val'] = array("","-flip","-flop");
+$opt['desc'] = array("","Horizontal","Vertikal");?>
 <TR><TD><?pop_select("divclose();set_posxy();document.form1.report_pic_style.value=this.value+':';document.form1.submit();",$opt,"",1,"","Spiegeln",60);?></TD></TR>
-<?$opt[val] = array("","-monochrome","-negate","-normalize");
-$opt[desc] = array("","Monochrom","Invertieren","Normalisieren");?>
+<?php $opt['val'] = array("","-monochrome","-negate","-normalize");
+$opt['desc'] = array("","Monochrom","Invertieren","Normalisieren");?>
 <TR><TD><?pop_select("divclose();set_posxy();document.form1.report_pic_style.value=this.value+':';document.form1.submit();",$opt,"",1,"","Filter",60);?></TD></TR>
 <TR><TD><?pop_bottom();?></TD></TR>
 </TABLE></FORM></DIV>
 
-<?/*----------------- Bild-Style DIV -------------------*/?>
+<?php /*----------------- Bild-Style DIV -------------------*/?>
 <DIV ID="menu_pichistory" class="lmbContextMenu" style="position:absolute;visibility:hidden;z-index:10001;" onclick="activ_menu=1"><FORM NAME="pichistory_form"><TABLE BORDER="0" cellspacing="0" cellpadding="0">
 <TR><TD ><?pop_top('menu_pichistory');?></TD></TR>
 <TR><TD>
 <?pop_left();?>
-&nbsp;<TEXTAREA ID="pichistory" NAME="pichistory" WRAP="physical" STYLE="width:140px;height:100px;background-color:<?echo $farbschema[WEB8];?>;" READONLY></TEXTAREA>
+&nbsp;<TEXTAREA ID="pichistory" NAME="pichistory" WRAP="physical" STYLE="width:140px;height:100px;background-color:<?= $farbschema['WEB8'] ?>;" READONLY></TEXTAREA>
 <?pop_right();?>
 </TD></TR>
 <TR><TD><?pop_bottom();?></TD></TR>
 </TABLE></FORM></DIV>
 
-<?/*----------------- PIC-INFO DIV -------------------*/?>
+<?php /*----------------- PIC-INFO DIV -------------------*/?>
 <DIV ID="pic_info" class="lmbContextMenu" style="position:absolute;visibility:hidden;z-index:10001;" onclick="activ_menu=1"><FORM NAME="picinfo_form"><TABLE BORDER="0" cellspacing="0" cellpadding="0">
 <TR><TD ><?pop_top('pic_info');?></TD></TR>
 <TR><TD>
 <?pop_left();?>
-&nbsp;<TEXTAREA READONLY NAME="picinfo_val" STYLE="width:140px;height:150px;background-color:<?echo $farbschema[WEB8];?>;" READONLY></TEXTAREA>
+&nbsp;<TEXTAREA READONLY NAME="picinfo_val" STYLE="width:140px;height:150px;background-color:<?= $farbschema['WEB8'] ?>;" READONLY></TEXTAREA>
 <?pop_right();?>
 </TD></TR>
 <TR><TD><?pop_bottom();?></TD></TR>
 </TABLE></FORM></DIV>
 
-<?/*----------------- Big Input formel DIV -------------------*/?>
+<?php /*----------------- Big Input formel DIV -------------------*/?>
 <DIV ID="menu_big_input" class="lmbContextMenu" style="position:absolute;visibility:hidden;z-index:10001;" onclick="activ_menu=1"><FORM NAME="big_input_form"><TABLE BORDER="0" cellspacing="0" cellpadding="0">
 <TR><TD ><?pop_top('pic_info',305);?></TD></TR>
 <TR><TD>
 <?pop_left(305);?>
-&nbsp;<TEXTAREA onfocus="bigInputEdit=1;" onblur="bigInputEdit=0;" NAME="big_input" id="big_input" STYLE="width:300px;height:200px;background-color:<?echo $farbschema[WEB8];?>;"  onkeyup="document.getElementById(currentdiv).value=this.value;"></TEXTAREA>
+&nbsp;<TEXTAREA onfocus="bigInputEdit=1;" onblur="bigInputEdit=0;" NAME="big_input" id="big_input" STYLE="width:300px;height:200px;background-color:<?= $farbschema['WEB8'] ?>;"  onkeyup="document.getElementById(currentdiv).value=this.value;"></TEXTAREA>
 <?pop_right();?>
 </TD></TR>
 <TR><TD><?pop_bottom(305);?></TD></TR>
 </TABLE></FORM></DIV>
 
-<?/*----------------- extendet_input DIV -------------------*/?>
+<?php /*----------------- extendet_input DIV -------------------*/?>
 <DIV ID="menu_extendet_input" class="lmbContextMenu" style="position:absolute;visibility:hidden;z-index:10001;" onclick="activ_menu=1"><FORM NAME="extendet_input_form"><TABLE BORDER="0" cellspacing="0" cellpadding="0">
 <TR><TD ><?pop_top('pic_info',305);?></TD></TR>
 <TR><TD>
 <?pop_left(305);?>
-&nbsp;<TEXTAREA NAME="extendet_input" id="extendet_input" STYLE="width:300px;height:200px;background-color:<?echo $farbschema[WEB8];?>;" onchange="document.getElementById('extendet_input_'+currentdiv).value=this.value"></TEXTAREA>
+&nbsp;<TEXTAREA NAME="extendet_input" id="extendet_input" STYLE="width:300px;height:200px;background-color:<?= $farbschema['WEB8'] ?>;" onchange="document.getElementById('extendet_input_'+currentdiv).value=this.value"></TEXTAREA>
 <?pop_right();?>
 </TD></TR>
 <TR><TD><?pop_bottom(305);?></TD></TR>
@@ -368,9 +374,9 @@ $opt[desc] = array("","Monochrom","Invertieren","Normalisieren");?>
 <FORM ACTION="main_admin.php" METHOD="post" name="form1">
 <input type="hidden" name="action" value="setup_report_main">
 <input type="hidden" name="report_typ">
-<input type="hidden" name="report_id" VALUE="<?echo $report_id;?>">
-<input type="hidden" name="report_name" VALUE="<?echo $report_name;?>">
-<input type="hidden" name="referenz_tab" VALUE="<?echo $referenz_tab;?>">
+<input type="hidden" name="report_id" VALUE="<?= $report_id ?>">
+<input type="hidden" name="report_name" VALUE="<?= $report_name ?>">
+<input type="hidden" name="referenz_tab" VALUE="<?= $referenz_tab ?>">
 <input type="hidden" name="default_font">
 <input type="hidden" name="default_size">
 <input type="hidden" name="new_text">
@@ -413,16 +419,16 @@ $opt[desc] = array("","Monochrom","Invertieren","Normalisieren");?>
 <input type="hidden" name="tabelement">
 
 <?php
-$report[page_style][0] = round($report[page_style][0] * 2.8346);
-$report[page_style][1] = round($report[page_style][1] * 2.8346);
-$report[page_style][2] = round($report[page_style][2] * 2.8346);
-$report[page_style][3] = round($report[page_style][3] * 2.8346);
-$report[page_style][4] = round($report[page_style][4] * 2.8346);
-$report[page_style][5] = round($report[page_style][5] * 2.8346);
+$report['page_style'][0] = round($report['page_style'][0] * 2.8346);
+$report['page_style'][1] = round($report['page_style'][1] * 2.8346);
+$report['page_style'][2] = round($report['page_style'][2] * 2.8346);
+$report['page_style'][3] = round($report['page_style'][3] * 2.8346);
+$report['page_style'][4] = round($report['page_style'][4] * 2.8346);
+$report['page_style'][5] = round($report['page_style'][5] * 2.8346);
 ?>
 
-<div id="ramen" style="position:absolute; left:20; top:20; width:<?echo $report[page_style][0];?>px; height:<?echo $report[page_style][1];?>px; border:3px groove; z-index:1">
-<div id="innenramen" style="position:absolute; left:<?echo $report[page_style][4];?>px; top:<?echo $report[page_style][2];?>px; width:<?echo ($report[page_style][0] - $report[page_style][4] - $report[page_style][5]);?>px; height:<?echo ($report[page_style][1] - $report[page_style][2] - $report[page_style][3]);?>px; border:1px solid #BBBBBB;z-index:1">
+<div id="ramen" style="position:absolute; left:20; top:20; width:<?= $report['page_style'][0] ?>px; height:<?= $report['page_style'][1] ?>px; border:3px groove; z-index:1">
+<div id="innenramen" style="position:absolute; left:<?= $report['page_style'][4] ?>px; top:<?= $report['page_style'][2] ?>px; width:<?= ($report['page_style'][0] - $report['page_style'][4] - $report['page_style'][5]) ?>px; height:<?= ($report['page_style'][1] - $report['page_style'][2] - $report['page_style'][3]) ?>px; border:1px solid #BBBBBB;z-index:1">
 <?php
 
 /*------- Style ---------*/
@@ -708,7 +714,7 @@ function print_tab($report_ID,$report_width,$report_height,$report_posx,$report_
 					$omousedown = "onMousedown=\"startDragTd(event,'tab_".$report_ID."','tab_el_".$report_ID."_".$bzm2."_".$bzm3."','div".odbc_result($rs, "EL_ID")."','".odbc_result($rs, "EL_ID")."');\"";
 				}
 
-				$result .= "<TD $colspanstyle nowrap style=\"overflow:hidden;background-color:transparent;border:1px dotted black;cursor:e-resize;width:".$tab_el_size.";\" VALIGN=\"TOP\" ID=\"tab_el_".$report_ID."_".$bzm2."_".$bzm3."\" OnClick=\"clear_tab_el();add_tabelement('".$report_ID."','".$report_tab."','".$bzm2."','".$bzm3."');\" $omousedown>";
+				$result .= "<TD $colspanstyle nowrap style=\"overflow:hidden;background-color:transparent;border:1px dotted;cursor:e-resize;width:".$tab_el_size.";\" VALIGN=\"TOP\" ID=\"tab_el_".$report_ID."_".$bzm2."_".$bzm3."\" OnClick=\"clear_tab_el();add_tabelement('".$report_ID."','".$report_tab."','".$bzm2."','".$bzm3."');\" $omousedown>";
 				
 				if($numrows > 0){
 					#$el_width = $tab_el_size;
@@ -748,7 +754,7 @@ function print_tab($report_ID,$report_width,$report_height,$report_posx,$report_
 /*----------------- Element-Schleife -------------------*/
 $bzm = 0;
 while($report["id"][$bzm]){
-	printBerichtElement($report['typ'][$bzm],$report["id"][$bzm],$report[width][$bzm],$report[height][$bzm],$report[posx][$bzm],$report[posy][$bzm],$report[zindex][$bzm],$report[style][$bzm],$report[value][$bzm],$report[extvalue][$bzm],0,$report[tab][$bzm],$report[tab_size][$bzm],$report[data_type][$bzm],$report[verkn_baum][$bzm],$report[dbfield][$bzm],$report[pic_type][$bzm],$report[pic_style][$bzm],$report[pic_size][$bzm],$report[pic_res][$bzm],$report[pic_name][$bzm]);
+	printBerichtElement($report['typ'][$bzm],$report["id"][$bzm],$report['width'][$bzm],$report['height'][$bzm],$report['posx'][$bzm],$report['posy'][$bzm],$report['zindex'][$bzm],$report['style'][$bzm],$report['value'][$bzm],$report['extvalue'][$bzm],0,$report['tab'][$bzm],$report['tab_size'][$bzm],$report['data_type'][$bzm],$report['verkn_baum'][$bzm],$report['dbfield'][$bzm],$report['pic_type'][$bzm],$report['pic_style'][$bzm],$report['pic_size'][$bzm],$report['pic_res'][$bzm],$report['pic_name'][$bzm]);
 	#printBerichtElement($report_ID         ,$report_width       ,$report_height       ,$report_posx       ,$report_posy       ,$report_zindex       ,$report_style       ,$report_value     ,$tab_el,$tab_el_type);
 	unset($stylevalue);
 	unset($textstyle);

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -29,8 +29,8 @@ function lmbExport_infotext(){
 
 	$info = "
 	# export.conf
-	# © LIMBAS GmbH - 2001-2017
-	# Copyright (c) 2001-2017 LIMBAS GmbH, Germany.  All rights reserved.
+	# © LIMBAS GmbH - 2001-2018
+	# Copyright (c) 2001-2018 LIMBAS GmbH, Germany.  All rights reserved.
 	#
 	# Author: LIMBAS GmbH
 	#
@@ -289,7 +289,13 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
 		// rules&groups
         if (in_array('rules',$tableprefix))
         {
-            $tosync = array_merge($tosync, array('lmb_groups','lmb_rules_action','lmb_rules_repform'));
+            $tosync = array_merge($tosync, array('lmb_groups','lmb_rules_action','lmb_rules_repform', 'lmb_rules_tables', 'lmb_rules_fields', 'lmb_rules_dataset', 'ldms_rules'));
+        }
+        
+	    // synchronisation
+        if (in_array('synchronisation',$tableprefix))
+        {
+            $tosync = array_merge($tosync, array('lmb_sync_conf','lmb_sync_template') );
         }
         
 	    // system
@@ -827,11 +833,11 @@ function lmbExport_Dump($format,$struct_only=false){
 	}
 
 
-	mkdir($umgvar[pfad]."/BACKUP/".date("d_m_y").$ext,0777);
+	mkdir($umgvar['pfad']."/BACKUP/".date("d_m_y").$ext,0777);
 
 
 	/* --- Configurations_Datei ------- */
-	$config_datei = fopen($umgvar[pfad]."/BACKUP/".date("d_m_y").$ext."/export.conf","w+");
+	$config_datei = fopen($umgvar['pfad']."/BACKUP/".date("d_m_y").$ext."/export.conf","w+");
 	$info = lmbExport_infotext();
 	/* ---> conf */ fputs($config_datei,$info);
 
@@ -841,7 +847,7 @@ function lmbExport_Dump($format,$struct_only=false){
 
 		unset($COLUM);
 		unset($line);
-		$table_datei = fopen($umgvar[pfad]."/BACKUP/".date("d_m_y").$ext."/$table","w+");
+		$table_datei = fopen($umgvar['pfad']."/BACKUP/".date("d_m_y").$ext."/$table","w+");
 
 		/* ---> conf */ fputs($config_datei,"<begin tabledefinition::$table>\n");
 
@@ -989,7 +995,7 @@ function lmbExport_Dump($format,$struct_only=false){
 
 	/* --- Komplettexport packen -------------------------------------- */
 	$path = $umgvar["pfad"]."/BACKUP";
-	#$systemquery = "tar -c -z -C ".$path." -f ".$umgvar[pfad]."/USER/".$session[user_id]."/temp/export.tar ".date("d_m_y").$ext;
+	#$systemquery = "tar -c -z -C ".$path." -f ".$umgvar['pfad']."/USER/".$session['user_id']."/temp/export.tar ".date("d_m_y").$ext;
 	$systemquery = "tar -c -z -C ".$path." -f ".$path."/".date("d_m_y").$ext.".tar.gz ".date("d_m_y").$ext;
 	$sys = exec($systemquery);
 	rmdirr($path."/".date("d_m_y").$ext,0,1,1);
@@ -1033,25 +1039,28 @@ function lmbExport_groupSelection($lmp=null){
 			<input class=\"checkb\" type=\"checkbox\" name=\"orderList[group][$group_key]\">
 			</TD>\n"; // TODO orderList is never used!
 			
-			if($rm_gtab);
-			foreach ($rm_gtab["tab_id"] as $gtab_key => $gtab_value){
-				if($rm_gtab["tab_group"][$gtab_key] == $group_value){
-					echo "<TR title=\"table\" OnMouseOver=\"this.style.backgroundColor='".$farbschema["WEB7"]."'\" OnMouseOut=\"this.style.backgroundColor=''\">
-					<TD nowrap>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class=\"lmb-icon-8 lmb-table\"></i>&nbsp;".$rm_gtab["desc"][$gtab_key]."<TD width=\"80%\" align=\"right\"><input class=\"checkb\" type=\"checkbox\" name=\"exptable[table][$gtab_key]\" VALUE=\"$gtab_key\"></TD>\n";
-					
-					if($rm_forms[$gtab_key]){
-					foreach ($rm_forms[$gtab_key]["id"] as $forms_key => $forms_value){
-						echo "<TR title=\"formular\" OnMouseOver=\"this.style.backgroundColor='".$farbschema["WEB7"]."'\" OnMouseOut=\"this.style.backgroundColor=''\">
-						<TD nowrap>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class=\"lmb-icon-cus lmb-icon-8 lmb-form\"></i>&nbsp;".$rm_forms[$gtab_key]["name"][$forms_key]."<TD width=\"80%\" align=\"right\"><input class=\"checkb\" type=\"checkbox\" name=\"exptable[form][$forms_key]\" VALUE=\"$forms_key\"></TD>\n";
-					}}
-					
-					if($rm_reports[$gtab_key]){
-					foreach ($rm_reports[$gtab_key]["id"] as $reports_key => $reports_value){
-						echo "<TR title=\"report\" OnMouseOver=\"this.style.backgroundColor='".$farbschema["WEB7"]."'\" OnMouseOut=\"this.style.backgroundColor=''\">
-						<TD nowrap>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class=\"lmb-icon-8 lmb-report\"></i>&nbsp;".$rm_reports[$gtab_key]["name"][$reports_key]."<TD width=\"80%\" align=\"right\"><input class=\"checkb\" type=\"checkbox\" name=\"exptable[report][$reports_key]\" VALUE=\"$reports_key\"></TD>\n";
-					}}
-				}
-			}
+			if ($rm_gtab) {
+                foreach ($rm_gtab["tab_id"] as $gtab_key => $gtab_value) {
+                    if ($rm_gtab["tab_group"][$gtab_key] == $group_value) {
+                        echo "<TR title=\"table\" OnMouseOver=\"this.style.backgroundColor='" . $farbschema["WEB7"] . "'\" OnMouseOut=\"this.style.backgroundColor=''\">
+					<TD nowrap>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class=\"lmb-icon-8 lmb-table\"></i>&nbsp;" . $rm_gtab["desc"][$gtab_key] . "<TD width=\"80%\" align=\"right\"><input class=\"checkb\" type=\"checkbox\" name=\"exptable[table][$gtab_key]\" VALUE=\"$gtab_key\"></TD>\n";
+
+                        if ($rm_forms[$gtab_key]) {
+                            foreach ($rm_forms[$gtab_key]["id"] as $forms_key => $forms_value) {
+                                echo "<TR title=\"formular\" OnMouseOver=\"this.style.backgroundColor='" . $farbschema["WEB7"] . "'\" OnMouseOut=\"this.style.backgroundColor=''\">
+						<TD nowrap>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class=\"lmb-icon-cus lmb-icon-8 lmb-form\"></i>&nbsp;" . $rm_forms[$gtab_key]["name"][$forms_key] . "<TD width=\"80%\" align=\"right\"><input class=\"checkb\" type=\"checkbox\" name=\"exptable[form][$forms_key]\" VALUE=\"$forms_key\"></TD>\n";
+                            }
+                        }
+
+                        if ($rm_reports[$gtab_key]) {
+                            foreach ($rm_reports[$gtab_key]["id"] as $reports_key => $reports_value) {
+                                echo "<TR title=\"report\" OnMouseOver=\"this.style.backgroundColor='" . $farbschema["WEB7"] . "'\" OnMouseOut=\"this.style.backgroundColor=''\">
+						<TD nowrap>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<i class=\"lmb-icon-8 lmb-report\"></i>&nbsp;" . $rm_reports[$gtab_key]["name"][$reports_key] . "<TD width=\"80%\" align=\"right\"><input class=\"checkb\" type=\"checkbox\" name=\"exptable[report][$reports_key]\" VALUE=\"$reports_key\"></TD>\n";
+                            }
+                        }
+                    }
+                }
+            }
 		}
 		echo "</TABLE>";
 	}

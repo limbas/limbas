@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -52,6 +52,7 @@ if(!is_numeric($ID)){
 }
 
 # ---------------- File-upload für EXT Explorer -----------------------
+/*
 if($_FILES AND $f_LID AND $LINK[128]){
 
 	$filelist["file"] = $_FILES['file']['tmp_name'];
@@ -59,6 +60,7 @@ if($_FILES AND $f_LID AND $LINK[128]){
 	$filelist["file_type"] = $_FILES['file']['type'];
 
 	foreach ($filelist["file"] as $key => $value){
+	    if(!$value){continue;}
 		$singlefile = array();
 		$singlefile["file"][1] = $filelist["file"][$key];
 		$singlefile["file_name"][1] = $filelist["file_name"][$key];
@@ -72,19 +74,19 @@ if($_FILES AND $f_LID AND $LINK[128]){
 		set_joins($f_gtabid,$verkn);
 	}
 }
-
+*/
 
 if(!isset($ID) AND !$form_id){
 	lmb_alert($lang["98"]);
 }
 
 
-if($gtab["typ"][$i] == 5){$action == "gtab_deterg";}
+if($gtab["typ"][$i] == 5){$action = "gtab_deterg";}
 
 ?>
 <div id="lmbAjaxContainer" class="ajax_container" style="position:absolute;display:none;" OnClick="activ_menu=1;"></div>
 <div id="lmbAjaxContainer2" class="ajax_container" style="position:absolute;display:none;z-index:999;" onclick="activ_menu=1;"></div>
-<div id="lmbZoomContainer" class="ajax_container" style="position:absolute;display:none;font-size:18;font-weight:bold" OnClick="activ_menu=1;"></div>
+<div id="lmbZoomContainer" class="ajax_container" style="position:absolute;display:none;font-size:18px;font-weight:bold" OnClick="activ_menu=1;"></div>
 <div id="dublicateCheckLayer" style="position:absolute;top:25%;left:25%;display:none;z-index:999"></div>
 
 <Script language="JavaScript">
@@ -105,7 +107,7 @@ jsvar["ajaxpost"] = "<?=$gtab["ajaxpost"][$gtabid]?>";
 jsvar["mainfield"] = "<?=$gfield[$gtabid]["mainfield"]?>";
 jsvar["tablename"] = "<?=$gtab["desc"][$gtabid]?>";
 
-<?
+<?php
 if($form_id){echo "jsvar[\"is_form\"] = \"1\";\n";}
 if(count($gformlist[$gtabid]["id"]) > 0){echo "jsvar[\"is_formlist\"] = \"1\";\n";}
 
@@ -201,6 +203,5 @@ unset($commit);
 ?>
 
 <span id="myExtForms"></span>
-<input type="text" id="hiddenfocus" style="width:1px;position:absolute;left:-100">
 
 </form>

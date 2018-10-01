@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*$remote_sync_precheck
@@ -45,7 +45,7 @@ function LIM_activate(el,elid){
 
 
 function LIM_setDefault(){
-	<?
+	<?php
 	if($single_export){
 		echo "LIM_activate(null,1)";
 	}elseif($dump_export){
@@ -102,18 +102,18 @@ function lmb_disableAllBut(el) {
 
 <TR><TD class="tabpoolfringe">
 
-<?/* --- Remote-import ------------------------------- */?>
+<?php /* --- Remote-import ------------------------------- */?>
 <TABLE ID="tab1" width="100%" cellspacing="0" cellpadding="0" class="tabBody">
 
 
-<?/* --- Tabellenliste ------------------------------- */?>
+<?php /* --- Tabellenliste ------------------------------- */?>
 <FORM ACTION="main_admin.php" METHOD="post" name="form1">
 <INPUT TYPE="hidden" NAME="action" VALUE="setup_export">
 <INPUT TYPE="hidden" NAME="make_package" VALUE="0">
 
-<TR class="tabHeader"><TD class="tabHeaderItem">&nbsp;<B><?=$lang[961]?></B></TD><TD class="tabHeaderItem"><?=$lang[978]?></TD></TR>
+<TR class="tabHeader"><TD class="tabHeaderItem">&nbsp;<B><?=$lang[961]?></B></TD><TD class="tabHeaderItem"><?=$lang[925]?></TD></TR>
 <TR class="tabBody"><TD><SELECT NAME="exptable[]" MULTIPLE SIZE="16" STYLE="width:200">
-<?
+<?php
 $odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'TABLE','VIEW'"));
 foreach($odbc_table["table_name"] as $tkey => $tvalue) {
 	if($exptable){
@@ -123,15 +123,15 @@ foreach($odbc_table["table_name"] as $tkey => $tvalue) {
 }
 ?>
 <TD ALIGN="CENTER" VALIGN="center">
-<?
+<?php
 if(!$format){$format = "system";}
 if($format == "excel"){$chk = "CHECKED";}else{$chk = "";}?>
 <i class="lmb-icon lmb-excel-alt2" TITLE="<?=$lang[962]?>" ALT="<?=$lang[962]?>" Border="0"></i><INPUT STYLE="border:0px;" TYPE="RADIO" NAME="format" VALUE="excel" <?=$chk?>>&nbsp;
-<?if($format == "txt"){$chk = "CHECKED";}else{$chk = "";}?>
+<?php if($format == "txt"){$chk = "CHECKED";}else{$chk = "";}?>
 <i class="lmb-icon lmb-file-text" TITLE="<?=$lang[963]?>" ALT="<?=$lang[963]?>" Border="0"></i><INPUT TYPE="RADIO" STYLE="border:0px;" NAME="format" VALUE="txt" <?=$chk?>>&nbsp;
-<?if($format == "system"){$chk = "CHECKED";}else{$chk = "";}?>
+<?php if($format == "system"){$chk = "CHECKED";}else{$chk = "";}?>
 <IMG SRC="pic/limbasicon.gif" TITLE="<?=$lang[964]?>" ALT="<?=$lang[964]?>" Border="0"><INPUT TYPE="RADIO" NAME="format" STYLE="border:0px;" VALUE="system" <?=$chk?>>
-<BR><BR>utf8 en/decode&nbsp;<input name="txt_encode" type="checkbox" <?if($txt_encode){echo "checked";}?>>
+<BR><BR>utf8 en/decode&nbsp;<input name="txt_encode" type="checkbox" <?php if($txt_encode){echo "checked";}?>>
 </TD>
 </TR>
 
@@ -143,7 +143,7 @@ if($format == "excel"){$chk = "CHECKED";}else{$chk = "";}?>
 </FORM>
 </TABLE>
 
-<?/* --- Komplettexport ------------------------------- */
+<?php /* --- Komplettexport ------------------------------- */
 if ($dump_export)
 {
 	echo '<script language="JavaScript">
@@ -155,7 +155,6 @@ if ($dump_export)
 <TABLE ID="tab2" width="100%" cellspacing="2" cellpadding="1" class="tabBody" style="display:none;">
 
 <FORM name="form2">
-<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
 <INPUT TYPE="hidden" NAME="action" VALUE="setup_export">
 
 <TR class="tabHeader"><TD class="tabHeaderItem" COLSPAN="3">&nbsp;<B><?=$lang[966]?></B></TD></TR>
@@ -171,18 +170,17 @@ if ($dump_export)
 
 
 
-<?/* --- Projectexport ------------------------------- */?>
+<?php /* --- Projectexport ------------------------------- */?>
 <TABLE ID="tab3" width="100%" cellspacing="2" cellpadding="1" class="tabBody" style="display:none;">
 
 <FORM name="form3">
-<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
 <INPUT TYPE="hidden" NAME="action" VALUE="setup_export">
 <INPUT TYPE="hidden" NAME="format" VALUE="group">
 
 <TR class="tabHeader"><TD class="tabHeaderItem" COLSPAN="3">&nbsp;<B><?=$lang[2462]?></B></TD></TR>
 <TR><TD>
 
-<?
+<?php
 $submit = 'group_export_';
 if(!$group_export){
 	lmbExport_groupSelection();
@@ -224,7 +222,6 @@ if ($sync_export)
 <TABLE ID="tab4" width="100%" cellspacing="2" cellpadding="1" class="tabBody" style="display:none;">
 
 <FORM name="form4">
-<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
 <INPUT TYPE="hidden" NAME="action" VALUE="setup_export">
 <INPUT TYPE="hidden" NAME="format" VALUE="sync">
 <INPUT TYPE="hidden" NAME="remote_sync_export" VALUE="">
@@ -259,7 +256,7 @@ if ($sync_export)
 <TD ><INPUT CLASS="syncexport" TYPE="checkbox" NAME="syncforms" STYLE="border:0px;" VALUE="1" <?=($syncforms?"checked":"")?>></TD><TD style="cursor:help"><?=$lang[2281]?></TD>
 </TR>
 <TR title="lmb_report_list, lmb_reports">
-<TD ><INPUT CLASS="syncexport" TYPE="checkbox" NAME="syncrep" STYLE="border:0px;" VALUE="1" <?=($syncrep?"checked":"")?>></TD><TD style="cursor:help"><?=$lang[2280]?></TD>
+<TD ><INPUT CLASS="syncexport" TYPE="checkbox" NAME="syncrep" STYLE="border:0px;" VALUE="1" <?=($syncrep?"checked":"")?>></TD><TD style="cursor:help"><?=$lang[1788]?></TD>
 </TR>
 <TR title="lmb_chart_list, lmb_charts">
 <TD ><INPUT CLASS="syncexport" TYPE="checkbox" NAME="synccharts" STYLE="border:0px;" VALUE="1" <?=($synccharts?"checked":"")?>></TD><TD style="cursor:help">Charts</TD>
@@ -304,6 +301,9 @@ if ($sync_export)
 </TR>
 <TR title="lmb_groups">
 <TD ><INPUT CLASS="syncexport" TYPE="checkbox" NAME="syncrules" STYLE="border:0px;" VALUE="1" <?=($syncrules?"checked":"")?>></TD><TD style="cursor:help">Rechte&Gruppen</TD>
+</TR>
+<TR title="lmb_sync_conf lmb_sync_template">
+<TD ><INPUT CLASS="syncexport" TYPE="checkbox" NAME="syncsynchronisation" STYLE="border:0px;" VALUE="1" <?=($syncsynchronisation?"checked":"")?>></TD><TD style="cursor:help">Synchronisation</TD>
 </TR>
 <TR title="lmb_umgvar, lmb_dbpatch, lmb_field_types, lmb_fonts, lmb_mimetypes, lmb_lang, lmb_action">
 <TD ><INPUT CLASS="syncexport" TYPE="checkbox" NAME="syncsystem" STYLE="border:0px;" VALUE="1" <?=($syncsystem?"checked":"")?>></TD><TD style="cursor:help">System</TD>
@@ -445,7 +445,7 @@ if($dump_export) {
             <p><h4><?=$lang[970]?>!</h4></p>
             <p>
                 <?=$lang[971]?> <?=$lang[973]?>:<BR>
-                <?=$lang[950]?>: <B><?=$result_exp_tabs?></B><BR>
+                <?=$lang[577]?>: <B><?=$result_exp_tabs?></B><BR>
                 <?=$lang[972]?>: <B><?=$result_exp_dat?></B>
             </p>
             <p>
@@ -461,7 +461,7 @@ if($dump_export) {
             <p><h4><?=$lang[970]?>!</h4></p>
             <p>
                 <?=$lang[971]?> <?=$lang[973]?>:<BR>
-                <?=$lang[950]?>: <B><?=$result_exp_tabs?></B><BR>
+                <?=$lang[577]?>: <B><?=$result_exp_tabs?></B><BR>
                 <?=$lang[972]?>: <B><?=$result_exp_dat?></B>
             </p>
             <p>
@@ -513,6 +513,7 @@ elseif($sync_export || $remote_sync_export || $remote_sync_precheck || $sync_exp
         if ($syncpools) $tosync[] = 'pools';
         if ($syncrules) $tosync[] = 'rules';
         if ($syncsystem) $tosync[] = 'system';
+        if ($syncsynchronisation) $tosync[] = 'synchronisation';
         
         if ($syncfunctmpfields) $tosync[] = 'functmpfields';
         if ($syncfunctmpfiles) $tosync[] = 'functmpfiles';
@@ -552,7 +553,7 @@ elseif($sync_export || $remote_sync_export || $remote_sync_precheck || $sync_exp
                 <p><h4><?=$lang[970]?>!</h4></p>
                 <p>
                     <?=$lang[971]?> <?=$lang[973]?>:<BR>
-                    <?=$lang[950]?>: <B><?=$result_exp_tabs?></B><BR>
+                    <?=$lang[577]?>: <B><?=$result_exp_tabs?></B><BR>
                     <?=$lang[972]?>: <B><?=$result_exp_dat?></B>
                 </p>
                 <p>
@@ -570,9 +571,14 @@ elseif($sync_export || $remote_sync_export || $remote_sync_precheck || $sync_exp
         
     # remote export
     } else if($remote_sync_export || $remote_sync_precheck) {
+        echo '<div id="limbasWaitsymbol" style="margin-left: 300px;" class="lmbWaitSymbol"></div>';
+        ob_flush();
+        flush();
+
         # get answer of soap
         $response = lmbExport_remoteSync($tosync, $remoteHost, $remoteUser, $remotePass, 2, $remote_sync_export);
-        
+        echo '<script>limbasWaitsymbol(null, true, true)</script>';
+
         # if answer valid
         if($response && is_array($response) && array_key_exists('output', $response)) {
             # log errors

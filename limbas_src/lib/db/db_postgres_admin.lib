@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -24,11 +24,23 @@ $DBA["DOMAINTABLE"] = array("tables","views","columns","key_column_usage","const
 $DBA["DOMAINSCHEMA"] = array("information_schema","information_schema","information_schema","information_schema","information_schema","information_schema","pg_catalog","pg_catalog","pg_catalog","pg_catalog","pg_catalog");
 
 # db version
-function dbf_version(){
+function dbf_version($DBA=null){
 	global $db;
-	
-	$rs = odbc_exec($db,"SELECT SETTING FROM PG_SETTINGS WHERE NAME = 'server_version_num'") or errorhandle(odbc_errormsg($db),$prepare_string,"get next sequence",$FILE,$LINE);
-	return odbc_result($rs,"SETTING");
+
+	$sql = "SELECT SETTING FROM PG_SETTINGS WHERE NAME = 'server_version_num'";
+	$rs = @odbc_exec($db,$sql) or errorhandle(odbc_errormsg($db),$sql,"get DB Version",$FILE,$LINE);
+	$version = odbc_result($rs,"SETTING");
+	$version_[] = $version;
+	$version_[] = $version;
+
+	// encoding
+    if($DBA) {
+        $sql = "SHOW SERVER_ENCODING";
+        $rs = @odbc_exec($db, $sql) or errorhandle(odbc_errormsg($db), $sql, "get DB Version", $FILE, $LINE);
+        $version_[] = odbc_result($rs, "server_encoding");
+    }
+
+	return $version_;
 }
 
 ############# indexes ########################

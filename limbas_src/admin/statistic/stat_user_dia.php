@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -23,7 +23,7 @@
 <TABLE BORDER="0" cellspacing="1" cellpadding="1">
 <TR><TD COLSPAN="99">&nbsp;</TD></TR>
 
-<?
+<?php
 if($diag_myd == 3){$d = 1;}else{$d = 0;}
 if($diag_myd == 2){$m = 1;}else{$m = 0;}
 if($diag_myd == 1){$y = 1;}else{$y = 0;}
@@ -38,7 +38,7 @@ while(odbc_fetch_row($rs, $bzm)) {
 
         $sqlquery1 = "SELECT DIAG_DESC,DIAG_VALUE,DIAG_SQL FROM LMB_CHARTS WHERE ID = ".odbc_result($rs, "ID");
         $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-        $phpfile = fopen($umgvar[pfad]."/USER/".$session[user_id]."/temp/diag".odbc_result($rs, "ID").".php","w+");
+        $phpfile = fopen($umgvar['pfad']."/USER/".$session['user_id']."/temp/diag".odbc_result($rs, "ID").".php","w+");
 
         $start_time = dateToStamp($diag_von);
         $end_time = dateToStamp($diag_bis);
@@ -88,12 +88,12 @@ while(odbc_fetch_row($rs, $bzm)) {
         }
 
 
-        fputs($phpfile,"<?\n");
+        fputs($phpfile,"<?php\n");
         fputs($phpfile,"\n\n".$result."\n");
         fputs($phpfile,odbc_result($rs1, "DIAG_VALUE"));
         fputs($phpfile,"\n?>");
         fclose($phpfile);
-        echo "<IMG SRC=\"USER/".$session[user_id]."/temp/diag".odbc_result($rs, "ID").".php\">";
+        echo "<IMG SRC=\"USER/".$session['user_id']."/temp/diag".odbc_result($rs, "ID").".php\">";
 $bzm++;
 }
 ?>

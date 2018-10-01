@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 # filter ID
-if($ffilter[globfilter]){$fid = 0;}else{$fid = $LID;}
+if($ffilter['globfilter']){$fid = 0;}else{$fid = $LID;}
 ?>
 
 
@@ -70,7 +70,6 @@ function clearall(){
 
 <TABLE BORDER="0" cellspacing="0" cellpadding="2" WIDTH="120%">
 <FORM ACTION="main.php" METHOD="post" name="form1" TARGET="explorer_main">
-<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
 <input type="hidden" name="action" value="explorer_main">
 
 <INPUT TYPE="hidden" NAME="typ" VALUE="<?=$typ?>">
@@ -93,22 +92,22 @@ function clearall(){
 
 <INPUT TYPE="hidden" NAME="ffilter_sub">
 
-<TR STYLE="background-color:<?=$farbschema[WEB7]?>;height:20px;">
-    <TD COLSPAN="4"><i class="lmb-icon lmb-folder-open" align="top"></i>&nbsp;&nbsp;<INPUT TYPE="TEXT" STYLE="border:1px solid <?=$farbschema[WEB4]?>;width:550px;height:16px;background-color:<?=$farbschema[WEB5]?>;color:FFFFFF;" VALUE="<?=$file_url?>"></TD></TR>
+<TR STYLE="background-color:<?=$farbschema['WEB7']?>;height:20px;">
+    <TD COLSPAN="4"><i class="lmb-icon lmb-folder-open" align="top"></i>&nbsp;&nbsp;<INPUT TYPE="TEXT" STYLE="border:1px solid <?=$farbschema['WEB4']?>;width:550px;height:16px;color:FFFFFF;" VALUE="<?=$file_url?>"></TD></TR>
 <TR><TD COLSPAN="4" STYLE="height:20px">&nbsp;</TD></TR>
 
 
 <TR><TD width="20">&nbsp;</TD><TD VALIGN="TOP">
 <TABLE BORDER="0" cellspacing="0" cellpadding="2" width="80%">
 
-<?
+<?php
 foreach ($gfile['id'] as $key => $val){
 	
 	# Sonderfelder überspringen
 	if($gtab["argresult_id"]["FILES"]."_34" == $key1 OR $gtab["argresult_id"]["FILES"]."_36" == $key1){echo "<TD></TD>";continue;}	
 	
 	if($gfile["tabid"][$key] != $prev_tabid){
-		echo "<TR><TD colspan=\"2\" bgcolor=\"".$farbschema["WEB6"]."\"><B>".$gtab["desc"][$gfile["tabid"][$key]]."</B></TD></TR>";	
+		echo "<TR><TD colspan=\"2\" bgcolor=\"".$farbschema["WEB3"]."\"><B>".$gtab["desc"][$gfile["tabid"][$key]]."</B></TD></TR>";
 	}
 
 	if(!$prev_tabid){
@@ -125,7 +124,7 @@ foreach ($gfile['id'] as $key => $val){
 
 echo "<TR><TD COLSPAN=\"2\"><B>$lang[1924]</B></TD></TR>\n";
 # Sub-Ordner
-if($ffilter[sub][$fid]){$checked = "CHECKED";}else{$checked = "";}
+if($ffilter['sub'][$fid]){$checked = "CHECKED";}else{$checked = "";}
 echo "<TR><TD STYLE=\"cursor:help\" VALIGN=\"TOP\">".$lang[1240].": </TD><TD><INPUT TYPE=\"CHECKBOX\" $checked OnClick=\"if(this.checked){document.form1.ffilter_sub.value='true';}else{document.form1.ffilter_sub.value='false';}\"></TD></TR>";
 
 ?>
@@ -134,8 +133,8 @@ echo "<TR><TD STYLE=\"cursor:help\" VALIGN=\"TOP\">".$lang[1240].": </TD><TD><IN
 
 <TR><TD COLSPAN="2" STYLE="height:10px">&nbsp;</TD></TR>
 <TR><TD width="20">&nbsp;</TD><TD VALIGN="TOP">
-<INPUT TYPE="BUTTON" OnCLick="document.form1.reset.value='0';send_form();" VALUE="<?=$lang[110]?>" STYLE="background-color:<?=$farbschema[WEB7]?>">
-<INPUT TYPE="BUTTON" OnCLick="document.form1.reset.value='1';clearall();send_form();" VALUE="<?=$lang[1571]?>" STYLE="background-color:<?=$farbschema[WEB7]?>;width:90px">
+<INPUT TYPE="BUTTON" OnCLick="document.form1.reset.value='0';send_form();" VALUE="<?=$lang[30]?>" STYLE="background-color:<?=$farbschema['WEB7']?>">
+<INPUT TYPE="BUTTON" OnCLick="document.form1.reset.value='1';clearall();send_form();" VALUE="<?=$lang[1571]?>" STYLE="background-color:<?=$farbschema['WEB7']?>;width:90px">
 </TD></TR>
 
 

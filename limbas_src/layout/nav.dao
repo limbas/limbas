@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,14 +11,12 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
  * ID: 7
  */
-
-
 
 function menu_get_standard($id, $bzm){
 	global $LINK;
@@ -32,180 +30,230 @@ function menu_get_standard($id, $bzm){
 	if($LINK["link_url"][$id]){
 		$menu[$bzm]["link"] = $LINK["link_url"][$id];
 	}
-	
 	$menu[$bzm]["bg"] = $LINK["bg"][$id];
-
-	//if(file_exists($LINK["icon_url"][$id])){
-		//$icon = explode("/",$LINK["icon_url"][$id]);
-		//$icon = "pic/8pxicons/".$icon[count($icon)-1];
-		//if(file_exists($icon)){
-		//	$menu[$bzm]["icon"] = $icon;
-		//}else{
-			$menu[$bzm]["icon"] = $LINK["icon_url"][$id];
-		//}
-	//}
-	
-	//if(file_exists($LINK["gicon"][$id])){
-		$menu[$bzm]["gicon"] = $LINK["gicon"][$id];
-	//}
-
+	$menu[$bzm]["icon"] = $LINK["icon_url"][$id];
+	$menu[$bzm]["gicon"] = $LINK["gicon"][$id];
 	$menu[$bzm]["child"] = null;
 
 	return $menu;
 }
 
-
 # tables Snapshots
-function menu_get_snapshot($tabid, $depth = null){
+function menu_get_snapshots($tabid, $depth = null){
 	global $gsnap;
 
 	$menu = array();
 	if($gsnap[$tabid]["id"]){
-	foreach ($gsnap[$tabid]["id"] as $key => $value){
-        $menu[$bzm0]["depth"] = $depth;
-		$menu[$bzm0]["name"] = $gsnap[$tabid]["name"][$key];
-		$menu[$bzm0]["desc"] = $gsnap[$tabid]["name"][$key] . " ($value)";
-		$menu[$bzm0]["link"] = "main.php?action=gtab_erg&gtabid=$tabid&snap_id=".$value."&frame_type=1";
-		//$menu[$bzm0]["icon"] = "pic/8pxicons/camera.gif";
-                $menu[$bzm0]["icon"] = " lmb-icon-8 lmb-camera ";
-		$menu[$bzm0]["child"] = null;
-		$bzm0++;
-		$bzm++;
-	}}
-
+        foreach ($gsnap[$tabid]["id"] as $key => $value){
+            $menu[] = menu_get_snapshot($tabid, $value, $depth);
+	    }
+	}
 	return $menu;
+}
+
+function menu_get_snapshot($tabid, $snapid, $depth = null) {
+    global $gsnap;
+
+    # check privilege
+    if (!$gsnap[$tabid]) {
+        return null;
+    }
+
+    $menu = array();
+    $menu["depth"] = $depth;
+    $menu["name"] = $gsnap[$tabid]["name"][$snapid];
+    $menu["desc"] = $gsnap[$tabid]["name"][$snapid] . " ($snapid)";
+    $menu["link"] = "main.php?action=gtab_erg&gtabid=$tabid&snap_id=".$snapid."&frame_type=1";
+    $menu["icon"] = " lmb-icon-8 lmb-camera ";
+    $menu["child"] = null;
+    $menu["attr"] = 'data-lmb-type="snap" data-lmb-id="' . $snapid . '" data-lmb-tabid="' . $tabid . '"';
+    return $menu;
 }
 
 # tables formulars
 function menu_get_forms($tabid, $typ, $depth = null){
 	global $gformlist;
-	global $session;
 
 	$menu = array();
-
-	$bzm = 0;
 	if($gformlist[$tabid]["id"]){
-	foreach ($gformlist[$tabid]["id"] as $key => $value){
-		if($typ == 1){
-			if($gformlist[$tabid]["hidden"][$key]){continue;}
-			if($gformlist[$tabid]["typ"][$key] == "2"){
-				$menu[$bzm]["depth"] = $depth;
-				$menu[$bzm]["name"] = $gformlist[$tabid]["name"][$key];
-				$menu[$bzm]["desc"] = $gformlist[$tabid]["name"][$key] . " ($value)";
-				$menu[$bzm]["link"] = "main.php?action=gtab_erg&gtabid=$tabid&form_id=$value&HEADER=".urlencode($gformlist[$tabid]["name"][$key])."&ID=0";
-				//$menu[$bzm]["icon"] = "pic/8pxicons/application_form.gif";
-                                $menu[$bzm]["icon"] = " lmb-icon-cus lmb-icon-8 lmb-form ";
-				$menu[$bzm]["child"] = null;
-				$bzm++;
-			}
-		}else{
-			$menu[$bzm]["depth"] = $depth;
-			$menu[$bzm]["name"] = $gformlist[$tabid]["name"][$key];
-			$menu[$bzm]["desc"] = $gformlist[$tabid]["name"][$key] . " ($value)";
-			$menu[$bzm]["link"] = "main_admin.php?action=setup_form_frameset&form_typ=".$gformlist[$tabid]["typ"][$key]."&form_id=$value&referenz_tab=".$gformlist[$tabid]["ref_tab"][$key];
-			//$menu[$bzm]["icon"] = "pic/8pxicons/application_form.gif";
-			$menu[$bzm]["icon"] = " lmb-icon-cus lmb-icon-8 lmb-form ";
-			$menu[$bzm]["child"] = null;
-			$bzm++;
-		}
-	}}
-
+        foreach ($gformlist[$tabid]["id"] as $key => $value){
+            $menu[] = menu_get_form($tabid, $value, $typ, $depth);
+        }
+	}
 	return $menu;
+}
 
+function menu_get_form($tabid, $formid, $typ, $depth = null) {
+    global $gformlist;
+
+    # check privilege
+    if (!$gformlist[$tabid]) {
+        return null;
+    }
+
+    $menu = array();
+    if ($typ == 1) {
+        # hidden form
+        if ($gformlist[$tabid]["hidden"][$formid]) {
+            return null;
+        }
+        # not list-form
+        if($gformlist[$tabid]["typ"][$formid] != "2"){
+            return null;
+        }
+
+        $menu["link"] = "main.php?action=gtab_erg&gtabid=$tabid&form_id=$formid&HEADER=".urlencode($gformlist[$tabid]["name"][$formid])."&ID=0";
+    } else {
+        $menu["link"] = "main_admin.php?action=setup_form_frameset&form_typ=".$gformlist[$tabid]["typ"][$formid]."&form_id=$formid&referenz_tab=".$gformlist[$tabid]["ref_tab"][$formid];
+    }
+
+    $menu["depth"] = $depth;
+    $menu["name"] = $gformlist[$tabid]["name"][$formid];
+    $menu["desc"] = $gformlist[$tabid]["name"][$formid] . " ($formid)";
+    $menu["icon"] = " lmb-icon-cus lmb-icon-8 lmb-form ";
+    $menu["child"] = null;
+    $menu["attr"] = 'data-lmb-type="form" data-lmb-id="' . $formid . '" data-lmb-tabid="' . $tabid . '"';
+
+    return $menu;
 }
 
 # tables reports
 function menu_get_reports($tabid, $typ, $depth = null){
 	global $greportlist;
-	global $session;
 
 	$menu = array();
-
-	$bzm = 0;
 	if($greportlist[$tabid]["id"]){
-	foreach ($greportlist[$tabid]["id"] as $key => $value){
-        if($typ == 1){
-			if($greportlist[$tabid]["hidden"][$key]){continue;}
-			if($greportlist[$tabid]["listmode"][$key]){
-				$menu[$bzm]["depth"] = $depth;
-				$menu[$bzm]["name"] = $greportlist[$tabid]["name"][$key];
-				$menu[$bzm]["desc"] = $greportlist[$tabid]["name"][$key] . " ($value)";;
-				$menu[$bzm]["link"] = "print_report($tabid,$value,'".$greportlist[$tabid]["defformat"][$key]."');";
-				//$menu[$bzm]["icon"] = "pic/8pxicons/".$greportlist[$tabid]["defformat"][$key].".gif";
-                                if(in_array($greportlist[$tabid]["defformat"][$key], array("pdf", "odt", "xml"))){
-                                    $menu[$bzm]["icon"] = " lmb-icon-8 lmb-".$greportlist[$tabid]["defformat"][$key]." ";
-                                }else{
-                                    $menu[$bzm]["icon"] = " lmb-icon-8 lmb-pdf ";
-                                }
-				$menu[$bzm]["child"] = null;
-				$bzm++;
-			}
-		}else{
-			$menu[$bzm]["depth"] = $depth;
-			$menu[$bzm]["name"] = $greportlist[$tabid]["name"][$key];
-			$menu[$bzm]["desc"] = $greportlist[$tabid]["name"][$key] . " ($value)";;
-			$menu[$bzm]["link"] = "main_admin.php?action=setup_report_frameset&report_id=$value&referenz_tab=$tabid";
-			//$menu[$bzm]["icon"] = "pic/8pxicons/".$greportlist[$tabid]["defformat"][$key].".gif";
-                        if(in_array($greportlist[$tabid]["defformat"][$key], array("pdf", "odt", "xml"))){
-                            $menu[$bzm]["icon"] = " lmb-icon-8 lmb-".$greportlist[$tabid]["defformat"][$key]." ";
-                        }else{
-                            $menu[$bzm]["icon"] = " lmb-icon-8 lmb-pdf ";
-                        }
-			$menu[$bzm]["child"] = null;
-			$bzm++;
-		}
-
-	}}
-
+        foreach ($greportlist[$tabid]["id"] as $key => $value){
+            $menu[] = menu_get_report($tabid, $value, $typ, $depth);
+        }
+	}
 	return $menu;
 }
 
-# tables diagramms
-function menu_get_diagramms($tabid, $typ, $depth = null){
-	global $session;
+function menu_get_report($tabid, $reportid, $typ, $depth = null) {
+    global $greportlist;
+
+    # check privilege
+    if (!$greportlist[$tabid]) {
+        return null;
+    }
+
+    $menu = array();
+    if($typ == 1){
+        if($greportlist[$tabid]["hidden"][$reportid]){
+            return null;
+        }
+        if(!$greportlist[$tabid]["listmode"][$reportid]) {
+            return null;
+        }
+
+        $menu["link"] = "print_report($tabid,$reportid,'".$greportlist[$tabid]["defformat"][$reportid]."');";
+    }else{
+        $menu["link"] = "main_admin.php?action=setup_report_frameset&report_id=$reportid&referenz_tab=$tabid";
+    }
+
+    $menu["depth"] = $depth;
+    $menu["name"] = $greportlist[$tabid]["name"][$reportid];
+    $menu["desc"] = $greportlist[$tabid]["name"][$reportid] . " ($reportid)";
+    if(in_array($greportlist[$tabid]["defformat"][$reportid], array("pdf", "odt", "xml"))){
+        $menu["icon"] = " lmb-icon-8 lmb-".$greportlist[$tabid]["defformat"][$reportid]." ";
+    }else{
+        $menu["icon"] = " lmb-icon-8 lmb-pdf ";
+    }
+    $menu["child"] = null;
+    $menu["attr"] = 'data-lmb-type="rep" data-lmb-id="' . $reportid . '" data-lmb-tabid="' . $tabid . '"';
+
+    return $menu;
+}
+
+# tables diagrams
+function menu_get_diagrams($tabid, $typ, $depth = null){
 	global $gdiaglist;
 
 	$menu = array();
-
-	$bzm = 0;
 	if($gdiaglist[$tabid]["id"]){
-	foreach ($gdiaglist[$tabid]["id"] as $key => $value){
-		if($gdiaglist[$tabid]["hidden"][$key]){continue;}
-		$menu[$bzm]["depth"] = $depth;
-		$menu[$bzm]["name"] = $gdiaglist[$tabid]["name"][$key];
-		$menu[$bzm]["desc"] = $gdiaglist[$tabid]["desc"][$key] . " ($value)";;
-		if($typ == 1){
-			$menu[$bzm]["link"] = "main.php?action=diag_erg&diag_id=".$gdiaglist[$tabid]["id"][$key];
-		}else{
-			$menu[$bzm]["link"] = "main_admin.php?action=setup_diag&diag_id=".$gdiaglist[$tabid]["id"][$key]."&diag_tab_id=".$tabid;
-		}
-		//$menu[$bzm]["icon"] = "pic/8pxicons/chart_curve.gif";
-		$menu[$bzm]["icon"] = " lmb-icon-8 lmb-line-chart ";
-		$menu[$bzm]["child"] = null;
-		$bzm++;
-
-	}}
-
+        foreach ($gdiaglist[$tabid]["id"] as $key => $value){
+            $menu[] = menu_get_diagram($tabid, $value, $typ, $depth);
+        }
+	}
 	return $menu;
+}
+
+function menu_get_diagram($tabid, $diagid, $typ, $depth = null) {
+    global $gdiaglist;
+
+    # check privilege
+    if (!$gdiaglist[$tabid]) {
+        return null;
+    }
+
+    $menu = array();
+    if($typ == 1){
+        if($gdiaglist[$tabid]["hidden"][$diagid]){
+            return null;
+        }
+        $menu["link"] = "main.php?action=diag_erg&diag_id=".$gdiaglist[$tabid]["id"][$diagid];
+    }else{
+        $menu["link"] = "main_admin.php?action=setup_diag&diag_id=".$gdiaglist[$tabid]["id"][$diagid]."&diag_tab_id=".$tabid;
+    }
+    $menu["depth"] = $depth;
+    $menu["name"] = $gdiaglist[$tabid]["name"][$diagid];
+    $menu["desc"] = $gdiaglist[$tabid]["desc"][$diagid] . " ($diagid)";;
+    $menu["icon"] = " lmb-icon-8 lmb-line-chart ";
+    $menu["child"] = null;
+    $menu["attr"] = 'data-lmb-type="diag" data-lmb-id="' . $diagid . '" data-lmb-tabid="' . $tabid . '"';
+    return $menu;
 }
 
 # newdata
 function menu_get_newdata($tabid, $depth){
-	global $session;
 	global $lang;
 	
 	$menu = array();
-	$bzm = 0;
-	$menu[$bzm]["depth"] = $depth;
-	$menu[$bzm]["name"] = "<span style=\"color:green\">".$lang[349]."</span>";
-	$menu[$bzm]["desc"] = $lang[2741];
-	$menu[$bzm]["link"] = "main.php?action=gtab_neu&gtabid=$tabid";
-	//$menu[$bzm]["icon"] = "pic/8pxicons/page_new.gif";
-	$menu[$bzm]["icon"] = " lmb-icon-8 lmb-plus-square ";
-	$menu[$bzm]["child"] = null;
-	$bzm++;
-
+	$menu[0]["depth"] = $depth;
+	$menu[0]["name"] = "<span style=\"color:green\">".$lang[349]."</span>";
+	$menu[0]["desc"] = $lang[2741];
+	$menu[0]["link"] = "main.php?action=gtab_neu&gtabid=$tabid";
+	$menu[0]["icon"] = " lmb-icon-8 lmb-plus-square ";
+	$menu[0]["child"] = null;
 	return $menu;
+}
+
+function menu_get_table($tabid, $isAdmin, $depth) {
+    global $gtab;
+    global $gfield;
+
+    # check privilege
+    if (!$gtab['tab_id'][$tabid]) {
+        return null;
+    }
+
+    # skip tables that are hidden
+    if($gtab['hidemenu'][$tabid]) {
+        return null;
+    }
+
+    $menu = array();
+    $menu['depth'] = $depth;
+    $menu['name'] = $gtab['desc'][$tabid];
+    $menu['desc'] = $gtab['desc'][$tabid] . ($isAdmin ? " ($tabid)" : '');
+    $menu['id'] = $tabid;
+    $menu['attr'] = 'data-lmb-type="tab" data-lmb-tabid="' . $tabid . '" data-lmb-table="' . $gtab['table'][$tabid] . '"';
+    if ($isAdmin) {
+        $menu['attr'] .= ' data-lmb-relations="' . htmlentities(json_encode(array_values($gfield[$tabid]['md5tab']))) . '"';
+    }
+
+    # user link
+    $menu['link'] = "main.php?action=gtab_erg&gtabid=$tabid&frame_type=1";
+
+    # get correct icon
+    if($gtab['typ'][$tabid] == 5) {
+        $menu['icon'] = ' lmb-query '; # query icon
+    } else {
+        $menu['icon'] = ' lmb-table '; # table icon
+    }
+
+    return $menu;
 }
 
 /*
@@ -232,32 +280,22 @@ function menu_get_child_artifacts($isAdmin, $parentTabGroupId = 0, $depth=0) {
             # skip tables that are not in the parent tab group
             if($gtab['tab_group'][$tableKey] != $parentTabGroupId) { continue; }
 
-            # skip tables that are hidden
-            if($gtab['hidemenu'][$tableKey]) { continue; }
-
-            # store depth, name and desc of table
-            $allEntries[$bzm]['depth'] = $depth;
-            $allEntries[$bzm]['name'] = $gtab['desc'][$tableKey];
-            $allEntries[$bzm]['desc'] = $gtab['desc'][$tableKey] . ($isAdmin ? " ($tableId)" : '');
-            $allEntries[$bzm]['id'] = $tableId;
-
-            # get correct link
-            if(!$isAdmin) {
-                # user link
-                $allEntries[$bzm]['link'] = "main.php?action=gtab_erg&gtabid=$tableId&frame_type=1";
-            } else if($gtab['typ'][$tableKey] == 5) {
-                # admin link to query editor
-                $allEntries[$bzm]['link'] = "main_admin.php?&action=setup_gtab_view&viewid=$tableId";
-            } else {
-                # admin link to table
-                $allEntries[$bzm]['link'] = "main_admin.php?&action=setup_gtab_ftype&tab_group=$parentTabGroupId&atid=$tableId&HEADER=" . urlencode($gtab['desc'][$tableId]);
+            # get default table (or null if hidden)
+            $subEntries = menu_get_table($tableId, $isAdmin, $depth);
+            if (!$subEntries) {
+                continue;
             }
+            $allEntries[$bzm] = $subEntries;
 
-            # get correct icon
-            if($gtab['typ'][$tableKey] == 5) {
-                $allEntries[$bzm]['icon'] = ' lmb-query '; # query icon
-            } else {
-                $allEntries[$bzm]['icon'] = ' lmb-table '; # table icon
+            # get correct link if admin
+            if ($isAdmin) {
+                if ($gtab['typ'][$tableKey] == 5) {
+                    # admin link to query editor
+                    $allEntries[$bzm]['link'] = "main_admin.php?&action=setup_gtab_view&viewid=$tableId";
+                } else {
+                    # admin link to table
+                    $allEntries[$bzm]['link'] = "main_admin.php?&action=setup_gtab_ftype&tab_group=$parentTabGroupId&atid=$tableId&HEADER=" . urlencode($gtab['desc'][$tableId]);
+                }
             }
 
             # get 'new entry'
@@ -268,7 +306,7 @@ function menu_get_child_artifacts($isAdmin, $parentTabGroupId = 0, $depth=0) {
             }
 
             # get snapshots
-            $childSnapshots = menu_get_snapshot($tableId, $depth);
+            $childSnapshots = menu_get_snapshots($tableId, $depth);
 
             # get forms
             $childForms = menu_get_forms($tableId, $isAdmin ? 2 : 1, $depth);
@@ -279,7 +317,7 @@ function menu_get_child_artifacts($isAdmin, $parentTabGroupId = 0, $depth=0) {
             $allReports = array_merge($allReports, $childReports);
 
             # get diagrams
-            $childDiags = menu_get_diagramms($tableId, $isAdmin ? 2 : 1, $depth);
+            $childDiags = menu_get_diagrams($tableId, $isAdmin ? 2 : 1, $depth);
             $allDiags = array_merge($allDiags, $childDiags);
 
             # store subchildren
@@ -299,7 +337,7 @@ function menu_get_child_artifacts($isAdmin, $parentTabGroupId = 0, $depth=0) {
         $allEntries[$bzm]['parent'] = $tabgroup['level'][$tabGroupKey];
         $allEntries[$bzm]['name'] = $tabgroup['name'][$tabGroupKey];
         $allEntries[$bzm]['desc'] = $tabgroup['beschreibung'][$tabGroupKey] . ($isAdmin ? " ($tabGroupId)" : '');;
-        $allEntries[$bzm]['link'] = $isAdmin ? ('main_admin.php?' . SID . '&action=setup_tab&tab_group=' . $tabGroupId) : '';
+        $allEntries[$bzm]['link'] = $isAdmin ? ('main_admin.php?action=setup_tab&tab_group=' . $tabGroupId) : '';
         $allEntries[$bzm]['icon'] = $tabgroup['icon'][$tabGroupKey];
         $allEntries[$bzm]['header'] = 1;
 
@@ -331,9 +369,6 @@ function menu_get_child_artifacts($isAdmin, $parentTabGroupId = 0, $depth=0) {
 
 # tables
 function menu_get_artifacts($isAdmin) {
-    global $gtab;
-    global $tabgroup;
-        
     # get all reports / forms / diags / tables sorted into tab groups, tables both
     # iteratively (meaning all tab groups are at depth 0) and
     # recursively (meaning all tab groups are children of their parent tab groups)
@@ -418,7 +453,8 @@ function menu_get_admin_setup(){
 	if($LINK[216]){$menu0 = menu_get_standard(216,6);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[294]){$menu0 = menu_get_standard(294,10);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[295]){$menu0 = menu_get_standard(295,10);$menu1 = array_merge($menu1,$menu0);}
-	if($LINK[298]){$menu0 = menu_get_standard(298,10);$menu1 = array_merge($menu1,$menu0);}
+    if($LINK[298]){$menu0 = menu_get_standard(298,10);$menu1 = array_merge($menu1,$menu0);}
+    if($LINK[303]){$menu0 = menu_get_standard(303,12);$menu1 = array_merge($menu1,$menu0);}
 	return $menu1;
 }
 
@@ -560,17 +596,29 @@ function menu_get_admin_diagramms(){
 
 # admin workflow
 function menu_get_admin_workflow(){
-	global $LINK;
+    global $gwfl;
 
-	$menu1 = array();
+    $menu = array();
 
-	return $menu1;
+    $bzm = 0;
+    if($gwfl){
+        foreach ($gwfl as $wflid => $wfl){
+            $menu[$bzm]["name"] = $wfl['name'];
+            $menu[$bzm]["desc"] = $wfl['desc'];
+            $menu[$bzm]["link"] = "main_admin.php?action=setup_workflow&wflid=$wflid";
+            $menu[$bzm]["child"] = null;
+            $bzm++;
+        }
+    }
+
+    return $menu;
 }
 
-
-
-
 # -------------------------------------------------------------------------------------------------------------
+global $LINK;
+global $session;
+global $gLmbExt;
+
 
 $adminArtifacts = menu_get_artifacts(TRUE);
 $userArtifacts = menu_get_artifacts(FALSE);
@@ -640,6 +688,27 @@ if($LINK[279]){
 	$menu[279] = $menu1;
 }
 
+# favorites
+if ($LINK[301]) {
+    $menu[301] = menu_get_standard(301, 0);
+    if ($session['m_setting']['fav']) {
+        foreach ($session['m_setting']['fav'] as $menuItemKey => $_) {
+            list ($type, $tabid, $id) = explode(';', $menuItemKey);
+
+            if ($type === 'form') {
+                $menu[301][0]['child'][] = menu_get_form($tabid, $id, 1, 0);
+            } else if ($type === 'rep') {
+                $menu[301][0]['child'][] = menu_get_report($tabid, $id, 1, 0);
+            } else if ($type === 'diag') {
+                $menu[301][0]['child'][] = menu_get_diagram($tabid, $id, 1, 0);
+            } else if ($type === 'snap') {
+                $menu[301][0]['child'][] = menu_get_snapshot($tabid, $id, 0);
+            } else if ($type === 'tab') {
+                $menu[301][0]['child'][] = menu_get_table($tabid, false, 0);
+            }
+        }
+    }
+}
 
 ####### profile #######
 if($LINK[21]){
@@ -764,7 +833,7 @@ if($LINK[17]){
 		$menu1 = array_merge($menu1,$menu0);
 	}
 	
-	# remidner
+	# reminder
 	if($LINK[289]){
 		$menu0 = menu_get_standard(289,8);
 		$menu0[8]["gicon"] = " lmb-icon-32 lmb-reminder ";
@@ -779,14 +848,9 @@ if($LINK[17]){
 		$menu1 = array_merge($menu1,$menu0);
 	}
 
-
-	
-
 	# ------------- admin ----------------
 	$menu[17] = $menu1;
 }
-
-
 
 # EXTENSIONS
 if($gLmbExt["ext_nav.inc"]){

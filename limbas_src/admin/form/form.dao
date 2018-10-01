@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -49,6 +49,7 @@ Stylebeschreibung:
 25 = opacity;
 26 = display;
 27 = border-radius;
+28 = margin;
 
 ------- Zusatz-Style -----------
 30 = report_tab_rows;
@@ -79,7 +80,7 @@ if($form_typ){$form['form_typ'] = $form_typ;}
 if($form_id){$form['form_id'] = $form_id;}
 
 /* --- Styletypen --------------------------------------------- */
-$styletyp = explode(";", "font-family:;font-style:;font-variant:;font-size:;font-weight:;word-spacing:;letter-spacing:;text-decoration:;text-transform:;color:;text-shadow:;line-height:;text-align:;border:;border-style:;border-color:;border-width:;border-left:;border-right:;border-top:;border-bottom:;background-color:;padding:;vertical-align:;overflow:;opacity:;;border-radius:");
+$styletyp = explode(";", "font-family:;font-style:;font-variant:;font-size:;font-weight:;word-spacing:;letter-spacing:;text-decoration:;text-transform:;color:;text-shadow:;line-height:;text-align:;border:;border-style:;border-color:;border-width:;border-left:;border-right:;border-top:;border-bottom:;background-color:;padding:;vertical-align:;overflow:;opacity:;;border-radius:;margin:");
 
 /* --- Elemente Positionieren --------------------------------------------- */
 if($form_possize){
@@ -207,8 +208,8 @@ if($form_copy AND $form_edit_id AND $form_id){
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 	$sqlquery = "INSERT INTO LMB_FORMS (ID,KEYID,ERSTUSER,FORM_ID,TYP,POSX,POSY,HEIGHT,WIDTH,INHALT,STYLE,TAB_GROUP,TAB_ID,FIELD_ID,Z_INDEX,UFORM_TYP,UFORM_VTYP,PIC_TYP,PIC_STYLE,PIC_SIZE,TAB,TAB_SIZE,TAB_EL,TAB_EL_COL,TAB_EL_ROW,TAB_EL_COL_SIZE,TITLE,SUBELEMENT,CATEGORIE)
-	VALUES ($NEXTKEYID,$NEXTID,$session[user_id],".odbc_result($rs,"FORM_ID").",'".odbc_result($rs,"TYP")."',".(odbc_result($rs,"POSX") + 3).",".(odbc_result($rs,"POSY") + 3).",".odbc_result($rs,"HEIGHT").",".odbc_result($rs,"WIDTH").",'".parse_db_string(odbc_result($rs,"INHALT"),99999)."','".odbc_result($rs,"STYLE")."',
-	".odbc_result($rs,"TAB_GROUP").",".odbc_result($rs,"TAB_ID").",".odbc_result($rs,"FIELD_ID").",".odbc_result($rs,"Z_INDEX").",".odbc_result($rs,"UFORM_TYP").",".odbc_result($rs,"UFORM_VTYP").",
+	VALUES ($NEXTKEYID,$NEXTID,{$session['user_id']},".odbc_result($rs,"FORM_ID").",'".odbc_result($rs,"TYP")."',".(odbc_result($rs,"POSX") + 5).",".(odbc_result($rs,"POSY") + 5).",".odbc_result($rs,"HEIGHT").",".odbc_result($rs,"WIDTH").",'".parse_db_string(odbc_result($rs,"INHALT"),99999)."','".odbc_result($rs,"STYLE")."',
+	".odbc_result($rs,"TAB_GROUP").",".odbc_result($rs,"TAB_ID").",".odbc_result($rs,"FIELD_ID").",".(odbc_result($rs,"Z_INDEX") + 1).",".odbc_result($rs,"UFORM_TYP").",".odbc_result($rs,"UFORM_VTYP").",
 	'".odbc_result($rs,"PIC_TYP")."','".odbc_result($rs,"PIC_STYLE")."','".odbc_result($rs,"PIC_SIZE")."',".odbc_result($rs,"TAB").",'".odbc_result($rs,"TAB_SIZE")."',".odbc_result($rs,"TAB_EL").",".odbc_result($rs,"TAB_EL_COL").",".odbc_result($rs,"TAB_EL_ROW").",".odbc_result($rs,"TAB_EL_COL_SIZE").",'".odbc_result($rs,"TITLE")."','".odbc_result($rs,"SUBELEMENT")."','".odbc_result($rs,"CATEGORIE")."')";
 
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -285,7 +286,7 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 	$NEXTKEYID = next_db_id("LMB_FORMS","ID");
 
 
-	#$styles = array(0=>$default_font,1=>'normal',3=>$default_size,4=>'normal',5=>0,6=>0,7=>'none',8=>'none',9=>'#000000',12=>'left',17=>'none',18=>'none',19=>'none',20=>'none',24=>'visible');
+	#$styles = array(0=>$default_font,1=>'normal',3=>$default_size,4=>'normal',5=>0,6=>0,7=>'none',8=>'none',9=>'',12=>'left',17=>'none',18=>'none',19=>'none',20=>'none',24=>'visible');
 	$styles = array();
 	$style = set_default_style($styles);
 
@@ -368,7 +369,6 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 				if(file_exists("UPLOAD/form/".$secname.".".$pic_type)){
 					# ----- Bildinfos -------
 					$pic_size = $width."x".$height;
-					$pic_type = $pic_type;
 					$field_id = $pic_compress;
 					$tab_size = $secname.".".$pic_type;
 
@@ -398,7 +398,7 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 		if($uform_style == 1){$uform_style_ = "iframe";}else{$uform_style_ = "div";}
 		if($uform_typ == 1){			#userdefined
 			$value = $lang[1171].": userdefined";
-		}elseif($uform_typ == 2){		#uform
+		}elseif($uform_typ == 2 AND $uform_set){		#uform
 			$sqlquery0 = "SELECT REFERENZ_TAB,NAME FROM LMB_FORM_LIST WHERE ID = $uform_set";
 			$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
 			$tab_group = $uform_set;
@@ -406,10 +406,20 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 			$value = $lang[1171]." ($uform_style_): ".$lang[1179]." ".odbc_result($rs0, "NAME");
 		}elseif($uform_typ == 3){		#table
 			$tab_id = $uform_set;
-			$value = $lang[1171]." ($uform_style_): ".$lang[921]." ".$gtab["desc"][$uform_set];
+			$value = $lang[1171]." ($uform_style_): ".$lang[164]." ".$gtab["desc"][$uform_set];
 		}
-		$width=200;
+		$width=300;
 		$height=200;
+    }elseif($form_add == "tile" AND $uform_set){
+
+	    $sqlquery0 = "SELECT REFERENZ_TAB,NAME FROM LMB_FORM_LIST WHERE ID = $uform_set";
+        $rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+        $tab_group = $uform_set;
+        $tab_id = odbc_result($rs0, "REFERENZ_TAB");
+        $value = $lang[1171]." ".odbc_result($rs0, "NAME");
+
+        $width=300;
+        $height=200;
 	}elseif($form_add == "tab"){
 		$sqlquery = "SELECT MAX(TAB) AS TABID FROM LMB_FORMS WHERE FORM_ID = $form_id";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -429,26 +439,22 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 		$tab_size = $form_stab_show;
 	}elseif($form_add == "menue"){
 		$value = "menue";
-		$styles = array(14=>'solid',15=>'#000000',16=>1,24=>'auto');
+		$styles = array(14=>'solid',15=>'',16=>1,24=>'auto');
 		$width = "300";$height = "200";
 		$style = set_default_style($styles);
 		$pic_size = "0_1_2"; #Menu-Auswahl
 	}elseif($form_add == "tabulator"){
 		$value = "tabulator";
-		$styles = array(14=>'solid',15=>'#000000',16=>1,24=>'auto');
+		$styles = array(14=>'solid',15=>'',16=>1,24=>'auto');
 		$width = "300";$height = "200";
 		$style = set_default_style($styles);
 	}elseif($form_add == "frame"){
 		$value = "frame";
-		$styles = array(14=>'solid',15=>'#000000',16=>1,24=>'auto');
+		$styles = array(14=>'solid',15=>'',16=>1,24=>'auto');
 		$width = "300";$height = "200";
 		$style = set_default_style($styles);
 	}elseif($form_add == "tabuItem"){
 		$value = "tabulator";
-	}elseif($form_add == "scroll"){
-		$value = "scroll";
-	}elseif($form_add == "tabmenu"){
-		$value = "tabmenu";
 	}elseif($form_add == "submt"){
 		$value = "submit";
 	}elseif($form_add == "chart" AND $form_chart_id){
@@ -474,30 +480,37 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 		$value = "1";
 	}elseif($form_add == "line"){
 		$value = "Linie";
-		$styles = array(0=>$default_font,1=>'normal',3=>$default_size,4=>'normal',5=>0,6=>0,7=>'none',8=>'none',9=>'#000000',12=>'left',16=>1,24=>'visible');
+		$styles = array(0=>$default_font,1=>'normal',3=>$default_size,4=>'normal',5=>0,6=>0,7=>'none',8=>'none',9=>'',12=>'left',16=>1,24=>'visible');
 		$style = set_default_style($styles);
 		$width=100;
 		$height=40;
 	}elseif($form_add == "ellipse"){
 		$value = "Ellipse";
-		$styles = array(0=>$default_font,1=>'normal',3=>$default_size,4=>'normal',5=>0,6=>0,7=>'none',8=>'none',9=>'#000000',12=>'left',16=>1,24=>'visible');
+		$styles = array(0=>$default_font,1=>'normal',3=>$default_size,4=>'normal',5=>0,6=>0,7=>'none',8=>'none',9=>'',12=>'left',16=>1,24=>'visible');
 		$style = set_default_style($styles);
 		$width=100;
 		$height=40;
 	}elseif($form_add == "rect"){
 		$value = "Rechteck";
-		$styles = array(0=>$default_font,1=>'normal',3=>$default_size,4=>'normal',5=>0,6=>0,7=>'none',8=>'none',9=>'#000000',12=>'left',16=>1,24=>'visible');
+		$styles = array(0=>$default_font,1=>'normal',3=>$default_size,4=>'normal',5=>0,6=>0,7=>'none',8=>'none',9=>'',12=>'left',16=>1,24=>'visible');
 		$style = set_default_style($styles);
 		$width=30;
 		$height=30;
+    }elseif($form_add == "tabmenu"){
+        $value = $form_add;
+        if($form_typ == 2 AND (!$form_tab OR !$form_tab_el)){
+            lmb_alert('table-elements only allowed in tables! first add element of type "table"');
+            return false;
+        }
+    }elseif($form_add == "scroll"){
+        $value = $form_add;
 	}elseif($form_add == "dbdesc" OR $form_add == "dbnew" OR $form_add == "dbsearch" OR $form_add == "dbdat"){
 		
 		# in Formlist only in Table allowed
-		if($form_typ == 2 AND (!$form_tab OR !$form_tab_el)){
-			lmb_alert('in formulars of type "list" databased-elements only allowed in tables! first add element of type "table"');
-			return false;
-		}
-		
+		#if($form_typ == 2 AND (!$form_tab OR !$form_tab_el)){
+		#	lmb_alert('databased-elements only allowed in tables! first add element of type "table"');
+		#	return false;
+		#}
 		$value = $form_dbdat_fieldname." (".$gtab["desc"][$form_dbdat_tabid].")";
 		$tab_id = parse_db_int($form_dbdat_tabid);
 		$field_id = parse_db_int($form_dbdat_fieldid);
@@ -550,7 +563,7 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 			$sqlquery = "INSERT INTO LMB_FORMS (ID,KEYID,ERSTUSER,FORM_ID,TYP,POSX,POSY,WIDTH,HEIGHT,INHALT,STYLE,FIELD_ID,TAB_ID,TAB_GROUP,UFORM_TYP,UFORM_VTYP,PIC_SIZE,PIC_TYP,TITLE,TAB,TAB_SIZE,TAB_EL,TAB_EL_ROW,TAB_EL_COL,TAB_EL_COL_SIZE,Z_INDEX,PARENTREL,SUBELEMENT,CATEGORIE) VALUES ($NEXTKEYID,$NEXTID,".$session["user_id"].",$form_id,'$form_add',0,$posy,$width,$height,'".$value."','$style',$field_id,$tab_id,$tab_group,".parse_db_int($uform_typ).",".parse_db_int($uform_style).",'$pic_size','$pic_type','$elink',$tab,'$tab_size',$tab_el,$tab_el_row,$tab_el_col,$tab_el_col_size,$ZINDEX,'".parse_db_string($parentrel,100)."',$subelement,$categorie)";
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if($form_add == "tabulator"){
-				$sqlquery = "INSERT INTO LMB_FORMS (ID,KEYID,ERSTUSER,FORM_ID,TYP,POSX,POSY,WIDTH,HEIGHT,INHALT,STYLE,Z_INDEX,SUBELEMENT) VALUES (".($NEXTKEYID+1).",".($NEXTID+1).",$session[user_id],$form_id,'tabuItem',0,0,20,10,'tabulator','$style',$ZINDEX,$NEXTID)";
+				$sqlquery = "INSERT INTO LMB_FORMS (ID,KEYID,ERSTUSER,FORM_ID,TYP,POSX,POSY,WIDTH,HEIGHT,INHALT,STYLE,Z_INDEX,SUBELEMENT) VALUES (".($NEXTKEYID+1).",".($NEXTID+1).",{$session['user_id']},$form_id,'tabuItem',0,0,20,10,'tabulator','$style',$ZINDEX,$NEXTID)";
 				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			}
 		#}
@@ -701,7 +714,7 @@ if($form_del AND $form_edit_id){
 }
 /* --- Elemente Editieren --------------------------------------------- */
 elseif($form_edit_value){
-	$prepare_string = "UPDATE LMB_FORMS SET INHALT = ?,LMB_FORMS SET EDITDATUM = ".LMB_DBDEF_TIMESTAMP.",EDITUSER = ".$session[user_id]." WHERE KEYID = $form_edit_id AND FORM_ID = $form_id";
+	$prepare_string = "UPDATE LMB_FORMS SET INHALT = ?,LMB_FORMS SET EDITDATUM = ".LMB_DBDEF_TIMESTAMP.",EDITUSER = ".$session['user_id']." WHERE KEYID = $form_edit_id AND FORM_ID = $form_id";
 	if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($form_edit_value)),__FILE__,__LINE__)){$commit = 1;}
 }
 
@@ -896,6 +909,9 @@ if($change_id){
 
 /* --- Title --------------------------------------------- */
 if($form_title AND $form_edit_id){
+	if ($form_title === 'null') {
+		$form_title = '';
+	}
 	$sqlquery = "UPDATE LMB_FORMS SET TITLE = '".parse_db_string($form_title,255)."' WHERE KEYID = $form_edit_id AND FORM_ID = $form_id";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
@@ -1067,13 +1083,13 @@ if($set_new_zindex){
 # max Z-Index
 $sqlquery = "SELECT MAX(Z_INDEX) AS RESULT FROM LMB_FORMS WHERE FORM_ID = $form_id AND NOT TYP = 'tab'";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-if(odbc_result($rs, "RESULT") > 0){$form["max_zindex"] = odbc_result($rs, "RESULT");}else{$form[max_zindex] = 1;}
+if(odbc_result($rs, "RESULT") > 0){$form["max_zindex"] = odbc_result($rs, "RESULT");}else{$form['max_zindex'] = 1;}
 
 #----------------- Schnappschuss -------------------
 $sqlquery = "SELECT ID,NAME,TABID FROM LMB_SNAP WHERE GLOBAL = ".LMB_DBDEF_TRUE;
 $rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 $bzm1 = 1;
-$snap[name] = array();
+$snap['name'] = array();
 while(odbc_fetch_row($rs1,$bzm1)){
 	$s = odbc_result($rs1,"ID");
 	$snap["name"][odbc_result($rs1,"TABID")][$s] = odbc_result($rs1,"NAME");
@@ -1098,10 +1114,10 @@ if($action == 'setup_form_menu'){
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$bzm = 1;
 	while(odbc_fetch_row($rs, $bzm)) {
-		$formfield[id][] = odbc_result($rs, "FIELD_ID");
-		$formfield[spelling][] = odbc_result($rs, "SPELLING");
-		$formfield[tab_id][] = odbc_result($rs, "TAB_ID");
-		$formfield[tab_group][] = odbc_result($rs, "TAB_GROUP");
+		$formfield['id'][] = odbc_result($rs, "FIELD_ID");
+		$formfield['spelling'][] = odbc_result($rs, "SPELLING");
+		$formfield['tab_id'][] = odbc_result($rs, "TAB_ID");
+		$formfield['tab_group'][] = odbc_result($rs, "TAB_GROUP");
 		$bzm++;
 	}
 }
@@ -1119,18 +1135,35 @@ while(odbc_fetch_row($rs,$bzm)){
 }
 
 # --- bestehende Klassen ---
-if(file_exists($umgvar["pfad"].$form["css"]) AND $form["css"]){
-	$sysclass[] = "";
-	$handle = fopen ($umgvar["pfad"].$form["css"], "r");
+$cssFiles = array();
+if ($form['css']) {
+    $cssFiles[] = $umgvar['pfad'] . $form['css']; # user-selected css class
+}
+$cssFiles[] = $umgvar['pfad'] . '/USER/' . $session['user_id'] . '/layout.css'; # layout.css of user
+
+$sysclass = array('val' => array(''), 'label' => array());
+foreach ($cssFiles as $filePath) {
+    if(!file_exists($filePath)){
+		continue;
+    }
+
+    # add label (== optgroup)
+    $sysclass['label'][count($sysclass['val'])] = basename($filePath);
+
+	$handle = fopen ($filePath, 'r');
 	while (!feof($handle)) {
-	    $buffer = fgets($handle, 4096);
-	    if(lmb_substr($buffer,0,1) == "#" OR lmb_substr($buffer,0,2) == "//"){continue;}
-	    if($buffer AND lmb_strpos($buffer,"*") === false AND !lmb_strpos($buffer,":") AND lmb_strpos($buffer,"{")){
-	    	$buffer = str_replace("{","",$buffer);
-	    	$buffer = explode(".",$buffer);
-	    	$buffer = $buffer[count($buffer)-1];
-	    	$sysclass[] = trim($buffer);
-	    }
+		$buffer = fgets($handle, 4096);
+		if(lmb_substr($buffer,0,1) == '#' OR lmb_substr($buffer,0,2) == '//'){
+			continue;
+		}
+		if($buffer AND lmb_strpos($buffer, '*') === false AND !lmb_strpos($buffer, ':') AND lmb_strpos($buffer, '{')){
+			$buffer = str_replace('{', '', $buffer);
+			$buffer = explode('.', $buffer);
+			if (count($buffer) >= 2) {
+                $buffer = $buffer[count($buffer) - 1];
+                $sysclass['val'][] = trim($buffer);
+            }
+		}
 	}
 	fclose ($handle);
 }

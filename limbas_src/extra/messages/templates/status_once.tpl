@@ -1,8 +1,8 @@
 <!-- [status_once.tpl] -->
 <script language="javascript" type="text/javascript">//<!--
 function display_errors(e){
-//	parent.$('compose_ifrm').style.display = 'block';
-//	parent.$('mail_error_panel').style.display = 'block';
+//	parent.document.getElementById('compose_ifrm').style.display = 'block';
+//	parent.document.getElementById('mail_error_panel').style.display = 'block';
 	parent.E.remove(window, "load", display_errors);
 	
 	if (e.target.body.innerHTML){

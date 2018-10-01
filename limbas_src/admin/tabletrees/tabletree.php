@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -182,7 +182,7 @@ if($treeid AND $tabid){
 	foreach ($gtab["tab_id"] as $key => $tabid){
 		if($tabletree[$tabid]["treeid"]){
 			echo "<tr class=\"tabHeader\"><td colspan=\"7\" class=\"tabHeaderItem\">".$gtab["desc"][$tabid]."</td></tr>";
-			echo "<tr class=\"tabSubHeader\"><td class=\"tabSubHeaderItem\" colspan=\"7\">".$lang[2532]."</td></tr>";
+			echo "<tr class=\"tabSubHeader\"><td class=\"tabSubHeaderItem\" colspan=\"7\">".$lang[4]."</td></tr>";
 			foreach ($tabletree[$tabid]["treeid"] as $key1 => $value1){
 				if($tabletree[$tabid]["display_icon"][$key1]){$icon = "<img src=\"".$tabletree[$tabid]["display_icon"][$key1]."\">";}else{$icon = "";}
 				echo "<tr clas=\"tabBody\">
@@ -195,8 +195,8 @@ if($treeid AND $tabid){
 
 	echo "<tr><td colspan=\"7\"><hr></td></tr>";
 	echo "<tr class=\"tabSubHeader\">
-	<td class=\"tabSubHeaderItem\" colspan=\"2\">".$lang[2532]."</td>
-	<td class=\"tabSubHeaderItem\" colspan=\"2\">".$lang[2540]."</td>
+	<td class=\"tabSubHeaderItem\" colspan=\"2\">".$lang[4]."</td>
+	<td class=\"tabSubHeaderItem\" colspan=\"2\">".$lang[164]."</td>
 	<td></td>
 	</tr>";
 

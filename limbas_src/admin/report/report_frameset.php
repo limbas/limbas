@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -43,7 +43,7 @@ if($reportcopy AND $new){
 	/* --- NEXT ID ---------------------------------------- */
 	$report_id = next_conf_id("LMB_REPORT_LIST");
 	/* --- Berichtliste ---------------------------------------- */
-	$sqlquery = "INSERT INTO LMB_REPORT_LIST (ID,ERSTUSER,NAME,BESCHREIBUNG,REFERENZ_TAB,PAGE_STYLE,TARGET,EXTENSION,DEFFORMAT) VALUES($report_id,$session[user_id],'".parse_db_string($report_name,160)."','',$referenz_tab,'$page_style',".parse_db_int($target,3).",'".parse_db_string($reportextension,160)."','".parse_db_string($defformat,30)."')";
+	$sqlquery = "INSERT INTO LMB_REPORT_LIST (ID,ERSTUSER,NAME,BESCHREIBUNG,REFERENZ_TAB,PAGE_STYLE,TARGET,EXTENSION,DEFFORMAT) VALUES($report_id,{$session['user_id']},'".parse_db_string($report_name,160)."','',$referenz_tab,'$page_style',".parse_db_int($target,3).",'".parse_db_string($reportextension,160)."','".parse_db_string($defformat,30)."')";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$NEXTID = next_db_id("LMB_RULES_REPFORM");
 	$sqlquery = "INSERT INTO LMB_RULES_REPFORM (ID,TYP,GROUP_ID,LMVIEW,REPFORM_ID) VALUES ($NEXTID,1,".$session["group_id"].",".LMB_DBDEF_TRUE.",$report_id)";
@@ -203,7 +203,7 @@ if($reportcopy AND $new){
 	# ------- Next ID ----------
 	$report_id = next_conf_id("LMB_REPORT_LIST");
 	if(!$reporttarget){$reporttarget_ = $report_id;}
-	$sqlquery = "INSERT INTO LMB_REPORT_LIST (ID,ERSTUSER,NAME,BESCHREIBUNG,PAGE_STYLE,REFERENZ_TAB,TARGET,EXTENSION,DEFFORMAT) VALUES($report_id,$session[user_id],'".parse_db_string($report_name,50)."','".str_replace("'","''",$report_desc)."','210;295;5;5;5;5',".parse_db_int($referenz_tab,3).",".parse_db_int($reporttarget_,3).",'".parse_db_string($reportextension,160)."','pdf')";
+	$sqlquery = "INSERT INTO LMB_REPORT_LIST (ID,ERSTUSER,NAME,BESCHREIBUNG,PAGE_STYLE,REFERENZ_TAB,TARGET,EXTENSION,DEFFORMAT) VALUES($report_id,{$session['user_id']},'".parse_db_string($report_name,50)."','".str_replace("'","''",$report_desc)."','210;295;5;5;5;5',".parse_db_int($referenz_tab,3).",".parse_db_int($reporttarget_,3).",'".parse_db_string($reportextension,160)."','pdf')";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$NEXTID = next_db_id("LMB_RULES_REPFORM");
@@ -239,7 +239,8 @@ if($reportextension){
 
 /* --- Frameset ---------------------------------------------------------- */
 ?>
-<FRAMESET COLS="*,240" Border="0" FRAMEBORDER="0" FRAMESPACING="0">
-    <FRAME SRC="main_admin.php?&action=setup_report_main&report_id=<?=$report_id?>&referenz_tab=<?=$referenz_tab?>&report_id=<?=$report_id?>" Scrolling="AUTO" NAME="report_main" Marginheight="0" Marginwidth="0">
-    <FRAME SRC="main_admin.php?&action=setup_report_menu&report_id=<?=$report_id?>&referenz_tab=<?=$referenz_tab?>&report_id=<?=$report_id?>" Scrolling="AUTO" NAME="report_menu" Marginheight="0" Marginwidth="0">
-</FRAMESET>
+
+<div class="frame-container">
+    <iframe name="report_main" src="main_admin.php?&action=setup_report_main&report_id=<?=$report_id?>&referenz_tab=<?=$referenz_tab?>&report_id=<?=$report_id?>" class="frame-fill"></iframe>
+    <iframe name="report_menu" src="main_admin.php?&action=setup_report_menu&report_id=<?=$report_id?>&referenz_tab=<?=$referenz_tab?>&report_id=<?=$report_id?>" style="width: 240px;"></iframe>
+</div>

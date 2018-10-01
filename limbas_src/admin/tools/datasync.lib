@@ -1,26 +1,24 @@
 <?php
-
 /**
  * General:
- *
- * collected data IDs are always salve IDs
- * SLAVE_DATID on slave must be same as DATID
+ *  - collected data IDs are always slave IDs
+ *  - SLAVE_DATID on slave must be same as DATID
  *
  *
  * Procedure:
+ *   1.:  On master:
+ *     $data = datasync_collectChangedData();
  *
- * 1.:  On master:
- * $data = datasync_collectChangedData();
+ *   2.:  On slave:
+ *     $newids = datasync_applyChangedData($data);
+ *     $return = datasync_collectChangedData($newids);
  *
- * 2.:  On slave:
- * $newids = datasync_applyChangedData($data);
- * $return = datasync_collectChangedData($newids);
- *
- * 3.:  Back on master:
- * $final = datasync_applyChangedData($return,true);
- *
+ *   3.:  Back on master:
+ *     $final = datasync_applyChangedData($return);
  */
 require_once('gtab/gtab.lib');
+require_once('gtab/gtab_type_erg.lib');
+require_once('gtab/gtab_type_update.lib');
 require_once('lib/include.lib');
 require_once('lib/include_admin.lib');
 
@@ -28,27 +26,27 @@ global $sync_slave;
 global $sync_template;
 global $sync_master;
 global $sync_exceptions;
+global $additionalCronData;
 
-if (IS_CRON === 1 && $additionalCronData)
-{
+// start sync via cron job
+if (IS_CRON === 1 && $additionalCronData) {
     datasync_runSyncWithMasterSocket($additionalCronData);
 }
-
 
 /**
  * Initializes synchronisation on master
  *
  * @param int $template
+ * @return void
  */
 function datasync_init($template) {
     global $sync_slave;
     global $sync_master;
     global $umgvar;
 
-    define('LMB_SYNC_PROC',true);
+    define('LMB_SYNC_PROC', true);
 
     $sync_master = true;
-
 
     //load all slaves from config
     $slaves = datasync_getSlaves();
@@ -57,37 +55,33 @@ function datasync_init($template) {
     datasync_loadTemplate($template);
 
     //run import process for every slave
-    foreach ($slaves as $slave)
-    {
+    foreach ($slaves as $slave) {
+        echo "<div style='margin:20px; padding:10px; background-color:#fdfdfd; border:1px solid gray;'>Slave {$slave['slave_url']}:<br>";
         $sync_slave = $slave['id'];
-        if ($umgvar['sync_method'] == 'soap')
-        {
-            datasync_runSyncWithSlaveSoap($slave['slave_url'],$slave['slave_username'],$slave['slave_pass']);
+        if ($umgvar['sync_method'] == 'soap') {
+            datasync_runSyncWithSlaveSoap($slave['slave_url'], $slave['slave_username'], $slave['slave_pass']);
+        } elseif ($umgvar['sync_method'] == 'socket') {
+            datasync_runSyncWithSlaveSocket($slave['slave_url'], $slave['slave_username'], $slave['slave_pass']);
         }
-        elseif ($umgvar['sync_method'] == 'socket')
-        {
-            datasync_runSyncWithSlaveSocket($slave['slave_url'],$slave['slave_username'],$slave['slave_pass']);
-        }
+        echo "</div><br><br>";
     }
 }
 
 
 /**
  * Gets a list of all slaves
- * //TODO: only load slaves specified by template
+ * TODO: only load slaves specified by template
  *
  * @return array
  */
-function datasync_getSlaves()
-{
+function datasync_getSlaves() {
     global $db;
+
     $sql = 'SELECT id, slave_url, slave_username, slave_pass FROM lmb_sync_slaves';
-    $rs = odbc_exec($db,$sql);
+    $rs = odbc_exec($db, $sql);
     $slaves = array();
-    if (odbc_num_rows($rs)>0)
-    {
-        while($row = odbc_fetch_array($rs))
-        {
+    if (odbc_num_rows($rs) > 0) {
+        while ($row = odbc_fetch_array($rs)) {
             $slaves[] = $row;
         }
     }
@@ -100,66 +94,51 @@ function datasync_getSlaves()
  *
  * @param int $id
  * @throws Exception
+ * @return void
  */
-function datasync_loadTemplate($id)
-{
+function datasync_loadTemplate($id) {
     global $db;
     global $gtab;
     global $sync_template;
+
     $sync_template = array();
 
     //load all tables marked for synchronisation
-    foreach ($gtab['datasync'] as $tabid => $value)
-    {
-        if ($value)
-        {
+    foreach ($gtab['datasync'] as $tabid => $value) {
+        if ($value) {
             $sync_template[$tabid] = true;
         }
     }
-
-    if (count($sync_template) <= 0)
-    {
+    if (count($sync_template) <= 0) {
         throw new Exception('No tables are marked for sync.');
     }
 
     //load conflict mode
     $sql = "SELECT conflict_mode FROM lmb_sync_template WHERE id = $id";
-    $rs = odbc_exec($db,$sql);
-    if (odbc_num_rows($rs)>0)
-    {
-        while(odbc_fetch_row($rs))
-        {
-            $sync_template['conflict_mode'] = odbc_result($rs,'conflict_mode');
-        }
-    }
-    else
-    {
+    $rs = odbc_exec($db, $sql);
+    if (odbc_num_rows($rs) > 0 && odbc_fetch_row($rs)) {
+        $sync_template['conflict_mode'] = odbc_result($rs, 'conflict_mode');
+    } else {
         throw new Exception('Template does not exist');
     }
 
     //load specific field rules
     $sql = "SELECT tabid, fieldid, master, slave FROM lmb_sync_conf WHERE template = $id";
-    $rs = odbc_exec($db,$sql);
-    if (odbc_num_rows($rs)>0)
-    {
-        while($row = odbc_fetch_array($rs))
-        {
-            if ($sync_template[$row['tabid']] === true)
-            {
-                $sync_template[$row['tabid']] = array();
+    $rs = odbc_exec($db, $sql);
+    if (odbc_num_rows($rs) > 0) {
+        while ($row = odbc_fetch_array($rs)) {
+            $tabid = $row['tabid'];
+            if ($sync_template[$tabid] === true) {
+                $sync_template[$tabid] = array();
             }
-            if ($row['master'])
-            {
-                $sync_template[$row['tabid']]['master'][] = $row['fieldid'];
+            if ($row['master']) {
+                $sync_template[$tabid]['master'][] = $row['fieldid'];
             }
-            if ($row['slave'])
-            {
-                $sync_template[$row['tabid']]['slave'][] = $row['fieldid'];
+            if ($row['slave']) {
+                $sync_template[$tabid]['slave'][] = $row['fieldid'];
             }
         }
-    }
-    else
-    {
+    } else {
         throw new Exception('Template is empty!');
     }
 }
@@ -171,13 +150,11 @@ function datasync_loadTemplate($id)
  * @param string $url
  * @param string $username
  * @param string $password
+ * @return void
  */
-function datasync_runSyncWithSlaveSoap($url,$username,$password)
-{
+function datasync_runSyncWithSlaveSoap($url, $username, $password) {
     global $sync_exceptions;
-    global $sync_slave;
     global $sync_template;
-    global $umgvar;
 
     $sync_exceptions = array();
 
@@ -196,17 +173,15 @@ function datasync_runSyncWithSlaveSoap($url,$username,$password)
 
     $result = soap_call_client($lmpar, $LIM);
 
-    if ($result === false)
-    {
+    if ($result === false) {
         datasync_setException('error', '4', 'Daten konnten nicht an Slave gesendet werden.');
         datasync_handleExceptions();
         return;
     }
 
-    if (is_array($result) && count($result) > 0)
-    {
+    if (is_array($result) && count($result) > 0) {
         $sync_exceptions = $result['sync_exceptions'];
-        $final = datasync_applyChangedData($result,true);
+        datasync_applyChangedData($result);
 
         $lmpar = array();
         $lmpar[0]['action'] = 'finish_datasync';
@@ -214,8 +189,7 @@ function datasync_runSyncWithSlaveSoap($url,$username,$password)
         $lmpar[0]['sync_timestamp'] = $result['timestamp'];
         $lmpar[0]['sync_template'] = $sync_template;
         $result = soap_call_client($lmpar, $LIM);
-        if ($result === false)
-        {
+        if ($result === false) {
             datasync_setException('error', '4', 'Finaler Status konnte nicht an Slave gesendet werden.');
         }
 
@@ -224,13 +198,12 @@ function datasync_runSyncWithSlaveSoap($url,$username,$password)
 
 
         //clean up cache
-        datasync_resetCache($data['timestamp'],true);
+        datasync_resetCache($data['timestamp']);
     }
     #$time_end = microtime(true);
     #$time = $time_end - $time_start;
     #$time_start = $time_end;
     #echo "<h1>$time</h1>";
-
 }
 
 
@@ -240,15 +213,15 @@ function datasync_runSyncWithSlaveSoap($url,$username,$password)
  * @param string $url
  * @param string $username
  * @param string $password
+ * @return void
  */
-function datasync_runSyncWithSlaveSocket($url,$username,$password)
-{
+function datasync_runSyncWithSlaveSocket($url, $username, $password) {
     global $sync_exceptions;
     global $sync_template;
     global $umgvar;
-    require_once($umgvar['path']."/extern/phpsocket/src/Factory.php");
-    require_once($umgvar['path']."/extern/phpsocket/src/Socket.php");
-    require_once($umgvar['path']."/extern/phpsocket/src/Exception.php");
+    require_once($umgvar['path'] . "/extern/phpsocket/src/Factory.php");
+    require_once($umgvar['path'] . "/extern/phpsocket/src/Socket.php");
+    require_once($umgvar['path'] . "/extern/phpsocket/src/Exception.php");
 
     $sync_exceptions = array();
 
@@ -283,7 +256,6 @@ function datasync_runSyncWithSlaveSocket($url,$username,$password)
     try {
         $url = parse_url($url);
         $url = $url['host'];
-        $url = '127.0.0.1'; // TODO
         $factory = new \Socket\Raw\Factory();
         $socket = $factory->createClient("$url:$port");
         $data = datasync_collectChangedData(true);
@@ -311,7 +283,7 @@ function datasync_runSyncWithSlaveSocket($url,$username,$password)
         if (!is_array($result) || count($result) <= 0) {
             datasync_setException('error', '4', 'Daten konnten nicht an Slave gesendet werden.');
             datasync_handleExceptions();
-            throw new Exception('Sync failed');
+            throw new Exception('Sync failed (m1). Received invalid data: ' . print_r($result, 1));
         }
         $time_end = microtime(true);
         $time = $time_end - $time_start;
@@ -323,10 +295,7 @@ function datasync_runSyncWithSlaveSocket($url,$username,$password)
 
         $sync_exceptions = $result['sync_exceptions'];
 
-        $final = datasync_applyChangedData($result);
-
-        echo 'FINAL:';
-        print_r($final);
+        datasync_applyChangedData($result);
 
         # second final message to slave
         $message = array(
@@ -339,7 +308,7 @@ function datasync_runSyncWithSlaveSocket($url,$username,$password)
         $result = $socket->lmbRead();
         if ($result === false) {
             datasync_setException('error', '4', 'Finaler Status konnte nicht an Slave gesendet werden.');
-            throw new Exception('Sync failed');
+            throw new Exception('Sync failed (m2). Finish datasync unsuccessful');
         }
 
         $time_end = microtime(true);
@@ -352,11 +321,11 @@ function datasync_runSyncWithSlaveSocket($url,$username,$password)
         #print_r($sync_exceptions);
 
         //clean up cache
-        datasync_resetCache($data['timestamp'],true);
+        datasync_resetCache($data['timestamp']);
     } catch (Exception $e) {
-        error_log('MASTER: '.$e->getMessage());
+        error_log('MASTER: ' . $e->getMessage());
         $success = false;
-        datasync_setException('error', '0', 'Verbindungsfehler.');
+        datasync_setException('error', '0', 'Verbindungsfehler: ' . $e->getMessage());
     }
     if ($socket) {
         $socket->close();
@@ -369,19 +338,25 @@ function datasync_runSyncWithSlaveSocket($url,$username,$password)
 
 /**
  * Opens a sync socket and runs sync with master
+ *
+ * @param string $authKey authentication key generated by master
+ * @return void
  */
-function datasync_runSyncWithMasterSocket($authKey)
-{
-    define ('LMB_SYNC_PROC',true);
+function datasync_runSyncWithMasterSocket($authKey) {
+    define('LMB_SYNC_PROC', true);
     global $sync_template;
     global $sync_master;
     global $sync_exceptions;
     global $umgvar;
-    require_once($umgvar['path']."/extern/phpsocket/src/Factory.php");
-    require_once($umgvar['path']."/extern/phpsocket/src/Socket.php");
-    require_once($umgvar['path']."/extern/phpsocket/src/Exception.php");
 
-    $url = '127.0.0.1';
+    require_once($umgvar['path'] . "/extern/phpsocket/src/Factory.php");
+    require_once($umgvar['path'] . "/extern/phpsocket/src/Socket.php");
+    require_once($umgvar['path'] . "/extern/phpsocket/src/Exception.php");
+
+    // get url
+    $urlParts = parse_url($umgvar['url']);
+    $url = $urlParts['host']; # '127.0.0.1';
+
     $port = $umgvar['sync_port'];
 
     $sync_master = false;
@@ -398,23 +373,25 @@ function datasync_runSyncWithMasterSocket($authKey)
             if ($master = $socket->accept()) {
                 # get first instruction
                 $data = $master->lmbReadArr();
-                if (!$data || $data['action'] !== 'setup_datasync' || $data['authKey'] !== $authKey) {
-                    throw new Exception('Sync failed');
+                if ($data === null || !is_array($data) || $data['action'] !== 'setup_datasync' || $data['authKey'] !== $authKey) {
+                    throw new Exception('Sync failed (s1). Received invalid data');
                 }
                 $sync_template = $data['sync_template'];
 
                 $newids = datasync_applyChangedData($data['sync_data']);
-                $return = datasync_collectChangedData(false,$newids);
-                $return['exceptions'] = $sync_exceptions;
+                $return = datasync_collectChangedData($newids);
+                $return['sync_exceptions'] = $sync_exceptions;
+
                 # answer to first sync
                 $master->lmbWriteArr($return);
+
                 # get second instruction
                 $data = $master->lmbReadArr();
-                if (!$data || $data['action'] !== 'finish_datasync' || !isset($data['sync_exceptions']) || $data['authKey'] !== $authKey) {
-                    throw new Exception('Sync failed');
+                if (!$data || $data['action'] !== 'finish_datasync' || !array_key_exists('sync_exceptions', $data) || $data['authKey'] !== $authKey) {
+                    throw new Exception('Sync failed (s2). Received invalid data');
                 }
 
-                $sync_exceptions = $data['sync_exceptions'];
+                $sync_exceptions = ($data['sync_exceptions']) ? $data['sync_exceptions'] : array();
 
                 //clean up cache
                 $reset = datasync_resetCache($return['timestamp']);
@@ -428,7 +405,7 @@ function datasync_runSyncWithMasterSocket($authKey)
             $success = false;
         }
     } catch (Exception $e) {
-        error_log('SLAVE: '.$e->getMessage());
+        error_log('SLAVE: ' . $e->getMessage());
         $success = false;
     }
     if ($socket) {
@@ -439,8 +416,8 @@ function datasync_runSyncWithMasterSocket($authKey)
 
 
 /**
- * @param int $timestamp
- * @return bool
+ * @param int $timestamp the latest creation time of cache datasets
+ * @return bool success
  */
 function datasync_resetCache($timestamp) {
     global $sync_master;
@@ -448,49 +425,41 @@ function datasync_resetCache($timestamp) {
     global $db;
     global $sync_slave;
 
-    if ($timestamp == '')
-    {
+    if ($timestamp == '') {
         return true;
     }
 
     //don't delete exceptions
-    $cw = '';
     $con = array();
-    foreach ($sync_exceptions as $type => $exceptions)
-    {
-        foreach ($exceptions as $tabid => $records)
-        {
-            if ($tabid == 0)
-            {
+    foreach ($sync_exceptions as $type => $exceptions) {
+        foreach ($exceptions as $tabid => $records) {
+            if ($tabid == 0) {
                 continue;
             }
             foreach ($records as $datid => $record) {
-                if ($datid == 0)
-                {
+                if ($datid == 0) {
                     $con[] = "(TABID = $tabid)";
                     continue;
                 }
                 foreach ($record as $fieldid => $msg) {
-                    if ($datid == 0)
-                    {
-                        $con[] = "(TABID = $tabid AND DATID = $datid)";
+                    if ($fieldid == 0) {
+                        $con[] = "(TABID = $tabid AND SLAVE_DATID = $datid)";
                         continue;
                     }
-                    $con[] = "(TABID = $tabid AND DATID = $datid AND FIELDID = $fieldid)";
+                    $con[] = "(TABID = $tabid AND SLAVE_DATID = $datid AND FIELDID = $fieldid)";
                 }
             }
         }
     }
-    if (count($con)>0)
-    {
-        $cw = 'NOT ('.implode(' OR ',$con).') AND';
+    $cw = '';
+    if (count($con) > 0) {
+        $cw = 'NOT (' . implode(' OR ', $con) . ') AND';
     }
 
     //TODO: template in lmb_sync_cache
-    $sql = "DELETE FROM lmb_sync_cache WHERE $cw erstdatum <= '$timestamp'  ".(($sync_master) ? " AND SLAVE_ID = $sync_slave" : '');
-    $rs = odbc_exec($db,$sql);
-    if (!$rs)
-    {
+    $sql = "DELETE FROM lmb_sync_cache WHERE $cw erstdatum <= '$timestamp'  " . (($sync_master) ? " AND SLAVE_ID = $sync_slave" : '');
+    $rs = odbc_exec($db, $sql);
+    if (!$rs) {
         return false;
     }
     return true;
@@ -500,55 +469,47 @@ function datasync_resetCache($timestamp) {
 /**
  * Prepares an array based on lmb_sync_cache which can be applied later
  *
- * @param bool $master
- * @param array $newids
+ * @param array<int> $newids
  * @return array
  */
-function datasync_collectChangedData($newids = array())
-{
+function datasync_collectChangedData($newids = array()) {
     global $db;
     global $sync_master;
     global $sync_slave;
 
-    //TODO: Nur Tabellen aus ausgewählten sync_template
-    //ORDER: delete -> created -> changed
-    if ($sync_master)
-    {
+    //TODO: Only tables of selected sync template
+    //ORDER: delete (1) -> created (2) -> changed (3)
+    if ($sync_master) {
         $sqlquery = "SELECT TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID, ERSTDATUM FROM lmb_sync_cache WHERE SLAVE_ID = $sync_slave ORDER BY TYPE ASC";
-    }
-    else
-    {
+    } else {
         $sqlquery = "SELECT TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID, ERSTDATUM FROM lmb_sync_cache ORDER BY TYPE ASC";
     }
-
-
-    $rs = odbc_exec($db,$sqlquery);
+    $rs = odbc_exec($db, $sqlquery);
 
 
     $data = array();
     $syncfields = array();
     $timestamp = '';
 
-    if (odbc_num_rows($rs)>0) {
+    if (odbc_num_rows($rs) > 0) {
         while ($row = odbc_fetch_array($rs)) {
-            $tabid = $row['tabid'];// odbc_result($rs, 'TABID');
-            $fieldid = $row['fieldid'];// odbc_result($rs, 'FIELDID');
-            $datid = $row['datid'];// odbc_result($rs, 'DATID');
-            $slave_datid = $row['slave_datid'];// odbc_result($rs, 'SLAVE_DATID');
-            $type = $row['type'];// odbc_result($rs, 'TYPE');
-            $erstdatum = $row['erstdatum'];// odbc_result($rs, 'ERSTDATUM');
+            $tabid = $row['tabid'];
+            $fieldid = $row['fieldid'];
+            $datid = $row['datid'];
+            $slave_datid = $row['slave_datid'];
+            $type = $row['type'];
+            $erstdatum = $row['erstdatum'];
 
-            if ($timestamp == '' || strtotime($timestamp) < strtotime($erstdatum))
-            {
+            // get highest timestamp
+            if ($timestamp == '' || strtotime($timestamp) < strtotime($erstdatum)) {
                 $timestamp = $erstdatum;
             }
 
-            if ($sync_master && $slave_datid == 0 && $type != 2)
-            {
-                datasync_setException('error',8,'No slavedat',$tabid);
+            // no slave assigned and dataset deleted/created
+            if ($sync_master && $slave_datid == 0 && $type != 2) {
+                datasync_setException('error', 8, 'No slavedat', $tabid);
                 continue;
             }
-
 
             if (!array_key_exists($tabid, $data)) {
                 $data[$tabid] = array();
@@ -556,68 +517,53 @@ function datasync_collectChangedData($newids = array())
                 $syncfields[$tabid] = datasync_getSyncFields($tabid);
             }
 
-
             //deleted
             if ($type == 1) {
                 $data[$tabid][$slave_datid] = false;
             } //created & not deleted
             else if ($type == 2 && $data[$tabid][$slave_datid] !== false) {
-                $newdata = datasync_getData($tabid, $datid, $syncfields[$tabid]);//'all');
-                if ($newdata === false)
-                {
+                $newdata = datasync_getData($tabid, $datid, $syncfields[$tabid]);
+                if ($newdata === false) {
                     continue;
                 }
                 $newdata['ID'] = $datid;
                 $newdata['slave_datid'] = 0;
-                if (!$sync_master)
-                {
+                if (!$sync_master) {
                     $data[$tabid]['new'][$datid] = $newdata;
-                }
-                else
-                {
+                } else {
                     $data[$tabid]['new'][] = $newdata;
                 }
 
             } //changed & not deleted & not created
-            else if ($type == 3 && $data[$tabid][$slave_datid] !== false && !(array_key_exists('new',$data[$tabid]) && array_key_exists($datid,$data[$tabid]['new']))) {
-                if (in_array($fieldid,$syncfields[$tabid]))
-                {
-                    $sd = datasync_getData($tabid, $datid, array($fieldid),$erstdatum);
-                    if ($sd === false)
-                    {
+            else if ($type == 3 && $data[$tabid][$slave_datid] !== false && !(array_key_exists('new', $data[$tabid]) && array_key_exists($datid, $data[$tabid]['new']))) {
+                if (in_array($fieldid, $syncfields[$tabid])) {
+                    $changedata = datasync_getData($tabid, $datid, array($fieldid), $erstdatum);
+                    if ($changedata === false) {
                         continue;
                     }
-                    if (is_array($data[$tabid][$slave_datid]))
-                    {
-                        $data[$tabid][$slave_datid] += $sd;
-                    }
-                    else
-                    {
-                        $data[$tabid][$slave_datid] = $sd;
+                    if (is_array($data[$tabid][$slave_datid])) {
+                        $data[$tabid][$slave_datid] += $changedata; // array merge
+                    } else {
+                        $data[$tabid][$slave_datid] = $changedata;
                     }
                 }
-                //$data[$tabid][$slave_datid] = datasync_getData($tabid, $datid, $syncfields[$tabid]);
             }
-
         }
     }
-    else {
-    }
 
-    return array('data'=>$data,'newids'=>$newids,'timestamp'=>$timestamp);
+    return array('data' => $data, 'newids' => $newids, 'timestamp' => $timestamp);
 }
 
 
 /**
  * Applies changes out of prepared array.
- * On slave ids of created records are collected and send back
- * On master all records get their corresponding lmb_sync_slave and lmb_sync_id
+ * On slave: ids of created records are collected and send back
+ * On master: all records get their corresponding lmb_sync_slave and lmb_sync_id
  *
  * @param array $syncdata
- * @return array
+ * @return array new ids by tabid
  */
-function datasync_applyChangedData($syncdata)
-{
+function datasync_applyChangedData($syncdata) {
     #return array();
     global $db;
     global $gfield;
@@ -625,36 +571,29 @@ function datasync_applyChangedData($syncdata)
     global $sync_master;
     global $sync_slave;
     global $sync_template;
-    $deleted = array();
-                    
+
     //get deleted records
     $sqlquery = "SELECT TYPE, TABID, DATID, SLAVE_ID, SLAVE_DATID FROM lmb_sync_cache WHERE type = 0";
-    
-    $rs = odbc_exec($db,$sqlquery);
-    if (!$rs)
-    {
-        datasync_setException('error',10,'Fetching deleted data failed');
+    $rs = odbc_exec($db, $sqlquery);
+    if (!$rs) {
+        datasync_setException('error', 10, 'Fetching deleted data failed');
     }
 
+    $deleted = array();
     while (odbc_fetch_row($rs)) {
-        //if master use sync_id instead of datid
-        if ($sync_master)
-        {
-            $deleted[odbc_result($rs,'TABID')][] = odbc_result($rs,'SLAVE_DATID');
-        }
-        else
-        {
-            $deleted[odbc_result($rs,'TABID')][] = odbc_result($rs,'DATID');
+        //if master use slave_datid instead of datid
+        if ($sync_master) {
+            $deleted[odbc_result($rs, 'TABID')][] = odbc_result($rs, 'SLAVE_DATID');
+        } else {
+            $deleted[odbc_result($rs, 'TABID')][] = odbc_result($rs, 'DATID');
         }
     }
 
     $newids = array();
     $relation = array();
-    foreach ($syncdata['data'] as $tabid => $data)
-    {
+    foreach ($syncdata['data'] as $tabid => $data) {
         $new = null;
-        if (array_key_exists('new',$data))
-        {
+        if (array_key_exists('new', $data)) {
             $new = $data['new'];
             unset($data['new']);
         }
@@ -663,200 +602,164 @@ function datasync_applyChangedData($syncdata)
         if (is_array($new)) {
             foreach ($new as $record) {
                 $id = new_data($tabid);
-                if ($id <= 0)
-                {
-                    datasync_setException('error',4,'New data failed: '.lmb_log::getLogMessage(true),$tabid);
+                if ($id <= 0) {
+                    datasync_setException('error', 4, 'New data failed: ' . lmb_log::getLogMessage(true), $tabid);
                     continue;
                 }
                 $update = array();
                 foreach ($record as $fieldid => $value) {
-                    if ($fieldid != 'ID' && $fieldid != 'slave_datid') {
-                        $special = datasync_checkFieldType($tabid,$fieldid,$value['value'],true);
-                        if ($special === true)
-                        {
-                            $update["$tabid,$fieldid,$id"] = $value['value'].'';
-                        }
-                        else
-                        {
-                            if ($special === 'rel')
-                            {
-                                $relation[$tabid][$id][$fieldid] = $value['value'];
-                            }
-                        }
-                    }
-                }
-                #print_r($update);
-                if (!update_data($update))
-                {
-                    datasync_setException('error',5,'New data - Update failed: '.lmb_log::getLogMessage(true),$tabid,$id);
-                }
-
-                if ($sync_master)
-                {
-                    //assign lmb_sync_slave and lmb_sync_id
-                    $table = $gtab['table'][$tabid];
-                    $sql = "UPDATE $table SET lmb_sync_slave = $sync_slave, lmb_sync_id = {$record['ID']} WHERE ID = $id";
-                    $rs = odbc_exec($db,$sql);
-                }
-                else
-                {
-                    //fill match array for master system
-                    $newids[$tabid][] = array('ID' => $record['ID'], 'slave_datid' => $id);
-                }
-            }
-        }
-
-
-        //update / delete records
-        foreach ($data as $id => $values)
-        {
-            if ($id == 0)
-            {
-                datasync_setException('error',6,'Record not found',$tabid,$id);
-                continue;
-            }
-
-            if ($sync_master)
-            {
-                $sid = $id;
-                $id = datasync_convertID($tabid,$id,0);
-                if ($id === false)
-                {
-                    datasync_setException('error',2,'ID resolve failed',$tabid,$sid);
-                    continue;
-                }
-            }
-
-            //deleted
-            if ($values === false)
-            {
-                //TODO: setting delete or hide
-                //TODO: Verknüpfungscheck
-                if (!del_data($tabid, $id, "hide"))
-                {
-                    datasync_setException('error',2,'Delete failed: '.lmb_log::getLogMessage(true),$tabid,$id);
-                }
-            }
-            //changed and not deleted
-            else if (!array_key_exists($tabid,$deleted) || !in_array($id,$deleted[$tabid]))
-            {
-                $update = array();
-                foreach ($values as $fieldid => $value)
-                {
-                    //Update allowed
-                    if ($sync_master)
-                    {
-                        $fids = $sync_template[$tabid]['master'];
-                    }
-                    else
-                    {
-                        $fids = $sync_template[$tabid]['slave'];
-                    }
-
-                    if (!in_array($fieldid,$fids))
-                    {
-                        continue;
-                    }
-
-                    $special = datasync_checkFieldType($tabid,$fieldid,$value['value'],true);
-                    if ($special === true)
-                    {
-                        if (datasync_hasConflict($tabid, $id, $fieldid, $value)) {
-                            continue;
-                        }
-                        $update["$tabid,$fieldid,$id"] = $value['value'].'';
-                    }
-                    else
-                    {
-                        if ($special === 'rel')
-                        {
+                    if ($fieldid !== 'ID' && $fieldid !== 'slave_datid') {
+                        $special = datasync_applyFieldType($tabid, $fieldid, $id, $value['value']);
+                        if ($special === true) {
+                            $update["$tabid,$fieldid,$id"] = $value['value'] . '';
+                        } else if ($special === 'rel') {
                             $relation[$tabid][$id][$fieldid] = $value['value'];
                         }
                     }
                 }
 
-                if (!update_data($update))
-                {
-                    datasync_setException('error',3,'Update failed: '.lmb_log::getLogMessage(true),$tabid,$id);
+                if ($sync_master) {
+                    //assign lmb_sync_slave and lmb_sync_id
+                    $table = $gtab['table'][$tabid];
+                    $sql = "UPDATE $table SET lmb_sync_slave = $sync_slave, lmb_sync_id = {$record['ID']} WHERE ID = $id";
+                    $rs = odbc_exec($db, $sql);
+                } else {
+                    //fill match array for master system
+                    $newids[$tabid][] = array('ID' => $record['ID'], 'slave_datid' => $id);
+                }
+
+                if ($update AND update_data($update) !== true) {
+                    datasync_setException('error', 5, 'New data - Update failed: ' . lmb_log::getLogMessage(true), $tabid, $id);
                 }
             }
         }
 
+        //update / delete records
+        foreach ($data as $id => $values) {
+            if ($id == 0) {
+                datasync_setException('error', 6, 'Record not found', $tabid, $id);
+                continue;
+            }
+
+            $sid = $id;
+            if ($sync_master) {
+                $id = datasync_convertID($tabid, $id, 0);
+                if ($id === false) {
+                    datasync_setException('error', 2, 'ID resolve failed', $tabid, $sid);
+                    continue;
+                }
+            }
+
+            //deleted
+            if ($values === false) {
+                //TODO: setting delete or hide
+                //TODO: relation check
+                if (!del_data($tabid, $id, "hide")) {
+                    datasync_setException('error', 2, 'Delete failed: ' . lmb_log::getLogMessage(true), $tabid, $sid);
+                }
+            } //changed and not deleted
+            else if (!array_key_exists($tabid, $deleted) || !in_array($id, $deleted[$tabid])) {
+                $update = array();
+                foreach ($values as $fieldid => $value) {
+                    //Update allowed
+                    if ($sync_master) {
+                        $fids = $sync_template[$tabid]['master'];
+                    } else {
+                        $fids = $sync_template[$tabid]['slave'];
+                    }
+
+                    if (!in_array($fieldid, $fids)) {
+                        continue;
+                    }
+
+                    $special = datasync_applyFieldType($tabid, $fieldid, $id, $value['value']);
+                    if ($special === true) {
+                        if (datasync_hasConflict($tabid, $id, $fieldid, $value)) {
+                            continue;
+                        }
+                        $update["$tabid,$fieldid,$id"] = $value['value'] . '';
+                    } else if ($special === 'rel') {
+                        $relation[$tabid][$id][$fieldid] = $value['value'];
+                    } else {
+                        continue;
+                    }
+                }
+                if ($update && update_data($update) !== true) {
+                    datasync_setException('error', 3, 'Update failed: ' . lmb_log::getLogMessage(true), $tabid, $sid);
+                }
+            }
+        }
 
     }
 
-
-
     //update sync_ids of records created on slave
-    if ($sync_master)
-    {
-        foreach ($syncdata['newids'] as $tabid =>$tab)
-        {
-            foreach ($tab as $record)
-            {
+    if ($sync_master) {
+        foreach ($syncdata['newids'] as $tabid => $tab) {
+            foreach ($tab as $record) {
                 $id = $record['ID'];
                 $sync_datid = $record['slave_datid'];
 
                 $table = $gtab['table'][$tabid];
                 //set lmb_sync_slave and lmb_sync_id
                 $sql = "UPDATE $table SET lmb_sync_slave = $sync_slave, lmb_sync_id = $sync_datid WHERE ID = $id";
-                $rs = odbc_exec($db,$sql);
+                $rs = odbc_exec($db, $sql);
             }
         }
     }
 
-    #echo 'rel:<br>';
-    #print_r($relation);
-
     //set or delete relations
-    foreach ($relation as $tabid => $records)
-    {
-        foreach ($records as $datid => $fields)
-        {
-            foreach ($fields as $fieldid => $verknids)
-            {
+    foreach ($relation as $tabid => $records) {
+        foreach ($records as $datid => $fields) {
+            $sdatid = $datid;
+            if ($sync_master) {
+                $sdatid = datasync_convertID($tabid, $datid, 1);
+            }
+
+            foreach ($fields as $fieldid => $verknids) {
                 $verkntab = $gfield[$tabid]['verkntabid'][$fieldid];
 
                 //get exsting relations
                 $gsr[$tabid]['ID'] = $datid;
                 $filter["relationval"][$tabid] = 1;
-                $gresult = get_gresult($tabid, 1, $filter, $gsr, null,array($tabid=>array($fieldid)));
-                if ($gresult[$tabid]['res_count']<=0)
-                {
+                $gresult = get_gresult($tabid, 1, $filter, $gsr, null, array($tabid => array($fieldid)));
+                if ($gresult[$tabid]['res_count'] <= 0) {
                     continue;
                 }
                 $existing_rel = $gresult[$tabid][$fieldid][0];
-                if ($sync_master)
-                {
+                if (!$existing_rel) {
+                    $existing_rel = array();
+                }
+                if ($sync_master) {
                     foreach ($verknids as $key => &$verknid) {
                         $verknid = datasync_convertID($verkntab, $verknid, 0);
                     }
                 }
-
                 $verknids = array_filter($verknids);
 
-                //Suche Übereinstimmungen
+                //search ids on both slave and master
                 $intersect = array_intersect($verknids, $existing_rel);
-
-                $verkn_add_ids = array_diff($verknids, $intersect);
-                $verkn_del_ids = array_diff($existing_rel, $intersect);
-
-                $relation = init_relation($tabid,$fieldid,$datid,$verkn_add_ids);
-                if (!set_relation($relation)){
-                    datasync_setException('error',11,'Add relations failed: '.lmb_log::getLogMessage(true),$tabid,$datid,$fieldid);
+                if (!$intersect) {
+                    $intersect = array();
                 }
 
-                $relation = init_relation($tabid,$fieldid,$datid,null,$verkn_del_ids);
-                set_relation($relation);
-                if (!set_relation($relation)){
-                    datasync_setException('error',11,'Remove relations failed: '.lmb_log::getLogMessage(true),$tabid,$datid,$fieldid);
+                // add ids missing on current system
+                if ($verkn_add_ids = array_diff($verknids, $intersect)) {
+                    $relation = init_relation($tabid, $fieldid, $datid, $verkn_add_ids);
+                    if ($verkn_add_ids && !set_relation($relation)) {
+                        datasync_setException('error', 11, 'Add relations failed: ' . lmb_log::getLogMessage(true), $tabid, $sdatid, $fieldid);
+                    }
+                }
+
+                // delete ids missing on partner system
+                if ($verkn_del_ids = array_diff($existing_rel, $intersect)) {
+                    $relation = init_relation($tabid, $fieldid, $datid, null, $verkn_del_ids);
+                    if ($verkn_del_ids && !set_relation($relation)) {
+                        datasync_setException('error', 11, 'Remove relations failed: ' . lmb_log::getLogMessage(true), $tabid, $sdatid, $fieldid);
+                    }
                 }
             }
         }
     }
-
-
-
 
     return $newids;
 }
@@ -866,34 +769,29 @@ function datasync_applyChangedData($syncdata)
  * Converts master ID from / to slave ID for defined slave
  *
  * @param int $tabid
- * @param int $sync_id
+ * @param int $cid
  * @param int $dir 0 = slave ID to master ID; 1 = master ID to slave ID
- * @return bool|mixed
+ * @return int|false converted id or false if not found
  */
-function datasync_convertID($tabid, $cid, $dir = 0)
-{
+function datasync_convertID($tabid, $cid, $dir = 0) {
     global $db;
     global $gtab;
     global $sync_slave;
+
     $table = $gtab['table'][$tabid];
-    if ($dir == 1)
-    {
+    if ($dir == 1) {
         //master ID to slave ID
         $sql = "SELECT lmb_sync_id as CID FROM $table WHERE lmb_sync_slave = $sync_slave AND ID = $cid";
-    }
-    else
-    {
+    } else {
         //slave ID to master ID
         $sql = "SELECT ID as CID FROM $table WHERE lmb_sync_slave = $sync_slave AND lmb_sync_id = $cid";
     }
-    $rs = odbc_exec($db,$sql);
+    $rs = odbc_exec($db, $sql);
 
-    $id = false;
-    while (odbc_fetch_row($rs))
-    {
-        $id = odbc_result($rs,'CID');
+    if (odbc_fetch_row($rs)) {
+        return odbc_result($rs, 'CID');
     }
-    return $id;
+    return false;
 }
 
 
@@ -901,35 +799,26 @@ function datasync_convertID($tabid, $cid, $dir = 0)
  * Collects all relevant fields of a table for synchronization
  *
  * @param int $tabid
+ * @throws Exception
  * @return array
  */
-function datasync_getSyncFields($tabid)
-{
+function datasync_getSyncFields($tabid) {
     global $sync_master;
     global $sync_template;
 
-    if (!array_key_exists($tabid,$sync_template))
-    {
-        //TODO: Throw error
-        return array();
+    if (!array_key_exists($tabid, $sync_template)) {
+        throw new Exception("Tabid $tabid not in sync template $sync_template!");
     }
 
-    if (is_array($sync_template[$tabid]))
-    {
+    if (is_array($sync_template[$tabid])) {
         if ($sync_master) {
             return $sync_template[$tabid]['master'];
-        }
-        else {
+        } else {
             return $sync_template[$tabid]['slave'];
         }
     }
-    else
-    {
-        return array();
-    }
 
-
-
+    return array();
 }
 
 
@@ -939,66 +828,61 @@ function datasync_getSyncFields($tabid)
  * @param int $tabid
  * @param int $id
  * @param array $field_ids
- * @return array
+ * @param int $timestamp
+ * @return array | false
  */
-function datasync_getData($tabid,$id,$field_ids,$timestamp=null)
-{
+function datasync_getData($tabid, $id, $field_ids, $timestamp = null) {
     $gsr[$tabid]['ID'] = $id;
-    $filter["relationval"][$tabid] = 1;
-    $filter["getlongval"][$tabid] = 1;
+    $filter['relationval'][$tabid] = 1;
+    $filter['getlongval'][$tabid] = 1;
 
-    //TODO: check for lmb_sync_slave
-    if ($field_ids === 'all')
-    {
+    //TODO: filter for lmb_sync_slave?
+    if ($field_ids === 'all') {
         $gresult = get_gresult($tabid, 1, $filter, $gsr, null);
-    }
-    else
-    {
-        $gresult = get_gresult($tabid, 1, $filter, $gsr, null,array($tabid=>$field_ids));
-    }
+    } else {
+        $gresult = get_gresult($tabid, 1, $filter, $gsr, null, array($tabid => $field_ids));
 
-    if ($gresult[$tabid]['res_count'] <= 0)
-    {
-        datasync_setException('error',9,'No record data',$tabid,$id);
-        return false;
-    }
-
-
-    $data = array();
-    foreach ($gresult[$tabid] as $key => $value)
-    {
-        if (is_numeric($key))
-        {
-            if (datasync_checkFieldType($tabid, $key,$value[0]))
-            {
-                $data[$key] = array('value'=>$value[0],'time'=>$timestamp);
+        // ensure that all field ids are present
+        foreach($field_ids as $field_id) {
+            if (!array_key_exists($field_id, $gresult[$tabid])) {
+                $gresult[$tabid][$field_id] = array();
             }
         }
     }
 
+    if ($gresult[$tabid]['res_count'] <= 0) {
+        datasync_setException('error', 9, 'No record data', $tabid, $id);
+        return false;
+    }
+
+    $data = array();
+    foreach ($gresult[$tabid] as $key => $value) {
+        if (is_numeric($key)) {
+            if (datasync_prepareFieldType($tabid, $key, $value[0], $gresult)) {
+                $data[$key] = array('value' => $value[0], 'time' => $timestamp);
+            }
+        }
+    }
     return $data;
 }
 
 
 /**
- * Checks if a special field type is allowed for synchronization
+ * Checks if a special field type is allowed for synchronization and prepare its data
  *
  * @param int $tabid
  * @param int $fieldid
  * @param mixed $value
- * @param bool $apply
+ * @param mixed[] $gresult
  * @return bool|string
  */
-function datasync_checkFieldType($tabid,$fieldid,&$value,$apply=false)
-{
+function datasync_prepareFieldType($tabid, $fieldid, &$value, $gresult) {
     global $gfield;
     global $sync_master;
     global $sync_template;
 
-    //TODO: Auswahl (multiselect), Auswahl (checkbox), Auswahl (ajax), Attribut
-
-    switch($gfield[$tabid]['data_type'][$fieldid])
-    {
+    //TODO: Attribut
+    switch ($gfield[$tabid]['data_type'][$fieldid]) {
         //Backward relation
         case 24:
             return false;
@@ -1006,27 +890,117 @@ function datasync_checkFieldType($tabid,$fieldid,&$value,$apply=false)
         //Relation: only valid if both, table and linked table, are synchronized
         case 27:
             $verkntab = $gfield[$tabid]['verkntabid'][$fieldid];
-            if (!array_key_exists($verkntab,$sync_template))
-            {
+            if (!array_key_exists($verkntab, $sync_template)) {
                 return false;
             }
-            if ($sync_master && !$apply) {
+            if ($sync_master) {
                 foreach ($value as &$verknid) {
                     $verknid = datasync_convertID($verkntab, $verknid, 1);
                 }
             }
-            //if data is applied (otherwise it's collected)
-            if ($apply)
-            {
-                return 'rel';
-            }
             break;
         //Currency
         case 30:
-            if (is_array($value))
-            {
-                $value = $value['V'].' '.$value['C'];
+            if (is_array($value)) {
+                $value = $value['V'] . ' ' . $value['C'];
             }
+            break;
+        //Auswahl (checkbox), Auswahl (multiselect), Auswahl (ajax)
+        case 18:
+        case 31:
+        case 32:
+            if ($value > 0) {
+                $func = 'cftyp_' . $gfield[$tabid]['funcid'][$fieldid];
+                $values = $func(0, $fieldid, $tabid, 5, $gresult);
+                if (!is_array($values)) {
+                    $values = array();
+                }
+                $value = array();
+                foreach ($values as $id => $text) {
+                    if (is_numeric($id)) {
+                        $value[] = $id;
+                    }
+                }
+            } else {
+                $value = null;
+            }
+            break;
+    }
+
+    return true;
+}
+
+
+/**
+ * Applies data of special fields
+ *
+ * @param int $tabid
+ * @param int $fieldid
+ * @param int $ID
+ * @param mixed $value
+ * @return bool|string
+ */
+function datasync_applyFieldType($tabid, $fieldid, $ID, &$value) {
+    global $gfield;
+    global $sync_template;
+
+    //TODO: Attribut
+    switch ($gfield[$tabid]['data_type'][$fieldid]) {
+        //Backward relation
+        case 24:
+            return false;
+            break;
+        //Relation: only valid if both, table and linked table, are synchronized
+        case 27:
+            $verkntab = $gfield[$tabid]['verkntabid'][$fieldid];
+            if (!array_key_exists($verkntab, $sync_template)) {
+                return false;
+            }
+            return 'rel';
+            break;
+        //Currency
+        case 30:
+            if (is_array($value)) {
+                $value = $value['V'] . ' ' . $value['C'];
+            }
+            break;
+        //Auswahl (checkbox), Auswahl (multiselect), Auswahl (ajax)
+        case 18:
+        case 31:
+        case 32:
+            if (is_array($value)) {
+                if (datasync_hasConflict($tabid, $ID, $fieldid, $value)) {
+                    return true;
+                }
+                /*$gsr[$tabid]['ID'] = $ID;
+                $gresult = get_gresult($tabid, 1, null, $gsr, null,array($tabid=>array($fieldid)));
+                if ($gresult[$tabid]['res_count']<=0)
+                {
+                    return false;
+                }
+                $func = 'cftyp_'.$gfield[$tabid]['funcid'][$fieldid];
+                $values = $func(0,$fieldid,$tabid,5,$gresult);
+                $existing = array();
+                if (!is_array($values))
+                {
+                    $values = array();
+                }
+                foreach ($values as $id => $text)
+                {
+                    if (is_numeric($id))
+                    {
+                        $existing[] = $id;
+                    }
+                }*/
+
+                if ($gfield[$tabid]['data_type'][$fieldid] == 32) {
+                    $value = ';' . implode(';', $value);
+                }
+                uftyp_23($tabid, $fieldid, $ID, $value);
+            } else {
+                return false;
+            }
+            return true;
             break;
     }
 
@@ -1041,25 +1015,24 @@ function datasync_checkFieldType($tabid,$fieldid,&$value,$apply=false)
  * mode 2 = latest wins
  * mode 3 = manual intervention
  *
- * @param $tabid
- * @param $datid
+ * @param int $tabid
+ * @param int $datid
  * @param int $fieldid
+ * @param array $value ['time' => ..., 'value' => ...]
  * @return bool
  */
-function datasync_hasConflict($tabid, $datid, $fieldid=0,$value=array())
-{
+function datasync_hasConflict($tabid, $datid, $fieldid = 0, $value = array()) {
     global $db;
     global $sync_master;
     global $sync_slave;
     global $sync_template;
 
-    $sqlquery = "SELECT ID, TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID, ERSTDATUM FROM lmb_sync_cache WHERE TABID = $tabid AND FIELDID = $fieldid AND DATID = $datid AND TYPE = 3".(($sync_master) ? "AND SLAVE_ID = $sync_slave" : '' );
-    $rs = odbc_exec($db,$sqlquery);
-    if (odbc_num_rows($rs)>0)
-    {
-        $curval = datasync_getData($tabid,$datid,array($fieldid));
-        if ($curval['value'] == $value['value'])
-        {
+    $sqlquery = "SELECT TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID, ERSTDATUM FROM lmb_sync_cache WHERE TABID = $tabid AND FIELDID = $fieldid AND DATID = $datid AND TYPE = 3" . (($sync_master) ? "AND SLAVE_ID = $sync_slave" : '');
+    $rs = odbc_exec($db, $sqlquery);
+    if (odbc_num_rows($rs) > 0) {
+        $curval = datasync_getData($tabid, $datid, array($fieldid));
+        $curval = $curval[$fieldid];
+        if ($curval['value'] == $value['value']) {
             return true;
         }
         switch ($sync_template['conflict_mode']) {
@@ -1075,9 +1048,8 @@ function datasync_hasConflict($tabid, $datid, $fieldid=0,$value=array())
                 break;
             case 2:
                 odbc_fetch_row($rs);
-                $time = odbc_result($rs,'ERSTDATUM');
-                if (strtotime($time) > strtotime($value['time']))
-                {
+                $time = odbc_result($rs, 'ERSTDATUM');
+                if (strtotime($time) > strtotime($value['time'])) {
                     return true;
                 }
                 break;
@@ -1093,43 +1065,38 @@ function datasync_hasConflict($tabid, $datid, $fieldid=0,$value=array())
 
 /**
  * Writes all cached exceptions into the database
+ *
+ * @return void
  */
-function datasync_handleExceptions()
-{
-    echo 'ERRORS:<br>';
+function datasync_handleExceptions() {
     global $db;
     global $gtab;
     global $sync_exceptions;
     global $sync_slave;
 
-    $isLimbasTable = array_key_exists('LMB_SYNC_LOG',$gtab['argresult_id']);
+    $isLimbasTable = array_key_exists('LMB_SYNC_LOG', $gtab['argresult_id']);
 
+    echo 'ERRORS:<br>';
     print_r($sync_exceptions);
 
-    if(count($sync_exceptions)>0)
-    {
+    if (count($sync_exceptions) > 0) {
         foreach ($sync_exceptions as $type => $exceptions) {
             foreach ($exceptions as $tabid => $records) {
                 foreach ($records as $datid => $record) {
                     foreach ($record as $fieldid => $field) {
-                        foreach ($field as $msg)
-                        {
-                            if ($msg['origin'] == 1)
-                            {
+                        foreach ($field as $msg) {
+                            if ($msg['origin'] == 1) {
                                 $datid = datasync_convertID($tabid, $datid);
                             }
 
-                            if ($isLimbasTable)
-                            {
+                            if ($isLimbasTable) {
                                 $ID = next_db_id('lmb_sync_log');
+                                // TODO ID, slaveid 2x
                                 $sqlquery = "INSERT INTO lmb_sync_log (ID,type,tabid,datid,fieldid,origin,slaveid,errorcode,message) VALUES ($ID,'$type',$tabid,$datid,$fieldid,{$msg['origin']},$sync_slave,{$msg['code']},'{$msg['msg']}')";
-                            }
-                            else
-                            {
+                            } else {
                                 $sqlquery = "INSERT INTO lmb_sync_log (type,tabid,datid,fieldid,origin,slaveid,errorcode,message) VALUES ('$type',$tabid,$datid,$fieldid,{$msg['origin']},$sync_slave,{$msg['code']},'{$msg['msg']}')";
                             }
-                            $rs = odbc_exec($db,$sqlquery);
-
+                            $rs = odbc_exec($db, $sqlquery);
                         }
                     }
                 }
@@ -1147,9 +1114,9 @@ function datasync_handleExceptions()
  * @param int $datid
  * @param int $fieldid
  */
-function datasync_setException($type, $code, $msg, $tabid=0, $datid=0, $fieldid=0)
-{
+function datasync_setException($type, $code, $msg, $tabid = 0, $datid = 0, $fieldid = 0) {
     global $sync_exceptions;
     global $sync_master;
-    $sync_exceptions[$type][$tabid][$datid][$fieldid][] = array('code'=>$code,'msg'=>$msg,'origin'=>($sync_master) ? 0 : 1);
+
+    $sync_exceptions[$type][$tabid][$datid][$fieldid][] = array('code' => $code, 'msg' => $msg, 'origin' => ($sync_master) ? 0 : 1);
 }

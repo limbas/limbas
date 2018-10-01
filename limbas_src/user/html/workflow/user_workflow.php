@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -48,10 +48,10 @@ function limbasPauseWorkflowinstance(wfid,wfinstid) {
 
 function nav_refresh(gtabid,snapid,val) {
 	if(parent.nav){
-		parent.nav.document.location.href = 'main.php?<?=SID?>&action=nav&sparte=gtab&refresh=no';
+		parent.nav.document.location.href = 'main.php?action=nav&sparte=gtab&refresh=no';
 	}
 	if(parent.parent.nav){
-		parent.parent.nav.document.location.href = 'main.php?<?=SID?>&action=nav&sparte=gtab&refresh=no';
+		parent.parent.nav.document.location.href = 'main.php?action=nav&sparte=gtab&refresh=no';
 	}
 }
 </SCRIPT>
@@ -61,7 +61,6 @@ function nav_refresh(gtabid,snapid,val) {
 <TABLE width='100%'><TR><TD WIDTH="20">&nbsp;</TD><TD>
 
 <FORM ACTION="main.php" METHOD="post" name="form1">
-<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
 <input type="hidden" name="action" value="my_workflow">
 <input type="hidden" name="wfid">
 <input type="hidden" name="wfinstid">
@@ -96,12 +95,12 @@ if($mywf AND $LINK[$action]){//$LINK[228]){
 		
 		
 		echo "<TR>";
-		echo "<TD colspan=7 style=\"background-color:" . $farbschema["WEB6"] . "\"><B>".$mywf[$wfid]["name"]."</TD>";
+		echo "<TD colspan=7 style=\"background-color:" . $farbschema["WEB3"] . "\"><B>".$mywf[$wfid]["name"]."</TD>";
 		echo "</TR>\n";
 	
 		echo "<TR  style=\"background-color:" . $farbschema["WEB7"] . "\">";
-		echo "<TD width=\"100\" style=\"font-weight:bold;color:grey\">".$lang[2040]."</TD>";
-		echo "<TD width=\"200\" style=\"font-weight:bold;color:grey\">".$lang[2041]."</TD>";
+		echo "<TD width=\"100\" style=\"font-weight:bold;color:grey\">".$lang[544]."</TD>";
+		echo "<TD width=\"200\" style=\"font-weight:bold;color:grey\">".$lang[126]."</TD>";
 		echo "<TD width=\"100\" style=\"font-weight:bold;color:grey\" TITLE=\"".$lang[2042]."\">".$lang[2042]."</TD>";
 		echo "<TD width=\"100\" style=\"font-weight:bold;color:grey\" TITLE=\"".$lang[2043]."\">".$lang[2043]."</TD>";
 		echo "<TD width=\"100\" style=\"font-weight:bold;color:grey\" TITLE=\"".$lang[2045]."\">".$lang[2044]."</TD>";
@@ -138,15 +137,15 @@ if($mywf AND $LINK[$action]){//$LINK[228]){
 			echo "</TD>\n";
 			
 			echo "<TD TITLE=\"Halten\">";
-			echo "<i class=\"lmb-icon lmb-lock-file\" onClick=\"javascript:if(confirm('".$lang[2046]."')){limbasPauseWorkflowinstance($wfid,$wfinstid);}\" style=\"cursor:pointer\"></i>";
+			echo "<i class=\"lmb-icon lmb-lock-file\" onClick=\"if(confirm('".$lang[2046]."')){limbasPauseWorkflowinstance($wfid,$wfinstid);}\" style=\"cursor:pointer\"></i>";
 			echo "</TD>\n";
 			
 			echo "<TD TITLE=\"Abrechen\">";
-			echo "<i class=\"lmb-icon lmb-trash\" onClick=\"javascript:if(confirm('".$lang[2047]."')){limbasCancelWorkflowinstance($wfid,$wfinstid);}\" style=\"cursor:pointer\"></i>";
+			echo "<i class=\"lmb-icon lmb-trash\" onClick=\"if(confirm('".$lang[2047]."')){limbasCancelWorkflowinstance($wfid,$wfinstid);}\" style=\"cursor:pointer\"></i>";
 			echo "</TD>\n";
 
 			echo "</TR>\n";
-				#echo "<LI><INPUT TYPE=\"TEXT\" VALUE=\"".$gsnap[$key1][name][$key2]."\" OnChange=\"edit_name('$key1','$key2',this.value)\" STYLE=\"border:none;width:150px;\"> <IMG SRC=\"pic/delete2.gif\" OnCLick=\"document.location.href='main.php?".SID."&action=user_snapshot&gtabid=$key1&del=$key2'\" STYLE=\"cursor:pointer;\"></LI>";
+				#echo "<LI><INPUT TYPE=\"TEXT\" VALUE=\"".$gsnap[$key1][name][$key2]."\" OnChange=\"edit_name('$key1','$key2',this.value)\" STYLE=\"border:none;width:150px;\"> <IMG SRC=\"pic/delete2.gif\" OnCLick=\"document.location.href='main.php?action=user_snapshot&gtabid=$key1&del=$key2'\" STYLE=\"cursor:pointer;\"></LI>";
 		}
 		
 		
@@ -180,11 +179,11 @@ if($mytasks AND $LINK[$action]){//$LINK[230]){
 		
 		
 		echo "<TR>";
-		echo "<TD colspan=4 style=\"background-color:" . $farbschema["WEB6"] . "\"><B>".$mytasks[$wfid]["description"]."</B></TD>";
+		echo "<TD colspan=4 style=\"background-color:" . $farbschema["WEB3"] . "\"><B>".$mytasks[$wfid]["description"]."</B></TD>";
 		echo "</TR>\n";
 	
 		echo "<TR  style=\"background-color:" . $farbschema["WEB7"] . "\">";
-		echo "<TD width=\"150\" style=\"font-weight:bold;color:grey\">".$lang[2040]."</TD>";
+		echo "<TD width=\"150\" style=\"font-weight:bold;color:grey\">".$lang[544]."</TD>";
 		echo "<TD width=\"250\" style=\"font-weight:bold;color:grey\">".$lang[2048]."</TD>";
 		echo "<TD width=\"100\" style=\"font-weight:bold;color:grey\">".$lang[2049]."</TD>";
 		echo "<TD width=\"100\" style=\"font-weight:bold;color:grey\">".$lang[2050]."</TD>";

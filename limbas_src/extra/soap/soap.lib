@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -22,8 +22,8 @@
 # ------- soap-Funktion --------
 function runlmb($lmpar){
 	$lmpar = unserialize($lmpar);
-	if($lmpar["use_noids"]){
-		$GLOBALS["lmpar"]["use_noids"] = $lmpar["use_noids"];
+	if($lmpar['use_noids']){
+		$GLOBALS['lmpar']['use_noids'] = $lmpar['use_noids'];
 		$lmpar = translateAssoziativeArray($lmpar);
 	}
 	if($lmb = parse_action($lmpar)){
@@ -40,11 +40,11 @@ function translateArrayRecursive(&$arr){
 	foreach ($arr as $key => $value){
 		$oldkey = $key;
 		if(lmb_substr($key,0,1) == "#"){
-			if($key = $gtab["argresult_id"][lmb_substr($key,1,90)] AND is_array($value)){
+			if($key = $gtab['argresult_id'][lmb_substr($key,1,90)] AND is_array($value)){
 				foreach ($value as $key1 => $value1){
 					if(lmb_substr($key1,0,1) == "*"){
 						$oldfkey = $key1;
-						if($key1 = $gfield[$key]["argresult_name"][lmb_substr($key1,1,90)]){
+						if($key1 = $gfield[$key]['argresult_name'][lmb_substr($key1,1,90)]){
 							$arr[$key][$key1] = $value1;
 						}
 					}else{
@@ -76,7 +76,7 @@ function translateAssoziativeField($gtabid,$field){
 	global $gfield;
 
 	if(!is_numeric($field) AND lmb_substr($field,0,1) == "*"){
-		return $gfield[$gtabid]["argresult_name"][lmb_substr($field,1,90)];
+		return $gfield[$gtabid]['argresult_name'][lmb_substr($field,1,90)];
 	}
 
 	return $field;
@@ -92,27 +92,28 @@ function translateShowFields($gtabid,$fields){
 function get_gselect(){
 	global $db;
 	global $gfield;
-	global $gtab;
 	global $umgvar;
 
 	
 	// multilang
+    $sql_s = array();
 	if($umgvar['multi_language']){
-	foreach($umgvar['multi_language'] as $lkey => $lval){
-	   $sql_s[] = 'LANG'.$lval.'_WERT';
-	}}
+		foreach($umgvar['multi_language'] as $lkey => $lval){
+		   $sql_s[] = 'LANG'.$lval.'_WERT';
+		}
+	}
 	                    
 	foreach ($gfield as $stab => $stabvalue){
-		if($gfield[$stab]["sort"]){
-			foreach ($gfield[$stab]["sort"] as $sfield => $sfieldvalue){
-				if($gfield[$stab]["field_type"][$sfield] == 4 AND $gfield[$stab]["select_pool"][$sfield]){
-					$sqlquery = "SELECT ID,WERT,".implode(',',$sql_s).",KEYWORDS FROM LMB_SELECT_W WHERE POOL = ".$gfield[$stab]["select_pool"][$sfield]." AND HIDE = ".LMB_DBDEF_FALSE." ORDER BY ".$gfield[$stab]["select_sort"][$sfield];
+		if($gfield[$stab]['sort']){
+			foreach ($gfield[$stab]['sort'] as $sfield => $sfieldvalue){
+				if($gfield[$stab]['field_type'][$sfield] == 4 AND $gfield[$stab]['select_pool'][$sfield]){
+					$sqlquery = "SELECT ID,WERT,".implode(',',$sql_s).",KEYWORDS FROM LMB_SELECT_W WHERE POOL = ".$gfield[$stab]['select_pool'][$sfield]." AND HIDE = ".LMB_DBDEF_FALSE." ORDER BY ".$gfield[$stab]['select_sort'][$sfield];
 					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					$bzm = 1;
 					while(odbc_fetch_row($rs, $bzm)) {
-						$gselect[$stab][$sfield]["id"][] = odbc_result($rs, "ID");
-						$gselect[$stab][$sfield]["val"][] = odbc_result($rs, "WERT");
-						$gselect[$stab][$sfield]["keywords"][] = odbc_result($rs, "KEYWORDS");
+						$gselect[$stab][$sfield]['id'][] = odbc_result($rs, "ID");
+						$gselect[$stab][$sfield]['val'][] = odbc_result($rs, "WERT");
+						$gselect[$stab][$sfield]['keywords'][] = odbc_result($rs, "KEYWORDS");
 						
 						// multilang
 						if($umgvar['multi_language']){
@@ -150,27 +151,27 @@ function parse_action($lmpar){
 	require_once("gtab/gtab_type_erg.lib");
 
 	# ------- Limbas Session Variablen --------
-	if(!$lmpar["lmbs"]){
-		if(is_array($lmpar[0]["getvars"])){
-			if(in_array("gtab",$lmpar[0]["getvars"])){$lmb["gtab"] = $gtab;}
-			if(in_array("gfield",$lmpar[0]["getvars"])){$lmb["gfield"] = $gfield;}
-			if(in_array("umgvar",$lmpar[0]["getvars"])){$lmb["umgvar"] = $umgvar;}
-			if(in_array("gselect",$lmpar[0]["getvars"])){$lmb["gselect"] = get_gselect();}
-			if(in_array("userdat",$lmpar[0]["getvars"])){$lmb["userdat"] = $GLOBALS["userdat"];}
-			if(in_array("groupdat",$lmpar[0]["getvars"])){$lmb["groupdat"] = $GLOBALS["groupdat"];}
-			if(in_array("gmimetypes",$lmpar[0]["getvars"])){$lmb["gmimetypes"] = $GLOBALS["gmimetypes"];}
-			if(in_array("greminder",$lmpar[0]["getvars"])){$lmb["greminder"] = $GLOBALS["greminder"];}
-			if(in_array("workflow",$lmpar[0]["getvars"])){$lmb["workflow"] = $GLOBALS["gwfl"];}
-		    if(in_array("perms",$lmpar[0]["getvars"])){$lmb["perms"] = $GLOBALS["LINK"];}
+	if(!$lmpar['lmbs']){
+		if(is_array($lmpar[0]['getvars'])){
+			if(in_array("gtab",$lmpar[0]['getvars'])){$lmb['gtab'] = $gtab;}
+			if(in_array("gfield",$lmpar[0]['getvars'])){$lmb['gfield'] = $gfield;}
+			if(in_array("umgvar",$lmpar[0]['getvars'])){$lmb['umgvar'] = $umgvar;}
+			if(in_array("gselect",$lmpar[0]['getvars'])){$lmb['gselect'] = get_gselect();}
+			if(in_array("userdat",$lmpar[0]['getvars'])){$lmb['userdat'] = $GLOBALS['userdat'];}
+			if(in_array("groupdat",$lmpar[0]['getvars'])){$lmb['groupdat'] = $GLOBALS['groupdat'];}
+			if(in_array("gmimetypes",$lmpar[0]['getvars'])){$lmb['gmimetypes'] = $GLOBALS['gmimetypes'];}
+			if(in_array("greminder",$lmpar[0]['getvars'])){$lmb['greminder'] = $GLOBALS['greminder'];}
+			if(in_array("workflow",$lmpar[0]['getvars'])){$lmb['workflow'] = $GLOBALS['gwfl'];}
+		    if(in_array("perms",$lmpar[0]['getvars'])){$lmb['perms'] = $GLOBALS['LINK'];}
 			# Ordnerstruktur
-			if(in_array("filestruct",$lmpar[0]["getvars"])){
+			if(in_array("filestruct",$lmpar[0]['getvars'])){
 				require_once("extra/explorer/filestructure.lib");
 				get_filestructure();
-				$lmb["filestruct"] = $GLOBALS["filestruct"];
+				$lmb['filestruct'] = $GLOBALS['filestruct'];
 			}
 			
 		}
-		$lmb["session"] = $session;
+		$lmb['session'] = $session;
 	}
 
 	# --- Aktionen ---
@@ -178,80 +179,80 @@ function parse_action($lmpar){
 		if(is_numeric($action)){
 
 			# translate tablename
-			if(!is_numeric($lmpart["gtabid"]) AND $lmpart["gtabid"]){
-				$lmpart["gtabid"] = $gtab["argresult_id"][lmb_substr($lmpart["gtabid"],1,90)];
+			if(!is_numeric($lmpart['gtabid']) AND $lmpart['gtabid']){
+				$lmpart['gtabid'] = $gtab['argresult_id'][lmb_substr($lmpart['gtabid'],1,90)];
 			}
 
 			# --- Select Liste (Auswahl Pools) ---
-			if($lmpart["action"] == "get_select"){
+			if($lmpart['action'] == "get_select"){
 				require_once("gtab/sql/add_select.dao");
-				$lmb[$action] = select_list($lmpart["gtabid"],$lmpart["fieldid"],null,null,null,$lmpart["count"],$lmpart["res_next"]);
+				$lmb[$action] = select_list($lmpart['gtabid'],$lmpart['fieldid'],null,null,null,$lmpart['count'],$lmpart['res_next']);
 
 			# --- neuer Datensatz ---
-			}elseif($lmpart["action"] == "gtab_new" AND $lmpart["gtabid"]){
+			}elseif($lmpart['action'] == "gtab_new" AND $lmpart['gtabid']){
 				actionGtabAdd($lmpart,$lmb,$action);
 			# --- Datensatz ändern ---
-            }elseif($lmpart["action"] == "gtab_change" AND $gtab["edit"][$lmpart["gtabid"]]){
-				if($lmpart["gup"]){
+            }elseif($lmpart['action'] == "gtab_change" AND $gtab['edit'][$lmpart['gtabid']]){
+				if($lmpart['gup']){
 					$success = true;
-					if(!update_data($lmpart["gup"],3,0)){$success = false;}
+					if(!update_data($lmpart['gup'],3,0)){$success = false;}
 				}
 				# Vernüpfung ändern
-				if($lmpart["gnup"]["verknpf"]){
-					foreach ($lmpart["gnup"]["verknpf"] as $idverkn => $val) {
-						if(lmb_substr($lmpart["gnup"]["verkn_ID"][$idverkn],0,3) == 'new'){
-							$acid = lmb_substr($lmpart["gnup"]["verkn_ID"][$idverkn],4,2);
-							$lmpart["gnup"]["verkn_ID"][$idverkn] = $lmb[$acid];
+				if($lmpart['gnup']['verknpf']){
+					foreach ($lmpart['gnup']['verknpf'] as $idverkn => $val) {
+						if(lmb_substr($lmpart['gnup']['verkn_ID'][$idverkn],0,3) == 'new'){
+							$acid = lmb_substr($lmpart['gnup']['verkn_ID'][$idverkn],4,2);
+							$lmpart['gnup']['verkn_ID'][$idverkn] = $lmb[$acid];
 						}
-						if(!is_array($lmpart["gnup"]["verkn_add_ID"][$idverkn]) AND lmb_substr($lmpart["gnup"]["verkn_add_ID"][$idverkn],0,3) == 'new'){
-							$acid = lmb_substr($lmpart["gnup"]["verkn_add_ID"][$idverkn],4,2);
-							$lmpart["gnup"]["verkn_add_ID"][$idverkn] = $lmb[$acid];
+						if(!is_array($lmpart['gnup']['verkn_add_ID'][$idverkn]) AND lmb_substr($lmpart['gnup']['verkn_add_ID'][$idverkn],0,3) == 'new'){
+							$acid = lmb_substr($lmpart['gnup']['verkn_add_ID'][$idverkn],4,2);
+							$lmpart['gnup']['verkn_add_ID'][$idverkn] = $lmb[$acid];
 						}
 
-						$verkn = set_verknpf($lmpart["gnup"]["verkn_tabid"][$idverkn],$lmpart["gnup"]["verkn_fieldid"][$idverkn],$lmpart["gnup"]["verkn_ID"][$idverkn],$lmpart["gnup"]["verkn_add_ID"][$idverkn],$lmpart["gnup"]["verkn_del_ID"][$idverkn],null,$val);
-						if(is_array($lmpart["gnup"]["verkn_linkParam"][$idverkn])){
-							foreach ($lmpart["gnup"]["verkn_linkParam"][$idverkn] as $lnpkey => $lnpval){
-								$verkn["linkParam"][$lnpkey] = $lnpval;
+						$verkn = set_verknpf($lmpart['gnup']['verkn_tabid'][$idverkn],$lmpart['gnup']['verkn_fieldid'][$idverkn],$lmpart['gnup']['verkn_ID'][$idverkn],$lmpart['gnup']['verkn_add_ID'][$idverkn],$lmpart['gnup']['verkn_del_ID'][$idverkn],null,$val);
+						if(is_array($lmpart['gnup']['verkn_linkParam'][$idverkn])){
+							foreach ($lmpart['gnup']['verkn_linkParam'][$idverkn] as $lnpkey => $lnpval){
+								$verkn['linkParam'][$lnpkey] = $lnpval;
 							}
 						}
-						if(!set_joins($lmpart["gtabid"],$verkn)){$success = false;}
+						if(!set_joins($lmpart['gtabid'],$verkn)){$success = false;}
 					}
 				}
 				$lmb[$action] = $success;
 
 			# --- Datensatz löschen ---
-			#}elseif($lmpart["action"] == "gtab_change" AND  $lmpart["id"] AND $lmpart["delete"] == 1){
-			}elseif($lmpart["action"] == "gtab_delete" AND  $lmpart["id"]){
-				$lmb[$action] = del_data($lmpart["gtabid"],$lmpart["id"]);
+			#}elseif($lmpart['action'] == "gtab_change" AND  $lmpart['id'] AND $lmpart['delete'] == 1){
+			}elseif($lmpart['action'] == "gtab_delete" AND  $lmpart['id']){
+				$lmb[$action] = del_data($lmpart['gtabid'],$lmpart['id']);
 			# --- Datensatz verstecken ---
-			}elseif($lmpart["action"] == "gtab_hide" AND  $lmpart["id"]){
-				$lmb[$action] = hide_data($lmpart["gtabid"],$lmpart["id"]);
+			}elseif($lmpart['action'] == "gtab_hide" AND  $lmpart['id']){
+				$lmb[$action] = hide_data($lmpart['gtabid'],$lmpart['id']);
 			# --- Datenstatz Ergebnisse ---
-			}elseif($lmpart["action"] == "gtab_erg"){
-				$lmb[$action]["fresult"] = getGtabLevel($lmpart,$lmb,$action,$lmpart["gtabid"],$lmpart["verkn"],0);
+			}elseif($lmpart['action'] == "gtab_erg"){
+				$lmb[$action]['fresult'] = getGtabLevel($lmpart,$lmb,$action,$lmpart['gtabid'],$lmpart['verkn'],0);
 			# --- DMS ---
-			}elseif($lmpart["action"] == "explorer_main"){
+			}elseif($lmpart['action'] == "explorer_main"){
 				actionDMS($lmpart,$lmb,$action);
 			# --- reminder ---
-			}elseif($lmpart["action"] == "reminder"){
+			}elseif($lmpart['action'] == "reminder"){
 				actionReminder($lmpart,$lmb,$action);
 			# --- workflow ---
-			}elseif($lmpart["action"] == "workflow"){
+			}elseif($lmpart['action'] == "workflow"){
 				$lmb[$action] = actionWorkflow($lmpart,$lmb,$action);
 			# --- report ---
-			}elseif($lmpart["action"] == "report"){
+			}elseif($lmpart['action'] == "report"){
 				$lmb[$action] = actionCreateReport($lmpart,$lmb,$action);
 			# --- file upload ---
-			}elseif($lmpart["action"] == "file_upload" AND $LINK[128]){
-			    if(is_array($lmpart["file"]["file"])){
-                    foreach($lmpart["file"]["file"] as $key => $filename){
-                        if($lmpart["file"]["content"][$key]){
-                            $fpath = $umgvar['path'].'/USER/'.$session['user_id'].'/temp/'.$lmpart["file"]["file"][$key];
+			}elseif($lmpart['action'] == "file_upload" AND $LINK[128]){
+			    if(is_array($lmpart['file']['file'])){
+                    foreach($lmpart['file']['file'] as $key => $filename){
+                        if($lmpart['file']['content'][$key]){
+                            $fpath = $umgvar['path'].'/USER/'.$session['user_id'].'/temp/'.$lmpart['file']['file'][$key];
                             $fp = fopen($fpath,'w');
-                            fputs($fp, base64_decode($lmpart["file"]["content"][$key]));
+                            fputs($fp, base64_decode($lmpart['file']['content'][$key]));
                             fclose($fp);
                             if(file_exists($fpath)){
-                                $lmb[$action][$key] = $lmpart["file"]["file"][$key];
+                                $lmb[$action][$key] = $lmpart['file']['file'][$key];
                             }else{
                                 $lmb[$action][$key] = false;
                             }
@@ -259,24 +260,24 @@ function parse_action($lmpar){
                     }
 			    }
 			# admin - variables
-			}elseif($lmpart["action"] == "get_lmbvars" AND is_array($lmpart["lmbvars"])){
-				if(in_array("tabgroup",$lmpart["lmbvars"])){$lmb[$action]["tabgroup"] = $GLOBALS["tabgroup"];}
-				if(in_array("gtab",$lmpart["lmbvars"])){$lmb[$action]["gtab"] = $GLOBALS["gtab"];}
-				if(in_array("gfield",$lmpart["lmbvars"])){$lmb[$action]["gfield"] = $GLOBALS["gfield"];}
-				if(in_array("gselect",$lmpart["lmbvars"])){$lmb[$action]["gselect"] = get_gselect();}
-				if(in_array("greportlist",$lmpart["lmbvars"])){$lmb[$action]["greportlist"] = $GLOBALS["greportlist"];}
-				if(in_array("gformlist",$lmpart["lmbvars"])){$lmb[$action]["gformlist"] = $GLOBALS["gformlist"];}
-				if(in_array("gdiaglist",$lmpart["lmbvars"])){$lmb[$action]["gdiaglist"] = $GLOBALS["gdiaglist"];}
-			    if(in_array("umgvar",$lmpar[0]["lmbvars"])){$lmb[$action]["umgvar"] = $umgvar;}
-			    if(in_array("userdat",$lmpar[0]["lmbvars"])){$lmb[$action]["userdat"] = $GLOBALS["userdat"];}
-			    if(in_array("groupdat",$lmpar[0]["lmbvars"])){$lmb[$action]["groupdat"] = $GLOBALS["groupdat"];}
-			    if(in_array("gmimetypes",$lmpar[0]["lmbvars"])){$lmb[$action]["gmimetypes"] = $GLOBALS["gmimetypes"];}
-			    if(in_array("greminder",$lmpar[0]["lmbvars"])){$lmb[$action]["greminder"] = $GLOBALS["greminder"];}
-			    if(in_array("workflow",$lmpar[0]["lmbvars"])){$lmb[$action]["workflow"] = $GLOBALS["gwfl"];}
-		        if(in_array("perms",$lmpar[0]["lmbvars"])){$lmb[$action]["perms"] = $GLOBALS["LINK"];}
+			}elseif($lmpart['action'] == "get_lmbvars" AND is_array($lmpart['lmbvars'])){
+				if(in_array("tabgroup",$lmpart['lmbvars'])){$lmb[$action]['tabgroup'] = $GLOBALS['tabgroup'];}
+				if(in_array("gtab",$lmpart['lmbvars'])){$lmb[$action]['gtab'] = $GLOBALS['gtab'];}
+				if(in_array("gfield",$lmpart['lmbvars'])){$lmb[$action]['gfield'] = $GLOBALS['gfield'];}
+				if(in_array("gselect",$lmpart['lmbvars'])){$lmb[$action]['gselect'] = get_gselect();}
+				if(in_array("greportlist",$lmpart['lmbvars'])){$lmb[$action]['greportlist'] = $GLOBALS['greportlist'];}
+				if(in_array("gformlist",$lmpart['lmbvars'])){$lmb[$action]['gformlist'] = $GLOBALS['gformlist'];}
+				if(in_array("gdiaglist",$lmpart['lmbvars'])){$lmb[$action]['gdiaglist'] = $GLOBALS['gdiaglist'];}
+			    if(in_array("umgvar",$lmpar[0]['lmbvars'])){$lmb[$action]['umgvar'] = $umgvar;}
+			    if(in_array("userdat",$lmpar[0]['lmbvars'])){$lmb[$action]['userdat'] = $GLOBALS['userdat'];}
+			    if(in_array("groupdat",$lmpar[0]['lmbvars'])){$lmb[$action]['groupdat'] = $GLOBALS['groupdat'];}
+			    if(in_array("gmimetypes",$lmpar[0]['lmbvars'])){$lmb[$action]['gmimetypes'] = $GLOBALS['gmimetypes'];}
+			    if(in_array("greminder",$lmpar[0]['lmbvars'])){$lmb[$action]['greminder'] = $GLOBALS['greminder'];}
+			    if(in_array("workflow",$lmpar[0]['lmbvars'])){$lmb[$action]['workflow'] = $GLOBALS['gwfl'];}
+		        if(in_array("perms",$lmpar[0]['lmbvars'])){$lmb[$action]['perms'] = $GLOBALS['LINK'];}
 
 			# Admin - remote-export preselect
-			}elseif($lmpart["action"] == "setup_remote_exportlist" AND $session["group_id"] == 1 AND $LINK[48]){
+			}elseif($lmpart['action'] == "setup_remote_exportlist" AND $session['group_id'] == 1 AND $LINK[48]){
 				$requi = "admin/tools/export_remote.lib";
 				require_once($requi);
 
@@ -285,25 +286,25 @@ function parse_action($lmpar){
 				global $greportlist;
 				global $gformlist;
 
-				$lmb[$action]["tabgroup"] = $tabgroup;
-				$lmb[$action]["gtab"] = $gtab;
-				$lmb[$action]["gfield"] = $gfield;
-				$lmb[$action]["greportlist"] = $greportlist;
-				$lmb[$action]["gformlist"] = $gformlist;
-				$lmb[$action]["gdiaglist"] = get_diag_list();
+				$lmb[$action]['tabgroup'] = $tabgroup;
+				$lmb[$action]['gtab'] = $gtab;
+				$lmb[$action]['gfield'] = $gfield;
+				$lmb[$action]['greportlist'] = $greportlist;
+				$lmb[$action]['gformlist'] = $gformlist;
+				$lmb[$action]['gdiaglist'] = get_diag_list();
 			# Admin - remote-export
-			}elseif($lmpart["action"] == "setup_remote_exportfiles" AND  $lmpart["exptables"] AND $session["group_id"] == 1 AND $LINK[48]){
+			}elseif($lmpart['action'] == "setup_remote_exportfiles" AND  $lmpart['exptables'] AND $session['group_id'] == 1 AND $LINK[48]){
 				
 				global $DBA;
 			
-				$requi = "lib/db/db_".$DBA["DB"]."_admin.lib";
+				$requi = "lib/db/db_".$DBA['DB']."_admin.lib";
 				require_once($requi);
 				$requi = "lib/include_admin.lib";
 				require_once($requi);
 				$requi = "admin/tools/export.lib";
 				require_once($requi);
 				
-				if($result_backup = lmbExport($lmpart["exptables"],'group',null,null)){
+				if($result_backup = lmbExport($lmpart['exptables'],'group',null,null)){
 					return true;
 				}
 			} elseif($lmpart['action'] == 'setup_remote_syncimport' && $session['group_id'] == 1 && $LINK[49]) {
@@ -325,10 +326,10 @@ function parse_action($lmpar){
                 }
 
                 # perform sync import
-                # TODO if lmpart["exptables"]?
+                # TODO if lmpart['exptables']?
                 # TODO imports
                 global $DBA;
-                require_once("lib/db/db_".$DBA["DB"]."_admin.lib");
+                require_once("lib/db/db_".$DBA['DB']."_admin.lib");
                 require_once("lib/include_admin.lib");
                 require_once("admin/tables/tab.lib");
                 require_once("admin/tools/import_sync.php");
@@ -391,11 +392,25 @@ function parse_action($lmpar){
             } elseif($lmpart['action'] == 'socket_datasync') {
 			    $port = $umgvar['sync_port'];
 
+                // kill remaining processes
+                $cronLocation = rtrim($umgvar['path'], '/') . '/cron.php';
+                $output = shell_exec('ps aux | grep -P "[p]hp ' . preg_quote($cronLocation) . ' .*? .*? .*? limbas_socket_sync_.*" | awk \'{print $2}\'');
+                $processIDs = explode("\n", $output);
+                $currentPID = getmypid();
+                for ($i = 0; $i < count($processIDs); $i++) {
+                    $pID = $processIDs[$i];
+                    if ($pID && is_numeric($pID) && intval($pID) !== $currentPID) {
+                        system('kill ' . $processIDs[$i]);
+                        sleep(1); // wait for port release
+                    }
+                }
+
 			    // generate secret key for authentication via socket
                 $authKey = bin2hex(openssl_random_pseudo_bytes(30));
                 if (!$authKey) {
                     return false;
                 }
+                $authKey = 'limbas_socket_sync_' . $authKey;
 
 			    // open socket server
                 $result = exec('php ' . $umgvar['path'] . '/cron.php datasync.lib admin limbas "' . $authKey. '" >/dev/null 2>&1 &');
@@ -405,6 +420,10 @@ function parse_action($lmpar){
                     return false;
                 }
 
+                // get url
+				$urlParts = parse_url($umgvar['url']);
+                $url = $urlParts['host'];
+
                 // wait for connection to open
                 require_once($umgvar['path']."/extern/phpsocket/src/Factory.php");
                 require_once($umgvar['path']."/extern/phpsocket/src/Socket.php");
@@ -413,7 +432,7 @@ function parse_action($lmpar){
                 $success = false;
                 for ($tries = 0; $tries < $umgvar['sync_timeout']; $tries++) {
                     try {
-                        $client = $factory->createClient("127.0.0.1:$port");
+                        $client = $factory->createClient("$url:$port");
                         $client->close();
                         $success = true;
                         break;
@@ -430,9 +449,9 @@ function parse_action($lmpar){
             }
 
 			# --- Extension ---
-			if($lmpart["extension"]){
-				$fkt = "extSoap".key($lmpart["extension"]);
-				$param = current($lmpart["extension"]);
+			if($lmpart['extension']){
+				$fkt = "extSoap".key($lmpart['extension']);
+				$param = current($lmpart['extension']);
 				$param_ = array();
 				if(lmb_strpos($param,"new_") !== false){
 					if($val_ = explode(",",$param)){
@@ -449,13 +468,13 @@ function parse_action($lmpar){
 					$lmb[$action] = $extension;
 				}
 
-			}elseif($lmpart["action"] == 'transaction'){
+			}elseif($lmpart['action'] == 'transaction'){
 			
-				if($lmpart["actionid"] == 'start'){
+				if($lmpart['actionid'] == 'start'){
 					lmb_StartTransaction();
-				}elseif($lmpart["actionid"] == 'end'){
+				}elseif($lmpart['actionid'] == 'end'){
 					lmb_EndTransaction(1);
-				}elseif($lmpart["actionid"] == 'rollback'){
+				}elseif($lmpart['actionid'] == 'rollback'){
 					lmb_EndTransaction(0);
 				}
 			
@@ -464,7 +483,7 @@ function parse_action($lmpar){
 			
 			
 			# error handling
-			if($GLOBALS['alert']){$lmb["error"][$action] = $GLOBALS['alert'];$GLOBALS['alert'] = null;}
+			if($GLOBALS['alert']){$lmb['error'][$action] = $GLOBALS['alert'];$GLOBALS['alert'] = null;}
 
 		}
 	}
@@ -510,9 +529,9 @@ function actionDMSTree(&$lmpart,&$lmb){
     global $filestruct;
     global $gfile;
     
-    $LID = $lmpart["LID"];
-    $sub = $lmpart["sub"];
-    $xml = $lmpart["xml"];
+    $LID = $lmpart['LID'];
+    $sub = $lmpart['sub'];
+    $xml = $lmpart['xml'];
     
 	require_once("extra/explorer/filestructure.lib");
 	
@@ -525,28 +544,28 @@ function actionReminder(&$lmpart,&$lmb,$action){
 	global $umgvar;
     global $session;
 
-	if($lmpart["getReminder"]){
-		$lmb[$action] = lmb_getReminder($lmpart["getReminder"]['gtabid'],$lmpart["getReminder"]['ID'],$lmpart["getReminder"]['category'],$lmpart["getReminder"]['wfl_inst'],$lmpart["getReminder"]['active']);
+	if($lmpart['getReminder']){
+		$lmb[$action] = lmb_getReminder($lmpart['getReminder']['gtabid'],$lmpart['getReminder']['ID'],$lmpart['getReminder']['category'],$lmpart['getReminder']['wfl_inst'],$lmpart['getReminder']['active']);
 		return $lmb;
 	}
 
-	if($lmpart["addReminder"]){
-		if($lmpart["addReminder"]['to_user']){
-		foreach ($lmpart["addReminder"]['to_user'] as $key => $val){
+	if($lmpart['addReminder']){
+		if($lmpart['addReminder']['to_user']){
+		foreach ($lmpart['addReminder']['to_user'] as $key => $val){
 			$to[] = $val."_u";
 		}
 		}
-		if($lmpart["addReminder"]['to_group']){
-		foreach ($lmpart["addReminder"]['to_group'] as $key => $val){
+		if($lmpart['addReminder']['to_group']){
+		foreach ($lmpart['addReminder']['to_group'] as $key => $val){
 			$to[] = $val."_g";
 		}
 		}
-		$lmb[$action] = lmb_addReminder($lmpart["addReminder"]['date'],$lmpart["addReminder"]['content'],$lmpart["addReminder"]['gtabid'],$lmpart["addReminder"]['ID'],$to,$lmpart["addReminder"]['category'],$lmpart["addReminder"]['wfl_inst'],$lmpart["addReminder"]['desc']);
+		$lmb[$action] = lmb_addReminder($lmpart['addReminder']['date'],$lmpart['addReminder']['content'],$lmpart['addReminder']['gtabid'],$lmpart['addReminder']['ID'],$to,$lmpart['addReminder']['category'],$lmpart['addReminder']['wfl_inst'],$lmpart['addReminder']['desc']);
 		return $lmb;
 	}
 	
-	if($lmpart["dropReminder"]){
-		$lmb[$action] = lmb_dropReminder($lmpart["dropReminder"]['ID'],$lmpart["dropReminder"]['gtabid'],$lmpart["dropReminder"]['category'],$lmpart["dropReminder"]['dat_id'],$lmpart["dropReminder"]['wfl_inst'],$lmpart["dropReminder"]['active'],$lmpart["dropReminder"]['extension']);
+	if($lmpart['dropReminder']){
+		$lmb[$action] = lmb_dropReminder($lmpart['dropReminder']['ID'],$lmpart['dropReminder']['gtabid'],$lmpart['dropReminder']['category'],$lmpart['dropReminder']['dat_id'],$lmpart['dropReminder']['wfl_inst'],$lmpart['dropReminder']['active'],$lmpart['dropReminder']['extension']);
 		return $lmb;
 	}
 }
@@ -557,19 +576,19 @@ function actionWorkflow(&$lmpart,&$lmb,$action){
 	global $umgvar;
 	global $session;
 	
-	if($lmpart["workflow"]){
+	if($lmpart['workflow']){
 		
 		require_once("gtab/gtab.lib");
 		require_once('extra/workflow/lwf.lib');
 
-		$wfl_id = $lmpart["workflow"]['wfl_id'];
-		$wfl_inst = $lmpart["workflow"]['wfl_inst'];
-		$wfl_task = $lmpart["workflow"]['wfl_task'];
-		$wfl_params = $lmpart["workflow"]['wfl_params'];
-		$gtabid = $lmpart["workflow"]['gtabid'];
-		$ID = $lmpart["workflow"]['ID'];
+		$wfl_id = $lmpart['workflow']['wfl_id'];
+		$wfl_inst = $lmpart['workflow']['wfl_inst'];
+		$wfl_task = $lmpart['workflow']['wfl_task'];
+		$wfl_params = $lmpart['workflow']['wfl_params'];
+		$gtabid = $lmpart['workflow']['gtabid'];
+		$ID = $lmpart['workflow']['ID'];
 
-		if(!$lmpart["workflow"]['wfl_inst']){
+		if(!$lmpart['workflow']['wfl_inst']){
 			$wfl_inst = lmb_wfl_getRecordInst($wfl_id,$gtabid,$ID);
 		}
 
@@ -597,43 +616,43 @@ function actionDMS(&$lmpart,&$lmb,$action){
 	require_once("extra/explorer/metadata.lib");
 
 	get_filestructure();
-	if(!$lmpart["typ"]){$lmpart["typ"] = 1;}
+	if(!$lmpart['typ']){$lmpart['typ'] = 1;}
 	
 	# Dateien
-	if(in_array("fresult",$lmpart["getvars"]) AND $lmpart["LID"]){
+	if(in_array("fresult",$lmpart['getvars']) AND $lmpart['LID']){
 		# filter ID
-		if($lmpart["ffilter"]["glob"]){$fid = 0;}else{$fid = $lmpart["LID"];}
+		if($lmpart['ffilter']['glob']){$fid = 0;}else{$fid = $lmpart['LID'];}
 
 		# upload file
-		if($lmpart["upload_file"]["name"]){
-			foreach ($lmpart["upload_file"]["name"] as $ukey => $uval){
-				$uplpath = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/".$uval;
-				if($lmpart["upload_file"]["content"][$ukey]){
+		if($lmpart['upload_file']['name']){
+			foreach ($lmpart['upload_file']['name'] as $ukey => $uval){
+				$uplpath = $umgvar['pfad']."/USER/".$session['user_id']."/temp/".$uval;
+				if($lmpart['upload_file']['content'][$ukey]){
 					if($handle = fopen($uplpath, "w")){
-						fwrite($handle, base64_decode($lmpart["upload_file"]["content"][$ukey]));
+						fwrite($handle, base64_decode($lmpart['upload_file']['content'][$ukey]));
 					}
 					
 					$file = array();
 					$dublicate = array();
 					$relation = array();
 					
-					$file["file"][] = $uplpath;
-					$file["file_name"][] = $lmpart["upload_file"]["name"][$ukey];
-					$file["file_type"][] = $lmpart["upload_file"]["mimetype"][$ukey];
-					$dublicate["type"][] = $lmpart["upload_file"]["dublicate"][$ukey];
+					$file['file'][] = $uplpath;
+					$file['file_name'][] = $lmpart['upload_file']['name'][$ukey];
+					$file['file_type'][] = $lmpart['upload_file']['mimetype'][$ukey];
+					$dublicate['type'][] = $lmpart['upload_file']['dublicate'][$ukey];
 					
 					# upload relation in ldms_files
-					$relation = $lmpart["upload_file"]["relation"][$ukey]; 
+					$relation = $lmpart['upload_file']['relation'][$ukey];
 
-					$lmb[$action]['upload']['file_name'][] = $lmpart["upload_file"]["name"][$ukey];
+					$lmb[$action]['upload']['file_name'][] = $lmpart['upload_file']['name'][$ukey];
 					if($nfid = upload($file,$fid,$relation,1,$dublicate)){
 						$lmb[$action]['upload']['file_id'][] = $nfid;
 
 						# link relation
-						if($lmpart["upload_file"]["link"]['verkn_tabid'][$ukey]){
-							$verkn = set_verknpf($lmpart["upload_file"]["link"]['verkn_tabid'][$ukey],$lmpart["upload_file"]["link"]['verkn_fieldid'][$ukey],$lmpart["upload_file"]["link"]['verkn_ID'][$ukey],$nfid,0,0,0);
-							$verkn["linkParam"]["LID"] = $lmpart["LID"];
-							set_joins($lmpart["upload_file"]["link"]['verkn_tabid'][$ukey],$verkn);
+						if($lmpart['upload_file']['link']['verkn_tabid'][$ukey]){
+							$verkn = set_verknpf($lmpart['upload_file']['link']['verkn_tabid'][$ukey],$lmpart['upload_file']['link']['verkn_fieldid'][$ukey],$lmpart['upload_file']['link']['verkn_ID'][$ukey],$nfid,0,0,0);
+							$verkn['linkParam']['LID'] = $lmpart['LID'];
+							set_joins($lmpart['upload_file']['link']['verkn_tabid'][$ukey],$verkn);
 						}
 					}else{
 						$lmb[$action]['upload']['file_id'][] = false;
@@ -645,35 +664,35 @@ function actionDMS(&$lmpart,&$lmb,$action){
 		}
 		
 		# delete file
-		if($lmpart["delete_file"]["id"]){
-			if(is_array($lmpart["delete_file"]["id"])){
-				foreach ($lmpart["delete_file"]["id"] as $dkey => $dval)
+		if($lmpart['delete_file']['id']){
+			if(is_array($lmpart['delete_file']['id'])){
+				foreach ($lmpart['delete_file']['id'] as $dkey => $dval)
 				del_file($dval);
-			}elseif(is_numeric($lmpart["delete_file"]["id"])){
-				del_file($lmpart["delete_file"]["id"]);
+			}elseif(is_numeric($lmpart['delete_file']['id'])){
+				del_file($lmpart['delete_file']['id']);
 			}
 		}
 		
 		# angeforderte Felder
-		if($lmpart["show_fields"]){
-			$gfile["show"][$fid] = null;
-			foreach ($lmpart["show_fields"] as $key => $value){
-				$gfile["show"][$lmpart["LID"]][$value] = 1;
+		if($lmpart['show_fields']){
+			$gfile['show'][$fid] = null;
+			foreach ($lmpart['show_fields'] as $key => $value){
+				$gfile['show'][$lmpart['LID']][$value] = 1;
 			}
 		}
 
 		# Filter
-		if($lmpart["ffilter"]){
-			foreach ($lmpart["ffilter"] as $key => $value){
+		if($lmpart['ffilter']){
+			foreach ($lmpart['ffilter'] as $key => $value){
 				if($key == "viewmode"){
 					$ffilter[$key] = $value;
 				}elseif($key == "search"){
 					foreach ($value as $key1 => $value1){
 						$key1_ = explode("_",$key1);
-						$ffilter["gsr"][$key1_[0]][$key1_[1]] = $value1;
+						$ffilter['gsr'][$key1_[0]][$key1_[1]] = $value1;
 					}
 				}elseif($key == "order"){
-					$ffilter["order"][$fid] = $value;
+					$ffilter['order'][$fid] = $value;
 				}else{
 					$ffilter[$key][$fid] = $value;
 				}
@@ -681,9 +700,9 @@ function actionDMS(&$lmpart,&$lmb,$action){
 		}
 		
 		# Tabellenverknüpfung
-		if($lmpart["verkn_ID"]){
-			$ffilter["viewmode"][$lmpart["LID"]] = 5;
-			$verkn["parent_datid"] = $lmpart["verkn_ID"];
+		if($lmpart['verkn_ID']){
+			$ffilter['viewmode'][$lmpart['LID']] = 5;
+			$verkn['parent_datid'] = $lmpart["verkn_ID"];
 		}
 
 		# --- Abfrage starten ---
@@ -855,9 +874,10 @@ function getGtabLevel(&$lmpart,&$lmb,$action,$gtabid,$verkn=null,$rec=null){
 	}
 	
 	# zeige long values
+    if($gtab["raverkn"][$gtab["verkn"][$gtabid]]){
 	foreach($gtab["raverkn"][$gtab["verkn"][$gtabid]] as $key => $ragtabid){
 		$filter["getlongval"][$ragtabid] = 1;
-	}
+	}}
 
 	# --- Result Space ---
 	$resultspace = $umgvar["resultspace"];
@@ -933,6 +953,7 @@ function getGtabLevel(&$lmpart,&$lmb,$action,$gtabid,$verkn=null,$rec=null){
 			
 			# Schleife aller 1:1 Verknüpfungen
 			foreach($rverkn as $key0 => $gtabid_){
+
 				# falls Tabelle angefordert
 				if($lmpart[$gtabid_]["showfields"]){
 					# fieldlist
@@ -1039,9 +1060,16 @@ function getGtabLevel(&$lmpart,&$lmb,$action,$gtabid,$verkn=null,$rec=null){
 
 
 		if(!$rec){
-			$lmb[$action]["result"]["res_count"][$rgtabid_] = $gresult[$gtabid]["res_count"];
-			$lmb[$action]["result"]["max_count"][$rgtabid_] = $gresult[$gtabid]["max_count"];
-			$lmb[$action]["result"]["page"][$rgtabid_] = $filter["page"][$gtabid];
+
+		    if($GLOBALS["lmpar"]["use_noids"]){
+				$gtabid_ = "#".$gtab["table"][$gtabid];
+			}else{
+				$gtabid_ = $gtabid;
+			}
+
+			$lmb[$action]["result"]["res_count"][$gtabid_] = $gresult[$gtabid]["res_count"];
+			$lmb[$action]["result"]["max_count"][$gtabid_] = $gresult[$gtabid]["max_count"];
+			$lmb[$action]["result"]["page"][$gtabid_] = $filter["page"][$gtabid];
 		}
 
 		return $fresult;

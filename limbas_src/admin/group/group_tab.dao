@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -21,21 +21,22 @@
 if($session["superadmin"] == 1){
 
 	/* --- Tabellengruppen ----------------------------------------------- */
-	$sqlquery = "SELECT DISTINCT LMB_CONF_GROUPS.ID,LMB_CONF_GROUPS.NAME,LMB_CONF_GROUPS.BESCHREIBUNG,LMB_CONF_GROUPS.SORT FROM LMB_CONF_GROUPS,LMB_RULES_TABLES WHERE LMB_CONF_GROUPS.ID = LMB_RULES_TABLES.TAB_GROUP AND (LMB_RULES_TABLES.LMVIEW = ".LMB_DBDEF_TRUE." OR LMB_RULES_TABLES.GROUP_ID = 1) AND (LMB_RULES_TABLES.GROUP_ID = ".implode(" OR LMB_RULES_TABLES.GROUP_ID = ",$session["subgroup"]).") ORDER BY LMB_CONF_GROUPS.SORT";
+	$sqlquery = "SELECT DISTINCT LMB_CONF_GROUPS.ID,LMB_CONF_GROUPS.NAME,LMB_CONF_GROUPS.BESCHREIBUNG,LMB_CONF_GROUPS.SORT,LMB_CONF_GROUPS.ICON FROM LMB_CONF_GROUPS,LMB_RULES_TABLES WHERE LMB_CONF_GROUPS.ID = LMB_RULES_TABLES.TAB_GROUP AND (LMB_RULES_TABLES.LMVIEW = ".LMB_DBDEF_TRUE." OR LMB_RULES_TABLES.GROUP_ID = 1) AND (LMB_RULES_TABLES.GROUP_ID = ".implode(" OR LMB_RULES_TABLES.GROUP_ID = ",$session["subgroup"]).") ORDER BY LMB_CONF_GROUPS.SORT";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	#$bzm = 1;
 	while(odbc_fetch_row($rs)) {
 		$i = odbc_result($rs, "ID");
 		$_tabgroup["id"][$i] = $i;
 		$_tabgroup["name"][$i] = $lang[odbc_result($rs,"NAME")];
-		$_tabgroup["beschreibung"][$i] = $lang[odbc_result($rs,"BESCHREIBUNG")];
+        $_tabgroup["beschreibung"][$i] = $lang[odbc_result($rs,"BESCHREIBUNG")];
+        $_tabgroup['icon'][$i] = odbc_result($rs, 'ICON');
 		#$_tabgroup["argid"][odbc_result($rs, "ID")] = $bzm-1;
 		#$bzm++;
 	}
 
 	/* --- Tabellen ------------------------------- */
 	$sqlquery = "SELECT DISTINCT
-	LMB_RULES_TABLES.VER,LMB_RULES_TABLES.LMTRIGGER,LMB_RULES_TABLES.GROUP_ID,LMB_RULES_TABLES.LMADD,LMB_RULES_TABLES.HIDE,LMB_RULES_TABLES.NEED,LMB_RULES_TABLES.EDIT,LMB_RULES_TABLES.DEL,LMB_RULES_TABLES.VIEW_FORM,LMB_RULES_TABLES.VIEW_TFORM,
+	LMB_RULES_TABLES.VER,LMB_RULES_TABLES.LMTRIGGER,LMB_RULES_TABLES.GROUP_ID,LMB_RULES_TABLES.LMADD,LMB_RULES_TABLES.HIDE,LMB_RULES_TABLES.NEED,LMB_RULES_TABLES.EDIT,LMB_RULES_TABLES.DEL,LMB_RULES_TABLES.VIEW_FORM,LMB_RULES_TABLES.VIEW_TFORM,VIEW_LFORM,
 	LMB_CONF_TABLES.VERSIONING,LMB_CONF_TABLES.TYP,LMB_CONF_TABLES.LOGGING,LMB_CONF_TABLES.LINECOLOR,LMB_CONF_TABLES.MARKCOLOR,LMB_CONF_TABLES.VERKN,LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.GROUPABLE,LMB_CONF_TABLES.LOCKABLE,LMB_CONF_TABLES.TAB_ID,LMB_CONF_TABLES.TAB_GROUP,LMB_CONF_TABLES.BESCHREIBUNG,LMB_CONF_TABLES.SORT
 	FROM LMB_CONF_TABLES,LMB_RULES_TABLES
 	WHERE LMB_RULES_TABLES.TAB_ID = LMB_CONF_TABLES.TAB_ID
@@ -50,6 +51,7 @@ if($session["superadmin"] == 1){
 		$_gtab["tab_group"][$i] = odbc_result($rs,"TAB_GROUP");
 		$_gtab["tab_view_form"][$i] = odbc_result($rs,"VIEW_FORM");
 		$_gtab["tab_view_tform"][$i] = odbc_result($rs,"VIEW_TFORM");
+		$_gtab["tab_view_lform"][$i] = odbc_result($rs,"VIEW_LFORM");
 		$_gtab["lockable"][$i] = odbc_result($rs,"LOCKABLE");
 		$_gtab["groupable"][$i] = odbc_result($rs,"GROUPABLE");
 		$_gtab["markcolor"][$i] = odbc_result($rs, "MARKCOLOR");
@@ -94,7 +96,7 @@ function set_rights($ID,$ismaingroup,$addsub){
 			
 			# Leserechte
 			if($srule[2] == 1){
-				$tabrule[tab][] = $srule[0];
+				$tabrule['tab'][] = $srule[0];
 				global ${"viewrule_".$srule[0]."_".$srule[1]};
 				if(${"viewrule_".$srule[0]."_".$srule[1]}){$perm = LMB_DBDEF_TRUE;$GLOBALS{"tabview_".$srule[0]} = 1;} else {$perm = LMB_DBDEF_FALSE;}
 				if(!$ismaingroup AND !$addsub AND $perm == LMB_DBDEF_TRUE){$bzm++;continue;}
@@ -104,7 +106,7 @@ function set_rights($ID,$ismaingroup,$addsub){
 			}
 			# Schreibrechte
 			elseif($srule[2] == 2){
-				$tabrule[tab][] = $srule[0];
+				$tabrule['tab'][] = $srule[0];
 				global ${"edit_".$srule[0]."_".$srule[1]};
 				if(${"edit_".$srule[0]."_".$srule[1]}){$perm = LMB_DBDEF_TRUE;$GLOBALS{"tabedit_".$srule[0]} = 1;} else {$perm = LMB_DBDEF_FALSE;}
 				if(!$ismaingroup AND !$addsub AND $perm == LMB_DBDEF_TRUE){$bzm++;continue;}
@@ -171,7 +173,7 @@ function set_rights($ID,$ismaingroup,$addsub){
 			}
 			# Pflichtfeld
 			if($srule[2] == 9){
-				$tabrule[tab][] = $srule[0];
+				$tabrule['tab'][] = $srule[0];
 				global ${"needrule_".$srule[0]."_".$srule[1]};
 				if(${"needrule_".$srule[0]."_".$srule[1]}){$perm = LMB_DBDEF_TRUE;$GLOBALS{"tabneed_".$srule[0]} = 1;} else {$perm = LMB_DBDEF_FALSE;}
 				if(!$ismaingroup AND !$addsub AND $perm == LMB_DBDEF_FALSE){$bzm++;continue;}
@@ -313,6 +315,14 @@ function set_rights($ID,$ismaingroup,$addsub){
 				global ${"view_tform_".$srule[0]};
 				if(!$ismaingroup AND !$addsub){$bzm++;continue;}
 				$sqlquery = "UPDATE LMB_RULES_TABLES SET VIEW_TFORM = ". parse_db_int(${"view_tform_".$srule[0]},5)." WHERE GROUP_ID = $ID AND TAB_ID = ".$srule[0];
+				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs) {$commit = 1;}
+			}
+			# default L-Formular
+			elseif($srule[2] == 24){
+				global ${"view_lform_".$srule[0]};
+				if(!$ismaingroup AND !$addsub){$bzm++;continue;}
+				$sqlquery = "UPDATE LMB_RULES_TABLES SET VIEW_LFORM = ". parse_db_int(${"view_lform_".$srule[0]},5)." WHERE GROUP_ID = $ID AND TAB_ID = ".$srule[0];
 				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
 			}
@@ -704,6 +714,7 @@ foreach($_gtab["tab_id"] as $key => $value){
         		LMB_RULES_TABLES.LMTRIGGER AS TABTRIGGER,
 				LMB_RULES_TABLES.VIEW_FORM,
 				LMB_RULES_TABLES.VIEW_TFORM,
+				LMB_RULES_TABLES.VIEW_LFORM,
 				LMB_RULES_TABLES.VER AS VERSIONING_TYPE,
 				LMB_RULES_TABLES.EDITRULE AS TABEDITRULE,
 				LMB_RULES_TABLES.INDICATOR,
@@ -735,6 +746,7 @@ foreach($_gtab["tab_id"] as $key => $value){
         $f_result[$key]["versioning_type"] = odbc_result($rs, "VERSIONING_TYPE");
         $f_result[$key]["view_form"] = odbc_result($rs, "VIEW_FORM");
         $f_result[$key]["view_tform"] = odbc_result($rs, "VIEW_TFORM");
+        $f_result[$key]["view_lform"] = odbc_result($rs, "VIEW_LFORM");
         $f_result[$key]["tabeditrule"] = htmlentities(odbc_result($rs, "TABEDITRULE"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]);
         $f_result[$key]["indicator"] = htmlentities(odbc_result($rs, "INDICATOR"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]);
         $f_result[$key]["tab_trigger"] = explode(",", odbc_result($rs, "TABTRIGGER"));

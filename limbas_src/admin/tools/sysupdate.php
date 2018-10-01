@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -657,7 +657,7 @@ function triggerrefresh(evt) {
 }
 
 function procedurerefresh(evt) {
-	link = confirm("<?echo $lang[2653];?>");
+	link = confirm("<?= $lang[2653] ?>");
 	if(link) {
 		limbasWaitsymbol(evt,1);
 		document.location.href="main_admin.php?action=setup_sysupdate&refresh_procedures=1";
@@ -665,7 +665,7 @@ function procedurerefresh(evt) {
 }
 
 function indexrefresh(evt) {
-	link = confirm("<?echo $lang[2722];?>");
+	link = confirm("<?= $lang[2722] ?>");
 	if(link) {
 		limbasWaitsymbol(evt,1);
 		document.location.href="main_admin.php?action=setup_sysupdate&refresh_indexes=1";
@@ -673,7 +673,7 @@ function indexrefresh(evt) {
 }
 
 function squencerefresh(evt) {
-	link = confirm("<?echo $lang[2663];?>");
+	link = confirm("<?= $lang[2663] ?>");
 	if(link) {
 		limbasWaitsymbol(evt,1);
 		document.location.href="main_admin.php?action=setup_sysupdate&refresh_squences=1";
@@ -695,7 +695,7 @@ function gurefresh(DATA) {
 }
 
 function drulesReset(evt) {
-	link = confirm("<?echo $lang[2551]."?\\n".$lang[2553];?>");
+	link = confirm("<?= $lang[2551]."?\\n".$lang[2553] ?>");
 	if(link) {
 		limbasWaitsymbol(evt,1);
 		document.location.href="main_admin.php?action=setup_sysupdate&drules_reset="+document.getElementById('drules_reset').value;
@@ -703,7 +703,7 @@ function drulesReset(evt) {
 }
 
 function specificUserrules(evt) {
-	link = confirm("<?echo $lang[2552]."?";?>");
+	link = confirm("<?= $lang[2552]."?" ?>");
 	if(link) {
 		limbasWaitsymbol(evt,1);
 		document.location.href="main_admin.php?action=setup_sysupdate&specific_userrules="+document.getElementById('specific_userrules').value;
@@ -796,7 +796,6 @@ function showprocess(id,value){
 
 
 <FORM ACTION="main_admin.php" METHOD="post" name="form1">
-<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
 <INPUT TYPE="hidden" NAME="action" VALUE="setup_sysupdate">
 <INPUT TYPE="hidden" NAME="locking">
 
@@ -822,17 +821,17 @@ function showprocess(id,value){
 <TR class="tabBody"><TD valign="top"><?=$lang[2476]?></TD>
     <TD align="RIGHT" valign="top"><input type="button" value="OK" onclick="foreignrefresh(event);"></TD></TR>
 
-<?if(LMB_DBFUNC_PROCEDUREHANDLE){?>
+<?php if(LMB_DBFUNC_PROCEDUREHANDLE){?>
 <TR class="tabBody"><TD valign="top"><?=$lang[2721]?></TD>
     <TD align="RIGHT" valign="top"><input type="button" value="OK" onclick="indexrefresh(event);"></TD></TR>
 <TR class="tabBody"><TD valign="top"><?=$lang[2652]?></TD>
     <TD align="RIGHT" valign="top"><input type="button" value="OK" onclick="procedurerefresh(event);"></TD></TR>
 <TR class="tabBody"><TD valign="top"><?=$lang[2488]?></TD>
     <TD align="RIGHT" valign="top"><input type="button" value="OK" onclick="triggerrefresh(event);"></TD></TR>
-<?if(LMB_DBFUNC_SEQUENCE){?>
+<?php if(LMB_DBFUNC_SEQUENCE){?>
 <TR class="tabBody"><TD valign="top"><?=$lang[2662]?></TD>
 <TD align="RIGHT" valign="top"><input type="button" value="OK" onclick="squencerefresh(event);"></TD></TR>
-<?}}?>
+<?php }}?>
 
 <TR class="tabSubHeader"><TD class="tabSubHeaderItem" colspan="3"><?=$lang[2484]?></TD></TR>
 
@@ -842,11 +841,11 @@ function showprocess(id,value){
 <TR class="tabBody"><TD valign="top"><?=$lang[1054]?></TD>
     <TD align="RIGHT" valign="top"><input type="button" value="OK" onclick="gurefresh('1');"></TD></TR>
 
-<?if($gtabs["tabledesc"]){?>
+<?php if($gtabs["tabledesc"]){?>
 <TR class="tabBody"><TD valign="top"><?=$lang[2551]?></TD>
 <TD align="RIGHT" valign="top">
 <select id="drules_reset"><option></option>
-<?
+<?php
 foreach ($gtabs["tabledesc"] as $key => $val){
 	echo "<option value=\"$key\">".$lang[$val]."</option>";
 }
@@ -854,11 +853,11 @@ foreach ($gtabs["tabledesc"] as $key => $val){
 </select>
 <input type="button" value="OK" onclick="drulesReset(event);" style="color:red"></TD></TR>
 
-<?if($gtabs["specific_userrules"]){?>
+<?php if($gtabs["specific_userrules"]){?>
 <TR class="tabBody"><TD valign="top"><?=$lang[2552]?></TD>
 <TD align="RIGHT" valign="top">
 <select id="specific_userrules"><option></option>
-<?
+<?php
 foreach ($gtabs["tabledesc"] as $key => $val){
 	if($gtabs["specific_userrules"][$key]){
 		echo "<option value=\"$key\">".$lang[$val]."</option>";
@@ -867,7 +866,7 @@ foreach ($gtabs["tabledesc"] as $key => $val){
 ?>
 </select>
 <input type="button" value="OK" onclick="specificUserrules(event);" style="color:red"></TD></TR>
-<?}}?>
+<?php }}?>
 
 
 <TR class="tabSubHeader"><TD class="tabSubHeaderItem" colspan="3"><?=$lang[2485]?></TD></TR>
@@ -878,7 +877,7 @@ foreach ($gtabs["tabledesc"] as $key => $val){
 <TR class="tabBody"><TD valign="top"><?=$lang[2367]?></TD>
     <TD align="RIGHT" valign="top"><input type="button" value="OK" onclick="deleteuserfilesave(event);"></TD></TR>
 
-<?/*
+<?php /*
 <TR class="tabBody"><TD valign="top"><?=$lang[2343]?></TD>
 <TD align="RIGHT" valign="top"><input type="button" value="OK" onclick="snaprefresh(event);"></TD></TR>
 */?>

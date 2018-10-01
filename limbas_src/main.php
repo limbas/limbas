@@ -2,7 +2,7 @@
 
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH (support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -12,7 +12,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0  
+ * Version 3.5  
  */
 
 /*
@@ -196,7 +196,7 @@ elseif ($action == "intro" or $action == "nav_info") {
     $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 } elseif ($action == "help") {
     $require1 = "help/help.php";
-} 
+}
 
 elseif ($action == "help_user") {
     $ONLOAD = "document.location.href='help/DB3_0.9.9.pdf'";
@@ -214,9 +214,9 @@ elseif ($action == "help_user") {
     } else {
         $checkmod = 2;
         $require2 = "gtab/gtab_register.lib";
+        $require3 = "extra/explorer/filestructure.lib";
         // Gtab Lösch/Kopier-Routine
         if ($use_record) {
-            $require3 = "extra/explorer/filestructure.lib";
             $require4 = "gtab/sql/gtab_use.dao";
         }
         $require5 = "gtab/sql/gtab_erg.dao";
@@ -375,11 +375,11 @@ elseif ($action == "user_lock" and $LINK[$action] == 1) {
 elseif ($action == "messages" and $LINK[$action] == 1) {
     unset($ID);
     $require1 = "extra/messages/index.php";
-    // $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
+    $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
+
 }/* --------------------- Explorer --------------------------- */
 elseif (($action == "explorer") and $LINK[$action] == 1) {
     $require1 = "extra/explorer/explorer_frameset.php";
-    $BODY = 1;
 } elseif ($action == "explorer_tree" and $LINK["explorer"] == 1) {
     $require1 = "extra/explorer/filestructure.lib";
     $require2 = "extra/explorer/explorer_tree.dao";
@@ -455,6 +455,7 @@ elseif ($action == "kalender" and $LINK[$action] == 1) {
     $require2 = "gtab/gtab_type.lib";
     $require3 = "extra/calendar/fullcalendar/cal.dao";
     $require4 = "extra/calendar/fullcalendar/cal.php";
+    $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
     $ONCLICK = "OnClick=\"body_click();\"";
 }/* ---------------------- Kanban -------------------------- */
 elseif ($action == "kanban") {// and $LINK[$action] == 1) {
@@ -471,7 +472,6 @@ elseif ($action == "kanban") {// and $LINK[$action] == 1) {
 elseif ($action == "userstat") {
     $require2 = "extra/calendar/dom/cal.php";
     $require3 = "gtab/gtab_register.lib";
-    $BODY = 1;
 } elseif ($action == "userstat_set") {
     $require1 = "extra/calendar/dom/cal_set.php";
     $ONLOAD = "window.focus();showFlatCalendar();";
@@ -595,7 +595,7 @@ if ($BODY != 1) {
 <script type="text/javascript" src="extern/jquery/jquery-1.11.0.min.js"></script>
 
 <?php
-    if ($action == "gtab_erg" or $action == "gtab_change" or $action == "gtab_deterg" or $action == "gtab_neu" or $action == "gtab_search" or $action == "gtab_form" or $action == "diag_erg" or $action == "diag_erg" or $action == "explorer_tree" or $action == "explorer_main" or $action == "message_detail" or $action == "message_main" or $action == "message_tree" or $action == "kalender" or $action == "kanban") {
+    if ($action == 'gtab_erg' or $action == 'gtab_change' or $action == 'gtab_deterg' or $action == 'gtab_neu' or $action == 'gtab_search' or $action == 'gtab_form' or $action == 'diag_erg' or $action == 'diag_erg' or $action == 'explorer_tree' or $action == 'explorer_main' or $action == 'message_detail' or $action == 'message_main' or $action == 'message_tree' or $action == 'kalender' or $action == 'kanban' or $action == 'mini_explorer') {
         echo "
 	<script type=\"text/javascript\" src=\"extra/explorer/file-cache.js\"></script>\n
 	<script type=\"text/javascript\" src=\"EXTENSIONS/system/ext.js\"></script>\n
@@ -628,7 +628,6 @@ if ($BODY != 1) {
         echo "
 	<script type=\"text/javascript\" src=\"gtab/html/gtab.js\"></script>\n
 	<script type=\"text/javascript\" src=\"gtab/html/gtab_change.js\"></script>\n
-    <link rel='stylesheet' type='text/css' href='extra/kanban/kanban.css' />
 	<script type='text/javascript' src='extra/kanban/kanban.js'></script>  
 	";
     }
@@ -767,7 +766,7 @@ if ($BODY != 1) {
     
     // ------------ Schnapschuß Navigationsrefresh -------------
     if ($new_snapshot) {
-        echo "if(parent.nav){parent.nav.document.location.href = 'main.php?&action=nav&sparte=gtab&tab_group=1&refresh=no&sess_refresh=1';};\nif(parent.parent.nav){parent.parent.nav.document.location.href = 'main.php?" . SID . "&action=nav&sparte=gtab&tab_group=1&refresh=no&sess_refresh=1';};\n";
+        echo "if(parent.nav){parent.nav.document.location.href = 'main.php?action=nav&sparte=gtab&tab_group=1&refresh=no&sess_refresh=1';};\nif(parent.parent.nav){parent.parent.nav.document.location.href = 'main.php?action=nav&sparte=gtab&tab_group=1&refresh=no&sess_refresh=1';};\n";
     }
     echo "var frameLoaded = true;\n";
     echo "</script>\n";

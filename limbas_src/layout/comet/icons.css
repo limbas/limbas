@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -81,6 +81,43 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     font-size: 2.6em;
+}
+
+
+@-webkit-keyframes rotating /* Safari and Chrome */ {
+    from {
+        -webkit-transform: rotate(0deg);
+        -o-transform: rotate(0deg);
+        transform: rotate(0deg);
+    }
+    to {
+        -webkit-transform: rotate(360deg);
+        -o-transform: rotate(360deg);
+        transform: rotate(360deg);
+    }
+}
+@keyframes rotating {
+    from {
+        -ms-transform: rotate(0deg);
+        -moz-transform: rotate(0deg);
+        -webkit-transform: rotate(0deg);
+        -o-transform: rotate(0deg);
+        transform: rotate(0deg);
+    }
+    to {
+        -ms-transform: rotate(360deg);
+        -moz-transform: rotate(360deg);
+        -webkit-transform: rotate(360deg);
+        -o-transform: rotate(360deg);
+        transform: rotate(360deg);
+    }
+}
+.lmb-rotating {
+    -webkit-animation: rotating 2s linear infinite;
+    -moz-animation: rotating 2s linear infinite;
+    -ms-animation: rotating 2s linear infinite;
+    -o-animation: rotating 2s linear infinite;
+    animation: rotating 2s linear infinite;
 }
 
 .lmb-icon.lmb-icon-on-input {
@@ -318,7 +355,7 @@
 .lmb-symbols::before { /* former .fa-ellipsis-h */
     content: "\f141";
 }
-.lmb-arrows-h::before { /* former .fa-arrows-h */
+.lmb-space-h::before,.lmb-arrows-h::before { /* former .fa-arrows-h */
     content: "\f07e";
 }
 .lmb-icon-cus.lmb-select-list::before {
@@ -1022,11 +1059,14 @@
 .lmb-paste::before { /* former .fa-clipboard */
     content: "\f0ea";
 }
-.lmb-exchange::before { /* former .fa-exchange */
+.lmb-space-words::before,.lmb-exchange::before { /* former .fa-exchange */
     content: "\f0ec";
 }
 .lmb-fav::before { /* former .fa-star-o */ 
     content: "\f006";
+}
+.lmb-fav-filled::before { /* former .fa-star */
+    content: "\f005";
 }
 .lmb-search::before { /* former .fa-search */
     content: "\f002";
@@ -1078,10 +1118,31 @@
 }
 .lmb-forbidden {
     border: 2px dashed red;
-    padding: 1px 6px 1px 6px;
+    padding: 2px;
+}
+.lmb-icon-cus.lmb-archived::before { /* view-archived */
+    content: "\e945";
+    color: orange;
+}
+.lmb-icon-cus.lmb-archived {
+    border: 2px dashed orange;
+    padding: 2px;
 }
 .lmb-unlocked::before { /* former .fa-unlock */ 
     content: "\f09c";
+    color: green;
+}
+.lmb-unlocked {
+    border: 2px dashed green;
+    padding: 2px;
+}
+.lmb-locked::before { /* former .fa-lock */
+    content: "\f023";
+    color: green;
+}
+.lmb-locked {
+    border: 2px dashed green;
+    padding: 2px;
 }
 .lmb-storage-folder::before { /* former .fa-hdd-o */
     content: "\f0a0";
@@ -1101,7 +1162,7 @@
 .lmb-columns::before {
     content: "\f0db";
 }
-.lmb-filter::before {
+.lmb-filter::before { /* former .fa-filter */
     content: "\f0b0";
 }
 .lmb-microphone::before { /* former .fa-microphone */
@@ -1109,4 +1170,44 @@
 }
 .lmb-microphone-slash::before { /* former .fa-microphone-slash */
     content: "\f131";
+}
+.lmb-tile::before { /* former .fa-th-large */
+    content: "\f009";
+}
+.lmb-italic::before {  /* former .fa-italic */
+    content: "\f033";
+}
+.lmb-bold::before {  /* former .fa-bold */
+    content: "\f032";
+}
+.lmb-underline::before {  /* former .fa-underline */
+    content: "\f0cd";
+}
+.lmb-align-left::before {  /* former .fa-align-left */
+    content: "\f036";
+}
+.lmb-align-bottom::before {  /* former .fa-align-center */
+    content: "\f037";
+}
+.lmb-space-v::before {  /* former .fa-arrows-v */
+    content: "\f07d";
+}
+.lmb-resize-form::before { /* */
+    content: "\f07e";
+}
+.lmb-icon.lmb-status-1::before {
+    content: "\f00c"; /* fa-check */
+    color: green;
+}
+.lmb-icon.lmb-status-2::before {
+    content: "\f00c"; /* fa-check */
+    color: orange;
+}
+.lmb-icon.lmb-status-3::before {
+    content: "\f00d"; /* fa-times */
+    color: red;
+}
+.lmb-icon.lmb-status-4::before {
+    content: "\f00d"; /* fa-times */
+    color: orange;
 }

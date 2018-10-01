@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -57,25 +57,25 @@ function olIMAPUserInterface(e){
 
 	this._onWindowResize = function(e){
 		if (_guiSTYLE_ == 1)
-			$('mail_panel').style.display = 'none';
+			document.getElementById('mail_panel').style.display = 'none';
 
-		$('mail_folders').style.display = 'none';
-		//$('mail_folders').style.height = ($('mail_hsizer').offsetHeight)+ 'px';
-		$('mail_folders').style.display = 'block';
+		document.getElementById('mail_folders').style.display = 'none';
+		//document.getElementById('mail_folders').style.height = (document.getElementById('mail_hsizer').offsetHeight)+ 'px';
+		document.getElementById('mail_folders').style.display = 'block';
                 
 		if (_guiSTYLE_ != 1){
-			$('mail_right_column').style.height = 
-				($('mail_hsizer').offsetHeight - $('mail_list').offsetHeight) + 'px';
+			document.getElementById('mail_right_column').style.height =
+				(document.getElementById('mail_hsizer').offsetHeight - document.getElementById('mail_list').offsetHeight) + 'px';
 			return;
 		}
 
-		$('mail_panel').style.height = (
-				$('mail_hsizer').offsetHeight -
-				$('mail_vsizer').offsetHeight -
-				$('mail_list').offsetHeight
+		document.getElementById('mail_panel').style.height = (
+				document.getElementById('mail_hsizer').offsetHeight -
+				document.getElementById('mail_vsizer').offsetHeight -
+				document.getElementById('mail_list').offsetHeight
 			) + 'px';
 
-		$('mail_panel').style.display = 'block';
+		document.getElementById('mail_panel').style.display = 'block';
 	};
 
 	this._gui_init_win_message = function(){
@@ -101,6 +101,7 @@ function olIMAPUserInterface(e){
 				case 1:
 					/* wipeout content of message panel */
 					win.el.innerHTML = '';
+					break;
 				case 2:
 					/* TODO: close browser window */
 					break;
@@ -120,21 +121,21 @@ function olIMAPUserInterface(e){
 	this._gui_init_sizers = function(){
 		/* initialize horizontal sizer */
 		new olSizer('mail_hsizer', 'mail_left_column', true, function (v){
-			var el = $('mail_left_column');
+			var el = document.getElementById('mail_left_column');
 			el.style.width = (v-el.offsetLeft-3) + 'px';
 		}, 170);
 
 		if (_guiSTYLE_==1) 	/* initialize vertical sizer */
 			new olSizer('mail_vsizer', 'mail_right_column', false,
 				function (v){
-					$('mail_right_column').style.height = v - $('mail_menu').offsetHeight + 'px';
-					$('mail_panel').style.display = 'none';
-					$('mail_panel').style.height = ( $('mail_hsizer').offsetHeight -
-							$('mail_vsizer').offsetHeight -	v +
-							$('mail_menu').offsetHeight ) + 'px';
-					$('mail_panel').style.display = 'block';
+					document.getElementById('mail_right_column').style.height = v - document.getElementById('mail_menu').offsetHeight + 'px';
+					document.getElementById('mail_panel').style.display = 'none';
+					document.getElementById('mail_panel').style.height = ( document.getElementById('mail_hsizer').offsetHeight -
+							document.getElementById('mail_vsizer').offsetHeight -	v +
+							document.getElementById('mail_menu').offsetHeight ) + 'px';
+					document.getElementById('mail_panel').style.display = 'block';
 
-				}, 120, $('mail_hsizer').offsetHeight - $('mail_vsizer').offsetHeight);
+				}, 120, document.getElementById('mail_hsizer').offsetHeight - document.getElementById('mail_vsizer').offsetHeight);
 	};
 
 	this._gui_init_textmenu = function(el){
@@ -186,7 +187,7 @@ function olIMAPUserInterface(e){
 			"lmb-mail-search",
 			function(e, o){
 				var x = E.getX(e), y = E.getY(e);
-				var offsetX = $('mail_main').tBodies[0].offsetLeft;
+				var offsetX = document.getElementById('mail_main').tBodies[0].offsetLeft;
 				if ((x + _self.win_ajax.width) > (document.body.clientWidth - offsetX))
 					x = document.body.clientWidth - _self.win_ajax.width - offsetX;
 				_self.win_ajax.show("?popup=1&find=1", true, true, x, y);
@@ -213,7 +214,7 @@ function olIMAPUserInterface(e){
 
 		_self.ctxMessage.add('merken',	"lmb-icon-cus lmb-email-link",
 			function(e, mbox, uid){
-				var el = $(uid);
+				var el = document.getElementById(uid);
 				//if (SEL.getCount()==0)
 				if (el.getAttribute('name') != 'marked')
 					SEL.select(el);
@@ -224,7 +225,7 @@ function olIMAPUserInterface(e){
 
 		_self.ctxMessage.add('löschen',	"lmb-icon-cus lmb-email-del",
 			function(e, mbox, uid){
-				var el = $(uid);
+				var el = document.getElementById(uid);
 				if (el.getAttribute('name') != 'marked')
 					SEL.select(el);
 				mail_delete_selection(mbox, SEL);
@@ -273,9 +274,9 @@ function olIMAPUserInterface(e){
 		_self.win_ajax = new olPopup('olPop', 'Nachricht suchen...', 320, 192, _baseURL_);
 
 		_self._gui_init_win_message();
-		_self._gui_init_textmenu($('mail_textmenu'));
+		_self._gui_init_textmenu(document.getElementById('mail_textmenu'));
 		_self._gui_init_contextmenus();
-		_self._gui_init_buttons($('mail_buttons'));
+		_self._gui_init_buttons(document.getElementById('mail_buttons'));
 		_self._gui_init_sizers();
 
                 //olEvent().observe(window, "click", _self.win_ajax.hide(_self.win_ajax));

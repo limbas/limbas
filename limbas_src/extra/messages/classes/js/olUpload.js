@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -31,7 +31,7 @@ function olUpload(url, w, h, sid, maxlen, debug){
 	this.is_running = 0;
 	
 	this._init = function(url, w, h, sid, maxlen, debug){
-		var el = $(this.el_cnt);
+		var el = document.getElementById(this.el_cnt);
 		var fv = 'sid=' + escape(sid);
 		fv+='&url=' + escape(url);
 		fv+='&maxlen=' + escape(maxlen);
@@ -55,7 +55,7 @@ function olUpload(url, w, h, sid, maxlen, debug){
 				el.innerHTML = 'Bitte installieren Sie zuerst den <a href="http://www.adobe.com/go/getflashplayer">Adobe Flash Player</a>!';
 		}
 		
-		$(this.el_inr).innerHTML = '<iframe class="'+this.el_res+'" id="'+this.el_res+'" src="about:blank" frameborder="0" vspace="0" hspace="0" marginwidth="0" marginheight="0" scrolling="auto"></iframe>';
+		document.getElementById(this.el_inr).innerHTML = '<iframe class="'+this.el_res+'" id="'+this.el_res+'" src="about:blank"></iframe>';
 		this.pos = 0;
 	};
 
@@ -65,7 +65,7 @@ function olUpload(url, w, h, sid, maxlen, debug){
 	};
 	
 	this.clear = function(){
-		var frm = $(this.el_res);
+		var frm = document.getElementById(this.el_res);
 		this.doc = frm.contentDocument;
 		if (this.doc == undefined || doc == null)
 			this.doc = frm.contentWindow.document;
@@ -74,31 +74,31 @@ function olUpload(url, w, h, sid, maxlen, debug){
 		this.doc.writeln('<html><head><link href="../styles/olUpload.css" rel="stylesheet" type="text/css">'+
 			'</head><body id="body">');
 		this.pos = 0;
-	},
+	};
 	
 	this.browse = function(a,b){
-		$('upload_page').style.display = 'none';
+		document.getElementById('upload_page').style.display = 'none';
 		this.clear();
 		/* clear errors */
-		var e = $(this.el_err);
+		var e = document.getElementById(this.el_err);
 		e.innerHTML = '';
 		e.style.display = 'none';
 	};
 
 	this.start = function(c,s){
-		$(this.el_inr).style.display = 'block';
-		$('upload_page').style.display = 'block';
+		document.getElementById(this.el_inr).style.display = 'block';
+		document.getElementById('upload_page').style.display = 'block';
 		this.is_running=1;
 	};
 	
 	this.print = function(t){
 		this.doc.writeln('<div class="upload_status">'+t+'</div>');
-		$(this.el_res).contentWindow.scrollTo(0, this.pos+=24);
+		document.getElementById(this.el_res).contentWindow.scrollTo(0, this.pos+=24);
 	};
 	
 	this.status = function(a,b){
 		this.doc.writeln('<div class="upload_status">a='+a+', b='+b+'</div>');
-		$(this.el_res).contentWindow.scrollTo(0, this.pos+=24);
+		document.getElementById(this.el_res).contentWindow.scrollTo(0, this.pos+=24);
 	};
 	
 	this.begin = function(f){
@@ -106,14 +106,14 @@ function olUpload(url, w, h, sid, maxlen, debug){
 			'" src="../images/wait.gif" border="0" width="20" height="20" align="top">'+f+
 			'</div>'
 		);
-		$(this.el_res).contentWindow.scrollTo(0, this.pos+=32);
+		document.getElementById(this.el_res).contentWindow.scrollTo(0, this.pos+=32);
 	};
 	
 	this.complete = function(f, s){
 		el = this.doc.getElementById('img_'+f);
 		el.src = "../images/doc.png";
 	
-		$(this.el_res).contentWindow.scrollTo(0, this.pos+=32);
+		document.getElementById(this.el_res).contentWindow.scrollTo(0, this.pos+=32);
 	};
 
 	this._delayed_close = function(){
@@ -129,7 +129,7 @@ function olUpload(url, w, h, sid, maxlen, debug){
 	};
 	
 	this.error = function(f, d){
-		var e = $(this.el_err);
+		var e = document.getElementById(this.el_err);
 		var span = document.createElement('span');
 		var img = document.createElement('img');
 		var div = document.createElement('div');

@@ -8,14 +8,14 @@
         </tr>
     </thead>
     <tbody>
-        <tr><td>Installation Path</td><td><?php echo $setup_path_project?></td></tr>
-        <tr><td>Database Vendor</td><td><?php echo $DBA["DB"]?></td></tr>
-        <tr><td>Database Name</td><td><?php echo $setup_database?></td></tr>
-        <tr><td>Database User</td><td><?php echo $setup_dbuser?></td></tr>
-        <tr><td>Database Host</td><td><?php echo $setup_host?></td></tr>
-        <tr><td>Database Schema</td><td><?php echo $setup_dbschema?></td></tr>
-        <tr><td>Database Port</td><td><?php echo $setup_dbport?></td></tr>        
-        <tr><td>Installation package</td><td><?php echo $backupdir?></td></tr>        
+        <tr><td>Installation Path</td><td><?= $setup_path_project ?></td></tr>
+        <tr><td>Database Vendor</td><td><?= $DBA["DB"] ?></td></tr>
+        <tr><td>Database Name</td><td><?= $setup_database ?></td></tr>
+        <tr><td>Database User</td><td><?= $setup_dbuser ?></td></tr>
+        <tr><td>Database Host</td><td><?= $setup_host ?></td></tr>
+        <tr><td>Database Schema</td><td><?= $setup_dbschema ?></td></tr>
+        <?if($setup_dbport){echo "<tr><td>Database Port</td><td>$setup_dbport</td></tr>";}?>
+        <tr><td>Installation package</td><td><?= $backupdir ?></td></tr>
     </tbody>
 </table>
 

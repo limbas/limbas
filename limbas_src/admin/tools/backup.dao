@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -131,11 +131,11 @@ function fill_backup_history($out,$path,$typ){
 	if(!$size){$size = 0;}
 	if(!$logpage){$logpage = 0;}
 
-	if($path[server] == "localhost" AND $DBA[LMHOST] != $bu[server]){
-		$path[server] = $bu[server];
+	if($path['server'] == "localhost" AND $DBA['LMHOST'] != $bu['server']){
+		$path['server'] = $bu['server'];
 	}
-	if($path[scppath]){
-		$store = $path[scppath].".$ext";
+	if($path['scppath']){
+		$store = $path['scppath'].".$ext";
 	}else{
 		$store = $path["path"].".$ext";
 	}
@@ -143,7 +143,7 @@ function fill_backup_history($out,$path,$typ){
 
 	
 	$NEXTID = next_db_id("LMB_HISTORY_BACKUP");
-	$sqlquery = "INSERT INTO LMB_HISTORY_BACKUP (ID,LABEL,ACTION,RESULT,MEDIUM,SIZE,NEXTLOGPAGE,SERVER,LOCATION,MESSAGE,CRON_ID) VALUES($NEXTID,'$label','$action',$res,'".trim($medium)."',".parse_db_int($size).",$logpage,'".$path[server]."','$store','$mess',$cronid)";
+	$sqlquery = "INSERT INTO LMB_HISTORY_BACKUP (ID,LABEL,ACTION,RESULT,MEDIUM,SIZE,NEXTLOGPAGE,SERVER,LOCATION,MESSAGE,CRON_ID) VALUES($NEXTID,'$label','$action',$res,'".trim($medium)."',".parse_db_int(round($size/1024)).",$logpage,'".$path['server']."','$store','$mess',$cronid)";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
@@ -156,14 +156,14 @@ function set_backup_path($medium,$path1,$path2,$typ){
 	global $umgvar;
 	global $DBA;
 
-	$path[medname] = $typ.date("ymdis");
+	$path['medname'] = $typ.date("ymdis");
 	$path["filename"] = date("y_m_d_i_s").".".$typ;
 	$path1 = trim($path1);
 
 	# --- File ---
 	if($medium == "1" AND $path1){
 		$pos = lmb_strpos($path1,":");
-		$path[server] = lmb_substr($path1,0,$pos);
+		$path['server'] = lmb_substr($path1,0,$pos);
 		# remote Server
 		if((preg_match("/^[0-9]/",lmb_substr($path["server"],0,1)) OR preg_match("/@[0-9]/",$path["server"])) AND lmb_strtolower($path["server"]) != "localhost" AND $path["server"] != $DBA["LMHOST"]){
 			$path["path"] = $umgvar["pfad"]."/TEMP/".$path["filename"];
@@ -173,22 +173,22 @@ function set_backup_path($medium,$path1,$path2,$typ){
 		}else{
 			if($path["server"] == $DBA["LMHOST"]){
 				$path["path"] = lmb_substr($path1,$pos+1,200)."/".$path["filename"];
-			}elseif(lmb_strtolower($path[server]) == "localhost"){
+			}elseif(lmb_strtolower($path['server']) == "localhost"){
 				$path["path"] = lmb_substr($path1,$pos+1,200)."/".$path["filename"];
 			}else{
 				$path["path"] = "/".$path1."/".$path["filename"];
 				$path["path"] = str_replace("//","/",$path["path"]);
 			}
 		}
-		$path[type] = "FILE";
-		$path[size] = "0";
-		$path[over] = "YES";
+		$path['type'] = "FILE";
+		$path['size'] = "0";
+		$path['over'] = "YES";
 	# --- Tape ---
 	}elseif($medium == "2" AND $path2){
 		$path["path"] = $path2;
-		$path[type] = "TAPE";
-		$path[size] = "64000";
-		$path[over] = "NO";
+		$path['type'] = "TAPE";
+		$path['size'] = "64000";
+		$path['over'] = "NO";
 	}
 	return $path;
 }
@@ -301,7 +301,7 @@ if($int_backup){
 		$out[10] = $path["medname"];
 		fill_backup_history($out,$path,"TXT");
 		if($DBA["DBHOST"] != $DBA["LMHOST"]){
-			if($path[scp] AND $path["scppath"]){
+			if($path['scp'] AND $path["scppath"]){
 				$sys = "scp ".$path_backup." ".$path["scppath"].".tar";
 				$ex = `$sys`;
 				unlink($path_backup);

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -161,12 +161,12 @@ if($kategorie AND $req){
 
 <TR class="tabHeader">
     <TD class="tabHeaderItem"><?=$lang[2068]?></TD>
-    <TD class="tabHeaderItem"><?=$lang[2069]?></TD>
+    <TD class="tabHeaderItem"><?=$lang[1749]?></TD>
     <TD class="tabHeaderItem"><?=$lang[2070]?></TD>
-    <TD class="tabHeaderItem"><?=$lang[2071]?></TD>
+    <TD class="tabHeaderItem"><?=$lang[126]?></TD>
     <TD class="tabHeaderItem"><?=$lang[2072]?></TD>
     <TD class="tabHeaderItem" align="center">start</TD>
-    <TD class="tabHeaderItem" align="center"><?=$lang[2073]?></TD>
+    <TD class="tabHeaderItem" align="center"><?=$lang[160]?></TD>
 </TR>
 <?php
 $sqlquery = "SELECT * FROM LMB_CRONTAB WHERE KATEGORY = '".lmb_strtoupper($kategoriedesc)."' ORDER BY ERSTDATUM";
@@ -187,7 +187,7 @@ while(odbc_fetch_row($rs, $bzm)){
 	<TD>&nbsp;<INPUT TYPE=\"CHECKBOX\" STYLE=\"border:none;background-color:transparent;\" NAME=\"activ_".odbc_result($rs,"ID")."\" OnClick=\"document.location.href='main_admin.php?&action=setup_indize_db&kategorie=$kategorie&activate_job=".odbc_result($rs,"ID")."'\" $activ>&nbsp;</TD>
 	<TD ALIGN=\"CENTER\">&nbsp;<i class=\"lmb-icon lmb-action\" STYLE=\"cursor:pointer;border:1px solid grey;\" NAME=\"activate_".odbc_result($rs,"ID")."\" OnClick=\"document.location.href='main_admin.php?&action=setup_indize_db&kategorie=$kategorie&run_job=".odbc_result($rs,"ID")."';limbasWaitsymbol(event,1);\"></i>&nbsp;</TD>
 	<TD ALIGN=\"CENTER\">&nbsp;<A HREF=\"main_admin.php?&action=setup_indize_db&kategorie=$kategorie&del_job=".odbc_result($rs,"ID")."\"><i class=\"lmb-icon lmb-trash\" BORDER=\"0\"></i></A>&nbsp;</TD></TR>";
-	$cronvalue[] = str_replace(";"," ",odbc_result($rs,"START"))."\twebuser (/usr/local/bin/php \"".$umgvar["pfad"]."/cron.php\" < /bin/echo ".odbc_result($rs,"ID").")";
+	$cronvalue[] = str_replace(";"," ",odbc_result($rs,"START"))."\t php \"".$umgvar["pfad"]."/cron.php\" ".odbc_result($rs,"ID");
 	$bzm++;
 }
 
@@ -204,11 +204,11 @@ if($alert){$dspl = "";}else{$dspl = "none";}
     <TD class="tabHeaderItem"><?=$lang[2074]?></TD>
     <TD class="tabHeaderItem"><?=$lang[2075]?></TD>
     <TD class="tabHeaderItem"><?=$lang[2076]?></TD>
-    <TD class="tabHeaderItem"><?=$lang[2077]?></TD>
+    <TD class="tabHeaderItem"><?=$lang[1437]?></TD>
     <TD class="tabHeaderItem"><?=$lang[2078]?></TD>
 </TR>
 <TR class="tabBody"><TD style="width:50px;"><INPUT TYPE="TEXT" NAME="cron[0]" VALUE="0" STYLE="width:100%"></TD><TD style="width:50px;"><INPUT TYPE="TEXT" NAME="cron[1]" VALUE="1" STYLE="width:100%"></TD><TD style="width:50px;"><INPUT TYPE="TEXT" VALUE="*" NAME="cron[2]" STYLE="width:100%"></TD><TD style="width:50px;"><INPUT TYPE="TEXT" NAME="cron[3]" VALUE="*" STYLE="width:100%"></TD><TD style="width:50px;"><INPUT TYPE="TEXT" NAME="cron[4]" VALUE="*" STYLE="width:100%"></TD><TD style="width:50px;"><INPUT TYPE="SUBMIT" NAME="add_job" VALUE="<?=$lang[2079]?>"></TD></TR>
-<TR class="tabBody" ID="crontab" STYLE="display:<?=$dspl?>"><TD colspan="7"><TEXTAREA STYLE="width:600px;height:100px;font-size:9px;overflow:hidden;">
+<TR class="tabBody" ID="crontab" STYLE="display:<?=$dspl?>"><TD colspan="7"><TEXTAREA STYLE="width:600px;height:100px;overflow:hidden;">
 <?php
 if($cronvalue){
 	foreach($cronvalue as $key => $value){
@@ -227,7 +227,7 @@ if($cronvalue){
 if($kategoriedesc == "INDIZE" OR $kategoriedesc == "OCR"){
 ?>
 	<TABLE BORDER="0" cellspacing="0" cellpadding="0"><TR>
-	<TD VALIGN="TOP"><TABLE cellspacing="0" STYLE="border:1px solid <?=$farbschema["WEB4"]?>;"><TR><TD STYLE="border-bottom:1px solid <?=$farbschema[WEB4]?>;background-color:<?=$farbschema[WEB7]?>"><?=$lang[2080]?></TD><TD VALIGN="TOP" STYLE="border-bottom:1px solid <?=$farbschema[WEB4]?>;background-color:<?=$farbschema[WEB7]?>"><?=$lang[2081]?><input type="checkbox" name="subdir">&nbsp;&nbsp;</TD></TR>
+	<TD VALIGN="TOP"><TABLE cellspacing="0" STYLE="border:1px solid <?=$farbschema["WEB4"]?>;"><TR><TD STYLE="border-bottom:1px solid <?=$farbschema['WEB4']?>;background-color:<?=$farbschema['WEB7']?>"><?=$lang[2080]?></TD><TD VALIGN="TOP" STYLE="border-bottom:1px solid <?=$farbschema['WEB4']?>;background-color:<?=$farbschema['WEB7']?>"><?=$lang[2081]?><input type="checkbox" name="subdir">&nbsp;&nbsp;</TD></TR>
 	<TR><TD COLSPAN="2">
 	<?php
 
@@ -244,8 +244,8 @@ if($kategoriedesc == "INDIZE" OR $kategoriedesc == "OCR"){
 		}
 		$bzm = 0;
 		while($file_struct["id"][$bzm]){
-			if($file_struct[level][$bzm] == $LEVEL){
-				if(in_array($file_struct["id"][$bzm],$file_struct[level])){
+			if($file_struct['level'][$bzm] == $LEVEL){
+				if(in_array($file_struct["id"][$bzm],$file_struct['level'])){
 					$next = 1;
 					$pic = "<IMG SRC=\"pic/outliner/plusonly.gif\" NAME=\"i".$file_struct["id"][$bzm]."\" OnClick=\"popup('".$file_struct["id"][$bzm]."','$LEVEL')\" STYLE=\"cursor:hand\">";
 				}else{
@@ -253,10 +253,10 @@ if($kategoriedesc == "INDIZE" OR $kategoriedesc == "OCR"){
 					$pic = "<IMG SRC=\"pic/outliner/blank.gif\">";
 				}
 				echo "<div ID=\"f_".$file_struct["id"][$bzm]."\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\" WIDTH=\"100%\">";
-				echo "<TR><TD WIDTH=\"20\">$pic</TD><TD WIDTH=\"20\"><i class=\"lmb-icon lmb-folder-closed\" ID=\"p".$file_struct["id"][$bzm]."\" NAME=\"p".$file_struct["id"][$bzm]."\" STYLE=\"cursor:hand\"></i></TD><TD>&nbsp;".$file_struct[name][$bzm]."</TD>";
+				echo "<TR><TD WIDTH=\"20\">$pic</TD><TD WIDTH=\"20\"><i class=\"lmb-icon lmb-folder-closed\" ID=\"p".$file_struct["id"][$bzm]."\" NAME=\"p".$file_struct["id"][$bzm]."\" STYLE=\"cursor:hand\"></i></TD><TD>&nbsp;".$file_struct['name'][$bzm]."</TD>";
 				echo "<TD ALIGN=\"RIGHT\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR>";
 				# --- view ---
-				if(!$file_struct[readonly][$bzm]){
+				if(!$file_struct['readonly'][$bzm]){
 					echo "<TD><INPUT TYPE=\"CHECKBOX\" ID=\"ifile_".$file_struct["id"][$bzm]."\" NAME=\"ifile[".$file_struct["id"][$bzm]."]\" STYLE=\"border:none;background-color:transparent;\"></TD>";
 					echo "<TD><i class=\"lmb-icon lmb-trash\" TITLE=\"drop jobresults\" BORDER=\"0\" STYLE=\"cursor:pointer\" OnClick=\"index_del('file_".$file_struct["id"][$bzm]."');\"></i><TD><i class=\"lmb-icon lmb-action\" TITLE=\"run job\" BORDER=\"0\" STYLE=\"cursor:pointer\" OnClick=\"index_refresh('file_".$file_struct["id"][$bzm]."');\"></i></TD>";
 				}
@@ -287,10 +287,10 @@ if($kategoriedesc == "INDIZE" OR $kategoriedesc == "OCR"){
 		foreach($gtab["table"] as $key => $value){
 			if($gfield[$key]["indize"]){
 				if(in_array("1",$gfield[$key]["indize"])){
-					echo "<TD VALIGN=\"TOP\"><TABLE cellspacing=\"0\" cellpadding=\"3\" STYLE=\"border:1px solid ".$farbschema[WEB4].";\"><TR><TD COLSPAN=\"4\" STYLE=\"border-bottom:1px solid ".$farbschema[WEB4].";background-color:".$farbschema[WEB7]."\">".$gtab[desc][$key]."</TD></TR>\n";
+					echo "<TD VALIGN=\"TOP\"><TABLE cellspacing=\"0\" cellpadding=\"3\" STYLE=\"border:1px solid ".$farbschema['WEB4'].";\"><TR><TD COLSPAN=\"4\" STYLE=\"border-bottom:1px solid ".$farbschema['WEB4'].";background-color:".$farbschema['WEB7']."\">".$gtab['desc'][$key]."</TD></TR>\n";
 					foreach($gfield[$key]["id"] as $key1 => $value1){
-						if($gfield[$key][indize][$key1] AND $gfield[$key][data_type][$key1] == 39){
-							echo "<TR><TD STYLE=\"border:none;color:green\" TITLE=\"".$gfield[$key][beschreibung][$key1]."\">".$gfield[$key][spelling][$key1]."</TD><TD><INPUT TYPE=\"CHECKBOX\" STYLE=\"border:none;background-color:transparent\" NAME=\"memo_".$key."_".$key1."\"></TD><TD><i class=\"lmb-icon lmb-trash\" TITLE=\"drop Index\" BORDER=\"0\" STYLE=\"cursor:pointer\" OnClick=\"index_del('field_".$key."_".$key1."');\"></i><TD><i class=\"lmb-icon lmb-action\" TITLE=\"renew Index\" BORDER=\"0\" STYLE=\"cursor:pointer\" OnClick=\"index_refresh('field_".$key."_".$key1."');\"></i></TD></TR>\n";
+						if($gfield[$key]['indize'][$key1] AND $gfield[$key]['data_type'][$key1] == 39){
+							echo "<TR><TD STYLE=\"border:none;color:green\" TITLE=\"".$gfield[$key]['beschreibung'][$key1]."\">".$gfield[$key]['spelling'][$key1]."</TD><TD><INPUT TYPE=\"CHECKBOX\" STYLE=\"border:none;background-color:transparent\" NAME=\"memo_".$key."_".$key1."\"></TD><TD><i class=\"lmb-icon lmb-trash\" TITLE=\"drop Index\" BORDER=\"0\" STYLE=\"cursor:pointer\" OnClick=\"index_del('field_".$key."_".$key1."');\"></i><TD><i class=\"lmb-icon lmb-action\" TITLE=\"renew Index\" BORDER=\"0\" STYLE=\"cursor:pointer\" OnClick=\"index_refresh('field_".$key."_".$key1."');\"></i></TD></TR>\n";
 						}
 					}
 					echo "</TABLE></TD><TD>&nbsp;&nbsp;&nbsp;</TD>\n";
@@ -328,7 +328,7 @@ if($kategoriedesc == "TEMPLATE"){
 	
 	<TR><TD class="tabFooter" colspan="2"></TR>
 	</TABLE>
-	<?
+	<?php
 	
 }
 
@@ -352,7 +352,7 @@ if($kategoriedesc == "DATASYNC"){
 	
 	<TR><TD class="tabFooter" colspan="2"></TR>
 	</TABLE>
-	<?
+	<?php
 	
 }
 
@@ -361,11 +361,11 @@ if($kategoriedesc == "DATASYNC"){
 </TR></TABLE>
 
 
-<?if($kategoriedesc){?>
+<?php if($kategoriedesc){?>
 <BR><BR>
 <TABLE BORDER="0" cellspacing="0" cellpadding="2" STYLE="collapse:collapse">
 <TR class="tabHeader"><TD><U>Crontab Value</U></TD></TR>
-<TR ID="crontab" BGCOLOR="<?=$farbschema[WEB6]?>"><TD><TEXTAREA STYLE="font-size:9px;width:600px;height:100px;overflow:hidden;">
+<TR ID="crontab" BGCOLOR="<?=$farbschema['WEB3']?>"><TD><TEXTAREA STYLE="width:600px;height:100px;overflow:hidden;">
 <?php
 if($cronvalue){
 	foreach($cronvalue as $key => $value){
@@ -375,9 +375,9 @@ if($cronvalue){
 ?>
 </TEXTAREA></TD></TR>
 </TABLE>
-<?}?>
+<?php }?>
 
 
 
-</tr></td></div>
+</tr></td></table></div>
 </FORM>

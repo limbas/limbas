@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -19,9 +19,17 @@
  */
 
 
+/*
+WEB5 : Contextmenu hover
+WEB6 : unused
+WEB9 : Formuluar tabframe backround
+WEB7 : Table dataset hover
+ */
+
+
 # frameset
-$topFrameSize = 25;
-$topMenuSize = 50;
+$topFrameSize = 30;
+$topMenuSize = 55;
 $LeftMenuSize = 190;
 $rightMenuSize = 230;
 $topFrameDivSize = ($topFrameSize-1);
@@ -30,9 +38,9 @@ if($intro){return;}
 $cssfile = fopen("{$umgvar['pfad']}/USER/{$session['user_id']}/layout.css", "w+");
 if($umgvar['waitsymbol']){$waitsymbol = $umgvar['waitsymbol'];}else{$waitsymbol = "pic/wait1.gif";}
 
-$fontc3 = lmbSuggestColor($farbschema['WEB13'],"CCCCCC","909090");
-$fontc6 = lmbSuggestColor($farbschema['WEB6'],"CCCCCC","333333");
-$fontc7 = lmbSuggestColor($farbschema['WEB7'],"CCCCCC","333333");
+$fontc3 = lmbSuggestColor($farbschema['WEB14'],"222222","7D7D7D");
+$fontc7 = lmbSuggestColor($farbschema['WEB7'],"5a5a5a","333333");
+$fontc14 = lmbSuggestColor($farbschema['WEB14']);
 
 $fontsize07 = "0.7em";
 $fontsize09 = "0.9em";
@@ -48,85 +56,65 @@ $umgvar['fontsize'];
 
 $buf .= file_get_contents($umgvar['pfad'] . "/layout/comet/icons.css");
 
-$buf .= <<<EOD
+$buf .= "
 
+/* to replace frames with iframes */
+.frame-container {
+    display: flex;
+    height: 100%;
+}
+.frame-container-vertical {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.frame-fill {
+    flex-grow: 1;
+}
 
 /*global*/
 body{
 	font-size: {$umgvar['fontsize']}px;
 	font-family: {$umgvar['font']};
-	background-color:{$farbschema['WEB14']};
-	height:96%;
+	background-color: {$farbschema['WEB14']};
+	color: {$farbschema['WEB2']};
+	margin: 0;
+	padding: 0;
 }
 
 /*global*/
 table{
 	font-size: {$umgvar['fontsize']}px;
 	font-family: {$umgvar['font']};
+	color: {$farbschema['WEB2']};
 }
 
 /*global*/
 th{
-	font-weight:normal;
-}
-        
-html{
-        height:100%;
-}
-        
-body{
-        height:calc(100% - 50px); 
+	font-weight: normal;
 }
 
-/*special icon colors*/
-.lmb-query::before {
-    color: {$farbschema['WEB7']};
-}
-
-/*middle frame*/
-body.main{
-	margin:0px;
-	padding:0px;
-        /*height:95%;*/
-        /*height:calc(100% - 50px);*/ /* fixes 2nd scrollbar in calendar */
-}
-
-/*middle frame header*/
-body.main_top{
-	margin:0px;
-	padding:0px;
-}
-
-/*top frame*/
-body.top{	
-}
-
-/*top menu frame*/
-body.top2{
-	margin:0px;
-	padding:0px;
+/*global*/
+iframe {
+    border: none;
 }
 
 /*navigation menu frame*/
 body.nav{
-	margin:0px;
-	padding:0px;
-	padding-left:5px;
-	padding-bottom:5px;
+	padding-left: 5px;
+	padding-bottom: 5px;
 }
 
 /*tools menu frame*/
 body.multiframe{
-	margin:0px;
-	padding:0px;
-        padding-right:5px;
-	padding-bottom:5px;
+    padding-right: 5px;
+	padding-bottom: 5px;
 }
 
 .lmbFrameShow {
     background-color: {$farbschema['WEB13']};
     border: 1px solid {$farbschema['WEB3']};
-    border-top:none;
+    border-top: none;
     height: 28px;
     padding-left: 20%;
     padding-top: 12px;
@@ -159,17 +147,6 @@ body.multiframe{
 	position:absolute;
 	right:6px;
 	top:8px;
-}
-        
-        
-.logo_topleft_menu {
-        background-color:{$farbschema['WEB10']};
-        padding: 0 5px;
-}
-        
-.logo_topleft_menu img {
-        max-height:47px;
-        cursor:pointer;
 }
 
 .lmbItemLogoTopLeft{
@@ -268,7 +245,9 @@ body.multiframe{
         display:none;
 }
   
-
+.lmbUpdateAvailable .lmbMenuItemTop2Icon {
+    color: #f9d421;
+}
 
 
 
@@ -311,7 +290,7 @@ body.multiframe{
     background-color: {$farbschema['WEB14']};
     
     color: {$farbschema['WEB12']};
-    cursor: default;
+    cursor: pointer;
     font-size: {$fontsize12};
     height: 40px;
     padding: 11px 0;
@@ -341,6 +320,8 @@ body.multiframe{
 .lmbMenuItemHeaderNav{
 	text-align:left;
 	padding-left:47px;
+	white-space: nowrap;
+	overflow: hidden;
 }
 
 .lmbMenuBodyNav {
@@ -348,11 +329,38 @@ body.multiframe{
     padding-left: 17px;
     padding-top: 8px;
     padding-right: 3px;
-    padding-bottom: 3px;
+    padding-bottom: 8px;
     text-align: left;
     box-sizing: border-box;
+    width:100%;
+    table-layout:fixed;
 }
-    
+.lmbMenuBodyNav td {
+    padding: 0;
+}
+
+.nav #multiframe .lmbMenuBodyNav tr td:first-child {
+    width: 20px;
+    text-align: center;
+}
+.nav #multiframe .lmbMenuBodyNav tr td:nth-child(3) {
+    width:20px;
+    text-align: right;
+    cursor:pointer;
+}
+
+.lmbMenuSubBodyNav {
+    overflow: hidden;
+    width:100%;
+    table-layout:fixed;
+    border-spacing: 0;
+    border-collapse: collapse;
+    white-space: nowrap;
+}
+.lmbMenuSubBodyNav td {
+    padding: 0;
+}
+
 .lmbMenuHide {
     cursor:pointer;
     height: 10px;
@@ -366,16 +374,16 @@ body.multiframe{
 .lmbMenuItemBodyNav{
 	text-align:left;
 	overflow:hidden;
-    display: inline-block;
     line-height: 20px;
-    width: 150%;
 }
-    
+a.lmbMenuItemBodyNav {
+    display: block;
+}
 .lmbMenuItemBodyNav:hover{
-	text-align:left;
-	overflow:hidden;
-	cursor:pointer;
-	text-decoration:underline;
+	text-decoration: none;
+}
+.lmbMenuItemBodyNav:not(.lmbMenuItemHeader):not(:nth-child(3)):hover{
+	background-color: {$farbschema['WEB5']};
 }
     
 .lmbMenuItemImage{
@@ -464,7 +472,19 @@ body.multiframe{
        
   .lmbPositionContainerMainTabPool.small {
         width:600px;
-}      
+}    
+
+/* 100% width/height of tabpool minus padding */
+.lmbPositionContainerMainTabPool.lmbFullSize {
+    height: calc(100% - 20px); /* padding-bottom of 20px */
+}
+.lmbPositionContainerMainTabPool.lmbFullSize .tabpool {
+    height: calc(100% - 20px);
+    width: calc(100% - 40px);
+}
+.lmbPositionContainerMainTabPool.lmbFullSize .tabpool tr:last-child {
+    height: 100%;
+}  
 
     
 /* Information Frame */
@@ -473,7 +493,7 @@ body.multiframe{
 .lmbfringeFrameMain .lmbinfo {
     border: 1px solid {$farbschema['WEB3']};
     margin: 20px;
-    width:600px;
+    width:800px;
 }
         
 .lmbfringeFrameMain .lmbinfo h2 {
@@ -538,8 +558,8 @@ body.multiframe{
 }
 
 .lmbGtabTabmenuActive{
-        display:none;
-	color:$fontc7;
+    display:none;
+	color:{$farbschema['WEB2']};
 	font-size:{$fontsize13};
 	white-space:nowrap;
 	overflow:visible;
@@ -551,21 +571,22 @@ body.multiframe{
         
 .lmbGtabTabmenuInactive, .lmbGtabTabmenuTable .lmbGtabTabmenuActive{
 	background-color:{$farbschema['WEB13']};
-	color:$fontc3;
+	//color:$fontc3;
 	//font-size:{$fontsize11};
 	white-space:nowrap;
 	overflow:visible;
 	padding: 3px 20px 5px 0;
 	border: none;
-        border-bottom:1px solid {$farbschema['WEB3']};
+    border-bottom:1px solid {$farbschema['WEB3']};
 	cursor:pointer;
-        float:left;
-        margin: 3px 0;
+    float:left;
+    margin: 3px 0;
 }
         
         
         
 .lmbGtabTabmenuTable.multiTab .lmbGtabTabmenuActive{
+    color:{$farbschema['WEB2']};
     clear: none;
     float: left;
     margin: 1px 0;
@@ -573,9 +594,41 @@ body.multiframe{
     width: auto;
 }        
         
+table .lmbGtabTab {
+    clear: none;
+    margin: 1px 0;
+    padding: 3px 20px 3px 0;
+    width: auto;
+    border-spacing: 0;
+}
+    
+td .lmbGtabTabActive {
+	color: $fontc7;
+	font-size: {$fontsize13};
+}
         
-        
-        
+.lmbGtabTabInactive, .lmbGtabTabActive {
+	color: $fontc3;
+	font-size: {$fontsize11};
+	white-space: nowrap;
+	overflow: visible;
+	padding: 3px 10px 3px 10px;
+	border: none;
+    border-bottom: 1px solid {$farbschema['WEB3']};
+	cursor: pointer;
+    margin: 3px 0;
+    vertical-align: baseline;
+}
+
+td .lmbGtabTabSpace {
+    width:100%;
+}
+
+.lmbGtabTabBody {
+	font-weight: normal;
+    border: 1px solid {$farbschema['WEB3']};
+	width: calc(95% - 2px); /* 2x border */
+}
         
         
         
@@ -595,9 +648,9 @@ body.multiframe{
         
 .GtabTableFringeHeader .lmbGtabTabmenuActive {
     border: none;
-        /* maybe for 100% header width */
-        box-sizing: border-box;
-        width: 100%;
+    /* maybe for 100% header width */
+    box-sizing: border-box;
+    width: 100%;
     border-bottom:1px solid {$farbschema['WEB1']};
     display: block;
     margin-bottom: 5px;
@@ -606,12 +659,11 @@ body.multiframe{
         
 
 .lmbGtabTabmenuTable .lmbGtabTabmenuActive {
-        /* maybe for 100% header width */
-        box-sizing: border-box;
-        width: 100%;
-        margin-top: 0px;
+    /* maybe for 100% header width */
+    box-sizing: border-box;
+    width: 100%;
+    margin-top: 0px;
     display: table-cell;
-    color:$fontc7;
     font-size: 1.3em;
     clear: both;
 }
@@ -709,14 +761,14 @@ body.multiframe{
 /* Tabulator Tabelle Formular links positioniert */
 
 .lmbGtabTabulatorLeftFrame{
-	background-color:{$farbschema['WEB14']};
+	background-color:{$farbschema['WEB9']};
 	border-collapse:collapse;
 	border: 1px solid {$farbschema['WEB3']};
 	border-left:none;
 }
 
 .lmbGtabTabulatorLeftActive{
-	background-color:{$farbschema['WEB14']};
+	background-color:{$farbschema['WEB9']};
 	color:$fontc7;
 	font-size:{$fontsize11};
 	white-space:nowrap;
@@ -773,7 +825,7 @@ body.multiframe{
 
 .gtabHeaderMenuTD{
 	cursor:pointer;
-	color:$fontc6;
+	color:color:{$farbschema['WEB2']};
 	padding-left:5px;
 	padding-right:5px;
 	height:18px;
@@ -804,8 +856,7 @@ body.multiframe{
 }
    
 .gtabHeaderInputINP{
-        border: none;
-        background-image: url("../../pic/find.png");
+        background-image: url(\"../../pic/find.png\");
         padding-left:14px;
         background-repeat: no-repeat;
         background-position: 2px 3px;
@@ -814,24 +865,29 @@ body.multiframe{
 }
 
 .gtabHeaderInputINPajax{
-        background-image: url("../../pic/find_green.png");
+        background-image: url(\"../../pic/find_green.png\");
 }
 
 .gtabHeaderTitleTD{
 	background-color: {$farbschema['WEB8']};
 	vertical-align: middle;
-	ine-height: 30px;
-        overflow: hidden;
+    overflow: hidden;
 	cursor:col-resize;
-	padding: 0 2px;
-        border-right: 1px solid {$farbschema['WEB1']};
-        border-left: 1px solid {$farbschema['WEB1']};
-        line-height: 20px;
+	padding-left: 4px;
+    border-right: 1px solid {$farbschema['WEB1']};
+    border-left: 1px solid {$farbschema['WEB1']};
+    line-height: 20px;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
 }
 
 .gtabHeaderTitleTDOver {
 	background-color: {$farbschema['WEB8']};
-    background-image: url("../../pic/silk_icons/arrow_bullet_left.gif");
+    background-image: url(\"../../pic/silk_icons/arrow_bullet_left.gif\");
     background-repeat: no-repeat;
     padding-left: 20px;
 }
@@ -907,9 +963,12 @@ body.multiframe{
     padding:2px;
     border:1px solid {$farbschema['WEB1']};
 }
+.gtabBodyTDCL .gtabBodyINP{
+    background-color:transparent;
+}
 
 .gtabBodyINP{
-	background-color: rgba(255, 255, 255, 0.5);
+	background-color: rgba(255, 255, 255, 0.3);
 }
 
 
@@ -922,7 +981,6 @@ body.multiframe{
 
 .gtabFooterTAB {
     height: 23px;
-    margin: 15px 0;
     vertical-align: middle;
     width: 100%;
 }
@@ -1000,6 +1058,10 @@ INPUT.gtabchange, TEXTAREA.gtabchange, SELECT.gtabchange{
         font-size: {$umgvar['fontsize']}px;
 }
 
+input, select, textarea {
+    color: inherit; /* to prevent the default black of some browsers */
+}
+
 .fgtabchange{
         background-color: {$farbschema['WEB8']};
         border: 1px solid {$farbschema['WEB3']};
@@ -1034,19 +1096,9 @@ DIV.fgtabchange{
 }
 
 INPUT.gmultilang {
-    background-image: url("../../pic/fa-language_16.png");
+    background-image: url(\"../../pic/fa-language_16.png\");
     background-repeat: no-repeat;
     background-position: right center;
-}
-
-
-/* gtab Tabelle Group */
-
-.gtabringeGroupBody {
-	font-weight: normal;
-    border: 1px solid {$farbschema['WEB3']};
-    border-top: none;
-	width: 94%;
 }
 
 
@@ -1077,11 +1129,34 @@ INPUT.gmultilang {
 
 
 
+/* Tabelle Kacheldarstellung */
+
+
+.tabTileSubform:hover .tabTileResize{
+    display:block;
+}
+
+.tabTileResize{
+    position:absolute;
+    display:none;
+    right:0px;
+    bottom:2px;
+    opacity:0.7;
+    cursor:pointer;
+    z-index:99999;
+}
+
+
+
 /* Tabelle allgemein */
 
 .tabfringe{
 	background-color:{$farbschema['WEB13']};
 	padding:0px;
+}
+
+.tabfringe.hoverable tr.tabBody:hover {
+    background-color:{$farbschema['WEB5']}
 }
 
 .tabHeader{
@@ -1110,6 +1185,10 @@ INPUT.gmultilang {
 
 .tabBody{
 	
+}
+
+.tabSortableHandle {
+    cursor: move;
 }
 
 .vAlignMiddle{
@@ -1142,27 +1221,30 @@ INPUT.gmultilang {
 }
 
 .tabHpoolItemActive{
-	color:$fontc7;
+	color:$fontc14;
 	font-size:{$fontsize11};
 	white-space:nowrap;
 	overflow:visible;
-	padding:3px;
+	padding:10px;
 	padding-left:20px;
 	padding-right:20px;
-	background-color:{$farbschema['WEB8']};
+	background-color:{$farbschema['WEB13']};
 	border:1px solid {$farbschema['WEB3']};
 	border-right:none;
 	border-bottom:none;
 	cursor:pointer;
 }
 
+.tabHpoolItemTR:nth-last-child(2) .tabHpoolItemActive {
+    border-bottom: 1px solid {$farbschema['WEB3']};
+}
+
 .tabHpoolItemInactive{
-	background-color:{$farbschema['WEB13']};
-	color:$fontc3;
+	color:{$farbschema['WEB12']};
 	font-size:{$fontsize11};
 	white-space:nowrap;
 	overflow:visible;
-	padding:3px;
+	padding:10px;
 	cursor:pointer;
 	padding-left:20px;
 	padding-right:20px;
@@ -1171,8 +1253,6 @@ INPUT.gmultilang {
 
 .tabHpoolItemSpaceGtab{
 	height:100%;
-	background-color:{$farbschema['WEB13']};
-	border:1px solid {$farbschema['WEB3']};
 }
 
 
@@ -1190,7 +1270,7 @@ INPUT.gmultilang {
 	border-collapse:collapse;
 	border-spacing:1px;
 	padding:5px;
-        margin:20px;
+    margin:20px;
 }
 
 .tabpoolItemTR{
@@ -1198,7 +1278,8 @@ INPUT.gmultilang {
 }
 
 .tabpoolItemActive{
-	color:$fontc7;
+    background-color:{$farbschema['WEB13']};
+	color:$fontc14;
 	text-align:center;
 	font-size:{$fontsize11};
 	white-space:nowrap;
@@ -1207,13 +1288,12 @@ INPUT.gmultilang {
 	padding-left:20px;
 	padding-right:20px;
 	border:1px solid {$farbschema['WEB3']};
-	border-bottom:none;
+	border-bottom-color:{$farbschema['WEB13']};
 	cursor:pointer;
 }
 
 .tabpoolItemInactive{
-	background-color:{$farbschema['WEB13']};
-	color:$fontc3;
+	color:{$farbschema['WEB12']};
 	text-align:center;
 	font-size:{$fontsize11};
 	white-space:nowrap;
@@ -1255,6 +1335,10 @@ INPUT.gmultilang {
     min-width: 150px;
     padding: 5px;
     position: absolute;
+    box-shadow: 7px 8px 9px -4px rgba(0,0,0,0.2);
+}
+.lmbContextMenu.lmbContextMenuMove {
+    padding: 0px 5px 5px 5px;
 }
     
 .lmbContextLink {
@@ -1276,9 +1360,13 @@ INPUT.gmultilang {
 }
 
 .lmbContextRow{
-	text-decoration:none;
-	display:block;
-	padding:2px;
+	text-decoration: none;
+	display: block;
+	padding: 3px 2px;
+}
+.lmbContextRow.lmbContextRowMove{
+	padding-top:5px;
+	cursor: move;
 }
         
 .lmbContextRowSeparatorLine{
@@ -1316,12 +1404,99 @@ INPUT.gmultilang {
 }
 
 .lmbContextHeader {
-	text-align:center;
-	height:20px;
+	height:18px;
 	font-weight: bold;
 	background-color: {$farbschema['WEB10']};
-	backgroud-color: easteregg;
-        padding-top: 4px;
+    padding-top: 6px;
+    border-bottom: 1px solid {$farbschema['WEB3']};
+    border-top: 1px solid {$farbschema['WEB3']};
+    margin: 0 -5px;
+   	text-align:center;
+}
+.lmbContextHeader:first-child {
+    margin-top: -5px;
+    border-top: none;
+}
+.lmbContextHeader[onclick] {
+    cursor: pointer;
+}
+.lmbContextHeader[onclick]:hover {
+    background-color: {$farbschema['WEB7']};
+}
+
+
+/* explorer */
+
+.lmbFileTreeItem{
+	cursor:pointer;
+}
+    
+.lmbFileTreeItem:hover{
+	cursor:pointer;
+	background-color: {$farbschema['WEB10']};
+	text-decoration:none;
+	/* color:{$fontc14};*/
+}
+
+
+
+/* relation tree ------------------------------------------------------------------------*/
+        
+.rtree1 {
+    background: {$farbschema["WEB7"]};
+    color: white;
+    font-weight:bold;
+	border:1px solid {$farbschema['WEB4']};
+	border-radius: 3px 3px 3px 3px;
+	padding: 3px;
+}
+
+.rtree2 {
+    background: {$farbschema["WEB10"]};
+
+	border:1px solid {$farbschema['WEB12']};
+	border-radius: 3px 3px 3px 3px;
+	padding: 3px;
+	
+}
+       
+        
+.lmb-green-hover-red {
+    color: green;
+}
+.lmb-black-hover-red {
+    color: {$farbschema["WEB2"]};
+}
+.lmb-green-hover-red:hover, .lmb-black-hover-red:hover {
+    color: red;
+}
+       
+.lmb-table-search-hide {
+    display: none;
+}
+
+label {
+    cursor: pointer;
+}
+
+.lmbfringeMenuSearch {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    transition: box-shadow 0.3s ease-in-out;
+}
+.lmbfringeMenuSearch .lmbMenuHeaderNav {
+    padding-top: 7px;
+    padding-bottom: unset;
+}
+.lmbTableSearch {
+    width: calc(100% - 7px);
+    padding:5px;
+    transition: box-shadow 0.3s ease-in-out;
+}
+.lmbTableSearch:not(:placeholder-shown) {
+    box-shadow: 0 0 2px 1px {$farbschema["WEB7"]};
+    border: 1px solid {$farbschema["WEB7"]};
 }
 
 
@@ -1360,13 +1535,11 @@ DIV.ajax_container {
 .lmbUploadProgress {
 	height: 14px;
 	width:100%;
-	border-radius: 4px;
 	border:1px solid {$farbschema['WEB3']};
 	background-color:{$farbschema['WEB8']};
-	background-image:url(../../pic/animated-overlay.gif);
-	background-repeat:repeat-x;
 	font-style:italic;
 	float:left;
+	position:relative;
 	display:none;
 }
 
@@ -1375,8 +1548,11 @@ DIV.ajax_container {
 	width:0%;
 	height:100%;
 	overflow:hidden;
-	border-radius: 4px;
-	border-right:1px solid {$farbschema['WEB3']};
+	white-space:nowrap;
+	position:absolute;
+	left:0;
+	top:0;
+	bottom:0;
 }
 
 .progress {
@@ -1407,6 +1583,22 @@ DIV.ajax_container {
 	background: {$farbschema['WEB14']};
 	opacity: .2;
 	filter: alpha(opacity=20);
+}
+
+/* Drop-Area border */
+.lmbUploadDroparea {
+    border: 2px dashed transparent;
+    margin: -2px;
+
+    /* because of dropover/dropleave events firing too fast */
+    transition: border-color 0.2s ease-in-out;
+}
+.lmbUploadDroparea.lmbUploadDropareaActive {
+    border-color: {$farbschema['WEB7']};
+    transition-duration: 0.01s;
+}
+.lmbUploadDroparea.lmbUploadDropareaHover {
+    border-color: green;
 }
 
 .modalOverlay {
@@ -1520,7 +1712,7 @@ TR.popmenu {
 
 TD {
 	font-weight: normal;
-	color: {$farbschema['WEB2']};
+	/* color: {$farbschema['WEB2']}; */
 }
 
 SELECT {
@@ -1576,6 +1768,10 @@ TEXTAREA {
         font-size: {$umgvar['fontsize']}px;
         resize:none;
 }
+
+i.lmb-icon[onclick] {
+    cursor: pointer;
+}
     
 /* for the translation form:
     Textarea is 2 line high, the height can be increased by the user */
@@ -1599,14 +1795,18 @@ FORM {
 /* fullcalendar ------------------------------------------------------------------------*/
 
 
-fc-widget-header,    /* <th>, usually */
+.fc-widget-header,    /* <th>, usually */
 .fc-widget-content {  /* <td>, usually */
 	border: 1px solid #ccc;
-	background: linear-gradient(to bottom, {$farbschema['WEB13']} 20%, {$farbschema['WEB11']} );
+	/* background: linear-gradient(to bottom, {$farbschema['WEB14']}, {$farbschema['WEB13']} 20px); */
+}
+
+.fc-widget-header {
+    vertical-align: bottom !important; 
 }
 
 .fc-state-highlight { /* <td> today cell */ /* TODO: add .fc-today to <th> */
-	background: {$farbschema['WEB10']};
+	background: {$farbschema['WEB5']};
 }
 
 .fc-cell-overlay { /* semi-transparent rectangle while dragging */
@@ -1706,10 +1906,10 @@ th.fc-resourceName {
 ------------------------------------------------------------------------*/
 
 .formeditorPanel {
-     background-color:{$farbschema["WEB11"]};
-     color: {$farbschema["WEB12"]};
+     background-color:{$farbschema["WEB8"]};
+     color: {$fontc14};
      border:1px solid {$farbschema["WEB3"]};
-     width:210px;
+     width:220px;
      margin-top: 10px;
 }
      
@@ -1724,7 +1924,7 @@ th.fc-resourceName {
      
 .formeditorPanelHead {
     height:15px;
-    color:#FFF;
+    color:{$fontc7};
     background-color:{$farbschema["WEB7"]};
     text-align:left;
 }
@@ -1759,8 +1959,22 @@ th.fc-resourceName {
 
 /* jquery UI ------------------------------------------------------------------------*/
 
+
+.ui-widget{
+    color: {$farbschema["WEB10"]};
+    background-color: {$farbschema["WEB10"]};
+}
+
+.ui-selecting {
+
+}
+
+.ui-selectable-helper {
+    border-color: {$farbschema["WEB2"]};
+}
+
 .ui-selected{
-	//background-color:orange !important;
+	//background:orange !important;
 	-moz-box-shadow: 3px 3px 3px #619A00;
 	-webkit-box-shadow: 3px 3px 3px #619A00;
 	box-shadow: 3px 3px 3px #619A00;
@@ -1774,18 +1988,23 @@ th.fc-resourceName {
     background: {$farbschema["WEB13"]};
 }
 
+
 .ui-widget .ui-widget-header {
     background: {$farbschema["WEB10"]};
     border-color: {$farbschema["WEB7"]};
     color: {$farbschema['WEB3']};
 }
+
+.ui-widget-content {
+    color:{$farbschema["WEB2"]};
+    background-image: none;
+}
     
 .ui-widget.ui-widget-content .ui-state-default {
-    color: {$farbschema["WEB12"]};
+    color: {$farbschema["WEB4"]};
 }
       
 .ui-widget.ui-widget-content .ui-state-hover, .ui-widget.ui-widget-content .ui-state-active {
-    background: {$farbschema["WEB10"]};
     border-color: {$farbschema["WEB7"]};
     color: {$farbschema['WEB2']};
 }
@@ -1809,11 +2028,11 @@ th.fc-resourceName {
 }
 
 .ui-widget .ui-widget-header .ui-icon.ui-icon-circle-triangle-e:before {
-    content: "\\f138"; 
+    content: \"\\f138\"; 
 }
     
 .ui-widget .ui-widget-header .ui-icon.ui-icon-circle-triangle-w:before {
-    content: "\\f137"; 
+    content: \"\\f137\"; 
 }
     
 .ui-widget .ui-widget-header .ui-icon.ui-icon-closethick {
@@ -1823,7 +2042,7 @@ th.fc-resourceName {
     height: 100%;
 }
 .ui-widget .ui-widget-header .ui-icon.ui-icon-closethick:before {
-    content: "\\f00d"; 
+    content: \"\\f00d\"; 
 }
 
 
@@ -1844,30 +2063,285 @@ div.calendar tbody .rowhilite td.wn {
     background: {$farbschema["WEB10"]}
 }
      
-        
-/* relation tree ------------------------------------------------------------------------*/
-        
-.rtree1 {
-    background: {$farbschema["WEB7"]};
-    color: white;
-    font-weight:bold;
-	border:1px solid {$farbschema['WEB4']};
-	border-radius: 3px 3px 3px 3px;
-	padding: 3px;
+.ui-datepicker {
+    background: linear-gradient({$farbschema["WEB11"]}, {$farbschema["WEB10"]});
 }
-
-.rtree2 {
-    background: {$farbschema["WEB10"]};
-
-	border:1px solid {$farbschema['WEB12']};
-	border-radius: 3px 3px 3px 3px;
-	padding: 3px;
-	
-}
-        
-        
      
-EOD;
+.ui-widget-content .ui-datepicker-calendar a.ui-state-default{
+    background-color: {$farbschema["WEB8"]};
+    color:{$farbschema["WEB12"]};
+    background-image: none;
+}
+
+.ui-widget-content .ui-datepicker-calendar a.ui-state-active{
+    background-color: {$farbschema["WEB12"]};
+    color:{$farbschema["WEB8"]};
+}
+
+.ui-widget-overlay{
+    background-image:none;
+    opacity: .6;
+    filter: Alpha(Opacity=60);
+}
+
+
+
+
+
+/* canban ------------------------------------------------------------------------*/
+
+
+.kanban-wrapper {
+    display: flex;
+    height: 95%;
+    max-width: 100%;
+    overflow: auto;
+    width: 100%;
+}
+
+.kanban {
+    /*table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 10px 0;*/
+}
+
+.kanban-header {
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    width: 100%;
+}
+
+.kanban-body {
+    display: flex;
+    flex-direction: row;
+    height: calc(100% - 35px);
+    height: -moz-calc(100% - 35px);
+    height: -webkit-calc(100% - 35px);
+    overflow: hidden;
+    width: 100%;
+}
+
+
+.kanban-column {
+    -moz-box-flex: 0;
+    -webkit-box-flex: 0;
+    flex: 0 0 280px;
+    margin: 0 5px 0 0;
+    max-width: 280px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 280px;
+    background-color: {$farbschema["WEB14"]};
+    box-sizing: border-box;
+}
+
+.kanban-column-header{
+    background-color: {$farbschema["WEB10"]};
+}
+
+.kanban-header .kanban-column {
+    border-top: 3px solid;
+    clear: both;
+    color: {$farbschema["WEB2"]};
+    font-weight: bold;
+    height: 30px;
+    padding: 7px 10px;
+    text-transform: uppercase;
+    overflow: hidden;
+}
+
+.kanban-body .kanban-column {
+    padding:5px 10px;
+}
+
+.kanban-header .kanban-filter {
+    border-color: {$farbschema["WEB12"]};
+}
+
+.kanban-body .kanban-filter {
+    background-color: {$farbschema["WEB8"]};
+    border: 1px solid {$farbschema["WEB12"]};
+}
+
+.kanban .col-title {
+    float:left;
+}
+.kanban .col-add, .kanban .col-filterico {
+    float:right;
+    cursor:pointer;
+}
+
+.kanban .card {
+    background-color: {$farbschema["WEB8"]};
+    box-shadow: 1px 1px 3px #545454;
+    border-radius: 3px 3px 3px 3px;
+    margin-bottom: 10px;
+    cursor:pointer;
+}
+
+.kanban .card-new:hover {
+    background-color: #DDDDDD;
+    color: #666666;
+}
+
+
+.kanban .kanban-drop {
+    background-color: {$farbschema["WEB11"]};
+    border:1px dashed {$farbschema["WEB7"]};
+    padding:15px;
+    margin-bottom: 10px;
+}
+
+.kanban .card .card-tags {
+    display: flex;
+}
+
+.kanban .card .card-tags .card-tag {
+    -moz-box-flex: 1;
+    -webkit-box-flex: 1;
+    display: block;
+    -webkit-flex: 1 1 0;
+    -moz-flex: 1 1 0;
+    -ms-flex: 1 1 0;
+    flex: 1 1 0;
+    height: 0.5rem;
+}
+
+.kanban .card .card-title {
+    padding: 10px;
+}
+
+.kanban .card .card-meta {
+    display:none;
+}
+
+.card-assigned {
+    text-align: right;
+//    background-color: {$farbschema["WEB11"]};
+}
+
+card-assigned-value{
+    background-color: {$farbschema["WEB11"]};
+}
+
+.card-assigned div {
+    display: inline-block;
+    margin: 0 5px 5px 0;
+    background-color: {$farbschema["WEB11"]};
+    padding: 5px;
+}
+
+/*
+ * Filter
+ ***************************************
+ */
+
+#kanban-filter ul {
+    list-style: outside none none;
+    margin: 0;
+    padding: 0;
+}
+
+#kanban-filter li {
+    border-bottom: 1px solid #666666;
+    clear: both;
+}
+
+#kanban-filter li a {
+    display: block;
+    padding: 0.5rem 0.5rem 0.5rem 1.5rem;
+}
+
+#kanban-filter li a:hover {
+    text-decoration:none;
+}
+
+#kanban-filter .filter-title {
+    text-transform: uppercase;
+}
+
+#kanban-filter .filter-item {
+    background-color: {$farbschema["WEB11"]};
+    border: 1px solid #afafaf;
+    cursor:pointer;
+    margin: 15px;
+    padding: 10px 40px 10px 10px;
+    position: relative;
+}
+
+#kanban-filter .filter-item .name {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    overflow-wrap: normal;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}
+
+#kanban-filter .filter-item .counter {
+    background-color: #afafaf;
+    box-sizing: border-box;
+    color: #ffffff;
+    height: 100%;
+    padding: 10px;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+
+#kanban-filter .filter-item .lmb-close-alt {
+    position: absolute;
+    right: 10px;
+    top: 12px;
+}
+
+#kanban-filter .filter-item[data-factive='1'] {
+    border:2px solid green;
+}
+
+#kanban-filter .filter-list {
+    display: none;
+    max-height: 300px;
+    overflow: auto;
+}
+
+/*
+ * Default-Formular
+ ***************************************
+ */
+.kanban-default-form input[type=text], .kanban-default-form select {
+    height:20px;
+    width:100%;
+}
+
+.kanban-default-form > tbody > tr > td {
+    padding:10px;
+    vertical-align: top;
+}
+
+.kanban-default-form p {
+    margin-bottom: 5px;
+}
+
+/* Smaller version of .lmbContextLink for use in attribute fieldtype */
+.lmbSelectLink {
+    color: {$farbschema['WEB2']};
+    cursor: pointer;
+    padding: 3px 1px 3px 0;
+    text-decoration: none;
+}
+.lmbSelectLink:hover {
+    background-color: {$farbschema['WEB5']};
+}
+
+/*special icon colors*/
+.lmb-query::before {
+    color: {$farbschema['WEB7']};
+}
+
+";
     
 # EXTENSIONS
 if($GLOBALS["gLmbExt"]["ext_css.inc"]){

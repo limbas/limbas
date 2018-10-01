@@ -2,7 +2,7 @@
 
 /*
  * Copyright notice
- * (c) 1998-2017 Limbas GmbH (info@limbas.com)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -12,7 +12,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -279,6 +279,12 @@ function sync_import_inner($path_right_export = null, $precheck, $confirm_syncim
             $exptables[] = dbf_4('ldms_rules');
         }
         
+        // synchronisation
+        if (in_array('synchronisation',$types)) {
+            $exptables[] = dbf_4('lmb_sync_conf');
+            $exptables[] = dbf_4('lmb_sync_template');
+        }
+        
         // === /sonst ===
 
         // always
@@ -309,7 +315,7 @@ function sync_import_inner($path_right_export = null, $precheck, $confirm_syncim
         if (!isset($callExtensionFunctionName)) {
             LimbasLogger::log(
                 "Configuration file invalid, following vars should be set:\n"
-                . ' - $callExtensionFunctionName: ' . json_encode($callExtensionFunctionName), LimbasLogger::LL_ERROR);
+                . ' - $callExtensionFunctionName', LimbasLogger::LL_ERROR);
             return false;
         }
     }
@@ -401,7 +407,7 @@ function sync_import_inner($path_right_export = null, $precheck, $confirm_syncim
     foreach ($tables as $table => $value) {
         # table will be created
         if (!array_key_exists($table, $exttableconf)) {
-            $output['createtab'][] = '<p style="color:green">create table ' . $table . '</p>';
+            $output['createtab'][] = '<p style="color:#05ce05">create table ' . $table . '</p>';
             $hasoutput['createtab'] = 1;
             if ($confirm_syncimport) {
                 import(false, 'over', null, null, null, null, $table);
@@ -485,7 +491,7 @@ function sync_import_inner($path_right_export = null, $precheck, $confirm_syncim
                 } # create field if not existent
                 else {
                     
-                    $output[$table]['createfield'][] = '<p style="color:#050">create field ' . $field . ' ' . $imptableconf[$table]['table'][$field]['datatype'].'('.$imptableconf[$table]['table'][$field]['fieldlength'].')</p>'; // in table '.$table.'</p>';
+                    $output[$table]['createfield'][] = '<p style="color:#05ce05">create field ' . $field . ' ' . $imptableconf[$table]['table'][$field]['datatype'].'('.$imptableconf[$table]['table'][$field]['fieldlength'].')</p>'; // in table '.$table.'</p>';
                     //add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$spellingf,$default,$sort,$add_permission,$inherit_tab,$inherit_field,$import_typ='default',$extension=null){
                     $hasoutput['createfield'] = 1;
                     
@@ -866,6 +872,23 @@ function sync_import_inner($path_right_export = null, $precheck, $confirm_syncim
             $lmbRulesTablefieldDiff = groupBy2Keys($lmbRulesTablefieldDiff, 'group', 'tablefield entry');
         }
         
+        if (in_array('synchronisation', $types)) {
+            $lmbSyncDiff = compareTableData($path, $pathtmp, dbf_4('lmb_sync_conf') . '.tar.gz', array(dbf_4('id')), $defaultIgnore);
+            if ($lmbSyncDiff === false) {
+                LimbasLogger::log("Could not compare sync conf!", LimbasLogger::LL_ERROR);
+                return false;
+            }
+            $lmbSyncDiff = groupBy1Key($lmbSyncDiff, 'conf_id');
+            
+            $lmbSyncTemplDiff = compareTableData($path, $pathtmp, dbf_4('lmb_sync_template') . '.tar.gz', array(dbf_4('id')), $defaultIgnore);
+            if ($lmbSyncTemplDiff === false) {
+                LimbasLogger::log("Could not compare sync template!", LimbasLogger::LL_ERROR);
+                return false;
+            }
+            $lmbSyncTemplDiff = groupBy1Key($lmbSyncTemplDiff, 'template_id');
+        }
+            
+        
         # compare system
         if (in_array('system', $types)) {
             # get lmb_action diff
@@ -937,7 +960,7 @@ function sync_import_inner($path_right_export = null, $precheck, $confirm_syncim
 
         # new tables
         if (is_array($output['createtab'])) {
-            echo '<h3 style="color:green">create tables</h3><div style="max-height:200px;overflow:auto;border:1px solid grey;padding:4px;">';
+            echo '<h3 style="color:#05ce05">create tables</h3><div style="max-height:200px;overflow:auto;border:1px solid grey;padding:4px;">';
             foreach ($output['createtab'] as $value) {
                 echo $value;
             }
@@ -947,7 +970,7 @@ function sync_import_inner($path_right_export = null, $precheck, $confirm_syncim
         # field changes
         if($hasoutput['deletefield'] OR $hasoutput['createfield'] OR $hasoutput['changefield']){
         echo '<h3>fieldchanges per table</h3><div style="border:1px solid lightgrey;padding:4px;">';
-        foreach ($output as $table => $value) {
+        foreach ($output as $table => $_value) {
             if ($table != 'createtab' && $table != 'deletetab') {
                 if(is_array($output[$table]['deletefield']) OR is_array($output[$table]['createfield']) OR is_array($output[$table]['changefield'])){
                 echo '<strong>' . lmb_strtoupper($table) . '</strong>';
@@ -1013,6 +1036,8 @@ function sync_import_inner($path_right_export = null, $precheck, $confirm_syncim
         tableOutput2($lmbLangDiff, 'Language changes');
         tableOutput1($lmbMimetypeDiff, 'Mimetype changes');
         tableOutput1($lmbUmgvarDiff, 'Environment variable changes');
+        tableOutput1($lmbSyncDiff, 'Sync config changes');
+        tableOutput1($lmbSyncTemplDiff, 'Sync template changes');
 
         if($precheck === 2){
             echo '<h3>Systemtables that are overwritten</h3>';
@@ -1211,21 +1236,15 @@ function sync_import_inner($path_right_export = null, $precheck, $confirm_syncim
         if (file_exists($extensionsTarGz)) {
             # remove old extensions
             $extensionsDir = $umgvar['path'] . '/EXTENSIONS';
-            error_log("test1");
             system("rm -r '$extensionsDir'", $returnCode);
             if($returnCode != 0) {
-                error_log("test2");
-
                 LimbasLogger::log("could not delete old EXTENSIONS: return code $returnCode!", LimbasLogger::LL_ERROR);
                 return false;
             }
-            error_log("test3");
 
             # extract new extensions
             system("tar xzf '$extensionsTarGz' -C '{$umgvar['path']}'");            
             LimbasLogger::log("overwrote old extensions", LimbasLogger::LL_INFO);
-            error_log("test4");
-
         }
                 
         # call extension function
@@ -1380,7 +1399,7 @@ function tableOutput2($diff, $description) {
  * @param array     $primaryKeys    array of columnNames that will be used to determine if a dataset
  *                                  of one table is also in the other
  * @param array     $ignoreColumns  array of columnNames that will be ignored and not compared
- * @param function  $descFunc       user function (type, leftData, rightData, key, columnIds)=>string
+ * @param function|string  $desc    user function (type, leftData, rightData, key, columnIds)=>string
  *                                  to add someDesc into the output array
  * @param function  $filterFunc     user function(key, value, columnIds)=>bool to filter left/right arrays
  * @return false|array [
@@ -1415,7 +1434,7 @@ function compareTableData($path, $pathtmp, $tarFileName, $primaryKeys, $ignoreCo
         LimbasLogger::log("Could not read '$tarFileName' in '$path' into array indexed by " . json_encode($primaryKeys) . "!", LimbasLogger::LL_ERROR);
         return false;
     }
-    $right = tarToPrimaryKeyIndexedArr($pathtmp, $tarFileName, $primaryKeys);
+    $right = tarToPrimaryKeyIndexedArr($pathtmp, $tarFileName, $primaryKeys, $_header = array());
     if ($right === false) {
         LimbasLogger::log("Could not read '$tarFileName' in '$pathtmp' into array indexed by " . json_encode($primaryKeys) . "!", LimbasLogger::LL_ERROR);
         return false;
@@ -1684,8 +1703,8 @@ function printCompareTable1($dataArr)
     }
 
     $red = '#f00';
-    $green = '#050';
-    $yellow = '#c19620';
+    $green = '#05ce05';
+    $yellow = '#ddaa1e';
 
     $out = "";
     foreach ($dataArr as $subKey => $data) {

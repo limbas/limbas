@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -248,7 +248,7 @@ function lmbAjax_resultGtabPost(result){
 function limbasDivShowReminderFilter(evt,el) {
 	activ_menu = 1;
 	if(el){
-		limbasDivShow(el,'limbasDivMenuExtras','limbasDivMenuReminder');
+		limbasDivShow(el,'limbasDivMenuAnsicht','limbasDivMenuReminder');
 	}
 }
 
@@ -428,10 +428,12 @@ function limbasSnapshotShare(el,snap_id,destUser,del,edit,drop)
 	if(typeof(edit) == "undefined"){edit = 0;}
 	if(typeof(drop) == "undefined"){drop = 0;}
 	
-	ajaxGet('','main_dyns.php','showUserGroups&gtabid='+snap_id+'&usefunction=lmbSnapShareSelect&destUser='+destUser+'&del='+del+'&edit='+edit+'&drop='+drop,'','ajaxContainerPost');
-	if(el){
-		limbasDivShow(el,'limbasDivMenuSnapshot','lmbAjaxContainer');
-	}
+	ajaxGet('','main_dyns.php','showUserGroups&gtabid='+snap_id+'&usefunction=lmbSnapShareSelect&destUser='+destUser+'&del='+del+'&edit='+edit+'&drop='+drop,'', function(result) {
+        $('#lmbAjaxContainer').html(result).show();
+		if(el){
+            limbasDivShow(el,'limbasDivMenuSnapshot','lmbAjaxContainer');
+        }
+	});
 }
 function lmbSnapShareSelect(ugval,snapname,gtabid){
 	limbasSnapshotShare(null,gtabid,ugval);
@@ -462,15 +464,16 @@ function refreshMenuOnSnapshot()
 
 /*----------------- Diagramm -------------------*/
 function lmbDiagramm(diag_id,gtabid) {
-	var actid = "getDiag&&gtabid=" + gtabid + "&diag_id="+ diag_id;
+	var actid = "getDiag&gtabid=" + gtabid + "&diag_id="+ diag_id;
 	ajaxGet(null,"main_dyns.php",actid,null,"lmbAjax_lmbDiagrammPost");
 }
 
 function lmbAjax_lmbDiagrammPost(result){
-	if(ajaxEvalScript(result) === false){
-		if(result){
-			diagramm = open(result+'?'+Date.now() ,"Diagram");
-		}
+    if (ajaxEvalScript(result)) {
+        result = result.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, '');
+    }
+	if(result){
+		diagramm = open(result+'?'+Date.now() ,"Diagram");
 	}
 }
 
@@ -513,7 +516,7 @@ function view_detail(newwin,id) {
 }
 
 function view_change() {
-	view_detail(1);
+	view_detail();
 }
 
 //----------------- Bearbeitungsansicht -------------------
@@ -529,6 +532,25 @@ function view_copychange(id,gtabid) {
 		document.form2.gtabid.value=jsvar["gtabid"];
 	}
 }
+
+// ---------------- Sendkeypress----------------------
+function view_contextDetail() {
+
+    if(tmp_form_id) {
+        ID = document.form2.ID.value;
+        gtabid = document.form2.gtabid.value;
+
+        var t = 'div';
+        if (tmp_form_typ == 1) {
+            t = 'iframe';
+        }
+        newwin7(null, gtabid, null, null, null, ID, tmp_form_id, tmp_form_dimension, null, t);
+    }else{
+        view_detail();
+    }
+
+}
+
 
 // ---------------- Sendkeypress----------------------
 function sendkeydown(evt) {
@@ -593,51 +615,6 @@ function gtabSetTablePosition(posx,posy){
             }   
     }
 
-        /*
-        // table height
-        if(document.getElementById("lmbGlistBodyTab")){
-                document.getElementById("GtabTableBody").style.height = document.getElementById("lmbGlistBodyTab").offsetHeight;
-        }else{
-                document.getElementById("GtabTableBody").style.height = document.getElementById("GtabBodyTableTD").offsetHeight;
-        }
-
-        var maintabHeight = document.getElementById("GtabTableFringe").offsetHeight;
-        var bodytabHeight = document.getElementById("GtabTableBody").offsetHeight;
-        var maintabWidth = document.getElementById("GtabTableFringe").offsetWidth;
-        var bodytabWidth = document.getElementById("GtabTableBody").offsetWidth;
-
-        if(browser_ns5){
-                var winHeight = window.innerHeight;
-                var winWidth = window.innerWidth;
-        }else{
-                var winHeight = document.body.offsetHeight;
-                var winWidth = document.body.offsetWidth;
-        }
-
-        // table resize window
-        if(maintabHeight+40 > winHeight){
-                document.getElementById("GtabTableBody").style.height = (winHeight-(maintabHeight-bodytabHeight)) - 50;
-                eltb = document.getElementById("lmbGlistBodyTab");
-                clast = eltb.rows[0].cells.length-1;
-
-                // padding last cell for scrollbar
-                var lastc = eltb.rows[0].cells.length-1;
-                var cl = eltb.rows.length
-
-                for (var e = 0; e < cl; e++){
-                        var tdel = eltb.rows[e].cells[lastc];
-                        if(tdel){
-                                tdel.style.paddingRight = '20px';
-                        }
-                }
-
-        }
-
-
-        if(document.getElementById("GtabTableFull") && maintabWidth+40 > winWidth){
-                document.getElementById("GtabTableFull").style.width = (winWidth-(maintabWidth-bodytabWidth)) - 50;
-        }
-        */
 	
 }
 
@@ -920,6 +897,52 @@ function lmbShowColumn(tabid,fieldid){
 	lmbAjax_resultGtab("form1",1,1,1,1);
 	document.form1.filter_hidecols.value = '';
 }
+function lmbShowSubColumns(headerEl) {
+	var header = $(headerEl);
+
+	// get/switch mode (show all / hide all)
+	var mode;
+	if (header.attr('lmb-mode') === 'show') {
+		mode = 'show';
+        header.attr('lmb-mode', 'hide');
+	} else {
+		mode = 'hide';
+        header.attr('lmb-mode', 'show')
+	}
+
+	// iterate over all context rows of that group
+    var toChange = [];
+    header
+		.nextUntil('.lmbContextHeader', '.lmbContextLink')
+		.each(function() {
+			var image = $(this).children('i');
+			var isHidden = (image.css('visibility') === 'hidden');
+
+			// already hidden / already shown -> nothing to do
+			if (mode === 'show' && !isHidden || mode === 'hide' && isHidden) {
+				return;
+			}
+
+			// change context row appearance
+			var text = $(this).children('span').get(0);
+			if (isHidden) {
+				image.css('visibility', '');
+				text.style.color = 'green';
+			} else {
+				image.css('visibility', 'hidden');
+				text.style.color = ''
+			}
+
+			// save tabid_fieldid for ajax request
+			var id = text.id;
+			toChange.push(id.replace('lmbViewFieldItem_', ''));
+		});
+
+    // perform ajax request
+    document.form1.filter_hidecols.value = toChange.join(';');
+    lmbAjax_resultGtab("form1", 1, 1, 1, 1);
+    document.form1.filter_hidecols.value = '';
+}
 
 // Limit aufheben
 function noLimit(){
@@ -983,8 +1006,15 @@ function set_color(COLOR) {
 			if(ln[0] == "td"){
 				if(ln[1] == line[1] || selected_rows['elrow_'+ln[1]+'_'+ln[3]]){
 					cc.style.backgroundColor = COLOR;
+                    document.getElementById('elrow_'+ln[1]+'_'+ln[3]).style.backgroundColor = '';
 					document.getElementById('elrow_'+ln[1]+'_'+ln[3]).setAttribute("lmbbgcolor", COLOR);
 				}
+			} else if(ln[0] == "tdap") {
+                if(ln[1] == line[1] || selected_rows['elrow_'+ln[1]+'_'+ln[2]]){
+                    cc.style.backgroundColor = COLOR;
+                    document.getElementById('elrow_'+ln[1]+'_'+ln[2]).style.backgroundColor = '';
+                    document.getElementById('elrow_'+ln[1]+'_'+ln[2]).setAttribute("lmbbgcolor", COLOR);
+                }
 			}
 		}
 		
@@ -1201,14 +1231,23 @@ function set_activ_menu(){
 }
 
 var cell_id = null;
+var tmp_form_id = null;
+var tmp_form_typ = null;
+var tmp_form_dimension = null;
+
 // --- Editmenüsteuerung -----------------------------------
-function div1(evt,el,ID,TABID,ERSTDATUM,EDITDATUM,ERSTUSER,EDITUSER,V_ID,V_GID,V_FID,V_TYP) {
+function lmbTableContextMenu(evt,el,ID,gtabid,form_id,form_typ,form_dimension,ERSTDATUM,EDITDATUM,ERSTUSER,EDITUSER,V_ID,V_GID,V_FID,V_TYP) {
 
 	divclose();
 	// --------- deactivate all rows -------------
 	//aktivateRows(0);
 	// --------- activate single row -------------
-	aktivateSingleRow('elrow_'+ID+'_'+TABID,1);
+	// aktivateSingleRow('elrow_'+ID+'_'+TABID,1);
+	// activate row if not active
+	const rowid = el.id;
+	if (!selected_rows[rowid]) {
+        lmbTableClickEvent(evt, el);
+	}
 
 	document.getElementById("lmbInfoCreate").innerHTML = ERSTUSER+"\n"+ERSTDATUM;
 	document.getElementById("lmbInfoEdit").innerHTML = EDITUSER+"\n"+EDITDATUM;
@@ -1220,7 +1259,11 @@ function div1(evt,el,ID,TABID,ERSTDATUM,EDITDATUM,ERSTUSER,EDITUSER,V_ID,V_GID,V
 	if(V_ID > 0){document.form2.verkn_ID.value=V_ID;}
 	if(V_GID > 0){document.form2.verkn_tabid.value=V_GID;}
 	if(V_FID > 0){document.form2.verkn_fieldid.value=V_FID;}
-	if(TABID > 0){document.form2.gtabid.value=TABID;}
+	if(gtabid > 0){document.form2.gtabid.value=gtabid;}
+
+	tmp_form_id=form_id;
+	tmp_form_typ=form_typ;
+	tmp_form_dimension=form_dimension;
 	
 	limbasDivShow('',evt,"limbasDivMenuContext");
 

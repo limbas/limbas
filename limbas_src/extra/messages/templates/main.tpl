@@ -28,10 +28,10 @@ $this->add("mail_left_bgcolor", $farbschema['WEB8']);
 		dbg.show(content, false, false);
 	}
 //--></script>
-<div class="lmbPositionContainerMain">
-<table class="tabfringe" width="100%" height="100%" cellspacing="0" cellpadding="0"><tr>
+<div class="lmbPositionContainerMain" style="height: calc(100% - 40px);" >
+<table class="tabfringe" width="100%"  cellspacing="0" cellpadding="0"><tr>
 <td class="lmbfringeFrameMain" valign="top">
-<table id="mail_main" height="100%" width="100%" border="0" cellpadding="0" cellspacing="0">
+<table id="mail_main" width="100%"  border="0" cellpadding="0" cellspacing="0">
 	<tr>
             <td id="mail_left_column" valign="top">
 				<div id="mail_folders">

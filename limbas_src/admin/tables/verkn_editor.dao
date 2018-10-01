@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -242,7 +242,7 @@ if($vknsave){
 	
 	#if(is_array($new_verknfindid)){$new_verknfindid = implode(",",$new_verknfindid).'?'.$findidCut;}
 	
-	$sqlquery =  "UPDATE LMB_CONF_FIELDS SET VERKNSEARCH = '".parse_db_string($new_verknsearchid,20)."',VERKNVIEW = '".parse_db_string($new_verknviewid,20)."',VERKNFIND = '".parse_db_string($new_verknfindid,20)."' WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+	$sqlquery =  "UPDATE LMB_CONF_FIELDS SET VERKNSEARCH = '".parse_db_string($new_verknsearchid,50)."',VERKNVIEW = '".parse_db_string($new_verknviewid,50)."',VERKNFIND = '".parse_db_string($new_verknfindid,50)."' WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}else{
 	$verknsearchid = explode(",",$new_verknsearchid);
@@ -296,7 +296,7 @@ if($veknfieldid AND $new_refint_rule AND !$recursrelation){
 	
 	# add
 	if($new_refint AND !$refint){
-		if(lmb_rebuildForeignKey(null,array($tabid),1)){
+		if(lmb_rebuildForeignKey(null,array($tabid),$fieldid)){
 			$new_refint = LMB_DBDEF_TRUE;
 			$refint = 1;
 			$message1 = "$lang[941] <B><FONT COLOR=\"green\">$lang[942]</FONT></B><BR>";
@@ -318,7 +318,7 @@ if($veknfieldid AND $new_refint_rule AND !$recursrelation){
 
 		$new_refint = LMB_DBDEF_FALSE;
 		$refint = 0;
-		$message1 = "$lang[941] <B><FONT COLOR=\"green\">$lang[938]</FONT></B><BR>";
+		$message1 = "$lang[941] <B><FONT COLOR=\"green\">$lang[770]</FONT></B><BR>";
 	
 		$sqlquery = "UPDATE LMB_CONF_FIELDS SET REFINT = $new_refint WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -370,9 +370,8 @@ function createRelationParams($new_vparams,$verknparams,$md5tab,$groupid,$fields
             $ifield['tablename'] = $md5tab;
             $ifield['tablegroup'] = $groupid;
             $ifield['tablespelling'] = $fieldspelling;
-			if(!$new_gtabid = import_create_addtable('convert',$ifield,1)){
-				return false;
-			}
+			$new_gtabid = import_create_addtable('convert',$ifield,1);
+			$new_gtabid = $new_gtabid['new_gtabid'];
 		}
 		
 		$sqlquery = "UPDATE LMB_CONF_FIELDS SET VERKNPARAMS = ".parse_db_int($new_gtabid)." WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
@@ -474,27 +473,6 @@ function lmb_has_duplicates($array){
 	return false;
 }
 
-/*
-* Checks if there is a duplicate in arr and removes the matching entry in arr2
-* Returns part-array of arr2
-*/
-function removeDuplicates($arr,$arr2){
-	$newarr = array();
-	for($i = 0; $i < count($arr); $i++){
-		$arraystr = implode(",",$arr[$i]);
-		for($u = $i + 1; $u < count($arr); $u++){
-			$array2str = implode(",",$arr[$u]);
-			if($arraystr == $array2str){
-				continue 2;
-			}
-		}
-		array_push($newarr,$arr2[$i]);
-	}
-	return $newarr;
-}
-
-
-
 
 /*
 * Returns array of all verkntabs from tabid to verkntabid
@@ -521,7 +499,7 @@ function recrelationtree(){
 			}
 		}
 	}
-	return removeDuplicates($branchesIds,$branchesFiltered);
+	return $branchesFiltered; //removeDuplicates($branchesIds,$branchesFiltered);
 }
 
 /*

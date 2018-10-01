@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -21,7 +21,7 @@
 
 
 
-<?
+<?php
 # * --- Teilimport -------------------------------
 if(!$txt_terminate){$txt_terminate = $umgvar['csv_delimiter'];}
 if(!$txt_enclosure){$txt_enclosure = $umgvar['csv_enclosure'];}
@@ -33,16 +33,16 @@ if(!$import_typ){$import_typ = 'atm';}
 <TR class="tabHeader"><TD class="tabHeaderItem" COLSPAN="99"><?=$lang[990]?>:</TD></TR>
 
 <TR class="tabBody">
-<TD valign="top"><IMG SRC="pic/limbasicon.gif" ALT="<?=$lang[995]?>" Border="0"><input type="radio" NAME="import_typ" VALUE="atm" STYLE="BACKGROUND-COLOR:<?echo $farbschema[WEB8]?>;BORDER:none" <?if($import_typ == 'atm'){echo 'checked';}?>></TD>
+<TD valign="top"><IMG SRC="pic/limbasicon.gif" ALT="<?=$lang[995]?>" Border="0"><input type="radio" NAME="import_typ" VALUE="atm" STYLE="BACKGROUND-COLOR:<?= $farbschema['WEB8'] ?>;BORDER:none" <?php if($import_typ == 'atm'){echo 'checked';}?>></TD>
 <TD valign="top">&nbsp;<?=$lang[998]?>:&nbsp;</TD>
 <TD valign="top"><input type="file" NAME="fileatm"></TD>
 
 <TD align="right" colspan="5">
-<?if($import_overwrite == "over" OR !$import_overwrite){$checked = "checked";}else{$checked = "";}?>
+<?php if($import_overwrite == "over" OR !$import_overwrite){$checked = "checked";}else{$checked = "";}?>
 <?=$lang[1002]?><INPUT TYPE="RADIO" NAME="import_overwrite" VALUE="over" <?=$checked?>>&nbsp;&nbsp;<br>
-<?if($import_overwrite == "add"){$checked = "checked";}else{$checked = "";}?>
+<?php if($import_overwrite == "add"){$checked = "checked";}else{$checked = "";}?>
 <?=$lang[1003]?><INPUT TYPE="RADIO" NAME="import_overwrite" VALUE="add" <?=$checked?>>&nbsp;&nbsp;<br>
-<?if($import_overwrite == "add_with_ID"){$checked = "checked";}else{$checked = "";}?>
+<?php if($import_overwrite == "add_with_ID"){$checked = "checked";}else{$checked = "";}?>
 <?=$lang[1003].' ('.$lang[1004].')'?><INPUT TYPE="RADIO" NAME="import_overwrite" VALUE="add_with_ID" <?=$checked?>>&nbsp;&nbsp;
 </TD>
 
@@ -51,7 +51,7 @@ if(!$import_typ){$import_typ = 'atm';}
 <TR class="tabBody"><TD colspan="5"><HR></TD></TR>
 
 <TR class="tabBody">
-<TD valign="top"><i class="lmb-icon lmb-file-text" ALT="<?=$lang[991]?>" Border="0"></i><input type="radio" ID="import_typ" NAME="import_typ" VALUE="txt" STYLE="BACKGROUND-COLOR:<?echo $farbschema[WEB8]?>;BORDER:none" <?if($import_typ == 'txt'){echo 'checked';}?>></TD>
+<TD valign="top"><i class="lmb-icon lmb-file-text" ALT="<?=$lang[991]?>" Border="0"></i><input type="radio" ID="import_typ" NAME="import_typ" VALUE="txt" STYLE="BACKGROUND-COLOR:<?= $farbschema['WEB8'] ?>;BORDER:none" <?php if($import_typ == 'txt'){echo 'checked';}?>></TD>
 <TD valign="top">&nbsp;<?=$lang[992]?>&nbsp;(csv,gz,zip):&nbsp;</TD>
 <TD valign="top"><input type="file" NAME="filetxt"></TD>
 <TD valign="top" align="right">
@@ -66,7 +66,7 @@ if(!$import_typ){$import_typ = 'atm';}
 
 <tr><td><?=$lang[1003]?>&nbsp;</td><td align="right" class="table-spacer-2px">
 	<select name="attach_gtabid"><option value="">
-	<?
+	<?php
 	$gtab_ = $gtab;
 	asort($gtab_['table']);
 	foreach ($gtab_["table"] as $key => $value){
@@ -83,14 +83,14 @@ if(!$import_typ){$import_typ = 'atm';}
 
 <TR class="tabBody"><TD colspan="5"><HR></TD></TR>
 <TR class="tabBody">
-<TD colspan="5"><INPUT TYPE="button" onclick="document.form1.import_action.value=1;document.form1.submit();" VALUE="<?=$lang[1005]?>">&nbsp;&nbsp;utf8 en/decode&nbsp;<input name="txt_encode" type="checkbox" <?if($txt_encode){echo "checked";}?>></TD>
+<TD colspan="5"><INPUT TYPE="button" onclick="document.form1.import_action.value=1;document.form1.submit();" VALUE="<?=$lang[979]?>">&nbsp;&nbsp;utf8 en/decode&nbsp;<input name="txt_encode" type="checkbox" <?php if($txt_encode){echo "checked";}?>></TD>
 </TR>
 
 
 <TR><TD colspan="5" class="tabFooter"></TD></TR>
 
 </TABLE>
-<?
+<?php
 
 
 
@@ -150,9 +150,9 @@ if($import_action AND $import_typ == "atm"){
 */
 }elseif($import_action AND $import_typ == "txt"){
 
-    #tab_name = field[tablename]
-    #tab_spelling = field[tablespelling]
-    #tab_group = field[tablegroup]
+    #tab_name = field['tablename']
+    #tab_spelling = field['tablespelling']
+    #tab_group = field['tablegroup']
     
     // import and attach to existing table
     if($attach_gtabid){
@@ -175,7 +175,7 @@ if($import_action AND $import_typ == "atm"){
     }else{
         // step 1 - merge fieldtypes
         if($import_action == 1){
-            import_create_fieldmapping($ifield,$import_typ,null,$txt_terminate,$txt_enclosure,$txt_calculate,$txt_encode);
+            import_create_fieldmapping($ifield,$import_typ,null,null,$txt_terminate,$txt_enclosure,$txt_calculate,$txt_encode);
         // step 2 - import datasets
         }elseif($import_action == 2){
             $ifield = import_create_addtable($import_typ,$ifield,$add_permission,1);

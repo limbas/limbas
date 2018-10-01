@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -126,11 +126,35 @@ function logout(){
 	}
 }
 
-function srefresh() {
-	link = confirm("<?=$lang[856]?>");
-	if(link) {
-		parent.nav.document.location.href="main.php?action=nav&sparte=gtab&tab_group=1&refresh=no&sess_refresh=<?=$session["user_id"]?>";
-	}
+function srefresh(el=null) {
+    // start rotating icon
+    var icon = null;
+    if (el) {
+        icon = $(el).find('i');
+        icon.addClass('lmb-rotating');
+        icon.css('color', '#e4d314');
+    }
+
+    // get id of selected menu element to show after frame is loaded
+    var activeMenu = '';
+    const activeItem = $('.lmbMenuItemActiveTop2[onclick]');
+    if (activeItem) {
+        const ids = activeItem.attr('onclick').match(/openMenu\((.*?)\)/);
+        if (ids && ids[1]) {
+            activeMenu = '&activeMenu=' + ids[1];
+        }
+    }
+
+    // reload frame
+    parent.nav.document.location.href="main.php?action=nav&sparte=gtab&tab_group=1&refresh=no&sess_refresh=<?=$session["user_id"]?>" + activeMenu;
+
+    // stop rotating icon when frame is loaded
+    if (el) {
+        parent.nav.frameElement.addEventListener('load', function () {
+            icon.removeClass('lmb-rotating');
+            icon.css('color', '');
+        });
+    }
 }
 
 function help(){
@@ -148,7 +172,7 @@ var activ1 = 0;
 var activ2 = 0;
 
 function l_over(el){
-	<?
+	<?php
 	foreach($LINK["name"] as $key => $value){
 		if($LINK["subgroup"][$key] == 2 AND $LINK["typ"][$key] == 1){
 	        echo "document.getElementById('el_".$key."').style.color='';\n";
@@ -157,7 +181,7 @@ function l_over(el){
 	}
 	?>
 	el.style.color = 'black';
-	el.style.borderBottom = '<?=$farbschema["WEB5"]?>';
+	el.style.borderBottom = '<?=$farbschema["WEB8"]?>';
 }
 
 
@@ -167,7 +191,7 @@ function l_out(el){
 		el.style.borderBottom='1px solid #FFFFFF';
 		if(activ1){
 			document.getElementById(activ1).style.color='black';
-			document.getElementById(activ1).style.borderBottom='<?=$farbschema["WEB5"]?>';
+			document.getElementById(activ1).style.borderBottom='<?=$farbschema["WEB8"]?>';
 		}
 	}
 }
@@ -175,7 +199,7 @@ function l_out(el){
 function act(el){
 	var sel = 'el_'+el;
 	var menel = el;
-	<?
+	<?php
 	foreach($LINK["name"] as $key => $value){
 		#if($LINK["typ"][$key] == 1 OR $LINK["typ"][$key] == 5){
 		#	echo "if(parent.nav.document.getElementById('menu_".$key."')){\n";
@@ -184,7 +208,7 @@ function act(el){
 		#}
 
 		if($LINK["subgroup"][$key] == 3 AND ($LINK["typ"][$key] == 1 OR $LINK["typ"][$key] == 5)){
-			echo "document.getElementById('el_".$key."').style.color='$farbschema[WEB12]';\n";
+			echo "document.getElementById('el_".$key."').style.color='{$farbschema['WEB12']}';\n";
 			echo "activ1 = 0;\n";
 		}
 	}
@@ -201,21 +225,21 @@ function act(el){
 
 
 function l2_over(el){
-	<?
+	<?php
 	foreach($LINK["name"] as $key => $value){
 		if($LINK["subgroup"][$key] == 2 AND $LINK["typ"][$key] == 1){
 	        echo "document.getElementById('el_".$key."').style.color='" . $farbschema["WEB12"] . "';\n";
 	    }
 	}
 	?>
-	el.style.color = '<?=$farbschema["WEB5"]?>';
+	el.style.color = '<?=$farbschema["WEB8"]?>';
 }
 
 function l2_out(el){
 	if(activ2 != el){
 		el.style.color='<?=$farbschema["WEB12"]?>';
 		if(activ2){
-			document.getElementById(activ2).style.color='<?=$farbschema["WEB5"]?>';
+			document.getElementById(activ2).style.color='<?=$farbschema["WEB8"]?>';
 		}
 	}
 }
@@ -239,11 +263,11 @@ function act2(el){
 		}
 	}
 
-	<?//firefox without getElementByName
+	<?php //firefox without getElementByName
 	if(lmb_strpos($_SERVER["HTTP_USER_AGENT"],"MSIE")<1){?>
 	toDisplay = parent.nav.document.getElementsByName(menel)[0];
 
-	<?}else{?>
+	<?php }else{?>
 	toDisplayList = parent.nav.document.getElementsByTagName("TABLE");
 	toDisplay = null;
 	for(i=0;i<toDisplayList.length;i++){
@@ -264,7 +288,7 @@ function act2(el){
 			}
 		}
 	}
-	<?}?>
+	<?php }?>
 
 
 	if(toDisplay){
@@ -289,18 +313,27 @@ function openMenu(id){
 <!-- TOP of the cells -->
 <?php
 
+echo '<td class="lmbMenuItemInactiveTop2" style="padding: 0 5px;" title="' . $lang[$LINK['name'][301]] . '" onclick="openMenu(301); limbasSetLayoutClassTabs(this,\'lmbMenuItemInactiveTop2\',\'lmbMenuItemActiveTop2\')">';
+$topLeft = 'pic/logo_topleft.png';
 if(file_exists("EXTENSIONS/customization/logo_topleft.png")){
-    echo '<td class="logo_topleft_menu"><img alt="" title="LIMBAS V. '.$umgvar["version"].'" src="EXTENSIONS/customization/logo_topleft.png" onclick="infos()"></td>';
+    $topLeft = 'EXTENSIONS/customization/logo_topleft.png';
 }
+echo '<img alt="" style="max-height: 47px;" src="' . $topLeft . '">';
+echo '</td>';
 
 $bzm = 1;
 if($menu["main"]){	
-foreach ($menu["main"] as $key => $value) {
-	if($value["link"]){$onclick = $value["link"];}else{$onclick = "openMenu($key)";}
-	if($bzm == 1){$class = "class=\"lmbMenuItemActiveTop2\"";}else{$class = "class=\"lmbMenuItemInactiveTop2\"";}
-	echo "<TD nowrap $class onclick=\"$onclick;limbasSetLayoutClassTabs(this,'lmbMenuItemInactiveTop2','lmbMenuItemActiveTop2')\" title=\"" . $value["desc"] . "\"><a class=\"lmbMenuItemTop2\">".$value["name"]."</a></TD>";
-	$bzm++;
-}}
+    foreach ($menu["main"] as $key => $value) {
+        # favorites
+        if ($key === 301) {
+            continue;
+        }
+        if($value["link"]){$onclick = $value["link"];}else{$onclick = "openMenu($key)";}
+        if($bzm == 1){$class = "class=\"lmbMenuItemActiveTop2\"";}else{$class = "class=\"lmbMenuItemInactiveTop2\"";}
+        echo "<TD nowrap $class onclick=\"$onclick;limbasSetLayoutClassTabs(this,'lmbMenuItemInactiveTop2','lmbMenuItemActiveTop2')\" title=\"" . $value["desc"] . "\"><a class=\"lmbMenuItemTop2\">".$value["name"]."</a></TD>";
+        $bzm++;
+    }
+}
 
 echo "<TD style=\"width:100%\" class=\"lmbMenuItemspaceTop2\"><div>&nbsp;</div></TD>";
 
@@ -310,14 +343,26 @@ echo "<TD style=\"width:100%\" class=\"lmbMenuItemspaceTop2\"><div>&nbsp;</div><
 
 $bzm = 1;
 if($menu["info"]){
-foreach ($menu["info"] as $key => $value) {
-	if($value["link"]){$onclick = $value["link"];}else{$onclick = "openMenu($key)";}
-	echo "<TD class=\"lmbMenuItemInactiveTop2\" nowrap onclick=\"$onclick;limbasSetLayoutClassTabs(this,'lmbMenuItemInactiveTop2','lmbMenuItemActiveTop2')\" title=\"" . $value["desc"] . "\"><a class=\"lmbMenuItemTop2\">".(($value['icon']) ? '<div class="lmbMenuItemTop2Icon"><i class="lmb-icon '.$value['icon'].'"></i></div><div class="lmbMenuItemTop2Text">'.$value["name"].'</div>' : $value["name"])."</a></TD>";
-        
-                
-        
-	$bzm++;
-}}
+    foreach ($menu["info"] as $key => $value) {
+        if($value["link"]){
+            $onclick = $value["link"];
+        }else{
+            $onclick = "openMenu($key)";
+        }
+        if($key != 214) { # not session refresh
+            $onclick .= ";limbasSetLayoutClassTabs(this,'lmbMenuItemInactiveTop2','lmbMenuItemActiveTop2')";
+        }
+
+        # automatically check for updates
+        $class = '';
+        if ($key == 207 /* info menu */ AND $latestVersion = lmbCheckForUpdates() AND is_string($latestVersion)) {
+            $class = 'lmbUpdateAvailable';
+            $value['desc'] .= "\n" . sprintf($lang[2927], $latestVersion);
+        }
+        echo "<TD class=\"lmbMenuItemInactiveTop2\" nowrap onclick=\"$onclick\" title=\"" . $value["desc"] . "\"><a class=\"lmbMenuItemTop2 $class\">".(($value['icon']) ? '<div class="lmbMenuItemTop2Icon"><i class="lmb-icon '.$value['icon'].'"></i></div><div class="lmbMenuItemTop2Text">'.$value["name"].'</div>' : $value["name"])."</a></TD>";
+        $bzm++;
+    }
+}
 
 ?>
 </TR>

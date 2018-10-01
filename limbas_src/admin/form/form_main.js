@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -404,7 +404,6 @@ function aktivate_menu(ID) {
 	$("#"+currentdiv).addClass('ui-selected');
 
 	document.onmousedown = startDrag;
-	return;
 }
 
 
@@ -763,8 +762,9 @@ function make_list(kontainer) {
 	
 	// ---- Tabelle -------
 	var el_tab = parent.form_menu.document.createElement("table");
+    el_tab.className = "formeditorPanel";
 	el_tab.style.margin = "0px";
-	el_tab.style.width = "210px";
+	el_tab.style.width = "215px";
 	el_tab.style.borderCollapse = "collapse";
 	el_tab.style.tableLayout = "fixed";
 	
@@ -1010,19 +1010,20 @@ var prevelBorder = new Array();
 var active_field_type = 0;
 
 function limbasMenuOpen(evt,el,id,dicoParams) {
-        if(dicoParams.get("MAINELEMENT") && mainisactive){return;}
+
+    if(dicoParams.get("MAINELEMENT") && mainisactive){return;}
 	mainisactive = 1;
-        // only get the first touched element, not its parents (which happens due to event propagation)
+    // only get the first touched element, not its parents (which happens due to event propagation)
 	if(!touchedElement) { touchedElement = el; }    
 	active_field_type = dicoParams.get("FIELD_TYPE");
 	
 	TYP = dicoParams.get("TYP");
 	STYLE = dicoParams.get("STYLE");
-	EVENT1 = decodeURIComponent(dicoParams.get("EVENT1"));
-	EVENT2 = decodeURIComponent(dicoParams.get("EVENT2"));
-	EVENT3 = decodeURIComponent(dicoParams.get("EVENT3"));
-	EVENT4 = decodeURIComponent(dicoParams.get("EVENT4"));
-	EVENT5 = decodeURIComponent(dicoParams.get("EVENT5"));
+	EVENT1 = decodeURIComponent((dicoParams.get("EVENT1") || "").replace(/\+/g, ' '));
+	EVENT2 = decodeURIComponent((dicoParams.get("EVENT2") || "").replace(/\+/g, ' '));
+	EVENT3 = decodeURIComponent((dicoParams.get("EVENT3") || "").replace(/\+/g, ' '));
+	EVENT4 = decodeURIComponent((dicoParams.get("EVENT4") || "").replace(/\+/g, ' '));
+	EVENT5 = decodeURIComponent((dicoParams.get("EVENT5") || "").replace(/\+/g, ' '));
 	VALUE = dicoParams.get("VALUE");
 	PICSTYLE = dicoParams.get("PICSTYLE");
 	PICSIZE = dicoParams.get("PICSIZE");
@@ -1056,7 +1057,7 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	document.form1.aktiv_id.value = div;
 	
 	// exit container before selectable
-	if(evt && (TYP == 'menue' || TYP == 'frame' || TYP == 'tabulator' || TYP == 'uform') && evt.ctrlKey){
+	if(evt && (TYP == 'menue' || TYP == 'frame' || TYP == 'tabulator' || TYP == 'uform' || TYP == 'tile') && evt.ctrlKey){
 		$(el).removeClass('ui-selected');
 		return;
 	}
@@ -1069,7 +1070,7 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	var style = STYLE.split(";");
         
 	// allgemeiner Inhalt
-	if(TYP == 'php' || TYP == 'js'){
+	if(TYP == 'php' || TYP == 'js' || TYP == 'frame') {
         // switch syntax highlighting
         if (TYP === 'php') {
             cmeditor.setOption("mode", "text/x-php");
@@ -1151,8 +1152,9 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	if(style[25] == 'true'){document.form_menu.input_line_reverse.checked = 1;}else{document.form_menu.input_line_reverse.checked = 0;}
 	if(style[35]){document.form_menu.input_readonly.value = style[35];}else{document.form_menu.input_readonly.value = '0';}
 	if(style[22]){document.form_menu.input_tabpadding.value = style[22];}else{document.form_menu.input_tabpadding.value = '';}
+    if(style[28]){document.form_menu.input_tabmargin.value = style[28];}else{document.form_menu.input_tabmargin.value = '';}
 	if(style[24]){document.form_menu.input_overflow.value = style[24];}else{document.form_menu.input_overflow.value = '';}
-	if(style[26]){document.form_menu.input_display.value = style[26];}else{document.form_menu.input_display.value = '';}
+	if(style[26]){document.form_menu.input_display.value = style[26];document.form_menu.input_tile.value = style[26];}else{document.form_menu.input_display.value = '';document.form_menu.input_tile.value = '';}
 	if(style[25]){document.form_menu.input_opacity.value = style[25];}else{document.form_menu.input_opacity.value = '';}
 	if(style[30]){document.form_menu.input_tabrows.value = style[30];}
 	if(style[31]){document.form_menu.input_tabcols.value = style[31];}
@@ -1163,6 +1165,7 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	if(style[38]){document.form_menu.input_tabuItemPos.value = style[38];}else{document.form_menu.input_tabuItemPos.value = 1;}
 	if(style[39]){document.form_menu.input_tabuItemMemPos.value = style[39];}else{document.form_menu.input_tabuItemMemPos.value = 1;}
 	if(style[27]){document.form_menu.input_borderradius.value = style[27];}else{document.form_menu.input_borderradius.value = '';}
+
 
 	// Zusatzparameter
 	if(ADDPAR){
@@ -1221,10 +1224,10 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	}
 
 	var el1 = document.getElementById(div).style;
-	if(el1.borderLeft.indexOf('none') < 1){document.form_menu.borderLeft.checked = true;}else{document.form_menu.borderLeft.checked = false;}
-	if(el1.borderRight.indexOf('none') < 1){document.form_menu.borderRight.checked = true;}else{document.form_menu.borderRight.checked = false;}
-	if(el1.borderTop.indexOf('none') < 1){document.form_menu.borderTop.checked = true;}else{document.form_menu.borderTop.checked = false;}
-	if(el1.borderBottom.indexOf('none') < 1){document.form_menu.borderBottom.checked = true;}else{document.form_menu.borderBottom.checked = false;}
+	document.form_menu.borderLeft.checked = el1.borderLeft.indexOf('none') < 1;
+	document.form_menu.borderRight.checked = el1.borderRight.indexOf('none') < 1;
+	document.form_menu.borderTop.checked = el1.borderTop.indexOf('none') < 1;
+	document.form_menu.borderBottom.checked = el1.borderBottom.indexOf('none') < 1;
 
 	// Textstyle anzeigen
 	if(document.getElementById(div).style.fontStyle){document.fstyle_form.input_fontstyle.value = document.getElementById(div).style.fontStyle;}else{document.fstyle_form.input_fontstyle.selectedIndex = 0;}

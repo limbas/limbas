@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -116,7 +116,7 @@ function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$p
 			if($LINK[14]){echo "<td style=\"width:20px;\" align=\"center\" nowrap><i class=\"lmb-icon lmb-page-find\" id=\"LmEx_Ex_symbol_".$verkn["uniqueid"]."6\" TITLE=\"".$lang[$LINK["desc"][14]]."\" style=\"cursor:pointer;$st\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$fieldid,'','','$ID','','','','','','','','','1');LmExt_Ex_DisplaySymbols(6,'','".$verkn["uniqueid"]."')\"></i></td><td style=\"width:5px;color:green;\" align=\"center\">|</td>";
 			echo "<td STYLE=\"width:15px;\">&nbsp;</td>";}
 			if($LINK[119] AND $LID){echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i class=\"lmb-icon-cus lmb-folder-add\" style=\"cursor:pointer;\" onclick=\"document.getElementById('LmEx_Ex_uploadfile_".$gtabid."_".$fieldid."').style.display='none';document.getElementById('LmEx_Ex_createfolder_".$gtabid."_".$fieldid."').style.display='';\" TITLE=\"".$lang[$LINK["desc"][119]]."\"></i></td><TD STYLE=\"width:5px;color:green;\" ALIGN=\"CENTER\">|</TD>";}
-			if($LINK[128] AND $LID){echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i class=\"lmb-icon lmb-file-upload\" style=\"cursor:pointer;\" onclick=\"document.getElementById('LmEx_Ex_createfolder_".$gtabid."_".$fieldid."').style.display='none';document.getElementById('LmEx_Ex_uploadfile_".$gtabid."_".$fieldid."').style.display='';LmEx_multiupload(1,'LmEx_Ex_uploadfiles_".$gtabid."_".$fieldid."',document.getElementById('ExtFileManager_LID_".$gtabid."_".$fieldid."').value,'".$gtabid."_".$fieldid."','$gtabid','$fieldid','$ID')\" TITLE=\"".$lang[$LINK["desc"][128]]."\"></i></td><TD STYLE=\"width:5px;color:green;\" ALIGN=\"CENTER\">|</TD>";}
+			if($LINK[128] AND $LID){echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i class=\"lmb-icon lmb-file-upload\" style=\"cursor:pointer;\" onclick=\"document.getElementById('LmEx_Ex_createfolder_".$gtabid."_".$fieldid."').style.display='none';document.getElementById('LmEx_Ex_uploadfile_".$gtabid."_".$fieldid."').style.display='';LmEx_showUploadField('LmEx_Ex_uploadfiles_{$gtabid}_{$fieldid}', document.getElementById('ExtFileManager_LID_{$gtabid}_{$fieldid}').value, '{$gtabid}_{$fieldid}', '$gtabid', '$fieldid', '$ID');\" TITLE=\"".$lang[$LINK["desc"][128]]."\"></i></td><TD STYLE=\"width:5px;color:green;\" ALIGN=\"CENTER\">|</TD>";}
 			if($LINK[171] AND $LID){echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i class=\"lmb-icon-cus lmb-page-delete-fancy\" style=\"cursor:pointer;\" OnClick=\"LmExt_Ex_UnLinkFiles($gtabid,$fieldid,$ID,document.getElementById('ExtFileManager_LID_".$gtabid."_".$fieldid."').value,'$formid',1)\" TITLE=\"".$lang[$LINK["desc"][171]]."\"></i></td><TD STYLE=\"width:5px;color:green;\" ALIGN=\"CENTER\">|</TD>";}
 			if($LINK[158] AND $LID){echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i class=\"lmb-icon-cus lmb-rel-del\" STYLE=\"cursor:pointer;\" TITLE=\"".$lang[$LINK["desc"][158]]."\" BORDER=\"0\" OnClick=\"LmExt_Ex_UnLinkFiles($gtabid,$fieldid,$ID,document.getElementById('ExtFileManager_LID_".$gtabid."_".$fieldid."').value,'$formid',0)\"></i></TD>";}
 		}else{
@@ -134,14 +134,12 @@ function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$p
 			/* --- Fieldlist ------*/
 			echo "<div ID=\"extRelationFieldsDIV_".$gtabid."_".$fieldid."\" class=\"lmbContextMenu\" style=\"position:absolute;display:none;z-index:9999\" OnClick=\"activ_menu = 1\">\n";
 			pop_top('fieldlist');
-			pop_left();echo "&nbsp;<B>$lang[1634]</B>";pop_right();pop_line();
+            pop_header(null, $lang[1634]);
 			foreach ($gfile["id"] as $key => $value){
 				# Felder ohne Rechte
 				if(!$gfile["id"][$key] OR $gtab["argresult_id"]["LDMS_FILES"]."_11" == $key){continue;}
 				if($gfile['field_type'][$key] == 100){
-					pop_left();echo "&nbsp;<B title=\"".$gfile['desc'][$key]."\">".$gfile['title'][$key]."</B>";
-					pop_right();
-					pop_line();
+                    pop_header(null, $gfile['title'][$key]);
 				}else{
 					pop_left();
 
@@ -184,7 +182,7 @@ function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$p
 		# --- Ajax Search ----
 		if($gfield[$gtabid]["dynsearch"][$fieldid] AND $action == "gtab_change"){
 			echo "<TD nowrap align=\"right\">
-				<INPUT TYPE=\"TEXT\" STYLE=\"width:80px;\" NAME=\"".$gfield[$gtabid]["form_name"][$fieldid]."_ds\" OnKeyup=\"lmbAjax_dynsearch(event,this,'14_b','".$gfield[$gtabid]["form_name"][$fieldid]."','".$verkn[tabid]."','".$verkn["fieldid"]."','$gtabid','$fieldid','$ID','$edittype')\">&nbsp;
+				<INPUT TYPE=\"TEXT\" STYLE=\"width:80px;\" NAME=\"".$gfield[$gtabid]["form_name"][$fieldid]."_ds\" OnKeyup=\"lmbAjax_dynsearch(event,this,'14_b','".$gfield[$gtabid]["form_name"][$fieldid]."','".$verkn['tabid']."','".$verkn["fieldid"]."','$gtabid','$fieldid','$ID','$edittype')\">&nbsp;
 				<DIV></DIV><DIV ID=\"".$gfield[$gtabid]["form_name"][$fieldid]."_dsl\" STYLE=\"position:absolute;z-index:999;\"></DIV>
 				<INPUT TYPE=\"HIDDEN\" NAME=\"".$gfield[$gtabid]["form_name"][$fieldid]."\"></TD>";
 		}else{
@@ -192,7 +190,7 @@ function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$p
 		}
 		echo "</TR></TABLE>
 		<table width=\"100%\">
-		<tr id=\"LmEx_Ex_createfolder_".$gtabid."_".$fieldid."\" style=\"display:none;\"><td nowrap>$lang[2231]:</td><td colspan=\"13\"><input type=\"text\" id=\"LmEx_Ex_addfolder_".$gtabid."_".$fieldid."\" style=\"width:200px;\">&nbsp;<input type=\"button\" value=\"$lang[2237]\" style=\"cursor:pointer;\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$fieldid,'','$edittype','$ID','','','','','','$formid',document.getElementById('LmEx_Ex_addfolder_".$gtabid."_".$fieldid."').value,'','');\"></td></tr>
+		<tr id=\"LmEx_Ex_createfolder_".$gtabid."_".$fieldid."\" style=\"display:none;\"><td nowrap>$lang[2231]:</td><td colspan=\"13\"><input type=\"text\" id=\"LmEx_Ex_addfolder_".$gtabid."_".$fieldid."\" style=\"width:200px;\">&nbsp;<input type=\"button\" value=\"$lang[571]\" style=\"cursor:pointer;\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$fieldid,'','$edittype','$ID','','','','','','$formid',document.getElementById('LmEx_Ex_addfolder_".$gtabid."_".$fieldid."').value,'','');\"></td></tr>
 		<tr id=\"LmEx_Ex_uploadfile_".$gtabid."_".$fieldid."\" style=\"display:none;\"><td id=\"LmEx_Ex_uploadfiles_".$gtabid."_".$fieldid."\"><td></tr>
 		</table>\n";
 		
@@ -200,7 +198,7 @@ function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$p
 		if($gformid){$height = "height:".($GLOBALS["gform"][$gformid]["height"][$formid]+40);}
 		echo "<div style=\"width:100%;$bt\" id=\"extRelationFieldsTab_".$gtabid."_".$fieldid."\">";
 		
-		echo "<TABLE BORDER=\"0\" ID=\"filetab\" CELLSPACING=\"0\" CELLPADDING=\"1\" STYLE=\"width:100%;border-collapse:collapse;table-layout:fixed;\">";
+		echo "<TABLE BORDER=\"0\" ID=\"filetab\" CELLSPACING=\"0\" CELLPADDING=\"1\" STYLE=\"width:100%;border-collapse:collapse;\">";
 		echo "<input type=\"hidden\" ID=\"ExtFileManager_LID_".$gtabid."_".$fieldid."\" value=\"$LID\">";
 
 		# ----- Ordnerstruktur ------
@@ -250,26 +248,10 @@ function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$p
 		
 		echo "
 		<script language=\"JavaScript\">
-		var obj = $(\"#extRelationFieldsTab_".$gtabid."_".$fieldid."\");
-		obj.on('dragenter', function (e)
-		{
-		    e.stopPropagation();
-		    e.preventDefault();
-		    $(\"div\").filter('[id^=\"td_\"]').addClass(\"lmbUploadDragenter\");
-		    return false;
-		});
-		obj.on('dragover', function (e)
-		{
-		     e.stopPropagation();
-		     e.preventDefault();
-		});
-		obj.on('drop', function (e)
-		{
-		     $(\"div\").filter('[id^=\"td_\"]').removeClass(\"lmbUploadDragenter\");
-		     e.preventDefault();
-		     var files = e.originalEvent.dataTransfer.files;
-		     LmEx_dragFileUpload(files,'".$gtabid."_".$fieldid."','$LID','$ID','LmEx_Ex_uploadfiles_".$gtabid."_".$fieldid."','$gtabid','$fieldid');
-		});
+		    LmEx_createDropArea($('#extRelationFieldsTab_{$gtabid}_{$fieldid}'), function(files) {
+                LmEx_showUploadField('LmEx_Ex_uploadfiles_{$gtabid}_{$fieldid}', $LID, '{$gtabid}_{$fieldid}', '{$gtabid}', '{$fieldid}', '{$ID}');
+		        LmEx_uploadFilesPrecheck(files, '{$LID}', '{$gtabid}_{$fieldid}', '{$gtabid}', '{$fieldid}', '{$ID}');
+		    });
 		</script>
 		";
 	}
@@ -302,7 +284,7 @@ function extendedExplPicShow(&$ffile,$gtabid,$field_id,$ID,$gformid,$formid,$pic
 		$dest = IMACK_ConvertThumbs(array($cfid,$ffile["secname"][$cfid],$ffile["mimeid"][$cfid],$ffile["thumb_ok"][$cfid],$ffile["level"][$cfid]),$width,$height,1);
 	}
 
-	echo "<TR><TD><TABLE CELLSPACING=\"0\" CELLPADDING=\"0\"><TR BGCOLOR=\"".$farbschema[WEB6]."\"><TD>&nbsp;</TD><TD><i TITLE=\"$lang[857]\" ALT=\"$lang[857]\" class=\"lmb-icon lmb-first\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3','$edittype',$ID,'','','','',1,'".$formid."','','','')\"></i></TD>";
+	echo "<TR><TD><TABLE CELLSPACING=\"0\" CELLPADDING=\"0\"><TR BGCOLOR=\"".$farbschema['WEB3']."\"><TD>&nbsp;</TD><TD><i TITLE=\"$lang[857]\" ALT=\"$lang[857]\" class=\"lmb-icon lmb-first\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3','$edittype',$ID,'','','','',1,'".$formid."','','','')\"></i></TD>";
 	echo "<TD><i TITLE=\"$lang[860]\" ALT=\"$lang[860]\" class=\"lmb-icon lmb-previous\" STYLE=\"cursor:pointer;font-size:1.5em;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3','$edittype',$ID,'','','','',".($i-1).",'".$formid."','','','')\"></i></TD>";
 	echo "<TD><INPUT TYPE=\"TEXT\" NAME=\"ExtFMPicShowCount_".$gtabid."_".$field_id."\" READONLY STYLE=\"width:60px;text-align:center\" VALUE=\"$i\"></TD>";
 	echo "<TD><i TITLE=\"$lang[859]\" ALT=\"$lang[859]\" class=\"lmb-icon lmb-next\" STYLE=\"cursor:pointer;font-size:1.5em;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3','$edittype',$ID,'','','','',".($i+1).",'".$formid."','','','')\"></i></TD>";
@@ -325,6 +307,7 @@ function lmbd_extendedMessages($ID,&$gresult,$fieldid,$gtabid,$class,$style,$pos
 	global $session;
 	global $filter;
 	global $gtabid;
+	global $umgvar;
 	
 	if(!$ID){return;}
 
@@ -362,14 +345,6 @@ function lmbd_extendedMessages($ID,&$gresult,$fieldid,$gtabid,$class,$style,$pos
 
 	# <remove additional mail uid,to fields to prevent unwanted display>
 	$filter["ext_RelationFields"][$vuniqueid] = $old_filter;
-
-	$fn = create_function('$a,$b,&$c','$c[1][$b] = strpos(strtolower($a),$c[0])!==false ? "up" : "down";');
-	$res = array(strtolower($imap_cfg['email_address']),&$tmp);
-	if(is_array($vgresult[$vgtabid][7]) AND $imap_cfg['email_address']){
-		array_walk($vgresult[$vgtabid][7],$fn,$res);
-		$vgresult[$vgtabid]["img"] = $res[1];
-	}
-
 	# </remove additional mail uid fields to prevent unwanted display>
 
 	if(!$filter["ext_RelationFields"]["showall"][$vuniqueid]){
@@ -402,10 +377,13 @@ function lmbd_extendedMessages($ID,&$gresult,$fieldid,$gtabid,$class,$style,$pos
 	echo "<TR class=\"gtabHeaderSymbolTR\">";
 		
 	if($typ == 1){
-		echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i name=\"mail_new\" id=\"{$vgtabid}_{$gtabid}_{$fieldid}_{$ID}_{$typ}_{$imap_cfg['arch_mbox']}\" class=\"lmb-icon-cus lmb-page-new\" BORDER=\"0\" TITLE=\"$lang[1299]\" STYLE=\"cursor:pointer\"></i></TD><TD STYLE=\"width:5px;color:green;\" ALIGN=\"CENTER\">|</TD>";
+        require_once($umgvar['path'] . '/extra/messages/config.php');
+	    $imap_cfg = lmb_getImapCfg($gtabid);
+
+        echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i name=\"mail_new\" id=\"{$vgtabid}_{$gtabid}_{$fieldid}_{$ID}_{$typ}_{$imap_cfg['arch_mbox']}\" class=\"lmb-icon-cus lmb-page-new\" BORDER=\"0\" TITLE=\"$lang[1299]\" STYLE=\"cursor:pointer\"></i></TD><TD STYLE=\"width:5px;color:green;\" ALIGN=\"CENTER\">|</TD>";
 		echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i name=\"mail_link\" id=\"{$gtabid}_{$fieldid}_{$ID}_{$typ}_{$gformid}\" class=\"lmb-icon-cus lmb-page-down\" STYLE=\"cursor:pointer;\" TITLE=\"$lang[1282]\" ALT=\"$lang[1282]\" BORDER=\"0\"></i></TD><TD STYLE=\"width:5px;color:green;\" ALIGN=\"CENTER\">|</TD>";
 	}
-	echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i class=\"lmb-icon lmb-list-ul-alt\" STYLE=\"cursor:pointer;\" TITLE=\"$lang[1298]\" ALT=\"$lang[868]\" BORDER=\"0\" OnClick=\"newwin5('".$verkn["vtabid"]."','".$gtabid."','".$fieldid."','".$ID."')\"></i></TD><TD STYLE=\"width:5px;color:green;\" ALIGN=\"CENTER\">|</TD>";
+	echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i class=\"lmb-icon lmb-list-ul-alt\" STYLE=\"cursor:pointer;\" TITLE=\"$lang[1298]\" ALT=\"$lang[573]\" BORDER=\"0\" OnClick=\"newwin5('".$verkn["vtabid"]."','".$gtabid."','".$fieldid."','".$ID."')\"></i></TD><TD STYLE=\"width:5px;color:green;\" ALIGN=\"CENTER\">|</TD>";
 	echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i class=\"lmb-icon-cus lmb-select-list\" STYLE=\"cursor:pointer;\" onclick=\"lmb_relShowField(event,this,'extRelationFieldsDIV_".$gtabid."_".$fieldid."');\"></i>";
 	
 	/* --- Fieldlist ------*/

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -22,7 +22,7 @@ function paintTextToImageSetColor($img){
 	global $farbschema;
 	$rgb[0] = ImageColorAllocate ($img, 0, 0, 0);
 	$rgb[2] = ImageColorAllocate ($img, 255, 255, 255);
-	$RGB = explode(",",hexdec(lmb_substr($farbschema[WEB8], 1, 2)).",".hexdec(lmb_substr($farbschema[WEB8], 3, 2)).",".hexdec(lmb_substr($farbschema[WEB8], 5, 2)));
+	$RGB = explode(",",hexdec(lmb_substr($farbschema['WEB8'], 1, 2)).",".hexdec(lmb_substr($farbschema['WEB8'], 3, 2)).",".hexdec(lmb_substr($farbschema['WEB8'], 5, 2)));
 	$rgb[1] = imagecolorallocate($img, $RGB[0], $RGB[1], $RGB[2]);
 	return $rgb;
 }
@@ -329,9 +329,10 @@ function getGroupTree($name,$items,$selected=null,$LEVEL=0,$l=null){
 	pop_left($mwidth);
 	echo "<TABLE BORDER=\"0\" cellspacing=\"0\" cellpadding=\"0\"><TR><TD></TD>";
 	if($items["header"]){
-	foreach ($items["header"] as $ikey => $ival){
-		echo "<TD align=\"center\">$ival</TD>";
-	}}
+		foreach ($items["header"] as $ikey => $ival){
+			echo "<TD align=\"center\">$ival</TD>";
+		}
+	}
 	echo "<TR>";
 	GroupTreeList($name,$items,$selected,$LEVEL,$l);
 	pop_right();
@@ -860,7 +861,7 @@ function lmb_addDependViews($viewdef){
  *
  * @param array $gtabid
  */
-function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$forcerefint=null){
+function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
 	global $db;
 	
 	# limbas keyname syntax:  "LMB_[parent-tableid]_[parent-fieldid]_V/ID_[child-tableid]"
@@ -921,16 +922,18 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$forcerefint=null)
 				}
 			}
 		}
-		
-		$sqlquery1 = "SELECT FIELD_ID,FIELD_NAME,DATA_TYPE,FIELD_TYPE,MD5TAB,VERKNTABID,VERKNFIELDID,VERKNTABLETYPE,REFINT,HASRECVERKN FROM LMB_CONF_FIELDS WHERE TAB_ID = $tableid";
+
+		if($onlyfield){$q = "AND FIELD_ID = $onlyfield";}else{$q = "AND REFINT = ".LMB_DBDEF_TRUE;}
+
+		$sqlquery1 = "SELECT FIELD_ID,FIELD_NAME,DATA_TYPE,FIELD_TYPE,MD5TAB,VERKNTABID,VERKNFIELDID,VERKNTABLETYPE,REFINT,HASRECVERKN FROM LMB_CONF_FIELDS WHERE TAB_ID = $tableid $q";
 		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		while(odbc_fetch_row($rs1)){
-			
+
 			# foreign keys
 			if(odbc_result($rs1,"DATA_TYPE") == 27 AND odbc_result($rs1,"VERKNTABID") AND odbc_result($rs1,"MD5TAB")){
 				if(odbc_result($rs1,"VERKNTABLETYPE") == 1){
-					# foreign keys 
-					if(odbc_result($rs1,"REFINT") OR $forcerefint){
+
+					# foreign keys
 						$ftable = odbc_result($rs1,"MD5TAB");
 						$ffield = "VERKN_ID";
 						$ptable = $tab[odbc_result($rs1,"VERKNTABID")];
@@ -971,7 +974,6 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$forcerefint=null)
 								$commit = 1;
 							}
 						}
-					}
 				}
 				$ffieldname = odbc_result($rs1,"FIELD_NAME");
 			}

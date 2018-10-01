@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -102,7 +102,7 @@ while(odbc_fetch_row($rs, $bzm)) {
 	function deleteDiagram(ID){
 		var del = confirm('<?=$lang[2285]?>');
 		if(del){
-			document.location.href="main_admin.php?<?SID?>&action=setup_diag&del=1&id="+ID;
+			document.location.href="main_admin.php?action=setup_diag&del=1&id="+ID;
 		}
 	}
 	function divclose(){
@@ -112,7 +112,6 @@ while(odbc_fetch_row($rs, $bzm)) {
 
 
 <FORM ACTION="main_admin.php" METHOD="post" name="form1">
-<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
 <input type="hidden" name="action" value="setup_diag">
 <input type="hidden" name="ID">
 <input type="hidden" name="diag_name">
@@ -136,7 +135,7 @@ if((!$diag_id)or(!$diag_tab_id)){
 		<TR class="tabHeader">
 			<TD class="tabHeaderItem">ID</TD>
 			<TD class="tabHeaderItem" COLSPAN=2></TD>
-			<TD class="tabHeaderItem"><?=$lang[1187]?></TD>
+			<TD class="tabHeaderItem"><?=$lang[4]?></TD>
 			<TD class="tabHeaderItem"><?=$lang[2863]?></TD>
 			<TD class="tabHeaderItem"><?=$lang[2864]?></TD>
 			<TD class="tabHeaderItem"><?=$lang[2207]?></TD>
@@ -155,7 +154,7 @@ if((!$diag_id)or(!$diag_tab_id)){
 					echo "<TD ALIGN=\"CENTER\">$value</TD>";
 					# Stift
 					echo "<TD ALIGN=\"CENTER\">";
-					//HREF=\"main_admin.php?$_SID&action=setup_tab&group_bzm=$bzm&tab_group=".$tabgroup_["id"][$bzm]."\"
+					//HREF=\"main_admin.php?action=setup_tab&group_bzm=$bzm&tab_group=".$tabgroup_["id"][$bzm]."\"
 					echo "<I OnClick=\"document.form1.diag_tab_id.value='$gtabid';document.form1.diag_id.value='$key';document.form1.submit();\" BORDER=\"0\" style=\"cursor:pointer\" class=\"lmb-icon lmb-pencil\"></i>";
 					echo "</TD>";
 					# Zahnrad
@@ -209,7 +208,7 @@ if((!$diag_id)or(!$diag_tab_id)){
 	<!-- Neues Diagramm -->
 	<TABLE>
 		<TR>
-			<TD><?=$lang[1187]?></TD>
+			<TD><?=$lang[4]?></TD>
 			<TD><?=$lang[164]?></TD>
 		</TR>
 		<TR>
@@ -218,12 +217,13 @@ if((!$diag_id)or(!$diag_tab_id)){
 			<SELECT NAME="tab_id"><OPTION>
 			<?php
 			foreach ($tabgroup["id"] as $key0 => $value0) {
-				echo "<OPTION VALUE=\"".$value."\">(".$tabgroup["name"][$key0].")";
+                echo '<optgroup label="' . $tabgroup["name"][$key0] . '">';
 				foreach ($gtab["tab_id"] as $key => $value) {
 					if($gtab["tab_group"][$key] == $value0){
-						echo "<OPTION VALUE=\"".$value."\">&nbsp;&nbsp;".$gtab["desc"][$key];
+						echo "<OPTION VALUE=\"".$value."\">".$gtab["desc"][$key];
 					}
 				}
+				echo '</optgroup>';
 			}
 			?>
 			</SELECT>

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -38,7 +38,7 @@ if($del AND $gtabid){
 if($snap_edit AND $gtabid AND $snapid){
 	if($snap_name = trim($snap_name)){
 		$update[] = "NAME = '".parse_db_string(str_replace(";",",",$snap_name),30)."'";
-		$gsnap[$gtabid][name][$snapid] = lmb_substr(str_replace(";",",",$snap_name),0,30);
+		$gsnap[$gtabid]['name'][$snapid] = lmb_substr(str_replace(";",",",$snap_name),0,30);
 	}
 	if($snap_global){
 		if($snap_global == 1){$v = LMB_DBDEF_TRUE;$vs = 1;}elseif($snap_global == 2){$v = LMB_DBDEF_FALSE;$vs = 0;}
@@ -80,10 +80,10 @@ function edit_snap(gtabid,snapid,val,typ) {
 
 function nav_refresh(gtabid,snapid,val) {
 	if(parent.nav){
-		parent.nav.document.location.href = 'main.php?<?=SID?>&action=nav&sparte=gtab&refresh=no';
+		parent.nav.document.location.href = 'main.php?action=nav&sparte=gtab&refresh=no';
 	}
 	if(parent.parent.nav){
-		parent.parent.nav.document.location.href = 'main.php?<?=SID?>&action=nav&sparte=gtab&refresh=no';
+		parent.parent.nav.document.location.href = 'main.php?action=nav&sparte=gtab&refresh=no';
 	}
 }
 
@@ -133,7 +133,7 @@ function divclose() {
 
 <div id="snapExtension" class="lmbContextMenu" style="position:absolute;display:none;z-index:999;" onclick="activ_menu=1">
 <?pop_left();?>
-<textarea id="snap_extensionValue" name="snap_extensionValue" onchange="document.form1.submit()" style="width:400px;height:250px;background-color:<?echo $farbschema[WEB8];?>;"></textarea>
+<textarea id="snap_extensionValue" name="snap_extensionValue" onchange="document.form1.submit()" style="width:400px;height:250px;background-color:<?= $farbschema['WEB8'] ?>;"></textarea>
 <?pop_right();?>
 <?pop_bottom();?>
 </div>
@@ -142,15 +142,15 @@ function divclose() {
 <div class="lmbPositionContainerMain">
 
 <select name="snap_view" onchange="document.form1.submit()">
-<option value="1" <?if($snap_view == 1){echo "SELECTED";}?>><?=$lang[2784]?>
-<option value="2" <?if($snap_view == 2){echo "SELECTED";}?>><?=$lang[2785]?>
+<option value="1" <?php if($snap_view == 1){echo "SELECTED";}?>><?=$lang[2784]?>
+<option value="2" <?php if($snap_view == 2){echo "SELECTED";}?>><?=$lang[2785]?>
 </select>
 
 <br><br>
 
 <table border="0" cellspacing="0" cellpadding="0" class="tabfringe"><tr><td valign="top">
 
-<?
+<?php
 
 $gsnap_ = SNAP_loadInSession(null,$snap_view);
 
@@ -192,5 +192,5 @@ if($tabgroup["name"] AND $gtab["tab_id"]){
 ?>
 </UL>
 
-</div></tr></td></table>
+</td></tr></table></div>
 </FORM>

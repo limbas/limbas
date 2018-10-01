@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -31,7 +31,7 @@ $cssfile = fopen("{$umgvar['pfad']}/USER/{$session['user_id']}/layout.css", "w+"
 if($umgvar['waitsymbol']){$waitsymbol = $umgvar['waitsymbol'];}else{$waitsymbol = "pic/wait1.gif";}
 
 $fontc3 = lmbSuggestColor($farbschema['WEB13'],"CCCCCC","909090");
-$fontc6 = lmbSuggestColor($farbschema['WEB6'],"CCCCCC","333333");
+$fontc6 = lmbSuggestColor($farbschema['WEB3'],"CCCCCC","333333");
 $fontc7 = lmbSuggestColor($farbschema['WEB7'],"CCCCCC","333333");
 
 $fontsize09 = "0.9em";
@@ -55,6 +55,19 @@ $buf .= file_get_contents($umgvar['pfad'] . "/layout/skalar/icons.css");
 
 $buf .= <<<EOD
 
+/* to replace frames with iframes */
+.frame-container {
+    display: flex;
+    height: 100%;
+}
+.frame-container-vertical {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.frame-fill {
+    flex-grow: 1;
+}
 
 /*global*/
 body{
@@ -73,6 +86,11 @@ table{
 /*global*/
 th{
 	font-weight:normal;
+}
+
+/*global*/
+iframe {
+    border: none;
 }
 
 /*middle frame*/
@@ -242,14 +260,14 @@ body.multiframe{
         height:15px;
         color:white;
         text-align: center;
-        background-color: {$farbschema[WEB6]};
+        background-color: {$farbschema['WEB3']};
 
 }
         
 .formeditorPanel{
         border:1px solid grey;
         width:210px;
-        background-color: {$farbschema[WEB7]};
+        background-color: {$farbschema['WEB7']};
 }
     
 i.btn {
@@ -947,7 +965,7 @@ DIV.fgtabchange{
 }
 
 .gtabchangeIframe{
-	background-color:{$farbschema['WEB9']};
+	background-color:{$farbschema['WEB8']};
 	border: 1px solid {$farbschema['WEB3']};
 	padding:5px;
 	padding-top:20px;
@@ -971,7 +989,7 @@ INPUT.gmultilang {
 
 /* gtab Tabelle Group */
 
-.gtabringeGroupBody {
+.lmbGtabTabBody {
 	font-weight: normal;
     border: 1px solid {$farbschema['WEB3']};
     border-top: none;
@@ -988,7 +1006,7 @@ INPUT.gmultilang {
 }
 
 .gtabFringeRelationBody{
-	background-color:{$farbschema['WEB9']};
+	background-color:{$farbschema['WEB8']};
 	border: 1px solid {$farbschema['WEB3']};
     width: 94%;
 }
@@ -1040,7 +1058,7 @@ INPUT.gmultilang {
 	background-image:url(../../layout/{$session['layout']}/pic/bckLightGrey.png);
 	background-position:top;
 	background-repeat:repeat-x;
-	background-color:{$farbschema['WEB5']};
+	background-color:{$farbschema['WEB8']};
 }
 
 .tabBody{
@@ -1094,7 +1112,7 @@ INPUT.gmultilang {
 	padding:3px;
 	padding-left:20px;
 	padding-right:20px;
-	background-color:{$farbschema['WEB9']};
+	background-color:{$farbschema['WEB8']};
 	border:1px solid {$farbschema['WEB3']};
 	border-right:none;
 	border-bottom:none;
@@ -1201,7 +1219,7 @@ INPUT.gmultilang {
 	background-image:url(../../layout/{$session['layout']}/pic/bckLightGreyHLine.png);
 	background-repeat:repeat-y;
 	background-position:right;
-	background-color:{$farbschema['WEB9']};
+	background-color:{$farbschema['WEB8']};
 	border:1px solid gray;
 	color:black;
 	position:absolute;
@@ -1302,7 +1320,7 @@ DIV.ajax_container {
 	background-image:url(../../layout/{$session['layout']}/pic/bckLightGreyHLine.png);
 	background-repeat:repeat-y;
 	background-position:right;
-	background-color:{$farbschema['WEB9']};
+	background-color:{$farbschema['WEB8']};
 	border:1px solid gray;
 	color:black;
 }
@@ -1311,7 +1329,7 @@ DIV.ajax_container {
 /*container allgemein*/
 .lmb_container {
 	padding:5px;
-	background-color:{$farbschema['WEB9']};
+	background-color:{$farbschema['WEB8']};
 	border:1px solid {$farbschema['WEB3']};
 }
 
@@ -1334,7 +1352,7 @@ DIV.ajax_container {
 	height: 14px;
 	width:100%;
 	border-radius: 4px;
-	border:1px solid {$farbschema['WEB5']};
+	border:1px solid {$farbschema['WEB8']};
 	background-color:{$farbschema['WEB11']};
 	background-image:url(../../pic/animated-overlay.gif);
 	background-repeat:repeat-x;
@@ -1349,7 +1367,7 @@ DIV.ajax_container {
 	height:100%;
 	overflow:hidden;
 	border-radius: 4px;
-	border-right:1px solid {$farbschema['WEB5']};
+	border-right:1px solid {$farbschema['WEB8']};
 }
 
 .lmbUploadProgressInfo {
@@ -1440,7 +1458,7 @@ DIV.ajax_container {
 }
 
 .iframeText { 
-	background-color: {$farbschema['WEB9']};
+	background-color: {$farbschema['WEB8']};
 }
 
 
@@ -1551,7 +1569,7 @@ TD {
 }
 
 TR.head {
-    background-color:{$farbschema['WEB6']};
+    background-color:{$farbschema['WEB3']};
 }
 
 TR.headsub {
@@ -1604,7 +1622,7 @@ TD.active_tag {
 	border-left: 1px solid {$farbschema['WEB3']};
 	border-right: 1px solid {$farbschema['WEB3']};
 	border-top: 1px solid {$farbschema['WEB3']};
-	background-color: {$farbschema['WEB6']};
+	background-color: {$farbschema['WEB3']};
 }
 
 TD.inactive_tag {
@@ -1628,7 +1646,7 @@ SELECT {
 
 SELECT.searchfield {
 	font-weight: normal;
-	background-color: {$farbschema['WEB9']};
+	background-color: {$farbschema['WEB8']};
     border: 2px inset grey;
     width: 480px;
 	border: 1px solid {$farbschema['WEB4']};
@@ -1636,19 +1654,19 @@ SELECT.searchfield {
 
 SELECT.gtaberg {
 	font-weight: normal;
-	background-color: {$farbschema['WEB9']};
+	background-color: {$farbschema['WEB8']};
     border: none;
 }
 
 SELECT.contextmenu {
 	font-weight: normal;
-	background-color: {$farbschema['WEB9']};
+	background-color: {$farbschema['WEB8']};
 }
 
 
 INPUT.searchfield {
 	font-weight: normal;
-	background-color: {$farbschema['WEB9']};
+	background-color: {$farbschema['WEB8']};
     border: 1px solid {$farbschema['WEB4']};
 }
 
@@ -1676,14 +1694,14 @@ INPUT.gtaberg {
 
 INPUT.upload {
 	font-weight: normal;
-	background-color: {$farbschema['WEB9']};
+	background-color: {$farbschema['WEB8']};
     border: 1px solid {$farbschema['WEB3']};
     width: 320px;
 }
 
 INPUT.submit {
 	font-size: {$fontsize11};
-	background-color: {$farbschema['WEB9']};
+	background-color: {$farbschema['WEB8']};
     border: 1px solid {$farbschema['WEB10']};
     padding:3px;
     padding-left:10px;

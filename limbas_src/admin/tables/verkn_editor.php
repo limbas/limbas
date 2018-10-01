@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -66,7 +66,7 @@ function LIM_activate(el,elid){
 
 
 function LIM_setDefault(){
-	<?
+	<?php
 	if($category=="edit"){
 		echo "LIM_activate(null,1);";
 	}elseif($category=="create"){
@@ -146,9 +146,9 @@ function changeorderf(el,id){
 <TABLE class="tabpool" BORDER="0" cellspacing="0" cellpadding="0" width="80%"><TR><TD>
 
 <TABLE BORDER="0" cellspacing="0" cellpadding="0"><TR>
-<TD nowrap ID="menu1" OnClick="LIM_activate(this,'1')" class="tabpoolItemActive"><?=$lang[1822]?></TD>
+<TD nowrap ID="menu1" OnClick="LIM_activate(this,'1')" class="tabpoolItemActive"><?=$lang[1634]?></TD>
 <TD nowrap ID="menu3" OnClick="LIM_activate(this,'3')" class="tabpoolItemInactive"><?=$lang[2376]?></TD>
-<?if($verkntabletype == 1) {?><TD nowrap ID="menu2" OnClick="LIM_activate(this,'2')" class="tabpoolItemInactive"><?=$lang[1823]?></TD><?}?>
+<?php if($verkntabletype == 1) {?><TD nowrap ID="menu2" OnClick="LIM_activate(this,'2')" class="tabpoolItemInactive"><?=$lang[1823]?></TD><?php }?>
 <TD class="tabpoolItemSpace">&nbsp;</TD>
 </TR></TABLE>
 
@@ -170,7 +170,7 @@ function changeorderf(el,id){
 
 <TABLE ID="tab1" BORDER="0" CELLPADDING="2" CELLSPACING="0" STYLE="width:480px;" class="tabBody">
 <TR class="tabHeader"><TD COLSPAN="3">
-<?
+<?php
 echo $verkntabdesc;
 if($verkntabletype == 3){
 	echo "&nbsp;<I>(<?=$lang[2371]?>)</I> &nbsp;&nbsp;$lang[2855]&nbsp;&nbsp;<i style=\"vertical-align:text-bottom\" class=\"lmb-icon lmb-switch\"></i>";
@@ -181,17 +181,17 @@ if($verkntabletype == 3){
 </TD></TR>
 <TR><TD VALIGN="TOP">
 
-<?if(!$verkntabid){?>
+<?php if(!$verkntabid){?>
 
 <TABLE BORDER="0" cellspacing="0" cellpadding="0" STYLE="width:480px;">
 <TR class="tabSubHeader"><TD VALIGN="TOP" COLSPAN="2" STYLE="height:20px;"><B><?=$lang[1824]?></B></TD></TR>
-<?
+<?php
 $sqlquery = "SELECT DISTINCT LMB_CONF_TABLES.TAB_ID,LMB_CONF_TABLES.TAB_GROUP,LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.BESCHREIBUNG,LMB_CONF_GROUPS.NAME,LMB_CONF_GROUPS.ID FROM LMB_CONF_TABLES,LMB_CONF_GROUPS WHERE LMB_CONF_TABLES.TAB_GROUP = LMB_CONF_GROUPS.ID ORDER BY LMB_CONF_GROUPS.ID";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 $bzm2 = 1;
 while(odbc_fetch_row($rs, $bzm2)) {
-	if(odbc_result($rs, "NAME") != $temp){echo "<TR><TD BGCOLOR=\"".$farbschema[WEB7]."\">".$lang[odbc_result($rs, "NAME")]."</TD></TR>";}
-	if(odbc_result($rs, "TAB_ID") == $tabid){$tcolor = "red";}else{$tcolor = "black";}
+	if(odbc_result($rs, "NAME") != $temp){echo "<TR><TD BGCOLOR=\"".$farbschema['WEB7']."\">".$lang[odbc_result($rs, "NAME")]."</TD></TR>";}
+	if(odbc_result($rs, "TAB_ID") == $tabid){$tcolor = "red";}else{$tcolor = $farbschema['WEB2'];}
 	echo "<TR><TD><INPUT TYPE=\"RADIO\" NAME=\"new_verkntabid\" VALUE=\"".odbc_result($rs, "TAB_ID")."\" STYLE=\"border:none;background-color:transparent;\" OnChange=\"document.form1.submit();\">&nbsp;<SPAN STYLE=\"color:$tcolor\">".$lang[odbc_result($rs, "BESCHREIBUNG")]."&nbsp;(".odbc_result($rs, "TABELLE").")</SPAN></TD></TR>";
 	$temp = odbc_result($rs, "NAME");
 	$bzm2++;
@@ -200,7 +200,7 @@ while(odbc_fetch_row($rs, $bzm2)) {
 ?>
 </TABLE>
 
-<?}else{?>
+<?php }else{?>
 
 <TABLE BORDER="0" cellspacing="0" cellpadding="0" STYLE="width:480px;">
 <TR class="tabSubHeader">
@@ -208,14 +208,14 @@ while(odbc_fetch_row($rs, $bzm2)) {
 <TD NOWRAP ALIGN="CENTER" VALIGN="TOP" style="cursor:help">&nbsp;<?=$lang[1825]?>&nbsp;</TD>
 <TD NOWRAP ALIGN="CENTER" VALIGN="TOP" title="<?=$lang[2808]?>" style="cursor:help">&nbsp;<?=$lang[1826]?>&nbsp;</TD>
 <TD NOWRAP ALIGN="CENTER" VALIGN="TOP" title="<?=$lang[2806]?>" style="cursor:help" colspan="2">&nbsp;<?=$lang[2089]?>&nbsp;</TD>
-<TD NOWRAP ALIGN="CENTER" VALIGN="TOP" title="<?=$lang[2807]?>" style="cursor:help" colspan="2">&nbsp;<?=$lang[2636]?>&nbsp;</TD>
+<TD NOWRAP ALIGN="CENTER" VALIGN="TOP" title="<?=$lang[2807]?>" style="cursor:help" colspan="2">&nbsp;<?=$lang[1846]?>&nbsp;</TD>
 </TR>
-<?
+<?php
 
 
 
 # --- ungültige Feldtypen ---
-$wrong_fields = array(25,13,23,39);
+$wrong_fields = array(25,13,23);
 $sqlquery =  "SELECT SPELLING,DATA_TYPE,FIELD_TYPE,FIELD_ID,ARTLEISTE,VERKNTABID,VERKNTABLETYPE,FIELD_NAME  FROM LMB_CONF_FIELDS WHERE TAB_ID = $verkntabid AND FIELD_TYPE < 100 ORDER BY SORT";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}	
@@ -290,47 +290,45 @@ while(odbc_fetch_row($rs, $bzm)) {
 ?>
 
 
-<tr><td><i><?=$lang[2816]?></i></td><td></td><td></td><td align="center"><input type="text" name="findidCut" style="width:30px" value="<?=$findidcut?>"></td><td></td><td align="center"><input type="text" name="viewidCut" style="width:30px" value="<?=$viewidcut?>"></td></tr>
+<tr><td><i><?=$lang[2595]?></i></td><td></td><td></td><td align="center"><input type="text" name="findidCut" style="width:30px" value="<?=$findidcut?>"></td><td></td><td align="center"><input type="text" name="viewidCut" style="width:30px" value="<?=$viewidcut?>"></td></tr>
 
 </TABLE>
-<?}?>
+<?php }?>
 
 </TD></TR>
 
-<?if($verkntabletype == 1) {?>
+<?php if($verkntabletype == 1) {?>
 
 <TR><TD><HR></TD></TR>
 <TR><TD>
 <table width="100%"><tr><td width="50%" valign="top">
 <?=$lang[941]?><BR>
-<INPUT TYPE="CHECKBOX" STYLE="border:none;background-color:transparent;" NAME="new_refint" <?if($refint){echo "CHECKED";}?>>&nbsp;
+<INPUT TYPE="CHECKBOX" STYLE="border:none;background-color:transparent;" NAME="new_refint" <?php if($refint){echo "CHECKED";}?>>&nbsp;
 <SELECT NAME="new_refint_rule">
-<OPTION VALUE="1" <?if($refint_rule == "DELETE RESTRICT"){echo "SELECTED";}?>>DELETE RESTRICT
+<OPTION VALUE="1" <?php if($refint_rule == "DELETE RESTRICT"){echo "SELECTED";}?>>DELETE RESTRICT
 </SELECT>
 <BR>
-<?if($refint_rule){echo "( $f1 | $f2 )";}?>
+<?php if($refint_rule){echo "( $f1 | $f2 )";}?>
 </td><td valign="top">
 <?=$lang[2809]?><br>
-<?
+<?php
 if($set_vparams AND $fieldid AND $tabid AND $veknfieldid AND !$recursrelation){
 	$verknparams = createRelationParams($new_vparams,$verknparams,$md5tab,$groupid,$fieldspelling,$fieldid,$tabid);
 }
 ?>
-<INPUT TYPE="CHECKBOX" STYLE="border:none;background-color:transparent;" NAME="new_vparams" <?if($verknparams){echo "CHECKED";}?> onchange="document.form1.set_vparams.value=1">&nbsp;<?if($verknparams){echo "(ID: $verknparams)";}?><br>
-<?
-echo '<span style="color:green;font-style:italic">'.$GLOBALS['message'].'</span>';
-?>
+<INPUT TYPE="CHECKBOX" STYLE="border:none;background-color:transparent;" NAME="new_vparams" <?php if($verknparams){echo "CHECKED";}?> onchange="document.form1.set_vparams.value=1">&nbsp;<?php if($verknparams){echo "(ID: $verknparams)";}?><br>
+<span style="color:green;font-style:italic"><?= $GLOBALS['message'] ?></span>
 
 </td></tr></table>
 
 </TD></TR>
-<?}?>
+<?php }?>
 
 
 <TR><TD>
 
 
-<?
+<?php
 
 
 
@@ -345,10 +343,26 @@ if(($verkntabletype == 1 OR $verkntabletype == 3) AND $tree = recrelationtree())
 		if($verkntree == $tree_identifier){$CHECKED = 'CHECKED';}
 		echo "<div><input type=\"checkbox\" onclick=\"LIM_relationTree('".implode(",",$path)."')\" $CHECKED>";
 		$tabname = array();
+
 		foreach($path as $key => $md5tab){
-			$tabname[] = $gtab['table'][getTabFromMd5($md5tab)];
-		}
-		echo implode(" --> ",$tabname);
+		    $vTabID = getTabFromMd5($md5tab);
+
+            if (isset($path[$key - 1])) {
+                $lastTab = getTabFromMd5($path[$key - 1]);
+            } else {
+                $lastTab = $tabid;
+            }
+
+            $fieldName = '';
+            foreach($gfield[$lastTab]['md5tab'] as $fieldKey => $md5) {
+                if ($md5 == $md5tab) {
+                     $fieldName = $gfield[$lastTab]['field_name'][$fieldKey];
+                     break;
+                }
+            }
+            $tabname[] = "<span title=\"{$fieldName}\">{$gtab['table'][$vTabID]}</span>";
+        }
+		echo '&rarr;' . implode(" &rarr; ",$tabname);
 		echo '</div>';
 	}
 }
@@ -368,7 +382,7 @@ if(($verkntabletype == 1 OR $verkntabletype == 3) AND $tree = recrelationtree())
 <TR><TD><hr></TD></TR>
 
 
-<TR><TD COLSPAN="3" align="center"><INPUT TYPE="SUBMIT" VALUE="<?=$lang[2283]?>" NAME="vknsave"></TD></TR>
+<TR><TD COLSPAN="3" align="center"><INPUT TYPE="SUBMIT" VALUE="<?=$lang[33]?>" NAME="vknsave"></TD></TR>
 <TR><TD>&nbsp;</TD></TR>
 <TR><TD COLSPAN="5"><?=$message1?></TD></TR>
 </TABLE>
@@ -378,7 +392,7 @@ if(($verkntabletype == 1 OR $verkntabletype == 3) AND $tree = recrelationtree())
 
 
 
-<?if($fieldid AND $tabid AND $verkntabid){?>
+<?php if($fieldid AND $tabid AND $verkntabid){?>
 
 <FORM ACTION="main_admin.php" METHOD="post" NAME="form2">
 <input type="hidden" name="action" value="setup_verkn_editor">
@@ -389,7 +403,7 @@ if(($verkntabletype == 1 OR $verkntabletype == 3) AND $tree = recrelationtree())
 <TABLE ID="tab2" STYLE="display:none;width:480px;" BORDER="0" CELLPADDING="0" CELLSPACING="0" WIDTH="100%">
 <TR><TD COLSPAN="3"><?=$message2?></TD></TR>
 <TR><TD><B><?=$tabname?></B><BR><BR><SELECT NAME="v_field1" SIZE="20"><OPTION VALUE="ID" SELECTED>ID
-<?
+<?php
 $sqlquery =  "SELECT DISTINCT FIELD_NAME FROM LMB_CONF_FIELDS WHERE TAB_ID = $tabid AND FIELD_TYPE < 100 AND FIELD_NAME != 'ID'";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}	
@@ -400,7 +414,7 @@ $bzm++;
 }
 ?>
 </SELECT></TD><TD>&nbsp;</TD><TD><B><?=$verkntabname?></B><BR><BR><SELECT NAME="v_field2" SIZE="20"><OPTION VALUE="ID" SELECTED>ID
-<?
+<?php
 $sqlquery =  "SELECT DISTINCT FIELD_NAME FROM LMB_CONF_FIELDS WHERE TAB_ID = $verkntabid AND FIELD_TYPE < 100 AND FIELD_NAME != 'ID'";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}	
@@ -415,7 +429,7 @@ $bzm++;
 <TR><TD COLSPAN="3" align="center"><INPUT TYPE="SUBMIT" VALUE="<?=$lang[1303]?>" NAME="verknrefresh"></TD></TR>
 </TABLE>
 </FORM>
-<?}?>
+<?php }?>
 
 
 
@@ -423,7 +437,7 @@ $bzm++;
 
 
 
-<?if($fieldid AND $tabid AND $verkntabid){?>
+<?php if($fieldid AND $tabid AND $verkntabid){?>
 
 <FORM ACTION="main_admin.php" METHOD="post" NAME="form3">
 <input type="hidden" name="action" value="setup_verkn_editor">
@@ -434,10 +448,10 @@ $bzm++;
 
 <TABLE ID="tab3" STYLE="display:none;width:480px;" BORDER="0" CELLPADDING="0" CELLSPACING="0" WIDTH="100%"><TR><TD align="center">
 <TABLE BORDER="0" CELLPADDING="1" CELLSPACING="2" WIDTH="80%">
-    <TR BGCOLOR="<?=$farbschema[WEB6]?>"><TD style="cursor:pointer" OnClick="document.getElementById('relation_verknview').style.display = '';"><i class="lmb-icon lmb-caret-square-down-alt"></i></TD><TD><b>&nbsp;<?=$lang[2377]?></b></TD></TR>
+    <TR BGCOLOR="<?=$farbschema['WEB3']?>"><TD style="cursor:pointer" OnClick="document.getElementById('relation_verknview').style.display = '';"><i class="lmb-icon lmb-caret-square-down-alt"></i></TD><TD><b>&nbsp;<?=$lang[2377]?></b></TD></TR>
 </TABLE>
 <TABLE BORDER="0" CELLPADDING="1" CELLSPACING="2" WIDTH="80%" ID="relation_verknview" style="display:none">
-<?
+<?php
 rec_verknpf_tabs($tabid,$verkntab);
 ?>
 <TR><TD colspan="3"><TEXTAREA style="width:100%;height:50px;background-color:#EEEEEE" ID="relation_preview" readonly OnDblClick="document.getElementById('relation_value').value=this.value"></TEXTAREA><hr></TD></TR>
@@ -465,13 +479,13 @@ rec_verknpf_tabs($tabid,$verkntab);
 
 </TD></TR>
 <TR><TD COLSPAN="3" HEIGHT="20">&nbsp;</TD></TR>
-<TR><TD COLSPAN="3" align="center"><INPUT TYPE="SUBMIT" VALUE="<?=$lang[2283]?>"></TD></TR>
+<TR><TD COLSPAN="3" align="center"><INPUT TYPE="SUBMIT" VALUE="<?=$lang[33]?>"></TD></TR>
 </TABLE>
 </FORM>
 
 
 </TD></TR></TABLE>
-<?}?>
+<?php }?>
 
 </TD></TR></TABLE></DIV>
 
@@ -482,7 +496,7 @@ LIM_setDefault();
 </SCRIPT>
 
 
-<?
+<?php
 function rec_verknpf_tabs($gtabid,$verkntab){
 	static $recmd5;
 	global $gfield;

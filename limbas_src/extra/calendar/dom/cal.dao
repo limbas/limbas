@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -38,7 +38,7 @@ if($inp_create){
 		if(!$gtabid){$gtabid = "0";}
 		if(!$field_id){$field_id = "0";}
 		if(!$dat_id){$dat_id = "0";}
-		$sqlquery = "INSERT INTO KALENDER (ID,ERSTUSER,START_DATE,END_DATE,TITLE,DESCRIPTION,STATUS,ALERT,COLOR,TYP,TAB_ID,FIELD_ID,DAT_ID,USER_ID) VALUES ($NEXTID,".$session[user_id].",'".convert_date($inp_from)."','".convert_date($inp_to)."','".$inp_title."','".$inp_desc."','',".$inp_alert.",'".$inp_color."',$inp_typ,$gtabid,$field_id,$dat_id,".$session[user_id].")";
+		$sqlquery = "INSERT INTO KALENDER (ID,ERSTUSER,START_DATE,END_DATE,TITLE,DESCRIPTION,STATUS,ALERT,COLOR,TYP,TAB_ID,FIELD_ID,DAT_ID,USER_ID) VALUES ($NEXTID,".$session['user_id'].",'".convert_date($inp_from)."','".convert_date($inp_to)."','".$inp_title."','".$inp_desc."','',".$inp_alert.",'".$inp_color."',$inp_typ,$gtabid,$field_id,$dat_id,".$session['user_id'].")";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		
@@ -48,7 +48,7 @@ if($inp_create){
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 			$anzahl = odbc_result($rs,"ANZAHL");
-			$sqlquery = "UPDATE ".$gtab[table][$gtabid]." SET ".$gfield[$gtabid][field_name][$field_id]." = ".$anzahl." WHERE ID = $dat_id";
+			$sqlquery = "UPDATE ".$gtab['table'][$gtabid]." SET ".$gfield[$gtabid]['field_name'][$field_id]." = ".$anzahl." WHERE ID = $dat_id";
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 		}	
@@ -70,7 +70,7 @@ if($inp_change AND $ID){
 		if(!$gtabid){$gtabid = "0";}
 		if(!$field_id){$field_id = "0";}
 		if(!$dat_id){$dat_id = "0";}	
-		$sqlquery = "UPDATE KALENDER SET EDITUSER = ".$session[user_id].", START_DATE = '".convert_date($inp_from)."', END_DATE = '".convert_date($inp_to)."',TITLE = '".$inp_title."',DESCRIPTION = '".$inp_desc."', STATUS = '', ALERT = ".$inp_alert.",COLOR = '".$inp_color."',TYP = $inp_typ WHERE ID = $ID $where";
+		$sqlquery = "UPDATE KALENDER SET EDITUSER = ".$session['user_id'].", START_DATE = '".convert_date($inp_from)."', END_DATE = '".convert_date($inp_to)."',TITLE = '".$inp_title."',DESCRIPTION = '".$inp_desc."', STATUS = '', ALERT = ".$inp_alert.",COLOR = '".$inp_color."',TYP = $inp_typ WHERE ID = $ID $where";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}else{
@@ -90,7 +90,7 @@ if($inp_del AND $ID){
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		$anzahl = odbc_result($rs,"ANZAHL");
-		$sqlquery = "UPDATE ".$gtab[table][$gtabid]." SET ".$gfield[$gtabid][field_name][$field_id]." = ".$anzahl." WHERE ID = $dat_id";
+		$sqlquery = "UPDATE ".$gtab['table'][$gtabid]." SET ".$gfield[$gtabid]['field_name'][$field_id]." = ".$anzahl." WHERE ID = $dat_id";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}
@@ -103,16 +103,16 @@ $sqlquery = "SELECT ID,IP,LOGIN_DATE,UPDATE_DATE,
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 $bzm = 1;
 while(odbc_fetch_row($rs, $bzm)) {
-	$termin[id][] = odbc_result($rs,"ID");
-	$termin[title][] = odbc_result($rs,"IP");
-	$termin[start_stamp][] = date("U",mktime(odbc_result($rs,"START_HOUR"),0,0,odbc_result($rs,"START_MONTH"),odbc_result($rs,"START_DAY"),odbc_result($rs,"START_YEAR")));
-	$termin[end_stamp][] = date("U",mktime(odbc_result($rs,"END_HOUR"),odbc_result($rs,"END_MINUTE")-1,0,odbc_result($rs,"END_MONTH"),odbc_result($rs,"END_DAY"),odbc_result($rs,"END_YEAR")));
-	$termin[start_date][] = odbc_result($rs,"LOGIN_DATE");
-	$termin[end_date][] = odbc_result($rs,"UPDATE_DATE");
-	$termin[status][] = "";
-	$termin[alert][] = "";
-	$termin[color][] =  $farbschema[WEB10];
-	$termin[typ][] = "";
+	$termin['id'][] = odbc_result($rs,"ID");
+	$termin['title'][] = odbc_result($rs,"IP");
+	$termin['start_stamp'][] = date("U",mktime(odbc_result($rs,"START_HOUR"),0,0,odbc_result($rs,"START_MONTH"),odbc_result($rs,"START_DAY"),odbc_result($rs,"START_YEAR")));
+	$termin['end_stamp'][] = date("U",mktime(odbc_result($rs,"END_HOUR"),odbc_result($rs,"END_MINUTE")-1,0,odbc_result($rs,"END_MONTH"),odbc_result($rs,"END_DAY"),odbc_result($rs,"END_YEAR")));
+	$termin['start_date'][] = odbc_result($rs,"LOGIN_DATE");
+	$termin['end_date'][] = odbc_result($rs,"UPDATE_DATE");
+	$termin['status'][] = "";
+	$termin['alert'][] = "";
+	$termin['color'][] =  $farbschema['WEB10'];
+	$termin['typ'][] = "";
 	$bzm++;
 }
 

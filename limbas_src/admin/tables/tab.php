@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -30,7 +30,7 @@
 
 <DIV ID="menu_indicator" class="lmbContextMenu" style="position:absolute;visibility:hidden;z-index:10001;" onclick="activ_menu=1">
 <?pop_left();?>
-<TEXTAREA ID="indicator_value" OnChange="document.form2.tabid.value=currenttabid;document.form2.indicator.value=' '+this.value;document.form2.submit();" STYLE="width:150px;height:100px;background-color:<?php echo $farbschema[WEB8];?>;"></TEXTAREA>
+<TEXTAREA ID="indicator_value" OnChange="document.form2.tabid.value=currenttabid;document.form2.indicator.value=' '+this.value;document.form2.submit();" STYLE="width:150px;height:100px;background-color:<?= $farbschema['WEB8'] ?>;"></TEXTAREA>
 <?pop_right();?>
 <?pop_bottom();?>
 </DIV>
@@ -76,7 +76,7 @@ function div4(el, evt,tab) {
 function group_delete(ID){
 	var del = confirm('<?=$lang[2286]?>');
 	if(del){
-		document.location.href="main_admin.php?<?SID?>&action=setup_tab&group_del="+ID;
+		document.location.href="main_admin.php?action=setup_tab&group_del="+ID;
 	}
 }
 
@@ -89,7 +89,7 @@ function tab_delete(group_bzm,tab_group,bzm,gtable,tabid,drop_physical){
 	}
 	var del = confirm("<?=$lang[2287]?> "+ph+'\n### '+gtable+" ###");
 	if(del){
-		document.location.href="main_admin.php?<?=SID?>&action=setup_tab&group_bzm="+group_bzm+"&tab_group="+tab_group+"&bzm="+bzm+"&gtable="+gtable+"&tabid="+tabid+"&del=1&drop_physical="+drop_physical;
+		document.location.href="main_admin.php?action=setup_tab&group_bzm="+group_bzm+"&tab_group="+tab_group+"&bzm="+bzm+"&gtable="+gtable+"&tabid="+tabid+"&del=1&drop_physical="+drop_physical;
 	}
 }
 
@@ -239,22 +239,22 @@ if(!$tab_group){?>
 	<TD class="tabHeaderItem"><?=$lang[949]?>&nbsp;</TD>
     <TD class="tabHeaderItem"></TD>
 	<TD class="tabHeaderItem"><?=$lang[952]?></TD>
-    <TD class="tabHeaderItem"><?=$lang[933]?></TD>
+    <TD class="tabHeaderItem"><?=$lang[160]?></TD>
 	<TD class="tabHeaderItem"><?=$lang[924]?></TD>
 	<TD class="tabHeaderItem"><?=$lang[923]?></TD>
-	<TD class="tabHeaderItem"><?=$lang[2461]?></TD>
+	<TD class="tabHeaderItem"><?=$lang[897]?></TD>
 	<TD class="tabHeaderItem">Icon</TD>
-	<TD class="tabHeaderItem"><?=$lang[950]?></TD>
+	<TD class="tabHeaderItem"><?=$lang[577]?></TD>
 	</TR>
         <?php
         foreach($tabgroup_["id"] as $bzm => $value){
         	echo "<TR class=\"tabBody\">";
-            echo "<TD class=\"vAlignMiddle txtAlignLeft\"><A HREF=\"main_admin.php?$_SID&action=setup_tab&group_bzm=$bzm&tab_group=".$tabgroup_["id"][$bzm]."\">&nbsp;".$tabgroup_["id"][$bzm]."&nbsp;</A></TD>";
-            echo "<TD class=\"vAlignMiddle txtAlignLeft\"><A HREF=\"main_admin.php?$_SID&action=setup_tab&group_bzm=$bzm&tab_group=".$tabgroup_["id"][$bzm]."\"><i class=\"lmb-icon lmb-pencil\" BORDER=\"0\" style=\"cursor:pointer\"></i></A></TD>";
-            echo "<TD class=\"vAlignMiddle txtAlignLeft\"><i class=\"lmb-icon lmb-long-arrow-up\" BORDER=\"0\" OnClick=\"document.location.href='main_admin.php?".SID."&action=setup_tab&group_change=".$tabgroup_["id"][$bzm]."&sort_id=".$tabgroup_['id'][$bzm]."&gup=1'\"></i>&nbsp;<i class=\"lmb-icon lmb-long-arrow-down\" BORDER=\"0\" OnClick=\"document.location.href='main_admin.php?".SID."&action=setup_tab&group_change=".$tabgroup_["id"][$bzm]."&sort_id=".$tabgroup_['id'][$bzm]."&gdown=1'\"></i></TD>";
+            echo "<TD class=\"vAlignMiddle txtAlignLeft\"><A HREF=\"main_admin.php?action=setup_tab&group_bzm=$bzm&tab_group=".$tabgroup_["id"][$bzm]."\">&nbsp;".$tabgroup_["id"][$bzm]."&nbsp;</A></TD>";
+            echo "<TD class=\"vAlignMiddle txtAlignLeft\"><A HREF=\"main_admin.php?action=setup_tab&group_bzm=$bzm&tab_group=".$tabgroup_["id"][$bzm]."\"><i class=\"lmb-icon lmb-pencil\" BORDER=\"0\" style=\"cursor:pointer\"></i></A></TD>";
+            echo "<TD class=\"vAlignMiddle txtAlignLeft\"><i class=\"lmb-icon lmb-long-arrow-up\" BORDER=\"0\" OnClick=\"document.location.href='main_admin.php?action=setup_tab&group_change=".$tabgroup_["id"][$bzm]."&sort_id=".$tabgroup_['id'][$bzm]."&gup=1'\"></i>&nbsp;<i class=\"lmb-icon lmb-long-arrow-down\" BORDER=\"0\" OnClick=\"document.location.href='main_admin.php?action=setup_tab&group_change=".$tabgroup_["id"][$bzm]."&sort_id=".$tabgroup_['id'][$bzm]."&gdown=1'\"></i></TD>";
             echo "<TD class=\"vAlignMiddle txtAlignLeft\">";
             if(!$tabgroup_["systemtab"][$bzm]){
-                echo "<i class=\"lmb-icon lmb-trash\" BORDER=\"0\" style=\"cursor:pointer\" OnClick=\"group_delete('".$tabgroup_["id"][$bzm]."')\"></i>";
+                echo "<i class=\"lmb-icon lmb-trash\" BORDER=\"0\" style=\"cursor:pointer;\" OnClick=\"group_delete('".$tabgroup_["id"][$bzm]."')\"></i>";
             }
             echo "</TD>";
         	echo "<TD><INPUT TYPE=\"TEXT\" NAME=\"group_name_".$tabgroup_["id"][$bzm]."\" STYLE=\"width:130px;\" VALUE=\"".$tabgroup_["name"][$bzm]."\" OnChange=\"document.form1.group_change.value='".$tabgroup_["id"][$bzm]."';document.form1.submit();\"></TD>";
@@ -267,7 +267,7 @@ if(!$tab_group){?>
                 // dont show the current subgroup as option
         		if($value1 != $value) {
                     // dont show any tabgroup-children of the current subgroup as option
-                    if(!array_key_exists($value, getTabgroupParents($value1))){                
+                    if(!array_key_exists($value, getTabgroupParents($value1))){
                         if($value1 == $tabgroup_["level"][$bzm]){$SELECTED = "SELECTED";}else{$SELECTED = "";}
                         echo "<OPTION VALUE=\"$value1\" $SELECTED>".$tabgroup_["name"][$bzm1]."</OPTION>";
                     }
@@ -299,12 +299,12 @@ if(!$tab_group){?>
 	?>
 	<FORM ACTION="main_admin.php" METHOD="post" NAME="form2">
 	<input type="hidden" name="action" value="setup_tab">
-	<input type="hidden" name="bzm" value="<?echo $bzm;?>">
+	<input type="hidden" name="bzm" value="<?= $bzm ?>">
 	<input type="hidden" name="tabid">
 	<input type="hidden" name="desc">
 	<input type="hidden" name="tabname">
-	<input type="hidden" name="tab_group" value="<?echo $tab_group;?>">
-	<input type="hidden" name="group_bzm" value="<?echo $group_bzm;?>">
+	<input type="hidden" name="tab_group" value="<?= $tab_group ?>">
+	<input type="hidden" name="group_bzm" value="<?= $group_bzm ?>">
 	<input type="hidden" name="breite">
 	<input type="hidden" name="lockable">
 	<input type="hidden" name="logging">
@@ -323,27 +323,27 @@ if(!$tab_group){?>
 	<input type="hidden" name="datasync">
 	
 	
-	<?if($result_gtab[$tab_group]["id"]){?>
+	<?php if($result_gtab[$tab_group]["id"]){?>
 	
 	<TABLE class="tabfringe" BORDER="0" cellspacing="1" cellpadding="2">
-	<TR class="tabHeader"><TD class="tabHeaderItem" colspan="24"><?echo $tabgroup_["name"][$tab_group];?></TD></TR>
+	<TR class="tabHeader"><TD class="tabHeaderItem" colspan="24"><?= $tabgroup_["name"][$tab_group] ?></TD></TR>
 
 	<TR class="tabHeader">
 	<TD class="tabHeaderItem" nowrap>ID</TD>
 	<TD class="tabHeaderItem" nowrap colspan="2"></TD>
 	<TD class="tabHeaderItem" nowrap><?=$lang[952]?></TD>
-	<TD class="tabHeaderItem" nowrap><?=$lang[933]?></TD>
+	<TD class="tabHeaderItem" nowrap><?=$lang[160]?></TD>
 	<TD class="tabHeaderItem" nowrap><?=$lang[951]?></TD>
 	<TD class="tabHeaderItem" nowrap><?=$lang[924]?></TD>
-	<TD class="tabHeaderItem" nowrap><?=$lang[2586]?></TD>
+	<TD class="tabHeaderItem" nowrap><?=$lang[900]?></TD>
 	<TD class="tabHeaderItem" nowrap>1:1 <?=$lang[1460]?></TD>
-	<TD class="tabHeaderItem" nowrap><?=$lang[1930]?></TD>
+	<TD class="tabHeaderItem" nowrap><?=$lang[925]?></TD>
 	<TD class="tabHeaderItem" nowrap><?=$lang[953]?></TD>
-	<TD class="tabHeaderItem" nowrap><?=$lang[954]?></TD>
+	<TD class="tabHeaderItem" nowrap><?=$lang[294]?></TD>
 	<TD class="tabHeaderItem" nowrap><?=$lang[1779]?></TD>
-    <TD class="tabHeaderItem" nowrap><?=$lang[955]?></TD>
+    <TD class="tabHeaderItem" nowrap><?=$lang[657]?></TD>
     <TD class="tabHeaderItem" nowrap><?=$lang[1601]?></TD>
-    <TD class="tabHeaderItem" nowrap><?=$lang[2336]?></TD>
+    <TD class="tabHeaderItem" nowrap><?=$lang[575]?></TD>
     <TD class="tabHeaderItem" nowrap><?=$lang[2640]?></TD>
     <TD class="tabHeaderItem" nowrap><?=$lang[1465]?></TD>
     <TD class="tabHeaderItem" nowrap><?=$lang[2703]?></TD>
@@ -351,7 +351,7 @@ if(!$tab_group){?>
     <TD class="tabHeaderItem" nowrap><?=$lang[2132]?></TD>
     <TD class="tabHeaderItem" nowrap><?=$lang[2688]?></TD>
     <TD class="tabHeaderItem" nowrap><?=$lang[1255]?></TD>
-    <TD class="tabHeaderItem" nowrap><?=$lang[2452]?></TD>
+    <TD class="tabHeaderItem" nowrap><?=$lang[2216]?></TD>
     <TD class="tabHeaderItem" nowrap><?=$lang[575]?></TD>
 	</TR>
 
@@ -362,29 +362,29 @@ if(!$tab_group){?>
 		$gtabid = $result_gtab[$tab_group]["id"][$bzm];
 		?>
 			<TR class="tabBody">
-			<TD class="vAlignMiddle"><?echo $result_gtab[$tab_group]["id"][$bzm];?></TD>
+			<TD class="vAlignMiddle"><?= $result_gtab[$tab_group]["id"][$bzm] ?></TD>
             
 			<TD class="vAlignMiddle" nowrap>
-			<?if($gfield[$result_gtab[$tab_group]["id"][$bzm]] OR !$isview){?>
+			<?php if($gfield[$result_gtab[$tab_group]["id"][$bzm]] OR !$isview){?>
                             <A HREF="main_admin.php?&action=setup_gtab_ftype&group_bzm=<?=$group_bzm?>&tab_group=<?=$tab_group?>&atid=<?=$result_gtab[$tab_group]["id"][$bzm]?>" title="<?=$lang[2689]?>"><i class="lmb-icon lmb-pencil" BORDER="0" style="cursor:pointer"></i></A>
                             <A onclick="activ_menu=1;ajaxEditTable(null,'<?=$gtabid?>','<?=$tab_group?>')" title="<?=$lang[2689]?>"><i class="lmb-icon lmb-cog-alt" BORDER="0" style="cursor:pointer"></i></A>
-			<?}?>
+			<?php }?>
 			</TD><TD class="vAlignMiddle" nowrap>
-			<?
+			<?php
 			if($isview){?>
                             <A HREF="main_admin.php?&action=setup_gtab_view&viewid=<?=$result_gtab[$tab_group]["id"][$bzm]?>" title="<?=$lang[2690]?>"><i class="lmb-icon lmb-organisation-edit" BORDER="0" style="cursor:pointer"></i></A>
-            <?}?>
+            <?php }?>
             </TD>
-            <TD class="vAlignMiddle txtAlignCenter"><i class="lmb-icon lmb-long-arrow-up" BORDER="0" onclick="document.location.href='main_admin.php?<?=SID?>&action=setup_tab&tab_group=<?echo $tab_group;?>&up=1;?>&fieldid=<?echo $result_gtab[$tab_group]['ID'][$bzm];?>';"></i>&nbsp;<i class="lmb-icon lmb-long-arrow-down" BORDER="0" onclick="document.location.href='main_admin.php?<?=SID?>&action=setup_tab&tab_group=<?echo $tab_group;?>&down=1;&fieldid=<?echo $result_gtab[$tab_group]['ID'][$bzm];?>';"></i></TD>
+            <TD class="vAlignMiddle txtAlignCenter"><i class="lmb-icon lmb-long-arrow-up" BORDER="0" onclick="document.location.href='main_admin.php?action=setup_tab&tab_group=<?= $tab_group ?>&up=1;?>&fieldid=<?= $result_gtab[$tab_group]['ID'][$bzm] ?>';"></i>&nbsp;<i class="lmb-icon lmb-long-arrow-down" BORDER="0" onclick="document.location.href='main_admin.php?action=setup_tab&tab_group=<?= $tab_group ?>&down=1;&fieldid=<?= $result_gtab[$tab_group]['ID'][$bzm] ?>';"></i></TD>
             <TD class="vAlignMiddle txtAlignCenter">
-            <?if($result_gtab[$tab_group]["tabelle"][$bzm] != "LDMS_FILES" AND $result_gtab[$tab_group]["tabelle"][$bzm] != "LDMS_META"){?>
-                <i class="lmb-icon lmb-trash" BORDER="0" style="cursor:pointer" OnClick="tab_delete('<?=$group_bzm?>','<?=$tab_group?>','<?=$bzm?>','<?=urlencode(lmb_strtoupper($result_gtab[$tab_group][tabelle][$bzm]))?>','<?=$result_gtab[$tab_group]["id"][$bzm]?>',0)"></i>
-                <i class="lmb-icon lmb-minus-circle" BORDER="0" style="cursor:pointer;height:13px;vertical-align:bottom" OnClick="tab_delete('<?=$group_bzm?>','<?=$tab_group?>','<?=$bzm?>','<?=urlencode(lmb_strtoupper($result_gtab[$tab_group][tabelle][$bzm]))?>','<?=$result_gtab[$tab_group]["id"][$bzm]?>',1)"></i>
-            <?}?>
+            <?php if($result_gtab[$tab_group]["tabelle"][$bzm] != "LDMS_FILES" AND $result_gtab[$tab_group]["tabelle"][$bzm] != "LDMS_META"){?>
+                <i class="lmb-icon lmb-trash" style="float:left;" BORDER="0" style="cursor:pointer" OnClick="tab_delete('<?=$group_bzm?>','<?=$tab_group?>','<?=$bzm?>','<?=urlencode(lmb_strtoupper($result_gtab[$tab_group]['tabelle'][$bzm]))?>','<?=$result_gtab[$tab_group]["id"][$bzm]?>',0)"></i>
+                <i class="lmb-icon lmb-minus-circle" BORDER="0" style="cursor:pointer;height:13px;vertical-align:bottom" OnClick="tab_delete('<?=$group_bzm?>','<?=$tab_group?>','<?=$bzm?>','<?=urlencode(lmb_strtoupper($result_gtab[$tab_group]['tabelle'][$bzm]))?>','<?=$result_gtab[$tab_group]["id"][$bzm]?>',1)"></i>
+            <?php }?>
             </TD>
 
-			<TD class="vAlignMiddle"><INPUT TYPE="TEXT" SIZE="25" VALUE="<?echo $result_gtab[$tab_group]["tabelle"][$bzm];?>" OnChange="document.form2.tabname.value=this.value;document.form2.tabid.value='<?echo $result_gtab[$tab_group][id][$bzm]?>';document.form2.submit();"></TD>
-			<TD class="vAlignMiddle"><INPUT TYPE="TEXT" SIZE="25" VALUE="<?echo $result_gtab[$tab_group]["beschreibung"][$bzm];?>" OnChange="document.form2.desc.value=this.value;document.form2.tabid.value='<?echo $result_gtab[$tab_group][id][$bzm]?>';document.form2.submit();"></TD>
+			<TD class="vAlignMiddle"><INPUT TYPE="TEXT" SIZE="25" VALUE="<?= $result_gtab[$tab_group]["tabelle"][$bzm] ?>" OnChange="document.form2.tabname.value=this.value;document.form2.tabid.value='<?= $result_gtab[$tab_group]['id'][$bzm] ?>';document.form2.submit();"></TD>
+			<TD class="vAlignMiddle"><INPUT TYPE="TEXT" SIZE="25" VALUE="<?= $result_gtab[$tab_group]["beschreibung"][$bzm] ?>" OnChange="document.form2.desc.value=this.value;document.form2.tabid.value='<?= $result_gtab[$tab_group]['id'][$bzm] ?>';document.form2.submit();"></TD>
 			
 			<TD class="vAlignMiddle txtAlignLeft">
 			<?php
@@ -411,9 +411,9 @@ if(!$tab_group){?>
 			<TD class="vAlignMiddle txtAlignLeft">
 			<?php
 			# typ
-			if($result_gtab[$tab_group]["typ"][$bzm] == 1){echo $lang[1928]."&nbsp;";}
+			if($result_gtab[$tab_group]["typ"][$bzm] == 1){echo $lang[164]."&nbsp;";}
 			elseif($result_gtab[$tab_group]["typ"][$bzm] == 2){echo $lang[1929]."&nbsp;";}
-			elseif($result_gtab[$tab_group]["typ"][$bzm] == 6){echo $lang[2380]."&nbsp;";}
+			elseif($result_gtab[$tab_group]["typ"][$bzm] == 6){echo $lang[767]."&nbsp;";}
 			elseif($result_gtab[$tab_group]["typ"][$bzm] == 5){
 				if($result_gtab[$tab_group]["viewtype"][$bzm] == 1){
 					echo $lang[2656]."&nbsp;";
@@ -430,86 +430,86 @@ if(!$tab_group){?>
 			?>
 			</TD>
 
-			<TD class="vAlignMiddle txtAlignCenter"><?echo $result_gtab[$tab_group]["num_gtab"][$bzm];?>&nbsp;</TD>
+			<TD class="vAlignMiddle txtAlignCenter"><?= $result_gtab[$tab_group]["num_gtab"][$bzm] ?>&nbsp;</TD>
             
-                        <TD class="vAlignMiddle txtAlignCenter"><DIV id="color_select_<?=$result_gtab[$tab_group]["id"][$bzm]?>" OnClick="div4(this, event,'<?=$result_gtab[$tab_group]["id"][$bzm]?>')" STYLE="cursor:pointer;width:20px;height:20px;border:1px solid black;background-color:<?php if($result_gtab[$tab_group][markcolor][$bzm]){echo $result_gtab[$tab_group][markcolor][$bzm];}else{echo $farbschema[WEB10];}?>"></DIV></TD>
+                        <TD class="vAlignMiddle txtAlignCenter"><DIV id="color_select_<?=$result_gtab[$tab_group]["id"][$bzm]?>" OnClick="div4(this, event,'<?=$result_gtab[$tab_group]["id"][$bzm]?>')" STYLE="cursor:pointer;width:20px;height:20px;border:1px solid black;background-color:<?php if($result_gtab[$tab_group]['markcolor'][$bzm]){echo $result_gtab[$tab_group]['markcolor'][$bzm];}else{echo $farbschema['WEB10'];}?>"></DIV></TD>
 
-            <?if($result_gtab[$tab_group]["logging"][$bzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}?>
+            <?php if($result_gtab[$tab_group]["logging"][$bzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}?>
             <TD class="vAlignMiddle txtAlignCenter">
-            <?if(!$isview){?><INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="document.form2.tabid.value=<?echo $result_gtab[$tab_group]["id"][$bzm]?>;document.form2.tab_group.value=<?echo $tab_group?>;if(this.checked){document.form2.logging.value=1;}else{document.form2.logging.value=2;};document.form2.submit();"><?}?>
+            <?php if(!$isview){?><INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="document.form2.tabid.value=<?= $result_gtab[$tab_group]["id"][$bzm] ?>;document.form2.tab_group.value=<?= $tab_group ?>;if(this.checked){document.form2.logging.value=1;}else{document.form2.logging.value=2;};document.form2.submit();"><?php }?>
             </TD>
 
-            <?if($result_gtab[$tab_group]["lockable"][$bzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}?>
+            <?php if($result_gtab[$tab_group]["lockable"][$bzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}?>
             <TD class="vAlignMiddle txtAlignCenter">
-            <?if(!$isview){?><INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="document.form2.tabid.value=<?echo $result_gtab[$tab_group]["id"][$bzm]?>;document.form2.tab_group.value=<?echo $tab_group?>;if(this.checked){document.form2.lockable.value=1;}else{document.form2.lockable.value=2;};document.form2.submit();"><?}?>
+            <?php if(!$isview){?><INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="document.form2.tabid.value=<?= $result_gtab[$tab_group]["id"][$bzm] ?>;document.form2.tab_group.value=<?= $tab_group ?>;if(this.checked){document.form2.lockable.value=1;}else{document.form2.lockable.value=2;};document.form2.submit();"><?php }?>
             </TD>
 
-            <?if($result_gtab[$tab_group]["linecolor"][$bzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}?>
+            <?php if($result_gtab[$tab_group]["linecolor"][$bzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}?>
             <TD class="vAlignMiddle txtAlignCenter">
-            <?if(!$isview){?><INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="document.form2.tabid.value=<?echo $result_gtab[$tab_group]["id"][$bzm]?>;document.form2.tab_group.value=<?echo $tab_group?>;if(this.checked){document.form2.linecolor.value=1;}else{document.form2.linecolor.value=2;};document.form2.submit();"><?}?>
+            <?php if(!$isview){?><INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="document.form2.tabid.value=<?= $result_gtab[$tab_group]["id"][$bzm] ?>;document.form2.tab_group.value=<?= $tab_group ?>;if(this.checked){document.form2.linecolor.value=1;}else{document.form2.linecolor.value=2;};document.form2.submit();"><?php }?>
             </TD>
 
-            <?if($result_gtab[$tab_group]["userrules"][$bzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}?>
+            <?php if($result_gtab[$tab_group]["userrules"][$bzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}?>
             <TD class="vAlignMiddle txtAlignCenter">
-            <?if(!$isview){?><INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="tab_userrule(this,'<?=$result_gtab[$tab_group]["id"][$bzm]?>','<?=$tab_group?>')"><?}?>
+            <?php if(!$isview){?><INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="tab_userrule(this,'<?=$result_gtab[$tab_group]["id"][$bzm]?>','<?=$tab_group?>')"><?php }?>
             </TD>
             
-            <?if($result_gtab[$tab_group]["ajaxpost"][$bzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}?>
+            <?php if($result_gtab[$tab_group]["ajaxpost"][$bzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}?>
             <TD class="vAlignMiddle txtAlignCenter">
-            <?if(!$isview){?><INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="document.form2.tabid.value=<?echo $result_gtab[$tab_group]["id"][$bzm]?>;document.form2.tab_group.value=<?echo $tab_group?>;if(this.checked){document.form2.ajaxpost.value=1;}else{document.form2.ajaxpost.value=2;};document.form2.submit();"><?}?>
+            <?php if(!$isview){?><INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="document.form2.tabid.value=<?= $result_gtab[$tab_group]["id"][$bzm] ?>;document.form2.tab_group.value=<?= $tab_group ?>;if(this.checked){document.form2.ajaxpost.value=1;}else{document.form2.ajaxpost.value=2;};document.form2.submit();"><?php }?>
             </TD>
 
             <TD class="vAlignMiddle txtAlignCenter">
-            <?
+            <?php
             if(!$isview){
             if($result_gtab[$tab_group]["groupable"][$bzm]){$CHECKED = "CHECKED";}else{$CHECKED = "";}?>
-            <?if(!$isview){?><INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="document.form2.tabid.value=<?echo $result_gtab[$tab_group]["id"][$bzm]?>;document.form2.tab_group.value=<?echo $tab_group?>;if(this.checked){document.form2.groupable.value=1;}else{document.form2.groupable.value=2;};document.form2.submit();"><?}?>
-            <?}?>
+            <?php if(!$isview){?><INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="document.form2.tabid.value=<?= $result_gtab[$tab_group]["id"][$bzm] ?>;document.form2.tab_group.value=<?= $tab_group ?>;if(this.checked){document.form2.groupable.value=1;}else{document.form2.groupable.value=2;};document.form2.submit();"><?php }?>
+            <?php }?>
             </TD>
             
-            <?if($result_gtab[$tab_group]["reserveid"][$bzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}?>
+            <?php if($result_gtab[$tab_group]["reserveid"][$bzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}?>
             <TD class="vAlignMiddle txtAlignCenter">
-            <?if(!$isview){?><INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="document.form2.tabid.value=<?echo $result_gtab[$tab_group]["id"][$bzm]?>;document.form2.tab_group.value=<?echo $tab_group?>;if(this.checked){document.form2.reserveid.value=1;}else{document.form2.reserveid.value=2;};document.form2.submit();"><?}?>
+            <?php if(!$isview){?><INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="document.form2.tabid.value=<?= $result_gtab[$tab_group]["id"][$bzm] ?>;document.form2.tab_group.value=<?= $tab_group ?>;if(this.checked){document.form2.reserveid.value=1;}else{document.form2.reserveid.value=2;};document.form2.submit();"><?php }?>
             </TD>
             
-            <?if($result_gtab[$tab_group]["datasync"][$bzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}?>
+            <?php if($result_gtab[$tab_group]["datasync"][$bzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}?>
             <TD class="vAlignMiddle txtAlignCenter">
-            <?if(!$isview){?><INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="document.form2.tabid.value=<?echo $result_gtab[$tab_group]["id"][$bzm]?>;document.form2.tab_group.value=<?echo $tab_group?>;if(this.checked){document.form2.datasync.value=1;}else{document.form2.datasync.value=2;};document.form2.submit();"><?}?>
+            <?php if(!$isview){?><INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="document.form2.tabid.value=<?= $result_gtab[$tab_group]["id"][$bzm] ?>;document.form2.tab_group.value=<?= $tab_group ?>;if(this.checked){document.form2.datasync.value=1;}else{document.form2.datasync.value=2;};document.form2.submit();"><?php }?>
             </TD>
             
             
-            <?if($result_gtab[$tab_group]["id"][$bzm] == $result_gtab[$tab_group]["verknid"][$bzm] AND !$isview){?>
+            <?php if($result_gtab[$tab_group]["id"][$bzm] == $result_gtab[$tab_group]["verknid"][$bzm] AND !$isview){?>
             <TD class="vAlignMiddle txtAlignCenter">
-            <SELECT OnChange="set_versioning('<?php echo $result_gtab[$tab_group]["id"][$bzm]?>','<?php echo $tab_group?>',this.value);">
+            <SELECT OnChange="set_versioning('<?= $result_gtab[$tab_group]["id"][$bzm] ?>','<?= $tab_group ?>',this.value);">
             <OPTION VALUE="-1" <?php if(!$result_gtab[$tab_group]["versioning"][$bzm]){echo "SELECTED";}?>>
             <OPTION VALUE="1" <?php if($result_gtab[$tab_group]["versioning"][$bzm] == 1){echo "SELECTED";}?>><?=$lang[2142]?>
             <OPTION VALUE="2" <?php if($result_gtab[$tab_group]["versioning"][$bzm] == 2){echo "SELECTED";}?>><?=$lang[2143]?>
             </SELECT></TD>
-            <?}else{?>
+            <?php }else{?>
             <TD class="vAlignMiddle txtAlignCenter">
             <?php if($result_gtab[$tab_group]["versioning"][$bzm] == 1){echo $lang[2142];}
 			elseif($result_gtab[$tab_group]["versioning"][$bzm] == 2){echo $lang[2143];}?>
 			</TD>
-			<?}?>
+			<?php }?>
 
 			
 			<TD class="vAlignMiddle txtAlignCenter">
             <?php if($result_gtab[$tab_group]["num_gtab"][$bzm] > 0){?>
-			<SELECT OnChange="document.form2.tabid.value=<?echo $result_gtab[$tab_group]["id"][$bzm]?>;document.form2.tab_group.value=<?echo $tab_group?>;document.form2.numrowcalc.value=this.value;document.form2.submit();">
-            <OPTION VALUE="-1" <?if(!$result_gtab[$tab_group]["numrowcalc"][$bzm]){echo "SELECTED";}?>><?=$lang[2685]?>
-            <OPTION VALUE="1" <?if($result_gtab[$tab_group]["numrowcalc"][$bzm] == 1){echo "SELECTED";}?>><?=$lang[2686]?>
-            <OPTION VALUE="2" <?if($result_gtab[$tab_group]["numrowcalc"][$bzm] == 2){echo "SELECTED";}?>><?=$lang[2687]?>
+			<SELECT OnChange="document.form2.tabid.value=<?= $result_gtab[$tab_group]["id"][$bzm] ?>;document.form2.tab_group.value=<?= $tab_group ?>;document.form2.numrowcalc.value=this.value;document.form2.submit();">
+            <OPTION VALUE="-1" <?php if(!$result_gtab[$tab_group]["numrowcalc"][$bzm]){echo "SELECTED";}?>><?=$lang[2685]?>
+            <OPTION VALUE="1" <?php if($result_gtab[$tab_group]["numrowcalc"][$bzm] == 1){echo "SELECTED";}?>><?=$lang[2686]?>
+            <OPTION VALUE="2" <?php if($result_gtab[$tab_group]["numrowcalc"][$bzm] == 2){echo "SELECTED";}?>><?=$lang[2687]?>
             </SELECT>
-            <?}?>
+            <?php }?>
             </TD>
 
             <td VALIGN="TOP" ALIGN="CENTER" nowrap><i style="float:left;" class="lmb-icon lmb-indicator-rule"></i><TEXTAREA NAME="indicator_rule_<?=$result_gtab[$tab_group]["id"][$bzm]?>" readonly style="width:60px;height:17px;cursor:pointer;" OnClick="show_indicator(this,'<?=$result_gtab[$tab_group]["id"][$bzm]?>')" title="<?=$lang[1255]?>"><?=$result_gtab[$tab_group]["indicator"][$bzm]?></TEXTAREA></td>
             
             <TD class="vAlignMiddle txtAlignCenter">
-            <?if($gtrigger[$gtabid]["id"]){?>
+            <?php if($gtrigger[$gtabid]["id"]){?>
 			<SPAN STYLE="display:none;position:absolute" ID="tab_trigger_<?=$gtabid?>" OnClick="activ_menu=1">
-			<SELECT NAME="tab_trigger_<?=$gtabid?>[]" STYLE="width:200px;" MULTIPLE SIZE="5" OnChange="document.form2.tabid.value=<?echo $result_gtab[$tab_group]["id"][$bzm]?>;document.form2.tab_group.value=<?echo $tab_group?>;document.form2.trigger.value='<?=$gtabid?>';" onblur="if(document.form2.trigger.value=='<?=$gtabid?>'){document.form2.submit();}"><OPTION VALUE="0">
-			<?
+			<SELECT NAME="tab_trigger_<?=$gtabid?>[]" STYLE="width:200px;" MULTIPLE SIZE="5" OnChange="document.form2.tabid.value=<?= $result_gtab[$tab_group]["id"][$bzm] ?>;document.form2.tab_group.value=<?= $tab_group ?>;document.form2.trigger.value='<?=$gtabid?>';" onblur="if(document.form2.trigger.value=='<?=$gtabid?>'){document.form2.submit();}"><OPTION VALUE="0">
+			<?php
 			$trlist = array();
 			foreach($gtrigger[$gtabid]["id"] as $trid => $trval){
 				if(in_array($trid,$result_gtab[$tab_group]["trigger"][$bzm])){$SELECTED = "SELECTED";$trlist[] = $gtrigger[$gtabid]["trigger_name"][$trid];}else{$SELECTED = "";}
@@ -519,7 +519,7 @@ if(!$tab_group){?>
 			</SELECT>
 			</SPAN>
 			<INPUT TYPE="TEXT" STYLE="width:100px;" VALUE="<?=implode(";",$trlist)?>" OnClick="activ_menu=1;document.getElementById('tab_trigger_<?=$gtabid?>').style.display=''">
-			<?}?>
+			<?php }?>
             </TD>
             
             
@@ -545,7 +545,7 @@ if(!$tab_group){?>
 	<TD class="tabHeaderItem"><?=$lang[924]?></TD>
     <TD class="tabHeaderItem">1:1 <?=$lang[1460]?></TD>
     <TD class="tabHeaderItem"><?=$lang[1464]?></TD>
-    <TD class="tabHeaderItem"><?=$lang[1930]?></TD>
+    <TD class="tabHeaderItem"><?=$lang[925]?></TD>
     <TD class="tabHeaderItem" colspan="2">&nbsp;</TD>
 	</TR>
 
@@ -555,23 +555,24 @@ if(!$tab_group){?>
 	<TD valign="top"><INPUT TYPE="TEXT" SIZE="25" NAME="beschreibung"></TD>
     <TD valign="top"><SELECT NAME="verkn"><OPTION VALUE="0">
     <?php
-    foreach($tabgroup_["id"] as $key => $value){
-        echo "<OPTGROUP label='{$tabgroup_[name][$key]}'>";
-    	if($result_gtab[$tabgroup_["id"][$key]]["id"]){
-            foreach($result_gtab[$tabgroup_["id"][$key]]["id"] as $key1 => $value){
-                $desc = $result_gtab[$tabgroup_["id"][$key]]["beschreibung"][$key1];
-                if ($desc == null) { $desc = $result_gtab[$tabgroup_["id"][$key]]["tabelle"][$key1]; }
-                echo "<OPTION VALUE=\"".$result_gtab[$tabgroup_["id"][$key]]["id"][$key1]."\">$desc";
+    foreach($tabgroup_["id"] as $key => $tabgroupID){
+        if($result_gtab[$tabgroupID]["id"] && $result_gtab[$tabgroupID]["id"][1]){
+            echo "<optgroup label='{$tabgroup_['name'][$key]}'>";
+            foreach($result_gtab[$tabgroupID]["id"] as $tableKey => $tableID){
+                $desc = $result_gtab[$tabgroupID]["beschreibung"][$tableKey];
+                if ($desc == null) { $desc = $result_gtab[$tabgroupID]["tabelle"][$tableKey]; }
+                echo "<option value=\"{$tableID}\">$desc</option>";
             }
-    	}
-    	echo "</OPTGROUP>";
+            echo "</optgroup>";
+        }
     }
     
     echo "<TD class=\"vAlignTop txtAlignLeft\"><select name=\"copy\" id=\"new_copy\"><option>";
     if($result_gtab[$tab_group]["tabelle"]){
-    foreach($result_gtab[$tab_group]["tabelle"] as $bzm => $value){
-    	echo "<option value=\"".$result_gtab[$tab_group]["id"][$bzm]."\">".$value."</option>";
-    }}
+        foreach($result_gtab[$tab_group]["tabelle"] as $bzm => $value){
+            echo "<option value=\"".$result_gtab[$tab_group]["id"][$bzm]."\">".$value."</option>";
+        }
+    }
 	echo "</select></TD>";
 	
 	?>
@@ -580,10 +581,10 @@ if(!$tab_group){?>
 
     <TD valign="top"><SELECT NAME="typ" OnChange="extendTabTyp(this)">
     <?php
-	echo "<OPTION VALUE=\"1\">".$lang[1928];  # table
+	echo "<OPTION VALUE=\"1\">".$lang[164];  # table
 	echo "<OPTION VALUE=\"2\">".$lang[1929];  # calendar
     echo "<OPTION VALUE=\"7\">".'Kanban';
-	echo "<OPTION VALUE=\"6\">".$lang[2380]; # messages
+	echo "<OPTION VALUE=\"6\">".$lang[767]; # messages
 	echo "<OPTION VALUE=\"5\">".$lang[2023]; # view
 	?>
     
@@ -598,7 +599,7 @@ if(!$tab_group){?>
     
     </TD>
 
-    <td valign="top"><INPUT TYPE="button" VALUE="<?=$lang[937]?>" OnClick="add_tab()">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+    <td valign="top"><INPUT TYPE="button" VALUE="<?=$lang[540]?>" OnClick="add_tab()">&nbsp;&nbsp;&nbsp;&nbsp;</td>
 
     <TD valign="top">
     <table cellpadding=0 cellspacing=0>
@@ -607,9 +608,9 @@ if(!$tab_group){?>
     <tr><td><?=$lang[2664]?></td>
     <td><INPUT TYPE="CHECKBOX" NAME="use_serial" VALUE="1"></td></tr>
     <tr><td><?=$lang[2665]?></td>
-    <?if(LMB_DBFUNC_SEQUENCE){?>
+    <?php if(LMB_DBFUNC_SEQUENCE){?>
     <td><INPUT TYPE="CHECKBOX" NAME="use_sequence" VALUE="1" readonly disabled checked></td></tr>
-    <?}?>
+    <?php }?>
     
     </tr></table>
     </TD>
@@ -621,6 +622,6 @@ if(!$tab_group){?>
 
     </FORM>
 
-<?}?>
+<?php }?>
 
 </div>

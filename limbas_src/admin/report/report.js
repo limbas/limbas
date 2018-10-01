@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -456,7 +456,6 @@ function aktivate_menu(ID) {
 	$("#"+currentdiv).addClass('ui-selected');
 	
 	document.onmousedown = startDrag;
-	return;
 }
 
 
@@ -960,10 +959,10 @@ function limbasMenuOpen(evt,el,ID,STYLE,TYP,VALUE,PICSTYLE,tab_element,dbdat_tab
 	}
 
 	var el = document.getElementById(div).style;
-	if(el.borderLeft.indexOf('none') < 1){document.form_menu.borderLeft.checked = true;}else{document.form_menu.borderLeft.checked = false;}
-	if(el.borderRight.indexOf('none') < 1){document.form_menu.borderRight.checked = true;}else{document.form_menu.borderRight.checked = false;}
-	if(el.borderTop.indexOf('none') < 1){document.form_menu.borderTop.checked = true;}else{document.form_menu.borderTop.checked = false;}
-	if(el.borderBottom.indexOf('none') < 1){document.form_menu.borderBottom.checked = true;}else{document.form_menu.borderBottom.checked = false;}
+	document.form_menu.borderLeft.checked = el.borderLeft.indexOf('none') < 1;
+	document.form_menu.borderRight.checked = el.borderRight.indexOf('none') < 1;
+	document.form_menu.borderTop.checked = el.borderTop.indexOf('none') < 1;
+	document.form_menu.borderBottom.checked = el.borderBottom.indexOf('none') < 1;
 
 	// Textstyle anzeigen
 	document.fstyle_form.input_fontstyle.value = document.getElementById(div).style.fontStyle;

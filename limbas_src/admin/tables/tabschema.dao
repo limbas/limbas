@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -42,7 +42,7 @@ function lmb_TabschemaGetAliasName($tabname,$viewid,$num=0){
 function lmb_SetTabschemaPattern($setdrag,$viewid=0,$relationstring=0){
 	global $db;
 	global $session;
-	
+
 	if($part_tabs = explode(":",$setdrag)){
 		foreach ($part_tabs as $key => $part_tab_){
 			if($part_tab_){
@@ -85,7 +85,7 @@ function lmb_SetTabschemaPattern($setdrag,$viewid=0,$relationstring=0){
 				}else{
 					if($deltable != $tabid){
 						$NEXTID = next_db_id("LMB_GTAB_PATTERN");
-						$sqlquery1 = "INSERT INTO LMB_GTAB_PATTERN (ID,ERSTUSER,TABID,POSX,POSY,WIDTH,HEIGHT,VIEWID) VALUES (".$NEXTID.",".$session["user_id"].",'".parse_db_string($tabid,50)."',".parse_db_int($posx,6).",".parse_db_int($posy,6).",".parse_db_int($sizex,6).",".parse_db_int($sizey,6).",".parse_db_int($viewid).")";
+						$sqlquery1 = "INSERT INTO LMB_GTAB_PATTERN (ID,ERSTUSER,TABID,POSX,POSY,WIDTH,HEIGHT,VIEWID) VALUES (".$NEXTID.",".$session["user_id"].",'".parse_db_string(str_replace("=","",$tabid),50)."',".parse_db_int($posx,6).",".parse_db_int($posy,6).",".parse_db_int($sizex,6).",".parse_db_int($sizey,6).",".parse_db_int($viewid).")";
 						$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 					}
 				}

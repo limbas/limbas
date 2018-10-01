@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -21,7 +21,7 @@
 <SCRIPT LANGUAGE="JavaScript">
 
 var dspl = new Array();
-<?
+<?php
 $dspl_ = array();
 if($dspl){
 $dspl_ = explode(";",$dspl);
@@ -173,7 +173,6 @@ function limbasShowGroupsPost(result){
 
 
 <FORM ACTION="main_admin.php" METHOD="post" name="form1">
-<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
 <input type="hidden" name="action" VALUE="setup_group_dateirechte">
 <input type="hidden" name="ID" VALUE="<?=$ID?>">
 <input type="hidden" name="fileid">
@@ -186,16 +185,16 @@ function limbasShowGroupsPost(result){
 
 <TABLE class="tabpool" BORDER="0" cellspacing="0" cellpadding="0"><TR><TD valign="top" height="100%">
 
-<TABLE BORDER="0" cellspacing="0" cellpadding="0" height="100%" style="border-collapse:collapse">
-<?if($LINK[135]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][135]?>" TITLE="<?=$lang[$LINK["desc"][135]]?>"><?echo "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][135]."\"></i>&nbsp;".$lang[$LINK["name"][135]];?></TD></TR><?}?>
-<?if($LINK[76]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][76]?>" TITLE="<?=$lang[$LINK["desc"][76]]?>"><?echo "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][76]."\"></i>&nbsp;".$lang[$LINK["name"][76]];?></TD></TR><?}?>
-<?if($LINK[100]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][100]?>" TITLE="<?=$lang[$LINK["desc"][100]]?>"><?echo "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][100]."\"></i>&nbsp;".$lang[$LINK["name"][100]];?></TD></TR><?}?>
-<?if($LINK[192]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemActive" OnClick="<?=$LINK["link_url"][192]?>" TITLE="<?=$lang[$LINK["desc"][192]]?>"><?echo "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][192]."\"></i>&nbsp;".$lang[$LINK["name"][192]];?></TD></TR><?}?>
-<?if($LINK[260]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][260]?>" TITLE="<?=$lang[$LINK["desc"][260]]?>"><?echo "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][260]."\"></i>&nbsp;".$lang[$LINK["name"][260]];?></TD></TR><?}?>
-<?if($LINK[291]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][291]?>" TITLE="<?=$lang[$LINK["desc"][291]]?>"><?echo "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][291]."\"></i>&nbsp;".$lang[$LINK["name"][291]];?></TD></TR><?}?>
-<?if($LINK[292]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][292]?>" TITLE="<?=$lang[$LINK["desc"][292]]?>"><?echo "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][292]."\"></i>&nbsp;".$lang[$LINK["name"][292]];?></TD></TR><?}?>
-<?if($LINK[290]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][290]?>" TITLE="<?=$lang[$LINK["desc"][290]]?>"><?echo "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][290]."\"></i>&nbsp;".$lang[$LINK["name"][290]];?></TD></TR><?}?>
-<?if($LINK[293]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][293]?>" TITLE="<?=$lang[$LINK["desc"][293]]?>"><?echo "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][293]."\"></i>&nbsp;".$lang[$LINK["name"][293]];?></TD></TR><?}?>
+<TABLE BORDER="0" cellspacing="0" cellpadding="0" height="100%" style="border-collapse:collapse;position:sticky;top:20px;">
+<?php if($LINK[135]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][135]?>" TITLE="<?=$lang[$LINK["desc"][135]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][135]."\"></i>&nbsp;".$lang[$LINK["name"][135]] ?></TD></TR><?php }?>
+<?php if($LINK[76]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][76]?>" TITLE="<?=$lang[$LINK["desc"][76]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][76]."\"></i>&nbsp;".$lang[$LINK["name"][76]] ?></TD></TR><?php }?>
+<?php if($LINK[100]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][100]?>" TITLE="<?=$lang[$LINK["desc"][100]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][100]."\"></i>&nbsp;".$lang[$LINK["name"][100]] ?></TD></TR><?php }?>
+<?php if($LINK[192]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemActive" OnClick="<?=$LINK["link_url"][192]?>" TITLE="<?=$lang[$LINK["desc"][192]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][192]."\"></i>&nbsp;".$lang[$LINK["name"][192]] ?></TD></TR><?php }?>
+<?php if($LINK[260]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][260]?>" TITLE="<?=$lang[$LINK["desc"][260]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][260]."\"></i>&nbsp;".$lang[$LINK["name"][260]] ?></TD></TR><?php }?>
+<?php if($LINK[291]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][291]?>" TITLE="<?=$lang[$LINK["desc"][291]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][291]."\"></i>&nbsp;".$lang[$LINK["name"][291]] ?></TD></TR><?php }?>
+<?php if($LINK[292]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][292]?>" TITLE="<?=$lang[$LINK["desc"][292]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][292]."\"></i>&nbsp;".$lang[$LINK["name"][292]] ?></TD></TR><?php }?>
+<?php if($LINK[290]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][290]?>" TITLE="<?=$lang[$LINK["desc"][290]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][290]."\"></i>&nbsp;".$lang[$LINK["name"][290]] ?></TD></TR><?php }?>
+<?php if($LINK[293]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][293]?>" TITLE="<?=$lang[$LINK["desc"][293]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][293]."\"></i>&nbsp;".$lang[$LINK["name"][293]] ?></TD></TR><?php }?>
 <TR><TD class="tabHpoolItemSpaceGtab"><div style="height:100%">&nbsp;</div></TD></TR>
 
 </TABLE>
@@ -227,12 +226,12 @@ function files1($LEVEL,$sub_view,$sub_add,$sub_addf,$sub_edit,$sub_del){
 	} else{
 		if(!$bzm){echo "<TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\" WIDTH=\"100%\"><TR>
 		
-		<TD align=\"left\" nowrap style=\"cursor:pointer;width:20px;\" TITLE=\"".$lang[2288]."\"><i class=\"lmb-icon lmb-expand-all\" OnClick=\"opcl_all(2);\" STYLE=\"border:1px solid red;padding:3px;padding-top:5px;padding-bottom:5px;\" ID=\"opclall2\"></i></TD>
-		<TD align=\"left\" nowrap style=\"cursor:pointer;width:20px;\" TITLE=\"".$lang[2289]."\"><i class=\"lmb-icon lmb-collapse-all\" OnClick=\"opcl_all(1);\" STYLE=\";padding:3px;padding-left:5px;padding-right:5px;\" ID=\"opclall1\"></i></TD>
-		<TD align=\"left\" nowrap style=\"cursor:pointer;width:20px;\" TITLE=\"".$lang[2290]."\"><i class=\"lmb-icon lmb-expand-some\" OnClick=\"opcl_all(3);\" STYLE=\"padding:3px;padding-top:5px;padding-bottom:5px;\" ID=\"opclall3\"></i></TD>
+		<TD align=\"left\" nowrap style=\"cursor:pointer;width:20px;\" TITLE=\"".$lang[2288]."\"><i class=\"lmb-icon lmb-expand-all\" OnClick=\"opcl_all(2);\" STYLE=\"border:1px solid red;padding:3px 5px;\" ID=\"opclall2\"></i></TD>
+		<TD align=\"left\" nowrap style=\"cursor:pointer;width:20px;\" TITLE=\"".$lang[2289]."\"><i class=\"lmb-icon lmb-collapse-all\" OnClick=\"opcl_all(1);\" STYLE=\";padding:3px 5px;\" ID=\"opclall1\"></i></TD>
+		<TD align=\"left\" nowrap style=\"cursor:pointer;width:20px;\" TITLE=\"".$lang[2290]."\"><i class=\"lmb-icon lmb-expand-some\" OnClick=\"opcl_all(3);\" STYLE=\"padding:3px 5px;\" ID=\"opclall3\"></i></TD>
 		<TD >&nbsp;</TD>
 
-                <TD style=\"width:100px\" align=\"center\">$lang[2105]<INPUT TYPE=\"CHECKBOX\" ID=\"inclsub\" CLASS=\"checkb\"></TD>
+                <TD style=\"width:100px\" align=\"center\">$lang[2081]<INPUT TYPE=\"CHECKBOX\" ID=\"inclsub\" CLASS=\"checkb\"></TD>
                 <TD class=\"lmbRightsCheckboxWrapper\" align=\"center\"><i class=\"lmb-icon lmb-eye\" BORDER=\"0\" TITLE=\"$lang[2295]\"></i></TD>
                 <TD class=\"lmbRightsCheckboxWrapper\" align=\"center\"><i class=\"lmb-icon lmb-create-file\" BORDER=\"0\" TITLE=\"$lang[2296]\"></i></TD>
                 <TD class=\"lmbRightsCheckboxWrapper\" align=\"center\"><i class=\"lmb-icon lmb-create-folder\" BORDER=\"0\" TITLE=\"$lang[2297]\"></i></TD>
@@ -256,7 +255,7 @@ function files1($LEVEL,$sub_view,$sub_add,$sub_addf,$sub_edit,$sub_del){
 			}
 			
 			echo "<div ID=\"f_".$LEVEL."_".$file_struct["id"][$bzm]."\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\" WIDTH=\"100%\">";
-			echo "<TR title=\"".htmlentities($file_struct["name"][$bzm],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\"><TD WIDTH=\"20\" nowrap>$pic</TD><TD nowrap WIDTH=\"20\"><i class=\"lmb-icon lmb-folder-closed\" ID=\"p".$file_struct["id"][$bzm]."\" NAME=\"p".$file_struct["id"][$bzm]."\" STYLE=\"cursor:hand\"></i></TD><TD nowrap>&nbsp;".$file_struct[name][$bzm]."</TD>";
+			echo "<TR title=\"".htmlentities($file_struct["name"][$bzm],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\"><TD WIDTH=\"20\" nowrap>$pic</TD><TD nowrap WIDTH=\"20\"><i class=\"lmb-icon lmb-folder-closed\" ID=\"p".$file_struct["id"][$bzm]."\" NAME=\"p".$file_struct["id"][$bzm]."\" STYLE=\"cursor:hand\"></i></TD><TD nowrap>&nbsp;".$file_struct['name'][$bzm]."</TD>";
 			echo "<TD ALIGN=\"RIGHT\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR>";
 			
                         # --- view ---
@@ -313,14 +312,14 @@ files1(0,0,0,0,0,0);
 
 </TD><TD width="30%"></TD></TR>
 
-<?
+<?php
 if($session["user_id"] != 1 AND $session["group_id"] == $ID){
 lmb_alert("no permission to change own group!");
 }else{
 ?>
 <TR><TD COLSPAN="10" ALIGN="CENTER"><HR></TD></TR>
-<TR><TD colspan="3"><input type="submit" value="<?=$lang[2106]?>" name="update_rules">&nbsp;&nbsp;&nbsp;&nbsp;<?=$lang[2107]?>:<input type="checkbox" name="change_subgroup" CLASS="checkb" <?if($change_subgroup){echo "CHECKED";}?>></TD></TR>
-<?}?>
+<TR><TD colspan="3"><input type="submit" value="<?=$lang[33]?>" name="update_rules">&nbsp;&nbsp;&nbsp;&nbsp;<?=$lang[2107]?>:<input type="checkbox" name="change_subgroup" CLASS="checkb" <?php if($change_subgroup){echo "CHECKED";}?>></TD></TR>
+<?php }?>
 <TR><TD colspan="3" class="tabFooter">&nbsp;</TD></TR>
 </TABLE>
 

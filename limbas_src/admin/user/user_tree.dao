@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -24,14 +24,14 @@ $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$a
 if(!$rs1){$commit = 1;}
 $bzm = 1;
 while(odbc_fetch_row($rs1, $bzm)) {
-	$alluser[user_id][] = odbc_result($rs1, "USER_ID");
-	$alluser[user_name][] = odbc_result($rs1, "VORNAME")." ".odbc_result($rs1, "NAME");
-	$alluser[name][] = odbc_result($rs1, "USERNAME");
-	$alluser[lock][] = odbc_result($rs1, "LMLOCK");
-	$alluser[del][] = odbc_result($rs1, "DEL");
-	$alluser[group_id][] = odbc_result($rs1, "GROUP_ID");
-	$alluser[clearpass][] = odbc_result($rs1, "CLEARPASS");
-	if(odbc_result($rs1, "SUB_GROUP")){$alluser[subgroup][] = explode(";",odbc_result($rs1, "SUB_GROUP"));}else{$alluser[subgroup][] = array(0);}
+	$alluser['user_id'][] = odbc_result($rs1, "USER_ID");
+	$alluser['user_name'][] = odbc_result($rs1, "VORNAME")." ".odbc_result($rs1, "NAME");
+	$alluser['name'][] = odbc_result($rs1, "USERNAME");
+	$alluser['lock'][] = odbc_result($rs1, "LMLOCK");
+	$alluser['del'][] = odbc_result($rs1, "DEL");
+	$alluser['group_id'][] = odbc_result($rs1, "GROUP_ID");
+	$alluser['clearpass'][] = odbc_result($rs1, "CLEARPASS");
+	if(odbc_result($rs1, "SUB_GROUP")){$alluser['subgroup'][] = explode(";",odbc_result($rs1, "SUB_GROUP"));}else{$alluser['subgroup'][] = array(0);}
 	$bzm++;
 }
 
@@ -42,27 +42,27 @@ if(!$rs){$commit = 1;}
 
 $bzm = 1;
 while(odbc_fetch_row($rs, $bzm)) {
-	$userstruct[id][] = odbc_result($rs, "GROUP_ID");
-	$userstruct[user_id][] = 0;
-	$userstruct[user_name][] = 0;
-	$userstruct[name][] = odbc_result($rs, "NAME");
-	$userstruct[clearpass][] = 0;
-	$userstruct[level][] = odbc_result($rs, "LEVEL");
-	$userstruct[lock][] = 0;
-	$userstruct[del][] = 0;
-	$userstruct[maingroup][] = 0;
+	$userstruct['id'][] = odbc_result($rs, "GROUP_ID");
+	$userstruct['user_id'][] = 0;
+	$userstruct['user_name'][] = 0;
+	$userstruct['name'][] = odbc_result($rs, "NAME");
+	$userstruct['clearpass'][] = 0;
+	$userstruct['level'][] = odbc_result($rs, "LEVEL");
+	$userstruct['lock'][] = 0;
+	$userstruct['del'][] = 0;
+	$userstruct['maingroup'][] = 0;
 
-	foreach ($alluser[user_id] as $key => $value) {
-		if($alluser[group_id][$key] == odbc_result($rs, "GROUP_ID") OR in_array(odbc_result($rs, "GROUP_ID"),$alluser[subgroup][$key])){
-			if($alluser[group_id][$key] == odbc_result($rs, "GROUP_ID")){$userstruct[maingroup][] = 1;}else{$userstruct[maingroup][] = 0;}
-			$userstruct[id][] = 1000;
-			$userstruct[user_id][] = $alluser[user_id][$key];
-			$userstruct[user_name][] = $alluser[user_name][$key];
-			$userstruct[name][] = $alluser[name][$key];
-			$userstruct[clearpass][] = $alluser[clearpass][$key];
-			$userstruct[lock][] = $alluser[lock][$key];
-			$userstruct[del][] = $alluser[del][$key];
-			$userstruct[level][] = odbc_result($rs, "GROUP_ID");
+	foreach ($alluser['user_id'] as $key => $value) {
+		if($alluser['group_id'][$key] == odbc_result($rs, "GROUP_ID") OR in_array(odbc_result($rs, "GROUP_ID"),$alluser['subgroup'][$key])){
+			if($alluser['group_id'][$key] == odbc_result($rs, "GROUP_ID")){$userstruct['maingroup'][] = 1;}else{$userstruct['maingroup'][] = 0;}
+			$userstruct['id'][] = 1000;
+			$userstruct['user_id'][] = $alluser['user_id'][$key];
+			$userstruct['user_name'][] = $alluser['user_name'][$key];
+			$userstruct['name'][] = $alluser['name'][$key];
+			$userstruct['clearpass'][] = $alluser['clearpass'][$key];
+			$userstruct['lock'][] = $alluser['lock'][$key];
+			$userstruct['del'][] = $alluser['del'][$key];
+			$userstruct['level'][] = odbc_result($rs, "GROUP_ID");
 			$bzm1++;
 		}
 	}

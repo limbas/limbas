@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -172,7 +172,7 @@ if($formcopy){
 		$form_id = next_conf_id("LMB_FORM_LIST");
 	
 		/* --- Neues Formular anlegen---------------------------------------- */
-		$sqlquery = "INSERT INTO LMB_FORM_LIST (ID,ERSTUSER,NAME,REFERENZ_TAB,FORM_TYP,EXTENSION) VALUES($form_id,$session[user_id],'".parse_db_string($form_name,160)."',".parse_db_int($referenz_tab).",".parse_db_int($form_typ).",'".parse_db_string($form_extension,250)."')";
+		$sqlquery = "INSERT INTO LMB_FORM_LIST (ID,ERSTUSER,NAME,REFERENZ_TAB,FORM_TYP,EXTENSION) VALUES($form_id,{$session['user_id']},'".parse_db_string($form_name,160)."',".parse_db_int($referenz_tab).",".parse_db_int($form_typ).",'".parse_db_string($form_extension,250)."')";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	
 		# Rechte
@@ -205,13 +205,13 @@ if($formcopy){
 					/* --- Feldbezeichnung eintragen ---------------------------------------- */;
 					$height = 16;
 					$width = 200;
-					$sqlquery = "INSERT INTO LMB_FORMS (KEYID,KEYID,form_id,ERSTUSER,POSX,POSY,HEIGHT,WIDTH,TYP,STYLE,INHALT) VALUES ($NEXTKEYID,$NEXTID,$form_id,$session[user_id],$posx,$posy,$height,$width,'text','$style','".$gfield[$gtab[tab_id][$gtabid]][spelling][$bzm1].":')";
+					$sqlquery = "INSERT INTO LMB_FORMS (KEYID,KEYID,form_id,ERSTUSER,POSX,POSY,HEIGHT,WIDTH,TYP,STYLE,INHALT) VALUES ($NEXTKEYID,$NEXTID,$form_id,{$session['user_id']},$posx,$posy,$height,$width,'text','$style','".$gfield[$gtab['tab_id'][$gtabid]]['spelling'][$bzm1].":')";
 					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					if(!$rs) {$commit = 1;}
 					$NEXTID++;
 					$NEXTKEYID++;
 					/* --- EingabeFeld eintragen ---------------------------------------- */
-					if($gfield[$gtab[tab_id][$gtabid]][data_type][$bzm1] == 24 OR $gfield[$gtab[tab_id][$gtabid]][data_type][$bzm1] == 27){
+					if($gfield[$gtab['tab_id'][$gtabid]]['data_type'][$bzm1] == 24 OR $gfield[$gtab['tab_id'][$gtabid]]['data_type'][$bzm1] == 27){
 						$height = 85;
 						$width = 430;
 					}else{
@@ -219,12 +219,12 @@ if($formcopy){
 						$width = 200;
 					}
 	
-					$sqlquery = "INSERT INTO LMB_FORMS (KEYID,KEYID,form_id,ERSTUSER,POSX,POSY,HEIGHT,WIDTH,TYP,STYLE,TAB_GROUP,TAB_ID,FIELD_ID,INHALT) VALUES ($NEXTKEYID,$NEXTID,$form_id,$session[user_id],".($posx + 210).",$posy,$height,$width,'dbdat','$style',".$gtab[tab_group][$bzm].",".$gtab[tab_id][$bzm].",".$gfield[$gtab[tab_id][$gtabid]][field_id][$bzm1].",'".$gfield[$gtab[tab_id][$gtabid]][field_name][$bzm1]."')";
+					$sqlquery = "INSERT INTO LMB_FORMS (KEYID,KEYID,form_id,ERSTUSER,POSX,POSY,HEIGHT,WIDTH,TYP,STYLE,TAB_GROUP,TAB_ID,FIELD_ID,INHALT) VALUES ($NEXTKEYID,$NEXTID,$form_id,{$session['user_id']},".($posx + 210).",$posy,$height,$width,'dbdat','$style',".$gtab['tab_group'][$bzm].",".$gtab['tab_id'][$bzm].",".$gfield[$gtab['tab_id'][$gtabid]]['field_id'][$bzm1].",'".$gfield[$gtab['tab_id'][$gtabid]]['field_name'][$bzm1]."')";
 					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					if(!$rs) {$commit = 1;}
 					$NEXTID++;
 					$NEXTKEYID++;
-					if($gfield[$gtab[tab_id][$gtabid]][data_type][$bzm1] == 24 OR $gfield[$gtab[tab_id][$gtabid]][data_type][$bzm1] == 27){
+					if($gfield[$gtab['tab_id'][$gtabid]]['data_type'][$bzm1] == 24 OR $gfield[$gtab['tab_id'][$gtabid]]['data_type'][$bzm1] == 27){
 						$posy = $posy + 109;
 					}else{
 						$posy = $posy + 24;
@@ -238,26 +238,26 @@ if($formcopy){
 				$bzm = 0;
 				$style = "VERDANA;normal;;11;normal;0;0;none;none;#000000;;;justify;;none;none;none;none;;none;;;";
 				$bzm1 = 0;
-				while($gfield[$gtab[tab_id][$vgtabid]][field_id][$bzm1]) {
+				while($gfield[$gtab['tab_id'][$vgtabid]]['field_id'][$bzm1]) {
 					$posy = 10;
 					$height = 14;
-					$width = lmb_strlen($gfield[$gtab[tab_id][$vgtabid]][field_name][$bzm1]) * 8 + 40;
+					$width = lmb_strlen($gfield[$gtab['tab_id'][$vgtabid]]['field_name'][$bzm1]) * 8 + 40;
 					
 					/* --- EingabeFeld eintragen ---------------------------------------- */
-					$sqlquery = "INSERT INTO LMB_FORMS (KEYID,KEYID,FORM_ID,ERSTUSER,TYP,POSX,POSY,HEIGHT,WIDTH,STYLE,INHALT,FIELD_ID,FORM_FRAME) VALUES ($NEXTKEYID,$NEXTID,$form_id,$session[user_id],'dbinput',$posx,$posy,$height,$width,'$style','".$gfield[$gtab[tab_id][$vgtabid]][spelling][$bzm1]."',".$gfield[$gtab[tab_id][$vgtabid]][field_id][$bzm1].",1)";
+					$sqlquery = "INSERT INTO LMB_FORMS (KEYID,KEYID,FORM_ID,ERSTUSER,TYP,POSX,POSY,HEIGHT,WIDTH,STYLE,INHALT,FIELD_ID,FORM_FRAME) VALUES ($NEXTKEYID,$NEXTID,$form_id,{$session['user_id']},'dbinput',$posx,$posy,$height,$width,'$style','".$gfield[$gtab['tab_id'][$vgtabid]]['spelling'][$bzm1]."',".$gfield[$gtab['tab_id'][$vgtabid]]['field_id'][$bzm1].",1)";
 					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					if(!$rs) {$commit = 1;}
 					$NEXTID++;
 					$NEXTKEYID++;
 					/* --- Feldbezeichnung eintragen ---------------------------------------- */
-					$sqlquery = "INSERT INTO LMB_FORMS (KEYID,KEYID,FORM_ID,ERSTUSER,TYP,POSX,POSY,HEIGHT,WIDTH,STYLE,INHALT,FIELD_ID,FORM_FRAME) VALUES ($NEXTKEYID,$NEXTID,$form_id,$session[user_id],'dbdesc',$posx,".($posy + 24).",$height,$width,'$style','".$gfield[$gtab[tab_id][$vgtabid]][spelling][$bzm1]."',".$gfield[$gtab[tab_id][$vgtabid]][field_id][$bzm1].",1)";
+					$sqlquery = "INSERT INTO LMB_FORMS (KEYID,KEYID,FORM_ID,ERSTUSER,TYP,POSX,POSY,HEIGHT,WIDTH,STYLE,INHALT,FIELD_ID,FORM_FRAME) VALUES ($NEXTKEYID,$NEXTID,$form_id,{$session['user_id']},'dbdesc',$posx,".($posy + 24).",$height,$width,'$style','".$gfield[$gtab['tab_id'][$vgtabid]]['spelling'][$bzm1]."',".$gfield[$gtab['tab_id'][$vgtabid]]['field_id'][$bzm1].",1)";
 					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					if(!$rs) {$commit = 1;}
 					$NEXTID++;
 					$NEXTKEYID++;
 					$posy = 0;
 					/* --- Feldinhalt eintragen ---------------------------------------- */
-					$sqlquery = "INSERT INTO LMB_FORMS (KEYID,KEYID,FORM_ID,ERSTUSER,TYP,POSX,POSY,HEIGHT,WIDTH,STYLE,TAB_GROUP,TAB_ID,FIELD_ID,INHALT,FORM_FRAME) VALUES ($NEXTKEYID,$NEXTID,$form_id,$session[user_id],'dbdat',$posx,$posy,$height,$width,'$style',".$gtab[tab_group][$bzm].",".$gtab[tab_id][$bzm].",".$gfield[$gtab[tab_id][$vgtabid]][field_id][$bzm1].",'".$gfield[$gtab[tab_id][$vgtabid]][field_name][$bzm1]."',2)";
+					$sqlquery = "INSERT INTO LMB_FORMS (KEYID,KEYID,FORM_ID,ERSTUSER,TYP,POSX,POSY,HEIGHT,WIDTH,STYLE,TAB_GROUP,TAB_ID,FIELD_ID,INHALT,FORM_FRAME) VALUES ($NEXTKEYID,$NEXTID,$form_id,{$session['user_id']},'dbdat',$posx,$posy,$height,$width,'$style',".$gtab['tab_group'][$bzm].",".$gtab['tab_id'][$bzm].",".$gfield[$gtab['tab_id'][$vgtabid]]['field_id'][$bzm1].",'".$gfield[$gtab['tab_id'][$vgtabid]]['field_name'][$bzm1]."',2)";
 					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					if(!$rs) {$commit = 1;}
 					$NEXTID++;
@@ -308,17 +308,17 @@ if($del AND $form_id){
 	$reftab = odbc_result($rs, "REFERENZ_TAB");
 	$exten = odbc_result($rs, "EXTENSION");
 	
-	if($gformlist[$reftab]["id"][$form_id] OR $gformlist[""]["id"][$form_id]){
+	if($gformlist[$reftab]["id"][$form_id] OR $gformlist['']["id"][$form_id]){
 
 		$sqlquery = "SELECT TAB_SIZE FROM LMB_FORMS WHERE FORM_ID = $form_id AND TYP = 'bild'";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		$bzm = 1;
 		while(odbc_fetch_row($rs, $bzm)) {
-			if(file_exists($umgvar[uploadpfad]."form/".odbc_result($rs, "TAB_SIZE"))){
-				unlink($umgvar[uploadpfad]."form/".odbc_result($rs, "TAB_SIZE"));
+			if(file_exists($umgvar['uploadpfad']."form/".odbc_result($rs, "TAB_SIZE"))){
+				unlink($umgvar['uploadpfad']."form/".odbc_result($rs, "TAB_SIZE"));
 			}
-			if(file_exists($umgvar[pfad]."/TEMP/thumpnails/form/".odbc_result($rs, "TAB_SIZE"))){
-				unlink($umgvar[pfad]."/TEMP/thumpnails/form/".odbc_result($rs, "TAB_SIZE"));
+			if(file_exists($umgvar['pfad']."/TEMP/thumpnails/form/".odbc_result($rs, "TAB_SIZE"))){
+				unlink($umgvar['pfad']."/TEMP/thumpnails/form/".odbc_result($rs, "TAB_SIZE"));
 			}
 		$bzm++;
 		}
@@ -330,7 +330,7 @@ if($del AND $form_id){
 		
 	}
 	unset($gformlist[$reftab]["id"][$form_id]);
-	unset($gformlist[""]["id"][$form_id]);
+	unset($gformlist['']["id"][$form_id]);
 	unset($gformlist[$reftab]["name"][$form_id]);
 
 	$_SESSION["gformlist"] = $gformlist;
@@ -341,13 +341,13 @@ if($del AND $form_id){
 <Script language="JavaScript">
 
 function change_name(val,name,ID) {
-	document.location.href="main_admin.php?<?SID?>&action=setup_form_select&rename_id="+ID+"&"+name+"="+val;
+	document.location.href="main_admin.php?action=setup_form_select&rename_id="+ID+"&"+name+"="+val;
 }
 
 function form_delete(ID){
 	var del = confirm('<?=$lang[2279]?>');
 	if(del){
-		document.location.href="main_admin.php?<?SID?>&action=setup_form_select&del=1&form_id="+ID;
+		document.location.href="main_admin.php?action=setup_form_select&del=1&form_id="+ID;
 	}
 }
 
@@ -369,11 +369,11 @@ function form_delete(ID){
 <TR class="tabHeader">
 <TD class="tabHeaderItem">ID</TD>
 <TD class="tabHeaderItem"></TD>
-<TD class="tabHeaderItem"><?=$lang[1164]?></TD>
+<TD class="tabHeaderItem"><?=$lang[160]?></TD>
 <TD class="tabHeaderItem"><?=$lang[1179]?></TD>
-<TD class="tabHeaderItem"><?=$lang[1182]?></TD>
+<TD class="tabHeaderItem"><?=$lang[925]?></TD>
 <TD class="tabHeaderItem"><?=$lang[1162]?></TD>
-<TD class="tabHeaderItem"><?=$lang[2449]?></TD>
+<TD class="tabHeaderItem"><?=$lang[1986]?></TD>
 <TD class="tabHeaderItem"><?=$lang[1638]?></TD>
 </TR>
 
@@ -383,7 +383,7 @@ if($gformlist){
 		if($gtab["table"][$key]){
 			$cat = $gtab["desc"][$key];
 		}else{
-			$cat = $lang[2449];
+			$cat = $lang[1986];
 		}
 		echo "<tr class=\"tabSubHeader\"><td class=\"tabSubHeaderItem\" colspan=\"8\">" . $cat . "</td></tr>";
 		if($value["id"]){
@@ -417,24 +417,25 @@ if($gformlist){
 <br>
 
 <TABLE class="tabfringe" BORDER="0" width="700" cellspacing="1" cellpadding="2">
-<TR class="tabHeader"><TD class="tabHeaderItem"><?=$lang[1180]?></TD><TD class="tabHeaderItem"><?=$lang[1181]?></TD><TD class="tabHeaderItem"><?=$lang[1464]?></TD><TD class="tabHeaderItem"><?=$lang[1182]?></TD><TD class="tabHeaderItem"><?=$lang[2449]?></TD><TD class="tabHeaderItem"></TD></TR>
+<TR class="tabHeader"><TD class="tabHeaderItem"><?=$lang[4]?></TD><TD class="tabHeaderItem"><?=$lang[164]?></TD><TD class="tabHeaderItem"><?=$lang[1464]?></TD><TD class="tabHeaderItem"><?=$lang[925]?></TD><TD class="tabHeaderItem"><?=$lang[1986]?></TD><TD class="tabHeaderItem"></TD></TR>
 
 <TR class="tabBody"><TD><INPUT TYPE="TEXT" NAME ="form_name" SIZE="20"></TD>
 <TD><SELECT NAME="tabid"><OPTION>
 <?php
 foreach ($tabgroup["id"] as $key0 => $value0) {
-	echo "<OPTION VALUE=\"0\">(".$tabgroup["name"][$key0].")";
+    echo '<optgroup label="' . $tabgroup["name"][$key0] . '">';
 	foreach ($gtab["tab_id"] as $key => $value) {
 		if($gtab["tab_group"][$key] == $value0){
-			echo "<OPTION VALUE=\"".$value."\">&nbsp;&nbsp;".$gtab["desc"][$key];
+			echo "<OPTION VALUE=\"".$value."\">".$gtab["desc"][$key];
 		}
 	}
+	echo '</optgroup>';
 }
 ?>
 </SELECT></TD>
 
 <TD><SELECT NAME="formcopy"><OPTION VALUE="0">
-<?
+<?php
 if($gformlist){
 foreach ($gformlist as $key => $value){
 	if($gtab["table"][$key]){
@@ -462,7 +463,7 @@ echo "<SELECT ID=\"zmenufiles\" NAME=\"form_extension\" style=\"width:100px;\"><
 foreach ($extfiles["name"] as $key1 => $filename){
 	if($extfiles["typ"][$key1] == "file" AND $extfiles["ext"][$key1] == "ext"){
 		$path = lmb_substr($extfiles["path"][$key1],lmb_strlen($umgvar["pfad"]),100);
-		if($result_links[ext][$bzm] == $path.$filename){$selected = "SELECTED";}else{$selected = "";}
+		if($result_links['ext'][$bzm] == $path.$filename){$selected = "SELECTED";}else{$selected = "";}
 		echo "<OPTION VALUE=\"".$path.$filename."\" $selected>".str_replace("/EXTENSIONS/","",$path).$filename;
 	}
 }

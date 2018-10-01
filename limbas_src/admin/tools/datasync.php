@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -79,7 +79,7 @@ function pops(tab){
 
 <TABLE class="tabpool" BORDER="0" width="700" cellspacing="0" cellpadding="0"><TR><TD>
 
-<?
+<?php
 
 
 
@@ -100,7 +100,7 @@ if($tab == 1){
 	
 	<TR class="tabHeader"><TD></TD><TD class="tabHeaderItem">Name</TD><TD class="tabHeaderItem">HOST</TD><TD class="tabHeaderItem">Username</TD><TD class="tabHeaderItem">Password</TD></TR>
 	
-    <?php 
+    <?php
         if($result_slave){
         foreach($result_slave['name'] as $skey => $sval){
         echo "<TR>
@@ -116,7 +116,7 @@ if($tab == 1){
         echo "
 	    
 	    
-	    <TR class=\"tabBody\"><TD></TD><TD><INPUT TYPE=\"submit\" VALUE=".$lang[1096]." NAME=\"edit_slave\"></TD></TR>
+	    <TR class=\"tabBody\"><TD></TD><TD><INPUT TYPE=\"submit\" VALUE=".$lang[522]." NAME=\"edit_slave\"></TD></TR>
 	    
         <TR></TR><TD colspan=\"6\"><HR></TD><TR>
         <TR>
@@ -126,7 +126,7 @@ if($tab == 1){
 	    <TD><input type=\"TEXT\" name=\"new_slaveuser\" style=\"width:80\"></TD>
         <TD><input type=\"password\" name=\"new_slavepass\" style=\"width:80\"></TD>
     
-	    <TD><input type=\"submit\" VALUE=\"".$lang[1095]."\" name=\"add_slave\"></TD></TR>";
+	    <TD><input type=\"submit\" VALUE=\"".$lang[540]."\" name=\"add_slave\"></TD></TR>";
     ?>
 	
 	<TR class="tabFooter"><TD colspan="7"></TD></TR>
@@ -147,7 +147,7 @@ if($tab == 1){
 	<TABLE BORDER="0" cellspacing="1" cellpadding="2" width="850" class="tabBody">
 	<TR><TD>&nbsp;</TD><TR>
 
-    <?php 
+    <?php
     
     
     if(!$template){
@@ -170,7 +170,7 @@ if($tab == 1){
         }}
         echo "
         <TR></TR><TD colspan=\"4\"><HR></TD><TR>
-        <TR><TD colspan=\"3\"><input type=\"TEXT\" name=\"new_template\" style=\"width:300\"></TD><TD><input type=\"submit\" VALUE=\"".$lang[1095]."\" name=\"add_template\"></TD></TR>";
+        <TR><TD colspan=\"3\"><input type=\"TEXT\" name=\"new_template\" style=\"width:300\"></TD><TD><input type=\"submit\" VALUE=\"".$lang[540]."\" name=\"add_template\"></TD></TR>";
     }else{
     
         
@@ -188,7 +188,7 @@ if($tab == 1){
         
         if(in_array($gfield[$tabid]["field_type"][$fkey],$skipftype)){continue;}
         
-    	echo "<TR><TD colspan=\"2\"><FONT COLOR=\"blue\">".$tabgroup['name'][$bzm]." (".$tabgroup['beschreibung'][$bzm].")</TD></TR>";
+    	echo "<TR><TD colspan=\"2\"><span style=\"color:blue\">".$tabgroup['name'][$bzm]." (".$tabgroup['beschreibung'][$bzm].")</span></TD></TR>";
     	foreach($gtab["tab_id"] as $key => $tabid){
             
     		if($gtab["tab_group"][$key] != $tabgroup["id"][$bzm] OR $gtab["typ"][$key] == 5 OR !$gtab["datasync"][$tabid]){continue;}
@@ -198,7 +198,7 @@ if($tab == 1){
     		?>
 			<TR>
 			<TD style="width:50px" align="left"><IMG src="pic/outliner/<?=$icon?>.gif" tabid="<?=$key?>" NAME="popicon_<?=$key?>" CLASS="popicon" BORDER="0" STYLE="cursor:pointer" OnClick="pops('<?=$key?>')"></TD>
-			<TD style="width:400px" align="left" ><FONT COLOR="green"><?=$gtab[table][$key]?> (<?=$gtab[desc][$key]?>)&nbsp;</TD>
+			<TD style="width:400px" align="left" ><FONT COLOR="green"><?=$gtab['table'][$key]?> (<?=$gtab['desc'][$key]?>)&nbsp;</TD>
 			<TD style="width:300px"></TD>
 			<TD style="width:50px" class="tabHeaderItem">master</TD>
 			<TD style="width:50px" class="tabHeaderItem">client</TD>
@@ -230,7 +230,7 @@ if($tab == 1){
     	echo "</TD></TR>";
     }
     echo "<TR><TD colspan=\"5\"><hr></TD></TR>";
-    echo "<TR><TD colspan=\"5\"><input type=\"button\" VALUE=\"".$lang[913]."\" onclick=\"send_form()\"></TD></TR>";
+    echo "<TR><TD colspan=\"5\"><input type=\"button\" VALUE=\"".$lang[33]."\" onclick=\"send_form()\"></TD></TR>";
     }
     			
     			
@@ -239,7 +239,7 @@ if($tab == 1){
 
 	</TABLE>
 	
-	<?
+	<?php
 }
 ?>
 

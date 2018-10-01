@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -60,7 +60,7 @@ function showCalendar(event,sell,fieldname,value) {
 }
 
 function view_detail(USER,ID,DIAG_VON,DIAG_BIS){
-        document.location.href = "main_admin.php?<?=SID?>action=setup_stat_user_deterg&user="+USER+"&ID="+ID+"&diag_von="+DIAG_VON+"&diag_bis="+DIAG_BIS+"";
+        document.location.href = "main_admin.php?action=setup_stat_user_deterg&user="+USER+"&ID="+ID+"&diag_von="+DIAG_VON+"&diag_bis="+DIAG_BIS+"";
 }
 
 function send_form(){
@@ -82,7 +82,6 @@ function send_form(){
 
 
 <FORM ACTION="main_admin.php" METHOD="post" name="form1">
-<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
 <input type="hidden" name="action" value="setup_stat_user_dia">
 <input type="hidden" name="diag_id" value="<?=$diag_id?>">
 <input type="hidden" name="diag_user">
@@ -91,14 +90,14 @@ function send_form(){
 <TABLE BORDER="0" cellspacing="1" cellpadding="1">
 <TR><TD COLSPAN="4">&nbsp;</TD></TR>
 
-<TR BGCOLOR="<?echo $farbschema[WEB6];?>">
+<TR BGCOLOR="<?= $farbschema['WEB3'] ?>">
 <TD><B>Auswahl</B></TD>
 <TD><B>User</B></TD>
 <TD><B>Erster Login</B></TD>
 <TD><B>Letzter Login</B></TD>
 </TR>
 
-<?
+<?php
 $sqlquery =  "SELECT * FROM LMB_USERDB";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 $bzm = 1;
@@ -109,7 +108,7 @@ while(odbc_fetch_row($rs, $bzm)) {
         $bin2 = odbc_binmode($rs2,2);
         $bzm2 = 1;
 
-        if($BGCOLOR == $farbschema[WEB7]){$BGCOLOR = $farbschema[WEB8];} else {$BGCOLOR = $farbschema[WEB7];}
+        if($BGCOLOR == $farbschema['WEB7']){$BGCOLOR = $farbschema['WEB8'];} else {$BGCOLOR = $farbschema['WEB7'];}
         echo "<TR BGCOLOR=\"$BGCOLOR\">";
         echo"<TD ALIGN=\"CENTER\"><INPUT TYPE=\"CHECKBOX\" NAME=\"user\" VALUE=\"$ID\"></TD>";
         echo"<TD><A HREF=\"Javascript:view_detail('".urlencode(odbc_result($rs,"VORNAME")." ".odbc_result($rs,"NAME"))."','$ID',document.form1.diag_von.value,document.form1.diag_bis.value);\">".odbc_result($rs,"VORNAME")." ".odbc_result($rs,"NAME")."</A></TD>";
@@ -129,7 +128,7 @@ $bzm++;
 <i class="lmb-icon lmb-calendar-alt" ALIGN="middle" BORDER="0" ALT="" style="cursor:pointer;" onclick="showCalendar(event,'diagb','diag_bis',document.form1.diag_bis.value)"></i></TD></TR>
 
 <TR><TD><B>Statistik-Typ:&nbsp;</B></TD><TD COLSPAN="3"><SELECT NAME="diag_id" STYLE="width:150px"><OPTION VALUE="4">Anmeldedauer<OPTION VALUE="5">Anmeldehäufigkeit<OPTION VALUE="6">Zeitbreich</SELECT>&nbsp;<i class="lmb-icon lmb-bar-chart" BORDER="0"></i></TD></TR>
-<TR><TD><B>Gliederung:</B></TD><TD COLSPAN="3"><SELECT NAME="diag_myd" STYLE="width:150px"><OPTION VALUE="1" <?if($diag_myd == 1){echo "SELECTED";}?>>Jährlich<OPTION VALUE="2" <?if($diag_myd == 2){echo "SELECTED";}?>>Monatlich<OPTION VALUE="3" <?if($diag_myd == 3){echo "SELECTED";}?>>Täglich</SELECT></TD></TR>
+<TR><TD><B>Gliederung:</B></TD><TD COLSPAN="3"><SELECT NAME="diag_myd" STYLE="width:150px"><OPTION VALUE="1" <?php if($diag_myd == 1){echo "SELECTED";}?>>Jährlich<OPTION VALUE="2" <?php if($diag_myd == 2){echo "SELECTED";}?>>Monatlich<OPTION VALUE="3" <?php if($diag_myd == 3){echo "SELECTED";}?>>Täglich</SELECT></TD></TR>
 <TR><TD>&nbsp;</TD><TD COLSPAN="3" HEIGHT="30" VALIGN="BOTTOM"><INPUT TYPE="BUTTON" value="berechne" OnClick="send_form();"></TD></TR>
 
 </TABLE>

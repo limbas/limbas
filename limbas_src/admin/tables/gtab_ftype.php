@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -23,59 +23,35 @@
 
 <Script language="JavaScript">
 
-if(browser_ns5){document.captureEvents(Event.MOUSEDOWN | Event.MOUSEUP);}
-document.onmouseup = endDrag;
+$(function() {
+    // sort table field rows
+    $("table.tabfringe tbody").sortable({
+        axis: "y",
+        containment: "parent",
+        cursor: "move",
+        distance: 5,
+        handle: ".tabSortableHandle",
+        items: "tr:nth-child(n+3):nth-last-child(n+5)", // exclude header and footer rows
+        stop: function(event, ui) {
+            // cancel if trying to sort to last row, functionality not implemented in backend
+            var sortedRow = ui.item.first();
+            if (!sortedRow.next().attr("data-lmb-fieldid")) {
+                sortedRow.parent().sortable("cancel");
+            }
+        },
+        update: function(event, ui) {
+            var sortedRow = ui.item.first();
+            var sortedRowFieldID = sortedRow.attr("data-lmb-fieldid");
+            var nextRowFieldID = sortedRow.next().attr("data-lmb-fieldid");
 
-var dy = 0;
-var current = null;
-var zIndexTop = 1;
-var currentfield = null;
-
-function startDrag(evt) {
-	if(browser_ns5){
-		var obj = evt.target;
-		current = obj.style;
-		dy = evt.pageY - parseInt(current.top);
-	}else{
-		var obj = window.event.srcElement;
-		current = obj.style;
-		dy = window.event.clientY - parseInt(current.top);
-	}
-
-	zIndexTop++;
-	current.zIndex = zIndexTop;
-
-	if(obj.id.substr(0,5) == 'field'){
-		if(browser_ns5){document.captureEvents(Event.MOUSEMOVE)}
-		document.onmousemove = drag;
-	}
-
-	return false;
-}
-
-function drag(evt) {
-	if (current != null) {
-		if(browser_ns5){
-			current.top = evt.pageY - dy;
-		}else{
-			current.top = window.event.clientY - dy;
-		}
-	}
-	return false;
-}
-
-function endDrag(e) {
-	if(!currentfield){return;}
-	if(current){current.top = 0;}
-	if(browser_ns5){document.releaseEvents(Event.MOUSEMOVE);}
-	document.onmousemove = null;
-	document.onmousedown = null;
-	current = null;
-	document.getElementById('field'+currentfield).style.fontWeight = '';
-	document.getElementById('field'+currentfield).style.color = 'blue';
-	
-	return false;
-}
+            if (sortedRowFieldID && nextRowFieldID) {
+                document.form1.move_to.value = nextRowFieldID;
+                document.form1.fieldid.value = sortedRowFieldID;
+                document.form1.submit();
+            }
+        }
+    });
+});
 
 /* --- delete field ----------------------------------- */
 function delete_field(id,name,physical) {
@@ -89,15 +65,15 @@ function delete_field(id,name,physical) {
 	}
 	var desc = confirm("<?=$lang[2019]?> "+ph+'\n### '+name+" ###");
 	if(desc){
-		document.location.href='main_admin.php?&action=setup_gtab_ftype&tab_group=<?=$tab_group?>&del_tabelle=<?echo urlencode($table_gtab[$bzm]);?>&column='+name+'&column_id='+id+'&del=1&atid=<?=$atid?>&drop_physical='+physical;
+		document.location.href='main_admin.php?&action=setup_gtab_ftype&tab_group=<?=$tab_group?>&del_tabelle=<?= urlencode($table_gtab[$bzm]) ?>&column='+name+'&column_id='+id+'&del=1&atid=<?=$atid?>&drop_physical='+physical;
 	}
 }
 
 /* --- convert field ----------------------------------- */
 function convert_field(convert,fieldid,name,size) {
-	var mess = '<?=$lang[2021]?>';
-	if(convert == 33 || convert == 34){mess = 'be care of if your referential integrity!';}
-	var desc = confirm("<?=$lang[2020]?> "+name+" ?\n"+mess);
+	var message = '<?=$lang[2021]?>';
+	if(convert == 33 || convert == 34){message += '\nTake care of your referential integrity!';}
+	var desc = confirm("<?=$lang[2020]?> "+name+" ?\n"+message);
 	
 	if(desc){
 		document.form1.fieldid.value = fieldid;
@@ -126,24 +102,6 @@ function editrule_field(val,fieldid) {
 	document.form1.fieldid.value = fieldid;
 	document.form1.edit_rule.value = val+" ";
 	document.form1.submit();
-}
-
-/* --- Element-Aktivierung ----------------------------------- */
-function aktivate(id) {
-	document.getElementById('field'+id).style.top = 20;
-	document.getElementById('field'+id).style.fontWeight = 'bold';
-	document.getElementById('field'+id).style.color = 'black';
-	document.onmousedown = startDrag;
-	currentfield = id;
-}
-
-function move_field(id){
-	if(currentfield != id && currentfield && id){
-		document.form1.move_to.value = id;
-		document.form1.fieldid.value = currentfield;
-		document.form1.submit();
-	}
-	currentfield = null;
 }
 
 // Ajax edit field
@@ -186,25 +144,25 @@ function change_wysiwyg(fieldid,el){
 }
 
 function newwin(FIELDID,ATID,POOL,TYP) {
-fieldselect = open("main_admin.php?<?=SID?>&action=setup_fieldselect&fieldid=" + FIELDID + "&atid=" + ATID + "&pool=" + POOL + "&field_pool=" + POOL + "&typ=" + TYP ,"Auswahlfelder","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=540,height=500");
+fieldselect = open("main_admin.php?action=setup_fieldselect&fieldid=" + FIELDID + "&atid=" + ATID + "&pool=" + POOL + "&field_pool=" + POOL + "&typ=" + TYP ,"Auswahlfelder","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=540,height=500");
 }
 function newwin2(FELD,TABELLE,VIEW) {
-genlink = open("main_admin.php?<?=SID?>&action=setup_genlink&tab=auftrag_ftype&&tab_group=<?echo $tab_group;?>tab=" + TABELLE + "&fieldid=" + FELD + "&atid=" + VIEW + "&typ=gtab_ftype" ,"Link_Generator","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=420,height=150");
+genlink = open("main_admin.php?action=setup_genlink&tab=auftrag_ftype&&tab_group=<?= $tab_group ?>tab=" + TABELLE + "&fieldid=" + FELD + "&atid=" + VIEW + "&typ=gtab_ftype" ,"Link_Generator","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=420,height=150");
 }
 function newwin3(FELD,TABID,ATID,ARGTYP) {
-argument = open("main_admin.php?<?=SID?>&action=setup_argument&tab_group=<?echo $tab_group;?>&atid=" + ATID + "&tab_id=" + TABID + "&fieldid=" + FELD + "&typ=gtab_ftype" + "&argument_typ=" + ARGTYP ,"Link_Generator","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=420,height=300");
+argument = open("main_admin.php?action=setup_argument&tab_group=<?= $tab_group ?>&atid=" + ATID + "&tab_id=" + TABID + "&fieldid=" + FELD + "&typ=gtab_ftype" + "&argument_typ=" + ARGTYP ,"Link_Generator","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=420,height=300");
 }
 function newwin4(FELD,TAB,ATID) {
-verknfield = open("main_admin.php?<?=SID?>&action=setup_verknfield&tab_group=<?echo $tab_group;?>&typ=gtab_ftype&tabid=" + ATID + "&tab=" + TAB + "&fieldid=" + FELD + "" ,"Verknuepfung","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=420,height=300");
+verknfield = open("main_admin.php?action=setup_verknfield&tab_group=<?= $tab_group ?>&typ=gtab_ftype&tabid=" + ATID + "&tab=" + TAB + "&fieldid=" + FELD + "" ,"Verknuepfung","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=420,height=300");
 }
 function newwin5(FELD,ATID,VERKNID) {
-verkn_editor = open("main_admin.php?<?=SID?>&action=setup_verkn_editor&tabid=" + ATID + "&fieldid=" + FELD + "&verkntabid=" + VERKNID + "" ,"Verknuepfung_Editor","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=550,height=600");
+verkn_editor = open("main_admin.php?action=setup_verkn_editor&tabid=" + ATID + "&fieldid=" + FELD + "&verkntabid=" + VERKNID + "" ,"Verknuepfung_Editor","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=550,height=600");
 }
 function newwin6(FELD,TAB,ATID) {
-upload_editor = open("main_admin.php?<?=SID?>&action=setup_upload_editor&tab_group=<?echo $tab_group;?>&tabid=" + ATID + "&tab=" + TAB + "&fieldid=" + FELD + "" ,"Verknuepfung","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=420,height=300");
+upload_editor = open("main_admin.php?action=setup_upload_editor&tab_group=<?= $tab_group ?>&tabid=" + ATID + "&tab=" + TAB + "&fieldid=" + FELD + "" ,"Verknuepfung","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=420,height=300");
 }
 function newwin7(FIELDID,TABID) {
-grouping_edior = open("main_admin.php?<?=SID?>&action=setup_grouping_editor&tabid=" + TABID + "&fieldid=" + FIELDID + "" ,"Grouping_Edito","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=420,height=300");
+grouping_edior = open("main_admin.php?action=setup_grouping_editor&tabid=" + TABID + "&fieldid=" + FIELDID + "" ,"Grouping_Edito","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=420,height=300");
 }
 
 
@@ -322,25 +280,32 @@ if($table_gtab[$bzm]) {
 	/* --- Spaltenüberschriften --------------------------------------- */
 	?>
 <FORM ACTION="main_admin.php" METHOD=post NAME="form1">
-	<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>"> 
-    <input type="hidden" name="action" value="setup_gtab_ftype"> 
-	<input type="hidden" name="new_gtab" value="<?echo $table_gtab[$bzm]?>"> 
-	<input type="hidden" name="new_conf_gtab" value="<?echo $conf_gtab[$bzm]?>"> 
-	<input type="hidden" name="tab_group" value="<?echo $tab_group?>"> 
-	<input type="hidden" name="tabelle"> <input type="hidden" name="fieldid"> 
-	<input type="hidden" name="spelling"> <input type="hidden" name="desc"> 
+    <input type="hidden" name="action" value="setup_gtab_ftype">
+	<input type="hidden" name="new_gtab" value="<?= $table_gtab[$bzm] ?>">
+	<input type="hidden" name="new_conf_gtab" value="<?= $conf_gtab[$bzm] ?>">
+	<input type="hidden" name="tab_group" value="<?= $tab_group ?>">
+	<input type="hidden" name="tabelle">
+    <input type="hidden" name="fieldid">
+	<input type="hidden" name="spelling">
+    <input type="hidden" name="desc">
 	<input type="hidden" name="uniquefield"> 
 	<input type="hidden" name="column">
 	<input type="hidden" name="columnid"> 
-	<input type="hidden" name="keyfield"> <input type="hidden" name="mainfield"> 
-	<input type="hidden" name="fieldindex"> <input type="hidden" name="atid" VALUE="<?echo $bzm;?>"> 
-	<input type="hidden" name="def"> <input type="hidden" name="def_bool"> 
+	<input type="hidden" name="keyfield">
+    <input type="hidden" name="mainfield">
+	<input type="hidden" name="fieldindex">
+    <input type="hidden" name="atid" VALUE="<?= $bzm ?>">
+	<input type="hidden" name="def">
+    <input type="hidden" name="def_bool">
     <input type="hidden" name="verk"> 
-    <input type="hidden" name="artleiste"> <input type="hidden" name="groupable">
+    <input type="hidden" name="artleiste">
+    <input type="hidden" name="groupable">
 	<input type="hidden" name="dynsearch"> 
-	<input type="hidden" name="move_to"> <input type="hidden" name="argument_edit"> 
+	<input type="hidden" name="move_to">
+    <input type="hidden" name="argument_edit">
 	<input type="hidden" name="argument_search"> 
-	<input type="hidden" name="convert_value"> <input type="hidden" name="convert_size"> 
+	<input type="hidden" name="convert_value">
+    <input type="hidden" name="convert_size">
 	<input type="hidden" name="extend_value"> 
 	<input type="hidden" name="new_keyid"> 
 	<input type="hidden" name="memoindex"> 
@@ -349,8 +314,11 @@ if($table_gtab[$bzm]) {
 	<input type="hidden" name="wysiwyg"> 
 	<input type="hidden" name="select_cut">
 	<input type="hidden" name="trigger"> 
-	<input type="hidden" name="quicksearch"> <input type="hidden" name="view_rule"> 
-	<input type="hidden" name="edit_rule"> <input type="hidden" name="ajaxsave">
+	<input type="hidden" name="quicksearch">
+    <input type="hidden" name="fullsearch">
+    <input type="hidden" name="view_rule">
+	<input type="hidden" name="edit_rule">
+    <input type="hidden" name="ajaxsave">
 	<input type="hidden" name="collreplace">
 	<input type="hidden" name="solve_dependency">
 	
@@ -372,43 +340,53 @@ if($table_gtab[$bzm]) {
 				<TD class="tabHeaderItem"></TD>
 				<TD class="tabHeaderItem">ID</TD>
 				<TD class="tabHeaderItem"></TD>
-				<?php if(!$isview){echo "<TD class=\"tabHeaderItem\">$lang[933]</TD>";}?>
+				<?php if(!$isview){echo "<TD class=\"tabHeaderItem\">$lang[160]</TD>";}?>
 				<TD class="tabHeaderItem"><?=$lang[922]?></TD>
 				<TD class="tabHeaderItem"><?=$lang[923]?></TD>
 				<TD class="tabHeaderItem"><?=$lang[924]?></TD>
 				<TD class="tabHeaderItem"><?=$lang[925]?></TD>
-				<TD class="tabHeaderItem"><?=$lang[2654]?></TD>
-            <?if(!$isview){?><TD class="tabHeaderItem" ALIGN="right"><?=$lang[928]?></TD><?}?>
-            <TD class="tabHeaderItem" ALIGN="right"><SPAN STYLE="width: 90px;"><?=$lang[929]?></SPAN></TD>
+				<TD class="tabHeaderItem"><?=$lang[210]?></TD>
+            <?php if(!$isview){?><TD class="tabHeaderItem" ALIGN="right"><?=$lang[928]?></TD><?php }?>
+            <TD class="tabHeaderItem" ALIGN="right"><SPAN STYLE="width: 90px;"><?=$lang[27]?></SPAN></TD>
 				<TD class="tabHeaderItem" ALIGN="center"><?=$lang[930]?></TD>
-				<TD class="tabHeaderItem" ALIGN="center"><?=$lang[2504]?></TD>
+				<TD class="tabHeaderItem" ALIGN="center"><?=$lang[1986]?></TD>
 				<TD class="tabHeaderItem" ALIGN="center"><?=$lang[2505]?></TD>
-            <?if(!$isview){?><TD class="tabHeaderItem" ALIGN="center"><?=$lang[2570]?></TD><?}?>
-            <?if($gtrigger[$bzm] AND !$isview){?><TD
-					class="tabHeaderItem"><?=$lang[2506]?></TD><?}?>
-            <?#$lang[926]?>
+            <?php if(!$isview){?><TD class="tabHeaderItem" ALIGN="center"><?=$lang[2570]?></TD><?php }?>
+            <?php if($gtrigger[$bzm] AND !$isview){?><TD
+					class="tabHeaderItem"><?=$lang[2216]?></TD><?php }?>
+            <?php #$lang[926]?>
             <TD class="tabbHeaderItem"><?=$lang[2235]?></TD>
-            <?if(!$isview){?><TD class="tabHeaderItem"><?=$lang[1884]?></TD><?}?>
-            <?if(!$isview){?><TD class="tabHeaderItem"><?=$lang[927]?></TD><?}?>
-            <?if(!$isview){?><TD class="tabHeaderItem"><?=$lang[2639]?></TD><?}?>
-            <?if(!$isview){?><TD class="tabHeaderItem"><?=$lang[2640]?></TD><?}?>
+            <?php if(!$isview){?><TD class="tabHeaderItem"><?=$lang[1720]?></TD><?php }?>
+            <?php if(!$isview){?><TD class="tabHeaderItem"><?=$lang[927]?></TD><?php }?>
+            <?php if(!$isview){?><TD class="tabHeaderItem"><?=$lang[2639]?></TD><?php }?>
+            <?php if(!$isview){?><TD class="tabHeaderItem"><?=$lang[2640]?></TD><?php }?>
             <TD class="tabHeaderItem">&nbsp;<?=$lang[932]?></TD>
 				<TD class="tabHeaderItem"><?=$lang[2507]?></TD>
+                <TD class="tabHeaderItem"><?=$lang[2922]?></TD>
 				<TD class="tabHeaderItem"><?=$lang[1459]?></TD>
 				<TD class="tabHeaderItem"><?=$lang[2672]?></TD>
 			</TR>
 
-	<?php  
+	<?php
     /* --- Ergebnisliste --------------------------------------- */
     if($result_fieldtype[$table_gtab[$bzm]]["field_id"]){
 	foreach ($result_fieldtype[$table_gtab[$bzm]]["field_id"] as $bzm1 => $val){
+	        if ($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 100) {
+	            $defaultBgCol = $farbschema['WEB8'];
+	            $style = "style=\"background-color:$defaultBgCol;\"";
+            } else {
+	            $defaultBgCol = '';
+	            $style = '';
+            }
             ?>
 
             <TR
+                data-lmb-fieldid="<?= $val ?>"
 				OnMouseOver="this.style.backgroundColor='<?=$farbschema["WEB7"]?>'"
-				OnMouseOut="this.style.backgroundColor=''">
+				OnMouseOut="this.style.backgroundColor='<?=$defaultBgCol?>'"
+                <?=$style?>>
 
-				<TD VALIGN="TOP"><?#<IMG SRC="pic/edit2.gif" BORDER="0" style="cursor:pointer">?></TD>
+				<TD VALIGN="TOP"><?php #<IMG SRC="pic/edit2.gif" BORDER="0" style="cursor:pointer">?></TD>
 
 				<TD VALIGN="TOP"><?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?></TD>
             
@@ -425,34 +403,30 @@ if($table_gtab[$bzm]) {
                 } else {
                     echo "<TD VALIGN=\"TOP\" ALIGN=\"CENTER\" style=\"cursor:pointer\">";
                     ?>
-					<i class="lmb-icon lmb-trash" onclick="delete_field('<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>','<?=urlencode($result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1])?>')" style="cursor:pointer" border="0"></i>
+					<i class="lmb-icon lmb-trash" onclick="delete_field('<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>','<?=urlencode($result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1])?>')" style="cursor:pointer;float:left;" border="0"></i>
 					<i class="lmb-icon lmb-minus-circle" onclick="delete_field('<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>','<?=urlencode($result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1])?>',1)" style="cursor:pointer;height:13px;vertical-align:bottom" border="0"></i>
 					<?php
                     echo "</TD>";
                 }
             }
-            if($result_fieldtype[$table_gtab[$bzm]]["view_dependency"][$bzm1]){$color = '#d041f4';}else{$color = 'blue';}
+            if($result_fieldtype[$table_gtab[$bzm]]["view_dependency"][$bzm1]){$color = '#d041f4';}else{$color = '';}
             ?>
             
-            <TD VALIGN="TOP"
-					OnMouseOver="this.style.backgroundColor = '<?=$farbschema["WEB6"]?>'"
-					OnMouseOut="this.style.backgroundColor = ''"
-					OnMouseUp="move_field('<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>')"
-					OnMouseDown="aktivate('<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>');">
+            <TD VALIGN="TOP" class="tabSortableHandle">
 					<SPAN
 					ID="field<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>"
-					STYLE="position: relative; top: 0; left: 0; cursor: n-resize; color: <?=$color?>">
-            <?echo $result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1];?>
+					STYLE="position: relative; top: 0; left: 0; color: <?=$color?>">
+            <?= $result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1] ?>
             </SPAN>&nbsp;
 				</TD>
 				<TD VALIGN="TOP"><INPUT TYPE="TEXT" SIZE="25"
-					NAME="DESC_<?echo $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1];?>"
-					VALUE="<?echo $lang[$result_fieldtype[$table_gtab[$bzm]]["beschreibung_feld"][$bzm1]];?>"
-					ONCHANGE="this.form.fieldid.value='<?echo $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1];?>';this.form.desc.value=this.form.DESC_<?echo $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1];?>.value;this.form.submit();"></TD>
+					NAME="DESC_<?= $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] ?>"
+					VALUE="<?= $lang[$result_fieldtype[$table_gtab[$bzm]]["beschreibung_feld"][$bzm1]] ?>"
+					ONCHANGE="this.form.fieldid.value='<?= $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] ?>';this.form.desc.value=this.form.DESC_<?= $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] ?>.value;this.form.submit();"></TD>
 				<TD VALIGN="TOP"><INPUT TYPE="TEXT" SIZE="16"
-					NAME="SPELLING_<?echo $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1];?>"
-					VALUE="<?echo $lang[$result_fieldtype[$table_gtab[$bzm]]["spelling"][$bzm1]];?>"
-					ONCHANGE="this.form.fieldid.value='<?echo $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1];?>';this.form.spelling.value=this.form.SPELLING_<?echo $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1];?>.value;this.form.submit();"></TD>
+					NAME="SPELLING_<?= $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] ?>"
+					VALUE="<?= $lang[$result_fieldtype[$table_gtab[$bzm]]["spelling"][$bzm1]] ?>"
+					ONCHANGE="this.form.fieldid.value='<?= $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] ?>';this.form.spelling.value=this.form.SPELLING_<?= $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] ?>.value;this.form.submit();"></TD>
 				<TD VALIGN="TOP" nowrap>
 			<?php
 			# Typ
@@ -484,32 +458,44 @@ if($table_gtab[$bzm]) {
 			
 
 			if(!$isview){
-				echo "<TD  VALIGN=\"TOP\" ALIGN=\"RIGHT\" nowrap>";
-				# defaultvalue
-				if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 11){
+                echo "<TD VALIGN=\"TOP\" ALIGN=\"RIGHT\" nowrap>";
+                # defaultvalue
+				if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 11 /* relation */){
+                    $verknTabid = $result_fieldtype[$table_gtab[$bzm]]['verkntabid'][$bzm1];
+                    $verknFieldid = $result_fieldtype[$table_gtab[$bzm]]['verknfieldid'][$bzm1];
+                    $iconColor = '';
+                    if (!$verknTabid or !$verknFieldid) {
+                        $iconColor = 'color:red;';
+                    }
 
-	       			if($result_fieldtype[$table_gtab[$bzm]][verkntabid][$bzm1]){
-	       				$sqlquery = "SELECT BESCHREIBUNG FROM LMB_CONF_TABLES WHERE TAB_ID = ".$result_fieldtype[$table_gtab[$bzm]]["verkntabid"][$bzm1];
+                    if($verknTabid){
+	       				$sqlquery = "SELECT BESCHREIBUNG FROM LMB_CONF_TABLES WHERE TAB_ID = ".$verknTabid;
 	       				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	       				echo $lang[odbc_result($rs, "BESCHREIBUNG")]." | ";
-	       			}
-	       			if($result_fieldtype[$table_gtab[$bzm]][verknfieldid][$bzm1]){
-	       				$sqlquery = "SELECT SPELLING FROM LMB_CONF_FIELDS WHERE TAB_ID = ".$result_fieldtype[$table_gtab[$bzm]][verkntabid][$bzm1]." AND FIELD_ID = ".$result_fieldtype[$table_gtab[$bzm]][verknfieldid][$bzm1];
-	       				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	       				echo $lang[odbc_result($rs, "SPELLING")];
-	       			}
+
+                        if($verknFieldid){
+                            $sqlquery = "SELECT SPELLING FROM LMB_CONF_FIELDS WHERE TAB_ID = ".$verknTabid." AND FIELD_ID = ".$verknFieldid;
+                            $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                            echo $lang[odbc_result($rs, "SPELLING")];
+                        } else {
+                            echo '?';
+                        }
+	       			} else {
+                        echo '?';
+                    }
+
 	       			if($LINK[163]){
-	       				echo "&nbsp;<i STYLE=\"cursor:pointer\" OnClick=\"newwin5('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$KEYID_gtab[$bzm]."','".$result_fieldtype[$table_gtab[$bzm]][verkntabid][$bzm1]."')\" class=\"lmb-icon ".$LINK[icon_url][163]."\" TITLE=\"".$lang[$LINK[desc][163]]."\" BORDER=\"0\"></i>";
+	       				echo "&nbsp;<i STYLE=\"cursor:pointer;$iconColor\" OnClick=\"newwin5('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$KEYID_gtab[$bzm]."','".$result_fieldtype[$table_gtab[$bzm]]['verkntabid'][$bzm1]."')\" class=\"lmb-icon ".$LINK['icon_url'][163]."\" TITLE=\"".$lang[$LINK['desc'][163]]."\" BORDER=\"0\"></i>";
 	       			}
 
 				}else{
 					if(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][$bzm1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 22 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 32 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 31 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 18 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 6 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 8 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 10 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 9 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 11 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 12 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 13 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 19 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 18 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 15 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 44 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] < 100 AND !$result_fieldtype[$table_gtab[$bzm]]["argument_typ"][$bzm1]){
-						echo "<INPUT TYPE=\"TEXT\" STYLE=\"width:100px;\" NAME=\"".$result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1]."\" VALUE=\"".htmlentities($result_fieldtype[$table_gtab[$bzm]]["domain_default"][$bzm1],ENT_QUOTES,$umgvar["charset"])."\" OnChange=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.def.value=this.value+' '; this.form.column.value='".$result_fieldtype[$table_gtab[$bzm]][field][$bzm1]."'; this.form.submit();\">";
+						echo "<INPUT TYPE=\"TEXT\" STYLE=\"width:100px;\" NAME=\"".$result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1]."\" VALUE=\"".htmlentities($result_fieldtype[$table_gtab[$bzm]]["domain_default"][$bzm1],ENT_QUOTES,$umgvar["charset"])."\" OnChange=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.def.value=this.value+' '; this.form.column.value='".$result_fieldtype[$table_gtab[$bzm]]['field'][$bzm1]."'; this.form.submit();\">";
 					}elseif(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][$bzm1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 10)
 					{
 						if($result_fieldtype[$table_gtab[$bzm]]["domain_default"][$bzm1] == "TRUE"){$checked = "CHECKED";}
 						else{$checked = "";}
-						echo "<INPUT TYPE=\"CHECKBOX\" VALUE=\"1\" NAME=\"".$result_fieldtype[$table_gtab[$bzm]][field][$bzm1]."\" $checked OnCLICK=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.def_bool.value=this.value+' '; this.form.column.value='".$result_fieldtype[$table_gtab[$bzm]][field][$bzm1]."'; this.form.submit();\">";
+						echo "<INPUT TYPE=\"CHECKBOX\" VALUE=\"1\" NAME=\"".$result_fieldtype[$table_gtab[$bzm]]['field'][$bzm1]."\" $checked OnCLICK=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.def_bool.value=this.value+' '; this.form.column.value='".$result_fieldtype[$table_gtab[$bzm]]['field'][$bzm1]."'; this.form.submit();\">";
 					}
 					else{
 						echo $result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][$bzm1];
@@ -539,11 +525,11 @@ if($table_gtab[$bzm]) {
             		echo "<INPUT TYPE=\"TEXT\" STYLE=\"width:50px;\" VALUE=\"".htmlentities($result_fieldtype[$table_gtab[$bzm]]["select_cut"][$bzm1],ENT_QUOTES,$umgvar["charset"])."\" OnChange=\"document.form1.select_cut.value=this.value;document.form1.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';document.form1.submit();\">";
             	}
 
-			    if($result_fieldtype[$table_gtab[$bzm]][select_pool][$bzm1]){
-			    	$sqlquery = "SELECT NAME FROM LMB_SELECT_P WHERE ID = ".$result_fieldtype[$table_gtab[$bzm]][select_pool][$bzm1];
+			    if($result_fieldtype[$table_gtab[$bzm]]['select_pool'][$bzm1]){
+			    	$sqlquery = "SELECT NAME FROM LMB_SELECT_P WHERE ID = ".$result_fieldtype[$table_gtab[$bzm]]['select_pool'][$bzm1];
 					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			    	echo "&nbsp;&nbsp;".htmlentities(odbc_result($rs, "NAME"),ENT_QUOTES,$umgvar["charset"]);
-			    	$pool = $result_fieldtype[$table_gtab[$bzm]][select_pool][$bzm1];
+			    	$pool = $result_fieldtype[$table_gtab[$bzm]]['select_pool'][$bzm1];
 			    }else{
 			    	$pool = 0;
 			    }
@@ -574,32 +560,32 @@ if($table_gtab[$bzm]) {
             /* --- Generierter Link --------------------------------------- */
             #}elseif($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 9){
             #    echo "<TD  NOWRAP>";
-            #    if($result_fieldtype[$table_gtab[$bzm]][genlink][$bzm1]){echo "Link";}
-			#    echo "<A HREF=\"JAVASCRIPT: newwin2('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".urlencode($table_gtab[$bzm])."','$bzm','".$result_fieldtype[$table_gtab[$bzm]][argument][$bzm1]."');\"><IMG SRC=\"pic/edit2.gif\" BORDER=\"0\" TITLE=\"".$result_fieldtype[$table_gtab[$bzm]][genlink][$bzm1]."\" ALT=\"".$result_fieldtype[$table_gtab[$bzm]][genlink][$bzm1]."\"></A></TD>";
+            #    if($result_fieldtype[$table_gtab[$bzm]]['genlink'][$bzm1]){echo "Link";}
+			#    echo "<A HREF=\"JAVASCRIPT: newwin2('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".urlencode($table_gtab[$bzm])."','$bzm','".$result_fieldtype[$table_gtab[$bzm]]['argument'][$bzm1]."');\"><IMG SRC=\"pic/edit2.gif\" BORDER=\"0\" TITLE=\"".$result_fieldtype[$table_gtab[$bzm]]['genlink'][$bzm1]."\" ALT=\"".$result_fieldtype[$table_gtab[$bzm]]['genlink'][$bzm1]."\"></A></TD>";
             /* --- Zeitstempel --------------------------------------- */
             }elseif($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 2){
-            	echo "<TD ALIGN=\"RIGHT\"><INPUT TYPE=\"TEXT\" STYLE=\"width:100px;\" NAME=\"FORMAT_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" VALUE=\"".$result_fieldtype[$table_gtab[$bzm]][format][$bzm1]."\" OnChange=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.nformat.value=this.value+' ';this.form.submit();\">";
+            	echo "<TD ALIGN=\"RIGHT\"><INPUT TYPE=\"TEXT\" STYLE=\"width:100px;\" NAME=\"FORMAT_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" VALUE=\"".$result_fieldtype[$table_gtab[$bzm]]['format'][$bzm1]."\" OnChange=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.nformat.value=this.value+' ';this.form.submit();\">";
             /* --- Zeit --------------------------------------- */
             }elseif($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 7){
-			    echo "<TD ALIGN=\"RIGHT\"><INPUT TYPE=\"TEXT\" STYLE=\"width:100px;\" NAME=\"FORMAT_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" VALUE=\"".$result_fieldtype[$table_gtab[$bzm]][format][$bzm1]."\" OnChange=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.nformat.value=this.value+' ';this.form.submit();\"></TD>";
+			    echo "<TD ALIGN=\"RIGHT\"><INPUT TYPE=\"TEXT\" STYLE=\"width:100px;\" NAME=\"FORMAT_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" VALUE=\"".$result_fieldtype[$table_gtab[$bzm]]['format'][$bzm1]."\" OnChange=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.nformat.value=this.value+' ';this.form.submit();\"></TD>";
             /* --- Long --------------------------------------- */
             }elseif($result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 39){
-            	if($result_fieldtype[$table_gtab[$bzm]][memoindex][$bzm1] == 1){$memoindexvalue = "CHECKED";} else{$memoindexvalue = "";}
-            	if($result_fieldtype[$table_gtab[$bzm]][wysiwyg][$bzm1] == 1){$wysiwygvalue = "CHECKED";} else{$wysiwygvalue = "";}
+            	if($result_fieldtype[$table_gtab[$bzm]]['memoindex'][$bzm1] == 1){$memoindexvalue = "CHECKED";} else{$memoindexvalue = "";}
+            	if($result_fieldtype[$table_gtab[$bzm]]['wysiwyg'][$bzm1] == 1){$wysiwygvalue = "CHECKED";} else{$wysiwygvalue = "";}
             	echo "<TD  ALIGN=\"RIGHT\" NOWRAP>".$lang[1581]." <INPUT TYPE=\"CHECKBOX\" NAME=\"MEMOINDEX_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" OnClick=\"change_memoindex('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."',this);\" ".$memoindexvalue.">";
 			    echo "<BR>".$lang[1885]." <INPUT TYPE=\"CHECKBOX\" NAME=\"WYSIWYG_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" OnClick=\"change_wysiwyg('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."',this);\" ".$wysiwygvalue."></TD>";
             /* --- NFORMAT --------------------------------------- */
             }elseif($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 5 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 22 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 44){
-				echo "<TD  VALIGN=\"TOP\" ALIGN=\"RIGHT\"><INPUT TYPE=\"TEXT\" STYLE=\"width:100px;\" NAME=\"FORMAT_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" VALUE=\"".$result_fieldtype[$table_gtab[$bzm]][format][$bzm1]."\" OnChange=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.nformat.value=this.value+' ';this.form.submit();\">";
+				echo "<TD  VALIGN=\"TOP\" ALIGN=\"RIGHT\"><INPUT TYPE=\"TEXT\" STYLE=\"width:100px;\" NAME=\"FORMAT_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" VALUE=\"".$result_fieldtype[$table_gtab[$bzm]]['format'][$bzm1]."\" OnChange=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.nformat.value=this.value+' ';this.form.submit();\">";
 			    /* --- Währung --------------------------------------- */
 				if($result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 30){
 			    	echo "<SELECT STYLE=\"width:100px;\" ONCHANGE=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.ncurrency.value=this.value;this.form.submit();\"><OPTION VALUE=\" \">";
-			    	asort($lmcurrency[currency]);
-			    	foreach($lmcurrency[currency] as $ckey => $cval){
-			    		if($lmcurrency[code][$ckey] == $result_fieldtype[$table_gtab[$bzm]][currency][$bzm1]){$sel = "SELECTED";}
-			    		#elseif($lmcurrency[code][$ckey] == "EUR" AND !$result_fieldtype[$table_gtab[$bzm]][currency][$bzm1]){$sel = "SELECTED";}
+			    	asort($lmcurrency['currency']);
+			    	foreach($lmcurrency['currency'] as $ckey => $cval){
+			    		if($lmcurrency['code'][$ckey] == $result_fieldtype[$table_gtab[$bzm]]['currency'][$bzm1]){$sel = "SELECTED";}
+			    		#elseif($lmcurrency['code'][$ckey] == "EUR" AND !$result_fieldtype[$table_gtab[$bzm]]['currency'][$bzm1]){$sel = "SELECTED";}
 			    		else{$sel = "";}
-			    		echo "<OPTION VALUE=\"".$lmcurrency[code][$ckey]."\" $sel>".$lmcurrency[currency][$ckey];
+			    		echo "<OPTION VALUE=\"".$lmcurrency['code'][$ckey]."\" $sel>".$lmcurrency['currency'][$ckey];
 			    	}
 			    	echo "</SELECT>";
 			    }
@@ -607,7 +593,7 @@ if($table_gtab[$bzm]) {
 			/* --- Grouping --------------------------------------- */
             }elseif($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 101){
                 echo "<TD NOWRAP ALIGN=\"right\">";
-                if($result_fieldtype[$table_gtab[$bzm]][genlink][$bzm1]){echo "Link";}
+                if($result_fieldtype[$table_gtab[$bzm]]['genlink'][$bzm1]){echo "Link";}
 			    echo "&nbsp;<A HREF=\"JAVASCRIPT: newwin7('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$bzm."');\"><i class=\"lmb-icon lmb-edit\" BORDER=\"0\"></i></A>";
             }else{
 				echo "<TD >&nbsp;</TD>";
@@ -619,10 +605,10 @@ if($table_gtab[$bzm]) {
 	       		if($isview){
 					$result_type_allow_convert_ = array(1,5);
 					$result_type_deny_convert_ = array(22);
-	       			echo "<TD VALIGN=\"TOP\"><SELECT STYLE=\"width:150px\" OnChange=\"convert_field(this[this.selectedIndex].value,'".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$result_fieldtype[$table_gtab[$bzm]][field][$bzm1]."',0);\"><OPTION>";
+	       			echo "<TD VALIGN=\"TOP\"><SELECT STYLE=\"width:150px\" OnChange=\"convert_field(this[this.selectedIndex].value,'".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$result_fieldtype[$table_gtab[$bzm]]['field'][$bzm1]."',0);\"><OPTION>";
 	       			foreach($result_type["id"] as $type_key => $type_value){
 	       				if(in_array($result_type["field_type"][$type_key],$result_type_allow_convert_) AND !in_array($result_type["data_type"][$type_key],$result_type_deny_convert_)){
-	       					echo "<OPTION VALUE=\"".$type_key."\">".$result_type[beschreibung][$type_key];
+	       					echo "<OPTION VALUE=\"".$type_key."\">".$result_type['beschreibung'][$type_key];
 	       				}
 	       			}
 	       			echo "</SELECT></TD>";
@@ -634,7 +620,7 @@ if($table_gtab[$bzm]) {
 	       		       $result_type_allow_convert_ = array(24);
 	       		    }
 					
-	       			echo "<TD VALIGN=\"TOP\"><SELECT STYLE=\"width:150px\" OnChange=\"convert_field(this[this.selectedIndex].value,'".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$result_fieldtype[$table_gtab[$bzm]][field][$bzm1]."',0);\"><OPTION>";
+	       			echo "<TD VALIGN=\"TOP\"><SELECT STYLE=\"width:150px\" OnChange=\"convert_field(this[this.selectedIndex].value,'".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$result_fieldtype[$table_gtab[$bzm]]['field'][$bzm1]."',0);\"><OPTION>";
 	       			foreach($result_type["id"] as $type_key => $type_value){
 	       				if(in_array($result_type["data_type"][$type_key],$result_type_allow_convert_)){
 	       					echo "<OPTION VALUE=\"".$type_key."\">".$result_type["beschreibung"][$type_key];
@@ -648,7 +634,7 @@ if($table_gtab[$bzm]) {
 					}else{
 						$result_type_allow_convert_ = array(16,17,33,19,21,1,2,3,4,5,6,7,8,9,10,29,28,12,14,31,18,30,32,39,42,44,45,50);
 					}
-	       			echo "<TD VALIGN=\"TOP\"><SELECT STYLE=\"width:150px\" OnChange=\"convert_field(this[this.selectedIndex].value,'".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$result_fieldtype[$table_gtab[$bzm]][field][$bzm1]."',0);\"><OPTION>";
+	       			echo "<TD VALIGN=\"TOP\"><SELECT STYLE=\"width:150px\" OnChange=\"convert_field(this[this.selectedIndex].value,'".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$result_fieldtype[$table_gtab[$bzm]]['field'][$bzm1]."',0);\"><OPTION>";
 	       			foreach($result_type["id"] as $type_key => $type_value){
 	       				if(in_array($result_type["data_type"][$type_key],$result_type_allow_convert_)){
 	       					echo "<OPTION VALUE=\"".$type_key."\">".$result_type["beschreibung"][$type_key];
@@ -656,11 +642,11 @@ if($table_gtab[$bzm]) {
 	       			}
 	       			echo "</SELECT></TD>";
 	       		}elseif($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 101){
-	       			echo "<TD VALIGN=\"TOP\"><SELECT STYLE=\"width:150px\" OnChange=\"convert_field(this[this.selectedIndex].value,'".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$result_fieldtype[$table_gtab[$bzm]][field][$bzm1]."',0);\"><OPTION>";
+	       			echo "<TD VALIGN=\"TOP\"><SELECT STYLE=\"width:150px\" OnChange=\"convert_field(this[this.selectedIndex].value,'".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$result_fieldtype[$table_gtab[$bzm]]['field'][$bzm1]."',0);\"><OPTION>";
 	       			$result_type_allow_convert_ = array(101,102);
 	       			foreach($result_type["id"] as $type_key => $type_value){
 	       				if(in_array($result_type["data_type"][$type_key],$result_type_allow_convert_)){
-	       					echo "<OPTION VALUE=\"".$type_key."\">".$result_type[beschreibung][$type_key];
+	       					echo "<OPTION VALUE=\"".$type_key."\">".$result_type['beschreibung'][$type_key];
 	       				}
 	       			}
 	       			echo "</SELECT></TD>";
@@ -670,7 +656,7 @@ if($table_gtab[$bzm]) {
  			# --- Extension ------
             echo "<TD  VALIGN=\"TOP\" ALIGN=\"CENTER\">";
             if(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][$bzm1] AND $ext_fk AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] < 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 22 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 15 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16){
-            	echo "<SELECT STYLE=\"width:150px\" OnChange=\"extend_field(this[this.selectedIndex].value,'".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$result_fieldtype[$table_gtab[$bzm]][field][$bzm1]."');\"><OPTION VALUE=\" \">";
+            	echo "<SELECT STYLE=\"width:150px\" OnChange=\"extend_field(this[this.selectedIndex].value,'".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$result_fieldtype[$table_gtab[$bzm]]['field'][$bzm1]."');\"><OPTION VALUE=\" \">";
             	foreach ($ext_fk as $key => $value){
             		echo "<OPTION VALUE=\"$value\" ";
             		if($result_fieldtype[$table_gtab[$bzm]]["ext_type"][$bzm1] == $value){echo "SELECTED";}
@@ -716,14 +702,14 @@ if($table_gtab[$bzm]) {
 			# --- Schlüssel ------
             #echo "<TD  VALIGN=\"TOP\" ALIGN=\"CENTER\">";
             #if(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][$bzm1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 2 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 4 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 6 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 10 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 9 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 11 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 13){
-            #	if($result_fieldtype[$table_gtab[$bzm]][fieldkey][$bzm1] == 1){$fieldkeyvalue = "CHECKED";} else{$fieldkeyvalue = "";}
+            #	if($result_fieldtype[$table_gtab[$bzm]]['fieldkey'][$bzm1] == 1){$fieldkeyvalue = "CHECKED";} else{$fieldkeyvalue = "";}
             #	echo "<CENTER><INPUT TYPE=\"CHECKBOX\" NAME=\"KEYFIELD_". $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" OnClick=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."'; this.form.keyfield.value='this.form.KEYFIELD_". $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1].".value'; this.form.submit();\"".$fieldkeyvalue."></CENTER>";}
             #echo "</TD>";
 
 			# --- Bezeichner ------
             echo "<TD  VALIGN=\"TOP\" ALIGN=\"CENTER\">";
             if(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][$bzm1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 31 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 18 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 6 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 10 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 9 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 13 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16){
-            	if($result_fieldtype[$table_gtab[$bzm]][mainfield][$bzm1] == 1){$mainfieldvalue = "CHECKED";} else{$mainfieldvalue = "";}
+            	if($result_fieldtype[$table_gtab[$bzm]]['mainfield'][$bzm1] == 1){$mainfieldvalue = "CHECKED";} else{$mainfieldvalue = "";}
             	echo "<CENTER><INPUT TYPE=\"CHECKBOX\" NAME=\"MAINFIELD_". $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" OnClick=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."'; this.form.mainfield.value='this.form.MAINFIELD_". $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1].".value'; this.form.submit();\"".$mainfieldvalue."></CENTER>";}
             echo "</TD>";
 
@@ -731,8 +717,8 @@ if($table_gtab[$bzm]) {
 			if(!$isview){
 	            echo "<TD  VALIGN=\"TOP\" ALIGN=\"CENTER\">";
 	            if(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][$bzm1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 15 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 11 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 6 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 39 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 22 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16){
-	            	if($result_fieldtype[$table_gtab[$bzm]][indexed][$bzm1] == 1){$indexvalue = "CHECKED";} else{$indexvalue = "";}
-	                echo "<CENTER><INPUT TYPE=\"CHECKBOX\" NAME=\"FIELDINDEX_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" $indexvalue OnCLICK=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.fieldindex.value='fieldindex_$indexvalue';this.form.column.value='".$result_fieldtype[$table_gtab[$bzm]][field][$bzm1]."';this.form.submit();\"></CENTER>";}
+	            	if($result_fieldtype[$table_gtab[$bzm]]['indexed'][$bzm1] == 1){$indexvalue = "CHECKED";} else{$indexvalue = "";}
+	                echo "<CENTER><INPUT TYPE=\"CHECKBOX\" NAME=\"FIELDINDEX_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" $indexvalue OnCLICK=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.fieldindex.value='fieldindex_$indexvalue';this.form.column.value='".$result_fieldtype[$table_gtab[$bzm]]['field'][$bzm1]."';this.form.submit();\"></CENTER>";}
 	            echo "</TD>";
 			}
 
@@ -775,6 +761,13 @@ if($table_gtab[$bzm]) {
             	if($result_fieldtype[$table_gtab[$bzm]]["quicksearch"][$bzm1] == 1){$quicksearchvalue = "CHECKED";}else{$quicksearchvalue = "";}
             	echo "<INPUT TYPE=\"CHECKBOX\" $quicksearchvalue NAME=\"QUICKSEARCH_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" OnCLICK=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."'; this.form.quicksearch.value='quicksearch_$quicksearchvalue'; this.form.submit();\">";
             }
+            # --- fullsearch ------
+            echo "<CENTER><TD  VALIGN=\"TOP\" ALIGN=\"CENTER\">";
+            if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] < 100 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 10 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 33 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 19 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 6 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 20){
+                if($result_fieldtype[$table_gtab[$bzm]]["fullsearch"][$bzm1] == 1){$fullsearchvalue = "CHECKED";}else{$fullsearchvalue = "";}
+                echo "<INPUT TYPE=\"CHECKBOX\" $fullsearchvalue NAME=\"QUICKSEARCH_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" OnCLICK=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."'; this.form.fullsearch.value='fullsearch_$fullsearchvalue'; this.form.submit();\">";
+            }
+
             echo "</TD>";
             # --- Gruppierbar ------
             echo "<TD  VALIGN=\"TOP\" ALIGN=\"CENTER\">";
@@ -827,14 +820,14 @@ if($table_gtab[$bzm]) {
 		$sqlquery =  "SELECT VERKNPARAMS FROM LMB_CONF_FIELDS WHERE UPPER(MD5TAB) = '".lmb_strtoupper($table_gtab[$bzm])."' AND VERKNPARAMS > 0";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(odbc_result($rs, "VERKNPARAMS")){$verknparams = array(1,2,3,4,5,7,8,10,14,15,18,21);}
-		$headerIds = array(1, 18, 48);
+		#$headerIds = array(1, 18, 48);
 
 		# Feldtypen
 		foreach ($result_type["id"] as $key => $value){
 			if($result_type["id"][$key] == 49 AND !$tab_versioning[$atid]){continue;}
 			if($verknparams AND !in_array($result_type["field_type"][$key],$verknparams)){continue;}
 			if($result_type["hassize"][$key]){$hs = "ID=\"".$result_type["size"][$key]."\"";}else{$hs = "";}
-			if(in_array($key, $headerIds)) {
+			if(!$result_type["field_type"][$key]) {
                 if ($key != $headerIds[0]) { echo "</OPTGROUP>"; }
                 echo "<OPTGROUP label=\"" . $result_type["beschreibung"][$key] . "\">";
                 continue;
@@ -845,46 +838,78 @@ if($table_gtab[$bzm]) {
 		?>
 		</SELECT>
 
-					<div id="argument_typ" style="display: none">
-						<SELECT NAME="typ2" style="width: 150px"
-							OnChange="checkfiledtype(0,this)">
-	    <?php
-		foreach ($result_type["id"] as $key => $value){
-			if($result_type["id"][$key] <= 17 OR $result_type["id"][$key] == 41 OR $result_type["id"][$key] == 42 OR $result_type["id"][$key] == 21 OR $result_type["id"][$key] == 23){
-				echo "<OPTION VALUE=\"".$result_type["id"][$key]."\">".$result_type["beschreibung"][$key];
-			}
-		}
-		?>
-	    </SELECT>
-					</div>
+        <div id="argument_typ" style="display: none">
+            <SELECT NAME="typ2" style="width: 150px" OnChange="checkfiledtype(0,this)">
+            <?php
+            foreach ($result_type["id"] as $key => $value) {
+                if($result_type["id"][$key] <= 17 OR $result_type["id"][$key] == 41 OR $result_type["id"][$key] == 42 OR $result_type["id"][$key] == 21 OR $result_type["id"][$key] == 23){
+                    continue;
+                }
+                if(!$result_type["field_type"][$key]) {
+                    echo "<optgroup label=\"xxx".$result_type["beschreibung"][$key]."\">";
+                }else{
+                    echo "<OPTION VALUE=\"".$result_type["id"][$key]."\">".$result_type["beschreibung"][$key];
+                }
+                if(!$result_type["field_type"][$key]) {
+                    echo "<optgroup>";
+                }
+            }
+            ?>
+            </SELECT>
+        </div>
 
 
-					<div id="inherit_typ" style="display: none">
-						<SELECT NAME="inherit_tab" style="width: 150px;"
-							OnChange="checkinherittype(this[this.selectedIndex].value)"><OPTION>
-	    <?php
-		foreach ($gtab["tab_id"] as $key => $value){
-			if($key != $atid){
-				echo "<OPTION VALUE=\"".$key."\">".$gtab["desc"][$key];
-			}
-		}
-		?>
-	    </SELECT>
-					</div>
+        <div id="inherit_typ" style="display: none">
+            <SELECT NAME="inherit_tab" style="width: 150px;" OnChange="checkinherittype(this[this.selectedIndex].value)">
+                <OPTION>
+                <?php
+                # tables grouped by tabgroup
+                foreach ($tabgroup['id'] as $groupKey => $groupID) {
+                    # collect tables of that tabgroup
+                    $tabgroupOptions = '';
+                    foreach ($gtab['tab_id'] as $tabKey => $tabID) {
+                        if($gtab['tab_group'][$tabKey] == $groupID and $tabID != $atid){
+                            $tabgroupOptions .= "<OPTION VALUE=\"{$tabID}\">{$gtab['desc'][$tabKey]}</option>";
+                        }
+                    }
+                    # only show tabgroup if tables are available
+                    if ($tabgroupOptions) {
+                        echo "<optgroup label=\"{$tabgroup['name'][$groupKey]}\">{$tabgroupOptions}</optgroup>";
+                    }
+                }
+                ?>
+            </SELECT>
+        </div>
 	
 	
 	    <?php
-		foreach ($gtab["tab_id"] as $key => $value){
+		foreach ($gtab['tab_id'] as $key => $value){
 			if($key != $atid){
 				echo "<div id=\"inherit_field_$key\" style=\"display:none\">";
-	   			echo "<SELECT NAME=\"inherit_field[$key]\" style=\"width:200px;\">\n<OPTION>";
-	   			if($gfield[$key]["sort"]){
-				foreach ($gfield[$key]["sort"] as $key1 => $value1){
-					if($gfield[$key]["field_type"][$key1] != 14 AND $gfield[$key]["field_type"][$key1] != 15 AND $gfield[$key]["field_type"][$key1] != 16 AND $gfield[$key]["data_type"][$key1] != 31 AND $gfield[$key]["data_type"][$key1] != 18 AND $gfield[$key]["data_type"][$key1] != 14 AND $gfield[$key]["field_type"][$key1] != 19 AND $gfield[$key]["field_type"][$key1] != 6  AND $gfield[$key]["field_type"][$key1] < 100){
-						echo "<OPTION VALUE=\"".$key1."\">".$gfield[$key]["spelling"][$key1];
-					}
-				}}
-				echo "\n</SELECT></div>";
+	   			echo "<select NAME=\"inherit_field[$key]\" style=\"width:200px;\"><option>";
+	   			if($gfield[$key]['sort']){
+                    foreach ($gfield[$key]['sort'] as $key1 => $value1){
+                        # group by sparte
+                        if ($gfield[$key]["field_type"][$key1] == 100 /* sparte */) {
+                            echo "<optgroup label=\"{$gfield[$key]['spelling'][$key1]}\">";
+                        }
+
+                        # show field
+                        if($gfield[$key]["field_type"][$key1] != 14 /* post/edit user */
+                            AND $gfield[$key]["field_type"][$key1] != 15 /* post/edit date */
+                            AND $gfield[$key]["field_type"][$key1] != 16 /* user/group list */
+                            AND $gfield[$key]["data_type"][$key1] != 31 /* multiselect */
+                            AND $gfield[$key]["data_type"][$key1] != 18 /* select checkbox */
+                            AND $gfield[$key]["data_type"][$key1] != 14 /* select radio */
+                            AND $gfield[$key]["field_type"][$key1] != 19 /* attribute */
+                            AND $gfield[$key]["field_type"][$key1] != 6  /* upload */
+                            AND $gfield[$key]["field_type"][$key1] < 100){
+
+                            echo "<option value=\"{$key1}\">{$gfield[$key]['spelling'][$key1]}</option>";
+                        }
+                    }
+	   			}
+				echo '</select></div>';
 			}
 		}
 		?>
@@ -896,7 +921,7 @@ if($table_gtab[$bzm]) {
 					<table>
 						<tr>
 							<td valign=top><INPUT TYPE="submit" NAME="add"
-								VALUE="<?=$lang[937]?>">&nbsp;&nbsp;&nbsp;&nbsp;</td>
+								VALUE="<?=$lang[540]?>">&nbsp;&nbsp;&nbsp;&nbsp;</td>
 							<td><table cellpadding="0" cellspacing="0">
 									<tr>
 										<td valign="center"><?=$lang[1263]?></td>
@@ -908,13 +933,13 @@ if($table_gtab[$bzm]) {
 					</table>
 				</TD>
 			</TR>
-	<?}?>
+	<?php }?>
 	
 	<TR>
 				<TD COLSPAN="24" class="tabFooter"></TD>
 			</TR>
 			</FORM>
-	<?
+	<?php
 $bzm++;
 }
 

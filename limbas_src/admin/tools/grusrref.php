@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -28,14 +28,14 @@ echo "
 
 <table style=\"width:506px;margin:10px;\" class=\"tabfringe\">
 <tr><td width=\"70\" nowrap><div><b>".$lang[561]." :</b></div></td><td><div id=\"status_group\"> - </div></td></tr>
-<tr><td nowrap><div><b>".$lang[921]." :</b></div></td><td><div id=\"status_table\"> - </div></td></tr>
+<tr><td nowrap><div><b>".$lang[164]." :</b></div></td><td><div id=\"status_table\"> - </div></td></tr>
 </table>
 ";
 
 
 if($check_all){
 	# ------------------------------ Gruppenrechte ergänzen ------------------------------------
-	check_grouprights1All(1);
+	check_grouprights1All(1,$check_table);
 	
 }elseif($group_id){
 	# ------------------------------ Gruppenrechte zurücksetzten ------------------------------------	
@@ -53,7 +53,7 @@ if($check_all){
 		}
 		check_grouprights2($group_id,$group_name,1,1);
 	}
-	group_list($group_id,$groupdat[name][$group_id]);
+	group_list($group_id,$groupdat['name'][$group_id]);
 }
 
 if($GLOBALS["action"]){

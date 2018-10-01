@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,36 +11,27 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
  * ID:
  */
 
-global $olTemplate_path, $olTemplate_self;
-
-/* path to project within framework */
-$olTemplate_path = dirname($_SERVER['SCRIPT_FILENAME'])."/".
-	(isset($project_root) ? $project_root : '')."templates";
-
-/* base URL location within framework */
-$olTemplate_self = isset($project_base) ? $project_base : $_SERVER['PHP_SELF'];
-
 class olTemplate {
 	var $buffer, $file;
 	var $s = array();
 	var $r = array();
 	
-	function olTemplate($path="", $nofile = false, $tpl_path = NULL) {
+	function __construct($path="", $nofile = false, $tpl_path = NULL) {
 		$this->constructor($path, $nofile, $tpl_path);
 	}
 	
 	function constructor($path="", $nofile = false, $tpl_path = NULL) {
-		global $olTemplate_path;
-		
+		global $umgvar;
+
 		if (!$tpl_path)
-			$tpl_path = $olTemplate_path;
+			$tpl_path = $umgvar['path'] . '/extra/messages/templates';
 			
 		if ($nofile){
 			$this->buffer = $path;
@@ -110,13 +101,13 @@ class olTemplate {
 	}
 
 	function parse($opt_a = NULL){
-		global $olTemplate_self, $project_root;
-		
+		global $gtabid;
+
 		if ($opt_a!=NULL)
 			$this->add_array($opt_a);
 
-		$this->add("_path", isset($project_root) ? $project_root : '');
-		$this->add("_self", $olTemplate_self);
+		$this->add("_path", 'extra/messages/');
+		$this->add("_self", 'main_dyns.php?actid=messages&gtabid=' . $gtabid);
 		$temp = $this->php_eval($this->buffer);
 
 		return preg_replace($this->s, $this->r, $temp);

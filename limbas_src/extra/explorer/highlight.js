@@ -160,7 +160,7 @@ function highlightGoogleSearchTerms(referrer)
   // remove the quotes (if you're really creative, you could search for the
   // terms within the quotes as phrases, and everything else as single terms)
   queryString = queryString.replace(/%22/gi, "");
-  queryString = queryString.replace(/\"/gi, "");
+  queryString = queryString.replace(/"/gi, "");
   
   return highlightSearchTerms(queryString, false);
 }

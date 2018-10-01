@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -28,64 +28,105 @@ require_once($umgvar["pfad"].'/gtab/gtab.lib');
 
 
 class limbasMail extends olMail{
+    const CUST_FLAG_ALREADY_LINKED = 'limbaslinked';
+
 	var $error = array();
 	var $imap_cfg;
 	var $table_id, $field_id, $record_id, $rtable_id;
 
-	function __construct($table_id, $field_id, $record_id, $rtable_id){
-		global $umgvar;
-		require($umgvar["pfad"].'/extra/messages/config.php');
+    function __construct($table_id, $field_id, $record_id, $rtable_id){
+        global $umgvar;
 
-		$this->rtable_id = $rtable_id;
-		$this->table_id = $table_id;
-		$this->field_id = $field_id;
-		$this->record_id = $record_id;
+        $this->rtable_id = $rtable_id;
+        $this->table_id = $table_id;
+        $this->field_id = $field_id;
+        $this->record_id = $record_id;
 
-		if (!function_exists("imap_open")){
-			$this->error[] = "Unterstützung für IMAP innerhalb PHP ist erforderlich!";
-			return $this;
-		}
-		if (!$imap_cfg){
-			$this->error[] = 'Keine gültige <a href="main.php?action=user_change">'.
-				'Nachrichten-Konfiguration</a> gefunden!';
-			return $this;
-		}
+        if (!function_exists("imap_open")){
+            $this->error[] = "Unterstützung für IMAP innerhalb PHP ist erforderlich!";
+            return $this;
+        }
 
-		/* instantiate olMail object and exit if connection failed. */
-		parent::constructor($imap_cfg);
-		$this->imap_cfg = $imap_cfg;
+        require_once($umgvar['path'] . '/extra/messages/config.php');
+        $imap_cfg = lmb_getImapCfg($rtable_id);
+        if (!$imap_cfg){
+            $this->error[] = 'Keine gültige <a href="main.php?action=user_change">'.
+                'Nachrichten-Konfiguration</a> gefunden!';
+            return $this;
+        }
 
-		if (!$this->is_connected()){
-			$this->error[] = "Fehler: ".imap_last_error();
-			return $this;
-		}
+        /* instantiate olMail object and exit if connection failed. */
+        parent::constructor($imap_cfg);
+        $this->imap_cfg = $imap_cfg;
 
-		return $this;
-	}
-	function __destruct(){$this->disconnect();}
+        if (!$this->is_connected()){
+            $this->error[] = "Fehler: ".imap_last_error();
+            return $this;
+        }
+
+        return $this;
+    }
+    function __destruct(){$this->disconnect();}
 
 	function arch($uid,$mbox){
-		if ($mbox){
-			if ($uid){
-				if (($ok = $this->archmail($uid, $mbox))>0){
-					$new = new_record($this->rtable_id,1,$this->field_id,$this->table_id,$this->record_id);
+	    global $umgvar;
 
-					$details = $this->get($ok);
-					$history["{$this->rtable_id},6,$new"] = $details["uid"];
-					$history["{$this->rtable_id},7,$new"] = lmb_utf8_decode(html_entity_decode($details["fromaddr"],ENT_QUOTES,$umgvar["charset"]));
-					$history["{$this->rtable_id},8,$new"] =  lmb_utf8_decode(html_entity_decode($details["toaddr"],ENT_QUOTES,$umgvar["charset"]));
-					$history["{$this->rtable_id},9,$new"] =  lmb_utf8_decode(html_entity_decode($details["subject"],ENT_QUOTES,$umgvar["charset"]));
-					$history["{$this->rtable_id},10,$new"] =  lmb_utf8_decode(html_entity_decode($details["body"],ENT_QUOTES,$umgvar["charset"]));
+	    if (!$mbox || !$uid)
+	        return false;
 
-					update_data($history,3,null);
-#error_log("archived:\n".utf8_decode(print_r($details,1)));
+        # get global unique id
+        $uuid = $this->get_uuid($this->get($uid, $mbox));
 
-					return $new;
-				}
-				$this->error[] = "Fehler beim archivieren der Nachricht!";
-			}
-		}
-		return false;
+        # check if mail has already been archived
+        $gsr = array();
+        $gsr[$this->rtable_id][11][0] = $uuid;
+        $gsr[$this->rtable_id][11]['txt'][0] = 2; # ==
+        $gresult = get_gresult($this->rtable_id, 1, null, $gsr);
+        $alreadyArchived = ($gresult[$this->rtable_id]['res_count'] > 0);
+
+//        $status = imap_setflag_full($this->con, "$uid", "label1");
+//        $status = imap_setflag_full($this->con, "$uid", "label1", ST_UID);
+//        print_r(imap_headers($this->con));
+//        print_r(imap_fetchheader($this->con, "$uid", FT_UID));
+
+        $returnID = null;
+        if ($alreadyArchived) {
+            # simply link to dataset
+            $archivedID = $gresult[$this->rtable_id]['id'][0];
+            $rel = init_relation($this->table_id, $this->field_id, $this->record_id, array($archivedID));
+            if (!set_relation($rel))
+                return false;
+
+            $returnID = $archivedID;
+
+        } else {
+            # archive and link to dataset
+            $newUID = $this->archmail($uid, $mbox);
+            if (!$newUID) {
+                $this->error[] = "Fehler beim archivieren der Nachricht!";
+                return false;
+            }
+
+            $new = new_record($this->rtable_id,1,$this->field_id,$this->table_id,$this->record_id);
+
+            $details = $this->get($newUID);
+            $history["{$this->rtable_id},6,$new"] = $details["uid"];
+            $history["{$this->rtable_id},7,$new"] = lmb_utf8_decode(html_entity_decode($details["fromaddr"],ENT_QUOTES,$umgvar["charset"]));
+            $history["{$this->rtable_id},8,$new"] =  lmb_utf8_decode(html_entity_decode($details["toaddr"],ENT_QUOTES,$umgvar["charset"]));
+            $history["{$this->rtable_id},9,$new"] =  lmb_utf8_decode(html_entity_decode($details["subject"],ENT_QUOTES,$umgvar["charset"]));
+            $history["{$this->rtable_id},10,$new"] =  lmb_utf8_decode(html_entity_decode($details["body"],ENT_QUOTES,$umgvar["charset"]));
+            $history["{$this->rtable_id},11,$new"] =  lmb_utf8_decode(html_entity_decode($uuid,ENT_QUOTES,$umgvar["charset"]));
+
+            update_data($history,3,null);
+
+            $returnID = $new;
+        }
+
+        if (!$returnID)
+            return false;
+
+        imap_setflag_full($this->con, $uid, limbasMail::CUST_FLAG_ALREADY_LINKED, ST_UID);
+        return $returnID;
 	}
 
 	function get($uid, $mbox=null){
@@ -234,10 +275,10 @@ class limbasMail extends olMail{
                 var_dump($ret);
 		/* save a copy of the message if sent successfully. */
 		if ($ret){
-			$saved_uid = $this->savemail("INBOX.Sent",
+			$saved_uid = $this->savemail("Sent",
 				$mail_headers."To: {$toaddr}\nSubject: ".
 				$util->quote_utf8($subject)."\n", $body);
-			$arch_uid = $this->arch($saved_uid,"INBOX.Sent");
+			$arch_uid = $this->arch($saved_uid,"Sent");
 		}else{
 			$this->error[] = "Nachricht konnte nicht versandt werden!";
 			return false;

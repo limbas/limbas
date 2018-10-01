@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -54,82 +54,69 @@ while(odbc_fetch_row($rs)) {
 
 $curDate = time();
 
-echo "<div class=\"lmbPositionContainerMain\">
-<table class=\"tabfringe\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><tr><td valign=\"top\">
-";
+echo '<div class="lmbPositionContainerMain small">';
+echo '<table class="tabfringe hoverable" cellpadding="4" style="border-collapse: collapse;">';
 
 if(!$remdata){
-	echo "<div style=\"margin:5px 10px;\"><b>".$lang[98]."</b></div>";
+    echo '<tr class="tabHeader"><td class="tabHeaderItem">' . $lang[98] . '</td></tr>';
 }else{
 
-	echo "<ul>";
+	foreach ($remdata["id"] as $groupid => $groupData) {
 
-	foreach ($remdata["id"] as $groupid => $groupval){
+        # tabgroup header
+        echo '<tr class="tabHeader">';
+        echo '<td class="tabHeaderItem" colspan="4">' . $tabgroup['beschreibung'][$groupid] . '</td>';
+        echo '</tr>';
 
-		echo "<li>";
-		#echo $tabgroup["beschreibung"][$tabgroup["argid"][$groupid]];
-		echo $tabgroup["beschreibung"][$groupid];
-		
-		echo "<ul>";
+		foreach ($groupData as $tabid => $tabData){
 
-		foreach ($groupval as $tabid => $tabval){
+            # table header
+            echo '<tr class="tabSubHeader">';
+            echo '<td class="tabSubHeaderItem"></td>';
+            echo '<td class="tabSubHeaderItem" colspan="3">';
+            echo "<a href=\"main.php?action=gtab_erg&source=root&gtabid={$tabid}&gfrist=1\">{$gtab['desc'][$tabid]}</a>";
+            echo '</td>';
+            echo '</tr>';
 
-			echo "<li>";
-			#echo "</A>&nbsp;|&nbsp;<IMG SRC=\"pic/delete2.gif\" OnClick=\"document.location.href='main.php?action=user_w_vorlage&del_id=".$tabid."'\" STYLE=\"cursor:pointer;\"></A>";
-			echo "<A HREF=\"main.php?action=gtab_erg&source=root&gtabid=".$tabid."&gfrist=1\">";
-			echo $gtab["desc"][$tabid];
-			echo "</A>";
+			foreach ($tabData as $remKey => $remval){
+                $reminderFrist = $remdata['frist'][$groupid][$tabid][$remKey];
+				$readableDate = get_date($reminderFrist, 4);
 
-			echo "<ul style=\"list-style-type:disc\">";
-
-			foreach ($tabval as $remid => $remval){
-
-				$datum = get_date($remdata["frist"][$groupid][$tabid][$remid],2);
-				$date = $remdata["frist"][$groupid][$tabid][$remid];
-				$dhour = lmb_substr($date,11,2);
-				$dmin = lmb_substr($date,14,2);
-				$dsec = lmb_substr($date,17,2);
-				$dday = lmb_substr($date,8,2);
-				$dmonth = lmb_substr($date,5,2);
-				$dyear = lmb_substr($date,0,4);
-				//mktime ( [int Stunde [, int Minute [, int Sekunde [, int Monat [, int Tag [, int Jahr [, int is_dst]]]]]]] )
-
-				if($curDate - mktime($dhour,$dmin,$dsec,$dmonth,$dday,$dyear)<0){
-					$color = "";
-				}else{
-					$color = "style=\"color:green\"";
+				# reminder in past?
+                $color = '';
+                if ($curDate >= get_stamp($reminderFrist)) {
+					$color = 'style="color:green"';
 				}
 
-				echo "<li>";
-				echo "<i class=\"lmb-icon lmb-trash\" OnClick=\"document.location.href='main.php?action=user_w_vorlage&del_id=".$remdata["id"][$groupid][$tabid][$remid]."'\" STYLE=\"cursor:pointer;\"></i>&nbsp;|&nbsp;";
-				echo "<A $color HREF=\"main.php?action=gtab_change&gtabid=".$tabid."&ID=".$remdata["dat_id"][$groupid][$tabid][$remid]."\">";
-				echo $datum;
-				echo "</A>";
-				if(odbc_result($rs, "FROMUSER")){echo "&nbsp;|&nbsp;".$userdat["bezeichnung"][$remdata["fromuser"][$groupid][$tabid][$remid]];}
-				/*
-				if($gfield[$tabid]["mainfield"] AND $remdata["dat_id"][$groupid][$tabid][$remid]){
-					$sqlquery1 = "SELECT ".$gfield[$tabid]["field_name"][$gfield[$tabid]["mainfield"]]." FROM ".$gtab["table"][$tabid]." WHERE ID = ".$remdata["dat_id"][$groupid][$tabid][$remid];
-					$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-					$mainfield = " | ".odbc_result($rs1,$gfield[$tabid]["field_name"][$gfield[$tabid]["mainfield"]]);
-				}
-				*/
-				echo "&nbsp;|&nbsp; (ID:".$remdata["dat_id"][$groupid][$tabid][$remid]." $mainfield)<br>";
-				if($remdata["content"][$groupid][$tabid][$remid]){echo $remdata["content"][$groupid][$tabid][$remid]."<br>";}
-				echo "<FONT STYLE=\"color:grey;\"><i>".$remdata["description"][$groupid][$tabid][$remid]."</i></FONT>";
-				echo "</li>";
+                echo "<tr class=\"tabBody\" style=\"cursor: pointer;\" onclick=\"document.location.href='main.php?action=gtab_change&gtabid={$tabid}&ID={$remdata['dat_id'][$groupid][$tabid][$remKey]}'\">";
 
+                # date
+                echo "<td $color >{$readableDate}</td>";
+
+                # dataset description
+                echo '<td><b>' . $remdata['content'][$groupid][$tabid][$remKey] . '</b></td>';
+
+                # user
+                echo '<td><i>' . $userdat['bezeichnung'][$remdata['fromuser'][$groupid][$tabid][$remKey]] . '</i></td>';
+
+                # delete
+                echo '<td onclick="event.preventDefault();event.stopPropagation();return false;">';
+                echo "<i class=\"lmb-icon lmb-trash\" onclick=\"document.location.href='main.php?action=user_w_vorlage&del_id={$remdata['id'][$groupid][$tabid][$remKey]}'\" style=\"cursor:pointer;\"></i>";
+                echo '</td>';
+                echo '</tr>';
+
+                # reminder description
+                if ($desc = $remdata['description'][$groupid][$tabid][$remKey]) {
+                    echo '<tr>';
+                    echo '<td></td>';
+                    echo '<td colspan="2"><i>' . $desc . '</i></td>';
+                    echo '</tr>';
+                }
 			}
-
-			echo "</ul></li>";
-
 		}
-		echo "</ul></li>";
-
 	}
-	echo "</ul>";
-
-
 }
-echo "</table></div>";
 
+echo '</table>';
+echo '</div>';
 ?>

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -30,7 +30,7 @@ if($GLOBALS["gLmbExt"]["ext_gtab_erg.inc"]){
 <div id="lmbAjaxContainer2" class="ajax_container" style="position:absolute;display:none;z-index:999;" onclick="activ_menu=1;"></div>
 <div id="limbasAjaxGtabContainer" class="ajax_container" style="padding:1px;position:absolute;display:none;z-index:999;" onclick="activ_menu=1;"></div>
 <div id="limbasDivMenuContext" class="lmbContextMenu" style="display:none;z-index:994;" OnClick="activ_menu = 1;">
-<? 
+<?php
 
 # check if is view
 if($gtab["typ"][$gtabid] == 5){$isview = 1;}
@@ -43,7 +43,11 @@ if(!$isview){
 		pop_submenu(173,'','');							# History
 	}
 }
-pop_menu(6,'','');										# Detail
+
+if($gtab["tab_view_lform"][$gtabid]){
+    pop_menu(6,'view_contextDetail();return;');										# Detail
+}
+
 if($gtab["edit"][$gtabid]){pop_menu(3,'','');}			# bearbeiten
 if($gtab["add"][$gtabid] AND $gtab["copy"][$gtabid] AND !$readonly){pop_menu(201,'','');}			# Datensatz kopieren
 if($verknpf AND $gtab["edit"][$gtabid] AND !$readonly){
@@ -78,7 +82,7 @@ pop_bottom();
 
 <div ID="limbasDivMenuInfo" class="lmbContextMenu" style="display:none;z-index:995" OnClick="activ_menu = 1;">
 <FORM NAME="info_form">
-<? #----------------- Info-Menü -------------------2
+<?php #----------------- Info-Menü -------------------2
 pop_menu2('','','lmbInfoCreate',"lmb-page-new");
 pop_menu2('','','lmbInfoEdit',"lmb-page-edit");
 pop_line();
@@ -86,7 +90,7 @@ pop_left();
 echo "&nbsp;$lang[1527]:<BR>&nbsp;<FONT COLOR=\"green\">[RETURN]</FONT><hr>";
 echo "&nbsp;$lang[357]:<BR>&nbsp;<FONT COLOR=\"green\">[Mouse DblClick]</FONT><hr>";
 echo "&nbsp;$lang[1529]:<BR>&nbsp;<FONT COLOR=\"green\">[SHIFT][Mouse DblClick]</FONT><hr>";
-echo "&nbsp;$lang[2821]:<BR>&nbsp;<FONT COLOR=\"green\">[CTRL][Mouse DblClick]</FONT>";
+echo "&nbsp;$lang[2821]:<BR>&nbsp;<FONT COLOR=\"green\">[CTRL][Right Mouse Click]</FONT>";
 pop_right();
 # extension
 if(function_exists($GLOBALS["gLmbExt"]["menuListCInfo"][$gtabid])){
@@ -99,7 +103,7 @@ pop_bottom();
 
 <div ID="limbasDivMenuRahmen" class="lmbContextMenu" style="display:none;z-index:993" OnClick="activ_menu = 1;">
 <FORM NAME="frame_form">
-<? #----------------- Frameset-Menü -------------------
+<?php #----------------- Frameset-Menü -------------------
 unset($opt);
 pop_top('limbasDivMenuRahmen');
 $opt["val"] = array("1","2","3");
@@ -112,14 +116,14 @@ pop_bottom();
 
 <div ID="limbasDivMenuFarb" class="lmbContextMenu" style="display:none;z-index:995;" OnClick="activ_menu = 1;">
 <FORM NAME="fcolor_form">
-<? #----------------- Farb-Menü -------------------
+<?php #----------------- Farb-Menü -------------------
 unset($opt);
 pop_top('limbasDivMenuFarb');
 pop_color(null, null, 'limbasDivMenuFarb');
 pop_left();
 if($gtab["linecolor"][$gtabid]){
 	echo "
-	<input type=\"radio\" name=\"ctyp\" value=\"1\" style=\"border:none;background-color:transparent;\" checked>&nbsp;$lang[850]&nbsp;&nbsp;
+	<input type=\"radio\" name=\"ctyp\" value=\"1\" style=\"border:none;background-color:transparent;\" checked>&nbsp;$lang[546]&nbsp;&nbsp;
 	<input type=\"radio\" name=\"ctyp\" value=\"2\" style=\"border:none;background-color:transparent;\">&nbsp;$lang[851]";
 }
 
@@ -130,7 +134,7 @@ pop_bottom();
 
 
 <DIV ID="limbasDivMenuBericht" class="lmbContextMenu" style="display:none;z-index:993;" OnClick="activ_menu = 1;">
-<? #----------------- Berichts-Menü -------------------
+<?php #----------------- Berichts-Menü -------------------
 pop_top('limbasDivMenuBericht');
 
 if($greportlist[$gtabid]["id"]){
@@ -169,17 +173,17 @@ if($gdiaglist[$gtabid]["id"]){
 
 <div ID="limbasDivMenuExport" class="lmbContextMenu" style="display:none;z-index:994" OnClick="activ_menu = 1;">
 <FORM NAME="export_form">
-<? #----------------- Export-Menü -------------------
+<?php #----------------- Export-Menü -------------------
 unset($opt);
 pop_top('limbasDivMenuExport');
-$opt[val] = array("1","3","2");
-$opt[desc] = array($lang[2016],'CSV',$lang[2017]);
+$opt['val'] = array("1","3","2");
+$opt['desc'] = array($lang[2016],'CSV',$lang[2017]);
 pop_select('',$opt,'',1,'lmbFormExportTyp',$lang[2502]."&nbsp",'');
 pop_line();
 $zl = "divclose();this.checked='';gtab_export(1,document.export_form.lmbFormExportTyp[document.export_form.lmbFormExportTyp.selectedIndex].value);";
 pop_menu2($lang[1342], null, null, null, null, $zl);
 $zl = "divclose();this.checked='';gtab_export(2,document.export_form.lmbFormExportTyp[document.export_form.lmbFormExportTyp.selectedIndex].value);";
-pop_menu2($lang[1461], null, null, null, null, $zl);
+pop_menu2($lang[994], null, null, null, null, $zl);
 pop_bottom();
 ?>
 </FORM></div>
@@ -187,7 +191,7 @@ pop_bottom();
 
 
 <div ID="limbasDivMenuDatei" class="lmbContextMenu" style="display:none;z-index:992" OnClick="activ_menu = 1;">
-<? #----------------- Menü - Datei -------------------
+<?php #----------------- Menü - Datei -------------------
 $noLine = true;
 if($gtab["edit"][$gtabid]){pop_menu(197,'','',0,1);$noLine=false;}	# speichern
 if($gtab["add"][$gtabid] AND !$readonly){pop_menu(1,'','',0,0);$noLine=false;}		# neuer Datensatz
@@ -230,7 +234,7 @@ pop_bottom();
 
 
 <div ID="limbasDivMenuBearbeiten" class="lmbContextMenu" style="display:none;z-index:992;" OnClick="activ_menu=1;">
-<? #----------------- Menü - bearbeiten -------------------
+<?php #----------------- Menü - bearbeiten -------------------
 pop_submenu(14,'','',0,1);											# suchen
 pop_menu(28,'','',0,1); 										# zurücksetzen
 pop_menu(236,'','',0,1);
@@ -251,7 +255,7 @@ pop_bottom();
 </div>
 
 <div ID="limbasDivMenuAnsicht" class="lmbContextMenu" style="display:none;z-index:992" OnClick="activ_menu = 1;">
-<? #----------------- Menü - Ansicht -------------------
+<?php #----------------- Menü - Ansicht -------------------
 pop_menu(240,'','',$session["symbolbar"],1);	# Symbolleiste
 if(!$filter["alter"][$gtabid]){
 	pop_menu(160,'',''); 	# Tabellengröße
@@ -289,7 +293,7 @@ if($LINK[275] AND $gfield[$gtabid]["aggregate"]){
 }
 
 if(!$isview AND $gfrist){
-	pop_menu2($lang[2899],null,null,"pic/silk_icons/bell.gif",null,"limbasDivShowReminderFilter(event,this);");
+	pop_menu2($lang[2899],null,null,"lmb-icon lmb-filter",null,"limbasDivShowReminderFilter(event,this);");
 }
 
 # extension
@@ -302,7 +306,7 @@ pop_bottom();
 </div>
 
 <div ID="limbasDivMenuExtras" class="lmbContextMenu" style="display:none;z-index:992" OnClick="activ_menu = 1;">
-<? #----------------- Menü - Extras -------------------
+<?php #----------------- Menü - Extras -------------------
 #pop_submenu(132,'','');			# Formulare
 if($LINK[131] AND $GLOBALS["greportlist_exist"] AND ($LINK[175] OR $LINK[176])){
 	pop_submenu(131,'','',0);			# Berichte
@@ -341,7 +345,7 @@ pop_bottom();
 </div>
 
 <DIV ID="limbasDivMenuSettings" class="lmbContextMenu" style="display:none;z-index:993" OnClick="activ_menu = 1;">
-<?
+<?php
 pop_top('limbasDivMenuSettings');
 pop_menu(212,'','',$filter["nolimit"][$gtabid],0);			# Limit aufheben
 if(!$isview AND $gtab["delete"][$gtabid]){
@@ -354,7 +358,7 @@ pop_bottom();
 
 <DIV ID="limbasDivMenuLock" class="lmbContextMenu" style="position: absolute;display:none;z-index:992;" OnClick="activ_menu = 1;">
 <FORM NAME="formular_lock">
-<? #----------------- Verknüpfungs-Menü -------------------
+<?php #----------------- Verknüpfungs-Menü -------------------
 pop_top('limbasDivMenuLock');
 pop_left();
 echo "&nbsp;&nbsp;<input type=\"text\" maxlength=\"2\" style=\"width:30px;\" value=\"30\" id=\"lmbLockTime\">&nbsp;&nbsp;&nbsp;<select id=\"lmbLockUnit\" class=\"contextmenu\"><option value=\"m\">".$lang[1980]."<option value=\"h\">".$lang[1981]."<option value=\"d\">".$lang[1982]."</select>&nbsp;&nbsp;<input type=\"text\" value=\"sperren\" ID=\"LmbIconDataLock\" style=\"cursor:pointer;vertical-align:bottom;width:50px;text-align:center\" OnClick=\"document.form1.lockingtime.value=document.getElementById('lmbLockTime').value+'|'+document.getElementById('lmbLockUnit').value;userecord('lock');\">";
@@ -366,12 +370,12 @@ pop_bottom();
 
 
 <div ID="limbasDivMenuSnapshot" class="lmbContextMenu" style="display:none;z-index:992" OnClick="activ_menu = 1;">
-<? #----------------- SubMenü - Schnapschuß -------------------
+<?php #----------------- SubMenü - Schnapschuß -------------------
 pop_top("limbasDivMenuSnapshot");
 
 # save
 if ($snap_id AND ($gsnap[$gtabid]["owner"][$snap_id] OR $gsnap[$gtabid]["edit"][$snap_id])){
-	pop_menu(0,"limbasSnapshotSave()",$lang[1997], null, null, 'lmb-save');
+	pop_menu(0,"limbasSnapshotSave()",$lang[842], null, null, 'lmb-save');
 }
 # save as
 if ($LINK[188]){
@@ -387,7 +391,7 @@ if ($snap_id AND $gsnap[$gtabid]["owner"][$snap_id] AND $LINK[225]){
 pop_menu(189,"",$lang[2000]);
 # delete
 if ($snap_id AND ($gsnap[$gtabid]["owner"][$snap_id] OR $gsnap[$gtabid]["del"][$snap_id])){
-	pop_menu(0,"limbasSnapshotDelete();",$lang[1999]);
+	pop_menu(0,"limbasSnapshotDelete();",$lang[160]);
 }
 # list of snapshots
 if($gsnap[$gtabid]){
@@ -404,31 +408,32 @@ pop_bottom();
 
 
 <div ID="limbasDivSnapshotSaveas" class="lmbContextMenu" style="display:none;z-index:992" OnClick="activ_menu = 1;">
-<? #----------------- SubMenü - Schnapschuß -------------------
+<?php #----------------- SubMenü - Schnapschuß -------------------
 
 pop_top("limbasDivSnapshotSaveas");
-pop_left();
-echo "<TABLE>";
-echo "<TR><TD>".$lang[2005].": </TD>";
-echo "<TD><INPUT TYPE=\"TEXT\" NAME=\"limbasSnapshotName\" onchange=\"javascript:limbasSnapshotSaveas()\"></TD></TR>";
-echo "</TABLE>";
-pop_right();
+pop_input2('limbasSnapshotSaveas();', 'limbasSnapshotName', '', '', $lang[4] . ':');
 ?>
 </div>
 
 
 
-<div ID="limbasDivMenuFields" class="lmbContextMenu" style="display:none;top:-1000;z-index:992" OnClick="activ_menu = 1;">
+<div ID="limbasDivMenuFields" class="lmbContextMenu" style="display:none;top:0px;z-index:992" OnClick="activ_menu = 1;">
 <?php #----------------- SubMenü - Schnapschuß -------------------
 
 pop_top("limbasDivMenuFields");
-pop_header(null, $lang[1634]);
-foreach ($gfield[$gtabid]["sort"] as $key => $value){
+
+$header = false;
+foreach ($gfield[$gtabid]['sort'] as $key => $value){
     
-    if($gfield[$gtabid]['field_type'][$key] >= 100){
-        # sparte
-        pop_header(null, $gfield[$gtabid]['spelling'][$key]);
-    } else {
+    if($gfield[$gtabid]['field_type'][$key] == 100 /* sparte */){
+        pop_header(null, $gfield[$gtabid]['spelling'][$key], 'lmbShowSubColumns(this);');
+        $header = true;
+    } else if ($gfield[$gtabid]['field_type'][$key] != 101 /* gruppierung */){
+        if (!$header) {
+            # pop default header "Allgemein"
+            pop_header(null, $lang[1634], 'lmbShowSubColumns(this);');
+            $header = true;
+        }
         if ($filter["hidecols"][$gtabid][$key]) {
             $color = "black";
             $icdis = "hidden";
@@ -453,7 +458,7 @@ pop_bottom();
 
 
 <DIV ID="limbasDivRowSetting" class="lmbContextMenu" style="display:none;z-index:993" OnClick="activ_menu = 1;">
-<? #----------------- SubMenü - Rowsetting -------------------
+<?php #----------------- SubMenü - Rowsetting -------------------
 pop_top('limbasDivRowSetting');
 pop_menu2($lang[861],null,null,"lmb-textsort-up",null,"lmbFieldSort(event,lmbGlobVar['sortid'],'&ASC',lmbGlobVar['res_next'])");
 pop_menu2($lang[862],null,null,"lmb-textsort-down",null,"lmbFieldSort(event,lmbGlobVar['sortid'],'&DESC',lmbGlobVar['res_next'])");
@@ -473,10 +478,10 @@ pop_bottom();
 ?>
 </DIV>
 
-<?if($gfrist){?>
+<?php if($gfrist){?>
 <div ID="limbasDivMenuReminder" class="lmbContextMenu" style="display:none;z-index:995" OnClick="activ_menu = 1;">
 <FORM NAME="reminder_form">
-<? #----------------- Reminder-Menü -------------------
+<?php #----------------- Reminder-Menü -------------------
 pop_header(null,$lang[425],$elementWidth);
 pop_left();
 echo "<table>
@@ -494,9 +499,9 @@ pop_submit($lang[30]);
 pop_bottom();
 ?>
 </FORM></div>
-<?}?>
+<?php }?>
 
-<?/*----------------- Javascript Functionen -------------------*/?>
+<?php /*----------------- Javascript Functionen -------------------*/?>
 <Script language="JavaScript">
 
 // ----- Js-Script-Variablen --------
@@ -505,7 +510,7 @@ jsvar["snap_id"] = "<?=$snap_id?>";
 jsvar["user_id"] = "<?=$session["user_id"]?>";
 jsvar["verkn_ID"] = "<?=$verkn_ID?>";
 jsvar["form_id"] = "<?=$form_id?>";
-jsvar["tablename"] = "<?if($snapid){echo $gsnap[$gtabid]["name"][$snapid];}else{echo $gtab["table"][$gtabid];}?>";
+jsvar["tablename"] = "<?php if($snapid){echo $gsnap[$gtabid]["name"][$snapid];}else{echo $gtab["table"][$gtabid];}?>";
 jsvar["wfl_id"] = "<?=$wfl_id?>";
 jsvar["wfl_inst"] = "<?=$wfl_inst?>";
 jsvar["resultspace"] = "<?=$umgvar["resultspace"]?>";
@@ -519,33 +524,33 @@ jsvar["tablename"] = "<?=$gtab["desc"][$gtabid]?>";
 // --------------------- Verknüpfungszusatz Datensatz markieren ------------------------
 </SCRIPT>
 
-	<?/*-------------------------------------------- Formularkopf ----------------------------------------*/?>
+	<?php /*-------------------------------------------- Formularkopf ----------------------------------------*/?>
 	<form action="main.php" method="post" id="lmbForm2" name="form2" autocomplete="off">
 	<input type="hidden" name="action">
 	<input type="hidden" name="old_action" value="<?=$action?>">
-	<input type="hidden" name="gtabid" value="<?echo $gtabid;?>">
-	<input type="hidden" name="tab_group" value="<?echo $tab_group;?>">
+	<input type="hidden" name="gtabid" value="<?= $gtabid ?>">
+	<input type="hidden" name="tab_group" value="<?= $tab_group ?>">
 	<input type="hidden" name="wfl_id" value="<?=$wfl_id;?>">
 	<input type="hidden" name="wfl_inst" value="<?=$wfl_inst;?>">
 	<input type="hidden" name="snap_id" value="<?=$snap_id;?>">
 	<input type="hidden" name="request_gsr" value="<?=$request_gsr;?>">
 	<input type="hidden" name="request_flt" value="<?=$request_flt;?>">
-	<input type="hidden" name="formlist_id" value="<?=$form_id;?>">
 	<input type="hidden" name="gfrist" VALUE="<?=$gfrist;?>">
+	<input type="hidden" name="formlist_id" value="<?=$form_id;?>">
 	<input type="hidden" name="form_id">
 	<input type="hidden" name="ID">
 	<input type="hidden" name="use_record">
 	<input type="hidden" name="posx">
 	<input type="hidden" name="posy">
 	<input type="hidden" name="funcid">
-	<input type="hidden" name="verknpf" VALUE="<?echo $verknpf;?>">
-	<? /* --------------------- Verknüpfungszusatz ------------------------ */?>
-	<input type="hidden" name="verkn_ID" VALUE="<?echo $verkn_ID;?>">
-	<input type="hidden" name="verkn_add_ID" VALUE="<?echo $verkn_add_ID;?>">
-	<input type="hidden" name="verkn_del_ID" VALUE="<?echo $verkn_del_ID;?>">
-	<input type="hidden" name="verkn_tabid" VALUE="<?echo $verkn_tabid;?>">
-	<input type="hidden" name="verkn_fieldid" VALUE="<?echo $verkn_fieldid;?>">
-	<input type="hidden" name="verkn_showonly" VALUE="<?echo $verkn_showonly;?>">
+	<input type="hidden" name="verknpf" VALUE="<?= $verknpf ?>">
+	<?php /* --------------------- Verknüpfungszusatz ------------------------ */?>
+	<input type="hidden" name="verkn_ID" VALUE="<?= $verkn_ID ?>">
+	<input type="hidden" name="verkn_add_ID" VALUE="<?= $verkn_add_ID ?>">
+	<input type="hidden" name="verkn_del_ID" VALUE="<?= $verkn_del_ID ?>">
+	<input type="hidden" name="verkn_tabid" VALUE="<?= $verkn_tabid ?>">
+	<input type="hidden" name="verkn_fieldid" VALUE="<?= $verkn_fieldid ?>">
+	<input type="hidden" name="verkn_showonly" VALUE="<?= $verkn_showonly ?>">
 	<input type="hidden" name="verkn_poolid" VALUE="<?=$verkn_poolid;?>">
 	<span id="myExtForms2"></span>
 	</form>
@@ -554,8 +559,8 @@ jsvar["tablename"] = "<?=$gtab["desc"][$gtabid]?>";
 	<form action="main.php" method="post" id="form1" name="form1" autocomplete="off">
 	<input type="hidden" name="action" value="gtab_erg">
 	<input type="hidden" name="old_action" value="<?=$action?>">
-	<input type="hidden" name="gtabid" value="<?echo $gtabid;?>">
-	<input type="hidden" name="tab_group" value="<?echo $tab_group;?>">
+	<input type="hidden" name="gtabid" value="<?= $gtabid ?>">
+	<input type="hidden" name="tab_group" value="<?= $tab_group ?>">
 	<input type="hidden" name="order">
 	<input type="hidden" name="select">
 	<input type="hidden" name="exp_typ">
@@ -603,22 +608,23 @@ jsvar["tablename"] = "<?=$gtab["desc"][$gtabid]?>";
 	<input type="hidden" name="filter_reminder_to">
 	<input type="hidden" name="filter_reminder_create">
 	<input type="hidden" name="filter_force_delete">
+    <input type="hidden" name="filter_tabulatorKey">
 	
 	<input type="hidden" name="pop_choice">
 	<input type="hidden" name="grp_choice">
 	
 	<input type="hidden" name="history_fields">
 	<input type="hidden" name="history_search">
-	<input type="hidden" name="verknpf" VALUE="<?echo $verknpf;?>">
+	<input type="hidden" name="verknpf" VALUE="<?= $verknpf ?>">
 	<input type="hidden" name="verkn_poolid" VALUE="<?=$verkn_poolid;?>">
-	<?# --------------------- Verknüpfungszusatz ------------------------
+	<?php #--------------------- Verknüpfungszusatz ------------------------
 	if($verknpf){?>
-	<input type="hidden" name="verkn_ID" VALUE="<?echo $verkn_ID;?>">
-	<input type="hidden" name="verkn_add_ID" VALUE="<?echo $verkn_add_ID;?>">
-	<input type="hidden" name="verkn_del_ID" VALUE="<?echo $verkn_del_ID;?>">
-	<input type="hidden" name="verkn_tabid" VALUE="<?echo $verkn_tabid;?>">
-	<input type="hidden" name="verkn_fieldid" VALUE="<?echo $verkn_fieldid;?>">
-	<input type="hidden" name="verkn_showonly" VALUE="<?echo $verkn_showonly;?>">
+	<input type="hidden" name="verkn_ID" VALUE="<?= $verkn_ID ?>">
+	<input type="hidden" name="verkn_add_ID" VALUE="<?= $verkn_add_ID ?>">
+	<input type="hidden" name="verkn_del_ID" VALUE="<?= $verkn_del_ID ?>">
+	<input type="hidden" name="verkn_tabid" VALUE="<?= $verkn_tabid ?>">
+	<input type="hidden" name="verkn_fieldid" VALUE="<?= $verkn_fieldid ?>">
+	<input type="hidden" name="verkn_showonly" VALUE="<?= $verkn_showonly ?>">
 	<?php }
 
 
@@ -638,7 +644,7 @@ if(!$filter["hidecols"][$gtabid][0]){
 
 # ----- Formular -------
 if($form_id AND $gformlist[$gtabid]["id"][$form_id] AND $gformlist[$gtabid]["typ"][$form_id] == 2){
-	if($gformlist[$gtabid]["css"][$form_id] AND lmb_strpos($gformlist[$gtabid]["css"][$gformid],"USER/") === false){
+	if($gformlist[$gtabid]["css"][$form_id]){
 		echo"<style type=\"text/css\">@import url(".$gformlist[$gtabid]["css"][$form_id].");</style>\n";
 	}
 	form_ergview($gtabid,$gresult,$form_id);
@@ -664,7 +670,7 @@ if($form_id AND $gformlist[$gtabid]["id"][$form_id] AND $gformlist[$gtabid]["typ
 			unset($popg[$gtabid]);
 		}
 	}else{
-		$usedef = 1;	
+		$usedef = 1;
 	}
 	
 	if($usedef){
@@ -699,7 +705,3 @@ view_copychange(".$rec[0].",".$rec[1].");
 
 
 ?>
-
-<span id="myExtForms"></span>
-<input type="text" id="hiddenfocus" style="width:1px;position:absolute;top:-100;left:-100">
-</form>

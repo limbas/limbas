@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -19,170 +19,236 @@
  */
 ?>
 
-<FORM ACTION="main_admin.php" METHOD="post" NAME="form1">
-<input type="hidden" name="action" value="setup_error_msg">
-<input type="hidden" name="del">
-<input type="hidden" name="log_typ" value="<?=$log_typ?>">
+<style>
+    textarea {
+        resize: vertical;
+        min-height: 40px;
+    }
+</style>
+
+<form action="main_admin.php" method="post" name="form1">
+    <input type="hidden" name="action" value="setup_error_msg">
+    <input type="hidden" name="del">
+    <input type="hidden" name="log_typ" value="<?= $log_typ ?>">
+    <input type="hidden" name="sort" value="<?= $sort ?>">
+
+    <div class="lmbPositionContainerMainTabPool">
+        <table class="tabpool" border="0" cellspacing="0" cellpadding="0">
+            <tr>
+                <td>
+                    <table border="0" cellspacing="0" cellpadding="0" style="width: 100%;">
+                        <tr class="tabpoolItemTR">
+                            <td nowrap class="tabpoolItem<?= $log_typ == 1 || !$log_typ ? 'Active' : 'Inactive' ?>"
+                                OnClick="document.location.href='main_admin.php?action=setup_error_msg&log_typ=1'">
+                                sql_error.log
+                            </td>
+                            <td nowrap class="tabpoolItem<?= $log_typ == 2 ? 'Active' : 'Inactive' ?>"
+                                OnClick="document.location.href='main_admin.php?action=setup_error_msg&log_typ=2'">
+                                indize_error.log
+                            </td>
+                            <td nowrap class="tabpoolItem<?= $log_typ == 3 ? 'Active' : 'Inactive' ?>"
+                                OnClick="document.location.href='main_admin.php?action=setup_error_msg&log_typ=3'">
+                                indize.log
+                            </td>
+                            <td class="tabpoolItemSpace">&nbsp;</td>
+                        </tr>
+                    </table>
+                </td>
+            </tr>
+            <tr>
+                <td class="tabpoolfringe">
+                    <table border="0" cellpadding="2" width="100%" class="tabBody" style="border-spacing: 10px;">
+                        <?php
+                        if ($log_typ == 1 OR !$log_typ):
+                            $path = $umgvar['pfad'] . '/TEMP/log/sql_error.log';
+
+                            if ($del) {
+                                unlink($path);
+                                $rf = fopen($path, 'w');
+                                fclose($rf);
+                            }
+
+                            if (!$showcount) {
+                                $showcount = 50;
+                            }
+                            if (file_exists($path)) {
+                                $handle = file($path);
+                                $lcount = count($handle);
+                            }
+                            ?>
+
+                            <?php if (!is_writable($path)): ?>
+                                <tr class="tabBody">
+                                    <td colspan="9" style="color: red;">
+                                        <i class="lmb-icon lmb-exclamation-triangle"></i>
+                                        Logfile is not writable!
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+                            <tr class="tabBody">
+                                <td colspan="2"><?= $lang[86] ?></td>
+                                <td><?= $lcount ?></td>
+                            </tr>
+                            <tr class="tabBody">
+                                <td colspan="2"><?= $lang[550] ?></td>
+                                <TD><i class="lmb-icon lmb-trash" onclick="document.form1.del.value=1;document.form1.submit();"></i></TD>
+                            </tr>
+                            <tr class="tabBody">
+                                <td colspan="2"><?= $lang[96] ?></td>
+                                <td><input type="text" value="<?= $showcount ?>" name="showcount" size="5"></td>
+                            </tr>
+                            <tr class="tabBody">
+                                <td colspan="2"><?= $lang[1837] ?></td>
+                                <td>
+                                    <?php
+                                    if (!$sort) {
+                                        $sort = 'desc';
+                                    }
+                                    ?>
+                                    <i class="lmb-icon lmb-textsort-up" onclick="document.form1.sort.value='asc';document.form1.submit();" title="<?= $lang[861] ?>" style="font-weight: <?= $sort == 'asc' ? 'bold' : 'normal' ?>"></i>
+                                    <i class="lmb-icon lmb-textsort-down" onclick="document.form1.sort.value='desc';document.form1.submit();" title="<?= $lang[862] ?>" style="font-weight: <?= $sort == 'desc' ? 'bold' : 'normal' ?>"></i>
+                                </td>
+                            </tr>
+                            <tr class="tabBody">
+                                <td colspan="9">&nbsp;</td>
+                            </tr>
+                            <tr class="tabHeader">
+                                <td class="tabHeaderItem"><?= $lang[3] ?></td>
+                                <td class="tabHeaderItem"><?= $lang[543] ?></td>
+                                <td class="tabHeaderItem"><?= $lang[544] ?></td>
+                                <td class="tabHeaderItem"><?= $lang[545] ?></td>
+                                <td class="tabHeaderItem"><?= $lang[546] ?></td>
+                                <td class="tabHeaderItem"><?= $lang[547] ?></td>
+                                <td class="tabHeaderItem"><?= $lang[548] ?></td>
+                            </tr>
+
+                            <?php
+                            if ($handle) {
+                                $showcount = min($showcount, $lcount);
+                                if ($sort == 'desc') {
+                                    $start = $lcount - $showcount;
+                                } else {
+                                    $start = 0;
+                                }
+                                $handle = array_slice($handle, $start, $showcount);
+                                if ($sort == 'desc') {
+                                    $handle = array_reverse($handle);
+                                }
+
+                                foreach ($handle as $line):
+                                    if (!$line) continue;
+                                    list($fDate, $fUser, $fAction, $fFile, $fLine, $fError, $fQuery) = explode("\t", $line);
+                                    ?>
+
+                                    <tr class="tabBody">
+                                        <td valign="top"><?= $fUser ?></td>
+                                        <td valign="top"><?= $fDate ?></td>
+                                        <td valign="top"><?= $fAction ?></td>
+                                        <td valign="top"><?= $fFile ?></td>
+                                        <td valign="top"><?= $fLine ?></td>
+                                        <td valign="top">
+                                            <textarea readonly cols="50" rows="3"><?= htmlentities($fError, ENT_QUOTES, $umgvar["charset"]) ?></textarea>
+                                        </td>
+                                        <td valign="top">
+                                            <textarea readonly cols="50" rows="3"><?= htmlentities($fQuery, ENT_QUOTES, $umgvar["charset"]) ?></textarea>
+                                        </td>
+                                    </tr>
+                                <?php endforeach;
+                            }
+                            ?>
+
+                        <?php elseif ($log_typ == 2):
+                            $path = $umgvar['pfad'] . '/TEMP/log/indize_error.log';
+                            if ($del) {
+                                unlink($path);
+                                $rf = fopen($path, 'w');
+                                fclose($rf);
+                            }
+                            ?>
+
+                            <?php if (!is_writable($path)): ?>
+                                <tr class="tabBody">
+                                    <td colspan="9" style="color: red;">
+                                        <i class="lmb-icon lmb-exclamation-triangle"></i>
+                                        Logfile is not writable!
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
+
+                            <tr class="tabBody">
+                                <td>
+                                    <?= $lang[550] ?>
+                                    &nbsp;&nbsp;&nbsp;
+                                    <i class="lmb-icon lmb-trash" onclick="document.form1.del.value=1;document.form1.submit();"></i>
+                                </td>
+                            </tr>
+                            <tr class="tabBody">
+                                <td>&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td>
+                                    <textarea readonly style="width:100%;height:500px;overflow:auto;">
+                                        <?php if (file_exists($path)) {
+                                            echo file_get_contents($path);
+                                        } ?>
+                                    </textarea>
+                                </td>
+                            </tr>
+
+                        <?php elseif ($log_typ == 3):
+                            $path = $umgvar['pfad'] . '/TEMP/log/indize.log';
+                            if ($del) {
+                                unlink($path);
+                                $rf = fopen($path, 'w');
+                                fclose($rf);
+                            }
+                            ?>
 
 
-<DIV class="lmbPositionContainerMainTabPool">
+                            <?php if (!is_writable($path)): ?>
+                                <tr class="tabBody">
+                                    <td colspan="2" style="color: red;">
+                                        <i class="lmb-icon lmb-exclamation-triangle"></i>
+                                        Logfile is not writable!
+                                    </td>
+                                </tr>
+                            <?php endif; ?>
 
-<TABLE class="tabpool" BORDER="0" width="600" cellspacing="0" cellpadding="0"><TR><TD>
+                            <tr class="tabBody">
+                                <td colspan="2">
+                                    <?= $lang[550] ?> &nbsp;&nbsp;&nbsp;
+                                    <i class="lmb-icon lmb-trash" onclick="document.form1.del.value=1;document.form1.submit();"></i>
+                                </td>
+                            </tr>
+                            <tr class="tabBody">
+                                <td colspan="2">&nbsp;</td>
+                            </tr>
+                            <tr class="tabHeader">
+                                <td class="tabHeaderItem"><?= $lang[543] ?></td>
+                                <td class="tabHeaderItem"><?= $lang[544] ?></td>
+                            </tr>
+                            <?php
+                            if (file_exists($path)) {
+                                $handle = fopen($path, 'r');
+                                if ($handle) {
+                                    while (($line = fgets($handle)) !== false) {
+                                        if (!$line) continue;
 
-<?
-if($log_typ == 1 OR !$log_typ){
-	
-	if($del){
-		unlink($umgvar["pfad"]."/TEMP/log/sql_error.log");
-		$rf = fopen($umgvar["pfad"]."/TEMP/log/sql_error.log","w");
-		fclose($rf);
-	}
-	
-	if(!$showcount){$showcount = 50;}
-	if(file_exists($umgvar["pfad"]."/TEMP/log/sql_error.log")){	
-		$handle = file($umgvar["pfad"]."/TEMP/log/sql_error.log");
-		$lcount = count($handle);
-	}
-
-?>
-	<TABLE BORDER="0" cellspacing="0" cellpadding="0"><TR class="tabpoolItemTR">
-	<TD nowrap class="tabpoolItemActive">sql_error.log</TD>
-	<TD nowrap class="tabpoolItemInactive" OnClick="document.location.href='main_admin.php?action=setup_error_msg&log_typ=2'">indize_error.log</TD>
-	<TD nowrap class="tabpoolItemInactive" OnClick="document.location.href='main_admin.php?action=setup_error_msg&log_typ=3'">indize.log</TD>
-	<TD class="tabpoolItemSpace">&nbsp;</TD>
-	</TR></TABLE>
-
-	</TD></TR>
-	
-	<TR><TD class="tabpoolfringe">
-	
-	<TABLE BORDER="0" cellspacing="1" cellpadding="2" width="100%" class="tabBody">
-
-	<TR class="tabBody"><TD COLSPAN="2"><?=$lang[2559]?></TD><TD><?=$lcount?></TD></TR>
-        <TR class="tabBody"><TD COLSPAN="2"><?=$lang[550]?></TD><TD><i class="lmb-icon lmb-trash" BORDER="0" onclick="document.form1.del.value=1;document.form1.submit();" style="cursor:pointer;"></i></TD></TR>
-	<TR class="tabBody"><TD COLSPAN="2"><?=$lang[2560]?></TD><TD><input type="text" value="<?=$showcount?>" name="showcount" size="5"></TD></TR>
-	<TR class="tabBody"><TD COLSPAN="9">&nbsp;</TD></TR>
-	
-	<TR>
-	<TD class="tabHeader"><?=$lang[542]?></TD>
-	<TD class="tabHeader"><?=$lang[543]?></TD>
-	<TD class="tabHeader"><?=$lang[544]?></TD>
-	<TD class="tabHeader"><?=$lang[545]?></TD>
-	<TD class="tabHeader"><?=$lang[546]?></TD>
-	<TD class="tabHeader"><?=$lang[547]?></TD>
-	<TD class="tabHeader"><?=$lang[548]?></TD>
-	</TR>
-	
-	<?
-	if($handle){
-		$start = $lcount - $showcount;
-		if($start < 0){$start = 0;$showcount=$lcount;}
-		#echo $lcount."-".$start."-".$showcount."-";
-		for ($i=$start; $i<$lcount ;$i++){
-
-			$parts = explode("\t",$handle[$i]);
-			
-	        echo "<TR class=\"tabBody\">";
-	        echo"<TD valign=\"top\">".$parts[1]."</TD>";
-	        echo"<TD valign=\"top\">".$parts[0]."</TD>";
-	        echo"<TD valign=\"top\">".$parts[2]."</TD>";
-	        echo"<TD valign=\"top\">".$parts[3]."</TD>";
-	        echo"<TD valign=\"top\">".$parts[4]."</TD>";
-	        echo"<TD valign=\"top\"><TEXTAREA readonly COLS=\"50\" ROWS=\"3\">".htmlentities($parts[5],ENT_QUOTES,$umgvar["charset"])."</TEXTAREA>&nbsp;&nbsp;</TD>";
-	        echo"<TD valign=\"top\"><TEXTAREA readonly COLS=\"50\" ROWS=\"3\">".htmlentities($parts[6],ENT_QUOTES,$umgvar["charset"])."</TEXTAREA>&nbsp;&nbsp;</TD>";
-	        echo"</TR>";
-		}
-	}
-	?>
-	
-	<TR class="tabFooter"><TD colspan="9"></TD></TR>
-	</TABLE>
-	
-	
-	
-	
-	
-<?}elseif($log_typ == 2){
-	
-	if($del){
-		unlink($umgvar["pfad"]."/TEMP/log/indize_error.log");
-		$rf = fopen($umgvar["pfad"]."/TEMP/log/indize_error.log","w");
-		fclose($rf);
-	}
-?>
-	<TABLE BORDER="0" cellspacing="0" cellpadding="0"><TR class="tabpoolItemTR">
-	<TD nowrap class="tabpoolItemInactive" OnClick="document.location.href='main_admin.php?action=setup_error_msg&log_typ=1'">sql_error.log</TD>
-	<TD nowrap class="tabpoolItemActive">indize_error.log</TD>
-	<TD nowrap class="tabpoolItemInactive" OnClick="document.location.href='main_admin.php?action=setup_error_msg&log_typ=3'">indize.log</TD>
-	<TD class="tabpoolItemSpace">&nbsp;</TD>
-	</TR></TABLE>
-
-	</TD></TR>
-	
-	<TR><TD class="tabpoolfringe">
-	
-	<TABLE BORDER="0" cellspacing="1" cellpadding="2" width="100%" class="tabBody">
-
-            <TR class="tabBody"><TD><?=$lang[550]?> &nbsp;&nbsp;&nbsp;<i class="lmb-icon lmb-trash" BORDER="0" onclick="document.form1.del=1;document.form1.submit();" style="cursor:pointer;"></i></TD></TR>
-	<TR class="tabBody"><TD>&nbsp;</TD></TR>
-	
-	<TR>
-	<TD>
-<textarea readonly style="width:100%;height:500px;overflow:auto;"><?if(file_exists($umgvar["pfad"]."/TEMP/log/indize_error.log")){echo file_get_contents($umgvar["pfad"]."/TEMP/log/indize_error.log");}?></textarea>
-	</TD>
-	</TR>
-	
-	<TR class="tabFooter"><TD colspan="9"></TD></TR>
-	</TABLE>
-	
-	
-	
-<?}elseif($log_typ == 3){
-	
-	if($del){
-		unlink($umgvar["pfad"]."/TEMP/log/indize.log");
-		$rf = fopen($umgvar["pfad"]."/TEMP/log/indize.log","w");
-		fclose($rf);
-	}
-?>
-	<TABLE BORDER="0" cellspacing="0" cellpadding="0"><TR class="tabpoolItemTR">
-	<TD nowrap class="tabpoolItemInactive" OnClick="document.location.href='main_admin.php?action=setup_error_msg&log_typ=1'">sql_error.log</TD>
-	<TD nowrap class="tabpoolItemInactive" OnClick="document.location.href='main_admin.php?action=setup_error_msg&log_typ=2'">indize_error.log</TD>
-	<TD nowrap class="tabpoolItemActive">indize.log</TD>
-	<TD class="tabpoolItemSpace">&nbsp;</TD>
-	</TR></TABLE>
-
-	</TD></TR>
-	
-	<TR><TD class="tabpoolfringe">
-	
-	<TABLE BORDER="0" cellspacing="1" cellpadding="2" width="100%" class="tabBody">
-
-            <TR class="tabBody"><TD><?=$lang[550]?> &nbsp;&nbsp;&nbsp;<i class="lmb-icon lmb-trash" BORDER="0" onclick="document.form1.del=1;document.form1.submit();" style="cursor:pointer;"></i></TD></TR>
-	<TR class="tabBody"><TD>&nbsp;</TD></TR>
-	
-	<TR>
-	<TD>
-	<textarea readonly style="width:100%;height:500px;overflow:auto;"><?if(file_exists($umgvar["pfad"]."/TEMP/log/indize.log")){echo file_get_contents($umgvar["pfad"]."/TEMP/log/indize.log");}?></textarea>
-	</TD>
-	</TR>
-	
-	<TR class="tabFooter"><TD colspan="9"></TD></TR>
-	</TABLE>
-<?}?>
-	
-	
-	
-	
-	
-	
-	
-
-
-
-
-
-
-</TABLE>
-</FORM>
-</div>
+                                        $line = htmlentities($line, ENT_QUOTES, $umgvar['charset']);
+                                        list($date, $message) = explode(' : ', $line, 2);
+                                        echo '<tr>';
+                                        echo '<td>', $date, '</td>';
+                                        echo '<td>', $message, '</td>';
+                                        echo '</tr>';
+                                    }
+                                    fclose($handle);
+                                }
+                            }
+                            ?>
+                        <?php endif; ?>
+                    </table>
+                </td>
+            </tr>
+        </table>
+    </div>
+</form>

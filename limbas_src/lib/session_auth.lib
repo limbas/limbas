@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -118,9 +118,11 @@ function lmb_authLDAP($auth_user,$auth_pass){
 			$userdata = array('username'=>$auth_user,'passwort'=>$auth_pass,'vorname'=>$userinfo[0]['givenname'][0],'name'=>$userinfo[0]['sn'][0],'beschreibung'=>$userinfo[0]['description'][0],'email'=>$userinfo[0]['mail'][0],'group_id'=>$existinggroup[$userinfo[0]['distinguishedname'][0]],'subgroup'=>$existinggroupnomain_list);
 			if(create_user($userdata)){
 				error_log("LDAP AUTHENTICATION - limbas user $authUser successfully created");
+                #lmb_log::error('LDAP AUTHENTICATION - limbas user $authUser successfully created');
 				return true;
 			}else{
 				error_log("LDAP AUTHENTICATION - adding limbas user $authUser failed");
+                #lmb_log::error("LDAP AUTHENTICATION - adding limbas user $authUser failed");
 				return false;
 			}
 			
@@ -157,6 +159,9 @@ if(strtoupper($umgvar["charset"]) == "UTF-8"){
     ini_set('default_charset', lmb_strtoupper($umgvar["charset"]));
 }
 
+
+$valid = '';
+$querypass = '';
 /* ----------------- auth from LDAP ------------------------ */
 if($umgvar['server_auth'] == 'LDAP' AND $auth_user AND $auth_pass AND $auth_user != 'admin'){
 	if(!lmb_authLDAP($auth_user,$auth_pass)){
@@ -176,12 +181,15 @@ if($umgvar['server_auth'] == 'LDAP' AND $auth_user AND $auth_pass AND $auth_user
 }else{
 	if($auth_pass){$querypass = "AND PASSWORT = '".md5($auth_pass)."'";}
 }
+$valid = null;
+
 
 # user authentication
 if($auth_user != 'admin'){$valid = "AND (VALIDDATE >= ".LMB_DBDEF_TIMESTAMP." OR VALID = ".LMB_DBDEF_FALSE.") AND DEL = ".LMB_DBDEF_FALSE;}
 $sqlquery2 = "SELECT * FROM LMB_USERDB WHERE USERNAME = '".parse_db_string($auth_user,30)."' $querypass $valid";
 $rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 if(!$rs2) {$commit = 1;}
+
 /* --- Prüfung nach IP --------------------------------- */
 if(odbc_fetch_row($rs2, 1)) {
 
@@ -194,7 +202,7 @@ if(odbc_fetch_row($rs2, 1)) {
 	}
 	$ipok = 1;
 	if(odbc_result($rs2,"IPRANGE") AND odbc_result($rs2,"IPRANGE") != '*.*.*.*'){
-		$rma = explode(".",$_SERVER['REMOTE_ADDR']);
+		$rma = explode(".",lmb_getIpAddr());
 		$rmar = explode("\n",odbc_result($rs2,"IPRANGE"));
 		$bzm = 0;
 		while($rmar[$bzm]){
@@ -230,9 +238,9 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 	$umgvar["update_metadata"] = explode(',',$umgvar["update_metadata"]);
 	$umgvar["read_metadata"] = explode(',',$umgvar["read_metadata"]);
 	$umgvar["indize_filetype"] = explode(',',$umgvar["indize_filetype"]);
-	$umgvar["multi_language"] = explode(',',$umgvar["multi_language"]);
-	
-	/* --- Pfade ------------------- */
+    $umgvar["multi_language"] = $umgvar["multi_language"] ? explode(',',$umgvar["multi_language"]) : array();
+
+    /* --- Pfade ------------------- */
 	$umgvar["path"] = rtrim($DBA["LMPATH"],"/");
 	$umgvar["pfad"] = rtrim($DBA["LMPATH"],"/");
 	$umgvar["temp"] = $umgvar["pfad"]."/TEMP";
@@ -465,6 +473,8 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 		$umgvar["version"] = trim($vers[0]);
 		$revision = lmb_substr($umgvar["version"],0,lmb_strrpos($umgvar["version"],"."));
 	}
+	# check for updates if admin and enabled in umgvar
+    lmbCheckForUpdates();
 
 	if(trim($umgvar["db-version"]) != $revision AND !defined('IS_SOAP') AND !defined('IS_WEBDAV') AND !defined('IS_WSDL')){
 		if($action == "setup_update"){
@@ -604,7 +614,7 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 	}
 
 	/* --- Farbliste auslesen ------------------- */
-	$sqlquery3 = "SELECT WERT FROM LMB_USER_COLORS WHERE USERID = ".$session[user_id]." OR USERID = 0";
+	$sqlquery3 = "SELECT WERT FROM LMB_USER_COLORS WHERE USERID = ".$session['user_id']." OR USERID = 0";
 	$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 	unset($user_colors);
 	$bzm = 1;
@@ -613,7 +623,7 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 	$user_colors["wert"][] = "000000";
 	$user_colors["wert"][] = "FFFFFF";
 	while(odbc_fetch_row($rs3, $bzm)) {
-		$user_colors[wert][] = odbc_result($rs3, "WERT");
+		$user_colors['wert'][] = odbc_result($rs3, "WERT");
 		$bzm++;
 	}
 
@@ -717,7 +727,7 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 	$rs5 = odbc_exec($db,$sqlquery5) or errorhandle(odbc_errormsg($db),$sqlquery5,$action,__FILE__,__LINE__);
 	if(!$rs5) {$commit = 1;}
 
-	$sqlquery6 = "INSERT INTO LMB_SESSION (ID,USER_ID,GROUP_ID,LOGOUT,IP) VALUES ('".session_id()."',".$session["user_id"].",".$session["group_id"].",".LMB_DBDEF_FALSE.",'".$_SERVER['REMOTE_ADDR']."')";
+	$sqlquery6 = "INSERT INTO LMB_SESSION (ID,USER_ID,GROUP_ID,LOGOUT,IP) VALUES ('".session_id()."',".$session["user_id"].",".$session["group_id"].",".LMB_DBDEF_FALSE.",'".lmb_getIpAddr()."')";
 	$rs6 = odbc_exec($db,$sqlquery6) or errorhandle(odbc_errormsg($db),$sqlquery6,$action,__FILE__,__LINE__);
 	if(!$rs6) {$commit = 1;}
 
@@ -739,13 +749,13 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 	}
 
 	/* --- Userstatistik eintragen ---------------------------------------- */
-	$sqlquery4 = "SELECT ID FROM LMB_HISTORY_USER WHERE SESSIONID = '".session_id()."' AND USERID = ".$session["user_id"]." AND IP = '".$_SERVER['REMOTE_ADDR']."' AND LOGIN_DATE >= '".convert_stamp($session["login_date"])."'";
+	$sqlquery4 = "SELECT ID FROM LMB_HISTORY_USER WHERE SESSIONID = '".session_id()."' AND USERID = ".$session["user_id"]." AND IP = '".lmb_getIpAddr()."' AND LOGIN_DATE >= '".convert_stamp($session["login_date"])."'";
 	$rs4 = odbc_exec($db,$sqlquery4) or errorhandle(odbc_errormsg($db),$sqlquery4,$action,__FILE__,__LINE__);
 	if(!$rs4) {$commit = 1;}
 	if(!odbc_fetch_row($rs4,1)){
 		/* --- Next ID -------------------------------------------------------- */
 		$NEXTID = next_db_id('LMB_HISTORY_USER','ID',1);
-		$sqlquery5 = "INSERT INTO LMB_HISTORY_USER (ID,USERID,SESSIONID,IP,HOST) VALUES (".$NEXTID.",".$session["user_id"].",'".session_id()."','".$_SERVER['REMOTE_ADDR']."','".$_SERVER['REMOTE_HOST']."')";
+		$sqlquery5 = "INSERT INTO LMB_HISTORY_USER (ID,USERID,SESSIONID,IP,HOST) VALUES (".$NEXTID.",".$session["user_id"].",'".session_id()."','".lmb_getIpAddr()."','".$_SERVER['REMOTE_HOST']."')";
 		$rs5 = odbc_exec($db,$sqlquery5) or errorhandle(odbc_errormsg($db),$sqlquery5,$action,__FILE__,__LINE__);
 		if(!$rs5) {$commit = 1;}
 	}else{
@@ -765,26 +775,18 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 	save_sessionvars($globvars);
 	
 
-}else{
-	
-	#$umgvar['auth'] = 'digest';
-	
-	@session_unset();
-	@session_destroy();
-	
-	#if($umgvar['auth'] == 'digest' OR defined('IS_WEBDAV')){
-	#	if (empty($_SERVER['PHP_AUTH_DIGEST'])) {
-	#		header('HTTP/1.1 401 Unauthorized');
-	#		header('WWW-Authenticate: Digest realm="' . $auth_realm .'",qop="auth",nonce="' . uniqid() . '",opaque="' . md5($auth_realm) .'"');
-	#	}
-	#}else{
-		# --- Anmeldeformular ---------------------------------------------- 
-	    Header("HTTP/1.1 401 Authorization required");
-	    Header('WWW-Authenticate: Basic realm="'.$auth_realm.'"'); 
-		if ($db) {odbc_close($db);}
-	#}
-	
-	die ("<html><BODY BGCOLOR=\"#FFFFFF\"><CENTER><FONT FACE=\"Arial,Helvetica\"><FONT SIZE=\"2\"><BR><IMG SRC=\"pic/logo_business.gif\" BORDER=\"0\"><BR><BR><U><FONT COLOR=\"red\">Permission denied!</U></font></font></CENTER></body></html>");
+}else{ //login failed
+
+    $ip = lmb_getIpAddr();
+
+    // access.log
+    $rf = fopen('TEMP/log/access.log', 'a');
+    fputs($rf, '['.date('D M d H:i:s').substr((string)microtime(),1,7)." ".date('Y')."] [auth_basic:error] [pid ".getmypid()."] [client ".$ip.":".$_SERVER['REMOTE_PORT']."] AH01617: user $auth_user: authentication failure for \"limbas/basic/auth\": Password Mismatch, referer: limbas/basic/auth\n");
+    fclose($rf);
+
+    // basic auth
+    lmb_basicauth();
+    die();
 }
 
 unset($commit);

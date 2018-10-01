@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -29,13 +29,13 @@ explContextDetail();
 <div id="lmbAjaxContainer" class="ajax_container" style="position:absolute;visibility:hidden;" OnClick="activ_menu=1;"></div>
 
 <DIV ID="filemenu" class="lmbContextMenu" style="position:absolute;visibility:hidden;top:0;z-index:3;" OnClick="activ_menu = 1;">
-<? #----------------- Haupt-Menü -------------------
+<?php #----------------- Haupt-Menü -------------------
 pop_menu(274,'',''); #save
 pop_line();
 pop_menu(195,'',''); #Info
 pop_line();
-if($filestruct[addf][$LID] AND !$filestruct["readonly"][$LID]){pop_menu(119,'','');$ln=1;} #neuer Ordner
-if($filestruct[edit][$LID] AND !$filestruct["readonly"][$LID] AND $LID){pop_submenu(116,'','');$ln=1;} #umbenennen
+if($filestruct['addf'][$LID] AND !$filestruct["readonly"][$LID]){pop_menu(119,'','');$ln=1;} #neuer Ordner
+if($filestruct['edit'][$LID] AND !$filestruct["readonly"][$LID] AND $LID){pop_submenu(116,'','');$ln=1;} #umbenennen
 if($ln){pop_line();}
 pop_submenu(190,'','');	#download
 if($filestruct["add"][$LID] AND $LID AND $LINK[128]){
@@ -54,7 +54,7 @@ pop_bottom();
 
 
 <DIV ID="editmenu" class="lmbContextMenu" style="position:absolute;visibility:hidden;top:0;z-index:3" OnClick="activ_menu = 1;">
-<? #----------------- edit-Menü -------------------
+<?php #----------------- edit-Menü -------------------
 $move = ($filestruct["del"][$LID] AND !$filestruct["readonly"][$LID] AND $LID);
 $copy = (!$filestruct["readonly"][$LID] AND $LID);
 $insert = ($filestruct["add"][$LID] AND !$filestruct["readonly"][$LID] AND $LID);
@@ -74,7 +74,7 @@ pop_bottom();
 </DIV>
 
 <DIV ID="viewmenu" class="lmbContextMenu" style="position:absolute;visibility:hidden;top:0;z-index:3" OnClick="activ_menu = 1;">
-<?
+<?php
 if($ffilter["viewmode"][$LID] == 1){$a = 1;}else{$a = 0;}
 pop_menu(222,'','',$a); 				#Datei
 if($ffilter["viewmode"][$LID] == 2){$a = 1;}else{$a = 0;}
@@ -98,7 +98,7 @@ pop_bottom();
 </DIV>
 
 <DIV ID="extramenu" class="lmbContextMenu" style="position:absolute;visibility:hidden;top:0;z-index:3" OnClick="activ_menu = 1;">
-<? #----------------- Extra-Menü -------------------
+<?php #----------------- Extra-Menü -------------------
 pop_menu(200,'',''); 	#thumbs neu berechnen
 pop_line();
 pop_submenu(203,'','');	#konvertieren
@@ -106,16 +106,35 @@ pop_menu(247,'','');	#favoriten
 pop_menu(269,'','');	#duplikate
 if($umgvar["ocr_enable"]){pop_submenu(262,'','');}	#ocr
 if($LINK[297]){
-pop_line();
-pop_submenu(297,'','');	#import
+    pop_line();
+    pop_submenu(297,'','');	#import
+}
+if ($LINK[304] and $gprinter) {
+    # separator
+    pop_line();
+
+    # print button
+    pop_menu(304, "LmEx_print(event, $LID, $('#LmExMenuOptionsPrinter').val())");
+
+    # printer selection
+    $opt = array();
+    $sel = '';
+    foreach ($gprinter as $id => $printer) {
+        $opt['val'][] = $id;
+        $opt['desc'][] = $printer['name'];
+        if ($printer['default']) {
+            $sel = $id;
+        }
+    }
+    pop_select('', $opt, $sel, 1, 'LmExMenuOptionsPrinter', $lang[2939]);
 }
 if($LINK[284]){
-pop_line();
-pop_submenu(284,'','');	#einstellungen
+    pop_line();
+    pop_submenu(284,'','');	#einstellungen
 }
 
 # extension
-if(function_exists($GLOBALS["gLmbExt"]["menuDMSExtras"][$gtabid])){
+if(function_exists($GLOBALS["gLmbExt"]["menuDMSExtras"])){
 	$GLOBALS["gLmbExt"]["menuDMSExtras"]($LID,$ID,$ffile);
 }
 
@@ -124,7 +143,7 @@ pop_bottom();
 </DIV>
 
 <DIV ID="settingsmenu" class="lmbContextMenu" style="visibility:hidden;z-index:9993" OnClick="activ_menu = 1;">
-<?
+<?php
 pop_top('limbasDivMenuSettings');
 if($ffilter["force_delete"]){$checked = "checked";}else{$checked = null;}
 pop_checkbox(276,"document.form1.ffilter_force_delete.value=this.checked;","",1,$checked,0);
@@ -151,7 +170,7 @@ pop_bottom();
 </DIV>
 
 <DIV ID="importmenu" class="lmbContextMenu" style="visibility:hidden;z-index:9993" OnClick="activ_menu = 1;">
-<?
+<?php
 pop_top('limbasDivMenuImport');
 pop_left();
 echo "<i style=\"color:grey;\">/EXTENSIONS/myfolder...</i>";
@@ -166,8 +185,8 @@ echo "
 pop_right();
 
 $opt["val"] = array('ignore','rename','overwrite','versioning');
-$opt["desc"] = array($lang[2332],$lang[2191],$lang[2192],$lang[2193]);
-pop_select($zl,$opt,$sel,null,'LmEx_ImportPathType',$lang[2480]);
+$opt["desc"] = array($lang[2332],$lang[1464],$lang[1002],$lang[2132]);
+pop_select($zl,$opt,$sel,null,'LmEx_ImportPathType',$lang[1685]);
 
 pop_line();
 
@@ -177,7 +196,7 @@ pop_bottom();
 </DIV>
 
 <DIV ID="searchmenu" class="lmbContextMenu" style="position:absolute;visibility:hidden;top:0;z-index:3" OnClick="activ_menu = 1;">
-<? #----------------- Such-Menü -------------------
+<?php #----------------- Such-Menü -------------------
 pop_top('searchmenu');
 pop_submenu(117,'',''); #Detailsuche
 pop_menu(217,'',''); #zurück setzen
@@ -191,7 +210,7 @@ pop_bottom();
 </DIV>
 
 <DIV ID="downloadmenu" class="lmbContextMenu" style="position:absolute;visibility:hidden;top:0;z-index:4" OnClick="activ_menu = 1;">
-<?
+<?php
 pop_top('downloadmenu');
 pop_left();
 echo "<span style=\"height:16px;cursor:default;\">&nbsp;<b>".$lang[1762]."</b></span>";
@@ -206,7 +225,7 @@ pop_bottom();
 </DIV>
 
 <DIV ID="previewmenu" class="lmbContextMenu" style="position:absolute;visibility:hidden;top:0;z-index:99995" OnClick="activ_menu = 1;">
-<?
+<?php
 pop_top('previewmenu');
 
 pop_left();
@@ -218,34 +237,16 @@ echo "<table><tr><td>$lang[1563]:&nbsp;</td><td><select id=\"convtoformat\" onch
 	<option value=\"html\">HTML</option>
 	";
 
-if($umgvar['use_unoconv']){
-	echo "
-		<option value=\"0\"></option>
-		<option value=\"0\">---------- unoconv ----------</option>
-		<option value=\"uc_pdf\">Portable Document Format (pdf)</option>
-		<option value=\"uc_eps\">Encapsulated PostScript (eps)</option>
-		<option value=\"0\"></option>
-		<option value=\"uc_doc\">Word 97/2000/XP (doc)</option>
-		<option value=\"uc_docx\">Word 2007 XML (docx)</option>
-		<option value=\"uc_odt\">Open Document Text (odt)</option>
-		<option value=\"uc_txt\">Text (txt)</option>
-		<option value=\"uc_rtf\">Rich Text (rtf)</option>
-		<option value=\"uc_bib\">BibTeX (bib)</option>
-		<option value=\"uc_docbook\">DocBook (xml)</option>
-		<option value=\"uc_latex\">LaTeX (ltx)</option>
-		<option value=\"0\"></option>
-		<option value=\"uc_jpg\">JPEG (jpg)</option>
-		<option value=\"uc_png\">PNG (png)</option>
-		<option value=\"uc_gif\">GIF (gif)</option>
-		<option value=\"uc_tiff\">TIFF (tiff)</option>
-		<option value=\"0\"></option>
-		<option value=\"uc_csv\">CSV (csv)</option>
-		<option value=\"uc_xls\">Excel 97/2000/XP (xls)</option>
-		<option value=\"uc_xlsx\">Excel 2007 (xlsx)</option>
-		<option value=\"uc_swf\">Flash (swf)</option>
-		</select></td></tr>
-		";
+# unoconv formats
+if (LmbUnoconv::isEnabled()) {
+    echo '<optgroup label="Unoconv">';
+    $formats = LmbUnoconv::getSupportedFormats();
+    foreach ($formats as $formatName => $formatDesc) {
+        echo "<option value=\"uc_{$formatName}\">$formatDesc</option>";
+    }
+    echo '</optgroup>';
 }
+echo '</select></td></tr>';
 
 echo "<tr id=\"convtopicdiv\" style=\"display:none\"><td>$lang[1141]:</td><td><input type=\"text\" id=\"convtopicsize\" style=\"width:30px;\">&nbsp;px</td></tr></table>";
 
@@ -259,18 +260,18 @@ pop_bottom();
 </DIV>
 
 
-<?
+<?php
 if($umgvar["ocr_enable"] AND $LINK[262]){
 echo "<DIV ID=\"ocrmenu\" class=\"lmbContextMenu\" style=\"position:absolute;visibility:hidden;top:0;z-index:4\" OnClick=\"activ_menu = 1;\">";
 pop_top('ocrmenu');
 $opt["val"] = $umgvar["ocr_format_val"]; // TODO not defined
 $opt["desc"] = $umgvar["ocr_format_desc"];
-pop_select("",$opt,"",1,"ocr_format",$lang[2648],50);
+pop_select("",$opt,"",1,"ocr_format",$lang[1563],50);
 $opt["val"] = $umgvar["ocr_quality_val"];
 $opt["desc"] = $umgvar["ocr_quality_desc"];
-pop_select("",$opt,"",1,"ocr_quality",$lang[2645],50);
+pop_select("",$opt,"",1,"ocr_quality",$lang[1176],50);
 $opt["val"] = array("preview","rename","overwrite","versioning");
-$opt["desc"] = array($lang[2646],$lang[2191],$lang[2192],$lang[2193]);
+$opt["desc"] = array($lang[1739],$lang[1464],$lang[1002],$lang[2132]);
 pop_select("",$opt,"",1,"ocr_destination","$lang[2647]",50);
 pop_line();
 pop_menu2($lang[2314], $lang[2314], null, null, null, "LmEx_ocrfile(document.getElementsByName('ocr_format')[0].value,document.getElementsByName('ocr_destination')[0].value,document.getElementsByName('ocr_quality')[0].value);");
@@ -281,27 +282,25 @@ echo "</DIV>";
 
 
 <DIV ID="cachelist" class="lmbContextMenu" style="position:absolute;visibility:hidden;top:0;z-index:3" OnClick="activ_menu = 1;">
-<?
+<?php
 pop_top('cachelist');
 pop_left();
-?><span ID="cachelist_area"></span><?
+?><span ID="cachelist_area"></span><?php
 pop_right();
 pop_bottom();
 ?>
 </DIV>
 
 <DIV ID="rename" class="lmbContextMenu" style="position:absolute;visibility:hidden;top:0;z-index:4" OnClick="activ_menu = 1;">
-<form name="form_rename">
-<?
+<?php
 pop_top('rename');
-pop_input(0,'document.form1.rename_file.value=this.value;LmEx_send_form(1);LmEx_divclose();','rename','','');
+pop_input(0,'document.form1.rename_file.value=this.value;LmEx_send_form(1);LmEx_divclose();','file_dir_rename','','');
 pop_bottom();
 ?>
-</form>
 </DIV>
 
-<DIV ID="fieldlist" class="lmbContextMenu" style="position:absolute;visibility:hidden;top:-500;z-index:4" OnClick="activ_menu = 1;">
-<?
+<DIV ID="fieldlist" class="lmbContextMenu" style="position:absolute;display:none;z-index:4" OnClick="activ_menu = 1;">
+<?php
 pop_top('fieldlist');
 pop_header(null, $lang[1634]);
 foreach ($gfile["id"] as $key => $value){
@@ -329,7 +328,7 @@ pop_bottom();
 ?>
 </DIV>
 
-<DIV ID="dublicateCheckLayer" style="position:absolute;top:25%;left:25%;visibility:hidden;z-index:5"></DIV>
+<DIV ID="dublicateCheckLayer" style="position:absolute;top:25%;left:25%;display:none;z-index:5"></DIV>
 <DIV ID="limbasDetailSearch" style="position:absolute;z-index:9999;" OnClick="activ_menu = 1;"></DIV>
 
 
@@ -348,7 +347,7 @@ jsvar["gtabid"] = <?=$gtab["argresult_id"]["LDMS_FILES"]?>;
 jsvar["searchcount"] = "<?=$umgvar["searchcount"]?>";
 
 // ----- Onload-Aktionen --------
-<?
+<?php
 if($onload){
 	echo $onload;
 }
@@ -407,7 +406,7 @@ if($onload){
 <input type="hidden" name="view_symbolbar">
 <input type="hidden" name="storage_folder">
 
-<?/*
+<?php /*
 <input type="hidden" name="f_fieldid" VALUE="<?=$f_fieldid?>">
 <input type="hidden" name="f_tabid" VALUE="<?=$f_tabid?>">
 <input type="hidden" name="f_datid" VALUE="<?=$f_datid?>">
@@ -428,7 +427,7 @@ if($onload){
 <div class="lmbfringeGtab">
 <TABLE ID="filetab" CELLPADDING="0" CELLSPACING="0" BORDER="0" > <?php //style="width:<?=$ffilter["tabsize"][$LID]"? > ?>
 
-<?
+<?php
 $headerdesc = $filestruct["name"][$LID];
 if(!$headerdesc){
 	$headerdesc = $lang[1200];
@@ -441,21 +440,21 @@ if(!$headerdesc){
 <TR ><TD>
 <div class="gtabHeaderMenuTR">
 <TABLE CELLPADDING="0" CELLSPACING="0" BORDER="0" width="100%"><TR><TD>&nbsp;</TD>
-<?if($LINK[195] OR $LINK[190] OR $LINK[203] OR $LINK[221]){?><TD class="gtabHeaderMenuTD" OnClick="LmEx_open_menu(this,'filemenu');" onmouseover="this.className='gtabHeaderMenuTDhover';" onmouseout="this.className='gtabHeaderMenuTD'"><?=$lang[1624]?>&nbsp;</TD><td> | </td><?}?>
-<?if($viewmenu["editmenu"]){?><TD class="gtabHeaderMenuTD" OnClick="LmEx_open_menu(this,'editmenu');" onmouseover="this.className='gtabHeaderMenuTDhover';" onmouseout="this.className='gtabHeaderMenuTD'">&nbsp;<?=$lang[1693]?>&nbsp;</TD><td> | </td><?}?>
-<?if($LINK[202] OR $LINK[219] OR $LINK[220]){?><TD class="gtabHeaderMenuTD" OnClick="LmEx_open_menu(this,'viewmenu');" onmouseover="this.className='gtabHeaderMenuTDhover';" onmouseout="this.className='gtabHeaderMenuTD'">&nbsp;<?=$lang[1625]?>&nbsp;</TD><td> | </td><?}?>
-<?if($LINK[200]){?><TD class="gtabHeaderMenuTD" OnClick="LmEx_open_menu(this,'extramenu');" onmouseover="this.className='gtabHeaderMenuTDhover';" onmouseout="this.className='gtabHeaderMenuTD'">&nbsp;<?=$lang[1939]?>&nbsp;</TD><?}?>
+<?php if($LINK[195] OR $LINK[190] OR $LINK[203] OR $LINK[221]){?><TD class="gtabHeaderMenuTD" OnClick="LmEx_open_menu(this,'filemenu');" onmouseover="this.className='gtabHeaderMenuTDhover';" onmouseout="this.className='gtabHeaderMenuTD'"><?=$lang[545]?>&nbsp;</TD><td> | </td><?php }?>
+<?php if($viewmenu["editmenu"]){?><TD class="gtabHeaderMenuTD" OnClick="LmEx_open_menu(this,'editmenu');" onmouseover="this.className='gtabHeaderMenuTDhover';" onmouseout="this.className='gtabHeaderMenuTD'">&nbsp;<?=$lang[1693]?>&nbsp;</TD><td> | </td><?php }?>
+<?php if($LINK[202] OR $LINK[219] OR $LINK[220]){?><TD class="gtabHeaderMenuTD" OnClick="LmEx_open_menu(this,'viewmenu');" onmouseover="this.className='gtabHeaderMenuTDhover';" onmouseout="this.className='gtabHeaderMenuTD'">&nbsp;<?=$lang[1625]?>&nbsp;</TD><td> | </td><?php }?>
+<?php if($LINK[200]){?><TD class="gtabHeaderMenuTD" OnClick="LmEx_open_menu(this,'extramenu');" onmouseover="this.className='gtabHeaderMenuTDhover';" onmouseout="this.className='gtabHeaderMenuTD'">&nbsp;<?=$lang[1939]?>&nbsp;</TD><?php }?>
 <TD WIDTH="100%">&nbsp;</TD>
 </TR></TABLE></div>
 </TD></TR>
-<?
+<?php
 
 # Symbolleiste
 if($session["symbolbar"]){
 	echo "<TR><TD><div class=\"gtabHeaderSymbolTR\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\">";
 	echo "<TR>";
 	pop_picmenu(274,'','');				# save
-	if($filestruct["add"][$LID]){pop_picmenu(128,'','','',"OnClick=\"LmEx_multiupload('1','','','','','','');\"");} 			# upload
+	if($filestruct["add"][$LID]){pop_picmenu(128,'','','',"OnClick=\"LmEx_showUploadField();\"");} 			# upload
 	if($filestruct["del"][$LID]){pop_picmenu(171,'','',1);} 		# delete
 	pop_picmenu(190,'','',1); 			# download
 
@@ -493,7 +492,7 @@ if($session["symbolbar"]){
 
 <TABLE CELLPADDING="0" CELLSPACING="1" BORDER="0" width="100%">
 <TR STYLE="height:20px;"><TD>
-<INPUT TYPE="TEXT" STYLE="border:1px solid <?=$farbschema["WEB4"]?>;width:100%;height:17px;background-color:<?=$farbschema["WEB8"]?>;color:blue;z-index:1;" VALUE="<?=$file_url?>" READONLY>
+<INPUT TYPE="TEXT" STYLE="border:1px solid <?=$farbschema["WEB4"]?>;width:100%;height:17px;background-color:<?=$farbschema["WEB8"]?>;z-index:1;" VALUE="<?=$file_url?>" READONLY>
 </TD></TR>
 </TABLE>
 
@@ -504,7 +503,7 @@ if($session["symbolbar"]){
 
 <tr><td>
 <div class="gtabHeaderInputTR" id="gtabExplBody">
-<?explMainContent($ID,$LID,$MID,$fid,$typ,$level,$file_url,$ffile,$ffilter);?>
+<?php explMainContent($ID,$LID,$MID,$fid,$typ,$level,$file_url,$ffile,$ffilter);?>
 </div>
 </td></tr>
 
@@ -516,24 +515,8 @@ if($session["symbolbar"]){
 
 
 <script language="JavaScript">
-var obj = $("#gtabExplBody");
-obj.on('dragenter', function (e)
-{
-    e.stopPropagation();
-    e.preventDefault();
-    $("div").filter('[id^="td_"]').addClass("lmbUploadDragenter");
-    return false;
-});
-obj.on('dragover', function (e)
-{
-     e.stopPropagation();
-     e.preventDefault();
-});
-obj.on('drop', function (e)
-{
-     $("div").filter('[id^="td_"]').removeClass("lmbUploadDragenter");
-     e.preventDefault();
-     var files = e.originalEvent.dataTransfer.files;
-     LmEx_dragFileUpload(files,1,'<?=$LID;?>','','','','');
-});
+    LmEx_createDropArea($("#gtabExplBody"), function(files) {
+        LmEx_showUploadField('lmbUploadLayer', <?= $LID ?>, 1);
+        LmEx_uploadFilesPrecheck(files, <?= $LID ?>, 1);
+    });
 </script>

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -223,17 +223,17 @@ function publicHTMLPost(result){
 		<table border="0" cellpadding="4" width="583">
 			<tr>
 				<td width="569">
-					<h2 align="left"> <font color="#000080"><?=$la["header1"]?></font><br></h2>
+					<h2 align="left" style="color:#000080"><?=$la["header1"]?><br></h2>
 
 
 					<form method="POST" action="filesearch.php" name="form1">
 					<input type="hidden" name="lng" value="<?=$lng?>">
-					<input type="hidden" name="ffilter_page" value="<?$ffilter["page"]?>">
+					<input type="hidden" name="ffilter_page" value="<?=$ffilter["page"]?>">
 					<input type="hidden" name="search" value="<?=$search?>">
 					<input type="hidden" name="raw_content" value="<?=rawurlencode($content)?>">
 					<input type="hidden" name="order" value="<?=$order?>">
 
-					<?
+					<?php
 					if($origin_title){$origin_title_ = "CHECKED";}
 					if($part_content){$part_content_ = "CHECKED";}
 					if(!$content){$content = "Linux";}
@@ -252,19 +252,19 @@ function publicHTMLPost(result){
 					<br><br>
 
 
-					<?
+					<?php
 					#echo "<pre>";
 					#print_r($lmb[1]["ffile"]);
 					?>
 
 
-					<?if($lmb[1]["ffile"]["res_count"] > 0){?>
+					<?php if($lmb[1]["ffile"]["res_count"] > 0){?>
 					<table cellpadding="3" cellspacing="1" style="width:570px;">
 					<tr STYLE="background-color:#FFEBD4;">
 					<td width="40%"><b><span title="sortieren" style="cursor:pointer" OnClick="document.form1.order.value='name';document.form1.submit();"><?=$la["dateiname"]?></span></b></td>
 					<td width="20%"><b><span title="sortieren" style="cursor:pointer" OnClick="document.form1.order.value='16_25';document.form1.submit();"><?=$la["erscheinen"]?></span></b></td>
 					<td width="40%"><b><span title="sortieren" style="cursor:pointer" OnClick="document.form1.order.value='19_16';document.form1.submit();"><?=$la["autor"]?></span></b></td></tr>
-					<?
+					<?php
 					if($lmb[1]["ffile"]["id"] AND !$content){
 						foreach($lmb[1]["ffile"]["id"] as $key => $value){
 							$mime = explode("/",$lmb[1]["ffile"]["mimetype"][$key]);
@@ -317,7 +317,7 @@ function publicHTMLPost(result){
 
 
 
-					<?
+					<?php
 					echo "<TR BGCOLOR=\"#FFEBD4\"><TD COLSPAN=\"13\"><TABLE cellspacing=\"0\" cellpadding=\"0\"><TR>\n";
 					echo "<TD NOWRAP>";
 					echo "&nbsp;<B>".$lmb[1]["ffile"]["res_count"]."</B>&nbsp;".$la["treffer"]."&nbsp;</TD>\n";
@@ -335,7 +335,7 @@ function publicHTMLPost(result){
 
 					</table>
 
-					<?
+					<?php
 					}elseif($search){
 						echo "<B><span style=\"color:red;\">".$la["nix_gefunden"]."!</span></B>";
 					}

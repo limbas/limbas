@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -32,35 +32,35 @@ function files1($LEVEL){
 		echo "<TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR><TD WIDTH=\"20\">&nbsp;</TD><TD>\n";
 	}
 	$bzm = 0;
-	while($userstruct[id][$bzm]){
-		if($userstruct[level][$bzm] == $LEVEL){
-			if(in_array($userstruct[id][$bzm],$userstruct[level])){
+	while($userstruct['id'][$bzm]){
+		if($userstruct['level'][$bzm] == $LEVEL){
+			if(in_array($userstruct['id'][$bzm],$userstruct['level'])){
 				$next = 1;
 			}else{
 				$next = 0;
 			}
 
-			if($userstruct[user_id][$bzm]){
+			if($userstruct['user_id'][$bzm]){
 				# --- Hauptgruppe ----
-				if($userstruct[maingroup][$bzm]){
-					if($userstruct[del][$bzm]){$iconclass = "lmb-user1-3";}
-					elseif($userstruct[lock][$bzm]){$iconclass = "lmb-user1-2";}
+				if($userstruct['maingroup'][$bzm]){
+					if($userstruct['del'][$bzm]){$iconclass = "lmb-user1-3";}
+					elseif($userstruct['lock'][$bzm]){$iconclass = "lmb-user1-2";}
 					else{$iconclass = "lmb-user1-1";}
 				# --- Untergruppe ----
 				}else{
-					if($userstruct[del][$bzm]){$iconclass = "lmb-user2-3";}
-					elseif($userstruct[lock][$bzm]){$iconclass = "lmb-user2-2";}
+					if($userstruct['del'][$bzm]){$iconclass = "lmb-user2-3";}
+					elseif($userstruct['lock'][$bzm]){$iconclass = "lmb-user2-2";}
 					else{$iconclass = "lmb-user2-1";}
 				}
 				if($umgvar["clear_password"]){$pass = "<i>(".$userstruct["clearpass"][$bzm].")</i>";}else{$pass = "";}
 				echo "<TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR><TD>$pic</TD><TD><i class=\"lmb-icon " .$iconclass. "\"></i></TD><TD>&nbsp;".$userstruct["name"][$bzm]."&nbsp;$pass </TD></TR></TABLE>\n";
 			}else{
-				echo "<TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR><TD>$pic</TD><TD><i class=\"lmb-icon lmb-folder-open\"></i></TD><TD>&nbsp;<b>".$userstruct[name][$bzm]."</b></TD></TR></TABLE>\n";
+				echo "<TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR><TD>$pic</TD><TD><i class=\"lmb-icon lmb-folder-open\"></i></TD><TD>&nbsp;<b>".$userstruct['name'][$bzm]."</b></TD></TR></TABLE>\n";
 			}
 
 			if($next){
 				$tab = 20;
-				files1($userstruct[id][$bzm]);
+				files1($userstruct['id'][$bzm]);
 			}
 		}
 		$bzm++;

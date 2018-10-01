@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -30,8 +30,9 @@ function limbasMultiframePreview(id,type,manual,dropitem,gtabid,params){
 		ajaxGet(0,"main_dyns.php","multiframePreview&limbasMultiframeItem="+type+"&id="+id+"&gtabid="+gtabid+"&dropitem="+dropitem+"&"+params,null,"limbasMultiframePreviewPost");
 		window.clearInterval(eval("refreshPreview" + id));
 		var fct = "limbasMultiframePreview(" + id + ",'" + type + "',0,0,'"+gtabid+"','"+params+"')";
-		var rate = document.getElementById("autorefreshPreviewWorkflow_"+id).value;
-		if(rate){
+        var rateEl = document.getElementById("autorefreshPreviewWorkflow_"+id);
+		if(rateEl && rateEl.value){
+		    var rate = rateEl.value;
 			eval("refreshPreview" + id + " = window.setInterval(fct,rate*60*1000);");
 		}
 	}
@@ -130,42 +131,40 @@ function body_click(){
 
 // anderes Fenster wählen
 function change_frame(file){
-	if(file != '<?$session["multiframe"]?>'){
-		document.location.href="main.php?<?SID?>&action=multiframe&change_frame="+file;
+	if(file != '<?= $session["multiframe"] ?>'){
+		document.location.href="main.php?action=multiframe&change_frame="+file;
 	}
 }
 
 hide_frame_size = 230;
 function hide_frame(){
+    var hiddenDiv = $('#hiddenframe');
+    var multiDiv = $('#multiframe');
+    var multiFrame = $('iframe#multiframe', top.document);
+    var multiFrameWidth = multiFrame.width();
 
-	var pcols = top.document.getElementById("mainset").cols;
-	fcols = pcols.split(",");
+    var newWidth;
+    var frameSize;
+    if (multiFrameWidth <= 30) {
+        newWidth = hide_frame_size;
+        hiddenDiv.hide();
+        multiDiv.show();
+        noMoreRefresh = 0;
+        frameSize = 0;
+    } else {
+        newWidth = 15;
+        hiddenDiv.show();
+        multiDiv.hide();
+        noMoreRefresh = 1;
+        frameSize = newWidth;
+    }
 
-	if(fcols[2] <= 30){
-		lfr = hide_frame_size;
-		document.getElementById("hiddenframe").style.display = 'none';
-		document.getElementById("multiframe").style.display = '';
-		noMoreRefresh = 0;
-		fs = 0;
-	}else{
-		if(browser_ns5){
-			lfr = 15;
-		}else{
-			lfr = 30;
-		}
-		document.getElementById("hiddenframe").style.display = '';
-		document.getElementById("multiframe").style.display = 'none';
-		noMoreRefresh = 1;
-		fs = lfr;
-	}
-	var size = fcols[0]+",*,"+lfr;
-	
-	ajaxGet(null,'main_dyns.php','layoutSettings&frame=multiframe&size='+fs,null);
-	top.document.getElementById("mainset").cols = size;
+    ajaxGet(null, 'main_dyns.php', 'layoutSettings&frame=multiframe&size=' + frameSize, null);
+    multiFrame.width(newWidth);
 
-	document.onmouseup = null;
-	document.onmousemove = null;
-	return false;
+    document.onmouseup = null;
+    document.onmousemove = null;
+    return false;
 }
 
 
@@ -265,9 +264,7 @@ function lmbResizeFrame(e) {
     );
 
     // resize frame
-    var mainset = top.document.getElementById("mainset");
-	fcols = mainset.cols.split(",");
-    mainset.cols = fcols[0] + ",*," + dw;
+    $('iframe#multiframe', top.document).width(dw);
 
 	return false;
 }
@@ -310,7 +307,7 @@ if($menu_setting["frame"]["multiframe"] AND $menu_setting["frame"]["multiframe"]
 	<SCRIPT LANGUAGE="JavaScript">
 	noMoreRefresh = 1;
 	</SCRIPT>
-	<?
+	<?php
 }
 ?>
 

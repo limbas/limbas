@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -125,6 +125,7 @@ function dynsClose(id) {
 	var el = document.getElementById(id);
 	hide_selects(2);
 	el.innerHTML = '';
+	$('#lmbAjaxContainer').hide();
 }
 
 // Ajax extended relation
@@ -187,8 +188,11 @@ function LmExt_RelationFields(el,gtabid,gfieldid,viewmode,edittype,ID,orderfield
             
 		// no ajax update (userdefined formular) - use formid as formname
 		if(formid && isNaN(formid)){
-			document.getElementsByName(formid)[0].value = relationid;
-			document.getElementById(formid+"_ds").value = text;
+			var formElement = document.getElementsByName(formid)[0];
+			if (formElement) {
+				formElement.value = relationid;
+                document.getElementById(formid+"_ds").value = text;
+            }
 		// no ajax update (ajax based select)
 		}else if(document.getElementById("g_"+gtabid+"_"+gfieldid+"_ds") && el && !document.getElementById("extRelationFieldsTab_"+gtabid+"_"+gfieldid)){
 			document.getElementsByName("g_"+gtabid+"_"+gfieldid)[0].value = relationid;
@@ -448,72 +452,64 @@ function lmbAjax_multilang(el,gtabid,gfieldid,ID){
 function dyns_11_a(evt,el_value,el_id,form_name,fieldid,gtabid,ID,dash,attribute,action,level) {
 
 	// contextmenu
-	var contextel;
+	var contextel = form_name+'_dsl';
 	if(!level){
 		level = '';
-		contextel = form_name+'_dsl';
-	}else{
-		contextel = form_name+'_'+level+'_dsl';
 	}
-	
+
 	if(el_id){
 		// attribute add / delete
-		if(action == "a"){
-			if(!evt.ctrlKey){dynsClose(contextel);}
-			el = document.getElementById(form_name+'_dse');
-			el.innerHTML = '<table style="width:95%;"><TR><TD width="2%">&nbsp;</TD><TD width="30%" style="border:1px solid #CCCCCC;background-color:#EFF7E7;"><I style="color:blue">'+el_value+'</I></TD><TD style="border:1px solid #CCCCCC;" width="68%"><INPUT TYPE="TEXT" NAME="'+form_name+'_att['+el_id+']" STYLE="width:100%;border:none;opacity:0.3;filter:Alpha(opacity=30);"></TD></TR></table>' + el.innerHTML;
-			document.form1[form_name].value = document.form1[form_name].value + ";" + el_id;
-		// select
-		}else if(action == "b"){
-			dynsClose(contextel);
-			document.getElementById(form_name+'_ds').value = el_value;
-			document.getElementById(form_name).value = el_value;
-		// multiple select ajax
-		}else if(action == "c"){
-			el = document.getElementById(form_name+'_dse');
-			el.innerHTML = '<SPAN STYLE=\'color:green;\'>' + el_value + '</SPAN>' + dash + el.innerHTML;
-			document.form1[form_name].value = document.form1[form_name].value + ";" + el_id;
-			activ_menu=1;
-		// attribute modify
-		}else if(action == "v"){
-			document.form1[form_name].value = "v" + el_id + document.form1[form_name].value;
-		// attribute (un)link
-		}else if(action == "d"){
-			var container = document.getElementById(form_name+'_dse');
-			if(container.childNodes.length>0){
-				for(var i=0;i<container.childNodes.length;i++){
-					if(container.childNodes[i].innerHTML && container.childNodes[i].innerHTML==el_value){
-						var element = container.childNodes[i];
-						var dash_element = element.nextSibling;
-						if(element){
-							var delete_action = value_in(document.form1[form_name].value,el_id);
-							break;
-						}
-					}
-				}
-				if(element && delete_action){
-					dyns_11_a_delete(evt,element,ID,gtabid,fieldid,el_id,form_name);
-				}else{
-					if(element){
-						if(dash_element.nodeName && dash_element.nodeName.toLowerCase()==dash.toLowerCase().replace(/\W+/g,"")){container.removeChild(dash_element);}
-						container.removeChild(element);
-					}
-					dyns_11_a(evt,el_value,el_id,form_name,fieldid,gtabid,ID,dash,attribute,"c",level);
-				}
-			}else{
-				dyns_11_a(evt,el_value,el_id,form_name,fieldid,gtabid,ID,dash,attribute,"c",level);
+		if(action === "a"){
+            if (document.form1[form_name].value.split(";").indexOf(el_id) > -1) {
+            	return;
 			}
-			activ_menu=1;
+			if (!evt.ctrlKey){
+				dynsClose(contextel);
+			}
+			const table = $('#' + form_name + '_dse').children('table');
+			var tBody = table.children('tbody');
+			if (!tBody.length) {
+				tBody = $('<tbody></tbody>').appendTo(table);
+			}
+            const input = '<input type="text" name="' + form_name + '_att[' + el_id + ']" style="overflow:initial;width:100%;" class="gtabchangeInnerFrame" onchange="dyns_11_a(event,this,\'' + el_id + '\',\'' + form_name + '\',\'' + fieldid + '\',\'' + gtabid + '\',\'' + ID + '\',\'\',1,\'v\');">';
+            tBody.prepend('<tr><td></td><td width="30%" style="color:green;">' + el_value + '</td><td width="68%">' + input + '</td></tr>');
+            document.form1[form_name].value += ";" + el_id;
+		// select
+		}else if(action === "b"){
+			dynsClose(contextel);
+            $('#' + form_name + '_ds').val(el_value);
+            $('#' + form_name).val(el_value);
+		// multiple select ajax
+		}else if(action === "c"){
+            if (!evt.ctrlKey){
+                dynsClose(contextel);
+            }
+			const el = $('#' + form_name + '_dse');
+			var htmlToInsert = '<span style="color:green;vertical-align:middle;">' + el_value + '</span>';
+			if (dash) {
+				const upperDash = dash.toUpperCase();
+				if (upperDash === '<OL>' || upperDash === '<UL>' || upperDash === '<LI>') {
+                    htmlToInsert = '<li>' + htmlToInsert + '</li>';
+				} else {
+                    htmlToInsert += dash;
+				}
+			}
+			el.prepend(htmlToInsert);
+			document.form1[form_name].value += ";" + el_id;
+			activ_menu = 1;
+		// attribute modify
+		}else if(action === "v"){
+			document.form1[form_name].value += ";v";
 		// load multiple select
-		}else if(action == "e"){
+		}else if(action === "e"){
 			oMultipleSelectLoader.load(evt,el_value,el_id,form_name,fieldid,gtabid,ID,dash,attribute,action,level);
 			activ_menu=1;
 			return false;
 		// multiple select ajax - unique
-		}else if(action == "f"){
+		}else if(action === "f"){
 			dynsClose(contextel);
-			document.getElementById(form_name+'_ds').value = el_value;
-			document.getElementById(form_name).value = el_id;
+			$('#' + form_name + '_ds').val(el_value);
+			$('#' + form_name).val(el_id);
 		}
 	}
 	checktyp('32','',form_name,fieldid,gtabid,' ',ID);
@@ -553,7 +549,52 @@ function dyns_11_a_delete(evt,el,ID,gtabid,fieldid,el_id,form_name,select_cut){
 	}
 }
 
+/*---------------- Tabulator-Element für Formular anzeigen ---------------------*/
+var lmbTabulatorKey = new Array();
+function lmbSwitchTabulator(el,mainel,elkey,vert){
 
+    if(vert){
+        var hel = el.parentNode.parentNode.parentNode;
+        var stpos = vert;
+    }else{
+        var hel = el.parentNode;
+        var stpos = "";
+    }
+
+    if(!hel){return;}
+    for(var i=0; i<hel.childNodes.length; i++){
+        if(vert){
+            divel =  hel.childNodes[i].firstChild.firstChild;
+        }else{
+            divel =  hel.childNodes[i];
+        }
+
+        var mt = "LmbTabulatorHeader";
+        if(!divel.id || divel.id.substr(0,mt.length)!=mt) continue;
+        var dsp = 0;
+        var cl = "lmbGtabTabulator"+stpos+"Inactive";
+        var nodel = divel.id.replace(mt,"LmbTabulatorItem");
+        if(divel.id==el.id){
+            dsp = 1;
+            cl="lmbGtabTabulator"+stpos+"Active";
+        }
+        divel.className = cl;
+        if(dsp) {
+            $('[id^='+nodel+']').show();
+        }else{
+            $('[id^='+nodel+']').hide();
+        }
+    }
+
+    var tabKey = new Array();
+    lmbTabulatorKey[mainel] = elkey;
+    var e = 0;
+    for (var i in lmbTabulatorKey){
+        tabKey[e] = i+"_"+lmbTabulatorKey[i];
+        e++;
+    }
+    document.form1.filter_tabulatorKey.value = tabKey.join(";");
+}
 
 
 
@@ -704,30 +745,27 @@ function MultipleSelectShow(instance_name) {
     this.load = function(evt, el_value, el_id, form_name, fieldid, gtabid, ID, dash, attribute, action, level) {
     	var id = form_name + '_' + level + '_' + el_id;
         var parent = $('#' + id);
-        var tBody = parent.children('table').children('tbody');
 
-        // already data in -> remove
-		if (tBody.children('tr').size() > 1) {
-			tBody.children('tr').not(':first').remove();
+        // already data displayed -> remove
+        if (parent.next().is(':not(.lmbSelectLink)')) {
+            parent.next().remove();
 			return;
 		}
 
 		// add to cache
 		if (id in this.cache) {
-            tBody.append('<tr><td colspan="3">' + this.cache[id] + '</td></tr>');
+            parent.after('<tr><td style="width:16px;"></td><td colspan="2">' + this.cache[id] + '</td></tr>');
             return;
 		}
 
 		var self = this;
-    	ajaxAdd = function(response) {
+        ajaxGet(null, "main_dyns.php", "limbasExtMultipleSelect&page=" + dash + "&gtabid=" + gtabid + "&fieldid=" + fieldid + "&ID=" + ID + "&level=" + el_id + "&form_name=" + form_name + "&form_value=" + el_value, null, function(response) {
             var tmp = response.split("#L#");
             var html = tmp[1];
 
-            tBody.append('<tr><td colspan="3">' + html + '</td></tr>');
+            parent.after('<tr><td style="width:16px;"></td><td colspan="2">' + html + '</td></tr>');
             self.cache[id] = html;
-		};
-
-        ajaxGet(null, "main_dyns.php", "limbasExtMultipleSelect&page=" + dash + "&gtabid=" + gtabid + "&fieldid=" + fieldid + "&ID=" + ID + "&level=" + el_id + "&form_name=" + form_name + "&form_value=" + el_value, null, "ajaxAdd");
+        });
 	};
 
 }
@@ -768,7 +806,8 @@ function checktyp(data_type,fieldname,fielddesc,field_id,tab_id,obj,id,ajaxpost,
 		regexp = regexp.replace(/xxx/g,(parseInt(fieldsize)+1));
 		regexp = regexp.replace(/xx/g,fieldsize);
 	}else{
-		regexp = regexp.replace(/xx/g,'');
+        regexp = regexp.replace(/xxx/g,'');
+        regexp = regexp.replace(/xx/g,'');
 	}
 
 	eval('var reg = /'+regexp+'/;');
@@ -898,6 +937,11 @@ function needfield(elid){
 				nval = document.getElementById(cc.name.substr(0, cc.name.length-3)).value;
 				if(nval.substr(0, 3) == '#L#'){nval = '';}
 			}
+
+			// inherit select
+			if(cc.name.substr(cc.name.length-3, 3) == '_di'){
+				nval = cc.value;
+			}
 			
 			if((ntype == 'text' || ntype == 'textarea') && !nval){
 				need[need.length] = nspell;
@@ -962,7 +1006,7 @@ function lmb_needfieldChange(elid,status) {
 }
 
 // report menu options
-function limbasReportMenuOptions(evt,el,gtabid,reportid,ID,output,listmode,report_medium,report_rename)
+function limbasReportMenuOptions(evt,el,gtabid,reportid,ID,output,listmode,report_medium,report_rename,report_printer)
 {
 	activ_menu = 1;
 	linkadd = '';
@@ -970,13 +1014,13 @@ function limbasReportMenuOptions(evt,el,gtabid,reportid,ID,output,listmode,repor
 	if(!el){
 		con = '';
 		use_record = '';
-		
+
 		if(!report_medium && document.report_form){report_medium = document.report_form.report_medium.value;}
 		if(!report_rename && document.report_form && document.report_form.report_rename){report_rename = document.report_form.report_rename.value;}
 		if(!report_rename){report_rename = '';}
-		
+
 		if(listmode){
-			linkadd = "&report_output="+output+"&report_medium="+report_medium+"&report_rename="+report_rename;
+			linkadd = "&report_output="+output+"&report_medium="+report_medium+"&report_rename="+report_rename+"&report_printer="+report_printer;
 		}else{
 			if(ID){
 				use_record = ID;
@@ -986,18 +1030,18 @@ function limbasReportMenuOptions(evt,el,gtabid,reportid,ID,output,listmode,repor
 				use_record = "all";
 				if(document.getElementById("GtabResCount")){var count = document.getElementById("GtabResCount").innerHTML;}else{var count = 'undefined'}
 			}
-			
+
 			if(count && !confirm(jsvar['lng_2676']+' '+count+'\n'+jsvar['lng_51'])){
 				activ_menu = 0;
 				limbasDivClose();
 				return;
 			}
-			linkadd = "&use_record="+use_record+"&report_output="+output+"&report_medium="+report_medium+"&report_rename="+report_rename;
+			linkadd = "&use_record="+use_record+"&report_output="+output+"&report_medium="+report_medium+"&report_rename="+report_rename+"&report_printer="+report_printer;
 		}
-		
+
 		limbasWaitsymbol(evt,1);
 	}else{
-		linkadd = "&report_medium="+report_medium+"&report_output="+output;
+		linkadd = "&report_medium="+report_medium+"&report_output="+output+"&report_printer="+report_printer;
 	}
 	
 	actid = "menuReportOption&gtabid=" + gtabid + "&reportid=" + reportid + "&ID=" + ID + linkadd;
@@ -1019,7 +1063,7 @@ function limbasReportMenuOptionsPost(result,el,output){
 	
 	if(output==2){
 		document.getElementById("lmbReportMenuOptionsArchive").innerHTML = "<i class='lmb-icon lmb-aktiv' border=0></i>";
-	}else if(output==1){
+	}else if(output==1 || output==4){
 		activ_menu = 0;
 		limbasDivClose();
 	}
@@ -1184,7 +1228,7 @@ function limbasInheritFromPost(json,evt){
 					$( "#form1" ).append("<input type='hidden' name='"+data['destFormname'][i]+"'>");
 					var el = document.getElementsByName(data['destFormname'][i])[0];
 				}
-				
+
 				if(data['destFieldtype'][i] == 3 && evt.shiftKey){
 					el.value += '\n'+data['resultval'][i];
 				}else{
@@ -1251,13 +1295,21 @@ function lmbQuickSearchAction(evt,gtabid,fieldid,id,val){
 	activ_menu = 0;
 }
 
+// handle klick on row
+function lmbTableContextEvent(evt,el,ID,gtabid,formid,form_typ,form_dimension,ERSTDATUM,EDITDATUM,ERSTUSER,EDITUSER,V_ID,V_GID,V_FID,V_TYP) {
 
+    evt.preventDefault();
 
+    if(evt.ctrlKey && formid) {
+        var t = 'div';
+        if(form_typ == 1){t = 'iframe';}
+        newwin7(null,gtabid,null,null,null,ID,formid,form_dimension,null,t);
+    }else{
+        lmbTableContextMenu(evt, el, ID, gtabid, formid, form_typ, form_dimension, ERSTDATUM, EDITDATUM, ERSTUSER, EDITUSER, V_ID, V_GID, V_FID, V_TYP);
+    }
 
-
-
-
-
+    return false;
+}
 
 // handle klick on row
 function lmbTableClickEvent(evt,el) {
@@ -1406,6 +1458,36 @@ function countofActiveRows(gtabid){
 
 
 
+// ---- Suchkriterien markieren ----------
+var select_text = new Array();
+function setSelectedText(evt,el,val) {
+	if(val && el){
+		if(!select_text[el.id]){select_text[el] = 0;};
+		var posStart = el.value.indexOf(val,select_text[el.id]);
+		var posEnd = val.length + posStart;
+		select_text[el.id] = posEnd;
+
+		if(posStart > 0){
+		el.focus();
+		// Mozilla ---
+		if (el.setSelectionRange) {
+			el.setSelectionRange(posStart, posEnd);
+		}
+		// IE ---
+		else if (el.createTextRange) {
+			var range = el.createTextRange();
+			range.collapse(true);
+			range.moveEnd('character', posEnd);
+			range.moveStart('character', posStart);
+			range.select();
+		}
+		}
+	}
+}
+
+
+
+
 
 
 // --- Fenster fuer Detail  -----------------------------------
@@ -1444,10 +1526,11 @@ function newwin6() {
 	hist = open("main.php?action=history&wfl_id=" + jsvar["wfl_id"] + "&wfl_inst=" + jsvar["wfl_inst"] + "&ID=" + ID + "&tab=" + gtabid + "" ,"History","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=600,height=600");
 }
 
-// show detail in dialog
-function newwin7(action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimension,v_formid,inframe){
+// show detail in dialog or new window
+function newwin7(action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimension,v_formid,inframe,layername){
 	
 	if(action != 'gtab_deterg' && action != 'gtab_neu'){action = 'gtab_change'}
+	var verknpf = '';
 	if(v_tabid){verknpf = 1;}
 	if(formdimension && formid != '0'){
 		var dimsn = formdimension.split("x");
@@ -1458,33 +1541,134 @@ function newwin7(action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimension,v_
 		var y = 450;
 	}
 
+	divclose();
+
+	if(!layername){layername = 'lmb_gtabDetailFrame';}
+
 	// show in new window
 	if(!inframe){
 		relationtab = open("main.php?action=" + action + "&verkn_showonly=1&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "&form_id="+formid + "&verknpf="+ verknpf + "&verkn_formid="+ v_formid  ,"relationtable","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width="+x+",height="+y);
 		return;
 	}
-	
-	// show in frame as iframe
-	if(!document.getElementById("lmb_gtabDetailFrame")){$( "body" ).append("<div id='lmb_gtabDetailFrame' style='position:absolute;display:none;z-index:9999;overflow:hidden;width:300px;height:300px;padding:0;'><iframe id='lmb_gtabDetailIFrame' name='lmb_gtabDetailIFrame' style='width:100%;height:100%;border:none;overflow:auto;'></iframe></div>");}
-	$("#lmb_gtabDetailFrame").css({'position':'relative','left':'0','top':'0'}).dialog({
-		width: x,
-		height: y,
-		resizable: true,
-		modal: true,
-		zIndex: 99999,
-		open: function(ev, ui){
-			$('#lmb_gtabDetailIFrame').attr("src","main.php?action=" + action + "&verkn_showonly=1&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "&form_id="+formid + "&verknpf="+ verknpf + "&verkn_formid="+ v_formid);
-		},
-		close:function(){
-			lmb_gtabDetailIFrame.document.form1.action.value='gtab_change';
-			lmb_gtabDetailIFrame.send_form(1,0,0,1);
-		}
-	});
 
+	if(inframe == 'div') {
+        // show in frame as div
+        $.ajax({
+            type: "GET",
+            url: "main_dyns.php",
+            async: false,
+            dataType: "html",
+            data: "actid=openSubForm&ID=" + id + "&gtabid=" + gtabid + "&gformid=" + formid,
+            success: function (data) {
+                $("<div id='"+layername+"'></div>").html(data).css({'position': 'relative', 'left': '0', 'top': '0'}).dialog({
+                    width: x,
+                    height: y,
+                    resizable: true,
+                    modal: true,
+                    zIndex: 99999,
+                    appendTo: "#form1",
+                    close: function () {
+                        $("#"+layername).dialog('destroy').remove();
+                    }
+                });
+            }
+        });
+
+    }else {
+
+	    // show in frame as iframe
+	    $("#"+layername).remove();
+        $("body").append("<div id='"+layername+"' style='position:absolute;display:none;z-index:9999;overflow:hidden;width:300px;height:300px;padding:0;'><iframe id='lmb_gtabDetailIFrame' name='lmb_gtabDetailIFrame' style='width:100%;height:100%;overflow:auto;'></iframe></div>");
+        $("#"+layername).css({'position': 'relative', 'left': '0', 'top': '0'}).dialog({
+            width: x,
+            height: y,
+            resizable: true,
+            modal: true,
+            zIndex: 99999,
+            open: function (ev, ui) {
+                $('#lmb_gtabDetailIFrame').attr("src", "main.php?action=" + action + "&verkn_showonly=1&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "&form_id=" + formid + "&verknpf=" + verknpf + "&verkn_formid=" + v_formid);
+            },
+            close: function () {
+                lmb_gtabDetailIFrame.document.form1.action.value = 'gtab_change';
+                lmb_gtabDetailIFrame.send_form(1, 0, 0, 1);
+            }
+        });
+    }
 }
 
 // --- Fenster Mehrfach-Selectfeld -----------------------------------
 function newwin10(FIELDID,TABID,TABGROUP,ID) {
 	divclose();
 	selectpool = open("main.php?&action=add_select&ID=" + ID + "&field_id=" + FIELDID + "&gtabid=" + TABID + "&wfl_id=" + jsvar["wfl_id"] + "&wfl_inst=" + jsvar["wfl_inst"] ,"selectpool","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=500,height=600");
+}
+
+
+
+
+
+/*----------------- Speech recognition -------------------*/
+var lmb_speechRec = window.SpeechRecognition || window.webkitSpeechRecognition || window.mozSpeechRecognition || window.msSpeechRecognition;
+lmb_speechRec = lmb_speechRec ? new lmb_speechRec() : null;
+var lmb_speechRecActive = false;
+var lmb_speechRecIcon = null;
+var lmb_speechRecInput = null;
+var lmb_speechRecTextPre = null;
+var lmb_speechRecTextPost = null;
+if (lmb_speechRec) {
+    lmb_speechRec.lang = "de";
+    lmb_speechRec.continuous = true;
+    lmb_speechRec.interimResults = true;
+
+    lmb_speechRec.onstart = function() {
+        lmb_speechRecIcon.removeClass('lmb-microphone').addClass('lmb-microphone-slash');
+        lmb_speechRecIcon.css('color', 'red');
+        lmb_speechRecInput.css('border-color', 'red');
+        lmb_speechRecActive = true;
+
+        // only replace selection -> store strings before and after selection
+        var selectionStart = lmb_speechRecInput.get(0).selectionStart;
+        var selectionEnd = lmb_speechRecInput.get(0).selectionEnd;
+        lmb_speechRecTextPre = lmb_speechRecInput.val().substring(0, selectionStart).trim();
+        if (lmb_speechRecTextPre !== '') {
+            lmb_speechRecTextPre += ' ';
+		}
+        lmb_speechRecTextPost = lmb_speechRecInput.val().substring(selectionEnd).trim();
+        if (lmb_speechRecTextPost !== '') {
+            lmb_speechRecTextPost = ' ' + lmb_speechRecTextPost;
+        }
+    };
+
+    lmb_speechRec.onend = function() {
+        lmb_speechRecIcon.removeClass('lmb-microphone-slash').addClass('lmb-microphone');
+        lmb_speechRecIcon.css('color', '');
+        lmb_speechRecInput.css('border-color', '');
+        lmb_speechRecInput.trigger('change');
+        lmb_speechRecActive = false;
+    };
+
+    lmb_speechRec.onresult = function(event) {
+        lmb_speechRecInput.val(lmb_speechRecTextPre + lmb_speechRecTextPost);
+        var wholeTranscript = "";
+        for (var i = 0; i < event.results.length; i++) {
+			wholeTranscript += event.results[i][0].transcript;
+        }
+        lmb_speechRecInput.val(lmb_speechRecTextPre + wholeTranscript + lmb_speechRecTextPost);
+    };
+}
+function lmb_addSpeechRecButton(inputID) {
+	if (lmb_speechRec) {
+        var inputs = $('input[name="' + inputID + '"]:visible');
+        if (!inputs.parent().has('i.lmb-icon.lmb-icon-on-input.lmb-microphone').length) {
+            inputs.parent().append('<i onclick="lmb_toggleSpeechRec(this, \'' + inputID + '\')" class="lmb-icon lmb-icon-on-input lmb-microphone" style="cursor:pointer;"></i>');
+		}
+    }
+}
+function lmb_toggleSpeechRec(icon, inputID) {
+    if (lmb_speechRecActive) {
+        lmb_speechRec.stop();
+    } else {
+        lmb_speechRecIcon = $(icon);
+        lmb_speechRecInput = $(icon).parent().children('#' + inputID);
+        lmb_speechRec.start()
+    }
 }

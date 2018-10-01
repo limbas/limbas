@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -23,7 +23,7 @@
 if (isset($text)) {
 
         $text = parse_db_string($text,4999);
-        $sqlquery = "UPDATE VORLAGEN SET INHALT = '$text' WHERE ID = $ID AND USER_ID = $session[user_id]";
+        $sqlquery = "UPDATE VORLAGEN SET INHALT = '$text' WHERE ID = $ID AND USER_ID = {$session['user_id']}";
         $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
         if($rs){
@@ -39,11 +39,10 @@ if (isset($text)) {
         <TABLE BORDER="0"><TR><TD WIDTH="20">&nbsp;</TD><TD>
 
         <style type="text/css">
-        .btnImage {cursor: pointer; cursor: hand;}
+        .btnImage {cursor: pointer;}
         </style>
 
 	<form name="form1" method="post" action="main.php">
-        <input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
         <input type="hidden" name="action" VALUE="user_vorlage_change">
         <input TYPE="hidden" NAME="ID" VALUE="<?=$ID;?>">
         <input TYPE="hidden" NAME="text">
@@ -71,6 +70,6 @@ if (isset($text)) {
 
 	</form>
         </TD></TR></TABLE>
-	<?
+	<?php
 }
 ?>

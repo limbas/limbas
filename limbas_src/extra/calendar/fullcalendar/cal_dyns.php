@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -78,22 +78,22 @@ if($params["action"] == "context"){
 		?>
 			<table cellpadding="1" cellspacing="0" width="100%">
 			<tr><td valign="top" colspan="4"><?=$gfield[$gtabid]['spelling'][$gfield[$gtabid]["argresult_name"]["SUBJECT"]]?><br>
-			<?display_dftyp($gresult,$gtabid,$gfield[$gtabid]["argresult_name"]["SUBJECT"],$ID,1,null,"width:100%;height:36px;");?><br><br></td></tr>
+			<?php display_dftyp($gresult,$gtabid,$gfield[$gtabid]["argresult_name"]["SUBJECT"],$ID,1,null,"width:100%;height:36px;");?><br><br></td></tr>
 
-			<tr><td><?=$gfield[$gtabid]['spelling'][$gfield[$gtabid]["argresult_name"]["STARTSTAMP"]]?>&nbsp;&nbsp;&nbsp;</td><td><?display_dftyp($gresult,$gtabid,$gfield[$gtabid]["argresult_name"]["STARTSTAMP"],$ID,1,null,"width:100px;");?></td><td>&nbsp;&nbsp;&nbsp;<?=$gfield[$gtabid]['spelling'][$gfield[$gtabid]["argresult_name"]["ENDSTAMP"]]?>&nbsp;&nbsp;&nbsp;</td><td><?display_dftyp($gresult,$gtabid,$gfield[$gtabid]["argresult_name"]["ENDSTAMP"],$ID,1,null,"width:100px;");?></td></tr>
-			<tr><td><?=$gfield[$gtabid]['spelling'][$gfield[$gtabid]["argresult_name"]["COLOR"]]?>&nbsp;&nbsp;&nbsp;</td><td><?display_dftyp($gresult,$gtabid,$gfield[$gtabid]["argresult_name"]["COLOR"],$ID,1,null,"width:100px;");?></td><td>&nbsp;&nbsp;&nbsp;<?=$gfield[$gtabid]['spelling'][$gfield[$gtabid]["argresult_name"]["ALLDAY"]]?><td><?display_dftyp($gresult,$gtabid,$gfield[$gtabid]["argresult_name"]["ALLDAY"],$ID,1);?></td></tr>
-			<tr><td><?=$gfield[$gtabid]['spelling'][$gfield[$gtabid]["argresult_name"]["REPEATUNTIL"]]?><td nowrap><?display_dftyp($gresult,$gtabid,$gfield[$gtabid]["argresult_name"]["REPEATUNTIL"],$ID,1,null,"width:100px;");?></td></tr>
+			<tr><td><?=$gfield[$gtabid]['spelling'][$gfield[$gtabid]["argresult_name"]["STARTSTAMP"]]?>&nbsp;&nbsp;&nbsp;</td><td><?php display_dftyp($gresult,$gtabid,$gfield[$gtabid]["argresult_name"]["STARTSTAMP"],$ID,1,null,"width:100px;");?></td><td>&nbsp;&nbsp;&nbsp;<?=$gfield[$gtabid]['spelling'][$gfield[$gtabid]["argresult_name"]["ENDSTAMP"]]?>&nbsp;&nbsp;&nbsp;</td><td><?php display_dftyp($gresult,$gtabid,$gfield[$gtabid]["argresult_name"]["ENDSTAMP"],$ID,1,null,"width:100px;");?></td></tr>
+			<tr><td><?=$gfield[$gtabid]['spelling'][$gfield[$gtabid]["argresult_name"]["COLOR"]]?>&nbsp;&nbsp;&nbsp;</td><td><?php display_dftyp($gresult,$gtabid,$gfield[$gtabid]["argresult_name"]["COLOR"],$ID,1,null,"width:100px;");?></td><td>&nbsp;&nbsp;&nbsp;<?=$gfield[$gtabid]['spelling'][$gfield[$gtabid]["argresult_name"]["ALLDAY"]]?><td><?php display_dftyp($gresult,$gtabid,$gfield[$gtabid]["argresult_name"]["ALLDAY"],$ID,1);?></td></tr>
+			<tr><td><?=$gfield[$gtabid]['spelling'][$gfield[$gtabid]["argresult_name"]["REPEATUNTIL"]]?><td nowrap><?php display_dftyp($gresult,$gtabid,$gfield[$gtabid]["argresult_name"]["REPEATUNTIL"],$ID,1,null,"width:100px;");?></td></tr>
 
 			<tr><td colspan="4"><br><?=$gfield[$gtabid]['spelling'][$gfield[$gtabid]["argresult_name"]["DESCRIPTION"]]?><br>
-			<?display_dftyp($gresult,$gtabid,$gfield[$gtabid]["argresult_name"]["DESCRIPTION"],$ID,1,null,"width:100%;height:100px");?></td></tr>
+			<?php display_dftyp($gresult,$gtabid,$gfield[$gtabid]["argresult_name"]["DESCRIPTION"],$ID,1,null,"width:100%;height:100px");?></td></tr>
 			<tr><td colspan="4">
 			<input type="button" value="<?=$lang[33]?>" onclick="lmb_calEdit(event);">
-			<?if($ID > 0){
+			<?php if($ID > 0){
 				echo "<input type=\"button\" value=\"details\" onclick=\"lmb_popupDetails(event,'$gtabid','$ID')\">";
 				echo "<input style=\"float:right\" onclick=\"lmb_calDelete(event,'$gtabid','$ID')\" type=\"button\" value=\"$lang[160]\"></td></tr>";
 			}?>
 			</table>
-		<?
+		<?php
 }elseif($params["action"] == "saveDetails"){
 	
 	# adding bulk dates

@@ -2,6 +2,8 @@ RewriteEngine On
 # This makes every request go to server.php
 RewriteRule (.*) index.php [L]
 
+<IfModule mod_php5.c>
+
 # Output buffering needs to be off, to prevent high memory usage
 php_flag output_buffering off
 
@@ -14,5 +16,27 @@ php_flag magic_quotes_gpc off
 
 # SabreDAV is not compatible with mbstring function overloading
 php_flag mbstring.func_overload off
+
+</IfModule>
+
+
+<IfModule mod_php7.c>
+
+# Output buffering needs to be off, to prevent high memory usage
+php_flag output_buffering off
+
+# This is also to prevent high memory usage
+php_flag always_populate_raw_post_data off
+
+# This is almost a given, but magic quotes is *still* on on some
+# linux distributions
+php_flag magic_quotes_gpc off
+
+# SabreDAV is not compatible with mbstring function overloading
+php_flag mbstring.func_overload off
+
+</IfModule>
+
+
 
 Allow from all

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -27,15 +27,15 @@ var c_id = new Array();
 var c_val = new Array();
 var a_col = new Array();
 var d_col = new Array();
-var maxid = <?=$result_colors[maxid]?>
+var maxid = <?=$result_colors['maxid']?>;
 
-<?
+<?php
 $key = 0;
-if($result_colors[id]){
-	foreach($result_colors[id] AS $key => $value) {
+if($result_colors['id']){
+	foreach($result_colors['id'] AS $key => $value) {
 		$tkey = "[".$key."]";
-		echo "c_id".$tkey." = \"".$result_colors[id][$key]."\";\n";
-		echo "c_val".$tkey." = \"".$result_colors[wert][$key]."\";\n";
+		echo "c_id".$tkey." = \"".$result_colors['id'][$key]."\";\n";
+		echo "c_val".$tkey." = \"".$result_colors['wert'][$key]."\";\n";
 	}
 }?>
 
@@ -84,16 +84,16 @@ function submit_changes(){
 
 // --- Farben -----------------------------------
 var color = new Array();
-color[1] = "<?=$farbschema[WEB1]?>";
-color[2] = "<?=$farbschema[WEB2]?>";
-color[3] = "<?=$farbschema[WEB3]?>";
-color[4] = "<?=$farbschema[WEB4]?>";
-color[5] = "<?=$farbschema[WEB5]?>";
-color[6] = "<?=$farbschema[WEB6]?>";
-color[7] = "<?=$farbschema[WEB7]?>";
-color[8] = "<?=$farbschema[WEB8]?>";
-color[9] = "<?=$farbschema[WEB9]?>";
-color[10] = "<?=$farbschema[WEB10]?>";
+color[1] = "<?=$farbschema['WEB1']?>";
+color[2] = "<?=$farbschema['WEB2']?>";
+color[3] = "<?=$farbschema['WEB3']?>";
+color[4] = "<?=$farbschema['WEB4']?>";
+color[5] = "<?=$farbschema['WEB5']?>";
+color[6] = "<?=$farbschema['WEB6']?>";
+color[7] = "<?=$farbschema['WEB7']?>";
+color[8] = "<?=$farbschema['WEB8']?>";
+color[9] = "<?=$farbschema['WEB9']?>";
+color[10] = "<?=$farbschema['WEB10']?>";
 
 // --- TD Style -----------------------------------
 function create_td(aktuTD,values){
@@ -195,7 +195,6 @@ function create_list(){
 
 
 <FORM ACTION="<?=$main_action?>" METHOD=post name="form1">
-<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
 <input type="hidden" name="action" value="<?=$action?>">
 <INPUT TYPE="hidden" NAME="del_color">
 <INPUT TYPE="hidden" NAME="add_color">
@@ -210,10 +209,10 @@ function create_list(){
 <TR class="tabBody">
 <TD ID="itemlist_area" VALIGN="TOP"></TD>
 <TD WIDTH="15"></TD>
-<TD WIDTH="1" STYLE="background-color:<?=$farbschema[WEB6];?>;"></TD>
+<TD WIDTH="1" STYLE="background-color:<?=$farbschema['WEB3'];?>;"></TD>
 <TD WIDTH="15"></TD>
 <TD width="200" height="200" VALIGN="TOP">
-<?
+<?php
 $bbzm = 1;
 $b = 0;
 while($b <= 255){
@@ -244,18 +243,18 @@ while($b <= 255){
 ?>
 <DIV><INPUT ID="selcolor" NAME="selcolor" TYPE="TEXT" OnChange="addcolor(this.value);this.style.backgroundColor=this.value;" STYLE="width:180px;height:15px;border:none;background-color:FFFFFF"></DIV>
 <BR><BR>
-<INPUT TYPE="button" VALUE="<?=$lang[157]?>" OnClick="submit_changes()">
+<INPUT TYPE="button" VALUE="<?=$lang[33]?>" OnClick="submit_changes()">
 </TD><TD VALIGN="TOP">
 
 <TABLE BORDER="0" cellspacing="0" cellpadding="0" STYLE="height:180px;width:20px;border:1px solid grey;">
-<?
+<?php
 $bbzm = 1;
 $b = 0;
 while($b <= 255){
 	$bcol = dechex($b);
 	if(!$bcol){$bcol = "00";}elseif(lmb_strlen($bcol) == 1){$bcol = "0".$bcol;}
 	$col = "0000".$bcol;
-	echo "<TR><TD STYLE=\"witdh:20px;heigh:20px;background-color:#$col;cursor:pointer\" OnMouseOver=\"cslice('slice_$bbzm')\"></TD></TR>";
+	echo "<TR><TD STYLE=\"width:20px;height:20px;background-color:#$col;cursor:pointer\" OnMouseOver=\"cslice('slice_$bbzm')\"></TD></TR>";
 	$b += 30;
 	$bbzm++;
 }

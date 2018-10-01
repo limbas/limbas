@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -104,7 +104,7 @@ function link_mail(e){
 	ajax.onComplete = function(content){
 		olCookie().remove("mail_marked");
 		set_cursor("default");
-		$("extRelationFieldsTab_"+_mail_link[0]+"_"+_mail_link[1]).innerHTML = content;
+		$("#extRelationFieldsTab_"+_mail_link[0]+"_"+_mail_link[1]).innerHTML = content;
 		mail_check();
 	};
 
@@ -126,11 +126,11 @@ function refresh_mail(e){
 	var ajax = new olAjax("main_dyns.php?actid=extMessagesDisplay"
 		+"&gtabid="+_params[0]+"&fldid="+_params[1]+"&id="+_params[2]
 		+"&edittype="+_params[3]);
-		+"&gformid="+_params[4]
+		// +"&gformid="+_params[4]
 		//+(_params[4] ? "&viewmode="+_params[4] : ""));
 
 	ajax.onComplete = function(content){
-		$("extRelationFieldsTab_"+_params[0]+"_"+_params[1]).innerHTML = content;
+		$("#extRelationFieldsTab_"+_params[0]+"_"+_params[1]).innerHTML = content;
 		mail_check();
 	};
 	ajax.onError = function (content){
@@ -138,4 +138,43 @@ function refresh_mail(e){
 	};
 
 	ajax.send('msgs=' + content, el);
+}
+
+
+// {$gtabid}_{$fieldid}_{$ID}_{$typ}_{$gformid}
+var mail_search_box = null;
+function search_mails(el, info) {
+    var params = info.split("_");
+    mail_search_box = el;
+
+    mainfunc = function(result) {
+        $("#lmbAjaxContainer").html(result);
+        limbasDivShow(mail_search_box,'','lmbAjaxContainer');
+	};
+
+    ajaxGet(null, "main_dyns.php", "extSearchMessages"
+	+ "&gtabid=" + params[0]
+	+ "&fldid=" + params[1]
+	+ "&id=" + params[2]
+	+ "&edittype=" + params[3]
+	+ "&gformid=" + params[4]
+	+ "&search=" + encodeURIComponent(el.value), null, "mainfunc");
+}
+
+function link_search_mail(uid, info) {
+    var params = info.split("_");
+
+    mainfunc = function(result) {
+        $("#extRelationFieldsTab_"+params[0]+"_"+params[1]).html(result);
+        mail_check();
+    };
+
+    ajaxGet(null, "main_dyns.php", "extAddRelMessages"
+	+ "&mbox=INBOX"
+    + "&gtabid=" + params[0]
+    + "&fldid=" + params[1]
+    + "&id=" + params[2]
+    + "&edittype=" + params[3]
+    + "&gformid=" + params[4]
+	+ "&ids=" + uid, null, "mainfunc");
 }

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,14 +11,14 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
  * ID: 57
  */
 
-if($action == "user_color"){$uid = $session[user_id];$main_action = "main.php";}elseif($action == "setup_color"){$uid = "0";$main_action = "main_admin.php";}
+if($action == "user_color"){$uid = $session['user_id'];$main_action = "main.php";}elseif($action == "setup_color"){$uid = "0";$main_action = "main_admin.php";}
 
 if($add_color){
 	$add_color = explode(";",$add_color);
@@ -47,23 +47,23 @@ if($del_color){
 /* --- Farb-Liste ---------------------------------------------*/
 if(($add_color OR $del_color) AND $action == "user_color"){
 	$user_colors = null;
-	$user_colors[wert][] = "transparent";
-	$user_colors[wert][] = "#000000";
-	$user_colors[wert][] = "#FFFFFF";
+	$user_colors['wert'][] = "transparent";
+	$user_colors['wert'][] = "#000000";
+	$user_colors['wert'][] = "#FFFFFF";
 }
 
-$result_colors[maxid] = 0;
+$result_colors['maxid'] = 0;
 
 $sqlquery = "SELECT MAX(ID) AS MAXID,ID,WERT FROM LMB_USER_COLORS WHERE USERID = $uid GROUP BY ID,WERT ORDER BY WERT";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 $bzm = 1;
 while(odbc_fetch_row($rs, $bzm)) {
 	if(($add_color OR $del_color) AND $action == "user_color"){
-		$user_colors[wert][] = "#".odbc_result($rs, "WERT");
+		$user_colors['wert'][] = "#".odbc_result($rs, "WERT");
 	}
-	$result_colors[id][$bzm] = odbc_result($rs, "ID");
-	$result_colors[wert][$bzm] = odbc_result($rs, "WERT");
-	$result_colors[maxid] = odbc_result($rs, "MAXID");
+	$result_colors['id'][$bzm] = odbc_result($rs, "ID");
+	$result_colors['wert'][$bzm] = odbc_result($rs, "WERT");
+	$result_colors['maxid'] = odbc_result($rs, "MAXID");
 	$bzm++;
 }
 

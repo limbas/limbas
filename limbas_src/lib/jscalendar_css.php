@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -33,7 +33,7 @@ $farbschema[WEB10] = "ActiveCaption";
 */
 
 
-$cssfile = fopen($umgvar[pfad]."/USER/".$session[user_id]."/jscalendar.css","w+");
+$cssfile = fopen($umgvar['pfad']."/USER/".$session['user_id']."/jscalendar.css","w+");
 fputs($cssfile,
 
 
@@ -46,11 +46,11 @@ fputs($cssfile,
   border-right: 2px solid #000;
   border-bottom: 2px solid #000;
   border-left: 2px solid #fff;
-  font-size: $umgvar[fontsize]px;
+  font-size: {$umgvar['fontsize']}px;
   color: #000;
   cursor: default;
-  background: ".$farbschema[WEB7].";
-  font-family: $umgvar[font];
+  background: ".$farbschema['WEB7'].";
+  font-family: {$umgvar['font']};
 }
 
 .calendar table {
@@ -58,11 +58,11 @@ fputs($cssfile,
   border-right: 1px solid #fff;
   border-bottom: 1px solid #fff;
   border-left: 1px solid #000;
-  font-size: $umgvar[fontsize]px;
+  font-size: {$umgvar['fontsize']}px;
   color: #000;
   cursor: default;
-  background: ".$farbschema[WEB7].";
-  font-family: $umgvar[font];
+  background: ".$farbschema['WEB7'].";
+  font-family: {$umgvar['font']};
 }
 
 /* Header part -- contains navigation buttons and day names. */
@@ -84,7 +84,7 @@ fputs($cssfile,
   font-weight: bold;
   padding: 1px;
   border: 1px solid #000;
-  background: ".$farbschema[WEB4].";
+  background: ".$farbschema['WEB4'].";
   color: #fff;
   text-align: center;
 }
@@ -99,7 +99,7 @@ fputs($cssfile,
   border-bottom: 1px solid #000;
   padding: 2px;
   text-align: center;
-  background: ".$farbschema[WEB8].";
+  background: ".$farbschema['WEB8'].";
 }
 
 .calendar thead .weekend { /* How a weekend day name shows in header */
@@ -109,7 +109,7 @@ fputs($cssfile,
 .calendar thead .hilite { /* How do the buttons in header appear when hover */
   border: 1px solid #000;
   padding: 0px;
-  background-color: ".$farbschema[WEB6].";
+  background-color: ".$farbschema['WEB3'].";
 }
 
 .calendar thead .active { /* Active (pressed) buttons in header */
@@ -118,7 +118,7 @@ fputs($cssfile,
   border-right: 1px solid #fff;
   border-bottom: 1px solid #fff;
   border-left: 1px solid #000;
-  background-color: ".$farbschema[WEB6].";
+  background-color: ".$farbschema['WEB3'].";
 }
 
 /* The body part -- contains all the days in month. */
@@ -132,15 +132,15 @@ fputs($cssfile,
 .calendar table .wn {
   padding: 2px 3px 2px 2px;
   border-right: 1px solid #000;
-  background: ".$farbschema[WEB8].";
+  background: ".$farbschema['WEB8'].";
 }
 
 .calendar tbody .rowhilite td {
-  background: ".$farbschema[WEB6].";
+  background: ".$farbschema['WEB3'].";
 }
 
 .calendar tbody .rowhilite td.wn {
-  background: ".$farbschema[WEB7].";
+  background: ".$farbschema['WEB7'].";
 }
 
 .calendar tbody td.hilite { /* Hovered cells <TD> */
@@ -168,7 +168,7 @@ fputs($cssfile,
   border-bottom: 1px solid #fff;
   border-left: 1px solid #000;
   padding: 2px 2px 0px 2px;
-  background: ".$farbschema[WEB6].";
+  background: ".$farbschema['WEB3'].";
 }
 
 .calendar tbody td.weekend { /* Cells showing weekend days */
@@ -196,10 +196,10 @@ fputs($cssfile,
 }
 
 .calendar tfoot .ttip { /* Tooltip (status bar) cell <TD> */
-  background: ".$farbschema[WEB8].";
+  background: ".$farbschema['WEB8'].";
   padding: 1px;
   border: 1px solid #000;
-  background: ".$farbschema[WEB4].";
+  background: ".$farbschema['WEB4'].";
   color: #fff;
   text-align: center;
 }
@@ -207,7 +207,7 @@ fputs($cssfile,
 .calendar tfoot .hilite { /* Hover style for buttons in footer */
   border: 1px solid #000;
   padding: 1px;
-  background: ".$farbschema[WEB6].";
+  background: ".$farbschema['WEB3'].";
 }
 
 .calendar tfoot .active { /* Active (pressed) style for buttons in footer */
@@ -231,7 +231,7 @@ fputs($cssfile,
   border-right: 1px solid #000;
   border-bottom: 1px solid #000;
   border-left: 1px solid #fff;
-  background: ".$farbschema[WEB6].";
+  background: ".$farbschema['WEB3'].";
   font-size: smaller;
   padding: 1px;
 }
@@ -247,7 +247,7 @@ fputs($cssfile,
 }
 
 .combo .active {
-  background: ".$farbschema[WEB8].";
+  background: ".$farbschema['WEB8'].";
   padding: 0px;
   border-top: 1px solid #000;
   border-right: 1px solid #fff;
@@ -264,7 +264,7 @@ fputs($cssfile,
   border-top: 1px solid #000;
   padding: 1px 0px;
   text-align: center;
-  background-color: ".$farbschema[WEB8].";
+  background-color: ".$farbschema['WEB8'].";
 }
 
 .calendar td.time .hour,

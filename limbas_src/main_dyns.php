@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH (support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0  
+ * Version 3.5  
  */
 
 /*
@@ -164,72 +164,75 @@ function dyns_extRelationFields($params){
 	}
 	
 	# ----------- Edit Permission -----------
-	if($gfield[$gtabid]["perm_edit"][$field_id] AND $typ != 2){$noedit = 0;}
-	# ----------- Editrule -----------
-	if($gfield[$gtabid]["editrule"][$field_id]){
-		$noedit = check_GtabRules($ID,$gtabid,$field_id,$gfield[$gtabid]["editrule"][$field_id]);
-	}
-	
+    if($params["ExtAction"] != 'sortup' AND $params["ExtAction"] != 'sortdown' AND $params["ExtAction"] != 'search'){
+	if($gfield[$gtabid]["perm_edit"][$field_id] AND $typ != 2){
+	    $noedit = 0;
+        $query_dataid = array($field_id => true);
+        // postcheck routine
+        if(update_data_precheck($gtabid,$ID,$query_dataid,$query_result=null,$old_gresult=null,$triggerResult=null,1)){$noedit = 0;}
+	}else{
+        lmb_log::error('dyns_extRelationFields - permission denied for edit field or table', $lang[1317], $gtabid, $field_id, $ID);
+    }}
+
 	# use extended form settings
 	#if($gform[$gformid]['parameters'][$formid]){eval($gform[$gformid]['parameters'][$formid].";");}
 	
 	# only for relation based table
 	if($isrelation){
-		# add relation
-		if($params["ExtAction"] == 'link' AND $params["relationid"] AND !$noedit){
-			$verkn = set_verknpf($gtabid,$field_id,$ID,$params["relationid"],0,0,0);
-			set_joins($gtabid,$verkn);
-		}
-		
-		# create relation
-		if($params["ExtAction"] == 'create' AND !$noedit){
-			new_record($vgtabid,1,$field_id,$gtabid,$ID);
-		}
-	
-		# drop relation
-		if($params["ExtAction"] == 'unlink' AND $params["relationid"] AND !$noedit){
-			$verkn = set_verknpf($gtabid,$field_id,$ID,0,$params["relationid"],0,0);
-			set_joins($gtabid,$verkn);
-		}
-		
-		# drop all relations
-		if($params["ExtAction"] == 'unlinkall' AND !$noedit){
-			$verkn = set_verknpf($gtabid,$field_id,$ID,0,'unlinkall',0,0);
-			set_joins($gtabid,$verkn);
-		}
-	
-		# drop&delete relation
-		if($params["ExtAction"] == 'delete' AND $params["relationid"] AND !$noedit){
-			$dellist = explode(',',$params["relationid"]);
-			foreach ($dellist as $dkey => $did){
-				lmb_StartTransaction();
-				$verkn = set_verknpf($gtabid,$field_id,$ID,0,$did,0,0);
-				set_joins($gtabid,$verkn);
-			
-				if(del_data($vgtabid,$did,"delete")){
-					lmb_EndTransaction(1);
-				}else{
-					lmb_EndTransaction(0);
-				}
-			}
-		}
-		
-		# copy relation
-		if($params["ExtAction"] == 'copy' AND $params["relationid"] AND !$noedit){
-			$copylist = explode(',',$params["relationid"]);
-			foreach ($copylist as $dkey => $did){
-			    $did_ = explode('_',$did);
-				if($did_[0]){ 
-				    $newID = new_record($vgtabid,1,$field_id,$gtabid,$ID,$did_[0]);
-				}
-			}
-		}
+
+	    if(!$noedit) {
+            # add relation
+            if ($params["ExtAction"] == 'link' AND $params["relationid"]) {
+                $verkn = set_verknpf($gtabid, $field_id, $ID, $params["relationid"], 0, 0, 0);
+                set_joins($gtabid, $verkn);
+            }
+
+            # create relation
+            if ($params["ExtAction"] == 'create') {
+                new_record($vgtabid, 1, $field_id, $gtabid, $ID);
+            }
+
+            # drop relation
+            if ($params["ExtAction"] == 'unlink' AND $params["relationid"]) {
+                $verkn = set_verknpf($gtabid, $field_id, $ID, 0, $params["relationid"], 0, 0);
+                set_joins($gtabid, $verkn);
+            }
+
+            # drop all relations
+            if ($params["ExtAction"] == 'unlinkall') {
+                $verkn = set_verknpf($gtabid, $field_id, $ID, 0, 'unlinkall', 0, 0);
+                set_joins($gtabid, $verkn);
+            }
+
+            # drop&delete relation
+            if ($params["ExtAction"] == 'delete' AND $params["relationid"]) {
+                $dellist = explode(',', $params["relationid"]);
+                foreach ($dellist as $dkey => $did) {
+                    $verkn = set_verknpf($gtabid, $field_id, $ID, 0, $did, 0, 0);
+                    if (set_joins($gtabid, $verkn)) {
+                        del_data($vgtabid, $did, "delete");
+                    }
+                }
+            }
+
+            # copy relation
+            if ($params["ExtAction"] == 'copy' AND $params["relationid"]) {
+                $copylist = explode(',', $params["relationid"]);
+                foreach ($copylist as $dkey => $did) {
+                    $did_ = explode('_', $did);
+                    if ($did_[0]) {
+                        $newID = new_record($vgtabid, 1, $field_id, $gtabid, $ID, $did_[0]);
+                    }
+                }
+            }
+
+        }
 		
 		# set relation
 		$verkn = set_verknpf($gtabid,$field_id,$ID,0,0,1,1);
 
 		# change relation based order
-		if(($params["ExtAction"] == 'sortup' OR $params["ExtAction"] == 'sortdown') AND $params["relationid"] AND !$noedit){
+		if(($params["ExtAction"] == 'sortup' OR $params["ExtAction"] == 'sortdown') AND $params["relationid"]){
 			$params["orderfield"] = "reset";
 			$vgresult = sql_14_c($vgtabid,$verkn,$linklevel,$gformid,$params["orderfield"],$gsr);
 
@@ -267,7 +270,9 @@ function dyns_extRelationFields($params){
 		$verkn = null;
 		
 		# ----------- Edit Permission -----------
-		if($gtab["edit"][$gtabid] AND $typ != 2){$noedit = 0;}
+		if($gtab["edit"][$gtabid] AND $typ != 2){$noedit = 0;}else{
+            lmb_log::error('dyns_extRelationFields - permission denied for edit field or table', $lang[1317], $gtabid, $field_id, $ID);
+        }
 		
 		# delete dataset
 		if($params["ExtAction"] == 'delete' AND $params["relationid"] AND !$noedit){
@@ -282,7 +287,7 @@ function dyns_extRelationFields($params){
 		if(!$params["orderfield"]){
 			$vfilter["order"][$vgtabid] = $filter["ext_RelationFields"]["order"][$vuniqueid];
 		}elseif($params["orderfield"] == "reset"){
-			$filter["ext_RelationFields"]["order"][$vuniqueid] = null;
+			unset($filter["ext_RelationFields"]["order"][$vuniqueid]);
 		}elseif("ASC" == $filter["ext_RelationFields"]["order"][$vuniqueid][0][2]){
 			$vfilter["order"][$vgtabid][0] = array($vgtabid,$params["orderfield"],"DESC");
 			$filter["ext_RelationFields"]["order"][$vuniqueid] = $vfilter["order"][$vgtabid];
@@ -304,7 +309,7 @@ function dyns_extRelationFields($params){
 	# editmode
 	if($params["ExtAction"] == 'edit' AND !$noedit AND $typ == 1){
 		if($filter["ext_RelationFields"]["edit"][$vuniqueid]){
-			$filter["ext_RelationFields"]["edit"][$vuniqueid] = 0;
+			unset($filter["ext_RelationFields"]["edit"][$vuniqueid]);
 		}else{
 			$filter["ext_RelationFields"]["edit"][$vuniqueid] = 1;
 		}
@@ -315,32 +320,31 @@ function dyns_extRelationFields($params){
 	if($viewmode){
 		$present = array_keys($filter["ext_RelationFields"][$vuniqueid],$viewmode);
 		if(count($present) > 0){
-			$filter["ext_RelationFields"][$vuniqueid][$present[0]] = 0;
+			unset($filter["ext_RelationFields"][$vuniqueid][$present[0]]);
 		}else{
 			$filter["ext_RelationFields"][$vuniqueid][] = $viewmode;
 		}
 		save_viewSettings($vuniqueid);
 	}
 	
-	# search
+	# search switch on/off
 	if($params["ExtAction"] == 'search'){
 		if($filter["ext_RelationFields"]["search"][$vuniqueid]){
-			$filter["ext_RelationFields"]["search"][$vuniqueid] = 0;
-			$filter["ext_RelationFields"]["searchval"][$vuniqueid] = 0;
+			unset($filter["ext_RelationFields"]["search"][$vuniqueid]);
+			unset($filter["ext_RelationFields"]["searchval"][$vuniqueid]);
 		}else{
 			$filter["ext_RelationFields"]["search"][$vuniqueid] = 1;
 		}
 		save_viewSettings($vuniqueid);
 	}
-	if($filter["ext_RelationFields"]["search"][$vuniqueid] OR $filter["ext_RelationFields"]["searchval"][$vuniqueid]){
 
+	if($filter["ext_RelationFields"]["search"][$vuniqueid] OR $filter["ext_RelationFields"]["searchval"][$vuniqueid]){
 		########### relation params ##########
 		$vgtabid_ = $vgtabid;
 		if($params["relationid"] > 1000){
 			$vgtabid_ = $gfield[$gtabid]["verknparams"][$field_id];
 		}
 		########### /relation params ##########
-		
 		$gsr = $filter["ext_RelationFields"]["searchval"][$vuniqueid];
 		if($params["ExtAction"] == 'searchval'){
 			$gsr[$vgtabid_][$params["relationid"]][0] = $params["ExtValue"];
@@ -468,6 +472,7 @@ function dyns_14_b($params){
 		$where_ = array();
 		$aval_ = array();
 		$from_ = array();
+		$whereGlob_ = array();
 		foreach($gfield[$gtabid]["verknsearch"][$fieldid] as $vkey => $vval){
 		    
 			$gsr_ = array();
@@ -479,8 +484,8 @@ function dyns_14_b($params){
 			if($result_["where"]){$where_ = array_merge($where_,$result_["where"]);}
 		    if($result_["vwhere"]){$where_ = array_merge($where_,$result_["vwhere"]);}
 		    if($result_["aval"]){$aval_ = array_merge($aval_,$result_["aval"]);}
-			if($result_["from_"]){$from_ = array_merge($from_,$result_["from_"]);}
-
+            if($result_["from_"]){$from_ = array_merge($from_,$result_["from_"]);}
+            if($result_["where_glob"]){$whereGlob_ = array_merge($whereGlob_,$result_["where_glob"]);}
 		}
 		
 		if($aval_[0]){
@@ -491,6 +496,9 @@ function dyns_14_b($params){
 		}
 		if($from_[0]){
 			$extension["from"] = $from_;
+		}
+		if($whereGlob_[0]) {
+			$extension["where"][] = "(".implode(" AND ",$whereGlob_).")";
 		}
 	}
 
@@ -783,6 +791,7 @@ function dyns_multipleSelect($params){
 		${$k} = $v;
 	}
 
+    require_once('gtab/gtab.lib');
 	require_once('gtab/sql/add_select.dao');
 	require_once('gtab/html/add_select.php');
 
@@ -887,7 +896,7 @@ function dyns_11_a($params){
 	WHERE
 	".$tabtyp."_W.HIDE = ".LMB_DBDEF_FALSE."
 	AND ".$tabtyp."_W.POOL = ".$gfield[$gtabid]["select_pool"][$fieldid]
-	.($selecttyp=="c" ? (in_array($value,array("#all","*")) || intval($level)>0 ? "AND ".$tabtyp."_W.LEVEL=".parse_db_int($level) : "") : "")."
+	.(in_array($value,array("#all","*")) || intval($level)>0 ? "AND ".$tabtyp."_W.LEVEL=".parse_db_int($level) : "")."
 	$where
 	ORDER BY $selsort
 	$limit
@@ -903,11 +912,10 @@ function dyns_11_a($params){
 		$page = 1;
 	}
 	
-	if($gfield[$gtabid]["data_type"][$fieldid] == 12){
+	if($gfield[$gtabid]["data_type"][$fieldid] == 12 /* auswahl select */){
 		$onclick_b = "document.getElementById('lmbAjaxContainer').style.display='none'";
 	}
 
-	$bzm1 = 1;
 	$bzm2 = 1;
 	if(odbc_result($rs, "ID")){
 		if($level){
@@ -915,58 +923,45 @@ function dyns_11_a($params){
 		}else{
 			echo "<div id=\"{$form_name}_dsl\">";
 		}
+        echo '<table style="width: 100%; border-collapse: collapse;">';
 		while(odbc_fetch_row($rs, $bzm) AND $bzm2 <= $maxresult) {
-            $id = odbc_result($rs, "ID");
-			//if(in_array($id,$exclude)){$bzm++;continue;}
+			$id = odbc_result($rs, 'ID');
+			$checked = odbc_result($rs, 'PRESENT');
+			$hasChildren = odbc_result($rs, 'HASLEVEL');
+            $value = htmlentities(odbc_result($rs, $field_name), ENT_QUOTES, $umgvar['charset']);
+            $keyword = htmlentities(odbc_result($rs, 'KEYWORDS'), ENT_QUOTES, $umgvar['charset']);
+            $level = odbc_result($rs, 'LEVEL');
+            if ($level == '0') {
+            	$level = '';
+			}
 
-			$font_weight = "bold";
-			$onclick = "";
-			$onmouseover = "if(this.style.color!='green'){this.style.color='blue';}";
-			$onmouseout = "if(this.style.color!='green'){this.style.color='black';}";
-			$present = odbc_result($rs, "PRESENT");
-			$level = odbc_result($rs, "LEVEL");
+			# show check if option is selected
+			$check = '';
+			if ($checked) {
+				$check = '<i class="lmb-icon lmb-check"></i>';
+			}
 
-			if(!$present){
-				$onclick = <<<EOD
-					onclick="this.style.fontWeight='$font_weight';
-					this.style.cursor='default';
-					dyns_11_a(event,this.firstChild.nodeValue,'$id','$form_name','$fieldid','$gtabid','$ID','{$gfield[$gtabid]["select_cut"][$fieldid]}','$tabtyp','$selecttyp');
-					activ_menu=1;
-					$onclick_b;
-					"
+			# show caret if option has children
+			$caretTD = '<td></td>';
+			if ($hasChildren) {
+				$caret = '<i class="lmb-icon lmb-edit-caret"></i>';
+				$caretTD = "<td style=\"width: 16px; text-align: right;\" onclick=\"event.stopPropagation();return dyns_11_a(event, '', '$id', '$form_name', '$fieldid', '$gtabid', '$ID', '{$gfield[$gtabid]['select_cut'][$fieldid]}','$tabtyp','e','$level');\">$caret</td>";
+			}
+
+			echo <<<EOD
+				<tr id="{$form_name}_{$level}_{$id}" title="$keyword" class="lmbSelectLink" onclick="return dyns_11_a(event, '$value', '$id', '$form_name', '$fieldid', '$gtabid', '$ID', '{$gfield[$gtabid]['select_cut'][$fieldid]}','$tabtyp','$selecttyp','$level');">
+					<td style="width: 16px;">$check</td>
+					<td>$value</td>
+					$caretTD
+				</tr>
 EOD;
-				$font_weight = "normal";
-			}
 
-			$rawwert = odbc_result($rs, $field_name);
-			$wert = htmlentities($rawwert,ENT_QUOTES,$umgvar["charset"]);
-			$keyword = htmlentities(odbc_result($rs, "KEYWORDS"),ENT_QUOTES,$umgvar["charset"]);
-
-			if($selecttyp=="c"){
-				$img = $checked = $onclick = $font_weight = "";
-				$haslevel = odbc_result($rs, "HASLEVEL");
-				$checked = $present ? " checked=\"checked\"" : "";
-				$check = "<input type=\"checkbox\" style=\"border:none;background-color:transparent;margin:0px;margin:0px;\" onclick=\"dyns_11_a(event,'".htmljs($rawwert)."','$id','$form_name','$fieldid','$gtabid','$ID','{$gfield[$gtabid]["select_cut"][$fieldid]}','$tabtyp','d','$level');\"$checked>";
-				if($haslevel){
-					$click = "onclick=\"return dyns_11_a(event,'','$id','$form_name','$fieldid','$gtabid','$ID','$page','$tabtyp','e','$level');\"";
-					$wert = "<a style = \"text-decoration:none;\">&nbsp;$wert&nbsp;</a>";
-					$img = "<i class=\"lmb-icon lmb-edit-caret\" style=\"vertical-align:middle;\" border=\"0\" align=\"right\" title=\"\"></i>";
-					$cursor = "cursor:pointer";
-				} else {
-					$click = "";
-					$wert = "<span>&nbsp;$wert&nbsp;</span>";
-					$cursor = "cursor:default";
-				}
-				$wert = "<table cellpadding=\"0\" cellspacing=\"0\"><tr><td style=\"width:16px;\">$check</td><td $click>$wert&nbsp;$img</td></tr></table>";
-			}
-			pop_left();
-			echo "<span id=\"{$form_name}_{$level}_{$id}\" style=\"$cursor;font-weight:$font_weight;\" onmouseover=\"$onmouseover\" onmouseout=\"$onmouseout\" $onclick title=\"".$keyword."\" id=\"view_{$form_name}_{$id}\">".$wert."</span>";
-			pop_right();
-			
 			$bzm++;
-			$bzm1++;
 			$bzm2++;
 		}
+		echo '</table>';
+
+		# TODO pagination
 		#if($bzm > $maxresult){echo "<hr><SPAN style=\"color:blue;cursor:pointer;\" OnClick=\"var element=document.getElementsByName('".$form_name."_ds'); lmbAjax_dynsearch(null,element[0],'11_a','".$gfield[$gtabid]["form_name"][$fieldid]."',".($page+1).",0,'$gtabid','$fieldid','$ID','$typ')\"> -->> next page</SPAN>&nbsp;&nbsp;|&nbsp;&nbsp;<SPAN style=\"color:blue;cursor:pointer;\" OnClick=\"document.getElementById('".$form_name."_dsl').innerHTML='';\">close</SPAN>";}
 		if($bzm > $maxresult){echo "&nbsp;&nbsp;... ";}
 		echo "</div>";
@@ -1112,7 +1107,7 @@ function dyns_gtabQuickSearch($params){
 		/* ------------------ Default --------------------- */
 		$fname = "cftyp_".$gfield[$gtabid]["funcid"][$fieldid];
 
-		echo "<DIV STYLE=\"background-color:".$farbschema["WEB6"].";border:1px solid #CCCCCC;padding:4px;\">";
+		echo "<DIV STYLE=\"background-color:".$farbschema["WEB3"].";border:1px solid #CCCCCC;padding:4px;\">";
 		echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">";
 		foreach ($gresult[$gtabid]["id"] as $key => $value) {
 
@@ -1242,7 +1237,7 @@ function dyns_gtabReplace($params){
                     
                     $update["$gtabid,$chfid,$value"] = convert_stamp($stmp);
                 }
-            }            
+            }
 
             // agregate numeric
             elseif ($gfield[$gtabid]["field_type"][$chfid] == 5 and (lmb_substr($grplval, 0, 1) == '+' or lmb_substr($grplval, 0, 1) == '-') and is_numeric($grplval)) {
@@ -1380,19 +1375,19 @@ function dyns_showReminder($params){
     } else {
         pop_left($mwidth);
         echo "<TABLE width='100%'><TR><TD nowrap>
-            &nbsp;$lang[1975] <INPUT onchange='javascript:setReminderDateTime(\"REMINDER_VALUE\",\"REMINDER_UNIT\",\"REMINDER_DATE_TIME\");' TYPE=\"TEXT\" NAME=\"REMINDER_VALUE\" STYLE=\"width:25px;\" MAX=4>
-            <SELECT NAME=REMINDER_UNIT onchange='javascript:setReminderDateTime(\"REMINDER_VALUE\",\"REMINDER_UNIT\",\"REMINDER_DATE_TIME\");' >
+            &nbsp;$lang[1975] <INPUT onchange='setReminderDateTime(\"REMINDER_VALUE\",\"REMINDER_UNIT\",\"REMINDER_DATE_TIME\");' TYPE=\"TEXT\" NAME=\"REMINDER_VALUE\" STYLE=\"width:25px;\" MAX=4>
+            <SELECT NAME=REMINDER_UNIT onchange='setReminderDateTime(\"REMINDER_VALUE\",\"REMINDER_UNIT\",\"REMINDER_DATE_TIME\");' >
             <OPTION VALUE=min>$lang[1980]</OPTION>
             <OPTION VALUE=hour>$lang[1981]</OPTION>
             <OPTION VALUE=day>$lang[1982]</OPTION>
             <OPTION VALUE=week>$lang[1983]</OPTION>
-            <OPTION VALUE=month>$lang[1984]</OPTION>
+            <OPTION VALUE=month>$lang[296]</OPTION>
             <OPTION VALUE=year>$lang[1985]</OPTION>
             </SELECT></TD>
             <TD nowrap align='right'>$lang[1976]
-            <INPUT onchange='javascript:{setReminderValue(\"REMINDER_DATE_TIME\",\"REMINDER_VALUE\",\"REMINDER_UNIT\");}' TYPE=TEXT NAME=\"REMINDER_DATE_TIME\" STYLE=\"width:115px;\" VALUE=\"".($changeViewId ? $changedate : local_date(1))."\" MAX=16>
+            <INPUT onchange='setReminderValue(\"REMINDER_DATE_TIME\",\"REMINDER_VALUE\",\"REMINDER_UNIT\");' TYPE=TEXT NAME=\"REMINDER_DATE_TIME\" STYLE=\"width:115px;\" VALUE=\"".($changeViewId ? $changedate : local_date(1))."\" MAX=16>
             <i class=\"lmb-icon lmb-caret-right\" style=\"cursor:pointer\" id=\"CALENDER_DISPLAY\" onclick=\"document.getElementsByName('REMINDER_UNIT')[0][2].selected=true; lmb_datepicker(event,this,'REMINDER_DATE_TIME',document.getElementsByName('REMINDER_DATE_TIME')[0].value,'".dateStringToDatepicker(setDateFormat(0,1))."',10);\"></i>&nbsp;&nbsp;</TD></TR></TABLE>
-            <CENTER><hr></CENTER>";
+            <div style=\"text-align: center;\"><hr></div>";
         pop_right();
     }
     
@@ -1407,6 +1402,7 @@ function dyns_showReminder($params){
             echo "<TR>
                 <TD valign=top>$lang[2643]:</TD>
                 <TD>
+                	<input type=\"hidden\" ID=\"REMINDER_USERGROUP\" NAME=\"REMINDER_USERGROUP\">
                     <div class=\"fgtabchange\">
                         <TABLE cellpadding=0 cellspacing=0 width=\"100%\">
                             <TR>
@@ -1420,7 +1416,7 @@ function dyns_showReminder($params){
                                 </TD>
                             </TR>
                         </TABLE>
-                        <div id=\"contWvUGList\" style=\"width:100%;background-color:".$farbschema["WEB9"]."\"></div>
+                        <div id=\"contWvUGList\" style=\"width:100%;background-color:".$farbschema["WEB8"]."\"></div>
                     </div>
                     <div id=\"lmb_reminderAddUserGroupuser\" class=\"ajax_container\" style=\"display:none;position:absolute;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>
                     <div id=\"lmb_reminderAddUserGroupgroup\" class=\"ajax_container\" style=\"text-align:left;display:none;position:absolute;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>
@@ -1433,7 +1429,7 @@ function dyns_showReminder($params){
     if(!is_null($defaults['remark'])){
         echo "<tr style=\"display:none;\"><td><textarea name=\"REMINDER_BEMERKUNG\">{$defaults['remark']}</textarea></td></tr>";
     } else {
-        echo "<tr><td valign=\"top\">$lang[1977]:</td><td><textarea name=\"REMINDER_BEMERKUNG\" style=\"width:190px;height:20px;\" onkeyup=\"limbasResizeTextArea(this,5);\">" . ($changeViewId ? $changedesc : "") . "</textarea></td></tr>";
+        echo "<tr><td valign=\"top\">$lang[295]:</td><td><textarea name=\"REMINDER_BEMERKUNG\" style=\"width:190px;height:20px;\" onkeyup=\"limbasResizeTextArea(this,5);\">" . ($changeViewId ? $changedesc : "") . "</textarea></td></tr>";
     }
     
     # mail
@@ -1465,7 +1461,7 @@ function dyns_showReminder($params){
     
     # separator
     if(is_null($defaults['remark']) AND is_null($defaults['mail']) AND is_null($defaults['category'])) {
-        echo "<tr><td colspan=\"2\"><center><hr></center><td></tr>";
+        echo "<tr><td colspan=\"2\"><div style=\"text-align: center;\"><hr></div><td></tr>";
     }
     
 	# delete all in list
@@ -1473,7 +1469,7 @@ function dyns_showReminder($params){
 			echo "
 			<tr><td valign=\"top\"><b>$lang[2644]:</b></td>
 			<td>".$greminder[$gtabid]["name"][$gfrist]."</td>
-			<td><i class=\"lmb-icon lmb-close-alt\" style=\"cursor:pointer;\" OnClick=\"javascript:limbasDivShowReminder(event,'','','$gfrist');\" Title=\"".$lang[721]."\"></i></td>
+			<td><i class=\"lmb-icon lmb-close-alt\" style=\"cursor:pointer;\" OnClick=\"limbasDivShowReminder(event,'','','$gfrist');\" Title=\"".$lang[721]."\"></i></td>
 			</tr>";
 	# delete single category
     }elseif(!$changeViewId AND $reminder = lmb_getReminder($gtabid,$ID,$category) AND !$defaults['hidecurrent']){
@@ -1503,8 +1499,8 @@ function dyns_showReminder($params){
                 $remval = $reminder["id"][$remkey];
                 echo "<tr>
 				<td></td>
-				<td><a href=\"#\" title=\"".$reminder["desc"][$remkey]."\" onclick=\"javascript:limbasDivShowReminder(event,'','','','$remval');\">".lmb_substr($reminder["datum"][$remkey],0,16)."</a></td>
-				<td><i class=\"lmb-icon lmb-close-alt\" style=\"cursor:pointer;\" OnClick=\"javascript:limbasDivShowReminder(event,'','','$remval');\" Title=\"".$lang[721]."\"></i></td>";
+				<td><a href=\"#\" title=\"".$reminder["desc"][$remkey]."\" onclick=\"limbasDivShowReminder(event,'','','','$remval');\">".lmb_substr($reminder["datum"][$remkey],0,16)."</a></td>
+				<td><i class=\"lmb-icon lmb-close-alt\" style=\"cursor:pointer;\" OnClick=\"limbasDivShowReminder(event,'','','$remval');\" Title=\"".$lang[721]."\"></i></td>";
 				if($reminder["from"][$remkey]){echo "<br><i>".$userdat["bezeichnung"][$reminder["from"][$remkey]]."</i>";}
 				echo "</tr>";
             }
@@ -1519,7 +1515,7 @@ function dyns_showReminder($params){
 
 
 	pop_left($mwidth);
-	echo "<CENTER><input type=button value=\"" . ($changeViewId ? $lang[2443] : $lang[1979]) . "\" onclick=\"" . ($changeViewId ? "limbasDivShowReminder(event,'','','','','$changeViewId');" : "limbasDivShowReminder(event,'','1');") . "\">&nbsp;<input type=button value=$lang[1978] onClick='javascript:{activ_menu=0;divclose();}'></CENTER>";
+	echo "<CENTER><input type=button value=\"" . ($changeViewId ? $lang[2443] : $lang[1038]) . "\" onclick=\"" . ($changeViewId ? "limbasDivShowReminder(event,'','','','','$changeViewId');" : "limbasDivShowReminder(event,'','1');") . "\">&nbsp;<input type=button value=$lang[844] onClick='activ_menu=0;divclose();'></CENTER>";
 	echo "<INPUT TYPE=HIDDEN NAME=WIEDERVORLAGENAME ID=WIEDERVORLAGEID>";
 	pop_right();
 
@@ -1665,13 +1661,12 @@ function print_dublicateMenu($filelist,$fp=null){
 	global $lang;
 	global $gtab;
 
-	echo "<DIV ID=\"limbasDivMenuVersioning\" class=\"lmbContextMenu\" style=\"top:40%;left:40%;z-index:99994;\" OnClick=\"activ_menu = 1;\">";
+
 	echo "<form name=\"form_dublUpload\" ID=\"limbasDivMenuVersioning\">";
-	
-	pop_top('limbasDivMenuVersioning',250);
+
+	pop_top(0,250);
 	pop_left(250);
 	echo "<table style=\"background-color:\" border=0 align=\"center\" width=\"90%\" cellpadding=0 cellspacing=0>
-	<tr><td align=\"center\" colspan=\"5\" style=\"color:red;\">".$lang[1683]." (".count($filelist["typ"]).")</td></tr>
 	<tr><td align=\"center\" colspan=\"5\"><hr></td></tr>";
 	$sum = count($filelist["id"]);
 	$i = 0;
@@ -1682,11 +1677,11 @@ function print_dublicateMenu($filelist,$fp=null){
 			echo "<tr><td align=\"center\" colspan=\"5\"><B>".$filelist["name"][$key]."</B></TD></TR>";
 			echo "<tr><td>&nbsp;".$lang[2332]."</td><td><input type=\"radio\" name=\"fileVersionType_$bzm\" value=\"skip\" OnChange=\"updateDublicateUploads($sum,0,$bzm)\" CHECKED></td><td style=\"width:30px;\">&nbsp;</td>";
 			echo "<td>&nbsp;".$lang[2210]."</td><td><input type=\"radio\" name=\"fileVersionType_$bzm\" value=\"rename\" OnChange=\"updateDublicateUploads($sum,1,$bzm)\"></td></tr>";
-			echo "</tr><tr><td>&nbsp;".$lang[2192]."</td><td><input type=\"radio\" name=\"fileVersionType_$bzm\" value=\"overwrite\" OnChange=\"updateDublicateUploads($sum,2,$bzm)\"></td><td style=\"width:30px;\">&nbsp;</td>";
+			echo "</tr><tr><td>&nbsp;".$lang[1002]."</td><td><input type=\"radio\" name=\"fileVersionType_$bzm\" value=\"overwrite\" OnChange=\"updateDublicateUploads($sum,2,$bzm)\"></td><td style=\"width:30px;\">&nbsp;</td>";
 			if($gtab["versioning"][$gtab["argresult_id"]["LDMS_FILES"]] AND $filelist["typ"][$key] != "f"){$disabled = "";}else{$disabled = "disabled";}
-			echo "<td>&nbsp;".$lang[2193]."</td><td><input type=\"radio\" $disabled name=\"fileVersionType_$bzm\" value=\"versioning\" OnChange=\"updateDublicateUploads($sum,3,$bzm)\"></td><td style=\"width:30px;\">&nbsp;</td>";
+			echo "<td>&nbsp;".$lang[2132]."</td><td><input type=\"radio\" $disabled name=\"fileVersionType_$bzm\" value=\"versioning\" OnChange=\"updateDublicateUploads($sum,3,$bzm)\"></td><td style=\"width:30px;\">&nbsp;</td>";
 			echo "<tr><td align=\"center\" colspan=\"5\"><hr></td></tr>";
-			echo "<tr style=\"display:none;\" id=\"versioning_subj_$bzm\"><td colspan=\"5\"><textarea style=\"width:100%;heigt:30px;\" name=\"fileVersionSubj_$bzm\" maxlength=180></textarea></td>";
+			echo "<tr style=\"display:none;\" id=\"versioning_subj_$bzm\"><td colspan=\"5\"><textarea style=\"width:100%;height:30px;\" name=\"fileVersionSubj_$bzm\" maxlength=180></textarea></td>";
 			echo "<input type=\"hidden\" id=\"fileVersionId_$bzm\" value=\"$value\">";
 			break;
 		}
@@ -1705,24 +1700,24 @@ function print_dublicateMenu($filelist,$fp=null){
 			echo "<tr><td>&nbsp;".$lang[2332]."</td><td><input type=\"radio\" name=\"fileVersionType_$bzm\" value=\"skip\" CHECKED><td style=\"width:30px;\">&nbsp;</td>";
 			echo "<td>&nbsp;".$lang[2210]."</td><td><input type=\"radio\" name=\"fileVersionType_$bzm\" value=\"rename\" OnClick=\"document.getElementById('versioning_subj_$bzm').style.display='none';\"></td></tr>";
 			if($filelist["vid"][$key] > 1){
-				echo "</tr><tr><td>&nbsp;".$lang[2192]."</td><td><input type=\"radio\" name=\"fileVersionType_$bzm\" value=\"overwrite\"></td><td style=\"width:30px;\">&nbsp;</td>";
+				echo "</tr><tr><td>&nbsp;".$lang[1002]."</td><td><input type=\"radio\" name=\"fileVersionType_$bzm\" value=\"overwrite\"></td><td style=\"width:30px;\">&nbsp;</td>";
 			}else{
-				echo "</tr><tr><td>&nbsp;".$lang[2192]."</td><td><input type=\"radio\" name=\"fileVersionType_$bzm\" value=\"overwrite\" OnClick=\"document.getElementById('versioning_subj_$bzm').style.display='none';\"></td><td style=\"width:30px;\">&nbsp;</td>";
+				echo "</tr><tr><td>&nbsp;".$lang[1002]."</td><td><input type=\"radio\" name=\"fileVersionType_$bzm\" value=\"overwrite\" OnClick=\"document.getElementById('versioning_subj_$bzm').style.display='none';\"></td><td style=\"width:30px;\">&nbsp;</td>";
 			}
 			if($gtab["versioning"][$gtab["argresult_id"]["LDMS_FILES"]] AND $filelist["typ"][$key] != "f"){$disabled = "";}else{$disabled = "disabled";}
-			echo "<td>&nbsp;".$lang[2193]."</td><td><input type=\"radio\" $disabled name=\"fileVersionType_$bzm\" value=\"versioning\" OnClick=\"document.getElementById('versioning_subj_$bzm').style.display='';\"></td><td style=\"width:30px;\">&nbsp;</td>";
+			echo "<td>&nbsp;".$lang[2132]."</td><td><input type=\"radio\" $disabled name=\"fileVersionType_$bzm\" value=\"versioning\" OnClick=\"document.getElementById('versioning_subj_$bzm').style.display='';\"></td><td style=\"width:30px;\">&nbsp;</td>";
 			echo "<tr><td align=\"center\" colspan=\"5\"><hr></td></tr>";
-			echo "<tr style=\"display:none;\" id=\"versioning_subj_$bzm\"><td colspan=\"5\"><textarea style=\"width:100%;heigt:30px;\" name=\"fileVersionSubj_$bzm\" maxlength=180></textarea></td>";
+			echo "<tr style=\"display:none;\" id=\"versioning_subj_$bzm\"><td colspan=\"5\"><textarea style=\"width:100%;height:30px;\" name=\"fileVersionSubj_$bzm\" maxlength=180></textarea></td>";
 			echo "<input type=\"hidden\" id=\"fileVersionId_$bzm\" value=\"$value\">";
 		}
 	}
 	echo "</table>";
 
-	echo "<table align=\"center\" width=\"90%\"><tr><td align=\"center\">&nbsp;<input type=\"button\" value=\"OK\" OnClick=\"selectDublicateUploads(event,$sum,'$fp')\">&nbsp;<input type=\"button\" value=\"abbrechen\" OnClick=\"document.getElementById('dublicateCheckLayer').style.visibility='hidden'\"></td></tr></table>";
+	echo "<table align=\"center\" width=\"90%\"><tr><td align=\"center\">&nbsp;<input type=\"button\" value=\"OK\" OnClick=\"selectDublicateUploads($sum)\">&nbsp;<input type=\"button\" value=\"abbrechen\" OnClick=\"$('#dublicateCheckLayer').dialog('close');\"></td></tr></table>";
 
 	pop_right(250);
 	pop_bottom(250);
-	echo "<form></DIV>";
+	echo "<form>";
 }
 
 # ---- Explorer save Copy/Paste event for Symbols --------
@@ -1736,6 +1731,7 @@ function dyns_fileUploadCheck($params){
 	global $session;
 	global $gmimetypes;
 	global $lang;
+	global $filestruct;
 	
 	require_once("extra/explorer/filestructure.lib");
 	require_once("gtab/gtab.lib");
@@ -1767,9 +1763,32 @@ function dyns_fileUploadCheck($params){
 			}
 		}
 	}
-		
-	if($existingFile["typ"]){
-		print_dublicateMenu($existingFile,$params["fp"]);
+
+	$result = array();
+
+	# upload to cloud
+//	if ($cloudID = $filestruct['cloud'][$params['level']]) {
+//        $result['uploadUrl'] = 'http://127.0.0.1/dev/public/upload.php?action=fileUpload';
+//	} else {
+		$result['uploadUrl'] = 'main_dyns.php?actid=fileUpload';
+//	}
+
+	if($existingFile['typ']){
+		ob_start();
+		print_dublicateMenu($existingFile, $params['fp']);
+		$html = ob_get_clean();
+        $result['status'] = 'confirmDuplicates';
+        $result['html'] = lmb_utf8_encode($html);
+	} else {
+        $result['status'] = 'upload';
+	}
+
+	$GLOBALS["noencode"] = 1;
+
+	if($result){
+		echo json_encode($result);
+	}else{
+		echo "false";
 	}
 }
 
@@ -1896,7 +1915,7 @@ function dyns_fileMetaInfo($params){
 		$boolValue = false;
 		$strMetaEcho = "";
 		$boolMetaValue = false;
-		echo "<TABLE STYLE=\"background-color:$farbschema[WEB11];border:1px solid #CCCCCC;padding:4px;width:100%\">";
+		echo "<TABLE STYLE=\"background-color:{$farbschema['WEB11']};border:1px solid #CCCCCC;padding:4px;width:100%\">";
 		foreach ($gfile['id'] as $key => $val){
 			if(!$gfile["virt"][$key]){
 				if($gfile["tabid"][$key] != $prev_tabid){
@@ -2012,10 +2031,10 @@ function dyns_fileSourceInfo($params){
 
 	# Verknüpfungen
 	if($forigin){
-		echo "<TABLE STYLE=\"background-color:$farbschema[WEB11];border:1px solid #CCCCCC;padding:4px;width:100%\">";
+		echo "<TABLE STYLE=\"background-color:{$farbschema['WEB11']};border:1px solid #CCCCCC;padding:4px;width:100%\">";
 		foreach($forigin as $key => $value){
 			foreach($value as $key1 => $value1){
-				echo "<tr bgcolor=\"".$farbschema["WEB10"]."\"><td COLSPAN=\"5\"><b STYLE=\"color:$farbschema[WEB4]\">".$gtab["desc"][$key]."&nbsp;&nbsp;(".$forigin[$key][$key1]["field"].")</b></td></tr>";
+				echo "<tr bgcolor=\"".$farbschema["WEB10"]."\"><td COLSPAN=\"5\"><b STYLE=\"color:{$farbschema['WEB4']}\">".$gtab["desc"][$key]."&nbsp;&nbsp;(".$forigin[$key][$key1]["field"].")</b></td></tr>";
 				foreach($forigin[$key][$key1]["id"] as $key2 => $value2){
 					echo "<tr>
 					<td style=\"width:20px;\"></td><td OnClick=\"open_tab('".$key."','".$forigin[$key][$key1]["id"][$key2]."')\" class=\"link\">".$forigin[$key][$key1]["id"][$key2]."</td>
@@ -2048,7 +2067,7 @@ function dyns_fileVersioningInfo($params)
     
     if ($file_id) {
         
-        echo "<TABLE STYLE=\"background-color:$farbschema[WEB11];border:1px solid #CCCCCC;padding:4px;width:100%\">";
+        echo "<TABLE STYLE=\"background-color:{$farbschema['WEB11']};border:1px solid #CCCCCC;padding:4px;width:100%\">";
         
         // ---------------- Versionen -----------------
         $sqlquery = "SELECT ID,NAME,VDESC,SIZE,ERSTUSER,ERSTDATUM FROM LDMS_FILES WHERE VPID = " . $file_id . " ORDER BY ERSTDATUM DESC";
@@ -2060,7 +2079,7 @@ function dyns_fileVersioningInfo($params)
         while (odbc_fetch_row($rs)) {
             $vid = odbc_result($rs, "ID");
             $vfile["id"][] = $vid;
-            $vfile["erstuser"][] = $userdat[vorname][odbc_result($rs, "ERSTUSER")] . " " . $userdat[name][odbc_result($rs, "ERSTUSER")];
+            $vfile["erstuser"][] = $userdat['vorname'][odbc_result($rs, "ERSTUSER")] . " " . $userdat['name'][odbc_result($rs, "ERSTUSER")];
             $vfile["erstdatum"][] = get_date(odbc_result($rs, "ERSTDATUM"), 2);
             $vfile["size"][] = odbc_result($rs, "SIZE");
             $vfile["vnote"][] = odbc_result($rs, "VDESC");
@@ -2114,7 +2133,7 @@ function dyns_fileDublicateInfo($params){
 	require_once("extra/explorer/filestructure.lib");
 	get_filestructure();
 	
-	echo "<TABLE STYLE=\"background-color:$farbschema[WEB11];border:1px solid #CCCCCC;padding:4px;width:100%\">";
+	echo "<TABLE STYLE=\"background-color:{$farbschema['WEB11']};border:1px solid #CCCCCC;padding:4px;width:100%\">";
 	
 	$sqlquery = "SELECT ID,LEVEL,NAME,SIZE,ERSTUSER,ERSTDATUM FROM LDMS_FILES WHERE MD5 = '".parse_db_string($file_md5,50)."' AND ID != ".parse_db_int($file_id,18);
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -2159,7 +2178,7 @@ function dyns_fileOCRInfo($params){
 			}
 		}
 
-		echo "<TABLE STYLE=\"background-color:$farbschema[WEB11];border:1px solid #CCCCCC;padding:4px;width:100%\">";
+		echo "<TABLE STYLE=\"background-color:{$farbschema['WEB11']};border:1px solid #CCCCCC;padding:4px;width:100%\">";
 		$sqlquery = "SELECT ID,OCR,OCRD,OCRT,OCRS,NAME,SECNAME,MIMETYPE FROM LDMS_FILES WHERE ID = ".$file_id." AND DEL = ".LMB_DBDEF_FALSE." ORDER BY ERSTDATUM ASC";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
@@ -2205,7 +2224,7 @@ function dyns_fileIndizeInfo($params){
 	$file_id = $params["par1"];
 
 	if($file_id){
-		echo "<TABLE STYLE=\"background-color:$farbschema[WEB11];border:1px solid #CCCCCC;padding:4px;width:100%\">";
+		echo "<TABLE STYLE=\"background-color:{$farbschema['WEB11']};border:1px solid #CCCCCC;padding:4px;width:100%\">";
 		$sqlquery = "SELECT ID,INDD,INDT,INDC FROM LDMS_FILES WHERE ID = ".$file_id." AND DEL = ".LMB_DBDEF_FALSE." ORDER BY ERSTDATUM ASC";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
@@ -2583,6 +2602,8 @@ function dyns_startWorkflowWithTable($params)
 function dyns_getDiag($params){
     global $gdiaglist;
     global $umgvar;
+    global $gsr;
+    global $filter;
     
     $diag_id = $params['diag_id'];
     $gtabid = $params['gtabid'];
@@ -2655,7 +2676,7 @@ function dyns_getSelectValues($params){
 	# SELECT / ATTRIBUTE
 	if($gfield[$params['gtabid']]["field_type"][$params['fieldid']] == 19){$tabtyp = "LMB_ATTRIBUTE";$aselect = ",LMB_ATTRIBUTE_D.VALUE_STRING,LMB_ATTRIBUTE_D.VALUE_NUM,LMB_ATTRIBUTE_W.TYPE";}else{$tabtyp = "LMB_SELECT";}
 
-	echo "<div class=\"lmbContextMenu\">";
+//	echo "<div class=\"lmbContextMenu\">";
 	pop_left();
 	echo "<table border=\"0\" cellpadding=\"0\" cellspacing=\"1\" style=\"padding:2px;\">";
 
@@ -2682,7 +2703,7 @@ function dyns_getSelectValues($params){
 	echo "</table>";
 	pop_right();
 	pop_bottom();
-	echo "</div>";
+//	echo "</div>";
 }
 
 /**
@@ -3006,7 +3027,7 @@ function dyns_versionDiffResult($params,$sub=0){
 							$fielddesc = " -> (".$result1.")";
 							if(!$sub){$glob_fielddesc = $result1;}
 						}else{
-							$fielddesc = " -> ".$lang[985];
+							$fielddesc = " -> ".$lang[770];
 						}
 					}
 					# key field
@@ -3202,7 +3223,7 @@ function dyns_fileVersionDiff($params){
 		if($target1 AND $target2){
 			$diff = textDiff($target1,$target2);
 			if($diff){
-				echo "<B>".odbc_result($rs, "NAME")."</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<SPAN STYLE=\"color:blue\">".$lang[1784]."<B> ".$vcount1."</B> -> ".$lang[1784]."<B> ".$vcount2."</B></SPAN><BR><hr>";
+				echo "<B>".odbc_result($rs, "NAME")."</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<SPAN STYLE=\"color:blue\">".$lang[2]."<B> ".$vcount1."</B> -> ".$lang[2]."<B> ".$vcount2."</B></SPAN><BR><hr>";
 				echo str_replace("\t","&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;",$diff);
 			}
 		}
@@ -3220,8 +3241,8 @@ function dyns_fileVersionDiff($params){
 /**
  * # Select Fieldtype
  *
- * @param unknown_type $params
- * @return unknown
+ * @param array $params
+ * @return void
  */
 function dyns_menuReportOption($params){
 	global $lang;
@@ -3231,76 +3252,133 @@ function dyns_menuReportOption($params){
 	global $db;
 	global $sysfont;
 	global $styletyp;
+	global $gprinter;
+	global $LINK;
 
-	$reportspec = $greportlist[$params["gtabid"]];
-	if(!$reportspec){return false;}
+	$reportspec = $greportlist[$params['gtabid']];
+	if(!$reportspec){return;}
 	
-	require_once("extra/report/report.dao");
+	require_once('extra/report/report.dao');
 	
-	$action = $params["action"];
-	$report_id = $params["reportid"];
-	$report_name = $reportspec["name"][$report_id];
-	$report_savename = $reportspec["savename"][$report_id];
-	$report_defformat = $reportspec["defformat"][$report_id];
-	$report_medium = $params["report_medium"];
-	$report_output = $params["report_output"];
-	$report_ext = $params["report_ext"];
-	$report_rename = $params["report_rename"];
-	$gtabid = $params["gtabid"];
-	$use_record = $params["use_record"];
-	$ID = $params["ID"];
-	$listmode = $greportlist[$gtabid]["listmode"][$report_id];
+	$action = $params['action'];
+	$report_id = $params['reportid'];
+	$report_name = $reportspec['name'][$report_id];
+	$report_savename = $reportspec['savename'][$report_id];
+	$report_defformat = $reportspec['defformat'][$report_id];
+	$report_medium = $params['report_medium'];
+	$report_output = $params['report_output'];
+	$report_ext = $params['report_ext'];
+    $report_rename = $params['report_rename'];
+    $report_printer = intval($params['report_printer']);
+	$gtabid = $params['gtabid'];
+	$use_record = $params['use_record'];
+	$ID = $params['ID'];
+	$listmode = $greportlist[$gtabid]['listmode'][$report_id];
 	if(!$report_medium){$report_medium = $report_defformat;}
 	
 	if($report_output){
 		
-		$filter = $GLOBALS["filter"];
-		$gsr = $GLOBALS["gsr"];
-		if($params["verkn_ID"]){
-			require_once("gtab/gtab.lib");
-			$verkn = set_verknpf($params["verkn_tabid"],$params["verkn_fieldid"],$params["verkn_ID"],null,null,$params["verkn_showonly"],1);
+		$filter = $GLOBALS['filter'];
+		$gsr = $GLOBALS['gsr'];
+		if($params['verkn_ID']){
+			require_once('gtab/gtab.lib');
+			$verkn = set_verknpf($params['verkn_tabid'],$params['verkn_fieldid'],$params['verkn_ID'],null,null,$params['verkn_showonly'],1);
 		}
 		
-		require_once("extra/explorer/filestructure.lib");
-		require_once("extra/report/report_".lmb_substr($report_medium,0,3).".php");
-		if($report_output==1 OR $report_output==3){
-			$path = trim(str_replace($umgvar["pfad"],"",$generatedReport),"/") . '?v=' . date("U");
-			echo "<Script language=\"JavaScript\">
-			open(\"$path\");
-			</Script>
-			";
+		require_once('extra/explorer/filestructure.lib');
+		require_once('extra/report/report_'.lmb_substr($report_medium,0,3).'.php');
+		if($report_output == 1 OR $report_output == 3){
+			$path = trim(str_replace($umgvar['pfad'],'',$generatedReport),'/') . '?v=' . date('U');
+			echo "<Script language=\"JavaScript\">open(\"$path\");</Script>";
+		} else if ($report_output == 4 and $LINK[304]) {
+            if (!lmbPrint($report_printer, $generatedReport)) {
+            	lmb_log::error('print failed', 'print failed!', $gtabid);
+			}
 		}
 	}
 
-	$opt["val"] = array("pdf","xml");
-	$opt["desc"] = array("pdf","xml");
-	if($reportspec["odt_template"][$report_id]){
-		$opt["val"][] = "odt";
-		$opt["desc"][] = "text";
+	$opt['val'] = array('pdf','xml');
+	$opt['desc'] = array('pdf','xml');
+	if($reportspec['odt_template'][$report_id]){
+		$opt['val'][] = 'odt';
+		$opt['desc'][] = 'text';
 	}
-	if($reportspec["ods_template"][$report_id]){
-		$opt["val"][] = "ods";
-		$opt["desc"][] = "spreadsheet";
+	if($reportspec['ods_template'][$report_id]){
+		$opt['val'][] = 'ods';
+		$opt['desc'][] = 'spreadsheet';
 	}
 	
 	$report_rename = reportSavename($report_name,$report_savename,$ID,$report_medium,$report_rename, false);
 	
-	echo "<form name=\"report_form\">";
+	echo '<form name="report_form">';
 	pop_top('limbasDivMenuReportOption');
 	pop_select('',$opt,$report_medium,1,'report_medium',$lang[2502]."&nbsp;",'');
-	$zl = "document.report_form.report_rename.value=this.value";
-	if($params["action"] != "gtab_erg"){
-		pop_input2("","report_rename",$report_rename,$readonly,$title,$titlesize);
+	if($params['action'] != 'gtab_erg'){
+		pop_input2('','report_rename',$report_rename,$readonly,$title,$titlesize);
 	}
 	pop_line();
-	pop_menu2($lang[1785],"","","lmb-icon-cus lmb-script-go","","limbasReportMenuOptions(event,'','".$params["gtabid"]."','".$params["reportid"]."','$ID',1,'$listmode')");
-	pop_menu2($lang[1787],"","lmbReportMenuOptionsArchive","lmb-icon-cus lmb-script-save","","limbasReportMenuOptions(event,'','".$params["gtabid"]."','".$params["reportid"]."','$ID',2,'$listmode')");
+	pop_menu2($lang[1739],'','','lmb-icon-cus lmb-script-go','',"limbasReportMenuOptions(event,'','{$params['gtabid']}','{$params['reportid']}','{$ID}',1,'{$listmode}')");
+    pop_menu2($lang[1787],'','lmbReportMenuOptionsArchive','lmb-icon-cus lmb-script-save','',"limbasReportMenuOptions(event,'','{$params['gtabid']}','{$params['reportid']}','{$ID}',2,'{$listmode}')");
+    if ($LINK[304] and $gprinter) {
+        # separator
+        pop_line();
+
+        # print button
+		pop_menu(304, "limbasReportMenuOptions(event,'','{$params['gtabid']}','{$params['reportid']}','{$ID}',4,'{$listmode}', null, null, $('#lmbReportMenuOptionsPrinter').val())");
+
+        # printer selection
+        $opt = array();
+        $sel = '';
+        foreach ($gprinter as $id => $printer) {
+            $opt['val'][] = $id;
+            $opt['desc'][] = $printer['name'];
+            if ($printer['default']) {
+                $sel = $id;
+            }
+        }
+		pop_select('', $opt, $sel, 1, 'lmbReportMenuOptionsPrinter', $lang[2939]);
+    }
 	pop_bottom();
 	echo "</form>";
 	
 }
 
 
+function dyns_printFile($params) {
+	global $umgvar;
+	global $LINK;
+
+	if (!$LINK[304]) {
+		return;
+	}
+
+	$printerID = intval($params['printerID']);
+	$fileIDs = json_decode($params['fileIDs']);
+
+	require_once('extra/explorer/filestructure.lib');
+
+	foreach ($fileIDs as $fileID) {
+		$fileID = parse_db_int($fileID);
+		$file = file_download($fileID);
+		if (!$file) {
+			continue; # TODO maybe user message
+		}
+
+        $filePath = $umgvar['path'] . '/' . $file['path'];
+
+		# try to convert to pdf
+		if (LmbUnoconv::isEnabled() and $file['mimetype'] != 'application/pdf') {
+            $newFilePath = $filePath . '.pdf';
+            if (LmbUnoconv::convertFile($filePath, $newFilePath, 'pdf')) {
+            	$filePath = $newFilePath;
+			}
+        }
+
+        if (!lmbPrint($printerID, $filePath)) {
+            lmb_log::error('Print failed', 'Drucken fehlgeschlagen!');
+        }
+    }
+}
 
 
 /**
@@ -3323,7 +3401,7 @@ function dyns_UGtype($params){
 	$usgr = $params["usgr"];
 	$usgra = explode("_",$usgr);
 
-	$redresult["activearray"] = array();
+    $redresult["activearray"] = array();
 	if(!$ID OR !$fieldid OR !$gtabid){return false;}
 
 	$onlyfield[$gtabid] = array($fieldid);
@@ -3358,7 +3436,9 @@ function dyns_UGtype($params){
 		$gutyp = odbc_result($rs, "TYP");
 		$guid = odbc_result($rs, "UGID");
 		$ers = "";
-		if($typ == 1){$ers = "<i class=\"lmb-icon lmb-erase\" OnClick=\"lmb_UGtype('$usgr','','$gtabid','$fieldid','$ID','');\"></i>&nbsp;";}
+//		if($typ == 1){
+			$ers = "<i class=\"lmb-icon lmb-erase\" style=\"cursor: pointer;\" OnClick=\"lmb_UGtype('{$guid}_{$gutyp}','','$gtabid','$fieldid','$ID','');\"></i>&nbsp;";
+//		}
 		if($gutyp == 'u'){
 			$gres[] = "<span>".$ers."<i class=\"lmb-icon lmb-icon-8 lmb-user\"></i> ".$userdat["bezeichnung"][$guid].$br."</span>";
 		}elseif($gutyp == 'g'){
@@ -3368,7 +3448,13 @@ function dyns_UGtype($params){
 
 	if($gres){
 		echo "<hr>";
-		if(!$gfield[$gtabid]["select_cut"][$fieldid] OR lmb_strtoupper($gfield[$gtabid]["select_cut"][$fieldid]) == "<OL>" OR lmb_strtoupper($gfield[$gtabid]["select_cut"][$fieldid]) == "<UL>" OR lmb_strtoupper($gfield[$gtabid]["select_cut"][$fieldid]) == "<LI>"){echo "<LI>";$cut = "<LI>";}else{$cut = $gfield[$gtabid]["select_cut"][$fieldid];}
+		if(!$gfield[$gtabid]["select_cut"][$fieldid]) {
+			$cut = '<br>';
+		} else if(lmb_strtoupper($gfield[$gtabid]["select_cut"][$fieldid]) == "<OL>" OR lmb_strtoupper($gfield[$gtabid]["select_cut"][$fieldid]) == "<UL>" OR lmb_strtoupper($gfield[$gtabid]["select_cut"][$fieldid]) == "<LI>"){
+			echo "<LI>";$cut = "<LI>";
+		} else {
+			$cut = $gfield[$gtabid]["select_cut"][$fieldid];
+		}
 		echo implode($cut,$gres);
 	}
 }
@@ -3425,8 +3511,8 @@ function dyns_showUserGroupsSearch($params){
 	$searchvalue = parse_db_string($params["value"],50);
 	$usefunction = $params["usefunction"];
 	$parameter = $params["parameter"];
-	
-	pop_closetop($usefunction.$typ);
+
+    pop_closetop($usefunction.$typ);
 	
 	if($typ == "user"){
 		$sqlquery = "SELECT LMB_USERDB.USER_ID
@@ -3821,7 +3907,7 @@ function dyns_getRelationTree($params){
 			
 			echo "<tr>
 			<td style=\"width:18px\" valign=\"top\"><img src=\"pic/outliner/".$imgpref.$outliner.".gif\" id=\"lmbTreePlus_".$treeid."_".$gtabid."_".$gval."_".$rand."\" align=\"top\" border=\"0\" style=\"cursor:pointer\" onclick=\"lmb_treeElOpen('$treeid','$gtabid','$gval','$rand')\"></td>
-			<td align=\"left\" nowrap><a onclick=\"lmbTreeOpenData('$gtabid','$gval','".$params["verkn_tabid"]."','".$params["verkn_fieldid"]."','".$params["verkn_ID"]."','$tform')\" title=\"".$gtitle."\">&nbsp;".$gvalue."</a></td>
+			<td align=\"left\" nowrap><a class=\"lmbFileTreeItem\" onclick=\"lmbTreeOpenData('$gtabid','$gval','".$params["verkn_tabid"]."','".$params["verkn_fieldid"]."','".$params["verkn_ID"]."','$tform')\" title=\"".$gtitle."\">&nbsp;".$gvalue."</a></td>
 			</tr>
 			<tr style=\"display:none\" id=\"lmbTreeEl_".$treeid."_".$gtabid."_".$gval."_".$rand."\"><td colspan=\"2\" align=\"left\"><table cellpadding=\"0\" cellspacing=\"0\">
 			";
@@ -3843,7 +3929,7 @@ function dyns_getRelationTree($params){
 				<td style=\"width:18px\"><img src=\"pic/outliner/join.gif\" valign=\"top\"></td>
 				<td style=\"width:18px\"><img src=\"pic/outliner/".$simgpref.".gif\" align=\"top\" style=\"cursor:pointer\" id=\"lmbTreeSubPlus_".$treeid."_".$rval."_".$gval."_".$rand."\" onclick=\"lmb_treeSubOpen('$treeid','$rval','$gval','$rand','$gtabid','$rkey')\"></td>
 				<td style=\"width:18px\"><i class=\"lmb-icon $icon\" align=\"top\" border=\"0\" id=\"lmbTreeSubBox_".$treeid."_".$rval."_".$gval."_".$rand."\"></i></td>
-				<td nowrap align=\"left\">&nbsp;<b><a onclick=\"lmbTreeOpenTable('$rval','$gtabid','$rkey','$gval')\">".$gfield[$gtabid]["spelling"][$rkey]."</a></b></td>
+				<td nowrap align=\"left\">&nbsp;<b><a class=\"lmbFileTreeItem\" onclick=\"lmbTreeOpenTable('$rval','$gtabid','$rkey','$gval')\">".$gfield[$gtabid]["spelling"][$rkey]."</a></b></td>
 				</tr>
 				<tr style=\"display:none\" id=\"lmbTreeTR_".$treeid."_".$rval."_".$gval."_".$rand."\">
 				<td style=\"background-image:url(pic/outliner/line.gif);background-repeat:repeat-y;\"></td>
@@ -4036,17 +4122,17 @@ function calendarPreview($gtabid){
 			
 			# minutes
 			if($diff <= 60){
-				if($tpo AND floor($diff) >= 15){$time = "<span style=\"color:orange;\">in ".floor($diff)." ".$lang[2764]."</span>";}
+				if($tpo AND floor($diff) >= 15){$time = "<span style=\"color:orange;\">in ".floor($diff)." ".$lang[1980]."</span>";}
 				elseif(floor($diff) == 0){$time = "<span style=\"color:red;\"><i class=\"lmb-icon lmb-icon-8 lmb-feed\" border=\"0\" style=\"vertical-align:bottom\"></i>&nbsp;<b>".$lang[2762]."</b></span>";}
-				else{$time = "<span style=\"color:grey;\">".$lang[2766]." ".floor($diff)." ".$lang[2764]."</span>";}
+				else{$time = "<span style=\"color:grey;\">".$lang[2766]." ".floor($diff)." ".$lang[1980]."</span>";}
 			# hours
 			}elseif($diff <= 1440){
-				if($tpo AND $diff > 180){$tpo = "<span style=\"color:blue;\">".$lang[2767]." ";}elseif($tpo){$tpo = "<span style=\"color:purple;\">".$lang[2767]." ";}else{$tpo = "<span style=\"color:grey;\">".$lang[2766]." ";}
-				$time = $tpo.floor($diff/60)." ".$lang[2763]." ".floor($diff-floor($diff/60)*60)." ".$lang[2764]."</span>";
+				if($tpo AND $diff > 180){$tpo = "<span style=\"color:blue;\">".$lang[1975]." ";}elseif($tpo){$tpo = "<span style=\"color:purple;\">".$lang[1975]." ";}else{$tpo = "<span style=\"color:grey;\">".$lang[2766]." ";}
+				$time = $tpo.floor($diff/60)." ".$lang[1981]." ".floor($diff-floor($diff/60)*60)." ".$lang[1980]."</span>";
 			# days
 			}else{
-				if($tpo){$tpo = "<span style=\"color:blue;\">".$lang[2767]." ";}else{$tpo = "<span style=\"color:grey;\">".$lang[2766]." ";}
-				$time = $tpo.floor($diff/1440)." ".$lang[2765]." ".floor((($diff/1440)-floor($diff/1440))*60)." ".$lang[2763]."</span>";
+				if($tpo){$tpo = "<span style=\"color:blue;\">".$lang[1975]." ";}else{$tpo = "<span style=\"color:grey;\">".$lang[2766]." ";}
+				$time = $tpo.floor($diff/1440)." ".$lang[1982]." ".floor((($diff/1440)-floor($diff/1440))*60)." ".$lang[1981]."</span>";
 			}
 		
 			echo "<TR><TD style=\"font-style:italic;\" TITLE=\"".get_date($gresult[$gtabid][$lmbCalFieldsID['STARTSTAMP']][$i],2)."\"><A HREF=\"Javascript:open_quickdetail($gtabid,".$gresult[$gtabid]["id"][$i].",'')\">";
@@ -4323,6 +4409,65 @@ function dyns_dialNumber($params) {
 	}else{
 		echo '<script>alert("no phone is installed!");</script>';
 	}
+}
+
+# add menu item to favorites of user
+function dyns_addToFavorites($params) {
+	global $session;
+	global $action;
+	global $db;
+
+	# check param
+	$type = $params['type'];
+    $tabid = $params['tabid'];
+    $id = $params['id'];
+	if (!$type || !$tabid)
+		return;
+	$target = $type . ";" . $tabid . ";" . $id;
+
+	# get settings
+    $sqlquery = 'SELECT M_SETTING FROM LMB_USERDB WHERE USER_ID = ' . $session['user_id'];
+    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if($m_setting = odbc_result($rs, "M_SETTING")){
+        $m_setting = unserialize($m_setting);
+    }
+
+    # change settings for given menu item
+	if ($m_setting['fav'][$target]) {
+        unset ($m_setting['fav'][$target]);
+	} else {
+        $m_setting['fav'][$target] = 1;
+	}
+
+	# store settings
+    if(is_array($m_setting)){
+        $prepare_string = 'UPDATE LMB_USERDB SET M_SETTING = ? WHERE USER_ID = ' . $session['user_id'];
+        lmb_PrepareSQL($prepare_string, array(parse_db_blob(serialize($m_setting))), __FILE__, __LINE__);
+    }
+
+    # refresh session
+    $session['m_setting'] = $m_setting;
+}
+
+/**
+ * Saves the width of the gtab window to the database.
+ * Can be extended to save other user vars
+ * @param $params array of gtabid and filter_gwidth
+ */
+function dyns_saveViewSettings($params) {
+	global $filter;
+
+	if (!$params['gtabid'] or !is_numeric($params['gtabid'])) {
+		return;
+	}
+	$gtabid = $params['gtabid'];
+
+    if ($params['filter_gwidth']) {
+        $filter_gwidth = $params['filter_gwidth'];
+    }
+    require_once('gtab/gtab_register.lib');
+    require_once('gtab/gtab.lib');
+    save_viewSettings(null, $gtabid);
 }
 
 # Buffer

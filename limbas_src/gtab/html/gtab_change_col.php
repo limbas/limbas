@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -24,7 +24,7 @@ if($change_col){
 	lmb_StartTransaction();
 	
 	# -------BOOLEAN---------
-	if($gfield[$gtabid][field_type][$fieldid] == 10){
+	if($gfield[$gtabid]['field_type'][$fieldid] == 10){
 		if($change_col[1] == 1){
 			$sqlquery = "SELECT ID,".$gfield[$gtabid]["field_name"][$fieldid]." FROM ".$gtab["table"][$gtabid];
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -52,15 +52,15 @@ if($change_col){
 			if(!$rs) {$commit = 1;}
 		}
 	# -------Text---------
-	}elseif($gfield[$gtabid][field_type][$fieldid] == 1){
+	}elseif($gfield[$gtabid]['field_type'][$fieldid] == 1){
 		if($change_col[2]){
 			if(preg_match("/".$gfield[$gtabid]["regel"][$fieldid]."/", $change_col[2])){
-				$where = "WHERE ".$gfield[$gtabid]["field_name"][$fieldid]." LIKE '".lmb_substr(str_replace("'","''",trim($change_col[2])),0,$gfield[$gtabid][size][$fieldid])."'";
+				$where = "WHERE ".$gfield[$gtabid]["field_name"][$fieldid]." LIKE '".lmb_substr(str_replace("'","''",trim($change_col[2])),0,$gfield[$gtabid]['size'][$fieldid])."'";
 			}else{echo "<B>$lang[58]</B>";}
 		}
 		if($change_col[1]){
 			if(preg_match("/".$gfield[$gtabid]["regel"][$fieldid]."/", $change_col[1])){
-				$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = '".lmb_substr(str_replace("'","''",trim($change_col[1])),0,$gfield[$gtabid][size][$fieldid])."' ".$where;
+				$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = '".lmb_substr(str_replace("'","''",trim($change_col[1])),0,$gfield[$gtabid]['size'][$fieldid])."' ".$where;
 			}else{echo "<B>$lang[58]</B>";}
 		}else{
 			$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = '' ".$where;	
@@ -68,13 +68,13 @@ if($change_col){
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	# -------Zahl---------
-	}elseif($gfield[$gtabid][field_type][$fieldid] == 5){	
+	}elseif($gfield[$gtabid]['field_type'][$fieldid] == 5){
 		if($change_col[2]){
 			if(preg_match("/".$gfield[$gtabid]["regel"][$fieldid]."/", $change_col[2])){
 				if($change_col[3] == 1){$change_col[3] = "=";}
 				if($change_col[3] == 2){$change_col[3] = ">";}
 				if($change_col[3] == 3){$change_col[3] = "<";}
-				$where = "WHERE ".$gfield[$gtabid]["field_name"][$fieldid]." ".$change_col[3]." ".lmb_substr($change_col[2],0,$gfield[$gtabid][size][$fieldid]);
+				$where = "WHERE ".$gfield[$gtabid]["field_name"][$fieldid]." ".$change_col[3]." ".lmb_substr($change_col[2],0,$gfield[$gtabid]['size'][$fieldid]);
 			}else{echo "<B>$lang[58]</B>";}
 		}
 		if($change_col[1]){
@@ -91,14 +91,14 @@ if($change_col){
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}	
 	# -------Datum---------
-	}elseif($gfield[$gtabid][field_type][$fieldid] == 2){	
+	}elseif($gfield[$gtabid]['field_type'][$fieldid] == 2){
 		if($change_col[2]){
 			if(preg_match("/".$gfield[$gtabid]["regel"][$fieldid]."/", $change_col[2])){
 				$change_col[2] = convert_date($change_col[2]);
 				if($change_col[3] == 1){$change_col[3] = "=";}
 				if($change_col[3] == 2){$change_col[3] = ">";}
 				if($change_col[3] == 3){$change_col[3] = "<";}
-				$where = "WHERE ".$gfield[$gtabid]["field_name"][$fieldid]." ".$change_col[3]." '".lmb_substr($change_col[2],0,$gfield[$gtabid][size][$fieldid])."'";
+				$where = "WHERE ".$gfield[$gtabid]["field_name"][$fieldid]." ".$change_col[3]." '".lmb_substr($change_col[2],0,$gfield[$gtabid]['size'][$fieldid])."'";
 			}else{echo "<B>$lang[58]</B>";}
 		}
 		if($change_col[1]){
@@ -117,15 +117,15 @@ if($change_col){
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	# -------SELECT---------
-	}elseif($gfield[$gtabid][field_type][$fieldid] == 4){
+	}elseif($gfield[$gtabid]['field_type'][$fieldid] == 4){
 		if($change_col[2]){
 			if(preg_match("/".$gfield[$gtabid]["regel"][$fieldid]."/", $change_col[2])){
-				$where = "WHERE ".$gfield[$gtabid]["field_name"][$fieldid]." LIKE '".lmb_substr(str_replace("'","''",trim($change_col[2])),0,$gfield[$gtabid][size][$fieldid])."'";
+				$where = "WHERE ".$gfield[$gtabid]["field_name"][$fieldid]." LIKE '".lmb_substr(str_replace("'","''",trim($change_col[2])),0,$gfield[$gtabid]['size'][$fieldid])."'";
 			}else{echo "<B>$lang[58]</B>";}
 		}
 		if($change_col[1]){
 			if(preg_match("/".$gfield[$gtabid]["regel"][$fieldid]."/", $change_col[1])){
-				$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = '".lmb_substr(str_replace("'","''",trim($change_col[1])),0,$gfield[$gtabid][size][$fieldid])."' ".$where;
+				$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = '".lmb_substr(str_replace("'","''",trim($change_col[1])),0,$gfield[$gtabid]['size'][$fieldid])."' ".$where;
 			}else{echo "<B>$lang[58]</B>";}
 		}else{
 			$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = '' ".$where;	
@@ -152,57 +152,57 @@ if($change_col){
 
 
 <TABLE BORDER="0" cellspacing="0" cellpadding="0"><TR><TD WIDTH="20">&nbsp;</TD><TD>
-<BR><B><?=$gfield[$gtabid][spelling][$fieldid]?></B>
+<BR><B><?=$gfield[$gtabid]['spelling'][$fieldid]?></B>
 
 <FORM ACTION="main.php" METHOD="post" NAME="form1">
 <input type="hidden" name="action" value="gtab_change_col">
-<input type="hidden" name="gtabid" value="<?echo $gtabid;?>">
-<input type="hidden" name="fieldid" value="<?echo $fieldid;?>">
+<input type="hidden" name="gtabid" value="<?= $gtabid ?>">
+<input type="hidden" name="fieldid" value="<?= $fieldid ?>">
 
 <TABLE BORDER="0" cellspacing="0" cellpadding="1">
 
-<?# -------Text---------  
-if($gfield[$gtabid][field_type][$fieldid] == 1){?>
+<?php #-------Text---------
+if($gfield[$gtabid]['field_type'][$fieldid] == 1){?>
 <TR ALIGN="LEFT"><TD><?=$lang[59]?></TD></TR>
-<TR ALIGN="LEFT"><TD><INPUT TYPE="TEXT" SIZE="30" NAME="change_col[1]" VALUE="<?=$change_col[1]?>" maxlength="<?=$gfield[$gtabid][size][$fieldid]?>"></TD></TR>
+<TR ALIGN="LEFT"><TD><INPUT TYPE="TEXT" SIZE="30" NAME="change_col[1]" VALUE="<?=$change_col[1]?>" maxlength="<?=$gfield[$gtabid]['size'][$fieldid]?>"></TD></TR>
 <TR><TD COLSPAN="2">&nbsp;</TD></TR>
 <TR ALIGN="LEFT"><TD><?=$lang[60]?></TD></TR>
-<TR ALIGN="LEFT"><TD><INPUT TYPE="TEXT" SIZE="30" NAME="change_col[2]" VALUE="<?=$change_col[2]?>" maxlength="<?=$gfield[$gtabid][size][$fieldid]?>"></TD></TR>
+<TR ALIGN="LEFT"><TD><INPUT TYPE="TEXT" SIZE="30" NAME="change_col[2]" VALUE="<?=$change_col[2]?>" maxlength="<?=$gfield[$gtabid]['size'][$fieldid]?>"></TD></TR>
 <TR><TD COLSPAN="2">&nbsp;</TD></TR>
 <TR ALIGN="LEFT"><TD COLSPAN="2"><INPUT TYPE="submit" VALUE="<?=$lang[1341]?>"></TD></TR>
-<?# -------BOOLEAN---------
-}elseif($gfield[$gtabid][field_type][$fieldid] == 10){?>
+<?php #-------BOOLEAN---------
+}elseif($gfield[$gtabid]['field_type'][$fieldid] == 10){?>
 <TR ALIGN="LEFT"><TD><INPUT TYPE="RADIO" NAME="change_col[1]" VALUE="1" STYLE="background-color:transparent;border:none">&nbsp;&nbsp;</TD><TD><?=$lang[1330]?></TD></TR>
 <TR ALIGN="LEFT"><TD><INPUT TYPE="RADIO" NAME="change_col[1]" VALUE="2" STYLE="background-color:transparent;border:none">&nbsp;&nbsp;</TD><TD><?=$lang[1331]?></TD></TR>
 <TR ALIGN="LEFT"><TD><INPUT TYPE="RADIO" NAME="change_col[1]" VALUE="3" STYLE="background-color:transparent;border:none">&nbsp;&nbsp;</TD><TD><?=$lang[1331]?></TD></TR>
 <TR><TD COLSPAN="2">&nbsp;</TD></TR>
 <TR ALIGN="LEFT"><TD COLSPAN="2"><INPUT TYPE="submit" VALUE="<?=$lang[1341]?>"></TD></TR>
-<?# -------Zahl---------
-}elseif($gfield[$gtabid][field_type][$fieldid] == 5){?>
+<?php #-------Zahl---------
+}elseif($gfield[$gtabid]['field_type'][$fieldid] == 5){?>
 <TR ALIGN="LEFT"><TD><SELECT STYLE="width:200px" NAME="change_col[0]"><OPTION VALUE="1"><?=$lang[59]?><OPTION VALUE="2"><?=$lang[1333]?><OPTION VALUE="3"><?=$lang[1334]?></SELECT></TD></TR>
-<TR ALIGN="LEFT"><TD><INPUT TYPE="TEXT" STYLE="width:200px" NAME="change_col[1]" VALUE="<?=$change_col[1]?>" maxlength="<?=$gfield[$gtabid][size][$fieldid]?>"></TD></TR>
+<TR ALIGN="LEFT"><TD><INPUT TYPE="TEXT" STYLE="width:200px" NAME="change_col[1]" VALUE="<?=$change_col[1]?>" maxlength="<?=$gfield[$gtabid]['size'][$fieldid]?>"></TD></TR>
 <TR><TD COLSPAN="2">&nbsp;</TD></TR>
 <TR ALIGN="LEFT"><TD><?=$lang[60]?></TD></TR>
-<TR ALIGN="LEFT"><TD><SELECT STYLE="width:200px" NAME="change_col[3]"><OPTION VALUE="1"><?=$lang[1335]?><OPTION VALUE="2"><?=$lang[1336]?><OPTION VALUE="3"><?=$lang[1337]?></SELECT></TD></TR>
-<TR ALIGN="LEFT"><TD><INPUT TYPE="TEXT" STYLE="width:200px" NAME="change_col[2]" VALUE="<?=$change_col[2]?>" maxlength="<?=$gfield[$gtabid][size][$fieldid]?>"></TD></TR>
+<TR ALIGN="LEFT"><TD><SELECT STYLE="width:200px" NAME="change_col[3]"><OPTION VALUE="1"><?=$lang[713]?><OPTION VALUE="2"><?=$lang[711]?><OPTION VALUE="3"><?=$lang[712]?></SELECT></TD></TR>
+<TR ALIGN="LEFT"><TD><INPUT TYPE="TEXT" STYLE="width:200px" NAME="change_col[2]" VALUE="<?=$change_col[2]?>" maxlength="<?=$gfield[$gtabid]['size'][$fieldid]?>"></TD></TR>
 <TR><TD COLSPAN="2">&nbsp;</TD></TR>
 <TR ALIGN="LEFT"><TD COLSPAN="2"><INPUT TYPE="submit" VALUE="<?=$lang[1341]?>"></TD></TR>
-<?# -------Datum---------
-}elseif($gfield[$gtabid][field_type][$fieldid] == 2){?>
+<?php #-------Datum---------
+}elseif($gfield[$gtabid]['field_type'][$fieldid] == 2){?>
 <TR ALIGN="LEFT"><TD><SELECT STYLE="width:200px" NAME="change_col[0]"><OPTION VALUE="1"><?=$lang[1338]?><OPTION VALUE="2"><?=$lang[1339]?><OPTION VALUE="3"><?=$lang[1340]?></SELECT></TD></TR>
-<TR ALIGN="LEFT"><TD><INPUT TYPE="TEXT" STYLE="width:200px" NAME="change_col[1]" VALUE="<?=get_date($change_col[1],1)?>" maxlength="<?=$gfield[$gtabid][size][$fieldid]?>"></TD></TR>
+<TR ALIGN="LEFT"><TD><INPUT TYPE="TEXT" STYLE="width:200px" NAME="change_col[1]" VALUE="<?=get_date($change_col[1],1)?>" maxlength="<?=$gfield[$gtabid]['size'][$fieldid]?>"></TD></TR>
 <TR><TD COLSPAN="2">&nbsp;</TD></TR>
 <TR ALIGN="LEFT"><TD><?=$lang[60]?></TD></TR>
-<TR ALIGN="LEFT"><TD><SELECT STYLE="width:200px" NAME="change_col[3]"><OPTION VALUE="1"><?=$lang[1335]?><OPTION VALUE="2"><?=$lang[1336]?><OPTION VALUE="3"><?=$lang[1337]?></SELECT></TD></TR>
-<TR ALIGN="LEFT"><TD><INPUT TYPE="TEXT" STYLE="width:200px" NAME="change_col[2]" VALUE="<?=get_date($change_col[2],1)?>" maxlength="<?=$gfield[$gtabid][size][$fieldid]?>"></TD></TR>
+<TR ALIGN="LEFT"><TD><SELECT STYLE="width:200px" NAME="change_col[3]"><OPTION VALUE="1"><?=$lang[713]?><OPTION VALUE="2"><?=$lang[711]?><OPTION VALUE="3"><?=$lang[712]?></SELECT></TD></TR>
+<TR ALIGN="LEFT"><TD><INPUT TYPE="TEXT" STYLE="width:200px" NAME="change_col[2]" VALUE="<?=get_date($change_col[2],1)?>" maxlength="<?=$gfield[$gtabid]['size'][$fieldid]?>"></TD></TR>
 <TR><TD COLSPAN="2">&nbsp;</TD></TR>
 <TR ALIGN="LEFT"><TD COLSPAN="2"><INPUT TYPE="submit" VALUE="<?=$lang[1341]?>"></TD></TR>
-<?# -------SELECT---------  
-}elseif($gfield[$gtabid][field_type][$fieldid] == 4){?>
+<?php #-------SELECT---------
+}elseif($gfield[$gtabid]['field_type'][$fieldid] == 4){?>
 <TR ALIGN="LEFT"><TD><?=$lang[59]?></TD></TR>
 <TR ALIGN="LEFT"><TD><SELECT STYLE="width:200px" NAME="change_col[1]"><OPTION VALUE="">
-<?
-$sqlquery = "SELECT WERT,SORT FROM LMB_SELECT_W WHERE POOL = TAB_ID = ".$gfield[$gtabid][select_pool][$fieldid]." ORDER BY SORT";
+<?php
+$sqlquery = "SELECT WERT,SORT FROM LMB_SELECT_W WHERE POOL = TAB_ID = ".$gfield[$gtabid]['select_pool'][$fieldid]." ORDER BY SORT";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 $bzm2 = 1;
 while(odbc_fetch_row($rs, $bzm2) AND $bzm2 < 50) {
@@ -215,7 +215,7 @@ while(odbc_fetch_row($rs, $bzm2) AND $bzm2 < 50) {
 <TR><TD COLSPAN="2">&nbsp;</TD></TR>
 <TR ALIGN="LEFT"><TD><?=$lang[60]?></TD></TR>
 <TR ALIGN="LEFT"><TD><SELECT STYLE="width:200px" NAME="change_col[2]"><OPTION VALUE="">
-<?
+<?php
 $bzm2 = 1;
 while(odbc_fetch_row($rs, $bzm2) AND $bzm2 < 50) {
 	echo "<OPTION VALUE=\"".odbc_result($rs, "AUSWAHL")."\">";
@@ -226,7 +226,7 @@ while(odbc_fetch_row($rs, $bzm2) AND $bzm2 < 50) {
 </SELECT></TD></TR>
 <TR><TD COLSPAN="2">&nbsp;</TD></TR>
 <TR ALIGN="LEFT"><TD COLSPAN="2"><INPUT TYPE="submit" VALUE="<?=$lang[1341]?>"></TD></TR>
-<?}?>
+<?php }?>
 
 </TABLE>
 </TD></TR></TABLE>

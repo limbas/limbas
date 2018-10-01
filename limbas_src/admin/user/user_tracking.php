@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -101,13 +101,13 @@ function poprecord(id){
 }
 
 function newwin(GTAB,ID) {
-	spalte = open("main.php?<?=SID?>&action=gtab_change&ID=" + ID + "&gtabid=" + GTAB + "" ,"Datensatzdetail","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=700,height=600");
+	spalte = open("main.php?action=gtab_change&ID=" + ID + "&gtabid=" + GTAB + "" ,"Datensatzdetail","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=700,height=600");
 }
 
 
 </SCRIPT>
 
-<?
+<?php
 if(!$diag_von){$diag_von = date("d.m.Y");}
 if(!$diag_bis){$diag_bis = date("d.m.Y");}
 ?>
@@ -127,11 +127,11 @@ if(!$diag_bis){$diag_bis = date("d.m.Y");}
 <TABLE class="tabpool" BORDER="0" cellspacing="0" cellpadding="0" width="100%"><TR><TD>
 
 <TABLE BORDER="0" cellspacing="0" cellpadding="0" width="100%"><TR class="tabpoolItemTR">
-<?if($typ == 1){$class="tabpoolItemActive";}else{$class="tabpoolItemInactive";}?>
+<?php if($typ == 1){$class="tabpoolItemActive";}else{$class="tabpoolItemInactive";}?>
 <TD class="<?=$class?>" OnClick="document.form1.typ.value='1';document.form1.submit();"><?=$lang[1431]?></TD>
-<?if($typ == 2){$class="tabpoolItemActive";}else{$class="tabpoolItemInactive";}?>
-<TD class="<?=$class?>" OnClick="document.form1.typ.value='2';document.form1.submit();"><?=$lang[1432]?></TD>
-<?if($typ == 3){$class="tabpoolItemActive";}else{$class="tabpoolItemInactive";}?>
+<?php if($typ == 2){$class="tabpoolItemActive";}else{$class="tabpoolItemInactive";}?>
+<TD class="<?=$class?>" OnClick="document.form1.typ.value='2';document.form1.submit();"><?=$lang[544]?></TD>
+<?php if($typ == 3){$class="tabpoolItemActive";}else{$class="tabpoolItemInactive";}?>
 <TD class="<?=$class?>" OnClick="document.form1.typ.value='3';document.form1.submit();"><?=$lang[1433]?></TD>
 <TD class="tabpoolItemSpace">&nbsp;</TD>
 </TR></TABLE>
@@ -140,27 +140,27 @@ if(!$diag_bis){$diag_bis = date("d.m.Y");}
 <TR><TD class="tabpoolfringe">
 
 
-<?if($typ != 3){?>
+<?php if($typ != 3){?>
 <TABLE BORDER="0" cellspacing="1" cellpadding="0" width="100%">
 
 <TR><TD class="tabSubHeaderItem">
-von:&nbsp;<INPUT TYPE="TEXT" NAME="diag_von" <?if($typ != 3){echo "VALUE=\"".$diag_von."\"";}?>style="cursor:pointer;width:115px;" READONLY onclick="showCalendar(event,'diagv','diag_von',document.form1.diag_von.value)">
+von:&nbsp;<INPUT TYPE="TEXT" NAME="diag_von" <?php if($typ != 3){echo "VALUE=\"".$diag_von."\"";}?>style="cursor:pointer;width:115px;" READONLY onclick="showCalendar(event,'diagv','diag_von',document.form1.diag_von.value)">
 <span id="diagv" style="position:absolute;"></span>
 <i class="lmb-icon lmb-calendar-alt" ALIGN="middle" BORDER="0" style="cursor:pointer;" onclick="showCalendar(event,'diagv','diag_von',document.form1.diag_von.value)"></i>
-&nbsp;&nbsp;&nbsp;bis:&nbsp;<INPUT TYPE="TEXT" NAME="diag_bis" <?if($typ != 3){echo "VALUE=\"".$diag_bis."\"";}?> style="cursor:pointer;width:115px;" onclick="showCalendar(event,'diagb','diag_bis',document.form1.diag_bis.value)">
+&nbsp;&nbsp;&nbsp;bis:&nbsp;<INPUT TYPE="TEXT" NAME="diag_bis" <?php if($typ != 3){echo "VALUE=\"".$diag_bis."\"";}?> style="cursor:pointer;width:115px;" onclick="showCalendar(event,'diagb','diag_bis',document.form1.diag_bis.value)">
 <span id="diagb" style="position:absolute;"></span>
 <i class="lmb-icon lmb-calendar-alt" ALIGN="middle" BORDER="0" ALT="" style="cursor:pointer;" onclick="showCalendar(event,'diagb','diag_bis',document.form1.diag_bis.value)"></i>
-<?if($typ == 2){?>
-&nbsp;<SELECT NAME="loglevel" onchange="document.form1.submit();"><OPTION VALUE="1" <?if($loglevel == 1){echo "SELECTED";}?>>Level 1<OPTION VALUE="2" <?if($loglevel == 2){echo "SELECTED";}?>>Level 2</SELECT>
-<?}?>
+<?php if($typ == 2){?>
+&nbsp;<SELECT NAME="loglevel" onchange="document.form1.submit();"><OPTION VALUE="1" <?php if($loglevel == 1){echo "SELECTED";}?>>Level 1<OPTION VALUE="2" <?php if($loglevel == 2){echo "SELECTED";}?>>Level 2</SELECT>
+<?php }?>
 </TD></TR>
 </TABLE>
 <hr>
-<?}?>
+<?php }?>
 
 
 <TABLE BORDER="0" cellspacing="1" cellpadding="0" width="100%">
-<?
+<?php
 
 if($typ == 3){$where2 .= " AND ".LMB_DBFUNC_DATE."ERSTDATUM) = '".date("Y-m-d",mktime(date("H"),date("i"),date("s"),date("m"),date("d"),date("Y")))."'";}
 else{
@@ -183,12 +183,12 @@ if($typ == 1){
 	<TD class="tabHeaderItem"><?=$lang[1803]?></TD>
 	<TD class="tabHeaderItem"><?=$lang[1802]?></TD>
 	</TR>
-	<?
+	<?php
 	$sqlquery =  "SELECT DISTINCT ID,LOGIN_DATE, UPDATE_DATE, IP, HOST, ".dbf_9(array('LOGIN_DATE','UPDATE_DATE'))." AS DAUER FROM LMB_HISTORY_USER WHERE USERID = $userid $where ORDER BY LOGIN_DATE";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$bzm = 1;
 	while(odbc_fetch_row($rs, $bzm)) {
-	        if($BGCOLOR == $farbschema[WEB7]){$BGCOLOR = $farbschema[WEB8];} else {$BGCOLOR = $farbschema[WEB7];}
+	        if($BGCOLOR == $farbschema['WEB7']){$BGCOLOR = $farbschema['WEB8'];} else {$BGCOLOR = $farbschema['WEB7'];}
 	        echo"<TR BGCOLOR=\"$BGCOLOR\">";
 	        echo"  <TD NOWRAP>".get_date(odbc_result($rs,"LOGIN_DATE"),2)."&nbsp;&nbsp;</TD>";
 	        echo"  <TD NOWRAP>".get_date(odbc_result($rs,"UPDATE_DATE"),2)."&nbsp;&nbsp;</TD>";
@@ -224,7 +224,7 @@ if($typ == 1){
 
 		</Script>
 		<div style="position:absolute;top:15px;left:340px" ID="usetime">refresh</div>
-	<?}
+	<?php }
 
 	if($order == "ERSTDATUM"){$or_erst = "ERSTDATUM DESC";}else{$or_erst = "ERSTDATUM";}
 	if($order == "ACTION"){$or_act = "ACTION DESC";}else{$or_act = "ACTION";}
@@ -236,7 +236,7 @@ if($typ == 1){
 	<TD class="tabHeaderItem" STYLE="cursor:pointer" OnClick="document.form1.order.value='<?=$or_tab?>';document.form1.submit();"><?=$lang[1806]?>&nbsp;&nbsp;</TD>
 	<TD class="tabHeaderItem"><?=$lang[1807]?>&nbsp;&nbsp;</TD>
 	</TR>
-	<?
+	<?php
 	if(!$order){
 		$order = "ERSTDATUM";
 		if($typ == 3){$order = "ERSTDATUM DESC";}
@@ -292,7 +292,7 @@ if($typ == 1){
 			while(odbc_fetch_row($rs1, $bzm1)) {
 				unset($val);
 				if($action_id == 3){$nowr = "";}else{$nowr = "NOWRAP";}
-				$ftype = $gfield[odbc_result($rs1, "TAB")][field_type][odbc_result($rs1, "FIELD")];
+				$ftype = $gfield[odbc_result($rs1, "TAB")]['field_type'][odbc_result($rs1, "FIELD")];
 				if($ftype == 11){
 					$links = explode(";",odbc_result($rs1, "FIELDVALUE"));
 					if($links){

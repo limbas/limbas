@@ -13,7 +13,7 @@
 				</td>
 			</tr>
 			<tr>
-				<td align="right" class="mail_desc_name" height="22">Empfänger:</td>
+				<td align="right" class="mail_desc_name" height="22">Empfï¿½nger:</td>
 				<td><input name="toaddr" type="text" size="40" 
 					style="border:solid 1px silver; border-right:0; width:100%;"
 					maxlen="320" value="${toaddr}"></td>
@@ -36,9 +36,9 @@
 	height:100%;
 	padding-left:2px;
 	margin:0px;
-">Die LIMBAS GmbH entwickelt webbasierte Free und Open Source Software. Der Hauptfokus von LIMBAS ist Unternehmenslösungen und Fachverfahren mit dem eigenen Open Application Development System umzusetzen. Dies ist ein webbasiertes Framework um Datenbankanwendungen über eine grafische Oberfläche einfach umzusetzen.
+">Die LIMBAS GmbH entwickelt webbasierte Free und Open Source Software. Der Hauptfokus von LIMBAS ist Unternehmenslï¿½sungen und Fachverfahren mit dem eigenen Open Application Development System umzusetzen. Dies ist ein webbasiertes Framework um Datenbankanwendungen ï¿½ber eine grafische Oberflï¿½che einfach umzusetzen.
 
-Open LIMBAS ergänzt Ihr Open Office und ist insbesondere dazu geeignet, Access Applikationen abzulösen. Es liefert einen hohen Anteil an Basis Funktionalitäten wie Tabellen, Formularen, Berichten, Abfragen und mehr. LIMBAS bietet Ihnen Vorteile, die Sie bisher mit anderen Systemen nicht nutzen konnten. Sie arbeiten mit einer zentralen und unabhängigen Datenbank, genießen den Vorzug einer zentralen Verwaltung und Rechtevergabe und haben die Möglichkeit einer delegierten Prozessentwicklung. So arbeiten Ihre Mitarbeiter nicht nur schneller und effizienter zusammen sondern Sie sparen Kosten.</textarea></td></tr><tr><td id="upload_page" style="display:none;">
+Open LIMBAS ergï¿½nzt Ihr Open Office und ist insbesondere dazu geeignet, Access Applikationen abzulï¿½sen. Es liefert einen hohen Anteil an Basis Funktionalitï¿½ten wie Tabellen, Formularen, Berichten, Abfragen und mehr. LIMBAS bietet Ihnen Vorteile, die Sie bisher mit anderen Systemen nicht nutzen konnten. Sie arbeiten mit einer zentralen und unabhï¿½ngigen Datenbank, genieï¿½en den Vorzug einer zentralen Verwaltung und Rechtevergabe und haben die Mï¿½glichkeit einer delegierten Prozessentwicklung. So arbeiten Ihre Mitarbeiter nicht nur schneller und effizienter zusammen sondern Sie sparen Kosten.</textarea></td></tr><tr><td id="upload_page" style="display:none;">
 <div class="upload_page">
 	<div id="upload_inner"></div>
 	<div id="upload_error"></div>
@@ -49,12 +49,12 @@ Open LIMBAS ergänzt Ihr Open Office und ist insbesondere dazu geeignet, Access A
 			</tr>
 			<tr>
 				<td colspan="2" align="center" height="22">
-<!--					<a href="#" onclick="show_upload(); return false">Datei(en) anhängen</a>-->
+<!--					<a href="#" onclick="show_upload(); return false">Datei(en) anhï¿½ngen</a>-->
 	<span id="upload_container">
 		<form name="imgup" enctype="multipart/form-data" method="POST" action="${self}">
 			<input type="hidden" name="MAX_FILE_SIZE" value="${max_file_size}">
-			<input id="upload_fileinput" type="file" name="Filedata" onclick="$('upload_fileinput').style.display='none'; return true;">
-			<input type="submit" value="Datei anhängen">
+			<input id="upload_fileinput" type="file" name="Filedata" onclick="document.getElementById('upload_fileinput').style.display='none'; return true;">
+			<input type="submit" value="Datei anhï¿½ngen">
 			<input type="hidden" name="sid" value="${sid}">
 			(max. ${max_file_size} Bytes)
 		</form>

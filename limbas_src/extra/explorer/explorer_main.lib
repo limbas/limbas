@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -20,6 +20,7 @@
 
 function explContextDetail(){
 	global $lang;
+	global $LINK;
 	echo "\n\n<DIV ID=\"limbasDivMenuExplContext\" class=\"lmbContextMenu\" style=\"position: absolute;visibility:hidden;z-index:99994;\" OnClick=\"activ_menu = 1;\">";
 	pop_top('limbasDivMenuExplContext');
 	pop_menu2("&nbsp;".$lang[1693], null, null, null, null, "LmEx_divclose();open('main.php?'+jsvar['SID']+'&action=explorer_detail&level='+jsvar['level']+'&LID='+jsvar['LID']+'&ID=' + LmEx_edit_id + '' ,'Info','toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650');\"");
@@ -27,7 +28,11 @@ function explContextDetail(){
 	pop_line();
     pop_menu2("&nbsp;".$lang[2321], null, null, null, null, "LmEx_divclose();open('main.php?'+jsvar['SID']+'&action=download&ID=' + LmEx_edit_id ,'download','toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650');\"");
     pop_menu2("&nbsp;".$lang[2322], null, null, null, null, "LmEx_divclose();document.location.href='main.php?&action=download&ID=' + LmEx_edit_id + '&sendas=a';\"");
-	pop_line();
+    if ($LINK[116]) {
+        pop_line();
+        pop_input2('document.form1.rename_file.value=this.value;LmEx_send_form(1);LmEx_divclose();', 'file_rename', '', '', '');
+    }
+    pop_line();
     pop_menu2("&nbsp;".$lang[2323], null, null, null, null, "LmEx_divclose();LmEx_dynsearchGet(event,'files_meta_'+LmEx_edit_id,'fileMetaInfo',LmEx_edit_id,0);\"");
     pop_menu2("&nbsp;".$lang[2324], null, null, null, null, "LmEx_divclose();LmEx_dynsearchGet(event,'files_meta_'+LmEx_edit_id,'fileIndizeInfo',LmEx_edit_id,0);\"");
     pop_menu2("&nbsp;".$lang[2325], null, null, null, null, "LmEx_divclose();LmEx_dynsearchGet(event,'files_meta_'+LmEx_edit_id,'fileVersioningInfo',LmEx_edit_id,0);\"");
@@ -67,13 +72,13 @@ function explSearch($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=null){
 		}
 		
 		if($ffilter["sub"]){$checked = "checked";}else{$checked = "";}
-		echo "&nbsp;<span title=\"".$lang[1905]."\"><span style=\"color:red\">s</span>ub<input type=\"checkbox\" style=\"border:none;background-color:transparent;\" style=\"border:none;\" $checked OnClick=\"document.form1.ffilter_sub.value=this.checked;\"></span>";
+		echo "&nbsp;<span title=\"".$lang[1240]."\"><span style=\"color:red\">s</span>ub<input type=\"checkbox\" style=\"border:none;background-color:transparent;\" style=\"border:none;\" $checked OnClick=\"document.form1.ffilter_sub.value=this.checked;\"></span>";
 		
 		#if($ffilter["onlymeta"]){$checked = "checked";}else{$checked = "";}
 		#echo "&nbsp;<span title=\"".$lang[1908]."\"><span style=\"color:red\">m</span>eta<input type=\"checkbox\" style=\"border:none;background-color:transparent;\" style=\"border:none;\" ".$ffilter["onlymeta"][$fid]." OnClick=\"document.form1.ffilter_onlymeta.value=this.checked;\"></span>";
 		
 		if($ffilter["content_andor"][$fid] == 2){$and = "";$or = "checked";}else{$and = "checked";$or = "";}
-		echo "&nbsp;&nbsp;&nbsp;".$lang[1906]."<input type=\"radio\" style=\"border:none;background-color:transparent;\" name=\"ffilter_content_andor\"value=\"1\" ".$and."> ".$lang[1907]."<input type=\"radio\" style=\"border:none;background-color:transparent;\" name=\"ffilter_content_andor\" value=\"2\" ".$or."></TD></TR>
+		echo "&nbsp;&nbsp;&nbsp;".$lang[854]."<input type=\"radio\" style=\"border:none;background-color:transparent;\" name=\"ffilter_content_andor\"value=\"1\" ".$and."> ".$lang[855]."<input type=\"radio\" style=\"border:none;background-color:transparent;\" name=\"ffilter_content_andor\" value=\"2\" ".$or."></TD></TR>
 			<TR class=\"gtabHeaderInputTR\"><TD nowrap style=\"height:5px;\"></TD></TR>";
 		echo "</TABLE></TD></TR>";
 	}else{
@@ -153,7 +158,7 @@ function explFolders($LID,$fid,$MID,$level,&$ffilter,$redirect=null,$rootlevel=n
 	if($ffilter["page"][$LID] <= 1 AND !$MID AND $ffilter["viewmode"][$LID] != 2){
 		if(($level OR $level == '0') AND $LID != $gfield[$f_tabid]["file_level"][$f_fieldid] AND $level != $rootlevel){
 			if($redirect){$redirect_ = "LmExt_Ex_SelectFolder(".$level.",".$redirect.")";}else{$redirect_ = "LmEx_select_folder(event,'$level')";}
-			echo "<TR class=\"gtabBodyTR\" style=\"background-color:".$farbschema["WEB8"].";\" OnClick=\"$redirect_;\" OnMouseOver=\"this.style.backgroundColor='".$farbschema["WEB6"]."'\" OnMouseOut=\"this.style.backgroundColor='".$farbschema["WEB8"]."'\"><TD class=\"gtabBodyTD\" STYLE=\"cursor:pointer;\" COLSPAN=\"$colspan\"><i class=\"lmb-icon lmb-folder-back\"></i></TD></TR>";
+			echo "<TR class=\"gtabBodyTR\" style=\"background-color:".$farbschema["WEB8"].";\" OnClick=\"$redirect_;\" OnMouseOver=\"this.style.backgroundColor='".$farbschema["WEB3"]."'\" OnMouseOut=\"this.style.backgroundColor='".$farbschema["WEB8"]."'\"><TD class=\"gtabBodyTD\" STYLE=\"cursor:pointer;\" COLSPAN=\"$colspan\"><i class=\"lmb-icon lmb-folder-back\"></i></TD></TR>";
 		}
 		$key2 = 1;
 		foreach($filestruct["id"] as $key => $value){
@@ -233,7 +238,7 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 				}
 				#$size = explode("x",$umgvar["thumbsize2"]);
 				#$img2 = IMACK_ConvertThumbs(array($value,$ffile["secname"][$key],$ffile["mimeid"][$key],$ffile["thumb_ok"][$key]),$size[0],$size[1]);
-				echo "<TD class=\"gtabBodyTD\" NOWRAP VALIGN=\"TOP\"><DIV ID=\"td_".$gtab["argresult_id"]["LDMS_FILES"]."_11_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;width:".$ffilter["rowsize"][$LID][1]."px;color:blue\">";
+				echo "<TD class=\"gtabBodyTD\" NOWRAP VALIGN=\"TOP\"><DIV ID=\"td_".$gtab["argresult_id"]["LDMS_FILES"]."_11_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;width:".$ffilter["rowsize"][$LID][1]."px;\">";
 				if($umgvar["file_quickdownload"]){echo "<A class=\"link\" HREF=\"main.php?".SID."&action=download&ID=$key\" TARGET=\"new\">";}
 				echo $islocked.$ffile["name"][$key];
 				if($umgvar["file_quickdownload"]){echo  "</A>";}
@@ -279,7 +284,7 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 					if($ffile["meta"][$key]){echo "<SPAN OnClick=\"LmEx_dynsearchGet(event,'files_meta_$key','fileMetaInfo','".$ffile["id"][$key]."',0)\" TITLE=\"$lang[1544]\">$space<B STYLE=\"color:blue;cursor:pointer;\">M</B></SPAN>&nbsp;";$space = "|&nbsp;";}
 					if($ffilter["viewmode"][$LID] == 5){echo "<SPAN OnClick=\"LmEx_dynsearchGet(event,'files_meta_$key','fileSourceInfo','".$ffile["id"][$key]."',0)\" TITLE=\"$lang[2334]\">$space<B STYLE=\"color:blue;cursor:pointer;\">H</B></SPAN>&nbsp;";$space = "|&nbsp;";}
 					if($ffile["vid"][$key] > 1){echo "<SPAN OnClick=\"LmEx_dynsearchGet(event,'files_meta_$key','fileVersioningInfo','".$ffile["vpid"][$key]."',0)\" TITLE=\"$lang[2170]\">$space<B STYLE=\"color:blue;cursor:pointer;\">V".$ffile["vid"][$key]."</B><SPAN>&nbsp;";}
-					if($ffilter["view_dublicates"] AND $ffile["dublicates"][$key]){echo "<SPAN OnClick=\"LmEx_dynsearchGet(event,'files_meta_$key','fileDublicateInfo','".$ffile["id"][$key]."','".$ffile["md5"][$key]."')\" TITLE=\"$lang[2480]\">$space<B STYLE=\"color:blue;cursor:pointer;\">D</B>(".$ffile["dublicates"][$key].")<SPAN>&nbsp;";}
+					if($ffilter["view_dublicates"] AND $ffile["dublicates"][$key]){echo "<SPAN OnClick=\"LmEx_dynsearchGet(event,'files_meta_$key','fileDublicateInfo','".$ffile["id"][$key]."','".$ffile["md5"][$key]."')\" TITLE=\"$lang[1685]\">$space<B STYLE=\"color:blue;cursor:pointer;\">D</B>(".$ffile["dublicates"][$key].")<SPAN>&nbsp;";}
 					echo "&nbsp;</DIV></TD>";
 					# Sort
 				}elseif($gfile["name"][$gkey] == "SORT"){
@@ -324,7 +329,7 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 		# keine Ergebnisse
 		#}elseif($search){
 	}elseif(!$GLOBALS["tmp"]["foldercount"]){
-		echo "<TR><TD colspan=\"$colspan\" OnClick=\"alert('".$lang[1914]."')\" style=\"cursor:pointer;color:blue;\">".$lang[1915]."</TD></TR>";
+		echo "<TR class=\"gtabBodyTR\"><TD class=\"gtabBodyTD\" colspan=\"$colspan\" OnClick=\"alert('".$lang[1914]."')\" style=\"cursor:pointer;color:blue;\">".$lang[1915]."</TD></TR>";
 	}
 
 }
@@ -464,9 +469,9 @@ function explMainContent($ID,$LID,$MID,$fid,$typ,$level,$file_url,&$ffile,&$ffil
 	
 	}else{
 		if($level OR $level == '0'){
-			echo "<div STYLE=\"cursor:pointer;height:20px\" OnClick=\"document.form1.LID.value='$level';document.form1.submit();\" OnMouseOver=\"this.style.backgroundColor='$farbschema[WEB9]'\" OnMouseOut=\"this.style.backgroundColor='$farbschema[WEB8]'\"><B>..</B></div>";
+			echo "<div STYLE=\"cursor:pointer;height:20px\" OnClick=\"document.form1.LID.value='$level';document.form1.submit();\" OnMouseOver=\"this.style.backgroundColor='{$farbschema['WEB8']}'\" OnMouseOut=\"this.style.backgroundColor='{$farbschema['WEB8']}'\"><B>..</B></div>";
 		}
-		echo "<div bgcolor=\"".$farbschema[WEB8]."\" style=\"height:20px\">&nbsp;<i class=\"lmb-icon lmb-reset\" STYLE=\"cursor:pointer;\" OnClick=\"document.form2.submit();\"></i>&nbsp;&nbsp;<FONT COLOR=\"red\">$lang[1472]</FONT></div>";
+		echo "<div bgcolor=\"".$farbschema['WEB8']."\" style=\"height:20px\">&nbsp;<i class=\"lmb-icon lmb-reset\" STYLE=\"cursor:pointer;\" OnClick=\"document.form2.submit();\"></i>&nbsp;&nbsp;<span style=\"color:red;\">$lang[1472]</span></div>";
 	}
 	
 

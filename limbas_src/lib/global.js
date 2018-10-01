@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -23,13 +23,16 @@
 
 
 function set_focus() {
-	if(browser_ie){
-		window.focus();
-	}else{
-		if(document.getElementById("myExtForms")){document.getElementById("myExtForms").focus();}
-		if(document.getElementById("hiddenfocus")){document.getElementById("hiddenfocus").focus();}
-		if(document.form1 && document.form1.action){document.form1.action.focus();}
-	}
+
+    $(window).focus();
+
+	//if(browser_ie){
+	//	window.focus();
+	//}else{
+	//	if(document.getElementById("myExtForms")){document.getElementById("myExtForms").focus();}
+	//	if(document.getElementById("hiddenfocus")){document.getElementById("hiddenfocus").focus();}
+	//	if(document.form1 && document.form1.action){document.form1.action.focus();}
+	//}
 }
 
 function LmGs_sendForm(reset){
@@ -124,8 +127,7 @@ function LmGs_divchange(id) {
 	var c = 1;
 	if(jsvar["searchcount"]){c = jsvar["searchcount"]-1;}
 	
-	var f = c;
-	for(a=0;a<=f;a++){
+	for(var a = 0; a <= c; a++){
 		var tmpid = "gse_"+id+"_"+a;
 		if(document.getElementById(tmpid)){document.getElementById(tmpid).style.display='';}
 		var tmpid = "gser_"+id+"_"+a;
@@ -183,12 +185,17 @@ function limbasSetCenterPos(el){
 }
 
 // wait Symbol
-function limbasWaitsymbol(evt,inlay,hide){
+function limbasWaitsymbol(evt,inlay,hide,symbol){
 	
 	if(hide){
-                $('#limbasWaitsymbol').hide();
+		$('#limbasWaitsymbol').hide();
 		return;
 	}
+
+	var lmbWaitSymbol = 'lmbWaitSymbol';
+	if(symbol){
+	    lmbWaitSymbol = 'symbol';
+    }
 	
 	if(inlay){
 		if(el = document.getElementById("limbasWaitsymbol")){
@@ -199,8 +206,7 @@ function limbasWaitsymbol(evt,inlay,hide){
 			el.id='limbasWaitsymbol';
 			el.style.position='absolute';
 			el.style.zIndex=99999;
-			//el.innerHTML = "<img src='pic/wait1.gif'>";
-			el.className = "lmbWaitSymbol";
+			el.className = lmbWaitSymbol;
 			el.style.display='';
 		}
 	}else{
@@ -409,8 +415,15 @@ function ajaxFormToURL(formname,actid){
 	var actpartname;
 	var actvarname = new Array;
 	var query = "";
-	
-	if(document.forms[formname]){
+
+
+	if(typeof(formname) == 'object') {
+        var formobject = formname;
+    }else{
+	    var formobject = document.forms[formname];
+    }
+
+	if(formobject){
 
 		if(actid){
 			actelements = actid.split("&");
@@ -421,15 +434,16 @@ function ajaxFormToURL(formname,actid){
 			}
 		}
 
-		ellist = document.forms[formname].elements;
+		ellist = formobject.elements;
 
 		for (var i=0; i<ellist.length; i++)
 		{
 			// already set in actid
-			if(actvarname[ellist[i].name]){continue;}
+			if(actvarname[ellist[i].name] && ellist[i].type != "radio"){continue;}
 			actvarname[ellist[i].name] = 1;
 			var elname = ellist[i].name;
-				
+			val = '';
+
 			if(ellist[i].type == "checkbox"){
 				if(ellist[i].checked == true){
 					val = ellist[i].value;
@@ -437,15 +451,28 @@ function ajaxFormToURL(formname,actid){
 					continue;
 				}
 			}else if(ellist[i].type == "select-multiple"){
-				var selname = ellist[i].name.substr(0,(ellist[i].name.length-2));
+				var selname = ellist[i].name;
 				for(e=0;e<ellist[i].options.length;e++){
 					if(ellist[i].options[e].selected == true){
 						query += "&"+selname+'['+e+']' + "=" + encodeURIComponent(ellist[i].options[e].value);
+
 					}
 				}
 				continue;
+
+
+			    //if(ellist[i].selected){
+
+
+
 			}else if(ellist[i].type == "radio"){
-				val = radioValue(document.getElementsByName(ellist[i].name));
+
+			    if(ellist[i].checked){
+				val = ellist[i].value;
+			    }else {
+				continue;
+			    }
+
 			}else{
 				val = ellist[i].value;
 			}
@@ -453,12 +480,11 @@ function ajaxFormToURL(formname,actid){
 			val = encodeURIComponent(val);
 			query += "&"+ellist[i].name + "=" + val;
 		}
-		
+
 		return query;
 	}
 
 }
-
 
 
 var ajaxGet_evt = null;
@@ -484,9 +510,9 @@ function ajaxGet(evt,url,actid,parameters,functionName,formname,tocontainer,sync
 	}else if(ajaxGet_evt){
 		setxypos(ajaxGet_evt,'lmbAjaxContainer');
 	}
-	
-	if(!nosymbol){
-		limbasWaitsymbol(evt,1,0);
+
+	if(nosymbol != 1){
+		limbasWaitsymbol(evt,1,0,nosymbol);
 		document.body.style.cursor = 'wait';
 	}
 
@@ -565,6 +591,13 @@ function ajaxGet(evt,url,actid,parameters,functionName,formname,tocontainer,sync
 			if(xmlhttp.readyState == 4){
 				if(functionName == undefined){
 				}else if(tocontainer){
+
+                    if(typeof functionName === "function") {
+                        functionName(xmlhttp.responseText);
+                    }else if(functionName){
+                        eval(functionName + "(xmlhttp.responseText)");
+                    }
+
 					if(typeof(tocontainer) == 'object'){
 						tocontainer.innerHTML = xmlhttp.responseText;
 					}else{
@@ -574,7 +607,9 @@ function ajaxGet(evt,url,actid,parameters,functionName,formname,tocontainer,sync
 				}else if(functionName=='' || !functionName){
 					functionName = 'ajaxShow';
 					ajaxShow(xmlhttp.responseText);
-				}else{
+				}else if(typeof functionName === "function") {
+                    functionName(xmlhttp.responseText);
+                } else {
 					eval(functionName + "(xmlhttp.responseText)");
 				}
 				
@@ -781,15 +816,9 @@ function setReminderValue(REMINDER_DATE_TIME,REMINDER_VALUE,REMINDER_UNIT)
 
 }
 
-
-function limbasResizeTextAreaGetMax(anumber, another) {
-	return((anumber > another) ? anumber : another);
-}
-
-
 function limbasResizeTextArea(t, minRows, minCols) {
 	if(!t.value){return;}
-	
+
 	t.style.height = '';
 	t.rows = minRows;
 	//t.setAttribute("wrap", "off");
@@ -802,43 +831,45 @@ function limbasResizeTextArea(t, minRows, minCols) {
 			currentLength = lines[i].length;
 			if (currentLength > maxChars) maxChars = currentLength;
 		}
-		t.cols = limbasResizeTextAreaGetMax(maxChars, minCols);
+		t.cols = Math.max(maxChars, minCols);
 	}
-	t.rows = limbasResizeTextAreaGetMax(lines.length + 1, minRows);
+	t.rows = Math.max(lines.length + 1, minRows);
 }
 
 function limbasGetDate(typ) {
-
-	isdate = new Date();
-	
-	Day = isdate.getDate();
-	Month = isdate.getMonth()+1;
-	Year = isdate.getYear()+1900;
-	Hours = isdate.getHours();
-	Minutes = isdate.getMinutes();
-	Seconds = isdate.getSeconds();
-	
-	if (Hours<10)
-	Hours="0"+Hours;
-	if (Minutes<10)
-	Minutes="0"+Minutes;
-	if (Seconds<10)
-	Seconds="0"+Seconds;
-	if (Day<10)
-	Day="0"+Day;
-	if (Month<10)
-	Month="0"+Month;
-
-	if(typ == 1){
-		isdate = Day+"."+Month+"."+Year;
-	}else if(typ == 5){
-		isdate = Hours+":"+Minutes+":"+Seconds;
-	}else{
-		isdate = Day+"."+Month+"."+Year+" "+Hours+":"+Minutes+":"+Seconds;
+	if (!typ || typ === 5) {
+		typ = "H:i:s";
 	}
-	//isdate = isdate.toLocaleString()
 
-	return isdate;
+	const today = new Date();
+	const addLeadingZero = function(number) {
+		if (number < 10) {
+			return "0" + number;
+		}
+		return number;
+	};
+
+	// placeholder -> function returning actual date/time value
+	// corresp. to http://php.net/manual/de/function.date.php
+	const placeholders = {
+        F: function(date) { return date.toLocaleDateString(navigator.language, {month: "long"}); },
+        H: function(date) { return addLeadingZero(date.getHours()); },
+        Y: function(date) { return date.getFullYear(); },
+        d: function(date) { return addLeadingZero(date.getDate()); },
+        i: function(date) { return addLeadingZero(date.getMinutes()); },
+        j: function(date) { return date.getDate(); },
+        l: function(date) { return date.toLocaleDateString(navigator.language, {weekday: "long"}); },
+        m: function(date) { return addLeadingZero(date.getMonth() + 1); },
+        s: function(date) { return addLeadingZero(date.getSeconds()); },
+        y: function(date) { return date.getFullYear().toString().substring(2); }
+	};
+
+	// replace format string with date/time values
+	var dateTimeString = typ;
+	for (var formatChar in placeholders) {
+        dateTimeString = dateTimeString.replace(formatChar, placeholders[formatChar](today));
+	}
+	return dateTimeString;
 }
 
 function limbasParseDate(datestring,format) {
@@ -1118,29 +1149,27 @@ function limbasGetElementWidth(el) {
 function resizeElementStep(elname,direction,formelnt,step){
 	
 	if(!step){
-		var step = 50;
+		step = 50;
 	}
 	
 	var el = document.getElementById(elname);
 	var acsize = el.offsetWidth;
 
+	var newsize = '';
 	if (isNaN(step)){
 		newsize = step;
 	}else{
-		if(direction == 'right'){
-			var newsize = acsize + step;
+		if(direction === 'right'){
+			newsize = acsize + step;
 		}	
-		if(direction == 'left'){
-			var newsize = acsize - step;
+		if(direction === 'left'){
+			newsize = acsize - step;
 		}
 	}
-        //console.log("newsize", newsize);
-        //console.log("step", step);
-
 	el.style.width = newsize;
 
 	if(formelnt){
-		formelnt.value = newsize;
+		$(formelnt).val(newsize).trigger('change');
 	}
 }
 
@@ -1152,7 +1181,7 @@ function limbasSetLayoutClassTabs(el,oldclass,newclass) {
 	var len = rowel.cells.length;
 	for (var r = 0; r < len; r++){
 		var cell = rowel.cells[r];
-		if(cell.className.substr(0,16) != 'tabpoolItemSpace' && cell.className.substr(0,20) != 'lmbMenuItemspaceTop2' && cell.className.indexOf('logo_topleft_menu') <= -1){
+		if(cell.className.indexOf('lmbGtabTabSpace') < 0 && cell.className.substr(0,16) != 'tabpoolItemSpace' && cell.className.substr(0,20) != 'lmbMenuItemspaceTop2'){
 			if(el != cell){
 				cell.className = oldclass;
 			}else{
@@ -1640,45 +1669,37 @@ function radioValue(rObj) {
 
 // set layer height to window size
 function lmb_setAutoHeight(el,offset,reset){
-        offset = (typeof offset !== 'undefined') ? offset : 0;
 
-        if(reset && el){
-		$(el).height('');
-        }else{            
+   offset = (typeof offset !== 'undefined') ? offset : 0;
+
+   if(reset && el){
+       $(el).height('');
+   }else{
 		if(top.nav){
 			top.nav.document.form1.alter.value=0;
 		}
 		window.focus();
 		if($(el) && $(el).css('overflow-y') == 'auto'){
-                        var winHeight = getWindowHeight();                        
-                                            
-                        var elHeight = $(el).height(); // height of el
-                        var elOffsetTop = $(el).position().top; // space between start of document and el
-                        var elOffsetBottom = $(document).height() - elOffsetTop - elHeight; // space between el and end of document
-                                                
-                        var elNewHeight = winHeight - elOffsetTop - elOffsetBottom - offset;
-                        
-                        if(elOffsetTop + elHeight + elOffsetBottom > winHeight) {
-                            $(el).css('max-height', elNewHeight + 'px');
-                        }
-                        
-                        return $(el).height();
-                        
-                        // previous calculation
-                        /*
-			var spacey = findPosY(el);
-			if(browser_ns5){
-				var winsize = window.innerHeight;
-			}else{
-				var winsize = document.body.offsetHeight
+			var winHeight = getWindowHeight();
+
+			var elHeight = $(el).height(); // height of el
+			var elOffsetTop = $(el).position().top; // space between start of document and el
+
+			// hide (possibly huge) context menues before calculating document height
+			limbasDivCloseTab.forEach(function(id) { $('#' + id).hide(); });
+            const docHeight = $(document).height();
+            limbasDivCloseTab.forEach(function(id) { $('#' + id).show(); });
+
+            var elOffsetBottom = docHeight - elOffsetTop - elHeight; // space between el and end of document
+
+			var elNewHeight = winHeight - elOffsetTop - elOffsetBottom - offset;
+
+			if(elOffsetTop + elHeight + elOffsetBottom > winHeight) {
+				$(el).css('max-height', elNewHeight + 'px');
 			}
-			var size = (winsize - spacey - offset);
-			var csize = el.offsetHeight;
-			if(csize > size){
-				el.style.height = size;
-			}
-			return size;
-                        */
+
+			return $(el).height();
+
 		}
 	}
 }
@@ -1720,6 +1741,23 @@ function getWindowHeight() {
         }
 }
 
+function toggleHeight(el,maxHeight,maxWidth) {
+
+    el = $('#'+el);
+
+    if(!maxHeight){maxHeight = 100;}
+    if(!maxWidth){maxWidth = 300;}
+
+    // toggle height
+    const actualHeight = el.get(0).scrollHeight+10;
+    const actualWidth = el.get(0).scrollWidth+10;
+    if (el.height() === actualHeight-10) {
+        el.animate({height: maxHeight + "px",width: maxWidth + "px"});
+    } else {
+        el.animate({height: actualHeight + "px",width: actualWidth + "px"});
+    }
+
+}
 
 function array_unique(arrayName) {
 	var newArray = new Array();
@@ -1781,11 +1819,14 @@ function lmbAjax_showUserGroupsSearch(evt,value,ID,gtabid,fieldid,usefunction,pr
 }
 
 function lmbAjax_showUserGroupsSearchPost(result,evt,typ,usefunction,prefix){
-	document.getElementById(prefix+usefunction+'user').style.display = 'none';
-	document.getElementById(prefix+usefunction+'group').style.display = 'none';
-	document.getElementById(prefix+usefunction+typ).style.display = '';
-	document.getElementById(prefix+usefunction+typ).innerHTML = result;
-	limbasDivCloseTab.push(prefix+usefunction+typ);
+	$('#'+prefix+usefunction+'user').hide();
+    $('#'+prefix+usefunction+'group').hide();
+    const ajaxContainerID = prefix+usefunction+typ;
+    const container = $('#'+ajaxContainerID);
+    container.html(result);
+    const img = $(evt.target);
+	limbasDivShow(img.get(0), 'lmbAjaxContainer', ajaxContainerID, '0x-15');
+    container.css('left', img.position().left + img.width()).css('top', img.position().top);
 }
 
 // gtab user rules

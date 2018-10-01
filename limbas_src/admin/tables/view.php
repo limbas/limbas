@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -19,6 +19,28 @@
  */
 
 ?>
+
+<!-- include codemirror with sql syntax highlighting and sql code completion -->
+<script src="extern/codemirror/lib/codemirror.js"></script>
+<script src="extern/codemirror/edit/matchbrackets.js"></script>
+<script src="extern/codemirror/edit/matchtags.js"></script>
+<script src="extern/codemirror/mode/sql/sql.js"></script>
+<script src="extern/codemirror/addon/hint/show-hint.js"></script>
+<link rel="stylesheet" href="extern/codemirror/addon/hint/show-hint.css">
+<script src="extern/codemirror/addon/hint/sql-hint.js"></script>
+<link rel="stylesheet" href="extern/codemirror/lib/codemirror.css">
+<style>
+    .CodeMirror {
+        border: 1px solid <?=$farbschema['WEB3']?>;
+        position: absolute;
+        height: unset;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+    }
+</style>
+<script src="extern/sqlFormatter/sql-formatter.min.js"></script>
 
 <style>
 
@@ -48,41 +70,54 @@ var zoomEl = null;
 function ZoomViewField(event,el,key) {
 	zoomKey = key;
 	zoomEl = el;
-	
-	document.getElementById("ZoomFieldArea").value = el.value;
-	limbasDivShow(el,null,'ZoomFieldContainer');
+
+    limbasDivShow(el,null,'ZoomFieldContainer');
+
+    zoomFieldCodeMirror.setValue(el.value);
+    zoomFieldCodeMirror.focus();
+    zoomFieldCodeMirror.refresh();
 
 	return false;
 }
 
-function ZoomViewFieldUpdate(event,el) {
-	
-	zoomEl.value = el.value;
-	lmbAjax_EditViewfield(event,zoomKey,'field','key_'+zoomKey,zoomKey);
-	
-	zoomKey = null;
-	zoomEl = null;
-	
-	divclose();
+function ZoomViewFieldUpdate(cm) {
+    if (zoomEl) {
+        zoomEl.value = cm.getValue();
+        lmbAjax_EditViewfield(event,zoomKey,'field','key_'+zoomKey,zoomKey);
+        divclose();
+    }
 }
 
-
 $(function() {
-	$('#vieweditorPattern').height(($( window ).height()) - 340);
+    zoomFieldCodeMirror = CodeMirror.fromTextArea(document.getElementById("ZoomFieldArea"), {
+        lineNumbers: true,
+        matchBrackets: true,
+        mode: "text/x-sql",
+        indentWithTabs: true,
+        smartIndent: true,
+        autofocus: false,
+        extraKeys: {
+            "Ctrl-Space": "autocomplete"
+        }
+    });
+    zoomFieldCodeMirror.on("blur", function(cm) {
+        ZoomViewFieldUpdate(cm);
+    });
 });
 
 
 </script>
 
 
-<div id="ZoomFieldContainer" class="ajax_container" style="position:absolute;visibility:hidden;z-index:999;" onclick="activ_menu=1;">
-<i class="lmb-icon lmb-close-alt" style="position:absolute;right:5px;cursor:pointer" onclick="divclose();"></i><br>
-<textarea id="ZoomFieldArea" style="width:250px;height:150px;overflow:auto;" onchange="ZoomViewFieldUpdate(event,this);"></textarea>
+<div id="ZoomFieldContainer" class="ajax_container" style="position:absolute;visibility:hidden;width:600px;z-index:999;" onclick="activ_menu=1;">
+    <?php pop_closetop('ZoomFieldContainer'); ?>
+    <br>
+    <textarea id="ZoomFieldArea" style="overflow:auto;"></textarea>
 </div>
 
-<div class="lmbPositionContainerMainTabPool" style="height:100%">
+<div class="lmbPositionContainerMainTabPool lmbFullSize">
 
-<FORM ACTION="main_admin.php" METHOD="post" name="form1">
+<FORM ACTION="main_admin.php" METHOD="post" name="form1" style="height: 100%;">
 <input type="hidden" name="action" value="setup_gtab_view">
 <input type="hidden" name="view_section" value="<?=$view_section?>">
 <input type="hidden" name="viewid" value="<?=$viewid?>">
@@ -93,6 +128,7 @@ $(function() {
 <input type="hidden" name="showsystabs">
 <input type="hidden" name="view_save">
 <input type="hidden" name="options_save">
+<input type="hidden" name="act">
 <?php
 
 
@@ -105,50 +141,154 @@ if($options_save){
 	lmb_QuestOptions($viewid,$options);
 }
 
-if($view_section == 1){
-	$gview = lmb_getQuestValue($viewid);
 
-	# save view definition
-	if($view_save){
-		if($view_public){
-			lmb_createQuestView($viewid,$view_def,$view_public,1,$view_drop);
-		}elseif (!$view_public AND $gview["ispublic"]){
-			lmb_createQuestView($viewid,$view_def,0,1,$view_drop);
-		}else {
-			lmb_createQuestView($viewid,$view_def,0,0,$view_drop);
-		}
-		$gview["viewdef"] = $view_def;
-		$gview["viewdrop"] = $view_drop;
-		$gview["ispublic"] = $view_public;
-	}
-	
+// get view infos from limbas
+$gview = lmb_getQuestValue($viewid);
+
+
+
+if($view_section == 1 OR $view_section == 2) {
+
+
+    // generate SQL from editor
+    if ($view_section == 2 AND ($act == 'view_save' OR $act == 'view_isvalid' OR $act == 'view_create' OR $act == 'view_replace')) {
+        $view_def = lmb_questCreateSQL($viewid);
+    }
+
+    // save view definition
+    if ($act == 'view_save') {
+        lmb_saveViewDefinition($viewid, $view_def);
+    } elseif ($act == 'view_isvalid') {
+        lmb_saveViewDefinition($viewid, $view_def);
+        if (lmb_precheckView($viewid, $view_def)) {
+            $gview["isvalid"] = 1;
+        }
+    } elseif ($act == 'view_drop') {
+        lmb_createQuestView($viewid, $view_def, $gview["ispublic"], 1);
+    } elseif ($act == 'view_create') {
+        lmb_saveViewDefinition($viewid, $view_def);
+        if (lmb_precheckView($viewid, $view_def)) {
+            $gview["isvalid"] = 1;
+            lmb_createQuestView($viewid, $view_def, $gview["ispublic"]);
+        }
+    } elseif ($act == 'view_replace') {
+        lmb_saveViewDefinition($viewid, $view_def);
+        if (lmb_precheckView($viewid, $view_def)) {
+            $gview["isvalid"] = 1;
+            lmb_createQuestView($viewid, $view_def, $gview["ispublic"], null, 1);
+        } else {
+
+        }
+    }
+
+
+    if ($act == 'view_public') {
+        // drop lmb_conf_fields
+        if ($gview["ispublic"]) {
+            lmb_QuestDeleteConfig($viewid);
+            // create lmb_conf_fields
+        } elseif ($gview['isvalid']) {
+            lmb_QuestConfig($viewid, $view_group, $view_name);
+        }
+    }
+
+    // get view infos from limbas after update
+    $gview = lmb_getQuestValue($viewid);
+
+
+}
+
+
+
+
+
+if($view_section == 1){
+
 	?>
-	<TABLE class="tabpool" BORDER="0" width="95%" cellspacing="0" cellpadding="0"><TR><TD>
-	<TABLE BORDER="0" cellspacing="0" cellpadding="0" width="100%"><TR class="tabpoolItemTR">
-	<TD nowrap class="tabpoolItemActive"><?=$lang[2613]?></TD>
+	<TABLE class="tabpool" BORDER="0" cellspacing="0" cellpadding="0"><TR><TD>
+	<TABLE BORDER="0" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse;"><TR class="tabpoolItemTR">
+	<TD nowrap class="tabpoolItemActive"><?=$lang[2026]?></TD>
 	<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='2';document.form1.submit();"><?=$lang[2612]?></TD>
-	<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='3';document.form1.submit();"><?=$lang[2616]?></TD>
-	<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='4';document.form1.submit();"><?=$lang[2755]?></TD>
+	<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='3';document.form1.submit();"><?=$lang[1739]?></TD>
+	<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='4';document.form1.submit();"><?=$lang[2795]?></TD>
+    <?php if($gview["ispublic"]){?><TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='5';document.form1.submit();"><?=$lang[953]?></TD><?php }?>
 	<TD class="tabpoolItemSpace">&nbsp;
-	<?if(1){echo "&nbsp;<a href=\"main_admin.php?&action=setup_gtab_ftype&atid=$viewid\"><i border=\"0\" style=\"cursor:pointer\" class=\"lmb-icon lmb-pencil\"></i></a>";}?>
 	</TD>
 	</TR></TABLE>
 
 	</TD></TR>
 	
 	<TR><TD class="tabpoolfringe">
-	<TABLE BORDER="0" cellspacing="1" cellpadding="2" width="100%" class="tabBody">
+	<TABLE BORDER="0" cellspacing="1" cellpadding="2" width="100%" class="tabBody" style="height: 100%;">
 	
 	<TR><TD><B><?=$gview["viewname"]?></B></TD></TR>
 	
-	<TR><TD>
-	<textarea name="view_def" style="width:100%;height:300px;background-color:<?=$farbschema["WEB8"]?>"><?=htmlentities($gview["viewdef"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])?></textarea></TD></TR>
+	<TR style="height: 100%;"><TD style="position: relative;">
+	<textarea id="view_def" name="view_def" style="width:100%;height:100%;background-color:<?=$farbschema["WEB8"]?>"><?=htmlentities($gview["viewdef"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])?></textarea></TD></TR>
+    <Script language="JavaScript">
 
-	<TR class="tabBody"><TD><HR></TD></TR>
+        var editor = CodeMirror.fromTextArea(document.getElementById("view_def"), {
+            lineNumbers: true,
+            lineWrapping:true,
+            matchBrackets: true,
+            mode: "text/x-sql",
+            indentWithTabs: true,
+            smartIndent: true,
+            autofocus: true,
+            extraKeys: {
+                "Ctrl-Space": "autocomplete"
+            }
+        });
+
+        function formatSQL() {
+            editor.setValue(sqlFormatter.format(editor.getValue(), { indent: "    "}));
+        }
+        editor.on('blur', formatSQL);
+
+        $(function() {
+            formatSQL();
+        });
+
+    </Script>
+    <TR class="tabBody"><TD><HR></TD></TR>
 	<TR class="tabBody"><TD align="right">
-	<?=$lang[2615]?> <input type="checkbox" NAME="view_public" <?if($gview["ispublic"]){echo "checked";}?>>&nbsp;&nbsp;
-	<?=$lang[2460]?> <input type="checkbox" NAME="view_drop" <?if($gview["viewdrop"]){echo "checked";}?>>
-	&nbsp;&nbsp;<input type="submit" NAME="view_save" value="<?=$lang[2614]?>">
+
+    <div style="float:left;">
+    <?=$lang[1996]?><?php if ($gview["ispublic"]) {echo "<i class=\"lmb-icon lmb-check\"></i>";}else{echo "<i class=\"lmb-icon lmb-minus-circle\"></i>";}?>&nbsp;
+    <?=$lang[2023]?><?php if ($gview["viewexists"]) {echo "<i class=\"lmb-icon lmb-check\"></i>";}else{echo "<i class=\"lmb-icon lmb-minus-circle\"></i>";}?>&nbsp;
+    Syntax<?php if ($gview["isvalid"]) {echo "<i class=\"lmb-icon lmb-check\"></i>";}else{echo "<i class=\"lmb-icon lmb-minus-circle\"></i>";}?>&nbsp;
+    </div>
+
+    <?php
+    #if($gview["isvalid"]) {$st_c = "color:black;background-color:".$farbschema['WEB7'];}
+	#if($gview["ispublic"]){$st_p = "color:black;background-color:".$farbschema['WEB7'];}
+	#if($gview["viewexists"]){$st_v = "color:black;background-color:".$farbschema['WEB7'];}
+	?>
+
+	<input type="button" value="<?=$lang[2940]?>" onclick="document.form1.act.value='view_save';setDrag();document.form1.submit();">
+    <input type="button" value="<?=$lang[2941]?>" onclick="document.form1.act.value='view_isvalid';document.form1.submit();">
+
+    <?php
+    if ($gview["viewexists"]) {
+        if (!$gview["isvalid"]) {
+            $st = "style=\"opacity:0.4; cursor:default;\" disabled";
+        }
+            echo "<input type=\"button\" value = \"" . $lang[1996] . "\" $st onclick=\"document.form1.act.value='view_public';document.form1.submit();\">";
+            echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+            echo "<input type=\"button\" value=\"" . $lang[2942] . "\"  onclick=\"document.form1.act.value='view_replace';document.form1.submit();\">&nbsp;";
+        #}else{
+            #echo "&nbsp;&nbsp;&nbsp;&nbsp;";
+        #}
+        echo "<input type=\"button\" value=\"" . $lang[2023] . " " . $lang[160] . "\" onclick=\"document.form1.act.value='view_drop';document.form1.submit();\">&nbsp;";
+    } else {
+        #if ($gview["isvalid"]) {
+            echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+            echo "<input type=\"button\" value=\"" . $lang[2942] . "\" onclick=\"document.form1.act.value='view_create';document.form1.submit();\">&nbsp;";
+        #}
+    }
+    ?>
+
+
 	</TD></TR>
 	<TR class="tabFooter"><TD></TD></TR>
 	</TABLE>
@@ -163,23 +303,7 @@ if($view_section == 1){
 		$sqlquery = "UPDATE LMB_CONF_VIEWS SET USESYSTABS = $showsystabs WHERE ID = $viewid";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
-	
-	$gview = lmb_getQuestValue($viewid);
-	# save view definition
-	if($view_save){
-		if($view_def = lmb_questCreateSQL($viewid)){
-			if($view_public){
-				lmb_createQuestView($viewid,$view_def,$view_public,1,$view_drop);
-			}elseif (!$view_public AND $gview["ispublic"]){
-				lmb_createQuestView($viewid,$view_def,0,1,$view_drop);
-			}else {
-				lmb_createQuestView($viewid,$view_def,0,0,$view_drop);
-			}
-			$gview["viewdef"] = $view_def;
-			$gview["viewdrop"] = $view_drop;
-			$gview["ispublic"] = $view_public;
-		}
-	}
+
 ?>
 
 <i id="relationSign" class="lmb-icon lmb-chain-alt" style="position:absolute;overflow:hidden;z-index:9999;visibility:hidden;"></i>
@@ -201,12 +325,13 @@ echo "<tr><td><hr><input type=\"checkbox\" OnClick=\"document.form1.showsystabs.
 </table>
 </div>
 
-<TABLE class="tabpool" BORDER="0" width="98%" height="95%" cellspacing="0" cellpadding="0"><TR><TD>
-<TABLE BORDER="0" cellspacing="0" cellpadding="0" width="100%"><TR class="tabpoolItemTR">
-<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='1';document.form1.submit();"><?=$lang[2613]?></TD>
+<TABLE class="tabpool" BORDER="0" cellspacing="0" cellpadding="0"><TR><TD>
+<TABLE BORDER="0" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse;"><TR class="tabpoolItemTR">
+<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='1';document.form1.submit();"><?=$lang[2026]?></TD>
 <TD nowrap class="tabpoolItemActive"><?=$lang[2612]?></TD>
-<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='3';document.form1.submit();"><?=$lang[2616]?></TD>
-<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='4';document.form1.submit();"><?=$lang[2755]?></TD>
+<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='3';document.form1.submit();"><?=$lang[1739]?></TD>
+<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='4';document.form1.submit();"><?=$lang[2795]?></TD>
+<?php if($gview["ispublic"]){?><TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='5';document.form1.submit();"><?=$lang[953]?></TD><?php }?>
 <TD class="tabpoolItemSpace">&nbsp;</TD>
 </TR>
 </TABLE>
@@ -217,7 +342,7 @@ echo "<tr><td><hr><input type=\"checkbox\" OnClick=\"document.form1.showsystabs.
 
 <TR><TD><B><?=$gview["viewname"]?></B></TD></TR>
 
-<TR><TD height="100%">
+<TR style="height:100%;"><TD>
 <div id="vieweditorPattern" style="position:relative;border:1px solid grey;width:100%;height:100%;overflow:auto;" oncontextmenu="limbasDivShow('',event,'tablist');return false;">
 <?php
 require_once("admin/tables/viewschema.php");
@@ -234,9 +359,40 @@ show_viewFields($viewid);
 
 <TR class="tabBody"><TD><HR></TD></TR>
 <TR class="tabBody"><TD align="right">
-<?=$lang[2615]?> <input type="checkbox" NAME="view_public" <?if($gview["ispublic"]){echo "checked";}?>>&nbsp;
-	<?=$lang[2460]?> <input type="checkbox" NAME="view_drop" <?if($gview["viewdrop"]){echo "checked";}?>>
-&nbsp;&nbsp;<input type="button" value="<?=$lang[2614]?>" style="margin:5px;" OnClick="setDrag();document.form1.view_save.value=1;document.form1.submit();">
+
+    <div style="float:left;">
+    <?=$lang[1996]?><?php if ($gview["ispublic"]) {echo "<i class=\"lmb-icon lmb-check\"></i>";}else{echo "<i class=\"lmb-icon lmb-minus-circle\"></i>";}?>&nbsp;
+    <?=$lang[2023]?><?php if ($gview["viewexists"]) {echo "<i class=\"lmb-icon lmb-check\"></i>";}else{echo "<i class=\"lmb-icon lmb-minus-circle\"></i>";}?>&nbsp;
+    Syntax<?php if ($gview["isvalid"]) {echo "<i class=\"lmb-icon lmb-check\"></i>";}else{echo "<i class=\"lmb-icon lmb-minus-circle\"></i>";}?>&nbsp;
+    </div>
+
+    <?php
+    #if($gview["isvalid"]) {$st_c = "color:black;background-color:".$farbschema['WEB7'];}
+	#if($gview["ispublic"]){$st_p = "color:black;background-color:".$farbschema['WEB7'];}
+	#if($gview["viewexists"]){$st_v = "color:black;background-color:".$farbschema['WEB7'];}
+	?>
+
+	<input type="button" value="<?=$lang[2940]?>" onclick="document.form1.act.value='view_save';setDrag();document.form1.submit();">
+    <input type="button" value="<?=$lang[2941]?>" onclick="document.form1.act.value='view_isvalid';document.form1.submit();">
+
+    <?php
+    if ($gview["viewexists"]) {
+        if (!$gview["isvalid"]) {
+            $st = "style=\"opacity:0.4; cursor:default;\" disabled";
+        }
+        if($gview["ispublic"]){$ispublic_lang = $lang[2943];$st='';}else{$ispublic_lang = $lang[1996];}
+        echo "<input type=\"button\" value = \"" . $ispublic_lang . "\" $st onclick=\"document.form1.act.value='view_public';document.form1.submit();\">";
+        echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+        echo "<input type=\"button\" value=\"" . $lang[2942] . "\"  onclick=\"document.form1.act.value='view_replace';document.form1.submit();\">&nbsp;";
+        echo "<input type=\"button\" value=\"" . $lang[2023] . " " . $lang[160] . "\" onclick=\"document.form1.act.value='view_drop';document.form1.submit();\">&nbsp;";
+    } else {
+        #if ($gview["isvalid"]) {
+            echo "&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;";
+            echo "<input type=\"button\" value=\"" . $lang[2942] . "\" onclick=\"document.form1.act.value='view_create';document.form1.submit();\">&nbsp;";
+        #}
+    }
+    ?>
+
 </TD></TR>
 <TR class="tabFooter"><TD></TD></TR>
 </TABLE>
@@ -251,30 +407,31 @@ document.getElementById("lmbViewfieldContainer").style.width = (window.innerWidt
 }elseif($view_section == 3){
 	$gview = lmb_getQuestValue($viewid);
 ?>
-	<TABLE class="tabpool" BORDER="0" width="95%" cellspacing="0" cellpadding="0"><TR><TD>
-	<TABLE BORDER="0" cellspacing="0" cellpadding="0" width="100%"><TR class="tabpoolItemTR">
-	<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='1';document.form1.submit();"><?=$lang[2613]?></TD>
+	<TABLE class="tabpool" BORDER="0" cellspacing="0" cellpadding="0"><TR><TD>
+	<TABLE BORDER="0" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse;"><TR class="tabpoolItemTR">
+	<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='1';document.form1.submit();"><?=$lang[2026]?></TD>
 	<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='2';document.form1.submit();"><?=$lang[2612]?></TD>
-	<TD nowrap class="tabpoolItemActive"><?=$lang[2616]?></TD>
-	<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='4';document.form1.submit();"><?=$lang[2755]?></TD>
+	<TD nowrap class="tabpoolItemActive"><?=$lang[1739]?></TD>
+	<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='4';document.form1.submit();"><?=$lang[2795]?></TD>
+    <?php if($gview["ispublic"]){?><TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='5';document.form1.submit();"><?=$lang[953]?></TD><?php }?>
 	<TD class="tabpoolItemSpace">&nbsp;</TD>
 	</TR></TABLE>
 
 	</TD></TR>
 	
 	<TR><TD class="tabpoolfringe">
-	<TABLE BORDER="0" cellspacing="1" cellpadding="2" width="100%" class="tabBody">
+	<TABLE BORDER="0" cellspacing="1" cellpadding="2" width="100%" class="tabBody" style="height: 100%;">
 	
 	<TR><TD><B><?=$gview["viewname"]?></B><hr></TD></TR>
 	
-	<TR><TD>
+	<TR style="height: 100%; vertical-align: top;"><TD>
 	
 	<?php
 	if($gview["viewdef"]){
 		echo "<br><br>";
 		$sRow = "style=\"border:1px solid grey\"";
 		$sTable = "cellpadding=2 cellspacing=0 style=\"border-collapse:collapse\"";
-		if($rs = @odbc_exec($db,$gview["viewdef"]) or lmb_questerror(odbc_errormsg($db),$gview["viewdef"])){
+		if($rs = @odbc_exec($db, lmb_paramTransView($viewid, $gview["viewdef"])) or lmb_questerror(odbc_errormsg($db),$gview["viewdef"])){
 			echo ODBCResourceToHTML($rs, $sTable, $sRow, 1000);
 		}
 	}
@@ -289,33 +446,39 @@ document.getElementById("lmbViewfieldContainer").style.width = (window.innerWidt
 }elseif($view_section == 4){
 	$gview = lmb_getQuestValue($viewid);
 ?>
-	<TABLE class="tabpool" BORDER="0" width="95%" cellspacing="0" cellpadding="0"><TR><TD>
-	<TABLE BORDER="0" cellspacing="0" cellpadding="0" width="100%"><TR class="tabpoolItemTR">
-	<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='1';document.form1.submit();"><?=$lang[2613]?></TD>
+	<TABLE class="tabpool" BORDER="0" cellspacing="0" cellpadding="0"><TR><TD>
+	<TABLE BORDER="0" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse;"><TR class="tabpoolItemTR">
+	<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='1';document.form1.submit();"><?=$lang[2026]?></TD>
 	<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='2';document.form1.submit();"><?=$lang[2612]?></TD>
-	<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='3';document.form1.submit();"><?=$lang[2616]?></TD>
-	<TD nowrap class="tabpoolItemActive"><?=$lang[2755]?></TD>
+	<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='3';document.form1.submit();"><?=$lang[1739]?></TD>
+	<TD nowrap class="tabpoolItemActive"><?=$lang[2795]?></TD>
+    <?php if($gview["ispublic"]){?><TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='5';document.form1.submit();"><?=$lang[953]?></TD><?php }?>
 	<TD class="tabpoolItemSpace">&nbsp;</TD>
 	</TR></TABLE>
 
 	</TD></TR>
 	
 	<TR><TD class="tabpoolfringe">
-	<TABLE BORDER="0" cellspacing="1" cellpadding="2" width="100%" class="tabBody">
+	<TABLE BORDER="0" cellspacing="1" cellpadding="2" width="100%" class="tabBody" style="height: 100%;">
 	
 	<TR><TD><B><?=$gview["viewname"]?></B><hr></TD></TR>
 	
-	<TR><TD>
+	<TR style="height: 100%; vertical-align: top;"><TD>
 	
 	<br>
 	<table border="0" cellspacing="1" cellpadding="2">
-	<tr><td width=150><?=$lang[2615]?></td><td valign="top"><input type="checkbox" NAME="view_public" disabled <?if($gview["ispublic"]){echo "checked";}?>></td></tr>
-	<tr><td valign="top">Event</td><td valign="top"><textarea name="options[event]" style="width:400px;height:150px;"><?=htmlentities($gview["event"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])?></textarea></td></tr>	
-	</table>
+
+    <tr><td width=150><?=$lang[1996]?></td><td valign="top"><?php if ($gview["ispublic"]) {echo "<i class=\"lmb-icon lmb-check\"></i>";}?></td></tr>
+    <tr><td width=150><?=$lang[2023]?></td><td valign="top"><?php if ($gview["viewexists"]) {echo "<i class=\"lmb-icon lmb-check\"></i>";}?></td></tr>
+    <tr><td width=150>Syntax</td><td valign="top"><?php if ($gview["isvalid"]) {echo "<i class=\"lmb-icon lmb-check\"></i>";}?></td></tr>
+    <tr><td>&nbsp;</td></tr>
+	<tr><td valign="top">Event</td><td valign="top"><textarea name="options[event]" style="width:500px;height:100px;"><?=htmlentities($gview["event"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])?></textarea></td></tr>
+	<tr><td valign="top">Parameter</td><td valign="top"><textarea name="options[params]" style="width:500px;height:100px;"><?=htmlentities($gview["params"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])?></textarea></td></tr>
+    </table>
 	
 	
 	<TR class="tabBody"><TD><HR></TD></TR>
-	<TR class="tabBody"><TD align="right"><input type="button" value="<?=$lang[2614]?>" style="margin:5px;" OnClick="document.form1.options_save.value=1;document.form1.submit();">
+	<TR class="tabBody"><TD align="right"><input type="button" value="<?=$lang[842]?>" style="margin:5px;" OnClick="document.form1.options_save.value=1;document.form1.submit();">
 	</TD></TR>
 	<TR class="tabFooter"><TD></TD></TR>
 	
@@ -323,8 +486,27 @@ document.getElementById("lmbViewfieldContainer").style.width = (window.innerWidt
 	</TD></TR>
 	</TABLE>
 <?php
-}
-?>
+}elseif($view_section == 5){
+    ?>
+	<TABLE class="tabpool" BORDER="0" cellspacing="0" cellpadding="0"><TR><TD>
+	<TABLE BORDER="0" cellspacing="0" cellpadding="0" style="width: 100%; border-collapse: collapse;"><TR class="tabpoolItemTR">
+	<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='1';document.form1.submit();"><?=$lang[2026]?></TD>
+	<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='2';document.form1.submit();"><?=$lang[2612]?></TD>
+	<TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='3';document.form1.submit();"><?=$lang[1739]?></TD>
+    <TD nowrap class="tabpoolItemInactive" OnClick="document.form1.view_section.value='4';document.form1.submit();"><?=$lang[2795]?></TD>
+    <TD nowrap class="tabpoolItemActive"><?=$lang[953]?></TD>
+
+	<TD class="tabpoolItemSpace">&nbsp;</TD>
+	</TR></TABLE>
+
+	</TD></TR>
+    <TR><TD class="tabpoolfringe" id="lmbViewfieldContainer" style="height: 100%; padding: 0;">
+    <iframe style="width:100%;height:100%" src="main_admin.php?action=setup_gtab_ftype&atid=<?=$viewid?>"></iframe>
+
+    </TD></TR></TABLE>
+	</TD></TR>
+	</TABLE>
+<?php }?>
 
 
 

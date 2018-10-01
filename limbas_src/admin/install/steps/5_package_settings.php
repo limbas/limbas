@@ -45,14 +45,14 @@ if($index = array_search("clean.tar.gz", $demoPaths)) {
         </tbody>
     </table>
 
-    <?
+    <?php
 } else {
     $noCleanFound = 1;
     ?>
         
     <div class="alert alert-warning" role="alert">No clean install archive found! You must install one of the following example values:</div>
 
-    <?php    
+    <?php
 }
 ?>
 
@@ -101,7 +101,7 @@ if($index = array_search("clean.tar.gz", $demoPaths)) {
 
 <div>    
     <button type="button" class="btn btn-default" onclick="switchToStep('<?= array_keys($steps)[4] ?>')">Back</button>
-    <?php 
+    <?php
     $nextStep = 6;
     $text = "Next step";
     if($noCleanFound AND $noDemoFound) {

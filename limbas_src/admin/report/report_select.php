@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -55,11 +55,11 @@ if($new_group AND $report_list) {
 				$flresult = create_fs_tab_path($key);
 
 				if(!$commit){
-					if($flresult[tab_level]){
-						$sqlquery = "SELECT ID FROM LDMS_STRUCTURE WHERE TYP = 5 AND LEVEL = ".$flresult[tab_level]." AND NAME = '".parse_db_string($report_name,50)."' AND TABGROUP_ID = ".$gtab[tab_group][$key]." AND TAB_ID = $key AND FIELD_ID = $NEXTID";
+					if($flresult['tab_level']){
+						$sqlquery = "SELECT ID FROM LDMS_STRUCTURE WHERE TYP = 5 AND LEVEL = ".$flresult['tab_level']." AND NAME = '".parse_db_string($report_name,50)."' AND TABGROUP_ID = ".$gtab['tab_group'][$key]." AND TAB_ID = $key AND FIELD_ID = $NEXTID";
 						$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 						if(!odbc_result($rs, "ID")){
-							$sqlquery = "INSERT INTO LDMS_STRUCTURE (ID,NAME,LEVEL,TYP,ERSTUSER,TABGROUP_ID,TAB_ID,FIELD_ID,FIX) VALUES (".$flresult[FNEXTID].",'".parse_db_string($report_name,50)."',".$flresult[tab_level].",5,".$session[user_id].",".$gtab[tab_group][$key].",$key,$NEXTID,".LMB_DBDEF_TRUE.")";
+							$sqlquery = "INSERT INTO LDMS_STRUCTURE (ID,NAME,LEVEL,TYP,ERSTUSER,TABGROUP_ID,TAB_ID,FIELD_ID,FIX) VALUES (".$flresult['FNEXTID'].",'".parse_db_string($report_name,50)."',".$flresult['tab_level'].",5,".$session['user_id'].",".$gtab['tab_group'][$key].",$key,$NEXTID,".LMB_DBDEF_TRUE.")";
 							$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 							if(!$rs) {$commit = 1;}
 						}
@@ -148,11 +148,11 @@ if($del AND $report_id){
 		if(!$rs) {$commit = 1;}
 		$bzm = 1;
 		while(odbc_fetch_row($rs, $bzm)) {
-			if(file_exists($umgvar[uploadpfad]."report/".odbc_result($rs, "TAB_SIZE"))){
-				unlink($umgvar[uploadpfad]."report/".odbc_result($rs, "TAB_SIZE"));
+			if(file_exists($umgvar['uploadpfad']."report/".odbc_result($rs, "TAB_SIZE"))){
+				unlink($umgvar['uploadpfad']."report/".odbc_result($rs, "TAB_SIZE"));
 			}
-			if(file_exists($umgvar[pfad]."/TEMP/thumpnails/report/".odbc_result($rs, "TAB_SIZE"))){
-				unlink($umgvar[pfad]."/TEMP/thumpnails/report/".odbc_result($rs, "TAB_SIZE"));
+			if(file_exists($umgvar['pfad']."/TEMP/thumpnails/report/".odbc_result($rs, "TAB_SIZE"))){
+				unlink($umgvar['pfad']."/TEMP/thumpnails/report/".odbc_result($rs, "TAB_SIZE"));
 			}
 		$bzm++;
 		}
@@ -173,7 +173,7 @@ if($del AND $report_id){
 	if(!$rs) {$commit = 1;}
 
 	if(!$commit AND odbc_result($rs, "ID")){
-		$GLOBALS["filestruct"][admin] = 1;
+		$GLOBALS["filestruct"]['admin'] = 1;
 		if(!delete_dir(odbc_result($rs, "ID"))){$commit = 1;}
 	}
 
@@ -271,8 +271,8 @@ function lmb_openMiniexplorer(elid,format) {
 <TR class="tabHeader">
 <TD class="tabHeaderItem">ID</TD>
 <TD class="tabHeaderItem"></TD>
-<TD class="tabHeaderItem"><?=$lang[1164]?></TD>
-<TD class="tabHeaderItem"><?=$lang[1160]?></TD>
+<TD class="tabHeaderItem"><?=$lang[160]?></TD>
+<TD class="tabHeaderItem"><?=$lang[1137]?></TD>
 <TD class="tabHeaderItem"><?=$lang[1162]?></TD>
 <TD class="tabHeaderItem"><?=$lang[2509]?></TD>
 <TD class="tabHeaderItem"><?=$lang[2111]?></TD>
@@ -285,7 +285,7 @@ function lmb_openMiniexplorer(elid,format) {
 
 </TR>
 
-<?
+<?php
 #----------------- Berichte -------------------
 function resultreportlist_(){
 	global $db;
@@ -355,7 +355,7 @@ if($greportlist_){
 		if($gtab["table"][$gtabid]){
 			$cat = $gtab["desc"][$gtabid];
 		}else{
-			$cat = $lang[2449];
+			$cat = $lang[1986];
 		}
 		echo "<tr class=\"tabSubHeader\"><td class=\"tabSubHeaderItem\" colspan=\"12\">" . $cat . "</td></tr>";
 		
@@ -459,8 +459,8 @@ function rep_sub_folderlist($LEVEL,$select,$space=null){
 
 <TR class="tabHeader">
 <TD colspan="3"></TD>
-<TD class="tabHeaderItem"><?=$lang[1180]?></TD>
-<TD class="tabHeaderItem"><?=$lang[1181]?></TD>
+<TD class="tabHeaderItem"><?=$lang[4]?></TD>
+<TD class="tabHeaderItem"><?=$lang[164]?></TD>
 <TD class="tabHeaderItem"><?=$lang[1464]?></TD>
 <TD colspan="5" class="tabHeaderItem">&nbsp</TD>
 
@@ -471,21 +471,22 @@ function rep_sub_folderlist($LEVEL,$select,$space=null){
 <TD><INPUT TYPE="TEXT" NAME ="report_name" SIZE="20"></TD>
 
 <TD><SELECT NAME="referenz_tab"><OPTION VALUE="-1"></OPTION>
-<?
+<?php
 foreach ($tabgroup["id"] as $key0 => $value0) {
-	echo "<OPTION VALUE=\"0\">(".$tabgroup["name"][$key0].")";
-	foreach ($gtab["tab_id"] as $key => $value) {
+    echo '<optgroup label="' . $tabgroup["name"][$key0] . '">';
+    foreach ($gtab["tab_id"] as $key => $value) {
 		if($gtab["tab_group"][$key] == $value0){
-			echo "<OPTION VALUE=\"".$value."\">&nbsp;&nbsp;".$gtab["desc"][$key]."</OPTION>";
+			echo "<OPTION VALUE=\"".$value."\">".$gtab["desc"][$key]."</OPTION>";
 		}
 	}
+	echo '</optgroup>';
 }
 ?>
 </SELECT></TD>
 
 <TD>
 <SELECT NAME="reportcopy"><OPTION VALUE="0"></OPTION>
-<?
+<?php
 if($greportlist_){
 	foreach ($greportlist_ as $gtabid => $value0){
 		if($greportlist_[$gtabid]["id"]){

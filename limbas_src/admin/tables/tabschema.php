@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -71,7 +71,7 @@ function schema_tab(&$pat,$gtabid,$posx,$posy){
 	echo "<TABLE class=\"lmb_container\" ID=\"tabsh_$gtabid\" STYLE=\"position:absolute;".$width.$height."left:".$posx."px;top:".$posy."px;border:1px solid black;background-color:".$farbschema["WEB7"].";overflow:hidden;z-index:$gtabid;\">";
 	echo "<TR><TD TITLE=\"".$gtab["desc"][$gtabid]."\" OnMousedown=\"iniDrag(event,'$gtabid');\" STYLE=\"cursor:move;\"><B>".$gtab["table"][$gtabid]."</B> ($gtabid)</TD></TR>";
 	
-	echo "<TR><TD><DIV ID=\"selsh_$gtabid\" STYLE=\"border:1px solid black;background-color:".$farbschema["WEB9"].";overflow:auto;width:99%;$height2\" onmouseup=\"paint_lines();\">";
+	echo "<TR><TD><DIV ID=\"selsh_$gtabid\" STYLE=\"border:1px solid black;background-color:".$farbschema["WEB4"].";color:".lmbSuggestColor($farbschema["WEB8"]).";overflow:auto;width:99%;$height2\" onmouseup=\"paint_lines();\">";
 	if($gfield[$gtabid]["id"]){
 	foreach ($gfield[$gtabid]["id"] as $key => $fieldid) {
 		if($gfield[$gtabid]["field_type"][$key] == 11){$style = "color:green;";}
@@ -124,7 +124,7 @@ function schema_link($gtabid){
 <TABLE class="tabpool language-table" BORDER="0" cellspacing="0" cellpadding="0" width="98%"><TR><TD>
 
 <TABLE BORDER="0" cellspacing="0" cellpadding="0" width="100%"><TR class="tabpoolItemTR">
-<?
+<?php
 if($typ == 2){
 	if($LINK[108]){echo "<TD class=\"tabpoolItemInactive\" NOWRAP OnClick=\"document.location.href='main_admin.php?action=setup_tabschema&typ=1'\">".$lang[$LINK["desc"][215]]."</TD>";}
 	if($LINK[258]){echo "<TD class=\"tabpoolItemActive\" NOWRAP OnClick=\"document.location.href='main_admin.php?action=setup_tabschema&typ=2'\">".$lang[2912]."</TD>";}
@@ -187,12 +187,12 @@ function lmb_search_pause(filter){
 </script>
 
 
-<div style="margin:10px;margin-left:20px;">
+<div style="margin: 10px 10px 10px 20px;">
 serach : <input type="text" onkeyup="lmb_search_pause(this.value)">
 </div>
 
   
-<?php 
+<?php
 
 $tables = dbf_20(array($DBA['DBSCHEMA'],null,'TABLE'));
 $tables = $tables["table_name"];
@@ -257,7 +257,7 @@ $(function() {
 });
 </script>
 
-<DIV class="ajax_container" ID="fieldinfo" style="width:300px;position:absolute;z-index:99999;border:1px solid black;padding:4px;visibility:hidden;background-color:<?=$farbschema[WEB11]?>"></DIV>
+<DIV class="ajax_container" ID="fieldinfo" style="width:300px;position:absolute;z-index:99999;border:1px solid black;padding:4px;visibility:hidden;background-color:<?=$farbschema['WEB11']?>"></DIV>
 
 <div ID="container" STYLE="position: relative; width: 100%; height: 500px; overflow: auto;">
 <?php
@@ -293,7 +293,7 @@ foreach ($gtab["tab_id"] as $key => $gtabid) {
 <FORM ACTION="main_admin.php" METHOD="post" name="form1">
 <input type="hidden" name="action" value="<?=$action?>">
 <input type="hidden" name="setdrag">
-<input type="submit" onclick="setDrag();ajaxGet(null,'main_admin.php', '&action=<?=$action?>&setdrag=' +document.form1.setdrag.value,null, 'void');return false;" value="<?=$lang[1997]?>" name="view_save">
+<input type="submit" onclick="setDrag();ajaxGet(null,'main_admin.php', '&action=<?=$action?>&setdrag=' +document.form1.setdrag.value,null, 'void');return false;" value="<?=$lang[842]?>" name="view_save">
 </FORM>
 
 </div>

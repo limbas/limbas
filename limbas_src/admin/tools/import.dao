@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -22,11 +22,11 @@ set_time_limit(12000); #200min
 ob_implicit_flush();
 
 if(!$lang){
-	$lang[985] = "deleted";
+	$lang[770] = "deleted";
 	$lang[1010] = "wrong datatype";
 	$lang[1011] = "inserts";
 	$lang[1012] = "failed";
-	$lang[1013] = "finished";
+	$lang[987] = "finished";
 	$lang[1014] = "start LIMBAS";
 	$lang[1015] = "inserting rows";
 	$lang[1016] = "failure on rows";
@@ -35,7 +35,7 @@ if(!$lang){
 	$lang[1019] = "failure";
 	$lang[1020] = "creating table";
 	$lang[1021] = "deleting table";
-	$lang[1023] = "table";
+	$lang[164] = "table";
 	$lang[1024] = "indexed";
 	$lang[1025] = "indexing table";
 	$lang[1026] = "add foreign key";
@@ -154,10 +154,10 @@ function import_create_fieldmapping($ifield,$import_typ,$covertfromtable,$odbc=n
     		
     echo "<TABLE>";
     /* --- Tabelle ------------- */
-    echo "<TR BGCOLOR=\"".$farbschema["WEB5"]."\"><TD COLSPAN=\"8\" ALIGN=\"CENTER\"><B>$lang[1023]</B></TD></TR>";
-    echo "<TR BGCOLOR=\"".$farbschema["WEB6"]."\"><TD><B>$lang[1027]</B></TD><TD><B>$lang[1028]</B></TD><TD><B>$lang[1029]</B></TD><TD COLSPAN=\"5\"></TD></TR>";
+    echo "<TR ><TD COLSPAN=\"8\" ALIGN=\"CENTER\"><B>$lang[164]</B></TD></TR>";
+    echo "<TR BGCOLOR=\"".$farbschema["WEB3"]."\"><TD><B>$lang[951]</B></TD><TD><B>$lang[924]</B></TD><TD><B>$lang[1029]</B></TD><TD COLSPAN=\"5\"></TD></TR>";
     echo "
-        <TR BGCOLOR=\"".$farbschema["WEB7"]."\">
+        <TR >
         <TD><INPUT TYPE=\"TEXT\" NAME=\"ifield[tablename]\" VALUE=\"".$covertfromtable."\" $readonly></TD>
         <TD><INPUT TYPE=\"TEXT\" SIZE=\"20\" VALUE=\"".$covertfromtable."\" NAME=\"ifield[tablespelling]\"></TD>
         <TD><SELECT NAME=\"ifield[tablegroup]\">";
@@ -170,8 +170,8 @@ function import_create_fieldmapping($ifield,$import_typ,$covertfromtable,$odbc=n
     echo "<TD COLSPAN=\"5\"></TD>";
     
     /* --- Felder ------------- */
-    echo "<TR BGCOLOR=\"".$farbschema["WEB5"]."\"><TD COLSPAN=\"8\" ALIGN=\"CENTER\"><B>$lang[1031]</B></TD></TR>";
-    echo "<TR BGCOLOR=\"".$farbschema["WEB6"]."\"><TD><B>$lang[1032]</B></TD><TD><B>$lang[1028]</B></TD><TD><B>$lang[1033]</B></TD>  <TD><B>Extension</B></TD> <TD><B>$lang[1034]</B></TD><TD><B>$lang[2654]</B></TD><TD colspan=\"2\" align=\"right\"><B>$lang[1035]</B></TD></TR>";
+    echo "<TR ><TD COLSPAN=\"8\" ALIGN=\"CENTER\"><B>$lang[953]</B></TD></TR>";
+    echo "<TR BGCOLOR=\"".$farbschema["WEB3"]."\"><TD><B>$lang[922]</B></TD><TD><B>$lang[924]</B></TD><TD><B>$lang[126]</B></TD>  <TD><B>Extension</B></TD> <TD><B>$lang[925]</B></TD><TD><B>$lang[210]</B></TD><TD colspan=\"2\" align=\"right\"><B>$lang[33]</B></TD></TR>";
     #$reserved_fields = array("ID","ERSTDATUM","EDITDATUM","ERSTUSER","EDITUSER","INUSE_TIME","INUSE_USER","DEL");
     $bzm = 0;
     foreach ($header as $bzm => $hval){
@@ -196,13 +196,11 @@ function import_create_fieldmapping($ifield,$import_typ,$covertfromtable,$odbc=n
     		$field_name = parse_db_syntax($hval,0);
     		
     		/* --- Feldliste ------------- */
-    		if($BGCOLOR == $farbschema["WEB7"]){$BGCOLOR = $farbschema["WEB6"];} else {$BGCOLOR = $farbschema["WEB7"];}
-    		#if($field_name != $hval){$BGCOLOR = "#CCCCCC";}
     		if($ifield['name'][$bzm]){$field_name = $ifield['name'][$bzm];}
     		if($ifield['spelling'][$bzm]){$hval = $ifield['spelling'][$bzm];}
     		if($ifield['desc'][$bzm]){$header2[$bzm] = $ifield['desc'][$bzm];}else{$header2[$bzm] = $hval;}
     		
-    		echo "<TR BGCOLOR=\"$BGCOLOR\">\n";
+    		echo "<TR>\n";
     		echo "<TD><INPUT TYPE=\"TEXT\" SIZE=\"20\" NAME=\"ifield[name][$bzm]\" VALUE=\"".$field_name."\" MAXLENGHT=\"18\" $readonly><INPUT TYPE=\"HIDDEN\" NAME=\"ifield[header][$bzm]\" VALUE=\"".$hval."\"></TD>\n";
     		echo "<TD><INPUT TYPE=\"TEXT\" SIZE=\"20\" NAME=\"ifield[spelling][$bzm]\" VALUE=\"".$hval."\"></TD>\n";
     		echo "<TD><INPUT TYPE=\"TEXT\" SIZE=\"20\" NAME=\"ifield[desc][$bzm]\" VALUE=\"".$header2[$bzm]."\"></TD>\n";
@@ -1155,10 +1153,10 @@ function create($tab,$sqlquery,$key){
 		$commit = 1;
 	}
 	if($rs2){
-		if($GLOBALS["action"]){echo "<div>$lang[1023] <FONT COLOR=\"#0033CC\">$tab</FONT> <b>$lang[1018].</b></div>\n";}
+		if($GLOBALS["action"]){echo "<div>$lang[164] <font style=\"font-style:italic;font-weight:bold\">$tab </font>$lang[1018].</b></div>\n";}
 		return true;
 	}else {
-		if($GLOBALS["action"]){echo "<div style=\"color:red;\">$lang[1020] <FONT COLOR=\"#0033CC\">$tab</FONT> $lang[1012]!</div>\n";}
+		if($GLOBALS["action"]){echo "<div style=\"color:red;\">$lang[1020] <font style=\"font-style:italic;font-weight:bold\">$tab</FONT> $lang[1012]!</div>\n";}
 		return false;
 	}
 }
@@ -1173,9 +1171,9 @@ function deleteExistingTab($tab){
 	$sqlquery = "DROP TABLE ".dbf_4($tab);
 	$rs2 = odbc_exec($db,$sqlquery);
 	if(!$rs2){
-		if($GLOBALS["action"]){echo "<div style=\"color:red;\">$lang[1021] <FONT COLOR=\"#0033CC\">$tab</FONT> $lang[1012]!</div>\n";}
+		if($GLOBALS["action"]){echo "<div style=\"color:red;\">$lang[1021] <font style=\"font-style:italic;font-weight:bold\">$tab</FONT> $lang[1012]!</div>\n";}
 	}else{
-		if($GLOBALS["action"]){echo "<div>$lang[1023] <FONT COLOR=\"#0033CC\">$tab</FONT> <B>$lang[985]</B></div>\n";}
+		if($GLOBALS["action"]){echo "<div>$lang[164] <font style=\"font-style:italic;font-weight:bold\">$tab</FONT> <B>$lang[770]</B></div>\n";}
 	}
 }
 
@@ -1398,14 +1396,14 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 					$rs4 = odbc_exec($db,$sqlquery);
 					if(!$rs4) {$commit = 1;}
 					if($rs4){
-						if($GLOBALS["action"]){echo "<div>$lang[1023] <FONT COLOR=\"#0033CC\">".$cdf[0]." (".$cdf[1].")</FONT> <b>$lang[1024]</b>.</div>\n";
+						if($GLOBALS["action"]){echo "<div>$lang[164] <font style=\"font-style:italic;font-weight:bold\">".$cdf[0]." (".$cdf[1].")</FONT> <b>$lang[1024]</b>.</div>\n";
 						echo "\n<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";}
 					}else{
-						if($GLOBALS["action"]){echo "<div style=\"color:red;\">$lang[1025] <FONT COLOR=\"#0033CC\">".$cdf[0]." (".$cdf[1].")</FONT> <b>$lang[1019]!</b></div>\n";
+						if($GLOBALS["action"]){echo "<div style=\"color:red;\">$lang[1025]<font style=\"font-style:italic;font-weight:bold\">".$cdf[0]." (".$cdf[1].")</FONT> <b>$lang[1019]!</b></div>\n";
 						echo "\n<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";}
 					}
 				}else{
-					if($GLOBALS["action"]){echo "<div style=\"color:red;\">$lang[1025] <FONT COLOR=\"#0033CC\">".$cdf[0]." (".$cdf[1].")</FONT> <br>$lang[1019]</b>, table does not exist!</div>\n";
+					if($GLOBALS["action"]){echo "<div style=\"color:red;\">$lang[1025] <font style=\"font-style:italic;font-weight:bold\">".$cdf[0]." (".$cdf[1].")</FONT> <br>$lang[1019]</b>, table does not exist!</div>\n";
 					echo "\n<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";}
 				}
 
@@ -1421,9 +1419,9 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 					$rs4 = odbc_exec($db,$sqlquery);
 					if(!$rs4) {echo $sqlquery;$commit = 1;}
 					
-					$outdesc1 = "<div>$lang[2215] <FONT COLOR=\"#0033CC\">".$cdf[0]."</FONT> <B>$lang[1018]</B>.</div>\n".
+					$outdesc1 = "<div>$lang[2215] <font style=\"font-style:italic;font-weight:bold\">".$cdf[0]."</FONT> <B>$lang[1018]</B>.</div>\n".
 						"<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";
-					$outdesc2 = "<div style=\"color:red;\">$lang[2215] <FONT COLOR=\"#0033CC\">".$cdf[0]."</FONT> $lang[1019]!</div>\n".
+					$outdesc2 = "<div style=\"color:red;\">$lang[2215] <font style=\"font-style:italic;font-weight:bold\">".$cdf[0]."</FONT> $lang[1019]!</div>\n".
 						"<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";
 					if($rs4){
 						if($GLOBALS["action"]){echo $outdesc1."\n";}
@@ -1469,7 +1467,7 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 
 /* --- preselect - import multible atm files ------- */
 function import_part_groupselect($fileatm,$fileatm_name){
-    
+    global $farbschema;
     global $umgvar;
     global $session;
     global $lang;
@@ -1496,9 +1494,9 @@ function import_part_groupselect($fileatm,$fileatm_name){
     /* ---------------------- Spaltenliste ---------------------- */?>
 <BR>
 <HR>
-<?
-    echo "<TABLE>";
-    echo "<TR BGCOLOR=\"".$farbschema[WEB7]."\"><TD>$lang[1024]</TD><TD>$lang[1039]</TD><TD>$lang[1040]</TD>";
+<?php
+   echo "<TABLE>";
+    echo "<TR BGCOLOR=\"".$farbschema['WEB7']."\"><TD>$lang[1024]</TD><TD>$lang[1039]</TD><TD>$lang[1040]</TD>";
     $bzm = 0;
     while($imptabgroup[$bzm]){
             echo "<TR><TD>$imptabgroup[$bzm]</TD>";
@@ -1671,8 +1669,8 @@ function import_tab_pool($import_typ,$import_overwrite,$import_count,$partimport
 		}elseif($import_count == "single"){
 			$tmp = explode(".",$fileatm_name);
 			$imptabgroup[0] = lmb_strtoupper(preg_replace("/^[^0-9a-zA-z_]$/","",$tmp[0]));
-			$pfad = $umgvar["pfad"]."/USER/".$session[user_id]."/temp/";
-			rmdirr($umgvar["pfad"]."/USER/".$session[user_id]."/temp");
+			$pfad = $umgvar["pfad"]."/USER/".$session['user_id']."/temp/";
+			rmdirr($umgvar["pfad"]."/USER/".$session['user_id']."/temp");
 			$copy = copy ($fileatm, $pfad.$imptabgroup[0].".tar.gz");
 		}
 
@@ -1819,7 +1817,7 @@ function import_complete($del_all,$txt_encode=null, $txt_terminate=null,$txt_enc
 	}
 
 	if($GLOBALS["action"]){
-		echo "<BR><BR><HR><H2>&nbsp;&nbsp;...$lang[1013],</H2>";
+		echo "<BR><BR><HR><H2>&nbsp;&nbsp;...$lang[987],</H2>";
 		echo "<input type=\"\" onclick=\"document.location.href='../../'\" class=\"btn btn-info pull-right\" value=\"$lang[1014]\"<br>
         <div>(default-user: <b>admin</b> | default password: <b>limbas</b>)</div><BR><BR><BR>";
 		echo "\n<script language=\"javascript\" type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";
@@ -1874,7 +1872,7 @@ function import_template(&$ifield,$attach_gtabid,$template,$template_val){
         
     echo "
         <TR></TR><TD>&nbsp;</TD><TR>
-        <TR><TD></TD><TD><input type=\"TEXT\" name=\"template_val\"></TD><TD><input type=\"button\" VALUE=\"".$lang[1095]."\" OnClick=\"document.form1.import_action.value=".$import_action.";document.form1.template.value='add';document.form1.submit();\"></TD></TR>
+        <TR><TD></TD><TD><input type=\"TEXT\" name=\"template_val\"></TD><TD><input type=\"button\" VALUE=\"".$lang[540]."\" OnClick=\"document.form1.import_action.value=".$import_action.";document.form1.template.value='add';document.form1.submit();\"></TD></TR>
         </TABLE>         
         ";
 
@@ -2049,7 +2047,7 @@ function proceedXmlImportLines($lines,$tableName,$tableStruct,$fieldStruct,$rela
 			$fieldList = implode(",",$fieldStruct[strval($tableName)]["NAME"]);
 			$valueList = implode(",",$fieldValue);
 
-			$sqlquery = "INSERT INTO $tableName (ID,ERSTUSER,$fieldList) VALUES ($NEXTID,$session[user_id],$valueList)";
+			$sqlquery = "INSERT INTO $tableName (ID,ERSTUSER,$fieldList) VALUES ($NEXTID,{$session['user_id']},$valueList)";
 			odbc_exec($db,$sqlquery) or print_r($sqlquery);#$errorImport .=  odbc_error($db);
 			$result["countImport"][$tableName]++;
 

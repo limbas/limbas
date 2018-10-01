@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -63,7 +63,7 @@ class lmb_kanban {
        ksort($columns);
 
         //add filter
-        $this->add_extended_column($lang[2608],$this->load_filter(),false,'kanban-filter','','#EEEEEE','kanban-filter');
+        $this->add_extended_column($lang[2608],$this->load_filter(),false,'kanban-filter','','','kanban-filter');
 
        foreach ($this->extended_columns as $ecolumn)
        {
@@ -115,8 +115,8 @@ class lmb_kanban {
         {
             $card = array();
             $card['id'] = $id;
-            $card['status'] = ($status == '') ? $this->get_status_id($gresult[$this->gtabid][$this->lmbKanFieldsID['STATUS']][$datakey]) : $status;
-            $card['title'] = $gresult[$this->gtabid][$this->lmbKanFieldsID['TITLE']][$datakey];
+            $card['status'] = lmb_utf8_decode(($status == '') ? $this->get_status_id($gresult[$this->gtabid][$this->lmbKanFieldsID['STATUS']][$datakey]) : $status);
+            $card['title'] = lmb_utf8_encode($gresult[$this->gtabid][$this->lmbKanFieldsID['TITLE']][$datakey]);
 
 
             //Get Tags
@@ -126,7 +126,7 @@ class lmb_kanban {
             unset($row['keyword']);
             foreach ($row as $key => $tag)
             {
-                $card['tags'][] = array('tag'=>$tag,'color'=>($colors[$key]) ? $colors[$key] : '#bbbbbb');
+                $card['tags'][] = array('tag'=>lmb_utf8_decode($tag),'color'=>($colors[$key]) ? $colors[$key] : '#bbbbbb');
             }
 
 
@@ -169,7 +169,7 @@ class lmb_kanban {
                     unset($row['keyword']);
                     foreach ($row as $value)
                     {
-                        $filters[$fname][] = lmb_strtolower($value);
+                        $filters[$fname][] = lmb_utf8_decode(lmb_strtolower($value));
                     }
 
                     break;
@@ -189,7 +189,7 @@ class lmb_kanban {
                     }
                     break;
                 default:
-                    $filters[$fname] = lmb_strtolower($gresult[$this->gtabid][$field][$datakey]);
+                    $filters[$fname] = lmb_utf8_decode(lmb_strtolower($gresult[$this->gtabid][$field][$datakey]));
             }
         }
         $card['filters'] = $filters;
@@ -207,7 +207,7 @@ class lmb_kanban {
 
         foreach ($columns as $column)
         {
-            $output .= '<div style="border-color:'.$column['color'].'" class="kanban-column '.(($column['class'] != '') ? $column['class'].'-head' : '').'">'
+            $output .= '<div style="border-color:'.$column['color'].'" class="kanban-column kanban-column-header '.(($column['class'] != '') ? $column['class'].'-head' : '').'">'
                     . '<div class="col-title">'.$column['title'].'</div>'
                     . (($column['extended'] || !$LINK[1] || !$gtab['add'][$this->gtabid] ) ? '' : '<div class="col-add" data-status="'.$column['id'].'"><i class="lmb-icon lmb-plus-square"></i></div>')
                     . (($column['class'] == 'kanban-filter') ? '<div class="col-filterico"><i class="lmb-icon lmb-filter"></i></div>' : '')
@@ -239,7 +239,7 @@ class lmb_kanban {
         return $output;
     }
 
-    public function add_extended_column($title, $content, $after=false, $id='', $action='', $color='#EEEEEE', $class='')
+    public function add_extended_column($title, $content, $after=false, $id='', $action='', $color='', $class='')
     {
         $this->extended_columns[] = array('id'=>$id, 'title'=>$title,'color'=>$color,'cards'=>$content,'after'=>false,'class'=>$class,'extended'=>true);
     }
@@ -345,7 +345,7 @@ class lmb_kanban {
             $ftype = $gfield[$this->gtabid]['field_type'][$field];
             $fname = lmb_strtolower($gfield[$this->gtabid]['field_name'][$field]);
             $fdesc = $gfield[$this->gtabid]['spelling'][$field];
-            $bcolor = '#eeeeee';
+            $bcolor = '';
 
             $filter_items = array();
 
@@ -417,7 +417,7 @@ class lmb_kanban {
         $filter_out .= '</form>';
 
         $search_buttons = '<table style="width:100%;margin-top:20px;" cellspacing="0" cellpadding="2">
-                            <tbody><tr><td colspan="2" align="center"><input value="erweitert" onclick="limbasDetailSearch(event,this,\''.$this->gtabid.'\',\'\',\'lmbKanAjaxContainer\')" type="button">&nbsp;<input value="reset" onclick="kanban_filter_reset()" type="button"></td></tr>
+                            <tbody><tr><td colspan="2" align="center"><input value="' . $lang[773] . '" onclick="limbasDetailSearch(event,this,\''.$this->gtabid.'\',\'\',\'lmbKanAjaxContainer\')" type="button">&nbsp;<input value="' . $lang[1875] . '" onclick="kanban_filter_reset()" type="button"></td></tr>
                         </tbody></table>';
 
 

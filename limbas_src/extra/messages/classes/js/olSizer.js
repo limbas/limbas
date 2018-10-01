@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -21,7 +21,7 @@ function olSizer(id, resize_id, is_horiz, f, min, max) {
 	var _self = this;
 	this.version = '$Id: olSizer.js 329 2009-09-29 13:41:33Z daniel $';
 	
-	this.doc = $('mail_main');
+	this.doc = document.getElementById('mail_main');
 	this.offsetX = this.doc.tBodies[0].offsetLeft;
 	this.offsetY = this.doc.tBodies[0].offsetTop;
 
@@ -56,21 +56,21 @@ function olSizer(id, resize_id, is_horiz, f, min, max) {
 		var ret = 0;
 		
 		if (_self.is_horiz)
-			ret = _self._limit($(_self.resize_id).offsetWidth) * 100 / document.body.clientWidth;
+			ret = _self._limit(document.getElementById(_self.resize_id).offsetWidth) * 100 / document.body.clientWidth;
 		else
-			ret = _self._limit($(_self.resize_id).offsetHeight) * 100 / document.body.clientHeight;
+			ret = _self._limit(document.getElementById(_self.resize_id).offsetHeight) * 100 / document.body.clientHeight;
 
 		_self.config_o.set(_self.id, Math.round(ret));
 	};
 
 	this._resize = (f) ? f : function(v){
 		if (_self.is_horiz)
-			$(_self.resize_id).style.width = v + 'px';
+			document.getElementById(_self.resize_id).style.width = v + 'px';
 		else
-			$(_self.resize_id).style.height = v + 'px';
+			document.getElementById(_self.resize_id).style.height = v + 'px';
 	};
 
-	E.observe($(this.id), "mousedown", function(e0){
+	E.observe(document.getElementById(this.id), "mousedown", function(e0){
 		var ss = function(e){ E.stop(e) };
 		var mm = function(e){
 			var x = e.clientX - _self.offsetX;
@@ -94,9 +94,9 @@ function olSizer(id, resize_id, is_horiz, f, min, max) {
 	});
 
 	if (_self.is_horiz)
-		$(_self.resize_id).style.width = _self._load() + 'px';
+		document.getElementById(_self.resize_id).style.width = _self._load() + 'px';
 	else
-		$(_self.resize_id).style.height = _self._load() + 'px';
+		document.getElementById(_self.resize_id).style.height = _self._load() + 'px';
 	
 	return this;
 }

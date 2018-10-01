@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -674,7 +674,7 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
 	}
 
 	if(!$commit){
-		#lmb_alert("$lang[922] $column $lang[938]");
+		#lmb_alert("$lang[922] $column $lang[770]");
 		flag_tableChanged();
 		return true;
 	}else{$GLOBALS["commit"] = 1;return false;}
@@ -930,6 +930,7 @@ function add_tabgroup($group_name,$group_desc){
 	global $session;
 	global $umgvar;
 	global $tabgroup;
+	global $lang;
 
 	flag_tableChanged();
 
@@ -1208,7 +1209,7 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 		lmb_alert($lang[56]);
 		return false;
 	}else{
-		#lmb_alert($lang[921]." ".$gtable." ".$lang[956]);
+		#lmb_alert($lang[164]." ".$gtable." ".$lang[563]);
 		return array($max_tabid,$gtable);
 	}
 
@@ -1346,6 +1347,11 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 		$typ_size = null;
 	}
 
+    # Währung - Nachkommastellen
+    if($datatyp == 30) {
+        $typ_size = $typ_size.',2';
+    }
+
 	$ct = parse_db_type($datentyp,$typ_size,$fieldsize);
 
 	$datentyp = $ct[0];
@@ -1358,7 +1364,7 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 		$insd = ",FIELD_SIZE";
 		$insv = ",".parse_db_int($csize);
 	}
-	
+
 	/* Defaultwert*/
 	if($default){
 		if(@constant("LMB_DBDEF_".lmb_strtoupper($default))){
@@ -1508,7 +1514,7 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
     }
     
 	if($commit != 1){
-		#lmb_alert("$lang[946] $field ($datentyp $property) $lang[942]");
+		#lmb_alert("$lang[851] $field ($datentyp $property) $lang[942]");
 		return true;
 	}else{
 		return false;
@@ -1938,7 +1944,7 @@ function add_extended_fields($nfield,$gtabid,$add_permission){
 function extended_fields_message(){
 	global $lang;
 	
-	$nfield[] = array("field" => "ID_","typ" => 19,"typ2" => 0,"size" => 0,"description" => $lang[2393],"spellingf" => $lang[2393],"default" => "","sort" => "");
+	$nfield[] = array("field" => "ID_","typ" => 19,"typ2" => 0,"size" => 0,"description" => $lang[2068],"spellingf" => $lang[2068],"default" => "","sort" => "");
 	$nfield[] = array("field" => "ERSTDATUM_","typ" => 38,"typ2" => 0,"size" => 0,"description" => $lang[2388],"spellingf" => $lang[2388],"default" => "","sort" => "");
 	$nfield[] = array("field" => "ERSTUSER_","typ" => 36,"typ2" => 0,"size" => 0,"description" => $lang[2389],"spellingf" => $lang[2389],"default" => "","sort" => "");
 	$nfield[] = array("field" => "EDITDATUM_","typ" => 39,"typ2" => 0,"size" => 0,"description" => $lang[2391],"spellingf" => $lang[2391],"default" => "","sort" => "");
@@ -1946,8 +1952,9 @@ function extended_fields_message(){
 	$nfield[] = array("field" => "MESSAGE_ID","typ" => 2,"typ2" => 0,"size" => 10,"description" => $lang[2412],"spellingf" => $lang[2412],"default" => "","sort" => "");
 	$nfield[] = array("field" => "FROM_ADDR","typ" => 13,"typ2" => 0,"size" => 128,"description" => $lang[2414],"spellingf" => $lang[2414],"default" => "","sort" => "");
 	$nfield[] = array("field" => "TO_ADDR","typ" => 15,"typ2" => 0,"size" => 1000,"description" => $lang[2415],"spellingf" => $lang[2415],"default" => "","sort" => "");
-	$nfield[] = array("field" => "SUBJECT","typ" => 15,"typ2" => 0,"size" => 399,"description" => $lang[2418],"spellingf" => $lang[2418],"default" => "","sort" => "");
+	$nfield[] = array("field" => "SUBJECT","typ" => 15,"typ2" => 0,"size" => 399,"description" => $lang[2381],"spellingf" => $lang[2381],"default" => "","sort" => "");
 	$nfield[] = array("field" => "MESSAGE","typ" => 41,"typ2" => 0,"size" => 0,"description" => $lang[2419],"spellingf" => $lang[2419],"default" => "","sort" => "");
+    $nfield[] = array("field" => "UUID","typ" => 13,"typ2" => 0,"size" => 32,"description" => 'UUID',"spellingf" => 'UUID',"default" => "","sort" => "");
 	return $nfield;
 }
 
@@ -1955,7 +1962,7 @@ function extended_fields_message(){
 function extended_fields_cal(){
 	global $lang;
 
-	$nfield[] = array("field" => "ID_","typ" => 19,"typ2" => 0,"size" => 0,"description" => $lang[2393],"spellingf" => $lang[2393],"default" => "","sort" => "");
+	$nfield[] = array("field" => "ID_","typ" => 19,"typ2" => 0,"size" => 0,"description" => $lang[2068],"spellingf" => $lang[2068],"default" => "","sort" => "");
 	$nfield[] = array("field" => "ERSTDATUM_","typ" => 38,"typ2" => 0,"size" => 0,"description" => $lang[2388],"spellingf" => $lang[2388],"default" => "","sort" => "");
 	$nfield[] = array("field" => "ERSTUSER_","typ" => 36,"typ2" => 0,"size" => 0,"description" => $lang[2389],"spellingf" => $lang[2389],"default" => "","sort" => "");
 	$nfield[] = array("field" => "ERSTGROUP","typ" => 2,"typ2" => 0,"size" => 5,"description" => $lang[2390],"spellingf" => $lang[2390],"default" => "","sort" => "");
@@ -1964,8 +1971,8 @@ function extended_fields_cal(){
 	$nfield[] = array("field" => "STARTSTAMP","typ" => 16,"typ2" => 0,"size" => 0,"description" => $lang[2382],"spellingf" => $lang[2382],"default" => "","sort" => "");
 	$nfield[] = array("field" => "ENDSTAMP","typ" => 16,"typ2" => 0,"size" => 0,"description" => $lang[2385],"spellingf" => $lang[2385],"default" => "","sort" => "");
 	$nfield[] = array("field" => "SUBJECT","typ" => 15,"typ2" => 0,"size" => 399,"description" => $lang[2381],"spellingf" => $lang[2381],"default" => "","sort" => "");
-	$nfield[] = array("field" => "DESCRIPTION","typ" => 41,"typ2" => 0,"size" => 0,"description" => $lang[2405],"spellingf" => $lang[2405],"default" => "","sort" => "");
-	$nfield[] = array("field" => "COLOR","typ" => 58,"typ2" => 0,"size" => 0,"description" => $lang[2704],"spellingf" => $lang[2704],"default" => "","sort" => "");
+	$nfield[] = array("field" => "DESCRIPTION","typ" => 41,"typ2" => 0,"size" => 0,"description" => $lang[126],"spellingf" => $lang[126],"default" => "","sort" => "");
+	$nfield[] = array("field" => "COLOR","typ" => 58,"typ2" => 0,"size" => 0,"description" => $lang[294],"spellingf" => $lang[294],"default" => "","sort" => "");
 	$nfield[] = array("field" => "ALLDAY","typ" => 17,"typ2" => 0,"size" => 0,"description" => $lang[2705],"spellingf" => $lang[2705],"default" => LMB_DBDEF_FALSE,"sort" => "");
 	$nfield[] = array("field" => "FREEF","typ" => 2,"typ2" => 0,"size" => 1,"description" => 'freef',"spellingf" => 'freef',"default" => "","sort" => "");
 	$nfield[] = array("field" => "ETAG","typ" => 13,"typ2" => 0,"size" => 20,"description" => 'ETAG',"spellingf" => 'ETAG',"default" => "","sort" => "");
@@ -1987,7 +1994,7 @@ function extended_fields_files(){
 	$nfield[] = array("field" => "ERSTUSER_","typ" => 36,"typ2" => 0,"size" => 0,"description" => $lang[1638],"spellingf" => $lang[1638],"default" => "","sort" => "5");
 	$nfield[] = array("field" => "LEVEL","typ" => 2,"typ2" => 0,"size" => 10,"description" => "LEVEL","spellingf" => "LEVEL","default" => "","sort" => "");
 	$nfield[] = array("field" => "TYP","typ" => 2,"typ2" => 0,"size" => 5,"description" => "TYP","spellingf" => "TYP","default" => "","sort" => "");
-	$nfield[] = array("field" => "SORT","typ" => 42,"typ2" => 0,"size" => 8,"description" => $lang[1919],"spellingf" => $lang[1919],"default" => "","sort" => "8");
+	$nfield[] = array("field" => "SORT","typ" => 42,"typ2" => 0,"size" => 8,"description" => $lang[1837],"spellingf" => $lang[1837],"default" => "","sort" => "8");
 	$nfield[] = array("field" => "DATID","typ" => 2,"typ2" => 0,"size" => 18,"description" => "DATID","spellingf" => "DATID","default" => "","sort" => "");
 	$nfield[] = array("field" => "TABID","typ" => 2,"typ2" => 0,"size" => 5,"description" => "TABID","spellingf" => "TABID","default" => "","sort" => "");
 	$nfield[] = array("field" => "FIELDID","typ" => 2,"typ2" => 0,"size" => 5,"description" => "FIELDID","spellingf" => "FIELDID","default" => "","sort" => "");
@@ -2040,8 +2047,8 @@ function extended_fields_filesmeta(){
 	$nfield[] = array("field" => "LMSECTION","typ" => 45,"typ2" => 0,"size" => 0,"description" => $lang[1745],"spellingf" => $lang[1745],"default" => "","sort" => "36");
 	$nfield[] = array("field" => "LMSECTION","typ" => 45,"typ2" => 0,"size" => 0,"description" => $lang[1746],"spellingf" => $lang[1746],"default" => "","sort" => "43");
 
-	$nfield[] = array("field" => "TYPE","typ" => 13,"typ2" => 0,"size" => 20,"description" => $lang[1568],"spellingf" => $lang[1568],"default" => "","sort" => "17");
-	$nfield[] = array("field" => "FTYPE","typ" => 13,"typ2" => 0,"size" => 20,"description" => $lang[1653],"spellingf" => $lang[1652],"default" => "","sort" => "27");
+	$nfield[] = array("field" => "TYPE","typ" => 13,"typ2" => 0,"size" => 20,"description" => $lang[623],"spellingf" => $lang[623],"default" => "","sort" => "17");
+	$nfield[] = array("field" => "FTYPE","typ" => 13,"typ2" => 0,"size" => 20,"description" => $lang[1653],"spellingf" => $lang[925],"default" => "","sort" => "27");
 	$nfield[] = array("field" => "NAME2","typ" => 13,"typ2" => 0,"size" => 250,"description" => $lang[1641],"spellingf" => $lang[1640],"default" => "","sort" => "23");
 	$nfield[] = array("field" => "FORMAT","typ" => 13,"typ2" => 0,"size" => 128,"description" => $lang[1563],"spellingf" => $lang[1563],"default" => "","sort" => "12");
 	$nfield[] = array("field" => "GEOMETRY","typ" => 13,"typ2" => 0,"size" => 20,"description" => $lang[1564],"spellingf" => $lang[1564],"default" => "","sort" => "13");
@@ -2051,12 +2058,12 @@ function extended_fields_filesmeta(){
 	$nfield[] = array("field" => "CREATOR","typ" => 13,"typ2" => 0,"size" => 30,"description" => $lang[1643],"spellingf" => $lang[1642],"default" => "","sort" => "22");
 	$nfield[] = array("field" => "SUBJECT","typ" => 15,"typ2" => 0,"size" => 399,"description" => $lang[1645],"spellingf" => $lang[1644],"default" => "","sort" => "28");
 	$nfield[] = array("field" => "CLASSIFICATION","typ" => 13,"typ2" => 0,"size" => 128,"description" => $lang[1678],"spellingf" => $lang[1677],"default" => "","sort" => "31");
-	$nfield[] = array("field" => "DESCRIPTION","typ" => 15,"typ2" => 0,"size" => 399,"description" => $lang[1647],"spellingf" => $lang[1646],"default" => "","sort" => "21");
+	$nfield[] = array("field" => "DESCRIPTION","typ" => 15,"typ2" => 0,"size" => 399,"description" => $lang[1647],"spellingf" => $lang[126],"default" => "","sort" => "21");
 	$nfield[] = array("field" => "PUBLISHER","typ" => 13,"typ2" => 0,"size" => 30,"description" => $lang[1649],"spellingf" => $lang[1648],"default" => "","sort" => "32");
 	$nfield[] = array("field" => "CONTRIBUTORS","typ" => 13,"typ2" => 0,"size" => 250,"description" => $lang[1651],"spellingf" => $lang[1650],"default" => "","sort" => "35");
 	$nfield[] = array("field" => "IDENTIFIER","typ" => 13,"typ2" => 0,"size" => 50,"description" => $lang[1657],"spellingf" => $lang[1656],"default" => "","sort" => "42");
 	$nfield[] = array("field" => "SOURCE","typ" => 13,"typ2" => 0,"size" => 30,"description" => $lang[1659],"spellingf" => $lang[1663],"default" => "","sort" => "36");
-	$nfield[] = array("field" => "LANGUAGE","typ" => 13,"typ2" => 0,"size" => 30,"description" => $lang[1661],"spellingf" => $lang[1660],"default" => "","sort" => "26");
+	$nfield[] = array("field" => "LANGUAGE","typ" => 13,"typ2" => 0,"size" => 30,"description" => $lang[1661],"spellingf" => $lang[624],"default" => "","sort" => "26");
 	$nfield[] = array("field" => "INSTRUCTIONS","typ" => 13,"typ2" => 0,"size" => 50,"description" => $lang[1747],"spellingf" => $lang[1747],"default" => "","sort" => "24");
 	$nfield[] = array("field" => "URGENCY","typ" => 2,"typ2" => 0,"size" => 5,"description" => $lang[1748],"spellingf" => $lang[1748],"default" => "0","sort" => "25");
 	$nfield[] = array("field" => "CATEGORY","typ" => 13,"typ2" => 0,"size" => 8,"description" => $lang[1749],"spellingf" => $lang[1749],"default" => "","sort" => "29");
@@ -2068,7 +2075,7 @@ function extended_fields_filesmeta(){
 	$nfield[] = array("field" => "TRANSMISSION","typ" => 13,"typ2" => 0,"size" => 30,"description" => $lang[1755],"spellingf" => $lang[1755],"default" => "","sort" => "41");
 	$nfield[] = array("field" => "ORIGINNAME","typ" => 13,"typ2" => 0,"size" => 50,"description" => $lang[1757],"spellingf" => $lang[1757],"default" => "","sort" => "20");
 	$nfield[] = array("field" => "COPYRIGHT","typ" => 13,"typ2" => 0,"size" => 128,"description" => $lang[1756],"spellingf" => $lang[1756],"default" => "","sort" => "43");
-	$nfield[] = array("field" => "CREATEDATE","typ" => 13,"typ2" => 0,"size" => 30,"description" => $lang[1751],"spellingf" => $lang[1751],"default" => "","sort" => "37");
+	$nfield[] = array("field" => "CREATEDATE","typ" => 13,"typ2" => 0,"size" => 30,"description" => $lang[1639],"spellingf" => $lang[1639],"default" => "","sort" => "37");
 	$nfield[] = array("field" => "SUBCATEGORY","typ" => 15,"typ2" => 0,"size" => 399,"description" => $lang[1758],"spellingf" => $lang[1758],"default" => "","sort" => "30");
 
 	return $nfield;
@@ -2081,7 +2088,7 @@ function extended_fields_kanban(){
 	$nfield[] = array("field" => "TITLE","typ" => 13,"typ2" => 0,"size" => 30,"description" => $lang[923],"spellingf" => $lang[923],"default" => "","sort" => "33");
     $nfield[] = array("field" => "TAGS","typ" => 31,"typ2" => 0,"size" => 50,"description" => 'Tags',"spellingf" => 'Tags',"default" => "","sort" => "");
     $nfield[] = array("field" => "SORT","typ" => 2,"typ2" => 0,"size" => 10,"description" => $lang[1837],"spellingf" => $lang[1837],"default" => "","sort" => "");
-    $nfield[] = array("field" => "DESCRIPTION","typ" => 41,"typ2" => 0,"size" => 0,"description" => $lang[2405],"spellingf" => $lang[2405],"default" => "","sort" => "");
+    $nfield[] = array("field" => "DESCRIPTION","typ" => 41,"typ2" => 0,"size" => 0,"description" => $lang[126],"spellingf" => $lang[126],"default" => "","sort" => "");
     $nfield[] = array("field" => "ASSIGNED","typ" => 40,"typ2" => 0,"size" => 0,"description" => $lang[2909],"spellingf" => $lang[2909],"default" => "","sort" => "");
 	return $nfield;
 }
@@ -2124,7 +2131,7 @@ function parse_db_type($convert_type,$new_size,$default_size){
 	$default_size = str_replace(".",",",$default_size);
 
 	if($new_size AND ($ct[0] == 'FIXED' OR $ct[0] == 'FLOAT' OR $ct[0] == 'NUMERIC' OR $ct[0] == 'VARCHAR' OR $ct[0] == 'CHAR' OR $ct[0] == 'BYTE')){
-		if(!preg_match("/^[0-9,.]{0,5}$/",$new_size)){lmb_alert("wrong fieldsize format -->$new_size<--");return false;}
+		if(!preg_match("/^[1-9]\d{0,5}([,.]\d{1,3})?$/",$new_size)){lmb_alert("wrong fieldsize format -->$new_size<--");return false;}
 		if(($ct[0] == "FIXED" OR $ct[0] == "FLOAT" OR $ct[0] == "NUMERIC") AND ($new_size > 30 OR !$new_size)){$new_size = 30;}
 		if($ct[0] == "VARCHAR" OR $ct[0] == "CHAR"){$new_size = floor(parse_db_float($new_size));}
 		$new_size = str_replace(".",",",$new_size);

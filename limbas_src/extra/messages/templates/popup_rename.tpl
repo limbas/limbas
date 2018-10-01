@@ -9,7 +9,7 @@
 </form>
 
 <script language="javascript" type="text/javascript">//<!--
-	$('to').focus();
+	document.getElementById('to').focus();
 //--></script>
 
 <!-- [/folder_rename.tpl] -->

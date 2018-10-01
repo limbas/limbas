@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -90,7 +90,7 @@ function update_crontab(){
 		# --- lesen ----
 		$handle = fopen($umgvar["crontab"],"r");
 			while($line = fgets($handle, 1000)){
-				if(!lmb_strpos($line,$umgvar[pfad])){
+				if(!lmb_strpos($line,$umgvar['pfad'])){
 					$crontab[] = $line;
 				}
 			}
@@ -109,7 +109,7 @@ function update_crontab(){
 		if(!$rs) {$commit = 1;}
 		$bzm = 1;
 		while(odbc_fetch_row($rs, $bzm)){
-			fputs($handle,str_replace(";"," ",odbc_result($rs,"START"))."\twebuser (/usr/local/bin/php \"".$umgvar[pfad]."/cron.php\" < /bin/echo ".odbc_result($rs,"ID").")\n");
+			fputs($handle,str_replace(";"," ",odbc_result($rs,"START"))."\twebuser (/usr/local/bin/php \"".$umgvar['pfad']."/cron.php\" < /bin/echo ".odbc_result($rs,"ID").")\n");
 			$bzm++;
 		}
 		fclose($handle);
@@ -209,7 +209,7 @@ function getasubdir($LEVEL,$s){
 	if($s){$GLOBALS["subd"][] = $LEVEL;}
 
 	foreach($file_struct["id"] as $key => $value){
-		if($file_struct[level][$key] == $LEVEL){
+		if($file_struct['level'][$key] == $LEVEL){
 			$GLOBALS["subd"][] = $file_struct["id"][$key];
 			if(in_array($file_struct["id"][$key],$file_struct["level"])){
 					getasubdir($file_struct["id"][$key],0);
@@ -310,37 +310,37 @@ function field_list($cronval){
 	$cronval = explode(";",$cronval);
 	if($cronval){
 		$bzm = 0;
-		foreach($cronval as $key => $value){
-			$partval = explode(",",$value);
+		foreach($cronval as $cronValue){
+			$partval = explode(",",$cronValue);
 			# --- Felder-Memos/Dateien ---
 			if($partval[0] == "field"){
 				$fieldval = explode("_",$partval[1]);
 				$indize["id"][] = $bzm;
-				$indize[typ][] = $partval[0];
-				$indize[tab][] = $fieldval[0];
-				$indize[field][] = $fieldval[1];
-				$indize[file][] = 0;
+				$indize['typ'][] = $partval[0];
+				$indize['tab'][] = $fieldval[0];
+				$indize['field'][] = $fieldval[1];
+				$indize['file'][] = 0;
 				$bzm++;
 				# --- Ordner-Dateien ---
 			}elseif($partval[0] == "file"){
 				# Unterordner einbinden
 				if($partval[2] == "s"){
 					$subd = array_unique(getasubdir($partval[1],1));
-					foreach ($subd as $key => $value){
+					foreach ($subd as $value){
 						$indize["id"][] = $bzm;
-						$indize[typ][] = $partval[0];
-						$indize[tab][] = 0;
-						$indize[field][] = 0;
-						$indize[file][] = $value;
+						$indize['typ'][] = $partval[0];
+						$indize['tab'][] = 0;
+						$indize['field'][] = 0;
+						$indize['file'][] = $value;
 						$bzm++;
 					}
 				# einzelner Ordner
 				}else{
 					$indize["id"][] = $bzm;
-					$indize[typ][] = $partval[0];
-					$indize[tab][] = 0;
-					$indize[field][] = 0;
-					$indize[file][] = $partval[1];
+					$indize['typ'][] = $partval[0];
+					$indize['tab'][] = 0;
+					$indize['field'][] = 0;
+					$indize['file'][] = $partval[1];
 					$bzm++;
 				}
 			}

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -267,7 +267,7 @@ function lmb_createDiagram($diag_id, $gsr=null, $filter=null, $verkn=null, $exte
         );
 
 	/* Get customization-settings from database */	
-	$sqlquery = "SELECT " . implode(',', $settingNames) . " FROM LMB_CHART_LIST WHERE ID=$diag_id";
+	$sqlquery = "SELECT " . implode(',', $settingNames) . " FROM LMB_CHART_LIST WHERE ID=".parse_db_int($diag_id);
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	odbc_fetch_row($rs, 1);
 	
@@ -641,8 +641,8 @@ function lmb_getNIntVals($n){
 function lmb_convertFloatInternational($tabId, $fieldId, $value) {
         global $gfield;
         
-        // check if data type of field is float (49)
-        if($gfield[$tabId]['data_type'][ $gfield[$tabId]['id'][$fieldId] ] == "49") {
+        // check if field is float
+        if($gfield[$tabId]['parse_type'][ $gfield[$tabId]['id'][$fieldId] ] == "6") {
                 return str_replace(',', '.', $value);
         } else {
                 return $value;

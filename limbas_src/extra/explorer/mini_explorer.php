@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -66,10 +66,10 @@ if(($add_folder AND $LINK[119]) AND ($LID OR ($LID == '0' AND $session["user_id"
 	get_filestructure();
 }
 
-# ---------- upload ---------------------
-if(is_numeric($LID) AND $LINK[128] AND $_FILES){
-	require_once('extra/explorer/explorer_upload.php');
-}
+# ---------- upload deprecatet ---------------------
+#if(is_numeric($LID) AND $LINK[128] AND $_FILES){
+#	require_once('extra/explorer/explorer_upload.php');
+#}
 
 /* --- Actionliste --------------------------------------------- */
 $files = $activelist["d"][$LID];
@@ -146,7 +146,7 @@ jsvar["message1"] = "<?=$lang[1696]?>";
 
 function postSelectedFiles(){
 
-	<?if($postaction){?>
+	<?php if($postaction){?>
 
 	var selectedfiles = new Array();
 	var filelist = LmEx_selectedFileList(<?=$LID?>);
@@ -165,16 +165,24 @@ function postSelectedFiles(){
 		alert(jsvar["lng_1717"]);
 	}
 
-	<?}?>
+	<?php }?>
 
 }
 
+$(function() {
+    LmEx_createDropArea($('body'), function(files) {
+        console.log(files);
+        LmEx_showUploadField();
+        LmEx_uploadFilesPrecheck(files, <?= $LID ?>, 1);
+    });
+});
 
-<?
+
+<?php
 if($uploadlink AND $upload_file AND $ufileId){
 ?>
 opener.<?=$postaction.$ufileId?>);
-<?
+<?php
 }
 ?>
 </script>
@@ -182,16 +190,16 @@ opener.<?=$postaction.$ufileId?>);
 
 <form enctype="multipart/form-data" action="main.php" method="post" name="form1">
 
-<DIV ID="dublicateCheckLayer" style="position:absolute;top:25%;left:25%;visibility:hidden;z-index:5"></DIV>
+<DIV ID="dublicateCheckLayer" style="position:absolute;top:25%;left:25%;display:none;z-index:5"></DIV>
 <div id="lmbAjaxContainer" class="ajax_container" style="position:absolute;visibility:hidden;" OnClick="activ_menu=1;"></div>
 
 
-<div style="border: 1px solid black;margin:5px;background-color:<?=$farbschema["WEB9"]?>">
+<div style="border: 1px solid black;margin:5px;background-color:<?=$farbschema["WEB8"]?>">
 
 <table><tr>
 <td nowrap style="width:60px;"><?=$lang[2229]?>:&nbsp;</td><td>
 <select style="width:150px;height:15px;" OnChange="document.form1.LID.value=this.value;document.form1.submit();">
-<?
+<?php
 $bzm = 1;
 foreach($file_path as $key => $value){
 	if(count($file_path) == $bzm){$sel = "SELECTED";}else{$sel = "";}
@@ -202,18 +210,18 @@ foreach($file_path as $key => $value){
 
 ?>
 </td><td>&nbsp;</td>
-<td><i class="lmb-icon-cus lmb-folder-up" style="cursor:pointer;" onclick="document.form1.LID.value='<?=$prev;?>';document.form1.submit();" title="<?=$lang[2225]?>"></i></td>
+<td><i class="lmb-icon-cus lmb-folder-up" style="cursor:pointer;" onclick="document.form1.LID.value='<?=$filestruct['level'][$LID];?>';document.form1.submit();" title="<?=$lang[2225]?>"></i></td>
 <td><i class="lmb-icon lmb-home" style="cursor:pointer;" onclick="document.form1.LID.value='<?=$home?>';document.form1.submit();" title="<?=$lang[2230]?>"></i></td>
-    <?if($LINK[119] AND $LID){?><td>&nbsp;</td><td><i class="lmb-icon-cus lmb-folder-add" style="cursor:pointer;" onclick="document.getElementById('uploadfile').style.display='none';document.getElementById('createfolder').style.display='';" title="<?=$lang[2231]?>"></i></td><?}?>
-    <?if($LINK[128] AND $LID){?><td><i class="lmb-icon lmb-file-upload" style="cursor:pointer;" onclick="document.getElementById('createfolder').style.display='none';document.getElementById('uploadfile').style.display='';document.getElementById('lmbUploadLayer').innerHTML='';LmEx_multiupload('1');" title="<?=$lang[2232]?>"></i></td><?}?>
-        <?if($LINK[171] AND $LID){?><td><i class="lmb-icon lmb-page-delete-alt" style="cursor:pointer;" onclick="LmEx_delfile();" title="<?=$lang[2318]?>"></i></td><?}?>
+    <?php if($LINK[119] AND $LID){?><td>&nbsp;</td><td><i class="lmb-icon-cus lmb-folder-add" style="cursor:pointer;" onclick="document.getElementById('uploadfile').style.display='none';document.getElementById('createfolder').style.display='';" title="<?=$lang[2231]?>"></i></td><?php }?>
+    <?php if($LINK[128] AND $LID){?><td><i class="lmb-icon lmb-file-upload" style="cursor:pointer;" onclick="document.getElementById('createfolder').style.display='none';document.getElementById('uploadfile').style.display='';document.getElementById('lmbUploadLayer').innerHTML='';LmEx_showUploadField();" title="<?=$lang[2232]?>"></i></td><?php }?>
+        <?php if($LINK[171] AND $LID){?><td><i class="lmb-icon lmb-page-delete-alt" style="cursor:pointer;" onclick="LmEx_delfile();" title="<?=$lang[2318]?>"></i></td><?php }?>
 
 <td>&nbsp;</td>
-<?if($show_details){$style1="opacity:0.3;filter:Alpha(opacity=30)";}else{$style="opacity:0.3;filter:Alpha(opacity=30)";}?>
+<?php if($show_details){$style1="opacity:0.3;filter:Alpha(opacity=30)";}else{$style="opacity:0.3;filter:Alpha(opacity=30)";}?>
 <td><i class="lmb-icon lmb-align-justify" style="cursor:pointer;<?=$style?>" onclick="document.form1.show_details.value='0';document.form1.submit();" title="<?=$lang[2233]?>"></i></td>
 <td><i class="lmb-icon-cus lmb-txt-col" style="cursor:pointer;<?=$style1?>" onclick="document.form1.show_details.value='1';document.form1.submit();" title="<?=$lang[2234]?>"></i></td>
 </tr>
-<tr id="createfolder" style="display:none;"><td colspan="12"><input type="text" name="addfolder" style="width:200px;">&nbsp;<input type="button" value="<?=$lang[2237]?>" style="cursor:pointer;" Onclick="document.form1.add_folder.value=document.form1.addfolder.value;document.form1.submit();"></td></tr>
+<tr id="createfolder" style="display:none;"><td colspan="12"><input type="text" name="addfolder" style="width:200px;">&nbsp;<input type="button" value="<?=$lang[571]?>" style="cursor:pointer;" Onclick="document.form1.add_folder.value=document.form1.addfolder.value;document.form1.submit();"></td></tr>
 <tr id="uploadfile"><td style="padding-left:3px;" id="lmbUploadLayer" style="width:100%" colspan="12"></td></tr>
 </table>
 
@@ -235,9 +243,9 @@ foreach($file_path as $key => $value){
 
 <div id="fileresultlist" style="border: 1px solid black;margin:6px;height:200px;background-color:<?=$farbschema["WEB8"]?>;overflow:scroll;">
 <table id="filetab" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse">
-<?
+<?php
 
-if($file_path){echo "<TR><TD colspan=\"10\"><DIV style=\"background-color:".$farbschema["WEB11"]."\">&nbsp;<i class=\"lmb-icon lmb-icon-8 lmb-folder\"></i>&nbsp;<INPUT TYPE=\"TEXT\" STYLE=\"border:none;width:94%;height:17px;background-color:".$farbschema["WEB11"].";color:#777777;z-index:1;\" VALUE=\"/".implode("/",$file_path)."\" READONLY></DIV></TD></TR>";}
+if($file_path){echo "<TR><TD colspan=\"10\"><DIV style=\"background-color:".$farbschema["WEB11"]."\">&nbsp;<i class=\"lmb-icon lmb-icon-8 lmb-folder\"></i>&nbsp;<INPUT TYPE=\"TEXT\" STYLE=\"border:none;width:94%;height:17px;background-color:".$farbschema["WEB11"].";color:color:".$farbschema["WEB8"].".;z-index:1;\" VALUE=\"/".implode("/",$file_path)."\" READONLY></DIV></TD></TR>";}
 
 explHeader($LID,0,$filter);
 explFolders($LID,$fid,0,$level,$filter);

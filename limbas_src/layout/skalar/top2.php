@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -127,10 +127,7 @@ function logout(){
 }
 
 function srefresh() {
-	link = confirm("<?=$lang[856]?>");
-	if(link) {
-		parent.nav.document.location.href="main.php?action=nav&sparte=gtab&tab_group=1&refresh=no&sess_refresh=<?=$session["user_id"]?>";
-	}
+    parent.nav.document.location.href="main.php?action=nav&sparte=gtab&tab_group=1&refresh=no&sess_refresh=<?=$session["user_id"]?>";
 }
 
 function help(){
@@ -148,7 +145,7 @@ var activ1 = 0;
 var activ2 = 0;
 
 function l_over(el){
-	<?
+	<?php
 	foreach($LINK["name"] as $key => $value){
 		if($LINK["subgroup"][$key] == 2 AND $LINK["typ"][$key] == 1){
 	        echo "document.getElementById('el_".$key."').style.color='';\n";
@@ -157,7 +154,7 @@ function l_over(el){
 	}
 	?>
 	el.style.color = 'black';
-	el.style.borderBottom = '<?=$farbschema["WEB5"]?>';
+	el.style.borderBottom = '<?=$farbschema["WEB8"]?>';
 }
 
 
@@ -167,7 +164,7 @@ function l_out(el){
 		el.style.borderBottom='1px solid #FFFFFF';
 		if(activ1){
 			document.getElementById(activ1).style.color='black';
-			document.getElementById(activ1).style.borderBottom='<?=$farbschema["WEB5"]?>';
+			document.getElementById(activ1).style.borderBottom='<?=$farbschema["WEB8"]?>';
 		}
 	}
 }
@@ -175,7 +172,7 @@ function l_out(el){
 function act(el){
 	var sel = 'el_'+el;
 	var menel = el;
-	<?
+	<?php
 	foreach($LINK["name"] as $key => $value){
 		#if($LINK["typ"][$key] == 1 OR $LINK["typ"][$key] == 5){
 		#	echo "if(parent.nav.document.getElementById('menu_".$key."')){\n";
@@ -184,7 +181,7 @@ function act(el){
 		#}
 
 		if($LINK["subgroup"][$key] == 3 AND ($LINK["typ"][$key] == 1 OR $LINK["typ"][$key] == 5)){
-			echo "document.getElementById('el_".$key."').style.color='$farbschema[WEB12]';\n";
+			echo "document.getElementById('el_".$key."').style.color='{$farbschema['WEB12']}';\n";
 			echo "activ1 = 0;\n";
 		}
 	}
@@ -201,21 +198,21 @@ function act(el){
 
 
 function l2_over(el){
-	<?
+	<?php
 	foreach($LINK["name"] as $key => $value){
 		if($LINK["subgroup"][$key] == 2 AND $LINK["typ"][$key] == 1){
 	        echo "document.getElementById('el_".$key."').style.color='" . $farbschema["WEB12"] . "';\n";
 	    }
 	}
 	?>
-	el.style.color = '<?=$farbschema["WEB5"]?>';
+	el.style.color = '<?=$farbschema["WEB8"]?>';
 }
 
 function l2_out(el){
 	if(activ2 != el){
 		el.style.color='<?=$farbschema["WEB12"]?>';
 		if(activ2){
-			document.getElementById(activ2).style.color='<?=$farbschema["WEB5"]?>';
+			document.getElementById(activ2).style.color='<?=$farbschema["WEB8"]?>';
 		}
 	}
 }
@@ -239,11 +236,11 @@ function act2(el){
 		}
 	}
 
-	<?//firefox without getElementByName
+	<?php //firefox without getElementByName
 	if(lmb_strpos($_SERVER["HTTP_USER_AGENT"],"MSIE")<1){?>
 	toDisplay = parent.nav.document.getElementsByName(menel)[0];
 
-	<?}else{?>
+	<?php }else{?>
 	toDisplayList = parent.nav.document.getElementsByTagName("TABLE");
 	toDisplay = null;
 	for(i=0;i<toDisplayList.length;i++){
@@ -264,7 +261,7 @@ function act2(el){
 			}
 		}
 	}
-	<?}?>
+	<?php }?>
 
 
 	if(toDisplay){

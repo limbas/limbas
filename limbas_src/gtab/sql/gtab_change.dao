@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -56,7 +56,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	
 
 	<DIV ID="limbasDivMenuDateien" class="lmbContextMenu" style="position:absolute;display:none;z-index:995;"><FORM NAME="filemenu" OnClick="activ_menu = 1;">
-	<? #----------------- Datei-Menü -------------------
+	<?php #----------------- Datei-Menü -------------------
 	pop_top('limbasDivMenuDateien');
 	foreach ($gfield[$gtabid]["id"] as $key => $value){
 		if($gfield[$gtabid]["data_type"][$key] == 25 OR $gfield[$gtabid]["data_type"][$key] == 13){
@@ -70,7 +70,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	
 	
 	<DIV ID="limbasDivMenuBericht" class="lmbContextMenu" style="display:none;z-index:993;" OnClick="activ_menu = 1;">
-	<? #----------------- Berichts-Menü -------------------
+	<?php #----------------- Berichts-Menü -------------------
 	pop_top('limbasDivMenuBericht');
 	
 	if($greportlist[$gtabid]["id"]){
@@ -110,7 +110,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	</DIV>
         
 	<div ID="limbasDivMenuDiagramme" class="lmbContextMenu" style="position:absolute;display:none;z-index:9992" OnClick="activ_menu = 1;">
-	<? #----------------- Diagramme - Menü -------------------
+	<?php #----------------- Diagramme - Menü -------------------
 	if($gdiaglist[$gtabid]["id"]){
 		pop_top('limbasDivMenuDiagramme');
 		foreach($gdiaglist[$gtabid]["id"] as $key => $value){
@@ -124,12 +124,12 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	</div>
 
 	<DIV ID="limbasDivMenuLink" class="lmbContextMenu" style="position: absolute;display:none;z-index:995;"><FORM NAME="formular_verknpf" OnClick="activ_menu = 1;">
-	<? #----------------- Verknüpfungs-Menü -------------------
+	<?php #----------------- Verknüpfungs-Menü -------------------
 	pop_top('limbasDivMenuLink');
 	if($gfield[$gtabid]["r_verkntabid"] AND $LINK[133]){
-		foreach($gfield[$gtabid][r_verkntabid] as $key => $value){
+		foreach($gfield[$gtabid]['r_verkntabid'] as $key => $value){
 			pop_left();
-			echo "<SPAN STYLE=\"cursor:pointer;width:100px;\" OnMouseOver=\"this.style.fontWeight='bold'\" OnMouseOut=\"this.style.fontWeight='normal'\" OnClick=\"show_verknpf('".$gfield[$gtabid]["r_verkntabid"][$key].";".$gfield[$gtabid]["r_verknfieldid"][$key]."','$ID')\">&nbsp;".$gtab[desc][$gfield[$gtabid][r_verkntabid][$key]]."&nbsp;</SPAN>";
+			echo "<SPAN STYLE=\"cursor:pointer;width:100px;\" OnMouseOver=\"this.style.fontWeight='bold'\" OnMouseOut=\"this.style.fontWeight='normal'\" OnClick=\"show_verknpf('".$gfield[$gtabid]["r_verkntabid"][$key].";".$gfield[$gtabid]["r_verknfieldid"][$key]."','$ID')\">&nbsp;".$gtab['desc'][$gfield[$gtabid]['r_verkntabid'][$key]]."&nbsp;</SPAN>";
 			pop_right();
 			$GLOBALS["rverknpf_exist"] = 1;
 		}
@@ -140,10 +140,10 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	
 	
 	<DIV ID="limbasDivMenuLock" class="lmbContextMenu" style="position: absolute;display:none;z-index:995;"><FORM NAME="formular_lock" OnClick="activ_menu = 1;">
-	<? #----------------- Verknüpfungs-Menü -------------------
+	<?php #----------------- Verknüpfungs-Menü -------------------
 	pop_top('limbasDivMenuLock');
 	pop_left();
-	echo "&nbsp;&nbsp;<input type=\"text\" maxlength=\"2\" style=\"width:30px;\" value=\"30\" id=\"lmbLockTime\">&nbsp;&nbsp;&nbsp;<select id=\"lmbLockUnit\" class=\"contextmenu\"><option value=\"m\">".$lang[1980]."<option value=\"h\">".$lang[1981]."<option value=\"d\">".$lang[1982]."</select>&nbsp;&nbsp;<i class=\"lmb-icon lmb-lock\" ID=\"LmbIconDataLock\" style=\"cursor:pointer;vertical-align:bottom\" OnClick=\"document.form1.lockingtime.value=document.getElementById('lmbLockTime').value+'|'+document.getElementById('lmbLockUnit').value;userecord('lock');\"></i>";
+	echo "&nbsp;&nbsp;<input type=\"text\" maxlength=\"2\" style=\"width:30px;\" value=\"30\" id=\"lmbLockTime\">&nbsp;&nbsp;&nbsp;<select id=\"lmbLockUnit\" class=\"contextmenu\"><option value=\"m\">".$lang[1980]."<option value=\"h\">".$lang[1981]."<option value=\"d\">".$lang[1982]."</select>&nbsp;&nbsp;<i class=\"lmb-icon lmb-lock\" ID=\"LmbIconDataLock\" style=\"cursor:pointer;vertical-align:middle;padding:0 5px;\" OnClick=\"document.form1.lockingtime.value=document.getElementById('lmbLockTime').value+'|'+document.getElementById('lmbLockUnit').value;userecord('lock');\"></i>";
 	pop_right();
 	pop_bottom();
 	?>
@@ -151,7 +151,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 
 	<DIV ID="limbasDivMenuInfo" class="lmbContextMenu" class="lmbContextMenu" style="position: absolute;display:none;z-index:992;" OnClick="activ_menu = 1;">
 	<FORM NAME="info_form">
-	<? #----------------- Info-Menü -------------------
+	<?php #----------------- Info-Menü -------------------
 	pop_menu2('','','lmbInfoCreate',"lmb-icon-cus lmb-page-new");
 	pop_menu2('','','lmbInfoEdit',"lmb-icon-cus lmb-page-edit");
 
@@ -162,7 +162,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	
 	pop_line();
 	pop_left();
-	echo "&nbsp;$lang[55]:<BR>&nbsp;<FONT COLOR=\"green\">[STRG][SHIFT][s]</FONT><BR>";
+	echo "&nbsp;$lang[33]:<BR>&nbsp;<FONT COLOR=\"green\">[STRG][SHIFT][s]</FONT><BR>";
 	echo "&nbsp;$lang[1531]:<BR>&nbsp;<FONT COLOR=\"green\">[STRG][SHIFT][y]</FONT><BR>";
 	echo "&nbsp;$lang[1530]:<BR>&nbsp;<FONT COLOR=\"green\">[STRG][SHIFT][x]</FONT><BR>";
 	echo "&nbsp;$lang[1524]:<BR>&nbsp;<FONT COLOR=\"green\">[STRG][SHIFT][n]</FONT><BR>";
@@ -179,7 +179,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	</FORM></DIV>
 
 	<DIV ID="limbasDivMenuContext" class="lmbContextMenu" style="position:absolute;display:none;z-index:991;" OnClick="activ_menu = 1;">
-	<? #----------------- Datei -------------------
+	<?php #----------------- Datei -------------------
 	if($form_id){pop_top('limbasDivMenuContext');}
 	
 	if(!$isview){pop_submenu(9,'','');}					# Infomenü
@@ -236,7 +236,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	</DIV>
 
 	<DIV ID="limbasDivMenuAnsicht" class="lmbContextMenu" style="position:absolute;display:none;z-index:991" OnClick="activ_menu = 1;">
-	<? #----------------- Ansicht -------------------
+	<?php #----------------- Ansicht -------------------
 	if($form_id){pop_top('limbasDivMenuAnsicht');}
 
 	pop_menu(240,'','',$session["symbolbar"]);	# Symbolleiste
@@ -263,7 +263,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	</DIV>
 
 	<DIV ID="limbasDivMenuExtras" class="lmbContextMenu" style="position:absolute;display:none;z-index:991" OnClick="activ_menu = 1;">
-	<? 
+	<?php
 	if($ID){
 	#----------------- Extras -------------------
 	if($form_id){pop_top('limbasDivMenuExtras');}
@@ -336,7 +336,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	
 	
 	<DIV ID="limbasDivMenuSettings" class="lmbContextMenu" style="visibility:hidden;z-index:993" OnClick="activ_menu = 1;">
-	<?
+	<?php
 	pop_top('limbasDivMenuSettings');
 	if(!$isview AND $gtab["delete"][$gtabid]){
 		if($filter["force_delete"][$gtabid]){$checked = "checked";}else{$checked = null;}
@@ -347,18 +347,18 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	</DIV>
 	
 	
-	<?
+	<?php
 	# extension
 	if(function_exists($GLOBALS["gLmbExt"]["menuCChange"][$gtabid])){
 		$GLOBALS["gLmbExt"]["menuCChange"][$gtabid]($gtabid,$form_id,$ID,$gresult);
 	}
 	?>
 
-<?}?>
+<?php }?>
 
 
 
-<?
+<?php
 /* --- Formular --------------------------------------- */
 function print_form(){
 	global $form_done;
@@ -413,13 +413,13 @@ function print_form(){
 <input type="hidden" name="verkn_poolid" VALUE="<?=$GLOBALS["verkn_poolid"]?>">
 <input type="hidden" name="filter_force_delete">
 <input type="hidden" name="wind_force_close">
-<?if($GLOBALS["verknpf"]){?>
+<?php if($GLOBALS["verknpf"]){?>
 <input type="hidden" name="verkn_ID" VALUE="<?=$GLOBALS["verkn_ID"]?>">
 <input type="hidden" name="verkn_tabid" VALUE="<?=$GLOBALS["verkn_tabid"]?>">
 <input type="hidden" name="verkn_fieldid" VALUE="<?=$GLOBALS["verkn_fieldid"]?>">
 <input type="hidden" name="verkn_showonly" VALUE="<?=$GLOBALS["verkn_showonly"]?>">
 <input type="hidden" name="verkn_formid" VALUE="<?=$GLOBALS["verkn_formid"]?>">
-<?}else{?>
+<?php }else{?>
 <input type="hidden" name="verkn_ID">
 <input type="hidden" name="verkn_tabid">
 <input type="hidden" name="verkn_fieldid">
@@ -436,7 +436,9 @@ function print_symbolbar($gtabid,&$gresult,$ID,$readonly=0){
 	global $gtab;
 	global $action;
 	global $LINK;
-	
+	global $userdat;
+	global $isview;
+
 	# check for version
 	$versedit = 1;
 	if($gtab["ver"][$gtabid] AND !$gresult[$gtabid]["VACT"][0] AND !$GLOBALS['filter']["force_delete"][$gtabid]){
@@ -447,7 +449,10 @@ function print_symbolbar($gtabid,&$gresult,$ID,$readonly=0){
 	if($ID){
 	if($gtab["edit"][$gtabid] AND !$isview AND $versedit){
 		if($action == "gtab_change"){
-			pop_picmenu(6,'','');									# Detail
+		    # show history
+		    $onClickShowContext = "limbasDivShowContext(event,this,'{$gresult[$gtabid]["id"][0]}','{$gtabid}','{$gresult[$gtabid]["ERSTDATUM"][0]}','{$gresult[$gtabid]["EDITDATUM"][0]}','{$userdat["bezeichnung"][$gresult[$gtabid]["ERSTUSER"][0]]}','{$userdat["bezeichnung"][$gresult[$gtabid]["EDITUSER"][0]]}');";
+		    $onClickOpenMenu = "limbasDivShow(this,null,'limbasDivMenuInfo');";
+			pop_picmenu(6,'','',null, 'onclick="' . $onClickShowContext . $onClickOpenMenu . '"');
 		}elseif($gtab["edit"][$gtabid] AND !$readonly){
 			pop_picmenu(3,'','');									# bearbeiten
 		}
@@ -542,11 +547,11 @@ function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0){
 	echo "<TR><TD COLSPAN=\"2\">";
 	echo "<TABLE BORDER=\"0\" cellspacing=\"0\" cellpadding=\"0\" width=\"100%\">\n";
 	# ----------- Datei -----------
-	echo "<TR><TD class=\"gtabHeaderMenuTD\" nowrap OnMouseOver=\"this.className='gtabHeaderMenuTDhover';\" OnMouseOut=\"this.className='gtabHeaderMenuTD';\" OnClick=\"limbasDivShowContext(event,this,'".$gresult[$gtabid]["id"][0]."','".$gtabid."','".$gresult[$gtabid]["ERSTDATUM"][0]."','".$gresult[$gtabid]["EDITDATUM"][0]."','".$userdat[bezeichnung][$gresult[$gtabid]["ERSTUSER"][0]]."','".$userdat[bezeichnung][$gresult[$gtabid]["EDITUSER"][0]]."')\">$lang[1702]</TD><TD>&nbsp;|&nbsp;</TD>";
+	echo "<TR><TD class=\"gtabHeaderMenuTD\" nowrap OnMouseOver=\"this.className='gtabHeaderMenuTDhover';\" OnMouseOut=\"this.className='gtabHeaderMenuTD';\" OnClick=\"limbasDivShowContext(event,this,'".$gresult[$gtabid]["id"][0]."','".$gtabid."','".$gresult[$gtabid]["ERSTDATUM"][0]."','".$gresult[$gtabid]["EDITDATUM"][0]."','".$userdat['bezeichnung'][$gresult[$gtabid]["ERSTUSER"][0]]."','".$userdat['bezeichnung'][$gresult[$gtabid]["EDITUSER"][0]]."')\">$lang[545]</TD><TD>&nbsp;|&nbsp;</TD>";
 	# ----------- Ansicht -----------
-	echo "<TD class=\"gtabHeaderMenuTD\" nowrap OnMouseOver=\"this.className='gtabHeaderMenuTDhover';\" OnMouseOut=\"this.className='gtabHeaderMenuTD';\" OnClick=\"limbasDivShow(this,'','limbasDivMenuAnsicht');\">$lang[1704]</TD><TD>&nbsp;|&nbsp;</TD>";
+	echo "<TD class=\"gtabHeaderMenuTD\" nowrap OnMouseOver=\"this.className='gtabHeaderMenuTDhover';\" OnMouseOut=\"this.className='gtabHeaderMenuTD';\" OnClick=\"limbasDivShow(this,'','limbasDivMenuAnsicht');\">$lang[1625]</TD><TD>&nbsp;|&nbsp;</TD>";
 	# ----------- Extras -----------
-	echo "<TD class=\"gtabHeaderMenuTD\" nowrap OnMouseOver=\"this.className='gtabHeaderMenuTDhover';\" OnMouseOut=\"this.className='gtabHeaderMenuTD';\" OnClick=\"limbasDivShow(this,'','limbasDivMenuExtras');\">$lang[2159]</TD>";
+	echo "<TD class=\"gtabHeaderMenuTD\" nowrap OnMouseOver=\"this.className='gtabHeaderMenuTDhover';\" OnMouseOut=\"this.className='gtabHeaderMenuTD';\" OnClick=\"limbasDivShow(this,'','limbasDivMenuExtras');\">$lang[1939]</TD>";
 
 	# extension
 	if(function_exists($GLOBALS["gLmbExt"]["menuChangeItems"][$gtabid])){
@@ -556,17 +561,25 @@ function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0){
 	echo "<TD class=\"gtabHeaderMenuTD\" VALIGN=\"bottom\" ALIGN=\"RIGHT\" WIDTH=\"100%\" NOWRAP>";
 
 	echo "<TABLE cellspacing=\"1\" cellpadding=\"2\"><TR>";
-               
-	# lock freigeben
+
+	# archived
+	if ($gresult[$gtabid]['DEL'][0]) { // TODO 0?
+        echo '
+            <td class="gtabHeaderMenuTD" title="' . $lang[1312] . '">
+                <i class="lmb-icon-cus lmb-archived"></i>
+            </td>';
+    }
+
+	# manuelles lock - lock freigeben
 	if($gtab["lock"][$gtabid] AND !$gresult[$gtabid]["LOCK"]["USER"][$ID] AND $gresult[$gtabid]["LOCK"]["STATIC"][$ID] AND $LINK["271"]){
-		echo "<TD class=\"gtabHeaderMenuTD\" ALIGN=\"CENTER\">
-                <i class=\"lmb-icon-32 lmb-forbidden\" style=\"cursor:pointer\" title=\"".$lang[$LINK["desc"][271]]." - ".$gresult[$gtabid]["LOCK"]["TIME"][$ID]."\" OnClick=\"".$LINK["link_url"][271]."\"></i>
+		echo "<TD class=\"gtabHeaderMenuTD\" ALIGN=\"CENTER\" title=\"".$lang[$LINK["desc"][271]]." - ".$gresult[$gtabid]["LOCK"]["TIME"][$ID]."\" OnClick=\"".$LINK["link_url"][271]."\">
+                <i class=\"lmb-icon lmb-locked\"></i>
 		</TD>";
 	}
 	# lock information
 	elseif($gtab["lockable"][$gtabid] AND $gresult[$gtabid]["LOCK"]["USER"][$ID]){
-		echo "<TD class=\"gtabHeaderMenuTD\" ALIGN=\"CENTER\">
-                <i class=\"lmb-icon-32 lmb-forbidden\" ID=\"LmbIconDataLock2\" style=\"cursor:pointer\" TITLE=\"".$lang[763]." (".$gresult[$gtabid]["LOCK"]["USER"][$ID]." - ".$lang[1722].$gresult[$gtabid]["LOCK"]["TIME"][$ID].")\"></i>
+		echo "<TD class=\"gtabHeaderMenuTD\" ALIGN=\"CENTER\" TITLE=\"".$lang[763]." (".$gresult[$gtabid]["LOCK"]["USER"][$ID]." - ".$lang[1722].$gresult[$gtabid]["LOCK"]["TIME"][$ID].")\">
+                <i class=\"lmb-icon lmb-forbidden\" ID=\"LmbIconDataLock2\"></i>
 		</TD>";
 	}
 
@@ -579,7 +592,7 @@ function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0){
 	
 	# 1:1 Verknüpfungs-Select
 	if(count($gtab["rverkn"][$gtab["verkn"][$gtabid]]) > 1){
-		echo "<TD class=\"gtabHeaderMenuTD\">&nbsp;</TD><TD SYTLE=\"border:1px solid grey;\">";
+		echo "<TD class=\"gtabHeaderMenuTD\">&nbsp;</TD><TD>";
 		echo "<SELECT class=\"contextmenu\" OnChange=\"document.form1.gtabid.value=this.value;send_form(1);\">";
 		foreach($gtab["rverkn"][$gtab["verkn"][$gtabid]] as $key => $value){
 			echo "<OPTION VALUE=\"".$value."\"";
@@ -590,11 +603,42 @@ function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0){
 	}
 	
 	if(!$GLOBALS["form_id"]){
-        echo "<TD class=\"gtabHeaderMenuTD\">&nbsp;&nbsp;<i class=\"lmb-icon lmb-arrow-left-caret u-color-3\" onclick=\"resizeElementStep('gtabDetail','left',document.form1.filter_gwidth,'700px');\"></i><i class=\"lmb-icon lmb-arrow-right-caret u-color-3\" onclick=\"resizeElementStep('gtabDetail','right',document.form1.filter_gwidth,'95%');\"></i></TD>";
+	    echo "<script>
+            $(function() {
+                // add resizable handle
+                $('#gtabDetail').resizable({
+                    handles: { e: '#gtabDetailResizeHandle' },
+                    stop: function(event, ui) {
+                        resizeElementStep('gtabDetail', '', document.form1.filter_gwidth, ui.element.css('width'));
+                    }
+                });
+                
+                // wait for resize
+                $(document.form1.filter_gwidth).change(function() {
+                    $.ajax({
+                        type: 'POST',
+                        url: 'main_dyns.php',
+                        data: {
+                            actid: 'saveViewSettings',
+                            gtabid: $gtabid,
+                            filter_gwidth: document.form1.filter_gwidth.value
+                        },
+                        success: function (data) {
+                            console.log(data);
+                        }
+                    });
+                });
+            });
+        </script>";
+        echo "<TD class=\"gtabHeaderMenuTD\">&nbsp;&nbsp;
+            <i class=\"lmb-icon lmb-arrow-left-caret u-color-3\" onclick=\"resizeElementStep('gtabDetail','left',document.form1.filter_gwidth,'700px');\"></i>
+            <i id=\"gtabDetailResizeHandle\" class=\"lmb-icon lmb-resize-form u-color-3 ui-resizable-handle ui-resizable-e\" style=\"position: relative;right:initial;\"></i>
+            <i class=\"lmb-icon lmb-arrow-right-caret u-color-3\" onclick=\"resizeElementStep('gtabDetail','right',document.form1.filter_gwidth,'calc(100% - 80px)');\"></i>
+        </TD>";
 	}
 	echo "</TR></TABLE>";
 	echo "</TD></TR>";
-	echo "</TABLE></TD></TR>\n";
+	echo "</TABLE></TD></TR>";
 
 	#echo "<TR><TD COLSPAN=\"2\" STYLE=\"background-color:".$farbschema["WEB8"]."\"><DIV WIDTH=\"100%\" STYLE=\"height:1px;overflow:hidden;\"></DIV></TD></TR>\n";
 
@@ -659,10 +703,6 @@ function form_view($gtabid,$ID,&$gresult,$gformid,$readonly=0){
 	# Formular
 	print_form();
 
-	if($gformlist[$gtabid]["css"][$gformid] AND lmb_strpos($gformlist[$gtabid]["css"][$gformid],"USER/") === false){
- 		echo "<style type=\"text/css\">@import url(".$gformlist[$gtabid]["css"][$gformid].");</style>\n";
-	}
-
 	if(!$gform[$gformid]["id"]){return false;}
 	$groupheader = $GLOBALS["filter"]["groupheader"][$gtabid];
 	$GLOBALS["filter"]["groupheader"][$gtabid] = 1;
@@ -679,10 +719,10 @@ function print_verknaddfrom($verkn_addfrom,$gtabid){
 	foreach($addfrom as $key => $value){
 		if($value){
 		$tab = explode(",",$value);
-		echo "<td nowrap style=\"cursor:pointer;color:$farbschema[WEB12];white-space:nowrap;height:20px;\" OnClick=\"jump_to_addfrom('$key');\">".$gtab[desc][$tab[0]]."</td><td valign=\"bottom\"><i class=\"lmb-icon lmb-long-arrow-right-alt\"></i></td>";
+		echo "<td nowrap style=\"cursor:pointer;color:{$farbschema['WEB12']};white-space:nowrap;height:20px;\" OnClick=\"jump_to_addfrom('$key');\">".$gtab['desc'][$tab[0]]."</td><td valign=\"bottom\"><i class=\"lmb-icon lmb-long-arrow-right-alt\"></i></td>";
 		}
 	}
-	echo "<td style=\"height:20px;color:$farbschema[WEB12];\">".$gtab['desc'][$gtabid]."</td></tr></table>";
+	echo "<td style=\"height:20px;color:{$farbschema['WEB12']};\">".$gtab['desc'][$gtabid]."</td></tr></table>";
 }
 
 # --------------- Verknüpfungsreiter --------------------------------------------
@@ -767,18 +807,18 @@ function print_formtags($gtabid,$gformid){
 	if($gformid){
 		$style = "border:none;border-top:1px solid ".$farbschema["WEB3"].";border-right:1px solid ".$farbschema["WEB3"].";border-bottom:1px solid ".$farbschema["WEB3"].";background-color:".$farbschema["WEB7"];
 	}else{
-		$style = "border:1px solid ".$farbschema["WEB3"].";border-bottom:none;background-color:".$farbschema["WEB6"];
+		$style = "border:1px solid ".$farbschema["WEB3"].";border-bottom:none;background-color:".$farbschema["WEB3"];
 	}
-	echo "<TD NOWRAP STYLE=\"cursor:pointer;padding:2px;padding-left:4px;padding-right:4px;color:".$farbschema["WEB12"].";$style;\" OnClick=\"document.form1.form_id.value='';send_form('1');\">".$gtab["desc"][$gtabid]."</TD>";
+	echo "<TD NOWRAP STYLE=\"cursor:pointer;padding:2px 4px;color:".$farbschema["WEB12"].";$style;\" OnClick=\"document.form1.form_id.value='';send_form('1');\">".$gtab["desc"][$gtabid]."</TD>";
 	foreach($gformlist[$gtabid]["id"] as $key => $value){
 		if($gformlist[$gtabid]["hidden"][$key]){continue;}
 		if($gformlist[$gtabid]["typ"][$key] == 1){
 			if($gformid == $value){
-				$style = "border-right:1px solid ".$farbschema["WEB3"].";border-top:1px solid ".$farbschema["WEB3"].";background-color:".$farbschema["WEB6"];
+				$style = "border-right:1px solid ".$farbschema["WEB3"].";border-top:1px solid ".$farbschema["WEB3"].";background-color:".$farbschema["WEB3"];
 			}else{
 				$style = "border-right:1px solid ".$farbschema["WEB3"].";border-bottom:1px solid ".$farbschema["WEB3"].";background-color:".$farbschema["WEB7"];
 			}
-			echo "<TD NOWRAP STYLE=\"cursor:pointer;padding:2px;padding-left:4px;padding-right:4px;color:".$farbschema["WEB12"].";$style\" OnClick=\"limbasWriteFormValue('form1','form_id->".$gformlist[$gtabid]["id"][$key].");send_form('1');\">".$gformlist[$gtabid]["name"][$key]."</TD>";
+			echo "<TD NOWRAP STYLE=\"cursor:pointer;padding:2px 4px;color:".$farbschema["WEB12"].";$style\" OnClick=\"limbasWriteFormValue('form1','form_id->".$gformlist[$gtabid]["id"][$key].");send_form('1');\">".$gformlist[$gtabid]["name"][$key]."</TD>";
 		}
 	}
 
@@ -945,7 +985,7 @@ function defaultView($gtabid,$ID,&$gresult,$readonly=0,&$filter=null){
 		print_scroll($ID);
 		echo "</TD><TD>";
 		if($action == 'gtab_change' OR $action == 'gtab_neu'){
-			echo "<INPUT class=\"submit\" TYPE=\"button\" NAME=\"lmbSbm\" STYLE=\"cursor:pointer\" value=\"$lang[55]\" onclick=\"document.form1.action.value='gtab_change'; send_form('1');\">&nbsp;&nbsp;";
+			echo "<INPUT class=\"submit\" TYPE=\"button\" NAME=\"lmbSbm\" STYLE=\"cursor:pointer\" value=\"$lang[33]\" onclick=\"document.form1.action.value='gtab_change'; send_form('1');\">&nbsp;&nbsp;";
 			echo "<INPUT class=\"submit\" TYPE=\"button\" NAME=\"lmbSbmClose\" STYLE=\"cursor:pointer;display:none\" value=\"$lang[2796]\" onclick=\"document.form1.action.value='gtab_change'; send_form(1,0,0,1);\">";
 		}
 	}
@@ -964,29 +1004,29 @@ if($wind_force_close){
 	echo "<script language=\"JavaScript\">";
 	if($verknpf==1 AND $verkn_tabid AND $verkn_fieldid AND $verkn_ID){
 		echo "
-		
-			// inner frame
-			if(parent.document.getElementById('lmb_gtabDetailFrame')){
-				var form_id = '';
-				if(parent.form1.form_id){form_id = parent.form1.form_id.value;}
-				parent.LmExt_RelationFields(null,$verkn_tabid,$verkn_fieldid,'',1,$verkn_ID,'','','','',form_id,'$verkn_formid');
-				parent.$('#lmb_gtabDetailFrame').html('');
-				parent.$('#lmb_gtabDetailFrame').dialog('close');
-			// new win
-			}else if(opener){
-				var form_id = '';
-				if(opener.form1.form_id){form_id = opener.form1.form_id.value;}
-				opener.LmExt_RelationFields(null,$verkn_tabid,$verkn_fieldid,'',1,$verkn_ID,'','','','',form_id,'$verkn_formid');
-				window.close();
-			}
+	        $( document ).ready(function() {
+                // inner frame
+                if(parent.document.getElementById('lmb_gtabDetailFrame')){
+                    var form_id = '';
+                    if(parent.form1.form_id){form_id = parent.form1.form_id.value;}
+                    parent.LmExt_RelationFields(null,$verkn_tabid,$verkn_fieldid,'',1,$verkn_ID,'','','','',form_id,'$verkn_formid');
+                    parent.$('#lmb_gtabDetailFrame').dialog('close');
+                // new win
+                }else if(opener){
+                    var form_id = '';
+                    if(opener.form1.form_id){form_id = opener.form1.form_id.value;}
+                    opener.LmExt_RelationFields(null,$verkn_tabid,$verkn_fieldid,'',1,$verkn_ID,'','','','',form_id,'$verkn_formid');
+                    window.close();
+                }
+            });
 			";
 	}else{
 	   // calendar iframe window
 	   echo "
 	    $( document ).ready(function() {
-	    if($('#lmb_eventDetailFrame', window.parent.document).hasClass('ui-dialog-content')){
-	       parent.lmb_closeIframeDialog();
-	    }
+            if($('#lmb_eventDetailFrame', window.parent.document).hasClass('ui-dialog-content')){
+               parent.lmb_closeIframeDialog();
+            }
 	    });
 	    ";
 	}

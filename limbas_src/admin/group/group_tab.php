@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -24,7 +24,7 @@
 <DIV ID="element3" class="lmbContextMenu" style="position:absolute;visibility:hidden;z-index:10001;" onclick="activ_menu=1">
 <FORM NAME="ffilter_form">
 <?pop_left();?>
-<TEXTAREA NAME="filter" OnChange="eval('document.form1.filterrule_'+this.form.id.value+'.value = this.value');save_rules(this.form.gtabid.value,this.form.field_id.value,8);" STYLE="width:150px;height:100px;background-color:<?echo $farbschema[WEB8];?>;"></TEXTAREA>
+<TEXTAREA NAME="filter" OnChange="eval('document.form1.filterrule_'+this.form.id.value+'.value = this.value');save_rules(this.form.gtabid.value,this.form.field_id.value,8);" STYLE="width:150px;height:100px;background-color:<?= $farbschema['WEB8'] ?>;"></TEXTAREA>
 <?pop_right();?>
 <?pop_bottom();?>
 <INPUT TYPE="HIDDEN" NAME="id">
@@ -36,7 +36,7 @@
 <DIV ID="element6" class="lmbContextMenu" style="position:absolute;visibility:hidden;z-index:10001;" onclick="activ_menu=1">
 <FORM NAME="edittab_form">
 <?pop_left();?>
-<TEXTAREA ID="edittab_value" NAME="edittab_value" OnChange="eval('document.form1.edit_rule_'+this.form.gtabid.value+'.value = this.value'); save_rules(this.form.gtabid.value,'',27)" STYLE="width:150px;height:100px;background-color:<?echo $farbschema[WEB8];?>;"></TEXTAREA>
+<TEXTAREA ID="edittab_value" NAME="edittab_value" OnChange="eval('document.form1.edit_rule_'+this.form.gtabid.value+'.value = this.value'); save_rules(this.form.gtabid.value,'',27)" STYLE="width:150px;height:100px;background-color:<?= $farbschema['WEB8'] ?>;"></TEXTAREA>
 <?pop_right();?>
 <?pop_bottom();?>
 <INPUT TYPE="HIDDEN" NAME="gtabid">
@@ -44,7 +44,7 @@
 
 <div ID="element4" class="lmbContextMenu" style="visibility:hidden;z-index:10001;" OnClick="activ_menu = 1;">
 <FORM NAME="fcolor_form">
-<? #----------------- Farb-Menü -------------------
+<?php #----------------- Farb-Menü -------------------
 unset($opt);
 pop_top('limbasDivMenuFarb');
 pop_color(null, null, 'element4');
@@ -56,7 +56,7 @@ pop_bottom();
 <DIV ID="element5" class="lmbContextMenu" style="position:absolute;visibility:hidden;z-index:10001;" onclick="activ_menu=1">
 <FORM NAME="editrule_form">
 <?pop_left();?>
-<TEXTAREA NAME="editrule" OnChange="eval('document.form1.'+this.form.id.value+'.value = this.value');save_rules(this.form.gtabid.value,this.form.field_id.value,17);" STYLE="width:150px;height:100px;background-color:<?echo $farbschema[WEB8];?>;"></TEXTAREA>
+<TEXTAREA NAME="editrule" OnChange="eval('document.form1.'+this.form.id.value+'.value = this.value');save_rules(this.form.gtabid.value,this.form.field_id.value,17);" STYLE="width:150px;height:100px;background-color:<?= $farbschema['WEB8'] ?>;"></TEXTAREA>
 <?pop_right();?>
 <?pop_bottom();?>
 <INPUT TYPE="HIDDEN" NAME="id">
@@ -69,7 +69,7 @@ pop_bottom();
 <DIV ID="element1" class="lmbContextMenu" style="position:absolute;visibility:hidden;z-index:10001;" onclick="activ_menu=1">
 <FORM NAME="indicator_form">
 <?pop_left();?>
-<TEXTAREA ID="indicator_value" NAME="indicator_value" OnChange="eval('document.form1.indicator_rule_'+this.form.gtabid.value+'.value = this.value'); save_rules(this.form.gtabid.value,'',31)" STYLE="width:150px;height:100px;background-color:<?echo $farbschema[WEB8];?>;"></TEXTAREA>
+<TEXTAREA ID="indicator_value" NAME="indicator_value" OnChange="eval('document.form1.indicator_rule_'+this.form.gtabid.value+'.value = this.value'); save_rules(this.form.gtabid.value,'',31)" STYLE="width:150px;height:100px;background-color:<?= $farbschema['WEB8'] ?>;"></TEXTAREA>
 <?pop_right();?>
 <?pop_bottom();?>
 <INPUT TYPE="HIDDEN" NAME="gtabid">
@@ -84,7 +84,7 @@ pop_bottom();
 <Script language="JavaScript">
 
 function newwin2(TABELLE,ID) {
-	trigger = open("main_admin.php?<?=SID?>&action=setup_group_trigger&GROUP_ID=<?echo $ID;?>&tab_id=" + TABELLE + "" ,"Trigger","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=350,height=330");
+	trigger = open("main_admin.php?action=setup_group_trigger&GROUP_ID=<?= $ID ?>&tab_id=" + TABELLE + "" ,"Trigger","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=350,height=330");
 }
 
 var activ_menu = null;
@@ -302,26 +302,25 @@ function f_3(PARAMETER) {
 </SCRIPT>
 
 <FORM ACTION="main_admin.php" METHOD="post" NAME="form1">
-<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
 <input type="hidden" name="action" value="setup_group_tab">
-<INPUT TYPE="hidden" NAME="ID" VALUE="<?echo $ID;?>">
+<INPUT TYPE="hidden" NAME="ID" VALUE="<?= $ID ?>">
 <INPUT TYPE="hidden" NAME="rules">
 <INPUT TYPE="hidden" NAME="popup" VALUE="<?=$popup?>">
 
 <div>
 
-<TABLE class="tabpool" BORDER="0" cellspacing="0" cellpadding="0"><TR><TD valign="top" height="100%">
+<TABLE class="tabpool" BORDER="0" cellspacing="0" cellpadding="0"><TR><TD valign="top" height="100%" style="min-width:150px">
 
-<TABLE BORDER="0" cellspacing="0" cellpadding="0" height="100%" style="border-collapse:collapse">
-<?if($LINK[135]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][135]?>" TITLE="<?=$lang[$LINK["desc"][135]]?>"><?echo "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][135]."\"></i>&nbsp;".$lang[$LINK["name"][135]];?></TD></TR><?}?>
-<?if($LINK[76]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][76]?>" TITLE="<?=$lang[$LINK["desc"][76]]?>"><?echo "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][76]."\"></i>&nbsp;".$lang[$LINK["name"][76]];?></TD></TR><?}?>
-<?if($LINK[100]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemActive" OnClick="<?=$LINK["link_url"][100]?>" TITLE="<?=$lang[$LINK["desc"][100]]?>"><?echo "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][100]."\"></i>&nbsp;".$lang[$LINK["name"][100]];?></TD></TR><?}?>
-<?if($LINK[192]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][192]?>" TITLE="<?=$lang[$LINK["desc"][192]]?>"><?echo "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][192]."\"></i>&nbsp;".$lang[$LINK["name"][192]];?></TD></TR><?}?>
-<?if($LINK[260]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][260]?>" TITLE="<?=$lang[$LINK["desc"][260]]?>"><?echo "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][260]."\"></i>&nbsp;".$lang[$LINK["name"][260]];?></TD></TR><?}?>
-<?if($LINK[291]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][291]?>" TITLE="<?=$lang[$LINK["desc"][291]]?>"><?echo "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][291]."\"></i>&nbsp;".$lang[$LINK["name"][291]];?></TD></TR><?}?>
-<?if($LINK[292]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][292]?>" TITLE="<?=$lang[$LINK["desc"][292]]?>"><?echo "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][292]."\"></i>&nbsp;".$lang[$LINK["name"][292]];?></TD></TR><?}?>
-<?if($LINK[290]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][290]?>" TITLE="<?=$lang[$LINK["desc"][290]]?>"><?echo "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][290]."\"></i>&nbsp;".$lang[$LINK["name"][290]];?></TD></TR><?}?>
-<?if($LINK[293]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][293]?>" TITLE="<?=$lang[$LINK["desc"][293]]?>"><?echo "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][293]."\"></i>&nbsp;".$lang[$LINK["name"][293]];?></TD></TR><?}?>
+<TABLE BORDER="0" cellspacing="0" cellpadding="0" height="100%" width="100%" style="border-collapse:collapse;position:sticky;top:20px;">
+<?php if($LINK[135]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][135]?>" TITLE="<?=$lang[$LINK["desc"][135]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][135]."\"></i>&nbsp;".$lang[$LINK["name"][135]] ?></TD></TR><?php }?>
+<?php if($LINK[76]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][76]?>" TITLE="<?=$lang[$LINK["desc"][76]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][76]."\"></i>&nbsp;".$lang[$LINK["name"][76]] ?></TD></TR><?php }?>
+<?php if($LINK[100]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemActive" OnClick="<?=$LINK["link_url"][100]?>" TITLE="<?=$lang[$LINK["desc"][100]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][100]."\"></i>&nbsp;".$lang[$LINK["name"][100]] ?></TD></TR><?php }?>
+<?php if($LINK[192]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][192]?>" TITLE="<?=$lang[$LINK["desc"][192]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][192]."\"></i>&nbsp;".$lang[$LINK["name"][192]] ?></TD></TR><?php }?>
+<?php if($LINK[260]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][260]?>" TITLE="<?=$lang[$LINK["desc"][260]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][260]."\"></i>&nbsp;".$lang[$LINK["name"][260]] ?></TD></TR><?php }?>
+<?php if($LINK[291]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][291]?>" TITLE="<?=$lang[$LINK["desc"][291]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][291]."\"></i>&nbsp;".$lang[$LINK["name"][291]] ?></TD></TR><?php }?>
+<?php if($LINK[292]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][292]?>" TITLE="<?=$lang[$LINK["desc"][292]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][292]."\"></i>&nbsp;".$lang[$LINK["name"][292]] ?></TD></TR><?php }?>
+<?php if($LINK[290]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][290]?>" TITLE="<?=$lang[$LINK["desc"][290]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][290]."\"></i>&nbsp;".$lang[$LINK["name"][290]] ?></TD></TR><?php }?>
+<?php if($LINK[293]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][293]?>" TITLE="<?=$lang[$LINK["desc"][293]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][293]."\"></i>&nbsp;".$lang[$LINK["name"][293]] ?></TD></TR><?php }?>
 <TR><TD class="tabHpoolItemSpaceGtab"><div style="height:100%">&nbsp;</div></TD></TR>
 
 </TABLE>
@@ -367,42 +366,42 @@ function viewrows($gtabid){
 	if($is_popup){if(in_array($gtabid,$is_popup)){$display = "";}else{$display = "none";}}else{$display = "none";}
 	echo "<TR ID=\"table_$gtabid\" STYLE=\"display:$display\">";
 	echo "<TD ALIGN=\"left\" COLSPAN=\"8\"><TABLE BORDER=\"0\" cellspacing=\"1\" cellpadding=\"0\">";
-	echo "<TR STYLE=\"background-color:".$farbschema[WEB7]."\"><TD ALIGN=\"RIGHT\" COLSPAN=\"4\">";
+	echo "<TR STYLE=\"background-color:".$farbschema['WEB7']."\"><TD ALIGN=\"RIGHT\" COLSPAN=\"4\">";
 
-	echo "<TABLE BORDER=\"0\" cellspacing=\"1\" cellpadding=\"1\"><TR STYLE=\"background-color:#FFFFFF\">";
+	echo "<TABLE BORDER=\"0\" cellspacing=\"1\" cellpadding=\"1\"><TR STYLE=\"background-color:{$farbschema['WEB8']}; color:" . lmbSuggestColor($farbschema['WEB8']) . "\">";
 	# --- view ---
-	echo "<TD nowrap><i class=\"lmb-icon lmb-eye-slash\"BORDER=\"0\" TITLE=\"$lang[2302]\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" NAME=\"tabhidemenu_".$gtabid."\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\" onclick=\"save_rules('$gtabid','',18)\" ";
+	echo "<TD nowrap><i class=\"lmb-icon lmb-eye-slash\"BORDER=\"0\" TITLE=\"$lang[2302]\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" NAME=\"tabhidemenu_".$gtabid."\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\" onclick=\"save_rules('$gtabid','',18)\" ";
 	if($f_result[$gtabid]["hidemenu"] == 1){echo "CHECKED";}
 	echo "></TD>";
 
 	# --- view versions ---
 	if($gtab["versioning"][$gtabid] AND !$isview){
 		if((($l_result[$gtabid]["viewver"] == 1 OR !$l_result) AND $s_result[$gtabid]["viewver"]) OR $session["superadmin"]){
-			echo "<TD nowrap><i class=\"lmb-icon lmb-show-versioned\" BORDER=\"0\" TITLE=\"$lang[2356]\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" NAME=\"tabviewver_".$gtabid."\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\" onclick=\"save_rules('$gtabid','',20)\" ";
+			echo "<TD nowrap><i class=\"lmb-icon lmb-show-versioned\" BORDER=\"0\" TITLE=\"$lang[2356]\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" NAME=\"tabviewver_".$gtabid."\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\" onclick=\"save_rules('$gtabid','',20)\" ";
 			if($f_result[$gtabid]["viewver"] == 1){echo "CHECKED";}
 			echo "></TD>";
 		}elseif(!$l_result[$gtabid]["viewver"] AND $s_result[$gtabid]["viewver"]){
-			echo "<TD nowrap><Ii class=\"lmb-icon lmb-show-versioned\" BORDER=\"0\" TITLE=\"$lang[2356]\" style=\"opacity:0.3;filter:Alpha(opacity=30);\"></i><INPUT readonly disabled TYPE=\"checkbox\" STYLE=\"background-color:transparent;opacity:0.3;filter:Alpha(opacity=30);\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\"></TD>";
+			echo "<TD nowrap><i class=\"lmb-icon lmb-show-versioned\" BORDER=\"0\" TITLE=\"$lang[2356]\" style=\"opacity:0.3;filter:Alpha(opacity=30);\"></i><INPUT readonly disabled TYPE=\"checkbox\" STYLE=\"background-color:transparent;opacity:0.3;filter:Alpha(opacity=30);\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\"></TD>";
 		}
 	}
 	# --- unlock data ---
 	if($gtab["lockable"][$gtabid] AND !$isview){
 		if((($l_result[$gtabid]["lock"] == 1 OR !$l_result) AND $s_result[$gtabid]["lock"]) OR $session["superadmin"]){
-			echo "<TD nowrap><i class=\"lmb-icon lmb-lock\"BORDER=\"0\" TITLE=\"$lang[2428]\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" NAME=\"lock_".$gtabid."\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\" onclick=\"save_rules('$gtabid','',21)\" ";
+			echo "<TD nowrap><i class=\"lmb-icon lmb-lock\"BORDER=\"0\" TITLE=\"$lang[2428]\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" NAME=\"lock_".$gtabid."\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\" onclick=\"save_rules('$gtabid','',21)\" ";
 			if($f_result[$gtabid]["lock"] == 1){echo "CHECKED";}
 			echo "></TD>";
 		}elseif(!$l_result[$gtabid]["lock"] AND $s_result[$gtabid]["lock"]){
-			echo "<TD nowrap><i class=\"lmb-icon lmb-lock\" BORDER=\"0\" TITLE=\"$lang[2428]\" style=\"opacity:0.3;filter:Alpha(opacity=30);\"></i><INPUT readonly disabled TYPE=\"checkbox\" STYLE=\"background-color:transparent;opacity:0.3;filter:Alpha(opacity=30);\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\"></TD>";
+			echo "<TD nowrap><i class=\"lmb-icon lmb-lock\" BORDER=\"0\" TITLE=\"$lang[2428]\" style=\"opacity:0.3;filter:Alpha(opacity=30);\"></i><INPUT readonly disabled TYPE=\"checkbox\" STYLE=\"background-color:transparent;opacity:0.3;filter:Alpha(opacity=30);\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\"></TD>";
 		}
 	}
 	# --- archive ---
 	if(!$isview){
 		if((($l_result[$gtabid]["hide"] == 1 OR !$l_result) AND $s_result[$gtabid]["hide"]) OR $session["superadmin"]){
-			echo "<TD nowrap><i class=\"lmb-icon lmb-save\"BORDER=\"0\" TITLE=\"$lang[1257]\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" NAME=\"tabhide_".$gtabid."\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\" onclick=\"save_rules('$gtabid','',5)\" ";
+			echo "<TD nowrap><i class=\"lmb-icon lmb-save\"BORDER=\"0\" TITLE=\"$lang[1257]\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" NAME=\"tabhide_".$gtabid."\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\" onclick=\"save_rules('$gtabid','',5)\" ";
 			if($f_result[$gtabid]["hide"] == 1){echo "CHECKED";}
 			echo "></TD>";
 		}elseif(!$l_result[$gtabid]["hide"] AND $s_result[$gtabid]["hide"]){
-			echo "<TD nowrap><i class=\"lmb-icon lmb-save\" BORDER=\"0\" TITLE=\"$lang[1257]\" style=\"opacity:0.3;filter:Alpha(opacity=30);\"></i><INPUT readonly disabled TYPE=\"checkbox\" STYLE=\"background-color:transparent;opacity:0.3;filter:Alpha(opacity=30);\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\"></TD>";
+			echo "<TD nowrap><i class=\"lmb-icon lmb-save\" BORDER=\"0\" TITLE=\"$lang[1257]\" style=\"opacity:0.3;filter:Alpha(opacity=30);\"></i><INPUT readonly disabled TYPE=\"checkbox\" STYLE=\"background-color:transparent;opacity:0.3;filter:Alpha(opacity=30);\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\"></TD>";
 		}
 	}
 
@@ -410,23 +409,23 @@ function viewrows($gtabid){
 	if($gtab["has_userrules"][$gtabid] AND !$isview){
 		# --- set userrules for administrate datasets ---
 		if((($l_result[$gtabid]["userrules"] == 1 OR !$l_result) AND $s_result[$gtabid]["edit_userrules"]) OR $session["superadmin"]){
-			echo "<TD nowrap><i class=\"lmb-icon lmb-group-gear\"BORDER=\"0\" TITLE=\"$lang[2337]\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" NAME=\"tabuserrules_".$gtabid."\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\" onclick=\"save_rules('$gtabid','',19)\" ";
+			echo "<TD nowrap><i class=\"lmb-icon lmb-group-gear\"BORDER=\"0\" TITLE=\"$lang[2337]\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" NAME=\"tabuserrules_".$gtabid."\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\" onclick=\"save_rules('$gtabid','',19)\" ";
 			if($f_result[$gtabid]["userrules"] == 1){echo "CHECKED";}
 			echo "></TD>";
 		}elseif(!$l_result[$gtabid]["userrules"] AND $s_result[$gtabid]["edit_userrules"]){
-			echo "<TD nowrap><i class=\"lmb-icon lmb-group-gear\" BORDER=\"0\" TITLE=\"$lang[2337]\" style=\"opacity:0.3;filter:Alpha(opacity=30);\"></i><INPUT readonly disabled TYPE=\"checkbox\" STYLE=\"background-color:transparent;opacity:0.3;filter:Alpha(opacity=30);\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\"></TD>";
+			echo "<TD nowrap><i class=\"lmb-icon lmb-group-gear\" BORDER=\"0\" TITLE=\"$lang[2337]\" style=\"opacity:0.3;filter:Alpha(opacity=30);\"></i><INPUT readonly disabled TYPE=\"checkbox\" STYLE=\"background-color:transparent;opacity:0.3;filter:Alpha(opacity=30);\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\"></TD>";
 		}
 		# --- set userrules for manage created datasets ---
 		if((($l_result[$gtabid]["userprivilege"] == 1 OR !$l_result) AND $s_result[$gtabid]["edit_ownuserrules"]) OR $session["superadmin"]){
-			echo "<TD nowrap><i class=\"lmb-icon lmb-user-gear\"BORDER=\"0\" TITLE=\"$lang[2453]\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" NAME=\"tabuserprivilege_".$gtabid."\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\" onclick=\"save_rules('$gtabid','',28)\" ";
+			echo "<TD nowrap><i class=\"lmb-icon lmb-user-gear\"BORDER=\"0\" TITLE=\"$lang[2453]\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" NAME=\"tabuserprivilege_".$gtabid."\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\" onclick=\"save_rules('$gtabid','',28)\" ";
 			if($f_result[$gtabid]["userprivilege"] == 1){echo "CHECKED";}
 			echo "></TD>";
 		}elseif(!$l_result[$gtabid]["userprivilege"] AND $s_result[$gtabid]["edit_ownuserrules"]){
-			echo "<TD nowrap><i class=\"lmb-icon lmb-user-gear\" BORDER=\"0\" TITLE=\"$lang[2453]\" style=\"opacity:0.3;filter:Alpha(opacity=30);\"></i><INPUT readonly disabled TYPE=\"checkbox\" STYLE=\"background-color:transparent\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\"></TD>";
+			echo "<TD nowrap><i class=\"lmb-icon lmb-user-gear\" BORDER=\"0\" TITLE=\"$lang[2453]\" style=\"opacity:0.3;filter:Alpha(opacity=30);\"></i><INPUT readonly disabled TYPE=\"checkbox\" STYLE=\"background-color:transparent\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\"></TD>";
 		}
 		# --- set userrules for manage single user/groups ---
 		if((($l_result[$gtabid]["hierarchicprivilege"] == 1 OR !$l_result) AND $s_result[$gtabid]["hierarchicprivilege"]) OR $session["superadmin"]){
-			echo "<TD nowrap><i class=\"lmb-icon lmb-groups\" BORDER=\"0\" TITLE=\"$lang[2516]\" style=\"cursor:pointer\" OnClick=\"limbasDivShow(this,parent,'GroupSelect_$gtabid');save_rules('$gtabid','',30)\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" NAME=\"tabhierarchicprivilege_".$gtabid."\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\" onclick=\"save_rules('$gtabid','',29)\" ";
+			echo "<TD nowrap><i class=\"lmb-icon lmb-groups\" BORDER=\"0\" TITLE=\"$lang[2516]\" style=\"cursor:pointer\" OnClick=\"limbasDivShow(this,parent,'GroupSelect_$gtabid');save_rules('$gtabid','',30)\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" NAME=\"tabhierarchicprivilege_".$gtabid."\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\" onclick=\"save_rules('$gtabid','',29)\" ";
 			if($f_result[$gtabid]["hierarchicprivilege"] == 1){echo "CHECKED";}
 			echo ">";
 			$glitems["name"] = array("view_$gtabid","edit_$gtabid","delete_$gtabid");
@@ -434,52 +433,52 @@ function viewrows($gtabid){
 			getGroupTree("GroupSelect_".$gtabid,$glitems,$f_result[$gtabid]["specificprivilege"]);
 			echo "</TD>";
 		}elseif(!$l_result[$gtabid]["hierarchicprivilege"] AND $s_result[$gtabid]["hierarchicprivilege"]){
-			echo "<TD nowrap><i class=\"lmb-icon lmb-groups\" BORDER=\"0\" TITLE=\"$lang[2516]\" style=\"opacity:0.3;filter:Alpha(opacity=30);\"></i><INPUT readonly disabled TYPE=\"checkbox\" STYLE=\"background-color:transparent;opacity:0.3;filter:Alpha(opacity=30);\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\"></TD>";
+			echo "<TD nowrap><i class=\"lmb-icon lmb-groups\" BORDER=\"0\" TITLE=\"$lang[2516]\" style=\"opacity:0.3;filter:Alpha(opacity=30);\"></i><INPUT readonly disabled TYPE=\"checkbox\" STYLE=\"background-color:transparent;opacity:0.3;filter:Alpha(opacity=30);\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\"></TD>";
 		}
 	}
 	# --- add ---
 	if(!$isview){
 		if((($l_result[$gtabid]["add"] == 1 OR !$l_result) AND $s_result[$gtabid]["add"]) OR $session["superadmin"]){
-			echo "<TD nowrap><i class=\"lmb-icon-cus lmb-page-new\"BORDER=\"0\" TITLE=\"$lang[1314]\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" NAME=\"tabadd_".$gtabid."\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\" onclick=\"save_rules('$gtabid','',6)\" ";
+			echo "<TD nowrap><i class=\"lmb-icon-cus lmb-page-new\"BORDER=\"0\" TITLE=\"$lang[571]\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" NAME=\"tabadd_".$gtabid."\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\" onclick=\"save_rules('$gtabid','',6)\" ";
 			if($f_result[$gtabid]["add"] == 1){echo "CHECKED";}
 			echo "></TD>";
 		}elseif(!$l_result[$gtabid]["add"] AND $s_result[$gtabid]["add"]){
-			echo "<TD nowrap><i class=\"lmb-icon-cus lmb-page-new\" BORDER=\"0\" TITLE=\"$lang[1314]\" style=\"opacity:0.3;filter:Alpha(opacity=30);\"></i><INPUT readonly disabled TYPE=\"checkbox\" STYLE=\"background-color:transparent;opacity:0.3;filter:Alpha(opacity=30);\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\"></TD>";
+			echo "<TD nowrap><i class=\"lmb-icon-cus lmb-page-new\" BORDER=\"0\" TITLE=\"$lang[571]\" style=\"opacity:0.3;filter:Alpha(opacity=30);\"></i><INPUT readonly disabled TYPE=\"checkbox\" STYLE=\"background-color:transparent;opacity:0.3;filter:Alpha(opacity=30);\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\"></TD>";
 		}
 	}
 	# --- delete ---
 	if(!$isview){
 		if((($l_result[$gtabid]["delete"] == 1 OR !$l_result) AND $s_result[$gtabid]["delete"]) OR $session["superadmin"]){
-			echo "<TD nowrap><i class=\"lmb-icon lmb-page-delete-alt\"BORDER=\"0\" TITLE=\"$lang[1256]\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" NAME=\"tabdel_".$gtabid."\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\" onclick=\"save_rules('$gtabid','',4)\" ";
+			echo "<TD nowrap><i class=\"lmb-icon lmb-page-delete-alt\"BORDER=\"0\" TITLE=\"$lang[160]\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" NAME=\"tabdel_".$gtabid."\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\" onclick=\"save_rules('$gtabid','',4)\" ";
 			if($f_result[$gtabid]["delete"] == 1){echo "CHECKED";}
 			echo "></TD>";
 		}elseif(!$l_result[$gtabid]["delete"] AND $s_result[$gtabid]["delete"]){
-			echo "<TD nowrap><i class=\"lmb-icon lmb-page-delete-alt\" BORDER=\"0\" TITLE=\"$lang[1256]\" style=\"opacity:0.3;filter:Alpha(opacity=30);\"></i><INPUT readonly disabled TYPE=\"checkbox\" STYLE=\"background-color:transparent;opacity:0.3;filter:Alpha(opacity=30);\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\"></TD>";
+			echo "<TD nowrap><i class=\"lmb-icon lmb-page-delete-alt\" BORDER=\"0\" TITLE=\"$lang[160]\" style=\"opacity:0.3;filter:Alpha(opacity=30);\"></i><INPUT readonly disabled TYPE=\"checkbox\" STYLE=\"background-color:transparent;opacity:0.3;filter:Alpha(opacity=30);\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\"></TD>";
 		}
 	}
 	echo "</TR></TABLE>";
 	
 	# --- view ---
-	echo "<TD ALIGN=\"RIGHT\"><TABLE cellspacing=\"0\" cellpadding=\"0\" STYLE=\"width:40px\"><TR><TD ALIGN=\"RIGHT\" nowrap><i class=\"lmb-icon lmb-eye\" BORDER=\"0\" TITLE=\"$lang[2303]\"></i><INPUT TYPE=\"checkbox\" NAME=\"tabview_".$gtabid."\" STYLE=\"background-color:transparent\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\" ";
+	echo "<TD ALIGN=\"RIGHT\"><TABLE cellspacing=\"0\" cellpadding=\"0\" STYLE=\"width:40px\"><TR><TD ALIGN=\"RIGHT\" nowrap><i class=\"lmb-icon lmb-eye\" BORDER=\"0\" TITLE=\"$lang[2303]\"></i><INPUT TYPE=\"checkbox\" NAME=\"tabview_".$gtabid."\" STYLE=\"background-color:transparent\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\" ";
 	if(!$isview){echo "onclick=\"click_all('$gtabid','1',this);\" ";
     }else{ echo "onclick=\"click_all('$gtabid','1',this);save_rules('$gtabid',0,1);\"";}
     if($f_result[$gtabid]["tabview"]){echo " CHECKED";}
 	echo "></TD></TR></TABLE></TD>";
 	# --- edit ---
 	if(!$isview){
-		echo "<TD ALIGN=\"RIGHT\"><TABLE cellspacing=\"0\" cellpadding=\"0\" STYLE=\"width:35px\"><TR><TD ALIGN=\"RIGHT\" nowrap><i class=\"lmb-icon lmb-pencil\" BORDER=\"0\" TITLE=\"$lang[1259]\"></i><INPUT TYPE=\"checkbox\" NAME=\"tabedit_".$gtabid."\" STYLE=\"background-color:transparent\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\" onclick=\"click_all('$gtabid','2',this)\"";
+		echo "<TD ALIGN=\"RIGHT\"><TABLE cellspacing=\"0\" cellpadding=\"0\" STYLE=\"width:35px\"><TR><TD ALIGN=\"RIGHT\" nowrap><i class=\"lmb-icon lmb-pencil\" BORDER=\"0\" TITLE=\"$lang[1259]\"></i><INPUT TYPE=\"checkbox\" NAME=\"tabedit_".$gtabid."\" STYLE=\"background-color:transparent\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\" onclick=\"click_all('$gtabid','2',this)\"";
 		if($f_result[$gtabid]["tabedit"]){echo " CHECKED";}
 		echo "></TD></TR></TABLE></TD>";
 	}
 	# --- need ---
 	if(!$isview){
-		echo "<TD ALIGN=\"RIGHT\"><TABLE cellspacing=\"0\" cellpadding=\"0\" STYLE=\"width:35px\"><TR><TD ALIGN=\"RIGHT\" nowrap><i class=\"lmb-icon lmb-exclamation\" BORDER=\"0\" TITLE=\"$lang[1508]\"></i><INPUT TYPE=\"checkbox\" NAME=\"tabneed_".$gtabid."\" STYLE=\"background-color:transparent\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\" onclick=\"click_all('$gtabid','9',this)\"";
+		echo "<TD ALIGN=\"RIGHT\"><TABLE cellspacing=\"0\" cellpadding=\"0\" STYLE=\"width:35px\"><TR><TD ALIGN=\"RIGHT\" nowrap><i class=\"lmb-icon lmb-exclamation\" BORDER=\"0\" TITLE=\"$lang[1508]\"></i><INPUT TYPE=\"checkbox\" NAME=\"tabneed_".$gtabid."\" STYLE=\"background-color:transparent\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\" onclick=\"click_all('$gtabid','9',this)\"";
 		if($f_result[$gtabid]["tabneed"]){echo " CHECKED";}
 		echo "></TD></TR></TABLE></TD>";
 	}
 	# --- copy ---
 	if(!$isview){
-		echo "<TD ALIGN=\"RIGHT\"><TABLE cellspacing=\"0\" cellpadding=\"0\" STYLE=\"width:35px\"><TR><TD ALIGN=\"RIGHT\" nowrap><i class=\"lmb-icon lmb-copy\" BORDER=\"0\" TITLE=\"$lang[1732]\"></i><INPUT TYPE=\"checkbox\" NAME=\"tabcopy_".$gtabid."\" STYLE=\"background-color:transparent\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\" onclick=\"click_all('$gtabid','13',this)\"";
+		echo "<TD ALIGN=\"RIGHT\"><TABLE cellspacing=\"0\" cellpadding=\"0\" STYLE=\"width:35px\"><TR><TD ALIGN=\"RIGHT\" nowrap><i class=\"lmb-icon lmb-copy\" BORDER=\"0\" TITLE=\"$lang[1464]\"></i><INPUT TYPE=\"checkbox\" NAME=\"tabcopy_".$gtabid."\" STYLE=\"background-color:transparent\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\" onclick=\"click_all('$gtabid','13',this)\"";
 		if($f_result[$gtabid]["tabcopy"]){echo " CHECKED";}
 		echo "></TD></TR></TABLE></TD>";
 	}
@@ -489,7 +488,7 @@ function viewrows($gtabid){
     }
 	# --- options ---
 	if(!$isview){
-	   echo "<TD ALIGN=\"RIGHT\"><TABLE cellspacing=\"0\" cellpadding=\"0\" STYLE=\"width:35px\"><TR><TD ALIGN=\"RIGHT\" nowrap><i class=\"lmb-icon lmb-cog-alt\" BORDER=\"0\" TITLE=\"$lang[2795]\"></i><INPUT TYPE=\"checkbox\" NAME=\"taboptions_".$gtabid."\" STYLE=\"background-color:transparent\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\" onclick=\"click_all('$gtabid','32',this)\"";
+	   echo "<TD ALIGN=\"RIGHT\"><TABLE cellspacing=\"0\" cellpadding=\"0\" STYLE=\"width:35px\"><TR><TD ALIGN=\"RIGHT\" nowrap><i class=\"lmb-icon lmb-cog-alt\" BORDER=\"0\" TITLE=\"$lang[2795]\"></i><INPUT TYPE=\"checkbox\" NAME=\"taboptions_".$gtabid."\" STYLE=\"background-color:transparent\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\" onclick=\"click_all('$gtabid','32',this)\"";
 	   if($f_result[$gtabid]["taboption"]){echo " CHECKED";}
 	   echo "></TD></TR></TABLE></TD>";
 	}
@@ -502,7 +501,7 @@ function viewrows($gtabid){
 	if(!$isview){
 		echo "<TD ALIGN=\"RIGHT\"><TABLE cellspacing=\"0\" cellpadding=\"0\" STYLE=\"width:35px\">";
 		if($gtab["versioning"][$gtabid] AND $f_result[$gtabid]["versioning_type"] == 2){
-		echo "<TR><TD ALIGN=\"RIGHT\" nowrap><i class=\"lmb-icon lmb-versioning-type\" BORDER=\"0\" TITLE=\"$lang[2133]\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\" onclick=\"click_all('$gtabid','16',this)\"";
+		echo "<TR><TD ALIGN=\"RIGHT\" nowrap><i class=\"lmb-icon lmb-versioning-type\" BORDER=\"0\" TITLE=\"$lang[2132]\"></i><INPUT TYPE=\"checkbox\" STYLE=\"background-color:transparent\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\" onclick=\"click_all('$gtabid','16',this)\"";
 		if(@in_array("1",$f_result[$gtabid]["versionable"])){echo " CHECKED";}
 		echo "></TD>";
 		}
@@ -522,8 +521,8 @@ function viewrows($gtabid){
 	echo "<TD ALIGN=\"CENTER\" OnCLick=\"set_searchrule('$gtabid')\" STYLE=\"cursor:pointer\" TITLE=\"$lang[2569]\"><B><U>$lang[2569]</U></B></TD>";
 	echo "<TD ALIGN=\"CENTER\" TITLE=\"$lang[2570]\"><B>$lang[2570]</B></TD>";
 	if($gtrigger[$gtabid]){echo "<TD ALIGN=\"CENTER\"><B>".$lang[1987]."</B></TD>";}
-	echo "<TD ALIGN=\"LEFT\" TITLE=\"$lang[2572]\"><B>&nbsp;".$lang[1599]."</B></TD>";
-	echo "<TD ALIGN=\"LEFT\"><B>&nbsp;$lang[2571]</B></TD>";}
+	echo "<TD ALIGN=\"LEFT\" TITLE=\"$lang[2572]\"><B>&nbsp;".$lang[1563]."</B></TD>";
+	echo "<TD ALIGN=\"LEFT\"><B>&nbsp;$lang[1986]</B></TD>";}
 	echo "</TR>";
 
 	if($f_result[$gtabid]["field_id"]){
@@ -531,7 +530,7 @@ function viewrows($gtabid){
 				echo "<TR>";
 				
 				echo "<TD style=\"height:20px;\">&nbsp;$key&nbsp;&nbsp;&nbsp;&nbsp;</TD>";
-				echo "<TD TITLE=\"".$f_result[$gtabid]["beschreibung"][$key]."\" nowrap>".$f_result[$gtabid][field][$key]."&nbsp;(".$f_result[$gtabid]["spelling"][$key].")</TD>";
+				echo "<TD TITLE=\"".$f_result[$gtabid]["beschreibung"][$key]."\" nowrap>".$f_result[$gtabid]['field'][$key]."&nbsp;(".$f_result[$gtabid]["spelling"][$key].")</TD>";
 				echo "<TD STYLE=\"font-size:9;\" COLSPAN=\"2\" nowrap>".$lang[$f_result[$gtabid]["typ"][$key]]."</TD>";
 
 				# --- view ----
@@ -553,7 +552,7 @@ function viewrows($gtabid){
 						echo "<TD ALIGN=\"RIGHT\">";
 						if($l_result[$gtabid]["edit"][$key] OR !$l_result){
 							if(!$l_result[$gtabid]["edit"][$key]){$bcol = "orange";}else{$bcol = $farbschema["WEB8"];}
-							echo "<INPUT TYPE=\"checkbox\" STYLE=\"border:none;background-color:".$bcol."\" NAME=\"edit_".$gtabid."_".$f_result[$gtabid]["field_id"][$key]."\" Onclick=\"save_rules('$gtabid','".$f_result[$gtabid][field_id][$key]."',2)\" ";
+							echo "<INPUT TYPE=\"checkbox\" STYLE=\"border:none;background-color:".$bcol."\" NAME=\"edit_".$gtabid."_".$f_result[$gtabid]["field_id"][$key]."\" Onclick=\"save_rules('$gtabid','".$f_result[$gtabid]['field_id'][$key]."',2)\" ";
 							if($f_result[$gtabid]["edit"][$key]){echo "CHECKED";}
 							echo ">";
 						}else{
@@ -573,7 +572,7 @@ function viewrows($gtabid){
 						if($l_result[$gtabid]["need"][$key]){
 							echo "<INPUT TYPE=\"checkbox\" readonly disabled checked style=\"opacity:0.3;filter:Alpha(opacity=30);\"></TD>";
 						}else{
-							echo "<INPUT TYPE=\"checkbox\" STYLE=\"border:none;background-color:".$farbschema["WEB8"]."\" NAME=\"needrule_".$gtabid."_".$f_result[$gtabid][field_id][$key]."\" Onclick=\"save_rules('$gtabid','".$f_result[$gtabid][field_id][$key]."',9)\" ";
+							echo "<INPUT TYPE=\"checkbox\" STYLE=\"border:none;background-color:".$farbschema["WEB8"]."\" NAME=\"needrule_".$gtabid."_".$f_result[$gtabid]['field_id'][$key]."\" Onclick=\"save_rules('$gtabid','".$f_result[$gtabid]['field_id'][$key]."',9)\" ";
 							if($f_result[$gtabid]["need"][$key] == 1){echo "CHECKED";}
 							echo ">";
 						}
@@ -597,7 +596,7 @@ function viewrows($gtabid){
 
                 echo "<TD ALIGN=\"RIGHT\">";
                 # --- list edit ----
-                $noListEdit = array(1, 10, 18, 22, 31, 32, 34, 35, 36, 37, 39, 45, 46);
+                $noListEdit = array(10, 18, 22, 31, 32, 34, 35, 36, 37, 39, 45, 46);
                 if(!in_array($f_result[$gtabid]["data_type"][$key], $noListEdit)){
                     if($l_result[$gtabid]["listedit"][$key] OR !$l_result){
                         echo "<INPUT TYPE=\"checkbox\" STYLE=\"border:none;\" NAME=\"listeditrule_".$gtabid."_".$f_result[$gtabid]["field_id"][$key]."\" Onclick=\"save_rules('$gtabid','".$f_result[$gtabid]["field_id"][$key]."',33)\" ";
@@ -635,11 +634,11 @@ function viewrows($gtabid){
 				if(!$isview){
 					echo "<TD WIDTH=\"40\" ALIGN=\"RIGHT\">";
 					if($gtab["versioning"][$gtabid] AND $f_result[$gtabid]["versioning_type"] == 2){
-						if($f_result[$gtabid]["data_type"][$key] != 22 AND $f_result[$gtabid][field_type][$key] != 14 AND $f_result[$gtabid]["field_type"][$key] != 15 AND $f_result[$gtabid][field_type][$key] < 100){
+						if($f_result[$gtabid]["data_type"][$key] != 22 AND $f_result[$gtabid]['field_type'][$key] != 14 AND $f_result[$gtabid]["field_type"][$key] != 15 AND $f_result[$gtabid]['field_type'][$key] < 100){
 							#if($l_result[$gtabid]["versionable"][$key]){
 							#	echo "<INPUT TYPE=\"checkbox\" readonly disabled checked style=\"opacity:0.3;filter:Alpha(opacity=30);\"></TD>";
 							#}else{
-								echo "<INPUT TYPE=\"checkbox\" STYLE=\"border:none;background-color:".$farbschema[WEB8]."\" NAME=\"versionrule_".$gtabid."_".$f_result[$gtabid]["field_id"][$key]."\" Onclick=\"save_rules('$gtabid','".$f_result[$gtabid]["field_id"][$key]."',16)\" ";
+								echo "<INPUT TYPE=\"checkbox\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\" NAME=\"versionrule_".$gtabid."_".$f_result[$gtabid]["field_id"][$key]."\" Onclick=\"save_rules('$gtabid','".$f_result[$gtabid]["field_id"][$key]."',16)\" ";
 								if($f_result[$gtabid]["versionable"][$key] == 1){echo "CHECKED";}
 								echo ">";
 							#}
@@ -651,13 +650,13 @@ function viewrows($gtabid){
 				# --- color ----
 				echo "<TD STYLE=\"width:20px;cursor:pointer;border:none\">";
 				echo "<DIV ID=\"color_".$gtabid."_".$f_result[$gtabid]["field_id"][$key]."\" OnClick=\"div4(this,'".$gtabid."','".$f_result[$gtabid]["field_id"][$key]."')\" STYLE=\"border:1px solid ".$farbschema["WEB3"].";width:15px;height:15px;";
-				if($f_result[$gtabid]["color"][$key]){echo "background-color:".$f_result[$gtabid][color][$key].";";}
+				if($f_result[$gtabid]["color"][$key]){echo "background-color:".$f_result[$gtabid]['color'][$key].";";}
 				echo "\">&nbsp;</DIV></TD>";
 
 				# --- default ----
 				if(!$isview){
 					if($f_result[$gtabid]["field_type"][$key] < 100){
-						echo "<TD><INPUT TYPE=\"TEXT\" NAME=\"filterdefault_".$gtabid."_".$f_result[$gtabid][field_id][$key]."\" VALUE=\"".htmlentities($f_result[$gtabid]["def"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" OnChange=\"save_rules('$gtabid','".$f_result[$gtabid][field_id][$key]."',12)\" STYLE=\"width:100px\"></TD>";
+						echo "<TD><INPUT TYPE=\"TEXT\" NAME=\"filterdefault_".$gtabid."_".$f_result[$gtabid]['field_id'][$key]."\" VALUE=\"".htmlentities($f_result[$gtabid]["def"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" OnChange=\"save_rules('$gtabid','".$f_result[$gtabid]['field_id'][$key]."',12)\" STYLE=\"width:100px\"></TD>";
 					}else{
 						echo "<td></td>";
 					}
@@ -666,30 +665,30 @@ function viewrows($gtabid){
 				# ----------- Filter ---------------
 				if($f_result[$gtabid]["filtertyp"][$key] == 1){$st = "style=\"color:red;width:100px;cursor:pointer;\" title=\"use automatic filterrule setted fom filter\"";}else{$st = "style=\"width:100px;cursor:pointer;\" title=\"use manual filterrule [ = '\$abc' ] or [ < 23 ]\"";}
 					# --------------------- Hiddenfeld -------------------
-					echo "<TD><INPUT TYPE=\"HIDDEN\" $st NAME=\"filterprev_".$gtabid."_".$f_result[$gtabid][field_id][$key]."\" VALUE=\"";
+					echo "<TD><INPUT TYPE=\"HIDDEN\" $st NAME=\"filterprev_".$gtabid."_".$f_result[$gtabid]['field_id'][$key]."\" VALUE=\"";
 					for($i = 0; $i <= 2; $i++){
-						if($gsr[$gtabid][$f_result[$gtabid][field_id][$key]][$i] OR $gsr[$gtabid][$f_result[$gtabid][field_id][$key]][$i] == "0"){
-							if($searchlang[andor][$gsr[$gtabid][$f_result[$gtabid][field_id][$key]][andor][$i]]){echo " ".htmlentities($searchlang["andor"][$gsr[$gtabid][$f_result[$gtabid]["field_id"][$key]]["andor"][$i]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])." ";}
+						if($gsr[$gtabid][$f_result[$gtabid]['field_id'][$key]][$i] OR $gsr[$gtabid][$f_result[$gtabid]['field_id'][$key]][$i] == "0"){
+							if($searchlang['andor'][$gsr[$gtabid][$f_result[$gtabid]['field_id'][$key]]['andor'][$i]]){echo " ".htmlentities($searchlang["andor"][$gsr[$gtabid][$f_result[$gtabid]["field_id"][$key]]["andor"][$i]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])." ";}
 							echo "(";
-							if($searchlang[num][$gsr[$gtabid][$f_result[$gtabid][field_id][$key]][num][$i]]){echo htmlentities($searchlang["num"][$gsr[$gtabid][$f_result[$gtabid]["field_id"][$key]]["num"][$i]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])." ";}
+							if($searchlang['num'][$gsr[$gtabid][$f_result[$gtabid]['field_id'][$key]]['num'][$i]]){echo htmlentities($searchlang["num"][$gsr[$gtabid][$f_result[$gtabid]["field_id"][$key]]["num"][$i]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])." ";}
 							echo "'".htmlentities($gsr[$gtabid][$f_result[$gtabid]["field_id"][$key]][$i],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."'";
-							if($searchlang[txt][$gsr[$gtabid][$f_result[$gtabid][field_id][$key]][txt][$i]]){echo " ".htmlentities($searchlang["txt"][$gsr[$gtabid][$f_result[$gtabid]["field_id"][$key]]["txt"][$i]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);}
-							if($searchlang[cs][$gsr[$gtabid][$f_result[$gtabid][field_id][$key]][cs][$i]]){echo " ".htmlentities($searchlang["cs"][$gsr[$gtabid][$f_result[$gtabid]["field_id"][$key]]["cs"][$i]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);}
+							if($searchlang['txt'][$gsr[$gtabid][$f_result[$gtabid]['field_id'][$key]]['txt'][$i]]){echo " ".htmlentities($searchlang["txt"][$gsr[$gtabid][$f_result[$gtabid]["field_id"][$key]]["txt"][$i]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);}
+							if($searchlang['cs'][$gsr[$gtabid][$f_result[$gtabid]['field_id'][$key]]['cs'][$i]]){echo " ".htmlentities($searchlang["cs"][$gsr[$gtabid][$f_result[$gtabid]["field_id"][$key]]["cs"][$i]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);}
 							echo ")";
 						}
 					}
 					# --------------------- Inputfeld -------------------
-					echo "\"><INPUT $st OnClick=\"div3(this,'".$gtabid."_".$f_result[$gtabid]["field_id"][$key]."','".$gtabid."','".$f_result[$gtabid][field_id][$key]."')\" TYPE=\"TEXT\" NAME=\"filterrule_".$gtabid."_".$f_result[$gtabid][field_id][$key]."\" VALUE=\"";
+					echo "\"><INPUT $st OnClick=\"div3(this,'".$gtabid."_".$f_result[$gtabid]["field_id"][$key]."','".$gtabid."','".$f_result[$gtabid]['field_id'][$key]."')\" TYPE=\"TEXT\" NAME=\"filterrule_".$gtabid."_".$f_result[$gtabid]['field_id'][$key]."\" VALUE=\"";
 					$gsh[$gtabid][$f_result[$gtabid]["field_id"][$key]] = unserialize($f_result[$gtabid]["filter"][$key]);
 					if($gsh[$gtabid][$f_result[$gtabid]["field_id"][$key]]){
 					for($i = 0; $i <= 2; $i++){
-						if($gsh[$gtabid][$f_result[$gtabid][field_id][$key]][$i] OR $gsh[$gtabid][$f_result[$gtabid][field_id][$key]][$i] == "0"){
-							if($searchlang[andor][$gsh[$gtabid][$f_result[$gtabid][field_id][$key]][andor][$i]]){echo " ".htmlentities($searchlang["andor"][$gsh[$gtabid][$f_result[$gtabid]["field_id"][$key]]["andor"][$i]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])." ";}
+						if($gsh[$gtabid][$f_result[$gtabid]['field_id'][$key]][$i] OR $gsh[$gtabid][$f_result[$gtabid]['field_id'][$key]][$i] == "0"){
+							if($searchlang['andor'][$gsh[$gtabid][$f_result[$gtabid]['field_id'][$key]]['andor'][$i]]){echo " ".htmlentities($searchlang["andor"][$gsh[$gtabid][$f_result[$gtabid]["field_id"][$key]]["andor"][$i]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])." ";}
 							echo "(";
-							if($searchlang[num][$gsh[$gtabid][$f_result[$gtabid][field_id][$key]][num][$i]]){echo htmlentities($searchlang["num"][$gsh[$gtabid][$f_result[$gtabid]["field_id"][$key]]["num"][$i]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])." ";}
+							if($searchlang['num'][$gsh[$gtabid][$f_result[$gtabid]['field_id'][$key]]['num'][$i]]){echo htmlentities($searchlang["num"][$gsh[$gtabid][$f_result[$gtabid]["field_id"][$key]]["num"][$i]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])." ";}
 							echo "'".htmlentities($gsh[$gtabid][$f_result[$gtabid]["field_id"][$key]][$i],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."'";
-							if($searchlang[txt][$gsh[$gtabid][$f_result[$gtabid][field_id][$key]][txt][$i]]){echo " ".htmlentities($searchlang["txt"][$gsh[$gtabid][$f_result[$gtabid]["field_id"][$key]]["txt"][$i]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);}
-							if($searchlang[cs][$gsh[$gtabid][$f_result[$gtabid][field_id][$key]][cs][$i]]){echo " ".htmlentities($searchlang["cs"][$gsh[$gtabid][$f_result[$gtabid]["field_id"][$key]]["cs"][$i]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);}
+							if($searchlang['txt'][$gsh[$gtabid][$f_result[$gtabid]['field_id'][$key]]['txt'][$i]]){echo " ".htmlentities($searchlang["txt"][$gsh[$gtabid][$f_result[$gtabid]["field_id"][$key]]["txt"][$i]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);}
+							if($searchlang['cs'][$gsh[$gtabid][$f_result[$gtabid]['field_id'][$key]]['cs'][$i]]){echo " ".htmlentities($searchlang["cs"][$gsh[$gtabid][$f_result[$gtabid]["field_id"][$key]]["cs"][$i]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);}
 							echo ")";
 						}
 					}
@@ -723,17 +722,17 @@ function viewrows($gtabid){
 				}
 
 				# --- number-format ----
-				if($f_result[$gtabid][field_type][$key] == 5 OR $f_result[$gtabid][field_type][$key] == 2){
+				if($f_result[$gtabid]['field_type'][$key] == 5 OR $f_result[$gtabid]['field_type'][$key] == 2){
 					echo "<TD NOWRAP><TABLE border=\"0\" cellspacing=\"0\" cellpadding=\"0\"><TR>";
-					echo "<TD NOWRAP>&nbsp;<INPUT TYPE=\"TEXT\" STYLE=\"width:50px;\" VALUE=\"".$f_result[$gtabid]["nformat"][$key]."\" NAME=\"filterformat_".$gtabid."_".$f_result[$gtabid][field_id][$key]."\" onchange=\"save_rules('$gtabid','".$f_result[$gtabid][field_id][$key]."',10)\">&nbsp;";
+					echo "<TD NOWRAP>&nbsp;<INPUT TYPE=\"TEXT\" STYLE=\"width:50px;\" VALUE=\"".$f_result[$gtabid]["nformat"][$key]."\" NAME=\"filterformat_".$gtabid."_".$f_result[$gtabid]['field_id'][$key]."\" onchange=\"save_rules('$gtabid','".$f_result[$gtabid]['field_id'][$key]."',10)\">&nbsp;";
 
 					# ---- Währung ----------
-					if($f_result[$gtabid][data_type][$key] == 30){
-						echo "<SELECT STYLE=\"width:100px;\" NAME=\"filtercurrency_".$gtabid."_".$f_result[$gtabid]["field_id"][$key]."\" onchange=\"save_rules('$gtabid','".$f_result[$gtabid][field_id][$key]."',11)\"><OPTION VALUE=\"\">";
-						asort($lmcurrency[currency]);
-						foreach($lmcurrency[currency] as $ckey => $cval){
-							if($lmcurrency[code][$ckey] == $f_result[$gtabid]["currency"][$key]){$sel = "SELECTED";}else{$sel = "";}
-							echo "<OPTION VALUE=\"".$lmcurrency[code][$ckey]."\" $sel>".$lmcurrency[currency][$ckey];
+					if($f_result[$gtabid]['data_type'][$key] == 30){
+						echo "<SELECT STYLE=\"width:100px;\" NAME=\"filtercurrency_".$gtabid."_".$f_result[$gtabid]["field_id"][$key]."\" onchange=\"save_rules('$gtabid','".$f_result[$gtabid]['field_id'][$key]."',11)\"><OPTION VALUE=\"\">";
+						asort($lmcurrency['currency']);
+						foreach($lmcurrency['currency'] as $ckey => $cval){
+							if($lmcurrency['code'][$ckey] == $f_result[$gtabid]["currency"][$key]){$sel = "SELECTED";}else{$sel = "";}
+							echo "<OPTION VALUE=\"".$lmcurrency['code'][$ckey]."\" $sel>".$lmcurrency['currency'][$ckey];
 						}
 					}
 					echo "</TD></TR></TABLE></TD>";
@@ -762,7 +761,11 @@ function viewrows($gtabid){
 }
 
 foreach($_tabgroup['id'] as $bzm => $val) {
-	echo "<TR><TD><FONT COLOR=\"blue\">".$_tabgroup['name'][$bzm]." (".$_tabgroup['beschreibung'][$bzm].")</TD></TR>";
+    $icon = '';
+    if ($iconClass = $_tabgroup['icon'][$bzm]) {
+        $icon = "<i class=\"lmb-icon $iconClass\"></i>&nbsp;";
+    }
+	echo "<TR><TD colspan=\"10\">$icon<b><i>".$_tabgroup['name'][$bzm]." (".$_tabgroup['beschreibung'][$bzm].")</i></b></TD></TR>";
 	echo "<TR><TD ALIGN=\"LEFT\">";
 	foreach($_gtab["tab_id"] as $key => $value){
 		if($_gtab["typ"][$key] == 5){$isview = 1;}else{$isview = 0;}
@@ -771,42 +774,59 @@ foreach($_tabgroup['id'] as $bzm => $val) {
 			$icon = 'plusonly';
 		    if($is_popup AND in_array($key,$is_popup)){$icon = 'minusonly';}else{$icon = 'plusonly';}
 		?>
-						<TABLE BORDER="0" width="900" cellspacing="2" cellpadding="0">
+
 						<TR>
 						<TD width="20" align="left"><IMG SRC="pic/outliner/<?=$icon?>.gif" tabid="<?=$key?>" CLASS="popicon" NAME="popicon_<?=$key?>" BORDER="0" STYLE="cursor:pointer" OnClick="pops('<?=$key?>')"></TD>
-						<TD width="200" align="left"><FONT COLOR="green"><?=$_gtab[table][$key]?> (<?=$_gtab[desc][$key]?>)&nbsp;</TD>
+						<TD width="300" align="left"><FONT><?=$_gtab['table'][$key]?> (<?=$_gtab['desc'][$key]?>)&nbsp;</TD>
 
 						
-						<?if(!$s_result[$key]["hidemenu"] OR $session["superadmin"]){?>
+						<?php if(!$s_result[$key]["hidemenu"] OR $session["superadmin"]){?>
 						
 			        		<TD width="100" nowrap>
 	
-			       			<?if(!$isview){?>
+			       			<?php if(!$isview){?>
 				        		<table cellspacing="0" cellpadding="2" border=0><tr>
                                 <td nowrap><i class="lmb-icon lmb-pencil"></i><TEXTAREA NAME="edit_rule_<?=$key?>" readonly style="width:60px;height:17px;cursor:pointer;overflow:hidden;" OnClick="div6(this,'<?=$key?>')" title="<?=$lang[2573]?>"><?=$f_result[$key]["tabeditrule"]?></TEXTAREA></td>
 				        		<td nowrap><i class="lmb-icon lmb-indicator-rule"></i><TEXTAREA NAME="indicator_rule_<?=$key?>" readonly style="width:60px;height:17px;cursor:pointer;overflow:hidden;" OnClick="div1(this,'<?=$key?>')" title="<?=$lang[1255]?>"><?=$f_result[$key]["indicator"]?></TEXTAREA></td>
 				        		</tr></table>
-							<?}?>
+							<?php }?>
 							
 					        </TD><TD nowrap>
 		
 							<?php
                             # form selection
-							$sqlquery = "SELECT ID,NAME FROM LMB_FORM_LIST WHERE REFERENZ_TAB = '".$_gtab["tab_id"][$key]."'";
+							$sqlquery = "SELECT ID,NAME,FORM_TYP FROM LMB_FORM_LIST WHERE REFERENZ_TAB = '".$_gtab["tab_id"][$key]."'";
 							$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 							$bzm1 = 1;
 							if(odbc_fetch_row($rs1,1)){
-								echo "<i class=\"lmb-icon-cus lmb-form-alt\" title=\"".$lang[2574]."\"></i>&nbsp<SELECT NAME=\"view_form_".$key."\" STYLE=\"width:100px\" OnChange=\"save_rules('$key','',22)\"><OPTION VALUE=\"0\">default";
+								echo "<i class=\"lmb-icon-cus lmb-form-alt\" title=\"".$lang[1169]."\"></i>&nbsp<SELECT NAME=\"view_form_".$key."\" STYLE=\"width:100px\" OnChange=\"save_rules('$key','',22)\"><OPTION VALUE=\"0\">default";
 								while(odbc_fetch_row($rs1,$bzm1)){
-									if($f_result[$key]["view_form"] == odbc_result($rs1, "ID")){$SELECTED = "SELECTED";}else{$SELECTED = "";}
-									echo "<OPTION VALUE=\"".odbc_result($rs1, "ID")."\" $SELECTED>".odbc_result($rs1, "NAME");
+								    if(odbc_result($rs1, "FORM_TYP") == 1) {
+                                        if ($f_result[$key]["view_form"] == odbc_result($rs1, "ID")) {
+                                            $SELECTED = "SELECTED";
+                                        } else {
+                                            $SELECTED = "";
+                                        }
+                                        echo "<OPTION VALUE=\"" . odbc_result($rs1, "ID") . "\" $SELECTED>" . odbc_result($rs1, "NAME");
+                                    }
 									$bzm1++;
 								}
 								echo "</SELECT>&nbsp;";
+
+                                //tablelist form selection
+								echo "<i class=\"lmb-icon lmb-icon-cus lmb-list-edit\" align=\"absbottom\" title=\"".$lang[2756]."\"></i>&nbsp<SELECT NAME=\"view_lform_".$key."\" OnChange=\"save_rules('$key','',24)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">none";
+								$bzm1 = 1;
+								while(odbc_fetch_row($rs1,$bzm1)){
+										if($f_result[$key]["view_lform"] == odbc_result($rs1, "ID")){$SELECTED = "SELECTED";}else{$SELECTED = "";}
+										echo "<OPTION VALUE=\"".odbc_result($rs1, "ID")."\" $SELECTED>".odbc_result($rs1, "NAME");
+										$bzm1++;
+								}
+								echo "</SELECT>&nbsp";
+
 	
-                                # calendar form selection
+								//calendar form selection
 								if($_gtab["typ"][$key] == 2){
-									echo "<i class=\"lmb-icon lmb-rep-date\" align=\"absbottom\"></i>&nbsp<SELECT NAME=\"view_tform_".$key."\" OnChange=\"save_rules('$key','',23)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">default";
+									echo "<i class=\"lmb-icon lmb-calendar\" align=\"absbottom\" title=\"".$lang[1929]." ".$lang[2574]."\"></i>&nbsp<SELECT NAME=\"view_tform_".$key."\" OnChange=\"save_rules('$key','',23)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">default";
 									$bzm1 = 1;
 									while(odbc_fetch_row($rs1,$bzm1)){
 										if($f_result[$key]["view_tform"] == odbc_result($rs1, "ID")){$SELECTED = "SELECTED";}else{$SELECTED = "";}
@@ -818,7 +838,7 @@ foreach($_tabgroup['id'] as $bzm => $val) {
                                                                 
                                 //kanban form selection
                                 if($_gtab["typ"][$key] == 7){
-									echo "<i class=\"lmb-icon lmb-columns\" align=\"absbottom\"></i>&nbsp<SELECT NAME=\"view_tform_".$key."\" OnChange=\"save_rules('$key','',23)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">default";
+									echo "<i class=\"lmb-icon lmb-columns\" align=\"absbottom\" title=\"kanban ".$lang[2574]."\"></i>&nbsp<SELECT NAME=\"view_tform_".$key."\" OnChange=\"save_rules('$key','',23)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">default";
 									$bzm1 = 1;
 									while(odbc_fetch_row($rs1,$bzm1)){
 										if($f_result[$key]["view_tform"] == odbc_result($rs1, "ID")){$SELECTED = "SELECTED";}else{$SELECTED = "";}
@@ -863,7 +883,7 @@ foreach($_tabgroup['id'] as $bzm => $val) {
 			            
 			            
 			            viewrows($key);
-			           	echo "</TABLE>";
+
 			            
 		
 		}
@@ -876,8 +896,8 @@ lmb_alert("no permission to change own group!");
 }else{
 ?>
 <TR><TD COLSPAN="10" ALIGN="CENTER"><HR></TD></TR>
-<TR><TD COLSPAN="10" ALIGN="LEFT"><INPUT TYPE="button" VALUE="<?=$lang[913]?>" OnClick="send();document.form1.submit();">&nbsp;&nbsp;&nbsp;&nbsp;<?=$lang[2107]?>:<input type="checkbox" name="addsubgroup" value="1"></TD></TR>
-<?}?>
+<TR><TD COLSPAN="10" ALIGN="LEFT"><INPUT TYPE="button" VALUE="<?=$lang[33]?>" OnClick="send();document.form1.submit();">&nbsp;&nbsp;&nbsp;&nbsp;<?=$lang[2107]?>:<input type="checkbox" name="addsubgroup" value="1"></TD></TR>
+<?php }?>
 
 <TR><TD colspan="10" class="tabFooter">&nbsp;</TD></TR>
 </TABLE>

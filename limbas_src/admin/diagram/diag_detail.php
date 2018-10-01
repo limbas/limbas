@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -88,8 +88,11 @@ $( document ).ready(function() {
 			}
 		})
 		.done(function( msg ) {
-			if(ajaxEvalScript(msg) === false && msg){
-    			    diagramm = open(msg+'?'+Date.now() ,"Diagram");
+            if (ajaxEvalScript(msg)) {
+                msg = msg.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, '');
+            }
+			if(msg){
+                diagramm = open(msg+'?'+Date.now() ,"Diagram");
 			}
 		});
 	});
@@ -194,10 +197,10 @@ $(function() {
 <table class="tabfringe" cellspacing="0" cellpadding="3" border="0">
     <tr class="tabHeader">
         <td class="tabHeaderItem">
-            <?php echo htmlentities($gdiaglist[$diag_tab_id]["name"][$diag_id]) . " (" . $lang[2869] . ": " . htmlentities($gtab["desc"][$diag_tab_id]) . ")"; ?>
+            <?= htmlentities($gdiaglist[$diag_tab_id]["name"][$diag_id]) . " (" . $lang[2023] . ": " . htmlentities($gtab["desc"][$diag_tab_id]) . ")" ?>
         </td>
         <td class="tabHeaderItem" style="margin-left:20px; margin-right:10px; padding-left: 10px; border-left:1px solid #ccc;">
-            <?php echo $lang[2893]; ?>
+            <?= $lang[2893] ?>
         </td>
     </tr>
             
@@ -208,10 +211,10 @@ $(function() {
                 <tr class="tabHeader">
                     <TD class="tabHeaderItem">ID</td>
                     <TD class="tabHeaderItem"></td>
-                    <TD class="tabHeaderItem"><?=$lang[2865]?></td>
-                    <TD class="tabHeaderItem"><?=$lang[2866]?></td>
+                    <TD class="tabHeaderItem"><?=$lang[922]?></td>
+                    <TD class="tabHeaderItem"><?=$lang[2631]?></td>
                     <TD class="tabHeaderItem" COLSPAN=2><?=$lang[2867]?></td>
-                    <TD class="tabHeaderItem"><?=$lang[2868]?></td>
+                    <TD class="tabHeaderItem"><?=$lang[294]?></td>
                 </tr>
 
 <?php
@@ -235,7 +238,7 @@ $(function() {
                     }
 ?>
 
-                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
+                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='<?= $farbschema['WEB7'] ?>'">
                         <td valign="top"><?=$fieldkey?></td>
                         <td valign="top">
                             <!--<i class="lmb-icon lmb-cog-alt" onclick="showdiv(event,'field_settings');" style="cursor:pointer;"></i>-->
@@ -251,7 +254,7 @@ $(function() {
                             <input id="yAxis_<?=$fieldkey?>" name="<?=$fieldkey?>" onchange="saveDetail(<?=$fieldkey?>);" type="radio" <?=$checkedYAxis?>>Beschriftung
                         </td>
                         <td class="hideShow_<?=$fieldkey?>" valign="top" <?=$style?>>
-                            <div id="color_<?=$fieldkey?>" onclick="showdiv(event,'menu_color',<?=$fieldkey?>);" style="margin:auto; cursor:pointer; width:20px; height:20px; border:1px solid black; background-color:#<?php echo htmlentities($checkedColor); ?>"></div>
+                            <div id="color_<?=$fieldkey?>" onclick="showdiv(event,'menu_color',<?=$fieldkey?>);" style="margin:auto; cursor:pointer; width:20px; height:20px; border:1px solid black; background-color:#<?= htmlentities($checkedColor) ?>"></div>
                         </td>
                     </tr>
 
@@ -266,87 +269,87 @@ $(function() {
             <table BORDER="0" cellspacing="0" cellpadding="2" class="tabfringe">
                 <tr class="tabHeader">
                     <td class="tabHeaderItem"><?=$lang[2891]?></td>
-                    <td class="tabHeaderItem"><?=$lang[2892]?></td>
+                    <td class="tabHeaderItem"><?=$lang[29]?></td>
                     <td class="tabHeaderItem">Auto-calculation</td>
                 </tr>
-                <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
-                    <td><?=$lang[2870]?>:</td>
+                <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='<?= $farbschema['WEB7'] ?>'">
+                    <td><?=$lang[1141]?>:</td>
                     <td><input type="text" id="diag_width" value="<?=$settings['DIAG_WIDTH']?>"> px</td>
                     <td></td>
                 </tr>
-                <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
-                    <td><?=$lang[2871]?>:</td>
+                <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='<?= $farbschema['WEB7'] ?>'">
+                    <td><?=$lang[1142]?>:</td>
                     <td><input type="text" id="diag_height" value="<?=$settings['DIAG_HEIGHT']?>"> px</td>
                     <td></td>
                 </tr>	
-                <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
+                <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='<?= $farbschema['WEB7'] ?>'">
                     <td><?=$lang[2872]?>:</td>
                     <td><input type="text" id="font_size" value="<?=$settings['FONT_SIZE']?>"> pt</td>
                     <td></td>
                 </tr>
-                <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
+                <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='<?= $farbschema['WEB7'] ?>'">
                     <td><?=$lang[2873]?>:</td>
                     <td><input type="text" id="padding_left" value="<?=$settings['PADDING_LEFT']==null ? 'auto" disabled="disabled' : $settings['PADDING_LEFT']?>"> px</td>
                     <td><input type="checkbox" id="auto_padding_left" <?=$settings['PADDING_LEFT']==null ? 'checked' : ''?>></td>
                 </tr>
-                <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
+                <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='<?= $farbschema['WEB7'] ?>'">
                     <td><?=$lang[2874]?>:</td>
                     <td><input type="text" id="padding_top" value="<?=$settings['PADDING_TOP']==null ? 'auto" disabled="disabled' : $settings['PADDING_TOP']?>"> px</td>
                     <td><input type="checkbox" id="auto_padding_top" <?=$settings['PADDING_TOP']==null ? 'checked' : ''?>></td>
                 </tr>
 	
-<?php 
+<?php
                 if($settings['DIAG_TYPE'] != "Pie-Chart"){ 
 ?>
 
-                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
+                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='<?= $farbschema['WEB7'] ?>'">
                         <td><?=$lang[2875]?>:</td>
                         <td><input type="text" id="padding_right" value="<?=$settings['PADDING_RIGHT']==null ? 'auto" disabled="disabled' : $settings['PADDING_RIGHT']?>"> px</td>
                         <td><input type="checkbox" id="auto_padding_right" <?=$settings['PADDING_RIGHT']==null ? 'checked' : ''?>></td>
                     </tr>
-                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
+                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='<?= $farbschema['WEB7'] ?>'">
                         <td><?=$lang[2876]?>:</td>
                         <td><input type="text" id="padding_bottom" value="<?=$settings['PADDING_BOTTOM']==null ? 'auto" disabled="disabled' : $settings['PADDING_BOTTOM']?>"> px</td>
                         <td><input type="checkbox" id="auto_padding_bottom" <?=$settings['PADDING_BOTTOM']==null ? 'checked' : ''?>></td>
                     </tr>
-                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
+                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='<?= $farbschema['WEB7'] ?>'">
                         <td><?=$lang[2877]?>:</td>
                         <td><input type="text" id="text_x" value="<?=$settings['TEXT_X']?>"></td>
                         <td></td>
                     </tr>
-                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
+                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='<?= $farbschema['WEB7'] ?>'">
                         <td><?=$lang[2878]?>:</td>
                         <td><input type="text" id="text_y" value="<?=$settings['TEXT_Y']?>"></td>
                         <td></td>
                     </tr>
-                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
+                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='<?= $farbschema['WEB7'] ?>'">
                         <td><?=$lang[2879]?>:</td>
                         <td><input type="text" id="legend_x" value="<?=$settings['LEGEND_X']==null ? 'auto" disabled="disabled' : $settings['LEGEND_X']?>"> px</td>
                         <td><input type="checkbox" id="auto_legend_x" <?=$settings['LEGEND_X']==null ? 'checked' : ''?>></td>
                     </tr>
-                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
+                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='<?= $farbschema['WEB7'] ?>'">
                         <td><?=$lang[2880]?>:</td>
                         <td><input type="text" id="legend_y" value="<?=$settings['LEGEND_Y']==null ? 'auto" disabled="disabled' : $settings['LEGEND_Y']?>"> px</td>
                         <td><input type="checkbox" id="auto_legend_y" <?=$settings['LEGEND_Y']==null ? 'checked' : ''?>></td>
                     </tr>
-                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
+                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='<?= $farbschema['WEB7'] ?>'">
                         <td><?=$lang[2881]?>:</td>
                         <td>
                             <select id="legend_mode" style="width: 160px;">
                                 <option value="none" <?=($settings['LEGEND_MODE']=="none")?"SELECTED":""?>><?=$lang[2882]?></option>
-                                <option value="vertical" <?=($settings['LEGEND_MODE']=="vertical")?"SELECTED":""?>><?=$lang[2883]?></option>
-                                <option value="horizontal" <?=($settings['LEGEND_MODE']=="horizontal")?"SELECTED":""?>><?=$lang[2884]?></option>
+                                <option value="vertical" <?=($settings['LEGEND_MODE']=="vertical")?"SELECTED":""?>><?=$lang[1245]?></option>
+                                <option value="horizontal" <?=($settings['LEGEND_MODE']=="horizontal")?"SELECTED":""?>><?=$lang[1244]?></option>
                             </select> 
                         </td>
                         <td></td>
                     </tr>
 	
-<?php 
+<?php
                 } 
                 if($settings['DIAG_TYPE'] == "Pie-Chart"){ 
 ?>
                     
-                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
+                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='<?= $farbschema['WEB7'] ?>'">
                         <td><?=$lang[2885]?>:</td>
                         <td>
                             <select id="pie_write_values" style="width: 160px;">
@@ -357,7 +360,7 @@ $(function() {
                         </td>
                         <td></td>
                     </tr>
-                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='#FBE16B'">
+                    <tr onmouseout="this.style.backgroundColor=''" onmouseover="this.style.backgroundColor='<?= $farbschema['WEB7'] ?>'">
                         <td><?=$lang[2889]?>:</td>
                         <td><input type="text" id="pie_radius" value="<?=$settings['PIE_RADIUS']==null ? 'auto" disabled="disabled' : $settings['PIE_RADIUS']?>"> px</td>
                         <td><input type="checkbox" id="auto_pie_radius" <?=$settings['PIE_RADIUS']==null ? 'checked' : ''?>></td>
@@ -377,7 +380,7 @@ $(function() {
                 <tr>
                     <td></td>
                     <td>
-                        <input type="button" id="create_diag" value="<?=$lang[2890]?>">
+                        <input type="button" id="create_diag" value="<?=$lang[1739]?>">
                     </td>
                     <td></td>
                 </tr>

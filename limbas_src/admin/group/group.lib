@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -339,7 +339,7 @@ function add_group($group_name,$group_beschr,$group_level,$use_parent_filesettin
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS["action"],__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	if(odbc_fetch_row($rs, 1)) {
-		lmb_alert("$lang[599] \"$group_name\" $lang[600]");
+		lmb_alert("$lang[561] \"$group_name\" $lang[600]");
 		$ID = $group_level;
 	}else{
 		/* --- Transaktion START -------------------------------------- */
@@ -399,7 +399,7 @@ function add_group($group_name,$group_beschr,$group_level,$use_parent_filesettin
 			$groupdat["name"][$NEXTID] = $group_name;
 			$groupdat["beschreibung"][$NEXTID] = $group_beschr;
 			$_SESSION["groupdat"] = $groupdat;
-			echo "<SCRIPT LANGUAGE=\"JavaScript\">parent.user_tree.location.href='main_admin.php?<?=SID?>&action=setup_user_tree';</SCRIPT>";
+			echo "<SCRIPT LANGUAGE=\"JavaScript\">parent.user_tree.location.href='main_admin.php?action=setup_user_tree';</SCRIPT>";
 		}
 	}
 
@@ -409,7 +409,7 @@ function add_group($group_name,$group_beschr,$group_level,$use_parent_filesettin
 
 
 /*------------------------------ Für alle Gruppen - Tabellen/Spalten-Rechte ------------------------------------*/
-function check_grouprights1All($showstatus=null){
+function check_grouprights1All($showstatus=null,$check_table=null){
     global $db;
     
     $commit = false;
@@ -422,7 +422,7 @@ function check_grouprights1All($showstatus=null){
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = true;}
 	while(odbc_fetch_row($rs)){
-		if(!check_grouprights1(odbc_result($rs,"GROUP_ID"),odbc_result($rs,"NAME"),$num_group,null,$showstatus)){
+		if(!check_grouprights1(odbc_result($rs,"GROUP_ID"),odbc_result($rs,"NAME"),$num_group,$check_table,$showstatus)){
 		      $commit = true;
 		}
 	}
@@ -452,10 +452,10 @@ ORDER BY TAB_GROUP,TAB_ID";
 	$bzm = 1;
 	while(odbc_fetch_row($rs,$bzm)) {
 		if(!odbc_result($rs,"VIEWTYPE") OR odbc_result($rs,"VIEWTYPE") == 1){
-			$gtab[table][] = odbc_result($rs,"TABELLE");
-			$gtab[tab_id][] = odbc_result($rs,"TAB_ID");
-			$gtab[desc][] = $lang[odbc_result($rs,"BESCHREIBUNG")];
-			$gtab[tab_group][] = odbc_result($rs,"TAB_GROUP");
+			$gtab['table'][] = odbc_result($rs,"TABELLE");
+			$gtab['tab_id'][] = odbc_result($rs,"TAB_ID");
+			$gtab['desc'][] = $lang[odbc_result($rs,"BESCHREIBUNG")];
+			$gtab['tab_group'][] = odbc_result($rs,"TAB_GROUP");
 		}
 	$bzm++;
 	}
@@ -487,21 +487,21 @@ ORDER BY TAB_GROUP,TAB_ID";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!odbc_fetch_row($rs, 1)){
 			$NEXTID = next_db_id("LMB_RULES_TABLES");            
-            $sqlquery1 = "INSERT INTO LMB_RULES_TABLES (ID,GROUP_ID,TAB_ID,TAB_GROUP,EDIT,LMVIEW,DEL,HIDE,LMADD,NEED,VIEW_FORM,VIEW_PERIOD) VALUES ($NEXTID,$group_id,".$gtab[tab_id][$bzm].",".$gtab[tab_group][$bzm].",$BOOL,$BOOL,$BOOL,$BOOL,$BOOL,".LMB_DBDEF_FALSE.",0,0)";
+            $sqlquery1 = "INSERT INTO LMB_RULES_TABLES (ID,GROUP_ID,TAB_ID,TAB_GROUP,EDIT,LMVIEW,DEL,HIDE,LMADD,NEED,VIEW_FORM,VIEW_PERIOD) VALUES ($NEXTID,$group_id,".$gtab['tab_id'][$bzm].",".$gtab['tab_group'][$bzm].",$BOOL,$BOOL,$BOOL,$BOOL,$BOOL,".LMB_DBDEF_FALSE.",0,0)";
             $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		}
 
             
 		/*------------------------------ Spaltenrechte ------------------------------------*/
-		$sqlquery = "SELECT * FROM LMB_CONF_FIELDS WHERE TAB_GROUP = ".$gtab[tab_group][$bzm]." AND TAB_ID = ".$gtab[tab_id][$bzm]." ORDER BY TAB_GROUP,TAB_ID,FIELD_ID";
+		$sqlquery = "SELECT * FROM LMB_CONF_FIELDS WHERE TAB_GROUP = ".$gtab['tab_group'][$bzm]." AND TAB_ID = ".$gtab['tab_id'][$bzm]." ORDER BY TAB_GROUP,TAB_ID,FIELD_ID";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		$bzm1 = 1;
 		while(odbc_fetch_row($rs, $bzm1)) {
-			$sqlquery2 = "SELECT ID FROM LMB_RULES_FIELDS WHERE FIELD_ID = ".odbc_result($rs,"FIELD_ID")." AND TAB_ID = ".$gtab[tab_id][$bzm]." AND TAB_GROUP = ".$gtab[tab_group][$bzm]." AND GROUP_ID = $group_id";
+			$sqlquery2 = "SELECT ID FROM LMB_RULES_FIELDS WHERE FIELD_ID = ".odbc_result($rs,"FIELD_ID")." AND TAB_ID = ".$gtab['tab_id'][$bzm]." AND TAB_GROUP = ".$gtab['tab_group'][$bzm]." AND GROUP_ID = $group_id";
 			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 			if (!odbc_fetch_row($rs2, 1)) {
 				$NEXTID = next_db_id("LMB_RULES_FIELDS");				
-				$sqlquery3 = "INSERT INTO LMB_RULES_FIELDS (ID,GROUP_ID,TAB_GROUP,TAB_ID,FIELD_ID,LMVIEW,EDIT,COLOR,FILTER,SORT) VALUES ($NEXTID,$group_id,".$gtab[tab_group][$bzm].",".$gtab[tab_id][$bzm].",".odbc_result($rs,"FIELD_ID").",$BOOL,$BOOL,'','',0)";
+				$sqlquery3 = "INSERT INTO LMB_RULES_FIELDS (ID,GROUP_ID,TAB_GROUP,TAB_ID,FIELD_ID,LMVIEW,EDIT,COLOR,FILTER,SORT) VALUES ($NEXTID,$group_id,".$gtab['tab_group'][$bzm].",".$gtab['tab_id'][$bzm].",".odbc_result($rs,"FIELD_ID").",$BOOL,$BOOL,'','',0)";
 				$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 			}
 		$bzm1++;

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -158,7 +158,7 @@ function show_tabletreeSettings($params){
 	";
 
 	# Formular
-	echo "<tr><td>".$lang[2714]."</td><td>";
+	echo "<tr><td>".$lang[1179]."</td><td>";
 	if($gformlist[$itemtab]["name"]){
 		echo "<select onchange=\"ajaxEditTree(null,$treeid,$itemtab,$itemtab,'$relationid','form',this.value)\"><option></option>";
 		foreach ($gformlist[$itemtab]["name"] as $key => $value){
@@ -172,7 +172,7 @@ function show_tabletreeSettings($params){
 	echo "</td></tr>";
 	
 	# Field
-	echo "<tr><td>".$lang[2715]."</td><td>";
+	echo "<tr><td>".$lang[168]."</td><td>";
 	if($gfield[$itemtab]["spelling"]){
 		echo "<select onchange=\"ajaxEditTree(null,$treeid,$itemtab,$itemtab,'$relationid','field',this.value)\"><option></option>";
 		foreach ($gfield[$itemtab]["spelling"] as $key => $value){
@@ -185,7 +185,7 @@ function show_tabletreeSettings($params){
 	echo "</td></tr>";
 	
 	# Title
-	echo "<tr><td>".$lang[2716]."</td><td>";
+	echo "<tr><td>".$lang[923]."</td><td>";
 	if($gfield[$itemtab]["spelling"]){
 		echo "<select onchange=\"ajaxEditTree(null,$treeid,$itemtab,$itemtab,'$relationid','title',this.value)\"><option></option>";
 		foreach ($gfield[$itemtab]["spelling"] as $key => $value){
@@ -198,7 +198,7 @@ function show_tabletreeSettings($params){
 	echo "</td></tr>";
 	
 	# Order
-	echo "<tr><td>".$lang[2717]."</td><td>";
+	echo "<tr><td>".$lang[1837]."</td><td>";
 	if($gfield[$itemtab]["spelling"]){
 		echo "<select onchange=\"ajaxEditTree(null,$treeid,$itemtab,$itemtab,'$relationid','sort',this.value)\"><option></option>";
 		foreach ($gfield[$itemtab]["spelling"] as $key => $value){
@@ -227,7 +227,7 @@ function show_tabletreeSettings($params){
 	
 	echo "<tr><td>".$lang[2718]."</td><td><input type=\"text\" STYLE=\"width:100%\" value=\"".htmlentities($ticon,ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" onchange=\"ajaxEditTree(null,$treeid,$treetab,$itemtab,'$relationid','icon',this.value)\"></td></tr>";
 	
-	echo "<tr><td>".$lang[2719]."</td><td><textarea style=\"width: 100%; height: 18px; overflow: visible;\" onblur=\"this.style.height='18px';\" onfocus=\"this.style.height='60px';\" onchange=\"ajaxEditTree(null,$treeid,$treetab,$itemtab,'$relationid','rule',this.value)\">".htmlentities($trule,ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</textarea></td></tr>";
+	echo "<tr><td>".$lang[2608]."</td><td><textarea style=\"width: 100%; height: 18px; overflow: visible;\" onblur=\"this.style.height='18px';\" onfocus=\"this.style.height='60px';\" onchange=\"ajaxEditTree(null,$treeid,$treetab,$itemtab,'$relationid','rule',this.value)\">".htmlentities($trule,ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</textarea></td></tr>";
 	
 	echo "<tr><td>".$lang[2720]."</td><td><input type=\"checkbox\" onchange=\"ajaxEditTree(null,$treeid,$treetab,$itemtab,'$relationid','display',this.checked)\" $tdisplay></td></tr>";
 

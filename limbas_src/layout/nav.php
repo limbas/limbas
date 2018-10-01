@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -34,7 +34,7 @@ function f_3(act,frame1,frame2) {
 }
 
 function f_4(PARAMETER) {
-	watcher = open("main_admin.php?<?=SID?>&action="+ PARAMETER+ "" ,"watcher","toolbar=0,location=0,status=0,menubar=0,scrollbars=0,resizable=0,width=400,height=500");
+	watcher = open("main_admin.php?action="+ PARAMETER+ "" ,"watcher","toolbar=0,location=0,status=0,menubar=0,scrollbars=0,resizable=0,width=400,height=500");
 }
 
 function print_report(tabid,value,defformat) {
@@ -59,7 +59,7 @@ function listdata(ID,NR,TABLE_TOP){
 		}
 	// must be opened
 	}else{
-		<?//firefox without getElementByName
+		<?php //firefox without getElementByName
 		if(lmb_strpos($_SERVER["HTTP_USER_AGENT"],"MSIE")<1){?>
 		child = document.getElementsByName(NR);
 
@@ -68,7 +68,7 @@ function listdata(ID,NR,TABLE_TOP){
 	    	document.getElementById('pfeil' + NR).src = icon['pfeil_u'].src;
 		}
 
-		<?//IE without.name
+		<?php //IE without.name
 		}else{?>
 
 		child = document.getElementById(TABLE_TOP).getElementsByTagName("TR");
@@ -79,7 +79,7 @@ function listdata(ID,NR,TABLE_TOP){
 		    	document.getElementById('pfeil' + NR).src = icon['pfeil_u'].src;
 			}
 		}
-		<?}?>
+		<?php }?>
 	}
 }
 
@@ -88,29 +88,27 @@ function listdata(ID,NR,TABLE_TOP){
 function mainMenu(menu){
 	<?php
 	foreach($menu as $key1 => $menuType){
-		echo "if(document.getElementById('" . $key1 . "')) { document.getElementById('" . $key1 . "').style.display='none';}\n";
+	    echo '$("#' . $key1 . '").hide();';
 	}
 	?>
-	var el = document.getElementById(menu);
-	if(el){
-		document.getElementById(menu).style.display = "";
-	}
+    $('#' + menu)
+        .show()
+        .find('.lmbTableSearch')
+        .focus();
 }
 
-function hideShow(name){
-
-	show = hideShow.arguments[1];
+function hideShow(name, show=false, noAjax=false){
 
 	var el = document.getElementById('CONTENT_' + name);
 	if(el.style.display=='none' || show){
-		
+
 		$(el).show('fast');
 		pic = document.getElementById('HS' + name);
 		if(pic){
                         $( pic ).removeClass("lmb-angle-down");
                         $( pic ).addClass("lmb-angle-up");
 		}
-		var show = 1;
+		show = 1;
 	}else{
 		$(el).hide('fast');
 		pic = document.getElementById('HS' + name);
@@ -118,25 +116,27 @@ function hideShow(name){
                         $( pic ).removeClass("lmb-angle-up");
                         $( pic ).addClass("lmb-angle-down");
 		}
-		var show = 0;
+		show = 0;
 	}
-	ajaxGet(null,'main_dyns.php','layoutSettings&menu='+name+'&show='+show,null);
+	if (!noAjax) {
+        ajaxGet(null,'main_dyns.php','layoutSettings&menu='+name+'&show='+show,null);
+    }
 }
 
-function hideShowSub(div,elt){
-	eltDiv = document.getElementById(div);
+function hideShowSub(div, elt, noAjax=false){
+	var eltDiv = document.getElementById(div);
 
 	if(!eltDiv) return;
 
-	eltTr = eltDiv.getElementsByTagName("TR");
+	var eltTr = eltDiv.getElementsByTagName("TR");
 	if(!eltTr) return;
 
-        arrowIcon = $('i[id^=arrowSub' + elt + ']').filter(':visible').first(); // because the id was given twice, once in a hidden div
-        if(!arrowIcon) return;
-        
-        if(arrowIcon.hasClass('lmb-caret-down')){
-                arrowIcon.removeClass('lmb-caret-down');
-                arrowIcon.addClass('lmb-caret-right');
+    var arrowIcon = $('i[id^=arrowSub' + elt + ']').filter(':visible').first(); // because the id was given twice, once in a hidden div
+    if(!arrowIcon) return;
+
+    if(arrowIcon.hasClass('lmb-caret-down')){
+        arrowIcon.removeClass('lmb-caret-down');
+        arrowIcon.addClass('lmb-caret-right');
 
 		for(i=0;i<eltTr.length;i++){
 			//document.write (eltTr.id  + "== subElt_" + elt + "<br>\n" + eltTr[]);
@@ -144,9 +144,9 @@ function hideShowSub(div,elt){
 				eltTr[i].style.display='none';
 		}
 		var show = 0;
-	}else{     
-                arrowIcon.removeClass('lmb-caret-right');
-                arrowIcon.addClass('lmb-caret-down');
+	}else{
+        arrowIcon.removeClass('lmb-caret-right');
+        arrowIcon.addClass('lmb-caret-down');
 
 		for(i=0;i<eltTr.length;i++){
 			//document.write (eltTr.id  + "== subElt_" + elt + "<br>\n" + eltTr[]);
@@ -155,42 +155,38 @@ function hideShowSub(div,elt){
 		}
 		var show = 1;
 	}
-	ajaxGet(null,'main_dyns.php','layoutSettings&submenu='+div+'_'+elt+'&show='+show,null);
+	if (!noAjax) {
+        ajaxGet(null, 'main_dyns.php', 'layoutSettings&submenu=' + div + '_' + elt + '&show=' + show, null);
+    }
 }
 
 hide_frame_size = 200;
 function hide_frame(){
-	var pcols = top.document.getElementById("mainset").cols;
-	fcols = pcols.split(",");
+    var hiddenDiv = $('#hiddenframe');
+    var multiDiv = $('#multiframe');
+    var navFrame = $('iframe#nav', top.document);
+    var navFrameWidth = navFrame.width();
 
-	if(fcols[0] <= 30){
-		lfr = hide_frame_size;
-		document.getElementById("hiddenframe").style.display = 'none';
-		document.getElementById("multiframe").style.display = '';
-		fs = 0;
-	}else{
-		if(browser_ns5){
-			lfr = 15;
-		}else{
-			lfr = 30;
-		}
-		document.getElementById("hiddenframe").style.display = '';
-		document.getElementById("multiframe").style.display = 'none';
-		fs = lfr;
-	}
+    var newWidth;
+    var frameSize;
+    if (navFrameWidth <= 30) {
+        newWidth = hide_frame_size;
+        hiddenDiv.hide();
+        multiDiv.show();
+        frameSize = 0;
+    } else {
+        newWidth = 15;
+        hiddenDiv.show();
+        multiDiv.hide();
+        frameSize = newWidth;
+    }
 
-	if(fcols.length == 3){
-		var size = lfr+",*,"+fcols[2];
-	}else{
-		var size = lfr+",*";
-	}
-	
-	ajaxGet(null,'main_dyns.php','layoutSettings&frame=nav&size='+fs,null);
-	top.document.getElementById("mainset").cols = size;
-	
-	document.onmouseup = null;
-	document.onmousemove = null;
-	return false;
+    ajaxGet(null, 'main_dyns.php', 'layoutSettings&frame=nav&size=' + frameSize, null);
+    navFrame.width(newWidth);
+
+    document.onmouseup = null;
+    document.onmousemove = null;
+    return false;
 }
 
 
@@ -246,7 +242,7 @@ function lmbGetScrollbarWidth() {
 function lmbEndResizeFrame() {
     document.onmouseup = null;
 	document.onmousemove = null;
-	
+
 	var elw = dropel.offsetWidth;
 	hide_frame_size = elw+10;
 	if(elwidth > 50 && elwidth < 400 && Math.abs((elw-elwidth)) > 10 ){
@@ -275,7 +271,7 @@ function lmbResizeFrame(e) {
 
     // max/min width
 	if(dw > 400 || dw < 50) { return false; }
-	
+
 	// catch click event after resize
     var captureClick = function(e) {
         e.stopPropagation(); // Stop the click from being propagated.
@@ -287,25 +283,8 @@ function lmbResizeFrame(e) {
         true
     );
 
-    // resize divs
-    var dwme = (dw - 115);
-    var ar = document.getElementsByTagName("div");
-	for (var i = ar.length; i > 0;) {
-		cc = ar[--i];
-		var cid = cc.id.split("_");
-		if(cid[0] === "mel"){
-			cc.style.width = dwme;
-		}
-	}
-
 	// resize frame
-    var mainset = top.document.getElementById("mainset");
-    var fcols = mainset.cols.split(",");
-    if(fcols.length === 3){
-        mainset.cols = dw + ",*," + fcols[2];
-    }else{
-        mainset.cols = dw + ",*";
-    }
+    $('iframe#nav', top.document).width(dw);
 
 	return false;
 }
@@ -315,7 +294,7 @@ function lmb_treeElOpen(treeid,tabid,elid,rand){
 	var elname = treeid+'_'+tabid+'_'+elid+'_'+rand;
 	var el = document.getElementById('lmbTreeEl_'+elname);
 	var img_src = document.getElementById('lmbTreePlus_'+elname).src;
-        
+
 	if(el.style.display == 'none'){
 		el.style.display = '';
 		document.getElementById('lmbTreePlus_'+elname).src = img_src.replace(/(plus)/,"minus");
@@ -327,7 +306,7 @@ function lmb_treeElOpen(treeid,tabid,elid,rand){
 
 
 function lmb_treeOpen(treeid,tabid,id){
-	
+
 	if(id.length>0 && document.getElementById("img"+treeid)){
 		var img_src = document.getElementById("img"+treeid).src;
 		if(img_src && img_src.match(/(minus)+/g)){
@@ -371,7 +350,7 @@ function lmb_treeSubOpen(treeid,tabid,elid,rand,gtabid,rkey){
                     $('#lmbTreeSubBox_'+elname).addClass('lmb-folder-closed');
                 }
 	}
-	
+
 	ajaxGet(null,"main_dyns.php","getRelationTree&gtabid="+tabid+"&treeid="+treeid+"&verkn_tabid="+gtabid+"&verkn_fieldid="+rkey+"&verkn_ID="+elid,null,"","","lmbTreeDIV_"+elname);
 
 }
@@ -409,10 +388,318 @@ function format_tree(elemid){
         }
     }
     return true;
-} 
+}
+
+var typingTimer;
+var typingInterval = 500; // ms
+function lmbFilterTablesTimer(event, textDomEl, navID) {
+    clearTimeout(typingTimer);
+
+    if (event.code === "Enter" || event.code === "Escape") {
+        // filter now
+        lmbFilterTables(event, textDomEl, navID, true);
+    } else {
+        // filter tables after <typingInterval> ms without keyup
+        typingTimer = setTimeout(function() { lmbFilterTables(event, textDomEl, navID); }, typingInterval);
+    }
+}
+
+function lmbFilterTables(event, textDomEl, navID, enterPressed=false) {
+    const nav = $('#' + navID);
+    const textEl = $(textDomEl);
+
+    // TODO also close/open level0 groups
+    // TODO reset changes made while clicking on open/close icon while searching
+
+    /**
+     * Switches icon classes so that it looks as if the group was popped up
+     * @param elem the jquery objects of the <i> element
+     * @param open whether to open or to close the group
+     */
+    const openIcon = function(elem, open) {
+        var a;
+        var b;
+        if (open) {
+            a = 'lmb-caret-right';
+            b = 'lmb-caret-down';
+        } else {
+            a = 'lmb-caret-down';
+            b = 'lmb-caret-right';
+        }
+
+        if (elem.hasClass(a)) {
+            elem.removeClass(a)
+                .addClass(b)
+                .addClass('lmb-table-search-icon-replace');
+        }
+    };
+
+    /**
+     * Removes all .lmb-table-search classes
+     */
+    const resetClasses = function(elem) {
+        elem.find('.lmb-table-search-hide').removeClass('lmb-table-search-hide');
+        elem.find('.lmb-table-search-popup').removeClass('lmb-table-search-popup').hide();
+        elem.find('[lmb-table-search-onclick]').each(function() {
+            $(this).attr('onclick', $(this).attr('lmb-table-search-onclick'));
+            $(this).removeAttr('lmb-table-search-onclick');
+        });
+        elem.find('i.lmb-table-search-icon-replace').each(function() {
+            openIcon($(this), false);
+        }).removeClass('lmb-table-search-icon-replace');
+        elem.find('.lmb-table-search-result').removeClass('lmb-table-search-result');
+    };
+
+    // restore to defaults
+    resetClasses(nav);
+
+    // clear text on escape key
+    if (event && event.keyCode === 27) {
+        $(textEl).val('');
+    }
+
+    // abort if no text
+    const text = $(textEl).val().toLowerCase();
+    const textUpper = text.toUpperCase();
+    if (!text) {
+        return;
+    }
+
+    /**
+     * Replaces the default onclick with a custom onclick that prevents ajax calls
+     */
+    const replaceOnclick = function(elem) {
+        const onclick = elem.attr('onclick');
+        elem.attr('lmb-table-search-onclick', onclick);
+        elem.attr('onclick', onclick
+            .replace(/hideShowSub\((.*?)\)/, "$`hideShowSub($1, true)$'")
+            .replace(/hideShow\((.*?)\)/, "$`hideShow($1, false, true)$'"));
+    };
+
+    /**
+     * Recursively traverses the dom to filter for the search string
+     * @param body
+     */
+    const filterRec = function(body) {
+        // get all sub-trs, but exclude the contents of table groups
+        const subEntries = body.children('tbody').children('tr').filter(function() {
+            if ($(this).is('[id^="subElt_"]')) {
+                return $(this).attr('id') === $(this).parentsUntil('[id^="subElt_"]').last().parent().attr('id');
+            } else if ($(this).is(':last-child')) {
+                return false;
+            }
+            return true;
+        });
+        if (!subEntries.length) {
+            return false;
+        }
+
+        var oneVisible = false;
+        subEntries.each(function() {
+            const subEntry = $(this);
+
+            // get link (user)
+            var link = subEntry.children('td').children('a.lmbMenuItemBodyNav');
+            var attrEl = link.children('[data-lmb-type]');
+            if (!link.length) {
+                // get link (admin)
+                link = subEntry.children('td').children().children('a.lmbMenuItemBodyNav');
+                attrEl = link.parent();
+            }
+
+            // text found?
+            var textFound = false;
+            if (link.length) {
+                // contains text, but doesn't contain "new dataset"
+                if (link.text().toLowerCase().indexOf(text) >= 0 && link.text().indexOf('<?= $lang[2741] ?>') < 0) {
+                    textFound = true;
+                }
+
+                // tabid
+                var tabID = attrEl.attr('data-lmb-tabid');
+                if (tabID && tabID === text) {
+                    textFound = true;
+                }
+
+                // form/rep/snapshot id
+                var anyID = attrEl.attr('data-lmb-id');
+                if (anyID && anyID === text) {
+                    textFound = true;
+                }
+
+                // physical table name
+                var tabName = attrEl.attr('data-lmb-table');
+                if (tabName && tabName.toLowerCase().indexOf(text) >= 0) {
+                    textFound = true;
+                }
+
+                // relations
+                var relations = attrEl.data('lmb-relations');
+                if (relations && relations.indexOf(textUpper) >= 0) {
+                    textFound = true;
+                }
+            }
+
+            // find content of table group
+            const subBodyParent = subEntry.nextUntil('tr:not([id^="subElt_"])').last();
+            const subBody = subBodyParent.children('td').children('table');
+
+            // check recursively if any child is visible
+            const showChildren = filterRec(subBody);
+            if (showChildren) {
+                oneVisible = true;
+
+                // children shown -> also show entry and body
+                if (subEntry.css('display') === 'none') {
+                    subEntry.addClass('lmb-table-search-popup').show();
+                }
+                if (subBody.css('display') === 'none') {
+                    subBody.addClass('lmb-table-search-popup').show();
+                }
+
+                // show all parents
+                subBody.parentsUntil($(this), ':hidden')
+                    .filter(function() {
+                        if ($(this).is('tr[id^=subElt_]')) {
+                            const icon = $(this).prev('tr').children('td.lmbMenuItemBodyNav').children('i');
+                            openIcon(icon, true);
+                        }
+                        return $(this).css('display') === 'none';
+                    })
+                    .addClass('lmb-table-search-popup')
+                    .show();
+            } else {
+                if (subBodyParent.css('display') === 'none') {
+                    resetClasses(subBodyParent);
+                } else {
+                    subBody.addClass('lmb-table-search-hide');
+                }
+            }
+
+            if (textFound) {
+                subEntry.addClass('lmb-table-search-result');
+                if (subEntry.css('display') === 'none') {
+                    subEntry.addClass('lmb-table-search-popup').show();
+                }
+                oneVisible = true;
+            } else if (!showChildren) {
+                subEntry.addClass('lmb-table-search-hide');
+                subBody.addClass('lmb-table-search-hide');
+            }
 
 
-<?
+        });
+        return oneVisible;
+    };
+
+    nav.children('table').each(function(index) {
+        // skip search bar
+        if (index === 0) {
+            return;
+        }
+
+        // filter table group (level 0)
+        const trs = $(this).children('tbody').children('tr');
+        const body = $(trs.get(1)).children('td').children('div.lmbMenuHeaderNavContent').children('table.lmbMenuBodyNav');
+        if (!body || !filterRec(body)) {
+           $(this).addClass('lmb-table-search-hide');
+        }
+
+        // replace onclick with no-ajax-onclick
+        const carets = $('#244').find('td.lmbMenuItemBodyNav:visible:not([lmb-table-search-onclick])').each(function() {
+            replaceOnclick($(this));
+        });
+
+        // replace top-level onclick
+        const caret = $(trs.get(0)).children('td.lmbMenuHeaderNav:not([lmb-table-search-onclick])');
+        if (caret.length) {
+            replaceOnclick(caret);
+        }
+    });
+
+    // enter pressed and only one search result -> perform click
+    if (enterPressed) {
+        const results = nav.find('.lmb-table-search-result');
+        if (results.length === 1) {
+            results.find('a').click();
+        }
+    }
+}
+
+// add clicked menu item to favorites
+function addToFavorites(evt) {
+    // only add if shift is pressed
+    if (!evt.shiftKey)
+        return;
+
+    // stop click event
+    evt.preventDefault();
+    evt.stopImmediatePropagation();
+    evt.stopPropagation();
+
+    // get menu item id
+    const target = $(this);
+    const type = target.attr("data-lmb-type");
+    const tabid = target.attr("data-lmb-tabid");
+    const id = target.attr("data-lmb-id");
+    const idStr = id ? ("&id=" + id) : "";
+
+    ajaxGet(null, "main_dyns.php", "addToFavorites&type=" + type +"&tabid=" + tabid + idStr, null, function() {
+        document.location.href = "main.php?&action=nav&sparte=gtab&tab_group=1&refresh=no";
+    });
+}
+// add star icon to menu item
+function addFavIconTo(elem) {
+    if (elem.children().not("i").length > 0) {
+        if (elem.children().children("i[data-lmb-fav-icon]").length > 0)
+            return;
+        elem.children().first().append("<i class=\"lmb-icon lmb-fav\" data-lmb-fav-icon></i>");
+    } else {
+        if (elem.children("i[data-lmb-fav-icon]").length > 0)
+            return;
+        elem.append("<i class=\"lmb-icon lmb-fav\" data-lmb-fav-icon></i>");
+    }
+}
+// remove star icon from menu item
+function removeFavIconFrom(elem) {
+    if (elem.children().not("i").length > 0) {
+        elem.children().children("i[data-lmb-fav-icon]").remove();
+    } else {
+        elem.children("i[data-lmb-fav-icon]").remove();
+    }
+}
+// add onclick listener to add menu item to favorites
+$(function() {
+    $("[data-lmb-type][data-lmb-tabid]").on('click', addToFavorites);
+
+    $('body').on('mousemove', function(evt) {
+        var added = ($(this).attr('data-lmb-added') === 'true');
+        if (evt.shiftKey && !added) {
+            $(this).attr('data-lmb-added', 'true');
+            $("[data-lmb-type][data-lmb-tabid]")
+                .each(function () { addFavIconTo($(this)); });
+        } else if (!evt.shiftKey && added) {
+            $(this).attr('data-lmb-added', 'false');
+            $("[data-lmb-type][data-lmb-tabid]")
+                .each(function () { removeFavIconFrom($(this)); });
+        }
+    });
+});
+
+// show shadow on scroll
+$(function() {
+    $(document).scroll(function() {
+        const searchTable = $("table.lmbfringeMenuSearch");
+        if ($("body").scrollTop() > 0) {
+            searchTable.css("box-shadow", "0 4px 2px -2px gray");
+        } else {
+            searchTable.css("box-shadow", "");
+        }
+    });
+});
+
+
+<?php
 /*
 var a = document.createElement('a');
 a.href='http://www.google.com';
@@ -427,8 +714,7 @@ a.click();
 //-->
 </script>
 <FORM ACTION="main.php" METHOD="post" NAME="form1" TARGET="main" style="display:none;">
-<INPUT TYPE="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
-<INPUT TYPE="hidden" NAME="ID" VALUE="<?echo $session["user_id"];?>">
+<INPUT TYPE="hidden" NAME="ID" VALUE="<?= $session["user_id"] ?>">
 <INPUT TYPE="hidden" NAME="aktivid">
 <INPUT TYPE="hidden" NAME="action">
 <INPUT TYPE="hidden" NAME="alter">
@@ -441,7 +727,6 @@ a.click();
 </FORM>
 
 <FORM ACTION="main_admin.php" METHOD="post" NAME="form2" TARGET="main" style="display:none;">
-<INPUT TYPE="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
 <INPUT TYPE="hidden" NAME="aktivid">
 <INPUT TYPE="hidden" NAME="action">
 <INPUT TYPE="hidden" NAME="frame1para">
@@ -483,13 +768,39 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
     global $lang;
     global $dwme;
     global $farbschema;
-    
+    global $activeMenu;
+
     # check param
     if(!$entry) { return; }
     
     # depth 0 -> User-menu / Admin-menu / Tables ...
     if($depth == 0) {
-        echo "<div id='{$entryKey}'>";
+        # session refresh: restore last active menu
+        $style = '';
+        if (isset($activeMenu)) {
+            $style = 'style="display: none;"';
+            if ($activeMenu == $entryKey) {
+                $style = '';
+            }
+        }
+        echo "<div id='{$entryKey}' {$style}>";
+
+        # hide quick search bar in favorites
+        if ($entryKey !== 301) {
+            # quick search
+            echo '
+                <table border="0" cellpadding="0" cellspacing="0" class="lmbfringeMenuNav lmbfringeMenuSearch" onmousedown="event.stopPropagation();">
+                    <tr>
+                        <td class="lmbMenuHeaderNav">
+                            <i class="lmbMenuHeaderImage lmb-icon-32 lmb-search"></i>
+                            <div class="lmbMenuItemHeaderNav">
+                                <input type="text" class="lmbTableSearch" onkeyup="lmbFilterTablesTimer(event, this, ' . $entryKey . ');" placeholder="' . $lang[2507] . '">
+                            </div>
+                        </td>
+                    </tr>
+                </table>
+            ';
+        }
         $data = array('depth0Key' => $entryKey);
         foreach ($entry as $childKey => $child) {
             recRender($childKey, $child, 1, $data);
@@ -519,9 +830,9 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
 
         # add big symbol
         if ($entry['gicon']) {
-            echo "<i class=\"lmbMenuHeaderImage lmb-icon-32 {$entry['gicon']}\" style=\"position:absolute;cursor:pointer\"></i>";
+            echo "<i class=\"lmbMenuHeaderImage lmb-icon-32 {$entry['gicon']}\"></i>";
         } else if ($entry['icon']) {
-            echo "<i class=\"lmbMenuHeaderImage lmb-icon-32 {$entry['icon']}\" style=\"position:absolute;cursor:pointer\"></i>";
+            echo "<i class=\"lmbMenuHeaderImage lmb-icon-32 {$entry['icon']}\"></i>";
         }
 
         # get correct angle icon (up/down)
@@ -535,17 +846,14 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
 
         # popupIcon
         echo "<div style=\"float:right;margin-right:0.5em;\" {$onToggleAngleSymbolClick}>";
-        if(count($entry['child']) > 0 || $entry['extension']){
-            echo "<i id=\"HS{$combinedId}\" class=\"lmb-icon {$iconclass}\" valign=\"top\" style=\"cursor:pointer\" border=\"0\"></i>";
+        if (count($entry['child']) > 0 || $entry['extension']) {
+            echo "<i id=\"HS{$combinedId}\" class=\"lmb-icon {$iconclass}\" valign=\"top\" border=\"0\"></i>";
         }
         echo '</div>';
 
         # title
-        $title = (is_numeric($entry['name'])?$lang[$entry['name']]:$entry['name']);
-        echo "<div class=\"lmbMenuItemHeaderNav {$subGroupClass}\" style=\"cursor:pointer\">{$title}</div>";
-
-        # empty div
-        echo '<div style="clear:both;height:1px;overflow:hidden;"></div>';
+        $title = (is_numeric($entry['name']) ? $lang[$entry['name']] : $entry['name']);
+        echo "<div class=\"lmbMenuItemHeaderNav\">{$title}</div>";
 
         # end header tr
         echo '</td></tr>';
@@ -563,7 +871,7 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
             eval($entry['eval'] . ';');
         } else {
             # start data table
-            echo '<table border="0" cellspacing="0" cellpadding="0" class="lmbMenuBodyNav" style="width:100%;">';
+            echo '<table border="0" cellspacing="0" cellpadding="0" class="lmbMenuBodyNav">';
 
             # render next level                
             if ($entry['child']) {
@@ -574,9 +882,6 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
                     recRender($childKey, $child, 2, $data);
                 }
             }
-
-            # add empty line
-            echo '<tr><td style="height:5px;overflow:hidden"></td></tr>';
 
             # end data table
             echo '</table>';
@@ -608,19 +913,21 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
         }
 
         # bold text for subgroups
-        $menuValue = (is_numeric($entry['name']) ? $lang[$entry['name']] : $entry['name']);        
+        $menuValue = (is_numeric($entry['name']) ? $lang[$entry['name']] : $entry['name']);
+        $aClass = '';
         if($entry['header']) {
             $menuValue = "<b>{$menuValue}</b>";
+            $aClass = 'lmbMenuItemHeader';
         }
         
         # start tr and add image
         echo "<tr><td>{$icon}</td>";
         
         # add title
-        echo "<td nowrap style=\"overflow:hidden;width:100%;background-color:{$entry['bg']}\" title=\"{$entry['desc']}\">";
+        echo "<td nowrap style=\"overflow:hidden;background-color:{$entry['bg']}\" title=\"{$entry['desc']}\">";
         $dwmeSub = $dwme - 115 - (25 * $entry['depth']); // -100 for first depth, -100 -25(img-width) for second depth ...
-        echo "<a style=\"overflow:hidden;\" class=\"lmbMenuItemBodyNav\" {$onclick}>";
-        echo "<div id=\"mel_{$data['depth1Id']}_{$entry['id']}\" style=\"width:{$dwmeSub}px;cursor:pointer; {$entry['style']}\">{$menuValue}</div>";
+        echo "<a class=\"$aClass lmbMenuItemBodyNav\" {$onclick}>";
+        echo "<div id=\"mel_{$data['depth0Key']}_{$entry['id']}\" {$entry['attr']} style=\"{$entry['style']}\">{$menuValue}</div>";
         echo '</a>';
         echo '</td>';
 
@@ -640,7 +947,7 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
 
         # add angle right/down icon
         if($entry['child']) {
-            echo "<td class=\"lmbMenuItemBodyNav\" width=\"100%\" align=\"right\" onclick=\"hideShowSub('{$data['depth0Key']}','{$tabGroupIndex}')\" style=\"cursor:pointer\">";
+            echo "<td class=\"lmbMenuItemBodyNav\" onclick=\"hideShowSub('{$data['depth0Key']}','{$tabGroupIndex}')\">";
             echo "<i id=\"arrowSub{$tabGroupIndex}\" class=\"lmb-icon {$iconClass}\"></i>";
             echo "</td>";
         } else {
@@ -658,8 +965,8 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
             echo "<div style=\"height:1px;background-color:{$farbschema['WEB4']};width:100%\"></div>";
             echo "</td></tr>";
         }
-        echo "<tr id=\"subElt_{$tabGroupIndex}\" style=\"display:{$eldispl};overflow:hidden;width:100px\"><td></td><td colspan=\"2\" style=\"padding:0;\">";
-        echo "<table cellspacing=\"0\" cellpadding=\"0\" style=\"width:100%;\">";
+        echo "<tr id=\"subElt_{$tabGroupIndex}\" style=\"display:{$eldispl};overflow:hidden;\"><td></td><td colspan=\"2\">";
+        echo "<table class=\"lmbMenuSubBodyNav\">";
         
         # render next level
         $data = array_merge($data, array(
@@ -688,29 +995,27 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
 
     # depth 3 -> e.g. "neu anlegen", "kundenliste", only items that have no children
     else if($depth == 3) {
-        # get correct cursor/onclick
-        $cursor = "";
+        # get correct onclick
         if (lmb_substr($entry['link'], 0, 4) == 'main') {
             $onclick = "onclick=\"{$entry['onclick']}; parent.main.location.href='{$entry['link']}'\"";
         } elseif ($entry['link']) {
             $onclick = "onclick=\"{$entry['onclick']}; {$entry['link']}\"";
         } else {
             $onclick = '';
-            $cursor = 'cursor:default;';
         }
 
         # get icon
         if ($entry['icon']) {
-            $icon = "<i border=\"0\" class=\"lmb-icon {$entry['icon']}\" style=\"vertical-align:text-bottom\"></i>";
+            $icon = "<i class=\"lmb-icon {$entry['icon']}\" style=\"vertical-align:baseline\"></i>";
         } else {
             $icon = '';
         }
 
         # output entry
-        echo "<tr id=\"subElt_{$tabGroupIndex}\" style=\"display:{$data['eldispl']};overflow:hidden;width:100px\">";
+        echo "<tr id=\"subElt_{$tabGroupIndex}\" style=\"display:{$data['eldispl']};overflow:hidden;\">";
         $dwmeSub = $dwme - 105 - (25 * $entry['depth']);
-        echo "<td class=\"contentSub\" nowrap title=\"{$entry['desc']}\">";
-        echo "<div id=\"mel_{$data['depth1Id']}_{$data['depth2Id']}_{$entry['id']}\" style=\"width:{$dwmeSub}; {$entry['style']}\">";
+        echo "<td class=\"contentSub\" title=\"{$entry['desc']}\">";
+        echo "<div id=\"mel_{$data['depth0Key']}_{$data['depth2Id']}_{$entry['id']}\" {$entry['attr']} style=\"{$entry['style']}\">";
 
         $textToDisplay = (is_numeric($entry['name']) ? $lang[$entry['name']] : $entry['name']);
         echo "<a class=\"lmbMenuItemBodyNav\" {$onclick}>{$icon}&nbsp;{$textToDisplay}</a>";
@@ -738,13 +1043,17 @@ echo '<div onclick="return hide_frame();"><div class="lmbMenuHeaderNav lmbMenuHi
 
 echo "</td></tr></table>\n";
 
-# show first menu in nav frame
-foreach($LINK["name"] as $key => $value){
-	if($LINK["subgroup"][$key] == 2 AND $LINK["typ"][$key] == 1){
-		echo "<script language='javascript'>mainMenu(" . $key . ")</script>";
-		$displayMainMenu = "mainMenu(" . $key . ")";
-		break;
-	}
+if (isset($activeMenu)) {
+    # show last opened menu in nav frame
+    $displayMainMenu = "mainMenu(" . $activeMenu . ")";
+} else {
+    # show first menu in nav frame
+    foreach ($LINK["name"] as $key => $value) {
+        if ($LINK["subgroup"][$key] == 2 AND $LINK["typ"][$key] == 1) {
+            $displayMainMenu = "mainMenu(" . $key . ")";
+            break;
+        }
+    }
 }
 
 echo "<script language='javascript'>" . $displayMainMenu . "</script>";

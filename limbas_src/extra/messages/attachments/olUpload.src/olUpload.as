@@ -137,22 +137,22 @@
 		public function eiDummy():void {
 		}
 
-		public function print_message(type:String, paramA:String, paramB:String):void
+		public function print_message(msgType:String, paramA:String, paramB:String):void
 		{
-			if (type != "upload_info"){
+			if (msgType != "upload_info"){
 				if (has_external_interface){
 					if (has_debug_interface)
-						status.appendText(type + ': ' + paramA + ' ' + paramB + '\n');
-					ExternalInterface.call(type, paramA, paramB);
+						status.appendText(msgType + ': ' + paramA + ' ' + paramB + '\n');
+					ExternalInterface.call(msgType, paramA, paramB);
 					return;
 				}
 			} else
 				if (has_debug_interface)
-						status.appendText(type + ': ' + paramA + ' ' + paramB + '\n');
+						status.appendText(msgType + ': ' + paramA + ' ' + paramB + '\n');
 			 
 			if (has_debug_interface || !has_external_interface)
 			{
-				status.appendText(type + ': ' + paramA + ' ' + paramB + '\n');
+				status.appendText(msgType + ': ' + paramA + ' ' + paramB + '\n');
 			}
 		}
 

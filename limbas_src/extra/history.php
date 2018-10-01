@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -23,7 +23,7 @@ if(!$history_typ){$history_typ = 1;}
 
 <Script language="JavaScript">
 function newwin(GTAB,ID) {
-	spalte = open("main.php?<?=SID?>&action=gtab_change&ID=" + ID + "&gtabid=" + GTAB + "" ,"Datensatzdetail","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=700,height=600");
+	spalte = open("main.php?action=gtab_change&ID=" + ID + "&gtabid=" + GTAB + "" ,"Datensatzdetail","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=700,height=600");
 }
 </Script>
 
@@ -45,9 +45,9 @@ function newwin(GTAB,ID) {
 <TABLE class="tabfringe" BORDER="0" width="100%" cellspacing="0" cellpadding="0"><TR><TD>
 
 <TABLE BORDER="0" cellspacing="0" cellpadding="0"><TR>
-<?if($history_typ == 1){$class="tabpoolItemActive";}else{$class="tabpoolItemInactive";}?>
-<TD nowrap class="<?=$class?>" OnClick="document.form1.history_typ.value=1;document.form1.submit();"><?=$lang[2497]?></TD>
-<?if($history_typ == 2){$class="tabpoolItemActive";}else{$class="tabpoolItemInactive";}?>
+<?php if($history_typ == 1){$class="tabpoolItemActive";}else{$class="tabpoolItemInactive";}?>
+<TD nowrap class="<?=$class?>" OnClick="document.form1.history_typ.value=1;document.form1.submit();"><?=$lang[1250]?></TD>
+<?php if($history_typ == 2){$class="tabpoolItemActive";}else{$class="tabpoolItemInactive";}?>
 <TD nowrap class="<?=$class?>" OnClick="document.form1.history_typ.value=2;document.form1.submit();"><?=$lang[2498]?></TD>
 <TD class="tabpoolItemSpace">&nbsp;</TD>
 </TR></TABLE>
@@ -58,7 +58,7 @@ function newwin(GTAB,ID) {
 	
 <TABLE BORDER="0" cellspacing="1" cellpadding="2" width="100%" class="tabBody">
 
-<?
+<?php
 if($history_typ == 2){
 	echo "<TR class=\"tabSubHeader\">
 	<TD class=\"tabSubHeaderItem\" COLSPAN=\"3\" ALIGN=\"CENTER\">&nbsp;&nbsp;<i class=\"lmb-icon lmb-arrow-left\" OnClick=\"document.form1.gonext.value=1;document.form1.submit();\"></i>&nbsp;&nbsp;".get_date($breakstamp,3)."&nbsp;&nbsp;";
@@ -73,10 +73,10 @@ if($history_typ == 2){
 
 <TABLE BORDER="0" cellspacing="1" cellpadding="2" width="100%">
 <TR class="tabHeader">
-<TD VALIGN="TOP" class="tabHeaderItem" OnClick="document.form1.order.value=1;document.form1.submit();"><?=$lang[288]?></TD>
-<TD VALIGN="TOP" class="tabHeaderItem" OnClick="document.form1.order.value=2;document.form1.submit();"><?=$lang[289]?></TD>
-<TD VALIGN="TOP" class="tabHeaderItem" OnClick="document.form1.order.value=3;document.form1.submit();"><?=$lang[290]?></TD>
-<TD VALIGN="TOP" class="tabHeaderItem"><?=$lang[291]?></TD>
+<TD VALIGN="TOP" class="tabHeaderItem" OnClick="document.form1.order.value=1;document.form1.submit();"><?=$lang[197]?></TD>
+<TD VALIGN="TOP" class="tabHeaderItem" OnClick="document.form1.order.value=2;document.form1.submit();"><?=$lang[3]?></TD>
+<TD VALIGN="TOP" class="tabHeaderItem" OnClick="document.form1.order.value=3;document.form1.submit();"><?=$lang[168]?></TD>
+<TD VALIGN="TOP" class="tabHeaderItem"><?=$lang[29]?></TD>
 </TR>
 
 
@@ -86,7 +86,7 @@ if($history_typ == 2){
 <TD></TD></TR>
 
 
-<?
+<?php
 /* --- Ergebnisliste --------------------------------------- */
 if($result_history["id"]){
 foreach($result_history["id"] as $key => $value){
@@ -99,16 +99,16 @@ foreach($result_history["id"] as $key => $value){
     if($result_history["field_type"][$key] == 11){
     	$links = explode(";",$result_history["fieldvalue"][$key]);
     	if($links){
-    	foreach($links as $key1 => $value1){
-    		$lid = trim(lmb_substr($value1,1,16));
-    		$value1 = preg_replace("/^[<]{1}/","<b style=\"color:red\">< </b>",$value1);
-    		$value1 = preg_replace("/^[>]{1}/","<b style=\"color:green\"> ></b>",$value1);
-    		$val[] = "<A href=\"#\" OnClick=\"newwin('".$gfield[$result_history["tabid"][$key]]["verkntabid"][$result_history["fieldid"][$key]]."','".$lid."');\">".$value1."</A>";
-    	}
-    	echo implode("<br>",$val);
+            foreach($links as $key1 => $value1){
+                $lid = trim(lmb_substr($value1,1,16));
+                $value1 = preg_replace("/^[<]{1}/","<b style=\"color:red\">< </b>",$value1);
+                $value1 = preg_replace("/^[>]{1}/","<b style=\"color:green\"> ></b>",$value1);
+                $val[] = "<A href=\"#\" OnClick=\"newwin('".$gfield[$result_history["tabid"][$key]]["verkntabid"][$result_history["fieldid"][$key]]."','".$lid."');\">".$value1."</A>";
+            }
+            echo implode("<br>",$val);
     	}
     }else{
-    	echo $result_history["fieldvalue"][$key];
+        echo nl2br($result_history["fieldvalue"][$key]);
     }
     echo "</TD>\n";
     echo "</TR>\n";

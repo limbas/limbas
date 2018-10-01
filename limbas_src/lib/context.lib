@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -24,16 +24,20 @@ function pop_top($el=null,$width=null){
 	#echo "<div class=\"lmbContextTop\" onclick=\"limbasDivClose(limbasGetParentMenuId(document.getElementById('$el').id));hide_selects(2);\" ID=\"pop_menu_".$el."\" style=\"position:absolute;height:4px;".$width."\">&nbsp;</div>";
 }
 
-function pop_header($el,$value){
-	global $farbschema;
-	echo "<div class=\"lmbContextHeader\">".$value."</div>
-	<div style=\"width:100%; height:1px; background-color:".$farbschema['WEB6']."; overflow:hidden;\">.</div>
-	";	
+function pop_header($el,$value,$event=null){
+
+    if ($event) {
+        $event = "onclick=\"$event\"";
+    } else {
+        $event = '';
+    }
+
+	echo '<div class="lmbContextHeader" ' . $event . '>' . $value . '</div>';
 }
 
 function pop_movetop($el,$width=null){
 	if($width) $width = "width:".$width."px";
-	echo "<div class=\"lmbContextRow\" onmousedown=\"aktivate_menu('$el');\"><div class=\"lmbContextItem\">
+	echo "<div class=\"lmbContextRow lmbContextRowMove\" onmousedown=\"aktivate_menu('$el');\"><div class=\"lmbContextItem\">
 	<div class=\"lmbContextTop\" id=\"pop_menu_".$el."\" style=\"cursor:move\">
 	<i class=\"lmbContextRight lmb-icon lmb-caret-square-down\" style=\"cursor:pointer\" onclick=\"document.getElementById('$el').style.display='none';\"></i>
 	</div></div></div>";
@@ -57,13 +61,14 @@ function pop_bottom($width=null){
 function pop_submit($name='submit',$event='send_form(1)'){
 	#if($width) $width = "width:".$width."px";
 	#echo "<div class=\"lmbContextRow\" style=\"position:absolute;height:6px;overflow:hidden;".$width."\">$name</div>";
-	
-	if($width) $width = "style=\"width:".$width."px\"";
 
+    #if($width) $width = "style=\"width:".$width."px\"";
+    #title="{$lang[$LINK["desc"][$id]]}"
+    #{$width}
 	echo <<<EOD
-	<div class="lmbContextRow" title="{$lang[$LINK["desc"][$id]]}">
+	<div class="lmbContextRow">
 		<div class="lmbContextItem" align="center" style="margin-bottom:3px;">
-			<input style="cursor:pointer" type="button" value="$name" onclick="$event" {$width}>
+			<input style="cursor:pointer" type="button" value="$name" onclick="$event">
 		</div>
 	</div>
 EOD;
@@ -100,28 +105,28 @@ function pop_menu($id,$zl=null,$zv=null,$active=null,$line=null,$imgclass=null){
 		$tmp = $zv ? $zv : $lang[$LINK["name"][$id]];
 
     	if($active){
-		$activeicon = "<i class=\"lmbContextRight lmb-icon lmb-check\" border=\"0\"></i>";
-		#$acst = "style=\"color:#AAAAAA\"";
-		#$acst = "style=\"font-weight:bold;\"";
-	}
+            $activeicon = "<i class=\"lmbContextRight lmb-icon lmb-check\" border=\"0\"></i>";
+            #$acst = "style=\"color:#AAAAAA\"";
+            #$acst = "style=\"font-weight:bold;\"";
+        }
 
-   	$class = "";
-    	$img = "";
-    	
-    	if($imgclass){
-    		$img = "<i class=\"lmbContextLeft lmb-icon $imgclass\" border=\"0\"></i>";
-    		$class = "Icon";
-    	}elseif($LINK["icon_url"][$id]){
-    		$img = "<i class=\"lmbContextLeft lmb-icon {$LINK["icon_url"][$id]}\" border=\"0\"></i>";
-    		$class = "Icon";
-    	}
+        $class = "";
+        $img = "";
 
-		echo <<<EOD
-		<a class="lmbContextLink" onclick="{$zl}{$LINK["link_url"][$id]};return false;" title="{$lang[$LINK["desc"][$id]]}">
-			$img
-			<span class="lmbContextItem$class" ID="pop_menu_{$id}" $acst>$tmp</span>
-			$activeicon
-		</a>
+        if($imgclass){
+            $img = "<i class=\"lmbContextLeft lmb-icon $imgclass\" border=\"0\"></i>";
+            $class = "Icon";
+        }elseif($LINK["icon_url"][$id]){
+            $img = "<i class=\"lmbContextLeft lmb-icon {$LINK["icon_url"][$id]}\" border=\"0\"></i>";
+            $class = "Icon";
+        }
+
+        echo <<<EOD
+        <a class="lmbContextLink" onclick="{$zl}{$LINK["link_url"][$id]};return false;" title="{$lang[$LINK["desc"][$id]]}">
+            $img
+            <span class="lmbContextItem$class" ID="pop_menu_{$id}" $acst>$tmp</span>
+            $activeicon
+        </a>
 EOD;
 
     }
@@ -132,7 +137,7 @@ EOD;
 function pop_menu2($val,$desc=null,$fname=null,$imgclass=null,$style=null,$event=null){
 
 	$class = "";
-        $img = "";
+    $img = "";
 	if($imgclass){
 		$img = "<i class=\"lmbContextLeft lmb-icon $imgclass\" border=\"0\"></i>";
 		$class = "Icon";
@@ -149,9 +154,8 @@ EOD;
 }
 
 function pop_submenu($id,$zl,$zv,$line=null){
-    global $farbschema,
-		$LINK,
-		$lang;
+    global $LINK;
+    global $lang;
 
     if($LINK[$id] OR $id == "0"){
 		$id = intval($id);
@@ -182,10 +186,9 @@ EOD;
 }
 
 function pop_submenu2($val,$zl,$zv=null,$width=null,$imgclass=null){
-    global $farbschema;
 
 	$class = "";
-        $img = "";
+    $img = "";
 	if($imgclass){
 		$img = "<i class=\"lmbContextLeft $imgclass\" border=\"0\"></i>";
 		$class = "Icon";
@@ -201,9 +204,8 @@ EOD;
 }
 
 function pop_input($id,$zl,$name,$val,$readonly,$width=null){
-    global $farbschema,
-		$LINK,
-		$lang;
+    global $LINK;
+    global $lang;
 
 	if($width) $width = "style=\"width:".$width."px\"";
 
@@ -217,18 +219,15 @@ EOD;
 }
 
 function pop_input2($zl,$name,$val,$readonly,$title,$titlesize=null){
-    global $farbschema,
-		$lang,
-		$LINK;
-
     if(!$title){$title = "";}
 	if($titlesize){
 		$width = "width:".(137-$titlesize)."px;";
 	}
 
 	echo <<<EOD
-	<div class="lmbContextRow" title="{$lang[$LINK["desc"][$id]]}">
-		<div class="lmbContextItem" style="text-align:right"><div style="float:left;">$title</div>
+	<div class="lmbContextRow" title="$title" style="vertical-align: middle;">
+		<div class="lmbContextItem" style="text-align:right">
+		    <span style="vertical-align: middle;">$title</span>
 			<input type="text" class="contextmenu" name="$name" id="$name" value="$val" $readonly onchange="$zl" style="{$width}margin-left:5px;">
 		</div>
 	</div>
@@ -236,7 +235,8 @@ EOD;
 }
 
 function pop_checkbox($id,$zl,$name,$val,$checked,$readonly,$title=null,$desc=null){
-	global $farbschema,$LINK,$lang;
+	global $LINK;
+	global $lang;
 
 	if($LINK[$id]){
 		$title = $lang[$LINK['name'][$id]];
@@ -251,22 +251,25 @@ function pop_checkbox($id,$zl,$name,$val,$checked,$readonly,$title=null,$desc=nu
 	}
 
 	echo <<<EOD
-		<div class="lmbContextRow" title="{$desc}">
-			$img
-			<span class="lmbContextItem$class" ID="pop_menu_{$id}">{$title}</span>
+		<div class="lmbContextLink" style="padding-top:0; padding-bottom:0;" title="{$desc}">
+		    <label for="$name" style="vertical-align: middle;">
+                $img
+                <span class="lmbContextItem$class" ID="pop_menu_{$id}">{$title}</span>
+            </label>			
 			<input type="checkbox" class="contextmenu" name="$name" id="$name" value="$val" $checked $readonly onchange="$zl">
 		</div>
 EOD;
 }
 
+/**
+ * @deprecated
+ */
 function pop_checkbox2($zl,$name,$val,$checked,$readonly){
-	global $farbschema,$LINK,$lang;
-		
-		echo <<<EOD
-		<div class="lmbContextRow">
-			<span class="lmbContextItem$class">fgdfg</span>
-			<input type="checkbox" class="contextmenu" name="$name" id="$name" value="$val" $checked $readonly onchange="$zl">
-		</div>
+    echo <<<EOD
+    <div class="lmbContextRow">
+        <span class="lmbContextItem$class">fgdfg</span>
+        <input type="checkbox" class="contextmenu" name="$name" id="$name" value="$val" $checked $readonly onchange="$zl">
+    </div>
 EOD;
 }
 
@@ -274,7 +277,6 @@ EOD;
 #"fill_style('0','fontFamily',this.value);",$opt,"",1,"input_fontface","Font",50
 
 function pop_select($zl,$opt,$sel,$size,$name,$title=null,$titlesize=null,$icon=null){
-    global $farbschema;
 
     if(!is_array($opt) || empty($opt)) return;
 
@@ -282,28 +284,24 @@ function pop_select($zl,$opt,$sel,$size,$name,$title=null,$titlesize=null,$icon=
         $width = "width:".(144-$titlesize)."px;";
     }
 
-    if($title && !$icon) {$title = "<div style=\"float:left;\">$title</div>&nbsp;";}
-
-    if($icon) {$icon = "<i class=\"lmbContextLeft lmb-icon $icon\"></i>";}
-    
     $options = "";
     if($opt["val"]){
         foreach($opt["val"] as $key => $value){
-                $selected = "";
-                if($sel == $value) $selected = "selected=\"selected\"";
-                if($opt["label"][$key]){
-                        $options .= "<optgroup label=\"".$opt["label"][$key]."\">";
-                }
-                $options .= "<option value=\"$value\" $selected>{$opt["desc"][$key]}</option>";
+            $selected = "";
+            if($sel == $value) $selected = "selected=\"selected\"";
+            if($opt["label"][$key]){
+                $options .= "<optgroup label=\"".$opt["label"][$key]."\">";
+            }
+            $options .= "<option value=\"$value\" $selected>{$opt["desc"][$key]}</option>";
         }
     }
 	
     if($icon){
         echo <<<EOD
             <div class="lmbContextRow">
-                    $icon
-                    <span class="lmbContextItemIcon" style="text-align:right">$title</span>            
-                    <select class="contextmenu" name="$name" id="$name" size="$size" onchange="$zl" style="{$width}">
+                    <i class="lmbContextLeft lmb-icon $icon"></i>
+                    <span class="lmbContextItemIcon" style="text-align:right;vertical-align:middle;">$title</span>            
+                    <select class="contextmenu" name="$name" id="$name" size="$size" onchange="$zl" style="vertical-align:middle;{$width}">
                             $options
                     </select>
             </div>
@@ -311,8 +309,9 @@ EOD;
     } else {
         echo <<<EOD
             <div class="lmbContextRow">
-                <div class="lmbContextItem" style="text-align:right">$title
-                    <select class="contextmenu" name="$name" id="$name" size="$size" onchange="$zl" style="{$width}">
+                <div class="lmbContextItem" style="text-align:right">
+                    <div style="display:inline-block;vertical-align:middle;">$title</div>&nbsp;
+                    <select class="contextmenu" name="$name" id="$name" size="$size" onchange="$zl" style="vertical-align:middle;{$width}">
                         $options
                     </select>
                 </div>
@@ -322,7 +321,6 @@ EOD;
 }
 
 function pop_color($funcname=null,$fparams=null,$container=null){
-    global $farbschema;
     global $user_colors;
     
     if(!$funcname){$funcname = "set_color";}
@@ -338,13 +336,13 @@ function pop_color($funcname=null,$fparams=null,$container=null){
 	foreach ($user_colors["wert"] as $key => $value){
 		if($bzm1 == 8){$bzm1 = 1;echo "</tr><tr>";}
 		if($value){$b = "border:1px solid black;";}
-		echo "<td style=\"width:14px;height:14px;cursor:pointer;background-color:".$value.";$b;\" OnClick=\"$funcname('".$value."'$fparams);\" title=\"$value\"><div style=\"width:14px;height:14px;\"></div></td>\n";
+		echo "<td style=\"width:14px;height:14px;cursor:pointer;background-color:#".$value.";$b;\" OnClick=\"$funcname('".$value."'$fparams);\" title=\"$value\"><div style=\"width:14px;height:14px;\"></div></td>\n";
 		$bzm1++;
 	}
 	echo "</tr></table></div></div>\n";
 }
 
-function pop_icon($classname=nullz){
+function pop_icon($classname=null){
 	if(!$classname) $classname = "";
     echo "<i class=\"lmbContextLeft lmb-icon $classname\" border=\"0\"></i>";
 }
@@ -353,7 +351,7 @@ function pop_left($width=null){
     echo "<div class=\"lmbContextRow\"><div class=\"lmbContextItem\">";
 
     #global $farbschema;
-    #echo "<TABLE CLASS=\"popmenu\" cellspacing=\"0\" cellpadding=\"0\"><TR CLASS=\"popmenu\"><TD STYLE=\"width:1px;background-color:$farbschema[WEB9]\"></TD><TD STYLE=\"width:1px;background-color:#FFFFFF\"></TD><TD STYLE=\"width:".($width-3)."px;overflow:hidden;background-color:$farbschema[WEB9];\">";
+    #echo "<TABLE CLASS=\"popmenu\" cellspacing=\"0\" cellpadding=\"0\"><TR CLASS=\"popmenu\"><TD STYLE=\"width:1px;background-color:$farbschema[WEB8]\"></TD><TD STYLE=\"width:1px;background-color:#FFFFFF\"></TD><TD STYLE=\"width:".($width-3)."px;overflow:hidden;background-color:$farbschema[WEB9];\">";
 }
 
 function pop_right($width=null){

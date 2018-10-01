@@ -44,7 +44,7 @@
 </form>
 
 <script language="javascript" type="text/javascript">//<!--
-	$('find').focus();
+	document.getElementById('find').focus();
 //--></script>
 
 <!-- [/find.tpl] -->

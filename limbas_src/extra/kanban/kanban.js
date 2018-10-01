@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -30,7 +30,7 @@ function kanban_init()
 {
     kanban_load_cards();
 
-    $('.lmbfringegtab').css('height',$(window).height()-40);
+    $('.lmbfringegtab').css('height',$(window).height()-120);
     $('.col-add').click(kanban_card_add);
 
     $('.kanban-filter-head').click(kanban_showhide_filter);
@@ -59,7 +59,7 @@ function kanban_card_drop(event, ui)
     var order = [];
     ui.item.parent().children().each(function () {
         order.push($(this).data('id'));
-    });    
+    });
     $.ajax({
         type: "POST",
         url: "main_dyns.php",
@@ -167,7 +167,7 @@ function kanban_load_card_by_id(id)
                   {
                       $('.kanban-body div[data-status="'+data['status']+'"]').append(kanban_card_render(data));
                   }
-                  
+
                   $('div[data-id="'+id+'"]').click(function() {
                       kanban_card_detail($(this).data('id'));
                   });
@@ -183,14 +183,14 @@ function kanban_card_detail(id) {
 	selectedCard = id;
 	// reset history_fields
 	document.form1.history_fields.value='';
-		
-                
+
+
         var w_ = 550;
 	var h_ = 380;
-        
+
 	// specific formular
 	if(jsvar['formid']){
-		
+
 		if(jsvar['form_dimension']){
 			var size = jsvar['form_dimension'].split('x');
 			w_ = (parseFloat(size[0])+40);
@@ -213,7 +213,7 @@ function kanban_card_detail(id) {
 			return;
 		}
 	}
-	
+
 	$.ajax({
 	  type: "GET",
 	  url: "main_dyns.php",
@@ -222,10 +222,10 @@ function kanban_card_detail(id) {
 	  success: function(data){
 	  	document.getElementById("lmbKanAjaxContainer").innerHTML = data;
 	  	ajaxEvalScript(data);
-                        
-                
+
+
                 if(!jsvar['formid']){h_ = ($("#lmbKanAjaxContainer").height()+50);}
-	
+
                 if($("#lmbKanAjaxContainer").hasClass('ui-dialog-content')){
                         $("#lmbKanAjaxContainer").dialog('open');
                 }else{
@@ -239,11 +239,11 @@ function kanban_card_detail(id) {
                                 appendTo: "#form1"
                         });
                 }
-                
+
 	  }
 	});
-	
-	
+
+
 
 }
 
@@ -264,7 +264,7 @@ function send_form(ajax,need) {
 	}else{
 		dynfunc = function(result){send_formPost(result,ajax);};
 		ajaxGet(null,'main_dyns.php','kanban&action=saveDetails',null,'dynfunc','form1',null,1);
-		
+
 		return true;
 	}
 }
@@ -319,7 +319,7 @@ function kanban_card_render(card)
     {
         output += '<div class="card-assigned">';
         $.each(card['assigned'], function(key, assigned) {
-            output += '<div title="'+assigned.long+'">'+assigned.short+'</div>';
+            output += '<div class="card-assigned-value" title="'+assigned.long+'">'+assigned.short+'</div>';
         });
         output += '</div>';
     }
@@ -495,4 +495,10 @@ function kanban_filter_reset(){
     filter_reset = 1;
     kanban_reload();
     filter_reset = 0;
+}
+
+// open formular
+function lmb_popupDetails(gtabid,ID) {
+    divclose();
+    details = open("main.php?&action=gtab_change&ID=" + ID + "&gtabid=" + gtabid + "" ,"details","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=650,height=600");
 }

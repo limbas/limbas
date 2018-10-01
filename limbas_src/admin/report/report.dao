@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -383,7 +383,7 @@ $pic_type=null,$pic_compress=null,$posy=null){
 
 			# ------ Datei zu groß --------
 			if($filesize >= $session["uploadsize"]){
-				lmb_alert("$lang[132]\\n$lang[130] $session[uploadsize] $lang[131]");
+				lmb_alert("$lang[132]\\n$lang[130] {$session['uploadsize']} $lang[131]");
 				# ------ falls kein Bild --------
 			}elseif($mime[0] != "image" AND $mime[1] != "pdf"){
 				lmb_alert("$lang[133]\\n== (".$mime[0]."/".$mime[1].")!");
@@ -501,7 +501,7 @@ $pic_type=null,$pic_compress=null,$posy=null){
 		$tab_size = "2;4";
 		
 		for($ti=1;$ti<=2;$ti++){
-			$sqlquery = "INSERT INTO LMB_REPORTS (ID,EL_ID,ERSTUSER,BERICHT_ID,TYP,TAB,TAB_EL_ROW,TAB_EL_COL,TAB_EL_COL_SIZE) VALUES ($NEXTKEYID,$NEXTID,$session[user_id],$report_id,'tabhead',$tab,0,$ti,60)";
+			$sqlquery = "INSERT INTO LMB_REPORTS (ID,EL_ID,ERSTUSER,BERICHT_ID,TYP,TAB,TAB_EL_ROW,TAB_EL_COL,TAB_EL_COL_SIZE) VALUES ($NEXTKEYID,$NEXTID,{$session['user_id']},$report_id,'tabhead',$tab,0,$ti,60)";
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			$NEXTKEYID++;
 			$NEXTID++;
@@ -531,7 +531,7 @@ $pic_type=null,$pic_compress=null,$posy=null){
 	if(!$posy){$posy = "0";}
 	
 	if($value AND $report_id){
-		$sqlquery = "INSERT INTO LMB_REPORTS (ID,EL_ID,Z_INDEX,ERSTUSER,BERICHT_ID,TYP,POSX,POSY,WIDTH,HEIGHT,INHALT,STYLE,DBFIELD,VERKN_BAUM,TAB,TAB_EL_ROW,TAB_EL_COL,TAB_SIZE,TAB_EL_COL_SIZE,DB_DATA_TYPE,PIC_SIZE,PIC_TYP,PIC_RES,PIC_NAME,BG) VALUES ($NEXTKEYID,$NEXTID,$NEXTZINDEX,$session[user_id],$report_id,'$report_add',0,$posy,$width,$height,'$value','$style','$dbfield','$dbbaum',$tab,$tab_el[0],$tab_el[1],'$tab_size',$tab_el_col_size,$data_type,'$pic_size','$pic_type',$pic_res,'$pic_name',0)";
+		$sqlquery = "INSERT INTO LMB_REPORTS (ID,EL_ID,Z_INDEX,ERSTUSER,BERICHT_ID,TYP,POSX,POSY,WIDTH,HEIGHT,INHALT,STYLE,DBFIELD,VERKN_BAUM,TAB,TAB_EL_ROW,TAB_EL_COL,TAB_SIZE,TAB_EL_COL_SIZE,DB_DATA_TYPE,PIC_SIZE,PIC_TYP,PIC_RES,PIC_NAME,BG) VALUES ($NEXTKEYID,$NEXTID,$NEXTZINDEX,{$session['user_id']},$report_id,'$report_add',0,$posy,$width,$height,'$value','$style','$dbfield','$dbbaum',$tab,$tab_el[0],$tab_el[1],'$tab_size',$tab_el_col_size,$data_type,'$pic_size','$pic_type',$pic_res,'$pic_name',0)";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
 
@@ -718,7 +718,7 @@ if(($report_tab_rows OR $report_tab_cols) AND $report_edit_id){
 			$sqlquery = "SELECT EL_ID FROM LMB_REPORTS  WHERE BERICHT_ID = $report_id AND TAB = $tabid AND TAB_EL_ROW = 0 AND TAB_EL_COL = $ti AND TYP = 'tabhead'";
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!odbc_fetch_row($rs, 1)){
-				$sqlquery1 = "INSERT INTO LMB_REPORTS (ID,EL_ID,ERSTUSER,BERICHT_ID,TYP,TAB,TAB_EL_ROW,TAB_EL_COL,TAB_EL_COL_SIZE) VALUES ($NEXTKEYID,$NEXTID,$session[user_id],$report_id,'tabhead',$tabid,0,$ti,60)";
+				$sqlquery1 = "INSERT INTO LMB_REPORTS (ID,EL_ID,ERSTUSER,BERICHT_ID,TYP,TAB,TAB_EL_ROW,TAB_EL_COL,TAB_EL_COL_SIZE) VALUES ($NEXTKEYID,$NEXTID,{$session['user_id']},$report_id,'tabhead',$tabid,0,$ti,60)";
 				$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 				$NEXTKEYID++;
 				$NEXTID++;
@@ -805,12 +805,12 @@ function convert_pic($style,$ID,$report_id){
 			}
 			$pic_source = $umgvar["uploadpfad"]."report/".$picorgname;
 			# ----- Konvertiern in JPEG/PNG/GIF --------
-			$cmd = $umgvar[imagemagick]."/convert ".$umgvar[imagemagicklimit]." -quality ".$pic_compress." -resize x".$width." -strip ".$pic_source." ".$umgvar["pfad"]."/TEMP/thumpnails/report/".$picname;
+			$cmd = $umgvar['imagemagick']."/convert ".$umgvar['imagemagicklimit']." -quality ".$pic_compress." -resize x".$width." -strip ".$pic_source." ".$umgvar["pfad"]."/TEMP/thumpnails/report/".$picname;
 			system($cmd,$out);
 			# --- Bild neu berechnen ---
 		}elseif($pic_style[0] == 'renew'){
-			$pic_source = $umgvar[uploadpfad]."report/".$picorgname;
-			$cmd = $umgvar[imagemagick]."/convert -quality 100 ".$umgvar[imagemagicklimit]." -geometry ".$width."x".$height."! -strip ".$pic_source." ".$umgvar["pfad"]."/TEMP/thumpnails/report/".$picname;
+			$pic_source = $umgvar['uploadpfad']."report/".$picorgname;
+			$cmd = $umgvar['imagemagick']."/convert -quality 100 ".$umgvar['imagemagicklimit']." -geometry ".$width."x".$height."! -strip ".$pic_source." ".$umgvar["pfad"]."/TEMP/thumpnails/report/".$picname;
 			system($cmd,$out);
 			# --- einzelnen style berechnen ----
 			foreach ($oldstyle as $stkey => $stval){
@@ -825,7 +825,7 @@ function convert_pic($style,$ID,$report_id){
 				$pic_source = $umgvar["pfad"]."/TEMP/thumpnails/report/".$picname;
 				# --- Bild aus Orginal berechnen ---
 			}else{
-				$pic_source = $umgvar[uploadpfad]."report/".$picorgname;
+				$pic_source = $umgvar['uploadpfad']."report/".$picorgname;
 			}
 
 			# --- Bildgröße vertauschen ---
@@ -837,7 +837,7 @@ function convert_pic($style,$ID,$report_id){
 			}
 
 			unset($out);
-			$cmd = $umgvar[imagemagick]."/convert -quality 100 ".$umgvar[imagemagicklimit]." ".$pic_style[0]." ".$pic_style[1]." -geometry ".$width."x".$height."! -strip ".$pic_source." ".$umgvar[pfad]."/TEMP/thumpnails/report/".$picname;
+			$cmd = $umgvar['imagemagick']."/convert -quality 100 ".$umgvar['imagemagicklimit']." ".$pic_style[0]." ".$pic_style[1]." -geometry ".$width."x".$height."! -strip ".$pic_source." ".$umgvar['pfad']."/TEMP/thumpnails/report/".$picname;
 			system($cmd,$out);
 
 
@@ -928,7 +928,7 @@ function setNewZindex($report,$report_id){
 	/*----------------- Element-Schleife -------------------*/
 	$bzm = 1;
 	foreach ($report["id"] as $key => $value){
-		if(!$report[tab_el_col][$key] AND !$report[tab_el_row][$key]){
+		if(!$report['tab_el_col'][$key] AND !$report['tab_el_row'][$key]){
 			# --- Index neu setzen ----
 			$sqlquery = "UPDATE LMB_REPORTS SET Z_INDEX = ".$bzm." WHERE EL_ID = ".$value." AND BERICHT_ID = $report_id";
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS["action"],__FILE__,__LINE__);

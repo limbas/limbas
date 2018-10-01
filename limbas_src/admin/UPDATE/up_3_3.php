@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2017 Limbas GmbH (info@limbas.com)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,6 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.5
  */
 
 /*
@@ -29,7 +30,7 @@ patch_db(1,3,$sqlquery,"adding table LMB_REVISION",3);
 $sqlquery = "CREATE TABLE LMB_SYNC_SLAVES (ID SMALLINT NOT NULL, ERSTUSER SMALLINT, ERSTDATUM ".LMB_DBTYPE_TIMESTAMP." DEFAULT ".LMB_DBDEF_TIMESTAMP.", NAME VARCHAR(50), SLAVE_URL VARCHAR(100), SLAVE_USERNAME VARCHAR(20), SLAVE_PASS VARCHAR(20) , PRIMARY KEY (ID))";
 patch_db(2,3,$sqlquery,"adding table LMB_SYNC_SLAVES",3);
 
-$sqlquery = "CREATE TABLE LMB_SYNC_CACHE (ID ".LMB_DBTYPE_FIXED."(16), TABID SMALLINT, FIELDID SMALLINT, DATID ".LMB_DBTYPE_FIXED."(16), SLAVE_ID SMALLINT, SLAVE_DATID ".LMB_DBTYPE_FIXED."(16) , TYPE ".LMB_DBTYPE_FIXED."(1), ERSTDATUM ".LMB_DBTYPE_TIMESTAMP." DEFAULT ".LMB_DBDEF_TIMESTAMP." , PRIMARY KEY (ID))";
+$sqlquery = "CREATE TABLE LMB_SYNC_CACHE (TABID SMALLINT, FIELDID SMALLINT, DATID ".LMB_DBTYPE_FIXED."(16), SLAVE_ID SMALLINT, SLAVE_DATID ".LMB_DBTYPE_FIXED."(16) , TYPE ".LMB_DBTYPE_FIXED."(1), ERSTDATUM ".LMB_DBTYPE_TIMESTAMP." DEFAULT ".LMB_DBDEF_TIMESTAMP.")";
 patch_db(3,3,$sqlquery,"adding table LMB_SYNC_CACHE",3);
 
 $sqlquery = "CREATE TABLE LMB_SYNC_CONF (ID SMALLINT NOT NULL, TEMPLATE SMALLINT, TABID SMALLINT, FIELDID SMALLINT, MASTER ".LMB_DBTYPE_BOOLEAN.", SLAVE ".LMB_DBTYPE_BOOLEAN.", PRIMARY KEY (ID))";
@@ -62,7 +63,7 @@ $sqlquery = "INSERT INTO LMB_UMGVAR VALUES($nid,155,'sync_port','9004','php sock
 patch_db(12,3,$sqlquery,"update umgvar",3);
 
 $nid = next_db_id("lmb_umgvar","ID");
-$sqlquery = "INSERT INTO LMB_UMGVAR VALUES($nid,156,'sync_method','socket','ynchronization method (socket / soap)',2818)";
+$sqlquery = "INSERT INTO LMB_UMGVAR VALUES($nid,156,'sync_method','socket','synchronization method (socket / soap)',2818)";
 patch_db(13,3,$sqlquery,"update umgvar",3);
 
 $nid = next_db_id("lmb_umgvar","ID");
@@ -79,7 +80,8 @@ patch_db(16,3,$sqlquery,"adding primary key to lmb_lang",3);
 
 
 
-lmb_rebuildSequences();
 echo "-->";
-$impsystables = array("lmb_lang.tar.gz","lmb_action.tar.gz","lmb_field_types.tar.gz");
+lmb_rebuildSequences();
+#$impsystables = array("lmb_lang.tar.gz","lmb_action.tar.gz","lmb_field_types.tar.gz");
+
 ?>

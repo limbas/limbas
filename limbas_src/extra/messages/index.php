@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -19,14 +19,16 @@
  */
 
 /* -- configuration is done there ----------------------------------------- */
-require('config.php');
+global $gtabid;
+require_once('config.php');
+$imap_cfg = lmb_getImapCfg($gtabid);
 
 $gui_style =     (int) __default($imap_cfg, 'gui_style', 0);
 $gui_behaviour = (int) __default($imap_cfg, 'gui_behaviour', 0);
 
 /* -- there are absolutely no configurable parts below this line ---------- */
 if (MAILER_DEBUG)
-	ob_end_clean();
+	ob_end_clean(); // TODO this is why no main_header is shown. Disabling debug causes layout to be distorted
 
 #header("Content-Type: text/html; charset=UTF-8"); /* mandatory */
 	
@@ -164,7 +166,7 @@ if (((bool)__default($_GET, 'folders', false)) || $mbox){
 					/* hide mail from list */
 					echo <<<EOD
 <script language="javascript" type="text/javascript">
-$('$uid').style.display = 'none';
+document.getElementById('$uid').style.display = 'none';
 </script>
 EOD;
 				} else
@@ -220,7 +222,7 @@ EOD;
 						echo <<<EOD
 Nachricht wurde gelöscht.
 <script language="javascript" type="text/javascript">
-$('$del_uid').style.display = 'none';
+document.getElementById('$del_uid').style.display = 'none';
 </script>
 EOD;
 				} else
@@ -250,7 +252,7 @@ try {
 	var _del_range = '$del_range';
 	var _del_uids = _del_range.split(",");
 	for (var idx=0; idx < _del_uids.length; idx++)
-		$(_del_uids[idx]).style.display = 'none';
+		document.getElementById(_del_uids[idx]).style.display = 'none';
 } catch(e) {}
 //--></script>
 EOD;
@@ -380,7 +382,7 @@ if ((bool)__default($_GET, 'compose', false)){
 	flush();
 
 	$ret = mail($toaddr, $util->quote_utf8($subject), $body, $mail_headers);
-	
+
 	/* save a copy of the message if sent successfully. */
 	if ($ret){
 		$tpl_status->output(array(
@@ -388,7 +390,7 @@ if ((bool)__default($_GET, 'compose', false)){
 			"image" => "wait.gif"));
 		ob_flush();
 		flush();
-		$saved_uid = $mail->savemail("INBOX.Sent",
+		$saved_uid = $mail->savemail("Sent",
 			$mail_headers."To: {$toaddr}\nSubject: ".
 			$util->quote_utf8($subject)."\n", $body);
 	}

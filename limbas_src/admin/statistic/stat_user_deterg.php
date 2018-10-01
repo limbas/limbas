@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -23,9 +23,9 @@
 <TABLE BORDER="0" cellspacing="1" cellpadding="1">
 <TR><TD COLSPAN="99">&nbsp;</TD></TR>
 
-<TR><TD COLSPAN="99" HEIGHT="20" STYLE="color:blue;"><B><?echo $user;?></B></TD></TR>
+<TR><TD COLSPAN="99" HEIGHT="20" STYLE="color:blue;"><B><?= $user ?></B></TD></TR>
 
-<TR BGCOLOR="<?echo $farbschema[WEB6];?>">
+<TR BGCOLOR="<?= $farbschema['WEB3'] ?>">
 <TD><B>Nr&nbsp;&nbsp;</B></TD>
 <TD><B>Login&nbsp;&nbsp;</B></TD>
 <TD><B>Logout&nbsp;&nbsp;</B></TD>
@@ -35,7 +35,7 @@
 </TR>
 
 
-<?
+<?php
 if(convert_date($diag_von)){$where = "AND LOGIN_DATE >= '".convert_date($diag_von)."'";}
 if(convert_date($diag_bis)){$where .= " AND LOGIN_DATE <= '".convert_date($diag_bis)."'";}
 
@@ -43,7 +43,7 @@ $sqlquery =  "SELECT DISTINCT ID,LOGIN_DATE, UPDATE_DATE, IP, HOST, TIMEDIFF(LOG
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 $bzm = 1;
 while(odbc_fetch_row($rs, $bzm)) {
-        if($BGCOLOR == $farbschema[WEB7]){$BGCOLOR = $farbschema[WEB8];} else {$BGCOLOR = $farbschema[WEB7];}
+        if($BGCOLOR == $farbschema['WEB7']){$BGCOLOR = $farbschema['WEB8'];} else {$BGCOLOR = $farbschema['WEB7'];}
         echo "<TR BGCOLOR=\"$BGCOLOR\">";
         echo"<TD>$bzm</TD>";
         echo"<TD>".get_date(odbc_result($rs,"LOGIN_DATE"),2)."&nbsp;&nbsp;</TD>";

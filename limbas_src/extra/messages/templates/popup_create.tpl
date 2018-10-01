@@ -9,7 +9,7 @@
 </form>
 
 <script language="javascript" type="text/javascript">//<!--
-	$('folder_create').focus();
+	document.getElementById('folder_create').focus();
 //--></script>
 
 <!-- [/folder_create.tpl] -->

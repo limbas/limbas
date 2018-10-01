@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,12 +11,13 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
  * ID: 41
  */
+
 
 /**
  * set global variables from session
@@ -49,6 +50,38 @@ function save_sessionvars($globvars){
 	foreach ($globvars as $key => $gvar) {
 		$_SESSION[$gvar] = $GLOBALS[$gvar];
 	}
+}
+
+/**
+ * get Client IP
+ *
+ */
+function lmb_getIpAddr(){
+    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
+      $ip=$_SERVER['HTTP_CLIENT_IP'];
+    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
+      $ip=$_SERVER['HTTP_X_FORWARDED_FOR'];
+    } else {
+      $ip=$_SERVER['REMOTE_ADDR'];
+    }
+
+    return $ip;
+}
+
+/**
+ * set basic auth header
+ *
+ */
+function lmb_basicauth(){
+    global $db;
+
+    # --- basic auth ----------------------------------------------
+    Header("HTTP/1.1 401 Authorization required");
+    Header('WWW-Authenticate: Basic realm="'.$GLOBALS['auth_realm'].'"');
+    if ($db) {odbc_close($db);}
+
+	die ("<html><BODY BGCOLOR=\"#FFFFFF\"><CENTER><FONT FACE=\"Arial,Helvetica\"><FONT SIZE=\"2\"><BR><IMG SRC=\"pic/logo_business.gif\" BORDER=\"0\"><BR><BR><U><FONT COLOR=\"red\">Permission denied!</U></font></font></CENTER></body></html>");
+
 }
 
 
@@ -110,28 +143,31 @@ function read_dir($path,$rec=null,&$arr=array()){
 }
 
 
-function lmb_alert($add_alert){
-	global $alert;
-	global $action;
-	global $umgvar;
-	global $session;
-	
-	if($umgvar['debug_messages']){
-		$logpath = $umgvar["pfad"]."/TEMP/log/messages.log";
-		$value = date("Y-m-d H:i:s")."\t".$session["username"]."\t".$action."\t".str_replace("\\n"," ",lmb_utf8_encode($add_alert))."\n";
-		$rf = fopen($logpath,"a");
-		fputs($rf,$value);
-		fclose($rf);
-	}
+function lmb_alert($add_alert, $isError=false){
+    global $alert;
+    global $action;
+    global $umgvar;
+    global $session;
+    global $lang;
 
-	if($alert){
-		if(!is_array($alert)){$alert = array($alert);}
-		array_unique($GLOBALS["alert"]);
-	}else{
-		$alert = array();
-	}
-	$GLOBALS["alert"][] = str_replace(chr(10),'\n',str_replace('\'',' ',$add_alert));
+    if($umgvar['debug_messages']){
+        $logpath = $umgvar["pfad"]."/TEMP/log/messages.log";
+        $value = date("Y-m-d H:i:s")."\t".$session["username"]."\t".$action."\t".str_replace("\\n"," ",lmb_utf8_encode($add_alert))."\n";
+        $rf = fopen($logpath,"a");
+        fputs($rf,$value);
+        fclose($rf);
+    }
 
+    if (!$alert) {
+        $alert = array();
+    } else if (!is_array($alert)) {
+        $alert = array($alert);
+    }
+    if ($isError) {
+        $alert[] = $lang[56];
+    }
+    $alert = array_unique($alert);
+    $alert[] = str_replace(chr(10), '\n', str_replace('\'', ' ', $add_alert));
 }
 
 
@@ -527,11 +563,11 @@ function lmb_error_log($source,$error,&$verbose=null,$alert=null){
 /**
  * limbas sql error reporting
  *
- * @param unknown_type $FEHLER
- * @param unknown_type $QUERY
- * @param unknown_type $ACTION
- * @param unknown_type $FILE
- * @param unknown_type $LINE
+ * @param string $FEHLER
+ * @param string $QUERY
+ * @param string $ACTION
+ * @param string $FILE
+ * @param int $LINE
  */
 function errorhandle($FEHLER,$QUERY,$ACTION,$FILE,$LINE){
 	global $db;
@@ -903,7 +939,7 @@ function lhist($lhist){
 		# --- History-Eintrag (history_action) ---------
 		$actionid = history_action($lhist["gtabid"][$key][0],$lhist["datid"][$key][0],$key,$lhist["level"][$key][0]);
 		if($actionid){
-			foreach($lhist[val][$key] as $key1 => $value1){
+			foreach($lhist['val'][$key] as $key1 => $value1){
 				$com = history_update($lhist["gtabid"][$key][0],$lhist["fieldid"][$key][0],$lhist["datid"][$key][0],$actionid,$value1,0);
 			}
 		}
@@ -1024,10 +1060,10 @@ function history_update($tabid,$fieldid,$datid,$actionid,$value,$oldvalue){
 		$guid = lmb_substr($value,1,6);
 		if(lmb_substr($value,0,1) == "u"){
 			$guname = "U:".$userdat["bezeichnung"][$guid];
-			$value = $userdat[bezeichnung][$guid];
+			$value = $userdat['bezeichnung'][$guid];
 		}elseif(lmb_substr($value,0,1) == "g"){
 			$guname = "G:".$groupdat["beschreibung"][$guid];
-			$value = $groupdat[name][$guid];
+			$value = $groupdat['name'][$guid];
 		}
 	}elseif(is_array($value) AND ($data_typ == 31 OR $data_typ == 32 OR $data_typ == 18)){
 		$value_ = array();
@@ -1053,9 +1089,11 @@ function history_update($tabid,$fieldid,$datid,$actionid,$value,$oldvalue){
 	$value = parse_db_string($value,990);
 	$sqlquery1 = "INSERT INTO LMB_HISTORY_UPDATE (ID,USERID,TAB,DATAID,FIELD,FIELDVALUE,ACTION_ID,LWF_ID,LWF_PRID,LWF_INID) VALUES ($NEXTID,".$session["user_id"].",".parse_db_int($tabid,5).",".parse_db_int($datid,18).",".parse_db_int($fieldid,5).",'".$value."',".parse_db_int($actionid,16).",".parse_db_int($lwf_id,2).",".parse_db_int($lwf_prid,2).",".parse_db_int($lwf_inid,16).")";
 	$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
-	if(!$rs1) {$commit = 1;}
+	if(!$rs1) {return false;}
 
-	return $commit;
+	return true;
+
+
 }
 
 
@@ -1143,7 +1181,7 @@ function tableDiff($target1,$target2,$name=null,$vcount1=null,$vcount2=null,$for
 				        $out .= "<TR><TD STYLE=\"border:1px solid #CCCCCC\">".textDiff($value_[0],$value_[1])."</td></tr>";
 				    }
 				}else{
-				    if($vcount1){$out .= "<TR BGCOLOR=\"$farbschema[WEB7]\"><TD STYLE=\"border:1px solid #CCCCCC;color:blue;\">$lang[1784] <B>$vcount2</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD STYLE=\"border:1px solid #CCCCCC;color:blue;\">$lang[1784] <B>$vcount1</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD></tr>";}
+				    if($vcount1){$out .= "<TR BGCOLOR=\"{$farbschema['WEB7']}\"><TD STYLE=\"border:1px solid #CCCCCC;color:blue;\">$lang[1784] <B>$vcount2</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD STYLE=\"border:1px solid #CCCCCC;color:blue;\">$lang[1784] <B>$vcount1</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD></tr>";}
 				    $out .= "<TR><TD STYLE=\"border:1px solid #CCCCCC\">".htmlentities($value_[0],ENT_QUOTES,$umgvar["charset"])."</TD><TD STYLE=\"border:1px solid #CCCCCC\">".htmlentities($value_[1])."</td></tr>";
 				}
 				
@@ -1910,6 +1948,9 @@ function lmb_EndTransaction($success,$message=null){
 # simple odbc tablelist
 function ODBCResourceToHTML($res, $sTable, $sRow, $numrows=100){
 	$cFields = odbc_num_fields($res);
+	if ($cFields == 0) {
+	    return '';
+    }
 	$strTable = "<table $sTable ><tr><td>nr</td>";
 	for ($n=1; $n<=$cFields; $n++){
 		$strTable .= "<td $sRow><b>". str_replace("_", " ", odbc_field_name($res, $n)) . "</b></td>";
@@ -2269,6 +2310,103 @@ function lmb_ajaxProgresStatus($total,$progress){
 
 }
 
+/**
+ * Checks for update if auto-update-check is enabled in umgvar (or manualUpdate is set to true)
+ * Returns:
+ *  - false on error
+ *  - true if current version is latest version
+ *  - latest version (e.g. "3.5") else
+ * @param bool $manualUpdate ignores umgvar auto-check setting if set to true
+ * @return bool|string
+ */
+function lmbCheckForUpdates($manualUpdate = false) {
+    global $session;
+    global $umgvar;
+    global $db;
+
+    # user is admin & auto-check for updates enabled
+    if (!$manualUpdate AND ($session['user_id'] != 1 OR !$umgvar['update_check'])) {
+        return false;
+    }
+
+    # return cached version
+    if (!$manualUpdate AND isset($session['latestVersion'])) {
+        return $session['latestVersion'];
+    }
+
+    # current version
+    list ($currentMajor, $currentMinor, /* ignored */) = explode('.', $umgvar['version'], 3);
+
+    # get latest version
+    $context = stream_context_create(array('http' => array('timeout' => 2)));
+    $latestVersion = @file_get_contents("http://www.limbas.org/version-{$currentMajor}-{$currentMinor}.html", false, $context);
+    if (!$latestVersion) {
+        if ($umgvar['update_check'] == 'auto') {
+            // probably no connection -> disable update_check
+            $sqlquery = "UPDATE LMB_UMGVAR SET NORM='0' WHERE FORM_NAME='update_check'";
+            $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+        }
+        $session['latestVersion'] = false;
+        return false;
+    }
+
+    list ($latestMajor, $latestMinor) = explode('.', $latestVersion);
+
+    # should only return x.y
+    if (!is_numeric($latestMajor) OR !is_numeric($latestMinor)) {
+        return false;
+    }
+
+    # version higher than currently installed?
+    if (($latestMajor > $currentMajor) OR (($latestMajor == $currentMajor) AND $latestMinor > $currentMinor)) {
+        $session['latestVersion'] = htmlentities($latestMajor . '.' . $latestMinor, ENT_QUOTES, $umgvar['charset']);
+    } else {
+        $session['latestVersion'] = true;
+    }
+    return $session['latestVersion'];
+}
+
+/**
+ * Prints a file on the specified printer
+ *
+ * @param $printerID int ID from LMB_PRINTER
+ * @param $file string full path to a file
+ * @return bool success
+ */
+function lmbPrint($printerID, $file) {
+    global $gprinter;
+    global $umgvar;
+
+    # check if printer in session
+    if (!array_key_exists($printerID, $gprinter)) {
+        lmb_log::error("Printer $printerID not valid!");
+        return false;
+    }
+
+    # check if file exists
+    if (!file_exists($file)) {
+        lmb_log::error("File does not exist!");
+        return false;
+    }
+
+    # no config?
+    $config = $gprinter[$printerID]['config'];
+    if (!$config) {
+        $config = '';
+    }
+
+    # print
+    exec('lp ' . strval($umgvar['lp_params']) . " -d {$gprinter[$printerID]['sysName']} {$config} '$file'", $outputLines, $exitCode);
+
+    # handle errors
+    if ($exitCode != 0) {
+        lmb_log::error("Could not print on printer {$printerID}: Exit code {$exitCode}, Output: " . print_r($outputLines, true));
+        return false;
+    }
+
+    return true;
+}
+
 class lmb_log
 {
     /**
@@ -2294,12 +2432,12 @@ class lmb_log
      * @param number    $fieldid        Id of current field
      * @param number    $datid          Id of current dataset
      */
-    public static function error($errorMessage, $userMessage=null, $tabid=null, $fieldid=null, $datid=null)
-    {
+    public static function error($errorMessage, $userMessage=null, $tabid=null, $fieldid=null, $datid=null) {
         global $session;
         global $lang;
         global $gtab;
         global $gfield;
+        global $umgvar;
 
         // collect log messages as array
         self::$log[] = array(
@@ -2311,33 +2449,35 @@ class lmb_log
 
         // error log
         if ($session['debug']) {
-            $debug = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS);
-            error_log(/*local_date(0) .*/"$errorMessage (tabid: $tabid, fieldid: $fieldid, datid: $datid)\n##### debug trace #####\n".print_r($debug,1));
+            try {
+                throw new Exception();
+            } catch (Exception $e) {
+                $trace = str_replace(str_replace("/dependent", "", rtrim($umgvar['path'], "/")), "", $e->getTraceAsString());
+                error_log(/*local_date(0) .*/"$errorMessage (tabid: $tabid, fieldid: $fieldid, datid: $datid), at:\n$trace");
+            }
         }
 
         // user alert
         if ($userMessage AND IS_SOAP !== true AND IS_CRON !== true) {
-            // error message
-            $userMessage = $lang[56] . "\n" . $userMessage;
-
             // add table name
             if ($tabid) {
-                if(is_numeric($tabid)){$tabid = $gtab['table'][$tabid];}
-                $userMessage .= "\n - " . $lang[164] . ":\t\t" . $tabid;                
-            
-                // add field name
-                if ($fieldid) {
-                    if(is_numeric($fieldid)){$fieldid = $gfield[$tabid]['spelling'][$fieldid];}
-                    $userMessage .= "\n - " . $lang[168] . ":\t\t" . $fieldid;
+                if(is_numeric($tabid)) {
+                    $tabname = $gtab['table'][$tabid];
+                    $userMessage .= "\n - " . $lang[164] . ":\t\t" . $tabname;
+                }
+                if(is_numeric($fieldid)) {
+                    $fieldname = $gfield[$tabid]['spelling'][$fieldid];
+                    $userMessage .= "\n - " . $lang[168] . ":\t\t" . $fieldname;
                 }
               
                 // add datid
                 if ($datid) {
                     $userMessage .= "\n - " . $lang[722] . "\t" . $datid;
                 }
-            }            
+                $userMessage .= "\n";
+            }
               
-            lmb_alert($userMessage);
+            lmb_alert($userMessage,true);
         }
     }
 
@@ -2380,6 +2520,20 @@ class lmb_log
         self::$log = array();
     }
 
+}
+
+/**
+ * Helper for defining getters whose value should be cached in the session
+ * @param string $key the key under which the value should be stored -> $session[$key]
+ * @param callable $getter returns the value which is stored in the session
+ * @return mixed the cached value
+ */
+function cachedSessionProperty($key, $getter) {
+    global $session;
+    if (!array_key_exists($key, $session)) {
+        $session[$key] = $getter();
+    }
+    return $session[$key];
 }
 
 ?>

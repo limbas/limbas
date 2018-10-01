@@ -1,4 +1,13 @@
 
+<?php
+if(stripos($setup_encoding,'UTF') !== false){
+    $setup_charset = 'UTF-8';
+    $charset_disabled_1 = 'disabled';
+}elseif($setup_encoding){
+    $charset_disabled_2 = 'disabled';
+}
+?>
+
 <table class="table table-condensed">
     <thead>
         <tr>
@@ -26,12 +35,21 @@
         </tr>
         <tr><td style="vertical-align: middle;">Charset:</td>
             <td><select class="form-control input-sm " name="setup_charset">
-                    <option value="ISO-8859-1" <?= $setup_charset == 'ISO-8859-1' ? 'selected' : ''?>>LATIN1</option>
-                    <option value="UTF-8" <?= $setup_charset == 'UTF-8' ? 'selected' : ''?>>UTF-8</option>
+                    <option value="ISO-8859-1" <?=$charset_disabled_1?> <?= $setup_charset == 'ISO-8859-1' ? 'selected' : ''?>>LATIN1</option>
+                    <option value="UTF-8" <?=$charset_disabled_2?> <?= $setup_charset == 'UTF-8' ? 'selected' : ''?>>UTF-8</option>
                 </select>
             </td>
         </tr>
-        <tr><td>Company:</td><td><input type="text" class="form-control input-sm " autocomplete="off" value="<?= $setup_company ? $setup_company : 'your company' ?>" name="setup_company" size="50"></td></tr>
+        <tr><td style="vertical-align: middle;">Color Scheme:</td>
+            <td><select class="form-control input-sm " name="setup_color_scheme">
+                    <option value="2" <?= $setup_color_scheme == '2' ? 'selected' : ''?>>Default</option>
+                    <option value="3" <?= $setup_color_scheme == '3' ? 'selected' : ''?>>Dark</option>
+                </select>
+            </td>
+        </tr>
+        <tr><td style="vertical-align: middle;">Company:</td>
+            <td><input type="text" class="form-control input-sm " autocomplete="off" value="<?= $setup_company ? $setup_company : 'your company' ?>" name="setup_company" size="50"></td>
+        </tr>
     </tbody>
 </table>
 

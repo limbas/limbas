@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -261,8 +261,8 @@ class pdf_report extends HTML2FPDF {
 
 		# font-color ----------------------------
 		if($style[9]){
-			$par[c] = $this->make_color($style[9]);
-			$this->SetTextColor($par[c][0],$par[c][1],$par[c][2]);
+			$par['c'] = $this->make_color($style[9]);
+			$this->SetTextColor($par['c'][0],$par['c'][1],$par['c'][2]);
 		}else{$this->SetTextColor(0,0,0);}
 
 
@@ -283,32 +283,32 @@ class pdf_report extends HTML2FPDF {
 
 		# fill-color ----------------------------
 		if($style[21] AND $style[21] != 'transparent'){
-			$par[c] = $this->make_color($style[21]);
-			$this->SetFillColor($par[c][0],$par[c][1],$par[c][2]);
-			$par[f] = 1;
-			$par[rf] = 'F';
+			$par['c'] = $this->make_color($style[21]);
+			$this->SetFillColor($par['c'][0],$par['c'][1],$par['c'][2]);
+			$par['f'] = 1;
+			$par['rf'] = 'F';
 		}else{
-			$par[f] = 0;
-			$par[rf] = '';
+			$par['f'] = 0;
+			$par['rf'] = '';
 			$this->FillColor = null;
 		}
 
 		# border-color ----------------------------
 		if($style[15]){
-			$par[c] = $this->make_color($style[15]);
-			$this->SetDrawColor($par[c][0],$par[c][1],$par[c][2]);
+			$par['c'] = $this->make_color($style[15]);
+			$this->SetDrawColor($par['c'][0],$par['c'][1],$par['c'][2]);
 		}
 
 		# border-width ----------------------------
 		if($style[16]){$this->SetLineWidth($style[16]);}
 
 		# border ----------------------------
-		$par[b] = $this->GetBorderType($style);
+		$par['b'] = $this->GetBorderType($style);
 
-		if(!$par[b]){
-			$par[b] = 0;
-			$par[rd] = '';
-		}else{$par[rd] = 'D';}
+		if(!$par['b']){
+			$par['b'] = 0;
+			$par['rd'] = '';
+		}else{$par['rd'] = 'D';}
 
 		# font-transform ----------------------------
 		if($style[8] == 'uppercase'){$val = lmb_strtoupper($val);}
@@ -321,14 +321,14 @@ class pdf_report extends HTML2FPDF {
 		#if($x AND $y){$this->SetXY($x,$y);}
 
 		# height ----------------------------
-		if($style[11]){$par[h] = intval($style[11]);}else{$par[h] = $style[3] + 3;}
+		if($style[11]){$par['h'] = intval($style[11]);}else{$par['h'] = $style[3] + 3;}
 
 		# align ----------------------------
 		if($style[12]){
-			$par[a] = $this->GetFontAlign($style[12]);
+			$par['a'] = $this->GetFontAlign($style[12]);
 		}
 
-		$out = array($x,$y,$w,$h,$par["h"],$val,$par[b],$par[a],$par[f],$typ,$style,$par[rf],$par[rd]);
+		$out = array($x,$y,$w,$h,$par["h"],$val,$par['b'],$par['a'],$par['f'],$typ,$style,$par['rf'],$par['rd']);
 		return $out;
 
 	}
@@ -372,7 +372,8 @@ class pdf_report extends HTML2FPDF {
 				}
 			}
 			# picture ----------------------------
-			$pityp = lmb_substr($par[5],(lmb_strlen($par[5])-3),3);
+//			$pityp = lmb_substr($par[5],(lmb_strlen($par[5])-3),3);
+            $pityp = pathinfo($par[5], PATHINFO_EXTENSION);
 			$this->Image($par[5],$par[0],$par[1],$par[2],$par[3],$pityp);
 			# Hintergrund-Rechteck ----------------------------
 			if(!$par[2] OR !$par[3]){

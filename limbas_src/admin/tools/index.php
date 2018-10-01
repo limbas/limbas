@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -148,9 +148,9 @@ if($ind_sort == "name"){
 }
 
 echo "<TR class=\"tabHeader\">
-<TD class=\"tabHeaderItem\"><a href=\"#\" onclick=\"ind_sort('name')\">$lang[2726]</a></TD>
-<TD class=\"tabHeaderItem\"><a href=\"#\" onclick=\"ind_sort('table')\">$lang[1852]</a></TD>
-<TD class=\"tabHeaderItem\"><a href=\"#\" onclick=\"ind_sort('column')\">$lang[1859]</a></TD>
+<TD class=\"tabHeaderItem\"><a href=\"#\" onclick=\"ind_sort('name')\">$lang[4]</a></TD>
+<TD class=\"tabHeaderItem\"><a href=\"#\" onclick=\"ind_sort('table')\">$lang[164]</a></TD>
+<TD class=\"tabHeaderItem\"><a href=\"#\" onclick=\"ind_sort('column')\">$lang[168]</a></TD>
 <TD align=\"center\" class=\"tabHeaderItem\"><a href=\"#\" onclick=\"ind_sort('unique')\">unique</a></TD>
 <TD align=\"center\" class=\"tabHeaderItem\"><a href=\"#\" onclick=\"ind_sort('used')\">$lang[1856]</a></TD>
 <TD align=\"center\"><input style=\"margin:0px\" type=\"checkbox\" onclick=\"checkall(this)\"></TD>
@@ -173,7 +173,7 @@ if($ind["name"]){
 			</TR>";
 	}
 	echo "<TR><TD COLSPAN=\"9\" class=\"tabFooter\">&nbsp;</TD></TR>";
-	echo "<TR><TD colspan=\"6\"><hr><input type=\"submit\" value=\"".$lang[1858]."\" name=\"rebuild\">&nbsp;&nbsp;&nbsp;<input type=\"submit\" value=\"".$lang[2730]."\" name=\"delete\"></TD></TR>";
+	echo "<TR><TD colspan=\"6\"><hr><input type=\"submit\" value=\"".$lang[1858]."\" name=\"rebuild\">&nbsp;&nbsp;&nbsp;<input type=\"submit\" value=\"".$lang[160]."\" name=\"delete\"></TD></TR>";
 }
 
 echo "</TABLE>";
@@ -183,7 +183,7 @@ echo "</TABLE>";
 
 /* -------- foreign keys --------*/
 echo "<TABLE ID=\"tab2\" width=\"100%\" cellspacing=\"0\" cellpadding=\"1\" class=\"tabBody\" style=\"display:none;\">";
-echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\">".$lang[2726]."</TD><TD class=\"tabHeaderItem\">".$lang[1852]."</TD><TD class=\"tabHeaderItem\">".$lang[1859]."</TD><TD class=\"tabHeaderItem\">".$lang[2727]."</TD><TD class=\"tabHeaderItem\">".$lang[2728]."</TD></TR>";
+echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\">".$lang[4]."</TD><TD class=\"tabHeaderItem\">".$lang[164]."</TD><TD class=\"tabHeaderItem\">".$lang[168]."</TD><TD class=\"tabHeaderItem\">".$lang[2727]."</TD><TD class=\"tabHeaderItem\">".$lang[2728]."</TD></TR>";
 
 # get foreign keys
 $fkey = lmb_getForeignKeys();
@@ -209,7 +209,7 @@ echo "</TABLE>";
 
 /* -------- primary keys --------*/
 echo "<TABLE ID=\"tab3\" width=\"100%\" cellspacing=\"0\" cellpadding=\"1\" class=\"tabBody\" style=\"display:none;\">";
-echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\">".$lang[2726]."</TD><TD class=\"tabHeaderItem\">".$lang[1852]."</TD><TD class=\"tabHeaderItem\">".$lang[1859]."</TD></TR>";
+echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\">".$lang[4]."</TD><TD class=\"tabHeaderItem\">".$lang[164]."</TD><TD class=\"tabHeaderItem\">".$lang[168]."</TD></TR>";
 
 # get primary keys
 $pkey = dbq_23(array($DBA["DBSCHEMA"]));
@@ -233,7 +233,7 @@ echo "</TABLE>";
 
 /* -------- unique constraints --------*/
 echo "<TABLE ID=\"tab4\" width=\"100%\" cellspacing=\"0\" cellpadding=\"1\" class=\"tabBody\" style=\"display:none;\">";
-echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\">".$lang[2726]."</TD><TD class=\"tabHeaderItem\">".$lang[1852]."</TD><TD class=\"tabHeaderItem\">".$lang[1859]."</TD></TR>";
+echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\">".$lang[4]."</TD><TD class=\"tabHeaderItem\">".$lang[164]."</TD><TD class=\"tabHeaderItem\">".$lang[168]."</TD></TR>";
 
 # get unique constraints
 $constr = dbq_26(array($DBA["DBSCHEMA"]));

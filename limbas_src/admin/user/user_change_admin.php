@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -46,7 +46,7 @@ function showCalendar(event,sell,fieldname,value) {
 }
 
 function delete_user(ID,USER){
-	del=confirm("<?=$lang[908]?> \"" + USER + "\" <?=$lang[909]?>?");
+	del=confirm("<?=$lang[908]?> \"" + USER + "\" <?=$lang[160]?>?");
 	if(del) {
 		document.form1.user_del.value=ID;
 		document.form1.action.value='setup_user_erg';
@@ -57,19 +57,19 @@ function delete_user(ID,USER){
 function gurefresh(DATA) {
         gu = confirm("<?=$lang[896]?>");
         if(gu) {
-                document.location.href="main_admin.php?<?=SID?>&action=setup_grusrref&user=<?=$ID?>&datarefresh=" + DATA + "";
+                document.location.href="main_admin.php?action=setup_grusrref&user=<?=$ID?>&datarefresh=" + DATA + "";
         }
 }
 function lrefresh() {
         link = confirm("<?=$lang[896]?>");
         if(link) {
-                document.location.href="main_admin.php?<?=SID?>&action=setup_linkref&user=<?=$ID?>";
+                document.location.href="main_admin.php?action=setup_linkref&user=<?=$ID?>";
         }
 }
 function srefresh() {
         link = confirm("<?=$lang[899]?>");
         if(link) {
-                document.location.href="main_admin.php?<?=SID?>&action=setup_user_change_admin&ID=<?=$ID?>&srefresh=1";
+                document.location.href="main_admin.php?action=setup_user_change_admin&ID=<?=$ID?>&srefresh=1";
         }
 }
 function createpass(){
@@ -93,11 +93,11 @@ function send(action) {
 }
 
 function newwin1(USERID) {
-	tracking = open("main_admin.php?<?=SID?>&action=setup_user_tracking&typ=1&userid=" + USERID ,"Tracking","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=600,height=600");
+	tracking = open("main_admin.php?action=setup_user_tracking&typ=1&userid=" + USERID ,"Tracking","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=600,height=600");
 }
 
 function newwin2(USERID) {
-	userstat = open("main.php?<?=SID?>&action=userstat&userstat=" + USERID ,"userstatistic","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=750,height=550");
+	userstat = open("main.php?action=userstat&userstat=" + USERID ,"userstatistic","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=750,height=550");
 }
 </SCRIPT>
 
@@ -106,8 +106,8 @@ function newwin2(USERID) {
 
 <FORM ENCTYPE="multipart/form-data" ACTION="main_admin.php" METHOD="post" NAME="form1">
 <input type="hidden" name="action" value="setup_user_change_admin">
-<input type="hidden" name="ID" value="<?echo $ID;?>">
-<input type="hidden" name="group_id" value="<?echo $result_user["group_id"];?>">
+<input type="hidden" name="ID" value="<?= $ID ?>">
+<input type="hidden" name="group_id" value="<?= $result_user["group_id"] ?>">
 <input type="hidden" name="user_change" value="1">
 <input type="hidden" name="user_del">
 <input type="hidden" name="fileview_change">
@@ -127,27 +127,27 @@ function newwin2(USERID) {
 <?php
 /* --- Ergebnis-Liste Adresseshauptabelle --------------------------------------- */
 echo "<TR class=\"tabHeader\"><TD COLSPAN=2 class=\"tabHeaderItem\">";
-if($result_user[lock]){echo "<i class=\"lmb-icon-cus lmb-user1-2\"></i>";}
-elseif($result_user[aktiv]){echo "<i class=\"lmb-icon lmb-user1-4\"></i>";}
+if($result_user['lock']){echo "<i class=\"lmb-icon-cus lmb-user1-2\"></i>";}
+elseif($result_user['aktiv']){echo "<i class=\"lmb-icon lmb-user1-4\"></i>";}
 else{echo "<i class=\"lmb-icon lmb-user1-1\"></i>";}
-echo "<B>$lang[607]</B></TD></TR>";
-echo "<TR class=\"tabBody\"><TD width=180>$lang[655]</TD><TD>".$result_user["erstdatum"]."</TD></TR>";
+echo "<B>$lang[140]</B></TD></TR>";
+echo "<TR class=\"tabBody\"><TD width=180>$lang[563]</TD><TD>".$result_user["erstdatum"]."</TD></TR>";
 echo "<TR class=\"tabBody\"><TD width=180>$lang[1792]</TD><TD>".$result_user["editdatum"]."</TD></TR>";
 echo "<TR class=\"tabBody\"><TD COLSPAN=\"2\"><HR></TD></TR>";
 
 echo "<TR class=\"tabBody\"><TD width=180>user-id</TD><TD>".$result_user["user_id"]."</TD></TR>";
-echo "<TR class=\"tabBody\"><TD width=180>$lang[608]</TD><TD><INPUT TYPE=TEXT STYLE=\"width:250px;\" name=\"userdata[username]\" STYLE=\"width:250px;\" VALUE=\"".$result_user["username"]."\" ";
+echo "<TR class=\"tabBody\"><TD width=180>$lang[519]</TD><TD><INPUT TYPE=TEXT STYLE=\"width:250px;\" name=\"userdata[username]\" STYLE=\"width:250px;\" VALUE=\"".$result_user["username"]."\" ";
 if($action != "setup_user_neu"){ echo "OnChange=\"alert('for change username, you need to set a password again!');\"";}
 echo "></TD></TR>";
 if($action == "setup_user_neu"){$pass = lmb_substr(md5(rand()),0,8);}
-echo "<TR class=\"tabBody\"><TD width=180>$lang[609]</TD><TD><INPUT TYPE=TEXT name=\"userdata[passwort]\" value=\"$pass\" STYLE=\"width:250px;\">&nbsp;<i class=\"lmb-icon lmb-lock-file\" STYLE=\"cursor:pointer\" OnClick=\"createpass();\"></i></TD></TR>";
-echo "<TR class=\"tabBody\"><TD width=180>$lang[610]</TD><TD><INPUT TYPE=TEXT name=\"userdata[vorname]\" STYLE=\"width:250px;\" VALUE=\"".$result_user["vorname"]."\"></TD></TR>";
-echo "<TR class=\"tabBody\"><TD width=180>$lang[611]</TD><TD><INPUT TYPE=TEXT name=\"userdata[name]\" STYLE=\"width:250px;\" VALUE=\"".$result_user["name"]."\"></TD></TR>";
+echo "<TR class=\"tabBody\"><TD width=180>$lang[141]</TD><TD><INPUT TYPE=TEXT name=\"userdata[passwort]\" value=\"$pass\" STYLE=\"width:250px;\">&nbsp;<i class=\"lmb-icon lmb-lock-file\" STYLE=\"cursor:pointer\" OnClick=\"createpass();\"></i></TD></TR>";
+echo "<TR class=\"tabBody\"><TD width=180>$lang[142]</TD><TD><INPUT TYPE=TEXT name=\"userdata[vorname]\" STYLE=\"width:250px;\" VALUE=\"".$result_user["vorname"]."\"></TD></TR>";
+echo "<TR class=\"tabBody\"><TD width=180>$lang[4]</TD><TD><INPUT TYPE=TEXT name=\"userdata[name]\" STYLE=\"width:250px;\" VALUE=\"".$result_user["name"]."\"></TD></TR>";
 echo "<TR class=\"tabBody\"><TD width=180>$lang[612]</TD><TD><INPUT TYPE=TEXT name=\"userdata[email]\" STYLE=\"width:250px;\" VALUE=\"".$result_user["email"]."\"></TD></TR>";
 echo "<TR class=\"tabBody\"><TD width=180>Tel</TD><TD><INPUT TYPE=TEXT name=\"userdata[tel]\" STYLE=\"width:250px;\" VALUE=\"".$result_user["tel"]."\"></TD></TR>";
 echo "<TR class=\"tabBody\"><TD width=180>Fax</TD><TD><INPUT TYPE=TEXT name=\"userdata[fax]\" STYLE=\"width:250px;\" VALUE=\"".$result_user["fax"]."\"></TD></TR>";
 echo "<TR class=\"tabBody\"><TD width=180>Position</TD><TD><INPUT TYPE=TEXT name=\"userdata[position]\" STYLE=\"width:250px;\" VALUE=\"".$result_user["position"]."\"></TD></TR>";
-echo "<TR class=\"tabBody\"><TD width=180 valign=\"top\">$lang[613]</TD><TD><TEXTAREA name=\"userdata[beschreibung]\" STYLE=\"width:250px;height:40px\">".htmlentities($result_user["beschreibung"],ENT_QUOTES,$umgvar["charset"])."</TEXTAREA></TD></TR>";
+echo "<TR class=\"tabBody\"><TD width=180 valign=\"top\">$lang[126]</TD><TD><TEXTAREA name=\"userdata[beschreibung]\" STYLE=\"width:250px;height:40px\">".htmlentities($result_user["beschreibung"],ENT_QUOTES,$umgvar["charset"])."</TEXTAREA></TD></TR>";
 
 if(!$result_user["group_id"] OR !$groupdat["name"][$result_user["group_id"]]){$needgroup = "style=\"color:red;\"";}
 echo "<TR class=\"tabBody\"><TD width=180 $needgroup>$lang[900]</TD><TD>";
@@ -186,12 +186,12 @@ echo "</TD></TR></TABLE>";
 echo "</TD></TR>";
 
 ?>
-<TR class="tabBody"><TD VALIGN="TOP"><?=$lang[903]?></TD><TD><TEXTAREA NAME="userdata[iprange]" STYLE="width:250px;height:50px"><?=$result_user[iprange]?></TEXTAREA></TD></TR>
+<TR class="tabBody"><TD VALIGN="TOP"><?=$lang[903]?></TD><TD><TEXTAREA NAME="userdata[iprange]" STYLE="width:250px;height:50px"><?=$result_user['iprange']?></TEXTAREA></TD></TR>
 
-<TR class="tabBody"><TD VALIGN="TOP">Farbkennung</TD><TD><input name="userdata[usercolor]" type="text" value="<?=$result_user["usercolor"]?>" style="background-color:#<?=$result_user["usercolor"]?>"></TD></TR>
+<TR class="tabBody"><TD VALIGN="TOP">Farbkennung</TD><TD><input name="userdata[usercolor]" type="text" value="<?=$result_user["usercolor"]?>" style="background-color:#<?=$result_user["usercolor"]?>; color:<?=lmbSuggestColor('#' . $result_user['usercolor'])?>"></TD></TR>
 
 <TR class="tabBody"><TD></TD><TD>
-<?if(file_exists("$umgvar[pfad]/USER/portrait/portrait_$ID.jpg")){?><IMG SRC="USER/portrait/portrait_<?=$ID?>.jpg" BORDER="1"><?}?>
+<?php if(file_exists($umgvar['pfad']."/USER/portrait/portrait_$ID.jpg")){?><IMG SRC="USER/portrait/portrait_<?=$ID?>.jpg" BORDER="1"><?php }?>
 <BR>
 </TD></TR>
 <?php
@@ -199,9 +199,9 @@ if(!$result_user["uploadsize"]){$result_user["uploadsize"] = $umgvar["default_ul
 if(!$result_user["maxresult"]){$result_user["maxresult"] = $umgvar["default_results"];}
 if(!$result_user["logging"]){$result_user["logging"] = $umgvar["default_loglevel"];}
 echo "<TR class=\"tabBody\"><TD COLSPAN=2 HEIGHT=20>&nbsp;</TD></TR>";
-echo "<TR class=\"tabHeader\"><TD COLSPAN=2 class=\"tabHeaderItem\"><B>$lang[614]</B></TD></TR>";
+echo "<TR class=\"tabHeader\"><TD COLSPAN=2 class=\"tabHeaderItem\"><B>$lang[146]</B></TD></TR>";
 echo "<TR class=\"tabBody\"><TD width=180>$lang[1817]</TD><TD><INPUT TYPE=TEXT name=\"userdata[validdate]\" STYLE=\"width:140px;\" VALUE=\"".$result_user["validdate"]."\" onclick=\"showCalendar(event,'diagv','userdata[validdate]',this.value)\"><span id=\"diagv\" style=\"position:absolute;\"></span></TD></TR>";
-echo "<TR class=\"tabBody\"><TD width=180>$lang[1300]</TD><TD><SELECT STYLE=\"width:140px;\" name=\"userdata[change_pass]\"><OPTION VALUE=TRUE "; if($result_user["change_pass"] == "1"){echo "SELECTED";} echo">$lang[867]<OPTION VALUE=FALSE ";  if(!$result_user[change_pass]){echo "SELECTED";} echo">$lang[866]</SELECT></TD></TR>";
+echo "<TR class=\"tabBody\"><TD width=180>$lang[1300]</TD><TD><SELECT STYLE=\"width:140px;\" name=\"userdata[change_pass]\"><OPTION VALUE=TRUE "; if($result_user["change_pass"] == "1"){echo "SELECTED";} echo">$lang[867]<OPTION VALUE=FALSE ";  if(!$result_user['change_pass']){echo "SELECTED";} echo">$lang[866]</SELECT></TD></TR>";
 echo "<TR class=\"tabBody\"><TD width=180>$lang[2262]</TD><TD><INPUT TYPE=TEXT name=\"userdata[gc_maxlifetime]\" STYLE=\"width:140px;\" VALUE=\"".$result_user["gc_maxlifetime"]."\">&nbsp;days</TD></TR>";
 echo "<TR class=\"tabBody\"><TD width=180>$lang[656]</TD><TD><SELECT TYPE=TEXT NAME=\"userdata[logging]\" STYLE=\"width:140px;\"><OPTION VALUE=\"0\" "; if(!$result_user["logging"]){echo "SELECTED";};echo ">$lang[1797]<OPTION VALUE=\"1\""; if($result_user["logging"] == 1){echo "SELECTED";}; echo ">$lang[1798]<OPTION VALUE=\"2\""; if($result_user["logging"] == 2){echo "SELECTED";}; echo ">$lang[1799]</SELECT>";
 
@@ -278,50 +278,50 @@ echo "<TR class=\"tabBody\"><TD colspan=\"2\"><hr></TD></TR>";
 
 echo "<TR class=\"tabBody\"><TD width=180>$lang[616]</TD><TD><INPUT TYPE=TEXT name=\"userdata[maxresult]\" STYLE=\"width:140px;\" VALUE=\"".$result_user["maxresult"]."\"></TD></TR>";
 echo "<TR class=\"tabBody\"><TD width=180>$lang[716]</TD><TD><INPUT TYPE=TEXT name=\"userdata[uploadsize]\" STYLE=\"width:140px;\" VALUE=\"".$result_user["uploadsize"]."\">&nbsp;Mbyte</TD></TR>";
-#echo "<TR class=\"tabBody\"><TD width=180>$lang[704]</TD><TD><SELECT STYLE=\"width:140px;\" name=\"userdata[data_display]\"><OPTION VALUE=1 "; if($result_user["data_display"] == "1"){echo "SELECTED";} echo">$lang[633]<OPTION VALUE=2 ";  if($result_user[data_display] == "2"){echo "SELECTED";} echo">$lang[632]</SELECT></TD></TR>";
+#echo "<TR class=\"tabBody\"><TD width=180>$lang[704]</TD><TD><SELECT STYLE=\"width:140px;\" name=\"userdata[data_display]\"><OPTION VALUE=1 "; if($result_user["data_display"] == "1"){echo "SELECTED";} echo">$lang[633]<OPTION VALUE=2 ";  if($result_user['data_display'] == "2"){echo "SELECTED";} echo">$lang[632]</SELECT></TD></TR>";
 
 echo "<TR class=\"tabBody\"><TD colspan=\"2\"><hr></TD></TR>";
 
 ?>
 
-<?if($ID){?>
-<?if($ID != 1){?>
-<TR class="tabBody"><TD VALIGN="TOP"><?=$lang[1781]?></TD><TD><TEXTAREA NAME="userdata[locktxt]" STYLE="width:250px;height:50px"><?=$result_user[locktxt]?></TEXTAREA></TD></TR>
-<?}?>
+<?php if($ID){?>
+<?php if($ID != 1){?>
+<TR class="tabBody"><TD VALIGN="TOP"><?=$lang[1781]?></TD><TD><TEXTAREA NAME="userdata[locktxt]" STYLE="width:250px;height:50px"><?=$result_user['locktxt']?></TEXTAREA></TD></TR>
+<?php }?>
 <TR class="tabBody"><TD COLSPAN=2 HEIGHT=20>&nbsp;</TD></TR>
 <TR class="tabHeader"><TD COLSPAN=2 class="tabHeaderItem"><B><?=$lang[1780]?></B></TD></TR>
-<?if($ID != 1){?>
-<TR class="tabBody"><TD><?=$lang[657]?></TD><TD ALIGN="LEFT"><INPUT TYPE="CHECKBOX" STYLE="border:none;background-color:transparent;" OnClick="document.form1.lock.value='1';" <?if($result_user[lock]){echo "CHECKED";}?>></TD></TR>
+<?php if($ID != 1){?>
+<TR class="tabBody"><TD><?=$lang[657]?></TD><TD ALIGN="LEFT"><INPUT TYPE="CHECKBOX" STYLE="border:none;background-color:transparent;" OnClick="document.form1.lock.value='1';" <?php if($result_user['lock']){echo "CHECKED";}?>></TD></TR>
 
 
-<?/*<TR class="tabBody"><TD><?=$lang[2239]?></TD><TD ALIGN="LEFT"><INPUT TYPE="CHECKBOX" STYLE="border:none;background-color:transparent;" OnClick="document.form1.lockbackend.value='1';" <?if($result_user[lockbackend]){echo "CHECKED";}?>></TD></TR>*/?>
+<?php /*<TR class="tabBody"><TD><?=$lang[2239]?></TD><TD ALIGN="LEFT"><INPUT TYPE="CHECKBOX" STYLE="border:none;background-color:transparent;" OnClick="document.form1.lockbackend.value='1';" <?php if($result_user['lockbackend']){echo "CHECKED";}?>></TD></TR>*/?>
 
 
-<?}?>
+<?php }?>
 
-<?if($session['superadmin'] AND $ID != 1){?><TR class="tabBody"><TD>Superadmin</TD><TD ALIGN="LEFT"><INPUT TYPE="CHECKBOX" STYLE="border:none;background-color:transparent;" OnClick="document.form1.superadmin.value='1';" <?if($result_user[superadmin]){echo "CHECKED";}?>></TD></TR><?}?>
-<TR class="tabBody"><TD><?=$lang[911]?></TD><TD ALIGN="LEFT"><INPUT TYPE="CHECKBOX" STYLE="border:none;background-color:transparent;" OnClick="document.form1.debug.value='1';" <?if($result_user[debug]){echo "CHECKED";}?>></TD></TR>
-<TR class="tabBody"><TD><?=$lang[2353]?></TD><TD ALIGN="LEFT"><INPUT TYPE="CHECKBOX" STYLE="border:none;background-color:transparent;" OnClick="document.form1.staticip.value='1';" <?if($result_user[staticip]){echo "CHECKED";}?>></TD></TR>
+<?php if($session['superadmin'] AND $ID != 1){?><TR class="tabBody"><TD>Superadmin</TD><TD ALIGN="LEFT"><INPUT TYPE="CHECKBOX" STYLE="border:none;background-color:transparent;" OnClick="document.form1.superadmin.value='1';" <?php if($result_user['superadmin']){echo "CHECKED";}?>></TD></TR><?php }?>
+<TR class="tabBody"><TD><?=$lang[911]?></TD><TD ALIGN="LEFT"><INPUT TYPE="CHECKBOX" STYLE="border:none;background-color:transparent;" OnClick="document.form1.debug.value='1';" <?php if($result_user['debug']){echo "CHECKED";}?>></TD></TR>
+<TR class="tabBody"><TD><?=$lang[2353]?></TD><TD ALIGN="LEFT"><INPUT TYPE="CHECKBOX" STYLE="border:none;background-color:transparent;" OnClick="document.form1.staticip.value='1';" <?php if($result_user['staticip']){echo "CHECKED";}?>></TD></TR>
 <TR class="tabBody"><TD colspan="2">&nbsp;</TD></TR>
 <TR class="tabBody"><TD><a OnClick="srefresh()" href=#><?=$lang[904]?></a></TD><TD ALIGN="LEFT"><i class="lmb-icon lmb-application-refresh" STYLE="cursor:pointer" border="0" OnClick="srefresh()"></i></TD></TR>
 <TR class="tabBody"><TD><a OnClick="newwin1('<?=$ID?>')" href=#><?=$lang[1250]?></a></TD><TD ALIGN="LEFT"><i class="lmb-icon lmb-history" STYLE="cursor:pointer" border="0" OnClick="newwin1('<?=$ID?>')"></i></TD></TR>
 <TR class="tabBody"><TD><a OnClick="newwin2('<?=$ID;?>')" href=#><?=$lang[1791]?></a></TD><TD ALIGN="LEFT"><i class="lmb-icon lmb-calendar-alt2" STYLE="cursor:pointer" border="0" OnClick="newwin2('<?=$ID;?>')"></i></TD></TR>
-<?}?>
+<?php }?>
 <TR class="tabBody"><TD width=180></TD><TD>&nbsp;</TD></TR>
 
 
 <TR class="tabBody"><TD VALIGN="top">
-<?if($session["user_id"] != $ID AND $ID){?>
+<?php if($session["user_id"] != $ID AND $ID){?>
 <?=$lang[2577]?>: <INPUT TYPE="CHECKBOX" NAME="usermail" VALUE="1" STYLE="border:none;background-color:transparent;">
-<?}?>
+<?php }?>
 </TD><TD>
 <TABLE cellpadding="2" cellspacing="2">
 
-<TR><TD VALIGN="TOP"><INPUT TYPE="button" value="<?=$lang[625]?>" STYLE="width:80px;" OnClick="send('<?=$action?>');"></TD>
+<TR><TD VALIGN="TOP"><INPUT TYPE="button" value="<?=$lang[522]?>" STYLE="width:80px;" OnClick="send('<?=$action?>');"></TD>
 <TD>&nbsp;</TD>
-<?if($result_user["username"] != 'admin' AND $session["group_id"] == 1 AND $ID){?>
+<?php if($result_user["username"] != 'admin' AND $session["group_id"] == 1 AND $ID){?>
 <TD VALIGN="TOP">
-<INPUT TYPE="button" value="<?=$lang[1480]?>" STYLE="width:80px;" OnClick="delete_user('<?echo $result_user["user_id"];?>','<?echo $result_user["username"];?>')" STYLE="cursor:pointer;color:red;">
+<INPUT TYPE="button" value="<?=$lang[160]?>" STYLE="width:80px;" OnClick="delete_user('<?= $result_user["user_id"] ?>','<?= $result_user["username"] ?>')" STYLE="cursor:pointer;color:red;">
 <BR>
 <INPUT TYPE="CHECKBOX" NAME="delete_user_files" STYLE="border:none;background-color:transparent;" CHECKED>&nbsp;<?=$lang[1481]?>
 <BR>
@@ -330,7 +330,7 @@ echo "<TR class=\"tabBody\"><TD colspan=\"2\"><hr></TD></TR>";
 
 </TD></TR>
 
-<?}?>
+<?php }?>
 <TR class="tabFooter"><TD width=180></TD><TD>
 </TABLE>
 </div>

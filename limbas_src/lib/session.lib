@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -40,6 +40,12 @@ $session_name = "limbas_".rtrim(base64_encode($auth_user),"=");
 $sess_refresh = $_REQUEST["sess_refresh"];
 $auth_user = dbf_7(substr($auth_user,0,30));
 $auth_pass = dbf_7(substr($auth_pass,0,30));
+
+// first basic auth
+if(!$auth_user){
+    lmb_basicauth();
+    die();
+}
 
 /* --- Session-Initialisierung --------------------------------------- */
 $action = preg_replace("[^A-Za-z0-9_]","_",$_REQUEST["action"]);
@@ -77,7 +83,7 @@ if($auth_user AND $auth_pass){
 	extract($_SERVER, EXTR_SKIP);
 	extract($_SESSION, EXTR_SKIP);
 	
-	$globvars = array("session","umgvar","userdat","groupdat","user_colors","lmcurrency","lmfieldtype","LINK","LINK_ID","LINK_ACTION","farbschema","lang","gsr","filter","mfilter","ffilter","popc","popg","gsnap","gform","gformlist","greportlist","gdiaglist","gtabletree","tabgroup","gtab","grule","gfield","gverkn","gfile","ufile","filestruct","verknpool","gmimetypes","gtrigger","greminder","gwfl","gLmbExt");
+	$globvars = array('session','umgvar','userdat','groupdat','user_colors','lmcurrency','lmfieldtype','LINK','LINK_ID','LINK_ACTION','farbschema','lang','gsr','filter','mfilter','ffilter','popc','popg','gsnap','gform','gformlist','greportlist','gdiaglist','gtabletree','tabgroup','gtab','grule','gfield','gverkn','gfile','ufile','filestruct','verknpool','gmimetypes','gtrigger','greminder','gwfl','gLmbExt','gprinter');
 	assign_sessionvars($globvars);
 	
 	# logout
@@ -165,10 +171,11 @@ if(odbc_result($rs,"ID") AND !$rslogout AND $session){
 /* --- Prüfung ob Backend gesperrt --------------------------------- */
 if($session["lockbackend"]){
 
-	if(!defined('IS_SOAP') AND !defined('IS_WEBDAV') AND defined('IS_WSDL') AND !lmb_strpos($umgvar["allowed_proxys"],$_SERVER["REMOTE_ADDR"])){
+	if(!defined('IS_SOAP') AND !defined('IS_WEBDAV') AND defined('IS_WSDL') AND !lmb_strpos($umgvar["allowed_proxys"],lmb_getIpAddr())){
 		require ("extra/lock.php");
 		session_destroy();
 		die();
 	}
 }
+
 ?>

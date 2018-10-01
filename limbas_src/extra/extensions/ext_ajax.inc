@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -321,7 +321,7 @@ function LmbExtVersionDiff($pdf,$ID,$report,$el){
 
 
 	if($gtab["raverkn"][$gtab["verkn"][$gtabid]]){
-		foreach ($gtab["raverkn"][$gtab["verkn"][$gtabid]] as $key => $tabid){
+		foreach ($gtab["raverkn"][$gtab["verkn"][$gtabid]] as $tabid){
 			if($gtab["tab_id"][$tabid]){
 
 				$data[0]['TEXT'] = $gtab["desc"][$tabid];
@@ -426,7 +426,6 @@ function dyns_extSendMessage($params){
 	$gtabid = $gfield[$params["gtabid"]]["verkntabid"][$params["fldid"]];
 
 	require_once("ext_limbasMail.php");
-
 	$mail = new limbasMail($params["gtabid"],$params["fldid"],$params["id"],$gtabid);
 
 	if ($mail){
@@ -437,15 +436,14 @@ function dyns_extSendMessage($params){
 		}
 		$mail->disconnect();
 	}
-#error_log("[".__FILE__."][".__LINE__."][".__FUNCTION__."]\n".print_r($uids,1));
-	$gtabid = $params["gtabid"];        
+
+	$gtabid = $params["gtabid"];
 	if (count($mail->error) > 0){
 		echo implode('<br>',$mail->error);
 		return;
 	}
         
-        
-        if (!$uid){
+    if (!$uid){
 		echo "Nachricht wurde versendet, konnte aber nicht verknüpft werden.";
 		return;
 	}
@@ -457,7 +455,7 @@ function dyns_extSendMessage($params){
 	<meta http-equiv="Cache-Control" content="no-cache, must-revalidate">
 	<meta http-equiv="Expires" content="0">
 	<meta name="robots" content="noindex, nofollow">
-	<title>Send message as {$imap_cfg['full_name']}</title>
+	<title>Send message as {$mail->imap_cfg['full_name']}</title>
 	<script src="extra/messages/classes/js/olEvent.js" language="javascript" type="text/javascript"></script>
 	<script src="extra/messages/classes/js/olAjax.js" language="javascript" type="text/javascript"></script>
 	<script src="EXTENSIONS/system/ext_messages.js" language="javascript" type="text/javascript"></script>
@@ -499,9 +497,10 @@ function dyns_extComposeMessage($params){
 	global $gtabid,$gfield,$umgvar,$session;
 
 	$gtabid = $gfield[$params["gtabid"]]["verkntabid"][$params["fldid"]];
-	require($umgvar["pfad"].'/extra/messages/config.php');
 
-	$imap_cfg['arch_mbox'] = urlencode($imap_cfg['arch_mbox']);
+	require($umgvar['path'].'/extra/messages/config.php');
+	$imap_cfg = lmb_getImapCfg($gtabid);
+
 	$id = intval($session['user_id']);
 	echo <<<EOD
 <html>
@@ -611,7 +610,7 @@ function dyns_extDelRelMessages($params){
 }
 
 function dyns_extMessagesDisplay($params){
-	global $gtab,$gfield,$filter,$gtabid,$umgvar;
+	global $gfield, $filter, $gtabid, $umgvar;
 
 	$gformid = $params['gformid'];
 	
@@ -648,18 +647,6 @@ function dyns_extMessagesDisplay($params){
 
 	$filter["ext_RelationFields"][$vuniqueid] = $old_filter;
 
-	$buf_gtabid = $gtabid;
-	$gtabid = $vgtabid;
-	require($umgvar["pfad"].'/extra/messages/config.php');
-	$gtabid = $buf_gtabid;
-
-	$fn = create_function('$a,$b,&$c','$c[1][$b] = strpos(strtolower($a),$c[0])!==false ? "up" : "down";');
-	$res = array(strtolower($imap_cfg['email_address']),&$tmp);
-	if(!empty($vgresult[$vgtabid][7])){
-		array_walk($vgresult[$vgtabid][7],$fn,$res);
-		$vgresult[$vgtabid]["img"] = $res[1];
-	}
-#error_log("$vgresult,$rscount,{$params["edittype"]},$verkn,{$params["gtabid"]},$vgtabid,{$params["fldid"]},{$params["id"]},$VID,$linklevel,$vuniqueid");
 	cftyp_14_d($vgresult,$rscount,$params["edittype"],$verkn,$params["gtabid"],$vgtabid,$params["fldid"],$params["id"],null,$linklevel,$vuniqueid,$gformid,$formid,$filter);
 	echo "<div id=\"mail_status_{$params["gtabid"]}_{$params["fldid"]}\"></div>";
 }

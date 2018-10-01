@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -344,12 +344,12 @@ function print_bild($pdf,$ID,$report,$el){
 	}else{
 		$stylevalue = $pdf->set_style($report["style"][$el]);
 		if($pic_style AND file_exists($umgvar["uploadpfad"]."report/".$pic_orgname)){
-			if(!file_exists($umgvar[pfad]."/TEMP/thumpnails/report/r_".$pic_name)){
-				$target = $umgvar[pfad]."/TEMP/thumpnails/report/r_".$pic_name;
+			if(!file_exists($umgvar['pfad']."/TEMP/thumpnails/report/r_".$pic_name)){
+				$target = $umgvar['pfad']."/TEMP/thumpnails/report/r_".$pic_name;
 				copy($umgvar["uploadpfad"]."report/".$pic_orgname,$target);
 				$picstyle = explode(";",$pic_style);
 				foreach($picstyle as $key => $value){
-					$cmd = $umgvar[imagemagick]."/convert ".$umgvar["imagemagicklimit"]." -quality ".$pic_quality." $value -strip ".$target." ".$target;
+					$cmd = $umgvar['imagemagick']."/convert ".$umgvar["imagemagicklimit"]." -quality ".$pic_quality." $value -strip ".$target." ".$target;
 					system($cmd,$out);
 				}
 				if(file_exists($target)){$report_value = "TEMP/thumpnails/report/r_".$pic_name;}
@@ -368,6 +368,8 @@ function print_bild($pdf,$ID,$report,$el){
 /*------- Chart ---------*/
 function print_chart($pdf,$ID,$report,$el){
 	global $umgvar;
+	global $gsr;
+	global $filter;
 
     if(hide_element($pdf,$report["style"][$el][29])){return true;}
     
@@ -985,7 +987,7 @@ function merge_report($filelist,$ID,$report_rename=null){
 		$pdfx = new pdf_report();
 		$pdfx->setFiles($filelist);
 		$pdfx->concat();
-		$pdfx->Output($umgvar["pfad"]."/USER/".$session[user_id]."/temp/$report_name");
+		$pdfx->Output($umgvar["pfad"]."/USER/".$session['user_id']."/temp/$report_name");
 	}
 
 	if(file_exists($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/$report_name")){

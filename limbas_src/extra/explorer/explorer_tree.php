@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -23,12 +23,11 @@
 
 <DIV ID="filemenu" class="lmbContextMenu" style="position:absolute;visibility:hidden;z-index:2" OnClick="activ_menu = 1;">
 <form name="form_menu" ACTION="main.php" METHOD="post">
-<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
 <input type="hidden" name="action" VALUE="<?=$action?>">
 <input type="hidden" NAME="add_file">
 <input type="hidden" NAME="del_file">
 <input type="hidden" NAME="LID">
-<?
+<?php
 pop_top('filemenu');
 pop_left();
 echo "&nbsp;<span id=\"menu_name\" style=\"font-weight:bold;width:100px;overflow:hidden;\">-</span>";
@@ -47,10 +46,10 @@ pop_bottom();
 </form></DIV>
 
 <DIV ID="cachelist" class="lmbContextMenu" style="visibility:hidden;z-index:3" OnClick="activ_menu = 1;">
-<?
+<?php
 pop_top('cachelist');
 pop_left();
-?><span ID="cachelist_area"></span><?
+?><span ID="cachelist_area"></span><?php
 pop_right();
 pop_bottom();
 ?>
@@ -66,9 +65,9 @@ var LmEx_edit_id = null;
 
 // ----- Js-Script-Variablen --------
 var jsvar = new Array();
-jsvar["copycache"] = "<?=$umgvar[copycache]?>";
-jsvar["WEB7"] = "<?=$farbschema[WEB7]?>";
-jsvar["WEB4"] = "<?=$farbschema[WEB4]?>";
+jsvar["copycache"] = "<?=$umgvar['copycache']?>";
+jsvar["WEB7"] = "<?=$farbschema['WEB7']?>";
+jsvar["WEB4"] = "<?=$farbschema['WEB4']?>";
 
 icon3 = 'lmb-icon-cus lmb-plusonly';
 icon4 = 'lmb-icon-cus lmb-minusonly';
@@ -302,7 +301,6 @@ function LmEx_open_menu(evt,el,menu){
 </FORM>
 
 <FORM ACTION="main.php" METHOD="post" name="form2" TARGET="explorer_main">
-<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
 <input type="hidden" name="action" value="explorer_main">
 <INPUT TYPE="hidden" NAME="LID" VALUE="<?=$filestruct["id"][0]?>">
 <INPUT TYPE="hidden" NAME="typ" VALUE="<?=$typ?>">
@@ -332,7 +330,7 @@ function files1($LEVEL,$start,$only_typ){
 		if($filestruct["level"][$key] == $LEVEL AND $filestruct["view"][$key] AND ($filestruct["typ"][$key] == $typ OR $typ != $only_typ)){
 			if(in_array($filestruct["id"][$key],$filestruct["level"])){
 				$next = 1;
-				$pic = "<i class=\"lmb-icon-cus lmb-plusonly\" NAME=\"i".$filestruct["id"][$key]."\" OnClick=\"popup('".$filestruct["id"][$key]."','$LEVEL','".$filestruct[tabid][$key]."','".$filestruct[typ][$key]."')\" STYLE=\"cursor:pointer\"></i>";
+				$pic = "<i class=\"lmb-icon-cus lmb-plusonly\" NAME=\"i".$filestruct["id"][$key]."\" OnClick=\"popup('".$filestruct["id"][$key]."','$LEVEL','".$filestruct['tabid'][$key]."','".$filestruct['typ'][$key]."')\" STYLE=\"cursor:pointer\"></i>";
 			}else{
 				$next = 0;
 				$pic = "<i class=\"lmb-icon-cus\"></i>";
@@ -358,9 +356,9 @@ function files1($LEVEL,$start,$only_typ){
 			#	echo ">&nbsp;".$filestruct[name][$key]."</TD></TR></TABLE></div>\n";
 			#	# ---- Limbas-Verzeichnis ----
 			#}else{
-				echo "<div ID=\"f_".$filestruct["id"][$key]."\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR TITLE=\"(".$filestruct["id"][$key].")\" STYLE=\"cursor:context-menu\" ONCONTEXTMENU=\"limbasDivClose();open_filemenu(event,'".$filestruct[name][$key]."','".$filestruct["id"][$key]."','".$filestruct[typ][$key]."','$LEVEL');return false;\"><TD>$pic</TD><TD><i class=\"lmb-icon lmb-folder" .$filterpic. "-closed\" ID=\"p".$filestruct["id"][$key]."\" NAME=\"p".$filestruct["id"][$key]."\"></i></TD><TD ";
-                echo "style=\"cursor:pointer;\" OnMouseOver=\"this.style.color='blue';\" OnMouseOut=\"this.style.color='{$farbschema['WEB2']}';\" OnClick=\"listlmdata('".$filestruct["id"][$key]."','$LEVEL','".$filestruct["typ"][$key]."')\"";
-				echo ">&nbsp;".$filestruct[name][$key]."</TD></TR></TABLE></div>\n";
+				echo "<div ID=\"f_".$filestruct["id"][$key]."\"><TABLE CELLPADDING=\"1\" CELLSPACING=\"0\" BORDER=\"0\"><TR TITLE=\"(".$filestruct["id"][$key].")\" STYLE=\"cursor:context-menu\" ONCONTEXTMENU=\"limbasDivClose();open_filemenu(event,'".$filestruct['name'][$key]."','".$filestruct["id"][$key]."','".$filestruct['typ'][$key]."','$LEVEL');return false;\"><TD>$pic</TD><TD><i class=\"lmb-icon lmb-folder" .$filterpic. "-closed\" ID=\"p".$filestruct["id"][$key]."\" NAME=\"p".$filestruct["id"][$key]."\"></i></TD><TD ";
+                echo "class=\"lmbFileTreeItem\" OnClick=\"listlmdata('".$filestruct["id"][$key]."','$LEVEL','".$filestruct["typ"][$key]."')\"";
+				echo ">&nbsp;".$filestruct['name'][$key]."</TD></TR></TABLE></div>\n";
 			#}
 
 
@@ -379,7 +377,7 @@ function files1($LEVEL,$start,$only_typ){
 }
 
 $lv = 0;
-if($typ == 2){$lv = $session[messages][level];}
+if($typ == 2){$lv = $session['messages']['level'];}
 files1($lv,0,2);
 ?>
 

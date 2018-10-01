@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -21,7 +21,7 @@
 
 <script language="JavaScript">
 
-<?
+<?php
 if($alert){
 	echo "parent.report_main.document.form1.submit();\n";
 }
@@ -41,16 +41,16 @@ function resetmenu(){
         document.getElementById('bild').style.borderStyle = 'outset';
         document.getElementById('bild').style.backgroundColor = '';
         document.getElementById('new_dbdat_area').style.display = 'none';
-        <?if($referenz_tab > 0){?>document.getElementById('dbdat').style.borderStyle = 'outset';
-        document.getElementById('dbdat').style.backgroundColor = '';<?}?>
+        <?php if($referenz_tab > 0){?>document.getElementById('dbdat').style.borderStyle = 'outset';
+        document.getElementById('dbdat').style.backgroundColor = '';<?php }?>
         document.getElementById('text').style.borderStyle = 'outset';
         document.getElementById('text').style.backgroundColor = '';
-        <?if($umgvar["use_jsgraphics"]){?>
+        <?php if($umgvar["use_jsgraphics"]){?>
         document.getElementById('line').style.borderStyle = 'outset';
         document.getElementById('line').style.backgroundColor = '';
         document.getElementById('ellipse').style.borderStyle = 'outset';
         document.getElementById('ellipse').style.backgroundColor = '';
-        <?}?>
+        <?php }?>
         document.getElementById('ureport').style.borderStyle = 'outset';
         document.getElementById('ureport').style.backgroundColor = '';
         document.getElementById('chart').style.borderStyle = 'outset';
@@ -85,11 +85,11 @@ function actbutton(id,st,opt){
 	if(stati.style.display == 'none'){
 		stati.style.display = '';
 		objst.borderStyle = 'inset';
-		objst.backgroundColor = '<?=$farbschema[WEB7]?>';
+		objst.backgroundColor = '<?=$farbschema['WEB7']?>';
 	}else{
 		stati.style.display = 'none';
 		objst.borderStyle = 'outset';
-		objst.backgroundColor = '<?=$farbschema[WEB10]?>';
+		objst.backgroundColor = '<?=$farbschema['WEB10']?>';
 	}
 }
 
@@ -204,8 +204,6 @@ function open_details(ev){
 	parent.report_main.document.getElementById(dv).onmousedown(ev);
 	// enable selectable function
 	parent.report_main.$('#innenramen').selectable("enable");
-	
-	return;
 }
 
 // deprecated
@@ -246,7 +244,6 @@ function setOrderBy(val){
 </script>
 
 <FORM ENCTYPE="multipart/form-data" ACTION="main_admin.php" METHOD="post" name="form1">
-<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
 <input type="hidden" name="action" value="setup_report_menu">
 <input type="hidden" name="report_id" value="<?=$report_id;?>">
 <input type="hidden" name="report_name" VALUE="<?=$report["name"];?>">
@@ -260,98 +257,96 @@ function setOrderBy(val){
 <div id="lmbAjaxContainer" class="ajax_container" style="position:absolute;visibility:hidden;" OnClick="activ_menu=1;"></div>
 
 <TABLE BORDER="0" cellspacing="0" cellpadding="0"><TR><TD WIDTH="10">&nbsp;</TD><TD>
-<BR>
+
 
 <TABLE cellspacing="0" cellpadding="2" class="formeditorPanel">
-<TR><TD class="formeditorPanelHead" COLSPAN="4"><?=$lang[1160]?></TD></TR>
+<TR><TD class="formeditorPanelHead" COLSPAN="4"><?=$lang[1137]?></TD></TR>
 <TR><TD VALIGN="TOP"><b><?=$lang[1137]?></TD><TD><?=$report["name"];?></TD></TR>
 <TR><TD VALIGN="TOP"><b><?=$lang[164]?></TD><TD><?=$gtab["desc"][$referenz_tab];?></TD></TR>
 </TABLE>
 
-<BR>
+
 
 <TABLE cellspacing="0" cellpadding="2" class="formeditorPanel">
 <TR><TD COLSPAN="4" class="formeditorPanelHead"><?=$lang[2782]?></TD></TR>
-<TR><TD STYLE="height:14px;"><B>X:</B></TD><TD><INPUT STYLE="border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB8];?>;width:40px;height:13px;" NAME="XPOSI" OnChange="parent.report_main.posxy_change(this.value,'');"></TD><TD>&nbsp;&nbsp;&nbsp;&nbsp;<B>W:</B>&nbsp;&nbsp;</TD><TD><INPUT TYPE="TEXT" STYLE="border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB8];?>;width:40px;height:13px;" NAME="WPOSI" OnChange="parent.report_main.sizexy_change('',this.value);"></TD></TR>
-<TR><TD STYLE="height:14px;"><B>Y:</B></TD><TD><INPUT STYLE="border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB8];?>;width:40px;height:13px;" NAME="YPOSI" OnChange="parent.report_main.posxy_change('',this.value);"></TD><TD>&nbsp;&nbsp;&nbsp;&nbsp;<B>H:</B>&nbsp;&nbsp;</TD><TD><INPUT TYPE="TEXT" STYLE="border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB8];?>;width:40px;height:13px;" NAME="HPOSI" OnChange="parent.report_main.sizexy_change(this.value,'');"></TD></TR>
+<TR><TD STYLE="height:14px;"><B>X:</B></TD><TD><INPUT STYLE="width:40px;" NAME="XPOSI" OnChange="parent.report_main.posxy_change(this.value,'');"></TD><TD>&nbsp;&nbsp;&nbsp;&nbsp;<B>W:</B>&nbsp;&nbsp;</TD><TD><INPUT TYPE="TEXT" STYLE="width:40px;" NAME="WPOSI" OnChange="parent.report_main.sizexy_change('',this.value);"></TD></TR>
+<TR><TD STYLE="height:14px;"><B>Y:</B></TD><TD><INPUT STYLE="width:40px;" NAME="YPOSI" OnChange="parent.report_main.posxy_change('',this.value);"></TD><TD>&nbsp;&nbsp;&nbsp;&nbsp;<B>H:</B>&nbsp;&nbsp;</TD><TD><INPUT TYPE="TEXT" STYLE="width:40px;" NAME="HPOSI" OnChange="parent.report_main.sizexy_change(this.value,'');"></TD></TR>
 </TD></TR></TABLE>
 
-<BR>
+
 
 <TABLE cellspacing="0" cellpadding="2" class="formeditorPanel">
-<TR><TD class="formeditorPanelHead" COLSPAN="4"><?=$lang[2781]?></TD></TR>
+<TR><TD class="formeditorPanelHead" COLSPAN="4"><?=$lang[2331]?></TD></TR>
 <TR><TD><?=$lang[1138]?>:</TD><TD>
-<SELECT NAME="default_font" STYLE="border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB8];?>;width:70;height:16;">
-<?
+<SELECT NAME="default_font" STYLE="width:70px;">
+<?php
 foreach($sysfont as $key => $value){
 	echo "<OPTION VALUE=\"".$value."\">".$value."\n";
 }
 ?>
 </SELECT>
-</TD><TD><?=$lang[1139]?>:</TD><TD><INPUT TYPE="TEXT" NAME="default_size" VALUE="10" STYLE="border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB8];?>;width:40;height:13;"></TD></TR>
+</TD><TD><?=$lang[210]?>:</TD><TD><INPUT TYPE="TEXT" NAME="default_size" VALUE="10" STYLE="width:40;"></TD></TR>
 <TR><TD COLSPAN="4"><U><?=$lang[1140]?>:</U></TD></TR>
-<TR><TD><?=$lang[1141]?>:</TD><TD><INPUT TYPE="TEXT" NAME="page_width" VALUE="<?if($report[page_style]){echo $report[page_style][0];}else{echo "210";}?>" OnChange="this.form.submit();" STYLE="border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB8];?>;width:40;height:13;"></TD><TD><?=$lang[1142]?>:</TD><TD><INPUT TYPE="TEXT" NAME="page_height" VALUE="<?if($report[page_style][1]){echo $report[page_style][1];}else{echo "295";}?>" OnChange="this.form.submit();" STYLE="border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB8];?>;width:40;height:13;"></TD></TR>
+<TR><TD><?=$lang[1141]?>:</TD><TD><INPUT TYPE="TEXT" NAME="page_width" VALUE="<?php if($report['page_style']){echo $report['page_style'][0];}else{echo "210";}?>" OnChange="this.form.submit();" STYLE="width:40;"></TD><TD><?=$lang[1142]?>:</TD>
+<TD><INPUT TYPE="TEXT" NAME="page_height" VALUE="<?php if($report['page_style'][1]){echo $report['page_style'][1];}else{echo "295";}?>" OnChange="this.form.submit();" STYLE="width:40;"></TD></TR>
 
-<?/*
-<TR ><TD COLSPAN="4"><U><?=$lang[1143]?>:</U></TD></TR>
-<TR ><TD><?=$lang[1144]?>:</TD><TD><INPUT TYPE="TEXT" NAME="border_top" VALUE="<?if($report[page_style][2]){echo $report[page_style][2];}else{echo "5";}?>" OnChange="this.form.submit();" STYLE="border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB8];?>;width:40;height:13;"></TD><TD><?=$lang[1145]?>:</TD><TD><INPUT TYPE="TEXT" NAME="border_bottom" VALUE="<?if($report[page_style][3]){echo $report[page_style][3];}else{echo "5";}?>" OnChange="this.form.submit();" STYLE="border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB8];?>;width:40;height:13;"></TD></TR>
-<TR ><TD><?=$lang[1146]?>:</B></TD><TD><INPUT TYPE="TEXT" NAME="border_left" VALUE="<?if($report[page_style][4]){echo $report[page_style][4];}else{echo "5";}?>" OnChange="this.form.submit();" STYLE="border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB8];?>;width:40;height:13;"></TD><TD><?=$lang[1147]?>:</TD><TD><INPUT TYPE="TEXT" NAME="border_right" VALUE="<?if($report[page_style][5]){echo $report[page_style][5];}else{echo "5";}?>" OnChange="this.form.submit();" STYLE="border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB8];?>;width:40;height:13;"></TD></TR>
-*/?>
 
 <TR><TD COLSPAN="5"><div style="overflow:hidden;height:1px;width:100%;background-color:grey;"></div></TD></TR>
-<TR><TD>name:</TD><TD colspan="3"><INPUT TYPE="TEXT" NAME="savename" VALUE="<?if($report["savename"]){echo htmlentities($report["savename"],ENT_QUOTES,$umgvar["charset"]);}else{echo "default";}?>" OnChange="this.form.submit();" STYLE="border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB8];?>;width:155;height:15;"></TD></TR>
+<TR><TD>name:</TD><TD colspan="3"><INPUT TYPE="TEXT" NAME="savename" VALUE="<?php if($report["savename"]){echo htmlentities($report["savename"],ENT_QUOTES,$umgvar["charset"]);}else{echo "default";}?>" OnChange="this.form.submit();" STYLE="width:155;"></TD></TR>
 <TR ><TD COLSPAN="5"><div style="overflow:hidden;height:1px;width:100%;background-color:grey;"></div></TD></TR>
-<?if($report["listmode"]){$checked="checked";}?>
+<?php if($report["listmode"]){$checked="checked";}?>
 
 
 
 
-<TR ><TD COLSPAN="3">Raster:</TD><TD><INPUT TYPE="TEXT" NAME="raster" VALUE="10" STYLE="width:30px;border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB8];?>;"></TD></TR>
-<TR ><TD COLSPAN="3"><?=$lang[2649]?>:</TD><TD><INPUT TYPE="CHECKBOX" NAME="listmode" id="listmode" STYLE="border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB7];?>;" <?=$checked?> OnChange="this.form.change_listmode.value=1;this.form.submit();"></TD></TR>
-<TR ><TD COLSPAN="3"><?=$lang[1148]?>:</TD><TD><INPUT TYPE="CHECKBOX" NAME="prop" STYLE="border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB7];?>;"></TD></TR>
-<TR ><TD COLSPAN="3"><?=$lang[2063]?>:</TD><TD><INPUT TYPE="CHECKBOX" NAME="set_zindex" STYLE="border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB7];?>;"></TD></TR>
-<TR ><TD COLSPAN="3"><?=$lang[2067]?>:</TD><TD><INPUT TYPE="CHECKBOX" NAME="set_new_zindex" STYLE="border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB7];?>;" onclick="setNewZindex();"></TD></TR>
+<TR ><TD COLSPAN="3">Raster:</TD><TD><INPUT TYPE="TEXT" NAME="raster" VALUE="10" STYLE="width:30px;"></TD></TR>
+<TR ><TD COLSPAN="3"><?=$lang[2649]?>:</TD><TD><INPUT TYPE="CHECKBOX" NAME="listmode" id="listmode"  <?=$checked?> OnChange="this.form.change_listmode.value=1;this.form.submit();"></TD></TR>
+<TR ><TD COLSPAN="3"><?=$lang[1148]?>:</TD><TD><INPUT TYPE="CHECKBOX" NAME="prop"></TD></TR>
+<TR ><TD COLSPAN="3"><?=$lang[2063]?>:</TD><TD><INPUT TYPE="CHECKBOX" NAME="set_zindex"></TD></TR>
+<TR ><TD COLSPAN="3"><?=$lang[2067]?>:</TD><TD><INPUT TYPE="CHECKBOX" NAME="set_new_zindex" onclick="setNewZindex();"></TD></TR>
 <TR ><TD COLSPAN="5"><div style="overflow:hidden;height:1px;width:100%;background-color:grey;"></div></TD></TR>
 <TR ><TD COLSPAN="4" nowrap>
-<?=$lang[2346]?>:&nbsp;
-<?if($report["orderby"] == "zindex"){$isOrderByZ = "CHECKED";}else{$isOrderByP = "CHECKED";}?>
-<?=$lang[2347]?><INPUT TYPE="RADIO" NAME="set_oderby" STYLE="border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB7];?>;" onclick="setOrderBy('zindex');" <?=$isOrderByZ?>>
-<?=$lang[2348]?><INPUT TYPE="RADIO" NAME="set_oderby" STYLE="border:none;BACKGROUND-COLOR:<?echo $farbschema[WEB7];?>;" onclick="setOrderBy('ypos');" <?=$isOrderByP?>>
+<?=$lang[1837]?>:&nbsp;
+<?php if($report["orderby"] == "zindex"){$isOrderByZ = "CHECKED";}else{$isOrderByP = "CHECKED";}?>
+<?=$lang[2347]?><INPUT TYPE="RADIO" NAME="set_oderby" onclick="setOrderBy('zindex');" <?=$isOrderByZ?>>
+<?=$lang[2348]?><INPUT TYPE="RADIO" NAME="set_oderby"  onclick="setOrderBy('ypos');" <?=$isOrderByP?>>
 </TD></TR>
 
 </TABLE>
 
-<BR>
+
 
 
 <TABLE cellspacing="0" cellpadding="0" class="formeditorPanel">
 <TR><TD COLSPAN="10" class="formeditorPanelHead"><?=$lang[2780]?></TD></TR>
 <TR ><TD><TABLE BORDER="0" cellspacing="0" cellpadding="0">
 <TR >
-    <TD VALIGN="TOP"><i ID="text" class="lmb-icon lmb-rep-txt btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1149]?>" VALUE="text" OnMouseDown="pressbutton('text','inset','<?echo $farbschema[WEB10];?>');" OnMouseUp="pressbutton('text','outset','<?echo $farbschema[WEB7];?>');parent.report_main.document.form1.report_add.value='text';send();"></i></TD>
-<?if($referenz_tab > 0){?><TD VALIGN="TOP"><i ID="dbdat" class="lmb-icon lmb-rep-db btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1150]?>" VALUE="dbdat" OnClick="parent.report_main.document.form1.report_add.value='dbdat';actbutton('dbdat','new_dbdat_area',0);"></i></TD><?}?>
+<TD VALIGN="TOP"><i ID="text" class="lmb-icon lmb-rep-txt btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1149]?>" VALUE="text" OnMouseDown="pressbutton('text','inset','<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('text','outset','<?= $farbschema['WEB7'] ?>');parent.report_main.document.form1.report_add.value='text';send();"></i></TD>
+<?php if($referenz_tab > 0){?><TD VALIGN="TOP"><i ID="dbdat" class="lmb-icon lmb-rep-db btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1150]?>" VALUE="dbdat" OnClick="parent.report_main.document.form1.report_add.value='dbdat';actbutton('dbdat','new_dbdat_area',0);"></i></TD><?php }?>
+<TD VALIGN="TOP"><i ID="tab" class="lmb-icon lmb-rep-table btn" STYLE="border:2px outset grey" TITLE="<?=$lang[164]?>" VALUE="tab" OnMouseDown="pressbutton('tab','inset','<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('tab','outset','<?= $farbschema['WEB7'] ?>');parent.report_main.document.form1.report_add.value='tab';send();"></i></TD>
+<TD VALIGN="TOP"><i ID="ureport" class="lmb-icon-cus lmb-rep-uform btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1171]?>" VALUE="ureport" OnMouseDown="pressbutton('ureport','inset','<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('ureport','outset','<?= $farbschema['WEB7'] ?>');parent.report_main.document.form1.report_add.value='ureport';actbutton('ureport','new_ureport_area',0);"></i></TD>
+<TD VALIGN="TOP"><i ID="chart" class="lmb-icon lmb-line-chart btn" STYLE="border:2px outset grey" TITLE="<?=$lang[2117]?>" VALUE="chart" OnMouseDown="pressbutton('chart','inset','<?= $farbschema['WEB10'] ?>');" OnClick="parent.report_main.document.form1.report_add.value='chart';actbutton('chart','new_chart_area',0);"></i></TD>
+</TR><TR>
 <TD VALIGN="TOP"><i ID="bild" class="lmb-icon lmb-rep-pic btn" STYLE="border:2px outset grey"TITLE="<?=$lang[1151]?>" VALUE="bild" OnClick="parent.report_main.document.form1.report_add.value='bild';actbutton('bild','new_bild_area',0);"></i></TD>
-<?if($umgvar["use_jsgraphics"]){?>
-<TD VALIGN="TOP"><i ID="line" class="lmb-icon lmb-rep-line btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1152]?>" VALUE="line" OnMouseDown="pressbutton('line','inset','<?echo $farbschema[WEB10];?>');" OnMouseUp="pressbutton('line','outset','<?echo $farbschema[WEB7];?>');parent.report_main.document.form1.report_add.value='line';send();"></i></TD>
-<TD VALIGN="TOP"><i ID="ellipse" class="lmb-icon lmb-rep-circ btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1154]?>" VALUE="ellipse" OnMouseDown="pressbutton('ellipse','inset','<?echo $farbschema[WEB10];?>');" OnMouseUp="pressbutton('ellipse','outset','<?echo $farbschema[WEB7];?>');parent.report_main.document.form1.report_add.value='ellipse';send();"></i></TD>
-<?}?>
-<TD VALIGN="TOP"><i ID="rect" class="lmb-icon lmb-rep-rect btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1153]?>" VALUE="rect" OnMouseDown="pressbutton('rect','inset','<?echo $farbschema[WEB10];?>');" OnMouseUp="pressbutton('rect','outset','<?echo $farbschema[WEB7];?>');parent.report_main.document.form1.report_add.value='rect';send();"></i></TD>
-<TD VALIGN="TOP"><i ID="tab" class="lmb-icon lmb-rep-table btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1155]?>" VALUE="tab" OnMouseDown="pressbutton('tab','inset','<?echo $farbschema[WEB10];?>');" OnMouseUp="pressbutton('tab','outset','<?echo $farbschema[WEB7];?>');parent.report_main.document.form1.report_add.value='tab';send();"></i></TD>
-<TD VALIGN="TOP"><i ID="datum" class="lmb-icon lmb-rep-date btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1156]?>" VALUE="datum" OnMouseDown="pressbutton('datum','inset','<?echo $farbschema[WEB10];?>');" OnMouseUp="pressbutton('datum','outset','<?echo $farbschema[WEB7];?>');parent.report_main.document.form1.report_add.value='datum';send();"></i></TD>
-<TD VALIGN="TOP"><i ID="ureport" class="lmb-icon-cus lmb-rep-uform btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1171]?>" VALUE="ureport" OnMouseDown="pressbutton('ureport','inset','<?echo $farbschema[WEB10];?>');" OnMouseUp="pressbutton('ureport','outset','<?echo $farbschema[WEB7];?>');parent.report_main.document.form1.report_add.value='ureport';actbutton('ureport','new_ureport_area',0);"></i></TD>
-</TR><TR >
-<TD VALIGN="TOP"><i ID="chart" class="lmb-icon lmb-line-chart btn" STYLE="border:2px outset grey" TITLE="<?=$lang[2117]?>" VALUE="chart" OnMouseDown="pressbutton('chart','inset','<?echo $farbschema[WEB10];?>');" OnClick="parent.report_main.document.form1.report_add.value='chart';actbutton('chart','new_chart_area',0);"></i></TD>
-<TD VALIGN="TOP"><i ID="snr" class="lmb-icon lmb-rep-snr btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1157]?>" VALUE="snr" OnMouseDown="pressbutton('snr','inset','<?echo $farbschema[WEB10];?>');" OnMouseUp="pressbutton('snr','outset','<?echo $farbschema[WEB7];?>');parent.report_main.document.form1.report_add.value='snr';send();"></i></TD>
-<TD VALIGN="TOP"><i ID="formel" class="lmb-icon lmb-rep-php btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1772]?>" VALUE="formel" OnMouseDown="pressbutton('formel','inset','<?echo $farbschema[WEB10];?>');" OnMouseUp="pressbutton('formel','outset','<?echo $farbschema[WEB7];?>');parent.report_main.document.form1.report_add.value='formel';send();"></i></TD>
+<?php if($umgvar["use_jsgraphics"]){?>
+<TD VALIGN="TOP"><i ID="line" class="lmb-icon lmb-rep-line btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1152]?>" VALUE="line" OnMouseDown="pressbutton('line','inset','<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('line','outset','<?= $farbschema['WEB7'] ?>');parent.report_main.document.form1.report_add.value='line';send();"></i></TD>
+<TD VALIGN="TOP"><i ID="ellipse" class="lmb-icon lmb-rep-circle btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1154]?>" VALUE="ellipse" OnMouseDown="pressbutton('ellipse','inset','<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('ellipse','outset','<?= $farbschema['WEB7'] ?>');parent.report_main.document.form1.report_add.value='ellipse';send();"></i></TD>
+<?php }?>
+<TD VALIGN="TOP"><i ID="rect" class="lmb-icon lmb-rep-rect btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1153]?>" VALUE="rect" OnMouseDown="pressbutton('rect','inset','<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('rect','outset','<?= $farbschema['WEB7'] ?>');parent.report_main.document.form1.report_add.value='rect';send();"></i></TD>
+</TR><TR>
+<TD VALIGN="TOP"><i ID="formel" class="lmb-icon lmb-rep-php btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1772]?>" VALUE="formel" OnMouseDown="pressbutton('formel','inset','<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('formel','outset','<?= $farbschema['WEB7'] ?>');parent.report_main.document.form1.report_add.value='formel';send();"></i></TD>
+<TD VALIGN="TOP"><i ID="datum" class="lmb-icon lmb-rep-date btn" STYLE="border:2px outset grey" TITLE="<?=$lang[197]?>" VALUE="datum" OnMouseDown="pressbutton('datum','inset','<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('datum','outset','<?= $farbschema['WEB7'] ?>');parent.report_main.document.form1.report_add.value='datum';send();"></i></TD>
+<TD VALIGN="TOP"><i ID="snr" class="lmb-icon lmb-rep-snr btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1157]?>" VALUE="snr" OnMouseDown="pressbutton('snr','inset','<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('snr','outset','<?= $farbschema['WEB7'] ?>');parent.report_main.document.form1.report_add.value='snr';send();"></i></TD>
 </TR></TABLE>
+
 </TD></TR></TABLE>
 
 
 <div ID="new_bild_area" style="display:none;">
-<br>
+
 <TABLE  cellspacing="0" cellpadding="2" class="formeditorPanel">
 <TR><TD colspan="2" class="formeditorPanelHead" align="center"></TD></TR>
-<TR><TD HEIGHT="25" colspan="2"><INPUT TYPE="FILE" NAME="new_pic" SIZE="20" STYLE="background-color:<?echo $farbschema[WEB7];?>;width:200px;height:17px;"></TD></TR>
+<TR><TD HEIGHT="25" colspan="2"><INPUT TYPE="FILE" NAME="new_pic" SIZE="20" STYLE="width:200px;height:17px;"></TD></TR>
 <TR><TD><?=$lang[925]?></td>
 <td><SELECT STYLE="width:60px;" NAME="pic_type">
 <OPTION VALUE="jpg">jpg
@@ -373,12 +368,12 @@ foreach($sysfont as $key => $value){
 <OPTION VALUE="100" SELECTED>100%
 </SELECT>
 </TD></TR>
-<TR ID="send_bild_area" style="display:none;"><TD  STYLE="height:30px;" VALIGN="CENTER">&nbsp;<SPAN ID="uploadlevel" STYLE="width:1px;height:15px;border:2px inset grey;background-color:<?echo $farbschema[WEB10];?>">&nbsp;</SPAN></TD></TR>
+<TR ID="send_bild_area" style="display:none;"><TD  STYLE="height:30px;" VALIGN="CENTER">&nbsp;<SPAN ID="uploadlevel" STYLE="width:1px;height:15px;border:2px inset grey;background-color:<?= $farbschema['WEB10'] ?>">&nbsp;</SPAN></TD></TR>
 </TABLE>
 </div>
 
 <div ID="new_dbdat_area" style="display:none;">
-<br>
+
 <TABLE  cellspacing="0" cellpadding="2" class="formeditorPanel">
 <TR><TD class="formeditorPanelHead" align="center"><?=$lang[972]?></TD></TR>
 <tr><td>
@@ -386,13 +381,14 @@ foreach($sysfont as $key => $value){
 <?php
 if(!$source_table){$source_table = $referenz_tab;}
 foreach ($tabgroup["id"] as $key0 => $value0) {
-	echo "<OPTION VALUE=\"0\">(".$tabgroup["name"][$key0].")";
+    echo '<optgroup label="' . $tabgroup["name"][$key0] . '">';
 	foreach ($gtab["tab_id"] as $key => $value) {
 		if($gtab["tab_group"][$key] == $value0){
 			if($source_table == $value){$selected = "selected";}else{$selected = "";}
-			echo "<OPTION VALUE=\"".$value."\" $selected>&nbsp;&nbsp;".$gtab["desc"][$key]."</OPTION>";
+			echo "<OPTION VALUE=\"".$value."\" $selected>".$gtab["desc"][$key]."</OPTION>";
 		}
 	}
+	echo '</optgroup>';
 }
 ?>
 </SELECT>
@@ -409,7 +405,7 @@ include_once("admin/report/report_tabliste.php");
 
 
 <div ID="new_chart_area" style="display:none;">
-<br>
+
 <TABLE  cellspacing="0" cellpadding="2" class="formeditorPanel">
 <TR><TD class="formeditorPanelHead" align="center"><?=$lang[972]?></TD></TR>
 <tr><td>
@@ -428,17 +424,17 @@ foreach ($gdiaglist as $keyk => $valuek) {
 
 
 <div ID="new_ureport_area" style="display:none;">
-<br>
+
 <TABLE cellspacing="0" cellpadding="0" class="formeditorPanel">
 <TR><TD class="formeditorPanelHead"><?=$lang[2779]?></TD></TR>
 <TR><TD  VALIGN="TOP">
-<div style=";padding:2px;"><?=$lang[1177]?>:<BR>
+<div style=";padding:2px;"><?=$lang[925]?>:
 <SELECT NAME="ureport_type" STYLE="width:190px">
 <OPTION VALUE="1"><?=$lang[2777]?>
 <OPTION VALUE="2"><?=$lang[2778]?>
 </SELECT></div>
 
-<div style="padding:2px;"><?=$lang[1179]?>:<BR>
+<div style="padding:2px;"><?=$lang[1179]?>:
 <SELECT NAME="ureport_id" STYLE="width:190px;"><option>
 <?php
 foreach ($greportlist["argresult_tabid"] as $rkey => $rval){
@@ -451,21 +447,15 @@ foreach ($greportlist["argresult_tabid"] as $rkey => $rval){
 </TABLE>
 </div>
 
-
-
-<BR>
 <TABLE cellspacing="0" cellpadding="0" class="formeditorPanel">
 <TR><TD STYLE="height:15px"class="formeditorPanelHead"></TD></TR>
-<TR><TD  STYLE="height:15px" ALIGN="CENTER"><INPUT TYPE="BUTTON" STYLE="border:1px solid grey;cursor:pointer" VALUE="<?=$lang[2515]?>" OnCliCk="send();"></TD></TR>
+<TR><TD  STYLE="height:15px" ALIGN="CENTER"><INPUT TYPE="BUTTON" STYLE="border:1px solid grey;cursor:pointer" VALUE="<?=$lang[33]?>" OnCliCk="send();"></TD></TR>
 </TABLE>
 
-
-
-<BR>
 <TABLE cellspacing="0" cellpadding="0" class="formeditorPanel">
-<TR><TD class="formeditorPanelHead"><?=$lang[2783]?></TD></TR></TABLE>
-<div ID="itemlist_area" class="formeditorPanel" style="margin-top:0"></div>
-
+<TR><TD class="formeditorPanelHead"><?= $lang[2783] ?></TD></TR>
+<tr><td><div ID="itemlist_area" style="margin-top: 0"></div></td></tr>
+</TABLE>
 
 
 </FORM>

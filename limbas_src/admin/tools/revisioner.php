@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -219,8 +219,8 @@ function lmb_compare_revision($compare_revision1, $compare_version1, $compare_re
             <TR>
                 <TD>
 
-                    <?
-                    if ($revisioner_typ == 1){
+                    <?php
+                   if ($revisioner_typ == 1){
                     ?>
                     <TABLE BORDER="0" cellspacing="0" cellpadding="0">
                         <TR class="tabpoolItemTR">
@@ -247,7 +247,7 @@ function lmb_compare_revision($compare_revision1, $compare_version1, $compare_re
                             <tr>
                             <td valign="top">Letzte Version</td>
                             <td valign="top">
-                                <b><?php echo $result_revisioner['last_revision'] . '.' . $result_revisioner['last_version'] . '</b> (' . get_date($result_revisioner['last_date'], 1) . ')'; ?>
+                                <b><?= $result_revisioner['last_revision'] . '.' . $result_revisioner['last_version'] . '</b> (' . get_date($result_revisioner['last_date'], 1) . ')' ?>
                             </td>
                             </tr><?php } ?>
                         <tr>
@@ -264,7 +264,7 @@ function lmb_compare_revision($compare_revision1, $compare_version1, $compare_re
                                             echo 1;
                                         } ?>
 
-                                    <option><?php echo($result_revisioner['last_revision'] + 1) ?></select></td>
+                                    <option><?= ($result_revisioner['last_revision'] + 1) ?></select></td>
                         </tr>
                         <tr>
                             <td valign="top">Bemerkung</td>
@@ -310,8 +310,8 @@ function lmb_compare_revision($compare_revision1, $compare_version1, $compare_re
                             <TD style="width: 80px" class="tabHeaderItem">Version<?= $lang[992271] ?></TD>
                             <TD class="tabHeaderItem">Core<?= $lang[992271] ?></TD>
                         </TR>
-                        <?
-                        if ($result_revisioner) {
+                        <?php
+                       if ($result_revisioner) {
                             foreach ($result_revisioner['id'] as $key => $value) {
                                 $revision = $result_revisioner['revision'][$key];
                                 $version = $result_revisioner['version'][$key];

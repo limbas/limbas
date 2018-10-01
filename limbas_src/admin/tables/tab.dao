@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -23,23 +23,33 @@
 function set_version($tabid,$tabname,$versioning){
 	global $db;
 	global $DBA;
+	global $gtab;
 	
 	if($versioning == -1){$versioning = 0;}
 
 	$sqlquery =  "UPDATE LMB_CONF_TABLES SET VERSIONING = $versioning WHERE TAB_ID = $tabid";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	
-	$odbc_column = dbf_5(array($DBA["DBSCHEMA"],$tabname,"VID"));
-	if($versioning AND !$odbc_column){
-		$sqlquery1 =  "ALTER TABLE $tabname ".LMB_DBFUNC_ADD_COLUMN_FIRST." VID ".LMB_DBTYPE_SMALLINT." DEFAULT 1, ".LMB_DBFUNC_ADD_COLUMN_NEXT." VPID ".LMB_DBTYPE_FIXED."(18), ".LMB_DBFUNC_ADD_COLUMN_NEXT." VACT ".LMB_DBTYPE_BOOLEAN." DEFAULT ".LMB_DBDEF_TRUE.", ".LMB_DBFUNC_ADD_COLUMN_NEXT." VDESC ".LMB_DBTYPE_VARCHAR."(399)";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-		if(!$rs1) {$commit = 1;}
-	}elseif(!$versioning){
-		$sqlquery1 =  "ALTER TABLE $tabname ".LMB_DBFUNC_DROP_COLUMN_FIRST." VID, ".LMB_DBFUNC_DROP_COLUMN_NEXT." VPID, ".LMB_DBFUNC_DROP_COLUMN_NEXT." VACT , ".LMB_DBFUNC_DROP_COLUMN_NEXT." VDESC";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-		if(!$rs1) {$commit = 1;}
-	}
+
+
+    $odbc_column = dbf_5(array($DBA["DBSCHEMA"], $tabname, "VID"));
+    if ($versioning AND !$odbc_column) {
+        $sqlquery1 = "ALTER TABLE $tabname " . LMB_DBFUNC_ADD_COLUMN_FIRST . " VID " . LMB_DBTYPE_SMALLINT . " DEFAULT 1, " . LMB_DBFUNC_ADD_COLUMN_NEXT . " VPID " . LMB_DBTYPE_FIXED . "(18), " . LMB_DBFUNC_ADD_COLUMN_NEXT . " VACT " . LMB_DBTYPE_BOOLEAN . " DEFAULT " . LMB_DBDEF_TRUE . ", " . LMB_DBFUNC_ADD_COLUMN_NEXT . " VDESC " . LMB_DBTYPE_VARCHAR . "(399)";
+        $rs1 = odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+        if (!$rs1) {
+            $commit = 1;
+        }
+    } elseif (!$versioning) {
+        // not delete for DMS
+        if ($tabid != $gtab["argresult_id"]["LDMS_FILES"] AND $tabid != $gtab["argresult_id"]["LDMS_FILES_META"]) {
+            $sqlquery1 = "ALTER TABLE $tabname " . LMB_DBFUNC_DROP_COLUMN_FIRST . " VID, " . LMB_DBFUNC_DROP_COLUMN_NEXT . " VPID, " . LMB_DBFUNC_DROP_COLUMN_NEXT . " VACT , " . LMB_DBFUNC_DROP_COLUMN_NEXT . " VDESC";
+            $rs1 = odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            if (!$rs1) {
+                $commit = 1;
+            }
+        }
+    }
+
 
 	if($versioning){
 		# $sqlquery1 =  "UPDATE $tabname SET VID = 1, VPID = ID, VACT = ".LMB_DBDEF_TRUE." WHERE VPID IS NULL";
@@ -139,7 +149,7 @@ if($group_name AND $group_add){
 
 /* --- Gruppe löschen -------------------------------------- */
 if($group_del){
-	$GLOBALS["filestruct"][admin] = 1;
+	$GLOBALS["filestruct"]['admin'] = 1;
 	if(!delete_tabgroup($group_del)){
 	 	$commit = 1;
 	}
@@ -419,55 +429,57 @@ if(!$import){
         }
 
         # properties of table
-        $result_gtab[$tabgroupid]['ID'][$tabIndex] = odbc_result($rs, 'TABLEID');
-        $result_gtab[$tabgroupid]['id'][$tabIndex] = odbc_result($rs, 'TAB_ID');
-        $result_gtab[$tabgroupid]['sort'][$tabIndex] = odbc_result($rs, 'TABLESORT');
-        $result_gtab[$tabgroupid]['tabelle'][$tabIndex] = odbc_result($rs, 'TABELLE');
-        $result_gtab[$tabgroupid]['beschreibung'][$tabIndex] = $lang[odbc_result($rs, 'TABLEDESC')];
-        $result_gtab[$tabgroupid]['lockable'][$tabIndex] = odbc_result($rs, 'LOCKABLE');
-        $result_gtab[$tabgroupid]['groupable'][$tabIndex] = odbc_result($rs, 'GROUPABLE');
-        $result_gtab[$tabgroupid]['markcolor'][$tabIndex] = odbc_result($rs, 'MARKCOLOR');
-        $result_gtab[$tabgroupid]['linecolor'][$tabIndex] = odbc_result($rs, 'LINECOLOR');
-        $result_gtab[$tabgroupid]['userrules'][$tabIndex] = odbc_result($rs, 'USERRULES');
-        $result_gtab[$tabgroupid]['logging'][$tabIndex] = odbc_result($rs, 'LOGGING');
-        $result_gtab[$tabgroupid]['versioning'][$tabIndex] = odbc_result($rs, 'VERSIONING');
-        $result_gtab[$tabgroupid]['typ'][$tabIndex] = odbc_result($rs, 'TYP');
-        $result_gtab[$tabgroupid]['verknid'][$tabIndex] = odbc_result($rs, 'VERKN');
-        $result_gtab[$tabgroupid]['trigger'][$tabIndex] = explode(',',odbc_result($rs, 'LMTRIGGER'));
-        $result_gtab[$tabgroupid]['indicator'][$tabIndex] = odbc_result($rs, 'INDICATOR');
-        $result_gtab[$tabgroupid]['ajaxpost'][$tabIndex] = odbc_result($rs, 'AJAXPOST');
-        $result_gtab[$tabgroupid]['numrowcalc'][$tabIndex] = odbc_result($rs, 'NUMROWCALC');
-        $result_gtab[$tabgroupid]['reserveid'][$tabIndex] = odbc_result($rs, 'RESERVEID');
-        $result_gtab[$tabgroupid]['argresult'][odbc_result($rs, 'TAB_ID')] = $tabIndex;
-        $result_gtab[$tabgroupid]['maingroup'][$tabIndex] = $tabgroupid;
-        $result_gtab[$tabgroupid]['datasync'][$tabIndex] = odbc_result($rs, 'DATASYNC');
-        $result_gtab[$tabgroupid]['params1'][$tabIndex] = odbc_result($rs, 'PARAMS1');
-        $result_gtab[$tabgroupid]['params2'][$tabIndex] = unserialize(odbc_result($rs, 'PARAMS2'));
+        if (odbc_result($rs, 'TABLEID')) {
+            $result_gtab[$tabgroupid]['ID'][$tabIndex] = odbc_result($rs, 'TABLEID');
+            $result_gtab[$tabgroupid]['id'][$tabIndex] = odbc_result($rs, 'TAB_ID');
+            $result_gtab[$tabgroupid]['sort'][$tabIndex] = odbc_result($rs, 'TABLESORT');
+            $result_gtab[$tabgroupid]['tabelle'][$tabIndex] = odbc_result($rs, 'TABELLE');
+            $result_gtab[$tabgroupid]['beschreibung'][$tabIndex] = $lang[odbc_result($rs, 'TABLEDESC')];
+            $result_gtab[$tabgroupid]['lockable'][$tabIndex] = odbc_result($rs, 'LOCKABLE');
+            $result_gtab[$tabgroupid]['groupable'][$tabIndex] = odbc_result($rs, 'GROUPABLE');
+            $result_gtab[$tabgroupid]['markcolor'][$tabIndex] = odbc_result($rs, 'MARKCOLOR');
+            $result_gtab[$tabgroupid]['linecolor'][$tabIndex] = odbc_result($rs, 'LINECOLOR');
+            $result_gtab[$tabgroupid]['userrules'][$tabIndex] = odbc_result($rs, 'USERRULES');
+            $result_gtab[$tabgroupid]['logging'][$tabIndex] = odbc_result($rs, 'LOGGING');
+            $result_gtab[$tabgroupid]['versioning'][$tabIndex] = odbc_result($rs, 'VERSIONING');
+            $result_gtab[$tabgroupid]['typ'][$tabIndex] = odbc_result($rs, 'TYP');
+            $result_gtab[$tabgroupid]['verknid'][$tabIndex] = odbc_result($rs, 'VERKN');
+            $result_gtab[$tabgroupid]['trigger'][$tabIndex] = explode(',', odbc_result($rs, 'LMTRIGGER'));
+            $result_gtab[$tabgroupid]['indicator'][$tabIndex] = odbc_result($rs, 'INDICATOR');
+            $result_gtab[$tabgroupid]['ajaxpost'][$tabIndex] = odbc_result($rs, 'AJAXPOST');
+            $result_gtab[$tabgroupid]['numrowcalc'][$tabIndex] = odbc_result($rs, 'NUMROWCALC');
+            $result_gtab[$tabgroupid]['reserveid'][$tabIndex] = odbc_result($rs, 'RESERVEID');
+            $result_gtab[$tabgroupid]['argresult'][odbc_result($rs, 'TAB_ID')] = $tabIndex;
+            $result_gtab[$tabgroupid]['maingroup'][$tabIndex] = $tabgroupid;
+            $result_gtab[$tabgroupid]['datasync'][$tabIndex] = odbc_result($rs, 'DATASYNC');
+            $result_gtab[$tabgroupid]['params1'][$tabIndex] = odbc_result($rs, 'PARAMS1');
+            $result_gtab[$tabgroupid]['params2'][$tabIndex] = unserialize(odbc_result($rs, 'PARAMS2'));
 
-        # count tables per group
-        $tabgroup_['tabellen'][$tabgroupid]++;
+            # count tables per group
+            $tabgroup_['tabellen'][$tabgroupid]++;
 
-        # check if contains system tables
-        $tableName = odbc_result($rs, 'TABELLE');
-        if ($tableName == 'LDMS_FILES' OR $tableName == 'LDMS_META') {
-            $tabgroup_['systemtab'][$tabgroupid] = 1;
+            # check if contains system tables
+            $tableName = odbc_result($rs, 'TABELLE');
+            if ($tableName == 'LDMS_FILES' OR $tableName == 'LDMS_META') {
+                $tabgroup_['systemtab'][$tabgroupid] = 1;
+            }
+
+            if(odbc_result($rs, 'VERKN')){
+                $result_gtab[$tabgroupid]['verkn'][$tabIndex] = $lang[odbc_result($rs, 'TABLE2DESC')];
+            }
+
+            if(odbc_result($rs, 'TYP') == 5){
+                $result_gtab[$tabgroupid]['viewtype'][$tabIndex] = odbc_result($rs, 'VIEWTYPE');
+            }
+
+            if(odbc_result($rs,'FIELDSID')) {
+                $result_gtab[$tabgroupid]['sverkn'][$tabIndex] = 1;
+            }
+
+            $result_gtab[$tabgroupid]['num_gtab'][$tabIndex] = odbc_result($rs, 'ANZAHL');
+
+            $tabIndex++;
         }
-
-        if(odbc_result($rs, 'VERKN')){
-            $result_gtab[$tabgroupid]['verkn'][$tabIndex] = $lang[odbc_result($rs, 'TABLE2DESC')];
-        }
-
-        if(odbc_result($rs, 'TYP') == 5){
-            $result_gtab[$tabgroupid]['viewtype'][$tabIndex] = odbc_result($rs, 'VIEWTYPE');
-        }
-
-        if(odbc_result($rs,'FIELDSID')) {
-            $result_gtab[$tabgroupid]['sverkn'][$tabIndex] = 1;
-        }
-
-        $result_gtab[$tabgroupid]['num_gtab'][$tabIndex] = odbc_result($rs, 'ANZAHL');
-
-        $tabIndex++;
     }
 }
 

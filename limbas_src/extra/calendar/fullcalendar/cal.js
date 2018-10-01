@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -64,7 +64,13 @@ function lmb_calInit() {
 		eventClick: lmb_calDetail,
 		dayClick: lmb_calGotoDay,
 		lazyFetching: true,
-		columnFormat:{week:'ddd dd-MM',day:'ddd - dd MMMM','':'ddd','resourceWeek':'ddd dd-MM','resourceMonth':'dd-MM'},
+		columnFormat:{
+			week:'ddd - d.MMMM',
+			day:'ddd - d.MMMM',
+			'':'ddd',
+			'resourceWeek':'ddd - d.MMMM',
+			'resourceMonth':'dd.MM.'
+		},
 		timeFormat: 'H:mm{-H:mm}',
 		axisFormat: 'H:mm',
 		events:lmb_calEvent,
@@ -75,7 +81,7 @@ function lmb_calInit() {
 		monthNamesShort: jsvar['jqmonth'],
 		dayNames: jsvar['jqday'],
 		dayNamesShort: jsvar['jqday'],
-		allDayText: 'allDay',
+		allDayText: jsvar['lng_2705'],
 		eventRender: lmb_calEventRender,
 		eventAfterAllRender: function(view) {
 			$('#calendar').fullCalendar('renderHolidays', $('#calendar').fullCalendar('getView'));
@@ -178,8 +184,10 @@ function lmb_calResource(){
 		}
 	});
 	
-	if(dat){
+	if(dat && Array.isArray(dat)){
 		return dat;
+	} else {
+		return [];
 	}
 	
 	//"main_dyns.php?actid=fullcalendar&"+ajaxFormToURL('formCalendar')+"&action=resources";

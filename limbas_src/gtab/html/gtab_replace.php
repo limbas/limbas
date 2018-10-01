@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -24,7 +24,7 @@ if(!$confirm){$confirm = 1;}
 <form action="main.php" method="post" id="lmbForm11" name="form11">
 <input type="hidden" name="use_records">
 
-<?
+<?php
 pop_top('lmbAjaxContainer');
 pop_left();
 ?>
@@ -34,7 +34,7 @@ pop_left();
 <tr><td colspan="2"><hr></td></tr>
 <tr><td valign="top" style="width:100px;"><?=$lang[103]?>:</td>
 <td><select style="width:200px;" onchange="LmGs_divchange(this.value);" name="grplfield"><option>
-<?
+<?php
 # ----------- Feldliste ------------
 foreach ($gfield[$gtabid]["sort"] as $key => $value){
     if($gfield[$gtabid]["collreplace"][$key] AND $gfield[$gtabid]["perm_edit"][$key]){
@@ -94,10 +94,10 @@ foreach ($gfield[$gtabid]["sort"] as $key => $value){
 			echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" style=\"cursor:pointer\" OnClick=\"lmb_datepicker(event,this,'',this.value,'".$dateformat."',20)\"></i>";
 
 			echo "<table>
-			    <tr><td><input type=\"text\" name=\"agregate[".$gtabid."][".$key."][minute]\" style=\"width:30px\" onchange=\"document.getElementById('grplval\[".$gtabid."\]\[".$key."\]').value=''\"></td><td>".$lang[2764]."</td></tr>
-			    <tr><td><input type=\"text\" name=\"agregate[".$gtabid."][".$key."][hour]\" style=\"width:30px\" onchange=\"document.getElementById('grplval\[".$gtabid."\]\[".$key."\]').value=''\"></td><td>$lang[2763]</td></tr>
-			    <tr><td><input type=\"text\" name=\"agregate[".$gtabid."][".$key."][day]\" style=\"width:30px\" onchange=\"document.getElementById('grplval\[".$gtabid."\]\[".$key."\]').value=''\"></td><td>".$lang[2765]."</td></tr>
-			    <tr><td><input type=\"text\" name=\"agregate[".$gtabid."][".$key."][month]\" style=\"width:30px\" onchange=\"document.getElementById('grplval\[".$gtabid."\]\[".$key."\]').value=''\"></td><td>".$lang[1984]."</td></tr>
+			    <tr><td><input type=\"text\" name=\"agregate[".$gtabid."][".$key."][minute]\" style=\"width:30px\" onchange=\"document.getElementById('grplval\[".$gtabid."\]\[".$key."\]').value=''\"></td><td>".$lang[1980]."</td></tr>
+			    <tr><td><input type=\"text\" name=\"agregate[".$gtabid."][".$key."][hour]\" style=\"width:30px\" onchange=\"document.getElementById('grplval\[".$gtabid."\]\[".$key."\]').value=''\"></td><td>$lang[1981]</td></tr>
+			    <tr><td><input type=\"text\" name=\"agregate[".$gtabid."][".$key."][day]\" style=\"width:30px\" onchange=\"document.getElementById('grplval\[".$gtabid."\]\[".$key."\]').value=''\"></td><td>".$lang[1982]."</td></tr>
+			    <tr><td><input type=\"text\" name=\"agregate[".$gtabid."][".$key."][month]\" style=\"width:30px\" onchange=\"document.getElementById('grplval\[".$gtabid."\]\[".$key."\]').value=''\"></td><td>".$lang[296]."</td></tr>
 			    <tr><td><input type=\"text\" name=\"agregate[".$gtabid."][".$key."][year]\" style=\"width:30px\" onchange=\"document.getElementById('grplval\[".$gtabid."\]\[".$key."\]').value=''\"></td><td>".$lang[1985]."</td></tr>
 			    </table>
 			    ";
@@ -116,7 +116,7 @@ echo "
 </td></tr>
 <tr><td></td>
 <td height=\"50\">
-<input type=\"button\" value=\"$lang[2674]\" name=\"search\" onclick=\"limbasCollectiveReplace(null,this,1,'$gtabid');\">&nbsp;
+<input type=\"button\" value=\"$lang[2460]\" name=\"search\" onclick=\"limbasCollectiveReplace(null,this,1,'$gtabid');\">&nbsp;
 </td></tr>
 </table>";
 

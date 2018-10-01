@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH (support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0  
+ * Version 3.5  
  */
 
 /*
@@ -50,7 +50,7 @@ $bodyclass = "main";
 if ($action == "nav_admin") {
 	$require1 = "layout/".$session["layout"]."/nav_admin.php";
 
-	#$BGCOLOR = "BGCOLOR=\"".$farbschema[WEB5]."\"";
+	#$BGCOLOR = "BGCOLOR=\"".$farbschema[WEB8]."\"";
 	$ONLOAD = "onload='this.link_0.click();'";
 }
 
@@ -119,7 +119,6 @@ elseif ($action == "setup_group_add" AND $LINK[138] == 1) {
 /* ------------------ user ------------------------ */
 elseif ($action == "setup_user") {
 	$require1 = "admin/user/user_frameset.php";
-	$BODY = 1;
 }
 elseif ($action == "setup_user_tree") {
 	$require1 = "admin/user/user_tree.dao";
@@ -148,7 +147,7 @@ elseif ($action == "setup_user_tracking" AND $LINK[$action] == 1) {
 	$require1 = "admin/user/user_tracking.php";
 	$ONKEYDOWN = "OnKeydown=\"sendkeydown(event);\"";
 	if($typ == 3){$ONLOAD="OnLoad=\"inusetime();\"";}
-	$BODYHEADER = $userdat[username][$userid].": ".$userdat[bezeichnung][$userid]." (".$userdat[groupname][$userid].")";
+	$BODYHEADER = $userdat['username'][$userid].": ".$userdat['bezeichnung'][$userid]." (".$userdat['groupname'][$userid].")";
 }
 elseif ($action == "setup_user_overview" AND $LINK[$action] == 1) {
 	$require1 = "admin/user/user_overview.php";
@@ -341,11 +340,11 @@ elseif ($action == "setup_tabschema" AND $LINK[$action] == 1) {
 	#$ONMOUSEUP = "OnMouseUp=\"paint_lines();\"";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
-elseif ($action == "setup_tabschema_dyn" AND $LINK[setup_gtab_ftype] == 1) {
+elseif ($action == "setup_tabschema_dyn" AND $LINK['setup_gtab_ftype'] == 1) {
 	$require1 = "admin/tables/tabschema_dyn.php";
 	$BODY = 1;
 }
-elseif ($action == "setup_fieldselect" AND $LINK[setup_gtab_ftype] == 1) {
+elseif ($action == "setup_fieldselect" AND $LINK['setup_gtab_ftype'] == 1) {
 	$require2 = "admin/tables/fieldselect.dao";
 	$require3 = "admin/tables/fieldselect.php";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
@@ -355,22 +354,22 @@ elseif ($action == "setup_mimetypes" AND $LINK[$action] == 1) {
 	$require3 = "admin/setup/mimetypes.php";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
-elseif ($action == "setup_genlink" AND $LINK[setup_gtab_ftype] == 1) {
+elseif ($action == "setup_genlink" AND $LINK['setup_gtab_ftype'] == 1) {
 	$require2 = "admin/tables/genlink.dao";
 	$require3 = "admin/tables/genlink.php";
-	$ONUNLOAD = "onUnload=opener.location.href='main_admin.php?".SID."&action=setup_$typ&tab_group=$tab_group&atid=$atid'";
+	$ONUNLOAD = "onUnload=opener.location.href='main_admin.php?action=setup_$typ&tab_group=$tab_group&atid=$atid'";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
-elseif ($action == "setup_argument" AND $LINK[setup_gtab_ftype] == 1) {
+elseif ($action == "setup_argument" AND $LINK['setup_gtab_ftype'] == 1) {
 	$require3 = "admin/tables/argument.dao";
 	$require4 = "admin/tables/argument.php";
-	#$ONUNLOAD = "onUnload=opener.location.href='main_admin.php?".SID."&action=setup_$typ&tab_group=$tab_group&atid=$atid'";
+	#$ONUNLOAD = "onUnload=opener.location.href='main_admin.php?action=setup_$typ&tab_group=$tab_group&atid=$atid'";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
-elseif ($action == "setup_verknfield" AND $LINK[setup_gtab_ftype] == 1) {
+elseif ($action == "setup_verknfield" AND $LINK['setup_gtab_ftype'] == 1) {
 	$require3 = "admin/tables/verknfield.dao";
 	$require4 = "admin/tables/verknfield.php";
-	$ONUNLOAD = "onUnload=opener.location.href='main_admin.php?".SID."&action=setup_$typ&tab_group=$tab_group&atid=$tabid'";
+	$ONUNLOAD = "onUnload=opener.location.href='main_admin.php?action=setup_$typ&tab_group=$tab_group&atid=$tabid'";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
 elseif ($action == "setup_verkn_editor" AND $LINK[$action] == 1) {
@@ -388,14 +387,18 @@ elseif ($action == "setup_grouping_editor" AND $LINK[$action] == 1) {
 	$require1 = "admin/tables/grouping_editor.php";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
-
+elseif ($action == 'setup_printers' AND $LINK[$action] == 1) {
+    $require1 = 'admin/setup/printers.dao';
+    $require2 = 'admin/setup/printers.php';
+    $BODYHEADER = $lang[$LINK['desc'][$LINK_ID[$action]]];
+}
 
 /* ------------------ statistic ------------------------ */
-elseif ($action == "setup_stat_user_det" AND $LINK[setup_stat_user_dia] == 1) {
+elseif ($action == "setup_stat_user_det" AND $LINK['setup_stat_user_dia'] == 1) {
 	$require1 = "admin/statistic/stat_user_det.php";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
-elseif ($action == "setup_stat_user_deterg" AND $LINK[setup_stat_user_dia] == 1) {
+elseif ($action == "setup_stat_user_deterg" AND $LINK['setup_stat_user_dia'] == 1) {
 	$require1 = "admin/statistic/stat_user_deterg.php";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
@@ -408,7 +411,6 @@ elseif ($action == "setup_stat_user_dia" AND $LINK[$action] == 1) {
 /* ------------------ form ------------------------ */
 elseif ($action == "setup_form_frameset" AND $LINK["setup_form"] == 1) {
 	$require1 = "admin/form/form_frameset.php";
-	$BODY = 1;
 }
 elseif ($action == "setup_form_main" AND $LINK["setup_form"] == 1) {
 	#$form_typ = 1;
@@ -437,7 +439,6 @@ elseif ($action == "setup_report_frameset" AND $LINK["setup_report_select"] == 1
 	$require1 = "admin/tools/add_filestruct.lib";
 	$require2 = "extra/explorer/filestructure.lib";
 	$require3 = "admin/report/report_frameset.php";
-	$BODY = 1;
 }
 elseif ($action == "setup_report_main" AND $LINK["setup_report_select"] == 1) {
 	$form_typ = 2;
@@ -463,7 +464,7 @@ elseif ($action == "setup_report_select" AND $LINK["setup_report_select"] == 1) 
 }
 
 /* ------------------ workflow ------------------------ */
-elseif ($action == "setup_workflow" AND $LINK[setup_form] == 1) {
+elseif ($action == "setup_workflow" AND $LINK['setup_form'] == 1) {
 	$require1 = "admin/workflow/workflow.dao";
 	$require2 = "admin/workflow/workflow.php";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID["setup_workflow"]]];
@@ -524,23 +525,23 @@ else{
 if($BODY != 1){
 ?>
 
-<html <?=$STYLE?>>
+<html <?= $STYLE ?>>
 
 <head>
-<meta NAME="Title" CONTENT="Limbas Enterprise Unifying Framework V <?=$umgvar[version]?>">
+<meta NAME="Title" CONTENT="Limbas Enterprise Unifying Framework V <?=$umgvar['version']?>">
 <meta NAME="author" content="LIMBAS GmbH">
 <meta NAME="Publisher" CONTENT="LIMBAS GmbH">
 <meta NAME="Copyright" CONTENT="LIMBAS GmbH">
 <meta NAME="description" content="Enterprise Unifying Framework">
-<meta NAME="version" content="<?=$umgvar[version]?>">
+<meta NAME="version" content="<?= $umgvar['version'] ?>">
 <meta NAME="date" content="2017-10-23">
 <meta HTTP-EQUIV="content-language" content="de">
-<meta HTTP-EQUIV="Content-Type" content="text/html; charset=<?=$umgvar[charset]?>">
+<meta HTTP-EQUIV="Content-Type" content="text/html; charset=<?= $umgvar['charset'] ?>">
 <meta HTTP-EQUIV="Pragma" content="no-cache">
 <meta HTTP-EQUIV="Cache-Control" content="no-cache, no-store, post-check=0, pre-check=0, must-revalidate">
 <meta HTTP-EQUIV="Expires" content="0">
 <meta http-equiv="Content-Style-Type" content="text/css">
-<title>Limbas Enterprise Unifying Framework V <?=$umgvar[version]?></title>
+<title>Limbas Enterprise Unifying Framework V <?=$umgvar['version']?></title>
 
 <script type="text/javascript" src="lib/global.js"></script>
 <script type='text/javascript' src='extern/jquery/jquery-1.7.1.min.js'></script>
@@ -552,19 +553,19 @@ if($BODY != 1){
 <style type='text/css'>@import url(extern/jquery/theme/jquery-ui-1.9.2.custom.css);</style>
 <style type='text/css'>@import url(extern/jquery/theme/jquery-ui-timepicker-addon.css);</style>
 <style type='text/css'>@import url(extern/jquery/colResizable.css);</style>
-<style type="text/css">@import url(USER/<?=$session[user_id]?>/layout.css);</style>
+<style type="text/css">@import url(USER/<?=$session['user_id']?>/layout.css);</style>
 
-<?if($action == "setup_user_tracking" OR $action == "setup_user_change_admin" OR $action == "setup_stat_user_det"){?>
-<?}elseif($action == "setup_form_main"){?>
+<?php if($action == "setup_user_tracking" OR $action == "setup_user_change_admin" OR $action == "setup_stat_user_det"){?>
+<?php }elseif($action == "setup_form_main"){?>
 	<script type="text/javascript" src="extern/jsgraphics/jsgraphics.js"></script>
 	<script type="text/javascript" src="admin/form/form_main.js"></script>
-<?}elseif($action == "setup_report_main"){?>
+<?php }elseif($action == "setup_report_main"){?>
 	<script type="text/javascript" src="extern/jsgraphics/jsgraphics.js"></script>
 	<script type="text/javascript" src="admin/report/report.js"></script>
-<?}elseif($action == "setup_gtab_view" OR $action == "setup_tabschema"){?>
+<?php }elseif($action == "setup_gtab_view" OR $action == "setup_tabschema"){?>
 	<script type="text/javascript" src="extern/jsgraphics/jsgraphics.js"></script>
 	<script type="text/javascript" src="admin/tables/tabschema.js"></script>
-<?}?>
+<?php }?>
 
 <script language="JavaScript">browserType();</script>
 </head>

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -30,90 +30,146 @@
 <style>
     .CodeMirror {
         border: 1px solid <?=$farbschema['WEB3']?>;
-        width:600px;
-        height:300px;
+        width: 600px;
+        height: 300px;
     }
 </style>
+<script src="extern/sqlFormatter/sql-formatter.min.js"></script>
 
-<DIV class="lmbPositionContainerMain">
+<div class="lmbPositionContainerMain">
 
-<TABLE class="tabfringe" BORDER="0" cellspacing="1" cellpadding="0">
 
-<?/* --- Tabellenliste ------------------------------- */?>
-<FORM ACTION="main_admin.php" METHOD="post" name="form2">
-<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
-<INPUT TYPE="hidden" NAME="action" VALUE="setup_tabtools">
-<INPUT TYPE="hidden" NAME="empty">
-<INPUT TYPE="hidden" NAME="delete">
-
-<TR class="tabHeader"><TD class="tabHeaderItem" HEIGHT="20" COLSPAN="5"><B><?=$lang[1059]?></B></TD></TR>
-<TR class="tabBody"><TD><SELECT NAME="table" STYLE="width:200px;">
-<?php
-$odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'TABLE','VIEW'"));
-foreach($odbc_table["table_name"] as $tkey => $tvalue) {
-	$domaintables["tablename"][] = $odbc_table["table_name"][$tkey];
-	$domaintables["owner"][] = $odbc_table["table_owner"][$tkey];
-	$domaintables["type"][] = $odbc_table["table_type"][$tkey];
-	if($table == $odbc_table["table_name"][$tkey]){$SELECTED = "SELECTED";}else{$SELECTED = "";}
-	if(lmb_strtoupper($odbc_table["table_type"][$tkey]) == "VIEW"){$val = "VIEW :: ".$odbc_table["table_name"][$tkey];}else{$val = $odbc_table["table_name"][$tkey];}
-	echo "<OPTION VALUE=\"".$odbc_table["table_name"][$tkey]."\" $SELECTED>".$val."\n";
-}
+<?php /* --- Tabellenliste ------------------------------- */
+if(!$use_codemirror){$use_codemirror='true';}
 ?>
-<TD ALIGN="LEFT">&nbsp;&nbsp;<INPUT TYPE="submit" VALUE="info" NAME="info">&nbsp;</TD>
-<TD ALIGN="LEFT"><INPUT TYPE="submit" VALUE="<?=$lang[1061]?>" NAME="show">&nbsp;</TD>
-<TD ALIGN="LEFT"><INPUT TYPE="button" onclick="if(confirm('<?=$lang[2153]?>')){document.form2.empty.value=1;document.form2.submit();}" VALUE="<?=$lang[1062]?>" STYLE="COLOR:orange">&nbsp;</TD>
-<TD ALIGN="LEFT"><INPUT TYPE="button" onclick="if(confirm('<?=$lang[2287]?>')){document.form2.delete.value=1;document.form2.submit();}" VALUE="<?=$lang[1063]?>" STYLE="COLOR:red">&nbsp;</TD>
-</TR>
 
-<TR><TD COLSPAN="5">&nbsp;</TD></TR>
+<form action="main_admin.php" method="post" name="form2">
+    <input type="hidden" name="action" value="setup_tabtools">
+    <input type="hidden" name="empty">
+    <input type="hidden" name="delete">
+    <input type="hidden" name="sqlFavoriteName">
+    <input type="hidden" name="use_codemirror" value="<?=$use_codemirror?>">
 
-<TR class="tabHeader"><TD class="tabHeaderItem" HEIGHT="20" COLSPAN="5"><B><?=$lang[1060]?></B></TD></TR>
-<TR class="tabBody"><TD ALIGN="LEFT">
-<SELECT NAME="domaintable" STYLE="width:200px;">
+    <table class="tabfringe" border="0" cellspacing="1" cellpadding="0">
+        <tr class="tabHeader"><td class="tabHeaderItem" colspan="5"><b><?=$lang[577]?></b></td></tr>
+        <tr class="tabBody">
+            <td>
+                <select name="table" style="width: 200px;">
+                    <?php
+                    $odbc_table = dbf_20(array($DBA['DBSCHEMA'], null, "'TABLE','VIEW'"));
+                    foreach($odbc_table['table_name'] as $tkey => $tvalue) {
+                        $domaintables['tablename'][] = $odbc_table['table_name'][$tkey];
+                        $domaintables['owner'][] = $odbc_table['table_owner'][$tkey];
+                        $domaintables['type'][] = $odbc_table['table_type'][$tkey];
+                        if($table == $odbc_table['table_name'][$tkey]){$SELECTED = 'SELECTED';}else{$SELECTED = '';}
+                        if(lmb_strtoupper($odbc_table['table_type'][$tkey]) == 'VIEW'){
+                            $val = 'VIEW :: ' . $odbc_table['table_name'][$tkey];
+                        }else{
+                            $val = $odbc_table['table_name'][$tkey];
+                        }
+                        echo "<option value='{$odbc_table['table_name'][$tkey]}' $SELECTED>$val</option>";
+                    }
+                    ?>
+                </select>
+            </td>
+            <td><input type="submit" value="info" name="info"></td>
+            <td><input type="submit" value="<?=$lang[1061]?>" name="show"></td>
+            <td><input type="button" onclick="if(confirm('<?=$lang[2153]?>')){ document.form2.empty.value=1; document.form2.submit(); }" value="<?=$lang[550]?>" style="color: orange"></td>
+            <td><input type="button" onclick="if(confirm('<?=$lang[2287]?>')){ document.form2.delete.value='table'; document.form2.submit(); }" value="<?=$lang[160]?>" style="color: red"></td>
+        </tr>
+        <tr><td colspan="5">&nbsp;</td></tr>
+
+        <tr class="tabHeader"><td class="tabHeaderItem" colspan="5"><b><?=$lang[1060]?></b></td></tr>
+        <tr class="tabBody">
+            <td>
+                <select name="domaintable" style="width: 200px;">
+                    <?php
+                    foreach ($DBA['DOMAINTABLE'] as $key => $val){
+                        echo "<option value='{$DBA['DOMAINSCHEMA'][$key]}.{$DBA['DOMAINTABLE'][$key]}'>{$DBA['DOMAINTABLE'][$key]}</option>";
+                    }
+                    ?>
+                </select>
+            </td>
+            <td></td>
+            <td><input type="submit" value="<?=$lang[1061]?>" name="showsys"></td>
+            <td colspan="2"></td>
+        </tr>
+        <tr><td colspan="5">&nbsp;</td></tr>
+
+        <?php if ($sqlFavorites) { ?>
+        <tr class="tabHeader"><td class="tabHeaderItem" colspan="5"><b><?=$lang[2924]?></b></td></tr>
+        <tr class="tabBody">
+            <td>
+                <select name="favorite" style="width: 200px;">
+                    <?php
+                    foreach ($sqlFavorites as $favoriteID => $favoriteName){
+                        $selected = ($favorite == $favoriteID) ? 'selected' : '';
+                        echo "<option value='$favoriteID' $selected>$favoriteName</option>";
+                    }
+                    ?>
+                </select>
+            </td>
+            <td></td>
+            <td><input type="submit" value="<?=$lang[1061]?>" name="showFavorite"></td>
+            <td></td>
+            <td><input type="button" onclick="if(confirm('<?=$lang[2287]?>')){ document.form2.delete.value='favorite'; document.form2.submit(); }" value="<?=$lang[160]?>"></td>
+        </tr>
+        <tr><td colspan="5">&nbsp;</td></tr>
+        <?php } ?>
+
+        <tr class="tabBody"><td class="tabHeaderItem" colspan="5"><b>SQL-Query</b></td></tr>
+        <tr class="tabBody">
+            <td colspan="5">
+                <textarea id="sqlvalue" name="sqlvalue" <?php if($use_codemirror != 'true'){echo "style=\"width:600px;height:300px;padding=5px;\"";}?> > <?= $sqlvalue ?></textarea>
+                <?php if($use_codemirror == 'true'){?>
+                <script language="JavaScript">
+                    var editor = CodeMirror.fromTextArea(document.getElementById("sqlvalue"), {
+                        lineNumbers: true,
+                        matchBrackets: true,
+                        mode: "text/x-sql",
+                        indentWithTabs: true,
+                        smartIndent: true,
+                        autofocus: true,
+                        extraKeys: {
+                            "Ctrl-Enter": function() {$("#sqlexec").trigger("click");},
+                            "Ctrl-Space": "autocomplete"
+                        }
+                    });
+
+                    function formatSQL() {
+                        editor.setValue(sqlFormatter.format(editor.getValue(), { indent: "    "}));
+                    }
+                    editor.on('blur', formatSQL);
+
+                    $(function() {
+                        formatSQL();
+                    });
+                </script>
+                <?php }?>
+            </td>
+        </tr>
+        <tr>
+            <td colspan="5">
+                <input id="sqlexec" type="submit" value="<?=$lang[1065]?>" name="sqlexec">
+                <input type="button" value="<?=$lang[2218]?>" name="sqlFavorite" onclick="const name = window.prompt('Name:'); document.form2.sqlFavoriteName.value  = name; document.form2.submit();">
+                &nbsp;&nbsp;&nbsp;&nbsp;format Code: <input type="checkbox" value="2" onclick="document.form2.use_codemirror.value=this.checked; document.form2.submit();" <?php if($use_codemirror == 'true'){echo 'checked';}?> >
+                <div style="float: right">
+                    <?=$lang[2770]?>:&nbsp;<input type="text" name="sqlexecnum" style="width: 50px" value="<?=$sqlexecnum?>">
+                </div>
+            </td>
+        </tr>
+        <tr><td class="tabFooter" colspan="5">&nbsp;</td></tr>
+    </table>
+</form>
+<br>
 <?php
-foreach ($DBA["DOMAINTABLE"] as $key => $val){
-	echo "<OPTION VALUE=\"".$DBA["DOMAINSCHEMA"][$key].".".$DBA["DOMAINTABLE"][$key]."\">".$DBA["DOMAINTABLE"][$key];
-}
-?>
-</SELECT></TD>
-<TD>&nbsp;&nbsp;</TD><TD><INPUT TYPE="submit" VALUE="<?=$lang[1064]?>" NAME="showsys"></TD><TD colspan="2"></TD>
-</TR>
 
-<TR><TD COLSPAN="5">&nbsp;</TD></TR>
-
-<TR class="tabBody"><TD class="tabHeaderItem" HEIGHT="20" COLSPAN="5"><B>SQL-Query</B></TD></TR>
-<TR class="tabBody"><TD COLSPAN="5">
-    <TEXTAREA id="sqlvalue" NAME="sqlvalue"><?= (($show AND $table AND !$sqlvalue) ? "select * from $table" : $sqlvalue) ?></TEXTAREA>
-    <Script language="JavaScript">
-
-        var editor = CodeMirror.fromTextArea(document.getElementById("sqlvalue"), {
-            lineNumbers: true,
-            matchBrackets: true,
-            mode: "text/x-sql",
-            indentWithTabs: true,
-            smartIndent: true,
-            autofocus: true,
-            extraKeys: {
-                "Ctrl-Enter": function() {$("#sqlexec").trigger("click");},
-                "Ctrl-Space": "autocomplete"
-            }
-        });
-
-
-    </Script>    
-</TD></TR>
-<TR><TD colspan="5"><INPUT id="sqlexec" TYPE="submit" VALUE="<?=$lang[1065]?>" NAME="sqlexec"> <div style="float:right"><?=$lang[2770]?>: <input type="text" NAME="sqlexecnum" style="width:50px" value="<?=$sqlexecnum?>"></div></TD></TR>
-<TR><TD class="tabFooter" colspan="5"></TR>
-</FORM>
-</TABLE>
-<BR>
-<?php
 echo $result;
-if($rssql AND lmb_strtoupper(lmb_substr($sqlvalue,0,6)) == "SELECT"){
-    echo ODBCResourceToHTML($rssql,"cellpadding=\"2\" cellspacing=\"0\" style=\"border-collapse:collapse;\"","style=\"border: 1px solid grey;\"",$sqlexecnum);
-}elseif(lmb_strtoupper(lmb_substr($sqlvalue,0,7)) == "EXPLAIN"){
+if ($rssql) {
+    echo ODBCResourceToHTML($rssql, 'cellpadding="2" cellspacing="0" style="border-collapse:collapse;"', 'style="border: 1px solid grey;"', $sqlexecnum);
+} elseif (lmb_strtoupper(lmb_substr($sqlvalue,0,7)) == 'EXPLAIN') {
     $rs = odbc_exec($db,$sqlvalue);
-    echo "<table style=\"border-collapse:collapse\" cellpadding=\"3\">";
+    echo '<table style="border-collapse:collapse" cellpadding="3">';
     while($ra = odbc_fetch_array($rs)){
         
         if(!$bzm){
@@ -122,63 +178,55 @@ if($rssql AND lmb_strtoupper(lmb_substr($sqlvalue,0,6)) == "SELECT"){
             }
         }
         
-        echo "<tr>";
+        echo '<tr>';
         foreach($ra as $col=>$value){
             echo "<td style=\"border:1px solid grey\">$value</td>";
         }
-        echo "</tr>";
+        echo '</tr>';
         $bzm++;
     }
-    echo "</table>";
+    echo '</table>';
 }
-
 
 $zeit0 = gettime();
 
-if($show AND $table){
-        echo "<H3>".$table."</H3><BR>";
-        $sqlquery = "SELECT * FROM $table";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-        if($rs){echo ODBCResourceToHTML($rs,"cellpadding=\"2\" cellspacing=\"0\" style=\"border-collapse:collapse;\"","style=\"border: 1px solid grey;\"",$sqlexecnum);}
-}
-if($info AND $table){
-	echo "<H3>".$table."</H3><BR>";
-	$rs = dbf_5(array($DBA["DBSCHEMA"],$table,null,1));
-	odbc_result_all($rs);
-
-}
-
-if($showsys AND $domaintable){
-        echo "<H3>".$system."</H3><BR>";
-        $sqlquery = "SELECT * FROM $domaintable";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-        if($rs){echo ODBCResourceToHTML($rs,"cellpadding=\"2\" cellspacing=\"0\" style=\"border-collapse:collapse;\"","style=\"border: 1px solid grey;\"",$sqlexecnum);}
-}
-if(!$table AND !$showsys){
-        echo "<TABLE BORDER=\"0\" cellspacing=\"1\" cellpadding=\"0\" WIDTH=\"500\">";
-        echo "<TR class=\"tabHeader\"><TD>$lang[1066]</TD><TD>$lang[1067]</TD><TD>$lang[1068]</TD></TR>";
-        $bzm = 0;
-        while($domaintables[tablename][$bzm]) {
-                echo "<TR><TD>".$domaintables["tablename"][$bzm]."</TD><TD>".$domaintables["owner"][$bzm]."</TD><TD>".$domaintables["type"][$bzm]."</TD></TR>";
+if ($show AND $table) {
+    # show table
+    echo "<h3>$table</h3><br>";
+    $sqlquery = "SELECT * FROM $table";
+    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if ($rs) {
+        echo ODBCResourceToHTML($rs, 'cellpadding="2" cellspacing="0" style="border-collapse:collapse;"', 'style="border: 1px solid grey;"', $sqlexecnum);
+    }
+} else if ($info AND $table) {
+    # show info of table
+    echo "<h3>$table</h3><br>";
+    $rs = dbf_5(array($DBA['DBSCHEMA'], $table, null, 1));
+    odbc_result_all($rs);
+} else if ($showsys AND $domaintable) {
+    # show system info
+    echo "<h3>$domaintable</h3><br>";
+    $sqlquery = "SELECT * FROM $domaintable";
+    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if ($rs) {
+        echo ODBCResourceToHTML($rs, 'cellpadding="2" cellspacing="0" style="border-collapse:collapse;"', 'style="border: 1px solid grey;"', $sqlexecnum);
+    }
+} else if (!$table AND !$showsys) {
+    # show all tables and views
+    echo '<table border="0" cellspacing="1" cellpadding="0" width="500">';
+    echo "<tr class=\"tabHeader\"><td>$lang[164]</td><td>$lang[1067]</td><td>$lang[1068]</td></tr>";
+    $bzm = 0;
+    while ($domaintables['tablename'][$bzm]) {
+        echo '<TR><TD>' . $domaintables['tablename'][$bzm] . '</TD><TD>' . $domaintables['owner'][$bzm] . '</TD><TD>' . $domaintables['type'][$bzm] . '</TD></TR>';
         $bzm++;
-        }
-        echo "</TABLE><BR><BR>";
+    }
+    echo '</table>';
+}
 
-}?>
-
-
-
-</TD></TR>
-
-<TR><TD></TD><TD>
-<?php
-$zeit = gettime() - $zeit0;
-echo "<FONT COLOR=\"green\" SIZE=\"2\">complete execution time!</FONT>&nbsp;($zeit sec.)";
+$zeit = number_format(gettime() - $zeit0, 8, ',', '.');
+echo "<br><br><span style='font-size: small; color: green'>finished execution!</span>&nbsp;($zeit sec.)";
 ?>
-</TD></TR>
-
-
-</TABLE>
+</div>
 
 
 

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -124,11 +124,11 @@ pop_menu(255,'','');
 pop_line();
 $opt = array();
 $opt['val'] = array('month','agendaWeek','agendaDay','basicWeek','basicDay');
-$opt['desc'] = array($lang[1945],$lang[1944],$lang[1943],$lang[1944],$lang[1943]);
+$opt['desc'] = array($lang[1437],$lang[1436],$lang[1435],$lang[1436],$lang[1435]);
 $opt['label'] = array($lang[2853],null,null,'basic');
 if($gtab['params1'][$gtabid]){
 	array_unshift($opt['val'],'resourceMonth','resourceWeek','resourceDay');
-	array_unshift($opt['desc'],$lang[1945],$lang[1944],$lang[1943]);
+	array_unshift($opt['desc'],$lang[1437],$lang[1436],$lang[1435]);
 	array_unshift($opt['label'],$lang[2854],null,null);
 }
 pop_select("lmb_calChangeSettings('viewmode',this.value);",$opt,$cal_viewmode,'','',"Anzeigemodus: ");
@@ -186,12 +186,12 @@ echo <<<EOD
 
 <table width="98%">
 
-<tr><td colspan="3"><b>{$lang[2804]}</b></td></tr>
+<tr><td colspan="3"><b>{$lang[1441]}</b></td></tr>
 
 <tr><td class="ui-widget-header" colspan="3" id="bulk_ts">
 <table width="400px"><tr>
 <td>{$lang[2799]}:</td><td><input name="calBulk_termStaH[0]" type="text" style="width:20px" onchange="lmb_validateTime(this,'h')">&nbsp;<b>:</b>&nbsp;<input name="calBulk_termStaM[0]" type="text" style="width:20px" value="00" onchange="lmb_validateTime(this,'m')"></td>
-<td>{$lang[2800]}:</td><td><input name="calBulk_termEndH[0]" type="text" style="width:20px" onchange="lmb_validateTime(this,'h')">&nbsp;<b>:</b>&nbsp;<input name="calBulk_termEndM[0]" type="text" style="width:20px" value="00" onchange="lmb_validateTime(this,'m')"></td>
+<td>{$lang[2385]}:</td><td><input name="calBulk_termEndH[0]" type="text" style="width:20px" onchange="lmb_validateTime(this,'h')">&nbsp;<b>:</b>&nbsp;<input name="calBulk_termEndM[0]" type="text" style="width:20px" value="00" onchange="lmb_validateTime(this,'m')"></td>
 <td>{$lang[2801]}:</td><td><input name="calBulk_termLenD[0]" type="text" style="width:40px" onchange="lmb_validateTime(this,'d')"> min.</td>
 <td><i class="lmb-icon lmb-plus" onclick="lmb_bulkAddTermin()"></i></td></tr></table>
 </td></tr>
@@ -224,7 +224,7 @@ echo <<<EOD
 <td>{$lang[2799]}:</td>
 <td><input type="text" id="calBulk_periodStartT" name="calBulk_periodStart" style="width:100px"> <i id="sel_7" border="0" align="middle" onclick="lmb_datepicker(event,this,'','','{$DPdateFormat}')" style="cursor:pointer;vertical-align:top;" title="öffne Quick-Kalender" class="lmb-icon lmb-caret-right"></i></td>
 <td>&nbsp;&nbsp;</td>
-<td>{$lang[2800]}:</td>
+<td>{$lang[2385]}:</td>
 <td><input type="text" id="calBulk_periodEndT" name="calBulk_periodEnd" style="width:100px"> <i id="sel_7" border="0" align="middle" onclick="lmb_datepicker(event,this,'','','{$DPdateFormat}')" style="cursor:pointer;vertical-align:top;" title="öffne Quick-Kalender" class="lmb-icon lmb-caret-right"></i></td>
 </tr></table>
 </td></tr>
@@ -257,13 +257,17 @@ EOD;
 <input type="hidden" name="cal_weekends" value="<?=$cal_weekends?>">
 <input type="hidden" name="filter_reset">
 
-<input type="text" id="hiddenfocus" style="width:1px;position:absolute;left:-100">
-
 <div class="lmbfringegtab" style="overflow:auto">
-<table cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;width:100%" class="GtabTableFringeHeader"><tbody><tr><td nowrap="" class="lmbGtabTabmenuActive" onclick="lmb_calReload(true,false)">
-<?php echo $gtab['desc'][$gtabid]; ?></td><td width="100%" class="lmbGtabTabmenuSpace"></td></tr></tbody></table>
 
-<table width="99%"><tr><td valign="top" align="left" id="cal_searchFrameTD" style="width:230px;<?php $menu_setting=lmbGetMenuSetting();if(!$menu_setting["frame"]["cal"]){echo 'display:none';}?>">
+
+<div style="float:left;padding-left:10px;margin-right:100px;width:calc(100% - 30px);border-bottom:1px solid <?=$farbschema['WEB3']?>;">
+    <span style="float:left;font-size:1.4em;" onclick="lmb_calReload(true,false)"><?= $gtab['desc'][$gtabid] ?></span>
+    <span style="float:right;"><i class="lmb-icon lmb-top-y u-color-4" style="cursor:pointer;font-size: 2em;marging-bottom:5px;" onclick="$('#calendar').fullCalendar('prev');lmb_calSetTitle();"></i><i class="lmb-icon lmb-top-x u-color-4" style="cursor:pointer;font-size: 2em;" onclick="$('#calendar').fullCalendar('next');lmb_calSetTitle();"></i></span>
+    <span style="transform: translateY(+10%);float:right;vertical-align: text-bottom;padding-right:10px;font-size:1.3em;font-weight:bold;" id="current_date"><span>
+</div>
+
+
+<table width="99%" style="padding-top:15px;"><tr><td valign="top" align="left" id="cal_searchFrameTD" style="width:230px;<?php $menu_setting=lmbGetMenuSetting();if(!$menu_setting["frame"]["cal"]){echo 'display:none';}?>">
 <div id="cal_searchFrame" style="<?php if(!$menu_setting["frame"]["cal"]){echo 'display:none';}?>">
 <div id="cal_datepicker" style="width:210px"></div>
 <br>
@@ -334,51 +338,40 @@ if($gtab["params1"][$gtabid] AND $gtab["params2"][$gtabid]['searchResource']){
 </tr></table>
 </td></tr>
 
-<tr><td>
-<div class="gtabHeaderMenuTR">
-<table border="0" cellspacing="0" cellpadding="0" style="border-collapse:collapse;width:100%;"><tr>
-<td width="70%" align="center">&nbsp;</td>
-<TD width="30%" align="right"><div style="padding-right:10px;font-size:1.3em;font-weight:bold;" id="current_date"></div></TD>
-<td nowrap><i class="lmb-icon lmb-top-y u-color-4" style="cursor:pointer;font-size: 2em;" onclick="$('#calendar').fullCalendar('prev');lmb_calSetTitle();"></i><i class="lmb-icon lmb-top-x u-color-4" style="cursor:pointer;font-size: 2em;" onclick="$('#calendar').fullCalendar('next');lmb_calSetTitle();"></i></td>
-</tr></table>
-</div>
-</td></tr>
-
-
 <tr><td >
 <div id="iconmenu" class="gtabHeaderSymbolTR" style="height:35px;">
-<table cellpadding="2" cellspacing="0">
+<table cellpadding="2" cellspacing="0" style="border-collapse: collapse;">
 
 <tr>
 <TD>
 </TD>
-<?if($LINK[224] AND $cal_viewmode != 3){?><td><i class="lmb-icon lmb-cog" onclick="limbasDivShow(this,'','viewmenu');" title="<?=$lang[$LINK['name'][224]]?>" style="cursor:pointer;"></i></td><?}?>
-<TD><i class="lmb-icon lmb-plus-square" onclick="lmb_calDetail(0, event, 0, 'gtab_neu');" title="<?=$lang[1943]?>" style="cursor:pointer;"></i></TD>
+<?php if($LINK[224] AND $cal_viewmode != 3){?><td><i class="lmb-icon lmb-cog" onclick="limbasDivShow(this,'','viewmenu');" title="<?=$lang[$LINK['name'][224]]?>" style="cursor:pointer;"></i></td><?php }?>
+<TD><i class="lmb-icon lmb-plus-square" onclick="lmb_calDetail(0, event, 0, 'gtab_neu');" title="<?=$lang[1435]?>" style="cursor:pointer;"></i></TD>
 <?php /* lmb_datepicker(event,this,null,null,'yy-mm-dd',10,'lmb_pickerSelected') */ ?>
 <TD><input type="hidden"><i class="lmb-icon lmb-page-find" OnClick="lmb_calSearchFrame()" TITLE="<?=$lang[2255]?>" style="cursor:pointer;"></i></TD>
-<?if($extrasmenu){?><td><i class="lmb-icon lmb-puzzle-piece" onclick="limbasDivShow(this,'','extrasmenu');" title="<?=$lang[2773]?>" style="cursor:pointer;"></i></td><?}?>
+<?php if($extrasmenu){?><td><i class="lmb-icon lmb-puzzle-piece" onclick="limbasDivShow(this,'','extrasmenu');" title="<?=$lang[1939]?>" style="cursor:pointer;"></i></td><?php }?>
 <TD>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TD>
 
-<?		
+<?php
 # resource
 if($gfield[$gtabid]["md5tab"][$gtab['params1'][$gtabid]]){?>
 <TD class="tabpoolItemInactive lmb-tabpoolItemnohover" title="<?=$lang[2854]?>"><i class="lmb-icon lmb-calendar-alt2"></i></TD>
-<TD id="tzone_resourceMonth" style="cursor:pointer;" onclick="lmb_calView('resourceMonth');" <?if($cal_viewmode=='resourceMonth'){echo "class=\"tabpoolItemActive\" ";}?>  class="tabpoolItemInactive"><?=$lang[1945];?></TD>
-<TD id="tzone_resourceWeek" style="cursor:pointer;" onclick="lmb_calView('resourceWeek');" <?if($cal_viewmode=='resourceWeek'){echo "class=\"tabpoolItemActive\" ";}?>  class="tabpoolItemInactive"><?=$lang[1944];?></TD>
-<TD id="tzone_resourceDay" style="cursor:pointer;" onclick="lmb_calView('resourceDay');" <?if($cal_viewmode=='resourceDay'){echo "class=\"tabpoolItemActive\" ";}?> class="tabpoolItemInactive"><?=$lang[1943];?></TD>
+<TD id="tzone_resourceMonth" style="cursor:pointer;" onclick="lmb_calView('resourceMonth');" <?php if($cal_viewmode=='resourceMonth'){echo "class=\"tabpoolItemActive\" ";}?>  class="tabpoolItemInactive"><?=$lang[1437];?></TD>
+<TD id="tzone_resourceWeek" style="cursor:pointer;" onclick="lmb_calView('resourceWeek');" <?php if($cal_viewmode=='resourceWeek'){echo "class=\"tabpoolItemActive\" ";}?>  class="tabpoolItemInactive"><?=$lang[1436];?></TD>
+<TD id="tzone_resourceDay" style="cursor:pointer;" onclick="lmb_calView('resourceDay');" <?php if($cal_viewmode=='resourceDay'){echo "class=\"tabpoolItemActive\" ";}?> class="tabpoolItemInactive"><?=$lang[1435];?></TD>
 <TD>&nbsp;&nbsp;&nbsp;</TD>
-<?}?>
+<?php }else{?>
 
 <TD title="<?=$lang[2853]?>" class="tabpoolItemInactive lmb-tabpoolItemnohover"><i class="lmb-icon-cus lmb-cal-day"></i></TD>
-<TD id="tzone_month" style="cursor:pointer; margin-right:-5px" value="<?=$lang[1945];?>" onclick="lmb_calView('month');" <?if($cal_viewmode=='month'){echo "class=\"tabpoolItemActive\" ";}?> class="tabpoolItemInactive"><?=$lang[1945];?></TD>
-<TD id="tzone_agendaWeek" style="cursor:pointer; margin-right:-5px" value="<?=$lang[1944];?>" onclick="lmb_calView('agendaWeek');" <?if($cal_viewmode=='agendaWeek'){echo "class=\"tabpoolItemActive\" ";}?> class="tabpoolItemInactive"><?=$lang[1944];?></TD>
-<TD id="tzone_agendaDay" style="cursor:pointer; margin-right:-5px" value="<?=$lang[1943];?>" onclick="lmb_calView('agendaDay');" <?if($cal_viewmode=='agendaDay'){echo "class=\"tabpoolItemActive\" ";}?> class="tabpoolItemInactive"><?=$lang[1943];?></TD>
+<TD id="tzone_month" style="cursor:pointer; margin-right:-5px" value="<?=$lang[1437];?>" onclick="lmb_calView('month');" <?php if($cal_viewmode=='month'){echo "class=\"tabpoolItemActive\" ";}?> class="tabpoolItemInactive"><?=$lang[1437];?></TD>
+<TD id="tzone_agendaWeek" style="cursor:pointer; margin-right:-5px" value="<?=$lang[1436];?>" onclick="lmb_calView('agendaWeek');" <?php if($cal_viewmode=='agendaWeek'){echo "class=\"tabpoolItemActive\" ";}?> class="tabpoolItemInactive"><?=$lang[1436];?></TD>
+<TD id="tzone_agendaDay" style="cursor:pointer; margin-right:-5px" value="<?=$lang[1435];?>" onclick="lmb_calView('agendaDay');" <?php if($cal_viewmode=='agendaDay'){echo "class=\"tabpoolItemActive\" ";}?> class="tabpoolItemInactive"><?=$lang[1435];?></TD>
 <TD>&nbsp;&nbsp;&nbsp;</TD>
 <TD title="Basic" class="tabpoolItemInactive lmb-tabpoolItemnohover"><i class="lmb-icon-cus lmb-cal-week"></TD>
-<TD id="tzone_basicWeek" style="cursor:pointer; margin-right:-5px" value="<?=$lang[1944];?>" onclick="lmb_calView('basicWeek');" <?if($cal_viewmode=='basicWeek'){echo "class=\"tabpoolItemActive\" ";}?> class="tabpoolItemInactive"><?=$lang[1944];?></TD>
-<TD id="tzone_basicDay" style="cursor:pointer; margin-right:-5px" value="<?=$lang[1943];?>" onclick="lmb_calView('basicDay');" <?if($cal_viewmode=='basicDay'){echo "class=\"tabpoolItemActive\" ";}?> class="tabpoolItemInactive"><?=$lang[1943];?></TD>
+<TD id="tzone_basicWeek" style="cursor:pointer; margin-right:-5px" value="<?=$lang[1436];?>" onclick="lmb_calView('basicWeek');" <?php if($cal_viewmode=='basicWeek'){echo "class=\"tabpoolItemActive\" ";}?> class="tabpoolItemInactive"><?=$lang[1436];?></TD>
+<TD id="tzone_basicDay" style="cursor:pointer; margin-right:-5px" value="<?=$lang[1435];?>" onclick="lmb_calView('basicDay');" <?php if($cal_viewmode=='basicDay'){echo "class=\"tabpoolItemActive\" ";}?> class="tabpoolItemInactive"><?=$lang[1435];?></TD>
 <!--<TD width="100%" align="right"><div style="padding-right:10px;font-size:1.3em;font-weight:bold;" id="current_date"></div></TD>-->
-
+<?php }?>
 
 </tr></table>
 </div>
@@ -401,7 +394,7 @@ if($gfield[$gtabid]["md5tab"][$gtab['params1'][$gtabid]]){?>
 
 
 <div id="lmb_eventDetailFrame" style="position:absolute;display:none;z-index:9999;overflow:hidden;width:300px;height:300px;padding:0px;">
-<iframe id="lmb_detailFrame" style="width:100%;height:100%;border:none;overflow:auto;"></iframe>
+<iframe id="lmb_detailFrame" style="width:100%;height:100%;overflow:auto;"></iframe>
 </div>
 
 </tr></td>
@@ -413,7 +406,7 @@ if($gfield[$gtabid]["md5tab"][$gtab['params1'][$gtabid]]){?>
 <div id="lmbCalAjaxContainer" class="ajax_container" style="position:absolute;display:none;z-index:2003"></div>
 
 <div id="lmbAjaxContextmenu" class="lmbContextMenu" style="position:absolute;display:none;z-index:2004;" OnClick="activ_menu=1;">
-<?php 
+<?php
 pop_top();
 if($gtab["add"][$gtabid] AND $gtab["copy"][$gtabid]){pop_menu(0,'lmb_calCut(activeDiv,activeEvent)',$lang[2666],'','','lmb-icon-cus lmb-page-cut');}   # auschneiden
 if($gtab["edit"][$gtabid]){pop_menu(0,'lmb_calCopy(activeDiv,activeEvent)',$lang[817],'','','lmb-page-copy');}        # kopieren

@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -45,25 +45,31 @@ function LmEx_ajaxResultCopyPasteEvent(result) {
 	}
 }
 
+//region Upload
 
+/**
+ * In duplicate dialog with multiple duplicate files,
+ *   if the user sets the checkbox 'apply for all files':
+ *   Update the duplicate setting of all files
+ * @param fileCount total number of files
+ * @param newType 0=skip, 1=rename, 2=overwrite, 3=version
+ * @param fileIndex index of the file whose type is changed
+ */
+function updateDublicateUploads(fileCount, newType, fileIndex){
+	// only update other files if user wants to
+	var changeAllCheckbox = $('#forallDublicateUploads').get(0);
+	if (changeAllCheckbox && !changeAllCheckbox.checked) {
+		return;
+	}
 
-
-
-
-// show extendet parameter in parameter formular
-function updateDublicateUploads(num,type,c){
-
-	var chk = document.getElementsByName("fileVersionType_"+c)[type].checked;
-	for (var i = c; i <= num; i++){
+	// TODO maybe improve
+	var chk = document.getElementsByName("fileVersionType_"+fileIndex)[newType].checked;
+	for (var i = fileIndex; i <= fileCount; i++){
 		if(document.getElementById("fileVersionId_"+i)){
-			if(chk == true){
-				var el = document.getElementsByName("fileVersionType_"+i)[type].checked = true;
-			}else{
-				var el = document.getElementsByName("fileVersionType_"+i)[type].checked = false;
-			}
+			document.getElementsByName("fileVersionType_"+i)[newType].checked = chk;
 
 			// display versioning text
-			if(type == 3){
+			if(newType == 3){
 				document.getElementById("versioning_subj_"+i).style.display='';
 			}else{
 				document.getElementById("versioning_subj_"+i).style.display='none';
@@ -72,411 +78,351 @@ function updateDublicateUploads(num,type,c){
 	}
 }
 
+/**
+ * Collects information from duplicate dialog and initiates upload
+ * @param fileCount total number of files
+ */
+function selectDublicateUploads(fileCount){
+	if(fileCount > 0){
+		// destroy duplicate dialog
+        $('#dublicateCheckLayer.ui-dialog-content').dialog('destroy');
 
-// handle & submit from parameter formular of dublicate uploads
-function selectDublicateUploads(evt,num,fp){
-
-	var fvt = new Array();
-	var subj = new Array();
-	var formel = document.form1;
-	
-	for (var i = 1; i <= num; i++){
-		if(document.getElementById("fileVersionId_"+i)){
-			var el = document.getElementsByName("fileVersionType_"+i);
-			var fvtValue = radioValue(el);
-			var el = document.getElementsByName("fileVersionSubj_"+i);
-			var sbjValue = el[0].value;
-
-			fvt.push(fvtValue);
-			subj.push(sbjValue);
-		}else{
-			fvt.push('');
-			subj.push('');
-		}
-		
-		// upload
-		if(formel.elements["dublicate[type]["+i+"]"]){
-			formel.elements["dublicate[type]["+i+"]"].value = fvtValue;
-			formel.elements["dublicate[subj]["+i+"]"].value = sbjValue;
-			var upl = 1;
-		}
-		
-	}
-	
-	// copy move
-	if(!upl){
-		if(!formel.elements["dublicate[type][0]"]){
-			$(formel).append("<input type='hidden' name='dublicate[type][0]'>");
-			$(formel).append("<input type='hidden' name='dublicate[subj][0]'>");
-		}
-		formel.elements["dublicate[type][0]"].value = fvt.join(";");
-		formel.elements["dublicate[subj][0]"].value = subj.join(";");
-	}
-
-	if(num > 0){
-		document.getElementById('limbasDivMenuVersioning').style.visibility='hidden';
-
-		$('.lmbUploadProgress').show(); //show all progressbars
-
-		if(LmEx_pasteTyp == 'copy'){
+		if (LmEx_pasteTyp === 'copy') {
 			LmEx_copy_file(LmEx_pasteFilelist);
-		}else if(LmEx_pasteTyp == 'move'){
+		} else if (LmEx_pasteTyp === 'move') {
 			LmEx_move_file(LmEx_pasteFilelist);
-		}else if(isDragDrop){
-			LmEx_dragFileUploadPost(null,fp,isDragDrop['files'],isDragDrop['LID'],isDragDrop['ID'],isDragDrop['gtabid'],isDragDrop['fieldid']);
-		}else{
-			LmEx_ajaxUploadCheckPost(null,fp);
+		} else {
+            var duplicateTypes = [];
+            var versionNames = [];
+            var formel = document.form1;
+            var upload = false;
+
+            for (var i = 1; i <= fileCount; i++){
+                if(document.getElementById("fileVersionId_" + i)){
+                    var duplicateType = radioValue(document.getElementsByName("fileVersionType_" + i)) || '';
+                    var versionName = document.getElementsByName("fileVersionSubj_" + i)[0].value || '';
+                    upload = true;
+                    duplicateTypes.push(duplicateType);
+                    versionNames.push(versionName);
+                }else{
+                    duplicateTypes.push('');
+                    versionNames.push('');
+                }
+            }
+
+            lmbUploadData.duplicateTypes = duplicateTypes;
+            lmbUploadData.versionNames = versionNames;
+
+            LmEx_uploadFiles(lmbUploadData.files, lmbUploadData.uploadUrl);
 		}
 	}
 }
 
-// add file upload forms to formular
-function LmEx_multiupload(co,dest,LID,fp,gtabid,fieldid,ID){
-	
-	if(!fp){fp = 1;}
-	if(!dest){dest = 'lmbUploadLayer';}
-	if(!LID){LID = jsvar["LID"];}
-	if(!gtabid){gtabid = '';}
-	if(!fieldid){fieldid = '';}
-	if(!ID){ID = '';}
-	var upllayer = document.getElementById(dest);
-
-	var cont = '<div class="gtabHeaderInputTR lmbUploadDiv" id="lmbUploadDiv_'+fp+'">\
-	<input type="hidden" name="f_LID" value="'+LID+'">\
-	<input type="hidden" name="f_datid" value="'+ID+'">\
-	<input type="hidden" name="f_gtabid" value="'+gtabid+'">\
-	<input type="hidden" name="f_fieldid" value="'+fieldid+'">\
-	<table>';
-
-	for (var i = 1; i <= co; i++) {
-                // ?????
-		if(!document.getElementById("lmbUploadLayer_'+i+'")){
-			cont += '<tr><td nowrap id="lmbUploadLayer_'+fp+'_'+i+'">\
-			<input type="file" multiple id="file['+fp+'_'+i+']" name="file['+i+']" size="20" onchange="LmEx_UploadArchivOption(this.value,\''+fp+'_'+i+'\')">\
-			<input type="hidden" name="dublicate[type]['+i+']">\
-			<input type="hidden" name="dublicate[subj]['+i+']">\
-			</td><td nowrap><div id="lmbUploadLayerSubmit_'+fp+'_'+i+'"><span id="lmbUploadStateUnzip_'+fp+'_'+i+'" style="display:none;padding-left:5px;padding-right:5px;vertical-align:text-top">'+jsvar['lng_1560']+':<input style="vertical-align:bottom" type="checkbox" id="file_archiv['+fp+'_'+i+']" name="file_archiv['+i+']"></span>';
-			if(i == 1){cont += '<input type="button" value="'+jsvar['lng_815']+'" style="vertical-align:middle" onclick="activ_menu=1;LmEx_CheckIfMultiUpload(\''+fp+'\',\''+LID+'\',\''+ID+'\',\''+dest+'\',\''+gtabid+'\',\''+fieldid+'\');">';}
-			cont += '</div></td><td width="100%"><div id="lmbUploadState_'+fp+'_'+i+'" class="lmbUploadProgress">\
-			<div id="lmbUploadState_'+fp+'_'+i+'Bar" class="lmbUploadProgressBar"></div></div>\
-			</td></tr>\
-			\n';
-                }
+/**
+ * If only selected file is an archive, show option to unzip
+ * @param files FileList from input field
+ * @param fp identifier of html elements for this upload
+ */
+function LmEx_UploadArchivOption(files, fp) {
+    var checkbox = $('#lmbUploadStateUnzip_' + fp).hide();
+	if (files.length === 1) {
+		var name = files[0].name;
+		var nameParts = name.split('.');
+		var ext = nameParts[nameParts.length - 1];
+		var extensions = ["gz", "zip", "tar", "rar", "gzip", "tgz"];
+		if (extensions.indexOf(ext) !== -1) {
+            checkbox.show();
+		}
 	}
-
-	cont += '</table></div>\n';
-	
-	// first drop all upload forms
-	$(".lmbUploadDiv").remove();
-	
-	upllayer.innerHTML = cont;
-	upllayer.parentNode.style.display='';	
-	
-	
-	
 }
 
-// html5 multi-file upload simulated with existing multi-file upload function for drag&drop
-function LmEx_CheckIfMultiUpload( fp, LID, ID, upllayer, gtabid,fieldid){
-        var fileInput = $('#lmbUploadDiv_'+fp+' input[type=file]').first().get(0);
+// number of files to upload. used to determine if all files were uploaded
+var lmb_uploadCount = 0;
 
-        if(fileInput.files.length > 1) {
-            // 5th argument: 'LmEx_Ex_uploadfile_' + fp
-            LmEx_dragFileUpload(fileInput.files, fp, LID, ID, upllayer, gtabid, fieldid);
-            
-        } else {
-            LmEx_ajaxUploadCheck(fileInput, LID, fp);
+/**
+ * Creates a Status / Progress bar for the specified fp. Displays information of the given file
+ * @param fp
+ * @param file object of File class
+ * @constructor
+ */
+function LmbStatusBar(fp, file) {
+	this.container = $('#lmbUploadDiv_' + fp + ' table tbody').first();
+	this.file = file;
+
+	// add progress bar
+	this.container.append('\
+		<tr>\
+			<td>\
+				<div id="lmbUploadState_' + fp + '" class="lmbUploadProgress">\
+					<div id="lmbUploadState_' + fp + 'Bar" class="lmbUploadProgressBar"></div>\
+				</div>\
+			</td>\
+		</tr>\
+	');
+
+	// add filename to progress bar
+	this.progressBar = $('#lmbUploadState_' + fp + 'Bar');
+    this.progressBar.html(this.file.name);
+
+    // add filename and progress bar to container
+    this.progressContainer = $('#lmbUploadState_' + fp);
+    this.progressContainer.html(this.file.name).show().append(this.progressBar);
+
+    // sets width of progress bar in container to simulate progress
+	this.setProgress = function(progress) {
+		this.progressBar.css('width', progress + '%');
+	};
+}
+
+/**
+ * Adds functionality to drop files from OS
+ * @param dropArea jQuery object that will be the drop area
+ * @param onDrop function (files) that is called on drop
+ */
+function LmEx_createDropArea(dropArea, onDrop) {
+    dropArea.addClass('lmbUploadDroparea');
+
+    $('body')
+        .on('drag dragstart dragend dragover dragenter dragleave drop', function(e) {
+            // prevent default action when dropping file on body
+            e.preventDefault();
+            e.stopPropagation();
+        })
+        .on('dragover dragenter', function() {
+            // add classes to indicate dropping area
+            dropArea.addClass('lmbUploadDropareaActive');
+        })
+        .on('dragleave dragend drop', function(e) {
+            // remove classes after dropping ended
+            dropArea.removeClass('lmbUploadDropareaActive');
+        });
+
+    // init drop area
+    dropArea
+		.on('drag dragstart dragend dragover dragenter dragleave drop', function(e) {
+            e.preventDefault();
+			e.stopPropagation();
+		})
+		.on('dragover dragenter', function() {
+            $(this).addClass('lmbUploadDropareaHover');
+		})
+		.on('dragleave dragend drop', function(e) {
+            $(this)
+				.removeClass('lmbUploadDropareaHover')
+				.removeClass('lmbUploadDropareaActive');
+		})
+		.on('drop', function(e) {
+            var files = e.originalEvent.dataTransfer.files;
+			if (files && files.length > 0) {
+				onDrop(files);
+			}
+		});
+}
+
+/**
+ * Adds an input[type=file] to the element specified with parentID
+ * @param parentID
+ */
+function LmEx_showUploadField(parentID, folderID, fp, gtabid, fieldid, datid) {
+    // optional params
+	parentID = parentID || 'lmbUploadLayer';
+    folderID = folderID || jsvar['LID'];
+    fp = fp || 1;
+    gtabid = gtabid || '';
+    fieldid = fieldid || '';
+    datid = datid || '';
+
+    var html = '';
+    html += '\
+		<div class="gtabHeaderInputTR lmbUploadDiv" id="lmbUploadDiv_' + fp + '">\
+			<input type="hidden" name="f_LID" value="' + folderID + '">\
+			<input type="hidden" name="f_gtabid" value="' + gtabid + '">\
+			<input type="hidden" name="f_fieldid" value="' + fieldid + '">\
+			<input type="hidden" name="f_datid" value="' + datid + '">\
+			<table>\
+				<tr>\
+					<td nowrap id="lmbUploadLayer_' + fp + '">\
+						<input type="file" multiple id="file[' + fp + ']" name="file[0]" size="20" onchange="LmEx_UploadArchivOption(this.files, \'' + fp + '\');">\
+					</td>\
+					<td nowrap>\
+						<div id="lmbUploadLayerSubmit_' + fp + '">\
+							<span id="lmbUploadStateUnzip_' + fp + '" style="display:none; padding-left:5px; padding-right:5px; vertical-align:text-top;">\
+								' + jsvar['lng_1560'] + ':\
+								<input style="vertical-align:bottom" type="checkbox" id="file_archiv[' + fp + ']" name="file_archiv[0]">\
+							</span>\
+							<input type="button" value="' + jsvar['lng_815'] + '" style="vertical-align:middle" onclick="activ_menu=1; LmEx_uploadFilesPrecheck($(this).closest(\'.lmbUploadDiv\').find(\'input[type=file]\').get(0).files, \'' + folderID + '\', \'' + fp + '\', \'' + gtabid + '\', \'' + fieldid + '\', \'' + datid + '\');">\
+						</div>\
+					</td>\
+				</tr>\
+			</table>\
+		</div>';
+
+    $('#' + parentID)
+		.show()
+		.html(html);
+}
+
+// contains data of the current upload
+var lmbUploadData;
+
+/**
+ * Performs a limbas-precheck for the given files
+ * @param files
+ */
+function LmEx_uploadFilesPrecheck(files, folderID, fp, gtabid, fieldid, datid) {
+    lmbUploadData = {
+    	files: files,
+        folderID: folderID,
+        fp: fp,
+        gtabid: gtabid || '',
+        fieldid: fieldid || '',
+        datid: datid || ''
+    };
+    LmEx_uploadFilesPrecheckInner(files);
+}
+function LmEx_uploadFilesPrecheckInner(files) {
+	// extract filenames and filesizes for url
+	var fileNames = [];
+	var fileSizes = [];
+	for (var i = 0; i < files.length; i++) {
+        fileNames.push(encodeURIComponent(files[i]['name']));
+        fileSizes.push(encodeURIComponent(files[i]['size']));
+	}
+
+	var url = 'fileUploadCheck&level='+lmbUploadData.folderID + '&name='+fileNames.join(';') + '&size='+fileSizes.join(';') + '&ID='+lmbUploadData.datid + '&fp='+lmbUploadData.fp + '&gtabid='+lmbUploadData.gtabid + '&fieldid='+lmbUploadData.fieldid;
+    ajaxGet(null, 'main_dyns.php', url, null, function(result) {
+        try {
+            var resultObj = JSON.parse(result);
+		} catch (err) {
+            ajaxEvalScript(result);
+            return;
+		}
+
+        lmbUploadData.uploadUrl = resultObj.uploadUrl;
+        var status = resultObj.status;
+        if (status === 'confirmDuplicates') {
+			lmbUploadData.hasDuplicates = true;
+            ajaxEvalScript(resultObj.html);
+			LmEx_handleDuplicates(resultObj.html);
+
+		} else if (status === 'upload') {
+            LmEx_uploadFiles(files, resultObj.uploadUrl);
+		}
+	});
+}
+
+/**
+ * Shows a dialog for the user to select what action to perform for duplicate files
+ * @param result html returned by limbas
+ */
+function LmEx_handleDuplicates(result) {
+    $('#dublicateCheckLayer')
+		.html(result)
+		.css({'position':'relative','left':'0','top':'0'})
+		.dialog({
+			title: jsvar["lng_1683"],
+			width: 300,
+			height: 200,
+			resizable: false,
+			modal: true,
+			zIndex: 10000,
+			close: function(){
+				$('.lmbUploadDiv').hide();
+			}
+		});
+}
+
+/**
+ * Uploades given files separately to the given uploadUrl
+ * @param files
+ * @param uploadUrl
+ */
+function LmEx_uploadFiles(files, uploadUrl) {
+    var formel = document.form1;
+    lmb_uploadCount = 0;
+
+    for (var i = 0; i < files.length; i++) {
+        var formData = new FormData();
+        formData.append('file[0]', files[i]);
+        formData.append('LID', lmbUploadData.folderID);
+        formData.append('gtabid', lmbUploadData.gtabid);
+        formData.append('fieldid', lmbUploadData.fieldid);
+        formData.append('ID', lmbUploadData.datid);
+        if (lmbUploadData.hasDuplicates) {
+            formData.append('dublicate[type][0]', lmbUploadData.duplicateTypes[i]);
+            formData.append('dublicate[subj][0]', lmbUploadData.versionNames[i]);
         }
-}
+        if (files.length === 1) {
+			formData.append('file_archiv['+i+']', formel.elements['file_archiv['+lmbUploadData.fp+']'].checked); // TODO was only in ajax upload, not in drag
+        }
 
-// display unzip option for upload
-function LmEx_UploadArchivOption(name,dest){
-	var npart  = name.split('.');
-	var len = npart.length;
-	var ext = npart[len-1];
-	if(ext == "gz" || ext == "zip" || ext == "tar" || ext == "rar" || ext == "gzip" || ext == "tgz"){
-		document.getElementById("lmbUploadStateUnzip_"+dest).style.display = '';
+        var status = new LmbStatusBar(lmbUploadData.fp, files[i]);
+        lmb_uploadCount++;
+
+		LmEx_uploadFile(formData, uploadUrl, function(workDone, workTotal) {
+            var workPercent = Math.ceil(workDone / workTotal * 100);
+			status.setProgress(workPercent);
+        });
 	}
 }
 
-
-// precheck upload if file already exists
-var upl_file = new Array();
-var upl_size = new Array();
-function LmEx_ajaxUploadCheck(filename,LID,fp) {
-
-	if(!filename){filename = "file";}
-	fnlen = (filename.length)+3;
-
-	if(!LID && document.form1.LID){var LID = document.form1.LID.value;}
-	if(document.form1.ID){var ID = document.form1.ID.value;}
-	
-	upl_file = new Array();
-	upl_size = new Array();
-        
-	var t = $('#lmbUploadDiv_'+fp+' input[type=file]').each(
-	function( index, obj ) {
-                
-		if(navigator.hasxmlProgress){
-			var filename = obj.files[0].name;
-			var filesize = obj.files[0].size
-		}else{
-			var filename = $(obj).val();
-			var filesize = 0;
-		}
-
-		// get name from path
-		var filename = $(obj).val();
-		var path = filename.replace(/\\/g,"/");
-		var pathpart = path.split("/");
-		pathpart.reverse();
-
-                // fill array
-		upl_file.push(escape(pathpart[0]));
-		upl_size.push(escape(filesize));
-        
-		ind = obj.id.substring((obj.name.lastIndexOf('[')+1),(obj.id.length-1));
-		spart = obj.id.substring(0,obj.id.lastIndexOf('[')).split('_');
-                if(!isNaN(spart[spart.length-1]) && !isNaN(spart[spart.length-2])){
-                        ind = spart[spart.length-2]+'_'+spart[spart.length-1]+'_'+ind;
-                }
-
-                document.getElementById('lmbUploadState_'+ind).style.display = 'inline'; //show progressbar
-                document.getElementById('lmbUploadLayerSubmit_'+ind).style.display = 'none'; // hide submit-button
-	}
-	);
-	
-	if(upl_file){
-		file = upl_file.join(";");
-		size = upl_size.join(";");
-		var getstring = "fileUploadCheck&level="+LID+"&name="+file+"&size="+size+"&ID="+ID+"&fp="+fp;
-		mainfunc = function(result){LmEx_ajaxUploadCheckPost(result,fp);};
-		ajaxGet(null,'main_dyns.php',getstring,null,'mainfunc',null,null,1);
-	}
-}
-
-
-// show upload pre-check result
-var lmb_uploadCount=0;
-function LmEx_ajaxUploadCheckPost(result,fp) {
-	
-	if(result){ajaxEvalScript(result)};
-	
-	var formel = document.form1;
-	
-	// file has dublicates - show parameters
-	if(result){
-		$('.lmbUploadProgress').hide(); //hide all progressbars
-		document.getElementById("dublicateCheckLayer").style.visibility='visible'; // show parameter formular
-		document.getElementById("dublicateCheckLayer").innerHTML = result;
-	
-	// direct files upload
-	}else{
-		// upload has progressbar
-		if(navigator.hasxmlProgress){
-			// paste each file element into single form
-			var i = 1;
-                        
-			$('#lmbUploadDiv_'+fp+' input[type=file]').each(
-				function( index, obj ) {
-                                        var formData = new FormData();
-					formData.append('file['+i+']', obj.files[0]);
-                                        formData.append('LID', formel.f_LID.value);
-                                        formData.append('gtabid', formel.f_gtabid.value);
-                                        formData.append('fieldid', formel.f_fieldid.value);
-                                        formData.append('ID', formel.f_datid.value);
-                                        formData.append('dublicate[subj][1]', formel.elements['dublicate[subj]['+i+']'].value);
-                                        formData.append('dublicate[type][1]', formel.elements['dublicate[type]['+i+']'].value);
-                                        formData.append('file_archiv['+i+']', formel.elements['file_archiv['+i+']'].checked);
-                                        var status = new lmb_createStatusbar('lmbUploadState_'+fp+'_'+(index+1));
-                                        status.filesize=lmb_fileSize(obj.files[0].size,1);
-                                        lmb_uploadCount++;
-					i++;
-                                        lmb_fileUpload(formData,status,formel);
-                                }                        
-			);
-			return;
-			
-		// simple form-upload
-		}else{
-			//limbasWaitsymbol(evt);
-			formel.submit();
-		}
-	}
-}
-
-
-// ajax based fileupload
-function lmb_fileUpload(formData,status,formel)
-{
-	var uploadURL ="main_dyns.php?actid=fileUpload"; //Upload URL
-	var extraData ={}; //Extra Data.
-    var jqXHR=$.ajax({
-            xhr: function() {
-            var xhrobj = $.ajaxSettings.xhr();
-            if (xhrobj.upload) {
-                    xhrobj.upload.addEventListener('progress', function(event) {
-                        var percent = 0;
-                        var position = event.loaded || event.position;
-                        var total = event.total;
-                        if (event.lengthComputable) {
-                            percent = Math.ceil(position / total * 100);
-                        }
-                        //Set progress
-                        status.setProgress(percent);
-                    }, false);
-                }
-            return xhrobj;
-        },
-        url: uploadURL,
-        type: "POST",
-        contentType:false,
+/**
+ * Uploads a file to the specified url
+ * @param fileFormData	FormData object of data to send
+ * @param uploadUrl		Url to upload FormData to
+ * @param onProgress	Function (workDone, workTotal) that is called on progress/success
+ */
+function LmEx_uploadFile(fileFormData, uploadUrl, onProgress) {
+	$.ajax({
+		xhr: function() {
+			// returns XMLHttpRequest with progress listener
+			var xhr = $.ajaxSettings.xhr();
+			if (xhr.upload) {
+				xhr.upload.addEventListener('progress', function(event) {
+					if (event.lengthComputable) {
+                        var workDone = event.loaded || event.position;
+                        var workTotal = event.total;
+                        onProgress(workDone, workTotal);
+					}
+				}, false);
+			}
+			return xhr;
+		},
+        url: uploadUrl,
+        type: 'POST',
+        contentType: false,
         processData: false,
         cache: false,
-        data: formData,
-        success: function(data){
-        	lmb_uploadCount--;
-            status.setProgress(100);
+        data: fileFormData,
+        success: function(data) {
+            onProgress(100);
             ajaxEvalScript(data);
-            if(!lmb_uploadCount){
-            	lmb_refreshForm(formel);
+            lmb_uploadCount--;
+            if(!lmb_uploadCount) {
+                lmb_refreshForm();
+                lmbUploadData = null;
             }
         }
-    });
-
+	});
 }
 
-
-// show statusbar
-function lmb_createStatusbar(fid)
-{
-	
-	//console.log('#'+fid+'Bar');
-	//console.log('#'+fid);
-	
-	this.progressBar = $('#'+fid+'Bar');
-	$('#'+fid).show();
-	$('#'+fid).css('backgroundImage','none');
-
-
-	this.setProgress = function(progress)
-	{
-		this.progressBar.width(progress+'%').html('&nbsp;'+this.filesize+'&nbsp;/&nbsp;'+progress + "% ");
-	};
-	this.setAbort = function(jqxhr)
-	{
-		var sb = this.statusbar;
-		this.abort.click(function()
-		{
-			jqxhr.abort();
-			sb.hide();
-		});
-	}
-}
-
-
-
-
-// DRAG&DROP upload pre-check with
-var isDragDrop = null;
-function LmEx_dragFileUpload(files,fp,LID,ID,upllayer,gtabid,fieldid)
-{
-	upl_file = new Array();
-	upl_size = new Array();
-	
-	LmEx_multiupload(files.length,upllayer,LID,fp,gtabid,fieldid,ID);
-	
-	for (var i = 0; i < files.length; i++)
-	{
-		e = i+1;
-		
-		document.getElementById('lmbUploadLayer_'+fp+'_'+e).innerHTML = '\
-		<input id="files['+fp+'_'+e+']" value="'+files[i]["name"]+'">\
-		<input type="hidden" name="dublicate[type]['+e+']">\
-		<input type="hidden" name="dublicate[subj]['+e+']">';
-		document.getElementById('lmbUploadLayerSubmit_'+fp+'_'+e).style.display = 'none';
-
-                // fill array
-		upl_file.push(escape(files[i]['name']));
-		upl_size.push(escape(files[i]['size']));
-	}
-	
-	// uploadcheck
-	if(upl_file){
-		file = upl_file.join(";");
-		size = upl_size.join(";");
-		var getstring = "fileUploadCheck&level="+LID+"&name="+file+"&size="+size+"&ID="+ID+"&fp="+fp;
-		
-		mainfunc = function(result){LmEx_dragFileUploadPost(result,fp,files,LID,ID,gtabid,fieldid);};
-		ajaxGet(null,'main_dyns.php',getstring,null,'mainfunc',null,null,1);
-	}
-}
-
-
-// DRAG&DROP show upload pre-check result
-function LmEx_dragFileUploadPost(result,fp,files,LID,ID,gtabid,fieldid) {
-	
-	if(result){ajaxEvalScript(result)};
-
-	formel = document.form1;
-	
-	// file has dublicates - show parameters
-	if(result){
-		
-		isDragDrop = new Array();
-		isDragDrop['files'] = files;
-		isDragDrop['LID'] = LID;
-		isDragDrop['ID'] = ID;
-		isDragDrop['gtabid'] = gtabid;
-		isDragDrop['fieldid'] = fieldid;
-		
-		$('.lmbUploadProgress').hide(); //hide all progressbars
-		document.getElementById("dublicateCheckLayer").style.visibility='visible'; // show parameter formular
-		document.getElementById("dublicateCheckLayer").innerHTML = result;
-	
-	// direct files upload
-	}else{
-		
-		isDragDrop = null;
-		
-		for (var i = 0; i < files.length; i++)
-		{
-			var e = i+1;
-			
-			formData = new FormData();
-			formData.append('file['+e+']', files[i]);
-			formData.append('LID', LID);
-			formData.append('ID', ID);
-			formData.append('gtabid', gtabid);
-			formData.append('fieldid', fieldid);
-			formData.append('dublicate[subj][1]', formel.elements['dublicate[subj]['+e+']'].value);
-			formData.append('dublicate[type][1]', formel.elements['dublicate[type]['+e+']'].value);
-
-			var status = new lmb_createStatusbar('lmbUploadState_'+fp+'_'+e);
-			status.filesize=lmb_fileSize(files[i].size,1);
-			lmb_uploadCount++;
-			lmb_fileUpload(formData,status,formel);
-		}
-	}
-}
-
-
-// specific refresh of form
-function lmb_refreshForm(formel)
-{
+/**
+ * Refreshes content by reloading type-field in gtab, or submit of form in explorer
+ */
+function lmb_refreshForm() {
 	// explorer main view
-	if(document.form1.action.value == 'explorer_main' || document.form1.action.value == 'mini_explorer'){
-		// drop all upload forms
-		$(".lmbUploadDiv").remove();
+	if(document.form1.action.value === 'explorer_main' || document.form1.action.value === 'mini_explorer'){
 		LmEx_send_form(1,1);
 	// gtab_change file relations
-	}else if(document.form1.action.value == 'gtab_change' || document.form1.action.value == 'gtab_neu'){
-		LmExt_Ex_RelationFields(formel['f_gtabid'].value,formel['f_fieldid'].value,'','',formel['f_datid'].value,'','','','','','','','');
-		// drop all upload forms
-		$(".lmbUploadDiv").remove();
+	}else if(document.form1.action.value === 'gtab_change' || document.form1.action.value === 'gtab_neu'){
+		LmExt_Ex_RelationFields(lmbUploadData.gtabid ,lmbUploadData.fieldid ,'','',lmbUploadData.datid ,'','','','','','','','');
 	}
+
+    // drop all upload forms
+    $(".lmbUploadDiv").remove();
 }
 
+//endregion
 
 //----------------- move/copy pre-check -------------------
 var LmEx_pasteFilelist;
@@ -486,23 +432,20 @@ function LmEx_ajaxPasteCheck(evt,filelist,typ) {
 	LmEx_pasteFilelist = filelist;
 	LmEx_pasteTyp = typ;
 	LmEx_setxypos(evt,"dublicateCheckLayer");
-	var getstring = "&level="+document.form1.LID.value+"&filelist="+escape(filelist);
+	var getstring = "&level="+document.form1.LID.value+"&filelist="+encodeURIComponent(filelist);
 	ajaxGet(null,'main_dyns.php','filePasteCheck' + getstring,null,'LmEx_ajaxResultPasteCheck');
 }
 
 //----------------- show upload preview check -------------------
 function LmEx_ajaxResultPasteCheck(result) {
-	if(result.substr(0,7) == 'direct-'){
+	if(result && result.substr(0,7) == 'direct-'){
 		if(LmEx_pasteTyp == 'copy'){
 			LmEx_copy_file(LmEx_pasteFilelist);
 		}else if(LmEx_pasteTyp == 'move'){
 			LmEx_move_file(LmEx_pasteFilelist);
 		}
 	}else if(result){
-		document.getElementById("dublicateCheckLayer").style.visibility='visible';
-		document.getElementById("dublicateCheckLayer").innerHTML = result;
-	}else{
-		alert('failure!');
+        LmEx_handleDuplicates(result);
 	}
 }
 
@@ -629,7 +572,7 @@ function LmEx_select_folder(evt,level){
 // Selektierte Dateien
 function LmEx_selectedFileList(lid){
 	var cc = null;
-	var filelist = new Array();
+	var filelist = [];
 	var pre = 0;
 
 	var ar = document.getElementsByTagName("input");
@@ -676,8 +619,8 @@ function LmEx_check_selected(lid,norm){
 
 function fieldlist(field){
 	
-	var flshow = new Array();
-	var flhide = new Array();
+	var flshow = [];
+	var flhide = [];
 
 	var textel = document.getElementById("dc_"+field);
 
@@ -698,6 +641,7 @@ function fieldlist(field){
 }
 
 // ---- File-Aktivierung -----
+var lastActivatedFilename = null; // set in LmEx_activate_file, used in LmEx_open_detail
 function LmEx_activate_file(evt,id,filename,lid,norm){
 
 	if(evt.ctrlKey && evt.shiftKey && norm == 'd'){
@@ -758,7 +702,8 @@ function LmEx_activate_file(evt,id,filename,lid,norm){
 	}else{
 		document.getElementById(filestatus).value=1;
 		document.getElementById(elline).style.backgroundColor = jsvar["WEB7"];
-		if(document.form_rename){document.form_rename.rename.value = filename;}
+		if(document.getElementById('file_dir_rename')){document.getElementById('file_dir_rename').value = filename;}
+        lastActivatedFilename = filename;
 		LmEx_edit_id = id;
 		LmEx_edit_norm = norm;
 	}
@@ -925,17 +870,31 @@ function LmEx_preview_archive(method,size){
 		LmEx_open_preview(jsvar["LID"],LmEx_edit_id,method,'')
 	}else{
 		alert(jsvar["lng_1717"]);
-	
 	}
 }
 
+function LmEx_print(event, lid, printerID) {
+    var printFiles = [];
+    var fileList = LmEx_selectedFileList(lid);
+    for (var i in fileList){
+        if(fileList[i]){
+            var key = i.split("_");
+            var ftyp = key[0];
+            if (ftyp == 'd' /* file */) {
+				var fid = key[1];
+                printFiles.push(fid);
+            }
+        }
+    }
+	ajaxGet(event, 'main_dyns.php', 'printFile&printerID=' + printerID + '&fileIDs=' + JSON.stringify(printFiles), null, function(result) {
+        ajaxEvalScript(result);
+        LmEx_divclose();
+	});
+}
 
 function LmEx_uploadFromPath(el,LID){
-	
-	var status = new lmb_createStatusbar('lmbUploadFromPath');
-	status.filesize='import';
-	el.style.visibility = 'hidden';
-	
+	var status = $('#lmbUploadFromPath').show();
+	var statusBar = status.children().first();
 	$.ajax({
 		xhr: function()
 		{
@@ -948,17 +907,17 @@ function LmEx_uploadFromPath(el,LID){
 					//console.log(percentComplete*100);
 					
 					//show progressbar
-					status.setProgress(percentComplete*100);
+                    statusBar.width((percentComplete * 100) + '%');
 				}
 			}, false);
 			return xhr;
 		},
 		type: 'POST',
-		url: 'main_dyns.php?actid=fileUploadFromPath&LID='+LID+'&path='+document.getElementById('LmEx_ImportPath').value+'&type='+document.getElementById('LmEx_ImportPathType').value,
+		url: 'main_dyns.php?actid=fileUploadFromPath&LID='+LID+'&path='+encodeURIComponent(document.getElementById('LmEx_ImportPath').value)+'&type='+document.getElementById('LmEx_ImportPathType').value,
 		data: {},
 		success: function(data){
 			//Do something success-ish
-			status.setProgress(100);
+			status.hide();
 			LmEx_send_form(1,1);
 			LmEx_divclose();
 		}
@@ -989,7 +948,7 @@ function LmEx_cache_file(todo){
 	document.getElementById('filemenu').style.visibility = 'hidden';
 	count =	LmEx_check_selected(jsvar["LID"]);
 	if(count > 0){
-		var copyfile = new Array();
+		var copyfile = [];
 		var filelist = LmEx_selectedFileList(lid);
 
 		for (var i in filelist){
@@ -1037,7 +996,7 @@ function LmEx_preview_thumbs(evt,url,close) {
     var size = jsvar['thumbsize2'].split('x');
     if(!$('#thumbPreviewLayer').length && !close) {
         $("body").append(
-            '<img id="thumbPreviewLayer" onclick="LmEx_preview_thumbs(null,null,1)" autofocus="1" style="width:'+size[0]+'px; height:'+size[1]+'px; padding: 0px;">'
+            '<img id="thumbPreviewLayer" onclick="LmEx_preview_thumbs(null,null,1)" style="width:'+size[0]+'px; height:'+size[1]+'px; padding: 0;">'
         );
     } else if (close) {
         $('#thumbPreviewLayer').dialog("close");
@@ -1137,7 +1096,7 @@ function LmEx_endDrag() {
 }
 
 // --- Feldschleife für Spaltenbreite festlegen -----
-var row_size = new Array();
+var row_size = [];
 function LmEx_tdsize(){
 	var cc = null;
 	var e = 0;
@@ -1205,17 +1164,21 @@ function LmEx_open_menu(el,menu){
 function LmEx_open_detail(evt,ID,lid,detail) {
         // close all contextmenues
         limbasDivClose();
-        
-	if(!lid){lid = jsvar["LID"];}
+
+    if(!lid){lid = jsvar["LID"];}
 	LmEx_check_all(0,lid);
 
 	if(evt.ctrlKey || evt.shiftKey || detail){
-		detail = open("main.php?action=download&ID=" + ID ,"download","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650");
+		open("main.php?action=download&ID=" + ID ,"download","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650");
 	}else{
-		if(document.getElementById("limbasDivMenuExplContext")){ 
-                    limbasDivShow("",evt,"limbasDivMenuExplContext");
-                    activ_menu = 0; // function only gets called on right click which doesnt trigger click on body
-                }
+		if(document.getElementById("limbasDivMenuExplContext")){
+			if (lastActivatedFilename) {
+				$('#file_rename').val(lastActivatedFilename);
+			}
+
+            limbasDivShow("",evt,"limbasDivMenuExplContext");
+			activ_menu = 0; // function only gets called on right click which doesnt trigger click on body
+		}
 	}
 	return false;
 }
@@ -1258,7 +1221,7 @@ function LmEx_open_details(evt,ID,LID,gtab_id,form_id,dimension) {
 
 	if(!evt.ctrlKey && !evt.shiftKey){
 		if(!document.getElementById("LmEx_DetailFrame")){
-			$("body").append('<div id="LmEx_DetailFrame" style="position:absolute;display:none;z-index:9999;overflow:hidden;width:300px;height:300px;"><iframe id="LmEx_DetailOpen" style="width:100%;height:100%;border:none;overflow:auto;"></iframe></div>');
+			$("body").append('<div id="LmEx_DetailFrame" style="position:absolute;display:none;z-index:9999;overflow:hidden;width:300px;height:300px;"><iframe id="LmEx_DetailOpen" style="width:100%;height:100%;overflow:auto;"></iframe></div>');
 		}
 		
 		if(form_id == '0'){form_id = null;}

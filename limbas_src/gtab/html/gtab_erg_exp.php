@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -66,7 +66,7 @@ function exportTabCSV($fh,$gtabid,&$gresult,&$filter,$expview=1,$typ=null){
 		
 		/* --- Feldschleife für export --------------------------------------- */
 		if($typ == 1){
-			if($BGCOLOR1 == $farbschema["WEB8"]){$BGCOLOR = $farbschema["WEB9"];$BGCOLOR1 = $farbschema["WEB9"];} else {$BGCOLOR = $farbschema["WEB8"];$BGCOLOR1 = $farbschema["WEB8"];}
+			if($BGCOLOR1 == $farbschema["WEB8"]){$BGCOLOR = $farbschema["WEB8"];$BGCOLOR1 = $farbschema["WEB8"];} else {$BGCOLOR = $farbschema["WEB8"];$BGCOLOR1 = $farbschema["WEB8"];}
 			if($gresult[$gtabid]["color"][$bzm]){$BGCOLOR = "#".$gresult[$gtabid]["color"][$bzm];}
 			if($cres){$BGCOLOR = "#".$cres;}
 			
@@ -156,7 +156,7 @@ function domTableElement($dom,$parentElement,$gtabid,$verkn,$filter,$gsr){
 		# ---- auf Endlosverknüpfungen prüfen ------
 		$still_done[$gtabid] = $gtabid;
 		# ---- Endlosverknüpfungen bei Selbstverknüpfung ------
-		if($gverkn[$gtabid]["id"] AND $popc[$gtabid] AND $gtab[sverkn][$gtabid]){
+		if($gverkn[$gtabid]["id"] AND $popc[$gtabid] AND $gtab['sverkn'][$gtabid]){
 			if(!$still_sdone[$gtabid]){$still_sdone[$gtabid] = array();}
 			if(in_array($gresult[$gtabid]["id"][$bzm],$still_sdone[$gtabid])){$bzm++; continue;}
 			$still_sdone[$gtabid][] = $gresult[$gtabid]["id"][$bzm];
@@ -172,7 +172,7 @@ function domTableElement($dom,$parentElement,$gtabid,$verkn,$filter,$gsr){
 				$retrn = $fname($bzm,$key,$gtabid,5,$gresult,0);
 				# Ohne Verknüpfungsfelder
 				if($gfield[$gtabid]["field_type"][$key] != 11){
-					$fieldElement = $dom->createElement(lmb_utf8_encode($gfield[$gtabid][field_name][$key]));
+					$fieldElement = $dom->createElement(lmb_utf8_encode($gfield[$gtabid]['field_name'][$key]));
 					$fieldElement->appendChild($dom->createTextNode(lmb_utf8_encode($retrn)));
 					$tableElement->appendChild($fieldElement);
 				}
@@ -180,7 +180,7 @@ function domTableElement($dom,$parentElement,$gtabid,$verkn,$filter,$gsr){
 		}
 		# Verknüpfungs-ID
 		if($verkn["id"]){
-			$fieldElement = $dom->createElement(lmb_utf8_encode($verkn[tab]."_ID"));
+			$fieldElement = $dom->createElement(lmb_utf8_encode($verkn['tab']."_ID"));
 			$fieldElement->appendChild($dom->createTextNode($verkn["id"]));
 			$tableElement->appendChild($fieldElement);
 		}
@@ -208,7 +208,7 @@ function domTableElement($dom,$parentElement,$gtabid,$verkn,$filter,$gsr){
 					# Abfrage
 					$verkn_ = set_verknpf($value,$gfield[$value]["field_id"][$key],$gresult[$gtabid]["id"][$bzm],0,0,1,2);
 					# Ausgabe
-					#if($gresult_[$value][res_viewcount] > 0){
+					#if($gresult_[$value]['res_viewcount'] > 0){
 						$subElement = domTableElement($dom,$tableElement,$gfield[$gtabid]["r_verkntabid"][$key],$verkn_,$filter,0,0);
 					#}
 				}
@@ -230,7 +230,7 @@ function domTableElement($dom,$parentElement,$gtabid,$verkn,$filter,$gsr){
 #---- Excell Export -------
 if($exp_medium == 1 OR $exp_medium == 3){
 	#header("Content-Type: application/vnd.ms-excel");
-	#header("Content-Disposition: attachement; filename=".$gtab[table][$gtabid].".xls");
+	#header("Content-Disposition: attachement; filename=".$gtab['table'][$gtabid].".xls");
 
 	if($exp_medium == 1){$ext = '.xls';}else{$ext = '.csv';}
 	
@@ -271,8 +271,8 @@ if($exp_medium == 1 OR $exp_medium == 3){
 	
 	# ------- xml Pfad ---------
 	$name = "limbasExport_".date("Y-m-d-h-m-s").".xml";
-	$out = $umgvar[pfad]."/USER/".$session[user_id]."/temp/".$name;
-	$outurl = $umgvar[url]."/USER/".$session[user_id]."/temp/".$name;
+	$out = $umgvar['pfad']."/USER/".$session['user_id']."/temp/".$name;
+	$outurl = $umgvar['url']."/USER/".$session['user_id']."/temp/".$name;
 	# ------- xml schreiben ---------
 	
 	$fh = fopen ($out, 'w');

@@ -66,27 +66,27 @@ function lmb_substr_count($haystack, $needle, $offset=null, $length=null){
 
 //ereg
 function lmb_ereg($pattern, $string){
-    return ereg($pattern, $string);
+    return preg_match("/{$pattern}/", $string);
 }
 
 //eregi
 function lmb_eregi($pattern, $string){
-    return eregi($pattern, $string);
+    return preg_match("/{$pattern}/i", $string);
 }
 
 //ereg_replace
 function lmb_ereg_replace($pattern, $replacement, $string){
-    return ereg_replace($pattern, $replacement, $string);
+    return preg_replace("/{$pattern}/", $replacement, $string);
 }
 
 // eregi_replace
 function lmb_eregi_replace($pattern, $replacement, $string){
-    return eregi_replace($pattern, $replacement, $string);
+    return preg_replace("/{$pattern}/i", $replacement, $string);
 }
 
 // split
 function lmb_split($pattern, $string, $limit=null){
-    return split($pattern, $string, $limit);
+    return preg_split("/{$pattern}/", $string, $limit);
 }
 
 // strrev

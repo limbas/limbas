@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2016 Limbas GmbH - Axel westhagen (support@limbas.org)
+ * (c) 1998-2018 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.0
+ * Version 3.5
  */
 
 /*
@@ -49,22 +49,21 @@ function device_path(device) {
 <div class="lmbPositionContainerMain small">
 
 <FORM ACTION="main_admin.php" METHOD="post" name="form1">
-<input type="hidden" name="<?echo $_SID;?>" value="<?echo session_id();?>">
 <input type="hidden" name="action" VALUE="setup_backup_man">
 <input type="hidden" name="device" VALUE="1">
 
-<?if($umgvar["backup_default"]){$path1 = $umgvar["backup_default"];}else{$path1 = "localhost:".$umgvar["pfad"]."/BACKUP";}?>
+<?php if($umgvar["backup_default"]){$path1 = $umgvar["backup_default"];}else{$path1 = "localhost:".$umgvar["pfad"]."/BACKUP";}?>
 
 <TABLE class="tabfringe" BORDER="0" cellspacing="2" cellpadding="2">
 <TR class="tabBody" ID="art_path"><TD STYLE="width:150px;"><B>Type</B></TD><TD>
 <SELECT STYLE="width:350px" NAME="art">
 <OPTION VALUE="1" SELECTED>Complete Data Backup
-<?if($DB["DBVENDOR"] == "maxdb76"){?><OPTION VALUE="2">Incremental Data Backup<?}?>
-<?if($DB["DBVENDOR"] == "maxdb76"){?><OPTION VALUE="3">Log Backup<?}?>
+<?php if($DB["DBVENDOR"] == "maxdb76"){?><OPTION VALUE="2">Incremental Data Backup<?php }?>
+<?php if($DB["DBVENDOR"] == "maxdb76"){?><OPTION VALUE="3">Log Backup<?php }?>
 <TR class="tabBody" ID="medium_path"><TD WIDTH="100"><B>Media</B></TD><TD>
 <SELECT STYLE="width:350px" NAME="medium" OnChange="medium_path(this.value);">
 <OPTION VALUE="1" SELECTED>File
-<?if($DB["DBVENDOR"] == "maxdb76"){?><OPTION VALUE="2">Tape<?}?>
+<?php if($DB["DBVENDOR"] == "maxdb76"){?><OPTION VALUE="2">Tape<?php }?>
 </SELECT></TD></TR>
 <TR class="tabBody" ID="file_path"><TD WIDTH="100"><B>Target (on db-host)</B></TD><TD><INPUT TYPE="TEXT" NAME="path1" VALUE="<?=$path1?>" STYLE="width:350px"></TD></TR>
 <TR class="tabBody" ID="tabe_path" STYLE="display:none"><TD WIDTH="100"><B>Target (dev)</B></TD><TD><INPUT TYPE="TEXT" NAME="path2" VALUE="/dev/rft0" STYLE="width:350px"></TD></TR>
@@ -76,14 +75,14 @@ function device_path(device) {
 </TABLE>
 <BR><BR>
 
-<?
+<?php
 echo $message;
 if($device == 2){?>
 	<?=$lang[971]?>:<BR>
-	<B><?echo $result_exp_tabs;?></B> <?=$lang[950]?><BR>
-	<B><?echo $result_exp_dat;?></B> <?=$lang[972]?><BR>
+	<B><?= $result_exp_tabs ?></B> <?=$lang[577]?><BR>
+	<B><?= $result_exp_dat ?></B> <?=$lang[972]?><BR>
 	<?=$lang[973]?><BR>
-<?}?>
+<?php }?>
 
 
 </div>
