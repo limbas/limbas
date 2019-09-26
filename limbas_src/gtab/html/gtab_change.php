@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -40,9 +40,7 @@ if($verknpf){
 
 #----------------- Scrollfunktionen -------------------
 if($scrollto){
-	# if view use pointer
-	if($gtab["typ"][$gtabid] == 5){$pointer = $ID;}else{$pointer = null;}
-	$ID = scroll_to($scrollto,$gtabid,$ID,$gsr,$filter,$verkn,$pointer);
+	$ID = scroll_to($scrollto,$gtabid,$ID,$gsr,$filter,$verkn);
 }
 
 #----------------- Plausibilitätsprüfung -------------------
@@ -137,16 +135,8 @@ if($gformlist[$gtabid]["extension"][$form_id]){
 			$gresult = get_gresult($gtabid,1,$filter,$gsr,0,$gform[$form_id]["used_fields"],$ID);
 		}else{
 			$gresult = get_gresult($gtabid,null,null,null,0,$gform[$form_id]["used_fields"],$ID);
-			###############
-		    #$gresult = get_gresult($gtabid,null,null,null,$verkn,null,$ID);
-		    #$onlyfield = $gform[$form_id]["used_fields"];
-		    #$verkn['verknparams'] = 1;
-		    #$onlyfield[14][] = 1001;
-		    #$extension["where"][] = "VERK_F856251CAE88D.ID = 1 AND VERK_F856251CAE88D.VERKN_ID = ARTIKEL.ID";
-			#$gresult = get_gresult($gtabid,null,null,null,$verkn,$onlyfield,$ID,$extension);
-			#############
 		}
-		
+
 		// relation parameters fields | parent relation fields
 		if($gform[$form_id]["parentrel"] OR $gform[$form_id]["paramrel"]){
 		    $verkn = null;
@@ -155,11 +145,6 @@ if($gformlist[$gtabid]["extension"][$form_id]){
 		    }
 			form_gresult($ID,$gtabid,$form_id,$gresult,null,$verkn);
 		}
-		
-		// parent relation values
-		#if($gform[$form_id]["parentrel"]){
-		#	form_gresult($ID,$gtabid,$form_id,$gresult);
-		#}
 	}
 	
 	$readonly = 0;

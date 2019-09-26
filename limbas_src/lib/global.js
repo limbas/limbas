@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -26,28 +26,37 @@ function set_focus() {
 
     $(window).focus();
 
-	//if(browser_ie){
-	//	window.focus();
-	//}else{
-	//	if(document.getElementById("myExtForms")){document.getElementById("myExtForms").focus();}
-	//	if(document.getElementById("hiddenfocus")){document.getElementById("hiddenfocus").focus();}
-	//	if(document.form1 && document.form1.action){document.form1.action.focus();}
-	//}
 }
 
-function LmGs_sendForm(reset){
-	if(reset){document.form11.filter_reset.value=1;}
-	if(typeof(window.send_form) == "function") {
-		document.form11.action.value = 'gtab_erg';
-		document.form11.gtabid.value = document.form1.gtabid.value;
-		document.form11.snap_id.value = document.form1.snap_id.value;
-		document.form11.gfrist.value = document.form1.gfrist.value;
-		send_form(11);
-	}else if(typeof(window. send_form) == "function") {
-		document.form11.action.value = 'explorer_main';
-		document.form11.LID.value = document.form1.LID.value;
-		LmEx_send_form(11);
-	}
+function LmGs_sendForm(reset,gtabid){
+
+    if(reset){document.form11.filter_reset.value=1;}
+    if($("#gdssnapid").val()){
+        $('#tabs_'+gtabid).html($("#gdssnapid option:selected").text());
+        document.form1.snap_id.value = $("#gdssnapid").val();
+    }
+
+    if(document.form1.action.value == 'explorer_main') {
+        document.form11.action.value = 'explorer_main';
+        document.form11.LID.value = document.form1.LID.value;
+        LmEx_send_form(11, 1);
+    }else if(document.form1.action.value == 'gtab_erg') {
+        lmbAjax_resultGtab('form11', 1, 1, 1, 1);
+    }
+
+    $( '#lmbAjaxContainer' ).dialog( "destroy" );
+
+	//if(typeof(window.send_form) == "function") {
+	//	document.form11.action.value = 'gtab_erg';
+	//	document.form11.gtabid.value = document.form1.gtabid.value;
+	//	document.form11.snap_id.value = document.form1.snap_id.value;
+	//	document.form11.gfrist.value = document.form1.gfrist.value;
+	//	send_form(11);
+	//}else if(typeof(window. send_form) == "function") {
+	//	document.form11.action.value = 'explorer_main';
+	//	document.form11.LID.value = document.form1.LID.value;
+	//	LmEx_send_form(11);
+	//}
 }
 
 function LmGs_elDisable(id) {
@@ -80,65 +89,138 @@ function LmGs_elDisable(id) {
 }
 
 //search Formular
-function limbasDetailSearch(evt,el,gtabid,fieldid,container){
+function limbasDetailSearch(evt,el,gtabid,fieldid,container,snap_id,module){
 	if(!fieldid){fieldid = '';}
 	if(!gtabid){gtabid = '';}
-	if(!container){container = 'lmbAjaxContainer';}
+	if(!snap_id){snap_id = '';}
+    if(!module){module = '';}
+    if(!container){container = 'lmbAjaxContainer';}
+    if(!document.getElementById(container)) {
+        $("body").append('<div id="'+container+'"></div>');
+    }
 	$.ajax({
 		type: "GET",
 		url: "main_dyns.php",
 		async: false,
-		data: "actid=gtabSearch&gtabid="+gtabid+"&fieldid="+fieldid,
+		data: "actid=gtabSearch&gtabid="+gtabid+"&fieldid="+fieldid+"&snap_id="+snap_id+'&module='+module,
 		success: function(data){
 			document.getElementById(container).innerHTML = data;
 			$("#"+container).css({'position':'relative','left':'0','top':'0'}).dialog({
 				title: jsvar["lng_101"],
-				width: 530,
-				height: 400,
+				width: 650,
+                minHeight: 400,
+				maxHeight: 700,
 				resizable: false,
 				modal: true,
 				zIndex: 10
 			});
-			if(fieldid){LmGs_divchange(fieldid);}
+			if(fieldid){LmGs_divchange(fieldid);};
 		}
 	});
 }
 
-function LmGs_divchange(id) {
 
+function limbasAddSearchPara(el){
+    $("#gdr_"+el.value+"_0").show();
+    $("#gdr_"+el.value+"_0 *[disabled]").prop('disabled', false);
+    $('[id^=gdr_' + el.value + '_]').css({ opacity: 1.0 });
+    el.value='';
+}
+
+function limbasExpandSearchPara(ele, key){
+    $('[id^=gdr_' + key + '_]').show().prop('disabled', false);
+    $('[id^=gdr_' + key + '_] *[disabled]').prop('disabled', false);
+    $(ele).hide();
+}
+
+
+function lmb_searchDropdown(inputElem, selectID, openSize) {
+    // default size
+    if (!openSize) {
+        openSize = 10;
+    }
+
+    // get both input and select elements
+    const inputEl = $(inputElem);
+    const selectEl = $('#' + selectID);
+
+    // open select
+    selectEl.attr('size', openSize);
+
+    // add event listeners if not already added
+    if (!inputEl.is('data-lmb-initialized')) {
+        inputEl.prop('data-lmb-initialized', true);
+
+        // focus lost from input
+        inputEl.blur(function(event) {
+            // focus from input -> select
+            if (selectEl.is(event.relatedTarget)) {
+                return;
+            }
+
+            selectEl.attr('size', 1);
+        });
+
+        // focus lost from select
+        selectEl.blur(function(event) {
+            // focus from select -> input
+            if (inputEl.is(event.relatedTarget)) {
+                return;
+            }
+
+            selectEl.attr('size', 1);
+        });
+
+        // typed into input -> filter select
+        inputEl.keyup(function() {
+            selectEl.attr('size', openSize);
+
+            var searchVal = $(this).val();
+            if (searchVal && searchVal !== '') {
+                searchVal = searchVal.toLowerCase();
+                selectEl.children('optgroup').hide();
+                selectEl.find('option').each(function() {
+                    if ($(this).text().toLowerCase().indexOf(searchVal) >= 0 || $(this).val() === '0' /* empty rows */) {
+                        $(this).show();
+                        $(this).parent().show();
+                    } else {
+                        $(this).hide();
+                    }
+                });
+            } else {
+                selectEl.find('*').show();
+                inputEl.val('');
+            }
+        });
+
+        // selected option -> close
+        selectEl.change(function() {
+            selectEl.attr('size', 1);
+        });
+    }
+}
+
+
+
+function LmGs_divchange(id) {
 	if(!id){return false;}
 
-	var ar = document.getElementsByTagName("div");
-	for (var i = ar.length; i > 0;) {
-	    cc = ar[--i];
-	    if(cc.id.substring(0,3) == "gse"){
-			cc.style.display='none';
-	    }
-	}
+	if ($("#gdsearchfield").length) {
+        // search
+        $("#gdsearchfield").val(id).change();
 
-	var ar = document.getElementsByTagName("tr");
-	for (var i = ar.length; i > 0;) {
-	    cc = ar[--i];
-	    if(cc.id.substring(0,4) == "gsea"){
-			cc.style.display='';
-	    }
+        $('[id^=gdr_]').css({ opacity: 0.3 });
+        $('[id^=gdr_' + id + '_0]').find('i').eq(0).hide();
+        $('[id^=gdr_' + id + '_]').show().css({ opacity: 1.0 }).find(':input').prop('disabled',false);
+	} else {
+        // batch change
+        $('div[id^=gse]').hide();
+        $('tr[id^=gsea]').show();
+		$('[id^=gse_'+id+'_]').show();
+		$('[id^=gser_'+id+'_]').show();
+		$('[id^=gsec_'+id+'_]').show();
+		$('[id^=gseo_'+id+'_]').show();
 	}
-
-	var c = 1;
-	if(jsvar["searchcount"]){c = jsvar["searchcount"]-1;}
-	
-	for(var a = 0; a <= c; a++){
-		var tmpid = "gse_"+id+"_"+a;
-		if(document.getElementById(tmpid)){document.getElementById(tmpid).style.display='';}
-		var tmpid = "gser_"+id+"_"+a;
-		if(document.getElementById(tmpid)){document.getElementById(tmpid).style.display='';}
-		var tmpid = "gsec_"+id+"_"+a;
-		if(document.getElementById(tmpid)){document.getElementById(tmpid).style.display='';}
-		var tmpid = "gseo_"+id+"_"+a;
-		if(document.getElementById(tmpid)){document.getElementById(tmpid).style.display='';}
-	}
-
-	//LmGs_elDisable(id);
 }
 
 // ------------------------------------------
@@ -579,9 +661,9 @@ function ajaxGet(evt,url,actid,parameters,functionName,formname,tocontainer,sync
 		
 		
 		if(window.XMLHttpRequest){
-			xmlhttp = new XMLHttpRequest();
+			var xmlhttp = new XMLHttpRequest();
 		}else if (window.ActiveXObject) {
-			xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+			var xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
 		}
 
 		if(!syncron){syncron = true;}else{syncron = false;}
@@ -1698,7 +1780,7 @@ function lmb_setAutoHeight(el,offset,reset){
 				$(el).css('max-height', elNewHeight + 'px');
 			}
 
-			return $(el).height();
+			return elHeight;
 
 		}
 	}

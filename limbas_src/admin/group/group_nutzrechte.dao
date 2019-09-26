@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -50,10 +50,8 @@ function group_list($ID,$first,$addsubgroup){
 		$sqlquery = "SELECT GROUP_ID FROM LMB_GROUPS WHERE LEVEL = $ID";
 	    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	    if(!$rs) {$commit = 1;}
-		$bzm = 1;
-	    while(odbc_fetch_row($rs, $bzm)) {
+	    while(odbc_fetch_row($rs)) {
 			group_list(odbc_result($rs, "GROUP_ID"),0,$addsubgroup);
-		$bzm++;
 		}
 	}
 	set_rights($ID,$first,$addsubgroup);
@@ -69,11 +67,9 @@ $sqlquery = "SELECT DISTINCT LMB_ACTION.ID,LMB_RULES_ACTION.PERM,LMB_ACTION.MAIN
 FROM LMB_RULES_ACTION,LMB_ACTION 
 WHERE LMB_RULES_ACTION.GROUP_ID = $group_level AND LMB_RULES_ACTION.LINK_ID = LMB_ACTION.ID ORDER BY LMB_ACTION.MAINGROUP,LMB_ACTION.SUBGROUP,LMB_ACTION.SORT";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$bzm1 = 1;
-while(odbc_fetch_row($rs, $bzm1)) {
+while(odbc_fetch_row($rs)) {
 	$id = odbc_result($rs, "ID");
 	$result_lgroup_link["PERM"][$id] = odbc_result($rs, "PERM");
-$bzm1++;
 }
 }
 
@@ -83,11 +79,9 @@ $sqlquery = "SELECT DISTINCT LMB_ACTION_DEPEND.ID,LMB_RULES_ACTION.PERM,LMB_ACTI
 FROM LMB_RULES_ACTION,LMB_ACTION_DEPEND 
 WHERE LMB_RULES_ACTION.GROUP_ID = $group_level AND LMB_RULES_ACTION.LINK_ID = LMB_ACTION_DEPEND.ID ORDER BY LMB_ACTION_DEPEND.MAINGROUP,LMB_ACTION_DEPEND.SUBGROUP,LMB_ACTION_DEPEND.SORT";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$bzm1 = 1;
-while(odbc_fetch_row($rs, $bzm1)) {
+while(odbc_fetch_row($rs)) {
 	$id = odbc_result($rs, "ID");
 	$result_lgroup_link["PERM"][$id] = odbc_result($rs, "PERM");
-$bzm1++;
 }
 }
 
@@ -98,8 +92,7 @@ $sqlquery = "SELECT DISTINCT LMB_RULES_ACTION.PERM,LMB_ACTION.ID,LMB_RULES_ACTIO
 FROM LMB_RULES_ACTION,LMB_ACTION 
 WHERE LMB_RULES_ACTION.GROUP_ID = $ID AND LMB_RULES_ACTION.LINK_ID = LMB_ACTION.ID ORDER BY LMB_ACTION.MAINGROUP,LMB_ACTION.SUBGROUP,LMB_ACTION.SORT";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$bzm1 = 1;
-while(odbc_fetch_row($rs, $bzm1)) {
+while(odbc_fetch_row($rs)) {
 	$id = odbc_result($rs, "ID");
 	$result_links["sort"][$id] = odbc_result($rs, "SORT");
 	$result_links["name"][$id] = odbc_result($rs, "LINK_NAME");
@@ -110,7 +103,6 @@ while(odbc_fetch_row($rs, $bzm1)) {
 	$result_links["perm"][$id] = odbc_result($rs, "PERM");
 	$result_links["link_id"][$id] = odbc_result($rs, "LINK_ID");
 	$result_links["id"][$id] = $id;
-$bzm1++;
 }
 
 
@@ -119,8 +111,7 @@ $sqlquery = "SELECT DISTINCT LMB_RULES_ACTION.PERM,LMB_ACTION_DEPEND.ID,LMB_RULE
 FROM LMB_RULES_ACTION,LMB_ACTION_DEPEND 
 WHERE LMB_RULES_ACTION.GROUP_ID = $ID AND LMB_RULES_ACTION.LINK_ID = LMB_ACTION_DEPEND.ID ORDER BY LMB_ACTION_DEPEND.MAINGROUP,LMB_ACTION_DEPEND.SUBGROUP,LMB_ACTION_DEPEND.SORT";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$bzm1 = 1;
-while(odbc_fetch_row($rs, $bzm1)) {
+while(odbc_fetch_row($rs)) {
 	$id = odbc_result($rs, "ID");
 	$result_links["sort"][$id] = odbc_result($rs, "SORT");
 	$result_links["name"][$id] = odbc_result($rs, "LINK_NAME");
@@ -131,7 +122,6 @@ while(odbc_fetch_row($rs, $bzm1)) {
 	$result_links["perm"][$id] = odbc_result($rs, "PERM");
 	$result_links["link_id"][$id] = odbc_result($rs, "LINK_ID");
 	$result_links["id"][$id] = $id;
-$bzm1++;
 }
 
 asort($result_links["sort"]);
@@ -164,7 +154,6 @@ $link_groupdesc[4][0] = $lang[1812];		#user
 	$link_groupdesc[4][2] = $lang[$LINK['name'][142]];	#Datei Manager
 	$link_groupdesc[4][3] = $lang[$LINK['name'][29]];		#Einstellungen
 	$link_groupdesc[4][4] = $lang[$LINK['name'][169]];	#Kalender
-	$link_groupdesc[4][5] = $lang[$LINK['name'][41]];		#Vorlagen
 	$link_groupdesc[4][6] = $lang[$LINK['name'][189]];	#Schnappschuss
 	$link_groupdesc[4][7] = $lang[2059];	#workflow
 	$link_groupdesc[4][8] = $lang[$LINK['name'][40]];		#Wiedervorlage

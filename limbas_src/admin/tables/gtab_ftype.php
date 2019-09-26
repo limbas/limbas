@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -144,7 +144,7 @@ function change_wysiwyg(fieldid,el){
 }
 
 function newwin(FIELDID,ATID,POOL,TYP) {
-fieldselect = open("main_admin.php?action=setup_fieldselect&fieldid=" + FIELDID + "&atid=" + ATID + "&pool=" + POOL + "&field_pool=" + POOL + "&typ=" + TYP ,"Auswahlfelder","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=540,height=500");
+fieldselect = open("main_admin.php?action=setup_fieldselect&fieldid=" + FIELDID + "&atid=" + ATID + "&pool=" + POOL + "&field_pool=" + POOL + "&typ=" + TYP ,"Auswahlfelder","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=750,height=500");
 }
 function newwin2(FELD,TABELLE,VIEW) {
 genlink = open("main_admin.php?action=setup_genlink&tab=auftrag_ftype&&tab_group=<?= $tab_group ?>tab=" + TABELLE + "&fieldid=" + FELD + "&atid=" + VIEW + "&typ=gtab_ftype" ,"Link_Generator","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=420,height=150");
@@ -329,7 +329,7 @@ if($table_gtab[$bzm]) {
 			<TR class="tabHeader">
 				<TD class="tabHeaderItem" colspan="24" HEIGHT="20">
     <?php
-    echo $table_gtab[$bzm]." (".$beschreibung_gtab[$bzm].")";
+    echo $lang[164] . ': ' . $table_gtab[$bzm]." (".$beschreibung_gtab[$bzm].")";
     if($isview){echo "&nbsp;&nbsp;&nbsp;<a href=\"main_admin.php?&action=setup_gtab_view&viewid=$atid\"><i border=\"0\" style=\"cursor:pointer\" class=\"lmb-icon lmb-organisation-edit\"></i></a>";}
     ?>
     
@@ -398,7 +398,9 @@ if($table_gtab[$bzm]) {
             
 	       if(!$isview){
 	            # --- delete ------
-	            if((lmb_strtoupper($table_gtab[$bzm]) == "LDMS_FILES" AND $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] <= 33) or (lmb_strtoupper($table_gtab[$bzm]) == "LDMS_META" and $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] <= 37)) {
+	            if((lmb_strtoupper($table_gtab[$bzm]) == "LDMS_FILES" AND $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] <= 33)
+                    or (lmb_strtoupper($table_gtab[$bzm]) == "LDMS_META" and $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] <= 37)
+                    or ($table_typ[$bzm] == 8 and $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] <= 2)) {
                     echo "<TD></TD>";
                 } else {
                     echo "<TD VALIGN=\"TOP\" ALIGN=\"CENTER\" style=\"cursor:pointer\">";
@@ -471,7 +473,7 @@ if($table_gtab[$bzm]) {
                     if($verknTabid){
 	       				$sqlquery = "SELECT BESCHREIBUNG FROM LMB_CONF_TABLES WHERE TAB_ID = ".$verknTabid;
 	       				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	       				echo $lang[odbc_result($rs, "BESCHREIBUNG")]." | ";
+	       				echo "<a onclick=\"document.location.href='main_admin.php?&action=setup_gtab_ftype&tab_group=$tab_group&atid=$verknTabid'\">".$lang[odbc_result($rs, "BESCHREIBUNG")]."</a> | ";
 
                         if($verknFieldid){
                             $sqlquery = "SELECT SPELLING FROM LMB_CONF_FIELDS WHERE TAB_ID = ".$verknTabid." AND FIELD_ID = ".$verknFieldid;
@@ -842,16 +844,9 @@ if($table_gtab[$bzm]) {
             <SELECT NAME="typ2" style="width: 150px" OnChange="checkfiledtype(0,this)">
             <?php
             foreach ($result_type["id"] as $key => $value) {
-                if($result_type["id"][$key] <= 17 OR $result_type["id"][$key] == 41 OR $result_type["id"][$key] == 42 OR $result_type["id"][$key] == 21 OR $result_type["id"][$key] == 23){
-                    continue;
-                }
-                if(!$result_type["field_type"][$key]) {
-                    echo "<optgroup label=\"xxx".$result_type["beschreibung"][$key]."\">";
-                }else{
-                    echo "<OPTION VALUE=\"".$result_type["id"][$key]."\">".$result_type["beschreibung"][$key];
-                }
-                if(!$result_type["field_type"][$key]) {
-                    echo "<optgroup>";
+                $contains = array(5,10,1,3,2);
+                if(in_array($result_type["field_type"][$key],$contains) AND $result_type["data_type"][$key] != 22 AND $result_type["data_type"][$key] != 44 AND $result_type["data_type"][$key] != 33) {
+                    echo "<OPTION VALUE=\"" . $result_type["id"][$key] . "\">" . $result_type["beschreibung"][$key];
                 }
             }
             ?>

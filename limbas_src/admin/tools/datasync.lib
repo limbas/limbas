@@ -77,7 +77,7 @@ function datasync_init($template) {
 function datasync_getSlaves() {
     global $db;
 
-    $sql = 'SELECT id, slave_url, slave_username, slave_pass FROM lmb_sync_slaves';
+    $sql = 'SELECT ID, SLAVE_URL, SLAVE_USERNAME, SLAVE_PASS FROM LMB_SYNC_SLAVES';
     $rs = odbc_exec($db, $sql);
     $slaves = array();
     if (odbc_num_rows($rs) > 0) {
@@ -114,16 +114,16 @@ function datasync_loadTemplate($id) {
     }
 
     //load conflict mode
-    $sql = "SELECT conflict_mode FROM lmb_sync_template WHERE id = $id";
+    $sql = "SELECT CONFLICT_MODE FROM LMB_SYNC_TEMPLATE WHERE ID = $id";
     $rs = odbc_exec($db, $sql);
     if (odbc_num_rows($rs) > 0 && odbc_fetch_row($rs)) {
-        $sync_template['conflict_mode'] = odbc_result($rs, 'conflict_mode');
+        $sync_template['conflict_mode'] = odbc_result($rs, 'CONFLICT_MODE');
     } else {
         throw new Exception('Template does not exist');
     }
 
     //load specific field rules
-    $sql = "SELECT tabid, fieldid, master, slave FROM lmb_sync_conf WHERE template = $id";
+    $sql = "SELECT TABID, FIELDID, MASTER, SLAVE FROM LMB_SYNC_CONF WHERE TEMPLATE = $id";
     $rs = odbc_exec($db, $sql);
     if (odbc_num_rows($rs) > 0) {
         while ($row = odbc_fetch_array($rs)) {
@@ -457,7 +457,7 @@ function datasync_resetCache($timestamp) {
     }
 
     //TODO: template in lmb_sync_cache
-    $sql = "DELETE FROM lmb_sync_cache WHERE $cw erstdatum <= '$timestamp'  " . (($sync_master) ? " AND SLAVE_ID = $sync_slave" : '');
+    $sql = "DELETE FROM LMB_SYNC_CACHE WHERE $cw ERSTDATUM <= '$timestamp'  " . (($sync_master) ? " AND SLAVE_ID = $sync_slave" : '');
     $rs = odbc_exec($db, $sql);
     if (!$rs) {
         return false;
@@ -480,9 +480,9 @@ function datasync_collectChangedData($newids = array()) {
     //TODO: Only tables of selected sync template
     //ORDER: delete (1) -> created (2) -> changed (3)
     if ($sync_master) {
-        $sqlquery = "SELECT TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID, ERSTDATUM FROM lmb_sync_cache WHERE SLAVE_ID = $sync_slave ORDER BY TYPE ASC";
+        $sqlquery = "SELECT TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID, ERSTDATUM FROM LMB_SYNC_CACHE WHERE SLAVE_ID = $sync_slave ORDER BY TYPE ASC";
     } else {
-        $sqlquery = "SELECT TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID, ERSTDATUM FROM lmb_sync_cache ORDER BY TYPE ASC";
+        $sqlquery = "SELECT TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID, ERSTDATUM FROM LMB_SYNC_CACHE ORDER BY TYPE ASC";
     }
     $rs = odbc_exec($db, $sqlquery);
 
@@ -573,7 +573,7 @@ function datasync_applyChangedData($syncdata) {
     global $sync_template;
 
     //get deleted records
-    $sqlquery = "SELECT TYPE, TABID, DATID, SLAVE_ID, SLAVE_DATID FROM lmb_sync_cache WHERE type = 0";
+    $sqlquery = "SELECT TYPE, TABID, DATID, SLAVE_ID, SLAVE_DATID FROM LMB_SYNC_CACHE WHERE TYPE = 0";
     $rs = odbc_exec($db, $sqlquery);
     if (!$rs) {
         datasync_setException('error', 10, 'Fetching deleted data failed');
@@ -620,8 +620,8 @@ function datasync_applyChangedData($syncdata) {
 
                 if ($sync_master) {
                     //assign lmb_sync_slave and lmb_sync_id
-                    $table = $gtab['table'][$tabid];
-                    $sql = "UPDATE $table SET lmb_sync_slave = $sync_slave, lmb_sync_id = {$record['ID']} WHERE ID = $id";
+                    $table = dbf_4($gtab['table'][$tabid]);
+                    $sql = "UPDATE $table SET LMB_SYNC_SLAVE = $sync_slave, LMB_SYNC_ID = {$record['ID']} WHERE ID = $id";
                     $rs = odbc_exec($db, $sql);
                 } else {
                     //fill match array for master system
@@ -699,9 +699,9 @@ function datasync_applyChangedData($syncdata) {
                 $id = $record['ID'];
                 $sync_datid = $record['slave_datid'];
 
-                $table = $gtab['table'][$tabid];
+                $table = dbf_4($gtab['table'][$tabid]);
                 //set lmb_sync_slave and lmb_sync_id
-                $sql = "UPDATE $table SET lmb_sync_slave = $sync_slave, lmb_sync_id = $sync_datid WHERE ID = $id";
+                $sql = "UPDATE $table SET LMB_SYNC_SLAVE = $sync_slave, LMB_SYNC_ID = $sync_datid WHERE ID = $id";
                 $rs = odbc_exec($db, $sql);
             }
         }
@@ -778,13 +778,13 @@ function datasync_convertID($tabid, $cid, $dir = 0) {
     global $gtab;
     global $sync_slave;
 
-    $table = $gtab['table'][$tabid];
+    $table = dbf_4($gtab['table'][$tabid]);
     if ($dir == 1) {
         //master ID to slave ID
-        $sql = "SELECT lmb_sync_id as CID FROM $table WHERE lmb_sync_slave = $sync_slave AND ID = $cid";
+        $sql = "SELECT LMB_SYNC_ID AS CID FROM $table WHERE LMB_SYNC_SLAVE = $sync_slave AND ID = $cid";
     } else {
         //slave ID to master ID
-        $sql = "SELECT ID as CID FROM $table WHERE lmb_sync_slave = $sync_slave AND lmb_sync_id = $cid";
+        $sql = "SELECT ID AS CID FROM $table WHERE LMB_SYNC_SLAVE = $sync_slave AND LMB_SYNC_ID = $cid";
     }
     $rs = odbc_exec($db, $sql);
 
@@ -1027,7 +1027,7 @@ function datasync_hasConflict($tabid, $datid, $fieldid = 0, $value = array()) {
     global $sync_slave;
     global $sync_template;
 
-    $sqlquery = "SELECT TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID, ERSTDATUM FROM lmb_sync_cache WHERE TABID = $tabid AND FIELDID = $fieldid AND DATID = $datid AND TYPE = 3" . (($sync_master) ? "AND SLAVE_ID = $sync_slave" : '');
+    $sqlquery = "SELECT TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID, ERSTDATUM FROM LMB_SYNC_CACHE WHERE TABID = $tabid AND FIELDID = $fieldid AND DATID = $datid AND TYPE = 3" . (($sync_master) ? "AND SLAVE_ID = $sync_slave" : '');
     $rs = odbc_exec($db, $sqlquery);
     if (odbc_num_rows($rs) > 0) {
         $curval = datasync_getData($tabid, $datid, array($fieldid));
@@ -1092,9 +1092,9 @@ function datasync_handleExceptions() {
                             if ($isLimbasTable) {
                                 $ID = next_db_id('lmb_sync_log');
                                 // TODO ID, slaveid 2x
-                                $sqlquery = "INSERT INTO lmb_sync_log (ID,type,tabid,datid,fieldid,origin,slaveid,errorcode,message) VALUES ($ID,'$type',$tabid,$datid,$fieldid,{$msg['origin']},$sync_slave,{$msg['code']},'{$msg['msg']}')";
+                                $sqlquery = "INSERT INTO LMB_SYNC_LOG (ID,TYPE,TABID,DATID,FIELDID,ORIGIN,SLAVEID,ERRORCODE,MESSAGE) VALUES ($ID,'$type',$tabid,$datid,$fieldid,{$msg['origin']},$sync_slave,{$msg['code']},'{$msg['msg']}')";
                             } else {
-                                $sqlquery = "INSERT INTO lmb_sync_log (type,tabid,datid,fieldid,origin,slaveid,errorcode,message) VALUES ('$type',$tabid,$datid,$fieldid,{$msg['origin']},$sync_slave,{$msg['code']},'{$msg['msg']}')";
+                                $sqlquery = "INSERT INTO LMB_SYNC_LOG (TYPE,TABID,DATID,FIELDID,ORIGIN,SLAVEID,ERRORCODE,MESSAGE) VALUES ('$type',$tabid,$datid,$fieldid,{$msg['origin']},$sync_slave,{$msg['code']},'{$msg['msg']}')";
                             }
                             $rs = odbc_exec($db, $sqlquery);
                         }

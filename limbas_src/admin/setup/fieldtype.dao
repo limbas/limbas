@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -30,10 +30,8 @@ $supervisor = $umgvar["admin_mode"];
 
 # system language
 $rs = db_ex("SELECT ELEMENT_ID,WERT FROM LMB_LANG WHERE TYP = 2 AND LANGUAGE_ID = ".$session["language"]);
-$bzm = 1;
-while(odbc_fetch_row($rs, $bzm)) {
+while(odbc_fetch_row($rs)) {
 	$systemlang[odbc_result($rs, "ELEMENT_ID")] = odbc_result($rs, "WERT");
-        $bzm++;
 }
 
 /* --- modify existing record  --------------------------------------------- */
@@ -53,7 +51,7 @@ if($change){
             # add copy to local table if not existent
             if(!$supervisor) {
                 $id_exists_rs = db_ex("SELECT ID FROM LMB_FIELD_TYPES_DEPEND WHERE ID = $id");
-                if(!odbc_fetch_row($id_exists_rs, 1)) {
+                if(!odbc_fetch_row($id_exists_rs)) {
                     db_ex("INSERT INTO LMB_FIELD_TYPES_DEPEND (SELECT * FROM LMB_FIELD_TYPES WHERE ID = $id)");
                 }
             }
@@ -81,12 +79,12 @@ if($change){
             if(!$supervisor) {
                 # add copy of lang to language_local
                 $lang_exists = db_ex("SELECT ID,ELEMENT_ID FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = $ft_data_type_exp");
-                if(!odbc_fetch_row($lang_exists, 1)) {
+                if(!odbc_fetch_row($lang_exists)) {
                     db_ex("INSERT INTO LMB_LANG_DEPEND (SELECT * FROM LMB_LANG WHERE ELEMENT_ID = $ft_data_type_exp)");
                 }
                 
                 $lang_exists = db_ex("SELECT ID,ELEMENT_ID FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = $ft_format");
-                if(!odbc_fetch_row($lang_exists, 1)) {
+                if(!odbc_fetch_row($lang_exists)) {
                     db_ex("INSERT INTO LMB_LANG_DEPEND (SELECT * FROM LMB_LANG WHERE ELEMENT_ID = $ft_format)");
                 }                
             }
@@ -137,13 +135,13 @@ if($del){
                 
         # get language ids of system table
         $lang_rs = db_ex("SELECT DATA_TYPE_EXP,FORMAT FROM LMB_FIELD_TYPES WHERE ID = $del");
-        if(odbc_fetch_row($lang_rs, 1)) {
+        if(odbc_fetch_row($lang_rs)) {
             $ft_data_type_exp = odbc_result($lang_rs,"DATA_TYPE_EXP");
             $ft_format = odbc_result($lang_rs,"FORMAT");
         } else {
             # get language ids of local table
             $lang_rs = db_ex("SELECT DATA_TYPE_EXP,FORMAT FROM LMB_FIELD_TYPES_DEPEND WHERE ID = $del");
-            if(odbc_fetch_row($lang_rs, 1)) {
+            if(odbc_fetch_row($lang_rs)) {
                 $ft_data_type_exp = odbc_result($lang_rs,"DATA_TYPE_EXP");
                 $ft_format = odbc_result($lang_rs,"FORMAT");
             } else {
@@ -154,7 +152,7 @@ if($del){
         
         # check if local entry exists
         $local_exists_rs = db_ex("SELECT ID FROM LMB_FIELD_TYPES_DEPEND WHERE ID = $del");
-        if(odbc_fetch_row($local_exists_rs, 1)) {
+        if(odbc_fetch_row($local_exists_rs)) {
             # delete language and fieldtype in local table
             lang_delete($ft_data_type_exp, "_depend");
             lang_delete($ft_format, "_depend");
@@ -178,8 +176,7 @@ if($del){
 
 /* --- list records --------------------------------------------- */
 $rs = db_ex("SELECT ID,PARSE_TYPE,FIELD_TYPE,DATA_TYPE,FUNCID,DATA_TYPE_EXP,DATENTYP,SIZE,LMRULE,FORMAT FROM LMB_FIELD_TYPES ORDER BY SORT");
-$bzm = 1;
-while(odbc_fetch_row($rs, $bzm)) {
+while(odbc_fetch_row($rs)) {
         $id = odbc_result($rs, "ID");
 	$result_ftype["id"][$id] = $id;
 	$result_ftype["parse_type"][$id] = odbc_result($rs, "PARSE_TYPE");
@@ -193,14 +190,12 @@ while(odbc_fetch_row($rs, $bzm)) {
 	$result_ftype["rule"][$id] = trim(odbc_result($rs, "LMRULE"));  # longtext handle
 	$result_ftype["format"][$id] = $lang[odbc_result($rs, "FORMAT")];
 	$result_ftype["format_id"][$id] = odbc_result($rs, "FORMAT");
-        $bzm++;
 }
 
 
 /* --- list local records -----------------------------------------*/
 $rs = db_ex("SELECT ID,PARSE_TYPE,FIELD_TYPE,DATA_TYPE,FUNCID,DATA_TYPE_EXP,DATENTYP,SIZE,LMRULE,FORMAT FROM LMB_FIELD_TYPES_DEPEND ORDER BY SORT");
-$bzm = 1;
-while(odbc_fetch_row($rs, $bzm)) {
+while(odbc_fetch_row($rs)) {
         $id = odbc_result($rs, "ID");
         # set local
         if($result_ftype["id"][$id]) {
@@ -226,7 +221,6 @@ while(odbc_fetch_row($rs, $bzm)) {
 	$result_ftype["size"][$id] = odbc_result($rs, "SIZE");
 	$result_ftype["rule"][$id] = trim(odbc_result($rs, "LMRULE"));  # longtext handle
 	$result_ftype["format"][$id] = $lang[odbc_result($rs, "FORMAT")];
-        $bzm++;
 }
 
 /* --- get max entries? -----------------------------------------*/

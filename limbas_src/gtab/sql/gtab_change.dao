@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -413,6 +413,7 @@ function print_form(){
 <input type="hidden" name="verkn_poolid" VALUE="<?=$GLOBALS["verkn_poolid"]?>">
 <input type="hidden" name="filter_force_delete">
 <input type="hidden" name="wind_force_close">
+<input type="hidden" name="is_new_win" value="<?=$GLOBALS["is_new_win"]?>">
 <?php if($GLOBALS["verknpf"]){?>
 <input type="hidden" name="verkn_ID" VALUE="<?=$GLOBALS["verkn_ID"]?>">
 <input type="hidden" name="verkn_tabid" VALUE="<?=$GLOBALS["verkn_tabid"]?>">
@@ -547,11 +548,11 @@ function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0){
 	echo "<TR><TD COLSPAN=\"2\">";
 	echo "<TABLE BORDER=\"0\" cellspacing=\"0\" cellpadding=\"0\" width=\"100%\">\n";
 	# ----------- Datei -----------
-	echo "<TR><TD class=\"gtabHeaderMenuTD\" nowrap OnMouseOver=\"this.className='gtabHeaderMenuTDhover';\" OnMouseOut=\"this.className='gtabHeaderMenuTD';\" OnClick=\"limbasDivShowContext(event,this,'".$gresult[$gtabid]["id"][0]."','".$gtabid."','".$gresult[$gtabid]["ERSTDATUM"][0]."','".$gresult[$gtabid]["EDITDATUM"][0]."','".$userdat['bezeichnung'][$gresult[$gtabid]["ERSTUSER"][0]]."','".$userdat['bezeichnung'][$gresult[$gtabid]["EDITUSER"][0]]."')\">$lang[545]</TD><TD>&nbsp;|&nbsp;</TD>";
+	echo "<TR><TD class=\"gtabHeaderMenuTD hoverable\" nowrap OnClick=\"limbasDivShowContext(event,this,'".$gresult[$gtabid]["id"][0]."','".$gtabid."','".$gresult[$gtabid]["ERSTDATUM"][0]."','".$gresult[$gtabid]["EDITDATUM"][0]."','".$userdat['bezeichnung'][$gresult[$gtabid]["ERSTUSER"][0]]."','".$userdat['bezeichnung'][$gresult[$gtabid]["EDITUSER"][0]]."')\">$lang[545]</TD><TD>&nbsp;|&nbsp;</TD>";
 	# ----------- Ansicht -----------
-	echo "<TD class=\"gtabHeaderMenuTD\" nowrap OnMouseOver=\"this.className='gtabHeaderMenuTDhover';\" OnMouseOut=\"this.className='gtabHeaderMenuTD';\" OnClick=\"limbasDivShow(this,'','limbasDivMenuAnsicht');\">$lang[1625]</TD><TD>&nbsp;|&nbsp;</TD>";
+	echo "<TD class=\"gtabHeaderMenuTD hoverable\" nowrap OnClick=\"limbasDivShow(this,'','limbasDivMenuAnsicht');\">$lang[1625]</TD><TD>&nbsp;|&nbsp;</TD>";
 	# ----------- Extras -----------
-	echo "<TD class=\"gtabHeaderMenuTD\" nowrap OnMouseOver=\"this.className='gtabHeaderMenuTDhover';\" OnMouseOut=\"this.className='gtabHeaderMenuTD';\" OnClick=\"limbasDivShow(this,'','limbasDivMenuExtras');\">$lang[1939]</TD>";
+	echo "<TD class=\"gtabHeaderMenuTD hoverable\" nowrap OnClick=\"limbasDivShow(this,'','limbasDivMenuExtras');\">$lang[1939]</TD>";
 
 	# extension
 	if(function_exists($GLOBALS["gLmbExt"]["menuChangeItems"][$gtabid])){
@@ -1020,12 +1021,25 @@ if($wind_force_close){
                 }
             });
 			";
-	}else{
-	   // calendar iframe window
+	}else if($is_new_win) {
+	    // when opening dialog in new window (used eg. for dispo plan)
+	    echo "
+	    $( document ).ready(function() {
+	        if (opener && opener.lmb_onCloseWindow) {
+	            opener.lmb_onCloseWindow();
+	        }
+	        window.close();
+	    });
+	    ";
+    }else{
+	   // calendar/explorer iframe window
 	   echo "
 	    $( document ).ready(function() {
             if($('#lmb_eventDetailFrame', window.parent.document).hasClass('ui-dialog-content')){
-               parent.lmb_closeIframeDialog();
+                parent.lmb_closeIframeDialog();
+            }
+            if($('#LmEx_DetailFrame', window.parent.document).hasClass('ui-dialog-content')) {
+                parent.LmEx_closeIframeDialog();
             }
 	    });
 	    ";

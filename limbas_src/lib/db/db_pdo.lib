@@ -1,143 +1,1144 @@
 <?php
-/*
- * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
- * All rights reserved
- * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
- * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
- * Or
- * In a Propritary Software Licence http://limbas.org
- * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
- * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
- * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+
+define('LMB_DBFUNC_OFFSET', 1);
+
+class LMBStatement extends PDOStatement {
+    public $pdo;
+    protected $fetchCache;
+    protected $fieldNames;
+
+    protected function __construct($pdo) {
+        $this->pdo = $pdo;
+    }
+
+    public function fetchCache() {
+        $this->fetchCache = $this->fetch(PDO::FETCH_BOTH, PDO::FETCH_ORI_NEXT);
+
+        if (empty($this->fieldNames) && $this->fetchCache !== false) {
+            $lastKey = null;
+            foreach ($this->fetchCache as $key => $value) {
+                if (!is_int($key)) {
+                    $this->fieldNames[] = strtoupper($key);
+                } else if (is_int($lastKey)) {
+                    $this->fieldNames[] = 'duplicate! (' . strval($key) . ')';
+                }
+                $lastKey = $key;
+            }
+        }
+        return $this->fetchCache !== false;
+    }
+
+    public function resultCache($field) {
+        if (empty($this->fetchCache)) {
+            if (!$this->fetchCache()) {
+                return null;
+            }
+        }
+        if (is_int($field)) {
+            $field--;
+        } else {
+            $field = strtoupper($field);
+        }
+        return $this->fetchCache[$field];
+    }
+
+    public function clearCache() {
+        $this->fetchCache = null;
+        $this->fieldNames = null;
+    }
+
+    public function getFieldName($field_number) {
+        $field_number--;
+        if (!array_key_exists($field_number, $this->fieldNames) || empty($this->fetchCache)) {
+            return false;
+        } else {
+            return $this->fieldNames[$field_number];
+        }
+
+    }
+
+}
+
+/**
+ * Toggle autocommit behaviour
+ *
+ * @param PDO $pdo
+ * @param bool $OnOff [optional]
+ * @return bool
+ */
+function odbc_autocommit(&$pdo, $OnOff = null) {
+    if ($OnOff === null) {
+        return $pdo->inTransaction();
+    }
+    if (!$OnOff) {
+        return $pdo->beginTransaction();
+    }
+    # TODO
+//    if (is_null($onOff)) {
+//        return $pdo->getAttribute(PDO::ATTR_AUTOCOMMIT);
+//    } else {
+//        return $pdo->setAttribute(PDO::ATTR_AUTOCOMMIT, $onOff);
+//    }
+    return true;
+}
+
+/**
+ * Handling of binary column data
+ *
+ * @param PDOStatement $stmt
+ * @param int $mode
+ * @return bool
+ */
+function odbc_binmode($stmt, $mode) {
+    //Not needed
+    return true;
+}
+
+/**
+ * Destroys an PDO
+ *
+ * @param PDO $pdo
+ * @return void No value is returned.
+ */
+function odbc_close(&$pdo) {
+    $pdo = null;
+}
+
+/**
+ * Close all ODBC connections
+ * @link http://php.net/manual/en/function.odbc-close-all.php
+ * @return void No value is returned.
+ * @since 4.0
+ * @since 5.0
+ */
+//function odbc_close_all () {}
+
+/**
+ * Lists the column names in specified tables
+ * @link http://php.net/manual/en/function.odbc-columns.php
+ * @param resource $pdo The ODBC connection identifier,
+ * see <b>odbc_connect</b> for details.</p>
+ * @param string $qualifier [optional] <p>
+ * The qualifier.
+ * </p>
+ * @param string $schema [optional] <p>
+ * The owner.
+ * </p>
+ * @param string $table_name [optional] <p>
+ * The table name.
+ * </p>
+ * @param string $column_name [optional] <p>
+ * The column name.
+ * </p>
+ * @return resource an ODBC result identifier or <b>FALSE</b> on failure.
+ * </p>
+ * <p>
+ * The result set has the following columns:
+ * TABLE_QUALIFIER
+ * TABLE_SCHEM
+ * TABLE_NAME
+ * COLUMN_NAME
+ * DATA_TYPE
+ * TYPE_NAME
+ * PRECISION
+ * LENGTH
+ * SCALE
+ * RADIX
+ * NULLABLE
+ * REMARKS
+ * </p>
+ * <p>
+ * The result set is ordered by TABLE_QUALIFIER, TABLE_SCHEM and
+ * TABLE_NAME.
+ * @since 4.0
+ * @since 5.0
+ */
+function odbc_columns($pdo, $qualifier = null, $schema = null, $table_name = null, $column_name = null) {
+    global $DBA;
+
+    /*
+
+
+    TABLE_QUALIFIER
+    TABLE_OWNER
+    TABLE_NAME
+    COLUMN_NAME
+    DATA_TYPE //TODO
+    TYPE_NAME
+    PRECISION
+    LENGTH //TODO
+    SCALE //TODO
+    RADIX
+    NULLABLE
+    REMARKS //TODO
+    SQL_DATA_TYPE //TODO
+    SQL_DATETIME_SUB //TODO
+    CHAR_OCTET_LENGTH //TODO
+    ORDINAL_POSITION
+    IS_NULLABLE //TODO
+    DISPLAY_SIZE //TODO
+    FIELD_TYPE //TODO
+    AUTO_INCREMENT //TODO
+    PHYSICAL NUMBER //TODO
+    TABLE OID //TODO
+    BASE TYPEID //TODO
+    TYPMOD //TODO
  */
 
-/*
- * ID:
+
+    if ($DBA['DB'] == 'postgres') {
+        $where = array();
+        if ($qualifier) {
+            $where[] = "table_catalog = '$qualifier'";
+        }
+        if ($schema) {
+            $where[] = "table_schema = '$schema'";
+        }
+        if ($table_name) {
+            $where[] = "table_name = '$table_name'";
+        }
+        if ($column_name) {
+            $where[] = "column_name = '$column_name'";
+        }
+
+        $query_string = "SELECT 
+                            TABLE_CATALOG as TABLE_QUALIFIER,
+                            TABLE_SCHEMA as TABLE_OWNER,
+                            TABLE_NAME,
+                            COLUMN_NAME,
+                            '' as DATA_TYPE,
+                            UDT_NAME as TYPE_NAME,
+                            (CASE WHEN NUMERIC_PRECISION IS NULL THEN (CASE WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NULL /*CHARACTER_OCTET_LENGTH*/ ELSE CHARACTER_MAXIMUM_LENGTH END) ELSE NUMERIC_PRECISION END) AS PRECISION,
+                            (CASE WHEN CHARACTER_MAXIMUM_LENGTH IS NULL THEN NULL /*CHARACTER_OCTET_LENGTH*/ ELSE CHARACTER_MAXIMUM_LENGTH END) AS LENGTH,
+                            (CASE WHEN NUMERIC_SCALE IS NULL THEN DATETIME_PRECISION ELSE NUMERIC_SCALE END) AS SCALE,
+                            NUMERIC_PRECISION_RADIX AS RADIX,
+                            (CASE WHEN IS_NULLABLE = 'YES' THEN 1 ELSE 0 END) as NULLABLE,
+                            '' AS REMARKS,
+                            COLUMN_DEFAULT AS COLUMN_DEF,
+                            '' AS SQL_DATA_TYPE,
+                            '' AS SQL_DATETIME_SUB,
+                            '' AS CHAR_OCTET_LENGTH,
+                            ORDINAL_POSITION AS ORDINAL_POSITION,
+                            '' AS IS_NULLABLE,
+                            '' AS DISPLAY_SIZE,
+                            '' AS FIELD_TYPE,
+                            '' AS AUTO_INCREMENT,
+                            '' AS PHYSICAL_NUMBER,
+                            '' AS TABLE_OID,
+                            '' AS BASE_TYPEID,
+                            '' AS TYPMOD
+                            FROM INFORMATION_SCHEMA.COLUMNS" . (!empty($where) ? ' WHERE ' . implode(' AND ', $where) : '') . ' ORDER BY ORDINAL_POSITION,TABLE_CATALOG, TABLE_SCHEMA, TABLE_NAME';
+
+    } elseif ($DBA['DB'] == 'mysql') {
+
+        $where = array();
+        if ($schema) {
+            $where[] = "TABLE_SCHEMA = '$schema'";
+        }
+        if ($table_name) {
+            $where[] = "TABLE_NAME = '$table_name'";
+        }
+        if ($column_name) {
+            $where[] = "COLUMN_NAME = '$column_name'";
+        }
+
+        $query_string = "SELECT
+                            TABLE_SCHEMA AS TABLE_SCHEMA,
+                            TABLE_NAME,
+                            COLUMN_NAME,
+                            COLUMN_DEFAULT,
+                            DATA_TYPE TYPE_NAME,
+                            ((CASE WHEN NUMERIC_PRECISION > 0 THEN NUMERIC_PRECISION ELSE CHARACTER_MAXIMUM_LENGTH END) + NUMERIC_SCALE) AS LENGTH,
+                            (CASE WHEN NUMERIC_PRECISION > 0 THEN NUMERIC_PRECISION ELSE CHARACTER_MAXIMUM_LENGTH END) AS PRECISION,
+                            NUMERIC_SCALE AS SCALE
+                            
+                            FROM
+                                INFORMATION_SCHEMA.COLUMNS"
+            . (!empty($where) ? ' WHERE ' . implode(' AND ', $where) : '');
+
+
+    }
+
+    return odbc_exec($pdo, $query_string);
+}
+
+/**
+ * Commit an ODBC transaction
+ *
+ * @param PDO $pdo
+ * @return bool
  */
-$db_pdo_queries = array('rand' => 0);
-
-function limbas_pdo_connect($host,$database,$dbuser,$dbpass,$dbdriver) {
-	
-	#if($dbdriver){
-	#	$dsn = "Driver=$dbdriver;Server=$host;Database=$database;ReadOnly=No";
-	#}else{
-		$dsn = "odbc:$database";
-	#}
-
-	try {
-		$db_pdo = new PDO($dsn, $dbuser, $dbpass);
-		$db_pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-	} catch (PDOException $e) {
-		throw new Exception('PDO: ' . $e->getMessage(), $e->getCode());
-	}
-
-	return $db_pdo;
+function odbc_commit(&$pdo) {
+    return $pdo->commit();
 }
 
-function limbas_odbc_exec(&$db_null,&$sql) {
-	global $db_pdo;
-	global $db_pdo_queries;
-	
-	if (!is_null($db_pdo)) {
-		$stm = $db_pdo->prepare($sql, array(PDO::ATTR_CURSOR => PDO::CURSOR_SCROLL));
-		#$stm = $db_pdo->prepare($sql);
-		$stm->execute();
-		if($stm) {
-			$db_pdo_queries['rand']++;
-			$key = $db_pdo_queries['rand'];
-			$query = array('stm' => $stm, 'row' => null);
-			$db_pdo_queries[$key]['offset'] = 0;
-			$db_pdo_queries[$key] = $query;
-			return $key;
-		}
-	}
-	//throw new Exception('PDO: No pdo connection found!', -1);
-	return false;
+/**
+ * Create a PDO
+ *
+ * @param string $dsn
+ * @param string
+ * @param string $password
+ * @param int $cursor_type [optional]
+ * @return PDO|bool
+ */
+function odbc_connect($dsn, $user, $password, $cursor_type = null) {
+    try {
+        $db = new PDO($dsn, $user, $password);
+    } catch (PDOException $e) {
+        return false;
+    }
+
+    $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
+    $db->setAttribute(PDO::ATTR_CASE, PDO::CASE_UPPER);
+    $db->setAttribute(PDO::ATTR_STATEMENT_CLASS, array('LMBStatement', array($db)));
+    return $db;
 }
 
-function limbas_odbc_fetch_row($key, $offset=null) {
-	global $db_pdo_queries;
-	
-	if (isset($db_pdo_queries[$key])) {
-		try{
-			if(!$offset){
-				$db_pdo_queries[$key]['offset']++;
-				$offset = $db_pdo_queries[$key]['offset'];
-			}
-			$row = $db_pdo_queries[$key]['stm']->fetch(PDO::FETCH_ASSOC, PDO::FETCH_ORI_ABS, $offset);
-			#$row = $db_pdo_queries[$key]['stm']->fetch(PDO::FETCH_ASSOC);
-		}
-		catch (PDOException $e){
-			if('HY106' == $e->getCode()){
-				$row = null;
-			}
-		}
-		
-		if($row){
-			$db_pdo_queries[$key]['row'] = $row;
-			return true;
-		}else{
-			$db_pdo_queries[$key]['row'] = false;
-		}
-	}
-	
-	//throw new Exception('PDO: Pdo query "' . $key . '" not found!', -1);
-	return false;
+/**
+ * Get cursorname
+ * @link http://php.net/manual/en/function.odbc-cursor.php
+ * @param resource $stmt <p>
+ * The result identifier.
+ * </p>
+ * @return string the cursor name, as a string.
+ * @since 4.0
+ * @since 5.0
+ */
+//function odbc_cursor ($stmt) {}
+
+/**
+ * Returns information about a current connection
+ * @link http://php.net/manual/en/function.odbc-data-source.php
+ * @param resource $pdo The ODBC connection identifier,
+ * see <b>odbc_connect</b> for details.</p>
+ * @param int $fetch_type <p>
+ * The <i>fetch_type</i> can be one of two constant types:
+ * <b>SQL_FETCH_FIRST</b>, <b>SQL_FETCH_NEXT</b>.
+ * Use <b>SQL_FETCH_FIRST</b> the first time this function is
+ * called, thereafter use the <b>SQL_FETCH_NEXT</b>.
+ * </p>
+ * @return array <b>FALSE</b> on error, and an array upon success.
+ * @since 4.3.0
+ * @since 5.0
+ */
+//function odbc_data_source ($pdo, $fetch_type) {}
+
+/**
+ * Execute a prepared statement
+ *
+ * @param PDOStatement $stmt
+ * @param array $parameters_array [optional]
+ * @return bool
+ */
+function odbc_execute(&$stmt, array $parameters_array = null) {
+    return $stmt->execute($parameters_array);
 }
 
-function limbas_odbc_result($key, $name) {
-	global $db_pdo_queries;
-
-	if(!isset($db_pdo_queries[$key]['row'])){
-		limbas_odbc_fetch_row($key, 1);
-	}
-
-	if ($db_pdo_queries[$key]['row'] !== false) {
-		return $db_pdo_queries[$key]['row'][lmb_strtolower($name)];
-	}
-
-	throw new Exception('PDO: No pdo row found ('. $key . ')!', -1);
-	//return false;
+/**
+ * Get the last error code
+ *
+ * @param PDOStatement|PDO $pdo
+ * @return string
+ */
+function odbc_error($pdo = null) {
+    if ($pdo) {
+        return $pdo->errorCode();
+    }
+    return '';
 }
 
-function limbas_odbc_errormsg($db_pdo){
-	return $db_pdo->errorCode();
+/**
+ * Get the last error message
+ *
+ * @param PDOStatement|PDO $pdo
+ * @return string
+ */
+function odbc_errormsg($pdo = null) {
+    if ($pdo) {
+        $error = $pdo->errorInfo();
+        return $error[2];
+    }
+    return '';
 }
 
-function limbas_odbc_num_rows($key,&$query=null,$counttype=null) {
-	global $db_pdo;
-	global $db_pdo_queries;
-	global $umgvar;
-	
-	$count = -1;
-	if(LMB_DBFUNC_NUMROWS){
-		$count = $db_pdo_queries[$key]['stm']->rowCount();
-	}
+/**
+ * Prepare and execute an SQL statement
+ *
+ * @param PDO $pdo
+ * @param string $query_string
+ * @param int $flags
+ * @return PDOStatement|bool
+ */
+function odbc_exec($pdo, $query_string, $flags = null) {
+    if (!$pdo) {
+        return false;
+    }
 
-	# ---------------- Anzahl Ergebnisse neu berechnen -------------
-	if($count < 0){
-		if($counttype == 2){
-			return $umgvar["resultspace"];
-		}elseif($counttype == 1){
-			while(limbas_odbc_fetch_row($key)){
-				$ct++;
-			}
-			$count = $ct;
-		}elseif($query){
-			$key1 = limbas_odbc_exec($db_pdo,$query) or errorhandle(limbas_odbc_errormsg($db_pdo),$query,'count_query',__FILE__,__LINE__);
-			$count =  limbas_odbc_result($key1, "RESULT");
-	   		limbas_odbc_free_result($key1);
-		}
-	}
-    return $count;
+    $stmt = $pdo->query($query_string);
+
+    if (!$stmt) {
+        error_log('Error: ' . odbc_errormsg($pdo) . ' for query ' . $query_string);
+        return false;
+    }
+
+    return $stmt;
 }
 
-
-function limbas_odbc_free_result($key){
-	unset($GLOABLS["db_pdo"]);
-	unset($GLOABLS["db_pdo_queries"][$key]);
+/**
+ * Fetch a result row as an associative array
+ *
+ * @param PDOStatement $stmt
+ * @param int $rownumber
+ * @return array|bool
+ */
+function odbc_fetch_array(&$stmt, $rownumber = null) {
+    #if ($rownumber !== null) {
+    #    error_log('Pdo: odbc_fetch_array: Cursor not supported!');
+    #}
+    return $stmt->fetch(PDO::FETCH_ASSOC);
 }
-?>
+
+/**
+ * Fetch a result row as an object
+ *
+ * @param PDOStatement $stmt
+ * @param int $rownumber
+ * @return object|bool
+ */
+function odbc_fetch_object(&$stmt, $rownumber = null) {
+    #if ($rownumber !== null) {
+    #    error_log('Pdo: odbc_fetch_object: Cursor not supported!');
+    #}
+    return $stmt->fetch(PDO::FETCH_OBJ);
+}
+
+/**
+ * Fetch a row
+ *
+ * @param LMBStatement $stmt
+ * @param int $row_number
+ * @return bool
+ */
+function odbc_fetch_row(&$stmt, $row_number = null) {
+    #if ($row_number !== null) {
+        #lmb_log::error('odbc_fetch_row: Cursor not supported!', null, null, null, null);
+        #error_log('Pdo: odbc_fetch_row: Cursor not supported!');
+    #}
+
+    if(!$stmt){return false;}   // todo performace check
+    return $stmt->fetchCache();
+}
+
+/**
+ * Fetch one result row into array
+ * @link http://php.net/manual/en/function.odbc-fetch-into.php
+ * @param resource $stmt <p>
+ * The result resource.
+ * </p>
+ * @param array $result_array <p>
+ * The result array
+ * that can be of any type since it will be converted to type
+ * array. The array will contain the column values starting at array
+ * index 0.
+ * </p>
+ * @param int $rownumber [optional] <p>
+ * The row number.
+ * </p>
+ * @return int the number of columns in the result;
+ * <b>FALSE</b> on error.
+ * @since 4.0
+ * @since 5.0
+ */
+//function odbc_fetch_into ($stmt, array &$result_array, $rownumber = null) {}
+
+/**
+ * Get the length (precision) of a field
+ * @link http://php.net/manual/en/function.odbc-field-len.php
+ * @param resource $stmt <p>
+ * The result identifier.
+ * </p>
+ * @param int $field_number <p>
+ * The field number. Field numbering starts at 1.
+ * </p>
+ * @return int the field name as a string, or <b>FALSE</b> on error.
+ * @since 4.0
+ * @since 5.0
+ */
+//function odbc_field_len ($stmt, $field_number) {}
+
+/**
+ * Get the scale of a field
+ * @link http://php.net/manual/en/function.odbc-field-scale.php
+ * @param resource $stmt <p>
+ * The result identifier.
+ * </p>
+ * @param int $field_number <p>
+ * The field number. Field numbering starts at 1.
+ * </p>
+ * @return int the field scale as a integer, or <b>FALSE</b> on error.
+ * @since 4.0
+ * @since 5.0
+ */
+//function odbc_field_scale ($stmt, $field_number) {}
+
+/**
+ * Get the columnname
+ *
+ * @param LMBStatement $stmt
+ * @param int $field_number
+ * @return string|bool
+ */
+function odbc_field_name($stmt, $field_number) {
+    return $stmt->getFieldName($field_number);
+}
+
+/**
+ * Datatype of a field
+ * @link http://php.net/manual/en/function.odbc-field-type.php
+ * @param resource $stmt <p>
+ * The result identifier.
+ * </p>
+ * @param int $field_number <p>
+ * The field number. Field numbering starts at 1.
+ * </p>
+ * @return string the field type as a string, or <b>FALSE</b> on error.
+ * @since 4.0
+ * @since 5.0
+ */
+//function odbc_field_type ($stmt, $field_number) {}
+
+/**
+ * Return column number
+ * @link http://php.net/manual/en/function.odbc-field-num.php
+ * @param resource $stmt <p>
+ * The result identifier.
+ * </p>
+ * @param string $field_name <p>
+ * The field name.
+ * </p>
+ * @return int the field number as a integer, or <b>FALSE</b> on error.
+ * Field numbering starts at 1.
+ * @since 4.0
+ * @since 5.0
+ */
+//function odbc_field_num ($stmt, $field_name) {}
+
+/**
+ * Free resources associated with a result
+ *
+ * @param LMBStatement $stmt
+ * @return bool
+ */
+function odbc_free_result(&$stmt) {
+    if (is_object($stmt)) {
+        $stmt->clearCache();
+    }
+    return true;
+}
+
+/**
+ * Retrieves information about data types supported by the data source
+ * @link http://php.net/manual/en/function.odbc-gettypeinfo.php
+ * @param resource $pdo The ODBC connection identifier,
+ * see <b>odbc_connect</b> for details.</p>
+ * @param int $data_type [optional] <p>
+ * The data type, which can be used to restrict the information to a
+ * single data type.
+ * </p>
+ * @return resource an ODBC result identifier or
+ * <b>FALSE</b> on failure.
+ * </p>
+ * <p>
+ * The result set has the following columns:
+ * TYPE_NAME
+ * DATA_TYPE
+ * PRECISION
+ * LITERAL_PREFIX
+ * LITERAL_SUFFIX
+ * CREATE_PARAMS
+ * NULLABLE
+ * CASE_SENSITIVE
+ * SEARCHABLE
+ * UNSIGNED_ATTRIBUTE
+ * MONEY
+ * AUTO_INCREMENT
+ * LOCAL_TYPE_NAME
+ * MINIMUM_SCALE
+ * MAXIMUM_SCALE
+ * </p>
+ * <p>
+ * The result set is ordered by DATA_TYPE and TYPE_NAME.
+ * @since 4.0
+ * @since 5.0
+ */
+//function odbc_gettypeinfo ($pdo, $data_type = null) {}
+
+/**
+ * Handling of LONG columns
+ * @link http://php.net/manual/en/function.odbc-longreadlen.php
+ * @param resource $stmt <p>
+ * The result identifier.
+ * </p>
+ * @param int $length <p>
+ * The number of bytes returned to PHP is controlled by the parameter
+ * length. If it is set to 0, Long column data is passed through to the
+ * client.
+ * </p>
+ * @return bool <b>TRUE</b> on success or <b>FALSE</b> on failure.
+ * @since 4.0
+ * @since 5.0
+ */
+//function odbc_longreadlen ($stmt, $length) {}
+
+/**
+ * Checks if multiple results are available
+ * @link http://php.net/manual/en/function.odbc-next-result.php
+ * @param resource $stmt <p>
+ * The result identifier.
+ * </p>
+ * @return bool <b>TRUE</b> if there are more result sets, <b>FALSE</b> otherwise.
+ * @since 4.0.5
+ * @since 5.0
+ */
+//function odbc_next_result ($stmt) {}
+
+/**
+ * Number of columns in a result
+ *
+ * @param LMBStatement $stmt
+ * @return int
+ */
+function odbc_num_fields($stmt) {
+    if(!$stmt){return false;}   // todo performace check
+    return $stmt->columnCount();
+}
+
+/**
+ * Number of rows in a result
+ *
+ * @param PDOStatement $stmt
+ * @return int
+ */
+function odbc_num_rows($stmt) {
+    if (!is_object($stmt)) {
+        return -1;
+    }
+    return $stmt->rowCount();
+}
+
+/**
+ * Open a persistent database connection
+ *
+ * @param string $dsn
+ * @param string $user
+ * @param string $password
+ * @param int $cursor_type [optional]
+ * @return PDO
+ */
+function odbc_pconnect($dsn, $user, $password, $cursor_type = null) {
+    return odbc_connect($dsn, $user, $password, $cursor_type);
+    //persistent connection does not support ATTR_STATEMENT_CLASS (necessary for cache)
+    //$db = new PDO("pgsql:host=;dbname=", $user, $password, array(PDO::ATTR_PERSISTENT => true));
+    //$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+    //$db->setAttribute(PDO::ATTR_STATEMENT_CLASS, array("LMBStatement", array($db)));
+    //return $db;
+}
+
+/**
+ * Prepares a statement for execution
+ *
+ * @param PDO $pdo
+ * @param string $query_string
+ * @return PDOStatement
+ */
+function odbc_prepare($pdo, $query_string) {
+    return $pdo->prepare($query_string);
+}
+
+/**
+ * Get result data
+ *
+ * @param LMBStatement $stmt
+ * @param string|int $field
+ * @return mixed
+ */
+function odbc_result(&$stmt, $field) {
+    if (!is_object($stmt)) {        // todo performance check
+        return null;
+    }
+    return $stmt->resultCache($field);
+}
+
+/**
+ * Print result as HTML table
+ *
+ * @param LMBStatement $stmt
+ * @param string $format [optional]
+ * @return int
+ */
+function odbc_result_all($stmt, $format = null) {
+    $table = "<table $format>";
+
+    $first = true;
+    while (odbc_fetch_row($stmt)) {
+        $noFields = odbc_num_fields($stmt);
+        if ($first) {
+            $table .= '<tr>';
+            for ($u = 1; $u <= $noFields; $u++) {
+                $table .= '<th><b>' . odbc_field_name($stmt, $u) . '</b></th>';
+            }
+            $table .= '</tr>';
+            $first = false;
+        }
+        $table .= '<tr>';
+        for ($u = 1; $u <= $noFields; $u++) {
+            $table .= '<td>' . odbc_result($stmt, $u) . '</td>';
+        }
+        $table .= '</tr>';
+    }
+    $table .= '</table>';
+    echo $table;
+    return odbc_num_rows($stmt);
+}
+
+/**
+ * Rollback a transaction
+ *
+ * @param PDO $pdo
+ * @return bool
+ */
+function odbc_rollback(&$pdo) {
+    return $pdo->rollBack();
+}
+
+/**
+ * Adjust ODBC settings
+ * @link http://php.net/manual/en/function.odbc-setoption.php
+ * @param resource $id <p>
+ * Is a connection id or result id on which to change the settings.
+ * For SQLSetConnectOption(), this is a connection id.
+ * For SQLSetStmtOption(), this is a result id.
+ * </p>
+ * @param int $function <p>
+ * Is the ODBC function to use. The value should be
+ * 1 for SQLSetConnectOption() and
+ * 2 for SQLSetStmtOption().
+ * </p>
+ * @param int $option <p>
+ * The option to set.
+ * </p>
+ * @param int $param <p>
+ * The value for the given <i>option</i>.
+ * </p>
+ * @return bool <b>TRUE</b> on success or <b>FALSE</b> on failure.
+ * @since 4.0
+ * @since 5.0
+ */
+//function odbc_setoption ($id, $function, $option, $param) {}
+
+/**
+ * Retrieves special columns
+ * @link http://php.net/manual/en/function.odbc-specialcolumns.php
+ * @param resource $pdo The ODBC connection identifier,
+ * see <b>odbc_connect</b> for details.</p>
+ * @param int $type When the type argument is <b>SQL_BEST_ROWID</b>,
+ * <b>odbc_specialcolumns</b> returns the
+ * column or columns that uniquely identify each row in the table.
+ * When the type argument is <b>SQL_ROWVER</b>,
+ * <b>odbc_specialcolumns</b> returns the column or columns in the
+ * specified table, if any, that are automatically updated by the data source
+ * when any value in the row is updated by any transaction.
+ * @param string $qualifier <p>
+ * The qualifier.
+ * </p>
+ * @param string $owner <p>
+ * The owner.
+ * </p>
+ * @param string $table <p>
+ * The table.
+ * </p>
+ * @param int $scope <p>
+ * The scope, which orders the result set.
+ * </p>
+ * @param int $nullable <p>
+ * The nullable option.
+ * </p>
+ * @return resource an ODBC result identifier or <b>FALSE</b> on
+ * failure.
+ * </p>
+ * <p>
+ * The result set has the following columns:
+ * SCOPE
+ * COLUMN_NAME
+ * DATA_TYPE
+ * TYPE_NAME
+ * PRECISION
+ * LENGTH
+ * SCALE
+ * PSEUDO_COLUMN
+ * @since 4.0
+ * @since 5.0
+ */
+//function odbc_specialcolumns ($pdo, $type, $qualifier, $owner, $table, $scope, $nullable) {}
+
+/**
+ * Retrieve statistics about a table
+ * @link http://php.net/manual/en/function.odbc-statistics.php
+ * @param resource $pdo The ODBC connection identifier,
+ * see <b>odbc_connect</b> for details.</p>
+ * @param string $qualifier <p>
+ * The qualifier.
+ * </p>
+ * @param string $owner <p>
+ * The owner.
+ * </p>
+ * @param string $table_name <p>
+ * The table name.
+ * </p>
+ * @param int $unique <p>
+ * The unique attribute.
+ * </p>
+ * @param int $accuracy <p>
+ * The accuracy.
+ * </p>
+ * @return resource an ODBC result identifier or <b>FALSE</b> on failure.
+ * </p>
+ * <p>
+ * The result set has the following columns:
+ * TABLE_QUALIFIER
+ * TABLE_OWNER
+ * TABLE_NAME
+ * NON_UNIQUE
+ * INDEX_QUALIFIER
+ * INDEX_NAME
+ * TYPE
+ * SEQ_IN_INDEX
+ * COLUMN_NAME
+ * COLLATION
+ * CARDINALITY
+ * PAGES
+ * FILTER_CONDITION
+ * @since 4.0
+ * @since 5.0
+ */
+//function odbc_statistics ($pdo, $qualifier, $owner, $table_name, $unique, $accuracy) {}
+
+/**
+ * Get the list of table names stored in a specific data source
+ * @link http://php.net/manual/en/function.odbc-tables.php
+ * @param PDO $pdo
+ * @param string $qualifier [optional]
+ * </p>
+ * @param string $owner [optional]
+ * @param string $name [optional]
+ * @param string $types [optional]
+ * @return PDOStatement|bool
+ */
+function odbc_tables($pdo, $qualifier = null, $owner = null, $name = null, $types = null) {
+    global $DBA;
+
+    /*
+
+    TABLE_QUALIFIER
+    TABLE_OWNER
+    TABLE_NAME
+    TABLE_TYPE
+    REMARKS
+
+     */
+
+    $where = array();
+
+    if ($types) {
+        $parts = explode(',', $types);
+        $wt = array();
+        foreach ($parts as $part) {
+            $type = trim($part, "'");
+            $wt[] = "table_type LIKE '%$type'";
+        }
+        if (!empty($wt)) {
+            $where[] = '(' . implode(' OR ', $wt) . ')';
+        }
+    }
+
+
+    if ($DBA['DB'] == 'postgres') {
+
+        if ($qualifier) {
+            $where[] = "table_catalog LIKE '$owner'";
+        }
+        if ($owner) {
+            $where[] = "table_schema LIKE '$owner'";
+        }
+        if ($name) {
+            $where[] = "lower(table_name) LIKE '" . lmb_strtolower($name) . "'";
+        }
+
+
+        $query_string = "select table_catalog as TABLE_QUALIFIER, table_schema as TABLE_OWNER, TABLE_NAME, (CASE WHEN TABLE_TYPE = 'BASE TABLE' THEN 'TABLE' ELSE TABLE_TYPE END) as TABLE_TYPE
+                  from information_schema.tables " . (!empty($where) ? ' WHERE ' . implode(' AND ', $where) : '') . ' ORDER BY TABLE_NAME';
+    } else if ($DBA['DB'] == 'mysql') {
+
+        $where[] = "table_schema LIKE '" . $GLOBALS['DBA']['DBSCHEMA'] . "'";
+
+        if ($name) {
+            $where[] = "lower(table_name) LIKE '" . lmb_strtolower($name) . "'";
+        }
+        $query_string = 'select table_catalog as TABLE_QUALIFIER, table_schema as TABLE_OWNER, table_name as TABLE_NAME, table_type as TABLE_TYPE
+                  from INFORMATION_SCHEMA.TABLES
+                  ' . (!empty($where) ? 'WHERE ' . implode(' AND ', $where) : '');
+    }
+    if (!$query_string) {
+        return false;
+    }
+    return odbc_exec($pdo, $query_string);
+}
+
+/**
+ * Gets the primary keys for a table
+ *
+ * @param PDO $pdo
+ * @param string $qualifier
+ * @param string $owner
+ * @param string $table
+ * @return PDOStatement|bool
+ */
+function odbc_primarykeys($pdo, $qualifier, $owner, $table) {
+    global $DBA;
+
+    /*
+    TABLE_QUALIFIER
+    TABLE_OWNER
+    TABLE_NAME
+    COLUMN_NAME
+    KEY_SEQ //TODO
+    PK_NAME
+     */
+
+    if ($DBA['DB'] == 'postgres') {
+        $query_string = "SELECT current_database() as TABLE_QUALIFIER, n.nspname as TABLE_OWNER, c2.relname AS table_name, a.attname AS COLUMN_NAME, '' as KEY_SEQ, c.relname as PK_NAME
+        FROM   pg_index i
+        JOIN   pg_attribute a ON a.attrelid = i.indrelid AND a.attnum = ANY(i.indkey)
+        JOIN   pg_class c ON i.indexrelid = c.oid
+        JOIN  pg_class c2 ON i.indrelid = c2.oid  
+        JOIN pg_namespace n ON n.oid = c.relnamespace
+        WHERE i.indisprimary
+        AND n.nspname = '$owner' AND c2.relname ='$table'";
+
+    } elseif ($DBA['DB'] == 'mysql') {
+        # TODO
+    }
+
+
+    if (!$query_string) {
+        return false;
+    }
+
+
+    return odbc_exec($pdo, $query_string);
+}
+
+/**
+ * Lists columns and associated privileges for the given table
+ * @link http://php.net/manual/en/function.odbc-columnprivileges.php
+ * @param resource $pdo The ODBC connection identifier,
+ * see <b>odbc_connect</b> for details.</p>
+ * @param string $qualifier <p>
+ * The qualifier.
+ * </p>
+ * @param string $owner <p>
+ * The owner.
+ * </p>
+ * @param string $table_name <p>
+ * The table name.
+ * </p>
+ * @param string $column_name <p>
+ * The <i>column_name</i> argument accepts search
+ * patterns ('%' to match zero or more characters and '_' to match a
+ * single character).
+ * </p>
+ * @return resource an ODBC result identifier or <b>FALSE</b> on failure.
+ * This result identifier can be used to fetch a list of columns and
+ * associated privileges.
+ * </p>
+ * <p>
+ * The result set has the following columns:
+ * TABLE_QUALIFIER
+ * TABLE_OWNER
+ * TABLE_NAME
+ * GRANTOR
+ * GRANTEE
+ * PRIVILEGE
+ * IS_GRANTABLE
+ * </p>
+ * <p>
+ * The result set is ordered by TABLE_QUALIFIER, TABLE_OWNER and
+ * TABLE_NAME.
+ * @since 4.0
+ * @since 5.0
+ */
+//function odbc_columnprivileges ($pdo, $qualifier, $owner, $table_name, $column_name) {}
+
+/**
+ * Lists tables and the privileges associated with each table
+ * @link http://php.net/manual/en/function.odbc-tableprivileges.php
+ * @param resource $pdo The ODBC connection identifier,
+ * see <b>odbc_connect</b> for details.</p>
+ * @param string $qualifier <p>
+ * The qualifier.
+ * </p>
+ * @param string $owner <p>
+ * The owner. Accepts the following search patterns:
+ * ('%' to match zero or more characters and '_' to match a single character)
+ * </p>
+ * @param string $name <p>
+ * The name. Accepts the following search patterns:
+ * ('%' to match zero or more characters and '_' to match a single character)
+ * </p>
+ * @return resource An ODBC result identifier or <b>FALSE</b> on failure.
+ * </p>
+ * <p>
+ * The result set has the following columns:
+ * TABLE_QUALIFIER
+ * TABLE_OWNER
+ * TABLE_NAME
+ * GRANTOR
+ * GRANTEE
+ * PRIVILEGE
+ * IS_GRANTABLE
+ * @since 4.0
+ * @since 5.0
+ */
+//function odbc_tableprivileges ($pdo, $qualifier, $owner, $name) {}
+
+/**
+ * Retrieves a list of foreign keys
+ * @link http://php.net/manual/en/function.odbc-foreignkeys.php
+ * @param resource $pdo The ODBC connection identifier,
+ * see <b>odbc_connect</b> for details.</p>
+ * @param string $pk_qualifier <p>
+ * The primary key qualifier.
+ * </p>
+ * @param string $pk_owner <p>
+ * The primary key owner.
+ * </p>
+ * @param string $pk_table <p>
+ * The primary key table.
+ * </p>
+ * @param string $fk_qualifier <p>
+ * The foreign key qualifier.
+ * </p>
+ * @param string $fk_owner <p>
+ * The foreign key owner.
+ * </p>
+ * @param string $fk_table <p>
+ * The foreign key table.
+ * </p>
+ * @return resource an ODBC result identifier or <b>FALSE</b> on failure.
+ * </p>
+ * <p>
+ * The result set has the following columns:
+ * PKTABLE_QUALIFIER
+ * PKTABLE_OWNER
+ * PKTABLE_NAME
+ * PKCOLUMN_NAME
+ * FKTABLE_QUALIFIER
+ * FKTABLE_OWNER
+ * FKTABLE_NAME
+ * FKCOLUMN_NAME
+ * KEY_SEQ
+ * UPDATE_RULE
+ * DELETE_RULE
+ * FK_NAME
+ * PK_NAME
+ * </p>
+ * If <i>pk_table</i> contains a table name,
+ * <b>odbc_foreignkeys</b> returns a result set
+ * containing the primary key of the specified table and all of the
+ * foreign keys that refer to it.
+ * If <i>fk_table</i> contains a table name,
+ * <b>odbc_foreignkeys</b> returns a result set
+ * containing all of the foreign keys in the specified table and the
+ * primary keys (in other tables) to which they refer.
+ * If both <i>pk_table</i> and
+ * <i>fk_table</i> contain table names,
+ * <b>odbc_foreignkeys</b> returns the foreign keys in
+ * the table specified in <i>fk_table</i> that refer
+ * to the primary key of the table specified in
+ * <i>pk_table
+ * @since 4.0
+ * @since 5.0
+ */
+//function odbc_foreignkeys ($pdo, $pk_qualifier, $pk_owner, $pk_table, $fk_qualifier, $fk_owner, $fk_table) {}
+
+/**
+ * Get the list of procedures stored in a specific data source
+ * @link http://php.net/manual/en/function.odbc-procedures.php
+ * @param resource $pdo The ODBC connection identifier,
+ * see <b>odbc_connect</b> for details.</p>
+ * @return resource an ODBC
+ * result identifier containing the information or <b>FALSE</b> on failure.
+ * </p>
+ * <p>
+ * The result set has the following columns:
+ * PROCEDURE_QUALIFIER
+ * PROCEDURE_OWNER
+ * PROCEDURE_NAME
+ * NUM_INPUT_PARAMS
+ * NUM_OUTPUT_PARAMS
+ * NUM_RESULT_SETS
+ * REMARKS
+ * PROCEDURE_TYPE
+ * @since 4.0
+ * @since 5.0
+ */
+//function odbc_procedures ($pdo) {}
+
+/**
+ * Retrieve information about parameters to procedures
+ * @link http://php.net/manual/en/function.odbc-procedurecolumns.php
+ * @param resource $pdo The ODBC connection identifier,
+ * see <b>odbc_connect</b> for details.</p>
+ * @return resource the list of input and output parameters, as well as the
+ * columns that make up the result set for the specified procedures.
+ * Returns an ODBC result identifier or <b>FALSE</b> on failure.
+ * </p>
+ * <p>
+ * The result set has the following columns:
+ * PROCEDURE_QUALIFIER
+ * PROCEDURE_OWNER
+ * PROCEDURE_NAME
+ * COLUMN_NAME
+ * COLUMN_TYPE
+ * DATA_TYPE
+ * TYPE_NAME
+ * PRECISION
+ * LENGTH
+ * SCALE
+ * RADIX
+ * NULLABLE
+ * REMARKS
+ * @since 4.0
+ * @since 5.0
+ */
+//function odbc_procedurecolumns ($pdo) {}
+
+/**
+ * Alias of <b>odbc_exec</b>
+ * @link http://php.net/manual/en/function.odbc-do.php
+ * @param $pdo
+ * @param $query
+ * @param $flags [optional]
+ * @since 4.0
+ * @since 5.0
+ */
+//function odbc_do ($pdo, $query, $flags) {}
+/**
+ * Alias of <b>odbc_field_len</b>
+ * @link http://php.net/manual/en/function.odbc-field-precision.php
+ * @param $stmt
+ * @param $field_number
+ * @since 4.0
+ * @since 5.0
+ */
+//function odbc_field_precision ($stmt, $field_number) {}

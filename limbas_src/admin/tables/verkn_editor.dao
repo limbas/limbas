@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -36,8 +36,8 @@ if($fieldid AND $tabid){
 	if(odbc_result($rs, "VERKNSEARCH")){$verknsearchid = explode(",",odbc_result($rs, "VERKNSEARCH"));}
 	if(odbc_result($rs, "VERKNVIEW")){$verknviewid_ = explode("?",odbc_result($rs, "VERKNVIEW"));$verknviewid = explode(",",$verknviewid_[0]); $viewidcut = $verknviewid_[1];}
 	if(odbc_result($rs, "VERKNFIND")){$verknfindid_ = explode("?",odbc_result($rs, "VERKNFIND"));$verknfindid = explode(",",$verknfindid_[0]); $findidcut = $verknfindid_[1];}
+	if(odbc_result($rs, "VERKNTABID")){$verkntabid = odbc_result($rs, "VERKNTABID");}
 	$verkntyp = odbc_result($rs, "FIELD_TYPE");
-	$verkntabid = odbc_result($rs, "VERKNTABID");
 	$veknfieldid = odbc_result($rs, "VERKNFIELDID");
 	$verknparams = odbc_result($rs, "VERKNPARAMS");
 	$md5tab = odbc_result($rs, "MD5TAB");
@@ -49,6 +49,7 @@ if($fieldid AND $tabid){
 	$relext = odbc_result($rs, "RELEXT");
 	$fieldname = odbc_result($rs, "FIELD_NAME");
 	$verkntree = odbc_result($rs, "VERKNTREE");
+	$vernparamsid = odbc_result($rs, "VERKNPARAMS");
 
 	#$sqlquery =  "SELECT FIELD_NAME,MD5TAB FROM LMB_CONF_FIELDS WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
 	#$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -152,14 +153,14 @@ if($set_verknfieldid AND $new_verknfieldid){
 		$recursrelation = 1;
 		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],$md5tab,"'TABLE'"));
 		if($odbc_table) {
-			$sqlquery2 =  "DROP TABLE ".dbf_4($md5tab);
-			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
-			if(!$rs2) {$commit = 1;}else{
-				lmb_updateTrigger();
-			}
+	        if(!lmb_dropTable($md5tab)){
+	            $commit = 1;
+            }else{
+	            lmb_updateTrigger();
+            }
 		}
 	    
-	    if(lmb_createView("SELECT KEYID,ERSTDATUM,ERSTUSER,ID AS VERKN_ID,VERKN_ID AS ID,SORT FROM ".odbc_result($rs, "MD5TAB"),dbf_4($md5tab))){
+	    if(lmb_createView("SELECT KEYID,ERSTDATUM,ERSTUSER,ID AS VERKN_ID,VERKN_ID AS ID,SORT FROM ".dbf_4(odbc_result($rs, "MD5TAB")),dbf_4($md5tab))){
 	    	if($datatype == 27){$unique = ",ISUNIQUE = ".LMB_DBDEF_TRUE;}
 			$sqlquery2 =  "UPDATE LMB_CONF_FIELDS SET HASRECVERKN = $new_verknfieldid, VERKNTABLETYPE = 2 $unique WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
 			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
@@ -241,7 +242,6 @@ if($vknsave){
 	}
 	
 	#if(is_array($new_verknfindid)){$new_verknfindid = implode(",",$new_verknfindid).'?'.$findidCut;}
-	
 	$sqlquery =  "UPDATE LMB_CONF_FIELDS SET VERKNSEARCH = '".parse_db_string($new_verknsearchid,50)."',VERKNVIEW = '".parse_db_string($new_verknviewid,50)."',VERKNFIND = '".parse_db_string($new_verknfindid,50)."' WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}else{
@@ -430,15 +430,15 @@ function createRecRelation($tabid,$fieldid,$relationtree,$md5tab){
 	
 	# drop TABLE
 	if($odbc_table = dbf_20(array($DBA["DBSCHEMA"],$md5tab,"'TABLE'"))){
-		$sqlquery = "DROP TABLE $md5tab";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!$rs){echo odbc_errormsg($db).'<br>';}
+	    if(!lmb_dropTable($md5tab)){
+		    echo odbc_errormsg($db).'<br>';
+	    }
 	}
 	# drop VIEW
 	elseif($odbc_table = dbf_20(array($DBA["DBSCHEMA"],$md5tab,"'VIEW'"))){
-		$sqlquery = dbq_20(array($md5tab));
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!$rs){echo odbc_errormsg($db).'<br>';}
+	    if(!lmb_dropView($md5tab)){
+		    echo odbc_errormsg($db).'<br>';
+	    }
 	}
 
 	$sqlquery = "CREATE VIEW $md5tab AS SELECT DISTINCT $select FROM $from WHERE $where";

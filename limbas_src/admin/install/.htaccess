@@ -6,7 +6,7 @@ allow from all
 </Files>
 
 <Files "*.php">
- SetHandler application/x-httpd-php
+ #SetHandler application/x-httpd-php
  allow from all
 </Files>
 

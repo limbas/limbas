@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -25,6 +25,17 @@
 if($alert){
 	echo "parent.report_main.document.form1.submit();\n";
 }
+
+if($display_panel){
+    $dp = explode(',',$display_panel);
+    foreach($dp as $key => $value){
+        $displayPanel[$value] = 'none';
+    }
+}
+
+echo 'asas',$report;
+
+
 ?>
 
 /* ---------------- Sendkeypress---------------------- */
@@ -38,6 +49,7 @@ function resetmenu(){
 		document.getElementById('new_ureport_area').style.display = 'none';
 		document.getElementById('new_chart_area').style.display = 'none';
         document.getElementById('new_bild_area').style.display = 'none';
+        document.getElementById('new_templ_area').style.display = 'none';
         document.getElementById('bild').style.borderStyle = 'outset';
         document.getElementById('bild').style.backgroundColor = '';
         document.getElementById('new_dbdat_area').style.display = 'none';
@@ -50,6 +62,10 @@ function resetmenu(){
         document.getElementById('line').style.backgroundColor = '';
         document.getElementById('ellipse').style.borderStyle = 'outset';
         document.getElementById('ellipse').style.backgroundColor = '';
+        <?php }
+        if($greportlist[$referenz_tab]["defformat"][$report_id] == 'tcpdf'){?>
+        document.getElementById('templ').style.borderStyle = 'outset';
+        document.getElementById('templ').style.backgroundColor = '';
         <?php }?>
         document.getElementById('ureport').style.borderStyle = 'outset';
         document.getElementById('ureport').style.backgroundColor = '';
@@ -114,7 +130,6 @@ function add_dbfield(el,evt){
 			el.className = "markAsActive";
 		}
 	}
-	
 }
 
 function send() {
@@ -168,6 +183,12 @@ function send() {
 		document.form1.report_add.value = '';
 		parent.report_main.document.form1.report_add.value='chart';
 		parent.report_main.document.form1.report_chart_id.value=document.form1.chart_id.value;
+		parent.report_main.document.form1.submit();
+	}else if(obj == 'templ' && document.form1.templ_id.value){
+		document.getElementById('new_templ_area').style.display = '';
+		document.form1.report_add.value = '';
+		parent.report_main.document.form1.report_add.value='templ';
+		parent.report_main.document.form1.report_templ_id.value=document.form1.templ_id.value;
 		parent.report_main.document.form1.submit();
 	}else{
 		parent.report_main.window.set_posxy();
@@ -240,14 +261,32 @@ function setOrderBy(val){
 	document.form1.submit();
 }
 
+function displayPanel(el,id){
+
+    var dpel = document.form1.display_panel;
+
+    if($(el).next().is(':visible')){
+        $(el).next().hide('slow');
+        var dp = dpel.value+id+',';
+    }else{
+        $(el).next().show('slow');
+        var dp = dpel.value.replace(id+',','');
+    }
+
+    dpel.value = dp;
+    console.log(dp);
+
+}
+
+
 
 </script>
-
 <FORM ENCTYPE="multipart/form-data" ACTION="main_admin.php" METHOD="post" name="form1">
 <input type="hidden" name="action" value="setup_report_menu">
 <input type="hidden" name="report_id" value="<?=$report_id;?>">
 <input type="hidden" name="report_name" VALUE="<?=$report["name"];?>">
 <input type="hidden" name="referenz_tab" VALUE="<?=$referenz_tab;?>">
+<input type="hidden" name="display_panel" value="<?=$display_panel?>">
 <input type="hidden" name="report_add">
 <input type="hidden" name="report_tab">
 <input type="hidden" name="report_tab_el">
@@ -258,25 +297,25 @@ function setOrderBy(val){
 
 <TABLE BORDER="0" cellspacing="0" cellpadding="0"><TR><TD WIDTH="10">&nbsp;</TD><TD>
 
-
-<TABLE cellspacing="0" cellpadding="2" class="formeditorPanel">
-<TR><TD class="formeditorPanelHead" COLSPAN="4"><?=$lang[1137]?></TD></TR>
+<div class="formeditorPanelHead" onclick="displayPanel(this,1)"><?=$lang[1137]?></div>
+<TABLE cellspacing="0" cellpadding="2" class="formeditorPanel" style="display:<?=$displayPanel[1]?>;">
 <TR><TD VALIGN="TOP"><b><?=$lang[1137]?></TD><TD><?=$report["name"];?></TD></TR>
 <TR><TD VALIGN="TOP"><b><?=$lang[164]?></TD><TD><?=$gtab["desc"][$referenz_tab];?></TD></TR>
 </TABLE>
 
-
-
-<TABLE cellspacing="0" cellpadding="2" class="formeditorPanel">
-<TR><TD COLSPAN="4" class="formeditorPanelHead"><?=$lang[2782]?></TD></TR>
+<div class="formeditorPanelHead" onclick="displayPanel(this,2)"><?=$lang[2782]?></div>
+<TABLE cellspacing="0" cellpadding="2" class="formeditorPanel" style="display:<?=$displayPanel[2]?>;">
 <TR><TD STYLE="height:14px;"><B>X:</B></TD><TD><INPUT STYLE="width:40px;" NAME="XPOSI" OnChange="parent.report_main.posxy_change(this.value,'');"></TD><TD>&nbsp;&nbsp;&nbsp;&nbsp;<B>W:</B>&nbsp;&nbsp;</TD><TD><INPUT TYPE="TEXT" STYLE="width:40px;" NAME="WPOSI" OnChange="parent.report_main.sizexy_change('',this.value);"></TD></TR>
 <TR><TD STYLE="height:14px;"><B>Y:</B></TD><TD><INPUT STYLE="width:40px;" NAME="YPOSI" OnChange="parent.report_main.posxy_change('',this.value);"></TD><TD>&nbsp;&nbsp;&nbsp;&nbsp;<B>H:</B>&nbsp;&nbsp;</TD><TD><INPUT TYPE="TEXT" STYLE="width:40px;" NAME="HPOSI" OnChange="parent.report_main.sizexy_change(this.value,'');"></TD></TR>
 </TD></TR></TABLE>
 
-
-
-<TABLE cellspacing="0" cellpadding="2" class="formeditorPanel">
-<TR><TD class="formeditorPanelHead" COLSPAN="4"><?=$lang[2331]?></TD></TR>
+<div class="formeditorPanelHead" onclick="displayPanel(this,3)"><?=$lang[2331]?></div>
+<TABLE cellspacing="0" cellpadding="2" class="formeditorPanel" style="display:<?=$displayPanel[3]?>;">
+<TR><TD>name</TD><TD colspan="3"><INPUT TYPE="TEXT" NAME="savename" VALUE="<?php if($report["savename"]){echo htmlentities($report["savename"],ENT_QUOTES,$umgvar["charset"]);}else{echo "default";}?>" OnChange="this.form.submit();" STYLE="width:155;"></TD></TR>
+<TR><TD><?=$lang[1141]?>:</TD><TD><INPUT TYPE="TEXT" NAME="page_width" VALUE="<?php if($report['page_style']){echo $report['page_style'][0];}else{echo "210";}?>" OnChange="this.form.submit();" STYLE="width:40;"></TD><TD><?=$lang[1142]?>:</TD>
+<TD><INPUT TYPE="TEXT" NAME="page_height" VALUE="<?php if($report['page_style'][1]){echo $report['page_style'][1];}else{echo "295";}?>" OnChange="this.form.submit();" STYLE="width:40;"></TD></TR>
+<TR><TD><?=$lang[1111]?><TD><INPUT TYPE="TEXT" NAME="border_top" VALUE="<?php if($report['page_style'][2]){echo $report['page_style'][2];}?>" OnChange="this.form.submit();" STYLE="width:40;"></TD></TR>
+<TR><TD COLSPAN="5"><div style="overflow:hidden;height:1px;width:100%;background-color:grey;"></div></TD></TR>
 <TR><TD><?=$lang[1138]?>:</TD><TD>
 <SELECT NAME="default_font" STYLE="width:70px;">
 <?php
@@ -286,19 +325,7 @@ foreach($sysfont as $key => $value){
 ?>
 </SELECT>
 </TD><TD><?=$lang[210]?>:</TD><TD><INPUT TYPE="TEXT" NAME="default_size" VALUE="10" STYLE="width:40;"></TD></TR>
-<TR><TD COLSPAN="4"><U><?=$lang[1140]?>:</U></TD></TR>
-<TR><TD><?=$lang[1141]?>:</TD><TD><INPUT TYPE="TEXT" NAME="page_width" VALUE="<?php if($report['page_style']){echo $report['page_style'][0];}else{echo "210";}?>" OnChange="this.form.submit();" STYLE="width:40;"></TD><TD><?=$lang[1142]?>:</TD>
-<TD><INPUT TYPE="TEXT" NAME="page_height" VALUE="<?php if($report['page_style'][1]){echo $report['page_style'][1];}else{echo "295";}?>" OnChange="this.form.submit();" STYLE="width:40;"></TD></TR>
-
-
-<TR><TD COLSPAN="5"><div style="overflow:hidden;height:1px;width:100%;background-color:grey;"></div></TD></TR>
-<TR><TD>name:</TD><TD colspan="3"><INPUT TYPE="TEXT" NAME="savename" VALUE="<?php if($report["savename"]){echo htmlentities($report["savename"],ENT_QUOTES,$umgvar["charset"]);}else{echo "default";}?>" OnChange="this.form.submit();" STYLE="width:155;"></TD></TR>
-<TR ><TD COLSPAN="5"><div style="overflow:hidden;height:1px;width:100%;background-color:grey;"></div></TD></TR>
 <?php if($report["listmode"]){$checked="checked";}?>
-
-
-
-
 <TR ><TD COLSPAN="3">Raster:</TD><TD><INPUT TYPE="TEXT" NAME="raster" VALUE="10" STYLE="width:30px;"></TD></TR>
 <TR ><TD COLSPAN="3"><?=$lang[2649]?>:</TD><TD><INPUT TYPE="CHECKBOX" NAME="listmode" id="listmode"  <?=$checked?> OnChange="this.form.change_listmode.value=1;this.form.submit();"></TD></TR>
 <TR ><TD COLSPAN="3"><?=$lang[1148]?>:</TD><TD><INPUT TYPE="CHECKBOX" NAME="prop"></TD></TR>
@@ -311,14 +338,10 @@ foreach($sysfont as $key => $value){
 <?=$lang[2347]?><INPUT TYPE="RADIO" NAME="set_oderby" onclick="setOrderBy('zindex');" <?=$isOrderByZ?>>
 <?=$lang[2348]?><INPUT TYPE="RADIO" NAME="set_oderby"  onclick="setOrderBy('ypos');" <?=$isOrderByP?>>
 </TD></TR>
-
 </TABLE>
 
-
-
-
-<TABLE cellspacing="0" cellpadding="0" class="formeditorPanel">
-<TR><TD COLSPAN="10" class="formeditorPanelHead"><?=$lang[2780]?></TD></TR>
+<div class="formeditorPanelHead" onclick="displayPanel(this,4)"><?=$lang[2780]?></div>
+<TABLE cellspacing="0" cellpadding="0" class="formeditorPanel" style="display:<?=$displayPanel[4]?>;">
 <TR ><TD><TABLE BORDER="0" cellspacing="0" cellpadding="0">
 <TR >
 <TD VALIGN="TOP"><i ID="text" class="lmb-icon lmb-rep-txt btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1149]?>" VALUE="text" OnMouseDown="pressbutton('text','inset','<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('text','outset','<?= $farbschema['WEB7'] ?>');parent.report_main.document.form1.report_add.value='text';send();"></i></TD>
@@ -333,6 +356,9 @@ foreach($sysfont as $key => $value){
 <TD VALIGN="TOP"><i ID="ellipse" class="lmb-icon lmb-rep-circle btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1154]?>" VALUE="ellipse" OnMouseDown="pressbutton('ellipse','inset','<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('ellipse','outset','<?= $farbschema['WEB7'] ?>');parent.report_main.document.form1.report_add.value='ellipse';send();"></i></TD>
 <?php }?>
 <TD VALIGN="TOP"><i ID="rect" class="lmb-icon lmb-rep-rect btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1153]?>" VALUE="rect" OnMouseDown="pressbutton('rect','inset','<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('rect','outset','<?= $farbschema['WEB7'] ?>');parent.report_main.document.form1.report_add.value='rect';send();"></i></TD>
+<?php if($greportlist[$referenz_tab]["defformat"][$report_id] == 'tcpdf'){?>
+<TD VALIGN="TOP"><i ID="templ" class="lmb-icon lmb-code btn" STYLE="border:2px outset grey" TITLE="HTML Template" VALUE="templ" OnMouseDown="pressbutton('templ','inset','<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('templ','outset','<?= $farbschema['WEB7'] ?>');parent.report_main.document.form1.report_add.value='templ';actbutton('templ','new_templ_area',0);"></i></TD>
+<?php } ?>
 </TR><TR>
 <TD VALIGN="TOP"><i ID="formel" class="lmb-icon lmb-rep-php btn" STYLE="border:2px outset grey" TITLE="<?=$lang[1772]?>" VALUE="formel" OnMouseDown="pressbutton('formel','inset','<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('formel','outset','<?= $farbschema['WEB7'] ?>');parent.report_main.document.form1.report_add.value='formel';send();"></i></TD>
 <TD VALIGN="TOP"><i ID="datum" class="lmb-icon lmb-rep-date btn" STYLE="border:2px outset grey" TITLE="<?=$lang[197]?>" VALUE="datum" OnMouseDown="pressbutton('datum','inset','<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('datum','outset','<?= $farbschema['WEB7'] ?>');parent.report_main.document.form1.report_add.value='datum';send();"></i></TD>
@@ -341,9 +367,7 @@ foreach($sysfont as $key => $value){
 
 </TD></TR></TABLE>
 
-
 <div ID="new_bild_area" style="display:none;">
-
 <TABLE  cellspacing="0" cellpadding="2" class="formeditorPanel">
 <TR><TD colspan="2" class="formeditorPanelHead" align="center"></TD></TR>
 <TR><TD HEIGHT="25" colspan="2"><INPUT TYPE="FILE" NAME="new_pic" SIZE="20" STYLE="width:200px;height:17px;"></TD></TR>
@@ -371,11 +395,10 @@ foreach($sysfont as $key => $value){
 <TR ID="send_bild_area" style="display:none;"><TD  STYLE="height:30px;" VALIGN="CENTER">&nbsp;<SPAN ID="uploadlevel" STYLE="width:1px;height:15px;border:2px inset grey;background-color:<?= $farbschema['WEB10'] ?>">&nbsp;</SPAN></TD></TR>
 </TABLE>
 </div>
-
 <div ID="new_dbdat_area" style="display:none;">
 
+<div class="formeditorPanelHead"><?=$lang[972]?></div>
 <TABLE  cellspacing="0" cellpadding="2" class="formeditorPanel">
-<TR><TD class="formeditorPanelHead" align="center"><?=$lang[972]?></TD></TR>
 <tr><td>
 <SELECT NAME="source_table" style="width:200px;" onchange="LmAdm_getFields(this.value,0,'')">"><OPTION VALUE="-1"></OPTION>
 <?php
@@ -405,9 +428,8 @@ include_once("admin/report/report_tabliste.php");
 
 
 <div ID="new_chart_area" style="display:none;">
-
+<div class="formeditorPanelHead"><?=$lang[972]?></div>
 <TABLE  cellspacing="0" cellpadding="2" class="formeditorPanel">
-<TR><TD class="formeditorPanelHead" align="center"><?=$lang[972]?></TD></TR>
 <tr><td>
 <SELECT NAME="chart_id" style="width:200px;"><OPTION VALUE="-1"></OPTION>
 <?php
@@ -424,9 +446,8 @@ foreach ($gdiaglist as $keyk => $valuek) {
 
 
 <div ID="new_ureport_area" style="display:none;">
-
+<div class="formeditorPanelHead"><?=$lang[2779]?></div>
 <TABLE cellspacing="0" cellpadding="0" class="formeditorPanel">
-<TR><TD class="formeditorPanelHead"><?=$lang[2779]?></TD></TR>
 <TR><TD  VALIGN="TOP">
 <div style=";padding:2px;"><?=$lang[925]?>:
 <SELECT NAME="ureport_type" STYLE="width:190px">
@@ -447,13 +468,33 @@ foreach ($greportlist["argresult_tabid"] as $rkey => $rval){
 </TABLE>
 </div>
 
+
+<div ID="new_templ_area" style="display:none;">
 <TABLE cellspacing="0" cellpadding="0" class="formeditorPanel">
-<TR><TD STYLE="height:15px"class="formeditorPanelHead"></TD></TR>
+<TR><TD class="formeditorPanelHead">Template</TD></TR>
+<TR><TD  VALIGN="TOP">
+<div style="padding:2px;">
+<SELECT NAME="templ_id" STYLE="width:190px;"><option>
+<?php
+foreach ($gtab['table'] as $rkey => $rval){
+    if($gtab['typ'][$rkey] == 8) {
+        echo "<OPTION VALUE=\"" . $rkey . "\">" . $rval;
+    }
+}
+?>
+</SELECT></div>
+</TD></TR>
+</TABLE>
+</div>
+
+
+<div class="formeditorPanelHead"></div>
+<TABLE cellspacing="0" cellpadding="0" class="formeditorPanel">
 <TR><TD  STYLE="height:15px" ALIGN="CENTER"><INPUT TYPE="BUTTON" STYLE="border:1px solid grey;cursor:pointer" VALUE="<?=$lang[33]?>" OnCliCk="send();"></TD></TR>
 </TABLE>
 
-<TABLE cellspacing="0" cellpadding="0" class="formeditorPanel">
-<TR><TD class="formeditorPanelHead"><?= $lang[2783] ?></TD></TR>
+<div class="formeditorPanelHead" onclick="displayPanel(this,5)"><?=$lang[2783]?></div>
+<TABLE cellspacing="0" cellpadding="0" class="formeditorPanel" style="display:<?=$displayPanel[5]?>;">
 <tr><td><div ID="itemlist_area" style="margin-top: 0"></div></td></tr>
 </TABLE>
 

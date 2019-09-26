@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -42,7 +42,7 @@ if($action == "setup_group_add" AND $LINK[138] == 1){
 
 /* --- Gruppe und Untergruppen löschen ---------------------------- */
 if($group_del AND $ID != 1){
-	delete_group_list($ID,$duf);
+	delete_group_list($ID);
 	echo "<SCRIPT LANGUAGE=\"JavaScript\">
 	parent.user_tree.location.href='main_admin.php?action=setup_user_tree';
 	document.location.href='main_admin.php?action=setup_user_erg&group_id=1';
@@ -94,7 +94,7 @@ if($update_parent_formsettings AND $update_parent_group){
 /* --- Select SQL-Query --------------------------------------------- */
 $sqlquery = "SELECT DISTINCT MULTIFRAMELIST,GROUP_ID,LEVEL,NAME,DESCRIPTION,REDIRECT,ERSTDATUM,EDITDATUM FROM LMB_GROUPS WHERE GROUP_ID = $ID AND DEL = ".LMB_DBDEF_FALSE." ORDER BY GROUP_ID";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-if(odbc_fetch_row($rs, 1)) {
+if(odbc_fetch_row($rs)) {
 	$result_group["name"] = odbc_result($rs, "NAME");
 	$result_group["beschreibung"] = odbc_result($rs, "DESCRIPTION");
 	$result_group["redirect"] = odbc_result($rs, "REDIRECT");

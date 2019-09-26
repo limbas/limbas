@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -20,32 +20,30 @@
 
 ############# Domain Tables ########################
 
-$DBA["DOMAINTABLE"] = array("statistics","key_column_usage","tables","columns","triggers","views");
-$DBA["DOMAINSCHEMA"] = array("information_schema","information_schema","information_schema","information_schema","information_schema","information_schema");
+$DBA["DOMAINTABLE"] = array("STATISTICS","KEY_COLUMN_USAGE","TABLES","COLUMNS","TRIGGERS","VIEWS");
+$DBA["DOMAINSCHEMA"] = array("INFORMATION_SCHEMA","INFORMATION_SCHEMA","INFORMATION_SCHEMA","INFORMATION_SCHEMA","INFORMATION_SCHEMA","INFORMATION_SCHEMA");
 
 # db version
 function dbf_version($DBA=null){
 	global $db;
 
 	// version
-	$sql = "SELECT @@version as version";
-	$rs = @odbc_exec($db,$sql) or errorhandle(odbc_errormsg($db),$sql,"get DB Version",$FILE,$LINE);
+	$sql = "SELECT @@VERSION as VERSION";
+	$rs = odbc_exec($db,$sql) or errorhandle(odbc_errormsg($db),$sql,"get DB Version",$FILE,$LINE);
 	$version = odbc_result($rs,"version");
 	$version_[] = $version;
 	$version_[] = substr($version, 0, strpos($version,'.'));
 
 	// encoding
     if($DBA) {
-        $sql = "SELECT default_character_set_name FROM information_schema.SCHEMATA WHERE schema_name = \"limbas\"";
-        $rs = @odbc_exec($db, $sql) or errorhandle(odbc_errormsg($db), $sql, "get DB Version", $FILE, $LINE);
+        $sql = "SELECT DEFAULT_CHARACTER_SET_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE UPPER(SCHEMA_NAME) = \"".strtoupper($DBA["DBNAME"])."\"";
+        $rs = odbc_exec($db, $sql) or errorhandle(odbc_errormsg($db), $sql, "get DB Version", $FILE, $LINE);
         $version_[] = odbc_result($rs, "default_character_set_name");
 
-        $sql = "SHOW VARIABLES WHERE Variable_name = 'default_storage_engine'";
-        $rs = @odbc_exec($db, $sql) or errorhandle(odbc_errormsg($db), $sql, "get DB Version", $FILE, $LINE);
+        $sql = "SHOW VARIABLES WHERE VARIABLE_NAME = 'default_storage_engine'";
+        $rs = odbc_exec($db, $sql) or errorhandle(odbc_errormsg($db), $sql, "get DB Version", $FILE, $LINE);
         $version_[] = odbc_result($rs, "Value");
-
     }
-
 
 	return $version_;
 
@@ -60,29 +58,29 @@ function dbf_version($DBA=null){
  * @return sql string
  */
 function dbq_2($p){
-	$sql = "select CARDINALITY AS INDEX_USED, 
-			table_name tablename,
+	$sql = "SELECT CARDINALITY AS INDEX_USED, 
+			TABLE_NAME TABLENAME,
 			CASE NON_UNIQUE WHEN 0 THEN 1 WHEN 1 THEN 0 END AS IS_UNIQUE,
-			column_name columnname,
-			index_name indexname,
+			COLUMN_NAME COLUMNNAME,
+			INDEX_NAME INDEXNAME,
 			IFNULL(cardinality,0),
-			index_type type
-			from
-			information_schema.statistics
+			INDEX_TYPE TYPE
+			FROM
+			INFORMATION_SCHEMA.STATISTICS
 			WHERE 
-				index_schema = '".$p[0]."'";
+				INDEX_SCHEMA = '".$p[0]."'";
 	
 	if($p[1]){
-		$sql .= " and lower(table_name) = '".lmb_strtolower($p[1])."'";
+		$sql .= " AND UPPER(TABLE_NAME) = '".lmb_strtoupper($p[1])."'";
 	}
 	if($p[2]){
-		$sql .= " and lower(column_name) = '".lmb_strtolower($p[2])."'";
+		$sql .= " AND UPPER(COLUMN_NAME) = '".lmb_strtoupper($p[2])."'";
 	}
 	if($p[3]){
-		$sql .= "and not index_name = 'SYSPRIMARYKEYINDEX'";
+		$sql .= "AND NOT INDEX_NAME = 'SYSPRIMARYKEYINDEX'";
 	}
 	
-	$sql .= " ORDER BY table_name, index_name";
+	$sql .= " ORDER BY TABLE_NAME, INDEX_NAME";
 	
 	return $sql;
 }
@@ -94,7 +92,7 @@ function dbq_2($p){
  * @return sql string
  */
 function dbq_4($p){
-	return "CREATE INDEX ".$p[1]." ON ".$p[2]."(".$p[3].")";
+	return "CREATE INDEX ".$p[1]." ON ".dbf_4($p[2])."(".$p[3].")";
 }
 
 /**
@@ -182,7 +180,7 @@ function dbq_26($p=null){
  */
 
 function dbq_17($p){
-	return "ALTER TABLE ".$p[0]." ADD PRIMARY KEY (".$p[1].")";
+	return "ALTER TABLE ".dbf_4($p[0])." ADD PRIMARY KEY (".$p[1].")";
 }
 
 
@@ -193,7 +191,7 @@ function dbq_17($p){
  * @return sql string
  */
 function dbq_24($p){
-	return "ALTER TABLE ".$p[0]." ADD CONSTRAINT ".$p[2]." UNIQUE (".$p[1].")";
+	return "ALTER TABLE ".dbf_4($p[0])." ADD CONSTRAINT ".$p[2]." UNIQUE (".$p[1].")";
 }
  
 /**
@@ -203,7 +201,7 @@ function dbq_24($p){
  * @return sql string
  */
 function dbq_18($p){
-	return "ALTER TABLE ".$p[0]." DROP PRIMARY KEY";
+	return "ALTER TABLE ".dbf_4($p[0])." DROP PRIMARY KEY";
 }
 
 
@@ -216,24 +214,24 @@ function dbq_18($p){
  * @return sql string
  */
 function dbq_3($p){
-	$sql = "select information_schema.key_column_usage.table_name tablename,
-				information_schema.key_column_usage.column_name columnname,
-				information_schema.key_column_usage.referenced_table_name reftablename,
-				information_schema.key_column_usage.referenced_column_name refcolumnname,
-				information_schema.key_column_usage.constraint_name fkeyname,
-				information_schema.referential_constraints.delete_rule rule
+	$sql = "SELECT INFORMATION_SCHEMA.KEY_COLUMN_USAGE.TABLE_NAME TABLENAME,
+				INFORMATION_SCHEMA.KEY_COLUMN_USAGE.COLUMN_NAME COLUMNNAME,
+				INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_TABLE_NAME REFTABLENAME,
+				INFORMATION_SCHEMA.KEY_COLUMN_USAGE.REFERENCED_COLUMN_NAME REFCOLUMNNAME,
+				INFORMATION_SCHEMA.KEY_COLUMN_USAGE.CONSTRAINT_NAME FKEYNAME,
+				INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.DELETE_RULE RULE
 			FROM 
-				information_schema.key_column_usage,
-				 information_schema.referential_constraints
+				INFORMATION_SCHEMA.KEY_COLUMN_USAGE,
+				 INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
 			WHERE 
-				information_schema.referential_constraints.constraint_name = information_schema.key_column_usage.constraint_name
-				and information_schema.key_column_usage.constraint_schema = '".$p[0]."'";
+				INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS.CONSTRAINT_NAME = INFORMATION_SCHEMA.KEY_COLUMN_USAGE.CONSTRAINT_NAME
+				AND INFORMATION_SCHEMA.KEY_COLUMN_USAGE.CONSTRAINT_SCHEMA = '".$p[0]."'";
 	
 	if($p[1]){
-		$sql .= " and lower(information_schema.key_column_usage.table_name) = '".lmb_strtolower($p[1])."'";
+		$sql .= " AND UPPER(INFORMATION_SCHEMA.KEY_COLUMN_USAGE.TABLE_NAME) = '".lmb_strtoupper($p[1])."'";
 	}
 	if($p[2]){
-		$sql .= " and lower(information_schema.key_column_usage.constraint_name) LIKE '".lmb_strtolower($p[2])."'";
+		$sql .= " AND UPPER(INFORMATION_SCHEMA.KEY_COLUMN_USAGE.CONSTRAINT_NAME) LIKE '".lmb_strtoupper($p[2])."'";
 	}
 	
 	return $sql;
@@ -249,9 +247,9 @@ function dbq_3($p){
 function dbq_11($p){
 	$p[5] = "DELETE RESTRICT";
 
-	return "ALTER TABLE ".$p[0]." 
+	return "ALTER TABLE ".dbf_4($p[0])." 
 		ADD CONSTRAINT ".$p[4]." FOREIGN KEY (".$p[1].") 
-		REFERENCES ".$p[2]."(".$p[3].") 
+		REFERENCES ".dbf_4($p[2])."(".$p[3].") 
 		ON ".$p[5];
 }
 
@@ -315,25 +313,25 @@ function dbq_13($p){
 /**
  * limbas specific trigger function for limbas relation schema
  *
- * @param array $p [0]=schema, [1]=triggername, [2]=tablename, [3]=action, [4]=value, [5]=vtablename
+ * @param array $p [0]=schema, [1]=tablename, [2]=fieldname, [3]=action, [4]=r-tablename, [5]=r-fieldname
  * @return sql string
  */
 function dbq_14($p){
 	global $DBA;
-	
+
 	# vorwertige Verknüpfung
-	if($p[3] == "+"){
-		$out = "UPDATE ".$p[1]." SET ".$p[2]." = (SELECT COUNT(*) FROM ".$p[0]." WHERE ID = NEW.ID) WHERE ID = NEW.ID;";
+	if($p[4] == "+"){
+		$out = "UPDATE ".$p[2]." SET ".$p[3]." = (SELECT COUNT(*) FROM ".$p[1]." WHERE ID = NEW.ID) WHERE ID = NEW.ID;";
 	}else{
-		$out = "UPDATE ".$p[1]." SET ".$p[2]." = (SELECT COUNT(*) FROM ".$p[0]." WHERE ID = OLD.ID) WHERE ID = OLD.ID;";
+		$out = "UPDATE ".$p[2]." SET ".$p[3]." = (SELECT COUNT(*) FROM ".$p[1]." WHERE ID = OLD.ID) WHERE ID = OLD.ID;";
 	}
 	
 	# rückwertige Verknüpfung
-	if($p[4]){
-		if($p[3] == "+"){
-			$out .= "\nUPDATE ".$p[4]." SET ".$p[5]." = (SELECT COUNT(*) FROM ".$p[0]." WHERE VERKN_ID = NEW.VERKN_ID) WHERE ID = NEW.VERKN_ID;";
+	if($p[5]){
+		if($p[4] == "+"){
+			$out .= "\nUPDATE ".$p[5]." SET ".$p[6]." = (SELECT COUNT(*) FROM ".$p[1]." WHERE VERKN_ID = NEW.VERKN_ID) WHERE ID = NEW.VERKN_ID;";
 		}else{
-			$out .= "\nUPDATE ".$p[4]." SET ".$p[5]." = (SELECT COUNT(*) FROM ".$p[0]." WHERE VERKN_ID = OLD.VERKN_ID) WHERE ID = OLD.VERKN_ID;";
+			$out .= "\nUPDATE ".$p[5]." SET ".$p[6]." = (SELECT COUNT(*) FROM ".$p[1]." WHERE VERKN_ID = OLD.VERKN_ID) WHERE ID = OLD.VERKN_ID;";
 		}
 	}
 	
@@ -449,7 +447,11 @@ function dbf_20($p){
 	
 	while(odbc_fetch_row($rs)){
 		$odbc_table["table_name"][] = odbc_result($rs,"TABLE_NAME");
-		$odbc_table["table_type"][] = odbc_result($rs,"TABLE_TYPE");
+		if(stripos(odbc_result($rs,"TABLE_TYPE"),'TABLE') !== false){
+		    $odbc_table["table_type"][] = 'TABLE';
+        }else{
+		    $odbc_table["table_type"][] = odbc_result($rs,"TABLE_TYPE");
+        }
 	}
 	
 	if($odbc_table){
@@ -457,6 +459,19 @@ function dbf_20($p){
 	}else{
 		return false;
 	}
+}
+
+/**
+ * drop table
+ *
+ * @param array $p [0]=table name
+ * @return sql string
+ */
+function dbq_28($p){
+
+	$qu = "DROP TABLE ".dbf_4($p[0]);
+
+	return $qu;
 }
 
 
@@ -473,7 +488,7 @@ function dbf_21($p){
 	dbf_22($p);
 
 	if(!$p[2]){$p[2] = 1;}
-	if($rs = odbc_exec($db,"SELECT seq_set('".dbf_4($p[1])."', ".$p[2].", 1);")){
+	if($rs = odbc_exec($db,"SELECT SEQ_SET('".dbf_4($p[1])."', ".$p[2].", 1);")){
 		return true;
 	}else{
 		return false;
@@ -499,7 +514,6 @@ function dbf_22($p){
 
 ############# columns ########################
 
-
 /**
  * list of columns
  *
@@ -508,9 +522,7 @@ function dbf_22($p){
  */
 function dbf_5($p,$mode=null){
 	global $db;
-	
-	#select ifnull(numeric_precision, character_maximum_length) from information_schema.columns where table_name='kunden'; 
-	
+
 	$sql = "SELECT TABLE_NAME, COLUMN_NAME, COLUMN_DEFAULT, COLUMN_KEY, IFNULL(NUMERIC_PRECISION, CHARACTER_MAXIMUM_LENGTH) AS 'PRECISION', NUMERIC_SCALE AS 'SCALE', DATA_TYPE AS TYPE_NAME FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = '".$p[0]."' AND LOWER(TABLE_NAME) = '".lmb_strtolower($p[1])."'";
 	if($p[2]){
 		$sql .= " AND LOWER(COLUMN_NAME) = '".lmb_strtolower($p[2])."'";
@@ -614,67 +626,22 @@ function dbq_22($p){
  */
 function dbq_16($p=null){
 	global $db;
-	
-	# limbas relation procedure
-	if($p[1]){dbq_21($p);}
-	
-	# SQL syntax for prepared statements cannot be used within stored routines (procedures or functions), or triggers. This restriction is lifted as of MySQL 5.0.13 for stored procedures, but not for stored functions or triggers.
-	/*
-	$sqlquery = "create procedure ".$p[0].".lmb_vkn(in id fixed(16),in vid fixed(16), in tabname char(60), in fieldname char(30), in act char(1) , in rtabname char(60), in rfieldname char(30))
-	
-	BEGIN
-	declare statement1 varchar(100);
-	declare statement2 varchar(100);
-	
-	SET statement1 = concat('update ',tabname, ' set ', fieldname, ' = ', fieldname, ' ', act, ' 1 where id = ', id); 
-	EXECUTE statement1;
-	
-	IF rtabname <> '' THEN SET statement2 = concat('update ', rtabname, ' set ', rfieldname, ' = ', rfieldname, ' ', act, ' 1 where id = ', vid);
-	end if;
-	IF statement2 <> '' THEN EXECUTE statement2;
-	end if;
-	END
-	";
-
-	if(!odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__)){$commit = 1;}
-	*/
-	
-/*
-	$sqlquery = "
-CREATE OR REPLACE FUNCTION lmb_lastmodified() RETURNS trigger AS '
-DECLARE
-
-statement VARCHAR(200);
-
-BEGIN
-
-statement = ''UPDATE LMB_CONF_TABLES SET LASTMODIFIED = CURRENT_TIMESTAMP WHERE TAB_ID = '' || TG_ARGV[0];
-EXECUTE statement;
-
-return new;
-
-END; '  LANGUAGE 'plpgsql';
-	";
-	
-	if(!$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create procedure lmb_lastmodified",__FILE__,__LINE__)){
-		return false;
-	}
-*/
-	
-	
 	# sequences workaround for mysql
 	if(!dbf_20(array($GLOBALS['DBA']['DBSCHEMA'],'LMB_SEQUENCES',"'TABLE'"))){
-	$sqlquery = "CREATE TABLE lmb_sequences ( sequence_name varchar(50) collate utf8_bin NOT NULL, current_value bigint(20) NOT NULL default '0', increment int(11) NOT NULL default '1', PRIMARY KEY (sequence_name) );";
-		if(!odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__)){$commit = 1;}
+	    $sqlquery = "CREATE TABLE LMB_SEQUENCES ( SEQUENCE_NAME VARCHAR(50) COLLATE UTF8_BIN NOT NULL, CURRENT_VALUE BIGINT(20) NOT NULL DEFAULT '0', INCREMENT INT(11) NOT NULL DEFAULT '1', PRIMARY KEY (SEQUENCE_NAME) );";
+	    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create TABLE lmb_sequences",__FILE__,__LINE__);
+		if(!$rs){$commit = 1;}
 	}
 	
 	dbq_21(array($GLOBALS['DBA']['DBSCHEMA']),'function','seq_nextval');
-	$sqlquery = "CREATE FUNCTION `seq_nextval`(seqname VARCHAR(100)) RETURNS int(11) BEGIN UPDATE lmb_sequences set current_value=(@ret:=current_value)+increment where sequence_name=seqname;RETURN @ret; END;";
-	if(!odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__)){$commit = 1;}
+	$sqlquery = "CREATE FUNCTION `SEQ_NEXTVAL`(SEQNAME VARCHAR(100)) RETURNS INT(11) BEGIN UPDATE LMB_SEQUENCES SET CURRENT_VALUE=(@RET:=CURRENT_VALUE)+INCREMENT WHERE SEQUENCE_NAME=SEQNAME;RETURN @RET; END;";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create procedure seq_nextval",__FILE__,__LINE__);
+	if(!$rs){$commit = 1;}
 	
 	dbq_21(array($GLOBALS['DBA']['DBSCHEMA']),'function','seq_set');
-	$sqlquery = "CREATE FUNCTION seq_set(seqname VARCHAR(100), cval int(11), inc int(11)) RETURNS int(11) BEGIN REPLACE INTO lmb_sequences(sequence_name, current_value, increment) VALUES(seqname, cval, inc); RETURN cval; END;";
-	if(!odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__)){$commit = 1;}
+	$sqlquery = "CREATE FUNCTION SEQ_SET(SEQNAME VARCHAR(100), CVAL INT(11), INC INT(11)) RETURNS INT(11) BEGIN REPLACE INTO LMB_SEQUENCES(SEQUENCE_NAME, CURRENT_VALUE, INCREMENT) VALUES(SEQNAME, CVAL, INC); RETURN CVAL; END;";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create procedure seq_set",__FILE__,__LINE__);
+	if(!$rs){$commit = 1;}
 
 	if($commit){return false;}
 	return true;
@@ -688,11 +655,14 @@ END; '  LANGUAGE 'plpgsql';
  * @param
  * @return bool
  */
-function dbq_21($p,$t='procedure',$n='lmb_vkn'){
+function dbq_21($p,$t=null,$n=null){
 	global $db;
-	
-	$sqlquery = "drop $t ".$p[0].".".$n;
-	$rs = @odbc_exec($db,$sqlquery);
+
+	if($t AND $n) {
+        $sqlquery = "DROP $t " . $p[0] . "." . $n;
+        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"drop procedure $n",__FILE__,__LINE__);
+
+    }
 }
 
 

@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -234,7 +234,16 @@ function lmbAjax_resultGtabPost(result){
 		result = result.split("#LMBSPLIT#");
 		if(result[0] && result[0].trim()){document.getElementById("GtabTableSearch").innerHTML = result[0];}
 		if(result[1] && result[1].trim()){document.getElementById("GtabTableHeader").innerHTML = result[1];}
-		if(result[2] && result[2].trim()){document.getElementById("GtabTableBody").innerHTML = result[2];}
+		if(result[2] && result[2].trim()){
+		    if(pagination_s) {
+		        n1 = result[2].search('LMB_STARTTAB') + 13;
+		        n2 = result[2].search('LMB_ENDTAB') - 9;
+                result[2] = result[2].substring(n1, n2);
+                $('#lmbGlistBodyTab').append(result[2]);
+            }else{
+		        document.getElementById("GtabTableBody").innerHTML = result[2];
+		    }
+		}
 		if(result[3] && result[3].trim()){document.getElementById("GtabTableFooter").innerHTML = result[3];}
 	}
 	gtabSetTablePosition();
@@ -256,24 +265,6 @@ function limbasDivShowReminderFilter(evt,el) {
 function lmb_reminderPost(result){
 	document.getElementById("lmbAjaxContainer").innerHTML = result;
 }
-
-
-// gtab_search Funktionen
-//function limbasDetailSearch(evt,el,gtabid,fieldid)
-//{
-//	actid = "gtabSearch&gtabid=" + gtabid + "&fieldid=" + fieldid;
-//	mainfunc = function(result){limbasDetailSearchPost(result,el,fieldid,evt);}
-//	ajaxGet(null,"main_dyns.php",actid,null,"mainfunc");
-//}
-
-//function limbasDetailSearchPost(result,el,fieldid,evt){
-//	document.getElementById("limbasAjaxGtabContainer").innerHTML = result;
-//	limbasDivShow(el,'limbasDivMenuBearbeiten','limbasAjaxGtabContainer');
-//	if(fieldid){LmGs_divchange(fieldid);}
-//}
-
-
-
 
 
 // gtab_replace function
@@ -435,6 +426,7 @@ function limbasSnapshotShare(el,snap_id,destUser,del,edit,drop)
         }
 	});
 }
+
 function lmbSnapShareSelect(ugval,snapname,gtabid){
 	limbasSnapshotShare(null,gtabid,ugval);
 }
@@ -551,9 +543,41 @@ function view_contextDetail() {
 
 }
 
-
 // ---------------- Sendkeypress----------------------
 function sendkeydown(evt) {
+
+    if(evt.altKey) {
+
+        // s
+        if (evt.keyCode == 83) {
+            alert('save');
+        }
+
+        // f
+        if (evt.keyCode == 70) {
+            alert('find');
+        }
+
+        // a
+        if (evt.keyCode == 65) {
+            alert('new');
+        }
+
+        // c
+        if (evt.keyCode == 67) {
+            alert('copy');
+        }
+
+        // d
+        if (evt.keyCode == 68) {
+            alert('delete');
+        }
+
+        return false;
+
+    }
+
+
 	if(evt.keyCode == 13 && !evt.shiftKey){
 		//set_focus();
 		document.form1.select.value=1;
@@ -583,7 +607,8 @@ function lmb_setTableWitdh(gtheader){
 
 // set table position
 function gtabSetTablePosition(posx,posy){
-        // set window title
+
+    // set window title
 	document.title = jsvar["tablename"];
 	        
 	if(top.nav){
@@ -593,10 +618,10 @@ function gtabSetTablePosition(posx,posy){
 	if(top.main){
 		top.main.focus();
 	}
-        
-    // set height
-    lmb_setAutoHeight(document.getElementById('GtabTableBody'), 20);
-        
+
+	// set height
+    lmb_setAutoHeight(document.getElementById('GtabTableBody'), 20) ;
+
     // set width
     if($('#GtabTableFull')) {                
             var overflowX = $(document).width() - $(window).width();
@@ -615,15 +640,79 @@ function gtabSetTablePosition(posx,posy){
             }   
     }
 
-	
+    if(!pagination_h) {
+        gtabSetTablePagination();
+    }
 }
+
+// set auto pagination
+var pagination_h = false;
+var pagination_s = false;
+function gtabSetTablePagination(){
+
+    hasScrollBar = true;
+    pagination_s = false;
+	pagination_h = $('#lmbGlistBodyTab').outerHeight();
+	if(!pagination_h){return;}
+    pagination_h = (pagination_h - $('#GtabTableBody').outerHeight());
+
+    var gtabTableBody = document.getElementById("GtabTableBody");
+    var gtabTableGroup = document.getElementById("GtabTableGroup");
+	if(gtabTableBody && gtabTableBody.scrollHeight == $('#GtabTableBody').outerHeight()){
+	    hasScrollBar = false;
+    } else if(gtabTableGroup && gtabTableGroup.scrollHeight == $('#GtabTableGroup').outerHeight()){
+        hasScrollBar = false;
+    }
+
+    // no scrollbar
+    if(hasScrollBar == false) {
+        $("#GtabTableBody").bind('DOMMouseScroll mousewheel', function(e) {
+            $("#GtabTableBody").unbind('DOMMouseScroll mousewheel');
+
+            var np = document.form1.elements['filter_page[' + jsvar["gtabid"] + ']'];
+            var page = np.value.split('/');
+            var max = page[1];
+            page = parseInt(page[0]);
+            if(page >= max){return;}
+            np.value = (page + 1 + '/' + max);
+
+            pagination_s = 1;
+            lmbAjax_resultGtab('form1', 1, 0, 0, 0);
+            gtabSetTablePagination();
+        });
+
+    // scrollbar exists
+	}else {
+
+        $("#GtabTableBody")
+			.unbind('DOMMouseScroll mousewheel')
+			.scroll(function(e) {
+				if ($(this).scrollTop() >= pagination_h) {
+                    $(this).unbind('scroll');
+					var np = document.form1.elements['filter_page[' + jsvar["gtabid"] + ']'];
+					var page = np.value.split('/');
+					var max = page[1];
+					page = parseInt(page[0]);
+					if(page >= max){return;}
+                    np.value = (page + 1 + '/' + max);
+
+					pagination_s = 1;
+					e.preventDefault();
+					lmbAjax_resultGtab('form1', 1, 0, 0, 0);
+					gtabSetTablePagination();
+				}
+			});
+    }
+
+}
+
 
 
 //----------------- Feldbreite automatisch verkleinern -------------------
 function td_resize() {
 	divclose();
 
-        var gts = document.getElementById('lmbGlistSearchTab');
+    var gts = document.getElementById('lmbGlistSearchTab');
 	var gth = document.getElementById('lmbGlistHeaderTab');
 	var gtb = document.getElementById('lmbGlistBodyTab');
 	//var tabbw = gtb.offsetWidth;
@@ -1075,8 +1164,9 @@ function lmbPopRelation(evt,el,type){
 	}else{
 		document.form1.elements[type].value = document.form1.elements[type].value + "|" + el.name + ";" + el.value + ";0";
 	}
-	
-	if(!document.getElementById('GtabTableGroup')){document.getElementById('myExtForms').innerHTML = "<div id='GtabTableGroup'></div>";}
+
+	var myExtForms = document.getElementById('myExtForms');
+	if(document.getElementById('GtabTableGroup') && myExtForms){myExtForms.innerHTML = "<div id='GtabTableGroup'></div>";}
 	
 	if(!evt.shiftKey){
 		divclose();

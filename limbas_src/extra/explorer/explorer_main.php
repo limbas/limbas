@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -24,9 +24,6 @@ require_once("extra/explorer/explorer_main.lib");
 #----------------- Context-Menü -------------------
 explContextDetail();
 ?>
-
-
-<div id="lmbAjaxContainer" class="ajax_container" style="position:absolute;visibility:hidden;" OnClick="activ_menu=1;"></div>
 
 <DIV ID="filemenu" class="lmbContextMenu" style="position:absolute;visibility:hidden;top:0;z-index:3;" OnClick="activ_menu = 1;">
 <?php #----------------- Haupt-Menü -------------------
@@ -81,7 +78,6 @@ if($ffilter["viewmode"][$LID] == 2){$a = 1;}else{$a = 0;}
 pop_menu(223,'','',$a); 				#searchengine view
 if($ffilter["viewmode"][$LID] == 5){$a = 1;}else{$a = 0;}
 if($typ == 7){pop_menu(264,'','',$a);} #tablerelation view
-pop_line();
 if($ffilter["viewmode"][$LID] == 3){$a = 1;}else{$a = 0;}
 pop_menu(256,'','',$a);					#picture galerie
 #if($ffilter["viewmode"][$LID] == 4){$a = 1;}else{$a = 0;}
@@ -165,6 +161,20 @@ if($session['superadmin']){
     }
     pop_select('document.form1.storage_folder.value=this.value;LmEx_send_form(1);', $opt, $selected, '', '', 'storage folder', '', 'lmb-storage-folder');    
 }
+
+# external storage
+if($session['superadmin']) {
+    $opt = array(
+        'val' => array('-1'),
+        'desc' => array('Keiner') # TODO
+    );
+    lmbGetExternalStorageConfig();
+    foreach ($externalStorage['desc'] as $storageID => $storageDesc) {
+        $opt['val'][] = $storageID;
+        $opt['desc'][] = $storageDesc;
+    }
+    pop_select('document.form1.externalStorageID.value=this.value;LmEx_send_form(1);', $opt, $filestruct['storageID'][$LID], '', '', 'external storage', '', 'lmb-storage-folder');
+}
 pop_bottom();
 ?>
 </DIV>
@@ -212,10 +222,7 @@ pop_bottom();
 <DIV ID="downloadmenu" class="lmbContextMenu" style="position:absolute;visibility:hidden;top:0;z-index:4" OnClick="activ_menu = 1;">
 <?php
 pop_top('downloadmenu');
-pop_left();
-echo "<span style=\"height:16px;cursor:default;\">&nbsp;<b>".$lang[1762]."</b></span>";
-pop_right();
-pop_line();
+pop_header('', $lang[1762]);
 pop_menu(0, "LmEx_download_archive('1');", "&nbsp;zip <span style=\"color:".$farbschema["WEB4"].";\">(windows)</span>");
 pop_menu(0, "LmEx_download_archive('2');", "&nbsp;tar.gz <span style=\"color:".$farbschema["WEB4"].";\">(unix)</span>");
 pop_menu(0, "LmEx_download_archive('3');", "&nbsp;tar.bz2 <span style=\"color:".$farbschema["WEB4"].";\">(unix)</span>");
@@ -329,7 +336,7 @@ pop_bottom();
 </DIV>
 
 <DIV ID="dublicateCheckLayer" style="position:absolute;top:25%;left:25%;display:none;z-index:5"></DIV>
-<DIV ID="limbasDetailSearch" style="position:absolute;z-index:9999;" OnClick="activ_menu = 1;"></DIV>
+<div id="lmbAjaxContainer" style="position:absolute;display:none;" OnClick="activ_menu=1;"></div>
 
 
 <script language="JavaScript">
@@ -405,6 +412,7 @@ if($onload){
 <input type="hidden" name="save_setting">
 <input type="hidden" name="view_symbolbar">
 <input type="hidden" name="storage_folder">
+<input type="hidden" name="externalStorageID">
 
 <?php /*
 <input type="hidden" name="f_fieldid" VALUE="<?=$f_fieldid?>">
@@ -440,10 +448,10 @@ if(!$headerdesc){
 <TR ><TD>
 <div class="gtabHeaderMenuTR">
 <TABLE CELLPADDING="0" CELLSPACING="0" BORDER="0" width="100%"><TR><TD>&nbsp;</TD>
-<?php if($LINK[195] OR $LINK[190] OR $LINK[203] OR $LINK[221]){?><TD class="gtabHeaderMenuTD" OnClick="LmEx_open_menu(this,'filemenu');" onmouseover="this.className='gtabHeaderMenuTDhover';" onmouseout="this.className='gtabHeaderMenuTD'"><?=$lang[545]?>&nbsp;</TD><td> | </td><?php }?>
-<?php if($viewmenu["editmenu"]){?><TD class="gtabHeaderMenuTD" OnClick="LmEx_open_menu(this,'editmenu');" onmouseover="this.className='gtabHeaderMenuTDhover';" onmouseout="this.className='gtabHeaderMenuTD'">&nbsp;<?=$lang[1693]?>&nbsp;</TD><td> | </td><?php }?>
-<?php if($LINK[202] OR $LINK[219] OR $LINK[220]){?><TD class="gtabHeaderMenuTD" OnClick="LmEx_open_menu(this,'viewmenu');" onmouseover="this.className='gtabHeaderMenuTDhover';" onmouseout="this.className='gtabHeaderMenuTD'">&nbsp;<?=$lang[1625]?>&nbsp;</TD><td> | </td><?php }?>
-<?php if($LINK[200]){?><TD class="gtabHeaderMenuTD" OnClick="LmEx_open_menu(this,'extramenu');" onmouseover="this.className='gtabHeaderMenuTDhover';" onmouseout="this.className='gtabHeaderMenuTD'">&nbsp;<?=$lang[1939]?>&nbsp;</TD><?php }?>
+<?php if($LINK[195] OR $LINK[190] OR $LINK[203] OR $LINK[221]){?><TD class="gtabHeaderMenuTD hoverable" OnClick="LmEx_open_menu(this,'filemenu');"><?=$lang[545]?>&nbsp;</TD><td> | </td><?php }?>
+<?php if($viewmenu["editmenu"]){?><TD class="gtabHeaderMenuTD hoverable" OnClick="LmEx_open_menu(this,'editmenu');">&nbsp;<?=$lang[1693]?>&nbsp;</TD><td> | </td><?php }?>
+<?php if($LINK[202] OR $LINK[219] OR $LINK[220]){?><TD class="gtabHeaderMenuTD hoverable" OnClick="LmEx_open_menu(this,'viewmenu');">&nbsp;<?=$lang[1625]?>&nbsp;</TD><td> | </td><?php }?>
+<?php if($LINK[200]){?><TD class="gtabHeaderMenuTD hoverable" OnClick="LmEx_open_menu(this,'extramenu');">&nbsp;<?=$lang[1939]?>&nbsp;</TD><?php }?>
 <TD WIDTH="100%">&nbsp;</TD>
 </TR></TABLE></div>
 </TD></TR>

@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -190,11 +190,11 @@ function LmEx_createDropArea(dropArea, onDrop) {
         })
         .on('dragover dragenter', function() {
             // add classes to indicate dropping area
-            dropArea.addClass('lmbUploadDropareaActive');
+            $(this).addClass('lmbBodyDropareaActive');
         })
-        .on('dragleave dragend drop', function(e) {
+        .on('dragleave dragend drop', function() {
             // remove classes after dropping ended
-            dropArea.removeClass('lmbUploadDropareaActive');
+            $(this).removeClass('lmbBodyDropareaActive');
         });
 
     // init drop area
@@ -206,10 +206,8 @@ function LmEx_createDropArea(dropArea, onDrop) {
 		.on('dragover dragenter', function() {
             $(this).addClass('lmbUploadDropareaHover');
 		})
-		.on('dragleave dragend drop', function(e) {
-            $(this)
-				.removeClass('lmbUploadDropareaHover')
-				.removeClass('lmbUploadDropareaActive');
+		.on('dragleave dragend drop', function() {
+            $(this).removeClass('lmbUploadDropareaHover');
 		})
 		.on('drop', function(e) {
             var files = e.originalEvent.dataTransfer.files;
@@ -299,6 +297,7 @@ function LmEx_uploadFilesPrecheckInner(files) {
 		}
 
         lmbUploadData.uploadUrl = resultObj.uploadUrl;
+        lmbUploadData.authToken = resultObj.authToken;
         var status = resultObj.status;
         if (status === 'confirmDuplicates') {
 			lmbUploadData.hasDuplicates = true;
@@ -344,17 +343,26 @@ function LmEx_uploadFiles(files, uploadUrl) {
     for (var i = 0; i < files.length; i++) {
         var formData = new FormData();
         formData.append('file[0]', files[i]);
+
+        if (lmbUploadData.hasDuplicates) {
+            var dupType = lmbUploadData.duplicateTypes[i];
+            if (dupType === 'skip') {
+				continue;
+            }
+            formData.append('dublicate[type][0]', dupType);
+            formData.append('dublicate[subj][0]', lmbUploadData.versionNames[i]);
+        }
+
         formData.append('LID', lmbUploadData.folderID);
         formData.append('gtabid', lmbUploadData.gtabid);
         formData.append('fieldid', lmbUploadData.fieldid);
         formData.append('ID', lmbUploadData.datid);
-        if (lmbUploadData.hasDuplicates) {
-            formData.append('dublicate[type][0]', lmbUploadData.duplicateTypes[i]);
-            formData.append('dublicate[subj][0]', lmbUploadData.versionNames[i]);
-        }
         if (files.length === 1) {
-			formData.append('file_archiv['+i+']', formel.elements['file_archiv['+lmbUploadData.fp+']'].checked); // TODO was only in ajax upload, not in drag
+			formData.append('file_archiv[0]', formel.elements['file_archiv['+lmbUploadData.fp+']'].checked); // TODO was only in ajax upload, not in drag
         }
+        if (lmbUploadData.authToken) {
+            formData.append('authToken', lmbUploadData.authToken);
+		}
 
         var status = new LmbStatusBar(lmbUploadData.fp, files[i]);
         lmb_uploadCount++;
@@ -363,6 +371,10 @@ function LmEx_uploadFiles(files, uploadUrl) {
             var workPercent = Math.ceil(workDone / workTotal * 100);
 			status.setProgress(workPercent);
         });
+	}
+
+	if (!lmb_uploadCount) {
+    	lmb_refreshForm();
 	}
 }
 
@@ -396,13 +408,20 @@ function LmEx_uploadFile(fileFormData, uploadUrl, onProgress) {
         data: fileFormData,
         success: function(data) {
             onProgress(100);
-            ajaxEvalScript(data);
+            if (data) {
+				if (!ajaxEvalScript(data)) {
+					alert(data);
+				}
+            }
             lmb_uploadCount--;
             if(!lmb_uploadCount) {
                 lmb_refreshForm();
                 lmbUploadData = null;
             }
-        }
+        },
+		error: function() {
+            alert(jsvar["lng_56"]);
+		}
 	});
 }
 
@@ -493,24 +512,6 @@ function LmEx_dynsClose(id) {
 	el.style.display='none';
 	el.parentNode.style.display='none';
 	el.innerHTML = '';
-}
-
-
-// --- search -----------------------------------
-function LmEx_detailSearch(evt, fieldid, element){
-        if(element) {
-            evt = element.id || evt;
-        }           
-        
-	actid = "gtabSearch&gtabid=" + jsvar["gtabid"] + "&fieldid=" + fieldid;
-	mainfunc = function(result){LmEx_detailSearchPost(result,fieldid);};
-	ajaxGet(null,"main_dyns.php",actid,null,"mainfunc");
-	limbasDivShow(element, evt,'limbasDetailSearch');
-}
-
-function LmEx_detailSearchPost(result,fieldid){
-	document.getElementById("limbasDetailSearch").innerHTML = result;
-	if(fieldid){Lm_divchange(fieldid);}
 }
 
 // -----------------------------------------------------------------------------------------------
@@ -1185,34 +1186,40 @@ function LmEx_open_detail(evt,ID,lid,detail) {
 
 /* --- Vorschau-Fenster ----------------------------------- */
 function LmEx_open_preview(LID,ID,method,format) {
-	detail = open("main.php?"+jsvar["SID"]+"&action=explorer_convert&LID=" + LID + "&ID=" + ID + "&method="+ method + "&format="+ format ,"preview","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650");
+	detail = open("main.php?action=explorer_convert&LID=" + LID + "&ID=" + ID + "&method="+ method + "&format="+ format ,"preview","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650");
 }
 
 //function LmEx_open_message(ID,MID) {
-//	open("main.php?"+jsvar["SID"]+"&action=message_detail&det=1&get=1&ID=" + ID + "&MID=" + MID + "&LID="+jsvar["LID"]+"" ,"Kalender","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=550");
+//	open("main.php?action=message_detail&det=1&get=1&ID=" + ID + "&MID=" + MID + "&LID="+jsvar["LID"]+"" ,"Kalender","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=550");
 //}
 
 /* --- Tabellen-Fenster ----------------------------------- */
 //function LmEx_open_tab(gtabid,ID) {
-//	record = open("main.php?"+jsvar["SID"]+"&action=gtab_deterg&gtabid=" + gtabid + "&ID=" + ID + "" ,"Record","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=500");
+//	record = open("main.php?action=gtab_deterg&gtabid=" + gtabid + "&ID=" + ID + "" ,"Record","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=500");
 //}
 
 /* --- neues explorer-Fenster ----------------------------------- */
 function LmEx_open_newexplorer() {
 	LmEx_divclose();
-	newexplorer=open("main.php?"+jsvar["SID"]+"&action=explorer" ,"LIMBAS_Explorer","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=850,height=500");
+	newexplorer=open("main.php?action=explorer" ,"LIMBAS_Explorer","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=850,height=500");
 }
 
 /* --- miniexplorer-Fenster ----------------------------------- */
 function LmEx_open_miniexplorer() {
 	LmEx_divclose();
-	miniexplorer=open("main.php?"+jsvar["SID"]+"&action=mini_explorer&home_level="+jsvar["LID"] ,"Datei_Browser","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=460,height=320");
+	miniexplorer=open("main.php?action=mini_explorer&home_level="+jsvar["LID"] ,"Datei_Browser","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=460,height=320");
 }
 
 /* --- miniexplorer-Fenster ----------------------------------- */
 function LmEx_open_dublicates() {
 	LmEx_divclose();
 	dublicates=open("main.php?&action=explorer_dublicates&LID="+jsvar["LID"] ,"Dublicates","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=850,height=500");
+}
+
+function LmEx_closeIframeDialog() {
+    if($('#LmEx_DetailFrame').hasClass('ui-dialog-content')){
+        $('#LmEx_DetailFrame').dialog('destroy');
+    }
 }
 
 /* --- miniexplorer-Fenster ----------------------------------- */
@@ -1259,7 +1266,7 @@ function LmEx_open_details(evt,ID,LID,gtab_id,form_id,dimension) {
 function LmEx_file_detail(id){
 	if(!id && LmEx_edit_norm == 'd'){id = LmEx_edit_id;}
 	if(id){
-		detail = open("main.php?"+jsvar["SID"]+"&action=explorer_detail&level="+jsvar["level"]+"&LID="+jsvar["LID"]+"&ID=" + id + "" ,"Info","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650");
+		detail = open("main.php?action=explorer_detail&level="+jsvar["level"]+"&LID="+jsvar["LID"]+"&ID=" + id + "" ,"Info","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650");
 	}
 }
 

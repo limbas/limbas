@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -584,17 +584,20 @@ function mysql_dbq_16($db,$p=null){
 	
 	# sequences workaround for mysql
 	if(!dbf_20(array($GLOBALS['DBA']['DBSCHEMA'],'LMB_SEQUENCES',"'TABLE'"))){
-	$sqlquery = "CREATE TABLE lmb_sequences ( sequence_name varchar(50) collate utf8_bin NOT NULL, current_value bigint(20) NOT NULL default '0', increment int(11) NOT NULL default '1', PRIMARY KEY (sequence_name) );";
-		if(!odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__)){$commit = 1;}
+	$sqlquery = "CREATE TABLE LMB_SEQUENCES ( SEQUENCE_NAME VARCHAR(50) COLLATE UTF8_BIN NOT NULL, CURRENT_VALUE BIGINT(20) NOT NULL DEFAULT '0', INCREMENT INT(11) NOT NULL DEFAULT '1', PRIMARY KEY (SEQUENCE_NAME) );";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__);
+	    if(!$rs){$commit = 1;}
 	}
 	
 	dbq_21(array($GLOBALS['DBA']['DBSCHEMA']),'function','seq_nextval');
-	$sqlquery = "CREATE FUNCTION `seq_nextval`(seqname VARCHAR(100)) RETURNS int(11) BEGIN UPDATE lmb_sequences set current_value=(@ret:=current_value)+increment where sequence_name=seqname;RETURN @ret; END;";
-	if(!odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__)){$commit = 1;}
+	$sqlquery = "CREATE FUNCTION `SEQ_NEXTVAL`(SEQNAME VARCHAR(100)) RETURNS INT(11) BEGIN UPDATE LMB_SEQUENCES SET CURRENT_VALUE=(@RET:=CURRENT_VALUE)+INCREMENT WHERE SEQUENCE_NAME=SEQNAME;RETURN @RET; END;";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__);
+	if(!$rs){$commit = 1;}
 	
 	dbq_21(array($GLOBALS['DBA']['DBSCHEMA']),'function','seq_set');
-	$sqlquery = "CREATE FUNCTION seq_set(seqname VARCHAR(100), cval int(11), inc int(11)) RETURNS int(11) BEGIN REPLACE INTO lmb_sequences(sequence_name, current_value, increment) VALUES(seqname, cval, inc); RETURN cval; END;";
-	if(!odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__)){$commit = 1;}
+	$sqlquery = "CREATE FUNCTION SEQ_SET(SEQNAME VARCHAR(100), CVAL INT(11), INC INT(11)) RETURNS INT(11) BEGIN REPLACE INTO LMB_SEQUENCES(SEQUENCE_NAME, CURRENT_VALUE, INCREMENT) VALUES(SEQNAME, CVAL, INC); RETURN CVAL; END;";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__);
+    if(!$rs){$commit = 1;}
 
 	if($commit){return false;}
 	return true;
@@ -609,9 +612,12 @@ function mysql_dbq_16($db,$p=null){
  * @return bool
  */
 function mysql_dbq_21($db,$p,$t='procedure',$n='lmb_vkn'){
-	
-	$sqlquery = "drop $t ".$p[0].".".$n;
-	$rs = @odbc_exec($db,$sqlquery);
+
+	$rs = odbc_exec($db,"SHOW FUNCTION STATUS WHERE NAME = 'lmb_vkn'"); //TODO
+    if(odbc_result($rs,"NAME")) {
+        $sqlquery = "drop $t " . $p[0] . "." . $n;
+        $rs1 = odbc_exec($db, $sqlquery);
+    }
 }
 
 

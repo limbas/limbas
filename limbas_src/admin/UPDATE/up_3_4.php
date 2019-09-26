@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -24,7 +24,7 @@ elseif(file_exists($umgvar["pfad"]."/admin/UPDATE/update.lib")){require_once($um
 
 
 
-$sqlquery = "alter table lmb_conf_fields add fullsearch ".LMB_DBTYPE_BOOLEAN." default ".LMB_DBDEF_FALSE;
+$sqlquery = "ALTER TABLE LMB_CONF_FIELDS ADD FULLSEARCH ".LMB_DBTYPE_BOOLEAN." DEFAULT ".LMB_DBDEF_FALSE;
 patch_db(1,4,$sqlquery,"adding full table search",3);
 
 
@@ -63,10 +63,10 @@ $nid = next_db_id("lmb_umgvar","ID");
 $sqlquery = "INSERT INTO LMB_UMGVAR VALUES($nid,158,'update_check','1','check for updates',1893)";
 patch_db(10,4,$sqlquery,"update umgvar",3);
 
-$sqlquery = "update lmb_action set link_url = 'srefresh(this);' where link_url = 'srefresh();'";
+$sqlquery = "UPDATE LMB_ACTION SET LINK_URL = 'srefresh(this);' WHERE LINK_URL = 'srefresh();'";
 patch_db(11,4,$sqlquery,'update session refresh action',3);
 
-$sqlquery = "update lmb_action set link_url = 'LmEx_showUploadField();LmEx_divclose();' where link_url = 'LmEx_multiupload(''1'');LmEx_divclose();'";
+$sqlquery = "UPDATE LMB_ACTION SET LINK_URL = 'LmEx_showUploadField();LmEx_divclose();' WHERE LINK_URL = 'LmEx_multiupload(''1'');LmEx_divclose();'";
 patch_db(12,4,$sqlquery,'update upload function name',3);
 
 echo "-->";

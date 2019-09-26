@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -97,14 +97,12 @@ function create_user($userdata){
 	$sqlquery = "Select * from LMB_CONF_TABLES ORDER BY TAB_GROUP,TAB_ID";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$bzm = 1;
-	while(odbc_fetch_row($rs,$bzm)) {
+	while(odbc_fetch_row($rs)) {
 		$tabname[] = odbc_result($rs,"TABELLE");
 		$tabid[] = odbc_result($rs,"TAB_ID");
 		$tabgroup[] = odbc_result($rs,"TAB_GROUP");
 		$tabsplelling[] = odbc_result($rs,"BESCHREIBUNG");
 		$tabgrpid[] = odbc_result($rs,"TAB_ID").odbc_result($rs,"TAB_GROUP");
-		$bzm++;
 	}
 	
 	$username = str_replace(" ","",parse_db_string($username,50));
@@ -114,7 +112,7 @@ function create_user($userdata){
 	$sqlquery = "SELECT USER_ID,NAME,VORNAME FROM LMB_USERDB WHERE LOWER(USERNAME) = '".lmb_strtolower($username)."'";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	if(odbc_fetch_row($rs, 1)) {
+	if(odbc_fetch_row($rs)) {
 		$GLOBALS["user_exists"] = 1;
 		lmb_alert($lang[606]);
 		return false;
@@ -125,10 +123,17 @@ function create_user($userdata){
 		if(!$rs) {$commit = 1;}
 		if(!$coloschema){$coloschema = odbc_result($rs, "ID");}
 
+		# password hash
+		$hashedPass = lmbPasswordHash($passwort);
+		if (!$hashedPass) {
+			$GLOBALS['commit'] = 1;
+			return false;
+		}
+
 		/* --- Next ID ---------------------------------------- */
 		$NEXTID = next_db_id("LMB_USERDB","USER_ID");
 		$sqlquery = "INSERT INTO LMB_USERDB (ID,USER_ID,USERNAME,PASSWORT,GROUP_ID,SUB_GROUP,EMAIL,VORNAME,NAME,BESCHREIBUNG,DATA_HIDE,DATA_DISPLAY,IPRANGE,DEL,
-		 LAYOUT,MAXRESULT,UPLOADSIZE,FARBSCHEMA,LANGUAGE,DATEFORMAT,TIME_ZONE,SETLOCAL,LOGGING) VALUES($NEXTID,$NEXTID,'$username','".md5($passwort)."',$group_id,'$subgroup','$email','$vorname','$name','$beschreibung',1,2,'',".LMB_DBDEF_FALSE.",
+		 LAYOUT,MAXRESULT,UPLOADSIZE,FARBSCHEMA,LANGUAGE,DATEFORMAT,TIME_ZONE,SETLOCAL,LOGGING) VALUES($NEXTID,$NEXTID,'$username','$hashedPass',$group_id,'$subgroup','$email','$vorname','$name','$beschreibung',1,2,'',".LMB_DBDEF_FALSE.",
 		'".parse_db_string($layout)."',".parse_db_int($results).",".parse_db_int($uloadsize).",'".parse_db_string($coloschema)."',".parse_db_int($language).",".parse_db_int($dateformat).",'".parse_db_string($timezone)."','".parse_db_string($setlocale)."',".parse_db_int($loglevel).")";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
@@ -166,7 +171,7 @@ function user_change($ID,$userdata,$file=0,$user_add=0){
 		}
 		
 		$sqlquery .= "USERNAME = '".parse_db_string($userdata["username"],50)."',";
-		$sqlquery .= "PASSWORT = '".md5($userdata["passwort"])."',";
+		$sqlquery .= "PASSWORT = '".lmbPasswordHash($userdata["passwort"])."',";
 		lmb_htaccess($ID,$userdata["username"],$userdata["passwort"]);
 		if($umgvar["clear_password"]){
 			$sqlquery .= "CLEARPASS = '".$userdata["passwort"]."',";
@@ -205,7 +210,7 @@ function user_change($ID,$userdata,$file=0,$user_add=0){
 	}else{$sqlquery .= "VALIDDATE = ".LMB_DBDEF_DTNULL.",VALID = ".LMB_DBDEF_FALSE;}
 
 	$sqlquery .= " WHERE USER_ID = $ID";
-	
+
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 }
@@ -215,12 +220,12 @@ function getUserDetails($ID){
 	global $db;
 	global $umgvar;
 
-	$sqlquery = "SELECT DISTINCT LMB_USERDB.SUPERADMIN,LMB_USERDB.TEL,LMB_USERDB.FAX,LMB_USERDB.POSITION,LMB_USERDB.TIME_ZONE,LMB_USERDB.STATIC_IP,LMB_USERDB.GC_MAXLIFETIME,LMB_USERDB.CLEARPASS,LMB_USERDB.LOCKBACKEND,LMB_USERDB.USERCOLOR,LMB_USERDB.VALIDDATE,LMB_USERDB.LMLOCK,LMB_USERDB.LOGGING,LMB_USERDB.LOCK_TXT,LMB_USERDB.DEBUG,LMB_USERDB.SUBADMIN,LMB_USERDB.USERNAME,LMB_USERDB.CHANGE_PASS,LMB_USERDB.SUB_GROUP,LMB_USERDB.IPRANGE,LMB_USERDB.GROUP_ID,LMB_USERDB.UPLOADSIZE,LMB_USERDB.LAYOUT,LMB_USERDB.LANGUAGE,LMB_USERDB.DATA_DISPLAY,LMB_USERDB.PASSWORT,LMB_USERDB.USER_ID,LMB_USERDB.VORNAME,LMB_USERDB.NAME,LMB_USERDB.EMAIL,LMB_USERDB.BESCHREIBUNG,LMB_USERDB.FARBSCHEMA,LMB_USERDB.MAXRESULT,LMB_USERDB.ERSTDATUM,LMB_USERDB.EDITDATUM,LMB_GROUPS.NAME AS GROUPNAME,LMB_GROUPS.GROUP_ID 
+	$sqlquery = "SELECT DISTINCT LMB_USERDB.SETLOCAL,LMB_USERDB.SUPERADMIN,LMB_USERDB.TEL,LMB_USERDB.FAX,LMB_USERDB.POSITION,LMB_USERDB.TIME_ZONE,LMB_USERDB.STATIC_IP,LMB_USERDB.GC_MAXLIFETIME,LMB_USERDB.CLEARPASS,LMB_USERDB.LOCKBACKEND,LMB_USERDB.USERCOLOR,LMB_USERDB.VALIDDATE,LMB_USERDB.LMLOCK,LMB_USERDB.LOGGING,LMB_USERDB.LOCK_TXT,LMB_USERDB.DEBUG,LMB_USERDB.SUBADMIN,LMB_USERDB.USERNAME,LMB_USERDB.CHANGE_PASS,LMB_USERDB.SUB_GROUP,LMB_USERDB.IPRANGE,LMB_USERDB.GROUP_ID,LMB_USERDB.UPLOADSIZE,LMB_USERDB.LAYOUT,LMB_USERDB.LANGUAGE,LMB_USERDB.DATA_DISPLAY,LMB_USERDB.PASSWORT,LMB_USERDB.USER_ID,LMB_USERDB.VORNAME,LMB_USERDB.NAME,LMB_USERDB.EMAIL,LMB_USERDB.BESCHREIBUNG,LMB_USERDB.FARBSCHEMA,LMB_USERDB.MAXRESULT,LMB_USERDB.ERSTDATUM,LMB_USERDB.EDITDATUM,LMB_USERDB.DATEFORMAT,LMB_GROUPS.NAME AS GROUPNAME,LMB_GROUPS.GROUP_ID 
 	FROM LMB_USERDB LEFT JOIN LMB_GROUPS ON (LMB_USERDB.GROUP_ID = LMB_GROUPS.GROUP_ID)
 	WHERE USER_ID = $ID";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-	if(odbc_fetch_row($rs, 1)) {
+	if(odbc_fetch_row($rs)) {
 		$result_user["username"] = odbc_result($rs, "USERNAME");
 		$result_user["passwort"] = odbc_result($rs, "PASSWORT");
 		$result_user["user_id"] = odbc_result($rs, "USER_ID");
@@ -258,7 +263,9 @@ function getUserDetails($ID){
 		$result_user["staticip"] = odbc_result($rs, "STATIC_IP");
 		$result_user["timezone"] = odbc_result($rs, "TIME_ZONE");
 		$result_user["superadmin"] = odbc_result($rs, "SUPERADMIN");
-		
+        $result_user["setlocale"] = odbc_result($rs, "SETLOCAL");
+        $result_user["dateformat"] = odbc_result($rs, "DATEFORMAT");
+
 		# --- Passwort Gültig ----
 		#$v_val = mktime(0,0,0,date("m"),date("d") + $result_user[valid],date("Y"));
 		#$v_pass = get_stamp($result_user[validdate]);
@@ -268,7 +275,7 @@ function getUserDetails($ID){
 		$sqlquery2 = "SELECT MAX(UPDATE_DATE) AS LASTKLICK FROM LMB_HISTORY_USER WHERE USERID = ".odbc_result($rs, "USER_ID")." AND UPDATE_DATE IS NOT NULL";
 		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 		if(!$rs2) {$commit = 1;}
-		if(odbc_fetch_row($rs2, 1)){
+		if(odbc_fetch_row($rs2)){
 			$lastklick = mktime(lmb_substr(odbc_result($rs2, "LASTKLICK"),11,2), lmb_substr(odbc_result($rs2, "LASTKLICK"),14,2) + $umgvar['session_length'], lmb_substr(odbc_result($rs2, "LASTKLICK"),17,2), lmb_substr(odbc_result($rs2, "LASTKLICK"),5,2), lmb_substr(odbc_result($rs2, "LASTKLICK"),8,2), lmb_substr(odbc_result($rs2, "LASTKLICK"),0,4));
 			$stamp = local_stamp(2);
 			if($lastklick >= $stamp){$result_user["aktiv"] = sprintf("%.2f",($lastklick - $stamp)/60);}

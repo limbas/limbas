@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -53,6 +53,9 @@ if($gtabid AND $ID){
 	$f_fieldid = 0;
 }
 */
+
+
+
 
 
 # ----- zeige Felder ------
@@ -115,6 +118,7 @@ if($ffilter_fl_hide){
 
 if(!$ffilter["tabsize"][$LID]){$ffilter["tabsize"][$LID] = 600;}
 
+
 # --------------------------------------------
 
 if($ffilter_anzahl){
@@ -160,12 +164,14 @@ if($ffilter_dublicates){
 	}
 }
 
+
 # ------------- Suchmaschienen Indexsuche ------------------
 
 if(isset($ffilter_content)){
 	$ffilter["content"][$fid] = lmb_substr(str_replace("\"","",$ffilter_content),0,100);
 }
-# Bei Exploreransicht Inhaltssuche leeren
+
+# ------------- Bei Exploreransicht Inhaltssuche leeren ------------------
 if($ffilter["viewmode"][$fid] == 1){$ffilter["content"][$fid] = null;}
 
 if($ffilter_content_cs == "true"){
@@ -194,10 +200,9 @@ if($ffilter_content_andor){
 	$ffilter["content_andor"][$fid] = 1;
 }
 
-
 # ---------------------------- Suchkriterien -------------------------
 
-# ---------------- Suchformular ----------------------
+# ---------------- Detail - Suchformular ----------------------
 if($supersearch AND $gs){
 	$gsr = $gs;
 }
@@ -205,7 +210,7 @@ if($supersearch AND $gs){
 # ------------- Schnellsuche -------------------------------
 foreach ($gfile['id'] as $key => $val){
 	if($gfile['field_type'][$key] != 100){
-		if($fs[$key][$fid][0] != $ffilter[$key][$fid][0] AND !$supersearch AND $ffilter["prev_lid"] == $LID){
+		if(isset($fs[$key][$fid][0]) AND $fs[$key][$fid][0] != $ffilter[$key][$fid][0] AND !$supersearch AND $ffilter["prev_lid"] == $LID){
 			$ffilter[$key][$fid] = $fs[$key][$fid];
 			$gsr[$gfile["tabid"][$key]][$gfile["fid"][$key]] = $ffilter[$key][$fid];
 		}elseif($gs[$gfile["tabid"][$key]][$gfile["fid"][$key]][0]){
@@ -217,7 +222,10 @@ foreach ($gfile['id'] as $key => $val){
 	}
 }
 
-$ffilter["gsr"] = $gsr;
+if($gsr) {
+    $ffilter["gsr"] = $gsr;
+}
+
 # -------------------------------------------------------------------------
 
 
@@ -230,7 +238,7 @@ if($view_symbolbar){
 
 # ---------------- User-Einstellungen speichern ----------------------
 if($save_setting){
-	save_userShow($LID,$save_setting,$ffilter);
+	save_userShow($LID,$save_setting);
 }
 
 
@@ -413,6 +421,9 @@ if($files){
 if($storage_folder AND $session['superadmin']){
     $storage_folder = trim($storage_folder);
     $old_path = $filestruct['path'][$LID];
+    if ($storage_folder === '--default--') {
+        $storage_folder = '';
+    }
     if($storage_folder){
         $new_path = 'STORAGE/'.$storage_folder.'/';
     }else{
@@ -440,6 +451,23 @@ if($storage_folder AND $session['superadmin']){
     }
 }
 
+# change external storage
+if ($externalStorageID AND is_numeric($externalStorageID) AND $session['superadmin']) {
+    if ($externalStorageID > 0) {
+        $externalStorageID = parse_db_int($externalStorageID);
+    } else {
+        $externalStorageID = LMB_DBDEF_NULL;
+    }
+
+    # update in db
+    $sqlquery = 'UPDATE LDMS_STRUCTURE SET storage_id=' . $externalStorageID . ' WHERE id=' . $LID;
+    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+
+    # update in session
+    if ($rs) {
+        $filestruct['storageID'][$LID] = $externalStorageID;
+    }
+}
 
 /* --- favorites reload--------------------------------------------- */
 if($favorite_file){

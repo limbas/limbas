@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -196,7 +196,7 @@ $noLine = true;
 if($gtab["edit"][$gtabid]){pop_menu(197,'','',0,1);$noLine=false;}	# speichern
 if($gtab["add"][$gtabid] AND !$readonly){pop_menu(1,'','',0,0);$noLine=false;}		# neuer Datensatz
 if($gtab["add"][$gtabid] AND $gtab["copy"][$gtabid] AND !$readonly){pop_menu(201,'','');$noLine=false;}			# Datensatz kopieren
-if($verknpf AND $gtab["edit"][$gtabid] AND !$readonly){
+if($verknpf){
 if($verkn_showonly){
     pop_menu(158,'','');								# Verknüpfung anlegen
 }else{
@@ -235,7 +235,7 @@ pop_bottom();
 
 <div ID="limbasDivMenuBearbeiten" class="lmbContextMenu" style="display:none;z-index:992;" OnClick="activ_menu=1;">
 <?php #----------------- Menü - bearbeiten -------------------
-pop_submenu(14,'','',0,1);											# suchen
+pop_submenu(14,'','',0);											# suchen
 pop_menu(28,'','',0,1); 										# zurücksetzen
 pop_menu(236,'','',0,1);
 if($gtab["edit"][$gtabid]){
@@ -292,7 +292,7 @@ if($LINK[275] AND $gfield[$gtabid]["aggregate"]){
 	pop_menu(275,'','',$filter["show_sum"][$gtabid],0);			# zeige summe
 }
 
-if(!$isview AND $gfrist){
+if($gfrist AND !$isview AND $LINK[109]){                                    # Wiedervorlage filtern
 	pop_menu2($lang[2899],null,null,"lmb-icon lmb-filter",null,"limbasDivShowReminderFilter(event,this);");
 }
 
@@ -315,16 +315,16 @@ if($gdiaglist[$gtabid]["id"]){
 	pop_submenu(232,'','',0);			# Diagramme
 	pop_line();
 }
-if(!$isview){
-	pop_submenu(188,'','',0); 			# Schnapschuß
-}
+
+pop_submenu(188,'','',0); 			# Schnapschuß
+
 
 pop_submenu(7,'','',1); 				# export
 if($gtab["ver"][$gtabid] AND $LINK[242]){
 	pop_submenu2($lang[$LINK['name'][242]],"lmb_datepicker(event,this,'view_version_status',document.form1.view_version_status.value,'".dateStringToDatepicker(setDateFormat(1,1))."',null,'lmb_version_status')",$lang[$LINK['desc'][242]],null,$LINK['icon_url'][242]);
 	#pop_submenu(242,'','',1); 			# Versionsstand
 }
-if(!$isview AND $greminder[$gtabid]){
+if(!$isview){
 	pop_submenu(109,'','',1);		    # Wiedervorlage
 }
 if($gtab["edit_userrules"][$gtabid] OR $gtab["edit_ownuserrules"][$gtabid]){ # Benutzerrechte	

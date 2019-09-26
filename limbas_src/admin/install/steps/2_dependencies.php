@@ -102,16 +102,41 @@ if(file_exists($setup_path_project."/TEMP/test.pdf")){unlink($setup_path_project
 
 /* --- php odbc --- */
 if(extension_loaded('odbc')){$msg['func_php_odbc'][] = 'odbc';}
-#if(extension_loaded('pdo')){$msg['func_php_odbc'][] = 'pdo';}
-#if(extension_loaded('pdo_pgsql')){$msg['func_php_odbc'][] = 'pdo_pgsql';}
-#if(extension_loaded('pdo_mysql')){$msg['func_php_odbc'][] = 'pdo_mysql';}
+if(extension_loaded('pdo')){$msg['func_php_pdo'][] = 'pdo';}
+if(extension_loaded('pdo_pgsql')){$msg['func_php_pdo'][] = 'pdo_pgsql';}
+if(extension_loaded('pdo_mysql')){$msg['func_php_pdo'][] = 'pdo_mysql';}
 
-if(extension_loaded('odbc') OR (extension_loaded('pdo') AND (extension_loaded('pdo_pgsql') OR extension_loaded('pdo_mysql')))) {
-    $msic['func_php_odbc'] = "1";
-    $msg['func_php_odbc'] = "<span style=\"color:green\">".implode(' ; ',$msg['func_php_odbc'])."</span><br><i>You can use ODBC for database connection.</i>";
-} else {
-    $msic['func_php_odbc'] = "3";
-    $msg['func_php_odbc'] = $msgError. "<br>available db extensions: <span style=\"color:grey\">".implode(' ; ',$msg['func_php_odbc'])."</span>";
+$msic['func_php_odbc'] = '4';
+$msic['func_php_pdo'] = '4';
+
+$vendorNames = array(
+            'PostgreSQL',
+            'mysql',
+            'MaxDB V7.6 / V7.9',
+            'MSSQL',
+            'Sybase',
+            'Ingres 10',
+            'oracle'
+);
+
+if(extension_loaded('odbc')){
+    $msg['func_php_odbc'] = "<span style=\"color:green\">".implode(' ; ',$msg['func_php_odbc'])."</span><br><i>You can use ODBC for database connection. Available databases are:</i><br><b>".implode(', ', $vendorNames);
+    $msic['func_php_odbc'] = '1';
+}
+
+if(!extension_loaded('odbc') AND extension_loaded('pdo') AND (extension_loaded('pdo_pgsql') OR extension_loaded('pdo_mysql'))){
+    $msg['func_php_pdo'] = "<span style=\"color:green\">".implode(' ; ',$msg['func_php_pdo'])."</span><br><i>You can use PDO for database connection.<br>PDO support is only for <b>mysql</b> or <b>PostgreSQL</b>. For other databases use ODBC</i>";
+    $msic['func_php_pdo'] = '1';
+}elseif(extension_loaded('odbc') AND extension_loaded('pdo') AND (extension_loaded('pdo_pgsql') OR extension_loaded('pdo_mysql'))){
+    $msg['func_php_pdo'] = "<span style=\"color:green\">".implode(' ; ',$msg['func_php_pdo'])."</span><br><i>If you want to use PDO you have to <u>deinstall</u> ODBC module fom PHP!<br>PDO support is only for <b>mysql</b> or <b>PostgreSQL</b>. For other databases use ODBC.</i>";
+    $msic['func_php_pdo'] = '2';
+}
+
+
+if($msic['func_php_odbc'] == '4' AND $msic['func_php_pdo'] == '4'){
+    $msic['func_php_odbc'] = '3';
+    $msic['func_php_pdo'] = '3';
+    $msg['func_php_odbc'] = $msgError. "<br>You can use ODBC or PDO for database connection. If you want to use PDO you have to deinstall ODBC module fom PHP!<br>PDO support is only for <b>mysql</b> or <b>PostgreSQL</b>. For other databases use ODBC.</i><br>available db extensions: <span style=\"color:grey\">".implode(' ; ',$msg['func_php_odbc'])."</span>";
     $commit = 1;
 }
 ?>
@@ -126,7 +151,8 @@ if(extension_loaded('odbc') OR (extension_loaded('pdo') AND (extension_loaded('p
         </tr>
     </thead>
     <tbody>
-        <tr><?= insIcon($msic['func_php_odbc']); ?><td>php_odbc</td><td><?= $msg['func_php_odbc'] ?></td></tr>
+        <tr><?= insIcon($msic['func_php_odbc']); ?><td>php_odbc</td><td><?= $msg['func_php_odbc']?></td></tr>
+        <tr><?= insIcon($msic['func_php_pdo']); ?><td>php_pdo</td><td><?= $msg['func_php_pdo']?></td></tr>
         <tr><?= insIcon($msic['func_path']); ?><td>path</td><td><?= $msg['func_path'] ?></td></tr>
         <tr><?= insIcon($msic['func_gd']); ?><td>gdlib</td><td><?= $msg['func_gd'] ?></td></tr>
         

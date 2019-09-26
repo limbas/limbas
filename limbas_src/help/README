@@ -12,10 +12,31 @@ LIMBAS is brought to you by the LIMBAS team at LIMBAS GmbH.
 For a list of developers and other contributors, see the Credits
 appendix in the manual.
 
+=== available files =======================================================
+
+- limbas source package/x.x/openlimbas_x.tar.gz
+    stable full installation package for manual installation
+- rpm/openlimbas-x.el7.noarch.rpm
+    rpm package for CentOS7 or RHEL
+    this rpm package install limbas apache module without database.
+- docker
+    full docker appliance to use limbas out of the box (installation with limbas demo database)
+- Raspberry Pi
+    full Raspberry Pi image to use limbas out of the box (installation with limbas demo database)
+- vm
+    full vmware image to use limbas out of the box (installation with limbas demo database)
+- tools/freetds-0.83-alias.tar.gz
+    Unix ODBC driver for MSSQL / Sybase
+- tools/Thunderbird plugin
+     Thunderbird Plugin to link emails in limbas tables
+
 
 === QUICKINSTALL =======================================================
 
-- you need at least apache with php and unixodbc support for used database or build-in odbc driver if supported from php. (for PostgreSQL use "postgreSQL ODBC" driver, not "unixodbc Driver for PostgreSQL")
+- Limbas Server only works on Unix Systems like Linux or BSD. Windows Server was not supported but should work with some adjustments.
+- you need at least apache with php and PDO support for used database. (PDO is only supported for PostgreSQl and MySQL. For other databases use installation with ODBC)
+- if ODBC needed you need unixodbc support for used database or build-in odbc driver if supported from php. (for PostgreSQL use "postgreSQL ODBC" driver, not "unixodbc Driver for PostgreSQL")
+- you cannot use ODBC and PDO module simultaneously
 - extract the complete LIMBAS package (not only the source) to an available apache web directory
 - make directory "/dependent" recursive writable for apacheuser
 - be shure the symbolic links are correct set from "limbas_src" to "dependent" directory
@@ -25,21 +46,13 @@ appendix in the manual.
 
 === UPDATE =======================================================
 
-update from 2.x
+update
 - download latest "LIMBAS source"
-- replace or add the new LIMBAS source directory "limbas_src_2.x"
-- rebuild the symlink "limbas_src" to the new source directory (ln -s limbas_src_2.x limbas_src)
-- login to limbas - limbas will redirect you to the "system update page" - select the Systemupdate script "up_2.x.php" and run the update with "OK". If your release is older than one release you have to run all updates up to your release.
+- replace or add the new LIMBAS source directory "limbas_src_x.x"
+- rebuild the symlink "limbas_src" to the new source directory (ln -s limbas_src_x.x limbas_src)
+- login to limbas - limbas will redirect you to the "system update page" - select the Systemupdate script "up_x.x.php" and run the update with "OK". If your release is older than one release you have to run all updates up to your release.
 - go to the root directory ([INSTALLPATH]/dependent/) and reset your system 
 - replace the "independent" directory with its newest version if necessary. Available as "independent.tar" archive or over subversion.
-
-=== SUBVERSION =======================================================
-
-You can download the actual developer release on subversion. This current snapshot is NOT a released version but may be usefull for using newest bugfixes.
-It contains a packed "independent.tar" archive. You should overwrite your old "independent" directory!
-To update use the instuctions above.
-
-http://limbas.svn.sourceforge.net/viewvc/limbas/trunk
 
 === DOCUMENTATION ===================================================
 
@@ -52,7 +65,7 @@ http://www.limbas.org/wiki/
 
 The default URL of your LIMBAS installation is:
 
-	http://localhost/openlimbas/dependent/index.php
+	http://localhost/openlimbas/dependent/
 
 
 === IMPORTANT =======================================================
@@ -67,13 +80,10 @@ mailing list at:
 
  following pre-build appliances are available for LIMBAS
 
- - USB stick / hard disk image
- - Live CD/DVD (.iso)
  - VMware / VirtualBox / KVM (.vmdk)
- - OVF virtual machine (.ovf)
- - Xen guest
- - Preload ISO (.iso)
- 
+ - raspberry PI image
+ - docker
+ - rpm for CentOS
  
  === default PASSWORDS =======================================================
  
@@ -84,4 +94,3 @@ mailing list at:
  for root user in appliances use
  user: root
  pass: linux
- 

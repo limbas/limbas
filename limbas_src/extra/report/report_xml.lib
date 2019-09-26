@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -134,17 +134,15 @@ function print_tab($dom,$report_id,$item,$ID,$rkey,&$report){
 		while($bzm3 <= $report_tab_cells){
 			$cols = array();
 			
-			$sqlquery = "SELECT DISTINCT EL_ID,INHALT,DBFIELD,TYP,POSX,POSY,TAB_EL_COL_SIZE,HEIGHT,STYLE,TAB FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB = ".$report_tab." AND TAB_EL_ROW = ".$bzm2." AND TAB_EL_COL = ".$bzm3." ORDER BY EL_ID ".LMB_DBFUNC_FOR_REUSE;
+			$sqlquery = "SELECT DISTINCT EL_ID,INHALT,DBFIELD,TYP,POSX,POSY,TAB_EL_COL_SIZE,HEIGHT,STYLE,TAB FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB = ".$report_tab." AND TAB_EL_ROW = ".$bzm2." AND TAB_EL_COL = ".$bzm3." ORDER BY EL_ID ";
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-			$i = 1;
-			while(odbc_fetch_row($rs,$i)) {
+			while(odbc_fetch_row($rs)) {
 				$cols["value"][] = odbc_result($rs, "INHALT");
 				$cols["typ"][] = odbc_result($rs, "TYP");
 				$cols["id"][] = odbc_result($rs, "EL_ID");
 				$cols["style"][] = odbc_result($rs, "STYLE");
 				$cols["dbfield"][] = odbc_result($rs, "DBFIELD");
-				$i++;
 			}
 			
 			if(is_array($cols["id"])){
@@ -317,12 +315,14 @@ function store_xml($dom,$rep,$ID,$report_output){
 	# ------- xml Pfad ---------
 	$name = $rep["name"];
 	$out = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/".$name;
+	$path = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/".lmb_utf8_encode($name);
+
 	# ------- xml schreiben ---------
-	$fh = fopen ($out, 'w');
+	$fh = fopen ($path, 'w');
 	fwrite($fh, $dom->saveXML());
 	fclose($fh);
 
-	if(file_exists($out)){
+	if(file_exists($path)){
 		# ------- archivieren ---------
 		if($report_output == 2){
 			# Archivieren
@@ -374,7 +374,7 @@ function xml_report($ID,$report_id,$use_record,&$rep){
 		
 		if($SID){
 			# report-Elemente
-			$report = element_list($SID,array("report_id" => $report_id),'');
+			$report = element_list($SID, $_passByRef = array("report_id" => $report_id),'');
 			# root Element (Berichtsname)
 			$item = $dom->createElement("item");
 			$item->setAttribute('id', $SID);

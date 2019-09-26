@@ -1,0 +1,121 @@
+Start
+  = Part*
+
+Part
+  = IfConstruct
+  / TemplateTag
+  / Html
+
+IfConstruct
+  = condition:IfTag consequent:Part* ElseTag alternative:Part* EndifTag
+  { return TemplateConfig::$instance->getIfPlaceholderInstance($condition, $consequent, $alternative); }
+  / condition:IfTag consequent:Part* EndifTag
+  { return TemplateConfig::$instance->getIfPlaceholderInstance($condition, $consequent, null); }
+
+IfTag
+  = TAGSTART IF condition:IfCondition TAGEND
+  { return $condition; }
+
+IfCondition
+  = DataPlaceholder
+  / Function
+
+ElseTag
+  = TAGSTART ELSE TAGEND
+
+EndifTag
+  = TAGSTART ENDIF TAGEND
+
+TemplateTag
+  = ESCAPEDTAGSTART Template TAGEND
+  { return $this->text(); }
+  / TAGSTART tpl:Template TAGEND
+  { return $tpl; }
+
+Template
+  = DataPlaceholder
+  / Function
+  / Subtemplate
+
+DataPlaceholder
+  = DATASTART head:FieldName tail:(DATASTART FieldName)* flags:Flags? altvalue:AltValue?
+  { $tail = array_map(function($t) { return $t[1]; }, $tail); array_unshift($tail, $head); return TemplateConfig::$instance->getDataPlaceholderInstance($tail, $flags, $altvalue); }
+
+Flags
+  = "[w]"
+  { return 'writeable'; }
+
+AltValue
+  = "|" param:StringParam
+  { return $param; }
+
+FieldName
+  = [A-Za-z]+
+  { return $this->text(); }
+
+Function
+  = FUNCTIONSTART call:FunctionCall
+  { return $call; }
+
+FunctionCall
+  = name:FunctionName _ "(" _ paramHead:Param paramTail:(_ "," _ Param)* _ ")"
+  { $paramTail = array_map(function($p) { return $p[3]; }, $paramTail); array_unshift($paramTail, $paramHead); return TemplateConfig::$instance->getFunctionPlaceholderInstance($name, $paramTail); }
+  / name:FunctionName _ "()"?
+  { return TemplateConfig::$instance->getFunctionPlaceholderInstance($name, array()); }
+
+FunctionName
+  = [A-Za-z0-9]+
+  { return $this->text(); }
+
+Param
+  = Function
+  / DataPlaceholder
+  / StringParam
+
+StringParam
+  = STRDELIMITER parts:QuotedStringCharacter* STRDELIMITER
+  { return join('', $parts); }
+
+QuotedStringCharacter
+  = '\\"'
+  / !STRDELIMITER .
+  { return $this->text(); }
+
+Subtemplate
+  = (!FUNCTIONSTART !DATASTART !TAGEND !IF !ELSE !ENDIF .)+
+    { return TemplateConfig::$instance->getSubTemplateElementPlaceholderInstance($this->text()); }
+
+Html
+  = (!TAGSTART !ESCAPEDTAGSTART .)+
+    { return TemplateConfig::$instance->getHtmlInstance($this->text()); }
+
+_ "whitespace"
+  = [ \t\n\r]*
+
+TAGSTART
+  = "${"
+
+ESCAPEDTAGSTART
+  = "$${"
+
+TAGEND
+  = "}"
+
+FUNCTIONSTART
+  = "="
+
+STRDELIMITER
+  = '"'
+
+DATASTART
+  = "->"
+  / "-&gt;"
+
+IF
+  = "if "
+
+ELSE
+  = "else"
+
+ENDIF
+  = "endif"

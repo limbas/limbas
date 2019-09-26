@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH (support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH (support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5  
+ * Version 3.6  
  */
 
 /*
@@ -252,6 +252,12 @@ elseif ($action == "setup_index" AND $LINK[$action] == 1) {
 	$require1 = "admin/tools/index.php";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
+elseif ($action == "setup_jobs_cron" AND $LINK[$action] == 1) {
+    $require1 = "admin/tools/jobs_ext.lib";
+    $require2 = "admin/tools/jobs_ext.dao";
+    $require3 = "admin/tools/jobs_cron.php";
+    $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
+}
 /* ------------------ setup ------------------------ */
 elseif ($action == "setup_umgvar" AND $LINK[$action] == 1) {
 	$require1 = "admin/setup/umgvar.dao";
@@ -278,6 +284,11 @@ elseif ($action == "setup_color_schema" AND $LINK[$action] == 1) {
 elseif ($action == "setup_links" AND $LINK[$action] == 1) {
 	$require1 = "admin/setup/links.dao";
 	$require2 = "admin/setup/links.php";
+	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
+}
+elseif ($action == "setup_menueditor" AND $LINK[$action] == 1) {
+	$require1 = "admin/setup/menueditor.dao";
+	$require2 = "admin/setup/menueditor.php";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
 elseif ($action == "setup_language" AND $LINK[$action] == 1) {
@@ -387,14 +398,20 @@ elseif ($action == "setup_grouping_editor" AND $LINK[$action] == 1) {
 	$require1 = "admin/tables/grouping_editor.php";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
+elseif ($action == 'setup_external_storage' AND $LINK[$action] == 1) {
+    $require1 = 'admin/setup/externalStorage.dao';
+    $require2 = 'admin/setup/externalStorage.php';
+    $BODYHEADER = $lang[$LINK['desc'][$LINK_ID[$action]]];
+}
 elseif ($action == 'setup_printers' AND $LINK[$action] == 1) {
     $require1 = 'admin/setup/printers.dao';
     $require2 = 'admin/setup/printers.php';
     $BODYHEADER = $lang[$LINK['desc'][$LINK_ID[$action]]];
-}
-
-/* ------------------ statistic ------------------------ */
-elseif ($action == "setup_stat_user_det" AND $LINK['setup_stat_user_dia'] == 1) {
+}elseif ($action == "intro" or $action == "nav_info") {
+    $require2 = "help/intro.php";
+    $BODYHEADER = $lang[$LINK['desc'][$LINK_ID[$action]]];
+    /* ------------------ statistic ------------------------ */
+}elseif ($action == "setup_stat_user_det" AND $LINK['setup_stat_user_dia'] == 1) {
 	$require1 = "admin/statistic/stat_user_det.php";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
@@ -445,6 +462,7 @@ elseif ($action == "setup_report_main" AND $LINK["setup_report_select"] == 1) {
 	$require1 = "admin/report/report.dao";
 	$require2 = "admin/report/report_main.php";
 	$ONKEYDOWN = "OnKeydown=\"movex(event);\"";
+	# TODO ! also in form
 	$ONLOAD = "OnLoad=\"window.setTimeout('create_list()',500)\"";
 	#$ONCLICK = "OnClick=\"reportBodyClick('menu')\"";
     $BODYHEADER = $lang[$LINK["desc"][$LINK_ID["setup_report_select"]]];
@@ -544,13 +562,12 @@ if($BODY != 1){
 <title>Limbas Enterprise Unifying Framework V <?=$umgvar['version']?></title>
 
 <script type="text/javascript" src="lib/global.js"></script>
-<script type='text/javascript' src='extern/jquery/jquery-1.7.1.min.js'></script>
-<script type='text/javascript' src='extern/jquery/jquery-ui-1.9.2.min.js'></script>
+<script type='text/javascript' src='extern/jquery/jquery-1.11.0.min.js'></script>
+<script type='text/javascript' src='extern/jquery/jquery-ui-1.12.1.min.js'></script>
 <script type='text/javascript' src='extern/jquery/colResizable-1.3.min.js'></script>
 <script type='text/javascript' src='extern/jquery/jquery.ui.datepicker-de.js'></script>
 <script type='text/javascript' src='extern/jquery/jquery-ui-timepicker-addon.js'></script>
-
-<style type='text/css'>@import url(extern/jquery/theme/jquery-ui-1.9.2.custom.css);</style>
+<style type='text/css'>@import url(extern/jquery/theme/jquery-ui-1.12.1.min.css);</style>
 <style type='text/css'>@import url(extern/jquery/theme/jquery-ui-timepicker-addon.css);</style>
 <style type='text/css'>@import url(extern/jquery/colResizable.css);</style>
 <style type="text/css">@import url(USER/<?=$session['user_id']?>/layout.css);</style>

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -80,6 +80,7 @@ body{
 	color: {$farbschema['WEB2']};
 	margin: 0;
 	padding: 0;
+	height: 95%;
 }
 
 /*global*/
@@ -831,12 +832,8 @@ td .lmbGtabTabSpace {
 	height:18px;
 }
 
-.gtabHeaderMenuTDhover{
+.gtabHeaderMenuTD.hoverable:hover{
 	text-decoration:underline;
-	cursor:pointer;
-	padding-left:5px;
-	padding-right:5px;
-	height:18px;
 }
                 
 .gtabHeaderSymbolTR{
@@ -887,7 +884,7 @@ td .lmbGtabTabSpace {
 
 .gtabHeaderTitleTDOver {
 	background-color: {$farbschema['WEB8']};
-    background-image: url(\"../../pic/silk_icons/arrow_bullet_left.gif\");
+    background-image: url(\"../../pic/arrow_bullet_left.gif\");
     background-repeat: no-repeat;
     padding-left: 20px;
 }
@@ -1081,6 +1078,7 @@ INPUT.fgtabchange, TEXTAREA.fgtabchange, SELECT.fgtabchange, TABLE.fgtabchange, 
 	filter:Alpha(opacity=100);
 	font-size: {$umgvar['fontsize']}px;
 	padding:2px;
+	color:{$farbschema['WEB2']};
 }
 
 DIV.fgtabchange{
@@ -1088,11 +1086,6 @@ DIV.fgtabchange{
 	overflow-y:auto;
 	padding:2px;
 	box-sizing: border-box;
-}
-
-.gtabchangeInnerFrame{
-	background-color: {$farbschema['WEB8']};
-    border: 1px solid {$farbschema['WEB3']};
 }
 
 INPUT.gmultilang {
@@ -1155,7 +1148,7 @@ INPUT.gmultilang {
 	padding:0px;
 }
 
-.tabfringe.hoverable tr.tabBody:hover {
+table.hoverable tr.tabBody:hover {
     background-color:{$farbschema['WEB5']}
 }
 
@@ -1575,8 +1568,9 @@ DIV.ajax_container {
     background-color:#337ab7;
     -webkit-box-shadow:inset 0 -1px 0 rgba(0,0,0,.15);
     box-shadow:inset 0 -1px 0 rgba(0,0,0,.15);
-    -webkit-transition:width .6s ease;
-    -o-transition:width .6s ease;transition:width .6s ease;
+    /* takes too long for quick progress updates -> progress bar half full on 100% */
+    /* -webkit-transition:width .6s ease; */
+    /* -o-transition:width .6s ease;transition:width .6s ease; */
 }
 
 .lmbUploadDragenter {
@@ -1593,12 +1587,19 @@ DIV.ajax_container {
     /* because of dropover/dropleave events firing too fast */
     transition: border-color 0.2s ease-in-out;
 }
-.lmbUploadDroparea.lmbUploadDropareaActive {
+body.lmbBodyDropareaActive * {
+    pointer-events: none;
+}
+body.lmbBodyDropareaActive .lmbUploadDroparea {
+    pointer-events: stroke;
     border-color: {$farbschema['WEB7']};
     transition-duration: 0.01s;
 }
 .lmbUploadDroparea.lmbUploadDropareaHover {
     border-color: green;
+}
+.lmbUploadDroparea.lmbUploadDropareaHover * {
+    pointer-events: none;
 }
 
 .modalOverlay {
@@ -1757,6 +1758,7 @@ INPUT.submit {
     
 INPUT.contextmenu {
     vertical-align: middle;
+    background-color: {$farbschema['WEB8']};
 }
 
 TEXTAREA {
@@ -1817,7 +1819,7 @@ FORM {
 	
 .fc-resourceName{
 	border: 1px solid #ccc;
-	background: linear-gradient(to bottom, {$farbschema['WEB13']} 20%, {$farbschema['WEB11']} );
+	background: linear-gradient(to bottom, {$farbschema['WEB13']} 70%, {$farbschema['WEB11']} );
 	font-weight:bold;
 	font-style:italic;
 }
@@ -1909,8 +1911,8 @@ th.fc-resourceName {
      background-color:{$farbschema["WEB8"]};
      color: {$fontc14};
      border:1px solid {$farbschema["WEB3"]};
-     width:220px;
-     margin-top: 10px;
+     width:240px;
+
 }
      
 .formeditorPanel td {
@@ -1924,15 +1926,19 @@ th.fc-resourceName {
      
 .formeditorPanelHead {
     height:15px;
+    padding:3px;
     color:{$fontc7};
     background-color:{$farbschema["WEB7"]};
     text-align:left;
+    margin-top:10px;
+    cursor:s-resize;
 }
     
     
 .formeditorPanel .btn {
-    border:2px outset;
+    border:1px outset;
     cursor: pointer;
+    padding:1px;
 }
     
 #itemlist_area td {
@@ -1988,6 +1994,9 @@ th.fc-resourceName {
     background: {$farbschema["WEB13"]};
 }
 
+.ui-dialog { 
+    z-index: 9999 !important ;
+}
 
 .ui-widget .ui-widget-header {
     background: {$farbschema["WEB10"]};
@@ -2065,6 +2074,7 @@ div.calendar tbody .rowhilite td.wn {
      
 .ui-datepicker {
     background: linear-gradient({$farbschema["WEB11"]}, {$farbschema["WEB10"]});
+    width:inherit;
 }
      
 .ui-widget-content .ui-datepicker-calendar a.ui-state-default{
@@ -2083,8 +2093,6 @@ div.calendar tbody .rowhilite td.wn {
     opacity: .6;
     filter: Alpha(Opacity=60);
 }
-
-
 
 
 
@@ -2340,6 +2348,288 @@ card-assigned-value{
 .lmb-query::before {
     color: {$farbschema['WEB7']};
 }
+
+
+
+
+/*
+ * Attribute Tag-Mode
+ ***************************************
+ */
+.tagattr {
+
+    /* default .fgtabchange */
+    min-height: 18px;
+    padding: 2px;
+    box-sizing: border-box;
+    margin: 0;
+    font-size: 11px;
+    overflow: hidden;
+
+    /* flex container */
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row-reverse;
+    -ms-flex-direction: row-reverse;
+    flex-direction: row-reverse;
+    -webkit-flex-wrap: nowrap;
+    -ms-flex-wrap: nowrap;
+    flex-wrap: nowrap;
+    -webkit-justify-content: flex-end;
+    -ms-flex-pack: end;
+    justify-content: flex-end;
+    -webkit-align-content: flex-end;
+    -ms-flex-line-pack: flex-end;
+    align-content: flex-end;
+    -webkit-align-items: flex-start;
+    -ms-flex-align: start;
+    align-items: flex-start;
+
+    border: none;
+    background: transparent;
+}
+
+.tagattr input {
+    margin-left: 0.1rem;
+    padding: 0;
+}
+
+
+.tagattr table {
+    display:block;
+}
+
+
+.tagattr tbody {
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    -webkit-flex-wrap: wrap;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    -webkit-justify-content: flex-start;
+    -ms-flex-pack: start;
+    justify-content: flex-start;
+    -webkit-align-content: flex-start;
+    -ms-flex-line-pack: start;
+    align-content: flex-start;
+    -webkit-align-items: flex-start;
+    -ms-flex-align: start;
+    align-items: flex-start;
+}
+
+
+.tagattr tr {
+    /* tr as flex item */
+    -webkit-order: 0;
+    -ms-flex-order: 0;
+    order: 0;
+    -webkit-flex: 0 1 auto;
+    -ms-flex: 0 1 auto;
+    flex: 0 1 auto;
+    -webkit-align-self: auto;
+    -ms-flex-item-align: auto;
+    align-self: auto;
+
+    /* tr as flex container */
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: stretch;
+    -ms-flex-align: stretch;
+    align-items: stretch;
+
+    /* other styles */
+    background: transparent;
+    margin-right: 0.4rem;
+    margin-bottom: 0.3rem;
+    border-radius: 5px;
+    padding: 0;
+    min-height:1.3rem;
+    height:1.3rem;
+}
+.tagattr tr td:nth-child(2),
+.tagattr tr td:nth-child(3) {
+    padding-top:0.1rem;
+}
+.tagattr tr td:nth-child(2) {
+    padding-right:0.2rem;
+}
+
+/* hide tag with empty input */
+.tagattr tr:not(.empty) td[data-hidetag=\"1\"] {
+    display: none;
+}
+
+
+.tagattr td {
+    width: auto !important;
+    padding:0;
+    display: flex;
+    -webkit-flex-direction: row;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+}
+
+
+/* search field */
+.tagattr > input:first-child {
+    width: 1.3rem !important;
+    height: 1.3rem;
+    margin: 0;
+    border-radius: 3px;
+    background-color: {$farbschema['WEB13']};
+    text-align: center;
+    cursor: pointer;
+}
+
+/*.tagattr > input:first-child,*/
+.tagattr.transition > input:first-child {
+    -webkit-transition: width 0.3s ease-in-out;
+    -moz-transition: width 0.3s ease-in-out;
+    -ms-transition: width 0.3s ease-in-out;
+    -o-transition: width 0.3s ease-in-out;
+    transition: width 0.3s ease-in-out;
+}
+
+/* input attribute */
+.tagattr tr input[type='text'] {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    margin-right: 0.1rem;
+    -webkit-appearance: none;
+}
+.tagattr.transition tr input[type='text'] {
+    -webkit-transition: width 0.3s ease;
+    -moz-transition: width 0.3s ease;
+    -ms-transition: width 0.3s ease;
+    -o-transition: width 0.3s ease;
+    transition: width 0.3s ease;
+}
+
+.tagattr tr input[type='text']:focus {
+    background-color: {$farbschema['WEB13']};
+    color:{$farbschema['WEB2']};
+    border: 1px solid {$farbschema['WEB3']};
+    border-radius: 3px;
+}
+.tagattr.transition tr input[type='text']:focus {
+    -webkit-transition: width 0.3s ease;
+    -moz-transition: width 0.3s ease;
+    -ms-transition: width 0.3s ease;
+    -o-transition: width 0.3s ease;
+    transition: width 0.3s ease;
+}
+
+
+/* select attribute */
+.tagattr select {
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    appearance: none;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    padding:0;
+    height:1rem;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+
+.tagattr.transition select {
+    -webkit-transition: width 0.3s ease-in-out;
+    -moz-transition: width 0.3s ease-in-out;
+    -ms-transition: width 0.3s ease-in-out;
+    -o-transition: width 0.3s ease-in-out;
+    transition: width 0.3s ease-in-out;
+}
+
+.tagattr tr.empty input[type='text'],
+.tagattr tr.empty select {
+    border-bottom: 1px solid;
+}
+
+/* checkbox attribute */
+.tagattr input[type=checkbox] {
+    display:none;
+}
+
+.tagattr input[type=checkbox] ~ label {
+    margin-left:0.2rem;
+}
+.tagattr input[type=checkbox] ~ label:before {
+    font-family: FontAwesome;
+    display: inline-block;
+    font-size: 1rem;
+    letter-spacing: 10px;
+    content: '\\f096'
+}
+.tagattr input[type=checkbox]:checked + label:before {
+    content: '\\f00c';
+    letter-spacing: 5px;
+}
+
+
+/*
+ * Multiselect Tag-Mode
+ ***************************************
+ */
+.tagattr .tagmulti {
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    -webkit-flex-wrap: wrap;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    -webkit-justify-content: flex-start;
+    -ms-flex-pack: start;
+    justify-content: flex-start;
+    -webkit-align-content: flex-start;
+    -ms-flex-line-pack: start;
+    align-content: flex-start;
+    -webkit-align-items: flex-start;
+    -ms-flex-align: start;
+    align-items: flex-start;
+}
+
+.tagattr .tagmulti > span {
+    margin-right: 0.3rem;
+    margin-bottom: 0.3rem;
+    width: auto !important;
+    display: flex;
+    -webkit-flex-direction: row;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    border-radius: 5px;
+    padding: 0.2rem 0.3rem;
+    border: 1px solid {$farbschema['WEB3']};
+}
+
+.tagattr .tagmulti br {
+    display: none;
+}
+
+
 
 ";
     

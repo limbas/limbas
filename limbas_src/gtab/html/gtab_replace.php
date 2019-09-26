@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -30,7 +30,7 @@ pop_left();
 ?>
 
 <table border="0" cellspacing="0" cellpadding="1" style="min-width:300px;padding:3px;">
-<tr style="height:20px;"><td colspan="2"><img src="<?=$LINK["icon_url"][287]?>" align=\"absmiddle\">&nbsp;&nbsp;<b><?=$lang[$LINK["name"][287]]?></b></td></tr>
+    <tr style="height:20px;"><td colspan="2"><i class="<?=$LINK["icon_url"][287]?>"></i>&nbsp;&nbsp;<b><?=$lang[$LINK["name"][287]]?></b></td></tr>
 <tr><td colspan="2"><hr></td></tr>
 <tr><td valign="top" style="width:100px;"><?=$lang[103]?>:</td>
 <td><select style="width:200px;" onchange="LmGs_divchange(this.value);" name="grplfield"><option>

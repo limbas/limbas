@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -33,15 +33,7 @@
 		
 		# Create/Update/Delete record
 		$sqlquery=null;
-		if(odbc_fetch_row($rs, 1)==null){
-			# Record doesnt exist
-			if($show==true){
-				# Create new record
-				$NEXTID = next_db_id("LMB_CHARTS");
-				$sqlquery = "INSERT INTO LMB_CHARTS (ID, CHART_ID, FIELD_ID, AXIS, FUNCTION, COLOR) 
-					VALUES($NEXTID,$diag_id,$field_id,1,0,'000000');";
-			}
-		}else{
+		if(odbc_fetch_row($rs)){
 			# Record exists
 			if($show==true){
 				# Update record
@@ -51,6 +43,14 @@
 			}elseif($show==false){
 				# Delete record
 				$sqlquery = "DELETE FROM LMB_CHARTS WHERE CHART_ID=$diag_id AND FIELD_ID = $field_id;";
+			}
+		}else{
+			# Record doesnt exist
+			if($show==true){
+				# Create new record
+				$NEXTID = next_db_id("LMB_CHARTS");
+				$sqlquery = "INSERT INTO LMB_CHARTS (ID, CHART_ID, FIELD_ID, AXIS, FUNCTION, COLOR) 
+					VALUES($NEXTID,$diag_id,$field_id,1,0,'000000');";
 			}
 		}
 		if($sqlquery!=null){
@@ -62,14 +62,13 @@
 			FROM LMB_CHARTS 
 			WHERE CHART_ID=$diag_id AND FIELD_ID = $field_id";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(odbc_fetch_row($rs,1)==null) {
-			echo json_encode(null);
-		}else{
-			odbc_fetch_row($rs, 1);
+		if(odbc_fetch_row($rs)) {
 			$diagdetaillist["axis"] = odbc_result($rs, "AXIS");
 			//$diagdetaillist["function"] = odbc_result($rs, "FUNCTION");
-			$diagdetaillist["color"] = odbc_result($rs, "COLOR");	
-			echo json_encode($diagdetaillist); 
+			$diagdetaillist["color"] = odbc_result($rs, "COLOR");
+			echo json_encode($diagdetaillist);
+		}else{
+            echo json_encode(null);
 		}
 	}
 		

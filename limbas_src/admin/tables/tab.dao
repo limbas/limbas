@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -92,10 +92,13 @@ function set_datasync($tabid,$tabname,$datasync){
 lmb_StartTransaction();
 
 
+
 // Tabelname
-$sqlquery =  "SELECT TABELLE FROM LMB_CONF_TABLES WHERE TAB_ID = $tabid";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$tablename = odbc_result($rs,"TABELLE");
+if($tabid) {
+    $sqlquery = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE TAB_ID = $tabid";
+    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    $tablename = odbc_result($rs, "TABELLE");
+}
 
 /* ---------------------- Gruppen ------------------------ */
 /* ------------------------------------------------------------ */
@@ -257,10 +260,8 @@ if($versioning) {
 	$sqlquery =  "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES WHERE VERKN = $tabid";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$bzm = 1;
-	while(odbc_fetch_row($rs, $bzm)) {
+	while(odbc_fetch_row($rs)) {
 		set_version(odbc_result($rs,"TAB_ID"),odbc_result($rs,"TABELLE"),trim($versioning));
-		$bzm++;
 	}
 }
 
@@ -309,6 +310,14 @@ if($indicator AND $tabid) {
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 }
+
+/* --- indicator -------------------------------------- */
+if($keyfield AND $tabid) {
+	$sqlquery =  "UPDATE LMB_CONF_TABLES SET KEYFIELD = '".trim(parse_db_string($keyfield,30))."' WHERE TAB_ID = $tabid";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
 
 /* --- params1 -------------------------------------- */
 if($params1 AND $tabid) {
@@ -393,6 +402,7 @@ if(!$import){
             LMB_CONF_TABLES.PARAMS1,
             LMB_CONF_TABLES.PARAMS2,
 			LMB_CONF_VIEWS.VIEWTYPE,
+			LMB_CONF_TABLES.KEYFIELD,
 			TABLES2.BESCHREIBUNG AS TABLE2DESC,
 			LMB_CONF_FIELDS.ID AS FIELDSID,
 			(
@@ -454,6 +464,7 @@ if(!$import){
             $result_gtab[$tabgroupid]['datasync'][$tabIndex] = odbc_result($rs, 'DATASYNC');
             $result_gtab[$tabgroupid]['params1'][$tabIndex] = odbc_result($rs, 'PARAMS1');
             $result_gtab[$tabgroupid]['params2'][$tabIndex] = unserialize(odbc_result($rs, 'PARAMS2'));
+            $result_gtab[$tabgroupid]['keyfield'][$tabIndex] = odbc_result($rs, 'KEYFIELD');
 
             # count tables per group
             $tabgroup_['tabellen'][$tabgroupid]++;

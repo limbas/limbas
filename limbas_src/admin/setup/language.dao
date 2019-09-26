@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -47,12 +47,10 @@ foreach ($langtyplist as $typkey => $langtyppart){
 		$sqlquery = "SELECT * FROM LMB_LANG$langtyppart WHERE LANGUAGE_ID = 1";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
-		$bzm1 = 1;
-		while(odbc_fetch_row($rs, $bzm1)) {
+		while(odbc_fetch_row($rs)) {
 			if(odbc_result($rs, "LMFILE")){$fl = odbc_result($rs, "LMFILE");}else{$fl = '0';}
 			$sqlquery1 = "INSERT INTO LMB_LANG$langtyppart (ID,LANGUAGE_ID,ELEMENT_ID,TYP,LMFILE,LANGUAGE,EDIT,WERT) VALUES ($NEXTID1,$NEXTID,".odbc_result($rs, "ELEMENT_ID").",".parse_db_int(odbc_result($rs, "TYP"),5).",'".parse_db_string($fl,250)."','".parse_db_string($add_lang,20)."',".LMB_DBDEF_FALSE.",'')";
 			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-			$bzm1++;
 			$NEXTID1++;
 		}
 	}
@@ -71,8 +69,11 @@ if($language_id AND $multilang){
 
     require_once('admin/tables/tab.lib');
 
-    $multi_language = $umgvar['multi_language'];
-    
+    if($umgvar['multi_language']) {
+        $multi_language = $umgvar['multi_language'];
+    }
+
+
     $sqlquery = "SELECT FIELD_ID,TAB_ID FROM LMB_CONF_FIELDS WHERE MULTILANG = ".LMB_DBDEF_TRUE;
     $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     if (! $rs1) {$commit = 1;}
@@ -92,8 +93,11 @@ if($language_id AND $multilang){
         $m = 0;
     }
 
-    
-    unset($multi_language[array_search($umgvar['default_language'],$multi_language)]);
+
+    $dfkey = array_search($umgvar['default_language'],$multi_language);
+    if($dfkey !== false) {
+        unset($multi_language[$dfkey]);
+    }
     
     $multi_language = array_filter($multi_language);
     $multi_language = array_unique($multi_language);
@@ -166,8 +170,7 @@ if($language_id AND $list){
 	/* ---Element-Liste --------------------------------------------- */
 	$sqlquery = "SELECT * FROM LMB_LANG$langtyp $where $order_";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$bzm = 1;
-	while(odbc_fetch_row($rs, $bzm)) {
+	while(odbc_fetch_row($rs)) {
 			$el_id = odbc_result($rs, "ELEMENT_ID");
             $result_el["id"][$el_id] = odbc_result($rs, "ID");
             $result_el["language_id"][$el_id] = odbc_result($rs, "LANGUAGE_ID");
@@ -179,7 +182,6 @@ if($language_id AND $list){
             $result_el["edit"][$el_id] = odbc_result($rs, "EDIT");
             $result_el["js"][$el_id] = odbc_result($rs, "JS");
             #if($bzm > $showlimit){break;}
-	$bzm++;
 	}
 
 	/* ---Element-Liste Referenz --------------------------------------------- */
@@ -199,15 +201,13 @@ if($language_id AND $list){
 
 	$sqlquery = "SELECT * FROM LMB_LANG$langtyp $where $order_";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$bzm = 1;
-	while(odbc_fetch_row($rs, $bzm)) {
+	while(odbc_fetch_row($rs)) {
 			$el_id = odbc_result($rs, "ELEMENT_ID");
 			$result_ref["element_id"][$el_id] = $el_id;
             $result_ref["id"][$el_id] = odbc_result($rs, "ID");
             $result_ref["language_id"][$el_id] = odbc_result($rs, "LANGUAGE_ID");
             $result_ref["wert"][$el_id] = htmlentities(trim(odbc_result($rs, "WERT")),ENT_QUOTES,$umgvar["charset"]);  # longtext handle
             #if($bzm > $showlimit){break;}
-	$bzm++;
 	}
 }
 

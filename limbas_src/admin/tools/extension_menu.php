@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -22,18 +22,18 @@ $openToPath=false;
 $openToPath_Path="";
 $file=null;
 
-if($filename AND $todo){	
-	if(lmb_substr($filename,0,9) == 'EXTENSION' AND !lmb_strpos($filename,'..')){	
+if($filename AND $todo){
+	if(lmb_substr($filename,0,9) == 'EXTENSION' AND !lmb_strpos($filename,'..')){
 		# new file or new folder
 		if($todo == 'addfile' || $todo == 'addfolder'){
 			$parts = explode("/",$filename);
 			$name = array_pop($parts);
 			$newFileFolder = implode("/",$parts);
-				
+
 			if(is_file($umgvar['pfad'] . "/" . $newFileFolder)){
 				$parts = explode("/",$newFileFolder);
 				array_pop($parts);
-				$newFileFolder = implode("/",$parts);			
+				$newFileFolder = implode("/",$parts);
 			}
 			$openToPath=true;
 			$dir = $umgvar['pfad'] . "/" . $newFileFolder . "/" . $name;
@@ -45,8 +45,7 @@ if($filename AND $todo){
 				$openToPath_Path = $newFileFolder . "/" . $name;
 			}
 		}
-		
-			
+
 		$folder = null;
 		if(is_file($filename)){
 			$folder = explode('/',$filename);
@@ -55,26 +54,26 @@ if($filename AND $todo){
 		}elseif (is_dir($filename)){
 			$folder = trim($filename,'/');
 		}
-		
+
 		if($folder){
-			
+
 			# delete
 			if($todo == 'delete'){
 				if($file){
 					unlink($filename);
 					$openToPath=true;
-					$openToPath_Path=$folder;				
-					
+					$openToPath_Path=$folder;
+
 				}else{
 					rmdirr($umgvar["pfad"].'/'.$folder,1,0,1);
 					$openToPath=true;
 					$folders = explode("/",$folder);
-					array_pop($folders);					
-					$openToPath_Path=implode("/",$folders);;				
+					array_pop($folders);
+					$openToPath_Path=implode("/",$folders);;
 				}
 			}
-			
-			# rename                        
+
+			# rename
 			if($todo == 'rename'){
 				if(!$newfilename){
                                     if($newfoldername) {
@@ -86,26 +85,26 @@ if($filename AND $todo){
 				if($file){
 					chdir($folder);
 					rename($file,$newfilename);
-					
+
 					$openToPath=true;
-					$openToPath_Path=$folder."/".$newfilename;	
+					$openToPath_Path=$folder."/".$newfilename;
 				}else{
 					$folderpath = explode('/',$filename);
 					$foldername = array_pop($folderpath);
 					$folderpath = trim(implode('/',$folderpath),'/');
 					chdir($folderpath);
 					rename($foldername,$newfilename);
-					
+
 					$openToPath=true;
-					$openToPath_Path=$folderpath."/".$newfilename;	
+					$openToPath_Path=$folderpath."/".$newfilename;
 				}
-				
+
 			}
-			
+
 			# upload
 			if($todo == 'upload'){
 				$openToPath=true;
-				$openToPath_Path=$folder;	
+				$openToPath_Path=$folder;
 			}
 		}
 	}
@@ -498,7 +497,7 @@ function lmb_ExtOpenContextFolder(el,path,filename){
         <div id="fileName"></div>
         <div id="fileSize"></div>
         <div id="fileType"></div>
-        <progress id="progress" hidden=true style="margin-top:10px"></progress> 
+        <progress id="progress" hidden=true style="margin-top:10px"></progress>
         <span id="percent"></span>
     </div>
     <?php
@@ -534,7 +533,7 @@ echo "<script type=\"text/javascript\">lmb_getTree(\"" . $umgvar['pfad'] . "/EXT
 
 
 //open given path in folderstructure
-if($openToPath==true){  
+if($openToPath==true){
       //create part-paths and execute javascript to open part-paths
       $pathParts=explode("/",str_replace("EXTENSIONS/","",$openToPath_Path));
       $zaehler=0;
@@ -542,10 +541,10 @@ if($openToPath==true){
 	    $tempPath="/EXTENSIONS";
 	    for($i=0;$i<=$zaehler;$i++) {
 		  $tempPath=$tempPath."/".$pathParts[$i];
-	    }	    
+	    }
 	    $zaehler++;
 	    echo "<script type='text/javascript'>lmb_getTree(\"".$umgvar["pfad"].$tempPath."/\",'" . md5($umgvar["pfad"].$tempPath."/") . "',true);</script>";
-      }      
+      }
 }
 
 

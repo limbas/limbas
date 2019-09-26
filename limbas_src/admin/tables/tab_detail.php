@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -88,6 +88,16 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 	echo "<tr><td>".$lang[953]."</td><td>".$result_gtab[$tabgroup]["num_gtab"][$tbzm]."</td></tr>";
 	
 	echo "<tr><td><hr></td><td><hr></td></tr>";
+
+
+	// keyfield
+	if($isview){
+	    echo "<tr><td valign=\"top\">".$lang[2950]."</td><td>";
+		echo "<input type=\"text\" STYLE=\"width:100%\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','keyfield')\" value=\"".$result_gtab[$tabgroup]["keyfield"][$tbzm]."\">";
+        echo "<br><i style=\"color:#AAAAAA\">".$lang[2951]."</i>";
+	    echo "</td></tr>";
+    }
+
 
 	# versioning
 	if(!$isview){
@@ -183,7 +193,7 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 		
 		
 		# search Calendar
-		echo "<tr><td valign=\"top\">searchCalendar</td><td><select multiple style=\"width:100%\" name=\"param2[searchCalendar][]\" size=\"2\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\"><option>";
+		echo "<tr><td valign=\"top\">searchCalendar</td><td><select multiple style=\"width:100%\" name=\"param2[searchCalendar]\" size=\"2\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\"><option>";
 		foreach ($gfield[$tabid]['field_name'] as $key => $value){
 			echo "<option value=\"$key\" ";
 			if(is_array($result_gtab[$tabgroup]["params2"][$tbzm]['searchCalendar']) AND in_array($key,$result_gtab[$tabgroup]["params2"][$tbzm]['searchCalendar'])){echo 'selected';}
@@ -194,7 +204,7 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 		# search Resource
 		if($result_gtab[$tabgroup]["params1"][$tbzm]){
 			$rtabid = $gfield[$tabid]['verkntabid'][$result_gtab[$tabgroup]["params1"][$tbzm]];
-			echo "<tr><td valign=\"top\">searchResource</td><td><select multiple style=\"width:100%\" name=\"param2[searchResource][]\" size=\"2\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\"><option>";
+			echo "<tr><td valign=\"top\">searchResource</td><td><select multiple style=\"width:100%\" name=\"param2[searchResource]\" size=\"2\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\"><option>";
 			foreach ($gfield[$rtabid]['field_name'] as $key => $value){
 				echo "<option value=\"$key\" ";
 				if(is_array($result_gtab[$tabgroup]["params2"][$tbzm]['searchResource']) AND in_array($key,$result_gtab[$tabgroup]["params2"][$tbzm]['searchResource'])){echo 'selected';}
@@ -295,7 +305,7 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
         echo "<tr><td><hr></td><td><hr></td></tr>
 		<tr><td colspan=\"2\" align=\"center\" class=\"tabHeaderItem\">".$lang[2852]."</td></tr>";
         # search Kanban
-        echo "<tr><td valign=\"top\">Search Kanban</td><td><select multiple style=\"width:100%\" name=\"param2[searchKanban][]\" size=\"" . (count($gfield[$tabid]['field_name']) + 1) . "\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\"><option>";
+        echo "<tr><td valign=\"top\">Search Kanban</td><td><select multiple style=\"width:100%\" name=\"param2[searchKanban]\" size=\"" . (count($gfield[$tabid]['field_name']) + 1) . "\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\"><option>";
         foreach ($gfield[$tabid]['field_name'] as $key => $value){
             echo "<option value=\"$key\" ";
             if(is_array($result_gtab[$tabgroup]["params2"][$tbzm]['searchKanban']) AND in_array($key,$result_gtab[$tabgroup]["params2"][$tbzm]['searchKanban'])){echo 'selected';}

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -23,10 +23,10 @@
 
 <DIV ID="element3" class="lmbContextMenu" style="position:absolute;visibility:hidden;z-index:10001;" onclick="activ_menu=1">
 <FORM NAME="ffilter_form">
-<?pop_left();?>
+<?php pop_left();?>
 <TEXTAREA NAME="filter" OnChange="eval('document.form1.filterrule_'+this.form.id.value+'.value = this.value');save_rules(this.form.gtabid.value,this.form.field_id.value,8);" STYLE="width:150px;height:100px;background-color:<?= $farbschema['WEB8'] ?>;"></TEXTAREA>
-<?pop_right();?>
-<?pop_bottom();?>
+<?php pop_right();?>
+<?php pop_bottom();?>
 <INPUT TYPE="HIDDEN" NAME="id">
 <INPUT TYPE="HIDDEN" NAME="gtabid">
 <INPUT TYPE="HIDDEN" NAME="field_id">
@@ -35,10 +35,10 @@
 
 <DIV ID="element6" class="lmbContextMenu" style="position:absolute;visibility:hidden;z-index:10001;" onclick="activ_menu=1">
 <FORM NAME="edittab_form">
-<?pop_left();?>
+<?php pop_left();?>
 <TEXTAREA ID="edittab_value" NAME="edittab_value" OnChange="eval('document.form1.edit_rule_'+this.form.gtabid.value+'.value = this.value'); save_rules(this.form.gtabid.value,'',27)" STYLE="width:150px;height:100px;background-color:<?= $farbschema['WEB8'] ?>;"></TEXTAREA>
-<?pop_right();?>
-<?pop_bottom();?>
+<?php pop_right();?>
+<?php pop_bottom();?>
 <INPUT TYPE="HIDDEN" NAME="gtabid">
 </FORM></DIV>
 
@@ -55,10 +55,10 @@ pop_bottom();
 
 <DIV ID="element5" class="lmbContextMenu" style="position:absolute;visibility:hidden;z-index:10001;" onclick="activ_menu=1">
 <FORM NAME="editrule_form">
-<?pop_left();?>
+<?php pop_left();?>
 <TEXTAREA NAME="editrule" OnChange="eval('document.form1.'+this.form.id.value+'.value = this.value');save_rules(this.form.gtabid.value,this.form.field_id.value,17);" STYLE="width:150px;height:100px;background-color:<?= $farbschema['WEB8'] ?>;"></TEXTAREA>
-<?pop_right();?>
-<?pop_bottom();?>
+<?php pop_right();?>
+<?php pop_bottom();?>
 <INPUT TYPE="HIDDEN" NAME="id">
 <INPUT TYPE="HIDDEN" NAME="gtabid">
 <INPUT TYPE="HIDDEN" NAME="field_id">
@@ -68,10 +68,10 @@ pop_bottom();
 
 <DIV ID="element1" class="lmbContextMenu" style="position:absolute;visibility:hidden;z-index:10001;" onclick="activ_menu=1">
 <FORM NAME="indicator_form">
-<?pop_left();?>
+<?php pop_left();?>
 <TEXTAREA ID="indicator_value" NAME="indicator_value" OnChange="eval('document.form1.indicator_rule_'+this.form.gtabid.value+'.value = this.value'); save_rules(this.form.gtabid.value,'',31)" STYLE="width:150px;height:100px;background-color:<?= $farbschema['WEB8'] ?>;"></TEXTAREA>
-<?pop_right();?>
-<?pop_bottom();?>
+<?php pop_right();?>
+<?php pop_bottom();?>
 <INPUT TYPE="HIDDEN" NAME="gtabid">
 </FORM></DIV>
 
@@ -797,29 +797,32 @@ foreach($_tabgroup['id'] as $bzm => $val) {
                             # form selection
 							$sqlquery = "SELECT ID,NAME,FORM_TYP FROM LMB_FORM_LIST WHERE REFERENZ_TAB = '".$_gtab["tab_id"][$key]."'";
 							$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-							$bzm1 = 1;
-							if(odbc_fetch_row($rs1,1)){
+							$form = null;
+							while(odbc_fetch_row($rs1)){
+							    $id = odbc_result($rs1, 'ID');
+							    $form['name'][$id] = odbc_result($rs1, 'NAME');
+							    $form['typ'][$id] = odbc_result($rs1, 'FORM_TYP');
+                            }
+
+							if($form){
 								echo "<i class=\"lmb-icon-cus lmb-form-alt\" title=\"".$lang[1169]."\"></i>&nbsp<SELECT NAME=\"view_form_".$key."\" STYLE=\"width:100px\" OnChange=\"save_rules('$key','',22)\"><OPTION VALUE=\"0\">default";
-								while(odbc_fetch_row($rs1,$bzm1)){
-								    if(odbc_result($rs1, "FORM_TYP") == 1) {
-                                        if ($f_result[$key]["view_form"] == odbc_result($rs1, "ID")) {
+								foreach($form['name'] as $fid => $_value){
+								    if($form['typ'][$fid] == 1) {
+                                        if ($f_result[$key]["view_form"] == $fid) {
                                             $SELECTED = "SELECTED";
                                         } else {
                                             $SELECTED = "";
                                         }
-                                        echo "<OPTION VALUE=\"" . odbc_result($rs1, "ID") . "\" $SELECTED>" . odbc_result($rs1, "NAME");
+                                        echo "<OPTION VALUE=\"" . $fid . "\" $SELECTED>" . $form['name'][$fid];
                                     }
-									$bzm1++;
 								}
 								echo "</SELECT>&nbsp;";
 
                                 //tablelist form selection
 								echo "<i class=\"lmb-icon lmb-icon-cus lmb-list-edit\" align=\"absbottom\" title=\"".$lang[2756]."\"></i>&nbsp<SELECT NAME=\"view_lform_".$key."\" OnChange=\"save_rules('$key','',24)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">none";
-								$bzm1 = 1;
-								while(odbc_fetch_row($rs1,$bzm1)){
-										if($f_result[$key]["view_lform"] == odbc_result($rs1, "ID")){$SELECTED = "SELECTED";}else{$SELECTED = "";}
-										echo "<OPTION VALUE=\"".odbc_result($rs1, "ID")."\" $SELECTED>".odbc_result($rs1, "NAME");
-										$bzm1++;
+								foreach($form['name'] as $fid => $_value){
+										if($f_result[$key]["view_lform"] == $fid){$SELECTED = "SELECTED";}else{$SELECTED = "";}
+										echo "<OPTION VALUE=\"".$fid."\" $SELECTED>".$form['name'][$fid];
 								}
 								echo "</SELECT>&nbsp";
 
@@ -827,11 +830,9 @@ foreach($_tabgroup['id'] as $bzm => $val) {
 								//calendar form selection
 								if($_gtab["typ"][$key] == 2){
 									echo "<i class=\"lmb-icon lmb-calendar\" align=\"absbottom\" title=\"".$lang[1929]." ".$lang[2574]."\"></i>&nbsp<SELECT NAME=\"view_tform_".$key."\" OnChange=\"save_rules('$key','',23)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">default";
-									$bzm1 = 1;
-									while(odbc_fetch_row($rs1,$bzm1)){
-										if($f_result[$key]["view_tform"] == odbc_result($rs1, "ID")){$SELECTED = "SELECTED";}else{$SELECTED = "";}
-										echo "<OPTION VALUE=\"".odbc_result($rs1, "ID")."\" $SELECTED>".odbc_result($rs1, "NAME");
-										$bzm1++;
+									foreach($form['name'] as $fid => $_value){
+										if($f_result[$key]["view_tform"] == $fid){$SELECTED = "SELECTED";}else{$SELECTED = "";}
+										echo "<OPTION VALUE=\"".$fid."\" $SELECTED>".$form['name'][$fid];
 									}
 									echo "</SELECT>&nbsp";
 								}
@@ -840,10 +841,9 @@ foreach($_tabgroup['id'] as $bzm => $val) {
                                 if($_gtab["typ"][$key] == 7){
 									echo "<i class=\"lmb-icon lmb-columns\" align=\"absbottom\" title=\"kanban ".$lang[2574]."\"></i>&nbsp<SELECT NAME=\"view_tform_".$key."\" OnChange=\"save_rules('$key','',23)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">default";
 									$bzm1 = 1;
-									while(odbc_fetch_row($rs1,$bzm1)){
-										if($f_result[$key]["view_tform"] == odbc_result($rs1, "ID")){$SELECTED = "SELECTED";}else{$SELECTED = "";}
-										echo "<OPTION VALUE=\"".odbc_result($rs1, "ID")."\" $SELECTED>".odbc_result($rs1, "NAME");
-										$bzm1++;
+									foreach($form['name'] as $fid => $_value){
+										if($f_result[$key]["view_tform"] == $fid){$SELECTED = "SELECTED";}else{$SELECTED = "";}
+										echo "<OPTION VALUE=\"".$fid."\" $SELECTED>".$form['name'][$fid];
 									}
 									echo "</SELECT>&nbsp";
 								}

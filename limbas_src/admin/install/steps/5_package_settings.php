@@ -37,7 +37,7 @@ if($index = array_search("clean.tar.gz", $demoPaths)) {
                 <td>
                     <div class="radio">
                         <label style="display:block;">
-                            <input type="radio" checked name="backupdir" value="clean.tar.gz">Install limbas without example values (ready for your application)
+                            <input type="radio" checked="checked" name="backupdir" value="clean.tar.gz">Install limbas without example values (ready for your application)
                         </label>
                     </div>
                 </td>

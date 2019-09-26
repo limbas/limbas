@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -19,6 +19,8 @@
  */
 
 ?>
+
+
 
 <!-- include codemirror with sql syntax highlighting and sql code completion -->
 <script src="extern/codemirror/lib/codemirror.js"></script>
@@ -88,6 +90,7 @@ function ZoomViewFieldUpdate(cm) {
     }
 }
 
+
 $(function() {
     zoomFieldCodeMirror = CodeMirror.fromTextArea(document.getElementById("ZoomFieldArea"), {
         lineNumbers: true,
@@ -104,6 +107,7 @@ $(function() {
         ZoomViewFieldUpdate(cm);
     });
 });
+
 
 
 </script>
@@ -151,13 +155,15 @@ if($view_section == 1 OR $view_section == 2) {
 
 
     // generate SQL from editor
+    $manually = true;
     if ($view_section == 2 AND ($act == 'view_save' OR $act == 'view_isvalid' OR $act == 'view_create' OR $act == 'view_replace')) {
         $view_def = lmb_questCreateSQL($viewid);
+        $manually = false;
     }
 
     // save view definition
     if ($act == 'view_save') {
-        lmb_saveViewDefinition($viewid, $view_def);
+        lmb_saveViewDefinition($viewid, $view_def, null, $manually);
     } elseif ($act == 'view_isvalid') {
         lmb_saveViewDefinition($viewid, $view_def);
         if (lmb_precheckView($viewid, $view_def)) {
@@ -371,8 +377,14 @@ show_viewFields($viewid);
 	#if($gview["ispublic"]){$st_p = "color:black;background-color:".$farbschema['WEB7'];}
 	#if($gview["viewexists"]){$st_v = "color:black;background-color:".$farbschema['WEB7'];}
 	?>
-
-	<input type="button" value="<?=$lang[2940]?>" onclick="document.form1.act.value='view_save';setDrag();document.form1.submit();">
+    <?php
+    $confirm = '';
+    if ($gview['setManually']) {
+        $text = 'Storing configuration overwrites manually edited sql! Proceed?';
+        $confirm = "if (!confirm('$text')) { return; }";
+    }
+    ?>
+	<input type="button" value="<?=$lang[2940]?>" onclick="<?= $confirm ?> document.form1.act.value='view_save';setDrag();document.form1.submit();">
     <input type="button" value="<?=$lang[2941]?>" onclick="document.form1.act.value='view_isvalid';document.form1.submit();">
 
     <?php
@@ -431,7 +443,7 @@ document.getElementById("lmbViewfieldContainer").style.width = (window.innerWidt
 		echo "<br><br>";
 		$sRow = "style=\"border:1px solid grey\"";
 		$sTable = "cellpadding=2 cellspacing=0 style=\"border-collapse:collapse\"";
-		if($rs = @odbc_exec($db, lmb_paramTransView($viewid, $gview["viewdef"])) or lmb_questerror(odbc_errormsg($db),$gview["viewdef"])){
+		if($rs = odbc_exec($db, lmb_paramTransView($viewid, $gview["viewdef"])) or lmb_questerror(odbc_errormsg($db),$gview["viewdef"])){
 			echo ODBCResourceToHTML($rs, $sTable, $sRow, 1000);
 		}
 	}

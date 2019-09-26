@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -42,8 +42,7 @@ if($session["superadmin"] == 1){
 	WHERE LMB_RULES_TABLES.TAB_ID = LMB_CONF_TABLES.TAB_ID
 	ORDER BY LMB_CONF_TABLES.SORT";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$bzm = 1;
-	while(odbc_fetch_row($rs,$bzm)) {
+	while(odbc_fetch_row($rs)) {
 		$i = odbc_result($rs,"TAB_ID");
 		$_gtab["tab_id"][$i] = $i;
 		$_gtab["table"][$i] = odbc_result($rs,"TABELLE");
@@ -60,7 +59,6 @@ if($session["superadmin"] == 1){
 		$_gtab["verkn"][$i] = odbc_result($rs, "VERKN");
 		$_gtab["typ"][$i] = odbc_result($rs, "TYP");
 		$_gtab["versioning"][$i] = odbc_result($rs, "VERSIONING");
-		$bzm++;
 	}
 
 }else{
@@ -69,7 +67,7 @@ if($session["superadmin"] == 1){
 }
 
 
-$ext_fk = getTypeExensions("lmbd");
+$ext_fk = getTypeExensions();
 
 /* --- Gruppe und Untergruppen ---------------------------- */
 function set_rights($ID,$ismaingroup,$addsub){
@@ -464,10 +462,8 @@ function group_list($ID,$first,$addsubgroup){
 		$sqlquery = "SELECT GROUP_ID FROM LMB_GROUPS WHERE LEVEL = $ID";
 	    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	    if(!$rs) {$commit = 1;}
-		$bzm = 1;
-	    while(odbc_fetch_row($rs, $bzm)) {
+	    while(odbc_fetch_row($rs)) {
 			group_list(odbc_result($rs, "GROUP_ID"),0,$addsubgroup);
-		$bzm++;
 		}
 	}
 	set_rights($ID,$first,$addsubgroup);
@@ -547,13 +543,11 @@ foreach($_gtab["tab_id"] as $key => $value){
         $s_result[$key]["viewver"] = odbc_result($rs, "VIEWVER");
         $s_result[$key]["lock"] = odbc_result($rs, "LMLOCK");
         $s_result[$key]["hidemenu"] = odbc_result($rs, "HIDEMENU");
-        
-        $bzm1 = 1;
-        while (odbc_fetch_row($rs, $bzm1)) {
+
+        while (odbc_fetch_row($rs)) {
             $field_id = odbc_result($rs, "FIELD_ID");
             $s_result[$key]["view"][$field_id] = odbc_result($rs, "LMVIEW");
             $s_result[$key]["edit"][$field_id] = odbc_result($rs, "EDIT");
-            $bzm1 ++;
         }
     }
     
@@ -614,23 +608,27 @@ foreach($_gtab["tab_id"] as $key => $value){
                 AND LMB_RULES_FIELDS.TAB_ID = $key";
             
             $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-            $l_result[$key]["tabedit"] = odbc_result($rs, "TABEDIT");
-            $l_result[$key]["tabview"] = odbc_result($rs, "TABVIEW");
-            $l_result[$key]["tabneed"] = odbc_result($rs, "TABNEED");
-            $l_result[$key]["tabcopy"] = odbc_result($rs, "TABCOPY");
-            $l_result[$key]["delete"] = odbc_result($rs, "DEL");
-            $l_result[$key]["hide"] = odbc_result($rs, "HIDE");
-            $l_result[$key]["hidemenu"] = odbc_result($rs, "HIDEMENU");
-            $l_result[$key]["add"] = odbc_result($rs, "LMADD");
-            $l_result[$key]["userrules"] = odbc_result($rs, "USERRULES");
-            $l_result[$key]["userprivilege"] = odbc_result($rs, "USERPRIVILEGE");
-            $l_result[$key]["hierarchicprivilege"] = odbc_result($rs, "HIRAPRIVILEGE");
-            $l_result[$key]["viewver"] = odbc_result($rs, "VIEWVER");
-            $l_result[$key]["lock"] = odbc_result($rs, "LMLOCK");
-            $l_result[$key]["tab_trigger"] = explode(",", odbc_result($rs, "TABTRIGGER"));
-            $l_result[$key]["indicator"] = explode(",", odbc_result($rs, "INDICATOR"));
-            $bzm1 = 1;
-            while (odbc_fetch_row($rs, $bzm1)) {
+            $bzm=1;
+            while (odbc_fetch_row($rs)) {
+                if($bzm == 1) {
+                    $l_result[$key]["tabedit"] = odbc_result($rs, "TABEDIT");
+                    $l_result[$key]["tabview"] = odbc_result($rs, "TABVIEW");
+                    $l_result[$key]["tabneed"] = odbc_result($rs, "TABNEED");
+                    $l_result[$key]["tabcopy"] = odbc_result($rs, "TABCOPY");
+                    $l_result[$key]["taboption"] = odbc_result($rs, "FIELDOPTION");
+                    $l_result[$key]["delete"] = odbc_result($rs, "DEL");
+                    $l_result[$key]["hide"] = odbc_result($rs, "HIDE");
+                    $l_result[$key]["hidemenu"] = odbc_result($rs, "HIDEMENU");
+                    $l_result[$key]["add"] = odbc_result($rs, "LMADD");
+                    $l_result[$key]["userrules"] = odbc_result($rs, "USERRULES");
+                    $l_result[$key]["userprivilege"] = odbc_result($rs, "USERPRIVILEGE");
+                    $l_result[$key]["hierarchicprivilege"] = odbc_result($rs, "HIRAPRIVILEGE");
+                    $l_result[$key]["viewver"] = odbc_result($rs, "VIEWVER");
+                    $l_result[$key]["lock"] = odbc_result($rs, "LMLOCK");
+                    $l_result[$key]["tab_trigger"] = explode(",", odbc_result($rs, "TABTRIGGER"));
+                    $l_result[$key]["indicator"] = explode(",", odbc_result($rs, "INDICATOR"));
+                }
+
                 $field_id = odbc_result($rs, "FIELD_ID");
                 $l_result[$key]["view"][$field_id] = odbc_result($rs, "LMVIEW");
                 $l_result[$key]["edit"][$field_id] = odbc_result($rs, "EDIT");
@@ -649,7 +647,8 @@ foreach($_gtab["tab_id"] as $key => $value){
                 $l_result[$key]["def"][$field_id] = odbc_result($rs, "DEFLT");
                 $l_result[$key]["listedit"][$field_id] = odbc_result($rs, "LISTEDIT");
                 $l_result[$key]["speechrec"][$field_id] = odbc_result($rs, "SPEECHREC");
-                $bzm1 ++;
+
+                $bzm++;
             }
         }
     }
@@ -730,46 +729,52 @@ foreach($_gtab["tab_id"] as $key => $value){
                 AND LMB_CONF_FIELDS.TAB_ID = $key
                 ORDER BY LMB_CONF_FIELDS.SORT";
         $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-        
-        $f_result[$key]["tabedit"] = odbc_result($rs, "TABEDIT");
-        $f_result[$key]["tabview"] = odbc_result($rs, "TABVIEW");
-        $f_result[$key]["tabcopy"] = odbc_result($rs, "TABCOPY");
-        $f_result[$key]["delete"] = odbc_result($rs, "DEL");
-        $f_result[$key]["hide"] = odbc_result($rs, "HIDE");
-        $f_result[$key]["hidemenu"] = odbc_result($rs, "HIDEMENU");
-        $f_result[$key]["add"] = odbc_result($rs, "LMADD");
-        $f_result[$key]["userrules"] = odbc_result($rs, "USERRULES");
-        $f_result[$key]["userprivilege"] = odbc_result($rs, "USERPRIVILEGE");
-        $f_result[$key]["hierarchicprivilege"] = odbc_result($rs, "HIRAPRIVILEGE");
-        $f_result[$key]["viewver"] = odbc_result($rs, "VIEWVER");
-        $f_result[$key]["lock"] = odbc_result($rs, "LMLOCK");
-        $f_result[$key]["versioning_type"] = odbc_result($rs, "VERSIONING_TYPE");
-        $f_result[$key]["view_form"] = odbc_result($rs, "VIEW_FORM");
-        $f_result[$key]["view_tform"] = odbc_result($rs, "VIEW_TFORM");
-        $f_result[$key]["view_lform"] = odbc_result($rs, "VIEW_LFORM");
-        $f_result[$key]["tabeditrule"] = htmlentities(odbc_result($rs, "TABEDITRULE"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]);
-        $f_result[$key]["indicator"] = htmlentities(odbc_result($rs, "INDICATOR"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]);
-        $f_result[$key]["tab_trigger"] = explode(",", odbc_result($rs, "TABTRIGGER"));
-        $specificprivilege = explode(",", odbc_result($rs, "SPECIFICPRIVILEGE"));
-        foreach ($specificprivilege as $spkey => $spval) {
-            if ($spval) {
-                if (is_numeric($spval)) {
-                    $f_result[$key]["specificprivilege"]["view_$key"][] = $spval;
-                    $f_result[$key]["specificprivilege"]["edit_$key"][] = $spval;
-                    $f_result[$key]["specificprivilege"]["delete_$key"][] = $spval;
-                } else {
-                    $f_result[$key]["specificprivilege"]["view_$key"][] = preg_replace("/[ved]/", "", $spval);
-                    if (lmb_strpos($spval, "e")) {
-                        $f_result[$key]["specificprivilege"]["edit_$key"][] = preg_replace("/[ved]/", "", $spval);
-                    }
-                    if (lmb_strpos($spval, "d")) {
-                        $f_result[$key]["specificprivilege"]["delete_$key"][] = preg_replace("/[ved]/", "", $spval);
+
+        $bzm = 1;
+        while (odbc_fetch_row($rs)) {
+
+            if($bzm == 1) {
+                $f_result[$key]["tabedit"] = odbc_result($rs, "TABEDIT");
+                $f_result[$key]["tabview"] = odbc_result($rs, "TABVIEW");
+                $f_result[$key]["tabneed"] = odbc_result($rs, "TABNEED");
+                $f_result[$key]["tabcopy"] = odbc_result($rs, "TABCOPY");
+                $f_result[$key]["taboption"] = odbc_result($rs, "FIELDOPTION");
+                $f_result[$key]["delete"] = odbc_result($rs, "DEL");
+                $f_result[$key]["hide"] = odbc_result($rs, "HIDE");
+                $f_result[$key]["hidemenu"] = odbc_result($rs, "HIDEMENU");
+                $f_result[$key]["add"] = odbc_result($rs, "LMADD");
+                $f_result[$key]["userrules"] = odbc_result($rs, "USERRULES");
+                $f_result[$key]["userprivilege"] = odbc_result($rs, "USERPRIVILEGE");
+                $f_result[$key]["hierarchicprivilege"] = odbc_result($rs, "HIRAPRIVILEGE");
+                $f_result[$key]["viewver"] = odbc_result($rs, "VIEWVER");
+                $f_result[$key]["lock"] = odbc_result($rs, "LMLOCK");
+                $f_result[$key]["versioning_type"] = odbc_result($rs, "VERSIONING_TYPE");
+                $f_result[$key]["view_form"] = odbc_result($rs, "VIEW_FORM");
+                $f_result[$key]["view_tform"] = odbc_result($rs, "VIEW_TFORM");
+                $f_result[$key]["view_lform"] = odbc_result($rs, "VIEW_LFORM");
+                $f_result[$key]["tabeditrule"] = htmlentities(odbc_result($rs, "TABEDITRULE"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]);
+                $f_result[$key]["indicator"] = htmlentities(odbc_result($rs, "INDICATOR"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]);
+                $f_result[$key]["tab_trigger"] = explode(",", odbc_result($rs, "TABTRIGGER"));
+                $specificprivilege = explode(",", odbc_result($rs, "SPECIFICPRIVILEGE"));
+                foreach ($specificprivilege as $spkey => $spval) {
+                    if ($spval) {
+                        if (is_numeric($spval)) {
+                            $f_result[$key]["specificprivilege"]["view_$key"][] = $spval;
+                            $f_result[$key]["specificprivilege"]["edit_$key"][] = $spval;
+                            $f_result[$key]["specificprivilege"]["delete_$key"][] = $spval;
+                        } else {
+                            $f_result[$key]["specificprivilege"]["view_$key"][] = preg_replace("/[ved]/", "", $spval);
+                            if (lmb_strpos($spval, "e")) {
+                                $f_result[$key]["specificprivilege"]["edit_$key"][] = preg_replace("/[ved]/", "", $spval);
+                            }
+                            if (lmb_strpos($spval, "d")) {
+                                $f_result[$key]["specificprivilege"]["delete_$key"][] = preg_replace("/[ved]/", "", $spval);
+                            }
+                        }
                     }
                 }
             }
-        }
-        $bzm1 = 1;
-        while (odbc_fetch_row($rs, $bzm1)) {
+
             $field_id = odbc_result($rs, "FIELD_ID");
             if ($s_result[$key]["view"][$field_id] or ! $s_result) {
                 $f_result[$key]["field_id"][$field_id] = $field_id;
@@ -799,7 +804,7 @@ foreach($_gtab["tab_id"] as $key => $value){
                 $f_result[$key]["listedit"][$field_id] = odbc_result($rs, "LISTEDIT");
                 $f_result[$key]["speechrec"][$field_id] = odbc_result($rs, "SPEECHREC");
             }
-            $bzm1 ++;
+            $bzm ++;
         }
     }
 }

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -37,13 +37,11 @@ function get_fonts(){
 	$sqlquery = "SELECT * FROM LMB_FONTS ORDER BY FAMILY,STYLE";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS["action"],__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$bzm = 1;
-	while(odbc_fetch_row($rs,$bzm)){
+	while(odbc_fetch_row($rs)){
 		$family = odbc_result($rs,"FAMILY");
 		$sysfont["family"][$family][] = odbc_result($rs,"FAMILY");
 		$sysfont["name"][$family][] = odbc_result($rs,"NAME");
 		$sysfont["style"][$family][] = odbc_result($rs,"STYLE");
-		$bzm++;
 	}
 
 	return $sysfont;
@@ -62,7 +60,7 @@ function get_report($report_id,$new){
 
 	$sqlquery = "SELECT ID,NAME,BESCHREIBUNG,DEFFORMAT,PAGE_STYLE,SQL_STATEMENT,REFERENZ_TAB,GROUPLIST,TARGET,SAVENAME,TAGMOD,EXTENSION,INDEXORDER,LISTMODE FROM LMB_REPORT_LIST WHERE ID = $report_id";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_fetch_row($rs, 1)) {
+	if(odbc_fetch_row($rs)) {
 		$report["name"] = odbc_result($rs, "NAME");
 		$report["savename"] = odbc_result($rs, "SAVENAME");
 		$report["report_id"] = odbc_result($rs, "ID");
@@ -115,20 +113,18 @@ function get_dataFields($ID,$report_id,$report_tab,$report_tab_cells,$bzm2){
 	$bzm1 = 0;
 	$has_row = 0;
 	while($bzm3 <= $report_tab_cells){
-		$sqlquery = "SELECT DISTINCT EL_ID,DBFIELD,VERKN_BAUM,STYLE,TYP,EXTVALUE,INHALT FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB = ".$report_tab." AND TAB_EL_ROW = ".$bzm2." AND TAB_EL_COL = ".$bzm3." ORDER BY EL_ID ".LMB_DBFUNC_FOR_REUSE;
+		$sqlquery = "SELECT DISTINCT EL_ID,DBFIELD,VERKN_BAUM,STYLE,TYP,EXTVALUE,INHALT FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB_EL = ".$report_tab." AND TAB_EL_ROW = ".$bzm2." AND TAB_EL_COL = ".$bzm3." ORDER BY EL_ID ";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(odbc_fetch_row($rs,1)){
+
 			/*------- Spalteninhalte Dateninhalte + max_count ---------*/
-			$bzm = 1;
-			while(odbc_fetch_row($rs,$bzm)) {
+            while (odbc_fetch_row($rs)) {
 				$style = odbc_result($rs, "STYLE");
-				
 				#--------- db-field --------------
 				if(odbc_result($rs, "TYP") == "dbdat" AND !$isarg){
 					$fieldlist[$bzm1] = array(odbc_result($rs, "DBFIELD"),odbc_result($rs, "VERKN_BAUM"),$style,odbc_result($rs, "EXTVALUE"),odbc_result($rs, "EL_ID"));
 					$bzm1++;
 					$isdbdat = 1;
-					
+
 				#--------- php argument / for extended datasource --------------
 				}elseif(odbc_result($rs, "TYP") == "formel" AND !$isdbdat){
 					$style_ = explode(';',$style);
@@ -136,13 +132,14 @@ function get_dataFields($ID,$report_id,$report_tab,$report_tab_cells,$bzm2){
 					if($style_[33] == 'true'){
 						$fieldlist[$bzm1] = array(odbc_result($rs, "DBFIELD"),odbc_result($rs, "VERKN_BAUM"),$style,odbc_result($rs, "EXTVALUE"),odbc_result($rs, "EL_ID"));
 						$isarg = 1;
-						if(!$value){$value= odbc_result($rs, "INHALT");}
+                        if (!$value) {
+                            $value = odbc_result($rs, "INHALT");
+                        }
 						$bzm1++;
 					}
 				}
-				$bzm++;
 			}
-		}
+
 		$bzm3++;
 	}
 	
@@ -166,8 +163,7 @@ function set_fonts($pdf,$report_id){
 	
 	$sqlquery = "SELECT EL_ID,STYLE FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TYP != 'tab'";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$bzm = 1;
-	while(odbc_fetch_row($rs,$bzm)) {
+	while(odbc_fetch_row($rs)) {
 		$style = odbc_result($rs, "STYLE");
 		if($style){
 			$style = explode(";",$style);
@@ -175,7 +171,6 @@ function set_fonts($pdf,$report_id){
 				$font[] = $style[0];
 			}
 		}
-		$bzm++;
 	}
 	//$available_fonts = get_fonts();
 	if($font){
@@ -200,13 +195,14 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 	global $groupdat;
 	global $umgvar;
 	global $glob_rowel;
+	global $glob_el;
 	global $gfield;
 	global $dingbats_char_on;
 	global $dingbats_char_off;
 	global $filestruct;
 	
 	$referenz_tab = $report["referenz_tab"];
-	
+
 	# get Fieldlist
 	if(!is_array($fieldlist) AND $report_tab){
 		$fieldlist = get_dataFields($ID,$report_id,$report_tab,$report_tab_cells,$bzm2);
@@ -222,14 +218,13 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 			}
 		}
 	}
-	
+
 	# list of dbfields
 	foreach($fieldlist as $key => $value){
 		$dbfield = explode(";",$value[0]);
 		$DBVERKNB = $value[1];
 		$style = explode(";",$value[2]);
 		$extvalue = $value[3];
-
 		$gtabid = $dbfield[0];
 		$fieldid = $dbfield[1];
 		$tab = $gtab["table"][$gtabid];
@@ -252,24 +247,24 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 
 
 		if($field AND $tab){
-			if($gtab["typ"][$gtabid] != 5){
-				$extension["select"][] = $tab.".ID AS IDALIAS_".$gtabid;
-			}
+
 			$onlyfield[$gtabid][] = $fieldid;
-			
-			# --- currency ---
-			#if($data_type == 30){
-				#$select[] = $tab.".".$field.",".$tab.".".$field."_C";
-			#}else{
-				#$select[] = $tab.".".$field;
-			#}
+
 			# --- extendet SQL ---
 			if($extvalue){
 				if(lmb_substr($extvalue,0,6) == "return"){
 					return eval($extvalue);
 				}else{
 					eval($extvalue.";");
+					if($ext_ = $extension[$gtabid]){
+					    $extension = array_merge($extension,$ext_);
+					    unset($extension[$gtabid]);
+                    }
 				}
+			}
+
+			if($gtab["keyfield"][$gtabid]){
+				$extension["select"][] = $tab.".".$gtab["keyfield"][$gtabid]." AS IDALIAS_".$gtabid;
 			}
 
 			#$extension["from"][] = $tab;
@@ -301,10 +296,11 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 
 						$extension["where"][] = $verkn_part_0.".ID = ".$verkn_part_2.".ID";
 						$extension["where"][] = $verkn_part_2.".VERKN_ID = ".$verkn_part_1.".ID";
-						# set Active Elements
 						if(!$bzm3){
 							$extension["where"][] = $verkn_part_2.".ID = ".$ID;
 						}
+
+						# set Active Elements
 						#if($style[33] != 'true' OR $verkn_part_4){
 						#	$extension["where"][] = $verkn_part_2.".AKTIV = ".LMB_DBDEF_TRUE;
 						#}
@@ -326,8 +322,8 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 				}
 				
 				
-			}elseif($dbfield AND $style[33] != 'true' AND $gtab["typ"][$gtabid] != 5){
-				$extension["where"][] = $tab.".ID = $ID";
+			}elseif($dbfield AND $style[33] != 'true' AND $gtab["keyfield"][$gtabid]){
+				$extension["where"][] = $tab.".".$gtab["keyfield"][$gtabid]." = ".$ID;
 			}
 		}
 	}
@@ -343,7 +339,7 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 	
 	# set tabid for independent table
 	#if($referenz_tab != $gtabid AND $report_tab_cells AND !$verkn_baum){    !!!!!!????????
-	if($referenz_tab != $gtabid AND !$verkn_baum){	
+	if($referenz_tab != $gtabid AND !$verkn_baum){
 		$referenz_tab = $gtabid;
 	}
 	
@@ -355,12 +351,12 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 	$query = get_sqlquery($referenz_tab,1,$filter,$gsr,null,$onlyfield,null,$extension,$ID);
 	$rs1 = odbc_exec($db,$query["sql"]) or errorhandle(odbc_errormsg($db),$query["sql"],$action,__FILE__,__LINE__);
 
-	$bzm1 = 1;
 	$bzm0 = 0;
-	while(odbc_fetch_row($rs1, $bzm1)) {
+	while(odbc_fetch_row($rs1)) {
 
 		# list of dbfields
 		$bzm3 = 0;
+		$break = 0;
 		foreach($fieldlist as $key => $value){
 			$mdata = null;
 
@@ -402,7 +398,7 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 					if($gfield[$gtabid]["nformat"][$fieldid]){
 						$DBRESULT[$bzm3][$bzm0] = convert_NumberFormat($oresult,$gfield[$gtabid]["nformat"][$fieldid])." ".$symbol;
 					}else{
-						$DBRESULT[$bzm3][$bzm0] = convert_NumberFormat($oresult,2,",","")." ".$symbol;
+						$DBRESULT[$bzm3][$bzm0] = convert_NumberFormat($oresult,2)." ".$symbol;
 					}
 					# --- Kommazahl ---
 				}elseif($parse_type == 6){
@@ -457,11 +453,9 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 				}elseif($data_type == 18 OR $data_type == 31 OR $data_type == 32){
 					$sqlquery2 = "SELECT LMB_SELECT_W.WERT FROM LMB_SELECT_W,LMB_SELECT_D WHERE LMB_SELECT_W.ID = LMB_SELECT_D.W_ID AND LMB_SELECT_D.TAB_ID = ".$gtabid." AND LMB_SELECT_D.FIELD_ID = ".$fieldid." AND LMB_SELECT_D.DAT_ID = ".odbc_result($rs1, "IDALIAS_".$gtabid);
 					$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
-					$bzm2 = 1;
 					$mdata = Array();
-					while(odbc_fetch_row($rs2, $bzm2)) {
+					while(odbc_fetch_row($rs2)) {
 						$mdata[] = odbc_result($rs2, "WERT");
-						$bzm2++;
 					}
 					if($bzm2 == 1){
 						$DBRESULT[$bzm3][$bzm0] = "";
@@ -480,9 +474,8 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 				}elseif($data_type == 13){
 					$sqlquery2 = "SELECT DISTINCT LDMS_FILES.SECNAME,LDMS_FILES.LEVEL,LDMS_FILES.SORT,LDMS_FILES.NAME,LMB_MIMETYPES.EXT,LDMS_FILES.SIZE,LMB_MIMETYPES.PIC,LMB_MIMETYPES.MIMETYPE FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND LDMS_FILES.TABID = $gtabid AND LDMS_FILES.FIELDID = $fieldid AND LDMS_FILES.DATID = ".odbc_result($rs1, "IDALIAS_".$gtabid)." AND TYP = 3  AND VID = 1 AND DEL = ".LMB_DBDEF_FALSE." ORDER BY LDMS_FILES.SORT";
 					$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
-					$bzm2 = 1;
-					#while(odbc_fetch_row($rs2, $bzm2)) {
-					if(odbc_fetch_row($rs2, 1)) {
+					#while(odbc_fetch_row($rs2)) {
+					if(odbc_fetch_row($rs2)) {
 					    if(!$filestruct){get_filestructure();}
 					    $level = odbc_result($rs2, "LEVEL");
 						$mime = explode("/",odbc_result($rs2, "MIMETYPE"));
@@ -491,9 +484,6 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 						}elseif($mime[1] == "pdf"){
 							$DBRESULT[$bzm3][$bzm0] = "PDF#*#".$umgvar["uploadpfad"].$filestruct['path'][$level].odbc_result($rs2, "SECNAME").".".odbc_result($rs2, "EXT");
 						}
-
-						$bzm2++;
-						$bzm2 = 9999999;
 					}
 					# --- sonstige ---
 				}else{
@@ -507,24 +497,25 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 			$GLOBALS["glob_rowel"][$elid][$rowid] = $DBRESULT[$bzm3][$bzm0];
 
 			# break after single elements for tables
-			if($style[33] != 'true' AND $report_tab){$bzm1 = 9999999;}else{$DBRESULT["list"] = 1;}
+			if($style[33] != 'true' AND $report_tab){$break = 1;}else{$DBRESULT["list"] = 1;}
 
 			$bzm3++;
 		}
 
+		if($break){break;}
+
 		$bzm0++;
-		$bzm1++;
 		$rowid++;
 	}
 
 	$DBRESULT["count"] = $bzm0;
 	$DBRESULT["rowid"] = $rowid-1;
 
-        return $DBRESULT;
+    return $DBRESULT;
 }
 
 /* --- Element-Liste --------------- */
-function element_list($ID,$report,$TYP){
+function element_list($ID,&$report,$TYP){
 	global $db;
 	
 	$report_id = $report["report_id"];
@@ -560,9 +551,8 @@ function element_list($ID,$report,$TYP){
 	}
 
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$bzm = 1;
 	$bzm0 = 1;
-	while(odbc_fetch_row($rs, $bzm)) {
+	while(odbc_fetch_row($rs)) {
 		$report["id"][$bzm0] = odbc_result($rs, "EL_ID");
 		$report["typ"][$bzm0] = odbc_result($rs, "TYP");
 		$report["value"][$bzm0] = trim(odbc_result($rs, "INHALT")); # longtext handle
@@ -571,7 +561,7 @@ function element_list($ID,$report,$TYP){
 		$report["posyabs"][$bzm0] = odbc_result($rs, "POSY");
 		$report["width"][$bzm0] = odbc_result($rs, "WIDTH");
 		$report["height"][$bzm0] = odbc_result($rs, "HEIGHT");
-		$report["style"][$bzm] = explode(";",odbc_result($rs, "STYLE"));
+		$report["style"][$bzm0] = explode(";",odbc_result($rs, "STYLE"));
 		$report["dbfield"][$bzm0] = odbc_result($rs, "DBFIELD");
 		$report["data_type"][$bzm0] = odbc_result($rs, "DB_DATA_TYPE");
 		$report["tab"][$bzm0] = odbc_result($rs, "TAB");
@@ -608,10 +598,9 @@ function element_list($ID,$report,$TYP){
 			}else{
 				$sk = '0';
 			}
-			$preselect[$sk][$bzm0] = array(odbc_result($rs, "DBFIELD"),$sk, odbc_result($rs, "STYLE"),trim(odbc_result($rs, "EXTVALUE")));
+			$preselect[$sk][$bzm0] = array(odbc_result($rs, "DBFIELD"),$sk, odbc_result($rs, "STYLE"),trim($extvalue));
 		}else{$report["dbvalue"][$bzm0] = 0;}
 
-		$bzm++;
 		$bzm0++;
 	}
 
@@ -643,7 +632,7 @@ function breakFooter($report_id){
 
 	$sqlquery = "SELECT DISTINCT POSY FROM LMB_REPORTS WHERE TAB_EL_ROW <= 0 AND TAB_EL_COL <= 0 AND BERICHT_ID = $report_id AND FOOTER = ".LMB_DBDEF_TRUE." ORDER BY POSY";
 	$rs = odbc_exec($db,$sqlquery);
-	if(odbc_fetch_row($rs, 1)) {
+	if(odbc_fetch_row($rs)) {
 		$pos = odbc_result($rs, "POSY");
 	}
 	return $pos;
@@ -651,7 +640,10 @@ function breakFooter($report_id){
 
 # --- PDF name ---------------------------------
 function reportSavename($report_name,$report_savename,$ID,$report_medium,$report_rename=null,$add_timestamp=false){
+    global $umgvar;
+
     if($ID){$idpref = "_".$ID;}
+    $report_medium = str_replace('tcpdf','pdf',$report_medium);
 
 	# own name
 	if($report_rename){
@@ -663,13 +655,11 @@ function reportSavename($report_name,$report_savename,$ID,$report_medium,$report
 	}else{
 		$name = $report_name.$idpref. ($add_timestamp ? ('_' . date("U")) : '') . ".".$report_medium;
 	}
-	
-	$name = str_replace(lmb_utf8_decode("ä"),"ae",$name);
-	$name = str_replace(lmb_utf8_decode("ö"),"oe",$name);
-	$name = str_replace(lmb_utf8_decode("ü"),"ue",$name);
-	$name = str_replace(lmb_utf8_decode("ß"),"ss",$name);
-	$name = preg_replace("/[^[:alnum:]\.]|[ ]/","_",$name);
 
+    #if($umgvar['charset'] == 'UTF-8'){$u = 'u';}
+	#$name = preg_replace("/[^[:alnum:]\.]|[ ]/$u",'',$name);
+
+    $name = str_replace(' ','',$name);
 	$name = str_replace(".pdf","",$name);
 	$name = str_replace(".xml","",$name);
 	$name = str_replace(".odt","",$name);
@@ -693,10 +683,10 @@ function reportArchiv($temp_file_path,$report,$ID,$report_output){
 	$name = explode("/",$temp_file_path);
 	$name = $name[count($name)-1];
 
-	if(file_exists(lmb_utf8_encode($temp_file_path))){
+	if(file_exists(lmb_utf8_encode($temp_file_path))){ 
 
 		# ------- pdf archivieren ---------
-		if($report_output >= 2){
+		if($report_output == 2 /* maybe also 3? */){
 			if(is_numeric($report["target"])){
 				$sqlquery = "SELECT FIELD_ID,TAB_ID,TYP,LEVEL,ID FROM LDMS_STRUCTURE WHERE ID = ".$report["target"];
 				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -706,7 +696,7 @@ function reportArchiv($temp_file_path,$report,$ID,$report_output){
 					$level = odbc_result($rs, "ID");
 					$field_id = odbc_result($rs, "FIELD_ID");
 					$dublicate["forceDelnm"][0] = 1;
-					$file["file"][0] = $temp_file_path;$file["file_name"][] = $name;$file["file_type"][] = 0;$file["file_archiv"][] = 0;
+					$file["file"][0] = lmb_utf8_encode($temp_file_path);$file["file_name"][] = $name;$file["file_type"][] = 0;$file["file_archiv"][] = 0;
 					#$fileid = upload($file,$level,array("datid" => $ID,"gtabid" => $report["referenz_tab"],"fieldid" => $report["report_id"]),1,$dublicate);
 					$fileid = upload($file,$level,array("datid" => $ID,"gtabid" => $report["referenz_tab"],"fieldid" => $field_id),1,$dublicate);
 

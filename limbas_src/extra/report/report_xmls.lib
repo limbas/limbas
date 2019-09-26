@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -159,7 +159,7 @@ function print_tab($dom,$report_id,$item,$ID,$el,&$report){
 	$sqlquery = "SELECT TAB_EL_COL,TAB_EL_COL_SIZE FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB_EL_ROW = 0 AND TYP = 'tabhead' AND TAB = ".$report_tab." ORDER BY TAB_EL_COL";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$bzm = 1;
-	while(odbc_fetch_row($rs, $bzm)) {
+	while(odbc_fetch_row($rs)) {
 		$firstrow_width[$bzm] = odbc_result($rs, "TAB_EL_COL_SIZE");
 		$bzm++;
 	}
@@ -188,40 +188,49 @@ function print_tab($dom,$report_id,$item,$ID,$el,&$report){
 		while($bzm3 <= $report_tab_cells){
 			
 			# Auslesen einzelner Zellenparameter
-			$sqlquery = "SELECT * FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB = ".$report_tab." AND TAB_EL_ROW = ".$bzm2." AND TAB_EL_COL = ".$bzm3." ORDER BY EL_ID ".LMB_DBFUNC_FOR_REUSE;
+			$sqlquery = "SELECT EL_ID,POSX,POSY,HEIGHT,STYLE,TYP,TAB,INHALT,DBFIELD FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB = ".$report_tab." AND TAB_EL_ROW = ".$bzm2." AND TAB_EL_COL = ".$bzm3." ORDER BY EL_ID ";
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			if(odbc_fetch_row($rs,1)){
-				$has_row = 1;
-			}
+			$rep = null;
+			while(odbc_fetch_row($rs)) {
+			    $rep['el_id'][] = odbc_result($rs, 'EL_ID');
+                $rep['posx'][] = odbc_result($rs, 'POSX');
+                $rep['posy'][] = odbc_result($rs, 'POSY');
+                $rep['height'][] = odbc_result($rs, 'HEIGHT');
+                $rep['style'][] = odbc_result($rs, 'STYLE');
+                $rep['typ'][] = odbc_result($rs, 'TYP');
+                $rep['tab'][] = odbc_result($rs, 'TAB');
+                $rep['inhalt'][] = odbc_result($rs, 'INHALT');
+                $rep['dbfield'][] = odbc_result($rs, 'DBFIELD');
+            }
 
-			$cell_par[$bzm3] = array('',odbc_result($rs, "POSX"),odbc_result($rs, "POSY"),$firstrow_width[$bzm3],odbc_result($rs, "HEIGHT"),explode(";",odbc_result($rs, "STYLE")),odbc_result($rs, "TYP"),odbc_result($rs, "TAB"));
-			
-			if($has_row){
+			$cell_par[$bzm3] = array('',$rep['posx'][0],$rep['posy'][0],$firstrow_width[$bzm3],$rep['height'][0],explode(";",$rep['style'][0]),$rep['typ'][0],$rep['tab'][0]);
+
+			if($rep){
 				
 				# cellname
-				if(odbc_result($rs, "TYP") == "dbdat"){
-					$fn = explode(';',odbc_result($rs, "DBFIELD"));
-					$cell_name[$bzm3] = lmb_utf8_encode(trim($gfield[$fn[0]]['field_name'][$fn[1]]))."_".odbc_result($rs, "EL_ID");
+				if($rep['typ'][0] == "dbdat"){
+					$fn = explode(';',$rep['dbfield'][0]);
+					$cell_name[$bzm3] = lmb_utf8_encode(trim($gfield[$fn[0]]['field_name'][$fn[1]]))."_".$rep['el_id'][0];
 					#$cell_name[$bzm3] = lmb_utf8_decode(trim(odbc_result($rs, "INHALT")),1)."_".odbc_result($rs, "EL_ID");
-				}elseif(odbc_result($rs, "EL_ID")){
-					$cell_name[$bzm3] = "element_".odbc_result($rs, "EL_ID");
+				}elseif($rep['el_id'][0]){
+					$cell_name[$bzm3] = "element_".$rep['el_id'][0];
 				}else{
 					$cell_name[$bzm3] = "";
 				}
 
 				/*------- Alle Elemente einer Zelle (für Dateninhalte) ---------*/
 				$bzm4 = 1;
-				while(odbc_fetch_row($rs, $bzm4)) {
+				foreach($rep['el_id'] as $key => $val){
 					
-					$dbelstyle = explode(";",odbc_result($rs, "STYLE"));
+					$dbelstyle = explode(";",$rep['style'][$key]);
 					if($bzm4 == 1 AND $dbelstyle[40]){
 						$seperator[$bzm2."_".$bzm3] = $dbelstyle[40];
 					}
 
 					#--------- Bei Typ Dateninhalt Zellenzeile auffüllen aus Datenabfrage --------------
-					if(odbc_result($rs, "TYP") == "dbdat"){
+					if($rep['typ'][$key] == "dbdat"){
 						$cell_value[$bzm3][$bzm4] = $dataArray[$bzm5]; # auffüllen
-						$GLOBALS["glob_el"][odbc_result($rs, "EL_ID")] = $cell_value[$bzm3][$bzm4];
+						$GLOBALS["glob_el"][$rep['el_id'][$key]] = $cell_value[$bzm3][$bzm4];
 						# Element verstecken
 						if(hide_element($dbelstyle[29])){
 							$cell_value[$bzm3][$bzm4] = null;
@@ -233,9 +242,9 @@ function print_tab($dom,$report_id,$item,$ID,$el,&$report){
 
 				/*------- Alle Elemente einer Zelle (für Einzelelemente z.B. TEXT/Formel) ---------*/
 				$bzm4 = 1;
-				while(odbc_fetch_row($rs, $bzm4)) {
-					$value = lmb_utf8_decode(trim(odbc_result($rs, "INHALT")),1); # longtext handle
-					$typ = odbc_result($rs, "TYP");
+				foreach($rep['el_id'] as $key => $val){
+					$value = lmb_utf8_decode(trim($rep['inhalt'][$key]),1); # longtext handle
+					$typ = $rep['typ'][$key];
 
 					# Datum
 					if($typ == "datum"){
@@ -432,12 +441,15 @@ function store_xml($dom,$rep,$ID,$report_output){
 	# ------- xml Pfad ---------
 	$name = $rep["name"];
 	$out = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/".$name;
+	$path = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/".lmb_utf8_encode($name);
+
+
 	# ------- xml schreiben ---------
-	$fh = fopen ($out, 'w');
+	$fh = fopen ($path, 'w');
 	fwrite($fh, $dom->saveXML());
 	fclose($fh);
 
-	if(file_exists($out)){
+	if(file_exists($path)){
 		# ------- archivieren ---------
 		if($report_output == 2){
 			# Archivieren
@@ -489,7 +501,7 @@ function xml_report($ID,$report_id,$use_record,&$rep){
 		
 		if(isset($SID)){
 			# report-Elemente
-			$report = element_list($SID,array("report_id" => $report_id),'');
+			$report = element_list($SID, $_passByRef = array("report_id" => $report_id),'');
 			# root Element (Berichtsname)
 			$item = $dom->createElement("item");
 			$item->setAttribute('id', $SID);

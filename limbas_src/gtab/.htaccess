@@ -12,6 +12,7 @@ allow from all
   deny from all
 </Files>
 
+
 <IfModule mod_php5.c>
   php_flag engine off
 </IfModule>

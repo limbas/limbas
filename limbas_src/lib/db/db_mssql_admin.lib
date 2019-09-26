@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -390,7 +390,7 @@ function dbq_19($p)
     } else {
         
         $sqlquery1 = dbq_20(array($p[0]));
-        $rs1 = @odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+        $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
         
         $qu = "CREATE VIEW " . $p[0] . " AS (" . rtrim(trim($p[1]), ";") . ")";
     }
@@ -466,6 +466,19 @@ function dbf_20($p){
 	}else{
 		return $odbc_table;
 	}
+}
+
+/**
+ * drop table
+ *
+ * @param array $p [0]=table name
+ * @return sql string
+ */
+function dbq_28($p){
+
+	$qu = "DROP TABLE ".dbf_4($p[0]);
+
+	return $qu;
 }
 
 ############# columns ########################
@@ -681,13 +694,13 @@ function dbq_13($p){
  */
 function dbq_14($p){
 	global $DBA;
-	if($p[3] == "+"){
+	if($p[4] == "+"){
 	    //{$act = ":NEW.ID,:NEW.VERKN_ID";}
-        if ($p[4] == "" OR $p[4] == null) {
+        if ($p[5] == "" OR $p[5] == null) {
      	    return "DECLARE @id int;
 
      	            SET @id = (select distinct ID from inserted);
-	                EXEC lmb_vkn @id, '".$p[1]."', '".$p[2]."', '".$p[0]."', 0, '".$p[4]."', '".$p[5]."';";
+	                EXEC lmb_vkn @id, '".$p[0].".".$p[2]."', '".$p[3]."', '".$p[0].".".$p[1]."', 0, '".$p[0].".".$p[5]."', '".$p[6]."';";
         }
         else {
     	    return "DECLARE @id int;
@@ -695,16 +708,16 @@ function dbq_14($p){
 
 	                SET @id = (select distinct ID from inserted);
 	                SET @verkn_id = (select VERKN_ID from inserted);
-	                EXEC lmb_vkn @id, '".$p[1]."', '".$p[2]."', '".$p[0]."', @verkn_id, '".$p[4]."', '".$p[5]."';";        	
+	                EXEC lmb_vkn @id, '".$p[0].".".$p[2]."', '".$p[3]."', '".$p[0].".".$p[1]."', @verkn_id, '".$p[0].".".$p[5]."', '".$p[6]."';";
         }
 	} else{
 	    //{$act = ":OLD.ID,:OLD.VERKN_ID";}
-	    if ($p[4] == "" OR $p[4] == null) {
+	    if ($p[5] == "" OR $p[5] == null) {
 	       return "DECLARE @id int;
 	               DECLARE @verkn_id int;
 	    
 	               SET @id = (select distinct ID from deleted);
-	               EXEC lmb_vkn @id, '".$p[1]."', '".$p[2]."', '".$p[0]."', 0, '".$p[4]."', '".$p[5]."';";
+	               EXEC lmb_vkn @id, '".$p[0].".".$p[2]."', '".$p[3]."', '".$p[0].".".$p[1]."', 0, '".$p[0].".".$p[5]."', '".$p[6]."';";
 	    }
 	    else {
 	       return "DECLARE @id int;
@@ -712,7 +725,7 @@ function dbq_14($p){
 	    
 	               SET @id = (select distinct ID from deleted);
 	               SET @verkn_id = (select VERKN_ID from deleted);
-	               EXEC lmb_vkn @id, '".$p[1]."', '".$p[2]."', '".$p[0]."', @verkn_id, '".$p[4]."', '".$p[5]."';";
+	               EXEC lmb_vkn @id, '".$p[0].".".$p[2]."', '".$p[3]."', '".$p[0].".".$p[1]."', @verkn_id, '".$p[0].".".$p[5]."', '".$p[6]."';";
 	    }
 	}
 	//return "Call ".$DBA["DBSCHEMA"].".lmb_vkn(".$act.",'".$p[0]."','".$p[1]."','".$p[2]."','".$p[3]."','".$p[4]."');";
@@ -854,16 +867,16 @@ function dbq_21($p){
 	global $db;
 	
 	$sqlquery = "DROP PROC lmb_vkn";
-	$rs = @odbc_exec($db,$sqlquery);
+	$rs = odbc_exec($db,$sqlquery);
 	
 	$sqlquery = "DROP PROC DropColumnCascading";
-	$rs = @odbc_exec($db,$sqlquery);
+	$rs = odbc_exec($db,$sqlquery);
 	
 	$sqlquery = "DROP FUNCTION Date";
 	$rs = odbc_exec($db,$sqlquery);
 	
 	$sqlquery = "DROP FUNCTION Time";
-	$rs = @odbc_exec($db,$sqlquery);
+	$rs = odbc_exec($db,$sqlquery);
 
 }
 

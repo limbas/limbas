@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -197,13 +197,14 @@ echo "</TD></TR>";
 <?php
 if(!$result_user["uploadsize"]){$result_user["uploadsize"] = $umgvar["default_uloadsize"];}
 if(!$result_user["maxresult"]){$result_user["maxresult"] = $umgvar["default_results"];}
-if(!$result_user["logging"]){$result_user["logging"] = $umgvar["default_loglevel"];}
+if(!isset($result_user["logging"])){$result_user["logging"] = $umgvar["default_loglevel"];}
 echo "<TR class=\"tabBody\"><TD COLSPAN=2 HEIGHT=20>&nbsp;</TD></TR>";
 echo "<TR class=\"tabHeader\"><TD COLSPAN=2 class=\"tabHeaderItem\"><B>$lang[146]</B></TD></TR>";
 echo "<TR class=\"tabBody\"><TD width=180>$lang[1817]</TD><TD><INPUT TYPE=TEXT name=\"userdata[validdate]\" STYLE=\"width:140px;\" VALUE=\"".$result_user["validdate"]."\" onclick=\"showCalendar(event,'diagv','userdata[validdate]',this.value)\"><span id=\"diagv\" style=\"position:absolute;\"></span></TD></TR>";
 echo "<TR class=\"tabBody\"><TD width=180>$lang[1300]</TD><TD><SELECT STYLE=\"width:140px;\" name=\"userdata[change_pass]\"><OPTION VALUE=TRUE "; if($result_user["change_pass"] == "1"){echo "SELECTED";} echo">$lang[867]<OPTION VALUE=FALSE ";  if(!$result_user['change_pass']){echo "SELECTED";} echo">$lang[866]</SELECT></TD></TR>";
 echo "<TR class=\"tabBody\"><TD width=180>$lang[2262]</TD><TD><INPUT TYPE=TEXT name=\"userdata[gc_maxlifetime]\" STYLE=\"width:140px;\" VALUE=\"".$result_user["gc_maxlifetime"]."\">&nbsp;days</TD></TR>";
-echo "<TR class=\"tabBody\"><TD width=180>$lang[656]</TD><TD><SELECT TYPE=TEXT NAME=\"userdata[logging]\" STYLE=\"width:140px;\"><OPTION VALUE=\"0\" "; if(!$result_user["logging"]){echo "SELECTED";};echo ">$lang[1797]<OPTION VALUE=\"1\""; if($result_user["logging"] == 1){echo "SELECTED";}; echo ">$lang[1798]<OPTION VALUE=\"2\""; if($result_user["logging"] == 2){echo "SELECTED";}; echo ">$lang[1799]</SELECT>";
+${'SELECTED_'.$result_user["logging"]} = 'SELECTED';
+echo "<TR class=\"tabBody\"><TD width=180>$lang[656]</TD><TD><SELECT TYPE=TEXT NAME=\"userdata[logging]\" STYLE=\"width:140px;\"><OPTION VALUE=\"0\" $SELECTED_0>$lang[1797]<OPTION VALUE=\"1\" $SELECTED_1>$lang[1798]<OPTION VALUE=\"2\" $SELECTED_2>$lang[1799]</SELECT>";
 
 echo "<TR class=\"tabBody\"><TD colspan=\"2\"><hr></TD></TR>";
 
@@ -212,8 +213,7 @@ echo "<TR class=\"tabBody\"><TD width=180>$lang[624]</TD><TD><SELECT STYLE=\"wid
 echo "<OPTION VALUE=\"-1\">system";
 $sqlquery = "Select DISTINCT LANGUAGE,LANGUAGE_ID FROM LMB_LANG";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$bzm = 1;
-while(odbc_fetch_row($rs, $bzm)) {
+while(odbc_fetch_row($rs)) {
 $langid = odbc_result($rs,"LANGUAGE_ID");
 if(!$result_user["language"]){$result_user["language"] = $umgvar["default_language"];}
 if($result_user["language"] == $langid){
@@ -222,7 +222,6 @@ if($result_user["language"] == $langid){
 	unset($SELECTED);
 }
 echo "<OPTION VALUE=\"".urlencode($langid)."\" $SELECTED>".odbc_result($rs,"LANGUAGE");
-$bzm++;
 }
 echo "</SELECT></TD></TR>";
 
@@ -238,8 +237,7 @@ echo "<TR class=\"tabBody\"><TD width=180>".$lang[902]."</TD><TD><INPUT TYPE=TEX
 echo "<TR class=\"tabBody\"><TD width=180>$lang[623]</TD><TD><SELECT STYLE=\"width:140px;\" name=\"userdata[farbe_schema]\">";
 $sqlquery = "SELECT * FROM LMB_COLORSCHEMES";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$bzm = 1;
-while(odbc_fetch_row($rs, $bzm)) {
+while(odbc_fetch_row($rs)) {
 $farbid = odbc_result($rs,"ID");
 if(!$result_user["farbschema"]){$result_user["farbschema"] = $umgvar["default_usercolor"];}
 if($result_user["farbschema"] == $farbid){
@@ -249,7 +247,6 @@ if($result_user["farbschema"] == $farbid){
 }
 
 echo "<OPTION VALUE=\"$farbid\" $SELECTED>".odbc_result($rs,"NAME");
-$bzm++;
 }
 echo "</SELECT></TD></TR>";
 
@@ -265,8 +262,6 @@ foreach($path["name"] as $key => $value){
 		 	unset($SELECTED);
 		}
 		$valuena = $value;
-		if($value == 'octopus' or $value == 'manta'){$valuena = $value." (deprecated!)";}
-		if($value == 'skalar'){$valuena = $value." (default)";}
 		echo "<OPTION VALUE=\"".$value."\" $SELECTED>".$valuena;
 	}
 }

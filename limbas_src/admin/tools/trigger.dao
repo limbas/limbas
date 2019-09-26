@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -28,12 +28,11 @@ if($trigger_typ == 2){
 
 if($sortup_definition OR $sortdown_definition){
 
-	$sqlquery = "SELECT ID,SORT FROM LMB_TRIGGER WHERE INTERN = ".parse_db_bool($intern)." ORDER BY SORT ".LMB_DBFUNC_FOR_REUSE;
+	$sqlquery = "SELECT ID,SORT FROM LMB_TRIGGER WHERE INTERN = ".parse_db_bool($intern)." ORDER BY SORT ";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$bzm = 1;
-	while(odbc_fetch_row($rs, $bzm)) {
-	
-	
+	while(odbc_fetch_row($rs)) {
+
 		if($sortup_definition == odbc_result($rs,"ID")){
 			$orderres[odbc_result($rs,"ID")] = ($bzm-1.1);
 		}elseif($sortdown_definition == odbc_result($rs,"ID")){
@@ -104,11 +103,11 @@ if($syncronize){
 		$definition = trim($definition);
 
 		$desc = lmb_strtoupper($triggerlist["event"][$tkey])."_".$triggerlist["tablename"][$tkey];
-		$sqlquery0 = "select ID from LMB_TRIGGER where lower(NAME) = '".lmb_strtolower(parse_db_string($trigerName,25))."' AND LOWER(TABLE_NAME) = '".lmb_strtolower($triggerlist["tablename"][$tkey])."' AND LOWER(TYPE) = '".lmb_strtolower($triggerlist["event"][$tkey])."'";
+		$sqlquery0 = "SELECT ID FROM LMB_TRIGGER WHERE LOWER(NAME) = '".lmb_strtolower(parse_db_string($trigerName,25))."' AND LOWER(TABLE_NAME) = '".lmb_strtolower($triggerlist["tablename"][$tkey])."' AND LOWER(TYPE) = '".lmb_strtolower($triggerlist["event"][$tkey])."' LIMIT 1";
 		
 		$rs0 = odbc_exec($db,$sqlquery0);
-		if(!odbc_fetch_row($rs0,1)){
-			$sqlquery1 = "insert into LMB_TRIGGER(ID,ERSTDATUM,EDITDATUM,EDITUSER,ERSTUSER,NAME,TABLE_NAME,TYPE,TRIGGER_VALUE,ACTIVE,DESCRIPTION) values(" . $nextId++ . ",".LMB_DBDEF_TIMESTAMP.",".LMB_DBDEF_TIMESTAMP.",".$session["user_id"].",".$session["user_id"].",'".parse_db_string($trigerName,25)."','".$triggerlist["tablename"][$tkey]."','INSERT','" . ltrim(rtrim(parse_db_string($definition,4000),")"),"(") .  "',".LMB_DBDEF_TRUE.",'".parse_db_string($desc,50)."')";
+		if(!odbc_fetch_row($rs0)){
+			$sqlquery1 = "INSERT INTO LMB_TRIGGER(ID,ERSTDATUM,EDITDATUM,EDITUSER,ERSTUSER,NAME,TABLE_NAME,TYPE,TRIGGER_VALUE,ACTIVE,DESCRIPTION) VALUES(" . $nextId++ . ",".LMB_DBDEF_TIMESTAMP.",".LMB_DBDEF_TIMESTAMP.",".$session["user_id"].",".$session["user_id"].",'".parse_db_string($trigerName,25)."','".$triggerlist["tablename"][$tkey]."','INSERT','" . ltrim(rtrim(parse_db_string($definition,4000),")"),"(") .  "',".LMB_DBDEF_TRUE.",'".parse_db_string($desc,50)."')";
 			odbc_exec($db,$sqlquery1);
 		}
 	}}
@@ -121,8 +120,7 @@ $result_trigger = array();
 
 $sqlquery = "SELECT * FROM LMB_TRIGGER WHERE INTERN = ".parse_db_bool($intern)." ORDER BY SORT,ERSTDATUM";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$bzm = 1;
-while(odbc_fetch_row($rs, $bzm)) {
+while(odbc_fetch_row($rs)) {
 	$result_trigger[odbc_result($rs, "TABLE_NAME")]["id"][] = odbc_result($rs, "ID");
 	$result_trigger[odbc_result($rs, "TABLE_NAME")]["erstdatum"][] = odbc_result($rs, "ERSTDATUM");
 	$result_trigger[odbc_result($rs, "TABLE_NAME")]["erstuser"][] = odbc_result($rs, "ERSTUSER");
@@ -135,7 +133,6 @@ while(odbc_fetch_row($rs, $bzm)) {
 	$result_trigger[odbc_result($rs, "TABLE_NAME")]["name"][] = odbc_result($rs, "DESCRIPTION");
 	$result_trigger[odbc_result($rs, "TABLE_NAME")]["intern"][] = odbc_result($rs, "INTERN");
 	$result_trigger[odbc_result($rs, "TABLE_NAME")]["position"][] = odbc_result($rs, "POSITION");
-$bzm++;
 }
 
 

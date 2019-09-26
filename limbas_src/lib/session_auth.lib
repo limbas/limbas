@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -110,7 +110,7 @@ function lmb_authLDAP($auth_user,$auth_pass){
 			$sqlquery3 = "SELECT ELEMENT_ID,WERT,JS FROM LMB_LANG WHERE LANGUAGE_ID = ".parse_db_int($umgvar["default_language"])." AND TYP = 1";
 			$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 			if(!$rs3) {$commit = 1;}
-			while(odbc_fetch_row($rs3, $bzm)) {
+			while(odbc_fetch_row($rs3)) {
 				$lang[odbc_result($rs3,"ELEMENT_ID")] = $debug_lang.$lvalue;
 			}
 
@@ -125,8 +125,6 @@ function lmb_authLDAP($auth_user,$auth_pass){
                 #lmb_log::error("LDAP AUTHENTICATION - adding limbas user $authUser failed");
 				return false;
 			}
-			
-			$lang = array();
 		}
 	
 	}
@@ -143,7 +141,7 @@ if(session_id()){
 }
 
 # check for authentication method / charset
-$sqlquery2 = "SELECT ID,FORM_NAME,NORM FROM LMB_UMGVAR WHERE FORM_NAME LIKE '%_auth' OR FORM_NAME = 'charset'";   #CATEGORY = 6 OR CATEGORY = 0
+$sqlquery2 = "SELECT ID,FORM_NAME,NORM FROM LMB_UMGVAR WHERE FORM_NAME LIKE '%_auth' OR FORM_NAME = 'charset' OR FORM_NAME = 'password_hash'";   #CATEGORY = 6 OR CATEGORY = 0
 $rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 $umgvar = array();
 while(odbc_fetch_row($rs2)){
@@ -159,39 +157,47 @@ if(strtoupper($umgvar["charset"]) == "UTF-8"){
     ini_set('default_charset', lmb_strtoupper($umgvar["charset"]));
 }
 
+$passwordChecked = false;
 
-$valid = '';
-$querypass = '';
 /* ----------------- auth from LDAP ------------------------ */
-if($umgvar['server_auth'] == 'LDAP' AND $auth_user AND $auth_pass AND $auth_user != 'admin'){
-	if(!lmb_authLDAP($auth_user,$auth_pass)){
-		$_REQUEST["rslogout"] = 1;
-	}
+if ($umgvar['server_auth'] === 'LDAP' AND $auth_user AND $auth_pass AND $auth_user !== 'admin') {
+	if (!lmb_authLDAP($auth_user,$auth_pass)) {
+		$_REQUEST['rslogout'] = 1;
+	} else {
+	    $passwordChecked = true;
+    }
 	
 /* ----------------- auth from extern (only SOAP) ------------------------ */
-}elseif(defined('IS_SOAP') AND $umgvar['server_auth'] == 'extern' AND file_exists('EXTENSIONS/ext_auth.inc')){
+} elseif (defined('IS_SOAP') AND $umgvar['server_auth'] === 'extern' AND file_exists('EXTENSIONS/ext_auth.inc')) {
 	# EXTENSIONS
 	require_once('EXTENSIONS/ext_auth.inc');
-	if(lmb_authEXT($auth_user,$auth_pass,$auth_group)){
-	    if($auth_pass){$querypass = "AND PASSWORT = '".md5($auth_pass)."'";}
-	}else{
+	if (function_exists('lmb_authEXT') AND lmb_authEXT($auth_user,$auth_pass,$auth_group)) {
+	    if (!$auth_pass) {
+            $passwordChecked = true;
+	    }
+	} else {
 	    $_REQUEST['rslogout'] = 1;
 	}
-/* ----------------- auth from intern ------------------------ */	
-}else{
-	if($auth_pass){$querypass = "AND PASSWORT = '".md5($auth_pass)."'";}
 }
-$valid = null;
 
-
+/* ----------------- auth from intern ------------------------ */
 # user authentication
-if($auth_user != 'admin'){$valid = "AND (VALIDDATE >= ".LMB_DBDEF_TIMESTAMP." OR VALID = ".LMB_DBDEF_FALSE.") AND DEL = ".LMB_DBDEF_FALSE;}
-$sqlquery2 = "SELECT * FROM LMB_USERDB WHERE USERNAME = '".parse_db_string($auth_user,30)."' $querypass $valid";
+$sqlquery2 = "SELECT * FROM LMB_USERDB WHERE USERNAME = '" . parse_db_string($auth_user, 30) . "'";
+if ($auth_user !== 'admin') {
+    $sqlquery2 .= ' AND (VALIDDATE >= ' . LMB_DBDEF_TIMESTAMP . ' OR VALID = ' . LMB_DBDEF_FALSE . ') AND DEL = ' . LMB_DBDEF_FALSE;
+}
 $rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
-if(!$rs2) {$commit = 1;}
+if (!$rs2) { $commit = 1; }
 
-/* --- Prüfung nach IP --------------------------------- */
-if(odbc_fetch_row($rs2, 1)) {
+/* --- Prüfung nach Passwort & IP --------------------------------- */
+$ipok = 0;
+if(odbc_fetch_row($rs2)) {
+    # check password if not already done by extension/ldap
+    if (!$passwordChecked) {
+        if (!lmbPasswordVerify($auth_user, $auth_pass, odbc_result($rs2, 'PASSWORT'))) {
+            $_REQUEST['rslogout'] = 1;
+        }
+    }
 
 	if($auth_digest){
 		// generate the valid response
@@ -221,24 +227,22 @@ if(odbc_fetch_row($rs2, 1)) {
 }
 
 #---- prüfen auf Authentifizierung/IP-Range/logut -------
-if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()) {
+if($ipok AND !$_REQUEST["rslogout"] AND session_id()) {
 
 	init_sessionvars($globvars);
 	
 	/* --- umgvar defaults ------------------- */
-	$bzm = 1;
 	$sqlquery3 = "SELECT FORM_NAME,NORM FROM LMB_UMGVAR";
 	$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 	if(!$rs3) {$commit = 1;}
-	while(odbc_fetch_row($rs3, $bzm)) {
+	while(odbc_fetch_row($rs3)) {
 		$umgvar[odbc_result($rs3,"FORM_NAME")] = odbc_result($rs3,"NORM");
-		$bzm++;
 	}
 	$umgvar["charset"] = lmb_strtoupper($umgvar["charset"]);
-	$umgvar["update_metadata"] = explode(',',$umgvar["update_metadata"]);
-	$umgvar["read_metadata"] = explode(',',$umgvar["read_metadata"]);
-	$umgvar["indize_filetype"] = explode(',',$umgvar["indize_filetype"]);
-    $umgvar["multi_language"] = $umgvar["multi_language"] ? explode(',',$umgvar["multi_language"]) : array();
+	if($umgvar["update_metadata"]){$umgvar["update_metadata"] = explode(',',$umgvar["update_metadata"]);}
+	if($umgvar["read_metadata"]){$umgvar["read_metadata"] = explode(',',$umgvar["read_metadata"]);}
+	if($umgvar["indize_filetype"]){$umgvar["indize_filetype"] = explode(',',$umgvar["indize_filetype"]);}
+    if($umgvar["multi_language"]){$umgvar["multi_language"] = explode(',',$umgvar["multi_language"]);}
 
     /* --- Pfade ------------------- */
 	$umgvar["path"] = rtrim($DBA["LMPATH"],"/");
@@ -251,9 +255,20 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 	if(!$umgvar["url"]){
 		$url = explode("/",$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']);
 		$last = count($url)-1;
-		if(lmb_strpos($url[$last],".php")){
-			unset($url[$last]);
+
+		if(lmb_strpos($_SERVER['REQUEST_URI'],".php")){
+		    while($url[$last]){
+		        if(lmb_strpos($url[$last],".php") === false){
+		            unset($url[$last]);
+                }else{
+		            unset($url[$last]);
+		            break;
+                }
+
+		        $last--;
+            }
 		}
+
 		$url = implode("/",$url);
 		
 		if($_SERVER['HTTPS']){
@@ -342,8 +357,8 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 	    $session["subgroup"] = explode(";",$sub_group);
 	}
 	$session["subgroup"][] = odbc_result($rs2,"GROUP_ID");
-	if($esetting = @odbc_result($rs2,"E_SETTING")){$session["e_setting"] = unserialize($esetting);}
-	if($msetting = @odbc_result($rs2,"M_SETTING")){$session["m_setting"] = unserialize($msetting);}
+	if($esetting = odbc_result($rs2,"E_SETTING")){$session["e_setting"] = unserialize($esetting);}
+	if($msetting = odbc_result($rs2,"M_SETTING")){$session["m_setting"] = unserialize($msetting);}
 	$ugtab = unserialize(odbc_result($rs2,"UGTAB"));
 	$filter = $ugtab["filter"];
 	
@@ -372,13 +387,13 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 	$sqlquery3 = "SELECT DISTINCT ID,LEVEL FROM LDMS_STRUCTURE WHERE FIX = ".LMB_DBDEF_TRUE." AND TYP = 1 AND LEVEL = 0";
 	$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 	if(!$rs3) {$commit = 1;}
-	if(odbc_fetch_row($rs3, 1)) {
+	if(odbc_fetch_row($rs3)) {
 		$session["filestruct"]["root"] = odbc_result($rs3,"ID");
 	}
 	
 	/* --- Version auslesen ------------------- */
 	$sqlquery3 = "SELECT REVISION,VERSION,MAJOR FROM LMB_DBPATCH ORDER BY MAJOR DESC, VERSION DESC,REVISION DESC";
-	$rs3 = @odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+	$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 	if($rs3) {
 	   $umgvar["db-version"] = odbc_result($rs3,"MAJOR").".".odbc_result($rs3,"VERSION").".".odbc_result($rs3,"REVISION");
 	}else{
@@ -387,11 +402,10 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 
 	/* --- Sprachtabelle system auslesen (default) ------------------- */
 	if($session["language"] != $umgvar["default_language"]){
-		$bzm = 1;
 		$sqlquery3 = "SELECT ELEMENT_ID,WERT,JS FROM LMB_LANG WHERE LANGUAGE_ID = ".$umgvar["default_language"];
 		$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 		if(!$rs3) {$commit = 1;}
-		while(odbc_fetch_row($rs3, $bzm)) {
+		while(odbc_fetch_row($rs3)) {
 			if($session["group_id"] == 1 AND $umgvar["debug_lang"]){$debug_lang = "(".odbc_result($rs3,"ELEMENT_ID").")";}
 			$lvalue = odbc_result($rs3,"WERT");
 			if(odbc_result($rs3,"JS")){
@@ -404,16 +418,14 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 				$lvalue = str_replace("\t","&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;",$lvalue);
 			}
 			$lang[odbc_result($rs3,"ELEMENT_ID")] = $debug_lang.$lvalue;
-			$bzm++;
 		}
 	}
 
 	/* --- Sprachtabelle system auslesen ------------------- */
-	$bzm = 1;
 	$sqlquery3 = "SELECT ELEMENT_ID,WERT,JS FROM LMB_LANG WHERE LANGUAGE_ID = ".$session['language'];
 	$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 	if(!$rs3) {$commit = 1;}
-	while(odbc_fetch_row($rs3, $bzm)) {
+	while(odbc_fetch_row($rs3)) {
 		if($session["group_id"] == 1 AND $umgvar["debug_lang"]){$debug_lang = "(".odbc_result($rs3,"ELEMENT_ID").")";}
 		if($lvalue = odbc_result($rs3,"WERT")){
 			if(odbc_result($rs3,"JS")){
@@ -427,37 +439,32 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 			}
 			$lang[odbc_result($rs3,"ELEMENT_ID")] = $debug_lang.$lvalue;
 		}
-		$bzm++;
 	}
 
 	/* --- Sprachtabelle local default language auslesen ------------------- */
 	if($session["language"] != $umgvar["default_language"]){
-		$bzm = 1;
 		$sqlquery3 = "SELECT ELEMENT_ID,WERT FROM LMB_LANG_DEPEND WHERE LANGUAGE_ID = ".$umgvar["default_language"];
 		$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 		if(!$rs3) {$commit = 1;}
-		while(odbc_fetch_row($rs3, $bzm)) {
+		while(odbc_fetch_row($rs3)) {
 			$wert = trim(odbc_result($rs3,"WERT"));
 			if($wert){
 				if($session["group_id"] == 1 AND $umgvar["debug_lang"]){$debug_lang = "(".odbc_result($rs3,"ELEMENT_ID").")";}
 				$lang[odbc_result($rs3,"ELEMENT_ID")] = $debug_lang.str_replace(chr(10),"",$wert);
 			}
-			$bzm++;
 		}
 	}
 
 	/* --- Sprachtabelle local user language auslesen ------------------- */
-	$bzm = 1;
 	$sqlquery3 = "SELECT ELEMENT_ID,WERT FROM LMB_LANG_DEPEND WHERE LANGUAGE_ID = ".$session["language"];
 	$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 	if(!$rs3) {$commit = 1;}
-	while(odbc_fetch_row($rs3, $bzm)) {
+	while(odbc_fetch_row($rs3)) {
 		$wert = trim(odbc_result($rs3,"WERT"));
 		if($wert){
 			if($session["group_id"] == 1 AND $umgvar["debug_lang"]){$debug_lang = "(".odbc_result($rs3,"ELEMENT_ID").")";}
 			$lang[odbc_result($rs3,"ELEMENT_ID")] = $debug_lang.str_replace(chr(10),"",$wert);
 		}
-		$bzm++;
 	}
 
 	/* --- Prüfung ob gesperrt --------------------------------- */
@@ -496,7 +503,7 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 	$sqlquery3 = "SELECT LMB_USERDB.TEL,LMB_USERDB.FAX,LMB_USERDB.POSITION,LMB_USERDB.EMAIL,LMB_USERDB.SUB_GROUP,LMB_USERDB.USERCOLOR,LMB_USERDB.USER_ID,LMB_USERDB.USERNAME,LMB_USERDB.NAME,LMB_USERDB.VORNAME,LMB_GROUPS.NAME AS GROUPNAME,LMB_USERDB.BESCHREIBUNG AS BU,LMB_GROUPS.DESCRIPTION AS BG,LMB_GROUPS.GROUP_ID FROM LMB_USERDB,LMB_GROUPS WHERE LMB_USERDB.GROUP_ID = LMB_GROUPS.GROUP_ID AND LMB_USERDB.DEL = ".LMB_DBDEF_FALSE;
 	$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 	if(!$rs3) {$commit = 1;}
-	while(odbc_fetch_row($rs3, $bzm)) {
+	while(odbc_fetch_row($rs3)) {
 		$tmp = odbc_result($rs3,"USER_ID");
 		$userdat["id"][$bzm-1] = $tmp;
 		$userdat["userid"][$tmp] = $tmp;
@@ -526,7 +533,7 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 	$sqlquery3 = "SELECT GROUP_ID,NAME,DESCRIPTION,REDIRECT,MULTIFRAMELIST,LEVEL FROM LMB_GROUPS WHERE DEL = ".LMB_DBDEF_FALSE;
 	$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 	if(!$rs3) {$commit = 1;}
-	while(odbc_fetch_row($rs3, $bzm)) {
+	while(odbc_fetch_row($rs3)) {
 		$tmp = odbc_result($rs3,"GROUP_ID");
 		$groupdat["id"][$bzm-1] = $tmp;
 		$groupdat["name"][$tmp] = odbc_result($rs3,"NAME");
@@ -543,8 +550,7 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
         WHERE (LMB_RULES_ACTION.GROUP_ID = ".implode(" OR LMB_RULES_ACTION.GROUP_ID = ",$session["subgroup"]).") AND LMB_RULES_ACTION.PERM = 2 AND LMB_ACTION.ID = LMB_RULES_ACTION.LINK_ID ORDER BY LMB_ACTION.MAINGROUP,LMB_ACTION.SUBGROUP,LMB_ACTION.SORT";
 	$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 	if(!$rs3) {$commit = 1;}
-	$bzm = 1;
-	while(odbc_fetch_row($rs3, $bzm)) {
+	while(odbc_fetch_row($rs3)) {
 		$link_id = odbc_result($rs3,"ID");
 		$LINK[$link_id] = 1;
 		$LINK["name"][$link_id] = odbc_result($rs3,"LINK_NAME");
@@ -565,7 +571,6 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 			$LINK[$tmp] = 1;
 			$LINK_ACTION[$link_id] = odbc_result($rs3,"ACTION");
 		}
-		$bzm++;
 	}
 
 	/* --- LINK local ------------------------------- */
@@ -573,8 +578,7 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
         WHERE (LMB_RULES_ACTION.GROUP_ID = ".implode(" OR LMB_RULES_ACTION.GROUP_ID = ",$session["subgroup"]).") AND LMB_RULES_ACTION.PERM = 2 AND LMB_ACTION_DEPEND.ID = LMB_RULES_ACTION.LINK_ID ORDER BY LMB_ACTION_DEPEND.MAINGROUP,LMB_ACTION_DEPEND.SUBGROUP,LMB_ACTION_DEPEND.SORT";
 	$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 	if(!$rs3) {$commit = 1;}
-	$bzm = 1;
-	while(odbc_fetch_row($rs3, $bzm)) {
+	while(odbc_fetch_row($rs3)) {
 		$link_id = odbc_result($rs3,"ID");
 		$LINK[$link_id] = 1;
 		$LINK["name"][$link_id] = odbc_result($rs3,"LINK_NAME");
@@ -596,14 +600,13 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 			$LINK[$tmp] = 1;
 			$LINK_ACTION[$link_id] = odbc_result($rs3,"ACTION");
 		}
-		$bzm++;
 	}
 
 	/* --- Farbschema auslesen ------------------- */
 	$sqlquery3 = "SELECT * FROM LMB_COLORSCHEMES WHERE ID = ".$session["farbschema"];
 	$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 	if(!$rs3) {$commit = 1;}
-	if(odbc_fetch_row($rs3, 1)) {
+	if(odbc_fetch_row($rs3)) {
 		$session["farbschema"] = odbc_result($rs3,"ID");
 		$farbschema["NAME"] = odbc_result($rs3,"NAME");
 
@@ -617,14 +620,12 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 	$sqlquery3 = "SELECT WERT FROM LMB_USER_COLORS WHERE USERID = ".$session['user_id']." OR USERID = 0";
 	$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 	unset($user_colors);
-	$bzm = 1;
 	$user_colors["wert"][] = "";
 	$user_colors["wert"][] = "transparent";
 	$user_colors["wert"][] = "000000";
 	$user_colors["wert"][] = "FFFFFF";
-	while(odbc_fetch_row($rs3, $bzm)) {
+	while(odbc_fetch_row($rs3)) {
 		$user_colors['wert'][] = odbc_result($rs3, "WERT");
-		$bzm++;
 	}
 
 
@@ -632,13 +633,11 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 	$sqlquery3 = "SELECT * FROM LMB_FIELD_TYPES";
 	$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 	if(!$rs3) {$commit = 1;}
-	$bzm = 1;
-	while(odbc_fetch_row($rs3, $bzm)) {
+	while(odbc_fetch_row($rs3)) {
 		$data_type = odbc_result($rs3,"DATA_TYPE");
 		$lmfieldtype[$data_type]["field_type"] = odbc_result($rs3,"FIELD_TYPE");
 		$lmfieldtype[$data_type]["parse_type"] = odbc_result($rs3,"PARSE_TYPE");
 		$lmfieldtype[$data_type]["size"] = odbc_result($rs3,"SIZE");
-		$bzm++;
 	}
 	
 	/* --- Feldtypen local auslesen ------------------- */
@@ -646,39 +645,33 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 	$sqlquery3 = "SELECT * FROM LMB_FIELD_TYPES_DEPEND";
 	$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 	if(!$rs3) {$commit = 1;}
-	$bzm = 1;
-	while(odbc_fetch_row($rs3, $bzm)) {
+	while(odbc_fetch_row($rs3)) {
 		$data_type = odbc_result($rs3,"DATA_TYPE");
 		$lmfieldtype[$data_type]["field_type"] = odbc_result($rs3,"FIELD_TYPE");
 		$lmfieldtype[$data_type]["parse_type"] = odbc_result($rs3,"PARSE_TYPE");
 		$lmfieldtype[$data_type]["size"] = odbc_result($rs3,"SIZE");
-		$bzm++;
 	}
 	*/
 
 	/* --- Währungstabelle auslesen ------------------- */
 	$sqlquery3 = "SELECT * FROM LMB_CURRENCY ORDER BY CODE";
 	$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
-	$bzm = 1;
-	while(odbc_fetch_row($rs3, $bzm)) {
+	while(odbc_fetch_row($rs3)) {
 		$code = odbc_result($rs3, "CODE");
 		$lmcurrency["currency"][$code] = odbc_result($rs3, "CURRENCY");
 		$lmcurrency["code"][$code] = odbc_result($rs3, "CODE");
 		$lmcurrency["unit"][$code] = parse_db_float(odbc_result($rs3, "UNIT"));
 		$lmcurrency["symbol"][$code] = odbc_result($rs3, "SYMBOL");
-		$bzm++;
 	}
 
 	#----------------- Mimetypes -------------------
 	$sqlquery3 = "SELECT * FROM LMB_MIMETYPES ORDER BY MIMETYPE";
 	$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
-	$bzm = 1;
-	while(odbc_fetch_row($rs3, $bzm)) {
+	while(odbc_fetch_row($rs3)) {
 		$key = odbc_result($rs3, "ID");
 		$gmimetypes["mimetype"][$key] = odbc_result($rs3, "MIMETYPE");
 		$gmimetypes["ext"][$key] = odbc_result($rs3, "EXT");
 		$gmimetypes["pic"][$key] = odbc_result($rs3, "PIC");
-		$bzm++;
 	}
 
 	# auf Userverzeichniss prüfen
@@ -752,7 +745,7 @@ if(odbc_fetch_row($rs2, 1) AND $ipok AND !$_REQUEST["rslogout"] AND session_id()
 	$sqlquery4 = "SELECT ID FROM LMB_HISTORY_USER WHERE SESSIONID = '".session_id()."' AND USERID = ".$session["user_id"]." AND IP = '".lmb_getIpAddr()."' AND LOGIN_DATE >= '".convert_stamp($session["login_date"])."'";
 	$rs4 = odbc_exec($db,$sqlquery4) or errorhandle(odbc_errormsg($db),$sqlquery4,$action,__FILE__,__LINE__);
 	if(!$rs4) {$commit = 1;}
-	if(!odbc_fetch_row($rs4,1)){
+	if(!odbc_fetch_row($rs4)){
 		/* --- Next ID -------------------------------------------------------- */
 		$NEXTID = next_db_id('LMB_HISTORY_USER','ID',1);
 		$sqlquery5 = "INSERT INTO LMB_HISTORY_USER (ID,USERID,SESSIONID,IP,HOST) VALUES (".$NEXTID.",".$session["user_id"].",'".session_id()."','".lmb_getIpAddr()."','".$_SERVER['REMOTE_HOST']."')";

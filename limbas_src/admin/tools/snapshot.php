@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -87,13 +87,18 @@ function nav_refresh(gtabid,snapid,val) {
 	}
 }
 
-function limbasSnapshotShare(evt,snap_id,destUser,del,edit,drop){
+function limbasSnapshotShare(el,snap_id,destUser,del,edit,drop){
 	if(typeof(del) == "undefined"){del = 0;}
 	if(typeof(edit) == "undefined"){edit = 0;}
 	if(typeof(drop) == "undefined"){drop = 0;}
-	browserType();
 
-	ajaxGet(evt,'main_dyns.php','showUserGroups&gtabid='+snap_id+'&usefunction=lmbSnapShareSelect&destUser='+destUser+'&del='+del+'&edit='+edit+'&drop='+drop,'','ajaxContainerPost');
+	ajaxGet('','main_dyns.php','showUserGroups&gtabid='+snap_id+'&usefunction=lmbSnapShareSelect&destUser='+destUser+'&del='+del+'&edit='+edit+'&drop='+drop,'', function(result) {
+        $('#lmbAjaxContainer').html(result).show();
+		if(el){
+            limbasDivShow(el,null,'lmbAjaxContainer');
+        }
+	});
+
 }
 function lmbSnapShareSelect(ugval,snapname,gtabid){
 	limbasSnapshotShare(null,gtabid,ugval);
@@ -132,10 +137,10 @@ function divclose() {
 <input type="hidden" name="del">
 
 <div id="snapExtension" class="lmbContextMenu" style="position:absolute;display:none;z-index:999;" onclick="activ_menu=1">
-<?pop_left();?>
+<?php pop_left();?>
 <textarea id="snap_extensionValue" name="snap_extensionValue" onchange="document.form1.submit()" style="width:400px;height:250px;background-color:<?= $farbschema['WEB8'] ?>;"></textarea>
-<?pop_right();?>
-<?pop_bottom();?>
+<?php pop_right();?>
+<?php pop_bottom();?>
 </div>
 
 
@@ -176,7 +181,7 @@ if($tabgroup["name"] AND $gtab["tab_id"]){
 							";
 							
 							if($LINK[225]){
-								echo "<TD style=\"padding-left:5px;\"><i class=\"lmb-icon lmb-groups\" OnCLick=\"limbasSnapshotShare(event,$key2,'');\" STYLE=\"cursor:pointer;$st\"></i></TD>";
+								echo "<TD style=\"padding-left:5px;\"><i class=\"lmb-icon lmb-groups\" OnCLick=\"limbasSnapshotShare(this,$key2,'');\" STYLE=\"cursor:pointer;$st\"></i></TD>";
 							}
 							echo "<TD style=\"padding-left:5px;\"><i class=\"lmb-icon lmb-trash\" OnCLick=\"document.form1.del.value=$key2;document.form1.gtabid.value=$key1;document.form1.submit();\" STYLE=\"cursor:pointer;\"></i></TD>
 							<TD><i>".$userdat["bezeichnung"][$gsnap_[$key1]["user_id"][$key2]]."</i></TD>

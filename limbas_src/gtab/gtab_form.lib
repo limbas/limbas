@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -68,7 +68,7 @@ function formListElements($action,$gtabid,$ID,&$gresult,$gformid,$ellist=null,$f
 					}
 				}else{$respadd = 1;}
 
-				if($respadd){
+				if($respadd AND is_numeric($stylearray[22])){
 					$width = ($width - (2 * $stylearray[22]));
 					$height = ($height - (2 * $stylearray[22]));
 				}
@@ -87,9 +87,11 @@ function formListElements($action,$gtabid,$ID,&$gresult,$gformid,$ellist=null,$f
 
 			#if(!$tab_id){$tab_id = $gformlist;} # ?????
 			$style = "width:".$width."px;height:".$height."px;z-index:".$gform[$gformid]["z_index"][$key];
-			if(!$gform[$gformid]["class"][$key]){
-				$style = $style.';'.$stylevalue;
-			}
+
+			#if(!$gform[$gformid]["class"][$key]){ // not use of style
+			#	$style = $style.';'.$stylevalue;
+			#}
+			$style = $style.';'.$stylevalue;
 			
             $typearray = array_flip(array('dbdat','tab','frame'));
             if ($readonly and isset($typearray[$gform[$gformid]["typ"][$key]])) {
@@ -237,7 +239,7 @@ function form_gresult($ID,$gtabid,$form_id,&$gresult,$self=null,$verkn=null){
 	if($verkn['id'] AND $vgtabid_ = $gfield[ $verkn['tabid'] ]["verknparams"][$verkn['fieldid']]){
         if($parelts = $gform[$form_id]['paramrel'][ $verkn['md5tab'] ]){
             $onlyfield[$vgtabid_] = $parelts;
-            $extension['where'][] = "ID = ".$verkn['tabid'];
+            $extension['where'][] = "ID = ".$verkn['id'];
             $extension['where'][] = "VERKN_ID = $ID";
             $gresult_ = get_gresult($vgtabid_,null,null,null,null,$onlyfield,null,$extension);
             $gresult[$vgtabid_] = $gresult_[$vgtabid_];
@@ -248,10 +250,11 @@ function form_gresult($ID,$gtabid,$form_id,&$gresult,$self=null,$verkn=null){
 	if($gfield[$gtabid]["verknfields"]){
 		# all relation fields
 		foreach ($gfield[$gtabid]["verknfields"] as $fieldid => $value){
-			
+
 			$gtabid_ = $gfield[$gtabid]["verkntabid"][$fieldid];
 			$parelts = $gform[$form_id]["parentrel"][$gfield[$gtabid]["md5tab"][$fieldid]];
-			
+
+			$verkn = null;
 			if($parelts){
 				$onlyfield[$gtabid_] = $parelts;
 				$verkn = set_verknpf($gtabid,$fieldid,$ID,0,0,1,0);
@@ -259,12 +262,14 @@ function form_gresult($ID,$gtabid,$form_id,&$gresult,$self=null,$verkn=null){
 				if($gresult_ = get_gresult($gtabid_,1,$filter,$GLOBALS["gsf"],$verkn,$onlyfield)){
 					$ID_ = $gresult_[$gtabid_]["id"][0];
 					$gresult[$gtabid_] = $gresult_[$gtabid_];
+					// origin of relation fields in forms
+					$gresult[$gtabid_]['parentage'] = $gtabid.'_'.$fieldid.'_'.$ID;
 				}
 			}
 	
 			# recursive call
 			if($ID_){
-				form_gresult($ID_,$gtabid_,$form_id,$gresult,1);
+				form_gresult($ID_,$gtabid_,$form_id,$gresult,1, $verkn);
 			}
 		}
 	}
@@ -288,7 +293,7 @@ function dftyp_warningDelete($key,$gformid,$pos,$style,$ID,$gtabid,$action,$fiel
 */
 
 #------------ dbdat ---------------------
-function form_dbdat($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id,$tab_id,&$gresult,$z_index,$collapse,$readonly){
+function form_dbdat($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id,$tab_id,&$gresult,$z_index=null,$collapse=null,$readonly=null){
 	global $gfield;
 	global $gtab;
 	global $gform;
@@ -354,8 +359,16 @@ function form_dbdat($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_
 	# use new ID of fields from related Tables / important for update
 	if($gtabid != $tab_id){
 		$ID = $gresult[$tab_id]['id'][0];
+		if(!$ID) {
+            if (!$gresult[$tab_id]['parentage']) {
+                $ID = null;
+                $edittyp = 2;
+            }else{
+                $ID = 0;
+            }
+        }
 	}
-	
+
 	$fname($ID,$gresult,$field_id,$tab_id,$fclass,$style,$pos,$edittyp,$z_index,$gform[$gformid]["event"][$key],$gformid,$key,$gform[$gformid]["pic_size"][$key]);
 }
 
@@ -508,9 +521,8 @@ function form_uform($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_
 			$vuniqueid = "g_0_".$fieldid;
 			$linklevel["tabid"] = $gtabid;
 			$gsr = $filter["ext_RelationFields"]["searchval"][$vuniqueid];
-			$vfilter["anzahl"][$gtabid] = "all";
 			$vfilter["order"][$gtabid] = $filter["ext_RelationFields"]["order"][$vuniqueid];
-			
+
 			# specific formular styles
 			$st = explode(";",$gform[$gformid]["style"][$key]);
 			if($st[24]){ #overflow
@@ -541,18 +553,32 @@ function form_uform($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_
 			}
 
 			if(!$filter["ext_RelationFields"][$vuniqueid]){$filter["ext_RelationFields"][$vuniqueid] = $gfield[$gtabid]["key"];}
-			if(!$filter["ext_RelationFields"]['nogresult'][$vuniqueid]){$ugresult = get_gresult($gtabid,2,$vfilter,$gsr,$verkn,$onlyfield,$single,$extension);}
+			#$vfilter["anzahl"][$gtabid] = $filter["ext_RelationFields"]["count"][$vuniqueid];
+			#$vfilter["page"][$gtabid] = $filter["ext_RelationFields"]["page"][$vuniqueid];
+
+			get_countFilter($gtabid,$vuniqueid,$params,$vfilter);
+
+			if(!$filter["ext_RelationFields"]['nogresult'][$vuniqueid]){
+			    $onlyfield[$gtabid] = $filter["ext_RelationFields"][$vuniqueid];
+			    $ugresult = get_gresult($gtabid,2,$vfilter,$gsr,$verkn,$onlyfield);
+			}
+
 			if(($action == 'gtab_change' OR $action == 'gtab_neu') AND !$readonly){$edittyp = 1;}else{$edittyp = 2;}
 
 			echo "<div $style_abs class=\"gtabFringeRelationBody\">\n";
 			if(!$filter["ext_RelationFields"]["no_menu"][$vuniqueid]){
 				dftyp_14_header($gtabid,$fieldid,$ID,$vuniqueid,$gformid,$key,$edittyp,$linklevel,$z_index,null,$filter);
 			}
-			echo "<div style=\"width:100%;$bt\" ID=\"extRelationFieldsTab_".$gtabid."_".$fieldid."\">";
 			# table
-			
+			echo "<div style=\"width:100%;$bt\" lmbHeight=\"$bt\" ID=\"extRelationFieldsTab_".$gtabid."_".$fieldid."\">";
 			cftyp_14_d($ugresult,$rscount,1,$verkn,$gtabid,$gtabid,$fieldid,$ID,$VID,$linklevel,$vuniqueid,$gformid,$key,$filter);
 			echo "</div>";
+
+            // pagination placeholder
+            if($filter["ext_RelationFields"]["pagination"][$vuniqueid]) {
+                echo "<div id=\"extRelationFooter_".$gtabid."_".$fieldid."\"></div>";
+            }
+
 			echo "</div>";
 		}
 	}
@@ -571,13 +597,14 @@ function form_tab($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id
 	$tdsize = explode(";",$gform[$gformid]["parameters"][$key]);
 
 	$stylearray_tab = explode(";",$gform[$gformid]["style"][$key]);
+	$style_div = set_style($stylearray_tab);
 	# zeigt gesammte Höhe an
 	if($stylearray_tab[24]){$height = "height:".$gform[$gformid]["height"][$key]."";}
-	$div_style = "style=\"".$pos.";width:".$gform[$gformid]["width"][$key].";$height;".set_style($stylearray_tab)."\"";
 	$tab_style = "style=\"border-collapse:$collapse;\"";
+    if(!$stylearray_tab[34]){$style_div_ = $style_div;}
 
 	echo "
-	<div $class $div_style>
+	<div $class style=\"".$pos.";width:".$gform[$gformid]["width"][$key].";$height;$style_div_\">
 	<table cellpadding=0 cellspacing=0 $tab_style id=\"element".$gform[$gformid]["fid"][$key]."\">";
 
 	# rows
@@ -594,8 +621,15 @@ function form_tab($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id
 				$valign = "valign=\"".$stylearray[23]."\"";
 				unset($stylearray[23],$stylearray[12]);
 				$stylevalue = set_style($stylearray);
-				# style fom tab
-				if($stylearray_tab[34]){$stylevalue = $style_tab.";".$stylevalue;}
+				$class = $gform[$gformid]["class"][$cell_key];
+				# inherit style from table
+				if($stylearray_tab[34]){
+				    $stylevalue = $style_div.";".$stylevalue;
+				    $class = $gform[$gformid]["class"][$key]." ".$gform[$gformid]["class"][$cell_key];
+				}
+
+				$class = "class=\"$class\"";
+				
 				# colspan
 				if($stylearray[37]){$colspan = $stylearray[37]; $CLSP = "colspan=\"".$stylearray[37]."\"";}else{$CLSP = "";}
 				# width
@@ -603,7 +637,7 @@ function form_tab($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id
 				# event
 				if($event = dftyp_events($typ,$gform[$gformid]['event'][$cell_key],null,null,null,null,null,$null,$gtabid,null)){$stylevalue .= ";cursor:pointer;";}
 
-				$class = "class=\"".$gform[$gformid]["class"][$cell_key]."\"";
+
 				echo "<td id=\"element".$gform[$gformid]["fid"][$cell_key]."\" $class style=\"$stylevalue;$tdwidth\" $align $valign $event $CLSP>";
 
 				if($gform[$gformid]["tab_cellel"][$gform[$gformid]["tab"][$key]][$c][$r]){
@@ -611,7 +645,7 @@ function form_tab($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id
 						$tab_id = $gform[$gformid]["tab_id"][$cellElkey];
 						$field_id = $gform[$gformid]["field_id"][$cellElkey];
 						$styleElarray = explode(";",$gform[$gformid]["style"][$cellElkey]);
-						$styleElvalue = set_style($styleElarray).";position:relative;width:".$gform[$gformid]["width"][$cellElkey]."px;height:".$gform[$gformid]["height"][$cellElkey]."px;z-index:".$gform[$gformid]["z_index"][$cellElkey];
+						$styleElvalue = set_style($styleElarray).";position:relative;width:".$gform[$gformid]["width"][$cellElkey]."px;min-height:".$gform[$gformid]["height"][$cellElkey]."px;z-index:".$gform[$gformid]["z_index"][$cellElkey];
 						// readonly from editrule
                         if ($readonly and isset($typearray[$gform[$gformid]["typ"][$cellElkey]])) {$styleElarray[35] = 1;}
                         
@@ -798,10 +832,11 @@ function form_fmenue($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field
 #------------ frame ---------------------
 function form_frame($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id,$tab_id,&$gresult,$z_index,$collapse,$readonly){
 	global $gform;
+
 	if($gform[$gformid]["inhalt"][$key]){
-		$style_ = preg_replace("/width:|height:|border-style:|padding:/","null",$style);
-		echo "<div $class style=\"color:transparent;border:none;padding:0 6px;$style_;left:".($gform[$gformid]["posx"][$key] + 15).";top:".($gform[$gformid]["posy"][$key] - 1).";height:3px;overflow:hidden;z-index:".($gform[$gformid]["z_index"][$key] + 1).";position:absolute;\">".$gform[$gformid]["inhalt"][$key]."</div>";
-		echo "<div $class style=\"opacity:0.3;filter:Alpha(opacity=30);padding-left:6px;padding-right:6px;$style_;left:".($gform[$gformid]["posx"][$key] + 15).";top:".($gform[$gformid]["posy"][$key] - 8).";z-index:".($gform[$gformid]["z_index"][$key] + 2).";position:absolute;border:none;\">".$gform[$gformid]["inhalt"][$key]."</div>";
+	    $stylearray = explode(";",$gform[$gformid]["style"][$key]);
+		$style_ = preg_replace("/width:|height:|border-style:|padding:|background-color|left:|top:/","",$style);
+        echo "<div style=\"$style_;position:absolute;left:".($gform[$gformid]["posx"][$key] + 20).";top:".($gform[$gformid]["posy"][$key] - 8).";z-index:".($gform[$gformid]["z_index"][$key] + 2).";border:none;padding-left:10px;padding-right:10px; background-image: linear-gradient(to bottom, transparent 50%, {$stylearray[21]} 50%)\">".$gform[$gformid]["inhalt"][$key]."</div>";
 	}
 
 	echo "<div id=\"element".$gform[$gformid]["fid"][$key]."\" style=\"".$pos.$style."\" title=\"".htmlentities($gform[$gformid]["title"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" $class>";
@@ -866,13 +901,21 @@ function form_inptext($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$fiel
 	$stylearray = explode(";",$gform[$gformid]["style"][$key]);
 	$event = dftyp_events(1,$gform[$gformid]["event"][$key],null,null,null,null,null,$null,$gtabid,null);
 	$style = "STYLE=\"".$pos.$style."\"";
-	echo "<INPUT ID=\"element".$gform[$gformid]["fid"][$key]."\" TYPE=\"TEXT\" NAME=\"lfel[".$gform[$gformid]["fid"][$key]."]\" $readonly $class $style $event VALUE=\"".htmlentities($gform[$gformid]["inhalt"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" MAXLENGTH=\"".$stylearray[36]."\" TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\" TITLE=\"".htmlentities($gform[$gformid]["title"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\">";
+	$value = $gform[$gformid]["inhalt"][$key];
+	if($_REQUEST['lfel'][$gform[$gformid]['fid'][$key]]){
+	    $value = $_REQUEST['lfel'][$gform[$gformid]['fid'][$key]];
+    }
+	echo "<INPUT ID=\"element".$gform[$gformid]["fid"][$key]."\" TYPE=\"TEXT\" NAME=\"lfel[".$gform[$gformid]["fid"][$key]."]\" $readonly $class $style $event VALUE=\"".htmlentities($value,ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" MAXLENGTH=\"".$stylearray[36]."\" TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\" TITLE=\"".htmlentities($gform[$gformid]["title"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\">";
 }
 
 #------------ input hidden ---------------------
 function form_inphidden($key,$gformid,$pos,$style,$class,$ID,$gtabid){
 	global $gform;
-	echo "<INPUT ID=\"element".$gform[$gformid]["fid"][$key]."\" TYPE=\"HIDDEN\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."]\" VALUE=\"".htmlentities($gform[$gformid]["inhalt"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\">";
+	$value = $gform[$gformid]["inhalt"][$key];
+	if($_REQUEST['lfel'][$gform[$gformid]['fid'][$key]]){
+	    $value = $_REQUEST['lfel'][$gform[$gformid]['fid'][$key]];
+    }
+	echo "<INPUT ID=\"element".$gform[$gformid]["fid"][$key]."\" TYPE=\"HIDDEN\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."]\" VALUE=\"".htmlentities($value,ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\">";
 }
 
 #------------ input textarea ---------------------
@@ -881,7 +924,11 @@ function form_inparea($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$fiel
 	if($readonly == 1){$readonly = 'readonly';}
 	$event = dftyp_events(1,$gform[$gformid]['event'][$key],null,null,null,null,null,$null,$gtabid,null);
 	$style = "STYLE=\"".$pos.$style."\"";
-	echo "<TEXTAREA ID=\"element".$gform[$gformid]["fid"][$key]."\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."]\" $readonly $class $style $event TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\" TITLE=\"".htmlentities($gform[$gformid]["title"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\">".htmlentities($gform[$gformid]["inhalt"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</TEXTAREA>";
+	$value = $gform[$gformid]["inhalt"][$key];
+	if($_REQUEST['lfel'][$gform[$gformid]['fid'][$key]]){
+	    $value = $_REQUEST['lfel'][$gform[$gformid]['fid'][$key]];
+    }
+	echo "<TEXTAREA ID=\"element".$gform[$gformid]["fid"][$key]."\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."]\" $readonly $class $style $event TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\" TITLE=\"".htmlentities($gform[$gformid]["title"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\">".htmlentities($value,ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</TEXTAREA>";
 }
 
 #------------ input select ---------------------
@@ -894,8 +941,14 @@ function form_inpselect($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$fi
 	if($readonly == 1){$readonly = 'readonly';}
 	$event = dftyp_events(1,$gform[$gformid]['event'][$key],null,null,null,null,null,$null,$gtabid,null);
 	$style = "STYLE=\"".$pos.$style."\"";
-	echo "<SELECT ID=\"element".$gform[$gformid]["fid"][$key]."\" TYPE=\"TEXT\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."]\" $readonly $class $style $event TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\" TITLE=\"".htmlentities($gform[$gformid]["title"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\">";
+	if($_REQUEST['lfel'][$gform[$gformid]['fid'][$key]]){
+	    $value = $_REQUEST['lfel'][$gform[$gformid]['fid'][$key]];
+    }
 
+	echo "<SELECT ID=\"element".$gform[$gformid]["fid"][$key]."\" TYPE=\"TEXT\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."]\" $readonly $class $style $event TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\" TITLE=\"".htmlentities($gform[$gformid]["title"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\">";
+	echo "<OPTION>";
+
+	// use Select-Pool
 	if(is_numeric($gform[$gformid]['inhalt'][$key])){
 		
 		// multilang
@@ -906,19 +959,22 @@ function form_inpselect($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$fi
 		    
 		$sqlquery = "SELECT ID,$field_name,HIDE,DEF FROM LMB_SELECT_W WHERE POOL = ".$gform[$gformid]['inhalt'][$key]." ORDER BY SORT";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		$bzm1 = 1;
-		echo "<OPTION>";
-		while(odbc_fetch_row($rs, $bzm1)) {
+		while(odbc_fetch_row($rs)) {
+		    $selected = '';
 			if(odbc_result($rs, "HIDE")){continue;}
-			if(odbc_result($rs, "DEF")){$selected = 'SELECTED';}
+			if(!$value AND odbc_result($rs, "DEF")){$selected = 'SELECTED';}
+			if($value == $sval){$selected = 'SELECTED';}
 			$sval = htmlentities(odbc_result($rs, $field_name),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
-			echo "<OPTION $selected>$sval";
-			$bzm1++;
+			echo "<OPTION value=\"$sval\" $selected>$sval";
 		}
+	// use Text with linebreak
 	}elseif($gform[$gformid]['inhalt'][$key]){
-		$opt = explode(",",$gform[$gformid]['inhalt'][$key]);
-		foreach ($opt as $key => $value){
-			echo "<OPTION>$value\n";
+		$opt = explode("\n",$gform[$gformid]['inhalt'][$key]);
+		foreach ($opt as $key => $sval){
+		    $selected = '';
+		    $sval = trim($sval,"\r");
+		    if($value == $sval){$selected = 'SELECTED';}
+			echo "<OPTION $selected value=\"$sval\">$sval\n";
 		}
 	}
 	echo "</SELECT>";
@@ -930,7 +986,11 @@ function form_inpcheck($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$fie
 	if($readonly == 1){$readonly = 'readonly';}
 	$event = dftyp_events(1,$gform[$gformid]['event'][$key],null,null,null,null,null,$null,$gtabid,null);
 	$style = "STYLE=\"".$pos.$style."\"";
-	if($gform[$gformid]['inhalt'][$key] == 1){$CHECKED = "checked";}
+	$value = $gform[$gformid]["inhalt"][$key];
+	if($_REQUEST['lfel'][$gform[$gformid]['fid'][$key]]){
+	    $value = 1;
+    }
+	if($value){$CHECKED = "checked";}
 	echo "<INPUT ID=\"element".$gform[$gformid]["fid"][$key]."\" TYPE=\"CHECKBOX\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."]\" $readonly $class $style $event $CHECKED TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\" TITLE=\"".htmlentities($gform[$gformid]["title"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\">";
 }
 
@@ -940,10 +1000,17 @@ function form_inpradio($key,$gformid,$pos,$style,$class,$ID,$gtabid){
 	$event = dftyp_events(1,$gform[$gformid]['event'][$key],null,null,null,null,null,$null,$gtabid,null);
 	$style = "STYLE=\"".$pos.$style."\"";
 	if($gform[$gformid]['inhalt'][$key]){
-		$opt = explode(" ",$gform[$gformid]['inhalt'][$key]);
-	}
-	if($opt[1] == 1){$CHECKED = "checked";}
-	echo "<INPUT ID=\"element".$gform[$gformid]["fid"][$key]."\" TYPE=\"RADIO\" NAME=\"lfel[".$opt[0]."]\" VALUE=\"lfel[".$gform[$gformid]['fid'][$key]."]\" $class $style $event $CHECKED TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\" TITLE=\"".htmlentities($gform[$gformid]["title"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\">";
+		$name = $gform[$gformid]['inhalt'][$key];
+	}else{
+	    $name = $gform[$gformid]['fid'][$key];
+    }
+    $name = explode(' ',$name);
+	if($_REQUEST['lfel'][$name[0]] == $gform[$gformid]['fid'][$key]){
+	    $value = 1;
+    }
+    if($value){$CHECKED = "checked";}
+
+	echo "<INPUT ID=\"element".$gform[$gformid]["fid"][$key]."\" TYPE=\"RADIO\" NAME=\"lfel[".$name[0]."]\" VALUE=\"".$gform[$gformid]['fid'][$key]."\" $class $style $event $CHECKED TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\" TITLE=\"".htmlentities($gform[$gformid]["title"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\">";
 }
 
 #------------ line ---------------------
@@ -1079,12 +1146,33 @@ function form_reminder($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$fie
     echo "{$gform[$gformid]["inhalt"][$key]}<i class=\"lmb-icon lmb-bell\" ID=\"element".$gform[$gformid]["fid"][$key]."\" $class $style $event onclick=\"limbasDivShowReminder(event,this,null,null,null,null,'" . htmlentities($defaults) . "');\" onmousedown=\"this.style.border='1px solid black';\" onmouseup=\"this.style.border='';\"></i>";
 }
 
+#-------- html template -----------
+function form_templ($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id,$tab_id,&$gresult) {
+    global $gform;
+    require_once('extra/template/form/FormTemplateConfig.php');
+
+    $content = $gform[$gformid]['inhalt'][$key];
+    $templGtabid = $gform[$gformid]['pic_typ'][$key];
+    TemplateConfig::$instance = new FormTemplateConfig($gtabid);
+
+    $baseElement = TemplateConfig::$instance->getTemplateElementInstance($templGtabid, 'lmbBaseElement', $content);
+    $baseElement->resolve($ID);
+
+    # TODO event
+    echo "<DIV ID=\"element{$gform[$gformid]["fid"][$key]}\" $class STYLE=\"$pos $style\">";
+    foreach ($baseElement->getAsHtmlArr() as &$html) {
+        echo $html;
+    }
+    echo "</DIV>";
+}
+
+
 # --------------------------- Listmode -------------------------------
 
 
 
 #------------ tab ---------------------
-function formlist_tab($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$style){
+function formlist_tab($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$datid,$style=null){
 	global $gform;
 	global $gfield;
 	global $gtab;
@@ -1098,45 +1186,47 @@ function formlist_tab($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$style){
     if(!$style[21]){$cl = "class=\"lmbfringegtab\"";}
     if($style[24] AND $style[24] != 'visible' AND $gform[$gformid]["height"][$key]){$height = $gform[$gformid]["height"][$key];}
 	$tab_size = explode(";",$gform[$gformid]['tab_size'][$key]);
+    $tdsize = explode(";",$gform[$gformid]["parameters"][$key]);
 	$pos = "top:".$gform[$gformid]["posy"][$key].";left:".$gform[$gformid]["posx"][$key].";";
-	$tdsize = explode(";",$gform[$gformid]["parameters"][$key]);
-	 
+
 	$style = set_style($style);
 	if($cellstyle == 1){$style_ = $style;}
+	if($datid !== null){$elname = '_'.$datid;}
 
-	echo "<div id=\"element".$gform[$gformid]["fid"][$key]."\" style=\"position:absolute;$pos;width:".(array_sum($tdsize))."px;max-height:".$height."px;$style;overflow:visible;\">
-	<table $cl id=\"elementTab".$gform[$gformid]["fid"][$key]."\" cellspacing=\"0\" cellpadding=\"0\" STYLE=\"display:inline-block;margin:0px;border-collapse:collapse;border-spacing:1px;\">\n";
+	echo "<div id=\"element".$gform[$gformid]["fid"][$key].$elname."\" style=\"position:absolute;$pos;max-height:".$height."px;$style;overflow:visible;\">
+	<table $cl id=\"elementTab".$gform[$gformid]["fid"][$key].$elname."\" cellspacing=\"0\" cellpadding=\"0\" STYLE=\"margin:0px;border-collapse:collapse;border-spacing:1px;width:".array_sum($tdsize)."px\">\n";
 
 	for ($r=1; $r<=$tab_size[1];$r++){
-	    
+
 	    // menu
 	    if($gform[$gformid]["typ"][$gform[$gformid]["tab_el_key"][$gform[$gformid]["tab"][$key]][1][$r]] == "tabmenu"){
+	        echo "<tr><td colspan=\"".count($tdsize)."\"><table cellpadding=0 cellspacing=0>";
 	        lmbGlistMenu($gtabid,1);
+	        echo "</table></td></tr>";
 	    // scroll
 	    }elseif($gform[$gformid]["typ"][$gform[$gformid]["tab_el_key"][$gform[$gformid]["tab"][$key]][1][$r]] == "scroll"){
-	        echo "<tr><td>";
+	        echo "<tr><td colspan=\"".count($tdsize)."\">";
 	        lmbGlistFooter($gtabid,$gresult,$GLOBALS['filter'],1);
 	        echo "</td></tr>";
 	    }else{
-
     		// ------- Datensatz in Zeile vorhanden --------
     		if($gform[$gformid]["tab_el_rowdat"][$gform[$gformid]["tab"][$key]][$r]){
-    		    echo "<tr><td><div id=\"elementBody".$gform[$gformid]["fid"][$key]."\" style=\"overflow-y:".$overflow.";overflow-x: hidden;\"><table class=\"lmbfringeGtabBody\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" STYLE=\"overflow:hidden;border-collapse:$collapse;width:".array_sum($tdsize)."\">";
+    		    #echo "<tr><td><div id=\"elementBody".$gform[$gformid]["fid"][$key]."\" style=\"overflow-y:".$overflow.";overflow-x: hidden;\"><table class=\"lmbfringeGtabBody\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" STYLE=\"overflow:hidden;border-collapse:$collapse;width:".array_sum($tdsize)."\">";
     			$bzm = 0;
     			while($bzm < $gresult[$gtabid]["res_viewcount"]) {
+    			    # show only one dataset if datid is present - for tile subforms
+    			    if($datid !== null){$bzm = $datid;}
     				formlist_tabrow($key,$gformid,$gtabid,$field_id,$tab_id,$gresult,$tab_size,$r,$bzm,$style_);
+    			    if($datid !== null){break;}
     				$bzm++;
     			}
-    			echo '</table></div></td></tr>';
-    			
+    			#echo '</table></div></td></tr>';
     		}else{
-    		    echo "<tr><td><div><table class=\"lmbfringeGtabBody\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" STYLE=\"border-collapse:$collapse;width:100%\">";
+    		    #echo "<tr><td><div><table class=\"lmbfringeGtabBody\" border=\"0\" cellpadding=\"0\" cellspacing=\"0\" STYLE=\"border-collapse:$collapse;width:100%\">";
     			formlist_tabrow($key,$gformid,$gtabid,$field_id,$tab_id,$gresult,$tab_size,$r,0,$style_);
-    			echo '</table></div></td></tr>';
+    			#echo '</table></div></td></tr>';
     		}
-
 	    }
-
 	}
 	echo "</table></div>";
 	if($height){
@@ -1186,7 +1276,8 @@ function formlist_tabrow($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$tab_
 			if($cell_key){
 				$stylearray = explode(";",$gform[$gformid]["style"][$cell_key]);
 				$stylevalue = set_style($stylearray);
-				$style = "width:".$tdsize[$c-1]."px;".$stylevalue.";height:".$gform[$gformid]["height"][$cell_key].";";
+				#$style = "width:".$tdsize[$c-1]."px;".$stylevalue.";min-height:".$gform[$gformid]["height"][$cell_key]."px;";
+				$style = "width:".$tdsize[$c-1]."px;".$stylevalue;
 				$field_id = $gform[$gformid]["field_id"][$cell_key];
 				$tab_id = $gform[$gformid]["tab_id"][$cell_key];
 				$bgcolor = null;
@@ -1244,7 +1335,6 @@ function formlist_dbdat($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$line)
 			$fname = "lmbc_".$gfield[$tab_id]["ext_type"][$field_id];
 		}
 	}
-
 	#------------------ Typfunktion ---------------------
 	$fname($line,$field_id,$tab_id,$edittyp,$gresult,$gform[$gformid]["event"][$key],$gformid,$key);
 	#------------------ Typfunktion ---------------------
@@ -1297,7 +1387,7 @@ function formlist_scroll($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$dati
 #------------ text ---------------------
 function formlist_text($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$datid){
 	global $gform;
-	echo str_replace(" ","&nbsp;",nl2br(htmlentities($gform[$gformid]["inhalt"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])));
+	echo nl2br(htmlentities($gform[$gformid]["inhalt"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]));
 }
 
 #------------ datum ---------------------
@@ -1315,7 +1405,7 @@ function formlist_usetime($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$dat
 function formlist_submt($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$datid){
 	global $gform;
 	$event = cftyp_events($typ,$gform[$gformid]['event'][$key],null,$gresult,$gtabid,null,$datid);
-	echo "<DIV ID=\"element".$gform[$gformid]["fid"][$key]."_".$gresult[$gtabid]['id'][$datid]."\" STYLE=\";cursor:pointer;\" $event OnClick=\"send_form('1');\">";
+	echo "<DIV ID=\"element".$gform[$gformid]["fid"][$key]."_".$gresult[$gtabid]['id'][$datid]."\" data-id=\"".$gresult[$gtabid]['id'][$datid]."\" STYLE=\";cursor:pointer;\" $event OnClick=\"send_form('1');\">";
 	echo $gform[$gformid]['inhalt'][$key];
 	echo "<DIV>";
 }
@@ -1325,7 +1415,7 @@ function formlist_button($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$dati
     global $gform;
     $event = cftyp_events($typ,$gform[$gformid]["event"][$key],null,$gresult,$gtabid,null,$datid);
     $style = "STYLE=\"width:100%;height:100%;".$style.";border:none\"";
-    echo "<input id=\"element".$gform[$gformid]["fid"][$key]."_".$gresult[$gtabid]['id'][$datid]."\" type=\"button\" value=\"".$gform[$gformid]["inhalt"][$key]."\" $event tabindex=\"".$gform[$gformid]["z_index"][$key]."\">";
+    echo "<input id=\"element".$gform[$gformid]["fid"][$key]."_".$gresult[$gtabid]['id'][$datid]."\" data-id=\"".$gresult[$gtabid]['id'][$datid]."\" type=\"button\" value=\"".$gform[$gformid]["inhalt"][$key]."\" $event tabindex=\"".$gform[$gformid]["z_index"][$key]."\">";
 }
 
 #------------ input text ---------------------
@@ -1333,13 +1423,18 @@ function formlist_inptext($key,$gformid,$gtabid,$field_id,$tab_id,$gresult,$dati
 	global $gform;
 	$event = cftyp_events($typ,$gform[$gformid]["event"][$key],null,$gresult,$gtabid,null,$datid);
 	$style = "STYLE=\"width:100%;height:100%;".$style.";border:none\"";
-	echo "<INPUT ID=\"element".$gform[$gformid]["fid"][$key]."_".$gresult[$gtabid]['id'][$datid]."\" TYPE=\"TEXT\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."]\" $style $event VALUE=\"".htmlentities($gform[$gformid]["inhalt"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\">";
+	$value = $gform[$gformid]["inhalt"][$key];
+	if($_REQUEST['lfel'][$gform[$gformid]['fid'][$key]][$datid]){
+	    $value = $_REQUEST['lfel'][$gform[$gformid]['fid'][$key]][$datid];
+    }
+
+	echo "<INPUT ID=\"element".$gform[$gformid]["fid"][$key]."_".$gresult[$gtabid]['id'][$datid]."\" data-id=\"".$gresult[$gtabid]['id'][$datid]."\" TYPE=\"TEXT\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."][$datid]\" $style $event VALUE=\"".htmlentities($value,ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\">";
 }
 
 #------------ input hidden ---------------------
 function formlist_inphidden($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$datid){
 	global $gform;
-	echo "<INPUT ID=\"element".$gform[$gformid]["fid"][$key]."_".$gresult[$gtabid]['id'][$datid]."\" TYPE=\"HIDDEN\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."]\" VALUE=\"".htmlentities($gform[$gformid]["inhalt"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\">";
+	echo "<INPUT ID=\"element".$gform[$gformid]["fid"][$key]."_".$gresult[$gtabid]['id'][$datid]."\" data-id=\"".$gresult[$gtabid]['id'][$datid]."\" TYPE=\"HIDDEN\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."]\" VALUE=\"".htmlentities($gform[$gformid]["inhalt"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\">";
 }
 
 #------------ input textarea ---------------------
@@ -1347,21 +1442,48 @@ function formlist_inparea($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$dat
 	global $gform;
 	$event = cftyp_events($typ,$gform[$gformid]['event'][$key],null,$gresult,$gtabid,null,$datid);
 	$style = "STYLE=\"".$pos.$style."\"";
-	echo "<TEXTAREA ID=\"element".$gform[$gformid]["fid"][$key]."_".$gresult[$gtabid]['id'][$datid]."\" TYPE=\"TEXT\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."]\" $style $event TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\">".htmlentities($gform[$gformid]["inhalt"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</TEXTAREA>";
+	echo "<TEXTAREA ID=\"element".$gform[$gformid]["fid"][$key]."_".$gresult[$gtabid]['id'][$datid]."\" data-id=\"".$gresult[$gtabid]['id'][$datid]."\" TYPE=\"TEXT\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."]\" $style $event TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\">".htmlentities($gform[$gformid]["inhalt"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</TEXTAREA>";
 }
 
 #------------ input select ---------------------
 function formlist_inpselect($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$datid,$style=null){
+
 	global $gform;
 	$event = cftyp_events($typ,$gform[$gformid]['event'][$key],null,$gresult,$gtabid,null,$datid);
 	$style = "STYLE=\"width:100%;height:100%;".$style.";border:none\"";
-	echo "<SELECT ID=\"element".$gform[$gformid]["fid"][$key]."_".$gresult[$gtabid]['id'][$datid]."\" TYPE=\"TEXT\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."]\" $style $event TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\">";
-	if($gform[$gformid]['inhalt'][$key]){
+	if($_REQUEST['lfel'][$gform[$gformid]['fid'][$key]][$datid]){
+	    $value = $_REQUEST['lfel'][$gform[$gformid]['fid'][$key]][$datid];
+    }
+	echo "<SELECT ID=\"element".$gform[$gformid]["fid"][$key]."_".$gresult[$gtabid]['id'][$datid]."\" data-id=\"".$gresult[$gtabid]['id'][$datid]."\" TYPE=\"TEXT\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."][$datid]\" $style $event TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\"><OPTION>";
+
+	if(is_numeric($gform[$gformid]['inhalt'][$key])){
+		// multilang
+		$field_name = 'WERT';
+		if($umgvar['multi_language'] AND $session['language'] != $umgvar['default_language']){
+		      $field_name = 'LANG'.$session['language'].'_WERT';
+		}
+
+		$sqlquery = "SELECT ID,$field_name,HIDE,DEF FROM LMB_SELECT_W WHERE POOL = ".$gform[$gformid]['inhalt'][$key]." ORDER BY SORT";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		while(odbc_fetch_row($rs)) {
+		    $selected = '';
+			if(odbc_result($rs, "HIDE")){continue;}
+			if(!$value AND odbc_result($rs, "DEF")){$selected = 'SELECTED';}
+			if($value == $sval){$selected = 'SELECTED';}
+			$sval = htmlentities(odbc_result($rs, $field_name),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+			echo "<OPTION value=\"$sval\" $selected>$sval";
+		}
+	// use Text with linebreak
+	}elseif($gform[$gformid]['inhalt'][$key]){
 		$opt = explode("\n",$gform[$gformid]['inhalt'][$key]);
-		foreach ($opt as $key => $value){
-			echo "<OPTION>$value\n";
+		foreach ($opt as $key => $sval){
+		    $selected = '';
+		    $sval = trim($sval,"\r");
+		    if($value == $sval){$selected = 'SELECTED';}
+			echo "<OPTION $selected value=\"$sval\">$sval\n";
 		}
 	}
+
 	echo "</SELECT>";
 }
 
@@ -1370,8 +1492,12 @@ function formlist_inpcheck($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$da
 	global $gform;
 	$event = cftyp_events($typ,$gform[$gformid]['event'][$key],null,$gresult,$gtabid,null,$datid);
 	$style = "STYLE=\"width:100%;height:100%;".$style.";border:none\"";
-	if($gform[$gformid]['inhalt'][$key] == 1){$CHECKED = "checked";}
-	echo "<INPUT ID=\"element".$gform[$gformid]["fid"][$key]."_".$gresult[$gtabid]['id'][$datid]."\" TYPE=\"CHECKBOX\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."]\" $style $event $CHECKED TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\">";
+	$value = $gform[$gformid]["inhalt"][$key];
+	if($_REQUEST['lfel'][$gform[$gformid]['fid'][$key]][$datid]){
+	    $value = 1;
+    }
+	if($value){$CHECKED = "checked";}
+	echo "<INPUT ID=\"element".$gform[$gformid]["fid"][$key]."_".$gresult[$gtabid]['id'][$datid]."\" data-id=\"".$gresult[$gtabid]['id'][$datid]."\" TYPE=\"CHECKBOX\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."][$datid]\" $style $event $CHECKED TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\">";
 }
 
 #------------ input radio ---------------------
@@ -1379,11 +1505,18 @@ function formlist_inpradio($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$da
 	global $gform;
 	$event = cftyp_events($typ,$gform[$gformid]['event'][$key],null,$gresult,$gtabid,null,$datid);
 	$style = "STYLE=\"width:100%;height:100%;".$style.";border:none\"";
-	if($gform[$gformid]["inhalt"][$key]){
-		$opt = explode(" ",$gform[$gformid]['inhalt'][$key]);
-	}
-	if($opt[1] == 1){$CHECKED = "checked";}
-	echo "<INPUT ID=\"element".$gform[$gformid]["fid"][$key]."_".$gresult[$gtabid]['id'][$datid]."\" TYPE=\"RADIO\" NAME=\"lfel[".$opt[0]."]\" VALUE=\"lfel[".$gform[$gformid]['fid'][$key]."]\" $style $event $CHECKED TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\">";
+	if($gform[$gformid]['inhalt'][$key]){
+		$name = $gform[$gformid]['inhalt'][$key];
+	}else{
+	    $name = $gform[$gformid]['fid'][$key];
+    }
+    $name = explode(' ',$name);
+	if($_REQUEST['lfel'][$name[0]][$datid] == $gform[$gformid]['fid'][$key].'_'.$datid){
+	    $value = 1;
+    }
+    if($value){$CHECKED = "checked";}
+
+	echo "<INPUT ID=\"element".$gform[$gformid]["fid"][$key]."_".$gresult[$gtabid]['id'][$datid]."\" data-id=\"".$gresult[$gtabid]['id'][$datid]."\" TYPE=\"RADIO\" NAME=\"lfel[".$name[0]."][$datid]\" VALUE=\"".$gform[$gformid]['fid'][$key]."_".$datid."\" $style $event $CHECKED TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\">";
 }
 
 #------------ PHP Script ---------------------
@@ -1395,7 +1528,7 @@ function formlist_php($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$datid){
         if($rtrn === true){$rtrn = '';}
         if($event = dftyp_events(1,$gform[$gformid]["event"][$key],null,null,null,null,null,$null,$gtabid,null)){$style .= ";cursor:pointer;";}
         $style = "STYLE=\"".$pos.$style."\"";
-        echo "<DIV ID=\"element".$gform[$gformid]["fid"][$key]."\" $class $style $event>";
+        echo "<DIV ID=\"element".$gform[$gformid]["fid"][$key]."\" data-id=\"".$gresult[$gtabid]['id'][$datid]."\" $class $style $event>";
         echo $rtrn;
         echo "</DIV>";
     }
@@ -1416,20 +1549,10 @@ function formlist_bild($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$datid)
 	global $db;
 	global $umgvar;
 
-	$path = "UPLOAD/form/".$gform[$gformid]["tab_size"][$key];
-	$path1 = "TEMP/thumpnails/form/".lmb_substr($gform[$gformid]['tab_size'][$key],0,lmb_strrpos($gform[$gformid]["tab_size"][$key],"."));
-    $style = set_style(explode(";", $gform[$gformid]["style"][$key]));
-    $style = "STYLE=\"".$style.";width:".$gform[$gformid]["width"][$key]."px;height:".$gform[$gformid]["height"][$key]."px;z-index:".$gform[$gformid]["z_index"][$key]."\"";
-
-	if(!file_exists($path1.".png")){
-		$cmd = $umgvar["imagemagick"]."/convert ".$umgvar["imagemagicklimit"]." ".$path." ".$path1.".png";
-		system($cmd,$out);
-	}
-
-	if(file_exists($path1.".png")){
-		$event = cftyp_events($typ,$gform[$gformid]["event"][$key],null,$gresult,$gtabid,null,$datid);
-		echo "<IMG SRC=\"".$path1.".png\" ID=\"element".$gform[$gformid]["fid"][$key]."\" $style $link $event>";
-	}
+	$ID = $gresult[$gtabid]['id'][$datid];
+	$style = set_style(explode(";", $gform[$gformid]["style"][$key]));
+	$class=$gform[$gformid]["class"][$key];
+	form_bild($key,$gformid,null,$style,$class,$ID,$gtabid);
 }
 
 #------------ frame ---------------------
@@ -1520,6 +1643,11 @@ function formlist_tabulator($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$d
     #echo "</DIV>";
 }
 
+function formlist_uform($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$datid){
+    $ID = $gresult[$gtabid]['id'][$datid];
+    form_uform($key,$gformid,null,null,null,$ID,$gtabid,$action,$field_id,$tab_id,$gresult,null,null,null);
+}
+
 function formlist_tile($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult){
     global $gform;
     global $gfield;
@@ -1541,7 +1669,7 @@ function formlist_tile($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult){
  		echo "<style type=\"text/css\">@import url(".$gformlist[$gtabid]["css"][$sub_gformid].");</style>\n";
 	}
 
-    echo "<div id=\"GtabTableBody\" style=\"overflow-x: hidden;overflow-y:auto;position:absolute;left:".$gform[$gformid]["posx"][$key].";top:".$gform[$gformid]["posy"][$key].";padding-right:10px\">";
+    echo "<div id=\"GtabTableBody\" style=\"overflow-x: hidden;overflow-y:auto;position:absolute;left:".$gform[$gformid]["posx"][$key].";top:".$gform[$gformid]["posy"][$key].";padding-right:1.5rem\">";
 
     $line = 0;
     while ($line < $gresult[$gtabid]["res_viewcount"]) {
@@ -1552,7 +1680,7 @@ function formlist_tile($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult){
             form_gresult($ID,$gtabid,$sub_gformid,$gresult);
         }
 
-        echo "<div id=\"subelement".$key."_".$ID."\" style=\"position:relative;$style;\" class=\"tabTileSubform\">";
+        echo "<div id=\"subelement".$key."_".$ID."\" style=\"position:relative;$style;\" class=\"tabTileSubform ".$gform[$gformid]["class"][$key]."\">";
 
         formlist_Elements($line,$key,$sub_gformid,$gtabid,$gresult);
 
@@ -1568,6 +1696,30 @@ function formlist_tile($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult){
 
 }
 
+#-------- html template -----------
+function formlist_templ($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$datid,$tile=null) {
+    global $gform;
+
+
+    require_once('extra/template/form/FormTemplateConfig.php');
+
+    $ID = $gresult[$gtabid]['id'][$datid];
+    $content = $gform[$gformid]['inhalt'][$key];
+    $templGtabid = $gform[$gformid]['pic_typ'][$key];
+
+    TemplateConfig::$instance = new FormTemplateConfig($gtabid, true);
+
+    $baseElement = TemplateConfig::$instance->getTemplateElementInstance($templGtabid, 'lmbBaseElement', $content);
+    $baseElement->resolve($ID,$gresult);
+
+    #$event = cftyp_events($typ,$gform[$gformid]['event'][$key],null,$gresult,$gtabid,null,$datid);
+    echo "<DIV ID=\"element".$gform[$gformid]["fid"][$key]."_".$ID."\">";
+    foreach ($baseElement->getAsHtmlArr() as &$html) {
+        echo $html;
+    }
+    echo "</div>";
+}
+
 
 
 function formlist_Elements($line,$key,$gformid,$gtabid,&$gresult,$ellist=null){
@@ -1581,11 +1733,15 @@ function formlist_Elements($line,$key,$gformid,$gtabid,&$gresult,$ellist=null){
     }
 
     foreach ($ellist as $skey => $value) {
-        if($gform[$gformid]["typ"][$skey] == "tabuItem" OR $gform[$gformid]["subelement"][$skey] == "tabuItem"){continue;}
+
+        if($gform[$gformid]["tab_el_row"][$skey] OR $gform[$gformid]["tab_el_col"][$skey] OR $gform[$gformid]["typ"][$skey] == "tabuItem" OR $gform[$gformid]["subelement"][$skey] == "tabuItem"){continue;}
+
+
         $sub_field_id = $gform[$gformid]["field_id"][$skey];
         $sub_tab_id = $gform[$gformid]["tab_id"][$skey];
         $div_style = '';
 
+        $stylearray = explode(";", $gform[$gformid]["style"][$skey]);
         $div_style = "width:".$gform[$gformid]["width"][$skey]."px;height:".$gform[$gformid]["height"][$skey]."px;z-index:".$gform[$gformid]["z_index"][$skey].";";
         $div_pos = "position:absolute;left:".$gform[$gformid]["posx"][$skey].";top:".$gform[$gformid]["posy"][$skey].";";
         $div_class = "CLASS=\"".$gform[$gformid]["class"][$skey]."\"";
@@ -1593,25 +1749,27 @@ function formlist_Elements($line,$key,$gformid,$gtabid,&$gresult,$ellist=null){
 
         // relations
         if($gfield[$sub_tab_id]['field_type'][$sub_field_id] == 11 AND $gresult[$gtabid][$sub_field_id][$line]) {
-            $div_style = set_style(explode(";", $gform[$gformid]["style"][$skey]));
+            $div_style = set_style($stylearray);
         // no image or upload
         }elseif($gform[$gformid]["typ"][$skey] != "bild" AND $gfield[$sub_tab_id]['field_type'][$sub_field_id] != 6) {
-            $div_style .= set_style(explode(";", $gform[$gformid]["style"][$skey]));
+            $div_style .= set_style($stylearray);
         }
 
         // if subresult from relation -> use line 0
         $line_ = $line;
         if($sub_tab_id AND $gtabid != $sub_tab_id){$line_ = 0;}
 
-        echo "<div id=\"element".$skey."_".$ID."\" style=\"$div_style;$div_pos\" $div_class>";
         $fname = "formlist_".$gform[$gformid]["typ"][$skey];
-        $fname($skey,$gformid,$gtabid,$sub_field_id,$sub_tab_id,$gresult,$line_,1);
-        echo "</div>";
+        if($gform[$gformid]["typ"][$skey] == 'tab') {
+            $fname($skey,$gformid,$gtabid,$sub_field_id,$sub_tab_id,$gresult,$line_,$stylearray);
+        }else{
+            echo "<div id=\"element" . $skey . "_" . $line_ . "\" style=\"$div_style;$div_pos\" $div_class>";
+            $fname($skey,$gformid,$gtabid,$sub_field_id,$sub_tab_id,$gresult,$line_,1);
+            echo "</div>";
+        }
 
     }
 
 }
-
-
 
 ?>

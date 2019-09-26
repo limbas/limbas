@@ -3,6 +3,7 @@
 # if button check is pressed: check the db connection
 if($db_test == 'validate') {
     $DBA["DBSCHEMA"] = $setup_dbschema;
+    $DBA["DBNAME"] = $setup_database;
 
     if(!$DBA['DB']){$DBA['DB'] = 'postgres';}
 
@@ -26,15 +27,16 @@ if($db_test == 'validate') {
         $setup_version = dbf_version($DBA);
         $DBA['VERSION'] = $setup_version[1];
         odbc_close($db);
+        $db = 1;
     }
 
     /* --- test database --- */
-    if($db AND $db = dbq_0($setup_host,$setup_database,$setup_dbuser,$setup_dbpass,$setup_dbdriver,$setup_dbport)) {
+    if($db = dbq_0($setup_host,$setup_database,$setup_dbuser,$setup_dbpass,$setup_dbdriver,$setup_dbport)) {
         lmb_StartTransaction();
 
         if($DBA['DB'] == 'mysql' AND $radio_odbc != 'pdo'){ // check for lower case table names
             $sqlquery1 = "SELECT CASE WHEN @@lower_case_table_names = 1 THEN 1 ELSE 2 END AS CSENSITIV";
-            $rs1 = @odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            $rs1 = odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
             if ($rs1 AND odbc_result($rs1,'CSENSITIV') == 1) {
                 $msg['db_conf'] = $msgOK;
                 $msic['db_conf'] = "1";
@@ -46,10 +48,10 @@ if($db_test == 'validate') {
         } elseif($DBA['DB'] == 'postgres'){
             #$sqlquery1 = "SHOW ALL";
             $sqlquery1 = "SHOW LC_CTYPE";
-            $rs1 = @odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            $rs1 = odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
             $LC_CTYPE = odbc_result($rs1,'LC_CTYPE');
             $sqlquery2 = "SHOW SYNCHRONOUS_COMMIT";
-            $rs2 = @odbc_exec($db, $sqlquery2) or errorhandle(odbc_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
+            $rs2 = odbc_exec($db, $sqlquery2) or errorhandle(odbc_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
             $SYNCHRONOUS_COMMIT = odbc_result($rs2,'SYNCHRONOUS_COMMIT');
             if ($rs1 AND $LC_CTYPE == 'C') {
                 $msg['db_conf'] = $msgOK.'<br><i>(synchronous_commit = '.$SYNCHRONOUS_COMMIT.')</i>';
@@ -65,11 +67,11 @@ if($db_test == 'validate') {
         // drop test table
         if ($odbc_table) {
             $sqlquery1 = "DROP TABLE " . dbf_4("LIMBASTEST");
-            $rs1 = @odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            $rs1 = odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
         }
 
         // create table
-        $sqlquery = "CREATE TABLE " . dbf_4("LIMBASTEST") . " (ID " . LMB_DBTYPE_INTEGER . ",ERSTDATUM " . LMB_DBTYPE_TIMESTAMP . " DEFAULT " . LMB_DBDEF_TIMESTAMP . ")";
+        $sqlquery = "CREATE TABLE " . dbf_4("LIMBASTEST") . " (ID " . LMB_DBTYPE_INTEGER . ",ERSTDATUM " . LMB_DBTYPE_TIMESTAMP . " DEFAULT " . LMB_DBDEF_TIMESTAMP . ",TXT VARCHAR(6))";
         $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         if ($rs) {
             $msg['db_create'] = $msgOK;
@@ -81,7 +83,13 @@ if($db_test == 'validate') {
         }
 
         // insert into
-        $sqlquery = "INSERT INTO LIMBASTEST (ID)  VALUES (1)";
+        if(stripos($setup_version[2],'UTF') !== false){
+            $insertstring = 'a1ä2Ü3';
+        }else{
+            $insertstring = utf8_decode('a1ä2Ü3');
+        }
+
+        $sqlquery = "INSERT INTO LIMBASTEST (ID,TXT)  VALUES (1,'".$insertstring."')";
         $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         if ($rs) {
             $msg['db_insert'] = $msgOK;
@@ -104,27 +112,30 @@ if($db_test == 'validate') {
         }
 
         // check cursor
-        $sqlquery = "SELECT * FROM LIMBASTEST";
-        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-        if(odbc_fetch_row($rs,1)){
-            odbc_result($rs, "ID");
-            if(odbc_fetch_row($rs,1)) {
-                if (odbc_result($rs, "ID")) {
-                    $cursor = 1;
-                } else {
-                    $cursor = 0;
+        if($radio_odbc != 'pdo') {
+            $sqlquery = "SELECT * FROM LIMBASTEST";
+            $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (odbc_fetch_row($rs, 1)) {
+                odbc_result($rs, "ID");
+                if (odbc_fetch_row($rs, 1)) {
+                    if (odbc_result($rs, "ID")) {
+                        $cursor = 1;
+                    } else {
+                        $cursor = 0;
+                    }
                 }
             }
-        }
-        if ($cursor) {
-            $msg['db_cursor'] = $msgOK;
-            $msic['db_cursor'] = "1";
-        } else {
-            $msg['db_cursor'] = $msgError;
-            $msic['db_cursor'] = "3";
-            $commit = 1;
-            if($radio_odbc == 'pdo') {
-                $msic['db_cursor'] = "2";
+            if ($cursor OR $radio_odbc == 'pdo') {
+                $msg['db_cursor'] = $msgOK;
+                $msic['db_cursor'] = "1";
+            } elseif ($radio_odbc == 'pdo') {
+                $msg['db_cursor'] = $msgOK;
+                $msic['db_cursor'] = "4";
+                $commit = 0;
+            } else {
+                $msg['db_cursor'] = $msgError;
+                $msic['db_cursor'] = "3";
+                $commit = 1;
             }
         }
 
@@ -151,9 +162,18 @@ if($db_test == 'validate') {
             $commit = 1;
         }
 
-
         lmb_EndTransaction(!(isset($commit) && $commit));
         odbc_close($db);
+
+        // check utf-8 encoding support
+        if(stripos($setup_version[2],'UTF') !== false AND !function_exists("mb_strlen")){
+            $msg['db_encoding'] = $msgError.'<br><i>to use UTF8 encoding you need to install php <b>mbstring</b> modul</i>';
+            $msic['db_encoding'] = "3";
+            $commit = 1;
+        }else{
+            $msg['db_encoding'] = $msgOK;
+            $msic['db_encoding'] = "1";
+        }
 
         # set as checked, if no error occured
         if (!$commit) {
@@ -162,25 +182,43 @@ if($db_test == 'validate') {
     }
 }
 
-# database vendors
-$vendorNames = array(
-    'PostgreSQL', 
-    'mysql',
-    'MaxDB V7.6 / V7.9',
-    'MSSQL',
-    'Sybase',
-    'Ingres 10',
-    'oracle'
-);
-$vendorValues = array(
-    'postgres', 
-    'mysql',
-    'maxdb76',
-    'mssql',
-    'mssql',
-    'ingres',
-    'oracle'
-);
+
+if(!$radio_odbc AND !extension_loaded('odbc')){$radio_odbc = 'pdo';}
+    # database vendors PDO
+    if($radio_odbc == 'pdo'){
+        # database vendors
+        $vendorNames = array(
+            'PostgreSQL',
+            'mysql'
+        );
+        $vendorValues = array(
+            'postgres',
+            'mysql'
+        );
+    # database vendors ODBC
+    }else{
+        $vendorNames = array(
+            'PostgreSQL',
+            'mysql',
+            'MaxDB V7.6 / V7.9',
+            'MSSQL',
+            'Sybase',
+            'Ingres 10',
+            'oracle'
+        );
+        $vendorValues = array(
+            'postgres',
+            'mysql',
+            'maxdb76',
+            'mssql',
+            'mssql',
+            'ingres',
+            'oracle'
+        );
+    }
+
+
+
 
 ?>
             
@@ -234,6 +272,7 @@ $vendorValues = array(
                 Driver = /opt/sdb/interfaces/odbc/lib79/libsdbodbc.so\
             ');
         }
+        if($('#radio_odbc_pdo').is(':checked')){document.getElementById("db_driver").value='PDO';}
         
         updateOdbcIni();
     }
@@ -311,8 +350,6 @@ $vendorValues = array(
 </script>
 
 
-<?php if(!$radio_odbc AND !extension_loaded('odbc')){$radio_odbc = 'pdo';}?>
-
 <table class="table table-condensed">  
     <thead>
         <tr>
@@ -323,12 +360,12 @@ $vendorValues = array(
         </tr>
     </thead>
     <tbody>
-    <?php if(extension_loaded('odbc')){?>
+    <?php if(extension_loaded('odbc')){ ?>
         <tr>
             <td>
                 <div class="radio">
                     <label style="display:block;">
-                        <input type="radio" name="radio_odbc" value="driver" id="radio_odbc_driver" onchange="onInstallTypeChange();" <?= $radio_odbc && $radio_odbc=="resource" ? "" : "checked" ?> <?if($db_test == 'valid') {echo 'readonly';}?>>Connect using the ODBC-driver
+                        <input type="radio" name="radio_odbc" value="driver" id="radio_odbc_driver" onchange="onInstallTypeChange();" <?= $radio_odbc && $radio_odbc=="resource" ? "" : "checked" ?> <?php if($db_test == 'valid') {echo 'readonly';}?>>Connect using the ODBC-driver
                     </label>
                 </div>
             </td>
@@ -337,23 +374,23 @@ $vendorValues = array(
             <td>
                 <div class="radio">
                     <label style="display:block;">
-                        <input type="radio" name="radio_odbc" value="resource" id="radio_odbc_resource" onchange="onInstallTypeChange();" <?= $radio_odbc=="resource" ? "checked" : "" ?> <?if($db_test == 'valid') {echo 'readonly';}?>>Connect using a pre-specified ODBC-resource
+                        <input type="radio" name="radio_odbc" value="resource" id="radio_odbc_resource" onchange="onInstallTypeChange();" <?= $radio_odbc=="resource" ? "checked" : "" ?> <?php if($db_test == 'valid') {echo 'readonly';}?>>Connect using a pre-specified ODBC-resource
                     </label>
                 </div>
             </td>
         </tr>
     <?php }
-    if(extension_loaded('pdo') AND !extension_loaded('odbc')){?>
+    if(extension_loaded('pdo') AND !extension_loaded('odbc')) { ?>
         <tr>
             <td>
                 <div class="radio">
                     <label style="display:block;">
-                        <input type="radio" name="radio_odbc" value="pdo" id="radio_odbc_pdo" onchange="onInstallTypeChange();" <?= $radio_odbc=="pdo" ? "checked" : "" ?> <?if($db_test == 'valid') {echo 'readonly';}?>>Connect using PDO
+                        <input type="radio" name="radio_odbc" value="pdo" id="radio_odbc_pdo" onchange="onInstallTypeChange();" <?= $radio_odbc=="pdo" ? "checked" : "" ?> <?php if($db_test == 'valid') {echo 'readonly';}?>>Connect using PDO
                     </label>
                 </div>
             </td>
         </tr>
-    <?php }?>
+    <?php } ?>
     </tbody>
 </table>
 
@@ -370,7 +407,7 @@ $vendorValues = array(
     <tbody>
         <tr><td style="vertical-align: middle;">Database Vendor:</td>
             <td>
-                <select class="form-control input-sm " id="db_vendor" name="DBA[DB]" onchange="clear_values(1);update_dbvendor();" <?if($db_test == 'valid') {echo 'readonly';}?>><option></option>
+                <select class="form-control input-sm " id="db_vendor" name="DBA[DB]" onchange="clear_values(1);update_dbvendor();" <?php if($db_test == 'valid') {echo 'readonly';}?>><option></option>
                     <?php
                     echo "</optgroup><optgroup label=\"---stable---\">";
                     foreach ($vendorNames as $key => $value) {
@@ -390,9 +427,12 @@ $vendorValues = array(
         <tr><td style="vertical-align: middle;">Database Password:</td><td><input type="password" class="form-control input-sm " autocomplete="off" value="<?= $setup_dbpass ?>" name="setup_dbpass" <?php if($db_test == 'valid') {echo 'readonly';}?>></td></tr>
         <tr><td style="vertical-align: middle;">Database Schema:</td><td><input type="text" class="form-control input-sm " autocomplete="off" name="setup_dbschema" value="<?= $setup_dbschema ?>" id="db_schema" <?php if($db_test == 'valid') {echo 'readonly';}?>></td></tr>
         <tr class="hideIfResource showIfPDO"><td style="vertical-align: middle;">Database Port:</td><td><input type="text" class="form-control input-sm " autocomplete="off" name="setup_dbport" value="<?= $setup_dbport?>" id="db_port" <?php if($db_test == 'valid') {echo 'readonly';}?>></td></tr>
-        <tr class="hideIfResource showIfPDO"><td style="vertical-align: middle;">SQL Driver (unixODBC):</td><td><input type="text" class="form-control input-sm " autocomplete="off" name="setup_dbdriver" id="db_driver" value="<?= $setup_dbdriver ?>" <?php if($db_test == 'valid') {echo 'readonly';}?>></td></tr>
-        <?php if($setup_version[0]){$setup_version_ = $setup_version; unset($setup_version_[1]); echo "<tr class=\"hideIfResource\"><td style=\"vertical-align: middle;\">Database Version:</td><td><input type=\"text\" class=\"form-control input-sm \" disabled autocomplete=\"off\" name=\"_setup_version\" value=\"".implode(' - ',$setup_version_)."\"></td></tr>";}?>
-        <input type="hidden" name="setup_encoding" value="<?=$setup_version[2]?>">
+        <tr class="hideIfResource showIfPDO"><td style="vertical-align: middle;">SQL Driver:</td><td><input type="text" class="form-control input-sm " autocomplete="off" name="setup_dbdriver" id="db_driver" value="<?= $setup_dbdriver ?>" <?php if($db_test == 'valid') {echo 'readonly';}?>></td></tr>
+        <?php if($setup_version[0]){
+            $setup_version_ = $setup_version; unset($setup_version_[1]);
+            echo "<tr class=\"hideIfResource\"><td style=\"vertical-align: middle;\">Database Version:</td><td><input type=\"text\" class=\"form-control input-sm \" disabled autocomplete=\"off\" name=\"_setup_version\" value=\"".implode(' - ',$setup_version_)."\"></td></tr>";
+            echo "<tr class=\"hideIfResource\"><td style=\"vertical-align: middle;\">Database Encoding:</td><td><input type=\"text\" class=\"form-control input-sm \" readonly autocomplete=\"off\" name=\"setup_encoding\" value=\"".$setup_version[2]."\"></td></tr>";
+        }?>
         <input type="hidden" name="DBA[VERSION]" value="<?=$DBA['VERSION']?>">
     </tbody>
 </table>
@@ -420,12 +460,15 @@ if($db_test) {
             <tr><?= insIcon($msic['db_select']); ?><td style="vertical-align: top;">select</td><td><?= $msg['db_select'] ?></td></tr>
             <tr><?= insIcon($msic['db_delete']); ?><td style="vertical-align: top;">delete</td><td><?= $msg['db_delete'] ?></td></tr>
             <tr><?= insIcon($msic['db_drop']); ?><td style="vertical-align: top;">drop table</td><td><?= $msg['db_drop'] ?></td></tr>
-            <tr><?= insIcon($msic['db_cursor']); ?><td style="vertical-align: top;">cursor support</td><td><?= $msg['db_cursor'] ?></td></tr>
+            <?php if($radio_odbc != 'pdo'){?><tr><?= insIcon($msic['db_cursor']); ?><td style="vertical-align: top;">cursor support (only odbc)</td><td><?= $msg['db_cursor'] ?></td></tr><?php }?>
+            <tr><?= insIcon($msic['db_encoding']); ?><td style="vertical-align: top;">encoding support</td><td><?= $msg['db_encoding'] ?></td></tr>
         </tbody>            
     </table>
 
 
-        <table class="table table-condensed">
+
+
+    <table class="table table-condensed">
         <thead>
             <tr>
                 <th colspan="3">
@@ -434,33 +477,29 @@ if($db_test) {
             </tr>
         </thead>
         <tbody>
-
     <?php
-    
+    if($msic['db_cursor'] > 1){
+        ?>
+        <tr><td><i>LIMBAS need ODBC cursor support for ODBC connections. In some cases versions of mysql, mariadb, php or combinations of them does not support cursors. You can try to adjust the connection string in funtion <b>dbq_0</b> in file <b>/lib/db/db_mysql.lib</b></i></td></tr>
+        <?php
+    }
+    # Information
+    if($DBA['DB'] == 'postgres'){
+        ?>
+            <tr><td><i>you can improve performance by setting <b>syncronous_commit off</b> in postgresql.conf. Be aware and read <a href='https://www.postgresql.org/docs/9.1/static/runtime-config-wal.html'>postgresql documentation</a>. You can set it to <b>off</b> for installation and set it to <b>on</b> after installation.</i></td></tr>
+            <tr><td><i>you can adjust security in <b>pg_hba.conf</b>. <u>Trust</u> meens you trust all local users. <u>password</u> meens you need user and password to connect. For more information read <a href='https://www.postgresql.org/docs/9.1/static/auth-pg-hba-conf.html'>postgresql documentation.</a></i></td></tr>
+			<tr><td><i>do not forget to create your cluster or database with <b>initdb --locale=C</b>. Otherwise ist results in a wrong dateformat! Read <a href="http://en.limbas.org/wiki/PostgreSQL#Database_Cluster_Initialization">limbas documentation</a></i></td></tr>
+			<tr><td><i>If you want to use <b>UTF-8</b> you have to create the database with <b>WITH ENCODING 'UTF8'</b>. <u>If not needed</u> it will better to use <b>WITH ENCODING 'SQL_ASCII'</b>. Read <a href="http://en.limbas.org/wiki/UTF8_support">limbas documentation</a></i></td></tr>
 
-if($msic['db_cursor'] > 1){
-    ?>
-    <tr><td><i>LIMBAS need ODBC cursor support for ODBC connections. In some cases versions of mysql, mariadb, php or combinations of them does not support cursors. You can try to adjust the connection string in funtion <b>dbq_0</b> in file <b>/lib/db/db_mysql.lib</b></i></td></tr>
-    <?php
-}
-
-# Information
-if($DBA['DB'] == 'postgres'){
-?>
-        <tr><td><i>you can improve performance by setting <b>syncronous_commit off</b> in postgresql.conf. Be aware and read <a href='https://www.postgresql.org/docs/9.1/static/runtime-config-wal.html'>postgresql documentation</a>. You can set it to <b>off</b> for installation and set it to <b>on</b> after installation.</i></td></tr>
-        <tr><td><i>you can adjust security in <b>pg_hba.conf</b>. <u>Trust</u> meens you trust all local users. <u>password</u> meens you need user and password to connect. For more information read <a href='https://www.postgresql.org/docs/9.1/static/auth-pg-hba-conf.html'>postgresql documentation.</a></i></td></tr>
-        <tr><td><i>do not forget to create your cluster or database with <b>initdb --locale=C</b>. Otherwise ist results in a wrong dateformat! Read <a href="http://en.limbas.org/wiki/PostgreSQL#Database_Cluster_Initialization">limbas documentation</a></i></td></tr>
-        <tr><td><i>If you want to use <b>UTF-8</b> you have to create the database with <b>WITH ENCODING 'UTF8'</b>. <u>If not needed</u> it will better to use <b>WITH ENCODING 'SQL_ASCII'</b>. Read <a href="http://en.limbas.org/wiki/UTF8_support">limbas documentation</a></i></td></tr>
-<?php
-}else if($DBA['DB'] == 'mysql'){
-?>
+        <?php
+    }else if($DBA['DB'] == 'mysql'){
+        ?>
         <tr><td><i>do not forget to configure mysql with <b>lower_case_table_names = 1</b> in /etc/my.cnf. Otherwise ist results in installation error! Read <a href="http://www.limbas.org/wiki/MySQL">limbas documentation</a></i></td></tr>
         <tr><td><i>you can improve performance by using <b>MYISAM</b> instead of <b>InnoDB</b> but be aware of losing transactions and foreign keys. Be aware and read <a href='http://www.limbas.org/wiki/MySQL'>limbas documentation</a></i></td></tr>
         <tr><td><i>If you want to use <b>UTF-8</b> you have to configure mysql with <b>default-character-set=utf8</b>. <u>If not needed</u> it will better to use <b>default-character-set=latin1</b>. Read <a href="https://dev.mysql.com/doc/refman/5.7/en/charset-applications.html">mysql documentation</a></i></td></tr>
-<?php
-}
-
-?>
+        <?php
+    }
+    ?>
     </tbody>
     </table>
     <?php
@@ -490,7 +529,6 @@ if($db_test != 'valid'){
             </td>
             <td>
                 <code id="odbcinst">
-                    
                 </code>
             </td>
         </tr> 

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -23,10 +23,10 @@ function explContextDetail(){
 	global $LINK;
 	echo "\n\n<DIV ID=\"limbasDivMenuExplContext\" class=\"lmbContextMenu\" style=\"position: absolute;visibility:hidden;z-index:99994;\" OnClick=\"activ_menu = 1;\">";
 	pop_top('limbasDivMenuExplContext');
-	pop_menu2("&nbsp;".$lang[1693], null, null, null, null, "LmEx_divclose();open('main.php?'+jsvar['SID']+'&action=explorer_detail&level='+jsvar['level']+'&LID='+jsvar['LID']+'&ID=' + LmEx_edit_id + '' ,'Info','toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650');\"");
+	pop_menu2("&nbsp;".$lang[1693], null, null, null, null, "LmEx_divclose();open('main.php?action=explorer_detail&level='+jsvar['level']+'&LID='+jsvar['LID']+'&ID=' + LmEx_edit_id + '' ,'Info','toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650');\"");
 	pop_submenu(203,'','');	#konvertieren
 	pop_line();
-    pop_menu2("&nbsp;".$lang[2321], null, null, null, null, "LmEx_divclose();open('main.php?'+jsvar['SID']+'&action=download&ID=' + LmEx_edit_id ,'download','toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650');\"");
+    pop_menu2("&nbsp;".$lang[2321], null, null, null, null, "LmEx_divclose();open('main.php?action=download&ID=' + LmEx_edit_id ,'download','toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650');\"");
     pop_menu2("&nbsp;".$lang[2322], null, null, null, null, "LmEx_divclose();document.location.href='main.php?&action=download&ID=' + LmEx_edit_id + '&sendas=a';\"");
     if ($LINK[116]) {
         pop_line();
@@ -127,7 +127,7 @@ function explHeader($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=null){
 			$onclick = "onclick=\"LmExt_Ex_RelationFields('$gtabid','$fieldid','','','$ID','$key1','','','','','','','','')\"";
 			$onmove = "";
 		}else{
-			$onclick="onclick=\"document.form1.ffilter_order.value='".$key1."';LmEx_send_form(1,1);\"";
+			$onclick="onclick=\"document.form1.ffilter_order.value='".$key1."';LmEx_send_form(1,1);document.form1.ffilter_order.value=''\"";
 			$onmove = "onmousedown=\"LmEx_startDrag(event,'$key1');\"";
 		}
 		
@@ -193,7 +193,7 @@ function explFolders($LID,$fid,$MID,$level,&$ffilter,$redirect=null,$rootlevel=n
 
 # ---------------- Dateiliste ------------------
 function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
-
+    global $session;
 	global $lang;
 	global $umgvar;
 	global $filestruct;
@@ -205,6 +205,7 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 	global $userdat;
 	global $farbschema;
 	global $gformlist;
+	global $externalStorage;
 
 	$colspan = count($gfile['show'][$LID]);
 
@@ -214,14 +215,14 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 	if($ffile["res_viewcount"]){
 		$key2 = 1;
 		foreach($ffile["id"] as $key => $value){
-			echo "<TR class=\"gtabBodyTR\" ID=\"elline_d_".$LID."_".$key."\" TITLE=\"".$ffile["url"][$key]."\" style=\"cursor:context-menu\" 
+			echo "<TR class=\"gtabBodyTR\" ID=\"elline_d_".$LID."_".$key."\" TITLE=\"".($ffile['storageID'][$key] ? '[' . $externalStorage['desc'][$ffile['storageID'][$key]] . '] ' : '').$ffile["url"][$key]."\" style=\"cursor:context-menu;" . ($ffile['storageID'][$key] ? 'font-style: italic;' : '') . "\" 
 			OnClick=\"LmEx_activate_file(event,'$key','".preg_replace("/\'\"\//","",$ffile["name"][$key])."','$LID','d')\" 
 			ondblclick=\"LmEx_open_details(event,$value,$LID,$tabid_files,'".$gtab["tab_view_form"][$tabid_files]."','".$gformlist[$tabid_files]["dimension"][$gtab["tab_view_form"][$tabid_files]]."')\"
 			OnMouseOver=\"LmEx_explorerLineOver(this,$key,1,'$LID','d')\" OnMouseOut=\"LmEx_explorerLineOver(this,$key,2,'$LID','d')\" 
 			oncontextmenu=\"LmEx_activate_file(event,'$key','".preg_replace("/\'\"\//","",$ffile["name"][$key])."','$LID','d');return LmEx_open_detail(event,$key,'$LID');\">";
 			# ---------------- Google Schema ------------------
 			if($ffilter["viewmode"][$LID] == 2){
-				echo "<TD class=\"gtabBodyTD\" COLSPAN=\"3\" VALIGN=\"TOP\"><DIV ID=\"td_".$gtab["argresult_id"]["LDMS_FILES"]."_11_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;width:".$ffilter["rowsize"][$LID][$gtab["argresult_id"]["LDMS_FILES"]."_11"]."px;\"><A class=\"link\" HREF=\"main.php?".SID."&action=download&ID=$key\" TARGET=\"new\"><IMG SRC=\"pic/fileicons/".$ffile["pic"][$key]."\" BORDER=\"0\"><U>".$ffile["name"][$key]."</U></A></DIV><BR>";
+				echo "<TD class=\"gtabBodyTD\" COLSPAN=\"3\" VALIGN=\"TOP\"><DIV ID=\"td_".$gtab["argresult_id"]["LDMS_FILES"]."_11_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;width:".$ffilter["rowsize"][$LID][$gtab["argresult_id"]["LDMS_FILES"]."_11"]."px;\"><A class=\"link\" HREF=\"main.php?action=download&ID=$key\" TARGET=\"new\"><IMG SRC=\"pic/fileicons/".$ffile["pic"][$key]."\" BORDER=\"0\"><U>".$ffile["name"][$key]."</U></A></DIV><BR>";
 				$mime = explode("/",$ffile["mimetype"][$key]);
 				echo $ffile["context"][$key]."<BR>";
 				echo "<span style=\"color:grey;\">URL: ".$ffile["url"][$key]."</span><BR>";
@@ -239,7 +240,7 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 				#$size = explode("x",$umgvar["thumbsize2"]);
 				#$img2 = IMACK_ConvertThumbs(array($value,$ffile["secname"][$key],$ffile["mimeid"][$key],$ffile["thumb_ok"][$key]),$size[0],$size[1]);
 				echo "<TD class=\"gtabBodyTD\" NOWRAP VALIGN=\"TOP\"><DIV ID=\"td_".$gtab["argresult_id"]["LDMS_FILES"]."_11_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;width:".$ffilter["rowsize"][$LID][1]."px;\">";
-				if($umgvar["file_quickdownload"]){echo "<A class=\"link\" HREF=\"main.php?".SID."&action=download&ID=$key\" TARGET=\"new\">";}
+				if($umgvar["file_quickdownload"]){echo "<A class=\"link\" HREF=\"main.php?action=download&ID=$key\" TARGET=\"new\">";}
 				echo $islocked.$ffile["name"][$key];
 				if($umgvar["file_quickdownload"]){echo  "</A>";}
 				echo "</DIV>";

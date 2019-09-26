@@ -442,7 +442,7 @@ class Limbas extends AbstractBackend {
 		$result = array (
 				'id' => $gresult [$lmb_UID] [0] ? $gresult [$lmb_UID] [0] : $c,
 				'uri' => $gresult [$lmb_UID] [0] ? $gresult [$lmb_UID] [0] . '.ics' : $objectUri,
-				'lastmodified' => $this->lmb_getDateTime($gresult ['EDITDATUM'] [0] ? $gresult ['EDITDATUM'] [0] : $gresult ['ERSTDATUM'] [0]),
+				'lastmodified' => $this->lmb_getDateTime(['EDITDATUM'] [0] ? $gresult ['EDITDATUM'] [0] : $gresult ['ERSTDATUM'] [0]),
 				'etag' => '"' . md5 ( $data ) . '"',
 				'calendarid' => $calendarId,
 				'size' => lmb_strlen ( $data ),

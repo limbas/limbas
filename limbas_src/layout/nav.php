@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -846,7 +846,7 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
 
         # popupIcon
         echo "<div style=\"float:right;margin-right:0.5em;\" {$onToggleAngleSymbolClick}>";
-        if (count($entry['child']) > 0 || $entry['extension']) {
+        if (($entry['child'] AND count($entry['child']) > 0) || $entry['extension']) {
             echo "<i id=\"HS{$combinedId}\" class=\"lmb-icon {$iconclass}\" valign=\"top\" border=\"0\"></i>";
         }
         echo '</div>';
@@ -992,8 +992,6 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
 
         $tabGroupIndex++;
     }
-
-    # depth 3 -> e.g. "neu anlegen", "kundenliste", only items that have no children
     else if($depth == 3) {
         # get correct onclick
         if (lmb_substr($entry['link'], 0, 4) == 'main') {
@@ -1012,7 +1010,7 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
         }
 
         # output entry
-        echo "<tr id=\"subElt_{$tabGroupIndex}\" style=\"display:{$data['eldispl']};overflow:hidden;\">";
+        echo "<tr id=\"subElt_{$tabGroupIndex}\" style=\"display:{$data['eldispl']};overflow:hidden;background-color:{$entry['bg']}\">";
         $dwmeSub = $dwme - 105 - (25 * $entry['depth']);
         echo "<td class=\"contentSub\" title=\"{$entry['desc']}\">";
         echo "<div id=\"mel_{$data['depth0Key']}_{$data['depth2Id']}_{$entry['id']}\" {$entry['attr']} style=\"{$entry['style']}\">";

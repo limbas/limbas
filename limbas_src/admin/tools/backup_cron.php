@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -120,8 +120,7 @@ if($device == 2){?>
 $sqlquery = "SELECT * FROM LMB_CRONTAB WHERE KATEGORY = 'BACKUP' ORDER BY ERSTDATUM";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
-$bzm = 1;
-while(odbc_fetch_row($rs, $bzm)){
+while(odbc_fetch_row($rs)){
 	if(odbc_result($rs,"KATEGORY") == "BACKUP"){$color = "#94AEEF";}
 	elseif(odbc_result($rs,"KATEGORY") == "INDEX"){$color = "#FF9294";}
 	
@@ -134,8 +133,6 @@ while(odbc_fetch_row($rs, $bzm)){
 	<TD>&nbsp;".odbc_result($rs,"ALIVE")."&nbsp;days</TD>
 	<TD ALIGN=\"CENTER\">&nbsp;<A HREF=\"main_admin.php?action=setup_backup_cron&del_job=".odbc_result($rs,"ID")."\"><i class=\"lmb-icon lmb-trash\" BORDER=\"0\"></i></A>&nbsp;</TD></TR>";
 	$cronvalue[] = odbc_result($rs,"START")."\twebuser (php \"".$umgvar['pfad']."/cron.php\" < /bin/echo ".odbc_result($rs,"ID").")";
-	
-	$bzm++;
 }
 
 ?>

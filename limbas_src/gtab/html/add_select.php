@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -21,7 +21,7 @@
 global $db;
 
 if (!$num_result) {
-    $num_result = 30;
+    $num_result = 15;
 }
 if (!$start) {
     $start = 1;
@@ -35,7 +35,7 @@ if ($gfield[$gtabid]["data_type"][$field_id] == 12 OR $gfield[$gtabid]["data_typ
 
 /* --- Werte hinzufügen --------------------------------------------- */
 if ($select_add AND $select_value AND $LINK[8]) {
-    select_add($select_add, $select_value, $select_keywords, $gtabid, $field_id, $ID);
+    select_add($select_add, $select_value, $select_keywords, $gtabid, $field_id, $ID, $level_id);
 }
 
 /* --- Werte ändern ---------------------------------------- */
@@ -45,7 +45,7 @@ if ($change_id AND $LINK[8]) {
 
 /* --- Werte sortieren --------------------------------------------- */
 if ($select_sort AND $select_sort_d AND $LINK[8]) {
-    select_sort($select_sort, $select_sort_d, $gtabid, $field_id);
+    select_sort($select_sort, $select_sort_d, $gtabid, $field_id, $level_id);
 }
 
 /* --- Werte auswählen --------------------------------------------- */
@@ -66,7 +66,7 @@ if ($fs_sel) {
 
 /* --- Werte löschen ---------------------------------------- */
 if ($del_id AND $LINK[8]) {
-    select_delete($del_id, $gtabid, $field_id, $ID);
+    select_delete($del_id, $gtabid, $field_id, $level_id);
 }
 
 if ($single) {
@@ -113,7 +113,7 @@ $result_fieldselect = select_list($gtabid, $field_id, $ID, $find_value, $find_ke
         } ?>
 
         <TR class="tabHeader">
-<?= $add ?>
+        <?= $add ?>
             <TD class="tabHeaderItem" nowrap><div style="margin-left:30px;"><?= $lang[29] ?></div></TD>
             <TD class="tabHeaderItem" nowrap><?= $lang[27] ?></TD>
             <TD class="tabHeaderItem" COLSPAN="2">&nbsp;</TD>
@@ -121,7 +121,7 @@ $result_fieldselect = select_list($gtabid, $field_id, $ID, $find_value, $find_ke
 
         <?php if ($LINK[8]) { ?><TR class="tabHeader"><?= $add ?><TD align="right" style="width:150px;"><INPUT TYPE="text" NAME="select_value" STYLE="width:120px;"></TD><TD><INPUT TYPE="text" STYLE="width:120px;" NAME="select_keywords"></TD><TD COLSPAN="2"><INPUT TYPE="button" onclick="lmbAjax_multiSelect()" VALUE="<?= $lang[34] ?>" NAME="select_add"></TD></TR>
             <TR class="tabHeader"><TD COLSPAN="6">&nbsp;</TD></TR>
-<?php } ?>
+        <?php } ?>
 
         <TR class="tabSubHeader"><?= $add ?><TD COLSPAN="6"><B style="margin-left:30px;"><?= $result_fieldselect['num_ges']; ?></B>&nbsp;<?= $lang[1843] ?>,&nbsp;<?= $lang[1844] ?>&nbsp;<B><?= $result_fieldselect['num_rows']; ?></B>&nbsp;<?= $lang[1846] ?>&nbsp;<B><?= $result_fieldselect['num_sel']; ?></B>&nbsp;<?= $lang[1845] ?></TD></TR>
         <TR class="tabSubHeader"><?php
@@ -130,7 +130,7 @@ $result_fieldselect = select_list($gtabid, $field_id, $ID, $find_value, $find_ke
 
         <?php
        if (!empty($parent))
-            echo "<TR class=\"tabSubHeader\"><TD>&nbsp;</TD><TD colspan=\"3\">$parent</TD></TR>";
+            echo "<TR class=\"tabSubHeader\"><TD>&nbsp;</TD><TD colspan=\"4\">$parent</TD></TR>";
 
         /* --- Ergebnisliste --------------------------------------- */
         if ($result_fieldselect["id"]) {
@@ -169,7 +169,7 @@ $result_fieldselect = select_list($gtabid, $field_id, $ID, $find_value, $find_ke
                     $multiple = 1;
                 }
                 echo "<TR class=\"tabBody\">";
-                echo "<TD class=\"tabSubHeaderItem\" ALIGN=\"CENTER\"><INPUT $selbox STYLE=\"border:none; background-color:transparent;\" onchange=\"2\" $CHECKED></TD>";
+                echo "<TD class=\"tabSubHeaderItem\" ALIGN=\"CENTER\"><INPUT $selbox STYLE=\"border:none; background-color:" . $result_fieldselect["color"][$key] . ";\" onchange=\"2\" $CHECKED></TD>";
                 echo "<TD class=\"tabSubHeaderItem\" nowrap><INPUT $readonly TYPE =\"TEXT\" STYLE=\"width:120px;\" NAME=\"fs_val[" . $result_fieldselect["id"][$key] . "]\" VALUE=\"" . $result_fieldselect["wert"][$key] . "\" ID=\"fs_val_" . $result_fieldselect["id"][$key] . "\" OnChange=\"document.form_fs.change_id.value=document.form_fs.change_id.value+'" . $result_fieldselect["id"][$key] . ";';\"></TD>";
                 echo "<TD class=\"tabSubHeaderItem\" nowrap><INPUT $readonly TYPE =\"TEXT\" STYLE=\"width:120px;\" NAME=\"fs_kw[" . $result_fieldselect["id"][$key] . "]\" VALUE=\"" . $result_fieldselect["keywords"][$key] . "\" OnChange=\"document.form_fs.change_id.value=document.form_fs.change_id.value=document.form_fs.change_id.value+'" . $result_fieldselect["id"][$key] . ";';\"></TD>";
                 echo "<TD class=\"tabSubHeaderItem\" nowrap ALIGN=\"LEFT\">";
@@ -179,7 +179,7 @@ $result_fieldselect = select_list($gtabid, $field_id, $ID, $find_value, $find_ke
                 }
                 echo "</TD><TD class=\"tabSubHeaderItem\" nowrap ALIGN=\"CENTER\">";
                 if ($LINK[8]) {
-                    if ($gfield[$gtabid]["data_type"][$field_id] == 32) {
+                    if (in_array($gfield[$gtabid]["data_type"][$field_id], array(32 /* multiselect ajax */, 46 /* attribute */))) {
                         if ($result_fieldselect["haslevel"][$key]) {
                             $imgst = "";
                         } else {
@@ -208,10 +208,6 @@ $result_fieldselect = select_list($gtabid, $field_id, $ID, $find_value, $find_ke
                 <i class="lmb-icon lmb-next" STYLE="cursor:pointer;font-size:1.5em;"  OnClick="document.form_fs.start.value = '<?= ($start + $num_result) ?>';lmbAjax_multiSelect();"></i>
                 <i class="lmb-icon lmb-last" STYLE="cursor:pointer"  OnClick="document.form_fs.start.value = '<?= ($result_fieldselect["num_ges"] - $num_result + 1) ?>'; lmbAjax_multiSelect();"></i>
             </TD></TR>
-
-
-
-
 
     </TABLE>
 </FORM>

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH (support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH (support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5  
+ * Version 3.6  
  */
 
 /*
@@ -43,7 +43,6 @@ function dyns_fileGroupRules($para){
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs){$commit = 1;}
 		$filerules = null;
-		$bzm = 1;
 		
 		echo "<DIV ID=\"fileGroupRules\" class=\"lmbContextMenu\" STYLE=\"position:absolute;z-index:999;\" OnClick=\"activ_menu = 1;\">";
 		pop_closetop("fileGroupRules");
@@ -58,7 +57,7 @@ function dyns_fileGroupRules($para){
 		<td align=\"center\"><i class=\"lmb-icon lmb-trash\"></i></td>
 		<td align=\"center\"><i class=\"lmb-icon lmb-lock-file\"></i></td>
 		</tr>";
-		while(odbc_fetch_row($rs, $bzm)) {
+		while(odbc_fetch_row($rs)) {
 			echo "<tr><td><a OnClick=\"document.location.href='main_admin.php?action=setup_group_erg&ID=".odbc_result($rs, "GROUP_ID")."'\">".$groupdat["name"][odbc_result($rs, "GROUP_ID")]."</a></td>";
 			echo "<td align=\"center\">";
 			if(odbc_result($rs, "LMVIEW")){echo "&nbsp;<i class=\"lmb-icon lmb-check-alt\"></i>";}
@@ -73,7 +72,6 @@ function dyns_fileGroupRules($para){
 			echo "</td><td align=\"center\">";
 			if(odbc_result($rs, "LMLOCK")){echo "&nbsp;<i class=\"lmb-icon lmb-check-alt\"></i>";}
 			echo "</td></tr>";
-			$bzm++;
 		}
 		echo "</table>";
 		pop_right();
@@ -152,6 +150,8 @@ function dyns_formTabFieldList($para){
 	$parent_tab = $para["parent_tab"];
 	$parent_field = $para["parent_field"];
 	$parentrel = $gfield[$parent_tab]["md5tab"][$parent_field];
+	$parentrelpath = $para["parentrelpath"];
+
 
 	echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">\n";
 	
@@ -159,6 +159,7 @@ function dyns_formTabFieldList($para){
 	foreach ($gfield[$gtabid]["sort"] as $key => $value){
 
 		$parentrel2 = $gfield[$gtabid]["md5tab"][$key];
+		$parentrelpath2 = $gtabid.",".$gfield[$gtabid]["verkntabid"][$key].",".$key;
 		
 		if($bzm >= count($gfield[$gtabid]["sort"])){$outliner = "joinbottom";}else{$outliner = "join";}
 
@@ -174,7 +175,7 @@ function dyns_formTabFieldList($para){
 				echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\"><TR><TD BACKGROUND=\"pic/outliner/line.gif\" VALIGN=\"top\"><IMG SRC=\"pic/outliner/".$outliner.".gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\"></TD><TD>\n";
 
 				echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">\n";
-				echo "<TR><TD TITLE=\"table : ".$gtab["desc"][$valueskn]."\"><A HREF=\"Javascript:LmAdm_getFields(".$valueskn.",$globid,$gtabid,$key)\"><IMG SRC=\"pic/outliner/plusonly.gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\" NAME=\"tab_".$globid."_plusminus\"><i class=\"lmb-icon lmb-folder-closed\" WIDTH=\"16\" HEIGHT=\"13\" ALIGN=\"TOP\" BORDER=\"0\" NAME=\"tab_".$globid."_box\"></i></A> <B title=\"".$gtab["table"][$keyskn]."\">".$gtab["desc"][$keyskn]."</B></TD></TR>\n";
+				echo "<TR><TD TITLE=\"table : ".$gtab["desc"][$valueskn]."\"><A HREF=\"Javascript:LmAdm_getFields(".$valueskn.",$globid,$gtabid,$key,'".$parentrelpath."|".$parentrelpath2."')\"><IMG SRC=\"pic/outliner/plusonly.gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\" NAME=\"tab_".$globid."_plusminus\"><i class=\"lmb-icon lmb-folder-closed\" WIDTH=\"16\" HEIGHT=\"13\" ALIGN=\"TOP\" BORDER=\"0\" NAME=\"tab_".$globid."_box\"></i></A> <B title=\"".$gtab["table"][$keyskn]."\">".$gtab["desc"][$keyskn]."</B></TD></TR>\n";
 				echo "<TR><TD ID=\"el_$globid\">";
 								
 				echo "</TR></TD>";
@@ -187,7 +188,7 @@ function dyns_formTabFieldList($para){
 
 		echo "<TR><TD><IMG SRC=\"pic/outliner/".$outliner.".gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\">";
 		if($gfield[$gtabid]["field_type"][$key] == 11 AND $gfield[$gtabid]["verkntabid"][$key]){echo "<IMG SRC=\"pic/outliner/hline.gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\">";}
-		echo "&nbsp;<A onclick=\"add_dbfield(this,event);\" title=\"".$gfield[$gtabid]["field_name"][$key]."\" lmfieldid=\"$key\" lmgtabid=\"$gtabid\" lmspelling=\"".$gfield[$gtabid]["field_name"][$key]."\" lmparentrel=\"$parentrel\" lmstabgroup=\"".$gtab["tab_group"][$gtabid]."\">".$gfield[$gtabid]["spelling"][$key]."</A>";
+		echo "&nbsp;<A onclick=\"add_dbfield(this,event);\" title=\"".$gfield[$gtabid]["field_name"][$key]."\" lmfieldid=\"$key\" lmgtabid=\"$gtabid\" lmspelling=\"".$gfield[$gtabid]["field_name"][$key]."\" lmparentrel=\"$parentrel\" lmparentrelpath=\"$parentrelpath\" lmstabgroup=\"".$gtab["tab_group"][$gtabid]."\">".$gfield[$gtabid]["spelling"][$key]."</A>";
 		echo "</TD></TR>\n";
 
 		$bzm++;
@@ -201,12 +202,12 @@ function dyns_formTabFieldList($para){
             if($verknparams = $gfield[$gtabid_]["verknparams"][$r_verknfieldid]){
                 
                 $globid = rand(1, 10000);
-                
+
                 echo "<TR><TD>\n";
                 echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\"><TR><TD BACKGROUND=\"pic/outliner/line.gif\" VALIGN=\"top\"><IMG SRC=\"pic/outliner/join.gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\"></TD><TD>\n";
                 
                 echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">\n";
-                echo "<TR><TD TITLE=\"table : " . $gtab["desc"][$gtabid_] . "\"><A HREF=\"Javascript:LmAdm_getFields(" . $verknparams . ",$globid,$gtabid_,$r_verknfieldid)\"><IMG SRC=\"pic/outliner/plusonly.gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\" NAME=\"tab_" . $globid . "_plusminus\"><i class=\"lmb-icon lmb-folder-closed\" WIDTH=\"16\" HEIGHT=\"13\" ALIGN=\"TOP\" BORDER=\"0\" NAME=\"tab_" . $globid . "_box\"></i></A> <B title=\"field: ".$gfield[$gtabid_]["spelling"][$r_verknfieldid]."\"><i>".$gtab["desc"][$verknparams]."</i></B></TD></TR>\n";
+                echo "<TR><TD TITLE=\"table : " . $gtab["desc"][$gtabid_] . "\"><A HREF=\"Javascript:LmAdm_getFields(" . $verknparams . ",$globid,$gtabid_,$r_verknfieldid,'')\"><IMG SRC=\"pic/outliner/plusonly.gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\" NAME=\"tab_" . $globid . "_plusminus\"><i class=\"lmb-icon lmb-folder-closed\" WIDTH=\"16\" HEIGHT=\"13\" ALIGN=\"TOP\" BORDER=\"0\" NAME=\"tab_" . $globid . "_box\"></i></A> <B title=\"field: ".$gfield[$gtabid_]["spelling"][$r_verknfieldid]."\"><i>".$gtab["desc"][$verknparams]."</i></B></TD></TR>\n";
                 echo "<TR><TD ID=\"el_$globid\">";
                 
                 echo "</TR></TD>";
@@ -218,28 +219,7 @@ function dyns_formTabFieldList($para){
             }
         }
     }
-        
-        
-	/* --- Fieldlist for extended relation params ------*/
-    /*
-    if($gfield[$parent_tab]["verknparams"][$parent_field]){
-        $vgtabid_ = $gfield[$parent_tab]["verknparams"][$parent_field];
-        $bzm_ = 1;
-        foreach ($gfield[$vgtabid_]["sort"] as $key_ => $value) {
-            
-            if($bzm_ >= count($gfield[$vgtabid_]["sort"])){$outliner_ = "joinbottom";}else{$outliner_ = "join";}
 
-            if ($gfield[$vgtabid_]["field_type"][$key_] >= 100) {continue;}
-            echo "<TR><TD><IMG SRC=\"pic/outliner/$outliner_.gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\">&nbsp;";
-            echo "<A onclick=\"add_dbfield(this,event);\" title=\"" . $gfield[$vgtabid_]["field_name"][$key_] . "\" lmfieldid=\"$key_\" lmgtabid=\"$vgtabid_\" lmspelling=\"" . $gfield[$vgtabid_]["field_name"][$key_] . "\" lmparentrel=\"$parentrel\" lmstabgroup=\"" . $gtab["tab_group"][$vgtabid_] . "\"><i>" . $gfield[$vgtabid_]["spelling"][$key_] . "</i></A>";
-            echo "</TD></TR>\n";
-            
-            $bzm_++;
-            // echo "<span class=\"lmbContextItem$class\" style=\"color:$color;cursor:pointer\" OnClick=\"LmExt_RelationFields(this,'$gtabid','$fieldid','$key','$edittyp','$ID','','','','','$gformid','$formid');\">".$gfield[$vgtabid_]["spelling"][$key]."</span>";
-        }
-    }
-	*/
-	
 	echo "</TABLE>\n";
 }
 
@@ -421,6 +401,17 @@ function dyns_createDiagPChart($par){
 function dyns_saveDiagSettings($par){
 	require_once("admin/diagram/diag_detail_ajax.php");
 	lmb_saveCustomizationSettings($par);
+}
+
+
+/**
+ * menu editor
+ *
+ * @param unknown_type $par
+ */
+function dyns_menuEditor($par){
+    require_once("admin/setup/menueditor.dao");
+	require_once("admin/setup/menueditor.php");
 }
 
 

@@ -1,3 +1,174 @@
+2019-09-26 12:23:37 fixed: excel export removed unnecessary characters fixed: table search select values missing ($db null)
+2019-09-26 12:11:04 fixing import convert to utf-8 / iso - set umgvars readonly - replaced with uservars - fixing missing function for imagick convert in Tablelist
+2019-09-26 10:02:54 fixing parentage inherit fields - fixing import issues fro mysql - fixing mysql timestamp issues
+2019-09-23 17:25:34 Extensions: Demo-files in tar ball
+2019-09-23 11:09:46 fixed: crontab layout chrome
+2019-09-20 13:52:50 rest path final adjustments
+2019-09-20 13:39:04 adding autoencoding for installation - adding databaseport to PDO
+2019-09-20 12:58:20 Improved rest path to consider empty umgvar and to fill during install
+2019-09-19 16:50:40 Fixed rest path if umgvar restpath is not set
+2019-09-19 10:55:52 Fixed DateTime fatal error on invalid dates
+2019-09-18 12:27:16 Fixed: Search parameter visibility
+2019-09-18 12:15:13 Fixed: Search parameter visibility Changed: REST url base path
+2019-09-18 11:57:23 copy of relation parameters in copy process - fixing currency format in soap export - adding extended Triggermanagement for PostgreSQL - fixing color fieldtypes
+2019-09-17 14:33:43 fixing relation postcheck routine - change currency output for SOAP or REST as Numeric without currency - fixing suggestColor without # - support own trigger without autocomplete
+2019-09-17 10:18:03 Fixed recursive search in attribute/multiple select
+2019-09-17 10:17:11 Fixed "field already exists" for ID, ERSTUSER etc.
+2019-09-16 13:05:42 Removed progress bar smooth transition
+2019-09-16 12:04:21 Fixed batch change
+2019-09-16 11:28:21 Added icon to help create backward relations
+2019-09-10 09:19:34 Fixed handling of umlauts in template parser
+2019-09-04 15:32:40 empty old pic folder
+2019-09-04 15:30:19 delete skalar layout, old pics
+2019-09-04 14:19:15 version 4.0.14
+2019-09-04 14:14:42 adding exensions to menugenerator
+2019-09-03 15:46:57 -
+2019-09-03 13:38:18 auto resize relation tables in hidden tabs
+2019-08-21 11:22:39 Fixed: table excel export record limit and depth
+2019-08-09 16:04:15 Improved install step 1
+2019-08-09 15:15:36 Fixed tabletree bug: Missing id field resulted in php error
+2019-08-09 14:38:34 Fixed datetime error
+2019-08-09 14:19:29 Removed deprecated module Vorlagen
+2019-08-09 13:48:32 some tag fixes
+2019-08-09 13:40:39 Replaced short open tags with default open tags
+2019-08-09 13:31:06 Fixed submit&close button not working in file explorer
+2019-08-09 13:12:35 Improved datetime functions to correctly handle inputs with two-digit year numbers
+2019-08-09 10:41:28 added: Apply crontab with limbas
+2019-08-09 10:38:59 changeable tags in Listmode
+2019-08-07 16:02:09 added: Apply crontab with limbas added: crontab user settings
+2019-08-06 10:15:17 adding preferences for php-elements in formulareditor
+2019-08-05 09:32:41 utf8 export
+2019-08-02 17:03:07 Improved template system by using parser instead of regex
+2019-08-02 10:34:30 Hopefully fixed odbc_fetch_array result keys
+2019-08-02 10:24:43 Hopefully fixed odbc_fetch_array result keys
+2019-08-01 17:58:23 administrate relation params in relation settings - changemod for relation params in n:m relations - usable values for input form elememts -
+2019-07-25 14:47:09 Fixed bug in FormDataPlaceholder
+2019-07-23 18:15:22 edit relation in table mode
+2019-07-23 16:19:35 limit argument field types for SQL / PHP Arguments
+2019-07-18 09:02:55 Readonly default in FormDataPlaceholder
+2019-07-16 15:18:09 fixed: syntax error in gtab_type_erg
+2019-07-16 15:04:05 Changed: better css parsing in form editor
+2019-07-16 12:39:41 some export fixes
+2019-07-11 11:01:12 adding templates in formular listmode
+2019-07-10 14:47:20 adding tableserach for relation parameter - adding tags in formular listmode
+2019-07-08 10:56:15 support tags in listforms
+2019-07-05 17:33:16 Added functionality to call parent windows function for submit&close, Fixed datetime functions' case sensitivity
+2019-07-05 17:31:44 Fixed gresult in FormTemplate for listmode
+2019-07-05 15:57:06 support pagination in relation views and subform tables
+2019-06-25 09:50:51 Tag-Mode Integration Fixed: calendar / kanban filter field selection Fixed: group records in tables
+2019-06-25 09:22:45 upload issues in field type upload
+2019-06-16 16:02:34 multible tags / order by input
+2019-06-04 10:11:52 Attribute Tag-Mode Style & Javascript
+2019-05-31 11:08:53 Tag / Multiselect addons
+2019-05-27 19:06:49 extend subform parameters with  'show_inframe', 'formid'
+2019-05-27 15:46:10 update field type attribute Part4 - tablerules topmarker
+2019-05-24 16:29:21 Fixed pdo error of duplicate column names
+2019-05-24 16:27:39 Added search for recursive attribute/select names.
+2019-05-24 11:58:57 update field type attribute Part3
+2019-05-23 14:05:28 Rest: All basic operations and functions are working
+2019-05-23 13:56:12 update field type attribute Part2
+2019-05-20 11:31:42 update field type attribute
+2019-05-16 09:38:03 Fixed wrong merge version of detail search
+2019-05-13 17:40:51 adding params to WYSIWYG in fieldtyps
+2019-05-13 12:11:29 fixing some select pool issues
+2019-05-10 18:45:07 adding used table in pool overview
+2019-05-10 17:45:27 Complete refactoring of template system to work in forms
+2019-05-10 13:40:00 password missing umgvars
+2019-05-10 12:55:20 bugfix
+2019-05-09 18:23:59 adding credentials login - encode REST output to utf-8
+2019-05-09 10:06:17 adding credentials login
+2019-05-07 17:13:49 adding template element to formeditor
+2019-05-02 15:12:55 Further Rest improvements: - id <-> attributes - comments
+2019-04-11 15:16:48 Drag and drop improvements, ajax fix
+2019-04-08 17:57:23 pdo enhancements - removing LMB_DBFUNC_FOR_REUSE - setting pointer of undefined view
+2019-03-28 14:48:59 Added extendability for ReportElement classes
+2019-03-26 12:48:02 removing @ for odbc_exec - report support unicode save name
+2019-03-26 12:45:51 report store unicode filenames
+2019-03-26 10:39:00 Added extension of template report
+2019-03-26 09:46:51 Fixed wrong gtabid in report
+2019-03-26 09:31:49 Fixed relationval for single dataset - Included and modified type functions for fitting REST results - Checked access privileges for fields
+2019-03-22 15:58:36 Added differentiation between self-link and attributes - Added support for parameterized relations in GET - Implemented PostRelation and PostTable RequestHandlers - Implemented PutDataset - Added DeleteTableRequestHandler stub - Fixed charset - Added TODO list
+2019-03-22 11:47:49 Added self link in GetTable
+2019-03-21 15:17:09 Added pagination links
+2019-03-21 14:20:20 Added 1:1 table support
+2019-03-21 13:40:54 fix some sql issues in tableeditor
+2019-03-21 12:00:56 Added documentation on what each class does
+2019-03-21 11:47:47 Separated request from request handlers, added missing classes
+2019-03-21 10:39:17 Cleanup, improved error output
+2019-03-21 10:30:15 Improved GET, added DELETE, improved error handling and class structure
+2019-03-21 10:22:34 First version of rest api
+2019-03-21 10:12:58 Small fixes
+2019-03-20 12:04:28 fix some sql issues in tableeditor
+2019-03-19 11:38:10 -
+2019-03-19 11:35:30 empty default value of tablefields
+2019-03-18 15:12:42 Code cleanup, quick fixes
+2019-03-18 14:11:18 Fixed remote import bug, fixed legacy hover using js
+2019-03-18 13:53:17 integrate detail search in file explorer module
+2019-03-18 12:56:45 Added confirmation before overwriting view definition
+2019-03-18 12:20:17 Scrolling bugfix
+2019-03-18 12:19:35 Pdo bug fix, removed cursor for postgres
+2019-03-18 11:42:05 Fixed report template bug
+2019-03-14 17:14:17 display & hide reportmenu sections
+2019-03-14 16:41:55 Blur fix for search dropdown (firefox)
+2019-03-14 16:40:17 Blur fix for search dropdown
+2019-03-14 15:03:04 Tinymce: Added wordcount plugin
+2019-03-14 15:01:15 Tinymce: Added forecolor/backcolor and hr plugins
+2019-03-14 14:58:22 fixed margin issue - adding pdf layout border
+2019-03-14 13:50:47 Fixed report archive
+2019-03-14 12:28:05 Small fixes
+2019-03-14 11:16:14 Head/Foot for template elements in report editor
+2019-03-14 10:41:16 include exeption handler for report generation
+2019-03-13 19:53:08 fixes background colors in reports
+2019-03-12 17:14:38 version notes
+2019-03-12 17:13:33 version notes
+2019-03-12 14:38:12 fixes full import issues with sequence check
+2019-03-08 16:30:18 adding extended menueditor
+2019-03-05 12:03:19 Tcpdf template bugfix
+2019-03-05 10:42:17 fixes in report templates
+2019-03-05 10:25:47 Tcpdf report templates: Proper error handling
+2019-03-04 16:02:17 change template jobs later
+2019-03-04 15:40:01 link to table in admin relation settings
+2019-03-04 15:21:55 fixed snapshot rule-setting popup
+2019-03-01 10:49:43 Spelling fix
+2019-03-01 10:42:24 Tcpdf report long field bugfix
+2019-03-01 10:42:14 Dateformat bugfix
+2019-02-28 15:53:27 Parameter for html templates
+2019-02-28 15:27:35 report extension for templates
+2019-02-28 14:05:36 extendet report options
+2019-02-26 09:37:35 clean source
+2019-02-25 12:09:47 Tcpdf report template features:  - Default values for data placeholder,  - Parameters to function calls  - Reusage of loaded data
+2019-02-21 10:30:47 Tcpdf report template
+2019-02-19 11:02:59 edit html templates
+2019-02-19 10:51:52 Tcpdf fixes: - Missing function GetPageHeight - Styling issues
+2019-02-19 10:47:42 adding html report templates
+2019-02-18 09:30:07 changes in TCPDF report - table settings in reportaditor
+2019-02-07 14:38:32 adjust array keys for unique relations in api
+2019-02-01 14:54:31 Small fixes:
+2019-01-31 17:44:03 adding parameter-menu for charts in report editor
+2019-01-31 15:49:07 support for identifier fields in views and view based reports
+2019-01-30 18:54:24 dynamic primary key field for Views
+2019-01-30 16:35:47 adding remindersettings in tablelist
+2019-01-28 18:06:47 adding text search field in tablesearch menu
+2019-01-25 11:33:06 fix local setting in usersettings
+2019-01-24 17:57:20 adding new searchform for tablefilter & snapshopts
+2019-01-23 19:46:34 adding new searchform for tablefilter
+2019-01-22 11:11:11 adding automatic creation of relations for unique relations in formulars
+2019-01-10 16:05:23 fixed multiple SQL in query editor - add extension port for WYSIWYG
+2018-12-21 14:46:18 fixed export max result - add field permission after TXT import
+2018-11-28 11:24:33 fixed permisson rule of relation cals
+2018-11-22 17:30:56 fixed relativ position of images in pdf generator - fixed subform tables in forms - fixed inherit style & classes of tables in forms
+2018-11-09 09:14:52 smart scroll
+2018-11-07 11:30:23 fix recursiv copy or record with relations
+2018-10-26 14:32:11 Tcpdf improvements
+2018-10-18 11:21:57 fixed some PDO issues - fixed calendar resource search
+2018-10-02 16:13:32 Small fixes
+2018-10-02 13:32:08 Small fixes for bugs caused by merge
+2018-10-01 17:56:06 fixed backsl bug for postgresql
+2018-10-01 17:42:57 Increased length of password field to contain secure hashes
+2018-10-01 17:12:41 Improved style and fixed functionality of system-jobs
+2018-09-28 17:25:42 Added classes that can be set in indicator
+2018-09-28 16:40:01 Added environment variable needed for new password hashing
+2018-09-28 16:24:57 Unified password checking and added php password_* hash functions for better password storage
 2018-09-26 14:04:14 database version check in info section
 2018-09-26 13:33:00 Fixed version and dbpatch
 2018-09-25 17:01:12 Fixed fieldtype-checking regex and improved drag&drop upload
@@ -17,8 +188,12 @@
 2018-09-11 18:09:20 fix vieweditor issues - fix sql editor issues
 2018-08-28 15:38:04 create only one foreign key in relation setting
 2018-08-23 14:33:38 fixed some colors in dark schema
+2018-08-10 14:34:07 extended pdo support
+2018-08-09 16:45:29 Intermediate version. Still not stable
 2018-08-09 12:51:41 Bugfix: Require was missing for viewSettings
+2018-08-09 12:35:29 extended pdo support
 2018-08-02 14:40:48 Still found unresolved string constants in sql statements
+2018-08-02 13:38:31 extended pdo support
 2018-08-02 09:39:47 extend waitSymbol
 2018-08-01 16:42:50 Bugfix: Form title wasn't changeable
 2018-07-25 11:02:10 extend ajax_get function
@@ -35,18 +210,27 @@
 2018-07-16 18:42:23 include global layout.css in formular editor
 2018-07-16 16:30:51 BUG language translation in parameter relations
 2018-07-16 15:14:14 Fixed quicksearch for physical table name, added search for relation
+2018-07-16 14:04:34 PDO changes - upper case tablenames MYSQL
 2018-07-13 16:18:40 Code style
 2018-07-12 17:36:44 Fix for "undefined constant" (part 1)
 2018-07-12 15:56:49 admin report table with cells
+2018-07-12 11:30:30 First version of tcpdf support with old version of report editor
+2018-07-12 10:38:58 admin report table with cells
+2018-06-28 11:52:55 update lang tables
+2018-06-28 11:31:19 DPO offset startpoint
 2018-06-26 12:36:37 Fixed currency fieldtype
+2018-06-26 11:39:34 Update fixes: Fixed invalid field id in ldms_files
 2018-06-26 09:21:35 Fixed diag gsr
 2018-06-25 12:06:49 Ajax-saving and drag&drop of gtab width
 2018-06-22 14:45:16 Fixed relation linking
+2018-06-22 13:10:00 extends ajaxGet function
 2018-06-21 17:02:18 Fixed not-opening of diagram if too many rows in transposed mode
 2018-06-18 10:52:26 Fixed time format using strftime
 2018-06-14 18:49:13 Fixed format check of field size
 2018-06-14 18:34:14 Language entries for kanban
+2018-06-12 12:24:01 version information
 2018-06-08 12:59:43 Feature for Attribute fieldtype: Show all levels
+2018-06-08 12:46:43 DPO implementation fixes
 2018-06-07 10:59:49 Improved usability of printer configuration
 2018-06-05 13:45:08 Fixed empty select-entry in admin->links
 2018-06-05 13:28:24 Added printer configuration - Added printing menu - Improved usability of file renaming - Fixed missing upload progress bars - Improved unoconv and added more configuration options
@@ -55,6 +239,7 @@
 2018-05-30 16:21:29 Fixed js bug in view editor
 2018-05-30 15:59:00 Fixed mimetype bug: Custom picture could not be set correctly
 2018-05-30 15:54:51 User feedback if no table or field is selected in a relation fieldtype
+2018-05-24 17:40:20 PDO implementation
 2018-05-24 17:35:16 some dark design fixes
 2018-05-18 09:19:35 Fixed-position category menu in admin->group - for higher usability - fixed missing border on active last category item
 2018-05-17 16:20:29 Attribute/Multiselect Fieldtypes: - Support for hierarchy of pool elements - Style & Usability improvements - Added some types in phpdoc - Added checkbox for attribute type yes/no
@@ -63,6 +248,10 @@
 2018-05-08 15:06:54 Mini-Explorer parent-dir fix
 2018-05-08 13:58:50 Auto-mode for update_check, that disables itself if no connection
 2018-05-08 11:51:30 Small fixes: - Calendar- instead of kanban-icon in group administration - Extraction of get-params in installer script for installer shell - Ignored errors/warnings of version check - Fix: No multilang entry caused select pools to not be updated
+2018-05-04 14:29:23 Included proxy files for external storage
+2018-05-04 14:26:31 Included sql updates in update file
+2018-05-04 14:02:17 Fixed sql statements. Todo: Include in update file
+2018-05-04 13:54:00 First version of external storage
 2018-04-26 16:18:51 Wvl user selection fix
 2018-04-24 13:53:57 Fixed Caldav error and calendar style bug
 2018-04-24 13:33:58 Changed js const to var because of firefox bug

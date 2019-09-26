@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -331,8 +331,8 @@ function dbq_13($p){
 
 function dbq_14($p){
 	global $DBA;
-	if($p[3] == "+"){$act = ":NEW.ID,:NEW.VERKN_ID";}else{$act = ":OLD.ID,:OLD.VERKN_ID";}
-	return "lmb_vkn(".$act.",'".$p[1]."','".$p[2]."','".$p[3]."','".$p[4]."','".$p[5]."','".$p[0]."');";
+	if($p[4] == "+"){$act = ":NEW.ID,:NEW.VERKN_ID";}else{$act = ":OLD.ID,:OLD.VERKN_ID";}
+	return "lmb_vkn(".$act.",'".$p[0].'.'.$p[2]."','".$p[3]."','".$p[4]."','".$p[0].".".$p[5]."','".$p[6]."','".$p[0].".".$p[1]."');";
 }
 
 
@@ -531,7 +531,7 @@ function dbf_21($p){
 function dbf_22($p){
 	global $db;
 
-	if($rs = @odbc_exec($db,"DROP SEQUENCE ".dbf_4($p[1]))){
+	if($rs = odbc_exec($db,"DROP SEQUENCE ".dbf_4($p[1]))){
 		return true;
 	}else{
 		return false;
@@ -716,7 +716,7 @@ function dbq_21($p){
 	global $db;
 	
 	$sqlquery = "drop procedure ".$p[0].".lmb_vkn";
-	$rs = @odbc_exec($db,$sqlquery);
+	$rs = odbc_exec($db,$sqlquery);
 }
 
 ################# BACKUP #################

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -96,7 +96,7 @@ if($select_del AND $pool){
 
 		$bzm = 1;
 		$rm = 0;
-		while(odbc_fetch_row($mrs,$bzm++)){
+		while(odbc_fetch_row($mrs)){
 			$d_id = odbc_result($mrs,'d_id');
 			$w_id = odbc_result($mrs,'id');
 			$l_id = odbc_result($mrs, 'level');
@@ -125,28 +125,27 @@ if($select_del AND $pool){
 			}
 		}
 
-#		error_log("level[$level]\nrecords to remove:\n".print_r($remove,1)."\nrelated records to remove:\n".print_r($levels,1));
 		if(empty($remove)) $levels = $remove = array();
 	}
 
-	if(!odbc_fetch_row($rs, 1) && empty($levels)==true){
+	if(!odbc_fetch_row($rs) && empty($levels)==true){
 		$sqlquery = 'DELETE FROM '.$typ."_W WHERE (ID = $select_del ".(count($remove)>0 ? implode(' ',$remove) : '').") AND POOL = $pool";
-#error_log(print_r($levels,1)."\n".$sqlquery);
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 		$sqlquery = "SELECT COUNT(ID) AS ERG FROM ".$typ."_W WHERE POOL = $pool";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		$num = odbc_result($rs, 'ERG');
+		$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$num = odbc_result($rs1, 'ERG');
+
 		$sqlquery = 'UPDATE '.$typ.'_P SET SNUM = '.parse_db_int($num,1000)." WHERE ID = $pool";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 		if($level>0){
 			$sqlquery = "SELECT COUNT(ID) AS ERG FROM ".$typ.'_W WHERE POOL = '.$gfield[$atid]['select_pool'][$fieldid]." AND LEVEL = $level";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-			if(!$cnt = odbc_result($rs, 'ERG')){
+			if(!$cnt = odbc_result($rs1, 'ERG')){
 				$sqlquery = 'UPDATE '.$typ.'_W SET HASLEVEL = '.LMB_DBDEF_FALSE.' WHERE ID = '.parse_db_int($level);
-				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			}
 		}
 	}else{
@@ -186,6 +185,7 @@ if($select_change AND $pool){
 			
 			$update['WERT'] = parse_db_string(trim(str_replace("\t",'',str_replace("\n",'',$select_wert[$value]))),160);
 			$update['KEYWORDS'] = parse_db_string(trim(str_replace("\t",'',str_replace("\n",'',$select_keyw[$value]))),250);
+			$update['COLOR'] = parse_db_string($select_color[$value]);
 
 			foreach($update as $key => $cvalue){
 			     $sql[] = $key ." = '$cvalue'";
@@ -222,7 +222,6 @@ if($select_change AND $pool){
 
 /* --- Defaultwert --------------------------------------------- */
 if($select_default AND $pool){
-
 	$sqlquery = 'SELECT DEF FROM '.$typ."_W WHERE POOL = $pool AND ID = $select_default";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(odbc_result($rs,'DEF')){
@@ -238,7 +237,64 @@ if($select_default AND $pool){
 		$sqlquery = 'UPDATE '.$typ.'_W SET DEF = '.LMB_DBDEF_FALSE." WHERE POOL = $pool AND ID != $select_default";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
+}
 
+/* --- Mandatory --------------------------------------------- */
+if($select_mandatory AND $pool){
+	$sqlquery = 'SELECT MANDATORY FROM '.$typ."_W WHERE POOL = $pool AND ID = $select_mandatory";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(odbc_result($rs,'MANDATORY')){
+		$sqlquery = 'UPDATE '.$typ.'_W SET MANDATORY = '.LMB_DBDEF_FALSE." WHERE POOL = $pool AND ID = $select_mandatory";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	}else{
+		$sqlquery = 'UPDATE '.$typ.'_W SET MANDATORY = '.LMB_DBDEF_TRUE." WHERE POOL = $pool AND ID = $select_mandatory";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	}
+}
+
+/* --- hidetag --------------------------------------------- */
+if($select_hidetag AND $pool){
+	$sqlquery = 'SELECT HIDETAG FROM '.$typ."_W WHERE POOL = $pool AND ID = $select_hidetag";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(odbc_result($rs,'HIDETAG')){
+		$sqlquery = 'UPDATE '.$typ.'_W SET HIDETAG = '.LMB_DBDEF_FALSE." WHERE POOL = $pool AND ID = $select_hidetag";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	}else{
+		$sqlquery = 'UPDATE '.$typ.'_W SET HIDETAG = '.LMB_DBDEF_TRUE." WHERE POOL = $pool AND ID = $select_hidetag";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	}
+}
+
+/* --- TAG-MODE --------------------------------------------- */
+if($tag_mode AND $pool){
+	$sqlquery = 'SELECT TAGMODE FROM '.$typ."_P WHERE ID = $pool";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(odbc_result($rs,'TAGMODE')){
+		$sqlquery = 'UPDATE '.$typ.'_P SET TAGMODE = '.LMB_DBDEF_FALSE." WHERE ID = $pool";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	}else{
+		$sqlquery = 'UPDATE '.$typ.'_P SET TAGMODE = '.LMB_DBDEF_TRUE." WHERE ID = $pool";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	}
+}
+
+/* --- Multiple-MODE --------------------------------------------- */
+if($multi_mode AND $pool){
+	$sqlquery = 'SELECT MULTIMODE FROM '.$typ."_P WHERE ID = $pool";
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(odbc_result($rs,'MULTIMODE')){
+		$sqlquery = 'UPDATE '.$typ.'_P SET MULTIMODE = '.LMB_DBDEF_FALSE." WHERE ID = $pool";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	}else{
+		$sqlquery = 'UPDATE '.$typ.'_P SET MULTIMODE = '.LMB_DBDEF_TRUE." WHERE ID = $pool";
+		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	}
+}
+
+/* --- Attribute --------------------------------------------- */
+if($select_attribut AND $pool){
+    $sqlquery = "UPDATE {$typ}_W SET TYPE = ".parse_db_int($select_attribut_[$select_attribut])." WHERE POOL = $pool AND ID = $select_attribut";
+    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 /* --- Hide --------------------------------------------- */
@@ -255,15 +311,14 @@ if($select_hide AND $pool){
 }
 
 /* --- Sortierung --------------------------------------------- */
-if($select_sort AND $pool AND $fssort){
-	if($fssort != 'WERT ASC' AND $fssort != 'WERT DESC' AND $fssort != 'SORT'){$fssort = 'SORT';}
+if($select_sort AND $pool){
 	$sqlquery = "UPDATE LMB_CONF_FIELDS SET SELECT_SORT = '".parse_db_string($fssort,20)."' WHERE TAB_ID = $atid AND FIELD_ID = $fieldid";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 /* --- Select-Feld hinzufügen --------------------------------------------- */
 if($add_select AND $new_wert AND $pool){
-	
+
 	lmb_StartTransaction();
 	
 	/* --- Next ID ---------------------------------------- */
@@ -277,10 +332,11 @@ if($add_select AND $new_wert AND $pool){
 
 	$NEXTSORT = odbc_result($rs,'NEXTID') + 1;
 	if($typ == 'LMB_ATTRIBUTE'){
-		$sqlquery = 'INSERT INTO '.$typ."_W (ID,SORT,ERSTUSER,POOL,WERT,KEYWORDS,TYPE,LEVEL) VALUES($NEXTID,$NEXTSORT,".$session['user_id'].",$pool,'".parse_db_string($new_wert,250)."','".parse_db_string($new_keyword,250)."',".parse_db_int($new_fieldtype,5).",".parse_db_int($level_id).")";
+		$sqlquery = 'INSERT INTO '.$typ."_W (ID,SORT,ERSTUSER,POOL,WERT,KEYWORDS,TYPE,LEVEL,ATTRPOOL) VALUES($NEXTID,$NEXTSORT,".$session['user_id'].",$pool,'".parse_db_string($new_wert,250)."','".parse_db_string($new_keyword,250)."',".parse_db_int($new_fieldtype,5).",".parse_db_int($level_id).",".parse_db_int($new_attrpool).")";
 	}else{
 		$sqlquery = 'INSERT INTO '.$typ."_W (ID,SORT,ERSTUSER,POOL,WERT,KEYWORDS,LEVEL) VALUES($NEXTID,$NEXTSORT,".$session['user_id'].",$pool,'".parse_db_string($new_wert,250)."','".parse_db_string($new_keyword,250)."',".parse_db_int($level_id).")";
 	}
+
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	
@@ -386,7 +442,7 @@ if($del_pool){
 	$sqlquery = 'SELECT DISTINCT '.$typ.'_D.ID FROM '.$typ."_D,".$typ.'_W WHERE '.$typ.'_D.W_ID = '.$typ.'_W.ID AND '.$typ.'_W.POOL = '.parse_db_int($del_pool,10);
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	if(!odbc_fetch_row($rs, 1)){
+	if(!odbc_fetch_row($rs)){
 		$sqlquery1 = 'DELETE FROM '.$typ.'_P WHERE ID = '.parse_db_int($del_pool,10);
 		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
@@ -419,13 +475,25 @@ if($set_pool AND !$pool){
 
 
 /* --- Pool-Liste --------------------------------------------- */
-$sqlquery = "SELECT ID,NAME,SNUM FROM ".$typ."_P ORDER BY LOWER(NAME)";
+$sqlquery = "SELECT ID,NAME,SNUM,TAGMODE,MULTIMODE FROM ".$typ."_P ORDER BY LOWER(NAME)";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 while(odbc_fetch_row($rs)) {
 	$pid = odbc_result($rs, 'ID');
 	$result_pool['id'][$pid] = $pid;
 	$result_pool['name'][$pid] = odbc_result($rs, 'NAME');
 	$result_pool['num'][$pid] = odbc_result($rs, 'SNUM');
+    $result_pool['tag_mode'][$pid] = odbc_result($rs, 'TAGMODE');
+	$result_pool['multi_mode'][$pid] = odbc_result($rs, 'MULTIMODE');
+}
+
+
+/* --- Select - Pool-Liste --------------------------------------------- */
+$sqlquery = "SELECT ID,NAME FROM LMB_SELECT_P ORDER BY LOWER(NAME)";
+$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(odbc_fetch_row($rs)) {
+	$pid = odbc_result($rs, 'ID');
+	$result_subpool['id'][$pid] = $pid;
+	$result_subpool['name'][$pid] = odbc_result($rs, 'NAME');
 }
 
 
@@ -450,8 +518,6 @@ if($pool){
 		$result_fieldselect['pool'] = odbc_result($rs, 'SELECT_POOL');
 	}
 	
-	if(!$result_fieldselect['sort']){$result_fieldselect['sort'] = 'SORT';}
-	
 
 	# TODO improve recursively?
 	$result_fieldselect['parent'] = array();
@@ -471,24 +537,39 @@ if($pool){
 		}
 	}
 
+
+	if(!$start OR $start < 1 OR $start > $result_fieldselect['num_ges']){$bzm = 1;$start = 1;}else{$bzm = $start;}
+
+    // use Limit & Offset instead of Cursor (PDO)
+    if(defined('LMB_DBFUNC_OFFSET')) {
+        $limit = "LIMIT $num_result OFFSET ".($start - 1 + LMB_DBFUNC_OFFSET_START);
+    }
+
 	if($find_wert){$where = " AND LOWER(WERT) LIKE '%".parse_db_string(lmb_strtolower($find_wert),250)."%'";}
 	if($find_keyw){$where .= " AND LOWER(KEYWORDS) LIKE '%".parse_db_string(lmb_strtolower($find_keyw),250)."%'";}
     if(!$showAllLevels){$where .= ' AND LEVEL='.parse_db_int($level_id);}
 
-	$sqlquery = "SELECT * FROM ".$typ."_W WHERE POOL = $pool $where ORDER BY ".$result_fieldselect['sort'];
+    $sort = $result_fieldselect['sort'];
+    if (!$result_fieldselect['sort']) {
+        $sort = $typ."_W.SORT";
+    }
+
+	$sqlquery = "SELECT * FROM ".$typ."_W WHERE POOL = $pool $where ORDER BY $sort $limit";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$bzm1 = 0;
-	if(!$start OR $start < 1 OR $start > $result_fieldselect['num_ges']){$bzm = 1;$start = 1;}else{$bzm = $start;}
-	while(odbc_fetch_row($rs, $bzm) AND $bzm1 < $num_result) {
+	while(odbc_fetch_row($rs, $bzm) AND $bzm1 <= $num_result) {
 		$result_fieldselect['id'][$bzm] = odbc_result($rs, 'ID');
 		$result_fieldselect['wert'][$bzm] = odbc_result($rs, 'WERT');
 		$result_fieldselect['keywords'][$bzm] = odbc_result($rs, 'KEYWORDS');
 		$result_fieldselect['def'][$bzm] = odbc_result($rs, 'DEF');
 		$result_fieldselect['hide'][$bzm] = odbc_result($rs, 'HIDE');
-		$result_fieldselect['haslevel'][$bzm] = odbc_result($rs, 'haslevel');
-		if($typ == 'LMB_ATTRIBUTE'){
-			$result_fieldselect['type'][$bzm] = odbc_result($rs, 'TYPE');
+		$result_fieldselect['haslevel'][$bzm] = odbc_result($rs, 'HASLEVEL');
+		if($typ == 'LMB_ATTRIBUTE') {
+            $result_fieldselect['mandatory'][$bzm] = odbc_result($rs, 'MANDATORY');
+            $result_fieldselect['color'][$bzm] = odbc_result($rs, 'COLOR');
+            $result_fieldselect['attrpool'][$bzm] = odbc_result($rs, 'ATTRPOOL');
+            $result_fieldselect['type'][$bzm] = odbc_result($rs, 'TYPE');
+            $result_fieldselect['hidetag'][$bzm] = odbc_result($rs, 'HIDETAG');
 		}
 		
 		$multi_language = $umgvar['multi_language'];

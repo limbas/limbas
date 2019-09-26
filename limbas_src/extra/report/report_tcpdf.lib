@@ -1,0 +1,1192 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.6
+ */
+
+/*
+ * ID: 223
+ */
+
+require_once('extern/tcpdf/tcpdf.php');
+require_once('extern/fpdi/fpdi.php');
+require_once('extra/report/report_tcpdf_class.lib');
+require_once('gtab/gtab.lib');
+
+#region FieldType Functions
+
+/*------- Text ---------*/
+function print_text(LmbTcpdf &$pdf, $ID, &$report, $el) {
+    $style = &$report['style'][$el];
+    if (!hide_element($pdf, $style[29])) {
+        if ($style[42] == 'true') {
+            $type = 'html';
+        } else {
+            $type = 'text';
+        }
+        $pdf->print_element($pdf->printcell($report['value'][$el], $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], $type));
+    }
+    $GLOBALS['glob_el'][$report['id'][$el]] = $report['value'][$el];
+}
+
+/*------- Rechteck ---------*/
+function print_rect(LmbTcpdf &$pdf, $ID, &$report, $el) {
+    if (!hide_element($pdf, $report['style'][$el][29])) {
+        $pdf->print_element($pdf->printcell('', $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], 'rect'));
+    }
+}
+
+/*------- Linie ---------*/
+/**
+ * @deprecated
+ */
+function print_line(LmbTcpdf $pdf, $ID, $report, $el) {
+    if (!hide_element($pdf, $report['style'][$el][29])) {
+        $pdf->print_element($pdf->printcell('', $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], 'line'));
+    }
+}
+
+/*------- Ellipse ---------*/
+/**
+ * @deprecated
+ */
+function print_ellipse(LmbTcpdf $pdf, $ID, $report, $el) {
+    if (!hide_element($pdf, $report['style'][$el][29])) {
+        $pdf->print_element($pdf->printcell('', $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], 'ellipse'));
+    }
+}
+
+/*------- Bericht Nr ---------*/
+/**
+ * @deprecated
+ */
+function print_bnr(LmbTcpdf $pdf, $ID, $report, $el) {
+    global $NEXT_B_NR;
+    if (!hide_element($pdf, $report['style'][$el][29])) {
+        $pdf->print_element($pdf->printcell($NEXT_B_NR, $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], 'bnr'));
+    }
+    $GLOBALS['glob_el'][$report['id'][$el]] = $NEXT_B_NR;
+}
+
+/*------- Datum ---------*/
+function print_datum(LmbTcpdf &$pdf, $ID, &$report, $el) {
+    $date = local_date(1);
+    if (!hide_element($pdf, $report['style'][$el][29])) {
+        $pdf->print_element($pdf->printcell($date, $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], 'datum'));
+    }
+    $GLOBALS['glob_el'][$report['id'][$el]] = $date;
+}
+
+/*------- Seiten-Nummer ---------*/
+function print_snr(LmbTcpdf &$pdf, $ID, &$report, $el) {
+    $pageNo = $pdf->PageNo();
+    if (!hide_element($pdf, $report['style'][$el][29])) {
+        $pdf->print_element($pdf->printcell($pageNo, $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], 'snr'));
+    }
+    $GLOBALS['glob_el'][$report['id'][$el]] = $pageNo;
+}
+
+/*------- Unterbericht ---------*/
+function print_ureport(LmbTcpdf &$pdf, $ID, &$report, $el) {
+    global $greportlist;
+    global $gfield;
+
+    $subreportid = $report['pic_res'][$el];
+    $parent_gtabid = $report['referenz_tab'];
+    $gtabid = $greportlist['argresult_tabid'][$subreportid];
+
+    # Bericht einbetten
+    if ($report['pic_typ'][$el] == 1) {
+        if (lmb_substr($report['parameter'][$el], 0, 6) == 'return') {
+            # ID Array
+            try {
+                $rval = eval($report['parameter'][$el]);
+                if ($rval and !isset($arg_result)) {
+                    $arg_result = $rval;
+                }
+            } catch (ParseError $e) {
+                lmb_log::error($e->getMessage());
+                $arg_result = array();
+            }
+            foreach ($arg_result as $key => $value) {
+                merge_subReport($pdf, $value, $subreportid);
+            }
+
+        } else {
+            # gresult erzeugen
+            $filter['anzahl'][$gtabid] = 'all';
+            $filter['nolimit'][$gtabid] = 1;
+
+            # versuche Verknüpfung automatisch aufzulösen
+            if ($relation = array_keys($gfield[$parent_gtabid]['verkntabid'], $gtabid)) {
+                $relation = $relation[0];
+                $verkn = set_verknpf($parent_gtabid, $relation, $ID, null, null, 1, 1);
+            }
+
+            # Parameter einbinden
+            if ($report['parameter'][$el]) {
+                try {
+                    eval($report['parameter'][$el]);
+                } catch (ParseError $e) {
+                    lmb_log::error($e->getMessage());
+                }
+            }
+
+            $gresult = get_gresult($gtabid, 1, $filter, $gsr, $verkn, 'ID', null, $extension);
+            foreach ($gresult[$gtabid]['id'] as $key => $value) {
+                merge_subReport($pdf, $value, $subreportid);
+            }
+        }
+
+    } elseif ($report['pic_typ'][$el] == 2) {
+        # Bericht einhängen per fpdi
+        append_subReport($pdf, $report, $ID, $el, $subreportid, $report['width'][$el], $report['height'][$el]);
+    }
+}
+
+/*------- Formel ---------*/
+function print_formel(LmbTcpdf &$pdf, $ID, &$report, $el) {
+    global $glob_el;
+    global $gtab;
+    global $gfield;
+    global $session;
+    global $umgvar;
+    global $userdat;
+    global $report_ext;
+
+    $style = $report['style'][$el];
+
+    # eval
+    $report_value = trim($report['value'][$el]);
+    if ($report_value) {
+        try {
+            $rval = eval($report_value);
+            if ($rval and !isset($arg_result)) {
+                $arg_result = $rval;
+            }
+        } catch (ParseError $e) {
+            lmb_log::error($e->getMessage());
+            $arg_result = '';
+        }
+    }
+
+    # hidden
+    if (!hide_element($pdf, $style[29]) and $arg_result) {
+        # as HTML
+        if ($style[42] == 'true') {
+            $type = 'html';
+        } else {
+            $type = 'formel';
+        }
+        $pdf->print_element($pdf->printcell($arg_result, $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], $type));
+    }
+
+    # TODO wiki?
+    if (isset($garg_result)) {
+        $GLOBALS['glob_el'][$report['id'][$el]] = $garg_result;
+    } else {
+        $GLOBALS['glob_el'][$report['id'][$el]] = $arg_result;
+    }
+}
+
+/*------- Db Inhalte ---------*/
+# TODO tagmod?
+function print_dbdat(LmbTcpdf &$pdf, $ID, &$report, $el) {
+    if (!$report['dbvalue'][$el]) {
+        return true;
+    }
+
+    $dbvalue = $report['dbvalue'][$el];
+    $style = $report['style'][$el];
+
+    if ($style[40]) {
+        $seperator = str_replace("\\\\t", "\t", str_replace("\\\\n", "\n", $style[40]));
+        $report_dbvalue = trim(implode($seperator, $dbvalue));
+    } else {
+        $report_dbvalue = implode("\n", $dbvalue);
+    }
+
+    $GLOBALS['glob_el'][$report['id'][$el]] = $dbvalue;
+    $report_dbvalue = explode('#*#', $report_dbvalue, 2);
+    if (count($report_dbvalue) == 2) {
+        $valuetype = $report_dbvalue[0];
+        $value = $report_dbvalue[1];
+    } else {
+        $valuetype = null;
+        $value = $report_dbvalue[0];
+    }
+
+    if (!$value) {
+        return true;
+    }
+
+    # hidden
+    if (hide_element($pdf, $style[29])) {
+        return true;
+    }
+
+    if ($valuetype == 'IMAGE') {
+        $pdf->print_element($pdf->printcell($value, $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], 'bild'));
+    } elseif ($valuetype == 'PDF') {
+        $pdf->setSourceFile($value);
+        $tplidx = $pdf->ImportPage(1);
+        $pdf->useTemplate($tplidx, $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el]);
+    } elseif ($valuetype == 'HTML') {
+        $pdf->print_element($pdf->printcell($value, $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], 'html'));
+    } elseif ($valuetype == 'SCTCNR') { # TODO ??
+        $pdf->print_element($pdf->printcell($value, $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], 'html'));
+    } else {
+        $pdf->print_element($pdf->printcell($value, $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], 'dbdat'));
+    }
+}
+
+/*------- Bild ---------*/
+function print_bild(LmbTcpdf &$pdf, $ID, &$report, $el) {
+    global $umgvar;
+
+    $pic_orgname = $report['tab_size'][$el];
+    $pic_name = $report['pic_name'][$el];
+    $report_value = $report['value'][$el];
+    $pic_quality = $report['data_type'][$el];
+    $pic_style = $report['pic_style'][$el];
+
+    $org_extension = explode('.', $pic_orgname);
+    $org_extension = $org_extension[count($org_extension) - 1];
+
+    if (hide_element($pdf, $report['style'][$el][29])) {
+        return true;
+    }
+
+    if (lmb_strtolower($org_extension) == 'pdf') { # PDF Integration
+        if (lmb_strpos($pic_orgname, $umgvar['path']) === false) {
+            $report_value = $umgvar['uploadpfad'] . 'report/' . $pic_orgname;
+        } else {
+            $report_value = $pic_orgname;
+        }
+
+        $pdf->setSourceFile($report_value);
+        $tplidx = $pdf->ImportPage(1);
+        $pdf->useTemplate($tplidx, $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el]);
+
+        # Hintergrund-Rechteck ----------------------------
+        # TODO maybe improve
+        $par = $pdf->printcell($report_value, $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], 'bild');
+        if (!$par[2] OR !$par[3]) {
+            $imsize = $pdf->getTemplateSize($tplidx, $par[2], $par[3]);
+            if (!$par[2]) {
+                $par[2] = $imsize['w'] + $par[10][22];
+            }
+            if (!$par[3]) {
+                $par[3] = $imsize['h'] + $par[10][22] + 4;
+            }
+        }
+        if ($par[6]) {
+            $pdf->Rect($par[0] - $par[10][19] / 2, $par[1] - $par[10][19] / 2, $par[2] + $par[10][19], $par[3] + $par[10][19]);
+        }
+
+    } else { # Bilder
+        if ($pic_style AND file_exists($umgvar['uploadpfad'] . 'report/' . $pic_orgname)) {
+            if (!file_exists($umgvar['pfad'] . '/TEMP/thumpnails/report/r_' . $pic_name)) {
+                $target = $umgvar['pfad'] . '/TEMP/thumpnails/report/r_' . $pic_name;
+                copy($umgvar['uploadpfad'] . 'report/' . $pic_orgname, $target);
+                $picstyle = explode(';', $pic_style);
+                foreach ($picstyle as $key => $value) {
+                    $cmd = $umgvar['imagemagick'] . '/convert ' . $umgvar['imagemagicklimit'] . " -quality $pic_quality $value -strip $target $target";
+                    system($cmd);
+                }
+                if (file_exists($target)) {
+                    $report_value = 'TEMP/thumpnails/report/r_' . $pic_name;
+                }
+            } else {
+                $report_value = 'TEMP/thumpnails/report/r_' . $pic_name;
+            }
+        } else {
+            $report_value = 'UPLOAD/report/' . $pic_orgname;
+        }
+        $pdf->print_element($pdf->printcell($report_value, $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], 'bild'));
+    }
+}
+
+/*------- Chart ---------*/
+function print_chart(LmbTcpdf &$pdf, $ID, &$report, $el) {
+    global $gsr;
+    global $filter;
+    global $verkn;
+    global $extension;
+
+    if (hide_element($pdf, $report['style'][$el][29])) {
+        return true;
+    }
+
+    require_once('extra/diagram/diagram.php');
+
+    $width = $report['width'][$el];
+    $height = $report['height'][$el];
+    $diag_id = $report['pic_res'][$el];
+    #if($report['style'][$el][21]){$bgcolor = $report['style'][$el][21];}
+    if ($report['parameter'][$el]) {
+        try {
+            eval($report['parameter'][$el]);
+        } catch (ParseError $e) {
+            lmb_log::error($e->getMessage());
+        }
+    }
+
+    if ($url = lmb_createDiagram($diag_id, $gsr, $filter, $verkn, $extension, ($width * 3), ($height * 3), $report['style'][$el])) {
+        $pdf->print_element($pdf->printcell($url, $report['posx'][$el], $report['posy'][$el], $width, $height, $report['style'][$el], 'bild'));
+    }
+}
+
+/*------- report template ---------*/
+function print_templ(LmbTcpdf &$pdf, $ID, &$report, $el) {
+    $templGtabid = $report['pic_typ'][$el];
+    $content = &$report['value'][$el];
+    $parameter = &$report['parameter'][$el];
+
+    require_once('extra/template/report/ReportTemplateConfig.php');
+    TemplateConfig::$instance = new ReportTemplateConfig($report, $parameter);
+    $baseElement = new ReportTemplateElement($templGtabid, 'lmbBaseElement', $content);
+    $baseElement->resolve($ID);
+
+    $htmlArr = &$baseElement->getAsHtmlArr();
+	$pdf->print_element($pdf->printcell(implode('', $htmlArr), $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], 'html'));
+}
+
+function print_tab(LmbTcpdf &$pdf, $ID, &$report, $el) {
+    global $action;
+    global $db;
+    global $umgvar;
+    global $glob_el;
+    global $glob_rowel;
+
+    $report_id = $report['report_id'];
+    $report_style = $report['style'][$el];
+    $report_tab = $report['tab'][$el];
+    $report_tab_size = $report['tab_size'][$el];
+
+    # table size
+    $tab_size = explode(';', $report_tab_size);
+    $report_tab_cols = $tab_size[0];
+    $report_tab_rows = $tab_size[1];
+
+    # column size
+    $colWidths = explode(';', $report['parameter'][$el]);
+    array_unshift($colWidths, null);
+
+    $sqlquery = "
+        SELECT
+            EL_ID,
+            TYP,
+            INHALT,
+            TAB_EL_ROW,
+            TAB_EL_COL,
+            TAB_EL_COL_SIZE,
+            STYLE,
+            WIDTH
+        FROM
+            LMB_REPORTS
+        WHERE
+            BERICHT_ID = $report_id
+            AND TAB_EL = $report_tab
+        ORDER BY
+            TAB_EL_ROW,
+            TAB_EL_COL,
+            CASE WHEN TYP = 'tabcell' THEN 1 ELSE 2 END,
+            EL_ID";
+    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    # get table cell information
+    $cells = array();
+    while (odbc_fetch_row($rs)) {
+        $row = odbc_result($rs, 'TAB_EL_ROW');
+        $col = odbc_result($rs, 'TAB_EL_COL');
+        $typ = odbc_result($rs, 'TYP');
+
+        if ($typ == 'tabcell') {
+            $cells[$row][$col] = array(
+                'STYLE' => explode(';', odbc_result($rs, 'STYLE')),
+                'CHILDREN' => array()
+            );
+            continue;
+        }
+
+        $cells[$row][$col]['CHILDREN'][] = array(
+            'INHALT' => odbc_result($rs, 'INHALT'),
+            'TYP' => odbc_result($rs, 'TYP'),
+            'EL_ID' => odbc_result($rs, 'EL_ID'),
+            'STYLE' => explode(';', odbc_result($rs, 'STYLE')),
+            'WIDTH' => odbc_result($rs, 'WIDTH')
+        );
+    }
+
+    $tableWidth = array_sum($colWidths);
+
+    # style
+    $attrs = array();
+    $attrs[] = lmbStyleToTcpdfHtmlAttr($report_style, false);
+
+    # cell padding - tcpdf only supports padding for whole table
+    if ($report_style[22]) {
+        $report_style[22] = str_replace('px', '', $report_style[22]);
+        $attrs[] = 'cellpadding="' . $report_style[22] . '"';
+    }
+
+    // style from table
+    if ($report_style[44]) {
+        # border inheritance
+        for ($i = 13; $i <= 20; $i++) {
+            unset ($report['style'][$el][$i]);
+        }
+    }
+
+    $htmlArr = array();
+
+
+
+    $htmlArr[] = '<table width="' . $tableWidth . '" ' . implode(' ', $attrs) . '><thead>';
+
+    # all rows of the table, differentiation between:
+    #  - editor-row ($row)
+    #  - pdf-row ($dynRow) (might be higher than $row because of relation datasets)
+    for ($row = 1, $dynRow = 1; $row <= $report_tab_rows; $row++, $dynRow++) {
+        # get data for whole editor-row (possibly multiple pdf-rows)
+        $dataArray = get_dataArray($ID, $report_id, $report_tab, $report, $report_tab_cols, $row, $dynRow);
+        if ($dataArray['count']) {
+            $datasetCount = $dataArray['count']; # number of datasets in this row
+            $dynRow = $dataArray['rowid'];
+        } else {
+            $datasetCount = 1;
+        }
+
+        # all columns of the current editor-row
+        $cell_value = array();
+        $separator = array();
+        $dataElementIndex = 0;
+        for ($col = 1; $col <= $report_tab_cols; $col++) {
+            $currentCell = &$cells[$row][$col];
+
+            # no elements in table cell?
+            if (!$currentCell['CHILDREN']) {
+                $cell_value[$col][1][] = ' ';
+                continue;
+            }
+
+            if ($sep = $currentCell['STYLE'][40]) {
+                $separator[$row][$col] = $sep;
+            }
+
+            # all elements of the current cell
+            foreach ($currentCell['CHILDREN'] as $elementIndex => &$cellElement) {
+                $type = $cellElement['TYP'];
+                $style = lmbStyleInheritFromParent($currentCell['STYLE'], $cellElement['STYLE']);
+
+                # database field or external data source
+                if ($type == 'dbdat' or ($type == 'formel' and $style[33] == 'true')) {
+                    $value = $dataArray[$dataElementIndex++];
+
+                    # TODO list mode?
+                    $value = array_map(function ($value) {
+                        $valueParts = explode('#*#', $value, 2);
+                        if (count($valueParts) == 2) {
+                            $valuetype = $valueParts[0];
+                            $value = $valueParts[1];
+                            if ($valuetype == 'HTML') {
+                                return $value;
+                            } else if ($valuetype == 'IMAGE') {
+                                return '<img src="' . $value . '">';
+                            }
+                        } else {
+                            $value = $valueParts[0];
+                        }
+                        return nl2br(htmlentities($value));
+                    }, $value);
+
+                    # TODO doesnt work in tcpdf
+                    if (hide_element($pdf, $style[29])) {
+                        $cell_value[$col][$elementIndex + 1] = null;
+                    } else {
+                        $cell_value[$col][$elementIndex + 1] = $value;
+                    }
+
+                    $GLOBALS['glob_el'][$cellElement['EL_ID']] = $value;
+                }
+            }
+
+            # all elements of the current cell/column
+            foreach ($currentCell['CHILDREN'] as $elementIndex => &$cellElement) {
+                $value = trim($cellElement['INHALT']);
+                $type = $cellElement['TYP'];
+                $style = $cellElement['STYLE'];
+
+                if ($type == 'datum') {
+                    $cell_value[$col][$elementIndex + 1] = array_fill(0, $datasetCount, local_date(1));
+                } else if ($type == 'formel' and $style[33] != 'true' /* not external data source */) {
+                    $value = trim($value);
+                    if ($value) {
+                        for ($i = 0; $i < $datasetCount; $i++) {
+                            $ROWNR = $dynRow - $datasetCount + $i + 1;
+                            unset($arg_result);
+                            try {
+                                $rval = eval($value);
+                                if ($rval and !isset($arg_result)) {
+                                    $arg_result = $rval;
+                                }
+                            } catch (ParseError $e) {
+                                lmb_log::error($e->getMessage());
+                                $arg_result = '';
+                            }
+                            $GLOBALS['glob_el'][$cellElement['EL_ID']][$ROWNR] = $arg_result;
+                            $cell_value[$col][$elementIndex + 1][] = nl2br(htmlentities($arg_result));
+                        }
+                    }
+                } else if ($type != 'dbdat' and !($type == 'formel' and $style[33] == 'true')) {
+                    if (!$style[40]) {
+                        $value = nl2br(htmlentities($value));
+                    }
+                    $cell_value[$col][$elementIndex + 1] = array_fill(0, $datasetCount, $value);
+                }
+            }
+            $cell_value['count'][$col] = count($currentCell['CHILDREN']);
+        }
+
+        # extension for table array
+        # TODO wiki?
+        if (isset($call_extFct) AND function_exists($call_extFct)) {
+            $cell_value = $call_extFct($cell_value, $datasetCount);
+            $call_extFct = null;
+        }
+
+        # dataset rows (editor-rows -> pdf-rows)
+        for ($datasetIndex = 0; $datasetIndex < $datasetCount; $datasetIndex++) {
+            $HIDEROW = 0;
+
+            $rowHtmlArr = array();
+            $rowHtmlArr[] = '<tr nobr="true">';
+            # columns
+            for ($col = 1; $col <= $report_tab_cols; $col++) {
+                $cell = &$cells[$row][$col];
+                $cellStyle = lmbStyleInheritFromParent($report_style, $cell['STYLE']);
+
+                # elements in cell
+                $elementsHtmlArr = array();
+                for ($elementIndex = 1; $elementIndex <= $cell_value['count'][$col]; $elementIndex++) {
+                    $elementStyle = lmbStyleInheritFromParent(array_replace($report_style, $cellStyle), $cell['CHILDREN'][$elementIndex - 1]['STYLE']);
+                    $attributeStr = '';
+                    if ($elemWidth = $cell['CHILDREN'][$elementIndex - 1]['WIDTH']) {
+                        $attributeStr .= 'width="' . $cell['CHILDREN'][$elementIndex - 1]['WIDTH'] . '" ';
+                    }
+                    $attributeStr .= lmbStyleToTcpdfHtmlAttr($elementStyle);
+
+                    $cellValue = $cell_value[$col][$elementIndex][$datasetIndex];
+
+                    # font-transform
+                    if ($elementStyle[8] === 'uppercase') {
+                        $cellValue = lmb_strtoupper($cellValue);
+                    } elseif ($elementStyle[8] === 'lowercase') {
+                        $cellValue = lmb_strtolower($cellValue);
+                    }
+
+                    $elementsHtmlArr[] = "<span $attributeStr>{$cellValue}</span>";
+                    if ($cell_value[$col][$elementIndex][$datasetIndex] == '#HIDEROW') {
+                        $HIDEROW = 1;
+                        break 2;
+                    }
+                    if (isset($cell_style) and $cell_style[$col][$elementIndex][$datasetIndex]) {
+                        # TODO not sure if correct
+                        $cell['CHILDREN'][$elementIndex - 1]['STYLE'] = lmb_array_merge($cell['CHILDREN'][$elementIndex - 1]['STYLE'], $cell_style[$col][$elementIndex][$datasetIndex]);
+                    }
+                }
+
+                if ($elementsHtmlArr) {
+                    if ($cellSeparator = $separator[$row][$col] and lmb_substr($cellSeparator, 0, 1) != '#') {
+                        $cellSeparator = str_replace("\\\\t", "\t", str_replace("\\\\n", "\n", $cellSeparator));
+                    } else {
+                        $cellSeparator = ' ';
+                    }
+                    $elementsHtml = trim(implode($cellSeparator, $elementsHtmlArr));
+                } else {
+                    $elementsHtml = '';
+                }
+
+                # style
+                $attributeStr = lmbStyleToTcpdfHtmlAttr($cellStyle);
+
+                $tdWidth = $colWidths[$col];
+                if ($colspan = $cellStyle[37]) {
+                    $attributeStr .= " colspan=\"$colspan\" ";
+                    for ($i = 1; $i < $colspan; $i++) {
+                        $tdWidth += $colWidths[$col + $i]; # add widths of following tds to this one
+                    }
+                    $col += $colspan - 1;
+                }
+
+                if ($row == 1) { # header
+                    $rowHtmlArr[] = "<th width=\"{$tdWidth}\" $attributeStr>$elementsHtml</th>";
+                } else { # data
+                    $rowHtmlArr[] = "<td width=\"{$tdWidth}\" $attributeStr>$elementsHtml</td>";
+                }
+            }
+
+            $rowHtmlArr[] = '</tr>';
+
+            if (!$HIDEROW) {
+                $htmlArr = array_merge($htmlArr, $rowHtmlArr);
+            }
+
+            if ($row == 1) {
+                $htmlArr[] = '</thead><tbody>';
+            }
+        }
+    }
+    $htmlArr[] = '</tbody></table>';
+
+    $pdf->print_element($pdf->printcell(implode('', $htmlArr), $report['posx'][$el], $report['posy'][$el], $tableWidth + 2 * $report_style[22] /* compensation for missing padding in report editor */, null, $report['style'][$el], 'html'));
+}
+
+function lmbStyleInheritFromParent($parentStyle, $cellStyle) {
+    static $inheritableProperties = array(
+        0, 1, 2, 3, 4, 5, 6, /* font */
+        8, 9, /* text-transform, color */
+        11, 12 /* line-height, text-align */
+    );
+
+    $rval = array();
+    for ($i = 0; $i < max(count($parentStyle), count($cellStyle)); $i++) {
+        # use cell value if not inheritable or parent has different value
+        if (!in_array($i, $inheritableProperties) or $cellStyle[$i] !== $parentStyle[$i]) {
+            $rval[$i] = $cellStyle[$i];
+        }
+    }
+
+    # border inheritance from table to td
+    if ($parentStyle[44]) {
+        # border
+        if(!$rval[14] or $rval[14] == 'none' or !$rval[16]) {
+            $rval[13] = $parentStyle[13];
+            $rval[14] = $parentStyle[14];
+            $rval[15] = $parentStyle[15];
+            $rval[16] = $parentStyle[16];
+            $rval[17] = $parentStyle[17];
+            $rval[18] = $parentStyle[18];
+            $rval[19] = $parentStyle[19];
+            $rval[20] = $parentStyle[20];
+        }
+    }
+    return $rval;
+}
+
+function lmbStyleToTcpdfHtmlAttr($cellStyle, $border = true) {
+    $attributes = array();
+    $styleArr = array();
+
+    # ---- font ----
+    if ($cellStyle[0]) {
+        $styleArr[] = "font-family:{$cellStyle[0]};";
+    }
+    if ($cellStyle[1] and $cellStyle[1] != 'normal') {
+        $styleArr[] = "font-style:{$cellStyle[1]};";
+    }
+    # TODO 2: font-variant
+    if ($cellStyle[3]) {
+        $unit = (intval($cellStyle[3]) === $cellStyle[3]) ? 'pt' : '';
+        $styleArr[] = "font-size:{$cellStyle[3]}{$unit};";
+    }
+    if ($cellStyle[4] and $cellStyle[4] != 'normal') {
+        $styleArr[] = "font-weight:{$cellStyle[4]};";
+    }
+    # TODO 5: word-spacing
+    if ($cellStyle[6]) {
+        $styleArr[] = "letter-spacing:{$cellStyle[6]};";
+    }
+    if ($cellStyle[7] and $cellStyle[7] != 'none') {
+        $styleArr[] = "text-decoration:{$cellStyle[7]};";
+    }
+    # TODO 8 text-transform
+    if ($cellStyle[9]) {
+        if (lmb_substr($cellStyle[9], 0, 1) !== '#') {
+            $cellStyle[9] = '#' . $cellStyle[9];
+        }
+        $styleArr[] = "color:{$cellStyle[9]};";
+    }
+    # TODO 10: text-shadow?
+    if ($cellStyle[11]) {
+        $styleArr[] = "line-height:{$cellStyle[11]};";
+    }
+    if ($cellStyle[12] and $cellStyle[12] != 'left') {
+        $styleArr[] = "text-align:{$cellStyle[12]};";
+    }
+    if ($cellStyle[22]) {
+        $styleArr[] = "padding:{$cellStyle[22]};";
+    }
+
+    if ($border and $cellStyle[14] and $cellStyle[14] !== 'none' and $cellStyle[15] and $cellStyle[16]) {
+        $borderStr = "{$cellStyle[16]} {$cellStyle[14]} #{$cellStyle[15]};"; // e.g. 1px solid #000000
+
+        if ($cellStyle[17] != 'none'
+            && $cellStyle[17] === $cellStyle[18]
+            && $cellStyle[17] === $cellStyle[19]
+            && $cellStyle[17] === $cellStyle[20]) { # border on all sides
+            $styleArr[] = 'border:' . $borderStr;
+        } else { # only border on some sides
+            if (isset($cellStyle[17]) and $cellStyle[17] != 'none') {
+                $styleArr[] = 'border-left:' . $borderStr;
+            }
+            if (isset($cellStyle[18]) and $cellStyle[18] != 'none') {
+                $styleArr[] = 'border-right:' . $borderStr;
+            }
+            if (isset($cellStyle[19]) and $cellStyle[19] != 'none') {
+                $styleArr[] = 'border-top:' . $borderStr;
+            }
+            if (isset($cellStyle[20]) and $cellStyle[20] != 'none') {
+                $styleArr[] = 'border-bottom:' . $borderStr;
+            }
+        }
+    }
+    if ($cellStyle[21]) {
+        if (lmb_substr($cellStyle[21], 0, 1) !== '#') {
+            $cellStyle[21] = '#' . $cellStyle[21];
+        }
+        $styleArr[] = "background-color:{$cellStyle[21]};";
+    }
+
+//                        22 => 'cellpadding',
+//                        23 => 'vertical-align',
+//                        24 => 'opacity'
+
+    if ($styleArr) {
+        $attributes[] = 'style="' . implode('', $styleArr) . '"';
+    }
+
+    return implode(' ', $attributes);
+}
+#endregion
+
+/**
+ * Returns true if the element should be hidden on the current page
+ * @param LmbTcpdf $pdf
+ * @param number $hide
+ * @return bool yes if hidden, no if shown
+ */
+function hide_element(LmbTcpdf &$pdf, $hide) {
+    $pageNo = $pdf->PageNo();
+    $odd = ($pageNo % 2 != 0);
+
+    if ($hide == 1 OR $hide == 'true' /* hide always */
+        OR ($hide == 2 AND $pageNo == 1) /* hide on first page */
+        OR ($hide == 3 AND $pageNo > 1) /* hide on not-first page */
+        OR ($hide == 4 AND !$odd) /* hide on even pages */
+        OR ($hide == 5 AND $odd) /* hide on odd pages */
+    ) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
+/*----------------- Element-Schleife PDF -------------------*/
+function list_elements_pdf(LmbTcpdf &$pdf, $ID, &$report, $subform = null) {
+    static $lastposy;
+
+    if ($report['id']) {
+        foreach ($report['id'] as $bzm => $value) {
+            # background
+            if ($report['background'][$bzm]) {
+                if (!hide_element($pdf, $report['background'][$bzm])) {
+                    continue;
+                }
+            }
+
+            # dependent on other element
+            if ($otherEl = $report['style'][$bzm][39] and !$report['dbvalue'][$report['arg_result'][$otherEl]][0]) {
+                # speichere Y Position Elements
+                $lastposy[$bzm] = $pdf->GetY();
+                continue;
+            }
+
+            # PageBreak before
+            if ($report['style'][$bzm][35] == 'true') {
+                $pdf->SetAutoPageBreak(false, 0);
+            }
+            if ($report['style'][$bzm][34] == 1) {
+                $pdf->AddPage();
+                $report['posy'][$bzm] = null;
+            }
+
+            # is subform
+            if ($subform) {
+                $report['posy'][$bzm] = $report['posy'][$bzm] + $subform;
+            }
+
+            # has relative position
+            if ($otherEl = $report['style'][$bzm][36]) {
+                # setze Position auf letzte posy des relativen Elternelements
+                $pdf->setY($lastposy[$report['arg_result'][$otherEl]]);
+
+                # Zeilenabstand berechnen
+                $ln = (-$report['posyabs'][$report['arg_result'][$otherEl]] - $report['height'][$report['arg_result'][$otherEl]] + $report['posyabs'][$bzm]);
+                $pdf->Ln($ln);
+                $report['posy'][$bzm] = null;
+            }
+
+            # element function
+            $fname = 'print_' . $report['typ'][$bzm];
+            $fname($pdf, $ID, $report, $bzm);
+
+            # PageBreak after
+            if ($report['style'][$bzm][35] == 'true') {
+                $pdf->SetAutoPageBreak(true, $report['footerpos']);
+            }
+            if ($report['style'][$bzm][34] == 2) {
+                $pdf->AddPage();
+            }
+
+            # save Y position of element
+            $lastposy[$bzm] = $pdf->GetY();
+        }
+    }
+}
+
+function SetPageBreak(LmbTcpdf &$pdf, $footerpos, &$report) {
+    if ($footerpos) { # Fußumbruch bei vorhandenen Fußelementen
+        $pdf->SetAutoPageBreak(true, $footerpos);
+    } elseif ($report['page_style'][4]) { # Fußumbruch bei vorhandenem Seitenrahmen
+        $footerpos = $report['page_style'][3];
+        $pdf->SetAutoPageBreak(true, $footerpos);
+    } else { # kein Fußumbruch
+        $pdf->SetAutoPageBreak(false, 0);
+    }
+}
+
+# --- PDF erzeugen ---------------------------------
+function create_pdf(&$report, $ID) {
+    #Header - Elemente
+    $rp['header'] = element_list($ID, $report, 'header');
+    #Footer - Elemente
+    $rp['footer'] = element_list($ID, $report, 'footer');
+    #Background - Elemente
+    $rp['background'] = element_list($ID, $report, 'background');
+
+    # --- neues PDF -----------------------------------
+    $width = $report['page_style'][0];
+    $height = $report['page_style'][1];
+    $orientation = ($width > $height) ? 'l' : 'p';
+    $isunicode = false;
+    if($GLOBALS['umgvar']['charset'] == 'UTF-8'){$isunicode = true;}
+
+    $pdf = new LmbTcpdf($orientation, 'pt', array($width, $height),  $isunicode, $GLOBALS['umgvar']['charset']);
+
+    # Fußumbruch bei vorhandenen Fußelementen
+    SetPageBreak($pdf, $report['footerpos'], $report);
+
+    $pdf->rp = $rp;
+    $pdf->report = &$report;
+    $pdf->report_id = $report['report_id'];
+    $pdf->ID = $ID;
+
+    $pdf->Open();
+    $pdf->SetMargins($report['page_style'][4], $report['page_style'][2], $report['page_style'][5], true);
+
+    # set all needed fonts
+    set_fonts($pdf, $report['report_id']);
+
+    $pdf->AddPage();
+    $pdf->SetSubject($report['name'] . ' ' . date('Y.m.d'));
+    $pdf->SetTitle($report['name'] . ' ' . date('Y.m.d'));
+    $pdf->SetCompression(true);
+    $pdf->SetCreator('LIMBAS');
+
+    return $pdf;
+}
+
+# --- PDF füllen ---------------------------------
+function fill_pdf(LmbTcpdf &$pdf, &$report, $ID, $subform = 0) {
+    $rep = &element_list($ID, $report, '');
+    list_elements_pdf($pdf, $ID, $rep, $subform);
+}
+
+# --- PDF ausgeben ---------------------------------
+function store_pdf(LmbTcpdf &$pdf, &$report, $ID, $report_rename = null, $report_output = null) {
+    global $session;
+    global $umgvar;
+
+    # pdf name
+    $name = reportSavename($report['name'], $report['savename'], $ID, 'pdf', $report_rename, ($report_output >= 2) /* archive */);
+    $out = $umgvar['pfad'] . '/USER/' . $session['user_id'] . '/temp/' . $name;
+    $path = $umgvar['pfad'] . '/USER/' . $session['user_id'] . '/temp/' . lmb_utf8_encode($name);
+
+    # write pdf to file
+    $pdf->Output($path, 'F');
+
+    # use postscript to compress
+    if ($umgvar['use_gs'] AND file_exists($path)) {
+        rename($path, $path . 'gs');
+        $sys = exec("cd ".$umgvar["pfad"]."/USER/".$session["user_id"]."/temp/; gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=".lmb_utf8_encode($name)." ".$path."gs");
+        unlink($path . 'gs');
+    }
+
+    return $out;
+}
+
+# verbinde Berichte
+function merge_report($filelist, $ID, $report_rename = null) {
+    global $session;
+    global $umgvar;
+
+    $report_name = reportSavename($GLOBALS['report_name'], $GLOBALS['report_savename'], $ID, 'pdf', $report_rename, true);
+
+    if ($umgvar['use_gs']) { # use gs
+        # use postcsript
+        if ($umgvar['ps_compatibilitylevel'] <= 1) {
+            $ps_comp = '1.4';
+        } else {
+            $ps_comp = $umgvar['ps_compatibilitylevel'];
+        }
+        if ($umgvar['ps_output']) {
+            $ps_output = $umgvar['ps_output'];
+        } else {
+            $ps_output = 'default';
+        }
+        if ($umgvar['ps_downsample']) {
+            $ps_downsample = ' -dDownsampleColorImages=true -dColorImageDownsampleType=/Average -dColorImageDownsampleThreshold=1.3';
+            if ($umgvar['ps_imageresolution']) {
+                $ps_downsample .= ' -dColorImageResolution=' . $umgvar['ps_imageresolution'];
+            }
+        }
+        $sys = exec('cd ' . $umgvar['pfad'] . '/USER/' . $session['user_id'] . "/temp/; gs -dNOPAUSE -dBATCH -dCompatibilityLevel=$ps_comp -dPDFSETTINGS=/$ps_output $ps_downsample -sDEVICE=pdfwrite -sOutputFile=".lmb_utf8_encode($report_name)." " . implode(' ', $filelist));
+    } else { # use fpdi
+        $pdfx = new LmbTcpdf();
+        $pdfx->concat($filelist);
+        $pdfx->Output($umgvar['pfad'] . '/USER/' . $session['user_id'] . '/temp/' . lmb_utf8_encode($report_name), 'F');
+    }
+
+    if (file_exists($umgvar['pfad'] . '/USER/' . $session['user_id'] . '/temp/' . lmb_utf8_encode($report_name))) {
+        return $umgvar['pfad'] . '/USER/' . $session['user_id'] . '/temp/' . $report_name;
+    } else {
+        return false;
+    }
+}
+
+# PDF anhängen
+function append_pdf(LmbTcpdf &$pdf, $file, $page = 1, $posx = 0, $posy = 0) {
+
+    if ($page == 'all') {
+        @exec('pdfinfo ' . $file . ' | awk \'/Pages/ {print $2}\'', $output);
+        $pages = $output[0];
+        for ($i = 1; $i <= $pages; $i++) {
+            append_pdf($pdf, $file, $i, $posx, $posy);
+        }
+        return;
+    }
+
+    $pageCount = $pdf->setSourceFile($file);
+    $tplIdx = $pdf->importPage($page);
+    $pdf->addPage();
+    $pdf->useTemplate($tplIdx, $posx, $posy);
+}
+
+# Bericht anhängen
+function append_report(LmbTcpdf &$pdf, $report_id, $ID) {
+    $pdf->AddPage();
+    $pdf->SetXY(0, 0);
+
+    $report = get_report($report_id, 0);
+    fill_pdf($pdf, $report, $ID);
+}
+
+# Unterbericht einfügen
+function append_subReport(LmbTcpdf &$pdf, &$report, $ID, $el, $report_id, $height = 0, $width = 0) {
+    $subreportfile = generate_pdf($report_id, $ID, 0, 'temp_' . $report_id . '.pdf');
+    $report['tab_size'][$el] = $subreportfile;
+    if ($width) {
+        $report['height'][$el] = 0;
+    }
+    if ($height) {
+        $report['width'][$el] = 0;
+    }
+    print_bild($pdf, $ID, $report, $el);
+}
+
+# Unterbericht integrieren
+function merge_subReport(LmbTcpdf &$pdf, $ID, $report_id) {
+    $report_ = get_report($report_id, 0);
+    fill_pdf($pdf, $report_, $ID, $pdf->GetY());
+}
+
+# Diagramm einbinden
+function append_subChart(LmbTcpdf &$pdf, &$report, $ID, $el, $chart_id, $height = 0, $width = 0) {
+    global $gdiaglist;
+    global $umgvar;
+    global $gsr;
+    global $filter;
+    global $session;
+
+    $gtabid = $gdiaglist['gtabid'][$chart_id];
+    if (!$gdiaglist[$gtabid]['id'][$chart_id]) {
+        return;
+    }
+
+    if ($file = $gdiaglist[$gtabid]['template'][$chart_id] and file_exists($umgvar['pfad'] . $file)) {
+        # use a template
+        require_once($umgvar['path'] . $file);
+        $link = "USER/{$session['user_id']}/temp/chart_{$chart_id}.png";
+
+    } else {
+        # use the diag editor
+        require_once('extra/diagram/diagram.php');
+        $link = lmb_createDiagram($chart_id, $gsr, $filter);
+    }
+    if (!file_exists($link)) {
+        return;
+    }
+
+    $h = $report['height'][$el];
+    $w = $report['width'][$el];
+    if ($height) {
+        $w = 0;
+    }
+    if ($width) {
+        $h = 0;
+    }
+
+    $pdf->print_element($pdf->printcell(
+        $link,
+        $report['posx'][$el],
+        $report['posy'][$el],
+        $w,
+        $h,
+        $report['style'][$el],
+        'bild'
+    ));
+}
+
+# Generiere Berichte
+function generate_pdf($report_id, $ID, $report_output, $report_rename = null) {
+    $report = &get_report($report_id, 0);
+    $pdf = create_pdf($report, $ID);
+    if (!$pdf) {
+        return false;
+    }
+
+    # fill pdf with elements
+    fill_pdf($pdf, $report, $ID);
+    $temp_file_path = store_pdf($pdf, $report, $ID, $report_rename, $report_output);
+
+    # clear memory (workaround)
+    $pdf->Close();
+    foreach ($pdf as &$value) {
+        $value = null;
+    }
+    $pdf = null;
+    unset($pdf);
+
+    if (!$temp_file_path) {
+        return false;
+    }
+
+    # Archivieren
+    $GLOBALS['archiv_file_id'] = reportArchiv($temp_file_path, $report, $ID, $report_output);
+
+    return $temp_file_path;
+}
+
+#region ExportFunctions
+
+# --- alle Berichte einer Tabelle -----------------------------------
+function LMB_pdfReportAll($gtabid, $report_id, $report_output, &$filter, &$gsr, &$verkn, $report_rename = null) {
+    global $gresult;
+
+    # Abfrage
+    $filter['anzahl'][$gtabid] = 'all';
+    $gresult = get_gresult($gtabid, 1, $filter, $gsr, $verkn);
+
+    $report = get_report($report_id, 1);
+    if ($report['grouplist']) {
+        $glist = $report['grouplist'];
+    } else {
+        $glist = array($report['report_id']);
+    }
+
+    $bzm = 0;
+    while ($bzm < $gresult[$gtabid]['res_count']) {
+        $ID = $gresult[$gtabid]['id'][$bzm];
+        $generated_file_path = generate_pdf($report_id, $ID, $report_output, $report_rename);
+        $filelist[] = lmb_utf8_encode($generated_file_path);
+        $bzm++;
+    }
+    if (count($filelist) > 1) {
+        $mergefile = merge_report($filelist, '0', $report_rename);
+        return ($mergefile);
+    } elseif ($generated_file_path) {
+        return ($generated_file_path);
+    }
+}
+
+# --- Berichtsliste mehrerer Datensätze -----------------------------------
+function LMB_pdfReportRecords($gtabid, $report_id, $report_output, $use_record, $report_rename = null) {
+    $use_record = explode(';', $use_record);
+    $use_record = array_unique($use_record);
+    foreach ($use_record as $key => $value) {
+        $recel = explode('_', $value);
+        if ($recel[1] == $gtabid) {
+            $ID = $recel[0];
+            $generated_file_path = generate_pdf($report_id, $ID, $report_output, $report_rename);
+            $filelist[] = lmb_utf8_encode($generated_file_path);
+        }
+    }
+    if (count($filelist) > 1) {
+        $mergefile = merge_report($filelist, '0', $report_rename);
+        return ($mergefile);
+    } elseif ($generated_file_path) {
+        return ($generated_file_path);
+    }
+}
+
+# --- Einzelbericht eines Datensatzes -----------------------------------
+function LMB_pdfReportUnit($gtabid, $report_id, $report_output, $ID, $report_rename = null) {
+    $generated_file_path = generate_pdf($report_id, $ID, $report_output, $report_rename);
+    return $generated_file_path;
+}
+
+# --- Einzelbericht eines Datensatzes in DMS -----------------------------------
+function LMB_pdfReportUnitDMS($report_id,$ID,$report_name=null,$level=null,$v_gtabid=null,$v_gfieldid=null,$v_ID=null){
+
+	$filepath = generate_pdf($report_id,$ID,null,$report_name);
+
+    if(file_exists(lmb_utf8_encode($filepath))){
+
+        $filename = explode('/', $filepath);
+        $filename = $filename[count($filename) - 1];
+
+        // upload in Filesystem
+        $file["file"][0] = $filepath;
+        $file["file_name"][0] = $filename;
+	    $tabrelation = array('datid' => $v_ID,'gtabid' => $v_gtabid,'fieldid' => $v_gfieldid);
+        $fileid = upload($file, $level, null, 1, $dublicate);
+
+
+        // Verknüpfen
+        if ($fileid AND $v_gtabid AND $v_gfieldid AND $v_ID) {
+            $verkn = init_relation($v_gtabid, $v_gfieldid, $v_ID, $fileid);
+            $verkn["linkParam"]["LID"] = $level;
+            set_joins($v_gtabid, $verkn);
+        }
+
+        return $fileid;
+
+    }
+
+}
+
+#endregion
+
+?>

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -62,59 +62,110 @@ function stampToDate($stamp,$format=0){
 	return $pdt->format($format);
 }
 
+/**
+ * Converts two-digit year (e.g. 17) to four digit year (e.g. 2017).
+ * @param $twoDigitYear
+ * @return false|string
+ */
+function getFourDigitYear($twoDigitYear) {
+	# validate input
+	if (!is_numeric($twoDigitYear)) {
+		return false;
+	}
+	if (is_string($twoDigitYear)) {
+		$twoDigitYear = intval($twoDigitYear);
+	}
+    if ($twoDigitYear < 0 || $twoDigitYear >= 100) {
+        return false;
+    }
+
+    # get min/max two digit years
+    $umgvarFuture = intval($GLOBALS['umgvar']['date_max_two_digit_year_addend']);
+    try {
+        $minYear = (new DateTime('now'))->sub(new DateInterval('P' . (100 - $umgvarFuture) . 'Y'))->format('Y');
+        $maxYear = (new DateTime('now'))->add(new DateInterval('P' . $umgvarFuture . 'Y'))->format('Y');
+	} catch (Exception $e) {
+    	return false;
+	}
+
+    # get correct year between min/max year
+    $maxYearTwoDigit = intval(lmb_substr($maxYear, 2, 2));
+	if ($twoDigitYear <= $maxYearTwoDigit) {
+		$century = lmb_substr($maxYear, 0, 2);
+	} else {
+		$century = lmb_substr($minYear, 0, 2);
+	}
+
+	return $century . lmb_str_pad(strval($twoDigitYear), 2, '0', STR_PAD_LEFT);
+}
 
 /**
  * convert date to stamp
  *
- * @param string $date
- * @return number
+ * @param string $dateString
+ * @param bool $getObj
+ * @return false|number|DateTime
  */
-function dateToStamp($date_string,$getobj=0){
-	$months = array();
-	$months['jan'] = array('januar,january,jan');
-	$months['feb'] = array('februar,february,feb');
-	$months['mar'] = array('märz','mär','mar','march');
-	$months['apr'] = array('april','apr');
-	$months['mai'] = array('mai');
-	$months['jun'] = array('juni','june','jun');
-	$months['jul'] = array('juli','july','jul');
-	$months['aug'] = array('august','aug');
-	$months['oct'] = array('oktober','okt','october','oct');
-	$months['nov'] = array('november','nov');
-	$months['dec'] = array('dezember','dez','dec','december');
-	if(!$date_string){return false;}
-	# only year
-	if(is_numeric($date_string)){$date_string = "01-01-".$date_string;}
+function dateToStamp($dateString, $getObj = false) {
+    $dateString = trim($dateString);
+    if (!$dateString) {
+        return false;
+    }
 
-	# translate month
-	foreach($months as $key => $value){
-		foreach ($value as $key2 => $value2){
-			if (lmb_stripos(lmb_strtolower($date_string),$value2) !== false) {
-				$date_string = str_replace($value2,$key,$date_string);
-				break;
+    # only year?
+    if (is_numeric($dateString)) {
+        if (lmb_strlen($dateString) <= 2) {
+            $dateString = getFourDigitYear($dateString);
+        }
+        $dateObj = DateTime::createFromFormat('Y-m-d', $dateString . '-01-01');
+        if ($dateObj) {
+            $dateObj->setTime(0, 0, 0);
+        } else {
+        	return 0;
+		}
+    } else {
+        # translate german months
+        static $months = array(
+            'jan' => array('januar'),
+            'feb' => array('februar'),
+            'mar' => array('märz', 'mär'),
+            'may' => array('mai'),
+            'jun' => array('juni'),
+            'jul' => array('juli'),
+            'oct' => array('oktober', 'okt'),
+            'dec' => array('dezember', 'dez')
+        );
+		foreach($months as $enName => $gerNames){
+			foreach ($gerNames as $gerName){
+				if (lmb_stripos($dateString, $gerName) !== false) {
+					$dateString = str_ireplace($gerName, $enName, $dateString);
+					break 2;
+				}
 			}
 		}
-	}
 
-	try {
-		$pdt = new DateTime($date_string);
-		if($getobj){
-			return $pdt;
-		}else{
-			return $pdt->format("U");
-		}
-	}catch (Exception $e) {
-		try {
-			$pdt = DateTime::createFromFormat('Y-m-d H:i:s+', $date_string);
-			if($getobj) {
-				return $pdt;
-			}else{
-				return $pdt->format("U");
-			}
-		}catch (Exception $e) {
-			return false;
-		}
-	}
+		# replace two-digit year with four-digit year
+        $dateString = preg_replace_callback('/^(\d\d?\.\d\d?\.)(\d\d)$/', function($match) {
+			return $match[1] . getFourDigitYear($match[2]);
+		}, $dateString);
+
+        try {
+            $dateObj = new DateTime($dateString);
+        } catch (Exception $e) {
+            try {
+                $dateObj = DateTime::createFromFormat('Y-m-d H:i:s+', $dateString);
+            } catch (Exception $e) {
+                return false;
+            }
+        }
+    }
+
+    # return dateobject (for internal use) / timestamp
+    if ($getObj) {
+        return $dateObj;
+    } else {
+        return intval($dateObj->format("U"));
+    }
 }
 
 
@@ -188,7 +239,7 @@ function convert_time($db_time){
  */
 function convert_date($date_string,$t=0){
 	if(!$date_string){return "";}
-	$pdt = dateToStamp($date_string,1);
+	$pdt = dateToStamp($date_string, true);
 	if($pdt === false){return "";}
 	return dbf_1($pdt,$t);
 }

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -110,18 +110,16 @@ function viewgrouptree($LEVEL,$l,$select=null){
 		$sqlquery = "SELECT GROUP_ID,NAME,LEVEL,LOWER(NAME),DESCRIPTION FROM LMB_GROUPS WHERE DEL = ".LMB_DBDEF_FALSE." ORDER BY GROUP_ID";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		$grouptree = array();
-		$bzm = 1;
-		while(odbc_fetch_row($rs, $bzm)){
+
+		while(odbc_fetch_row($rs)){
 			$grouptree["id"][] = odbc_result($rs, "GROUP_ID");
 			$grouptree["name"][] = odbc_result($rs, "NAME");
 			$grouptree["level"][] = odbc_result($rs, "LEVEL");
-		$bzm++;
 		}
 	}
 
 	if($LEVEL){$l .= "--";}
 
-	$bzm = 0;
 	foreach($grouptree["id"] as $key => $value){
 		if($grouptree["level"][$key] == $LEVEL){
 			if($select){if(in_array($grouptree["id"][$key],$select)){$SELECTED="SELECTED";}else{$SELECTED="";}}
@@ -145,7 +143,7 @@ function lmb_htaccess($ID,$user,$pass){
 	$sqlquery = "SELECT USERNAME,PASSWORT,CLEARPASS FROM LMB_USERDB WHERE USER_ID = $ID";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	if(odbc_fetch_row($rs, 1)) {
+	if(odbc_fetch_row($rs)) {
 
 		if(!$user){$user = odbc_result($rs, "USERNAME");}
 		if(!$pass){$pass = odbc_result($rs, "CLEARPASS");}
@@ -293,12 +291,10 @@ function GroupTreeList($name,$items,$selected,$LEVEL=0,$l=null){
 		$sqlquery = "SELECT GROUP_ID,NAME,LEVEL,LOWER(NAME),DESCRIPTION FROM LMB_GROUPS WHERE DEL = ".LMB_DBDEF_FALSE." ORDER BY GROUP_ID";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		$grouptree = array();
-		$bzm = 1;
-		while(odbc_fetch_row($rs, $bzm)){
+		while(odbc_fetch_row($rs)){
 			$grouptree["id"][] = odbc_result($rs, "GROUP_ID");
 			$grouptree["name"][] = odbc_result($rs, "NAME");
 			$grouptree["level"][] = odbc_result($rs, "LEVEL");
-			$bzm++;
 		}
 	}
 
@@ -356,7 +352,6 @@ function lmb_updateTrigger(){
 	global $db;
 	global $DBA;
 
-	#lmb_dropAllDBTrigger("LMB_TRG_%");
 	lmb_dropAllDBTrigger();
 
 	$sqlquery = "SELECT * FROM LMB_TRIGGER WHERE ACTIVE = ".LMB_DBDEF_TRUE." AND TYPE IS NOT NULL AND INTERN = ".LMB_DBDEF_FALSE." ORDER BY TABLE_NAME,TYPE";
@@ -381,16 +376,13 @@ function lmb_updateTrigger(){
 			if($triggers["value"][$key] AND $triggers["name"][$key] AND lmb_strtolower($triggers["vendor"][$key]) == lmb_strtolower($DBA["DB"])){
 				if(!$triggers["position"][$key]){$triggers["position"][$key] = "AFTER";}
 				$sqlquery = dbq_13(array($DBA["DBSCHEMA"],$triggers["name"][$key],$triggers["table"][$key],$triggers["type"][$key],$triggers["value"][$key],$triggers["position"][$key]));
-				@odbc_exec($db,$sqlquery) or $errorTrigger[$triggers["table"][$key]] = odbc_errormsg($db);
+				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs){$commit = 1;}
 			}
 		}
 	}
-	if($errorTrigger){
-		echo "<br>Error during update of triggers, please review the trigger content for the following tables:";
-		foreach ($errorTrigger as $key => $val){
-			echo "<br>- $key: ($val)<br>";
-		}
-		echo "</b><br>. The other triggers have been updated successfully.";
+	if($commit){
+		lmb_alert("Error during update of triggers, please check the error log\nThe other triggers have been updated successfully.");
 		return false;
 	}else{
 		return true;
@@ -467,17 +459,14 @@ function lmb_relationTrigger($verknTabName,$elternTab,$elternFeld,$kindTab,$kind
 	global $db;
 	global $DBA;
 
-	$userdb = $DBA["DBSCHEMA"];
-		
 	# recusiv relation (view)
 	if($kindFeld){
-		$trigger_add_func = dbq_14(array(dbf_4($userdb.".".$verknTabName),dbf_4($userdb.".".$elternTab),dbf_4($elternFeld),'+',dbf_4($userdb.".".$kindTab),dbf_4($kindFeld)));
-		$trigger_del_func = dbq_14(array(dbf_4($userdb.".".$verknTabName),dbf_4($userdb.".".$elternTab),dbf_4($elternFeld),'-',dbf_4($userdb.".".$kindTab),dbf_4($kindFeld)));
+		$trigger_add_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'+',dbf_4($kindTab),dbf_4($kindFeld)));
+		$trigger_del_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'-',dbf_4($kindTab),dbf_4($kindFeld)));
 	}else{
-		$trigger_add_func = dbq_14(array(dbf_4($userdb.".".$verknTabName),dbf_4($userdb.".".$elternTab),dbf_4($elternFeld),'+'));
-		$trigger_del_func = dbq_14(array(dbf_4($userdb.".".$verknTabName),dbf_4($userdb.".".$elternTab),dbf_4($elternFeld),'-'));
+		$trigger_add_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'+'));
+		$trigger_del_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'-'));
 	}
-	
 	
 	$success1 = lmb_addTrigger("INSERT_".$verknTabName,"INSERT",$verknTabName,$trigger_add_func,0,0,1);
 	$success2 = lmb_addTrigger("DELETE_".$verknTabName,"DELETE",$verknTabName,$trigger_del_func,0,0,1);
@@ -579,6 +568,35 @@ function lmb_rebuildTrigger($deleteall=null,$onlytabs=null){
 	return true;
 }
 
+################### tables #############################
+
+function lmb_dropTable($name=null){
+	global $db;
+	global $DBA;
+
+	if($name){
+		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],$name,"'TABLE'"));
+		if($odbc_table) {
+
+            // check dependency views
+            if(lmb_checkViewDependency($name, null, 1) === false) {
+                return false;
+            }
+
+			$sqlquery1 = dbq_28(array(dbf_4($name)));
+			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			if($rs1){
+			    return true;
+			}else{
+			    return false;
+            }
+		}
+	}
+	return true;
+}
+
+
+
 ################### views #############################
 
 # --- create db view  -----------------------------------
@@ -635,9 +653,19 @@ function lmb_dropView($name=null){
 	if($name){
 		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],$name,"'VIEW'"));
 		if($odbc_table) {
+
+		    // check dependency views
+            if(lmb_checkViewDependency($name, null, 1) === false) {
+                return false;
+            }
+
 			$sqlquery1 = dbq_20(array(dbf_4($name)));
 			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-			if($rs1){return true;}else{return  false;}
+			if($rs1){
+			    return true;
+			}else{
+                return false;
+			}
 		}
 	}else{
 	    
@@ -650,17 +678,7 @@ function lmb_dropView($name=null){
 	    }
 	    
 	    if($commit){return false;}else{return true;}
-	    
-	    /*
-		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],null,"'VIEW'"));
-		if($odbc_table["table_name"]){
-			foreach($odbc_table["table_name"] as $tkey => $tvalue) {
-				$sqlquery1 = dbq_20(array(dbf_4($tvalue)));
-				$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-				if(!$rs1){$commit = 1;}
-			}
-		}
-		*/
+
 		
 	}
 	return true;
@@ -730,10 +748,11 @@ function lmb_getViewDef($name){
 
 
 # --- get dependency tree of views -----------------------------------
-function lmb_checkViewDependency($tablename,$fieldname=null,$clear=null,$rec=false){
+function lmb_checkViewDependency($tablename,$fieldname=null,$debug=null,$clear=null,$rec=false){
     static $dependency;
     global $DBA;
 
+    if(!LMB_DBFUNC_VIEWDEPENDENCY){return false;}
     if(!$dependency OR !$clear){$dependency = array();}
     
     if($dep = dbf_25(array($DBA['DBSCHEMA'],$tablename,$fieldname))){
@@ -741,13 +760,20 @@ function lmb_checkViewDependency($tablename,$fieldname=null,$clear=null,$rec=fal
             if(!in_array($value,$dependency)){
                 array_push($dependency,$value);
                 if($rec){
-                    lmb_checkViewDependency($value,null,1,1);
+                    lmb_checkViewDependency($value,null,$debug,1,1);
                 }
             }
         }
     }
-    
-    return array_unique($dependency);
+
+    $dependency = array_unique($dependency);
+
+    if($debug AND count($dependency) > 0){
+        lmb_alert("found view dependencies! check it manually!\n".implode("\n",$dependency));
+        return false;
+    }
+
+    return $dependency;
 }
 
 
@@ -774,6 +800,8 @@ function lmb_getSubView($value, $level, $clear = 0){
  */
 function lmb_getViewDependency($arsort=0){
     global $DBA;
+
+    if(!LMB_DBFUNC_VIEWDEPENDENCY){return false;}
 
     $tables = dbf_20(array($DBA['DBSCHEMA'],null,'TABLE'));
     $tables = $tables["table_name"];
@@ -998,7 +1026,7 @@ function lmb_addForeignKey($ftable,$ffield,$ptable,$pfield,$fkname){
 	global $db;
 	
 	$sqlquery = dbq_11(array($ftable,$ffield,$ptable,$pfield,$fkname));
-	$rs = @odbc_exec($db,$sqlquery);
+	$rs = odbc_exec($db,$sqlquery);
 	if(!$rs){
 		echo "error in execute: ".$sqlquery."<br>".odbc_errormsg($db)."<br><br>";
 	}
@@ -1035,7 +1063,7 @@ function lmb_dropForeignKey($ftable,$fkname){
 	global $db;
 	
 	$sqlquery = dbq_6(array($ftable,$fkname));
-	$rs = @odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if($rs){return true;}
 }
 
@@ -1077,8 +1105,10 @@ function lmb_rebuildSequences($tablename=null,$field=null){
 	global $DBA;
 	
 	if(!LMB_DBFUNC_SEQUENCE){return false;}
-	
-	if($tablename AND $field){
+
+
+	if($tablename){
+	    if(!$field){$field = 'ID';}
 		$table = array(array($tablename,$field));
 	}else{
 	
@@ -1107,8 +1137,6 @@ function lmb_rebuildSequences($tablename=null,$field=null){
 		$field = $value[1];
 
 		$lastid = next_db_id($tablename,$field);
-		# first drop sequence
-		dbf_22(array("",dbf_4("SEQ_".$tablename."_".$field)));
 		# add new sequence
 		if(!dbf_21(array("",dbf_4("SEQ_".$tablename."_".$field),$lastid))){
 			$error = 1;

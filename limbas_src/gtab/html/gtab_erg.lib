@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -47,12 +47,15 @@ function grouping_menu($gtabid,$gval,$ebene){
 		pop_left($elementWidth);
 		foreach($gfield[$gtabid]["sort"] as $key => $value){
 			if($gfield[$gtabid]["groupable"][$key]){
-			    // check if already used
-			    #if($popgrec[$gtabid][$key]){continue;}
+			    // check if already used on previous level
+				$usedkey = ($ebene-1)>0?$ebene-1:0;
+			    if($popgrec[$gtabid][$usedkey][$key]){$popgrec[$gtabid][$ebene][$key] = 1;continue;}
 				if($popg[$gtabid][$ebene][$gval][$key]){$CHECKED = "CHECKED";}else{$CHECKED = "";}
 				echo "<div><input type=\"checkbox\" name=\"popgr_".$gtabid."_".$ebene."_".$gval."\" value=\"".$gfield[$gtabid]["field_id"][$key]."\" onclick=\"lmbPopRelation(event,this,'grp_choice');\" $CHECKED>".$gfield[$gtabid]["spelling"][$key]."</div>\n";
 				$div = " ";
-				#$popgrec[$gtabid][$key] = 1;
+				if (!empty($CHECKED)) {
+                    $popgrec[$gtabid][$ebene][$key] = 1;
+                }
 			}
 		}
 
@@ -171,10 +174,10 @@ function lmbGlistMenu($gtabid,$subtab=null){
 	
 	<div $cl style='float:left;'>
 	<table border=\"0\" cellpadding=\"0\" cellspacing=\"2\"><tr>
-	<td nowrap class=\"gtabHeaderMenuTD\" OnMouseOver=\"this.className='gtabHeaderMenuTDhover';\" OnMouseOut=\"this.className='gtabHeaderMenuTD';\" onclick=\"limbasDivShow(this,'','limbasDivMenuDatei');\" id=\"edit4\">$lang[545]</td><td>&nbsp;|&nbsp;</td>
-	<td nowrap class=\"gtabHeaderMenuTD\" OnMouseOver=\"this.className='gtabHeaderMenuTDhover';\" OnMouseOut=\"this.className='gtabHeaderMenuTD';\" onclick=\"limbasDivShow(this,'','limbasDivMenuBearbeiten');\">$lang[843]</td><td>&nbsp;|&nbsp;</td>
-	<td nowrap class=\"gtabHeaderMenuTD\" OnMouseOver=\"this.className='gtabHeaderMenuTDhover';\" OnMouseOut=\"this.className='gtabHeaderMenuTD';\" onclick=\"limbasDivShow(this,'','limbasDivMenuAnsicht');\">$lang[1625]</td><td>&nbsp;|&nbsp;</td>
-	<td nowrap class=\"gtabHeaderMenuTD\" OnMouseOver=\"this.className='gtabHeaderMenuTDhover';\" OnMouseOut=\"this.className='gtabHeaderMenuTD';\" onclick=\"limbasDivShow(this,'','limbasDivMenuExtras');\">$lang[1939]</td>\n";
+	<td nowrap class=\"gtabHeaderMenuTD hoverable\" onclick=\"limbasDivShow(this,'','limbasDivMenuDatei');\" id=\"edit4\">$lang[545]</td><td>&nbsp;|&nbsp;</td>
+	<td nowrap class=\"gtabHeaderMenuTD hoverable\" onclick=\"limbasDivShow(this,'','limbasDivMenuBearbeiten');\">$lang[843]</td><td>&nbsp;|&nbsp;</td>
+	<td nowrap class=\"gtabHeaderMenuTD hoverable\" onclick=\"limbasDivShow(this,'','limbasDivMenuAnsicht');\">$lang[1625]</td><td>&nbsp;|&nbsp;</td>
+	<td nowrap class=\"gtabHeaderMenuTD hoverable\" onclick=\"limbasDivShow(this,'','limbasDivMenuExtras');\">$lang[1939]</td>\n";
 	if($GLOBALS["view_version_status"]){echo "<td>&nbsp;|&nbsp;</td><td nowrap class=\"gtabHeaderMenuTD\" style=\"color:red;\">&nbsp;&nbsp;&nbsp;(".$lang[2172]." ".$GLOBALS["view_version_status"].")</td>";}
 	echo "<td width=\"100%\"></td></tr></table>
 	</div>";
@@ -224,7 +227,7 @@ function lmbGlistMenu($gtabid,$subtab=null){
 			}
 		}
 
-		if($gtab["edit"][$gtabid] AND $GLOBALS["verknpf"] AND !$readonly){
+		if($GLOBALS["verknpf"]){
 			if($GLOBALS["verkn_showonly"]){
 				pop_picmenu(158,'','');                                 # verknüpfen
 			}else{
@@ -340,12 +343,10 @@ function lmbGlistSearchDetail($gtabid,$key,$style=null,$event=null){
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			echo "<select class=\"gtabHeaderInputINP\" id=\"tdinp_".$gtabid."_".$gfield[$gtabid]["field_id"][$key]."\" $style name=\"gs[".$gtabid."][".$gfield[$gtabid]["field_id"][$key]."][0]\" $events>";
 			echo "<option></option>";
-			$key1 = 1;
-			while(odbc_fetch_row($rs, $key1)) {
+			while(odbc_fetch_row($rs)) {
 				echo "<option value=\"".odbc_result($rs,"WERT")."\" ";
 				if(odbc_result($rs,"WERT") == $gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0]){echo " selected";}
 				echo ">".odbc_result($rs,"WERT")."</option>";
-				$key1++;
 			}
 		# --- Alles andere --
 		}elseif($gfield[$gtabid]["field_type"][$key] != 6 AND $gfield[$gtabid]["field_type"][$key] != 3){
@@ -353,15 +354,14 @@ function lmbGlistSearchDetail($gtabid,$key,$style=null,$event=null){
 			echo "<option>";
 			$sqlquery = "SELECT DISTINCT ".$gfield[$gtabid]["field_name"][$key]." FROM ".$gtab["table"][$gtabid]." ORDER BY ".$gfield[$gtabid]["field_name"][$key];
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			$key1 = 1;
-			while(odbc_fetch_row($rs, $key1)) {
+			while(odbc_fetch_row($rs)) {
 				if(odbc_result($rs, $gfield[$gtabid]["field_name"][$key])){
 					echo "<option";
 					# --- DATUM --
 					if($gfield[$gtabid]["field_type"][$key] == 2){
 						$date = get_date(odbc_result($rs, $gfield[$gtabid]["field_name"][$key]),1);
 						$date2 = get_date($gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0],1);
-						if($date == $date2){echo " SELECTED";}
+						if($date === $date2){echo " SELECTED";}
 						echo " value=\"".odbc_result($rs, $gfield[$gtabid]["field_name"][$key])."\">".$date;
 						# --- User/Gruppen-Liste --
 					#}elseif($gfield[$gtabid]["field_type"][$key] == 16) {
@@ -381,7 +381,6 @@ function lmbGlistSearchDetail($gtabid,$key,$style=null,$event=null){
 						echo " value=\"".odbc_result($rs, $gfield[$gtabid]["field_name"][$key])."\">".odbc_result($rs, $gfield[$gtabid]["field_name"][$key]);
 					}
 				}
-				$key1++;
 			}
 		}
 		echo "</select>";
@@ -476,7 +475,7 @@ function lmbGlistHeaderDetail($gtabid,&$gresult,$key,$rowkey,$gformid,$utyp=null
 	echo '<div style="position:relative;">';
 	if(!$gformid AND !$utyp){$onmdown = "onmousedown=\"lmbIniRowSort(event,'".$gtabid."','".$gfield[$gtabid]["field_id"][$key]."');\"";}
 	echo "<div class=\"gtabHeaderTitleTDItem\" id=\"tdhead_".$gtabid."_".$gfield[$gtabid]["field_id"][$key]."\" $onmdown $style>".$gfield[$gtabid]["spelling"][$key]."</div>";
-	if($gfield[$gtabid]["field_type"][$key] != 3 AND $gfield[$gtabid]["data_type"][$key] != 31 AND $gfield[$gtabid]["data_type"][$key] != 32 AND $gfield[$gtabid]["field_type"][$key] != 6 AND $gfield[$gtabid]["field_type"][$key] != 11){
+	if((LMB_DBFUNC_LONGHANDLE OR $gfield[$gtabid]["field_type"][$key] != 3) AND $gfield[$gtabid]["data_type"][$key] != 31 AND $gfield[$gtabid]["data_type"][$key] != 32 AND $gfield[$gtabid]["field_type"][$key] != 6 AND $gfield[$gtabid]["field_type"][$key] != 11){
 
 		if($filter["order"][$gtabid][$key][2] == "DESC"){
 			echo "<i class=\"lmb-icon lmb-textsort-down\" border=\"0\" title=\"$lang[861]\" style=\"cursor:pointer;margin:5px;float:left;$picdesc\" onclick=\"lmbFieldSort(event,'$tmp_sortid','&ASC','".$gresult[$gtabid]["res_next"]."');\"></i>";
@@ -532,7 +531,7 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 
 	if(!$subtab){
 		echo "<tr><td id=\"GtabBodyTableTD\">";
-		echo "<div id=\"GtabTableBody\" class=\"gtabHeaderBodyTR\" style=\"overflow-x: hidden;overflow-y:auto;\">"; # scrolling Header Y-position
+		echo "<div id=\"GtabTableBody\" class=\"gtabHeaderBodyTR\" style=\"overflow-x: hidden;overflow-y:auto;padding-bottom:20px;\">"; # scrolling Header Y-position
 	}
 	
 	if($prev_id){
@@ -544,9 +543,9 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 	}
 
 
-    echo "<table id=\"lmbGlistBodyTab$tid\" class=\"lmbfringeGtabBody\" border=\"0\" cellspacing=\"1\" cellpadding=\"0\" style=\"table-layout:fixed;width:".$filter["hidecols"][$gtabid][0]."\">";
+    echo "<table id=\"lmbGlistBodyTab$tid\" class=\"lmbfringeGtabBody\" border=\"0\" cellspacing=\"1\" cellpadding=\"0\" style=\"table-layout:fixed;width:".$filter["hidecols"][$gtabid][0]."\" LMB_STARTTAB>";
 
-	
+
 	if($filter["alter"][$gtabid]){$class = "CL";}
 
 	/* ---------------------- rows --------------------------------------- */
@@ -595,10 +594,10 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 		$BGCOLOR = '';
 		# row-color from indicator
 		if(is_array($gresult[$gtabid]["indicator"]["color"][$bzm])){
-			$BGCOLOR = "#".average_color($gresult[$gtabid]["indicator"]["color"][$bzm]);
+			$BGCOLOR = average_color($gresult[$gtabid]["indicator"]["color"][$bzm]);
 		# row-color from user
 		}elseif($gresult[$gtabid]["color"][$bzm]){
-			$BGCOLOR = "#".$gresult[$gtabid]["color"][$bzm];
+			$BGCOLOR = $gresult[$gtabid]["color"][$bzm];
 		}
 		# row-title from indicator
 		$title = "";
@@ -612,6 +611,12 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 		}else{
 			$grpimage = "lmb-small-arrow-right u-color-4";
 		}
+
+		# class from indicator
+        $indicatorClass = '';
+        if ($gresult[$gtabid]['indicator']['class'][$bzm]) {
+			$indicatorClass = $gresult[$gtabid]['indicator']['class'][$bzm];
+		}
 		
 		# klick event in views
 		if($gtab["typ"][$gtabid] == 5 AND $gtab["event"][$gtabid]){
@@ -624,7 +629,7 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 		/*----------------- <TR> -------------------*/
 		// TODO onContextMenu: before: click
 		echo "
-		<tr $title class=\"gtabBodyTR $BGCLASS\" id=\"elrow_".$ID."_".$gtabid."\" style=\"background-color:$BGCOLOR;cursor:context-menu\" lmbbgcolor=\"$BGCOLOR\"
+		<tr $title class=\"gtabBodyTR $BGCLASS $indicatorClass\" id=\"elrow_".$ID."_".$gtabid."\" style=\"background-color:$BGCOLOR;cursor:context-menu\" lmbbgcolor=\"$BGCOLOR\"
 		onmouseover=\"lmb_tableRowColor(this,'".$farbschema["WEB7"]."',1)\"
 		onmouseout=\"lmb_tableRowColor(this,null,1)\" 
 		oncontextmenu=\"return lmbTableContextEvent(event,this,'$ID','$gtabid','".$gtab["tab_view_lform"][$gtabid]."','".$GLOBALS['gformlist'][$gtabid]["typ"][$gtab["tab_view_lform"][$gtabid]]."','".$GLOBALS['gformlist'][$gtabid]["dimension"][$gtab["tab_view_lform"][$gtabid]]."','".$gresult[$gtabid]["ERSTDATUM"][$bzm]."','".$gresult[$gtabid]["EDITDATUM"][$bzm]."','".$userdat["bezeichnung"][$gresult[$gtabid]["ERSTUSER"][$bzm]]."','".$userdat["bezeichnung"][$gresult[$gtabid]["EDITUSER"][$bzm]]."','$prev_id','$prev_gtabid','$prev_fieldid','$prev_typ');\" 
@@ -826,7 +831,10 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 	}
 	
 
-	echo "</table>";
+	echo "</table LMB_ENDTAB>";
+
+
+
 	if(!$subtab){echo "</div><tr><td>";}
 	
 	
@@ -848,7 +856,7 @@ function lmbGlistFooter($gtabid,&$gresult,$filter,$subtab=null,$style=null){
 
 	if(!$subtab){
 		echo "<tr><td>";
-		echo "<div id=\"GtabTableFooter\" style=\"$style\"><br>";
+		echo "<div id=\"GtabTableFooter\" style=\"$style\">";
 	}
 	
 	echo "<table id=\"lmbGlistFooterTab\" class=\"gtabFooterTAB\" cellpadding=\"0\" cellspacing=\"0\" border=\"0\" width=\"100%\"><tr class=\"gtabFooterTR\"><td>\n";
@@ -1086,7 +1094,7 @@ function table_group($gtabid,$group_fields,$filter,$ebene,$gsr,$verkn){
 				echo "<div 
 				onmouseover=\"if(document.getElementById('popgi_".$ebene."_".$key."')){document.getElementById('popgi_".$ebene."_".$key."').style.visibility='visible';}\" 
 				onmouseout=\"if(document.getElementById('popgi_".$ebene."_".$key."')){document.getElementById('popgi_".$ebene."_".$key."').style.visibility='hidden';}\" 
-				style=\"background-color:".$farbschema["WEB14"].";color:#".$user_colors["wert"][(0+$ebene)].";border-left:1px solid ".$farbschema["WEB4"].";width:100%;height:15px;\">
+				style=\"background-color:".$farbschema["WEB14"].";color:#".$user_colors["wert"][0].";border-left:1px solid ".$farbschema["WEB4"].";width:100%;\">
 				<span style=\"padding-left:".(($ebene-1)*20+8)."px;\"></span><b>";
 				foreach($group_fields as $fkey => $fvalue){
 						$typ = $gfield[$gtabid]["funcid"][$fvalue];
@@ -1100,24 +1108,29 @@ function table_group($gtabid,$group_fields,$filter,$ebene,$gsr,$verkn){
 						if($fkey >= 1){echo " / ";}
 
 						if($value[$fvalue]){
-							/* ------------------ Default --------------------- */
+							// ------------------ Default ---------------------
 							$fname = "cftyp_".$typ;
-							/* ------------------ Extension --------------------- */
+							// ------------------ Extension ---------------------
 							if($gfield[$gtabid]["ext_type"][$fvalue]){
 								if(function_exists($gfield[$gtabid]["ext_type"][$fvalue])){
 									$fname = $gfield[$gtabid]["ext_type"][$fvalue];
 								}
 							}
-							/* ------------------ Typfunction --------------------- */
+							// ------------------ Typfunction ---------------------
 							$retrn = $fname($key,$fvalue,$gtabid,2,$gresult,0);
-							/* ------------------ /Typfunction -------------------- */
+							// ------------------ /Typfunction --------------------
 						}else{
 							echo "#";
 						}
 
 						# search parameters
 						$gsr[$gtabid][$fvalue][0] = $value[$fvalue];
-						$gsr[$gtabid][$fvalue]["txt"][0] = 2;
+						if (!empty($value[$fvalue])) {
+							$gsr[$gtabid][$fvalue]["txt"][0] = 2;
+						} else {
+							$gsr[$gtabid][$fvalue]["txt"][0] = 7;
+						}
+
 				}
 				
 				if($popg[$gtabid][$ebene][$key]){
@@ -1184,7 +1197,7 @@ function form_ergview($gtabid,&$gresult,$gformid){
 				# tablelist
 				if($gform[$gformid]["typ"][$key] == "tab" OR $gform[$gformid]["typ"][$key] == "tile" OR $gform[$gformid]["typ"][$key] == "scroll"){
 					$fname = "formlist_".$gform[$gformid]["typ"][$key];
-					$retrn = $fname($key,$gformid,$gtabid,$field_id,$tab_id,$gresult,$stylevalue);
+					$retrn = $fname($key,$gformid,$gtabid,$field_id,$tab_id,$gresult,null,$stylevalue);
 				#single elements
 				}else{
 					$stylevalue = set_style(explode(";",$gform[$gformid]["style"][$key]));
@@ -1213,8 +1226,8 @@ function show_userRules($gtabid,$ID){
 	$sqlquery = "SELECT LMB_RULES_DATASET.USERID,LMB_RULES_DATASET.GROUPID,LMB_RULES_DATASET.EDIT,LMB_RULES_DATASET.DEL,LMB_RULES_DATASET.EDITUSER FROM LMB_RULES_DATASET WHERE LMB_RULES_DATASET.TABID = $gtabid AND LMB_RULES_DATASET.DATID = $ID ORDER BY GROUPID,USERID";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$bzm = 1;
-	while(odbc_fetch_row($rs, $bzm)) {
+
+	while(odbc_fetch_row($rs)) {
 		$userid = odbc_result($rs,"USERID");
 		$groupid = odbc_result($rs,"GROUPID");
 		if(odbc_result($rs,"DEL")){$dp = "<i class=\"lmb-icon-cus lmb-page-delete-fancy\" title=\"delete\"></i>";}else{$dp = "";}
@@ -1224,8 +1237,6 @@ function show_userRules($gtabid,$ID){
 		}elseif($groupid){
 			$groups[] = $groupdat["name"][$groupid]." ".$ep."&nbsp;".$dp;
 		}
-
-		$bzm++;
 	}
 
 	if($user){

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -82,6 +82,32 @@ function lmb_basicauth(){
 
 	die ("<html><BODY BGCOLOR=\"#FFFFFF\"><CENTER><FONT FACE=\"Arial,Helvetica\"><FONT SIZE=\"2\"><BR><IMG SRC=\"pic/logo_business.gif\" BORDER=\"0\"><BR><BR><U><FONT COLOR=\"red\">Permission denied!</U></font></font></CENTER></body></html>");
 
+}
+
+//
+/**
+ * set Authorization Vars - workaround for some hoster server configurations
+ *
+ */
+function lmb_setAuthorizationVars(){
+    if (isset($_SERVER['PHP_AUTH_USER']) && $_SERVER['PHP_AUTH_PW']) {
+        return;
+    }
+
+    $servfield = null;
+    if (isset($_SERVER['HTTP_AUTHORIZATION']) && (strlen($_SERVER['HTTP_AUTHORIZATION']) > 0)) {
+        $servfield = 'HTTP_AUTHORIZATION';
+    } else if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) && (strlen($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) > 0)) {
+        $servfield = 'REDIRECT_HTTP_AUTHORIZATION';
+    }
+    if ($servfield){
+        list($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']) = explode(':', base64_decode(substr($_SERVER[$servfield], 6)));
+        if( strlen($_SERVER['PHP_AUTH_USER']) == 0 || strlen($_SERVER['PHP_AUTH_PW']) == 0 )
+        {
+            unset($_SERVER['PHP_AUTH_USER']);
+            unset($_SERVER['PHP_AUTH_PW']);
+        }
+    }
 }
 
 
@@ -216,7 +242,7 @@ function average_color($color_array)
 	$avg_green /= count($color_array);
 	$avg_blue /= count($color_array);
 
-	return "".sprintf("%02s",dechex($avg_red)).sprintf("%02s",dechex($avg_green)).sprintf("%02s",dechex($avg_blue));
+	return "#".sprintf("%02s",dechex($avg_red)).sprintf("%02s",dechex($avg_green)).sprintf("%02s",dechex($avg_blue));
 }
 
 
@@ -313,7 +339,8 @@ function convert_FloatRound($value){
 	$value = parse_db_float($value);
 	$value .= lmb_strpos($value,".") === false ? "." : "";
 	$value = sprintf("%-018s",$value);
-	$value = floatval(lmb_substr($value,0,lmb_strlen($value)-2));
+	$value = floatval(lmb_substr($value,0,lmb_strlen($value)-2));   # depends on php localization
+    $value =  str_replace(',', '.', $value);
 	$value = $value.$epart;
 	
 	return $value;
@@ -337,7 +364,7 @@ function next_db_id($tab,$field="ID",$sequence=null,$filter=null){
 		return dbf_8("SEQ_".$tab."_".$field);
 	}else{
 		#if(LMB_DBFUNC_MAXHANDLE){$isnn = " WHERE $field IS NOT NULL";}
-		$sqlquery = "SELECT MAX($field) AS NEXTID FROM $tab";
+		$sqlquery = "SELECT MAX($field) AS NEXTID FROM ".dbf_4($tab);
 		if($filter){$sqlquery .= " WHERE $filter";}
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 		if($NEXTID = odbc_result($rs,"NEXTID")+1){
@@ -375,16 +402,14 @@ function next_conf_id($tab,$field="ID",$ext=null,$allocate=null){
 			if(odbc_result($rs, $field) > $from){   
 				$NEXTID = $from;
 			}else{
-				$bzm = 1;
 				$kid_ = 0;
-				while(odbc_fetch_row($rs,$bzm)){
+				while(odbc_fetch_row($rs)){
 					$kid = odbc_result($rs, $field);
 					if(($kid-$kid_) > 1 AND $kid_){
 						$NEXTID = $kid_+1;
 						break;
 					}
 					$kid_ = $kid;
-					$bzm++;
 				}
 			}
 		}
@@ -432,12 +457,12 @@ function lmb_num_rows($rs,&$query=null,$counttype=null) {
 	$ct = 0;
 	
 	$count = -1;
-	if(LMB_DBFUNC_NUMROWS){
+	if(defined(LMB_DBFUNC_NUMROWS) AND !defined(LMB_DBFUNC_OFFSET)){
 		$count = odbc_num_rows($rs);
 	}
-	
+
 	# ---------------- Anzahl Ergebnisse neu berechnen -------------
-	if($count < 0){
+	if($count <= 0){
 		if($counttype == 2){
 			return $umgvar["resultspace"];
 		}elseif($counttype == 1){
@@ -466,7 +491,7 @@ function lmb_PrepareSQL($prepare_string,$bindvalue,$FILE=null,$LINE=null) {
 
 	if(LMB_DBFUNC_PREPAREHANDLE){
 		$sql_prep = odbc_prepare($db,$prepare_string);
-		$rs = @odbc_execute($sql_prep,$bindvalue) or errorhandle(odbc_errormsg($db),$prepare_string,"odbc_prepare",$FILE,$LINE);
+		$rs = odbc_execute($sql_prep,$bindvalue) or errorhandle(odbc_errormsg($db),$prepare_string,"odbc_prepare",$FILE,$LINE);
 		if(!$rs) {$commit = 1;}
 	}else{
 		$prepsplit = explode("?",$prepare_string);
@@ -504,6 +529,19 @@ function lmb_array_sum($arr){
 	}
 
 	return $sum;
+}
+
+function lmb_getGElementTabID(&$haystack,$id){
+
+    foreach ($haystack as $tabid => $value) {
+        if($value['id']){
+        foreach ($value['id'] as $skey => $svalue) {
+            if($svalue == $id){
+                return $tabid;
+            }
+        }}
+    }
+
 }
 
 
@@ -570,7 +608,6 @@ function lmb_error_log($source,$error,&$verbose=null,$alert=null){
  * @param int $LINE
  */
 function errorhandle($FEHLER,$QUERY,$ACTION,$FILE,$LINE){
-	global $db;
 	global $session;
 	global $umgvar;
 
@@ -585,6 +622,10 @@ function errorhandle($FEHLER,$QUERY,$ACTION,$FILE,$LINE){
 	$rf = fopen($logpath,"a");
 	fputs($rf,$value);
 	fclose($rf);
+
+	if($session["debug"] OR $umgvar['admin_mode']) {
+        lmb_alert($value);
+    }
 			
 	#odbc_rollback($db);
 	#odbc_autocommit($db, 1);
@@ -666,10 +707,11 @@ function IMACK_ConvertThumbs($file=null,$width=null,$height=null,$prop=null,$des
 	global $db;
 	global $gmimetypes;
 	global $filestruct;
-	
+
 	# file from id or array
 	if(is_numeric($file) OR is_array($file)){
 	    
+	    require_once("extra/explorer/filestructure.lib");
 	    if(!$filestruct){get_filestructure();}
 	    
 		if(is_numeric($file)){
@@ -884,11 +926,12 @@ function image_info(&$inf){
 }
 
 
-# colorschema darkness
+# suggest font color
 function lmbSuggestColor($color,$wc="FFFFFF",$bc="000000"){
-	if(!$color){return $bc;}
-	
-    $o = round(((hexdec(lmb_substr($color, 1, 2)) * 299) + (hexdec(lmb_substr($color, 3, 2)) * 587) + (hexdec(lmb_substr($color, 5, 2)) * 114)) / 1000);
+	if(!$color){return '';}
+
+	$color = ltrim($color,'#');
+    $o = round(((hexdec(lmb_substr($color, 0, 2)) * 299) + (hexdec(lmb_substr($color, 2, 2)) * 587) + (hexdec(lmb_substr($color, 4, 2)) * 114)) / 1000);
 
     if($o > 125) {
         return "#$bc";
@@ -1283,7 +1326,7 @@ function historyGetEdituser($gtabid,$fieldid,$datid){
 	$sqlquery = "SELECT USERID FROM LMB_HISTORY_UPDATE WHERE TAB = ".parse_db_int($gtabid,5)." AND FIELD = ".parse_db_int($fieldid,5)." AND DATAID = ".parse_db_int($datid,10)." $where ORDER BY ERSTDATUM DESC $limit";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 
-	if(odbc_fetch_row($rs,1)){
+	if(odbc_fetch_row($rs)){
 		$uid = odbc_result($rs,"USERID");
 		return $userdat["bezeichnung"][$uid];
 	}else{
@@ -1293,13 +1336,13 @@ function historyGetEdituser($gtabid,$fieldid,$datid){
 
 
 function get_currency_symbol($currency){
-	if($currency == "EUR"){
-		$symbol = chr(128);
-	}elseif($currency == "USD"){
-		$symbol = "\$";
-	}else{return false;}
-
-	return $symbol;
+    $isUtf8 = (lmb_strtoupper($GLOBALS['umgvar']['charset']) === 'UTF-8');
+    if($currency == 'EUR'){
+        return $isUtf8 ? '€' : chr(128);
+	}elseif($currency == 'USD'){
+        return '$';
+	}
+	return false;
 }
 
 
@@ -1628,7 +1671,6 @@ function lmb_utf8_encode($value){
 	if($GLOBALS["umgvar"]["charset"] == "UTF-8"){
 		return $value;
 	}else{
-		#return utf8_encode($value);
 		return iconv($GLOBALS["umgvar"]["charset"],"UTF-8//IGNORE",$value);
 	}
 }
@@ -1951,18 +1993,24 @@ function ODBCResourceToHTML($res, $sTable, $sRow, $numrows=100){
 	if ($cFields == 0) {
 	    return '';
     }
-	$strTable = "<table $sTable ><tr><td>nr</td>";
-	for ($n=1; $n<=$cFields; $n++){
-		$strTable .= "<td $sRow><b>". str_replace("_", " ", odbc_field_name($res, $n)) . "</b></td>";
-	}
-	$strTable .= "</tr>";
+
 	$bzm = 1;
 	while(odbc_fetch_row($res)){
+
+	    if($bzm == 1) {
+            $strTable = "<table $sTable ><tr><td>nr</td>";
+            for ($n = 1; $n <= $cFields; $n++) {
+                $strTable .= "<td $sRow><b>" . str_replace("_", " ", odbc_field_name($res, $n)) . "</b></td>";
+            }
+            $strTable .= "</tr>";
+        }
+
 		$strTable .= "<tr><td>$bzm</td>";
-		for ($n=1; $n<=$cFields; $n++)
-		{$cell = htmlentities(odbc_result($res, $n),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
-		if ($cell=='') {$strTable .= "<td $sRow>&nbsp;</td>";}
-		else {$strTable .= "<td $sRow>". $cell . "</td>";}}
+		for ($n=1; $n<=$cFields; $n++) {
+		    $cell = htmlentities(odbc_result($res, $n),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+		    if ($cell=='') {$strTable .= "<td $sRow>&nbsp;</td>";}
+		    else {$strTable .= "<td $sRow>". $cell . "</td>";}
+		}
 		$strTable .= "</tr>";
 		$bzm++;
 		if($bzm > $numrows){break;}
@@ -1976,51 +2024,71 @@ function ODBCResourceToHTML($res, $sTable, $sRow, $numrows=100){
 function lmb_ini_wysiwyg($elid,$params=null,$changeEvent=null,$advanced=null){
 	global $umgvar;
 	global $session;
-	
+
+	$lang = "lang_1";
+	if($advanced AND $advanced != 1){$params = $advanced;}
+	if($session['language'] != 2){$lang = "lang_".$session['language'];}
+
 	$out = "<script type=\"text/javascript\">\n";
 	if($umgvar["wysiwygeditor"] == "openwysiwyg"){
 		if(!$params){$params = "StatusBarEnabled=false;Width='100%';removeToolbarElement('headings');removeToolbarElement('save');removeToolbarElement('maximize');removeToolbarElement('font');";}
 		$out .= "lmb_iniWYSIWYG(\"".$elid."\",\"$params\");\n";
-	}elseif($umgvar["wysiwygeditor"] == "TinyMCE"){	
-		if($changeEvent){$params .= ", setup: function(editor) { editor.on('change', function(e) {".$changeEvent.";});}";}
-		if($session['language'] != 2){$lang = "language: \"lang_".$session['language']."\",";}
-		
+
+	}elseif($umgvar["wysiwygeditor"] == "TinyMCE"){
+	    $init = array('language:"'.$lang.'"', 'selector: "textarea#'.$elid.'"', 'width: "100%"');
+	    $plugins = array();
+		$external_plugins = array();
+		$toolbar = array();
+        $extended_valid_elements = array('@[nobr],table[*]'); /* this allows table[nobr], but also allows any other attribute of the table */
+
 		if($advanced == 1){
-				$out .= "
-			tinymce.init({
-				$lang
-				selector: \"textarea#$elid\",
-				width: \"100%\",
-				plugins: [
-				\"advlist autolink lists link image charmap print preview anchor\",
-				\"searchreplace visualblocks code fullscreen\",
-				\"insertdatetime media table contextmenu paste\"
-				],
-				toolbar: \"styleselect | fontselect | fontsizeselect | bold italic | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | link image\"
-				$params
-			});";
-		}elseif($advanced){
-				$out .= "
-			tinymce.init({
-				$lang
-				selector: \"textarea#$elid\",
-				width: \"100%\",
-				$advanced
-				$params
-			});";
-		}else{
-				$out .= "
-			tinymce.init({
-				$lang
-				selector: \"textarea#$elid\",
-				width: \"100%\",
-				toolbar: false
-				$params
-			});
-			";
+		    $init = array('language:"'.$lang.'"', 'selector: "textarea#'.$elid.'"', 'width: "100%"');
+		    $plugins = array('advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'print', 'preview', 'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen', 'insertdatetime', 'media', 'table', 'contextmenu', 'paste', 'wordcount', 'hr', 'textcolor');
+            $toolbar = array('styleselect', 'fontselect', 'fontsizeselect', 'bold italic', 'alignleft aligncenter alignright alignjustify', 'bullist numlist outdent indent', 'link image', 'forecolor backcolor');
 		}
 
+        if($changeEvent){array_push($init,"setup: function(editor) { editor.on('change', function(e) {".$changeEvent.";});}");}
+
+        // eval params
+        if($params){$params = eval($params.';');}
+
+        // use object
+        if(is_string($params)){
+            $out .= "tinymce.init(Object.assign({language:\"$lang\", selector: \"textarea#$elid\", setup: function(editor) { editor.on('change', function(e) {".$changeEvent.";});}}, $params ));";
+        // extend params
+        }else{
+                if ($params['init']) {
+                    $init = array_unique(array_merge($init, $params['init']));
+                }
+                if ($params['plugins']) {
+                    $plugins = array_unique(array_merge($plugins, $params['plugins']));
+                }
+                if ($params['external_plugins']) {
+                    $external_plugins = array_unique(array_merge($external_plugins, $params['external_plugins']));
+                }
+                if ($params['toolbar']) {
+                    $toolbar = array_unique(array_merge($toolbar, $params['toolbar']));
+                }
+                if ($params['extended_valid_elements']) {
+                    $extended_valid_elements = array_unique(array_merge($extended_valid_elements, $params['extended_valid_elements']));
+                }
+
+
+                if ($init) {$init_[] = implode(',', $init);}
+                if (count($plugins)) {$init_[] = 'plugins: "' . implode(',', $plugins).'"';}
+                if (count($external_plugins)) {$init_[] = 'external_plugins: "'. implode('|', $external_plugins).'"';}
+                if (count($toolbar)) {$init_[] = 'toolbar: "'. implode(' | ', $toolbar).'"';}
+                if (count($extended_valid_elements)) {$init_[] = 'extended_valid_elements: "'. implode('', $extended_valid_elements).'"';}
+
+
+            $out .= "
+                tinymce.init({
+                    ".implode(',',$init_)."
+            });";
+        }
+
 	}
+
 	$out .= "</script>\n";
 	
 	return $out;
@@ -2367,6 +2435,104 @@ function lmbCheckForUpdates($manualUpdate = false) {
 }
 
 /**
+ * Generates and stores a unique auth token for the current user
+ * @param int $lifespan the number of times the token may be used
+ * @return bool|string the token or false on failure
+ */
+function lmbGenerateAuthToken($lifespan=1) {
+    global $session;
+    global $db;
+    global $action;
+
+    $token = bin2hex(openssl_random_pseudo_bytes(32));
+    $userID = parse_db_int($session['user_id']);
+    $lifespan = parse_db_int($lifespan);
+    $expireStamp = dbf_1(time() + 60 * 5 /* expires in 5 minutes */);
+
+    # delete expired auth tokens
+    $sqlquery = 'DELETE FROM LMB_AUTH_TOKEN WHERE EXPIRESTAMP < ' . LMB_DBDEF_TIMESTAMP;
+    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+    # insert new token
+    $sqlquery = "INSERT INTO LMB_AUTH_TOKEN (TOKEN, USER_ID, LIFESPAN, EXPIRESTAMP) VALUES ('$token', $userID, $lifespan, '$expireStamp')";
+    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+    if ($rs) {
+        return $token;
+    } else {
+        return false;
+    }
+}
+
+/**
+ * Checks if the given auth token is valid and, if it is, returns the corresponding user id
+ * @param $auth_token string auth token generated by lmbGenerateAuthToken
+ * @return int|false the limbas user_id or false on error
+ * @see lmbGenerateAuthToken
+ */
+function lmbGetAuthTokenUser($auth_token) {
+    global $db;
+    global $action;
+
+    # check token exists
+    $sqlquery = "SELECT USER_ID, EXPIRESTAMP, LIFESPAN FROM LMB_AUTH_TOKEN WHERE TOKEN = '$auth_token'";
+    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if (!odbc_fetch_row($rs)) {
+        return false;
+    }
+
+    # check token not expired
+    $expireStamp = odbc_result($rs, 'EXPIRESTAMP');
+    $lifespan = odbc_result($rs, 'LIFESPAN');
+    if ((strtotime($expireStamp) - time()) <= 0 OR $lifespan < 1) {
+        $sqlquery = "DELETE FROM LMB_AUTH_TOKEN WHERE TOKEN='$auth_token'";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        return false;
+    }
+
+    # decrease lifespan
+    if ($lifespan == 1) {
+        $sqlquery = "DELETE FROM LMB_AUTH_TOKEN WHERE TOKEN='$auth_token'";
+        odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    } else {
+        $sqlquery = "UPDATE LMB_AUTH_TOKEN SET LIFESPAN=LIFESPAN-1 WHERE TOKEN = '$auth_token'";
+        odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    }
+    if ($user_id = odbc_result($rs, 'USER_ID')) {
+        return $user_id;
+    }
+    return false;
+}
+
+/**
+ * Checks if the given auth credentials are valid and, if it is, returns the corresponding user id
+ * @param $credentials string auth token generated by lmbGenerateAuthToken
+ * @return int|false the limbas user_id or false on error
+ */
+function lmbGetAuthCredentials($auth_user, $auth_pass) {
+    global $db;
+    global $action;
+
+    # check token exists
+    $sqlquery = "SELECT USER_ID,PASSWORT FROM LMB_USERDB WHERE USERNAME = '$auth_user'";
+    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if (odbc_fetch_row($rs)) {
+        $user_id = odbc_result($rs, 'USER_ID');
+        if (!lmbPasswordVerify($auth_user, $auth_pass, odbc_result($rs, 'PASSWORT'))) {
+            return false;
+        }
+    }else{
+        return false;
+    }
+
+    if(!$user_id){
+        return false;
+    }
+
+    return $user_id;
+}
+
+/**
  * Prints a file on the specified printer
  *
  * @param $printerID int ID from LMB_PRINTER
@@ -2534,6 +2700,68 @@ function cachedSessionProperty($key, $getter) {
         $session[$key] = $getter();
     }
     return $session[$key];
+}
+
+/**
+ * Hashes the given password according to the security settings
+ * @param $password
+ * @return bool|string hashed password or false on failure
+ */
+function lmbPasswordHash($password) {
+    global $umgvar;
+
+    if ($hashFunc = $umgvar['password_hash']) {
+        return password_hash($password, $hashFunc);
+    } else {
+        return md5($password);
+    }
+}
+
+/**
+ * Checks if entered password matches stored password
+ * If needed, converts from md5 to password_hash
+ * @param $username
+ * @param $enteredPassword
+ * @param $storedPassword
+ * @return bool true if password is correct, false otherwise
+ */
+function lmbPasswordVerify($username, $enteredPassword, $storedPassword) {
+    global $umgvar;
+    global $db;
+    global $action;
+
+
+    if(!$umgvar){
+        $sqlquery = "SELECT NORM FROM LMB_UMGVAR WHERE FORM_NAME = 'password_hash' ";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if (odbc_fetch_row($rs)) {
+            $umgvar['password_hash'] = odbc_result($rs, 'NORM');
+        }
+    }
+
+    $hashFunc = $umgvar['password_hash'];
+
+    # use password_* functions
+    if ($hashFunc) {
+        # correct password
+        if (password_verify($enteredPassword, $storedPassword)) {
+            return true; # authenticated via password_verify
+        }
+
+        # leftover md5 string?
+        if (strlen($storedPassword) === 32 AND $storedPassword === md5($enteredPassword)) {
+            # convert from md5 to password_hash
+            $hashedPassword = password_hash($enteredPassword, $hashFunc);
+            $sqlquery = "UPDATE LMB_USERDB SET PASSWORT='$hashedPassword' WHERE USERNAME = '" . parse_db_string($username, 30) . "'";
+            $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+            return true; # authenticated via md5
+        }
+    } else if (strlen($storedPassword) === 32) {
+        if ($storedPassword === md5($enteredPassword)) {
+            return true; # authenticated via md5
+        }
+    }
+    return false;
 }
 
 ?>

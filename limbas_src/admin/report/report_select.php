@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -37,7 +37,7 @@ if($new_group AND $report_list) {
 					}
 				}
 				$NEXTID = next_conf_id("LMB_REPORT_LIST");
-				$report_name = preg_replace("/[^A_Za-z0-9]/","_",$group_name[$key]);
+				$report_name = preg_replace('/[^a-z0-9]/i','_',$group_name[$key]);
 				$report_name = lmb_substr(preg_replace("/[_]{1,}/","_",$report_name),0,18);
 				$group_list = implode(";",$group_list);
 
@@ -146,15 +146,13 @@ if($del AND $report_id){
 		$sqlquery = "SELECT TAB_SIZE FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TYP = 'bild'";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		$bzm = 1;
-		while(odbc_fetch_row($rs, $bzm)) {
+		while(odbc_fetch_row($rs)) {
 			if(file_exists($umgvar['uploadpfad']."report/".odbc_result($rs, "TAB_SIZE"))){
 				unlink($umgvar['uploadpfad']."report/".odbc_result($rs, "TAB_SIZE"));
 			}
 			if(file_exists($umgvar['pfad']."/TEMP/thumpnails/report/".odbc_result($rs, "TAB_SIZE"))){
 				unlink($umgvar['pfad']."/TEMP/thumpnails/report/".odbc_result($rs, "TAB_SIZE"));
 			}
-		$bzm++;
 		}
 	}
 
@@ -178,15 +176,13 @@ if($del AND $report_id){
 	}
 
 
-
-
 	/* --- Transaktion ENDE -------------------------------------- */
 	if($commit == 1){
 		lmb_EndTransaction(0);
 	} else {
-		odbc_commit($db);
+		lmb_EndTransaction(1);
 	}
-	lmb_EndTransaction(1);
+
 }
 ?>
 
@@ -320,8 +316,7 @@ function resultreportlist_(){
 
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$bzm = 1;
-	while(odbc_fetch_row($rs, $bzm)) {
+	while(odbc_fetch_row($rs)) {
 		$key = odbc_result($rs, "ID");
 		$gtabid = odbc_result($rs, "REFERENZ_TAB");
 		$greportlist[$gtabid]["id"][$key] = odbc_result($rs, "ID");
@@ -339,7 +334,6 @@ function resultreportlist_(){
 		
 		if($greportlist[$gtabid]["odt_template"][$key]){$greportlist[$gtabid]["odt_template"][$key] = get_NameFromID($greportlist[$gtabid]["odt_template"][$key]);}else{$greportlist[$gtabid]["odt_template"][$key] = "";}
 		if($greportlist[$gtabid]["ods_template"][$key]){$greportlist[$gtabid]["ods_template"][$key] = get_NameFromID($greportlist[$gtabid]["ods_template"][$key]);}else{$greportlist[$gtabid]["ods_template"][$key] = "";}
-		$bzm++;
 	}
 	return $greportlist;
 }
@@ -413,6 +407,8 @@ if($greportlist_){
 				echo "<TD><select name=\"report_defaultformat[$key]\" style=\"width:80px;\" onchange=\"document.form1.changedefaultformat_id.value='$key';document.form1.action.value='setup_report_select';document.form1.submit();\">";
 				if($greportlist_[$gtabid]["defaultformat"][$key] == 'pdf'){$SELECTED="SELECTED";}else{$SELECTED="";}
 				echo "<option value=\"pdf\" $SELECTED>pdf</option>";
+                if($greportlist_[$gtabid]["defaultformat"][$key] == 'tcpdf'){$SELECTED="SELECTED";}else{$SELECTED="";}
+                echo "<option value=\"tcpdf\" $SELECTED>tcpdf</option>";
 				if($greportlist_[$gtabid]["defaultformat"][$key] == 'odt'){$SELECTED="SELECTED";}else{$SELECTED="";}
 				echo "<option value=\"odt\" $SELECTED>odt</option>";
 				if($greportlist_[$gtabid]["defaultformat"][$key] == 'xml'){$SELECTED="SELECTED";}else{$SELECTED="";}

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -52,7 +52,7 @@ if(!$view){
 <tr><td valign="top"><?= $lang[2] ?>:</td><td style="color:#999999"><?= $umgvar['version'] ?></td></tr>
 <?php if ($session['user_id'] == 1) { ?>
     <tr>
-        <td valign="top"><?= $lang[2926] ?>:</td>
+        <td valign="top"><?= $lang[2930] ?>:</td>
         <td style="color:#999999">
             <?php
             $latestVersion = lmbCheckForUpdates($checkForUpdates ? true : false);
@@ -108,6 +108,7 @@ if(!$view){
 <TR><TD>jquery</TD><TD><A href="http://jquery.com">http://jquery.com</A></TD></TR>
 <TR><TD>fpdf</TD><TD><A href="http://www.fpdf.org">http://www.fpdf.org</A></TD></TR>
 <TR><TD>fpdi</TD><TD><A href="http://fpdi.setasign.de/">http://fpdi.setasign.de/</A></TD></TR>
+<TR><TD>tcpdf</TD><TD><A href="https://tcpdf.org/">https://tcpdf.org/</A></TD></TR>
 <TR><TD>fullcalendar</TD><TD><A href="http://arshaw.com/fullcalendar/">http://arshaw.com/fullcalendar/</A></TD></TR>
 <TR><TD>SabreDAV</TD><TD><A href="http://code.google.com/p/sabredav/">http://code.google.com/p/sabredav/</A></TD></TR>
 <TR><TD>PHPExcel</TD><TD><A href="http://phpexcel.codeplex.com">http://phpexcel.codeplex.com/</A></TD></TR>
@@ -118,7 +119,6 @@ if(!$view){
 <TR><TD>interpid</TD><TD><A href="http://www.interpid.eu">http://www.interpid.eu</A></TD></TR>
 <TR><TD>EXIF</TD><TD><A href="http://electronics.ozhiker.com">http://electronics.ozhiker.com</A></TD></TR>
 <TR><TD>codemirror</TD><TD><A href="http://codemirror.net">http://codemirror.net</A></TD></TR>
-<TR><TD>colresizable</TD><TD><A href="http://quocity.com/colresizable/">http://quocity.com/colresizable/</A></TD></TR>
 <TR><TD>adldap</TD><TD><A href="http://adldap.sourceforge.net">http://adldap.sourceforge.net/</A></TD></TR>
 </TABLE>
 
@@ -132,19 +132,46 @@ if(!$view){
 
     <TR>
         <TD valign=top class="bord">Added</TD>
-        <TD valign=top class="bord">cups printer module</TD>
-        <TD valign=top class="bord">added new cups printer module</TD>
+        <TD valign=top class="bord">PDO</TD>
+        <TD valign=top class="bord">adding PDO database connection as default</TD>
     </TR>
     <TR>
         <TD valign=top class="bord">Added</TD>
-        <TD valign=top class="bord">remove frameset</TD>
-        <TD valign=top class="bord">remove framesets on startpage</TD>
+        <TD valign=top class="bord">REST</TD>
+        <TD valign=top class="bord">adding REST interface</TD>
     </TR>
     <TR>
         <TD valign=top class="bord">Added</TD>
-        <TD valign=top class="bord">extend attribute field type</TD>
-        <TD valign=top class="bord">extend attribute with hierarchy</TD>
+        <TD valign=top class="bord">formular templates</TD>
+        <TD valign=top class="bord">adding template based forms</TD>
     </TR>
+    <TR>
+        <TD valign=top class="bord">Added</TD>
+        <TD valign=top class="bord">crontab</TD>
+        <TD valign=top class="bord">Apply crontab with limbas</TD>
+    </TR>
+    <TR>
+        <TD valign=top class="bord">Added</TD>
+        <TD valign=top class="bord">Tags</TD>
+        <TD valign=top class="bord">new field type with Tags</TD>
+    </TR>
+    <TR>
+        <TD valign=top class="bord">Added</TD>
+        <TD valign=top class="bord">relation params</TD>
+        <TD valign=top class="bord">administrate relation params in relation settings</TD>
+    </TR>
+    <TR>
+        <TD valign=top class="bord">Added</TD>
+        <TD valign=top class="bord">pagination</TD>
+        <TD valign=top class="bord">support pagination in relation views and subform tables</TD>
+    </TR>
+    <TR>
+        <TD valign=top class="bord">Added</TD>
+        <TD valign=top class="bord">menueditor</TD>
+        <TD valign=top class="bord">adding extended menueditor</TD>
+    </TR>
+
+
 
 
 <TR>
@@ -223,7 +250,7 @@ require_once('admin/install/steps/2_dependencies.php');
 
 <br><br>
 <div class="footer">
-LIMBAS. Copyright &copy; 1998-2018 LIMBAS GmbH (info@limbas.com). LIMBAS is free software; You can redistribute it and/or modify it under the terms of the GPL General Public License V2 as published by the Free Software Foundation; Go to <a href="http://www.limbas.org/" title="LIMBAS Website" target="new">http://www.limbas.org/</a> for details. LIMBAS comes with ABSOLUTELY NO WARRANTY; Please note that some external scripts are copyright of their respective owners, and are released under different licences.
+LIMBAS. Copyright &copy; 1998-2019 LIMBAS GmbH (info@limbas.com). LIMBAS is free software; You can redistribute it and/or modify it under the terms of the GPL General Public License V2 as published by the Free Software Foundation; Go to <a href="http://www.limbas.org/" title="LIMBAS Website" target="new">http://www.limbas.org/</a> for details. LIMBAS comes with ABSOLUTELY NO WARRANTY; Please note that some external scripts are copyright of their respective owners, and are released under different licences.
 </div>
 
 </div>

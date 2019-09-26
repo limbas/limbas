@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -111,7 +111,7 @@ class lmb_calendar {
 	 * @param unknown_type $ID
 	 * @param unknown_type $dayDelta
 	 * @param unknown_type $minuteDelta
-	 * @return unknown
+	 * @return bool
 	 */
 	function lmb_dropEvent($gtabid,$ID,$dayDelta,$minuteDelta,$action=null,$resource=null,$origin_resource=null){
 		global $db;
@@ -186,11 +186,15 @@ class lmb_calendar {
 				#if(!$rs0) {$commit = 1;}
 			}
 
-			if($commit) {return false;}else{return true;}
-		}else{return false;}
-		
-		return true;
-	}
+			if($commit) {
+			    return false;
+			}else{
+			    return true;
+			}
+		}else{
+		    return false;
+		}
+    }
 	
 	# move event
 	function lmb_moveEvent($gtabid,$ID,$movestamp,$resource){
@@ -304,19 +308,19 @@ class lmb_calendar {
 				$extension['where'][0] .= " OR ($tab.".$this->lmbCalFields['REPETITION']." > 0)";
 			}
 			$extension['where'][0] .= ")";
-		}else{
+		} #else{
 			#$extension['where'][0] = "
 			#($tab.".$this->lmbCalFields['STARTSTAMP']." >= '".convert_stamp($startstamp,0)."' AND $tab.".$this->lmbCalFields['STARTSTAMP']." <= '".convert_stamp($endstamp,0)."') OR
 			#($tab.".$this->lmbCalFields['ENDSTAMP']." >= '".convert_stamp($startstamp,0)."' AND $tab.".$this->lmbCalFields['ENDSTAMP']." <= '".convert_stamp($endstamp,0)."')
 			#";
-		}
+		#}
 		
 		# resource
 		if($gfield[$gtabid]["md5tab"][$gtab['params1'][$gtabid]]){
 			$rfieldid = $gtab['params1'][$gtabid];
 			$rgtabid = $gfield[$gtabid]['verkntabid'][$gtab["params1"][$gtabid]];
 			
-			$ojoin[$gtab["table"][$gtabid]][$gfield[$gtabid]["md5tab"][$rfieldid]][0] = $gtab['table'][$gtabid].'.id = '.$gfield[$gtabid]["md5tab"][$rfieldid].'.ID';
+			$ojoin[$gtab["table"][$gtabid]][$gfield[$gtabid]["md5tab"][$rfieldid]][0] = $gtab['table'][$gtabid].'.ID = '.$gfield[$gtabid]["md5tab"][$rfieldid].'.ID';
 			$extension["ojoin"] = $ojoin;
 			$extension['select'][0] = $gfield[$gtabid]["md5tab"][$rfieldid].'.VERKN_ID AS RESOURCE_'.$rfieldid;
 			$fieldlist[$gtabid] = $gfield[$gtabid]["sort"];
@@ -326,7 +330,7 @@ class lmb_calendar {
 			
 			########### search in resouce ############
 			
-			# search single resource
+			# search single resource / drop empty arrays
 			if($params["cal_resourceSearch"]){
 				$resourceSearch = array_filter($params["cal_resourceSearch"]);
 			}
@@ -463,7 +467,7 @@ class lmb_calendar {
 		}
 
 		if($color){
-			$color = "#".$color;
+			$color = $color;
 			$text_color = lmbSuggestColor($color);
 		}
 
@@ -556,10 +560,11 @@ class lmb_calendar {
 		
 		########### search in resouce ############
 
-		# search single resource
+		# search single resource / drop empty arrays
 		if($params["cal_resourceSearch"]){
 			$resourceSearch = array_filter($params["cal_resourceSearch"]);
 		}
+
 		if($resourceSearch){
 			$extension['where'][] = $gtab['table'][$rgtabid].'.ID IN ('.implode(',',array_map('parse_db_int',$resourceSearch)).')';
 		}elseif($params["gs"][$rgtabid]){

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -29,8 +29,7 @@ if($change_col){
 			$sqlquery = "SELECT ID,".$gfield[$gtabid]["field_name"][$fieldid]." FROM ".$gtab["table"][$gtabid];
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
-			$bzm = 1;
-			while(odbc_fetch_row($rs, $bzm)) {
+			while(odbc_fetch_row($rs)) {
 				if(odbc_result($rs, $gfield[$gtabid]["field_name"][$fieldid])){
 					$sqlquery1 = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = ".LMB_DBDEF_FALSE." WHERE ID = ".odbc_result($rs, "ID");
 					$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
@@ -40,7 +39,6 @@ if($change_col){
 					$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 					if(!$rs1) {$commit = 1;}				
 				}
-			$bzm++;	
 			}			
 		}elseif($change_col[1] == 2){
 			$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = ".LMB_DBDEF_TRUE;
@@ -204,11 +202,9 @@ if($gfield[$gtabid]['field_type'][$fieldid] == 1){?>
 <?php
 $sqlquery = "SELECT WERT,SORT FROM LMB_SELECT_W WHERE POOL = TAB_ID = ".$gfield[$gtabid]['select_pool'][$fieldid]." ORDER BY SORT";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$bzm2 = 1;
-while(odbc_fetch_row($rs, $bzm2) AND $bzm2 < 50) {
+while(odbc_fetch_row($rs)) {
 	echo "<OPTION VALUE=\"".odbc_result($rs, "WERT")."\">";
 	echo odbc_result($rs, "WERT");
-	$bzm2++;
 }
 ?>
 </SELECT></TD></TR>
@@ -216,11 +212,9 @@ while(odbc_fetch_row($rs, $bzm2) AND $bzm2 < 50) {
 <TR ALIGN="LEFT"><TD><?=$lang[60]?></TD></TR>
 <TR ALIGN="LEFT"><TD><SELECT STYLE="width:200px" NAME="change_col[2]"><OPTION VALUE="">
 <?php
-$bzm2 = 1;
-while(odbc_fetch_row($rs, $bzm2) AND $bzm2 < 50) {
+while(odbc_fetch_row($rs)) {
 	echo "<OPTION VALUE=\"".odbc_result($rs, "AUSWAHL")."\">";
 	echo odbc_result($rs, "AUSWAHL");
-	$bzm2++;
 }
 ?>
 </SELECT></TD></TR>

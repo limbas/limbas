@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -267,11 +267,11 @@ EOD;
 </div>
 
 
-<table width="99%" style="padding-top:15px;"><tr><td valign="top" align="left" id="cal_searchFrameTD" style="width:230px;<?php $menu_setting=lmbGetMenuSetting();if(!$menu_setting["frame"]["cal"]){echo 'display:none';}?>">
+<table width="99%" style="padding-top:15px;"><tr><td valign="top" align="left" id="cal_searchFrameTD" style="width:230px;padding-right:20px;<?php $menu_setting=lmbGetMenuSetting();if(!$menu_setting["frame"]["cal"]){echo 'display:none';}?>">
 <div id="cal_searchFrame" style="<?php if(!$menu_setting["frame"]["cal"]){echo 'display:none';}?>">
-<div id="cal_datepicker" style="width:210px"></div>
+<div id="cal_datepicker"></div>
 <br>
-<table id="extsearchtab" style="width:210px" cellpadding="2" cellspacing="0">
+<table id="extsearchtab" cellpadding="2" cellspacing="0">
 
 
 <?php
@@ -302,8 +302,8 @@ if($gtab["params1"][$gtabid] AND $gtab["params2"][$gtabid]['searchResource']){
 	
 	echo "<tr><td>&nbsp;</td></tr><tr class=\"tabSubHeader\"><td colspan=\"2\" align=\"center\" class=\"tabSubHeaderItem\">".$gtab["desc"][$rtabid]."</td></tr>";
 
-	echo "<tr class=\"tabBody\"><td colspan=\"2\"><select id=\"cal_resourceSearch\" name=\"cal_resourceSearch[]\" multiple size=\"4\" class=\"gtabHeaderInputINP\" style=\"width:100%;\"><option>";
-	$lmb_calendar = new lmb_calendar;
+	echo "<tr class=\"tabBody\"><td colspan=\"2\"><select id=\"cal_resourceSearch\" name=\"cal_resourceSearch\" multiple size=\"4\" class=\"gtabHeaderInputINP\" style=\"width:100%;\"><option>";
+	if(!$lmb_calendar){$lmb_calendar = new lmb_calendar;}
 	if($resources = $lmb_calendar->getResources($gtabid,$null)){
 		foreach ($resources as $key => $value){
 			echo "<option value=\"".$resources[$key]['id']."\">".$resources[$key]['name'];

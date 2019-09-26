@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -68,7 +68,7 @@ if($set_fonts){
 		if($nfnt[$key]){
 			if(!file_exists($umgvar["pdfpfad"].$fontname2.".php")){
 				# -- generate postscript font ---
-				#chdir($umgvar["pdfpfad"]);
+				chdir($umgvar["pdfpfad"]);
 				#$cmd = "ttf2pt1 -a ".$fontex["file"][$key]." ".$fontname2;
 				#exec($cmd);
 
@@ -137,7 +137,7 @@ if($set_fonts){
 
 			$sqlquery0 = "SELECT ID FROM LMB_FONTS WHERE LOWER(NAME) = '".lmb_strtolower(parse_db_string($fontex['family'][$key],30))."' AND STYLE = '".$fstyle."'";
 			$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
-			if(odbc_fetch_row($rs0,1)){
+			if(odbc_fetch_row($rs0)){
 					echo "can not add font ".$fontex['name'][$key].".. font already exists .. skip ... <br>";
 					continue;
 			}else{
@@ -155,10 +155,8 @@ if($set_fonts){
 $sqlquery = "SELECT NAME FROM LMB_FONTS";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
-$bzm = 1;
-while(odbc_fetch_row($rs,$bzm)){
+while(odbc_fetch_row($rs)){
 	$ifont[odbc_result($rs,"NAME")] = 1;
-	$bzm++;
 }
 
 ?>

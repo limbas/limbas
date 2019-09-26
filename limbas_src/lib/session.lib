@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -26,6 +26,9 @@ $auth_pass = $_REQUEST["auth_pass"];
 $auth_realm = 'Limbas Enterprise Unifying Framework';
 $auth_group = null;
 
+// set Authorization Vars
+lmb_setAuthorizationVars();
+
 #if($_SERVER['PHP_AUTH_DIGEST']){
 #	if(!$auth_digest = http_digest_parse($_SERVER['PHP_AUTH_DIGEST'])) die('Wrong Credentials!');
 #	if(!$auth_user){$auth_user = $auth_digest['username'];}
@@ -35,47 +38,92 @@ $auth_group = null;
 	if(!$auth_pass){$auth_pass = $_SERVER['PHP_AUTH_PW'];}
 #}
 
+
 $rslogout = $_REQUEST["logout"];
 $session_name = "limbas_".rtrim(base64_encode($auth_user),"=");
 $sess_refresh = $_REQUEST["sess_refresh"];
 $auth_user = dbf_7(substr($auth_user,0,30));
 $auth_pass = dbf_7(substr($auth_pass,0,30));
+$auth_token = dbf_7($_REQUEST['authToken']);
 
 // first basic auth
-if(!$auth_user){
+if(!$auth_user and !$auth_token){
     lmb_basicauth();
     die();
 }
 
 /* --- Session-Initialisierung --------------------------------------- */
-$action = preg_replace("[^A-Za-z0-9_]","_",$_REQUEST["action"]);
+$action = preg_replace('/[^0-9a-z]+/i','_',$_REQUEST["action"]);
 if($action == 'report_html'){session_cache_limiter('private');Header('Pragma: public');}
 
 # --- Datenbankverbindung -------------------------------------------
 $db = dbq_0($DBA["DBHOST"],$DBA["DBNAME"],$DBA["DBUSER"],$DBA["DBPASS"],$DBA["ODBCDRIVER"],$DBA["PORT"]);
 
 # --- Session -------------------------------------------
-if($auth_user AND $auth_pass){
-	if(!isset($_COOKIE[$session_name]) AND !isset($_REQUEST[$session_name])){
+if(($auth_user AND $auth_pass) OR $auth_token){
+//	if(!isset($_COOKIE[$session_name]) AND !isset($_REQUEST[$session_name])){
+	    # NOTE: commented for performance reasons (cookie lifetime is irrelevant because of ongoing ajax polling)
 	    // check for session lifetime
-		$sqlquery2 = "SELECT * FROM LMB_USERDB WHERE USERNAME = '".$auth_user."' AND PASSWORT = '".md5($auth_pass)."'";
-		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
-		if($gc_lifetime = odbc_result($rs2,"GC_MAXLIFETIME")){
-			ini_set("session.cookie_lifetime",$gc_lifetime);
-		}
-		
-		if(defined('IS_WSDL')){
-			$sqlquery3 = "SELECT ID FROM LMB_SESSION WHERE USER_ID = ".odbc_result($rs2,"USER_ID")." ORDER BY ERSTDATUM ASC";
-			$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
-			
-			if(odbc_result($rs3,"ID") AND $HTTP_RAW_POST_DATA){
-				session_id(odbc_result($rs3,"ID"));
-			}
-		}
-	}
-	
-	session_name($session_name);
-	session_start();
+//		$sqlquery2 = "SELECT * FROM LMB_USERDB WHERE USERNAME = '".$auth_user."' AND PASSWORT = '".md5($auth_pass)."'";
+//		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+//		if($gc_lifetime = odbc_result($rs2,"GC_MAXLIFETIME")){
+//			ini_set("session.cookie_lifetime",$gc_lifetime);
+//		}
+
+        # NOTE: commented because of performance and security reasons
+        # uncomment to load stored session_id if your wsdl client doesn't support sending the session name
+//		if(defined('IS_WSDL')){
+//			$sqlquery3 = "SELECT ID FROM LMB_SESSION WHERE USER_ID = ".odbc_result($rs2,"USER_ID")." ORDER BY ERSTDATUM ASC";
+//			$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+//
+//			if(odbc_result($rs3,"ID") AND $HTTP_RAW_POST_DATA){
+//				session_id(odbc_result($rs3,"ID"));
+//			}
+//			}
+//		}
+//	}
+
+
+    // REST / WSDL - use credentials
+    if(defined('IS_REST') OR defined('IS_WSDL')) {
+
+        $user_id = lmbGetAuthCredentials($auth_user, $auth_pass);
+
+        if (!$user_id) {
+            lmb_basicauth();
+        }
+
+        # get session id
+        $sqlquery = "SELECT ID FROM LMB_SESSION WHERE USER_ID={$user_id} ORDER BY ERSTDATUM DESC " . LMB_DBFUNC_LIMIT . " 1";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if (odbc_fetch_row($rs)) {
+            # load session of user
+            $session_id = odbc_result($rs, 'id');
+            session_id($session_id);
+        }
+        ini_set('session.use_cookies', 0);
+
+        // use auth token - used in Cloud - only if session is available!
+    }elseif ($auth_token) {
+        $user_id = lmbGetAuthTokenUser($auth_token);
+        if (!$user_id) {
+            lmb_basicauth();
+        }
+
+        # get session id
+        $sqlquery = "SELECT ID FROM LMB_SESSION WHERE USER_ID={$user_id} ORDER BY ERSTDATUM DESC " . LMB_DBFUNC_LIMIT . " 1";
+        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if (!odbc_fetch_row($rs)) {
+            lmb_basicauth();
+        }
+
+        # load session of user
+        $session_id = odbc_result($rs, 'id');
+        session_id($session_id);
+    } else {
+        session_name($session_name);
+    }
+    session_start();
 
 	extract($_GET, EXTR_SKIP);
 	extract($_POST, EXTR_SKIP);
@@ -83,7 +131,7 @@ if($auth_user AND $auth_pass){
 	extract($_SERVER, EXTR_SKIP);
 	extract($_SESSION, EXTR_SKIP);
 	
-	$globvars = array('session','umgvar','userdat','groupdat','user_colors','lmcurrency','lmfieldtype','LINK','LINK_ID','LINK_ACTION','farbschema','lang','gsr','filter','mfilter','ffilter','popc','popg','gsnap','gform','gformlist','greportlist','gdiaglist','gtabletree','tabgroup','gtab','grule','gfield','gverkn','gfile','ufile','filestruct','verknpool','gmimetypes','gtrigger','greminder','gwfl','gLmbExt','gprinter');
+	$globvars = array('session','umgvar','userdat','groupdat','user_colors','lmcurrency','lmfieldtype','LINK','LINK_ID','LINK_ACTION','farbschema','lang','gsr','filter','mfilter','ffilter','popc','popg','gsnap','gform','gformlist','greportlist','gdiaglist','gtabletree','tabgroup','gtab','grule','gfield','gverkn','gfile','ufile','filestruct','verknpool','gmimetypes','gtrigger','greminder','gwfl','gLmbExt','externalStorage','gprinter');
 	assign_sessionvars($globvars);
 	
 	# logout
@@ -107,7 +155,7 @@ if($sess_refresh){
 
 /* --- Prüfung ob Session vorhanden ----------------------------------- */
 $sqlquery = "SELECT ID,IP,FILESTRUCT_CHANGED,TABLE_CHANGED,SNAP_CHANGED FROM LMB_SESSION WHERE ID = '".session_id()."'";
-$rs = @odbc_exec($db,$sqlquery);
+$rs = odbc_exec($db,$sqlquery);
 if(!$rs){
 	if(strpos(odbc_errormsg($db),"Unknown table name") > 0){
 		die("<Script language=\"JavaScript\">\ndocument.location.href='admin/install/setup.php';\n</Script>\n");

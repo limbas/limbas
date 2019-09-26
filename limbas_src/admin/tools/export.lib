@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -466,26 +466,28 @@ function lmbExport_ToText($exptable,$format,$export_filter=null,$txt_encode=null
 			else{$expf = "";}
 			if($expf){if(lmb_substr(lmb_strtoupper($expf),0,5) != "WHERE"){$expf = "WHERE $expf";}}
 			
-			$sqlquery = "SELECT * FROM ".$exptable[$bzm0]." ".$expf." ".LMB_DBFUNC_FOR_REUSE;
+			$sqlquery = "SELECT * FROM ".$exptable[$bzm0]." ".$expf;
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 			$num = odbc_num_fields($rs);
 
-			/* --- Spaltenüberschriften ------------------------------ */
-			$bzm = 1;
-			$zeile = array();
-			while($bzm <= $num){
-				//$zeile .= $umgvar['csv_enclosure'].odbc_field_name($rs, $bzm).$umgvar['csv_enclosure'].$delimiter;
-				$zeile[] = odbc_field_name($rs, $bzm);
-				$bzm++;
-			}
-			//$list[] = $zeile;
-			lmb_fputcsv($expdatei, $zeile);
-
 			/* --- Ergebnisschleife --------------------------------------- */
-			
 			$bzm = 1;
-			while(odbc_fetch_row($rs, $bzm)) {
+			while(odbc_fetch_row($rs)) {
+
+                /* --- Spaltenüberschriften ------------------------------ */
+                if($bzm == 1) {
+                    $bzm1 = 1;
+                    $zeile = array();
+                    while ($bzm1 <= $num) {
+                        //$zeile .= $umgvar['csv_enclosure'].odbc_field_name($rs, $bzm).$umgvar['csv_enclosure'].$delimiter;
+                        $zeile[] = odbc_field_name($rs, $bzm1);
+                        $bzm1++;
+                    }
+                    //$list[] = $zeile;
+                    lmb_fputcsv($expdatei, $zeile);
+                }
+
 				$zeile = array();
 				$bzm1 = 1;
 				while($bzm1 <= $num){
@@ -599,6 +601,8 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 			$info = lmbExport_infotext();
 			/* ---> conf */ fputs($config_datei,$info);
 
+			/* ---> conf */ fputs($config_datei,"<encoding ".$umgvar['charset'].">\n\n");
+
 			/* ---> conf */ fputs($config_datei,"<begin tabledefinition::".$newtablename.">\n");
 			/* --- Spalten_Liste --------------------------------------------- */
 			if($col = dbf_5(array($DBA["DBSCHEMA"],$table,null),1)){
@@ -621,7 +625,11 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 					if($DEFAULT OR $DEFAULT == '0'){
 						if($DATATYPE == "INTEGER" OR $DATATYPE == "SMALLINT" OR $DATATYPE == "FLOAT" OR $DATATYPE == "FIXED"){
 							$DEFAULT = parse_db_int($DEFAULT);
-						}elseif($DATATYPE == "BOOLEAN" OR $DATATYPE == 'TIMESTAMP' OR $DATATYPE == 'DATETIME'){
+						}elseif($DATATYPE == "BOOLEAN" OR $DATATYPE == 'TIMESTAMP' OR $DATATYPE == 'DATE' OR $DATATYPE == 'TIME'){
+					        ### PSQL maching ###
+						    if(substr($DEFAULT_[2],0,4) == 'DATE'){$DEFAULT = 'CURRENT_DATE';}
+					        if(substr($DEFAULT_[2],0,4) == 'TIME'){$DEFAULT = 'CURRENT_TIME';}
+
 							if(defined ("LMB_DBREDEF_".$DEFAULT)){
 								$DEFAULT = constant("LMB_DBREDEF_".$DEFAULT);
 							}
@@ -636,7 +644,7 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 					}
 					}*/
 
-					# workaround for stupid timestamp default value
+					# mysql workaround for stupid timestamp default value
 					if($GLOBALS['DBA']['DB'] == 'mysql' AND $DEFAULT == '0000-00-00 00:00:00'){
 						$DEFAULT = '';
 					}
@@ -661,10 +669,9 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 				elseif($export_filter[$bzm0]){$expf = $export_filter[$bzm0];}
 				else{$expf = "";}
 				if($expf){if(lmb_substr(lmb_strtoupper(trim($expf)),0,5) != "WHERE"){$expf = "WHERE $expf";}}
-				$sqlquery = "SELECT * FROM $table ".$expf." ".LMB_DBFUNC_FOR_REUSE;
+				$sqlquery = "SELECT * FROM $table ".$expf;
 				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
-				$bzm1 = 1;
 				while(odbc_fetch_row($rs)) {
 					$line = array();
 					$bzm2 = 0;
@@ -686,7 +693,6 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 
 
 					$result_exp_dat++;
-					$bzm1++;
 				}
 
 				odbc_free_result($rs);
@@ -698,8 +704,7 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 			$sqlquery = dbq_2(array($DBA["DBSCHEMA"],$table,null,1,null,'lmb'));
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
-			$bzm1 = 1;
-			while(odbc_fetch_row($rs, $bzm1)) {
+			while(odbc_fetch_row($rs)) {
 				#$REFTABLENAME = dbf_4(odbc_result($rs, "TABLENAME"));
 				$REFTABLENAME = $newtablename;
 				$REFCOLUMNNAME = odbc_result($rs, "COLUMNNAME");
@@ -707,7 +712,6 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 				$TYPE = "";
 				$SORT = "ASC";
 				/* ---> conf */ fputs($config_datei,"$REFTABLENAME::$REFCOLUMNNAME::$TYPE::$SORT\n");
-				$bzm1++;
 			}
 			/* ---> conf */ fputs($config_datei,"<end indexdefinition>\n\n");
 
@@ -717,8 +721,7 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 			$sqlquery = dbq_3(array($table,$DBA["DBSCHEMA"]));
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
-			$bzm1 = 1;
-			while(odbc_fetch_row($rs, $bzm1)) {
+			while(odbc_fetch_row($rs)) {
 				#$DEFTABLENAME = dbf_4(odbc_result($rs, "TABLENAME"));
 				$DEFTABLENAME = $newtablename;
 				$DEFCOLUMNNAME = odbc_result($rs, "COLUMNNAME");
@@ -726,7 +729,6 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 				$REFCOLUMNNAME = odbc_result($rs, "REFCOLUMNNAME");
 				#$RULE = odbc_result($rs, "LMRULE");
 				/* ---> conf */ fputs($config_datei,"$DEFTABLENAME::$DEFCOLUMNNAME::$REFTABLENAME::$REFCOLUMNNAME\n");
-				$bzm1++;
 			}
 			/* ---> conf */ fputs($config_datei,"<end keydefinition>\n\n");
 
@@ -849,6 +851,8 @@ function lmbExport_Dump($format,$struct_only=false){
 		unset($line);
 		$table_datei = fopen($umgvar['pfad']."/BACKUP/".date("d_m_y").$ext."/$table","w+");
 
+		/* ---> conf */ fputs($config_datei,"<encoding ".$umgvar['charset'].">\n\n");
+
 		/* ---> conf */ fputs($config_datei,"<begin tabledefinition::$table>\n");
 
 		/* --- Spalten_Liste --------------------------------------------- */
@@ -869,8 +873,11 @@ function lmbExport_Dump($format,$struct_only=false){
 				if($DEFAULT OR $DEFAULT == '0'){
 					if($DATATYPE == "INTEGER" OR $DATATYPE == "SMALLINT" OR $DATATYPE == "FLOAT" OR $DATATYPE == "FIXED"){
 						$DEFAULT = parse_db_int($DEFAULT);
-					}elseif($DATATYPE == "BOOLEAN" OR $DATATYPE == "TIMESTAMP" OR $DATATYPE == "DATETIME"){
+					}elseif($DATATYPE == "BOOLEAN" OR $DATATYPE == "TIMESTAMP" OR $DATATYPE == 'DATE' OR $DATATYPE == 'TIME'){
 						if(defined ("LMB_DBREDEF_".$DEFAULT)){
+					        ### PSQL maching ###
+						    if(substr($DEFAULT_[2],0,4) == 'DATE'){$DEFAULT = 'CURRENT_DATE';}
+					        if(substr($DEFAULT_[2],0,4) == 'TIME'){$DEFAULT = 'CURRENT_TIME';}
 							$DEFAULT = constant("LMB_DBREDEF_".$DEFAULT);
 						}
 					}
@@ -891,45 +898,48 @@ function lmbExport_Dump($format,$struct_only=false){
 			#/* ---> tab  */ fputs($table_datei,"\n");
 		/* ---> conf */ fputs($config_datei,"<end tabledefinition>\n\n");
 
-		/* --- Inhalt_Liste --------------------------------------------- */
-                    if(lmb_substr($table,0,10) != "LMB_INDIZE" AND lmb_substr($table,0,11) != "LMB_HISTORY"){
-                        if (!$struct_only OR lmb_strtolower(lmb_substr($table,0,4)) == 'lmb_' OR lmb_strtolower(lmb_substr($table,0,5)) == 'ldms_') {
-                            $sqlquery = "Select * from $table ".LMB_DBFUNC_FOR_REUSE;
-                            $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                            if(!$rs) {$commit = 1;}
-                            $bzm1 = 1;
-                            while(odbc_fetch_row($rs, $bzm1)) {
-                                    $line = array();
-                                    $bzm2 = 0;
-                                    while(isset($COLUM[$bzm2])){
-                                            //$erg = str_replace("\t","#TAB#",odbc_result($rs, $COLUM[$bzm2]));
-                                            //$erg = str_replace("\r\n","#NEXTLINE#",$erg);
-                                            //$erg = str_replace("\n","#NEXTLINE#",$erg);
-                                            //$erg = str_replace("\\","#BACKSL#",$erg);
+        /* --- Inhalt_Liste --------------------------------------------- */
+        if (lmb_substr($table, 0, 10) != "LMB_INDIZE" AND lmb_substr($table, 0, 11) != "LMB_HISTORY") {
+            if (!$struct_only OR lmb_strtolower(lmb_substr($table, 0, 4)) == 'lmb_' OR lmb_strtolower(lmb_substr($table, 0, 5)) == 'ldms_') {
+                $sqlquery = "Select * from $table ";
+                $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                if (!$rs) {
+                    $commit = 1;
+                }
+                while (odbc_fetch_row($rs)) {
+                    $line = array();
+                    $bzm2 = 0;
+                    while (isset($COLUM[$bzm2])) {
+                        //$erg = str_replace("\t","#TAB#",odbc_result($rs, $COLUM[$bzm2]));
+                        //$erg = str_replace("\r\n","#NEXTLINE#",$erg);
+                        //$erg = str_replace("\n","#NEXTLINE#",$erg);
+                        //$erg = str_replace("\\","#BACKSL#",$erg);
 
-                                            $erg = odbc_result($rs, $COLUM[$bzm2]);
+                        $erg = odbc_result($rs, $COLUM[$bzm2]);
 
                         // mask \" for fputcsv
                         if (!$GLOBALS['phpvok']) {
                             $erg = str_replace('\\"', '#BSLQUT#', $erg);
                         }
 
-                                            if($GLOBALS['DBA']['DB'] == 'mysql' AND $erg == '0000-00-00 00:00:00'){$erg = '';}
-                                            #/* ---> tab  */ fputs($table_datei,$erg."\t");
-                                            $line[] = $erg;
-                                            $bzm2++;
-                                    }
-                                    #/* ---> tab  */ fputs($table_datei,"\n");
-                                    /* ---> tab  */ lmb_fputcsv($table_datei, $line, 1);
-                                    $result_exp_dat++;
-                                    $bzm1++;
-                            }
+                        if ($GLOBALS['DBA']['DB'] == 'mysql' AND $erg == '0000-00-00 00:00:00') {
+                            $erg = '';
                         }
+                        #/* ---> tab  */ fputs($table_datei,$erg."\t");
+                        $line[] = $erg;
+                        $bzm2++;
                     }
+                    #/* ---> tab  */ fputs($table_datei,"\n");
+                    /* ---> tab  */
+                    lmb_fputcsv($table_datei, $line, 1);
+                    $result_exp_dat++;
+                }
+            }
+        }
 
 
-		$result_exp_tabs = $bzm;
-		$bzm++;
+        $result_exp_tabs = $bzm;
+        $bzm++;
 	}
 
 
@@ -938,15 +948,13 @@ function lmbExport_Dump($format,$struct_only=false){
 	$sqlquery = dbq_2(array($DBA["DBSCHEMA"],null,null,1,null,'lmb'));
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$bzm1 = 1;
-	while(odbc_fetch_row($rs, $bzm1)) {
+	while(odbc_fetch_row($rs)) {
 		$REFTABLENAME = odbc_result($rs, "TABLENAME");
 		$REFCOLUMNNAME = odbc_result($rs, "COLUMNNAME");
 		#$TYPE = odbc_result($rs, "TYPE");
 		$TYPE = "";
 		$SORT = "ASC";
 		/* ---> conf */ fputs($config_datei,"$REFTABLENAME::$REFCOLUMNNAME::$TYPE::$SORT\n");
-		$bzm1++;
 	}
 	/* ---> conf */ fputs($config_datei,"<end indexdefinition>\n\n");
 
@@ -964,11 +972,16 @@ function lmbExport_Dump($format,$struct_only=false){
 			if(lmb_strpos($DEFINITION,"CREATE VIEW $VIEWNAME AS") !== false){
 				$DEFINITION = str_replace("CREATE VIEW $VIEWNAME AS","",$DEFINITION);
 				$DEFINITION = str_replace($DBA["DBSCHEMA"].".","",$DEFINITION);
+				$DEFINITION = trim($DEFINITION);
 				$DEFINITION = ltrim($DEFINITION,"(");
 				$DEFINITION = rtrim($DEFINITION,")");
 				$DEFINITION = trim($DEFINITION);
 			}
 			#$DEFINITION = str_replace("::text","",$DEFINITION); # for postgresql export
+            // MYSQL needs upper case for system views
+            if(strtoupper(substr($VIEWNAME,0,5)) == 'VERK_'){
+			    $DEFINITION = strtoupper($DEFINITION);
+            }
 			/* ---> conf */ fputs($config_datei,$VIEWNAME."::".$DEFINITION."\n");
 		}
 	}

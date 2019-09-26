@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,116 +11,121 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
  * ID: 51
  */
 
+set_time_limit(1200); #20min
 
-function exportTabCSV($fh,$gtabid,&$gresult,&$filter,$expview=1,$typ=null){
-	global $session;
-	global $gtab;
-	global $gfield;
-	global $farbschema;
-	global $umgvar;
-	
-	/* ---------------- Seperator ------------------ */
-	$delimiter = ($umgvar['csv_delimiter'] == "") ? ',' : $umgvar['csv_delimiter'];
-	$enclosure = ($umgvar['csv_enclosure'] == "") ? '"' : $umgvar['csv_enclosure'];
+function exportTabCSV($fh,$gtabid,&$gresult,&$filter, $expview=1, $typ=null){
+    global $session;
+    global $gtab;
+    global $gfield;
+    global $farbschema;
+    global $umgvar;
+
+    /* ---------------- Seperator ------------------ */
+    $delimiter = ($umgvar['csv_delimiter'] == "") ? ',' : $umgvar['csv_delimiter'];
+    $enclosure = ($umgvar['csv_enclosure'] == "") ? '"' : $umgvar['csv_enclosure'];
     if($umgvar['csv_delimiter'] == '\t'){$delimiter = "\t";}
-	
-	/* ---------------- Header ------------------ */
-	if($typ == 1){$line = "<BODY><TABLE>\n<TR>";}
-	foreach ($gfield[$gtabid]["sort"] as $key => $value){
-		if(!$gfield[$gtabid]["funcid"][$key]){continue;}
-		if(!$filter["hidecols"][$gtabid][$key] AND $gfield[$gtabid]["field_type"][$key] < 100 AND $gfield[$gtabid]["field_type"][$key] != 20){
-			if($typ == 1){$line .= "<TD>".$gfield[$gtabid]['spelling'][$key]."</TD>";}
+
+    /* ---------------- Header ------------------ */
+    if($typ == 1){$line = '<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+    <meta http-equiv="content-type" content="application/vnd.ms-excel; charset='.$umgvar["charset"].'">
+</head><BODY><TABLE><TR>';}
+    foreach ($gfield[$gtabid]["sort"] as $key => $value){
+        if(!$gfield[$gtabid]["funcid"][$key]){continue;}
+        if(!$filter["hidecols"][$gtabid][$key] AND $gfield[$gtabid]["field_type"][$key] < 100 AND $gfield[$gtabid]["field_type"][$key] != 20){
+            if($typ == 1){$line .= "<TD>".$gfield[$gtabid]['spelling'][$key]."</TD>";}
 			elseif($typ == 3){
-				$l[] = $gfield[$gtabid]['spelling'][$key]; //'"'.str_replace('"','""',$gfield[$gtabid]['spelling'][$key]).'"';
-			}
-		}
-	}
-	if($typ == 3){ 
-		//$line .= implode(";",$l)."\n";
-		fputcsv($fh,$l,$delimiter,$enclosure);
-	}
-	if($typ == 1){
-		$line .= "</TR>\n";
-		fwrite($fh, $line);
-		$line = '';
-	}
-	
-	/* ---------------- Body ------------------ */
+                $l[] = $gfield[$gtabid]['spelling'][$key]; //'"'.str_replace('"','""',$gfield[$gtabid]['spelling'][$key]).'"';
+            }
+        }
+    }
+    if($typ == 3){
+        //$line .= implode(";",$l)."\n";
+        fputcsv($fh,$l,$delimiter,$enclosure);
+    }
+    if($typ == 1){
+        $line .= "</TR>\n";
+        fwrite($fh, $line);
+        $line = '';
+    }
 
-	if($expview == 2){
-		$rescount = $gresult[$gtabid]["res_count"];
-	}else{
-		$rescount = $gresult[$gtabid]["res_viewcount"];
-	}
-	
-	$bzm = 0;
-	while($bzm < $rescount) {
-		$l = array();
-		
-		/* --- Feldschleife für export --------------------------------------- */
-		if($typ == 1){
-			if($BGCOLOR1 == $farbschema["WEB8"]){$BGCOLOR = $farbschema["WEB8"];$BGCOLOR1 = $farbschema["WEB8"];} else {$BGCOLOR = $farbschema["WEB8"];$BGCOLOR1 = $farbschema["WEB8"];}
-			if($gresult[$gtabid]["color"][$bzm]){$BGCOLOR = "#".$gresult[$gtabid]["color"][$bzm];}
-			if($cres){$BGCOLOR = "#".$cres;}
-			
-			$line = "<TR BGCOLOR=\"$BGCOLOR\">";
-		}
-		
-		foreach ($gfield[$gtabid]["sort"] as $key => $value){
-			if(!$gfield[$gtabid]["funcid"][$key]){continue;}
-			if(!$filter["hidecols"][$gtabid][$key] AND $gfield[$gtabid]["field_type"][$key] < 100 AND $gfield[$gtabid]["field_type"][$key] != 20){
-				if($gfield[$gtabid]["color"][$key] AND !$gresult[$gtabid]["color"][$bzm]){$BGCOLORTD = " BGCOLOR = \"#".$gfield[$gtabid]["color"][$key]."\"";}else{$BGCOLORTD = "";}
-				
-				if($typ == 1){$line .= "<TD".$BGCOLORTD.">";}
+    /* ---------------- Body ------------------ */
+    if($expview == 2){
+        $rescount = $gresult[$gtabid]["res_count"];
+    }else{
+        $rescount = $gresult[$gtabid]["res_viewcount"];
+    }
 
-				/* ------------------ Typfunction --------------------- */
-				$fname = "cftyp_".$gfield[$gtabid]["funcid"][$key];
-				$retrn = $fname($bzm,$key,$gtabid,5,$gresult,0);
-				/* ------------------ /Typfunction -------------------- */
-				if(is_array($retrn)){
-					if($gfield[$gtabid]["field_type"][$key] == 11 AND is_array($retrn["value"])){
-						$retrn = implode("; ",$retrn["value"]);
-					}else{
-						$retrn = implode("; ",$retrn);
-					}
-				}
+    $bzm = 0;
+    while($bzm < $rescount) {
+        $l = array();
 
-				if($typ == 1){
-					if($gfield[$gtabid]["wysiwyg"][$field_id]){
-						$retrn = strip_tags($retrn,"<br>");
-					}
-					$line .= "$retrn</TD>";
-				}elseif($typ == 3){
-					$l[] = $retrn;//'"'.str_replace('"','""',$retrn).'"';
-				}
-			}
-		}
-		
-		if($typ == 3){
-			//$line .= implode(";",$l)."\n"; 
-			fputcsv($fh,$l,$delimiter,$enclosure);
-		}
-		if($typ == 1){
-			$line .= "</TR>\n";
-			fwrite($fh, $line);
-			$line = '';
-		}
-		
-		$bzm++;
-	}
-	
-	if($typ == 1){
-		$line .= "</TABLE></BODY>\n";
-		fwrite($fh, $line);
-		$line = '';
-	}
+        /* --- Feldschleife für export --------------------------------------- */
+        if($typ == 1){
+            if($BGCOLOR1 == $farbschema["WEB8"]){$BGCOLOR = $farbschema["WEB8"];$BGCOLOR1 = $farbschema["WEB8"];} else {$BGCOLOR = $farbschema["WEB8"];$BGCOLOR1 = $farbschema["WEB8"];}
+            if($gresult[$gtabid]["color"][$bzm]){$BGCOLOR = "#".$gresult[$gtabid]["color"][$bzm];}
+            if($cres){$BGCOLOR = "#".$cres;}
+
+            $line = "<TR BGCOLOR=\"$BGCOLOR\">";
+        }
+
+        foreach ($gfield[$gtabid]["sort"] as $key => $value){
+            if(!$gfield[$gtabid]["funcid"][$key]){continue;}
+            if(!$filter["hidecols"][$gtabid][$key] AND $gfield[$gtabid]["field_type"][$key] < 100 AND $gfield[$gtabid]["field_type"][$key] != 20){
+                if($gfield[$gtabid]["color"][$key] AND !$gresult[$gtabid]["color"][$bzm]){$BGCOLORTD = " BGCOLOR = \"#".$gfield[$gtabid]["color"][$key]."\"";}else{$BGCOLORTD = "";}
+
+                if($typ == 1){$line .= "<TD".$BGCOLORTD.">";}
+
+                /* ------------------ Typfunction --------------------- */
+                $fname = "cftyp_".$gfield[$gtabid]["funcid"][$key];
+                $retrn = $fname($bzm,$key,$gtabid,5,$gresult,0);
+                /* ------------------ /Typfunction -------------------- */
+                if(is_array($retrn)){
+                    if($gfield[$gtabid]["field_type"][$key] == 11 AND is_array($retrn["value"])){
+                        $retrn = implode("; ",$retrn["value"]);
+                    }else{
+                        $retrn = implode("; ",$retrn);
+                    }
+                }
+
+                if($typ == 1){
+                    if($gfield[$gtabid]["wysiwyg"][$field_id]){
+                        $retrn = strip_tags($retrn,"<br>");
+                    }
+                    $line .= "$retrn</TD>";
+                }elseif($typ == 3){
+                    $l[] = $retrn;//'"'.str_replace('"','""',$retrn).'"';
+                }
+            }
+        }
+
+        if($typ == 3){
+            //$line .= implode(";",$l)."\n";
+            fputcsv($fh,$l,$delimiter,$enclosure);
+        }
+        if($typ == 1){
+            $line .= "</TR>\n";
+            fwrite($fh, $line);
+            $line = '';
+        }
+
+        $bzm++;
+    }
+
+    if($typ == 1){
+        $line .= '</TABLE></BODY></html>';
+        fwrite($fh, $line);
+        $line = '';
+    }
 }
 
 
@@ -142,11 +147,8 @@ function domTableElement($dom,$parentElement,$gtabid,$verkn,$filter,$gsr){
 	$gresult = get_gresult($gtabid,1,$filter,$gsr,$verkn);
 	
 	# Anzahl Egebnisse
-	if($exp_typ == 2){
-		$rescount = $gresult[$gtabid]["res_count"];
-	}else{
-		$rescount = $gresult[$gtabid]["res_viewcount"];
-	}
+	$rescount = $gresult[$gtabid]["res_count"];
+	#$rescount = $gresult[$gtabid]["res_viewcount"];
 
 	$bzm = 0;
 	while($bzm < $rescount) {
@@ -195,7 +197,7 @@ function domTableElement($dom,$parentElement,$gtabid,$verkn,$filter,$gsr){
 					# Abfrage
 					$verkn_ = set_verknpf($gtabid,$gfield[$gtabid]["field_id"][$key],$gresult[$gtabid]["id"][$bzm],0,0,1,0);
 					# Ausgabe
-					$subElement = domTableElement($dom,$tableElement,$gfield[$gtabid]["verkntabid"][$key],$verkn_,$filter,0,0);			
+					$subElement = domTableElement($dom,$tableElement,$gfield[$gtabid]["verkntabid"][$key],$verkn_,$filter,0);
 				}
 			}
 		}
@@ -209,7 +211,7 @@ function domTableElement($dom,$parentElement,$gtabid,$verkn,$filter,$gsr){
 					$verkn_ = set_verknpf($value,$gfield[$value]["field_id"][$key],$gresult[$gtabid]["id"][$bzm],0,0,1,2);
 					# Ausgabe
 					#if($gresult_[$value]['res_viewcount'] > 0){
-						$subElement = domTableElement($dom,$tableElement,$gfield[$gtabid]["r_verkntabid"][$key],$verkn_,$filter,0,0);
+						$subElement = domTableElement($dom,$tableElement,$gfield[$gtabid]["r_verkntabid"][$key],$verkn_,$filter,0);
 					#}
 				}
 			}
@@ -242,13 +244,16 @@ if($exp_medium == 1 OR $exp_medium == 3){
 	# gresult
 	$filter_ = $filter;
 	$filter_["getlongval"][$gtabid] = 1;
+	if ($exp_typ == 2) {
+		$filter_["anzahl"][$gtabid] = 'all';
+	}
 	$gresult = get_gresult($gtabid,1,$filter_,$gsr,$verkn);
 	
 	# open file handler
 	$fh = fopen ($out, 'w');
 	
 	# fill file
-	exportTabCSV($fh,$gtabid,$gresult,$filter,$exp_typ,$exp_medium);
+	exportTabCSV($fh,$gtabid,$gresult,$filter, $exp_typ, $exp_medium);
 
 	# close file
 	fclose($fh);
@@ -261,6 +266,8 @@ if($exp_medium == 1 OR $exp_medium == 3){
 }elseif($exp_medium == 2){
 	# neues DOM Objekt
 	$dom = new DomDocument('1.0', $umgvar['charset']);
+
+	$filter_ = $filter;
 	
 	# root Element (Beschreibung)
 	$root = $dom->createElement("Limbas-Export-".date("Y-m-d"));

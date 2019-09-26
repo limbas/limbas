@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -35,13 +35,11 @@ $bu["host"] = $DBA["DBHOST"];
 
 
 if(!$umgvar){
-	$bzm = 1;
 	$sqlquery = "SELECT FORM_NAME,NORM FROM LMB_UMGVAR";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs, $bzm)) {
+	while(odbc_fetch_row($rs)) {
 		$umgvar[odbc_result($rs,"FORM_NAME")] = odbc_result($rs,"NORM");
-		$bzm++;
 	}
 }
 
@@ -87,14 +85,12 @@ function delete_backup_list($days,$cron_id,$path){
 		$sqlquery = "SELECT * FROM LMB_HISTORY_BACKUP WHERE ERSTDATUM < '".$date."' AND CRON_ID = $cron_id";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		$bzm = 1;
-		while(odbc_fetch_row($rs, $bzm)) {
+		while(odbc_fetch_row($rs)) {
 			if(delete_backup(odbc_result($rs,"SERVER"),odbc_result($rs,"LOCATION"),$path,odbc_result($rs,"ID"))){
 				$sqlquery1 = "DELETE FROM LMB_HISTORY_BACKUP WHERE ID = ".odbc_result($rs,"ID");
 				$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 				if(!$rs1) {$commit = 1;}
 			}
-			$bzm++;
 		}
 	}
 }
@@ -224,10 +220,8 @@ function update_backup_crontab(){
 		$sqlquery = "SELECT * FROM LMB_CRONTAB WHERE ACTIV = ".LMB_DBDEF_TRUE." ORDER BY ERSTDATUM";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		$bzm = 1;
-		while(odbc_fetch_row($rs, $bzm)){
+		while(odbc_fetch_row($rs)){
 			fputs($handle,str_replace(";"," ",odbc_result($rs,"START"))."\twebuser (/usr/local/bin/php \"".$umgvar["pfad"]."/lib/cron.php\" < /bin/echo ".odbc_result($rs,"ID").")\n");
-			$bzm++;
 		}
 		fclose($handle);
 		return true;
@@ -243,7 +237,7 @@ if($delete_backup){
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$bzm = 1;
-	if(odbc_fetch_row($rs, 1)) {
+	if(odbc_fetch_row($rs)) {
 		if(delete_backup(odbc_result($rs,"SERVER"),odbc_result($rs,"LOCATION"))){
 			$sqlquery1 = "DELETE FROM LMB_HISTORY_BACKUP WHERE ID = ".odbc_result($rs,"ID");
 			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);

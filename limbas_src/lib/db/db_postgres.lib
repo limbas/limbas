@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -67,6 +67,10 @@ define("LMB_DBRETYPE_TEXT","LONG");
 # LMB_DBREDEF #
 define("LMB_DBREDEF_NOW()","TIMESTAMP");
 define("LMB_DBREDEF_CURRENT_TIMESTAMP","TIMESTAMP");
+define("LMB_DBREDEF_CURRENT_DATE","DATE");
+#define("LMB_DBREDEF_('NOW","DATE");
+define("LMB_DBREDEF_CURRENT_TIME","TIME");
+#define("LMB_DBREDEF_('NOW","DATE");
 define("LMB_DBREDEF_FALSE","FALSE");
 define("LMB_DBREDEF_TRUE","TRUE");
 
@@ -76,7 +80,7 @@ define("LMB_DBFUNC_PRIMARY_KEY","PRIMARY KEY");
 define("LMB_DBFUNC_UNIQUE","UNIQUE");
 define("LMB_DBFUNC_CONCAT","||");
 #define("LMB_DBFUNC_UMASCB","\\");
-define("LMB_DBFUNC_FOR_REUSE","");
+define("LMB_DBFUNC_OFFSET_START",0);
 define("LMB_DBFUNC_LIMIT","LIMIT");
 define("LMB_DBFUNC_ROWNO","");
 define("LMB_DBFUNC_SPLIT_TRIGGER","EXECUTE PROCEDURE");
@@ -102,6 +106,13 @@ define("LMB_DBFUNC_NUMROWS",1);
 define("LMB_DBFUNC_VIEWGALIAS",0);
 define("LMB_DBFUNC_SEQUENCE",1);
 define("LMB_DBFUNC_VIEWDEPENDENCY",1);
+define("LMB_DBCURSOR",0);
+define("LMB_DBFUNC_WITH_RECURSIVE", 'WITH RECURSIVE');
+
+// use PDO driver
+if($DBA['ODBCDRIVER'] == 'PDO') {
+    require_once('lib/db/db_pdo.lib');
+}
 
 
 # workaround for postgresql versions
@@ -111,24 +122,27 @@ if($DBA['VERSION'] < 90100){
 	define("LMB_DBFUNC_UMASCB","\\");
 }
 
-# DBCURSOR #
-#define("LMB_DBCURSOR",0);
 
-#require_once("lib/db/db_pdo.lib");
 
 # odbc connect:
 function dbq_0($host,$database,$dbuser,$dbpass,$dbdriver=null,$port=null){
-	if($dbdriver){
+
+    if($dbdriver == 'PDO') {
+        if(!$port){$port = 5432;}
+        $dsn = "pgsql:host=$host;port=$port;dbname=$database";
+    }elseif($dbdriver) {
 		$dsn = "Driver=$dbdriver;Server=$host;Port=$port;Database=$database;ReadOnly=No";
 		#SQL_CUR_USE_ODBC
 		#SQL_CUR_DEFAULT
 		#SQL_CUR_USE_DRIVER
-		$db = odbc_pconnect ($dsn, $dbuser, $dbpass);
-	}else{
-		$db = odbc_pconnect($database,$dbuser,$dbpass);
+    }else{
+	    $dsn = $database;
 	}
+
+	$db = odbc_pconnect($dsn,$dbuser,$dbpass);
+
 	if($db){return $db;}
-	else{echo("<h1>Database connection failed</h1><p>($dsn)<BR>".odbc_errormsg()."</p>"); return false;}
+	else{echo("<div class=\"alert alert-danger\"><h1>Database connection failed</h1><p>($dsn)<BR>".odbc_errormsg()."</p></div>"); return false;}
 }
 
 /**
@@ -217,6 +231,10 @@ function dbf_8($p){
  */
 function dbf_4($p){
 	return lmb_strtolower($p);
+}
+
+function dbf_4a($p){
+	return strtoupper($p);
 }
 
 /**

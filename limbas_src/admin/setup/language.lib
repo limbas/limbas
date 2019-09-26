@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -23,6 +23,7 @@
 /* ---Sprach-Liste --------------------------------------------- */
 function get_language_list($langtyp=null){
 	global $db;
+	$langtyp = dbf_4($langtyp);
 
 	$sqlquery = "SELECT DISTINCT LANGUAGE,LANGUAGE_ID FROM LMB_LANG ORDER BY LANGUAGE";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -44,6 +45,7 @@ function get_language_list($langtyp=null){
 function lang_delete($del,$langtyp=null){
 	global $db;
 	global $lang;
+	$langtyp = dbf_4($langtyp);
 
 	if(is_numeric($del)){
 		$sqlquery1 = "DELETE FROM LMB_LANG$langtyp WHERE ELEMENT_ID = $del";
@@ -60,6 +62,7 @@ function lang_change($id,$element_id,$new_value,$language_id,$langtyp,$typ=1,$fi
 	global $db;
 	global $lang;
 	global $session;
+	$langtyp = dbf_4($langtyp);
 
 	if($id){
 		$sqlquery = "UPDATE LMB_LANG$langtyp SET WERT = '".parse_db_string($new_value,249)."',EDIT = ".LMB_DBDEF_TRUE." WHERE ID = $id";
@@ -67,7 +70,7 @@ function lang_change($id,$element_id,$new_value,$language_id,$langtyp,$typ=1,$fi
 		$sqlquery0 = "SELECT ID FROM LMB_LANG$langtyp WHERE ELEMENT_ID = $element_id";
 		$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
 		# no element found
-		if(!odbc_fetch_row($rs0,1)){
+		if(!odbc_fetch_row($rs0)){
 			lang_add($session["language"],$typ,$file,$new_value,$langtyp,$element_id);
 		}
 		$sqlquery = "UPDATE LMB_LANG$langtyp SET WERT = '".parse_db_string($new_value,249)."',EDIT = ".LMB_DBDEF_TRUE." WHERE ELEMENT_ID = $element_id AND LANGUAGE_ID = ".$session["language"];
@@ -93,6 +96,7 @@ function lang_change($id,$element_id,$new_value,$language_id,$langtyp,$typ=1,$fi
 /* --- ändern js --------------------------------------------- */
 function lang_changejs($id,$new_js,$language_id,$langtyp){
 	global $db;
+	$langtyp = dbf_4($langtyp);
 
 	if($id){
 		$sqlquery = "UPDATE LMB_LANG$langtyp SET JS = ".parse_db_bool($new_js)." WHERE ID = $id";
@@ -106,6 +110,7 @@ function lang_add($language_id,$typ,$file,$wert,$langtyp=null,$element_id=null){
 	global $db;
 	global $lang;
 	global $umgvar;
+	$langtyp = dbf_4($langtyp);
 
 	$result_language = get_language_list($langtyp);
 

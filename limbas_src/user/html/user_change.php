@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -66,10 +66,8 @@ function check_pass(pass2) {
 <?php
 $sqlquery = "SELECT DISTINCT * FROM LMB_COLORSCHEMES";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$bzm = 1;
-while(odbc_fetch_row($rs, $bzm)) {
-echo "<TR><TD>".odbc_result($rs, "NAME")."</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB1")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB2")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB3")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB4")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB8")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB3")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB7")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB8")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD></TR>";
-$bzm++;
+while(odbc_fetch_row($rs)) {
+    echo "<TR><TD>".odbc_result($rs, "NAME")."</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB1")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB2")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB3")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB4")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB8")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB3")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB7")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB8")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD></TR>";
 }
 ?>
 </TABLE>
@@ -119,12 +117,10 @@ echo "<TR class=\"tabBody\"><TD width=150>$lang[624]</TD><TD><SELECT STYLE=\"wid
 echo "<OPTION VALUE=\"-1\">system";
 $sqlquery = "Select DISTINCT LANGUAGE,LANGUAGE_ID FROM LMB_LANG";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$bzm = 1;
-while(odbc_fetch_row($rs, $bzm)) {
+while(odbc_fetch_row($rs)) {
 $langid = odbc_result($rs,"LANGUAGE_ID");
 if($result_user["language"] == $langid){$SELECTED =  "SELECTED";}else {unset($SELECTED);}
 echo "<OPTION VALUE=\"".urlencode($langid)."\" $SELECTED>".odbc_result($rs,"LANGUAGE");
-$bzm++;
 }
 echo "</SELECT></TD></TR>";
 
@@ -135,12 +131,10 @@ echo "<TR class=\"tabBody\"><TD width=150>$lang[2576]</TD><TD><SELECT STYLE=\"wi
 echo "<TR class=\"tabBody\"><TD width=150>$lang[623]</TD><TD><SELECT STYLE=\"width:160px;\" name=\"farbe\" OnChange=\"this.form.farbe_change.value='1';\">";
 $sqlquery = "SELECT * FROM LMB_COLORSCHEMES WHERE LOWER(NAME) LIKE '%".lmb_strtolower($result_user["layout"])."%' ORDER BY ID";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$bzm = 1;
-while(odbc_fetch_row($rs, $bzm)) {
+while(odbc_fetch_row($rs)) {
 $farbid = odbc_result($rs,"ID");
 if($result_user["farbschema"] == $farbid){$SELECTED =  "SELECTED";}else {unset($SELECTED);}
 echo "<OPTION VALUE=\"".urlencode($farbid)."\" $SELECTED>".str_replace("(".$result_user["layout"].")","",odbc_result($rs,"NAME"));
-$bzm++;
 }
 echo "</SELECT></TD></TR>";
 

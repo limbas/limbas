@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -109,8 +109,7 @@ function get_gselect(){
 				if($gfield[$stab]['field_type'][$sfield] == 4 AND $gfield[$stab]['select_pool'][$sfield]){
 					$sqlquery = "SELECT ID,WERT,".implode(',',$sql_s).",KEYWORDS FROM LMB_SELECT_W WHERE POOL = ".$gfield[$stab]['select_pool'][$sfield]." AND HIDE = ".LMB_DBDEF_FALSE." ORDER BY ".$gfield[$stab]['select_sort'][$sfield];
 					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-					$bzm = 1;
-					while(odbc_fetch_row($rs, $bzm)) {
+					while(odbc_fetch_row($rs)) {
 						$gselect[$stab][$sfield]['id'][] = odbc_result($rs, "ID");
 						$gselect[$stab][$sfield]['val'][] = odbc_result($rs, "WERT");
 						$gselect[$stab][$sfield]['keywords'][] = odbc_result($rs, "KEYWORDS");
@@ -120,8 +119,6 @@ function get_gselect(){
 					    foreach($umgvar['multi_language'] as $lkey => $lval){
 	                       $gselect[$stab][$sfield]["val_$lval"][] = odbc_result($rs, 'LANG'.$lval.'_WERT');
 	                    }}
-
-						$bzm++;
 					}
 				}
 			}
@@ -139,12 +136,10 @@ function parse_action($lmpar){
 	global $gtab;
 	global $gfield;
 	global $umgvar;
-	global $exp_typ;
 	global $filter;
 	global $LINK;
 	global $db;
 
-	$exp_typ = 4;
 	$lmb = array();
 
 	require_once("gtab/gtab.lib");
@@ -259,6 +254,34 @@ function parse_action($lmpar){
                         }
                     }
 			    }
+			# --- remote download (external storage) ---
+			}elseif($lmpart['action'] === 'remote_download' AND $LINK[190]) {
+                require_once('extra/explorer/filestructure.lib');
+
+                if(is_numeric($fileID = $lmpart['fileID'])
+				and $file = file_download($fileID)
+				and $storageID = $file['storageID']) {
+					# TODO maybe check url against cloud config?
+					$lmb[$action]['file'] = $file;
+                    $lmb[$action]['storageConfig'] = lmbGetExternalStorageConfig($storageID);
+				}
+			# --- finish remote upload (external storage) ---
+			}elseif($lmpart['action'] === 'finish_remote_upload' AND $LINK[128]) { # TODO link required?
+				if ($fileID = $lmpart['ID']) {
+                    $success = $lmpart['success'];
+                    if ($success and $fileName = $lmpart['uniqueFileName']) {
+                    	$dlLink = '';
+                    	if ($lmpart['downloadLink']) {
+                    		$dlLink = ",DOWNLOAD_LINK='" . parse_db_string($lmpart['downloadLink']) . "'";
+						}
+						$sqlquery = "UPDATE LDMS_FILES SET SECNAME='" . parse_db_string($fileName) . "' $dlLink WHERE STORAGE_ID IS NOT NULL AND ID=" . parse_db_int($fileID);
+                    	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                    } else {
+                        require_once('extra/explorer/filestructure.lib');
+                    	del_file($fileID); # TODO forcedelnm?
+					}
+                }
+
 			# admin - variables
 			}elseif($lmpart['action'] == "get_lmbvars" AND is_array($lmpart['lmbvars'])){
 				if(in_array("tabgroup",$lmpart['lmbvars'])){$lmb[$action]['tabgroup'] = $GLOBALS['tabgroup'];}
@@ -627,11 +650,21 @@ function actionDMS(&$lmpart,&$lmb,$action){
 		if($lmpart['upload_file']['name']){
 			foreach ($lmpart['upload_file']['name'] as $ukey => $uval){
 				$uplpath = $umgvar['pfad']."/USER/".$session['user_id']."/temp/".$uval;
-				if($lmpart['upload_file']['content'][$ukey]){
-					if($handle = fopen($uplpath, "w")){
-						fwrite($handle, base64_decode($lmpart['upload_file']['content'][$ukey]));
+                $fileContent = &$lmpart['upload_file']['content'][$ukey];
+                $noupload = $lmpart['upload_file']['noupload'][$ukey];
+                if($fileContent or $noupload === 3 /* external storage */) { # TODO maybe implement noupload other than 3
+					if($fileContent and $handle = fopen($uplpath, "w")){
+						fwrite($handle, base64_decode($fileContent));
+                        fclose($handle);
 					}
-					
+                    if ($noupload === 3) {
+                        $storageID = $filestruct['storageID'][$lmpart['LID']];
+                        $lmb[$action]['upload']['storageConfig'] = lmbGetExternalStorageConfig($storageID);
+                        $lmb[$action]['upload']['authToken'] = lmbGenerateAuthToken();
+                    } else {
+                        $noupload = 1;
+                    }
+
 					$file = array();
 					$dublicate = array();
 					$relation = array();
@@ -639,14 +672,20 @@ function actionDMS(&$lmpart,&$lmb,$action){
 					$file['file'][] = $uplpath;
 					$file['file_name'][] = $lmpart['upload_file']['name'][$ukey];
 					$file['file_type'][] = $lmpart['upload_file']['mimetype'][$ukey];
+                    $file['file_size'][] = $lmpart['upload_file']['file_size'][$ukey];
 					$dublicate['type'][] = $lmpart['upload_file']['dublicate'][$ukey];
-					
-					# upload relation in ldms_files
+                    $dublicate['subj'][] = $lmpart['upload_file']['subj'][$ukey];
+
+                    # upload relation in ldms_files
 					$relation = $lmpart['upload_file']['relation'][$ukey];
 
 					$lmb[$action]['upload']['file_name'][] = $lmpart['upload_file']['name'][$ukey];
-					if($nfid = upload($file,$fid,$relation,1,$dublicate)){
+					if($nfid = upload($file,$fid,$relation,$noupload,$dublicate)){
 						$lmb[$action]['upload']['file_id'][] = $nfid;
+
+						if ($noupload === 3) {
+                            $lmb[$action]['upload']['uniqueFileName'] = lmbUniqueFilename($lmpart["upload_file"]["name"][$ukey], $nfid);
+						}
 
 						# link relation
 						if($lmpart['upload_file']['link']['verkn_tabid'][$ukey]){
@@ -880,7 +919,7 @@ function getGtabLevel(&$lmpart,&$lmb,$action,$gtabid,$verkn=null,$rec=null){
 	}}
 
 	# --- Result Space ---
-	$resultspace = $umgvar["resultspace"];
+	#$resultspace = $umgvar["resultspace"];
 	if(is_numeric($lmpart[$gtabid]["count"]) AND $lmpart[$gtabid]["count"] > $umgvar["resultspace"]){
 		$GLOBALS["umgvar"]["resultspace"] = $lmpart[$gtabid]["count"];
 	}

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -289,7 +289,9 @@ function import_create_addtable($import_typ, $ifield, $add_permission = null, $v
                 
                 // Feld hinzufügen
                 if(!in_array(lmb_strtolower($ifield['name'][$bzm9]),$systemfields)){
-                    if (add_field($ifield['name'][$bzm9], $new_gtabid, $ifield['typ'][$bzm9], 0, $ifield['size'][$bzm9], $ifield['id'], $ifield['desc'][$bzm9], $ifield['spelling'][$bzm9], null, null, null, null, null, $import_typ)) {
+                    if ($new_field_id = add_field($ifield['name'][$bzm9], $new_gtabid, $ifield['typ'][$bzm9], 0, $ifield['size'][$bzm9], $ifield['id'], $ifield['desc'][$bzm9], $ifield['spelling'][$bzm9], null, null, null, null, null, $import_typ)) {
+                        // add field permission
+                        add_fieldPermission($new_gtabid,$new_field_id,1);
                         if($verbose){echo "--> " . $lang[168] . " <b>" . $ifield['name'][$bzm9] . "</b> " . $lang[1018] . "<br>";}
                     }
                 }else{
@@ -323,9 +325,13 @@ function import_create_addtable($import_typ, $ifield, $add_permission = null, $v
         }
     }
 
+    // add table permissions
+    $commit = add_tablePermission($new_gtabid,1);
+
+
     return $ifield;
 
-}    
+}
     
 function import_create_filltable($import_typ, $ifield, $txt_terminate = null, $txt_encode = null, $txt_enclosure = null, $verbose=null){
     global $db;
@@ -333,10 +339,13 @@ function import_create_filltable($import_typ, $ifield, $txt_terminate = null, $t
     global $umgvar;
     global $lang;
     global $DBA;
-    
+
+
+    $new_gtab = $ifield['new_gtab'];
+    $new_gtabid = $ifield['new_gtabid'];
+
     /* --- Datensätze einfügen -------------------------------------- */
     if ($ifield['data'] == '2') {
-        
 
         if($verbose){
         echo "
@@ -378,7 +387,7 @@ function import_create_filltable($import_typ, $ifield, $txt_terminate = null, $t
             $INSERT_OK = "0";
             $INSERT_FALSE = "0";
             $bzm0 = 1;
-            
+
             while ($line = lmb_fgetcsv($txtdat, 0, $txt_terminate, $txt_enclosure, $umgvar['csv_escape'])) {
 
                     // ignore header
@@ -936,7 +945,7 @@ function checkFormatTEXT($data,$param){
 
 
 /* --- fill Systemtables ------- */
-function fill($tab,$file,$ctyp,$ktyp,$cname,$kkey,$partimport,$import_overwrite,$txt_encode=null,$txt_terminate=null,$txt_enclosure=null){
+function fill($tab,$file,$ctyp,$ktyp,$cname,$kkey,$partimport,$import_overwrite,$txt_encode=null,$txt_terminate=null,$txt_enclosure=null,$nosequence=null){
 	global $umgvar;
 	global $table;
 	global $backupdir;
@@ -1126,7 +1135,9 @@ EOD;
 	
 	
 	# set sequence table
-	lmb_rebuildSequences($tab);
+    if(strtolower(substr($tab,0,4)) != 'lmb_' && !$nosequence) {
+        lmb_rebuildSequences($tab,'ID');
+    }
 	
 	if($count_false){
 		if($GLOBALS["action"]){echo "<p style=\"color:red;\">&nbsp;&nbsp;$count_false $lang[1016]!</p>";}
@@ -1178,7 +1189,7 @@ function deleteExistingTab($tab){
 }
 
 /* --- System Import ------- */
-function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $txt_terminate=null,$txt_enclosure=null,$tab_name=''){
+function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $txt_terminate=null,$txt_enclosure=null,$tab_name='',$nosequence=null){
 	global $umgvar;
 	global $table;
 	global $backupdir;
@@ -1246,7 +1257,15 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 	    
 		if(lmb_substr($line,0,1) != "#" AND lmb_substr($line,0,1) != " "){
 
-			if(lmb_substr($line,0,22) == "<begin indexdefinition"){
+	        if(lmb_substr($line,0,10) == "<encoding ") {
+                $encoding = rtrim(rtrim(lmb_substr($line,10)),'>');
+
+                // encoding different
+                if(!$txt_encode AND $encoding AND $GLOBALS['umgvar']["charset"] AND strtoupper($encoding) != strtoupper($GLOBALS['umgvar']["charset"])){
+                    $txt_encode = 1;
+                }
+
+            }elseif(lmb_substr($line,0,22) == "<begin indexdefinition"){
 				$definition = "index";
 			} elseif(lmb_substr($line,0,20) == "<end indexdefinition"){
 				$definition = "";
@@ -1308,7 +1327,7 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 				if(!$kkey){$kkey = "ID";}
 
 				/* --- Tabelle füllen------- */
-				if($iscreated && $filename != ''){fill($tab,$filename,$ctyp,$ktyp,$cname,$kkey,$partimport,$import_overwrite,$txt_encode,$txt_terminate,$txt_enclosure);}
+				if($iscreated && $filename != ''){fill($tab,$filename,$ctyp,$ktyp,$cname,$kkey,$partimport,$import_overwrite,$txt_encode,$txt_terminate,$txt_enclosure,$nosequence);}
 
 			}elseif($definition == "table"){
 				unset($columndef);
@@ -1349,8 +1368,19 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 					}elseif($cdf[1] == "TIMESTAMP" OR $cdf[1] == "BOOLEAN" OR $cdf[1] == "INTEGER" OR $cdf[1] == "SMALLINT" OR $cdf[1] == "BIGINT" OR $cdf[1] == "FIXED" OR $cdf[1] == "FLOAT" OR $cdf[1] == "DECIMAL" OR $cdf[1] == "NUMERIC" OR $cdf[1] == "DATE" OR $cdf[1] == "TIME"){
 						$default = "DEFAULT ".$default;
 					}else{
+                        # decode/encode utf8
+                        if($txt_encode){
+                            if($umgvar["charset"] == "UTF-8"){
+                                $default = utf8_encode($default);
+                            }else{
+                                $default = iconv("UTF-8",$GLOBALS["umgvar"]["charset"],$default);
+                            }
+                        }
 						$default = "DEFAULT '".parse_db_string($default)."'";
 					}
+					if($DBA['DB'] == 'mysql' AND $cdf[1] == 'TIMESTAMP' AND !$default){
+					    $default = 'NULL';
+                    }
 				}
 				if($cdf[1] == "TIMESTAMP" OR $cdf[1] == "DATE" OR $cdf[1] == "TIME" OR $cdf[1] == "BOOLEAN" OR $cdf[1] == "INTEGER" OR $cdf[1] == "SMALLINT" OR $cdf[1] == "BIGINT" OR $cdf[1] == "FLOAT" OR $cdf[1] == "DECIMAL" OR (($cdf[1] == "FIXED" OR $cdf[1] == "NUMERIC") AND (!$cdf[3] OR $cdf[3] == 28))){
 					$sqlquery .= $cdf[0]." ".$cdf[7].$cdf[8]." ".$default;
@@ -1768,7 +1798,7 @@ function import_complete($del_all,$txt_encode=null, $txt_terminate=null,$txt_enc
 	}
 	
 	# fullimport
-	import('','over',null,$txt_encode, $txt_terminate,$txt_enclosure);
+	import('','over',null,$txt_encode, $txt_terminate,$txt_enclosure,null,1);
 	
 	# create foreign keys and trigger
 	if(lmb_rebuildForeignKey(1)){

@@ -2,7 +2,7 @@
 
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH (support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH (support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -12,7 +12,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5  
+ * Version 3.6  
  */
 
 /*
@@ -131,7 +131,7 @@ if (! $bodyclass) {
 
 /* --- Aktion :-------------------------------------------------------- */
 if ($action == "layoutframe") {
-    $layoutframe = preg_replace("[^a-zA-Z0-9-]", "", $layoutframe);
+    $layoutframe = preg_replace('/[^a-z0-9-]/i', "", $layoutframe);
     $require2 = "layout/frame_main_" . $layoutframe . ".php";
     if (file_exists("layout/" . $session["layout"] . "/frame_main_" . $layoutframe . ".php")) {
         $require2 = "layout/" . $session["layout"] . "/frame_main_" . $layoutframe . ".php";
@@ -223,7 +223,7 @@ elseif ($action == "help_user") {
         $require6 = "gtab/html/gtab_erg.php";
         
         $ONLOAD = "gtabSetTablePosition('$posx','$posy')";
-        $ONKEYDOWN = "OnKeydown=\"sendkeydown(event);\"";
+        $ONKEYDOWN = "OnKeydown=\"return sendkeydown(event);\"";
         $ONCLICK = "OnClick=\"body_click();\"";
     }
     
@@ -234,7 +234,7 @@ elseif ($action == "gtab_exp" and $LINK[$action] == 1) {
     $require2 = "gtab/gtab_register.lib";
     $require4 = "gtab/html/gtab_erg_exp.php";
     $BODY = 1;
-} 
+}
 
 elseif ($action == "gtab_deterg" and $LINK[$action] == 1) {
     $userview = "all";
@@ -340,19 +340,6 @@ elseif ($action == "user_change" and $LINK[$action] == 1) {
     $require2 = "user/html/user_color.php";
     $ONLOAD = "create_list();";
     $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
-} elseif ($action == "user_vorlage" and $LINK[$action] == 1) {
-    $require1 = "extra/vorlagen/vorlagen_liste.dao";
-    $require2 = "extra/vorlagen/vorlagen_liste.php";
-    $ONLOAD = "";
-    $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
-} elseif ($action == "user_vorlage_change" and $LINK[$action] == 1) {
-    $require1 = "extern/richtext/richtext.js";
-    $require2 = "extra/richtext.php";
-} elseif ($action == "user_vorlageninhalt" and $LINK[$action] == 1) {
-    $require1 = "extra/vorlagen/vorlagen_inhalt.dao";
-    $BODY = 1;
-} elseif ($action == "user_vorlage_view" and $LINK[$action] == 1) {
-    $require1 = "extra/vorlagen/vorlagen_inhalt.dao";
 } elseif ($action == "user_snapshot" and $LINK[$action] == 1) {
     $require1 = "extra/snapshot/snapshot.lib";
     $require2 = "user/html/user_snapshot.php";
@@ -571,8 +558,7 @@ if ($BODY != 1) {
 <TITLE>Limbas - Enterprise Unifying Framework V <?=$umgvar["version"]?></TITLE>
 
 <!-- meta -->
-<META NAME="Title"
-	CONTENT="Limbas Enterprise Unifying Framework V <?=$umgvar["version"]?>">
+<META NAME="Title" CONTENT="Limbas Enterprise Unifying Framework V <?=$umgvar["version"]?>">
 <meta NAME="author" content="LIMBAS GmbH">
 <META NAME="Publisher" CONTENT="LIMBAS GmbH">
 <META NAME="Copyright" CONTENT="LIMBAS GmbH">
@@ -580,12 +566,10 @@ if ($BODY != 1) {
 <meta NAME="version" content="<?=$umgvar["version"]?>">
 <meta NAME="date" content="2017-10-23">
 <meta HTTP-EQUIV="content-language" content="de">
-<meta HTTP-EQUIV="Content-Type"
-	content="text/html; charset=<?=$umgvar["charset"]?>">
+<meta HTTP-EQUIV="Content-Type" content="text/html; charset=<?=$umgvar["charset"]?>">
 <meta http-equiv="Content-Style-Type" content="text/css">
 <meta HTTP-EQUIV="Pragma" content="no-cache">
-<meta HTTP-EQUIV="Cache-Control"
-	content="no-cache, no-store, post-check=0, pre-check=0, must-revalidate">
+<meta HTTP-EQUIV="Cache-Control" content="no-cache, no-store, post-check=0, pre-check=0, must-revalidate">
 <meta HTTP-EQUIV="Expires" content="0">
 <meta HTTP-EQUIV="X-UA-Compatible" content="ie=edge,chrome=1" />
 
@@ -599,10 +583,10 @@ if ($BODY != 1) {
         echo "
 	<script type=\"text/javascript\" src=\"extra/explorer/file-cache.js\"></script>\n
 	<script type=\"text/javascript\" src=\"EXTENSIONS/system/ext.js\"></script>\n
-	<script type=\"text/javascript\" src=\"extern/jquery/jquery-ui-1.10.4.min.js\"></script>
+	<script type=\"text/javascript\" src=\"extern/jquery/jquery-ui-1.12.1.min.js\"></script>
 	<script type=\"text/javascript\" src=\"extern/jquery/jquery.ui.datepicker-de.js\"></script>
 	<script type=\"text/javascript\" src=\"extern/jquery/jquery-ui-timepicker-addon.js\"></script>
-	<style type=\"text/css\">@import url(extern/jquery/theme/jquery-ui-1.10.4.custom.css);</style>
+	<style type=\"text/css\">@import url(extern/jquery/theme/jquery-ui-1.12.1.min.css);</style>
 	<style type=\"text/css\">@import url(extern/jquery/theme/jquery-ui-timepicker-addon.css);</style>";
         if ($umgvar["use_jsgraphics"]) {
             echo "<script type=\"text/javascript\" src=\"extern/jsgraphics/jsgraphics.js\"></script>\n";

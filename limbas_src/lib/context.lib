@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -212,7 +212,7 @@ function pop_input($id,$zl,$name,$val,$readonly,$width=null){
 	echo <<<EOD
 	<div class="lmbContextRow" title="{$lang[$LINK["desc"][$id]]}">
 		<div class="lmbContextItem">
-			<input type="text" name="$name" id="$name" value="$val" $readonly onchange="$zl" {$width}>
+			<input type="text" class="contextmenu" name="$name" id="$name" value="$val" $readonly onchange="$zl" {$width}>
 		</div>
 	</div>
 EOD;
@@ -335,8 +335,14 @@ function pop_color($funcname=null,$fparams=null,$container=null){
 	echo "<table border=\"0\" cellspacing=\"3\" cellpadding=\"0\"><tr>\n";
 	foreach ($user_colors["wert"] as $key => $value){
 		if($bzm1 == 8){$bzm1 = 1;echo "</tr><tr>";}
-		if($value){$b = "border:1px solid black;";}
-		echo "<td style=\"width:14px;height:14px;cursor:pointer;background-color:#".$value.";$b;\" OnClick=\"$funcname('".$value."'$fparams);\" title=\"$value\"><div style=\"width:14px;height:14px;\"></div></td>\n";
+		if($value){
+		    $b = "border:1px solid black;";
+		    $value = trim($value,'#');
+		}
+		if (!empty($value)) {
+		    $value = '#'.$value;
+        }
+		echo "<td style=\"width:14px;height:14px;cursor:pointer;background-color:".$value.";$b;\" OnClick=\"$funcname('".$value."'$fparams);\" title=\"$value\"><div style=\"width:14px;height:14px;\"></div></td>\n";
 		$bzm1++;
 	}
 	echo "</tr></table></div></div>\n";

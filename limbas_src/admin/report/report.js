@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -151,6 +151,7 @@ function endDrag(e) {
 	current = null;
 	eltd = null;
 	eltb = null;
+	mainisactive = null;
 	
 	if(document.getElementById(currentdiv)){
 		document.getElementById('border_move').style.left = parentsetx(currentdiv) + document.getElementById(currentdiv).offsetWidth - 4;
@@ -251,50 +252,6 @@ function resize(evt) {
 	}
 	return false;
 }
-
-
-function resizeXXX(evt) {
-	if (current != null) {
-		
-		if(parent.form_menu.document.form1.raster.value > 0){var raster = parent.form_menu.document.form1.raster.value;}
-		else{var raster = 10;}
-		
-		if(browser_ns5){
-			if(evt.pageY - py + ey > 0 && evt.pageX - px + ex > 0){
-				if(parent.report_menu.document.form1.prop.checked || evt.shiftKey){
-					current.top = evt.pageY - dy;
-					current.left = px + ((evt.pageY - py) * xy) - 8;
-					current_div.height = evt.pageY - py + ey;
-					current_div.width = (evt.pageY - py + ey) * xy;
-				}else{
-					current.top = evt.pageY - dy;
-					current.left = evt.pageX - dx;
-					current_div.height = evt.pageY - py + ey;
-					current_div.width = evt.pageX - px + ex;
-				}
-			}
-		}else{
-			if((window.event.clientY - py + ey) > 0 && (window.event.clientX - px + ex) > 0){
-				if(parent.report_menu.document.form1.prop.checked){
-					current.top = window.event.clientY - dy;
-					current.left = px + (window.event.clientY - py) * xy;
-					current_div.height = window.event.clientY - py + ey;
-					current_div.width = (window.event.clientY - py + ey) * xy;
-				}else{
-					current.top = window.event.clientY - dy;
-					current.left = window.event.clientX - dy;
-					current_div.height = window.event.clientY - py + ey;
-					current_div.width = window.event.clientX - px + ex;
-				}
-			}
-		}
-
-		parent.report_menu.document.form1.HPOSI.value = parseInt(current_div.height);
-		parent.report_menu.document.form1.WPOSI.value = parseInt(current_div.width);
-	}
-	return false;
-}
-
 
 function resize_pic(evt) {
 	if (current != null) {
@@ -464,64 +421,35 @@ function aktivate_resize(evt) {
 	document.onmousedown = startResize;
 }
 
-
 /* --- Tabellen-Element hinzufügen (Feld aktivieren) ----------------------------------- */
 function act_tabelement(dv,TAB,ROW,COL){
-	document.getElementById(dv).style.backgroundImage = 'url(pic/bg_hide.gif)';
+
 	document.form1.report_tab.value = TAB;
 	document.form1.report_tab_el.value = ROW+";"+COL;
 	parent.report_menu.document.form1.report_tab.value = TAB;
 	parent.report_menu.document.form1.report_tab_el.value = ROW+";"+COL
+
 }
 
-function add_tabelement(TABDIV,TAB,ROW,COL){
-	var dv = "tab_el_"+TABDIV+"_"+ROW+"_"+COL;
-	eval("setTimeout(\"act_tabelement('"+dv+"','"+TAB+"','"+ROW+"','"+COL+"')\",100);");
-}
-
-//Tabellenfelderumrandung zurücksetzen
-function clear_tab_el() {
-	document.form1.report_tab_el.value = "";
-	parent.report_menu.document.form1.report_tab_el.value = "";
+//Tabellen-Spaltenbreite berechnen
+var tdel = new Array();
+function set_tabcols() {
 	var cc = null;
-	var ar = document.getElementsByTagName("td");
+	var ar = document.getElementsByTagName("th");
 	for (var i = ar.length; i > 0;) {
 		cc = ar[--i];
 		if(cc.id.substring(0,6) == "tab_el"){
-			cc.style.backgroundImage = "none";
+			var el = cc.id.split("_");
+			var elname = el[2] + "_" + el[4];
+			tdel[elname] = elname + "_" + parseInt(cc.offsetWidth);
 		}
 	}
-}
 
-
-//Tabellen-Spaltenbreite berechnen
-
-function set_tabcols() {
-	var tdel = new Array();
-	var cc = null;
-	var s = 0;
-	var ar = document.getElementsByTagName("table");
-	for (var i = ar.length; i > 0;) {
-		cc = ar[--i];
-		if(cc.id.substr(0,4) == 'tab_'){
-		for (var e = 0; e < cc.rows[0].cells.length; e++){
-			var el = cc.rows[0].cells[e];
-			var elpart = el.id.split("_");
-			tdel[s] = elpart[2] + "_" + elpart[4]+'_'+el.style.width.substr(0,el.style.width.length-2);
-			s++;
-		}}
+	var val = "";
+	for (var e in tdel){
+		var val = val + tdel[e] + ";";
 	}
-	document.form1.report_tab_size.value = tdel.join(';');
-}
-
-function set_tabcell_width(width){
-	if(width){
-		var cell = $("#"+currentdiv).closest('td');
-	    var columnNo = cell.index();
-	    cell.closest("table")
-	        .find("tr td:nth-child(" + (columnNo+1) + ")")
-	        .width(width);
-	}
+	document.form1.report_tab_size.value = val;
 }
 
 
@@ -645,30 +573,33 @@ function fill_style(STYLE_ID,STYLE,VAL) {
 		ID = div.substr(3,10);
 		el = document.getElementById(div).style;
 		if(!setstyle[ID]){setstyle[ID] = new Array();}
-		
-		switch(STYLE) {
-			case "":
-			break;
-			case "lineHeight":
-			if(!VAL){VAL = 0;}
-			VAL = parseFloat(el.fontSize) + parseFloat(VAL);
-			VAL = VAL + "px";
-			el.lineHeight = VAL;
-			break;
-			case "border":
-			if(VAL && VAL != 'none'){
-			if(document.getElementById(VAL).checked){
-				eval("el."+VAL+" = '';");
-				VAL = '';
-			}else{
-				eval("el."+VAL+" = 'none';");
-				VAL = 'none';
-			}}
-			break;
-			default:
-			eval("el."+STYLE+"='"+VAL+"';");
-			break;
-		}
+
+        switch (STYLE) {
+            case "":
+                break;
+            case "lineHeight":
+                if (!VAL) {
+                    VAL = 0;
+                }
+                VAL = parseFloat(el.fontSize) + parseFloat(VAL);
+                VAL = VAL + "px";
+                el.lineHeight = VAL;
+                break;
+            case "border":
+                if (VAL && VAL != 'none') {
+                    if (document.getElementById(VAL).checked) {
+                        el[VAL] = '';
+                        VAL = '';
+                    } else {
+                        el[VAL] = 'none';
+                        VAL = 'none';
+                    }
+                }
+                break;
+            default:
+                eval("el." + STYLE + "='" + VAL + "';");
+                break;
+        }
 
 		setstyle[ID][STYLE_ID] = VAL;
 
@@ -709,8 +640,6 @@ function fill_style(STYLE_ID,STYLE,VAL) {
 			eval("js_clear('jg"+ID+"');");
 			eval("js_ellipse('jg"+ID+"','"+js_width+"','"+js_height+"','"+js_color+"','"+js_lheight+"');");
 		}
-		
-		if(!multiselect){return;}
 
 	});
 
@@ -743,7 +672,7 @@ function set_viewtab() {
 var bigInputEdit;
 // bei ENTER fokus()
 function enterfocus(evt){
-	if((currenttyp == 'text' || ((currenttyp == 'formel' || currenttyp == 'dbdat') && !bigInputEdit)) && currentdiv){document.getElementById(currentdiv).focus();}
+	if((currenttyp == 'text' || currenttyp == 'templ' || ((currenttyp == 'formel' || currenttyp == 'dbdat') && !bigInputEdit)) && currentdiv){document.getElementById(currentdiv).focus();}
 }
 
 // --- jsGraphics -----------------------------------
@@ -806,9 +735,11 @@ function lmb_multiMenu(evt){
 function aktivate(evt,el,ID,TYP,tab_element) {
 	divid = "div"+ID;
 	picid = "pic"+ID;
-	
+
 	// disable selectable function
-	$('#innenramen').selectable("disable");
+	if(evt) {
+        $('#innenramen').selectable("disable");
+    }
 
 	document.onmousedown = startDrag;
 	document.form1.aktiv_id.value = divid;
@@ -837,7 +768,7 @@ function aktivate(evt,el,ID,TYP,tab_element) {
 
 	
 	// controlKey for multiselect
-	if(evt && !evt.ctrlKey){
+	if(!evt || (evt && !evt.ctrlKey)){
 		// active shadow
 		var cc = null;
 		var ar = document.getElementsByTagName("*");
@@ -878,7 +809,12 @@ function aktivate(evt,el,ID,TYP,tab_element) {
 }
 
 // ------------- öffne Hauptmenü ----------------
-function limbasMenuOpen(evt,el,ID,STYLE,TYP,VALUE,PICSTYLE,tab_element,dbdat_table,dbdat_field) {
+var mainisactive = 0;
+function limbasMenuOpen(evt,el,ID,STYLE,TYP,VALUE,PICSTYLE,tab_element,dbdat_table,dbdat_field,TAB,ROW,COL) {
+
+    // only get the first touched element, not its parents (which happens due to event propagation)
+    if(TAB && mainisactive){return;}
+	mainisactive = 1;
 
 	div = 'div'+ID;
 	window.focus();
@@ -891,6 +827,7 @@ function limbasMenuOpen(evt,el,ID,STYLE,TYP,VALUE,PICSTYLE,tab_element,dbdat_tab
 
 	var fullborder = 0;
 	var style = STYLE.split(";");
+
 	//if(TYP == 'formel'){document.value_form.val.value=VALUE;}
 	if(TYP == 'bild'){
 		document.picinfo_form.picinfo_val.value=VALUE;
@@ -915,9 +852,8 @@ function limbasMenuOpen(evt,el,ID,STYLE,TYP,VALUE,PICSTYLE,tab_element,dbdat_tab
 	document.form_menu.ZIndex.value = 'zIndex: '+document.getElementById(div).style.zIndex;
 	document.form_menu.input_fontface.value = document.getElementById(div).style.fontFamily;
 	document.form_menu.input_fontsize.value = document.getElementById(div).style.fontSize;
+	document.form_menu.input_tabpadding.value = document.getElementById(div).style.padding;
 	document.fstyle_form.input_fontvalign.value = document.getElementById(div).style.fontValign;
-	var borderstyle = document.getElementById(div).style.borderStyle.split(' ');
-	document.form_menu.input_borderstyle.value = borderstyle[0];
 
 	if(style[25] == 'true'){document.form_menu.input_line_reverse.checked = 1;}else{document.form_menu.input_line_reverse.checked = 0;}
 	if(style[33] == 'true'){document.form_menu.input_list.checked = 1;}else{document.form_menu.input_list.checked = 0;}
@@ -927,8 +863,8 @@ function limbasMenuOpen(evt,el,ID,STYLE,TYP,VALUE,PICSTYLE,tab_element,dbdat_tab
 	if(style[35] == 'true'){document.form_menu.input_breaklock.checked = 1;}else{document.form_menu.input_breaklock.checked = 0;}
 	if(style[41] == 'true'){document.form_menu.input_tagmode.checked = 1;}else{document.form_menu.input_tagmode.checked = 0;}
 	if(style[42] == 'true'){document.form_menu.input_html.checked = 1;}else{document.form_menu.input_html.checked = 0;}
-	
-	if(style[22]){document.form_menu.input_tabpadding.value = style[22];}else{document.form_menu.input_tabpadding.value = '';}
+
+	//if(style[22]){document.form_menu.input_tabpadding.value = style[22];}else{document.form_menu.input_tabpadding.value = '';}
 	if(style[29]){document.form_menu.input_hide.value = style[29];}else{document.form_menu.input_hide.value = 0;}
 	if(style[30]){document.form_menu.input_tabrows.value = style[30];}
 	if(style[31]){document.form_menu.input_tabcols.value = style[31];}
@@ -941,28 +877,33 @@ function limbasMenuOpen(evt,el,ID,STYLE,TYP,VALUE,PICSTYLE,tab_element,dbdat_tab
 	if(style[39]){document.form_menu.input_relativedisplay.value = style[39];}else{document.form_menu.input_relativedisplay.value = '0';}
 	if(style[40]){document.form_menu.input_seperator.value = style[40];}else{document.form_menu.input_seperator.value = '';}
 	if(style[43]){document.form_menu.input_rotate.value = style[43];}else{document.form_menu.input_rotate.value = '';}
+	if(style[44]){document.form_menu.input_cellstyle.value = style[44];}else{document.form_menu.input_cellstyle.value = '';}
 
-	// Borderstyle anzeigen
-	if(browser_ns5){
-		var tmp = document.getElementById(div).style.borderWidth.split(' ');
-		if(parseFloat(tmp[0])){
-			document.form_menu.input_borderwidth.value = tmp[0];
-		}else{
-			document.form_menu.input_borderwidth.value = '0px';
-		}
-	}else{
-		if(parseFloat(document.getElementById(div).style.borderWidth)){
-			document.form_menu.input_borderwidth.value = document.getElementById(div).style.borderWidth;
-		}else{
-			document.form_menu.input_borderwidth.value = '';
-		}
-	}
 
-	var el = document.getElementById(div).style;
-	document.form_menu.borderLeft.checked = el.borderLeft.indexOf('none') < 1;
-	document.form_menu.borderRight.checked = el.borderRight.indexOf('none') < 1;
-	document.form_menu.borderTop.checked = el.borderTop.indexOf('none') < 1;
-	document.form_menu.borderBottom.checked = el.borderBottom.indexOf('none') < 1;
+	// first remove all active cell borders
+	$( ".activecellborder" ).removeClass( "activecellborder" );
+
+	// Bordestyle
+	var borderstyle = document.getElementById(div).style.borderStyle;
+	document.form_menu.input_borderstyle.value = '';
+	if(borderstyle && borderstyle.indexOf('solid') !== -1) {
+        document.form_menu.input_borderstyle.value = 'solid';
+    }
+
+    // Boerderwidth
+    var tmp = document.getElementById(div).style.borderWidth.split(' ');
+	document.form_menu.input_borderwidth.value = '0';
+	tmp.reverse();
+	if(parseFloat(tmp[0])) {
+        document.form_menu.input_borderwidth.value = tmp[0];
+    }
+
+	// border show
+	var el_ = document.getElementById(div).style;
+	if(!el_.borderStyle || el_.borderStyle == 'none' || !el_.borderLeft.indexOf('none') || !el_.borderLeft.indexOf('1px dotted grey')){document.form_menu.borderLeft.checked=0;}else{document.form_menu.borderLeft.checked=1;}
+	if(!el_.borderStyle || el_.borderStyle == 'none' || !el_.borderRight.indexOf('none') || !el_.borderRight.indexOf('1px dotted grey')){document.form_menu.borderRight.checked=0;}else{document.form_menu.borderRight.checked=1;}
+	if(!el_.borderStyle || el_.borderStyle == 'none' || !el_.borderTop.indexOf('none') || !el_.borderTop.indexOf('1px dotted grey')){document.form_menu.borderTop.checked=0;}else{document.form_menu.borderTop.checked=1;}
+	if(!el_.borderStyle || el_.borderStyle == 'none' || !el_.borderBottom.indexOf('none') || !el_.borderBottom.indexOf('1px dotted grey')){document.form_menu.borderBottom.checked=0;}else{document.form_menu.borderBottom.checked=1;}
 
 	// Textstyle anzeigen
 	document.fstyle_form.input_fontstyle.value = document.getElementById(div).style.fontStyle;
@@ -984,25 +925,18 @@ function limbasMenuOpen(evt,el,ID,STYLE,TYP,VALUE,PICSTYLE,tab_element,dbdat_tab
 	}
 	
 	document.getElementById('big_input').value=document.getElementById(currentdiv).value;
-	
-	//if(parseInt(document.getElementById(div).style.wordSpacing)){
-	//	document.fstyle_form.input_wordspacing.value = document.getElementById(div).style.wordSpacing;
-	//}else{
-	//	document.fstyle_form.input_wordspacing.value = "";
-	//}
+
 
 	//Typanzeige im Hauptmenü
+    var TYP_ = TYP;
+    if(TYP == 'tabcell'){TYP_ = 'tab';}
 	parent.report_menu.resetmenu();
-	parent.report_menu.document.getElementById(TYP).style.backgroundColor = jsvar["WEB7"];
-	//parent.report_menu.document.form1.default_size.value = parseInt(document.getElementById(div).style.fontSize) + 'px';
-	//parent.report_menu.document.form1.default_font.value = document.getElementById(div).style.fontFamily;
-	//document.getElementById("menu").style.visibility='visible';
+	parent.report_menu.document.getElementById(TYP_).style.backgroundColor = jsvar["WEB7"];
 
-	
 	if($(".ui-selected").filter('[id^="div"]').length > 1){
 		var TYP = 'multi';
 	}
-	
+
 	//Anzeigeoptionen im Menü bei unterschiedlichen Typen
 	var cc = null;
 	var ar = document.getElementById('menu').getElementsByTagName("tr");
@@ -1025,13 +959,29 @@ function limbasMenuOpen(evt,el,ID,STYLE,TYP,VALUE,PICSTYLE,tab_element,dbdat_tab
 			}
 		}
 	}
+	// show activateParentCell if is inner cellelement
+	$('.menu_activateParentCell').hide();
+	if($('#div'+ID).parent().hasClass('defaultcellborder')){
+	    $('.menu_activateParentCell').show();
+    }
 
-	//Tabellenspalten einblenden
-	if(TYP=="tab")
-	{
-		show_tab(ID,'1');
+
+	if(TYP=="tab") {
+		sel = limbasGlobalGetIndexofValueInSelect("input_tabcols",PICSTYLE);
+		document.getElementById("input_tabcols").options[sel].selected=true;
+		sel = limbasGlobalGetIndexofValueInSelect("input_tabrows",VALUE);
+		document.getElementById("input_tabrows").options[sel].selected=true;
 	}
 
+
+	// add active cell border
+	if(TYP=='tabcell'){
+	    $('#div'+ID).addClass( "activecellborder" );
+
+		act_tabelement(ID,TAB,ROW,COL);
+		parent.report_menu.document.form1.HPOSI.value = parseInt(document.getElementById(div).offsetHeight);
+		parent.report_menu.document.form1.WPOSI.value = parseInt(document.getElementById(div).offsetWidth);
+	}
 
 	//Listenmarkierung setzten
 	var cc = null;
@@ -1086,23 +1036,6 @@ function lmb_dropEl(lang){
 
 }
 
-//Tabellenspalten aus/einblenden
-function show_tab(ID,BOOL){
-	var cc = null;
-	eval("var ar = document.getElementById('tab_"+ID+"').getElementsByTagName('tr');");
-	for (var i = ar.length; i > 0;) {
-		cc = ar[--i];
-		if(cc.id.substring(0,2) == "tr"){
-			if(BOOL == 1){
-				cc.style.display="";
-				view_tab[ID] = 'true'
-			}else{
-				cc.style.display='none';
-				view_tab[ID] = 'false'
-			}
-		}
-	}
-}
 
 
 /* --- Submenüsteuerung ----------------------------------- */
@@ -1216,4 +1149,16 @@ function el_to_front(dir){
 	});
 
 	if(currentdiv){fill_posxy(currentdiv);}
+}
+
+
+function el_to_cell(){
+
+	if(currentdiv){
+	    //console.log(currentdiv);
+        //console.log($('#'+currentdiv ).parent().attr('id'));
+
+        document.getElementById(currentdiv).parentNode.onmousedown();
+
+    }
 }

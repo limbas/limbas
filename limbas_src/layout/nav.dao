@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -29,7 +29,9 @@ function menu_get_standard($id, $bzm){
 	$menu[$bzm]["id"] = $id;
 	if($LINK["link_url"][$id]){
 		$menu[$bzm]["link"] = $LINK["link_url"][$id];
-	}
+	}elseif($LINK["extension"][$id]){
+	    $menu[$bzm]["link"] = 'main.php?action='.$GLOBALS['LINK_ACTION'][$id];
+    }
 	$menu[$bzm]["bg"] = $LINK["bg"][$id];
 	$menu[$bzm]["icon"] = $LINK["icon_url"][$id];
 	$menu[$bzm]["gicon"] = $LINK["gicon"][$id];
@@ -37,6 +39,8 @@ function menu_get_standard($id, $bzm){
 
 	return $menu;
 }
+
+
 
 # tables Snapshots
 function menu_get_snapshots($tabid, $depth = null){
@@ -83,7 +87,7 @@ function menu_get_forms($tabid, $typ, $depth = null){
 	return $menu;
 }
 
-function menu_get_form($tabid, $formid, $typ, $depth = null) {
+function menu_get_form($tabid, $formid, $typ = 1, $depth = null) {
     global $gformlist;
 
     # check privilege
@@ -130,7 +134,7 @@ function menu_get_reports($tabid, $typ, $depth = null){
 	return $menu;
 }
 
-function menu_get_report($tabid, $reportid, $typ, $depth = null) {
+function menu_get_report($tabid, $reportid, $typ = 1, $depth = null) {
     global $greportlist;
 
     # check privilege
@@ -179,7 +183,7 @@ function menu_get_diagrams($tabid, $typ, $depth = null){
 	return $menu;
 }
 
-function menu_get_diagram($tabid, $diagid, $typ, $depth = null) {
+function menu_get_diagram($tabid, $diagid, $typ = 1, $depth = null) {
     global $gdiaglist;
 
     # check privilege
@@ -219,7 +223,7 @@ function menu_get_newdata($tabid, $depth){
 	return $menu;
 }
 
-function menu_get_table($tabid, $isAdmin, $depth) {
+function menu_get_table($tabid, $isAdmin=false, $depth=0) {
     global $gtab;
     global $gfield;
 
@@ -447,6 +451,7 @@ function menu_get_admin_setup(){
 	if($LINK[43]){$menu0 = menu_get_standard(43,0);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[177]){$menu0 = menu_get_standard(177,1);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[45]){$menu0 = menu_get_standard(45,2);$menu1 = array_merge($menu1,$menu0);}
+	if($LINK[305]){$menu0 = menu_get_standard(305,2);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[46]){$menu0 = menu_get_standard(46,3);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[47]){$menu0 = menu_get_standard(47,4);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[108]){$menu0 = menu_get_standard(108,5);$menu1 = array_merge($menu1,$menu0);}
@@ -454,8 +459,10 @@ function menu_get_admin_setup(){
 	if($LINK[294]){$menu0 = menu_get_standard(294,10);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[295]){$menu0 = menu_get_standard(295,10);$menu1 = array_merge($menu1,$menu0);}
     if($LINK[298]){$menu0 = menu_get_standard(298,10);$menu1 = array_merge($menu1,$menu0);}
+    if($LINK[302]){$menu0 = menu_get_standard(302,11);$menu1 = array_merge($menu1,$menu0);}
     if($LINK[303]){$menu0 = menu_get_standard(303,12);$menu1 = array_merge($menu1,$menu0);}
-	return $menu1;
+    if($LINK[207]){$menu0 = menu_get_standard(207,13);$menu1 = array_merge($menu1,$menu0);}
+    return $menu1;
 }
 
 # admin tools - backup
@@ -479,6 +486,7 @@ function menu_get_admin_tools_indize(){
 
 	if($LINK[185]){$menu0 = menu_get_standard(185,0);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[187]){$menu0 = menu_get_standard(187,1);$menu1 = array_merge($menu1,$menu0);}
+    if($LINK[210]){$menu0 = menu_get_standard(210,1);$menu1 = array_merge($menu1,$menu0);}
 
 	return $menu1;
 }
@@ -852,12 +860,30 @@ if($LINK[17]){
 	$menu[17] = $menu1;
 }
 
+
+
+# custom menu
+require_once('layout/nav_depend.dao');
+
+
+
 # EXTENSIONS
 if($gLmbExt["ext_nav.inc"]){
 	foreach ($gLmbExt["ext_nav.inc"] as $key => $extfile){
 		require_once($extfile);
 	}
 }
+
+
+
+
+
+
+
+
+
+
+
 
 #echo "<pre>";
 #print_r($menu);

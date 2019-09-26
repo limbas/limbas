@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -21,18 +21,18 @@
 /*----------------- Farbe DIV -------------------*/?>
 <DIV ID="menu_color" class="lmbContextMenu" style="position:absolute;visibility:hidden;z-index:10002;">
 <FORM NAME="fcolor_form"><TABLE BORDER="0" cellspacing="0" cellpadding="0">
-<TR><TD><?pop_top('menu_color');?></TD></TR>
+<TR><TD><?php pop_top('menu_color');?></TD></TR>
 <TR><TD>
-<?pop_color(null, null, 'menu_color');?>
+<?php pop_color(null, null, 'menu_color');?>
 </TD></TR>
-<TR><TD><?pop_bottom();?></TD></TR>
+<TR><TD><?php pop_bottom();?></TD></TR>
 </TABLE></FORM></DIV>
 
 <DIV ID="menu_indicator" class="lmbContextMenu" style="position:absolute;visibility:hidden;z-index:10001;" onclick="activ_menu=1">
-<?pop_left();?>
+<?php pop_left();?>
 <TEXTAREA ID="indicator_value" OnChange="document.form2.tabid.value=currenttabid;document.form2.indicator.value=' '+this.value;document.form2.submit();" STYLE="width:150px;height:100px;background-color:<?= $farbschema['WEB8'] ?>;"></TEXTAREA>
-<?pop_right();?>
-<?pop_bottom();?>
+<?php pop_right();?>
+<?php pop_bottom();?>
 </DIV>
 
 
@@ -135,7 +135,7 @@ function divclose(){
 	if(!activ_menu){
 		hide_trigger();
 		document.getElementById('menu_indicator').style.visibility = 'hidden';
-                document.getElementById('menu_color').style.visibility = 'hidden';
+        document.getElementById('menu_color').style.visibility = 'hidden';
 		document.getElementById('lmbAjaxContainer').style.visibility = 'hidden';
 	}
 	activ_menu = 0;
@@ -326,7 +326,7 @@ if(!$tab_group){?>
 	<?php if($result_gtab[$tab_group]["id"]){?>
 	
 	<TABLE class="tabfringe" BORDER="0" cellspacing="1" cellpadding="2">
-	<TR class="tabHeader"><TD class="tabHeaderItem" colspan="24"><?= $tabgroup_["name"][$tab_group] ?></TD></TR>
+	<TR class="tabHeader"><TD class="tabHeaderItem" colspan="24"><?= $lang[1029] ?>: <?= $tabgroup_["name"][$tab_group] ?></TD></TR>
 
 	<TR class="tabHeader">
 	<TD class="tabHeaderItem" nowrap>ID</TD>
@@ -432,7 +432,7 @@ if(!$tab_group){?>
 
 			<TD class="vAlignMiddle txtAlignCenter"><?= $result_gtab[$tab_group]["num_gtab"][$bzm] ?>&nbsp;</TD>
             
-                        <TD class="vAlignMiddle txtAlignCenter"><DIV id="color_select_<?=$result_gtab[$tab_group]["id"][$bzm]?>" OnClick="div4(this, event,'<?=$result_gtab[$tab_group]["id"][$bzm]?>')" STYLE="cursor:pointer;width:20px;height:20px;border:1px solid black;background-color:<?php if($result_gtab[$tab_group]['markcolor'][$bzm]){echo $result_gtab[$tab_group]['markcolor'][$bzm];}else{echo $farbschema['WEB10'];}?>"></DIV></TD>
+            <TD class="vAlignMiddle txtAlignCenter"><DIV id="color_select_<?=$result_gtab[$tab_group]["id"][$bzm]?>" OnClick="div4(this, event,'<?=$result_gtab[$tab_group]["id"][$bzm]?>')" STYLE="cursor:pointer;width:20px;height:20px;border:1px solid black;background-color:<?php if($result_gtab[$tab_group]['markcolor'][$bzm]){echo $result_gtab[$tab_group]['markcolor'][$bzm];}else{echo $farbschema['WEB10'];}?>"></DIV></TD>
 
             <?php if($result_gtab[$tab_group]["logging"][$bzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}?>
             <TD class="vAlignMiddle txtAlignCenter">
@@ -585,6 +585,7 @@ if(!$tab_group){?>
 	echo "<OPTION VALUE=\"2\">".$lang[1929];  # calendar
     echo "<OPTION VALUE=\"7\">".'Kanban';
 	echo "<OPTION VALUE=\"6\">".$lang[767]; # messages
+    echo "<OPTION VALUE=\"8\">".$lang[428]; # report template
 	echo "<OPTION VALUE=\"5\">".$lang[2023]; # view
 	?>
     

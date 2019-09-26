@@ -1,0 +1,144 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.6
+ */
+
+/*
+ * ID:
+ */
+?>
+
+
+
+<?php
+
+require_once ('lib/include_admin.lib');
+require_once ('admin/setup/language.lib');
+
+
+
+function lmb_custmenuEdit(&$custmenu,$par){
+
+    global $db;
+    global $session;
+
+    $ID = $par['id'];
+    $linkid = $par['linkid'];
+    $act = $par['act'];
+    $parent = $par['parent'];
+    $value = $par['menudetail'];
+
+    if($par['act'] == 'update') {
+
+        if($value['typ'] <= 1 AND $value['name']) {
+            // change lang value
+            if ($custmenu['name'][$ID]) {
+                lang_change(null,$custmenu['name'][$ID],$value['name'],$session["language"],'_DEPEND');
+            // new lang value
+            }else{
+                $name_id =  lang_add($session["language"],4,'Custmenu: ',$value['name'],'_DEPEND');
+                $sql[] = "NAME = ".parse_db_int($name_id);
+            }
+        }elseif(is_numeric($value['name'])){
+            $sql[] = "NAME = '".parse_db_int($value['name'])."'";
+        }
+
+        // title
+        if($value['title']) {
+            // change lang value
+            if ($custmenu['title'][$ID]) {
+                lang_change(null,$custmenu['title'][$ID],$value['title'],$session["language"],'_DEPEND');
+            // new lang value
+            }else{
+                $name_id =  lang_add($session["language"],4,'Custmenu: ',$value['title'],'_DEPEND');
+                $sql[] = "TITLE = ".parse_db_int($name_id);
+            }
+        }
+        // url
+        if($value['url']) {
+             $sql[] = "URL = '".parse_db_string($value['url'],150)."'";
+        }
+        // icon
+        if($value['icon']) {
+             $sql[] = "ICON = '".parse_db_string($value['icon'],60)."'";
+        }
+        // bg
+        if($value['bg']) {
+             $sql[] = "BG = '".parse_db_string($value['bg'],7)."'";
+        }
+        // typ
+        if($value['typ']) {
+             $sql[] = "TYP = ".parse_db_int($value['typ']);
+        }
+
+        if($sql) {
+            $sql_ = implode($sql,',');
+            $sqlquery = "UPDATE LMB_CUSTMENU SET $sql_ WHERE ID = $ID";
+            $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        }
+
+    }elseif($par['act'] == 'add'){
+        $NEXTID = next_db_id("LMB_CUSTMENU");
+
+        $sqlquery = "SELECT MAX(SORT) AS NEXTSORT FROM LMB_CUSTMENU WHERE LINKID = $linkid AND PARENT = ".parse_db_int($parent);
+        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        $NEXTSORT = (odbc_result($rs, 'NEXTSORT')+1);
+
+        $sqlquery = "INSERT INTO LMB_CUSTMENU (ID,LINKID,PARENT,TYP,SORT) VALUES ($NEXTID,$linkid,".parse_db_int($parent).",".parse_db_int($value['name']).",$NEXTSORT)";
+        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    }elseif($par['act'] == 'delete'){
+
+        $sqlquery = "DELETE FROM LMB_CUSTMENU WHERE ID = $ID AND LINKID = $linkid";
+        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+        $sqlquery = "UPDATE LMB_CUSTMENU SET PARENT = ".$custmenu['parent'][$ID]." WHERE PARENT = $ID AND LINKID = $linkid";
+        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+        lang_delete($custmenu['name'][$ID]);
+        lang_delete($custmenu['title'][$ID]);
+
+    }elseif($par['act'] == 'up' OR $par['act'] == 'down'){
+        lmb_sortConf($par['act'],$ID,'LMB_CUSTMENU','SORT',"LINKID = $linkid AND PARENT = $parent");
+    }
+
+
+}
+
+function lmb_custmenuGet($linkid){
+    global $db;
+    global $lang;
+
+    $sqlquery = "SELECT * FROM LMB_CUSTMENU WHERE LINKID = " . parse_db_int($linkid)." ORDER BY PARENT,SORT";
+    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    while (odbc_fetch_row($rs)) {
+
+        $key = odbc_result($rs, 'ID');
+
+        $custmenu['id'][$key] = $key;
+        $custmenu['parent'][$key] = odbc_result($rs, 'PARENT');
+        $custmenu['typ'][$key] = odbc_result($rs, 'TYP');
+        $custmenu['name'][$key] = odbc_result($rs, 'NAME');
+        $custmenu['title'][$key] = odbc_result($rs, 'TITLE');
+        $custmenu['linkid'][$key] = odbc_result($rs, 'LINKID');
+        $custmenu['sort'][$key] = odbc_result($rs, 'SORT');
+        $custmenu['url'][$key] = odbc_result($rs, 'URL');
+        $custmenu['icon'][$key] = odbc_result($rs, 'ICON');
+        $custmenu['bg'][$key] = odbc_result($rs, 'BG');
+    }
+
+    return $custmenu;
+
+}

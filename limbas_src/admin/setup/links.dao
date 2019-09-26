@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -25,220 +25,272 @@ lmb_StartTransaction();
 $supervisor = $umgvar["admin_mode"];
 
 /* --- ändern --------------------------------------------- */
-if($change){
+if ($change) {
 
-	foreach ($link_name as $key => $value){
-		if(${"change_link_".$key}){
+    foreach ($link_name as $key => $value) {
+        if (${"change_link_" . $key}) {
 
-			# check destination
-			if($key >= 1000 OR !$supervisor){
-				$typ = "_DEPEND";
-			}else{
-				$typ = "";
-			}
+            # check destination
+            if ($key >= 1000 OR !$supervisor) {
+                $typ = "_DEPEND";
+            } else {
+                $typ = "";
+            }
 
-			# add copy to links_local
-			if(!$supervisor){
-                                $sqlquery = "SELECT ID FROM LMB_ACTION_DEPEND WHERE ID = $key";
-                                $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                                if(!$rs) {$commit = 1;}
-				if(!odbc_fetch_row($rs,1)){
-                                        $sqlquery1 = "INSERT INTO LMB_ACTION_DEPEND (SELECT * FROM LMB_ACTION WHERE ID = $key)";
-                                        $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-                                        if(!$rs1) {$commit = 1;}
-				}
-			}
+            # add copy to links_local
+            if (!$supervisor) {
+                $sqlquery = "SELECT ID FROM LMB_ACTION_DEPEND WHERE ID = $key";
+                $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                if (!$rs) {
+                    $commit = 1;
+                }
+                if (!odbc_fetch_row($rs)) {
+                    $sqlquery1 = "INSERT INTO LMB_ACTION_DEPEND (SELECT * FROM LMB_ACTION WHERE ID = $key)";
+                    $rs1 = odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+                    if (!$rs1) {
+                        $commit = 1;
+                    }
+                }
+            }
 
-                        $linkname = preg_replace("/ {2,}/"," ",parse_db_string($link_name[$key],50));
-                        $linkdesc = preg_replace("/ {2,}/"," ",parse_db_string($link_desc[$key],50));
-                        $linkaction = preg_replace("/ {2,}/"," ",parse_db_string($link_action[$key],50));
-                        $linkurl = preg_replace("/ {2,}/"," ",parse_db_string($link_url[$key],240));
-                        $linkiconurl = preg_replace("/ {2,}/"," ",parse_db_string($link_iconurl[$key],128));
-                        $linkhelpurl = preg_replace("/ {2,}/"," ",parse_db_string($link_helpurl[$key],60));
-                        $linkext = preg_replace("/ {2,}/"," ",parse_db_string($link_ext[$key],50));
-                        $linksubgroup = preg_replace("/ {2,}/"," ",parse_db_int($link_subgroup[$key],5));
-                        $linksort = preg_replace("/ {2,}/"," ",parse_db_int($link_sort[$key],5));
+            $linkname = preg_replace("/ {2,}/", " ", parse_db_string($link_name[$key], 50));
+            $linkdesc = preg_replace("/ {2,}/", " ", parse_db_string($link_desc[$key], 50));
+            $linkaction = preg_replace("/ {2,}/", " ", parse_db_string($link_action[$key], 50));
+            $linkurl = preg_replace("/ {2,}/", " ", parse_db_string($link_url[$key], 240));
+            $linkiconurl = preg_replace("/ {2,}/", " ", parse_db_string($link_iconurl[$key], 128));
+            $linkhelpurl = preg_replace("/ {2,}/", " ", parse_db_string($link_helpurl[$key], 60));
+            $linkext = preg_replace("/ {2,}/", " ", parse_db_string($link_ext[$key], 50));
+            $linksubgroup = preg_replace("/ {2,}/", " ", parse_db_int($link_subgroup[$key], 5));
+            $linksort = preg_replace("/ {2,}/", " ", parse_db_int($link_sort[$key], 5));
 
 
-                        $sqlquery1 = "UPDATE LMB_ACTION$typ SET
+            $sqlquery1 = "UPDATE LMB_ACTION$typ SET
                         SUBGROUP = $linksubgroup,
-                        LINK_URL = '".$linkurl."',
-                        ICON_URL = '".$linkiconurl."',
-                        HELP_URL = '".$linkhelpurl."',
-                        ACTION = '".$linkaction."',
+                        LINK_URL = '" . $linkurl . "',
+                        ICON_URL = '" . $linkiconurl . "',
+                        HELP_URL = '" . $linkhelpurl . "',
+                        ACTION = '" . $linkaction . "',
                         SORT = $linksort,
                         EXTENSION = '$linkext'
-                        WHERE ID = ".$key;
+                        WHERE ID = " . $key;
 
-                        # get lang-id
-                        $sqlquery2 = "SELECT ID,LINK_NAME FROM LMB_ACTION$typ WHERE ID = $key";
-                        $rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
-                        if(!$rs2) {$commit = 1;}
-                        $name_langid = odbc_result($rs2, "LINK_NAME");
+            # get lang-id
+            $sqlquery2 = "SELECT ID,LINK_NAME FROM LMB_ACTION$typ WHERE ID = $key";
+            $rs2 = odbc_exec($db, $sqlquery2) or errorhandle(odbc_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
+            if (!$rs2) {
+                $commit = 1;
+            }
+            $name_langid = odbc_result($rs2, "LINK_NAME");
 
-                        $sqlquery2 = "SELECT ID,BESCHREIBUNG FROM LMB_ACTION$typ WHERE ID = $key";
-                        $rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
-                        if(!$rs2) {$commit = 1;}
-                        $desc_langid = odbc_result($rs2, "BESCHREIBUNG");
+            $sqlquery2 = "SELECT ID,BESCHREIBUNG FROM LMB_ACTION$typ WHERE ID = $key";
+            $rs2 = odbc_exec($db, $sqlquery2) or errorhandle(odbc_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
+            if (!$rs2) {
+                $commit = 1;
+            }
+            $desc_langid = odbc_result($rs2, "BESCHREIBUNG");
 
-                        # add copy to language_local
-                        $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-                        if(!$rs1) {$commit = 1;}
-                        if(!$rs) {$commit = 1;}
+            # add copy to language_local
+            $rs1 = odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            if (!$rs1) {
+                $commit = 1;
+            }
+            if (!$rs) {
+                $commit = 1;
+            }
 
-                        if(!$supervisor){
-                                $sqlquery0 = "SELECT ID,ELEMENT_ID FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = $name_langid";
-                                $rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
-                                if(!$rs0) {$commit = 1;}
-                                if(!odbc_fetch_row($rs0,1)){
-                                        $sqlquery1 = "INSERT INTO LMB_LANG_DEPEND (SELECT * FROM LMB_LANG WHERE ELEMENT_ID = $name_langid)";
-                                        $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-                                        if(!$rs1) {$commit = 1;}
-                                }
-                                $sqlquery0 = "SELECT ID,ELEMENT_ID FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = $desc_langid";
-                                $rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
-                                if(!$rs0) {$commit = 1;}
-                                if(!odbc_fetch_row($rs0,1)){
-                                        $sqlquery1 = "INSERT INTO LMB_LANG_DEPEND (SELECT * FROM LMB_LANG WHERE ELEMENT_ID = $desc_langid)";
-                                        $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-                                        if(!$rs1) {$commit = 1;}
-                                }
-                        }
+            if (!$supervisor) {
+                $sqlquery0 = "SELECT ID,ELEMENT_ID FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = $name_langid";
+                $rs0 = odbc_exec($db, $sqlquery0) or errorhandle(odbc_errormsg($db), $sqlquery0, $action, __FILE__, __LINE__);
+                if (!$rs0) {
+                    $commit = 1;
+                }
+                if (!odbc_fetch_row($rs0)) {
+                    $sqlquery1 = "INSERT INTO LMB_LANG_DEPEND (SELECT * FROM LMB_LANG WHERE ELEMENT_ID = $name_langid)";
+                    $rs1 = odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+                    if (!$rs1) {
+                        $commit = 1;
+                    }
+                }
+                $sqlquery0 = "SELECT ID,ELEMENT_ID FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = $desc_langid";
+                $rs0 = odbc_exec($db, $sqlquery0) or errorhandle(odbc_errormsg($db), $sqlquery0, $action, __FILE__, __LINE__);
+                if (!$rs0) {
+                    $commit = 1;
+                }
+                if (!odbc_fetch_row($rs0)) {
+                    $sqlquery1 = "INSERT INTO LMB_LANG_DEPEND (SELECT * FROM LMB_LANG WHERE ELEMENT_ID = $desc_langid)";
+                    $rs1 = odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+                    if (!$rs1) {
+                        $commit = 1;
+                    }
+                }
+            }
 
-                        /* --- Language update --------------------------------------------- */
-                        $sqlquery1 = "UPDATE LMB_LANG$typ SET WERT = '".$linkname."' WHERE ELEMENT_ID = $name_langid AND LANGUAGE_ID = ".$session["language"];
-                        $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-                        if(!$rs1) {$commit = 1;}
-                        $sqlquery1 = "UPDATE LMB_LANG$typ SET WERT = '".$linkdesc."' WHERE ELEMENT_ID = $desc_langid AND LANGUAGE_ID = ".$session["language"];
-                        $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-                        if(!$rs1) {$commit = 1;}
+            /* --- Language update --------------------------------------------- */
+            $sqlquery1 = "UPDATE LMB_LANG$typ SET WERT = '" . $linkname . "' WHERE ELEMENT_ID = $name_langid AND LANGUAGE_ID = " . $session["language"];
+            $rs1 = odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            if (!$rs1) {
+                $commit = 1;
+            }
+            $sqlquery1 = "UPDATE LMB_LANG$typ SET WERT = '" . $linkdesc . "' WHERE ELEMENT_ID = $desc_langid AND LANGUAGE_ID = " . $session["language"];
+            $rs1 = odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            if (!$rs1) {
+                $commit = 1;
+            }
 
-                        $lang[$name_langid] = $linkname;
-                        $lang[$desc_langid] = $linkdesc;
-		}
-	}
+            $lang[$name_langid] = $linkname;
+            $lang[$desc_langid] = $linkdesc;
+        }
+    }
 
 }
 
 
 /* --- hinzufügen --------------------------------------------- */
-if($add){
-	require_once("admin/setup/language.lib");
+if ($add) {
+    require_once("admin/setup/language.lib");
 
-	$newsubgroup = preg_replace("/ {2,}/"," ",parse_db_int($new_subgroup,5));
-	$newmaingroup = preg_replace("/ {2,}/"," ",parse_db_int($new_maingroup,5));
-	$newlinkname = preg_replace("/ {2,}/"," ",parse_db_string($new_linkname,50));
-	$newdesc = preg_replace("/ {2,}/"," ",parse_db_string($new_desc,50));
-	$newlinkaction = preg_replace("/ {2,}/"," ",parse_db_string($new_linkaction,50));
-	$newlinkurl = preg_replace("/ {2,}/"," ",parse_db_string($new_linkurl,240));
-	$newiconurl = preg_replace("/ {2,}/"," ",parse_db_string($new_iconurl,128));
-	$newextension = preg_replace("/ {2,}/"," ",parse_db_string($new_extension,160));
+    $newsubgroup = preg_replace("/ {2,}/", " ", parse_db_int($new_subgroup, 5));
+    $newmaingroup = preg_replace("/ {2,}/", " ", parse_db_int($new_maingroup, 5));
+    $newlinkname = preg_replace("/ {2,}/", " ", parse_db_string($new_linkname, 50));
+    $newdesc = preg_replace("/ {2,}/", " ", parse_db_string($new_desc, 50));
+    $newlinkaction = preg_replace("/ {2,}/", " ", parse_db_string($new_linkaction, 50));
+    $newlinkurl = preg_replace("/ {2,}/", " ", parse_db_string($new_linkurl, 240));
+    $newiconurl = preg_replace("/ {2,}/", " ", parse_db_string($new_iconurl, 128));
+    $newextension = preg_replace("/ {2,}/", " ", parse_db_string($new_extension, 160));
 
-        /* --- Link Eintrag ---------------------------------------- */
-        if($newmaingroup == 5 OR !$supervisor){
-                $NEXTLID = next_db_id("LMB_ACTION_DEPEND");
-		# beginning from 1000
-		if($NEXTLID < 1000){
-			$NEXTLID = 1000;
-		}
-                $ltyp = "_DEPEND";
-        }else{
-		$NEXTLID = next_db_id("LMB_ACTION");
-		$ltyp = "";
+    /* --- Link Eintrag ---------------------------------------- */
+    if ($newmaingroup == 5 OR !$supervisor) {
+        $NEXTLID = next_db_id("LMB_ACTION_DEPEND");
+        # beginning from 1000
+        if ($NEXTLID < 1000) {
+            $NEXTLID = 1000;
         }
+        $ltyp = "_DEPEND";
+    } else {
+        $NEXTLID = next_db_id("LMB_ACTION");
+        $ltyp = "";
+    }
 
-        $linkname = lang_add($session["language"],2,0,$newlinkname,$ltyp);
-        $linkdesc = lang_add($session["language"],2,0,$newdesc,$ltyp);
+    $linkname = lang_add($session["language"], 2, 0, $newlinkname, $ltyp);
+    $linkdesc = lang_add($session["language"], 2, 0, $newdesc, $ltyp);
 
-	$sqlquery = "INSERT INTO LMB_ACTION$ltyp (ID,LINK_NAME,LINK_URL,ICON_URL,BESCHREIBUNG,MAINGROUP,SUBGROUP,ACTION,EXTENSION) VALUES ($NEXTLID,".parse_db_int($linkname,5).",'$newlinkurl','$newiconurl',".parse_db_int($linkdesc,5).",".$newmaingroup.",".$newsubgroup.",'$newlinkaction','$newextension')";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-        if(!$rs) {$commit = 1;}
+    $sqlquery = "INSERT INTO LMB_ACTION$ltyp (ID,LINK_NAME,LINK_URL,ICON_URL,BESCHREIBUNG,MAINGROUP,SUBGROUP,ACTION,EXTENSION) VALUES ($NEXTLID," . parse_db_int($linkname, 5) . ",'$newlinkurl','$newiconurl'," . parse_db_int($linkdesc, 5) . "," . $newmaingroup . "," . $newsubgroup . ",'$newlinkaction','$newextension')";
+    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
 
-        /* --- Link-Rechte Eintrag ---------------------------------------- */
-	$sqlquery = "SELECT GROUP_ID FROM LMB_GROUPS";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	$bzm = 1;
-	while(odbc_fetch_row($rs, $bzm)) {
-                /* --- Next ID ---------------------------------------- */
-		$NEXTID = next_db_id("LMB_RULES_ACTION");
-		if(odbc_result($rs,"GROUP_ID") == 1){$perm = 2;}else{$perm = 1;}
-		$sqlquery1 = "INSERT INTO LMB_RULES_ACTION (ID,LINK_ID,GROUP_ID,PERM) VALUES (".$NEXTID.",".$NEXTLID.",".odbc_result($rs,"GROUP_ID").",$perm)";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-		if(!$rs1) {$commit = 1;}
-                $bzm++;
-	}
+    /* --- Link-Rechte Eintrag ---------------------------------------- */
+    $sqlquery = "SELECT GROUP_ID FROM LMB_GROUPS";
+    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
+    while (odbc_fetch_row($rs)) {
+        /* --- Next ID ---------------------------------------- */
+        $NEXTID = next_db_id("LMB_RULES_ACTION");
+        if (odbc_result($rs, "GROUP_ID") == 1) {
+            $perm = 2;
+        } else {
+            $perm = 1;
+        }
+        $sqlquery1 = "INSERT INTO LMB_RULES_ACTION (ID,LINK_ID,GROUP_ID,PERM) VALUES (" . $NEXTID . "," . $NEXTLID . "," . odbc_result($rs, "GROUP_ID") . ",$perm)";
+        $rs1 = odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+        if (!$rs1) {
+            $commit = 1;
+        }
+    }
 }
 
 /* --- löschen --------------------------------------------- */
-if($del){
+if ($del) {
 
-	$sqlquery = "SELECT LINK_NAME,BESCHREIBUNG FROM LMB_ACTION WHERE ID = $id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	if(odbc_fetch_row($rs, 1)){
-		$link_name = odbc_result($rs,"LINK_NAME");
-		$link_desc = odbc_result($rs,"BESCHREIBUNG");
-	}else{
-		$sqlquery = "SELECT LINK_NAME,BESCHREIBUNG FROM LMB_ACTION_DEPEND WHERE ID = $id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!$rs) {$commit = 1;}
-		if(odbc_fetch_row($rs, 1)){
-			$link_name = odbc_result($rs,"LINK_NAME");
-			$link_desc = odbc_result($rs,"BESCHREIBUNG");
-		}else{
-			$link_name = 0;
-			$link_desc = 0;
-		}
-	}
+    $sqlquery = "SELECT LINK_NAME,BESCHREIBUNG FROM LMB_ACTION WHERE ID = $id";
+    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
+    if (odbc_fetch_row($rs)) {
+        $link_name = odbc_result($rs, "LINK_NAME");
+        $link_desc = odbc_result($rs, "BESCHREIBUNG");
+    } else {
+        $sqlquery = "SELECT LINK_NAME,BESCHREIBUNG FROM LMB_ACTION_DEPEND WHERE ID = $id";
+        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        if (!$rs) {
+            $commit = 1;
+        }
+        if (odbc_fetch_row($rs)) {
+            $link_name = odbc_result($rs, "LINK_NAME");
+            $link_desc = odbc_result($rs, "BESCHREIBUNG");
+        } else {
+            $link_name = 0;
+            $link_desc = 0;
+        }
+    }
 
-	if(!$supervisor){
-		$sqlquery = "DELETE FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = $link_name OR ELEMENT_ID = $link_desc";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                if(!$rs) {$commit = 1;}
-		$sqlquery = "DELETE FROM LMB_ACTION_DEPEND WHERE ID = $id";
-                $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                if(!$rs) {$commit = 1;}
-                if($id >= 1000){
-                        $sqlquery = "DELETE FROM LMB_RULES_ACTION WHERE LINK_ID = ".$id;
-                        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                        if(!$rs) {$commit = 1;}
-                }
-	}else{
-                $sqlquery = "SELECT ID FROM LMB_ACTION_DEPEND WHERE ID = $id";
-                $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                if(!$rs) {$commit = 1;}
-                if(odbc_fetch_row($rs, 1)){
-                        # delete from local table
-                        $sqlquery = "DELETE FROM LMB_ACTION_DEPEND WHERE ID = $id";
-                        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                        if(!$rs) {$commit = 1;}
-                        $sqlquery = "DELETE FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = $link_name OR ELEMENT_ID = $link_desc";
-                        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                        if(!$rs) {$commit = 1;}		
-                } else {
-                        # delete from system table
-                        $sqlquery = "DELETE FROM LMB_LANG WHERE ELEMENT_ID = $link_name OR ELEMENT_ID = $link_desc";
-                        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                        if(!$rs) {$commit = 1;}
-                        $sqlquery = "DELETE FROM LMB_ACTION WHERE ID = $id";
-                        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                        if(!$rs) {$commit = 1;}
-                        $sqlquery = "DELETE FROM LMB_RULES_ACTION WHERE LINK_ID = $id";
-                        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                        if(!$rs) {$commit = 1;}
-                }            
-		
-	}
+    if (!$supervisor) {
+        $sqlquery = "DELETE FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = $link_name OR ELEMENT_ID = $link_desc";
+        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        if (!$rs) {
+            $commit = 1;
+        }
+        $sqlquery = "DELETE FROM LMB_ACTION_DEPEND WHERE ID = $id";
+        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        if (!$rs) {
+            $commit = 1;
+        }
+        if ($id >= 1000) {
+            $sqlquery = "DELETE FROM LMB_RULES_ACTION WHERE LINK_ID = " . $id;
+            $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (!$rs) {
+                $commit = 1;
+            }
+        }
+    } else {
+        $sqlquery = "SELECT ID FROM LMB_ACTION_DEPEND WHERE ID = $id";
+        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        if (!$rs) {
+            $commit = 1;
+        }
+        if (odbc_fetch_row($rs)) {
+            # delete from local table
+            $sqlquery = "DELETE FROM LMB_ACTION_DEPEND WHERE ID = $id";
+            $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (!$rs) {
+                $commit = 1;
+            }
+            $sqlquery = "DELETE FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = $link_name OR ELEMENT_ID = $link_desc";
+            $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (!$rs) {
+                $commit = 1;
+            }
+        } else {
+            # delete from system table
+            $sqlquery = "DELETE FROM LMB_LANG WHERE ELEMENT_ID = $link_name OR ELEMENT_ID = $link_desc";
+            $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (!$rs) {
+                $commit = 1;
+            }
+            $sqlquery = "DELETE FROM LMB_ACTION WHERE ID = $id";
+            $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (!$rs) {
+                $commit = 1;
+            }
+            $sqlquery = "DELETE FROM LMB_RULES_ACTION WHERE LINK_ID = $id";
+            $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (!$rs) {
+                $commit = 1;
+            }
+        }
 
-	# original language
-	$sqlquery = "SELECT ELEMENT_ID,WERT FROM LMB_LANG WHERE TYP = 2 AND LANGUAGE_ID = ".$session["language"]." AND (ELEMENT_ID = $link_name OR ELEMENT_ID = $link_desc)";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$bzm = 1;
-	while(odbc_fetch_row($rs, $bzm)) {
-		$lang[odbc_result($rs, "ELEMENT_ID")] = odbc_result($rs, "WERT");
-                $bzm++;
-	}
+    }
+
+    # original language
+    $sqlquery = "SELECT ELEMENT_ID,WERT FROM LMB_LANG WHERE TYP = 2 AND LANGUAGE_ID = " . $session["language"] . " AND (ELEMENT_ID = $link_name OR ELEMENT_ID = $link_desc)";
+    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    while (odbc_fetch_row($rs)) {
+        $lang[odbc_result($rs, "ELEMENT_ID")] = odbc_result($rs, "WERT");
+    }
 
 }
 
@@ -269,7 +321,6 @@ $link_groupdesc[4][0] = $lang[1812];		#user
 	$link_groupdesc[4][2] = $lang[$LINK['name'][142]];	#Datei Manager
 	$link_groupdesc[4][3] = $lang[$LINK['name'][29]];		#Einstellungen
 	$link_groupdesc[4][4] = $lang[$LINK['name'][169]];	#Kalender
-	$link_groupdesc[4][5] = $lang[$LINK['name'][41]];		#Vorlagen
 	$link_groupdesc[4][6] = $lang[$LINK['name'][189]];	#Schnappschuss
 	$link_groupdesc[4][7] = $lang[2059];	#workflow
 	$link_groupdesc[4][8] = $lang[$LINK['name'][40]];		#Wiedervorlage
@@ -278,77 +329,79 @@ $link_groupdesc[5][0] = $lang[1813];		#add_on
 
 
 /* --- Tabellen-Liste System --------------------------------------------- */
-if($order){$sort = "ORDER BY $order";}else{$sort = "ORDER BY MAINGROUP,SUBGROUP,SORT";}
+if ($order) {
+    $sort = "ORDER BY $order";
+} else {
+    $sort = "ORDER BY MAINGROUP,SUBGROUP,SORT";
+}
 $sqlquery = "SELECT * FROM LMB_ACTION $sort";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$bzm = 1;
-while(odbc_fetch_row($rs, $bzm)) {
-	$id = odbc_result($rs, "ID");
-	$result_links["id"][$id] = odbc_result($rs, "ID");
-	$result_links["link_name"][$id] = $lang[odbc_result($rs, "LINK_NAME")];
-	$result_links["link_name"][$id] = $lang[odbc_result($rs, "LINK_NAME")];
-	$result_links["link_url"][$id] = odbc_result($rs, "LINK_URL");
-	$result_links["icon_url"][$id] = odbc_result($rs, "ICON_URL");
-	$result_links["help_url"][$id] = odbc_result($rs, "HELP_URL");
-	$result_links["action"][$id] = odbc_result($rs, "ACTION");
-	$result_links["beschreibung"][$id] = $lang[odbc_result($rs, "BESCHREIBUNG")];
-	$result_links["maingroup"][$id] = odbc_result($rs, "MAINGROUP");
-	$result_links["subgroup"][$id] = odbc_result($rs, "SUBGROUP");
-	$result_links["sort"][$id] = odbc_result($rs, "SORT");
-	$result_links["ext"][$id] = odbc_result($rs, "EXTENSION");
-	$bzm++;
+$rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+while (odbc_fetch_row($rs)) {
+    $id = odbc_result($rs, "ID");
+    $result_links["id"][$id] = odbc_result($rs, "ID");
+    $result_links["link_name"][$id] = $lang[odbc_result($rs, "LINK_NAME")];
+    $result_links["link_name"][$id] = $lang[odbc_result($rs, "LINK_NAME")];
+    $result_links["link_url"][$id] = odbc_result($rs, "LINK_URL");
+    $result_links["icon_url"][$id] = odbc_result($rs, "ICON_URL");
+    $result_links["help_url"][$id] = odbc_result($rs, "HELP_URL");
+    $result_links["action"][$id] = odbc_result($rs, "ACTION");
+    $result_links["beschreibung"][$id] = $lang[odbc_result($rs, "BESCHREIBUNG")];
+    $result_links["maingroup"][$id] = odbc_result($rs, "MAINGROUP");
+    $result_links["subgroup"][$id] = odbc_result($rs, "SUBGROUP");
+    $result_links["sort"][$id] = odbc_result($rs, "SORT");
+    $result_links["ext"][$id] = odbc_result($rs, "EXTENSION");
 }
 
 
 # system language
-$sqlquery = "SELECT ELEMENT_ID,WERT FROM LMB_LANG WHERE TYP = 2 AND LANGUAGE_ID = ".$session["language"];
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$bzm = 1;
-while(odbc_fetch_row($rs, $bzm)) {
-	$systemlang[odbc_result($rs, "ELEMENT_ID")] = odbc_result($rs, "WERT");
-$bzm++;
+$sqlquery = "SELECT ELEMENT_ID,WERT FROM LMB_LANG WHERE TYP = 2 AND LANGUAGE_ID = " . $session["language"];
+$rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+while (odbc_fetch_row($rs)) {
+    $systemlang[odbc_result($rs, "ELEMENT_ID")] = odbc_result($rs, "WERT");
 }
 
 
 /* --- Tabellen-Liste Local --------------------------------------------- */
-if($order){$sort = "ORDER BY $order";}else{$sort = "ORDER BY MAINGROUP,SUBGROUP,SORT";}
+if ($order) {
+    $sort = "ORDER BY $order";
+} else {
+    $sort = "ORDER BY MAINGROUP,SUBGROUP,SORT";
+}
 $sqlquery = "SELECT * FROM LMB_ACTION_DEPEND $sort";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$bzm = 1;
-while(odbc_fetch_row($rs, $bzm)) {
-	$id = odbc_result($rs, "ID");
-	# system values
-	if($result_links["id"][$id]){
-		$result_links["local"][$id] = 1;
-		foreach($result_links as $key => $value){
-			$result_links["system_".$key][$id] = $result_links[$key][$id];
-		}
-		$result_links["system_link_name"][$id] = $systemlang[odbc_result($rs, "LINK_NAME")];
-		$result_links["system_beschreibung"][$id] = $systemlang[odbc_result($rs, "BESCHREIBUNG")];
+$rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+while (odbc_fetch_row($rs)) {
+    $id = odbc_result($rs, "ID");
+    # system values
+    if ($result_links["id"][$id]) {
+        $result_links["local"][$id] = 1;
+        foreach ($result_links as $key => $value) {
+            $result_links["system_" . $key][$id] = $result_links[$key][$id];
+        }
+        $result_links["system_link_name"][$id] = $systemlang[odbc_result($rs, "LINK_NAME")];
+        $result_links["system_beschreibung"][$id] = $systemlang[odbc_result($rs, "BESCHREIBUNG")];
 
-	}else{
-		$result_links["local"][$id] = 2;
-	}
-	$result_links["id"][$id] = odbc_result($rs, "ID");
-	$result_links["link_name"][$id] = $lang[odbc_result($rs, "LINK_NAME")];
-	$result_links["link_url"][$id] = odbc_result($rs, "LINK_URL");
-	$result_links["icon_url"][$id] = odbc_result($rs, "ICON_URL");
-	$result_links["help_url"][$id] = odbc_result($rs, "HELP_URL");
-	$result_links["action"][$id] = odbc_result($rs, "ACTION");
-	$result_links["beschreibung"][$id] = $lang[odbc_result($rs, "BESCHREIBUNG")];
-	$result_links["maingroup"][$id] = odbc_result($rs, "MAINGROUP");
-	$result_links["subgroup"][$id] = odbc_result($rs, "SUBGROUP");
-	$result_links["sort"][$id] = odbc_result($rs, "SORT");
-	$result_links["ext"][$id] = odbc_result($rs, "EXTENSION");
-	$bzm++;
+    } else {
+        $result_links["local"][$id] = 2;
+    }
+    $result_links["id"][$id] = odbc_result($rs, "ID");
+    $result_links["link_name"][$id] = $lang[odbc_result($rs, "LINK_NAME")];
+    $result_links["link_url"][$id] = odbc_result($rs, "LINK_URL");
+    $result_links["icon_url"][$id] = odbc_result($rs, "ICON_URL");
+    $result_links["help_url"][$id] = odbc_result($rs, "HELP_URL");
+    $result_links["action"][$id] = odbc_result($rs, "ACTION");
+    $result_links["beschreibung"][$id] = $lang[odbc_result($rs, "BESCHREIBUNG")];
+    $result_links["maingroup"][$id] = odbc_result($rs, "MAINGROUP");
+    $result_links["subgroup"][$id] = odbc_result($rs, "SUBGROUP");
+    $result_links["sort"][$id] = odbc_result($rs, "SORT");
+    $result_links["ext"][$id] = odbc_result($rs, "EXTENSION");
 }
 
 
 asort($result_links["sort"]);
 
 /* --- Transaktion ENDE -------------------------------------- */
-if($commit == 1){
-	lmb_EndTransaction(0);
+if ($commit == 1) {
+    lmb_EndTransaction(0);
 } else {
     lmb_EndTransaction(1);
 }

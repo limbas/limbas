@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -122,9 +122,10 @@ function limbasSubheaderSelection(el,gtabid,fieldid,typ,formid,ID,form_subel,aja
 			lmb_syncTable($(this).attr('id'));
 		}).removeClass('resizable');
 	}
-	
 
 	gtabSetTablePosition();
+
+	lmb_initTables();
 }
 
 // change value of grouping-fields
@@ -189,13 +190,25 @@ function lmb_UGtypePost(result,gtabid,fieldid){
 	document.getElementById("g_"+gtabid+"_"+fieldid+"_dsl").innerHTML = result;
 }
 
+function lmb_initTables(){
+    $('.extRelationTab').each(function(i, obj) {
+        lmb_initTable(obj.getAttribute('data-el'));
+    });
+}
+
 function lmb_initTable(elkey){
-	var id = 'extRelationTab_'+elkey;
+
+    var id = 'extRelationTab_'+elkey;
+    $('#'+id).addClass('extRelationTab');
+
+    if(document.getElementById(id).offsetHeight == 0){
+        return;
+    }
+
 	$('#'+id+'head').remove();
 	var head = $('#'+id+' thead');
     $("<table class='lmbfringeGtabBody' border='0' cellspacing='0' cellpadding='0' style='border:none;width:100%;table-layout:fixed' id='"+id+"head'>").append(head.html()).insertBefore("#extRelationFieldsTab_"+elkey);
     head.remove();
-
     document.getElementById("extRelationFieldsTab_"+elkey).style.height = document.getElementById("extRelationFieldsTab_"+elkey).getAttribute("lmbHeight") - document.getElementById(id+'head').offsetHeight - (document.getElementById(id+'menu') == null ? 0 : document.getElementById(id+'menu').offsetHeight);
     lmb_syncTable(id);
 }
@@ -691,8 +704,8 @@ function lmb_formpicdmove(id,way,max){
 	}else if(nr < 0){
 		 nr = max;
 	}
-	
-	
+
+
 	$("#formpicname_"+id).hide();
 
 	eval("var pic = formpicsn_"+id+"["+nr+"].split('#');");
@@ -817,8 +830,8 @@ function newwin8(ID,TAB_ID,REP_ID,MEDIUM,PRINT) {
 }
 
 // --- Fenster Long-Feld editieren -----------------------------------
-function newwin9(FIELDID,TABID,ID) {
-	editlong = open("main.php?action=edit_long&wfl_id=" + jsvar["wfl_id"] + "&wfl_inst=" + jsvar["wfl_inst"] + "&ID=" + ID + "&field_id=" + FIELDID + "&gtabid=" + TABID + "" ,"Texteditor","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=650,height=800");
+function newwin9(FIELDID,TABID,ID,GFORMID,FORMID) {
+	editlong = open("main.php?action=edit_long&wfl_id=" + jsvar["wfl_id"] + "&wfl_inst=" + jsvar["wfl_inst"] + "&ID=" + ID + "&field_id=" + FIELDID + "&gtabid=" + TABID + "&gformid=" + GFORMID + "&formid=" + FORMID ,"Texteditor","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=650,height=800");
 }
 
 // explorer
@@ -847,3 +860,5 @@ function report_archiv() {
 function lmbDiagramm(diag_id,gtabid,ID) {
 	diagramm = open("main.php?action=diag_erg&gtabid=" + gtabid + "&diag_id="+ diag_id + "&data_id=" + ID ,"Diagramm","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=600,height=400");
 }
+
+

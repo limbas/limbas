@@ -1,5 +1,8 @@
 <?php
 
+# will be overwritten during import, store for later
+$backupFile = $backupdir;
+
 if($setup_language == '2') {
     $session["setlocale"] = "en_EN";
 } else {
@@ -27,12 +30,12 @@ require("../../lib/include_admin.lib");
 require("../../lib/include_DateTime.lib");
 
 if(strtoupper($setup_charset) == "UTF-8"){
-    $umgvar["charset"] = $setup_charset;
-    $txt_encode = 1;
     require_once("../../lib/include_mbstring.lib");
+    $GLOBALS['umgvar']['charset'] = 'UTF-8';
     ini_set('default_charset', 'utf-8');
 }else{
     require_once("../../lib/include_string.lib");
+    $GLOBALS['umgvar']['charset'] = lmb_strtoupper($setup_charset);
     ini_set('default_charset', lmb_strtoupper($setup_charset));
 }
 
@@ -66,7 +69,7 @@ $GLOBALS["umgvar"]["pfad"] = $setup_path_project;
 
 require_once("../tools/import.dao");
 
-import_complete(1,$txt_encode);
+import_complete(1);
 
 /* --- update umgvar ------------------------------------------------------ */
 
@@ -121,7 +124,6 @@ $defaulturl = "http://{$_SERVER['SERVER_NAME']}{$defaulturl}/";
 $sqlquery = "UPDATE LMB_UMGVAR SET NORM = '$defaulturl' WHERE FORM_NAME = 'url'";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-
 # --- update include_db.lib ----------------------------
 $dblibvalue = fopen($setup_path_project."/inc/include_db.lib","w+");
 
@@ -174,4 +176,14 @@ fclose($dblibvalue);
 
 /* --- DB-CLOSE ------------------------------------------------------ */
 if ($db){odbc_close($db);}
-		
+
+# clean installation: remove demo-extension directories/files
+if ($backupFile === 'demo.tar.gz') {
+    $demoExtPath = "{$path}/EXTENSIONS/demo.tar.gz";
+    if (file_exists($demoExtPath)) {
+        $success = system("tar xzf '{$demoExtPath}' -C '{$path}/EXTENSIONS'");
+        if (!$success) {
+            echo "<div class=\"alert alert-success\">If you want extension files for demonstration purposes, you can extract the file dependent/EXTENSIONS/demo.tar.gz</div>";
+        }
+    }
+}

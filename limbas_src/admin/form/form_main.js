@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -328,7 +328,7 @@ var aktivTabulator = new Array();
 function setTabulator(mainel,tabuid){
 	var val = new Array();
 	var bzm = 0;
-	
+
 	aktivTabulator[mainel] = tabuid;
 	
 	for (var key in aktivTabulator){
@@ -650,9 +650,7 @@ function fill_style(STYLE_ID,STYLE,VAL) {
 			eval("js_clear('jg"+ID+"');");
 			eval("js_ellipse('jg"+ID+"','"+js_width+"','"+js_height+"','"+js_color+"','"+js_lheight+"');");
 		}
-		
-		if(!multiselect){return;}
-	
+
 	});
 }
 
@@ -764,7 +762,7 @@ function make_list(kontainer) {
 	var el_tab = parent.form_menu.document.createElement("table");
     el_tab.className = "formeditorPanel";
 	el_tab.style.margin = "0px";
-	el_tab.style.width = "215px";
+	el_tab.style.width = "230px";
 	el_tab.style.borderCollapse = "collapse";
 	el_tab.style.tableLayout = "fixed";
 	
@@ -1011,10 +1009,10 @@ var active_field_type = 0;
 
 function limbasMenuOpen(evt,el,id,dicoParams) {
 
+    // only get the first touched element, not its parents (which happens due to event propagation)
     if(dicoParams.get("MAINELEMENT") && mainisactive){return;}
 	mainisactive = 1;
-    // only get the first touched element, not its parents (which happens due to event propagation)
-	if(!touchedElement) { touchedElement = el; }    
+	if(!touchedElement) { touchedElement = el; }
 	active_field_type = dicoParams.get("FIELD_TYPE");
 	
 	TYP = dicoParams.get("TYP");
@@ -1062,12 +1060,13 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 		return;
 	}
 	
-        // set new tab
+    // set new tab
 	if(TYP == 'menue' || TYP == 'frame' || TYP == 'tabulator'){
 		limbasSetTabulator(id);
 	}
 
 	var style = STYLE.split(";");
+	var selectedInput = null;
         
 	// allgemeiner Inhalt
 	if(TYP == 'php' || TYP == 'js' || TYP == 'frame') {
@@ -1088,15 +1087,18 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
             cmeditor.setValue(selectedInput.val());
 		}
 
-        // reload possible changes to textarea when focussing codemirror
-        cmeditor.on('focus', function() {
-            cmeditor.setValue(selectedInput.val());
-        });
+        if(selectedInput) {
+            // reload possible changes to textarea when focussing codemirror
+            cmeditor.on('focus', function () {
+                cmeditor.setValue(selectedInput.val());
+            });
 
-        // update textarea content on change
-        cmeditor.on('change', function() {
-            selectedInput.val(cmeditor.getValue());
-        });
+            // update textarea content on change
+            cmeditor.on('change', function () {
+                selectedInput.val(cmeditor.getValue());
+            });
+        }
+
 	}else{
 		$('#lmb_subform_value').val('');
 		$('#menu_value').hide();
@@ -1224,10 +1226,10 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	}
 
 	var el1 = document.getElementById(div).style;
-	document.form_menu.borderLeft.checked = el1.borderLeft.indexOf('none') < 1;
-	document.form_menu.borderRight.checked = el1.borderRight.indexOf('none') < 1;
-	document.form_menu.borderTop.checked = el1.borderTop.indexOf('none') < 1;
-	document.form_menu.borderBottom.checked = el1.borderBottom.indexOf('none') < 1;
+	document.form_menu.borderLeft.checked = el1.borderLeft.indexOf('none') < 0;
+	document.form_menu.borderRight.checked = el1.borderRight.indexOf('none') < 0;
+	document.form_menu.borderTop.checked = el1.borderTop.indexOf('none') < 0;
+	document.form_menu.borderBottom.checked = el1.borderBottom.indexOf('none') < 0;
 
 	// Textstyle anzeigen
 	if(document.getElementById(div).style.fontStyle){document.fstyle_form.input_fontstyle.value = document.getElementById(div).style.fontStyle;}else{document.fstyle_form.input_fontstyle.selectedIndex = 0;}

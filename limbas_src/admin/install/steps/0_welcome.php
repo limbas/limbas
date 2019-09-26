@@ -1,3 +1,13 @@
+<?php
+	/* --- revision check --------------------------------- */
+	if(file_exists("../../lib/version.inf")){
+		$vers = file("../../lib/version.inf");
+		$vers = trim($vers[0]);
+		$revision = substr($vers,0,strrpos($vers,"."));
+	}
+?>
+
+
 <div class="alert alert-warning small" role="alert">
     LIMBAS. Copyright &copy; 1998-2018 LIMBAS GmbH. Go to <a href="http://www.limbas.org/" target="new">http://www.limbas.org/</a> for details.
     LIMBAS comes with ABSOLUTELY NO WARRANTY; This is free software, and you are welcome to redistribute it under
@@ -8,6 +18,8 @@
     <h1 style="color: #999;"><b>Welcome to</b></h1>
 
     <img src="../../pic/limbas-logo-R-grau_trans.png" style="margin-left:15%; margin-right:15%; width: 70%;">
+
+    <h3 style="color: #999;margin-left:15%; margin-right:15%;"><b>V. <?=$revision?></b></h3>
 
     <button type="submit" class="btn btn-info pull-right" name="install" value="<?= array_keys($steps)[1] ?>">Start</button>
 </div>

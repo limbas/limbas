@@ -14,7 +14,7 @@
         <tr><td>Database User</td><td><?= $setup_dbuser ?></td></tr>
         <tr><td>Database Host</td><td><?= $setup_host ?></td></tr>
         <tr><td>Database Schema</td><td><?= $setup_dbschema ?></td></tr>
-        <?if($setup_dbport){echo "<tr><td>Database Port</td><td>$setup_dbport</td></tr>";}?>
+        <?php if($setup_dbport){echo "<tr><td>Database Port</td><td>$setup_dbport</td></tr>";}?>
         <tr><td>Installation package</td><td><?= $backupdir ?></td></tr>
     </tbody>
 </table>

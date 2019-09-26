@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -22,25 +22,21 @@
 /* --- Tabellenarray ------------------------------- */
 $sqlquery = "SELECT TAB_ID,BESCHREIBUNG FROM LMB_CONF_TABLES";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$bzm = 1;
-while(odbc_fetch_row($rs,$bzm)) {
+while(odbc_fetch_row($rs)) {
 	$tabarray[odbc_result($rs,"TAB_ID")] = odbc_result($rs,"BESCHREIBUNG");
-$bzm++;
 }
 /* --- Felderarray ------------------------------- */
 $sqlquery = "SELECT FIELD_ID,TAB_ID,SPELLING FROM LMB_CONF_FIELDS";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$bzm = 1;
-while(odbc_fetch_row($rs,$bzm)) {
+while(odbc_fetch_row($rs)) {
 	$fieldarray[odbc_result($rs,"TAB_ID")][odbc_result($rs,"FIELD_ID")] = odbc_result($rs,"SPELLING");
-$bzm++;
 }
 
 # --- Zeitperiode -----
 if($periodid){
 	$sqlquery = "SELECT LOGIN_DATE,UPDATE_DATE FROM LMB_HISTORY_USER WHERE ID = $periodid";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_fetch_row($rs,1)) {
+	if(odbc_fetch_row($rs)) {
 		$diag_von = get_date(odbc_result($rs,"LOGIN_DATE"),1);
 		$diag_bis = get_date(odbc_result($rs,"UPDATE_DATE"),1);
 	}
@@ -186,8 +182,7 @@ if($typ == 1){
 	<?php
 	$sqlquery =  "SELECT DISTINCT ID,LOGIN_DATE, UPDATE_DATE, IP, HOST, ".dbf_9(array('LOGIN_DATE','UPDATE_DATE'))." AS DAUER FROM LMB_HISTORY_USER WHERE USERID = $userid $where ORDER BY LOGIN_DATE";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$bzm = 1;
-	while(odbc_fetch_row($rs, $bzm)) {
+	while(odbc_fetch_row($rs)) {
 	        if($BGCOLOR == $farbschema['WEB7']){$BGCOLOR = $farbschema['WEB8'];} else {$BGCOLOR = $farbschema['WEB7'];}
 	        echo"<TR BGCOLOR=\"$BGCOLOR\">";
 	        echo"  <TD NOWRAP>".get_date(odbc_result($rs,"LOGIN_DATE"),2)."&nbsp;&nbsp;</TD>";
@@ -195,7 +190,6 @@ if($typ == 1){
 	        echo"  <TD NOWRAP>".lmb_substr(odbc_result($rs,"DAUER"),0,8)."&nbsp;&nbsp;</TD>";
 	        echo"  <TD NOWRAP>".odbc_result($rs,"IP")."&nbsp;&nbsp;</TD>";
 	        echo"</TR>";
-	$bzm++;
 	}
 }elseif($typ == 2 OR $typ == 3){
 	if($typ == 3){?>
@@ -249,7 +243,7 @@ if($typ == 1){
 	$sqlquery =  "SELECT * FROM LMB_HISTORY_ACTION WHERE USERID = $userid $where2 ORDER BY $order";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$bzm = 1;
-	while(odbc_fetch_row($rs, $bzm)) {
+	while(odbc_fetch_row($rs)) {
 		if(odbc_result($rs,"DATAID")){$dat_id = odbc_result($rs,"DATAID");}else{$dat_id = "";}
 		$action_id = odbc_result($rs,"ACTION");
 		if($action_id == 1){$action = "<SPAN STYLE=\"color:blue\">".$lang[$LINK["desc"][$action_id]]."</SPAN>";}
@@ -288,8 +282,7 @@ if($typ == 1){
 		echo"</TR>";
 		if(in_array($action_id,$popuparray)){
 			echo "<TR STYLE=\"display:none\" ID=\"tr_$bzm\"><TD COLSPAN=\"4\"><TABLE BORDER=\"0\">";
-			$bzm1 = 1;
-			while(odbc_fetch_row($rs1, $bzm1)) {
+			while(odbc_fetch_row($rs1)) {
 				unset($val);
 				if($action_id == 3){$nowr = "";}else{$nowr = "NOWRAP";}
 				$ftype = $gfield[odbc_result($rs1, "TAB")]['field_type'][odbc_result($rs1, "FIELD")];
@@ -305,7 +298,6 @@ if($typ == 1){
 				}else{
 					echo "<TR><TD $nowr STYLE=\"width:50px\">&nbsp;</TD><TD STYLE=\"width:100px\" VALIGN=\"TOP\">".$lang[$fieldarray[odbc_result($rs,"TAB")][odbc_result($rs1, "FIELD")]]."</TD><TD $nowr>".nl2br(htmlentities(odbc_result($rs1, "FIELDVALUE"),ENT_QUOTES,$umgvar["charset"]))."</TD></TR>";
 				}
-				$bzm1++;
 			}
 			echo "</TABLE></TD></TR>";
 		}

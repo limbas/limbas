@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -29,7 +29,7 @@ function get_fieldname($atid,$ftid){
 
 $result_type = lmb_get_fieldtypes(1);
 
-$ext_fk = getTypeExensions("lmbd");
+$ext_fk = getTypeExensions();
 
 /* --- Transaktion START ------------------------------------------------ */
 lmb_StartTransaction();
@@ -45,8 +45,7 @@ if($tab_group){$gb = "WHERE TAB_GROUP = $tab_group";}
 $sqlquery = "SELECT * FROM LMB_CONF_TABLES $gb ORDER BY ID";
 $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
-$bzm = 1;
-while(odbc_fetch_row($rs,$bzm)) {
+while(odbc_fetch_row($rs)) {
 	$table_id = odbc_result($rs,"TAB_ID");
 	$table_gtab[$table_id] = lmb_strtolower(odbc_result($rs,"TABELLE"));
 	$beschreibung_gtab[$table_id] = $lang[odbc_result($rs,"BESCHREIBUNG")];
@@ -55,7 +54,6 @@ while(odbc_fetch_row($rs,$bzm)) {
 	$tab_versioning[$table_id] = odbc_result($rs,"VERSIONING");
 	$table_typ[$table_id] = odbc_result($rs,"TYP");
 	${"tabid_".odbc_result($rs,"TABELLE")} = odbc_result($rs,"TAB_ID");
-	$bzm++;
 }
 
 
@@ -87,7 +85,7 @@ if($move_to AND $fieldid) {
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		$bzm = 1;
-		while(odbc_fetch_row($rs,$bzm)) {
+		while(odbc_fetch_row($rs)) {
 			$sqlquery2 =  "UPDATE LMB_CONF_FIELDS SET SORT = $bzm WHERE FIELD_ID = ".odbc_result($rs,"FIELD_ID")." AND TAB_GROUP = $tab_group AND TAB_ID = $atid";
 			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 			$bzm++;
@@ -148,8 +146,9 @@ if($def){
 	
 	if(!$commit){
 		if(lmb_strtoupper($def) == "'NULL'"){$def = "";}
+		$def = str_replace('NULL','',$def);
         $def = parse_db_string($def);
-		$sqlquery =  "UPDATE LMB_CONF_FIELDS SET DEFAULTVALUE = '$def' WHERE TAB_ID = $atid AND FIELD_ID = $fieldid";
+		$sqlquery =  "UPDATE LMB_CONF_FIELDS SET DEFAULTVALUE = '".trim($def,"'")."' WHERE TAB_ID = $atid AND FIELD_ID = $fieldid";
 		$rs2 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs2) {$commit = 1;}
 	}
@@ -576,7 +575,7 @@ if($new_keyid){
 	$sqlquery =  "SELECT ID FROM ".$table_gtab[$table_id];
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$bzm = 1;
-	while(odbc_fetch_row($rs, $bzm)) {
+	while(odbc_fetch_row($rs)) {
 		$sqlquery1 =  "UPDATE ".$table_gtab[$table_id]." SET ID = $bzm WHERE ID = ".odbc_result($rs, "ID");
 		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 	$bzm++;
@@ -596,7 +595,7 @@ function convert_field($convert,$convert_size,$fieldid,$tabid,$table,$solve_depe
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
-	if(odbc_fetch_row($rs,1)){
+	if(odbc_fetch_row($rs)){
 		$origin["field_name"] = odbc_result($rs, "FIELD_NAME");
 		$origin["data_type"] = odbc_result($rs, "DATA_TYPE");
 		$origin["field_type"] = odbc_result($rs, "FIELD_TYPE");
@@ -692,8 +691,7 @@ function convert_field($convert,$convert_size,$fieldid,$tabid,$table,$solve_depe
 			$sqlquery = "SELECT ID,".$origin["field_name"]." FROM $table";
 			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
-			$bzm = 1;
-			while(odbc_fetch_row($rs, $bzm)){
+			while(odbc_fetch_row($rs)){
 				$datid = odbc_result($rs, "ID");
 				$count = 0;
 				if($ovalue = odbc_result($rs, $origin["field_name"])){
@@ -718,7 +716,7 @@ function convert_field($convert,$convert_size,$fieldid,$tabid,$table,$solve_depe
 				$sqlquery2 = "UPDATE $table SET ".$origin["field_name"]." = '".$count."' WHERE ID = $datid";
 				$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 				if(!$rs2) {$commit = 1;}
-				$bzm++;
+
 			}
 		}
 		
@@ -745,18 +743,15 @@ function convert_field($convert,$convert_size,$fieldid,$tabid,$table,$solve_depe
 		$sqlquery = "SELECT ID,".$origin["field_name"]." FROM $table";
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		$bzm = 1;
-		while(odbc_fetch_row($rs, $bzm)){
+		while(odbc_fetch_row($rs)){
 			$datid = odbc_result($rs, "ID");
 			unset($new_val);
 			#if(odbc_result($rs, $origin["field_name"])){
 				$sqlquery1 = "SELECT LMB_SELECT_W.WERT FROM LMB_SELECT_D,LMB_SELECT_W WHERE LMB_SELECT_D.TAB_ID = $tabid AND LMB_SELECT_D.FIELD_ID = $fieldid AND LMB_SELECT_D.DAT_ID = ".$datid." AND LMB_SELECT_D.W_ID = LMB_SELECT_W.ID";
 				$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 				if(!$rs1) {$commit = 1;}
-				$bzm1 = 1;
-				while(odbc_fetch_row($rs1, $bzm1)){
+				while(odbc_fetch_row($rs1)){
 					$new_val[] = odbc_result($rs1, "WERT");
-					$bzm1++;
 				}
 				if(is_array($new_val)){
 					if($toselect){
@@ -769,7 +764,6 @@ function convert_field($convert,$convert_size,$fieldid,$tabid,$table,$solve_depe
 				$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 				if(!$rs1) {$commit = 1;}
 			#}
-			$bzm++;
 		}
 
 		# löschen der Multiselect-Einträge
@@ -834,11 +828,11 @@ function convert_field($convert,$convert_size,$fieldid,$tabid,$table,$solve_depe
 		# Währung
 		if($origin["data_type"] == 30 AND $result_type["data_type"][$convert] != 30){
 			$sqlquery = dbq_22(array($table,$origin["field_name"]."_C"));
-			$rs = @odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 		}elseif($origin["data_type"] != 30 AND $result_type["data_type"][$convert] == 30){
 			$sqlquery =  "ALTER TABLE $table ".LMB_DBFUNC_ADD_COLUMN_FIRST." ".$origin["field_name"]."_C ".LMB_DBTYPE_VARCHAR."(5)";
-			$rs = @odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 		}
 	}
@@ -914,7 +908,7 @@ if($table_gtab[$bzm]) {
 					ORDER BY LMB_CONF_FIELDS.SORT";
 	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$bzm1 = 1;
-	while(odbc_fetch_row($rs, $bzm1)) {
+	while(odbc_fetch_row($rs)) {
 		$fieldsp_name = lmb_strtoupper(odbc_result($rs, "FIELD_NAME"));
 		$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] = odbc_result($rs, "FIELD_ID");
 		$result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1] = $fieldsp_name;
@@ -992,7 +986,7 @@ if($table_gtab[$bzm]) {
 
 		if(odbc_result($rs, "ARGUMENT_TYP")){$gfield[$atid]["argument_typ"][odbc_result($rs, "FIELD_ID")] = odbc_result($rs, "ARGUMENT_TYP");}
 
-		if(LMB_DBFUNC_VIEWDEPENDENCY AND lmb_checkViewDependency($table_gtab[$bzm],$result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1])){
+		if(lmb_checkViewDependency($table_gtab[$bzm],$result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1])){
 		    $result_fieldtype[$table_gtab[$bzm]]["view_dependency"][$bzm1] = 1;
 		}
 

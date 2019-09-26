@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2018 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.5
+ * Version 3.6
  */
 
 /*
@@ -177,23 +177,25 @@ function SNAP_loadInSession($snap_changed=null,$admin=null){
 		
 		###### check for changes/permissions #######
 		
-		# drop fields
+		# drop missing fields
+        if($gsnap[$snaptabid]["filter"][$snapid]['sort']){
 		foreach ($gsnap[$snaptabid]["filter"][$snapid]['sort'] as $key => $value){
 			if(!$gfield[$snaptabid]['sort'][$key]){
 				unset($gsnap[$snaptabid]["filter"][$snapid]['sort'][$key]);
 				unset($gsnap[$snaptabid]["filter"][$snapid]['hidecols'][$key]);
 				unset($gsnap[$snaptabid]["filter"][$snapid]["gsr"][$key]);
 			}
-		}
+		}}
 
-		# add fields
+		# add new fields as hidden
+        if($gfield[$snaptabid]['sort']){
 		foreach ($gfield[$snaptabid]['sort'] as $key => $value){
 			if(!$gsnap[$snaptabid]["filter"][$snapid]['sort'][$key]){
 				$gsnap[$snaptabid]["filter"][$snapid]['hidecols'][$key] = 1;
 				$gsnap[$snaptabid]["filter"][$snapid]['sort'][$key] = $value;
 				$resort = 1;
 			}
-		}
+		}}
 		
 		# resort if needed
 		if($resort){
@@ -387,7 +389,7 @@ function SNAP_save($gtabid,$name,$id,$snapf = "null"){
 		$sqlquery = "SELECT ID FROM LMB_SNAP WHERE NAME = '".parse_db_string(str_replace(";",",",$name),30)."' AND TABID = $gtabid AND USER_ID = " .$session["user_id"];
 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		if(odbc_fetch_row($rs,1)){
+		if(odbc_fetch_row($rs)){
 			$prepare_string = "UPDATE LMB_SNAP SET FILTER = ? WHERE ID = ".odbc_result($rs,"ID");
 			if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($snapf)),__FILE__,__LINE__)){$commit = 1;}
 
