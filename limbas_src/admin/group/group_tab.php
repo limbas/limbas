@@ -310,8 +310,7 @@ function f_3(PARAMETER) {
 <div>
 
 <TABLE class="tabpool" BORDER="0" cellspacing="0" cellpadding="0"><TR><TD valign="top" height="100%" style="min-width:150px">
-
-<TABLE BORDER="0" cellspacing="0" cellpadding="0" height="100%" width="100%" style="border-collapse:collapse;position:sticky;top:20px;">
+<TABLE BORDER="0" cellspacing="0" cellpadding="0" height="100%" width="100%" style="border-collapse:collapse;">
 <?php if($LINK[135]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][135]?>" TITLE="<?=$lang[$LINK["desc"][135]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][135]."\"></i>&nbsp;".$lang[$LINK["name"][135]] ?></TD></TR><?php }?>
 <?php if($LINK[76]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemInactive" OnClick="<?=$LINK["link_url"][76]?>" TITLE="<?=$lang[$LINK["desc"][76]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][76]."\"></i>&nbsp;".$lang[$LINK["name"][76]] ?></TD></TR><?php }?>
 <?php if($LINK[100]){?><TR class="tabHpoolItemTR"><TD class="tabHpoolItemActive" OnClick="<?=$LINK["link_url"][100]?>" TITLE="<?=$lang[$LINK["desc"][100]]?>"><?= "<i style=\"float:left;\" class=\"lmb-icon ".$LINK["icon_url"][100]."\"></i>&nbsp;".$lang[$LINK["name"][100]] ?></TD></TR><?php }?>
@@ -328,7 +327,7 @@ function f_3(PARAMETER) {
 </TD><TD width="100%" class="tabHpoolfringe" style="border-left:none">
 
 <TABLE ID="tab1" width="100%" cellspacing="2" cellpadding="1" class="tabBody">
-    <TR class="tabHeader"><TD class="tabHeaderItem" colspan="23"><i class="lmb-icon lmb-group"></i>&nbsp;<?=$groupdat["name"][$ID]?></TD></TR>
+<TR class="tabHeader"><TD class="tabHeaderItem" colspan="23"><i class="lmb-icon lmb-group"></i>&nbsp;<?=$groupdat["name"][$ID]?></TD></TR>
 <TR><TD colspan="23"><HR></TD></TR>
 
 <?php
@@ -360,13 +359,13 @@ function viewrows($gtabid){
 	global $gtrigger;
 	global $gtab;
 	global $gfield;
-	
+
 	if($gtab["typ"][$gtabid] == 5){$isview = 1;}
 
 	if($is_popup){if(in_array($gtabid,$is_popup)){$display = "";}else{$display = "none";}}else{$display = "none";}
 	echo "<TR ID=\"table_$gtabid\" STYLE=\"display:$display\">";
 	echo "<TD ALIGN=\"left\" COLSPAN=\"8\"><TABLE BORDER=\"0\" cellspacing=\"1\" cellpadding=\"0\">";
-	echo "<TR STYLE=\"background-color:".$farbschema['WEB7']."\"><TD ALIGN=\"RIGHT\" COLSPAN=\"4\">";
+	echo "<TR STYLE=\"background-color:".$farbschema['WEB7']."\"><TD ALIGN=\"LEFT\" COLSPAN=\"4\">";
 
 	echo "<TABLE BORDER=\"0\" cellspacing=\"1\" cellpadding=\"1\"><TR STYLE=\"background-color:{$farbschema['WEB8']}; color:" . lmbSuggestColor($farbschema['WEB8']) . "\">";
 	# --- view ---
@@ -487,11 +486,10 @@ function viewrows($gtabid){
         echo "<TD ALIGN=\"CENTER\"><i class=\"lmb-icon-cus lmb-list-edit\" BORDER=\"0\" TITLE=\"$lang[1290]\"></i></TD>";
     }
 	# --- options ---
-	if(!$isview){
-	   echo "<TD ALIGN=\"RIGHT\"><TABLE cellspacing=\"0\" cellpadding=\"0\" STYLE=\"width:35px\"><TR><TD ALIGN=\"RIGHT\" nowrap><i class=\"lmb-icon lmb-cog-alt\" BORDER=\"0\" TITLE=\"$lang[2795]\"></i><INPUT TYPE=\"checkbox\" NAME=\"taboptions_".$gtabid."\" STYLE=\"background-color:transparent\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\" onclick=\"click_all('$gtabid','32',this)\"";
-	   if($f_result[$gtabid]["taboption"]){echo " CHECKED";}
-	   echo "></TD></TR></TABLE></TD>";
-	}
+    echo "<TD ALIGN=\"RIGHT\"><TABLE cellspacing=\"0\" cellpadding=\"0\" STYLE=\"width:35px\"><TR><TD ALIGN=\"RIGHT\" nowrap><i class=\"lmb-icon lmb-cog-alt\" BORDER=\"0\" TITLE=\"$lang[2795]\"></i><INPUT TYPE=\"checkbox\" NAME=\"taboptions_".$gtabid."\" STYLE=\"background-color:transparent\" STYLE=\"border:none;background-color:".$farbschema['WEB8']."\" onclick=\"click_all('$gtabid','32',this)\"";
+    if($f_result[$gtabid]["taboption"]){echo " CHECKED";}
+    echo "></TD></TR></TABLE></TD>";
+
     # --- speech recognition ---
     if(!$isview){
         echo "<TD ALIGN=\"RIGHT\"><i class=\"lmb-icon lmb-microphone\" BORDER=\"0\" TITLE=\"Speech recognition\"></i></TD>";
@@ -510,19 +508,22 @@ function viewrows($gtabid){
 	
 	# ---- IS VIEW ------
 	if($isview){
-	   echo "<TD colspan=\"5\"></td>";
+	   echo "<TD ALIGN=\"CENTER\"><i class=\"lmb-icon lmb-colors\" BORDER=\"0\" TITLE=\"$lang[2567]\"></i></TD>";
+	   echo "<TD colspan=\"4\"></TD>";
+	   if(!$f_result[$gtabid]["field_id"]){
+	       echo "<TD style=\"width:700px;color:red\">&nbsp;&nbsp;<b>".$lang[2699]." !</b></TD>";
+       }
 	}
-	
-	
 
 	if(!$isview){
-	echo "<TD ALIGN=\"CENTER\"><i class=\"lmb-icon lmb-colors\" BORDER=\"0\" TITLE=\"$lang[2567]\"></i></TD>";
+    echo "<TD ALIGN=\"CENTER\"><i class=\"lmb-icon lmb-colors\" BORDER=\"0\" TITLE=\"$lang[2567]\"></i></TD>";
 	echo "<TD ALIGN=\"CENTER\" TITLE=\"$lang[2568]\"><B>$lang[1614]</B></TD>";
 	echo "<TD ALIGN=\"CENTER\" OnCLick=\"set_searchrule('$gtabid')\" STYLE=\"cursor:pointer\" TITLE=\"$lang[2569]\"><B><U>$lang[2569]</U></B></TD>";
 	echo "<TD ALIGN=\"CENTER\" TITLE=\"$lang[2570]\"><B>$lang[2570]</B></TD>";
 	if($gtrigger[$gtabid]){echo "<TD ALIGN=\"CENTER\"><B>".$lang[1987]."</B></TD>";}
 	echo "<TD ALIGN=\"LEFT\" TITLE=\"$lang[2572]\"><B>&nbsp;".$lang[1563]."</B></TD>";
-	echo "<TD ALIGN=\"LEFT\"><B>&nbsp;$lang[1986]</B></TD>";}
+	echo "<TD ALIGN=\"LEFT\"><B>&nbsp;$lang[1986]</B></TD>";
+	}
 	echo "</TR>";
 
 	if($f_result[$gtabid]["field_id"]){
@@ -594,17 +595,23 @@ function viewrows($gtabid){
 					echo "</TD>";
 				}
 
-                echo "<TD ALIGN=\"RIGHT\">";
-                # --- list edit ----
-                $noListEdit = array(10, 18, 22, 31, 32, 34, 35, 36, 37, 39, 45, 46);
-                if(!in_array($f_result[$gtabid]["data_type"][$key], $noListEdit)){
-                    if($l_result[$gtabid]["listedit"][$key] OR !$l_result){
-                        echo "<INPUT TYPE=\"checkbox\" STYLE=\"border:none;\" NAME=\"listeditrule_".$gtabid."_".$f_result[$gtabid]["field_id"][$key]."\" Onclick=\"save_rules('$gtabid','".$f_result[$gtabid]["field_id"][$key]."',33)\" ";
-                        if($f_result[$gtabid]["listedit"][$key]){echo "CHECKED";}
-                        echo ">";
-                    }else{echo "<INPUT TYPE=\"checkbox\" readonly disabled style=\"opacity:0.3;filter:Alpha(opacity=30);\">";}
+				if(!$isview) {
+                    echo "<TD ALIGN=\"RIGHT\">";
+                    # --- list edit ----
+                    $noListEdit = array(10, 18, 22, 31, 32, 34, 35, 36, 37, 39, 45, 46);
+                    if (!in_array($f_result[$gtabid]["data_type"][$key], $noListEdit)) {
+                        if ($l_result[$gtabid]["listedit"][$key] OR !$l_result) {
+                            echo "<INPUT TYPE=\"checkbox\" STYLE=\"border:none;\" NAME=\"listeditrule_" . $gtabid . "_" . $f_result[$gtabid]["field_id"][$key] . "\" Onclick=\"save_rules('$gtabid','" . $f_result[$gtabid]["field_id"][$key] . "',33)\" ";
+                            if ($f_result[$gtabid]["listedit"][$key]) {
+                                echo "CHECKED";
+                            }
+                            echo ">";
+                        } else {
+                            echo "<INPUT TYPE=\"checkbox\" readonly disabled style=\"opacity:0.3;filter:Alpha(opacity=30);\">";
+                        }
+                    }
+                    echo "</TD>";
                 }
-                echo "</TD>";
 
 				echo "<TD ALIGN=\"RIGHT\">";
 				# --- option ----
@@ -618,17 +625,22 @@ function viewrows($gtabid){
 				}
 				echo "</TD>";
 
-                echo "<TD ALIGN=\"RIGHT\">";
-                # --- speech recognition ----
-                if(in_array($f_result[$gtabid]["data_type"][$key], array(1 /* add more here */))){
-                    if($l_result[$gtabid]["speechrec"][$key] OR !$l_result){
-                        echo "<INPUT TYPE=\"checkbox\" STYLE=\"border:none;\" NAME=\"speechrecrule_".$gtabid."_".$f_result[$gtabid]["field_id"][$key]."\" Onclick=\"save_rules('$gtabid','".$f_result[$gtabid]["field_id"][$key]."',34)\" ";
-                        if($f_result[$gtabid]["speechrec"][$key]){echo "CHECKED";}
-                        echo ">";
-                    }else{echo "<INPUT TYPE=\"checkbox\" readonly disabled style=\"opacity:0.3;filter:Alpha(opacity=30);\">";}
+				if(!$isview) {
+                    echo "<TD ALIGN=\"RIGHT\">";
+                    # --- speech recognition ----
+                    if (in_array($f_result[$gtabid]["data_type"][$key], array(1 /* add more here */))) {
+                        if ($l_result[$gtabid]["speechrec"][$key] OR !$l_result) {
+                            echo "<INPUT TYPE=\"checkbox\" STYLE=\"border:none;\" NAME=\"speechrecrule_" . $gtabid . "_" . $f_result[$gtabid]["field_id"][$key] . "\" Onclick=\"save_rules('$gtabid','" . $f_result[$gtabid]["field_id"][$key] . "',34)\" ";
+                            if ($f_result[$gtabid]["speechrec"][$key]) {
+                                echo "CHECKED";
+                            }
+                            echo ">";
+                        } else {
+                            echo "<INPUT TYPE=\"checkbox\" readonly disabled style=\"opacity:0.3;filter:Alpha(opacity=30);\">";
+                        }
+                    }
+                    echo "</TD>";
                 }
-                echo "</TD>";
-				
 
 				# --- versioning ----
 				if(!$isview){
@@ -760,6 +772,19 @@ function viewrows($gtabid){
 	echo "</TD></TR></TABLE>";
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 foreach($_tabgroup['id'] as $bzm => $val) {
     $icon = '';
     if ($iconClass = $_tabgroup['icon'][$bzm]) {
@@ -768,6 +793,7 @@ foreach($_tabgroup['id'] as $bzm => $val) {
 	echo "<TR><TD colspan=\"10\">$icon<b><i>".$_tabgroup['name'][$bzm]." (".$_tabgroup['beschreibung'][$bzm].")</i></b></TD></TR>";
 	echo "<TR><TD ALIGN=\"LEFT\">";
 	foreach($_gtab["tab_id"] as $key => $value){
+
 		if($_gtab["typ"][$key] == 5){$isview = 1;}else{$isview = 0;}
 		if($_gtab["tab_group"][$key] == $_tabgroup["id"][$bzm]){
 			if(!@in_array("1",$s_result[$key]["view"]) AND $session["user_id"] != 1 AND !$session["superadmin"]){continue;}
@@ -775,114 +801,115 @@ foreach($_tabgroup['id'] as $bzm => $val) {
 		    if($is_popup AND in_array($key,$is_popup)){$icon = 'minusonly';}else{$icon = 'plusonly';}
 		?>
 
-						<TR>
-						<TD width="20" align="left"><IMG SRC="pic/outliner/<?=$icon?>.gif" tabid="<?=$key?>" CLASS="popicon" NAME="popicon_<?=$key?>" BORDER="0" STYLE="cursor:pointer" OnClick="pops('<?=$key?>')"></TD>
-						<TD width="300" align="left"><FONT><?=$_gtab['table'][$key]?> (<?=$_gtab['desc'][$key]?>)&nbsp;</TD>
+        <TR>
+        <TD width="20" align="left"><IMG SRC="pic/outliner/<?=$icon?>.gif" tabid="<?=$key?>" CLASS="popicon" NAME="popicon_<?=$key?>" BORDER="0" STYLE="cursor:pointer" OnClick="pops('<?=$key?>')"></TD>
+        <TD width="300" align="left"><FONT><?=$_gtab['table'][$key]?> (<?=$_gtab['desc'][$key]?>)&nbsp;</TD>
 
-						
-						<?php if(!$s_result[$key]["hidemenu"] OR $session["superadmin"]){?>
-						
-			        		<TD width="100" nowrap>
-	
-			       			<?php if(!$isview){?>
-				        		<table cellspacing="0" cellpadding="2" border=0><tr>
-                                <td nowrap><i class="lmb-icon lmb-pencil"></i><TEXTAREA NAME="edit_rule_<?=$key?>" readonly style="width:60px;height:17px;cursor:pointer;overflow:hidden;" OnClick="div6(this,'<?=$key?>')" title="<?=$lang[2573]?>"><?=$f_result[$key]["tabeditrule"]?></TEXTAREA></td>
-				        		<td nowrap><i class="lmb-icon lmb-indicator-rule"></i><TEXTAREA NAME="indicator_rule_<?=$key?>" readonly style="width:60px;height:17px;cursor:pointer;overflow:hidden;" OnClick="div1(this,'<?=$key?>')" title="<?=$lang[1255]?>"><?=$f_result[$key]["indicator"]?></TEXTAREA></td>
-				        		</tr></table>
-							<?php }?>
-							
-					        </TD><TD nowrap>
-		
-							<?php
-                            # form selection
-							$sqlquery = "SELECT ID,NAME,FORM_TYP FROM LMB_FORM_LIST WHERE REFERENZ_TAB = '".$_gtab["tab_id"][$key]."'";
-							$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-							$form = null;
-							while(odbc_fetch_row($rs1)){
-							    $id = odbc_result($rs1, 'ID');
-							    $form['name'][$id] = odbc_result($rs1, 'NAME');
-							    $form['typ'][$id] = odbc_result($rs1, 'FORM_TYP');
-                            }
 
-							if($form){
-								echo "<i class=\"lmb-icon-cus lmb-form-alt\" title=\"".$lang[1169]."\"></i>&nbsp<SELECT NAME=\"view_form_".$key."\" STYLE=\"width:100px\" OnChange=\"save_rules('$key','',22)\"><OPTION VALUE=\"0\">default";
-								foreach($form['name'] as $fid => $_value){
-								    if($form['typ'][$fid] == 1) {
-                                        if ($f_result[$key]["view_form"] == $fid) {
-                                            $SELECTED = "SELECTED";
-                                        } else {
-                                            $SELECTED = "";
-                                        }
-                                        echo "<OPTION VALUE=\"" . $fid . "\" $SELECTED>" . $form['name'][$fid];
-                                    }
-								}
-								echo "</SELECT>&nbsp;";
+        <?php if(!$s_result[$key]["hidemenu"] OR $session["superadmin"]){?>
 
-                                //tablelist form selection
-								echo "<i class=\"lmb-icon lmb-icon-cus lmb-list-edit\" align=\"absbottom\" title=\"".$lang[2756]."\"></i>&nbsp<SELECT NAME=\"view_lform_".$key."\" OnChange=\"save_rules('$key','',24)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">none";
-								foreach($form['name'] as $fid => $_value){
-										if($f_result[$key]["view_lform"] == $fid){$SELECTED = "SELECTED";}else{$SELECTED = "";}
-										echo "<OPTION VALUE=\"".$fid."\" $SELECTED>".$form['name'][$fid];
-								}
-								echo "</SELECT>&nbsp";
+            <TD width="100" nowrap>
 
-	
-								//calendar form selection
-								if($_gtab["typ"][$key] == 2){
-									echo "<i class=\"lmb-icon lmb-calendar\" align=\"absbottom\" title=\"".$lang[1929]." ".$lang[2574]."\"></i>&nbsp<SELECT NAME=\"view_tform_".$key."\" OnChange=\"save_rules('$key','',23)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">default";
-									foreach($form['name'] as $fid => $_value){
-										if($f_result[$key]["view_tform"] == $fid){$SELECTED = "SELECTED";}else{$SELECTED = "";}
-										echo "<OPTION VALUE=\"".$fid."\" $SELECTED>".$form['name'][$fid];
-									}
-									echo "</SELECT>&nbsp";
-								}
-                                                                
-                                //kanban form selection
-                                if($_gtab["typ"][$key] == 7){
-									echo "<i class=\"lmb-icon lmb-columns\" align=\"absbottom\" title=\"kanban ".$lang[2574]."\"></i>&nbsp<SELECT NAME=\"view_tform_".$key."\" OnChange=\"save_rules('$key','',23)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">default";
-									$bzm1 = 1;
-									foreach($form['name'] as $fid => $_value){
-										if($f_result[$key]["view_tform"] == $fid){$SELECTED = "SELECTED";}else{$SELECTED = "";}
-										echo "<OPTION VALUE=\"".$fid."\" $SELECTED>".$form['name'][$fid];
-									}
-									echo "</SELECT>&nbsp";
-								}
-							}
-                            
-                            # Versioning Type
-							if($gtab["versioning"][$key] AND !$isview){
-								echo "<i class=\"lmb-icon lmb-versioning-type\" title=\"".$lang[2565]."\"></i>&nbsp<SELECT NAME=\"versioning_type_".$key."\" OnChange=\"save_rules('$key','',25)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">";
-								echo "<OPTION VALUE=\"1\" ";if($f_result[$key]["versioning_type"] == 1){echo "SELECTED";}echo ">".$lang[2144];
-								echo "<OPTION VALUE=\"2\" ";if($f_result[$key]["versioning_type"] == 2){echo "SELECTED";}echo ">".$lang[2145];
-								echo "</SELECT>&nbsp;";
-							}
-	
-							if(!$isview){
-					            if($LINK[226] AND $gtrigger[$value]){
-						            echo "<i class=\"lmb-icon lmb-database\" ALIGN=\"absbottom\" TITLE=\"trigger\" OnClick=\"activ_menu=1;document.getElementById('tab_trigger_$key').style.display=''\"></i>&nbsp;
-						            <SPAN STYLE=\"display:none;position:absolute\" ID=\"tab_trigger_$key\" OnClick=\"activ_menu=1\">
-						            <SELECT NAME=\"tab_trigger_".$key."[]\" OnChange=\"save_rules('$key','',26)\" STYLE=\"width:200px;\" MULTIPLE SIZE=\"5\"><OPTION VALUE=\"\">";
-						            $trlist = array();
-						            foreach($gtrigger[$value]["id"] as $trid => $trval){
-						            	if(in_array($trid,$f_result[$key]["tab_trigger"])){$SELECTED = "SELECTED";$trlist[] = $gtrigger[$value]["trigger_name"][$trid];}else{$SELECTED = "";}
-						            	echo "<OPTION VALUE=\"".$trid."\" $SELECTED>".$gtrigger[$value]["trigger_name"][$trid]." (".$gtrigger[$value]["type"][$trid].")</OPTION>";
-						            }
-						            echo "</SELECT>
-						            </SPAN>
-						            <INPUT TYPE=\"TEXT\" STYLE=\"width:100px;\" VALUE=\"".implode(";",$trlist)."\" OnClick=\"activ_menu=1;document.getElementById('tab_trigger_$key').style.display=''\">";
-					            }
-							}
-				            
-				            echo "</TD>";
-			            
-						}else{
-							echo "<td>&nbsp;</td>";
-						}
-			            
-			           	echo "</TR>";
-			            
-			            
-			            viewrows($key);
+            <?php if(!$isview){?>
+                <table cellspacing="0" cellpadding="2" border=0><tr>
+                <td nowrap><i class="lmb-icon lmb-pencil"></i><TEXTAREA NAME="edit_rule_<?=$key?>" readonly style="width:60px;height:17px;cursor:pointer;overflow:hidden;" OnClick="div6(this,'<?=$key?>')" title="<?=$lang[2573]?>"><?=$f_result[$key]["tabeditrule"]?></TEXTAREA></td>
+                <td nowrap><i class="lmb-icon lmb-indicator-rule"></i><TEXTAREA NAME="indicator_rule_<?=$key?>" readonly style="width:60px;height:17px;cursor:pointer;overflow:hidden;" OnClick="div1(this,'<?=$key?>')" title="<?=$lang[1255]?>"><?=$f_result[$key]["indicator"]?></TEXTAREA></td>
+                </tr></table>
+            <?php }?>
+
+            </TD><TD nowrap>
+
+            <?php
+            # form selection
+            $sqlquery = "SELECT ID,NAME,FORM_TYP FROM LMB_FORM_LIST WHERE REFERENZ_TAB = '".$_gtab["tab_id"][$key]."'";
+            $rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+            $form = null;
+            while(lmbdb_fetch_row($rs1)){
+                $id = lmbdb_result($rs1, 'ID');
+                $form['name'][$id] = lmbdb_result($rs1, 'NAME');
+                $form['typ'][$id] = lmbdb_result($rs1, 'FORM_TYP');
+            }
+
+            if($form){
+                echo "<i class=\"lmb-icon-cus lmb-form-alt\" title=\"".$lang[1169]."\"></i>&nbsp<SELECT NAME=\"view_form_".$key."\" STYLE=\"width:100px\" OnChange=\"save_rules('$key','',22)\"><OPTION VALUE=\"0\">default";
+                foreach($form['name'] as $fid => $_value){
+                    if($form['typ'][$fid] == 1) {
+                        if ($f_result[$key]["view_form"] == $fid) {
+                            $SELECTED = "SELECTED";
+                        } else {
+                            $SELECTED = "";
+                        }
+                        echo "<OPTION VALUE=\"" . $fid . "\" $SELECTED>" . $form['name'][$fid];
+                    }
+                }
+                echo "</SELECT>&nbsp;";
+
+                //tablelist form selection
+                echo "<i class=\"lmb-icon lmb-icon-cus lmb-list-edit\" align=\"absbottom\" title=\"".$lang[2756]."\"></i>&nbsp<SELECT NAME=\"view_lform_".$key."\" OnChange=\"save_rules('$key','',24)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">none";
+                foreach($form['name'] as $fid => $_value){
+                        if($f_result[$key]["view_lform"] == $fid){$SELECTED = "SELECTED";}else{$SELECTED = "";}
+                        echo "<OPTION VALUE=\"".$fid."\" $SELECTED>".$form['name'][$fid];
+                }
+                echo "</SELECT>&nbsp";
+
+
+                //calendar form selection
+                if($_gtab["typ"][$key] == 2){
+                    echo "<i class=\"lmb-icon lmb-calendar\" align=\"absbottom\" title=\"".$lang[1929]." ".$lang[2574]."\"></i>&nbsp<SELECT NAME=\"view_tform_".$key."\" OnChange=\"save_rules('$key','',23)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">default";
+                    echo "<i class=\"lmb-icon lmb-calendar\" align=\"absbottom\" title=\"".$lang[1929]." ".$lang[2574]."\"></i>&nbsp<SELECT NAME=\"view_tform_".$key."\" OnChange=\"save_rules('$key','',23)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">default";
+                    foreach($form['name'] as $fid => $_value){
+                        if($f_result[$key]["view_tform"] == $fid){$SELECTED = "SELECTED";}else{$SELECTED = "";}
+                        echo "<OPTION VALUE=\"".$fid."\" $SELECTED>".$form['name'][$fid];
+                    }
+                    echo "</SELECT>&nbsp";
+                }
+
+                //kanban form selection
+                if($_gtab["typ"][$key] == 7){
+                    echo "<i class=\"lmb-icon lmb-columns\" align=\"absbottom\" title=\"kanban ".$lang[2574]."\"></i>&nbsp<SELECT NAME=\"view_tform_".$key."\" OnChange=\"save_rules('$key','',23)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">default";
+                    $bzm1 = 1;
+                    foreach($form['name'] as $fid => $_value){
+                        if($f_result[$key]["view_tform"] == $fid){$SELECTED = "SELECTED";}else{$SELECTED = "";}
+                        echo "<OPTION VALUE=\"".$fid."\" $SELECTED>".$form['name'][$fid];
+                    }
+                    echo "</SELECT>&nbsp";
+                }
+            }
+
+            # Versioning Type
+            if($gtab["versioning"][$key] AND !$isview){
+                echo "<i class=\"lmb-icon lmb-versioning-type\" title=\"".$lang[2565]."\"></i>&nbsp<SELECT NAME=\"versioning_type_".$key."\" OnChange=\"save_rules('$key','',25)\" STYLE=\"width:100px\"><OPTION VALUE=\"0\">";
+                echo "<OPTION VALUE=\"1\" ";if($f_result[$key]["versioning_type"] == 1){echo "SELECTED";}echo ">".$lang[2144];
+                echo "<OPTION VALUE=\"2\" ";if($f_result[$key]["versioning_type"] == 2){echo "SELECTED";}echo ">".$lang[2145];
+                echo "</SELECT>&nbsp;";
+            }
+
+            if(!$isview){
+                if($LINK[226] AND $gtrigger[$value]){
+                    echo "<i class=\"lmb-icon lmb-database\" ALIGN=\"absbottom\" TITLE=\"trigger\" OnClick=\"activ_menu=1;document.getElementById('tab_trigger_$key').style.display=''\"></i>&nbsp;
+                    <SPAN STYLE=\"display:none;position:absolute\" ID=\"tab_trigger_$key\" OnClick=\"activ_menu=1\">
+                    <SELECT NAME=\"tab_trigger_".$key."[]\" OnChange=\"save_rules('$key','',26)\" STYLE=\"width:200px;\" MULTIPLE SIZE=\"5\"><OPTION VALUE=\"\">";
+                    $trlist = array();
+                    foreach($gtrigger[$value]["id"] as $trid => $trval){
+                        if(in_array($trid,$f_result[$key]["tab_trigger"])){$SELECTED = "SELECTED";$trlist[] = $gtrigger[$value]["trigger_name"][$trid];}else{$SELECTED = "";}
+                        echo "<OPTION VALUE=\"".$trid."\" $SELECTED>".$gtrigger[$value]["trigger_name"][$trid]." (".$gtrigger[$value]["type"][$trid].")</OPTION>";
+                    }
+                    echo "</SELECT>
+                    </SPAN>
+                    <INPUT TYPE=\"TEXT\" STYLE=\"width:100px;\" VALUE=\"".implode(";",$trlist)."\" OnClick=\"activ_menu=1;document.getElementById('tab_trigger_$key').style.display=''\">";
+                }
+            }
+
+            echo "</TD>";
+
+        }else{
+            echo "<td>&nbsp;</td>";
+        }
+
+        echo "</TR>";
+
+
+        viewrows($key);
 
 			            
 		

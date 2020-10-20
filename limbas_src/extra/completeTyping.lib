@@ -30,4 +30,4 @@
 <INPUT TYPE=HIDDEN NAME="limbasInputDisplay">
 <INPUT TYPE=HIDDEN NAME="limbasInputId">
 
-<script type="text/javascript" src="extra/completeTyping.js"></script>
+<script type="text/javascript" src="extra/completeTyping.js?v=<?=$umgvar["version"]?>"></script>

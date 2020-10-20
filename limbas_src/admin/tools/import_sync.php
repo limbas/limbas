@@ -219,6 +219,7 @@ function sync_import_inner($path_right_export = null, $precheck, $confirm_syncim
             $exptables[] = dbf_4('lmb_mimetypes');
             $exptables[] = dbf_4('lmb_lang');
             $exptables[] = dbf_4('lmb_umgvar');
+            $exptables[] = dbf_4('lmb_custvar');
             $exptables[] = dbf_4('lmb_action');
             $exptables[] = dbf_4('lmb_dbpatch');
         }
@@ -481,7 +482,7 @@ function sync_import_inner($path_right_export = null, $precheck, $confirm_syncim
 
                                 // modify field
                                 if ($sqlquery = dbq_9(array($DBA['DBSCHEMA'], $table, $field, $def))) {
-                                    $rs1 = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                                    $rs1 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
                                 }else{
                                     LimbasLogger::log("execute query: $sqlquery", LimbasLogger::LL_INFO);
                                 }
@@ -531,10 +532,11 @@ function sync_import_inner($path_right_export = null, $precheck, $confirm_syncim
                             $datentyp = 'TEXT';
                         }
 
-                        $sqlquery = 'ALTER TABLE ' . $table . ' ADD COLUMN ' . $field . ' ' . $datentyp . ' DEFAULT ' . $def;
-                        $rs1 = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                        #$sqlquery = 'ALTER TABLE ' . $table . ' ADD COLUMN ' . $field . ' ' . $datentyp . ' DEFAULT ' . $def;
+                        $sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$table,$field,$datentyp,$def));
+                        $rs1 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
                         if (!$rs1) {
-                            LimbasLogger::log("Could not add column '$field' in table '$table' with query '$sqlquery'! Message:" . odbc_errormsg($db), LimbasLogger::LL_ERROR);
+                            LimbasLogger::log("Could not add column '$field' in table '$table' with query '$sqlquery'! Message:" . lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
                             return false;
                         }else{
                             LimbasLogger::log("execute query: $sqlquery", LimbasLogger::LL_INFO);
@@ -551,7 +553,7 @@ function sync_import_inner($path_right_export = null, $precheck, $confirm_syncim
                     
                     if ($confirm_syncimport) {
                         if ($sqlquery = dbq_22(array($table, $field))) {
-                            $rs1 = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                            $rs1 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
                         }else{
                             LimbasLogger::log("execute query: $sqlquery", LimbasLogger::LL_INFO);
                         }
@@ -944,6 +946,13 @@ function sync_import_inner($path_right_export = null, $precheck, $confirm_syncim
                 return false;
             }
             $lmbUmgvarDiff = groupBy1Key($lmbUmgvarDiff, 'envvar');
+
+            $lmbCustvarDiff = compareTableData($path, $pathtmp, dbf_4('lmb_umgvar') . '.tar.gz', array(dbf_4('id')), $defaultIgnore, dbf_4('form_name'), $filterFunc);
+            if ($lmbCustvarDiff === false) {
+                LimbasLogger::log("Could not compare umgvar!", LimbasLogger::LL_ERROR);
+                return false;
+            }
+            $lmbCustvarDiff = groupBy1Key($lmbCustvarDiff, 'custvar');
         }
 
         # output report
@@ -1036,6 +1045,7 @@ function sync_import_inner($path_right_export = null, $precheck, $confirm_syncim
         tableOutput2($lmbLangDiff, 'Language changes');
         tableOutput1($lmbMimetypeDiff, 'Mimetype changes');
         tableOutput1($lmbUmgvarDiff, 'Environment variable changes');
+        tableOutput1($lmbCustvarDiff, 'Custom global variable changes');
         tableOutput1($lmbSyncDiff, 'Sync config changes');
         tableOutput1($lmbSyncTemplDiff, 'Sync template changes');
 
@@ -1089,17 +1099,17 @@ function sync_import_inner($path_right_export = null, $precheck, $confirm_syncim
         if ((in_array('tabs',$types) OR in_array('links',$types)) AND !in_array('group',$types)){
             require_once("admin/group/group.lib");
         	$sqlquery = "SELECT GROUP_ID,NAME FROM LMB_GROUPS";
-        	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         	if(!$rs) {$commit = 1;}
-        	while(odbc_fetch_row($rs)){
+        	while(lmbdb_fetch_row($rs)){
         	    if(in_array('tabs',$types)){
-            		check_grouprights1(odbc_result($rs,"GROUP_ID"));
-            		LimbasLogger::log("check table rules for group ".odbc_result($rs,"NAME"), LimbasLogger::LL_INFO);
+            		check_grouprights1(lmbdb_result($rs,"GROUP_ID"));
+            		LimbasLogger::log("check table rules for group ".lmbdb_result($rs,"NAME"), LimbasLogger::LL_INFO);
         	    }
         	    if(in_array('links',$types)){
-                    check_grouprights(odbc_result($rs,"GROUP_ID"));
-                    del_grouprights(odbc_result($rs,"GROUP_ID"));
-            		LimbasLogger::log("check action rules for group ".odbc_result($rs,"NAME"), LimbasLogger::LL_INFO);
+                    check_grouprights(lmbdb_result($rs,"GROUP_ID"));
+                    del_grouprights(lmbdb_result($rs,"GROUP_ID"));
+            		LimbasLogger::log("check action rules for group ".lmbdb_result($rs,"NAME"), LimbasLogger::LL_INFO);
         	    }
         	}
         }
@@ -1117,7 +1127,7 @@ function sync_import_inner($path_right_export = null, $precheck, $confirm_syncim
         if (in_array('lmb_umgvar', $exptables)) {
             foreach ($lmbUmgvarStorage as $key => $value) {
                 $sqlquery = "UPDATE LMB_UMGVAR SET NORM='$value' WHERE FORM_NAME='$key'";
-                $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
                 if(!$rs) {
                     LimbasLogger::log("Could not restore umgvar!", LimbasLogger::LL_ERROR);
                     return false;
@@ -1132,7 +1142,7 @@ function sync_import_inner($path_right_export = null, $precheck, $confirm_syncim
         
         if (in_array('funcdelsession',$types)){
         	$sqlquery = "DELETE FROM LMB_SESSION";
-        	$rs = odbc_exec($db,$sqlquery);
+        	$rs = lmbdb_exec($db,$sqlquery);
         	LimbasLogger::log("function : delete sessions", LimbasLogger::LL_INFO);
         }
         
@@ -1354,7 +1364,7 @@ function parseConfigToArray($file)
 
                   $cdf = explode("::",$line);
                   $sqlquery = "ALTER TABLE ".$newtabname[$cdf[0]]." ADD FOREIGN KEY(".$cdf[1].") REFERENCES ".$cdf[2]."(".$cdf[3].") ON DELETE RESTRICT";
-                  $rs5 = odbc_exec($db,$sqlquery);
+                  $rs5 = lmbdb_exec($db,$sqlquery);
                   $outdesc1 = "<div>$lang[1026] <FONT COLOR=\"#0033CC\">".$newtabname[$cdf[0]]."</FONT></div>\n<Script language=\"JavaScript\">scrolldown();</SCRIPT>\n";
                   $outdesc2 = "<div style=\"color:red;\">$lang[1026] <FONT COLOR=\"#0033CC\">".$newtabname[$cdf[0]]."</FONT> $lang[1019]</div>\n<Script language=\"JavaScript\">scrolldown();</SCRIPT>\n";
                   if($rs5){

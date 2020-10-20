@@ -1,0 +1,51 @@
+<?php
+global $LINK;
+if (!$LINK['setup_php_editor']) {
+    die("Not allowed!");
+}
+
+/**
+ * Executes phpCode and returns its output, executionTime and thrown errors
+ * Used only via ajax
+ * @param $phpCode
+ * @param $maxExecutionSeconds
+ */
+function executePhpCode($phpCode, $maxExecutionSeconds) {
+    # limit execution time
+    set_time_limit(intval($maxExecutionSeconds));
+    ini_set('max_execution_time', intval($maxExecutionSeconds));
+
+    $result = array();
+
+    # catch recoverable errors
+    set_error_handler(function ($type, $str, $file, $line) use (&$result) {
+        if (lmb_strpos($file, __FILE__) === 0) {
+            $result['error'][] = 'Error at line ' . $line . ': ' . $str;
+        } else {
+            $result['error'][] = 'Error in ' . $file . ', line ' . $line . ': ' . $str;
+        }
+        return true; // catch error
+    }, E_RECOVERABLE_ERROR);
+
+    # execute and measure time
+    ob_start();
+    $time = gettime();
+    try {
+        eval($phpCode);
+    } catch (Throwable $e) {
+        $result['error'][] = get_class($e) . ' thrown at line ' . $e->getLine() . ': ' . $e->getMessage();
+    }
+    $secs = number_format(gettime() - $time, 8, ',', '.');
+    $output = ob_get_clean();
+
+    # reset original error handlers
+    restore_error_handler();
+
+    # output useful data
+    $result['executionTime'] = $secs;
+    $result['output'] = $output;
+    $result['error'] = array_map(function ($e) {
+        return '<p>' . htmlentities($e) . '</p>';
+    }, $result['error']);
+    echo json_encode($result);
+}

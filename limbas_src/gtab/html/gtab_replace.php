@@ -70,9 +70,9 @@ foreach ($gfield[$gtabid]["sort"] as $key => $value){
 			echo "<div id=\"gse_".$key."_".$key1."\" style=\"display:$display;\">
 			<select style=\"width:200px;\" name=\"grplval[".$gtabid."][".$key."]\"><option>";
 			$sqlquery = "SELECT DISTINCT WERT,".$gfield[$gtabid]["select_sort"][$key]." FROM LMB_SELECT_W WHERE POOL = ".$gfield[$gtabid]["select_pool"][$key]." ORDER BY ".$gfield[$gtabid]["select_sort"][$key];
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			while(odbc_fetch_row($rs)) {
-				echo "<option value=\"".str_replace("\"","",odbc_result($rs,"WERT"))."\">".odbc_result($rs,"WERT");
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			while(lmbdb_fetch_row($rs)) {
+				echo "<option value=\"".str_replace("\"","",lmbdb_result($rs,"WERT"))."\">".lmbdb_result($rs,"WERT");
 			}
 			echo "</select>
 			</div>";
@@ -80,9 +80,9 @@ foreach ($gfield[$gtabid]["sort"] as $key => $value){
 			echo "<div id=\"gse_".$key."_".$key1."\" style=\"display:$display;\">
 			<select multiple style=\"width:200px;\" name=\"grplval[".$gtabid."][".$key."][]\"><option>";
 			$sqlquery = "SELECT DISTINCT WERT,ID,".$gfield[$gtabid]["select_sort"][$key]." FROM LMB_SELECT_W WHERE POOL = ".$gfield[$gtabid]["select_pool"][$key]." ORDER BY ".$gfield[$gtabid]["select_sort"][$key];
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			while(odbc_fetch_row($rs)) {
-				echo "<option value=\"".str_replace("\"","",odbc_result($rs,"ID"))."\">".odbc_result($rs,"WERT");
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			while(lmbdb_fetch_row($rs)) {
+				echo "<option value=\"".str_replace("\"","",lmbdb_result($rs,"ID"))."\">".lmbdb_result($rs,"WERT");
 			}
 			echo "</select>
 			</div>";

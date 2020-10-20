@@ -45,19 +45,19 @@ function patch_5(){
     global $db;
     
     $sqlquery = dbq_9(array($DBA['SCHEMA'],'LMB_CHART_LIST','PADDING_LEFT'),'NULL');
-    $rs = odbc_exec($db,$sqlquery);
+    $rs = lmbdb_exec($db,$sqlquery);
     $sqlquery = dbq_9(array($DBA['SCHEMA'],'LMB_CHART_LIST','padding_top'),'NULL');
-    $rs = odbc_exec($db,$sqlquery);
+    $rs = lmbdb_exec($db,$sqlquery);
     $sqlquery = dbq_9(array($DBA['SCHEMA'],'LMB_CHART_LIST','padding_right'),'NULL');
-    $rs = odbc_exec($db,$sqlquery);
+    $rs = lmbdb_exec($db,$sqlquery);
     $sqlquery = dbq_9(array($DBA['SCHEMA'],'LMB_CHART_LIST','padding_bottom'),'NULL');
-    $rs = odbc_exec($db,$sqlquery);
+    $rs = lmbdb_exec($db,$sqlquery);
     $sqlquery = dbq_9(array($DBA['SCHEMA'],'LMB_CHART_LIST','legend_x'),'NULL');
-    $rs = odbc_exec($db,$sqlquery);
+    $rs = lmbdb_exec($db,$sqlquery);
     $sqlquery = dbq_9(array($DBA['SCHEMA'],'LMB_CHART_LIST','legend_y'),'NULL');
-    $rs = odbc_exec($db,$sqlquery);
+    $rs = lmbdb_exec($db,$sqlquery);
     $sqlquery = dbq_9(array($DBA['SCHEMA'],'LMB_CHART_LIST','pie_radius'),'NULL');
-    $rs = odbc_exec($db,$sqlquery);
+    $rs = lmbdb_exec($db,$sqlquery);
     
     return true;
 }
@@ -71,5 +71,5 @@ echo "-->";
 
 ###########################
 
-if ($db AND !$action) {odbc_close($db);}
+if ($db AND !$action) {lmbdb_close($db);}
 ?>

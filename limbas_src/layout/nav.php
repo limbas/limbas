@@ -361,7 +361,15 @@ function lmbTreeOpenTable(gtabid,verkn_tabid,verkn_fieldid,verkn_ID){
 }
 
 function lmbTreeOpenData(gtabid,ID,verkn_tabid,verkn_fieldid,verkn_ID,form_id){
-	parent.main.location.href='main.php?action=gtab_change&verknpf=1&verkn_showonly=1&gtabid='+gtabid+'&ID='+ID+'&verkn_tabid='+verkn_tabid+'&verkn_fieldid='+verkn_fieldid+'&verkn_ID='+verkn_ID+'&formid='+form_id;
+    var url = '';
+    if(verkn_ID && verkn_tabid && verkn_fieldid){
+        url += '&verkn_ID='+verkn_ID+'&verkn_tabid='+verkn_tabid+'&verkn_fieldid='+verkn_fieldid+'+&verknpf=1&verkn_showonly=1';
+    }
+    if(form_id){
+        url += '&form_id='+form_id;
+    }
+
+	parent.main.location.href='main.php?action=gtab_change&gtabid='+gtabid+'&ID='+ID+url;
 }
 
 function format_tree(elemid){
@@ -1041,10 +1049,8 @@ echo '<div onclick="return hide_frame();"><div class="lmbMenuHeaderNav lmbMenuHi
 
 echo "</td></tr></table>\n";
 
-if (isset($activeMenu)) {
-    # show last opened menu in nav frame
-    $displayMainMenu = "mainMenu(" . $activeMenu . ")";
-} else {
+$displayMainMenu = '';
+if (!isset($activeMenu)) {
     # show first menu in nav frame
     foreach ($LINK["name"] as $key => $value) {
         if ($LINK["subgroup"][$key] == 2 AND $LINK["typ"][$key] == 1) {

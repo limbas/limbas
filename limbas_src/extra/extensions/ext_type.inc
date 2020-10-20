@@ -440,10 +440,10 @@ function lmbd_extendedMessages($ID,&$gresult,$fieldid,$gtabid,$class,$style,$pos
 	
 	echo "<div id=\"mail_status\"></div>";
 ?>
-<script src="extra/messages/classes/js/olAjax.js" language="javascript" type="text/javascript"></script>
-<script src="extra/messages/classes/js/olCookie.js" language="javascript" type="text/javascript"></script>
-<script src="extra/messages/classes/js/olEvent.js" language="javascript" type="text/javascript"></script>
-<script src="EXTENSIONS/system/ext_messages.js" language="javascript" type="text/javascript"></script>
+<script src="extra/messages/classes/js/olAjax.js?v=<?=$umgvar["version"]?>" language="javascript" type="text/javascript"></script>
+<script src="extra/messages/classes/js/olCookie.js?v=<?=$umgvar["version"]?>" language="javascript" type="text/javascript"></script>
+<script src="extra/messages/classes/js/olEvent.js?v=<?=$umgvar["version"]?>" language="javascript" type="text/javascript"></script>
+<script src="EXTENSIONS/system/ext_messages.js?v=<?=$umgvar["version"]?>" language="javascript" type="text/javascript"></script>
 <script language="javascript" type="text/javascript">//<!--
 	olEvent().observe(window, "load", mail_check);
 //--></script>

@@ -34,7 +34,7 @@ $path = implode("/",$path);
 set_include_path($path);
 chdir($path);
 
-require_once('inc/include_db.lib');
+require_once('lib/db/db_wrapper.lib');
 require_once('lib/include.lib');
 require_once('lib/session.lib');
 require_once('gtab/gtab.lib');
@@ -178,8 +178,8 @@ class MyCollection extends Sabre\DAV\Collection {
 		global $db;
 		
 		$sqlquery = "SELECT ID FROM LDMS_FILES WHERE LEVEL = ".$this->lid." AND LOWER(NAME) = '".parse_db_string(lmb_strtolower(lmb_utf8_decode($name)),40)."'";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(odbc_result($rs, "ID")){
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(lmbdb_result($rs, "ID")){
 			return true;
 		}
 		return false;
@@ -349,7 +349,7 @@ class MyFile extends \Sabre\DAV\File {
 			
 			error_log($sqlquery);
 			
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs){
 				return false;
 			}

@@ -83,20 +83,20 @@ function patch_19(){
 	global $db;
 
 	$sqlquery = "ALTER TABLE LMB_CONF_FIELDS ADD DATETIMESEC ".LMB_DBTYPE_NUMERIC."(1)";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 
 	$sqlquery = "SELECT ID,DATETIME FROM LMB_CONF_FIELDS";
-	$rs = odbc_exec($db,$sqlquery);
-	while(odbc_fetch_row($rs)){
-		if(odbc_result($rs,"DATETIME")){
-			$sqlquery1 = "UPDATE LMB_CONF_FIELDS SET DATETIMESEC = 1 WHERE ID = ".odbc_result($rs,"ID");
-			$rs1 = odbc_exec($db,$sqlquery1);
+	$rs = lmbdb_exec($db,$sqlquery);
+	while(lmbdb_fetch_row($rs)){
+		if(lmbdb_result($rs,"DATETIME")){
+			$sqlquery1 = "UPDATE LMB_CONF_FIELDS SET DATETIMESEC = 1 WHERE ID = ".lmbdb_result($rs,"ID");
+			$rs1 = lmbdb_exec($db,$sqlquery1);
 		}
 	}
 	$sqlquery = "ALTER TABLE LMB_CONF_FIELDS DROP DATETIME";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = dbq_7(array($DBA["DBSCHEMA"],"LMB_CONF_FIELDS","DATETIMESEC","DATETIME"));
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 
 	if($rs){return true;}
 	return false;
@@ -194,7 +194,7 @@ patch_scr(45,"2.4","patch_45","System");
 
 ###########################
 
-if ($db AND !$action) {odbc_close($db);}
+if ($db AND !$action) {lmbdb_close($db);}
 
 echo "
 	<script language='JavaScript'>

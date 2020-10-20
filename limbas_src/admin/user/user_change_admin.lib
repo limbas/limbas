@@ -29,27 +29,27 @@ function create_user_dir($userid,$groupid){
 
 	# --- checken ob present
 	$sqlquery = "SELECT ID FROM LDMS_STRUCTURE WHERE ERSTUSER = $userid AND TYP = 2 AND LEVEL = 0";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs){$commit = 1;}
-	$present = odbc_result($rs,"ID");
+	$present = lmbdb_result($rs,"ID");
 
 	if(!$present){
 		# -------------------- private / messages ---------------
 		$NEXTID = next_db_id('LDMS_STRUCTURE');
 		$sqlquery = "INSERT INTO LDMS_STRUCTURE (ID,NAME,LEVEL,ERSTUSER,ERSTGROUP,TYP,FIX,TAB_ID,SORT) VALUES ($NEXTID,'$lang[812]',0,$userid,$groupid,4,".LMB_DBDEF_TRUE.",0,2)";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs){$commit = 1;}
 		#$sqlquery = "INSERT INTO LDMS_STRUCTURE (ID,NAME,LEVEL,ERSTUSER,ERSTGROUP,TYP,FIX,TAB_ID,SORT) VALUES (".($NEXTID+2).",'$lang[767]',$NEXTID,$userid,$groupid,2,".LMB_DBDEF_TRUE.",1,1)";
-		#$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		#$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		#if(!$rs){$commit = 1;}
 		#$sqlquery = "INSERT INTO LDMS_STRUCTURE (ID,NAME,LEVEL,ERSTUSER,ERSTGROUP,TYP,FIX,TAB_ID,SORT) VALUES (".($NEXTID+3).",'$lang[768]',".($NEXTID+2).",$userid,$groupid,2,".LMB_DBDEF_TRUE.",2,1)";
-		#$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		#$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		#if(!$rs){$commit = 1;}
 		#$sqlquery = "INSERT INTO LDMS_STRUCTURE (ID,NAME,LEVEL,ERSTUSER,ERSTGROUP,TYP,FIX,TAB_ID,SORT) VALUES (".($NEXTID+4).",'$lang[769]',".($NEXTID+2).",$userid,$groupid,2,".LMB_DBDEF_TRUE.",3,2)";
-		#$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		#$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		#if(!$rs){$commit = 1;}
 		#$sqlquery = "INSERT INTO LDMS_STRUCTURE (ID,NAME,LEVEL,ERSTUSER,ERSTGROUP,TYP,FIX,TAB_ID,SORT) VALUES (".($NEXTID+5).",'$lang[770]',".($NEXTID+2).",$userid,$groupid,2,".LMB_DBDEF_TRUE.",4,3)";
-		#$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		#$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		#if(!$rs){$commit = 1;}
 	}
 
@@ -76,6 +76,7 @@ function create_user($userdata){
 	$uloadsize = $userdata["uloadsize"];
 	$usercolor = $userdata["usercolor"];
 	$language = $userdata["language"];
+	$dlanguage = $userdata["dlanguage"];
 	$dateformat = $userdata["dateformat"];
 	$timezone = $userdata["timezone"];
 	$setlocale = $userdata["setlocale"];
@@ -95,14 +96,14 @@ function create_user($userdata){
 
 	/* --- Tabellen Array -------------------------------------- */
 	$sqlquery = "Select * from LMB_CONF_TABLES ORDER BY TAB_GROUP,TAB_ID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$tabname[] = odbc_result($rs,"TABELLE");
-		$tabid[] = odbc_result($rs,"TAB_ID");
-		$tabgroup[] = odbc_result($rs,"TAB_GROUP");
-		$tabsplelling[] = odbc_result($rs,"BESCHREIBUNG");
-		$tabgrpid[] = odbc_result($rs,"TAB_ID").odbc_result($rs,"TAB_GROUP");
+	while(lmbdb_fetch_row($rs)) {
+		$tabname[] = lmbdb_result($rs,"TABELLE");
+		$tabid[] = lmbdb_result($rs,"TAB_ID");
+		$tabgroup[] = lmbdb_result($rs,"TAB_GROUP");
+		$tabsplelling[] = lmbdb_result($rs,"BESCHREIBUNG");
+		$tabgrpid[] = lmbdb_result($rs,"TAB_ID").lmbdb_result($rs,"TAB_GROUP");
 	}
 	
 	$username = str_replace(" ","",parse_db_string($username,50));
@@ -110,18 +111,18 @@ function create_user($userdata){
 
 	/* --- SUCHE ob schon vorhanden --------------------------------------------- */
 	$sqlquery = "SELECT USER_ID,NAME,VORNAME FROM LMB_USERDB WHERE LOWER(USERNAME) = '".lmb_strtolower($username)."'";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	if(odbc_fetch_row($rs)) {
+	if(lmbdb_fetch_row($rs)) {
 		$GLOBALS["user_exists"] = 1;
 		lmb_alert($lang[606]);
 		return false;
 	}else{
 		/* --- Standard Farbschema auslesen --------------------------------------------- */
 		$sqlquery = "SELECT ID FROM LMB_COLORSCHEMES WHERE NORM = ".LMB_DBDEF_TRUE;
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		if(!$coloschema){$coloschema = odbc_result($rs, "ID");}
+		if(!$coloschema){$coloschema = lmbdb_result($rs, "ID");}
 
 		# password hash
 		$hashedPass = lmbPasswordHash($passwort);
@@ -133,9 +134,9 @@ function create_user($userdata){
 		/* --- Next ID ---------------------------------------- */
 		$NEXTID = next_db_id("LMB_USERDB","USER_ID");
 		$sqlquery = "INSERT INTO LMB_USERDB (ID,USER_ID,USERNAME,PASSWORT,GROUP_ID,SUB_GROUP,EMAIL,VORNAME,NAME,BESCHREIBUNG,DATA_HIDE,DATA_DISPLAY,IPRANGE,DEL,
-		 LAYOUT,MAXRESULT,UPLOADSIZE,FARBSCHEMA,LANGUAGE,DATEFORMAT,TIME_ZONE,SETLOCAL,LOGGING) VALUES($NEXTID,$NEXTID,'$username','$hashedPass',$group_id,'$subgroup','$email','$vorname','$name','$beschreibung',1,2,'',".LMB_DBDEF_FALSE.",
-		'".parse_db_string($layout)."',".parse_db_int($results).",".parse_db_int($uloadsize).",'".parse_db_string($coloschema)."',".parse_db_int($language).",".parse_db_int($dateformat).",'".parse_db_string($timezone)."','".parse_db_string($setlocale)."',".parse_db_int($loglevel).")";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		 LAYOUT,MAXRESULT,UPLOADSIZE,FARBSCHEMA,LANGUAGE,DLANGUAGE,DATEFORMAT,TIME_ZONE,SETLOCAL,LOGGING) VALUES($NEXTID,$NEXTID,'$username','$hashedPass',$group_id,'$subgroup','$email','$vorname','$name','$beschreibung',1,2,'',".LMB_DBDEF_FALSE.",
+		'".parse_db_string($layout)."',".parse_db_int($results).",".parse_db_int($uloadsize).",'".parse_db_string($coloschema)."',".parse_db_int($language).",".parse_db_int($dlanguage).",".parse_db_int($dateformat).",'".parse_db_string($timezone)."','".parse_db_string($setlocale)."',".parse_db_int($loglevel).")";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		$ID = $NEXTID;
 
@@ -162,9 +163,9 @@ function user_change($ID,$userdata,$file=0,$user_add=0){
 	if($userdata["passwort"] AND $userdata["username"]){
 		if(!$user_add){
 			$sqlquery1 = "SELECT USER_ID,NAME,VORNAME,GROUP_ID FROM LMB_USERDB WHERE LOWER(USERNAME) = '".lmb_strtolower($userdata["username"])."'";
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
-			if(odbc_result($rs1,"USER_ID") AND odbc_result($rs1,"USER_ID") != $ID) {
+			if(lmbdb_result($rs1,"USER_ID") AND lmbdb_result($rs1,"USER_ID") != $ID) {
 				lmb_alert($lang[606]);
 				return false;
 			}
@@ -188,10 +189,12 @@ function user_change($ID,$userdata,$file=0,$user_add=0){
 	if($userdata["beschreibung"]){$sqlquery .= "BESCHREIBUNG = '".parse_db_string($userdata["beschreibung"],255)."',";}
 	if($userdata["group_id"]){$sqlquery .= "GROUP_ID = ".$userdata["group_id"].",";}
 	if($userdata["sub_group"]){$sqlquery .= "SUB_GROUP = '".implode(";",$userdata["sub_group"])."',";}else{$sqlquery .= "SUB_GROUP = '',";}
+	if($userdata["multitenant"]){$sqlquery .= "MULTITENANT = '".implode(";",$userdata["multitenant"])."',";}else{$sqlquery .= "MULTITENANT = '',";}
 	if($userdata["usercolor"]){$sqlquery .= "USERCOLOR = '".parse_db_string($userdata["usercolor"],6)."',";}
 	if($userdata["maxresult"]){$sqlquery .= "MAXRESULT = ".$userdata["maxresult"].",";}else{$sqlquery .= "MAXRESULT = 15,";}
 	if($userdata["uploadsize"]){$sqlquery .= "UPLOADSIZE = ".($userdata["uploadsize"] * 1048576).",";}else{$sqlquery .= "UPLOADSIZE = 1048576,";}
 	if($userdata["language"]){$sqlquery .= "LANGUAGE = ".$userdata["language"].",";}
+	if($userdata["dlanguage"]){if($userdata["dlanguage"] == -1){$userdata["dlanguage"] = 0;};$sqlquery .= "DLANGUAGE = ".$userdata["dlanguage"].",";}
 	if($userdata["layout"]){$sqlquery .= "LAYOUT = '".parse_db_string($userdata["layout"],20)."',";}
 	$sqlquery .= "LOCK_TXT = '".parse_db_string($userdata["locktxt"],500)."',";
 	if($userdata["change_pass"]){$sqlquery .= "CHANGE_PASS = ".parse_db_bool($userdata["change_pass"]).",";}
@@ -211,7 +214,7 @@ function user_change($ID,$userdata,$file=0,$user_add=0){
 
 	$sqlquery .= " WHERE USER_ID = $ID";
 
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 }
 
@@ -220,51 +223,54 @@ function getUserDetails($ID){
 	global $db;
 	global $umgvar;
 
-	$sqlquery = "SELECT DISTINCT LMB_USERDB.SETLOCAL,LMB_USERDB.SUPERADMIN,LMB_USERDB.TEL,LMB_USERDB.FAX,LMB_USERDB.POSITION,LMB_USERDB.TIME_ZONE,LMB_USERDB.STATIC_IP,LMB_USERDB.GC_MAXLIFETIME,LMB_USERDB.CLEARPASS,LMB_USERDB.LOCKBACKEND,LMB_USERDB.USERCOLOR,LMB_USERDB.VALIDDATE,LMB_USERDB.LMLOCK,LMB_USERDB.LOGGING,LMB_USERDB.LOCK_TXT,LMB_USERDB.DEBUG,LMB_USERDB.SUBADMIN,LMB_USERDB.USERNAME,LMB_USERDB.CHANGE_PASS,LMB_USERDB.SUB_GROUP,LMB_USERDB.IPRANGE,LMB_USERDB.GROUP_ID,LMB_USERDB.UPLOADSIZE,LMB_USERDB.LAYOUT,LMB_USERDB.LANGUAGE,LMB_USERDB.DATA_DISPLAY,LMB_USERDB.PASSWORT,LMB_USERDB.USER_ID,LMB_USERDB.VORNAME,LMB_USERDB.NAME,LMB_USERDB.EMAIL,LMB_USERDB.BESCHREIBUNG,LMB_USERDB.FARBSCHEMA,LMB_USERDB.MAXRESULT,LMB_USERDB.ERSTDATUM,LMB_USERDB.EDITDATUM,LMB_USERDB.DATEFORMAT,LMB_GROUPS.NAME AS GROUPNAME,LMB_GROUPS.GROUP_ID 
+	$sqlquery = "SELECT DISTINCT LMB_USERDB.MULTITENANT,LMB_USERDB.SETLOCAL,LMB_USERDB.SUPERADMIN,LMB_USERDB.TEL,LMB_USERDB.FAX,LMB_USERDB.POSITION,LMB_USERDB.TIME_ZONE,LMB_USERDB.STATIC_IP,LMB_USERDB.GC_MAXLIFETIME,LMB_USERDB.CLEARPASS,LMB_USERDB.LOCKBACKEND,LMB_USERDB.USERCOLOR,LMB_USERDB.VALIDDATE,LMB_USERDB.LMLOCK,LMB_USERDB.LOGGING,LMB_USERDB.LOCK_TXT,LMB_USERDB.DEBUG,LMB_USERDB.SUBADMIN,LMB_USERDB.USERNAME,LMB_USERDB.CHANGE_PASS,LMB_USERDB.SUB_GROUP,LMB_USERDB.IPRANGE,LMB_USERDB.GROUP_ID,LMB_USERDB.UPLOADSIZE,LMB_USERDB.LAYOUT,LMB_USERDB.LANGUAGE,LMB_USERDB.DLANGUAGE,LMB_USERDB.DATA_DISPLAY,LMB_USERDB.PASSWORT,LMB_USERDB.USER_ID,LMB_USERDB.VORNAME,LMB_USERDB.NAME,LMB_USERDB.EMAIL,LMB_USERDB.BESCHREIBUNG,LMB_USERDB.FARBSCHEMA,LMB_USERDB.MAXRESULT,LMB_USERDB.ERSTDATUM,LMB_USERDB.EDITDATUM,LMB_USERDB.DATEFORMAT,LMB_GROUPS.NAME AS GROUPNAME,LMB_GROUPS.GROUP_ID 
 	FROM LMB_USERDB LEFT JOIN LMB_GROUPS ON (LMB_USERDB.GROUP_ID = LMB_GROUPS.GROUP_ID)
 	WHERE USER_ID = $ID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-	if(odbc_fetch_row($rs)) {
-		$result_user["username"] = odbc_result($rs, "USERNAME");
-		$result_user["passwort"] = odbc_result($rs, "PASSWORT");
-		$result_user["user_id"] = odbc_result($rs, "USER_ID");
-		$result_user["vorname"] = odbc_result($rs, "VORNAME");
-		$result_user["name"] = odbc_result($rs, "NAME");
-		$result_user["email"] = odbc_result($rs, "EMAIL");
-		$result_user["tel"] = odbc_result($rs, "TEL");
-		$result_user["fax"] = odbc_result($rs, "FAX");
-		$result_user["position"] = odbc_result($rs, "POSITION");
-		$result_user["beschreibung"] = odbc_result($rs, "BESCHREIBUNG");
-		$result_user["group_id"] = odbc_result($rs, "GROUP_ID");
-		if(odbc_result($rs, "SUB_GROUP")){$result_user["sub_group"] = explode(";",odbc_result($rs, "SUB_GROUP"));}
-		$result_user["gruppe"] = odbc_result($rs, "GROUPNAME");
-		$result_user["gruppen_id"] = odbc_result($rs, "GROUP_ID");
-		$result_user["data_display"] = odbc_result($rs, "DATA_DISPLAY");
-		$result_user["farbschema"] = odbc_result($rs, "FARBSCHEMA");
-		$result_user["language"] = odbc_result($rs, "LANGUAGE");
-		$result_user["layout"] = odbc_result($rs, "LAYOUT");
-		$result_user["maxresult"] = odbc_result($rs, "MAXRESULT");
-		$result_user["change_pass"] = odbc_result($rs, "CHANGE_PASS");
-		$result_user["uploadsize"] = (odbc_result($rs, "UPLOADSIZE")/1048576);
-		$result_user["iprange"] = odbc_result($rs, "IPRANGE");
-		$result_user["erstdatum"] = get_date(odbc_result($rs, "ERSTDATUM"),2);
-		$result_user["editdatum"] = get_date(odbc_result($rs, "EDITDATUM"),2);
-		$result_user["subadmin"] = odbc_result($rs, "SUBADMIN");
-		$result_user["lock"] = odbc_result($rs, "LMLOCK");
-		$result_user["lockbackend"] = odbc_result($rs, "LOCKBACKEND");
-		$result_user["debug"] = odbc_result($rs, "DEBUG");
-		$result_user["logging"] = odbc_result($rs, "LOGGING");
-		$result_user["locktxt"] = odbc_result($rs, "LOCK_TXT");
-		$result_user["validdate"] = get_date(odbc_result($rs, "VALIDDATE"),1);
-		$result_user["usercolor"] = odbc_result($rs, "USERCOLOR");
-		$result_user["clearpass"] = odbc_result($rs, "CLEARPASS");
-		$result_user["gc_maxlifetime"] = round(odbc_result($rs, "GC_MAXLIFETIME")/60/60/24,2);
-		$result_user["staticip"] = odbc_result($rs, "STATIC_IP");
-		$result_user["timezone"] = odbc_result($rs, "TIME_ZONE");
-		$result_user["superadmin"] = odbc_result($rs, "SUPERADMIN");
-        $result_user["setlocale"] = odbc_result($rs, "SETLOCAL");
-        $result_user["dateformat"] = odbc_result($rs, "DATEFORMAT");
+	if(lmbdb_fetch_row($rs)) {
+		$result_user["username"] = lmbdb_result($rs, "USERNAME");
+		$result_user["passwort"] = lmbdb_result($rs, "PASSWORT");
+		$result_user["user_id"] = lmbdb_result($rs, "USER_ID");
+		$result_user["vorname"] = lmbdb_result($rs, "VORNAME");
+		$result_user["name"] = lmbdb_result($rs, "NAME");
+		$result_user["email"] = lmbdb_result($rs, "EMAIL");
+		$result_user["tel"] = lmbdb_result($rs, "TEL");
+		$result_user["fax"] = lmbdb_result($rs, "FAX");
+		$result_user["position"] = lmbdb_result($rs, "POSITION");
+		$result_user["beschreibung"] = lmbdb_result($rs, "BESCHREIBUNG");
+		$result_user["group_id"] = lmbdb_result($rs, "GROUP_ID");
+		if(lmbdb_result($rs, "SUB_GROUP")){$result_user["sub_group"] = explode(";",lmbdb_result($rs, "SUB_GROUP"));}
+		$result_user["gruppe"] = lmbdb_result($rs, "GROUPNAME");
+		$result_user["gruppen_id"] = lmbdb_result($rs, "GROUP_ID");
+		$result_user["data_display"] = lmbdb_result($rs, "DATA_DISPLAY");
+		$result_user["farbschema"] = lmbdb_result($rs, "FARBSCHEMA");
+		$result_user["language"] = lmbdb_result($rs, "LANGUAGE");
+		$result_user["dlanguage"] = lmbdb_result($rs, "DLANGUAGE");
+		$result_user["layout"] = lmbdb_result($rs, "LAYOUT");
+		$result_user["maxresult"] = lmbdb_result($rs, "MAXRESULT");
+		$result_user["change_pass"] = lmbdb_result($rs, "CHANGE_PASS");
+		$result_user["uploadsize"] = (lmbdb_result($rs, "UPLOADSIZE")/1048576);
+		$result_user["iprange"] = lmbdb_result($rs, "IPRANGE");
+		$result_user["erstdatum"] = get_date(lmbdb_result($rs, "ERSTDATUM"),2);
+		$result_user["editdatum"] = get_date(lmbdb_result($rs, "EDITDATUM"),2);
+		$result_user["subadmin"] = lmbdb_result($rs, "SUBADMIN");
+		$result_user["lock"] = lmbdb_result($rs, "LMLOCK");
+		$result_user["lockbackend"] = lmbdb_result($rs, "LOCKBACKEND");
+		$result_user["debug"] = lmbdb_result($rs, "DEBUG");
+		$result_user["logging"] = lmbdb_result($rs, "LOGGING");
+		$result_user["locktxt"] = lmbdb_result($rs, "LOCK_TXT");
+		$result_user["validdate"] = get_date(lmbdb_result($rs, "VALIDDATE"),1);
+		$result_user["usercolor"] = lmbdb_result($rs, "USERCOLOR");
+		$result_user["clearpass"] = lmbdb_result($rs, "CLEARPASS");
+		$result_user["gc_maxlifetime"] = round(lmbdb_result($rs, "GC_MAXLIFETIME")/60/60/24,2);
+		$result_user["staticip"] = lmbdb_result($rs, "STATIC_IP");
+		$result_user["timezone"] = lmbdb_result($rs, "TIME_ZONE");
+		$result_user["superadmin"] = lmbdb_result($rs, "SUPERADMIN");
+        $result_user["setlocale"] = lmbdb_result($rs, "SETLOCAL");
+        $result_user["dateformat"] = lmbdb_result($rs, "DATEFORMAT");
+        $multitenant = explode(',',lmbdb_result($rs, "MULTITENANT"));
+        $result_user["multitenant"] = explode(';',$multitenant[0]);
 
 		# --- Passwort Gültig ----
 		#$v_val = mktime(0,0,0,date("m"),date("d") + $result_user[valid],date("Y"));
@@ -272,11 +278,11 @@ function getUserDetails($ID){
 
 		#$v_pass - $v_now;
 
-		$sqlquery2 = "SELECT MAX(UPDATE_DATE) AS LASTKLICK FROM LMB_HISTORY_USER WHERE USERID = ".odbc_result($rs, "USER_ID")." AND UPDATE_DATE IS NOT NULL";
-		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		$sqlquery2 = "SELECT MAX(UPDATE_DATE) AS LASTKLICK FROM LMB_HISTORY_USER WHERE USERID = ".lmbdb_result($rs, "USER_ID")." AND UPDATE_DATE IS NOT NULL";
+		$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 		if(!$rs2) {$commit = 1;}
-		if(odbc_fetch_row($rs2)){
-			$lastklick = mktime(lmb_substr(odbc_result($rs2, "LASTKLICK"),11,2), lmb_substr(odbc_result($rs2, "LASTKLICK"),14,2) + $umgvar['session_length'], lmb_substr(odbc_result($rs2, "LASTKLICK"),17,2), lmb_substr(odbc_result($rs2, "LASTKLICK"),5,2), lmb_substr(odbc_result($rs2, "LASTKLICK"),8,2), lmb_substr(odbc_result($rs2, "LASTKLICK"),0,4));
+		if(lmbdb_fetch_row($rs2)){
+			$lastklick = mktime(lmb_substr(lmbdb_result($rs2, "LASTKLICK"),11,2), lmb_substr(lmbdb_result($rs2, "LASTKLICK"),14,2) + $umgvar['session_length'], lmb_substr(lmbdb_result($rs2, "LASTKLICK"),17,2), lmb_substr(lmbdb_result($rs2, "LASTKLICK"),5,2), lmb_substr(lmbdb_result($rs2, "LASTKLICK"),8,2), lmb_substr(lmbdb_result($rs2, "LASTKLICK"),0,4));
 			$stamp = local_stamp(2);
 			if($lastklick >= $stamp){$result_user["aktiv"] = sprintf("%.2f",($lastklick - $stamp)/60);}
 		}
@@ -324,15 +330,16 @@ function mailUserInfo($result_user,$send_usermail,$userdata=null){
 		
 		if($userdata['passwort']){
 			$passmessage = $userdata['passwort'];
-		}elseif($result_user["clearpass"]){
-			$passmessage = $result_user["clearpass"];
 		}
 
-		if($umgvar["password_as_image"] AND $passmessage){
-			$passimage = paintTextToImage($passmessage,12);
+		if($umgvar["password_as_image"] == 'image' AND $passmessage){
+			$passimage = paintTextToImage($passmessage,10);
 			$passmessage = "<img alt=\"\" src=\"cid:1259\">";
+		}elseif($umgvar["password_as_image"] == 'plain' AND $passmessage){
+
 		}else{
-			$nopass = 1;
+			$plainpass = 1;
+			$passmessage = '';
 		}
 
 		$settingsmessage = "name: ".$result_user["vorname"]." ".$result_user["name"]."<br>";
@@ -340,13 +347,13 @@ function mailUserInfo($result_user,$send_usermail,$userdata=null){
 		if($result_user["email"]){$settingsmessage .= "email: ".$result_user["email"]."<br>";}
 		if($result_user["farbschema"]){
 			$sqlquery = "SELECT NAME FROM LMB_COLORSCHEMES WHERE ID = ".parse_db_int($result_user["farbschema"]);
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			$settingsmessage .= "color: ".odbc_result($rs,"NAME")."<br>";
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$settingsmessage .= "color: ".lmbdb_result($rs,"NAME")."<br>";
 		}
 		if($result_user["language"]){
 			$sqlquery = "SELECT DISTINCT LANGUAGE FROM LMB_LANG WHERE LANGUAGE_ID = ".$result_user["language"];
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			$settingsmessage .= "language: ".odbc_result($rs,"LANGUAGE")."<br>";
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$settingsmessage .= "language: ".lmbdb_result($rs,"LANGUAGE")."<br>";
 		}
 		if($result_user["layout"]){$settingsmessage .= "layout: ".$result_user["layout"]."<br>";}
 		if($result_user["maxresult"]){$settingsmessage .= "maxresult: ".$result_user["maxresult"]."<br>";}
@@ -362,9 +369,11 @@ function mailUserInfo($result_user,$send_usermail,$userdata=null){
 		".nl2br($result_user["locktxt"])."<br>
 		<br><u>Your Login</u><br>
 		username: ".$result_user["username"]."<br>";
-		if(!$nopass){
+		if($plainpass){
 			$subject .= "password: ".$passmessage."<br><br>";
-		}
+		}elseif($passimage){
+            $subject .= "Password: <img alt=\"PW\" src=\"cid:attach-1\"><br><br>";
+        }
 		$subject .= "
 		Your baselink to limbas:<A HREF=\"".$umgvar["url"]."\">".$umgvar["url"]."</A><br>
 		".nl2br($result_user["beschreibung"])."<br><br>
@@ -376,39 +385,9 @@ function mailUserInfo($result_user,$send_usermail,$userdata=null){
 		<br><br>
 		This Message was automatically generated by Limbas!<br>
 		</html>\n\n";
-		
-		
-		if(file_exists($passimage)){
-			$handle = fopen($passimage, "r");
-			$attach_content = chunk_split(base64_encode(fread($handle, filesize($passimage))));
-			fclose($handle);
-			$subject .= "\n--" . $boundary . "\n";
-			$subject .= "Content-ID:1259\n";
-			$subject .= "Content-Type: image/jpeg; name=\"textimage.png\"\n";
-			$subject .= "Content-Transfer-Encoding: base64\n";
-			$subject .= "Content-Disposition: attachment; filename=\"textimage.png\"\n\n";
-			$subject .= $attach_content;
-			$subject .= "\n--" . $boundary . "\n";
-		}
-
-		
-		
-		$headers = "From: support@limbas.com \r\n";
-		$headers .= "MIME-Version: 1.0 \n";
-		$headers .= "Content-Transfer-Encoding: 7bit\n";
-		$headers .= "Content-Type: multipart/related; boundary=\"$boundary\"\n\n";
-		$headers .= "--" . $boundary . "\n";
-		$headers .= "Content-Type: text/html; charset=ISO-8859-1 \n";
-		$headers .= "Content-Transfer-Encoding: 7bit\n";
 
 		if($send_usermail){
-			if(mail($result_user["email"], "Limbas User-Information", $subject, $headers)){
-				$success = 1;
-				lmb_alert("login-information was send successfully to user: ".$result_user['username']);
-			}else{
-				lmb_alert("failed to send user Information for user: ".$result_user['username']);
-				$success = 0;
-			}
+            lmb_sendMail($result_user["email"],'',"Limbas User-Information",$subject,$passimage);
 		}
 	}
 
@@ -439,20 +418,15 @@ function mailUserInfo($result_user,$send_usermail,$userdata=null){
 		This Message was automatically generated by Limbas!<br>
 		</html>";
 
-		$headers = "From: support@limbas.com \r\n";
+		$from = $session['email'];
+		$headers = "From: $from \n";
 		$headers.= "Content-Type: text/html; charset=ISO-8859-1 ";
 		$headers .= "MIME-Version: 1.0 ";
 
 		$mailto = explode(" ",$umgvar["send_userchanges"]);
+
 		foreach ($mailto as $key => $mail){
-			return;
-			if(mail($mail, "Limbas User-Information", $subject, $headers)){
-				$success = 1;
-				#lmb_alert("login-information was send successfully to user: ".$userdat["username"][$key]);
-			}else{
-				#lmb_alert("failed to send user Information for user: ".$userdat["username"][$key]);
-				$success = 0;
-			}
+		    #lmb_sendMail($mailto,'',"Limbas User-Information",$subject);
 		}
 	}
 	
@@ -462,5 +436,62 @@ function mailUserInfo($result_user,$send_usermail,$userdata=null){
 		return false;
 	}
 }
+
+
+function getMultitenant(){
+    global $db;
+
+    $sqlquery = "SELECT ID,MID,NAME FROM LMB_MULTITENANT";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs)) {
+
+        $id = lmbdb_result($rs, "ID");
+        $mid = lmbdb_result($rs, "MID");
+        $mname = lmbdb_result($rs, "NAME");
+
+        $result_multitenants['name'][$id] = $mname;
+        $result_multitenants['mid'][$id] = $mid;
+
+    }
+
+	return $result_multitenants;
+}
+
+
+function showMultitenant(&$result_user){
+    global $db;
+    global $result_multitenants;
+
+	echo "<DIV ID=\"multitenantlist\" class=\"lmbContextMenu\" STYLE=\"position:absolute;z-index:999;display:none;\" OnClick=\"activ_menu = 1;\">";
+	pop_closetop('multitenantlist');
+	pop_left($mwidth);
+	echo "<TABLE BORDER=\"0\" cellspacing=\"0\" cellpadding=\"0\">";
+
+    foreach ($result_multitenants['mid'] as $id => $mid){
+
+        $mname = $result_multitenants['name'][$id];
+
+        if(in_array($id,$result_user["multitenant"])){$CHECKED = 'CHECKED';}else {$CHECKED = '';}
+
+        echo "<tr>
+        <td title=\"$mid\">$mname</td>
+        <td><input type=\"checkbox\" name=\"userdata[multitenant][]\" value=\"$id\" $CHECKED></td>
+        </tr>";
+    }
+
+    echo "</TABLE>";
+
+	pop_right();
+	pop_bottom($mwidth);
+
+	echo "</DIV>";
+}
+
+
+
+
+
+
+
 ?>
 

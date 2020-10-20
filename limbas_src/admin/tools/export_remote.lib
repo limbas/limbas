@@ -25,14 +25,14 @@ function get_diag_list(){
 	$menu = array();
 
 	$sqlquery = "SELECT * FROM LMB_CHARTS";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)) {
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
 		
-		$gdiags["id"][] = odbc_result($rs,"ID");
-		$gdiags["diag_id"][] = odbc_result($rs,"DIAG_ID");
-		$gdiags["tab_id"][] = odbc_result($rs,"DIAG_NAME");
-		$gdiags["name"][] = odbc_result($rs,"DIAG_NAME");
-		$gdiags["desc"][] = odbc_result($rs,"DIAG_DESC");
+		$gdiags["id"][] = lmbdb_result($rs,"ID");
+		$gdiags["diag_id"][] = lmbdb_result($rs,"DIAG_ID");
+		$gdiags["tab_id"][] = lmbdb_result($rs,"DIAG_NAME");
+		$gdiags["name"][] = lmbdb_result($rs,"DIAG_NAME");
+		$gdiags["desc"][] = lmbdb_result($rs,"DIAG_DESC");
 	}
 
 	return $gdiags;

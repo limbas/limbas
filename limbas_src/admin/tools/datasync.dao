@@ -28,19 +28,19 @@ if(!$tab){$tab = 1;}
 if($new_template AND $add_template){
     $NEXTID = next_db_id("LMB_SYNC_TEMPLATE"); 
     $sqlquery = "INSERT INTO LMB_SYNC_TEMPLATE (ID, NAME) VALUES($NEXTID, '".parse_db_string($new_template,50)."')";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 if(is_numeric($drop_template)){
     $sqlquery = "DELETE FROM LMB_SYNC_TEMPLATE WHERE ID = ".parse_db_int($drop_template);
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     $sqlquery = "DELETE FROM LMB_SYNC_CONF WHERE TEMPLATE = ".parse_db_int($drop_template);
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 if(is_numeric($setting_template)){
     $sqlquery = "UPDATE LMB_SYNC_TEMPLATE SET CONFLICT_MODE = ".parse_db_int($template_mode[$setting_template])." WHERE ID = ".parse_db_int($setting_template);
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 
@@ -52,13 +52,13 @@ if(is_numeric($setting_template)){
 if($add_slave AND $new_slavename){
     $NEXTID = next_db_id("LMB_SYNC_SLAVES"); 
     $sqlquery = "INSERT INTO LMB_SYNC_SLAVES (ID,NAME,SLAVE_URL,SLAVE_USERNAME,SLAVE_PASS) VALUES($NEXTID, '".parse_db_string($new_slavename,50)."', '".parse_db_string($new_slaveurl,100)."', '".parse_db_string($new_slaveuser,20)."', '".parse_db_string($new_slavepass,20)."')";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 
 if(is_numeric($drop_slave)){
     $sqlquery = "DELETE FROM LMB_SYNC_SLAVES WHERE ID = ".parse_db_int($drop_slave);
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 
@@ -71,7 +71,7 @@ if($edit_slave){
             SLAVE_USERNAME = '".parse_db_string($slave['username'][$tkey],20)."',
             SLAVE_PASS = '".parse_db_string($slave['pass'][$tkey],20)."'
         WHERE ID = $tkey";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     }
 }
 
@@ -82,13 +82,13 @@ if($edit_template AND $rules){
         $srule = explode("_",$arule[$tkey]);
 
 		$sqlquery = "DELETE FROM LMB_SYNC_CONF WHERE TABID = ".parse_db_int($srule[0])." AND FIELDID = ".parse_db_int($srule[1])." AND TEMPLATE = ".$template;
-	    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
         // add
         if($templ_conf[$srule[0]][$srule[1]][1] OR $templ_conf[$srule[0]][$srule[1]][2]){
     	    $NEXTID = next_db_id("LMB_SYNC_CONF");
     		$sqlquery = "INSERT INTO LMB_SYNC_CONF (ID,TABID,FIELDID,TEMPLATE,MASTER,SLAVE) VALUES( $NEXTID, ".parse_db_int($srule[0]).",".parse_db_int($srule[1]).",".parse_db_int($template).",".parse_db_bool($templ_conf[$srule[0]][$srule[1]][1]).",".parse_db_bool($templ_conf[$srule[0]][$srule[1]][2]).")";
-    		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     	    if(!$rs) {$commit = 1;}
         }
     
@@ -100,35 +100,35 @@ if($edit_template AND $rules){
 
 
 $sqlquery = "SELECT ID,NAME,SLAVE_URL,SLAVE_USERNAME,SLAVE_PASS FROM LMB_SYNC_SLAVES ORDER BY NAME";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-    $sid = odbc_result($rs, "ID");
-	$result_slave['name'][$sid] = odbc_result($rs, "NAME");
-	$result_slave['slave_url'][$sid] = odbc_result($rs, "SLAVE_URL");
-	$result_slave['slave_username'][$sid] = odbc_result($rs, "SLAVE_USERNAME");
-	$result_slave['slave_pass'][$sid] = odbc_result($rs, "SLAVE_PASS");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+    $sid = lmbdb_result($rs, "ID");
+	$result_slave['name'][$sid] = lmbdb_result($rs, "NAME");
+	$result_slave['slave_url'][$sid] = lmbdb_result($rs, "SLAVE_URL");
+	$result_slave['slave_username'][$sid] = lmbdb_result($rs, "SLAVE_USERNAME");
+	$result_slave['slave_pass'][$sid] = lmbdb_result($rs, "SLAVE_PASS");
 }
 
 $sqlquery = "SELECT ID,NAME,CONFLICT_MODE FROM LMB_SYNC_TEMPLATE WHERE TABID IS NULL OR TABID = 0 ORDER BY NAME";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-    $tid = odbc_result($rs, "ID");
-	$result_template['name'][$tid] = odbc_result($rs, "NAME");
-	$result_template['mode'][$tid] = odbc_result($rs, "CONFLICT_MODE");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+    $tid = lmbdb_result($rs, "ID");
+	$result_template['name'][$tid] = lmbdb_result($rs, "NAME");
+	$result_template['mode'][$tid] = lmbdb_result($rs, "CONFLICT_MODE");
 }
 
 
 $sqlquery = "SELECT ID,TEMPLATE,TABID,FIELDID,MASTER,SLAVE FROM LMB_SYNC_CONF";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-    $cid = odbc_result($rs, "ID");
-    $ctabid = odbc_result($rs, "TABID");
-    $cfieldid = odbc_result($rs, "FIELDID");
-    $ctemplate = odbc_result($rs, "TEMPLATE");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+    $cid = lmbdb_result($rs, "ID");
+    $ctabid = lmbdb_result($rs, "TABID");
+    $cfieldid = lmbdb_result($rs, "FIELDID");
+    $ctemplate = lmbdb_result($rs, "TEMPLATE");
 
     $result_conf[$ctemplate][$ctabid][$cfieldid]['id'] = $cid;
-	$result_conf[$ctemplate][$ctabid][$cfieldid]['master'] = odbc_result($rs, "MASTER");
-	$result_conf[$ctemplate][$ctabid][$cfieldid]['slave'] = odbc_result($rs, "SLAVE");
+	$result_conf[$ctemplate][$ctabid][$cfieldid]['master'] = lmbdb_result($rs, "MASTER");
+	$result_conf[$ctemplate][$ctabid][$cfieldid]['slave'] = lmbdb_result($rs, "SLAVE");
 }
 
 if($popup){$is_popup = explode(";",$popup);}

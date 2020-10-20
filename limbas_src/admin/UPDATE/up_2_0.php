@@ -50,18 +50,18 @@ function patch_8(){
 	return true;
 
 	$sqlquery = "ALTER TABLE LMB_CONF_FIELDS ADD RELEXT2 ".LMB_DBTYPE_LONG;
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	if(!$rs){return false;}
 	
 	$sqlquery1 = "UPDATE LMB_CONF_FIELDS SET RELEXT2 = RELEXT";
-	$rs1 = odbc_exec($db,$sqlquery1);
+	$rs1 = lmbdb_exec($db,$sqlquery1);
 	
 	$sqlquery = "ALTER TABLE LMB_CONF_FIELDS DROP RELEXT";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	if(!$rs OR !$rs1){return false;}
 	
 	$sqlquery = dbq_7(array($DBA["DBSCHEMA"],"LMB_CONF_FIELDS","RELEXT2","RELEXT"));
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	if(!$rs){return false;}
 	
 	return true;
@@ -77,16 +77,16 @@ function patch_10(){
 	global $db;
 
 	$sqlquery = "UPDATE LMB_UMGVAR SET NORM = '18' where form_name = 'default_usercolor'";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	if(!$rs){return false;}
 	$sqlquery = "UPDATE LMB_UMGVAR SET NORM = 'manta' where form_name = 'default_layout'";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	if(!$rs){return false;}
 	$sqlquery = "UPDATE LMB_UMGVAR SET NORM = '11' where form_name = 'fontsize'";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	if(!$rs){return false;}
 	$sqlquery = "UPDATE LMB_UMGVAR SET NORM = '0' where form_name = 'admin_mode'";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	if(!$rs){return false;}
 	
 	return true;
@@ -150,7 +150,7 @@ function patch_27(){
 	$rellist = dbf_20(array($DBA["DBSCHEMA"],dbf_4("VERK_%"),"'TABLE'"));
 	foreach ($rellist["table_name"] as $key => $tablename){
 		$sqlquery = "ALTER TABLE $tablename ADD SORT SMALLINT";
-		$rs = odbc_exec($db,$sqlquery);
+		$rs = lmbdb_exec($db,$sqlquery);
 	}
 	return true;
 }
@@ -223,5 +223,5 @@ $impsystables = array("lmb_lang.tar.gz","lmb_action.tar.gz","lmb_field_types.tar
 
 ###########################
 
-if ($db AND !$action) {odbc_close($db);}
+if ($db AND !$action) {lmbdb_close($db);}
 ?>

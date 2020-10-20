@@ -1,0 +1,44 @@
+<?php
+
+
+if($new_multitenant_name AND $add_multitenant){
+    $NEXTID = next_db_id("LMB_MULTITENANT");
+    if(!$new_multitenant_id){$new_multitenant_id = $NEXTID;}
+    $sqlquery = "INSERT INTO LMB_MULTITENANT (ID, MID, NAME) VALUES($NEXTID, '".parse_db_string($new_multitenant_id,50)."', '".parse_db_string($new_multitenant_name,150)."')";
+
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+
+if(is_numeric($drop_multitenant)){
+    $sqlquery = "DELETE FROM LMB_MULTITENANT WHERE ID = ".parse_db_int($drop_multitenant);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+    // todo - delete all related Datasets
+
+}
+
+if($edit_multitenant){
+    foreach($multitenant['edit'] as $mkey => $mval){
+        if(!$mkey){continue;}
+        $sqlquery = "UPDATE LMB_MULTITENANT SET 
+            MID = '".parse_db_string($multitenant['mid'][$mkey],50)."',
+            NAME = '".parse_db_string($multitenant['name'][$mkey],150)."',
+            SYNCSLAVE = ".parse_db_int($multitenant['syncslave'][$mkey])."
+        WHERE ID = $mkey";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    }
+}
+
+
+$sqlquery = "SELECT ID,MID,NAME,SYNCSLAVE FROM LMB_MULTITENANT";
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+    $mid = lmbdb_result($rs, "ID");
+	$result_multitenant['name'][$mid] = lmbdb_result($rs, "NAME");
+	$result_multitenant['mid'][$mid] = lmbdb_result($rs, "MID");
+	$result_multitenant['syncslave'][$mid] = lmbdb_result($rs, "SYNCSLAVE");
+}
+
+
+?>

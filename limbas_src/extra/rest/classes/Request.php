@@ -7,12 +7,12 @@ class Request {
     /**
      * Allowed request methods
      */
-    protected const ALLOWED_METHODS = array('GET', 'POST', 'PATCH', 'DELETE');
+    const ALLOWED_METHODS = array('GET', 'POST', 'PATCH', 'DELETE');
 
     /**
      * parameters used by api functions
      */
-    public const API_PARAMETERS = array('page'=>'$page', 'sort'=>'$sort', 'fields'=>'$fields');
+    const API_PARAMETERS = array('page'=>'$page', 'sort'=>'$sort', 'fields'=>'$fields');
 
     /**
      * @var Router

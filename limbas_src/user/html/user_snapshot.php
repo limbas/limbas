@@ -20,11 +20,11 @@
 
 if($del AND $gtabid){
 	$sqlquery = "DELETE FROM LMB_SNAP_SHARED where ID = $del";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	
 	$sqlquery = "DELETE FROM LMB_SNAP WHERE ID = $del AND USER_ID = ".$session["user_id"]." AND TABID = $gtabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}else{
 		unset($gsnap[$gtabid]["id"][$del]);
 		unset($gsnap[$gtabid]['name'][$del]);
@@ -47,7 +47,7 @@ if($snap_edit AND $gtabid AND $snapid){
 	if($update){
 		$update = implode(",",$update);
 		$sqlquery = "UPDATE LMB_SNAP SET $update WHERE ID = $snapid AND USER_ID = {$session['user_id']} AND TABID = $gtabid";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);	
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);	
 	}
 }
 ?>
@@ -138,10 +138,10 @@ global $session;
 
 # count shared snapshots by snapshot id
 $sqlquery = "SELECT SNAPSHOT_ID FROM LMB_SNAP_SHARED,LMB_SNAP WHERE LMB_SNAP.ID = LMB_SNAP_SHARED.SNAPSHOT_ID AND LMB_SNAP.USER_ID = ".$session["user_id"];
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 $sharedCount = array();
-while(odbc_fetch_row($rs)){
-	$snid = odbc_result($rs,"SNAPSHOT_ID");
+while(lmbdb_fetch_row($rs)){
+	$snid = lmbdb_result($rs,"SNAPSHOT_ID");
     $sharedCount[$snid]++;
 }
 

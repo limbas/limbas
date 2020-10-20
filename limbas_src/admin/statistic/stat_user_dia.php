@@ -29,15 +29,15 @@ if($diag_myd == 2){$m = 1;}else{$m = 0;}
 if($diag_myd == 1){$y = 1;}else{$y = 0;}
 
 $sqlquery = "SELECT DISTINCT ID FROM LMB_CHARTS WHERE DIAG_ID = $diag_typ";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-while(odbc_fetch_row($rs)) {
+while(lmbdb_fetch_row($rs)) {
         unset($last);
         echo "<BR><BR>";
 
-        $sqlquery1 = "SELECT DIAG_DESC,DIAG_VALUE,DIAG_SQL FROM LMB_CHARTS WHERE ID = ".odbc_result($rs, "ID");
-        $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-        $phpfile = fopen($umgvar['pfad']."/USER/".$session['user_id']."/temp/diag".odbc_result($rs, "ID").".php","w+");
+        $sqlquery1 = "SELECT DIAG_DESC,DIAG_VALUE,DIAG_SQL FROM LMB_CHARTS WHERE ID = ".lmbdb_result($rs, "ID");
+        $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+        $phpfile = fopen($umgvar['pfad']."/USER/".$session['user_id']."/temp/diag".lmbdb_result($rs, "ID").".php","w+");
 
         $start_time = dateToStamp($diag_von);
         $end_time = dateToStamp($diag_bis);
@@ -56,7 +56,7 @@ while(odbc_fetch_row($rs)) {
                 $db_date_start = convert_date(date("d.m.Y",$run_time));
                 $run_time = $tmp_time;
                 $db_date_end = convert_date(date("d.m.Y",mktime(0,0,0,date("m",$run_time),date("d",$run_time)-1,date("Y",$run_time))));
-                eval(odbc_result($rs1, "DIAG_SQL"));
+                eval(lmbdb_result($rs1, "DIAG_SQL"));
                 #echo $db_date_start." ".$db_date_end."<BR>";
         }
 
@@ -69,7 +69,7 @@ while(odbc_fetch_row($rs)) {
                 $db_date_start = convert_date(date("d.m.Y",$run_time));
                 $run_time = mktime(0,0,0,date("m",$run_time)+$m,date("d",$run_time)+$d,date("Y",$run_time)+$y);
                 $db_date_end = convert_date(date("d.m.Y",mktime(0,0,0,date("m",$run_time),date("d",$run_time)-1,date("Y",$run_time))));
-                eval(odbc_result($rs1, "DIAG_SQL"));
+                eval(lmbdb_result($rs1, "DIAG_SQL"));
                 #echo $db_date_start." ".$db_date_end."<BR>";
         }
 
@@ -82,17 +82,17 @@ while(odbc_fetch_row($rs)) {
                 elseif($diag_myd == 3){$x_desc[] = "'".date("D",$run_time)."'";}
                 $run_time = mktime(0,0,0,date("m",$run_time)+$m,date("d",$run_time)+$d,date("Y",$run_time)+$y);
                 $last = 1;
-                eval(odbc_result($rs1, "DIAG_SQL"));
+                eval(lmbdb_result($rs1, "DIAG_SQL"));
                 #echo $db_date_start." ".$db_date_end."<BR>";
         }
 
 
         fputs($phpfile,"<?php\n");
         fputs($phpfile,"\n\n".$result."\n");
-        fputs($phpfile,odbc_result($rs1, "DIAG_VALUE"));
+        fputs($phpfile,lmbdb_result($rs1, "DIAG_VALUE"));
         fputs($phpfile,"\n?>");
         fclose($phpfile);
-        echo "<IMG SRC=\"USER/".$session['user_id']."/temp/diag".odbc_result($rs, "ID").".php\">";
+        echo "<IMG SRC=\"USER/".$session['user_id']."/temp/diag".lmbdb_result($rs, "ID").".php\">";
 }
 ?>
 

@@ -26,14 +26,14 @@ $tab = $gtab['table'][$gtabid];
 if($kalenderlist){
 
 $sqlquery = "SELECT DISTINCT KEYID,ERSTDATUM,DATUM,ZEITSTEMPEL,BEMERKUNG,FARBE FROM DATE_".$gtab['tab_id'][$gtabid]." WHERE ID = $ID AND FIELD = '$field' ORDER BY DATUM";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-        $result_kallist['keyid'][] = odbc_result($rs, "KEYID");
-        $result_kallist['erstdatum'][] = get_date(odbc_result($rs, "ERSTDATUM"),2);
-        $result_kallist['datum'][] = get_date(odbc_result($rs, "DATUM"),2);
-        $result_kallist['zeitstempel'][] = odbc_result($rs, "ZEITSTEMPEL");
-        $result_kallist['bemerkung'][] = odbc_result($rs, "BEMERKUNG");
-        $result_kallist['farbe'][] = odbc_result($rs, "FARBE");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+        $result_kallist['keyid'][] = lmbdb_result($rs, "KEYID");
+        $result_kallist['erstdatum'][] = get_date(lmbdb_result($rs, "ERSTDATUM"),2);
+        $result_kallist['datum'][] = get_date(lmbdb_result($rs, "DATUM"),2);
+        $result_kallist['zeitstempel'][] = lmbdb_result($rs, "ZEITSTEMPEL");
+        $result_kallist['bemerkung'][] = lmbdb_result($rs, "BEMERKUNG");
+        $result_kallist['farbe'][] = lmbdb_result($rs, "FARBE");
 }
 
 
@@ -67,7 +67,7 @@ if($change_ok == 'eintragen' AND $ID AND $field AND $tab){
 
                 /* --- alte Termine löschen ---------*/
                 $sqlquery = "DELETE FROM DATE_".$gtab['tab_id'][$gtabid]." WHERE ID = $ID AND FIELD = '".$field."' AND MONTH(DATUM) = $monat AND YEAR(DATUM) = $jahr" ;
-                $rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                $rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
                 if(!$rs1) {$commit = 1;}
 
                 while($tag < $tage_m AND $bzm < 10) {
@@ -80,7 +80,7 @@ if($change_ok == 'eintragen' AND $ID AND $field AND $tab){
                                                 /* --- Next ID ---------------------------------------- */
                                                 $NEXTID = next_db_id("DATE_".$gtab['tab_id'][$gtabid],"KEYID");
                                                 $sqlquery = "INSERT INTO DATE_".$gtab['tab_id'][$gtabid]." (KEYID,ID,DATUM,ZEITSTEMPEL,FIELD,FARBE,BEMERKUNG) VALUES ($NEXTID,$ID,'$jahr-$monat-$tag 00:00:00',$res_tag,'".$field."','".${"c".$res_tag}."','".${"d".$res_tag}."')";
-                                                $rs2 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                                                $rs2 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
                                                 if(!$rs2) {$commit = 1;}
                                                 $bzm3++;
                                         }
@@ -99,17 +99,17 @@ if($change_ok == 'eintragen' AND $ID AND $field AND $tab){
         /* --- Summe aller Tage ---------*/
         if($commit != 1){
                 $sqlquery = "SELECT COUNT(*) AS ANZAHL FROM DATE_".$gtab['tab_id'][$gtabid]." WHERE FIELD = '".$field."' AND ID = $ID";
-                $rs_date1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                $rs_date1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
                 $sqlquery = "SELECT MAX(DATUM) AS LASTDATUM FROM DATE_".$gtab['tab_id'][$gtabid]." WHERE FIELD = '".$field."' AND ID = $ID";
-                $rs_date2 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                $rs_date2 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
                 $sqlquery = "SELECT MIN(DATUM) AS FIRSTDATUM FROM DATE_".$gtab['tab_id'][$gtabid]." WHERE FIELD = '".$field."' AND ID = $ID";
-                $rs_date3 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                $rs_date3 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-                $lastdatum = explode("-",lmb_substr(odbc_result($rs_date2, "LASTDATUM"),0,10));
-                $firstdatum = explode("-",lmb_substr(odbc_result($rs_date3, "FIRSTDATUM"),0,10));
+                $lastdatum = explode("-",lmb_substr(lmbdb_result($rs_date2, "LASTDATUM"),0,10));
+                $firstdatum = explode("-",lmb_substr(lmbdb_result($rs_date3, "FIRSTDATUM"),0,10));
 
-                $sqlquery = "UPDATE ".$tab." SET ".$field." = '$lastdatum[2].$lastdatum[1].$lastdatum[0];$firstdatum[2].$firstdatum[1].$firstdatum[0];".odbc_result($rs_date1, "ANZAHL")."' WHERE ID = $ID";
-                $rs3 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                $sqlquery = "UPDATE ".$tab." SET ".$field." = '$lastdatum[2].$lastdatum[1].$lastdatum[0];$firstdatum[2].$firstdatum[1].$firstdatum[0];".lmbdb_result($rs_date1, "ANZAHL")."' WHERE ID = $ID";
+                $rs3 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         }
 
 
@@ -122,22 +122,22 @@ if($change_ok == 'eintragen' AND $ID AND $field AND $tab){
 /* --- Termine auslesen ---------*/
 
 $sqlquery = "SELECT ZEITSTEMPEL,FARBE,BEMERKUNG FROM DATE_".$gtab['tab_id'][$gtabid]." WHERE FIELD = '".$field."' AND ID = $ID";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-        $tmp = odbc_result($rs, "ZEITSTEMPEL");
-        $result_date[$tmp] = odbc_result($rs, "ZEITSTEMPEL");
-        $result_color[$tmp] = odbc_result($rs, "FARBE");
-        $result_bemerkung[$tmp] = odbc_result($rs, "BEMERKUNG");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+        $tmp = lmbdb_result($rs, "ZEITSTEMPEL");
+        $result_date[$tmp] = lmbdb_result($rs, "ZEITSTEMPEL");
+        $result_color[$tmp] = lmbdb_result($rs, "FARBE");
+        $result_bemerkung[$tmp] = lmbdb_result($rs, "BEMERKUNG");
 }
 
 /* --- Monate auslesen ---------*/
 
 $sqlquery = "SELECT DISTINCT MONTH(DATUM) MONAT, YEAR(DATUM) JAHR FROM DATE_".$gtab['tab_id'][$gtabid]." WHERE FIELD = '".$field."' AND ID = $ID ORDER BY YEAR(DATUM),MONTH(DATUM)";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 $bzm = 1;
-while(odbc_fetch_row($rs)) {
-        $result_month[$bzm] = odbc_result($rs, "MONAT");
-        $result_year[$bzm] = odbc_result($rs, "JAHR");
+while(lmbdb_fetch_row($rs)) {
+        $result_month[$bzm] = lmbdb_result($rs, "MONAT");
+        $result_year[$bzm] = lmbdb_result($rs, "JAHR");
 $bzm++;
 }
 

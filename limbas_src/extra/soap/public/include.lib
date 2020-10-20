@@ -40,8 +40,7 @@ if($LIM["use_soap"]){
 	}
 	
 	define("IS_SOAP",1);
-
-	require_once("inc/include_db.lib");
+	require_once("lib/db/db_wrapper.lib");
 	require_once("lib/include.lib");
 	require_once("lib/session.lib");
 	require_once("extra/soap/server.php");
@@ -73,15 +72,15 @@ function call_client($lmpar){
 		"style" => SOAP_RPC,
 		"use" => SOAP_ENCODED,
 		"compression" => SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_DEFLATE,
-		"encoding"=>"ISO-8859-1"
+		"encoding"=>"UTF-8"
 		));
 
 		try{
-			$lmb = $client->__call("runlmb", array(serialize($lmpar)), array("uri" => "urn:xmethodsLimbasServer","soapaction" => "urn:xmethodsLimbasServer"));
+			$lmb = $client->__call("runlmb", array(base64_encode(serialize($lmpar))), array("uri" => "urn:xmethodsLimbasServer","soapaction" => "urn:xmethodsLimbasServer"));
 		}catch(Exception $e){
 			error_log($e->getMessage()."in ".$e->getFile()." on line #".$e->getLine()."\nerror on query:\n".print_r($lmpar,1)."\n{$_SERVER['HTTP_HOST']}:{$_SERVER['REQUEST_URI']}:{$_SERVER['QUERY_STRING']} with request:\n".print_r($_REQUEST,1));
 		}
-		if($lmb){$lmb = unserialize($lmb);}
+		if($lmb){$lmb = unserialize(base64_decode($lmb));}
 
 
 		if($lmb["session"]["s_id"]){

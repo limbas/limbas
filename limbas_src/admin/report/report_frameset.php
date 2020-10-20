@@ -34,20 +34,20 @@ if($reportcopy AND $new){
 	$report_name = parse_db_string($report_name,160);
 
 	$sqlquery = "SELECT REFERENZ_TAB,PAGE_STYLE,TARGET,DEFFORMAT FROM LMB_REPORT_LIST WHERE ID = $reportcopy";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$referenz_tab = odbc_result($rs,"REFERENZ_TAB");
-	$page_style = odbc_result($rs,"PAGE_STYLE");
-	$target = odbc_result($rs,"TARGET");
-	$defformat = odbc_result($rs,"DEFFORMAT");
+	$referenz_tab = lmbdb_result($rs,"REFERENZ_TAB");
+	$page_style = lmbdb_result($rs,"PAGE_STYLE");
+	$target = lmbdb_result($rs,"TARGET");
+	$defformat = lmbdb_result($rs,"DEFFORMAT");
 	/* --- NEXT ID ---------------------------------------- */
 	$report_id = next_conf_id("LMB_REPORT_LIST");
 	/* --- Berichtliste ---------------------------------------- */
 	$sqlquery = "INSERT INTO LMB_REPORT_LIST (ID,ERSTUSER,NAME,BESCHREIBUNG,REFERENZ_TAB,PAGE_STYLE,TARGET,EXTENSION,DEFFORMAT) VALUES($report_id,{$session['user_id']},'".parse_db_string($report_name,160)."','',$referenz_tab,'$page_style',".parse_db_int($target,3).",'".parse_db_string($reportextension,160)."','".parse_db_string($defformat,30)."')";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$NEXTID = next_db_id("LMB_RULES_REPFORM");
 	$sqlquery = "INSERT INTO LMB_RULES_REPFORM (ID,TYP,GROUP_ID,LMVIEW,REPFORM_ID) VALUES ($NEXTID,1,".$session["group_id"].",".LMB_DBDEF_TRUE.",$report_id)";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 	/* --- Next ID ---------------------------------------- */
 	$NEXTKEYID = next_db_id("LMB_REPORTS","ID");
@@ -84,22 +84,22 @@ if($reportcopy AND $new){
 		PIC_NAME,
 		BG,
 		EXTVALUE FROM LMB_REPORTS WHERE BERICHT_ID = $reportcopy";
-	$rs0 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs0 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs0) {$commit = 1;}
-	while(odbc_fetch_row($rs0)) {
+	while(lmbdb_fetch_row($rs0)) {
 
-		$typ = odbc_result($rs0,"TYP");
-		$tab_size = odbc_result($rs0,"TAB_SIZE");
-		$pic_name = odbc_result($rs0,"PIC_NAME");
-		$elid = odbc_result($rs0,"EL_ID");
+		$typ = lmbdb_result($rs0,"TYP");
+		$tab_size = lmbdb_result($rs0,"TAB_SIZE");
+		$pic_name = lmbdb_result($rs0,"PIC_NAME");
+		$elid = lmbdb_result($rs0,"EL_ID");
 		
 		if($typ == 'bild'){
 			$ext = explode(".",$pic_name);
-			$secname = $elid.substr(md5($elid.date("U").odbc_result($rs0,"PIC_NAME")),0,12).".".$ext[1];
-			if(file_exists($umgvar['path']."/UPLOAD/report/".odbc_result($rs0,"TAB_SIZE"))){
-				copy($umgvar['path']."/UPLOAD/report/".odbc_result($rs0,"TAB_SIZE"),$umgvar['path']."/UPLOAD/report/".$secname);
-				if(file_exists($umgvar['path']."/TEMP/thumpnails/report/".odbc_result($rs0,"TAB_SIZE"))){
-					copy($umgvar['path']."/TEMP/thumpnails/report/".odbc_result($rs0,"TAB_SIZE"),$umgvar['path']."/TEMP/thumpnails/report/".$secname);
+			$secname = $elid.substr(md5($elid.date("U").lmbdb_result($rs0,"PIC_NAME")),0,12).".".$ext[1];
+			if(file_exists($umgvar['path']."/UPLOAD/report/".lmbdb_result($rs0,"TAB_SIZE"))){
+				copy($umgvar['path']."/UPLOAD/report/".lmbdb_result($rs0,"TAB_SIZE"),$umgvar['path']."/UPLOAD/report/".$secname);
+				if(file_exists($umgvar['path']."/TEMP/thumpnails/report/".lmbdb_result($rs0,"TAB_SIZE"))){
+					copy($umgvar['path']."/TEMP/thumpnails/report/".lmbdb_result($rs0,"TAB_SIZE"),$umgvar['path']."/TEMP/thumpnails/report/".$secname);
 				}
 			}
 			$tab_size = $secname;
@@ -146,36 +146,36 @@ if($reportcopy AND $new){
 		".parse_db_int($elid,5).",
 		".$session['user_id'].",
 		'".$typ."',
-		".parse_db_int(odbc_result($rs0,"POSX")).",
-		".parse_db_int(odbc_result($rs0,"POSY")).",
-		".parse_db_int(odbc_result($rs0,"HEIGHT")).",
-		".parse_db_int(odbc_result($rs0,"WIDTH")).",
-		'".parse_db_string(odbc_result($rs0,"INHALT"))."',
-		'".odbc_result($rs0,"DBFIELD")."',
-		'".odbc_result($rs0,"VERKN_BAUM")."',
-		'".odbc_result($rs0,"STYLE")."',
-		".parse_db_int(odbc_result($rs0,"DB_DATA_TYPE")).",
-		".parse_db_bool(odbc_result($rs0,"SHOW_ALL")).",
+		".parse_db_int(lmbdb_result($rs0,"POSX")).",
+		".parse_db_int(lmbdb_result($rs0,"POSY")).",
+		".parse_db_int(lmbdb_result($rs0,"HEIGHT")).",
+		".parse_db_int(lmbdb_result($rs0,"WIDTH")).",
+		'".parse_db_string(lmbdb_result($rs0,"INHALT"))."',
+		'".lmbdb_result($rs0,"DBFIELD")."',
+		'".lmbdb_result($rs0,"VERKN_BAUM")."',
+		'".lmbdb_result($rs0,"STYLE")."',
+		".parse_db_int(lmbdb_result($rs0,"DB_DATA_TYPE")).",
+		".parse_db_bool(lmbdb_result($rs0,"SHOW_ALL")).",
 		".parse_db_int($report_id).",
-		".parse_db_int(odbc_result($rs0,"Z_INDEX")).",
-		".parse_db_bool(odbc_result($rs0,"LISTE")).",
-		".parse_db_int(odbc_result($rs0,"TAB")).",
+		".parse_db_int(lmbdb_result($rs0,"Z_INDEX")).",
+		".parse_db_bool(lmbdb_result($rs0,"LISTE")).",
+		".parse_db_int(lmbdb_result($rs0,"TAB")).",
 		'".parse_db_string($tab_size)."',
-		".parse_db_int(odbc_result($rs0,"TAB_EL_COL")).",
-		".parse_db_int(odbc_result($rs0,"TAB_EL_ROW")).",
-		".parse_db_int(odbc_result($rs0,"TAB_EL_COL_SIZE")).",
-		".parse_db_bool(odbc_result($rs0,"HEADER")).",
-		".parse_db_bool(odbc_result($rs0,"FOOTER")).",
-		'".parse_db_string(odbc_result($rs0,"PIC_TYP"),3)."',
-		'".parse_db_string(odbc_result($rs0,"PIC_STYLE"),250)."',
-		'".parse_db_string(odbc_result($rs0,"PIC_SIZE"),50)."',
-		".parse_db_int(odbc_result($rs0,"PIC_RES"),5).",
+		".parse_db_int(lmbdb_result($rs0,"TAB_EL_COL")).",
+		".parse_db_int(lmbdb_result($rs0,"TAB_EL_ROW")).",
+		".parse_db_int(lmbdb_result($rs0,"TAB_EL_COL_SIZE")).",
+		".parse_db_bool(lmbdb_result($rs0,"HEADER")).",
+		".parse_db_bool(lmbdb_result($rs0,"FOOTER")).",
+		'".parse_db_string(lmbdb_result($rs0,"PIC_TYP"),3)."',
+		'".parse_db_string(lmbdb_result($rs0,"PIC_STYLE"),250)."',
+		'".parse_db_string(lmbdb_result($rs0,"PIC_SIZE"),50)."',
+		".parse_db_int(lmbdb_result($rs0,"PIC_RES"),5).",
 		'".parse_db_string($pic_name,20)."',
-		".parse_db_int(odbc_result($rs0,"bg")).",
-		'".parse_db_string(odbc_result($rs0,"EXTVALUE"),1000)."'
+		".parse_db_int(lmbdb_result($rs0,"bg")).",
+		'".parse_db_string(lmbdb_result($rs0,"EXTVALUE"),1000)."'
 		)";
 		
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 		$NEXTKEYID++;
 	}
@@ -204,11 +204,11 @@ if($reportcopy AND $new){
 	$report_id = next_conf_id("LMB_REPORT_LIST");
 	if(!$reporttarget){$reporttarget_ = $report_id;}
 	$sqlquery = "INSERT INTO LMB_REPORT_LIST (ID,ERSTUSER,NAME,BESCHREIBUNG,PAGE_STYLE,REFERENZ_TAB,TARGET,EXTENSION,DEFFORMAT) VALUES($report_id,{$session['user_id']},'".parse_db_string($report_name,50)."','".str_replace("'","''",$report_desc)."','210;295;5;5;5;5',".parse_db_int($referenz_tab,3).",".parse_db_int($reporttarget_,3).",'".parse_db_string($reportextension,160)."','pdf')";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$NEXTID = next_db_id("LMB_RULES_REPFORM");
 	$sqlquery = "INSERT INTO LMB_RULES_REPFORM (ID,TYP,GROUP_ID,LMVIEW,REPFORM_ID) VALUES ($NEXTID,1,".$session["group_id"].",".LMB_DBDEF_TRUE.",$report_id)";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 	/* --- Transaktion ENDE -------------------------------------- */
 	if($commit == 1){
@@ -226,7 +226,7 @@ if($reportcopy AND $new){
 if(!$commit AND $new AND !$reporttarget){
 	if($lid = create_fs_report_dir($referenz_tab,$report_id,$report_name)){
 		$sqlquery = "UPDATE LMB_REPORT_LIST SET TARGET = $lid WHERE ID = $report_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		get_filestructure(1);
 	}

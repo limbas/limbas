@@ -22,13 +22,13 @@
 if($del AND $id){
 	//pchart
 	$sqlquery = "DELETE FROM LMB_CHART_LIST WHERE ID = $id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 	$sqlquery = "DELETE FROM LMB_CHARTS WHERE CHART_ID = $id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	
 	$sqlquery = "DELETE FROM LMB_RULES_REPFORM WHERE REPFORM_ID = $id AND TYP = 3";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 /* --- Diagramm erstellen  ---------------------------- */
@@ -36,32 +36,32 @@ if($new_diag AND $diag_name and $tab_id){
 	//pchart
 	$NEXTID = next_db_id("LMB_CHART_LIST");
 	$sqlquery = "INSERT INTO LMB_CHART_LIST (ID,ERSTUSER,DIAG_NAME,TAB_ID) VALUES($NEXTID,".$session["user_id"].",'".parse_db_string($diag_name,80)."',$tab_id)";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 	$NEXTID2 = next_db_id("LMB_RULES_REPFORM");
 	$sqlquery = "INSERT INTO LMB_RULES_REPFORM(ID,TYP,GROUP_ID,LMVIEW,REPFORM_ID) VALUES ($NEXTID2,3,".$session["group_id"].",".LMB_DBDEF_TRUE.",$NEXTID)";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 /* --- Diagrammtyp ändern ----------------------------- */
 if($diag_type AND $ID){
 	//pchart
 	$sqlquery = "UPDATE LMB_CHART_LIST SET DIAG_TYPE = '".trim(parse_db_string($diag_type,50))."',TEMPLATE='' WHERE ID = $ID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 /* --- Template ändern -------------------------------- */
 if($template AND $ID){
 	//pchart
 	$sqlquery = "UPDATE LMB_CHART_LIST SET TEMPLATE = '".trim(parse_db_string($template,50))."' WHERE ID = $ID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 /* --- Transposed ändern ------------------------------ */
 if($transposed AND $ID){
 	//pchart
 	$sqlquery = "UPDATE LMB_CHART_LIST SET TRANSPOSED = $transposed WHERE ID = $ID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 /* Get Diagram Settings */
@@ -80,18 +80,18 @@ $sqlquery = "SELECT
 				LMB_RULES_REPFORM.REPFORM_ID = CHARTS.ID
 				AND LMB_RULES_REPFORM.TYP = 3
 				AND LMB_RULES_REPFORM.GROUP_ID = ".$session["group_id"];
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
 $gdiaglist = array();
-while(odbc_fetch_row($rs)) {
-	$key = odbc_result($rs, "ID");
-	$gtabid = odbc_result($rs, "TAB_ID");
-	$gdiaglist[$gtabid]["id"][$key] = odbc_result($rs, "ID");
-	$gdiaglist[$gtabid]["name"][$key] = odbc_result($rs, "DIAG_NAME");
-	$gdiaglist[$gtabid]["desc"][$key] = odbc_result($rs, "DIAG_DESC");
-	$gdiaglist[$gtabid]["type"][$key] = odbc_result($rs, "DIAG_TYPE");
-	$gdiaglist[$gtabid]["grouplist"][$key] = odbc_result($rs, "TEMPLATE");
-	$gdiaglist[$gtabid]["transposed"][$key] = odbc_result($rs, "TRANSPOSED");
+while(lmbdb_fetch_row($rs)) {
+	$key = lmbdb_result($rs, "ID");
+	$gtabid = lmbdb_result($rs, "TAB_ID");
+	$gdiaglist[$gtabid]["id"][$key] = lmbdb_result($rs, "ID");
+	$gdiaglist[$gtabid]["name"][$key] = lmbdb_result($rs, "DIAG_NAME");
+	$gdiaglist[$gtabid]["desc"][$key] = lmbdb_result($rs, "DIAG_DESC");
+	$gdiaglist[$gtabid]["type"][$key] = lmbdb_result($rs, "DIAG_TYPE");
+	$gdiaglist[$gtabid]["grouplist"][$key] = lmbdb_result($rs, "TEMPLATE");
+	$gdiaglist[$gtabid]["transposed"][$key] = lmbdb_result($rs, "TRANSPOSED");
 }
 
 ?>

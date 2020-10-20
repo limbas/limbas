@@ -259,7 +259,27 @@ function form_gresult($ID,$gtabid,$form_id,&$gresult,$self=null,$verkn=null){
 				$onlyfield[$gtabid_] = $parelts;
 				$verkn = set_verknpf($gtabid,$fieldid,$ID,0,0,1,0);
 				$filter["getlongval"][$gtabid_] = 1;
-				if($gresult_ = get_gresult($gtabid_,1,$filter,$GLOBALS["gsf"],$verkn,$onlyfield)){
+
+                // extract parameters from relation fields
+                $extension = null;
+				if($gform[$form_id]['parameters']){
+                    foreach($gform[$form_id]['tab_id'] as $pkey => $pval){
+                        if($gform[$form_id]['parameters'][$pkey] AND $pval == $gtabid_ AND in_array($gform[$form_id]['field_id'][$pkey],$parelts)){
+                            $parameters_ .= $gform[$form_id]['parameters'][$pkey];
+                        }
+                    }
+                }
+                if($parameters_) {
+                    eval($parameters_.';');
+                }
+
+                if($gsr){
+				    $gsr = array_merge($GLOBALS["gsf"],$gsr);
+                }else{
+				    $gsr = $GLOBALS["gsf"];
+                }
+
+				if($gresult_ = get_gresult($gtabid_,1,$filter,$gsr,$verkn,$onlyfield,null,$extension)){
 					$ID_ = $gresult_[$gtabid_]["id"][0];
 					$gresult[$gtabid_] = $gresult_[$gtabid_];
 					// origin of relation fields in forms
@@ -293,6 +313,22 @@ function dftyp_warningDelete($key,$gformid,$pos,$style,$ID,$gtabid,$action,$fiel
 */
 
 #------------ dbdat ---------------------
+/**
+ * @param int $key
+ * @param int $gformid
+ * @param string $pos css-style-string containing the top:... left:...
+ * @param string $style another css-style-string
+ * @param string $class css classes to add to the element
+ * @param int $ID dataset id
+ * @param int $gtabid table id of table hosting the report
+ * @param string $action limbas action, e.g. gtab_change
+ * @param int $field_id field id of dbdat
+ * @param int $tab_id table id of dbdat
+ * @param array $gresult from get_gresult()
+ * @param int $z_index css z-index
+ * @param null $collapse
+ * @param bool $readonly whether to display the input as readonly field
+ */
 function form_dbdat($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id,$tab_id,&$gresult,$z_index=null,$collapse=null,$readonly=null){
 	global $gfield;
 	global $gtab;
@@ -462,6 +498,7 @@ function form_chart($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_
 	}
 }
 
+
 #------------ uform ---------------------
 function form_uform($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id,$tab_id,&$gresult,$z_index,$collapse,$readonly){
 	global $gform;
@@ -552,6 +589,14 @@ function form_uform($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_
 			}
 			}
 
+			// use relation view for manual relation in ext_RelationFields setting
+			if($filter["ext_RelationFields"]["relation"][$vuniqueid]){
+			    echo "<div $style_abs class=\"gtabFringeRelationBody\">\n";
+                dftyp_14($filter["ext_RelationFields"]["relation"][$vuniqueid]['ID'],$gresult,$filter["ext_RelationFields"]["relation"][$vuniqueid]['field_id'],$filter["ext_RelationFields"]["relation"][$vuniqueid]['tab_id'],null,null,null,1,null,null,$gformid,$formid);
+                echo "</div>";
+                return;
+            }
+
 			if(!$filter["ext_RelationFields"][$vuniqueid]){$filter["ext_RelationFields"][$vuniqueid] = $gfield[$gtabid]["key"];}
 			#$vfilter["anzahl"][$gtabid] = $filter["ext_RelationFields"]["count"][$vuniqueid];
 			#$vfilter["page"][$gtabid] = $filter["ext_RelationFields"]["page"][$vuniqueid];
@@ -560,7 +605,7 @@ function form_uform($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_
 
 			if(!$filter["ext_RelationFields"]['nogresult'][$vuniqueid]){
 			    $onlyfield[$gtabid] = $filter["ext_RelationFields"][$vuniqueid];
-			    $ugresult = get_gresult($gtabid,2,$vfilter,$gsr,$verkn,$onlyfield);
+			    $ugresult = get_gresult($gtabid,2,$vfilter,$gsr,$verkn,$onlyfield,null,$extension);
 			}
 
 			if(($action == 'gtab_change' OR $action == 'gtab_neu') AND !$readonly){$edittyp = 1;}else{$edittyp = 2;}
@@ -702,6 +747,7 @@ function form_menue($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_
 	global $lang;
 	global $gfield;
 	global $gform;
+	global $gtab;
 
 	$showel = explode("_",$gform[$gformid]["pic_size"][$key]);
 
@@ -717,7 +763,7 @@ function form_menue($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_
 			print_linktags($gtabid,$GLOBALS["verkn_poolid"],$ID,$gresult);
 			echo "</td></tr>";
 			$hastop = 1;
-			# Tabreiter
+        # Tabreiter
 		}elseif(in_array("3",$showel)){
 			echo "<tr><td>";
 			print_linktags($gtabid,$GLOBALS["verkn_poolid"],$ID,$gresult,1);
@@ -726,10 +772,10 @@ function form_menue($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_
 		}
 
 		# menu
-		if(in_array("1",$showel)){
+		if(in_array('1',$showel)){
 			if(!$hastop){echo "<tr class=\"gtabBodyDetailTopBorder\"><td></td></tr>";}
 			echo "<tr><td>";
-			print_menue($gtabid,$gresult,$GLOBALS["verkn_addfrom"],$readonly);
+			print_menue($gtabid,$gresult,$GLOBALS["verkn_addfrom"],$readonly,$showel);
 			echo "</td></tr>";
 		}
 
@@ -833,17 +879,15 @@ function form_fmenue($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field
 function form_frame($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id,$tab_id,&$gresult,$z_index,$collapse,$readonly){
 	global $gform;
 
+	echo "<div style=\"".$pos."\">";
 	if($gform[$gformid]["inhalt"][$key]){
-	    $stylearray = explode(";",$gform[$gformid]["style"][$key]);
-		$style_ = preg_replace("/width:|height:|border-style:|padding:|background-color|left:|top:/","",$style);
-        echo "<div style=\"$style_;position:absolute;left:".($gform[$gformid]["posx"][$key] + 20).";top:".($gform[$gformid]["posy"][$key] - 8).";z-index:".($gform[$gformid]["z_index"][$key] + 2).";border:none;padding-left:10px;padding-right:10px; background-image: linear-gradient(to bottom, transparent 50%, {$stylearray[21]} 50%)\">".$gform[$gformid]["inhalt"][$key]."</div>";
+        echo "<div style=\"$style_;position:relative;padding:4px;z-index:".($gform[$gformid]["z_index"][$key] + 2).";border:none;\">".$gform[$gformid]["inhalt"][$key]."</div>";
 	}
-
-	echo "<div id=\"element".$gform[$gformid]["fid"][$key]."\" style=\"".$pos.$style."\" title=\"".htmlentities($gform[$gformid]["title"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" $class>";
+	echo "<div id=\"element".$gform[$gformid]["fid"][$key]."\" style=\"position:relative;".$style."\" title=\"".htmlentities($gform[$gformid]["title"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" $class>";
 	if(is_array($gform[$gformid]["subellist"][$key][0])){
 		formListElements($action,$gtabid,$ID,$gresult,$gformid,$gform[$gformid]["subellist"][$key][0],0,$readonly);
 	}
-	echo "</div>";
+	echo "</div></div>";
 }
 
 #------------ datum ---------------------
@@ -856,6 +900,18 @@ function form_datum($key,$gformid,$pos,$style,$class,$ID,$gtabid){
 	echo "<INPUT ID=\"element".$gform[$gformid]["fid"][$key]."\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."]\" $class $style $event TYPE=\"TEXT\" $style $event TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\" TITLE=\"".htmlentities($gform[$gformid]["title"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\">";
 	echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" id=\"lfel_".$gform[$gformid]['fid'][$key]."\" BORDER=\"0\" TITLE=\"$lang[700]\" style=\"cursor:pointer;vertical-align:top;\" Onclick=\"lmb_datepicker(event,this,'','','".dateStringToDatepicker(setDateFormat(1,1))."')\"></i>\n";
 	#echo local_date(0);
+	echo "</DIV>";
+}
+
+#------------ Verknüpfungsreiter ---------------------
+function form_relpath($key,$gformid,$pos,$style,$class,$ID,$gtabid){
+	global $gform;
+
+	if(!$GLOBALS["verkn_addfrom"]){return;}
+
+
+	echo "<DIV style=\"$pos;z-index:".$gform[$gformid]["z_index"][$key]."\">";
+    print_verknaddfrom($GLOBALS["verkn_addfrom"],$gtabid,$style);
 	echo "</DIV>";
 }
 
@@ -946,36 +1002,46 @@ function form_inpselect($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$fi
     }
 
 	echo "<SELECT ID=\"element".$gform[$gformid]["fid"][$key]."\" TYPE=\"TEXT\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."]\" $readonly $class $style $event TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\" TITLE=\"".htmlentities($gform[$gformid]["title"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\">";
-	echo "<OPTION>";
 
 	// use Select-Pool
 	if(is_numeric($gform[$gformid]['inhalt'][$key])){
-		
-		// multilang
+        echo "<OPTION>";
+
+        // multilang
 		$field_name = 'WERT';
-		if($umgvar['multi_language'] AND $session['language'] != $umgvar['default_language']){
-		      $field_name = 'LANG'.$session['language'].'_WERT';
+		if($umgvar['multi_language'] AND $session['dlanguage'] != $umgvar['default_language']){
+		      $field_name = 'LANG'.$session['dlanguage'].'_WERT';
 		}
 		    
 		$sqlquery = "SELECT ID,$field_name,HIDE,DEF FROM LMB_SELECT_W WHERE POOL = ".$gform[$gformid]['inhalt'][$key]." ORDER BY SORT";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		while(odbc_fetch_row($rs)) {
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs)) {
 		    $selected = '';
-			if(odbc_result($rs, "HIDE")){continue;}
-			if(!$value AND odbc_result($rs, "DEF")){$selected = 'SELECTED';}
+			if(lmbdb_result($rs, "HIDE")){continue;}
+			if(!$value AND lmbdb_result($rs, "DEF")){$selected = 'SELECTED';}
 			if($value == $sval){$selected = 'SELECTED';}
-			$sval = htmlentities(odbc_result($rs, $field_name),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+			$sval = htmlentities(lmbdb_result($rs, $field_name),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
 			echo "<OPTION value=\"$sval\" $selected>$sval";
 		}
 	// use Text with linebreak
 	}elseif($gform[$gformid]['inhalt'][$key]){
 		$opt = explode("\n",$gform[$gformid]['inhalt'][$key]);
-		foreach ($opt as $key => $sval){
+		$html = '';
+		$emptyOption = '<option></option>';
+        foreach ($opt as $key => $sval){
 		    $selected = '';
 		    $sval = trim($sval,"\r");
+            if (lmb_substr($sval, -1) === '*') {
+                $emptyOption = '';
+                $sval = lmb_substr($sval, 0, -1);
+                if (!$value) {
+                    $value = $sval;
+                }
+            }
 		    if($value == $sval){$selected = 'SELECTED';}
-			echo "<OPTION $selected value=\"$sval\">$sval\n";
+            $html .= "<OPTION $selected value=\"$sval\">$sval</OPTION>";
 		}
+		echo $emptyOption, $html;
 	}
 	echo "</SELECT>";
 }
@@ -1454,34 +1520,46 @@ function formlist_inpselect($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$d
 	if($_REQUEST['lfel'][$gform[$gformid]['fid'][$key]][$datid]){
 	    $value = $_REQUEST['lfel'][$gform[$gformid]['fid'][$key]][$datid];
     }
-	echo "<SELECT ID=\"element".$gform[$gformid]["fid"][$key]."_".$gresult[$gtabid]['id'][$datid]."\" data-id=\"".$gresult[$gtabid]['id'][$datid]."\" TYPE=\"TEXT\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."][$datid]\" $style $event TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\"><OPTION>";
+	echo "<SELECT ID=\"element".$gform[$gformid]["fid"][$key]."_".$gresult[$gtabid]['id'][$datid]."\" data-id=\"".$gresult[$gtabid]['id'][$datid]."\" TYPE=\"TEXT\" NAME=\"lfel[".$gform[$gformid]['fid'][$key]."][$datid]\" $style $event TABINDEX=\"".$gform[$gformid]["z_index"][$key]."\">";
 
 	if(is_numeric($gform[$gformid]['inhalt'][$key])){
+	    echo '<option></option>';
+
 		// multilang
 		$field_name = 'WERT';
-		if($umgvar['multi_language'] AND $session['language'] != $umgvar['default_language']){
-		      $field_name = 'LANG'.$session['language'].'_WERT';
+		if($umgvar['multi_language'] AND $session['dlanguage'] != $umgvar['default_language']){
+		      $field_name = 'LANG'.$session['dlanguage'].'_WERT';
 		}
 
 		$sqlquery = "SELECT ID,$field_name,HIDE,DEF FROM LMB_SELECT_W WHERE POOL = ".$gform[$gformid]['inhalt'][$key]." ORDER BY SORT";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		while(odbc_fetch_row($rs)) {
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs)) {
 		    $selected = '';
-			if(odbc_result($rs, "HIDE")){continue;}
-			if(!$value AND odbc_result($rs, "DEF")){$selected = 'SELECTED';}
+			if(lmbdb_result($rs, "HIDE")){continue;}
+			if(!$value AND lmbdb_result($rs, "DEF")){$selected = 'SELECTED';}
 			if($value == $sval){$selected = 'SELECTED';}
-			$sval = htmlentities(odbc_result($rs, $field_name),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+			$sval = htmlentities(lmbdb_result($rs, $field_name),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
 			echo "<OPTION value=\"$sval\" $selected>$sval";
 		}
 	// use Text with linebreak
 	}elseif($gform[$gformid]['inhalt'][$key]){
 		$opt = explode("\n",$gform[$gformid]['inhalt'][$key]);
-		foreach ($opt as $key => $sval){
+		$html = '';
+		$emptyOption = '<option></option>';
+        foreach ($opt as $key => $sval){
 		    $selected = '';
 		    $sval = trim($sval,"\r");
+		    if (lmb_substr($sval, -1) === '*') {
+                $emptyOption = '';
+		        $sval = lmb_substr($sval, 0, -1);
+		        if (!$value) {
+		            $value = $sval;
+                }
+            }
 		    if($value == $sval){$selected = 'SELECTED';}
-			echo "<OPTION $selected value=\"$sval\">$sval\n";
+			$html .= "<OPTION $selected value=\"$sval\">$sval</OPTION>";
 		}
+		echo $emptyOption, $html;
 	}
 
 	echo "</SELECT>";

@@ -66,7 +66,7 @@
         }
 
         if ($form["form_typ"] == 1 || $form["form_typ"] == 2) {
-            array_push($reset, 'wflhist', 'reminder', 'dbdat', 'dbdesc', 'dbnew', 'text', 'datum', 'scroll', 'js', 'php', 'submt', 'button', 'inptext', 'inparea', 'inpselect', 'inpcheck', 'inpradio', 'inphidden', 'chart', 'templ', 'frame','tabulator','tab','uform','html');
+            array_push($reset, 'wflhist', 'reminder', 'dbdat', 'dbdesc', 'dbnew', 'text', 'datum', 'relpath', 'scroll', 'js', 'php', 'submt', 'button', 'inptext', 'inparea', 'inpselect', 'inpcheck', 'inpradio', 'inphidden', 'chart', 'templ', 'frame','tabulator','tab','uform','html');
             echo "$('#new_dbdat_area').hide();";
             echo "$('#new_wflhist_area').hide();";
         }
@@ -578,7 +578,9 @@
                                     <?php if ($form["form_typ"] == 1 OR $form["form_typ"] == 2) {$st = "";} else {$st = "none";} ?>
                                     <TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="php" class="lmb-icon lmb-rep-php btn" TITLE="<?= $lang[1772] ?>" VALUE="php" OnMouseDown="pressbutton('php', 'inset', '<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('php', 'outset', '<?= $farbschema['WEB7'] ?>');add('php');send();"></i></TD>
                                     <?php if ($form["form_typ"] == 1) {$st = "";} else {$st = "none";} ?>
-                                    <TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="datum" class="lmb-icon lmb-rep-date btn" TITLE="<?= $lang[197] ?>" VALUE="datum" OnMouseDown="pressbutton('datum', 'inset', '<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('datum', 'outset', '<?= $farbschema['WEB7'] ?>');add('datum');send();"></i>
+                                    <TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="datum" class="lmb-icon lmb-rep-date btn" TITLE="<?= $lang[197] ?>" VALUE="datum" OnMouseDown="pressbutton('datum', 'inset', '<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('datum', 'outset', '<?= $farbschema['WEB7'] ?>');add('datum');send();"></i></TD>
+                                    <?php if ($form["form_typ"] == 1) {$st = "";} else {$st = "none";} ?>
+                                    <TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="relpath" class="lmb-icon lmb-arrow-right btn" TITLE="relation path" VALUE="relpath" OnMouseDown="pressbutton('relpath', 'inset', '<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('relpath', 'outset', '<?= $farbschema['WEB7'] ?>');add('relpath');send();"></i></TD>
                                 </TR>
                             </TABLE>
                         </TD>

@@ -29,11 +29,11 @@
 		$sq = "SELECT CHART_ID, FIELD_ID 
 			FROM LMB_CHARTS 
 			WHERE CHART_ID = $diag_id AND FIELD_ID = $field_id;";
-		$rs = odbc_exec($db,$sq) or errorhandle(odbc_errormsg($db),$sq,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sq) or errorhandle(lmbdb_errormsg($db),$sq,$action,__FILE__,__LINE__);
 		
 		# Create/Update/Delete record
 		$sqlquery=null;
-		if(odbc_fetch_row($rs)){
+		if(lmbdb_fetch_row($rs)){
 			# Record exists
 			if($show==true){
 				# Update record
@@ -54,18 +54,18 @@
 			}
 		}
 		if($sqlquery!=null){
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
 		
 		# Create return value
 		$sqlquery = "SELECT CHART_ID, FIELD_ID, AXIS, FUNCTION, COLOR 
 			FROM LMB_CHARTS 
 			WHERE CHART_ID=$diag_id AND FIELD_ID = $field_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(odbc_fetch_row($rs)) {
-			$diagdetaillist["axis"] = odbc_result($rs, "AXIS");
-			//$diagdetaillist["function"] = odbc_result($rs, "FUNCTION");
-			$diagdetaillist["color"] = odbc_result($rs, "COLOR");
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(lmbdb_fetch_row($rs)) {
+			$diagdetaillist["axis"] = lmbdb_result($rs, "AXIS");
+			//$diagdetaillist["function"] = lmbdb_result($rs, "FUNCTION");
+			$diagdetaillist["color"] = lmbdb_result($rs, "COLOR");
 			echo json_encode($diagdetaillist);
 		}else{
             echo json_encode(null);
@@ -93,7 +93,7 @@
                         . "PIE_RADIUS=" . ($par['pie_radius']=='auto' ? 'null' : parse_db_int($par['pie_radius']));
                 
 		$sqlquery .= " WHERE ID=" . parse_db_int($par['diag_id']);                
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         }
 	
 ?>

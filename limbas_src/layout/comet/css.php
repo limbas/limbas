@@ -468,11 +468,11 @@ a.lmbMenuItemBodyNav {
 }
         
 .lmbPositionContainerMain.small {
-        width:600px;
+        width:800px;
 }
        
   .lmbPositionContainerMainTabPool.small {
-        width:600px;
+        width:800px;
 }    
 
 /* 100% width/height of tabpool minus padding */
@@ -553,6 +553,21 @@ a.lmbMenuItemBodyNav {
 
 /* gtab Tabelle Relation Tabmenu */
 
+.lmbTableHeader {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    border-bottom: 1px solid {$farbschema['WEB3']};
+}
+.lmbTableHeader .lmbGtabTabmenuInactive,
+.lmbTableHeader .lmbGtabTabmenuActive {
+    clear: none;
+    float: none;
+    width: initial;
+    display: inline-block;
+    border: 0;
+}
+
 .lmbGtabTabmenuTable{
 	border-collapse:collapse;
 	border-spacing:1px;
@@ -583,8 +598,6 @@ a.lmbMenuItemBodyNav {
     float:left;
     margin: 3px 0;
 }
-        
-        
         
 .lmbGtabTabmenuTable.multiTab .lmbGtabTabmenuActive{
     color:{$farbschema['WEB2']};
@@ -630,12 +643,9 @@ td .lmbGtabTabSpace {
     border: 1px solid {$farbschema['WEB3']};
 	width: calc(95% - 2px); /* 2x border */
 }
-        
-        
-        
 
 .lmbGtabTabmenuSpace{
-        display:none;
+    display:none;
 	width:100%;
 	background-color:{$farbschema['WEB14']};
 	border:1px solid {$farbschema['WEB14']};
@@ -1391,6 +1401,16 @@ table.hoverable tr.tabBody:hover {
 	padding-right:12px; /* earlier pad-left: 6 */
 }
 
+.lmbContextItem.inactive {
+    opacity: 0.5;
+    font-style: oblique;
+}
+
+.lmbContextItemIcon.inactive {
+    opacity: 0.5;
+    font-style: oblique;
+}
+
 .lmbContextTop {
 	cursor:pointer;
 	padding-bottom:8px;
@@ -1416,7 +1436,6 @@ table.hoverable tr.tabBody:hover {
 .lmbContextHeader[onclick]:hover {
     background-color: {$farbschema['WEB7']};
 }
-
 
 /* explorer */
 
@@ -1789,9 +1808,15 @@ FORM {
 	padding:0px;
 }
 
+INS {
+    color: #222222;
+    padding:2px;
+}
 
-
-
+DEL {
+    color: #222222;
+    padding:2px;
+}
 
 
 /* fullcalendar ------------------------------------------------------------------------*/
@@ -2629,7 +2654,37 @@ card-assigned-value{
     display: none;
 }
 
+.lmb-progress {
+    height: 2em;
+    max-width: 250px;
+    background-color: {$farbschema['WEB10']};
+    position: relative;
+    margin-top: 0.3em;
+    margin-bottom: 1.2em;
+}
+.lmb-progress .lmb-progress-valtext {
+    position: absolute;
+    text-align: center;
+    top: 5px;
+    left: 0;
+    right: 0;
+}
+.lmb-progress .lmb-progress-val {
+    background-color: {$farbschema['WEB7']};
+    display: inline-block;
+    height: 100%;
+}
 
+.first-letter-red {
+    display: inline-block; /* for ::first-letter to work */
+}
+.first-letter-red::first-letter {
+    color: red;
+}
+
+label input {
+    vertical-align: middle;
+}
 
 ";
     

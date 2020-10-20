@@ -28,7 +28,7 @@ function patch_1(){
 	global $db;
 	$nid = next_db_id("lmb_colorschemes");
 	$sqlquery = "INSERT INTO LMB_COLORSCHEMES VALUES($nid,'basic (comet)','#d0d0d0','#444444','#C0C0C0','#BBBBBB','#C0C0C0','#C0C0C0','#97C5AB','#EEEEEE',".LMB_DBDEF_TRUE.",'#EEEEEE','#eaf3ee','#FDFEFD','#909090','#FFFFFF','#F5F5F5')";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	return true;
 }
 patch_scr(0,0,'patch_1','',3);
@@ -40,5 +40,5 @@ patch_scr(0,0,'patch_1','',3);
 
 ###########################
 
-if ($db AND !$action) {odbc_close($db);}
+if ($db AND !$action) {lmbdb_close($db);}
 ?>

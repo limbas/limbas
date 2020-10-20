@@ -41,12 +41,12 @@ function LmEntOcr_copy($ID,$ocr_destination=null,$ocr_format=null,$ocr_params=nu
 	$out = true;
 	if($ID){
 		$sqlquery = "SELECT SECNAME,MIMETYPE FROM LDMS_FILES WHERE ID = $ID";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		if(odbc_fetch_row($rs)){
-			$name = odbc_result($rs, "SECNAME").".".$gmimetypes["ext"][odbc_result($rs, "MIMETYPE")];
+		if(lmbdb_fetch_row($rs)){
+			$name = lmbdb_result($rs, "SECNAME").".".$gmimetypes["ext"][lmbdb_result($rs, "MIMETYPE")];
 			$path = $umgvar["pfad"]."/UPLOAD/".$name;
-			$mimetype = $gmimetypes["mimetype"][odbc_result($rs, "MIMETYPE")];
+			$mimetype = $gmimetypes["mimetype"][lmbdb_result($rs, "MIMETYPE")];
 			$out = $name;
 		}
 	}
@@ -132,12 +132,12 @@ function LmEntSetOCRStatus ($zeit_main,$ID=0,$new_ID=0){
 
 	if($new_ID){
 		$sqlquery1 = "UPDATE LDMS_FILES SET OCR = TRUE,OCRT = $zeit_dauer, OCRD = ".LMB_DBDEF_TIMESTAMP.", OCRS = $ID WHERE LDMS_FILES.ID = ".$new_ID;
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 	}
 	if($ID){
 		$sqlquery1 = "UPDATE LDMS_FILES SET OCR = TRUE,OCRT = $zeit_dauer, OCRD = ".LMB_DBDEF_TIMESTAMP.", OCRS = $new_ID WHERE LDMS_FILES.ID = ".$ID;
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 	}
 }
@@ -148,10 +148,10 @@ function restoreOCR($ID){
 	global $gmimetypes;
 
 	$sqlquery = "SELECT ID,OCRD,OCRT,OCRS,NAME,SECNAME,MIMETYPE FROM LDMS_FILES WHERE ID = ".$ID." AND DEL = FALSE AND VACT = TRUE";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	if(odbc_fetch_row($rs)){
-		$fname = odbc_result($rs,"SECNAME").".".$gmimetypes["ext"][odbc_result($rs, "MIMETYPE")];
+	if(lmbdb_fetch_row($rs)){
+		$fname = lmbdb_result($rs,"SECNAME").".".$gmimetypes["ext"][lmbdb_result($rs, "MIMETYPE")];
 		$upath = $umgvar["pfad"]."/UPLOAD/".$fname;
 		$fpath = $umgvar["ocr_save_copy"]."/".$fname;
 		if(file_exists($fpath)){
@@ -161,14 +161,14 @@ function restoreOCR($ID){
 			rename($fpath, $upath);
 
 			# meta update
-			if($meta = getmeta_from_file($upath,$gmimetypes["mimetype"][odbc_result($rs, "MIMETYPE")],1)){
+			if($meta = getmeta_from_file($upath,$gmimetypes["mimetype"][lmbdb_result($rs, "MIMETYPE")],1)){
 				# put metadata
 				putmeta_to_db($ID,$meta);
 			}
 
 			# OCR reset
 			$sqlquery1 = "UPDATE LDMS_FILES SET OCR = FALSE, OCRT = 0, OCRD = NULL WHERE ID = ".$ID;
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 
 			# delete inize
@@ -186,13 +186,13 @@ function delFileIndex($ID){
 	global $db;
 
 	$sqlquery1 = "DELETE FROM LMB_INDIZE_F WHERE FID = ".$ID;
-	$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
+	$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
 	if(!$rs1) {$commit = 1;}
 	$sqlquery1 = "DELETE FROM LMB_INDIZE_FS WHERE FID = ".$ID;
-	$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
+	$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
 	if(!$rs1) {$commit = 1;}
 	$sqlquery1 = "UPDATE LDMS_FILES SET IND = FALSE WHERE ID = ".$ID;
-	$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
+	$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
 	if(!$rs1) {$commit = 1;}
 }
 
@@ -215,13 +215,13 @@ function LmEntGenerate_ocr($ID,$level,$ocr_destination=null,$ocr_format=null){
 	$zeit_main = gettime();
 
 	$sqlquery = "SELECT SECNAME,MIMETYPE,NAME,LEVEL FROM LDMS_FILES WHERE ID = $ID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	if(odbc_fetch_row($rs)){
-		$name = odbc_result($rs, "SECNAME").".".$gmimetypes["ext"][odbc_result($rs, "MIMETYPE")];
+	if(lmbdb_fetch_row($rs)){
+		$name = lmbdb_result($rs, "SECNAME").".".$gmimetypes["ext"][lmbdb_result($rs, "MIMETYPE")];
 		$path = $umgvar["pfad"]."/UPLOAD/".$name;
-		$mimetypeext = $gmimetypes["ext"][odbc_result($rs, "MIMETYPE")];
-		$mimetype = $gmimetypes["mimetype"][odbc_result($rs, "MIMETYPE")];
+		$mimetypeext = $gmimetypes["ext"][lmbdb_result($rs, "MIMETYPE")];
+		$mimetype = $gmimetypes["mimetype"][lmbdb_result($rs, "MIMETYPE")];
 	}else{
 		lmb_loghandle("ocr_error.log","file not found for ID:$ID");
 		return false;
@@ -290,8 +290,8 @@ function LmEntGenerate_ocr($ID,$level,$ocr_destination=null,$ocr_format=null){
 			}
 		# different output format
 		}else{
-			$point = lmb_strrpos(odbc_result($rs, "NAME"),".");
-			$newname = lmb_substr(odbc_result($rs, "NAME"),0,$point);
+			$point = lmb_strrpos(lmbdb_result($rs, "NAME"),".");
+			$newname = lmb_substr(lmbdb_result($rs, "NAME"),0,$point);
 			if($ocr_format == "text"){
 				$newmime = "text/plain";
 				$newname = $newname.".txt";
@@ -311,7 +311,7 @@ function LmEntGenerate_ocr($ID,$level,$ocr_destination=null,$ocr_format=null){
 					$file["file_name"][] = $newname;
 					$file["file_type"][] = $newmime;
 					
-					if($new_ID = upload($file,odbc_result($rs, "LEVEL"),0,1,$dublicate)){
+					if($new_ID = upload($file,lmbdb_result($rs, "LEVEL"),0,1,$dublicate)){
 						if($ocr_destination == "overwrite"){
 							del_file($ID);
 						}

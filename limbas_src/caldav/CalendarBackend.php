@@ -111,10 +111,10 @@ class Limbas extends AbstractBackend {
 		$bzm = 0;
 		$ctag = array ();
 		$sqlquery = 'SELECT LASTMODIFIED, TAB_ID FROM LMB_CONF_TABLES WHERE TYP=2';
-		$rs = odbc_exec ( $db, $sqlquery ) or errorhandle ( odbc_errormsg ( $db ), $sqlquery, $action, __FILE__, __LINE__ );
-		while ( odbc_fetch_row ( $rs ) ) {
-			$ts = odbc_result ( $rs, 'LASTMODIFIED' );
-			$tabId = odbc_result ( $rs, 'TAB_ID' );
+		$rs = lmbdb_exec ( $db, $sqlquery ) or errorhandle ( lmbdb_errormsg ( $db ), $sqlquery, $action, __FILE__, __LINE__ );
+		while ( lmbdb_fetch_row ( $rs ) ) {
+			$ts = lmbdb_result ( $rs, 'LASTMODIFIED' );
+			$tabId = lmbdb_result ( $rs, 'TAB_ID' );
 			$ctag [$tabId] = get_Stamp ( $ts );
 		}
 		
@@ -341,8 +341,8 @@ class Limbas extends AbstractBackend {
 		// Events created by limbas have a numeric id, while those created by caldav clients use UUIDs
 		if (! is_numeric ( $c )) {
 			$sqlquery = "SELECT ID FROM " . $gtab ['table'] [$calendarId] . " WHERE UID = '$c'";
-			$rs = odbc_exec ( $db, $sqlquery ) or errorhandle ( odbc_errormsg ( $db ), $sqlquery, $action, __FILE__, __LINE__ );
-			$id = odbc_result ( $rs, "ID" );
+			$rs = lmbdb_exec ( $db, $sqlquery ) or errorhandle ( lmbdb_errormsg ( $db ), $sqlquery, $action, __FILE__, __LINE__ );
+			$id = lmbdb_result ( $rs, "ID" );
 		} else {
 			$id = $c;
 		}
@@ -485,8 +485,8 @@ class Limbas extends AbstractBackend {
 		# unterer Aufruf in else muß auskommentiert werden
 		if (! is_numeric ( $uid )) {
 			$sqlquery = "SELECT ID FROM " . $gtab ['table'] [$calendarId] . " WHERE UID = '$uid'";
-			$rs = odbc_exec ( $db, $sqlquery ) or errorhandle ( odbc_errormsg ( $db ), $sqlquery, $action, __FILE__, __LINE__ );
-			$dataId = odbc_result ( $rs, "ID" );
+			$rs = lmbdb_exec ( $db, $sqlquery ) or errorhandle ( lmbdb_errormsg ( $db ), $sqlquery, $action, __FILE__, __LINE__ );
+			$dataId = lmbdb_result ( $rs, "ID" );
 			if($dataId){$create = false;}
 		} else {
 			$dataId = $uid;
@@ -503,8 +503,8 @@ class Limbas extends AbstractBackend {
 			// Events created by limbas have a numeric id, while those created by caldav clients use UUIDs
 			if (! is_numeric ( $uid )) {
 				$sqlquery = "SELECT ID FROM " . $gtab ['table'] [$calendarId] . " WHERE UID = '$uid'";
-				$rs = odbc_exec ( $db, $sqlquery ) or errorhandle ( odbc_errormsg ( $db ), $sqlquery, $action, __FILE__, __LINE__ );
-				$dataId = odbc_result ( $rs, "ID" );
+				$rs = lmbdb_exec ( $db, $sqlquery ) or errorhandle ( lmbdb_errormsg ( $db ), $sqlquery, $action, __FILE__, __LINE__ );
+				$dataId = lmbdb_result ( $rs, "ID" );
 			} else {
 				$dataId = $uid;
 			}
@@ -733,8 +733,8 @@ class Limbas extends AbstractBackend {
 			
 			$sqlquery = "SELECT ID FROM " . $gtab ['table'] [$calendarId] . " WHERE UID = '$objectId'";
 			
-			$rs = odbc_exec ( $db, $sqlquery ) or errorhandle ( odbc_errormsg ( $db ), $sqlquery, $action, __FILE__, __LINE__ );
-			$id = odbc_result ( $rs, "ID" );
+			$rs = lmbdb_exec ( $db, $sqlquery ) or errorhandle ( lmbdb_errormsg ( $db ), $sqlquery, $action, __FILE__, __LINE__ );
+			$id = lmbdb_result ( $rs, "ID" );
 		} else {
 			$id = $objectId;
 		}

@@ -31,7 +31,7 @@ function patch_2(){
 	global $db;
 	$nid = next_db_id("lmb_umgvar","ID");
 	$sqlquery = "insert into lmb_umgvar values($nid,153,'multi_language','1','languages to translate (1,2,3)',1896)";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	return true;
 }
 patch_scr(2,11,'patch_2','multilanguage support',2);
@@ -43,13 +43,13 @@ function patch_3(){
 	require_once("admin/setup/language.lib");
 	
 	$sqlquery = "SELECT ID,NAME FROM LMB_REMINDER_LIST";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)) {
-		$id = odbc_result($rs, "ID");
-		$name = odbc_result($rs, "NAME");
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
+		$id = lmbdb_result($rs, "ID");
+		$name = lmbdb_result($rs, "NAME");
     	$name_id = lang_add($umgvar['default_language'],4,"Reminder: ".$name,$name,"_DEPEND");
 	    $sqlquery1 = "UPDATE LMB_REMINDER_LIST SET NAME = '".parse_db_int($name_id)."' WHERE ID = $id";
-	    $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+	    $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		
 	}
 	return true;
@@ -65,5 +65,5 @@ patch_db(4,11,$sqlquery,'fieldtype picture',2);
 
 ###########################
 
-if ($db AND !$action) {odbc_close($db);}
+if ($db AND !$action) {lmbdb_close($db);}
 ?>

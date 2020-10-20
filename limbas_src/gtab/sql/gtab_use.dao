@@ -29,7 +29,7 @@ if($action == "gtab_neu" AND isset($gtabid)){
 			$ID = new_record($gtabid,$verknpf,$verkn_fieldid,$verkn_tabid,$verkn_ID,0,0);
 			if(!$ID){
 				lmb_EndTransaction(0);
-				#if($db){odbc_close($db);}
+				#if($db){lmbdb_close($db);}
 				#die("\n\n<BODY BGCOLOR=\"$farbschema[WEB8]\">\n<Script Language=\"JavaScript\">\nalert('".$alert.$lang[1317]."');\nfunction inusetime(){};\nvar jsvar = 0;\n</SCRIPT></BODY>");
 			}else{
 				lmb_EndTransaction(1);
@@ -53,7 +53,7 @@ elseif($use_typ == 'copy' AND $use_record){
 			# --- anlegen ---
 			if(!$ID = new_record($gtabid_,$verknpf,$verkn_fieldid,$verkn_tabid,$verkn_ID,$ID_,0)){
 				lmb_EndTransaction(0,"ID ".$ID_);
-				#if($db){odbc_close($db);}
+				#if($db){lmbdb_close($db);}
 				#die("\n\n<BODY BGCOLOR=\"$farbschema[WEB8]\">\n<Script Language=\"JavaScript\">\nalert('".$alert.$lang[1317]."');\nfunction inusetime(){};\nvar jsvar = 0;\n</SCRIPT></BODY>");
 			}else{
 				lmb_EndTransaction(1);
@@ -82,7 +82,7 @@ elseif($use_typ == 'versioning' AND $use_record){
 			# --- anlegen ---
 			if(!$ID = new_record($gtabid_,$verknpf,$verkn_fieldid,$verkn_tabid,$verkn_ID,$ID_,1)){
 				lmb_EndTransaction(0,"ID ".$ID_);
-				#if($db){odbc_close($db);}
+				#if($db){lmbdb_close($db);}
 				#die("\n\n<BODY BGCOLOR=\"$farbschema[WEB8]\">\n<Script Language=\"JavaScript\">\nalert('".$alert.$lang[1317]."');\nfunction inusetime(){};\nvar jsvar = 0;\n</SCRIPT></BODY>");
 			}elseif($ID == $ID_){
 				lmb_EndTransaction(0,$lang[2152]."\\nID ".$ID_);

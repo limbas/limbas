@@ -37,10 +37,10 @@ if($GLOBALS["action"]){
 if($group){
 	# -----Einzelgruppe----------
 	$sqlquery = "SELECT GROUP_ID,NAME FROM LMB_GROUPS WHERE GROUP_ID = $group";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$bzm = 1;
-	if(odbc_fetch_row($rs)) {
-		check_grouprights(odbc_result($rs,"GROUP_ID"),odbc_result($rs,"NAME"),0,1);
+	if(lmbdb_fetch_row($rs)) {
+		check_grouprights(lmbdb_result($rs,"GROUP_ID"),lmbdb_result($rs,"NAME"),0,1);
 	}
 }else{
 	# -----Gruppenliste----------

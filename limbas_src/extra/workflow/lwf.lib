@@ -89,10 +89,10 @@ function lmb_wfl_getTask($wlf_id,$wfl_inst,$tab_id=null,$dat_id=null){
 	if(!$wfl_inst){return false;}
 	
 	$sqlquery = "SELECT TASK_ID FROM LMB_WFL_INST WHERE ID = ".parse_db_int($wfl_inst);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	
-	#if(odbc_fetch_row($rs)){
-		return odbc_result($rs, "TASK_ID");
+	#if(lmbdb_fetch_row($rs)){
+		return lmbdb_result($rs, "TASK_ID");
 	#}elseif($wlf_id){
 	#	$wfl_start = lmb_wfl_start($wfl_id,$wfl_inst,$tab_id,$dat_id);
 		#$GLOBALS['wfl_inst'] = $wfl_start[0];
@@ -137,10 +137,10 @@ function lmb_wfl_getRecordInst($wlf_id,$tab_id,$dat_id){
 	if(!$tab_id OR !$dat_id){return false;}
 	
 	$sqlquery = "SELECT ID FROM LMB_WFL_INST WHERE TAB_ID = ".parse_db_int($tab_id)." AND DAT_ID = ".parse_db_int($dat_id)." AND WFL_ID = ".parse_db_int($wlf_id);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-	if(odbc_fetch_row($rs)){
-		return odbc_result($rs, "ID");
+	if(lmbdb_fetch_row($rs)){
+		return lmbdb_result($rs, "ID");
 	}else{
 		return false;
 	}
@@ -167,13 +167,13 @@ function lmb_wfl_start($wfl_id,$task_id=null,$tab_id=null,$dat_id=null){
 		$task_id = key($task);
 		
 		#$sqlquery = "SELECT ID FROM LMB_WFL_TASK WHERE WFL_ID = $wlf_id ORDER BY SORT";
-		#$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		#$task_id = odbc_result($rs, "ID");
+		#$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		#$task_id = lmbdb_result($rs, "ID");
 	}
 
 	$NEXTID = next_db_id("LMB_WFL_INST","ID",1);
 	$sqlquery = "INSERT INTO LMB_WFL_INST (ID,TAB_ID,DAT_ID,TASK_ID,WFL_ID) VALUES($NEXTID,".parse_db_int($tab_id).",".parse_db_int($dat_id).",".parse_db_int($task_id).",".parse_db_int($wfl_id).")";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 	$GLOBALS['wfl_inst'] = $NEXTID;
 	#array($NEXTID,$task_id);
@@ -196,7 +196,7 @@ function lmb_wfl_end($wfl_id,$wfl_inst,$tab_id=0,$dat_id=0){
 		return;
 	}
 
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	
 	unset($GLOBALS['wfl_inst']);
 	
@@ -219,7 +219,7 @@ function lmb_wfl_setTask($wfl_id,$wfl_inst,$task_id,$tab_id=null,$dat_id=null){
 	
 	if($wfl_inst){
 		$sqlquery = "UPDATE LMB_WFL_INST SET TASK_ID = ".parse_db_int($task_id).", TAB_ID = ".parse_db_int($tab_id).", DAT_ID = ".parse_db_int($dat_id)." WHERE ID = ".parse_db_int($wfl_inst);
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if($rs){return $task_id;}else{return false;}
 	}else{
 		$task_id = lmb_wfl_start($wfl_id,$task_id,$tab_id,$dat_id);
@@ -264,7 +264,7 @@ function lmb_wfl_setHistory($wfl_id,$wfl_inst,$old_task,$new_task,$tab_id=null,$
 
 	$NEXTID = next_db_id("LMB_WFL_HISTORY");
 	$sqlquery = "INSERT INTO LMB_WFL_HISTORY (ID,ERSTDATUM,WFL_ID,INST_ID,TASK_ID,USER_ID,TAB_ID,DAT_ID $sqli) VALUES($NEXTID,".LMB_DBDEF_TIMESTAMP.",".parse_db_int($wfl_id).",".parse_db_int($wfl_inst).",".parse_db_int($new_task).",".$session['user_id'].",".parse_db_int($tab_id).",".parse_db_int($dat_id).$sqlv.")";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	
 	if($rs){return true;}else{return false;}
 }
@@ -303,13 +303,13 @@ function lmb_wfl_getHistory($wfl_id,$wfl_inst,$task_id=null,$user_id=null,$tab_i
 	$wfl['task_id'] = array();
 	
 	$sqlquery = "SELECT * FROM LMB_WFL_HISTORY WHERE WFL_ID = ".parse_db_int($wfl_id)." AND $where ORDER BY $order_by";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while (odbc_fetch_row($rs)){
-		$wfl['task_id'][] = odbc_result($rs, "TASK_ID");
-		$wfl['date'][] = odbc_result($rs, "ERSTDATUM");
-		$wfl['user_id'][] = odbc_result($rs, "USER_ID");
-		$wfl['tab_id'][] = odbc_result($rs, "TAB_ID");
-		$wfl['dat_id'][] = odbc_result($rs, "DAT_ID");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while (lmbdb_fetch_row($rs)){
+		$wfl['task_id'][] = lmbdb_result($rs, "TASK_ID");
+		$wfl['date'][] = lmbdb_result($rs, "ERSTDATUM");
+		$wfl['user_id'][] = lmbdb_result($rs, "USER_ID");
+		$wfl['tab_id'][] = lmbdb_result($rs, "TAB_ID");
+		$wfl['dat_id'][] = lmbdb_result($rs, "DAT_ID");
 	}
 
 	if($rs){return $wfl;}else{return false;}

@@ -321,7 +321,7 @@ if(!$tab_group){?>
 	<input type="hidden" name="numrowcalc">
 	<input type="hidden" name="reserveid">
 	<input type="hidden" name="datasync">
-	
+	<input type="hidden" name="multitenant">
 	
 	<?php if($result_gtab[$tab_group]["id"]){?>
 	
@@ -348,6 +348,7 @@ if(!$tab_group){?>
     <TD class="tabHeaderItem" nowrap><?=$lang[1465]?></TD>
     <TD class="tabHeaderItem" nowrap><?=$lang[2703]?></TD>
     <TD class="tabHeaderItem" nowrap>Sync</TD>
+    <TD class="tabHeaderItem" nowrap><?=$lang[2962]?></TD>
     <TD class="tabHeaderItem" nowrap><?=$lang[2132]?></TD>
     <TD class="tabHeaderItem" nowrap><?=$lang[2688]?></TD>
     <TD class="tabHeaderItem" nowrap><?=$lang[1255]?></TD>
@@ -476,7 +477,11 @@ if(!$tab_group){?>
             <TD class="vAlignMiddle txtAlignCenter">
             <?php if(!$isview){?><INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="document.form2.tabid.value=<?= $result_gtab[$tab_group]["id"][$bzm] ?>;document.form2.tab_group.value=<?= $tab_group ?>;if(this.checked){document.form2.datasync.value=1;}else{document.form2.datasync.value=2;};document.form2.submit();"><?php }?>
             </TD>
-            
+
+            <?php if($result_gtab[$tab_group]["multitenant"][$bzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}?>
+            <TD class="vAlignMiddle txtAlignCenter">
+            <INPUT TYPE="CHECKBOX" VALUE="1" <?=$CHECKED?> OnClick="document.form2.tabid.value=<?= $result_gtab[$tab_group]["id"][$bzm] ?>;document.form2.tab_group.value=<?= $tab_group ?>;if(this.checked){document.form2.multitenant.value=1;}else{document.form2.multitenant.value=2;};document.form2.submit();">
+            </TD>
             
             <?php if($result_gtab[$tab_group]["id"][$bzm] == $result_gtab[$tab_group]["verknid"][$bzm] AND !$isview){?>
             <TD class="vAlignMiddle txtAlignCenter">

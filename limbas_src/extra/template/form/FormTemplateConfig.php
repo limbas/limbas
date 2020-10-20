@@ -34,8 +34,11 @@ class FormTemplateConfig extends TemplateConfig {
         return new FormTemplateElement($templateElementGtabid, $name, $html);
     }
 
-    public function getDataPlaceholderInstance($chain, $flags, $altValue) {
-        return new FormDataPlaceholder($chain, $flags, $altValue);
+    public function getDataPlaceholderInstance($chain, $options, $altValue) {
+        return new FormDataPlaceholder($chain, $options, $altValue);
     }
 
+    public function getMedium() {
+        return "form";
+    }
 }

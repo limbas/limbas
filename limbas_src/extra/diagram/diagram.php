@@ -268,32 +268,32 @@ function lmb_createDiagram($diag_id, $gsr=null, $filter=null, $verkn=null, $exte
 
 	/* Get customization-settings from database */	
 	$sqlquery = "SELECT " . implode(',', $settingNames) . " FROM LMB_CHART_LIST WHERE ID=".parse_db_int($diag_id);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_fetch_row($rs)){
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_fetch_row($rs)){
 
         $dbSettings = array();
         foreach($settingNames as $name) {
-            $dbSettings[$name] = odbc_result($rs, $name);
+            $dbSettings[$name] = lmbdb_result($rs, $name);
         }
 
             // get width/height from parameters instead of database
-        if(!$width){$width = odbc_result($rs, "DIAG_WIDTH");}
-        if(!$height){$height = odbc_result($rs, "DIAG_HEIGHT");}
+        if(!$width){$width = lmbdb_result($rs, "DIAG_WIDTH");}
+        if(!$height){$height = lmbdb_result($rs, "DIAG_HEIGHT");}
         $dbSettings['DIAG_WIDTH'] = $width;
         $dbSettings['DIAG_HEIGHT'] = $height;
 
             // fixed settings
-        $text_x = odbc_result($rs, "TEXT_X");
-        $text_y = odbc_result($rs, "TEXT_Y");
-        if(!$fontsize){ $fontsize = odbc_result($rs, "FONT_SIZE"); }
-        $legend_mode = odbc_result($rs, "LEGEND_MODE");
-        $pie_write_values = odbc_result($rs, "PIE_WRITE_VALUES");
-        $diag_tab_id = odbc_result($rs, "TAB_ID");
-        $diag_type = odbc_result($rs, "DIAG_TYPE");
+        $text_x = lmbdb_result($rs, "TEXT_X");
+        $text_y = lmbdb_result($rs, "TEXT_Y");
+        if(!$fontsize){ $fontsize = lmbdb_result($rs, "FONT_SIZE"); }
+        $legend_mode = lmbdb_result($rs, "LEGEND_MODE");
+        $pie_write_values = lmbdb_result($rs, "PIE_WRITE_VALUES");
+        $diag_tab_id = lmbdb_result($rs, "TAB_ID");
+        $diag_type = lmbdb_result($rs, "DIAG_TYPE");
         $diagname = $gdiaglist[$gtabid]["name"][$diag_id];
 
         /* Define transposed-mode */
-        $isTransposed = odbc_result($rs, "TRANSPOSED");
+        $isTransposed = lmbdb_result($rs, "TRANSPOSED");
 
         /* Define chart types */
         $isLine = ($diag_type == "Line-Graph");
@@ -308,21 +308,21 @@ function lmb_createDiagram($diag_id, $gsr=null, $filter=null, $verkn=null, $exte
 
 	/* Get fields from database */
 	$sqlquery = "SELECT CHART_ID, FIELD_ID, AXIS,COLOR FROM LMB_CHARTS WHERE CHART_ID = $diag_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$fields = array();
 	$num_data_axes = 0;
 	$num_caption_axes = 0;
 	$bzm=0;
-	while(odbc_fetch_row($rs)){
-		$fields[$bzm]['field_id'] = odbc_result($rs, "FIELD_ID");
-		$tmp_axis = odbc_result($rs, "AXIS");
+	while(lmbdb_fetch_row($rs)){
+		$fields[$bzm]['field_id'] = lmbdb_result($rs, "FIELD_ID");
+		$tmp_axis = lmbdb_result($rs, "AXIS");
 		if($tmp_axis == DATA_AXIS){
 			$num_data_axes++;
 		}elseif($tmp_axis == CAPTION_AXIS){
 			$num_caption_axes++;
 		}
 		$fields[$bzm]['axis'] = $tmp_axis;
-		$fields[$bzm]['color'] = odbc_result($rs, "COLOR");
+		$fields[$bzm]['color'] = lmbdb_result($rs, "COLOR");
 		$bzm++;
 	}
 
@@ -609,15 +609,15 @@ function lmb_getFontLocation($style) {
     
     // get name of font file from lmb_fonts
     $sqlquery = "SELECT NAME FROM LMB_FONTS WHERE STYLE='$b$i' AND FAMILY='$family'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
     // abort if error
     if(!$rs) {
         return $default;
     }
     
-    if(odbc_fetch_row($rs)) {
-        $name = odbc_result($rs, 'NAME');
+    if(lmbdb_fetch_row($rs)) {
+        $name = lmbdb_result($rs, 'NAME');
     }
     
     // abort if no name was found

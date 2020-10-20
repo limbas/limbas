@@ -26,8 +26,8 @@
 # db version
 function postgres_dbf_version($db){
 	
-	$rs = odbc_exec($db,"SELECT SETTING FROM PG_SETTINGS WHERE NAME = 'server_version_num'") or errorhandle(odbc_errormsg($db),$prepare_string,"get next sequence",$FILE,$LINE);
-	return odbc_result($rs,"SETTING");
+	$rs = lmbdb_exec($db,"SELECT SETTING FROM PG_SETTINGS WHERE NAME = 'server_version_num'") or errorhandle(lmbdb_errormsg($db),$prepare_string,"get next sequence",$FILE,$LINE);
+	return lmbdb_result($rs,"SETTING");
 }
 
 ############# indexes ########################
@@ -127,11 +127,11 @@ function postgres_dbq_23($db,$p=null){
 	if($p[1]){$sql .= " AND TC.TABLE_NAME = '".postgres_dbf_4($p[1])."'";}
 	if($p[2]){$sql .= " AND KCU.COLUMN_NAME = '".postgres_dbf_4($p[2])."'";}
 
-	$rs = odbc_exec($db,$sql) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)){
-		$contraint["TABLE_NAME"][] = odbc_result($rs,"TABLE_NAME");
-		$contraint["COLUMN_NAME"][] = odbc_result($rs,"COLUMN_NAME");
-		$contraint["PK_NAME"][] = odbc_result($rs,"CONSTRAINT_NAME");
+	$rs = lmbdb_exec($db,$sql) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+		$contraint["TABLE_NAME"][] = lmbdb_result($rs,"TABLE_NAME");
+		$contraint["COLUMN_NAME"][] = lmbdb_result($rs,"COLUMN_NAME");
+		$contraint["PK_NAME"][] = lmbdb_result($rs,"CONSTRAINT_NAME");
 	}
 	return  $contraint;
 }
@@ -159,11 +159,11 @@ function postgres_dbq_26($db,$p=null){
 	if($p[1]){$sql .= " AND TC.TABLE_NAME = '".postgres_dbf_4($p[1])."'";}
 	if($p[2]){$sql .= " AND KCU.COLUMN_NAME = '".postgres_dbf_4($p[2])."'";}
 
-	$rs = odbc_exec($db,$sql) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)){
-		$contraint["TABLE_NAME"][] = odbc_result($rs,"TABLE_NAME");
-		$contraint["COLUMN_NAME"][] = odbc_result($rs,"COLUMN_NAME");
-		$contraint["PK_NAME"][] = odbc_result($rs,"CONSTRAINT_NAME");
+	$rs = lmbdb_exec($db,$sql) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+		$contraint["TABLE_NAME"][] = lmbdb_result($rs,"TABLE_NAME");
+		$contraint["COLUMN_NAME"][] = lmbdb_result($rs,"COLUMN_NAME");
+		$contraint["PK_NAME"][] = lmbdb_result($rs,"CONSTRAINT_NAME");
 	}
 	return  $contraint;
 }
@@ -284,12 +284,12 @@ function postgres_dbf_3($db,$p){
 		$sql .= " AND LOWER(TRIGGER_NAME) LIKE '".lmb_strtolower($p[1])."'";
 	}
 	
-	$rs = odbc_exec($db,$sql);
-	while(odbc_fetch_row($rs)){
-		$res["triggername"][] = odbc_result($rs,"TRIGGERNAME");
-		$res["definition"][] = odbc_result($rs,"DEFINITION");
-		$res["event"][] = odbc_result($rs,"EVENT");
-		$res["tablename"][] = odbc_result($rs,"TABLENAME");
+	$rs = lmbdb_exec($db,$sql);
+	while(lmbdb_fetch_row($rs)){
+		$res["triggername"][] = lmbdb_result($rs,"TRIGGERNAME");
+		$res["definition"][] = lmbdb_result($rs,"DEFINITION");
+		$res["event"][] = lmbdb_result($rs,"EVENT");
+		$res["tablename"][] = lmbdb_result($rs,"TABLENAME");
 	}
 	
 	return $res;
@@ -447,11 +447,11 @@ function postgres_dbf_25($db,$p){
     #error_log($qu);
     
     $dep = false;
-	$rs = odbc_exec($db,$qu);
-	while(odbc_fetch_row($rs)){
-		$dep[] = odbc_result($rs,"dependent_view");
-		#$dep["table"][] = odbc_result($rs,"source_table");
-		#$dep["field"][] = odbc_result($rs,"column_name");
+	$rs = lmbdb_exec($db,$qu);
+	while(lmbdb_fetch_row($rs)){
+		$dep[] = lmbdb_result($rs,"dependent_view");
+		#$dep["table"][] = lmbdb_result($rs,"source_table");
+		#$dep["field"][] = lmbdb_result($rs,"column_name");
 	}
 	
 	return $dep;
@@ -480,11 +480,11 @@ function postgres_dbf_20($db,$p){
     
     echo $p[1];
 
-	$rs = odbc_tables($db,null,$p[0],postgres_dbf_4($p[1]),$p[2]);
-	while(odbc_fetch_row($rs)){
-		$odbc_table["table_name"][] = odbc_result($rs,"TABLE_NAME");
-		$odbc_table["table_type"][] = odbc_result($rs,"TABLE_TYPE");
-		$odbc_table["table_owner"][] = odbc_result($rs,"TABLE_OWNER");
+	$rs = lmbdb_tables($db,null,$p[0],postgres_dbf_4($p[1]),$p[2]);
+	while(lmbdb_fetch_row($rs)){
+		$odbc_table["table_name"][] = lmbdb_result($rs,"TABLE_NAME");
+		$odbc_table["table_type"][] = lmbdb_result($rs,"TABLE_TYPE");
+		$odbc_table["table_owner"][] = lmbdb_result($rs,"TABLE_OWNER");
 	}
 	
 	if($odbc_table){
@@ -508,7 +508,7 @@ function postgres_dbf_21($db,$p){
 	postgres_dbf_22($p);
 	
 	if($p[2]){$start = " START ".$p[2];}
-	if($rs = odbc_exec($db,"CREATE SEQUENCE ".postgres_dbf_4($p[1]).$start)){
+	if($rs = lmbdb_exec($db,"CREATE SEQUENCE ".postgres_dbf_4($p[1]).$start)){
 		return true;
 	}else{
 		return false;
@@ -522,9 +522,9 @@ function postgres_dbf_21($db,$p){
  */
 function postgres_dbf_22($db,$p){
 
-    #$rs1 = odbc_exec($db,"SELECT C.RELNAME FROM PG_CLASS C WHERE C.RELKIND = 'S' AND RELNAME = '".postgres_dbf_4($p[1])."'");  //TODO
-    #if(odbc_result($rs1, "RELNAME")) {
-        $rs = odbc_exec($db, "DROP SEQUENCE " . postgres_dbf_4($p[1]) . " CASCADE");
+    #$rs1 = lmbdb_exec($db,"SELECT C.RELNAME FROM PG_CLASS C WHERE C.RELKIND = 'S' AND RELNAME = '".postgres_dbf_4($p[1])."'");  //TODO
+    #if(lmbdb_result($rs1, "RELNAME")) {
+        $rs = lmbdb_exec($db, "DROP SEQUENCE " . postgres_dbf_4($p[1]) . " CASCADE");
         if ($rs) {
             return true;
         } else {
@@ -546,21 +546,21 @@ function postgres_dbf_22($db,$p){
 function postgres_dbf_5($db,$p,$mode=null){
 	
 	if($p[2]){
-		$rs = odbc_columns($db,null,$p[0],postgres_dbf_4($p[1]),postgres_dbf_4($p[2]));
+		$rs = lmbdb_columns($db,null,$p[0],postgres_dbf_4($p[1]),postgres_dbf_4($p[2]));
 	}else{
-		$rs = odbc_columns($db,null,$p[0],postgres_dbf_4($p[1]));
+		$rs = lmbdb_columns($db,null,$p[0],postgres_dbf_4($p[1]));
 	}
 	
 	if($p[3]){return $rs;}
 	
-	while(odbc_fetch_row($rs)) {
-		$col["tablename"][] = trim(odbc_result($rs, "TABLE_NAME"));
-		$col["columnname"][] = trim(odbc_result($rs, "COLUMN_NAME"));
-		$col["columnname_lower"][] = postgres_dbf_4(trim(odbc_result($rs, "COLUMN_NAME")));
-		$col["datatype"][] = trim(odbc_result($rs, "TYPE_NAME"));
-		$col["length"][] = trim(odbc_result($rs, "PRECISION"));
-		$col["scale"][] = trim(odbc_result($rs, "SCALE"));
-		$col["default"][] = trim(odbc_result($rs, "COLUMN_DEF"));
+	while(lmbdb_fetch_row($rs)) {
+		$col["tablename"][] = trim(lmbdb_result($rs, "TABLE_NAME"));
+		$col["columnname"][] = trim(lmbdb_result($rs, "COLUMN_NAME"));
+		$col["columnname_lower"][] = postgres_dbf_4(trim(lmbdb_result($rs, "COLUMN_NAME")));
+		$col["datatype"][] = trim(lmbdb_result($rs, "TYPE_NAME"));
+		$col["length"][] = trim(lmbdb_result($rs, "PRECISION"));
+		$col["scale"][] = trim(lmbdb_result($rs, "SCALE"));
+		$col["default"][] = trim(lmbdb_result($rs, "COLUMN_DEF"));
 		
 		#$sql = "SELECT scc.column_name as \"Field\", udt_name as \"UDT\", data_type as \"Type\", is_nullable as \"Is Nullable\",keys.key as \"Key\", column_default as \"Default\"
 		
@@ -575,9 +575,9 @@ function postgres_dbf_5($db,$p,$mode=null){
 	           FROM information_schema.constraint_column_usage col, pg_constraint c
 	           WHERE table_schema = '".$p[0]."' AND table_name = '".$p[1]."'
 	               AND c.conname = col.constraint_name) as keys  ON scc.column_name = keys.column_name
-	        WHERE scc.table_name = '".$p[1]."' AND scc.column_name = '".odbc_result($rs, "COLUMN_NAME")."'";
-			if($rs1 = odbc_exec($db,$sql)){
-				$col["mode"][] = odbc_result($rs1, "Key");
+	        WHERE scc.table_name = '".$p[1]."' AND scc.column_name = '".lmbdb_result($rs, "COLUMN_NAME")."'";
+			if($rs1 = lmbdb_exec($db,$sql)){
+				$col["mode"][] = lmbdb_result($rs1, "Key");
 			}else{
 				$col["mode"][] = "";
 			}
@@ -683,7 +683,7 @@ return new;
 END; '  LANGUAGE 'plpgsql';
 	";
 
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__);
 	if(!$rs){
 		return false;
 	}
@@ -704,7 +704,7 @@ return new;
 END; '  LANGUAGE 'plpgsql';
 	";
 
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create procedure lmb_lastmodified",__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,"create procedure lmb_lastmodified",__FILE__,__LINE__);
 	if(!$rs){
 		return false;
 	}
@@ -721,10 +721,10 @@ END; '  LANGUAGE 'plpgsql';
  */
 function postgres_dbq_21($db,$p){
 
-	$rs = odbc_exec($db, "SELECT PROSRC FROM PG_PROC WHERE PRONAME = 'lmb_vkn'"); //TODO
-    if(odbc_result($rs,"PROSRC")) {
+	$rs = lmbdb_exec($db, "SELECT PROSRC FROM PG_PROC WHERE PRONAME = 'lmb_vkn'"); //TODO
+    if(lmbdb_result($rs,"PROSRC")) {
         $sqlquery = "drop function lmb_vkn()";
-        $rs1 = odbc_exec($db, $sqlquery);
+        $rs1 = lmbdb_exec($db, $sqlquery);
     }
 }
 

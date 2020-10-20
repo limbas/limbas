@@ -806,6 +806,9 @@ function aktivate(evt,el,ID,TYP,tab_element) {
 		parent.report_menu.document.form1.XPOSI.value = parseInt(document.getElementById(divid).style.left);
 		parent.report_menu.document.form1.YPOSI.value = parseInt(document.getElementById(divid).style.top);
 	}
+
+	// codemirror
+	cmeditor.setValue(document.getElementById(currentdiv).value);
 }
 
 // ------------- öffne Hauptmenü ----------------
@@ -827,6 +830,7 @@ function limbasMenuOpen(evt,el,ID,STYLE,TYP,VALUE,PICSTYLE,tab_element,dbdat_tab
 
 	var fullborder = 0;
 	var style = STYLE.split(";");
+	arrayReplace(style, setstyle[ID]); // merge state from db with (unsaved) state from ui
 
 	//if(TYP == 'formel'){document.value_form.val.value=VALUE;}
 	if(TYP == 'bild'){

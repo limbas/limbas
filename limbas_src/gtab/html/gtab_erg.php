@@ -228,6 +228,14 @@ if($filter["unhide"][$gtabid]){
     pop_menu(164,'','',0,0);							# Papierkorb
 }}
 if($gtab["delete"][$gtabid] AND !$readonly){pop_menu(11,'','',0,0);}	# löschen
+
+// custmenu
+if($GLOBALS['gcustmenu'][$gtabid][3]['id'][0]){
+    foreach($GLOBALS['gcustmenu'][$gtabid][3]['id'] as $cmkey => $cmid){
+        lmb_pop_custmenu($cmid,$gtabid,$ID,$gresult);
+    }
+}
+
 pop_bottom();
 ?>
 </div>
@@ -248,6 +256,13 @@ if($LINK[161] AND $LINK[3] AND $filter["alter"][$gtabid]){ # Liste bearbeiten
 
 if($gfield[$gtabid]["collreplace"] AND $gtab["edit"][$gtabid]){
 	pop_menu(287,'','',0,1);									# Sammeländerungen
+}
+
+// custmenu
+if($GLOBALS['gcustmenu'][$gtabid][4]['id'][0]){
+    foreach($GLOBALS['gcustmenu'][$gtabid][4]['id'] as $cmkey => $cmid){
+        lmb_pop_custmenu($cmid,$gtabid,$ID,$gresult);
+    }
 }
 
 pop_bottom();
@@ -283,6 +298,11 @@ if($gtab["lockable"][$gtabid]){
 	pop_menu(273,'','',$filter["locked"][$gtabid],0);			# zeige gesperrte
 	pop_menu(233,'','',$filter["hidelocked"][$gtabid],0);		# verstecke gesperrte
 }
+
+if($gtab["multitenant"][$gtabid] AND count($lmmultitenants['mid']) > 1){
+    pop_menu(309,'','',$filter["multitenant"][$gtabid],0);			# zeige Mandanten
+}
+
 if($gtab["edit_userrules"][$gtabid] OR $gtab["edit_ownuserrules"][$gtabid]){ # Benutzerrechte	
 	pop_menu(267,'','',$filter["userrules"][$gtabid],0);
 }
@@ -299,6 +319,13 @@ if($gfrist AND !$isview AND $LINK[109]){                                    # Wi
 # extension
 if(function_exists($GLOBALS["gLmbExt"]["menuListCDisplay"][$gtabid])){
 	$GLOBALS["gLmbExt"]["menuListCDisplay"][$gtabid]($gtabid,$form_id,$gresult);
+}
+
+// custmenu
+if($GLOBALS['gcustmenu'][$gtabid][5]['id'][0]){
+    foreach($GLOBALS['gcustmenu'][$gtabid][5]['id'] as $cmkey => $cmid){
+        lmb_pop_custmenu($cmid,$gtabid,$ID,$gresult);
+    }
 }
 	
 pop_bottom();
@@ -339,10 +366,30 @@ pop_submenu(277,'','');					# Einstellungen
 if(function_exists($GLOBALS["gLmbExt"]["menuListCExtras"][$gtabid])){
 	$GLOBALS["gLmbExt"]["menuListCExtras"][$gtabid]($gtabid,$form_id,$gresult);
 }
+
+// custmenu
+if($GLOBALS['gcustmenu'][$gtabid][6]['id'][0]){
+    foreach($GLOBALS['gcustmenu'][$gtabid][6]['id'] as $cmkey => $cmid){
+        lmb_pop_custmenu($cmid,$gtabid,$ID,$gresult);
+    }
+}
 	
 pop_bottom();
 ?>
 </div>
+
+
+<?php
+// extended custmenu
+if($GLOBALS['gcustmenu'][$gtabid][2]['id'][0]){
+    foreach($GLOBALS['gcustmenu'][$gtabid][2]['id'] as $cmkey => $cmid){
+        echo "<DIV ID=\"limbasDivCustMenu_$cmid\" class=\"lmbContextMenu\" style=\"display:none;z-index:993\" OnClick=\"activ_menu = 1;\">";
+        lmb_pop_custmenu($cmid,$gtabid,$ID,$gresult);
+        echo "</div>";
+    }
+}
+?>
+
 
 <DIV ID="limbasDivMenuSettings" class="lmbContextMenu" style="display:none;z-index:993" OnClick="activ_menu = 1;">
 <?php
@@ -551,6 +598,7 @@ jsvar["tablename"] = "<?=$gtab["desc"][$gtabid]?>";
 	<input type="hidden" name="verkn_tabid" VALUE="<?= $verkn_tabid ?>">
 	<input type="hidden" name="verkn_fieldid" VALUE="<?= $verkn_fieldid ?>">
 	<input type="hidden" name="verkn_showonly" VALUE="<?= $verkn_showonly ?>">
+	<?php /*<input type="hidden" name="verkn_addfrom" VALUE="<?=$verkn_addfrom?>">  todo  */?>
 	<input type="hidden" name="verkn_poolid" VALUE="<?=$verkn_poolid;?>">
 	<span id="myExtForms2"></span>
 	</form>
@@ -609,7 +657,8 @@ jsvar["tablename"] = "<?=$gtab["desc"][$gtabid]?>";
 	<input type="hidden" name="filter_reminder_create">
 	<input type="hidden" name="filter_force_delete">
     <input type="hidden" name="filter_tabulatorKey">
-	
+    <input type="hidden" name="filter_multitenant">
+	<input type="hidden" name="verkn_addfrom">
 	<input type="hidden" name="pop_choice">
 	<input type="hidden" name="grp_choice">
 	

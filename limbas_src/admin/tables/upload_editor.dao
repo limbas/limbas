@@ -21,8 +21,8 @@
 set_time_limit(2400); #40min
 # -------- Verkndaten auslesen ---------------
 $sqlquery =  "SELECT * FROM LMB_CONF_TABLES WHERE TAB_ID = $tabid";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-$tabname = odbc_result($rs, "TABELLE");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$tabname = lmbdb_result($rs, "TABELLE");
 
 
 
@@ -95,11 +95,11 @@ function find_dat($filename,$uploadfield){
 	}else{
 		$sqlquery = "SELECT $uploadfield,ID FROM $tabname WHERE LOWER($uploadfield) = '".lmb_strtolower(str_replace("'","''",$filename))."'";
 	}
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	#if(!$rs){echo "<BR>".$sqlquery."<BR>";}
 
-	if(odbc_fetch_row($rs)){
-		return odbc_result($rs, "ID");
+	if(lmbdb_fetch_row($rs)){
+		return lmbdb_result($rs, "ID");
 	}
 
 	return false;

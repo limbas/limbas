@@ -39,12 +39,12 @@
 
 
 $sqlquery = "SELECT * FROM LMB_CONF_TABLES WHERE TYP = 4";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-while(odbc_fetch_row($rs)) {
-        echo "<TR><TD><A HREF=\"main_admin.php?action=setup_quest_sql&quest_id=".odbc_result($rs, "ID")."\">".odbc_result($rs, "QUEST_NAME")."</A></TD>";
-        echo "<TD>".$userdat['vorname'][odbc_result($rs, "ERSTUSER")]." ".$userdat['name'][odbc_result($rs, "ERSTUSER")]."</TD>";
-        echo "<TD <TD ALIGN=\"CENTER\"><A HREF=\"main_admin.php?action=setup_quest_select&del=1&quest_id=".odbc_result($rs, "ID")."\"><i class=\"lmb-icon lmb-trash\" BORDER=\"0\"></i></A></TD></TR>";
+while(lmbdb_fetch_row($rs)) {
+        echo "<TR><TD><A HREF=\"main_admin.php?action=setup_quest_sql&quest_id=".lmbdb_result($rs, "ID")."\">".lmbdb_result($rs, "QUEST_NAME")."</A></TD>";
+        echo "<TD>".$userdat['vorname'][lmbdb_result($rs, "ERSTUSER")]." ".$userdat['name'][lmbdb_result($rs, "ERSTUSER")]."</TD>";
+        echo "<TD <TD ALIGN=\"CENTER\"><A HREF=\"main_admin.php?action=setup_quest_select&del=1&quest_id=".lmbdb_result($rs, "ID")."\"><i class=\"lmb-icon lmb-trash\" BORDER=\"0\"></i></A></TD></TR>";
 }
 
 ?>

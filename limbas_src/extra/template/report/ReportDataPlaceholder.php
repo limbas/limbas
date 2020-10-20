@@ -42,4 +42,22 @@ class ReportDataPlaceholder extends DataPlaceholder {
         }
         return false;
     }
+
+    public function getAsHtmlArr() {
+        $htmlArr = &parent::getAsHtmlArr();
+
+        // option: css class
+        if (array_key_exists('class', $this->options)) {
+            $el = 'span';
+            if (array_key_exists('element', $this->options)) {
+                $el = $this->options['element'];
+            }
+            array_unshift($htmlArr, "<{$el} class=\"{$this->options['class']}\">");
+            array_push($htmlArr, "</{$el}>");
+        }
+
+        return $htmlArr;
+    }
+
+
 }

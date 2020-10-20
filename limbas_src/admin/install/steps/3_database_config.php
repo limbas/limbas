@@ -8,12 +8,10 @@ if($db_test == 'validate') {
     if(!$DBA['DB']){$DBA['DB'] = 'postgres';}
 
     if($radio_odbc == 'pdo'){
-        if(extension_loaded('odbc')){
-            echo "<div class=\"alert alert-danger\" style=\"color:red\">You can not use PDO while you have php <b>odbc</b> module installed!</div>";
-        }else {
-            require_once('../../lib/db/db_pdo.lib');
-            $setup_dbdriver = 'PDO';
-        }
+        require_once('../../lib/db/db_pdo.lib');
+        $setup_dbdriver = 'PDO';
+    }else{
+        require_once('../../lib/db/db_odbc.lib');
     }
 
     require_once("../../lib/db/db_{$DBA['DB']}.lib");
@@ -26,7 +24,7 @@ if($db_test == 'validate') {
         // database version
         $setup_version = dbf_version($DBA);
         $DBA['VERSION'] = $setup_version[1];
-        odbc_close($db);
+        lmbdb_close($db);
         $db = 1;
     }
 
@@ -36,8 +34,8 @@ if($db_test == 'validate') {
 
         if($DBA['DB'] == 'mysql' AND $radio_odbc != 'pdo'){ // check for lower case table names
             $sqlquery1 = "SELECT CASE WHEN @@lower_case_table_names = 1 THEN 1 ELSE 2 END AS CSENSITIV";
-            $rs1 = odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
-            if ($rs1 AND odbc_result($rs1,'CSENSITIV') == 1) {
+            $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            if ($rs1 AND lmbdb_result($rs1,'CSENSITIV') == 1) {
                 $msg['db_conf'] = $msgOK;
                 $msic['db_conf'] = "1";
             } else {
@@ -48,11 +46,11 @@ if($db_test == 'validate') {
         } elseif($DBA['DB'] == 'postgres'){
             #$sqlquery1 = "SHOW ALL";
             $sqlquery1 = "SHOW LC_CTYPE";
-            $rs1 = odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
-            $LC_CTYPE = odbc_result($rs1,'LC_CTYPE');
+            $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            $LC_CTYPE = lmbdb_result($rs1,'LC_CTYPE');
             $sqlquery2 = "SHOW SYNCHRONOUS_COMMIT";
-            $rs2 = odbc_exec($db, $sqlquery2) or errorhandle(odbc_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
-            $SYNCHRONOUS_COMMIT = odbc_result($rs2,'SYNCHRONOUS_COMMIT');
+            $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
+            $SYNCHRONOUS_COMMIT = lmbdb_result($rs2,'SYNCHRONOUS_COMMIT');
             if ($rs1 AND $LC_CTYPE == 'C') {
                 $msg['db_conf'] = $msgOK.'<br><i>(synchronous_commit = '.$SYNCHRONOUS_COMMIT.')</i>';
                 $msic['db_conf'] = "1";
@@ -67,12 +65,12 @@ if($db_test == 'validate') {
         // drop test table
         if ($odbc_table) {
             $sqlquery1 = "DROP TABLE " . dbf_4("LIMBASTEST");
-            $rs1 = odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
         }
 
         // create table
-        $sqlquery = "CREATE TABLE " . dbf_4("LIMBASTEST") . " (ID " . LMB_DBTYPE_INTEGER . ",ERSTDATUM " . LMB_DBTYPE_TIMESTAMP . " DEFAULT " . LMB_DBDEF_TIMESTAMP . ",TXT VARCHAR(6))";
-        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        $sqlquery = "CREATE TABLE " . dbf_4("LIMBASTEST") . " (ID " . LMB_DBTYPE_INTEGER . ",ERSTDATUM " . LMB_DBTYPE_TIMESTAMP . " DEFAULT " . LMB_DBDEF_TIMESTAMP . ",TXT ".LMB_DBTYPE_VARCHAR."(6))";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         if ($rs) {
             $msg['db_create'] = $msgOK;
             $msic['db_create'] = "1";
@@ -90,7 +88,7 @@ if($db_test == 'validate') {
         }
 
         $sqlquery = "INSERT INTO LIMBASTEST (ID,TXT)  VALUES (1,'".$insertstring."')";
-        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         if ($rs) {
             $msg['db_insert'] = $msgOK;
             $msic['db_insert'] = "1";
@@ -101,7 +99,7 @@ if($db_test == 'validate') {
         }
         // select
         $sqlquery = "SELECT * FROM LIMBASTEST";
-        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         if ($rs) {
             $msg['db_select'] = $msgOK;
             $msic['db_select'] = "1";
@@ -114,11 +112,11 @@ if($db_test == 'validate') {
         // check cursor
         if($radio_odbc != 'pdo') {
             $sqlquery = "SELECT * FROM LIMBASTEST";
-            $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-            if (odbc_fetch_row($rs, 1)) {
-                odbc_result($rs, "ID");
-                if (odbc_fetch_row($rs, 1)) {
-                    if (odbc_result($rs, "ID")) {
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (lmbdb_fetch_row($rs, 1)) {
+                lmbdb_result($rs, "ID");
+                if (lmbdb_fetch_row($rs, 1)) {
+                    if (lmbdb_result($rs, "ID")) {
                         $cursor = 1;
                     } else {
                         $cursor = 0;
@@ -141,7 +139,7 @@ if($db_test == 'validate') {
 
         // delete from
         $sqlquery = "DELETE FROM LIMBASTEST";
-        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         if ($rs) {
             $msg['db_delete'] = $msgOK;
             $msic['db_delete'] = "1";
@@ -152,7 +150,7 @@ if($db_test == 'validate') {
         }
         // drop table
         $sqlquery = "DROP TABLE " . dbf_4("LIMBASTEST");
-        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         if ($rs) {
             $msg['db_drop'] = $msgOK;
             $msic['db_drop'] = "1";
@@ -163,7 +161,7 @@ if($db_test == 'validate') {
         }
 
         lmb_EndTransaction(!(isset($commit) && $commit));
-        odbc_close($db);
+        lmbdb_close($db);
 
         // check utf-8 encoding support
         if(stripos($setup_version[2],'UTF') !== false AND !function_exists("mb_strlen")){
@@ -183,39 +181,32 @@ if($db_test == 'validate') {
 }
 
 
-if(!$radio_odbc AND !extension_loaded('odbc')){$radio_odbc = 'pdo';}
-    # database vendors PDO
-    if($radio_odbc == 'pdo'){
-        # database vendors
-        $vendorNames = array(
-            'PostgreSQL',
-            'mysql'
-        );
-        $vendorValues = array(
-            'postgres',
-            'mysql'
-        );
-    # database vendors ODBC
-    }else{
-        $vendorNames = array(
-            'PostgreSQL',
-            'mysql',
-            'MaxDB V7.6 / V7.9',
-            'MSSQL',
-            'Sybase',
-            'Ingres 10',
-            'oracle'
-        );
-        $vendorValues = array(
-            'postgres',
-            'mysql',
-            'maxdb76',
-            'mssql',
-            'mssql',
-            'ingres',
-            'oracle'
-        );
-    }
+if(!$radio_odbc){$radio_odbc = 'pdo';}
+
+$vendor['name'] = array(
+    'PostgreSQL',
+    'mysql',
+    'MaxDB V7.6 / V7.9',
+    'MSSQL',
+    'Sybase',
+    'HANA',
+    'Ingres 10',
+    'oracle'
+);
+$vendor['value'] = array(
+    'postgres',
+    'mysql',
+    'maxdb76',
+    'mssql',
+    'mssql',
+    'hana',
+    'ingres',
+    'oracle'
+);
+$vendor['pdo'] = array(
+    1,
+    1,
+);
 
 
 
@@ -240,7 +231,7 @@ if(!$radio_odbc AND !extension_loaded('odbc')){$radio_odbc = 'pdo';}
 
         if (db_vendor.value === 'postgres'){
             if(!db_schema.value){db_schema.value = "public";}
-            if(!db_driver.value){db_driver.value = "PSQL";}
+            if(!db_driver.value || db_driver.value == 'PDO'){db_driver.value = "PSQL";}
             $('#odbcinst').html('\
                 [PSQL]<br>\
                 Description = PostgreSQL<br>\
@@ -248,11 +239,11 @@ if(!$radio_odbc AND !extension_loaded('odbc')){$radio_odbc = 'pdo';}
             ');
         }else if (db_vendor.value === 'ingres'){
             if(!db_schema.value){db_schema.value = "ingres";}
-            if(!db_driver.value){db_driver.value = "IngresSQL";}
+            if(!db_driver.value || db_driver.value == 'PDO'){db_driver.value = "IngresSQL";}
             $('#odbcinst').html('');
         }else if (db_vendor.value === 'mysql'){
             if(!db_schema.value){db_schema.value = db_name.value;}
-            if(!db_driver.value){db_driver.value = "MySQL";}
+            if(!db_driver.value || db_driver.value == 'PDO'){db_driver.value = "MySQL";}
             $('#odbcinst').html('\
                 [MySQL]<br>\
                 Description = ODBC for MySQL<br>\
@@ -261,11 +252,11 @@ if(!$radio_odbc AND !extension_loaded('odbc')){$radio_odbc = 'pdo';}
             ');
         }else if (db_vendor.value === 'mssql'){
             if(!db_schema.value){db_schema.value = "dbo";}
-            if(!db_driver.value){db_driver.value = "MSSQL";}
+            if(!db_driver.value || db_driver.value == 'PDO'){db_driver.value = "MSSQL";}
             $('#odbcinst').html('');
         }else if (db_vendor.value === 'maxdb76'){
             if(!db_schema.value){db_schema.value = db_user.value;}
-            if(!db_driver.value){db_driver.value = "MAXDBSQL";}
+            if(!db_driver.value || db_driver.value == 'PDO'){db_driver.value = "MAXDBSQL";}
             $('#odbcinst').html('\
                 [MAXDBSQL]<br>\
                 Description = ODBC for MaxDB<br>\
@@ -282,7 +273,10 @@ if(!$radio_odbc AND !extension_loaded('odbc')){$radio_odbc = 'pdo';}
         if($('#radio_odbc_driver').is(':checked')) {
             // resource name -> database name
             $('input[name="setup_database"]').parent().parent().children().first().html('Database Name:');
-            
+
+            // remove driver
+            $('#db_driver').val('');
+
             // write correct driver
             update_dbvendor();
 
@@ -292,6 +286,10 @@ if(!$radio_odbc AND !extension_loaded('odbc')){$radio_odbc = 'pdo';}
             $('.showIfODBC').show();
             $('.hideIfPDO').show();
             $('#db_driver').attr('readonly', false);
+
+            $('.support_pdo').show();
+            $('.notsupport_pdo').show();
+
         } else if($('#radio_odbc_resource').is(':checked')) {
             // database name -> resource name
             $('input[name="setup_database"]').parent().parent().children().first().html('Resource Name:');    
@@ -303,6 +301,10 @@ if(!$radio_odbc AND !extension_loaded('odbc')){$radio_odbc = 'pdo';}
             $('.hideIfResource').hide();
             $('.showIfResource').show();
             $('.showIfODBC').show();
+
+            $('.support_pdo').show();
+            $('.notsupport_pdo').show();
+
         }else if($('#radio_odbc_pdo').is(':checked')) {
             // resource name -> database name
             $('input[name="setup_database"]').parent().parent().children().first().html('Database Name:');
@@ -313,6 +315,14 @@ if(!$radio_odbc AND !extension_loaded('odbc')){$radio_odbc = 'pdo';}
             $('.showIfPDO').show();
             $('.showIfODBC').hide();
             $('.hideIfPDO').hide();
+
+            if($('#db_vendor').val() != 'mysql' && $('#db_vendor').val() != 'postgres') {
+                $('#db_vendor').val('');
+            }
+
+            $('.support_pdo').show();
+            $('.notsupport_pdo').hide();
+
         }
         
         updateOdbcIni();
@@ -360,27 +370,7 @@ if(!$radio_odbc AND !extension_loaded('odbc')){$radio_odbc = 'pdo';}
         </tr>
     </thead>
     <tbody>
-    <?php if(extension_loaded('odbc')){ ?>
-        <tr>
-            <td>
-                <div class="radio">
-                    <label style="display:block;">
-                        <input type="radio" name="radio_odbc" value="driver" id="radio_odbc_driver" onchange="onInstallTypeChange();" <?= $radio_odbc && $radio_odbc=="resource" ? "" : "checked" ?> <?php if($db_test == 'valid') {echo 'readonly';}?>>Connect using the ODBC-driver
-                    </label>
-                </div>
-            </td>
-        </tr>
-        <tr>
-            <td>
-                <div class="radio">
-                    <label style="display:block;">
-                        <input type="radio" name="radio_odbc" value="resource" id="radio_odbc_resource" onchange="onInstallTypeChange();" <?= $radio_odbc=="resource" ? "checked" : "" ?> <?php if($db_test == 'valid') {echo 'readonly';}?>>Connect using a pre-specified ODBC-resource
-                    </label>
-                </div>
-            </td>
-        </tr>
-    <?php }
-    if(extension_loaded('pdo') AND !extension_loaded('odbc')) { ?>
+    <?php if(extension_loaded('pdo')) { ?>
         <tr>
             <td>
                 <div class="radio">
@@ -391,6 +381,27 @@ if(!$radio_odbc AND !extension_loaded('odbc')){$radio_odbc = 'pdo';}
             </td>
         </tr>
     <?php } ?>
+    <?php if(extension_loaded('odbc')){ ?>
+        <tr>
+            <td>
+                <div class="radio">
+                    <label style="display:block;">
+                        <input type="radio" name="radio_odbc" value="driver" id="radio_odbc_driver" onchange="onInstallTypeChange();" <?= $radio_odbc=='driver' ? "checked" : "" ?> <?php if($db_test == 'valid') {echo 'readonly';}?>>Connect using the ODBC-driver
+                    </label>
+                </div>
+            </td>
+        </tr>
+
+        <tr>
+            <td>
+                <div class="radio">
+                    <label style="display:block;">
+                        <input type="radio" name="radio_odbc" value="resource" id="radio_odbc_resource" onchange="onInstallTypeChange();" <?= $radio_odbc=="resource" ? "checked" : "" ?> <?php if($db_test == 'valid') {echo 'readonly';}?>>Connect using a pre-specified ODBC-resource
+                    </label>
+                </div>
+            </td>
+        </tr>
+        <?php }?>
     </tbody>
 </table>
 
@@ -410,14 +421,15 @@ if(!$radio_odbc AND !extension_loaded('odbc')){$radio_odbc = 'pdo';}
                 <select class="form-control input-sm " id="db_vendor" name="DBA[DB]" onchange="clear_values(1);update_dbvendor();" <?php if($db_test == 'valid') {echo 'readonly';}?>><option></option>
                     <?php
                     echo "</optgroup><optgroup label=\"---stable---\">";
-                    foreach ($vendorNames as $key => $value) {
-                        if($DBA['DB'] == $vendorValues[$key]){$selected = 'selected';}else{$selected = '';}
-                        if($vendorNames[$key] == 'Sybase'){echo "</optgroup><optgroup label=\"---beta---\">";}
-                        echo "<option value=\"".$vendorValues[$key]."\" $selected>".$vendorNames[$key]."</option>";
+                    foreach ($vendor['name'] as $key => $value) {
+                        if($vendor['pdo'][$key]){$style='class="support_pdo"';}else{$style='style="display:none" class="notsupport_pdo"';}
+
+                        if($DBA['DB'] == $vendor['value'][$key]){$selected = 'selected';}else{$selected = '';}
+                        if($vendor['name'][$key] == 'Sybase'){echo "</optgroup><optgroup $style label=\"---beta---\">";}
+                        echo "<option value=\"".$vendor['value'][$key]."\" $style $selected>".$vendor['name'][$key]."</option>";
                     }
                     echo "</optgroup>";
                     ?>
-
                 </select>
             </td>
         </tr>
@@ -534,7 +546,6 @@ if($db_test != 'valid'){
         </tr> 
     </tbody>            
 </table>
-    <?php if(extension_loaded('odbc')){echo "<div class=\"alert alert-danger showIfPDO\" role=\"alert\">If you want to use PDO you have to deinstall ODBC module fom PHP!</div>";}?>
     <div class="alert alert-info showIfPDO" role="alert">You can use <b>pdo_pgsql</b> or <b>pdo_mysql</b> with PDO. For other databases please use <b>ODBC.</div>
 
 <?php }?>

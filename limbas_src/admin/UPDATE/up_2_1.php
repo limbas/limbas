@@ -83,5 +83,5 @@ patch_db(17,"2.1",$sqlquery,"update number format");
 
 ###########################
 
-if ($db AND !$action) {odbc_close($db);}
+if ($db AND !$action) {lmbdb_close($db);}
 ?>

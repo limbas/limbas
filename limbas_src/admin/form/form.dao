@@ -96,15 +96,15 @@ if($form_possize){
 
 	$sqlquery = "SELECT KEYID,ERSTDATUM,ERSTUSER,FORM_ID,TYP,POSX,POSY,HEIGHT,WIDTH,STYLE,TAB_GROUP,TAB_ID,FIELD_ID,Z_INDEX,UFORM_TYP,UFORM_VTYP,PIC_TYP,PIC_STYLE,PIC_SIZE,TAB,TAB_SIZE,TAB_EL_COL,TAB_EL_ROW,TAB_EL_COL_SIZE,TITLE,EVENT_CLICK,EVENT_OVER,EVENT_OUT,EVENT_DBLCLICK,EVENT_CHANGE,PARAMETERS,INHALT,CLASS,ID,CATEGORIE,SUBELEMENT
 	 FROM LMB_FORMS WHERE FORM_ID = $form_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)) {
-		$id_ = odbc_result($rs, "KEYID");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
+		$id_ = lmbdb_result($rs, "KEYID");
 		if($div_pos[$id_]){
 			$ia = 0;
 			$form_ = explode(",",$div_pos[$id_]);
-			$typ_ = odbc_result($rs, "TYP");
-			$subelement_ = odbc_result($rs, "SUBELEMENT");
-			$zindex_ = odbc_result($rs, "Z_INDEX");
+			$typ_ = lmbdb_result($rs, "TYP");
+			$subelement_ = lmbdb_result($rs, "SUBELEMENT");
+			$zindex_ = lmbdb_result($rs, "Z_INDEX");
 
 			if(!$form_[1] OR !preg_match("/^[0-9]{1,4}$/",$form_[1])){$form_[1] = "0";}
 			if(!$form_[2] OR !preg_match("/^[0-9]{1,4}$/",$form_[2])){$form_[2] = "0";}
@@ -119,14 +119,18 @@ if($form_possize){
 				$INHALT = ${"text".$id_};
 				$ia = "INHALT = ?,";
 			}elseif(lmb_strpos("_chart_menu_bild_tab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_menue_scroll_tabmenu_uform",$typ_)){
-				$ia = "";
+				$ia = NULL;
 			}else{
 				$INHALT = "";
 				$ia = "INHALT = ?,";
 			}
-			
-			$prepare_string = "UPDATE LMB_FORMS SET $ia POSX = ".$form_[1].",POSY = ".$form_[2].",WIDTH = ".$form_[3].",HEIGHT = ".$form_[4].",Z_INDEX = ".$form_[5]." WHERE ID = ".odbc_result($rs, "ID")." AND FORM_ID = $form_id";
-			if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($INHALT)),__FILE__,__LINE__)){$commit = 1;}
+			$prepare_string = "UPDATE LMB_FORMS SET $ia POSX = ".$form_[1].",POSY = ".$form_[2].",WIDTH = ".$form_[3].",HEIGHT = ".$form_[4].",Z_INDEX = ".$form_[5]." WHERE ID = ".lmbdb_result($rs, "ID")." AND FORM_ID = $form_id";
+
+			if($ia){
+			    lmb_PrepareSQL($prepare_string,array($INHALT),__FILE__,__LINE__);
+            }else {
+                lmbdb_exec($db, $prepare_string) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            }
 
 			if($typ_ == "tabuItem" AND $subelement_){
 				$tabuItemRebuild[$subelement_] = 1;
@@ -134,13 +138,13 @@ if($form_possize){
 		}
 		
 		# Formulargröße berechnen
-		$style_ = explode(';',odbc_result($rs, "STYLE"));
+		$style_ = explode(';',lmbdb_result($rs, "STYLE"));
 		if($typ_ != 'tabcell' AND $typ_ != 'tabuitem' AND $typ_ != 'php' AND $typ_ != 'js' AND $style_[26] != 'none'){
-			if(odbc_result($rs, 'WIDTH')+odbc_result($rs, 'POSX') > $max['X']){
-				$max['X'] = odbc_result($rs, 'WIDTH')+odbc_result($rs, 'POSX');
+			if(lmbdb_result($rs, 'WIDTH')+lmbdb_result($rs, 'POSX') > $max['X']){
+				$max['X'] = lmbdb_result($rs, 'WIDTH')+lmbdb_result($rs, 'POSX');
 			}
-			if(odbc_result($rs, 'HEIGHT')+odbc_result($rs, 'POSY') > $max['Y']){
-				$max['Y'] = odbc_result($rs, 'HEIGHT')+odbc_result($rs, 'POSY');
+			if(lmbdb_result($rs, 'HEIGHT')+lmbdb_result($rs, 'POSY') > $max['Y']){
+				$max['Y'] = lmbdb_result($rs, 'HEIGHT')+lmbdb_result($rs, 'POSY');
 			}
 		}
 
@@ -148,7 +152,7 @@ if($form_possize){
 	
 	# Formulargröße eintragen
 	$sqlquery = "UPDATE LMB_FORM_LIST SET DIMENSION = '".$max['X']."x".$max['Y']."' WHERE ID = $form_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 	# workaround for sorting tabulators
 	if($tabuItemRebuild){
@@ -159,25 +163,25 @@ if($form_possize){
 		
 		foreach ($tabuItemRebuild as $catkey => $catval){
 			$sqlquery = "SELECT KEYID,CATEGORIE FROM LMB_FORMS WHERE FORM_ID = $form_id AND SUBELEMENT = $catkey AND TYP = 'tabuItem' ORDER BY Z_INDEX";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			$subelements = null;
-			while(odbc_fetch_row($rs)) {
-				$categorie = odbc_result($rs, "CATEGORIE");
-				$elid = odbc_result($rs, "KEYID");
+			while(lmbdb_fetch_row($rs)) {
+				$categorie = lmbdb_result($rs, "CATEGORIE");
+				$elid = lmbdb_result($rs, "KEYID");
 				$subelements[] = $elid;
 				$sqlquery1 = "UPDATE LMB_FORMS SET KEYID = ".($elid+10000)." WHERE FORM_ID = $form_id AND SUBELEMENT = $catkey AND TYP = 'tabuItem' AND KEYID = $elid";
-				$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+				$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 				$sqlquery1 = "UPDATE LMB_FORMS SET CATEGORIE = ".($elid+10000)." WHERE FORM_ID = $form_id AND SUBELEMENT = $catkey AND CATEGORIE = $elid";
-				$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+				$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			}
 			if($subelements){
 				$subelements_ = $subelements;
 				sort($subelements);
 				foreach ($subelements as $subkey => $subval){
 					$sqlquery1 = "UPDATE LMB_FORMS SET KEYID = ".$subelements[$subkey]." WHERE FORM_ID = $form_id AND SUBELEMENT = $catkey AND TYP = 'tabuItem' AND KEYID = ".($subelements_[$subkey]+10000);
-					$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+					$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 					$sqlquery1 = "UPDATE LMB_FORMS SET CATEGORIE = ".$subelements[$subkey]." WHERE FORM_ID = $form_id AND SUBELEMENT = $catkey AND CATEGORIE = ".($subelements_[$subkey]+10000);
-					$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+					$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 				}
 			}
 		}
@@ -188,7 +192,7 @@ if($form_possize){
 # --- Formular Redirect (Formularumleitung) ---------------------------------------------
 if($form_redirect AND $form_id){
 	$sqlquery = "UPDATE LMB_FORM_LIST SET REDIRECT = $form_redirect WHERE ID = $form_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 
@@ -197,20 +201,20 @@ if($form_copy AND $form_edit_id AND $form_id){
 
 	/* --- Next ID ---------------------------------------- */
 	$sqlquery = "SELECT MAX(KEYID) AS NEXTID FROM LMB_FORMS WHERE FORM_ID = $form_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$NEXTID = odbc_result($rs,"NEXTID") + 1;
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$NEXTID = lmbdb_result($rs,"NEXTID") + 1;
 	$NEXTKEYID = next_db_id("LMB_FORMS","ID");
 
 	$sqlquery = "SELECT KEYID,ERSTDATUM,ERSTUSER,FORM_ID,TYP,POSX,POSY,HEIGHT,WIDTH,STYLE,TAB_GROUP,TAB_ID,FIELD_ID,Z_INDEX,UFORM_TYP,UFORM_VTYP,PIC_TYP,PIC_STYLE,PIC_SIZE,TAB,TAB_EL,TAB_SIZE,TAB_EL_COL,TAB_EL_ROW,TAB_EL_COL_SIZE,TITLE,EVENT_CLICK,EVENT_OVER,EVENT_OUT,EVENT_DBLCLICK,EVENT_CHANGE,PARAMETERS,INHALT,CLASS,ID,SUBELEMENT,CATEGORIE
 	 FROM LMB_FORMS WHERE KEYID = $form_edit_id AND FORM_ID = $form_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 	$sqlquery = "INSERT INTO LMB_FORMS (ID,KEYID,ERSTUSER,FORM_ID,TYP,POSX,POSY,HEIGHT,WIDTH,INHALT,STYLE,TAB_GROUP,TAB_ID,FIELD_ID,Z_INDEX,UFORM_TYP,UFORM_VTYP,PIC_TYP,PIC_STYLE,PIC_SIZE,TAB,TAB_SIZE,TAB_EL,TAB_EL_COL,TAB_EL_ROW,TAB_EL_COL_SIZE,TITLE,SUBELEMENT,CATEGORIE)
-	VALUES ($NEXTKEYID,$NEXTID,{$session['user_id']},".odbc_result($rs,"FORM_ID").",'".odbc_result($rs,"TYP")."',".(odbc_result($rs,"POSX") + 5).",".(odbc_result($rs,"POSY") + 5).",".odbc_result($rs,"HEIGHT").",".odbc_result($rs,"WIDTH").",'".parse_db_string(odbc_result($rs,"INHALT"),99999)."','".odbc_result($rs,"STYLE")."',
-	".odbc_result($rs,"TAB_GROUP").",".odbc_result($rs,"TAB_ID").",".odbc_result($rs,"FIELD_ID").",".(odbc_result($rs,"Z_INDEX") + 1).",".odbc_result($rs,"UFORM_TYP").",".odbc_result($rs,"UFORM_VTYP").",
-	'".odbc_result($rs,"PIC_TYP")."','".odbc_result($rs,"PIC_STYLE")."','".odbc_result($rs,"PIC_SIZE")."',".odbc_result($rs,"TAB").",'".odbc_result($rs,"TAB_SIZE")."',".odbc_result($rs,"TAB_EL").",".odbc_result($rs,"TAB_EL_COL").",".odbc_result($rs,"TAB_EL_ROW").",".odbc_result($rs,"TAB_EL_COL_SIZE").",'".odbc_result($rs,"TITLE")."','".odbc_result($rs,"SUBELEMENT")."','".odbc_result($rs,"CATEGORIE")."')";
+	VALUES ($NEXTKEYID,$NEXTID,{$session['user_id']},".lmbdb_result($rs,"FORM_ID").",'".lmbdb_result($rs,"TYP")."',".(lmbdb_result($rs,"POSX") + 5).",".(lmbdb_result($rs,"POSY") + 5).",".lmbdb_result($rs,"HEIGHT").",".lmbdb_result($rs,"WIDTH").",'".parse_db_string(lmbdb_result($rs,"INHALT"),99999)."','".lmbdb_result($rs,"STYLE")."',
+	".lmbdb_result($rs,"TAB_GROUP").",".lmbdb_result($rs,"TAB_ID").",".lmbdb_result($rs,"FIELD_ID").",".(lmbdb_result($rs,"Z_INDEX") + 1).",".lmbdb_result($rs,"UFORM_TYP").",".lmbdb_result($rs,"UFORM_VTYP").",
+	'".lmbdb_result($rs,"PIC_TYP")."','".lmbdb_result($rs,"PIC_STYLE")."','".lmbdb_result($rs,"PIC_SIZE")."',".lmbdb_result($rs,"TAB").",'".lmbdb_result($rs,"TAB_SIZE")."',".lmbdb_result($rs,"TAB_EL").",".lmbdb_result($rs,"TAB_EL_COL").",".lmbdb_result($rs,"TAB_EL_ROW").",".lmbdb_result($rs,"TAB_EL_COL_SIZE").",'".lmbdb_result($rs,"TITLE")."','".lmbdb_result($rs,"SUBELEMENT")."','".lmbdb_result($rs,"CATEGORIE")."')";
 
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 
@@ -274,13 +278,13 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 
 	/* --- Next ID ---------------------------------------- */
 	$sqlquery = "SELECT MAX(Z_INDEX) AS ZINDEX FROM LMB_FORMS WHERE FORM_ID = $form_id AND TAB_EL_ROW <= 0 AND TAB_EL_COL <= 0";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$ZINDEX = odbc_result($rs,"ZINDEX") + 1;
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$ZINDEX = lmbdb_result($rs,"ZINDEX") + 1;
 
 	/* --- Next ID ---------------------------------------- */
 	$sqlquery = "SELECT MAX(KEYID) AS NEXTID FROM LMB_FORMS WHERE FORM_ID = $form_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$NEXTID = odbc_result($rs,"NEXTID") + 1;
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$NEXTID = lmbdb_result($rs,"NEXTID") + 1;
 	$NEXTKEYID = next_db_id("LMB_FORMS","ID");
 
 
@@ -323,9 +327,9 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 			$pos1 = lmb_strrpos($filename,'.');
 			$ext = lmb_strtolower(trim(lmb_substr($filename,$pos1+1,4)));
 			$sqlquery0 = "SELECT ID,EXT,MIMETYPE FROM LMB_MIMETYPES WHERE LOWER(EXT) = '$ext'";
-			$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
-			if(odbc_result($rs0, "ID")){
-				$mime = explode("/",odbc_result($rs0, "MIMETYPE"));
+			$rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+			if(lmbdb_result($rs0, "ID")){
+				$mime = explode("/",lmbdb_result($rs0, "MIMETYPE"));
 			}
 
 			# ------ Datei zu groß --------
@@ -335,8 +339,8 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 			}elseif($mime[0] != "image"){
 				lmb_alert("$lang[133]\\n== (".$mime[0]."/".$mime[1].")!");
 			}else{
-				$mimetypeid = odbc_result($rs0, "ID");
-				$mimetype = odbc_result($rs0, "MIMETYPE");
+				$mimetypeid = lmbdb_result($rs0, "ID");
+				$mimetype = lmbdb_result($rs0, "MIMETYPE");
 				$secname = $NEXTID.lmb_substr(md5($NEXTID.date("U").$filename),0,12);
 				$out = 1;
 				$mime = explode("/",$mimetype);
@@ -392,16 +396,18 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 		$value = "wflhist";
 	}elseif($form_add == "datum"){
 		$value = "Datum";
+	}elseif($form_add == "relpath"){
+		$value = "relation path";
 	}elseif($form_add == "uform"){
 		if($uform_style == 1){$uform_style_ = "iframe";}else{$uform_style_ = "div";}
 		if($uform_typ == 1){			#userdefined
 			$value = $lang[1171].": userdefined";
 		}elseif($uform_typ == 2 AND $uform_set){		#uform
 			$sqlquery0 = "SELECT REFERENZ_TAB,NAME FROM LMB_FORM_LIST WHERE ID = $uform_set";
-			$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+			$rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
 			$tab_group = $uform_set;
-			$tab_id = odbc_result($rs0, "REFERENZ_TAB");
-			$value = $lang[1171]." ($uform_style_): ".$lang[1179]." ".odbc_result($rs0, "NAME");
+			$tab_id = lmbdb_result($rs0, "REFERENZ_TAB");
+			$value = $lang[1171]." ($uform_style_): ".$lang[1179]." ".lmbdb_result($rs0, "NAME");
 		}elseif($uform_typ == 3){		#table
 			$tab_id = $uform_set;
 			$value = $lang[1171]." ($uform_style_): ".$lang[164]." ".$gtab["desc"][$uform_set];
@@ -411,18 +417,18 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
     }elseif($form_add == "tile" AND $uform_set){
 
 	    $sqlquery0 = "SELECT REFERENZ_TAB,NAME FROM LMB_FORM_LIST WHERE ID = $uform_set";
-        $rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+        $rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
         $tab_group = $uform_set;
-        $tab_id = odbc_result($rs0, "REFERENZ_TAB");
-        $value = $lang[1171]." ".odbc_result($rs0, "NAME");
+        $tab_id = lmbdb_result($rs0, "REFERENZ_TAB");
+        $value = $lang[1171]." ".lmbdb_result($rs0, "NAME");
 
         $width=300;
         $height=200;
 	}elseif($form_add == "tab"){
 		$sqlquery = "SELECT MAX(TAB) AS TABID FROM LMB_FORMS WHERE FORM_ID = $form_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		$value = "Tabelle ".(odbc_result($rs,"TABID") + 1);
-		$tab = (odbc_result($rs,"TABID") + 1);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$value = "Tabelle ".(lmbdb_result($rs,"TABID") + 1);
+		$tab = (lmbdb_result($rs,"TABID") + 1);
 		$tab_size = "2;1";
 		lmb_addElement($form_id,'tabcell',null,null,null,$tab,'1;1');
 		lmb_addElement($form_id,'tabcell',null,null,null,$tab,'1;2');
@@ -440,7 +446,7 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 		$styles = array(14=>'solid',15=>'',16=>1,24=>'auto');
 		$width = "300";$height = "200";
 		$style = set_default_style($styles);
-		$pic_size = "0_1_2"; #Menu-Auswahl
+		$pic_size = "1_2_3"; #Menu-Auswahl
 	}elseif($form_add == "tabulator"){
 		$value = "tabulator";
 		$styles = array(14=>'solid',15=>'',16=>1,24=>'auto');
@@ -504,7 +510,6 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
         $value = $form_add;
     }elseif($form_add == "templ"){
 		if(!$form_templ_id){return false;}
-			    error_log(123);
 		$value = 'template: '.$gtab['table'][$form_templ_id];
 		$pic_type = $form_templ_id;
 		$width=300;
@@ -527,7 +532,7 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 		if($form_replace_element){
 		    // , PARENTRELPATH = '".parse_db_string($parentrelpath,100)."' TODO
 			$prepare_string = "UPDATE LMB_FORMS SET INHALT = ?,FIELD_ID = $form_dbdat_fieldid,TAB_ID = $form_dbdat_tabid,TAB_GROUP = $tab_group, PARENTREL = '".parse_db_string($parentrel,100)."' WHERE KEYID = $form_replace_element AND FORM_ID = $form_id";
-			lmb_PrepareSQL($prepare_string,array(parse_db_blob($value)),__FILE__,__LINE__);
+			lmb_PrepareSQL($prepare_string,array($value),__FILE__,__LINE__);
 			$value = null;
 		}
 	}
@@ -543,8 +548,8 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 	#$aktivid = str_replace("div","",$aktiv_id);
 	#if(is_numeric($aktivid)){
 		#$sqlquery = "SELECT KEYID FROM LMB_FORMS WHERE FORM_ID = $form_id AND KEYID = $aktivid AND (TYP = 'tabulator' OR TYP = 'menue' OR TYP = 'frame')";
-		#$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		#if(odbc_result($rs,"KEYID")){
+		#$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		#if(lmbdb_result($rs,"KEYID")){
 		#	$subelement = $aktivid;
 		#	if($localsession["adminFormTabulator"][$form_id][$aktivid]){
 		#		$categorie = $localsession["adminFormTabulator"][$form_id][$aktivid];
@@ -568,10 +573,10 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 	if($value AND $form_id){
         // PARENTRELPATH '".parse_db_string($parentrelpath,100)."'  TODO
 			$sqlquery = "INSERT INTO LMB_FORMS (ID,KEYID,ERSTUSER,FORM_ID,TYP,POSX,POSY,WIDTH,HEIGHT,INHALT,STYLE,FIELD_ID,TAB_ID,TAB_GROUP,UFORM_TYP,UFORM_VTYP,PIC_SIZE,PIC_TYP,TITLE,TAB,TAB_SIZE,TAB_EL,TAB_EL_ROW,TAB_EL_COL,TAB_EL_COL_SIZE,Z_INDEX,PARENTREL,SUBELEMENT,CATEGORIE) VALUES ($NEXTKEYID,$NEXTID,".$session["user_id"].",$form_id,'$form_add',0,$posy,$width,$height,'".$value."','$style',$field_id,$tab_id,$tab_group,".parse_db_int($uform_typ).",".parse_db_int($uform_style).",'$pic_size','$pic_type','$elink',$tab,'$tab_size',$tab_el,$tab_el_row,$tab_el_col,$tab_el_col_size,$ZINDEX,'".parse_db_string($parentrel,100)."',$subelement,$categorie)";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if($form_add == "tabulator"){
 				$sqlquery = "INSERT INTO LMB_FORMS (ID,KEYID,ERSTUSER,FORM_ID,TYP,POSX,POSY,WIDTH,HEIGHT,INHALT,STYLE,Z_INDEX,SUBELEMENT) VALUES (".($NEXTKEYID+1).",".($NEXTID+1).",{$session['user_id']},$form_id,'tabuItem',0,0,20,10,'tabulator','$style',$ZINDEX,$NEXTID)";
-				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			}
 	}
 }
@@ -612,52 +617,52 @@ function form_delete_element($element_id,$form_id,$sub=null){
 	global $umgvar;
 	
 	$sqlquery = "SELECT TYP,INHALT,TAB_GROUP,PIC_TYP,TAB,TAB_EL,TAB_SIZE,SUBELEMENT,TAB_EL_ROW,TAB_EL_COL FROM LMB_FORMS WHERE KEYID = ".$element_id." AND FORM_ID = $form_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$typ = odbc_result($rs, "TYP");
-	$inhalt = odbc_result($rs, "INHALT");
-	$pic_typ = odbc_result($rs, "PIC_TYP");
-	$pic_name = odbc_result($rs, "TAB_SIZE");
-	$tab = odbc_result($rs, "TAB");
-	$tab_el = odbc_result($rs, "TAB_EL");
-	$tab_el_row = odbc_result($rs, "TAB_EL_ROW");
-	$tab_el_col = odbc_result($rs, "TAB_EL_COL");
-	$subelement = odbc_result($rs, "SUBELEMENT");
+	$typ = lmbdb_result($rs, "TYP");
+	$inhalt = lmbdb_result($rs, "INHALT");
+	$pic_typ = lmbdb_result($rs, "PIC_TYP");
+	$pic_name = lmbdb_result($rs, "TAB_SIZE");
+	$tab = lmbdb_result($rs, "TAB");
+	$tab_el = lmbdb_result($rs, "TAB_EL");
+	$tab_el_row = lmbdb_result($rs, "TAB_EL_ROW");
+	$tab_el_col = lmbdb_result($rs, "TAB_EL_COL");
+	$subelement = lmbdb_result($rs, "SUBELEMENT");
 
 	# delete sub elements
 	if($typ == "menue" OR $typ == "tabulator" OR $typ == "frame"){
 		$sqlquery = "SELECT KEYID FROM LMB_FORMS WHERE SUBELEMENT = ".parse_db_int($element_id)." AND FORM_ID = $form_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		while (odbc_fetch_row($rs)){
-			if(!form_delete_element(odbc_result($rs, "KEYID"),$form_id,1)){return false;}
+		while (lmbdb_fetch_row($rs)){
+			if(!form_delete_element(lmbdb_result($rs, "KEYID"),$form_id,1)){return false;}
 		}
 	}elseif($typ == "tabuItem" AND !$sub){
 		$sqlquery = "SELECT KEYID FROM LMB_FORMS WHERE CATEGORIE = ".parse_db_int($element_id)." AND SUBELEMENT = ".parse_db_int($subelement)." AND TYP != 'tabuItem' AND FORM_ID = $form_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		while (odbc_fetch_row($rs)){
-			if(!form_delete_element(odbc_result($rs, "KEYID"),$form_id,1)){return false;}
+		while (lmbdb_fetch_row($rs)){
+			if(!form_delete_element(lmbdb_result($rs, "KEYID"),$form_id,1)){return false;}
 		}
 	}elseif($typ == "tabcell"){
 		$sqlquery = "SELECT KEYID FROM LMB_FORMS WHERE TAB_EL = $tab_el AND TAB_EL_ROW = $tab_el_row AND TAB_EL_COL = $tab_el_col AND TYP != 'tabcell' AND FORM_ID = $form_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		while (odbc_fetch_row($rs)){
-			if(!form_delete_element(odbc_result($rs, "KEYID"),$form_id,1)){return false;}
+		while (lmbdb_fetch_row($rs)){
+			if(!form_delete_element(lmbdb_result($rs, "KEYID"),$form_id,1)){return false;}
 		}
 	}
 
 	# delete tab elements
 	if($typ == "tab"){
 		$sqlquery = "SELECT KEYID FROM LMB_FORMS WHERE TAB_EL = ".$tab." AND FORM_ID = $form_id AND TYP != 'tab'";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		while (odbc_fetch_row($rs)){
-			if(!form_delete_element(odbc_result($rs, "KEYID"),$form_id,1)){return false;}
+		while (lmbdb_fetch_row($rs)){
+			if(!form_delete_element(lmbdb_result($rs, "KEYID"),$form_id,1)){return false;}
 		}
 		$sqlquery = "DELETE FROM LMB_FORMS WHERE TAB = ".$tab." AND FORM_ID = $form_id";
-		$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 	}
 
@@ -674,7 +679,7 @@ function form_delete_element($element_id,$form_id,$sub=null){
 	
 	# delete single element
 	$sqlquery = "DELETE FROM LMB_FORMS WHERE KEYID = ".$element_id." AND FORM_ID = $form_id";
-	$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs1) {$commit = 1;}
 	
 	if($commit){return false;}else{return true;}
@@ -696,7 +701,7 @@ function form_moveElement($form_id,$move_id,$aktiv_tabcontainer,$localsession){
 	if($move_id = explode(';',$move_id)){
 		foreach ($move_id as $key => $value){
 			$sqlquery = "UPDATE LMB_FORMS SET SUBELEMENT = ".parse_db_int($aktiv_tabcontainer).", CATEGORIE = ".parse_db_int($categorie)." WHERE FORM_ID = $form_id AND KEYID = $value";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
 	}
 }
@@ -722,7 +727,7 @@ if($form_del AND $form_edit_id){
 /* --- Elemente Editieren --------------------------------------------- */
 elseif($form_edit_value){
 	$prepare_string = "UPDATE LMB_FORMS SET INHALT = ?,LMB_FORMS SET EDITDATUM = ".LMB_DBDEF_TIMESTAMP.",EDITUSER = ".$session['user_id']." WHERE KEYID = $form_edit_id AND FORM_ID = $form_id";
-	if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($form_edit_value)),__FILE__,__LINE__)){$commit = 1;}
+	if(!lmb_PrepareSQL($prepare_string,array($form_edit_value),__FILE__,__LINE__)){$commit = 1;}
 }
 
 /* --- Style Editieren --------------------------------------------- */
@@ -735,8 +740,8 @@ if($form_setstyle){
 		$styles1 = explode(",",$styles[$bzm]);
 
 		$sqlquery = "SELECT STYLE FROM LMB_FORMS WHERE FORM_ID = $form_id AND KEYID = $styles1[0]";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		$old_style = odbc_result($rs, "STYLE");
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$old_style = lmbdb_result($rs, "STYLE");
 		$style = explode(";", $old_style);
 
 		$bzm1 = 1;
@@ -772,7 +777,7 @@ if($form_setstyle){
 		if($zopt){$zopt = ",".implode(",", $zopt);}
 
 		$sqlquery = "UPDATE LMB_FORMS SET STYLE = '".implode(";", $style)."',EDITDATUM = ".LMB_DBDEF_TIMESTAMP.",EDITUSER = ".$session["user_id"].$zopt." WHERE FORM_ID = $form_id AND KEYID = $styles1[0]";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		$bzm++;
 	}
 }
@@ -786,12 +791,12 @@ if($form_tab_size){
 		if(!$tabsizeval){continue;}
 		$tabsizeel = explode("_",$tabsizeval);
 		#$sqlquery = "SELECT TAB FROM LMB_FORMS WHERE KEYID = ".$tabsizeel[0]." AND FORM_ID = $form_id";
-		#$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		#$tt_tabid = odbc_result($rs, "TAB");
+		#$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		#$tt_tabid = lmbdb_result($rs, "TAB");
 
 		if(is_numeric($tabsizeel[0]) AND preg_match("/^[0-9]{1,4}$/",$tabsizeel[1]) AND preg_match("/^[0-9]{1,4}$/",$tabsizeel[2])){
 			#$sqlquery = "UPDATE LMB_FORMS SET TAB_EL_COL_SIZE = ".$tabsizeel[2]." WHERE TAB = ".$tt_tabid." AND TAB_EL_COL = ".$tabsizeel[1]." AND FORM_ID = $form_id";
-			#$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			#$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			$tabsizesum[$tabsizeel[0]][$tabsizeel[1]] = $tabsizeel[2];
 		}
 	}
@@ -800,8 +805,8 @@ if($form_tab_size){
 			ksort($tval);
 			$tabsize = array_sum($tval);
 			$sizeel = implode(";",$tval);
-			$sqlquery = "UPDATE LMB_FORMS SET WIDTH = ".$tabsize.",PARAMETERS = '".$sizeel."'  WHERE KEYID = $key AND FORM_ID = $form_id";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$sqlquery = "UPDATE LMB_FORMS SET WIDTH = ".$tabsize.",PARAMETERS = ? WHERE KEYID = $key AND FORM_ID = $form_id";
+			$rs = lmb_PrepareSQL($sqlquery,array($sizeel)) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
 	}
 }
@@ -812,12 +817,12 @@ function lmb_addTableCell($form_tab_rows,$form_tab_cols,$form_tab,$form_tab_el,$
 	global $form_id;
 	
 	$sqlquery = "SELECT TAB_SIZE,TAB,PARAMETERS FROM LMB_FORMS WHERE KEYID = $form_edit_id AND FORM_ID = $form_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_fetch_row($rs)){
-		$tab_size = explode(";",odbc_result($rs, "TAB_SIZE"));
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_fetch_row($rs)){
+		$tab_size = explode(";",lmbdb_result($rs, "TAB_SIZE"));
 		$old_size = $tab_size;
-		$tabid = odbc_result($rs, "TAB");
-		$cellsice = explode(";", odbc_result($rs, "PARAMETERS"));
+		$tabid = lmbdb_result($rs, "TAB");
+		$cellsice = explode(";", lmbdb_result($rs, "PARAMETERS"));
 	}
 
 	if($form_tab_rows AND preg_match("/^[0-9]{0,2}$/", $form_tab_rows)){
@@ -840,9 +845,9 @@ function lmb_addTableCell($form_tab_rows,$form_tab_cols,$form_tab,$form_tab_el,$
 		if($form_tab_rows > $old_size[1]){
 			$rowdiff = abs($form_tab_rows - $old_size[1]);
 			$sqlquery = "UPDATE LMB_FORMS SET TAB_EL_ROW = (TAB_EL_ROW + $rowdiff) WHERE FORM_ID = $form_id AND TAB_EL = $tabid AND TAB_EL_ROW >= $row";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			$sqlquery = "UPDATE LMB_FORMS SET TAB_SIZE = '".implode(";",$tab_size)."' WHERE KEYID = $form_edit_id AND FORM_ID = $form_id";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		# Zeilen entfernen
 		}else{
 			$rowdiff = abs($old_size[1] - $form_tab_rows);
@@ -850,27 +855,27 @@ function lmb_addTableCell($form_tab_rows,$form_tab_cols,$form_tab,$form_tab_el,$
 			for ($i=$row; $i<($row+$rowdiff);$i++){
 				for ($e=1; $e<=$cols;$e++){
 					$sqlquery1 = "SELECT KEYID FROM LMB_FORMS WHERE FORM_ID = $form_id AND TAB_EL = $tabid AND TAB_EL_ROW = $i AND TAB_EL_COL = $e AND TYP = 'tabcell'";
-					$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-					if(odbc_fetch_row($rs1)){form_delete_element(odbc_result($rs1, "KEYID"),$form_id);}
+					$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+					if(lmbdb_fetch_row($rs1)){form_delete_element(lmbdb_result($rs1, "KEYID"),$form_id);}
 				}
 			}
 			$sqlquery1 = "UPDATE LMB_FORMS SET TAB_EL_ROW = (TAB_EL_ROW - $rowdiff) WHERE FORM_ID = $form_id AND TAB_EL = $tabid AND TAB_EL_ROW > $row AND TAB_EL_ROW > 1";
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			$sqlquery1 = "UPDATE LMB_FORMS SET TAB_SIZE = '".implode(";",$tab_size)."' WHERE KEYID = $form_edit_id AND FORM_ID = $form_id";
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		}
 	# Zeilen am Ende hinzufügen / Spalten hinzufügen - entfernen
 	}elseif($form_tab_rows > $old_size[1] OR ($form_tab_cols != $old_size[0] AND $form_tab_cols)){
 		for ($e=($cols+1); $e<=$old_size[0];$e++){
 			for ($i=1; $i<=$rows;$i++){
 				$sqlquery1 = "SELECT KEYID FROM LMB_FORMS WHERE FORM_ID = $form_id AND TAB_EL = $tabid AND TAB_EL_ROW = $i AND TAB_EL_COL = $e AND TYP = 'tabcell'";
-				$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-				if(odbc_fetch_row($rs1)){form_delete_element(odbc_result($rs1, "KEYID"),$form_id);}
+				$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+				if(lmbdb_fetch_row($rs1)){form_delete_element(lmbdb_result($rs1, "KEYID"),$form_id);}
 			}
 		}
 		
 		$sqlquery = "UPDATE LMB_FORMS SET TAB_SIZE = '".implode(";",$tab_size)."' WHERE KEYID = $form_edit_id AND FORM_ID = $form_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		
 	}else{
 		lmb_alert("select column first!");
@@ -892,8 +897,8 @@ function lmb_addTableCell($form_tab_rows,$form_tab_cols,$form_tab,$form_tab_el,$
 	if($form_tab_cols AND $has_cellsice AND $cellsice){
 		$tabsize = array_sum($cellsice);
 		$sizeel = implode(";",$cellsice);
-		$sqlquery = "UPDATE LMB_FORMS SET WIDTH = ".$tabsize.",PARAMETERS = '".$sizeel."' WHERE TAB = $tabid AND TYP = 'tab' AND FORM_ID = $form_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$sqlquery = "UPDATE LMB_FORMS SET WIDTH = ".$tabsize.",PARAMETERS = ? WHERE TAB = $tabid AND TYP = 'tab' AND FORM_ID = $form_id";
+        $rs = lmb_PrepareSQL($sqlquery,array($sizeel)) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
 
 }
@@ -912,10 +917,10 @@ if($change_id){
 	$change_id = parse_db_int($change_id);
 	if($change_id > 0){
 		$sqlquery = "SELECT ID FROM LMB_FORMS WHERE KEYID = $change_id AND FORM_ID = $form_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!odbc_result($rs, "ID")){
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!lmbdb_result($rs, "ID")){
 			$sqlquery1 = "UPDATE LMB_FORMS SET KEYID = '".$change_id."' WHERE KEYID = $form_edit_id AND FORM_ID = $form_id";
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		}
 	}
 }
@@ -926,7 +931,7 @@ if($form_title AND $form_edit_id){
 		$form_title = '';
 	}
 	$sqlquery = "UPDATE LMB_FORMS SET TITLE = '".parse_db_string($form_title,255)."' WHERE KEYID = $form_edit_id AND FORM_ID = $form_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 /* --- Event Attribute --------------------------------------------- */
@@ -938,7 +943,7 @@ if($form_event1){
 			if($fepart AND is_numeric($fepart[0])){
 				$value = parse_db_string($fepart[2],180);
 				$sqlquery = "UPDATE LMB_FORMS SET EVENT_".$fepart[1]." = '".$value."' WHERE KEYID = ".$fepart[0]." AND FORM_ID = $form_id";
-				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			}
 		}
 	}
@@ -946,9 +951,8 @@ if($form_event1){
 
 if($form_parameters AND $form_edit_id){
 	if($form_parameters == 'null'){$form_parameters = '';}
-	$value = parse_db_string($form_parameters,500);
-	$sqlquery = "UPDATE LMB_FORMS SET PARAMETERS = '".$value."' WHERE KEYID = $form_edit_id AND FORM_ID = $form_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$sqlquery = "UPDATE LMB_FORMS SET PARAMETERS = ? WHERE KEYID = $form_edit_id AND FORM_ID = $form_id";
+    $rs = lmb_PrepareSQL($sqlquery,array($form_parameters)) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 
@@ -960,53 +964,53 @@ function getFormElements($form_id){
 
 	$sqlquery = "SELECT KEYID,CATEGORIE,ERSTDATUM,ERSTUSER,FORM_ID,SUBELEMENT,TYP,POSX,POSY,HEIGHT,WIDTH,STYLE,TAB_GROUP,TAB_ID,FIELD_ID,Z_INDEX,UFORM_TYP,UFORM_VTYP,PIC_TYP,PIC_STYLE,PIC_SIZE,TAB,TAB_EL,TAB_SIZE,TAB_EL_COL,TAB_EL_ROW,TAB_EL_COL_SIZE,TITLE,EVENT_CLICK,EVENT_OVER,EVENT_OUT,EVENT_DBLCLICK,EVENT_CHANGE,PARAMETERS,INHALT,CLASS,ID
 	 FROM LMB_FORMS WHERE FORM_ID = $form_id ORDER BY Z_INDEX";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS["action"],__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)) {
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS["action"],__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
 		
-		if($view_categorie != odbc_result($rs, "CATEGORIE") AND odbc_result($rs, "CATEGORIE") AND $view_categorie){
+		if($view_categorie != lmbdb_result($rs, "CATEGORIE") AND lmbdb_result($rs, "CATEGORIE") AND $view_categorie){
 			continue;
 		}
 		
-		$id = odbc_result($rs, "KEYID");
-		$form["id"][$id] = odbc_result($rs, "KEYID");
-		$form["typ"][$id] = odbc_result($rs, "TYP");
-		$form["value"][$id] = trim(odbc_result($rs, "INHALT")); # longtext handle
-		$form["posx"][$id] = odbc_result($rs, "POSX");
-		$form["posy"][$id] = odbc_result($rs, "POSY");
-		$form["width"][$id] = odbc_result($rs, "WIDTH");
-		$form["height"][$id] = odbc_result($rs, "HEIGHT");
-		$form["style"][$id] = odbc_result($rs, "STYLE");
-		$form["title"][$id] = odbc_result($rs, "TITLE");
-		$form["tab_id"][$id] = odbc_result($rs, "TAB_ID");
-		$form["field_id"][$id] = odbc_result($rs, "FIELD_ID");
-		$form["tab_group"][$id] = odbc_result($rs, "TAB_GROUP");
-		$form["pic_type"][$id] = odbc_result($rs, "PIC_TYP");
-		$form["pic_style"][$id] = odbc_result($rs, "PIC_STYLE");
-		$form["pic_size"][$id] = odbc_result($rs, "PIC_SIZE");
-		$form["tab"][$id] = odbc_result($rs, "TAB");
-		$form["tab_el"][$id] = odbc_result($rs, "TAB_EL");
-		$form["tab_size"][$id] = odbc_result($rs, "TAB_SIZE");
-		$form["tab_el_col"][$id] = odbc_result($rs, "TAB_EL_COL");
-		$form["tab_el_row"][$id] = odbc_result($rs, "TAB_EL_ROW");
-		$form["tab_el_col_size"][$id] = odbc_result($rs, "TAB_EL_COL_SIZE");
-		$form["parameters"][$id] = htmlentities(trim(odbc_result($rs, "PARAMETERS"))); # longtext handle
-		$form["zindex"][$id] = odbc_result($rs, "Z_Index");
-		$form["class"][$id] = trim(odbc_result($rs, "CLASS"));
-		$form["subel"][$id] = odbc_result($rs, "SUBELEMENT");
-		$form["categorie"][$id] = odbc_result($rs, "CATEGORIE");
+		$id = lmbdb_result($rs, "KEYID");
+		$form["id"][$id] = lmbdb_result($rs, "KEYID");
+		$form["typ"][$id] = lmbdb_result($rs, "TYP");
+		$form["value"][$id] = trim(lmbdb_result($rs, "INHALT")); # longtext handle
+		$form["posx"][$id] = lmbdb_result($rs, "POSX");
+		$form["posy"][$id] = lmbdb_result($rs, "POSY");
+		$form["width"][$id] = lmbdb_result($rs, "WIDTH");
+		$form["height"][$id] = lmbdb_result($rs, "HEIGHT");
+		$form["style"][$id] = lmbdb_result($rs, "STYLE");
+		$form["title"][$id] = lmbdb_result($rs, "TITLE");
+		$form["tab_id"][$id] = lmbdb_result($rs, "TAB_ID");
+		$form["field_id"][$id] = lmbdb_result($rs, "FIELD_ID");
+		$form["tab_group"][$id] = lmbdb_result($rs, "TAB_GROUP");
+		$form["pic_type"][$id] = lmbdb_result($rs, "PIC_TYP");
+		$form["pic_style"][$id] = lmbdb_result($rs, "PIC_STYLE");
+		$form["pic_size"][$id] = lmbdb_result($rs, "PIC_SIZE");
+		$form["tab"][$id] = lmbdb_result($rs, "TAB");
+		$form["tab_el"][$id] = lmbdb_result($rs, "TAB_EL");
+		$form["tab_size"][$id] = lmbdb_result($rs, "TAB_SIZE");
+		$form["tab_el_col"][$id] = lmbdb_result($rs, "TAB_EL_COL");
+		$form["tab_el_row"][$id] = lmbdb_result($rs, "TAB_EL_ROW");
+		$form["tab_el_col_size"][$id] = lmbdb_result($rs, "TAB_EL_COL_SIZE");
+		$form["parameters"][$id] = htmlentities(trim(lmbdb_result($rs, "PARAMETERS"))); # longtext handle
+		$form["zindex"][$id] = lmbdb_result($rs, "Z_Index");
+		$form["class"][$id] = trim(lmbdb_result($rs, "CLASS"));
+		$form["subel"][$id] = lmbdb_result($rs, "SUBELEMENT");
+		$form["categorie"][$id] = lmbdb_result($rs, "CATEGORIE");
 		
-		$form["uform_vtyp"] = odbc_result($rs, "UFORM_VTYP");
-		$form["uform_typ"] = odbc_result($rs, "UFORM_TYP");
+		$form["uform_vtyp"] = lmbdb_result($rs, "UFORM_VTYP");
+		$form["uform_typ"] = lmbdb_result($rs, "UFORM_TYP");
 		
 		if($form["typ"][$id] == 'tabcell'){
 			$form["tab_cell"][$form["tab_el"][$id]][$form["tab_el_col"][$id]][$form["tab_el_row"][$id]] = $id;
 		}
 
-		$f_event[0] = odbc_result($rs, "EVENT_CLICK");
-		$f_event[1] = odbc_result($rs, "EVENT_DBLCLICK");
-		$f_event[2] = odbc_result($rs, "EVENT_OVER");
-		$f_event[3] = odbc_result($rs, "EVENT_OUT");
-		$f_event[4] = odbc_result($rs, "EVENT_CHANGE");
+		$f_event[0] = lmbdb_result($rs, "EVENT_CLICK");
+		$f_event[1] = lmbdb_result($rs, "EVENT_DBLCLICK");
+		$f_event[2] = lmbdb_result($rs, "EVENT_OVER");
+		$f_event[3] = lmbdb_result($rs, "EVENT_OUT");
+		$f_event[4] = lmbdb_result($rs, "EVENT_CHANGE");
 		$form["event"][$id] = $f_event;
 
 	}
@@ -1026,7 +1030,7 @@ function setNewZindex($form,$form_id){
 		if(!$form["tab_el_col"][$key] AND !$form["tab_el_row"][$key]){
 			# --- Index neu setzen ----
 			$sqlquery = "UPDATE LMB_FORMS SET Z_INDEX = ".$bzm." WHERE KEYID = ".$value." AND FORM_ID = $form_id";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS["action"],__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS["action"],__FILE__,__LINE__);
 		$bzm++;
 		}
 	}
@@ -1036,38 +1040,38 @@ function setNewZindex($form,$form_id){
 if($default_class){
 	if($default_class == "NULL"){$default_class = '';}
 	$sqlquery = "UPDATE LMB_FORM_LIST SET CSS = '".parse_db_string($default_class,120)."' WHERE ID = $form_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 
 // dimension
 if($form_dimension){
 	$sqlquery = "UPDATE LMB_FORM_LIST SET dimension = '".parse_db_string($form_dimension,10)."' WHERE ID = $form_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 
 
 if(!$form_id){$form_id = "0";}
 $sqlquery = "SELECT ID,NAME,BESCHREIBUNG,REFERENZ_TAB,ERSTDATUM,EDITDATUM,ERSTUSER,FORM_TYP,FRAME_SIZE,REDIRECT,CSS,DIMENSION FROM LMB_FORM_LIST";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-	if($form_id == odbc_result($rs, "ID")){
-		$form["name"] = odbc_result($rs, "NAME");
-		$form["form_id"] = odbc_result($rs, "ID");
-		$form["form_typ"] = odbc_result($rs, "FORM_TYP");
-		$form["referenz_tab"] = odbc_result($rs, "REFERENZ_TAB");
-		$form["redirect"] = odbc_result($rs, "REDIRECT");
-		$form["css"] = odbc_result($rs, "CSS");
-		$form["dimension"] = explode('x',odbc_result($rs, "DIMENSION"));
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+	if($form_id == lmbdb_result($rs, "ID")){
+		$form["name"] = lmbdb_result($rs, "NAME");
+		$form["form_id"] = lmbdb_result($rs, "ID");
+		$form["form_typ"] = lmbdb_result($rs, "FORM_TYP");
+		$form["referenz_tab"] = lmbdb_result($rs, "REFERENZ_TAB");
+		$form["redirect"] = lmbdb_result($rs, "REDIRECT");
+		$form["css"] = lmbdb_result($rs, "CSS");
+		$form["dimension"] = explode('x',lmbdb_result($rs, "DIMENSION"));
 	}else{
-		$key = odbc_result($rs, "ID");
-		$formliste["name"][$key] = odbc_result($rs, "NAME");
-		$formliste["form_id"][$key] = odbc_result($rs, "ID");
-		$formliste["form_typ"][$key] = odbc_result($rs, "FORM_TYP");
-		$formliste["referenz_tab"][$key] = odbc_result($rs, "REFERENZ_TAB");
-		$formliste["redirect"][$key] = odbc_result($rs, "REDIRECT");
-		$formliste["css"][$key] = odbc_result($rs, "CSS");
+		$key = lmbdb_result($rs, "ID");
+		$formliste["name"][$key] = lmbdb_result($rs, "NAME");
+		$formliste["form_id"][$key] = lmbdb_result($rs, "ID");
+		$formliste["form_typ"][$key] = lmbdb_result($rs, "FORM_TYP");
+		$formliste["referenz_tab"][$key] = lmbdb_result($rs, "REFERENZ_TAB");
+		$formliste["redirect"][$key] = lmbdb_result($rs, "REDIRECT");
+		$formliste["css"][$key] = lmbdb_result($rs, "CSS");
 	}
 }
 
@@ -1090,49 +1094,49 @@ if($set_new_zindex){
 
 # max Z-Index
 $sqlquery = "SELECT MAX(Z_INDEX) AS RESULT FROM LMB_FORMS WHERE FORM_ID = $form_id AND NOT TYP = 'tab'";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-if(odbc_result($rs, "RESULT") > 0){$form["max_zindex"] = odbc_result($rs, "RESULT");}else{$form['max_zindex'] = 1;}
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+if(lmbdb_result($rs, "RESULT") > 0){$form["max_zindex"] = lmbdb_result($rs, "RESULT");}else{$form['max_zindex'] = 1;}
 
 #----------------- Schnappschuss -------------------
 $sqlquery = "SELECT ID,NAME,TABID FROM LMB_SNAP WHERE GLOBAL = ".LMB_DBDEF_TRUE;
-$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 $snap['name'] = array();
-while(odbc_fetch_row($rs1)){
-	$s = odbc_result($rs1,"ID");
-	$snap["name"][odbc_result($rs1,"TABID")][$s] = odbc_result($rs1,"NAME");
+while(lmbdb_fetch_row($rs1)){
+	$s = lmbdb_result($rs1,"ID");
+	$snap["name"][lmbdb_result($rs1,"TABID")][$s] = lmbdb_result($rs1,"NAME");
 }
 
 // ----------------- Unterformular Zusatz -------------------
 if($action == 'setup_form_menu'){
 	// ----------------- Liste aller Formulare -------------------
 	$sqlquery = "SELECT DISTINCT NAME,ID,FORM_TYP,REFERENZ_TAB FROM LMB_FORM_LIST ORDER BY NAME";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)) {
-		$formlist['name'][] = odbc_result($rs, "NAME");
-		$formlist['id'][] = odbc_result($rs, "ID");
-		$formlist['typ'][] = odbc_result($rs, "FORM_TYP");
-		$formlist['ref_tab'][] = odbc_result($rs, "REFERENZ_TAB");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
+		$formlist['name'][] = lmbdb_result($rs, "NAME");
+		$formlist['id'][] = lmbdb_result($rs, "ID");
+		$formlist['typ'][] = lmbdb_result($rs, "FORM_TYP");
+		$formlist['ref_tab'][] = lmbdb_result($rs, "REFERENZ_TAB");
 	}
 
 	$sqlquery = "SELECT LMB_CONF_FIELDS.FIELD_ID,LMB_CONF_FIELDS.SPELLING,LMB_CONF_FIELDS.TAB_GROUP,LMB_CONF_FIELDS.TAB_ID FROM LMB_CONF_FIELDS,LMB_FIELD_TYPES WHERE LMB_CONF_FIELDS.DATA_TYPE = LMB_FIELD_TYPES.DATA_TYPE AND LMB_FIELD_TYPES.FIELD_TYPE = 11 AND LMB_CONF_FIELDS.TAB_ID = ".$form["referenz_tab"];
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)) {
-		$formfield['id'][] = odbc_result($rs, "FIELD_ID");
-		$formfield['spelling'][] = odbc_result($rs, "SPELLING");
-		$formfield['tab_id'][] = odbc_result($rs, "TAB_ID");
-		$formfield['tab_group'][] = odbc_result($rs, "TAB_GROUP");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
+		$formfield['id'][] = lmbdb_result($rs, "FIELD_ID");
+		$formfield['spelling'][] = lmbdb_result($rs, "SPELLING");
+		$formfield['tab_id'][] = lmbdb_result($rs, "TAB_ID");
+		$formfield['tab_group'][] = lmbdb_result($rs, "TAB_GROUP");
 	}
 }
 
 # --- bestehende Fonts ---
 $sqlquery = "SELECT DISTINCT FAMILY FROM LMB_FONTS ORDER BY FAMILY";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
 $sysfont = array();
 $sysfont[] = "";
-while(odbc_fetch_row($rs)){
-	$sysfont[] = trim(odbc_result($rs,"FAMILY"));
+while(lmbdb_fetch_row($rs)){
+	$sysfont[] = trim(lmbdb_result($rs,"FAMILY"));
 }
 
 # --- bestehende Klassen ---

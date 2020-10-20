@@ -301,7 +301,7 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
 	    // system
         if (in_array('system',$tableprefix))
         {
-            $tosync = array_merge($tosync, array('lmb_dbpatch','lmb_umgvar','lmb_field_types','lmb_fonts','lmb_mimetypes','lmb_lang','lmb_action') );
+            $tosync = array_merge($tosync, array('lmb_dbpatch','lmb_umgvar','lmb_custvar','lmb_field_types','lmb_fonts','lmb_mimetypes','lmb_lang','lmb_action') );
         }
 
         // === /sonst ===
@@ -467,21 +467,21 @@ function lmbExport_ToText($exptable,$format,$export_filter=null,$txt_encode=null
 			if($expf){if(lmb_substr(lmb_strtoupper($expf),0,5) != "WHERE"){$expf = "WHERE $expf";}}
 			
 			$sqlquery = "SELECT * FROM ".$exptable[$bzm0]." ".$expf;
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
-			$num = odbc_num_fields($rs);
+			$num = lmbdb_num_fields($rs);
 
 			/* --- Ergebnisschleife --------------------------------------- */
 			$bzm = 1;
-			while(odbc_fetch_row($rs)) {
+			while(lmbdb_fetch_row($rs)) {
 
                 /* --- Spaltenüberschriften ------------------------------ */
                 if($bzm == 1) {
                     $bzm1 = 1;
                     $zeile = array();
                     while ($bzm1 <= $num) {
-                        //$zeile .= $umgvar['csv_enclosure'].odbc_field_name($rs, $bzm).$umgvar['csv_enclosure'].$delimiter;
-                        $zeile[] = odbc_field_name($rs, $bzm1);
+                        //$zeile .= $umgvar['csv_enclosure'].lmbdb_field_name($rs, $bzm).$umgvar['csv_enclosure'].$delimiter;
+                        $zeile[] = lmbdb_field_name($rs, $bzm1);
                         $bzm1++;
                     }
                     //$list[] = $zeile;
@@ -491,8 +491,8 @@ function lmbExport_ToText($exptable,$format,$export_filter=null,$txt_encode=null
 				$zeile = array();
 				$bzm1 = 1;
 				while($bzm1 <= $num){
-					$erg = odbc_result($rs, odbc_field_name($rs, $bzm1));
-					//if(!$session['csv_enclosure']){$erg = str_replace($delimiter," ",odbc_result($rs, odbc_field_name($rs, $bzm1)));}
+					$erg = lmbdb_result($rs, lmbdb_field_name($rs, $bzm1));
+					//if(!$session['csv_enclosure']){$erg = str_replace($delimiter," ",lmbdb_result($rs, lmbdb_field_name($rs, $bzm1)));}
 					//$erg = str_replace("\r\n"," ",$erg);
 					//$erg = str_replace("\n"," ",$erg);
 					//$zeile .= $umgvar['csv_enclosure'].$erg.$umgvar['csv_enclosure'].$delimiter;
@@ -532,7 +532,7 @@ function lmbExport_ToText($exptable,$format,$export_filter=null,$txt_encode=null
 			
 			*/
 
-			odbc_free_result($rs);
+			lmbdb_free_result($rs);
 			fclose($expdatei);
 			
 			# return link
@@ -619,7 +619,7 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 					$CODETYPE = $col["codetype"][$ckey];
 					$SCALE = $col["scale"][$ckey];
 					$MODE = $col["mode"][$ckey];
-					$DEFAULT_ = explode("::",trim(lmb_strtoupper($col["default"][$ckey])));
+					$DEFAULT_ = explode("::",trim($col["default"][$ckey]));
 					$DEFAULT = trim($DEFAULT_[0],"'");
 
 					if($DEFAULT OR $DEFAULT == '0'){
@@ -627,11 +627,11 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 							$DEFAULT = parse_db_int($DEFAULT);
 						}elseif($DATATYPE == "BOOLEAN" OR $DATATYPE == 'TIMESTAMP' OR $DATATYPE == 'DATE' OR $DATATYPE == 'TIME'){
 					        ### PSQL maching ###
-						    if(substr($DEFAULT_[2],0,4) == 'DATE'){$DEFAULT = 'CURRENT_DATE';}
-					        if(substr($DEFAULT_[2],0,4) == 'TIME'){$DEFAULT = 'CURRENT_TIME';}
+						    if(lmb_substr(lmb_strtoupper($DEFAULT_[2]),0,4) == 'DATE'){$DEFAULT = 'CURRENT_DATE';}
+					        if(lmb_substr(lmb_strtoupper($DEFAULT_[2]),0,4) == 'TIME'){$DEFAULT = 'CURRENT_TIME';}
 
-							if(defined ("LMB_DBREDEF_".$DEFAULT)){
-								$DEFAULT = constant("LMB_DBREDEF_".$DEFAULT);
+							if(defined ("LMB_DBREDEF_".strtoupper($DEFAULT))){
+								$DEFAULT = constant("LMB_DBREDEF_".strtoupper($DEFAULT));
 							}
 						}
 					}
@@ -670,13 +670,13 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 				else{$expf = "";}
 				if($expf){if(lmb_substr(lmb_strtoupper(trim($expf)),0,5) != "WHERE"){$expf = "WHERE $expf";}}
 				$sqlquery = "SELECT * FROM $table ".$expf;
-				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
-				while(odbc_fetch_row($rs)) {
+				while(lmbdb_fetch_row($rs)) {
 					$line = array();
 					$bzm2 = 0;
 					while($COLUM[$bzm2]){
-						$erg = odbc_result($rs, $COLUM[$bzm2]);
+						$erg = lmbdb_result($rs, $COLUM[$bzm2]);
 
 						// mask \" for fputcsv
 						if (! $GLOBALS['phpvok']) {
@@ -695,20 +695,20 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 					$result_exp_dat++;
 				}
 
-				odbc_free_result($rs);
+				lmbdb_free_result($rs);
 			}
 
 
 			/* --- Index_Liste --------------------------------------------- */
 			/* ---> conf */ fputs($config_datei,"<begin indexdefinition>\n");
 			$sqlquery = dbq_2(array($DBA["DBSCHEMA"],$table,null,1,null,'lmb'));
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
-			while(odbc_fetch_row($rs)) {
-				#$REFTABLENAME = dbf_4(odbc_result($rs, "TABLENAME"));
+			while(lmbdb_fetch_row($rs)) {
+				#$REFTABLENAME = dbf_4(lmbdb_result($rs, "TABLENAME"));
 				$REFTABLENAME = $newtablename;
-				$REFCOLUMNNAME = odbc_result($rs, "COLUMNNAME");
-				#$TYPE = odbc_result($rs, "TYPE");
+				$REFCOLUMNNAME = lmbdb_result($rs, "COLUMNNAME");
+				#$TYPE = lmbdb_result($rs, "TYPE");
 				$TYPE = "";
 				$SORT = "ASC";
 				/* ---> conf */ fputs($config_datei,"$REFTABLENAME::$REFCOLUMNNAME::$TYPE::$SORT\n");
@@ -719,15 +719,15 @@ function lmbExport_ToSystem($exptable,$explist,$export_filter=null,$tableprefix=
 			/* --- Foreign-Key_Liste --------------------------------------------- */
 			/* ---> conf */ fputs($config_datei,"<begin keydefinition>\n");
 			$sqlquery = dbq_3(array($table,$DBA["DBSCHEMA"]));
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
-			while(odbc_fetch_row($rs)) {
-				#$DEFTABLENAME = dbf_4(odbc_result($rs, "TABLENAME"));
+			while(lmbdb_fetch_row($rs)) {
+				#$DEFTABLENAME = dbf_4(lmbdb_result($rs, "TABLENAME"));
 				$DEFTABLENAME = $newtablename;
-				$DEFCOLUMNNAME = odbc_result($rs, "COLUMNNAME");
-				$REFTABLENAME = odbc_result($rs, "REFTABLENAME");
-				$REFCOLUMNNAME = odbc_result($rs, "REFCOLUMNNAME");
-				#$RULE = odbc_result($rs, "LMRULE");
+				$DEFCOLUMNNAME = lmbdb_result($rs, "COLUMNNAME");
+				$REFTABLENAME = lmbdb_result($rs, "REFTABLENAME");
+				$REFCOLUMNNAME = lmbdb_result($rs, "REFCOLUMNNAME");
+				#$RULE = lmbdb_result($rs, "LMRULE");
 				/* ---> conf */ fputs($config_datei,"$DEFTABLENAME::$DEFCOLUMNNAME::$REFTABLENAME::$REFCOLUMNNAME\n");
 			}
 			/* ---> conf */ fputs($config_datei,"<end keydefinition>\n\n");
@@ -902,20 +902,20 @@ function lmbExport_Dump($format,$struct_only=false){
         if (lmb_substr($table, 0, 10) != "LMB_INDIZE" AND lmb_substr($table, 0, 11) != "LMB_HISTORY") {
             if (!$struct_only OR lmb_strtolower(lmb_substr($table, 0, 4)) == 'lmb_' OR lmb_strtolower(lmb_substr($table, 0, 5)) == 'ldms_') {
                 $sqlquery = "Select * from $table ";
-                $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
                 if (!$rs) {
                     $commit = 1;
                 }
-                while (odbc_fetch_row($rs)) {
+                while (lmbdb_fetch_row($rs)) {
                     $line = array();
                     $bzm2 = 0;
                     while (isset($COLUM[$bzm2])) {
-                        //$erg = str_replace("\t","#TAB#",odbc_result($rs, $COLUM[$bzm2]));
+                        //$erg = str_replace("\t","#TAB#",lmbdb_result($rs, $COLUM[$bzm2]));
                         //$erg = str_replace("\r\n","#NEXTLINE#",$erg);
                         //$erg = str_replace("\n","#NEXTLINE#",$erg);
                         //$erg = str_replace("\\","#BACKSL#",$erg);
 
-                        $erg = odbc_result($rs, $COLUM[$bzm2]);
+                        $erg = lmbdb_result($rs, $COLUM[$bzm2]);
 
                         // mask \" for fputcsv
                         if (!$GLOBALS['phpvok']) {
@@ -946,12 +946,12 @@ function lmbExport_Dump($format,$struct_only=false){
 	/* --- Index_Liste --------------------------------------------- */
 	/* ---> conf */ fputs($config_datei,"<begin indexdefinition>\n");
 	$sqlquery = dbq_2(array($DBA["DBSCHEMA"],null,null,1,null,'lmb'));
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$REFTABLENAME = odbc_result($rs, "TABLENAME");
-		$REFCOLUMNNAME = odbc_result($rs, "COLUMNNAME");
-		#$TYPE = odbc_result($rs, "TYPE");
+	while(lmbdb_fetch_row($rs)) {
+		$REFTABLENAME = lmbdb_result($rs, "TABLENAME");
+		$REFCOLUMNNAME = lmbdb_result($rs, "COLUMNNAME");
+		#$TYPE = lmbdb_result($rs, "TYPE");
 		$TYPE = "";
 		$SORT = "ASC";
 		/* ---> conf */ fputs($config_datei,"$REFTABLENAME::$REFCOLUMNNAME::$TYPE::$SORT\n");
@@ -961,10 +961,10 @@ function lmbExport_Dump($format,$struct_only=false){
 	/* --- Views --------------------------------------------- */
 	/* ---> conf */ fputs($config_datei,"<begin viewdefinition>\n");
 	$sqlquery = dbq_12(array($DBA["DBSCHEMA"]));
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$vname = array();
-	while(odbc_fetch_row($rs)) {
-		$VIEWNAME = lmb_strtoupper(odbc_result($rs, "VIEWNAME"));
+	while(lmbdb_fetch_row($rs)) {
+		$VIEWNAME = lmb_strtoupper(lmbdb_result($rs, "VIEWNAME"));
 		if(!$vname[$VIEWNAME]){
 			$vname[$VIEWNAME] = 1;
 			$DEFINITION = str_replace("\t"," ",str_replace("\n","",lmb_getViewDef($VIEWNAME)));
@@ -990,12 +990,12 @@ function lmbExport_Dump($format,$struct_only=false){
 	/* --- Trigger --------------------------------------------- */
 	#/* ---> conf */ fputs($config_datei,"<begin triggerdefinition>\n");
 	#$sqlquery = dbq_9(array($DBA["DBSCHEMA"]));
-	#$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	#$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	#if(!$rs) {$commit = 1;}
 	#$bzm1 = 1;
-	#while(odbc_fetch_row($rs, $bzm1)) {
-	#	$TRIGGERNAME = odbc_result($rs, "TRIGGERNAME");
-	#	$DEFINITION = str_replace("\t"," ",str_replace("\n","",odbc_result($rs, "DEFINITION")));
+	#while(lmbdb_fetch_row($rs, $bzm1)) {
+	#	$TRIGGERNAME = lmbdb_result($rs, "TRIGGERNAME");
+	#	$DEFINITION = str_replace("\t"," ",str_replace("\n","",lmbdb_result($rs, "DEFINITION")));
 	#	/* ---> conf */ fputs($config_datei,$TRIGGERNAME."::".$DEFINITION."\n");
 	#	$bzm1++;
 	#}

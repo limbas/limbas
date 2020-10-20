@@ -19,24 +19,23 @@
  */
 
 $lpath = "/usr/local/httpd/htdocs/projekte/limbas/";
-require($lpath."inc/include_db.lib");
+require($lpath."lib/db/db_wrapper.lib");
 require($lpath."lib/include.lib");
 
-
 $sqlquery = "SELECT DISTINCT ELEMENT_ID FROM LMB_LANG WHERE TYP != 2 ORDER BY ELEMENT_ID";
-$rs = odbc_exec($db,$sqlquery);
+$rs = lmbdb_exec($db,$sqlquery);
 
 
-while(odbc_fetch_row($rs)) {
+while(lmbdb_fetch_row($rs)) {
 
-    $cmd = "cd /usr/local/httpd/htdocs/projekte/limbas; grep -r \"\\\$lang\\[".odbc_result($rs, "ELEMENT_ID")."\\]\" *;";
+    $cmd = "cd /usr/local/httpd/htdocs/projekte/limbas; grep -r \"\\\$lang\\[".lmbdb_result($rs, "ELEMENT_ID")."\\]\" *;";
     $grep = explode(chr(10),`$cmd`);
 
 
     if(!$grep[0]){
-        $sqlquery1 = "DELETE FROM LMB_LANG WHERE ELEMENT_ID = ".odbc_result($rs, "ELEMENT_ID");
-        $rs1 = odbc_exec($db,$sqlquery1);
-        $res[] = odbc_result($rs, "ELEMENT_ID");
+        $sqlquery1 = "DELETE FROM LMB_LANG WHERE ELEMENT_ID = ".lmbdb_result($rs, "ELEMENT_ID");
+        $rs1 = lmbdb_exec($db,$sqlquery1);
+        $res[] = lmbdb_result($rs, "ELEMENT_ID");
         $count++;
     }
 

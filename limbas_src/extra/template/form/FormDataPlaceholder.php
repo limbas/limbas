@@ -2,20 +2,11 @@
 
 class FormDataPlaceholder extends DataPlaceholder {
 
-    protected $isReadOnly = true;
-
     // key in the gresult that corresponds to the dataset
     protected $key;
 
     // store reference to gresult to pass it to list/detail render functions
     protected $gresult = null;
-
-    public function __construct($chain, $flags, $altValue) {
-        if ($flags === 'writeable') {
-            $this->isReadOnly = false;
-        }
-        parent::__construct($chain, $flags, $altValue);
-    }
 
     public function resolve($gresultKey=null, $key=null) {
         $gresult = &$this->gresult;
@@ -26,7 +17,7 @@ class FormDataPlaceholder extends DataPlaceholder {
             return false;
         }
         list($gtabid, $fieldid) = explode(';', $this->fieldlist[0]);
-        if (array_key_exists($key, $gresult[$gtabid][$fieldid])) {
+        if ($key == 0 || array_key_exists($key, $gresult[$gtabid][$fieldid])) {
             $this->gresult = &$gresult;
             $this->key = $key;
             $this->setValue($gresult[$gtabid][$fieldid][$key]);
@@ -45,9 +36,11 @@ class FormDataPlaceholder extends DataPlaceholder {
         $structure = array();
         $currentStruct = &$structure;
         for ($i = 1; $i < count($parts); $i += 2) {
+            $relationGtabID = $parts[$i - 1];
             $relationFieldID = $parts[$i];
-            $currentStruct[$relationFieldID] = array();
-            $currentStruct = &$currentStruct[$relationFieldID];
+            $identifier = $relationGtabID . ',' . $relationFieldID;
+            $currentStruct[$identifier] = array();
+            $currentStruct = &$currentStruct[$identifier];
         }
 
         $currentStruct['placeholders'][$this->fieldlist[0]] = $this;
@@ -56,8 +49,9 @@ class FormDataPlaceholder extends DataPlaceholder {
     }
 
     public function getAsHtmlArr() {
-        global $gtabid;
         global $gfield;
+        global $gtab;
+        global $session;
 
         if ($this->fieldlist === null) {
             lmb_log::error("Data placeholder {$this->fullMatch} could not be resolved!", 'Not all data placeholders could be resolved!');
@@ -71,16 +65,41 @@ class FormDataPlaceholder extends DataPlaceholder {
             return array();
         }
 
+        $datid = $this->gresult[$gtabid]['id'][$this->key];
+
+        // check access privileges
+        $readonly = false;
+        if ($gtab['editrule'][$gtabid]) { # edit Permission
+            $readonly = check_GtabRules($datid, $gtabid, $fieldid, $gtab['editrule'][$gtabid], $this->key, $this->gresult);
+        }
+        if ($gtab['has_userrules'][$gtabid] and !$readonly and !$gtab['edit_userrules'][$gtabid]) { # specific user/grouprules
+            $readonly = !check_GtabUserRules($gtabid, $datid, $session['user_id'], 'edit');
+        }
+
+        // option: writeable
+        if (!$readonly && (!array_key_exists('w', $this->options) || !$this->options['w'])) {
+            $readonly = true;
+        }
+
+        // option: css class
+        $class = 'fgtabchange';
+        if (array_key_exists('class', $this->options)) {
+            $class .= ' ' . $this->options['class'];
+        }
+
         require_once('gtab/gtab_type.lib');
         ob_start();
 
-        $type = $this->isReadOnly ? 2 : 1;
         if (TemplateConfig::$instance->isListmode()) {
+            // check edit rights
+            if (!$readonly AND $gfield[$gtabid]["editrule"][$fieldid]) {
+                $readonly = check_GtabRules($datid, $gtabid, $fieldid, $gfield[$gtabid]["editrule"][$fieldid], $this->key, $this->gresult);
+            }
+
             $fname = 'cftyp_' . $funcid;
-            $fname($this->key, $fieldid, $gtabid, $type, $this->gresult);
+            $fname($this->key, $fieldid, $gtabid, $readonly ? 2 : 1, $this->gresult);
         } else {
-            $fname = 'dftyp_' . $funcid;
-            $fname($this->gresult[$gtabid]['id'][$this->key], $this->gresult, $fieldid, $gtabid, '', '', '', $type, '');
+            display_dftyp($this->gresult, $gtabid, $fieldid, $datid, !$readonly, $class);
         }
 
         $out = ob_get_clean();

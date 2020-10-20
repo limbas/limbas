@@ -1,0 +1,275 @@
+/*
+ * Attribute Tag-Mode
+ ***************************************
+ */
+.tagattr {
+
+  /* default .fgtabchange */
+  min-height: 18px;
+  padding: 2px;
+  box-sizing: border-box;
+  margin: 0;
+  font-size: 11px;
+  overflow: hidden;
+
+  /* flex container */
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: row-reverse;
+  -ms-flex-direction: row-reverse;
+  flex-direction: row-reverse;
+  -webkit-flex-wrap: nowrap;
+  -ms-flex-wrap: nowrap;
+  flex-wrap: nowrap;
+  -webkit-justify-content: flex-end;
+  -ms-flex-pack: end;
+  justify-content: flex-end;
+  -webkit-align-content: flex-end;
+  -ms-flex-line-pack: flex-end;
+  align-content: flex-end;
+  -webkit-align-items: flex-start;
+  -ms-flex-align: start;
+  align-items: flex-start;
+
+  border: none;
+  background: transparent;
+}
+
+.tagattr input {
+  margin-left: 0.1rem;
+  padding: 0;
+}
+
+.tagattr table {
+  display: block;
+}
+
+.tagattr tbody {
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  -webkit-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  -webkit-justify-content: flex-start;
+  -ms-flex-pack: start;
+  justify-content: flex-start;
+  -webkit-align-content: flex-start;
+  -ms-flex-line-pack: start;
+  align-content: flex-start;
+  -webkit-align-items: flex-start;
+  -ms-flex-align: start;
+  align-items: flex-start;
+}
+
+.tagattr tr {
+  /* tr as flex item */
+  -webkit-order: 0;
+  -ms-flex-order: 0;
+  order: 0;
+  -webkit-flex: 0 1 auto;
+  -ms-flex: 0 1 auto;
+  flex: 0 1 auto;
+  -webkit-align-self: auto;
+  -ms-flex-item-align: auto;
+  align-self: auto;
+
+  /* tr as flex container */
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-align-items: stretch;
+  -ms-flex-align: stretch;
+  align-items: stretch;
+
+  /* other styles */
+  background: transparent;
+  margin-right: 0.4rem;
+  margin-bottom: 0.3rem;
+  border-radius: 5px;
+  padding: 0;
+  min-height: 1.3rem;
+  height: 1.3rem;
+}
+
+.tagattr tr td:nth-child(2),
+.tagattr tr td:nth-child(3) {
+  padding-top: 0.1rem;
+}
+
+.tagattr tr td:nth-child(2) {
+  padding-right: 0.2rem;
+}
+
+/* hide tag with empty input */
+.tagattr tr:not(.empty) td[data-hidetag="1"] {
+  display: none;
+}
+
+.tagattr td {
+  width: auto !important;
+  padding: 0;
+  display: flex;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -ms-flex-align: center;
+  align-items: center;
+}
+
+/* search field */
+.tagattr > input:first-child {
+  width: 1.3rem !important;
+  height: 1.3rem;
+  margin: 0;
+  border-radius: 3px;
+  background-color: $farbschemaWEB13;
+  text-align: center;
+  cursor: pointer;
+}
+
+/*.tagattr > input:first-child,*/
+.tagattr.transition > input:first-child {
+  -webkit-transition: width 0.3s ease-in-out;
+  -moz-transition: width 0.3s ease-in-out;
+  -ms-transition: width 0.3s ease-in-out;
+  -o-transition: width 0.3s ease-in-out;
+  transition: width 0.3s ease-in-out;
+}
+
+/* input attribute */
+.tagattr tr input[type='text'] {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+  margin-right: 0.1rem;
+  -webkit-appearance: none;
+}
+
+.tagattr.transition tr input[type='text'] {
+  -webkit-transition: width 0.3s ease;
+  -moz-transition: width 0.3s ease;
+  -ms-transition: width 0.3s ease;
+  -o-transition: width 0.3s ease;
+  transition: width 0.3s ease;
+}
+
+.tagattr tr input[type='text']:focus {
+  background-color: $farbschemaWEB13;
+  color: $farbschemaWEB2;
+  border: 1px solid $farbschemaWEB3;
+  border-radius: 3px;
+}
+
+.tagattr.transition tr input[type='text']:focus {
+  -webkit-transition: width 0.3s ease;
+  -moz-transition: width 0.3s ease;
+  -ms-transition: width 0.3s ease;
+  -o-transition: width 0.3s ease;
+  transition: width 0.3s ease;
+}
+
+/* select attribute */
+.tagattr select {
+  -moz-appearance: none;
+  -webkit-appearance: none;
+  appearance: none;
+  border: none;
+  cursor: pointer;
+  background: transparent;
+  padding: 0;
+  height: 1rem;
+  font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+
+.tagattr.transition select {
+  -webkit-transition: width 0.3s ease-in-out;
+  -moz-transition: width 0.3s ease-in-out;
+  -ms-transition: width 0.3s ease-in-out;
+  -o-transition: width 0.3s ease-in-out;
+  transition: width 0.3s ease-in-out;
+}
+
+.tagattr tr.empty input[type='text'],
+.tagattr tr.empty select {
+  border-bottom: 1px solid;
+}
+
+/* checkbox attribute */
+.tagattr input[type=checkbox] {
+  display: none;
+}
+
+.tagattr input[type=checkbox] ~ label {
+  margin-left: 0.2rem;
+}
+
+.tagattr input[type=checkbox] ~ label:before {
+  font-family: FontAwesome;
+  display: inline-block;
+  font-size: 1rem;
+  letter-spacing: 10px;
+  content: '\f096'
+}
+
+.tagattr input[type=checkbox]:checked + label:before {
+  content: '\f00c';
+  letter-spacing: 5px;
+}
+
+/*
+ * Multiselect Tag-Mode
+ ***************************************
+ */
+.tagattr .tagmulti {
+  display: -ms-flexbox;
+  display: -webkit-flex;
+  display: flex;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  -webkit-flex-wrap: wrap;
+  -ms-flex-wrap: wrap;
+  flex-wrap: wrap;
+  -webkit-justify-content: flex-start;
+  -ms-flex-pack: start;
+  justify-content: flex-start;
+  -webkit-align-content: flex-start;
+  -ms-flex-line-pack: start;
+  align-content: flex-start;
+  -webkit-align-items: flex-start;
+  -ms-flex-align: start;
+  align-items: flex-start;
+}
+
+.tagattr .tagmulti > span {
+  margin-right: 0.3rem;
+  margin-bottom: 0.3rem;
+  width: auto !important;
+  display: flex;
+  -webkit-flex-direction: row;
+  -ms-flex-direction: row;
+  flex-direction: row;
+  -webkit-justify-content: center;
+  -ms-flex-pack: center;
+  justify-content: center;
+  -webkit-align-items: center;
+  -ms-flex-align: center;
+  align-items: center;
+  border-radius: 5px;
+  padding: 0.2rem 0.3rem;
+  border: 1px solid $farbschemaWEB3;
+}
+
+.tagattr .tagmulti br {
+  display: none;
+}

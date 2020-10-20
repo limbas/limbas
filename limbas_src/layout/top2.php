@@ -304,17 +304,88 @@ function openMenu(id){
 	parent.nav.mainMenu(id);
 }
 
+function selectMultitenant(el){
+
+    var left = $(el).offset().left;
+    var cont = "<div id='selectMultitenant' class='lmbContextMenu' style='position:absolute;left:"+left+";top:80px;'>"+$('#selectMultitenant').html()+"</div>";
+
+    if(!parent.document.getElementById('selectMultitenant')) {
+        $(cont).appendTo(parent.document.body);
+    }
+
+    parent.document.getElementById('selectMultitenant').style.display='';
+}
+
+function setMultitenant(id,name) {
+    parent.document.getElementById('selectMultitenant').remove();
+    parent.top1.document.getElementById('topframeMultitenants').innerHTML = '(' +name+')';
+    parent.message.location.href = 'main.php?&action=top2&setMultitenant='+id;
+}
+
+
 </SCRIPT>
 
 
 
 
 
-<TABLE cellpadding="0" cellspacing="0" border="0" class="lmbfringeMenuTop2"><TR>
+
 
 <!-- TOP of the cells -->
 <?php
+if($umgvar["multitenant"] AND count($lmmultitenants['mid']) > 1){
 
+    if(is_numeric($setMultitenant) AND in_array($setMultitenant,$session["multitenant"])){
+        $sqlquery = "SELECT MULTITENANT FROM LMB_USERDB WHERE USER_ID = ".$session['user_id'];
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $mvalue = explode(',',lmbdb_result($rs, "MULTITENANT"));
+        $mvalue = $mvalue[0].','.$setMultitenant;
+
+        $sqlquery = "UPDATE LMB_USERDB SET MULTITENANT = '$mvalue' WHERE USER_ID = ".$session['user_id'];
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+        $_SESSION['session']["mid"] = $setMultitenant;
+        $session["mid"] = $setMultitenant;
+
+        // reload LMB_CUSTVAR with MID
+        if($gtab['multitenant'][$gtab['argresult_id']['LMB_CUSTVAR_DEPEND']]) {
+
+            $custvar = array();
+            $sqlquery3 = 'SELECT CKEY, CVALUE FROM LMB_CUSTVAR WHERE ACTIVE = ' . LMB_DBDEF_TRUE;
+            $rs3 = lmbdb_exec($db, $sqlquery3) or errorhandle(lmbdb_errormsg($db), $sqlquery3, $action, __FILE__, __LINE__);
+            while (lmbdb_fetch_row($rs3)) {
+                $custvar[lmbdb_result($rs3, "CKEY")] = lmbdb_result($rs3, "CVALUE");
+            }
+
+            $sqlmt = "AND LMB_CUSTVAR_DEPEND.LMB_MID = " . $lmmultitenants['mid'][$session['mid']];
+                $sqlquery3 = 'SELECT LMB_CUSTVAR_DEPEND.CKEY, LMB_CUSTVAR_DEPEND.CVALUE 
+                FROM LMB_CUSTVAR_DEPEND LEFT JOIN LMB_CUSTVAR ON LMB_CUSTVAR_DEPEND.CKEY = LMB_CUSTVAR.CKEY AND LMB_CUSTVAR.ACTIVE = TRUE AND LMB_CUSTVAR.OVERRIDABLE = FALSE
+                WHERE LMB_CUSTVAR_DEPEND.ACTIVE = '.LMB_DBDEF_TRUE.' AND LMB_CUSTVAR.ID IS NULL '.$sqlmt;
+            $rs3 = lmbdb_exec($db, $sqlquery3) or errorhandle(lmbdb_errormsg($db), $sqlquery3, $action, __FILE__, __LINE__);
+            while (lmbdb_fetch_row($rs3)) {
+                $custvar[lmbdb_result($rs3, "CKEY")] = lmbdb_result($rs3, "CVALUE");
+            }
+        }
+
+    }
+
+    echo "<div id=\"selectMultitenant\" style=\"display:none\">";
+        pop_closetop('selectMultitenant');
+        foreach ($lmmultitenants['mid'] as $key => $value) {
+            if($session["mid"] == $key){$style = 'background:'.$farbschema['WEB7'];}else{$style = '';}
+            pop_menu2($lmmultitenants['name'][$key],null,null,null,$style,"parent.message.setMultitenant($key,'".$lmmultitenants['name'][$key]."')");
+        }
+
+        pop_bottom($mwidth);
+
+    echo "</div>";
+
+    $show_multitenant = 1;
+
+}
+
+
+echo "<TABLE cellpadding=\"0\" cellspacing=\"0\" border=\"0\" class=\"lmbfringeMenuTop2\"><TR>";
 echo '<td class="lmbMenuItemInactiveTop2" style="padding: 0 5px;" title="' . $lang[$LINK['name'][301]] . '" onclick="openMenu(301); limbasSetLayoutClassTabs(this,\'lmbMenuItemInactiveTop2\',\'lmbMenuItemActiveTop2\')">';
 $topLeft = 'pic/logo_topleft.png';
 if(file_exists("EXTENSIONS/customization/logo_topleft.png")){
@@ -346,6 +417,10 @@ echo "<TD style=\"width:100%\" class=\"lmbMenuItemspaceTop2\"><div>&nbsp;</div><
 $bzm = 1;
 if($menu["info"]){
     foreach ($menu["info"] as $key => $value) {
+
+        // hide multitenant if not needed
+        if($key == 308 AND !$show_multitenant) {continue;}
+
         if($value["link"]){
             $onclick = $value["link"];
         }else{

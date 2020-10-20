@@ -159,10 +159,10 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 		echo "<tr><td valign=\"top\">".$lang[2850]."</td><td>";
 		echo "<select onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params1')\"><option>";
 		$sqlquery = "SELECT FIELD_ID,FIELD_NAME FROM LMB_CONF_FIELDS WHERE TAB_ID = $tabid AND FIELD_TYPE = 11 AND DATA_TYPE = 24";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		while(odbc_fetch_row($rs)) {
-			if(odbc_result($rs, "FIELD_ID") == $result_gtab[$tabgroup]["params1"][$tbzm]){$selected = 'selected';}else{$selected = '';}
-			echo "<option value=\"".odbc_result($rs, "FIELD_ID")."\" $selected>".odbc_result($rs, "FIELD_NAME");
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs)) {
+			if(lmbdb_result($rs, "FIELD_ID") == $result_gtab[$tabgroup]["params1"][$tbzm]){$selected = 'selected';}else{$selected = '';}
+			echo "<option value=\"".lmbdb_result($rs, "FIELD_ID")."\" $selected>".lmbdb_result($rs, "FIELD_NAME");
 		}
 		echo "</select>
 		<br><i style=\"color:#AAAAAA\">".$lang[2851]."</i>
@@ -368,16 +368,22 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 		</td></tr>";
 		# datasync
 		if($result_gtab[$tabgroup]["datasync"][$tbzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}
-		echo "<tr><td valign=\"top\">".$lang[2703]."</td><td valign=\"top\"><input type=\"checkbox\" value=\"1\" $CHECKED onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','datasync')\">
-		<br><i style=\"color:#AAAAAA\">".$lang[2832]."</i>
+		echo "<tr><td valign=\"top\">".$lang[2915]."</td><td valign=\"top\"><input type=\"checkbox\" value=\"1\" $CHECKED onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','datasync')\">
+		<br><i style=\"color:#AAAAAA\">".$lang[2963]."</i>
 		</td></tr>";
 	}
+
+    # multitenant
+    if($result_gtab[$tabgroup]["multitenant"][$tbzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}
+    echo "<tr><td valign=\"top\">".$lang[2961]."</td><td valign=\"top\"><input type=\"checkbox\" value=\"1\" $CHECKED onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','multitenant')\">
+    <br><i style=\"color:#AAAAAA\">".$lang[2964]."</i>
+    </td></tr>";
 
 	# rebuild rules
 	echo "<tr><td valign=\"top\">".$lang[575]."</td><td><i style=\"cursor:pointer\" class=\"lmb-icon lmb-refresh\" onclick=\"open('main_admin.php?action=setup_grusrref&check_table=$tabid&check_all=1' ,'refresh','toolbar=0,location=0,status=1,menubar=0,scrollbars=1,resizable=1,width=550,height=400')\"></i>
 	<br><i style=\"color:#AAAAAA\">".$lang[1054]."</i>
 	</td></tr>";
-	
+
 	# rebuild temp
 	echo "<tr><td valign=\"top\">".$lang[2761]."</td><td><i style=\"cursor:pointer\" class=\"lmb-icon lmb-refresh\" onclick=\"ajaxEditTable(this,'$tabid','$tabgroup','tablesync')\"></i>";
 	if($tablesync){echo " <i class=\"lmb-icon lmb-aktiv\"></i>";}

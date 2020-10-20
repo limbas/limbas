@@ -1,0 +1,105 @@
+/* fullcalendar ------------------------------------------------------------------------*/
+
+.fc-widget-header, /* <th>, usually */
+.fc-widget-content { /* <td>, usually */
+  border: 1px solid #ccc;
+  /* background: linear-gradient(to bottom, $farbschemaWEB14, $farbschemaWEB13 20px); */
+}
+
+.fc-widget-header {
+  vertical-align: bottom !important;
+}
+
+.fc-state-highlight { /* <td> today cell */
+  /* TODO: add .fc-today to <th> */
+  background: $farbschemaWEB5;
+}
+
+.fc-cell-overlay { /* semi-transparent rectangle while dragging */
+  background: $farbschemaWEB7;
+  opacity: .3;
+  filter: alpha(opacity=30); /* for IE */
+}
+
+.fc-resourceName {
+  border: 1px solid #ccc;
+  background: linear-gradient(to bottom, $farbschemaWEB13 70%, $farbschemaWEB11);
+  font-weight: bold;
+  font-style: italic;
+}
+
+.fc-day-header, .fc-week-number, .fc-widget-header {
+  background: $farbschemaWEB10;
+}
+
+.fc-event {
+  border: 1px solid #3a87ad; /* default BORDER color */
+  background-color: #3a87ad; /* default BACKGROUND color */
+  color: #fff; /* default TEXT color  */
+  font-size: .85em;
+  cursor: default;
+  border-radius: 3px;
+}
+
+a.fc-event {
+  text-decoration: none;
+}
+
+.fc-ltr .fc-event-hori.fc-event-start,
+.fc-rtl .fc-event-hori.fc-event-end {
+  border-left-width: 1px;
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+}
+
+.fc-ltr .fc-event-hori.fc-event-end,
+.fc-rtl .fc-event-hori.fc-event-start {
+  border-right-width: 1px;
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
+}
+
+.fc-view-resourceWeek tr:nth-child(even), .fc-view-resourceMonth tr:nth-child(even), .fc-view-resourceDay tr:nth-child(even) {
+  background: $farbschemaWEB10;
+}
+
+.fc .fc-week-number {
+  width: 25px;
+  text-align: center;
+}
+
+/* fullcalendar holidays extension
+------------------------------------------------------------------------*/
+
+.fcr-holiday-title-M {
+  top: 60px;
+}
+
+.fcr-holiday-title-M, .fcr-holiday-title-aW, .fcr-holiday-title-bW {
+  color: #aaaaaa;
+  font-weight: bold;
+  height: 32px;
+  left: 2px;
+  overflow: hidden;
+  position: absolute;
+  width: 98%;
+}
+
+/* fullcalendar Resource month, Resource week, Resource day
+------------------------------------------------------------------------*/
+
+td.fc-resourceName {
+  border-left: 1px solid #ddd;
+  border-top: 1px solid #ddd;
+  padding: 0px 5px 0px 5px;
+  white-space: nowrap;
+  font-weight: bold;
+}
+
+tr.fc-last td.fc-resourceName {
+  border-bottom: 1px solid #ddd;
+}
+
+th.fc-resourceName {
+  border-bottom: 1px solid #ddd;
+}

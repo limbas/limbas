@@ -19,14 +19,14 @@
  */
 ?>
 <!-- include codemirror with sql syntax highlighting and sql code completion -->
-<script src="extern/codemirror/lib/codemirror.js"></script>
-<script src="extern/codemirror/edit/matchbrackets.js"></script>
-<script src="extern/codemirror/edit/matchtags.js"></script>
-<script src="extern/codemirror/mode/sql/sql.js"></script>
-<script src="extern/codemirror/addon/hint/show-hint.js"></script>
-<link rel="stylesheet" href="extern/codemirror/addon/hint/show-hint.css">
-<script src="extern/codemirror/addon/hint/sql-hint.js"></script>
-<link rel="stylesheet" href="extern/codemirror/lib/codemirror.css">
+<script src="extern/codemirror/lib/codemirror.js?v=<?=$umgvar["version"]?>"></script>
+<script src="extern/codemirror/edit/matchbrackets.js?v=<?=$umgvar["version"]?>"></script>
+<script src="extern/codemirror/edit/matchtags.js?v=<?=$umgvar["version"]?>"></script>
+<script src="extern/codemirror/mode/sql/sql.js?v=<?=$umgvar["version"]?>"></script>
+<script src="extern/codemirror/addon/hint/show-hint.js?v=<?=$umgvar["version"]?>"></script>
+<link rel="stylesheet" href="extern/codemirror/addon/hint/show-hint.css?v=<?=$umgvar["version"]?>">
+<script src="extern/codemirror/addon/hint/sql-hint.js?v=<?=$umgvar["version"]?>"></script>
+<link rel="stylesheet" href="extern/codemirror/lib/codemirror.css?v=<?=$umgvar["version"]?>">
 <style>
     .CodeMirror {
         border: 1px solid <?=$farbschema['WEB3']?>;
@@ -34,7 +34,7 @@
         height: 300px;
     }
 </style>
-<script src="extern/sqlFormatter/sql-formatter.min.js"></script>
+<script src="extern/sqlFormatter/sql-formatter.min.js?v=<?=$umgvar["version"]?>"></script>
 
 <div class="lmbPositionContainerMain">
 
@@ -120,7 +120,7 @@ if(!$use_codemirror){$use_codemirror='true';}
         <tr class="tabBody"><td class="tabHeaderItem" colspan="5"><b>SQL-Query</b></td></tr>
         <tr class="tabBody">
             <td colspan="5">
-                <textarea id="sqlvalue" name="sqlvalue" <?php if($use_codemirror != 'true'){echo "style=\"width:600px;height:300px;padding=5px;\"";}?> > <?= $sqlvalue ?></textarea>
+                <textarea id="sqlvalue" name="sqlvalue" <?php if($use_codemirror != 'true'){echo "style=\"width:600px;height:300px;padding=5px;\"";}?> ><?= $sqlvalue ?></textarea>
                 <?php if($use_codemirror == 'true'){?>
                 <script language="JavaScript">
                     var editor = CodeMirror.fromTextArea(document.getElementById("sqlvalue"), {
@@ -136,13 +136,25 @@ if(!$use_codemirror){$use_codemirror='true';}
                         }
                     });
 
-                    function formatSQL() {
-                        editor.setValue(sqlFormatter.format(editor.getValue(), { indent: "    "}));
+                    /**
+                     * Format sql only if content was changed (!clean) and formatted content differs current content
+                     * This prevents the page jumps caused by scrolling the codemirror into view after changing the content
+                     * @param checkClean whether to skip formatting if the content wasnt changed
+                     */
+                    function formatSQL(checkClean=true) {
+                        if (checkClean && editor.doc.isClean())
+                            return;
+                        var oldValue = editor.getValue();
+                        var newValue = sqlFormatter.format(oldValue, { indent: "    "});
+                        if (oldValue.length !== newValue.length || oldValue !== newValue) {
+                            editor.setValue(newValue);
+                        }
+                        editor.doc.markClean();
                     }
                     editor.on('blur', formatSQL);
 
                     $(function() {
-                        formatSQL();
+                        formatSQL(false);
                     });
                 </script>
                 <?php }?>
@@ -168,9 +180,9 @@ echo $result;
 if ($rssql) {
     echo ODBCResourceToHTML($rssql, 'cellpadding="2" cellspacing="0" style="border-collapse:collapse;"', 'style="border: 1px solid grey;"', $sqlexecnum);
 } elseif (lmb_strtoupper(lmb_substr($sqlvalue,0,7)) == 'EXPLAIN') {
-    $rs = odbc_exec($db,$sqlvalue);
+    $rs = lmbdb_exec($db,$sqlvalue);
     echo '<table style="border-collapse:collapse" cellpadding="3">';
-    while($ra = odbc_fetch_array($rs)){
+    while($ra = lmbdb_fetch_array($rs)){
         
         if(!$bzm){
             foreach($ra as $col=>$value){
@@ -194,7 +206,7 @@ if ($show AND $table) {
     # show table
     echo "<h3>$table</h3><br>";
     $sqlquery = "SELECT * FROM $table";
-    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     if ($rs) {
         echo ODBCResourceToHTML($rs, 'cellpadding="2" cellspacing="0" style="border-collapse:collapse;"', 'style="border: 1px solid grey;"', $sqlexecnum);
     }
@@ -202,12 +214,12 @@ if ($show AND $table) {
     # show info of table
     echo "<h3>$table</h3><br>";
     $rs = dbf_5(array($DBA['DBSCHEMA'], $table, null, 1));
-    odbc_result_all($rs,'border=1 style="border-collapse: collapse;padding:3px"');
+    lmbdb_result_all($rs,'border=1 style="border-collapse: collapse;padding:3px"');
 } else if ($showsys AND $domaintable) {
     # show system info
     echo "<h3>$domaintable</h3><br>";
     $sqlquery = "SELECT * FROM $domaintable";
-    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     if ($rs) {
         echo ODBCResourceToHTML($rs, 'cellpadding="2" cellspacing="0" style="border-collapse:collapse;"', 'style="border: 1px solid grey;"', $sqlexecnum);
     }

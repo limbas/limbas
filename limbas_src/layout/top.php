@@ -40,23 +40,34 @@ if($menu_setting["frame"]["top"]){
 	$displ1 = "";$displ2 = "display:none";
 }
 
+if($lmmultitenants['name'][$session["mid"]]){$mname  = '('.$lmmultitenants['name'][$session["mid"]].')';}
+
 echo "<div class=\"lmbfringeFrameTop\" id=\"small_frame\">";
-if(file_exists($umgvar["pfad"]."/EXTENSIONS/customization/logo_small.png")){?>
-<a target="_blank" href="index.php"><div id="small_image" class="lmbItemInfoTop"><img src="EXTENSIONS/customization/logo_small.png"></div></a>
-<div class="lmbItemUsernameTop"><?=$lang[2455]?>: <b><?= $session["vorname"]." ".$session["name"] ?></b>
-<?php }else{?>
-<a target="_blank" href="index.php"><div id="small_image" class="lmbItemInfoTop"><b>L<span style="color:orange">I</span>MBAS</b> <?=$umgvar["company"]?></div></a>
-<div class="lmbItemUsernameTop"><?=$lang[2455]?>: <b><?= $session["vorname"]." ".$session["name"] ?></b>
-<?php }?>
-<?php if($umgvar["admin_mode"] AND $LINK[17] AND $session["group_id"] == 1){
+
+echo "<div id=\"topframeIdentifier\" class=\"lmbItemInfoTop\">";
+
+if(file_exists($umgvar["pfad"]."/EXTENSIONS/customization/logo_small.png")){
+    echo "<a target=\"_blank\" href=\"index.php\"><span id=\"small_image\" ><img src=\"EXTENSIONS/customization/logo_small.png\"></span></a>";
+
+}else{
+    echo "<a target=\"_blank\" href=\"index.php\"><span id=\"small_image\" ><b>L<span style=\"color:orange\">I</span>MBAS</b> ".$umgvar["company"]."</span></a>";
+}
+
+echo "&nbsp;&nbsp;<span id=\"topframeMultitenants\">$mname</span>";
+
+echo "</div>";
+
+echo "<div class=\"lmbItemUsernameTop\">$lang[2455]: <b>".$session["vorname"]." ".$session["name"]."</b>";
+
+if($umgvar["admin_mode"] AND $LINK[17] AND $session["group_id"] == 1){
 	echo "<a href=\"main_admin.php?action=setup_umgvar#admin-mode\" target=\"main\" style=\"color:red; margin-left: 10px; border: 1px solid red; padding: 2px 4px;\">admin mode on!</a>";
-}?>
-</div>
+}
 
-<!--<div class="lmbItemUsernameTop"><?=$lang[2455]?>: <B><?= $session["vorname"]." ".$session["name"] ?>-->
+
+
+?>
 
 </div>
 </div>
-
 
 

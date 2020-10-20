@@ -30,10 +30,10 @@
 <TR><TD><B><?=$lang[168]?></B><BR><SELECT NAME="uploadfield" SIZE="25"><OPTION VALUE="ID" SELECTED>ID
 <?php
 $sqlquery =  "SELECT * FROM LMB_CONF_FIELDS WHERE TAB_ID = $tabid";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
-while(odbc_fetch_row($rs)) {
-	echo "<OPTION VALUE=\"".odbc_result($rs, "FIELD_NAME")."\">".odbc_result($rs, "FIELD_NAME");
+while(lmbdb_fetch_row($rs)) {
+	echo "<OPTION VALUE=\"".lmbdb_result($rs, "FIELD_NAME")."\">".lmbdb_result($rs, "FIELD_NAME");
 }
 if($sourcepath){$path = $sourcepath;}else{$path = "/TEMP";}
 ?>

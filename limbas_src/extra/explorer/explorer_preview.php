@@ -27,9 +27,9 @@ if(!$filestruct){
 }
 # --- Rechte ----
 $sqlquery = "SELECT ID,LEVEL FROM LDMS_FILES WHERE LDMS_FILES.ID = $ID";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
-if(odbc_fetch_row($rs) AND $filestruct["view"][odbc_result($rs, "LEVEL")]){
+if(lmbdb_fetch_row($rs) AND $filestruct["view"][lmbdb_result($rs, "LEVEL")]){
 	$preview_archive_link = preview_archive(array($ID),$method,$searchwords,$format);
 	if($preview_archive_link[0]){
 		if($preview_archive_link[1]){
@@ -58,5 +58,5 @@ if(odbc_fetch_row($rs) AND $filestruct["view"][odbc_result($rs, "LEVEL")]){
 	echo '<BR><BR>'.$lang[114];
 }
 
-//echo "<pre>id[$ID]level[".odbc_result($rs, "LEVEL")."]";print_r($filestruct);
+//echo "<pre>id[$ID]level[".lmbdb_result($rs, "LEVEL")."]";print_r($filestruct);
 ?>

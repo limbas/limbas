@@ -18,7 +18,7 @@
  * ID: 204
  */
 
-require_once("inc/include_db.lib");
+require_once("lib/db/db_wrapper.lib");
 require_once("lib/db/db_".$DBA["DB"]."_admin.lib");
 require_once("lib/include.lib");
 require_once("lib/session.lib");
@@ -40,7 +40,7 @@ function dyns_fileGroupRules($para){
 	if(is_numeric($para["level"])){
 		# --- Rechte lesen ------
 		$sqlquery = "SELECT DISTINCT GROUP_ID,LMVIEW,LMADD,DEL,ADDF,EDIT,LMLOCK FROM LDMS_RULES WHERE FILE_ID = ".$para["level"]." AND LMVIEW = ".LMB_DBDEF_TRUE;
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs){$commit = 1;}
 		$filerules = null;
 		
@@ -57,20 +57,20 @@ function dyns_fileGroupRules($para){
 		<td align=\"center\"><i class=\"lmb-icon lmb-trash\"></i></td>
 		<td align=\"center\"><i class=\"lmb-icon lmb-lock-file\"></i></td>
 		</tr>";
-		while(odbc_fetch_row($rs)) {
-			echo "<tr><td><a OnClick=\"document.location.href='main_admin.php?action=setup_group_erg&ID=".odbc_result($rs, "GROUP_ID")."'\">".$groupdat["name"][odbc_result($rs, "GROUP_ID")]."</a></td>";
+		while(lmbdb_fetch_row($rs)) {
+			echo "<tr><td><a OnClick=\"document.location.href='main_admin.php?action=setup_group_erg&ID=".lmbdb_result($rs, "GROUP_ID")."'\">".$groupdat["name"][lmbdb_result($rs, "GROUP_ID")]."</a></td>";
 			echo "<td align=\"center\">";
-			if(odbc_result($rs, "LMVIEW")){echo "&nbsp;<i class=\"lmb-icon lmb-check-alt\"></i>";}
+			if(lmbdb_result($rs, "LMVIEW")){echo "&nbsp;<i class=\"lmb-icon lmb-check-alt\"></i>";}
 			echo "</td><td align=\"center\">";
-			if(odbc_result($rs, "LMADD")){echo "&nbsp;<i class=\"lmb-icon lmb-check-alt\"></i>";}
+			if(lmbdb_result($rs, "LMADD")){echo "&nbsp;<i class=\"lmb-icon lmb-check-alt\"></i>";}
 			echo "</td><td align=\"center\">";
-			if(odbc_result($rs, "ADDF")){echo "&nbsp;<i class=\"lmb-icon lmb-check-alt\"></i>";}
+			if(lmbdb_result($rs, "ADDF")){echo "&nbsp;<i class=\"lmb-icon lmb-check-alt\"></i>";}
 			echo "</td><td align=\"center\">";
-			if(odbc_result($rs, "EDIT")){echo "&nbsp;<i class=\"lmb-icon lmb-check-alt\"></i>";}
+			if(lmbdb_result($rs, "EDIT")){echo "&nbsp;<i class=\"lmb-icon lmb-check-alt\"></i>";}
 			echo "</td><td align=\"center\">";
-			if(odbc_result($rs, "DEL")){echo "&nbsp;<i class=\"lmb-icon lmb-check-alt\"></i>";}
+			if(lmbdb_result($rs, "DEL")){echo "&nbsp;<i class=\"lmb-icon lmb-check-alt\"></i>";}
 			echo "</td><td align=\"center\">";
-			if(odbc_result($rs, "LMLOCK")){echo "&nbsp;<i class=\"lmb-icon lmb-check-alt\"></i>";}
+			if(lmbdb_result($rs, "LMLOCK")){echo "&nbsp;<i class=\"lmb-icon lmb-check-alt\"></i>";}
 			echo "</td></tr>";
 		}
 		echo "</table>";
@@ -437,6 +437,21 @@ function dyns_extensionEditorUpload($par){
 	require_once("admin/tools/extension_ajax.php");
 }
 
+/**
+ * php editor
+ *
+ * @param array $par
+ */
+function dyns_executePhpCode($par){
+    // prevent php execution via link
+    if (array_key_exists('phpCode', $_GET)) {
+        echo "PhpCode in GET request not allowed!";
+        return;
+    }
+    require_once('admin/tools/php_editor.lib');
+    executePhpCode($par['phpCode'], $par['maxExecutionSeconds']);
+}
+
 # Buffer
 ob_start();
 
@@ -484,6 +499,6 @@ if($output = ob_get_contents()){
 
 
 
-if ($db) {odbc_close($db);}
+if ($db) {lmbdb_close($db);}
 
 ?>

@@ -31,8 +31,11 @@ class ReportTemplateConfig extends TemplateConfig {
         return new ReportTemplateElement($templateElementGtabid, $name, $html);
     }
 
-    public function getDataPlaceholderInstance($chain, $flags, $altValue) {
-        return new ReportDataPlaceholder($chain, $flags, $altValue);
+    public function getDataPlaceholderInstance($chain, $options, $altValue) {
+        return new ReportDataPlaceholder($chain, $options, $altValue);
     }
 
+    public function getMedium() {
+        return "report";
+    }
 }

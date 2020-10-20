@@ -30,8 +30,7 @@ $auth_pass = $_SERVER['PHP_AUTH_PW'];
 ini_set('session.use_only_cookies',0);
 
 # ------- Limbas include Dateien --------
-require_once("inc/include_db.lib");
-require_once("lib/db/db_".$DBA["DB"].".lib");
+require_once("lib/db/db_wrapper.lib");
 require_once("lib/include.lib");
 require_once("lib/session.lib");
 
@@ -52,5 +51,5 @@ require_once('extra/soap/wsdl/soapserver.php');
 
 
 
-if ($db) {odbc_close($db);}
+if ($db) {lmbdb_close($db);}
 ?>

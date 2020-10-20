@@ -40,8 +40,8 @@ function patch_4() {
     global $db;
 
     $sqlquery = "SELECT TAB_ID FROM LMB_CONF_TABLES WHERE UPPER(TABELLE) = 'LDMS_FILES'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    $tid = odbc_result($rs,'TAB_ID');
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $tid = lmbdb_result($rs,'TAB_ID');
     if (!$tid) {
         return false;
     }
@@ -98,20 +98,20 @@ function patch_11(){
 	$NEXTID = next_db_id("LMB_REPORTS");
 
 	$sqlquery = "SELECT ID,BERICHT_ID,TAB,TAB_SIZE FROM LMB_REPORTS WHERE TYP = 'tab' ORDER BY BERICHT_ID,TAB";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 
-	while(odbc_fetch_row($rs)){
+	while(lmbdb_fetch_row($rs)){
 
-	    if($report_id != odbc_result($rs,"BERICHT_ID")){
-	        $sqlquery1 = "SELECT MAX(EL_ID) AS NEXTELID FROM LMB_REPORTS WHERE BERICHT_ID = ".odbc_result($rs,"BERICHT_ID");
-            $rs1 = odbc_exec($db,$sqlquery1);
-            $NEXTELID = odbc_result($rs1,"NEXTELID") + 1;
+	    if($report_id != lmbdb_result($rs,"BERICHT_ID")){
+	        $sqlquery1 = "SELECT MAX(EL_ID) AS NEXTELID FROM LMB_REPORTS WHERE BERICHT_ID = ".lmbdb_result($rs,"BERICHT_ID");
+            $rs1 = lmbdb_exec($db,$sqlquery1);
+            $NEXTELID = lmbdb_result($rs1,"NEXTELID") + 1;
         }
 
-	    $id = odbc_result($rs,"ID");
-		$tabid = odbc_result($rs,"TAB");
-		$report_id = odbc_result($rs,"BERICHT_ID");
-		$tab_size = explode(";",odbc_result($rs,"TAB_SIZE"));
+	    $id = lmbdb_result($rs,"ID");
+		$tabid = lmbdb_result($rs,"TAB");
+		$report_id = lmbdb_result($rs,"BERICHT_ID");
+		$tab_size = explode(";",lmbdb_result($rs,"TAB_SIZE"));
 
 		$extvalue = array();
 
@@ -120,13 +120,13 @@ function patch_11(){
             for($col=1;$col<=$tab_size[0];$col++){
 
                 $sqlquery1 = "SELECT TAB_EL_COL_SIZE FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB = $tabid AND TYP = 'tabhead' AND TAB_EL_COL = $col";
-                $rs1 = odbc_exec($db,$sqlquery1);
-                $colsize = odbc_result($rs1,"TAB_EL_COL_SIZE");
+                $rs1 = lmbdb_exec($db,$sqlquery1);
+                $colsize = lmbdb_result($rs1,"TAB_EL_COL_SIZE");
 
                 $sqlquery1 = "SELECT ID,STYLE FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB = $tabid AND TYP != 'tabhead' AND TYP != 'tab' AND TYP != 'tabcell' AND TAB_EL_COL = $col AND TAB_EL_ROW = $row ORDER BY ID";
-                $rs1 = odbc_exec($db,$sqlquery1);
-                $elstyle = odbc_result($rs1,"STYLE");
-                $elid = odbc_result($rs1,"ID");
+                $rs1 = lmbdb_exec($db,$sqlquery1);
+                $elstyle = lmbdb_result($rs1,"STYLE");
+                $elid = lmbdb_result($rs1,"ID");
 
                 if($elid) {
 
@@ -152,12 +152,12 @@ function patch_11(){
                     $elstyle = implode(';', $elstyle);
 
                     $sqlquery3 = "UPDATE LMB_REPORTS SET STYLE = '$elstyle' WHERE BERICHT_ID = $report_id AND ID = $elid";
-                    $rs3 = odbc_exec($db,$sqlquery3);
+                    $rs3 = lmbdb_exec($db,$sqlquery3);
                 }
 
 
                 $sqlquery3 = "INSERT INTO LMB_REPORTS (ID,EL_ID,ERSTUSER,BERICHT_ID,TYP,TAB_EL,TAB_EL_ROW,TAB_EL_COL,TAB_EL_COL_SIZE,STYLE) VALUES ($NEXTID,$NEXTELID,1,$report_id,'tabcell'," . parse_db_int($tabid) . "," . parse_db_int($row) . "," . parse_db_int($col) . "," . parse_db_int($colsize) . ",'$cell_style')";
-                $rs3 = odbc_exec($db, $sqlquery3);
+                $rs3 = lmbdb_exec($db, $sqlquery3);
                 $NEXTELID++;
                 $NEXTID++;
 
@@ -168,17 +168,17 @@ function patch_11(){
 
         if($extvalue){
 		    $sqlquery3 = "UPDATE LMB_REPORTS SET EXTVALUE = '".implode(';',$extvalue)."', TAB_EL = 0, STYLE='' WHERE BERICHT_ID = $report_id AND ID = $id";
-			$rs3 = odbc_exec($db,$sqlquery3);
+			$rs3 = lmbdb_exec($db,$sqlquery3);
         }
 
 	}
 
     $sqlquery3 = "UPDATE LMB_REPORTS SET TAB_EL = TAB WHERE TYP != 'tab' AND TAB > 0";
-	$rs3 = odbc_exec($db,$sqlquery3);
+	$rs3 = lmbdb_exec($db,$sqlquery3);
     $sqlquery3 = "UPDATE LMB_REPORTS SET TAB = 0 WHERE TYP != 'tab'";
-	$rs3 = odbc_exec($db,$sqlquery3);
+	$rs3 = lmbdb_exec($db,$sqlquery3);
     $sqlquery3 = "DELETE FROM LMB_REPORTS WHERE TYP = 'tabhead'";
-	$rs3 = odbc_exec($db,$sqlquery3);
+	$rs3 = lmbdb_exec($db,$sqlquery3);
 
 
 	mkdir('inc/fonts/tcpdf');

@@ -21,13 +21,21 @@
 
 # ------- soap-Funktion --------
 function runlmb($lmpar){
-	$lmpar = unserialize($lmpar);
+    if($GLOBALS['umgvar']['soap_base64']) {
+        $lmpar = unserialize(base64_decode($lmpar));
+    }else{
+        $lmpar = unserialize($lmpar);
+    }
 	if($lmpar['use_noids']){
 		$GLOBALS['lmpar']['use_noids'] = $lmpar['use_noids'];
 		$lmpar = translateAssoziativeArray($lmpar);
 	}
 	if($lmb = parse_action($lmpar)){
-		return serialize($lmb);
+	    if($GLOBALS['umgvar']['soap_base64']) {
+            return base64_encode(serialize($lmb));
+        }else{
+	        return serialize($lmb);
+        }
 	}else{
 		return array();
 	}
@@ -108,16 +116,16 @@ function get_gselect(){
 			foreach ($gfield[$stab]['sort'] as $sfield => $sfieldvalue){
 				if($gfield[$stab]['field_type'][$sfield] == 4 AND $gfield[$stab]['select_pool'][$sfield]){
 					$sqlquery = "SELECT ID,WERT,".implode(',',$sql_s).",KEYWORDS FROM LMB_SELECT_W WHERE POOL = ".$gfield[$stab]['select_pool'][$sfield]." AND HIDE = ".LMB_DBDEF_FALSE." ORDER BY ".$gfield[$stab]['select_sort'][$sfield];
-					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-					while(odbc_fetch_row($rs)) {
-						$gselect[$stab][$sfield]['id'][] = odbc_result($rs, "ID");
-						$gselect[$stab][$sfield]['val'][] = odbc_result($rs, "WERT");
-						$gselect[$stab][$sfield]['keywords'][] = odbc_result($rs, "KEYWORDS");
+					$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					while(lmbdb_fetch_row($rs)) {
+						$gselect[$stab][$sfield]['id'][] = lmbdb_result($rs, "ID");
+						$gselect[$stab][$sfield]['val'][] = lmbdb_result($rs, "WERT");
+						$gselect[$stab][$sfield]['keywords'][] = lmbdb_result($rs, "KEYWORDS");
 						
 						// multilang
 						if($umgvar['multi_language']){
 					    foreach($umgvar['multi_language'] as $lkey => $lval){
-	                       $gselect[$stab][$sfield]["val_$lval"][] = odbc_result($rs, 'LANG'.$lval.'_WERT');
+	                       $gselect[$stab][$sfield]["val_$lval"][] = lmbdb_result($rs, 'LANG'.$lval.'_WERT');
 	                    }}
 					}
 				}
@@ -275,7 +283,7 @@ function parse_action($lmpar){
                     		$dlLink = ",DOWNLOAD_LINK='" . parse_db_string($lmpart['downloadLink']) . "'";
 						}
 						$sqlquery = "UPDATE LDMS_FILES SET SECNAME='" . parse_db_string($fileName) . "' $dlLink WHERE STORAGE_ID IS NOT NULL AND ID=" . parse_db_int($fileID);
-                    	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                    	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
                     } else {
                         require_once('extra/explorer/filestructure.lib');
                     	del_file($fileID); # TODO forcedelnm?
@@ -391,7 +399,7 @@ function parse_action($lmpar){
 
                 $newids = datasync_applyChangedData($lmpart['sync_data']);
                 $return = datasync_collectChangedData($newids);
-                $return['exceptions'] = $sync_exceptions;
+                $return['sync_exceptions'] = $sync_exceptions;
                 return $return;
             } elseif($lmpart['action'] == 'finish_datasync') {
                 # check params

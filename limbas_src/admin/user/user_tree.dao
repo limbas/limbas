@@ -20,38 +20,38 @@
 
 
 $sqlquery1 = "SELECT USER_ID,USERNAME,VORNAME,NAME,LMLOCK,DEL,GROUP_ID,SUB_GROUP,CLEARPASS FROM LMB_USERDB ORDER BY USERNAME";
-$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 if(!$rs1){$commit = 1;}
-while(odbc_fetch_row($rs1)) {
-	$alluser['user_id'][] = odbc_result($rs1, "USER_ID");
-	$alluser['user_name'][] = odbc_result($rs1, "VORNAME")." ".odbc_result($rs1, "NAME");
-	$alluser['name'][] = odbc_result($rs1, "USERNAME");
-	$alluser['lock'][] = odbc_result($rs1, "LMLOCK");
-	$alluser['del'][] = odbc_result($rs1, "DEL");
-	$alluser['group_id'][] = odbc_result($rs1, "GROUP_ID");
-	$alluser['clearpass'][] = odbc_result($rs1, "CLEARPASS");
-	if(odbc_result($rs1, "SUB_GROUP")){$alluser['subgroup'][] = explode(";",odbc_result($rs1, "SUB_GROUP"));}else{$alluser['subgroup'][] = array(0);}
+while(lmbdb_fetch_row($rs1)) {
+	$alluser['user_id'][] = lmbdb_result($rs1, "USER_ID");
+	$alluser['user_name'][] = lmbdb_result($rs1, "VORNAME")." ".lmbdb_result($rs1, "NAME");
+	$alluser['name'][] = lmbdb_result($rs1, "USERNAME");
+	$alluser['lock'][] = lmbdb_result($rs1, "LMLOCK");
+	$alluser['del'][] = lmbdb_result($rs1, "DEL");
+	$alluser['group_id'][] = lmbdb_result($rs1, "GROUP_ID");
+	$alluser['clearpass'][] = lmbdb_result($rs1, "CLEARPASS");
+	if(lmbdb_result($rs1, "SUB_GROUP")){$alluser['subgroup'][] = explode(";",lmbdb_result($rs1, "SUB_GROUP"));}else{$alluser['subgroup'][] = array(0);}
 }
 
 
 $sqlquery = "SELECT GROUP_ID,NAME,LEVEL FROM LMB_GROUPS WHERE DEL = ".LMB_DBDEF_FALSE." ORDER BY GROUP_ID";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs){$commit = 1;}
 
-while(odbc_fetch_row($rs)) {
-	$userstruct['id'][] = odbc_result($rs, "GROUP_ID");
+while(lmbdb_fetch_row($rs)) {
+	$userstruct['id'][] = lmbdb_result($rs, "GROUP_ID");
 	$userstruct['user_id'][] = 0;
 	$userstruct['user_name'][] = 0;
-	$userstruct['name'][] = odbc_result($rs, "NAME");
+	$userstruct['name'][] = lmbdb_result($rs, "NAME");
 	$userstruct['clearpass'][] = 0;
-	$userstruct['level'][] = odbc_result($rs, "LEVEL");
+	$userstruct['level'][] = lmbdb_result($rs, "LEVEL");
 	$userstruct['lock'][] = 0;
 	$userstruct['del'][] = 0;
 	$userstruct['maingroup'][] = 0;
 
 	foreach ($alluser['user_id'] as $key => $value) {
-		if($alluser['group_id'][$key] == odbc_result($rs, "GROUP_ID") OR in_array(odbc_result($rs, "GROUP_ID"),$alluser['subgroup'][$key])){
-			if($alluser['group_id'][$key] == odbc_result($rs, "GROUP_ID")){$userstruct['maingroup'][] = 1;}else{$userstruct['maingroup'][] = 0;}
+		if($alluser['group_id'][$key] == lmbdb_result($rs, "GROUP_ID") OR in_array(lmbdb_result($rs, "GROUP_ID"),$alluser['subgroup'][$key])){
+			if($alluser['group_id'][$key] == lmbdb_result($rs, "GROUP_ID")){$userstruct['maingroup'][] = 1;}else{$userstruct['maingroup'][] = 0;}
 			$userstruct['id'][] = 1000;
 			$userstruct['user_id'][] = $alluser['user_id'][$key];
 			$userstruct['user_name'][] = $alluser['user_name'][$key];
@@ -59,7 +59,7 @@ while(odbc_fetch_row($rs)) {
 			$userstruct['clearpass'][] = $alluser['clearpass'][$key];
 			$userstruct['lock'][] = $alluser['lock'][$key];
 			$userstruct['del'][] = $alluser['del'][$key];
-			$userstruct['level'][] = odbc_result($rs, "GROUP_ID");
+			$userstruct['level'][] = lmbdb_result($rs, "GROUP_ID");
 			$bzm1++;
 		}
 	}

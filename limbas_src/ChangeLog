@@ -1,3 +1,146 @@
+2020-07-09 16:27:58 bugfix in formular list
+2020-06-24 14:56:22 -FIX tablerights for views
+2020-06-24 14:02:20 -support LMB_MID multitenant for Views -FIX multitenant in usersettings
+2020-06-22 16:26:21 FIX - Menueditor Link zu Tabellenlosen Formular FIX - Formularliste Typ  Erweiterung doppelt FIX - Wiedervorlage anlegen Admin form zu klein FIX - Formular Rechteck ohne Rahmen CSS FIX - Rechte oberstes Häckchen deaktiviert FIX - Formularrechte Name ohne lang[] FIX - delete physical files after deleting corresponding dataset
+2020-06-19 16:30:41 bootstrap layout first version fully integrated
+2020-06-16 09:55:29 Template-System: Check edit rights
+2020-06-12 09:23:50 added postgres global variables
+2020-05-29 18:07:43 Bugfix: Another infinite loop in template system
+2020-05-26 16:08:09 Bugfix: Infinite loop in template system
+2020-05-21 10:37:14 Bugfixes for css class in template report
+2020-05-21 10:26:25 Add css column to lmb_report_list
+2020-05-21 10:18:39 Remove short open tags
+2020-05-18 11:13:27 adding css class to tcpdf reports
+2020-05-15 17:07:32 update language file
+2020-05-15 11:09:22 noheader params for extensions - bugfix in check_grourights
+2020-05-14 14:42:14 add boolean format checkbox, radio, select
+2020-05-11 13:28:43 merge master
+2020-05-06 10:58:45 Template-System: Support for custom css class
+2020-04-30 18:44:35 Template-System: Support for displaying template elements only in form/report
+2020-04-24 17:59:16 Template-System: Support for 1:1 relation and numeric function param
+2020-04-08 10:43:31 Postgres fts: Remove todo file
+2020-04-08 10:37:28 Postgres fts: Rank by relevance
+2020-04-07 11:04:36 Loading icon in explorer
+2020-04-01 12:55:00 Postgres vector strip
+2020-04-01 12:35:01 Headline configuration
+2020-04-01 12:21:37 Use postgres fts default false if not postgres
+2020-04-01 12:17:34 Removal of array_slice
+2020-04-01 11:05:16 Explorer num cols fix
+2020-03-27 11:08:23 Remove debug statement
+2020-03-27 11:07:00 Search result headline
+2020-03-27 11:01:41 Instant-updating progress bars
+2020-03-25 13:32:43 Allowing document content fieldtype only in LDMS_FILES
+2020-03-25 13:24:22 Postgres index search for fields
+2020-03-25 13:13:01 Sql error bugfix
+2020-03-25 12:40:46 Implemented null and notnull checks for upload, long and document content
+2020-03-25 12:22:40 Bugfix: get_filestructure not defined
+2020-03-25 12:22:19 Postgres index searching for files
+2020-03-24 13:46:45 Correct filter options in table
+2020-03-24 13:29:51 Added postgres fts options in searchbar in dms
+2020-03-24 11:30:00 Cache for colNeeded function
+2020-03-24 11:27:50 Implemented deletion of postgres index
+2020-03-23 18:15:46 trigger option to ignore archived relations - new lock screen - 1:n to simple 1:n converter function
+2020-03-23 16:38:20 Implemented postgres indexing
+2020-03-23 12:50:01 Fixed utf8 bug
+2020-03-21 12:50:11 indize_create now returns correct success state
+2020-03-21 12:47:43 Indize_level documentation
+2020-03-21 12:45:01 Cleanup filelevel_indize
+2020-03-21 12:38:12 Progress bar rework
+2020-03-20 16:52:25 Indize.lib cleanup
+2020-03-18 15:38:30 Added vector/lang fields when indexing is (de)activated for field
+2020-03-18 15:14:01 fts_* fields are being created on the fly when umgvar are changed
+2020-03-18 14:10:59 Added umgvar entries
+2020-03-18 13:40:07 Added todo
+2020-03-17 12:40:52 Form and Report: Showing user's (unsaved) changes when opening menu
+2020-03-12 11:02:39 release 4.1
+2020-03-10 17:55:20 Bugfix: Wrong hash function type
+2020-03-10 15:40:37 Bugfix: Prepare with missing data
+2020-03-10 15:30:45 Bugfix: Prepare statement without quotes
+2020-03-10 14:50:37 Feature: PHP-Editor
+2020-03-10 14:15:35 Add type field to lmb_code_favorites to distinguish between sql and php
+2020-03-10 14:06:41 Rename lmb_sql_favorites to lmb_code_favorites
+2020-03-10 13:17:39 Improved interaction with codemirror
+2020-03-10 13:01:53 Added codemirror support to report editor
+2020-03-10 12:46:06 Fixed codemirror editing multiple textareas in form editor
+2020-03-04 15:27:06 added lmb encryption functions
+2020-03-04 15:16:10 add update setitings
+2020-03-03 19:56:23 improve manual count calculation for relations - improve relation path behavior
+2020-03-02 16:17:06 option to ignore archived relations for relation count calculation
+2020-02-25 14:21:44 optimize relation popup handling
+2020-02-25 14:19:48 table header space fix
+2020-02-24 12:38:07 optimize relation popup handling
+2020-02-21 15:01:23 No session generation on each click of webdav connection
+2020-02-21 14:46:04 Rename of set_style functions to avoid duplicate declaration
+2020-02-19 19:55:14 adding parameter relations to get_gresult API - adding view_detail function to table list
+2020-02-19 11:31:00 adding relation parameter for different popup handling - adding relation path element in forms
+2020-02-13 17:54:55 use base46 encoding for soap requests - change soap currency format to array - change mysql NULL value for datetime fields
+2020-02-10 12:42:12 parsing prepare statements without parse_db_blob - parse_db_blob not longer used
+2020-02-03 09:35:48 update installation process for PDO connections
+2020-01-21 10:35:32 adding extension parameter in single relation fields in formulars
+2020-01-20 14:28:05 Version.inf update
+2020-01-20 14:26:06 Code cleanup, fix of deprecated functions
+2020-01-20 14:22:10 Bugfix for automatic versioning
+2020-01-15 12:38:49 datasync - error handling adjustments
+2020-01-15 12:33:55 fix datasync handle systemfields
+2020-01-09 11:06:48 Filter context menus on key press
+2020-01-08 12:47:10 fix LMB_MID Sync Fieldname
+2020-01-08 10:15:38 fix form permissions of grid forms
+2019-12-20 10:23:43 datasync - filter get all records including hidden
+2019-12-20 09:54:22 Umgvar / Custvar überarbeiten
+2019-12-20 09:47:59 new filter parameter unhide -1 show all dataset
+2019-12-18 10:43:26 Fixed ODBC datasync
+2019-12-11 17:04:54 adding menueditor for contextmenus part
+2019-12-10 09:29:50 adding menueditor for contextmenus part2 - support extensions update_dats
+2019-12-06 13:20:43 New layout: use scss and new color schema
+2019-12-06 13:13:01 Datasync systemfields & change: create if not exist
+2019-12-03 14:32:27 Iron position sticky fix
+2019-12-03 12:08:52 Fixed page jumps on codemirror blur
+2019-12-02 19:02:35 adding menueditor for contextmenus part1
+2019-11-22 17:05:34 bugfix - default table order - adding customized click event to relation params
+2019-11-21 13:45:15 support optional multilanguage for data values
+2019-11-20 20:10:01 support multitenant for custvars
+2019-11-19 15:45:47 bugfix for crontab active flag
+2019-11-13 14:56:08 adding versioninfo for .js and .css files
+2019-11-13 11:52:28 drop multilang option in views
+2019-11-12 17:38:24 adding default fieldvalues in forms without ID - modify multilanguage transactions - join multitenant with sync client
+2019-11-12 16:32:39 Quick search for bootstrap layout
+2019-11-08 14:05:56 Readded changes accidentally lost by merge
+2019-11-08 13:51:52 Bootstrap layout first core adjustments
+2019-11-08 13:46:26 Merge
+2019-11-06 13:19:48 hide sync puplished field in Slaves - redesign user administration - fixing custvar generation
+2019-11-05 10:15:25 Bootstrap layout first version
+2019-10-30 17:14:30 adding HANA Database odbc
+2019-10-30 17:13:48 adding HANA Database - adding phpmailer
+2019-10-22 17:30:48 bugfix empty select field in multilanguage mode
+2019-10-22 15:49:49 bugfix PDO dbf_5 columns LIKE search
+2019-10-17 15:31:51 javascript
+2019-10-17 13:16:55 renamed all odbc_ functions to Limbas function lmbdb_
+2019-10-17 11:45:51 fixed typo
+2019-10-17 11:42:18 added: admin - currency and exchange rate settings
+2019-10-17 10:33:26 MULTITENANT update scripts
+2019-10-17 10:31:42 MULTITENANT update scripts
+2019-10-17 09:43:45 adding multitenant rule validation
+2019-10-16 18:07:38 adding multitenant basic functions
+2019-10-11 10:08:34 Removed debug statement
+2019-10-11 09:44:08 Fixed sorting for argument field type, Fixed sql injection, Fixed default sort field
+2019-10-10 14:09:33 bootstrap layout first implementation
+2019-10-07 18:46:41 Increased new window size for chrome
+2019-10-07 18:24:08 Refresh of sequences when renaming table
+2019-10-07 10:56:56 Added default value of input select in form editor
+2019-10-07 10:21:18 Added documentation to ajaxGet method
+2019-10-07 10:19:38 Small fixes/imports
+2019-10-07 10:12:35 Replacement of german umlauts in field creation
+2019-10-07 10:10:40 Fixed listform bug: Subelements of group element were shown twice
+2019-10-07 10:07:36 Revert "Replacement of german umlauts in field creation"
+2019-10-02 11:57:21 adding client admin gui - adding client table parameter
+2019-10-01 17:13:44 Fixed page jumping in table group administration on firefox
+2019-10-01 16:48:18 Fixed nav content jumping after loading
+2019-10-01 16:16:22 Hint and link to public limbas relation tables
+2019-10-01 16:15:45 Replacement of german umlauts in field creation
+2019-10-01 14:17:39 Fixed wrong tabgroup in link to linked table
+2019-09-30 17:11:21 Fixed sorting of fields in admin
+2019-09-30 14:18:59 fixed: custvar_depend - wrong field types
+2019-09-26 17:16:40 added: custom global variables
 2019-09-26 12:23:37 fixed: excel export removed unnecessary characters fixed: table search select values missing ($db null)
 2019-09-26 12:11:04 fixing import convert to utf-8 / iso - set umgvars readonly - replaced with uservars - fixing missing function for imagick convert in Tablelist
 2019-09-26 10:02:54 fixing parentage inherit fields - fixing import issues fro mysql - fixing mysql timestamp issues

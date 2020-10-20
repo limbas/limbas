@@ -63,7 +63,7 @@ foreach ($rulelist_ as $key => $value){
 	if($gtab["table"][$key]){
 		$desc = $gtab["desc"][$key];
 	}else{
-		$desc = $lang[2512];
+		$desc = $lang[1986];
 	}
 	echo "<TR bgcolor=\"".$farbschema["WEB7"]."\"><TD style=\"color:green\" colspan=\"3\"><i class=\"lmb-icon-8 lmb-table\"></i>&nbsp;".$desc."</TD></TR>";
 	if($value["id"]){

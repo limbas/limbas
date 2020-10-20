@@ -17,7 +17,7 @@
 /*
  * ID:
  */
-
+require_once('lib/db/db_odbc.lib');
 
 # constants
 function postgres_dbf_0($value){
@@ -124,18 +124,18 @@ function postgres_dbf_0($value){
 function postgres_dbq_0($host,$database,$dbuser,$dbpass,$dbdriver=null,$port=null){
     if($dbdriver == 'PDO') {
         $dsn = "pgsql:host=$host;dbname=$database";
-        $db = odbc_pconnect ($dsn, $dbuser, $dbpass);
+        $db = lmbdb_pconnect ($dsn, $dbuser, $dbpass);
     }elseif($dbdriver){
 		$dsn = "Driver=$dbdriver;Server=$host;Port=$port;Database=$database;ReadOnly=No";
 		#SQL_CUR_USE_ODBC
 		#SQL_CUR_DEFAULT
 		#SQL_CUR_USE_DRIVER
-		$db = odbc_pconnect ($dsn, $dbuser, $dbpass);
+		$db = lmbdb_pconnect ($dsn, $dbuser, $dbpass);
 	}else{
-		$db = odbc_pconnect($database,$dbuser,$dbpass);
+		$db = lmbdb_pconnect($database,$dbuser,$dbpass);
 	}
 	if($db){return $db;}
-	else{echo("<h1>Database connection failed</h1><p>($dsn)<BR>".odbc_errormsg()."</p>"); return false;}
+	else{echo("<h1>Database connection failed</h1><p>($dsn)<BR>".lmbdb_errormsg()."</p>"); return false;}
 }
 
 /**
@@ -211,8 +211,8 @@ function postgres_dbf_7($p){
  */
 function postgres_dbf_8($db,$p){
 
-	$rs = odbc_exec($db,"SELECT NEXTVAL('".dbf_4($p)."') AS NEXTSEQ") or errorhandle(odbc_errormsg($db),$prepare_string,"get next sequence",$FILE,$LINE);
-	return odbc_result($rs,"NEXTSEQ");
+	$rs = lmbdb_exec($db,"SELECT NEXTVAL('".dbf_4($p)."') AS NEXTSEQ") or errorhandle(lmbdb_errormsg($db),$prepare_string,"get next sequence",$FILE,$LINE);
+	return lmbdb_result($rs,"NEXTSEQ");
 }
 
 /**

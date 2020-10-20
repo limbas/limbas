@@ -168,11 +168,15 @@ if($ffilter_dublicates){
 # ------------- Suchmaschienen Indexsuche ------------------
 
 if(isset($ffilter_content)){
-	$ffilter["content"][$fid] = lmb_substr(str_replace("\"","",$ffilter_content),0,100);
+	$ffilter["content"][$fid] = lmb_substr(str_replace("\"","",trim($ffilter_content)),0,100);
 }
 
 # ------------- Bei Exploreransicht Inhaltssuche leeren ------------------
 if($ffilter["viewmode"][$fid] == 1){$ffilter["content"][$fid] = null;}
+
+if ($ffilter_fts_search_mode) {
+    $ffilter['fts_search_mode'][$fid] = $ffilter_fts_search_mode;
+}
 
 if($ffilter_content_cs == "true"){
 	$ffilter["content_cs"][$fid] = 1;
@@ -431,7 +435,7 @@ if($storage_folder AND $session['superadmin']){
     }
     
 	$sqlquery = "UPDATE LDMS_STRUCTURE SET PATH = '".parse_db_string($storage_folder)."' WHERE ID = $LID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 	get_filestructure(1);
 	flag_filestructure();
         
@@ -439,13 +443,13 @@ if($storage_folder AND $session['superadmin']){
     $subdirs = get_subdir($LID, 1);
     if (is_array($subdirs)) {
         $sqlquery1 = "SELECT SECNAME,EXT FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND LDMS_FILES.LEVEL IN (" . implode(',', $subdirs) . ')';
-        $rs1 = odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+        $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
         if (! $rs1) {
             $commit = 1;
         }
-        while (odbc_fetch_row($rs1)) {
-            if (file_exists($umgvar["uploadpfad"] . $old_path . odbc_result($rs1, "SECNAME") . "." . odbc_result($rs1, "EXT"))) {
-                rename($umgvar["uploadpfad"] . $old_path . odbc_result($rs1, "SECNAME") . "." . odbc_result($rs1, "EXT"), $umgvar["uploadpfad"] . $new_path . odbc_result($rs1, "SECNAME") . "." . odbc_result($rs1, "EXT"));
+        while (lmbdb_fetch_row($rs1)) {
+            if (file_exists($umgvar["uploadpfad"] . $old_path . lmbdb_result($rs1, "SECNAME") . "." . lmbdb_result($rs1, "EXT"))) {
+                rename($umgvar["uploadpfad"] . $old_path . lmbdb_result($rs1, "SECNAME") . "." . lmbdb_result($rs1, "EXT"), $umgvar["uploadpfad"] . $new_path . lmbdb_result($rs1, "SECNAME") . "." . lmbdb_result($rs1, "EXT"));
             }
         }
     }
@@ -461,7 +465,7 @@ if ($externalStorageID AND is_numeric($externalStorageID) AND $session['superadm
 
     # update in db
     $sqlquery = 'UPDATE LDMS_STRUCTURE SET storage_id=' . $externalStorageID . ' WHERE id=' . $LID;
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 
     # update in session
     if ($rs) {

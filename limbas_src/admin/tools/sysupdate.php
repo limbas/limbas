@@ -30,12 +30,12 @@ ob_implicit_flush();
 $sqlquery = "SELECT LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.TAB_ID,LMB_CONF_TABLES.BESCHREIBUNG,LMB_RULES_TABLES.SPECIFICPRIVILEGE 
 FROM LMB_CONF_TABLES,LMB_RULES_TABLES 
 WHERE LMB_RULES_TABLES.TAB_ID = LMB_CONF_TABLES.TAB_ID AND GROUP_ID = ".$session["group_id"]." AND LMB_CONF_TABLES.USERRULES = ".LMB_DBDEF_TRUE;
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-	$gtabsid = odbc_result($rs,"TAB_ID");
-	$gtabs["tablename"][$gtabsid] = odbc_result($rs,"TABELLE");
-	$gtabs["tabledesc"][$gtabsid] = odbc_result($rs,"BESCHREIBUNG");
-	if(odbc_result($rs,"SPECIFICPRIVILEGE")){$gtabs["specific_userrules"][$gtabsid] = 1;}
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+	$gtabsid = lmbdb_result($rs,"TAB_ID");
+	$gtabs["tablename"][$gtabsid] = lmbdb_result($rs,"TABELLE");
+	$gtabs["tabledesc"][$gtabsid] = lmbdb_result($rs,"BESCHREIBUNG");
+	if(lmbdb_result($rs,"SPECIFICPRIVILEGE")){$gtabs["specific_userrules"][$gtabsid] = 1;}
 }
 
 # -------------------- Standard Ordner anlegen ---------------
@@ -44,10 +44,10 @@ function createDefaultDirs(){
 	global $db;
 
 	$sqlquery = "SELECT USER_ID,GROUP_ID,USERNAME FROM LMB_USERDB WHERE DEL = ".LMB_DBDEF_FALSE;
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs){$commit = 1;}
-	while(odbc_fetch_row($rs)){
-		create_default_dir(odbc_result($rs,"USER_ID"),odbc_result($rs,"USER_ID"),odbc_result($rs,"USERNAME"));
+	while(lmbdb_fetch_row($rs)){
+		create_default_dir(lmbdb_result($rs,"USER_ID"),lmbdb_result($rs,"USER_ID"),lmbdb_result($rs,"USERNAME"));
 	}
 }
 
@@ -62,33 +62,33 @@ function create_default_dir($userid,$groupid,$username){
 
 	# Öffentlicher Ordner
 	$sqlquery = "SELECT ID FROM LDMS_STRUCTURE WHERE ERSTUSER = 1 AND TYP = 1 AND FIX = ".LMB_DBDEF_TRUE." AND LEVEL = 0";
-	$rs0 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs0 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs0){$commit = 1;}
-	if(!odbc_result($rs0,"ID")){
+	if(!lmbdb_result($rs0,"ID")){
 
 		$sqlquery = "INSERT INTO LDMS_STRUCTURE (ID,NAME,LEVEL,ERSTUSER,ERSTGROUP,TYP,FIX,FIELD_ID,TAB_ID) VALUES ($NEXTID,'$lang[813]',0,1,$groupid,1,".LMB_DBDEF_TRUE.",0,0)";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs){$commit = 1;}
 		$sqlquery = "INSERT INTO LDMS_RULES (ID,GROUP_ID,FILE_ID,LMVIEW,LMADD,DEL,ADDF,EDIT) VALUES ($NEXTRID,1,$NEXTID,".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.")";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs){$commit = 1;}
 		$info .= ".. public folder created for user <b>$username</b><br>";
 
 		# Dokumente
 		$sqlquery = "INSERT INTO LDMS_STRUCTURE (ID,NAME,LEVEL,ERSTUSER,ERSTGROUP,TYP,FIX,FIELD_ID,TAB_ID) VALUES (".($NEXTID+1).",'$lang[1705]',$NEXTID,1,$groupid,1,".LMB_DBDEF_FALSE.",0,0)";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		$NEXTRID++;
 		$sqlquery = "INSERT INTO LDMS_RULES (ID,GROUP_ID,FILE_ID,LMVIEW,LMADD,DEL,ADDF,EDIT) VALUES ($NEXTRID,1,".($NEXTID+1).",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.")";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs){$commit = 1;}
 		$info .= ".. document folder created for user <b>$username</b><br>";
 
 		# Bilder
 		$sqlquery = "INSERT INTO LDMS_STRUCTURE (ID,NAME,LEVEL,ERSTUSER,ERSTGROUP,TYP,FIX,FIELD_ID,TAB_ID) VALUES (".($NEXTID+2).",'$lang[1706]',$NEXTID,1,$groupid,1,".LMB_DBDEF_FALSE.",0,0)";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		$NEXTRID++;
 		$sqlquery = "INSERT INTO LDMS_RULES (ID,GROUP_ID,FILE_ID,LMVIEW,LMADD,DEL,ADDF,EDIT) VALUES ($NEXTRID,1,".($NEXTID+2).",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.")";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs){$commit = 1;}
 		$info .= ".. picture folder created <b>$username</b><br>";
 	}
@@ -97,11 +97,11 @@ function create_default_dir($userid,$groupid,$username){
 
 	# Eigene Dateien
 	$sqlquery = "SELECT ID FROM LDMS_STRUCTURE WHERE ERSTUSER = $userid AND TYP = 4 AND FIX = ".LMB_DBDEF_TRUE." AND LEVEL = 0";
-	$rs0 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs0 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs0){$commit = 1;}
-	if(!odbc_result($rs0,"ID")){
+	if(!lmbdb_result($rs0,"ID")){
 		$sqlquery = "INSERT INTO LDMS_STRUCTURE (ID,NAME,LEVEL,ERSTUSER,ERSTGROUP,TYP,FIX,TAB_ID,SORT) VALUES ($NEXTID,'$lang[812]',0,".$userid.",".$groupid.",4,".LMB_DBDEF_TRUE.",0,2)";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs){$commit = 1;}
 		$NEXTRID++;
 		$info .= ".. user folder created for user <b>$username</b><br>";
@@ -159,17 +159,19 @@ if($umgvar["lock"]){
 if($locking){
 	if($syslock){
 		$sqlquery = "UPDATE LMB_UMGVAR SET NORM = 1 WHERE FORM_NAME = 'lock'";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-		$user_lock = "CHECKED";
-		$sqlquery = "UPDATE LMB_SESSION SET LOGOUT = ".LMB_DBDEF_TRUE." WHERE USER_ID != ".$session["user_id"];
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		#$sqlquery = "UPDATE LMB_SESSION SET LOGOUT = ".LMB_DBDEF_TRUE." WHERE USER_ID != ".$session["user_id"];
+		#$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+		$sqlquery = "DELETE FROM LMB_SESSION WHERE USER_ID != ".$session["user_id"];
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 		$user_lock = "CHECKED";
 		$_SESSION["umgvar"]["lock"] = 1;
 	}else{
 		$sqlquery = "UPDATE LMB_UMGVAR SET NORM = 0 WHERE FORM_NAME = 'lock'";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		$user_lock = "";
 		$_SESSION["umgvar"]["lock"] = 0;
 	}
@@ -196,130 +198,124 @@ if($newsystem){
 	}
 
 	# systemtabellen leeren
-	$sqlquery = "DELETE FROM ACTION_DEPEND";
-	$rs = odbc_exec($db,$sqlquery);
+	$sqlquery = "DELETE FROM LMB_ACTION_DEPEND";
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_ATTRIBUTE_D";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_ATTRIBUTE_P";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_ATTRIBUTE_W";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_CHARTS";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_CONF_FIELDS";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_CONF_GROUPS";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_CONF_TABLES";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_CONF_VIEWS";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_CONF_VIEWFIELDS";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_CRONTAB";
-	$rs = odbc_exec($db,$sqlquery);
-	$sqlquery = "DELETE FROM LMB_ERRORS";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_FONTS";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_FORMS";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_FORM_LIST";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_GROUPS WHERE GROUP_ID != 1";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_GTAB_GROUPDAT";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_GTAB_PATTERN";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_GTAB_ROWSIZE";
-	$rs = odbc_exec($db,$sqlquery);
-	$sqlquery = "DELETE FROM LMB_GTAB_STATUS";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_REMINDER";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_REMINDER_LIST";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_HISTORY_ACTION";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_HISTORY_BACKUP";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_HISTORY_UPDATE";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_HISTORY_USER";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_INDIZE_D";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_INDIZE_DS";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_INDIZE_F";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_INDIZE_FS";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_INDIZE_HISTORY";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_INDIZE_W";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_LANG_DEPEND";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_REPORTS";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_REPORT_LIST";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_RULES_ACTION WHERE GROUP_ID != 1";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_RULES_DATASET";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_RULES_FIELDS";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_RULES_REPFORM";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_RULES_TABLES";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_SELECT_D";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_SELECT_P";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_SELECT_W";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_SESSION";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_SNAP";
-	$rs = odbc_exec($db,$sqlquery);
-	$sqlquery = "DELETE FROM LMB_SNAP_ARCHIVE";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_SNAP_SHARED";
-	$rs = odbc_exec($db,$sqlquery);
-	$sqlquery = "DELETE FROM LMB_TABSCHEME";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_TABLETREE";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_TRIGGER";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
+    $sqlquery = "DELETE FROM LMB_CUSTVAR";
+    $rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_USERDB WHERE USER_ID != 1";
-	$rs = odbc_exec($db,$sqlquery);
-	$sqlquery = "DELETE FROM LMB_USER_COLORS WHERE USER_ID != 1";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
+	$sqlquery = "DELETE FROM LMB_USER_COLORS WHERE USERID != 1";
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_USRGRP_LST";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_REVISION";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_WFL";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_WFL_HISTORY";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_WFL_INST";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_WFL_TASK";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LDMS_FAVORITES";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LDMS_RULES";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LDMS_STRUCTURE";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "UPDATE LMB_ACTION SET EXTENSION = ''";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 
 	lmb_dropTable('LDMS_FILES');
 	lmb_dropTable('LDMS_META');
@@ -330,6 +326,9 @@ if($newsystem){
 	
 	# Dateisystem neu anlegen für User 1
 	createDefaultDirs();
+
+    # Eigene globale Variablen Tabelle anlegen
+    create_custvar_table();
 
 	# Menürechte neu einlesen für User 1
 	#$check_all = 1;
@@ -354,11 +353,11 @@ function create_default_files(){
 
 	# Alte Tabellen löschen
 	$sqlquery = "SELECT TAB_ID,TABELLE,TAB_GROUP FROM LMB_CONF_TABLES WHERE UPPER(TABELLE) LIKE 'LDMS_%'";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)){
-		if(lmb_strtoupper(odbc_result($rs,"TABELLE")) == lmb_strtoupper("LDMS_FILES")){delete_tab(odbc_result($rs,"TAB_ID"));}
-		elseif(lmb_strtoupper(odbc_result($rs,"TABELLE")) == lmb_strtoupper("LDMS_META")){delete_tab(odbc_result($rs,"TAB_ID"));}
-		$tab_group = odbc_result($rs,"TAB_GROUP");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+		if(lmb_strtoupper(lmbdb_result($rs,"TABELLE")) == lmb_strtoupper("LDMS_FILES")){delete_tab(lmbdb_result($rs,"TAB_ID"));}
+		elseif(lmb_strtoupper(lmbdb_result($rs,"TABELLE")) == lmb_strtoupper("LDMS_META")){delete_tab(lmbdb_result($rs,"TAB_ID"));}
+		$tab_group = lmbdb_result($rs,"TAB_GROUP");
 	}
 	
 	$odbc_table = dbf_20(array($DBA["DBSCHEMA"],"LDMS_%","'TABLE'"));
@@ -377,9 +376,9 @@ function create_default_files(){
 
 	# Gruppe anlegen
 	$sqlquery = "SELECT * FROM LMB_CONF_GROUPS WHERE ID = $tab_group";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_fetch_row($rs)){
-	    $group_id = odbc_result($rs,"ID");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_fetch_row($rs)){
+	    $group_id = lmbdb_result($rs,"ID");
 	}else{
 	    $group_id = add_tabgroup("Limbassys","Limbas Systemtabellen");
 	}
@@ -423,6 +422,31 @@ function get_lockmessage(){
 	}
 }
 
+function create_custvar_table(){
+    global $db;
+
+    require_once("admin/tables/tab.lib");
+
+    lmb_dropTable('LMB_CUSTVAR_DEPEND');
+
+    $tab_group = 0;
+    $sqlquery = "SELECT TAB_GROUP FROM LMB_CONF_TABLES WHERE UPPER(TABELLE) LIKE 'LDMS_%' LIMIT 1";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs)){
+        $tab_group = lmbdb_result($rs,"TAB_GROUP");
+    }
+
+    if($tab_group){
+        # Tabelle LMB_CUSTVAR_DEPEND anlegen
+        if($tab_id = add_tab("LMB_CUSTVAR_DEPEND",$tab_group,"Custom Vars",0,3,1)){
+            # Felder anlegen
+            $nfield = extended_fields_custvar();
+            add_extended_fields($nfield,$tab_id[0],1);
+        }
+    }
+
+}
+
 /*
 
 # already done in gtab_array.lib (SNAP_loadInSession)
@@ -432,10 +456,10 @@ function snaprefresh(){
 	require_once("extra/snapshot/snapshot.lib");
 
 	$sqlquery = "SELECT * FROM LMB_SNAP";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-	while(odbc_fetch_row($rs)){
-		$snapfilter = SNAP_revalidate(odbc_result($rs,"FILTER"),odbc_result($rs,"TABID"),odbc_result($rs,"ID"));
+	while(lmbdb_fetch_row($rs)){
+		$snapfilter = SNAP_revalidate(lmbdb_result($rs,"FILTER"),lmbdb_result($rs,"TABID"),lmbdb_result($rs,"ID"));
 	}
 }
 */
@@ -446,7 +470,7 @@ function drulesReset($tabid){
 	if(!is_numeric($tabid)){return false;}
 	
 	$sqlquery = "DELETE FROM LMB_RULES_DATASET WHERE TABID = $tabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs){$commit = 1;}
 
 	if(!$commit){return true;}else{return false;}
@@ -461,10 +485,10 @@ function specificUserrules($tabid){
 	require_once("gtab/gtab.lib");
 	
 	$sqlquery = "SELECT ID FROM ".$gtabs["tablename"][$tabid];
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs){$commit = 1;}
-	while(odbc_fetch_row($rs)){
-		$rec[] = odbc_result($rs,"ID");
+	while(lmbdb_fetch_row($rs)){
+		$rec[] = lmbdb_result($rs,"ID");
 	}
 	if(!add_GtabUserRules($tabid,$rec,array(null,"g","v",null,2),1)){$commit = 1;}
 	
@@ -477,32 +501,32 @@ function resortSelect(){
 	global $db;
 	
 	$sqlquery = "SELECT ID FROM LMB_SELECT_P";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$sqlquery1 = "SELECT ID FROM LMB_SELECT_W WHERE POOL = ".odbc_result($rs, "ID")." ORDER BY LEVEL,SORT";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
+		$sqlquery1 = "SELECT ID FROM LMB_SELECT_W WHERE POOL = ".lmbdb_result($rs, "ID")." ORDER BY LEVEL,SORT";
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 		$NEXTID=1;
-		while(odbc_fetch_row($rs1)) {
-			$sqlquery2 = "UPDATE LMB_SELECT_W SET SORT = $NEXTID WHERE ID = ".odbc_result($rs1, "ID");
-			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs1)) {
+			$sqlquery2 = "UPDATE LMB_SELECT_W SET SORT = $NEXTID WHERE ID = ".lmbdb_result($rs1, "ID");
+			$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 			if(!$rs2) {$commit = 1;}
 			$NEXTID++;
 		}
 	}
 
 	$sqlquery = "SELECT ID FROM LMB_ATTRIBUTE_P";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$sqlquery1 = "SELECT ID FROM LMB_ATTRIBUTE_W WHERE POOL = ".odbc_result($rs, "ID")." ORDER BY LEVEL,SORT";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
+		$sqlquery1 = "SELECT ID FROM LMB_ATTRIBUTE_W WHERE POOL = ".lmbdb_result($rs, "ID")." ORDER BY LEVEL,SORT";
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 		$NEXTID=1;
-		while(odbc_fetch_row($rs1)) {
-			$sqlquery2 = "UPDATE LMB_ATTRIBUTE_W SET SORT = $NEXTID WHERE ID = ".odbc_result($rs1, "ID");
-			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs1)) {
+			$sqlquery2 = "UPDATE LMB_ATTRIBUTE_W SET SORT = $NEXTID WHERE ID = ".lmbdb_result($rs1, "ID");
+			$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 			if(!$rs2) {$commit = 1;}
 			$NEXTID++;
 		}
@@ -534,7 +558,7 @@ if($drules_reset){
 
 if($sessiondel){
 	$sqlquery = "DELETE FROM LMB_SESSION";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	ini_set('soap.wsdl_cache_ttl', 1);
 }
 
@@ -580,7 +604,7 @@ if($delete_files){
 
 if($refresh_thumps){
 	$sqlquery = "UPDATE LDMS_FILES SET THUMB_OK = TRUE";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 if($refresh_procedures){

@@ -24,24 +24,24 @@ function lmb_getCustmenu(){
     global $lang;
 
     $sqlquery = "SELECT * FROM LMB_CUSTMENU ORDER BY LINKID,PARENT,SORT";
-    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     $custmenu = array();
 
-    while (odbc_fetch_row($rs)) {
+    while (lmbdb_fetch_row($rs)) {
 
-        $key = odbc_result($rs, 'ID');
-        $LINKID = odbc_result($rs, 'LINKID');
+        $key = lmbdb_result($rs, 'ID');
+        $LINKID = lmbdb_result($rs, 'LINKID');
 
         $custmenu[$LINKID]['id'][$key] = $key;
-        $custmenu[$LINKID]['parent'][$key] = odbc_result($rs, 'PARENT');
-        $custmenu[$LINKID]['typ'][$key] = odbc_result($rs, 'TYP');
-        $custmenu[$LINKID]['name'][$key] = odbc_result($rs, 'NAME');
-        $custmenu[$LINKID]['title'][$key] = odbc_result($rs, 'TITLE');
-        $custmenu[$LINKID]['linkid'][$key] = odbc_result($rs, 'LINKID');
-        $custmenu[$LINKID]['sort'][$key] = odbc_result($rs, 'SORT');
-        $custmenu[$LINKID]['url'][$key] = odbc_result($rs, 'URL');
-        $custmenu[$LINKID]['icon'][$key] = odbc_result($rs, 'ICON');
-        $custmenu[$LINKID]['bg'][$key] = odbc_result($rs, 'BG');
+        $custmenu[$LINKID]['parent'][$key] = lmbdb_result($rs, 'PARENT');
+        $custmenu[$LINKID]['typ'][$key] = lmbdb_result($rs, 'TYP');
+        $custmenu[$LINKID]['name'][$key] = lmbdb_result($rs, 'NAME');
+        $custmenu[$LINKID]['title'][$key] = lmbdb_result($rs, 'TITLE');
+        $custmenu[$LINKID]['linkid'][$key] = lmbdb_result($rs, 'LINKID');
+        $custmenu[$LINKID]['sort'][$key] = lmbdb_result($rs, 'SORT');
+        $custmenu[$LINKID]['url'][$key] = lmbdb_result($rs, 'URL');
+        $custmenu[$LINKID]['icon'][$key] = lmbdb_result($rs, 'ICON');
+        $custmenu[$LINKID]['bg'][$key] = lmbdb_result($rs, 'BG');
 
     }
 

@@ -99,14 +99,14 @@ if(($rebuild OR $delete) AND $useindex){
 		if(!$indname OR !$indt OR !$indf){continue;}
 		# drop index
 		$sqlquery = dbq_5(array($DBA["DBSCHEMA"],$indname,$indt));
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if($rs){lmb_alert("index $indname deleted");}
 		
 		if($rebuild){
 			# create index
 			$indname = dbf_4("LMBINDV_".lmb_substr(md5($indt."_".$indf),0,12));
 			$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$indt,$indf));
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if($rs){lmb_alert("index $indname created");}
 		}
 	}
@@ -118,14 +118,14 @@ echo "<TABLE ID=\"tab1\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" clas
 
 # get indexes
 $sqlquery = dbq_2(array($DBA["DBSCHEMA"],null,null,1));
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 $bzm = 1;
-while(odbc_fetch_row($rs)) {
-	$ind["name"][] = odbc_result($rs,"INDEXNAME");
-	$ind["table"][] = odbc_result($rs,"TABLENAME");
-	$ind["used"][] = odbc_result($rs,"INDEX_USED");
-	$ind["column"][] = odbc_result($rs,"COLUMNNAME");
-	$ind["unique"][] = odbc_result($rs,"IS_UNIQUE");
+while(lmbdb_fetch_row($rs)) {
+	$ind["name"][] = lmbdb_result($rs,"INDEXNAME");
+	$ind["table"][] = lmbdb_result($rs,"TABLENAME");
+	$ind["used"][] = lmbdb_result($rs,"INDEX_USED");
+	$ind["column"][] = lmbdb_result($rs,"COLUMNNAME");
+	$ind["unique"][] = lmbdb_result($rs,"IS_UNIQUE");
 	$bzm1++;
 }
 $ind["key"] = $ind["name"];

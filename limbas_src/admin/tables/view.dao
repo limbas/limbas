@@ -39,15 +39,15 @@ function lmb_getViewFieldtypes(){
 	global $db;
 
 	$sqlquery = "SELECT * FROM LMB_FIELD_TYPES ORDER BY SORT";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	unset($result_type);
-	while(odbc_fetch_row($rs)) {
-	        $fid = odbc_result($rs, "ID");
-	        $field_types["beschreibung"][$fid] = odbc_result($rs, "DATA_TYPE_EXP");
-	        $field_types["size"][$fid] = odbc_result($rs, "SIZE");
-	        $field_types["data_type"][$fid] = odbc_result($rs, "DATA_TYPE");
-	        $field_types["field_type"][$fid] = odbc_result($rs, "FIELD_TYPE");
-	        $field_types["hassize"][$fid] = odbc_result($rs, "HASSIZE");
+	while(lmbdb_fetch_row($rs)) {
+	        $fid = lmbdb_result($rs, "ID");
+	        $field_types["beschreibung"][$fid] = lmbdb_result($rs, "DATA_TYPE_EXP");
+	        $field_types["size"][$fid] = lmbdb_result($rs, "SIZE");
+	        $field_types["data_type"][$fid] = lmbdb_result($rs, "DATA_TYPE");
+	        $field_types["field_type"][$fid] = lmbdb_result($rs, "FIELD_TYPE");
+	        $field_types["hassize"][$fid] = lmbdb_result($rs, "HASSIZE");
 	}
 	
 	return $field_types;
@@ -65,24 +65,24 @@ function lmb_QuestDeleteConfig($tabid,$fieldid=null){
 	
 	# drop language
 	$sqlquery =  "SELECT DISTINCT MD5TAB,SPELLING,BESCHREIBUNG,DATA_TYPE,VERKNTABLETYPE FROM LMB_CONF_FIELDS WHERE TAB_ID = $tabid $sqlfield";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$sqlquery1 = "DELETE FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = ".parse_db_int(odbc_result($rs,"SPELLING"))." OR ELEMENT_ID = ".parse_db_int(odbc_result($rs,"BESCHREIBUNG"));
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
+		$sqlquery1 = "DELETE FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = ".parse_db_int(lmbdb_result($rs,"SPELLING"))." OR ELEMENT_ID = ".parse_db_int(lmbdb_result($rs,"BESCHREIBUNG"));
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 	}
 	# drop old config
 	$sqlquery = "DELETE FROM LMB_CONF_FIELDS WHERE TAB_ID = $tabid $sqlfield";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	# drop old rules
 	$sqlquery = "DELETE FROM LMB_RULES_FIELDS WHERE TAB_ID = $tabid $sqlfield";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
 	$sqlquery = "UPDATE LMB_CONF_VIEWS SET ISPUBLIC = ".LMB_DBDEF_FALSE." WHERE ID = $tabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
 }
@@ -93,8 +93,8 @@ function lmb_QuestOptions($viewid,$options){
 
 	if($options['params']){$options['params'] = serialize($options['params']);}
 
-	$sqlquery = "UPDATE LMB_CONF_TABLES SET EVENT = '".parse_db_blob($options['event'])."', PARAMS2 = '".parse_db_blob($options['params'])."' WHERE TAB_ID = $viewid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$sqlquery = "UPDATE LMB_CONF_TABLES SET EVENT = '".parse_db_string($options['event'])."', PARAMS2 = '".parse_db_string($options['params'])."' WHERE TAB_ID = $viewid";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	
 }
@@ -114,9 +114,9 @@ function lmb_QuestConfig($viewid,$view_group,$view_name){
 	// get view name
     if(!$view_name) {
         $sqlquery = "SELECT TABELLE,TAB_GROUP FROM LMB_CONF_TABLES WHERE TAB_ID = $viewid";
-        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-        $view_name = odbc_result($rs, "TABELLE");
-        $view_group = odbc_result($rs, "TAB_GROUP");
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        $view_name = lmbdb_result($rs, "TABELLE");
+        $view_group = lmbdb_result($rs, "TAB_GROUP");
     }
 
 	$field = dbf_5(array($DBA["DBSCHEMA"],$view_name));
@@ -125,19 +125,19 @@ function lmb_QuestConfig($viewid,$view_group,$view_name){
 	# old conf values
 	$cfield = array();
 	$sqlquery = "SELECT ID,FIELD_ID,TAB_ID,FIELD_NAME FROM LMB_CONF_FIELDS WHERE TAB_ID = $viewid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)){
-		if(!in_array(dbf_4(odbc_result($rs,"FIELD_NAME")),$field["columnname_lower"])){
+	while(lmbdb_fetch_row($rs)){
+		if(!in_array(dbf_4(lmbdb_result($rs,"FIELD_NAME")),$field["columnname_lower"])){
 			# drop old conf value if not exist
-			lmb_QuestDeleteConfig($viewid,odbc_result($rs,"FIELD_ID"));
+			lmb_QuestDeleteConfig($viewid,lmbdb_result($rs,"FIELD_ID"));
 		}else{
-			$cfield[] = dbf_4(odbc_result($rs,"FIELD_NAME"));
+			$cfield[] = dbf_4(lmbdb_result($rs,"FIELD_NAME"));
 		}
 	}
 	
 	$next_confid = next_db_id("LMB_CONF_FIELDS");
-	$next_ruleid = next_db_id("LMB_RULES_FIELDS");
+	#$next_ruleid = next_db_id("LMB_RULES_FIELDS");
 	$sort = 0;
 	
 	foreach ($field["columnname"] as $key => $value){
@@ -146,7 +146,7 @@ function lmb_QuestConfig($viewid,$view_group,$view_name){
 		# skip if already exist
 		if(in_array(dbf_4($value),$cfield)){
 			$sqlquery = "UPDATE LMB_CONF_FIELDS SET SORT = $sort WHERE TAB_ID = $viewid AND FIELD_NAME = '$value'";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 			continue;
 		}
@@ -164,27 +164,31 @@ function lmb_QuestConfig($viewid,$view_group,$view_name){
 		
 		$sqlquery = "INSERT INTO LMB_CONF_FIELDS (ID,FIELD_ID,TAB_ID,TAB_GROUP,SORT,FIELD_NAME,FORM_NAME,BESCHREIBUNG,SPELLING,FIELD_TYPE,DATA_TYPE,FIELD_SIZE,NEED) VALUES
 			($next_confid,$next_fieldid,$viewid,$view_group,$sort,'".lmb_strtoupper(parse_db_string($value))."','".lmb_strtolower(parse_db_string($value))."',".parse_db_int($description_id).",".parse_db_int($spellingf_id).",".$field_type.",".$data_type.",".parse_db_int($field_size).",".LMB_DBDEF_FALSE.")";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 
 		$group_id = $session["group_id"];
 		if($group_id == 1){$bool = LMB_DBDEF_TRUE;}else{$bool = LMB_DBDEF_FALSE;}
-		
+
+		/*
 		$sqlquery = "INSERT INTO LMB_RULES_FIELDS (ID,GROUP_ID,TAB_GROUP,TAB_ID,FIELD_ID,LMVIEW,EDIT,COPY,COLOR,FILTER,SORT) VALUES 
 			($next_ruleid,$group_id,$view_group,$viewid,$next_fieldid,$bool,$bool,$bool,'','',0)";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		
-		$next_ruleid++;
+		*/
+		#$next_ruleid++;
 		$next_confid++;
 	}
 
 	// set rules to admin
 	//check_grouprights1($session['group_id'],null,null,$viewid);
 
+    // set group rights
+    check_grouprights1All(null,$viewid);
 
+	// update view params
 	$sqlquery = "UPDATE LMB_CONF_VIEWS SET ISPUBLIC = ".LMB_DBDEF_TRUE." WHERE ID = $viewid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 	if($commit){
 	    lmb_EndTransaction(0);
@@ -245,7 +249,7 @@ function lmb_saveViewDefinition($viewid,$view_def,$isvalid=null,$setManually=nul
     }
 
     $prepare_string = "UPDATE LMB_CONF_VIEWS SET $isvalid_ $setManually VIEWDEF = ? WHERE ID = $viewid";
-	if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($view_def)),__FILE__,__LINE__)){$commit = 1;}
+	if(!lmb_PrepareSQL($prepare_string,array($view_def),__FILE__,__LINE__)){$commit = 1;}
 
 }
 
@@ -254,9 +258,9 @@ function lmb_deleteView($view_name){
     global $db;
 
     $sqlquery = dbq_20(array($view_name));
-    $rs = odbc_exec($db,$sqlquery) or $error = str_replace("\n","\\n",odbc_errormsg($db));
+    $rs = lmbdb_exec($db,$sqlquery) or $error = str_replace("\n","\\n",lmbdb_errormsg($db));
     if(!$rs) {
-        errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         lmb_alert($error);
         return false;
     }
@@ -270,13 +274,13 @@ function lmb_precheckView($viewid,$view_def){
     // replace params if exists
 	$view_def = lmb_paramTransView($viewid,$view_def);
 
-    $rs = odbc_exec($db,$view_def);
-	$error = str_replace("\n","\\n",odbc_errormsg($db));
+    $rs = lmbdb_exec($db,$view_def);
+	$error = str_replace("\n","\\n",lmbdb_errormsg($db));
 	if(!$rs AND $view_def){lmb_alert($error);return false;}
 
 	// mark checked as true
 	$sqlquery = "UPDATE LMB_CONF_VIEWS SET ISVALID = ".LMB_DBDEF_TRUE." WHERE ID = $viewid" ;
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
     return true;
 }
@@ -299,9 +303,9 @@ function lmb_createQuestView($viewid,$view_def,$view_public=null,$view_drop=null
 
 	// get view name
 	$sqlquery = "SELECT TABELLE,TAB_GROUP FROM LMB_CONF_TABLES WHERE TAB_ID = $viewid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$view_name = odbc_result($rs,"TABELLE");
-	$view_group = odbc_result($rs,"TAB_GROUP");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$view_name = lmbdb_result($rs,"TABELLE");
+	$view_group = lmbdb_result($rs,"TAB_GROUP");
 	
 	// drop view
 	if($view_drop){
@@ -321,22 +325,22 @@ function lmb_createQuestView($viewid,$view_def,$view_public=null,$view_drop=null
 
 	// try to create or replace view
 	$sqlquery = dbq_19(array($view_name,$view_def_));
-	#$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$rs = odbc_exec($db,$sqlquery) or $error = str_replace("\n","\\n",odbc_errormsg($db));
+	#$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or $error = str_replace("\n","\\n",lmbdb_errormsg($db));
 
 	// drop view first if failed
 	if(!$rs AND $view_replace){
 	    $error = '';
 	    if(!lmb_deleteView($view_name)){return false;}
 	    // try to create view again
-        $rs = odbc_exec($db,$sqlquery) or $error = str_replace("\n","\\n",odbc_errormsg($db));
+        $rs = lmbdb_exec($db,$sqlquery) or $error = str_replace("\n","\\n",lmbdb_errormsg($db));
 	    if(!$rs) {
-	        errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	        errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	        lmb_alert($error);
 	        return false;
 	    }
 	}elseif(!$rs){
-        errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	    lmb_alert($error);
 	    return false;
     }
@@ -434,7 +438,7 @@ function lmb_createQuestRelation($viewid,$relationstring,$addrelation=null,$sett
 	}
 
 	$prepare_string = "UPDATE LMB_CONF_VIEWS SET RELATION = ? WHERE ID = $viewid";
-	if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($relation)),__FILE__,__LINE__)){$commit = 1;}
+	if(!lmb_PrepareSQL($prepare_string,array($relation),__FILE__,__LINE__)){$commit = 1;}
 
 	return $relation;
 	
@@ -445,18 +449,18 @@ function lmb_getQuestValue($viewid){
     global $DBA;
 
 	$sqlquery = "SELECT LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.EVENT,LMB_CONF_TABLES.PARAMS2,LMB_CONF_VIEWS.VIEWDEF,LMB_CONF_VIEWS.ISPUBLIC,LMB_CONF_VIEWS.HASID,LMB_CONF_VIEWS.USESYSTABS,LMB_CONF_VIEWS.RELATION,LMB_CONF_VIEWS.ISVALID,LMB_CONF_VIEWS.SETMANUALLY FROM LMB_CONF_VIEWS,LMB_CONF_TABLES WHERE LMB_CONF_VIEWS.ID = LMB_CONF_TABLES.TAB_ID AND LMB_CONF_TABLES.TAB_ID = ".parse_db_int($viewid);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	if(odbc_fetch_row($rs)){
-		$gview["viewdef"] = odbc_result($rs,"VIEWDEF");
-		$gview["ispublic"] = odbc_result($rs,"ISPUBLIC");
-		$gview["viewname"] = odbc_result($rs,"TABELLE");
-		$gview["relationstring"] = odbc_result($rs,"RELATION");
-		$gview["showsystabs"] = odbc_result($rs,"USESYSTABS");
-		$gview["event"] = odbc_result($rs,"EVENT");
-        $gview["isvalid"] = odbc_result($rs,"ISVALID");
-        $gview["setManually"] = odbc_result($rs,"SETMANUALLY");
-		if($gview["params"] = odbc_result($rs,"PARAMS2")){
+	if(lmbdb_fetch_row($rs)){
+		$gview["viewdef"] = lmbdb_result($rs,"VIEWDEF");
+		$gview["ispublic"] = lmbdb_result($rs,"ISPUBLIC");
+		$gview["viewname"] = lmbdb_result($rs,"TABELLE");
+		$gview["relationstring"] = lmbdb_result($rs,"RELATION");
+		$gview["showsystabs"] = lmbdb_result($rs,"USESYSTABS");
+		$gview["event"] = lmbdb_result($rs,"EVENT");
+        $gview["isvalid"] = lmbdb_result($rs,"ISVALID");
+        $gview["setManually"] = lmbdb_result($rs,"SETMANUALLY");
+		if($gview["params"] = lmbdb_result($rs,"PARAMS2")){
 		    $gview["params"] = unserialize($gview["params"]);
         }
 
@@ -476,20 +480,20 @@ function lmb_getQuestFields($viewid){
 	global $db;
 	
 	$sqlquery = "SELECT * FROM LMB_CONF_VIEWFIELDS WHERE VIEWID = ".parse_db_int($viewid)." ORDER BY SORT";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)){
-		$key = odbc_result($rs,"ID");
-		$fieldname = odbc_result($rs,"QFIELD");
-		$gviewfields["id"][$key] = odbc_result($rs,"TABLENAME")."_".$fieldname;
+	while(lmbdb_fetch_row($rs)){
+		$key = lmbdb_result($rs,"ID");
+		$fieldname = lmbdb_result($rs,"QFIELD");
+		$gviewfields["id"][$key] = lmbdb_result($rs,"TABLENAME")."_".$fieldname;
 		$gviewfields["fieldname"][$key] = $fieldname;
-		$gviewfields["tablename"][$key] = odbc_result($rs,"TABLENAME");
-		$gviewfields["order"][$key] = odbc_result($rs,"QORDER");
-		$gviewfields["filter"][$key] = odbc_result($rs,"QFILTER");
-		$gviewfields["alias"][$key] = odbc_result($rs,"QALIAS");
-		$gviewfields["show"][$key] = odbc_result($rs,"QSHOW");
-		$gviewfields["sort"][$key] = odbc_result($rs,"SORT");
-		$gviewfields["func"][$key] = odbc_result($rs,"QFUNC");
+		$gviewfields["tablename"][$key] = lmbdb_result($rs,"TABLENAME");
+		$gviewfields["order"][$key] = lmbdb_result($rs,"QORDER");
+		$gviewfields["filter"][$key] = lmbdb_result($rs,"QFILTER");
+		$gviewfields["alias"][$key] = lmbdb_result($rs,"QALIAS");
+		$gviewfields["show"][$key] = lmbdb_result($rs,"QSHOW");
+		$gviewfields["sort"][$key] = lmbdb_result($rs,"SORT");
+		$gviewfields["func"][$key] = lmbdb_result($rs,"QFUNC");
 	}
 
 	return $gviewfields;
@@ -510,39 +514,39 @@ function lmb_editQuestFields($viewid,&$par){
 		$next_sort = next_db_id("LMB_CONF_VIEWFIELDS","SORT");
 		$sqlquery = "INSERT INTO LMB_CONF_VIEWFIELDS (ID,VIEWID,TABLENAME,QFIELD,SORT) VALUES
 			(".parse_db_int($next_id).",".parse_db_int($viewid).",'".parse_db_string(base64_decode($table_name))."','".parse_db_string(base64_decode($field_name))."',".parse_db_int($next_sort).")";
-                $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}elseif($par["act"] == 'addalias'){
 		if($table_name==1){$table_name = "";}
 		$next_id = next_db_id("LMB_CONF_VIEWFIELDS");
 		$next_sort = next_db_id("LMB_CONF_VIEWFIELDS","SORT");
 		$sqlquery = "INSERT INTO LMB_CONF_VIEWFIELDS (ID,VIEWID,TABLENAME,QFIELD,QALIAS,SORT) VALUES 
 			(".parse_db_int($next_id).",".parse_db_int($viewid).",'".parse_db_string($table_name)."','".parse_db_string($par["view_newalias"])."','".parse_db_string("Ausdruck$next_sort")."',".parse_db_int($next_sort).")";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}elseif($par["act"] == 'del'){
 		$sqlquery = "DELETE FROM LMB_CONF_VIEWFIELDS WHERE VIEWID = ".parse_db_int($viewid)." AND ID=".parse_db_int($field_name);
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}elseif($par["act"] == 'alias'){
 		$alias = preg_replace('/[^a-z0-9]/i','_',$par["view_alias_$formid"]);
 		$alias = preg_replace("/[_]{1,}/","_",$alias);
 		if(!preg_match("/[A-Za-z]/",lmb_substr($alias,0,1)) AND $alias){$alias = "L".$alias;}
 		$alias = lmb_substr($alias,0,50);
 		$sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET QALIAS = '".parse_db_string($alias,50)."' WHERE VIEWID = ".parse_db_int($viewid)." AND ID=".parse_db_int($field_name);
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}elseif($par["act"] == 'order'){
 		$sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET QORDER = ".parse_db_int($par["view_order_$formid"])." WHERE VIEWID = ".parse_db_int($viewid)." AND ID=".parse_db_int($field_name);
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}elseif($par["act"] == 'show'){
 		$sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET QSHOW = ".parse_db_bool($par["view_show_$formid"])." WHERE VIEWID = ".parse_db_int($viewid)." AND ID=".parse_db_int($field_name);
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}elseif($par["act"] == 'field'){
 		$prepare_string = "UPDATE LMB_CONF_VIEWFIELDS SET QFIELD = ? WHERE VIEWID = ".parse_db_int($viewid)." AND ID=".parse_db_int($field_name);
-		lmb_PrepareSQL($prepare_string,array(parse_db_blob($par["view_field_$formid"])),__FILE__,__LINE__);
+		lmb_PrepareSQL($prepare_string,array($par["view_field_$formid"]),__FILE__,__LINE__);
 	}elseif($par["act"] == 'filter'){
 		$prepare_string = "UPDATE LMB_CONF_VIEWFIELDS SET QFILTER = ? WHERE VIEWID = ".parse_db_int($viewid)." AND ID=".parse_db_int($field_name);
-		lmb_PrepareSQL($prepare_string,array(parse_db_blob($par["view_filter_$formid"])),__FILE__,__LINE__);
+		lmb_PrepareSQL($prepare_string,array($par["view_filter_$formid"]),__FILE__,__LINE__);
 	}elseif($par["act"] == 'func'){
 		$sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET QFUNC = ".parse_db_int($par["view_func_$formid"])." WHERE VIEWID = ".parse_db_int($viewid)." AND ID=".parse_db_int($field_name);
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}elseif($par["act"] == 'move'){
 		if($gviewfields = lmb_getQuestFields($viewid)){
 			$bzm = 1;
@@ -552,22 +556,22 @@ function lmb_editQuestFields($viewid,&$par){
 				}elseif($key == $par["setviewfield"]){
 					if($gviewfields["sort"][$formid] < $gviewfields["sort"][$par["setviewfield"]]){
 						$sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET SORT = $bzm WHERE VIEWID = ".parse_db_int($viewid)." AND ID = $key";
-						$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+						$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 						$bzm++;
 						$sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET SORT = $bzm WHERE VIEWID = ".parse_db_int($viewid)." AND ID = $formid";
-						$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+						$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 						$bzm++;
 					}else{
 						$sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET SORT = $bzm WHERE VIEWID = ".parse_db_int($viewid)." AND ID = $formid";
-						$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+						$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 						$bzm++;
 						$sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET SORT = $bzm WHERE VIEWID = ".parse_db_int($viewid)." AND ID = $key";
-						$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+						$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 						$bzm++;
 					}
 				}else{
 					$sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET SORT = $bzm WHERE VIEWID = ".parse_db_int($viewid)." AND ID = $key";
-					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					$bzm++;
 				}
 			}
@@ -594,12 +598,12 @@ function lmb_addAliasToDuplicateNames($viewid) {
                 AND A.VIEWID=B.VIEWID 
                 AND (A.QALIAS=B.QALIAS OR (A.QALIAS IS NULL AND B.QALIAS IS NULL AND A.QFIELD=B.QFIELD))
                 WHERE A.VIEWID=$viewidEsc";
-    $rsPairs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rsPairs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
     # fix each pair
-    while(odbc_fetch_row($rsPairs)) {
-        $aid = odbc_result($rsPairs, "AID");
-        $oldName = odbc_result($rsPairs, "QFIELD");
+    while(lmbdb_fetch_row($rsPairs)) {
+        $aid = lmbdb_result($rsPairs, "AID");
+        $oldName = lmbdb_result($rsPairs, "QFIELD");
 
         # find a name that isn't in use
         $suffixNumber = 0;
@@ -609,15 +613,15 @@ function lmb_addAliasToDuplicateNames($viewid) {
             $sqlquery = "SELECT ID FROM LMB_CONF_VIEWFIELDS
                           WHERE VIEWID=$viewidEsc  
                           AND (QFIELD='$newAliasEsc' OR QALIAS='$newAliasEsc')";
-            $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
             $suffixNumber++;
-        } while (odbc_num_rows($rs) > 0);
+        } while (lmbdb_num_rows($rs) > 0);
 
         # update the dataset
         $sqlquery = "UPDATE LMB_CONF_VIEWFIELDS 
                       SET QALIAS='$newAliasEsc' 
                       WHERE ID=$aid";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     }
         
 }

@@ -33,18 +33,18 @@ $GLOBALS["gtab"] = $gtab;
 
 /* --- Tabellengruppen ----------------------------------------------- */
 $sqlquery = "SELECT DISTINCT LMB_CONF_GROUPS.ID,LMB_CONF_GROUPS.ICON,LMB_CONF_GROUPS.LEVEL,LMB_CONF_GROUPS.NAME,LMB_CONF_GROUPS.BESCHREIBUNG,LMB_CONF_GROUPS.SORT FROM LMB_CONF_GROUPS,LMB_RULES_TABLES WHERE LMB_CONF_GROUPS.ID = LMB_RULES_TABLES.TAB_GROUP AND LMB_RULES_TABLES.LMVIEW = ".LMB_DBDEF_TRUE." AND (LMB_RULES_TABLES.GROUP_ID = ".implode(" OR LMB_RULES_TABLES.GROUP_ID = ",$session['subgroup']).") ORDER BY LMB_CONF_GROUPS.SORT";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 #$bzm = 0;
-while(odbc_fetch_row($rs)) {
-	$i = odbc_result($rs, "ID");
-	$tabgroup["id"][$i] = odbc_result($rs, "ID");
-	$tabgroup["name"][$i] = $lang[odbc_result($rs,"NAME")];
-	$tabgroup["beschreibung"][$i] = $lang[odbc_result($rs,"BESCHREIBUNG")];
-	$tabgroup["level"][$i] = odbc_result($rs,"LEVEL");
-	$tabgroup["icon"][$i] = odbc_result($rs,"ICON");
-	$tabgroup["name_lid"][$i] = odbc_result($rs,"NAME");
-	$tabgroup["beschreibung_lid"][$i] = odbc_result($rs,"BESCHREIBUNG");
-	#$tabgroup["argid"][odbc_result($rs, "ID")] = $i;
+while(lmbdb_fetch_row($rs)) {
+	$i = lmbdb_result($rs, "ID");
+	$tabgroup["id"][$i] = lmbdb_result($rs, "ID");
+	$tabgroup["name"][$i] = $lang[lmbdb_result($rs,"NAME")];
+	$tabgroup["beschreibung"][$i] = $lang[lmbdb_result($rs,"BESCHREIBUNG")];
+	$tabgroup["level"][$i] = lmbdb_result($rs,"LEVEL");
+	$tabgroup["icon"][$i] = lmbdb_result($rs,"ICON");
+	$tabgroup["name_lid"][$i] = lmbdb_result($rs,"NAME");
+	$tabgroup["beschreibung_lid"][$i] = lmbdb_result($rs,"BESCHREIBUNG");
+	#$tabgroup["argid"][lmbdb_result($rs, "ID")] = $i;
 	#$bzm++;
 }
 
@@ -55,89 +55,89 @@ while(odbc_fetch_row($rs)) {
 $sqlquery = "SELECT DISTINCT
 LMB_RULES_TABLES.COPY,LMB_RULES_TABLES.INDICATOR,LMB_RULES_TABLES.SPECIFICPRIVILEGE,LMB_RULES_TABLES.HIRAPRIVILEGE,LMB_RULES_TABLES.USERRULES AS EDIT_USERRULES,LMB_RULES_TABLES.USERPRIVILEGE AS EDIT_OWNUSERRULES,LMB_RULES_TABLES.VER,LMB_RULES_TABLES.LMLOCK,LMB_RULES_TABLES.LMTRIGGER AS RECHTE_TRIGGER,LMB_RULES_TABLES.VER,LMB_RULES_TABLES.VIEWVER,
 LMB_RULES_TABLES.GROUP_ID,LMB_RULES_TABLES.LMADD,LMB_RULES_TABLES.HIDE,LMB_RULES_TABLES.NEED,LMB_RULES_TABLES.EDIT,LMB_RULES_TABLES.DEL,LMB_RULES_TABLES.VIEW_PERIOD,LMB_RULES_TABLES.VIEW_FORM,LMB_RULES_TABLES.VIEW_TFORM,LMB_RULES_TABLES.VIEW_LFORM,LMB_RULES_TABLES.EDITRULE,LMB_RULES_TABLES.HIDEMENU,
-LMB_CONF_TABLES.DATASYNC,LMB_CONF_TABLES.PARAMS2,LMB_CONF_TABLES.PARAMS1,LMB_CONF_TABLES.KEYFIELD,LMB_CONF_TABLES.EVENT,LMB_CONF_TABLES.RESERVEID,LMB_CONF_TABLES.NUMROWCALC,LMB_CONF_TABLES.AJAXPOST,LMB_CONF_TABLES.INDICATOR AS GROUPINDICATOR,LMB_CONF_TABLES.LMTRIGGER,LMB_CONF_TABLES.USERRULES AS HAS_USERRULES,LMB_CONF_TABLES.VERSIONING,LMB_CONF_TABLES.TYP,LMB_CONF_TABLES.LOGGING,LMB_CONF_TABLES.LINECOLOR,LMB_CONF_TABLES.MARKCOLOR,LMB_CONF_TABLES.VERKN,LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.GROUPABLE,LMB_CONF_TABLES.LOCKABLE,LMB_CONF_TABLES.TAB_ID,LMB_CONF_TABLES.TAB_GROUP,LMB_CONF_TABLES.BESCHREIBUNG,LMB_CONF_TABLES.SORT,
+LMB_CONF_TABLES.MULTITENANT,LMB_CONF_TABLES.DATASYNC,LMB_CONF_TABLES.PARAMS2,LMB_CONF_TABLES.PARAMS1,LMB_CONF_TABLES.KEYFIELD,LMB_CONF_TABLES.EVENT,LMB_CONF_TABLES.RESERVEID,LMB_CONF_TABLES.NUMROWCALC,LMB_CONF_TABLES.AJAXPOST,LMB_CONF_TABLES.INDICATOR AS GROUPINDICATOR,LMB_CONF_TABLES.LMTRIGGER,LMB_CONF_TABLES.USERRULES AS HAS_USERRULES,LMB_CONF_TABLES.VERSIONING,LMB_CONF_TABLES.TYP,LMB_CONF_TABLES.LOGGING,LMB_CONF_TABLES.LINECOLOR,LMB_CONF_TABLES.MARKCOLOR,LMB_CONF_TABLES.VERKN,LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.GROUPABLE,LMB_CONF_TABLES.LOCKABLE,LMB_CONF_TABLES.TAB_ID,LMB_CONF_TABLES.TAB_GROUP,LMB_CONF_TABLES.BESCHREIBUNG,LMB_CONF_TABLES.SORT,
 CASE LMB_RULES_TABLES.GROUP_ID WHEN ".$session["group_id"]." THEN 2 ELSE 1 END AS GROUP_SORT
 FROM LMB_CONF_TABLES,LMB_RULES_TABLES
 WHERE LMB_RULES_TABLES.TAB_ID = LMB_CONF_TABLES.TAB_ID
 AND LMB_RULES_TABLES.LMVIEW = ".LMB_DBDEF_TRUE."
 AND (LMB_RULES_TABLES.GROUP_ID = ".implode(" OR LMB_RULES_TABLES.GROUP_ID = ",$session["subgroup"]).")
 ORDER BY GROUP_SORT,LMB_CONF_TABLES.TAB_GROUP,LMB_CONF_TABLES.SORT";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 $bzm1 = 1;
 $bzm2 = 0;
-while(odbc_fetch_row($rs)) {
-	$i = odbc_result($rs,"TAB_ID");
+while(lmbdb_fetch_row($rs)) {
+	$i = lmbdb_result($rs,"TAB_ID");
 	$gtab["tab_id"][$i] = $i;
-	$gtab["table"][$i] = lmb_strtoupper(odbc_result($rs,"TABELLE"));
-	if($lang[odbc_result($rs,"BESCHREIBUNG")]){$gtab["desc"][$i] = $lang[odbc_result($rs,"BESCHREIBUNG")];}else{$gtab["desc"][$i] = $gtab["table"][$i];}
-	if(defined('IS_SOAP')){$gtab["desc_lid"][$i] = odbc_result($rs,"BESCHREIBUNG");}
-	$gtab["tab_group"][$i] = odbc_result($rs,"TAB_GROUP");
-	$gtab["tab_view_form"][$i] = odbc_result($rs,"VIEW_FORM");
-	$gtab["tab_view_tform"][$i] = odbc_result($rs,"VIEW_TFORM");
-	$gtab["tab_view_lform"][$i] = odbc_result($rs,"VIEW_LFORM");
-	$gtab["lockable"][$i] = odbc_result($rs,"LOCKABLE");
-	$gtab["groupable"][$i] = odbc_result($rs,"GROUPABLE");
-	$gtab["markcolor"][$i] = odbc_result($rs, "MARKCOLOR");
-	$gtab["linecolor"][$i] = odbc_result($rs, "LINECOLOR");
-	$gtab["logging"][$i] = odbc_result($rs, "LOGGING");
-	$gtab["verkn"][$i] = odbc_result($rs, "VERKN");
-	$gtab["typ"][$i] = odbc_result($rs, "TYP");
-	$gtab["ajaxpost"][$i] = odbc_result($rs, "AJAXPOST");
-	$gtab["versioning"][$i] = odbc_result($rs, "VERSIONING");
-	$gtab["numrowcalc"][$i] = odbc_result($rs, "NUMROWCALC");
-	$gtab["reserveid"][$i] = odbc_result($rs, "RESERVEID");
-	$gtab["keyfield"][$i] = odbc_result($rs, "KEYFIELD");
-	$gtab["datasync"][$i] = odbc_result($rs, "DATASYNC");
-	
-	if(odbc_result($rs, "PARAMS1")){$gtab["params1"][$i] = odbc_result($rs, "PARAMS1");}
-	if($params2 = odbc_result($rs, "PARAMS2")){$gtab["params2"][$i] = unserialize($params2);}
-	if(odbc_result($rs, "GROUP_SORT") == 2){$maingroup = 1;}else{$maingroup = 0;}
-	if($event = odbc_result($rs, "EVENT")){$gtab["event"][$i] = $event;}
-	if(odbc_result($rs, "EDITRULE")){$gtab["editrule"][$i] = odbc_result($rs, "EDITRULE");}
-	if(odbc_result($rs, "HAS_USERRULES")){$gtab["has_userrules"][$i] = odbc_result($rs, "HAS_USERRULES");}
-	if(odbc_result($rs, "EDIT_USERRULES")){$gtab["edit_userrules"][$i] = odbc_result($rs, "EDIT_USERRULES");}
-	if(odbc_result($rs, "EDIT_OWNUSERRULES")){$gtab["edit_ownuserrules"][$i] = odbc_result($rs, "EDIT_OWNUSERRULES");}
-	if(odbc_result($rs, "HIRAPRIVILEGE")){$gtab["subedit_userrules"][$i] = odbc_result($rs, "HIRAPRIVILEGE");}
-	if(odbc_result($rs, "SPECIFICPRIVILEGE")){
+	$gtab["table"][$i] = lmb_strtoupper(lmbdb_result($rs,"TABELLE"));
+	if($lang[lmbdb_result($rs,"BESCHREIBUNG")]){$gtab["desc"][$i] = $lang[lmbdb_result($rs,"BESCHREIBUNG")];}else{$gtab["desc"][$i] = $gtab["table"][$i];}
+	if(defined('IS_SOAP')){$gtab["desc_lid"][$i] = lmbdb_result($rs,"BESCHREIBUNG");}
+	$gtab["tab_group"][$i] = lmbdb_result($rs,"TAB_GROUP");
+	$gtab["tab_view_form"][$i] = lmbdb_result($rs,"VIEW_FORM");
+	$gtab["tab_view_tform"][$i] = lmbdb_result($rs,"VIEW_TFORM");
+	$gtab["tab_view_lform"][$i] = lmbdb_result($rs,"VIEW_LFORM");
+	$gtab["lockable"][$i] = lmbdb_result($rs,"LOCKABLE");
+	$gtab["groupable"][$i] = lmbdb_result($rs,"GROUPABLE");
+	$gtab["markcolor"][$i] = lmbdb_result($rs, "MARKCOLOR");
+	$gtab["linecolor"][$i] = lmbdb_result($rs, "LINECOLOR");
+	$gtab["logging"][$i] = lmbdb_result($rs, "LOGGING");
+	$gtab["verkn"][$i] = lmbdb_result($rs, "VERKN");
+	$gtab["typ"][$i] = lmbdb_result($rs, "TYP");
+	$gtab["ajaxpost"][$i] = lmbdb_result($rs, "AJAXPOST");
+	$gtab["versioning"][$i] = lmbdb_result($rs, "VERSIONING");
+	$gtab["numrowcalc"][$i] = lmbdb_result($rs, "NUMROWCALC");
+	$gtab["reserveid"][$i] = lmbdb_result($rs, "RESERVEID");
+	$gtab["keyfield"][$i] = lmbdb_result($rs, "KEYFIELD");
+	$gtab["datasync"][$i] = lmbdb_result($rs, "DATASYNC");
+	if(lmbdb_result($rs, "multitenant")){$gtab["multitenant"][$i] = lmbdb_result($rs, "multitenant");}
+	if(lmbdb_result($rs, "PARAMS1")){$gtab["params1"][$i] = lmbdb_result($rs, "PARAMS1");}
+	if($params2 = lmbdb_result($rs, "PARAMS2")){$gtab["params2"][$i] = unserialize($params2);}
+	if(lmbdb_result($rs, "GROUP_SORT") == 2){$maingroup = 1;}else{$maingroup = 0;}
+	if($event = lmbdb_result($rs, "EVENT")){$gtab["event"][$i] = $event;}
+	if(lmbdb_result($rs, "EDITRULE")){$gtab["editrule"][$i] = lmbdb_result($rs, "EDITRULE");}
+	if(lmbdb_result($rs, "HAS_USERRULES")){$gtab["has_userrules"][$i] = lmbdb_result($rs, "HAS_USERRULES");}
+	if(lmbdb_result($rs, "EDIT_USERRULES")){$gtab["edit_userrules"][$i] = lmbdb_result($rs, "EDIT_USERRULES");}
+	if(lmbdb_result($rs, "EDIT_OWNUSERRULES")){$gtab["edit_ownuserrules"][$i] = lmbdb_result($rs, "EDIT_OWNUSERRULES");}
+	if(lmbdb_result($rs, "HIRAPRIVILEGE")){$gtab["subedit_userrules"][$i] = lmbdb_result($rs, "HIRAPRIVILEGE");}
+	if(lmbdb_result($rs, "SPECIFICPRIVILEGE")){
 		if($gtab["specific_userrules"][$i]){
-			$gtab["specific_userrules"][$i] = array_unique(array_merge($gtab["specific_userrules"][$i],explode(",",odbc_result($rs, "SPECIFICPRIVILEGE"))));
+			$gtab["specific_userrules"][$i] = array_unique(array_merge($gtab["specific_userrules"][$i],explode(",",lmbdb_result($rs, "SPECIFICPRIVILEGE"))));
 		}else{
-			$gtab["specific_userrules"][$i] = explode(",",odbc_result($rs, "SPECIFICPRIVILEGE"));
+			$gtab["specific_userrules"][$i] = explode(",",lmbdb_result($rs, "SPECIFICPRIVILEGE"));
 		}
 	}
 	
 	if($gtab["trigger"][$i]){$trgger = $gtab["trigger"][$i];}else{$trgger = array();}
-	if(odbc_result($rs, "LMTRIGGER") OR odbc_result($rs, "RECHTE_TRIGGER")){$gtab["trigger"][$i] = array_unique(array_merge(explode(",",odbc_result($rs, "LMTRIGGER")),explode(",",odbc_result($rs, "RECHTE_TRIGGER")),$trgger));}
+	if(lmbdb_result($rs, "LMTRIGGER") OR lmbdb_result($rs, "RECHTE_TRIGGER")){$gtab["trigger"][$i] = array_unique(array_merge(explode(",",lmbdb_result($rs, "LMTRIGGER")),explode(",",lmbdb_result($rs, "RECHTE_TRIGGER")),$trgger));}
 
 	if(!$alrdone[$i]){
 		# 1:1 Verknüpfungen
-		if(odbc_result($rs, "VERKN")){$gtab["rverkn"][odbc_result($rs, "VERKN")][$i] = $i;}
+		if(lmbdb_result($rs, "VERKN")){$gtab["rverkn"][lmbdb_result($rs, "VERKN")][$i] = $i;}
 		# 1:1 Verknüpfungen ohne Rechte
 		$sqlquery1 = "SELECT TAB_ID,TABELLE,VERSIONING FROM LMB_CONF_TABLES WHERE VERKN = ".$i." ORDER BY TAB_ID";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-		while(odbc_fetch_row($rs1)) {
-			$gtab["raverkn"][odbc_result($rs, "VERKN")][odbc_result($rs1, "TAB_ID")] = odbc_result($rs1, "TAB_ID");
-			$gtab["table"][odbc_result($rs1, "TAB_ID")] = lmb_strtoupper(odbc_result($rs1,"TABELLE"));
-			$gtab["versioning"][odbc_result($rs1, "TAB_ID")] = odbc_result($rs1, "VERSIONING");
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs1)) {
+			$gtab["raverkn"][lmbdb_result($rs, "VERKN")][lmbdb_result($rs1, "TAB_ID")] = lmbdb_result($rs1, "TAB_ID");
+			$gtab["table"][lmbdb_result($rs1, "TAB_ID")] = lmb_strtoupper(lmbdb_result($rs1,"TABELLE"));
+			$gtab["versioning"][lmbdb_result($rs1, "TAB_ID")] = lmbdb_result($rs1, "VERSIONING");
 		}
 	}
 
-	$gtab["argresult_id"][lmb_strtoupper(odbc_result($rs,"TABELLE"))] = odbc_result($rs,"TAB_ID");
-	if(odbc_result($rs,"DEL") == 1){$gtab["delete"][$i] = odbc_result($rs,"DEL");}
-	if(odbc_result($rs,"EDIT") == 1){$gtab["edit"][$i] = odbc_result($rs,"EDIT");}
-	if(odbc_result($rs,"HIDE") == 1){$gtab["hide"][$i] = odbc_result($rs,"HIDE");}
-	if(odbc_result($rs,"COPY") == 1){$gtab["copy"][$i] = odbc_result($rs,"COPY");}
-	if(odbc_result($rs,"LMADD") == 1){$gtab["add"][$i] = odbc_result($rs,"LMADD");}
-	$gtab["need"][$i] = odbc_result($rs,"NEED");
-	if(odbc_result($rs,"VER") AND odbc_result($rs, "VERSIONING")){$gtab["ver"][$i] = odbc_result($rs,"VER");}
-	if(odbc_result($rs,"VIEWVER") AND odbc_result($rs, "VERSIONING")){$gtab["viewver"][$i] = odbc_result($rs,"VIEWVER");}
-	if(odbc_result($rs,"LMLOCK")){$gtab["lock"][$i] = odbc_result($rs,"LMLOCK");}
-	$gtab["hidemenu"][$i] = odbc_result($rs,"HIDEMENU");
+	$gtab["argresult_id"][lmb_strtoupper(lmbdb_result($rs,"TABELLE"))] = lmbdb_result($rs,"TAB_ID");
+	if(lmbdb_result($rs,"DEL") == 1){$gtab["delete"][$i] = lmbdb_result($rs,"DEL");}
+	if(lmbdb_result($rs,"EDIT") == 1){$gtab["edit"][$i] = lmbdb_result($rs,"EDIT");}
+	if(lmbdb_result($rs,"HIDE") == 1){$gtab["hide"][$i] = lmbdb_result($rs,"HIDE");}
+	if(lmbdb_result($rs,"COPY") == 1){$gtab["copy"][$i] = lmbdb_result($rs,"COPY");}
+	if(lmbdb_result($rs,"LMADD") == 1){$gtab["add"][$i] = lmbdb_result($rs,"LMADD");}
+	$gtab["need"][$i] = lmbdb_result($rs,"NEED");
+	if(lmbdb_result($rs,"VER") AND lmbdb_result($rs, "VERSIONING")){$gtab["ver"][$i] = lmbdb_result($rs,"VER");}
+	if(lmbdb_result($rs,"VIEWVER") AND lmbdb_result($rs, "VERSIONING")){$gtab["viewver"][$i] = lmbdb_result($rs,"VIEWVER");}
+	if(lmbdb_result($rs,"LMLOCK")){$gtab["lock"][$i] = lmbdb_result($rs,"LMLOCK");}
+	$gtab["hidemenu"][$i] = lmbdb_result($rs,"HIDEMENU");
 
 	#----------------- indicator -------------------
-	if(odbc_result($rs, "GROUPINDICATOR")){$gtab["indicator"][$i] = odbc_result($rs, "GROUPINDICATOR");}
-	elseif(odbc_result($rs, "INDICATOR")){$gtab["indicator"][$i] = odbc_result($rs, "INDICATOR");}
+	if(lmbdb_result($rs, "GROUPINDICATOR")){$gtab["indicator"][$i] = lmbdb_result($rs, "GROUPINDICATOR");}
+	elseif(lmbdb_result($rs, "INDICATOR")){$gtab["indicator"][$i] = lmbdb_result($rs, "INDICATOR");}
 	
 	# table is view
 	if($gtab["typ"][$i] == 5){
@@ -154,17 +154,17 @@ while(odbc_fetch_row($rs)) {
 	
 	
 	#----- File-Level ----------------------------------
-	#$sqlquery1 = "SELECT ID FROM LDMS_STRUCTURE WHERE TABGROUP_ID = ".odbc_result($rs,"TAB_GROUP")." AND TAB_ID = $i AND FIELD_ID = 0 AND FIX = TRUE";
-	#$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+	#$sqlquery1 = "SELECT ID FROM LDMS_STRUCTURE WHERE TABGROUP_ID = ".lmbdb_result($rs,"TAB_GROUP")." AND TAB_ID = $i AND FIELD_ID = 0 AND FIX = TRUE";
+	#$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 	#if(!$rs1) {$commit = 1;}
-	#$gtab['file_level'][$i] = odbc_result($rs1,"ID");
+	#$gtab['file_level'][$i] = lmbdb_result($rs1,"ID");
 
 	if(!$alrdone[$i]){
 		#----------------- Berichts LEVEL -------------------
 		$sqlquery1 = "SELECT LEVEL FROM LDMS_STRUCTURE WHERE LDMS_STRUCTURE.TYP = 5 AND LDMS_STRUCTURE.FIX = ".LMB_DBDEF_TRUE." AND TAB_ID = $i";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
-		$gtab["reportlevel"][$i] = odbc_result($rs1, "LEVEL");
+		$gtab["reportlevel"][$i] = lmbdb_result($rs1, "LEVEL");
 	}
 
 	$alrdone[$i] = 1;
@@ -231,9 +231,9 @@ function gfield_array($gtab,$gfield,$gtabid){
 
 # ------- Spaltenbreiten ------
 	$sqlquery = "SELECT ROW_SIZE FROM LMB_GTAB_ROWSIZE WHERE TAB_ID = $gtabid AND USER_ID = ".$session["user_id"];
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_fetch_row($rs)){
-		$trse = explode(";",odbc_result($rs,"ROW_SIZE"));
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_fetch_row($rs)){
+		$trse = explode(";",lmbdb_result($rs,"ROW_SIZE"));
 		foreach($trse as $key => $value){
 			$rse = explode(",",$trse[$key]);
 			$tabrse[$gtabid][$rse[0]] = $rse[1];
@@ -247,7 +247,7 @@ function gfield_array($gtab,$gfield,$gtabid){
 
 	# ------- Spalten-Array ------
 	$sqlquery = "SELECT 
-                        LMB_CONF_FIELDS.FULLSEARCH,LMB_CONF_FIELDS.POPUPDEFAULT,LMB_CONF_FIELDS.VERKNTREE,LMB_CONF_FIELDS.LISTING_VIEWMODE,LMB_CONF_FIELDS.LISTING_CUT,LMB_CONF_FIELDS.VERKNPARAMS,LMB_CONF_FIELDS.SCALE,LMB_CONF_FIELDS.AGGREGATE,LMB_CONF_FIELDS.COLLREPLACE,LMB_CONF_FIELDS.FIELD_SIZE,LMB_CONF_FIELDS.AJAXPOST,LMB_CONF_FIELDS.POTENCY, LMB_CONF_FIELDS.EDITRULE AS GEDITRULE,LMB_CONF_FIELDS.VIEWRULE,LMB_CONF_FIELDS.QUICKSEARCH,LMB_CONF_FIELDS.HASRECVERKN,LMB_CONF_FIELDS.DEFAULTVALUE,LMB_CONF_FIELDS.LMTRIGGER,LMB_CONF_FIELDS.RELEXT,LMB_CONF_FIELDS.MAINFIELD,LMB_CONF_FIELDS.VERKNTABLETYPE,LMB_CONF_FIELDS.EXT_TYPE,LMB_CONF_FIELDS.INHERIT_TAB,LMB_CONF_FIELDS.INHERIT_FIELD,LMB_CONF_FIELDS.INHERIT_SEARCH,LMB_CONF_FIELDS.INHERIT_GROUP,LMB_CONF_FIELDS.INHERIT_EVAL,LMB_CONF_FIELDS.INHERIT_FILTER,LMB_CONF_FIELDS.SELECT_CUT,LMB_CONF_FIELDS.ID,LMB_CONF_FIELDS.SELECT_POOL,LMB_CONF_FIELDS.DATETIME,LMB_CONF_FIELDS.WYSIWYG,LMB_CONF_FIELDS.GROUPABLE,LMB_CONF_FIELDS.CURRENCY,LMB_CONF_FIELDS.NFORMAT,LMB_CONF_FIELDS.INDIZE,LMB_CONF_FIELDS.INDEXED,LMB_CONF_FIELDS.SELECT_SORT,LMB_CONF_FIELDS.MD5TAB,LMB_CONF_FIELDS.FIELD_ID,LMB_CONF_FIELDS.TAB_ID,LMB_CONF_FIELDS.TAB_GROUP,LMB_CONF_FIELDS.SORT,LMB_CONF_FIELDS.DATA_TYPE,LMB_CONF_FIELDS.FIELD_TYPE,LMB_CONF_FIELDS.FIELD_NAME,LMB_CONF_FIELDS.FORM_NAME,LMB_CONF_FIELDS.BESCHREIBUNG,LMB_CONF_FIELDS.SPELLING,LMB_CONF_FIELDS.FIELDKEY,LMB_CONF_FIELDS.ISUNIQUE,LMB_CONF_FIELDS.VERKNFIELDID,LMB_CONF_FIELDS.DYNSEARCH,LMB_CONF_FIELDS.VERKNSEARCH,LMB_CONF_FIELDS.VERKNVIEW,LMB_CONF_FIELDS.VERKNFIND,LMB_CONF_FIELDS.ARTLEISTE,LMB_CONF_FIELDS.VERKNTABID,LMB_CONF_FIELDS.GENLINK,LMB_CONF_FIELDS.ARGUMENT,LMB_CONF_FIELDS.ARGUMENT_EDIT,LMB_CONF_FIELDS.ARGUMENT_TYP,LMB_CONF_FIELDS.MULTILANG,
+                        LMB_CONF_FIELDS.FULLSEARCH,LMB_CONF_FIELDS.POPUPDEFAULT,LMB_CONF_FIELDS.VERKNTREE,LMB_CONF_FIELDS.LISTING_VIEWMODE,LMB_CONF_FIELDS.LISTING_CUT,LMB_CONF_FIELDS.VERKNPARAMS,LMB_CONF_FIELDS.SCALE,LMB_CONF_FIELDS.AGGREGATE,LMB_CONF_FIELDS.COLLREPLACE,LMB_CONF_FIELDS.FIELD_SIZE,LMB_CONF_FIELDS.AJAXPOST,LMB_CONF_FIELDS.POTENCY, LMB_CONF_FIELDS.EDITRULE AS GEDITRULE,LMB_CONF_FIELDS.VIEWRULE,LMB_CONF_FIELDS.QUICKSEARCH,LMB_CONF_FIELDS.HASRECVERKN,LMB_CONF_FIELDS.DEFAULTVALUE,LMB_CONF_FIELDS.LMTRIGGER,LMB_CONF_FIELDS.RELEXT,LMB_CONF_FIELDS.MAINFIELD,LMB_CONF_FIELDS.VERKNTABLETYPE,LMB_CONF_FIELDS.EXT_TYPE,LMB_CONF_FIELDS.INHERIT_TAB,LMB_CONF_FIELDS.INHERIT_FIELD,LMB_CONF_FIELDS.INHERIT_SEARCH,LMB_CONF_FIELDS.INHERIT_GROUP,LMB_CONF_FIELDS.INHERIT_EVAL,LMB_CONF_FIELDS.INHERIT_FILTER,LMB_CONF_FIELDS.SELECT_CUT,LMB_CONF_FIELDS.ID,LMB_CONF_FIELDS.SELECT_POOL,LMB_CONF_FIELDS.DATETIME,LMB_CONF_FIELDS.WYSIWYG,LMB_CONF_FIELDS.GROUPABLE,LMB_CONF_FIELDS.CURRENCY,LMB_CONF_FIELDS.NFORMAT,LMB_CONF_FIELDS.INDIZE,LMB_CONF_FIELDS.INDEXED,LMB_CONF_FIELDS.SELECT_SORT,LMB_CONF_FIELDS.MD5TAB,LMB_CONF_FIELDS.FIELD_ID,LMB_CONF_FIELDS.TAB_ID,LMB_CONF_FIELDS.TAB_GROUP,LMB_CONF_FIELDS.SORT,LMB_CONF_FIELDS.DATA_TYPE,LMB_CONF_FIELDS.FIELD_TYPE,LMB_CONF_FIELDS.FIELD_NAME,LMB_CONF_FIELDS.FORM_NAME,LMB_CONF_FIELDS.BESCHREIBUNG,LMB_CONF_FIELDS.SPELLING,LMB_CONF_FIELDS.FIELDKEY,LMB_CONF_FIELDS.ISUNIQUE,LMB_CONF_FIELDS.VERKNFIELDID,LMB_CONF_FIELDS.DYNSEARCH,LMB_CONF_FIELDS.VERKNSEARCH,LMB_CONF_FIELDS.VERKNVIEW,LMB_CONF_FIELDS.VERKNFIND,LMB_CONF_FIELDS.ARTLEISTE,LMB_CONF_FIELDS.VERKNTABID,LMB_CONF_FIELDS.GENLINK,LMB_CONF_FIELDS.ARGUMENT,LMB_CONF_FIELDS.ARGUMENT_EDIT,LMB_CONF_FIELDS.ARGUMENT_TYP,LMB_CONF_FIELDS.MULTILANG,LMB_CONF_FIELDS.VERKNGROUP,
                         LMB_FIELD_TYPES.PARSE_TYPE,LMB_FIELD_TYPES.FORMAT,LMB_FIELD_TYPES.SIZE,LMB_FIELD_TYPES.LMRULE,LMB_FIELD_TYPES.DATA_TYPE_EXP,LMB_FIELD_TYPES.FUNCID,
                         LMB_RULES_FIELDS.LMVIEW,LMB_RULES_FIELDS.EXT_TYPE AS GROUPEXT_TYPE,LMB_RULES_FIELDS.VER,LMB_RULES_FIELDS.LMTRIGGER AS RECHTE_TRIGGER,LMB_RULES_FIELDS.EDITRULE,LMB_RULES_FIELDS.COPY,LMB_RULES_FIELDS.FIELDOPTION,LMB_RULES_FIELDS.DEFLT,LMB_RULES_FIELDS.NEED,LMB_RULES_FIELDS.CURRENCY AS GROUPCURRENCY,LMB_RULES_FIELDS.NFORMAT AS GROUPNFORMAT,LMB_RULES_FIELDS.COLOR AS GROUPCOLOR,LMB_RULES_FIELDS.SORT AS GROUPSORT,LMB_RULES_FIELDS.FILTER AS GROUPFILTER,LMB_RULES_FIELDS.FILTERTYP AS GROUPFILTERTYP,LMB_RULES_FIELDS.EDIT AS GROUPEDIT,LMB_RULES_FIELDS.LISTEDIT,LMB_RULES_FIELDS.SPEECHREC,
                         CASE LMB_RULES_FIELDS.GROUP_ID WHEN ".$session["group_id"]." THEN 2 ELSE 1 END AS GROUP_SORT
@@ -258,43 +258,45 @@ function gfield_array($gtab,$gfield,$gtabid){
                         AND LMB_RULES_FIELDS.TAB_ID = ".$gtabid."
                         AND ((LMB_RULES_FIELDS.GROUP_ID = ".implode(" OR LMB_RULES_FIELDS.GROUP_ID = ",$session["subgroup"]).") AND (LMB_RULES_FIELDS.LMVIEW = ".LMB_DBDEF_TRUE." OR LMB_RULES_FIELDS.EDIT = ".LMB_DBDEF_TRUE." OR LMB_RULES_FIELDS.COPY = ".LMB_DBDEF_TRUE." OR LMB_RULES_FIELDS.FILTER != ''))
                 		ORDER BY GROUP_SORT,LMB_CONF_FIELDS.SORT";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)) {
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
 		
-		$bzm0 = odbc_result($rs,"FIELD_ID");
+		$bzm0 = lmbdb_result($rs,"FIELD_ID");
 		$field_ok = 1;
-		$field_name = odbc_result($rs,"FIELD_NAME");
-		$data_type = odbc_result($rs,"DATA_TYPE");
+		$field_name = lmbdb_result($rs,"FIELD_NAME");
+		$data_type = lmbdb_result($rs,"DATA_TYPE");
+		$field_type = lmbdb_result($rs,"FIELD_TYPE");
 		#$fieldName[$field_name]=$bzm0; ??????
 
-		// multi language
-		if(odbc_result($rs,"MULTILANG")){
+		// multilang
+		if(lmbdb_result($rs,"MULTILANG")){
             $rawfield_name = $field_name;
-            if($session['language'] != $umgvar['default_language'] AND ($data_type != 32 AND $data_type != 31 AND $data_type != 18)){
-                $field_name = 'LANG'.$session['language'].'_'.$field_name;
+            if($session['dlanguage'] != $umgvar['default_language'] AND ($data_type != 32 AND $data_type != 31 AND $data_type != 18)){
+                $field_name = 'LANG'.$session['dlanguage'].'_'.$field_name;
             }
 		}
 		
 		# predefine long fields
-		$lmb_argument = trim(odbc_result($rs,"ARGUMENT")); # longtext handle
-		$lmb_relext = trim(odbc_result($rs,"RELEXT")); # longtext handle
-		$lmb_genlink = trim(odbc_result($rs,"GENLINK")); # longtext handle
+		$lmb_argument = trim(lmbdb_result($rs,"ARGUMENT")); # longtext handle
+		$lmb_relext = trim(lmbdb_result($rs,"RELEXT")); # longtext handle
+		$lmb_genlink = trim(lmbdb_result($rs,"GENLINK")); # longtext handle
+
 
 		# Virtuelle Felder :: Sparten-Beschriftung / Gruppierung
-		if(odbc_result($rs,"PARSE_TYPE") == 100){
-			if(odbc_result($rs,"LMVIEW")){
+		if(lmbdb_result($rs,"PARSE_TYPE") == 100){
+			if(lmbdb_result($rs,"LMVIEW")){
 				$gfield[$gtabid]["field_id"][$bzm0] = $bzm0;
 				$gfield[$gtabid]["key"][$bzm0] = $bzm0;
 				$gfield[$gtabid]["field_name"][$bzm0] = lmb_strtoupper($field_name);
-				if($lang[odbc_result($rs,"SPELLING")]){$gfield[$gtabid]["spelling"][$bzm0] = $lang[odbc_result($rs,"SPELLING")];}else{$gfield[$gtabid]["spelling"][$bzm0] = $gfield[$gtabid]["field_name"][$bzm0];}
-				if($lang[odbc_result($rs,"BESCHREIBUNG")]){$gfield[$gtabid]["beschreibung"][$bzm0] = $lang[odbc_result($rs,"BESCHREIBUNG")];}else{$gfield[$gtabid]["beschreibung"][$bzm0] = $gfield[$gtabid]["field_name"][$bzm0];}
-				$gfield[$gtabid]["field_type"][$bzm0] = odbc_result($rs,"FIELD_TYPE");
-				$gfield[$gtabid]["funcid"][$bzm0] = odbc_result($rs,"FUNCID");
-				$gfield[$gtabid]["sort"][$bzm0] = odbc_result($rs,"SORT");
+				if($lang[lmbdb_result($rs,"SPELLING")]){$gfield[$gtabid]["spelling"][$bzm0] = $lang[lmbdb_result($rs,"SPELLING")];}else{$gfield[$gtabid]["spelling"][$bzm0] = $gfield[$gtabid]["field_name"][$bzm0];}
+				if($lang[lmbdb_result($rs,"BESCHREIBUNG")]){$gfield[$gtabid]["beschreibung"][$bzm0] = $lang[lmbdb_result($rs,"BESCHREIBUNG")];}else{$gfield[$gtabid]["beschreibung"][$bzm0] = $gfield[$gtabid]["field_name"][$bzm0];}
+				$gfield[$gtabid]["field_type"][$bzm0] = lmbdb_result($rs,"FIELD_TYPE");
+				$gfield[$gtabid]["funcid"][$bzm0] = lmbdb_result($rs,"FUNCID");
+				$gfield[$gtabid]["sort"][$bzm0] = lmbdb_result($rs,"SORT");
 				if($lmb_argument){$gfield[$gtabid]["argument"][$bzm0] = $lmb_argument;}
 				if($lmb_relext){$gfield[$gtabid]["relext"][$bzm0] = $lmb_relext;}
-				if(odbc_result($rs,"VIEWRULE")){$gfield[$gtabid]["viewrule"][$bzm0] = odbc_result($rs,"VIEWRULE");}
-				if(odbc_result($rs,"AJAXPOST")){$gfield[$gtabid]["ajaxpost"][$bzm0] = odbc_result($rs,"AJAXPOST");}
+				if(lmbdb_result($rs,"VIEWRULE")){$gfield[$gtabid]["viewrule"][$bzm0] = lmbdb_result($rs,"VIEWRULE");}
+				if(lmbdb_result($rs,"AJAXPOST")){$gfield[$gtabid]["ajaxpost"][$bzm0] = lmbdb_result($rs,"AJAXPOST");}
 				# is grouping field
 				if($gfield[$gtabid]["field_type"][$bzm0] == 101 AND $gfield[$gtabid]["argument"][$bzm0]){
 					$grpel = explode(";",$gfield[$gtabid]["argument"][$bzm0]);
@@ -306,9 +308,14 @@ function gfield_array($gtab,$gfield,$gtabid){
 			continue;
 		}
 
+		#----- LMB_SYNC_SLAVE published field hidden if is Slave ----------------------------------
+	    if($field_type == 22 AND $umgvar['sync_mode'] == 1){
+		    continue;
+        }
+
 		# ------- Verknüpfungsrechte auf Tabellen prüfen  ------
-		if(odbc_result($rs,"VERKNTABID")){
-			if($gtab["tab_id"][odbc_result($rs,"VERKNTABID")]){
+		if(lmbdb_result($rs,"VERKNTABID")){
+			if($gtab["tab_id"][lmbdb_result($rs,"VERKNTABID")]){
 				$field_ok = 1;
 			}else{
 				$field_ok = 0;
@@ -318,108 +325,111 @@ function gfield_array($gtab,$gfield,$gtabid){
 		if($field_ok){
 		
 			# handle long fields
-			if($data_type == 39 AND LMB_DBFUNC_LONGHANDLE AND !odbc_result($rs,"INDIZE")){
+			if($data_type == 39 AND LMB_DBFUNC_LONGHANDLE AND !lmbdb_result($rs,"INDIZE")){
 				$gfield[$gtabid]["longhandle"][$bzm0] = 1;
 			}
 			
-			$gfield[$gtabid]["form_name"][$bzm0] = "g_".$gtabid."_".odbc_result($rs,"FIELD_ID");
-			if(odbc_result($rs,"ARGUMENT_TYP") == 47 AND !odbc_result($rs,"ARGUMENT_EDIT") AND $lmb_argument){
+			$gfield[$gtabid]["form_name"][$bzm0] = "g_".$gtabid."_".lmbdb_result($rs,"FIELD_ID");
+			if(lmbdb_result($rs,"ARGUMENT_TYP") == 47 AND !lmbdb_result($rs,"ARGUMENT_EDIT") AND $lmb_argument){
 				$gfield[$gtabid]["select"][$bzm0] = $lmb_argument." AS ".$gfield[$gtabid]["form_name"][$bzm0];
-			}elseif(odbc_result($rs,"FIELD_TYPE") != 14 AND odbc_result($rs,"FIELD_TYPE") != 15 AND odbc_result($rs,"FIELD_TYPE") != 100 AND ($data_type != 39 OR $gfield[$gtabid]["longhandle"][$bzm0])){
+			}elseif(lmbdb_result($rs,"FIELD_TYPE") != 14 AND lmbdb_result($rs,"FIELD_TYPE") != 15 AND lmbdb_result($rs,"FIELD_TYPE") != 100 AND ($data_type != 39 OR $gfield[$gtabid]["longhandle"][$bzm0])){
 				$gfield[$gtabid]["select"][$bzm0] = $gtab["table"][$gtabid].".".$field_name." AS ".$gfield[$gtabid]["form_name"][$bzm0];
 			}
 			#$gfield[$gtabid]['tab'][$bzm0] = $gtab['table'][$gtabid];
 			#$gfield[$gtabid]['tab_id'][$bzm0] = $gtabid;
-			#$gfield[$gtabid]['tab_group'][$bzm0] = odbc_result($rs,"TAB_GROUP");
+			#$gfield[$gtabid]['tab_group'][$bzm0] = lmbdb_result($rs,"TAB_GROUP");
 
 			# Sichtrechte
-			if(odbc_result($rs,"LMVIEW")){
-				$gfield[$gtabid]["sort"][$bzm0] = odbc_result($rs,"SORT");
+			if(lmbdb_result($rs,"LMVIEW")){
+				$gfield[$gtabid]["sort"][$bzm0] = lmbdb_result($rs,"SORT");
 				$gfield[$gtabid]["key"][$bzm0] = $bzm0;
 			}
 
 			$gfield[$gtabid]["id"][$bzm0] = $bzm0;
 			$gfield[$gtabid]["field_id"][$bzm0] = $bzm0;
 			$gfield[$gtabid]["field_name"][$bzm0] = lmb_strtoupper($field_name);
-			$gfield[$gtabid]["field_type"][$bzm0] = odbc_result($rs,"FIELD_TYPE");
+			$gfield[$gtabid]["field_type"][$bzm0] = $field_type;
 			$gfield[$gtabid]["data_type"][$bzm0] = $data_type;
-			$gfield[$gtabid]["funcid"][$bzm0] = odbc_result($rs,"FUNCID");
-			$gfield[$gtabid]["parse_type"][$bzm0] = odbc_result($rs,"PARSE_TYPE");
-			$gfield[$gtabid]["data_type_exp"][$bzm0] = $lang[odbc_result($rs,"DATA_TYPE_EXP")];
-			$gfield[$gtabid]["format"][$bzm0] = $lang[odbc_result($rs,"FORMAT")];
+			$gfield[$gtabid]["funcid"][$bzm0] = lmbdb_result($rs,"FUNCID");
+			$gfield[$gtabid]["parse_type"][$bzm0] = lmbdb_result($rs,"PARSE_TYPE");
+			$gfield[$gtabid]["data_type_exp"][$bzm0] = $lang[lmbdb_result($rs,"DATA_TYPE_EXP")];
+			$gfield[$gtabid]["format"][$bzm0] = $lang[lmbdb_result($rs,"FORMAT")];
 			$gfield[$gtabid]["argresult_name"][lmb_strtoupper($field_name)] = $bzm0;
 
-			$lmrule = odbc_result($rs,"LMRULE");
-			if(odbc_result($rs,"FIELD_SIZE")){
-				$gfield[$gtabid]["size"][$bzm0] = odbc_result($rs,"FIELD_SIZE");
-				if(odbc_result($rs,"SCALE")){$gfield[$gtabid]["scale"][$bzm0] = odbc_result($rs,"SCALE");}
-				$gfield[$gtabid]["regel"][$bzm0] = str_replace("xxx",(odbc_result($rs,"FIELD_SIZE")+1),$lmrule);
-				$gfield[$gtabid]["regel"][$bzm0] = str_replace("xx",odbc_result($rs,"FIELD_SIZE"),$gfield[$gtabid]["regel"][$bzm0]);
+			$lmrule = lmbdb_result($rs,"LMRULE");
+			if(lmbdb_result($rs,"FIELD_SIZE")){
+				$gfield[$gtabid]["size"][$bzm0] = lmbdb_result($rs,"FIELD_SIZE");
+				if(lmbdb_result($rs,"SCALE")){$gfield[$gtabid]["scale"][$bzm0] = lmbdb_result($rs,"SCALE");}
+				$gfield[$gtabid]["regel"][$bzm0] = str_replace("xxx",(lmbdb_result($rs,"FIELD_SIZE")+1),$lmrule);
+				$gfield[$gtabid]["regel"][$bzm0] = str_replace("xx",lmbdb_result($rs,"FIELD_SIZE"),$gfield[$gtabid]["regel"][$bzm0]);
 			}else{
-				$gfield[$gtabid]["size"][$bzm0] = odbc_result($rs,"SIZE");
+				$gfield[$gtabid]["size"][$bzm0] = lmbdb_result($rs,"SIZE");
 				$gfield[$gtabid]["regel"][$bzm0] = str_replace("xx","",$lmrule);
 			}
 			
 			if($rawfield_name){$gfield[$gtabid]["rawfield_name"][$bzm0] = $rawfield_name;}
-			if($lang[odbc_result($rs,"SPELLING")]){$gfield[$gtabid]["spelling"][$bzm0] = $lang[odbc_result($rs,"SPELLING")];}else{$gfield[$gtabid]["spelling"][$bzm0] = odbc_result($rs,"FIELD_NAME");}
-			if($lang[odbc_result($rs,"BESCHREIBUNG")]){$gfield[$gtabid]["beschreibung"][$bzm0] = $lang[odbc_result($rs,"BESCHREIBUNG")];}else{$gfield[$gtabid]["beschreibung"][$bzm0] = odbc_result($rs,"FIELD_NAME");}
+			if($lang[lmbdb_result($rs,"SPELLING")]){$gfield[$gtabid]["spelling"][$bzm0] = $lang[lmbdb_result($rs,"SPELLING")];}else{$gfield[$gtabid]["spelling"][$bzm0] = lmbdb_result($rs,"FIELD_NAME");}
+			if($lang[lmbdb_result($rs,"BESCHREIBUNG")]){$gfield[$gtabid]["beschreibung"][$bzm0] = $lang[lmbdb_result($rs,"BESCHREIBUNG")];}else{$gfield[$gtabid]["beschreibung"][$bzm0] = lmbdb_result($rs,"FIELD_NAME");}
 			
-			if(odbc_result($rs,"INHERIT_TAB")){$gfield[$gtabid]["inherit_tab"][$bzm0] = odbc_result($rs,"INHERIT_TAB");}
-			if(odbc_result($rs,"INHERIT_FIELD")){$gfield[$gtabid]["inherit_field"][$bzm0] = odbc_result($rs,"INHERIT_FIELD");}
-			if(odbc_result($rs,"INHERIT_SEARCH")){$gfield[$gtabid]["inherit_search"][$bzm0] = odbc_result($rs,"INHERIT_SEARCH");}
-			if(odbc_result($rs,"INHERIT_EVAL")){$gfield[$gtabid]["inherit_eval"][$bzm0] = odbc_result($rs,"INHERIT_EVAL");}
-			if(odbc_result($rs,"INHERIT_GROUP")){$gfield[$gtabid]["inherit_group"][$bzm0] = odbc_result($rs,"INHERIT_GROUP");}
-			if(odbc_result($rs,"INHERIT_FILTER")){$gfield[$gtabid]["inherit_filter"][$bzm0] = odbc_result($rs,"INHERIT_FILTER");}
+			if(lmbdb_result($rs,"INHERIT_TAB")){$gfield[$gtabid]["inherit_tab"][$bzm0] = lmbdb_result($rs,"INHERIT_TAB");}
+			if(lmbdb_result($rs,"INHERIT_FIELD")){$gfield[$gtabid]["inherit_field"][$bzm0] = lmbdb_result($rs,"INHERIT_FIELD");}
+			if(lmbdb_result($rs,"INHERIT_SEARCH")){$gfield[$gtabid]["inherit_search"][$bzm0] = lmbdb_result($rs,"INHERIT_SEARCH");}
+			if(lmbdb_result($rs,"INHERIT_EVAL")){$gfield[$gtabid]["inherit_eval"][$bzm0] = lmbdb_result($rs,"INHERIT_EVAL");}
+			if(lmbdb_result($rs,"INHERIT_GROUP")){$gfield[$gtabid]["inherit_group"][$bzm0] = lmbdb_result($rs,"INHERIT_GROUP");}
+			if(lmbdb_result($rs,"INHERIT_FILTER")){$gfield[$gtabid]["inherit_filter"][$bzm0] = lmbdb_result($rs,"INHERIT_FILTER");}
 			
 			if($lmb_argument){$gfield[$gtabid]["argument"][$bzm0] = $lmb_argument;}
-			if(odbc_result($rs,"ARGUMENT_TYP")){$gfield[$gtabid]["argument_typ"][$bzm0] = odbc_result($rs,"ARGUMENT_TYP");}
-			if(odbc_result($rs,"ARGUMENT_EDIT")){$gfield[$gtabid]["argument_edit"][$bzm0] = odbc_result($rs,"ARGUMENT_EDIT");}
-			if(odbc_result($rs,"AJAXPOST")){$gfield[$gtabid]["ajaxpost"][$bzm0] = odbc_result($rs,"AJAXPOST");}
+			if(lmbdb_result($rs,"ARGUMENT_TYP")){$gfield[$gtabid]["argument_typ"][$bzm0] = lmbdb_result($rs,"ARGUMENT_TYP");}
+			if(lmbdb_result($rs,"ARGUMENT_EDIT")){$gfield[$gtabid]["argument_edit"][$bzm0] = lmbdb_result($rs,"ARGUMENT_EDIT");}
+			if(lmbdb_result($rs,"AJAXPOST")){$gfield[$gtabid]["ajaxpost"][$bzm0] = lmbdb_result($rs,"AJAXPOST");}
 			if($lmb_genlink){$gfield[$gtabid]["genlink"][$bzm0] = $lmb_genlink;}
-			if(odbc_result($rs,"VERKNTABID")){$gfield[$gtabid]["verkntabid"][$bzm0] = odbc_result($rs,"VERKNTABID");}
-			if(odbc_result($rs,"VERKNFIELDID")){$gfield[$gtabid]["verknfieldid"][$bzm0] = odbc_result($rs,"VERKNFIELDID");}
-			if(odbc_result($rs,"HASRECVERKN")){$gfield[$gtabid]["hasrecverkn"][$bzm0] = odbc_result($rs,"HASRECVERKN");}
-			if(odbc_result($rs,"VERKNTABLETYPE")){$gfield[$gtabid]["verkntabletype"][$bzm0] = odbc_result($rs,"VERKNTABLETYPE");}
-			if(odbc_result($rs,"VERKNTREE")){$gfield[$gtabid]["verkntree"][$bzm0] = odbc_result($rs,"VERKNTREE");}
-			if(odbc_result($rs,"MD5TAB")){$gfield[$gtabid]["md5tab"][$bzm0] = lmb_strtoupper(odbc_result($rs,"MD5TAB"));}
+			if(lmbdb_result($rs,"VERKNTABID")){$gfield[$gtabid]["verkntabid"][$bzm0] = lmbdb_result($rs,"VERKNTABID");}
+			if(lmbdb_result($rs,"VERKNFIELDID")){$gfield[$gtabid]["verknfieldid"][$bzm0] = lmbdb_result($rs,"VERKNFIELDID");}
+			if(lmbdb_result($rs,"HASRECVERKN")){$gfield[$gtabid]["hasrecverkn"][$bzm0] = lmbdb_result($rs,"HASRECVERKN");}
+			if(lmbdb_result($rs,"VERKNTABLETYPE")){$gfield[$gtabid]["verkntabletype"][$bzm0] = lmbdb_result($rs,"VERKNTABLETYPE");}
+			if(lmbdb_result($rs,"VERKNTREE")){$gfield[$gtabid]["verkntree"][$bzm0] = lmbdb_result($rs,"VERKNTREE");}
+			if(lmbdb_result($rs,"MD5TAB")){$gfield[$gtabid]["md5tab"][$bzm0] = lmb_strtoupper(lmbdb_result($rs,"MD5TAB"));}
 			if($lmb_relext){$gfield[$gtabid]["relext"][$bzm0] = $lmb_relext;}
-			if(odbc_result($rs,"DYNSEARCH")){$gfield[$gtabid]["dynsearch"][$bzm0] = odbc_result($rs,"DYNSEARCH");}
-			if(odbc_result($rs,"ARTLEISTE")){$gfield[$gtabid]["artleiste"][$bzm0] = odbc_result($rs,"ARTLEISTE");}
-			if(odbc_result($rs,"QUICKSEARCH")){$gfield[$gtabid]["quicksearch"][$bzm0] = $lang[odbc_result($rs,"QUICKSEARCH")];}
-            if(odbc_result($rs,"FULLSEARCH")){$gfield[$gtabid]["fullsearch"][$bzm0] = $lang[odbc_result($rs,"FULLSEARCH")];}
-			if(odbc_result($rs,"ISUNIQUE")){$gfield[$gtabid]["unique"][$bzm0] = odbc_result($rs,"ISUNIQUE");}
-			if(odbc_result($rs,"SELECT_SORT")){$gfield[$gtabid]["select_sort"][$bzm0] = odbc_result($rs,"SELECT_SORT");}elseif(odbc_result($rs,"FIELD_TYPE") == 4){$gfield[$gtabid]["select_sort"][$bzm0] = 'SORT';}
-			if(odbc_result($rs,"SELECT_POOL")){$gfield[$gtabid]["select_pool"][$bzm0] = odbc_result($rs,"SELECT_POOL");}elseif(odbc_result($rs,"FIELD_TYPE") == 4){$gfield[$gtabid]["select_pool"][$bzm0] = 0;}
-			if(odbc_result($rs,"FIELD_TYPE") == 4 OR odbc_result($rs,"FIELD_TYPE") == 11){if(odbc_result($rs,"SELECT_CUT")){$gfield[$gtabid]["select_cut"][$bzm0] = odbc_result($rs,"SELECT_CUT");}else{$gfield[$gtabid]["select_cut"][$bzm0] = '<BR>';}}
-			if(odbc_result($rs,"GROUPABLE")){$gfield[$gtabid]["groupable"][$bzm0] = odbc_result($rs,"GROUPABLE");}
-			if(odbc_result($rs,"INDIZE")){$gfield[$gtabid]["indize"][$bzm0] = odbc_result($rs,"INDIZE");}
-			if(odbc_result($rs,"INDEXED")){$gfield[$gtabid]["indexed"][$bzm0] = odbc_result($rs,"INDEXED");}
-			if(odbc_result($rs,"DATETIME") OR odbc_result($rs,"DATETIME") == 0){$gfield[$gtabid]["datetime"][$bzm0] = parse_db_int(odbc_result($rs,"DATETIME"));}
-			if(odbc_result($rs,"WYSIWYG")){$gfield[$gtabid]["wysiwyg"][$bzm0] = odbc_result($rs,"WYSIWYG");}
-			if(odbc_result($rs,"DEFLT")){$gfield[$gtabid]["deflt"][$bzm0] = odbc_result($rs,"DEFLT");}
-			if(odbc_result($rs,"DEFAULTVALUE")){$gfield[$gtabid]["domain_default"][$bzm0] = odbc_result($rs,"DEFAULTVALUE");}
-			if(odbc_result($rs,"VIEWRULE")){$gfield[$gtabid]["viewrule"][$bzm0] = odbc_result($rs,"VIEWRULE");}
-			if(odbc_result($rs,"POTENCY")){$gfield[$gtabid]["potency"][$bzm0] = odbc_result($rs,"POTENCY");}
-			if(odbc_result($rs,"COLLREPLACE")){$gfield[$gtabid]["collreplace"][$bzm0] = odbc_result($rs,"COLLREPLACE");}
-			if(odbc_result($rs,"AGGREGATE")){$gfield[$gtabid]["aggregate"][$bzm0] = odbc_result($rs,"AGGREGATE");}
-		    if(odbc_result($rs,"MULTILANG") AND $session['language'] != $umgvar['default_language']){$gfield[$gtabid]["multilang"][$bzm0] = 2;}
-		    elseif(odbc_result($rs,"MULTILANG")){$gfield[$gtabid]["multilang"][$bzm0] = 1;}
+			if(lmbdb_result($rs,"DYNSEARCH")){$gfield[$gtabid]["dynsearch"][$bzm0] = lmbdb_result($rs,"DYNSEARCH");}
+			if(lmbdb_result($rs,"ARTLEISTE")){$gfield[$gtabid]["artleiste"][$bzm0] = lmbdb_result($rs,"ARTLEISTE");}
+			if(lmbdb_result($rs,"QUICKSEARCH")){$gfield[$gtabid]["quicksearch"][$bzm0] = $lang[lmbdb_result($rs,"QUICKSEARCH")];}
+            if(lmbdb_result($rs,"FULLSEARCH")){$gfield[$gtabid]["fullsearch"][$bzm0] = $lang[lmbdb_result($rs,"FULLSEARCH")];}
+			if(lmbdb_result($rs,"ISUNIQUE")){$gfield[$gtabid]["unique"][$bzm0] = lmbdb_result($rs,"ISUNIQUE");}
+			if(lmbdb_result($rs,"SELECT_SORT")){$gfield[$gtabid]["select_sort"][$bzm0] = lmbdb_result($rs,"SELECT_SORT");}elseif(lmbdb_result($rs,"FIELD_TYPE") == 4){$gfield[$gtabid]["select_sort"][$bzm0] = 'SORT';}
+			if(lmbdb_result($rs,"SELECT_POOL")){$gfield[$gtabid]["select_pool"][$bzm0] = lmbdb_result($rs,"SELECT_POOL");}elseif(lmbdb_result($rs,"FIELD_TYPE") == 4){$gfield[$gtabid]["select_pool"][$bzm0] = 0;}
+			if(lmbdb_result($rs,"FIELD_TYPE") == 4 OR lmbdb_result($rs,"FIELD_TYPE") == 11){if(lmbdb_result($rs,"SELECT_CUT")){$gfield[$gtabid]["select_cut"][$bzm0] = lmbdb_result($rs,"SELECT_CUT");}else{$gfield[$gtabid]["select_cut"][$bzm0] = '<BR>';}}
+			if(lmbdb_result($rs,"GROUPABLE")){$gfield[$gtabid]["groupable"][$bzm0] = lmbdb_result($rs,"GROUPABLE");}
+			if(lmbdb_result($rs,"INDIZE")){$gfield[$gtabid]["indize"][$bzm0] = lmbdb_result($rs,"INDIZE");}
+			if(lmbdb_result($rs,"INDEXED")){$gfield[$gtabid]["indexed"][$bzm0] = lmbdb_result($rs,"INDEXED");}
+			if(lmbdb_result($rs,"DATETIME") OR lmbdb_result($rs,"DATETIME") == 0){$gfield[$gtabid]["datetime"][$bzm0] = parse_db_int(lmbdb_result($rs,"DATETIME"));}
+			if(lmbdb_result($rs,"WYSIWYG")){$gfield[$gtabid]["wysiwyg"][$bzm0] = lmbdb_result($rs,"WYSIWYG");}
+
+			if(lmbdb_result($rs,"DEFAULTVALUE")){$gfield[$gtabid]["table_deflt"][$bzm0] = lmbdb_result($rs,"DEFAULTVALUE");}
+			if(lmbdb_result($rs,"DEFLT")){$gfield[$gtabid]["deflt"][$bzm0] = lmbdb_result($rs,"DEFLT");}
+
+			if(lmbdb_result($rs,"VIEWRULE")){$gfield[$gtabid]["viewrule"][$bzm0] = lmbdb_result($rs,"VIEWRULE");}
+			if(lmbdb_result($rs,"POTENCY")){$gfield[$gtabid]["potency"][$bzm0] = lmbdb_result($rs,"POTENCY");}
+			if(lmbdb_result($rs,"COLLREPLACE")){$gfield[$gtabid]["collreplace"][$bzm0] = lmbdb_result($rs,"COLLREPLACE");}
+			if(lmbdb_result($rs,"AGGREGATE")){$gfield[$gtabid]["aggregate"][$bzm0] = lmbdb_result($rs,"AGGREGATE");}
+		    if(lmbdb_result($rs,"MULTILANG") AND $session['dlanguage'] != $umgvar['default_language']){$gfield[$gtabid]["multilang"][$bzm0] = 2;}
+		    elseif(lmbdb_result($rs,"MULTILANG")){$gfield[$gtabid]["multilang"][$bzm0] = 1;}
 		
-			if(odbc_result($rs,"LISTING_CUT")){$gfield[$gtabid]["listing_cut"][$bzm0] = odbc_result($rs,"LISTING_CUT");}
-			if(odbc_result($rs,"LISTING_VIEWMODE")){$gfield[$gtabid]["listing_viewmode"][$bzm0] = odbc_result($rs,"LISTING_VIEWMODE");}
-			
-			if(odbc_result($rs,"VERKNPARAMS")){$gfield[$gtabid]["verknparams"][$bzm0] = odbc_result($rs,"VERKNPARAMS");}
-			if(odbc_result($rs,"VERKNSEARCH")){$gfield[$gtabid]["verknsearch"][$bzm0] = explode(",",odbc_result($rs,"VERKNSEARCH"));}else{$gfield[$gtabid]["verknsearch"][$bzm0][0] = odbc_result($rs,"VERKNFIELDID");}
-			if(odbc_result($rs,"VERKNVIEW")){
-				$verknview = explode("?",odbc_result($rs,"VERKNVIEW"));
+			if(lmbdb_result($rs,"LISTING_CUT")){$gfield[$gtabid]["listing_cut"][$bzm0] = lmbdb_result($rs,"LISTING_CUT");}
+			if(lmbdb_result($rs,"LISTING_VIEWMODE")){$gfield[$gtabid]["listing_viewmode"][$bzm0] = lmbdb_result($rs,"LISTING_VIEWMODE");}
+
+            if(lmbdb_result($rs,"VERKNGROUP")){$gfield[$gtabid]["verkngroup"][$bzm0] = lmbdb_result($rs,"VERKNGROUP");}
+			if(lmbdb_result($rs,"VERKNPARAMS")){$gfield[$gtabid]["verknparams"][$bzm0] = lmbdb_result($rs,"VERKNPARAMS");}
+			if(lmbdb_result($rs,"VERKNSEARCH")){$gfield[$gtabid]["verknsearch"][$bzm0] = explode(",",lmbdb_result($rs,"VERKNSEARCH"));}else{$gfield[$gtabid]["verknsearch"][$bzm0][0] = lmbdb_result($rs,"VERKNFIELDID");}
+			if(lmbdb_result($rs,"VERKNVIEW")){
+				$verknview = explode("?",lmbdb_result($rs,"VERKNVIEW"));
 				if($verknview[1]){$gfield[$gtabid]["verknviewcut"][$bzm0] = $verknview[1];}else{$gfield[$gtabid]["verknviewcut"][$bzm0] = ' ';}
 				$gfield[$gtabid]["verknview"][$bzm0] = explode(",",$verknview[0]);
-			}else{$gfield[$gtabid]["verknview"][$bzm0][0] = odbc_result($rs,"VERKNFIELDID");}
-			if(odbc_result($rs,"VERKNFIND")){
-				$verknfind = explode("?",odbc_result($rs,"VERKNFIND"));
+			}else{$gfield[$gtabid]["verknview"][$bzm0][0] = lmbdb_result($rs,"VERKNFIELDID");}
+			if(lmbdb_result($rs,"VERKNFIND")){
+				$verknfind = explode("?",lmbdb_result($rs,"VERKNFIND"));
 				if($verknfind[1]){$gfield[$gtabid]["verknfindcut"][$bzm0] = $verknfind[1];}else{$gfield[$gtabid]["verknfindcut"][$bzm0] = ' ';}
 				$gfield[$gtabid]["verknfind"][$bzm0] = explode(",",$verknfind[0]);
-			}else{$gfield[$gtabid]["verknfind"][$bzm0][0] = odbc_result($rs,"VERKNFIELDID");}
+			}else{$gfield[$gtabid]["verknfind"][$bzm0][0] = lmbdb_result($rs,"VERKNFIELDID");}
 			
 			$ftp = $gfield[$gtabid]["field_type"][$bzm0];
 			$dtp = $gfield[$gtabid]["data_type"][$bzm0];
@@ -433,63 +443,63 @@ function gfield_array($gtab,$gfield,$gtabid){
 
 			# ######## Summierende Rechte #########
 			# ----- Schreibrechte -----------
-			if(odbc_result($rs,"GROUPEDIT")){$gfield[$gtabid]["perm_edit"][$bzm0] = 1;}
+			if(lmbdb_result($rs,"GROUPEDIT")){$gfield[$gtabid]["perm_edit"][$bzm0] = 1;}
 			# ----- kopierrechte -----------
-			if(odbc_result($rs,"COPY")){$gfield[$gtabid]["copy"][$bzm0] = 1;}
+			if(lmbdb_result($rs,"COPY")){$gfield[$gtabid]["copy"][$bzm0] = 1;}
 			# ----- Optionen -----------
-			if(odbc_result($rs,"FIELDOPTION")){$gfield[$gtabid]["option"][$bzm0] = 1;}
+			if(lmbdb_result($rs,"FIELDOPTION")){$gfield[$gtabid]["option"][$bzm0] = 1;}
 			# ----- Pflichtfeld -----------
-			if(odbc_result($rs,"NEED")){$gfield[$gtabid]["need"][$bzm0] = "*".$gfield[$gtabid]["spelling"][$bzm0].": ";}
+			if(lmbdb_result($rs,"NEED")){$gfield[$gtabid]["need"][$bzm0] = "*".$gfield[$gtabid]["spelling"][$bzm0].": ";}
 			# ----- Versionierung -----------
-			if(odbc_result($rs,"VER")){$gfield[$gtabid]["ver"][$bzm0] = 1;}
+			if(lmbdb_result($rs,"VER")){$gfield[$gtabid]["ver"][$bzm0] = 1;}
 
 			# ######## Hauptgruppen Rechte #########
 			if($gfield[$gtabid]["trigger"][$bzm0]){$trgger = $gfield[$gtabid]["trigger"][$bzm0];}else{$trgger = array();}
-			if(odbc_result($rs, "LMTRIGGER") OR odbc_result($rs, "RECHTE_TRIGGER")){$gfield[$gtabid]["trigger"][$bzm0] = array_unique(array_merge(explode(",",odbc_result($rs, "LMTRIGGER")),explode(",",odbc_result($rs, "RECHTE_TRIGGER")),$trgger));}
-			if(odbc_result($rs,"GEDITRULE")){
-				$gfield[$gtabid]["editrule"][$bzm0] = odbc_result($rs,"GEDITRULE");
-			}elseif(odbc_result($rs,"EDITRULE")){
-				$gfield[$gtabid]["editrule"][$bzm0] = odbc_result($rs,"EDITRULE");
+			if(lmbdb_result($rs, "LMTRIGGER") OR lmbdb_result($rs, "RECHTE_TRIGGER")){$gfield[$gtabid]["trigger"][$bzm0] = array_unique(array_merge(explode(",",lmbdb_result($rs, "LMTRIGGER")),explode(",",lmbdb_result($rs, "RECHTE_TRIGGER")),$trgger));}
+			if(lmbdb_result($rs,"GEDITRULE")){
+				$gfield[$gtabid]["editrule"][$bzm0] = lmbdb_result($rs,"GEDITRULE");
+			}elseif(lmbdb_result($rs,"EDITRULE")){
+				$gfield[$gtabid]["editrule"][$bzm0] = lmbdb_result($rs,"EDITRULE");
 			}
-			$gfield[$gtabid]["color"][$bzm0] = odbc_result($rs,"GROUPCOLOR");
+			$gfield[$gtabid]["color"][$bzm0] = lmbdb_result($rs,"GROUPCOLOR");
 			
-			$groupfilter = odbc_result($rs,"GROUPFILTER");
+			$groupfilter = lmbdb_result($rs,"GROUPFILTER");
 			# gilt nur wenn keine anderen Einschränkungen aktiv
 			if($groupfilter == '#INACTIVE#'){
 
 			}elseif($groupfilter){
 				$gfield[$gtabid]["filter"][$bzm0][] = $groupfilter;
-				$gfield[$gtabid]["filtertyp"][$bzm0][] = odbc_result($rs,"GROUPFILTERTYP");
+				$gfield[$gtabid]["filtertyp"][$bzm0][] = lmbdb_result($rs,"GROUPFILTERTYP");
 			# setzt Rechte auf NULL (alle Rechte) wenn kein Filter gesetzt
 			}else{
 				$reset_groupfilter[$bzm0] = $bzm0;
 			}
 
 			#----- Numberformat / Potenzen ----------------------------------
-			if(odbc_result($rs,"GROUPNFORMAT")){$gfield[$gtabid]["nformat"][$bzm0] = odbc_result($rs,"GROUPNFORMAT");}
-			elseif(odbc_result($rs,"NFORMAT")){$gfield[$gtabid]["nformat"][$bzm0] = odbc_result($rs,"NFORMAT");}
+			if(lmbdb_result($rs,"GROUPNFORMAT")){$gfield[$gtabid]["nformat"][$bzm0] = lmbdb_result($rs,"GROUPNFORMAT");}
+			elseif(lmbdb_result($rs,"NFORMAT")){$gfield[$gtabid]["nformat"][$bzm0] = lmbdb_result($rs,"NFORMAT");}
 			else{$gfield[$gtabid]["nformat"][$bzm0] = NULL;}
 
 			#----- extension ----------------------------------
-			if(odbc_result($rs,"GROUPEXT_TYPE")){$gfield[$gtabid]["ext_type"][$bzm0] = odbc_result($rs,"GROUPEXT_TYPE");}
-			elseif(odbc_result($rs,"EXT_TYPE")){$gfield[$gtabid]["ext_type"][$bzm0] = odbc_result($rs,"EXT_TYPE");}
+			if(lmbdb_result($rs,"GROUPEXT_TYPE")){$gfield[$gtabid]["ext_type"][$bzm0] = lmbdb_result($rs,"GROUPEXT_TYPE");}
+			elseif(lmbdb_result($rs,"EXT_TYPE")){$gfield[$gtabid]["ext_type"][$bzm0] = lmbdb_result($rs,"EXT_TYPE");}
 			else{$gfield[$gtabid]["ext_type"][$bzm0] = NULL;}
 
 			#----- currency ----------------------------------
-			if(odbc_result($rs,"GROUPCURRENCY")){$gfield[$gtabid]["currency"][$bzm0] = odbc_result($rs,"GROUPCURRENCY");}
-			elseif(odbc_result($rs,"CURRENCY")){$gfield[$gtabid]["currency"][$bzm0] = odbc_result($rs,"CURRENCY");}
+			if(lmbdb_result($rs,"GROUPCURRENCY")){$gfield[$gtabid]["currency"][$bzm0] = lmbdb_result($rs,"GROUPCURRENCY");}
+			elseif(lmbdb_result($rs,"CURRENCY")){$gfield[$gtabid]["currency"][$bzm0] = lmbdb_result($rs,"CURRENCY");}
 			
-			#----- LMB_SYNC_SLAVE ----------------------------------
+			#----- LMB_SYNC_SLAVE published field ----------------------------------
 		    if($gfield[$gtabid]["field_name"][$bzm0] == 'LMB_SYNC_SLAVE'){$gfield[$gtabid]['sync'][$bzm0] = 1;}
 
 			# ------- Default-Sortierung ------
-			if(odbc_result($rs,"GROUPSORT") == 1 AND !$gfield[$gtabid]["sortfield"]){
+			if(lmbdb_result($rs,"GROUPSORT") == 1 AND !$gfield[$gtabid]["sortfield"]){
 				$gfield[$gtabid]["sortfield"] = $field_name;
-				$gfield[$gtabid]["sortfield_type"] = odbc_result($rs,"FIELD_TYPE");
+				$gfield[$gtabid]["sortfield_type"] = $gfield[$gtabid]["parse_type"][$bzm0];
 				$gfield[$gtabid]["sortfield_asc"] = "ASC";
-			}elseif(odbc_result($rs,"GROUPSORT") == 2 AND !$gfield[$gtabid]["sortfield"]){
+			}elseif(lmbdb_result($rs,"GROUPSORT") == 2 AND !$gfield[$gtabid]["sortfield"]){
 				$gfield[$gtabid]["sortfield"] = $field_name;
-				$gfield[$gtabid]["sortfield_type"] = odbc_result($rs,"FIELD_TYPE");
+				$gfield[$gtabid]["sortfield_type"] = $gfield[$gtabid]["parse_type"][$bzm0];
 				$gfield[$gtabid]["sortfield_asc"] = "DESC";
 			}
 
@@ -497,7 +507,7 @@ function gfield_array($gtab,$gfield,$gtabid){
 
 			# Währung
 			if($gfield[$gtabid]["data_type"][$bzm0] == 30){
-				$gfield[$gtabid]["select"][$bzm0] .= ",".$gtab['table'][$gtabid].".".odbc_result($rs,"FIELD_NAME")."_C AS ".$gfield[$gtabid]["form_name"][$bzm0]."_C";
+				$gfield[$gtabid]["select"][$bzm0] .= ",".$gtab['table'][$gtabid].".".lmbdb_result($rs,"FIELD_NAME")."_C AS ".$gfield[$gtabid]["form_name"][$bzm0]."_C";
 			}
 
 			# ---- Verknüpfung --------------------
@@ -517,14 +527,14 @@ function gfield_array($gtab,$gfield,$gtabid){
 				// replaced by relation parameters
 				/*
                 # Zusatzfelder Verknüpfungstabelle
-				$rs1 = odbc_columns($db,null,$DBA["DBSCHEMA"],lmb_strtoupper($gfield[$gtabid]["md5tab"][$bzm0]));
+				$rs1 = lmbdb_columns($db,null,$DBA["DBSCHEMA"],lmb_strtoupper($gfield[$gtabid]["md5tab"][$bzm0]));
 				$deffields = array("ID","KEYID","VERKN_ID","ERSTDATUM","ERSTUSER","SORT");
 				$gfield[$gtabid]["md5tab_fields"][$bzm0] = null;
 				$gfield[$gtabid]["md5tab_types"][$bzm0] = null;
-				while(odbc_fetch_row($rs1)) {
-					if(!in_array(lmb_strtoupper(odbc_result($rs1, "COLUMN_NAME")),$deffields)){
-			  			$gfield[$gtabid]["md5tab_fields"][$bzm0][] = odbc_result($rs1, "COLUMN_NAME");
-			  			$gfield[$gtabid]["md5tab_types"][$bzm0][] = odbc_result($rs1, "TYPE_NAME");
+				while(lmbdb_fetch_row($rs1)) {
+					if(!in_array(lmb_strtoupper(lmbdb_result($rs1, "COLUMN_NAME")),$deffields)){
+			  			$gfield[$gtabid]["md5tab_fields"][$bzm0][] = lmbdb_result($rs1, "COLUMN_NAME");
+			  			$gfield[$gtabid]["md5tab_types"][$bzm0][] = lmbdb_result($rs1, "TYPE_NAME");
 					}
 				}
 				*/
@@ -532,12 +542,12 @@ function gfield_array($gtab,$gfield,$gtabid){
 			}
 
 			#----- File-Level ----------------------------------
-			if($data_type == 25 OR $data_type == 13 OR ($gtab["typ"][odbc_result($rs,"VERKNTABID")] == 3 AND odbc_result($rs,"FIELD_TYPE") == 11)){
+			if($data_type == 25 OR $data_type == 13 OR ($gtab["typ"][lmbdb_result($rs,"VERKNTABID")] == 3 AND lmbdb_result($rs,"FIELD_TYPE") == 11)){
 				$sqlquery1 = "SELECT ID FROM LDMS_STRUCTURE WHERE TAB_ID = $gtabid AND FIELD_ID = $bzm0 AND FIX = ".LMB_DBDEF_TRUE;
-				$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+				$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 				if(!$rs1) {$commit = 1;}
-				if(odbc_result($rs1,"ID")){
-					$gfield[$gtabid]["file_level"][$bzm0] = odbc_result($rs1,"ID");
+				if(lmbdb_result($rs1,"ID")){
+					$gfield[$gtabid]["file_level"][$bzm0] = lmbdb_result($rs1,"ID");
 				}
 			}
 
@@ -549,13 +559,13 @@ function gfield_array($gtab,$gfield,$gtabid){
 			}
 
 			# ----------------- Field Key -------------------
-			if(odbc_result($rs,"FIELDKEY") == TRUE){
-				$gfield[$gtabid]["fieldkey"] = odbc_result($rs,"FIELD_NAME");
+			if(lmbdb_result($rs,"FIELDKEY") == TRUE){
+				$gfield[$gtabid]["fieldkey"] = lmbdb_result($rs,"FIELD_NAME");
 				$gfield[$gtabid]["fieldkey_id"] = $bzm0;
 			}
 
 			# ----------------- Main Field / Bezeichner -------------------
-			if(odbc_result($rs,"MAINFIELD") == TRUE){
+			if(lmbdb_result($rs,"MAINFIELD") == TRUE){
 				$gfield[$gtabid]["mainfield"] = $bzm0;
 			}
 
@@ -566,9 +576,9 @@ function gfield_array($gtab,$gfield,$gtabid){
 				$gfield[$gtabid]["rowsize"][$bzm0] = $umgvar["default_fieldwidth"];
 			}
 
-            if (odbc_result($rs,"LISTEDIT")) {$gfield[$gtabid]["listedit"][$bzm0] = 1;}
-            if (odbc_result($rs,"SPEECHREC")) {$gfield[$gtabid]["speechrec"][$bzm0] = 1;}
-            if (odbc_result($rs,"POPUPDEFAULT")) {
+            if (lmbdb_result($rs,"LISTEDIT")) {$gfield[$gtabid]["listedit"][$bzm0] = 1;}
+            if (lmbdb_result($rs,"SPEECHREC")) {$gfield[$gtabid]["speechrec"][$bzm0] = 1;}
+            if (lmbdb_result($rs,"POPUPDEFAULT")) {
                 $GLOBALS['popg'][$gtabid][0]['null'][$bzm0] = 1;
                 $GLOBALS['popc'][$gtabid][$gfield[$gtabid]["verkntabid"][$bzm0]] = 1;
             }
@@ -593,37 +603,41 @@ function gfield_array($gtab,$gfield,$gtabid){
 		}
 	}
 
-	# field sort
+	# default sort and key values
 	if($gfield[$gtabid]["sort"]){
-		asort($gfield[$gtabid]["sort"]);
-	}
 
-	# Deafault sort and key values
-	if($gfield[$gtabid]["sort"]){
-		$first_gfield = array_keys($gfield[$gtabid]["sort"]);
+	    asort($gfield[$gtabid]["sort"]);
 
-		$first_gfield = $first_gfield_[0];
-		if($gfield[$gtabid]["field_type"][$first_gfield] == 100){
-			$first_gfield = $first_gfield_[1];
-			if($gfield[$gtabid]["field_type"][$first_gfield] == 100){
-				$first_gfield = $first_gfield = $first_gfield_[2];
-				if($gfield[$gtabid]["field_type"][$first_gfield] == 100){
-					$first_gfield = "none";
-				}
-			}
-		}
+        if($gfield[$gtabid]["argresult_name"]['ID']){ // has ID
+            $first_gfield = $gfield[$gtabid]["argresult_name"]['ID'];
+        }elseif($gtab["typ"][$gtabid] == 5) { //IS VIEW - order first second or third field of view for pagination
+            $first_gfield_ = array_keys($gfield[$gtabid]["sort"]);
+            $first_gfield = $first_gfield_[0];
+            if ($gfield[$gtabid]["field_type"][$first_gfield] == 100) {
+                $first_gfield = $first_gfield_[1];
+                if ($gfield[$gtabid]["field_type"][$first_gfield] == 100) {
+                    $first_gfield = $first_gfield = $first_gfield_[2];
+                    if ($gfield[$gtabid]["field_type"][$first_gfield] == 100) {
+                        $first_gfield = 0;
+                    }
+                }
+            }
+        }else{
+            $first_gfield = 0;
+        }
 
 		#----- Sortierung eintragen --------
-		if(!$gfield[$gtabid]["sortfield"] AND $first_gfield != "none"){
+		if(!$gfield[$gtabid]["sortfield"] AND $first_gfield){
 			$gfield[$gtabid]["sortfield"] = $gfield[$gtabid]["field_name"][$first_gfield];
-			$gfield[$gtabid]["sortfield_type"] = $gfield[$gtabid]["field_type"][$first_gfield];
+			$gfield[$gtabid]["sortfield_type"] = $gfield[$gtabid]["parse_type"][$first_gfield];
 			$gfield[$gtabid]["sortfield_asc"] = "ASC";
 		}
 		#----- Feld-Key eintragen --------
-		if(!$gfield[$gtabid]["fieldkey"] AND $first_gfield != "none"){
+		if(!$gfield[$gtabid]["fieldkey"] AND $first_gfield){
 			$gfield[$gtabid]["fieldkey"] = $gfield[$gtabid]["field_name"][$first_gfield];
 			$gfield[$gtabid]["fieldkey_id"] = $first_gfield;
 		}
+
 	}
 
 	return $gfield;
@@ -652,30 +666,31 @@ function resultreportlist(){
 	";
 */
 	$sqlquery = "
-	SELECT DISTINCT LMB_REPORT_LIST.LISTMODE,LMB_REPORT_LIST.DEFFORMAT,LMB_REPORT_LIST.SAVENAME,LMB_REPORT_LIST.ODT_TEMPLATE,LMB_REPORT_LIST.ODS_TEMPLATE,LMB_REPORT_LIST.ID,LMB_REPORT_LIST.TARGET,LMB_REPORT_LIST.NAME,LMB_REPORT_LIST.REFERENZ_TAB,LMB_RULES_REPFORM.HIDDEN
+	SELECT DISTINCT LMB_REPORT_LIST.LISTMODE,LMB_REPORT_LIST.DEFFORMAT,LMB_REPORT_LIST.CSS,LMB_REPORT_LIST.SAVENAME,LMB_REPORT_LIST.ODT_TEMPLATE,LMB_REPORT_LIST.ODS_TEMPLATE,LMB_REPORT_LIST.ID,LMB_REPORT_LIST.TARGET,LMB_REPORT_LIST.NAME,LMB_REPORT_LIST.REFERENZ_TAB,LMB_RULES_REPFORM.HIDDEN
 	FROM LMB_REPORT_LIST,LMB_RULES_REPFORM
 	WHERE LMB_RULES_REPFORM.REPFORM_ID = LMB_REPORT_LIST.ID
 	AND LMB_RULES_REPFORM.TYP = 1
 	AND (LMB_RULES_REPFORM.GROUP_ID = ".implode(" OR LMB_RULES_REPFORM.GROUP_ID = ",$session["subgroup"]).")
 	";
 	#ORDER BY LMB_REPORT_LIST.NAME (only maxdb76)
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$key = odbc_result($rs, "ID");
-		$gtabid = odbc_result($rs, "REFERENZ_TAB");
+	while(lmbdb_fetch_row($rs)) {
+		$key = lmbdb_result($rs, "ID");
+		$gtabid = lmbdb_result($rs, "REFERENZ_TAB");
 		$greportlist[$gtabid]["id"][$key] = $key;
-		$greportlist[$gtabid]["name"][$key] = odbc_result($rs, "NAME");
-		if(odbc_result($rs, "DEFFORMAT")){$greportlist[$gtabid]["defformat"][$key] = odbc_result($rs, "DEFFORMAT");}
-		if(odbc_result($rs, "ODT_TEMPLATE")){$greportlist[$gtabid]["odt_template"][$key] = odbc_result($rs, "ODT_TEMPLATE");}
-		if(odbc_result($rs, "ODS_TEMPLATE")){$greportlist[$gtabid]["ods_template"][$key] = odbc_result($rs, "ODS_TEMPLATE");}
-		if(odbc_result($rs, "SAVENAME")){$greportlist[$gtabid]["savename"][$key] = odbc_result($rs, "SAVENAME");}
-		if(odbc_result($rs, "LISTMODE")){$greportlist[$gtabid]["listmode"][$key] = odbc_result($rs, "LISTMODE");}
-		#$greportlist[$gtabid]["grouplist"][$key] = odbc_result($rs, "GROUPLIST");
-		#$greportlist[$gtabid]["fid"][$key] = odbc_result($rs, "TARGET");
-		#$greportlist[$gtabid]["level"][$key] = odbc_result($rs, "LEVEL");
+		$greportlist[$gtabid]["name"][$key] = lmbdb_result($rs, "NAME");
+        if(lmbdb_result($rs, "DEFFORMAT")){$greportlist[$gtabid]["defformat"][$key] = lmbdb_result($rs, "DEFFORMAT");}
+        if(lmbdb_result($rs, "CSS")){$greportlist[$gtabid]["css"][$key] = lmbdb_result($rs, "CSS");}
+		if(lmbdb_result($rs, "ODT_TEMPLATE")){$greportlist[$gtabid]["odt_template"][$key] = lmbdb_result($rs, "ODT_TEMPLATE");}
+		if(lmbdb_result($rs, "ODS_TEMPLATE")){$greportlist[$gtabid]["ods_template"][$key] = lmbdb_result($rs, "ODS_TEMPLATE");}
+		if(lmbdb_result($rs, "SAVENAME")){$greportlist[$gtabid]["savename"][$key] = lmbdb_result($rs, "SAVENAME");}
+		if(lmbdb_result($rs, "LISTMODE")){$greportlist[$gtabid]["listmode"][$key] = lmbdb_result($rs, "LISTMODE");}
+		#$greportlist[$gtabid]["grouplist"][$key] = lmbdb_result($rs, "GROUPLIST");
+		#$greportlist[$gtabid]["fid"][$key] = lmbdb_result($rs, "TARGET");
+		#$greportlist[$gtabid]["level"][$key] = lmbdb_result($rs, "LEVEL");
 		$greportlist["argresult_tabid"][$key] = $gtabid;
-		if(odbc_result($rs, "HIDDEN") AND $greportlist[$gtabid]["hidden"][$key] !== 0){$greportlist[$gtabid]["hidden"][$key] = 1;}
+		if(lmbdb_result($rs, "HIDDEN") AND $greportlist[$gtabid]["hidden"][$key] !== 0){$greportlist[$gtabid]["hidden"][$key] = 1;}
 		else{$greportlist[$gtabid]["hidden"][$key] = 0;}
 	}
 	return $greportlist;
@@ -691,18 +706,18 @@ function resultdiaglist(){
 	WHERE LMB_RULES_REPFORM.REPFORM_ID = LMB_CHART_LIST.ID
 	AND LMB_RULES_REPFORM.TYP = 3
 	AND (LMB_RULES_REPFORM.GROUP_ID IN (".implode(",",$session["subgroup"])."))";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$key = odbc_result($rs, "ID");
-		$gtabid = odbc_result($rs, "TAB_ID");
+	while(lmbdb_fetch_row($rs)) {
+		$key = lmbdb_result($rs, "ID");
+		$gtabid = lmbdb_result($rs, "TAB_ID");
 		$gdiaglist[$gtabid]["id"][$key] = $key;
-		$gdiaglist[$gtabid]["name"][$key] = odbc_result($rs, "DIAG_NAME");
-		$gdiaglist[$gtabid]["desc"][$key] = odbc_result($rs, "DIAG_DESC");
-		$gdiaglist[$gtabid]["template"][$key] = odbc_result($rs, "TEMPLATE");
-		$gdiaglist[$gtabid]["noheader"][$key] = odbc_result($rs, "NOHEADER");
+		$gdiaglist[$gtabid]["name"][$key] = lmbdb_result($rs, "DIAG_NAME");
+		$gdiaglist[$gtabid]["desc"][$key] = lmbdb_result($rs, "DIAG_DESC");
+		$gdiaglist[$gtabid]["template"][$key] = lmbdb_result($rs, "TEMPLATE");
+		$gdiaglist[$gtabid]["noheader"][$key] = lmbdb_result($rs, "NOHEADER");
 		$gdiaglist['gtabid'][$key] = $gtabid;
-		if(odbc_result($rs, "HIDDEN") AND $gdiaglist[$gtabid]["hidden"][$key] !== 0){$gdiaglist[$gtabid]["hidden"][$key] = 1;}
+		if(lmbdb_result($rs, "HIDDEN") AND $gdiaglist[$gtabid]["hidden"][$key] !== 0){$gdiaglist[$gtabid]["hidden"][$key] = 1;}
 		else{$gdiaglist[$gtabid]["hidden"][$key] = 0;}
 	}
 	return $gdiaglist;
@@ -720,20 +735,20 @@ function resultreminder(){
 	AND LMB_RULES_REPFORM.TYP = 4
 	AND (LMB_RULES_REPFORM.GROUP_ID IN (".implode(",",$session["subgroup"])."))
 	ORDER BY LMB_REMINDER_LIST.TAB_ID,LMB_REMINDER_LIST.SORT";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$bzm = 1;
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$key = odbc_result($rs, "ID");
-		$gtabid = odbc_result($rs, "TAB_ID");
-		$greminder[$gtabid]["name"][$key] = $lang[odbc_result($rs, "NAME")];
-		$greminder[$gtabid]["forml_id"][$key] = odbc_result($rs, "FORML_ID");
-		$greminder[$gtabid]["formd_id"][$key] = odbc_result($rs, "FORMD_ID");
-		$greminder[$gtabid]["groupbased"][$key] = odbc_result($rs, "GROUPBASED");
+	while(lmbdb_fetch_row($rs)) {
+		$key = lmbdb_result($rs, "ID");
+		$gtabid = lmbdb_result($rs, "TAB_ID");
+		$greminder[$gtabid]["name"][$key] = $lang[lmbdb_result($rs, "NAME")];
+		$greminder[$gtabid]["forml_id"][$key] = lmbdb_result($rs, "FORML_ID");
+		$greminder[$gtabid]["formd_id"][$key] = lmbdb_result($rs, "FORMD_ID");
+		$greminder[$gtabid]["groupbased"][$key] = lmbdb_result($rs, "GROUPBASED");
 		$greminder["argresult_id"][$key] = $gtabid;
-		if(odbc_result($rs, "HIDDEN") AND $greminder[$gtabid]["hidden"][$key] !== 0){$greminder[$gtabid]["hidden"][$key] = 1;}
+		if(lmbdb_result($rs, "HIDDEN") AND $greminder[$gtabid]["hidden"][$key] !== 0){$greminder[$gtabid]["hidden"][$key] = 1;}
 		else{$greminder[$gtabid]["hidden"][$key] = 0;}
 	}
 	return $greminder;
@@ -752,23 +767,24 @@ function resultformlist(){
 	AND LMB_RULES_REPFORM.TYP = 2
 	AND (LMB_RULES_REPFORM.GROUP_ID IN (".implode(",",$session["subgroup"])."))
 	ORDER BY REFERENZ_TAB,NAME";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$key = odbc_result($rs, "ID");
-		$gtabid = odbc_result($rs, "REFERENZ_TAB");
+	while(lmbdb_fetch_row($rs)) {
+		$key = lmbdb_result($rs, "ID");
+		$gtabid = lmbdb_result($rs, "REFERENZ_TAB");
 		if(!$gtabid){$gtabid = 0;}
+		$gformlist["argresult_id"][$key] = $gtabid;
 		$gformlist[$gtabid]["id"][$key] = $key;
-		$gformlist[$gtabid]["name"][$key] = odbc_result($rs, "NAME");
-		$gformlist[$gtabid]["typ"][$key] = odbc_result($rs, "FORM_TYP");
-		$gformlist[$gtabid]["redirect"][$key] = odbc_result($rs, "REDIRECT");
+		$gformlist[$gtabid]["name"][$key] = lmbdb_result($rs, "NAME");
+		$gformlist[$gtabid]["typ"][$key] = lmbdb_result($rs, "FORM_TYP");
+		$gformlist[$gtabid]["redirect"][$key] = lmbdb_result($rs, "REDIRECT");
 		$gformlist[$gtabid]["ref_tab"][$key] = $gtabid;
-		$gformlist[$gtabid]["erstuser"][$key] = odbc_result($rs, "ERSTUSER");
-		if(odbc_result($rs, "CSS") != 'layout.css'){$gformlist[$gtabid]["css"][$key] = lmb_substr(odbc_result($rs, "CSS"),1,120);}
-		$gformlist[$gtabid]["extension"][$key] = trim(odbc_result($rs, "EXTENSION"),"/");
-		#if($gformlist[$gtabid]["typ"][$key] == 1){$gformlist[$gtabid]["dimension"][$key] = odbc_result($rs, "DIMENSION");}
-		$gformlist[$gtabid]["dimension"][$key] = odbc_result($rs, "DIMENSION");
-		if(odbc_result($rs, "HIDDEN") AND $gformlist[$gtabid]["hidden"][$key] !== 0){$gformlist[$gtabid]["hidden"][$key] = 1;}
+		$gformlist[$gtabid]["erstuser"][$key] = lmbdb_result($rs, "ERSTUSER");
+		if(lmbdb_result($rs, "CSS") != 'layout.css'){$gformlist[$gtabid]["css"][$key] = lmb_substr(lmbdb_result($rs, "CSS"),1,120);}
+		$gformlist[$gtabid]["extension"][$key] = trim(lmbdb_result($rs, "EXTENSION"),"/");
+		#if($gformlist[$gtabid]["typ"][$key] == 1){$gformlist[$gtabid]["dimension"][$key] = lmbdb_result($rs, "DIMENSION");}
+		$gformlist[$gtabid]["dimension"][$key] = lmbdb_result($rs, "DIMENSION");
+		if(lmbdb_result($rs, "HIDDEN") AND $gformlist[$gtabid]["hidden"][$key] !== 0){$gformlist[$gtabid]["hidden"][$key] = 1;}
 		else{$gformlist[$gtabid]["hidden"][$key] = 0;}
 	}
 	
@@ -779,58 +795,60 @@ function resultformlist(){
 function resultform($tableid,$formid,$fbzm,$gform){
 	global $db;
 	global $gfield;
+	global $gformlist;
 
 	if($tableid){$where = "TAB_EL = $tableid AND FORM_ID = $formid AND TAB_EL_ROW > 0 AND TAB_EL_COL > 0 ORDER BY KEYID";}
 	else{$where = "TAB_EL_ROW = 0 AND TAB_EL_COL = 0 ORDER BY CATEGORIE,Z_INDEX";}
 	$sqlquery = "SELECT * FROM LMB_FORMS WHERE $where";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$key = odbc_result($rs, "FORM_ID");
-		$id = odbc_result($rs, "KEYID");
+	while(lmbdb_fetch_row($rs)) {
+		$key = lmbdb_result($rs, "FORM_ID");
+		$id = lmbdb_result($rs, "KEYID");
 		$fbzm = $id;
-		
+		if(!isset($gformlist["argresult_id"][$key])){continue;} // todo description ??
+
 		$gform[$key]["id"][$fbzm] = $key;
 		$gform[$key]["fid"][$fbzm] = $id;
-		$gform[$key]["typ"][$fbzm] = odbc_result($rs, "TYP");
-		$gform[$key]["posx"][$fbzm] = odbc_result($rs, "POSX");
-		$gform[$key]["posy"][$fbzm] = odbc_result($rs, "POSY");
-		$gform[$key]["height"][$fbzm] = odbc_result($rs, "HEIGHT");
-		$gform[$key]["width"][$fbzm] = odbc_result($rs, "WIDTH");
-		$gform[$key]["style"][$fbzm] = odbc_result($rs, "STYLE");
-		$gform[$key]["z_index"][$fbzm] = odbc_result($rs, "Z_INDEX");
-		if($inhalt = odbc_result($rs, "INHALT")){$gform[$key]["inhalt"][$fbzm] = trim($inhalt);} # longtext handle
-		if($title = odbc_result($rs, "TITLE")){$gform[$key]["title"][$fbzm] = $title;}
-		if(odbc_result($rs, "TAB_GROUP")){$gform[$key]["tab_group"][$fbzm] = odbc_result($rs, "TAB_GROUP");}
-		if(odbc_result($rs, "TAB_ID")){$gform[$key]["tab_id"][$fbzm] = odbc_result($rs, "TAB_ID");}
-		if(odbc_result($rs, "FIELD_ID")){$gform[$key]["field_id"][$fbzm] = odbc_result($rs, "FIELD_ID");}
-		if(odbc_result($rs, "UFORM_TYP")){$gform[$key]["uform_typ"][$fbzm] = odbc_result($rs, "UFORM_TYP");}
-		if(odbc_result($rs, "UFORM_VTYP")){$gform[$key]["uform_vtyp"][$fbzm] = odbc_result($rs, "UFORM_VTYP");}
-		if(odbc_result($rs, "PIC_TYP")){$gform[$key]["pic_typ"][$fbzm] = odbc_result($rs, "PIC_TYP");}
-		if($pic_style = odbc_result($rs, "PIC_STYLE")){$gform[$key]["pic_style"][$fbzm] = $pic_style;}
-		if($pic_size = odbc_result($rs, "PIC_SIZE")){$gform[$key]["pic_size"][$fbzm] = $pic_size;}
-		if(odbc_result($rs, "TAB")){$gform[$key]["tab"][$fbzm] = odbc_result($rs, "TAB");}
-		if(odbc_result($rs, "TAB_SIZE")){$gform[$key]["tab_size"][$fbzm] = odbc_result($rs, "TAB_SIZE");}
-		if(odbc_result($rs, "TAB_EL")){$gform[$key]["tab_el"][$fbzm] = odbc_result($rs, "TAB_EL");}
-		if(odbc_result($rs, "TAB_EL_COL")){$gform[$key]["tab_el_col"][$fbzm] = odbc_result($rs, "TAB_EL_COL");}
-		if(odbc_result($rs, "TAB_EL_ROW")){$gform[$key]["tab_el_row"][$fbzm] = odbc_result($rs, "TAB_EL_ROW");}
-		if(odbc_result($rs, "PARENTREL")){$gform[$key]["parentage"][$fbzm] = odbc_result($rs, "PARENTREL");}
-		# if(odbc_result($rs, "PARENTRELPATH")){$gform[$key]["parentrelpath"][$fbzm] = odbc_result($rs, "PARENTRELPATH");} # TODO
-		#if(odbc_result($rs, "TAB_EL_COL_SIZE")){$gform[$key]["tab_el_col_size"][$fbzm] = odbc_result($rs, "TAB_EL_COL_SIZE");} # ????? TODO
+		$gform[$key]["typ"][$fbzm] = lmbdb_result($rs, "TYP");
+		$gform[$key]["posx"][$fbzm] = lmbdb_result($rs, "POSX");
+		$gform[$key]["posy"][$fbzm] = lmbdb_result($rs, "POSY");
+		$gform[$key]["height"][$fbzm] = lmbdb_result($rs, "HEIGHT");
+		$gform[$key]["width"][$fbzm] = lmbdb_result($rs, "WIDTH");
+		$gform[$key]["style"][$fbzm] = lmbdb_result($rs, "STYLE");
+		$gform[$key]["z_index"][$fbzm] = lmbdb_result($rs, "Z_INDEX");
+		if($inhalt = lmbdb_result($rs, "INHALT")){$gform[$key]["inhalt"][$fbzm] = trim($inhalt);} # longtext handle
+		if($title = lmbdb_result($rs, "TITLE")){$gform[$key]["title"][$fbzm] = $title;}
+		if(lmbdb_result($rs, "TAB_GROUP")){$gform[$key]["tab_group"][$fbzm] = lmbdb_result($rs, "TAB_GROUP");}
+		if(lmbdb_result($rs, "TAB_ID")){$gform[$key]["tab_id"][$fbzm] = lmbdb_result($rs, "TAB_ID");}
+		if(lmbdb_result($rs, "FIELD_ID")){$gform[$key]["field_id"][$fbzm] = lmbdb_result($rs, "FIELD_ID");}
+		if(lmbdb_result($rs, "UFORM_TYP")){$gform[$key]["uform_typ"][$fbzm] = lmbdb_result($rs, "UFORM_TYP");}
+		if(lmbdb_result($rs, "UFORM_VTYP")){$gform[$key]["uform_vtyp"][$fbzm] = lmbdb_result($rs, "UFORM_VTYP");}
+		if(lmbdb_result($rs, "PIC_TYP")){$gform[$key]["pic_typ"][$fbzm] = lmbdb_result($rs, "PIC_TYP");}
+		if($pic_style = lmbdb_result($rs, "PIC_STYLE")){$gform[$key]["pic_style"][$fbzm] = $pic_style;}
+		if($pic_size = lmbdb_result($rs, "PIC_SIZE")){$gform[$key]["pic_size"][$fbzm] = $pic_size;}
+		if(lmbdb_result($rs, "TAB")){$gform[$key]["tab"][$fbzm] = lmbdb_result($rs, "TAB");}
+		if(lmbdb_result($rs, "TAB_SIZE")){$gform[$key]["tab_size"][$fbzm] = lmbdb_result($rs, "TAB_SIZE");}
+		if(lmbdb_result($rs, "TAB_EL")){$gform[$key]["tab_el"][$fbzm] = lmbdb_result($rs, "TAB_EL");}
+		if(lmbdb_result($rs, "TAB_EL_COL")){$gform[$key]["tab_el_col"][$fbzm] = lmbdb_result($rs, "TAB_EL_COL");}
+		if(lmbdb_result($rs, "TAB_EL_ROW")){$gform[$key]["tab_el_row"][$fbzm] = lmbdb_result($rs, "TAB_EL_ROW");}
+		if(lmbdb_result($rs, "PARENTREL")){$gform[$key]["parentage"][$fbzm] = lmbdb_result($rs, "PARENTREL");}
+		# if(lmbdb_result($rs, "PARENTRELPATH")){$gform[$key]["parentrelpath"][$fbzm] = lmbdb_result($rs, "PARENTRELPATH");} # TODO
+		#if(lmbdb_result($rs, "TAB_EL_COL_SIZE")){$gform[$key]["tab_el_col_size"][$fbzm] = lmbdb_result($rs, "TAB_EL_COL_SIZE");} # ????? TODO
 
-		if($parameters = odbc_result($rs, "PARAMETERS")){$gform[$key]["parameters"][$fbzm] = trim($parameters);}  # longtext handle
-		#$gform[$key]["categorie"][$fbzm] = odbc_result($rs, "CATEGORIE");
+		if($parameters = lmbdb_result($rs, "PARAMETERS")){$gform[$key]["parameters"][$fbzm] = trim($parameters);}  # longtext handle
+		#$gform[$key]["categorie"][$fbzm] = lmbdb_result($rs, "CATEGORIE");
 		
 		# is subelement
-		if(odbc_result($rs, "SUBELEMENT") AND !$tableid AND $gform[$key]["typ"][$fbzm] != "tabuItem"){
-			$gform[$key]["subelement"][$fbzm] = odbc_result($rs, "SUBELEMENT");
-			$gform[$key]["subellist"][$gform[$key]["subelement"][$fbzm]][parse_db_int(odbc_result($rs, "CATEGORIE"))][$fbzm] = $fbzm;
+		if(lmbdb_result($rs, "SUBELEMENT") AND !$tableid AND $gform[$key]["typ"][$fbzm] != "tabuItem"){
+			$gform[$key]["subelement"][$fbzm] = lmbdb_result($rs, "SUBELEMENT");
+			$gform[$key]["subellist"][$gform[$key]["subelement"][$fbzm]][parse_db_int(lmbdb_result($rs, "CATEGORIE"))][$fbzm] = $fbzm;
 		}else{
 			$gform[$key]["mainellist"][$fbzm] = $fbzm;
 		}
 		
 		# is parent relationelement
-		if($parentrel = lmb_strtoupper(odbc_result($rs, "PARENTREL"))){
+		if($parentrel = lmb_strtoupper(lmbdb_result($rs, "PARENTREL"))){
 		    // relation parameters fields
 			if($gform[$key]["field_id"][$fbzm] > 1000){
                 $gform[$key]["paramrel"][$parentrel][] = $gform[$key]["field_id"][$fbzm];
@@ -855,21 +873,21 @@ function resultform($tableid,$formid,$fbzm,$gform){
 		}
 		
 		# overwrite class
-		if($class = odbc_result($rs, "CLASS")){
+		if($class = lmbdb_result($rs, "CLASS")){
 			$pcl = explode(".",$class);
 			$gform[$key]["class"][$fbzm] = trim($pcl[count($pcl)-1]);
 		}
 
 		# ------- Events -----------
-		if(odbc_result($rs, "EVENT_CLICK")){$gform[$key]["event"][$fbzm]["click"] = odbc_result($rs, "EVENT_CLICK");}
-		if(odbc_result($rs, "EVENT_DBLCLICK")){$gform[$key]["event"][$fbzm]["dblclick"] = odbc_result($rs, "EVENT_DBLCLICK");}
-		if(odbc_result($rs, "EVENT_OVER")){$gform[$key]["event"][$fbzm]["over"] = odbc_result($rs, "EVENT_OVER");}
-		if(odbc_result($rs, "EVENT_OUT")){$gform[$key]["event"][$fbzm]["out"] = odbc_result($rs, "EVENT_OUT");}
-		if(odbc_result($rs, "EVENT_CHANGE")){$gform[$key]["event"][$fbzm]["change"] = odbc_result($rs, "EVENT_CHANGE");}
+		if(lmbdb_result($rs, "EVENT_CLICK")){$gform[$key]["event"][$fbzm]["click"] = lmbdb_result($rs, "EVENT_CLICK");}
+		if(lmbdb_result($rs, "EVENT_DBLCLICK")){$gform[$key]["event"][$fbzm]["dblclick"] = lmbdb_result($rs, "EVENT_DBLCLICK");}
+		if(lmbdb_result($rs, "EVENT_OVER")){$gform[$key]["event"][$fbzm]["over"] = lmbdb_result($rs, "EVENT_OVER");}
+		if(lmbdb_result($rs, "EVENT_OUT")){$gform[$key]["event"][$fbzm]["out"] = lmbdb_result($rs, "EVENT_OUT");}
+		if(lmbdb_result($rs, "EVENT_CHANGE")){$gform[$key]["event"][$fbzm]["change"] = lmbdb_result($rs, "EVENT_CHANGE");}
 
 		# benötigte Tabellen und Felder für Query
 		if($gfield[$gform[$key]["tab_id"][$fbzm]]["sort"][$gform[$key]["field_id"][$fbzm]]){
-			$gform[$key]["used_fields"][odbc_result($rs, "TAB_ID")][$gform[$key]["field_id"][$fbzm]] = $gform[$key]["field_id"][$fbzm];
+			$gform[$key]["used_fields"][lmbdb_result($rs, "TAB_ID")][$gform[$key]["field_id"][$fbzm]] = $gform[$key]["field_id"][$fbzm];
 		}
 
 
@@ -879,7 +897,7 @@ function resultform($tableid,$formid,$fbzm,$gform){
         }
 
         if($gform[$key]["typ"][$fbzm] == "tab"){
-            $gform_ = resultform(odbc_result($rs, "TAB"),odbc_result($rs, "FORM_ID"),$fbzm,$gform);
+            $gform_ = resultform(lmbdb_result($rs, "TAB"),lmbdb_result($rs, "FORM_ID"),$fbzm,$gform);
             $gform = $gform_[0];
             $fbzm = $gform_[1];
         }
@@ -890,10 +908,12 @@ function resultform($tableid,$formid,$fbzm,$gform){
     // adding used_fields for tile subform
 	if($tile){
 	foreach($tile as $fkey => $tileform){
-	    if($fkey AND $tileform) {
-            foreach($gform[$tileform]['used_fields'] as $tab_key => $tab_val){
-                foreach($tab_val as $field_key => $field_val) {
-                    $gform[$fkey]['used_fields'][$tab_key][$field_val] = $field_val;
+	    if($fkey AND $gform[$tileform]) {
+	        if ($gform[$tileform]['used_fields']) {
+                foreach ($gform[$tileform]['used_fields'] as $tab_key => $tab_val) {
+                    foreach ($tab_val as $field_key => $field_val) {
+                        $gform[$fkey]['used_fields'][$tab_key][$field_val] = $field_val;
+                    }
                 }
             }
         }
@@ -951,15 +971,15 @@ function resulttabletree(){
 	global $db;
 
 	$sqlquery = "SELECT * FROM LMB_TABLETREE";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)) {
-		$tid = odbc_result($rs, "ID");
-		$tabid = odbc_result($rs, "TABID");
-		$treeid = odbc_result($rs, "TREEID");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
+		$tid = lmbdb_result($rs, "ID");
+		$tabid = lmbdb_result($rs, "TABID");
+		$treeid = lmbdb_result($rs, "TREEID");
 		
 		$gtabletree[$tabid][$treeid]["id"] = $tid;
 		$gtabletree[$tabid][$treeid]["tabid"] = $tabid;
-		if(odbc_result($rs, "POOLNAME")){$gtabletree[$tabid][$treeid]["poolname"] = odbc_result($rs, "POOLNAME");}
+		if(lmbdb_result($rs, "POOLNAME")){$gtabletree[$tabid][$treeid]["poolname"] = lmbdb_result($rs, "POOLNAME");}
 	}
 	
 	return $gtabletree;
@@ -972,20 +992,45 @@ function resulttriggerlist(){
 	global $session;
 
 	$sqlquery = "SELECT ID,TABLE_NAME,TYPE,TRIGGER_VALUE,DESCRIPTION,POSITION FROM LMB_TRIGGER WHERE ACTIVE = ".LMB_DBDEF_TRUE." AND INTERN = ".LMB_DBDEF_TRUE;
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$key = odbc_result($rs, "ID");
-		$gtabid = $gtab["argresult_id"][lmb_strtoupper(odbc_result($rs, "TABLE_NAME"))];
+	while(lmbdb_fetch_row($rs)) {
+		$key = lmbdb_result($rs, "ID");
+		$gtabid = $gtab["argresult_id"][lmb_strtoupper(lmbdb_result($rs, "TABLE_NAME"))];
 		$gtrigger[$gtabid]["id"][$key] = $key;
-		$gtrigger[$gtabid]["table_name"][$key] = odbc_result($rs, "TABLE_NAME");
-		$gtrigger[$gtabid]["type"][$key] = odbc_result($rs, "TYPE");
-		$gtrigger[$gtabid]["value"][$key] = odbc_result($rs, "TRIGGER_VALUE");
-		$gtrigger[$gtabid]["trigger_name"][$key] = odbc_result($rs, "DESCRIPTION");
-		$gtrigger[$gtabid]["position"][$key] = odbc_result($rs, "POSITION");
+		$gtrigger[$gtabid]["table_name"][$key] = lmbdb_result($rs, "TABLE_NAME");
+		$gtrigger[$gtabid]["type"][$key] = lmbdb_result($rs, "TYPE");
+		$gtrigger[$gtabid]["value"][$key] = lmbdb_result($rs, "TRIGGER_VALUE");
+		$gtrigger[$gtabid]["trigger_name"][$key] = lmbdb_result($rs, "DESCRIPTION");
+		$gtrigger[$gtabid]["position"][$key] = lmbdb_result($rs, "POSITION");
 	}
 	return $gtrigger;
 }
+
+#----------------- Custmenu -------------------
+function resultcustmenu(){
+    global $db;
+
+    $sqlquery = "SELECT * FROM LMB_CUSTMENU_LIST ORDER BY TABID,TYPE,FIELDID,NAME";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    while (lmbdb_fetch_row($rs)) {
+
+        $key = lmbdb_result($rs, 'ID');
+        $tabid = lmbdb_result($rs, 'TABID');
+        $type = lmbdb_result($rs, 'TYPE');
+        $fieldid = lmbdb_result($rs, 'FIELDID');
+
+        if($tabid AND $type) {
+            $gcustmenu[$tabid][$type]['id'][] = $key;
+            $gcustmenu[$tabid][$type]['name'][] = lmbdb_result($rs, 'NAME');
+            $gcustmenu[$tabid][$type][$fieldid] = $key;
+        }
+    }
+
+    return $gcustmenu;
+}
+
 
 #----------------- Data Sync -------------------
 function resultsync(&$gfield){
@@ -995,10 +1040,10 @@ function resultsync(&$gfield){
 
 	if($umgvar['sync_mode']){$mode='SLAVE';}else{$mode='MASTER';}
 	$sqlquery = "SELECT DISTINCT TABID,FIELDID FROM LMB_SYNC_CONF WHERE $mode = ".LMB_DBDEF_TRUE;
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-	    $gfield[odbc_result($rs, 'TABID')]['sync'][odbc_result($rs, 'FIELDID')] = 1;
+	while(lmbdb_fetch_row($rs)) {
+	    $gfield[lmbdb_result($rs, 'TABID')]['sync'][lmbdb_result($rs, 'FIELDID')] = 1;
 	}
 }
 
@@ -1009,23 +1054,23 @@ function result_wfl(){
 	global $session;
 
 	$sqlquery = "SELECT DISTINCT LMB_WFL.ID,LMB_WFL.NAME,LMB_WFL.DESCR FROM LMB_WFL,LMB_RULES_REPFORM WHERE LMB_WFL.ID = LMB_RULES_REPFORM.REPFORM_ID AND LMB_RULES_REPFORM.GROUP_ID IN(".implode(",",$session["subgroup"]).") AND LMB_RULES_REPFORM.TYP = 5 ORDER BY ID";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	if($rs){
-		while(odbc_fetch_row($rs)) {
-			$key = odbc_result($rs, "ID");
-			$wfl[$key]["name"] = odbc_result($rs, "NAME");
-			$wfl[$key]["desc"] = odbc_result($rs, "DESCR");
+		while(lmbdb_fetch_row($rs)) {
+			$key = lmbdb_result($rs, "ID");
+			$wfl[$key]["name"] = lmbdb_result($rs, "NAME");
+			$wfl[$key]["desc"] = lmbdb_result($rs, "DESCR");
 			
-			#$params =  odbc_result($rs, "PARAMS");
+			#$params =  lmbdb_result($rs, "PARAMS");
 			#if($params){$wfl[$key]["params"] = $params;}
 			
 			$sqlquery1 = "SELECT * FROM LMB_WFL_TASK WHERE WFL_ID = $key ORDER BY SORT";
-			$rs1 = odbc_exec($db,$sqlquery1);
+			$rs1 = lmbdb_exec($db,$sqlquery1);
 			if($rs1){
-				while(odbc_fetch_row($rs1)) {
-					$tid = odbc_result($rs1, "ID");
-					$wfl[$key]["task"]["name"][$tid] = odbc_result($rs1, "NAME");
-					$params =  odbc_result($rs1, "PARAMS");
+				while(lmbdb_fetch_row($rs1)) {
+					$tid = lmbdb_result($rs1, "ID");
+					$wfl[$key]["task"]["name"][$tid] = lmbdb_result($rs1, "NAME");
+					$params =  lmbdb_result($rs1, "PARAMS");
 					if($params){$wfl[$key]["task"]["params"][$tid] = $params;}
 				}
 			}
@@ -1040,24 +1085,22 @@ function resultPrinter() {
     global $db;
 
     $sqlquery = 'SELECT ID, NAME, SYSNAME, CONFIG, DEF FROM LMB_PRINTERS ORDER BY ID';
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 
     $printers = array();
-    while (odbc_fetch_row($rs)) {
+    while (lmbdb_fetch_row($rs)) {
         $printer = array(
-            'name' => odbc_result($rs, 'NAME'),
-            'sysName' => odbc_result($rs, 'SYSNAME'),
-            'config' => odbc_result($rs, 'CONFIG')
+            'name' => lmbdb_result($rs, 'NAME'),
+            'sysName' => lmbdb_result($rs, 'SYSNAME'),
+            'config' => lmbdb_result($rs, 'CONFIG')
         );
-        if (odbc_result($rs, 'DEF')) {
+        if (lmbdb_result($rs, 'DEF')) {
             $printer['default'] = 1;
         }
-        $printers[odbc_result($rs, 'ID')] = $printer;
+        $printers[lmbdb_result($rs, 'ID')] = $printer;
     }
     return $printers;
 }
-
-
 
 function mergeArray($a,$b)
 {
@@ -1096,10 +1139,9 @@ function mergeArray($a,$b)
 $gfile = resultfiles();
 # Formulare
 #if($LINK[132]){
+    $gformlist = resultformlist();
 	$gform_ = resultform(0,0,0,array());
 	$gform = $gform_[0];
-	$gformlist = resultformlist();
-
 #}
 # Berichte
 #if($LINK[131]){
@@ -1115,6 +1157,9 @@ $gtabletree = resulttabletree();
 
 # Trigger
 $gtrigger = resulttriggerlist();
+
+# Custmenu
+$gcustmenu = resultcustmenu();
 
 # Data Sync
 resultsync($gfield);

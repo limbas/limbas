@@ -70,11 +70,11 @@ function patch_db($revision,$vers,$sql,$desc='',$major=null){
 	}
 
 	$sqlquery = "SELECT ID FROM LMB_DBPATCH WHERE REVISION = $revision AND VERSION = '$vers'";
-	$rs = odbc_exec($db,$sqlquery);
-	if(!odbc_fetch_row($rs)){
+	$rs = lmbdb_exec($db,$sqlquery);
+	if(!lmbdb_fetch_row($rs)){
 		$id = next_db_id("LMB_DBPATCH");
 		if($sql){
-			$rs1 = odbc_exec($db,$sql) or errorhandle(odbc_errormsg($db),$sqlquery,'update',__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sql) or errorhandle(lmbdb_errormsg($db),$sqlquery,'update',__FILE__,__LINE__);
 		}else{
 			$rs1 = 1;
 		}
@@ -85,7 +85,7 @@ function patch_db($revision,$vers,$sql,$desc='',$major=null){
 			$sqlquery = "INSERT INTO LMB_DBPATCH VALUES ($id,'$vers',".LMB_DBDEF_FALSE.",$revision,'".parse_db_string($desc,250)."')";
 			echo "patch V $vers - $revision FAILURE!\n<br>";
 		}
-		$rs2 = odbc_exec($db,$sqlquery);
+		$rs2 = lmbdb_exec($db,$sqlquery);
 	}
 }
 
@@ -98,8 +98,8 @@ function patch_scr($revision,$vers,$func,$desc,$major=null){
 	}
 
 	$sqlquery = "SELECT ID FROM LMB_DBPATCH WHERE REVISION = $revision AND VERSION = '$vers'";
-	$rs = odbc_exec($db,$sqlquery);
-	if(!odbc_fetch_row($rs)){
+	$rs = lmbdb_exec($db,$sqlquery);
+	if(!lmbdb_fetch_row($rs)){
 		$id = next_db_id("LMB_DBPATCH");
 		if($func()){
 			$sqlquery = "INSERT INTO LMB_DBPATCH VALUES ($id,'$vers',".LMB_DBDEF_TRUE.",$revision,'".parse_db_string($desc,250)."')";
@@ -108,7 +108,7 @@ function patch_scr($revision,$vers,$func,$desc,$major=null){
 			$sqlquery = "INSERT INTO LMB_DBPATCH VALUES ($id,'$vers',".LMB_DBDEF_FALSE.",$revision,'".parse_db_string($desc,250)."')";
 			echo "patch V $vers - $revision FAILURE!\n<br>";
 		}
-		$rs2 = odbc_exec($db,$sqlquery);
+		$rs2 = lmbdb_exec($db,$sqlquery);
 	}
 }
 
@@ -116,8 +116,8 @@ function patch_scr2($major,$revision,$vers,$func,$desc){
 	global $db;
 
 	$sqlquery = "SELECT ID FROM LMB_DBPATCH WHERE MAJOR = $major AND REVISION = $revision AND VERSION = $vers";
-	$rs = odbc_exec($db,$sqlquery);
-	if(!odbc_fetch_row($rs)){
+	$rs = lmbdb_exec($db,$sqlquery);
+	if(!lmbdb_fetch_row($rs)){
 		$id = next_db_id("LMB_DBPATCH");
 		if($func()){
 			$sqlquery = "INSERT INTO LMB_DBPATCH (ID,MAJOR,VERSION,STATUS,REVISION,DESCRIPTION) VALUES ($id,$major,$vers,".LMB_DBDEF_TRUE.",$revision,'".parse_db_string($desc,250)."')";
@@ -126,7 +126,7 @@ function patch_scr2($major,$revision,$vers,$func,$desc){
 			$sqlquery = "INSERT INTO LMB_DBPATCH (ID,MAJOR,VERSION,STATUS,REVISION,DESCRIPTION)  VALUES ($id,$major,$vers,".LMB_DBDEF_FALSE.",$revision,'".parse_db_string($desc,250)."')";
 			echo "patch V $vers - $revision FAILURE!\n<br>";
 		}
-		$rs2 = odbc_exec($db,$sqlquery);
+		$rs2 = lmbdb_exec($db,$sqlquery);
 	}
 }
 
@@ -134,11 +134,11 @@ function patch_db2($major,$revision,$vers,$sql,$desc=''){
 	global $db;
 
 	$sqlquery = "SELECT ID FROM LMB_DBPATCH WHERE MAJOR = $major AND REVISION = $revision AND VERSION = $vers";
-	$rs = odbc_exec($db,$sqlquery);
-	if(!odbc_fetch_row($rs)){
+	$rs = lmbdb_exec($db,$sqlquery);
+	if(!lmbdb_fetch_row($rs)){
 		$id = next_db_id("LMB_DBPATCH");
 		if($sql){
-			$rs1 = odbc_exec($db,$sql) or errorhandle(odbc_errormsg($db),$sqlquery,'update',__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sql) or errorhandle(lmbdb_errormsg($db),$sqlquery,'update',__FILE__,__LINE__);
 		}else{
 			$rs1 = 1;
 		}
@@ -149,7 +149,7 @@ function patch_db2($major,$revision,$vers,$sql,$desc=''){
 			$sqlquery = "INSERT INTO LMB_DBPATCH (ID,MAJOR,VERSION,STATUS,REVISION,DESCRIPTION) VALUES ($id,$major,$vers,".LMB_DBDEF_FALSE.",$revision,'".parse_db_string($desc,250)."')";
 			echo "patch V $vers - $revision FAILURE!\n<br>";
 		}
-		$rs2 = odbc_exec($db,$sqlquery);
+		$rs2 = lmbdb_exec($db,$sqlquery);
 	}
 }
 

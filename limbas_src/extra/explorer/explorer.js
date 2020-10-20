@@ -530,6 +530,7 @@ function LmEx_send_form(id,ajax) {
 			url: "main_dyns.php?actid=fileMainContent",
 			data: $('#form'+id).serialize(),
 			success: function(data){
+                limbasWaitsymbol(null, true, true);
 				document.getElementById('gtabExplBody').innerHTML=data;
 				ajaxEvalScript(data);
 			}
@@ -539,7 +540,7 @@ function LmEx_send_form(id,ajax) {
 	}else{
 		eval("document.form"+id+".submit();");
 	}
-
+    limbasWaitsymbol(null, true);
 }
 
 // ---------------- Sendkeypress----------------------

@@ -49,10 +49,10 @@ if(!$view){
 
 <table border="0" cellpadding="2" cellspacing="0" width="100%">
 <TR class="tabHeader"><TD class="tabHeaderItem" colspan="2">info</td></tr>
-<tr><td valign="top"><?= $lang[2] ?>:</td><td style="color:#999999"><?= $umgvar['version'] ?></td></tr>
+<tr><td valign="top"><?=$lang[2]?>:</td><td style="color:#999999"><?= $umgvar['version'] ?></td></tr>
 <?php if ($session['user_id'] == 1) { ?>
     <tr>
-        <td valign="top"><?= $lang[2930] ?>:</td>
+        <td valign="top"><?=$lang[2930]?>:</td>
         <td style="color:#999999">
             <?php
             $latestVersion = lmbCheckForUpdates($checkForUpdates ? true : false);
@@ -70,13 +70,13 @@ if(!$view){
         </td>
     </tr>
 <?php } ?>
-<tr><td valign="top"><?= $lang[3]    ?>:</td><td style="color:#999999"><?= $session['username'] ?></td></tr>
-<tr><td valign="top"><?= $lang[4]    ?>:</td><td style="color:#999999"><?= "{$session['vorname']} {$session['name']}" ?></td></tr>
-<tr><td valign="top"><?= $lang[11]   ?>:</td><td style="color:#999999"><?= $umgvar['company'] ?></td></tr>
-<tr><td valign="top"><?= $lang[749]  ?>:</td><td style="color:#999999"><?= $session['lastlogin'] ?></td></tr>
-<tr><td valign="top"><?= $lang[7]    ?>:</td><td style="color:#999999"><?= $_SERVER['SERVER_NAME'] ?></td></tr>
-<tr><td valign="top"><?= $lang[8]    ?>:</td><td style="color:#999999"><?= $_SERVER['REMOTE_ADDR'] ?></td></tr>
-<tr><td valign="top"><?= $lang[9]    ?>:</td><td style="color:#999999"><?= $_SERVER['HTTP_USER_AGENT'] ?></td></tr>
+<tr><td valign="top"><?=$lang[519]?>:</td><td style="color:#999999"><?= $session['username'] ?></td></tr>
+<tr><td valign="top"><?=$lang[4]?>:</td><td style="color:#999999"><?= "{$session['vorname']} {$session['name']}" ?></td></tr>
+<tr><td valign="top"><?=$lang[11]?>:</td><td style="color:#999999"><?= $umgvar['company'] ?></td></tr>
+<tr><td valign="top"><?=$lang[749]?>:</td><td style="color:#999999"><?= $session['lastlogin'] ?></td></tr>
+<tr><td valign="top"><?=$lang[7]?>:</td><td style="color:#999999"><?= $_SERVER['SERVER_NAME'] ?></td></tr>
+<tr><td valign="top"><?=$lang[8]?>:</td><td style="color:#999999"><?= $_SERVER['REMOTE_ADDR'] ?></td></tr>
+<tr><td valign="top"><?=$lang[9]?>:</td><td style="color:#999999"><?= $_SERVER['HTTP_USER_AGENT'] ?></td></tr>
 
 <?php if($session['group_id'] == 1){
     require_once("lib/db/db_".$DBA["DB"]."_admin.lib");
@@ -132,47 +132,39 @@ if(!$view){
 
     <TR>
         <TD valign=top class="bord">Added</TD>
-        <TD valign=top class="bord">PDO</TD>
-        <TD valign=top class="bord">adding PDO database connection as default</TD>
+        <TD valign=top class="bord">PDO/ODBC</TD>
+        <TD valign=top class="bord">adding support for PDO and ODBC simultaneously</TD>
     </TR>
     <TR>
         <TD valign=top class="bord">Added</TD>
-        <TD valign=top class="bord">REST</TD>
-        <TD valign=top class="bord">adding REST interface</TD>
+        <TD valign=top class="bord">Multitenant</TD>
+        <TD valign=top class="bord">adding basic multitenant functionality</TD>
     </TR>
     <TR>
         <TD valign=top class="bord">Added</TD>
-        <TD valign=top class="bord">formular templates</TD>
-        <TD valign=top class="bord">adding template based forms</TD>
+        <TD valign=top class="bord">Menueditor</TD>
+        <TD valign=top class="bord">adding additional menueditors for context and tabelmenus</TD>
     </TR>
     <TR>
         <TD valign=top class="bord">Added</TD>
-        <TD valign=top class="bord">crontab</TD>
-        <TD valign=top class="bord">Apply crontab with limbas</TD>
+        <TD valign=top class="bord">custvars</TD>
+        <TD valign=top class="bord">adding customized parameter table like environment variables</TD>
     </TR>
     <TR>
         <TD valign=top class="bord">Added</TD>
-        <TD valign=top class="bord">Tags</TD>
-        <TD valign=top class="bord">new field type with Tags</TD>
+        <TD valign=top class="bord">HANA</TD>
+        <TD valign=top class="bord">adding SAP HANA Database support</TD>
     </TR>
     <TR>
         <TD valign=top class="bord">Added</TD>
-        <TD valign=top class="bord">relation params</TD>
-        <TD valign=top class="bord">administrate relation params in relation settings</TD>
+        <TD valign=top class="bord">Currency</TD>
+        <TD valign=top class="bord">adding currency conversion with validity support and exchange rates</TD>
     </TR>
     <TR>
         <TD valign=top class="bord">Added</TD>
-        <TD valign=top class="bord">pagination</TD>
-        <TD valign=top class="bord">support pagination in relation views and subform tables</TD>
+        <TD valign=top class="bord">PHP Editor</TD>
+        <TD valign=top class="bord">adding native PHP editor in admin tools</TD>
     </TR>
-    <TR>
-        <TD valign=top class="bord">Added</TD>
-        <TD valign=top class="bord">menueditor</TD>
-        <TD valign=top class="bord">adding extended menueditor</TD>
-    </TR>
-
-
-
 
 <TR>
     <TD valign=top class="bord" colspan=3><br><i>more information on changes shown in <a href="main.php?action=intro&view=ChangeLog">ChangeLog</a></i></TD>

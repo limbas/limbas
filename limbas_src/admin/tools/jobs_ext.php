@@ -146,49 +146,49 @@ $userfield = '<i class="lmb-icon lmb-user-alt" style="cursor:pointer" onclick="a
                         <?php
                         if($templupdate){
                             $sqlquery = "SELECT VAL FROM LMB_CRONTAB WHERE ID = $templupdate";
-                            $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                            $newval_ = explode(';',odbc_result($rs,"VAL"));
+                            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                            $newval_ = explode(';',lmbdb_result($rs,"VAL"));
                             $newval_[0] = ${'templatevalue_'.$templupdate};
                             $newval = implode(';',$newval_);
                             if(file_exists($umgvar['path'].$newval_[0])) {
                                 $sqlquery = "UPDATE LMB_CRONTAB SET VAL='".parse_db_string($newval,250)."' WHERE ID = $templupdate";
-                                $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                                $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
                             }else{
                                 lmb_alert('file does not exists!');
                             }
                         }
 
                         $sqlquery = "SELECT LMB_CRONTAB.ID,KATEGORY,START,VAL,LMB_CRONTAB.ERSTDATUM,ACTIV,DESCRIPTION,ALIVE,JOB_USER,USERNAME FROM LMB_CRONTAB LEFT JOIN LMB_USERDB ON LMB_USERDB.ID = LMB_CRONTAB.JOB_USER WHERE KATEGORY = '" . lmb_strtoupper($kategoriedesc) . "' ORDER BY ERSTDATUM";
-                        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-                        while(odbc_fetch_row($rs)){
-                            $tid = odbc_result($rs,"ID");
-                            $val = odbc_result($rs,"VAL");
+                        while(lmbdb_fetch_row($rs)){
+                            $tid = lmbdb_result($rs,"ID");
+                            $val = lmbdb_result($rs,"VAL");
                             $val0 = explode(";",$val);
                             $color = '';
-                            if(odbc_result($rs,"KATEGORY") == "INDIZE"){
+                            if(lmbdb_result($rs,"KATEGORY") == "INDIZE"){
                                 $color = "#7AB491";
                             }
                             $activ = '';
-                            if(odbc_result($rs,"ACTIV")){
+                            if(lmbdb_result($rs,"ACTIV")){
                                 $activ = "CHECKED";
                             }
                             $template = '';
-                            if(odbc_result($rs,"KATEGORY") == "TEMPLATE" OR odbc_result($rs,"KATEGORY") == "D"){
+                            if(lmbdb_result($rs,"KATEGORY") == "TEMPLATE" OR lmbdb_result($rs,"KATEGORY") == "D"){
                                 $template = $val0[0];
                             }
                             echo "
                                 <TR class=\"tabBody\" OnClick=\"show_val('');show_val('".$val."');\">
-                                    <TD>&nbsp;".odbc_result($rs,"ID")."&nbsp;</TD>
-                                    <TD  BGCOLOR=\"$color\">&nbsp;".odbc_result($rs,"KATEGORY")."&nbsp;<input type=\"text\" style=\"width:200px\" value=\"$template\" name=\"templatevalue_$tid\" onchange=\"document.form1.kategorie.value='template.lib';document.form1.templupdate.value='$tid';document.form1.submit();\"></TD>
-                                    <TD>&nbsp;".odbc_result($rs,"START")."&nbsp;</TD>
-                                    <TD>&nbsp;".odbc_result($rs,"USERNAME")."&nbsp;</TD>
-                                    <TD>&nbsp;".odbc_result($rs,"DESCRIPTION")."&nbsp;</TD>
-                                    <TD>&nbsp;<INPUT TYPE=\"CHECKBOX\" STYLE=\"border:none;background-color:transparent;\" NAME=\"activ_".odbc_result($rs,"ID")."\" OnClick=\"document.location.href='main_admin.php?&action=setup_indize_db&kategorie=$kategorie&activate_job=".odbc_result($rs,"ID")."'\" $activ>&nbsp;</TD>
-                                    <TD ALIGN=\"CENTER\">&nbsp;<i class=\"lmb-icon lmb-action\" STYLE=\"cursor:pointer;border:1px solid grey;\" NAME=\"activate_".odbc_result($rs,"ID")."\" OnClick=\"document.location.href='main_admin.php?&action=setup_indize_db&kategorie=$kategorie&run_job=".odbc_result($rs,"ID")."';limbasWaitsymbol(event,1);\"></i>&nbsp;</TD>
-                                    <TD ALIGN=\"CENTER\">&nbsp;<A HREF=\"main_admin.php?&action=setup_indize_db&kategorie=$kategorie&del_job=".odbc_result($rs,"ID")."\"><i class=\"lmb-icon lmb-trash\" BORDER=\"0\"></i></A>&nbsp;</TD>
+                                    <TD>&nbsp;".lmbdb_result($rs,"ID")."&nbsp;</TD>
+                                    <TD  BGCOLOR=\"$color\">&nbsp;".lmbdb_result($rs,"KATEGORY")."&nbsp;<input type=\"text\" style=\"width:200px\" value=\"$template\" name=\"templatevalue_$tid\" onchange=\"document.form1.kategorie.value='template.lib';document.form1.templupdate.value='$tid';document.form1.submit();\"></TD>
+                                    <TD>&nbsp;".lmbdb_result($rs,"START")."&nbsp;</TD>
+                                    <TD>&nbsp;".lmbdb_result($rs,"USERNAME")."&nbsp;</TD>
+                                    <TD>&nbsp;".lmbdb_result($rs,"DESCRIPTION")."&nbsp;</TD>
+                                    <TD>&nbsp;<INPUT TYPE=\"CHECKBOX\" STYLE=\"border:none;background-color:transparent;\" NAME=\"activ_".lmbdb_result($rs,"ID")."\" OnClick=\"document.location.href='main_admin.php?&action=setup_indize_db&kategorie=$kategorie&activate_job=".lmbdb_result($rs,"ID")."'\" $activ>&nbsp;</TD>
+                                    <TD ALIGN=\"CENTER\">&nbsp;<i class=\"lmb-icon lmb-action\" STYLE=\"cursor:pointer;border:1px solid grey;\" NAME=\"activate_".lmbdb_result($rs,"ID")."\" OnClick=\"document.location.href='main_admin.php?&action=setup_indize_db&kategorie=$kategorie&run_job=".lmbdb_result($rs,"ID")."';limbasWaitsymbol(event,1);\"></i>&nbsp;</TD>
+                                    <TD ALIGN=\"CENTER\">&nbsp;<A HREF=\"main_admin.php?&action=setup_indize_db&kategorie=$kategorie&del_job=".lmbdb_result($rs,"ID")."\"><i class=\"lmb-icon lmb-trash\" BORDER=\"0\"></i></A>&nbsp;</TD>
                                 </TR>";
-                            $cronvalue[] = str_replace(";"," ",odbc_result($rs,"START"))."\t php \"".$umgvar["pfad"]."/cron.php\" ".odbc_result($rs,"ID");
+                            $cronvalue[] = str_replace(";"," ",lmbdb_result($rs,"START"))."\t php \"".$umgvar["pfad"]."/cron.php\" ".lmbdb_result($rs,"ID");
                         }
                         ?>
 
@@ -348,9 +348,9 @@ $userfield = '<i class="lmb-icon lmb-user-alt" style="cursor:pointer" onclick="a
                                     <SELECT STYLE="width:120px;" NAME="job_template" onchange="document.getElementById('job_desc').value=this.options[this.selectedIndex].text"><OPTION>
                                             <?php
                                             $sqlquery = "SELECT ID,NAME FROM LMB_SYNC_TEMPLATE WHERE TABID IS NULL OR TABID = 0 ORDER BY NAME";
-                                            $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                                            while(odbc_fetch_row($rs)) {
-                                                echo "<OPTION VALUE=\"".odbc_result($rs, "ID")."\">".odbc_result($rs, "NAME");
+                                            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                                            while(lmbdb_fetch_row($rs)) {
+                                                echo "<OPTION VALUE=\"".lmbdb_result($rs, "ID")."\">".lmbdb_result($rs, "NAME");
                                             }
                                             ?>
                                     </SELECT>

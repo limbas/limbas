@@ -25,7 +25,7 @@
 <?php
 if(!$group_id){$group_id = 1;}
 $sqlquery = "SELECT GROUP_ID,NAME,LEVEL FROM LMB_GROUPS WHERE GROUP_ID = $group_id";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs){$commit = 1;}
 
 /* --- Gruppen-Neu-Formular 1 Schritt --------------------------------------- */

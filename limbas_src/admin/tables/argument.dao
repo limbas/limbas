@@ -22,16 +22,16 @@
 if($argument_change){
 	$argument = trim(parse_db_string($argument));
 	$sqlquery = "UPDATE LMB_CONF_FIELDS".$tab." SET ARGUMENT = '$argument' WHERE FIELD_ID = $fieldid AND TAB_GROUP = $tab_group AND TAB_ID = $tab_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 /* --- Tabellen-Liste --------------------------------------------- */
 $sqlquery = "SELECT ARGUMENT_TYP,ARGUMENT,ID FROM LMB_CONF_FIELDS WHERE FIELD_ID = $fieldid AND TAB_GROUP = $tab_group AND TAB_ID = $tab_id";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-if(odbc_fetch_row($rs)) {
-	$result_argument["argument"] = odbc_result($rs, "ARGUMENT");
-	$result_argument["argument_typ"] = odbc_result($rs, "ARGUMENT_TYP");
-	$result_argument["id"] = odbc_result($rs, "ID");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+if(lmbdb_fetch_row($rs)) {
+	$result_argument["argument"] = lmbdb_result($rs, "ARGUMENT");
+	$result_argument["argument_typ"] = lmbdb_result($rs, "ARGUMENT_TYP");
+	$result_argument["id"] = lmbdb_result($rs, "ID");
 }
 
 
@@ -54,13 +54,13 @@ function arg_refresh($tab_id,$fieldid,$argument) {
 	
 		/* --- Alle Daten aktualisieren --------------------------------------------- */
 		$sqlquery = "SELECT * FROM ".$gtab["table"][$tab_id]." WHERE DEL = ".LMB_DBDEF_FALSE;
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		while(odbc_fetch_row($rs)) {
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs)) {
 			
 			unset($arg_result);
 			unset($result);
 			$val = "";
-			$ID = odbc_result($rs, "ID");
+			$ID = lmbdb_result($rs, "ID");
 			$arg = explode("#", $argument);
 			
 			foreach($arg as $key => $value){
@@ -71,15 +71,15 @@ function arg_refresh($tab_id,$fieldid,$argument) {
 					$gf_name = $gfield[$tab_id]["field_name"][$gf_id];
 					# --- date ---
 					if($gf_typ == 2){
-						$value = get_date(odbc_result($rs, $gf_name),1);
+						$value = get_date(lmbdb_result($rs, $gf_name),1);
 					# --- currency ---
 					}elseif($gf_dtyp == 30){
-						$value = odbc_result($rs, $gf_name)." ".odbc_result($rs, $gf_name."_C");
+						$value = lmbdb_result($rs, $gf_name)." ".lmbdb_result($rs, $gf_name."_C");
 					# --- System Date ---
 					}elseif($gf_dtyp == 15){
-						$value = get_date(odbc_result($rs, $gf_name),1);
+						$value = get_date(lmbdb_result($rs, $gf_name),1);
 					}else{
-						$value = odbc_result($rs, $gf_name);
+						$value = lmbdb_result($rs, $gf_name);
 					}
 					$value = str_replace("\"","\\\"",$value);
 					if(!$value AND ($gf_typ == 5 OR $gf_typ == 17)){$value = 0;}
@@ -112,7 +112,7 @@ function arg_refresh($tab_id,$fieldid,$argument) {
 			}
 			
 			$sqlquery1 = "UPDATE ".$gtab["table"][$tab_id]." SET ".$gfield[$tab_id]["field_name"][$fieldid]." = $arg_result WHERE ID = $ID";
-			$rs1 = odbc_exec($db,$sqlquery1);
+			$rs1 = lmbdb_exec($db,$sqlquery1);
 
 		}
 		

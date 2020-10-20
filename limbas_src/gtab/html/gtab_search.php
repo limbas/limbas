@@ -197,23 +197,28 @@ if($module == 'explorer_search') {
                     echo "<SELECT $fm ID=\"gdstxt_" . $gtabid . "_" . $key . "_" . $nkey . "\" NAME=\"gs[" . $gtabid . "][" . $key . "][txt][" . $nkey . "]\" STYLE=\"width:100px;\" OnChange=\"if(this.selectedIndex == 5){};limbasCheckforindex(this.value)\">";
 
                     echo "<optgroup label=\"Suchoptionen\">";
+                    $isBlob = $gfield[$gtabid]["data_type"][$key] == 39 OR $gfield[$gtabid]["data_type"][$key] == 13;
 
-                    echo "<OPTION VALUE=\"2\"";
-                    if ($gsr[$gtabid][$key]["txt"][$nkey] == 2 OR !$gsr[$gtabid][$key][$nkey]) {
-                        echo " SELECTED";
+                    if (!$isBlob OR !$umgvar['postgres_use_fulltextsearch']) {
+                        echo "<OPTION VALUE=\"2\"";
+                        if ($gsr[$gtabid][$key]["txt"][$nkey] == 2 OR !$gsr[$gtabid][$key][$nkey]) {
+                            echo " SELECTED";
+                        }
+                        echo ">$lang[107]";
                     }
-                    echo ">$lang[107]";
                     echo "<OPTION VALUE=\"1\"";
                     if ($gsr[$gtabid][$key]["txt"][$nkey] == 1 OR (!$gsr[$gtabid][$key]["txt"][$nkey] AND $gsr[$gtabid][$key][$nkey])) {
                         echo " SELECTED";
                     }
                     echo ">$lang[106]";
-                    echo "<OPTION VALUE=\"3\"";
-                    if ($gsr[$gtabid][$key]["txt"][$nkey] == 3) {
-                        echo " SELECTED";
+                    if (!$isBlob OR !$umgvar['postgres_use_fulltextsearch']) {
+                        echo "<OPTION VALUE=\"3\"";
+                        if ($gsr[$gtabid][$key]["txt"][$nkey] == 3) {
+                            echo " SELECTED";
+                        }
+                        echo ">$lang[108]";
                     }
-                    echo ">$lang[108]";
-                    if ($gfield[$gtabid]["data_type"][$key] == 39 OR $gfield[$gtabid]["data_type"][$key] == 13) {
+                    if ($isBlob AND !$umgvar['postgres_use_fulltextsearch']) {
                         echo "<OPTION VALUE=\"4\"";
                         if ($gsr[$gtabid][$key]["txt"][$nkey] == 4) {
                             echo " SELECTED";
@@ -272,14 +277,14 @@ if($module == 'explorer_search') {
                         $gfield[$gtabid]['select_sort'][$key] = "SORT";
                     }
                     $sqlquery = "SELECT DISTINCT WERT," . $gfield[$gtabid]['select_sort'][$key] . " FROM LMB_SELECT_W WHERE POOL = " . $gfield[$gtabid]['select_pool'][$key] . " ORDER BY " . $gfield[$gtabid]['select_sort'][$key];
-                    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-                    while (odbc_fetch_row($rs)) {
-                        if (lmb_strtolower($gsrres) == lmb_strtolower(odbc_result($rs, "WERT"))) {
+                    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                    while (lmbdb_fetch_row($rs)) {
+                        if (lmb_strtolower($gsrres) == lmb_strtolower(lmbdb_result($rs, "WERT"))) {
                             $SELECTED = "SELECTED";
                         } else {
                             $SELECTED = "";
                         }
-                        echo "<OPTION VALUE=\"" . str_replace("\"", "", odbc_result($rs, "WERT")) . "\" $SELECTED>" . odbc_result($rs, "WERT");
+                        echo "<OPTION VALUE=\"" . str_replace("\"", "", lmbdb_result($rs, "WERT")) . "\" $SELECTED>" . lmbdb_result($rs, "WERT");
 
                     }
                     echo "</SELECT>";

@@ -32,9 +32,9 @@ function olUpload(url, w, h, sid, maxlen, debug){
 	
 	this._init = function(url, w, h, sid, maxlen, debug){
 		var el = document.getElementById(this.el_cnt);
-		var fv = 'sid=' + escape(sid);
-		fv+='&url=' + escape(url);
-		fv+='&maxlen=' + escape(maxlen);
+		var fv = 'sid=' + encodeURIComponent(sid);
+		fv+='&url=' + encodeURIComponent(url);
+		fv+='&maxlen=' + encodeURIComponent(maxlen);
 		
 		if (debug)
 			fv+="&debug=1";

@@ -39,17 +39,17 @@ if($inp_create){
 		if(!$field_id){$field_id = "0";}
 		if(!$dat_id){$dat_id = "0";}
 		$sqlquery = "INSERT INTO KALENDER (ID,ERSTUSER,START_DATE,END_DATE,TITLE,DESCRIPTION,STATUS,ALERT,COLOR,TYP,TAB_ID,FIELD_ID,DAT_ID,USER_ID) VALUES ($NEXTID,".$session['user_id'].",'".convert_date($inp_from)."','".convert_date($inp_to)."','".$inp_title."','".$inp_desc."','',".$inp_alert.",'".$inp_color."',$inp_typ,$gtabid,$field_id,$dat_id,".$session['user_id'].")";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		
 		# --- Anzahl Termnine in Datensatz schreiben ------
 		if($type == "tab" AND $where){
 			$sqlquery = "SELECT COUNT(ID) ANZAHL FROM KALENDER WHERE ".lmb_substr($where,4,99);
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
-			$anzahl = odbc_result($rs,"ANZAHL");
+			$anzahl = lmbdb_result($rs,"ANZAHL");
 			$sqlquery = "UPDATE ".$gtab['table'][$gtabid]." SET ".$gfield[$gtabid]['field_name'][$field_id]." = ".$anzahl." WHERE ID = $dat_id";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 		}	
 		
@@ -71,7 +71,7 @@ if($inp_change AND $ID){
 		if(!$field_id){$field_id = "0";}
 		if(!$dat_id){$dat_id = "0";}	
 		$sqlquery = "UPDATE KALENDER SET EDITUSER = ".$session['user_id'].", START_DATE = '".convert_date($inp_from)."', END_DATE = '".convert_date($inp_to)."',TITLE = '".$inp_title."',DESCRIPTION = '".$inp_desc."', STATUS = '', ALERT = ".$inp_alert.",COLOR = '".$inp_color."',TYP = $inp_typ WHERE ID = $ID $where";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}else{
 		lmb_alert($lang[138]);
@@ -81,17 +81,17 @@ if($inp_change AND $ID){
 # --- Termin löschen ------
 if($inp_del AND $ID){
 	$sqlquery = "DELETE FROM KALENDER WHERE ID = $ID $where";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	
 	# --- Anzahl Termnine in Datensatz schreiben ------
 	if($type == "tab" AND $where){
 		$sqlquery = "SELECT COUNT(ID) AS ANZAHL FROM KALENDER WHERE ".lmb_substr($where,4,99);
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		$anzahl = odbc_result($rs,"ANZAHL");
+		$anzahl = lmbdb_result($rs,"ANZAHL");
 		$sqlquery = "UPDATE ".$gtab['table'][$gtabid]." SET ".$gfield[$gtabid]['field_name'][$field_id]." = ".$anzahl." WHERE ID = $dat_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}
 }
@@ -100,14 +100,14 @@ $sqlquery = "SELECT ID,IP,LOGIN_DATE,UPDATE_DATE,
 		".LMB_DBFUNC_YEAR."LOGIN_DATE) AS START_YEAR,".LMB_DBFUNC_MONTH."LOGIN_DATE) AS START_MONTH,".LMB_DBFUNC_DAY."LOGIN_DATE) AS START_DAY,".LMB_DBFUNC_HOUR."LOGIN_DATE) AS START_HOUR,".LMB_DBFUNC_MINUTE."LOGIN_DATE) AS START_MINUTE,
 		".LMB_DBFUNC_YEAR."UPDATE_DATE) AS END_YEAR,".LMB_DBFUNC_MONTH."UPDATE_DATE) AS END_MONTH,".LMB_DBFUNC_DAY."UPDATE_DATE) AS END_DAY,".LMB_DBFUNC_HOUR."UPDATE_DATE) AS END_HOUR,".LMB_DBFUNC_MINUTE."UPDATE_DATE) AS END_MINUTE
 		FROM LMB_HISTORY_USER WHERE USERID = $userstat ORDER BY LOGIN_DATE";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-	$termin['id'][] = odbc_result($rs,"ID");
-	$termin['title'][] = odbc_result($rs,"IP");
-	$termin['start_stamp'][] = date("U",mktime(odbc_result($rs,"START_HOUR"),0,0,odbc_result($rs,"START_MONTH"),odbc_result($rs,"START_DAY"),odbc_result($rs,"START_YEAR")));
-	$termin['end_stamp'][] = date("U",mktime(odbc_result($rs,"END_HOUR"),odbc_result($rs,"END_MINUTE")-1,0,odbc_result($rs,"END_MONTH"),odbc_result($rs,"END_DAY"),odbc_result($rs,"END_YEAR")));
-	$termin['start_date'][] = odbc_result($rs,"LOGIN_DATE");
-	$termin['end_date'][] = odbc_result($rs,"UPDATE_DATE");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+	$termin['id'][] = lmbdb_result($rs,"ID");
+	$termin['title'][] = lmbdb_result($rs,"IP");
+	$termin['start_stamp'][] = date("U",mktime(lmbdb_result($rs,"START_HOUR"),0,0,lmbdb_result($rs,"START_MONTH"),lmbdb_result($rs,"START_DAY"),lmbdb_result($rs,"START_YEAR")));
+	$termin['end_stamp'][] = date("U",mktime(lmbdb_result($rs,"END_HOUR"),lmbdb_result($rs,"END_MINUTE")-1,0,lmbdb_result($rs,"END_MONTH"),lmbdb_result($rs,"END_DAY"),lmbdb_result($rs,"END_YEAR")));
+	$termin['start_date'][] = lmbdb_result($rs,"LOGIN_DATE");
+	$termin['end_date'][] = lmbdb_result($rs,"UPDATE_DATE");
 	$termin['status'][] = "";
 	$termin['alert'][] = "";
 	$termin['color'][] =  $farbschema['WEB10'];

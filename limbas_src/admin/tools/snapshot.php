@@ -22,11 +22,11 @@ if(!$snap_view){$snap_view = 1;}
 
 if($del AND $gtabid){
 	$sqlquery = "DELETE FROM LMB_SNAP_SHARED where ID = $del";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	
 	$sqlquery = "DELETE FROM LMB_SNAP WHERE ID = $del AND TABID = $gtabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}else{
 		unset($gsnap[$gtabid]['id'][$del]);
 		unset($gsnap[$gtabid]['name'][$del]);
@@ -49,13 +49,13 @@ if($snap_edit AND $gtabid AND $snapid){
 	if($update){
 		$update = implode(",",$update);
 		$sqlquery = "UPDATE LMB_SNAP SET $update WHERE ID = $snapid AND TABID = $gtabid";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);	
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
 }
 
 if($snap_extension){
 	$prepare_string = "UPDATE LMB_SNAP SET EXT = ? WHERE ID = ".$snap_extension;
-	if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($snap_extensionValue)),__FILE__,__LINE__)){$commit = 1;}
+	if(!lmb_PrepareSQL($prepare_string,array($snap_extensionValue),__FILE__,__LINE__)){$commit = 1;}
 }
 
 

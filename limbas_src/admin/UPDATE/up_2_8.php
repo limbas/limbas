@@ -50,10 +50,10 @@ function patch_3(){
 	$nfield[] = array("field" => "INTERVALS","typ" => 2,"typ2" => 0,"size" => 2,"description" => 'INTERVALS',"spellingf" => 'INTERVALS',"default" => "","sort" => "");
 
 	$sqlquery = "SELECT TAB_ID FROM LMB_CONF_TABLES WHERE TYP = 2";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 
-	while(odbc_fetch_row($rs)){
-		$tabid = odbc_result($rs, "TAB_ID");
+	while(lmbdb_fetch_row($rs)){
+		$tabid = lmbdb_result($rs, "TAB_ID");
 		add_extended_fields($nfield,$tabid,1);
 	}
 	
@@ -68,7 +68,7 @@ function patch_4(){
 
 	$nid = next_db_id("lmb_umgvar","ID");
 	$sqlquery = "insert into lmb_umgvar values($nid,137,'database_version','".dbf_version()."','database version',11)";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	
 	return true;
 	
@@ -85,7 +85,7 @@ function patch_7(){
 	global $db;
 	$nid = next_db_id("lmb_umgvar","ID");
 	$sqlquery = "insert into lmb_umgvar values($nid,137,'csv_delimiter','".parse_db_string('\t')."','csv export delimiter (".parse_db_string('\t')." / ;)',11)";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	return true;
 }
 patch_scr(7,"2.8","patch_7","update umgvar");
@@ -94,7 +94,7 @@ function patch_8(){
 	global $db;
 	$nid = next_db_id("lmb_umgvar","ID");
 	$sqlquery = "insert into lmb_umgvar values($nid,137,'csv_enclosure','','csv export enclosure (".parse_db_string('"').")',11)";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	return true;
 }
 patch_scr(8,"2.8","patch_8","update umgvar");
@@ -136,29 +136,29 @@ function patch_17(){
 	
 
 	$sqlquery = "select tab_id from lmb_conf_tables where lower(tabelle) = 'ldms_files'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$tid = odbc_result($rs,'tab_id');
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$tid = lmbdb_result($rs,'tab_id');
 
 	$sqlquery = "select id from lmb_conf_fields where tab_id = $tid and field_name = 'TYP'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-    if(!odbc_fetch_row($rs) and $tid){
+    if(!lmbdb_fetch_row($rs) and $tid){
 		$nid = next_db_id("lmb_conf_fields","ID");
 		$sqlquery = "insert into lmb_conf_fields (id,field_id,tab_id,tab_group,data_type,field_type,field_name,form_name,verkntabletype,beschreibung,spelling,field_size) values ($nid,6,$tid,4,16,5,'TYP','typ',1,10932,10933,5)";
-	    $rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	    $rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     }
     
 	$sqlquery = "select id from lmb_conf_fields where tab_id = $tid and field_name = 'VPID'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     
-    if(!odbc_fetch_row($rs) and $tid){
+    if(!lmbdb_fetch_row($rs) and $tid){
     	
 		$sqlquery = "delete from lmb_conf_fields where tab_id = $tid and field_id = 27";
-		$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	
 		$nid = next_db_id("lmb_conf_fields","ID");
 		$sqlquery = "insert into lmb_conf_fields (id,field_id,tab_id,tab_group,data_type,field_type,field_name,form_name,verkntabletype,beschreibung,spelling,field_size) values ($nid,27,$tid,4,16,5,'VPID','vpid',1,10974,10975,18)";
-	    $rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	    $rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     }
     
     if($rs1){
@@ -166,15 +166,15 @@ function patch_17(){
 		require_once("admin/group/group.lib");
 	
 		$sqlquery = "SELECT COUNT(*) AS ANZAHL FROM LMB_GROUPS";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		$num_group =  odbc_result($rs,"ANZAHL");
+		$num_group =  lmbdb_result($rs,"ANZAHL");
 			
 		$sqlquery = "SELECT GROUP_ID,NAME FROM LMB_GROUPS";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		while(odbc_fetch_row($rs)){
-			check_grouprights1(odbc_result($rs,"GROUP_ID"),odbc_result($rs,"NAME"),null,null);
+		while(lmbdb_fetch_row($rs)){
+			check_grouprights1(lmbdb_result($rs,"GROUP_ID"),lmbdb_result($rs,"NAME"),null,null);
 		}
 	
     }
@@ -194,5 +194,5 @@ patch_db(18,"2.8",$sqlquery,"rename option in lmb_rules_fields");
 
 ###########################
 
-if ($db AND !$action) {odbc_close($db);}
+if ($db AND !$action) {lmbdb_close($db);}
 ?>

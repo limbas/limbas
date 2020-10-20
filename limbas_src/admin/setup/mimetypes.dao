@@ -13,7 +13,7 @@ if($change && $changeIds){
                         $pic = parse_db_string( ${"pic_".$id} );
                         
                         $sqlquery = "UPDATE LMB_MIMETYPES SET MIMETYPE='$mimetype', EXT='$ext', PIC='$pic' WHERE ID = $id";
-   			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);        
+   			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
 	}
 }
@@ -26,28 +26,28 @@ if($add){
         $new_pic = parse_db_string( $new_pic, 255);
                 
         $sqlquery = "INSERT INTO LMB_MIMETYPES (ID, MIMETYPE, EXT, PIC) VALUES ($nextId, '$new_mimetype', '$new_ext', '$new_pic')";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 /* --- mimetype löschen --------------------------------------------- */
 if($del){
         $del = parse_db_int($del);
 	$sqlquery = "DELETE FROM LMB_MIMETYPES WHERE ID = $del";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 
 
 /* --- Mimetype-Liste --------------------------------------------- */
 $sqlquery = "SELECT ID, MIMETYPE, EXT, PIC FROM LMB_MIMETYPES ORDER BY MIMETYPE";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 $result_mimetypes = array();
-while(odbc_fetch_row($rs)) {
-    $result_mimetypes['id'][] = odbc_result($rs, 'ID');
-    $result_mimetypes['mimetype'][] = odbc_result($rs, 'MIMETYPE');
-    $result_mimetypes['ext'][] = odbc_result($rs, 'EXT');
-    $result_mimetypes['pic'][] = odbc_result($rs, 'PIC');
+while(lmbdb_fetch_row($rs)) {
+    $result_mimetypes['id'][] = lmbdb_result($rs, 'ID');
+    $result_mimetypes['mimetype'][] = lmbdb_result($rs, 'MIMETYPE');
+    $result_mimetypes['ext'][] = lmbdb_result($rs, 'EXT');
+    $result_mimetypes['pic'][] = lmbdb_result($rs, 'PIC');
 }
 
 function cleanMimetype($mimetype) {

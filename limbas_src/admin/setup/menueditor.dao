@@ -15,7 +15,7 @@
  */
 
 /*
- * ID:
+ * ID: 232
  */
 ?>
 
@@ -41,7 +41,7 @@ function lmb_custmenuEdit(&$custmenu,$par){
 
     if($par['act'] == 'update') {
 
-        if($value['typ'] <= 1 AND $value['name']) {
+        if(($value['typ'] <= 1 OR $value['typ'] == 8 OR $value['typ'] == 13) AND isset($value['name'])) {
             // change lang value
             if ($custmenu['name'][$ID]) {
                 lang_change(null,$custmenu['name'][$ID],$value['name'],$session["language"],'_DEPEND');
@@ -55,7 +55,7 @@ function lmb_custmenuEdit(&$custmenu,$par){
         }
 
         // title
-        if($value['title']) {
+        if(isset($value['title'])) {
             // change lang value
             if ($custmenu['title'][$ID]) {
                 lang_change(null,$custmenu['title'][$ID],$value['title'],$session["language"],'_DEPEND');
@@ -66,48 +66,62 @@ function lmb_custmenuEdit(&$custmenu,$par){
             }
         }
         // url
-        if($value['url']) {
+        if(isset($value['url'])) {
              $sql[] = "URL = '".parse_db_string($value['url'],150)."'";
         }
+        // attribute
+        if(isset($value['attribute'])) {
+             $sql[] = "URL = '".parse_db_string($value['attribute'],150)."'";
+        }
         // icon
-        if($value['icon']) {
+        if(isset($value['icon'])) {
              $sql[] = "ICON = '".parse_db_string($value['icon'],60)."'";
         }
         // bg
-        if($value['bg']) {
+        if(isset($value['bg'])) {
              $sql[] = "BG = '".parse_db_string($value['bg'],7)."'";
         }
         // typ
         if($value['typ']) {
              $sql[] = "TYP = ".parse_db_int($value['typ']);
         }
+        // inactive
+        if(isset($value['inactive'])) {
+             $sql[] = "INACTIVE = '".parse_db_string($value['inactive'],150)."'";
+        }
+        // disabled
+        if(isset($value['disabled'])) {
+             $sql[] = "DISABLED = '".parse_db_string($value['disabled'],150)."'";
+        }
 
         if($sql) {
             $sql_ = implode($sql,',');
             $sqlquery = "UPDATE LMB_CUSTMENU SET $sql_ WHERE ID = $ID";
-            $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         }
 
     }elseif($par['act'] == 'add'){
         $NEXTID = next_db_id("LMB_CUSTMENU");
 
         $sqlquery = "SELECT MAX(SORT) AS NEXTSORT FROM LMB_CUSTMENU WHERE LINKID = $linkid AND PARENT = ".parse_db_int($parent);
-        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-        $NEXTSORT = (odbc_result($rs, 'NEXTSORT')+1);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        $NEXTSORT = (lmbdb_result($rs, 'NEXTSORT')+1);
 
         $sqlquery = "INSERT INTO LMB_CUSTMENU (ID,LINKID,PARENT,TYP,SORT) VALUES ($NEXTID,$linkid,".parse_db_int($parent).",".parse_db_int($value['name']).",$NEXTSORT)";
-        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
 
     }elseif($par['act'] == 'delete'){
 
         $sqlquery = "DELETE FROM LMB_CUSTMENU WHERE ID = $ID AND LINKID = $linkid";
-        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
 
         $sqlquery = "UPDATE LMB_CUSTMENU SET PARENT = ".$custmenu['parent'][$ID]." WHERE PARENT = $ID AND LINKID = $linkid";
-        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
 
-        lang_delete($custmenu['name'][$ID]);
-        lang_delete($custmenu['title'][$ID]);
+        if($custmenu['typ'][$ID] <= 1 OR $custmenu['typ'][$ID] == 8 OR $custmenu['typ'][$ID] == 13) {
+            lang_delete($custmenu['name'][$ID],'_DEPEND');
+            lang_delete($custmenu['title'][$ID],'_DEPEND');
+        }
 
     }elseif($par['act'] == 'up' OR $par['act'] == 'down'){
         lmb_sortConf($par['act'],$ID,'LMB_CUSTMENU','SORT',"LINKID = $linkid AND PARENT = $parent");
@@ -121,24 +135,102 @@ function lmb_custmenuGet($linkid){
     global $lang;
 
     $sqlquery = "SELECT * FROM LMB_CUSTMENU WHERE LINKID = " . parse_db_int($linkid)." ORDER BY PARENT,SORT";
-    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
 
-    while (odbc_fetch_row($rs)) {
+    while (lmbdb_fetch_row($rs)) {
 
-        $key = odbc_result($rs, 'ID');
+        $key = lmbdb_result($rs, 'ID');
 
         $custmenu['id'][$key] = $key;
-        $custmenu['parent'][$key] = odbc_result($rs, 'PARENT');
-        $custmenu['typ'][$key] = odbc_result($rs, 'TYP');
-        $custmenu['name'][$key] = odbc_result($rs, 'NAME');
-        $custmenu['title'][$key] = odbc_result($rs, 'TITLE');
-        $custmenu['linkid'][$key] = odbc_result($rs, 'LINKID');
-        $custmenu['sort'][$key] = odbc_result($rs, 'SORT');
-        $custmenu['url'][$key] = odbc_result($rs, 'URL');
-        $custmenu['icon'][$key] = odbc_result($rs, 'ICON');
-        $custmenu['bg'][$key] = odbc_result($rs, 'BG');
+        $custmenu['parent'][$key] = lmbdb_result($rs, 'PARENT');
+        $custmenu['typ'][$key] = lmbdb_result($rs, 'TYP');
+        $custmenu['name'][$key] = lmbdb_result($rs, 'NAME');
+        $custmenu['title'][$key] = lmbdb_result($rs, 'TITLE');
+        $custmenu['linkid'][$key] = lmbdb_result($rs, 'LINKID');
+        $custmenu['sort'][$key] = lmbdb_result($rs, 'SORT');
+        $custmenu['url'][$key] = lmbdb_result($rs, 'URL');
+        $custmenu['icon'][$key] = lmbdb_result($rs, 'ICON');
+        $custmenu['bg'][$key] = lmbdb_result($rs, 'BG');
+        $custmenu['disabled'][$key] = lmbdb_result($rs, 'DISABLED');
+        $custmenu['inactive'][$key] = lmbdb_result($rs, 'INACTIVE');
     }
 
     return $custmenu;
 
+}
+
+function lmb_custmenulistEdit($listact,$linkid,$custmenulist){
+    global $db;
+    global $lang;
+    global $session;
+
+    if($listact == 'add' AND $custmenulist['add']['name']){
+        $name_id =  lang_add($session["language"],4,'Custmenu: ',$custmenulist['add']['name'],'_DEPEND');
+        $NEXTID = next_db_id("LMB_CUSTMENU_LIST");
+        $sqlquery = "INSERT INTO LMB_CUSTMENU_LIST (ID,NAME) VALUES ($NEXTID,$name_id)";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    }elseif($listact == 'change' AND $custmenulist[$linkid]['name']){
+
+       $custmenu_list = lmb_custmenulistGet();
+
+       // change lang value
+       if ($custmenu_list['name'][$linkid]) {
+            lang_change(null,$custmenu_list['name'][$linkid],$custmenulist[$linkid]['name'],$session["language"],'_DEPEND');
+        // new lang value
+        }else{
+            $name_id =  lang_add($session["language"],4,'Custmenu: ',$custmenulist[$linkid]['name'],'_DEPEND');
+            $sql = ", NAME = ".parse_db_int($name_id);
+        }
+
+        $sqlquery = "UPDATE LMB_CUSTMENU_LIST SET 
+        TABID = ".parse_db_int($custmenulist[$linkid]['tabid']).",
+        TYPE = ".parse_db_int($custmenulist[$linkid]['type']).",
+        FIELDID = ".parse_db_int($custmenulist[$linkid]['fieldid'])."
+        $sql
+        WHERE ID = ".parse_db_int($linkid);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    }elseif($listact == 'del' AND $linkid){
+        $custmenu = lmb_custmenuGet($linkid);
+        foreach($custmenu['id'] as $key => $value){
+            if($custmenu['typ'][$key] <= 1 OR $custmenu['typ'][$key] == 8 OR $custmenu['typ'][$key] == 13) {
+                lang_delete($custmenu['name'][$key], '_DEPEND');
+                lang_delete($custmenu['title'][$key], '_DEPEND');
+            }
+        }
+
+        $custmenu_list = lmb_custmenulistGet();
+        if($custmenu_list['name'][$linkid]){
+            lang_delete($custmenu_list['name'][$linkid], '_DEPEND');
+        }
+
+        $sqlquery = "DELETE FROM LMB_CUSTMENU_LIST WHERE ID = ".parse_db_int($linkid);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        $sqlquery = "DELETE FROM LMB_CUSTMENU WHERE LINKID = ".parse_db_int($linkid);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    }
+
+}
+
+
+function lmb_custmenulistGet(){
+    global $db;
+    global $lang;
+
+    $sqlquery = "SELECT * FROM LMB_CUSTMENU_LIST ORDER BY TABID,TYPE,NAME";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    while (lmbdb_fetch_row($rs)) {
+
+        $key = lmbdb_result($rs, 'ID');
+
+        $custmenu_list['id'][$key] = $key;
+        $custmenu_list['name'][$key] = lmbdb_result($rs, 'NAME');
+        $custmenu_list['tabid'][$key] = lmbdb_result($rs, 'TABID');
+        $custmenu_list['type'][$key] = lmbdb_result($rs, 'TYPE');
+        $custmenu_list['fieldid'][$key] = lmbdb_result($rs, 'FIELDID');
+    }
+
+    return $custmenu_list;
 }

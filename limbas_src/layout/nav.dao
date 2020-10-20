@@ -106,7 +106,12 @@ function menu_get_form($tabid, $formid, $typ = 1, $depth = null) {
             return null;
         }
 
-        $menu["link"] = "main.php?action=gtab_erg&gtabid=$tabid&form_id=$formid&HEADER=".urlencode($gformlist[$tabid]["name"][$formid])."&ID=0";
+        if($tabid){
+            $menu["link"] = "main.php?action=gtab_erg&gtabid=$tabid&form_id=$formid&HEADER=".urlencode($gformlist[$tabid]["name"][$formid])."&ID=0";
+        }else{
+            $menu["link"] = "main.php?action=gtab_form&form_id=$formid&HEADER=".urlencode($gformlist[$tabid]["name"][$formid]);
+        }
+
     } else {
         $menu["link"] = "main_admin.php?action=setup_form_frameset&form_typ=".$gformlist[$tabid]["typ"][$formid]."&form_id=$formid&referenz_tab=".$gformlist[$tabid]["ref_tab"][$formid];
     }
@@ -460,8 +465,10 @@ function menu_get_admin_setup(){
 	if($LINK[295]){$menu0 = menu_get_standard(295,10);$menu1 = array_merge($menu1,$menu0);}
     if($LINK[298]){$menu0 = menu_get_standard(298,10);$menu1 = array_merge($menu1,$menu0);}
     if($LINK[302]){$menu0 = menu_get_standard(302,11);$menu1 = array_merge($menu1,$menu0);}
-    if($LINK[303]){$menu0 = menu_get_standard(303,12);$menu1 = array_merge($menu1,$menu0);}
-    if($LINK[207]){$menu0 = menu_get_standard(207,13);$menu1 = array_merge($menu1,$menu0);}
+    if($LINK[307]){$menu0 = menu_get_standard(307,11);$menu1 = array_merge($menu1,$menu0);}
+    if($LINK[310]){$menu0 = menu_get_standard(310,12);$menu1 = array_merge($menu1,$menu0);}
+    if($LINK[303]){$menu0 = menu_get_standard(303,13);$menu1 = array_merge($menu1,$menu0);}
+    if($LINK[207]){$menu0 = menu_get_standard(207,14);$menu1 = array_merge($menu1,$menu0);}
     return $menu1;
 }
 
@@ -519,7 +526,8 @@ function menu_get_admin_tools(){
 	if($LINK[50]){$menu0 = menu_get_standard(50,8);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[283]){$menu0 = menu_get_standard(283,9);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[102]){$menu0 = menu_get_standard(102,6);$menu1 = array_merge($menu1,$menu0);}
-	if($LINK[285]){$menu0 = menu_get_standard(285,11);$menu1 = array_merge($menu1,$menu0);}
+    if($LINK[311]){$menu0 = menu_get_standard(311,14);$menu1 = array_merge($menu1,$menu0);}
+    if($LINK[285]){$menu0 = menu_get_standard(285,11);$menu1 = array_merge($menu1,$menu0);}
     if($LINK[299]){$menu0 = menu_get_standard(299,12);$menu1 = array_merge($menu1,$menu0);}
 	if($LINK[57]){$menu0 = menu_get_standard(57,13);$menu1 = array_merge($menu1,$menu0);}
 

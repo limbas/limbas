@@ -67,8 +67,8 @@ function show_fieldinfo($gtabid,$fieldid){
 	# --- Anzahl ---
 	if($gfield[$gtabid]['field_type'][$fieldid] == 11 AND $gfield[$gtabid]['md5tab'][$fieldid]){
 		$sqlquery = "SELECT COUNT(*) RES FROM ".$gfield[$gtabid]['md5tab'][$fieldid];
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		echo "<TR><TD nowrap STYLE=\"border:1px solid grey;padding:1px;overflow:hidden;\" valign=\"top\"><B>".$lang[1887]."</TD><TD STYLE=\"border:1px solid grey;padding:1px;overflow:hidden;\"><INPUT TYPE=\"TEXT\" STYLE=\"width:100%;background-color:transparent;border:none;\" VALUE=\"".odbc_result($rs,"RES")."\"></TD></TR>";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		echo "<TR><TD nowrap STYLE=\"border:1px solid grey;padding:1px;overflow:hidden;\" valign=\"top\"><B>".$lang[1887]."</TD><TD STYLE=\"border:1px solid grey;padding:1px;overflow:hidden;\"><INPUT TYPE=\"TEXT\" STYLE=\"width:100%;background-color:transparent;border:none;\" VALUE=\"".lmbdb_result($rs,"RES")."\"></TD></TR>";
 	}
 	
 	# --- Datun incl. Zeit --- 

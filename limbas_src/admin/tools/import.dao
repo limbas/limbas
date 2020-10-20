@@ -135,10 +135,10 @@ function import_create_fieldmapping($ifield,$import_typ,$covertfromtable,$odbc=n
     
     /* --- Tabellengruppen ----------------------------------------------- */
     $sqlquery = "SELECT ID,LEVEL,NAME,BESCHREIBUNG,SORT FROM LMB_CONF_GROUPS ORDER BY LMB_CONF_GROUPS.SORT";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    while(odbc_fetch_row($rs)) {
-    	$tabgroup_["id"][] = odbc_result($rs, "ID");
-    	$tabgroup_["name"][] = $lang[odbc_result($rs,"NAME")];
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs)) {
+    	$tabgroup_["id"][] = lmbdb_result($rs, "ID");
+    	$tabgroup_["name"][] = $lang[lmbdb_result($rs,"NAME")];
     }
     
     $result_type = lmb_get_fieldtypes();
@@ -300,19 +300,19 @@ function import_create_addtable($import_typ, $ifield, $add_permission = null, $v
                 
                 /* --- Feldtyp ermitteln -------------------------------------- */
                 $sqlquery = "SELECT FIELD_TYPE,SIZE,DATENTYP,LMRULE,DATA_TYPE FROM LMB_FIELD_TYPES WHERE ID = " . $ifield['typ'][$bzm9];
-                $rs = odbc_exec($db, $sqlquery);
+                $rs = lmbdb_exec($db, $sqlquery);
                 if (! $rs) {
                     $commit = 1;
                 }
-                $ifield['fieldtype'][$bzm9] = odbc_result($rs, "FIELD_TYPE");
-                $ifield['datatype'][$bzm9] = odbc_result($rs, "DATA_TYPE");
-                $ifield['datentyp'][$bzm9] = odbc_result($rs, "DATENTYP");
-                $ifield['rule'][$bzm9] = odbc_result($rs, "LMRULE");
+                $ifield['fieldtype'][$bzm9] = lmbdb_result($rs, "FIELD_TYPE");
+                $ifield['datatype'][$bzm9] = lmbdb_result($rs, "DATA_TYPE");
+                $ifield['datentyp'][$bzm9] = lmbdb_result($rs, "DATENTYP");
+                $ifield['rule'][$bzm9] = lmbdb_result($rs, "LMRULE");
                 if ($ifield['size'][$bzm9]) {
                     $ifield['rule'][$bzm9] = str_replace("xxx", ($ifield['size'][$bzm9] + 1), $ifield['rule'][$bzm9]);
                     $ifield['rule'][$bzm9] = str_replace("xx", $ifield['size'][$bzm9], $ifield['rule'][$bzm9]);
                 } else {
-                    $ifield['size'][$bzm9] = odbc_result($rs, "SIZE");
+                    $ifield['size'][$bzm9] = lmbdb_result($rs, "SIZE");
                     $ifield['rule'][$bzm9] = str_replace("xx", "", $ifield['rule'][$bzm9]);
                 }
                 
@@ -412,7 +412,7 @@ function import_create_filltable($import_typ, $ifield, $txt_terminate = null, $t
                         /* --- Datensatz eintragen -------------------------------------- */
                         if ($insert and $value) {
                             $sqlquery = "INSERT INTO $new_gtab (ID,ERSTUSER,$insert) VALUES ($NEXTID," . $ERSTUSER . ",$value)";
-                            if($rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__)){
+                            if($rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__)){
                                 $INSERT_OK ++;
                             } else {
                                 $INSERT_FALSE ++;
@@ -588,8 +588,8 @@ function import_create_fillodbc($ifield, $odbc, $txt_encode, $verbose=null){
     
     // count of rows
     $sqlquery = "SELECT COUNT(*) AS COUNT FROM " . $odbc['odbc_table'];
-    $rs = odbc_exec($odbc['odbc_connect'], $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-    $maxline = odbc_result($rs, "COUNT");
+    $rs = lmbdb_exec($odbc['odbc_connect'], $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    $maxline = lmbdb_result($rs, "COUNT");
     
     /* ---------------------- Zeilenausgabe ---------------------- */
     $INSERT_OK = "0";
@@ -599,9 +599,9 @@ function import_create_fillodbc($ifield, $odbc, $txt_encode, $verbose=null){
     // odbc result
     $selectfields = implode($ifield['name'], ',');
     $sqlquery = "SELECT $selectfields FROM " . $odbc['odbc_table'];
-    $odbc_rs = odbc_exec($odbc['odbc_connect'], $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    $odbc_rs = lmbdb_exec($odbc['odbc_connect'], $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     
-    while (odbc_fetch_row($odbc_rs)) {
+    while (lmbdb_fetch_row($odbc_rs)) {
         
         $line = array();
         $insert_ = array();
@@ -612,7 +612,7 @@ function import_create_fillodbc($ifield, $odbc, $txt_encode, $verbose=null){
         // each line
         foreach ($ifield['id'] as $fkey => $fval) {
             if (in_array($ifield['name'][$fkey], $systemfields)) {continue;}
-            $odbc_value = odbc_result($odbc_rs, $ifield['name'][$fkey]);
+            $odbc_value = lmbdb_result($odbc_rs, $ifield['name'][$fkey]);
             import_create_sqlvalue($fkey,$ifield,$insert_,$value_,$NEXTID,$ERSTUSER,$odbc_value,$txt_encode);
         }
         
@@ -624,7 +624,7 @@ function import_create_fillodbc($ifield, $odbc, $txt_encode, $verbose=null){
             /* --- Datensatz eintragen -------------------------------------- */
             if ($insert and $value) {
                 $sqlquery = "INSERT INTO $new_gtab (ID,ERSTUSER,$insert) VALUES ($NEXTID,$ERSTUSER,$value)";
-                if ($rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__)) {
+                if ($rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__)) {
                     $INSERT_OK ++;
                 } else {
                     $INSERT_FALSE ++;
@@ -852,8 +852,8 @@ function import_attach_fromodbc($ifield,$odbc,$txt_encode=null,$verbose=1){
 
 	# count of rows
     $sqlquery = "SELECT COUNT(*) AS COUNT FROM " . $odbc['odbc_table'];
-    $rs = odbc_exec($odbc_connect, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-    $maxline = odbc_result($rs, "COUNT");
+    $rs = lmbdb_exec($odbc_connect, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    $maxline = lmbdb_result($rs, "COUNT");
 	
     // odbc result
     $dbfunc = $odbc['odbc_vendor'].'_dbf_5';
@@ -873,13 +873,13 @@ function import_attach_fromodbc($ifield,$odbc,$txt_encode=null,$verbose=1){
 	}
 
     $sqlquery = "SELECT ".implode(',',$fieldlist)." FROM " . $odbc['odbc_table'];
-    $odbc_rs = odbc_exec($odbc_connect, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-    while (odbc_fetch_row($odbc_rs)) {
+    $odbc_rs = lmbdb_exec($odbc_connect, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    while (lmbdb_fetch_row($odbc_rs)) {
 
     	$history_fields = array();
 		foreach ($fieldlist as $gfieldid => $fieldname){
 		    
-		    $fieldvalue = odbc_result($odbc_rs, $fieldname);
+		    $fieldvalue = lmbdb_result($odbc_rs, $fieldname);
 
             if($extension = $ifield["extension"][$gfieldid]){
                 $fieldvalue = $extension($fieldvalue,$fieldname);
@@ -1100,7 +1100,7 @@ EOD;
 			$coll = implode(",",$coll);
 			$sqlquery2 = "INSERT INTO $tab ($coll) VALUES($values)";
 			if($bzm4 > 1){
-				$rs3 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db), $sqlquery2, $GLOBALS['action'], __FILE__, __LINE__);
+				$rs3 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $GLOBALS['action'], __FILE__, __LINE__);
 				if(!$rs3) {
 					$commit = 1;
 					$count_false++;
@@ -1124,7 +1124,7 @@ EOD;
 		foreach($prepare_long["field"][$bzm4] as $lkey => $lval){
 			if($prepare_long["id"][$bzm4]){
 				$prepare_string = "UPDATE ".$tab." SET ".$prepare_long["field"][$bzm4][$lkey]." = ? WHERE ID = ".$prepare_long["id"][$bzm4];
-				lmb_PrepareSQL($prepare_string,array(parse_db_blob($prepare_long["value"][$bzm4][$lkey])),__FILE__,__LINE__);
+				lmb_PrepareSQL($prepare_string,array($prepare_long["value"][$bzm4][$lkey]),__FILE__,__LINE__);
 			}
 		}}
 		unset($prepare_long);
@@ -1158,7 +1158,7 @@ function create($tab,$sqlquery,$key){
 	
 	$sqlquery = $sqlquery.$key;
 	$sqlquery = lmb_substr($sqlquery,0,lmb_strlen($sqlquery) - 1).")";
-	$rs2 = odbc_exec($db,$sqlquery);
+	$rs2 = lmbdb_exec($db,$sqlquery);
 	if(!$rs2) {
 		echo $sqlquery."<br>";
 		$commit = 1;
@@ -1180,7 +1180,7 @@ function deleteExistingTab($tab){
 	global $db;
 	global $lang;
 	$sqlquery = "DROP TABLE ".dbf_4($tab);
-	$rs2 = odbc_exec($db,$sqlquery);
+	$rs2 = lmbdb_exec($db,$sqlquery);
 	if(!$rs2){
 		if($GLOBALS["action"]){echo "<div style=\"color:red;\">$lang[1021] <font style=\"font-style:italic;font-weight:bold\">$tab</FONT> $lang[1012]!</div>\n";}
 	}else{
@@ -1423,7 +1423,7 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 				$odbc_table = dbf_20(array($DBA["DBSCHEMA"],$cdf[0],"'TABLE'"));
 				if($odbc_table) {
 					$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$cdf[0],$cdf[1]));
-					$rs4 = odbc_exec($db,$sqlquery);
+					$rs4 = lmbdb_exec($db,$sqlquery);
 					if(!$rs4) {$commit = 1;}
 					if($rs4){
 						if($GLOBALS["action"]){echo "<div>$lang[164] <font style=\"font-style:italic;font-weight:bold\">".$cdf[0]." (".$cdf[1].")</FONT> <b>$lang[1024]</b>.</div>\n";
@@ -1446,7 +1446,7 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 				if($cdf){
 					$sqlquery = dbq_19($cdf);
 					
-					$rs4 = odbc_exec($db,$sqlquery);
+					$rs4 = lmbdb_exec($db,$sqlquery);
 					if(!$rs4) {echo $sqlquery;$commit = 1;}
 					
 					$outdesc1 = "<div>$lang[2215] <font style=\"font-style:italic;font-weight:bold\">".$cdf[0]."</FONT> <B>$lang[1018]</B>.</div>\n".
@@ -1470,7 +1470,7 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 
 				$cdf = explode("::",$line);
 				$sqlquery = "ALTER TABLE ".$newtabname[$cdf[0]]." ADD FOREIGN KEY(".$cdf[1].") REFERENCES ".$cdf[2]."(".$cdf[3].") ON DELETE RESTRICT";
-				$rs5 = odbc_exec($db,$sqlquery);
+				$rs5 = lmbdb_exec($db,$sqlquery);
 				$outdesc1 = "<div>$lang[1026] <FONT COLOR=\"#0033CC\">".$newtabname[$cdf[0]]."</FONT></div>\n<Script language=\"JavaScript\">scrolldown();</SCRIPT>\n";
 				$outdesc2 = "<div style=\"color:red;\">$lang[1026] <FONT COLOR=\"#0033CC\">".$newtabname[$cdf[0]]."</FONT> $lang[1019]</div>\n<Script language=\"JavaScript\">scrolldown();</SCRIPT>\n";
 				if($rs5){
@@ -1779,7 +1779,7 @@ function import_complete($del_all,$txt_encode=null, $txt_terminate=null,$txt_enc
 		if($odbc_table){
 			foreach($odbc_table["table_name"] as $tkey => $tvalue) {
 				$sqlquery1 = "DROP VIEW ".dbf_4($tvalue);
-				$vrs1 = odbc_exec($db,$sqlquery1);
+				$vrs1 = lmbdb_exec($db,$sqlquery1);
 				if(!$vrs1) {$commit = 1;}
 			}
 			echo "drop existing tables ... <b>done</b><br>";
@@ -1790,7 +1790,7 @@ function import_complete($del_all,$txt_encode=null, $txt_terminate=null,$txt_enc
 		if($odbc_table){
 			foreach($odbc_table["table_name"] as $tkey => $tvalue) {
 				$sqlquery1 = "DROP TABLE ".dbf_4($tvalue);
-				$vrs1 = odbc_exec($db,$sqlquery1);
+				$vrs1 = lmbdb_exec($db,$sqlquery1);
 				if(!$vrs1) {$commit = 1;}
 			}
 			echo "drop existing views ... <b>done</b><br><br>";
@@ -1865,8 +1865,8 @@ function import_template(&$ifield,$attach_gtabid,$template,$template_val){
 
     if($template == 'load'){
         $sqlquery = "SELECT SETTING FROM LMB_SYNC_TEMPLATE WHERE ID = ".parse_db_int($template_val);
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-        $ifield = unserialize(base64_decode(odbc_result($rs, "SETTING")));
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $ifield = unserialize(base64_decode(lmbdb_result($rs, "SETTING")));
         return;
     }
     
@@ -1874,28 +1874,28 @@ function import_template(&$ifield,$attach_gtabid,$template,$template_val){
         $setting = base64_encode(serialize($ifield));
         $NEXTID = next_db_id("LMB_SYNC_TEMPLATE");
     	$prepare_string = "INSERT INTO LMB_SYNC_TEMPLATE (ID,NAME,TABID,SETTING) VALUES ($NEXTID,'".parse_db_string($template_val,50)."', ".parse_db_int($attach_gtabid).", ?)";
-        if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($setting)),__FILE__,__LINE__)){$commit = 1;}
+        if(!lmb_PrepareSQL($prepare_string,array($setting),__FILE__,__LINE__)){$commit = 1;}
     }
     
     if($template == 'drop'){
         $sqlquery = "DELETE FROM LMB_SYNC_TEMPLATE WHERE ID = ".parse_db_int($template_val);
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     }
     
     $sqlquery = "SELECT * FROM LMB_SYNC_TEMPLATE WHERE TABID = ".parse_db_int($attach_gtabid);
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
     
     echo "<HR>
         <TABLE>
         <TR><TD class=\"tabHeaderItem\"><b>Templates</b></TD></TR>
         <TR class=\"tabHeader\"><TD>&nbsp;</TD></TR>";
-    while(odbc_fetch_row($rs)) {
-        $template_id = odbc_result($rs, "ID");
+    while(lmbdb_fetch_row($rs)) {
+        $template_id = lmbdb_result($rs, "ID");
         
         echo "<TR>
             <TD style=\"width:20px\"><i class=\"lmb-icon lmb-trash\" onclick=\"document.form1.template_val.value=$template_id;document.form1.template.value='drop';document.form1.import_action.value=".$import_action.";document.form1.submit();\" style=\"cursor:pointer\" border=\"0\"></i></TD>
-            <TD>".odbc_result($rs, "NAME")."</TD>
+            <TD>".lmbdb_result($rs, "NAME")."</TD>
             <TD><input type=\"button\" value=\"Einstellung laden\" onclick=\"document.form1.template_val.value=$template_id;document.form1.template.value='load';document.form1.import_action.value=".$import_action.";document.form1.submit();\"></TD>
             </TR>";
     }
@@ -2000,7 +2000,7 @@ function do_importXML($xmlFile){
 			}
 
 			$sqlquery = "INSERT INTO XMLIMPORTLOG(ID,WARNING,TABLES,RESULT) values(" . next_db_id('XMLIMPORTLOG','ID') . "," . ($result["warningImport"] ? "'" . parse_db_string(serialize($result["warningImport"]),1000) . "'" : "null" ) . ",'" . parse_db_string(serialize($tableStruct["NAME"]),1000) . "','" . parse_db_string(serialize($result["countImport"]),1000) . "')";
-			odbc_exec($db,$sqlquery);
+			lmbdb_exec($db,$sqlquery);
 		}
 
 }
@@ -2078,13 +2078,13 @@ function proceedXmlImportLines($lines,$tableName,$tableStruct,$fieldStruct,$rela
 			$valueList = implode(",",$fieldValue);
 
 			$sqlquery = "INSERT INTO $tableName (ID,ERSTUSER,$fieldList) VALUES ($NEXTID,{$session['user_id']},$valueList)";
-			odbc_exec($db,$sqlquery) or print_r($sqlquery);#$errorImport .=  odbc_error($db);
+			lmbdb_exec($db,$sqlquery) or print_r($sqlquery);#$errorImport .=  lmbdb_error($db);
 			$result["countImport"][$tableName]++;
 
 			// relation
 			if($relationParam){
 				$sqlquery = "INSERT INTO " . $relationStruct[$relationParam["PARENT"]][$tableName] . "(KEYID,ID,VERKN_ID) values(" . next_db_id($relationStruct[$relationParam["PARENT"]][$tableName],"KEYID",1) . "," . $relationParam["ID"] . ",$NEXTID)";
-				odbc_exec($db,$sqlquery) or$result["warningImport"][$tableName][] = "Error relation between to tables: $sqlquery";
+				lmbdb_exec($db,$sqlquery) or$result["warningImport"][$tableName][] = "Error relation between to tables: $sqlquery";
 			}
 
 			if($tableStruct[$tableName]["RELATION"]){

@@ -44,10 +44,10 @@ if($check_all){
 		global $commit;
 		
 		$sqlquery = "SELECT GROUP_ID,NAME FROM LMB_GROUPS WHERE LEVEL = $group_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		while(odbc_fetch_row($rs)) {
-			group_list(odbc_result($rs, "GROUP_ID"),odbc_result($rs,"NAME"));
+		while(lmbdb_fetch_row($rs)) {
+			group_list(lmbdb_result($rs, "GROUP_ID"),lmbdb_result($rs,"NAME"));
 		}
 		check_grouprights2($group_id,$group_name,1,1);
 	}

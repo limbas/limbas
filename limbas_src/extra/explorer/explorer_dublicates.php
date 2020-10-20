@@ -57,11 +57,11 @@ if($subdir = get_subdir($LID,1)){
 	echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\">".$lang[544]."</TD><TD class=\"tabHeaderItem\">".$lang[545]."</TD></TR>";
 	
 	$sqlquery = "SELECT LDMS_FILES.ID,LDMS_FILES.LEVEL,LDMS_FILES.NAME,LDMS_FILES.MD5 FROM LDMS_FILES,(SELECT MD5 FROM LDMS_FILES WHERE LEVEL IN ($indir) GROUP BY MD5 HAVING COUNT(MD5)>1) DBL WHERE LDMS_FILES.MD5 = DBL.MD5";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
+	while(lmbdb_fetch_row($rs)) {
 		
-		$md5 = odbc_result($rs,"MD5");
+		$md5 = lmbdb_result($rs,"MD5");
 		
 		if($lastmd5 != $md5){
 			echo "<TR class=\"tabBody\"><TD colspan=\"2\"><hr></TD></TR>";
@@ -69,9 +69,9 @@ if($subdir = get_subdir($LID,1)){
 		
 		echo "<TR class=\"tabBody\">
 		<TD nowrap>
-		<input type=\"checkbox\" NAME=\"file[".odbc_result($rs,"ID")."]\" VALUE=\"".odbc_result($rs,"ID")."\">
+		<input type=\"checkbox\" NAME=\"file[".lmbdb_result($rs,"ID")."]\" VALUE=\"".lmbdb_result($rs,"ID")."\">
 		</TD>
-		<TD><A HREF=\"main.php?&action=download&ID=".odbc_result($rs,"ID")."\" TARGET=\"new\" style=\"font-style:italic\">".set_url(odbc_result($rs,"LEVEL"),odbc_result($rs,"ID")).odbc_result($rs,"NAME")."</A></TD></TR>";
+		<TD><A HREF=\"main.php?&action=download&ID=".lmbdb_result($rs,"ID")."\" TARGET=\"new\" style=\"font-style:italic\">".set_url(lmbdb_result($rs,"LEVEL"),lmbdb_result($rs,"ID")).lmbdb_result($rs,"NAME")."</A></TD></TR>";
 
 		$lastmd5 = $md5;
 

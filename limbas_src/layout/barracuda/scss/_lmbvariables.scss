@@ -1,0 +1,174 @@
+// Variables
+//
+// Variables should follow the `$component-state-property-size` formula for
+// consistent naming. Ex: $nav-link-disabled-color and $modal-content-box-shadow-xs.
+
+//legacy
+$farbschemaWEB1: #d0d0d0 !default;
+$farbschemaWEB2: #444444 !default;
+$farbschemaWEB3: #C0C0C0 !default;
+$farbschemaWEB4: #BBBBBB !default;
+$farbschemaWEB5: #EAF3EE !default;
+$farbschemaWEB6: #C0C0C0 !default;
+$farbschemaWEB7: #97C5AB !default;
+$farbschemaWEB8: #EEEEEE !default;
+$farbschemaWEB9: #F5F5F5 !default;
+$farbschemaWEB10: #EAF3EE !default;
+$farbschemaWEB11: #FDFEFD !default;
+$farbschemaWEB12: #909090 !default;
+$farbschemaWEB13: #FFFFFF !default;
+$farbschemaWEB14: #F5F5F5 !default;
+
+$fontsize07: 0.7em;
+$fontsize09: 0.9em;
+$fontsize11: 1.1em;
+$fontsize12: 1.2em;
+$fontsize13: 1.3em;
+$fontsize14: 1.4em;
+$fontsize15: 1.5em;
+$waitsymbol: "pic/wait1.gif";
+//if($umgvar['waitsymbol']){$waitsymbol = $umgvar['waitsymbol'];}else{$waitsymbol = "pic/wait1.gif";}
+
+$umgvarfont: Verdana, Arial, Helvetica;
+$umgvarfontsize: 11px;
+
+@function lmbSuggestColor($color, $wc: #FFFFFF, $bc: #000000) {
+  $red: red($color);
+  $green: green($color);
+  $blue: blue($color);
+
+  $o: ($red * 299 + $green * 587 + $blue * 114) / 1000;
+
+  @if ($o > 125) {
+    @return $bc;
+  } @else {
+    @return $wc;
+  }
+
+}
+
+$fontc3: lmbSuggestColor($farbschemaWEB14, #222222, #7D7D7D);
+$fontc7: lmbSuggestColor($farbschemaWEB7, #5a5a5a, #333333);
+$fontc14: lmbSuggestColor($farbschemaWEB14);
+//legacy end
+
+
+// global defaults
+
+$body-bg: #fffbf6 !default;
+$default-color: #333333 !default;
+$default-bg-color: #f9f8f3 !default;
+$default-border-color: #c0c0c0 !default;
+
+//bootstrap defaults
+
+$enable-rounded: false;
+
+$primary: #588100 !default;
+$success: #9fe900 !default;
+
+$white:    #fff !default;
+$gray-100: #f9f8f3 !default;
+$gray-200: #f1eee2 !default;
+$gray-300: #dcd9ce !default;
+$gray-400: #c6c3b9 !default;
+$gray-500: #b0aea5 !default;
+$gray-600: #84827c !default;
+$gray-700: #585753 !default;
+$gray-800: #42413e !default;
+$gray-900: #2c2c2a !default;
+$black:    #000 !default;
+
+$input-focus-border-color: #9fe900 !default;
+$border-color: $default-border-color !default;
+
+// Top navigation
+$top-nav-background-color: #4E4E4E !default;
+$navbar-light-color: #fff !default;
+$navbar-light-hover-color: #9fe900 !default; //#a5ef00;
+$navbar-light-active-color: #9fe900 !default; //#a5ef00;
+$navbar-light-brand-color: $navbar-light-color !default;
+$navbar-light-brand-hover-color: $navbar-light-color !default;
+
+// Show menu
+$showmenu-color: #444444 !default;
+$showmenu-background-color: #ffffff !default;
+$showmenu-border: 1px solid #C0C0C0 !default;
+
+// Left navigation
+
+$nav-left-background-color: #706C66 !default;
+$nav-left-right-border: none;
+
+$nav-left-header-color: #f3f3f3 !default;
+$nav-left-header-hover-color: #fff !default;
+$nav-left-header-open-color: #fff !default;
+$nav-left-header-background-color: $nav-left-background-color !default;
+$nav-left-header-hover-background-color: #f18e00 !default;
+$nav-left-header-open-background-color: #f18e00 !default;
+$nav-left-header-border: none !default;
+
+$nav-left-inner-color: $nav-left-header-color !default;
+$nav-left-inner-hover-color: #fff !default;
+$nav-left-inner-background-color: $nav-left-background-color !default;
+$nav-left-inner-open-background-color: darken($nav-left-background-color, 12) !default;
+$nav-left-inner-border: none !default;
+$nav-left-hide-color: #fff;
+
+$nav-left-query-icon-color: #ffca7d !default;
+$nav-left-new-data-color: #A3F401 !default;
+
+// Right navigation
+$nav-right-background-color: #ffffff !default;
+$nav-right-left-border: 1px solid $default-border-color;
+
+$nav-right-header-color: #444444 !default;
+$nav-right-header-hover-color: #444444 !default;
+$nav-right-header-open-color: #444444 !default;
+$nav-right-header-background-color: #ffffff;
+$nav-right-header-hover-background-color: #f1eee2;
+$nav-right-header-open-background-color: #f1eee2;
+$nav-right-header-border: none;
+
+$nav-right-inner-color: #444444 !default;
+$nav-right-inner-hover-color: #7f7f7f !default;
+$nav-right-inner-background-color: #ffffff;
+$nav-right-inner-open-background-color: lighten($nav-right-header-open-background-color, 5);
+$nav-right-inner-border: none;
+$nav-right-hide-color: #444444;
+
+// Top info area
+
+$top-info-area-color: #767676;
+$top-info-area-background-color: #fff;
+$top-info-border-bottom: 1px solid $default-border-color;
+
+// Kanban
+$kanban-colum-color: $default-color !default;
+$kanban-colum-background-color: $default-bg-color !default;
+$kanban-colum-header-color: $default-color !default;
+$kanban-colum-header-background-color: #ffffff !default;
+$kanban-card-background-color: $kanban-colum-background-color !default;
+$kanban-assigned-background-color: lighten($kanban-card-background-color, 10) !default;
+$kanban-filter-background-color: $kanban-colum-background-color !default;
+$kanban-filter-border: 1px solid $default-border-color !default;
+$kanban-filter-item-background-color: lighten($kanban-filter-background-color, 10) !default;
+$kanban-filter-item-border: 1px solid $default-border-color !default;
+$kanban-card-drop-background-color: lighten($kanban-filter-background-color, 10) !default;
+$kanban-card-drop-border: 1px dashed $default-border-color !default;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

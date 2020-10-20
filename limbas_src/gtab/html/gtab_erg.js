@@ -230,6 +230,7 @@ function lmbAjax_resultGtab(form,body,footer,header,search){
 
 // Ajax Preview output
 function lmbAjax_resultGtabPost(result){
+	ajaxEvalScript(result);
 	if(result){
 		result = result.split("#LMBSPLIT#");
 		if(result[0] && result[0].trim()){document.getElementById("GtabTableSearch").innerHTML = result[0];}
@@ -493,10 +494,18 @@ function view_detail(newwin,id) {
 	if(this.gtabDetailIframe){document.form2.target='gtabDetailIframe';}else{document.form2.target='_self';};
 	
 	document.form2.action.value='gtab_change';
-	
+
 	if(id){
 		document.form2.ID.value=id;
-	}
+	}else{
+        var actrows = checkActiveRows();
+        if(actrows.length > 0){
+            var id = actrows[0].split("_");
+            document.form2.ID.value=id[0];
+        }
+    }
+
+    if(!id){return false;}
 	
 	if(newwin){
 		document.form2.target='_new';
@@ -508,7 +517,7 @@ function view_detail(newwin,id) {
 }
 
 function view_change() {
-	view_detail();
+    view_detail();
 }
 
 //----------------- Bearbeitungsansicht -------------------
@@ -610,10 +619,6 @@ function gtabSetTablePosition(posx,posy){
 
     // set window title
 	document.title = jsvar["tablename"];
-	        
-	if(top.nav){
-		top.nav.document.form1.alter.value=1;
-	}
 	
 	if(top.main){
 		top.main.focus();
@@ -1326,37 +1331,78 @@ var tmp_form_typ = null;
 var tmp_form_dimension = null;
 
 // --- Editmenüsteuerung -----------------------------------
-function lmbTableContextMenu(evt,el,ID,gtabid,form_id,form_typ,form_dimension,ERSTDATUM,EDITDATUM,ERSTUSER,EDITUSER,V_ID,V_GID,V_FID,V_TYP) {
+function lmbTableContextMenu(evt,el,ID,gtabid,custmenu,parentid,form_id,form_typ,form_dimension,ERSTDATUM,EDITDATUM,ERSTUSER,EDITUSER,V_ID,V_GID,V_FID,V_TYP) {
 
-	divclose();
+
 	// --------- deactivate all rows -------------
 	//aktivateRows(0);
 	// --------- activate single row -------------
 	// aktivateSingleRow('elrow_'+ID+'_'+TABID,1);
 	// activate row if not active
-	const rowid = el.id;
-	if (!selected_rows[rowid]) {
-        lmbTableClickEvent(evt, el);
+
+    child = 'limbasDivMenuContext';
+    parent = evt;
+
+    if(parentid){
+	    parent = 'lmb_custmenu_'+parentid;
+	    child = 'lmb_custmenu_'+custmenu;
+	}else if(custmenu){
+        divclose();
+	    child = 'lmb_custmenu_'+custmenu;
 	}
 
-	document.getElementById("lmbInfoCreate").innerHTML = ERSTUSER+"\n"+ERSTDATUM;
-	document.getElementById("lmbInfoEdit").innerHTML = EDITUSER+"\n"+EDITDATUM;
+	if(!document.getElementById(child)){
+        $('#limbasDivMenuContext').after("<div id='"+child+"' class='lmbContextMenu' style='position:absolute;z-index:992;' onclick='activ_menu = 1;'>");
+    }
 
-	document.form1.ID.value=ID;
+    if(!parentid) {
+        const rowid = el.id;
+        if (!selected_rows[rowid]) {
+            lmbTableClickEvent(evt, el);
+        }
+    }
 
-	if(ID > 0){document.form2.ID.value=ID;}
-	if(V_TYP > 0){document.form2.verknpf.value=V_TYP;}
-	if(V_ID > 0){document.form2.verkn_ID.value=V_ID;}
-	if(V_GID > 0){document.form2.verkn_tabid.value=V_GID;}
-	if(V_FID > 0){document.form2.verkn_fieldid.value=V_FID;}
-	if(gtabid > 0){document.form2.gtabid.value=gtabid;}
+    // use custmenu
+    if(custmenu) {
+        var fieldid = $(evt.target).closest('.element-cell').attr( "data-fieldid" );
+        if(!fieldid){fieldid = '';}
+        var actrows = checkActiveRows();
+		if(actrows.length > 1) {
+            ID = actrows.join(";");
+        }
+        var actid = "gtabCustmenu&custmenu=" + custmenu + "&ID=" + ID + "&gtabid=" + gtabid + "&fieldid="+ fieldid;
+        ajaxGet(null, "main_dyns.php", actid, null, '', null, child);
+    }else {
+        document.getElementById("lmbInfoCreate").innerHTML = ERSTUSER + "\n" + ERSTDATUM;
+        document.getElementById("lmbInfoEdit").innerHTML = EDITUSER + "\n" + EDITDATUM;
 
-	tmp_form_id=form_id;
-	tmp_form_typ=form_typ;
-	tmp_form_dimension=form_dimension;
-	
-	limbasDivShow('',evt,"limbasDivMenuContext");
+        document.form1.ID.value = ID;
 
+        if (ID > 0) {
+            document.form2.ID.value = ID;
+        }
+        if (V_TYP > 0) {
+            document.form2.verknpf.value = V_TYP;
+        }
+        if (V_ID > 0) {
+            document.form2.verkn_ID.value = V_ID;
+        }
+        if (V_GID > 0) {
+            document.form2.verkn_tabid.value = V_GID;
+        }
+        if (V_FID > 0) {
+            document.form2.verkn_fieldid.value = V_FID;
+        }
+        if (gtabid > 0) {
+            document.form2.gtabid.value = gtabid;
+        }
+
+        tmp_form_id = form_id;
+        tmp_form_typ = form_typ;
+        tmp_form_dimension = form_dimension;
+    }
+
+    limbasDivShow(el, parent, child);
 	window.setTimeout('set_activ_menu()',500);
 
 	return false;

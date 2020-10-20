@@ -34,10 +34,10 @@
 <TR><TD><?=$lang[561]?>:</TD><TD><SELECT name="group_id" STYLE="width:250px;">
 <?php
 $sqlquery = "SELECT GROUP_ID,NAME,LOWER(NAME),BESCHREIBUNG,ERSTDATUM,EDITDATUM FROM LMB_GROUPS WHERE DEL = ".LMB_DBDEF_FALSE." ORDER BY LOWER(NAME)";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)){
-if(odbc_result($rs, "GROUP_ID") == $group_id){$SELECTED="SELECTED";}else{$SELECTED="";}
-echo "<OPTION VALUE=\"".odbc_result($rs, "GROUP_ID")."\" $SELECTED>".odbc_result($rs, "NAME");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)){
+if(lmbdb_result($rs, "GROUP_ID") == $group_id){$SELECTED="SELECTED";}else{$SELECTED="";}
+echo "<OPTION VALUE=\"".lmbdb_result($rs, "GROUP_ID")."\" $SELECTED>".lmbdb_result($rs, "NAME");
 }
 ?>
 </SELECT></TD></TR>

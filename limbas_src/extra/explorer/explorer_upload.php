@@ -91,7 +91,7 @@ function lmbExternalStorageUploadIntern($storageID, $file, $tabid, $fieldid, $da
         $dlLink = ",DOWNLOAD_LINK='" . parse_db_string($downloadLink) . "'";
     }
     $sqlquery = "UPDATE LDMS_FILES SET SECNAME='" . parse_db_string($uniqueFileName) . "' $dlLink WHERE STORAGE_ID IS NOT NULL AND ID=" . parse_db_int($fileID);
-    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     if (!$rs) {
         return false;
     }

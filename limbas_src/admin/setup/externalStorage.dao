@@ -48,7 +48,7 @@ if ($newExternalStorage and $newDesc and $newClass) {
         $values[] = LMB_DBDEF_TRUE;
     }
     $sqlquery = 'INSERT INTO lmb_external_storage (' . implode(',', $fields) . ') VALUES (\'' . implode('\',\'', $values) . '\')';
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     $externalStorage = null;
 }
 
@@ -75,14 +75,14 @@ if ($changedIDs) {
               externalaccessurl='$externalAccessUrl',
               publiccloud=$publicCloud
             WHERE id=$id";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     }
     $externalStorage = null;
 }
 
 if ($deleteID) {
     $sqlquery = 'DELETE FROM lmb_external_storage WHERE id=' . parse_db_int($deleteID);
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     $externalStorage = null;
 }
 

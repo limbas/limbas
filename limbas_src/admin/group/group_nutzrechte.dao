@@ -20,8 +20,8 @@
 
 /* --- Übergruppe --------------------------------------------- */
 $sqlquery = "SELECT LEVEL FROM LMB_GROUPS WHERE GROUP_ID = $ID";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-if(odbc_result($rs, "LEVEL")){$group_level = odbc_result($rs, "LEVEL");}else{$group_level = 0;}
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+if(lmbdb_result($rs, "LEVEL")){$group_level = lmbdb_result($rs, "LEVEL");}else{$group_level = 0;}
 
 function set_rights($ID,$first,$addsubgroup){
 	global $db;
@@ -35,7 +35,7 @@ function set_rights($ID,$first,$addsubgroup){
 		if($menu[$arule[$bzm]]){$bool = "2";}else{$bool = "1";}
 		if($addsubgroup != 1 AND $bool == "2" AND !$first){$bzm++;continue;}
 		$sqlquery = "UPDATE LMB_RULES_ACTION SET PERM = $bool WHERE LINK_ID = $arule[$bzm] AND GROUP_ID = $ID";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$bzm++;
 	}
 }
@@ -48,10 +48,10 @@ function group_list($ID,$first,$addsubgroup){
 
 	if($ID){
 		$sqlquery = "SELECT GROUP_ID FROM LMB_GROUPS WHERE LEVEL = $ID";
-	    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	    if(!$rs) {$commit = 1;}
-	    while(odbc_fetch_row($rs)) {
-			group_list(odbc_result($rs, "GROUP_ID"),0,$addsubgroup);
+	    while(lmbdb_fetch_row($rs)) {
+			group_list(lmbdb_result($rs, "GROUP_ID"),0,$addsubgroup);
 		}
 	}
 	set_rights($ID,$first,$addsubgroup);
@@ -66,10 +66,10 @@ if($group_level AND $session["user_id"] != 1){
 $sqlquery = "SELECT DISTINCT LMB_ACTION.ID,LMB_RULES_ACTION.PERM,LMB_ACTION.MAINGROUP,LMB_ACTION.SUBGROUP,LMB_ACTION.SORT 
 FROM LMB_RULES_ACTION,LMB_ACTION 
 WHERE LMB_RULES_ACTION.GROUP_ID = $group_level AND LMB_RULES_ACTION.LINK_ID = LMB_ACTION.ID ORDER BY LMB_ACTION.MAINGROUP,LMB_ACTION.SUBGROUP,LMB_ACTION.SORT";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-	$id = odbc_result($rs, "ID");
-	$result_lgroup_link["PERM"][$id] = odbc_result($rs, "PERM");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+	$id = lmbdb_result($rs, "ID");
+	$result_lgroup_link["PERM"][$id] = lmbdb_result($rs, "PERM");
 }
 }
 
@@ -78,10 +78,10 @@ if($group_level AND $session["user_id"] != 1){
 $sqlquery = "SELECT DISTINCT LMB_ACTION_DEPEND.ID,LMB_RULES_ACTION.PERM,LMB_ACTION_DEPEND.MAINGROUP,LMB_ACTION_DEPEND.SUBGROUP,LMB_ACTION_DEPEND.SORT 
 FROM LMB_RULES_ACTION,LMB_ACTION_DEPEND 
 WHERE LMB_RULES_ACTION.GROUP_ID = $group_level AND LMB_RULES_ACTION.LINK_ID = LMB_ACTION_DEPEND.ID ORDER BY LMB_ACTION_DEPEND.MAINGROUP,LMB_ACTION_DEPEND.SUBGROUP,LMB_ACTION_DEPEND.SORT";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-	$id = odbc_result($rs, "ID");
-	$result_lgroup_link["PERM"][$id] = odbc_result($rs, "PERM");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+	$id = lmbdb_result($rs, "ID");
+	$result_lgroup_link["PERM"][$id] = lmbdb_result($rs, "PERM");
 }
 }
 
@@ -91,17 +91,17 @@ while(odbc_fetch_row($rs)) {
 $sqlquery = "SELECT DISTINCT LMB_RULES_ACTION.PERM,LMB_ACTION.ID,LMB_RULES_ACTION.LINK_ID,LMB_ACTION.LINK_NAME,LMB_ACTION.BESCHREIBUNG,LMB_ACTION.SORT,LMB_ACTION.MAINGROUP,LMB_ACTION.SUBGROUP,LMB_ACTION.ICON_URL,LMB_ACTION.SORT 
 FROM LMB_RULES_ACTION,LMB_ACTION 
 WHERE LMB_RULES_ACTION.GROUP_ID = $ID AND LMB_RULES_ACTION.LINK_ID = LMB_ACTION.ID ORDER BY LMB_ACTION.MAINGROUP,LMB_ACTION.SUBGROUP,LMB_ACTION.SORT";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-	$id = odbc_result($rs, "ID");
-	$result_links["sort"][$id] = odbc_result($rs, "SORT");
-	$result_links["name"][$id] = odbc_result($rs, "LINK_NAME");
-	$result_links["desc"][$id] = odbc_result($rs, "BESCHREIBUNG");
-    $result_links["icon_url"][$id] = odbc_result($rs, "ICON_URL");
-	$result_links["maingroup"][$id] = odbc_result($rs, "MAINGROUP");
-	$result_links["subgroup"][$id] = odbc_result($rs, "SUBGROUP");
-	$result_links["perm"][$id] = odbc_result($rs, "PERM");
-	$result_links["link_id"][$id] = odbc_result($rs, "LINK_ID");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+	$id = lmbdb_result($rs, "ID");
+	$result_links["sort"][$id] = lmbdb_result($rs, "SORT");
+	$result_links["name"][$id] = lmbdb_result($rs, "LINK_NAME");
+	$result_links["desc"][$id] = lmbdb_result($rs, "BESCHREIBUNG");
+    $result_links["icon_url"][$id] = lmbdb_result($rs, "ICON_URL");
+	$result_links["maingroup"][$id] = lmbdb_result($rs, "MAINGROUP");
+	$result_links["subgroup"][$id] = lmbdb_result($rs, "SUBGROUP");
+	$result_links["perm"][$id] = lmbdb_result($rs, "PERM");
+	$result_links["link_id"][$id] = lmbdb_result($rs, "LINK_ID");
 	$result_links["id"][$id] = $id;
 }
 
@@ -110,17 +110,17 @@ while(odbc_fetch_row($rs)) {
 $sqlquery = "SELECT DISTINCT LMB_RULES_ACTION.PERM,LMB_ACTION_DEPEND.ID,LMB_RULES_ACTION.LINK_ID,LMB_ACTION_DEPEND.LINK_NAME,LMB_ACTION_DEPEND.BESCHREIBUNG,LMB_ACTION_DEPEND.SORT,LMB_ACTION_DEPEND.MAINGROUP,LMB_ACTION_DEPEND.SUBGROUP,LMB_ACTION_DEPEND.ICON_URL,LMB_ACTION_DEPEND.SORT 
 FROM LMB_RULES_ACTION,LMB_ACTION_DEPEND 
 WHERE LMB_RULES_ACTION.GROUP_ID = $ID AND LMB_RULES_ACTION.LINK_ID = LMB_ACTION_DEPEND.ID ORDER BY LMB_ACTION_DEPEND.MAINGROUP,LMB_ACTION_DEPEND.SUBGROUP,LMB_ACTION_DEPEND.SORT";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-	$id = odbc_result($rs, "ID");
-	$result_links["sort"][$id] = odbc_result($rs, "SORT");
-	$result_links["name"][$id] = odbc_result($rs, "LINK_NAME");
-	$result_links["desc"][$id] = odbc_result($rs, "BESCHREIBUNG");
-    $result_links["icon_url"][$id] = odbc_result($rs, "ICON_URL");
-	$result_links["maingroup"][$id] = odbc_result($rs, "MAINGROUP");
-	$result_links["subgroup"][$id] = odbc_result($rs, "SUBGROUP");
-	$result_links["perm"][$id] = odbc_result($rs, "PERM");
-	$result_links["link_id"][$id] = odbc_result($rs, "LINK_ID");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+	$id = lmbdb_result($rs, "ID");
+	$result_links["sort"][$id] = lmbdb_result($rs, "SORT");
+	$result_links["name"][$id] = lmbdb_result($rs, "LINK_NAME");
+	$result_links["desc"][$id] = lmbdb_result($rs, "BESCHREIBUNG");
+    $result_links["icon_url"][$id] = lmbdb_result($rs, "ICON_URL");
+	$result_links["maingroup"][$id] = lmbdb_result($rs, "MAINGROUP");
+	$result_links["subgroup"][$id] = lmbdb_result($rs, "SUBGROUP");
+	$result_links["perm"][$id] = lmbdb_result($rs, "PERM");
+	$result_links["link_id"][$id] = lmbdb_result($rs, "LINK_ID");
 	$result_links["id"][$id] = $id;
 }
 

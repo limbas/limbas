@@ -27,7 +27,7 @@ if (!$sqlexecnum) {
 
 if ($empty AND $table) {
     $sqlquery = "DELETE FROM ".dbf_4($table);
-    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     if ($rs) {
         $result = $lang[1069];
     } else {
@@ -35,11 +35,11 @@ if ($empty AND $table) {
     }
 } elseif ($delete AND $delete == 'table' AND $table) {
     $sqlquery0 = dbq_12(array($DBA['DBSCHEMA'], $table));
-    $rs = odbc_exec($db, $sqlquery0) or errorhandle(odbc_errormsg($db), $sqlquery0, $action, __FILE__, __LINE__);
+    $rs = lmbdb_exec($db, $sqlquery0) or errorhandle(lmbdb_errormsg($db), $sqlquery0, $action, __FILE__, __LINE__);
     if (!$rs) {
         $commit = 1;
     }
-    if (odbc_fetch_row($rs)) {
+    if (lmbdb_fetch_row($rs)) {
         $drop = lmb_dropView($table);
     } else {
         $drop = lmb_dropTable($table);
@@ -56,12 +56,12 @@ if ($empty AND $table) {
     if(substr($DBA['DB'],0,4) == 'maxdb') {
         $sqlvalue_ = explode('//', $sqlvalue);
         foreach ($sqlvalue_ as $key => $sqlquery) {
-            $rssql = odbc_exec($db, $sqlquery);
-            $count += odbc_num_rows($rssql);
+            $rssql = lmbdb_exec($db, $sqlquery);
+            $count += lmbdb_num_rows($rssql);
         }
     }else{
-        $rssql = odbc_exec($db, $sqlvalue);
-        $count = odbc_num_rows($rssql);
+        $rssql = lmbdb_exec($db, $sqlvalue);
+        $count = lmbdb_num_rows($rssql);
     }
 
     $sqlquery = $sqlvalue;
@@ -70,27 +70,27 @@ if ($empty AND $table) {
     if ($rssql) {
         $result = "<span style='font-size: small; color: green'>$lang[1073]!</span>&nbsp;[$zeit sec.]&nbsp;&nbsp;&nbsp;count&nbsp;[$count]<br><br>";
     } else {
-        $result = "<span style='color: red'>$lang[1012]!</span><br>" . odbc_errormsg($db);
+        $result = "<span style='color: red'>$lang[1012]!</span><br>" . lmbdb_errormsg($db);
     }
 } elseif ($sqlFavoriteName and $sqlvalue) {
     # add favorite
-    $nextID = next_db_id('lmb_sql_favorites');
+    $nextID = next_db_id('lmb_code_favorites');
     $name = parse_db_string($sqlFavoriteName);
 
-    $prepareString = "INSERT INTO LMB_SQL_FAVORITES (ID, NAME, STATEMENT) VALUES ($nextID, '$name', ?)";
-    lmb_PrepareSQL($prepareString, array(parse_db_blob($sqlvalue)), __FILE__, __LINE__);
+    $prepareString = "INSERT INTO LMB_CODE_FAVORITES (ID, NAME, STATEMENT, TYPE) VALUES ($nextID, '$name', ?, 0)";
+    lmb_PrepareSQL($prepareString, array($sqlvalue), __FILE__, __LINE__);
 } elseif ($delete AND $delete == 'favorite' AND $favorite) {
     # delete favorite
-    $sqlquery = 'DELETE FROM LMB_SQL_FAVORITES WHERE ID=' . parse_db_int($favorite);
-    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    $sqlquery = 'DELETE FROM LMB_CODE_FAVORITES WHERE ID=' . parse_db_int($favorite);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
 } elseif ($favorite AND $showFavorite) {
     # load sql of favorite
-    $sqlquery = 'SELECT NAME, STATEMENT FROM LMB_SQL_FAVORITES WHERE ID=' . parse_db_int($favorite);
-    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-    if (odbc_fetch_row($rs)) {
-        $favoriteStatement = odbc_result($rs, 'STATEMENT');
-        $rssql = odbc_exec($db, $favoriteStatement);
-        $result = '<h3>' . odbc_result($rs, 'NAME') . '</h3>';
+    $sqlquery = 'SELECT NAME, STATEMENT FROM LMB_CODE_FAVORITES WHERE ID=' . parse_db_int($favorite);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (lmbdb_fetch_row($rs)) {
+        $favoriteStatement = lmbdb_result($rs, 'STATEMENT');
+        $rssql = lmbdb_exec($db, $favoriteStatement);
+        $result = '<h3>' . lmbdb_result($rs, 'NAME') . '</h3>';
     }
 }
 
@@ -102,10 +102,10 @@ if ($sqlquery) {
 
 # get all favorites
 $sqlFavorites = array();
-$sqlquery = 'SELECT ID, NAME FROM LMB_SQL_FAVORITES';
-$rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-while (odbc_fetch_row($rs)) {
-    $sqlFavorites[odbc_result($rs, 'ID')] = odbc_result($rs, 'NAME');
+$sqlquery = 'SELECT ID, NAME FROM LMB_CODE_FAVORITES WHERE TYPE=0';
+$rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+while (lmbdb_fetch_row($rs)) {
+    $sqlFavorites[lmbdb_result($rs, 'ID')] = lmbdb_result($rs, 'NAME');
 }
 
 # sql value to show

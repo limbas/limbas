@@ -115,7 +115,7 @@ $vendorNames = array(
             'MaxDB V7.6 / V7.9',
             'MSSQL',
             'Sybase',
-            'Ingres 10',
+            'HANA',
             'oracle'
 );
 
@@ -127,9 +127,11 @@ if(extension_loaded('odbc')){
 if(!extension_loaded('odbc') AND extension_loaded('pdo') AND (extension_loaded('pdo_pgsql') OR extension_loaded('pdo_mysql'))){
     $msg['func_php_pdo'] = "<span style=\"color:green\">".implode(' ; ',$msg['func_php_pdo'])."</span><br><i>You can use PDO for database connection.<br>PDO support is only for <b>mysql</b> or <b>PostgreSQL</b>. For other databases use ODBC</i>";
     $msic['func_php_pdo'] = '1';
-}elseif(extension_loaded('odbc') AND extension_loaded('pdo') AND (extension_loaded('pdo_pgsql') OR extension_loaded('pdo_mysql'))){
-    $msg['func_php_pdo'] = "<span style=\"color:green\">".implode(' ; ',$msg['func_php_pdo'])."</span><br><i>If you want to use PDO you have to <u>deinstall</u> ODBC module fom PHP!<br>PDO support is only for <b>mysql</b> or <b>PostgreSQL</b>. For other databases use ODBC.</i>";
-    $msic['func_php_pdo'] = '2';
+}
+
+if(extension_loaded('pdo') AND (extension_loaded('pdo_pgsql') OR extension_loaded('pdo_mysql'))){
+    $msg['func_php_pdo'] = "<span style=\"color:green\">".implode(' ; ',$msg['func_php_pdo'])."</span><br><i>You can use PDO for database connection.<br>PDO support is only for <b>mysql</b> or <b>PostgreSQL</b>. For other databases use ODBC.</i>";
+    $msic['func_php_pdo'] = '1';
 }
 
 

@@ -107,7 +107,7 @@ if($set_fonts){
 
 	# --- DB Eintrag ---
 	$sqlquery = "DELETE FROM LMB_FONTS";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
 	foreach ($fontex['family'] as $key => $value){
@@ -136,14 +136,14 @@ if($set_fonts){
 			}
 
 			$sqlquery0 = "SELECT ID FROM LMB_FONTS WHERE LOWER(NAME) = '".lmb_strtolower(parse_db_string($fontex['family'][$key],30))."' AND STYLE = '".$fstyle."'";
-			$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
-			if(odbc_fetch_row($rs0)){
+			$rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+			if(lmbdb_fetch_row($rs0)){
 					echo "can not add font ".$fontex['name'][$key].".. font already exists .. skip ... <br>";
 					continue;
 			}else{
 				$NEXTID = next_db_id("LMB_FONTS");
 				$sqlquery = "INSERT INTO LMB_FONTS (ID,FAMILY,NAME,STYLE) VALUES($NEXTID,'".parse_db_string($fontex['family'][$key],30)."','".parse_db_string($fontex['name'][$key],30)."','".$fstyle."')";
-				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
 			}
 		}
@@ -153,10 +153,10 @@ if($set_fonts){
 
 
 $sqlquery = "SELECT NAME FROM LMB_FONTS";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
-while(odbc_fetch_row($rs)){
-	$ifont[odbc_result($rs,"NAME")] = 1;
+while(lmbdb_fetch_row($rs)){
+	$ifont[lmbdb_result($rs,"NAME")] = 1;
 }
 
 ?>

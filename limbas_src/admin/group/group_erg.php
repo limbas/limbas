@@ -106,9 +106,9 @@ function f_3(PARAMETER) {
 <TR><TD><?=$lang[3]?></TD><TD><SELECT STYLE="width:250px" OnChange="document.form1.action.value='setup_user_change_admin';document.form1.ID.value=this.value;document.form1.submit();"><OPTION>
 <?php
 $sqlquery = "SELECT DISTINCT USER_ID,USERNAME FROM LMB_USERDB WHERE GROUP_ID = $ID AND DEL = ".LMB_DBDEF_FALSE;
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-        echo "<OPTION VALUE=\"".odbc_result($rs, "USER_ID")."\">".odbc_result($rs, "USERNAME");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+        echo "<OPTION VALUE=\"".lmbdb_result($rs, "USER_ID")."\">".lmbdb_result($rs, "USERNAME");
 }
 ?>
 </SELECT></TD></TR>

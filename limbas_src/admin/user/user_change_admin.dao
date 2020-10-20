@@ -25,13 +25,13 @@ lmb_StartTransaction();
 if($reactivate AND $ID){
 	/* --- SUCHE ob schon vorhanden --------------------------------------------- */
 	$sqlquery = "SELECT USERNAME,PASSWORT FROM LMB_USERDB WHERE USER_ID = $ID AND DEL = ".LMB_DBDEF_TRUE;
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	if(odbc_fetch_row($rs)) {
+	if(lmbdb_fetch_row($rs)) {
 		# --- User Verzeichnis hinzufügen -------
-		if(!create_user_folder($ID,odbc_result($rs,"USERNAME"),odbc_result($rs,"PASSWORT")) AND !create_user_dir($ID,$userdata["group_id"])){$commit = 1;}else{
+		if(!create_user_folder($ID,lmbdb_result($rs,"USERNAME"),lmbdb_result($rs,"PASSWORT")) AND !create_user_dir($ID,$userdata["group_id"])){$commit = 1;}else{
 			$sqlquery1 = "UPDATE LMB_USERDB SET DEL = ".LMB_DBDEF_FALSE." WHERE USER_ID = $ID AND DEL = ".LMB_DBDEF_TRUE;
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 		}
 	}else{die("user does not exist!");}
@@ -58,72 +58,72 @@ if($commit == 1){
 /* --- User sperren --------------------------------------------- */
 if($lock AND $ID){
         $sqlquery = "DELETE FROM LMB_SESSION WHERE USER_ID = $ID";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
         $sqlquery = "SELECT LMLOCK FROM LMB_USERDB WHERE USER_ID = $ID";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
-        if(odbc_result($rs,"LMLOCK") == 1){$LOCK = LMB_DBDEF_FALSE;}else{$LOCK = LMB_DBDEF_TRUE;}
+        if(lmbdb_result($rs,"LMLOCK") == 1){$LOCK = LMB_DBDEF_FALSE;}else{$LOCK = LMB_DBDEF_TRUE;}
         $sqlquery = "UPDATE LMB_USERDB SET LMLOCK = $LOCK WHERE USER_ID = $ID";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
         $sqlquery = "DELETE FROM LMB_SESSION WHERE USER_ID = $ID";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}else{system("rm ".$umgvar['pfad']."/USER/$ID/menuicons/*",$sys1);system("rm ".$umgvar['pfad']."/USER/$ID/thumpnails/*",$sys1);system("rm ".$umgvar['pfad']."/USER/$ID/temp/*",$sys1);}
 }
 
 /* --- User Backend sperren --------------------------------------------- */
 if($lockbackend AND $ID AND $ID != 1){
         $sqlquery = "DELETE FROM LMB_SESSION WHERE USER_ID = $ID";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
         $sqlquery = "SELECT LOCKBACKEND FROM LMB_USERDB WHERE USER_ID = $ID";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
-        if(odbc_result($rs,"LOCKBACKEND") == 1){$LOCK = LMB_DBDEF_FALSE;}else{$LOCK = LMB_DBDEF_TRUE;}
+        if(lmbdb_result($rs,"LOCKBACKEND") == 1){$LOCK = LMB_DBDEF_FALSE;}else{$LOCK = LMB_DBDEF_TRUE;}
         $sqlquery = "UPDATE LMB_USERDB SET LOCKBACKEND = $LOCK WHERE USER_ID = $ID";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
         $sqlquery = "DELETE FROM LMB_SESSION WHERE USER_ID = $ID";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}else{system("rm ".$umgvar['pfad']."/USER/$ID/menuicons/*",$sys1);system("rm ".$umgvar['pfad']."/USER/$ID/thumpnails/*",$sys1);system("rm ".$umgvar['pfad']."/USER/$ID/temp/*",$sys1);}
 }
 
 /* --- Debug --------------------------------------------- */
 if($debug AND $ID){
         $sqlquery = "DELETE FROM LMB_SESSION WHERE USER_ID = $ID";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
         $sqlquery = "SELECT DEBUG FROM LMB_USERDB WHERE USER_ID = $ID";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
-        if(odbc_result($rs,"DEBUG") == 1){$DEBUG = LMB_DBDEF_FALSE;}else{$DEBUG = LMB_DBDEF_TRUE;}
+        if(lmbdb_result($rs,"DEBUG") == 1){$DEBUG = LMB_DBDEF_FALSE;}else{$DEBUG = LMB_DBDEF_TRUE;}
         $sqlquery = "UPDATE LMB_USERDB SET DEBUG = $DEBUG WHERE USER_ID = $ID";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
         $sqlquery = "DELETE FROM LMB_SESSION WHERE USER_ID = $ID";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
 }
 
 /* --- Static IP --------------------------------------------- */
 if($staticip AND $ID){
         $sqlquery = "SELECT STATIC_IP FROM LMB_USERDB WHERE USER_ID = $ID";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
-        if(odbc_result($rs,"STATIC_IP") == 1){$STATIC_IP = LMB_DBDEF_FALSE;}else{$STATIC_IP = LMB_DBDEF_TRUE;}
+        if(lmbdb_result($rs,"STATIC_IP") == 1){$STATIC_IP = LMB_DBDEF_FALSE;}else{$STATIC_IP = LMB_DBDEF_TRUE;}
         $sqlquery = "UPDATE LMB_USERDB SET STATIC_IP = $STATIC_IP WHERE USER_ID = $ID";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
 }
 /* --- superadmin --------------------------------------------- */
 if($superadmin AND $ID AND $session['superadmin'] AND $ID != 1){
         $sqlquery = "SELECT SUPERADMIN FROM LMB_USERDB WHERE USER_ID = $ID";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
-        if(odbc_result($rs,"SUPERADMIN") == 1){$SUPERADMIN = LMB_DBDEF_FALSE;}else{$SUPERADMIN = LMB_DBDEF_TRUE;}
+        if(lmbdb_result($rs,"SUPERADMIN") == 1){$SUPERADMIN = LMB_DBDEF_FALSE;}else{$SUPERADMIN = LMB_DBDEF_TRUE;}
         $sqlquery = "UPDATE LMB_USERDB SET SUPERADMIN = $SUPERADMIN WHERE USER_ID = $ID";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
 }
 
@@ -140,8 +140,8 @@ if($ID){
 
 	/* --- Userdaten --------------------------------------------- */
 	$sqlquery = "SELECT NAME,VORNAME,USERNAME FROM LMB_USERDB WHERE USER_ID = $ID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$username = odbc_result($rs, "VORNAME")." ".odbc_result($rs, "NAME")." (".odbc_result($rs, "USERNAME").")";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$username = lmbdb_result($rs, "VORNAME")." ".lmbdb_result($rs, "NAME")." (".lmbdb_result($rs, "USERNAME").")";
 	
 	
 	if($user_change AND $ID) {

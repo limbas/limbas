@@ -24,13 +24,13 @@ $report_xml = 1;
 require_once("extra/report/report_xml.php");
 
 $sqlquery = "SELECT ODT_TEMPLATE,NAME FROM LMB_REPORT_LIST WHERE ID = ".parse_db_int($report_id);
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-if($ootemplateid = odbc_result($rs,"ODT_TEMPLATE")){
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+if($ootemplateid = lmbdb_result($rs,"ODT_TEMPLATE")){
 	$sqlquery1 = "SELECT DISTINCT LDMS_FILES.NAME,LDMS_FILES.SECNAME,LMB_MIMETYPES.EXT FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.ID = ".parse_db_int($ootemplateid)." AND LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID";
-	$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-	$ootemplate = odbc_result($rs1,"SECNAME").".".odbc_result($rs1,"EXT");
+	$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+	$ootemplate = lmbdb_result($rs1,"SECNAME").".".lmbdb_result($rs1,"EXT");
 	if(is_file($umgvar["pfad"]."/UPLOAD/".$ootemplate)){
-		$ootemplatename = odbc_result($rs1,"NAME");
+		$ootemplatename = lmbdb_result($rs1,"NAME");
 		$ootemplatepath = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/".$ootemplatename;
 		copy($umgvar["pfad"]."/UPLOAD/".$ootemplate,$ootemplatepath);
 		if(!file_exists($ootemplatepath)){

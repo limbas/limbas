@@ -26,7 +26,7 @@
 if(!$gtab["tab_id"][$gtabid]){return false;}
 
 $sqlquery = "SELECT * FROM ".$gtab["table"][$gtabid]." ".$sql;
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 $sRow = "style=\"border:1px solid grey\"";
 $sTable = "cellpadding=2 cellspacing=0 style=\"border-collapse:collapse\"";
 echo ODBCResourceToHTML($rs, $sTable, $sRow, $umgvar["resultspace"]);

@@ -35,21 +35,21 @@
 
 <?php
 $sqlquery = "SELECT * FROM LMB_INDIZE_HISTORY ORDER BY ERSTDATUM DESC";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
 if(!$maxresult){$maxresult = 30;}
 $status = "OK";
 $bzm = 1;
-while(odbc_fetch_row($rs) AND $bzm <= $maxresult) {
+while(lmbdb_fetch_row($rs) AND $bzm <= $maxresult) {
 
-	if(!odbc_result($rs,"RESULT")){$bgColor = "#FF9294";$status = "FALSE";}
-	elseif(!odbc_result($rs,"INUM")){$bgColor = "";}
-	elseif(odbc_result($rs,"INUM") > 0 AND odbc_result($rs,"INUM") <= 1000){$bgColor = "#CEE8D8";}
-	elseif(odbc_result($rs,"INUM") > 1000 AND odbc_result($rs,"INUM") <= 10000){$bgColor = "#97DAB1";}
-	elseif(odbc_result($rs,"INUM") > 10000 AND odbc_result($rs,"INUM") <= 100000){$bgColor = "#78BE93";}
-	elseif(odbc_result($rs,"INUM") > 100000 AND odbc_result($rs,"INUM") <= 500000){$bgColor = "#F5F67C";}
-	elseif(odbc_result($rs,"INUM") > 500000 AND odbc_result($rs,"INUM") <= 1000000){$bgColor = "#FCC457";}
-	elseif(odbc_result($rs,"INUM") > 1000000){$bgColor = "#FC6A57";}
+	if(!lmbdb_result($rs,"RESULT")){$bgColor = "#FF9294";$status = "FALSE";}
+	elseif(!lmbdb_result($rs,"INUM")){$bgColor = "";}
+	elseif(lmbdb_result($rs,"INUM") > 0 AND lmbdb_result($rs,"INUM") <= 1000){$bgColor = "#CEE8D8";}
+	elseif(lmbdb_result($rs,"INUM") > 1000 AND lmbdb_result($rs,"INUM") <= 10000){$bgColor = "#97DAB1";}
+	elseif(lmbdb_result($rs,"INUM") > 10000 AND lmbdb_result($rs,"INUM") <= 100000){$bgColor = "#78BE93";}
+	elseif(lmbdb_result($rs,"INUM") > 100000 AND lmbdb_result($rs,"INUM") <= 500000){$bgColor = "#F5F67C";}
+	elseif(lmbdb_result($rs,"INUM") > 500000 AND lmbdb_result($rs,"INUM") <= 1000000){$bgColor = "#FCC457";}
+	elseif(lmbdb_result($rs,"INUM") > 1000000){$bgColor = "#FC6A57";}
 
 	# get matching text color for background-color
 	if ($bgColor) {
@@ -59,14 +59,14 @@ while(odbc_fetch_row($rs) AND $bzm <= $maxresult) {
     }
 
 	echo "<TR style=\"background-color:$bgColor; color:$color;\">
-	<TD>&nbsp;".odbc_result($rs,"ID")."&nbsp;</TD>
-	<TD>&nbsp;".odbc_result($rs,"JOB")."&nbsp;</TD>
-	<TD>&nbsp;".odbc_result($rs,"ACTION")."&nbsp;</TD>
-	<TD>&nbsp;".get_date(odbc_result($rs,"ERSTDATUM"),2)."&nbsp;</TD>
-	<TD>&nbsp;$status ".odbc_result($rs,"MESSAGE")."&nbsp;</TD>
-	<TD>&nbsp;".number_format((odbc_result($rs,"USED_TIME")/60),1,".",".")." &nbsp;</TD>
-	<TD>&nbsp;".odbc_result($rs,"JNUM")."&nbsp;</TD>
-	<TD>&nbsp;".odbc_result($rs,"INUM")."&nbsp;</TD></TR>";
+	<TD>&nbsp;".lmbdb_result($rs,"ID")."&nbsp;</TD>
+	<TD>&nbsp;".lmbdb_result($rs,"JOB")."&nbsp;</TD>
+	<TD>&nbsp;".lmbdb_result($rs,"ACTION")."&nbsp;</TD>
+	<TD>&nbsp;".get_date(lmbdb_result($rs,"ERSTDATUM"),2)."&nbsp;</TD>
+	<TD>&nbsp;$status ".lmbdb_result($rs,"MESSAGE")."&nbsp;</TD>
+	<TD>&nbsp;".number_format((lmbdb_result($rs,"USED_TIME")/60),1,".",".")." &nbsp;</TD>
+	<TD>&nbsp;".lmbdb_result($rs,"JNUM")."&nbsp;</TD>
+	<TD>&nbsp;".lmbdb_result($rs,"INUM")."&nbsp;</TD></TR>";
 
 	$bzm++;
 }

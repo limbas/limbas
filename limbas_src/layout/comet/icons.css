@@ -327,6 +327,9 @@
 .lmb-chain::before { /* former .fa-link */
     content: "\f0c1";
 }
+.lmb-user-circle-o::before {
+    content: "\f2be";
+}
 .lmb-user-list::before { /* former .fa-list-alt */
     content: "\f022";
 }
@@ -1214,3 +1217,10 @@
     content: "\f00d"; /* fa-times */
     color: orange;
 }
+.lmb-money::before {  /* former .fa-money */
+    content: "\f0d6";
+}
+.lmb-universal-access::before {  /* former .universal-access */
+    content: "\f29a";
+}
+

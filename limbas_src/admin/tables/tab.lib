@@ -42,7 +42,7 @@ function checkAndUpdateTableSession(){
 	if($GLOBALS["umgvar"]["get_new_tablestruct"]){
 		# set session change
 		$sqlquery = "UPDATE LMB_SESSION SET TABLE_CHANGED = ".LMB_DBDEF_FALSE." WHERE USER_ID = ".$session["user_id"];
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		$GLOBALS["umgvar"]["get_new_tablestruct"] = 0;
 		require("gtab/gtab_array.lib");
 	}
@@ -51,10 +51,12 @@ function checkAndUpdateTableSession(){
 /**
  * check for dublicate names in db
  *
- * @param unknown_type $name            
- * @param unknown_type $typ,
- *            1 = table/view, string = fieldname
- * @param unknown_type $i            
+ * @param string $name tablename
+ * @param int|string $typ for duplicate checking:
+ *   - 0 = dont check for duplicates
+ *   - 1 = table/view
+ *   - string = fieldname
+ * @param int $i recursion depth
  * @return string
  */
 function parse_db_syntax($name, $typ = 0, $i = 0)
@@ -73,6 +75,7 @@ function parse_db_syntax($name, $typ = 0, $i = 0)
             $name = lmb_substr($name, 0, 30) . "_" . $i;
         }
     } else {
+        $name = preg_replace(array('/Ä/', '/Ö/', '/Ü/', '/ä/', '/ö/', '/ü/', '/ß/'), array('Ae', 'Oe', 'Ue', 'ae', 'oe', 'ue', 'ss'), $name);
         $name = preg_replace('/[^a-z0-9]/i', '_', $name);
         $name = preg_replace("/[_]{1,}/", "_", $name);
         if (! preg_match("/[A-Za-z]/", lmb_substr($name, 0, 1))) {
@@ -101,9 +104,9 @@ function parse_db_syntax($name, $typ = 0, $i = 0)
     if (! is_array($sqlreserved) AND $GLOBALS['session']["s_id"]) {
         $sqlreserved = array();
         $sqlquery = "SELECT ID,SQL_92 FROM LMB_SQLRESERVED";
-        if ($rs = odbc_exec($db, $sqlquery)) {
-            while (odbc_fetch_row($rs)) {
-                $sqlreserved[] = lmb_strtoupper(odbc_result($rs, "SQL_92"));
+        if ($rs = lmbdb_exec($db, $sqlquery)) {
+            while (lmbdb_fetch_row($rs)) {
+                $sqlreserved[] = lmb_strtoupper(lmbdb_result($rs, "SQL_92"));
             }
         }
     } else {
@@ -157,19 +160,21 @@ function lmb_get_fieldtypes($all=null) {
         $sqlquery = "SELECT * FROM LMB_FIELD_TYPES ORDER BY SORT";
     }
     
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    while(odbc_fetch_row($rs)) {
-    	$rid = odbc_result($rs, "ID");
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs)) {
+    	$rid = lmbdb_result($rs, "ID");
     	$result_type["id"][$rid] = $rid;
-    	$result_type["field_type"][$rid] = odbc_result($rs, "FIELD_TYPE");
-    	$result_type["data_type"][$rid] = odbc_result($rs, "DATA_TYPE");
-    	$result_type["parse_type"][$rid] = odbc_result($rs, "PARSE_TYPE");
-    	$result_type["datentyp"][$rid] = odbc_result($rs, "DATENTYP");
-    	$result_type["funcid"][$rid] = odbc_result($rs, "FUNCID");
-    	$result_type["size"][$rid] = odbc_result($rs, "SIZE");
-    	$result_type["hassize"][$rid] = odbc_result($rs, "HASSIZE");
-    	$result_type["beschreibung"][$rid] = $lang[odbc_result($rs, "DATA_TYPE_EXP")];
-    	$result_type["arg_result_datatype"][odbc_result($rs, "DATA_TYPE")] = $rid;
+    	$result_type["field_type"][$rid] = lmbdb_result($rs, "FIELD_TYPE");
+    	$result_type["data_type"][$rid] = lmbdb_result($rs, "DATA_TYPE");
+    	$result_type["parse_type"][$rid] = lmbdb_result($rs, "PARSE_TYPE");
+    	$result_type["datentyp"][$rid] = lmbdb_result($rs, "DATENTYP");
+    	$result_type["funcid"][$rid] = lmbdb_result($rs, "FUNCID");
+    	$result_type["size"][$rid] = lmbdb_result($rs, "SIZE");
+    	$result_type["hassize"][$rid] = lmbdb_result($rs, "HASSIZE");
+    	$result_type["beschreibung"][$rid] = $lang[lmbdb_result($rs, "DATA_TYPE_EXP")];
+    	$result_type["arg_result_datatype"][lmbdb_result($rs, "DATA_TYPE")] = $rid;
+    	$result_type["md5tab"][$rid] = lmbdb_result($rs, "MD5TAB");
+    	$result_type["verkntabid"][$rid] = lmbdb_result($rs, "VERKNTABID");
     }
     
     return $result_type;
@@ -203,7 +208,7 @@ function lmb_convert_fieldtype($source_data_type, $source_parse_type, $source_fi
     
     // try db-based modify
     $sqlquery = dbq_15(array($DBA["DBSCHEMA"],$table,$source_fieldname,$dest_type));
-    $rs = odbc_exec($db, $sqlquery);
+    $rs = lmbdb_exec($db, $sqlquery);
     
     // manual modify
     if (!$rs) {
@@ -211,7 +216,7 @@ function lmb_convert_fieldtype($source_data_type, $source_parse_type, $source_fi
         lmb_StartTransaction();
 
         // error message
-        $err = odbc_errormsg($db);
+        $err = lmbdb_errormsg($db);
         lmb_alert($err);
         // check if dependency problem
         if (strpos($err, 'depends on')) {
@@ -229,8 +234,9 @@ function lmb_convert_fieldtype($source_data_type, $source_parse_type, $source_fi
         }
         
         // copy field to LMB_TEMP_CONVERT
-        $sqlquery = "ALTER TABLE $table " . LMB_DBFUNC_ADD_COLUMN_FIRST . " LMB_TEMP_CONVERT " . $dest_type;
-        $rs = odbc_exec($db, $sqlquery);
+        #$sqlquery = "ALTER TABLE $table " . LMB_DBFUNC_ADD_COLUMN_FIRST . " LMB_TEMP_CONVERT " . $dest_type;
+        $sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$table,'LMB_TEMP_CONVERT',$dest_type));
+        $rs = lmbdb_exec($db, $sqlquery);
         if (! $rs) {
             #lmb_alert("Error in db-based modify: $errorFirstTry");
             lmb_alert("SQL Error in add temporay field!");
@@ -239,50 +245,48 @@ function lmb_convert_fieldtype($source_data_type, $source_parse_type, $source_fi
         
         // db-based update
         $sqlquery = "UPDATE $table SET LMB_TEMP_CONVERT = $conversion(" . $source_fieldname . ")";
-        $rs = odbc_exec($db, $sqlquery);
+        $rs = lmbdb_exec($db, $sqlquery);
 
         // manual modify
         if (! $rs and ($source_data_type and $source_data_type != 18 and $source_data_type != 31 and $source_data_type != 32 or $raw)) {
             $sqlquery = "SELECT ID," . $source_fieldname . " FROM $table";
-            $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
 
-            while (odbc_fetch_row($rs)) {
+            while (lmbdb_fetch_row($rs)) {
                 // numeric
                 if ($source_parse_type == 1) {
-                    $value = parse_db_int(odbc_result($rs, $source_fieldname), $source_field_size);
+                    $value = parse_db_int(lmbdb_result($rs, $source_fieldname), $source_field_size);
                     // string
                 } else if ($source_parse_type == 6) {
-                    $value = parse_db_float(odbc_result($rs, $source_fieldname), $source_field_size);
+                    $value = parse_db_float(lmbdb_result($rs, $source_fieldname), $source_field_size);
                     // string
                 } else {
-                    $value = parse_db_string(odbc_result($rs, $source_fieldname), $source_field_size);
+                    $value = parse_db_string(lmbdb_result($rs, $source_fieldname), $source_field_size);
                 }
-                $prepare_string = "UPDATE $table SET LMB_TEMP_CONVERT = ? WHERE ID = " . odbc_result($rs, "ID");
-                lmb_PrepareSQL($prepare_string, array(
-                    parse_db_blob($value)
-                ), __FILE__, __LINE__);
+                $prepare_string = "UPDATE $table SET LMB_TEMP_CONVERT = ? WHERE ID = " . lmbdb_result($rs, "ID");
+                lmb_PrepareSQL($prepare_string, array($value), __FILE__, __LINE__);
             }
         }
 
         if (! $commit) {
             // drop origin
             $sqlquery = dbq_22(array($table,$source_fieldname));
-            $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
             if (! $rs) {
-                lmb_alert("SQL Error in drop origin: " . odbc_errormsg($db));
+                lmb_alert("SQL Error in drop origin: " . lmbdb_errormsg($db));
                 $commit = 1;
             }
             // rename temp
             $sqlquery = dbq_7(array($DBA["DBSCHEMA"],$table,"LMB_TEMP_CONVERT",$source_fieldname));
-            $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
             if (! $rs) {
-                lmb_alert("SQL Error in rename temp: " . odbc_errormsg($db));
+                lmb_alert("SQL Error in rename temp: " . lmbdb_errormsg($db));
                 $commit = 1;
             }
             
             //delete temp if already exists
             $sqlquery = dbq_22(array($table, 'LMB_TEMP_CONVERT'));
-            $rs = odbc_exec($db, $sqlquery);
+            $rs = lmbdb_exec($db, $sqlquery);
         }
 
         if($commit){
@@ -319,36 +323,36 @@ function add_erstuserRules($tabid){
 
 	# get tablename
 	$sqlquery = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE TAB_ID = $tabid";
-	$rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+	$rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     if (! $rs) {
         $commit = 1;
     }
-    $tabname = odbc_result($rs, "TABELLE");
+    $tabname = lmbdb_result($rs, "TABELLE");
     
     // list of all datasets
     $sqlquery = "SELECT ID,ERSTUSER FROM $tabname";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$datid = odbc_result($rs,"ID");
-		$erstuser = odbc_result($rs,"ERSTUSER");
+	while(lmbdb_fetch_row($rs)) {
+		$datid = lmbdb_result($rs,"ID");
+		$erstuser = lmbdb_result($rs,"ERSTUSER");
 
 		# search if rule already present
 		$NEXTID = next_db_id("LMB_RULES_DATASET","KEYID");
 		#$sqlquery1 = "SELECT KEYID FROM LMB_RULES_DATASET WHERE DATID = $datid AND TABID = $tabid AND USERID = ".$session["user_id"];
-		#$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		#$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		#if(!$rs1) {$commit = 1;}
-		#if(!odbc_fetch_row($rs1,1)){
+		#if(!lmbdb_fetch_row($rs1,1)){
 
 			# insert new rule for admin
 			#$sqlquery2 = "INSERT INTO LMB_RULES_DATASET (KEYID,EDITUSER,DATID,USERID,GROUPID,TABID,EDIT,DEL) VALUES($NEXTID,".$session["user_id"].",".parse_db_int($datid,18).",".$session["user_id"].",0,".parse_db_int($tabid,5).",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.")";
-			#$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+			#$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 			#if(!$rs2) {$commit = 1;}
 
 			# insert new rule for erstuser
 			#if($erstuser != $session["user_id"]){
 				$sqlquery2 = "INSERT INTO LMB_RULES_DATASET (KEYID,EDITUSER,DATID,USERID,GROUPID,TABID,EDIT,DEL) VALUES($NEXTID,". $session["user_id"].",".parse_db_int($datid,18).",".$erstuser.",0,".parse_db_int($tabid,5).",".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.")";
-				$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+				$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 				if(!$rs2) {$commit = 1;}
 			#}
 
@@ -358,18 +362,18 @@ function add_erstuserRules($tabid){
 
 	# list of 1:1 tables
 	$sqlquery = "SELECT TAB_ID FROM LMB_CONF_TABLES WHERE VERKN = (SELECT VERKN FROM LMB_CONF_TABLES WHERE ID = $tabid)";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
+	while(lmbdb_fetch_row($rs)) {
 
 		# set tablestatus with userrights
-		$sqlquery2 = "UPDATE LMB_CONF_TABLES SET USERRULES = ".LMB_DBDEF_TRUE." WHERE TAB_ID = ".odbc_result($rs,"TAB_ID");
-		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		$sqlquery2 = "UPDATE LMB_CONF_TABLES SET USERRULES = ".LMB_DBDEF_TRUE." WHERE TAB_ID = ".lmbdb_result($rs,"TAB_ID");
+		$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 		if(!$rs2) {$commit = 1;}
 
 		# set userright status for table with erstgroup
-		$sqlquery2 = "UPDATE LMB_RULES_TABLES SET USERRULES = ".LMB_DBDEF_TRUE." WHERE GROUP_ID = ".$session["group_id"]." AND TAB_ID = ".odbc_result($rs,"TAB_ID");
-		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		$sqlquery2 = "UPDATE LMB_RULES_TABLES SET USERRULES = ".LMB_DBDEF_TRUE." WHERE GROUP_ID = ".$session["group_id"]." AND TAB_ID = ".lmbdb_result($rs,"TAB_ID");
+		$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 		if(!$rs2) {$commit = 1;}
 	}
 
@@ -386,25 +390,25 @@ function del_erstuserRules($tabid,$rec){
 	global $session;
 
 	$sqlquery = "DELETE FROM LMB_RULES_DATASET WHERE TABID = $tabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
 	if(!$rec){$sel = " AND TAB_ID = $tabid";}
 
 	# list of 1:1 tables
 	$sqlquery = "SELECT TAB_ID FROM LMB_CONF_TABLES WHERE VERKN = (SELECT VERKN FROM LMB_CONF_TABLES WHERE ID = $tabid) $sel";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
+	while(lmbdb_fetch_row($rs)) {
 
 		# set tablestatus with userrights
-		$sqlquery2 = "UPDATE LMB_CONF_TABLES SET USERRULES = ".LMB_DBDEF_FALSE." WHERE TAB_ID = ".odbc_result($rs,"TAB_ID");
-		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		$sqlquery2 = "UPDATE LMB_CONF_TABLES SET USERRULES = ".LMB_DBDEF_FALSE." WHERE TAB_ID = ".lmbdb_result($rs,"TAB_ID");
+		$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 		if(!$rs2) {$commit = 1;}
 
 		# set userright status for table with erstgroup
-		$sqlquery2 = "UPDATE LMB_RULES_TABLES SET USERRULES = ".LMB_DBDEF_FALSE." WHERE TAB_ID = ".odbc_result($rs,"TAB_ID");
-		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		$sqlquery2 = "UPDATE LMB_RULES_TABLES SET USERRULES = ".LMB_DBDEF_FALSE." WHERE TAB_ID = ".lmbdb_result($rs,"TAB_ID");
+		$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 		if(!$rs2) {$commit = 1;}
 	}
 
@@ -429,24 +433,24 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
 	lmb_StartTransaction();
 		
 	$sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)){
-		$tab[odbc_result($rs,"TAB_ID")] = odbc_result($rs,"TABELLE");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+		$tab[lmbdb_result($rs,"TAB_ID")] = lmbdb_result($rs,"TABELLE");
 	}
 
 	$sqlquery0 = "SELECT FIELD_TYPE,DATA_TYPE,FIELD_NAME,MD5TAB,SPELLING,BESCHREIBUNG,VERKNTABLETYPE,HASRECVERKN,MULTILANG,VERKNPARAMS FROM LMB_CONF_FIELDS WHERE TAB_ID = $atid AND FIELD_ID = $column_id";
-	$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
-	if(odbc_fetch_row($rs0)) {
-		$field_type = odbc_result($rs0,"FIELD_TYPE");
-		$data_type = odbc_result($rs0, "DATA_TYPE");
-        $field_name = odbc_result($rs0, "FIELD_NAME");
-        $md5tab = odbc_result($rs0, "MD5TAB");
-        $spelling_id = odbc_result($rs0, "SPELLING");
-        $beschreibung_id = odbc_result($rs0, "BESCHREIBUNG");
-        $verkntabletype = odbc_result($rs0, "VERKNTABLETYPE");
-        $hasrecverkn = odbc_result($rs0, "HASRECVERKN");
-        $multilang = odbc_result($rs0, "MULTILANG");
-        $verknparams = odbc_result($rs0, "VERKNPARAMS");
+	$rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+	if(lmbdb_fetch_row($rs0)) {
+		$field_type = lmbdb_result($rs0,"FIELD_TYPE");
+		$data_type = lmbdb_result($rs0, "DATA_TYPE");
+        $field_name = lmbdb_result($rs0, "FIELD_NAME");
+        $md5tab = lmbdb_result($rs0, "MD5TAB");
+        $spelling_id = lmbdb_result($rs0, "SPELLING");
+        $beschreibung_id = lmbdb_result($rs0, "BESCHREIBUNG");
+        $verkntabletype = lmbdb_result($rs0, "VERKNTABLETYPE");
+        $hasrecverkn = lmbdb_result($rs0, "HASRECVERKN");
+        $multilang = lmbdb_result($rs0, "MULTILANG");
+        $verknparams = lmbdb_result($rs0, "VERKNPARAMS");
         $del_tabelle = $tab[$atid];
     } else {
         $commit = 1;
@@ -457,10 +461,10 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
         // --------- auf rekursives Verknüpfungsview suchen -------------
         if ($hasrecverkn) {
             $sqlquery2 = "SELECT MD5TAB,FIELD_NAME,FIELD_ID,TAB_ID FROM LMB_CONF_FIELDS WHERE HASRECVERKN = (SELECT FIELD_ID FROM LMB_CONF_FIELDS WHERE UPPER(MD5TAB) = '" . lmb_strtoupper($md5tab) . "' AND VERKNTABLETYPE = 2)";
-            $rs2 = odbc_exec($db, $sqlquery2) or errorhandle(odbc_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
-            $basemd5 = dbf_4(odbc_result($rs2, "MD5TAB"));
-            $basefield = dbf_4(odbc_result($rs2, "FIELD_NAME"));
-            $basetab = dbf_4($tab[odbc_result($rs2, "TAB_ID")]);
+            $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
+            $basemd5 = dbf_4(lmbdb_result($rs2, "MD5TAB"));
+            $basefield = dbf_4(lmbdb_result($rs2, "FIELD_NAME"));
+            $basetab = dbf_4($tab[lmbdb_result($rs2, "TAB_ID")]);
             
             if ($drop_physical) {
                 lmb_dropView($md5tab);
@@ -468,8 +472,8 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
             lmb_deleteTriggerForTable($basemd5);
             // lmb_relationTrigger($basemd5,$basetab,$basefield,0,0);
             
-            $sqlquery2 = "UPDATE LMB_CONF_FIELDS SET HASRECVERKN = 0,VERKNTABLETYPE = 1 WHERE FIELD_ID = " . odbc_result($rs2, "FIELD_ID") . " AND TAB_ID = " . odbc_result($rs2, "TAB_ID");
-            $rs2 = odbc_exec($db, $sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+            $sqlquery2 = "UPDATE LMB_CONF_FIELDS SET HASRECVERKN = 0,VERKNTABLETYPE = 1 WHERE FIELD_ID = " . lmbdb_result($rs2, "FIELD_ID") . " AND TAB_ID = " . lmbdb_result($rs2, "TAB_ID");
+            $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 
 			lmb_updateTrigger();
 		}
@@ -477,30 +481,30 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
 
 		/* --- Datensatz in CONF_Tabelle/Select_Tabelle löschen --------------------------------------------- */
 		$sqlquery2 = "DELETE FROM LMB_CONF_FIELDS WHERE FIELD_ID = $column_id AND TAB_ID = $atid";
-		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 		if(!$rs2) {$commit = 1;}
 		$sqlquery2 = "DELETE FROM LMB_RULES_FIELDS WHERE FIELD_ID = $column_id AND TAB_ID = $atid";
-		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 		if(!$rs2) {$commit = 1;}
 		$sqlquery2 = "DELETE FROM LMB_SELECT_D WHERE FIELD_ID = $column_id AND TAB_ID = $atid";
-		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 		if(!$rs2) {$commit = 1;}
 		/* --- Inidize-Daten löschen ------*/
 		$sqlquery2 = "DELETE FROM LMB_INDIZE_D WHERE TABID = $atid AND FIELDID = $column_id";
-		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 		if(!$rs2) {$commit = 1;}
 		$sqlquery2 = "DELETE FROM LMB_INDIZE_DS WHERE TABID = $atid AND FIELDID = $column_id";
-		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 		if(!$rs2) {$commit = 1;}
 
 		$sqlquery3 = "SELECT ID FROM LMB_CONF_FIELDS WHERE TAB_ID = $atid ORDER BY SORT";
-		$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+		$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 		if(!$rs3) {$commit = 1;}
 		/* --- CONF_Tabelle neu anordnen --------------------------------------------- */
 		$bzm = 1;
-		while(odbc_fetch_row($rs3)) {
-			$sqlquery4 = "UPDATE LMB_CONF_FIELDS SET SORT = $bzm WHERE ID = '".odbc_result($rs3, "ID")."'";
-			$rs4 = odbc_exec($db,$sqlquery4) or errorhandle(odbc_errormsg($db),$sqlquery4,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs3)) {
+			$sqlquery4 = "UPDATE LMB_CONF_FIELDS SET SORT = $bzm WHERE ID = '".lmbdb_result($rs3, "ID")."'";
+			$rs4 = lmbdb_exec($db,$sqlquery4) or errorhandle(lmbdb_errormsg($db),$sqlquery4,$action,__FILE__,__LINE__);
 			if(!$rs4) {$commit = 1;}
 			$bzm++;
 		}
@@ -508,9 +512,9 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
 		/* --- Währungsfeld löschen -------------------------------------- */
 		if($data_type == 30 AND $drop_physical){
 			$sqlquery = dbq_22(array($del_tabelle,$field_name."_C"));
-			$rs3 = odbc_exec($db,$sqlquery);
+			$rs3 = lmbdb_exec($db,$sqlquery);
 			if(!$rs3){
-    			lmb_alert(odbc_errormsg($db));
+    			lmb_alert(lmbdb_errormsg($db));
     			// check dependency views
                 lmb_checkViewDependency($field_name,null,1);
                 $commit = 2;
@@ -519,16 +523,16 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
 
 		/* --- Tabellen-Uploaddateien löschen -------------------------------------- */
 		$sqlquery3 = "SELECT ID FROM LDMS_STRUCTURE WHERE TAB_ID = $atid AND FIELD_ID = $column_id AND FIX = ".LMB_DBDEF_TRUE;
-		$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+		$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 		if(!$rs3) {$commit = 1;}
-		if(odbc_result($rs3, "ID") AND $drop_physical){
+		if(lmbdb_result($rs3, "ID") AND $drop_physical){
 			$GLOBALS["filestruct"]["admin"] = 1;
 			
 			# übergehe Transaktion bei Fehlern
 			$GLOBALS["lmb_transaction"] = 1;
 			
 			$forceDelnm[0] = "#all#";
-			if(!delete_dir(odbc_result($rs3, "ID"),$forceDelnm)){
+			if(!delete_dir(lmbdb_result($rs3, "ID"),$forceDelnm)){
 				$commit = 1;
 				$md5tab_allready_deleted = 1;
 			}
@@ -540,7 +544,7 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
 		
 		/* --- Spracheinträge löschen -------------------------------------- */
 		$sqlquery3 = "DELETE FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = $spelling_id OR ELEMENT_ID = $beschreibung_id";
-		$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+		$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 		if(!$rs3) {$commit = 1;}
 
 		/* --- Verknüpfungstabelle löschen -------------------------------------- */
@@ -579,10 +583,10 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
 		if($field_type != 14 AND $field_type != 15 AND $data_type != 22 AND $data_type != 43 AND $data_type != 51 AND $data_type < 100 AND $drop_physical){
 
 			$sqlquery1 = dbq_22(array($del_tabelle,$field_name));
-			$rs1 = odbc_exec($db,$sqlquery1);
+			$rs1 = lmbdb_exec($db,$sqlquery1);
 
 			if(!$rs1){
-			    $err = odbc_errormsg($db);
+			    $err = lmbdb_errormsg($db);
 			    lmb_alert("can not drop field $field_name in database! try to drop it manualy!");
     		    lmb_alert($err);
 			    // check dependency views
@@ -606,9 +610,9 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
                         // drop fields
                         if(in_array(lmb_strtolower($prefix.$field_name),$fielddev['columnname_lower'])){
                             $sqlquery = dbq_22(array($del_tabelle,$prefix . $field_name));
-                            $rs = odbc_exec($db, $sqlquery);
+                            $rs = lmbdb_exec($db, $sqlquery);
                             if(!$rs){
-                			    $err = odbc_errormsg($db);
+                			    $err = lmbdb_errormsg($db);
                 			    lmb_alert("can not drop field $field_name in database! try to drop it manualy!");
                     		    lmb_alert($err);
                 			    // check dependency views
@@ -660,11 +664,11 @@ function delete_tab($tabid,$drop_physical=true) {
 
 	/* Tabellen Name*/
 	$sqlquery =  "SELECT TABELLE,BESCHREIBUNG,TYP FROM LMB_CONF_TABLES WHERE TAB_ID = $tabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$gtab = odbc_result($rs, "TABELLE");
-	$desc_id = odbc_result($rs, "BESCHREIBUNG");
-	$typ = odbc_result($rs, "TYP");
+	$gtab = lmbdb_result($rs, "TABELLE");
+	$desc_id = lmbdb_result($rs, "BESCHREIBUNG");
+	$typ = lmbdb_result($rs, "TYP");
 	
 	# schütze Systemtabellen
 	#if($gtab == "FILES" OR $gtab = "LDMS_META"){
@@ -674,11 +678,11 @@ function delete_tab($tabid,$drop_physical=true) {
 	
 	/* --- Tabellen-Uploaddateien löschen -------------------------------------- */
 	$sqlquery3 = "SELECT ID FROM LDMS_STRUCTURE WHERE TAB_ID = $tabid AND FIELD_ID = 0 AND FIX = ".LMB_DBDEF_TRUE;
-	$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 	if(!$rs3) {$commit = 1;}
-	if(odbc_result($rs3, "ID") AND $drop_physical){
+	if(lmbdb_result($rs3, "ID") AND $drop_physical){
 		$GLOBALS["filestruct"]["admin"] = 1;
-		if(!delete_dir(odbc_result($rs3, "ID"))){
+		if(!delete_dir(lmbdb_result($rs3, "ID"))){
 			$commit = 1;
 		}
 		$GLOBALS["filestruct"]["admin"] = 0;
@@ -686,16 +690,16 @@ function delete_tab($tabid,$drop_physical=true) {
 
 	// drop relation tables
 	$sqlquery =  "SELECT DISTINCT MD5TAB,SPELLING,BESCHREIBUNG,DATA_TYPE,VERKNTABLETYPE FROM LMB_CONF_FIELDS WHERE TAB_ID = $tabid ORDER BY VERKNTABLETYPE DESC";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-	    $md5tab = odbc_result($rs,"MD5TAB");
+	while(lmbdb_fetch_row($rs)) {
+	    $md5tab = lmbdb_result($rs,"MD5TAB");
 
 		if($drop_physical){
 			
-			if($md5tab AND (odbc_result($rs,"DATA_TYPE") == 24 OR odbc_result($rs,"DATA_TYPE") == 27)){
+			if($md5tab AND (lmbdb_result($rs,"DATA_TYPE") == 24 OR lmbdb_result($rs,"DATA_TYPE") == 27)){
 			    // drop table
-			    if(odbc_result($rs,"VERKNTABLETYPE") == 1){
+			    if(lmbdb_result($rs,"VERKNTABLETYPE") == 1){
 			    	
 			    	// drop sequence
     				if(LMB_DBFUNC_SEQUENCE){dbf_22(array("",dbf_4("SEQ_".$md5tab."_KEYID")));}
@@ -706,7 +710,7 @@ function delete_tab($tabid,$drop_physical=true) {
                     }
 
 			    // drop view
-			    }elseif(odbc_result($rs,"VERKNTABLETYPE") == 2){
+			    }elseif(lmbdb_result($rs,"VERKNTABLETYPE") == 2){
 					$viewinfo = lmb_getViewInfo($md5tab);
 					if(!lmb_dropView($md5tab)){$commit = 2;}
 					lmb_deleteTriggerForTable($viewinfo);
@@ -716,8 +720,8 @@ function delete_tab($tabid,$drop_physical=true) {
 		}
 		
 		# Spracheinträge löschen für Felder
-		$sqlquery4 = "DELETE FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = ".odbc_result($rs,"SPELLING")." OR ELEMENT_ID = ".odbc_result($rs,"BESCHREIBUNG");
-		$rs4 = odbc_exec($db,$sqlquery4) or errorhandle(odbc_errormsg($db),$sqlquery4,$action,__FILE__,__LINE__);
+		$sqlquery4 = "DELETE FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = ".lmbdb_result($rs,"SPELLING")." OR ELEMENT_ID = ".lmbdb_result($rs,"BESCHREIBUNG");
+		$rs4 = lmbdb_exec($db,$sqlquery4) or errorhandle(lmbdb_errormsg($db),$sqlquery4,$action,__FILE__,__LINE__);
 		if(!$rs4) {$commit = 1;}
 	}
 
@@ -741,7 +745,7 @@ function delete_tab($tabid,$drop_physical=true) {
 	# drop view
 	}elseif(lmb_substr($gtab,0,4) != "LMB_" AND $typ == 5){
 		$sqlquery = "DELETE FROM LMB_CONF_VIEWS WHERE ID = $tabid";
-		$rs1 = odbc_exec($db,$sqlquery);
+		$rs1 = lmbdb_exec($db,$sqlquery);
 		if($drop_physical){
 
 		    if(!lmb_dropView($gtab)){
@@ -749,11 +753,11 @@ function delete_tab($tabid,$drop_physical=true) {
             }
 		}
 		$sqlquery = "DELETE FROM LMB_GTAB_PATTERN WHERE VIEWID = $tabid";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		
 		$sqlquery = "DELETE FROM LMB_CONF_VIEWFIELDS WHERE VIEWID = $tabid";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}
 
@@ -761,43 +765,43 @@ function delete_tab($tabid,$drop_physical=true) {
 	del_erstuserRules($tabid,0);
 
 	$sqlquery = "DELETE FROM LMB_CONF_TABLES WHERE TAB_ID = $tabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$sqlquery = "DELETE FROM LMB_CONF_FIELDS WHERE TAB_ID = $tabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$sqlquery = "DELETE FROM LMB_SELECT_D WHERE TAB_ID = $tabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$sqlquery = "DELETE FROM LMB_RULES_FIELDS WHERE TAB_ID = $tabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$sqlquery = "DELETE FROM LMB_RULES_TABLES WHERE TAB_ID = $tabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$sqlquery = "DELETE FROM LMB_GTAB_GROUPDAT WHERE TAB_ID = $tabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$sqlquery = "DELETE FROM LMB_REMINDER WHERE TAB_ID = $tabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$sqlquery = "DELETE FROM LMB_GTAB_ROWSIZE WHERE TAB_ID = $tabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	/* --- Snapshot löschen ------*/
 	$sqlquery = "DELETE FROM LMB_SNAP WHERE TABID = $tabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	/* --- Inidize-Daten löschen ------*/
 	$sqlquery = "DELETE FROM LMB_INDIZE_D WHERE TABID = $tabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$sqlquery = "DELETE FROM LMB_INDIZE_DS WHERE TABID = $tabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	if($typ != 5){
 		$sqlquery = "DELETE FROM LMB_GTAB_PATTERN WHERE TABID = '$tabid'";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}
 
@@ -819,9 +823,9 @@ function delete_tabgroup($group_del) {
 	flag_tableChanged();
 
 	$sqlquery = "SELECT TAB_ID FROM LMB_CONF_GROUPS,LMB_CONF_TABLES WHERE LMB_CONF_GROUPS.ID = $group_del AND LMB_CONF_GROUPS.ID = LMB_CONF_TABLES.TAB_GROUP";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)) {
-		if(!delete_tab(odbc_result($rs,"TAB_ID"))){
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
+		if(!delete_tab(lmbdb_result($rs,"TAB_ID"))){
 			$commit = 1;
 		}
 	}
@@ -829,26 +833,26 @@ function delete_tabgroup($group_del) {
 	if(!$commit){
 	
     	$sqlquery = "SELECT NAME,BESCHREIBUNG FROM LMB_CONF_GROUPS WHERE ID = $group_del";
-    	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     	if(!$rs) {$commit = 1;}
-    	$name_id = odbc_result($rs,"NAME");
-    	$desc_id = odbc_result($rs,"BESCHREIBUNG");
+    	$name_id = lmbdb_result($rs,"NAME");
+    	$desc_id = lmbdb_result($rs,"BESCHREIBUNG");
     
     	# Spachelement löschen
     	lang_delete($name_id,"_DEPEND");
     	lang_delete($desc_id,"_DEPEND");
     
     	$sqlquery = "DELETE FROM LMB_CONF_GROUPS WHERE ID = $group_del";
-    	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 	
 		/* --- Tabellen-Uploaddateien löschen -------------------------------------- */
 		$sqlquery3 = "SELECT ID FROM LDMS_STRUCTURE WHERE TABGROUP_ID = $group_del AND TAB_ID = 0 AND FIELD_ID = 0 AND FIX = ".LMB_DBDEF_TRUE;
-		$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+		$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 		if(!$rs3) {$commit = 1;}
-		if(odbc_result($rs3, "ID")){
+		if(lmbdb_result($rs3, "ID")){
 			$GLOBALS["filestruct"]["admin"] = 1;
-			if(!delete_dir(odbc_result($rs3, "ID"))){
+			if(!delete_dir(lmbdb_result($rs3, "ID"))){
 				$commit = 1;
 			}
 			$GLOBALS["filestruct"]["admin"] = 0;
@@ -880,7 +884,7 @@ function add_tabgroup($group_name,$group_desc){
 	$desc_id = lang_add($session["language"],4,"Tablegroup: ".$group_desc,$group_desc,"_DEPEND");
 
 	$sqlquery = "INSERT INTO LMB_CONF_GROUPS (ID,NAME,BESCHREIBUNG,SORT) VALUES ($NEXTID,$name_id,$desc_id,$NEXTSORT)";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
 	if($commit){lmb_alert($lang[56]);return false;}else{return $NEXTID;}
@@ -917,15 +921,18 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 		
 		foreach ($sysfields as $key => $value){
 			if(!in_array(dbf_4($value),$existing_columns["columnname"])){
-				$addfields[] = $value." ".$sysfieldtyp[$key];
+				#$addfields[] = $value." ".$sysfieldtyp[$key];
+				$addfields[] = $value;
+				$addfieldstype[] = $sysfieldtyp[$key];
 				#if(lmb_strtoupper($value) == "ID"){$new_prikey = 1;}
 				#if(lmb_strtoupper($value) == "DEL"){$new_del = 1;}
 			}
 		}
 
 		if($addfields){
-			$sqlquery = "ALTER TABLE $gtable ".LMB_DBFUNC_ADD_COLUMN_FIRST." ".implode(",".LMB_DBFUNC_ADD_COLUMN_NEXT." ",$addfields);
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			#$sqlquery = "ALTER TABLE $gtable ".LMB_DBFUNC_ADD_COLUMN_FIRST." ".implode(",".LMB_DBFUNC_ADD_COLUMN_NEXT." ",$addfields);
+			$sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$gtable,$addfields,$addfieldstype));
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 		}
 	
@@ -938,7 +945,7 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 		
 
 		$sqlquery = "UPDATE $gtable SET DEL = ".LMB_DBDEF_FALSE." WHERE DEL IS NULL";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		
 		
 		
@@ -946,9 +953,9 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 
 		/*
 		$sqlquery = "SELECT ID FROM $gtable WHERE ID IS NULL OR ID < 1";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		if(odbc_fetch_row($rs)){
+		if(lmbdb_fetch_row($rs)){
 			$GLOBALS["message"] .= "<br>primary key (ID) defined but contains NULL values! be shure your field [ID] has numeric unique values!<br>";
 			$commit = 1;
 		}
@@ -956,12 +963,12 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 		if(!$commit){
 			# drop old Primary Key
 			$sqlquery = dbq_18(array($gtable));
-			$rs = odbc_exec($db,$sqlquery);
+			$rs = lmbdb_exec($db,$sqlquery);
 			#if(!$rs) {$commit = 1;}
 			
 			# add new Primary Key
 			$sqlquery = dbq_17(array($gtable,"ID"));
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 		}
 		*/
@@ -981,12 +988,12 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 		# Versionierungsfelder falls 1:1 Tabelle versioniert
 		if($verkn AND $typ != 5){
 			$sqlquery = "SELECT VERSIONING,USERRULES FROM LMB_CONF_TABLES WHERE TAB_ID = $verkn";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
-			$versioning = odbc_result($rs, "VERSIONING");
-			$has_userrules = odbc_result($rs, "USERRULES");
+			$versioning = lmbdb_result($rs, "VERSIONING");
+			$has_userrules = lmbdb_result($rs, "USERRULES");
 			if($versioning){
-				$versioning_fields = "VID SMALLINT,VPID ".LMB_DBTYPE_FIXED."(18),VACT ".LMB_DBTYPE_BOOLEAN." DEFAULT ".LMB_DBDEF_TRUE.",VDESC VARCHAR(255),";
+				$versioning_fields = "VID SMALLINT,VPID ".LMB_DBTYPE_FIXED."(18),VACT ".LMB_DBTYPE_BOOLEAN." DEFAULT ".LMB_DBDEF_TRUE.",VDESC ".LMB_DBTYPE_VARCHAR."(255),";
 			}
 		}
 
@@ -998,7 +1005,7 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 				$pid = LMB_DBTYPE_FIXED."(18) NOT NULL";
 			}
 			$sqlquery = "CREATE TABLE ".dbf_4($gtable)." (ID $pid, ERSTDATUM ".LMB_DBTYPE_TIMESTAMP." DEFAULT ".LMB_DBDEF_TIMESTAMP.", EDITDATUM ".LMB_DBTYPE_TIMESTAMP.", EDITUSER SMALLINT, ERSTUSER SMALLINT DEFAULT 1, INUSE_TIME ".LMB_DBTYPE_TIMESTAMP.", INUSE_USER SMALLINT,DEL ".LMB_DBTYPE_BOOLEAN." DEFAULT ".LMB_DBDEF_FALSE.", $versioning_fields ".LMB_DBFUNC_PRIMARY_KEY." (ID))";
-			$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;return false;}
 		}
 	}
@@ -1013,10 +1020,10 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 		# --- 1:1 Verknüpfungsdatensätze auffüllen ----------------------------------------------
 		# Tabellen Name
 		$sqlquery = "SELECT TABELLE,TYP,VERSIONING FROM LMB_CONF_TABLES WHERE TAB_ID = $verkn";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		$verkntab = odbc_result($rs, "TABELLE");
-		$typ =  odbc_result($rs, "TYP");
+		$verkntab = lmbdb_result($rs, "TABELLE");
+		$typ =  lmbdb_result($rs, "TYP");
 
 		if($versioning){
 			$sqlquery = "SELECT ID,ERSTDATUM,ERSTUSER,DEL,VID,VPID,VACT,VDESC FROM ".$verkntab;
@@ -1024,29 +1031,29 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 			$sqlquery = "SELECT ID,ERSTDATUM,ERSTUSER,DEL FROM ".$verkntab;
 		}
 
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		while(odbc_fetch_row($rs)){
+		while(lmbdb_fetch_row($rs)){
 			if($versioning){
 				$version_insert = ",VID,VPID,VACT,VDESC";
-				$version_val = ",".parse_db_int(odbc_result($rs, "VID"),5).",".parse_db_int(odbc_result($rs, "VPID"),18).",".parse_db_bool(odbc_result($rs, "VACT")).",'".parse_db_string(odbc_result($rs, "VDESC"),180)."'";
+				$version_val = ",".parse_db_int(lmbdb_result($rs, "VID"),5).",".parse_db_int(lmbdb_result($rs, "VPID"),18).",".parse_db_bool(lmbdb_result($rs, "VACT")).",'".parse_db_string(lmbdb_result($rs, "VDESC"),180)."'";
 			}
-			$sqlquery1 = "INSERT INTO $gtable (ID,ERSTDATUM,ERSTUSER,DEL $version_insert) VALUES (".parse_db_int(odbc_result($rs, "ID"),16).",'".odbc_result($rs, "ERSTDATUM")."',".parse_db_int(odbc_result($rs, "ERSTUSER"),4).",".parse_db_bool(odbc_result($rs, "DEL"))." $version_val)";
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$sqlquery1 = "INSERT INTO $gtable (ID,ERSTDATUM,ERSTUSER,DEL $version_insert) VALUES (".parse_db_int(lmbdb_result($rs, "ID"),16).",'".lmbdb_result($rs, "ERSTDATUM")."',".parse_db_int(lmbdb_result($rs, "ERSTUSER"),4).",".parse_db_bool(lmbdb_result($rs, "DEL"))." $version_val)";
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 
 
 			# Spezifische Userrechte hinzufügen
 			if($has_userrules){
-				$sqlquery2 = "SELECT * FROM LMB_RULES_DATASET WHERE TABID = $verkn AND DATID = ".odbc_result($rs, "ID");
-				$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+				$sqlquery2 = "SELECT * FROM LMB_RULES_DATASET WHERE TABID = $verkn AND DATID = ".lmbdb_result($rs, "ID");
+				$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 				if(!$rs2) {$commit = 1;}
 
-				while(odbc_fetch_row($rs2)){
+				while(lmbdb_fetch_row($rs2)){
 
 					$NEXTID3 = next_db_id("LMB_RULES_DATASET","KEYID");
-					$sqlquery3 = "INSERT INTO LMB_RULES_DATASET (KEYID,EDITUSER,DATID,USERID,GROUPID,TABID,EDIT,DEL) VALUES($NEXTID3,".$session["user_id"].",".parse_db_int(odbc_result($rs2, "DATID"),18).",".parse_db_int(odbc_result($rs2, "USERID"),5).",".parse_db_int(odbc_result($rs2, "GROUPID"),5).",".parse_db_int($max_tabid,5).",".parse_db_bool(odbc_result($rs2, "EDIT")).",".parse_db_bool(odbc_result($rs2, "DEL")).")";
-					$rs3 = odbc_exec($db,$sqlquery3) or errorhandle(odbc_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+					$sqlquery3 = "INSERT INTO LMB_RULES_DATASET (KEYID,EDITUSER,DATID,USERID,GROUPID,TABID,EDIT,DEL) VALUES($NEXTID3,".$session["user_id"].",".parse_db_int(lmbdb_result($rs2, "DATID"),18).",".parse_db_int(lmbdb_result($rs2, "USERID"),5).",".parse_db_int(lmbdb_result($rs2, "GROUPID"),5).",".parse_db_int($max_tabid,5).",".parse_db_bool(lmbdb_result($rs2, "EDIT")).",".parse_db_bool(lmbdb_result($rs2, "DEL")).")";
+					$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 					if(!$rs3) {$commit = 1;}
 
 				}
@@ -1056,7 +1063,7 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 
 		# --- ref Integrität ----------------------------------------------
 		#$sqlquery =  "ALTER TABLE $verkntab ADD FOREIGN KEY FK_".parse_db_string($gtable,18)."_ID (ID) REFERENCES ".parse_db_string($gtable,18)." ON DELETE RESTRICT";
-		#$rs = odbc_exec($db,$sqlquery);
+		#$rs = lmbdb_exec($db,$sqlquery);
 		#if(!$rs1) {$commit = 1;}
 	}
 
@@ -1069,7 +1076,7 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 	if($typ == 5){$keyfield = '';}
 
 	$sqlquery = "INSERT INTO LMB_CONF_TABLES (ID,TAB_ID,TAB_GROUP,SORT,TABELLE,BESCHREIBUNG,LOCKABLE,MARKCOLOR,VERKN,TYP,VERSIONING,USERRULES,KEYFIELD) VALUES ($max_id,$max_tabid,$tab_group,$max_sort,'".$gtable."',$desc_id,".LMB_DBDEF_FALSE.",'',$verkn,".parse_db_int($typ,2).",".parse_db_int($versioning,1).",".parse_db_bool($userules).",'".parse_db_string($keyfield)."')";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
 	# Abfrage Typ
@@ -1085,7 +1092,7 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 		# set userright status for table with erstgroup
 		if($userules){
 			$sqlquery = "UPDATE LMB_RULES_TABLES SET USERRULES = ".LMB_DBDEF_TRUE." WHERE GROUP_ID = ".$session["group_id"]." AND TAB_ID = ".$max_tabid;
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 		}
 	}
@@ -1115,8 +1122,8 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 		'selectable'=>1
 		));
 		
-		$sqlquery = "UPDATE LMB_CONF_TABLES SET PARAMS2 = '".parse_db_blob($params2)."' WHERE TAB_ID = ".$max_tabid;
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$sqlquery = "UPDATE LMB_CONF_TABLES SET PARAMS2 = '".parse_db_string($params2)."' WHERE TAB_ID = ".$max_tabid;
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		
 	# Zusatzfelder Message
@@ -1134,7 +1141,7 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 	# view
 	}elseif($typ == 5){
 		$sqlquery =  "INSERT INTO LMB_CONF_VIEWS (ID,VIEWTYPE) VALUES ($max_tabid,".parse_db_int($viewtyp).")";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
 	
 	
@@ -1169,11 +1176,11 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 
 	/* Tabellen Name*/
 	$sqlquery =  "SELECT TABELLE,TAB_GROUP,BESCHREIBUNG FROM LMB_CONF_TABLES WHERE TAB_ID = $gtabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$table = odbc_result($rs, "TABELLE");
-	$groupid = odbc_result($rs, "TAB_GROUP");
-	$tablename = odbc_result($rs, "BESCHREIBUNG");
+	$table = lmbdb_result($rs, "TABELLE");
+	$groupid = lmbdb_result($rs, "TAB_GROUP");
+	$tablename = lmbdb_result($rs, "BESCHREIBUNG");
 	$inherit_pool = 0;
 
 	if(!$table){return false;}
@@ -1183,7 +1190,7 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	if($import_typ != "convert"){$field = parse_db_syntax($field,$table);}
 
 	$sqlquery =  "SELECT ID FROM LMB_CONF_FIELDS WHERE lower(FIELD_NAME) = lower('$field') AND TAB_ID = $gtabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
 
@@ -1193,26 +1200,26 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 		
 		# inherit fieldinfos
 		$sqlquery =  "SELECT LMB_CONF_FIELDS.VERKNPARAMS,LMB_CONF_FIELDS.SELECT_POOL,LMB_CONF_FIELDS.FIELD_SIZE,LMB_CONF_FIELDS.ARGUMENT,LMB_FIELD_TYPES.ID,LMB_CONF_FIELDS.FIELD_TYPE,LMB_CONF_FIELDS.FIELD_NAME FROM LMB_CONF_FIELDS,LMB_FIELD_TYPES WHERE LMB_CONF_FIELDS.DATA_TYPE = LMB_FIELD_TYPES.DATA_TYPE AND LMB_CONF_FIELDS.TAB_ID = $inherit_tab AND LMB_CONF_FIELDS.FIELD_ID = ".$inherit_field;
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		$inherit_id = odbc_result($rs, "ID");
-		$inherit_fieldtype = odbc_result($rs, "FIELD_TYPE");
-		$inherit_fieldname = odbc_result($rs, "FIELD_NAME");
-		$inherit_argument = odbc_result($rs, "ARGUMENT");
-		$inherit_pool = odbc_result($rs, "SELECT_POOL");
-		$verknparams = odbc_result($rs, "VERKNPARAMS");
+		$inherit_id = lmbdb_result($rs, "ID");
+		$inherit_fieldtype = lmbdb_result($rs, "FIELD_TYPE");
+		$inherit_fieldname = lmbdb_result($rs, "FIELD_NAME");
+		$inherit_argument = lmbdb_result($rs, "ARGUMENT");
+		$inherit_pool = lmbdb_result($rs, "SELECT_POOL");
+		$verknparams = lmbdb_result($rs, "VERKNPARAMS");
 
 		# inherit table
 		$sqlquery =  "SELECT LMB_CONF_TABLES.TABELLE FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = $inherit_tab";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		$inherit_table = odbc_result($rs, "TABELLE");
+		$inherit_table = lmbdb_result($rs, "TABELLE");
 
 		/* --- echte Feldgröße --------------------------------------------- */
 		$rs = dbf_5(array($DBA["DBSCHEMA"],dbf_4($inherit_table),dbf_4($inherit_fieldname),1));
-		if(odbc_fetch_row($rs)) {
-			$inherit_precision = odbc_result($rs, "PRECISION");
-			$inherit_scale = odbc_result($rs, "SCALE");
+		if(lmbdb_fetch_row($rs)) {
+			$inherit_precision = lmbdb_result($rs, "PRECISION");
+			$inherit_scale = lmbdb_result($rs, "SCALE");
 			if($inherit_scale){
 				$typ_size = $inherit_precision.",".$inherit_scale;
 			}elseif($inherit_precision){
@@ -1249,28 +1256,28 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 		$argument_typ = 0;
 	}
 
-	odbc_free_result($rs);
+	lmbdb_free_result($rs);
 
 	if($newtyp == 1 OR $newtyp == 18){$newtyp = 10;}
 	if(!$newtyp){$newtyp = 13;}
 	/* --- Datentyp festlegen --------------------------------------------- */
 	$sqlquery =  "SELECT * FROM LMB_FIELD_TYPES WHERE ID = $newtyp";
-	$rs3 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs3 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs3) {$commit = 1;}
-	if(odbc_fetch_row($rs3)){
-		$datatypid = odbc_result($rs3, "ID");
-		$fieldtyp = odbc_result($rs3, "FIELD_TYPE");
-		$datatyp = odbc_result($rs3, "DATA_TYPE");
-		$parsetype = odbc_result($rs3, "PARSE_TYPE");
-		$datentyp = odbc_result($rs3, "DATENTYP");
-		$fieldsize = odbc_result($rs3, "SIZE");
+	if(lmbdb_fetch_row($rs3)){
+		$datatypid = lmbdb_result($rs3, "ID");
+		$fieldtyp = lmbdb_result($rs3, "FIELD_TYPE");
+		$datatyp = lmbdb_result($rs3, "DATA_TYPE");
+		$parsetype = lmbdb_result($rs3, "PARSE_TYPE");
+		$datentyp = lmbdb_result($rs3, "DATENTYP");
+		$fieldsize = lmbdb_result($rs3, "SIZE");
 	}
 	
 	/* ---  Größe --------------------------------------------- */
 	$sqlquery =  "SELECT ID FROM LMB_FIELD_TYPES WHERE HASSIZE = ".LMB_DBDEF_TRUE;
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)){
-		$dynamic_fields[] = odbc_result($rs, "ID");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+		$dynamic_fields[] = lmbdb_result($rs, "ID");
 	}
 
 	if(in_array($datatypid,$dynamic_fields)){
@@ -1300,33 +1307,32 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	/* Defaultwert*/
 	if($default){
 		if(@constant("LMB_DBDEF_".lmb_strtoupper($default))){
-			$default = "DEFAULT ".constant("LMB_DBDEF_".lmb_strtoupper($default));
-		}else{
-			$default = "DEFAULT $default";
+			$default = constant("LMB_DBDEF_".lmb_strtoupper($default));
 		}
 	}elseif($fieldtyp == 10){						# boolean
-		$default = "DEFAULT ".LMB_DBDEF_FALSE;
+		$default = LMB_DBDEF_FALSE;
 	}elseif($fieldtyp == 2 OR $fieldtyp == 7){		# date
-		$default = "";
+		$default = '';
 	}elseif($fieldtyp == 11 OR $default == '0'){	# 0 or relation
-		$default = "DEFAULT 0";
+		$default = '0';
 	}else{
-		$default = "";
+		$default = '';
 	}
 
 	/* --- Feld in Tabelle zufügen --------------------------------------------- */
-	if($fieldtyp != 14 AND $fieldtyp != 15 AND $fieldtyp != 17 AND $datatyp != 22 AND $datatyp != 41 AND $datatyp != 51 AND $parsetype != 100){
+	if($fieldtyp != 14 AND $fieldtyp != 15 AND $fieldtyp != 17 AND $datatyp != 22 AND $datatyp != 41 AND $datatyp != 51 AND $datatyp != 52 AND $parsetype != 100){
 		if(!$datentyp){return false;}
 		if($import_typ != "convert"){
-			$sqlquery =  "ALTER TABLE ".lmb_strtoupper($table)." ADD $field $datentyp $property $default";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			#$sqlquery =  "ALTER TABLE ".lmb_strtoupper($table)." ADD $field $datentyp $default";
+			$sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$table,$field,$datentyp,$default));
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 		}
 	}
 	/* --- Boolean Defaultwerte setzen --------------------------------------------- */
 	if($datentyp == "BOOLEAN"){
 		if($sqlquery = dbq_9(array($DBA["DBSCHEMA"],$table,$field,LMB_DBDEF_FALSE))){
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 		}
 	}
@@ -1339,6 +1345,7 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 		else if($datatyp == 36){$field = "ERSTDATUM";}   /* --- ERSTDATUM ----*/
 		else if($datatyp == 37){$field = "EDITDATUM";}   /* --- EDITDATUM ----*/
 		else if($datatyp == 51){$field = "LMB_SYNC_SLAVE";}   /* --- LMB_SYNC_SLAVE ----*/
+        else if($datatyp == 52){$field = "LMB_MID";}   /* --- MULTITENANT ----*/
 		else if($typ == 49){$field = "VDESC";}  		    /* --- VDESC ----*/
 		else {
             if(lmb_strtoupper($field) != lmb_strtoupper($field_)){
@@ -1358,8 +1365,8 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	
 	/* --- Sonderfelder / Vernüpfungsparameter-Tabelle + 1000 -------- */
 	$sqlquery =  "SELECT VERKNPARAMS FROM LMB_CONF_FIELDS WHERE MD5TAB = '$table' AND VERKNPARAMS > 0";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_result($rs, "VERKNPARAMS")){$allocate = 1000;}
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_result($rs, "VERKNPARAMS")){$allocate = 1000;}
 
 	/* --- Nächste FIELD_ID setzen -------- */
 	$field_id = next_conf_id("LMB_CONF_FIELDS","FIELD_ID","AND TAB_ID = $gtabid",$allocate);
@@ -1369,9 +1376,9 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	if($datatyp == 24 OR $datatyp == 27){$newmd5tab = dbf_4("VERK_".lmb_substr(md5(lmb_strtoupper($table).lmb_strtoupper($field).time()),0,13));}
 	if($sort){$new_sort = $sort;}else{
 		$sqlquery =  "SELECT MAX(SORT) AS NEXTID FROM LMB_CONF_FIELDS WHERE TAB_ID = $gtabid";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		$new_sort = odbc_result($rs, "NEXTID") + 1;
+		$new_sort = lmbdb_result($rs, "NEXTID") + 1;
 	}
 	# Währung
 	if($datatyp == 30){
@@ -1391,25 +1398,26 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	
 	$sqlquery = "INSERT INTO LMB_CONF_FIELDS (ID,FIELD_ID,TAB_ID,TAB_GROUP,SORT,FIELD_NAME,FORM_NAME,BESCHREIBUNG,FIELD_TYPE,DATA_TYPE,NEED,SPELLING,FIELDKEY,ARGUMENT,SELECT_SORT,NFORMAT,MD5TAB,INHERIT_TAB,INHERIT_FIELD,ARGUMENT_TYP,EXT_TYPE,SELECT_POOL $insd) VALUES
 	($new_id,$field_id,$gtabid,$groupid,$new_sort,'".lmb_strtoupper($field)."','".lmb_strtolower($field)."','$description_id',$fieldtyp,$datatyp,".LMB_DBDEF_FALSE.",'$spellingf_id',$fieldkey,'$argument','$select_sort','$nformat','".strtoupper($newmd5tab)."',$inherit_tab,$inherit_field,$argument_typ,'$extension',".parse_db_int($inherit_pool)." $insv)";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
 	/* --- Verknüpfungstabelle n:m erstellen -------- */
 	if($datatyp == 24){
 		$sqlquery = "CREATE TABLE ".$newmd5tab." (KEYID ".LMB_DBTYPE_FIXED."(18) NOT NULL,ERSTDATUM ".LMB_DBTYPE_TIMESTAMP." DEFAULT ".LMB_DBDEF_TIMESTAMP.", ERSTUSER ".LMB_DBTYPE_SMALLINT.", ID ".LMB_DBTYPE_FIXED."(18),VERKN_ID ".LMB_DBTYPE_FIXED."(18),".LMB_DBFUNC_PRIMARY_KEY." (KEYID),SORT SMALLINT)";
-		$rs3 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs3 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs3) {$commit = 1;}
 		lmb_rebuildSequences($newmd5tab,'KEYID');
 		/* --- Verknüpfungstabelle 1:n erstellen -------- */
 	}elseif($datatyp == 27){
 		$sqlquery = "CREATE TABLE ".$newmd5tab." (KEYID ".LMB_DBTYPE_FIXED."(18) NOT NULL,ERSTDATUM ".LMB_DBTYPE_TIMESTAMP." DEFAULT ".LMB_DBDEF_TIMESTAMP.", ERSTUSER ".LMB_DBTYPE_SMALLINT.", ID ".LMB_DBTYPE_FIXED."(18),VERKN_ID ".LMB_DBTYPE_FIXED."(18),".LMB_DBFUNC_PRIMARY_KEY." (KEYID),SORT SMALLINT)";
-		$rs3 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs3 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs3) {$commit = 1;}
 		lmb_rebuildSequences($newmd5tab,'KEYID');
 		/* --- Wärung -------- */
 	}elseif($datatyp == 30){
-		$sqlquery =  "ALTER TABLE ".lmb_strtoupper($table)." ADD ".$field."_C ".LMB_DBTYPE_VARCHAR."(5)";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		#$sqlquery =  "ALTER TABLE ".lmb_strtoupper($table)." ADD ".$field."_C ".LMB_DBTYPE_VARCHAR."(5)";
+		$sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$table,$field.'_C',LMB_DBTYPE_VARCHAR.'(5)'));
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		# ---- Upload Ordnerstruktur anlegen -----------------
 	}elseif($datatyp == 13){ #$datatyp == 25  ???
@@ -1422,11 +1430,11 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	if($datatyp == 24 OR $datatyp == 27){
 		# ID
 		$sqlquery = dbq_4(array($DBA["DBSCHEMA"],"LMBINDV_".lmb_substr(md5($newmd5tab."_ID"),0,12),$newmd5tab,"ID"));
-		$rs3 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs3 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs3) {$commit = 1;}
 		# SORT
 		$sqlquery = dbq_4(array($DBA["DBSCHEMA"],"LMBINDV_".lmb_substr(md5($newmd5tab."_SORT"),0,12),$newmd5tab,"SORT"));
-		$rs3 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs3 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs3) {$commit = 1;}
 		
 		# VERKN_ID
@@ -1434,13 +1442,13 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 		# only n:m
 		if($datatyp == 24){
 			$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$newmd5tab,"VERKN_ID"));
-			$rs3 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs3 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs3) {$commit = 1;}
 		# only 1:n
 		}else{
 			# add constraint
 			$sqlquery =  dbq_24(array($newmd5tab,'VERKN_ID',$indname));
-			$rs3 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs3 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
 
 	}
@@ -1479,23 +1487,35 @@ function lmb_renameTable($tabid,$tabname){
 	}
 	
 	$sqlquery = "SELECT TABELLE,TYP FROM LMB_CONF_TABLES WHERE TAB_ID = $tabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
-	if(odbc_result($rs,"TABELLE")){
+	if(lmbdb_result($rs,"TABELLE")){
+        $typ = lmbdb_result($rs,"TYP");
+
+        # drop sequence
+        if ($typ != 5 AND LMB_DBFUNC_SEQUENCE) {
+            dbf_22(array("",dbf_4("SEQ_".lmbdb_result($rs,"TABELLE")."_ID")));
+        }
 		# rename view
-		if(odbc_result($rs,"TYP") == 5){
-			$sqlquery = dbf_24(array(odbc_result($rs,"TABELLE"),$tabname));
+		if($typ == 5){
+			$sqlquery = dbf_24(array(lmbdb_result($rs,"TABELLE"),$tabname));
 		# rename table
 		}else{
-			$sqlquery = dbf_17(array(odbc_result($rs,"TABELLE"),$tabname));
+			$sqlquery = dbf_17(array(lmbdb_result($rs,"TABELLE"),$tabname));
 		}
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 
 		if(!$commit){
+            if($typ != 5 AND LMB_DBFUNC_SEQUENCE){
+                # create sequence
+                $lastid = next_db_id($tabname);
+                dbf_21(array("",dbf_4("SEQ_".$tabname."_ID"),$lastid));
+            }
+
 			$sqlquery = "UPDATE LMB_CONF_TABLES SET TABELLE = '$tabname' WHERE TAB_ID = $tabid";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 		}
 	}
@@ -1521,16 +1541,16 @@ function lmb_renameField($tabid,$fieldid,$fieldname){
 	}
 	
 	$sqlquery = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE TAB_ID = $tabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$tablename = odbc_result($rs,"TABELLE");
+	$tablename = lmbdb_result($rs,"TABELLE");
 	
 	$sqlquery = "SELECT FIELD_NAME,FIELD_TYPE,DATA_TYPE FROM LMB_CONF_FIELDS WHERE TAB_ID = $tabid AND FIELD_ID = $fieldid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$old_fieldname = odbc_result($rs,"FIELD_NAME");
-	$fieldtype = odbc_result($rs,"FIELD_TYPE");
-	$datatype = odbc_result($rs,"DATA_TYPE");
+	$old_fieldname = lmbdb_result($rs,"FIELD_NAME");
+	$fieldtype = lmbdb_result($rs,"FIELD_TYPE");
+	$datatype = lmbdb_result($rs,"DATA_TYPE");
 
 	if($old_fieldname){
 		# no virtual fields like sparte
@@ -1543,20 +1563,20 @@ function lmb_renameField($tabid,$fieldid,$fieldname){
 			# currency
 			if($datatype == 30){
 				$sqlquery = dbq_7(array($DBA["DBSCHEMA"],$tablename,$old_fieldname.'_C',$fieldname.'_C'));
-				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
 			}
 			
 			if(!$commit){
 				$sqlquery = dbq_7(array($DBA["DBSCHEMA"],$tablename,$old_fieldname,$fieldname));
-				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
 			}
 		}
 
 		if(!$commit){
 			$sqlquery = "UPDATE LMB_CONF_FIELDS SET FIELD_NAME = '$fieldname' WHERE TAB_ID = $tabid AND FIELD_ID = $fieldid";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 		}
 	}
@@ -1579,24 +1599,24 @@ function lmb_copy_table($copy,$gtable,$tab_group,$beschreibung,$add_permission){
 	global $lang;
 	
 	#$sqlquery = "SELECT TYP FROM LMB_CONF_TABLES WHERE TAB_ID = $copy";
-	#$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	#$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	#if(!$rs) {$commit = 1;}
 	
 	# LMB_CONF_TABLES
 	$sqlquery1 = "SELECT * FROM LMB_CONF_TABLES WHERE TAB_ID = $copy";
-	$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+	$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 	if(!$rs1) {return 1;}
-	if(odbc_fetch_row($rs1)) {
+	if(lmbdb_fetch_row($rs1)) {
 		/* --- Sprachtabelle -------- */
 		$desc_id = lang_add($session["language"],4,"Table: ".$tabname,parse_db_string($beschreibung,60),"_DEPEND");
-		$sourcetable = odbc_result($rs1,'TABELLE');
+		$sourcetable = lmbdb_result($rs1,'TABELLE');
 		$tabname = parse_db_syntax($gtable,1);
-		$ID = odbc_result($rs1,'ID');
-		$TYP = odbc_result($rs1, "TYP");
+		$ID = lmbdb_result($rs1,'ID');
+		$TYP = lmbdb_result($rs1, "TYP");
 		$NEXTID = next_db_id('LMB_CONF_TABLES');
 		$NEXTTID = next_db_id('LMB_CONF_TABLES','TAB_ID');
 		$SORT = next_db_id('LMB_CONF_TABLES','SORT');
-		$keyfield = odbc_result($rs1,'KEYFIELD');
+		$keyfield = lmbdb_result($rs1,'KEYFIELD');
 		$sqlquery2 = "INSERT INTO LMB_CONF_TABLES (ID,TAB_ID,TAB_GROUP,SORT,TABELLE,BESCHREIBUNG,TYP,VERKN,KEYFIELD) VALUES(
 			$NEXTID,
 			$NEXTTID,
@@ -1608,7 +1628,7 @@ function lmb_copy_table($copy,$gtable,$tab_group,$beschreibung,$add_permission){
 			$NEXTTID,
 			'$keyfield'
 			)";
-		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 		if(!$rs2) {return 1;}
 	}
 
@@ -1616,10 +1636,10 @@ function lmb_copy_table($copy,$gtable,$tab_group,$beschreibung,$add_permission){
 	if($TYP == 5){
 		
 		$sqlquery1 = "SELECT * FROM LMB_CONF_VIEWS WHERE ID = $copy";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {return 1;}
-		if(odbc_fetch_row($rs1)) {
-			$ID = odbc_result($rs1,'ID');
+		if(lmbdb_fetch_row($rs1)) {
+			$ID = lmbdb_result($rs1,'ID');
 			$sqlquery2 = "INSERT INTO LMB_CONF_VIEWS (ID,VIEWDEF,ISPUBLIC,HASID,RELATION,USESYSTABS,VIEWTYPE) VALUES(
 			$NEXTTID,
 			(SELECT VIEWDEF FROM LMB_CONF_VIEWS WHERE ID = $ID),
@@ -1629,15 +1649,15 @@ function lmb_copy_table($copy,$gtable,$tab_group,$beschreibung,$add_permission){
 			(SELECT USESYSTABS FROM LMB_CONF_VIEWS WHERE ID = $ID),
 			(SELECT VIEWTYPE FROM LMB_CONF_VIEWS WHERE ID = $ID)
 			)";
-			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+			$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 			if(!$rs2) {return 1;}
 		}
 		
 		$sqlquery1 = "SELECT * FROM LMB_CONF_VIEWFIELDS WHERE VIEWID = $copy";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {return 1;}
-		while(odbc_fetch_row($rs1)) {
-			$ID = odbc_result($rs1,'ID');
+		while(lmbdb_fetch_row($rs1)) {
+			$ID = lmbdb_result($rs1,'ID');
 			$NEXTID = next_db_id('LMB_CONF_VIEWFIELDS');
 			$sqlquery2 = "INSERT INTO LMB_CONF_VIEWFIELDS (ID,VIEWID,TABLENAME,QFIELD,QFILTER,QORDER,QALIAS,SORT,QSHOW,QFUNC) VALUES(
 			$NEXTID,
@@ -1651,16 +1671,16 @@ function lmb_copy_table($copy,$gtable,$tab_group,$beschreibung,$add_permission){
 			(SELECT QSHOW FROM LMB_CONF_VIEWFIELDS WHERE ID = $ID),
 			(SELECT QFUNC FROM LMB_CONF_VIEWFIELDS WHERE ID = $ID)
 			)";
-			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+			$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 			if(!$rs2) {return 1;}
 		}
 		
 		
 		$sqlquery1 = "SELECT * FROM LMB_GTAB_PATTERN WHERE VIEWID = $copy";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {return 1;}
-		while(odbc_fetch_row($rs1)) {
-			$ID = odbc_result($rs1,'ID');
+		while(lmbdb_fetch_row($rs1)) {
+			$ID = lmbdb_result($rs1,'ID');
 			$NEXTID = next_db_id('LMB_GTAB_PATTERN');
 			$sqlquery2 = "INSERT INTO LMB_GTAB_PATTERN (ID,VIEWID,ERSTUSER,TABID,PATID,POSX,POSY,WIDTH,HEIGHT,VISIBLE) VALUES(
 			$NEXTID,
@@ -1674,7 +1694,7 @@ function lmb_copy_table($copy,$gtable,$tab_group,$beschreibung,$add_permission){
 			(SELECT HEIGHT FROM LMB_GTAB_PATTERN WHERE ID = $ID),
 			(SELECT VISIBLE FROM LMB_GTAB_PATTERN WHERE ID = $ID)
 			)";
-			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+			$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 			if(!$rs2) {return 1;}
 		}
 		
@@ -1684,27 +1704,27 @@ function lmb_copy_table($copy,$gtable,$tab_group,$beschreibung,$add_permission){
 	}else{
 		# copy table
 		$sqlquery1 = "CREATE TABLE $tabname AS (SELECT * FROM $sourcetable)";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {return 1;}
 		
 		// default settings
 		$sqlquery1 = dbq_9(array($DBA["DBSCHEMA"],$tabname,'DEL','FALSE'));
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		$sqlquery1 = dbq_9(array($DBA["DBSCHEMA"],$tabname,'ERSTDATUM',LMB_DBDEF_TIMESTAMP));
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		$sqlquery1 = dbq_9(array($DBA["DBSCHEMA"],$tabname,'ERSTUSER',1));
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		
 		# LMB_CONF_FIELDS
 		$sqlquery1 = "SELECT * FROM LMB_CONF_FIELDS WHERE TAB_ID = $copy";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {return 1;}
 		$NEXTID = next_db_id('LMB_CONF_FIELDS');
-		while(odbc_fetch_row($rs1)) {
-			$ID = odbc_result($rs1,'ID');
-			$field_id = odbc_result($rs1,'FIELD_ID');
-			$lang_name = lang_add($session["language"],4,"Table: ".$tabname,parse_db_string($lang[odbc_result($rs1,'SPELLING')],60),"_DEPEND");
-			$lang_desc = lang_add($session["language"],4,"Table: ".$tabname,parse_db_string($lang[odbc_result($rs1,'BESCHREIBUNG')],60),"_DEPEND");
+		while(lmbdb_fetch_row($rs1)) {
+			$ID = lmbdb_result($rs1,'ID');
+			$field_id = lmbdb_result($rs1,'FIELD_ID');
+			$lang_name = lang_add($session["language"],4,"Table: ".$tabname,parse_db_string($lang[lmbdb_result($rs1,'SPELLING')],60),"_DEPEND");
+			$lang_desc = lang_add($session["language"],4,"Table: ".$tabname,parse_db_string($lang[lmbdb_result($rs1,'BESCHREIBUNG')],60),"_DEPEND");
 			$sqlquery2 = "INSERT INTO LMB_CONF_FIELDS (ID,TAB_ID,TAB_GROUP,BESCHREIBUNG,SPELLING,FIELD_ID,SORT,DATA_TYPE,FIELD_TYPE,FIELD_NAME,FORM_NAME,FIELDKEY,SELECT_POOL,SELECT_CUT,INHERIT_TAB,INHERIT_FIELD,INHERIT_SEARCH,INHERIT_EVAL,INHERIT_FILTER,INHERIT_GROUP,MAINFIELD,FIELD_SIZE,SCALE,DATETIME) VALUES(
 				$NEXTID,
 				$NEXTTID,
@@ -1731,7 +1751,7 @@ function lmb_copy_table($copy,$gtable,$tab_group,$beschreibung,$add_permission){
 				(SELECT SCALE FROM LMB_CONF_FIELDS WHERE ID = $ID),
 				(SELECT DATETIME FROM LMB_CONF_FIELDS WHERE ID = $ID)
 				)";
-			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+			$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 			if(!$rs2) {return 1;}
 
 			$commit = add_fieldPermission($NEXTTID,$field_id,$tab_group);
@@ -1755,33 +1775,36 @@ function lmb_set_multi_language($atid,$fieldid,$add,$langid=null){
     global $db;
     global $DBA;
     global $umgvar;
+    static $alter_lmb_select;
 
     if($langid){
-        $langlist[0] = $langid;
+        $multi_language[0] = $langid;
     }else{
         $multi_language = $umgvar['multi_language'];
     }
 
 	$sqlquery =  "SELECT LMB_CONF_TABLES.TABELLE,LMB_CONF_FIELDS.FIELD_NAME,LMB_CONF_FIELDS.TAB_ID,LMB_CONF_FIELDS.FIELD_TYPE,LMB_CONF_FIELDS.DATA_TYPE FROM LMB_CONF_FIELDS,LMB_CONF_TABLES WHERE LMB_CONF_FIELDS.FIELD_ID = $fieldid AND LMB_CONF_FIELDS.TAB_ID = $atid AND LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.TAB_ID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     if(!$rs) {$commit = 1;}
-	$field_type = odbc_result($rs,"FIELD_TYPE");
-    $data_type = odbc_result($rs,"DATA_TYPE");
-    $table_name = odbc_result($rs,"TABELLE");
-    $field_name = odbc_result($rs,"FIELD_NAME");
+	$field_type = lmbdb_result($rs,"FIELD_TYPE");
+    $data_type = lmbdb_result($rs,"DATA_TYPE");
+    $table_name = lmbdb_result($rs,"TABELLE");
+    $field_name = lmbdb_result($rs,"FIELD_NAME");
     
-    // select Pool
-    if($field_type == 4 AND $add AND !$langid){
-        // check for pool for needed fields
-        $selectdev = dbf_5(array($DBA['DBSCHEMA'],'LMB_SELECT_W','LANG%'));
-        foreach ($multi_language as $lkey => $langID) {
+    // select Pool table
+    if($field_type == 4 AND $add AND !$alter_lmb_select){
 
+        // check for pool for needed fields
+        $selectdev = dbf_5(array($DBA['DBSCHEMA'],'LMB_SELECT_W','LANG'.$langID.'%'));
+
+        foreach ($multi_language as $lkey => $langID) {
             // skip default language
             if($langID == $umgvar['default_language']){continue;}
             
             if (!in_array(dbf_4('LANG' . $langID . '_WERT'), $selectdev['columnname_lower'])) {
-                $sqlquery = 'ALTER TABLE LMB_SELECT_W ADD LANG' . $langID . '_WERT VARCHAR(255)';
-                $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                $alter_lmb_select = 1;
+                $sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],'LMB_SELECT_W','LANG'.$langID.'_WERT',LMB_DBTYPE_VARCHAR.'(255)'));
+                $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
             }
         }
     }
@@ -1789,9 +1812,12 @@ function lmb_set_multi_language($atid,$fieldid,$add,$langid=null){
     // add language fields (not for multiselect)
     if($data_type != 32 AND $data_type != 31 AND $data_type != 18){
 
+        // check for existing fields
+        $existing_fiels = dbf_5(array($DBA['DBSCHEMA'],$table_name,'LANG%'));
+
         $fielddev = dbf_5(array($DBA['DBSCHEMA'],$table_name,$field_name));
         foreach($multi_language as $lkey => $langID){
-            
+
             // skip default language
             if($langID == $umgvar['default_language']){continue;}
             
@@ -1800,19 +1826,23 @@ function lmb_set_multi_language($atid,$fieldid,$add,$langid=null){
     
             // add fields
             if($add){
-               // long
-               if($data_type == 39){
-                    $sqlquery =  "ALTER TABLE ".lmb_strtoupper($table_name)." ADD ".$prefix.$field_name." ".$fielddev['datatype'][0];
-               //varchar
-               }else{
-                    $sqlquery =  "ALTER TABLE ".lmb_strtoupper($table_name)." ADD ".$prefix.$field_name." ".$fielddev['datatype'][0]."(".$fielddev['length'][0].")";
-               }
-               $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                if(in_array(lmb_strtolower($prefix.$field_name),$existing_fiels['columnname_lower'])) {continue;}
+                // long
+                if($data_type == 39){
+                    #$sqlquery =  "ALTER TABLE ".lmb_strtoupper($table_name)." ADD ".$prefix.$field_name." ".$fielddev['datatype'][0];
+                    $sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$table_name,$prefix.$field_name,$fielddev['datatype'][0]));
+                //varchar
+                }else{
+                    #$sqlquery =  "ALTER TABLE ".lmb_strtoupper($table_name)." ADD ".$prefix.$field_name." ".$fielddev['datatype'][0]."(".$fielddev['length'][0].")";
+                    $sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$table_name,$prefix.$field_name,$fielddev['datatype'][0]."(".$fielddev['length'][0].")"));
+                }
+                $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     		
             // drop fields
             }else{
-               $sqlquery = dbq_22(array($table_name,$prefix.$field_name));
-               @$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                if(!in_array(lmb_strtolower($prefix.$field_name),$existing_fiels['columnname_lower'])) {continue;}
+                $sqlquery = dbq_22(array($table_name, $prefix . $field_name));
+                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
             }
         }
     }
@@ -1830,14 +1860,14 @@ function add_tablePermission($gtabid,$tab_group){
 	global $db;
 
 	$sqlquery = "SELECT * FROM LMB_GROUPS";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)){
-		$group_id = odbc_result($rs,"GROUP_ID");
+	while(lmbdb_fetch_row($rs)){
+		$group_id = lmbdb_result($rs,"GROUP_ID");
 		$NEXTID = next_db_id("LMB_RULES_TABLES");
 		if($group_id == 1){$BOOL = LMB_DBDEF_TRUE;}else{$BOOL = LMB_DBDEF_FALSE;}
 		$sqlquery1 = "INSERT INTO LMB_RULES_TABLES (ID,GROUP_ID,TAB_ID,TAB_GROUP,EDIT,LMVIEW,DEL,HIDE,COPY,LMADD,VIEW_FORM,VIEW_PERIOD) VALUES ($NEXTID,$group_id,$gtabid,$tab_group,$BOOL,$BOOL,$BOOL,$BOOL,$BOOL,$BOOL,0,0)";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}
 	
@@ -1858,15 +1888,15 @@ function add_fieldPermission($gtabid,$field_id,$tab_group){
 	
 	# ------------------------------ Gruppenliste ------------------------------------
 	$sqlquery = "SELECT GROUP_ID FROM LMB_GROUPS";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)){
-		$group_id = odbc_result($rs,"GROUP_ID");
+	while(lmbdb_fetch_row($rs)){
+		$group_id = lmbdb_result($rs,"GROUP_ID");
 		/*------------------------------ Spaltenrechte ------------------------------------*/
 		if($group_id == 1 OR $session["superadmin"]){$bool = LMB_DBDEF_TRUE;}else{$bool = LMB_DBDEF_FALSE;}
 		$NEXTID = next_db_id("LMB_RULES_FIELDS");
 		$sqlquery1 = "INSERT INTO LMB_RULES_FIELDS (ID,GROUP_ID,TAB_GROUP,TAB_ID,FIELD_ID,LMVIEW,EDIT,COPY,FIELDOPTION,COLOR,FILTER,SORT) VALUES ($NEXTID,$group_id,$tab_group,$gtabid,$field_id,$bool,$bool,$bool,$bool,'','',0)";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}
 	
@@ -1962,17 +1992,32 @@ function extended_fields_files(){
 	$nfield[] = array("field" => "INFO","typ" => 17,"typ2" => 0,"size" => 0,"description" => "Info","spellingf" => "Info","default" => LMB_DBDEF_FALSE,"sort" => "");
 	$nfield[] = array("field" => "CONTENT","typ" => 54,"typ2" => 0,"size" => 0,"description" => "Document-referenz","spellingf" => "Content","default" => LMB_DBDEF_FALSE,"sort" => "");
 	$nfield[] = array("field" => "MD5","typ" => 13,"typ2" => 0,"size" => 50,"description" => "MD5","spellingf" => "MD5","default" => "","sort" => "");
+    $nfield[] = array("field" => "STORAGE_ID","typ" => 2,"typ2" => 0,"size" => 10,"description" => "STORAGE_ID","spellingf" => "STORAGE_ID","default" => "","sort" => "");
+    $nfield[] = array("field" => "DOWNLOAD_LINK","typ" => 13,"typ2" => 0,"size" => 255,"description" => "DOWNLOAD_LINK","DOWNLOAD_LINK" => "MD5","default" => "","sort" => "");
 
+	/*
 	$sfield[] = "IND ".LMB_DBTYPE_BOOLEAN." DEFAULT ".LMB_DBDEF_FALSE;
 	$sfield[] = "INDD ".LMB_DBTYPE_TIMESTAMP;
 	$sfield[] = "INDT SMALLINT";
 	$sfield[] = "INDM ".LMB_DBTYPE_BOOLEAN." DEFAULT ".LMB_DBDEF_FALSE;
 	$sfield[] = "INDC ".LMB_DBTYPE_FIXED."(16)";
-
 	$sfield[] = "OCR ".LMB_DBTYPE_BOOLEAN." DEFAULT ".LMB_DBDEF_FALSE;
 	$sfield[] = "OCRD ".LMB_DBTYPE_TIMESTAMP;
 	$sfield[] = "OCRT SMALLINT";
 	$sfield[] = "OCRS ".LMB_DBTYPE_FIXED."(16)";
+	*/
+
+	$sfield[] = array('IND',LMB_DBTYPE_BOOLEAN,LMB_DBDEF_FALSE);
+	$sfield[] = array('INDD',LMB_DBTYPE_TIMESTAMP);
+	$sfield[] = array('INDT',LMB_DBTYPE_SMALLINT);
+	$sfield[] = array('INDM',LMB_DBTYPE_BOOLEAN,LMB_DBDEF_FALSE);
+	$sfield[] = array('INDC',LMB_DBTYPE_FIXED.'(16)');
+
+	$sfield[] = array('OCR',LMB_DBTYPE_BOOLEAN,LMB_DBDEF_FALSE);
+	$sfield[] = array('OCRD',LMB_DBTYPE_TIMESTAMP);
+	$sfield[] = array('OCRT',LMB_DBTYPE_SMALLINT);
+	$sfield[] = array('OCRS',LMB_DBTYPE_FIXED.'(16)');
+
 
 	return array($nfield,$sfield);
 }
@@ -2023,6 +2068,26 @@ function extended_fields_filesmeta(){
 	return $nfield;
 }
 
+# Default FILES fields
+function extended_fields_custvar(){
+    global $lang;
+
+    $nfield[] = array("field" => "ID_","typ" => 19,"typ2" => 0,"size" => 0,"description" => $lang[2068],"spellingf" => $lang[2068],"default" => "","sort" => "1");
+    $nfield[] = array("field" => "ERSTDATUM_","typ" => 38,"typ2" => 0,"size" => 0,"description" => $lang[2388],"spellingf" => $lang[2388],"default" => "","sort" => "2");
+    $nfield[] = array("field" => "ERSTUSER_","typ" => 36,"typ2" => 0,"size" => 0,"description" => $lang[2389],"spellingf" => $lang[2389],"default" => "","sort" => "3");
+    $nfield[] = array("field" => "ERSTGROUP","typ" => 2,"typ2" => 0,"size" => 5,"description" => $lang[2390],"spellingf" => $lang[2390],"default" => "","sort" => "4");
+    $nfield[] = array("field" => "EDITDATUM_","typ" => 39,"typ2" => 0,"size" => 0,"description" => $lang[2391],"spellingf" => $lang[2391],"default" => "","sort" => "5");
+    $nfield[] = array("field" => "EDITUSER_","typ" => 37,"typ2" => 0,"size" => 0,"description" => $lang[2392],"spellingf" => $lang[2392],"default" => "","sort" => "6");
+
+    $nfield[] = array("field" => "CKEY", "typ" => 13,"typ2" => 0,"size" => 50,"description" => $lang[926],"spellingf" => $lang[926],"default" => "","sort" => "7");
+    $nfield[] = array("field" => "CVALUE", "typ" => 13,"typ2" => 0,"size" => 200,"description" => $lang[29],"spellingf" => $lang[29],"default" => "","sort" => "8");
+    $nfield[] = array("field" => "DESCRIPTION", "typ" => 13,"typ2" => 0,"size" => 240,"description" => $lang[126],"spellingf" => $lang[126],"default" => "","sort" => "9");
+    $nfield[] = array("field" => "OVERRIDABLE", "typ" => 17,"typ2" => 0,"size" => 0,"description" => $lang[2957],"spellingf" => $lang[2957],"default" => "","sort" => "10");
+    $nfield[] = array("field" => "ACTIVE", "typ" => 17,"typ2" => 0,"size" => 0,"description" => $lang[632],"spellingf" => $lang[632],"default" => "","sort" => "11");
+
+    return $nfield;
+}
+
 # Default Kanban fields
 function extended_fields_kanban(){
 	global $lang;
@@ -2048,10 +2113,13 @@ function add_extended_fields_sys($table,$fields){
 	global $db;
 
 	foreach ($fields as $key => $value){
-		$sqlquery = "ALTER TABLE $table ADD $value";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$field[] = $value[0];
+		$type[] = $value[1];
+		$default[] = $value[2];
 	}
 
+    $sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$table,$field,$type,$default));
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 
@@ -2065,7 +2133,7 @@ function flag_tableChanged(){
 
 	if(!$GLOBALS["umgvar"]["get_new_tablestruct"]){
 		$sqlquery = "UPDATE LMB_SESSION SET TABLE_CHANGED = ".LMB_DBDEF_TRUE;
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
 	$GLOBALS["umgvar"]["get_new_tablestruct"] = 1;
 }
@@ -2106,9 +2174,9 @@ function lmb_dynamicFieldsize(){
 	global $db;
 
 	$sqlquery =  "SELECT ID FROM LMB_FIELD_TYPES WHERE HASSIZE = ".LMB_DBDEF_TRUE;
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)){
-		$dynamic_fields[] = odbc_result($rs, "ID");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+		$dynamic_fields[] = lmbdb_result($rs, "ID");
 	}
 	
 	return $dynamic_fields;

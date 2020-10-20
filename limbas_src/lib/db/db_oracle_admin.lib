@@ -105,10 +105,10 @@ function dbq_5($p){
 function dbq_23($p){
 	global $db;
 	
-	$rs = odbc_primarykeys($db, $p[2], $p[0], $p[1]);
-	while(odbc_fetch_row($rs)){
-		$pri_key["COLUMN_NAME"][] = odbc_result($rs,"COLUMN_NAME");
-		$pri_key["PK_NAME"][] = odbc_result($rs,"PK_NAME");
+	$rs = lmbdb_primarykeys($db, $p[2], $p[0], $p[1]);
+	while(lmbdb_fetch_row($rs)){
+		$pri_key["COLUMN_NAME"][] = lmbdb_result($rs,"COLUMN_NAME");
+		$pri_key["PK_NAME"][] = lmbdb_result($rs,"PK_NAME");
 	}
 	return  $pri_key;
 }
@@ -263,13 +263,13 @@ function dbf_3($p){
 		$sql .= " WHERE LOWER(TRIGGER_NAME) LIKE '".lmb_strtolower($p[1])."'";
 	}
 	
-	$rs = odbc_exec($db,$sql);
-	while(odbc_fetch_row($rs)){
-		$res["triggername"][] = odbc_result($rs,"TRIGGERNAME");
-		$res["definition"][] = odbc_result($rs,"DEFINITION");
-		$res["tablename"][] = odbc_result($rs,"TABLENAME");
+	$rs = lmbdb_exec($db,$sql);
+	while(lmbdb_fetch_row($rs)){
+		$res["triggername"][] = lmbdb_result($rs,"TRIGGERNAME");
+		$res["definition"][] = lmbdb_result($rs,"DEFINITION");
+		$res["tablename"][] = lmbdb_result($rs,"TABLENAME");
 		
-		$res["event"][] = odbc_result($rs,"TRIGGERING_EVENT");
+		$res["event"][] = lmbdb_result($rs,"TRIGGERING_EVENT");
 		
 	}
 	
@@ -335,6 +335,10 @@ function dbq_14($p){
 	return "lmb_vkn(".$act.",'".$p[0].'.'.$p[2]."','".$p[3]."','".$p[4]."','".$p[0].".".$p[5]."','".$p[6]."','".$p[0].".".$p[1]."');";
 }
 
+function dbq_27($p){
+    #return "UPDATE LMB_CONF_TABLES SET LASTMODIFIED = CURRENT_TIMESTAMP WHERE TAB_ID = ".$p[1].";";
+    return;
+}
 
 
 ############# view ########################
@@ -480,11 +484,11 @@ function dbf_17($p){
 function dbf_20($p){
 	global $db;
 	
-	$rs = odbc_tables($db,null,$p[0],dbf_4($p[1]),$p[2]);
-	while(odbc_fetch_row($rs)){
-		$odbc_table["table_name"][] = odbc_result($rs,"TABLE_NAME");
-		$odbc_table["table_type"][] = odbc_result($rs,"TABLE_TYPE");
-		$odbc_table["table_owner"][] = odbc_result($rs,"TABLE_OWNER");
+	$rs = lmbdb_tables($db,null,$p[0],dbf_4($p[1]),$p[2]);
+	while(lmbdb_fetch_row($rs)){
+		$odbc_table["table_name"][] = lmbdb_result($rs,"TABLE_NAME");
+		$odbc_table["table_type"][] = lmbdb_result($rs,"TABLE_TYPE");
+		$odbc_table["table_owner"][] = lmbdb_result($rs,"TABLE_OWNER");
 	}
 
 	if(!$odbc_table){
@@ -513,7 +517,7 @@ function dbf_21($p){
 	dbf_22($p);
 	
 	if($p[2]){$start = " START WITH ".$p[2];}
-	if($rs = odbc_exec($db,"CREATE SEQUENCE ".dbf_4($p[1]).$start)){
+	if($rs = lmbdb_exec($db,"CREATE SEQUENCE ".dbf_4($p[1]).$start)){
 		return true;
 	}else{
 		return false;
@@ -531,7 +535,7 @@ function dbf_21($p){
 function dbf_22($p){
 	global $db;
 
-	if($rs = odbc_exec($db,"DROP SEQUENCE ".dbf_4($p[1]))){
+	if($rs = lmbdb_exec($db,"DROP SEQUENCE ".dbf_4($p[1]))){
 		return true;
 	}else{
 		return false;
@@ -556,9 +560,9 @@ function dbf_5($p,$mode=null){
 	
 	if($p[3]){
 		if($p[2]){
-			$rs = odbc_columns($db,null,$p[0],dbf_4($p[1]),dbf_4($p[2]));
+			$rs = lmbdb_columns($db,null,$p[0],dbf_4($p[1]),dbf_4($p[2]));
 		}else{
-			$rs = odbc_columns($db,null,$p[0],dbf_4($p[1]));
+			$rs = lmbdb_columns($db,null,$p[0],dbf_4($p[1]));
 		}
 		return $rs;
 	}
@@ -568,16 +572,16 @@ function dbf_5($p,$mode=null){
 		$sql .= " AND LOWER(COLUMNNAME) = '".lmb_strtolower($p[2])."'";
 	}
 
-	$rs = odbc_exec($db,$sql);
-	while(odbc_fetch_row($rs)) {
-		$col["tablename"][] = dbf_4(odbc_result($rs, "TABLENAME"));
-		$col["columnname"][] = dbf_4(odbc_result($rs, "COLUMNNAME"));
-		$col["columnname_lower"][] = dbf_4(trim(odbc_result($rs, "COLUMNNAME")));
-		$col["datatype"][] = odbc_result($rs, "DATATYPE");
-		$col["length"][] = odbc_result($rs, "LEN");
-		$col["scale"][] = trim(odbc_result($rs, "DEC"));
-		$col["default"][] = odbc_result($rs, "DEFAULT");
-		$col["mode"][] = odbc_result($rs, "MODE");
+	$rs = lmbdb_exec($db,$sql);
+	while(lmbdb_fetch_row($rs)) {
+		$col["tablename"][] = dbf_4(lmbdb_result($rs, "TABLENAME"));
+		$col["columnname"][] = dbf_4(lmbdb_result($rs, "COLUMNNAME"));
+		$col["columnname_lower"][] = dbf_4(trim(lmbdb_result($rs, "COLUMNNAME")));
+		$col["datatype"][] = lmbdb_result($rs, "DATATYPE");
+		$col["length"][] = lmbdb_result($rs, "LEN");
+		$col["scale"][] = trim(lmbdb_result($rs, "DEC"));
+		$col["default"][] = lmbdb_result($rs, "DEFAULT");
+		$col["mode"][] = lmbdb_result($rs, "MODE");
 	}
 	
 	if($col){
@@ -699,7 +703,7 @@ end if;
 End;
 ";
 	
-	if($rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__)){
+	if($rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__)){
 		return true;
 	}else{
 		return false;
@@ -716,7 +720,7 @@ function dbq_21($p){
 	global $db;
 	
 	$sqlquery = "drop procedure ".$p[0].".lmb_vkn";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 }
 
 ################# BACKUP #################

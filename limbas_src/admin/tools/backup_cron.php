@@ -118,21 +118,21 @@ if($device == 2){?>
 <?php
 
 $sqlquery = "SELECT * FROM LMB_CRONTAB WHERE KATEGORY = 'BACKUP' ORDER BY ERSTDATUM";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
-while(odbc_fetch_row($rs)){
-	if(odbc_result($rs,"KATEGORY") == "BACKUP"){$color = "#94AEEF";}
-	elseif(odbc_result($rs,"KATEGORY") == "INDEX"){$color = "#FF9294";}
+while(lmbdb_fetch_row($rs)){
+	if(lmbdb_result($rs,"KATEGORY") == "BACKUP"){$color = "#94AEEF";}
+	elseif(lmbdb_result($rs,"KATEGORY") == "INDEX"){$color = "#FF9294";}
 	
 	echo "<TR BGCOLOR=\"$color\" class=\"tabBody\">
-	<TD>&nbsp;".odbc_result($rs,"ID")."&nbsp;</TD>
-	<TD>&nbsp;".odbc_result($rs,"KATEGORY")."&nbsp;</TD>
-	<TD>&nbsp;".odbc_result($rs,"START")."&nbsp;</TD>
-	<TD>&nbsp;".odbc_result($rs,"DESCRIPTION")."&nbsp;</TD>
-	<TD>&nbsp;".odbc_result($rs,"ACTIV")."&nbsp;</TD>
-	<TD>&nbsp;".odbc_result($rs,"ALIVE")."&nbsp;days</TD>
-	<TD ALIGN=\"CENTER\">&nbsp;<A HREF=\"main_admin.php?action=setup_backup_cron&del_job=".odbc_result($rs,"ID")."\"><i class=\"lmb-icon lmb-trash\" BORDER=\"0\"></i></A>&nbsp;</TD></TR>";
-	$cronvalue[] = odbc_result($rs,"START")."\twebuser (php \"".$umgvar['pfad']."/cron.php\" < /bin/echo ".odbc_result($rs,"ID").")";
+	<TD>&nbsp;".lmbdb_result($rs,"ID")."&nbsp;</TD>
+	<TD>&nbsp;".lmbdb_result($rs,"KATEGORY")."&nbsp;</TD>
+	<TD>&nbsp;".lmbdb_result($rs,"START")."&nbsp;</TD>
+	<TD>&nbsp;".lmbdb_result($rs,"DESCRIPTION")."&nbsp;</TD>
+	<TD>&nbsp;".lmbdb_result($rs,"ACTIV")."&nbsp;</TD>
+	<TD>&nbsp;".lmbdb_result($rs,"ALIVE")."&nbsp;days</TD>
+	<TD ALIGN=\"CENTER\">&nbsp;<A HREF=\"main_admin.php?action=setup_backup_cron&del_job=".lmbdb_result($rs,"ID")."\"><i class=\"lmb-icon lmb-trash\" BORDER=\"0\"></i></A>&nbsp;</TD></TR>";
+	$cronvalue[] = lmbdb_result($rs,"START")."\twebuser (php \"".$umgvar['pfad']."/cron.php\" < /bin/echo ".lmbdb_result($rs,"ID").")";
 }
 
 ?>

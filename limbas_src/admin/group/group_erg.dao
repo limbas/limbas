@@ -21,14 +21,14 @@
 # Obergruppe
 if($ID){
 	$sqlquery = "SELECT LEVEL FROM LMB_GROUPS WHERE GROUP_ID = $ID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$group_level = odbc_result($rs, "LEVEL");
+	$group_level = lmbdb_result($rs, "LEVEL");
 	if($group_level){
 		$sqlquery = "SELECT NAME FROM LMB_GROUPS WHERE GROUP_ID = $group_level";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		$groupname_level = odbc_result($rs, "NAME");
+		$groupname_level = lmbdb_result($rs, "NAME");
 	}else{$group_level = 0;}
     $startgroup = 0;
     if(!$session["superadmin"]){$startgroup = $group_level;}
@@ -56,7 +56,7 @@ if($change){
 
 	if(is_array($multiframe)){$multiframe = parse_db_string(implode(";",$multiframe),250);}
 	$sqlquery = "UPDATE LMB_GROUPS SET NAME = '$groupname',DESCRIPTION = '$groupdesc',REDIRECT = '".$redirect."',MULTIFRAMELIST = '".$multiframe."' WHERE GROUP_ID = $ID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if($rs) {
 		$groupdat["name"][$ID] = $groupname;
 		$groupdat["beschreibung"][$ID] = $groupdesc;
@@ -65,7 +65,7 @@ if($change){
 
 	if(($maingroup OR $maingroup === "0") AND $maingroup != $ID){
 		$sqlquery = "UPDATE LMB_GROUPS SET LEVEL = ".parse_db_int($maingroup,3)." WHERE GROUP_ID = $ID";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		echo "<SCRIPT LANGUAGE=\"JavaScript\">parent.user_tree.location.href=parent.user_tree.location.href</script>\n";
 	}
 }
@@ -93,16 +93,16 @@ if($update_parent_formsettings AND $update_parent_group){
 
 /* --- Select SQL-Query --------------------------------------------- */
 $sqlquery = "SELECT DISTINCT MULTIFRAMELIST,GROUP_ID,LEVEL,NAME,DESCRIPTION,REDIRECT,ERSTDATUM,EDITDATUM FROM LMB_GROUPS WHERE GROUP_ID = $ID AND DEL = ".LMB_DBDEF_FALSE." ORDER BY GROUP_ID";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-if(odbc_fetch_row($rs)) {
-	$result_group["name"] = odbc_result($rs, "NAME");
-	$result_group["beschreibung"] = odbc_result($rs, "DESCRIPTION");
-	$result_group["redirect"] = odbc_result($rs, "REDIRECT");
-	$result_group["erstdatum"] = get_date(odbc_result($rs, "ERSTDATUM"),1);
-	$result_group["editdatum"] = get_date(odbc_result($rs, "EDITDATUM"),1);
-	$result_group["group_id"] = odbc_result($rs, "GROUP_ID");
-	$result_group["group_level"] = odbc_result($rs, "LEVEL");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+if(lmbdb_fetch_row($rs)) {
+	$result_group["name"] = lmbdb_result($rs, "NAME");
+	$result_group["beschreibung"] = lmbdb_result($rs, "DESCRIPTION");
+	$result_group["redirect"] = lmbdb_result($rs, "REDIRECT");
+	$result_group["erstdatum"] = get_date(lmbdb_result($rs, "ERSTDATUM"),1);
+	$result_group["editdatum"] = get_date(lmbdb_result($rs, "EDITDATUM"),1);
+	$result_group["group_id"] = lmbdb_result($rs, "GROUP_ID");
+	$result_group["group_level"] = lmbdb_result($rs, "LEVEL");
 	$result_group["mframelist"] = array();
-	if(odbc_result($rs, "MULTIFRAMELIST")){$result_group["mframelist"] = explode(";",odbc_result($rs, "MULTIFRAMELIST"));}
+	if(lmbdb_result($rs, "MULTIFRAMELIST")){$result_group["mframelist"] = explode(";",lmbdb_result($rs, "MULTIFRAMELIST"));}
 }
 ?>

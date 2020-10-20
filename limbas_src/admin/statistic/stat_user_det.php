@@ -99,20 +99,20 @@ function send_form(){
 
 <?php
 $sqlquery =  "SELECT * FROM LMB_USERDB";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-        $ID = odbc_result($rs,"USER_ID");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+        $ID = lmbdb_result($rs,"USER_ID");
         $sqlquery2 =  "SELECT MIN(LOGIN_DATE) AS MIN_DATE, MAX(LOGIN_DATE) AS MAX_DATE FROM LMB_HISTORY_USER WHERE USERID = ".$ID;
-        $rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
-        $bin2 = odbc_binmode($rs2,2);
+        $rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+        $bin2 = lmbdb_binmode($rs2,2);
         $bzm2 = 1;
 
         if($BGCOLOR == $farbschema['WEB7']){$BGCOLOR = $farbschema['WEB8'];} else {$BGCOLOR = $farbschema['WEB7'];}
         echo "<TR BGCOLOR=\"$BGCOLOR\">";
         echo"<TD ALIGN=\"CENTER\"><INPUT TYPE=\"CHECKBOX\" NAME=\"user\" VALUE=\"$ID\"></TD>";
-        echo"<TD><A HREF=\"Javascript:view_detail('".urlencode(odbc_result($rs,"VORNAME")." ".odbc_result($rs,"NAME"))."','$ID',document.form1.diag_von.value,document.form1.diag_bis.value);\">".odbc_result($rs,"VORNAME")." ".odbc_result($rs,"NAME")."</A></TD>";
-        echo"<TD>".get_date(odbc_result($rs2,"MIN_DATE"),2)."&nbsp;&nbsp;</TD>";
-        echo"<TD>".get_date(odbc_result($rs2,"MAX_DATE"),2)."&nbsp;&nbsp;</TD>";
+        echo"<TD><A HREF=\"Javascript:view_detail('".urlencode(lmbdb_result($rs,"VORNAME")." ".lmbdb_result($rs,"NAME"))."','$ID',document.form1.diag_von.value,document.form1.diag_bis.value);\">".lmbdb_result($rs,"VORNAME")." ".lmbdb_result($rs,"NAME")."</A></TD>";
+        echo"<TD>".get_date(lmbdb_result($rs2,"MIN_DATE"),2)."&nbsp;&nbsp;</TD>";
+        echo"<TD>".get_date(lmbdb_result($rs2,"MAX_DATE"),2)."&nbsp;&nbsp;</TD>";
         echo"</TR>";
 }
 ?>

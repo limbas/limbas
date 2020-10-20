@@ -38,13 +38,13 @@ function patch_2()
     global $db;
 
     $sqlquery = "SELECT ID,WERT FROM LMB_USER_COLORS";
-    $rs = odbc_exec($db, $sqlquery);
-    while (odbc_fetch_row($rs)) {
-        $color = '#'.ltrim(odbc_result($rs, "WERT"),'#');
-        $id = odbc_result($rs, "ID");
+    $rs = lmbdb_exec($db, $sqlquery);
+    while (lmbdb_fetch_row($rs)) {
+        $color = '#'.ltrim(lmbdb_result($rs, "WERT"),'#');
+        $id = lmbdb_result($rs, "ID");
 
         $sqlquery1 = "UPDATE LMB_USER_COLORS SET WERT = '".$color."' WHERE ID = $id";
-        $rs1 = odbc_exec($db, $sqlquery1);
+        $rs1 = lmbdb_exec($db, $sqlquery1);
     }
     return true;
 }

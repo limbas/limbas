@@ -44,40 +44,40 @@ function patch_7(){
 	global $db;
 
 	$sqlquery = "UPDATE LMB_UMGVAR SET category=1893 WHERE category=0";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	
 	$sqlquery = "UPDATE LMB_UMGVAR SET category=1894 WHERE category=1";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	
 	$sqlquery = "UPDATE LMB_UMGVAR SET category=1895 WHERE category=2";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	
 	$sqlquery = "UPDATE LMB_UMGVAR SET category=1896 WHERE category=3";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	
 	$sqlquery = "UPDATE LMB_UMGVAR SET category=1898 WHERE category=4";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	
 	$sqlquery = "UPDATE LMB_UMGVAR SET category=2700 WHERE category=12";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	
 	$sqlquery = "UPDATE LMB_UMGVAR SET category=1899 WHERE category=5";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	
 	$sqlquery = "UPDATE LMB_UMGVAR SET category=1900 WHERE category=6";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	
 	$sqlquery = "UPDATE LMB_UMGVAR SET category=2818 WHERE category=11";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	
 	$sqlquery = "UPDATE LMB_UMGVAR SET category=1995 WHERE category=7";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	
 	$sqlquery = "UPDATE LMB_UMGVAR SET category=2819 WHERE category=8";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	
 	$sqlquery = "UPDATE LMB_UMGVAR SET category=2820 WHERE category=10";
-	$rs = odbc_exec($db,$sqlquery);	
+	$rs = lmbdb_exec($db,$sqlquery);	
 	
 	return true;
 
@@ -103,5 +103,5 @@ patch_db(11,"2.9",$sqlquery,"tree-relation");
 
 ###########################
 
-if ($db AND !$action) {odbc_close($db);}
+if ($db AND !$action) {lmbdb_close($db);}
 ?>

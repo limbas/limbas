@@ -17,11 +17,11 @@
 /*
  * ID: 1
  */
-require_once("inc/include_db.lib");
+require_once("lib/db/db_wrapper.lib");
 require_once("lib/include.lib");
 require_once("lib/session.lib");
 
-# redirect group 
+# redirect group
 if($groupdat["redirect"][$session["group_id"]]){
 	if(lmb_strtolower(lmb_substr($groupdat["redirect"][$session["group_id"]],0,4)) == "http"){
 		header("HTTP/1.1 301 Moved Permanently");
@@ -36,6 +36,7 @@ if($groupdat["redirect"][$session["group_id"]]){
 }
 
 ?>
+
 <HTML>
 <HEAD>
 <META NAME="Title" CONTENT="Limbas Enterprise Unifying Framework V <?= $umgvar["version"] ?>">
@@ -52,6 +53,7 @@ if($groupdat["redirect"][$session["group_id"]]){
 <meta HTTP-EQUIV="Cache-Control" content="no-cache, no-store, post-check=0, pre-check=0, must-revalidate">
 <meta HTTP-EQUIV="Expires" content="0">
 <link rel="shortcut icon" href="favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
 </HEAD>
 
 <?php /* --- Frameset ---------------------------------------------------------- */
@@ -71,5 +73,5 @@ if($session["layout"]){
 
 <?php
 /* --- DB-CLOSE ------------------------------------------------------ */
-if ($db) {odbc_close($db);}
+if ($db) {lmbdb_close($db);}
 ?>

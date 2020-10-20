@@ -1,0 +1,11 @@
+/* explorer */
+
+.lmbFileTreeItem {
+  cursor: pointer;
+}
+
+.lmbFileTreeItem:hover {
+  cursor: pointer;
+  background-color: $farbschemaWEB10;
+  text-decoration: none;
+}

@@ -95,7 +95,7 @@ if($trigger_typ == 1){
 	if($showsystr){$showsystr = "checked";}
 	echo "<TR class=\"tabBody\"><TD colspan=\"8\"><HR></TD></TR>";
 	echo "<TR class=\"tabBody\"><TD colspan=\"7\" align=\"right\">
-	show limbas trigger<input type=\"checkbox\" NAME=\"showsystr\" $showsystr onchange=\"this.form.submit();\">&nbsp;&nbsp;
+	show system trigger<input type=\"checkbox\" NAME=\"showsystr\" $showsystr onchange=\"this.form.submit();\">&nbsp;&nbsp;
 	<input type=\"submit\" NAME=\"syncronize\" value=\"$lang[2275]\">&nbsp;&nbsp;
 	<input type=\"submit\" NAME=\"change\" value=\"$lang[842]\">
 	</TD></TR>";

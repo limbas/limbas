@@ -232,9 +232,7 @@ if($tab == 1){
     echo "<TR><TD colspan=\"5\"><hr></TD></TR>";
     echo "<TR><TD colspan=\"5\"><input type=\"button\" VALUE=\"".$lang[33]."\" onclick=\"send_form()\"></TD></TR>";
     }
-    			
-    			
-    
+
     ?>
 
 	</TABLE>

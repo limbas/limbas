@@ -52,5 +52,5 @@ patch_db(8,"2.7",$sqlquery,"BUGFIX - update lmb_rules_tables");
 
 ###########################
 
-if ($db AND !$action) {odbc_close($db);}
+if ($db AND !$action) {lmbdb_close($db);}
 ?>

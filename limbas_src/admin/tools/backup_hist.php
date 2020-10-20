@@ -42,30 +42,30 @@ function f_3(PARAMETER) {
 <?php
 
 $sqlquery = "SELECT * FROM LMB_HISTORY_BACKUP ORDER BY ERSTDATUM DESC";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
 if(!$maxresult){$maxresult = 100;}
 $status = "OK";
 $bzm = 1;
-while(odbc_fetch_row($rs) AND $bzm <= $maxresult) {
+while(lmbdb_fetch_row($rs) AND $bzm <= $maxresult) {
 	
-	if(!odbc_result($rs,"RESULT")){$bgColor = "#FBE3BF";$status = "FALSE";}
-	elseif(odbc_result($rs,"ACTION") == "SAVE DATA"){$bgColor = "#D0DEEF";}
-	elseif(odbc_result($rs,"ACTION") == "SAVE LOG"){$bgColor = "#CEDBF7";}
-	elseif(odbc_result($rs,"ACTION") == "SAVE PAGES"){$bgColor = "#E3ECF5";}
+	if(!lmbdb_result($rs,"RESULT")){$bgColor = "#FBE3BF";$status = "FALSE";}
+	elseif(lmbdb_result($rs,"ACTION") == "SAVE DATA"){$bgColor = "#D0DEEF";}
+	elseif(lmbdb_result($rs,"ACTION") == "SAVE LOG"){$bgColor = "#CEDBF7";}
+	elseif(lmbdb_result($rs,"ACTION") == "SAVE PAGES"){$bgColor = "#E3ECF5";}
 	else{$bgColor = "#FFFFFF";}
 
 	$color = lmbSuggestColor($bgColor);
 
 	echo "<TR style=\"background-color:$bgColor; color:$color;\">
-	<TD>&nbsp;".odbc_result($rs,"ID")."&nbsp;</TD>
-	<TD>&nbsp;".odbc_result($rs,"ACTION")."&nbsp;</TD>
-	<TD>&nbsp;".get_date(odbc_result($rs,"ERSTDATUM"),2)."&nbsp;</TD>
-	<TD>&nbsp;$status ".odbc_result($rs,"MESSAGE")."&nbsp;</TD>
-	<TD>&nbsp;".odbc_result($rs,"MEDIUM")."&nbsp;</TD>
-	<TD>&nbsp;".file_size(odbc_result($rs,"SIZE")*1024)."&nbsp;</TD>
-	<TD>&nbsp;".odbc_result($rs,"SERVER")."&nbsp;</TD>
-	<TD>&nbsp;".odbc_result($rs,"LOCATION")."&nbsp;</TD>";
+	<TD>&nbsp;".lmbdb_result($rs,"ID")."&nbsp;</TD>
+	<TD>&nbsp;".lmbdb_result($rs,"ACTION")."&nbsp;</TD>
+	<TD>&nbsp;".get_date(lmbdb_result($rs,"ERSTDATUM"),2)."&nbsp;</TD>
+	<TD>&nbsp;$status ".lmbdb_result($rs,"MESSAGE")."&nbsp;</TD>
+	<TD>&nbsp;".lmbdb_result($rs,"MEDIUM")."&nbsp;</TD>
+	<TD>&nbsp;".file_size(lmbdb_result($rs,"SIZE")*1024)."&nbsp;</TD>
+	<TD>&nbsp;".lmbdb_result($rs,"SERVER")."&nbsp;</TD>
+	<TD>&nbsp;".lmbdb_result($rs,"LOCATION")."&nbsp;</TD>";
 	$bzm++;
 }
 ?>

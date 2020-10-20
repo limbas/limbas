@@ -19,11 +19,20 @@ abstract class TemplateConfig {
 
     public abstract function getFunctionPrefix();
 
+    /**
+     * Used to filter template elements to some medium, e.g.:
+     * ${form: ->articles}
+     * ${report: =printTable()}
+     * "form" or "report" is what should be returned by getMedium()
+     * @return string the medium this TemplateConfig generates html for
+     */
+    public abstract function getMedium();
+
     public function getTemplateElementInstance($templateElementGtabid, $name, &$html) {
         return new TemplateElement($templateElementGtabid, $name, $html);
     }
 
-    public abstract function getDataPlaceholderInstance($chain, $flags, $altValue);
+    public abstract function getDataPlaceholderInstance($chain, $options, $altValue);
 
     public function getFunctionPlaceholderInstance($name, $params) {
         return new FunctionPlaceholder($name, $params);

@@ -78,9 +78,10 @@ function lmb_basicauth(){
     # --- basic auth ----------------------------------------------
     Header("HTTP/1.1 401 Authorization required");
     Header('WWW-Authenticate: Basic realm="'.$GLOBALS['auth_realm'].'"');
-    if ($db) {odbc_close($db);}
+    if ($db) {lmbdb_close($db);}
 
-	die ("<html><BODY BGCOLOR=\"#FFFFFF\"><CENTER><FONT FACE=\"Arial,Helvetica\"><FONT SIZE=\"2\"><BR><IMG SRC=\"pic/logo_business.gif\" BORDER=\"0\"><BR><BR><U><FONT COLOR=\"red\">Permission denied!</U></font></font></CENTER></body></html>");
+    require_once ('extra/permission.php');
+	die ();
 
 }
 
@@ -366,8 +367,8 @@ function next_db_id($tab,$field="ID",$sequence=null,$filter=null){
 		#if(LMB_DBFUNC_MAXHANDLE){$isnn = " WHERE $field IS NOT NULL";}
 		$sqlquery = "SELECT MAX($field) AS NEXTID FROM ".dbf_4($tab);
 		if($filter){$sqlquery .= " WHERE $filter";}
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-		if($NEXTID = odbc_result($rs,"NEXTID")+1){
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+		if($NEXTID = lmbdb_result($rs,"NEXTID")+1){
 			return $NEXTID;
 		}
 	}
@@ -397,14 +398,14 @@ function next_conf_id($tab,$field="ID",$ext=null,$allocate=null){
 	if($from AND $to){
 		if($umgvar["allocate_freeid"] AND !$allocate){
 			$sqlquery = "SELECT $field FROM $tab WHERE $field <= $to AND $field >= $from $ext ORDER BY $field";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 
-			if(odbc_result($rs, $field) > $from){   
+			if(lmbdb_result($rs, $field) > $from){
 				$NEXTID = $from;
 			}else{
 				$kid_ = 0;
-				while(odbc_fetch_row($rs)){
-					$kid = odbc_result($rs, $field);
+				while(lmbdb_fetch_row($rs)){
+					$kid = lmbdb_result($rs, $field);
 					if(($kid-$kid_) > 1 AND $kid_){
 						$NEXTID = $kid_+1;
 						break;
@@ -417,8 +418,8 @@ function next_conf_id($tab,$field="ID",$ext=null,$allocate=null){
 		if(!$NEXTID){
 
 			$sqlquery = "SELECT MAX($field) AS NEXTID FROM $tab WHERE $field <= $to AND $field >= $from $ext";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-			$NEXTID = odbc_result($rs,"NEXTID")+1;
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+			$NEXTID = lmbdb_result($rs,"NEXTID")+1;
 
 			if($allocate AND $NEXTID < $allocate){
 				$NEXTID = $NEXTID+$allocate;
@@ -458,7 +459,7 @@ function lmb_num_rows($rs,&$query=null,$counttype=null) {
 	
 	$count = -1;
 	if(defined(LMB_DBFUNC_NUMROWS) AND !defined(LMB_DBFUNC_OFFSET)){
-		$count = odbc_num_rows($rs);
+		$count = lmbdb_num_rows($rs);
 	}
 
 	# ---------------- Anzahl Ergebnisse neu berechnen -------------
@@ -466,14 +467,14 @@ function lmb_num_rows($rs,&$query=null,$counttype=null) {
 		if($counttype == 2){
 			return $umgvar["resultspace"];
 		}elseif($counttype == 1){
-			while(odbc_fetch_row($rs)){
+			while(lmbdb_fetch_row($rs)){
 				$ct++;
 			}
 			$count = $ct;
 		}elseif($query){
-			$rs1 = odbc_exec($db,$query) or errorhandle(odbc_errormsg($db),$query,'count_query',__FILE__,__LINE__);
-			$count =  odbc_result($rs1, "RESULT");
-	   		odbc_free_result($rs1);
+			$rs1 = lmbdb_exec($db,$query) or errorhandle(lmbdb_errormsg($db),$query,'count_query',__FILE__,__LINE__);
+			$count =  lmbdb_result($rs1, "RESULT");
+	   		lmbdb_free_result($rs1);
 		}
 	}
     return $count;
@@ -482,27 +483,35 @@ function lmb_num_rows($rs,&$query=null,$counttype=null) {
 /**
  * SQL - prepare
  *
- * @param string $query_string
- * @param array $value
- * @return bolean
+ * @param $prepare_string string
+ * @param $bindvalue array of values with which to replace ?s in prepare_string
+ * @param $FILE string __FILE__
+ * @param $LINE string __LINE__
+ * @return PDOStatement|resource|false
  */
 function lmb_PrepareSQL($prepare_string,$bindvalue,$FILE=null,$LINE=null) {
 	global $db;
 
 	if(LMB_DBFUNC_PREPAREHANDLE){
-		$sql_prep = odbc_prepare($db,$prepare_string);
-		$rs = odbc_execute($sql_prep,$bindvalue) or errorhandle(odbc_errormsg($db),$prepare_string,"odbc_prepare",$FILE,$LINE);
-		if(!$rs) {$commit = 1;}
+		$sql_prep = lmbdb_prepare($db,$prepare_string);
+		$rs = lmbdb_execute($sql_prep,$bindvalue) or errorhandle(lmbdb_errormsg($db),$prepare_string,'odbc_prepare',$FILE,$LINE);
 	}else{
 		$prepsplit = explode("?",$prepare_string);
 		foreach ($prepsplit as $key => $value){
-			if(isset($bindvalue[$key]) AND count($prepsplit) > 1){$sqlquery .= $value."'".$bindvalue[$key]."'";}
-			else{$sqlquery .= $value;}
+			if($key + 1 === count($prepsplit)) { // last part
+                $sqlquery .= $value;
+            } else {
+                $sqlquery .= $value . "'" . parse_db_string($bindvalue[$key]) . "'";
+            }
 		}
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,"odbc_prepare",$FILE,$LINE);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,"odbc_prepare",$FILE,$LINE);
 	}
 
-	if($rs){return true;}else{return false;}
+	if(!$rs){return false;}
+	if($sql_prep) {
+	    return $sql_prep; // return statement s.t. you can fetch later on
+    }
+    return $rs; // fallback if !LMB_DBFUNC_PREPAREHANDLE
 }
 
 /**
@@ -607,35 +616,39 @@ function lmb_error_log($source,$error,&$verbose=null,$alert=null){
  * @param string $FILE
  * @param int $LINE
  */
-function errorhandle($FEHLER,$QUERY,$ACTION,$FILE,$LINE){
-	global $session;
-	global $umgvar;
+function errorhandle($FEHLER,$QUERY,$ACTION,$FILE,$LINE)
+{
+    global $session;
+    global $umgvar;
 
-	if($ACTION == 'result_query'){
-		if(function_exists("filter_reset")){filter_reset();}
-		$ACTION = 'gtab_erg';
-	}
-	if(!$ACTION){$ACTION = $GLOBALS["action"];}
-	
-	$logpath = $umgvar["pfad"]."/TEMP/log/sql_error.log";
-	$value = date("Y-m-d H:i:s")."\t".$session["username"]."\t".$ACTION."\t".$FILE."\t".$LINE."\t".str_replace("\n"," ",$FEHLER)."\t".str_replace("\n"," ",$QUERY)."\n";
-	$rf = fopen($logpath,"a");
-	fputs($rf,$value);
-	fclose($rf);
-
-	if($session["debug"] OR $umgvar['admin_mode']) {
-        lmb_alert($value);
+    if ($ACTION == 'result_query') {
+        if (function_exists("filter_reset")) {
+            filter_reset();
+        }
+        $ACTION = 'gtab_erg';
     }
-			
-	#odbc_rollback($db);
-	#odbc_autocommit($db, 1);
-	
-	/* --- Next ID ---------------------------------------- */
-	#$NEXTID = next_db_id("LMB_ERRORS","ID");
-	#$sqlquery = "INSERT INTO LMB_ERRORS (ID,MELDUNG,SQLQUERY,USERID,ACTION,LMFILE,LINE) VALUES ($NEXTID,'".parse_db_string($FEHLER)."','".parse_db_string($QUERY)."','".$session["user_id"]."','$ACTION','$FILE','$LINE')";
-	#$rs = odbc_exec($db,$sqlquery);
-	#odbc_commit($db);
-	#odbc_autocommit($db, 1);
+    if (!$ACTION) {
+        $ACTION = $GLOBALS["action"];
+    }
+
+    $logpath = $umgvar["pfad"] . "/TEMP/log/sql_error.log";
+    $value = date("Y-m-d H:i:s") . "\t" . $session["username"] . "\t" . $ACTION . "\t" . $FILE . "\t" . $LINE . "\t" . str_replace("\n", " ", $FEHLER) . "\t" . str_replace("\n", " ", $QUERY) . "\n";
+    $rf = fopen($logpath, "a");
+    fputs($rf, $value);
+    fclose($rf);
+
+    if ($session["debug"] OR $umgvar['admin_mode']) {
+        lmb_alert($value);
+
+    // userdefined error from database function "lmb_isnull()"
+    } elseif ($session['db-custerrors']){
+        $ep = lmb_strpos($FEHLER,'<LMB');
+        if ($ep !== FALSE){
+            $FEHLER = substr($FEHLER,$ep+4,lmb_strpos($FEHLER,'LMB>')-$ep-4);
+            lmb_alert($FEHLER);
+        }
+    }
+
 	
 	return;
 }
@@ -716,13 +729,13 @@ function IMACK_ConvertThumbs($file=null,$width=null,$height=null,$prop=null,$des
 	    
 		if(is_numeric($file)){
 			$sqlquery = "SELECT ID,SECNAME,MIMETYPE,THUMB_OK,LEVEL FROM LDMS_FILES WHERE ID = $file AND THUMB_OK = ".LMB_DBDEF_TRUE;
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-			if(!odbc_result($rs, "SECNAME")){return false;}
-			$file_id = odbc_result($rs, "ID");
-			$secname = odbc_result($rs, "SECNAME");
-			$mimeid = odbc_result($rs, "MIMETYPE");
-			$thumb_ok = odbc_result($rs, "THUMB_OK");
-			$level = odbc_result($rs, "LEVEL");
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+			if(!lmbdb_result($rs, "SECNAME")){return false;}
+			$file_id = lmbdb_result($rs, "ID");
+			$secname = lmbdb_result($rs, "SECNAME");
+			$mimeid = lmbdb_result($rs, "MIMETYPE");
+			$thumb_ok = lmbdb_result($rs, "THUMB_OK");
+			$level = lmbdb_result($rs, "LEVEL");
 		}elseif(is_array($file)){
 			$file_id = $file[0];
 			$secname = $file[1];
@@ -881,7 +894,7 @@ function IMACK_NoSuccess($file_id){
 	
 	if(is_numeric($file_id)){
 		$sqlquery = "UPDATE LDMS_FILES SET THUMB_OK = ".LMB_DBDEF_FALSE." WHERE ID = $file_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 	}
 				
 }
@@ -900,11 +913,11 @@ function IMACK_Watermark($dest,$watermark){
 	   if(!$filestruct){get_filestructure();}
 	    
 		if(is_numeric($watermark)){
-		    $level = odbc_result($rs1, "SECNAME");
+		    $level = lmbdb_result($rs1, "SECNAME");
 			$sqlquery1 = "SELECT SECNAME,MIMETYPE,LEVEL FROM LDMS_FILES WHERE ID = $watermark";
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
-			if(odbc_result($rs1, "SECNAME")){
-				$wmark = $umgvar["uploadpfad"].$filestruct['path'][$level].odbc_result($rs1, "SECNAME").".".$gmimetypes["ext"][odbc_result($rs1, "MIMETYPE")];
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
+			if(lmbdb_result($rs1, "SECNAME")){
+				$wmark = $umgvar["uploadpfad"].$filestruct['path'][$level].lmbdb_result($rs1, "SECNAME").".".$gmimetypes["ext"][lmbdb_result($rs1, "MIMETYPE")];
 				$cmd = $umgvar["imagemagick"]."/composite -dissolve 25% -gravity northeast $wmark $dest $dest";
 				system($cmd,$out);
 			}
@@ -1007,7 +1020,7 @@ function history_action($tabid,$datid,$link_id,$level){
 		$level = parse_db_int($level,1);
 		$NEXTID = next_db_id('LMB_HISTORY_ACTION','ID',1);
 		$sqlquery1 = "INSERT INTO LMB_HISTORY_ACTION (ID,USERID,TAB,DATAID,ACTION,LOGLEVEL,LWF_ID,LWF_PRID,LWF_INID) VALUES ($NEXTID,".$session["user_id"].",".parse_db_int($tabid,5).",".parse_db_int($datid,16).",".parse_db_int($link_id,5).",".parse_db_int($level,5).",".parse_db_int($lwf_id,2).",".parse_db_int($lwf_prid,2).",".parse_db_int($lwf_inid,16).")";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 		$GLOBALS["ltmp"]["history_action"] = 1;
 
@@ -1131,7 +1144,7 @@ function history_update($tabid,$fieldid,$datid,$actionid,$value,$oldvalue){
 	if(lmb_strlen($value) > 990){$value = $value."...";}
 	$value = parse_db_string($value,990);
 	$sqlquery1 = "INSERT INTO LMB_HISTORY_UPDATE (ID,USERID,TAB,DATAID,FIELD,FIELDVALUE,ACTION_ID,LWF_ID,LWF_PRID,LWF_INID) VALUES ($NEXTID,".$session["user_id"].",".parse_db_int($tabid,5).",".parse_db_int($datid,18).",".parse_db_int($fieldid,5).",'".$value."',".parse_db_int($actionid,16).",".parse_db_int($lwf_id,2).",".parse_db_int($lwf_prid,2).",".parse_db_int($lwf_inid,16).")";
-	$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
+	$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
 	if(!$rs1) {return false;}
 
 	return true;
@@ -1324,10 +1337,10 @@ function historyGetEdituser($gtabid,$fieldid,$datid){
 	if(LMB_DBFUNC_ROWNO){$where = "AND ".LMB_DBFUNC_ROWNO." < 2";}
 
 	$sqlquery = "SELECT USERID FROM LMB_HISTORY_UPDATE WHERE TAB = ".parse_db_int($gtabid,5)." AND FIELD = ".parse_db_int($fieldid,5)." AND DATAID = ".parse_db_int($datid,10)." $where ORDER BY ERSTDATUM DESC $limit";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 
-	if(odbc_fetch_row($rs)){
-		$uid = odbc_result($rs,"USERID");
+	if(lmbdb_fetch_row($rs)){
+		$uid = lmbdb_result($rs,"USERID");
 		return $userdat["bezeichnung"][$uid];
 	}else{
 		return false;
@@ -1906,9 +1919,9 @@ function getFirstUserForRecord($tabid,$recid){
 	$tabname = $gtab["table"][$tabid];
 
 	$sqlquery = "select ERSTUSER from $tabname where ID = $recid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_fetch_row($rs)){
-		return odbc_result($rs,"ERSTUSER");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_fetch_row($rs)){
+		return lmbdb_result($rs,"ERSTUSER");
 	}
 }
 
@@ -1921,9 +1934,9 @@ function USER_getDisplay($userid){
 
 	if($userid){
 		$sqlquery = "select VORNAME,NAME from LMB_USERDB where USER_ID = $userid";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(odbc_fetch_row($rs)){
-			return odbc_result($rs,"VORNAME") . " " . odbc_result($rs,"NAME");
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(lmbdb_fetch_row($rs)){
+			return lmbdb_result($rs,"VORNAME") . " " . lmbdb_result($rs,"NAME");
 		}
 	}
 }
@@ -1955,7 +1968,7 @@ function lmb_StartTransaction(){
 		$GLOBALS["lmb_transaction"]++;
 	}
 
-	odbc_autocommit($db, 0);
+	lmbdb_autocommit($db, 0);
 	return true;
 }
 
@@ -1971,10 +1984,10 @@ function lmb_EndTransaction($success,$message=null){
 	}
 
 	if($success){
-		odbc_commit($db);
+		lmbdb_commit($db);
 		if($message AND $message != 'none'){lmb_alert($message);}
 	} else {
-		odbc_rollback($db);
+		lmbdb_rollback($db);
 			if($message != 'none'){
 			if(!$alert){
 				lmb_alert($lang[56]);
@@ -1983,31 +1996,31 @@ function lmb_EndTransaction($success,$message=null){
 			if($message){lmb_alert($message);}
 		}
 	}
-	odbc_autocommit($db, 1);
+	lmbdb_autocommit($db, 1);
 }
 
 
 # simple odbc tablelist
 function ODBCResourceToHTML($res, $sTable, $sRow, $numrows=100){
-	$cFields = odbc_num_fields($res);
+	$cFields = lmbdb_num_fields($res);
 	if ($cFields == 0) {
 	    return '';
     }
 
 	$bzm = 1;
-	while(odbc_fetch_row($res)){
+	while(lmbdb_fetch_row($res)){
 
 	    if($bzm == 1) {
             $strTable = "<table $sTable ><tr><td>nr</td>";
             for ($n = 1; $n <= $cFields; $n++) {
-                $strTable .= "<td $sRow><b>" . str_replace("_", " ", odbc_field_name($res, $n)) . "</b></td>";
+                $strTable .= "<td $sRow><b>" . str_replace("_", " ", lmbdb_field_name($res, $n)) . "</b></td>";
             }
             $strTable .= "</tr>";
         }
 
 		$strTable .= "<tr><td>$bzm</td>";
 		for ($n=1; $n<=$cFields; $n++) {
-		    $cell = htmlentities(odbc_result($res, $n),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+		    $cell = htmlentities(lmbdb_result($res, $n),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
 		    if ($cell=='') {$strTable .= "<td $sRow>&nbsp;</td>";}
 		    else {$strTable .= "<td $sRow>". $cell . "</td>";}
 		}
@@ -2035,14 +2048,14 @@ function lmb_ini_wysiwyg($elid,$params=null,$changeEvent=null,$advanced=null){
 		$out .= "lmb_iniWYSIWYG(\"".$elid."\",\"$params\");\n";
 
 	}elseif($umgvar["wysiwygeditor"] == "TinyMCE"){
-	    $init = array('language:"'.$lang.'"', 'selector: "textarea#'.$elid.'"', 'width: "100%"');
+	    $init = array('language:"'.$lang.'"', 'selector: "textarea#'.$elid.'"','force_p_newlines: false','force_br_newlines: false','forced_root_block: ""', 'width: "100%"');
 	    $plugins = array();
 		$external_plugins = array();
 		$toolbar = array();
         $extended_valid_elements = array('@[nobr],table[*]'); /* this allows table[nobr], but also allows any other attribute of the table */
 
 		if($advanced == 1){
-		    $init = array('language:"'.$lang.'"', 'selector: "textarea#'.$elid.'"', 'width: "100%"');
+		    $init = array('language:"'.$lang.'"', 'selector: "textarea#'.$elid.'"','force_p_newlines: false','force_br_newlines: false','forced_root_block: ""', 'width: "100%"');
 		    $plugins = array('advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'print', 'preview', 'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen', 'insertdatetime', 'media', 'table', 'contextmenu', 'paste', 'wordcount', 'hr', 'textcolor');
             $toolbar = array('styleselect', 'fontselect', 'fontsizeselect', 'bold italic', 'alignleft aligncenter alignright alignjustify', 'bullist numlist outdent indent', 'link image', 'forecolor backcolor');
 		}
@@ -2149,20 +2162,23 @@ function lmbGetMenuSetting(){
 	global $session;
 	
 	$sqlquery = "SELECT M_SETTING FROM LMB_USERDB WHERE USER_ID = ".$session["user_id"];
-	if($rs = odbc_exec($db,$sqlquery)){
-		return unserialize(odbc_result($rs, "M_SETTING"));
+	if($rs = lmbdb_exec($db,$sqlquery)){
+		return unserialize(lmbdb_result($rs, "M_SETTING"));
 	}
 }
 
 
 
-function lmb_PHPMailer($to, $from, $subject, $message, $attachment=null){
+
+function lmb_PHPMailer($to, $from, $subject, $message, $attachment=null, $IsHTML=null, $SMTP=null){
     global $session;
     global $userdat;
-    
-    require_once('extern/PHPMailer/class.phpmailer.php');
-     
-    
+    global $umgvar;
+
+    require_once('extern/PHPMailer/src/Exception.php');
+    require_once('extern/PHPMailer/src/PHPMailer.php');
+    require_once('extern/PHPMailer/src/SMTP.php');
+
     $from_mail = $from;
     $from_name = null;
     if(!$from){
@@ -2181,7 +2197,57 @@ function lmb_PHPMailer($to, $from, $subject, $message, $attachment=null){
         $to_name = $to[1];
     }
     
-    $mail = new PHPMailer();
+    $mail = new PHPMailer\PHPMailer\PHPMailer();
+
+    // IsHTML=1;IsSMTP=1;HOST=123;Port=123;Auth=true;User=abc;From=abc;Pass=abc;Sec=tls;
+    if($SMTP) {
+        $params_ = explode(';', $SMTP);
+    }else{
+        $params_ = explode(';', $umgvar['php_mailer']);
+    }
+
+    foreach($params_ as $key => $value){
+        $p = explode('=',$value);
+        $params[trim($p[0])] = trim($p[1]);
+    }
+
+    if($IsHTML OR $params['IsHTML']){
+        $mail->IsHTML(true);
+    }
+    if($params['IsSMTP']){
+        $mail->IsSMTP();
+        if($params['HOST']){
+            $mail->Host = $params['HOST'];
+        }
+        if($params['Port']){
+            $mail->Port = $params['Port'];
+        }
+        if($params['Auth']){
+            $mail->SMTPAuth = $params['Auth'];
+        }
+        if($params['User']){
+            $mail->Username = $params['User'];
+        }
+        if($params['Pass']){
+            $mail->Password = $params['Pass'];
+        }
+        if($params['Sec']){
+            $mail->SMTPSecure = $params['Sec'];
+        }
+        if($params['From']){
+            $from_mail = $params['From'];
+        }
+        $mail->SMTPOptions = ['ssl'=>[
+        'verify_peer' => false,
+        'verify_peer_name' => false,
+        'allow_self_signed' => true
+        ]];
+
+        $mailer->AuthType='PLAIN';
+        #$mail->SMTPDebug = 4;
+        #$mail->SMTPAutoTLS = true;
+    }
+
     $mail -> CharSet = "UTF-8";
     $mail->AddReplyTo($from_mail,$from_name);
     $mail->SetFrom($from_mail, $from_name);   
@@ -2193,9 +2259,17 @@ function lmb_PHPMailer($to, $from, $subject, $message, $attachment=null){
     #$mail->AltBody = strip_tags(str_replace('<br>','\n',str_replace('<p>','\n',$message)));
 
     if($attachment){
-        if(!is_array($attachment)){$attachment[] = $attachment;}
+        if(!is_array($attachment)){$attachment = array($attachment);}
+        $bzm = 0;
         foreach($attachment as $key => $value){
-            $mail->AddAttachment($value);      // attachment
+            if(!$value){continue;}
+            $ext = explode('.',$value);
+            if($ext[1] == 'png' OR $ext[1] == 'gif' OR $ext[1] == 'jpg' OR $ext[1] == 'jpeg') {
+                $bzm++;
+                $mail->AddEmbeddedImage($value, 'attach-' . $bzm);      // image
+            }else{
+                $mail->AddAttachment($value);                           // attachment
+            }
         }
     }
     
@@ -2205,6 +2279,7 @@ function lmb_PHPMailer($to, $from, $subject, $message, $attachment=null){
     } else {
         return true;
     }
+
 }
 
 
@@ -2220,11 +2295,10 @@ function lmb_PHPMailer($to, $from, $subject, $message, $attachment=null){
 function lmb_sendMail($to,$from,$subject,$message,$attachment=null,$cc=null,$bcc=null){
 	global $session;
 	global $umgvar;
-	
 
 	// use PHPMailer
 	if($umgvar['use_phpmailer']){
-	   return lmb_PHPMailer($to, $from, $subject, $message, $attachement);
+	   return lmb_PHPMailer($to, $from, $subject, $message, $attachment);
 	}
 
 	$reply = $from;
@@ -2242,9 +2316,9 @@ function lmb_sendMail($to,$from,$subject,$message,$attachment=null,$cc=null,$bcc
 	$mime_boundary2 = "------------" . md5(uniqid(mt_rand(), 1));
 	
 	#$header  ="From:".$from."<".$from.">\n";
-	$header  ="From:".$from."\n";
-	$header .= "Reply-To: ".$reply."\n";
-	$header.= "MIME-Version: 1.0\n";
+	$header  ="From: ".$from."\r\n";
+	$header .= "Reply-To: ".$reply."\r\n";
+	$header.= "MIME-Version: 1.0\r\n";
 	
 	if($cc){
 	    if(is_array($cc)){
@@ -2283,7 +2357,7 @@ function lmb_sendMail($to,$from,$subject,$message,$attachment=null,$cc=null,$bcc
 	$content.= $message."\n\n";
 	$content.= "--".$mime_boundary2."--\n";
 	
-	if(!is_array($attachment)){
+	if($attachment AND !is_array($attachment)){
 		$attachment = array($attachment);
 	}
 	
@@ -2324,7 +2398,7 @@ function lmb_sendMail($to,$from,$subject,$message,$attachment=null,$cc=null,$bcc
 	}
 
 
-	if(@mail($to, $subject, $content, $header)) return true;
+	if(@mail($to, $subject, $content, $header, '-f '.$from)) return true;
 	else return false;
 }
 
@@ -2412,7 +2486,7 @@ function lmbCheckForUpdates($manualUpdate = false) {
         if ($umgvar['update_check'] == 'auto') {
             // probably no connection -> disable update_check
             $sqlquery = "UPDATE LMB_UMGVAR SET NORM='0' WHERE FORM_NAME='update_check'";
-            $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
         }
         $session['latestVersion'] = false;
         return false;
@@ -2451,11 +2525,11 @@ function lmbGenerateAuthToken($lifespan=1) {
 
     # delete expired auth tokens
     $sqlquery = 'DELETE FROM LMB_AUTH_TOKEN WHERE EXPIRESTAMP < ' . LMB_DBDEF_TIMESTAMP;
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
     # insert new token
     $sqlquery = "INSERT INTO LMB_AUTH_TOKEN (TOKEN, USER_ID, LIFESPAN, EXPIRESTAMP) VALUES ('$token', $userID, $lifespan, '$expireStamp')";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
     if ($rs) {
         return $token;
@@ -2476,29 +2550,29 @@ function lmbGetAuthTokenUser($auth_token) {
 
     # check token exists
     $sqlquery = "SELECT USER_ID, EXPIRESTAMP, LIFESPAN FROM LMB_AUTH_TOKEN WHERE TOKEN = '$auth_token'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    if (!odbc_fetch_row($rs)) {
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if (!lmbdb_fetch_row($rs)) {
         return false;
     }
 
     # check token not expired
-    $expireStamp = odbc_result($rs, 'EXPIRESTAMP');
-    $lifespan = odbc_result($rs, 'LIFESPAN');
+    $expireStamp = lmbdb_result($rs, 'EXPIRESTAMP');
+    $lifespan = lmbdb_result($rs, 'LIFESPAN');
     if ((strtotime($expireStamp) - time()) <= 0 OR $lifespan < 1) {
         $sqlquery = "DELETE FROM LMB_AUTH_TOKEN WHERE TOKEN='$auth_token'";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         return false;
     }
 
     # decrease lifespan
     if ($lifespan == 1) {
         $sqlquery = "DELETE FROM LMB_AUTH_TOKEN WHERE TOKEN='$auth_token'";
-        odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     } else {
         $sqlquery = "UPDATE LMB_AUTH_TOKEN SET LIFESPAN=LIFESPAN-1 WHERE TOKEN = '$auth_token'";
-        odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     }
-    if ($user_id = odbc_result($rs, 'USER_ID')) {
+    if ($user_id = lmbdb_result($rs, 'USER_ID')) {
         return $user_id;
     }
     return false;
@@ -2515,10 +2589,10 @@ function lmbGetAuthCredentials($auth_user, $auth_pass) {
 
     # check token exists
     $sqlquery = "SELECT USER_ID,PASSWORT FROM LMB_USERDB WHERE USERNAME = '$auth_user'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    if (odbc_fetch_row($rs)) {
-        $user_id = odbc_result($rs, 'USER_ID');
-        if (!lmbPasswordVerify($auth_user, $auth_pass, odbc_result($rs, 'PASSWORT'))) {
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if (lmbdb_fetch_row($rs)) {
+        $user_id = lmbdb_result($rs, 'USER_ID');
+        if (!lmbPasswordVerify($auth_user, $auth_pass, lmbdb_result($rs, 'PASSWORT'))) {
             return false;
         }
     }else{
@@ -2711,7 +2785,7 @@ function lmbPasswordHash($password) {
     global $umgvar;
 
     if ($hashFunc = $umgvar['password_hash']) {
-        return password_hash($password, $hashFunc);
+        return password_hash($password, intval($hashFunc));
     } else {
         return md5($password);
     }
@@ -2733,9 +2807,9 @@ function lmbPasswordVerify($username, $enteredPassword, $storedPassword) {
 
     if(!$umgvar){
         $sqlquery = "SELECT NORM FROM LMB_UMGVAR WHERE FORM_NAME = 'password_hash' ";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-        if (odbc_fetch_row($rs)) {
-            $umgvar['password_hash'] = odbc_result($rs, 'NORM');
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if (lmbdb_fetch_row($rs)) {
+            $umgvar['password_hash'] = lmbdb_result($rs, 'NORM');
         }
     }
 
@@ -2753,7 +2827,7 @@ function lmbPasswordVerify($username, $enteredPassword, $storedPassword) {
             # convert from md5 to password_hash
             $hashedPassword = password_hash($enteredPassword, $hashFunc);
             $sqlquery = "UPDATE LMB_USERDB SET PASSWORT='$hashedPassword' WHERE USERNAME = '" . parse_db_string($username, 30) . "'";
-            $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
             return true; # authenticated via md5
         }
     } else if (strlen($storedPassword) === 32) {
@@ -2762,6 +2836,96 @@ function lmbPasswordVerify($username, $enteredPassword, $storedPassword) {
         }
     }
     return false;
+}
+
+
+/**
+ * encrypts given string
+ *
+ * @param $string
+ * @return string
+ */
+function lmb_encrypt($string) {
+    global $umgvar;
+
+    $iv  = bin2hex(openssl_random_pseudo_bytes(openssl_cipher_iv_length($umgvar['enc_cipher'])));
+    $key = hex2bin(hash('sha256', LMB_ENC_KEY));
+
+    return $iv.base64_encode(openssl_encrypt($string, $umgvar['enc_cipher'], $key, 0, $iv));
+}
+
+/**
+ * decrypts given string
+ *
+ * @param $string
+ * @return string
+ */
+function lmb_decrypt($string) {
+    global $umgvar;
+
+    $ivlen     = openssl_cipher_iv_length('AES-256-CBC')*2;
+    $iv        = substr($string,0,$ivlen);
+    $encrypted = substr($string,$ivlen);
+
+    $key = hex2bin(hash('sha256', LMB_ENC_KEY));
+
+    return openssl_decrypt(base64_decode($encrypted), $umgvar['enc_cipher'], $key, 0, $iv);
+}
+
+/**
+ * Creates where clause filtering the specified postgres tsvector field for the search words
+ * @param $searchWords array of string
+ * @param $mode string 'and', 'or' or 'phrase'
+ * @param $langField string identifier of regconfig field that specifies the lang
+ * @return string where clause
+ * @see postgresAddFtsFields()
+ */
+function postgresGetFtsQuery($searchWords, $mode, $langField) {
+    global $umgvar;
+
+    $searchWords = array_map('parse_db_string', $searchWords);
+    if (!$mode) {
+        $mode = 'and';
+    }
+    switch ($mode) {
+        case 'and':
+            $search = implode('&', $searchWords);
+            $func = 'to_tsquery';
+            break;
+        case 'or':
+            $search = implode('|', $searchWords);
+            $func = 'to_tsquery';
+            break;
+        case 'phrase':
+            $search = implode(' ', $searchWords);
+            $func = 'phraseto_tsquery';
+            break;
+    }
+
+    if (postgresFtsLangColNeeded()) {
+        $indizeLang = "{$langField}::REGCONFIG";
+    } else {
+        $indizeLang = "'{$umgvar['postgres_indize_lang']}'";
+    }
+
+    return "{$func}({$indizeLang}, '{$search}')";
+}
+
+
+/**
+ * Determines whether a fts_lang field is needed to determine the indexed vector's language
+ * Returns true if $umgvar['postgres_indize_lang'] is 'all' or a list of languges (e.g. 'german,english')
+ * @return bool
+ */
+function postgresFtsLangColNeeded() {
+    global $umgvar;
+    static $needed = null;
+
+    if ($needed === null) {
+        $lang = array_key_exists('postgres_indize_lang', $_SESSION['umgvar']) ? $_SESSION['umgvar']['postgres_indize_lang'] : $umgvar['postgres_indize_lang'];
+        $needed = lmb_strpos($lang, ',') !== false || trim($lang) === 'all';
+    }
+    return $needed;
 }
 
 ?>

@@ -50,7 +50,7 @@ patch_db(7,4,$sqlquery,"adding table LMB_SQL_FAVORITES",3);
 function patch_8(){
     global $db;
     $sqlquery = "UPDATE LMB_FORM_LIST SET CSS = '' WHERE CSS LIKE '/USER/%'";
-    $rs = odbc_exec($db,$sqlquery);
+    $rs = lmbdb_exec($db,$sqlquery);
     return true;
 }
 patch_scr(8,4,'patch_8','delete wrong formuar css entries',3);

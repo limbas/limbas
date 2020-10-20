@@ -28,19 +28,20 @@ if($gLmbExt["ext_type.inc"]){
 
 
 /**
- * display formated field
+ * display formatted field
  *
- * @param unknown_type $gresult
- * @param unknown_type $gtabid
- * @param unknown_type $fieldid
- * @param unknown_type $ID
- * @param unknown_type $edit
- * @param unknown_type $class
- * @param unknown_type $style
- * @param unknown_type $pos
- * @param unknown_type $event
+ * @param array $gresult from get_gresult()
+ * @param int $gtabid table id
+ * @param int $fieldid field id
+ * @param int $ID dataset id
+ * @param bool $edit show fields as editable
+ * @param string $class css classes to add to the field
+ * @param string $style custom css
+ * @param string $pos more css
+ * @param int $z_index used for tabindex
+ * @param array $event passed to dftyp_events() to create onclick/onchange/... actions
  */
-function display_dftyp(&$gresult,$gtabid,$fieldid,$ID,$edit=1,$class=null,$style=null,$pos=null,$z_index=1,&$event=null){
+function display_dftyp(&$gresult,$gtabid,$fieldid,$ID,$edit=true,$class=null,$style=null,$pos=null,$z_index=1,&$event=null){
 	global $gfield;
 	global $gtab;
 
@@ -54,10 +55,13 @@ function display_dftyp(&$gresult,$gtabid,$fieldid,$ID,$edit=1,$class=null,$style
 	# ----------- Field Edit -----------
 	$noedit = 1;
 	if($gtab["edit"][$gtabid]){
-		if($gfield[$gtabid]["perm_edit"][$fieldid]){$noedit = 0;}
+		if ($gfield[$gtabid]["perm_edit"][$fieldid]) {
+		    $noedit = 0;
+		}
+
 		# ----------- Editrule -----------
-		if($gfield[$gtabid]["editrule"][$fieldid]){
-			$noedit = check_GtabRules($ID,$gtabid,$fieldid,$gfield[$gtabid]["editrule"][$fieldid],0,$gresult);
+		if (!$noedit and $gfield[$gtabid]["editrule"][$fieldid]){
+			$noedit = check_GtabRules($ID, $gtabid, $fieldid, $gfield[$gtabid]["editrule"][$fieldid], 0, $gresult);
 		}
 	}
 
@@ -346,18 +350,18 @@ function dftyp_7($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$ev
 
 		if($gresult[$gtabid][$bzm][0]['V'] AND $gfield[$gtabid]["option"][$bzm]){
 			if(preg_match('/display:none/',$style)){$sdpl="display:none;";}
-			echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" ID=\"".$gfield[$gtabid]["form_name"][$bzm]."_dse\" BORDER=\"0\" TITLE=\"\" style=\"cursor:pointer;vertical-align:baseline;$sdpl\" OnClick=\"limbasChangeCurrency(this,'".$result."','".$gresult[$gtabid][$bzm][0]['C']."','".$gfield[$gtabid]["form_name"][$bzm]."','$bzm')\"></i>";
+			echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" ID=\"".$gfield[$gtabid]["form_name"][$bzm]."_dse\" BORDER=\"0\" TITLE=\"\" style=\"cursor:pointer;vertical-align:baseline;$sdpl\" OnClick=\"limbasChangeCurrency(this,'".$gfield[$gtabid]["form_name"][$bzm]."','$bzm')\"></i>";
 		}
 		#echo "&nbsp;<span style=\"position:absolute;\" Onclick=\"limbasChangeCurrency(this,'".$gresult[$gtabid][$bzm][0]['V']."','".$gresult[$gtabid][$bzm][0]['C']."','".$gfield[$gtabid]["form_name"][$bzm]."','$bzm')\"><IMG SRC=\"pic/edit4.gif\" BORDER=\"0\" TITLE=\"\" style=\"cursor:pointer;vertical-align:baseline;\"></span>";
 	}else{
-		if($result = preg_replace("/^[\.]/","0.",$gresult[$gtabid][$bzm][0]['V'])){
-			$result = $result." ".$lmcurrency["symbol"][$gresult[$gtabid][$bzm][0]['C']];
-		}
+	    $val = $gresult[$gtabid][$bzm][0]['V'];
+		$val = preg_replace("/^[\.]/","0.",$val);
 		$events = dftyp_events($typ,$event,$event_click,null,null,null,null,$gresult,$gtabid,$bzm);
 		if($gfield[$gtabid]["nformat"][$bzm]){
-			$gresult[$gtabid][$bzm][0]['V'] = convert_NumberFormat($gresult[$gtabid][$bzm][0]['V'],$gfield[$gtabid]["nformat"][$bzm]);
+			$val = convert_NumberFormat($val,$gfield[$gtabid]["nformat"][$bzm]);
 		}
-		echo "<div id=\"".$gfield[$gtabid]["form_name"][$bzm]."\" name=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class STYLE=\"".$style."\" $events> ".$result."</div>";
+        $result = $val . " " . $lmcurrency["symbol"][$gresult[$gtabid][$bzm][0]['C']];
+        echo "<div id=\"".$gfield[$gtabid]["form_name"][$bzm]."\" name=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class STYLE=\"".$style."\" $events> ".$result."</div>";
 	}
 	echo "</div>";
 }
@@ -653,6 +657,7 @@ function dftyp_5($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$ev
 	global $gtab;
 	global $gfield;
 	global $farbschema;
+	global $lang;
 
 	if($style){
 	    $style_ = "STYLE=\"".$pos.$style.";height:auto;\"";
@@ -663,12 +668,48 @@ function dftyp_5($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$ev
 		$style = "STYLE=\"width:auto\"";
 	}
 	
-	if($typ == 1){
-		$event_click = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm]."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this.checked,'$ID','".$gfield[$gtabid]["ajaxpost"][$bzm]."',null,null,'".$gresult[$gtabid]['parentage']."')";
-	    if($gfield[$gtabid]["inherit_tab"][$bzm] AND !$gfield[$gtabid]["argument_edit"][$bzm]){$event_click = '';}
-		$events = dftyp_events($typ,$event,$event_click,null,null,null,null,$gresult,$gtabid,$bzm);
-		if($gresult[$gtabid][$bzm][0] == 1){$checked = "CHECKED" ;} else { unset($checked);}
-		echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style TYPE=\"CHECKBOX\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"1\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events $checked>";
+	if($typ == 1) {
+
+        if (!$gfield[$gtabid]["listing_viewmode"][$bzm]) {
+            $value = "this.checked";
+        } elseif ($gfield[$gtabid]["listing_viewmode"][$bzm] == 1){
+            $value = "this.value";
+        } elseif ($gfield[$gtabid]["listing_viewmode"][$bzm] == 2){
+            $value = "this.value";
+        }
+
+        $event_click = "checktyp('" . $gfield[$gtabid]["data_type"][$bzm] . "','" . $gfield[$gtabid]["form_name"][$bzm] . "','" . $gfield[$gtabid]["spelling"][$bzm] . "','" . $bzm . "','" . $gtabid . "',$value,'$ID','" . $gfield[$gtabid]["ajaxpost"][$bzm] . "',null,null,'" . $gresult[$gtabid]['parentage'] . "')";
+        if ($gfield[$gtabid]["inherit_tab"][$bzm] AND !$gfield[$gtabid]["argument_edit"][$bzm]) {
+            $event_click = '';
+        }
+        $events = dftyp_events($typ, $event, $event_click, null, null, null, null, $gresult, $gtabid, $bzm);
+        if ($gresult[$gtabid][$bzm][0] == 1) {
+            $checked = "CHECKED";
+            $selected = "SELECTED";
+        } else {
+            unset($checked);
+            $checked0 = "CHECKED";
+            $selected0 = "SELECTED";
+        }
+
+        // checkbox
+        if (!$gfield[$gtabid]["listing_viewmode"][$bzm]) {
+            echo "<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style TYPE=\"CHECKBOX\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"1\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events $checked>";
+        // radio
+        } elseif ($gfield[$gtabid]["listing_viewmode"][$bzm] == 1){
+            echo
+            $lang[1506]."<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style TYPE=\"RADIO\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"1\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events $checked>".
+            $lang[1507]."<INPUT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style TYPE=\"RADIO\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" VALUE=\"0\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events $checked0>
+            ";
+        // select
+        } elseif ($gfield[$gtabid]["listing_viewmode"][$bzm] == 2){
+            echo "
+            <SELECT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style TYPE=\"RADIO\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events>
+            <OPTION VALUE=\"1\" $selected>".$lang[1506]."
+            <OPTION VALUE=\"0\" $selected0>".$lang[1507]."
+            </SELECED>";
+        }
+
 	}elseif($typ == 2){
 		if($gresult[$gtabid][$bzm][0] == 1){
 			$events = dftyp_events($typ,$event,null,null,null,null,null,$gresult,$gtabid,$bzm);
@@ -757,10 +798,10 @@ function dftyp_21($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 	}
 
 	$sqlquery = "SELECT UGID,TYP FROM LMB_UGLST WHERE TABID = $gtabid AND FIELDID = $bzm AND DATID = ".$gresult[$gtabid]["id"][0];
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)){
-		$gutyp = odbc_result($rs, "TYP");
-		$guid = odbc_result($rs, "UGID");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+		$gutyp = lmbdb_result($rs, "TYP");
+		$guid = lmbdb_result($rs, "UGID");
 		$ers = "";
 		if($typ == 1){$ers = "<i class=\"lmb-icon lmb-erase\" OnClick=\"lmb_UGtype('".$guid."_".$gutyp."','','$gtabid','$bzm','$ID','');\" style=\"cursor:pointer\"></i>&nbsp;";}
 		if($gutyp == 'u'){
@@ -943,9 +984,9 @@ function dftyp_35($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 	
 	if(!$lmb_sync_slaves){
 	$sqlquery = "SELECT ID,NAME,SLAVE_URL FROM LMB_SYNC_SLAVES ORDER BY NAME";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)){
-	   $lmb_sync_slaves[odbc_result($rs, 'ID')] = odbc_result($rs, 'NAME');
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+	   $lmb_sync_slaves[lmbdb_result($rs, 'ID')] = lmbdb_result($rs, 'NAME');
 	}
 	}
 	
@@ -973,6 +1014,37 @@ function dftyp_35($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 	echo "</DIV>";
 }
 
+
+/* -------------------------- multitenants --------------------------------- */
+function dftyp_36($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$event=null) {
+	global $db;
+    global $gtab;
+    global $gfield;
+    global $session;
+    global $lmmultitenants;
+
+	if($pos){$pos = "STYLE=\"".$pos."\"";}
+	if($style){$style = "STYLE=\"".$style."\"";}
+
+	echo "<DIV $pos>";
+	if($typ == 1){
+		$event_change = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm]."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this.value,'".$ID."','".$gfield[$gtabid]["ajaxpost"][$bzm]."',null,null,'".$gresult[$gtabid]['parentage']."')";
+		$events = dftyp_events($typ,$event,null,$event_dblclick,null,null,$event_change,$gresult,$gtabid,$bzm);
+
+		echo "<SELECT ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events><OPTION></OPTION>";
+        foreach ($lmmultitenants['mid'] as $mid => $value){
+            echo "<OPTION value=\"$value\" ";
+            if($value == $gresult[$gtabid]['MID'][0]){echo "selected";}
+            echo ">".$lmmultitenants['name'][$mid]." ($value)</OPTION>";
+        }
+        echo "</SELECT>";
+
+	}elseif($typ == 2){
+		$events = dftyp_events($typ,$event,$event_click,null,null,null,null,$gresult,$gtabid,$bzm);
+		echo "<div id=\"".$gfield[$gtabid]["form_name"][$bzm]."\" name=\"".$gfield[$gtabid]["form_name"][$bzm]."\" $class $style $events style=\"cursor:pointer;\" title=\"".$gresult[$gtabid]['MID'][0]."\"> ".htmlentities($lmmultitenants['name'][$lmmultitenants['translate'][$gresult[$gtabid]['MID'][0]]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</div>";
+	}
+	echo "</DIV>";
+}
 
 /* -------------------------- Select-Feld 1 --------------------------------- */
 function dftyp_9($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$event=null) {
@@ -1023,17 +1095,17 @@ function dftyp_9($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$ev
 			// multilang
 			$field_name = 'WERT';
 			if($gfield[$gtabid]['multilang'][$bzm] == 2){
-		        $field_name = 'LANG'.$session['language'].'_WERT';
+		        $field_name = 'LANG'.$session['dlanguage'].'_WERT';
 		    }
 
 			$sqlquery = "SELECT ID,$field_name,HIDE FROM LMB_SELECT_W WHERE POOL = ".$gfield[$gtabid]["select_pool"][$bzm]." ".$where;
 			if ($gfield[$gtabid]["select_sort"][$bzm]) {$sqlquery .= " ORDER BY LMB_SELECT_W." . $gfield[$gtabid]["select_sort"][$bzm];} else {$sqlquery .= " ORDER BY LMB_SELECT_W.SORT";}
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			echo "<OPTION>";
-			while(odbc_fetch_row($rs)) {
-				$wert = odbc_result($rs, $field_name);
+			while(lmbdb_fetch_row($rs)) {
+				$wert = lmbdb_result($rs, $field_name);
 				$sval = htmlentities($wert,ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
-				if(!odbc_result($rs, "HIDE") OR $wert == $gresult[$gtabid][$bzm][0]){
+				if(!lmbdb_result($rs, "HIDE") OR $wert == $gresult[$gtabid][$bzm][0]){
 					echo "<OPTION VALUE=\"$sval\" ";
 					if($wert == $gresult[$gtabid][$bzm][0]){echo "SELECTED";}
 					echo ">";
@@ -1077,17 +1149,17 @@ function dftyp_15($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 		// multilang
 		$field_name = 'WERT';
 		if($gfield[$gtabid]['multilang'][$bzm] == 2){
-		     $field_name = 'LANG'.$session['language'].'_WERT';
+		     $field_name = 'LANG'.$session['dlanguage'].'_WERT';
 		}
 
 
 		$sqlquery = "SELECT $field_name,HIDE FROM LMB_SELECT_W WHERE POOL = ".$gfield[$gtabid]["select_pool"][$bzm].' '.$where;
 		if ($gfield[$gtabid]["select_sort"][$bzm]) {$sqlquery .= " ORDER BY LMB_SELECT_W." . $gfield[$gtabid]["select_sort"][$bzm];} else {$sqlquery .= " ORDER BY LMB_SELECT_W.SORT";}
 		echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\" $class $style>";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		while(odbc_fetch_row($rs)) {
-			$wert = odbc_result($rs, $field_name);
-			if(!odbc_result($rs, "HIDE") OR $wert == $gresult[$gtabid][$bzm][0]){
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs)) {
+			$wert = lmbdb_result($rs, $field_name);
+			if(!lmbdb_result($rs, "HIDE") OR $wert == $gresult[$gtabid][$bzm][0]){
 				echo "<TR>";
 				echo "<TD>".htmlentities($wert,ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</TD>";
 				echo "<TD ALIGN=\"right\" style=\"width:50px;\"><INPUT $class ID=\"".$gfield[$gtabid]["form_name"][$bzm]."\" TYPE=\"RADIO\" VALUE=\"".htmlentities($wert,ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\" STYLE=\"border:none;background-color:transparent;\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events";
@@ -1127,7 +1199,7 @@ function dftyp_10($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 	// multilang
 	$field_name = 'WERT';
 	if($gfield[$gtabid]['multilang'][$bzm] == 2){
-	    $field_name = 'LANG'.$session['language'].'_WERT';
+	    $field_name = 'LANG'.$session['dlanguage'].'_WERT';
 	}
 	
 	echo "<DIV $pos>";
@@ -1144,11 +1216,11 @@ function dftyp_10($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 		LEFT OUTER JOIN LMB_SELECT_D ON (LMB_SELECT_D.W_ID = LMB_SELECT_W.ID AND LMB_SELECT_D.TAB_ID = ".$gtabid." AND LMB_SELECT_D.FIELD_ID = ".$bzm." AND LMB_SELECT_D.DAT_ID = $ID)
 		WHERE LMB_SELECT_W.POOL = ".$gfield[$gtabid]['select_pool'][$bzm]." AND LMB_SELECT_W.HIDE = FALSE $where";
 		if ($gfield[$gtabid]["select_sort"][$bzm]) {$sqlquery .= " ORDER BY LMB_SELECT_W." . $gfield[$gtabid]["select_sort"][$bzm].", LMB_SELECT_D.ID";} else {$sqlquery .= " ORDER BY LMB_SELECT_D.ID";}
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		while(odbc_fetch_row($rs)) {
-			$sid = odbc_result($rs, "ID");
-			$mselct['value'][$sid] = odbc_result($rs, $field_name);
-			$mselct['d_id'][$sid] = odbc_result($rs, "DID");
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs)) {
+			$sid = lmbdb_result($rs, "ID");
+			$mselct['value'][$sid] = lmbdb_result($rs, $field_name);
+			$mselct['d_id'][$sid] = lmbdb_result($rs, "DID");
 		}
 		
 		# if unique
@@ -1182,10 +1254,10 @@ function dftyp_10($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 		echo "<div id=\"".$form_name."\" $style $class $events>";
 		$sqlquery1 = "SELECT LMB_SELECT_W.$field_name FROM LMB_SELECT_W,LMB_SELECT_D WHERE LMB_SELECT_D.W_ID = LMB_SELECT_W.ID AND LMB_SELECT_D.TAB_ID = $gtabid AND LMB_SELECT_D.FIELD_ID = $bzm AND LMB_SELECT_D.DAT_ID = $ID AND LMB_SELECT_W.HIDE = FALSE ";
 		if ($gfield[$gtabid]["select_sort"][$bzm]) {$sqlquery .= " ORDER BY LMB_SELECT_W." . $gfield[$gtabid]["select_sort"][$bzm].", LMB_SELECT_D.ID";} else {$sqlquery .= " ORDER BY LMB_SELECT_D.ID";}
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-		while(odbc_fetch_row($rs1)) {
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs1)) {
 			if(!$gfield[$gtabid]["unique"][$bzm]){echo "<li class=\"gtabBodyDetailValLI\">";}
-			echo htmlentities(odbc_result($rs1, $field_name),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+			echo htmlentities(lmbdb_result($rs1, $field_name),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
 			if(!$gfield[$gtabid]["unique"][$bzm]){echo "</li>";}
 		}
 		echo "</div>";
@@ -1215,7 +1287,7 @@ function dftyp_11($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 	// multilang
 	$field_name = 'WERT';
 	if($gfield[$gtabid]['multilang'][$bzm] == 2){
-	    $field_name = 'LANG'.$session['language'].'_WERT';
+	    $field_name = 'LANG'.$session['dlanguage'].'_WERT';
 	}
 
 	// SELECT / ATTRIBUTE
@@ -1223,9 +1295,9 @@ function dftyp_11($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 
 	// Poolsettings
     $sqlquery = "SELECT LMB_{$tabtyp}_P.TAGMODE,LMB_{$tabtyp}_P.MULTIMODE FROM LMB_{$tabtyp}_P WHERE ID = ".$gfield[$gtabid]["select_pool"][$bzm];
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    $pool_tagmode = odbc_result($rs, 'TAGMODE');
-    $pool_multimode = odbc_result($rs, "MULTIMODE");
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $pool_tagmode = lmbdb_result($rs, 'TAGMODE');
+    $pool_multimode = lmbdb_result($rs, "MULTIMODE");
 
 	if($typ == 1){
 
@@ -1249,11 +1321,11 @@ function dftyp_11($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 		if($gfield[$gtabid]["field_type"][$bzm] != 19){
 			$sqlquery1 = "SELECT LMB_SELECT_W.ID,LMB_SELECT_D.ID AS DID,LMB_SELECT_W.$field_name,LMB_SELECT_W.KEYWORDS FROM LMB_SELECT_W,LMB_SELECT_D WHERE LMB_SELECT_D.W_ID = LMB_SELECT_W.ID AND LMB_SELECT_D.TAB_ID = ".$gtabid." AND LMB_SELECT_D.FIELD_ID = ".$bzm." AND LMB_SELECT_D.DAT_ID = $ID";
 			if ($gfield[$gtabid]["select_sort"][$bzm]) {$sqlquery1 .= " ORDER BY LMB_SELECT_W." . $gfield[$gtabid]["select_sort"][$bzm].", LMB_SELECT_D.ID";} else {$sqlquery1 .= "ORDER BY LMB_SELECT_D.ID";}
-		    $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		    $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			# get single value if is unique
 			if($gfield[$gtabid]["unique"][$bzm]){
-				$singlevalue = odbc_result($rs1, $field_name);
-				$svalue = odbc_result($rs1, "ID");
+				$singlevalue = lmbdb_result($rs1, $field_name);
+				$svalue = lmbdb_result($rs1, "ID");
 			}
 		}
 
@@ -1297,13 +1369,13 @@ function dftyp_11($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
             }
 
             $scount = 0;
-            while (odbc_fetch_row($rs1)) {
+            while (lmbdb_fetch_row($rs1)) {
                 $ellist[] = "
 
-                <SPAN style=\"cursor:pointer;vertical-align:middle;\" TITLE=\"" . htmlentities(odbc_result($rs1, "KEYWORDS"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]) . "\">
-                <i class=\"lmb-icon lmb-erase\" is_active=\"1\" style=\"cursor:pointer;font-size:10\" OnClick=\"dyns_11_a_delete(event,this,'$ID','$gtabid','$bzm','" . odbc_result($rs1, "ID") ."','" . odbc_result($rs1, "DID") ."','" . $form_name . "','" . $gfield[$gtabid]["select_cut"][$bzm] . "');\"></i>
-                <SPAN>" . htmlentities(odbc_result($rs1, $field_name), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]) ."</SPAN></SPAN>";
-                $ellid[] = odbc_result($rs1, "ID");
+                <SPAN style=\"cursor:pointer;vertical-align:middle;\" TITLE=\"" . htmlentities(lmbdb_result($rs1, "KEYWORDS"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]) . "\">
+                <i class=\"lmb-icon lmb-erase\" is_active=\"1\" style=\"cursor:pointer;font-size:10\" OnClick=\"dyns_11_a_delete(event,this,'$ID','$gtabid','$bzm','" . lmbdb_result($rs1, "ID") ."','" . lmbdb_result($rs1, "DID") ."','" . $form_name . "','" . $gfield[$gtabid]["select_cut"][$bzm] . "');\"></i>
+                <SPAN>" . htmlentities(lmbdb_result($rs1, $field_name), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]) ."</SPAN></SPAN>";
+                $ellid[] = lmbdb_result($rs1, "ID");
                 $bzm1++;
             }
             if (!$gfield[$gtabid]["select_cut"][$bzm] OR lmb_strtoupper($gfield[$gtabid]["select_cut"][$bzm]) == "<OL>" OR lmb_strtoupper($gfield[$gtabid]["select_cut"][$bzm]) == "<UL>" OR lmb_strtoupper($gfield[$gtabid]["select_cut"][$bzm]) == "<LI>") {
@@ -1365,9 +1437,9 @@ function dftyp_11($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 		}else{
 			$sqlquery1 = "SELECT LMB_SELECT_W.$field_name FROM LMB_SELECT_W,LMB_SELECT_D WHERE LMB_SELECT_D.W_ID = LMB_SELECT_W.ID AND LMB_SELECT_D.TAB_ID = ".$gtabid." AND LMB_SELECT_D.FIELD_ID = ".$bzm." AND LMB_SELECT_D.DAT_ID = $ID";
 			if ($gfield[$gtabid]["select_sort"][$bzm]) {$sqlquery1 .= " ORDER BY LMB_SELECT_W." . $gfield[$gtabid]["select_sort"][$bzm].", LMB_SELECT_D.ID";} else {$sqlquery1 .= " ORDER BY LMB_SELECT_D.ID";}
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-			while(odbc_fetch_row($rs1)) {
-				$ellist[] = htmlentities(odbc_result($rs1, $field_name),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			while(lmbdb_fetch_row($rs1)) {
+				$ellist[] = htmlentities(lmbdb_result($rs1, $field_name),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
 			}
 			if(lmb_strtoupper($gfield[$gtabid]["select_cut"][$bzm]) == "<OL>" OR lmb_strtoupper($gfield[$gtabid]["select_cut"][$bzm]) == "<UL>" OR lmb_strtoupper($gfield[$gtabid]["select_cut"][$bzm]) == "<LI>"){echo "<LI>";$cut = "<LI>";}else{$cut = $gfield[$gtabid]["select_cut"][$bzm];}
 			if($ellist){echo implode($cut,$ellist);}
@@ -1392,39 +1464,39 @@ function dftyp_tags($gtabid,$bzm,$ID,$form_name,$field_name,$pool_multimode,$typ
 
     $sqlquery1 = "SELECT LMB_ATTRIBUTE_D.W_ID,LMB_ATTRIBUTE_W.TYPE,LMB_ATTRIBUTE_W.$field_name,LMB_ATTRIBUTE_W.KEYWORDS,LMB_ATTRIBUTE_W.TYPE,LMB_ATTRIBUTE_W.MANDATORY,LMB_ATTRIBUTE_W.COLOR,LMB_ATTRIBUTE_W.ATTRPOOL,LMB_ATTRIBUTE_W.HIDETAG,LMB_ATTRIBUTE_D.ID AS DID,LMB_ATTRIBUTE_D.VALUE_STRING,LMB_ATTRIBUTE_D.VALUE_NUM,VALUE_DATE FROM LMB_ATTRIBUTE_W,LMB_ATTRIBUTE_D WHERE LMB_ATTRIBUTE_D.W_ID = LMB_ATTRIBUTE_W.ID AND LMB_ATTRIBUTE_D.TAB_ID = " . $gtabid . " AND LMB_ATTRIBUTE_D.FIELD_ID = " . $bzm . " AND LMB_ATTRIBUTE_D.DAT_ID = $ID";
     if ($gfield[$gtabid]["select_sort"][$bzm]) {$sqlquery1 .= " ORDER BY LMB_ATTRIBUTE_W." . $gfield[$gtabid]["select_sort"][$bzm].", LMB_ATTRIBUTE_D.ID";} else {$sqlquery1 .= " ORDER BY LMB_ATTRIBUTE_D.ID";}
-    $rs1 = odbc_exec($db, $sqlquery1) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+    $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
 
-    while (odbc_fetch_row($rs1)) {
+    while (lmbdb_fetch_row($rs1)) {
 
-        $wert = odbc_result($rs1, $field_name);
-        $wid = odbc_result($rs1, "W_ID");
-        $type = odbc_result($rs1, 'TYPE');
-        $keywords = odbc_result($rs1, 'KEYWORDS');
-        $color = odbc_result($rs1, 'COLOR');
-        $pool = odbc_result($rs1, 'ATTRPOOL');
-        $hidetag = odbc_result($rs1, 'HIDETAG');
-        $keyword = odbc_result($rs1, 'KEYWORDS');
-        if($pool_multimode){$did = odbc_result($rs1, "DID");}
+        $wert = lmbdb_result($rs1, $field_name);
+        $wid = lmbdb_result($rs1, "W_ID");
+        $type = lmbdb_result($rs1, 'TYPE');
+        $keywords = lmbdb_result($rs1, 'KEYWORDS');
+        $color = lmbdb_result($rs1, 'COLOR');
+        $pool = lmbdb_result($rs1, 'ATTRPOOL');
+        $hidetag = lmbdb_result($rs1, 'HIDETAG');
+        $keyword = lmbdb_result($rs1, 'KEYWORDS');
+        if($pool_multimode){$did = lmbdb_result($rs1, "DID");}
         $form_tagname = $gfield[$gtabid]['form_name'][$bzm]."_".$ID."_att[".$wid."][".$did."]";
 
         $need = '';
         $checkbox = '';
         $option = '';
 
-        if(odbc_result($rs1, "MANDATORY")){$need = '*';}
+        if(lmbdb_result($rs1, "MANDATORY")){$need = '*';}
 
         # date
         if ($lmfieldtype[$type]['parse_type'] == 4) {
             $formtype = "<INPUT TYPE=\"text\"";
-            $attvalue = get_date(odbc_result($rs1, 'VALUE_DATE'));
+            $attvalue = get_date(lmbdb_result($rs1, 'VALUE_DATE'));
         # bool
         } else if ($lmfieldtype[$type]['parse_type'] == 3) {
-            $formtype = '<input id="attrckb'.$form_tagname.'" type="checkbox" onchange="$(this).siblings(\'input\').val(this.checked?1:0).change();" ' . (odbc_result($rs1, 'VALUE_NUM') ? 'checked' : '') . '><label for="attrckb'.$form_tagname.'"></label><INPUT TYPE="hidden"';
-            $attvalue = odbc_result($rs1, 'VALUE_NUM');
+            $formtype = '<input id="attrckb'.$form_tagname.'" type="checkbox" onchange="$(this).siblings(\'input\').val(this.checked?1:0).change();" ' . (lmbdb_result($rs1, 'VALUE_NUM') ? 'checked' : '') . '><label for="attrckb'.$form_tagname.'"></label><INPUT TYPE="hidden"';
+            $attvalue = lmbdb_result($rs1, 'VALUE_NUM');
         # pool
         }else if($type == 12){
             $formtype = "<select ";
-            $attvalue = odbc_result($rs1, 'VALUE_STRING');
+            $attvalue = lmbdb_result($rs1, 'VALUE_STRING');
 
             # extension
             if($gfield[$gtabid]["relext"][$bzm]){
@@ -1435,16 +1507,16 @@ function dftyp_tags($gtabid,$bzm,$ID,$form_name,$field_name,$pool_multimode,$typ
             // multilang
             $field_name = 'WERT';
             if($gfield[$gtabid]['multilang'][$bzm] == 2){
-                $field_name = 'LANG'.$session['language'].'_WERT';
+                $field_name = 'LANG'.$session['dlanguage'].'_WERT';
             }
 
             $sqlquery2 = "SELECT ID,$field_name,HIDE FROM LMB_SELECT_W WHERE POOL = $pool ".$where;  # todo - order by
-            $rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+            $rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
             $option = "<OPTION>";
-            while(odbc_fetch_row($rs2)) {
-                $subval = odbc_result($rs2, $field_name);
+            while(lmbdb_fetch_row($rs2)) {
+                $subval = lmbdb_result($rs2, $field_name);
                 $sval = htmlentities($subval,ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
-                if(!odbc_result($rs, "HIDE") OR $subval == $gresult[$gtabid][$bzm][0]){
+                if(!lmbdb_result($rs, "HIDE") OR $subval == $gresult[$gtabid][$bzm][0]){
                     $option .= "<OPTION VALUE=\"$sval\" ";
                     if($subval == $attvalue){$option .= "SELECTED";}
                     $option .= ">".$sval.'</OPTION>';
@@ -1455,12 +1527,12 @@ function dftyp_tags($gtabid,$bzm,$ID,$form_name,$field_name,$pool_multimode,$typ
         } else if($type){
             $formtype = "<INPUT TYPE=\"text\"";
 
-            if (odbc_result($rs1, 'VALUE_NUM')) {
-                $value_num = convert_FloatRound(odbc_result($rs1, 'VALUE_NUM'));
+            if (lmbdb_result($rs1, 'VALUE_NUM')) {
+                $value_num = convert_FloatRound(lmbdb_result($rs1, 'VALUE_NUM'));
             } else {
                 $value_num = '';
             }
-            $attvalue = htmlentities(trim($value_num . ' ' . odbc_result($rs1, 'VALUE_STRING')), ENT_QUOTES, $GLOBALS['umgvar']['charset']);
+            $attvalue = htmlentities(trim($value_num . ' ' . lmbdb_result($rs1, 'VALUE_STRING')), ENT_QUOTES, $GLOBALS['umgvar']['charset']);
         }
 
         // readonly
@@ -1482,14 +1554,14 @@ function dftyp_tags($gtabid,$bzm,$ID,$form_name,$field_name,$pool_multimode,$typ
                 NAME = \"" . $form_tagname . "\" 
                 ID=\"" . $form_tagname . "\" 
                 VALUE=\"" . $attvalue . "\" STYLE=\"overflow:initial;width:100%;\" $class
-                OnChange=\"checktyp('" . odbc_result($rs1, "TYPE") . "','" . $form_tagname . "','" . $wert . "','" . $bzm . "','" . $gtabid . "',this.value,'$ID','" . $gfield[$gtabid]["ajaxpost"][$bzm] . "',null,null,'" . $gresult[$gtabid]['parentage'] . "');
-                dyns_11_a(event,this,'" . odbc_result($rs1, "W_ID") . "','" . $form_name . "','$bzm','$gtabid','$ID','',1,'v');\">
+                OnChange=\"checktyp('" . lmbdb_result($rs1, "TYPE") . "','" . $form_tagname . "','" . $wert . "','" . $bzm . "','" . $gtabid . "',this.value,'$ID','" . $gfield[$gtabid]["ajaxpost"][$bzm] . "',null,null,'" . $gresult[$gtabid]['parentage'] . "');
+                dyns_11_a(event,this,'" . lmbdb_result($rs1, "W_ID") . "','" . $form_name . "','$bzm','$gtabid','$ID','',1,'v');\">
                 $option
                 ";
             }
             echo "</TD></TR>";
         }
-        $ellid[] = odbc_result($rs1, "W_ID");
+        $ellid[] = lmbdb_result($rs1, "W_ID");
     }
 
     echo "</TABLE>";
@@ -1517,7 +1589,7 @@ function dftyp_23($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 	// multilang
 	$field_name = 'WERT';
 	if($gfield[$gtabid]['multilang'][$bzm] == 2){
-	    $field_name = 'LANG'.$session['language'].'_WERT';
+	    $field_name = 'LANG'.$session['dlanguage'].'_WERT';
 	}
 		
 	if($typ == 1){
@@ -1526,11 +1598,11 @@ function dftyp_23($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 
 		/*------ Vorhandene Werte --------*/
 		$sqlquery = "SELECT W_ID FROM LMB_SELECT_D WHERE TAB_ID = $gtabid AND FIELD_ID = $bzm AND DAT_ID = $ID";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		$tmp_result = array();
 		$bzm1 = 1;
-		while(odbc_fetch_row($rs)) {
-			$tmp_result[] = odbc_result($rs, "W_ID");
+		while(lmbdb_fetch_row($rs)) {
+			$tmp_result[] = lmbdb_result($rs, "W_ID");
 			$bzm1++;
 		}
 		$scount = ($bzm1-1);
@@ -1544,17 +1616,17 @@ function dftyp_23($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 		/*------ Auswahlliste --------*/
 		$sqlquery = "SELECT ID,$field_name,HIDE FROM LMB_SELECT_W WHERE POOL = ".$gfield[$gtabid]["select_pool"][$bzm].' '.$where;
 		#if ($gfield[$gtabid]["select_sort"][$bzm]) {$sqlquery .= " ORDER BY LMB_SELECT_W." . $gfield[$gtabid]["select_sort"][$bzm];} else {$sqlquery .= " ORDER BY LMB_SELECT_W.SORT";}
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 		echo "<TABLE $class $style BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">";
 		echo "<INPUT TYPE=\"HIDDEN\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."\">";
 		$bzm1 = 1;
-		while(odbc_fetch_row($rs)) {
-			if(!odbc_result($rs, "HIDE") OR in_array(odbc_result($rs, "ID") ,$tmp_result)){
+		while(lmbdb_fetch_row($rs)) {
+			if(!lmbdb_result($rs, "HIDE") OR in_array(lmbdb_result($rs, "ID") ,$tmp_result)){
 				echo "<TR>";
-				echo "<TD ALIGN=\"LEFT\">".htmlentities(odbc_result($rs, $field_name),ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</TD>";
-				echo "<TD ALIGN=\"right\" style=\"width:50px;\"><INPUT TYPE=\"CHECKBOX\" ID=\"".$gfield[$gtabid]["form_name"][$bzm]."[".($bzm1-1)."]\" VALUE=\"".odbc_result($rs, "ID")."\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."[".($bzm1-1)."]\" $class STYLE=\"border:none;background-color:transparent;\" TABINDEX=\"$z_index\" $events TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" ";
-				if(in_array(odbc_result($rs, "ID") ,$tmp_result)){echo "CHECKED";}
+				echo "<TD ALIGN=\"LEFT\">".htmlentities(lmbdb_result($rs, $field_name),ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</TD>";
+				echo "<TD ALIGN=\"right\" style=\"width:50px;\"><INPUT TYPE=\"CHECKBOX\" ID=\"".$gfield[$gtabid]["form_name"][$bzm]."[".($bzm1-1)."]\" VALUE=\"".lmbdb_result($rs, "ID")."\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm]."[".($bzm1-1)."]\" $class STYLE=\"border:none;background-color:transparent;\" TABINDEX=\"$z_index\" $events TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" ";
+				if(in_array(lmbdb_result($rs, "ID") ,$tmp_result)){echo "CHECKED";}
 				echo "></TD>";
 				echo "</TR>";
 			}
@@ -1568,10 +1640,10 @@ function dftyp_23($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 		$events = dftyp_events(2,$event,null,null,null,null,null,$gresult,$gtabid,$bzm);
 		$sqlquery1 = "SELECT LMB_SELECT_W.$field_name FROM LMB_SELECT_W,LMB_SELECT_D WHERE LMB_SELECT_D.W_ID = LMB_SELECT_W.ID AND LMB_SELECT_D.TAB_ID = ".$gtabid." AND LMB_SELECT_D.FIELD_ID = ".$bzm." AND LMB_SELECT_D.DAT_ID = $ID";
 		#if ($gfield[$gtabid]["select_sort"][$bzm]) {$sqlquery .= " ORDER BY LMB_SELECT_W." . $gfield[$gtabid]["select_sort"][$bzm].", LMB_SELECT_D.ID";} else {$sqlquery .= " ORDER BY LMB_SELECT_D.ID";}
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		echo "<div $class $style $events>";
-		while(odbc_fetch_row($rs1)) {
-			echo "<li>".htmlentities(odbc_result($rs1, $field_name),ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</li>";
+		while(lmbdb_fetch_row($rs1)) {
+			echo "<li>".htmlentities(lmbdb_result($rs1, $field_name),ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</li>";
 		}
 		echo "</div>";
 	}
@@ -1601,7 +1673,7 @@ function dftyp_12($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 	$sqlquery1 = "SELECT DISTINCT LDMS_FILES.ID,LDMS_FILES.LEVEL,LDMS_FILES.SORT,LDMS_FILES.CHECKED,LDMS_FILES.CHECKUSER,LDMS_FILES.PERM,LDMS_FILES.PERMUSER,LDMS_FILES.LMLOCK,LDMS_FILES.LOCKUSER,LDMS_FILES.SECNAME,LDMS_FILES.NAME,LDMS_FILES.THUMB_OK,LDMS_FILES.SIZE,LDMS_FILES.ERSTUSER,LDMS_FILES.ERSTDATUM,LDMS_FILES.INDD,LDMS_FILES.INDT,LDMS_FILES.IND,LDMS_FILES.MIMETYPE
 	FROM LDMS_FILES
 	WHERE LDMS_FILES.TABID = $gtabid AND LDMS_FILES.FIELDID = $bzm AND LDMS_FILES.DATID = $ID AND TYP = 3 AND VID = 1 ORDER BY LDMS_FILES.SORT,LDMS_FILES.ERSTDATUM";
-	$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+	$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 	if(!$rs1) {$commit = 1;}
 
 	# ----------- Formular Ansicht ---------------------------------------------------------------
@@ -1612,11 +1684,11 @@ function dftyp_12($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 		$img_sn = array();
 		$width = $gform[$gformid]["width"][$formid];
 		$height = $gform[$gformid]["height"][$formid];
-		while(odbc_fetch_row($rs1)) {
-		    $LID = odbc_result($rs1, "LEVEL");
-			if($img2 = IMACK_ConvertThumbs(array(odbc_result($rs1, "ID"),odbc_result($rs1, "SECNAME"),odbc_result($rs1, "MIMETYPE"),odbc_result($rs1, "THUMB_OK"),odbc_result($rs1, "LEVEL")),($width-2),$height,1)){
+		while(lmbdb_fetch_row($rs1)) {
+		    $LID = lmbdb_result($rs1, "LEVEL");
+			if($img2 = IMACK_ConvertThumbs(array(lmbdb_result($rs1, "ID"),lmbdb_result($rs1, "SECNAME"),lmbdb_result($rs1, "MIMETYPE"),lmbdb_result($rs1, "THUMB_OK"),lmbdb_result($rs1, "LEVEL")),($width-2),$height,1)){
 				$img_sn[$bzm1] = $img2;
-				$img_id[$bzm1] = odbc_result($rs1, "ID");
+				$img_id[$bzm1] = lmbdb_result($rs1, "ID");
                 $bzm1++;
 			}
 		}
@@ -1726,9 +1798,9 @@ function dftyp_12($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 		# Datei Liste
 
         # ---- Datei-Liste -----
-        while (odbc_fetch_row($rs1)) {
-            $fid = odbc_result($rs1, "ID");
-            $LID = odbc_result($rs1, "LEVEL");
+        while (lmbdb_fetch_row($rs1)) {
+            $fid = lmbdb_result($rs1, "ID");
+            $LID = lmbdb_result($rs1, "LEVEL");
 
             unset($img);
             $event_click = "checktyp('" . $gfield[$gtabid]["data_type"][$bzm] . "','','','" . $bzm . "','" . $gtabid . "','delete_file','$ID','" . $gfield[$gtabid]["ajaxpost"][$bzm] . "')";
@@ -1736,12 +1808,12 @@ function dftyp_12($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
             echo "
 				<TR>
 				<TD NOWRAP VALIGN=\"TOP\" WIDTH=\"20\" OnClick=\"this.parentNode.style.backgroundColor='red';\"><i class=\"lmb-icon-cus lmb-page-delete-fancy\" height=\"12\" width=\"12\" style=\"cursor:pointer;\" TITLE=\"" . $lang[160] . "\" OnClick=\"document.form1." . $gfield[$gtabid]["form_name"][$bzm] . "_delete.value+='$fid;';$event_click;\"></i></TD>";
-            if (file_exists($umgvar["pfad"] . "/pic/fileicons/" . $gmimetypes["pic"][odbc_result($rs1, "MIMETYPE")])) {
-                echo "<TD NOWRAP VALIGN=\"TOP\" WIDTH=\"20\"><IMG SRC=\"pic/fileicons/" . $gmimetypes["pic"][odbc_result($rs1, "MIMETYPE")] . "\" height=\"12\" width=\"12\" BORDER=\"0\"></TD>";
+            if (file_exists($umgvar["pfad"] . "/pic/fileicons/" . $gmimetypes["pic"][lmbdb_result($rs1, "MIMETYPE")])) {
+                echo "<TD NOWRAP VALIGN=\"TOP\" WIDTH=\"20\"><IMG SRC=\"pic/fileicons/" . $gmimetypes["pic"][lmbdb_result($rs1, "MIMETYPE")] . "\" height=\"12\" width=\"12\" BORDER=\"0\"></TD>";
             }
-            echo "<TD NOWRAP VALIGN=\"TOP\"><A HREF=\"main.php?action=download&ID=$fid\" TARGET=\"new\" TYPE=\"" . odbc_result($rs1, "MIMETYPE") . "\">" . htmlentities(odbc_result($rs1, "NAME"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]) . "</A></TD>
-				<TD NOWRAP VALIGN=\"TOP\"><FONT COLOR=\"black\" TITLE=\"$lang[1544]\">" . get_date(odbc_result($rs1, "ERSTDATUM"), 1) . " (" . file_size(odbc_result($rs1, "SIZE")) . ")";
-            if (odbc_result($rs1, "IND")) {
+            echo "<TD NOWRAP VALIGN=\"TOP\"><A HREF=\"main.php?action=download&ID=$fid\" TARGET=\"new\" TYPE=\"" . lmbdb_result($rs1, "MIMETYPE") . "\">" . htmlentities(lmbdb_result($rs1, "NAME"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]) . "</A></TD>
+				<TD NOWRAP VALIGN=\"TOP\"><FONT COLOR=\"black\" TITLE=\"$lang[1544]\">" . get_date(lmbdb_result($rs1, "ERSTDATUM"), 1) . " (" . file_size(lmbdb_result($rs1, "SIZE")) . ")";
+            if (lmbdb_result($rs1, "IND")) {
                 echo "(<B STYLE=\"color:green\">i</B>)&nbsp;";
             }
             if (preg_match('/display:none/', $style)) {
@@ -1752,7 +1824,7 @@ function dftyp_12($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 
             #---- thumbs -----
             $size = explode("x", $umgvar["thumbsize1"]);
-            $img = IMACK_ConvertThumbs(array(odbc_result($rs1, "ID"), odbc_result($rs1, "SECNAME"), odbc_result($rs1, "MIMETYPE"), odbc_result($rs1, "THUMB_OK")), $size[0], $size[1], 1);
+            $img = IMACK_ConvertThumbs(array(lmbdb_result($rs1, "ID"), lmbdb_result($rs1, "SECNAME"), lmbdb_result($rs1, "MIMETYPE"), lmbdb_result($rs1, "THUMB_OK")), $size[0], $size[1], 1);
             if ($img) {
                 echo "<TD ALIGN=\"RIGHT\" VALIGN=\"TOP\">&nbsp;<img src=\"$img\" BORDER=\"1\">&nbsp;</TD>";
             }
@@ -1774,7 +1846,10 @@ function dftyp_32($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 	global $umgvar;
 	global $filestruct;
 
-    if(!$filestruct){get_filestructure();}
+    if(!$filestruct){
+        require_once('extra/explorer/filestructure.lib');
+        get_filestructure();
+    }
 
 	$secname_id = $gfield[$gtabid]["argresult_name"]["SECNAME"];
 	$mimetype_id = $gfield[$gtabid]["argresult_name"]["MIMETYPE"];
@@ -1983,7 +2058,7 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 	global $filter;
 	global $umgvar;
 	global $gformlist;
-	
+
 	if(!$ID){return;}
 	if(!$action){$action = 'gtab_change';}
 	require_once "gtab/gtab_type_erg.lib";
@@ -2144,7 +2219,7 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 					}
 				}
 				
-				echo "<SELECT $multiple $class STYLE=\"$style\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" ID=\"".$gfield[$gtabid]["form_name"][$bzm].$fextend."\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm].$fextend."[]\" $events>";
+				echo "<SELECT $multiple $class STYLE=\"$style\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" ID=\"".$gfield[$gtabid]["form_name"][$bzm].$fextend."\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm].$fextend."[]\" $events>"; // todo  name mit [] am Ende ??
 				echo "<OPTION VALUE=\"\">";
 	
 				if(!$vgresultlist = $vgresult[$linklevel["tabid"]]["id"]){$vgresultlist = array();}
@@ -2200,9 +2275,9 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 
         #$params['formid'] = $formid;   //TODO
         #$params['id'] = $ID;           //TODO
-		$vgresult = sql_14_c($vgtabid,$verkn,$linklevel,$gformid,null,$gsr,null,null,$params);
+        $vgresult = sql_14_c($vgtabid,$verkn,$linklevel,$gformid,null,$gsr,null,null,$params);
 		$rscount = $vgresult[$vgtabid]["res_count"];
-		
+
 		if($linklevel["is_subrelation"]) {$typ = 2;}
 		
 		if($style){$style_abs = "STYLE=\"".$pos.$style."overflow-x:hidden;\"";}else{$style_abs = "STYLE=\"margin-top:5px;margin-bottom:5px;\"";}

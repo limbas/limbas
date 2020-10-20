@@ -44,10 +44,11 @@ class FormTemplateElement extends TemplateElement {
             $existingPlaceholders = array();
             $missingPlaceholders = array();
             foreach ($placeholdersByStructure['placeholders'] as $key => &$placeholder) {
-                list($_gtabid, $fieldID) = explode(';', $key);
-                $allFieldIDs[] = intval($fieldID);
-                if (!array_key_exists($fieldID, $gresult[$gtabid])) {
-                    $missingFieldIDs[] = intval($fieldID);
+                // note that $tabID can differ from $gtabid in case a 1:1 relation table is requested
+                list($tabID, $fieldID) = explode(';', $key);
+                $allFieldIDs[intval($tabID)][] = intval($fieldID);
+                if (!array_key_exists($fieldID, $gresult[$tabID])) {
+                    $missingFieldIDs[intval($tabID)][] = intval($fieldID);
                     $missingPlaceholders[] = &$placeholder;
                 } else {
                     $existingPlaceholders[] = &$placeholder;
@@ -63,36 +64,37 @@ class FormTemplateElement extends TemplateElement {
             $this->setDataPlaceholderValues($existingPlaceholders, $gresultKey, $gtabid, $datid);
 
             # fetch data and store in gresult
-            if ($missingFieldIDs) {
+            foreach ($missingFieldIDs as $tabID => $fieldIDs) {
                 if ($datid) {
-                    TemplateConfig::$instance->gresults[] = get_gresult($gtabid, 1, null, null, null, array($gtabid => $missingFieldIDs), $datid);
+                    TemplateConfig::$instance->gresults[] = get_gresult($tabID, 1, null, null, null, array($tabID => $fieldIDs), $datid);
                     $subGresultKey = count(TemplateConfig::$instance->gresults) - 1;
                     $subGresult = &TemplateConfig::$instance->gresults[$subGresultKey];
                 }
 
                 # no dataset
-                if ($subGresult[$gtabid]['res_count'] == 0) {
+                if ($subGresult[$tabID]['res_count'] == 0) {
                     # -> set fields for later lookup
-                    foreach ($missingFieldIDs as $tmpFieldID) {
-                        $subGresult[$gtabid][$tmpFieldID][0] = null;
+                    foreach ($fieldIDs as $tmpFieldID) {
+                        $subGresult[$tabID][$tmpFieldID][0] = null;
                     }
 
                     # -> set id 0 to create new dataset
-                    $subGresult[$gtabid]['id'][0] = 0;
+                    $subGresult[$tabID]['id'][0] = 0;
                 }
 
                 # resolve remaining with new gresult
-                $this->setDataPlaceholderValues($missingPlaceholders, $subGresultKey, $gtabid, $datid);
+                $this->setDataPlaceholderValues($missingPlaceholders, $subGresultKey, $tabID, $datid);
             }
         }
 
         # recursively advance on relation tables
-        foreach ($placeholdersByStructure as $relationFieldID => &$subStructure) {
-            if (!is_numeric($relationFieldID)) {
+        foreach ($placeholdersByStructure as $relationFieldIdentifier => &$subStructure) {
+            list($tabID, $relationFieldID) = explode(',', $relationFieldIdentifier);
+            if (!is_numeric($tabID) || !is_numeric($relationFieldID)) {
                 continue;
             }
 
-            $verkn = set_verknpf($gtabid, $relationFieldID, $datid, 0, 0, 1, 0);
+            $verkn = set_verknpf($tabID, $relationFieldID, $datid, 0, 0, 1, 0);
             $this->resolveDataPlaceholdersRec($subStructure, $verkn);
         }
 
@@ -115,18 +117,20 @@ class FormTemplateElement extends TemplateElement {
         # check which fields to request
         $missingFieldIDs = array();
         foreach ($structure['placeholders'] as $key => $_placeholder) {
-            list($_gtabid, $fieldID) = explode(';', $key);
-            $missingFieldIDs[] = intval($fieldID);
+            list($tabID, $fieldID) = explode(';', $key);
+            $missingFieldIDs[$tabID][] = intval($fieldID);
         }
 
         # call to get_gresult (only if parent-relation-datid is available)
         if ($verkn['id'] != 0) {
             # include at least id field
             if (!$missingFieldIDs) {
-                $missingFieldIDs[] = $gfield[$targetTabid]['argresult_name'][$gtab['keyfield'][$targetTabid]];
+                $missingFieldIDs[$targetTabid][] = $gfield[$targetTabid]['argresult_name'][$gtab['keyfield'][$targetTabid]];
+            }
+            foreach ($missingFieldIDs as $tabID => $fieldIDs) {
+                TemplateConfig::$instance->gresults[] = get_gresult($tabID, 1, null, null, $verkn, array($tabID => $fieldIDs));
             }
 
-            TemplateConfig::$instance->gresults[] = get_gresult($targetTabid, 1, null, null, $verkn, array($targetTabid => $missingFieldIDs));
         } else {
             TemplateConfig::$instance->gresults[] = array();
         }
@@ -152,12 +156,13 @@ class FormTemplateElement extends TemplateElement {
         $this->setDataPlaceholderValues($structure['placeholders'], $gresultKey, $targetTabid, $datid);
 
         # recursively advance on relation tables
-        foreach ($structure as $relationFieldID => &$subStructure) {
+        foreach ($structure as $relationFieldIdentifier => &$subStructure) {
+            list($tabID, $relationFieldID) = explode(',', $relationFieldIdentifier);
             if (!is_numeric($relationFieldID)) {
                 continue;
             }
 
-            $verkn = set_verknpf($targetTabid, $relationFieldID, $datid, 0, 0, 1, 0);
+            $verkn = set_verknpf($tabID, $relationFieldID, $datid, 0, 0, 1, 0);
             $this->resolveDataPlaceholdersRec($subStructure, $verkn);
         }
 

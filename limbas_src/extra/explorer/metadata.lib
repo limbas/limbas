@@ -335,12 +335,12 @@ function getmeta_from_db($ID,$index){
 
 	if($from AND $where){
 	$sqlquery = "SELECT * FROM ".implode(",",$from)." WHERE LDMS_FILES.ID = $ID AND ".implode(" AND ",$where);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {return false;}
-	if(odbc_fetch_row($rs)){
+	if(lmbdb_fetch_row($rs)){
 		foreach ($gfile['name'] as $key => $value){
 			if($gfile['field_type'][$key] != 100 AND !$gfile["virt"][$key] AND $gfile["tab"][$key] != "LDMS_FILES" AND $gfile["name"][$key] != "ID" AND $gfile["name"][$key] != "MIMETYPE"){
-				$result = odbc_result($rs, $value);
+				$result = lmbdb_result($rs, $value);
 
 				# date
 				if($gfile['typ'][$key] == 4){
@@ -437,7 +437,7 @@ function putmeta_to_db($ID,$meta){
 	# LDMS_META Tabelle updaten
 	if($history_fields){
 		$sqlquery = "UPDATE LDMS_FILES SET INDM = ".LMB_DBDEF_FALSE.", META = ".LMB_DBDEF_TRUE." WHERE ID = $ID";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {return false;}
 		update_data($history_fields,3,0,1);
 	}
@@ -455,25 +455,25 @@ function refreshmeta_to_db($ID){
     if(!$filestruct){get_filestructure();}
 	# get Details
 	$sqlquery = "SELECT DISTINCT LDMS_FILES.SECNAME,LDMS_FILES.LEVEL,LMB_MIMETYPES.MIMETYPE,LMB_MIMETYPES.EXT FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.ID = $ID AND LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {return false;}
-	$level = odbc_result($rs,'LEVEL');
-	$absfile = $umgvar["uploadpfad"].$filestruct['path'][$level].odbc_result($rs,"SECNAME").".".odbc_result($rs,"EXT");
-	$mimetype = odbc_result($rs,"MIMETYPE");
-	$ext = odbc_result($rs,"EXT");
+	$level = lmbdb_result($rs,'LEVEL');
+	$absfile = $umgvar["uploadpfad"].$filestruct['path'][$level].lmbdb_result($rs,"SECNAME").".".lmbdb_result($rs,"EXT");
+	$mimetype = lmbdb_result($rs,"MIMETYPE");
+	$ext = lmbdb_result($rs,"EXT");
 
 	# Metadaten in Datei schreiben
 	put_meta($ID,$ext,$absfile);
 
 	# reset Index
 	$sqlquery = "UPDATE LDMS_FILES SET INDM = ".LMB_DBDEF_FALSE.", META = ".LMB_DBDEF_TRUE." WHERE ID = $ID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {return false;}
 	$sqlquery = "DELETE FROM LMB_INDIZE_F WHERE FID = $ID AND META = ".LMB_DBDEF_TRUE;
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {return false;}
 	$sqlquery = "DELETE FROM LMB_INDIZE_FS WHERE FID = $ID AND META = ".LMB_DBDEF_TRUE;
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {return false;}
 
 	return true;

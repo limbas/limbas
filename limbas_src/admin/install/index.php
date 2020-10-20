@@ -50,9 +50,9 @@ $steps = array(
 <html>
     <head>
         <title><?= $_SERVER['SERVER_NAME'] ?> : LIMBAS Installation</title>
-        <link rel="stylesheet" href="../../extern/bootstrap/bootstrap.min.css">
-        <link rel="stylesheet" href="../../layout/comet/icons.css">
-        <script type="text/javascript" src="../../extern/jquery/jquery-1.11.0.min.js"></script>
+        <link rel="stylesheet" href="../../extern/bootstrap/bootstrap.min.css?v=<?=$umgvar["version"]?>">
+        <link rel="stylesheet" href="../../layout/comet/icons.css?v=<?=$umgvar["version"]?>">
+        <script type="text/javascript" src="../../extern/jquery/jquery-1.11.0.min.js?v=<?=$umgvar["version"]?>"></script>
         <style type="text/css">
             .borderless td, .borderless th {
                 border: none !important; 

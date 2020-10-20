@@ -20,13 +20,13 @@
 
 /* Get Field Settings */
 $sqlquery = "SELECT CHART_ID, FIELD_ID, AXIS, FUNCTION, COLOR FROM LMB_CHARTS WHERE CHART_ID=$diag_id";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 $diagdetaillist = array();
-while(odbc_fetch_row($rs)){
-	$fi = odbc_result($rs, "FIELD_ID");
-	$diagdetaillist[$fi]["axis"] = odbc_result($rs, "AXIS");
-	$diagdetaillist[$fi]["function"] = odbc_result($rs, "FUNCTION");
-	$diagdetaillist[$fi]["color"] = odbc_result($rs, "COLOR");
+while(lmbdb_fetch_row($rs)){
+	$fi = lmbdb_result($rs, "FIELD_ID");
+	$diagdetaillist[$fi]["axis"] = lmbdb_result($rs, "AXIS");
+	$diagdetaillist[$fi]["function"] = lmbdb_result($rs, "FUNCTION");
+	$diagdetaillist[$fi]["color"] = lmbdb_result($rs, "COLOR");
 }
 
 /* Get Customization Settings */
@@ -34,11 +34,11 @@ $settingnames = array('DIAG_TYPE','DIAG_WIDTH','DIAG_HEIGHT','TEXT_X','TEXT_Y','
 				'PADDING_TOP','PADDING_RIGHT','PADDING_BOTTOM','LEGEND_X','LEGEND_Y','LEGEND_MODE',
 				'PIE_WRITE_VALUES','PIE_RADIUS');
 $sqlquery = "SELECT " . implode(",", $settingnames) . " FROM LMB_CHART_LIST WHERE ID=$diag_id";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-if(odbc_fetch_row($rs)) {
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+if(lmbdb_fetch_row($rs)) {
     $settings = array();
     foreach ($settingnames as $name) {
-        $settings[$name] = odbc_result($rs, $name);
+        $settings[$name] = lmbdb_result($rs, $name);
     }
 }
 

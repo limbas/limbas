@@ -37,7 +37,6 @@
 
 <div class="lmbPositionContainerMain small">
 
-
 <table class="tabfringe">
 <?php
 
@@ -63,13 +62,7 @@ if($reminder){
 				
 				<TD align=\"center\" style=\"width:30px;white-space: nowrap;\">
 				<a href=\"main_admin.php?action=setup_reminder&sort=up&sortid=$id&tabid=$tabid\"><i class=\"lmb-icon lmb-long-arrow-up\" BORDER=\"0\"></i></a>&nbsp;<a href=\"main_admin.php?action=setup_reminder&sort=down&sortid=$id&tabid=$tabid\"><i class=\"lmb-icon lmb-long-arrow-down\" BORDER=\"0\"></i></a></TD>
-				
-				
 				<td><input type=\"text\" name=\"remindername[$id]\" value=\"".$name."\" onchange=\"document.form1.editid.value=$id;document.form1.submit();\"></td>
-				
-				
-				
-				
 				<td>";
 			if($gformlist[$tabid]["name"]){
 				$forms = "";

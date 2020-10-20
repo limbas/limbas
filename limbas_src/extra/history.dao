@@ -119,34 +119,34 @@ AND LMB_RULES_FIELDS.LMVIEW = TRUE
 $where
 ORDER BY $order LIMIT 200";
 
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 $bzm = 1;
-while(odbc_fetch_row($rs)) {
+while(lmbdb_fetch_row($rs)) {
 
 	if($history_typ == 2){
 		if($bzm == 1){
-			$startid = odbc_result($rs, "ID");
-			$startdate = get_date(odbc_result($rs, "ERSTDATUM"),1);
+			$startid = lmbdb_result($rs, "ID");
+			$startdate = get_date(lmbdb_result($rs, "ERSTDATUM"),1);
 		}else{
-			if(odbc_result($rs, "USERID") != $prevuser OR $startdate != get_date(odbc_result($rs, "ERSTDATUM"),1)){
+			if(lmbdb_result($rs, "USERID") != $prevuser OR $startdate != get_date(lmbdb_result($rs, "ERSTDATUM"),1)){
 				break;
 			}
 		}
 	}
 
-	$result_history["id"][] = odbc_result($rs, "ID");
-	$result_history["field_type"][] = $gfield[odbc_result($rs, "TAB")]['field_type'][odbc_result($rs, "FIELD")];
-	$result_history["editdatum"][] = get_date(odbc_result($rs, "ERSTDATUM"),2);
-	$result_history["field"][] = $gfield[odbc_result($rs, "TAB")]["spelling"][odbc_result($rs, "FIELD")];
-	$result_history["tabid"][] = odbc_result($rs, "TAB");
-	$result_history["fieldid"][] = odbc_result($rs, "FIELD");
-	$result_history["fieldvalue"][] = odbc_result($rs, "FIELDVALUE");
-	$result_history["user"][] = odbc_result($rs, "USERID");
+	$result_history["id"][] = lmbdb_result($rs, "ID");
+	$result_history["field_type"][] = $gfield[lmbdb_result($rs, "TAB")]['field_type'][lmbdb_result($rs, "FIELD")];
+	$result_history["editdatum"][] = get_date(lmbdb_result($rs, "ERSTDATUM"),2);
+	$result_history["field"][] = $gfield[lmbdb_result($rs, "TAB")]["spelling"][lmbdb_result($rs, "FIELD")];
+	$result_history["tabid"][] = lmbdb_result($rs, "TAB");
+	$result_history["fieldid"][] = lmbdb_result($rs, "FIELD");
+	$result_history["fieldvalue"][] = lmbdb_result($rs, "FIELDVALUE");
+	$result_history["user"][] = lmbdb_result($rs, "USERID");
 
 
-	$prevuser = odbc_result($rs, "USERID");
-	$breakid = odbc_result($rs, "ID");
-	$breakstamp = odbc_result($rs, "ERSTDATUM");
+	$prevuser = lmbdb_result($rs, "USERID");
+	$breakid = lmbdb_result($rs, "ID");
+	$breakstamp = lmbdb_result($rs, "ERSTDATUM");
 
 	$bzm++;
 }

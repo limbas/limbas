@@ -8,13 +8,13 @@ Part
 
 IfConstruct
   = condition:IfTag consequent:Part* ElseTag alternative:Part* EndifTag
-  { return TemplateConfig::$instance->getIfPlaceholderInstance($condition, $consequent, $alternative); }
+  { return $condition ? TemplateConfig::$instance->getIfPlaceholderInstance($condition, $consequent, $alternative) : TemplateConfig::$instance->getHtmlInstance(""); }
   / condition:IfTag consequent:Part* EndifTag
-  { return TemplateConfig::$instance->getIfPlaceholderInstance($condition, $consequent, null); }
+  { return $condition ? TemplateConfig::$instance->getIfPlaceholderInstance($condition, $consequent, null) : TemplateConfig::$instance->getHtmlInstance(""); }
 
 IfTag
-  = TAGSTART IF condition:IfCondition TAGEND
-  { return $condition; }
+  = TAGSTART medium:Medium? IF condition:IfCondition TAGEND
+  { return (!$medium || TemplateConfig::$instance->getMedium() === $medium) ? $condition : null; }
 
 IfCondition
   = DataPlaceholder
@@ -27,10 +27,14 @@ EndifTag
   = TAGSTART ENDIF TAGEND
 
 TemplateTag
-  = ESCAPEDTAGSTART Template TAGEND
+  = ESCAPEDTAGSTART Medium? Template TAGEND
   { return $this->text(); }
-  / TAGSTART tpl:Template TAGEND
-  { return $tpl; }
+  / TAGSTART medium:Medium? tpl:Template TAGEND
+  { return (!$medium || TemplateConfig::$instance->getMedium() === $medium) ? $tpl : TemplateConfig::$instance->getHtmlInstance(""); }
+
+Medium
+  = medium:Identifier ":" _
+  { return $medium; }
 
 Template
   = DataPlaceholder
@@ -38,19 +42,42 @@ Template
   / Subtemplate
 
 DataPlaceholder
-  = DATASTART head:FieldName tail:(DATASTART FieldName)* flags:Flags? altvalue:AltValue?
-  { $tail = array_map(function($t) { return $t[1]; }, $tail); array_unshift($tail, $head); return TemplateConfig::$instance->getDataPlaceholderInstance($tail, $flags, $altvalue); }
+  = head:FieldIdentifier tail:(FieldIdentifier)* options:Option* altvalue:AltValue?
+  { array_unshift($tail, $head); return TemplateConfig::$instance->getDataPlaceholderInstance($tail, array_merge(...$options), $altvalue); }
 
-Flags
-  = "[w]"
-  { return 'writeable'; }
+Option
+  = OPTIONSTART key:OptionKey OPTIONEND
+  { return array($key => true); }
+  / OPTIONSTART key:OptionKey OPTIONKEYVALSEP val:OptionVal OPTIONEND
+  { return array($key => $val); }
+
+OptionKey
+  = OptionKeyChar*
+  { return $this->text(); }
+
+OptionKeyChar
+  = "\\" OPTIONKEYVALSEP
+  / "\\" OPTIONEND
+  / !OPTIONKEYVALSEP !OPTIONEND .
+
+OptionVal
+  = OptionValChar*
+  { return $this->text(); }
+
+OptionValChar
+  = "\\" OPTIONEND
+  / !OPTIONEND .
 
 AltValue
   = "|" param:StringParam
   { return $param; }
 
-FieldName
-  = [A-Za-z]+
+FieldIdentifier
+  = tableIdentifier:(TABLEDATASTART Identifier)? DATASTART fieldIdentifier:Identifier
+  { $ret = array('name' => $fieldIdentifier); if ($tableIdentifier) { $ret['table'] = $tableIdentifier[1]; } return $ret; }
+
+Identifier
+  = [A-Za-z0-9_]+
   { return $this->text(); }
 
 Function
@@ -71,6 +98,7 @@ Param
   = Function
   / DataPlaceholder
   / StringParam
+  / NumberParam
 
 StringParam
   = STRDELIMITER parts:QuotedStringCharacter* STRDELIMITER
@@ -80,6 +108,10 @@ QuotedStringCharacter
   = '\\"'
   / !STRDELIMITER .
   { return $this->text(); }
+
+NumberParam
+  = MINUS? [0-9]+ decimal:(DECIMALPOINT [0-9]+)?
+  { return $decimal ? floatval($this->text()) : intval($this->text()); }
 
 Subtemplate
   = (!FUNCTIONSTART !DATASTART !TAGEND !IF !ELSE !ENDIF .)+
@@ -111,6 +143,10 @@ DATASTART
   = "->"
   / "-&gt;"
 
+TABLEDATASTART
+  = "=>"
+  / "=&gt;"
+
 IF
   = "if "
 
@@ -119,3 +155,18 @@ ELSE
 
 ENDIF
   = "endif"
+
+MINUS
+  = "-"
+
+DECIMALPOINT
+  = "."
+
+OPTIONSTART
+  = "["
+
+OPTIONKEYVALSEP
+  = "="
+
+OPTIONEND
+  = "]"

@@ -30,7 +30,7 @@ function SNAP_invalidate(){
 	global $action;
 
 	$sqlquery = "UPDATE LMB_SESSION SET SNAP_CHANGED = ".LMB_DBDEF_TRUE;
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 
@@ -82,7 +82,7 @@ function SNAP_revalidate($snapshot,$gtabid,$snapid){
 
 	if($update){
 		$prepare_string = "UPDATE LMB_SNAP SET FILTER = ? WHERE ID = ".$snapid." AND USER_ID = " . $session["user_id"];
-		if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($snapshot)),__FILE__,__LINE__)){$commit = 1;}
+		if(!lmb_PrepareSQL($prepare_string,array($snapshot),__FILE__,__LINE__)){$commit = 1;}
 	}
 
 	return $snapshot;
@@ -159,21 +159,21 @@ function SNAP_loadInSession($snap_changed=null,$admin=null){
 				$sqlquery .= "ORDER BY LMB_SNAP.NAME";
 	}
 
-	$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-	while(odbc_fetch_row($rs1)){
+	while(lmbdb_fetch_row($rs1)){
 		$resort = 0;
-		$snaptabid = odbc_result($rs1,"TABID");
-		$snapid = odbc_result($rs1,"ID");
-		$gsnap[$snaptabid]["filter"][$snapid] = unserialize(odbc_result($rs1,"FILTER"));
+		$snaptabid = lmbdb_result($rs1,"TABID");
+		$snapid = lmbdb_result($rs1,"ID");
+		$gsnap[$snaptabid]["filter"][$snapid] = unserialize(lmbdb_result($rs1,"FILTER"));
 		#SNAP_validate($snaptabid,$gsnap[$snaptabid]["filter"][$snapid]);
 		
 		$gsnap[$snaptabid]["id"][$snapid] = $snapid;
-		$gsnap[$snaptabid]["user_id"][$snapid] = odbc_result($rs1,"USER_ID");
-		$gsnap[$snaptabid]["name"][$snapid] = odbc_result($rs1,"NAME");
-		$gsnap[$snaptabid]["glob"][$snapid] = odbc_result($rs1,"GLOBAL");
-		$gsnap[$snaptabid]["del"][$snapid] = odbc_result($rs1,"DEL");
-		$gsnap[$snaptabid]["edit"][$snapid] = odbc_result($rs1,"EDIT");
+		$gsnap[$snaptabid]["user_id"][$snapid] = lmbdb_result($rs1,"USER_ID");
+		$gsnap[$snaptabid]["name"][$snapid] = lmbdb_result($rs1,"NAME");
+		$gsnap[$snaptabid]["glob"][$snapid] = lmbdb_result($rs1,"GLOBAL");
+		$gsnap[$snaptabid]["del"][$snapid] = lmbdb_result($rs1,"DEL");
+		$gsnap[$snaptabid]["edit"][$snapid] = lmbdb_result($rs1,"EDIT");
 		
 		###### check for changes/permissions #######
 		
@@ -204,26 +204,26 @@ function SNAP_loadInSession($snap_changed=null,$admin=null){
 
 
 		# Extension
-		#$e2xt = odbc_result($rs1,"EXT");
+		#$e2xt = lmbdb_result($rs1,"EXT");
 		#if($ext){
 		#	eval($ext);
 		#	$gsnap[$snaptabid]["ext"][$snapid] = $extension;
 		#
-		$gsnap[$snaptabid]["ext"][$snapid] = odbc_result($rs1,"EXT");
+		$gsnap[$snaptabid]["ext"][$snapid] = lmbdb_result($rs1,"EXT");
 		#}
 		
 		#$gsnap["tab"][$snapid] = $snaptabid;
-		if(odbc_result($rs1,"USER_ID") == $session["user_id"]){
+		if(lmbdb_result($rs1,"USER_ID") == $session["user_id"]){
 			$gsnap[$snaptabid]["owner"][$snapid] = 1;
 		}
-		if(odbc_result($rs1,"ENTITY_TYPE")){
+		if(lmbdb_result($rs1,"ENTITY_TYPE")){
 			$gsnap[$snaptabid]["shared"][$snapid] = 1;
 		}
 	}
 
 	if($snap_changed){
 		$sqlquery = "UPDATE LMB_SESSION SET SNAP_CHANGED = ".LMB_DBDEF_FALSE." WHERE USER_ID = " . $session["user_id"];
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
 	
 	return $gsnap;
@@ -246,40 +246,40 @@ function SNAP_share($destUser,$snapshotId,$del,$edit,$drop){
 	if(!$uid[0] OR !$uid[1]){return false;}
 	
 	$sqlquery = "SELECT ID,ENTITY_ID,EDIT,DEL FROM LMB_SNAP_SHARED WHERE ENTITY_ID=".$uid[0]." AND ENTITY_TYPE='".lmb_strtoupper($uid[1])."' AND SNAPSHOT_ID=".$snapshotId;
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$entity_id = odbc_result($rs,"ENTITY_ID");
-	$can_del = odbc_result($rs,"DEL");
-	$can_edit = odbc_result($rs,"EDIT");
+	$entity_id = lmbdb_result($rs,"ENTITY_ID");
+	$can_del = lmbdb_result($rs,"DEL");
+	$can_edit = lmbdb_result($rs,"EDIT");
 	
 	$sqlquery = "SELECT TABID FROM LMB_SNAP WHERE ID=".$snapshotId;
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$snaptabid = odbc_result($rs,"TABID");
+	$snaptabid = lmbdb_result($rs,"TABID");
 	
 	if(!$LINK[225] AND !$gsnap[$snaptabid]["owner"][$snapshotId]){lmb_alert("you have no permission to share this snapshot!");return false;}
 	
 	if($drop AND $entity_id){
 		$sqlquery = "DELETE FROM LMB_SNAP_SHARED WHERE ENTITY_ID=".$uid[0]." AND ENTITY_TYPE='".lmb_strtoupper($uid[1])."' AND SNAPSHOT_ID=".$snapshotId;
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}elseif($edit AND $entity_id){
 		if($can_edit){$bool = LMB_DBDEF_FALSE;
 		}else{$bool = LMB_DBDEF_TRUE;}
 		$sqlquery = "UPDATE LMB_SNAP_SHARED SET EDIT = ".$bool." WHERE ENTITY_ID=".$uid[0]." AND ENTITY_TYPE='".lmb_strtoupper($uid[1])."' AND SNAPSHOT_ID=".$snapshotId;
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}elseif($del AND $entity_id){
 		if($can_del){$bool = LMB_DBDEF_FALSE;
 		}else{$bool = LMB_DBDEF_TRUE;}
 		$sqlquery = "UPDATE LMB_SNAP_SHARED SET DEL = ".$bool." WHERE ENTITY_ID=".$uid[0]." AND ENTITY_TYPE='".lmb_strtoupper($uid[1])."' AND SNAPSHOT_ID=".$snapshotId;
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}elseif(!$entity_id AND $session["user_id"] != $uid[0]){
 		lmb_StartTransaction();
 		$nextId = next_db_id("LMB_SNAP_SHARED");
 		$sqlquery = "INSERT INTO LMB_SNAP_SHARED(ID,ENTITY_TYPE,ENTITY_ID,SNAPSHOT_ID) VALUES ($nextId,'".lmb_strtoupper($uid[1])."',".$uid[0].",$snapshotId)";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		lmb_EndTransaction(!$commit);
 	}
@@ -296,17 +296,17 @@ function SNAP_getParam($id)
 
 	$sqlquery = "SELECT * FROM LMB_SNAP WHERE ID=$id";
 
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
-	if(odbc_fetch_row($rs))
+	if(lmbdb_fetch_row($rs))
 	{
-		$result["name"] = odbc_result($rs,"NAME");
-		$result["id"] = odbc_result($rs,"ID");
-		$result["tabid"] = odbc_result($rs,"TABID");
-		$result["global"] = odbc_result($rs,"GLOBAL");
-		$result["filter"] = odbc_result($rs,"FILTER");
-		$result["owner"] = odbc_result($rs,"USER_ID");
+		$result["name"] = lmbdb_result($rs,"NAME");
+		$result["id"] = lmbdb_result($rs,"ID");
+		$result["tabid"] = lmbdb_result($rs,"TABID");
+		$result["global"] = lmbdb_result($rs,"GLOBAL");
+		$result["filter"] = lmbdb_result($rs,"FILTER");
+		$result["owner"] = lmbdb_result($rs,"USER_ID");
 	}
 
 	return $result;
@@ -332,10 +332,10 @@ function SNAP_delete($id,$gtabid)
 	if($id>0)
 	{
 		$sqlquery = "DELETE FROM LMB_SNAP WHERE ID = ".$id;
-		$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 		$sqlquery = "DELETE FROM LMB_SNAP_SHARED WHERE SNAPSHOT_ID = ".$id;
-		$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 		unset($gsnap[$gtabid]["id"][$id]);
 		return true;
@@ -376,7 +376,7 @@ function SNAP_save($gtabid,$name,$id,$snapf = "null"){
 	if($id>0)
 	{
 		$prepare_string = "UPDATE LMB_SNAP SET FILTER = ? WHERE ID = ".$id;
-		if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($snapf)),__FILE__,__LINE__)){$commit = 1;}
+		if(!lmb_PrepareSQL($prepare_string,array($snapf),__FILE__,__LINE__)){$commit = 1;}
 
 		# invalidate Session for other users
 		SNAP_invalidate();
@@ -387,20 +387,20 @@ function SNAP_save($gtabid,$name,$id,$snapf = "null"){
 		#$_SESSION["gsnap"] = null;
 
 		$sqlquery = "SELECT ID FROM LMB_SNAP WHERE NAME = '".parse_db_string(str_replace(";",",",$name),30)."' AND TABID = $gtabid AND USER_ID = " .$session["user_id"];
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		if(odbc_fetch_row($rs)){
-			$prepare_string = "UPDATE LMB_SNAP SET FILTER = ? WHERE ID = ".odbc_result($rs,"ID");
-			if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($snapf)),__FILE__,__LINE__)){$commit = 1;}
+		if(lmbdb_fetch_row($rs)){
+			$prepare_string = "UPDATE LMB_SNAP SET FILTER = ? WHERE ID = ".lmbdb_result($rs,"ID");
+			if(!lmb_PrepareSQL($prepare_string,array($snapf),__FILE__,__LINE__)){$commit = 1;}
 
 		}else{
 			lmb_StartTransaction();
 			$NEXTID = next_db_id("LMB_SNAP");
 			$sqlquery1 = "INSERT INTO LMB_SNAP (ID,USER_ID,TABID,NAME) VALUES ($NEXTID,".$session["user_id"] . ",$gtabid,'".parse_db_string(str_replace(";",",",$name),30)."')";
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 			$prepare_string = "UPDATE LMB_SNAP SET FILTER = ? WHERE ID = ".$NEXTID;
-			if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob(parse_db_blob($snapf))),__FILE__,__LINE__)){$commit = 1;}
+			if(!lmb_PrepareSQL($prepare_string,array($snapf),__FILE__,__LINE__)){$commit = 1;}
 			lmb_EndTransaction(!$commit);
 		}
 
@@ -422,10 +422,10 @@ function SNAP_save($gtabid,$name,$id,$snapf = "null"){
 		lmb_StartTransaction();
 		$NEXTID = next_db_id("LMB_SNAP");
 		$sqlquery1 = "INSERT INTO LMB_SNAP (ID,USER_ID,TABID,GLOBAL) VALUES ($NEXTID,0,$gtabid,true)";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 		$prepare_string = "UPDATE LMB_SNAP SET FILTER = ? WHERE ID = ".$NEXTID;
-		if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob(parse_db_blob($snapf))),__FILE__,__LINE__)){$commit = 1;}
+		if(!lmb_PrepareSQL($prepare_string,array($snapf),__FILE__,__LINE__)){$commit = 1;}
 		lmb_EndTransaction(!$commit);
 	}
 

@@ -6,7 +6,7 @@ if ($addPrinter and $addPrinterName and $addPrinterSysName) {
     $nextID = next_db_id('LMB_PRINTERS');
 
     $sqlquery = "INSERT INTO LMB_PRINTERS (ID, NAME, SYSNAME) VALUES ($nextID, '$addPrinterName', '$addPrinterSysName')";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
     if (!$rs) {
         echo 'Could not insert printer!';
     }
@@ -17,10 +17,10 @@ if ($defaultPrinter) {
     $defaultPrinter = parse_db_int($defaultPrinter);
 
     $sqlquery = "UPDATE LMB_PRINTERS SET DEF = TRUE WHERE ID = $defaultPrinter";
-    $rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    $rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 
     $sqlquery = "UPDATE LMB_PRINTERS SET DEF = FALSE WHERE ID != $defaultPrinter";
-    $rs2 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    $rs2 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
     if (!$rs1 or !$rs2) {
         echo 'Could not change default printer!';
     }
@@ -31,7 +31,7 @@ if ($changePrinter) {
     $printerName = parse_db_string(${'printerName_' . $changePrinter});
     $changePrinter = parse_db_int($changePrinter);
     $sqlquery = "UPDATE LMB_PRINTERS SET NAME = '$printerName' WHERE ID=$changePrinter";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
     if (!$rs) {
         echo 'Could not update printer!';
     }
@@ -42,7 +42,7 @@ if ($saveSelectedConfig and $configPrinter) {
     $selectedConfig = parse_db_string($selectedConfig);
     $configPrinter = parse_db_int($configPrinter);
     $sqlquery = "UPDATE LMB_PRINTERS SET CONFIG='$selectedConfig' WHERE ID=$configPrinter";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
     if (!$rs) {
         echo 'Could not save config!';
     }
@@ -53,7 +53,7 @@ if ($saveSelectedConfig and $configPrinter) {
 if ($delPrinter) {
     $delPrinter = parse_db_int($delPrinter);
     $sqlquery = "DELETE FROM LMB_PRINTERS WHERE ID=$delPrinter";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
     if (!$rs) {
         echo 'Could not delete printer!';
     }
@@ -76,18 +76,18 @@ if (!$availablePrinterNames) {
 
 # get limbas printers
 $sqlquery = 'SELECT ID, NAME, SYSNAME, CONFIG, DEF FROM LMB_PRINTERS ORDER BY ID';
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 
 $printers = array();
-while (odbc_fetch_row($rs)) {
-    $printerSysName = odbc_result($rs, 'SYSNAME');
+while (lmbdb_fetch_row($rs)) {
+    $printerSysName = lmbdb_result($rs, 'SYSNAME');
     $printer = array(
-        'name' => odbc_result($rs, 'NAME'),
+        'name' => lmbdb_result($rs, 'NAME'),
         'sysName' => $printerSysName,
-        'config' => odbc_result($rs, 'CONFIG')
+        'config' => lmbdb_result($rs, 'CONFIG')
     );
 
-    if (odbc_result($rs, 'DEF')) {
+    if (lmbdb_result($rs, 'DEF')) {
         $printer['default'] = 1;
     }
 
@@ -96,7 +96,7 @@ while (odbc_fetch_row($rs)) {
         echo "<pre>Printer $printerSysName not found on system!</pre>";
         $printer['error'] = true;
     }
-    $printers[odbc_result($rs, 'ID')] = $printer;
+    $printers[lmbdb_result($rs, 'ID')] = $printer;
 }
 
 # collect information about installed printers

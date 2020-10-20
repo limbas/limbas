@@ -396,6 +396,7 @@ if($onload){
 <input type="hidden" name="ffilter_order">
 <input type="hidden" name="ffilter_viewmode">
 <input type="hidden" name="ffilter_glob">
+<input type="hidden" name="ffilter_fts_search_mode">
 <input type="hidden" name="ffilter_content_cs">
 <input type="hidden" name="ffilter_content_ts">
 <input type="hidden" name="ffilter_content_se">

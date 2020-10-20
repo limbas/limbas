@@ -38,7 +38,7 @@ set_include_path($path);
 chdir($path);
 
 
-require_once('inc/include_db.lib');
+require_once('lib/db/db_wrapper.lib');
 require_once('lib/include.lib');
 require_once('lib/session.lib');
 require_once('gtab/gtab.lib');

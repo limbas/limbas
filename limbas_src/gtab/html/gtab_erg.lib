@@ -130,7 +130,8 @@ function lmbGlistTabs($gtabid,$verkn_poolid,$snap_id=0){
 	echo "<tr><td>";
 	echo "<table class=\"GtabTableFringeHeader\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"border-collapse:collapse;width:100%\"><tr>";
 	# aus Verknpf Pool
-	if($verknpool[$verkn_poolid] AND $verkn_poolid != $gtabid AND $verkn_poolid != 'reset'){
+	/*
+    if($verknpool[$verkn_poolid] AND $verkn_poolid != $gtabid AND $verkn_poolid != 'reset'){
 		foreach ($verknpool[$verkn_poolid] as $key => $value){
 			if($value[10]){$mst = "style=\"background-color:".$value[10]."\"";}else{$mst = null;}
 			if($gtabid == $value[0]){$class = "lmbGtabTabmenuActive";}else{$class = "lmbGtabTabmenuInactive";}
@@ -138,6 +139,7 @@ function lmbGlistTabs($gtabid,$verkn_poolid,$snap_id=0){
 		}
 	# regulär
 	}else{
+	*/
 		# --- Verknüpfungs Pool setzen -------------------------
 		$verknpool[$gtabid][] = array($gtabid,'null','null','null','null','null','null','null',$GLOBALS["form_id"],'null');
 		if($snap_id){$desc = $gsnap[$gtabid]["name"][$snap_id];
@@ -146,7 +148,7 @@ function lmbGlistTabs($gtabid,$verkn_poolid,$snap_id=0){
 		echo "<td nowrap class=\"lmbGtabTabmenuActive\" $mst id=\"tabs_".$layoutVer["tabid"] = $gtabid."\" onclick=\"send_form('1');\">".$desc;
 		if($greminder[$gtabid]['name'][$GLOBALS['gfrist']]){echo "&nbsp;(<i>".$greminder[$gtabid]["name"][$GLOBALS['gfrist']]."</i>)";}
 		echo "</td>";
-	}
+	#}
 
     echo "<td class=\"lmbGtabTabmenuSpace\" width=\"100%\"></td></tr></table>";
 	echo "</td></tr>";
@@ -178,6 +180,15 @@ function lmbGlistMenu($gtabid,$subtab=null){
 	<td nowrap class=\"gtabHeaderMenuTD hoverable\" onclick=\"limbasDivShow(this,'','limbasDivMenuBearbeiten');\">$lang[843]</td><td>&nbsp;|&nbsp;</td>
 	<td nowrap class=\"gtabHeaderMenuTD hoverable\" onclick=\"limbasDivShow(this,'','limbasDivMenuAnsicht');\">$lang[1625]</td><td>&nbsp;|&nbsp;</td>
 	<td nowrap class=\"gtabHeaderMenuTD hoverable\" onclick=\"limbasDivShow(this,'','limbasDivMenuExtras');\">$lang[1939]</td>\n";
+
+    // custmenu
+    if($GLOBALS['gcustmenu'][$gtabid][2]['id'][0]){
+        foreach($GLOBALS['gcustmenu'][$gtabid][2]['id'] as $cmkey => $cmid){
+            echo "<td>&nbsp;|&nbsp;</td><td nowrap class=\"gtabHeaderMenuTD hoverable\" onclick=\"limbasDivShow(this,'','limbasDivCustMenu_$cmid');\">".$lang[$GLOBALS['gcustmenu'][$gtabid][2]['name'][$cmkey]]."</td>\n";
+        }
+    }
+
+
 	if($GLOBALS["view_version_status"]){echo "<td>&nbsp;|&nbsp;</td><td nowrap class=\"gtabHeaderMenuTD\" style=\"color:red;\">&nbsp;&nbsp;&nbsp;(".$lang[2172]." ".$GLOBALS["view_version_status"].")</td>";}
 	echo "<td width=\"100%\"></td></tr></table>
 	</div>";
@@ -241,6 +252,7 @@ function lmbGlistMenu($gtabid,$subtab=null){
 		if($gtab["viewver"][$gtabid]){pop_picmenu(237,'','',$filter["viewversion"][$gtabid]);}	# zeige versionierte
 		if($gtab["hide"][$gtabid]){pop_picmenu(165,'','',$filter["unhide"][$gtabid]);}			# zeige gelöschte
 		if($gtab["lockable"][$gtabid]){pop_picmenu(273,'','',$filter["locked"][$gtabid]);}		# zeige gesperrte
+        if($gtab["multitenant"][$gtabid] AND count($GLOBALS['lmmultitenants']['mid']) > 1){pop_picmenu(309,'','',$filter["multitenant"][$gtabid]);}	# zeige Mandanten
 		echo "<td>&nbsp;&nbsp;</td>";
 		if($GLOBALS["greportlist_exist"] AND ($LINK[175] OR $LINK[176])){
 			pop_picmenu(131,'','');										# Berichte
@@ -340,45 +352,45 @@ function lmbGlistSearchDetail($gtabid,$key,$style=null,$event=null){
 		}elseif($gfield[$gtabid]["field_type"][$key] == 4 OR $gfield[$gtabid]["field_type"][$key] == 19){
 			if($gfield[$gtabid]["field_type"][$key] == 4){$sl = "SELECT";}else{$sl = "ATTRIBUTE";}
 			$sqlquery = "SELECT ID,WERT FROM LMB_".$sl."_W WHERE POOL = ".$gfield[$gtabid]["select_pool"][$key]." AND HIDE = ".LMB_DBDEF_FALSE." ORDER BY ".$gfield[$gtabid]["select_sort"][$key];
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			echo "<select class=\"gtabHeaderInputINP\" id=\"tdinp_".$gtabid."_".$gfield[$gtabid]["field_id"][$key]."\" $style name=\"gs[".$gtabid."][".$gfield[$gtabid]["field_id"][$key]."][0]\" $events>";
 			echo "<option></option>";
-			while(odbc_fetch_row($rs)) {
-				echo "<option value=\"".odbc_result($rs,"WERT")."\" ";
-				if(odbc_result($rs,"WERT") == $gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0]){echo " selected";}
-				echo ">".odbc_result($rs,"WERT")."</option>";
+			while(lmbdb_fetch_row($rs)) {
+				echo "<option value=\"".lmbdb_result($rs,"WERT")."\" ";
+				if(lmbdb_result($rs,"WERT") == $gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0]){echo " selected";}
+				echo ">".lmbdb_result($rs,"WERT")."</option>";
 			}
 		# --- Alles andere --
 		}elseif($gfield[$gtabid]["field_type"][$key] != 6 AND $gfield[$gtabid]["field_type"][$key] != 3){
 			echo "<select class=\"gtabHeaderInputINP\" id=\"tdinp_".$gtabid."_".$gfield[$gtabid]["field_id"][$key]."\" $style name=\"gs[".$gtabid."][".$gfield[$gtabid]["field_id"][$key]."][0]\" $events>";
 			echo "<option>";
 			$sqlquery = "SELECT DISTINCT ".$gfield[$gtabid]["field_name"][$key]." FROM ".$gtab["table"][$gtabid]." ORDER BY ".$gfield[$gtabid]["field_name"][$key];
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			while(odbc_fetch_row($rs)) {
-				if(odbc_result($rs, $gfield[$gtabid]["field_name"][$key])){
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			while(lmbdb_fetch_row($rs)) {
+				if(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key])){
 					echo "<option";
 					# --- DATUM --
 					if($gfield[$gtabid]["field_type"][$key] == 2){
-						$date = get_date(odbc_result($rs, $gfield[$gtabid]["field_name"][$key]),1);
+						$date = get_date(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]),1);
 						$date2 = get_date($gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0],1);
 						if($date === $date2){echo " SELECTED";}
-						echo " value=\"".odbc_result($rs, $gfield[$gtabid]["field_name"][$key])."\">".$date;
+						echo " value=\"".lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key])."\">".$date;
 						# --- User/Gruppen-Liste --
 					#}elseif($gfield[$gtabid]["field_type"][$key] == 16) {
-					#	if(odbc_result($rs, $gfield[$gtabid]["field_name"][$key]) == $gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0]){echo " SELECTED";}
-					#	if(lmb_substr(odbc_result($rs, $gfield[$gtabid]["field_name"][$key]),0,1) == "u"){
-					#		echo " VALUE=\"".odbc_result($rs, $gfield[$gtabid]["field_name"][$key])."\">U:".$userdat["bezeichnung"][lmb_substr(odbc_result($rs, $gfield[$gtabid]["field_name"][$key]),1,99)];
-					#	}elseif(lmb_substr(odbc_result($rs, $gfield[$gtabid]["field_name"][$key]),0,1) == "g"){
-					#		echo " VALUE=\"".odbc_result($rs, $gfield[$gtabid]["field_name"][$key])."\">G:".$groupdat["beschreibung"][lmb_substr(odbc_result($rs, $gfield[$gtabid]["field_name"][$key]),1,99)];
+					#	if(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]) == $gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0]){echo " SELECTED";}
+					#	if(lmb_substr(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]),0,1) == "u"){
+					#		echo " VALUE=\"".lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key])."\">U:".$userdat["bezeichnung"][lmb_substr(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]),1,99)];
+					#	}elseif(lmb_substr(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]),0,1) == "g"){
+					#		echo " VALUE=\"".lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key])."\">G:".$groupdat["beschreibung"][lmb_substr(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]),1,99)];
 					#	}
 						# --- Erst/Edit-User --
 					}elseif($gfield[$gtabid]["field_type"][$key] == 14) {
 						$field = $gfield[$gtabid]["field_name"][$gfield[$gtabid]["field_gtabid"][ $gtabid.$gfield[$gtabid]["field_id"][$key]]];
-						if(odbc_result($rs, $gfield[$gtabid]["field_name"][$key]) == $gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0]){echo " selected";}
-						echo " value=\"".odbc_result($rs, $gfield[$gtabid]["field_name"][$key])."\">".$userdat["bezeichnung"][odbc_result($rs, $gfield[$gtabid]["field_name"][$key])];
+						if(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]) == $gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0]){echo " selected";}
+						echo " value=\"".lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key])."\">".$userdat["bezeichnung"][lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key])];
 					}else{
-						if( odbc_result($rs, $gfield[$gtabid]["field_name"][$key]) == $gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0]){echo " selected";}
-						echo " value=\"".odbc_result($rs, $gfield[$gtabid]["field_name"][$key])."\">".odbc_result($rs, $gfield[$gtabid]["field_name"][$key]);
+						if( lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]) == $gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0]){echo " selected";}
+						echo " value=\"".lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key])."\">".lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]);
 					}
 				}
 			}
@@ -617,6 +629,12 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
         if ($gresult[$gtabid]['indicator']['class'][$bzm]) {
 			$indicatorClass = $gresult[$gtabid]['indicator']['class'][$bzm];
 		}
+
+		# attribute from indicator
+        $indicatorAttribute = '';
+        if ($gresult[$gtabid]['indicator']['attribute'][$bzm]) {
+			$indicatorAttribute = $gresult[$gtabid]['indicator']['attribute'][$bzm];
+		}
 		
 		# klick event in views
 		if($gtab["typ"][$gtabid] == 5 AND $gtab["event"][$gtabid]){
@@ -627,12 +645,13 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 		
 		/* ---------------- begin row -------------------- */
 		/*----------------- <TR> -------------------*/
+
 		// TODO onContextMenu: before: click
 		echo "
-		<tr $title class=\"gtabBodyTR $BGCLASS $indicatorClass\" id=\"elrow_".$ID."_".$gtabid."\" style=\"background-color:$BGCOLOR;cursor:context-menu\" lmbbgcolor=\"$BGCOLOR\"
+		<tr $title class=\"element-row gtabBodyTR $BGCLASS $indicatorClass\" $indicatorAttribute id=\"elrow_".$ID."_".$gtabid."\" style=\"background-color:$BGCOLOR;cursor:context-menu\" lmbbgcolor=\"$BGCOLOR\"
 		onmouseover=\"lmb_tableRowColor(this,'".$farbschema["WEB7"]."',1)\"
 		onmouseout=\"lmb_tableRowColor(this,null,1)\" 
-		oncontextmenu=\"return lmbTableContextEvent(event,this,'$ID','$gtabid','".$gtab["tab_view_lform"][$gtabid]."','".$GLOBALS['gformlist'][$gtabid]["typ"][$gtab["tab_view_lform"][$gtabid]]."','".$GLOBALS['gformlist'][$gtabid]["dimension"][$gtab["tab_view_lform"][$gtabid]]."','".$gresult[$gtabid]["ERSTDATUM"][$bzm]."','".$gresult[$gtabid]["EDITDATUM"][$bzm]."','".$userdat["bezeichnung"][$gresult[$gtabid]["ERSTUSER"][$bzm]]."','".$userdat["bezeichnung"][$gresult[$gtabid]["EDITUSER"][$bzm]]."','$prev_id','$prev_gtabid','$prev_fieldid','$prev_typ');\" 
+		oncontextmenu=\"return lmbTableContextEvent(event,this,'$ID','$gtabid','".$GLOBALS['gcustmenu'][$gtabid][1]['id'][0]."','".$gtab["tab_view_lform"][$gtabid]."','".$GLOBALS['gformlist'][$gtabid]["typ"][$gtab["tab_view_lform"][$gtabid]]."','".$GLOBALS['gformlist'][$gtabid]["dimension"][$gtab["tab_view_lform"][$gtabid]]."','".$gresult[$gtabid]["ERSTDATUM"][$bzm]."','".$gresult[$gtabid]["EDITDATUM"][$bzm]."','".$userdat["bezeichnung"][$gresult[$gtabid]["ERSTUSER"][$bzm]]."','".$userdat["bezeichnung"][$gresult[$gtabid]["EDITUSER"][$bzm]]."','$prev_id','$prev_gtabid','$prev_fieldid','$prev_typ');\" 
 		onclick=\"lmbTableClickEvent(event,this,'$gtabid','".$ID."');\" ";
 		if($session["data_display"] == 2 AND $verknpf != 1){$is_frame = "1";}else{$is_frame = "0";}
 		echo "ondblclick=\"$event\"";
@@ -650,7 +669,7 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 		*/
 
 		
-		echo "<td id=\"tdap_".$ID."_".$gtabid."\" class=\"gtabBodyTD".$class."\" style=\"width:".$gfield[$gtabid]["rowsize"][0]."px;\" nowrap>\n";
+		echo "<td id=\"tdap_".$ID."_".$gtabid."\" data-fieldid=\"0\" class=\"element-cell gtabBodyTD".$class."\" style=\"width:".$gfield[$gtabid]["rowsize"][0]."px;\" nowrap>\n";
 		
 		# popup symbol
 		if($pophist["cdone"][$gtabid]){
@@ -711,7 +730,7 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 			if($gfield[$gtabid]["field_type"][$key] == 5){$align = "right";}else{$align = "left";}
 			
 			
-			echo "<td id=\"td_".$ID."_".$gfield[$gtabid]["field_id"][$key]."_".$gtabid."\" align=\"$align\" class=\"gtabBodyTD".$class.$lclass."\" style=\"width:".$gfield[$gtabid]["rowsize"][$key]."px;$lstyle;$rightspace\" oncontextmenu=\"cell_id = 'td_".$ID."_".$gfield[$gtabid]["field_id"][$key]."_".$gtabid."';\" ";
+			echo "<td id=\"td_".$ID."_".$gfield[$gtabid]["field_id"][$key]."_".$gtabid."\" data-fieldid=\"$key\" align=\"$align\" class=\"element-cell gtabBodyTD".$class.$lclass."\" style=\"width:".$gfield[$gtabid]["rowsize"][$key]."px;$lstyle;$rightspace\" oncontextmenu=\"cell_id = 'td_".$ID."_".$gfield[$gtabid]["field_id"][$key]."_".$gtabid."';\" ";
 			if($gfield[$gtabid]["color"][$key] AND !$gresult[$gtabid]["color"][$bzm]){echo "bgcolor=\"".$gfield[$gtabid]["color"][$key]."\" lmbbgcolor=\"".$gfield[$gtabid]["color"][$key]."\"";}
 			echo ">\n";
 
@@ -995,7 +1014,7 @@ function table_calculate($gtabid,&$gresult){
 	
 	$query = "SELECT ".implode(',',$sqls);
 	if($count){$query .= ','.lmb_substr($lmb_query["count"],7);}else{$query .= substr($lmb_query["count"],25);}
-	$rs = odbc_exec($db,$query) or errorhandle(odbc_errormsg($db),$query,'aggregate_query',__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$query) or errorhandle(lmbdb_errormsg($db),$query,'aggregate_query',__FILE__,__LINE__);
 
 	/* --- Feldschleife --------------------------------------- */
 	foreach($gfield[$gtabid]["sort"] as $key => $value){
@@ -1017,7 +1036,7 @@ function table_calculate($gtabid,&$gresult){
 
 			# SUM
 			if(lmb_strpos($aggregate,'5') !== false){
-				$sum = odbc_result($rs,"LS_$key");
+				$sum = lmbdb_result($rs,"LS_$key");
 				if($gfield[$gtabid]["data_type"][$key] == 30){$gresult_[$gtabid][$key][0]['V'] = $sum;
 				}else{$gresult_[$gtabid][$key][0] = $sum;}
 				echo "<tr><td>SUM:</td><td align=\"right\" nowrap>";
@@ -1026,8 +1045,8 @@ function table_calculate($gtabid,&$gresult){
 			}
 			# AVG
 			if(lmb_strpos($aggregate,'1') !== false){
-				#$avg = round(parse_db_float(odbc_result($rs,"LA_$key")),2);
-				$avg = odbc_result($rs,"LA_$key");
+				#$avg = round(parse_db_float(lmbdb_result($rs,"LA_$key")),2);
+				$avg = lmbdb_result($rs,"LA_$key");
 				if($gfield[$gtabid]["data_type"][$key] == 30){$gresult_[$gtabid][$key][0]['V'] = $avg;
 				}else{$gresult_[$gtabid][$key][0] = $avg;}
 				echo "<tr><td>AVG:</td><td align=\"right\" nowrap>";
@@ -1036,7 +1055,7 @@ function table_calculate($gtabid,&$gresult){
 			}
 			# MAX
 			if(lmb_strpos($aggregate,'3') !== false){
-				$max = odbc_result($rs,"LMA_$key");
+				$max = lmbdb_result($rs,"LMA_$key");
 				if($gfield[$gtabid]["data_type"][$key] == 30){$gresult_[$gtabid][$key][0]['V'] = $max;
 				}else{$gresult_[$gtabid][$key][0] = $max;}
 				echo "<tr><td>MAX:</td><td align=\"right\" nowrap>";
@@ -1045,7 +1064,7 @@ function table_calculate($gtabid,&$gresult){
 			}
 			# MIN
 			if(lmb_strpos($aggregate,'4') !== false){
-				$min = odbc_result($rs,"LMI_$key");
+				$min = lmbdb_result($rs,"LMI_$key");
 				if($gfield[$gtabid]["data_type"][$key] == 30){$gresult_[$gtabid][$key][0]['V'] = $min;
 				}else{$gresult_[$gtabid][$key][0] = $min;}
 				echo "<tr><td>MIN:</td><td align=\"right\" nowrap>";
@@ -1054,7 +1073,7 @@ function table_calculate($gtabid,&$gresult){
 			}
 			# COUNT
 			if(lmb_strpos($aggregate,'2') !== false){
-				$count = odbc_result($rs,'RESULT');
+				$count = lmbdb_result($rs,'RESULT');
 				echo "<tr><td>CNT:</td><td align=\"right\" nowrap>".$count."<td></tr>";
 			}
 
@@ -1185,10 +1204,10 @@ function form_ergview($gtabid,&$gresult,$gformid){
 	global $gform;
 	global $session;
 
-	if($umgvar['jsgraphics']){echo "<script type=\"text/javascript\" src=\"extern/jsgraphics/jsgraphics.js\"></script>\n";}
+	if($umgvar['jsgraphics']){echo "<script type=\"text/javascript\" src=\"extern/jsgraphics/jsgraphics.js?v=".$umgvar["version"]."\"></script>\n";}
 	if($gform[$gformid]["id"]){
 		# ------ Formular-Element-Auflistung
-		foreach($gform[$gformid]["id"] as $key => $value){
+		foreach($gform[$gformid]["mainellist"] as $key => $value){
 			# --- Tabellenelemente ausgeschlossen -------
 			if(!$gform[$gformid]["tab_el_col"][$key] AND !$gform[$gformid]["tab_el_row"][$key]){
 				$field_id = $gform[$gformid]["field_id"][$key];
@@ -1224,14 +1243,14 @@ function show_userRules($gtabid,$ID){
 	echo "<TR><TD COLSPAN=\"".($gtab["fieldcount"][$gtabid]+1)."\">";
 
 	$sqlquery = "SELECT LMB_RULES_DATASET.USERID,LMB_RULES_DATASET.GROUPID,LMB_RULES_DATASET.EDIT,LMB_RULES_DATASET.DEL,LMB_RULES_DATASET.EDITUSER FROM LMB_RULES_DATASET WHERE LMB_RULES_DATASET.TABID = $gtabid AND LMB_RULES_DATASET.DATID = $ID ORDER BY GROUPID,USERID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
-	while(odbc_fetch_row($rs)) {
-		$userid = odbc_result($rs,"USERID");
-		$groupid = odbc_result($rs,"GROUPID");
-		if(odbc_result($rs,"DEL")){$dp = "<i class=\"lmb-icon-cus lmb-page-delete-fancy\" title=\"delete\"></i>";}else{$dp = "";}
-		if(odbc_result($rs,"EDIT")){$ep = "<i class=\"lmb-icon lmb-page-edit\" title=\"edit\"></i>";}else{$ep = "";}
+	while(lmbdb_fetch_row($rs)) {
+		$userid = lmbdb_result($rs,"USERID");
+		$groupid = lmbdb_result($rs,"GROUPID");
+		if(lmbdb_result($rs,"DEL")){$dp = "<i class=\"lmb-icon-cus lmb-page-delete-fancy\" title=\"delete\"></i>";}else{$dp = "";}
+		if(lmbdb_result($rs,"EDIT")){$ep = "<i class=\"lmb-icon lmb-page-edit\" title=\"edit\"></i>";}else{$ep = "";}
 		if($userid){
 			$user[] = $userdat["bezeichnung"][$userid]." ".$ep."&nbsp;".$dp;
 		}elseif($groupid){

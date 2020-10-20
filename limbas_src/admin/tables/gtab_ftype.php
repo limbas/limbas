@@ -31,20 +31,16 @@ $(function() {
         cursor: "move",
         distance: 5,
         handle: ".tabSortableHandle",
-        items: "tr:nth-child(n+3):nth-last-child(n+5)", // exclude header and footer rows
-        stop: function(event, ui) {
-            // cancel if trying to sort to last row, functionality not implemented in backend
-            var sortedRow = ui.item.first();
-            if (!sortedRow.next().attr("data-lmb-fieldid")) {
-                sortedRow.parent().sortable("cancel");
-            }
-        },
+        items: "tr[data-lmb-fieldid]", // exclude header and footer rows
         update: function(event, ui) {
             var sortedRow = ui.item.first();
             var sortedRowFieldID = sortedRow.attr("data-lmb-fieldid");
             var nextRowFieldID = sortedRow.next().attr("data-lmb-fieldid");
 
-            if (sortedRowFieldID && nextRowFieldID) {
+            if (sortedRowFieldID) {
+                if (!nextRowFieldID) {
+                    nextRowFieldID = 'last';
+                }
                 document.form1.move_to.value = nextRowFieldID;
                 document.form1.fieldid.value = sortedRowFieldID;
                 document.form1.submit();
@@ -417,9 +413,7 @@ if($table_gtab[$bzm]) {
             <TD VALIGN="TOP" class="tabSortableHandle">
 					<SPAN
 					ID="field<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>"
-					STYLE="position: relative; top: 0; left: 0; color: <?=$color?>">
-            <?= $result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1] ?>
-            </SPAN>&nbsp;
+					STYLE="position: relative; top: 0; left: 0; color: <?=$color?>"><?= $result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1] ?></SPAN>&nbsp;
 				</TD>
 				<TD VALIGN="TOP"><INPUT TYPE="TEXT" SIZE="25"
 					NAME="DESC_<?= $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] ?>"
@@ -472,13 +466,14 @@ if($table_gtab[$bzm]) {
 
                     if($verknTabid){
 	       				$sqlquery = "SELECT BESCHREIBUNG FROM LMB_CONF_TABLES WHERE TAB_ID = ".$verknTabid;
-	       				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	       				echo "<a onclick=\"document.location.href='main_admin.php?&action=setup_gtab_ftype&tab_group=$tab_group&atid=$verknTabid'\">".$lang[odbc_result($rs, "BESCHREIBUNG")]."</a> | ";
+	       				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	       				$verknTabgroup = $gtab['tab_group'][$verknTabid];
+	       				echo "<a onclick=\"document.location.href='main_admin.php?&action=setup_gtab_ftype&tab_group=$verknTabgroup&atid=$verknTabid'\">".$lang[lmbdb_result($rs, "BESCHREIBUNG")]."</a> | ";
 
                         if($verknFieldid){
                             $sqlquery = "SELECT SPELLING FROM LMB_CONF_FIELDS WHERE TAB_ID = ".$verknTabid." AND FIELD_ID = ".$verknFieldid;
-                            $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                            echo $lang[odbc_result($rs, "SPELLING")];
+                            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                            echo $lang[lmbdb_result($rs, "SPELLING")];
                         } else {
                             echo '?';
                         }
@@ -529,8 +524,8 @@ if($table_gtab[$bzm]) {
 
 			    if($result_fieldtype[$table_gtab[$bzm]]['select_pool'][$bzm1]){
 			    	$sqlquery = "SELECT NAME FROM LMB_SELECT_P WHERE ID = ".$result_fieldtype[$table_gtab[$bzm]]['select_pool'][$bzm1];
-					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			    	echo "&nbsp;&nbsp;".htmlentities(odbc_result($rs, "NAME"),ENT_QUOTES,$umgvar["charset"]);
+					$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			    	echo "&nbsp;&nbsp;".htmlentities(lmbdb_result($rs, "NAME"),ENT_QUOTES,$umgvar["charset"]);
 			    	$pool = $result_fieldtype[$table_gtab[$bzm]]['select_pool'][$bzm1];
 			    }else{
 			    	$pool = 0;
@@ -544,8 +539,8 @@ if($table_gtab[$bzm]) {
 				echo "<TD ALIGN=\"RIGHT\" NOWRAP>";
 			    if($result_fieldtype[$table_gtab[$bzm]]["select_pool"][$bzm1]){
 			    	$sqlquery = "SELECT NAME FROM LMB_ATTRIBUTE_P WHERE ID = ".$result_fieldtype[$table_gtab[$bzm]]["select_pool"][$bzm1];
-					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			    	echo "&nbsp;&nbsp;".htmlentities(odbc_result($rs, "NAME"),ENT_QUOTES,$umgvar["charset"]);
+					$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			    	echo "&nbsp;&nbsp;".htmlentities(lmbdb_result($rs, "NAME"),ENT_QUOTES,$umgvar["charset"]);
 			    	$pool = $result_fieldtype[$table_gtab[$bzm]]["select_pool"][$bzm1];
 			    }else{
 			    	$pool = 0;
@@ -555,7 +550,14 @@ if($table_gtab[$bzm]) {
                 echo "</TD>";
             /* --- Verknüpfung --------------------------------------- */
             }elseif($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 11){
-            	echo "<TD  VALIGN=\"TOP\" ALIGN=\"RIGHT\" nowrap>".$result_fieldtype[$table_gtab[$bzm]]["verkntab"][$bzm1]."&nbsp;";
+                $verknTableName = $result_fieldtype[$table_gtab[$bzm]]["verkntab"][$bzm1];
+                if (lmb_strtoupper(lmb_substr($verknTableName, 0, 5)) === 'VERK_') {
+                    if ($verknTableID = array_search(lmb_strtolower($verknTableName), $table_gtab)) {
+                        $verknTableName = "<a onclick=\"document.location.href='main_admin.php?action=setup_gtab_ftype&atid={$verknTableID}';\" title=\"{$beschreibung_gtab[$verknTableID]}\" style=\"text-decoration: underline;\">$verknTableName</a>";
+                    }
+                }
+
+            	echo "<TD  VALIGN=\"TOP\" ALIGN=\"RIGHT\" nowrap>".$verknTableName."&nbsp;";
                 if($result_fieldtype[$table_gtab[$bzm]]["verkntabletype"][$bzm1] == 3){echo "<i style=\"vertical-align:text-bottom\" class=\"lmb-icon lmb-switch\"></i>";}
             	elseif($result_fieldtype[$table_gtab[$bzm]]["verkntabletype"][$bzm1] == 2){echo "<i style=\"vertical-align:text-bottom\" class=\"lmb-icon lmb-long-arrow-left\"></i>";}
             	echo "</TD>";
@@ -616,11 +618,16 @@ if($table_gtab[$bzm]) {
 	       			echo "</SELECT></TD>";
 	       		}elseif($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 11){
 
+	       		    // n:m
 	       		    if($result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 24) {
 					   $result_type_allow_convert_ = array(27);
-	       		    }else{
-	       		       $result_type_allow_convert_ = array(24);
-	       		    }
+	       		    // 1:n
+	       		    }elseif($result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 27) {
+	       		       $result_type_allow_convert_ = array(24,25);
+	       		    // 1:n simple
+	       		    }elseif($result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 25) {
+	       		        $result_type_allow_convert_ = array(27);
+                    }
 					
 	       			echo "<TD VALIGN=\"TOP\"><SELECT STYLE=\"width:150px\" OnChange=\"convert_field(this[this.selectedIndex].value,'".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$result_fieldtype[$table_gtab[$bzm]]['field'][$bzm1]."',0);\"><OPTION>";
 	       			foreach($result_type["id"] as $type_key => $type_value){
@@ -820,14 +827,15 @@ if($table_gtab[$bzm]) {
 		
 		/* --- Vernüpfungsparameter-Tabelle -------- */
 		$sqlquery =  "SELECT VERKNPARAMS FROM LMB_CONF_FIELDS WHERE UPPER(MD5TAB) = '".lmb_strtoupper($table_gtab[$bzm])."' AND VERKNPARAMS > 0";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(odbc_result($rs, "VERKNPARAMS")){$verknparams = array(1,2,3,4,5,7,8,10,14,15,18,21);}
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(lmbdb_result($rs, "VERKNPARAMS")){$verknparams = array(1,2,3,4,5,7,8,10,14,15,18,21);}
 		#$headerIds = array(1, 18, 48);
 
 		# Feldtypen
 		foreach ($result_type["id"] as $key => $value){
 			if($result_type["id"][$key] == 49 AND !$tab_versioning[$atid]){continue;}
 			if($verknparams AND !in_array($result_type["field_type"][$key],$verknparams)){continue;}
+			if($result_type["field_type"][$key] == 20 /* file content */ AND $gtab['argresult_id']['LDMS_FILES'] != $bzm){continue;}
 			if($result_type["hassize"][$key]){$hs = "ID=\"".$result_type["size"][$key]."\"";}else{$hs = "";}
 			if(!$result_type["field_type"][$key]) {
                 if ($key != $headerIds[0]) { echo "</OPTGROUP>"; }

@@ -139,9 +139,9 @@ function print_tab($dom,$report_id,$item,$ID,$el,&$report){
 
 	# Tabellenname des ersten DB-Elements für Elementbeschreibung
 	$sqlquery = "SELECT DBFIELD FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB = ".$report_tab." AND TYP = 'dbdat'";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_result($rs, "DBFIELD")){
-		$tmp = explode(";",odbc_result($rs, "DBFIELD"));
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_result($rs, "DBFIELD")){
+		$tmp = explode(";",lmbdb_result($rs, "DBFIELD"));
 		$el_tablename = $gtab["table"][$tmp[0]]."_".$report["id"][$el];
 	}else{
 		$el_tablename = "element_".$report["id"][$el];
@@ -157,10 +157,10 @@ function print_tab($dom,$report_id,$item,$ID,$el,&$report){
 
 	# first get cellsize of first hidden line
 	$sqlquery = "SELECT TAB_EL_COL,TAB_EL_COL_SIZE FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB_EL_ROW = 0 AND TYP = 'tabhead' AND TAB = ".$report_tab." ORDER BY TAB_EL_COL";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$bzm = 1;
-	while(odbc_fetch_row($rs)) {
-		$firstrow_width[$bzm] = odbc_result($rs, "TAB_EL_COL_SIZE");
+	while(lmbdb_fetch_row($rs)) {
+		$firstrow_width[$bzm] = lmbdb_result($rs, "TAB_EL_COL_SIZE");
 		$bzm++;
 	}
 
@@ -189,18 +189,18 @@ function print_tab($dom,$report_id,$item,$ID,$el,&$report){
 			
 			# Auslesen einzelner Zellenparameter
 			$sqlquery = "SELECT EL_ID,POSX,POSY,HEIGHT,STYLE,TYP,TAB,INHALT,DBFIELD FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB = ".$report_tab." AND TAB_EL_ROW = ".$bzm2." AND TAB_EL_COL = ".$bzm3." ORDER BY EL_ID ";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			$rep = null;
-			while(odbc_fetch_row($rs)) {
-			    $rep['el_id'][] = odbc_result($rs, 'EL_ID');
-                $rep['posx'][] = odbc_result($rs, 'POSX');
-                $rep['posy'][] = odbc_result($rs, 'POSY');
-                $rep['height'][] = odbc_result($rs, 'HEIGHT');
-                $rep['style'][] = odbc_result($rs, 'STYLE');
-                $rep['typ'][] = odbc_result($rs, 'TYP');
-                $rep['tab'][] = odbc_result($rs, 'TAB');
-                $rep['inhalt'][] = odbc_result($rs, 'INHALT');
-                $rep['dbfield'][] = odbc_result($rs, 'DBFIELD');
+			while(lmbdb_fetch_row($rs)) {
+			    $rep['el_id'][] = lmbdb_result($rs, 'EL_ID');
+                $rep['posx'][] = lmbdb_result($rs, 'POSX');
+                $rep['posy'][] = lmbdb_result($rs, 'POSY');
+                $rep['height'][] = lmbdb_result($rs, 'HEIGHT');
+                $rep['style'][] = lmbdb_result($rs, 'STYLE');
+                $rep['typ'][] = lmbdb_result($rs, 'TYP');
+                $rep['tab'][] = lmbdb_result($rs, 'TAB');
+                $rep['inhalt'][] = lmbdb_result($rs, 'INHALT');
+                $rep['dbfield'][] = lmbdb_result($rs, 'DBFIELD');
             }
 
 			$cell_par[$bzm3] = array('',$rep['posx'][0],$rep['posy'][0],$firstrow_width[$bzm3],$rep['height'][0],explode(";",$rep['style'][0]),$rep['typ'][0],$rep['tab'][0]);
@@ -211,7 +211,7 @@ function print_tab($dom,$report_id,$item,$ID,$el,&$report){
 				if($rep['typ'][0] == "dbdat"){
 					$fn = explode(';',$rep['dbfield'][0]);
 					$cell_name[$bzm3] = lmb_utf8_encode(trim($gfield[$fn[0]]['field_name'][$fn[1]]))."_".$rep['el_id'][0];
-					#$cell_name[$bzm3] = lmb_utf8_decode(trim(odbc_result($rs, "INHALT")),1)."_".odbc_result($rs, "EL_ID");
+					#$cell_name[$bzm3] = lmb_utf8_decode(trim(lmbdb_result($rs, "INHALT")),1)."_".lmbdb_result($rs, "EL_ID");
 				}elseif($rep['el_id'][0]){
 					$cell_name[$bzm3] = "element_".$rep['el_id'][0];
 				}else{

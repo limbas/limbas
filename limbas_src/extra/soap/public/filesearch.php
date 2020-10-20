@@ -184,7 +184,7 @@ INPUT.checkbox {
 
 
 
-<script type="text/javascript" src="lib/lmsoap.js"></script>
+<script type="text/javascript" src="lib/lmsoap.js?v=<?=$umgvar["version"]?>"></script>
 
 <script language="JavaScript">
 

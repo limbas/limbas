@@ -26,8 +26,8 @@ require_once("extra/report/report_xmls.lib");
 include 'extern/PHPExcel/Classes/PHPExcel/IOFactory.php';
 
 $sqlquery1 = "SELECT DISTINCT LDMS_FILES.NAME,LDMS_FILES.SECNAME,LMB_MIMETYPES.EXT FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.ID = ".parse_db_int($greportlist[$greportlist["argresult_tabid"][$report_id]]["ods_template"][$report_id])." AND LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID";
-$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-$ootemplate = odbc_result($rs1,"SECNAME").".".odbc_result($rs1,"EXT");
+$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+$ootemplate = lmbdb_result($rs1,"SECNAME").".".lmbdb_result($rs1,"EXT");
 $ootemplatepath = $umgvar["pfad"]."/UPLOAD/".$ootemplate;
 if(!file_exists($ootemplatepath)){
 	echo "no Office Template found!";

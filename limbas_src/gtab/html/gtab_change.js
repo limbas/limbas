@@ -647,22 +647,36 @@ function limbasSetNewCurrency(formname,value,crurency,fieldid){
 	limbasDivClose();
 }
 
-function limbasChangeCurrency(el,value,curr,formname,fieldid){
+function limbasChangeCurrency(el,formname,fieldid){
+    var value = $('#'+formname).val().replace(",",".");
 	if(!value){return;}
-	limbasDivShow(el,null,'lmbAjaxContainer','','',1);
-	value = value.replace(",",".");
+    limbasDivShow(el,null,'lmbAjaxContainer','','',1);
 
-	const currentCurrencyIndex = jsvar["currency_code"].indexOf(curr);
-
-    var newHtml = "";
-    for (var i = 0; i < jsvar["currency_code"].length; ++i) {
-		const numbval = value.split(' ');
-		const calc = limbasRoundMath((1 / jsvar["currency_unit"][i]) * jsvar["currency_unit"][currentCurrencyIndex] * numbval[0]);
-
-        newHtml += '<a class="lmbContextLink" onclick="limbasSetNewCurrency(\''+formname+'\',\''+calc+'\',\''+jsvar["currency_code"][i]+'\',\''+fieldid+'\')">';
-        newHtml += jsvar["currency_code"][i] + "&nbsp;" + calc;
-        newHtml += '</a>';
+    const numbval = value.split(' ');
+    var curr = jsvar["default_currency"];
+    if (numbval.length > 1) {
+        curr = numbval[1];
 	}
+
+	var currencies = Object.keys(jsvar["currency_id"]).filter(jsvar["currency_id"].hasOwnProperty.bind(jsvar["currency_id"])).reduce(function(obj, key) { obj[jsvar["currency_id"][key]] = key; return obj; }, {});
+
+
+    var newHtml = '';
+    for (const [id, rate] of Object.entries(jsvar["currency_rate"][curr])) {
+
+
+        const calc = limbasRoundMath(rate * numbval[0]);
+
+        newHtml += '<a class="lmbContextLink" onclick="limbasSetNewCurrency(\''+formname+'\',\''+calc+'\',\''+currencies[id]+'\',\''+fieldid+'\')">';
+        newHtml += currencies[id] + "&nbsp;" + calc;
+        newHtml += '</a>';
+
+    }
+
+    if (!newHtml) {
+        newHtml = jsvar['lng_2979'];
+	}
+
     $("#lmbAjaxContainer").html(newHtml);
 }
 

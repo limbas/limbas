@@ -25,7 +25,7 @@ ob_implicit_flush();
 ?>
 
 <link rel="stylesheet" href="extern/bootstrap/bootstrap.min.css">
-<div id="scolldown" class="lmbPositionContainerMain small" style="max-height: 100%">
+<div id="scolldown" class="lmbPositionContainerMain" style="max-height: 100%">
 
 <style>
     BODY{
@@ -157,6 +157,13 @@ if($update_file) {
 		session_destroy();
 		session_unset();
         echo '</div>';
+
+        if($releasenotes){
+            echo '<div class="alert alert-info" role="alert"><b>Releasenotes!</b><br><br><ul style="padding-left: 20px;">';
+            echo $releasenotes;
+            echo '</ul></div>';
+        }
+
         echo "<hr><input type=\"button\" onclick=\"top.document.location.href='index.php'\" class=\"btn btn-info pull-right\" value=\"finished .. back to LIMBAS\"<br><br>";
 	}
 
@@ -173,6 +180,8 @@ if($update_file) {
 ?>
 
 </FORM>
+
+<?php if(!$update_file) {?>
 
 <br><br>
 
@@ -191,6 +200,8 @@ if($update_file) {
         <li>replace the "independent" directory with its newest version if necessary. Available as "independent.tar" archive in source.
     </ul>
 </div>
+
+<?php }?>
 
 <script language="JavaScript">
     $(function() {

@@ -36,10 +36,10 @@ $bu["host"] = $DBA["DBHOST"];
 
 if(!$umgvar){
 	$sqlquery = "SELECT FORM_NAME,NORM FROM LMB_UMGVAR";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$umgvar[odbc_result($rs,"FORM_NAME")] = odbc_result($rs,"NORM");
+	while(lmbdb_fetch_row($rs)) {
+		$umgvar[lmbdb_result($rs,"FORM_NAME")] = lmbdb_result($rs,"NORM");
 	}
 }
 
@@ -69,7 +69,7 @@ function delete_backup($server,$location,$path=null,$job=null){
 		
 		if($success AND $date AND $cron_id){
             $sqlquery = "DELETE FROM LMB_HISTORY_BACKUP WHERE ID = '".parse_db_int($job)."'";
-            $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
 		}
 		
 		return true;
@@ -83,12 +83,12 @@ function delete_backup_list($days,$cron_id,$path){
 
 	if($date = convert_stamp(mktime(0,0,0,date("m"),date("d")-$days,date("Y")))){
 		$sqlquery = "SELECT * FROM LMB_HISTORY_BACKUP WHERE ERSTDATUM < '".$date."' AND CRON_ID = $cron_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		while(odbc_fetch_row($rs)) {
-			if(delete_backup(odbc_result($rs,"SERVER"),odbc_result($rs,"LOCATION"),$path,odbc_result($rs,"ID"))){
-				$sqlquery1 = "DELETE FROM LMB_HISTORY_BACKUP WHERE ID = ".odbc_result($rs,"ID");
-				$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs)) {
+			if(delete_backup(lmbdb_result($rs,"SERVER"),lmbdb_result($rs,"LOCATION"),$path,lmbdb_result($rs,"ID"))){
+				$sqlquery1 = "DELETE FROM LMB_HISTORY_BACKUP WHERE ID = ".lmbdb_result($rs,"ID");
+				$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 				if(!$rs1) {$commit = 1;}
 			}
 		}
@@ -140,7 +140,7 @@ function fill_backup_history($out,$path,$typ){
 	
 	$NEXTID = next_db_id("LMB_HISTORY_BACKUP");
 	$sqlquery = "INSERT INTO LMB_HISTORY_BACKUP (ID,LABEL,ACTION,RESULT,MEDIUM,SIZE,NEXTLOGPAGE,SERVER,LOCATION,MESSAGE,CRON_ID) VALUES($NEXTID,'$label','$action',$res,'".trim($medium)."',".parse_db_int(round($size/1024)).",$logpage,'".$path['server']."','$store','$mess',$cronid)";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
 	return $out;
@@ -218,10 +218,10 @@ function update_backup_crontab(){
 		}
 		# --- schreiben neuer Inhalte ----
 		$sqlquery = "SELECT * FROM LMB_CRONTAB WHERE ACTIV = ".LMB_DBDEF_TRUE." ORDER BY ERSTDATUM";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		while(odbc_fetch_row($rs)){
-			fputs($handle,str_replace(";"," ",odbc_result($rs,"START"))."\twebuser (/usr/local/bin/php \"".$umgvar["pfad"]."/lib/cron.php\" < /bin/echo ".odbc_result($rs,"ID").")\n");
+		while(lmbdb_fetch_row($rs)){
+			fputs($handle,str_replace(";"," ",lmbdb_result($rs,"START"))."\twebuser (/usr/local/bin/php \"".$umgvar["pfad"]."/lib/cron.php\" < /bin/echo ".lmbdb_result($rs,"ID").")\n");
 		}
 		fclose($handle);
 		return true;
@@ -234,13 +234,13 @@ function update_backup_crontab(){
 # --- Backup löschen ---
 if($delete_backup){
 	$sqlquery = "SELECT * FROM LMB_HISTORY_BACKUP WHERE ID = $delete_backup";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$bzm = 1;
-	if(odbc_fetch_row($rs)) {
-		if(delete_backup(odbc_result($rs,"SERVER"),odbc_result($rs,"LOCATION"))){
-			$sqlquery1 = "DELETE FROM LMB_HISTORY_BACKUP WHERE ID = ".odbc_result($rs,"ID");
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+	if(lmbdb_fetch_row($rs)) {
+		if(delete_backup(lmbdb_result($rs,"SERVER"),lmbdb_result($rs,"LOCATION"))){
+			$sqlquery1 = "DELETE FROM LMB_HISTORY_BACKUP WHERE ID = ".lmbdb_result($rs,"ID");
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 		}
 	}
@@ -316,7 +316,7 @@ if($int_backup){
 # ---- Cron Job löschen ----
 if($del_job){
 	$sqlquery = "DELETE FROM LMB_CRONTAB WHERE ID = $del_job AND KATEGORY = 'BACKUP'";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	#if(!update_backup_crontab()){lmb_alert("no permission to /etc/crontab\\ncheck it manualy");};
 }elseif($cron_backup){
@@ -348,7 +348,7 @@ if($del_job){
 
 	$NEXTID = next_db_id("LMB_CRONTAB");
 	$sqlquery = "INSERT INTO LMB_CRONTAB (ID,KATEGORY,START,VAL,DESCRIPTION,ACTIV,ALIVE) VALUES($NEXTID,'BACKUP','$cron_1;$cron_2;$cron_3;$cron_4;$cron_5','$val','$desc',".LMB_DBDEF_TRUE.",$alive)";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	#if(!update_backup_crontab()){lmb_alert("no permission to /etc/crontab\\ncheck it manualy");};
 }

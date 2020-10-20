@@ -67,7 +67,7 @@ function nav_refresh(gtabid,snapid,val) {
 <input type="hidden" name="wf_cancel">
 <input type="hidden" name="wf_pause">
 
-<script type="text/javascript" src="user/html/user_workflow.js"></script>
+<script type="text/javascript" src="user/html/user_workflow.js?v=<?=$umgvar["version"]?>"></script>
 
 <?php
 $mywf = WF_getMyWorkflowInstances();

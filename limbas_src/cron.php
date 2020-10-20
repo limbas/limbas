@@ -55,7 +55,7 @@ if($argv[2] AND $argv[3]){
 $cronjob = 1;
 
 
-require_once($lpath."inc/include_db.lib");
+require_once($lpath."lib/db/db_wrapper.lib");
 require_once($lpath."lib/db/db_".$DBA["DB"]."_admin.lib");
 require_once($lpath."lib/include.lib");
 require_once($lpath."lib/include_admin.lib");
@@ -72,12 +72,32 @@ if($auth_user){
     
     /* --- LMB_UMGVAR ------------------- */
 	$sqlquery = "SELECT FORM_NAME,NORM FROM LMB_UMGVAR";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$umgvar[odbc_result($rs,"FORM_NAME")] = odbc_result($rs,"NORM");
+	while(lmbdb_fetch_row($rs)) {
+		$umgvar[lmbdb_result($rs,"FORM_NAME")] = lmbdb_result($rs,"NORM");
 	}
 	$umgvar["pfad"] = $umgvar["path"];
+
+    # -------- Eigene globale Variablen auslesen --------
+    $sqlquery3 = 'SELECT CKEY, CVALUE FROM LMB_CUSTVAR WHERE ACTIVE = ' . LMB_DBDEF_TRUE;
+    $rs3 = lmbdb_exec($db, $sqlquery3) or errorhandle(lmbdb_errormsg($db), $sqlquery3, $action, __FILE__, __LINE__);
+    if (!$rs3) {
+        $commit = 1;
+    }
+    while (lmbdb_fetch_row($rs3)) {
+        $custvar[lmbdb_result($rs3, "CKEY")] = lmbdb_result($rs3, "CVALUE");
+    }
+
+    /* --- load custom variables depend ------------------- */
+    $sqlquery3 = 'SELECT LMB_CUSTVAR_DEPEND.CKEY, LMB_CUSTVAR_DEPEND.CVALUE FROM LMB_CUSTVAR_DEPEND LEFT JOIN LMB_CUSTVAR ON LMB_CUSTVAR_DEPEND.CKEY = LMB_CUSTVAR.CKEY WHERE LMB_CUSTVAR.OVERRIDABLE = ' . LMB_DBDEF_TRUE . ' AND LMB_CUSTVAR.ACTIVE = ' . LMB_DBDEF_TRUE . ' AND LMB_CUSTVAR_DEPEND.ACTIVE = ' . LMB_DBDEF_TRUE;
+    $rs3 = lmbdb_exec($db, $sqlquery3) or errorhandle(lmbdb_errormsg($db), $sqlquery3, $action, __FILE__, __LINE__);
+    if (!$rs3) {
+        $commit = 1;
+    }
+    while (lmbdb_fetch_row($rs3)) {
+        $custvar[lmbdb_result($rs3, "CKEY")] = lmbdb_result($rs3, "CVALUE");
+    }
 
 	# --- mbstring include -------------------------------------------
 	if(strtoupper($umgvar["charset"]) == "UTF-8"){
@@ -93,6 +113,11 @@ if($auth_user){
 		require_once($lpath."lib/include_DateTime.lib");
 	}else{
 		require_once($lpath."lib/include_datetime.lib");
+	}
+
+	/* --- Prüfung ob gesperrt --------------------------------- */
+	if($umgvar["lock"]){
+		die('System is locked!');
 	}
 	
 	require_once($lpath."gtab/gtab_array.lib");
@@ -118,7 +143,7 @@ if ($job && is_string($job) && !is_numeric($job)) {
         $additionalCronData = $argv[4];
     }
     require_once($filepath);
-    if($db){odbc_close($db);}
+    if($db){lmbdb_close($db);}
     return;
 }
 
@@ -138,17 +163,17 @@ require_once($lpath."admin/tools/jobs_ext.lib");
 
 
 
-$sqlquery = "SELECT * FROM LMB_CRONTAB WHERE ID = $job";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$sqlquery = "SELECT * FROM LMB_CRONTAB WHERE ID = $job AND ACTIV = ".LMB_DBDEF_TRUE;
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
-if(odbc_fetch_row($rs)) {
-	$cronvalue = odbc_result($rs,"VAL");
-	$cron_id = odbc_result($rs,"ID");
-	$kattempl = lmb_strtolower(odbc_result($rs,"KATEGORY"));
+if(lmbdb_fetch_row($rs)) {
+	$cronvalue = lmbdb_result($rs,"VAL");
+	$cron_id = lmbdb_result($rs,"ID");
+	$kattempl = lmb_strtolower(lmbdb_result($rs,"KATEGORY"));
 	
 	# -------- BACKUP ----------
 	if($kattempl == "backup" AND $cronvalue){
-		$backup_alive = odbc_result($rs,"ALIVE");
+		$backup_alive = lmbdb_result($rs,"ALIVE");
 
 		$val = explode(";",$cronvalue);
 		foreach($val as $key => $value){
@@ -174,5 +199,5 @@ if(odbc_fetch_row($rs)) {
 
 
 /* --- DB-CLOSE ------------------------------------------------------ */
-if($db){odbc_close($db);}
+if($db){lmbdb_close($db);}
 ?>

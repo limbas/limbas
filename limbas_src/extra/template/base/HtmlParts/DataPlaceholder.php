@@ -6,8 +6,12 @@
  *
  * Syntax:
  *  ${->Field} where 'Field' is the Database-Fieldname of the dataset for which the template is being resolved
+ *  ${=>CurrentTable->Field}
+ *  ${=>1:1RelationTable->Field}
  *  ${->Field|DefaultValue} where 'DefaultValue' is inserted if the content of 'Field' is empty
  *  ${->RelationField->Field} for relations
+ *  ${->Field[w]} in form for editable input field
+ *  ${->Field[class=my-class test-class input]}
  */
 abstract class DataPlaceholder extends AbstractHtmlPart {
 
@@ -37,10 +41,25 @@ abstract class DataPlaceholder extends AbstractHtmlPart {
      */
     protected $fullMatch;
 
-    public function __construct($fieldNames, $flags, $altValue) {
-        global $gfield;
+    /**
+     * @var array options passed to placeholder: ${->test[w][class=test]} => array('w' => true, 'class' => 'test')
+     */
+    protected $options;
 
-        $this->fullMatch = '->' . implode('->', $fieldNames);
+    public function __construct($fieldIdentifiers, $options, $altValue) {
+        global $gfield, $gtab;
+
+        $this->options = $options;
+
+        $fieldIdentifierStrs = array_map(function($identifier) {
+            $str = '';
+            if (array_key_exists('table', $identifier)) {
+                $str = '=>' . $identifier['table'];
+            }
+            $str .= '->' . $identifier['name'];
+            return $str;
+        }, $fieldIdentifiers);
+        $this->fullMatch = implode('', $fieldIdentifierStrs);
 
         # store alternative value if given
         if ($altValue) {
@@ -48,18 +67,38 @@ abstract class DataPlaceholder extends AbstractHtmlPart {
         }
 
         # resolve field trace
-        $numParts = count($fieldNames);
+        $numParts = count($fieldIdentifiers);
 
         $this->fieldlist = array();
         $trace = array();
         $currentGtabid = TemplateConfig::$instance->getGtabid();
         $fieldID = null;
         for ($i = 0; $i < $numParts; $i++) {
+            # resolve table
+            if (array_key_exists('table', $fieldIdentifiers[$i])) {
+                $tableName = $fieldIdentifiers[$i]['table'];
+                $tableID = $gtab['argresult_id'][lmb_strtoupper($tableName)];
+                if ($tableID != $currentGtabid) { // specifying current table is allowed as hint to developers
+                    $relationTableID = $gtab['verkn'][$tableID];
+
+                    // not current table & not 1:1 relation table -> not allowed
+                    if ($currentGtabid != $relationTableID) {
+                        lmb_log::error("Invalid table {$tableName} in placeholder {$this->fullMatch}!", "Invalid table {$tableName}!", $currentGtabid);
+                        $this->fieldlist = null;
+                        $this->setValue('');
+                        return;
+                    }
+
+                    $currentGtabid = $tableID;
+                }
+            }
+
             $trace[] = $currentGtabid;
 
             # resolve field name -> id
-            $fieldID = $gfield[$currentGtabid]['argresult_name'][lmb_strtoupper($fieldNames[$i])];
+            $fieldID = $gfield[$currentGtabid]['argresult_name'][lmb_strtoupper($fieldIdentifiers[$i]['name'])];
             if ($fieldID === null) {
+                lmb_log::error("Invalid field {$fieldIdentifiers[$i]['name']} in placeholder {$this->fullMatch}!", "Invalid field {$fieldIdentifiers[$i]['name']}!", $currentGtabid);
                 $this->fieldlist = null;
                 $this->setValue('');
                 return;

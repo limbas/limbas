@@ -48,14 +48,14 @@ function set_row_size($rowsize,$gtabid){
 	$rowsize = implode(";",$rsize);
 
 	$sqlquery = "SELECT ID FROM LMB_GTAB_ROWSIZE WHERE USER_ID = ".$session["user_id"]." AND TAB_ID = $gtabid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_fetch_row($rs)){
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_fetch_row($rs)){
 		$sqlquery = "UPDATE LMB_GTAB_ROWSIZE SET ROW_SIZE = '$rowsize' WHERE USER_ID = ".$session["user_id"]." AND TAB_ID = $gtabid";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}else{
 		$NEXTID = next_db_id("LMB_GTAB_ROWSIZE");
 		$sqlquery = "INSERT INTO LMB_GTAB_ROWSIZE (ID,USER_ID,TAB_ID,ROW_SIZE) VALUES ($NEXTID,".$session["user_id"].",$gtabid,'$rowsize')";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
 	
 	lmbGetGtabWidth($gtabid,$filter["hidecols"][$gtabid]);
@@ -98,11 +98,11 @@ function get_groupresult($gtabid,$group_fields,$gsr){
 	
 	if(!$filter["anzahl"][$gtabid]){$filter["anzahl"][$gtabid] = $session["maxresult"];}
 	$sqlquery = "SELECT DISTINCT ".implode(",",$from)." FROM ".$gtab['table'][$gtabid]." $where ORDER BY ".implode(",",$from);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	for($i=1; $i < $filter["anzahl"][$gtabid]; $i++) {
-		if(odbc_fetch_row($rs)) {
+		if(lmbdb_fetch_row($rs)) {
 			foreach($group_fields as $key => $value){
-				$result_group[$i][$value] = odbc_result($rs, $gfield[$gtabid]['field_name'][$value]);
+				$result_group[$i][$value] = lmbdb_result($rs, $gfield[$gtabid]['field_name'][$value]);
 			}
 		}
 	}

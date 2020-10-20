@@ -37,7 +37,7 @@ if($newupload){
 	
 	if($gfv){$gf = implode(";",$gfv);}
 	$sqlquery =  "UPDATE LMB_CONF_FIELDS SET ARGUMENT = '".parse_db_string($gf,500)."' WHERE TAB_ID = $tabid AND FIELD_ID = $fieldid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 }
 
@@ -61,22 +61,22 @@ if($newupload){
 
 <?php
 $sqlquery =  "SELECT ARGUMENT FROM LMB_CONF_FIELDS WHERE TAB_ID = $tabid AND FIELD_ID = $fieldid";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}	
-if(odbc_fetch_row($rs)) {
-	$gf = explode(";",odbc_result($rs, "ARGUMENT"));
+if(lmbdb_fetch_row($rs)) {
+	$gf = explode(";",lmbdb_result($rs, "ARGUMENT"));
 }
 
 $sqlquery =  "SELECT FIELD_ID,FIELD_NAME,ARGUMENT FROM LMB_CONF_FIELDS WHERE TAB_ID = $tabid AND FIELD_TYPE < 100 ORDER BY SORT";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
-while(odbc_fetch_row($rs)) {
-	$key = array_search(odbc_result($rs, "FIELD_ID"),$gf);
+while(lmbdb_fetch_row($rs)) {
+	$key = array_search(lmbdb_result($rs, "FIELD_ID"),$gf);
 	if($key !== FALSE){$CHECKED = "CHECKED";$sortvalue=($key+1);}else{$CHECKED = "";$sortvalue="";}
 	echo "<TR>
-	<TD>".odbc_result($rs, "FIELD_NAME")."</TD>
-	<TD ALIGN=\"right\"><INPUT TYPE=\"CHECKBOX\" NAME=\"grouping_fields[id][".odbc_result($rs, "FIELD_ID")."]\" VALUE=\"".odbc_result($rs, "FIELD_ID")."\" $CHECKED></TD>
-	<TD NOWRAP ALIGN=\"right\"><INPUT TYPE=\"TEXT\" NAME=\"grouping_fields[sort][".odbc_result($rs, "FIELD_ID")."]\" VALUE=\"$sortvalue\" STYLE=\"width:20px;\"></TD>
+	<TD>".lmbdb_result($rs, "FIELD_NAME")."</TD>
+	<TD ALIGN=\"right\"><INPUT TYPE=\"CHECKBOX\" NAME=\"grouping_fields[id][".lmbdb_result($rs, "FIELD_ID")."]\" VALUE=\"".lmbdb_result($rs, "FIELD_ID")."\" $CHECKED></TD>
+	<TD NOWRAP ALIGN=\"right\"><INPUT TYPE=\"TEXT\" NAME=\"grouping_fields[sort][".lmbdb_result($rs, "FIELD_ID")."]\" VALUE=\"$sortvalue\" STYLE=\"width:20px;\"></TD>
 	</TR>";
 }
 

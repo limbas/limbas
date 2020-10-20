@@ -66,7 +66,7 @@ class LMBStatement extends PDOStatement {
  * @param bool $OnOff [optional]
  * @return bool
  */
-function odbc_autocommit(&$pdo, $OnOff = null) {
+function lmbdb_autocommit(&$pdo, $OnOff = null) {
     if ($OnOff === null) {
         return $pdo->inTransaction();
     }
@@ -89,7 +89,7 @@ function odbc_autocommit(&$pdo, $OnOff = null) {
  * @param int $mode
  * @return bool
  */
-function odbc_binmode($stmt, $mode) {
+function lmbdb_binmode($stmt, $mode) {
     //Not needed
     return true;
 }
@@ -100,7 +100,7 @@ function odbc_binmode($stmt, $mode) {
  * @param PDO $pdo
  * @return void No value is returned.
  */
-function odbc_close(&$pdo) {
+function lmbdb_close(&$pdo) {
     $pdo = null;
 }
 
@@ -111,7 +111,7 @@ function odbc_close(&$pdo) {
  * @since 4.0
  * @since 5.0
  */
-//function odbc_close_all () {}
+//function lmbdb_close_all () {}
 
 /**
  * Lists the column names in specified tables
@@ -153,7 +153,7 @@ function odbc_close(&$pdo) {
  * @since 4.0
  * @since 5.0
  */
-function odbc_columns($pdo, $qualifier = null, $schema = null, $table_name = null, $column_name = null) {
+function lmbdb_columns($pdo, $qualifier = null, $schema = null, $table_name = null, $column_name = null) {
     global $DBA;
 
     /*
@@ -198,7 +198,7 @@ function odbc_columns($pdo, $qualifier = null, $schema = null, $table_name = nul
             $where[] = "table_name = '$table_name'";
         }
         if ($column_name) {
-            $where[] = "column_name = '$column_name'";
+            $where[] = "column_name LIKE '$column_name'";
         }
 
         $query_string = "SELECT 
@@ -259,7 +259,7 @@ function odbc_columns($pdo, $qualifier = null, $schema = null, $table_name = nul
 
     }
 
-    return odbc_exec($pdo, $query_string);
+    return lmbdb_exec($pdo, $query_string);
 }
 
 /**
@@ -268,7 +268,7 @@ function odbc_columns($pdo, $qualifier = null, $schema = null, $table_name = nul
  * @param PDO $pdo
  * @return bool
  */
-function odbc_commit(&$pdo) {
+function lmbdb_commit(&$pdo) {
     return $pdo->commit();
 }
 
@@ -281,13 +281,15 @@ function odbc_commit(&$pdo) {
  * @param int $cursor_type [optional]
  * @return PDO|bool
  */
-function odbc_connect($dsn, $user, $password, $cursor_type = null) {
+function lmbdb_connect($dsn, $user, $password, $cursor_type = null) {
     try {
         $db = new PDO($dsn, $user, $password);
     } catch (PDOException $e) {
         return false;
     }
 
+
+    #$db->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
     $db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_WARNING);
     $db->setAttribute(PDO::ATTR_CASE, PDO::CASE_UPPER);
     $db->setAttribute(PDO::ATTR_STATEMENT_CLASS, array('LMBStatement', array($db)));
@@ -304,7 +306,7 @@ function odbc_connect($dsn, $user, $password, $cursor_type = null) {
  * @since 4.0
  * @since 5.0
  */
-//function odbc_cursor ($stmt) {}
+//function lmbdb_cursor ($stmt) {}
 
 /**
  * Returns information about a current connection
@@ -321,7 +323,7 @@ function odbc_connect($dsn, $user, $password, $cursor_type = null) {
  * @since 4.3.0
  * @since 5.0
  */
-//function odbc_data_source ($pdo, $fetch_type) {}
+//function lmbdb_data_source ($pdo, $fetch_type) {}
 
 /**
  * Execute a prepared statement
@@ -330,7 +332,7 @@ function odbc_connect($dsn, $user, $password, $cursor_type = null) {
  * @param array $parameters_array [optional]
  * @return bool
  */
-function odbc_execute(&$stmt, array $parameters_array = null) {
+function lmbdb_execute(&$stmt, array $parameters_array = null) {
     return $stmt->execute($parameters_array);
 }
 
@@ -340,7 +342,7 @@ function odbc_execute(&$stmt, array $parameters_array = null) {
  * @param PDOStatement|PDO $pdo
  * @return string
  */
-function odbc_error($pdo = null) {
+function lmbdb_error($pdo = null) {
     if ($pdo) {
         return $pdo->errorCode();
     }
@@ -353,7 +355,7 @@ function odbc_error($pdo = null) {
  * @param PDOStatement|PDO $pdo
  * @return string
  */
-function odbc_errormsg($pdo = null) {
+function lmbdb_errormsg($pdo = null) {
     if ($pdo) {
         $error = $pdo->errorInfo();
         return $error[2];
@@ -369,7 +371,7 @@ function odbc_errormsg($pdo = null) {
  * @param int $flags
  * @return PDOStatement|bool
  */
-function odbc_exec($pdo, $query_string, $flags = null) {
+function lmbdb_exec($pdo, $query_string, $flags = null) {
     if (!$pdo) {
         return false;
     }
@@ -377,7 +379,7 @@ function odbc_exec($pdo, $query_string, $flags = null) {
     $stmt = $pdo->query($query_string);
 
     if (!$stmt) {
-        error_log('Error: ' . odbc_errormsg($pdo) . ' for query ' . $query_string);
+        error_log('Error: ' . lmbdb_errormsg($pdo) . ' for query ' . $query_string);
         return false;
     }
 
@@ -391,7 +393,7 @@ function odbc_exec($pdo, $query_string, $flags = null) {
  * @param int $rownumber
  * @return array|bool
  */
-function odbc_fetch_array(&$stmt, $rownumber = null) {
+function lmbdb_fetch_array(&$stmt, $rownumber = null) {
     #if ($rownumber !== null) {
     #    error_log('Pdo: odbc_fetch_array: Cursor not supported!');
     #}
@@ -405,7 +407,7 @@ function odbc_fetch_array(&$stmt, $rownumber = null) {
  * @param int $rownumber
  * @return object|bool
  */
-function odbc_fetch_object(&$stmt, $rownumber = null) {
+function lmbdb_fetch_object(&$stmt, $rownumber = null) {
     #if ($rownumber !== null) {
     #    error_log('Pdo: odbc_fetch_object: Cursor not supported!');
     #}
@@ -419,7 +421,7 @@ function odbc_fetch_object(&$stmt, $rownumber = null) {
  * @param int $row_number
  * @return bool
  */
-function odbc_fetch_row(&$stmt, $row_number = null) {
+function lmbdb_fetch_row(&$stmt, $row_number = null) {
     #if ($row_number !== null) {
         #lmb_log::error('odbc_fetch_row: Cursor not supported!', null, null, null, null);
         #error_log('Pdo: odbc_fetch_row: Cursor not supported!');
@@ -449,7 +451,7 @@ function odbc_fetch_row(&$stmt, $row_number = null) {
  * @since 4.0
  * @since 5.0
  */
-//function odbc_fetch_into ($stmt, array &$result_array, $rownumber = null) {}
+//function lmbdb_fetch_into ($stmt, array &$result_array, $rownumber = null) {}
 
 /**
  * Get the length (precision) of a field
@@ -464,7 +466,7 @@ function odbc_fetch_row(&$stmt, $row_number = null) {
  * @since 4.0
  * @since 5.0
  */
-//function odbc_field_len ($stmt, $field_number) {}
+//function lmbdb_field_len ($stmt, $field_number) {}
 
 /**
  * Get the scale of a field
@@ -479,7 +481,7 @@ function odbc_fetch_row(&$stmt, $row_number = null) {
  * @since 4.0
  * @since 5.0
  */
-//function odbc_field_scale ($stmt, $field_number) {}
+//function lmbdb_field_scale ($stmt, $field_number) {}
 
 /**
  * Get the columnname
@@ -488,7 +490,7 @@ function odbc_fetch_row(&$stmt, $row_number = null) {
  * @param int $field_number
  * @return string|bool
  */
-function odbc_field_name($stmt, $field_number) {
+function lmbdb_field_name($stmt, $field_number) {
     return $stmt->getFieldName($field_number);
 }
 
@@ -505,7 +507,7 @@ function odbc_field_name($stmt, $field_number) {
  * @since 4.0
  * @since 5.0
  */
-//function odbc_field_type ($stmt, $field_number) {}
+//function lmbdb_field_type ($stmt, $field_number) {}
 
 /**
  * Return column number
@@ -521,7 +523,7 @@ function odbc_field_name($stmt, $field_number) {
  * @since 4.0
  * @since 5.0
  */
-//function odbc_field_num ($stmt, $field_name) {}
+//function lmbdb_field_num ($stmt, $field_name) {}
 
 /**
  * Free resources associated with a result
@@ -529,7 +531,7 @@ function odbc_field_name($stmt, $field_number) {
  * @param LMBStatement $stmt
  * @return bool
  */
-function odbc_free_result(&$stmt) {
+function lmbdb_free_result(&$stmt) {
     if (is_object($stmt)) {
         $stmt->clearCache();
     }
@@ -571,7 +573,7 @@ function odbc_free_result(&$stmt) {
  * @since 4.0
  * @since 5.0
  */
-//function odbc_gettypeinfo ($pdo, $data_type = null) {}
+//function lmbdb_gettypeinfo ($pdo, $data_type = null) {}
 
 /**
  * Handling of LONG columns
@@ -588,7 +590,7 @@ function odbc_free_result(&$stmt) {
  * @since 4.0
  * @since 5.0
  */
-//function odbc_longreadlen ($stmt, $length) {}
+//function lmbdb_longreadlen ($stmt, $length) {}
 
 /**
  * Checks if multiple results are available
@@ -600,7 +602,7 @@ function odbc_free_result(&$stmt) {
  * @since 4.0.5
  * @since 5.0
  */
-//function odbc_next_result ($stmt) {}
+//function lmbdb_next_result ($stmt) {}
 
 /**
  * Number of columns in a result
@@ -608,7 +610,7 @@ function odbc_free_result(&$stmt) {
  * @param LMBStatement $stmt
  * @return int
  */
-function odbc_num_fields($stmt) {
+function lmbdb_num_fields($stmt) {
     if(!$stmt){return false;}   // todo performace check
     return $stmt->columnCount();
 }
@@ -619,7 +621,7 @@ function odbc_num_fields($stmt) {
  * @param PDOStatement $stmt
  * @return int
  */
-function odbc_num_rows($stmt) {
+function lmbdb_num_rows($stmt) {
     if (!is_object($stmt)) {
         return -1;
     }
@@ -635,8 +637,8 @@ function odbc_num_rows($stmt) {
  * @param int $cursor_type [optional]
  * @return PDO
  */
-function odbc_pconnect($dsn, $user, $password, $cursor_type = null) {
-    return odbc_connect($dsn, $user, $password, $cursor_type);
+function lmbdb_pconnect($dsn, $user, $password, $cursor_type = null) {
+    return lmbdb_connect($dsn, $user, $password, $cursor_type);
     //persistent connection does not support ATTR_STATEMENT_CLASS (necessary for cache)
     //$db = new PDO("pgsql:host=;dbname=", $user, $password, array(PDO::ATTR_PERSISTENT => true));
     //$db->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -651,7 +653,7 @@ function odbc_pconnect($dsn, $user, $password, $cursor_type = null) {
  * @param string $query_string
  * @return PDOStatement
  */
-function odbc_prepare($pdo, $query_string) {
+function lmbdb_prepare($pdo, $query_string) {
     return $pdo->prepare($query_string);
 }
 
@@ -662,7 +664,7 @@ function odbc_prepare($pdo, $query_string) {
  * @param string|int $field
  * @return mixed
  */
-function odbc_result(&$stmt, $field) {
+function lmbdb_result(&$stmt, $field) {
     if (!is_object($stmt)) {        // todo performance check
         return null;
     }
@@ -676,29 +678,29 @@ function odbc_result(&$stmt, $field) {
  * @param string $format [optional]
  * @return int
  */
-function odbc_result_all($stmt, $format = null) {
+function lmbdb_result_all($stmt, $format = null) {
     $table = "<table $format>";
 
     $first = true;
-    while (odbc_fetch_row($stmt)) {
-        $noFields = odbc_num_fields($stmt);
+    while (lmbdb_fetch_row($stmt)) {
+        $noFields = lmbdb_num_fields($stmt);
         if ($first) {
             $table .= '<tr>';
             for ($u = 1; $u <= $noFields; $u++) {
-                $table .= '<th><b>' . odbc_field_name($stmt, $u) . '</b></th>';
+                $table .= '<th><b>' . lmbdb_field_name($stmt, $u) . '</b></th>';
             }
             $table .= '</tr>';
             $first = false;
         }
         $table .= '<tr>';
         for ($u = 1; $u <= $noFields; $u++) {
-            $table .= '<td>' . odbc_result($stmt, $u) . '</td>';
+            $table .= '<td>' . lmbdb_result($stmt, $u) . '</td>';
         }
         $table .= '</tr>';
     }
     $table .= '</table>';
     echo $table;
-    return odbc_num_rows($stmt);
+    return lmbdb_num_rows($stmt);
 }
 
 /**
@@ -707,7 +709,7 @@ function odbc_result_all($stmt, $format = null) {
  * @param PDO $pdo
  * @return bool
  */
-function odbc_rollback(&$pdo) {
+function lmbdb_rollback(&$pdo) {
     return $pdo->rollBack();
 }
 
@@ -734,7 +736,7 @@ function odbc_rollback(&$pdo) {
  * @since 4.0
  * @since 5.0
  */
-//function odbc_setoption ($id, $function, $option, $param) {}
+//function lmbdb_setoption ($id, $function, $option, $param) {}
 
 /**
  * Retrieves special columns
@@ -779,7 +781,7 @@ function odbc_rollback(&$pdo) {
  * @since 4.0
  * @since 5.0
  */
-//function odbc_specialcolumns ($pdo, $type, $qualifier, $owner, $table, $scope, $nullable) {}
+//function lmbdb_specialcolumns ($pdo, $type, $qualifier, $owner, $table, $scope, $nullable) {}
 
 /**
  * Retrieve statistics about a table
@@ -821,7 +823,7 @@ function odbc_rollback(&$pdo) {
  * @since 4.0
  * @since 5.0
  */
-//function odbc_statistics ($pdo, $qualifier, $owner, $table_name, $unique, $accuracy) {}
+//function lmbdb_statistics ($pdo, $qualifier, $owner, $table_name, $unique, $accuracy) {}
 
 /**
  * Get the list of table names stored in a specific data source
@@ -834,7 +836,7 @@ function odbc_rollback(&$pdo) {
  * @param string $types [optional]
  * @return PDOStatement|bool
  */
-function odbc_tables($pdo, $qualifier = null, $owner = null, $name = null, $types = null) {
+function lmbdb_tables($pdo, $qualifier = null, $owner = null, $name = null, $types = null) {
     global $DBA;
 
     /*
@@ -891,7 +893,7 @@ function odbc_tables($pdo, $qualifier = null, $owner = null, $name = null, $type
     if (!$query_string) {
         return false;
     }
-    return odbc_exec($pdo, $query_string);
+    return lmbdb_exec($pdo, $query_string);
 }
 
 /**
@@ -903,7 +905,7 @@ function odbc_tables($pdo, $qualifier = null, $owner = null, $name = null, $type
  * @param string $table
  * @return PDOStatement|bool
  */
-function odbc_primarykeys($pdo, $qualifier, $owner, $table) {
+function lmbdb_primarykeys($pdo, $qualifier, $owner, $table) {
     global $DBA;
 
     /*
@@ -935,7 +937,7 @@ function odbc_primarykeys($pdo, $qualifier, $owner, $table) {
     }
 
 
-    return odbc_exec($pdo, $query_string);
+    return lmbdb_exec($pdo, $query_string);
 }
 
 /**
@@ -977,7 +979,7 @@ function odbc_primarykeys($pdo, $qualifier, $owner, $table) {
  * @since 4.0
  * @since 5.0
  */
-//function odbc_columnprivileges ($pdo, $qualifier, $owner, $table_name, $column_name) {}
+//function lmbdb_columnprivileges ($pdo, $qualifier, $owner, $table_name, $column_name) {}
 
 /**
  * Lists tables and the privileges associated with each table
@@ -1009,7 +1011,7 @@ function odbc_primarykeys($pdo, $qualifier, $owner, $table) {
  * @since 4.0
  * @since 5.0
  */
-//function odbc_tableprivileges ($pdo, $qualifier, $owner, $name) {}
+//function lmbdb_tableprivileges ($pdo, $qualifier, $owner, $name) {}
 
 /**
  * Retrieves a list of foreign keys
@@ -1069,7 +1071,7 @@ function odbc_primarykeys($pdo, $qualifier, $owner, $table) {
  * @since 4.0
  * @since 5.0
  */
-//function odbc_foreignkeys ($pdo, $pk_qualifier, $pk_owner, $pk_table, $fk_qualifier, $fk_owner, $fk_table) {}
+//function lmbdb_foreignkeys ($pdo, $pk_qualifier, $pk_owner, $pk_table, $fk_qualifier, $fk_owner, $fk_table) {}
 
 /**
  * Get the list of procedures stored in a specific data source
@@ -1092,7 +1094,7 @@ function odbc_primarykeys($pdo, $qualifier, $owner, $table) {
  * @since 4.0
  * @since 5.0
  */
-//function odbc_procedures ($pdo) {}
+//function lmbdb_procedures ($pdo) {}
 
 /**
  * Retrieve information about parameters to procedures
@@ -1121,7 +1123,7 @@ function odbc_primarykeys($pdo, $qualifier, $owner, $table) {
  * @since 4.0
  * @since 5.0
  */
-//function odbc_procedurecolumns ($pdo) {}
+//function lmbdb_procedurecolumns ($pdo) {}
 
 /**
  * Alias of <b>odbc_exec</b>
@@ -1132,7 +1134,7 @@ function odbc_primarykeys($pdo, $qualifier, $owner, $table) {
  * @since 4.0
  * @since 5.0
  */
-//function odbc_do ($pdo, $query, $flags) {}
+//function lmbdb_do ($pdo, $query, $flags) {}
 /**
  * Alias of <b>odbc_field_len</b>
  * @link http://php.net/manual/en/function.odbc-field-precision.php
@@ -1141,4 +1143,4 @@ function odbc_primarykeys($pdo, $qualifier, $owner, $table) {
  * @since 4.0
  * @since 5.0
  */
-//function odbc_field_precision ($stmt, $field_number) {}
+//function lmbdb_field_precision ($stmt, $field_number) {}

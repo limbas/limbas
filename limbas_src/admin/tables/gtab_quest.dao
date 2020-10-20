@@ -35,27 +35,27 @@ function create_quest($quest,$tab_id){
 	global $db;
 
 	$sqlquery = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE TAB_ID = $tab_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$view_name = odbc_result($rs,"TABELLE");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$view_name = lmbdb_result($rs,"TABELLE");
 
 	$prepare_string = "UPDATE LMB_CONF_TABLES SET QUEST = ? WHERE TAB_ID = $tab_id";
-	if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($quest)),__FILE__,__LINE__)){$commit = 1;}
+	if(!lmb_PrepareSQL($prepare_string,array($quest),__FILE__,__LINE__)){$commit = 1;}
 
 	# search views
 	$sqlquery = dbq_12(array($DBA["DBSCHEMA"],$view_name));
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	
-	if(odbc_fetch_row($rs)){
+	if(lmbdb_fetch_row($rs)){
 		# drop view
 		$sqlquery1 = dbq_20(array($view_name));
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 	}
 	
 	# create view
 	$sqlquery = dbq_19(array($view_name,$quest));
-	$rs = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
 	
@@ -88,11 +88,11 @@ if($update_quest){
 
 
 $sqlquery = "SELECT QUEST FROM LMB_CONF_TABLES WHERE TAB_ID = $tabid";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
 $bzm = 1;
-if(odbc_fetch_row($rs)) {
-	$quest_sqlvalue = odbc_result($rs,"QUEST");
+if(lmbdb_fetch_row($rs)) {
+	$quest_sqlvalue = lmbdb_result($rs,"QUEST");
 }
 
 

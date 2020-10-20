@@ -118,32 +118,32 @@ function patch_31(){
 	$NEXTKEYID = next_db_id("LMB_REPORTS","KEYID");
 	
 	$sqlquery = "SELECT ID,BERICHT_ID,TAB,TAB_SIZE FROM LMB_REPORTS WHERE TYP = 'tab'";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 
-	while(odbc_fetch_row($rs)){
-		$tabid = odbc_result($rs,"TAB");
-		$report_id = odbc_result($rs,"BERICHT_ID");
-		$tab_size = explode(";",odbc_result($rs,"TAB_SIZE"));
+	while(lmbdb_fetch_row($rs)){
+		$tabid = lmbdb_result($rs,"TAB");
+		$report_id = lmbdb_result($rs,"BERICHT_ID");
+		$tab_size = explode(";",lmbdb_result($rs,"TAB_SIZE"));
 		
 		$sqlquery1 = "SELECT MAX(ID) AS NEXTID FROM LMB_REPORTS WHERE BERICHT_ID = $report_id";
-		$rs1 = odbc_exec($db,$sqlquery1);
-		$NEXTID = odbc_result($rs1,"NEXTID") + 1;
+		$rs1 = lmbdb_exec($db,$sqlquery1);
+		$NEXTID = lmbdb_result($rs1,"NEXTID") + 1;
 		
 		$sqlquery1 = "SELECT DISTINCT TAB_EL_COL_SIZE,TAB_EL_COL FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB = $tabid AND TAB_EL_ROW > 0 ORDER BY TAB_EL_COL";
-		$rs1 = odbc_exec($db,$sqlquery1);
+		$rs1 = lmbdb_exec($db,$sqlquery1);
 		$oldsize = array();
 		$oldsize[] = 0;
-		while(odbc_fetch_row($rs1)){
-			$oldsize[] = odbc_result($rs1,"TAB_EL_COL_SIZE");
+		while(lmbdb_fetch_row($rs1)){
+			$oldsize[] = lmbdb_result($rs1,"TAB_EL_COL_SIZE");
 		}
 		
 		for($ti=1;$ti<=$tab_size[0];$ti++){
 			if($oldsize[$ti]){$size = $oldsize[$ti];}else{$size = 60;}
 			$sqlquery2 = "SELECT ID FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB = $tabid AND TAB_EL_ROW = 0 AND TAB_EL_COL = $ti AND TYP = 'tabhead'";
-			$rs2 = odbc_exec($db,$sqlquery2);
-			if(!odbc_fetch_row($rs2, 1)){
+			$rs2 = lmbdb_exec($db,$sqlquery2);
+			if(!lmbdb_fetch_row($rs2, 1)){
 				$sqlquery3 = "INSERT INTO LMB_REPORTS (KEYID,ID,ERSTUSER,BERICHT_ID,TYP,TAB,TAB_EL_ROW,TAB_EL_COL,TAB_EL_COL_SIZE) VALUES ($NEXTKEYID,$NEXTID,1,$report_id,'tabhead',$tabid,0,$ti,$size)";
-				$rs3 = odbc_exec($db,$sqlquery3);
+				$rs3 = lmbdb_exec($db,$sqlquery3);
 				$NEXTKEYID++;
 				$NEXTID++;
 			}
@@ -176,5 +176,5 @@ patch_db(36,"2.3",$sqlquery,"new COLORSCHEMES for skalar");
 
 ###########################
 
-if ($db AND !$action) {odbc_close($db);}
+if ($db AND !$action) {lmbdb_close($db);}
 ?>

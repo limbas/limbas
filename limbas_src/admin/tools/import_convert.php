@@ -24,9 +24,9 @@
 <TR  class="tabBody"><TD><SELECT NAME="covertfromtable"><OPTION></OPTION>
 <?php
 $sqlquery = "SELECT TABELLE FROM LMB_CONF_TABLES";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-	$existing_tables[] = lmb_strtoupper(odbc_result($rs, "TABELLE"));
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+	$existing_tables[] = lmb_strtoupper(lmbdb_result($rs, "TABELLE"));
 }
 
 $odbctable = dbf_20(array($DBA["DBSCHEMA"],null,"'TABLE','VIEW'"));

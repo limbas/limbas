@@ -949,11 +949,6 @@ function aktivate(evt,el,id,TYP) {
 
 }
 
-function lmb_changeElValue(el){
-	currentel.firstChild.value=el.value;
-	currentel.value=el.value;
-}
-
 function limbasSetTabulator(id){
         document.form1.aktiv_tabcontainer.value = id;
 	if(prevElement != id){
@@ -1066,7 +1061,8 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	}
 
 	var style = STYLE.split(";");
-	var selectedInput = null;
+	arrayReplace(style, setstyle[id]); // merge state from db with (unsaved) state from ui
+	selectedInput = null;
         
 	// allgemeiner Inhalt
 	if(TYP == 'php' || TYP == 'js' || TYP == 'frame') {
@@ -1086,18 +1082,6 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	    	selectedInput = $('#div'+id);
             cmeditor.setValue(selectedInput.val());
 		}
-
-        if(selectedInput) {
-            // reload possible changes to textarea when focussing codemirror
-            cmeditor.on('focus', function () {
-                cmeditor.setValue(selectedInput.val());
-            });
-
-            // update textarea content on change
-            cmeditor.on('change', function () {
-                selectedInput.val(cmeditor.getValue());
-            });
-        }
 
 	}else{
 		$('#lmb_subform_value').val('');
@@ -1340,8 +1324,6 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	// setTimeout("enterfocus()",200);
     document.getElementById(currentdiv).focus();
 }
-
-
 
 // bei ENTER fokus()
 function enterfocus(){

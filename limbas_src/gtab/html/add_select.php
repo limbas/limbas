@@ -52,11 +52,11 @@ if ($select_sort AND $select_sort_d AND $LINK[8]) {
 #if($fs_sel AND $single){
 #	if(is_numeric(lmb_substr($fs_sel,1,16))){
 #		$sqlquery = "SELECT WERT FROM LMB_SELECT_W WHERE POOL = ".$gfield[$gtabid]["select_pool"][$field_id]." AND ID = ".lmb_substr($fs_sel,1,16);
-#		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+#		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 #		if(!$rs) {$commit = 1;}
-#		$val = odbc_result($rs, "WERT");
+#		$val = lmbdb_result($rs, "WERT");
 #		$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$field_id]." = '".parse_db_string($val,160)."' WHERE ID = $ID";
-#		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+#		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 #	}
 #}else
 
@@ -71,8 +71,8 @@ if ($del_id AND $LINK[8]) {
 
 if ($single) {
     $sqlquery = "SELECT " . $gfield[$gtabid]["field_name"][$field_id] . " FROM " . $gtab["table"][$gtabid] . " WHERE ID = $ID";
-    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-    $single_value = odbc_result($rs, $gfield[$gtabid]["field_name"][$field_id]);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    $single_value = lmbdb_result($rs, $gfield[$gtabid]["field_name"][$field_id]);
 }
 
 

@@ -19,7 +19,7 @@
  */
 
 
-$jsvar_ = array(24,49,50,51,56,84,93,101,134,164,721,744,745,813,815,822,1311,1318,1424,1441,1504,1509,1560,1608,1615,1683,1733,126,1709,1717,1760,1868,1913,2006,2007,2008,2009,2010,2082,2083,2114,2138,2139,2146,2147,2153,2154,2155,2156,2157,2158,2186,2187,2219,2359,2433,2454,2676,2794,2354,2902,2705);
+$jsvar_ = array(24,49,50,51,56,84,93,101,134,164,721,744,745,813,815,822,1311,1318,1424,1441,1504,1509,1560,1608,1615,1683,1733,126,1709,1717,1760,1868,1913,2006,2007,2008,2009,2010,2082,2083,2114,2138,2139,2146,2147,2153,2154,2155,2156,2157,2158,2186,2187,2219,2359,2433,2454,2676,2794,2354,2902,2705,2979);
 foreach($jsvar_ as $key => $value){
 	$jsvar .= "jsvar['lng_".$value."'] = \"".$lang[$value]."\";\n";
 }
@@ -38,11 +38,11 @@ var input_check = null;\n\n
 
 
 $sqlquery = "SELECT * FROM LMB_FIELD_TYPES WHERE FIELD_TYPE > 0 ORDER BY SORT";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-	fputs($jsfile,"RULE[".odbc_result($rs, "DATA_TYPE")."] = \"".str_replace("\\","\\\\",odbc_result($rs, "LMRULE"))."\";
-DATA_TYPE_EXP[".odbc_result($rs, "DATA_TYPE")."] = \"".$lang[odbc_result($rs, "DATA_TYPE_EXP")]."\";
-FORMAT[".odbc_result($rs, "DATA_TYPE")."] = \"".$lang[odbc_result($rs, "FORMAT")]."\";\n");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+	fputs($jsfile,"RULE[".lmbdb_result($rs, "DATA_TYPE")."] = \"".str_replace("\\","\\\\",lmbdb_result($rs, "LMRULE"))."\";
+DATA_TYPE_EXP[".lmbdb_result($rs, "DATA_TYPE")."] = \"".$lang[lmbdb_result($rs, "DATA_TYPE_EXP")]."\";
+FORMAT[".lmbdb_result($rs, "DATA_TYPE")."] = \"".$lang[lmbdb_result($rs, "FORMAT")]."\";\n");
 }
 
 # lang

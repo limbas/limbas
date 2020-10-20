@@ -18,7 +18,7 @@
  * ID: 204
  */
 
-require_once("inc/include_db.lib");
+require_once("lib/db/db_wrapper.lib");
 require_once("lib/include.lib");
 require_once("lib/session.lib");
 require_once("lib/context.lib");
@@ -49,8 +49,8 @@ function dyns_layoutSettings($params){
     $m_setting = array();
 
     $sqlquery = "SELECT M_SETTING FROM LMB_USERDB WHERE USER_ID = ".$session["user_id"];
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    if($m_setting = odbc_result($rs, "M_SETTING")){
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if($m_setting = lmbdb_result($rs, "M_SETTING")){
         $m_setting = unserialize($m_setting);
     }
 
@@ -74,12 +74,23 @@ function dyns_layoutSettings($params){
 
     if(is_array($m_setting)){
         $prepare_string = "UPDATE LMB_USERDB SET M_SETTING = ? WHERE USER_ID = ".$session["user_id"];
-        lmb_PrepareSQL($prepare_string,array(parse_db_blob(serialize($m_setting))),__FILE__,__LINE__);
+        lmb_PrepareSQL($prepare_string,array(serialize($m_setting)),__FILE__,__LINE__);
     }
 }
 
 
 #################### tables ##################
+
+
+
+/**
+ * custmenu / contextmenu
+ *
+ * @param $params
+ */
+function dyns_gtabCustmenu($params){
+    lmb_pop_custmenu($params['custmenu'],$params['gtabid'],$params['ID'],null,$params['fieldid']);
+}
 
 
 /**
@@ -269,7 +280,7 @@ function dyns_extRelationFields($params){
             # change specific order
             foreach ($vgresult[$vgtabid]["sort"] as $vkey => $vval){
                 $sqlquery = "UPDATE ".$gfield[$gtabid]["md5tab"][$field_id]." SET SORT = $vval WHERE ID = $ID AND VERKN_ID = ".$vgresult[$vgtabid]["id"][$vkey];
-                $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
             }
             save_viewSettings($vuniqueid);
         }
@@ -786,7 +797,7 @@ function dyns_openSubForm($params){
 
     // create new dataset
     if($action == 'gtab_neu'){
-        $ID = new_record($gtabid);
+        $ID = new_record($gtabid,null,$params['verkn_fieldid'], $params['verkn_tabid'], $params['verkn_ID']);
     }
 
     $gresult = get_gresult($gtabid, null, null, null, null, $gform[$gformid]["used_fields"], $ID);
@@ -934,14 +945,14 @@ function dyns_11_a($params){
     // multilang
     $field_name = 'WERT';
     if($gfield[$gtabid]['multilang'][$fieldid] == 2){
-        $field_name = 'LANG'.$session['language'].'_WERT';
+        $field_name = 'LANG'.$session['dlanguage'].'_WERT';
     }
 
     // multimode from Pool
     $sqlquery = "SELECT MULTIMODE FROM {$tabtyp}_P WHERE ID = $pool";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     if(!$rs) {$commit = 1;}
-    $multimode = odbc_result($rs, 'MULTIMODE');
+    $multimode = lmbdb_result($rs, 'MULTIMODE');
 
     // maxresult
     $maxresult = $session['maxresult'];
@@ -1003,7 +1014,7 @@ function dyns_11_a($params){
 	$limit
 	";
 
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     if(!$rs) {$commit = 1;}
 
 	if($page and is_numeric($page)){
@@ -1025,13 +1036,13 @@ function dyns_11_a($params){
         echo "<div id=\"{$form_name}_dsl\">";
     }
     echo '<table style="width: 100%; border-collapse: collapse;">';
-    while(odbc_fetch_row($rs, $bzm) AND $bzm2 <= $maxresult) {
-        $id = odbc_result($rs, 'ID');
-        $checked = odbc_result($rs, 'PRESENT');
-        $hasChildren = odbc_result($rs, 'HASLEVEL');
-        $value = htmlentities(odbc_result($rs, $field_name), ENT_QUOTES, $umgvar['charset']);
-        $keyword = htmlentities(odbc_result($rs, 'KEYWORDS'), ENT_QUOTES, $umgvar['charset']);
-        $level = odbc_result($rs, 'LEVEL');
+    while(lmbdb_fetch_row($rs, $bzm) AND $bzm2 <= $maxresult) {
+        $id = lmbdb_result($rs, 'ID');
+        $checked = lmbdb_result($rs, 'PRESENT');
+        $hasChildren = lmbdb_result($rs, 'HASLEVEL');
+        $value = htmlentities(lmbdb_result($rs, $field_name), ENT_QUOTES, $umgvar['charset']);
+        $keyword = htmlentities(lmbdb_result($rs, 'KEYWORDS'), ENT_QUOTES, $umgvar['charset']);
+        $level = lmbdb_result($rs, 'LEVEL');
         if ($level == '0') {
             $level = '';
         }
@@ -1653,9 +1664,9 @@ function dyns_gmultilang($params){
 
     // language definition
     $sqlquery = "SELECT LANGUAGE_ID,LANGUAGE FROM LMB_LANG GROUP BY LANGUAGE_ID,LANGUAGE";
-    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-    while(odbc_fetch_row($rs)){
-        $language[odbc_result($rs,'LANGUAGE_ID')] = odbc_result($rs,'LANGUAGE');
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    while(lmbdb_fetch_row($rs)){
+        $language[lmbdb_result($rs,'LANGUAGE_ID')] = lmbdb_result($rs,'LANGUAGE');
     }
 
     if($gfield[$gtabid]['multilang'][$fieldid]){
@@ -1669,11 +1680,11 @@ function dyns_gmultilang($params){
 
         // get field values
         $sqlquery = "SELECT ".implode(',',$fieldname)." FROM ".$gtab['table'][$gtabid]." WHERE ID = $ID";
-        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-        if(odbc_fetch_row($rs)){
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        if(lmbdb_fetch_row($rs)){
             echo '<table width="100%">';
             foreach ($fieldname as $lkey => $field) {
-                echo '<tr><td><b>'.$language[$lkey].'</b></td><td><div class="gtabchange">'.odbc_result($rs,$field).'</div></td></tr>';
+                echo '<tr><td><b>'.$language[$lkey].'</b></td><td><div class="gtabchange">'.lmbdb_result($rs,$field).'</div></td></tr>';
             }
             echo '</table>';
 
@@ -1926,11 +1937,11 @@ function dyns_filePasteCheck($params){
 		# file
 		if($typ == "d"){
 			$sqlquery = "SELECT ID,NAME,VID FROM LDMS_FILES WHERE LEVEL = ".$params["level"]." AND VACT = ".LMB_DBDEF_TRUE." AND NAME = (SELECT NAME FROM LDMS_FILES WHERE ID = ".$fid.")";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			if(odbc_fetch_row($rs)){
-				$existingFile["name"][] = odbc_result($rs, "NAME");
-				$existingFile["id"][] = odbc_result($rs, "ID");
-				$existingFile["vid"][] = odbc_result($rs, "VID");
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			if(lmbdb_fetch_row($rs)){
+				$existingFile["name"][] = lmbdb_result($rs, "NAME");
+				$existingFile["id"][] = lmbdb_result($rs, "ID");
+				$existingFile["vid"][] = lmbdb_result($rs, "VID");
 				$existingFile["typ"][] = "d";
 			}else{
 				$existingFile["name"][] = null;
@@ -1940,10 +1951,10 @@ function dyns_filePasteCheck($params){
 		# folder
 		}elseif($typ == "f"){
 			$sqlquery = "SELECT ID,LEVEL,NAME FROM LDMS_STRUCTURE WHERE LEVEL = ".$params["level"]." AND NAME = (SELECT NAME FROM LDMS_STRUCTURE WHERE ID = ".$fid.")";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			if(odbc_fetch_row($rs)){
-				$existingFile["name"][] = odbc_result($rs, "NAME");
-				$existingFile["id"][] = odbc_result($rs, "ID");
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			if(lmbdb_fetch_row($rs)){
+				$existingFile["name"][] = lmbdb_result($rs, "NAME");
+				$existingFile["id"][] = lmbdb_result($rs, "ID");
 				$existingFile["typ"][] = "f";
 			}else{
 				$existingFile["name"][] = null;
@@ -2057,8 +2068,8 @@ function dyns_fileMetaInfo($params){
 
                     $gtabid	= $gfile['tabid'][$key];
                     $fid = $gfile['fid'][$key];
-                    #$gresult[$gtabid][$fid][0] = odbc_result($rs,$gfile['name'][$key]);
-                    #$gresult[$gtabid][$fid][0] = odbc_result($rs,$gfile['name'][$key]);
+                    #$gresult[$gtabid][$fid][0] = lmbdb_result($rs,$gfile['name'][$key]);
+                    #$gresult[$gtabid][$fid][0] = lmbdb_result($rs,$gfile['name'][$key]);
 
                     /* ------------------ Default --------------------- */
                     $fname = "cftyp_".$gfield[$gtabid]["funcid"][$fid];
@@ -2122,21 +2133,21 @@ function dyns_fileSourceInfo($params){
 						}
 						if($gtab["table"][$key0] AND $gfield[$key0]["md5tab"][$key] AND $gtab["table"][$key0] AND $mainfield){
 							$sqlquery = "SELECT DISTINCT ".$gtab["table"][$key0].".ID,".$gtab["table"][$key0].".".$mainfield.",".$gfield[$key0]["md5tab"][$key].".LID FROM ".$gtab["table"][$key0].",".$gfield[$key0]["md5tab"][$key].",".$gtab["table"][$value]." WHERE ".$gtab["table"][$key0].".ID = ".$gfield[$key0]["md5tab"][$key].".ID AND ".$gfield[$key0]["md5tab"][$key].".VERKN_ID = ".$gtab["table"][$value].".ID AND ".$gtab["table"][$value].".ID = $ID";
-							$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+							$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 							if(!$rs) {$commit = 1;}
-							while(odbc_fetch_row($rs)){
+							while(lmbdb_fetch_row($rs)){
 								# delete relation
-								if($droprelation[0] == $key0 AND $droprelation[1] == $key AND $droprelation[2] == odbc_result($rs, "ID")){
+								if($droprelation[0] == $key0 AND $droprelation[1] == $key AND $droprelation[2] == lmbdb_result($rs, "ID")){
 									require_once("gtab/gtab.lib");
 									$verkn = set_verknpf($droprelation[0],$droprelation[1],$droprelation[2],0,$ID,0,0);
 									if($verkn AND $verkn["typ"] AND $verkn["id"] AND $verkn["del_id"]){
 										set_joins($value,$verkn);
 									}
 								}else{
-									$forigin[$key0][$key]["value"][] = odbc_result($rs, $mainfield);
-									$forigin[$key0][$key]["id"][] = odbc_result($rs, "ID");
+									$forigin[$key0][$key]["value"][] = lmbdb_result($rs, $mainfield);
+									$forigin[$key0][$key]["id"][] = lmbdb_result($rs, "ID");
 									$forigin[$key0][$key]["field"] = $gfield[$key0]["beschreibung"][$key];
-									$forigin[$key0][$key]["folder"][] = $filestruct["name"][odbc_result($rs, "LID")];
+									$forigin[$key0][$key]["folder"][] = $filestruct["name"][lmbdb_result($rs, "LID")];
 								}
 							}
 						}
@@ -2199,18 +2210,18 @@ function dyns_fileVersioningInfo($params) {
 				LDMS_FILES A
 				JOIN LDMS_FILES B ON A.vpid = B.vpid
 				WHERE A.id = ' . parse_db_int($file_id) . ' ORDER BY ERSTDATUM DESC';
-        $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         if (! $rs) {
             $commit = 1;
         }
         $bzm = 1;
-        while (odbc_fetch_row($rs)) {
-            $vid = odbc_result($rs, "ID");
+        while (lmbdb_fetch_row($rs)) {
+            $vid = lmbdb_result($rs, "ID");
             $vfile["id"][] = $vid;
-            $vfile["erstuser"][] = $userdat['vorname'][odbc_result($rs, "ERSTUSER")] . " " . $userdat['name'][odbc_result($rs, "ERSTUSER")];
-            $vfile["erstdatum"][] = get_date(odbc_result($rs, "ERSTDATUM"), 2);
-            $vfile["size"][] = odbc_result($rs, "SIZE");
-            $vfile["vnote"][] = odbc_result($rs, "VDESC");
+            $vfile["erstuser"][] = $userdat['vorname'][lmbdb_result($rs, "ERSTUSER")] . " " . $userdat['name'][lmbdb_result($rs, "ERSTUSER")];
+            $vfile["erstdatum"][] = get_date(lmbdb_result($rs, "ERSTDATUM"), 2);
+            $vfile["size"][] = lmbdb_result($rs, "SIZE");
+            $vfile["vnote"][] = lmbdb_result($rs, "VDESC");
             $vfile["nr"][] = $bzm;
             $prev = $vid;
             $bzm ++;
@@ -2264,12 +2275,12 @@ function dyns_fileDublicateInfo($params){
 	echo "<TABLE STYLE=\"background-color:{$farbschema['WEB11']};border:1px solid #CCCCCC;padding:4px;width:100%\">";
 	
 	$sqlquery = "SELECT ID,LEVEL,NAME,SIZE,ERSTUSER,ERSTDATUM FROM LDMS_FILES WHERE MD5 = '".parse_db_string($file_md5,50)."' AND ID != ".parse_db_int($file_id,18);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		if($filestruct["id"][odbc_result($rs,"LEVEL")]){
-			echo "<tr><td nowrap><A HREF=\"main.php?&action=download&ID=".odbc_result($rs,"ID")."\" TARGET=\"new\">".odbc_result($rs,"NAME")."</A></td><td nowrap>".file_size(odbc_result($rs,"SIZE"))."</td><td nowrap>".$userdat["vorname"][odbc_result($rs,"ERSTUSER")]." ".$userdat["name"][odbc_result($rs,"ERSTUSER")]."</td><td nowrap>".get_date(odbc_result($rs,"ERSTDATUM"),1)."</td></tr>";
-			echo "<TR><td colspan=\"4\" style=\"overflow:hidden;\"><div style=\"overflow:hidden;width:100%;color:blue;cursor:pointer;\" OnClick=\"document.form1.LID.value='".odbc_result($rs, "LEVEL")."';LmEx_send_form(1)\"><I>"."/".set_url(odbc_result($rs, "LEVEL"),0)."</I></A></div></td></TR>";
+	while(lmbdb_fetch_row($rs)) {
+		if($filestruct["id"][lmbdb_result($rs,"LEVEL")]){
+			echo "<tr><td nowrap><A HREF=\"main.php?&action=download&ID=".lmbdb_result($rs,"ID")."\" TARGET=\"new\">".lmbdb_result($rs,"NAME")."</A></td><td nowrap>".file_size(lmbdb_result($rs,"SIZE"))."</td><td nowrap>".$userdat["vorname"][lmbdb_result($rs,"ERSTUSER")]." ".$userdat["name"][lmbdb_result($rs,"ERSTUSER")]."</td><td nowrap>".get_date(lmbdb_result($rs,"ERSTDATUM"),1)."</td></tr>";
+			echo "<TR><td colspan=\"4\" style=\"overflow:hidden;\"><div style=\"overflow:hidden;width:100%;color:blue;cursor:pointer;\" OnClick=\"document.form1.LID.value='".lmbdb_result($rs, "LEVEL")."';LmEx_send_form(1)\"><I>"."/".set_url(lmbdb_result($rs, "LEVEL"),0)."</I></A></div></td></TR>";
 		}
 	}
 	
@@ -2308,25 +2319,25 @@ function dyns_fileOCRInfo($params){
 
 		echo "<TABLE STYLE=\"background-color:{$farbschema['WEB11']};border:1px solid #CCCCCC;padding:4px;width:100%\">";
 		$sqlquery = "SELECT ID,OCR,OCRD,OCRT,OCRS,NAME,SECNAME,MIMETYPE FROM LDMS_FILES WHERE ID = ".$file_id." AND DEL = ".LMB_DBDEF_FALSE." ORDER BY ERSTDATUM ASC";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		if(odbc_fetch_row($rs)){
-			if(odbc_result($rs,"OCR")){
-				echo "<tr><td nowrap>OCR Date: </td><td>". get_date(odbc_result($rs,"OCRD"),2)."</td></tr>";
-				echo "<tr><td nowrap>OCR Time: </td><td>".round(odbc_result($rs,"OCRT"),2)." sec.</td></tr>";
+		if(lmbdb_fetch_row($rs)){
+			if(lmbdb_result($rs,"OCR")){
+				echo "<tr><td nowrap>OCR Date: </td><td>". get_date(lmbdb_result($rs,"OCRD"),2)."</td></tr>";
+				echo "<tr><td nowrap>OCR Time: </td><td>".round(lmbdb_result($rs,"OCRT"),2)." sec.</td></tr>";
 
-                if(odbc_result($rs,"OCRS")){
-                    $sqlquery1 = "SELECT ID,NAME FROM LDMS_FILES WHERE ID = ".odbc_result($rs,"OCRS");
-                    $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+                if(lmbdb_result($rs,"OCRS")){
+                    $sqlquery1 = "SELECT ID,NAME FROM LDMS_FILES WHERE ID = ".lmbdb_result($rs,"OCRS");
+                    $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
                     if(!$rs1) {$commit = 1;}
-                    echo "<TR><td>OCR Source</td><td><A HREF=\"main.php?action=download&ID=".odbc_result($rs1,"ID")."\" TARGET=\"new\">".odbc_result($rs1,"NAME")."</A></td></TR>";
+                    echo "<TR><td>OCR Source</td><td><A HREF=\"main.php?action=download&ID=".lmbdb_result($rs1,"ID")."\" TARGET=\"new\">".lmbdb_result($rs1,"NAME")."</A></td></TR>";
                 }
 
                 if($umgvar["ocr_save_copy"]){
-                    $fname = odbc_result($rs,"SECNAME").".".$gmimetypes["ext"][odbc_result($rs, "MIMETYPE")];
+                    $fname = lmbdb_result($rs,"SECNAME").".".$gmimetypes["ext"][lmbdb_result($rs, "MIMETYPE")];
                     $fpath = $umgvar["ocr_save_copy"]."/".$fname;
                     if(file_exists($fpath)){
-                        #echo "<tr><td nowrap>OCR SaveCopy:</td><td><A HREF=\"main.php?action=download&ID=".odbc_result($rs,"ID")."\" TARGET=\"new\">".odbc_result($rs,"NAME")."</A></td></tr>";
+                        #echo "<tr><td nowrap>OCR SaveCopy:</td><td><A HREF=\"main.php?action=download&ID=".lmbdb_result($rs,"ID")."\" TARGET=\"new\">".lmbdb_result($rs,"NAME")."</A></td></tr>";
                         echo "<tr><td nowrap>restore original:</td><td><i class=\"lmb-icon lmb-refresh\" align=\"absbottom\" OnClick=\"LmEx_dynsearchGet(event,'files_meta_$file_id','fileOCRInfo','".$file_id."','restore')\" style=\"cursor:pointer\"></i></td></tr>";
                     }
                 }
@@ -2354,12 +2365,12 @@ function dyns_fileIndizeInfo($params){
 	if($file_id){
 		echo "<TABLE STYLE=\"background-color:{$farbschema['WEB11']};border:1px solid #CCCCCC;padding:4px;width:100%\">";
 		$sqlquery = "SELECT ID,INDD,INDT,INDC FROM LDMS_FILES WHERE ID = ".$file_id." AND DEL = ".LMB_DBDEF_FALSE." ORDER BY ERSTDATUM ASC";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		if(odbc_fetch_row($rs)){
-			echo "<tr><td nowrap>Indize Date: </td><td>". get_date(odbc_result($rs,"INDD"),2)."</td></tr>";
-			echo "<tr><td nowrap>Indize Time: </td><td>".round(odbc_result($rs,"INDT"),2)." sec.</td></tr>";
-			echo "<tr><td nowrap>Indize Count: </td><td>".odbc_result($rs,"INDC")."</td></tr>";
+		if(lmbdb_fetch_row($rs)){
+			echo "<tr><td nowrap>Indize Date: </td><td>". get_date(lmbdb_result($rs,"INDD"),2)."</td></tr>";
+			echo "<tr><td nowrap>Indize Time: </td><td>".round(lmbdb_result($rs,"INDT"),2)." sec.</td></tr>";
+			echo "<tr><td nowrap>Indize Count: </td><td>".lmbdb_result($rs,"INDC")."</td></tr>";
 		}
 		echo "</TABLE>";
 	}
@@ -2379,8 +2390,8 @@ function dyns_getFileRowCount($params){
 
     if($params["LID"]){
         if($query = get_fwhere($params["LID"],$GLOBALS["ffilter"],$params["typ"])){
-            $rs = odbc_exec($db,$query["count"]) or errorhandle(odbc_errormsg($db),$query["count"],$action,__FILE__,__LINE__);
-            echo odbc_result($rs, "RESCOUNT");
+            $rs = lmbdb_exec($db,$query["count"]) or errorhandle(lmbdb_errormsg($db),$query["count"],$action,__FILE__,__LINE__);
+            echo lmbdb_result($rs, "RESCOUNT");
         }else{
             echo "(unable to get row count!)";
         }
@@ -2405,8 +2416,8 @@ function dyns_getRowcount($params){
 
     if($params["gtabid"]){
         $query = get_sqlquery($params["gtabid"],1,$GLOBALS["filter"],$GLOBALS["gsr"],$verkn);
-        if($rs = odbc_exec($db,$query["count"])){
-            $rcount = odbc_result($rs, "RESULT");
+        if($rs = lmbdb_exec($db,$query["count"])){
+            $rcount = lmbdb_result($rs, "RESULT");
         }else{
             $rcount = "(unable to get row count!)";
         }
@@ -2448,7 +2459,7 @@ function dyns_cancelWorkflow($params){
 
  	if(WF_getOwner($workflowId,$workflowInstanceId)==$session["user_id"]){
  		$sqlquery = "delete from " . $gtab["table"][$workflowId] ." where ID = $workflowInstanceId";
- 		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+ 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
  	}
 }
 
@@ -2515,7 +2526,7 @@ function dyns_snapShareDisplay($params){
     $snapid = $params["gtabid"];
 
     $sqlquery = "SELECT LMB_SNAP_SHARED.EDIT,LMB_SNAP_SHARED.DEL,LMB_SNAP_SHARED.ENTITY_TYPE,LMB_SNAP_SHARED.ENTITY_ID FROM LMB_SNAP_SHARED WHERE SNAPSHOT_ID = $snapid ORDER BY ENTITY_TYPE DESC,ENTITY_ID";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
     echo "<table cellpadding=\"0\" cellspacing=\"0\" width=\"100%\">
 	<tr><td colspan=\"6\"><hr></td></tr>
@@ -2526,16 +2537,16 @@ function dyns_snapShareDisplay($params){
 	</tr>
 	";
 
-    while(odbc_fetch_row($rs)){
-        $uid = odbc_result($rs,"ENTITY_ID")."_".odbc_result($rs,"ENTITY_TYPE");
-        if(odbc_result($rs,"EDIT")){$edit = "CHECKED";}else{$edit = "";}
-        if(odbc_result($rs,"DEL")){$del = "CHECKED";}else{$del = "";}
-        if(odbc_result($rs,"ENTITY_TYPE")=="U"){
+    while(lmbdb_fetch_row($rs)){
+        $uid = lmbdb_result($rs,"ENTITY_ID")."_".lmbdb_result($rs,"ENTITY_TYPE");
+        if(lmbdb_result($rs,"EDIT")){$edit = "CHECKED";}else{$edit = "";}
+        if(lmbdb_result($rs,"DEL")){$del = "CHECKED";}else{$del = "";}
+        if(lmbdb_result($rs,"ENTITY_TYPE")=="U"){
             $pic = " lmb-user ";
-            $name = $userdat["bezeichnung"][odbc_result($rs,"ENTITY_ID")];
-        }elseif(odbc_result($rs,"ENTITY_TYPE")=="G"){
+            $name = $userdat["bezeichnung"][lmbdb_result($rs,"ENTITY_ID")];
+        }elseif(lmbdb_result($rs,"ENTITY_TYPE")=="G"){
             $pic = " lmb-group ";
-            $name = $groupdat["name"][odbc_result($rs,"ENTITY_ID")];
+            $name = $groupdat["name"][lmbdb_result($rs,"ENTITY_ID")];
         }else{
             continue;
         }
@@ -2618,19 +2629,19 @@ function dyns_completeTyping($params)
     $inputDisplay = $params['limbasInputDisplay'];
 
     $sqlquery = "select ".implode(",",$displayField).",$idField from ".$tableName." where UPPER(".implode(") like '".lmb_strtoupper($beginValue)."%' OR UPPER(",$fieldSearch).") like '".lmb_strtoupper($beginValue)."%'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     if(!$rs) {$commit = 1;}
 
-    while(odbc_fetch_row($rs)) {
+    while(lmbdb_fetch_row($rs)) {
         $value = "";
         $separator ="";
         foreach ($displayField as $keyR => $valR)
         {
-            $value .= $separator . odbc_result($rs,$valR);
+            $value .= $separator . lmbdb_result($rs,$valR);
             $separator = " ";
         }
 
-        echo "<span onClick='javascript:limbasClickCompleteTyping(\"$inputDisplay\",\"$value\",\"$inputId\",\"".odbc_result($rs,$idField)."\")'>$value";
+        echo "<span onClick='javascript:limbasClickCompleteTyping(\"$inputDisplay\",\"$value\",\"$inputId\",\"".lmbdb_result($rs,$idField)."\")'>$value";
 
         echo "</span><br>";
     }
@@ -2655,20 +2666,20 @@ function dyns_getSelectValues($params){
 		$order = "ORDER BY ".$tabtyp."_W.".$gfield[$params['gtabid']]['select_sort'][$params['fieldid']];
 	}
 	$sqlquery = "SELECT WERT $aselect FROM ".$tabtyp."_D,".$tabtyp."_W WHERE ".$tabtyp."_D.W_ID = ".$tabtyp."_W.ID AND ".$tabtyp."_D.TAB_ID = ".$params['gtabid']." AND ".$tabtyp."_D.FIELD_ID = ".$params['fieldid']." AND ".$tabtyp."_D.DAT_ID = ".$params['id']." ".$order;
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)) {
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
 		# ATTRIBUTE
 		if($gfield[$params['gtabid']]["field_type"][$params['fieldid']] == 19){
 			# date
-			if($lmfieldtype[odbc_result($rs, "TYPE")]["parse_type"] == 4){
-				$attvalue = ":&nbsp;".stampToDate(odbc_result($rs, "VALUE_NUM"),1);
+			if($lmfieldtype[lmbdb_result($rs, "TYPE")]["parse_type"] == 4){
+				$attvalue = ":&nbsp;".stampToDate(lmbdb_result($rs, "VALUE_NUM"),1);
 			# text / number
 			}else{
-				if(odbc_result($rs, "VALUE_NUM")){$value_num = odbc_result($rs, "VALUE_NUM");}else{$value_num = "";}
-				$attvalue = ":&nbsp;".htmlentities(trim($value_num." ".odbc_result($rs, "VALUE_STRING")),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+				if(lmbdb_result($rs, "VALUE_NUM")){$value_num = lmbdb_result($rs, "VALUE_NUM");}else{$value_num = "";}
+				$attvalue = ":&nbsp;".htmlentities(trim($value_num." ".lmbdb_result($rs, "VALUE_STRING")),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
 			}
 		}
-		echo "<tr><td nowrap>".htmlentities(odbc_result($rs, "WERT"),ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</td><td style=\"color:".$farbschema["WEB12"]."\">$attvalue</td></tr>";
+		echo "<tr><td nowrap>".htmlentities(lmbdb_result($rs, "WERT"),ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</td><td style=\"color:".$farbschema["WEB12"]."\">$attvalue</td></tr>";
 	}
 	
 	echo "</table>";
@@ -2781,7 +2792,7 @@ function dyns_inheritFrom($params){
 
                 # delete old relations
                 $sqlquery = "DELETE FROM ".$gfield[$destGtabid]["md5tab"][$fieldId]." WHERE ID = ".$destId;
-                $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+                $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
                 if(!$rs) {$commit = 1;}
 
                 $filter["relationval"][$sourceGtabid] = 1;
@@ -2863,18 +2874,18 @@ function dyns_versionDiff($params){
 
 	# get version number
 	$sqlquery = "SELECT ID,VID,ERSTDATUM,ERSTUSER FROM ".$gtab["table"][$params["gtabid"]]." WHERE ID = ".$params["ID"]." OR ID = ".$params["VID"];
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$bzm=1;
-	while(odbc_fetch_row($rs)){
+	while(lmbdb_fetch_row($rs)){
 	    if($bzm == 1){
-            $v1 = odbc_result($rs,"VID");
-            $d1 = get_date(odbc_result($rs,"ERSTDATUM"));
-            $u1 = $userdat["bezeichnung"][odbc_result($rs,"ERSTUSER")];
+            $v1 = lmbdb_result($rs,"VID");
+            $d1 = get_date(lmbdb_result($rs,"ERSTDATUM"));
+            $u1 = $userdat["bezeichnung"][lmbdb_result($rs,"ERSTUSER")];
         }elseif($bzm == 2){
-            $v2 = odbc_result($rs,"VID");
-            $d2 = get_date(odbc_result($rs,"ERSTDATUM"));
-            $u2 = $userdat["bezeichnung"][odbc_result($rs,"ERSTUSER")];
+            $v2 = lmbdb_result($rs,"VID");
+            $d2 = get_date(lmbdb_result($rs,"ERSTDATUM"));
+            $u2 = $userdat["bezeichnung"][lmbdb_result($rs,"ERSTUSER")];
         }
 	    $bzm++;
     }
@@ -3160,15 +3171,15 @@ function dyns_fileVersionDiff($params){
         $toba = array("|","<",">");
 
         $sqlquery = "SELECT LDMS_FILES.LEVEL,LDMS_FILES.SECNAME,LDMS_FILES.NAME,LDMS_FILES.VID,LMB_MIMETYPES.EXT,LMB_MIMETYPES.MIMETYPE FROM LMB_MIMETYPES,LDMS_FILES WHERE LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND LDMS_FILES.ID = $file1";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
 
-        if(odbc_fetch_row($rs)){
-            $level = odbc_result($rs, "LEVEL");
-            $target = $umgvar["uploadpfad"].$filestruct['path'][$level].odbc_result($rs, "SECNAME").".".odbc_result($rs, "EXT");
+        if(lmbdb_fetch_row($rs)){
+            $level = lmbdb_result($rs, "LEVEL");
+            $target = $umgvar["uploadpfad"].$filestruct['path'][$level].lmbdb_result($rs, "SECNAME").".".lmbdb_result($rs, "EXT");
             if(file_exists($target)){
-                $target1 = str_replace($toba," ",convert_to_text(odbc_result($rs, "SECNAME"),odbc_result($rs, "EXT"),odbc_result($rs, "MIMETYPE"),$file1,0,1,0,odbc_result($rs, "LEVEL")));
-                $vcount1 = odbc_result($rs, "VID");
+                $target1 = str_replace($toba," ",convert_to_text(lmbdb_result($rs, "SECNAME"),lmbdb_result($rs, "EXT"),lmbdb_result($rs, "MIMETYPE"),$file1,0,1,0,lmbdb_result($rs, "LEVEL")));
+                $vcount1 = lmbdb_result($rs, "VID");
                 if(lmb_utf8_check(lmb_substr($target1,0,200))){
                     $target1 = lmb_utf8_decode($target1);
                 }elseif($GLOBALS["umgvar"]["charset"] == "UTF-8"){
@@ -3178,14 +3189,14 @@ function dyns_fileVersionDiff($params){
         }
 
         $sqlquery = "SELECT LDMS_FILES.LEVEL,LDMS_FILES.SECNAME,LDMS_FILES.NAME,LDMS_FILES.VID,LMB_MIMETYPES.EXT,LMB_MIMETYPES.MIMETYPE FROM LMB_MIMETYPES,LDMS_FILES WHERE LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND LDMS_FILES.ID = $file2";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
-        if(odbc_fetch_row($rs)){
-            $level = odbc_result($rs, "LEVEL");
-            $target = $umgvar["uploadpfad"].$filestruct['path'][$level].odbc_result($rs, "SECNAME").".".odbc_result($rs, "EXT");
+        if(lmbdb_fetch_row($rs)){
+            $level = lmbdb_result($rs, "LEVEL");
+            $target = $umgvar["uploadpfad"].$filestruct['path'][$level].lmbdb_result($rs, "SECNAME").".".lmbdb_result($rs, "EXT");
             if(file_exists($target)){
-                $target2 = str_replace($toba," ",convert_to_text(odbc_result($rs, "SECNAME"),odbc_result($rs, "EXT"),odbc_result($rs, "MIMETYPE"),$file2,0,1,0,odbc_result($rs, "LEVEL")));
-                $vcount2 = odbc_result($rs, "VID");
+                $target2 = str_replace($toba," ",convert_to_text(lmbdb_result($rs, "SECNAME"),lmbdb_result($rs, "EXT"),lmbdb_result($rs, "MIMETYPE"),$file2,0,1,0,lmbdb_result($rs, "LEVEL")));
+                $vcount2 = lmbdb_result($rs, "VID");
                 if(lmb_utf8_check(lmb_substr($target2,0,200))){
                     $target2 = lmb_utf8_decode($target2);
                 }elseif($GLOBALS["umgvar"]["charset"] == "UTF-8"){
@@ -3197,7 +3208,7 @@ function dyns_fileVersionDiff($params){
         if($target1 AND $target2){
             $diff = textDiff($target1,$target2);
             if($diff){
-                echo "<B>".odbc_result($rs, "NAME")."</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<SPAN STYLE=\"color:blue\">".$lang[2]."<B> ".$vcount1."</B> -> ".$lang[2]."<B> ".$vcount2."</B></SPAN><BR><hr>";
+                echo "<B>".lmbdb_result($rs, "NAME")."</B>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<SPAN STYLE=\"color:blue\">".$lang[2]."<B> ".$vcount1."</B> -> ".$lang[2]."<B> ".$vcount2."</B></SPAN><BR><hr>";
                 echo str_replace("\t","&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;",$diff);
             }
         }
@@ -3397,28 +3408,28 @@ function dyns_UGtype($params){
 
         if($edit_typ == 'u' OR $edit_typ == 'g'){
             $sqlquery = "SELECT UGID FROM LMB_UGLST WHERE TABID = ".parse_db_int($gtabid)." AND FIELDID = ".parse_db_int($fieldid)." AND DATID = ".parse_db_int($ID)." AND TYP = '".parse_db_string($edit_typ,1)."' AND UGID = ".parse_db_int($edit_id);
-            $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-            if(odbc_result($rs, "UGID")){
+            if(lmbdb_result($rs, "UGID")){
                 $sqlquery = "DELETE FROM LMB_UGLST WHERE TABID = ".parse_db_int($gtabid)." AND FIELDID = ".parse_db_int($fieldid)." AND DATID = ".parse_db_int($ID)." AND TYP = '".parse_db_string($edit_typ,1)."' AND UGID = ".parse_db_int($edit_id);
-                $rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                $rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
             }else{
                 $sqlquery = "INSERT INTO LMB_UGLST (UGID,TABID,FIELDID,DATID,TYP) VALUES (".parse_db_int($edit_id).",".parse_db_int($gtabid).",".parse_db_int($fieldid).",".parse_db_int($ID).",'".parse_db_string($edit_typ,1)."')";
-                $rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                $rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
             }
 
             $sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = (SELECT COUNT(*) FROM LMB_UGLST WHERE TABID = ".parse_db_int($gtabid)." AND FIELDID = ".parse_db_int($fieldid)." AND DATID = ".parse_db_int($ID).") WHERE ID = $ID";
-            $rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+            $rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         }
     }
 
 
     $sqlquery = "SELECT UGID,TYP FROM LMB_UGLST WHERE TABID = $gtabid AND FIELDID = $fieldid AND DATID = ".$ID;
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-    while(odbc_fetch_row($rs)){
-        $gutyp = odbc_result($rs, "TYP");
-        $guid = odbc_result($rs, "UGID");
+    while(lmbdb_fetch_row($rs)){
+        $gutyp = lmbdb_result($rs, "TYP");
+        $guid = lmbdb_result($rs, "UGID");
         $ers = "";
 //		if($typ == 1){
         $ers = "<i class=\"lmb-icon lmb-erase\" style=\"cursor: pointer;\" OnClick=\"lmb_UGtype('{$guid}_{$gutyp}','','$gtabid','$fieldid','$ID','');\"></i>&nbsp;";
@@ -3505,10 +3516,10 @@ function dyns_showUserGroupsSearch($params){
 			$sqlquery .= " AND (LOWER(LMB_USERDB.USERNAME) LIKE '%".lmb_strtolower($searchvalue)."%' OR LOWER(LMB_USERDB.VORNAME) LIKE '%".lmb_strtolower($searchvalue)."%' OR LOWER(LMB_USERDB.NAME) LIKE '%".lmb_strtolower($searchvalue)."%')";
 		}
 		
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		while(odbc_fetch_row($rs)) {
-			$key = odbc_result($rs,"USER_ID");            
+		while(lmbdb_fetch_row($rs)) {
+			$key = lmbdb_result($rs,"USER_ID");
             pop_menu2($userdat["bezeichnung"][$key], null, null, "lmb-user", null, "$usefunction('".$key."_u','".$userdat["bezeichnung"][$key]."','$gtabid','$fieldid','$ID','$parameter');");
 		}
 	}elseif($typ == "group"){
@@ -3518,11 +3529,11 @@ function dyns_showUserGroupsSearch($params){
 			$sqlquery .= " AND LOWER(LMB_GROUPS.NAME) LIKE '%".lmb_strtolower($searchvalue)."%'";
 		}
 		
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 
-		while(odbc_fetch_row($rs)) {
-			$key = odbc_result($rs,"GROUP_ID");            
+		while(lmbdb_fetch_row($rs)) {
+			$key = lmbdb_result($rs,"GROUP_ID");
             pop_menu2($groupdat["name"][$key], null, null, "lmb-group", null, "$usefunction('".$key."_g','".$groupdat["name"][$key]."','$gtabid','$fieldid','$ID','$parameter');");
 		}
 	}
@@ -3596,12 +3607,12 @@ function dyns_showGtabRules($params){
 	";
 
 	$sqlquery = "SELECT DISTINCT LMB_GROUPS.GROUP_ID,LMB_RULES_DATASET.EDIT,LMB_RULES_DATASET.DEL FROM LMB_GROUPS,LMB_RULES_DATASET WHERE LMB_GROUPS.GROUP_ID = LMB_RULES_DATASET.GROUPID AND LMB_RULES_DATASET.TABID = $gtabid AND LMB_RULES_DATASET.DATID IN ($d_datidlist)";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$key = odbc_result($rs,"GROUP_ID");
-		if(odbc_result($rs,"EDIT")){$edit = "CHECKED";}else{$edit = "";}
-		if(odbc_result($rs,"DEL")){$del = "CHECKED";}else{$del = "";}
+	while(lmbdb_fetch_row($rs)) {
+		$key = lmbdb_result($rs,"GROUP_ID");
+		if(lmbdb_result($rs,"EDIT")){$edit = "CHECKED";}else{$edit = "";}
+		if(lmbdb_result($rs,"DEL")){$del = "CHECKED";}else{$del = "";}
 		echo "<TR><TD><i class=\"lmb-icon lmb-group\"></i></TD><TD>".$groupdat["name"][$key]."</TD>
 		<TD><i class=\"lmb-icon lmb-check-alt\"></i></TD>
 		<TD><INPUT TYPE=\"checkbox\" CLASS=\"checkb\" OnClick=\"limbasAjaxGtabRules('$gtabid','$use_records','".$key."_g_e_'+limbasGetBoolVal(this.checked)+lmb_hirarrules,'','');\" $edit></TD>
@@ -3612,14 +3623,14 @@ function dyns_showGtabRules($params){
 	}
 
 	$sqlquery = "SELECT DISTINCT LMB_USERDB.USER_ID,LMB_RULES_DATASET.EDIT,LMB_RULES_DATASET.DEL,LMB_RULES_DATASET.EDITUSER FROM LMB_USERDB,LMB_RULES_DATASET WHERE LMB_USERDB.USER_ID = LMB_RULES_DATASET.USERID AND LMB_RULES_DATASET.TABID = $gtabid AND LMB_RULES_DATASET.DATID IN ($d_datidlist)";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$key = odbc_result($rs,"USER_ID");
+	while(lmbdb_fetch_row($rs)) {
+		$key = lmbdb_result($rs,"USER_ID");
 		if($session["user_id"] == $key){continue;}
-		if($key == odbc_result($rs,"EDITUSER")){$pic = "lmb-user-plus";}else{$pic = "lmb-user-alt";}
-		if(odbc_result($rs,"EDIT")){$edit = "CHECKED";}else{$edit = "";}
-		if(odbc_result($rs,"DEL")){$del = "CHECKED";}else{$del = "";}
+		if($key == lmbdb_result($rs,"EDITUSER")){$pic = "lmb-user-plus";}else{$pic = "lmb-user-alt";}
+		if(lmbdb_result($rs,"EDIT")){$edit = "CHECKED";}else{$edit = "";}
+		if(lmbdb_result($rs,"DEL")){$del = "CHECKED";}else{$del = "";}
 		echo "<TR><TD><i class=\"lmb-icon $pic\"></i></TD><TD TITLE=\"".$userdat["groupname"][$key]."\">".$userdat["bezeichnung"][$key]."</TD>
 		<TD><i class=\"lmb-icon lmb-check-alt\"></i></TD>
 		<TD><INPUT TYPE=\"checkbox\" CLASS=\"checkb\" OnClick=\"limbasAjaxGtabRules('$gtabid','$use_records','".$key."_u_e_'+limbasGetBoolVal(this.checked)+lmb_hirarrules,'','');\" $edit></TD>
@@ -3689,12 +3700,12 @@ function dyns_showGtabRulesUsersearch($params){
     pop_closetop('ContainerGtabRulesUsersearch');
     pop_left();
 
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$key = odbc_result($rs,"USER_ID");
+	while(lmbdb_fetch_row($rs)) {
+		$key = lmbdb_result($rs,"USER_ID");
 		if($key == $session["user_id"]){continue;}
-		if(odbc_result($rs,"KEYID")){
+		if(lmbdb_result($rs,"KEYID")){
 			echo "<span style=\"color:#AAAAAA\">".$userdat["bezeichnung"][$key]."</spn><br>";
 		}else{
 			echo "<a href=\"Javascript:limbasAjaxGtabRules('$gtabid','$use_records','".$key."_u_v_'+lmb_hirarrules,'','');\">".$userdat["bezeichnung"][$key]."</a><br>";
@@ -3755,12 +3766,12 @@ function dyns_showGtabRulesGroupsearch($params){
     pop_closetop('ContainerGtabRulesGroupsearch');
     pop_left();
 
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$key = odbc_result($rs,"GROUP_ID");
+	while(lmbdb_fetch_row($rs)) {
+		$key = lmbdb_result($rs,"GROUP_ID");
 		if($key == $session["group_id"]){continue;}
-		if(odbc_result($rs,"KEYID")){
+		if(lmbdb_result($rs,"KEYID")){
 			echo "<span style=\"color:#AAAAAA\">".$groupdat["name"][$key]."</span><br>";
 		}else{
 			echo "<a href=\"Javascript:limbasAjaxGtabRules('$gtabid','$use_records','".$key."_g_v_'+lmb_hirarrules,'','');\">".$groupdat["name"][$key]."</a><br>";
@@ -3802,17 +3813,17 @@ function dyns_getRelationTree($params){
         global $db;
 
         $sqlquery = "SELECT * FROM LMB_TABLETREE WHERE TREEID = ".parse_db_int($treeid);
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-        while(odbc_fetch_row($rs)){
-            if($md5tab = odbc_result($rs,"RELATIONID")){
-                $tree['tform'][$md5tab] = odbc_result($rs,"TARGET_FORMID");
-                $tree['tsnap'][$md5tab] = odbc_result($rs,"TARGET_SNAP");
-                $tree['display'][$md5tab] = odbc_result($rs,"DISPLAY");
-                $tree['tfield'][$md5tab] = odbc_result($rs,"DISPLAY_FIELD");
-                $tree['ttitle'][$md5tab] = odbc_result($rs,"DISPLAY_TITLE");
-                $tree['tsort'][$md5tab] = odbc_result($rs,"DISPLAY_SORT");
-                $tree['ticon'][$md5tab] = odbc_result($rs,"DISPLAY_ICON");
-                $tree['trule'][$md5tab] = odbc_result($rs,"DISPLAY_RULE");
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        while(lmbdb_fetch_row($rs)){
+            if($md5tab = lmbdb_result($rs,"RELATIONID")){
+                $tree['tform'][$md5tab] = lmbdb_result($rs,"TARGET_FORMID");
+                $tree['tsnap'][$md5tab] = lmbdb_result($rs,"TARGET_SNAP");
+                $tree['display'][$md5tab] = lmbdb_result($rs,"DISPLAY");
+                $tree['tfield'][$md5tab] = lmbdb_result($rs,"DISPLAY_FIELD");
+                $tree['ttitle'][$md5tab] = lmbdb_result($rs,"DISPLAY_TITLE");
+                $tree['tsort'][$md5tab] = lmbdb_result($rs,"DISPLAY_SORT");
+                $tree['ticon'][$md5tab] = lmbdb_result($rs,"DISPLAY_ICON");
+                $tree['trule'][$md5tab] = lmbdb_result($rs,"DISPLAY_RULE");
             }
         }
         return $tree;
@@ -3881,7 +3892,7 @@ function dyns_getRelationTree($params){
 
 
                 echo "<tr>
-			<td style=\"width:18px\" valign=\"top\"><img src=\"pic/outliner/".$imgpref.$outliner.".gif\" id=\"lmbTreePlus_".$treeid."_".$gtabid."_".$gval."_".$rand."\" align=\"top\" border=\"0\" style=\"cursor:pointer\" onclick=\"lmb_treeElOpen('$treeid','$gtabid','$gval','$rand')\"></td>
+			<td style=\"width:18px\" valign=\"top\"><img src=\"pic/outliner/".$imgpref.$outliner.".gif\" id=\"lmbTreePlus_".$treeid."_".$gtabid."_".$gval."_".$rand."\" align=\"top\" border=\"0\" style=\"cursor:pointer\" onclick=\"lmb_treeElOpen('$treeid','$gtabid','$gval','$rand');event.stopPropagation();\"></td>
 			<td align=\"left\" nowrap><a class=\"lmbFileTreeItem\" onclick=\"lmbTreeOpenData('$gtabid','$gval','".$params["verkn_tabid"]."','".$params["verkn_fieldid"]."','".$params["verkn_ID"]."','$tform')\" title=\"".$gtitle."\">&nbsp;".$gvalue."</a></td>
 			</tr>
 			<tr style=\"display:none\" id=\"lmbTreeEl_".$treeid."_".$gtabid."_".$gval."_".$rand."\"><td colspan=\"2\" align=\"left\"><table cellpadding=\"0\" cellspacing=\"0\">
@@ -3902,9 +3913,9 @@ function dyns_getRelationTree($params){
 
                         echo "<tr>
 				<td style=\"width:18px\"><img src=\"pic/outliner/join.gif\" valign=\"top\"></td>
-				<td style=\"width:18px\"><img src=\"pic/outliner/".$simgpref.".gif\" align=\"top\" style=\"cursor:pointer\" id=\"lmbTreeSubPlus_".$treeid."_".$rval."_".$gval."_".$rand."\" onclick=\"lmb_treeSubOpen('$treeid','$rval','$gval','$rand','$gtabid','$rkey')\"></td>
+				<td style=\"width:18px\"><img src=\"pic/outliner/".$simgpref.".gif\" align=\"top\" style=\"cursor:pointer\" id=\"lmbTreeSubPlus_".$treeid."_".$rval."_".$gval."_".$rand."\" onclick=\"lmb_treeSubOpen('$treeid','$rval','$gval','$rand','$gtabid','$rkey');event.stopPropagation();\"></td>
 				<td style=\"width:18px\"><i class=\"lmb-icon $icon\" align=\"top\" border=\"0\" id=\"lmbTreeSubBox_".$treeid."_".$rval."_".$gval."_".$rand."\"></i></td>
-				<td nowrap align=\"left\">&nbsp;<b><a class=\"lmbFileTreeItem\" onclick=\"lmbTreeOpenTable('$rval','$gtabid','$rkey','$gval')\">".$gfield[$gtabid]["spelling"][$rkey]."</a></b></td>
+				<td nowrap align=\"left\">&nbsp;<b><a class=\"lmbFileTreeItem\" onclick=\"lmbTreeOpenTable('$rval','$gtabid','$rkey','$gval');event.stopPropagation();\">".$gfield[$gtabid]["spelling"][$rkey]."</a></b></td>
 				</tr>
 				<tr style=\"display:none\" id=\"lmbTreeTR_".$treeid."_".$rval."_".$gval."_".$rand."\">
 				<td style=\"background-image:url(pic/outliner/line.gif);background-repeat:repeat-y;\"></td>
@@ -3987,12 +3998,12 @@ function filesFavoritePreview($userid,$params){
     $dropitem = $params["dropitem"];
 
     $sqlquery = "SELECT DISTINCT LDMS_FILES.NAME,LDMS_FILES.SIZE,LDMS_FAVORITES.FILE_ID,LDMS_FAVORITES.ERSTDATUM,LMB_MIMETYPES.PIC FROM LDMS_FAVORITES,LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FAVORITES.FILE_ID = LDMS_FILES.ID AND LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND LDMS_FAVORITES.USER_ID=".$userid." AND FOLDER = ".LMB_DBDEF_FALSE." ORDER BY ERSTDATUM";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    if(odbc_fetch_row($rs)){$has_row = 1;}
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(lmbdb_fetch_row($rs)){$has_row = 1;}
 
     $sqlquery1 = "SELECT DISTINCT FILE_ID,ERSTDATUM FROM LDMS_FAVORITES WHERE LDMS_FAVORITES.USER_ID=".$userid." AND FOLDER = ".LMB_DBDEF_TRUE." ORDER BY ERSTDATUM";
-    $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-    if(odbc_fetch_row($rs1)){$has_row1 = 1;}
+    $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+    if(lmbdb_fetch_row($rs1)){$has_row1 = 1;}
 
     if($has_row OR $has_row1){
 
@@ -4005,15 +4016,15 @@ function filesFavoritePreview($userid,$params){
 
 		if($has_row1){
 			$maxCount = $umgvar["favorite_limit"];
-			while(odbc_fetch_row($rs1) AND $maxCount>0){
+			while(lmbdb_fetch_row($rs1) AND $maxCount>0){
 				$maxCount--;
-				if($dropitem == "f".odbc_result($rs1,"FILE_ID") AND $dropitem){
-					$sqlquery0 = "DELETE FROM LDMS_FAVORITES WHERE FILE_ID = ".parse_db_int(odbc_result($rs1,"FILE_ID"))." AND USER_ID=".$userid." AND FOLDER = ".LMB_DBDEF_TRUE;
-					$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+				if($dropitem == "f".lmbdb_result($rs1,"FILE_ID") AND $dropitem){
+					$sqlquery0 = "DELETE FROM LDMS_FAVORITES WHERE FILE_ID = ".parse_db_int(lmbdb_result($rs1,"FILE_ID"))." AND USER_ID=".$userid." AND FOLDER = ".LMB_DBDEF_TRUE;
+					$rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
 				}else{
-					echo "<TR><TD><A OnClick=\"parent.main.document.location.href='main.php?action=explorer&LID=".odbc_result($rs1,"FILE_ID")."';\">";
-					echo "<DIV STYLE=\"width:90%;overflow:hidden;font-size:;color:blue;cursor:pointer\"><i class=\"lmb-icon lmb-folder-closed\" BORDER=\"0\"></i>&nbsp;".string_dispSubstr($filestruct["name"][odbc_result($rs1,"FILE_ID")],20)."&nbsp;</DIV></A></TD>";
-					echo "<TD ALIGN=\"RIGHT\" STYLE=\"width:10%;overflow:hidden\"><i class=\"lmb-icon lmb-close-alt\" BORDER=\"0\" STYLE=\"cursor:pointer\" OnClick=\"limbasMultiframePreview(".$params["id"].",'Explorer',null,'f".odbc_result($rs1,"FILE_ID")."');\"></i></TD>";
+					echo "<TR><TD><A OnClick=\"parent.main.document.location.href='main.php?action=explorer&LID=".lmbdb_result($rs1,"FILE_ID")."';\">";
+					echo "<DIV STYLE=\"width:90%;overflow:hidden;font-size:;color:blue;cursor:pointer\"><i class=\"lmb-icon lmb-folder-closed\" BORDER=\"0\"></i>&nbsp;".string_dispSubstr($filestruct["name"][lmbdb_result($rs1,"FILE_ID")],20)."&nbsp;</DIV></A></TD>";
+					echo "<TD ALIGN=\"RIGHT\" STYLE=\"width:10%;overflow:hidden\"><i class=\"lmb-icon lmb-close-alt\" BORDER=\"0\" STYLE=\"cursor:pointer\" OnClick=\"limbasMultiframePreview(".$params["id"].",'Explorer',null,'f".lmbdb_result($rs1,"FILE_ID")."');\"></i></TD>";
 					echo "</TR>";
 				}
 			}
@@ -4021,15 +4032,15 @@ function filesFavoritePreview($userid,$params){
 
 		if($has_row){
 			$maxCount = $umgvar["favorite_limit"];
-			while(odbc_fetch_row($rs) AND $maxCount>0){
+			while(lmbdb_fetch_row($rs) AND $maxCount>0){
 				$maxCount--;
-				if($dropitem == "d".odbc_result($rs,"FILE_ID") AND $dropitem){
-					$sqlquery0 = "DELETE FROM LDMS_FAVORITES WHERE FILE_ID = ".parse_db_int(odbc_result($rs,"FILE_ID"))." AND USER_ID=".$userid." AND FOLDER = ".LMB_DBDEF_FALSE;
-					$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+				if($dropitem == "d".lmbdb_result($rs,"FILE_ID") AND $dropitem){
+					$sqlquery0 = "DELETE FROM LDMS_FAVORITES WHERE FILE_ID = ".parse_db_int(lmbdb_result($rs,"FILE_ID"))." AND USER_ID=".$userid." AND FOLDER = ".LMB_DBDEF_FALSE;
+					$rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
 				}else{
-					echo "<TR><TD TITLE=\"".file_size(odbc_result($rs,"SIZE"))."\"><A OnClick=\"open('main.php?action=explorer_detail&ID=".odbc_result($rs,"FILE_ID")."' ,'Info','toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650');\">";
-					echo "<DIV STYLE=\"width:100%;overflow:hidden;font-size:;color:blue;cursor:pointer\"><IMG SRC=\"pic/fileicons/".odbc_result($rs,"PIC")."\" BORDER=\"0\">&nbsp;".string_dispSubstr(odbc_result($rs,"NAME"),20)."&nbsp;</DIV></A></TD>";
-					echo "<TD ALIGN=\"RIGHT\" STYLE=\"width:10%;overflow:hidden\"><i class=\"lmb-icon lmb-close-alt\"  STYLE=\"cursor:pointer\" OnClick=\"limbasMultiframePreview(".$params["id"].",'Explorer',null,'d".odbc_result($rs,"FILE_ID")."');\"></i></TD>";
+					echo "<TR><TD TITLE=\"".file_size(lmbdb_result($rs,"SIZE"))."\"><A OnClick=\"open('main.php?action=explorer_detail&ID=".lmbdb_result($rs,"FILE_ID")."' ,'Info','toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650');\">";
+					echo "<DIV STYLE=\"width:100%;overflow:hidden;font-size:;color:blue;cursor:pointer\"><IMG SRC=\"pic/fileicons/".lmbdb_result($rs,"PIC")."\" BORDER=\"0\">&nbsp;".string_dispSubstr(lmbdb_result($rs,"NAME"),20)."&nbsp;</DIV></A></TD>";
+					echo "<TD ALIGN=\"RIGHT\" STYLE=\"width:10%;overflow:hidden\"><i class=\"lmb-icon lmb-close-alt\"  STYLE=\"cursor:pointer\" OnClick=\"limbasMultiframePreview(".$params["id"].",'Explorer',null,'d".lmbdb_result($rs,"FILE_ID")."');\"></i></TD>";
 					echo "</TR>";
 				}
 			}
@@ -4398,8 +4409,8 @@ function dyns_addToFavorites($params) {
 
     # get settings
     $sqlquery = 'SELECT M_SETTING FROM LMB_USERDB WHERE USER_ID = ' . $session['user_id'];
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    if($m_setting = odbc_result($rs, "M_SETTING")){
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if($m_setting = lmbdb_result($rs, "M_SETTING")){
         $m_setting = unserialize($m_setting);
     }
 
@@ -4413,7 +4424,7 @@ function dyns_addToFavorites($params) {
     # store settings
     if(is_array($m_setting)){
         $prepare_string = 'UPDATE LMB_USERDB SET M_SETTING = ? WHERE USER_ID = ' . $session['user_id'];
-        lmb_PrepareSQL($prepare_string, array(parse_db_blob(serialize($m_setting))), __FILE__, __LINE__);
+        lmb_PrepareSQL($prepare_string, array(serialize($m_setting)), __FILE__, __LINE__);
     }
 
     # refresh session
@@ -4439,6 +4450,32 @@ function dyns_saveViewSettings($params) {
     require_once('gtab/gtab_register.lib');
     require_once('gtab/gtab.lib');
     save_viewSettings(null, $gtabid);
+}
+
+
+/**
+ * Changes the current tenant
+ * @param $params array of gtabid and filter_gwidth
+ */
+function dyns_setMultitenant($params) {
+    global $session;
+    global $db;
+
+    if (!$params['mid'] || !is_numeric($params['mid']) || !in_array($params['mid'],$session["multitenant"])) {
+        return;
+    }
+    $setMultitenant = $params['mid'];
+
+    $sqlquery = "SELECT MULTITENANT FROM LMB_USERDB WHERE USER_ID = ".$session['user_id'];
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $mvalue = explode(',',lmbdb_result($rs, "MULTITENANT"));
+    $mvalue = $mvalue[0].','.$setMultitenant;
+
+    $sqlquery = "UPDATE LMB_USERDB SEt MULTITENANT = '$mvalue' WHERE USER_ID = ".$session['user_id'];
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+    $_SESSION['session']["mid"] = $setMultitenant;
+    $session["mid"] = $setMultitenant;
 }
 
 # Buffer
@@ -4493,6 +4530,6 @@ if($output = ob_get_contents()){
     echo $output;
 }
 
-if ($db) {odbc_close($db);}
+if ($db) {lmbdb_close($db);}
 
 ?>

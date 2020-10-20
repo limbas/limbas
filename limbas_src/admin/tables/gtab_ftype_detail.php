@@ -113,9 +113,21 @@ echo "</form>";
 		echo "</td></tr>";
 	}}
 	
-	
-	
+
 	####### Sonderfelder #######
+
+	/* --- BOOLEAN Format --------------------------------------- */
+	if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 10){
+		echo "<tr><td valign=\"top\">".$lang[2998]."</td><td>";
+		echo "<SELECT STYLE=\"width:100%;\" onchange=\"document.form2.val.value=this.value;ajaxEditField('$fieldid','boolformat')\">";
+		$SELECTED[$result_fieldtype[$table_gtab[$bzm]]["listing_viewmode"][1]] = 'selected';
+		echo "<OPTION VALUE=\" \" $SELECTED[0]>Checkbox";
+		echo "<OPTION VALUE=\"1\" $SELECTED[1]>Radio";
+		echo "<OPTION VALUE=\"2\" $SELECTED[2]>Select";
+		echo "</SELECT>";
+		echo "<br><i style=\"color:#AAAAAA\">".$lang[2999]."</i>";
+		echo "</td></tr>";
+    }
 	
 	/* --- NFORMAT --------------------------------------- */
 	if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 5 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 22 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 44){
@@ -165,9 +177,18 @@ echo "</form>";
 		<tr><td><hr></td><td><hr></td></tr>
 		<tr><td valign=\"top\">".$lang[2812]."</td><td><select style=\"width:100%\" onchange=\"document.form2.val.value=this.value+' ';ajaxEditField('$fieldid','relviewmode')\"><option value=\"1\" $SELECTED[1]>".$lang[2814]."</option><option value=\"2\" $SELECTED[2]>".$lang[2815]."</option><option value=\"3\" $SELECTED[3]>".$lang[2709]."</option><option value=\"4\" $SELECTED[4]>".$lang[2913]."</option></select>
 		<br><i style=\"color:#AAAAAA\">".$lang[2848]."</i>
-		</td></tr>
+		</td></tr>";
+
+        // --- relations
+		if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 11) {
+            $SELECTED = array();
+            $SELECTED[$result_fieldtype[$table_gtab[$bzm]]["triggercount"][1]] = 'selected';
+            echo "<tr><td valign=\"top\">" . $lang[2991] . "</td><td><select style=\"width:100%\" onchange=\"document.form2.val.value=this.value+' ';ajaxEditField('$fieldid','triggercount')\"><option value=\"1\" $SELECTED[1]>" . $lang[2994] . "</option><option value=\"2\" $SELECTED[2]>" . $lang[2993] . "</option></select>
+		<br><i style=\"color:#AAAAAA\">" . $lang[2992] . "</i>
+		</td></tr>";
+        }
 		
-		<tr><td valign=\"top\">".$lang[2813]."</td><td><input type=\"text\" style=\"width:100%;\" value=\"".$result_fieldtype[$table_gtab[$bzm]]["listing_cut"][1]."\" onchange=\"document.form2.val.value=this.value+' ';ajaxEditField('$fieldid','relviewcut')\">
+		echo "<tr><td valign=\"top\">".$lang[2813]."</td><td><input type=\"text\" style=\"width:100%;\" value=\"".$result_fieldtype[$table_gtab[$bzm]]["listing_cut"][1]."\" onchange=\"document.form2.val.value=this.value+' ';ajaxEditField('$fieldid','relviewcut')\">
 		<br><i style=\"color:#AAAAAA\">".$lang[2849]."</i>
 		</td></tr>
 		
@@ -417,14 +438,14 @@ echo "</form>";
 	
 	
 	# --- multi language ------
-
+    if(!$isview){
 	if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 1 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 3 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 4){
 		echo "<tr><td valign=\"top\">".$lang[2895]."</td><td>";
 		if($result_fieldtype[$table_gtab[$bzm]]["multilang"][1] == 1){$collreplacevalue = "CHECKED";} else{$collreplacevalue = "";}
 		echo "<INPUT TYPE=\"CHECKBOX\" onclick=\"document.form2.val.value=this.checked;ajaxEditField('$fieldid','multilang')\"".$collreplacevalue.">";
 		echo "<br><i style=\"color:#AAAAAA\">".$lang[2896]."</i>";
 		echo "</td></tr>";
-	}
+	}}
 	
 	# relation/grouping popup default
     if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 11 OR $result_fieldtype[$table_gtab[$bzm]]["groupable"][1] == 1){
@@ -458,8 +479,8 @@ echo "</form>";
 		$pool = 0;
 		if($pool = $result_fieldtype[$table_gtab[$bzm]]["select_pool"][1]){
 			$sqlquery = "SELECT NAME FROM LMB_ATTRIBUTE_P WHERE ID = ".$result_fieldtype[$table_gtab[$bzm]]["select_pool"][1];
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			echo "<A HREF=\"JAVASCRIPT: newwin('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][1]."','$bzm','$pool','LMB_ATTRIBUTE');\">".htmlentities(odbc_result($rs, "NAME"),ENT_QUOTES,$umgvar["charset"])."</A>";
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			echo "<A HREF=\"JAVASCRIPT: newwin('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][1]."','$bzm','$pool','LMB_ATTRIBUTE');\">".htmlentities(lmbdb_result($rs, "NAME"),ENT_QUOTES,$umgvar["charset"])."</A>";
 			
 		}
 		echo "&nbsp;&nbsp;<A HREF=\"JAVASCRIPT: newwin('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][1]."','$bzm','$pool','LMB_ATTRIBUTE');\"><i border=\"0\" class=\"lmb-icon lmb-pencil\"></i>";
@@ -475,8 +496,8 @@ echo "</form>";
 		$pool = 0;
 		if($pool = $result_fieldtype[$table_gtab[$bzm]]["select_pool"][1]){
 			$sqlquery = "SELECT NAME FROM LMB_SELECT_P WHERE ID = ".$result_fieldtype[$table_gtab[$bzm]]["select_pool"][1];
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			echo "<A HREF=\"JAVASCRIPT: newwin('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][1]."','$bzm','$pool','LMB_SELECT');\">".htmlentities(odbc_result($rs, "NAME"),ENT_QUOTES,$umgvar["charset"])."<a>";
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			echo "<A HREF=\"JAVASCRIPT: newwin('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][1]."','$bzm','$pool','LMB_SELECT');\">".htmlentities(lmbdb_result($rs, "NAME"),ENT_QUOTES,$umgvar["charset"])."<a>";
 		}
 		echo "&nbsp;&nbsp;<i border=\"0\" class=\"lmb-icon lmb-pencil\" onclick=\"newwin('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][1]."','$bzm','$pool','LMB_SELECT');\" style=\"cursor:pointer;\"></i>";
 		echo "</td></tr>";
@@ -558,13 +579,13 @@ echo "</form>";
         echo "<tr><td>".$lang[1460]."</td><td>";
 		if($verknTabid){
 			$sqlquery = "SELECT BESCHREIBUNG FROM LMB_CONF_TABLES WHERE TAB_ID = ".$verknTabid;
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-            echo "<a onclick=\"document.location.href='main_admin.php?&action=setup_gtab_ftype&tab_group=$tab_group&atid=$verknTabid'\">".$lang[odbc_result($rs, "BESCHREIBUNG")]."</a> | ";
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+            echo "<a onclick=\"document.location.href='main_admin.php?&action=setup_gtab_ftype&tab_group=$tab_group&atid=$verknTabid'\">".$lang[lmbdb_result($rs, "BESCHREIBUNG")]."</a> | ";
 
             if($verknFieldid){
                 $sqlquery = "SELECT SPELLING FROM LMB_CONF_FIELDS WHERE TAB_ID = ".$verknTabid." AND FIELD_ID = ".$verknFieldid;
-                $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                echo $lang[odbc_result($rs, "SPELLING")];
+                $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                echo $lang[lmbdb_result($rs, "SPELLING")];
             } else {
                 echo '?';
             }
@@ -663,12 +684,12 @@ echo "</form>";
 	<table ID="tab2" border="0" style="width:420px;display:none;padding:5px;">
 	<?php
 	if($rs = dbf_5(array($DBA["DBSCHEMA"],$table_gtab[$bzm],dbf_4($result_fieldtype[$table_gtab[$bzm]]["field"][1]),1))){
-	while (odbc_fetch_row($rs))
+	while (lmbdb_fetch_row($rs))
 	{
-		$jml = odbc_num_fields($rs);
+		$jml = lmbdb_num_fields($rs);
 		for($i=1;$i<=$jml;$i++)
 		{
-			echo "<tr><td style=\"border-bottom:1px solid #CCCCCC\">".odbc_field_name($rs,$i) . "</td><td style=\"border-bottom:1px solid #CCCCCC\">" . odbc_result($rs,$i)."</td></tr>";
+			echo "<tr><td style=\"border-bottom:1px solid #CCCCCC\">".lmbdb_field_name($rs,$i) . "</td><td style=\"border-bottom:1px solid #CCCCCC\">" . lmbdb_result($rs,$i)."</td></tr>";
 		}
 	}
 	}

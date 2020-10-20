@@ -48,17 +48,17 @@ if($lock){
 		lmb_StartTransaction();
 		
         $sqlquery = "DELETE FROM LMB_SESSION WHERE USER_ID = $lock";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
         $sqlquery = "SELECT LMLOCK FROM LMB_USERDB WHERE USER_ID = $lock";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
-        if(odbc_result($rs,"LMLOCK") == 1){$LOCK = LMB_DBDEF_FALSE;}else{$LOCK = LMB_DBDEF_TRUE;}
+        if(lmbdb_result($rs,"LMLOCK") == 1){$LOCK = LMB_DBDEF_FALSE;}else{$LOCK = LMB_DBDEF_TRUE;}
         $sqlquery = "UPDATE LMB_USERDB SET LMLOCK = $LOCK WHERE USER_ID = $lock";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
         $sqlquery = "DELETE FROM LMB_SESSION WHERE USER_ID = $lock";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}else{system("rm ".$umgvar['pfad']."/USER/$lock/menuicons/*",$sys1);system("rm ".$umgvar["pfad"]."/USER/$lock/temp/*",$sys1);}
 
 		lmb_EndTransaction(!$commit);
@@ -67,17 +67,17 @@ if($lock){
 /* --- Debug --------------------------------------------- */
 if($debug){
         $sqlquery = "DELETE FROM LMB_SESSION WHERE USER_ID = $debug";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
         $sqlquery = "SELECT DEBUG FROM LMB_USERDB WHERE USER_ID = $debug";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
-        if(odbc_result($rs,"DEBUG") == 1){$DEBUG = LMB_DBDEF_FALSE;}else{$DEBUG = LMB_DBDEF_TRUE;}
+        if(lmbdb_result($rs,"DEBUG") == 1){$DEBUG = LMB_DBDEF_FALSE;}else{$DEBUG = LMB_DBDEF_TRUE;}
         $sqlquery = "UPDATE LMB_USERDB SET DEBUG = $DEBUG WHERE USER_ID = $debug";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
         $sqlquery = "DELETE FROM LMB_SESSION WHERE USER_ID = $debug";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
 }
 
@@ -85,7 +85,7 @@ if($debug){
 /* --- Logout --------------------------------------------- */
 if($logout){
         $sqlquery = "UPDATE LMB_SESSION SET LOGOUT = ".LMB_DBDEF_TRUE." WHERE USER_ID = $logout";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}	
 }
 
@@ -133,21 +133,21 @@ $where
 GROUP BY LMB_USERDB.SUB_GROUP,LMB_USERDB.GROUP_ID,LMB_USERDB.LOGGING,LMB_USERDB.DEBUG,LMB_USERDB.USERNAME,LMB_USERDB.PASSWORT,LMB_USERDB.USER_ID,LMB_USERDB.VORNAME,LMB_USERDB.NAME,LMB_USERDB.EMAIL,LMB_USERDB.LMLOCK,LMB_USERDB.BESCHREIBUNG,LMB_USERDB.ERSTDATUM,LMB_USERDB.EDITDATUM,LMB_USERDB.DEL,LMB_GROUPS.NAME,LMB_GROUPS.GROUP_ID
 ";
 
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
 
 
 $bzm = 1;
-while(odbc_fetch_row($rs)) {
+while(lmbdb_fetch_row($rs)) {
 
 	$view = 1;
 	
 	if($ufilter_group){
-		if(lmb_strtolower($ufilter_group) == lmb_strtolower(odbc_result($rs, "G_NAME"))){
+		if(lmb_strtolower($ufilter_group) == lmb_strtolower(lmbdb_result($rs, "G_NAME"))){
 			$view = 1;
 		}else{
 			$view = 0;
-			$subgr = explode(";",odbc_result($rs, "SUB_GROUP"));
+			$subgr = explode(";",lmbdb_result($rs, "SUB_GROUP"));
 			if(in_array($group_id,$subgr)){
 				$view = 1;
 			}else{
@@ -158,11 +158,11 @@ while(odbc_fetch_row($rs)) {
 	
 	
 	if($group_id){
-		if($group_id == odbc_result($rs, "GROUP_ID")){
+		if($group_id == lmbdb_result($rs, "GROUP_ID")){
 			$view = 1;
 		}else{
 			$view = 0;
-			$subgr = explode(";",odbc_result($rs, "SUB_GROUP"));
+			$subgr = explode(";",lmbdb_result($rs, "SUB_GROUP"));
 			if(in_array($group_id,$subgr)){
 				$view = 1;
 			}else{
@@ -172,22 +172,22 @@ while(odbc_fetch_row($rs)) {
 	}
 
 	if($view){
-	    $result_user["username"][$bzm] = odbc_result($rs, "USERNAME");
-	    $result_user["passwort"][$bzm] = odbc_result($rs, "PASSWORT");
-	    $result_user["user_id"][$bzm] = odbc_result($rs, "USER_ID");
-	    $result_user["vorname"][$bzm] = odbc_result($rs, "VORNAME");
-		$result_user["name"][$bzm] = odbc_result($rs, "U_NAME");
-		$result_user["email"][$bzm] = odbc_result($rs, "EMAIL");
-	    $result_user["lock"][$bzm] = odbc_result($rs, "LMLOCK");
-	    $result_user["debug"][$bzm] = odbc_result($rs, "DEBUG");
-	    $result_user["logging"][$bzm] = odbc_result($rs, "LOGGING");
-	    $result_user["beschreibung"][$bzm] = odbc_result($rs, "U_BESCHREIBUNG");
-		$result_user["gruppe"][$bzm] = odbc_result($rs, "G_NAME");
-		$result_user["gruppen_id"][$bzm] = odbc_result($rs, "GROUP_ID");
-		$result_user["del"][$bzm] = odbc_result($rs, "DEL");
-		$result_user["erstdatum"][$bzm] = get_date(odbc_result($rs, "U_ERSTDATUM"),1);
-		$result_user["editdatum"][$bzm] = get_date(odbc_result($rs, "U_EDITDATUM"),1);
-		$result_user["lastklick"][$bzm] = odbc_result($rs, "LASTKLICK");
+	    $result_user["username"][$bzm] = lmbdb_result($rs, "USERNAME");
+	    $result_user["passwort"][$bzm] = lmbdb_result($rs, "PASSWORT");
+	    $result_user["user_id"][$bzm] = lmbdb_result($rs, "USER_ID");
+	    $result_user["vorname"][$bzm] = lmbdb_result($rs, "VORNAME");
+		$result_user["name"][$bzm] = lmbdb_result($rs, "U_NAME");
+		$result_user["email"][$bzm] = lmbdb_result($rs, "EMAIL");
+	    $result_user["lock"][$bzm] = lmbdb_result($rs, "LMLOCK");
+	    $result_user["debug"][$bzm] = lmbdb_result($rs, "DEBUG");
+	    $result_user["logging"][$bzm] = lmbdb_result($rs, "LOGGING");
+	    $result_user["beschreibung"][$bzm] = lmbdb_result($rs, "U_BESCHREIBUNG");
+		$result_user["gruppe"][$bzm] = lmbdb_result($rs, "G_NAME");
+		$result_user["gruppen_id"][$bzm] = lmbdb_result($rs, "GROUP_ID");
+		$result_user["del"][$bzm] = lmbdb_result($rs, "DEL");
+		$result_user["erstdatum"][$bzm] = get_date(lmbdb_result($rs, "U_ERSTDATUM"),1);
+		$result_user["editdatum"][$bzm] = get_date(lmbdb_result($rs, "U_EDITDATUM"),1);
+		$result_user["lastklick"][$bzm] = lmbdb_result($rs, "LASTKLICK");
 		$lastklick = mktime(lmb_substr($result_user["lastklick"][$bzm],11,2), lmb_substr($result_user["lastklick"][$bzm],14,2) + $umgvar["session_length"], lmb_substr($result_user["lastklick"][$bzm],17,2), lmb_substr($result_user["lastklick"][$bzm],5,2), lmb_substr($result_user["lastklick"][$bzm],8,2), lmb_substr($result_user["lastklick"][$bzm],0,4));
 		$stamp = local_stamp(2);
 		if($lastklick >= $stamp){$result_user["aktiv"][$bzm] = sprintf("%.2f",($lastklick - $stamp)/60);}

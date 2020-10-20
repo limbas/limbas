@@ -37,10 +37,9 @@ if($gfield[$gtabid]["field_name"][$field_id] AND $gtab["table"][$gtabid] AND $ID
 	
 	
 	if($umgvar["wysiwygeditor"] == "openwysiwyg"){
-		echo "<script type=\"text/javascript\" src=\"extern/wysiwyg/openwysiwyg/scripts/wysiwyg.js\"></script>\n";
+		echo "<script type=\"text/javascript\" src=\"extern/wysiwyg/openwysiwyg/scripts/wysiwyg.js?v=".$umgvar["version"]."\"></script>\n";
 	}elseif($umgvar["wysiwygeditor"] == "TinyMCE"){
-		#echo "<script language=\"javascript\" type=\"text/javascript\" src=\"extern/wysiwyg/tiny_mce/tiny_mce.js\"></script>\n";
-		echo "<script language=\"javascript\" type=\"text/javascript\" src=\"extern/wysiwyg/tinymce/tinymce.min.js\"></script>\n";
+		echo "<script language=\"javascript\" type=\"text/javascript\" src=\"extern/wysiwyg/tinymce/tinymce.min.js?v=".$umgvar["version"]."\"></script>\n";
 	}
 	
 	?>

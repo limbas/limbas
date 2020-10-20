@@ -114,5 +114,5 @@ patch_db(28,"2.2",$sqlquery,"update umgvar");
 
 ###########################
 
-if ($db AND !$action) {odbc_close($db);}
+if ($db AND !$action) {lmbdb_close($db);}
 ?>

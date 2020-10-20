@@ -40,16 +40,16 @@ if(convert_date($diag_von)){$where = "AND LOGIN_DATE >= '".convert_date($diag_vo
 if(convert_date($diag_bis)){$where .= " AND LOGIN_DATE <= '".convert_date($diag_bis)."'";}
 
 $sqlquery =  "SELECT DISTINCT ID,LOGIN_DATE, UPDATE_DATE, IP, HOST, TIMEDIFF(LOGIN_DATE,UPDATE_DATE) DAUER FROM LMB_HISTORY_USER WHERE USERID = $ID $where ORDER BY LOGIN_DATE";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
         if($BGCOLOR == $farbschema['WEB7']){$BGCOLOR = $farbschema['WEB8'];} else {$BGCOLOR = $farbschema['WEB7'];}
         echo "<TR BGCOLOR=\"$BGCOLOR\">";
         echo"<TD>$bzm</TD>";
-        echo"<TD>".get_date(odbc_result($rs,"LOGIN_DATE"),2)."&nbsp;&nbsp;</TD>";
-        echo"<TD>".get_date(odbc_result($rs,"UPDATE_DATE"),2)."&nbsp;&nbsp;</TD>";
-        echo"<TD>".lmb_substr(odbc_result($rs,"DAUER"),0,19)."&nbsp;&nbsp;</TD>";
-        echo"<TD>".odbc_result($rs,"IP")."&nbsp;&nbsp;</TD>";
-        echo"<TD>".odbc_result($rs,"HOST")."&nbsp;&nbsp;</TD>";
+        echo"<TD>".get_date(lmbdb_result($rs,"LOGIN_DATE"),2)."&nbsp;&nbsp;</TD>";
+        echo"<TD>".get_date(lmbdb_result($rs,"UPDATE_DATE"),2)."&nbsp;&nbsp;</TD>";
+        echo"<TD>".lmb_substr(lmbdb_result($rs,"DAUER"),0,19)."&nbsp;&nbsp;</TD>";
+        echo"<TD>".lmbdb_result($rs,"IP")."&nbsp;&nbsp;</TD>";
+        echo"<TD>".lmbdb_result($rs,"HOST")."&nbsp;&nbsp;</TD>";
         echo"</TR>";
 }
 

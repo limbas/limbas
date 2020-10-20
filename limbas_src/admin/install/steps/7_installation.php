@@ -18,11 +18,9 @@ if($DBA["DB"]){
 }
 
 if($setup_dbdriver == 'PDO'){
-    if(extension_loaded('odbc')){
-        echo "<div class=\"alert alert-danger\" style=\"color:red\">You can not use PDO while you have php <b>odbc</b> module installed!</div>";
-    }else {
-        require_once('../../lib/db/db_pdo.lib');
-    }
+    require_once('../../lib/db/db_pdo.lib');
+}else{
+    require_once('../../lib/db/db_odbc.lib');
 }
 
 require("../../lib/include.lib");
@@ -75,41 +73,41 @@ import_complete(1);
 
 if($setup_company){
     $sqlquery = "UPDATE LMB_UMGVAR SET NORM = '$setup_company' WHERE FORM_NAME = 'company'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 if($setup_path_project){
     $sqlquery = "UPDATE LMB_UMGVAR SET NORM = '".parse_db_string($setup_path_project)."' WHERE FORM_NAME = 'path'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     $sqlquery = "UPDATE LMB_UMGVAR SET NORM = 'localhost:///".$setup_path_project."/BACKUP' WHERE FORM_NAME = 'backup_default'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 if(is_numeric($setup_language)){
     $sqlquery = "UPDATE LMB_UMGVAR SET NORM = '$setup_language' WHERE FORM_NAME = 'default_language'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     $sqlquery = "UPDATE LMB_USERDB SET LANGUAGE = ".$setup_language;
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 if(is_numeric($setup_dateformat)){
     $sqlquery = "UPDATE LMB_UMGVAR SET NORM = '$setup_dateformat' WHERE FORM_NAME = 'default_dateformat'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     $sqlquery = "UPDATE LMB_USERDB SET DATEFORMAT = ".$setup_dateformat;
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 if($setup_charset){
     $sqlquery = "UPDATE LMB_UMGVAR SET NORM = '$setup_charset' WHERE FORM_NAME = 'charset'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 if($setup_version[0]){
     $sqlquery = "UPDATE LMB_UMGVAR SET NORM = '".$DBA['VERSION']."' WHERE FORM_NAME = 'database_version'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 # update color scheme
 if($setup_color_scheme){
     $sqlquery = "UPDATE LMB_UMGVAR SET NORM = '$setup_color_scheme' WHERE FORM_NAME = 'default_usercolor'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     $sqlquery = "UPDATE LMB_USERDB SET FARBSCHEMA = '$setup_color_scheme'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 
@@ -122,7 +120,7 @@ $defaulturl = dirname(dirname(dirname($_SERVER['PHP_SELF'])));
 $defaulturl = "http://{$_SERVER['SERVER_NAME']}{$defaulturl}/";
 
 $sqlquery = "UPDATE LMB_UMGVAR SET NORM = '$defaulturl' WHERE FORM_NAME = 'url'";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 # --- update include_db.lib ----------------------------
 $dblibvalue = fopen($setup_path_project."/inc/include_db.lib","w+");
@@ -175,7 +173,7 @@ fclose($dblibvalue);
 
 
 /* --- DB-CLOSE ------------------------------------------------------ */
-if ($db){odbc_close($db);}
+if ($db){lmbdb_close($db);}
 
 # clean installation: remove demo-extension directories/files
 if ($backupFile === 'demo.tar.gz') {

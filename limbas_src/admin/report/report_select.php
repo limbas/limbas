@@ -21,7 +21,7 @@
 #/*----------------- Aktions-Eintrag -------------------*/
 #if(isset($aktion_value) AND $report_id AND !$del) {
 #	$sqlquery = "UPDATE LMB_REPORT_LIST SET SQL_STATEMENT = '".parse_db_string($aktion_value,255)."' WHERE ID = $report_id";
-#	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+#	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 #	if(!$rs) {$commit = 1;}
 #}
 
@@ -43,12 +43,12 @@ if($new_group AND $report_list) {
 
 				# Report
 				$sqlquery = "INSERT INTO LMB_REPORT_LIST (ID,NAME,ERSTDATUM,ERSTUSER,REFERENZ_TAB,GROUPLIST,TARGET) VALUES ($NEXTID,'$report_name',".LMB_DBTYPE_TIMESTAMP.",'".$session["user_id"]."',".$key.",'".$group_list."',$NEXTID)";
-				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
 
 				$NEXTID2 = next_db_id("LMB_RULES_REPFORM");
 				$sqlquery = "INSERT INTO LMB_RULES_REPFORM VALUES ($NEXTID2,1,".$session["group_id"].",".LMB_DBDEF_TRUE.",$NEXTID)";
-				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
 
 				# ---- Filestrukture ----------------
@@ -57,10 +57,10 @@ if($new_group AND $report_list) {
 				if(!$commit){
 					if($flresult['tab_level']){
 						$sqlquery = "SELECT ID FROM LDMS_STRUCTURE WHERE TYP = 5 AND LEVEL = ".$flresult['tab_level']." AND NAME = '".parse_db_string($report_name,50)."' AND TABGROUP_ID = ".$gtab['tab_group'][$key]." AND TAB_ID = $key AND FIELD_ID = $NEXTID";
-						$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-						if(!odbc_result($rs, "ID")){
+						$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+						if(!lmbdb_result($rs, "ID")){
 							$sqlquery = "INSERT INTO LDMS_STRUCTURE (ID,NAME,LEVEL,TYP,ERSTUSER,TABGROUP_ID,TAB_ID,FIELD_ID,FIX) VALUES (".$flresult['FNEXTID'].",'".parse_db_string($report_name,50)."',".$flresult['tab_level'].",5,".$session['user_id'].",".$gtab['tab_group'][$key].",$key,$NEXTID,".LMB_DBDEF_TRUE.")";
-							$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+							$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 							if(!$rs) {$commit = 1;}
 						}
 					}
@@ -73,25 +73,25 @@ if($new_group AND $report_list) {
 
 if($changeext_id) {
 	$sqlquery = "UPDATE LMB_REPORT_LIST SET EXTENSION='".parse_db_string($report_extension[$changeext_id],160)."' WHERE ID = ".parse_db_int($changeext_id,3);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 }
 
 if($changetarget_id) {
 	$sqlquery = "UPDATE LMB_REPORT_LIST SET TARGET=".parse_db_int($report_changetarget[$changetarget_id],16)." WHERE ID = ".parse_db_int($changetarget_id,3);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 }
 
 if($changename_id) {
 	$sqlquery = "UPDATE LMB_REPORT_LIST SET NAME='".parse_db_string($report_changename[$changename_id],160)."' WHERE ID = ".parse_db_int($changename_id,3);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 }
 
 if($changedefaultformat_id) {
 	$sqlquery = "UPDATE LMB_REPORT_LIST SET DEFFORMAT='".parse_db_string($report_defaultformat[$changedefaultformat_id])."' WHERE ID = ".parse_db_int($changedefaultformat_id,3);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 }
 
@@ -117,14 +117,14 @@ if($changeootemplate_id) {
 		$sqlquery = "UPDATE LMB_REPORT_LIST SET ODS_TEMPLATE=".$ootplid."  WHERE ID = ".parse_db_int($changeootemplate_id,3);
 	}
 	
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 }
 
 /*----------------- Report umbenennen -------------------*/
 if($savename_id) {
 	$sqlquery = "UPDATE LMB_REPORT_LIST SET SAVENAME='".parse_db_string($report_savename[$savename_id],160)."' WHERE ID = ".parse_db_int($savename_id,3);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 }
 
@@ -135,44 +135,44 @@ if($del AND $report_id){
 	lmb_StartTransaction();
 
 	$sqlquery = "SELECT REFERENZ_TAB,GROUPLIST FROM LMB_REPORT_LIST WHERE ID = $report_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$rep_ref_tab = odbc_result($rs, "REFERENZ_TAB");
-	$group_list = odbc_result($rs, "GROUPLIST");
+	$rep_ref_tab = lmbdb_result($rs, "REFERENZ_TAB");
+	$group_list = lmbdb_result($rs, "GROUPLIST");
 
 
 
 	if(!$group_list){
 		$sqlquery = "SELECT TAB_SIZE FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TYP = 'bild'";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		while(odbc_fetch_row($rs)) {
-			if(file_exists($umgvar['uploadpfad']."report/".odbc_result($rs, "TAB_SIZE"))){
-				unlink($umgvar['uploadpfad']."report/".odbc_result($rs, "TAB_SIZE"));
+		while(lmbdb_fetch_row($rs)) {
+			if(file_exists($umgvar['uploadpfad']."report/".lmbdb_result($rs, "TAB_SIZE"))){
+				unlink($umgvar['uploadpfad']."report/".lmbdb_result($rs, "TAB_SIZE"));
 			}
-			if(file_exists($umgvar['pfad']."/TEMP/thumpnails/report/".odbc_result($rs, "TAB_SIZE"))){
-				unlink($umgvar['pfad']."/TEMP/thumpnails/report/".odbc_result($rs, "TAB_SIZE"));
+			if(file_exists($umgvar['pfad']."/TEMP/thumpnails/report/".lmbdb_result($rs, "TAB_SIZE"))){
+				unlink($umgvar['pfad']."/TEMP/thumpnails/report/".lmbdb_result($rs, "TAB_SIZE"));
 			}
 		}
 	}
 
 	$sqlquery = "DELETE FROM LMB_REPORTS WHERE BERICHT_ID = $report_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$sqlquery = "DELETE FROM LMB_REPORT_LIST WHERE ID = $report_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$sqlquery = "DELETE FROM LMB_RULES_REPFORM WHERE REPFORM_ID = $report_id AND TYP = 1";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 	# --- Filestructure ------
 	$sqlquery = "SELECT ID FROM LDMS_STRUCTURE WHERE TAB_ID = $rep_ref_tab AND FIELD_ID = $report_id AND TYP = 5";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
-	if(!$commit AND odbc_result($rs, "ID")){
+	if(!$commit AND lmbdb_result($rs, "ID")){
 		$GLOBALS["filestruct"]['admin'] = 1;
-		if(!delete_dir(odbc_result($rs, "ID"))){$commit = 1;}
+		if(!delete_dir(lmbdb_result($rs, "ID"))){$commit = 1;}
 	}
 
 
@@ -314,23 +314,23 @@ function resultreportlist_(){
 	AND LMB_RULES_REPFORM.GROUP_ID IN (".implode(",",$session["subgroup"]).")
 	ORDER BY REFERENZ_TAB,NAME";
 
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$key = odbc_result($rs, "ID");
-		$gtabid = odbc_result($rs, "REFERENZ_TAB");
-		$greportlist[$gtabid]["id"][$key] = odbc_result($rs, "ID");
-		$greportlist[$gtabid]["name"][$key] = odbc_result($rs, "NAME");
-		#$greportlist[$gtabid]["fid"][$key] = odbc_result($rs, "TARGET");
-		#$greportlist[$gtabid]["grouplist"][$key] = odbc_result($rs, "GROUPLIST");
-		#$greportlist[$gtabid]["level"][$key] = odbc_result($rs, "LEVEL");
-		$greportlist[$gtabid]["erstuser"][$key] = odbc_result($rs, "ERSTUSER");
-		$greportlist[$gtabid]["target"][$key] = odbc_result($rs, "TARGET");
-		$greportlist[$gtabid]["savename"][$key] = odbc_result($rs, "SAVENAME");
-		$greportlist[$gtabid]["extension"][$key] = odbc_result($rs, "EXTENSION");
-		$greportlist[$gtabid]["odt_template"][$key] = odbc_result($rs, "ODT_TEMPLATE");
-		$greportlist[$gtabid]["ods_template"][$key] = odbc_result($rs, "ODS_TEMPLATE");
-		$greportlist[$gtabid]["defaultformat"][$key] = odbc_result($rs, "DEFFORMAT");
+	while(lmbdb_fetch_row($rs)) {
+		$key = lmbdb_result($rs, "ID");
+		$gtabid = lmbdb_result($rs, "REFERENZ_TAB");
+		$greportlist[$gtabid]["id"][$key] = lmbdb_result($rs, "ID");
+		$greportlist[$gtabid]["name"][$key] = lmbdb_result($rs, "NAME");
+		#$greportlist[$gtabid]["fid"][$key] = lmbdb_result($rs, "TARGET");
+		#$greportlist[$gtabid]["grouplist"][$key] = lmbdb_result($rs, "GROUPLIST");
+		#$greportlist[$gtabid]["level"][$key] = lmbdb_result($rs, "LEVEL");
+		$greportlist[$gtabid]["erstuser"][$key] = lmbdb_result($rs, "ERSTUSER");
+		$greportlist[$gtabid]["target"][$key] = lmbdb_result($rs, "TARGET");
+		$greportlist[$gtabid]["savename"][$key] = lmbdb_result($rs, "SAVENAME");
+		$greportlist[$gtabid]["extension"][$key] = lmbdb_result($rs, "EXTENSION");
+		$greportlist[$gtabid]["odt_template"][$key] = lmbdb_result($rs, "ODT_TEMPLATE");
+		$greportlist[$gtabid]["ods_template"][$key] = lmbdb_result($rs, "ODS_TEMPLATE");
+		$greportlist[$gtabid]["defaultformat"][$key] = lmbdb_result($rs, "DEFFORMAT");
 		
 		if($greportlist[$gtabid]["odt_template"][$key]){$greportlist[$gtabid]["odt_template"][$key] = get_NameFromID($greportlist[$gtabid]["odt_template"][$key]);}else{$greportlist[$gtabid]["odt_template"][$key] = "";}
 		if($greportlist[$gtabid]["ods_template"][$key]){$greportlist[$gtabid]["ods_template"][$key] = get_NameFromID($greportlist[$gtabid]["ods_template"][$key]);}else{$greportlist[$gtabid]["ods_template"][$key] = "";}
@@ -393,10 +393,10 @@ if($greportlist_){
 				echo "<SELECT OnChange=\"document.getElementById('report_changetarget_$key').value=this.value;document.form1.changetarget_id.value='$key';document.form1.action='main_admin.php';document.form1.action.value='setup_report_select';document.form1.submit();\" style=\"width:100px;\"><OPTION VALUE=\"0\"></OPTION>";
 				if($gtabid){
 					$sqlquery = "SELECT ID FROM LDMS_STRUCTURE WHERE TAB_ID = $gtabid AND FIELD_ID = 0 AND TYP = 3";
-					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					if(!$rs){$commit = 1;}
-					while(odbc_fetch_row($rs)){
-						rep_sub_folderlist(odbc_result($rs,"ID"),$greportlist_[$gtabid]["target"][$key]);
+					while(lmbdb_fetch_row($rs)){
+						rep_sub_folderlist(lmbdb_result($rs,"ID"),$greportlist_[$gtabid]["target"][$key]);
 					}
 				}
 				echo "</SELECT><input type=\"text\" style=\"width:30px;\" id=\"report_changetarget_$key\" name=\"report_changetarget[".$key."]\" value=\"".$greportlist_[$gtabid]["target"][$key]."\" OnChange=\"document.form1.changetarget_id.value='$key';document.form1.action='main_admin.php';document.form1.action.value='setup_report_select';document.form1.submit();\">";

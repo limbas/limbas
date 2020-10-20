@@ -24,12 +24,12 @@ if($add_color){
 	$add_color = explode(";",$add_color);
 	foreach($add_color AS $key => $value) {
 		$sqlquery = "SELECT ID FROM LMB_USER_COLORS WHERE WERT = '$value' AND USERID = $uid";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!odbc_fetch_row($rs)){
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!lmbdb_fetch_row($rs)){
 			/* --- Next ID ---------------------------------------- */		
 			$NEXTID = next_db_id("LMB_USER_COLORS");
 			$sqlquery1 = "INSERT INTO LMB_USER_COLORS (ID,WERT,USERID) VALUES ($NEXTID,'$value',$uid)";
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);		
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);		
 		}
 	}
 }
@@ -39,7 +39,7 @@ if($del_color){
 	$del_c = explode(";",$del_color);
 	foreach($del_c AS $key => $value) {
 		$sqlquery = "DELETE FROM LMB_USER_COLORS WHERE WERT = '$value' AND USERID = ".$uid;
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);			
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);			
 	}
 }
 
@@ -55,15 +55,15 @@ if(($add_color OR $del_color) AND $action == "user_color"){
 $result_colors['maxid'] = 0;
 
 $sqlquery = "SELECT MAX(ID) AS MAXID,ID,WERT FROM LMB_USER_COLORS WHERE USERID = $uid GROUP BY ID,WERT ORDER BY WERT";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 $bzm = 1;
-while(odbc_fetch_row($rs)) {
+while(lmbdb_fetch_row($rs)) {
 	if(($add_color OR $del_color) AND $action == "user_color"){
-		$user_colors['wert'][] = "#".odbc_result($rs, "WERT");
+		$user_colors['wert'][] = "#".lmbdb_result($rs, "WERT");
 	}
-	$result_colors['id'][$bzm] = odbc_result($rs, "ID");
-	$result_colors['wert'][$bzm] = odbc_result($rs, "WERT");
-	$result_colors['maxid'] = odbc_result($rs, "MAXID");
+	$result_colors['id'][$bzm] = lmbdb_result($rs, "ID");
+	$result_colors['wert'][$bzm] = lmbdb_result($rs, "WERT");
+	$result_colors['maxid'] = lmbdb_result($rs, "MAXID");
 	$bzm++;
 }
 

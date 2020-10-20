@@ -25,8 +25,8 @@ function lmbGetLockmessage() {
 
     # user message
     $sqlquery = "SELECT LOCK_TXT FROM LMB_USERDB WHERE USERNAME='{$session['username']}'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    if ($message = trim(odbc_result($rs, 'LOCK_TXT'))) {
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if ($message = trim(lmbdb_result($rs, 'LOCK_TXT'))) {
         return $message;
     }
 

@@ -109,7 +109,7 @@ function ajaxGet(evt,url,actid,parameters,functionName) {
 				value = document.getElementsByName(parameters[intI])[0].value;
 			}
 			
-			url += separator + parameters[intI] + "=" + escape(value);
+			url += separator + parameters[intI] + "=" + encodeURIComponent(value);
 			separator = "&";
 			//globalLmbAjax[globalLmbAjaxKey][parameters[intI]] = escape(value);
 		}

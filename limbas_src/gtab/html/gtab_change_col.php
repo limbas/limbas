@@ -27,26 +27,26 @@ if($change_col){
 	if($gfield[$gtabid]['field_type'][$fieldid] == 10){
 		if($change_col[1] == 1){
 			$sqlquery = "SELECT ID,".$gfield[$gtabid]["field_name"][$fieldid]." FROM ".$gtab["table"][$gtabid];
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
-			while(odbc_fetch_row($rs)) {
-				if(odbc_result($rs, $gfield[$gtabid]["field_name"][$fieldid])){
-					$sqlquery1 = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = ".LMB_DBDEF_FALSE." WHERE ID = ".odbc_result($rs, "ID");
-					$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			while(lmbdb_fetch_row($rs)) {
+				if(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$fieldid])){
+					$sqlquery1 = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = ".LMB_DBDEF_FALSE." WHERE ID = ".lmbdb_result($rs, "ID");
+					$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 					if(!$rs1) {$commit = 1;}				
 				}else{
-					$sqlquery1 = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = ".LMB_DBDEF_TRUE." WHERE ID = ".odbc_result($rs, "ID");
-					$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+					$sqlquery1 = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = ".LMB_DBDEF_TRUE." WHERE ID = ".lmbdb_result($rs, "ID");
+					$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 					if(!$rs1) {$commit = 1;}				
 				}
 			}			
 		}elseif($change_col[1] == 2){
 			$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = ".LMB_DBDEF_TRUE;
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 		}elseif($change_col[1] == 3){
 			$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = ".LMB_DBDEF_FALSE;
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 		}
 	# -------Text---------
@@ -63,7 +63,7 @@ if($change_col){
 		}else{
 			$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = '' ".$where;	
 		}	
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	# -------Zahl---------
 	}elseif($gfield[$gtabid]['field_type'][$fieldid] == 5){
@@ -86,7 +86,7 @@ if($change_col){
 				}
 			}else{echo "<B>$lang[58]</B>";}
 		}	
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}	
 	# -------Datum---------
 	}elseif($gfield[$gtabid]['field_type'][$fieldid] == 2){
@@ -112,7 +112,7 @@ if($change_col){
 			}
 		}else{echo "<B>$lang[58]</B>";}
 		
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	# -------SELECT---------
 	}elseif($gfield[$gtabid]['field_type'][$fieldid] == 4){
@@ -128,7 +128,7 @@ if($change_col){
 		}else{
 			$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$fieldid]." = '' ".$where;	
 		}	
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	# -------Zahl---------
 	}		
@@ -201,10 +201,10 @@ if($gfield[$gtabid]['field_type'][$fieldid] == 1){?>
 <TR ALIGN="LEFT"><TD><SELECT STYLE="width:200px" NAME="change_col[1]"><OPTION VALUE="">
 <?php
 $sqlquery = "SELECT WERT,SORT FROM LMB_SELECT_W WHERE POOL = TAB_ID = ".$gfield[$gtabid]['select_pool'][$fieldid]." ORDER BY SORT";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-	echo "<OPTION VALUE=\"".odbc_result($rs, "WERT")."\">";
-	echo odbc_result($rs, "WERT");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+	echo "<OPTION VALUE=\"".lmbdb_result($rs, "WERT")."\">";
+	echo lmbdb_result($rs, "WERT");
 }
 ?>
 </SELECT></TD></TR>
@@ -212,9 +212,9 @@ while(odbc_fetch_row($rs)) {
 <TR ALIGN="LEFT"><TD><?=$lang[60]?></TD></TR>
 <TR ALIGN="LEFT"><TD><SELECT STYLE="width:200px" NAME="change_col[2]"><OPTION VALUE="">
 <?php
-while(odbc_fetch_row($rs)) {
-	echo "<OPTION VALUE=\"".odbc_result($rs, "AUSWAHL")."\">";
-	echo odbc_result($rs, "AUSWAHL");
+while(lmbdb_fetch_row($rs)) {
+	echo "<OPTION VALUE=\"".lmbdb_result($rs, "AUSWAHL")."\">";
+	echo lmbdb_result($rs, "AUSWAHL");
 }
 ?>
 </SELECT></TD></TR>

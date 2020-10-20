@@ -109,7 +109,7 @@ define("LMB_DBFUNC_VIEWDEPENDENCY",0);
 define("LMB_DBCURSOR",1);
 define("LMB_DBFUNC_WITH_RECURSIVE", 'WITH');
 
-#require_once("lib/db/db_pdo.lib");
+#require_once('lib/db/db_odbc.lib');
 
 # odbc connect:
 function dbq_0($host,$database,$dbuser,$dbpass,$dbdriver=null){
@@ -118,12 +118,12 @@ function dbq_0($host,$database,$dbuser,$dbpass,$dbdriver=null){
 		#SQL_CUR_USE_ODBC
 		#SQL_CUR_DEFAULT
 		#SQL_CUR_USE_DRIVER
-		@$db = odbc_pconnect ($dsn, $dbuser, $dbpass);
+		@$db = lmbdb_pconnect ($dsn, $dbuser, $dbpass);
 	}else{
-		@$db = odbc_pconnect($database,$dbuser,$dbpass);
+		@$db = lmbdb_pconnect($database,$dbuser,$dbpass);
 	}
 	if($db){return $db;}
-	else{echo("<h1>Database connection failed</h1><p>($dsn)<BR>".odbc_errormsg()."</p>"); return false;}
+	else{echo("<h1>Database connection failed</h1><p>($dsn)<BR>".lmbdb_errormsg()."</p>"); return false;}
 }
 
 
@@ -162,11 +162,7 @@ function dbf_1($p,$t=0){
  * @return string
  */
 function dbf_6($p){
-	#if (get_magic_quotes_gpc()){
-	#	return stripslashes($p);
-	#}else{
-		return str_replace("'","''",$p);
-	#}
+    return dbf_7($p);
 }
 
 /**
@@ -176,11 +172,7 @@ function dbf_6($p){
  * @return string
  */
 function dbf_7($p){
-	#if (get_magic_quotes_gpc()){
-	#	return str_replace("'","''",stripslashes($p));
-	#}else{
-		return str_replace("'","''",$p);
-	#}
+    return str_replace("'","''",$p);
 }
 
 /**

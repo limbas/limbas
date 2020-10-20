@@ -23,14 +23,14 @@
 
 
 <!-- include codemirror with sql syntax highlighting and sql code completion -->
-<script src="extern/codemirror/lib/codemirror.js"></script>
-<script src="extern/codemirror/edit/matchbrackets.js"></script>
-<script src="extern/codemirror/edit/matchtags.js"></script>
-<script src="extern/codemirror/mode/sql/sql.js"></script>
-<script src="extern/codemirror/addon/hint/show-hint.js"></script>
-<link rel="stylesheet" href="extern/codemirror/addon/hint/show-hint.css">
-<script src="extern/codemirror/addon/hint/sql-hint.js"></script>
-<link rel="stylesheet" href="extern/codemirror/lib/codemirror.css">
+<script src="extern/codemirror/lib/codemirror.js?v=<?=$umgvar["version"]?>"></script>
+<script src="extern/codemirror/edit/matchbrackets.js?v=<?=$umgvar["version"]?>"></script>
+<script src="extern/codemirror/edit/matchtags.js?v=<?=$umgvar["version"]?>"></script>
+<script src="extern/codemirror/mode/sql/sql.js?v=<?=$umgvar["version"]?>"></script>
+<script src="extern/codemirror/addon/hint/show-hint.js?v=<?=$umgvar["version"]?>"></script>
+<link rel="stylesheet" href="extern/codemirror/addon/hint/show-hint.css?v=<?=$umgvar["version"]?>">
+<script src="extern/codemirror/addon/hint/sql-hint.js?v=<?=$umgvar["version"]?>"></script>
+<link rel="stylesheet" href="extern/codemirror/lib/codemirror.css?v=<?=$umgvar["version"]?>">
 <style>
     .CodeMirror {
         border: 1px solid <?=$farbschema['WEB3']?>;
@@ -42,7 +42,7 @@
         right: 0;
     }
 </style>
-<script src="extern/sqlFormatter/sql-formatter.min.js"></script>
+<script src="extern/sqlFormatter/sql-formatter.min.js?v=<?=$umgvar["version"]?>"></script>
 
 <style>
 
@@ -307,7 +307,7 @@ if($view_section == 1){
 	if($showsystabs){
 		if($showsystabs == 2){$showsystabs = "FALSE";}else{$showsystabs = "TRUE";}
 		$sqlquery = "UPDATE LMB_CONF_VIEWS SET USESYSTABS = $showsystabs WHERE ID = $viewid";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
 
 ?>
@@ -443,7 +443,7 @@ document.getElementById("lmbViewfieldContainer").style.width = (window.innerWidt
 		echo "<br><br>";
 		$sRow = "style=\"border:1px solid grey\"";
 		$sTable = "cellpadding=2 cellspacing=0 style=\"border-collapse:collapse\"";
-		if($rs = odbc_exec($db, lmb_paramTransView($viewid, $gview["viewdef"])) or lmb_questerror(odbc_errormsg($db),$gview["viewdef"])){
+		if($rs = lmbdb_exec($db, lmb_paramTransView($viewid, $gview["viewdef"])) or lmb_questerror(lmbdb_errormsg($db),$gview["viewdef"])){
 			echo ODBCResourceToHTML($rs, $sTable, $sRow, 1000);
 		}
 	}

@@ -27,32 +27,32 @@ function patch_1(){
 	global $db;
 
     $sqlquery = "ALTER TABLE LMB_DBPATCH ADD MAJOR ".LMB_DBTYPE_SMALLINT;
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
     if(!$rs){return false;}
     
     $sqlquery = "ALTER TABLE LMB_DBPATCH ADD VERSION2 ".LMB_DBTYPE_SMALLINT;
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
     if(!$rs){return false;}
     
 	$sqlquery = "SELECT * FROM LMB_DBPATCH";
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
     if(!$rs){return false;}
 
-	while(odbc_fetch_row($rs)){
-		$version = odbc_result($rs, "VERSION");
-		$id = odbc_result($rs, "ID");
+	while(lmbdb_fetch_row($rs)){
+		$version = lmbdb_result($rs, "VERSION");
+		$id = lmbdb_result($rs, "ID");
 		$v = explode('.',$version);
 		
 		$sqlquery1 = "UPDATE LMB_DBPATCH SET VERSION2 = ".parse_db_int($v[1]).", MAJOR = ".parse_db_int($v[0])." WHERE ID = $id";
-		$rs1 = odbc_exec($db,$sqlquery1);
+		$rs1 = lmbdb_exec($db,$sqlquery1);
 	}
 	
     $sqlquery = dbq_22(array('LMB_DBPATCH','VERSION'));
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	if(!$rs){return false;}
     
     $sqlquery = dbq_7(array($DBA["DBSCHEMA"],'LMB_DBPATCH','VERSION2','VERSION'));
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
     if(!$rs){return false;}
 	
 	return true;
@@ -69,7 +69,7 @@ function patch_3(){
 	global $db;
 	$nid = next_db_id("lmb_umgvar","ID");
 	$sqlquery = "insert into lmb_umgvar values($nid,137,'csv_escape','".parse_db_string('\\')."','csv escape char (".parse_db_string('\\')." / ~)',2818)";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	return true;
 }
 patch_scr(3,10,"patch_3","update umgvar",2);
@@ -87,7 +87,7 @@ function patch_7(){
 	global $db;
 	$nid = next_db_id("lmb_umgvar","ID");
 	$sqlquery = "insert into lmb_umgvar values($nid,152,'use_phpmailer','1','use PHPMailer for sendmail',2818)";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	return true;
 }
 patch_scr(7,10,"patch_7","update umgvar",2);
@@ -106,7 +106,7 @@ function patch_9(){
 	
 	
 	$sqlquery = dbf_17(array('LMB_CHARTS','LMB_CHART_LIST'));
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     if(!$rs) {$commit = 1;return false;}
 
     $addfields[] = 'DIAG_TYPE '.LMB_DBTYPE_VARCHAR.'(50)';
@@ -128,12 +128,12 @@ function patch_9(){
     
     foreach($addfields as $key => $value){
         $sqlquery = "ALTER TABLE LMB_CHART_LIST ".LMB_DBFUNC_ADD_COLUMN_FIRST." ".$value;
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;return false;}
     }
 
 	$sqlquery = 'CREATE TABLE LMB_CHARTS (ID '.LMB_DBTYPE_FIXED.'(10),CHART_ID '.LMB_DBTYPE_SMALLINT.', FIELD_ID '.LMB_DBTYPE_SMALLINT.', AXIS '.LMB_DBTYPE_SMALLINT.', FUNCTION '.LMB_DBTYPE_SMALLINT.', COLOR '.LMB_DBTYPE_VARCHAR.'(8) ,'.LMB_DBFUNC_PRIMARY_KEY.' (ID))';
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;return false;}
     
 	return true;
@@ -145,19 +145,19 @@ function patch_10(){
 	global $db;
 
 	$sqlquery = "update lmb_umgvar set norm = 'pdf,text,html',beschreibung = 'files to index (pdf,text,html OR 1 for all)' where form_name = 'indize_filetype'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     
 	$sqlquery = "update lmb_umgvar set beschreibung = 'read metadata from file (jpg,jpeg,tiff,pdf,gif OR 1 for all)' where form_name = 'read_metadata'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     
 	$sqlquery = "update lmb_umgvar set beschreibung = 'update metadata to file (jpg,jpeg,tiff,pdf,gif OR 1 for all)' where form_name = 'update_metadata'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     
 	$sqlquery = "update lmb_umgvar set beschreibung = 'update exif metadata (1=XMP, 2=IPTC)' where form_name = 'use_exif'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     
 	$sqlquery = "delete from lmb_umgvar where form_name = 'upload_progress'";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     
 	return true;
 }
@@ -173,5 +173,5 @@ $impsystables = array("lmb_lang.tar.gz");
 
 ###########################
 
-if ($db AND !$action) {odbc_close($db);}
+if ($db AND !$action) {lmbdb_close($db);}
 ?>

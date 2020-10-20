@@ -41,9 +41,16 @@ function explContextDetail(){
 }
 
 
-# Suchleiste
-function explSearch($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=null){
-
+/**
+ * Renders the searchbar
+ * @param $LID int ID of folder
+ * @param $fid int ID of folder / 0 if "remember search critera" is activated
+ * @param $ffilter array filter settings
+ * @param $gtabid int|null
+ * @param $fieldid int|null
+ * @param $ID int|null
+ */
+function explSearch($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=null) {
 	global $lang;
 	global $umgvar;
 	global $gfile;
@@ -51,36 +58,52 @@ function explSearch($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=null){
 
 	if($ffilter["viewmode"][$LID] == 2){
 		# ---------------- Google Schema ------------------
-		echo "<TR><TD COLSPAN=\"5\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\" width=\"100%\">";
+        $cols = 2 + count($gfile['show'][$LID]);
+		echo "<TR><TD COLSPAN=\"$cols\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\" width=\"100%\">";
 		
 		echo "<TR class=\"gtabHeaderInputTR\"><TD class=\"gtabHeaderInputTD\" nowrap><input class=\"gtabHeaderInputINP\" type=\"text\" style=\"width:300px;\" value=\"".$ffilter["content"][$fid]."\" name=\"ffilter_content\" maxlength=\"50\">&nbsp;";
-		
-		if($umgvar["indize_cs"]){
-			if($ffilter["content_cs"][$fid]){$checked = "checked";}else{$checked = "";}
-			echo "&nbsp;<span>&nbsp;<span title=\"".$lang[1902]."\"><span style=\"color:red\">C</span>s<input type=\"checkbox\" style=\"border:none;background-color:transparent;\" style=\"border:none;\" ".$checked." OnClick=\"document.form1.ffilter_content_cs.value=this.checked;\"></span>";
-		}
-		
-		if($ffilter["content_ts"][$fid]){$checked = "checked";}else{$checked = "";}
-		echo "&nbsp;<span title=\"".$lang[1904]."\"><span style=\"color:red\">T</span>s<input type=\"checkbox\" style=\"border:none;background-color:transparent;\" style=\"border:none;\" ".$checked." OnClick=\"document.form1.ffilter_content_ts.value=this.checked;\"></span>";
-		
-		if($ffilter["content_mf"][$fid]){$checked = "checked";}else{$checked = "";}
-		echo "&nbsp;<span title=\"".$lang[2448]."\"><span style=\"color:red\">S</span>nd<input type=\"checkbox\" style=\"border:none;background-color:transparent;\" style=\"border:none;\" ".$checked." OnClick=\"document.form1.ffilter_content_mf.value=this.checked;\"></span>";
-		
-		if($umgvar["indize_level"] > 1){
-			if($ffilter["content_se"][$fid]){$checked = "checked";}else{$checked = "";}
-			echo "&nbsp;<span title=\"".$lang[1903]."\"><span style=\"color:red\">S</span>tr<input type=\"checkbox\" style=\"border:none;background-color:transparent;\" sytle=\"border:none;\" ".$checked." OnClick=\"document.form1.ffilter_content_se.value=this.checked;\"></span>";
-		}
-		
-		if($ffilter["sub"]){$checked = "checked";}else{$checked = "";}
-		echo "&nbsp;<span title=\"".$lang[1240]."\"><span style=\"color:red\">s</span>ub<input type=\"checkbox\" style=\"border:none;background-color:transparent;\" style=\"border:none;\" $checked OnClick=\"document.form1.ffilter_sub.value=this.checked;\"></span>";
-		
-		#if($ffilter["onlymeta"]){$checked = "checked";}else{$checked = "";}
-		#echo "&nbsp;<span title=\"".$lang[1908]."\"><span style=\"color:red\">m</span>eta<input type=\"checkbox\" style=\"border:none;background-color:transparent;\" style=\"border:none;\" ".$ffilter["onlymeta"][$fid]." OnClick=\"document.form1.ffilter_onlymeta.value=this.checked;\"></span>";
-		
-		if($ffilter["content_andor"][$fid] == 2){$and = "";$or = "checked";}else{$and = "checked";$or = "";}
-		echo "&nbsp;&nbsp;&nbsp;".$lang[854]."<input type=\"radio\" style=\"border:none;background-color:transparent;\" name=\"ffilter_content_andor\"value=\"1\" ".$and."> ".$lang[855]."<input type=\"radio\" style=\"border:none;background-color:transparent;\" name=\"ffilter_content_andor\" value=\"2\" ".$or."></TD></TR>
-			<TR class=\"gtabHeaderInputTR\"><TD nowrap style=\"height:5px;\"></TD></TR>";
-		echo "</TABLE></TD></TR>";
+
+		if ($umgvar['postgres_use_fulltextsearch']) {
+		    // TODO lang
+            echo '<select name="fts_search_mode" onchange="document.form1.ffilter_fts_search_mode.value = this.value;">';
+            echo '<option value="and" ' . ($ffilter['fts_search_mode'][$fid] == 'and' ? 'selected' : '') . '>Und (Alle Wörter)</option>';
+            echo '<option value="or" ' . ($ffilter['fts_search_mode'][$fid] == 'or' ? 'selected' : '') . '>Oder (Eins der Wörter)</option>';
+            if (!$umgvar['postgres_strip_tsvector']) {
+                echo '<option value="phrase" ' . ($ffilter['fts_search_mode'][$fid] == 'phrase' ? 'selected' : '') . '>Satz</option>';
+            }
+            echo '</select>';
+
+            if($ffilter["sub"]){$checked = "checked";}else{$checked = "";}
+            echo "&nbsp;<label title=\"".$lang[1240]."\" class=\"first-letter-red\">sub<input type=\"checkbox\" style=\"border:none;\" $checked OnClick=\"document.form1.ffilter_sub.value=this.checked;\"></label>";
+        } else {
+            if($umgvar["indize_cs"]){
+                if($ffilter["content_cs"][$fid]){$checked = "checked";}else{$checked = "";}
+                echo "&nbsp;<label title=\"".$lang[1902]."\" class=\"first-letter-red\">Cs<input type=\"checkbox\" ".$checked." OnClick=\"document.form1.ffilter_content_cs.value=this.checked;\"></label>";
+            }
+
+            if($ffilter["content_ts"][$fid]){$checked = "checked";}else{$checked = "";}
+            echo "&nbsp;<label title=\"".$lang[1904]."\" class=\"first-letter-red\">Ts<input type=\"checkbox\" ".$checked." OnClick=\"document.form1.ffilter_content_ts.value=this.checked;\"></label>";
+
+            if($ffilter["content_mf"][$fid]){$checked = "checked";}else{$checked = "";}
+            echo "&nbsp;<label title=\"".$lang[2448]."\" class=\"first-letter-red\">Snd<input type=\"checkbox\" ".$checked." OnClick=\"document.form1.ffilter_content_mf.value=this.checked;\"></label>";
+
+            if($umgvar["indize_level"] == 2 /* allow sentence search */){
+                if($ffilter["content_se"][$fid]){$checked = "checked";}else{$checked = "";}
+                echo "&nbsp;<label title=\"".$lang[1903]."\" class=\"first-letter-red\">Str<input type=\"checkbox\" ".$checked." OnClick=\"document.form1.ffilter_content_se.value=this.checked;\"></label>";
+            }
+
+            if($ffilter["sub"]){$checked = "checked";}else{$checked = "";}
+            echo "&nbsp;<label title=\"".$lang[1240]."\" class=\"first-letter-red\">sub<input type=\"checkbox\" $checked OnClick=\"document.form1.ffilter_sub.value=this.checked;\"></label>";
+
+            #if($ffilter["onlymeta"]){$checked = "checked";}else{$checked = "";}
+            #echo "&nbsp;<span title=\"".$lang[1908]."\"><span style=\"color:red\">m</span>eta<input type=\"checkbox\" ".$ffilter["onlymeta"][$fid]." OnClick=\"document.form1.ffilter_onlymeta.value=this.checked;\"></span>";
+
+            if($ffilter["content_andor"][$fid] == 2){$and = "";$or = "checked";}else{$and = "checked";$or = "";}
+            echo "&nbsp;&nbsp;&nbsp;<label>".$lang[854]."<input type=\"radio\" name=\"ffilter_content_andor\" value=\"1\" ".$and."></label><label>".$lang[855]."<input type=\"radio\" name=\"ffilter_content_andor\" value=\"2\" ".$or."></label>";
+        }
+
+		echo '</TD></TR><TR class="gtabHeaderInputTR"><TD nowrap style="height:5px;"></TD></TR>';
+		echo '</TABLE></TD></TR>';
 	}else{
 		# ---------------- Suchfelder ------------------
 		#if(!$ffilter["rowsize"][$LID][1]){$ffilter["rowsize"][$LID][1] = "100%";}

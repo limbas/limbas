@@ -19,7 +19,7 @@
  */
 ?>
 
-<script type="text/javascript" src="extra/calendar/dom/cal.js"></script>
+<script type="text/javascript" src="extra/calendar/dom/cal.js?v=<?=$umgvar["version"]?>"></script>
 
 <Script language="JavaScript">
 

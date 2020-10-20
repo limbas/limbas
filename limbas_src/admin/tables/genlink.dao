@@ -23,15 +23,15 @@
 if($genlink_change){
 $argument = parse_db_string($argument);
 $sqlquery = "UPDATE CONF_".$tab." SET GENLINK = '$argument' WHERE ID = $fieldid";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 /* --- Tabellen-Liste --------------------------------------------- */
 $sqlquery = "SELECT GENLINK,ID FROM CONF_".$tab." WHERE ID = $fieldid";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-if(odbc_fetch_row($rs)) {
-	$result_genlink['genlink'] = odbc_result($rs, "GENLINK");
-	$result_genlink['id'] = odbc_result($rs, "ID");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+if(lmbdb_fetch_row($rs)) {
+	$result_genlink['genlink'] = lmbdb_result($rs, "GENLINK");
+	$result_genlink['id'] = lmbdb_result($rs, "ID");
 }
 
 ?>

@@ -1,4 +1,6 @@
 /* use
+ * > npm install pegjs
+ * > npm install phpegjs
  * > node generateParser.js
  * in this directory to generate parser
  */

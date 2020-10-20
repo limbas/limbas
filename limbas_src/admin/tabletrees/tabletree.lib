@@ -25,13 +25,13 @@ function add_tabletree($new_tabletree,$new_treename,$new_treetable){
 	$NEXT_TREEID = next_db_id("LMB_TABLETREE","TREEID");
 	$NEXT_ID = next_db_id("LMB_TABLETREE");
 	$sqlquery = "INSERT INTO LMB_TABLETREE (ID,TREEID,ERSTUSER,ERSTDATUM,TABID,POOLNAME) VALUES($NEXT_ID,$NEXT_TREEID,".$session["user_id"].",".LMB_DBDEF_TIMESTAMP.",".parse_db_int($new_treetable,5).",'".parse_db_string($new_treename,50)."')";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 function delete_tabletree($delid){
 	global $db;
 	$sqlquery = "DELETE FROM LMB_TABLETREE WHERE TREEID = ".parse_db_int($delid);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 
@@ -39,23 +39,23 @@ function get_tabletree(){
 	global $db;
 
 	$sqlquery = "SELECT * FROM LMB_TABLETREE WHERE RELATIONID IS NULL";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$id = odbc_result($rs, "ID");
-		$tid = odbc_result($rs, "TABID");
+	while(lmbdb_fetch_row($rs)) {
+		$id = lmbdb_result($rs, "ID");
+		$tid = lmbdb_result($rs, "TABID");
 		$tabletree[$tid]["id"][$id] = $id;
 		$tabletree[$tid]["tabid"][$id] = $tid;
-		$tabletree[$tid]["treeid"][$id] = odbc_result($rs, "TREEID");
-		$tabletree[$tid]["poolname"][$id] = odbc_result($rs, "POOLNAME");
-		$tabletree[$tid]["erstdatum"][$id] = odbc_result($rs, "ERSTDATUM");
-		$tabletree[$tid]["erstuser"][$id] = odbc_result($rs, "ERSTUSER");
-		$tabletree[$tid]["target_formid"][$id] = odbc_result($rs, "TARGET_FORMID");
-		$tabletree[$tid]["target_snap"][$id] = odbc_result($rs, "TARGET_SNAP");
-		$tabletree[$tid]["display_field"][$id] = odbc_result($rs, "DISPLAY_FIELD");
-		$tabletree[$tid]["display_icon"][$id] = odbc_result($rs, "DISPLAY_ICON");
-		$tabletree[$tid]["display_title"][$id] = odbc_result($rs, "DISPLAY_TITLE");
-		$tabletree[$tid]["display_rule"][$id] = odbc_result($rs, "DISPLAY_RULE");
+		$tabletree[$tid]["treeid"][$id] = lmbdb_result($rs, "TREEID");
+		$tabletree[$tid]["poolname"][$id] = lmbdb_result($rs, "POOLNAME");
+		$tabletree[$tid]["erstdatum"][$id] = lmbdb_result($rs, "ERSTDATUM");
+		$tabletree[$tid]["erstuser"][$id] = lmbdb_result($rs, "ERSTUSER");
+		$tabletree[$tid]["target_formid"][$id] = lmbdb_result($rs, "TARGET_FORMID");
+		$tabletree[$tid]["target_snap"][$id] = lmbdb_result($rs, "TARGET_SNAP");
+		$tabletree[$tid]["display_field"][$id] = lmbdb_result($rs, "DISPLAY_FIELD");
+		$tabletree[$tid]["display_icon"][$id] = lmbdb_result($rs, "DISPLAY_ICON");
+		$tabletree[$tid]["display_title"][$id] = lmbdb_result($rs, "DISPLAY_TITLE");
+		$tabletree[$tid]["display_rule"][$id] = lmbdb_result($rs, "DISPLAY_RULE");
 	}
 	return $tabletree;
 }
@@ -78,60 +78,60 @@ function show_tabletreeSettings($params){
 	if($changetyp){
 		
 		$sqlquery = "SELECT ID,RELATIONID FROM LMB_TABLETREE WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!odbc_result($rs,'RELATIONID')){
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!lmbdb_result($rs,'RELATIONID')){
 			$NEXTID = next_db_id("LMB_TABLETREE");
 			$sqlquery1 = "INSERT INTO LMB_TABLETREE (ID,RELATIONID,TABID,TREEID,ITEMTAB) VALUES($NEXTID,'$relationid',$treetab,$treeid,$itemtab)";
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		}
 		
 	
 		if($changetyp == 'form'){
 			$sqlquery = "UPDATE LMB_TABLETREE SET TARGET_FORMID = ".parse_db_int($changeval)." WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
 		if($changetyp == 'field'){
 			$sqlquery = "UPDATE LMB_TABLETREE SET DISPLAY_FIELD = ".parse_db_int($changeval)." WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
 		if($changetyp == 'icon'){
 			$sqlquery = "UPDATE LMB_TABLETREE SET DISPLAY_ICON = '".parse_db_string($changeval,250)."' WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
 		if($changetyp == 'title'){
 			$sqlquery = "UPDATE LMB_TABLETREE SET DISPLAY_TITLE = ".parse_db_int($changeval)." WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
 		if($changetyp == 'snap'){
 			$sqlquery = "UPDATE LMB_TABLETREE SET TARGET_SNAP = ".parse_db_int($changeval)." WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
 		if($changetyp == 'display'){
 			$sqlquery = "UPDATE LMB_TABLETREE SET DISPLAY = ".parse_db_bool($changeval)." WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
 		if($changetyp == 'sort'){
 			$sqlquery = "UPDATE LMB_TABLETREE SET DISPLAY_SORT = ".parse_db_int($changeval)." WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
 		if($changetyp == 'rule'){
 			$sqlquery = "UPDATE LMB_TABLETREE SET DISPLAY_RULE = '".parse_db_string($changeval,250)."' WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
 		
 	}
 
 	$sqlquery = "SELECT * FROM LMB_TABLETREE WHERE TREEID = $treeid AND ITEMTAB = $itemtab AND RELATIONID = '$relationid'";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_fetch_row($rs)){
-		$tform = odbc_result($rs,"TARGET_FORMID");
-		$tsnap = odbc_result($rs,"TARGET_SNAP");
-		$ttitle = odbc_result($rs,"DISPLAY_TITLE");
-		$ticon = odbc_result($rs,"DISPLAY_ICON");
-		$tfield = odbc_result($rs,"DISPLAY_FIELD");
-		$tdisplay = odbc_result($rs,"DISPLAY");
-		$tsort = odbc_result($rs,"DISPLAY_SORT");
-		$trule = odbc_result($rs,"DISPLAY_RULE");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_fetch_row($rs)){
+		$tform = lmbdb_result($rs,"TARGET_FORMID");
+		$tsnap = lmbdb_result($rs,"TARGET_SNAP");
+		$ttitle = lmbdb_result($rs,"DISPLAY_TITLE");
+		$ticon = lmbdb_result($rs,"DISPLAY_ICON");
+		$tfield = lmbdb_result($rs,"DISPLAY_FIELD");
+		$tdisplay = lmbdb_result($rs,"DISPLAY");
+		$tsort = lmbdb_result($rs,"DISPLAY_SORT");
+		$trule = lmbdb_result($rs,"DISPLAY_RULE");
 		if($tdisplay){$tdisplay = "checked";}
 	}
 

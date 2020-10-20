@@ -108,13 +108,13 @@ function viewgrouptree($LEVEL,$l,$select=null){
 
 	if(!$grouptree){
 		$sqlquery = "SELECT GROUP_ID,NAME,LEVEL,LOWER(NAME),DESCRIPTION FROM LMB_GROUPS WHERE DEL = ".LMB_DBDEF_FALSE." ORDER BY GROUP_ID";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		$grouptree = array();
 
-		while(odbc_fetch_row($rs)){
-			$grouptree["id"][] = odbc_result($rs, "GROUP_ID");
-			$grouptree["name"][] = odbc_result($rs, "NAME");
-			$grouptree["level"][] = odbc_result($rs, "LEVEL");
+		while(lmbdb_fetch_row($rs)){
+			$grouptree["id"][] = lmbdb_result($rs, "GROUP_ID");
+			$grouptree["name"][] = lmbdb_result($rs, "NAME");
+			$grouptree["level"][] = lmbdb_result($rs, "LEVEL");
 		}
 	}
 
@@ -141,12 +141,12 @@ function lmb_htaccess($ID,$user,$pass){
 	global $umgvar;
 
 	$sqlquery = "SELECT USERNAME,PASSWORT,CLEARPASS FROM LMB_USERDB WHERE USER_ID = $ID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	if(odbc_fetch_row($rs)) {
+	if(lmbdb_fetch_row($rs)) {
 
-		if(!$user){$user = odbc_result($rs, "USERNAME");}
-		if(!$pass){$pass = odbc_result($rs, "CLEARPASS");}
+		if(!$user){$user = lmbdb_result($rs, "USERNAME");}
+		if(!$pass){$pass = lmbdb_result($rs, "CLEARPASS");}
 
 		if(!$user){return false;}
 
@@ -204,11 +204,11 @@ function lmb_htaccessGroup(){
 	$path = $umgvar["pfad"]."/TEMP";
 	
 	$sqlquery = "SELECT USER_ID FROM LMB_USERDB WHERE DEL = FALSE AND LMLOCK = FALSE";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
+	while(lmbdb_fetch_row($rs)) {
 		
-		$userid = odbc_result($rs, "ID");
+		$userid = lmbdb_result($rs, "ID");
 		
 		if($pass AND $user){
 			$pass = crypt($pass);
@@ -241,15 +241,18 @@ function lmb_htaccessGroup(){
 
 # --- User Verzeichnis hinzufügen -------
 function create_user_folder($ID,$username,$passwort){
+    global $umgvar;
 
-	if(!file_exists("USER/$ID")){
-		$sys1 = mkdir("USER/$ID",0777);
+	if(!file_exists($umgvar['pfad']."/USER/$ID")){
+		$sys1 = mkdir($umgvar['pfad']."/USER/$ID",0777);
 		if(!$sys1){$commit = 1;}
-		$sys1 = mkdir("USER/$ID/menuicons",0777);
+		$sys1 = mkdir($umgvar['pfad']."/USER/$ID/menuicons",0777);
 		if(!$sys1){$commit = 1;}
-		$sys1 = mkdir("USER/$ID/temp",0777);
+		$sys1 = mkdir($umgvar['pfad']."/USER/$ID/temp",0777);
 		if(!$sys1){$commit = 1;}
-		$sys1 = mkdir("USER/$ID/download",0777);
+		$sys1 = mkdir($umgvar['pfad']."/USER/$ID/download",0777);
+		if(!$sys1){$commit = 1;}
+		$sys1 = mkdir($umgvar['pfad']."/USER/$ID/settings",0777);
 		if(!$sys1){$commit = 1;}
 	}
 
@@ -289,12 +292,12 @@ function GroupTreeList($name,$items,$selected,$LEVEL=0,$l=null){
 	
 	if(!$LEVEL){
 		$sqlquery = "SELECT GROUP_ID,NAME,LEVEL,LOWER(NAME),DESCRIPTION FROM LMB_GROUPS WHERE DEL = ".LMB_DBDEF_FALSE." ORDER BY GROUP_ID";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		$grouptree = array();
-		while(odbc_fetch_row($rs)){
-			$grouptree["id"][] = odbc_result($rs, "GROUP_ID");
-			$grouptree["name"][] = odbc_result($rs, "NAME");
-			$grouptree["level"][] = odbc_result($rs, "LEVEL");
+		while(lmbdb_fetch_row($rs)){
+			$grouptree["id"][] = lmbdb_result($rs, "GROUP_ID");
+			$grouptree["name"][] = lmbdb_result($rs, "NAME");
+			$grouptree["level"][] = lmbdb_result($rs, "LEVEL");
 		}
 	}
 
@@ -355,19 +358,19 @@ function lmb_updateTrigger(){
 	lmb_dropAllDBTrigger();
 
 	$sqlquery = "SELECT * FROM LMB_TRIGGER WHERE ACTIVE = ".LMB_DBDEF_TRUE." AND TYPE IS NOT NULL AND INTERN = ".LMB_DBDEF_FALSE." ORDER BY TABLE_NAME,TYPE";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-	while(odbc_fetch_row($rs)){
-		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],odbc_result($rs,"TABLE_NAME"),"'TABLE'"));
+	while(lmbdb_fetch_row($rs)){
+		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],lmbdb_result($rs,"TABLE_NAME"),"'TABLE'"));
 		if(!$odbc_table){
-			lmb_deleteTriggerForTable(odbc_result($rs,"TABLE_NAME"));
+			lmb_deleteTriggerForTable(lmbdb_result($rs,"TABLE_NAME"));
 		}else{
-			$triggers["name"][] = odbc_result($rs,"NAME");
-			$triggers["table"][] = odbc_result($rs,"TABLE_NAME");
-			$triggers["type"][] = odbc_result($rs,"TYPE");
-			$triggers["value"][] = odbc_result($rs,"TRIGGER_VALUE");
-			$triggers["vendor"][] = odbc_result($rs,"DBVENDOR");
-			$triggers["position"][] = odbc_result($rs,"POSITION");
+			$triggers["name"][] = lmbdb_result($rs,"NAME");
+			$triggers["table"][] = lmbdb_result($rs,"TABLE_NAME");
+			$triggers["type"][] = lmbdb_result($rs,"TYPE");
+			$triggers["value"][] = lmbdb_result($rs,"TRIGGER_VALUE");
+			$triggers["vendor"][] = lmbdb_result($rs,"DBVENDOR");
+			$triggers["position"][] = lmbdb_result($rs,"POSITION");
 		}
 	}
 
@@ -376,7 +379,7 @@ function lmb_updateTrigger(){
 			if($triggers["value"][$key] AND $triggers["name"][$key] AND lmb_strtolower($triggers["vendor"][$key]) == lmb_strtolower($DBA["DB"])){
 				if(!$triggers["position"][$key]){$triggers["position"][$key] = "AFTER";}
 				$sqlquery = dbq_13(array($DBA["DBSCHEMA"],$triggers["name"][$key],$triggers["table"][$key],$triggers["type"][$key],$triggers["value"][$key],$triggers["position"][$key]));
-				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs){$commit = 1;}
 			}
 		}
@@ -398,7 +401,7 @@ function lmb_dropAllDBTrigger($triggername=null,$delData=false){
 		foreach ($triggerlist["triggername"] as $tkey => $tname){
 			#if(lmb_substr($tname,0,12) == "INSERT_VERK_" AND lmb_substr($tname,0,12) == "INSERT_VERK_"){continue;}
 			$sqlquery = dbq_10(array($triggerlist["triggername"][$tkey],$triggerlist["tablename"][$tkey]));
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 		}
 	}
@@ -406,7 +409,7 @@ function lmb_dropAllDBTrigger($triggername=null,$delData=false){
 	if($delData){
 		if($triggername){$where = "AND NAME LIKE '$triggername'";}
 		$sqlquery = "DELETE FROM LMB_TRIGGER WHERE INTERN = ".LMB_DBDEF_FALSE." AND (DESCRIPTION LIKE 'INSERT_VERK_%' OR DESCRIPTION LIKE 'DELETE_VERK_%') ".$where;
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}
 	
@@ -423,11 +426,11 @@ function lmb_addTrigger($desc,$type,$table,$value,$intern=null,$position="AFTER"
 	// check for duplicates in DB Trigger
 	if(!$intern){
     	$sqlquery0 = "SELECT ID FROM LMB_TRIGGER WHERE LOWER(TABLE_NAME) = '".lmb_strtolower(parse_db_string($table,20))."' AND TYPE = '$type' AND POSITION = '$position' AND INTERN = ".LMB_DBDEF_FALSE;
-    	$rs0 = odbc_exec($db,$sqlquery0);
-    	while(odbc_fetch_row($rs0)){
+    	$rs0 = lmbdb_exec($db,$sqlquery0);
+    	while(lmbdb_fetch_row($rs0)){
     		if($replace){
-    			$sqlquery1 = "DELETE FROM LMB_TRIGGER WHERE ID = ".odbc_result($rs0,"ID");
-    			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+    			$sqlquery1 = "DELETE FROM LMB_TRIGGER WHERE ID = ".lmbdb_result($rs0,"ID");
+    			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
     		}else{
     			if($GLOBALS["action"] == "setup_trigger"){
     				lmb_alert("trigger already exists!");
@@ -441,7 +444,7 @@ function lmb_addTrigger($desc,$type,$table,$value,$intern=null,$position="AFTER"
 	$trigerName = lmb_substr("LMB_TRG_" . $md5Hash ,0,18);
 	$nextid = next_db_id("LMB_TRIGGER");
 	$sqlquery = "INSERT INTO LMB_TRIGGER (ID,ERSTDATUM,EDITDATUM,EDITUSER,ERSTUSER,NAME,TABLE_NAME,TYPE,TRIGGER_VALUE,DESCRIPTION,ACTIVE,INTERN,SORT,DBVENDOR,POSITION) VALUES ($nextid,".LMB_DBDEF_TIMESTAMP.",".LMB_DBDEF_TIMESTAMP.",".$session["user_id"].",".$session["user_id"].",'".parse_db_string(lmb_strtoupper($trigerName),25)."','".parse_db_string(lmb_strtoupper($table),50)."','".parse_db_string($type,20)."','".parse_db_string($value,4000)."','".parse_db_string($desc,50)."',".LMB_DBDEF_TRUE.",".parse_db_bool($intern).",0,'".parse_db_string($DBA["DB"],15)."','".parse_db_string($position,6)."')";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs){
 		return false;
 	}
@@ -452,22 +455,22 @@ function lmb_addTrigger($desc,$type,$table,$value,$intern=null,$position="AFTER"
 function lmb_deleteTriggerForTable($tablename){
 	global $db;
 	$sqlquery = "DELETE FROM LMB_TRIGGER WHERE LOWER(TABLE_NAME) = '".lmb_strtolower(parse_db_string($tablename,40))."' AND INTERN = ".LMB_DBDEF_FALSE;
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
-function lmb_relationTrigger($verknTabName,$elternTab,$elternFeld,$kindTab,$kindFeld){
+function lmb_relationTrigger($verknTabName,$elternTab,$elternFeld,$kindTab,$kindFeld,$archive=1){
 	global $db;
 	global $DBA;
 
-	# recusiv relation (view)
+	# backward relation (view)
 	if($kindFeld){
-		$trigger_add_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'+',dbf_4($kindTab),dbf_4($kindFeld)));
-		$trigger_del_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'-',dbf_4($kindTab),dbf_4($kindFeld)));
+		$trigger_add_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'+',dbf_4($kindTab),dbf_4($kindFeld),$archive));
+		$trigger_del_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'-',dbf_4($kindTab),dbf_4($kindFeld),$archive));
 	}else{
-		$trigger_add_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'+'));
-		$trigger_del_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'-'));
+		$trigger_add_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'+',dbf_4($kindTab),null,$archive));
+		$trigger_del_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'-',dbf_4($kindTab),null,$archive));
 	}
-	
+
 	$success1 = lmb_addTrigger("INSERT_".$verknTabName,"INSERT",$verknTabName,$trigger_add_func,0,0,1);
 	$success2 = lmb_addTrigger("DELETE_".$verknTabName,"DELETE",$verknTabName,$trigger_del_func,0,0,1);
 	
@@ -497,20 +500,20 @@ function lmb_rebuildTrigger($deleteall=null,$onlytabs=null){
 	}
 	
 	$sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)){
-		$tab[odbc_result($rs,"TAB_ID")] = odbc_result($rs,"TABELLE");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+		$tab[lmbdb_result($rs,"TAB_ID")] = lmbdb_result($rs,"TABELLE");
 	}
 	
 	if(is_array($onlytabs)){$qu = "WHERE TAB_ID IN (".implode(",",$onlytabs).")";}
 	$sqlquery = "SELECT TAB_ID,TABELLE,VERKN,TYP FROM LMB_CONF_TABLES $qu";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)){
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
 
-		$tablename = odbc_result($rs,"TABELLE");
-		$tableid = odbc_result($rs,"TAB_ID");
-		$sverkn = odbc_result($rs,"VERKN");
-		$typ = odbc_result($rs,"TYP");
+		$tablename = lmbdb_result($rs,"TABELLE");
+		$tableid = lmbdb_result($rs,"TAB_ID");
+		$sverkn = lmbdb_result($rs,"VERKN");
+		$typ = lmbdb_result($rs,"TYP");
 		
 		# Calendar Trigger
 		if($typ == 2){
@@ -519,34 +522,36 @@ function lmb_rebuildTrigger($deleteall=null,$onlytabs=null){
 		}
 				
 		# Relation Trigger
-		$sqlquery1 = "SELECT FIELD_ID,FIELD_NAME,DATA_TYPE,FIELD_TYPE,MD5TAB,VERKNTABID,VERKNFIELDID,VERKNTABLETYPE,REFINT,HASRECVERKN FROM LMB_CONF_FIELDS WHERE TAB_ID = $tableid";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-		while(odbc_fetch_row($rs1)){
+		$sqlquery1 = "SELECT FIELD_ID,FIELD_NAME,DATA_TYPE,FIELD_TYPE,MD5TAB,VERKNTABID,VERKNFIELDID,VERKNTABLETYPE,REFINT,HASRECVERKN,VERKNGROUP FROM LMB_CONF_FIELDS WHERE TAB_ID = $tableid AND FIELD_TYPE = 11";
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs1)){
 			# limbas relations
-			if(odbc_result($rs1,"FIELD_TYPE") == 11 AND odbc_result($rs1,"VERKNTABID") AND odbc_result($rs1,"MD5TAB")){
-				if(odbc_result($rs1,"VERKNTABLETYPE") == 1){
+			if(lmbdb_result($rs1,"VERKNTABID") AND lmbdb_result($rs1,"MD5TAB")){
+				if(lmbdb_result($rs1,"VERKNTABLETYPE") == 1){
 					# relation trigger
-					$ptable = $tab[odbc_result($rs1,"VERKNTABID")];
-					$ftable = odbc_result($rs1,"MD5TAB");
+					$ptable = $tab[lmbdb_result($rs1,"VERKNTABID")];
+					$ftable = lmbdb_result($rs1,"MD5TAB");
+					// triggercount for archived
+					$archive = lmbdb_result($rs1,"VERKNGROUP");
 						
-					if(odbc_result($rs1,"HASRECVERKN")){
-						$sqlquery2 = "SELECT FIELD_NAME FROM LMB_CONF_FIELDS WHERE TAB_ID = ".odbc_result($rs1,"VERKNTABID")." AND FIELD_ID = ".odbc_result($rs1,"HASRECVERKN");
-						$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
-						$pfieldname = odbc_result($rs2,"FIELD_NAME");
+					if(lmbdb_result($rs1,"HASRECVERKN")){
+						$sqlquery2 = "SELECT FIELD_NAME FROM LMB_CONF_FIELDS WHERE TAB_ID = ".lmbdb_result($rs1,"VERKNTABID")." AND FIELD_ID = ".lmbdb_result($rs1,"HASRECVERKN");
+						$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+						$pfieldname = lmbdb_result($rs2,"FIELD_NAME");
 						if($pfieldname){
 							$updtrigg = 1;
-							if(!lmb_relationTrigger($ftable,$tablename,odbc_result($rs1,"FIELD_NAME"),$ptable,$pfieldname)){
+							if(!lmb_relationTrigger($ftable,$tablename,lmbdb_result($rs1,"FIELD_NAME"),$ptable,$pfieldname,$archive)){
 								$commit = 1;
 							}
 						}else{
 							$updtrigg = 1;
-							if(!$success = lmb_relationTrigger($ftable,$tablename,odbc_result($rs1,"FIELD_NAME"),0,0)){
+							if(!$success = lmb_relationTrigger($ftable,$tablename,lmbdb_result($rs1,"FIELD_NAME"),$ptable,0,$archive)){
 								$commit = 1;
 							}
 						}
 					}else{
 						$updtrigg = 1;
-						if(!lmb_relationTrigger($ftable,$tablename,odbc_result($rs1,"FIELD_NAME"),0,0)){
+						if(!lmb_relationTrigger($ftable,$tablename,lmbdb_result($rs1,"FIELD_NAME"),$ptable,0,$archive)){
 							$commit = 1;
 						}
 					}
@@ -584,7 +589,7 @@ function lmb_dropTable($name=null){
             }
 
 			$sqlquery1 = dbq_28(array(dbf_4($name)));
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if($rs1){
 			    return true;
 			}else{
@@ -612,7 +617,7 @@ function lmb_createView($query,$name){
 			return true;
 		}else{
 			$sqlquery = "CREATE VIEW ".dbf_4($name)." AS ".$query;
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if($rs){return true;}else{return  false;}
 		}
 	}
@@ -626,15 +631,15 @@ function lmb_createlmbViews($name=null){
     
     if($name){$sql = "WHERE LOWER(TABELLE) = ".strtolower($name);}
     $sqlquery = "SELECT TABELLE, TAB_ID, VIEWDEF FROM LMB_CONF_VIEWS INNER JOIN LMB_CONF_TABLES ON (LMB_CONF_VIEWS.ID = LMB_CONF_TABLES.TAB_ID) $sql";
-    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-    while (odbc_fetch_row($rs)) {
-        $tabid = odbc_result($rs, "TAB_ID");
-        $viewname = odbc_result($rs, "TABELLE");
-        $viewdef = odbc_result($rs, "VIEWDEF");
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    while (lmbdb_fetch_row($rs)) {
+        $tabid = lmbdb_result($rs, "TAB_ID");
+        $viewname = lmbdb_result($rs, "TABELLE");
+        $viewdef = lmbdb_result($rs, "VIEWDEF");
 
         // create view
         $sqlquery2 = dbq_19(array($viewname,$viewdef));
-        $rs = odbc_exec($db, $sqlquery2) or errorhandle(odbc_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
+        $rs = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
         if (! $rs) {
             lmb_alert("cannot create view $viewname!");
         }
@@ -660,7 +665,7 @@ function lmb_dropView($name=null){
             }
 
 			$sqlquery1 = dbq_20(array(dbf_4($name)));
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if($rs1){
 			    return true;
 			}else{
@@ -694,10 +699,10 @@ function lmb_droplmbViews($name=null,$config=null){
     // drop views in order of field "SORT" for view relation
     if($name){$sql = "WHERE LOWER(TABELLE) = ".strtolower($name);}
     $sqlquery = "SELECT TABELLE, TAB_ID FROM LMB_CONF_VIEWS INNER JOIN LMB_CONF_TABLES ON (LMB_CONF_VIEWS.ID = LMB_CONF_TABLES.TAB_ID) $sql ORDER BY SORT DESC";
-    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-    while (odbc_fetch_row($rs)) {
-        $tabid = odbc_result($rs, "TAB_ID");
-        $viewname = odbc_result($rs, "TABELLE");
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    while (lmbdb_fetch_row($rs)) {
+        $tabid = lmbdb_result($rs, "TAB_ID");
+        $viewname = lmbdb_result($rs, "TABELLE");
         
         // drop view & config
         if($config){
@@ -719,14 +724,14 @@ function lmb_getViewInfo($name){
 	#global $DBA;
 	
 	$sqlquery = "SELECT MD5TAB FROM LMB_CONF_FIELDS WHERE HASRECVERKN = (SELECT FIELD_ID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".dbf_4($name)."' AND VERKNTABLETYPE = 2)";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	return dbf_4(odbc_result($rs, "MD5TAB"));
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	return dbf_4(lmbdb_result($rs, "MD5TAB"));
 	
 	/*
 	$sqlquery = dbq_12(array($DBA["DBSCHEMA"],$name));
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_fetch_row($rs)) {
-		return dbf_4(odbc_result($rs, "TABLENAME"));
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_fetch_row($rs)) {
+		return dbf_4(lmbdb_result($rs, "TABLENAME"));
 	}
 	*/
 }
@@ -739,9 +744,9 @@ function lmb_getViewDef($name){
 
 	if(!$name){return false;}
 	$sqlquery = dbq_8(array($DBA["DBSCHEMA"],$name));
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_fetch_row($rs)) {
-		return odbc_result($rs, "DEFINITION");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_fetch_row($rs)) {
+		return lmbdb_result($rs, "DEFINITION");
 	}
 }
 
@@ -909,22 +914,22 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
 	
 	
 	$sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)){
-		$tab[odbc_result($rs,"TAB_ID")] = odbc_result($rs,"TABELLE");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+		$tab[lmbdb_result($rs,"TAB_ID")] = lmbdb_result($rs,"TABELLE");
 	}
 	
 	if(is_array($onlytabs)){$qu = "WHERE TAB_ID IN (".implode(",",$onlytabs).")";}
 	$sqlquery = "SELECT TAB_ID,TABELLE,VERKN FROM LMB_CONF_TABLES $qu";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	
-	while(odbc_fetch_row($rs)){
+	while(lmbdb_fetch_row($rs)){
 		$f0 = null;
 		$f1 = null;
 		$f2 = null;
-		$tablename = odbc_result($rs,"TABELLE");
-		$tableid = odbc_result($rs,"TAB_ID");
-		$sverkn = odbc_result($rs,"VERKN");
+		$tablename = lmbdb_result($rs,"TABELLE");
+		$tableid = lmbdb_result($rs,"TAB_ID");
+		$sverkn = lmbdb_result($rs,"VERKN");
 
 		# 1:1 relation
 		if($sverkn != $tableid){
@@ -954,19 +959,19 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
 		if($onlyfield){$q = "AND FIELD_ID = $onlyfield";}else{$q = "AND REFINT = ".LMB_DBDEF_TRUE;}
 
 		$sqlquery1 = "SELECT FIELD_ID,FIELD_NAME,DATA_TYPE,FIELD_TYPE,MD5TAB,VERKNTABID,VERKNFIELDID,VERKNTABLETYPE,REFINT,HASRECVERKN FROM LMB_CONF_FIELDS WHERE TAB_ID = $tableid $q";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-		while(odbc_fetch_row($rs1)){
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs1)){
 
 			# foreign keys
-			if(odbc_result($rs1,"DATA_TYPE") == 27 AND odbc_result($rs1,"VERKNTABID") AND odbc_result($rs1,"MD5TAB")){
-				if(odbc_result($rs1,"VERKNTABLETYPE") == 1){
+			if(lmbdb_result($rs1,"DATA_TYPE") == 27 AND lmbdb_result($rs1,"VERKNTABID") AND lmbdb_result($rs1,"MD5TAB")){
+				if(lmbdb_result($rs1,"VERKNTABLETYPE") == 1){
 
 					# foreign keys
-						$ftable = odbc_result($rs1,"MD5TAB");
+						$ftable = lmbdb_result($rs1,"MD5TAB");
 						$ffield = "VERKN_ID";
-						$ptable = $tab[odbc_result($rs1,"VERKNTABID")];
+						$ptable = $tab[lmbdb_result($rs1,"VERKNTABID")];
 						$pfield = "ID";
-						#$fkname = "LMB_".$tableid."_".odbc_result($rs1,"FIELD_ID")."_VID_".odbc_result($rs1,"VERKNTABID");
+						#$fkname = "LMB_".$tableid."_".lmbdb_result($rs1,"FIELD_ID")."_VID_".lmbdb_result($rs1,"VERKNTABID");
 						# search foreign key
 						
 						if($fkys["keyname"]){
@@ -983,11 +988,11 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
 							}
 						}
 	
-						$ftable = odbc_result($rs1,"MD5TAB");
+						$ftable = lmbdb_result($rs1,"MD5TAB");
 						$ffield = "ID";
 						$ptable = $tab[$tableid];
 						$pfield = "ID";
-						#$fkname = "LMB_".$tableid."_".odbc_result($rs1,"FIELD_ID")."_ID_".odbc_result($rs1,"VERKNTABID");
+						#$fkname = "LMB_".$tableid."_".lmbdb_result($rs1,"FIELD_ID")."_ID_".lmbdb_result($rs1,"VERKNTABID");
 						# search foreign key
 						if($fkys["keyname"]){
 						foreach ($fkys["keyname"] as $key => $value){
@@ -1003,7 +1008,7 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
 							}
 						}
 				}
-				$ffieldname = odbc_result($rs1,"FIELD_NAME");
+				$ffieldname = lmbdb_result($rs1,"FIELD_NAME");
 			}
 		}
 	}
@@ -1026,9 +1031,9 @@ function lmb_addForeignKey($ftable,$ffield,$ptable,$pfield,$fkname){
 	global $db;
 	
 	$sqlquery = dbq_11(array($ftable,$ffield,$ptable,$pfield,$fkname));
-	$rs = odbc_exec($db,$sqlquery);
+	$rs = lmbdb_exec($db,$sqlquery);
 	if(!$rs){
-		echo "error in execute: ".$sqlquery."<br>".odbc_errormsg($db)."<br><br>";
+		echo "error in execute: ".$sqlquery."<br>".lmbdb_errormsg($db)."<br><br>";
 	}
 	if($rs){return true;}else{return false;}
 }
@@ -1045,9 +1050,9 @@ function lmb_dropAllForeignKeys($only_lmb=null){
 	
 	if($only_lmb){$qu = dbf_4("LMB_%");}else{$qu = null;}
 	$sqlquery = dbq_3(array($DBA["DBSCHEMA"],null,$qu));
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)){
-		lmb_dropForeignKey(odbc_result($rs,"TABLENAME"),odbc_result($rs,"FKEYNAME"));
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+		lmb_dropForeignKey(lmbdb_result($rs,"TABLENAME"),lmbdb_result($rs,"FKEYNAME"));
 	}
 	if($rs){return true;}
 }
@@ -1063,7 +1068,7 @@ function lmb_dropForeignKey($ftable,$fkname){
 	global $db;
 	
 	$sqlquery = dbq_6(array($ftable,$fkname));
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if($rs){return true;}
 }
 
@@ -1082,13 +1087,13 @@ function lmb_getForeignKeys($ftable=null,$fkname=null){
 	
 	# get foreign keys
 	$sqlquery = dbq_3(array($DBA["DBSCHEMA"],$ftable,$fkname));
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)){
-		$fk["keyname"][] = dbf_4(odbc_result($rs,"FKEYNAME"));
-		$fk["tablename"][] = dbf_4(odbc_result($rs,"TABLENAME"));
-		$fk["columnname"][] = dbf_4(odbc_result($rs,"COLUMNNAME"));
-		$fk["reftablename"][] = dbf_4(odbc_result($rs,"REFTABLENAME"));
-		$fk["refcolumnname"][] = dbf_4(odbc_result($rs,"REFCOLUMNNAME"));
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+		$fk["keyname"][] = dbf_4(lmbdb_result($rs,"FKEYNAME"));
+		$fk["tablename"][] = dbf_4(lmbdb_result($rs,"TABLENAME"));
+		$fk["columnname"][] = dbf_4(lmbdb_result($rs,"COLUMNNAME"));
+		$fk["reftablename"][] = dbf_4(lmbdb_result($rs,"REFTABLENAME"));
+		$fk["refcolumnname"][] = dbf_4(lmbdb_result($rs,"REFCOLUMNNAME"));
 	}
 	return $fk;
 }
@@ -1117,9 +1122,9 @@ function lmb_rebuildSequences($tablename=null,$field=null){
 		
 		# project tables
 		$sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES WHERE TYP != 5";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		while(odbc_fetch_row($rs)){
-			$table[] = array(odbc_result($rs,"TABELLE"),'ID');
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs)){
+			$table[] = array(lmbdb_result($rs,"TABELLE"),'ID');
 		}
 		
 		# relation tables
@@ -1157,12 +1162,12 @@ function lmb_rebuildIndex(){
 	global $DBA;
 	
 	$sqlquery = dbq_2(array($DBA["DBSCHEMA"]),null,null,1);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs){$commit = 1;}
 
-	while(odbc_fetch_row($rs)){
-		$table = dbf_4(odbc_result($rs,"TABLENAME"));
-		$field = dbf_4(odbc_result($rs,"COLUMNNAME"));
+	while(lmbdb_fetch_row($rs)){
+		$table = dbf_4(lmbdb_result($rs,"TABLENAME"));
+		$field = dbf_4(lmbdb_result($rs,"COLUMNNAME"));
 		$ind[$table][$field] = 1;
 	}
 
@@ -1174,7 +1179,7 @@ function lmb_rebuildIndex(){
 				if(!$ind[dbf_4($md5tab)][dbf_4('ID')]){
 					$indname = "LMBINDV_".lmb_substr(md5($md5tab."_ID"),0,12);
 					$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$md5tab,"ID"));
-					$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					if(!$rs1) {$commit = 1;}else{
 						echo "index $indname for $md5tab ID added<br>";
 					}
@@ -1182,7 +1187,7 @@ function lmb_rebuildIndex(){
 				if(!$ind[dbf_4($md5tab)][dbf_4('SORT')]){
 					$indname = "LMBINDV_".lmb_substr(md5($md5tab."_SORT"),0,12);
 					$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$md5tab,"SORT"));
-					$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					if(!$rs1) {$commit = 1;}else{
 						echo "index $indname for $md5tab SORT added<br>";
 					}
@@ -1193,7 +1198,7 @@ function lmb_rebuildIndex(){
 					# only n:m
 					if($gfield[$gtabid]["data_type"][$fieldid] == 24){
 						$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$md5tab,"VERKN_ID"));
-						$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+						$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 						if(!$rs1) {$commit = 1;}else{
 							echo "index $indname for $md5tab VERKN_ID added<br>";
 						}
@@ -1201,7 +1206,7 @@ function lmb_rebuildIndex(){
 					}else{
 						# add constraint
 						$sqlquery =  dbq_24(array($md5tab,'VERKN_ID',$indname));
-						$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+						$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					}
 				}
 			}
@@ -1238,7 +1243,7 @@ function lmb_rebuildIndex(){
 		if(!$ind[dbf_4($table)][dbf_4($field)]){
 			$indname = "LMBIND_".lmb_substr(md5($table."_".$field),0,12);
 			$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$table,$field));
-			$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}else{
 				echo "index $indname for $table $field added<br>";
 			}
@@ -1265,12 +1270,12 @@ function lmb_sortConf($act,$sortid,$table,$field='SORT',$filter=null){
 	if($filter){$filter = "WHERE $filter";}
 	
 	$sqlquery = "SELECT ID,$field FROM $table $filter ORDER BY $field";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	
 	$bzm = 0;
-	while(odbc_fetch_row($rs)){
+	while(lmbdb_fetch_row($rs)){
 		$bzm = $bzm+2;
-		$sort[odbc_result($rs, 'ID')] = $bzm;
+		$sort[lmbdb_result($rs, 'ID')] = $bzm;
 	}
 	
 	if($act == 'up'){
@@ -1284,7 +1289,7 @@ function lmb_sortConf($act,$sortid,$table,$field='SORT',$filter=null){
 	$bzm = 1;
 	foreach ($sort as $key => $value){
 		$sqlquery = "UPDATE $table SET $field = $bzm WHERE ID = $key";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		$bzm++;
 	}
@@ -1443,7 +1448,8 @@ function lmb_fputcsv(&$table_datei, $line, $intern=0) {
  */
 function soap_call_client($lmpar,$LIM){
 	global $lmbs;
-	
+	global $umgvar;
+
 	$lmpar["lmbs"] = $lmbs["session"]["s_id"]; # Session OK
 	
 	# ----- Aktion ausführen ----------
@@ -1458,13 +1464,13 @@ function soap_call_client($lmpar,$LIM){
 		"style" => SOAP_RPC,
 		"use" => SOAP_ENCODED,
 		"compression" => SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_DEFLATE,
-		"encoding"=>"ISO-8859-1"
+		"encoding"=>$umgvar['charset']
 		));
 		
 		#"location" => $LIM["lim_url"]."/main_soap.php?".$lmbs["session"]["s_name"]."=".$lmbs["session"]["s_id"],
 
 		try{
-			$lmb = $client->__call("runlmb", array(serialize($lmpar)), array("uri" => "urn:xmethodsLimbasServer","soapaction" => "urn:xmethodsLimbasServer"));
+			$lmb = $client->__soapCall("runlmb", array(serialize($lmpar)), array("uri" => "urn:xmethodsLimbasServer","soapaction" => "urn:xmethodsLimbasServer"));
 		}catch(Exception $e){
 			lmb_alert('can not access to '.$LIM["lim_url"].'\n'.$e->getMessage());
 			return false;

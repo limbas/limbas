@@ -24,13 +24,13 @@
 echo '<div style="text-align:center;font-weight:bold;text-decoration:underline;margin-bottom:10px">', $lang[517], '</div>';
 
 ?>
-<script src="extern/codemirror/lib/codemirror.js"></script>
-<link rel="stylesheet" href="extern/codemirror/lib/codemirror.css">
-<script src="extern/codemirror/edit/matchbrackets.js"></script>
-<script src="extern/codemirror/edit/matchtags.js"></script>
-<script src="extern/codemirror/mode/javascript/javascript.js"></script>
-<script src="extern/codemirror/mode/php/php.js"></script>
-<script src="extern/codemirror/mode/sql/sql.js"></script>
+<script src="extern/codemirror/lib/codemirror.js?v=<?=$umgvar["version"]?>"></script>
+<link rel="stylesheet" href="extern/codemirror/lib/codemirror.css?v=<?=$umgvar["version"]?>">
+<script src="extern/codemirror/edit/matchbrackets.js?v=<?=$umgvar["version"]?>"></script>
+<script src="extern/codemirror/edit/matchtags.js?v=<?=$umgvar["version"]?>"></script>
+<script src="extern/codemirror/mode/javascript/javascript.js?v=<?=$umgvar["version"]?>"></script>
+<script src="extern/codemirror/mode/php/php.js?v=<?=$umgvar["version"]?>"></script>
+<script src="extern/codemirror/mode/sql/sql.js?v=<?=$umgvar["version"]?>"></script>
 <script type="text/javascript">
     $(function() {
         editor = CodeMirror.fromTextArea(document.getElementById('argument'), {

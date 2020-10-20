@@ -67,17 +67,17 @@ $tabletree = get_tabletree();
 
 
 $sqlquery = "SELECT * FROM LMB_TABLETREE WHERE TREEID = ".parse_db_int($treeid);
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)){
-	if($md5tab = odbc_result($rs,"RELATIONID")){
-		$tree['tform'][$md5tab] = odbc_result($rs,"TARGET_FORMID");
-		#$tree['tsnap'][$md5tab] = odbc_result($rs,"TARGET_SNAP");
-		$tree['display'][$md5tab] = odbc_result($rs,"DISPLAY");
-		$tree['tfield'][$md5tab] = odbc_result($rs,"DISPLAY_FIELD");
-		$tree['ttitle'][$md5tab] = odbc_result($rs,"DISPLAY_TITLE");
-		$tree['tsort'][$md5tab] = odbc_result($rs,"DISPLAY_SORT");
-		$tree['ticon'][$md5tab] = odbc_result($rs,"DISPLAY_ICON");
-		$tree['trule'][$md5tab] = odbc_result($rs,"DISPLAY_RULE");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)){
+	if($md5tab = lmbdb_result($rs,"RELATIONID")){
+		$tree['tform'][$md5tab] = lmbdb_result($rs,"TARGET_FORMID");
+		#$tree['tsnap'][$md5tab] = lmbdb_result($rs,"TARGET_SNAP");
+		$tree['display'][$md5tab] = lmbdb_result($rs,"DISPLAY");
+		$tree['tfield'][$md5tab] = lmbdb_result($rs,"DISPLAY_FIELD");
+		$tree['ttitle'][$md5tab] = lmbdb_result($rs,"DISPLAY_TITLE");
+		$tree['tsort'][$md5tab] = lmbdb_result($rs,"DISPLAY_SORT");
+		$tree['ticon'][$md5tab] = lmbdb_result($rs,"DISPLAY_ICON");
+		$tree['trule'][$md5tab] = lmbdb_result($rs,"DISPLAY_RULE");
 	}
 }
 

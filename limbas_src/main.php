@@ -51,7 +51,7 @@ unset($require10);
 unset($require11);
 
 /* --- Include Libary ------------------------------------------------ */
-require_once ("inc/include_db.lib");
+require_once ("lib/db/db_wrapper.lib");
 require_once ("lib/include.lib");
 require_once ("lib/session.lib");
 require_once ("lib/context.lib");
@@ -76,12 +76,12 @@ if ($rgsr) {
 if (lmb_substr($action, 0, 4) == "gtab") {
     if (! $gtab["tab_id"][$gtabid] and $action != 'gtab_form') {
         if ($db) {
-            odbc_close($db);
+            lmbdb_close($db);
         }
         die("<BODY ><BR><BR><CENTER><B><H3><FONT COLOR=\"red\" FACE=\"VERDANA,ARIAL,HELVETICA\">$lang[1]</FONT></H1></B></CENTER></BODY>");
     } elseif ($gtab["typ"][$gtabid] != 5 and count($gfield[$gtabid]["field_id"]) <= 0 and $action != 'gtab_form') {
         if ($db) {
-            odbc_close($db);
+            lmbdb_close($db);
         }
         die("<BODY ><BR><BR><CENTER><B><H3><FONT COLOR=\"red\" FACE=\"VERDANA,ARIAL,HELVETICA\">$lang[1]</FONT></H1></B><BR><BR><B>&nbsp;$lang[118]</CENTER></BODY>");
     }
@@ -130,27 +130,24 @@ if (! $bodyclass) {
 }
 
 /* --- Aktion :-------------------------------------------------------- */
-if ($action == "layoutframe") {
+if ($action == 'sess_refresh') {
+    die('1');
+} elseif ($action == "layoutframe") { //TODO: deprecated in the future layout
     $layoutframe = preg_replace('/[^a-z0-9-]/i', "", $layoutframe);
     $require2 = "layout/frame_main_" . $layoutframe . ".php";
     if (file_exists("layout/" . $session["layout"] . "/frame_main_" . $layoutframe . ".php")) {
         $require2 = "layout/" . $session["layout"] . "/frame_main_" . $layoutframe . ".php";
     }
     $bodyclass = "main_" . $layoutframe;
-} elseif ($action == "top") {
+} elseif ($action == "top") { //TODO: deprecated in the future layout
     $require1 = "gtab/gtab.lib";
     $require2 = "layout/top.php";
     if (file_exists("layout/" . $session["layout"] . "/top.php")) {
         $require2 = "layout/" . $session["layout"] . "/top.php";
     }
-    #$projekt_file = array(
-    #    1,
-    #    2
-    #);
-    //$STYLE = "border-top:1px solid black;";
     $GLOBALS["ltmp"]["history_action"] = 1;
     $bodyclass = "top";
-} elseif ($action == "top2" and $LINK[252]) {
+} elseif ($action == "top2" and $LINK[252]) { //TODO: deprecated in the future layout
     $require2 = "layout/top2.php";
     if (file_exists("layout/" . $session["layout"] . "/top2.php")) {
         $require2 = "layout/" . $session["layout"] . "/top2.php";
@@ -160,7 +157,7 @@ if ($action == "layoutframe") {
     }
     $GLOBALS["ltmp"]["history_action"] = 1;
     $bodyclass = "top2";
-} elseif ($action == "nav" and $LINK[251]) {
+} elseif ($action == "nav" and $LINK[251]) { //TODO: deprecated in the future layout
     $require1 = "gtab/gtab.lib";
     $require2 = "layout/nav.dao";
     if (file_exists("layout/" . $session["layout"] . "/nav.dao")) {
@@ -173,7 +170,7 @@ if ($action == "layoutframe") {
     // if($refresh != "no"){$ONLOAD = "this.link_1.click();";}
     $GLOBALS["ltmp"]["history_action"] = 1;
     $bodyclass = "nav";
-} elseif ($action == "multiframe" and $session["multiframe"] and $LINK[253]) {
+} elseif ($action == "multiframe" and $session["multiframe"] and $LINK[253]) { //TODO: deprecated in the future layout
     $require1 = "layout/multiframe.dao";
     if (file_exists("layout/" . $session["layout"] . "/multiframe.dao")) {
         $require1 = "layout/" . $session["layout"] . "/multiframe.dao";
@@ -182,8 +179,6 @@ if ($action == "layoutframe") {
     if (file_exists("layout/" . $session["layout"] . "/multiframe.php")) {
         $require2 = "layout/" . $session["layout"] . "/multiframe.php";
     }
-    //$STYLE = "border-top:1px solid " . $farbschema["WEB4"] . ";";
-    $STYLE = "";
     $GLOBALS["ltmp"]["history_action"] = 1;
     $ONCLICK = "OnClick=\"body_click();\"";
     $ONLOAD = "startautoopen();";
@@ -522,7 +517,7 @@ elseif ($action == "download" and $LINK[$action] == 1) {
     }
     if (! $a) {
         if ($db) {
-            odbc_close($db);
+            lmbdb_close($db);
         }
         die("<BODY ><BR><BR><CENTER><B><H3><FONT COLOR=\"red\" FACE=\"VERDANA,ARIAL,HELVETICA\">$lang[1]</FONT></H1></B></CENTER></BODY>");
     }
@@ -549,10 +544,9 @@ if($ONWINDOWUNLOAD) {
 
 $ONLOAD = "OnLoad=\"browserType();$ONLOAD;$ONWINDOWUNLOAD\"";
 if ($BODY != 1) {
-    /* --------------------- KOPF --------------------------- */
-    $STYLE = "STYLE=\"$STYLE\"";
-    echo "<html $STYLE>\n";
-    ?>
+echo "<html>\n";
+?>
+
 <HEAD>
 <link rel="SHORTCUT ICON" href="favicon.ico">
 <TITLE>Limbas - Enterprise Unifying Framework V <?=$umgvar["version"]?></TITLE>
@@ -574,89 +568,78 @@ if ($BODY != 1) {
 <meta HTTP-EQUIV="X-UA-Compatible" content="ie=edge,chrome=1" />
 
 
-<script type="text/javascript" src="lib/global.js"></script>
-<script type="text/javascript" src="USER/<?=$session["user_id"]?>/syntaxcheck.js" language="javascript"></script>
-<script type="text/javascript" src="extern/jquery/jquery-1.11.0.min.js"></script>
+<script type="text/javascript" src="lib/global.js?v=<?=$umgvar["version"]?>"></script>
+<script type="text/javascript" src="USER/<?=$session["user_id"]?>/syntaxcheck.js?v=<?=$umgvar["version"]?>" language="javascript"></script>
+<script type="text/javascript" src="extern/jquery/jquery-1.11.0.min.js?v=<?=$umgvar["version"]?>"></script>
 
-<?php
-    if ($action == 'gtab_erg' or $action == 'gtab_change' or $action == 'gtab_deterg' or $action == 'gtab_neu' or $action == 'gtab_search' or $action == 'gtab_form' or $action == 'diag_erg' or $action == 'diag_erg' or $action == 'explorer_tree' or $action == 'explorer_main' or $action == 'message_detail' or $action == 'message_main' or $action == 'message_tree' or $action == 'kalender' or $action == 'kanban' or $action == 'mini_explorer') {
-        echo "
-	<script type=\"text/javascript\" src=\"extra/explorer/file-cache.js\"></script>\n
-	<script type=\"text/javascript\" src=\"EXTENSIONS/system/ext.js\"></script>\n
-	<script type=\"text/javascript\" src=\"extern/jquery/jquery-ui-1.12.1.min.js\"></script>
-	<script type=\"text/javascript\" src=\"extern/jquery/jquery.ui.datepicker-de.js\"></script>
-	<script type=\"text/javascript\" src=\"extern/jquery/jquery-ui-timepicker-addon.js\"></script>
-	<style type=\"text/css\">@import url(extern/jquery/theme/jquery-ui-1.12.1.min.css);</style>
-	<style type=\"text/css\">@import url(extern/jquery/theme/jquery-ui-timepicker-addon.css);</style>";
-        if ($umgvar["use_jsgraphics"]) {
-            echo "<script type=\"text/javascript\" src=\"extern/jsgraphics/jsgraphics.js\"></script>\n";
-        }
-    }
+<?php if ($action == 'gtab_erg' or $action == 'gtab_change' or $action == 'gtab_deterg' or $action == 'gtab_neu' or $action == 'gtab_search' or $action == 'gtab_form' or $action == 'diag_erg' or $action == 'diag_erg' or $action == 'explorer_tree' or $action == 'explorer_main' or $action == 'message_detail' or $action == 'message_main' or $action == 'message_tree' or $action == 'kalender' or $action == 'kanban' or $action == 'mini_explorer') {?>
+	<script type="text/javascript" src="extra/explorer/file-cache.js?v=<?=$umgvar["version"]?>"></script>
+	<script type="text/javascript" src="EXTENSIONS/system/ext.js?v=<?=$umgvar["version"]?>"></script>
+	<script type="text/javascript" src="extern/jquery/jquery-ui-1.12.1.min.js?v=<?=$umgvar["version"]?>"></script>
+	<script type="text/javascript" src="extern/jquery/jquery.ui.datepicker-de.js?v=<?=$umgvar["version"]?>"></script>
+	<script type="text/javascript" src="extern/jquery/jquery-ui-timepicker-addon.js?v=<?=$umgvar["version"]?>"></script>
+	<style type="text/css">@import url(extern/jquery/theme/jquery-ui-1.12.1.min.css?v=<?=$umgvar["version"]?>);</style>
+	<style type="text/css">@import url(extern/jquery/theme/jquery-ui-timepicker-addon.css?v=<?=$umgvar["version"]?>);</style>
+    <?php if ($umgvar["use_jsgraphics"]) {?>
+         <script type="text/javascript" src="extern/jsgraphics/jsgraphics.js?v=<?=$umgvar["version"]?>"></script>
+    <?php }
+}
     
-    if ($action == "explorer_main" or $action == "explorer_detail" or $action == "message_detail" or $action == "message_main" or $action == "mini_explorer" or $action == "gtab_change" or $action == "gtab_deterg" or $action == "gtab_neu") {
-        echo "<script type=\"text/javascript\" src=\"extra/explorer/explorer.js\"></script>\n";
-    }
+if ($action == "explorer_main" or $action == "explorer_detail" or $action == "message_detail" or $action == "message_main" or $action == "mini_explorer" or $action == "gtab_change" or $action == "gtab_deterg" or $action == "gtab_neu") {?>
+    <script type="text/javascript" src="extra/explorer/explorer.js?v=<?=$umgvar["version"]?>"></script>
+<?php }
+
+if ($action == "kalender") {?>
+    <script type="text/javascript" src="gtab/html/gtab.js?v=<?=$umgvar["version"]?>"></script>
+    <script type="text/javascript" src="gtab/html/gtab_change.js?v=<?=$umgvar["version"]?>"></script>
+    <link rel='stylesheet' type='text/css' href='extern/fullcalendar/fullcalendar.css?v=<?=$umgvar["version"]?>' />
+    <link rel='stylesheet' type='text/css' href='extern/fullcalendar/fullcalendar.print.css?v=<?=$umgvar["version"]?>' media='print' />
+    <script type='text/javascript' src='extern/fullcalendar/fullcalendar.js?v=<?=$umgvar["version"]?>'></script>
+    <script type='text/javascript' src='extra/calendar/fullcalendar/cal.js?v=<?=$umgvar["version"]?>'></script>
+<?php }
     
-    if ($action == "kalender") {
-        echo "
-	<script type=\"text/javascript\" src=\"gtab/html/gtab.js\"></script>\n
-	<script type=\"text/javascript\" src=\"gtab/html/gtab_change.js\"></script>\n
-    <link rel='stylesheet' type='text/css' href='extern/fullcalendar/fullcalendar.css' />
-	<link rel='stylesheet' type='text/css' href='extern/fullcalendar/fullcalendar.print.css' media='print' />
-	<script type='text/javascript' src='extern/fullcalendar/fullcalendar.js'></script>
-	<script type='text/javascript' src='extra/calendar/fullcalendar/cal.js'></script>  
-	";
-    }
+if ($action == "kanban") {?>
+	<script type="text/javascript" src="gtab/html/gtab.js?v=<?=$umgvar["version"]?>"></script>
+	<script type="text/javascript" src="gtab/html/gtab_change.js?v=<?=$umgvar["version"]?>"></script>
+	<script type="text/javascript" src="extra/kanban/kanban.js?v=<?=$umgvar["version"]?>"></script>
+<?php } 
+
+if ($action == "gtab_erg") {?>
+        <script type="text/javascript" src="gtab/html/gtab.js?v=<?=$umgvar["version"]?>"></script>
+        <script type="text/javascript" src="gtab/html/gtab_erg.js?v=<?=$umgvar["version"]?>"></script>
+<?php } elseif ($action == "gtab_change" or $action == "gtab_deterg" or $action == "gtab_neu" or $action == "explorer_detail") {?>
+        <script type="text/javascript" src="gtab/html/gtab.js?v=<?=$umgvar["version"]?>"></script>
+        <script type="text/javascript" src="gtab/html/gtab_change.js?v=<?=$umgvar["version"]?>"></script>
+<?php }
     
-    if ($action == "kanban") {
-        echo "
-	<script type=\"text/javascript\" src=\"gtab/html/gtab.js\"></script>\n
-	<script type=\"text/javascript\" src=\"gtab/html/gtab_change.js\"></script>\n
-	<script type='text/javascript' src='extra/kanban/kanban.js'></script>  
-	";
-    }
+if ($gfield[$gtabid]["wysiwyg"]) {
+    if ($umgvar["wysiwygeditor"] == "openwysiwyg") {?>
+            <script type="text/javascript" src="extern/wysiwyg/openwysiwyg/scripts/wysiwyg.js?v=<?=$umgvar["version"]?>"></script>
+    <?php } elseif ($umgvar["wysiwygeditor"] == "TinyMCE") {?>
+            <script language="javascript" type="text/javascript" src="extern/wysiwyg/tinymce/tinymce.min.js?v=<?=$umgvar["version"]?>"></script>
+    <?php }
+}
     
-    if ($action == "gtab_erg") {
-        echo "<script type=\"text/javascript\" src=\"gtab/html/gtab.js\"></script>\n";
-        echo "<script type=\"text/javascript\" src=\"gtab/html/gtab_erg.js\"></script>\n";
-    } elseif ($action == "gtab_change" or $action == "gtab_deterg" or $action == "gtab_neu" or $action == "explorer_detail") {
-        echo "<script type=\"text/javascript\" src=\"gtab/html/gtab.js\"></script>\n";
-        echo "<script type=\"text/javascript\" src=\"gtab/html/gtab_change.js\"></script>\n";
-    }
+// main CSS
+if ($action != "report_html") {?>
+    <style type="text/css">@import url(USER/<?=$session["user_id"]?>/layout.css?v=<?=$umgvar["version"]?>);</style>
+<?php }
     
-    if ($gfield[$gtabid]["wysiwyg"]) {
-        if ($umgvar["wysiwygeditor"] == "openwysiwyg") {
-            echo "<script type=\"text/javascript\" src=\"extern/wysiwyg/openwysiwyg/scripts/wysiwyg.js\"></script>\n";
-        } elseif ($umgvar["wysiwygeditor"] == "TinyMCE") {
-            // echo "<script language=\"javascript\" type=\"text/javascript\" src=\"extern/wysiwyg/tiny_mce/tiny_mce.js\"></script>\n";
-            echo "<script language=\"javascript\" type=\"text/javascript\" src=\"extern/wysiwyg/tinymce/tinymce.min.js\"></script>\n";
-        }
-    }
+// EXTENSIONS js
+if ($gLmbExt["ext_main.js"] AND $BODY != 1) {
+    foreach ($gLmbExt["ext_main.js"] as $key => $extfile) {?>
+        <script language="javascript" type="text/javascript" src="<?=$extfile.'?v='.$umgvar["version"]?>"></script>
+    <?php }
+}
     
-    // main CSS
-    if ($action != "report_html") {
-        echo "<style type=\"text/css\">@import url(USER/" . $session["user_id"] . "/layout.css);</style>\n";
-    }
+// EXTENSIONS css
+if ($gLmbExt["ext_main.css"] AND $BODY != 1) {
+    foreach ($gLmbExt["ext_main.css"] as $key => $extfile) {?>
+        <link rel="stylesheet" type="text/css" href="<?=$extfile.'?v='.$umgvar["version"]?>">
+    <?php }
+}
     
-    // EXTENSIONS js
-    if ($gLmbExt["ext_main.js"]) {
-        foreach ($gLmbExt["ext_main.js"] as $key => $extfile) {
-            echo "<script language=\"javascript\" type=\"text/javascript\" src=\"$extfile\"></script>\n";
-        }
-    }
-    
-    // EXTENSIONS css
-    if ($gLmbExt["ext_main.css"]) {
-        foreach ($gLmbExt["ext_main.css"] as $key => $extfile) {
-            echo "<link rel='stylesheet' type='text/css' href='$extfile'>";
-        }
-    }
-    
-    if ($SCRIPT) {
-        echo $SCRIPT;
-    }
-    
-    echo "</HEAD>";
+echo "</HEAD>";
     
     // Page - Header
     if ($BODY != 1) {
@@ -775,7 +758,7 @@ if ($lhist and $session["logging"]) {
 
 /* --- DB-CLOSE ------------------------------------------------------ */
 if ($db) {
-    odbc_close($db);
+    lmbdb_close($db);
 }
 
 // save session variables

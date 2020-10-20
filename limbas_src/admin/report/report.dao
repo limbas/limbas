@@ -105,9 +105,13 @@ if($action == "setup_report_menu"){
 		 $setOrder = "INDEXORDER='".parse_db_string($setOrder,15)."',";
 	}
 
+	# CSS Datei
+    if($default_class){
+	    $default_class = "css = '".parse_db_string($default_class,100)."',";
+    }
 
-	$sqlquery = "UPDATE LMB_REPORT_LIST SET $page_style $setOrder SAVENAME='".parse_db_string($savename,160)."' WHERE ID = $report_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$sqlquery = "UPDATE LMB_REPORT_LIST SET $default_class $page_style $setOrder SAVENAME='".parse_db_string($savename,160)."' WHERE ID = $report_id";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 /* --- Elemente Positionieren --------------------------------------------- */
@@ -123,14 +127,14 @@ if($report_possize){
 	}
 
 	$sqlquery = "SELECT EL_ID,TYP,POSX,POSY,HEIGHT,WIDTH,INHALT,DBFIELD,VERKN_BAUM,STYLE,DB_DATA_TYPE,SHOW_ALL,BERICHT_ID,Z_INDEX,LISTE,TAB,TAB_SIZE,TAB_EL_COL,TAB_EL_ROW,TAB_EL_COL_SIZE,HEADER,FOOTER,PIC_TYP,PIC_STYLE,PIC_SIZE,PIC_RES,PIC_NAME,BG,EXTVALUE,ID FROM LMB_REPORTS WHERE BERICHT_ID = $report_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-	while(odbc_fetch_row($rs)) {
-		if($div_pos[odbc_result($rs, "EL_ID")]){
-			$report_ = explode(",",$div_pos[odbc_result($rs, "EL_ID")]);
-			$typ_ = odbc_result($rs, "TYP");
+	while(lmbdb_fetch_row($rs)) {
+		if($div_pos[lmbdb_result($rs, "EL_ID")]){
+			$report_ = explode(",",$div_pos[lmbdb_result($rs, "EL_ID")]);
+			$typ_ = lmbdb_result($rs, "TYP");
 
-			if(odbc_result($rs,"TYP") == "tab" AND $report_[4]){
+			if(lmbdb_result($rs,"TYP") == "tab" AND $report_[4]){
 				$report_[4] = ($report_[4] - 15);
 			}
 
@@ -142,9 +146,9 @@ if($report_possize){
 
 			$prvalue = array();
 			
-			if(${"text".odbc_result($rs, "EL_ID")}){
+			if(${"text".lmbdb_result($rs, "EL_ID")}){
 				$ia = "INHALT = ?,";
-				$prvalue[] = parse_db_blob(${"text".odbc_result($rs, "EL_ID")});
+				$prvalue[] = ${"text".lmbdb_result($rs, "EL_ID")};
 			}elseif(lmb_strpos("_menu_bild_tab_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_menue_fmenue_scroll_usetime_ureport_chart",$typ_)){
 				$ia = "";
 			}else{
@@ -153,10 +157,11 @@ if($report_possize){
 			}
 
 			# extendet input
-			$prvalue[] = parse_db_blob(${"extendet_input_div".odbc_result($rs, "EL_ID")});
+			$extDivValue = ${"extendet_input_div".lmbdb_result($rs, "EL_ID")};
+			$prvalue[] = $extDivValue ? $extDivValue : '';
 
 			# value
-			$prepare_string = "UPDATE LMB_REPORTS SET $ia EXTVALUE = ?,POSX = ".$report_[1].",POSY = ".$report_[2].",WIDTH = ".$report_[3].",HEIGHT = ".$report_[4].",Z_INDEX = ".$report_[5]." WHERE EL_ID = ".odbc_result($rs, "EL_ID")." AND BERICHT_ID = $report_id";
+			$prepare_string = "UPDATE LMB_REPORTS SET $ia EXTVALUE = ?,POSX = ".$report_[1].",POSY = ".$report_[2].",WIDTH = ".$report_[3].",HEIGHT = ".$report_[4].",Z_INDEX = ".$report_[5]." WHERE EL_ID = ".lmbdb_result($rs, "EL_ID")." AND BERICHT_ID = $report_id";
 			if(!lmb_PrepareSQL($prepare_string,$prvalue,__FILE__,__LINE__)){$commit = 1;}
 		}
 	}
@@ -174,40 +179,40 @@ function lmb_copy_report($report_id,$report_edit_id,$tab=null,$oldtab=null){
 	}else{
 		$sqlquery = "SELECT * FROM LMB_REPORTS WHERE EL_ID = $report_edit_id AND BERICHT_ID = $report_id AND TAB_EL_ROW <= 0 AND TAB_EL_COL <= 0";
 	}
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	
-	$typ = odbc_result($rs,"TYP");
-	$tab_size = odbc_result($rs,"TAB_SIZE");
-	$pic_name = odbc_result($rs,"PIC_NAME");
+	$typ = lmbdb_result($rs,"TYP");
+	$tab_size = lmbdb_result($rs,"TAB_SIZE");
+	$pic_name = lmbdb_result($rs,"PIC_NAME");
 	
 	if($typ == 'tab'){
 		$sqlquery2 = "SELECT MAX(TAB) AS NEXTTAB FROM LMB_REPORTS WHERE BERICHT_ID = $report_id";
-		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
-		$tab = (odbc_result($rs2,"NEXTTAB") + 1);
-		lmb_copy_report($report_id,$report_edit_id,$tab,odbc_result($rs,"TAB"));
+		$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		$tab = (lmbdb_result($rs2,"NEXTTAB") + 1);
+		lmb_copy_report($report_id,$report_edit_id,$tab,lmbdb_result($rs,"TAB"));
 	}elseif($typ == 'bild'){
 		$ext = explode(".",$pic_name);
-		$secname = $report_edit_id.lmb_substr(md5($report_edit_id.date("U").odbc_result($rs,"PIC_NAME")),0,12).".".$ext[1];
-		if(file_exists($umgvar['path']."/UPLOAD/report/".odbc_result($rs,"TAB_SIZE"))){
-			copy($umgvar['path']."/UPLOAD/report/".odbc_result($rs,"TAB_SIZE"),$umgvar['path']."/UPLOAD/report/".$secname);
-			if(file_exists($umgvar['path']."/TEMP/thumpnails/report/".odbc_result($rs,"TAB_SIZE"))){
-				copy($umgvar['path']."/TEMP/thumpnails/report/".odbc_result($rs,"TAB_SIZE"),$umgvar['path']."/TEMP/thumpnails/report/".$secname);
+		$secname = $report_edit_id.lmb_substr(md5($report_edit_id.date("U").lmbdb_result($rs,"PIC_NAME")),0,12).".".$ext[1];
+		if(file_exists($umgvar['path']."/UPLOAD/report/".lmbdb_result($rs,"TAB_SIZE"))){
+			copy($umgvar['path']."/UPLOAD/report/".lmbdb_result($rs,"TAB_SIZE"),$umgvar['path']."/UPLOAD/report/".$secname);
+			if(file_exists($umgvar['path']."/TEMP/thumpnails/report/".lmbdb_result($rs,"TAB_SIZE"))){
+				copy($umgvar['path']."/TEMP/thumpnails/report/".lmbdb_result($rs,"TAB_SIZE"),$umgvar['path']."/TEMP/thumpnails/report/".$secname);
 			}
 		}
 		$tab_size = $secname;
 		$pic_name = $secname;
 	}
 
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)){
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
 		
 		/* --- Next EL_ID ---------------------------------------- */
 		$sqlquery2 = "SELECT MAX(EL_ID) AS NEXTID FROM LMB_REPORTS WHERE BERICHT_ID = $report_id";
-		$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
-		$NEXTID = odbc_result($rs2,"NEXTID") + 1;
+		$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		$NEXTID = lmbdb_result($rs2,"NEXTID") + 1;
 		$NEXTKEYID = next_db_id("LMB_REPORTS","ID");
 		
-		if(!$tab){$tab = odbc_result($rs,"TAB");}
+		if(!$tab){$tab = lmbdb_result($rs,"TAB");}
 	
 		$sqlquery1 = "INSERT INTO LMB_REPORTS (
 		ID,
@@ -246,37 +251,37 @@ function lmb_copy_report($report_id,$report_edit_id,$tab=null,$oldtab=null){
 		$NEXTKEYID,
 		$NEXTID,
 		".$session['user_id'].",
-		'".odbc_result($rs,"TYP")."',
-		".(odbc_result($rs,"POSX") + 3).",
-		".(odbc_result($rs,"POSY") + 3).",
-		".parse_db_int(odbc_result($rs,"HEIGHT")).",
-		".parse_db_int(odbc_result($rs,"WIDTH")).",
-		'".parse_db_string(odbc_result($rs,"INHALT"),255)."',
-		'".odbc_result($rs,"DBFIELD")."',
-		'".odbc_result($rs,"VERKN_BAUM")."',
-		'".odbc_result($rs,"STYLE")."',
-		".parse_db_int(odbc_result($rs,"DB_DATA_TYPE")).",
-		".parse_db_bool(odbc_result($rs,"SHOW_ALL")).",
-		".parse_db_int(odbc_result($rs,"BERICHT_ID")).",
-		".parse_db_int(odbc_result($rs,"Z_INDEX")).",
-		".parse_db_bool(odbc_result($rs,"LISTE")).",
+		'".lmbdb_result($rs,"TYP")."',
+		".(lmbdb_result($rs,"POSX") + 3).",
+		".(lmbdb_result($rs,"POSY") + 3).",
+		".parse_db_int(lmbdb_result($rs,"HEIGHT")).",
+		".parse_db_int(lmbdb_result($rs,"WIDTH")).",
+		'".parse_db_string(lmbdb_result($rs,"INHALT"),255)."',
+		'".lmbdb_result($rs,"DBFIELD")."',
+		'".lmbdb_result($rs,"VERKN_BAUM")."',
+		'".lmbdb_result($rs,"STYLE")."',
+		".parse_db_int(lmbdb_result($rs,"DB_DATA_TYPE")).",
+		".parse_db_bool(lmbdb_result($rs,"SHOW_ALL")).",
+		".parse_db_int(lmbdb_result($rs,"BERICHT_ID")).",
+		".parse_db_int(lmbdb_result($rs,"Z_INDEX")).",
+		".parse_db_bool(lmbdb_result($rs,"LISTE")).",
 		".parse_db_int($tab).",
 		'".$tab_size."',
-		".parse_db_int(odbc_result($rs,"TAB_EL_COL")).",
-		".parse_db_int(odbc_result($rs,"TAB_EL_ROW")).",
-		".parse_db_int(odbc_result($rs,"TAB_EL_COL_SIZE")).",
-		".parse_db_bool(odbc_result($rs,"HEADER")).",
-		".parse_db_bool(odbc_result($rs,"FOOTER")).",
-		'".parse_db_string(odbc_result($rs,"PIC_TYP"),3)."',
-		'".parse_db_string(odbc_result($rs,"PIC_STYLE"),250)."',
-		'".parse_db_string(odbc_result($rs,"PIC_SIZE"),50)."',
-		".parse_db_int(odbc_result($rs,"PIC_RES"),5).",
+		".parse_db_int(lmbdb_result($rs,"TAB_EL_COL")).",
+		".parse_db_int(lmbdb_result($rs,"TAB_EL_ROW")).",
+		".parse_db_int(lmbdb_result($rs,"TAB_EL_COL_SIZE")).",
+		".parse_db_bool(lmbdb_result($rs,"HEADER")).",
+		".parse_db_bool(lmbdb_result($rs,"FOOTER")).",
+		'".parse_db_string(lmbdb_result($rs,"PIC_TYP"),3)."',
+		'".parse_db_string(lmbdb_result($rs,"PIC_STYLE"),250)."',
+		'".parse_db_string(lmbdb_result($rs,"PIC_SIZE"),50)."',
+		".parse_db_int(lmbdb_result($rs,"PIC_RES"),5).",
 		'".parse_db_string($pic_name,20)."',
-		".parse_db_int(odbc_result($rs,"bg")).",
-		'".parse_db_string(odbc_result($rs,"EXTVALUE"),1000)."'
+		".parse_db_int(lmbdb_result($rs,"bg")).",
+		'".parse_db_string(lmbdb_result($rs,"EXTVALUE"),1000)."'
 		)";
 		
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 
 	}
 }
@@ -315,13 +320,13 @@ $pic_type=null,$pic_compress=null,$posy=null){
 
 	/* --- Next Z-Index ---------------------------------------- */
 	$sqlquery = "SELECT MAX(Z_INDEX) AS NEXTID FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB_EL_ROW <= 0 AND TAB_EL_COL <= 0";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$NEXTZINDEX = odbc_result($rs,"NEXTID") + 1;
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$NEXTZINDEX = lmbdb_result($rs,"NEXTID") + 1;
 
 	/* --- Next EL_ID ---------------------------------------- */
 	$sqlquery = "SELECT MAX(EL_ID) AS NEXTID FROM LMB_REPORTS WHERE BERICHT_ID = $report_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$NEXTID = odbc_result($rs,"NEXTID") + 1;
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$NEXTID = lmbdb_result($rs,"NEXTID") + 1;
 
 	$NEXTKEYID = next_db_id("LMB_REPORTS","ID");
 
@@ -356,9 +361,9 @@ $pic_type=null,$pic_compress=null,$posy=null){
 			$pos1 = lmb_strrpos($filename,'.');
 			$ext = lmb_strtolower(trim(lmb_substr($filename,$pos1+1,4)));
 			$sqlquery0 = "SELECT ID,EXT,MIMETYPE FROM LMB_MIMETYPES WHERE LOWER(EXT) = '$ext'";
-			$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
-			if(odbc_result($rs0, "ID")){
-				$mime = explode("/",odbc_result($rs0, "MIMETYPE"));
+			$rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+			if(lmbdb_result($rs0, "ID")){
+				$mime = explode("/",lmbdb_result($rs0, "MIMETYPE"));
 			}
 
 			# ------ Datei zu groß --------
@@ -368,8 +373,8 @@ $pic_type=null,$pic_compress=null,$posy=null){
 			}elseif($mime[0] != "image" AND $mime[1] != "pdf"){
 				lmb_alert("$lang[133]\\n== (".$mime[0]."/".$mime[1].")!");
 			}else{
-				$mimetypeid = odbc_result($rs0, "ID");
-				$mimetype = odbc_result($rs0, "MIMETYPE");
+				$mimetypeid = lmbdb_result($rs0, "ID");
+				$mimetype = lmbdb_result($rs0, "MIMETYPE");
 				$secname = $NEXTID.lmb_substr(md5($NEXTID.date("U").$filename),0,12);
 
 				/* --- Konvertiern in JPEG/PNG -------------------------------------------- */
@@ -470,14 +475,14 @@ $pic_type=null,$pic_compress=null,$posy=null){
 		# replace element
 		if($report_replace_element){
 			$prepare_string = "UPDATE LMB_REPORTS SET INHALT = ?,DBFIELD = '$dbfield',VERKN_BAUM = '$dbbaum',DB_DATA_TYPE = $data_type WHERE EL_ID = $report_replace_element AND BERICHT_ID = $report_id";
-			lmb_PrepareSQL($prepare_string,array(parse_db_blob($value)),__FILE__,__LINE__);
+			lmb_PrepareSQL($prepare_string,array($value),__FILE__,__LINE__);
 			$value = null;
 		}
 	}elseif($report_add == "tab"){
 	    $sqlquery = "SELECT MAX(TAB) AS TABID FROM LMB_REPORTS WHERE BERICHT_ID = $report_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		$value = "Tabelle ".(odbc_result($rs,"TABID") + 1);
-		$tab = (odbc_result($rs,"TABID") + 1);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$value = "Tabelle ".(lmbdb_result($rs,"TABID") + 1);
+		$tab = (lmbdb_result($rs,"TABID") + 1);
 		$tab_size = "2;1";
 
 		lmb_addElement($report_id,'tabcell',null,null,null,$tab,'1;1');
@@ -491,14 +496,14 @@ $pic_type=null,$pic_compress=null,$posy=null){
         $style = set_default_style(array());
 		/*
 		$sqlquery = "SELECT MAX(TAB) AS TID FROM LMB_REPORTS WHERE BERICHT_ID = $report_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		$value = "Tabelle ".(odbc_result($rs,"TID") + 1);
-		$tab = (odbc_result($rs,"TID") + 1);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$value = "Tabelle ".(lmbdb_result($rs,"TID") + 1);
+		$tab = (lmbdb_result($rs,"TID") + 1);
 		$tab_size = "2;4";
 		
 		for($ti=1;$ti<=2;$ti++){
 			$sqlquery = "INSERT INTO LMB_REPORTS (ID,EL_ID,ERSTUSER,BERICHT_ID,TYP,TAB,TAB_EL_ROW,TAB_EL_COL,TAB_EL_COL_SIZE) VALUES ($NEXTKEYID,$NEXTID,{$session['user_id']},$report_id,'tabhead',$tab,0,$ti,60)";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			$NEXTKEYID++;
 			$NEXTID++;
 		}
@@ -551,7 +556,7 @@ $pic_type=null,$pic_compress=null,$posy=null){
 	
 	if($value AND $report_id){
 		$sqlquery = "INSERT INTO LMB_REPORTS (ID,EL_ID,Z_INDEX,ERSTUSER,BERICHT_ID,TYP,POSX,POSY,WIDTH,HEIGHT,INHALT,STYLE,DBFIELD,VERKN_BAUM,TAB,TAB_EL_ROW,TAB_EL_COL,TAB_SIZE,TAB_EL,TAB_EL_COL_SIZE,DB_DATA_TYPE,PIC_SIZE,PIC_TYP,PIC_RES,PIC_NAME,BG) VALUES ($NEXTKEYID,$NEXTID,$NEXTZINDEX,{$session['user_id']},$report_id,'$report_add',0,$posy,$width,$height,'$value','$style','$dbfield','$dbbaum' ,$tab,$tab_el_row,$tab_el_col,'$tab_size',$tab_el,$tab_el_col_size,$data_type,'$pic_size','$pic_type',$pic_res,'$pic_name',0)";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
 
 	#checkforlistmode($report_id);
@@ -562,23 +567,23 @@ function report_delete_element($report_edit_id,$report_id){
 	global $db;
 	
 	$sqlquery = "SELECT TYP,INHALT,DB_DATA_TYPE,TAB_SIZE,PIC_NAME,TAB_EL,TAB,TAB_EL_ROW,TAB_EL_COL FROM LMB_REPORTS WHERE EL_ID = ".$report_edit_id." AND BERICHT_ID = $report_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$typ = odbc_result($rs, "TYP");
-	$inhalt = odbc_result($rs, "INHALT");
-	$pic_id = odbc_result($rs, "DB_DATA_TYPE");
-	$picorgname = odbc_result($rs, "TAB_SIZE");
-	$picname = odbc_result($rs, "PIC_NAME");
-	$tab = odbc_result($rs, "TAB");
-	$tab_el = odbc_result($rs, "TAB_EL");
-	$tab_el_row = odbc_result($rs, "TAB_EL_ROW");
-	$tab_el_col = odbc_result($rs, "TAB_EL_COL");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$typ = lmbdb_result($rs, "TYP");
+	$inhalt = lmbdb_result($rs, "INHALT");
+	$pic_id = lmbdb_result($rs, "DB_DATA_TYPE");
+	$picorgname = lmbdb_result($rs, "TAB_SIZE");
+	$picname = lmbdb_result($rs, "PIC_NAME");
+	$tab = lmbdb_result($rs, "TAB");
+	$tab_el = lmbdb_result($rs, "TAB_EL");
+	$tab_el_row = lmbdb_result($rs, "TAB_EL_ROW");
+	$tab_el_col = lmbdb_result($rs, "TAB_EL_COL");
 
 	# delete tab cell elements
 	if($typ == "tabcell"){
 		$sqlquery = "SELECT EL_ID FROM LMB_REPORTS WHERE TAB_EL = $tab_el AND TAB_EL_ROW = $tab_el_row AND TAB_EL_COL = $tab_el_col AND TYP != 'tabcell' AND BERICHT_ID = $report_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		while (odbc_fetch_row($rs)){
-			if(!report_delete_element(odbc_result($rs, "EL_ID"),$report_id)){return false;}
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		while (lmbdb_fetch_row($rs)){
+			if(!report_delete_element(lmbdb_result($rs, "EL_ID"),$report_id)){return false;}
 		}
 		return true;
 	}
@@ -586,18 +591,18 @@ function report_delete_element($report_edit_id,$report_id){
 	# delete tab elements
 	if($typ == "tab"){
 		$sqlquery = "SELECT EL_ID FROM LMB_REPORTS WHERE TAB_EL = ".$tab." AND BERICHT_ID = $report_id AND TYP != 'tab'";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		while (odbc_fetch_row($rs)){
-			if(!report_delete_element(odbc_result($rs, "EL_ID"),$report_id)){return false;}
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		while (lmbdb_fetch_row($rs)){
+			if(!report_delete_element(lmbdb_result($rs, "EL_ID"),$report_id)){return false;}
 		}
 		$sqlquery = "DELETE FROM LMB_REPORTS WHERE TAB = $tab AND BERICHT_ID = $report_id";
-		$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		return true;
 	}
 
 	# delete single element
     $sqlquery = "DELETE FROM LMB_REPORTS WHERE EL_ID = ".$report_edit_id." AND BERICHT_ID = $report_id";
-	$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 
 	/* --- Bilder löschen -------------------------------------- */
@@ -661,7 +666,7 @@ if($report_del AND $report_edit_id){
 /* --- Elemente Editieren --------------------------------------------- */
 }elseif($report_edit_value){
 	$prepare_string = "UPDATE LMB_REPORTS SET INHALT = ?,EDITDATUM = ".LMB_DBDEF_TIMESTAMP.",EDITUSER = ".$session["user_id"]." WHERE EL_ID = $report_edit_id AND BERICHT_ID = $report_id";
-	if(!lmb_PrepareSQL($prepare_string,array(parse_db_blob($report_edit_value)),__FILE__,__LINE__)){$commit = 1;}
+	if(!lmb_PrepareSQL($prepare_string,array($report_edit_value),__FILE__,__LINE__)){$commit = 1;}
 }
 
 /* --- Style Editieren --------------------------------------------- */
@@ -672,8 +677,8 @@ if($report_setstyle){
 		$styles1 = explode("#,",$styles[$bzm]);
 
 		$sqlquery = "SELECT STYLE FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND EL_ID = $styles1[0]";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		$old_style = odbc_result($rs, "STYLE");
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$old_style = lmbdb_result($rs, "STYLE");
 		$style = array_pad(array(), 44, '');
 		$style = array_replace($style, explode(";", $old_style));
 
@@ -692,7 +697,7 @@ if($report_setstyle){
 
 		if(is_numeric($styles1[0])){
 			$sqlquery = "UPDATE LMB_REPORTS SET STYLE = '".implode(";", $style)."',BG = $style[32],HEADER = ".parse_db_bool($style[27]).", FOOTER = ".parse_db_bool($style[28]).", EDITDATUM = ".LMB_DBDEF_TIMESTAMP.",EDITUSER = ".$session["user_id"]." WHERE BERICHT_ID = $report_id AND EL_ID = $styles1[0]";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
 		$bzm++;
 	}
@@ -715,7 +720,7 @@ if($report_tab_size){
 			$tabsize = array_sum($tval);
 			$sizeel = implode(";",$tval);
 			$sqlquery = "UPDATE LMB_REPORTS SET WIDTH = ".$tabsize.",EXTVALUE = '".$sizeel."'  WHERE EL_ID = $key AND BERICHT_ID = $report_id";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
 	}
 }
@@ -727,12 +732,12 @@ function lmb_addTableCell($report_tab_rows,$report_tab_cols,$report_tab,$report_
 	global $report_id;
 
 	$sqlquery = "SELECT TAB_SIZE,TAB,EXTVALUE FROM LMB_REPORTS WHERE EL_ID = $report_edit_id AND BERICHT_ID = $report_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_fetch_row($rs)){
-		$tab_size = explode(";",odbc_result($rs, "TAB_SIZE"));
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_fetch_row($rs)){
+		$tab_size = explode(";",lmbdb_result($rs, "TAB_SIZE"));
 		$old_size = $tab_size;
-		$tabid = odbc_result($rs, "TAB");
-		$cellsice = explode(";", odbc_result($rs, "EXTVALUE"));
+		$tabid = lmbdb_result($rs, "TAB");
+		$cellsice = explode(";", lmbdb_result($rs, "EXTVALUE"));
 	}
 
 	if($report_tab_rows AND preg_match("/^[0-9]{0,2}$/", $report_tab_rows)){
@@ -755,9 +760,9 @@ function lmb_addTableCell($report_tab_rows,$report_tab_cols,$report_tab,$report_
 		if($report_tab_rows > $old_size[1]){
 			$rowdiff = abs($report_tab_rows - $old_size[1]);
 			$sqlquery = "UPDATE LMB_REPORTS SET TAB_EL_ROW = (TAB_EL_ROW + $rowdiff) WHERE BERICHT_ID = $report_id AND TAB_EL = $tabid AND TAB_EL_ROW >= $row";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			$sqlquery = "UPDATE LMB_REPORTS SET TAB_SIZE = '".implode(";",$tab_size)."' WHERE EL_ID = $report_edit_id AND BERICHT_ID = $report_id";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		# Zeilen entfernen
 		}else{
 			$rowdiff = abs($old_size[1] - $report_tab_rows);
@@ -765,27 +770,27 @@ function lmb_addTableCell($report_tab_rows,$report_tab_cols,$report_tab,$report_
 			for ($i=$row; $i<($row+$rowdiff);$i++){
 				for ($e=1; $e<=$cols;$e++){
 					$sqlquery1 = "SELECT EL_ID FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB_EL = $tabid AND TAB_EL_ROW = $i AND TAB_EL_COL = $e AND TYP = 'tabcell'";
-					$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-					if(odbc_fetch_row($rs1)){report_delete_element(odbc_result($rs1, "EL_ID"),$report_id);}
+					$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+					if(lmbdb_fetch_row($rs1)){report_delete_element(lmbdb_result($rs1, "EL_ID"),$report_id);}
 				}
 			}
 			$sqlquery1 = "UPDATE LMB_REPORTS SET TAB_EL_ROW = (TAB_EL_ROW - $rowdiff) WHERE BERICHT_ID = $report_id AND TAB_EL = $tabid AND TAB_EL_ROW > $row AND TAB_EL_ROW > 1";
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			$sqlquery1 = "UPDATE LMB_REPORTS SET TAB_SIZE = '".implode(";",$tab_size)."' WHERE EL_ID = $report_edit_id AND BERICHT_ID = $report_id";
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		}
 	# Zeilen am Ende hinzufügen / Spalten hinzufügen - entfernen
 	}elseif($report_tab_rows > $old_size[1] OR ($report_tab_cols != $old_size[0] AND $report_tab_cols)){
 		for ($e=($cols+1); $e<=$old_size[0];$e++){
 			for ($i=1; $i<=$rows;$i++){
 				$sqlquery1 = "SELECT EL_ID FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB_EL = $tabid AND TAB_EL_ROW = $i AND TAB_EL_COL = $e AND TYP = 'tabcell'";
-				$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-				if(odbc_fetch_row($rs1)){report_delete_element(odbc_result($rs1, "EL_ID"),$report_id);}
+				$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+				if(lmbdb_fetch_row($rs1)){report_delete_element(lmbdb_result($rs1, "EL_ID"),$report_id);}
 			}
 		}
 
 		$sqlquery = "UPDATE LMB_REPORTS SET TAB_SIZE = '".implode(";",$tab_size)."' WHERE EL_ID = $report_edit_id AND BERICHT_ID = $report_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 	}else{
 		lmb_alert("select column first!");
@@ -808,7 +813,7 @@ function lmb_addTableCell($report_tab_rows,$report_tab_cols,$report_tab,$report_
 		$tabsize = array_sum($cellsice);
 		$sizeel = implode(";",$cellsice);
 		$sqlquery = "UPDATE LMB_REPORTS SET WIDTH = ".$tabsize.",EXTVALUE = '".$sizeel."' WHERE TAB = $tabid AND TYP = 'tab' AND BERICHT_ID = $report_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
 
 }
@@ -832,8 +837,8 @@ function checkforlistmode($report_id,$value=null){
 		$vl = $value;
 	}else{
 		$sqlquery = "SELECT ID FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TYP = 'dbdat' AND TAB_EL_ROW <= 0 AND TAB_EL_COL <= 0";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(odbc_result($rs, "ID")){
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(lmbdb_result($rs, "ID")){
 			$vl = LMB_DBDEF_FALSE;
 		}else{
 			#$vl = LMB_DBDEF_TRUE;
@@ -844,7 +849,7 @@ function checkforlistmode($report_id,$value=null){
 	
 	#if($vl){
 		$sqlquery1 = "UPDATE LMB_REPORT_LIST SET LISTMODE = $value WHERE ID = $report_id";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 	#}
 }
 
@@ -861,13 +866,13 @@ function convert_pic($style,$ID,$report_id){
 
 	# --- Bilddaten ----
 	$sqlquery = "SELECT TYP,INHALT,TAB_SIZE,PIC_STYLE,PIC_NAME,HEIGHT,WIDTH,DB_DATA_TYPE FROM LMB_REPORTS WHERE EL_ID = ".$ID." AND BERICHT_ID = $report_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$typ = odbc_result($rs, "TYP");
-	$picname = odbc_result($rs, "PIC_NAME");
-	$picorgname = odbc_result($rs, "TAB_SIZE");
-	$height = odbc_result($rs, "HEIGHT");
-	$width = odbc_result($rs, "WIDTH");
-	$pic_compress = odbc_result($rs, "DB_DATA_TYPE");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$typ = lmbdb_result($rs, "TYP");
+	$picname = lmbdb_result($rs, "PIC_NAME");
+	$picorgname = lmbdb_result($rs, "TAB_SIZE");
+	$height = lmbdb_result($rs, "HEIGHT");
+	$width = lmbdb_result($rs, "WIDTH");
+	$pic_compress = lmbdb_result($rs, "DB_DATA_TYPE");
 
 	# --- neuer Style ---
 	$pic_style = explode(":",$style);
@@ -875,8 +880,8 @@ function convert_pic($style,$ID,$report_id){
 	if($typ == 'bild' AND $picname){
 
 		# ---- altes pic Style -----
-		if(odbc_result($rs, "PIC_STYLE")){
-			$oldstyle = explode(";",odbc_result($rs, "PIC_STYLE"));
+		if(lmbdb_result($rs, "PIC_STYLE")){
+			$oldstyle = explode(";",lmbdb_result($rs, "PIC_STYLE"));
 		}
 		$bzm = 0;
 		while($oldstyle[$bzm]){
@@ -940,7 +945,7 @@ function convert_pic($style,$ID,$report_id){
 
 		# --- neues Style in DB eintragen ----
 		$sqlquery1 = "UPDATE LMB_REPORTS SET PIC_STYLE = '".$styl."',WIDTH = $width,HEIGHT = $height WHERE EL_ID = ".$ID." AND BERICHT_ID = $report_id";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 	}
 }
@@ -958,33 +963,33 @@ function getReportElements($report_id){
 	$sqlquery = "SELECT EL_ID,TYP,POSX,POSY,HEIGHT,WIDTH,INHALT,DBFIELD,VERKN_BAUM,STYLE,DB_DATA_TYPE,SHOW_ALL,BERICHT_ID,Z_INDEX,LISTE,TAB,TAB_EL,TAB_SIZE,TAB_EL_COL,TAB_EL_ROW,TAB_EL_COL_SIZE,HEADER,FOOTER,PIC_TYP,PIC_STYLE,PIC_SIZE,PIC_RES,PIC_NAME,BG,EXTVALUE,ID
 	 FROM LMB_REPORTS 
 	 WHERE BERICHT_ID = $report_id ORDER BY Z_INDEX";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)) {
-	    $id = odbc_result($rs, "EL_ID");
-		$report["id"][$id] = odbc_result($rs, "EL_ID");
-		$report["typ"][$id] = odbc_result($rs, "TYP");
-		$report["value"][$id] = trim(odbc_result($rs, "INHALT")); # longtext handle
-		$report["extvalue"][$id] = trim(odbc_result($rs, "EXTVALUE")); # longtext handle
-		$report["posx"][$id] = odbc_result($rs, "POSX");
-		$report["posy"][$id] = odbc_result($rs, "POSY");
-		$report["width"][$id] = odbc_result($rs, "WIDTH");
-		$report["height"][$id] = odbc_result($rs, "HEIGHT");
-		$report["style"][$id] = odbc_result($rs, "STYLE");
-		$report["pic_type"][$id] = odbc_result($rs, "PIC_TYP");
-		$report["pic_style"][$id] = odbc_result($rs, "PIC_STYLE");
-		$report["pic_size"][$id] = odbc_result($rs, "PIC_SIZE");
-		$report["pic_res"][$id] = odbc_result($rs, "PIC_RES");
-		$report["pic_name"][$id] = odbc_result($rs, "PIC_NAME");
-		$report["dbfield"][$id] = odbc_result($rs, "DBFIELD");
-		$report["data_type"][$id] = odbc_result($rs, "DB_DATA_TYPE");
-		$report["tab"][$id] = odbc_result($rs, "TAB");
-		$report["tab_el"][$id] = odbc_result($rs, "TAB_EL");
-		$report["tab_size"][$id] = odbc_result($rs, "TAB_SIZE");
-		$report["verkn_baum"][$id] = odbc_result($rs, "VERKN_BAUM");
-		$report["tab_el_col"][$id] = odbc_result($rs, "TAB_EL_COL");
-		$report["tab_el_row"][$id] = odbc_result($rs, "TAB_EL_ROW");
-		$report["tab_el_col_size"][$id] = odbc_result($rs, "TAB_EL_COL_SIZE");
-		$report["zindex"][$id] = odbc_result($rs, "Z_Index");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
+	    $id = lmbdb_result($rs, "EL_ID");
+		$report["id"][$id] = lmbdb_result($rs, "EL_ID");
+		$report["typ"][$id] = lmbdb_result($rs, "TYP");
+		$report["value"][$id] = trim(lmbdb_result($rs, "INHALT")); # longtext handle
+		$report["extvalue"][$id] = trim(lmbdb_result($rs, "EXTVALUE")); # longtext handle
+		$report["posx"][$id] = lmbdb_result($rs, "POSX");
+		$report["posy"][$id] = lmbdb_result($rs, "POSY");
+		$report["width"][$id] = lmbdb_result($rs, "WIDTH");
+		$report["height"][$id] = lmbdb_result($rs, "HEIGHT");
+		$report["style"][$id] = lmbdb_result($rs, "STYLE");
+		$report["pic_type"][$id] = lmbdb_result($rs, "PIC_TYP");
+		$report["pic_style"][$id] = lmbdb_result($rs, "PIC_STYLE");
+		$report["pic_size"][$id] = lmbdb_result($rs, "PIC_SIZE");
+		$report["pic_res"][$id] = lmbdb_result($rs, "PIC_RES");
+		$report["pic_name"][$id] = lmbdb_result($rs, "PIC_NAME");
+		$report["dbfield"][$id] = lmbdb_result($rs, "DBFIELD");
+		$report["data_type"][$id] = lmbdb_result($rs, "DB_DATA_TYPE");
+		$report["tab"][$id] = lmbdb_result($rs, "TAB");
+		$report["tab_el"][$id] = lmbdb_result($rs, "TAB_EL");
+		$report["tab_size"][$id] = lmbdb_result($rs, "TAB_SIZE");
+		$report["verkn_baum"][$id] = lmbdb_result($rs, "VERKN_BAUM");
+		$report["tab_el_col"][$id] = lmbdb_result($rs, "TAB_EL_COL");
+		$report["tab_el_row"][$id] = lmbdb_result($rs, "TAB_EL_ROW");
+		$report["tab_el_col_size"][$id] = lmbdb_result($rs, "TAB_EL_COL_SIZE");
+		$report["zindex"][$id] = lmbdb_result($rs, "Z_Index");
 		if($report["typ"][$id] == 'tabcell'){
 			$report["tab_cell"][$report["tab_el"][$id]][$report["tab_el_col"][$id]][$report["tab_el_row"][$id]] = $id;
 		}
@@ -997,21 +1002,22 @@ function get_report_globals($report_id){
 	global $db;
 
 	/* --- Bericht-Liste --------------------------------------------- */
-	$sqlquery = "SELECT ID,NAME,PAGE_STYLE,REFERENZ_TAB,SAVENAME,INDEXORDER,LISTMODE FROM LMB_REPORT_LIST WHERE ID = $report_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_fetch_row($rs)) {
-		$report["name"] = odbc_result($rs, "NAME");
-		$report["report_id"] = odbc_result($rs, "ID");
-		$report["page_style"] = explode(";",odbc_result($rs, "PAGE_STYLE"));
-		$report["referenz_tab"] = odbc_result($rs, "REFERENZ_TAB");
-		$report["savename"] = odbc_result($rs, "SAVENAME");
-		$report["orderby"] = odbc_result($rs, "INDEXORDER");
-		$report["listmode"] = odbc_result($rs, "LISTMODE");
+	$sqlquery = "SELECT ID,NAME,CSS,DEFFORMAT,PAGE_STYLE,REFERENZ_TAB,SAVENAME,INDEXORDER,LISTMODE FROM LMB_REPORT_LIST WHERE ID = $report_id";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_fetch_row($rs)) {
+		$report["name"] = lmbdb_result($rs, "NAME");
+		$report["report_id"] = lmbdb_result($rs, "ID");
+		$report["page_style"] = explode(";",lmbdb_result($rs, "PAGE_STYLE"));
+		$report["referenz_tab"] = lmbdb_result($rs, "REFERENZ_TAB");
+		$report["savename"] = lmbdb_result($rs, "SAVENAME");
+		$report["orderby"] = lmbdb_result($rs, "INDEXORDER");
+		$report["listmode"] = lmbdb_result($rs, "LISTMODE");
+		$report["defformat"] = lmbdb_result($rs, "DEFFORMAT");
+		$report["css"] = lmbdb_result($rs, "CSS");
 	}
 
 	return $report;
 }
-
 /* --- zIndex neu setzen --------------------------------------------- */
 function setNewZindex($report,$report_id){
 	global $db;
@@ -1024,7 +1030,7 @@ function setNewZindex($report,$report_id){
 		if(!$report['tab_el_col'][$key] AND !$report['tab_el_row'][$key]){
 			# --- Index neu setzen ----
 			$sqlquery = "UPDATE LMB_REPORTS SET Z_INDEX = ".$bzm." WHERE EL_ID = ".$value." AND BERICHT_ID = $report_id";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS["action"],__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS["action"],__FILE__,__LINE__);
 		$bzm++;
 		}
 	}
@@ -1052,16 +1058,16 @@ if($set_new_zindex){
 
 # max Z-Index
 $sqlquery = "SELECT MAX(Z_INDEX) AS RESULT FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND NOT TYP = 'tab'";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-if(odbc_result($rs, "RESULT") > 0){$report["max_zindex"] = odbc_result($rs, "RESULT");}else{$report["max_zindex"] = 1;}
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+if(lmbdb_result($rs, "RESULT") > 0){$report["max_zindex"] = lmbdb_result($rs, "RESULT");}else{$report["max_zindex"] = 1;}
 
 # --- bestehende Fonts ---
 $sqlquery = "SELECT DISTINCT FAMILY FROM LMB_FONTS ORDER BY FAMILY";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
 $sysfont = array();
-while(odbc_fetch_row($rs)){
-	$sysfont[] = trim(odbc_result($rs,"FAMILY"));
+while(lmbdb_fetch_row($rs)){
+	$sysfont[] = trim(lmbdb_result($rs,"FAMILY"));
 }
 
 ?>

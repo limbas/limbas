@@ -188,14 +188,15 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	}
 	pop_line();
 	if($gtab["edit"][$gtabid] AND $action == "gtab_change" AND !$readonly){pop_menu(197,'','');}	# speichern
-	
-	# id ID ~ new dataset
-	if($ID){
+
 
 	if($gtab["add"][$gtabid]){
 		pop_menu(1,'','');								# neuer Datensatz
 	}
-	
+
+	# id ID ~ new dataset
+	if($ID){
+
 	if($gtab["copy"][$gtabid] AND !$readonly){
 		pop_menu(201,'','');							# Datensatz kopieren
 	}
@@ -228,6 +229,13 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	if(function_exists($GLOBALS["gLmbExt"]["menuChangeCContext"][$gtabid])){
 		$GLOBALS["gLmbExt"]["menuChangeCContext"][$gtabid]($gtabid,$form_id,$ID,$gresult);
 	}
+
+    // custmenu
+    if($GLOBALS['gcustmenu'][$gtabid][13]['id'][0]){
+        foreach($GLOBALS['gcustmenu'][$gtabid][13]['id'] as $cmkey => $cmid){
+            lmb_pop_custmenu($cmid,$gtabid,$ID,$gresult);
+        }
+    }
 	
 	pop_bottom();
 	
@@ -257,6 +265,13 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	if(function_exists($GLOBALS["gLmbExt"]["menuChangeCDisplay"][$gtabid])){
 		$GLOBALS["gLmbExt"]["menuChangeCDisplay"][$gtabid]($gtabid,$form_id,$ID,$gresult);
 	}
+
+    // custmenu
+    if($GLOBALS['gcustmenu'][$gtabid][15]['id'][0]){
+        foreach($GLOBALS['gcustmenu'][$gtabid][15]['id'] as $cmkey => $cmid){
+            lmb_pop_custmenu($cmid,$gtabid,$ID,$gresult);
+        }
+    }
 	
 	pop_bottom();
 	?>
@@ -329,6 +344,13 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	if(function_exists($GLOBALS["gLmbExt"]["menuChangeCExtras"][$gtabid])){
 		$GLOBALS["gLmbExt"]["menuChangeCExtras"][$gtabid]($gtabid,$form_id,$ID,$gresult);
 	}
+
+    // custmenu
+    if($GLOBALS['gcustmenu'][$gtabid][16]['id'][0]){
+        foreach($GLOBALS['gcustmenu'][$gtabid][16]['id'] as $cmkey => $cmid){
+            lmb_pop_custmenu($cmid,$gtabid,$ID,$gresult);
+        }
+    }
 	
 	pop_bottom();
 	?>
@@ -362,6 +384,14 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 /* --- Formular --------------------------------------- */
 function print_form(){
 	global $form_done;
+	global $verkn_addfrom;
+
+	/*
+	error_log(print_r($verkn_addfrom,1));
+	$addfrom = explode(";",$verkn_addfrom);
+	end($addfrom);
+	$addfrom_ = explode(",",current($addfrom));
+	*/
 
 	if($form_done){return true;}
 	$form_done = 1;
@@ -515,7 +545,7 @@ function print_symbolbar($gtabid,&$gresult,$ID,$readonly=0){
 }
 
 /* --- Menü --------------------------------------- */
-function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0){
+function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0,$showheader=null){
 	global $lang;
 	global $session;
 	global $gtab;
@@ -529,20 +559,15 @@ function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0){
 	global $action;
 	
     echo "<div class=\"gtabHeaderMenuTR\">";
-	
 	echo "<TABLE BORDER=\"0\" cellspacing=\"0\" cellpadding=\"0\" WIDTH=\"100%\">";
 	
 	# ----------- Verknüpfungsreiter ------------
-	if($verkn_addfrom){
-		echo "<TR>";
-		# ----------- neue Verknüpfungen -----------
-		if($verkn_addfrom){
-			echo "<TD nowrap>";
+    if(isset($showheader) AND !in_array('4',$showheader)){$verkn_addfrom = null;}
+	if(!$showheader AND $verkn_addfrom){
+        echo "<TR><TD nowrap>";
 			print_verknaddfrom($verkn_addfrom,$gtabid);
-			echo "</TD>";
-		}
-		echo "</TR>\n";
-		echo "<TR><TD COLSPAN=\"2\" STYLE=\"background-color:".$farbschema["WEB7"].";border-bottom:1px solid ".$farbschema["WEB4"].";\"><DIV width=\"100%\" style=\"height:1px;overflow:hidden;\"></DIV></TD></TR>\n";
+        echo "</TD></TR>";
+		echo "<TR><TD COLSPAN=\"2\"><DIV width=\"100%\" class=\"lmbTableHeader\"></DIV></TD></TR>\n";
 	}
 
 	echo "<TR><TD COLSPAN=\"2\">";
@@ -558,6 +583,13 @@ function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0){
 	if(function_exists($GLOBALS["gLmbExt"]["menuChangeItems"][$gtabid])){
 		$GLOBALS["gLmbExt"]["menuChangeItems"][$gtabid]($gtabid,$gresult);
 	}
+
+    // custmenu
+    if($GLOBALS['gcustmenu'][$gtabid][12]['id'][0]){
+        foreach($GLOBALS['gcustmenu'][$gtabid][12]['id'] as $cmkey => $cmid){
+            echo "<td>&nbsp;|&nbsp;</td><td nowrap class=\"gtabHeaderMenuTD hoverable\" onclick=\"limbasDivShow(this,'','limbasDivCustMenu_$cmid');\">".$lang[$GLOBALS['gcustmenu'][$gtabid][2]['name'][$cmkey]]."</td>\n";
+        }
+    }
 	
 	echo "<TD class=\"gtabHeaderMenuTD\" VALIGN=\"bottom\" ALIGN=\"RIGHT\" WIDTH=\"100%\" NOWRAP>";
 
@@ -645,8 +677,6 @@ function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0){
 
 	# Symbolleiste
 	if($session["symbolbar"]){
-		
-		
 
 		echo "<TR class=\"gtabHeaderSymbolTR\"><TD COLSPAN=\"2\"><div class=\"gtabHeaderSymbolTD\"><TABLE><TR>\n";
 		
@@ -712,18 +742,18 @@ function form_view($gtabid,$ID,&$gresult,$gformid,$readonly=0){
 }
 
 # --------------- Verknüpfungspfad --------------------------------------------
-function print_verknaddfrom($verkn_addfrom,$gtabid){
+function print_verknaddfrom($verkn_addfrom,$gtabid,$style=null){
 	global $gtab;
 	global $farbschema;
 	$addfrom = explode(";",$verkn_addfrom);
-	echo "<table cellpadding=3 cellspacing=0><tr>";
+	echo "<div style=\"".$style."\">";
 	foreach($addfrom as $key => $value){
 		if($value){
 		$tab = explode(",",$value);
-		echo "<td nowrap style=\"cursor:pointer;color:{$farbschema['WEB12']};white-space:nowrap;height:20px;\" OnClick=\"jump_to_addfrom('$key');\">".$gtab['desc'][$tab[0]]."</td><td valign=\"bottom\"><i class=\"lmb-icon lmb-long-arrow-right-alt\"></i></td>";
+		echo "<div style=\"cursor:pointer;float:left;padding:2px\" OnClick=\"jump_to_addfrom('$key');\">".$gtab['desc'][$tab[0]]."</div><div style=\"float:left;padding:2px\"><i class=\"lmb-icon lmb-long-arrow-right-alt\"></i></div>";
 		}
 	}
-	echo "<td style=\"height:20px;color:{$farbschema['WEB12']};\">".$gtab['desc'][$gtabid]."</td></tr></table>";
+	echo "<div style=\"float:left;padding:2px\">".$gtab['desc'][$gtabid]."</div>";
 }
 
 # --------------- Verknüpfungsreiter --------------------------------------------
@@ -735,24 +765,24 @@ function print_linktags($gtabid,$verkn_poolid,$ID,&$gresult,$onlyfirst=0){
 	global $gverkn;
 	global $action;
 	global $greminder;
-	
-	
-	
+
 	$groupable = $gtab["groupable"][$gtabid];
 	if($onlyfirst){$groupable = 0;}
-        
-        
-        echo "<TABLE class=\"lmbGtabTabmenuTable ".(($groupable) ? 'multiTab' : '')." \" cellspacing=\"0\" cellpadding=\"0\" border=\"0\" STYLE=\"width:100%;\"><TR>";
-	
+
+	echo '<div class="lmbTableHeader">';
+
 	# aus Verknpf Pool
+    /*
 	if($verknpool[$verkn_poolid] AND $verkn_poolid != $gtabid){
 		foreach ($verknpool[$verkn_poolid] as $key => $value){
 			if($value[10]){$mst = "style=\"background-color:".$value[10]."\"";}else{$mst = null;}
 			if($gtabid == $value[0]){$class = "lmbGtabTabmenuActive";}else{$class = "lmbGtabTabmenuInactive";}
-			echo "<TD class=\"".$class."\" NOWRAP $mst OnClick=\"limbasLinkTags(event,'".$value[0]."','".$value[1]."','".$value[2]."','".$value[3]."','".$value[4]."','".$value[5]."','".$value[6]."','".$value[7]."','null','".$value[8]."');\">".$gtab["desc"][$value[0]]."&nbsp;".$value[9]."</TD>\n";
+			echo "<div class=\"$class\" $mst onclick=\"limbasLinkTags(event,'".$value[0]."','".$value[1]."','".$value[2]."','".$value[3]."','".$value[4]."','".$value[5]."','".$value[6]."','".$value[7]."','null','".$value[8]."');\">{$gtab["desc"][$value[0]]}&nbsp;{$value[9]}</div>";
 		}
-	# neu generieren
+
+    # neu generieren
 	}else{
+	*/
 		$verknpool[$gtabid] = null;
 
 		# ------- (-) Verknüpfung -----------------------------------------
@@ -761,7 +791,7 @@ function print_linktags($gtabid,$verkn_poolid,$ID,&$gresult,$onlyfirst=0){
 				if($value != $gtabid AND $gfield[$value]["verkntabletype"][$gfield[$gtabid]["r_verknfieldid"][$key]] != 2){
 					if($gfield[$value]["unique"][$gfield[$gtabid]["r_verknfieldid"][$key]] OR $gfield[$value]["data_type"][$gfield[$gtabid]["r_verknfieldid"][$key]] == 27){$act = "gtab_change";}else{$act = "gtab_erg";}
 					if($gtab["markcolor"][$value]){$mst = "style=\"background-color:".$gtab["markcolor"][$value]."\"";}else{$mst = null;}
-					echo "<TD class=\"lmbGtabTabmenuInactive\" $mst ID=\"tabs_".$value."\" NOWRAP OnClick=\"limbasLinkTags(event,'".$value."','0','".$value."','".$gfield[$gtabid]["r_verknfieldid"][$key]."','".$ID."',2,'".$act."','1','".$gtabid."',0)\">".$gtab["desc"][$value]."</TD>\n";
+					echo "<div class=\"lmbGtabTabmenuInactive\" $mst id=\"tabs_".$value."\" OnClick=\"limbasLinkTags(event,'".$value."','0','".$value."','".$gfield[$gtabid]["r_verknfieldid"][$key]."','".$ID."',2,'".$act."','1','".$gtabid."',0)\">".$gtab["desc"][$value]."</div>";
 					# --- Verknüpfungs Pool setzen -------------------------
 					$verknpool[$gtabid][] = array($value,0,$value,$gfield[$gtabid]["r_verknfieldid"][$key],$ID,2,$act,1,0,'',$gtab["markcolor"][$value]);
 				}
@@ -770,9 +800,10 @@ function print_linktags($gtabid,$verkn_poolid,$ID,&$gresult,$onlyfirst=0){
 
 		# ------- Aktuelle Tabelle -----------------------------------------
 		if($gtab["markcolor"][$gtabid]){$mst = "style=\"background-color:".$gtab["markcolor"][$gtabid]."\"";}else{$mst = null;}
-		echo "<td class=\"lmbGtabTabmenuActive\" $mst id=\"tabs_".$gtabid."\" nowrap onclick=\"send_form('1');\">".$gtab["desc"][$gtabid];
+		#echo "<div class=\"lmbGtabTabmenuActive\" $mst id=\"tabs_".$gtabid."\" onclick=\"send_form('1');\">".$gtab["desc"][$gtabid];
+		echo "<div class=\"lmbGtabTabmenuActive\" $mst id=\"tabs_".$gtabid."\" onclick=\"document.form1.action.value='gtab_erg';document.form1.form_id.value=document.form1.formlist_id.value;send_form('1');\">".$gtab["desc"][$gtabid];
 		if($greminder[$gtabid]['name'][$GLOBALS['gfrist']]){echo "&nbsp;(<i>".$greminder[$gtabid]["name"][$GLOBALS['gfrist']]."</i>)";}
-		echo "</td>";
+		echo "</div>";
 
 		# --- Verknüpfungs Pool setzen -------------------------
 		$verknpool[$gtabid][] = array($gtabid,$ID,0,0,0,0,"gtab_change",$GLOBALS["verkn_showonly"],$GLOBALS["form_id"],"");
@@ -785,17 +816,16 @@ function print_linktags($gtabid,$verkn_poolid,$ID,&$gresult,$onlyfirst=0){
 					if($gtab["markcolor"][$value]){$mst = "style=\"background-color:".$gtab["markcolor"][$value]."\"";}else{$mst = null;}
 					# Anzahl Vernüpfungen
 					$count = "<span style=\"font-size:9;color:green\">(".$gresult[$gtabid][$key][0].")</span>";
-					echo "<TD class=\"lmbGtabTabmenuInactive\" $mst ID=\"tabs_".$value."\" NOWRAP OnClick=\"limbasLinkTags(event,'".$value."','0','".$gtabid."','".$gfield[$gtabid]["field_id"][$key]."','".$ID."',1,'".$act."','1','".$gtabid."',0);\">".$gtab["desc"][$value]."&nbsp;".$count."</TD>";
+					echo "<div class=\"lmbGtabTabmenuInactive\" $mst id=\"tabs_".$value."\" OnClick=\"limbasLinkTags(event,'".$value."','0','".$gtabid."','".$gfield[$gtabid]["field_id"][$key]."','".$ID."',1,'".$act."','1','".$gtabid."',0);\">".$gtab["desc"][$value]."&nbsp;".$count."</div>";
 					# --- Verknüpfungs Pool setzen -------------------------
 					$verknpool[$gtabid][] = array($value,0,$gtabid,$gfield[$gtabid]["field_id"][$key],$ID,1,$act,1,0,$count,$gtab["markcolor"][$value]);
 				}
 			}
 		}
 
-	}
+	#}
 
-	echo "<TD class=\"lmbGtabTabmenuSpace\"></TD>";
-	echo "</TR></TABLE>";
+	echo "</div>";
 }
 
 # --------------- Formularreiter --------------------------------------------
@@ -825,6 +855,44 @@ function print_formtags($gtabid,$gformid){
 
 	echo "<TD NOWRAP STYLE=\"border-bottom:1px solid ".$farbschema["WEB3"].";width:90%;height:1px;\">&nbsp;</TD>";
 	echo "</TR></TABLE>";
+}
+
+# --- Defaultwerte --------------------------------------
+function get_default_values($gtabid){
+    global $gtab;
+    global $gfield;
+
+    // table default
+    foreach($gfield[$gtabid]["sort"] as $key => $value){
+
+        // table default
+        $value = $gfield[$gtabid]["table_deflt"][$key];
+
+        // group default overwrite table default
+        if($gfield[$gtabid]["deflt"][$key]) {
+            $value = $gfield[$gtabid]["deflt"][$key];
+        }
+
+        // eval if starts wit return
+        if(lmb_substr($value,0,6) == 'return') {
+            $value = eval($value.';');
+        }
+
+        if($gfield[$gtabid]["field_type"][$key] == 2) {
+            if(constant('LMB_DBREDEF_'.strtoupper($value)) == 'TIMESTAMP'){
+                $value = convert_date(local_date());
+            }elseif(constant('LMB_DBREDEF_'.strtoupper($value)) == 'DATE'){
+                $value = convert_date(local_date(1));
+            }elseif(convert_date($value)){
+                $value = convert_date($value);
+            }
+        }
+
+        $gresult[$gtabid][$key][0] = $value;
+
+    }
+
+    return $gresult;
 }
 
 # --------------- default view elements --------------------------------------------

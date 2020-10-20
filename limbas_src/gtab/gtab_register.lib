@@ -191,6 +191,10 @@ if($filter_reset AND !$snap_id){
 		if($filter["viewversion"][$gtabid]){$filter["viewversion"][$gtabid] = 0;}
 		else{$filter["viewversion"][$gtabid] = 1;}
 	}
+	if($filter_multitenant){
+		if($filter["multitenant"][$gtabid]){$filter["multitenant"][$gtabid] = 0;
+		}else{$filter["multitenant"][$gtabid] = 1;}
+	}
 	if($filter_nolimit){
 		if($filter["nolimit"][$gtabid]){$filter["nolimit"][$gtabid] = 0;
 		}else{$filter["nolimit"][$gtabid] = 1;}

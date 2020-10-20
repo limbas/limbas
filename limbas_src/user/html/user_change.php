@@ -65,9 +65,9 @@ function check_pass(pass2) {
 <TABLE BORDER="0" cellspacing="2" cellpadding="0" STYLE="border:2px solid black" BGCOLOR="<?=$farbschema['WEB8']?>">
 <?php
 $sqlquery = "SELECT DISTINCT * FROM LMB_COLORSCHEMES";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-    echo "<TR><TD>".odbc_result($rs, "NAME")."</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB1")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB2")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB3")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB4")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB8")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB3")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB7")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".odbc_result($rs, "WEB8")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD></TR>";
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+    echo "<TR><TD>".lmbdb_result($rs, "NAME")."</TD><TD BGCOLOR=\"".lmbdb_result($rs, "WEB1")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".lmbdb_result($rs, "WEB2")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".lmbdb_result($rs, "WEB3")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".lmbdb_result($rs, "WEB4")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".lmbdb_result($rs, "WEB8")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".lmbdb_result($rs, "WEB3")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".lmbdb_result($rs, "WEB7")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".lmbdb_result($rs, "WEB8")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD></TR>";
 }
 ?>
 </TABLE>
@@ -116,11 +116,11 @@ echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\" COLSPAN=2><i class=\"l
 echo "<TR class=\"tabBody\"><TD width=150>$lang[624]</TD><TD><SELECT STYLE=\"width:160px;\" NAME=\"language\" OnChange=\"this.form.lang_change.value='1';\">";
 echo "<OPTION VALUE=\"-1\">system";
 $sqlquery = "Select DISTINCT LANGUAGE,LANGUAGE_ID FROM LMB_LANG";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-$langid = odbc_result($rs,"LANGUAGE_ID");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+$langid = lmbdb_result($rs,"LANGUAGE_ID");
 if($result_user["language"] == $langid){$SELECTED =  "SELECTED";}else {unset($SELECTED);}
-echo "<OPTION VALUE=\"".urlencode($langid)."\" $SELECTED>".odbc_result($rs,"LANGUAGE");
+echo "<OPTION VALUE=\"".urlencode($langid)."\" $SELECTED>".lmbdb_result($rs,"LANGUAGE");
 }
 echo "</SELECT></TD></TR>";
 
@@ -130,11 +130,11 @@ echo "<TR class=\"tabBody\"><TD width=150>$lang[2576]</TD><TD><SELECT STYLE=\"wi
 /* --- Farbschema Liste --------------------------------------------- */
 echo "<TR class=\"tabBody\"><TD width=150>$lang[623]</TD><TD><SELECT STYLE=\"width:160px;\" name=\"farbe\" OnChange=\"this.form.farbe_change.value='1';\">";
 $sqlquery = "SELECT * FROM LMB_COLORSCHEMES WHERE LOWER(NAME) LIKE '%".lmb_strtolower($result_user["layout"])."%' ORDER BY ID";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-$farbid = odbc_result($rs,"ID");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+$farbid = lmbdb_result($rs,"ID");
 if($result_user["farbschema"] == $farbid){$SELECTED =  "SELECTED";}else {unset($SELECTED);}
-echo "<OPTION VALUE=\"".urlencode($farbid)."\" $SELECTED>".str_replace("(".$result_user["layout"].")","",odbc_result($rs,"NAME"));
+echo "<OPTION VALUE=\"".urlencode($farbid)."\" $SELECTED>".str_replace("(".$result_user["layout"].")","",lmbdb_result($rs,"NAME"));
 }
 echo "</SELECT></TD></TR>";
 

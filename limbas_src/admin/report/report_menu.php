@@ -33,9 +33,6 @@ if($display_panel){
     }
 }
 
-echo 'asas',$report;
-
-
 ?>
 
 /* ---------------- Sendkeypress---------------------- */
@@ -314,6 +311,43 @@ function displayPanel(el,id){
 <TR><TD>name</TD><TD colspan="3"><INPUT TYPE="TEXT" NAME="savename" VALUE="<?php if($report["savename"]){echo htmlentities($report["savename"],ENT_QUOTES,$umgvar["charset"]);}else{echo "default";}?>" OnChange="this.form.submit();" STYLE="width:155;"></TD></TR>
 <TR><TD><?=$lang[1141]?>:</TD><TD><INPUT TYPE="TEXT" NAME="page_width" VALUE="<?php if($report['page_style']){echo $report['page_style'][0];}else{echo "210";}?>" OnChange="this.form.submit();" STYLE="width:40;"></TD><TD><?=$lang[1142]?>:</TD>
 <TD><INPUT TYPE="TEXT" NAME="page_height" VALUE="<?php if($report['page_style'][1]){echo $report['page_style'][1];}else{echo "295";}?>" OnChange="this.form.submit();" STYLE="width:40;"></TD></TR>
+
+<?php if($report["defformat"] == 'tcpdf'){?>
+<TR>
+    <TD><?= $lang[2581] ?></TD>
+    <TD COLSPAN="3">
+        <select name="default_class" onchange="document.form1.submit();" style="width:100px;">
+            <option value="NULL">
+            <?php
+           if (file_exists($umgvar['pfad'] . '/EXTENSIONS/css')) {
+                $extfiles = read_dir($umgvar['pfad'] . '/EXTENSIONS/css', 0);
+
+                $extfiles['name'][] = 'layout.css';
+                $extfiles['typ'][] = 'file';
+                $extfiles['path'][] = '/EXTENSIONS/css/layout.css';
+                $extfiles['ext'][] = 'css';
+
+                if ($extfiles['name']) {
+                    foreach ($extfiles['name'] as $key1 => $filename) {
+                        if ($extfiles['typ'][$key1] == 'file' AND $extfiles['ext'][$key1] == 'css') {
+                            $path = lmb_substr($extfiles['path'][$key1], lmb_strlen($umgvar['pfad']), 100);
+                            if ($report['css'] == $path . $filename) {
+                                $selected = 'SELECTED';
+                            } else {
+                                $selected = '';
+                            }
+                            echo '<option value="' . $path . $filename . '" ' . $selected . '>' . str_replace('/EXTENSIONS/css/', '', $path) . $filename;
+                        }
+                    }
+                }
+            }
+            ?>
+
+        </select>
+    </TD>
+</TR>
+<?php }?>
+
 <TR><TD><?=$lang[1111]?><TD><INPUT TYPE="TEXT" NAME="border_top" VALUE="<?php if($report['page_style'][2]){echo $report['page_style'][2];}?>" OnChange="this.form.submit();" STYLE="width:40;"></TD></TR>
 <TR><TD COLSPAN="5"><div style="overflow:hidden;height:1px;width:100%;background-color:grey;"></div></TD></TR>
 <TR><TD><?=$lang[1138]?>:</TD><TD>

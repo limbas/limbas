@@ -31,15 +31,15 @@ function lmb_formCopy($ID,$form_name,$referenz_tab,$form_extension){
 	$form_name = str_replace("\"","",$form_name);
 	
 	$sqlquery = "SELECT FORM_TYP,REFERENZ_TAB,CSS,EXTENSION,DIMENSION FROM LMB_FORM_LIST WHERE ID = $ID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$form_typ = odbc_result($rs,"FORM_TYP");
+	$form_typ = lmbdb_result($rs,"FORM_TYP");
 	
 	if(!$form_extension){
-		$form_extension = odbc_result($rs,"EXTENSION");
+		$form_extension = lmbdb_result($rs,"EXTENSION");
 	}
 	if(!$referenz_tab){
-		$referenz_tab = odbc_result($rs,"REFERENZ_TAB");
+		$referenz_tab = lmbdb_result($rs,"REFERENZ_TAB");
 	}
 
 	/* --- Next ID ---------------------------------------- */
@@ -48,13 +48,13 @@ function lmb_formCopy($ID,$form_name,$referenz_tab,$form_extension){
 	$new_fieldkeyid = next_db_id('LMB_FORMS');
 	
 	/* --- Neues Formular anlegen---------------------------------------- */
-	$sqlquery = "INSERT INTO LMB_FORM_LIST (ID,ERSTUSER,NAME,REFERENZ_TAB,FORM_TYP,CSS,EXTENSION,DIMENSION) VALUES(".parse_db_int($new_formid,5).",".$session["user_id"].",'".parse_db_string($form_name,160)."',".parse_db_int($referenz_tab,5).",".parse_db_int($form_typ,5).",'".parse_db_string(odbc_result($rs,"CSS"),120)."','".parse_db_string($form_extension,250)."','".parse_db_string(odbc_result($rs,"DIMENSION"),10)."')";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$sqlquery = "INSERT INTO LMB_FORM_LIST (ID,ERSTUSER,NAME,REFERENZ_TAB,FORM_TYP,CSS,EXTENSION,DIMENSION) VALUES(".parse_db_int($new_formid,5).",".$session["user_id"].",'".parse_db_string($form_name,160)."',".parse_db_int($referenz_tab,5).",".parse_db_int($form_typ,5).",'".parse_db_string(lmbdb_result($rs,"CSS"),120)."','".parse_db_string($form_extension,250)."','".parse_db_string(lmbdb_result($rs,"DIMENSION"),10)."')";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 	# Rechte
 	$NEXTID = next_db_id("LMB_RULES_REPFORM");
 	$sqlquery = "INSERT INTO LMB_RULES_REPFORM (ID,TYP,GROUP_ID,LMVIEW,REPFORM_ID) VALUES ($NEXTID,2,".$session["group_id"].",".LMB_DBDEF_TRUE.",$new_formid)";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 	$gformlist[$referenz_tab]["id"][$new_formid] = $new_formid;
 	$gformlist[$referenz_tab]["name"][$new_formid] = $form_name;
@@ -63,6 +63,7 @@ function lmb_formCopy($ID,$form_name,$referenz_tab,$form_extension){
 	$gformlist[$referenz_tab]["ref_tab"][$new_formid] = $referenz_tab;
 	$gformlist[$referenz_tab]["erstuser"][$new_formid] = $session["user_id"];
 	$gformlist[$referenz_tab]["extension"][$new_formid] = $form_extension;
+	$gformlist["argresult_id"][$new_formid] = $referenz_tab;
 	$_SESSION["gformlist"] = $gformlist;
 	
 	/* --- LMB_FORMS ---------------------------------------- */ 
@@ -70,9 +71,9 @@ function lmb_formCopy($ID,$form_name,$referenz_tab,$form_extension){
 	$fieldlist = implode(', ', $domain_columns["columnname"]);
 	
 	$sqlquery = "SELECT $fieldlist FROM LMB_FORMS WHERE FORM_ID = ".$ID;
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
+	while(lmbdb_fetch_row($rs)) {
 		
 		$qu_field = array();
 		$qu_value = array();
@@ -80,7 +81,7 @@ function lmb_formCopy($ID,$form_name,$referenz_tab,$form_extension){
 		$bzm = 0;
 		foreach ($domain_columns["columnname"] as $key1 => $fieldname){
 
-			$value1 = odbc_result($rs, $fieldname);
+			$value1 = lmbdb_result($rs, $fieldname);
 			if($value1 == ''){continue;}
 
 			$qu_field[] = $fieldname;
@@ -94,7 +95,7 @@ function lmb_formCopy($ID,$form_name,$referenz_tab,$form_extension){
 
 			/* ---- upload ------ */
 			}elseif(lmb_strtoupper($fieldname) == 'TYP' AND $value1 == 'bild'){
-				$tab_size  = odbc_result($rs, 'TAB_SIZE');
+				$tab_size  = lmbdb_result($rs, 'TAB_SIZE');
 				$ext = explode(".",$tab_size);
 				$secname = lmb_substr(md5($new_fieldkeyid.date("U")),0,12).".".$ext[1];
 				$qu_value[] = lmb_parseImport($value1,$domain_columns,$key1);
@@ -122,7 +123,7 @@ function lmb_formCopy($ID,$form_name,$referenz_tab,$form_extension){
 		if($pic_key AND $secname){$qu_value[$pic_key] = "'".$secname."'";}
 
 		$sqlquery1 = "INSERT INTO LMB_FORMS (".implode(",",$qu_field).") VALUES (".implode(",",$qu_value).")";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 		
 		$new_fieldkeyid++;
@@ -160,8 +161,8 @@ if($formcopy){
 	
 	if($referenz_tab){
 		$sqlquery = "SELECT TAB_ID FROM LMB_CONF_TABLES WHERE TAB_ID = ".parse_db_int($referenz_tab);
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!odbc_result($rs,"TAB_ID")){
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!lmbdb_result($rs,"TAB_ID")){
 			lmb_alert("referenz table not found!");
 			$fail = 1;
 		}
@@ -173,27 +174,20 @@ if($formcopy){
 	
 		/* --- Neues Formular anlegen---------------------------------------- */
 		$sqlquery = "INSERT INTO LMB_FORM_LIST (ID,ERSTUSER,NAME,REFERENZ_TAB,FORM_TYP,EXTENSION) VALUES($form_id,{$session['user_id']},'".parse_db_string($form_name,160)."',".parse_db_int($referenz_tab).",".parse_db_int($form_typ).",'".parse_db_string($form_extension,250)."')";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	
 		# Rechte
 		$NEXTID = next_db_id("LMB_RULES_REPFORM");
 		$sqlquery = "INSERT INTO LMB_RULES_REPFORM (ID,TYP,GROUP_ID,LMVIEW,REPFORM_ID) VALUES ($NEXTID,2,".$session["group_id"].",".LMB_DBDEF_TRUE.",".parse_db_int($form_id).")";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	
-		$gformlist[$referenz_tab]["id"][$form_id] = $form_id;
-		$gformlist[$referenz_tab]["name"][$form_id] = $form_name;
-		$gformlist[$referenz_tab]["typ"][$form_id] = $form_typ;
-		$gformlist[$referenz_tab]["redirect"][$form_id] = "";
-		$gformlist[$referenz_tab]["ref_tab"][$form_id] = $referenz_tab;
-		$gformlist[$referenz_tab]["erstuser"][$form_id] = $session["user_id"];
-		$gformlist[$referenz_tab]["extension"][$form_id] = $form_extension;
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
 		
 		if(!$form_extension AND $referenz_tab){
 	
 			/* --- Next ID ---------------------------------------- */
 			$sqlquery = "SELECT MAX(KEYID) AS NEXTID FROM LMB_FORMS WHERE FORM_ID = $form_id";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			$NEXTID = odbc_result($rs,"NEXTID") + 1;
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$NEXTID = lmbdb_result($rs,"NEXTID") + 1;
 			$NEXTKEYID = next_db_id("LMB_FORMS","KEYID");
 	
 			/* --- Einspaltig --------------------------------------- */
@@ -206,7 +200,7 @@ if($formcopy){
 					$height = 16;
 					$width = 200;
 					$sqlquery = "INSERT INTO LMB_FORMS (KEYID,KEYID,form_id,ERSTUSER,POSX,POSY,HEIGHT,WIDTH,TYP,STYLE,INHALT) VALUES ($NEXTKEYID,$NEXTID,$form_id,{$session['user_id']},$posx,$posy,$height,$width,'text','$style','".$gfield[$gtab['tab_id'][$gtabid]]['spelling'][$bzm1].":')";
-					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					if(!$rs) {$commit = 1;}
 					$NEXTID++;
 					$NEXTKEYID++;
@@ -220,7 +214,7 @@ if($formcopy){
 					}
 	
 					$sqlquery = "INSERT INTO LMB_FORMS (KEYID,KEYID,form_id,ERSTUSER,POSX,POSY,HEIGHT,WIDTH,TYP,STYLE,TAB_GROUP,TAB_ID,FIELD_ID,INHALT) VALUES ($NEXTKEYID,$NEXTID,$form_id,{$session['user_id']},".($posx + 210).",$posy,$height,$width,'dbdat','$style',".$gtab['tab_group'][$bzm].",".$gtab['tab_id'][$bzm].",".$gfield[$gtab['tab_id'][$gtabid]]['field_id'][$bzm1].",'".$gfield[$gtab['tab_id'][$gtabid]]['field_name'][$bzm1]."')";
-					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					if(!$rs) {$commit = 1;}
 					$NEXTID++;
 					$NEXTKEYID++;
@@ -245,20 +239,20 @@ if($formcopy){
 					
 					/* --- EingabeFeld eintragen ---------------------------------------- */
 					$sqlquery = "INSERT INTO LMB_FORMS (KEYID,KEYID,FORM_ID,ERSTUSER,TYP,POSX,POSY,HEIGHT,WIDTH,STYLE,INHALT,FIELD_ID,FORM_FRAME) VALUES ($NEXTKEYID,$NEXTID,$form_id,{$session['user_id']},'dbinput',$posx,$posy,$height,$width,'$style','".$gfield[$gtab['tab_id'][$vgtabid]]['spelling'][$bzm1]."',".$gfield[$gtab['tab_id'][$vgtabid]]['field_id'][$bzm1].",1)";
-					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					if(!$rs) {$commit = 1;}
 					$NEXTID++;
 					$NEXTKEYID++;
 					/* --- Feldbezeichnung eintragen ---------------------------------------- */
 					$sqlquery = "INSERT INTO LMB_FORMS (KEYID,KEYID,FORM_ID,ERSTUSER,TYP,POSX,POSY,HEIGHT,WIDTH,STYLE,INHALT,FIELD_ID,FORM_FRAME) VALUES ($NEXTKEYID,$NEXTID,$form_id,{$session['user_id']},'dbdesc',$posx,".($posy + 24).",$height,$width,'$style','".$gfield[$gtab['tab_id'][$vgtabid]]['spelling'][$bzm1]."',".$gfield[$gtab['tab_id'][$vgtabid]]['field_id'][$bzm1].",1)";
-					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					if(!$rs) {$commit = 1;}
 					$NEXTID++;
 					$NEXTKEYID++;
 					$posy = 0;
 					/* --- Feldinhalt eintragen ---------------------------------------- */
 					$sqlquery = "INSERT INTO LMB_FORMS (KEYID,KEYID,FORM_ID,ERSTUSER,TYP,POSX,POSY,HEIGHT,WIDTH,STYLE,TAB_GROUP,TAB_ID,FIELD_ID,INHALT,FORM_FRAME) VALUES ($NEXTKEYID,$NEXTID,$form_id,{$session['user_id']},'dbdat',$posx,$posy,$height,$width,'$style',".$gtab['tab_group'][$bzm].",".$gtab['tab_id'][$bzm].",".$gfield[$gtab['tab_id'][$vgtabid]]['field_id'][$bzm1].",'".$gfield[$gtab['tab_id'][$vgtabid]]['field_name'][$bzm1]."',2)";
-					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					if(!$rs) {$commit = 1;}
 					$NEXTID++;
 					$NEXTKEYID++;
@@ -269,31 +263,21 @@ if($formcopy){
 			}
 		}
 	}
+
+	$gformlist = resultformlist_();
 	$_SESSION["gformlist"] = $gformlist;
+
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 /*----------------- Formular umbenennen -------------------*/
 if($rename_id) {
 	$sqlquery = "SELECT REFERENZ_TAB FROM LMB_FORM_LIST WHERE ID = $rename_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$reftab = odbc_result($rs, "REFERENZ_TAB");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$reftab = lmbdb_result($rs, "REFERENZ_TAB");
 	if($gformlist[$reftab]["id"][$rename_id]){
 		$sqlquery = "UPDATE LMB_FORM_LIST SET NAME = '".parse_db_string(${"form_name_".$rename_id},160)."' WHERE ID = $rename_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		$gformlist[$reftab]["name"][$rename_id] = ${"form_name_".$rename_id};
 		$_SESSION["gformlist"] = $gformlist;
@@ -304,34 +288,61 @@ if($rename_id) {
 if($del AND $form_id){
 
 	$sqlquery = "SELECT ID,REFERENZ_TAB,EXTENSION FROM LMB_FORM_LIST WHERE ID = $form_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$reftab = odbc_result($rs, "REFERENZ_TAB");
-	$exten = odbc_result($rs, "EXTENSION");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$reftab = lmbdb_result($rs, "REFERENZ_TAB");
+	$exten = lmbdb_result($rs, "EXTENSION");
 	
 	if($gformlist[$reftab]["id"][$form_id] OR $gformlist['']["id"][$form_id]){
 
 		$sqlquery = "SELECT TAB_SIZE FROM LMB_FORMS WHERE FORM_ID = $form_id AND TYP = 'bild'";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		while(odbc_fetch_row($rs)) {
-			if(file_exists($umgvar['uploadpfad']."form/".odbc_result($rs, "TAB_SIZE"))){
-				unlink($umgvar['uploadpfad']."form/".odbc_result($rs, "TAB_SIZE"));
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs)) {
+			if(file_exists($umgvar['uploadpfad']."form/".lmbdb_result($rs, "TAB_SIZE"))){
+				unlink($umgvar['uploadpfad']."form/".lmbdb_result($rs, "TAB_SIZE"));
 			}
-			if(file_exists($umgvar['pfad']."/TEMP/thumpnails/form/".odbc_result($rs, "TAB_SIZE"))){
-				unlink($umgvar['pfad']."/TEMP/thumpnails/form/".odbc_result($rs, "TAB_SIZE"));
+			if(file_exists($umgvar['pfad']."/TEMP/thumpnails/form/".lmbdb_result($rs, "TAB_SIZE"))){
+				unlink($umgvar['pfad']."/TEMP/thumpnails/form/".lmbdb_result($rs, "TAB_SIZE"));
 			}
 		}
 		
 		$sqlquery = "DELETE FROM LMB_FORMS WHERE FORM_ID = $form_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		$sqlquery = "DELETE FROM LMB_FORM_LIST WHERE ID = $form_id";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		
 	}
-	unset($gformlist[$reftab]["id"][$form_id]);
-	unset($gformlist['']["id"][$form_id]);
-	unset($gformlist[$reftab]["name"][$form_id]);
 
+	$gformlist = resultformlist_();
 	$_SESSION["gformlist"] = $gformlist;
+
+}
+
+#----------------- Form list -------------------
+function resultformlist_(){
+	global $db;
+	global $session;
+
+	$sqlquery = "SELECT DISTINCT LMB_FORM_LIST.DIMENSION,LMB_FORM_LIST.EXTENSION,LMB_FORM_LIST.NAME,LMB_FORM_LIST.CSS,LMB_FORM_LIST.ID,LMB_FORM_LIST.REDIRECT,LMB_FORM_LIST.FORM_TYP,LMB_FORM_LIST.REFERENZ_TAB,LMB_FORM_LIST.ERSTUSER,LMB_RULES_REPFORM.HIDDEN
+	FROM LMB_FORM_LIST,LMB_RULES_REPFORM
+	WHERE LMB_RULES_REPFORM.REPFORM_ID = LMB_FORM_LIST.ID
+	AND LMB_RULES_REPFORM.TYP = 2
+	AND (LMB_RULES_REPFORM.GROUP_ID IN (".implode(",",$session["subgroup"])."))
+	ORDER BY REFERENZ_TAB,NAME";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	while(lmbdb_fetch_row($rs)) {
+		$key = lmbdb_result($rs, "ID");
+		$gtabid = lmbdb_result($rs, "REFERENZ_TAB");
+		if(!$gtabid){$gtabid = 0;}
+		$gformlist["argresult_id"][$key] = $gtabid;
+		$gformlist[$gtabid]["id"][$key] = $key;
+		$gformlist[$gtabid]["name"][$key] = lmbdb_result($rs, "NAME");
+		$gformlist[$gtabid]["typ"][$key] = lmbdb_result($rs, "FORM_TYP");
+		$gformlist[$gtabid]["ref_tab"][$key] = $gtabid;
+		$gformlist[$gtabid]["extension"][$key] = trim(lmbdb_result($rs, "EXTENSION"),"/");
+	}
+
+	return $gformlist;
 }
 
 ?>
@@ -377,32 +388,37 @@ function form_delete(ID){
 
 <?php
 if($gformlist){
-	foreach ($gformlist as $key => $value){
-		if($gtab["table"][$key]){
-			$cat = $gtab["desc"][$key];
+
+    $tablist = array_unique($gformlist['argresult_id']);
+	foreach ($tablist as $key => $gtabid){
+
+	    if($gtabid){
+			$cat = $gtab["desc"][$gtabid];
 		}else{
 			$cat = $lang[1986];
 		}
 		echo "<tr class=\"tabSubHeader\"><td class=\"tabSubHeaderItem\" colspan=\"8\">" . $cat . "</td></tr>";
-		if($value["id"]){
-			foreach ($value["id"] as $key2 => $value2){
-				if($value2){
-					if($value["typ"][$key2] == 1){$typ = $lang[1183];}else{$typ = $lang[1184];}
+
+		if($gformlist[$gtabid]['id']){
+			#foreach ($value["id"] as $key2 => $value2){
+			foreach ($gformlist[$gtabid]['id'] as $key2 => $formid){
+				#if($value2){
+					if($gformlist[$gtabid]["typ"][$key2] == 1){$typ = $lang[1183];}else{$typ = $lang[1184];}
 					echo "<TR class=\"tabBody\">";
-					echo "<TD>&nbsp;".$value["id"][$key2]."&nbsp;</TD>";
+					echo "<TD>&nbsp;".$formid."&nbsp;</TD>";
 					echo "<TD>";
-					if(!$value["extension"][$key2]){echo "<A HREF=\"main_admin.php?&action=setup_form_frameset&form_typ=".$value["typ"][$key2]."&form_id=".$value["id"][$key2]."&referenz_tab=".$value["ref_tab"][$key2]."\"><i class=\"lmb-icon lmb-pencil\" BORDER=\"0\" style=\"cursor:pointer\"></i></A>";}
+					if(!$gformlist[$gtabid]["extension"][$key2]){echo "<A HREF=\"main_admin.php?&action=setup_form_frameset&form_typ=".$gformlist[$gtabid]["typ"][$key2]."&form_id=".$formid."&referenz_tab=".$gformlist[$gtabid]["ref_tab"][$key2]."\"><i class=\"lmb-icon lmb-pencil\" BORDER=\"0\" style=\"cursor:pointer\"></i></A>";}
 					echo "</TD>";
-					echo "<TD ALIGN=\"CENTER\"><i OnClick=\"form_delete('".$value["id"][$key2]."')\" class=\"lmb-icon lmb-trash\" BORDER=\"0\" style=\"cursor:pointer\"></i></TD>";
-					echo "<TD><INPUT TYPE=\"TEXT\" NAME=\"form_name_".$value["id"][$key2]."\" VALUE=\"".$value["name"][$key2]."\" STYLE=\"width:160px;\" OnChange=\"change_name(this.value,this.name,'".$value["id"][$key2]."');\"></TD>";
+					echo "<TD ALIGN=\"CENTER\"><i OnClick=\"form_delete('".$formid."')\" class=\"lmb-icon lmb-trash\" BORDER=\"0\" style=\"cursor:pointer\"></i></TD>";
+					echo "<TD><INPUT TYPE=\"TEXT\" NAME=\"form_name_".$formid."\" VALUE=\"".$gformlist[$gtabid]["name"][$key2]."\" STYLE=\"width:160px;\" OnChange=\"change_name(this.value,this.name,'".$gformlist[$gtabid]["id"][$key2]."');\"></TD>";
 					
 					echo "<TD>".$typ."</TD>";
 					
-					echo "<TD>".$gtab["desc"][$value["ref_tab"][$key2]]."</TD>";
-					echo "<TD>".$value["extension"][$key2]."</TD>";
-					echo "<TD>".$userdat["bezeichnung"][$value["erstuser"][$key2]]."</TD>";
+					echo "<TD>".$gtab["desc"][$gformlist[$gtabid]["ref_tab"][$key2]]."</TD>";
+					echo "<TD>".$gformlist[$gtabid]["extension"][$key2]."</TD>";
+					echo "<TD>".$userdat["bezeichnung"][$gformlist[$gtabid]["erstuser"][$key2]]."</TD>";
 					echo "</TR>";
-				}
+				#}
 			}
 		}
 

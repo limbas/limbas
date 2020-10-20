@@ -134,7 +134,7 @@ if ($odbc['odbc_vendor'] AND file_exists($umgvar['path'] . '/lib/odbc/db_' . $od
     
     $dbfunc = $odbc['odbc_vendor'] . '_dbq_0';
     if (! $odbc_connect = $dbfunc($odbc['odbc_host'], $odbc['odbc_database'], $odbc['odbc_dbuser'], $odbc['odbc_dbpass'], $odbc['odbc_dbdriver'], $odbc['odbc_dbport'])) {
-        echo odbc_errormsg($odbc_connect);
+        echo lmbdb_errormsg($odbc_connect);
         return false;
     }
     $odbc['odbc_connect'] = $odbc_connect;

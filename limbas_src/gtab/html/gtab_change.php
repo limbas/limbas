@@ -45,7 +45,7 @@ if($scrollto){
 
 #----------------- Plausibilitätsprüfung -------------------
 if(!is_numeric($ID)){
-	if($db){odbc_close($db);}
+	if($db){lmbdb_close($db);}
 	die("<BODY BGCOLOR=\"$farbschema[WEB8]\"><Script language=\"JavaScript\">\nalert('$lang[764]');\nfunction inusetime(){};</SCRIPT></BODY>");
 }
 
@@ -111,8 +111,10 @@ if(count($gformlist[$gtabid]["id"]) > 0){echo "jsvar[\"is_formlist\"] = \"1\";\n
 
 #echo "jsvar[\"currency\"] = new Array('".implode("','",$lmcurrency["currency"])."');\n";
 if($lmcurrency){
-	echo "jsvar[\"currency_code\"] = new Array('".implode("','",$lmcurrency["code"])."');\n";
-	echo "jsvar[\"currency_unit\"] = new Array('".implode("','",$lmcurrency["unit"])."');\n";
+	echo "jsvar[\"currency_code\"] = ['".implode("','",$lmcurrency["code"])."'];\n";
+    echo "jsvar[\"currency_id\"] = ".json_encode($lmcurrency["id"]).";\n";
+	echo "jsvar[\"currency_rate\"] = ".json_encode($lmcurrency["rate"]).";\n";
+    echo "jsvar[\"default_currency\"] = '".$umgvar['default_currency']."';\n";
 }
 
 # reload list
@@ -122,13 +124,16 @@ if($lmcurrency){
 </SCRIPT>
 
 
-<?php if($action == 'gtab_neu'){$action = 'gtab_change';}
+<?php
+
+if($action == 'gtab_neu'){$action = 'gtab_change';}
 
 # --- zeige Formular-Ansicht EXTENSION -----
 if($gformlist[$gtabid]["extension"][$form_id]){
 	require_once($gformlist[$gtabid]["extension"][$form_id]);
 # --- zeige Formular-Ansicht -----
 }elseif($gform[$form_id] AND $gformlist[$gtabid]["id"][$form_id] AND $gformlist[$gtabid]["typ"][$form_id] == 1){
+
 	if($ID){
 		if($gtab["typ"][$gtabid] == 5){
 			# need filter and search-params for using pointer
@@ -136,6 +141,11 @@ if($gformlist[$gtabid]["extension"][$form_id]){
 		}else{
 			$gresult = get_gresult($gtabid,null,null,null,0,$gform[$form_id]["used_fields"],$ID);
 		}
+
+        # ----------- multitenant permission  -----------
+        if($umgvar['multitenant'] AND $gtab['multitenant'][$gtabid] AND $lmmultitenants['mid'][$session['mid']] != $gresult[$gtabid]['MID'][0] AND !$session["superadmin"]){
+            $action = 'gtab_deterg';
+        }
 
 		// relation parameters fields | parent relation fields
 		if($gform[$form_id]["parentrel"] OR $gform[$form_id]["paramrel"]){
@@ -145,7 +155,9 @@ if($gformlist[$gtabid]["extension"][$form_id]){
 		    }
 			form_gresult($ID,$gtabid,$form_id,$gresult,null,$verkn);
 		}
-	}
+	}elseif($ID == 0) {
+        $gresult = get_default_values($gtabid);
+    }
 	
 	$readonly = 0;
 	# ----------- edit Permission -----------
@@ -168,7 +180,14 @@ if($gformlist[$gtabid]["extension"][$form_id]){
 		}else{
 			$gresult = get_gresult($gtabid,null,null,null,0,0,$ID);
 		}
-	}
+	}elseif($ID == 0) {
+        $gresult = get_default_values($gtabid);
+    }
+
+    # ----------- multitenant permission  -----------
+    if($umgvar['multitenant'] AND $gtab['multitenant'][$gtabid] AND $lmmultitenants['mid'][$session['mid']] != $gresult[$gtabid]['MID'][0] AND !$session["superadmin"]){
+        $action = 'gtab_deterg';
+    }
 	
 	$readonly = 0;
 	# ----------- edit Permission -----------

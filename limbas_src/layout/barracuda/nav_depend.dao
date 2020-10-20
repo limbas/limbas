@@ -1,0 +1,121 @@
+<?php
+/*
+ * Copyright notice
+ * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * All rights reserved
+ * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
+ * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * Or
+ * In a Propritary Software Licence http://limbas.org
+ * The GNU General Public License can be found at http://www.gnu.org/copyleft/gpl.html.
+ * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
+ * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ * This copyright notice MUST APPEAR in all copies of the script!
+ * Version 3.6
+ */
+
+/*
+ * ID:
+ */
+
+
+function lmb_getCustmenu(){
+    global $db;
+    global $lang;
+
+    $sqlquery = "SELECT * FROM LMB_CUSTMENU ORDER BY LINKID,PARENT,SORT";
+    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    while (odbc_fetch_row($rs)) {
+
+        $key = odbc_result($rs, 'ID');
+        $LINKID = odbc_result($rs, 'LINKID');
+
+        $custmenu[$LINKID]['id'][$key] = $key;
+        $custmenu[$LINKID]['parent'][$key] = odbc_result($rs, 'PARENT');
+        $custmenu[$LINKID]['typ'][$key] = odbc_result($rs, 'TYP');
+        $custmenu[$LINKID]['name'][$key] = odbc_result($rs, 'NAME');
+        $custmenu[$LINKID]['title'][$key] = odbc_result($rs, 'TITLE');
+        $custmenu[$LINKID]['linkid'][$key] = odbc_result($rs, 'LINKID');
+        $custmenu[$LINKID]['sort'][$key] = odbc_result($rs, 'SORT');
+        $custmenu[$LINKID]['url'][$key] = odbc_result($rs, 'URL');
+        $custmenu[$LINKID]['icon'][$key] = odbc_result($rs, 'ICON');
+        $custmenu[$LINKID]['bg'][$key] = odbc_result($rs, 'BG');
+
+    }
+
+    return $custmenu;
+
+}
+
+
+function lmb_buildCustmenu(&$custmenu,$parent,$menu=array()){
+    global $lang;
+    $ebzm = 0;
+
+    foreach ($custmenu['id'] as $key => $id) {
+        if($custmenu['parent'][$key] == $parent) {
+            $elid = $custmenu['name'][$key];
+            $typ = $custmenu['typ'][$key];
+            $menu_ = array();
+
+            if($typ <= 1){
+                $menu[$ebzm]['id'] = $ebzm;
+                $menu[$ebzm]['name'] = $lang[$custmenu['name'][$key]];
+                $menu[$ebzm]['desc'] = $lang[$custmenu['title'][$key]];
+                $menu[$ebzm]['link'] = $custmenu['url'][$key];
+                $menu[$ebzm]['bg'] = $custmenu['bg'][$key];
+                $menu[$ebzm]['icon'] = $custmenu['icon'][$key];
+
+            }elseif($typ == 2) {
+                $menu__ = menu_get_table($elid);
+                $menu_[$ebzm] = $menu__;
+                $menu = array_merge($menu,$menu_);
+            }elseif($typ == 3) {
+                $gtabid = lmb_getGElementTabID($GLOBALS['gsnap'],$elid);
+                $menu__ = menu_get_snapshot($gtabid, $elid);
+                $menu_[$ebzm] = $menu__;
+                $menu = array_merge($menu,$menu_);
+            }elseif($typ == 4) {
+                $gtabid = lmb_getGElementTabID($GLOBALS['greportlist'],$elid);
+                $menu__ = menu_get_report($gtabid, $elid);
+                $menu_[$ebzm] = $menu__;
+                $menu = array_merge($menu,$menu_);
+            }elseif($typ == 5) {
+                $gtabid = lmb_getGElementTabID($GLOBALS['gformlist'],$elid);
+                $menu__ = menu_get_form($gtabid, $elid);
+                $menu_[$ebzm] = $menu__;
+                $menu = array_merge($menu,$menu_);
+            }elseif($typ == 6) {
+                $gtabid = lmb_getGElementTabID($GLOBALS['gdiaglist'],$elid);
+                $menu__ = menu_get_diagram($gtabid, $elid);
+                $menu_[$ebzm] = $menu__;
+                $menu = array_merge($menu,$menu_);
+            }elseif($typ == 7) {
+                $menu_ = menu_get_standard($elid, $ebzm);
+                $menu = array_merge($menu,$menu_);
+            }
+
+            if(in_array($id,$custmenu['parent'])) {
+                $menu[$ebzm]["child"] = lmb_buildCustmenu($custmenu,$id);
+            }
+
+            $ebzm++;
+        }
+    }
+
+    return $menu;
+
+}
+
+
+$custmenu = lmb_getCustmenu();
+
+foreach ($custmenu as $key => $submenu) {
+
+    $menu[$key] = lmb_buildCustmenu($submenu, 0);
+
+}
+
+
+?>

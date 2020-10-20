@@ -97,5 +97,5 @@ patch_db(21,"2.5",$sqlquery,"mysql - update lmb_conf_tables");
 
 ###########################
 
-if ($db AND !$action) {odbc_close($db);}
+if ($db AND !$action) {lmbdb_close($db);}
 ?>

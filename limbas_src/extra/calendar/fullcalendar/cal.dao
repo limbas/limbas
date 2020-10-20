@@ -119,12 +119,12 @@ class lmb_calendar {
 		global $gfield;
 
 		$sqlquery = "SELECT ID,".$this->lmbCalFields['STARTSTAMP'].",".$this->lmbCalFields['ENDSTAMP']." FROM ".$gtab["table"][$gtabid]." WHERE ID = ".$ID;
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		if(odbc_result($rs, "ID") AND ($dayDelta OR $minuteDelta OR $resource)){
+		if(lmbdb_result($rs, "ID") AND ($dayDelta OR $minuteDelta OR $resource)){
 			
-			$startstamp = get_stamp(odbc_result($rs, $this->lmbCalFields['STARTSTAMP']));
-			$endstamp = get_stamp(odbc_result($rs, $this->lmbCalFields['ENDSTAMP']));
+			$startstamp = get_stamp(lmbdb_result($rs, $this->lmbCalFields['STARTSTAMP']));
+			$endstamp = get_stamp(lmbdb_result($rs, $this->lmbCalFields['ENDSTAMP']));
 			if($startstamp > $endstamp){return false;}
 			
 			# drop event  - new start date
@@ -142,11 +142,11 @@ class lmb_calendar {
 				    $recource_id = $origin_resource;
 				    if(!$origin_resource OR $resource == $origin_resource){
 				    	$sqlquery0 = "SELECT KEYID,VERKN_ID FROM ".$gfield[$gtabid]['md5tab'][$gtab['params1'][$gtabid]]." WHERE ID = ".$ID;
-    					$rs0 = odbc_exec($db,$sqlquery0) or errorhandle(odbc_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+    					$rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
     					if(!$rs0) {$commit = 1;}
-    					$num = odbc_num_rows($rs0);
+    					$num = lmbdb_num_rows($rs0);
     					if($num == 1){
-    					   $recource_id = odbc_result($rs0, "VERKN_ID");
+    					   $recource_id = lmbdb_result($rs0, "VERKN_ID");
     					}
 				    }*/
 
@@ -182,7 +182,7 @@ class lmb_calendar {
 				if(!update_data($update)){$commit=1;}
 
 				#$sqlquery1 = "UPDATE ".$gtab["table"][$gtabid]." SET $sqlstart $sqlend WHERE ID = $ID";
-				#$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+				#$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 				#if(!$rs0) {$commit = 1;}
 			}
 
@@ -202,18 +202,18 @@ class lmb_calendar {
 	    global $gtab;
 
 		$sqlquery = "SELECT ".$this->lmbCalFields['STARTSTAMP'].",".$this->lmbCalFields['ENDSTAMP']." FROM ".$gtab["table"][$gtabid]." WHERE ID = ".$ID;
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-	    if(odbc_fetch_row($rs)){
-	          $startstamp = get_stamp(odbc_result($rs,$this->lmbCalFields['STARTSTAMP']));
-		      $endstamp = get_stamp(odbc_result($rs,$this->lmbCalFields['ENDSTAMP']));
+	    if(lmbdb_fetch_row($rs)){
+	          $startstamp = get_stamp(lmbdb_result($rs,$this->lmbCalFields['STARTSTAMP']));
+		      $endstamp = get_stamp(lmbdb_result($rs,$this->lmbCalFields['ENDSTAMP']));
 	    }
 	    $start = convert_stamp($movestamp);
 	    $len = ($endstamp - $startstamp);
 	    $end = convert_stamp($movestamp + $len);
 
 		$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$this->lmbCalFields['STARTSTAMP']." = '$start', ".$this->lmbCalFields['ENDSTAMP']." = '$end' WHERE ID = ".$ID;
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 
 		# --- resource ---
@@ -467,7 +467,6 @@ class lmb_calendar {
 		}
 
 		if($color){
-			$color = $color;
 			$text_color = lmbSuggestColor($color);
 		}
 

@@ -22,21 +22,9 @@ ob_implicit_flush(true);
 ob_end_flush();
 
 if(!$GLOBALS["cronjob"]){
-echo "
-<Script language=\"JavaScript\">
-function showprocess(id,value,acc){
-	if(document.getElementById(id)){
-		document.getElementById(id).style.width = Math.round(value);
-		document.getElementById(\"accval\").firstChild.nodeValue = Math.round(acc)+'%';
-	}
-	document.getElementById(\"indcontainer\").style.display='';
-}
-</SCRIPT>
-";
-
-echo "<div id=\"indcontainer\"  class=\"lmbContextMenu\" style=\"z-index:99;left:60px;top:60px;width:250px;display:none;\">";
-pop_closetop('indcontainer');
-pop_left();
+    echo "<div id=\"indcontainer\"  class=\"lmbContextMenu\" style=\"z-index:99;left:60px;top:60px;width:250px;display:none;\">";
+    pop_closetop('indcontainer');
+    pop_left();
 }
 
 $jobdir = read_dir($umgvar["pfad"]."/admin/tools/jobs",0);
@@ -61,24 +49,52 @@ if($kategorie AND $req){
 if($run_job){
 	$job = $run_job;
 	$sqlquery = "SELECT ID,VAL FROM LMB_CRONTAB WHERE ID = $run_job";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	if($cronval = odbc_result($rs,"VAL")){
-		lmb_loghandle(lmb_strtolower($kategoriedesc).".log","starting job \t(".odbc_result($rs,"ID").")");
+	if($cronval = lmbdb_result($rs,"VAL")){
+		lmb_loghandle(lmb_strtolower($kategoriedesc).".log","starting job \t(".lmbdb_result($rs,"ID").")");
 		periodic_job($cronval);
-		lmb_loghandle(lmb_strtolower($kategoriedesc).".log","ending job \t(".odbc_result($rs,"ID").")");
+		lmb_loghandle(lmb_strtolower($kategoriedesc).".log","ending job \t(".lmbdb_result($rs,"ID").")");
 	}
 }
 
 # -------- Umgebungvaiablen auslesen --------
 if(!$umgvar){
 	$sqlquery = "SELECT FORM_NAME,NORM FROM LMB_UMGVAR";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)) {
-		$umgvar[odbc_result($rs,"FORM_NAME")] = odbc_result($rs,"NORM");
+	while(lmbdb_fetch_row($rs)) {
+		$umgvar[lmbdb_result($rs,"FORM_NAME")] = lmbdb_result($rs,"NORM");
 	}
 }
+
+
+
+
+# -------- Eigene globale Variablen auslesen --------
+if(!$custvar) {
+    $custvar = array();
+    $sqlquery3 = 'SELECT CKEY, CVALUE FROM LMB_CUSTVAR WHERE ACTIVE = ' . LMB_DBDEF_TRUE;
+    $rs3 = lmbdb_exec($db, $sqlquery3) or errorhandle(lmbdb_errormsg($db), $sqlquery3, $action, __FILE__, __LINE__);
+    if (!$rs3) {
+        $commit = 1;
+    }
+    while (lmbdb_fetch_row($rs3)) {
+        $custvar[lmbdb_result($rs3, "CKEY")] = lmbdb_result($rs3, "CVALUE");
+    }
+
+
+    /* --- load custom variables depend ------------------- */
+    $sqlquery3 = 'SELECT LMB_CUSTVAR_DEPEND.CKEY, LMB_CUSTVAR_DEPEND.CVALUE FROM LMB_CUSTVAR_DEPEND LEFT JOIN LMB_CUSTVAR ON LMB_CUSTVAR_DEPEND.CKEY = LMB_CUSTVAR.CKEY WHERE LMB_CUSTVAR.OVERRIDABLE = ' . LMB_DBDEF_TRUE . ' AND LMB_CUSTVAR.ACTIVE = ' . LMB_DBDEF_TRUE . ' AND LMB_CUSTVAR_DEPEND.ACTIVE = ' . LMB_DBDEF_TRUE;
+    $rs3 = lmbdb_exec($db, $sqlquery3) or errorhandle(lmbdb_errormsg($db), $sqlquery3, $action, __FILE__, __LINE__);
+    if (!$rs3) {
+        $commit = 1;
+    }
+    while (lmbdb_fetch_row($rs3)) {
+        $custvar[lmbdb_result($rs3, "CKEY")] = lmbdb_result($rs3, "CVALUE");
+    }
+}
+
 
 # -------- delete job action --------
 if($del_index){
@@ -95,7 +111,7 @@ if($refresh_index){
 # ---- Cron Job löschen ----
 if($del_job){
 	$sqlquery = "DELETE FROM LMB_CRONTAB WHERE ID = $del_job AND KATEGORY = '$kategoriedesc'";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	#if(!update_crontab()){lmb_alert("no permission to /etc/crontab\\ncheck it manualy");};
 }
@@ -103,11 +119,11 @@ if($del_job){
 # ---- Cron Job deactivate / activate ----
 if($activate_job){
 	$sqlquery = "SELECT ACTIV FROM LMB_CRONTAB WHERE ID = $activate_job AND KATEGORY = '$kategoriedesc'";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	if(odbc_result($rs,"ACTIV")){$bool = LMB_DBDEF_FALSE;}else{$bool = LMB_DBDEF_TRUE;}
+	if(lmbdb_result($rs,"ACTIV")){$bool = LMB_DBDEF_FALSE;}else{$bool = LMB_DBDEF_TRUE;}
 	$sqlquery = "UPDATE LMB_CRONTAB SET ACTIV = $bool WHERE ID = $activate_job AND KATEGORY = '$kategoriedesc'";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	#if(!update_crontab()){lmb_alert("no permission to /etc/crontab\\ncheck it manualy");};
 }

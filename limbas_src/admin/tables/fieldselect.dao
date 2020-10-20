@@ -36,23 +36,23 @@ if($_FILES['select_import']['name'] AND $pool){
 
 			if(!$select_import_add){
 				$sqlquery = 'DELETE FROM '.$typ.'_W WHERE POOL = '.$pool;
-				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
 			}
 			$select_import = fopen($umgvar['pfad'].'/USER/'.$session['user_id'].'/temp/select_import.txt','r');
 
 			$NEXTID = next_db_id(''.$typ.'_W');
 			$sqlquery = 'SELECT MAX(SORT) AS NEXTSORT FROM '.$typ.'_W WHERE POOL = '.$pool;
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
-			$NEXTSORT = odbc_result($rs,'NEXTSORT') + 1;
+			$NEXTSORT = lmbdb_result($rs,'NEXTSORT') + 1;
 
 			while($line = fgets($select_import, 100000)){
 				$part = explode("\t",$line);
 				if(count($part) == 1 OR count($part) == 2){
 					$part[0] = trim(str_replace("\t",'',str_replace("\n",'',$part[0])));
 					$sqlquery = 'INSERT INTO '.$typ."_W (ID,ERSTUSER,SORT,WERT,KEYWORDS,POOL,LEVEL) VALUES($NEXTID,".$session['user_id'].",$NEXTSORT,'".parse_db_string($part[0],250)."','".parse_db_string($part[1],250)."',$pool,".parse_db_int($level_id).")";
-					$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					if(!$rs) {$commit = 1;}
 					$NEXTID++;
 					$NEXTSORT++;
@@ -61,14 +61,14 @@ if($_FILES['select_import']['name'] AND $pool){
 			fclose($select_import);
 
 			$sqlquery = "SELECT COUNT(ID) ERG FROM {$typ}_W WHERE POOL = $pool";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			$num = odbc_result($rs, 'ERG');
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$num = lmbdb_result($rs, 'ERG');
 			$sqlquery = 'UPDATE '.$typ.'_P SET SNUM = '.parse_db_int($num,1000)." WHERE ID = $pool";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 			if($level_id > 0){
 				$sqlquery = 'UPDATE '.$typ.'_W SET HASLEVEL = '.LMB_DBDEF_TRUE.' WHERE ID = '.parse_db_int($level_id);
-				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			}
 			
 			unlink($umgvar['pfad'].'/USER/'.$session['user_id'].'/temp/select_import.txt');
@@ -82,7 +82,7 @@ if($select_del AND $pool){
 	$level = 0;
 
 	$sqlquery = 'SELECT DISTINCT '.$typ.'_D.ID FROM '.$typ."_D,".$typ.'_W WHERE '.$typ.'_D.W_ID = '.$typ.'_W.ID AND '.$typ."_W.ID = $select_del";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
 	$levels = $remove = array();
@@ -91,15 +91,15 @@ if($select_del AND $pool){
 		$msqlquery = "select w.id,w.level,d.id as d_id from ".lmb_strtolower($typ)."_w as w
 			left join ".$typ."_D as d on(d.w_id=w.id)
 			where pool=".$gfield[$atid]['select_pool'][$fieldid];
-		$mrs = odbc_exec($db,$msqlquery) or errorhandle(odbc_errormsg($db),$msqlquery,$action,__FILE__,__LINE__);
+		$mrs = lmbdb_exec($db,$msqlquery) or errorhandle(lmbdb_errormsg($db),$msqlquery,$action,__FILE__,__LINE__);
 		if(!$mrs) {$commit = 1;}
 
 		$bzm = 1;
 		$rm = 0;
-		while(odbc_fetch_row($mrs)){
-			$d_id = odbc_result($mrs,'d_id');
-			$w_id = odbc_result($mrs,'id');
-			$l_id = odbc_result($mrs, 'level');
+		while(lmbdb_fetch_row($mrs)){
+			$d_id = lmbdb_result($mrs,'d_id');
+			$w_id = lmbdb_result($mrs,'id');
+			$l_id = lmbdb_result($mrs, 'level');
 			$levels[$l_id][] = array('w_id'=>$w_id,'set'=>(intval($d_id)>0));
 			if($select_del==$w_id) $level = $l_id;
 		}
@@ -128,24 +128,24 @@ if($select_del AND $pool){
 		if(empty($remove)) $levels = $remove = array();
 	}
 
-	if(!odbc_fetch_row($rs) && empty($levels)==true){
+	if(!lmbdb_fetch_row($rs) && empty($levels)==true){
 		$sqlquery = 'DELETE FROM '.$typ."_W WHERE (ID = $select_del ".(count($remove)>0 ? implode(' ',$remove) : '').") AND POOL = $pool";
-		$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 		$sqlquery = "SELECT COUNT(ID) AS ERG FROM ".$typ."_W WHERE POOL = $pool";
-		$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		$num = odbc_result($rs1, 'ERG');
+		$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$num = lmbdb_result($rs1, 'ERG');
 
 		$sqlquery = 'UPDATE '.$typ.'_P SET SNUM = '.parse_db_int($num,1000)." WHERE ID = $pool";
-		$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 		if($level>0){
 			$sqlquery = "SELECT COUNT(ID) AS ERG FROM ".$typ.'_W WHERE POOL = '.$gfield[$atid]['select_pool'][$fieldid]." AND LEVEL = $level";
-			$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-			if(!$cnt = odbc_result($rs1, 'ERG')){
+			if(!$cnt = lmbdb_result($rs1, 'ERG')){
 				$sqlquery = 'UPDATE '.$typ.'_W SET HASLEVEL = '.LMB_DBDEF_FALSE.' WHERE ID = '.parse_db_int($level);
-				$rs1 = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			}
 		}
 	}else{
@@ -170,7 +170,7 @@ if($select_change AND $pool){
 			// old values
 			if($gfield[$atid]['data_type'][$fieldid] == 12 OR $gfield[$atid]['data_type'][$fieldid] == 14){
 				$sqlquery = "SELECT * FROM ".$typ."_W WHERE ID = $value AND POOL = ".$pool;
-				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
 			}
 			
@@ -178,10 +178,10 @@ if($select_change AND $pool){
 			if(($gfield[$atid]['multilang'][$fieldid] OR !$fieldid) AND $multi_language){
 			    foreach($multi_language as $lkey => $langid){
 			         $update['LANG'.$langid.'_WERT'] = parse_db_string(trim(str_replace("\t",'',str_replace("\n",'',${'select_wert_'.$langid}[$value]))),160);
-			         $oldvalue[$langid] = odbc_result($rs,'LANG'.$langid.'_WERT');
+			         $oldvalue[$langid] = lmbdb_result($rs,'LANG'.$langid.'_WERT');
 			    }
 			}
-			$oldvalue[$umgvar['default_language']] = odbc_result($rs,'WERT');
+			$oldvalue[$umgvar['default_language']] = lmbdb_result($rs,'WERT');
 			
 			$update['WERT'] = parse_db_string(trim(str_replace("\t",'',str_replace("\n",'',$select_wert[$value]))),160);
 			$update['KEYWORDS'] = parse_db_string(trim(str_replace("\t",'',str_replace("\n",'',$select_keyw[$value]))),250);
@@ -193,7 +193,7 @@ if($select_change AND $pool){
 			
 			// update pool values
 			$sqlquery = 'UPDATE '.$typ.'_W SET '.implode(',',$sql)." WHERE ID = $value AND POOL = $pool";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 	
 			// update table entries
@@ -210,7 +210,7 @@ if($select_change AND $pool){
 			    
                 if ($upd) {
                     $sqlquery = 'UPDATE ' . $gtab['table'][$atid] . ' SET '.implode(',',$upd).' WHERE ' . $gfield[$atid]['field_name'][$fieldid] . " = '" . parse_db_string($oldvalue[$umgvar['default_language']], 160) . "' AND " . $gfield[$atid]['field_name'][$fieldid] . ' IS NOT NULL AND ' . $gfield[$atid]['field_name'][$fieldid] . " != ''";
-                    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
                     if (! $rs) {$commit = 1;}
                 }
 
@@ -223,97 +223,97 @@ if($select_change AND $pool){
 /* --- Defaultwert --------------------------------------------- */
 if($select_default AND $pool){
 	$sqlquery = 'SELECT DEF FROM '.$typ."_W WHERE POOL = $pool AND ID = $select_default";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_result($rs,'DEF')){
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_result($rs,'DEF')){
 		$sqlquery = 'UPDATE '.$typ.'_W SET DEF = '.LMB_DBDEF_FALSE." WHERE POOL = $pool AND ID = $select_default";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}else{
 		$sqlquery = 'UPDATE '.$typ.'_W SET DEF = '.LMB_DBDEF_TRUE." WHERE POOL = $pool AND ID = $select_default";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
 	
 	# single select
 	if($gfield[$atid]['data_type'][$fieldid] == 12 OR $gfield[$atid]['data_type'][$fieldid] == 14){
 		$sqlquery = 'UPDATE '.$typ.'_W SET DEF = '.LMB_DBDEF_FALSE." WHERE POOL = $pool AND ID != $select_default";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
 }
 
 /* --- Mandatory --------------------------------------------- */
 if($select_mandatory AND $pool){
 	$sqlquery = 'SELECT MANDATORY FROM '.$typ."_W WHERE POOL = $pool AND ID = $select_mandatory";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_result($rs,'MANDATORY')){
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_result($rs,'MANDATORY')){
 		$sqlquery = 'UPDATE '.$typ.'_W SET MANDATORY = '.LMB_DBDEF_FALSE." WHERE POOL = $pool AND ID = $select_mandatory";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}else{
 		$sqlquery = 'UPDATE '.$typ.'_W SET MANDATORY = '.LMB_DBDEF_TRUE." WHERE POOL = $pool AND ID = $select_mandatory";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
 }
 
 /* --- hidetag --------------------------------------------- */
 if($select_hidetag AND $pool){
 	$sqlquery = 'SELECT HIDETAG FROM '.$typ."_W WHERE POOL = $pool AND ID = $select_hidetag";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_result($rs,'HIDETAG')){
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_result($rs,'HIDETAG')){
 		$sqlquery = 'UPDATE '.$typ.'_W SET HIDETAG = '.LMB_DBDEF_FALSE." WHERE POOL = $pool AND ID = $select_hidetag";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}else{
 		$sqlquery = 'UPDATE '.$typ.'_W SET HIDETAG = '.LMB_DBDEF_TRUE." WHERE POOL = $pool AND ID = $select_hidetag";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
 }
 
 /* --- TAG-MODE --------------------------------------------- */
 if($tag_mode AND $pool){
 	$sqlquery = 'SELECT TAGMODE FROM '.$typ."_P WHERE ID = $pool";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_result($rs,'TAGMODE')){
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_result($rs,'TAGMODE')){
 		$sqlquery = 'UPDATE '.$typ.'_P SET TAGMODE = '.LMB_DBDEF_FALSE." WHERE ID = $pool";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}else{
 		$sqlquery = 'UPDATE '.$typ.'_P SET TAGMODE = '.LMB_DBDEF_TRUE." WHERE ID = $pool";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
 }
 
 /* --- Multiple-MODE --------------------------------------------- */
 if($multi_mode AND $pool){
 	$sqlquery = 'SELECT MULTIMODE FROM '.$typ."_P WHERE ID = $pool";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_result($rs,'MULTIMODE')){
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_result($rs,'MULTIMODE')){
 		$sqlquery = 'UPDATE '.$typ.'_P SET MULTIMODE = '.LMB_DBDEF_FALSE." WHERE ID = $pool";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}else{
 		$sqlquery = 'UPDATE '.$typ.'_P SET MULTIMODE = '.LMB_DBDEF_TRUE." WHERE ID = $pool";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
 }
 
 /* --- Attribute --------------------------------------------- */
 if($select_attribut AND $pool){
     $sqlquery = "UPDATE {$typ}_W SET TYPE = ".parse_db_int($select_attribut_[$select_attribut])." WHERE POOL = $pool AND ID = $select_attribut";
-    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 /* --- Hide --------------------------------------------- */
 if($select_hide AND $pool){
 	$sqlquery = 'SELECT HIDE FROM '.$typ."_W WHERE POOL = $pool AND ID = $select_hide";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_result($rs,'HIDE')){
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_result($rs,'HIDE')){
 		$sqlquery = 'UPDATE '.$typ.'_W SET HIDE = '.LMB_DBDEF_FALSE." WHERE POOL = $pool AND ID = $select_hide";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}else{
 		$sqlquery = 'UPDATE '.$typ.'_W SET HIDE = '.LMB_DBDEF_TRUE." WHERE POOL = $pool AND ID = $select_hide";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
 }
 
 /* --- Sortierung --------------------------------------------- */
 if($select_sort AND $pool){
 	$sqlquery = "UPDATE LMB_CONF_FIELDS SET SELECT_SORT = '".parse_db_string($fssort,20)."' WHERE TAB_ID = $atid AND FIELD_ID = $fieldid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 /* --- Select-Feld hinzufügen --------------------------------------------- */
@@ -324,32 +324,32 @@ if($add_select AND $new_wert AND $pool){
 	/* --- Next ID ---------------------------------------- */
 	$NEXTID = next_db_id(''.$typ.'_W');
 	$sqlquery = "SELECT MAX(SORT) AS NEXTID FROM ".$typ."_W WHERE POOL = $pool";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	
 	$new_wert = trim(str_replace("\t",'',str_replace("\n",'',$new_wert)));
 	$new_keyword = trim(str_replace("\t",'',str_replace("\n",'',$new_keyword)));
 
-	$NEXTSORT = odbc_result($rs,'NEXTID') + 1;
+	$NEXTSORT = lmbdb_result($rs,'NEXTID') + 1;
 	if($typ == 'LMB_ATTRIBUTE'){
 		$sqlquery = 'INSERT INTO '.$typ."_W (ID,SORT,ERSTUSER,POOL,WERT,KEYWORDS,TYPE,LEVEL,ATTRPOOL) VALUES($NEXTID,$NEXTSORT,".$session['user_id'].",$pool,'".parse_db_string($new_wert,250)."','".parse_db_string($new_keyword,250)."',".parse_db_int($new_fieldtype,5).",".parse_db_int($level_id).",".parse_db_int($new_attrpool).")";
 	}else{
 		$sqlquery = 'INSERT INTO '.$typ."_W (ID,SORT,ERSTUSER,POOL,WERT,KEYWORDS,LEVEL) VALUES($NEXTID,$NEXTSORT,".$session['user_id'].",$pool,'".parse_db_string($new_wert,250)."','".parse_db_string($new_keyword,250)."',".parse_db_int($level_id).")";
 	}
 
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	
 	$sqlquery = "SELECT COUNT(ID) AS ERG FROM ".$typ."_W WHERE POOL = $pool";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$num = odbc_result($rs, 'ERG');
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$num = lmbdb_result($rs, 'ERG');
 	$sqlquery = 'UPDATE '.$typ.'_P SET SNUM = '.parse_db_int($num,1000)." WHERE ID = $pool";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	
 	if($level_id > 0){
 		$sqlquery = 'UPDATE '.$typ.'_W SET HASLEVEL = '.LMB_DBDEF_TRUE.' WHERE ID = '.parse_db_int($level_id);
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}
 	
@@ -359,21 +359,21 @@ if($add_select AND $new_wert AND $pool){
 /* --- Positionsänderung ------------------------------- */
 if($select_sort){
 	$sqlquery =  'SELECT SORT FROM '.$typ."_W WHERE ID = $select_sort";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$sort = odbc_result($rs, 'SORT');
+	$sort = lmbdb_result($rs, 'SORT');
 
 	/* --- neu sortieren ------------------------------- */
 	#if(!$sort){
 		$sqlquery = 'SELECT ID FROM '.$typ."_W WHERE POOL = $pool ORDER BY SORT";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		$NEXTID=1;
-		while(odbc_fetch_row($rs)) {
-			$sqlquery1 = 'UPDATE '.$typ."_W SET SORT = $NEXTID WHERE ID = ".odbc_result($rs, 'ID');
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs)) {
+			$sqlquery1 = 'UPDATE '.$typ."_W SET SORT = $NEXTID WHERE ID = ".lmbdb_result($rs, 'ID');
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
-			if($select_sort == odbc_result($rs, 'ID')){$sort = $NEXTID;}
+			if($select_sort == lmbdb_result($rs, 'ID')){$sort = $NEXTID;}
 			$NEXTID++;
 		}
 	#}
@@ -382,33 +382,33 @@ if($select_sort){
 	if($select_sort_d == 1 AND $pool) {
 		if($sort > 1){
 			$sqlquery1 = 'UPDATE '.$typ."_W SET SORT = 999999 WHERE ID = $select_sort";
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 			$sqlquery1 = 'UPDATE '.$typ."_W SET SORT = $sort WHERE SORT = ".($sort - 1)." AND POOL = $pool";
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 			$sqlquery1 = 'UPDATE '.$typ.'_W SET SORT = '.($sort - 1)." WHERE ID = $select_sort";
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 		}
 	/* --- nach unten  ------------------------------- */
 	}elseif($select_sort_d == 2 AND $pool) {
 		$sqlquery =  'SELECT SORT FROM '.$typ."_W WHERE ID = $select_sort";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		$sqlquery1 =  "SELECT MAX(SORT) AS MAXSORT FROM ".$typ."_W WHERE POOL = $pool";
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		if(odbc_result($rs, 'SORT') < odbc_result($rs1, 'MAXSORT')){
-			$sort = parse_db_int(odbc_result($rs, 'SORT'));
+		if(lmbdb_result($rs, 'SORT') < lmbdb_result($rs1, 'MAXSORT')){
+			$sort = parse_db_int(lmbdb_result($rs, 'SORT'));
 			$sqlquery1 = 'UPDATE '.$typ."_W SET SORT = 999999 WHERE ID = $select_sort";
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 			$sqlquery1 = 'UPDATE '.$typ."_W SET SORT = $sort WHERE SORT = ".($sort + 1)." AND POOL = $pool";
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 			$sqlquery1 = 'UPDATE '.$typ.'_W SET SORT = '.($sort + 1)." WHERE ID = $select_sort";
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 		}
 	}
@@ -418,7 +418,7 @@ if($select_sort){
 /* --- Pool umbenennen --------------------------------------------- */
 if($rename_pool AND $select_pool[$rename_pool]){
 	$sqlquery = 'UPDATE '.$typ."_P SET NAME = '".parse_db_string($select_pool[$rename_pool],60)."' WHERE ID = $rename_pool";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 }
 
@@ -426,11 +426,11 @@ if($rename_pool AND $select_pool[$rename_pool]){
 if($new_wert AND $add_pool){
 	$NEXTID = next_db_id(''.$typ.'_P');
 	$sqlquery = 'INSERT INTO '.$typ."_P (ID,ERSTUSER,NAME) VALUES($NEXTID,{$session['user_id']},'".parse_db_string($new_wert,60)."')";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	if(!$field_pool AND $atid){
 		$sqlquery = "UPDATE LMB_CONF_FIELDS SET SELECT_POOL = $NEXTID WHERE TAB_ID = $atid AND FIELD_ID = $fieldid";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
         $field_pool = $NEXTID;
     }
@@ -440,17 +440,17 @@ if($new_wert AND $add_pool){
 /* --- Pool löschen --------------------------------------------- */
 if($del_pool){
 	$sqlquery = 'SELECT DISTINCT '.$typ.'_D.ID FROM '.$typ."_D,".$typ.'_W WHERE '.$typ.'_D.W_ID = '.$typ.'_W.ID AND '.$typ.'_W.POOL = '.parse_db_int($del_pool,10);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	if(!odbc_fetch_row($rs)){
+	if(!lmbdb_fetch_row($rs)){
 		$sqlquery1 = 'DELETE FROM '.$typ.'_P WHERE ID = '.parse_db_int($del_pool,10);
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 		$sqlquery1 = 'DELETE FROM '.$typ.'_W WHERE POOL = '.parse_db_int($del_pool,10);
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 		$sqlquery = "UPDATE LMB_CONF_FIELDS SET SELECT_POOL = 0 WHERE SELECT_POOL = $del_pool";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}else{
 		lmb_alert($lang[112]);
@@ -460,11 +460,11 @@ if($del_pool){
 /* --- Pool auswählen --------------------------------------------- */
 if($set_pool AND !$pool){
 	$sqlquery = "UPDATE LMB_CONF_FIELDS SET SELECT_POOL = $set_pool WHERE TAB_ID = $atid AND FIELD_ID = $fieldid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
 	$sqlquery1 = 'DELETE FROM '.$typ."_D WHERE TAB_ID = $atid AND FIELD_ID = $fieldid";
-	$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+	$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 	if(!$rs1) {$commit = 1;}
 
 	$field_pool = $set_pool;
@@ -476,24 +476,24 @@ if($set_pool AND !$pool){
 
 /* --- Pool-Liste --------------------------------------------- */
 $sqlquery = "SELECT ID,NAME,SNUM,TAGMODE,MULTIMODE FROM ".$typ."_P ORDER BY LOWER(NAME)";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-	$pid = odbc_result($rs, 'ID');
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+	$pid = lmbdb_result($rs, 'ID');
 	$result_pool['id'][$pid] = $pid;
-	$result_pool['name'][$pid] = odbc_result($rs, 'NAME');
-	$result_pool['num'][$pid] = odbc_result($rs, 'SNUM');
-    $result_pool['tag_mode'][$pid] = odbc_result($rs, 'TAGMODE');
-	$result_pool['multi_mode'][$pid] = odbc_result($rs, 'MULTIMODE');
+	$result_pool['name'][$pid] = lmbdb_result($rs, 'NAME');
+	$result_pool['num'][$pid] = lmbdb_result($rs, 'SNUM');
+    $result_pool['tag_mode'][$pid] = lmbdb_result($rs, 'TAGMODE');
+	$result_pool['multi_mode'][$pid] = lmbdb_result($rs, 'MULTIMODE');
 }
 
 
 /* --- Select - Pool-Liste --------------------------------------------- */
 $sqlquery = "SELECT ID,NAME FROM LMB_SELECT_P ORDER BY LOWER(NAME)";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-	$pid = odbc_result($rs, 'ID');
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+	$pid = lmbdb_result($rs, 'ID');
 	$result_subpool['id'][$pid] = $pid;
-	$result_subpool['name'][$pid] = odbc_result($rs, 'NAME');
+	$result_subpool['name'][$pid] = lmbdb_result($rs, 'NAME');
 }
 
 
@@ -507,15 +507,15 @@ if($pool){
     if($find_keyw){$where .= " AND LOWER(KEYWORDS) LIKE '%".parse_db_string(lmb_strtolower($find_keyw),250)."%'";}
     if(!$showAllLevels){$where .= ' AND LEVEL='.parse_db_int($level_id);}
 	$sqlquery = "SELECT COUNT(*) AS NUMR FROM ".$typ."_W WHERE POOL = $pool{$where}";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$result_fieldselect['num_ges'] = odbc_result($rs, 'NUMR');
+	$result_fieldselect['num_ges'] = lmbdb_result($rs, 'NUMR');
 
 	if($atid AND $fieldid){
 	$sqlquery = "SELECT SELECT_SORT,SELECT_POOL FROM LMB_CONF_FIELDS WHERE TAB_ID = $atid AND FIELD_ID = $fieldid";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		$result_fieldselect['sort'] = odbc_result($rs, 'SELECT_SORT');
-		$result_fieldselect['pool'] = odbc_result($rs, 'SELECT_POOL');
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$result_fieldselect['sort'] = lmbdb_result($rs, 'SELECT_SORT');
+		$result_fieldselect['pool'] = lmbdb_result($rs, 'SELECT_POOL');
 	}
 	
 
@@ -525,14 +525,14 @@ if($pool){
 		$tmp = $level_id;
 		while($tmp>0){
 			$sqlquery = "SELECT WERT,LEVEL FROM ".$typ."_W WHERE ID=$tmp";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs){
 				$commit = 1;
 				$tmp = 0;
 				break;
 			}else{
-                $result_fieldselect['parent'][$tmp] = odbc_result($rs, 'WERT');
-                $tmp = odbc_result($rs, 'LEVEL');
+                $result_fieldselect['parent'][$tmp] = lmbdb_result($rs, 'WERT');
+                $tmp = lmbdb_result($rs, 'LEVEL');
             }
 		}
 	}
@@ -555,27 +555,27 @@ if($pool){
     }
 
 	$sqlquery = "SELECT * FROM ".$typ."_W WHERE POOL = $pool $where ORDER BY $sort $limit";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs, $bzm) AND $bzm1 <= $num_result) {
-		$result_fieldselect['id'][$bzm] = odbc_result($rs, 'ID');
-		$result_fieldselect['wert'][$bzm] = odbc_result($rs, 'WERT');
-		$result_fieldselect['keywords'][$bzm] = odbc_result($rs, 'KEYWORDS');
-		$result_fieldselect['def'][$bzm] = odbc_result($rs, 'DEF');
-		$result_fieldselect['hide'][$bzm] = odbc_result($rs, 'HIDE');
-		$result_fieldselect['haslevel'][$bzm] = odbc_result($rs, 'HASLEVEL');
+	while(lmbdb_fetch_row($rs, $bzm) AND $bzm1 <= $num_result) {
+		$result_fieldselect['id'][$bzm] = lmbdb_result($rs, 'ID');
+		$result_fieldselect['wert'][$bzm] = lmbdb_result($rs, 'WERT');
+		$result_fieldselect['keywords'][$bzm] = lmbdb_result($rs, 'KEYWORDS');
+		$result_fieldselect['def'][$bzm] = lmbdb_result($rs, 'DEF');
+		$result_fieldselect['hide'][$bzm] = lmbdb_result($rs, 'HIDE');
+		$result_fieldselect['haslevel'][$bzm] = lmbdb_result($rs, 'HASLEVEL');
 		if($typ == 'LMB_ATTRIBUTE') {
-            $result_fieldselect['mandatory'][$bzm] = odbc_result($rs, 'MANDATORY');
-            $result_fieldselect['color'][$bzm] = odbc_result($rs, 'COLOR');
-            $result_fieldselect['attrpool'][$bzm] = odbc_result($rs, 'ATTRPOOL');
-            $result_fieldselect['type'][$bzm] = odbc_result($rs, 'TYPE');
-            $result_fieldselect['hidetag'][$bzm] = odbc_result($rs, 'HIDETAG');
+            $result_fieldselect['mandatory'][$bzm] = lmbdb_result($rs, 'MANDATORY');
+            $result_fieldselect['color'][$bzm] = lmbdb_result($rs, 'COLOR');
+            $result_fieldselect['attrpool'][$bzm] = lmbdb_result($rs, 'ATTRPOOL');
+            $result_fieldselect['type'][$bzm] = lmbdb_result($rs, 'TYPE');
+            $result_fieldselect['hidetag'][$bzm] = lmbdb_result($rs, 'HIDETAG');
 		}
 		
 		$multi_language = $umgvar['multi_language'];
 		if(($gfield[$atid]['multilang'][$fieldid] OR !$fieldid) AND $multi_language){
 			foreach($multi_language as $lkey => $langid){
-			    $result_fieldselect['wert_'.$langid][$bzm] = odbc_result($rs, 'LANG'.$langid.'_WERT');
+			    $result_fieldselect['wert_'.$langid][$bzm] = lmbdb_result($rs, 'LANG'.$langid.'_WERT');
 			}
 		}
 		

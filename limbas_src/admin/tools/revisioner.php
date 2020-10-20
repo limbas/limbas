@@ -31,16 +31,16 @@ function lmb_get_revision()
     global $db;
 
     $sqlquery = "SELECT ID,ERSTDATUM,ERSTUSER,REVISION,VERSION,COREV,DESCRIPTION FROM LMB_REVISION ORDER BY ERSTDATUM DESC";
-    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-    while (odbc_fetch_row($rs)) {
-        $key = odbc_result($rs, "ID");
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    while (lmbdb_fetch_row($rs)) {
+        $key = lmbdb_result($rs, "ID");
         $result_revisioner['id'][$key] = $key;
-        $result_revisioner['erstdatum'][$key] = odbc_result($rs, 'ERSTDATUM');
-        $result_revisioner['erstuser'][$key] = odbc_result($rs, 'ERSTUSER');
-        $result_revisioner['revision'][$key] = odbc_result($rs, 'REVISION');
-        $result_revisioner['version'][$key] = odbc_result($rs, 'VERSION');
-        $result_revisioner['core'][$key] = odbc_result($rs, 'COREV');
-        $result_revisioner['desc'][$key] = odbc_result($rs, 'DESCRIPTION');
+        $result_revisioner['erstdatum'][$key] = lmbdb_result($rs, 'ERSTDATUM');
+        $result_revisioner['erstuser'][$key] = lmbdb_result($rs, 'ERSTUSER');
+        $result_revisioner['revision'][$key] = lmbdb_result($rs, 'REVISION');
+        $result_revisioner['version'][$key] = lmbdb_result($rs, 'VERSION');
+        $result_revisioner['core'][$key] = lmbdb_result($rs, 'COREV');
+        $result_revisioner['desc'][$key] = lmbdb_result($rs, 'DESCRIPTION');
 
         if (!$result_revisioner['last_revision']) {
             $result_revisioner['last_revision'] = $result_revisioner['revision'][$key];
@@ -99,8 +99,8 @@ function lmb_create_revision($last, $revision, $desc)
 
     // create revision dataset
     $NEXTID = next_db_id('LMB_REVISION');
-    $sqlquery = "INSERT INTO LMB_REVISION(ID,ERSTDATUM,ERSTUSER,REVISION,VERSION,COREV,DESCRIPTION) values(" . $NEXTID . "," . LMB_DBDEF_TIMESTAMP . "," . $session["user_id"] . "," . parse_db_int($next['revision']) . "," . parse_db_int($next['version']) . ",'" . parse_db_string($umgvar["version"]) . "','" . parse_db_blob($desc) . "')";
-    odbc_exec($db, $sqlquery);
+    $sqlquery = "INSERT INTO LMB_REVISION(ID,ERSTDATUM,ERSTUSER,REVISION,VERSION,COREV,DESCRIPTION) values(" . $NEXTID . "," . LMB_DBDEF_TIMESTAMP . "," . $session["user_id"] . "," . parse_db_int($next['revision']) . "," . parse_db_int($next['version']) . ",'" . parse_db_string($umgvar["version"]) . "','" . parse_db_string($desc) . "')";
+    lmbdb_exec($db, $sqlquery);
 
     /*$exptables = array();
     // Bestehenden Tabellen für Vergleich exportieren

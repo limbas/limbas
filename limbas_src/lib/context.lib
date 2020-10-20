@@ -15,8 +15,156 @@
  */
 
 /*
- * ID:
+ * ID: 233
  */
+
+
+
+function lmb_pop_custmenu($custmenu,$gtabid,$ID,$gresult=null,$fieldid=null){
+    global $db;
+    global $lang;
+    global $gcustmenu;
+    global $LINK;
+
+    if($fieldid AND $gcustmenu[$gtabid][1][$fieldid]){
+        $custmenu = $gcustmenu[$gtabid][1][$fieldid];
+    }
+
+    $sqlquery = "SELECT * FROM LMB_CUSTMENU WHERE LINKID = ".parse_db_int($custmenu)." ORDER BY SORT";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    if(!$rs) {return false;}
+    while (lmbdb_fetch_row($rs)) {
+        $menuitems['name'][] = lmbdb_result($rs,'NAME');
+        $menuitems['title'][] = lmbdb_result($rs,'TITLE');
+        $menuitems['typ'][] = intval(lmbdb_result($rs,'TYP'));
+        $menuitems['icon'][] = lmbdb_result($rs,'ICON');
+        $menuitems['bgcolor'][] = lmbdb_result($rs,'BG');
+        $menuitems['url'][] = lmbdb_result($rs,'URL');
+        $menuitems['disabled'][] = lmbdb_result($rs,'DISABLED');
+        $menuitems['inactive'][] = lmbdb_result($rs,'INACTIVE');
+        #$menuitems['class'][] = lmbdb_result($rs,'CLASS');
+        $menuitems['parent'][] = lmbdb_result($rs,'PARENT');
+        $menuitems['id'][] = lmbdb_result($rs,'ID');
+    }
+
+
+    if(!$menuitems){return false;}
+
+    foreach($menuitems['id'] as $hkey => $hvalue){
+
+        // headers
+        if($menuitems['typ'][$hkey] != 0){continue;}
+
+        if(substr($lang[$menuitems['name'][$hkey]],0,1) == '_' OR substr($lang[$menuitems['name'][$hkey]],0,1) == '-'){
+            pop_line();
+        }elseif($lang[$menuitems['name'][$hkey]]){
+            pop_header(null,$lang[$menuitems['name'][$hkey]]);
+        }
+
+        foreach($menuitems['name'] as $key => $value) {
+
+            if ($menuitems['parent'][$key] != $hvalue) {
+                continue;
+            }
+
+            // background color
+            $menuitems['style'][$key] = 'background-color:' . $menuitems['bgcolor'][$key];
+
+            // hide
+            if ($menuitems['disabled'][$key]) {
+                if (eval($menuitems['disabled'][$key] . ';')) {
+                    continue;
+                }
+            }
+
+            // inactive
+            if ($menuitems['inactive'][$key]) {
+                if (eval($menuitems['inactive'][$key] . ';')) {
+                    $menuitems['url'][$key] = '';
+                    $menuitems['class'][$key] = 'inactive';
+                    $menuitems['style'][$key] .= ';cursor:default';
+                }
+            }
+
+            $item = $menuitems['name'][$key];
+
+            // manuell
+            if ($menuitems['typ'][$key] == 8) {
+                $url = $menuitems['url'][$key];
+
+                // check for function
+                if(substr($menuitems['url'][$key],0,6) == 'return'){
+                    $url = eval($menuitems['url'][$key].';');
+                }
+
+                pop_menu2($lang[$item], $lang[$menuitems['title'][$key]], null, $menuitems['icon'][$key], $menuitems['style'][$key], $url, $menuitems['class'][$key]);
+            // menu
+            } elseif ($menuitems['typ'][$key] == 9) {
+                if(!$LINK[$item]) {continue;}
+                pop_menu2($lang[$LINK['name'][$item]], 'open form', null, $LINK['icon_url'][$item], $menuitems['style'][$key], $LINK['link_url'][$item], $menuitems['class'][$key]);
+            // form
+            } elseif ($menuitems['typ'][$key] == 10) {
+                global $gformlist;
+                global $gfield;
+
+                // check for alternative forms
+                if($fieldid AND $gfield[$gtabid]['field_type'][$fieldid] == 11 AND !$gformlist[$gtabid]["id"][$item]) {
+
+                    // get relation IDs
+                    require_once('gtab/gtab.lib');
+                    $filter["relationval"][$gtabid] = 1;
+                    $onlyfield[$gtabid] = array($fieldid);
+                    $gresult = get_gresult($gtabid,1,$filter,null,null,$onlyfield,$ID);
+                    $ID = $gresult[$gtabid][$fieldid][0][0]; // first relation
+
+                    // get relation tabid
+                    $gtabid = $gfield[$gtabid]["verkntabid"][$fieldid];
+
+                    if(!$ID OR !$gtabid){continue;}
+                }
+
+                if(!$gformlist[$gtabid]["id"][$item] and !$menuitems['url'][$key]){continue;}
+
+                // selected rows
+                if(!is_numeric($ID)){$ID = explode('_',explode(';',$ID)[0])[0];}
+
+                if ($gformlist[$gtabid]["typ"][$item] == 1) {
+                    $t = 'iframe';
+                } else {
+                    $t = 'div';
+                }
+
+                if($menuitems['url'][$key]){
+                    $url = "newwin7(null,'" . $gformlist["argresult_id"][$item] . "',null,null,null,$('#elrow_".$ID."_".$gtabid."').attr('".$menuitems['url'][$key]."'),'" . $item . "','" . $gformlist[$gformlist["argresult_id"][$item]]['dimension'][$item] . "',null,'" . $t . "');";
+                }else {
+                    $url = "newwin7(null,'" . $gtabid . "',null,null,null,'" . $ID . "','" . $item . "','" . $gformlist[$gtabid]['dimension'][$item] . "',null,'" . $t . "');";
+                }
+                pop_menu2($gformlist[$gformlist["argresult_id"][$item]]['name'][$item], 'open form', null, $menuitems['icon'][$key], $menuitems['style'][$key], $url, $menuitems['class'][$key]);
+            // report
+            } elseif ($menuitems['typ'][$key] == 11) {
+                global $greportlist;
+                if(!$greportlist[$gtabid]["id"][$item]){continue;}
+
+                if(!is_numeric($ID)){$ID = '';}
+                $url = "limbasReportMenuOptions(event,this,'$gtabid','$item','$ID','1','" . $greportlist[$gtabid]["listmode"][$key] . "');";
+                pop_submenu2($greportlist[$gtabid]["name"][$item], $url, '', '', 'lmb-icon lmb-' . $greportlist[$gtabid]["defformat"][$item]);
+            // submenu
+            } elseif ($menuitems['typ'][$key] == 12) {
+                $url = "lmbTableContextMenu(event,this,'$ID',$gtabid,$item,$custmenu)";
+                pop_submenu2($lang[$item], $url);
+            // function
+            } elseif ($menuitems['typ'][$key] == 13) {
+                $url = $menuitems['url'][$key];
+                if (function_exists($url)) {
+                    $url($gtabid, $ID, $formid);
+                }
+            }
+        }
+    }
+}
+
+
+
 
 
 function pop_top($el=null,$width=null){
@@ -134,13 +282,13 @@ EOD;
 
 
 //changed do not display both from menu and given name
-function pop_menu2($val,$desc=null,$fname=null,$imgclass=null,$style=null,$event=null){
+function pop_menu2($val,$desc=null,$fname=null,$imgclass=null,$style=null,$event=null,$class=null){
 
-	$class = "";
+	$class_ = "";
     $img = "";
 	if($imgclass){
 		$img = "<i class=\"lmbContextLeft lmb-icon $imgclass\" border=\"0\"></i>";
-		$class = "Icon";
+		$class_ = "Icon";
 	}
 	
 	if($event){
@@ -148,7 +296,7 @@ function pop_menu2($val,$desc=null,$fname=null,$imgclass=null,$style=null,$event
 	}
 	echo <<<EOD
 	<a $event class="lmbContextLink" title="{$desc}" style="{$style}">
-		$img<span class="lmbContextItem$class" id="$fname">$val</span>
+		$img<span class="lmbContextItem$class_ $class" id="$fname">$val</span>
 	</a>
 EOD;
 }

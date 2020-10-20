@@ -51,12 +51,12 @@ class lmb_kanban {
         global $lang;
        $sqlquery = "SELECT LMB_SELECT_W.ID, LMB_SELECT_W.WERT,LMB_SELECT_W.SORT,LMB_SELECT_W.KEYWORDS FROM LMB_CONF_FIELDS  LEFT JOIN LMB_SELECT_W ON LMB_SELECT_W.POOL = LMB_CONF_FIELDS.SELECT_POOL WHERE TAB_ID = ".$this->gtabid." AND UPPER(FIELD_NAME) = '".$this->lmbKanFields['STATUS']."'";
        #error_log($sqlquery);
-       $rs = odbc_exec($db,$sqlquery);
+       $rs = lmbdb_exec($db,$sqlquery);
        $columns = array();
-       while(odbc_fetch_row($rs)){
-            $sort = odbc_result($rs,'SORT');
-            $wert = odbc_result($rs,'WERT');
-            $columns[$sort] = array('id'=>odbc_result($rs,'id'), 'title'=>$wert,'color'=>odbc_result($rs,'KEYWORDS'),'class'=>'','extended'=>false);
+       while(lmbdb_fetch_row($rs)){
+            $sort = lmbdb_result($rs,'SORT');
+            $wert = lmbdb_result($rs,'WERT');
+            $columns[$sort] = array('id'=>lmbdb_result($rs,'id'), 'title'=>$wert,'color'=>lmbdb_result($rs,'KEYWORDS'),'class'=>'','extended'=>false);
             $columns[$sort]['cards'] = $this->load_cards($wert);
        }
        ksort($columns);
@@ -83,10 +83,10 @@ class lmb_kanban {
     {
         global $db;
         $sqlquery = "SELECT LMB_SELECT_W.ID AS SID FROM LMB_CONF_FIELDS  LEFT JOIN LMB_SELECT_W ON LMB_SELECT_W.POOL = LMB_CONF_FIELDS.SELECT_POOL WHERE TAB_ID = ".$this->gtabid." AND UPPER(FIELD_NAME) = '".$this->lmbKanFields['STATUS']."' AND LMB_SELECT_W.WERT = '$status'";
-        $rs = odbc_exec($db,$sqlquery);
+        $rs = lmbdb_exec($db,$sqlquery);
         $id = 0;
-        while(odbc_fetch_row($rs)){
-            $id = odbc_result($rs,'SID');
+        while(lmbdb_fetch_row($rs)){
+            $id = lmbdb_result($rs,'SID');
         }
         return $id;
     }
@@ -252,10 +252,10 @@ class lmb_kanban {
         global $db;
         $sqlquery = "SELECT WERT FROM LMB_SELECT_W WHERE ID = ".$status_id;
 
-        $rs = odbc_exec($db,$sqlquery);
+        $rs = lmbdb_exec($db,$sqlquery);
         $status = array();
-        while(odbc_fetch_row($rs)){
-             $status = odbc_result($rs,'WERT');
+        while(lmbdb_fetch_row($rs)){
+             $status = lmbdb_result($rs,'WERT');
         }
         $update["{$this->gtabid},{$this->lmbKanFieldsID['STATUS']},$ID"] = $status;
         return update_data($update);
@@ -356,11 +356,11 @@ class lmb_kanban {
                 case 4:
                     $spool = $gfield[$this->gtabid]['select_pool'][$field];
                     $sqlquery = "SELECT WERT, KEYWORDS FROM LMB_SELECT_W WHERE POOL = $spool";
-                    $rs = odbc_exec($db,$sqlquery);
-                    while(odbc_fetch_row($rs)){
+                    $rs = lmbdb_exec($db,$sqlquery);
+                    while(lmbdb_fetch_row($rs)){
 
-                        $color = odbc_result($rs,'KEYWORDS');
-                        $wert = odbc_result($rs,'WERT');
+                        $color = lmbdb_result($rs,'KEYWORDS');
+                        $wert = lmbdb_result($rs,'WERT');
 
                         $filter_items[] = array((($color == '') ? $bcolor : $color), lmb_strtolower($wert),$wert);
                     }

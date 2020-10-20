@@ -94,7 +94,7 @@ function add_rules($ID,$groupid,&$frule,&$filerules,&$erule){
 
 		if($ch["LMVIEW"] == LMB_DBDEF_FALSE OR $filerules[$key]["view"] == "0"){
 			$sqlquery = "DELETE FROM LDMS_RULES WHERE GROUP_ID = $groupid AND FILE_ID = $key";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
 
 		if(is_array($ch)){
@@ -104,7 +104,7 @@ function add_rules($ID,$groupid,&$frule,&$filerules,&$erule){
 				}
 				$qu = implode(",",$qu);
 				$sqlquery = "UPDATE LDMS_RULES SET $qu WHERE FILE_ID = $key AND GROUP_ID = $groupid";
-				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs){$commit = 1;}
 			}elseif($tr){
 				foreach ($ch as $k => $v){
@@ -112,7 +112,7 @@ function add_rules($ID,$groupid,&$frule,&$filerules,&$erule){
 					$qu["t"][] = $v;
 				}
 				$sqlquery = "INSERT INTO LDMS_RULES (ID,GROUP_ID,FILE_ID,".implode(",",$qu["i"]).") VALUES($NEXTID,$groupid,$key,".implode(",",$qu["t"]).")";
-				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs){$commit = 1;}
 				$NEXTID++;
 			}
@@ -126,24 +126,24 @@ function get_filerules($ID){
 	
 	# --- Rechte lesen ------
 	$sqlquery = "SELECT * FROM LDMS_RULES WHERE GROUP_ID = $ID ORDER BY FILE_ID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs){$commit = 1;}
 	
 	$filerules = array();
 
-	while(odbc_fetch_row($rs)) {
-		if($id == odbc_result($rs, "FILE_ID")){
-			$sqlquery1 = "DELETE FROM LDMS_RULES WHERE GROUP_ID = $ID AND ID = ".odbc_result($rs, "ID");
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
+		if($id == lmbdb_result($rs, "FILE_ID")){
+			$sqlquery1 = "DELETE FROM LDMS_RULES WHERE GROUP_ID = $ID AND ID = ".lmbdb_result($rs, "ID");
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
 		
-		$id = odbc_result($rs, "FILE_ID");
-		$filerules[$id]["view"] = odbc_result($rs, "LMVIEW");
-		$filerules[$id]["add"] = odbc_result($rs, "LMADD");
-		$filerules[$id]["addf"] = odbc_result($rs, "ADDF");
-		$filerules[$id]["edit"] = odbc_result($rs, "EDIT");
-		$filerules[$id]["del"] = odbc_result($rs, "DEL");
-		$filerules[$id]["lock"] = odbc_result($rs, "LMLOCK");
+		$id = lmbdb_result($rs, "FILE_ID");
+		$filerules[$id]["view"] = lmbdb_result($rs, "LMVIEW");
+		$filerules[$id]["add"] = lmbdb_result($rs, "LMADD");
+		$filerules[$id]["addf"] = lmbdb_result($rs, "ADDF");
+		$filerules[$id]["edit"] = lmbdb_result($rs, "EDIT");
+		$filerules[$id]["del"] = lmbdb_result($rs, "DEL");
+		$filerules[$id]["lock"] = lmbdb_result($rs, "LMLOCK");
 	}
 	
 	return $filerules;
@@ -156,11 +156,11 @@ function group_list($ID,&$grouplist){
 
 	if($ID){
 		$sqlquery = "SELECT GROUP_ID FROM LMB_GROUPS WHERE LEVEL = $ID";
-	    $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	    if(!$rs) {$commit = 1;}
-	    while(odbc_fetch_row($rs)) {
-	    	$grouplist[] = odbc_result($rs, "GROUP_ID");
-			group_list(odbc_result($rs, "GROUP_ID"),$grouplist);
+	    while(lmbdb_fetch_row($rs)) {
+	    	$grouplist[] = lmbdb_result($rs, "GROUP_ID");
+			group_list(lmbdb_result($rs, "GROUP_ID"),$grouplist);
 		}
 	}
 
@@ -171,16 +171,16 @@ function group_list($ID,&$grouplist){
 
 
 $sqlquery = "SELECT * FROM LDMS_STRUCTURE WHERE TYP = 1 OR TYP = 3 OR TYP = 7 OR TYP = 5 ORDER BY TYP,NAME";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs){$commit = 1;}
 
 # ------------ Öffentlicher Ordner ------------------------------
-while(odbc_fetch_row($rs)) {
-	$id = odbc_result($rs, "ID");
+while(lmbdb_fetch_row($rs)) {
+	$id = lmbdb_result($rs, "ID");
     $file_struct["id"][$id] = $id;
-    $file_struct["name"][$id] = odbc_result($rs, "NAME");
-    $file_struct["level"][$id] = odbc_result($rs, "LEVEL");
-    $file_struct["typ"][$id] = odbc_result($rs, "TYP");
+    $file_struct["name"][$id] = lmbdb_result($rs, "NAME");
+    $file_struct["level"][$id] = lmbdb_result($rs, "LEVEL");
+    $file_struct["typ"][$id] = lmbdb_result($rs, "TYP");
 }
 
 

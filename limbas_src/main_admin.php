@@ -26,7 +26,7 @@ function is_time(){
 $zeit_main = is_time();
 
 /* --- Include Libary ------------------------------------------------ */
-require_once("inc/include_db.lib");
+require_once("lib/db/db_wrapper.lib");
 require_once("lib/db/db_".$DBA["DB"]."_admin.lib");
 require_once("lib/include.lib");
 require_once("lib/include_admin.lib");
@@ -34,7 +34,6 @@ require_once("lib/session.lib");
 require_once("lib/context.lib");
 require_once("extra/snapshot/snapshot.lib");
 
-#$STYLE = "style=\"border-left:1px inset black;border-top:1px inset black;\"";
 
 // EXTENSIONS add
 if ($gLmbExt["ext_main_admin.inc"]) {
@@ -175,6 +174,11 @@ elseif ($action == "setup_tabtools" AND $LINK[$action] == 1) {
 	$require3 = "admin/tools/tabtools.php";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
+elseif ($action == "setup_php_editor" AND $LINK[$action] == 1) {
+    $require1 = "admin/tools/php_editor.dao";
+    $require3 = "admin/tools/php_editor.php";
+    $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
+}
 elseif ($action == "setup_export" AND $LINK[$action] == 1) {
 	$require1 = "admin/tools/export.lib";
 	$require2 = "admin/tools/export.php";
@@ -234,7 +238,11 @@ elseif ($action == "setup_update") {
 	$require1 = "admin/tools/update.php";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
-
+elseif ($action == "setup_currency" AND $LINK[$action] == 1) {
+    $require1 = "admin/tools/currency.dao";
+    $require2 = "admin/tools/currency.php";
+    $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
+}
 /*-------------- intern jobs -----------------------*/
 elseif ($action == "setup_indize_db" AND $LINK[$action] == 1) {
 	$require1 = "admin/tools/jobs_ext.lib";
@@ -263,6 +271,11 @@ elseif ($action == "setup_umgvar" AND $LINK[$action] == 1) {
 	$require1 = "admin/setup/umgvar.dao";
 	$require2 = "admin/setup/umgvar.php";
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
+}
+elseif ($action == "setup_custvar" AND $LINK[$action] == 1) {
+    $require1 = "admin/setup/custvar.dao";
+    $require2 = "admin/setup/custvar.php";
+    $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
 elseif ($action == "setup_ftype" AND $LINK[$action] == 1) {
 	$require1 = "admin/setup/language.lib";
@@ -401,6 +414,11 @@ elseif ($action == "setup_grouping_editor" AND $LINK[$action] == 1) {
 elseif ($action == 'setup_external_storage' AND $LINK[$action] == 1) {
     $require1 = 'admin/setup/externalStorage.dao';
     $require2 = 'admin/setup/externalStorage.php';
+    $BODYHEADER = $lang[$LINK['desc'][$LINK_ID[$action]]];
+}
+elseif ($action == 'setup_multitenant' AND $LINK[$action] == 1) {
+    $require1 = 'admin/setup/multitenant.dao';
+    $require2 = 'admin/setup/multitenant.php';
     $BODYHEADER = $lang[$LINK['desc'][$LINK_ID[$action]]];
 }
 elseif ($action == 'setup_printers' AND $LINK[$action] == 1) {
@@ -543,7 +561,7 @@ else{
 if($BODY != 1){
 ?>
 
-<html <?= $STYLE ?>>
+<html>
 
 <head>
 <meta NAME="Title" CONTENT="Limbas Enterprise Unifying Framework V <?=$umgvar['version']?>">
@@ -561,27 +579,44 @@ if($BODY != 1){
 <meta http-equiv="Content-Style-Type" content="text/css">
 <title>Limbas Enterprise Unifying Framework V <?=$umgvar['version']?></title>
 
-<script type="text/javascript" src="lib/global.js"></script>
-<script type='text/javascript' src='extern/jquery/jquery-1.11.0.min.js'></script>
-<script type='text/javascript' src='extern/jquery/jquery-ui-1.12.1.min.js'></script>
-<script type='text/javascript' src='extern/jquery/colResizable-1.3.min.js'></script>
-<script type='text/javascript' src='extern/jquery/jquery.ui.datepicker-de.js'></script>
-<script type='text/javascript' src='extern/jquery/jquery-ui-timepicker-addon.js'></script>
-<style type='text/css'>@import url(extern/jquery/theme/jquery-ui-1.12.1.min.css);</style>
-<style type='text/css'>@import url(extern/jquery/theme/jquery-ui-timepicker-addon.css);</style>
-<style type='text/css'>@import url(extern/jquery/colResizable.css);</style>
-<style type="text/css">@import url(USER/<?=$session['user_id']?>/layout.css);</style>
+<script type="text/javascript" src="lib/global.js?v=<?=$umgvar["version"]?>"></script>
+<script type='text/javascript' src='extern/jquery/jquery-1.11.0.min.js?v=<?=$umgvar["version"]?>'></script>
+<script type='text/javascript' src='extern/jquery/jquery-ui-1.12.1.min.js?v=<?=$umgvar["version"]?>'></script>
+<script type='text/javascript' src='extern/jquery/colResizable-1.3.min.js?v=<?=$umgvar["version"]?>'></script>
+<script type='text/javascript' src='extern/jquery/jquery.ui.datepicker-de.js?v=<?=$umgvar["version"]?>'></script>
+<script type='text/javascript' src='extern/jquery/jquery-ui-timepicker-addon.js?v=<?=$umgvar["version"]?>'></script>
+<style type='text/css'>@import url(extern/jquery/theme/jquery-ui-1.12.1.min.css?v=<?=$umgvar["version"]?>);</style>
+<style type='text/css'>@import url(extern/jquery/theme/jquery-ui-timepicker-addon.css?v=<?=$umgvar["version"]?>);</style>
+<style type='text/css'>@import url(extern/jquery/colResizable.css?v=<?=$umgvar["version"]?>);</style>
+    
+    
+<?php
+
+//load layout / choose between new and legacy based on action and template //TODO: remove legacy switch in future version
+if (in_array($action,['setup_color_schema'])) {
+    if ($session['layout'] != 'barracuda') { ?>
+        <link rel="stylesheet" type="text/css" href="layout/css/barracuda.4.css?v=<?=$umgvar["version"]?>">
+    <?php } else { ?>
+        <link rel="stylesheet" type="text/css" href="layout/css/<?=$session['layout']?>.<?=$session['farbschema']?>.css?v=<?=$umgvar["version"]?>">
+    <?php } ?>
+<?php } else { ?>
+    <link rel="stylesheet" type="text/css" href="USER/<?=$session['user_id']?>/layout.css?v=<?=$umgvar["version"]?>">
+<?php } ?>
+    
 
 <?php if($action == "setup_user_tracking" OR $action == "setup_user_change_admin" OR $action == "setup_stat_user_det"){?>
 <?php }elseif($action == "setup_form_main"){?>
-	<script type="text/javascript" src="extern/jsgraphics/jsgraphics.js"></script>
-	<script type="text/javascript" src="admin/form/form_main.js"></script>
+	<script type="text/javascript" src="extern/jsgraphics/jsgraphics.js?v=<?=$umgvar["version"]?>"></script>
+	<script type="text/javascript" src="admin/form/form_main.js?v=<?=$umgvar["version"]?>"></script>
 <?php }elseif($action == "setup_report_main"){?>
-	<script type="text/javascript" src="extern/jsgraphics/jsgraphics.js"></script>
-	<script type="text/javascript" src="admin/report/report.js"></script>
+	<script type="text/javascript" src="extern/jsgraphics/jsgraphics.js?v=<?=$umgvar["version"]?>"></script>
+	<script type="text/javascript" src="admin/report/report.js?v=<?=$umgvar["version"]?>"></script>
 <?php }elseif($action == "setup_gtab_view" OR $action == "setup_tabschema"){?>
-	<script type="text/javascript" src="extern/jsgraphics/jsgraphics.js"></script>
-	<script type="text/javascript" src="admin/tables/tabschema.js"></script>
+	<script type="text/javascript" src="extern/jsgraphics/jsgraphics.js?v=<?=$umgvar["version"]?>"></script>
+	<script type="text/javascript" src="admin/tables/tabschema.js?v=<?=$umgvar["version"]?>"></script>
+<?php }elseif($action == "setup_color_schema"){?>
+    <script type="text/javascript" src="extern/spectrum/spectrum.min.js?v=<?=$umgvar["version"]?>"></script>
+    <link rel="stylesheet" type="text/css" href="extern/spectrum/spectrum.min.css?v=<?=$umgvar["version"]?>">
 <?php }?>
 
 <script language="JavaScript">browserType();</script>
@@ -642,7 +677,7 @@ if($BODY != 1){
 
 /* --- DB-CLOSE ------------------------------------------------------ */
 if ($db) {
-	odbc_close($db);
+	lmbdb_close($db);
 }
 
 

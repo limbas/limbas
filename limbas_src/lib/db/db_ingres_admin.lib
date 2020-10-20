@@ -112,10 +112,10 @@ function dbq_5($p){
 function dbq_23($p){
 	global $db;
 	
-	$rs = odbc_primarykeys($db, $p[2], $p[0], $p[1]);
-	while(odbc_fetch_row($rs)){
-		$pri_key["COLUMN_NAME"][] = odbc_result($rs,"COLUMN_NAME");
-		$pri_key["PK_NAME"][] = odbc_result($rs,"PK_NAME");
+	$rs = lmbdb_primarykeys($db, $p[2], $p[0], $p[1]);
+	while(lmbdb_fetch_row($rs)){
+		$pri_key["COLUMN_NAME"][] = lmbdb_result($rs,"COLUMN_NAME");
+		$pri_key["PK_NAME"][] = lmbdb_result($rs,"PK_NAME");
 	}
 	return  $pri_key;
 }
@@ -141,8 +141,8 @@ function dbq_18($p){
 	global $DBA;
 	
 	$sql = dbq_2(array($DBA["DBUSER"],$p[0],null,2));
-	$rs = odbc_exec($db,$sql);
-	$indexname = odbc_result($rs, "INDEXNAME");
+	$rs = lmbdb_exec($db,$sql);
+	$indexname = lmbdb_result($rs, "INDEXNAME");
 	if($indexname){
 		return "ALTER TABLE ".$p[0]." DROP CONSTRAINT ".$indexname;
 	}
@@ -237,13 +237,13 @@ function dbf_3($p){
 		$sql .= " AND LOWER(rule_name) LIKE '".lmb_strtolower($p[1])."'";
 	}
 	
-	$rs = odbc_exec($db,$sql);
-	while(odbc_fetch_row($rs)){
-		$res["triggername"][] = odbc_result($rs,"TRIGGERNAME");
-		$res["definition"][] = odbc_result($rs,"DEFINITION");
-		$res["tablename"][] = odbc_result($rs,"TABLENAME");
+	$rs = lmbdb_exec($db,$sql);
+	while(lmbdb_fetch_row($rs)){
+		$res["triggername"][] = lmbdb_result($rs,"TRIGGERNAME");
+		$res["definition"][] = lmbdb_result($rs,"DEFINITION");
+		$res["tablename"][] = lmbdb_result($rs,"TABLENAME");
 		
-		$ev = odbc_result($rs,"EVENT");
+		$ev = lmbdb_result($rs,"EVENT");
 		if($ev == 1){
 			$res["event"][] = "DELETE";
 		}elseif($ev == 2){
@@ -380,10 +380,10 @@ function dbf_20($p){
 	global $db;
 
 	if(!$p[1]){$p[1] = "%";}
-	$rs = odbc_tables($db,null,$p[0],dbf_4($p[1]),$p[2]);
-	while(odbc_fetch_row($rs)){
-		$odbc_table["table_name"][] = odbc_result($rs,"TABLE_NAME");
-		$odbc_table["table_type"][] = odbc_result($rs,"TABLE_TYPE");
+	$rs = lmbdb_tables($db,null,$p[0],dbf_4($p[1]),$p[2]);
+	while(lmbdb_fetch_row($rs)){
+		$odbc_table["table_name"][] = lmbdb_result($rs,"TABLE_NAME");
+		$odbc_table["table_type"][] = lmbdb_result($rs,"TABLE_TYPE");
 	}
 	
 	if(!$odbc_table){
@@ -408,19 +408,19 @@ function dbf_5($p,$mode=null){
 	
 	
 	if($p[2]){
-		$rs = odbc_columns($db,null,$p[0],dbf_4($p[1]),dbf_4($p[2]));
+		$rs = lmbdb_columns($db,null,$p[0],dbf_4($p[1]),dbf_4($p[2]));
 	}else{
-		$rs = odbc_columns($db,null,$p[0],dbf_4($p[1]));
+		$rs = lmbdb_columns($db,null,$p[0],dbf_4($p[1]));
 	}
 	
 	if($p[3]){return $rs;}
 	
 	if($mode){
 		$sql2 = dbq_2(array($p[0],$p[1],null,2,null));
-		$rs2 = odbc_exec($db,$sql2);
-		while(odbc_fetch_row($rs2)) {
-			if(odbc_result($rs2, "INDEXNAME")){
-				$key[odbc_result($rs2, "COLUMNNAME")] = 1;
+		$rs2 = lmbdb_exec($db,$sql2);
+		while(lmbdb_fetch_row($rs2)) {
+			if(lmbdb_result($rs2, "INDEXNAME")){
+				$key[lmbdb_result($rs2, "COLUMNNAME")] = 1;
 			}
 		}
 	}
@@ -429,17 +429,17 @@ function dbf_5($p,$mode=null){
 	if($p[2]){
 		$sql .= " AND LOWER(COLUMN_NAME) = '".lmb_strtolower($p[2])."'";
 	}
-	$rs = odbc_exec($db,$sql);
-	while(odbc_fetch_row($rs)) {
-		$col["tablename"][] = dbf_4(trim(odbc_result($rs, "TABLE_NAME")));
-		$col["columnname"][] = dbf_4(trim(odbc_result($rs, "COLUMN_NAME")));
-		$col["columnname_lower"][] = dbf_4(trim(odbc_result($rs, "COLUMN_NAME")));
-		$col["datatype"][] = str_replace(" ","_",trim(odbc_result($rs, "COLUMN_DATATYPE")));
-		$col["length"][] = trim(odbc_result($rs, "COLUMN_LENGTH"));
-		$col["default"][] = trim(odbc_result($rs, "COLUMN_DEFAULT_VAL"));
+	$rs = lmbdb_exec($db,$sql);
+	while(lmbdb_fetch_row($rs)) {
+		$col["tablename"][] = dbf_4(trim(lmbdb_result($rs, "TABLE_NAME")));
+		$col["columnname"][] = dbf_4(trim(lmbdb_result($rs, "COLUMN_NAME")));
+		$col["columnname_lower"][] = dbf_4(trim(lmbdb_result($rs, "COLUMN_NAME")));
+		$col["datatype"][] = str_replace(" ","_",trim(lmbdb_result($rs, "COLUMN_DATATYPE")));
+		$col["length"][] = trim(lmbdb_result($rs, "COLUMN_LENGTH"));
+		$col["default"][] = trim(lmbdb_result($rs, "COLUMN_DEFAULT_VAL"));
 		
 		if($mode){
-			if($key[trim(odbc_result($rs, "COLUMN_NAME"))]){
+			if($key[trim(lmbdb_result($rs, "COLUMN_NAME"))]){
 				$col["mode"][] = "KEY";
 			}else{
 				$col["mode"][] = null;

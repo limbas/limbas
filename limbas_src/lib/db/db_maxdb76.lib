@@ -102,25 +102,26 @@ define("LMB_DBFUNC_VIEWDEPENDENCY",0);
 define("LMB_DBCURSOR",1);
 define("LMB_DBFUNC_WITH_RECURSIVE", 'DECLARE C CURSOR FOR WITH RECURSIVE');
 
+#require_once('lib/db/db_odbc.lib');
 
 
 # odbc connect:
 function dbq_0($host,$database,$dbuser,$dbpass,$dbdriver=null){
 	if($dbdriver == "DSN"){
-		$db = odbc_pconnect("$database","$dbuser","$dbpass") or
-			die('<BR><BR><div style="text-align:center;">Database connection failed!<BR>'.odbc_errormsg($db).'</div>');
+		$db = lmbdb_pconnect("$database","$dbuser","$dbpass") or
+			die('<BR><BR><div style="text-align:center;">Database connection failed!<BR>'.lmbdb_errormsg($db).'</div>');
 	}elseif($dbdriver){
 		$dsn = "Driver=$dbdriver;ServerNode=$host;ServerDB=$database;ReadOnly=No";
-		$db = odbc_pconnect ($dsn, $dbuser, $dbpass);
+		$db = lmbdb_pconnect ($dsn, $dbuser, $dbpass);
 	}else{
-		$db = odbc_pconnect("$host:$database","$dbuser","$dbpass");
+		$db = lmbdb_pconnect("$host:$database","$dbuser","$dbpass");
 	}
 	if($db){return $db;}
-	else{echo("<h1>Database connection failed</h1><p>($dsn)<BR>".odbc_errormsg()."</p>"); return false;}
+	else{echo("<h1>Database connection failed</h1><p>($dsn)<BR>".lmbdb_errormsg()."</p>"); return false;}
 }
 
 #function dbq_0($host,$database,$dbuser,$dbpass,$odbcdriver=null){
-#	$db = odbc_pconnect("$host:$database","$dbuser","$dbpass") or die("<BR><BR><CENTER>Database connection failed!<BR>".odbc_errormsg($db)."</CENTER>");
+#	$db = lmbdb_pconnect("$host:$database","$dbuser","$dbpass") or die("<BR><BR><CENTER>Database connection failed!<BR>".lmbdb_errormsg($db)."</CENTER>");
 #	return $db;
 #}
 
@@ -160,11 +161,7 @@ function dbf_1($p,$t=0){
  * @return string
  */
 function dbf_6($p){
-	#if (get_magic_quotes_gpc()){
-	#	return stripslashes($p);
-	#}else{
-		return $p;
-	#}
+    return dbf_7($p);
 }
 
 /**
@@ -174,11 +171,7 @@ function dbf_6($p){
  * @return string
  */
 function dbf_7($p){
-	#if (get_magic_quotes_gpc()){
-	#	return str_replace("'","''",stripslashes($p));
-	#}else{
-		return str_replace("'","''",$p);
-	#}
+    return str_replace("'","''",$p);
 }
 
 /**
@@ -189,8 +182,8 @@ function dbf_7($p){
 function dbf_8($p){
 	global $db;
 
-	$rs = odbc_exec($db,"SELECT ".dbf_4($p).".NEXTVAL AS NEXTSEQ FROM DUAL") or errorhandle(odbc_errormsg($db),$prepare_string,"get next sequence",$FILE,$LINE);
-	return odbc_result($rs,"NEXTSEQ");
+	$rs = lmbdb_exec($db,"SELECT ".dbf_4($p).".NEXTVAL AS NEXTSEQ FROM DUAL") or errorhandle(lmbdb_errormsg($db),$prepare_string,"get next sequence",$FILE,$LINE);
+	return lmbdb_result($rs,"NEXTSEQ");
 }
 
 /**

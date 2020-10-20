@@ -40,7 +40,23 @@ TEXTAREA {
 	border: 1px dotted grey;
 }
 
+.CodeMirror {
+    border: 1px solid <?=$farbschema['WEB3']?>;
+    width: 300px;
+    height: 200px;
+}
 </STYLE>
+
+<script src="extern/codemirror/lib/codemirror.js?v=<?=$umgvar["version"]?>"></script>
+<link rel="stylesheet" href="extern/codemirror/lib/codemirror.css?v=<?=$umgvar["version"]?>">
+<script src="extern/codemirror/edit/matchbrackets.js?v=<?=$umgvar["version"]?>"></script>
+<script src="extern/codemirror/edit/matchtags.js?v=<?=$umgvar["version"]?>"></script>
+<script src="extern/codemirror/mode/htmlmixed/htmlmixed.js?v=<?=$umgvar["version"]?>"></script>
+<script src="extern/codemirror/mode/xml/xml.js?v=<?=$umgvar["version"]?>"></script>
+<script src="extern/codemirror/mode/javascript/javascript.js?v=<?=$umgvar["version"]?>"></script>
+<script src="extern/codemirror/mode/css/css.js?v=<?=$umgvar["version"]?>"></script>
+<script src="extern/codemirror/mode/clike/clike.js?v=<?=$umgvar["version"]?>"></script>
+<script src="extern/codemirror/mode/php/php.js?v=<?=$umgvar["version"]?>"></script>
 
 <script language="JavaScript">
 
@@ -242,7 +258,7 @@ $opt['desc'] = array("",$lang[2445],$lang[2091],$lang[2092],$lang[2446],$lang[24
 <TR id="menu_dbdat_bild_chart_" STYLE="display:none"><TD>
 </TD></TR>
 <TR id="menu_formel_" STYLE="display:none"><TD><?php pop_line();?></TD></TR>
-<TR id="menu_formel_templ_" STYLE="display:none"><TD><?php pop_submenu2("Edit","document.getElementById('big_input').value=document.getElementById(currentdiv).value;limbasDivShow(this,'menu','menu_big_input');","Edit");?></TD></TR>
+<TR id="menu_formel_templ_" STYLE="display:none"><TD><?php pop_submenu2("Edit","cmeditor.setValue(document.getElementById(currentdiv).value);limbasDivShow(this,'menu','menu_big_input');","Edit");?></TD></TR>
 <TR id="menu_dbdat_ureport_chart_" STYLE="display:none"><TD><?php pop_line();?></TD></TR>
 <TR id="menu_dbdat_ureport_chart_templ_" STYLE="display:none"><TD><?php pop_submenu2("Parameter","document.getElementById('extendet_input').value=document.getElementById('extendet_input_' + currentdiv).value;limbasDivShow(this,'menu','menu_extendet_input');","Parameter");?></TD></TR>
 <TR id="menu_multi_text_bild_chart_templ_datum_dbdat_dbdesc_rect_line_ellipse_tab_snr_formel_ureport_tabcell_" STYLE="display:none"><TD><?php pop_line();?></TD></TR>
@@ -366,7 +382,30 @@ $opt['desc'] = array("","Monochrom","Invertieren","Normalisieren");?>
 <TR><TD ><?php pop_top('pic_info',305);?></TD></TR>
 <TR><TD>
 <?php pop_left(305);?>
-&nbsp;<TEXTAREA onfocus="bigInputEdit=1;" onblur="bigInputEdit=0;" NAME="big_input" id="big_input" STYLE="width:300px;height:200px;background-color:<?= $farbschema['WEB8'] ?>;"  onkeyup="document.getElementById(currentdiv).value=this.value;"></TEXTAREA>
+&nbsp;<TEXTAREA onfocus="bigInputEdit=1;" onblur="bigInputEdit=0;" name="big_input" id="big_input"></TEXTAREA>
+        <Script language="JavaScript">
+            var cmeditor = CodeMirror.fromTextArea(document.getElementById("big_input"), {
+                lineNumbers: true,
+                matchBrackets: true,
+                mode: "text/x-php",
+                indentUnit: 4,
+                indentWithTabs: true,
+                enterMode: "indent",
+                tabMode: "shift"
+            });
+
+            // update textarea element on cm change
+            cmeditor.on('change', function() {
+                document.getElementById(currentdiv).value = cmeditor.getValue();
+            });
+
+            // update cm on textarea change
+            $(function() {
+                $('[lmbtype=formel],[lmbtype=templ]').on('input', function() {
+                    cmeditor.setValue(document.getElementById(currentdiv).value);
+                });
+            });
+        </Script>
 <?php pop_right();?>
 </TD></TR>
 <TR><TD><?php pop_bottom(305);?></TD></TR>
@@ -444,7 +483,7 @@ $report['page_style'][5] = round($report['page_style'][5] * 2.8346);
 <?php
 
 /*------- Style ---------*/
-function set_style($textstyle){
+function set_style_report($textstyle){
 	global $styletyp;
 	$textstyle = explode(";",$textstyle);
 	$bzm1 = 0;
@@ -496,7 +535,7 @@ function print_tab($report,$key){
 	$report_tab_rows = $tab_size[1];
 
 	$reportstyle = explode(";",$report_style);
-	$stylevalue = set_style($report_style);
+	$stylevalue = set_style_report($report_style);
 
 	if(!$report_tab_el){$position = "position:absolute; left:".$report_posx."; top:".$report_posy;}
 	if($reportstyle[24]){$height = "height:$report_height;";}
@@ -568,7 +607,7 @@ function print_tab($report,$key){
                     #$align = "align=\"" . $cellstyle[12] . "\"";
                     #$valign = "valign=\"" . $cellstyle[23] . "\"";
 
-                    $style = "style=\"" . set_style($st) . ";\"";
+                    $style = "style=\"" . set_style_report($st) . ";\"";
 
 					/*
                     if($tab_cell_id == 219){
@@ -629,7 +668,7 @@ function printBerichtElement($report,$key){
     $report_picthumb = $report['pic_name'][$key];
 
 
-	$stylevalue = set_style($report_style);
+	$stylevalue = set_style_report($report_style);
 	$st = explode(";",$report_style);
 
 	if($tab_el_type=="text"){
@@ -796,7 +835,7 @@ function printBerichtElement($report,$key){
 		}
 
 		#if(!$tab_el){
-			echo "<$tagType $readonly id=\"div".$report_ID."\" lmbselectable=\"1\" $textAreaName $style $OnClick $onMousedown $onMouseOver $onMouseOut>";
+			echo "<$tagType lmbtype=\"$tab_el_type\" $readonly id=\"div".$report_ID."\" lmbselectable=\"1\" $textAreaName $style $OnClick $onMousedown $onMouseOver $onMouseOut>";
 			echo $content;
 			echo "</$tagType>\n";
 		#}else{

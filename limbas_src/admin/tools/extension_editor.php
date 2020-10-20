@@ -38,16 +38,16 @@ if ($extsave AND $fvalue AND $fpath) {
     <meta HTTP-EQUIV="Content-Type" content="text/html; charset=UTF-8">
     <title></title>
     <style type="text/css">@import url(USER/<?=$session['user_id']?>/layout.css);</style>
-    <script src="extern/codemirror/lib/codemirror.js"></script>
-    <link rel="stylesheet" href="extern/codemirror/lib/codemirror.css">
-    <script src="extern/codemirror/edit/matchbrackets.js"></script>
-    <script src="extern/codemirror/edit/matchtags.js"></script>
-    <script src="extern/codemirror/mode/htmlmixed/htmlmixed.js"></script>
-    <script src="extern/codemirror/mode/xml/xml.js"></script>
-    <script src="extern/codemirror/mode/javascript/javascript.js"></script>
-    <script src="extern/codemirror/mode/css/css.js"></script>
-    <script src="extern/codemirror/mode/clike/clike.js"></script>
-    <script src="extern/codemirror/mode/php/php.js"></script>
+    <script src="extern/codemirror/lib/codemirror.js?v=<?=$umgvar["version"]?>"></script>
+    <link rel="stylesheet" href="extern/codemirror/lib/codemirror.css?v=<?=$umgvar["version"]?>">
+    <script src="extern/codemirror/edit/matchbrackets.js?v=<?=$umgvar["version"]?>"></script>
+    <script src="extern/codemirror/edit/matchtags.js?v=<?=$umgvar["version"]?>"></script>
+    <script src="extern/codemirror/mode/htmlmixed/htmlmixed.js?v=<?=$umgvar["version"]?>"></script>
+    <script src="extern/codemirror/mode/xml/xml.js?v=<?=$umgvar["version"]?>"></script>
+    <script src="extern/codemirror/mode/javascript/javascript.js?v=<?=$umgvar["version"]?>"></script>
+    <script src="extern/codemirror/mode/css/css.js?v=<?=$umgvar["version"]?>"></script>
+    <script src="extern/codemirror/mode/clike/clike.js?v=<?=$umgvar["version"]?>"></script>
+    <script src="extern/codemirror/mode/php/php.js?v=<?=$umgvar["version"]?>"></script>
     <style>
         .CodeMirror {
             border: 1px solid<?=$farbschema['WEB3']?>;

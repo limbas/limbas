@@ -349,6 +349,11 @@ function print_chart(LmbTcpdf &$pdf, $ID, &$report, $el) {
 
 /*------- report template ---------*/
 function print_templ(LmbTcpdf &$pdf, $ID, &$report, $el) {
+    global $greportlist;
+    global $umgvar;
+
+    $reportID = $report['report_id'];
+    $reportTabID = $report['referenz_tab'];
     $templGtabid = $report['pic_typ'][$el];
     $content = &$report['value'][$el];
     $parameter = &$report['parameter'][$el];
@@ -359,7 +364,13 @@ function print_templ(LmbTcpdf &$pdf, $ID, &$report, $el) {
     $baseElement->resolve($ID);
 
     $htmlArr = &$baseElement->getAsHtmlArr();
-	$pdf->print_element($pdf->printcell(implode('', $htmlArr), $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], 'html'));
+
+    // add report's css file if set
+    if ($cssFile = $greportlist[$reportTabID]['css'][$reportID]) {
+        array_unshift($htmlArr, '<style>', file_get_contents($umgvar['path'] . '/' . $cssFile), '</style>');
+    }
+
+    $pdf->print_element($pdf->printcell(implode('', $htmlArr), $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], 'html'));
 }
 
 function print_tab(LmbTcpdf &$pdf, $ID, &$report, $el) {
@@ -403,29 +414,29 @@ function print_tab(LmbTcpdf &$pdf, $ID, &$report, $el) {
             TAB_EL_COL,
             CASE WHEN TYP = 'tabcell' THEN 1 ELSE 2 END,
             EL_ID";
-    $rs = odbc_exec($db, $sqlquery) or errorhandle(odbc_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
 
     # get table cell information
     $cells = array();
-    while (odbc_fetch_row($rs)) {
-        $row = odbc_result($rs, 'TAB_EL_ROW');
-        $col = odbc_result($rs, 'TAB_EL_COL');
-        $typ = odbc_result($rs, 'TYP');
+    while (lmbdb_fetch_row($rs)) {
+        $row = lmbdb_result($rs, 'TAB_EL_ROW');
+        $col = lmbdb_result($rs, 'TAB_EL_COL');
+        $typ = lmbdb_result($rs, 'TYP');
 
         if ($typ == 'tabcell') {
             $cells[$row][$col] = array(
-                'STYLE' => explode(';', odbc_result($rs, 'STYLE')),
+                'STYLE' => explode(';', lmbdb_result($rs, 'STYLE')),
                 'CHILDREN' => array()
             );
             continue;
         }
 
         $cells[$row][$col]['CHILDREN'][] = array(
-            'INHALT' => odbc_result($rs, 'INHALT'),
-            'TYP' => odbc_result($rs, 'TYP'),
-            'EL_ID' => odbc_result($rs, 'EL_ID'),
-            'STYLE' => explode(';', odbc_result($rs, 'STYLE')),
-            'WIDTH' => odbc_result($rs, 'WIDTH')
+            'INHALT' => lmbdb_result($rs, 'INHALT'),
+            'TYP' => lmbdb_result($rs, 'TYP'),
+            'EL_ID' => lmbdb_result($rs, 'EL_ID'),
+            'STYLE' => explode(';', lmbdb_result($rs, 'STYLE')),
+            'WIDTH' => lmbdb_result($rs, 'WIDTH')
         );
     }
 

@@ -38,7 +38,7 @@ if($LIM["use_soap"]){
 		}
 	}
 
-	require_once("inc/include_db.lib");
+	require_once("lib/db/db_wrapper.lib");
 	require_once("lib/include.lib");
 	require_once("lib/session.lib");
 	require_once("extra/soap/server.php");

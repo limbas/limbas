@@ -105,9 +105,9 @@ function print_tab($dom,$report_id,$item,$ID,$rkey,&$report){
 	
 	# Tabellenname des ersten DB-Elements für Elementbeschreibung
 	$sqlquery = "SELECT DBFIELD FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB = ".$report_tab." AND TYP = 'dbdat'";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_result($rs, "DBFIELD")){
-		$tmp = explode(";",odbc_result($rs, "DBFIELD"));
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_result($rs, "DBFIELD")){
+		$tmp = explode(";",lmbdb_result($rs, "DBFIELD"));
 		$el_tablename = $gtab["table"][$tmp[0]]."_".$report_ID;
 	}else{
 		$el_tablename = "element_".$report_ID;
@@ -135,14 +135,14 @@ function print_tab($dom,$report_id,$item,$ID,$rkey,&$report){
 			$cols = array();
 			
 			$sqlquery = "SELECT DISTINCT EL_ID,INHALT,DBFIELD,TYP,POSX,POSY,TAB_EL_COL_SIZE,HEIGHT,STYLE,TAB FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB = ".$report_tab." AND TAB_EL_ROW = ".$bzm2." AND TAB_EL_COL = ".$bzm3." ORDER BY EL_ID ";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-			while(odbc_fetch_row($rs)) {
-				$cols["value"][] = odbc_result($rs, "INHALT");
-				$cols["typ"][] = odbc_result($rs, "TYP");
-				$cols["id"][] = odbc_result($rs, "EL_ID");
-				$cols["style"][] = odbc_result($rs, "STYLE");
-				$cols["dbfield"][] = odbc_result($rs, "DBFIELD");
+			while(lmbdb_fetch_row($rs)) {
+				$cols["value"][] = lmbdb_result($rs, "INHALT");
+				$cols["typ"][] = lmbdb_result($rs, "TYP");
+				$cols["id"][] = lmbdb_result($rs, "EL_ID");
+				$cols["style"][] = lmbdb_result($rs, "STYLE");
+				$cols["dbfield"][] = lmbdb_result($rs, "DBFIELD");
 			}
 			
 			if(is_array($cols["id"])){

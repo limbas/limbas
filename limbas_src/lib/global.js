@@ -580,6 +580,18 @@ function ajaxGetWait(evt,url,actid,parameters,functionName,formname,wait) {
 
 
 /* --- ajaxGet ----------------------------------- */
+/**
+ * Queries a dyns_xxx function in the backend
+ * @param evt object|null Browser-Mouse-Event
+ * @param url string The url that is queried ("main_dyns.php?your_get_parameters..."
+ * @param actid string The backend function "dyns_"+actid will be executed
+ * @param parameters array of element ids Form elements to include in the query
+ * @param functionName function|string The function to execute when the query's result is available
+ * @param formname string|null The form to include in the query
+ * @param tocontainer html-element|null The html element to insert the query's result-html into
+ * @param syncron bool If true, the query will not be asynchronous
+ * @param nosymbol bool If true, the loading-icon will not be shown during the query
+ */
 function ajaxGet(evt,url,actid,parameters,functionName,formname,tocontainer,syncron,nosymbol) {
 
 	// IE event workaround 
@@ -658,8 +670,8 @@ function ajaxGet(evt,url,actid,parameters,functionName,formname,tocontainer,sync
 	}
 
 	if(url.length > 1){
-		
-		
+
+
 		if(window.XMLHttpRequest){
 			var xmlhttp = new XMLHttpRequest();
 		}else if (window.ActiveXObject) {
@@ -765,11 +777,17 @@ function ajaxEvalScriptXX(val){
 
 function ajaxContainerPost(string,container)
 {
-	if(!container){
-		container = 'lmbAjaxContainer';
-		limbasDivCloseTab.push(container);
-	}
-	var el = document.getElementById(container);
+	if(!container) {
+        container = 'lmbAjaxContainer';
+        limbasDivCloseTab.push(container)
+    }
+
+	if(! document.getElementById(container)){
+	    $("<div id='"+container+"'></div>").appendTo(document.body);
+    }
+
+    var el = document.getElementById(container);
+
 	el.innerHTML = string;
 	el.style.visibility='visible';
 	el.style.display='';
@@ -1382,14 +1400,11 @@ function setxypos(evt,el) {
 	if(typeof(el)!="object"){
 		el = document.getElementById(el);
 	}
-	
-	if(browser_ns5){
-		el.style.left=evt.pageX - 5;
-		el.style.top=evt.pageY - 5;
-	} else if(window.event){ 
-		el.style.left = window.event.clientX + document.body.scrollLeft - 5;
-		el.style.top = window.event.clientY + document.body.scrollTop - 5;
-	}
+
+	if(typeof(el)=="object" && evt.pageX) {
+	    el.style.left = evt.pageX - 5;
+	    el.style.top = evt.pageY - 5;
+    }
 
 }
 
@@ -1425,6 +1440,10 @@ var validEnter = false;
 */
 function limbasDivShow(el,parent,child,slide,display,abs,center,puttotop)
 {
+    if(!parent && el && (typeof(el) !== 'string' || el.indexOf(';') < 0)) {
+        parent = $(el).closest('.lmbContextMenu').attr('id');
+    }
+
     validEnter = false;
 	activ_menu=1;
 	if(el || parent){limbasDivClose(parent); }
@@ -1450,8 +1469,9 @@ function limbasDivShow(el,parent,child,slide,display,abs,center,puttotop)
 			}
 			document.getElementById(child).style.zIndex = (parseInt(parel.style.zIndex) + 1);
 		//!="object")
-		}else if(typeof(parent)=="object"){
-			setxypos(parent,child);                      
+		}else if(typeof(parent)=="object" && parent.pageX){
+            // is event
+            setxypos(parent, child);
 
 		}else{
 			setxypos(parent,child);
@@ -1558,6 +1578,92 @@ function limbasDivShow(el,parent,child,slide,display,abs,center,puttotop)
         //document.getElementById(child).style.visibility = "visible";
 	//if(center){limbasSetCenterPos(document.getElementById(child));}
 	//if(display){document.getElementById(child).style.display ='';}
+
+	// filter context menu on key press
+	$(document)
+		.off('keypress.limbasDivShow') /* remove existing events to prevent handler from being attached twice */
+		.on('keypress.limbasDivShow', function(e) {
+			// dont add key if we are typing into an input/select
+			if (!e.target || $(e.target).is('input:not(:disabled),select:not(:disabled),textarea:not(:disabled,[readonly])'))
+				return;
+
+			// abort if no context menu available
+			if (!childel)
+				return;
+
+			// abort if context menu is hidden
+			const contextMenu =  $(childel);
+			if (contextMenu.is(':hidden'))
+				return;
+
+			// prepend new row for filter input (if not exists)
+			var filterRow = contextMenu.children('.lmbFilterRow');
+			var filterInput = filterRow.find('input');
+			if (!filterRow.length) {
+				filterInput = $('<input type="text" class="contextmenu lmbFilterRowInput" value="">');
+				filterRow = $('<div class="lmbContextRow lmbFilterRow" title="Filter"><i class="lmbContextLeft lmb-icon lmb-search"></i><span class="lmbContextItemIcon"></span></div>');
+                filterRow.children().last().append(filterInput);
+                const filterSeparator = $('<div class="lmbContextRowSeparator"><div class="lmbContextRowSeparatorLine">&nbsp;</div></div>');
+                contextMenu.prepend(filterRow, filterSeparator);
+
+                // listen for change of input
+                filterInput
+					.keyup(function(e) {
+						// remove on escape or empty
+						if (e.keyCode === 27 /* escape */ || this.value === '') {
+                            lmbFilterContextMenu(contextMenu, null);
+                            const filterRow = $(this).closest('.lmbFilterRow');
+                            const separator = filterRow.next();
+                            filterRow.remove();
+                            separator.remove();
+                            return;
+						}
+
+                        const shownElements = lmbFilterContextMenu(contextMenu, this.value);
+						if (e.keyCode === 13 /* enter */ && shownElements.length === 1) {
+							filterInput.blur();
+							shownElements.click();
+						}
+                    });
+			}
+
+			// set value immediately, stop input event from being propagated by focus change (led to undefined behavior)
+			// set focus to directly redirect future key inputs
+			e.preventDefault();
+			e.stopPropagation();
+			e.stopImmediatePropagation();
+			filterInput.val(filterInput.val() + e.key).focus();
+		});
+}
+
+/**
+ * Filters the context menu s.t. only rows containing the searchString are shown
+ * @param contextMenu jQuery element representing the contextMenu (.lmbContextMenu)
+ * @param searchString string to filter for, null to reset filter
+ * @returns the remaining elements (which are still shown)
+ */
+function lmbFilterContextMenu(contextMenu, searchString) {
+    const elementsToIgnore = contextMenu.children().slice(0, 2); /* remove filter row and separator from set */
+
+    // reset filters
+    contextMenu.find('.lmb-table-search-hide').removeClass('lmb-table-search-hide');
+
+    if (searchString === null)
+        return;
+
+    // apply filter
+    const searchStringLower = searchString.toLowerCase();
+    const elementsToFilter = contextMenu
+        .find('.lmbContextRow,.lmbContextLink')
+        .not(elementsToIgnore);
+
+    const hiddenElements = elementsToFilter
+		.filter(function() {
+			return $(this).text().toLowerCase().indexOf(searchStringLower) === -1; /* doesnt contain search string */
+		})
+		.addClass('lmb-table-search-hide');
+
+    return elementsToFilter.not(hiddenElements);
 }
 
 //----------------- Schließe alle Context-Menüs bei Klick auf Hintergrund -------------------
@@ -1757,9 +1863,6 @@ function lmb_setAutoHeight(el,offset,reset){
    if(reset && el){
        $(el).height('');
    }else{
-		if(top.nav){
-			top.nav.document.form1.alter.value=0;
-		}
 		window.focus();
 		if($(el) && $(el).css('overflow-y') == 'auto'){
 			var winHeight = getWindowHeight();
@@ -1791,10 +1894,7 @@ function lmb_setAutoHeightCalendar(el, offset, reset) {
 
         if(reset && el){
 		$(el).height('');
-	}else{            
-		if(top.nav){
-			top.nav.document.form1.alter.value=0;
-		}
+	}else{
 		window.focus();
 		if($(el) && $(el).css('overflow-y') == 'auto'){
                         // set white background to fit window
@@ -1915,7 +2015,7 @@ function lmbAjax_showUserGroupsSearchPost(result,evt,typ,usefunction,prefix){
 var limbasAjaxGtabRulesContainer;
 function limbasAjaxGtabRules(gtabid,use_records,parameter,container){
 	if(container){limbasAjaxGtabRulesContainer = container;}
-	actid = "showGtabRules&gtabid=" + gtabid + "&use_records=" + escape(use_records) + "&parameter=" + parameter;
+	actid = "showGtabRules&gtabid=" + gtabid + "&use_records=" + encodeURIComponent(use_records) + "&parameter=" + parameter;
 	ajaxGet(null,"main_dyns.php",actid,null,"limbasAjaxGtabRulesPost");
 }
 
@@ -1992,4 +2092,21 @@ function limbasCheckforindex(val,fkey,gtabid) {
 			}
 		}
 	}
+}
+
+/**
+ * Replaces values in arr1 with values from arr2 at same index (if set)
+ * Modifies arr1
+ * @param arr1
+ * @param arr2
+ */
+function arrayReplace(arr1, arr2) {
+    if (!arr2) {
+        return;
+    }
+    for (var i = 0; i < arr1.length; i++) {
+        if (arr2[i]) {
+            arr1[i] = arr2[i];
+        }
+    }
 }

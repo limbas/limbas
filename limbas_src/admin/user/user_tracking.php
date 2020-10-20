@@ -21,33 +21,33 @@
 
 /* --- Tabellenarray ------------------------------- */
 $sqlquery = "SELECT TAB_ID,BESCHREIBUNG FROM LMB_CONF_TABLES";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-	$tabarray[odbc_result($rs,"TAB_ID")] = odbc_result($rs,"BESCHREIBUNG");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+	$tabarray[lmbdb_result($rs,"TAB_ID")] = lmbdb_result($rs,"BESCHREIBUNG");
 }
 /* --- Felderarray ------------------------------- */
 $sqlquery = "SELECT FIELD_ID,TAB_ID,SPELLING FROM LMB_CONF_FIELDS";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-	$fieldarray[odbc_result($rs,"TAB_ID")][odbc_result($rs,"FIELD_ID")] = odbc_result($rs,"SPELLING");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+	$fieldarray[lmbdb_result($rs,"TAB_ID")][lmbdb_result($rs,"FIELD_ID")] = lmbdb_result($rs,"SPELLING");
 }
 
 # --- Zeitperiode -----
 if($periodid){
 	$sqlquery = "SELECT LOGIN_DATE,UPDATE_DATE FROM LMB_HISTORY_USER WHERE ID = $periodid";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_fetch_row($rs)) {
-		$diag_von = get_date(odbc_result($rs,"LOGIN_DATE"),1);
-		$diag_bis = get_date(odbc_result($rs,"UPDATE_DATE"),1);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_fetch_row($rs)) {
+		$diag_von = get_date(lmbdb_result($rs,"LOGIN_DATE"),1);
+		$diag_bis = get_date(lmbdb_result($rs,"UPDATE_DATE"),1);
 	}
 }
 
 ?>
 
 
-<script type="text/javascript" src="extern/jscalendar/calendar.js"></script>
-<script type="text/javascript" src="extern/jscalendar/lang/calendar-de.js"></script>
-<style type="text/css">@import url(extern/jscalendar/jscalendar.css);</style>
+<script type="text/javascript" src="extern/jscalendar/calendar.js?v=<?=$umgvar["version"]?>"></script>
+<script type="text/javascript" src="extern/jscalendar/lang/calendar-de.js?v=<?=$umgvar["version"]?>"></script>
+<style type="text/css">@import url(extern/jscalendar/jscalendar.css?v=<?=$umgvar["version"]?>);</style>
 
 <Script language="JavaScript">
 var calendar = null;
@@ -181,14 +181,14 @@ if($typ == 1){
 	</TR>
 	<?php
 	$sqlquery =  "SELECT DISTINCT ID,LOGIN_DATE, UPDATE_DATE, IP, HOST, ".dbf_9(array('LOGIN_DATE','UPDATE_DATE'))." AS DAUER FROM LMB_HISTORY_USER WHERE USERID = $userid $where ORDER BY LOGIN_DATE";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)) {
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
 	        if($BGCOLOR == $farbschema['WEB7']){$BGCOLOR = $farbschema['WEB8'];} else {$BGCOLOR = $farbschema['WEB7'];}
 	        echo"<TR BGCOLOR=\"$BGCOLOR\">";
-	        echo"  <TD NOWRAP>".get_date(odbc_result($rs,"LOGIN_DATE"),2)."&nbsp;&nbsp;</TD>";
-	        echo"  <TD NOWRAP>".get_date(odbc_result($rs,"UPDATE_DATE"),2)."&nbsp;&nbsp;</TD>";
-	        echo"  <TD NOWRAP>".lmb_substr(odbc_result($rs,"DAUER"),0,8)."&nbsp;&nbsp;</TD>";
-	        echo"  <TD NOWRAP>".odbc_result($rs,"IP")."&nbsp;&nbsp;</TD>";
+	        echo"  <TD NOWRAP>".get_date(lmbdb_result($rs,"LOGIN_DATE"),2)."&nbsp;&nbsp;</TD>";
+	        echo"  <TD NOWRAP>".get_date(lmbdb_result($rs,"UPDATE_DATE"),2)."&nbsp;&nbsp;</TD>";
+	        echo"  <TD NOWRAP>".lmb_substr(lmbdb_result($rs,"DAUER"),0,8)."&nbsp;&nbsp;</TD>";
+	        echo"  <TD NOWRAP>".lmbdb_result($rs,"IP")."&nbsp;&nbsp;</TD>";
 	        echo"</TR>";
 	}
 }elseif($typ == 2 OR $typ == 3){
@@ -241,11 +241,11 @@ if($typ == 1){
 	$popuparray = array(3,128,171,129,130,203,190,116,200,195,119);
 
 	$sqlquery =  "SELECT * FROM LMB_HISTORY_ACTION WHERE USERID = $userid $where2 ORDER BY $order";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$bzm = 1;
-	while(odbc_fetch_row($rs)) {
-		if(odbc_result($rs,"DATAID")){$dat_id = odbc_result($rs,"DATAID");}else{$dat_id = "";}
-		$action_id = odbc_result($rs,"ACTION");
+	while(lmbdb_fetch_row($rs)) {
+		if(lmbdb_result($rs,"DATAID")){$dat_id = lmbdb_result($rs,"DATAID");}else{$dat_id = "";}
+		$action_id = lmbdb_result($rs,"ACTION");
 		if($action_id == 1){$action = "<SPAN STYLE=\"color:blue\">".$lang[$LINK["desc"][$action_id]]."</SPAN>";}
 		elseif($action_id == 11){$action = "<SPAN STYLE=\"color:red\">".$lang[$LINK["desc"][$action_id]]."</SPAN>";}
 		elseif($action_id == 164){$action = "<SPAN STYLE=\"color:orange\">".$lang[$LINK["desc"][$action_id]]."</SPAN>";}
@@ -262,9 +262,9 @@ if($typ == 1){
 
 		echo "<TR BGCOLOR=\"$BGCOLOR\" ";
 		if(in_array($action_id,$popuparray)){
-			$sqlquery1 = "SELECT DISTINCT ID,ERSTDATUM,USERID,TAB,FIELD,DATAID,FIELDVALUE FROM LMB_HISTORY_UPDATE WHERE DATAID = ".odbc_result($rs, "DATAID")." AND ACTION_ID = ".odbc_result($rs, "ID")." AND TAB = ".odbc_result($rs, "TAB")." ORDER BY ERSTDATUM";
-			$sqlquery1c = "SELECT COUNT(*) AS RESULT FROM LMB_HISTORY_UPDATE WHERE DATAID = ".odbc_result($rs, "DATAID")." AND ACTION_ID = ".odbc_result($rs, "ID")." AND TAB = ".odbc_result($rs, "TAB");
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$sqlquery1 = "SELECT DISTINCT ID,ERSTDATUM,USERID,TAB,FIELD,DATAID,FIELDVALUE FROM LMB_HISTORY_UPDATE WHERE DATAID = ".lmbdb_result($rs, "DATAID")." AND ACTION_ID = ".lmbdb_result($rs, "ID")." AND TAB = ".lmbdb_result($rs, "TAB")." ORDER BY ERSTDATUM";
+			$sqlquery1c = "SELECT COUNT(*) AS RESULT FROM LMB_HISTORY_UPDATE WHERE DATAID = ".lmbdb_result($rs, "DATAID")." AND ACTION_ID = ".lmbdb_result($rs, "ID")." AND TAB = ".lmbdb_result($rs, "TAB");
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			$numrows = lmb_num_rows($rs1,$sqlquery1c);
 			if($numrows){
 				echo "STYLE=\"cursor:pointer\" OnClick=\"poprecord('tr_$bzm')\" ";
@@ -275,28 +275,28 @@ if($typ == 1){
 			}
 		}
 		echo ">";
-		echo"<TD NOWRAP BGCOLOR=\"$BGCOLOR1\">".get_date(odbc_result($rs,"ERSTDATUM"),2)."&nbsp;&nbsp;</TD>";
+		echo"<TD NOWRAP BGCOLOR=\"$BGCOLOR1\">".get_date(lmbdb_result($rs,"ERSTDATUM"),2)."&nbsp;&nbsp;</TD>";
 		echo"<TD NOWRAP>".$action."&nbsp;&nbsp;</TD>";
-		echo"<TD NOWRAP>".$lang[$tabarray[odbc_result($rs,"TAB")]]."&nbsp;&nbsp;</TD>";
+		echo"<TD NOWRAP>".$lang[$tabarray[lmbdb_result($rs,"TAB")]]."&nbsp;&nbsp;</TD>";
 		echo"<TD NOWRAP>".$dat_id."&nbsp;&nbsp;</TD>";
 		echo"</TR>";
 		if(in_array($action_id,$popuparray)){
 			echo "<TR STYLE=\"display:none\" ID=\"tr_$bzm\"><TD COLSPAN=\"4\"><TABLE BORDER=\"0\">";
-			while(odbc_fetch_row($rs1)) {
+			while(lmbdb_fetch_row($rs1)) {
 				unset($val);
 				if($action_id == 3){$nowr = "";}else{$nowr = "NOWRAP";}
-				$ftype = $gfield[odbc_result($rs1, "TAB")]['field_type'][odbc_result($rs1, "FIELD")];
+				$ftype = $gfield[lmbdb_result($rs1, "TAB")]['field_type'][lmbdb_result($rs1, "FIELD")];
 				if($ftype == 11){
-					$links = explode(";",odbc_result($rs1, "FIELDVALUE"));
+					$links = explode(";",lmbdb_result($rs1, "FIELDVALUE"));
 					if($links){
 						foreach($links as $key1 => $value1){
 							$lid = lmb_substr($value1,1,10);
-							$val[] = "<A HREF=\"#\" OnClick=\"newwin('".$gfield[odbc_result($rs1, "TAB")]["verkntabid"][odbc_result($rs1, "FIELD")]."','".$lid."');\">$value1</A>";
+							$val[] = "<A HREF=\"#\" OnClick=\"newwin('".$gfield[lmbdb_result($rs1, "TAB")]["verkntabid"][lmbdb_result($rs1, "FIELD")]."','".$lid."');\">$value1</A>";
 						}
-						echo "<TR><TD $nowr STYLE=\"width:50px\">&nbsp;</TD><TD STYLE=\"width:100px\" VALIGN=\"TOP\">".$lang[$fieldarray[odbc_result($rs,"TAB")][odbc_result($rs1, "FIELD")]]."</TD><TD $nowr>".implode("|",$val)."</TD></TR>";
+						echo "<TR><TD $nowr STYLE=\"width:50px\">&nbsp;</TD><TD STYLE=\"width:100px\" VALIGN=\"TOP\">".$lang[$fieldarray[lmbdb_result($rs,"TAB")][lmbdb_result($rs1, "FIELD")]]."</TD><TD $nowr>".implode("|",$val)."</TD></TR>";
 					}
 				}else{
-					echo "<TR><TD $nowr STYLE=\"width:50px\">&nbsp;</TD><TD STYLE=\"width:100px\" VALIGN=\"TOP\">".$lang[$fieldarray[odbc_result($rs,"TAB")][odbc_result($rs1, "FIELD")]]."</TD><TD $nowr>".nl2br(htmlentities(odbc_result($rs1, "FIELDVALUE"),ENT_QUOTES,$umgvar["charset"]))."</TD></TR>";
+					echo "<TR><TD $nowr STYLE=\"width:50px\">&nbsp;</TD><TD STYLE=\"width:100px\" VALIGN=\"TOP\">".$lang[$fieldarray[lmbdb_result($rs,"TAB")][lmbdb_result($rs1, "FIELD")]]."</TD><TD $nowr>".nl2br(htmlentities(lmbdb_result($rs1, "FIELDVALUE"),ENT_QUOTES,$umgvar["charset"]))."</TD></TR>";
 				}
 			}
 			echo "</TABLE></TD></TR>";

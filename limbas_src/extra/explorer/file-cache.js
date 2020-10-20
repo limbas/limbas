@@ -252,7 +252,7 @@ function setzeCookie(name, wert) {
 	var path = (arg_laenge > 3) ? arg_wert[3] : null;
 	var domain = (arg_laenge > 4) ? arg_wert[4] : null;
 	var secure = (arg_laenge > 5) ? arg_wert[5] : false;
-	document.cookie = name + "=" + escape (wert) +
+	document.cookie = name + "=" + encodeURIComponent(wert) +
 	((expires == null) ? "" : ("; expires=" +
 	expires.toGMTString())) +
 	((path == null) ? "" : ("; path=" + path)) +

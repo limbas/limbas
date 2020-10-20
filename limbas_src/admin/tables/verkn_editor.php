@@ -187,12 +187,12 @@ if($verkntabletype == 3){
 <TR class="tabSubHeader"><TD VALIGN="TOP" COLSPAN="2" STYLE="height:20px;"><B><?=$lang[1824]?></B></TD></TR>
 <?php
 $sqlquery = "SELECT DISTINCT LMB_CONF_TABLES.TAB_ID,LMB_CONF_TABLES.TAB_GROUP,LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.BESCHREIBUNG,LMB_CONF_GROUPS.NAME,LMB_CONF_GROUPS.ID FROM LMB_CONF_TABLES,LMB_CONF_GROUPS WHERE LMB_CONF_TABLES.TAB_GROUP = LMB_CONF_GROUPS.ID ORDER BY LMB_CONF_GROUPS.ID";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(odbc_fetch_row($rs)) {
-	if(odbc_result($rs, "NAME") != $temp){echo "<TR><TD BGCOLOR=\"".$farbschema['WEB7']."\">".$lang[odbc_result($rs, "NAME")]."</TD></TR>";}
-	if(odbc_result($rs, "TAB_ID") == $tabid){$tcolor = "red";}else{$tcolor = $farbschema['WEB2'];}
-	echo "<TR><TD><INPUT TYPE=\"RADIO\" NAME=\"new_verkntabid\" VALUE=\"".odbc_result($rs, "TAB_ID")."\" STYLE=\"border:none;background-color:transparent;\" OnChange=\"document.form1.submit();\">&nbsp;<SPAN STYLE=\"color:$tcolor\">".$lang[odbc_result($rs, "BESCHREIBUNG")]."&nbsp;(".odbc_result($rs, "TABELLE").")</SPAN></TD></TR>";
-	$temp = odbc_result($rs, "NAME");
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+	if(lmbdb_result($rs, "NAME") != $temp){echo "<TR><TD BGCOLOR=\"".$farbschema['WEB7']."\">".$lang[lmbdb_result($rs, "NAME")]."</TD></TR>";}
+	if(lmbdb_result($rs, "TAB_ID") == $tabid){$tcolor = "red";}else{$tcolor = $farbschema['WEB2'];}
+	echo "<TR><TD><INPUT TYPE=\"RADIO\" NAME=\"new_verkntabid\" VALUE=\"".lmbdb_result($rs, "TAB_ID")."\" STYLE=\"border:none;background-color:transparent;\" OnChange=\"document.form1.submit();\">&nbsp;<SPAN STYLE=\"color:$tcolor\">".$lang[lmbdb_result($rs, "BESCHREIBUNG")]."&nbsp;(".lmbdb_result($rs, "TABELLE").")</SPAN></TD></TR>";
+	$temp = lmbdb_result($rs, "NAME");
 }
 
 ?>
@@ -221,21 +221,21 @@ if($vernparamsid) {
 }
 
 $sqlquery =  "SELECT SPELLING,DATA_TYPE,FIELD_TYPE,FIELD_ID,ARTLEISTE,VERKNTABID,VERKNTABLETYPE,FIELD_NAME FROM LMB_CONF_FIELDS WHERE (TAB_ID = $verkntabid $qu) AND FIELD_TYPE < 100 ORDER BY TAB_ID,SORT";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
 
-while(odbc_fetch_row($rs)) {
+while(lmbdb_fetch_row($rs)) {
     $recrelation = null;
-	#if(odbc_result($rs, "VERKNTABLETYPE") == 2){$bzm++;continue;} !!!!!!!!!!!!!!! rückwertige Verknüpfung - mögliche ENDLOSSCHLEIFE
-    if(odbc_result($rs, "FIELD_TYPE") == 11 AND $verkntree){continue;}
-    $field_id = odbc_result($rs, "FIELD_ID");
-    if(odbc_result($rs, "FIELD_TYPE") == 11 OR odbc_result($rs, "VERKNTABLETYPE") == 2){$recrelation = 'font-style:italic;text-decoration:underline';}
+	#if(lmbdb_result($rs, "VERKNTABLETYPE") == 2){$bzm++;continue;} !!!!!!!!!!!!!!! rückwertige Verknüpfung - mögliche ENDLOSSCHLEIFE
+    if(lmbdb_result($rs, "FIELD_TYPE") == 11 AND $verkntree){continue;}
+    $field_id = lmbdb_result($rs, "FIELD_ID");
+    if(lmbdb_result($rs, "FIELD_TYPE") == 11 OR lmbdb_result($rs, "VERKNTABLETYPE") == 2){$recrelation = 'font-style:italic;text-decoration:underline';}
     
-	if(!in_array(odbc_result($rs, "DATA_TYPE"),$wrong_fields)){
+	if(!in_array(lmbdb_result($rs, "DATA_TYPE"),$wrong_fields)){
 	
 		$sqlquery1 = "SELECT ID,MD5TAB FROM LMB_CONF_FIELDS WHERE VERKNTABID = $tabid AND TAB_ID = $verkntabid AND FIELD_ID = ".$field_id;
-		$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-		if(odbc_result($rs1, "MD5TAB")){
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		if(lmbdb_result($rs1, "MD5TAB")){
 			$onchange = "OnChange=\"create_view();document.form1.set_verknfieldid.value=1;\"";
 			$style= "style=\"color:red;\"";
 		}elseif($verkntabletype == 2){
@@ -265,22 +265,22 @@ while(odbc_fetch_row($rs)) {
 		}else{$gchecked = "";}
 
 		echo "<TR>";
-		echo "<TD NOWRAP TITLE=\"".odbc_result($rs, "FIELD_NAME")."\" style=\"$recrelation\">";
-		echo $lang[odbc_result($rs, "SPELLING")];
-        if (odbc_result($rs, 'FIELD_TYPE') == 11 AND odbc_result($rs, 'VERKNTABLETYPE') != 2 AND $gfield[$verkntabid]['verkntabid'][$field_id] == $tabid) {
+		echo "<TD NOWRAP TITLE=\"".lmbdb_result($rs, "FIELD_NAME")."\" style=\"$recrelation\">";
+		echo $lang[lmbdb_result($rs, "SPELLING")];
+        if (lmbdb_result($rs, 'FIELD_TYPE') == 11 AND lmbdb_result($rs, 'VERKNTABLETYPE') != 2 AND $gfield[$verkntabid]['verkntabid'][$field_id] == $tabid) {
             echo '<i class="lmb-icon lmb-long-arrow-left"></i>';
         }
 		echo "</TD>";
 
 		echo "<TD align=\"center\">";
-		if(odbc_result($rs, "VERKNTABLETYPE") != 2 AND $field_id < 1000){echo "<INPUT TYPE=\"RADIO\" $vradio NAME=\"new_verknfieldid\" VALUE=\"".$field_id."\" STYLE=\"border:none;background-color:transparent;\" $checked $onchange>";}
+		if(lmbdb_result($rs, "VERKNTABLETYPE") != 2 AND $field_id < 1000){echo "<INPUT TYPE=\"RADIO\" $vradio NAME=\"new_verknfieldid\" VALUE=\"".$field_id."\" STYLE=\"border:none;background-color:transparent;\" $checked $onchange>";}
 		echo "</TD>";
 		echo "<TD align=\"center\">";
 		echo "<INPUT TYPE=\"CHECKBOX\" NAME=\"new_verknsearchid[".$field_id."]\" VALUE=\"".$field_id."\" STYLE=\"border:none;background-color:transparent;\" $schecked>";
 		echo "</TD>";
 		
 		echo "<TD align=\"center\">";
-		if(odbc_result($rs, "VERKNTABLETYPE") != 2 AND $field_id < 1000){echo "<INPUT TYPE=\"CHECKBOX\" class=\"verknfindid\" elid=\"".$field_id."\" NAME=\"new_verknfindid[".$field_id."]\" VALUE=\"".$field_id."\" STYLE=\"border:none;background-color:transparent;\" $eschecked onchange=\"changeorderf(this,".$field_id.")\">";}
+		if(lmbdb_result($rs, "VERKNTABLETYPE") != 2 AND $field_id < 1000){echo "<INPUT TYPE=\"CHECKBOX\" class=\"verknfindid\" elid=\"".$field_id."\" NAME=\"new_verknfindid[".$field_id."]\" VALUE=\"".$field_id."\" STYLE=\"border:none;background-color:transparent;\" $eschecked onchange=\"changeorderf(this,".$field_id.")\">";}
 		echo "</TD><TD><span id=\"verknfindid_".$field_id."\" style=\"color:green\">";
 		if($fchecked){echo '('.$sortkeyf.')';}
 		echo "</span><input type=\"hidden\" id=\"verknsortf_".$field_id."\" name=\"verknsortf[".$field_id."]\" value=\"".$sortkeyf."\">
@@ -413,19 +413,19 @@ if(($verkntabletype == 1 OR $verkntabletype == 3) AND $tree = recrelationtree())
 <TR><TD><B><?=$tabname?></B><BR><BR><SELECT NAME="v_field1" SIZE="20"><OPTION VALUE="ID" SELECTED>ID
 <?php
 $sqlquery =  "SELECT DISTINCT FIELD_NAME FROM LMB_CONF_FIELDS WHERE TAB_ID = $tabid AND FIELD_TYPE < 100 AND FIELD_NAME != 'ID'";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
-while(odbc_fetch_row($rs)) {
-	echo "<OPTION VALUE=\"".odbc_result($rs, "FIELD_NAME")."\">".odbc_result($rs, "FIELD_NAME");
+while(lmbdb_fetch_row($rs)) {
+	echo "<OPTION VALUE=\"".lmbdb_result($rs, "FIELD_NAME")."\">".lmbdb_result($rs, "FIELD_NAME");
 }
 ?>
 </SELECT></TD><TD>&nbsp;</TD><TD><B><?=$verkntabname?></B><BR><BR><SELECT NAME="v_field2" SIZE="20"><OPTION VALUE="ID" SELECTED>ID
 <?php
 $sqlquery =  "SELECT DISTINCT FIELD_NAME FROM LMB_CONF_FIELDS WHERE TAB_ID = $verkntabid AND FIELD_TYPE < 100 AND FIELD_NAME != 'ID'";
-$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs) {$commit = 1;}
-while(odbc_fetch_row($rs)) {
-	echo "<OPTION VALUE=\"".odbc_result($rs, "FIELD_NAME")."\">".odbc_result($rs, "FIELD_NAME");
+while(lmbdb_fetch_row($rs)) {
+	echo "<OPTION VALUE=\"".lmbdb_result($rs, "FIELD_NAME")."\">".lmbdb_result($rs, "FIELD_NAME");
 }
 ?>
 </SELECT></TD></TR>

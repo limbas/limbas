@@ -35,13 +35,13 @@ function get_fonts(){
 
 	# Fontliste
 	$sqlquery = "SELECT * FROM LMB_FONTS ORDER BY FAMILY,STYLE";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$GLOBALS["action"],__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS["action"],__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	while(odbc_fetch_row($rs)){
-		$family = odbc_result($rs,"FAMILY");
-		$sysfont["family"][$family][] = odbc_result($rs,"FAMILY");
-		$sysfont["name"][$family][] = odbc_result($rs,"NAME");
-		$sysfont["style"][$family][] = odbc_result($rs,"STYLE");
+	while(lmbdb_fetch_row($rs)){
+		$family = lmbdb_result($rs,"FAMILY");
+		$sysfont["family"][$family][] = lmbdb_result($rs,"FAMILY");
+		$sysfont["name"][$family][] = lmbdb_result($rs,"NAME");
+		$sysfont["style"][$family][] = lmbdb_result($rs,"STYLE");
 	}
 
 	return $sysfont;
@@ -59,26 +59,26 @@ function get_report($report_id,$new){
 	if($new){system("rm ".$umgvar['pfad']."/USER/".$session['user_id']."/temp/*");}
 
 	$sqlquery = "SELECT ID,NAME,BESCHREIBUNG,DEFFORMAT,PAGE_STYLE,SQL_STATEMENT,REFERENZ_TAB,GROUPLIST,TARGET,SAVENAME,TAGMOD,EXTENSION,INDEXORDER,LISTMODE FROM LMB_REPORT_LIST WHERE ID = $report_id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(odbc_fetch_row($rs)) {
-		$report["name"] = odbc_result($rs, "NAME");
-		$report["savename"] = odbc_result($rs, "SAVENAME");
-		$report["report_id"] = odbc_result($rs, "ID");
-		$report["page_style"] = explode(";",odbc_result($rs, "PAGE_STYLE"));
-		$report["referenz_tab"] = odbc_result($rs, "REFERENZ_TAB");
-		$report["target"] = odbc_result($rs, "TARGET");
-		$report["tagmod"] = odbc_result($rs, "TAGMOD");
-		$report["extension"] = odbc_result($rs, "EXTENSION");
-		$report["indexorder"] = odbc_result($rs, "INDEXORDER");
-		$report["listmode"] = odbc_result($rs, "LISTMODE");
-		$report["defformat"] = odbc_result($rs, "DEFFORMAT");
-		if(odbc_result($rs, "GROUPLIST")){
-			$report["grouplist"] = explode(";",odbc_result($rs, "GROUPLIST"));
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_fetch_row($rs)) {
+		$report["name"] = lmbdb_result($rs, "NAME");
+		$report["savename"] = lmbdb_result($rs, "SAVENAME");
+		$report["report_id"] = lmbdb_result($rs, "ID");
+		$report["page_style"] = explode(";",lmbdb_result($rs, "PAGE_STYLE"));
+		$report["referenz_tab"] = lmbdb_result($rs, "REFERENZ_TAB");
+		$report["target"] = lmbdb_result($rs, "TARGET");
+		$report["tagmod"] = lmbdb_result($rs, "TAGMOD");
+		$report["extension"] = lmbdb_result($rs, "EXTENSION");
+		$report["indexorder"] = lmbdb_result($rs, "INDEXORDER");
+		$report["listmode"] = lmbdb_result($rs, "LISTMODE");
+		$report["defformat"] = lmbdb_result($rs, "DEFFORMAT");
+		if(lmbdb_result($rs, "GROUPLIST")){
+			$report["grouplist"] = explode(";",lmbdb_result($rs, "GROUPLIST"));
 		}
 	}
 
-	if(!$GLOBALS["report_name"]){$GLOBALS["report_name"] = odbc_result($rs, "NAME");}
-	if(!$GLOBALS["report_name"]){$GLOBALS["report_savename"] = odbc_result($rs, "SAVENAME");}
+	if(!$GLOBALS["report_name"]){$GLOBALS["report_name"] = lmbdb_result($rs, "NAME");}
+	if(!$GLOBALS["report_name"]){$GLOBALS["report_savename"] = lmbdb_result($rs, "SAVENAME");}
 
 	# --- Ränder --------------------------------------------
 	if(!$report["page_style"][0]){$report["page_style"][0] = 210;}
@@ -114,26 +114,26 @@ function get_dataFields($ID,$report_id,$report_tab,$report_tab_cells,$bzm2){
 	$has_row = 0;
 	while($bzm3 <= $report_tab_cells){
 		$sqlquery = "SELECT DISTINCT EL_ID,DBFIELD,VERKN_BAUM,STYLE,TYP,EXTVALUE,INHALT FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB_EL = ".$report_tab." AND TAB_EL_ROW = ".$bzm2." AND TAB_EL_COL = ".$bzm3." ORDER BY EL_ID ";
-		$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 			/*------- Spalteninhalte Dateninhalte + max_count ---------*/
-            while (odbc_fetch_row($rs)) {
-				$style = odbc_result($rs, "STYLE");
+            while (lmbdb_fetch_row($rs)) {
+				$style = lmbdb_result($rs, "STYLE");
 				#--------- db-field --------------
-				if(odbc_result($rs, "TYP") == "dbdat" AND !$isarg){
-					$fieldlist[$bzm1] = array(odbc_result($rs, "DBFIELD"),odbc_result($rs, "VERKN_BAUM"),$style,odbc_result($rs, "EXTVALUE"),odbc_result($rs, "EL_ID"));
+				if(lmbdb_result($rs, "TYP") == "dbdat" AND !$isarg){
+					$fieldlist[$bzm1] = array(lmbdb_result($rs, "DBFIELD"),lmbdb_result($rs, "VERKN_BAUM"),$style,lmbdb_result($rs, "EXTVALUE"),lmbdb_result($rs, "EL_ID"));
 					$bzm1++;
 					$isdbdat = 1;
 
 				#--------- php argument / for extended datasource --------------
-				}elseif(odbc_result($rs, "TYP") == "formel" AND !$isdbdat){
+				}elseif(lmbdb_result($rs, "TYP") == "formel" AND !$isdbdat){
 					$style_ = explode(';',$style);
 					# is LIST Mode
 					if($style_[33] == 'true'){
-						$fieldlist[$bzm1] = array(odbc_result($rs, "DBFIELD"),odbc_result($rs, "VERKN_BAUM"),$style,odbc_result($rs, "EXTVALUE"),odbc_result($rs, "EL_ID"));
+						$fieldlist[$bzm1] = array(lmbdb_result($rs, "DBFIELD"),lmbdb_result($rs, "VERKN_BAUM"),$style,lmbdb_result($rs, "EXTVALUE"),lmbdb_result($rs, "EL_ID"));
 						$isarg = 1;
                         if (!$value) {
-                            $value = odbc_result($rs, "INHALT");
+                            $value = lmbdb_result($rs, "INHALT");
                         }
 						$bzm1++;
 					}
@@ -162,9 +162,9 @@ function set_fonts($pdf,$report_id){
 	#global $pdf;
 	
 	$sqlquery = "SELECT EL_ID,STYLE FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TYP != 'tab'";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)) {
-		$style = odbc_result($rs, "STYLE");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
+		$style = lmbdb_result($rs, "STYLE");
 		if($style){
 			$style = explode(";",$style);
 			if($style[0]){
@@ -267,64 +267,73 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 				$extension["select"][] = $tab.".".$gtab["keyfield"][$gtabid]." AS IDALIAS_".$gtabid;
 			}
 
-			#$extension["from"][] = $tab;
-			
-			/* --- Falls Verknüpfungstabelle --------------------------------------------- */
+            $extension["where"][] = $gtab["table"][$referenz_tab].".ID = ".$ID;
+			$extension["from"][] = $gtab["table"][$referenz_tab];
+
+			$currentTableID = $referenz_tab;
+
+            /* --- Falls Verknüpfungstabelle --------------------------------------------- */
 			if($DBVERKNB){
 				$verkn_baum = explode("|",$DBVERKNB);
-				$verkn_baum_count = count($verkn_baum);
-				$bzm2 = 0;
 				$bzm3 = 0;
 				foreach ($verkn_baum as $bzm2 => $value2){
-					if($value2){
-						$verkn_part = explode(";",$verkn_baum[$bzm2]);
-						$verkn_part_0 = $gtab["table"][$verkn_part[0]];
-						$verkn_part_1 = $gtab["table"][$verkn_part[1]];
-						$verkn_part_2 = $gfield[$verkn_part[0]]["md5tab"][$verkn_part[2]];
-						#$verkn_part_3 = $gtab["table"][$verkn_part[3]]; #field_type (27 or 24)
-						$verkn_part_4 = $gtab["table"][$verkn_part[4]];
-						
-						# 1:1 relation
-						if(!$bzm3 AND $verkn_part_0 != $gtab["table"][$referenz_tab]){
-							$extension["where"][] = $verkn_part_0.".ID = ".$gtab["table"][$referenz_tab].".ID";
-						}
-						
-						if(!$verkn_part_0 OR !$verkn_part_1 OR !$verkn_part_2){
-							#lmb_alert("No permission for relation \"".$gtab["desc"][$verkn_part[0]]."\" to \"".$gtab["desc"][$verkn_part[1]]."\" (".$verkn_part[0]." -> ".$verkn_part[1].") ");
-							break;
-						}
+					if (!$value2) {
+                        continue;
+                    }
 
-						$extension["where"][] = $verkn_part_0.".ID = ".$verkn_part_2.".ID";
-						$extension["where"][] = $verkn_part_2.".VERKN_ID = ".$verkn_part_1.".ID";
-						if(!$bzm3){
-							$extension["where"][] = $verkn_part_2.".ID = ".$ID;
-						}
+                    $verkn_part = explode(";",$verkn_baum[$bzm2]);
+                    $baseTableID = $verkn_part[0];
+                    $resultTableID = $verkn_part[1];
+                    $relationFieldID = $verkn_part[2];
+                    #$verkn_part_3 = $gtab["table"][$verkn_part[3]]; #field_type (27 or 24)
+                    $verkn_part_4 = $gtab["table"][$verkn_part[4]];
 
-						# set Active Elements
-						#if($style[33] != 'true' OR $verkn_part_4){
-						#	$extension["where"][] = $verkn_part_2.".AKTIV = ".LMB_DBDEF_TRUE;
-						#}
+                    $baseTableName = $gtab["table"][$baseTableID];
+                    $resultTableName = $gtab["table"][$resultTableID];
+                    $relationTableName = $gfield[$baseTableID]["md5tab"][$relationFieldID];
 
-						if($bzm2 == "0"){$where[] = $verkn_part_0.".ID = $ID";}
-						$extension["from"][] = $verkn_part_0;
-						$extension["from"][] = $verkn_part_1;
-						$extension["from"][] = $verkn_part_2;
-						$bzm3++;
-					}
+                    if(!$baseTableName OR !$resultTableName OR !$relationTableName){
+                        #lmb_alert("No permission for relation \"".$gtab["desc"][$verkn_part[0]]."\" to \"".$gtab["desc"][$verkn_part[1]]."\" (".$verkn_part[0]." -> ".$verkn_part[1].") ");
+                        break;
+                    }
+
+                    # 1:1 relation
+                    if($baseTableID != $currentTableID){
+                        $currentTableName = $gtab["table"][$currentTableID];
+                        $extension["where"][] = $currentTableName.".ID = ".$baseTableName.".ID";
+                    }
+
+                    $extension["where"][] = $baseTableName.".ID = ".$relationTableName.".ID";
+                    $extension["where"][] = $relationTableName.".VERKN_ID = ".$resultTableName.".ID";
+
+                    # set Active Elements
+                    #if($style[33] != 'true' OR $verkn_part_4){
+                    #	$extension["where"][] = $relationTableName.".AKTIV = ".LMB_DBDEF_TRUE;
+                    #}
+
+                    $extension["from"][] = $baseTableName;
+                    $extension["from"][] = $resultTableName;
+                    $extension["from"][] = $relationTableName;
+                    $bzm3++;
+                    $currentTableID = $resultTableID;
 				}
 				
 				# order by sort
 				if($bzm3){
 					#$vuniqueid = $gfield[$gtabid]["form_name"][$fieldid];
 					#$filter = $GLOBALS["filter"]["ext_RelationFields"]["order"][$vuniqueid];
-					$extension["order"][] = $verkn_part_2.".SORT";
-					$extension["select"][] = $verkn_part_2.".SORT";
+					$extension["order"][] = $relationTableName.".SORT";
+					$extension["select"][] = $relationTableName.".SORT";
 				}
 				
-				
-			}elseif($dbfield AND $style[33] != 'true' AND $gtab["keyfield"][$gtabid]){
-				$extension["where"][] = $tab.".".$gtab["keyfield"][$gtabid]." = ".$ID;
 			}
+
+			# 1:1 relation
+            if ($currentTableID != $gtabid) {
+                $currentTableName = $gtab["table"][$currentTableID];
+                $fieldName = $gtab["keyfield"][$gtabid] ? $gtab["keyfield"][$gtabid] : 'ID';
+                $extension["where"][] = "{$tab}.{$fieldName} = {$currentTableName}.ID";
+            }
 		}
 	}
 
@@ -348,11 +357,11 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 	$filter["report"][$referenz_tab] = "1";
 	$extension["showdelete"] = 1;
 
-	$query = get_sqlquery($referenz_tab,1,$filter,$gsr,null,$onlyfield,null,$extension,$ID);
-	$rs1 = odbc_exec($db,$query["sql"]) or errorhandle(odbc_errormsg($db),$query["sql"],$action,__FILE__,__LINE__);
+	$query = get_sqlquery($referenz_tab,1,$filter,$gsr,null,$onlyfield,null,$extension);
+	$rs1 = lmbdb_exec($db,$query["sql"]) or errorhandle(lmbdb_errormsg($db),$query["sql"],$action,__FILE__,__LINE__);
 
 	$bzm0 = 0;
-	while(odbc_fetch_row($rs1)) {
+	while(lmbdb_fetch_row($rs1)) {
 
 		# list of dbfields
 		$bzm3 = 0;
@@ -385,16 +394,16 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 				# long handling
 				#if($gfield[$gtabid]["data_type"][$fieldid] == 39 AND !$gfield[$gtabid]["longhandle"][$fieldid]){
 				#	$sqlquery2 = "SELECT ".$gfield[$gtabid]["field_name"][$fieldid]." FROM ".$tab." WHERE ID = $ID";
-				#	$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
-				#	$oresult = lmb_utf8_decode(odbc_result($rs2,$gfield[$gtabid]["field_name"][$fieldid]),1);
+				#	$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+				#	$oresult = lmb_utf8_decode(lmbdb_result($rs2,$gfield[$gtabid]["field_name"][$fieldid]),1);
 				#}else{
-				#	$oresult = lmb_utf8_decode(odbc_result($rs1, $field),1);
+				#	$oresult = lmb_utf8_decode(lmbdb_result($rs1, $field),1);
 				#}
 
-				$oresult = odbc_result($rs1, $field);
+				$oresult = lmbdb_result($rs1, $field);
 
                                 if($data_type == 30){
-					if(!$symbol = get_currency_symbol(odbc_result($rs1, $field."_C"))){$symbol = odbc_result($rs1, $field."_C");}
+					if(!$symbol = get_currency_symbol(lmbdb_result($rs1, $field."_C"))){$symbol = lmbdb_result($rs1, $field."_C");}
 					if($gfield[$gtabid]["nformat"][$fieldid]){
 						$DBRESULT[$bzm3][$bzm0] = convert_NumberFormat($oresult,$gfield[$gtabid]["nformat"][$fieldid])." ".$symbol;
 					}else{
@@ -451,11 +460,11 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 					$DBRESULT[$bzm3][$bzm0] = get_date($oresult,1);
 					# --- Multible Auswahlfeld ---
 				}elseif($data_type == 18 OR $data_type == 31 OR $data_type == 32){
-					$sqlquery2 = "SELECT LMB_SELECT_W.WERT FROM LMB_SELECT_W,LMB_SELECT_D WHERE LMB_SELECT_W.ID = LMB_SELECT_D.W_ID AND LMB_SELECT_D.TAB_ID = ".$gtabid." AND LMB_SELECT_D.FIELD_ID = ".$fieldid." AND LMB_SELECT_D.DAT_ID = ".odbc_result($rs1, "IDALIAS_".$gtabid);
-					$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+					$sqlquery2 = "SELECT LMB_SELECT_W.WERT FROM LMB_SELECT_W,LMB_SELECT_D WHERE LMB_SELECT_W.ID = LMB_SELECT_D.W_ID AND LMB_SELECT_D.TAB_ID = ".$gtabid." AND LMB_SELECT_D.FIELD_ID = ".$fieldid." AND LMB_SELECT_D.DAT_ID = ".lmbdb_result($rs1, "IDALIAS_".$gtabid);
+					$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 					$mdata = Array();
-					while(odbc_fetch_row($rs2)) {
-						$mdata[] = odbc_result($rs2, "WERT");
+					while(lmbdb_fetch_row($rs2)) {
+						$mdata[] = lmbdb_result($rs2, "WERT");
 					}
 					if($bzm2 == 1){
 						$DBRESULT[$bzm3][$bzm0] = "";
@@ -472,17 +481,17 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 					$DBRESULT[$bzm3][$bzm0] = "HTML#*#".$oresult;
 					# --- Upload ---
 				}elseif($data_type == 13){
-					$sqlquery2 = "SELECT DISTINCT LDMS_FILES.SECNAME,LDMS_FILES.LEVEL,LDMS_FILES.SORT,LDMS_FILES.NAME,LMB_MIMETYPES.EXT,LDMS_FILES.SIZE,LMB_MIMETYPES.PIC,LMB_MIMETYPES.MIMETYPE FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND LDMS_FILES.TABID = $gtabid AND LDMS_FILES.FIELDID = $fieldid AND LDMS_FILES.DATID = ".odbc_result($rs1, "IDALIAS_".$gtabid)." AND TYP = 3  AND VID = 1 AND DEL = ".LMB_DBDEF_FALSE." ORDER BY LDMS_FILES.SORT";
-					$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
-					#while(odbc_fetch_row($rs2)) {
-					if(odbc_fetch_row($rs2)) {
+					$sqlquery2 = "SELECT DISTINCT LDMS_FILES.SECNAME,LDMS_FILES.LEVEL,LDMS_FILES.SORT,LDMS_FILES.NAME,LMB_MIMETYPES.EXT,LDMS_FILES.SIZE,LMB_MIMETYPES.PIC,LMB_MIMETYPES.MIMETYPE FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND LDMS_FILES.TABID = $gtabid AND LDMS_FILES.FIELDID = $fieldid AND LDMS_FILES.DATID = ".lmbdb_result($rs1, "IDALIAS_".$gtabid)." AND TYP = 3  AND VID = 1 AND DEL = ".LMB_DBDEF_FALSE." ORDER BY LDMS_FILES.SORT";
+					$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+					#while(lmbdb_fetch_row($rs2)) {
+					if(lmbdb_fetch_row($rs2)) {
 					    if(!$filestruct){get_filestructure();}
-					    $level = odbc_result($rs2, "LEVEL");
-						$mime = explode("/",odbc_result($rs2, "MIMETYPE"));
+					    $level = lmbdb_result($rs2, "LEVEL");
+						$mime = explode("/",lmbdb_result($rs2, "MIMETYPE"));
 						if($mime[0] == "image"){
-							$DBRESULT[$bzm3][$bzm0] = "IMAGE#*#".$umgvar["uploadpfad"].$filestruct['path'][$level].odbc_result($rs2, "SECNAME").".".odbc_result($rs2, "EXT");
+							$DBRESULT[$bzm3][$bzm0] = "IMAGE#*#".$umgvar["uploadpfad"].$filestruct['path'][$level].lmbdb_result($rs2, "SECNAME").".".lmbdb_result($rs2, "EXT");
 						}elseif($mime[1] == "pdf"){
-							$DBRESULT[$bzm3][$bzm0] = "PDF#*#".$umgvar["uploadpfad"].$filestruct['path'][$level].odbc_result($rs2, "SECNAME").".".odbc_result($rs2, "EXT");
+							$DBRESULT[$bzm3][$bzm0] = "PDF#*#".$umgvar["uploadpfad"].$filestruct['path'][$level].lmbdb_result($rs2, "SECNAME").".".lmbdb_result($rs2, "EXT");
 						}
 					}
 					# --- sonstige ---
@@ -550,55 +559,55 @@ function element_list($ID,&$report,$TYP){
 		 FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB_EL_ROW <= 0 AND TAB_EL_COL <= 0 AND HEADER = ".LMB_DBDEF_FALSE." AND FOOTER = ".LMB_DBDEF_FALSE." AND BG = 0 ORDER BY $order";
 	}
 
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$bzm0 = 1;
-	while(odbc_fetch_row($rs)) {
-		$report["id"][$bzm0] = odbc_result($rs, "EL_ID");
-		$report["typ"][$bzm0] = odbc_result($rs, "TYP");
-		$report["value"][$bzm0] = trim(odbc_result($rs, "INHALT")); # longtext handle
-		$report["posx"][$bzm0] = odbc_result($rs, "POSX");
-		$report["posy"][$bzm0] = odbc_result($rs, "POSY");
-		$report["posyabs"][$bzm0] = odbc_result($rs, "POSY");
-		$report["width"][$bzm0] = odbc_result($rs, "WIDTH");
-		$report["height"][$bzm0] = odbc_result($rs, "HEIGHT");
-		$report["style"][$bzm0] = explode(";",odbc_result($rs, "STYLE"));
-		$report["dbfield"][$bzm0] = odbc_result($rs, "DBFIELD");
-		$report["data_type"][$bzm0] = odbc_result($rs, "DB_DATA_TYPE");
-		$report["tab"][$bzm0] = odbc_result($rs, "TAB");
-		$report["tab_size"][$bzm0] = odbc_result($rs, "TAB_SIZE");
-		$report["header"][$bzm0] = odbc_result($rs, "HEADER");
-		$report["footer"][$bzm0] = odbc_result($rs, "FOOTER");
-		$report["verkn_baum"][$bzm0] = odbc_result($rs, "VERKN_BAUM");
-		$report["pic_typ"][$bzm0] = odbc_result($rs, "PIC_TYP");
-		$report["pic_style"][$bzm0] = odbc_result($rs, "PIC_STYLE");
-		$report["pic_size"][$bzm0] = odbc_result($rs, "PIC_SIZE");
-		$report["pic_res"][$bzm0] = odbc_result($rs, "PIC_RES");
-		$report["pic_name"][$bzm0] = odbc_result($rs, "PIC_NAME");
-		$report["background"][$bzm0] = odbc_result($rs, "BG");
-		$report["arg_result"][odbc_result($rs, "EL_ID")] = $bzm0;
+	while(lmbdb_fetch_row($rs)) {
+		$report["id"][$bzm0] = lmbdb_result($rs, "EL_ID");
+		$report["typ"][$bzm0] = lmbdb_result($rs, "TYP");
+		$report["value"][$bzm0] = trim(lmbdb_result($rs, "INHALT")); # longtext handle
+		$report["posx"][$bzm0] = lmbdb_result($rs, "POSX");
+		$report["posy"][$bzm0] = lmbdb_result($rs, "POSY");
+		$report["posyabs"][$bzm0] = lmbdb_result($rs, "POSY");
+		$report["width"][$bzm0] = lmbdb_result($rs, "WIDTH");
+		$report["height"][$bzm0] = lmbdb_result($rs, "HEIGHT");
+		$report["style"][$bzm0] = explode(";",lmbdb_result($rs, "STYLE"));
+		$report["dbfield"][$bzm0] = lmbdb_result($rs, "DBFIELD");
+		$report["data_type"][$bzm0] = lmbdb_result($rs, "DB_DATA_TYPE");
+		$report["tab"][$bzm0] = lmbdb_result($rs, "TAB");
+		$report["tab_size"][$bzm0] = lmbdb_result($rs, "TAB_SIZE");
+		$report["header"][$bzm0] = lmbdb_result($rs, "HEADER");
+		$report["footer"][$bzm0] = lmbdb_result($rs, "FOOTER");
+		$report["verkn_baum"][$bzm0] = lmbdb_result($rs, "VERKN_BAUM");
+		$report["pic_typ"][$bzm0] = lmbdb_result($rs, "PIC_TYP");
+		$report["pic_style"][$bzm0] = lmbdb_result($rs, "PIC_STYLE");
+		$report["pic_size"][$bzm0] = lmbdb_result($rs, "PIC_SIZE");
+		$report["pic_res"][$bzm0] = lmbdb_result($rs, "PIC_RES");
+		$report["pic_name"][$bzm0] = lmbdb_result($rs, "PIC_NAME");
+		$report["background"][$bzm0] = lmbdb_result($rs, "BG");
+		$report["arg_result"][lmbdb_result($rs, "EL_ID")] = $bzm0;
 		
 		# Extendet parameters for subreports
-		if($extvalue = odbc_result($rs, "EXTVALUE")){
+		if($extvalue = lmbdb_result($rs, "EXTVALUE")){
 			$report["parameter"][$bzm0] = $extvalue;
 		}
 		
 		# fix Position must be after first footer
 		if($report["style"][$bzm0][35]){
 			$sqlquery1 = "SELECT MIN(POSY) AS ERG FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND FOOTER = ".LMB_DBDEF_TRUE;
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-			if(odbc_result($rs1,"ERG") > $report["posy"][$bzm0] AND odbc_result($rs1,"ERG")){
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			if(lmbdb_result($rs1,"ERG") > $report["posy"][$bzm0] AND lmbdb_result($rs1,"ERG")){
 				$report["style"][$bzm0][35] = 0;
 			}
 		}
 
 		# Vorgruppierung Abfragen
-		if(odbc_result($rs, "TYP") == "dbdat"){
-			if(odbc_result($rs, "VERKN_BAUM")){
-				$sk = odbc_result($rs, "VERKN_BAUM");
+		if(lmbdb_result($rs, "TYP") == "dbdat"){
+			if(lmbdb_result($rs, "VERKN_BAUM")){
+				$sk = lmbdb_result($rs, "VERKN_BAUM");
 			}else{
 				$sk = '0';
 			}
-			$preselect[$sk][$bzm0] = array(odbc_result($rs, "DBFIELD"),$sk, odbc_result($rs, "STYLE"),trim($extvalue));
+			$preselect[$sk][$bzm0] = array(lmbdb_result($rs, "DBFIELD"),$sk, lmbdb_result($rs, "STYLE"),trim($extvalue));
 		}else{$report["dbvalue"][$bzm0] = 0;}
 
 		$bzm0++;
@@ -631,9 +640,9 @@ function breakFooter($report_id){
 	global $db;
 
 	$sqlquery = "SELECT DISTINCT POSY FROM LMB_REPORTS WHERE TAB_EL_ROW <= 0 AND TAB_EL_COL <= 0 AND BERICHT_ID = $report_id AND FOOTER = ".LMB_DBDEF_TRUE." ORDER BY POSY";
-	$rs = odbc_exec($db,$sqlquery);
-	if(odbc_fetch_row($rs)) {
-		$pos = odbc_result($rs, "POSY");
+	$rs = lmbdb_exec($db,$sqlquery);
+	if(lmbdb_fetch_row($rs)) {
+		$pos = lmbdb_result($rs, "POSY");
 	}
 	return $pos;
 }
@@ -689,12 +698,12 @@ function reportArchiv($temp_file_path,$report,$ID,$report_output){
 		if($report_output == 2 /* maybe also 3? */){
 			if(is_numeric($report["target"])){
 				$sqlquery = "SELECT FIELD_ID,TAB_ID,TYP,LEVEL,ID FROM LDMS_STRUCTURE WHERE ID = ".$report["target"];
-				$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
-				if(odbc_result($rs, "ID")){
+				if(lmbdb_result($rs, "ID")){
 
-					$level = odbc_result($rs, "ID");
-					$field_id = odbc_result($rs, "FIELD_ID");
+					$level = lmbdb_result($rs, "ID");
+					$field_id = lmbdb_result($rs, "FIELD_ID");
 					$dublicate["forceDelnm"][0] = 1;
 					$file["file"][0] = lmb_utf8_encode($temp_file_path);$file["file_name"][] = $name;$file["file_type"][] = 0;$file["file_archiv"][] = 0;
 					#$fileid = upload($file,$level,array("datid" => $ID,"gtabid" => $report["referenz_tab"],"fieldid" => $report["report_id"]),1,$dublicate);
@@ -703,9 +712,9 @@ function reportArchiv($temp_file_path,$report,$ID,$report_output){
 					if(!$fileid){return false;}
 
 					# if target folder is type report
-					if(odbc_result($rs, "TYP") == 7){
+					if(lmbdb_result($rs, "TYP") == 7){
 
-						$verkn_ = set_verknpf($report["referenz_tab"],odbc_result($rs, "FIELD_ID"),$ID,$fileid,0,0,0);
+						$verkn_ = set_verknpf($report["referenz_tab"],lmbdb_result($rs, "FIELD_ID"),$ID,$fileid,0,0,0);
 						$verkn_["linkParam"]["LID"] = $level;
 
 						if(set_joins($report["referenz_tab"],$verkn_)){

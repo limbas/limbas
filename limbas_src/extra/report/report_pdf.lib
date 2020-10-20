@@ -555,17 +555,17 @@ function print_tab($pdf,$ID,$report,$el){
 
 			# Auslesen einzelner Zellenparameter
 			$sqlquery = "SELECT EL_ID,POSX,POSY,HEIGHT,STYLE,TYP,TAB,INHALT FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB_EL = ".$report_tab." AND TAB_EL_ROW = ".$bzm2." AND TAB_EL_COL = ".$bzm3." ORDER BY EL_ID ";
-			$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			$rep = null;
-			while(odbc_fetch_row($rs)) {
-			    $rep['el_id'][] = odbc_result($rs, 'EL_ID');
-                $rep['posx'][] = odbc_result($rs, 'POSX');
-                $rep['posy'][] = odbc_result($rs, 'POSY');
-                $rep['height'][] = odbc_result($rs, 'HEIGHT');
-                $rep['style'][] = odbc_result($rs, 'STYLE');
-                $rep['typ'][] = odbc_result($rs, 'TYP');
-                $rep['tab'][] = odbc_result($rs, 'TAB');
-                $rep['inhalt'][] = odbc_result($rs, 'INHALT');
+			while(lmbdb_fetch_row($rs)) {
+			    $rep['el_id'][] = lmbdb_result($rs, 'EL_ID');
+                $rep['posx'][] = lmbdb_result($rs, 'POSX');
+                $rep['posy'][] = lmbdb_result($rs, 'POSY');
+                $rep['height'][] = lmbdb_result($rs, 'HEIGHT');
+                $rep['style'][] = lmbdb_result($rs, 'STYLE');
+                $rep['typ'][] = lmbdb_result($rs, 'TYP');
+                $rep['tab'][] = lmbdb_result($rs, 'TAB');
+                $rep['inhalt'][] = lmbdb_result($rs, 'INHALT');
             }
 
             $cell_par[$bzm3] = array('',$rep['posx'][0],$rep['posy'][0],$firstrow_width[$bzm3],$rep['height'][0],explode(";",$rep['style'][0]),$rep['typ'][0],$rep['tab'][0]);

@@ -28,7 +28,7 @@ function add_workflow($name){
 	
 	$NEXT_ID = next_db_id("LMB_WFL_TASK");
 	$sqlquery = "INSERT INTO LMB_WFL (ID,NAME) VALUES($NEXT_ID,'".parse_db_string($name,50)."')";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 function add_workflowTask($wflid,$name){
@@ -37,27 +37,27 @@ function add_workflowTask($wflid,$name){
 	
 	$NEXT_ID = next_db_id("LMB_WFL_TASK");
 	$sqlquery = "INSERT INTO LMB_WFL_TASK (ID,WFL_ID,NAME,SORT) VALUES($NEXT_ID,".parse_db_int($wflid).",'".parse_db_string($name,50)."',$NEXT_ID)";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 function delete_workflow($delid){
 	global $db;
 
 	$sqlquery = "DELETE FROM LMB_WFL_INST WHERE TASK_ID IN (SELECT ID FROM LMB_WFL_TASK WHERE WFL_ID = ".parse_db_int($delid).")";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$sqlquery = "DELETE FROM LMB_WFL_TASK WHERE WFL_ID = ".parse_db_int($delid);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$sqlquery = "DELETE FROM LMB_WFL WHERE ID = ".parse_db_int($delid);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 function delete_workflowTask($delid){
 	global $db;
 
 	$sqlquery = "DELETE FROM LMB_WFL_INST WHERE TASK_ID = ".parse_db_int($delid);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	$sqlquery = "DELETE FROM LMB_WFL_TASK WHERE ID = ".parse_db_int($delid);
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
 function edit_workflow($id){
@@ -68,12 +68,12 @@ function edit_workflow($id){
 	
 	$sqlquery = "UPDATE LMB_WFL SET 
 	NAME='".parse_db_string($workflowname[$id],50)."', 
-	DESCR = '".parse_db_blob($workflowdescr[$id])."'
+	DESCR = '".parse_db_string($workflowdescr[$id])."'
 	WHERE ID = $id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	
 	$prepare_string = "UPDATE LMB_WFL SET PARAMS = ? WHERE ID = $id";
-	lmb_PrepareSQL($prepare_string,array(parse_db_blob($workflowparams[$id])),__FILE__,__LINE__);
+	lmb_PrepareSQL($prepare_string,array($workflowparams[$id]),__FILE__,__LINE__);
 }
 
 function edit_workflowTask($id){
@@ -88,22 +88,22 @@ function edit_workflowTask($id){
 	DESCR = '".parse_db_string($taskdescr[$id],250)."',
 	TAB_ID = ".parse_db_int($tasktabid[$id])."
 	WHERE ID = $id";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	
 	$prepare_string = "UPDATE LMB_WFL_TASK SET PARAMS = ? WHERE ID = $id";
-	lmb_PrepareSQL($prepare_string,array(parse_db_blob($taskparams[$id])),__FILE__,__LINE__);
+	lmb_PrepareSQL($prepare_string,array($taskparams[$id]),__FILE__,__LINE__);
 }
 
 function get_workflow(){
 	global $db;
 
 	$sqlquery = "SELECT * FROM LMB_WFL ORDER BY ID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)){
-		$key = odbc_result($rs, "ID");
-		$workflow["name"][$key] = odbc_result($rs, "NAME");
-		$workflow["descr"][$key] = odbc_result($rs, "DESCR");
-		$workflow["params"][$key] = odbc_result($rs, "PARAMS");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+		$key = lmbdb_result($rs, "ID");
+		$workflow["name"][$key] = lmbdb_result($rs, "NAME");
+		$workflow["descr"][$key] = lmbdb_result($rs, "DESCR");
+		$workflow["params"][$key] = lmbdb_result($rs, "PARAMS");
 	}
 	return $workflow;
 }
@@ -112,20 +112,20 @@ function get_workflowTask($wflid){
 	global $db;
 
 	$sqlquery = "SELECT * FROM LMB_WFL_TASK WHERE WFL_ID = $wflid ORDER BY SORT";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	while(odbc_fetch_row($rs)){
-		$key = odbc_result($rs, "ID");
-		$task["name"][$key] = odbc_result($rs, "NAME");
-		$task["descr"][$key] = odbc_result($rs, "DESCR");
-		$task["sort"][$key] = odbc_result($rs, "SORT");
-		$task["uparams"][$key] = odbc_result($rs, "PARAMS");
-		$task["tab_id"][$key] = odbc_result($rs, "TAB_ID");
-		$task["tasks_usable"][$key] = odbc_result($rs, "TASKS_USABLE");	
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+		$key = lmbdb_result($rs, "ID");
+		$task["name"][$key] = lmbdb_result($rs, "NAME");
+		$task["descr"][$key] = lmbdb_result($rs, "DESCR");
+		$task["sort"][$key] = lmbdb_result($rs, "SORT");
+		$task["uparams"][$key] = lmbdb_result($rs, "PARAMS");
+		$task["tab_id"][$key] = lmbdb_result($rs, "TAB_ID");
+		$task["tasks_usable"][$key] = lmbdb_result($rs, "TASKS_USABLE");	
 	}
 	
 	$sqlquery = "SELECT NAME FROM LMB_WFL WHERE ID = $wflid ORDER BY ID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$task["wfl_name"] = odbc_result($rs, "NAME");
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$task["wfl_name"] = lmbdb_result($rs, "NAME");
 	
 	
 	return $task;

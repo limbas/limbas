@@ -28,30 +28,31 @@ if($umgvar["indize_timeout"]){
 }
 
 /**
-* check aphanumeric digits
-* @param val Wort
-* @return boolean
+* Removes non-alphanumeric digits from given value according to limbas settings
+* @param string value word to check
+* @return string|false if word is invalid
 */
 function feasible_val($value){
+    global $umgvar;
 
-	if($GLOBALS["umgvar"]["indize_clean"]){
-		$value = preg_replace("/^[^[:alnum:]]{1,}|[^[:alnum:]]{1,}$/","",$value);
+	if($umgvar["indize_clean"]){
+		$value = preg_replace("/^[^[:alnum:]]{1,}|[^[:alnum:]]{1,}$/u","",$value);
 	}
-	
-	if(lmb_strlen($value) < $GLOBALS["umgvar"]["indize_length"]){
+
+	if(lmb_strlen($value) < $umgvar["indize_length"]){
 		return false;
 	}
 		
-	if(!$GLOBALS["umgvar"]["indize_cs"]){
+	if(!$umgvar["indize_cs"]){
 		$value = lmb_strtolower($value);
 	}
 
 	$len = lmb_strlen($value);
-	if($len < $GLOBALS["umgvar"]["indize_length"] OR !$GLOBALS["umgvar"]["indize_feasible"]){return false;}
+	if($len < $umgvar["indize_length"] OR !$umgvar["indize_feasible"]){return false;}
 	$nonalpha = preg_match_all("/[^[:alnum:]]/",$value,$out);
 	if(!$nonalpha){return $value;}
 	$alphadiff = (($nonalpha*100)/$len);
-	if($alphadiff > $GLOBALS["umgvar"]["indize_feasible"]){
+	if($alphadiff > $umgvar["indize_feasible"]){
 	    return false;
 	}else{
 		return $value;
@@ -60,12 +61,11 @@ function feasible_val($value){
 
 
 /**
-* Auflösen von Tabellen/Feld Ids in Namen
-* @global db database handler
-* @param tabid Tabellen-ID
-* @param fieldid Feld-ID
-* @return indi Array: [tabname]|[fieldname]|[datatype]|[NEXTID_D]|[NEXTID_W]
-*/
+ * Returns information about the specified field
+ * @param int $tabid
+ * @param int $fieldid
+ * @return array = [tabid, fieldid, tabname, fieldname, datatype, fieldtype]
+ */
 function table_infos($tabid,$fieldid){
 	global $db;
 
@@ -74,29 +74,27 @@ function table_infos($tabid,$fieldid){
 
 	# -------- Tabellenname --------
 	$sqlquery = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE TAB_ID = ".$indi['tabid'];
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$indi['tabname'] = odbc_result($rs,"TABELLE");
+	$indi['tabname'] = lmbdb_result($rs,"TABELLE");
+
 	# -------- Feldinformationen --------
 	$sqlquery = "SELECT DISTINCT LMB_FIELD_TYPES.DATA_TYPE,LMB_FIELD_TYPES.FIELD_TYPE,LMB_CONF_FIELDS.FIELD_NAME FROM LMB_FIELD_TYPES,LMB_CONF_FIELDS WHERE LMB_CONF_FIELDS.FIELD_ID = ".$indi['fieldid']." AND LMB_CONF_FIELDS.TAB_ID = ".$indi['tabid']." AND LMB_CONF_FIELDS.DATA_TYPE = LMB_FIELD_TYPES.DATA_TYPE";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$indi["fieldname"] = odbc_result($rs,"FIELD_NAME");
-	$indi["datatype"] = odbc_result($rs,"DATA_TYPE");
-	$indi["fieldtype"] = odbc_result($rs,"FIELD_TYPE");
+	$indi["fieldname"] = lmbdb_result($rs,"FIELD_NAME");
+	$indi["datatype"] = lmbdb_result($rs,"DATA_TYPE");
+	$indi["fieldtype"] = lmbdb_result($rs,"FIELD_TYPE");
 
 	return $indi;
 }
 
 /**
-* Memos auslesen und indizierung anstoßen
-* @global db database handler
-* @global gtab Array Tabellenliste
-* @global gfield Array Feldliste
-* @param indi Array aus table_infos()
-* @return null
-* @internal Statusausgabe
-*/
+ * Fetches data from field and starts indexing
+ *
+ * @param array indi Array aus table_infos(): Specifies which field to index
+ * @return array|false indi on success or false on failure
+ */
 function prepare_memo_indize($indi){
 	global $db;
 	global $gtab;
@@ -107,189 +105,196 @@ function prepare_memo_indize($indi){
 	$fieldid = $indi["fieldid"];
 
 	$sqlquery = "SELECT COUNT(*) AS ANZAHL FROM ".$indi["tabname"]." WHERE IND_".$indi["fieldid"]." = ".LMB_DBDEF_FALSE." AND DEL = ".LMB_DBDEF_FALSE;
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$jobsum = odbc_result($rs,"ANZAHL");
+	$jobsum = lmbdb_result($rs,"ANZAHL");
 
 	# --- Status ----
 	$stat_name = "tab_".$tabid."_".$fieldid;
-	if(!$GLOBALS["cronjob"]){echo "<span>Databased Memo: ".$gtab['desc'][$tabid]." (".$gfield[$tabid]['spelling'][$fieldid].")  </span><div style=\"width:200px;height:15px;border:1px solid black;\"><span style=\"position:absolute;\" ID=\"accval\">&nbsp;&nbsp;&nbsp;$jobsum</span><IMG ID=\"$stat_name\" SRC=\"pic/point_g.gif\" WIDTH=\"0\" HEIGHT=\"15\"></div><BR>\n";}
+	if (!$GLOBALS['cronjob']) {createProgressBar($stat_name, "Databased Memo: {$gtab['desc'][$tabid]} ({$gfield[$tabid]['spelling'][$fieldid]})");}
 
 	$sqlquery = "SELECT ID,{$indi['fieldname']} FROM ".$indi["tabname"]." WHERE IND_".$indi["fieldid"]." = ".LMB_DBDEF_FALSE." AND DEL = ".LMB_DBDEF_FALSE." ORDER BY ID";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$bzm = 1;
-	while(odbc_fetch_row($rs)) {
+	while(lmbdb_fetch_row($rs)) {
 
-		$indi["meta"] = 0;
-		$indi["sid"] = 1;
-		$indi["fileid"] = 0;
-		$indi["datid"] = odbc_result($rs,"ID");
-		$indi["typ"] = "field";
+        $indi["meta"] = 0;
+        $indi["sid"] = 1;
+        $indi["fileid"] = 0;
+        $indi["datid"] = lmbdb_result($rs,"ID");
+        $indi["typ"] = "field";
 
-		$indi["NEXTID_D"] = next_db_id("LMB_INDIZE_D");
-		$indi["NEXTID_DS"] = next_db_id("LMB_INDIZE_DS");
-		$indi["NEXTID_F"] = next_db_id("LMB_INDIZE_F");
-		$indi["NEXTID_FS"] = next_db_id("LMB_INDIZE_FS");
-		$indi["NEXTID_W"] = next_db_id("LMB_INDIZE_W");
+	    if ($umgvar['postgres_use_fulltextsearch']) {
+ 	        indize_create_postgres($indi);
+        } else {
+            $indi["NEXTID_D"] = next_db_id("LMB_INDIZE_D");
+            $indi["NEXTID_DS"] = next_db_id("LMB_INDIZE_DS");
+            $indi["NEXTID_F"] = next_db_id("LMB_INDIZE_F");
+            $indi["NEXTID_FS"] = next_db_id("LMB_INDIZE_FS");
+            $indi["NEXTID_W"] = next_db_id("LMB_INDIZE_W");
 
-		$blob = explode(" ",str_replace(array("\t","\n")," ",strip_tags(odbc_result($rs,$indi["fieldname"]))));
-		if($blob){
-			# --- Indizierung groß ----
-			if(!indize_create($blob,$indi)){$commit = 1;}
-			# --- Indizierung klein ----
-			if(!indize_create_s($indi)){$commit = 1;}
+            $blob = explode(" ",str_replace(array("\t","\n")," ",strip_tags(lmbdb_result($rs,$indi["fieldname"]))));
+            if($blob){
+                # --- Indizierung groß ----
+                if(!indize_create($blob,$indi)){$commit = 1;}
+                # --- Indizierung klein ----
+                if(!indize_create_s($indi)){$commit = 1;}
 
-			$sqlquery1 = "UPDATE ".$indi["tabname"]." SET IND_".$indi["fieldid"]." = ".LMB_DBDEF_TRUE.",INDD_".$indi["fieldid"]." = ".LMB_DBDEF_TIMESTAMP." WHERE ID = ".odbc_result($rs,"ID");
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
-			if(!$rs1) {$commit = 1;}
-			$indi["jnumfs"]++;
-		}
-		if(!$umgvar["IS_CRON"]){write_status($stat_name,$jobsum,$bzm);}
+                $sqlquery1 = "UPDATE ".$indi["tabname"]." SET IND_".$indi["fieldid"]." = ".LMB_DBDEF_TRUE.",INDD_".$indi["fieldid"]." = ".LMB_DBDEF_TIMESTAMP." WHERE ID = ".lmbdb_result($rs,"ID");
+                $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
+                if(!$rs1) {$commit = 1;}
+                $indi["jnumfs"]++;
+            }
+        }
+
+		if(!$umgvar["IS_CRON"]){updateProgressBar($stat_name, $bzm, $jobsum);}
 		$indi["words"] = null;
 		$bzm++;
 
 		# Zeitlimit
 		if($GLOBALS["timeout"] = check_timeout($umgvar["indize_timeout"])){
 			echo "<span style=\"color:red\"> Maximum execution time of ".$umgvar["indize_timeout"]." minutes exceeded! process finished!</span><br>";
-			lmb_loghandle("inidze.log","Maximum execution time exceeded");
+			lmb_loghandle("indize.log","Maximum execution time exceeded");
 			return $indi;
 		}
-
 	}
-	if($commit){return false;}else{return $indi;}
+    if(!$umgvar["IS_CRON"]){finishProgressBar($stat_name, $jobsum);}
+    if($commit){return false;}else{return $indi;}
 }
 
 /**
-* Ordner-Dateien auslesen und Indizierung anstoßen
-* @global db database handler
-* @global level Dateiordner-ID
-* @param indi Array aus table_infos()
-* @return null
-* @internal Statusausgabe
-*/
-function prepare_filelevel_indize($level,$indi){
+ * Reads files from given folder and starts indexing
+ * @param $level int folder ID
+ * @return bool
+ */
+function prepare_filelevel_indize($level){
 	global $db;
 	global $umgvar;
-	global $timeout;
-	global $logfile;
-	
-	# Ordnername
+
+    $indi = array();
+
+	# folder name
 	$sqlquery = "SELECT NAME FROM LDMS_STRUCTURE WHERE ID = $level";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$filename = odbc_result($rs,"NAME");
+	$folderName = lmbdb_result($rs,"NAME");
 
+	# file count
 	$sqlquery = "SELECT COUNT(*) AS ANZAHL FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.LEVEL = $level AND LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND IND = ".LMB_DBDEF_FALSE." AND DEL = ".LMB_DBDEF_FALSE;
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$jobsum = odbc_result($rs,"ANZAHL");
-	# --- Status ----
-	$stat_name = "file_".$level;
-	if(!$GLOBALS["cronjob"]){echo "<span id=\"".$stat_name."_name\">$filename: </span><div style=\"width:200px;height:15px;border:1px solid black;\"><span style=\"position:absolute;\" ID=\"accval\">&nbsp;&nbsp;&nbsp;$jobsum</span><IMG ID=\"$stat_name\" SRC=\"pic/point_g.gif\" WIDTH=\"0\" HEIGHT=\"15\"></div><BR>\n";}
+	$fileCount = lmbdb_result($rs,"ANZAHL");
 
+	# print status
+	$stat_name = "file_".$level;
+	if (!$GLOBALS['cronjob']) {createProgressBar($stat_name, $folderName);}
+
+	# get files
 	if($umgvar['indize_header']){$indw = "(IND = ".LMB_DBDEF_FALSE." OR INDM = ".LMB_DBDEF_FALSE.")";}else{$indw = "IND = ".LMB_DBDEF_FALSE;}
 	$sqlquery = "SELECT DISTINCT LDMS_FILES.ID,LDMS_FILES.LEVEL,LDMS_FILES.NAME,LDMS_FILES.IND,LDMS_FILES.INDM,LDMS_FILES.SECNAME,LMB_MIMETYPES.MIMETYPE,LMB_MIMETYPES.EXT FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.LEVEL = $level AND LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND DEL = ".LMB_DBDEF_FALSE." AND $indw";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$bzm = 1;
-	while(odbc_fetch_row($rs)) {
+	while(lmbdb_fetch_row($rs)) {
 
 		# status
-		if(!$umgvar["IS_CRON"]){echo "<Script language=\"JavaScript\">document.getElementById('".$stat_name."_name').innerHTML = '$filename: ".odbc_result($rs,"NAME")."'</SCRIPT>\n";}
+        if (!$umgvar['IS_CRON']) {updateProgressBar($stat_name, $bzm - 1, $fileCount, $folderName . ': ' . lmbdb_result($rs, 'NAME'));}
 
-		$ind_ok = 0;
 		$indi["cacheId"] = null;
 		$indi["words"] = null;
 		$indi["w_meta"] = null;
 		$indi["meta"] = 0;
 		$indi["sid"] = 1;
-		$indi["fileid"] = odbc_result($rs,"ID");
+		$indi["fileid"] = lmbdb_result($rs,"ID");
 		$indi["typ"] = "file";
 		$zeit_main = gettime();
-		$zeit_dauer = 0;
-		$ext = odbc_result($rs,"EXT");
+		$ext = lmbdb_result($rs,"EXT");
 
-                # delete old index
-                del_file_index($indi["fileid"]);
+        # delete old index
+        del_file_index($indi["fileid"]);
 
 		# Datei-Inhalt
-
 		if(($umgvar['indize_filetype'][0] == 1 OR in_array($ext,$umgvar['indize_filetype']))
-                        AND $ctt = convert_to_text(odbc_result($rs,"SECNAME"),$ext,odbc_result($rs,"MIMETYPE"),odbc_result($rs, "ID"),1,0,1,odbc_result($rs, "LEVEL"))){
+            AND $ctt = convert_to_text(lmbdb_result($rs,"SECNAME"),$ext,lmbdb_result($rs,"MIMETYPE"),lmbdb_result($rs, "ID"),1,0,1,lmbdb_result($rs, "LEVEL"))) {
 
-                        $indi["NEXTID_D"] = next_db_id("LMB_INDIZE_D");
-                        $indi["NEXTID_DS"] = next_db_id("LMB_INDIZE_DS");
-                        $indi["NEXTID_F"] = next_db_id("LMB_INDIZE_F");
-                        $indi["NEXTID_FS"] = next_db_id("LMB_INDIZE_FS");
-                        $indi["NEXTID_W"] = next_db_id("LMB_INDIZE_W");
-    		       
-			# Nur Metadaten indizieren
-			if(odbc_result($rs,"IND") AND !odbc_result($rs,"INDM")){
-				# File-Header
-				if($meta = getmeta_from_db(odbc_result($rs, "ID"),1)){
-					$sqlquery1 = "SELECT MAX(SID) AS NEXTID FROM LMB_INDIZE_F WHERE FID = ".$indi["fileid"];
-					$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
-					if(!$rs1) {$commit = 1;}
-					$indi["sid"] = odbc_result($rs1,"NEXTID") + 1;
+		    if ($umgvar['postgres_use_fulltextsearch']) {
+                $resultpath = $umgvar['pfad'] . "/TEMP/txt/" . lmbdb_result($rs, "SECNAME") . ".txt";
+                $text = &file_get_contents($resultpath);
+                indize_create_postgres($indi, $text);
+            } else {
+                $indi["NEXTID_D"] = next_db_id("LMB_INDIZE_D");
+                $indi["NEXTID_DS"] = next_db_id("LMB_INDIZE_DS");
+                $indi["NEXTID_F"] = next_db_id("LMB_INDIZE_F");
+                $indi["NEXTID_FS"] = next_db_id("LMB_INDIZE_FS");
+                $indi["NEXTID_W"] = next_db_id("LMB_INDIZE_W");
 
-					$indi["meta"] = 1;
-					foreach ($meta as $key => $val){
-						# --- Indizierung groß ----
-						$blob = str_replace("meta: ","",strip_tags(trim($val)));
-						$blob = explode(" ",str_replace("\t"," ",$blob));
-						if(!indize_create($blob,$indi)){$commit = 1;}
-					}
-					# --- Indizierung klein ----
-					if(!indize_create_s($indi)){$commit = 1;}
-				}
-			# Inhalt und Metadaten indizieren
-			}else{
-				# Temporärer TXT Pfad
-				$resultpath = $umgvar['pfad']."/TEMP/txt/".odbc_result($rs,"SECNAME").".txt";
+                # Nur Metadaten indizieren
+                if (lmbdb_result($rs, "IND") AND !lmbdb_result($rs, "INDM")) {
+                    # File-Header
+                    if ($meta = getmeta_from_db(lmbdb_result($rs, "ID"), 1)) {
+                        $sqlquery1 = "SELECT MAX(SID) AS NEXTID FROM LMB_INDIZE_F WHERE FID = " . $indi["fileid"];
+                        $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, null, __FILE__, __LINE__);
+                        if (!$rs1) {$commit = 1;}
+                        $indi["sid"] = lmbdb_result($rs1, "NEXTID") + 1;
 
-				if(file_exists($resultpath)){
-					$tf = fopen($resultpath,"r");
-					while($blob = fgets($tf, 4096)){
-			 			$blob = trim(strip_tags($blob));
-			 			if($blob){
-			 				# Metadaten
-			 				if(lmb_substr($blob,0,5) == "meta:"){
-			 					$indi["meta"] = 1;
-			 					$blob = lmb_substr($blob,5);
-			 				}else{
-			 					$indi["meta"] = 0;
-			 				}
+                        $indi["meta"] = 1;
+                        foreach ($meta as $key => $val) {
+                            # --- Indizierung groß ----
+                            $blob = str_replace("meta: ", "", strip_tags(trim($val)));
+                            $blob = explode(" ", str_replace("\t", " ", $blob));
+                            if (!indize_create($blob, $indi)) {$commit = 1;}
+                        }
+                        # --- Indizierung klein ----
+                        if (!indize_create_s($indi)) {$commit = 1;}
+                    }
+                    # Inhalt und Metadaten indizieren
+                } else {
+                    # Temporärer TXT Pfad
+                    $resultpath = $umgvar['pfad'] . "/TEMP/txt/" . lmbdb_result($rs, "SECNAME") . ".txt";
 
-				 			$blob = explode(" ",str_replace("\t"," ",$blob));
-							# --- Indizierung groß ----
-							if(!indize_create($blob,$indi)){$commit = 1;}
-			 			}
-					}
-					
-                                        # --- Indizierung klein ----
-					if(!indize_create_s($indi)){$commit = 1;}
+                    if (file_exists($resultpath)) {
+                        $tf = fopen($resultpath, "r");
+                        while ($blob = fgets($tf, 4096)) {
+                            $blob = trim(strip_tags($blob));
+                            if ($blob) {
+                                # Metadaten
+                                if (lmb_substr($blob, 0, 5) == "meta:") {
+                                    $indi["meta"] = 1;
+                                    $blob = lmb_substr($blob, 5);
+                                } else {
+                                    $indi["meta"] = 0;
+                                }
 
-					fclose($tf);
-				}
-			}
+                                $blob = explode(" ", str_replace("\t", " ", $blob));
+                                # --- Indizierung groß ----
+                                if (!indize_create($blob, $indi)) {$commit = 1;}
+                            }
+                        }
+
+                        # --- Indizierung klein ----
+                        if (!indize_create_s($indi)) {$commit = 1;}
+
+                        fclose($tf);
+                    }
+                }
+            }
                         
 			$inc = count($indi["words"]);
 			$zeit_now = gettime();
 			$zeit_dauer = number_format(($zeit_now - $zeit_main),4,'.','');
 			if($ctt === 2){$zeit_dauer = -1;}
-			$sqlquery1 = "UPDATE LDMS_FILES SET IND = ".LMB_DBDEF_TRUE.",INDM = ".LMB_DBDEF_TRUE.",INDD = ".LMB_DBDEF_TIMESTAMP.",INDT = $zeit_dauer,INDC = $inc WHERE ID = ".odbc_result($rs,"ID");
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
+			$sqlquery1 = "UPDATE LDMS_FILES SET IND = ".LMB_DBDEF_TRUE.",INDM = ".LMB_DBDEF_TRUE.",INDD = ".LMB_DBDEF_TIMESTAMP.",INDT = $zeit_dauer,INDC = $inc WHERE ID = ".lmbdb_result($rs,"ID");
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 
 			$indi["jnumfs"]++;
 		}else{
-			$sqlquery1 = "UPDATE LDMS_FILES SET IND = ".LMB_DBDEF_TRUE.",INDM = ".LMB_DBDEF_TRUE.",INDD = ".LMB_DBDEF_TIMESTAMP.",INDT = -2,INDC = 0 WHERE ID = ".odbc_result($rs,"ID");
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
+			$sqlquery1 = "UPDATE LDMS_FILES SET IND = ".LMB_DBDEF_TRUE.",INDM = ".LMB_DBDEF_TRUE.",INDD = ".LMB_DBDEF_TIMESTAMP.",INDT = -2,INDC = 0 WHERE ID = ".lmbdb_result($rs,"ID");
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 		}
 
-		if(!$umgvar["IS_CRON"]){write_status($stat_name,$jobsum,$bzm);}
 		$indi["words"] = null;
 		$bzm++;
 
@@ -301,18 +306,19 @@ function prepare_filelevel_indize($level,$indi){
 		}
 
 		# log
-		lmb_loghandle("indize.log",$filename." : ".odbc_result($rs,"NAME")." : ".$inc,$zeit_main);
+		lmb_loghandle("indize.log",$folderName." : ".lmbdb_result($rs,"NAME")." : ".$inc,$zeit_main);
 	}
-	if($commit){return false;}else{return $indi;}
+    if(!$umgvar["IS_CRON"]){finishProgressBar($stat_name, $fileCount);}
+    if($commit){return false;}else{return $indi;}
 }
 
 
 /**
-* Wort in Wortliste hinzufügen
-* @global db database handler
-* @param indi Array aus table_infos()
-* @return bollean
-*/
+ * Adds a word to the list of indexed words (LMB_INDIZE_W)
+ * @param $indi array from table_infos()
+ * @param $value string the word to insert
+ * @return bool success
+ */
 function add_indexword($indi,$value){
 	global $db;
 	
@@ -321,152 +327,70 @@ function add_indexword($indi,$value){
 	}
 	
 	$sqlquery = "INSERT INTO LMB_INDIZE_W (ID,VAL,METAPHONE,UPPERVAL) VALUES (".$indi["NEXTID_W"].",'".parse_db_string($value,60)."','".parse_db_string(soundex($value),60)."','".parse_db_string($upperval,60)."')";
-        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
 	if(!$rs) {return false;}
 	return true;
 }
 
 /**
-* Indizes erstellen im Level1 Modus
-* @global db database handler
-* @param indi Array aus table_infos()
-* @return bollean
-*/
+ * Inserts words from $indi['words'] into database (level 1 mode)
+ * @param $indi array from table_infos()
+ * @return bool success
+ */
 function indize_create_s(&$indi){
 	global $db;
 
-	if($indi["words"]){            
-                foreach($indi["words"] as $key => $value){
-
-                        if($indi["typ"] == "field"){
-                                $indi["NEXTID_DS"]++;
-                                $sqlquery = "INSERT INTO LMB_INDIZE_DS (ID,SID,WID,REF,TABID,FIELDID) VALUES (".$indi["NEXTID_DS"].",".$value.",".$key.",".$indi["datid"].",".$indi["tabid"].",".$indi["fieldid"].")";
-                        }elseif($indi['typ'] == "file"){
-                                $indi["NEXTID_FS"]++;
-                                $sqlquery = "INSERT INTO LMB_INDIZE_FS (ID,SID,WID,FID,META) VALUES (".$indi["NEXTID_FS"].",".$value.",".$key.",".$indi["fileid"].",".parse_db_bool($indi["w_meta"][$key]).")";
-                        }
-                        $indi["sid"]++;
-                        $indi["gnumfs"]++;
-                        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
-                        if(!$rs) {return false;}
-                }    
-            
-            
-            
-                
-                /*
-                $Ds = array();
-                $Fs = array();
-
-                foreach($indi["words"] as $key => $value){
-                        
-                        if($indi["NEXTID_DS"] == null
-                                || $value == null
-                                || $key == null) {
-                            continue;
-                        }
-                        
-                        if(($indi["typ"] == "field") && $indi["datid"] === null) {
-                            error_log("no datid");
-                            return;
-                        }
-                        if(($indi["typ"] == "field") && $indi["tabid"] === null) {
-                            error_log("no tabid");
-                            return;
-                        }
-                        if(($indi["typ"] == "field") && $indi["fieldid"] === null) {
-                            error_log("no fieldid");
-                            return;
-                        }
-                        if(($indi["typ"] == "file") && $indi["fileid"] === null) {
-                            error_log("no fileid");                            
-                            return;
-                        }
-                        if(($indi["typ"] == "file" && $indi["w_meta"][$key] === null)) {
-                            error_log("no w_meta");
-                            return;
-                        }
-                    
-                        if($indi["typ"] == "field"){
-				$indi["NEXTID_DS"]++; #?
-				$Ds[] = " SELECT ".$indi["NEXTID_DS"].",".$value.",".$key.",".$indi["datid"].",".$indi["tabid"].",".$indi["fieldid"]." ";
-                               
-			}elseif($indi["typ"] == "file"){
-				$indi["NEXTID_FS"]++;
-				$Fs[] = " SELECT ".$indi["NEXTID_FS"].",".$value.",".$key.",".$indi["fileid"].",".parse_db_bool($indi["w_meta"][$key])." ";
-			}
-                    
-			$indi["sid"]++;
-			$indi["gnumfs"]++;
-                    
-                        if(count($Ds) > 0 && count($Ds) % 800 == 0) {
-                            $sqlquery = "INSERT INTO LMB_INDIZE_DS (ID,SID,WID,REF,TABID,FIELDID) (" . implode(" UNION ALL ", $Ds) . ")";
-                           
-                            $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
-                            if(!$rs) {return false;}
-                            $Ds = array();
-                        }
-                        
-                        if(count($Fs) > 0 && count($Fs) % 800 == 0) {                           
-                            $sqlquery = "INSERT INTO LMB_INDIZE_FS (ID,SID,WID,FID,META) (" . implode(" UNION ALL ", $Fs) . ")";
-                                        
-                            $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
-                            if(!$rs) {return false;}
-                            $Fs = array();
-                        }
-                        
-		}
-                if(count($Ds) > 1) {
-                        $sqlquery = "INSERT INTO LMB_INDIZE_DS (ID,SID,WID,REF,TABID,FIELDID) (" . implode(" UNION ALL ", $Ds) . ")";
-                                           
-                        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
-                        if(!$rs) {return false;}
-                }
-                
-                if(count($Fs) > 1) {                
-                        $sqlquery = "INSERT INTO LMB_INDIZE_FS (ID,SID,WID,FID,META) (" . implode(" UNION ALL ", $Fs) . ")";
-                                                                     
-                        $rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
-                        if(!$rs) {return false;}                        
-                }
-           
-                */              
-
+	if($indi["words"]){
+	    foreach($indi["words"] as $key => $value){
+            if($indi["typ"] == "field"){
+                $indi["NEXTID_DS"]++;
+                $sqlquery = "INSERT INTO LMB_INDIZE_DS (ID,SID,WID,REF,TABID,FIELDID) VALUES (".$indi["NEXTID_DS"].",".$value.",".$key.",".$indi["datid"].",".$indi["tabid"].",".$indi["fieldid"].")";
+            }elseif($indi['typ'] == "file"){
+                $indi["NEXTID_FS"]++;
+                $sqlquery = "INSERT INTO LMB_INDIZE_FS (ID,SID,WID,FID,META) VALUES (".$indi["NEXTID_FS"].",".$value.",".$key.",".$indi["fileid"].",".parse_db_bool($indi["w_meta"][$key]).")";
+            }
+            $indi["sid"]++;
+            $indi["gnumfs"]++;
+            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
+            if(!$rs) {return false;}
+        }
 	}
 
 	return true;
 }
 
 /**
-* Indizes erstellen im Level2 Modus
-* @global db database handler
-* @global words vorhandene Wortliste
-* @param blob Textblock
-* @param indi Array aus table_infos()
-* @return indi Array [NEXTID_D]|[NEXTID_W]|[sid]|[gnum] + table_infos()
-* @internal Auswahl zwischen array-search und DB-Abfrage Modus
-*/
-function indize_create($blob,&$indi){
+ * Inserts words into database (level 2 mode)
+ * @param $words array of words
+ * @param $indi array from table_infos()
+ * @return bool success
+ */
+function indize_create($words,&$indi){
 	global $db;
 	global $umgvar;
-        
-        foreach($blob as $key => $value){
+
+    foreach($words as $key => $value){
+        if (!$value) {
+            continue;
+        }
+
+        $value = lmb_utf8_encode($value);
 
 		# check alphanumeric digits
-		if(!$value = feasible_val($value) OR !$value){continue;}
+        $value = feasible_val($value);
+		if(!$value){continue;}
 
-		# Wort in Chache
+        # Wort in Chache
 		if($indi["cacheId"][$value]){
 			$wid = $indi["cacheId"][$value];
 		}else{
+		    // TODO can be improved by bulk-querying words
 			# Wort in der Wortliste suchen
 			$sqlquery1 = "SELECT ID FROM LMB_INDIZE_W WHERE VAL = '".parse_db_string($value,60)."'";
-			$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
 
-			if(!$rs1) {$commit = 1;}
-
-			if(odbc_result($rs1,"ID")){
-				$wid = odbc_result($rs1,"ID");
+			if(lmbdb_result($rs1,"ID")){
+				$wid = lmbdb_result($rs1,"ID");
 			}else{
 				# neues Wort der Wortliste hinzufügen
 				$indi["NEXTID_W"]++;
@@ -482,7 +406,7 @@ function indize_create($blob,&$indi){
 		$indi["w_meta"][$wid] = $indi["meta"];
 
 		# Falls Level 2
-		if($umgvar["indize_level"] == 2){
+		if($umgvar["indize_level"] == 2 /* allow sentence search */){
 			if($indi["typ"] == "field"){
 				$indi["NEXTID_D"]++;
 				$sqlquery2 = "INSERT INTO LMB_INDIZE_D (ID,SID,WID,REF,TABID,FIELDID) VALUES (".$indi["NEXTID_D"].",".$indi["sid"].",".$wid.",".$indi["datid"].",".$indi["tabid"].",".$indi["fieldid"].")";
@@ -490,156 +414,171 @@ function indize_create($blob,&$indi){
 				$indi["NEXTID_F"]++;
 				$sqlquery2 = "INSERT INTO LMB_INDIZE_F (ID,SID,WID,FID,META) VALUES (".$indi["NEXTID_F"].",".$indi["sid"].",".$wid.",".$indi["fileid"].",".parse_db_bool($indi["meta"]).")";
 			}
-			$rs2 = odbc_exec($db,$sqlquery2) or errorhandle(odbc_errormsg($db),$sqlquery2,null,__FILE__,__LINE__);
-			if(!$rs2) {return $indi;}
+			$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,null,__FILE__,__LINE__);
+			if(!$rs2) {return false;}
 			$indi["sid"]++;
 			$indi["gnumf"]++;
 		}
 
-
 	}
-        
-        
-        /*
-        // vorher 12 s
-        // jetzt 8 s
-        $toAddDb = [];
-        foreach($blob as $key => $value) {
-                # check alphanumeric digits
-		if(!$value = feasible_val($value) OR !$value){continue;}
-                
-                # Wort in Chache
-		if($indi["cacheId"][$value]){
-			$wid = $indi["cacheId"][$value];
-		}else{
-                        if(trim($value) != "") {
-                                $toAddDb[] = $value;
-                        }
-		}
-        }
-        
-        if(count($toAddDb) > 0) {        
-            # Wörter in der Wortliste suchen
-            $wordlist = implode(",", array_map(function($value){return "'" . parse_db_string($value, 60) . "'";}, $toAddDb));
-            $sqlquery1 = "SELECT ID,VAL FROM LMB_INDIZE_W WHERE VAL IN ($wordlist)";
-            $rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
-
-            if(!$rs1) {
-                $commit = 1;
-                error_log($sqlquery1);
-                return;
-            }
-
-            $bzm = 1;
-            while(odbc_fetch_row($rs1, $bzm)) {
-                    $wid = odbc_result($rs1,"ID");
-                    $val = odbc_result($rs1,"VAL");
-
-                    # Wort in Chache
-                    if($indi["cacheId"][$value]){
-                            $wid = $indi["cacheId"][$value];
-                    } else {
-                            # Wort in Cache legen
-                            $indi["cacheId"][$val] = $wid;
-                    }
-                    if(($key = array_search($val, $toAddDb)) !== false) {
-                        unset($toAddDb[$key]);
-                    }
-                    # Werte für Level1 Modus
-                    $indi["words"][$wid]++;
-                    $indi["w_meta"][$wid] = $indi["meta"];
-                    $bzm++;
-            }
-
-            # Wörter hinzufügen
-            foreach ($toAddDb as $val) {
-                    # neues Wort der Wortliste hinzufügen
-                    $indi["NEXTID_W"]++;
-                    $wid = $indi["NEXTID_W"];
-                    # Werte für Level1 Modus
-                    $indi["words"][$wid]++;
-                    $indi["w_meta"][$wid] = $indi["meta"];
-
-                    add_indexword($indi,$val);
-                    # Wort in Cache legen
-                    $indi["cacheId"][$val] = $wid;
-            }
-        }
-        # TODO lvl 2 fehlt
-        */      
-        
-        
-	
-
 	return true;
 }
 
+/**
+ * Performs postgres' to_tsvector function on file/field content and inserts the resulting tsvector into the
+ * corresponding field (ldms_files.fts_vector or ~table~.~field~_fts_vector.
+ * Depending on $umgvar['postgres_indize_lang'] also detects the content's language and inserts into *fts_lang
+ * @param $indi array from table_infos()
+ * @param $text string|null content of file (if $indi['typ'] == 'file')
+ * @return bool success
+ */
+function indize_create_postgres(&$indi, &$text=null) {
+    global $umgvar;
+    static $bestVectorSql = null;
+
+    // using INPUT as temporary table to store input text, s.t. the text doesn't need to be included multiple times in the query
+    if (!$bestVectorSql) {
+        $langStr = $umgvar['postgres_indize_lang'];
+        if (!postgresFtsLangColNeeded()) {
+            $bestVectorSql = "SELECT TO_TSVECTOR('{$langStr}', INPUT.TEXT) AS VECTOR FROM INPUT";
+        } else {
+            if ($langStr === 'all') {
+                $where = '';
+            } else {
+                $langs = explode(',', $langStr);
+                $langs = array_map(function($l) { return "'$l'"; }, $langs);
+                $where = 'WHERE CFGNAME IN (' . implode(',', $langs) . ')';
+            }
+            $bestVectorSql = '
+                SELECT
+                    CFGNAME::REGCONFIG,
+                    TO_TSVECTOR(CFGNAME::REGCONFIG, INPUT.TEXT) AS VECTOR,
+                    LENGTH(TO_TSVECTOR(CFGNAME::REGCONFIG, INPUT.TEXT)) AS LEN
+                FROM PG_TS_CONFIG, INPUT ' . $where . ' ORDER BY LEN LIMIT 1';
+        }
+    }
+
+    $vectorField = 'BESTVECTOR.VECTOR';
+    if ($umgvar['postgres_strip_tsvector']) {
+        $vectorField = "STRIP({$vectorField})";
+    }
+
+    if ($indi['typ'] == 'file') {
+        $langSql = '';
+        if (postgresFtsLangColNeeded()) {
+            $langSql = ', FTS_LANG = BESTVECTOR.CFGNAME';
+        }
+        $prepare_string = "
+        WITH INPUT AS (SELECT ? AS TEXT),
+             BESTVECTOR AS ($bestVectorSql)
+        UPDATE LDMS_FILES SET FTS_VECTOR = $vectorField $langSql FROM BESTVECTOR WHERE ID = ?";
+        $result = lmb_PrepareSQL($prepare_string,array(&$text, $indi['fileid']),__FILE__,__LINE__);
+    } else {
+        $langSql = '';
+        if (postgresFtsLangColNeeded()) {
+            $langSql = ", {$indi['fieldname']}_FTS_LANG = BESTVECTOR.CFGNAME";
+        }
+        $prepare_string = "
+        WITH INPUT AS (SELECT {$indi['fieldname']} AS TEXT FROM {$indi['tabname']} WHERE ID = {$indi['datid']}),
+             BESTVECTOR AS ($bestVectorSql)
+        UPDATE {$indi['tabname']} SET {$indi['fieldname']}_FTS_VECTOR = $vectorField $langSql FROM BESTVECTOR WHERE ID = ?";
+        $result = lmb_PrepareSQL($prepare_string,array($indi['datid']),__FILE__,__LINE__);
+    }
+
+    if (!$result) {
+        return false;
+    }
+    return true;
+}
 
 /**
-* Index löschen für Tabellen-Felder
-* @global db database handler
-* @param tabid Tabellen-ID
-* @param fieldid Feld-ID
-* @return null
-*/
-# -------- Feld Index löschen --------
+ * Deletes index for given field
+ * @param $indi array from table_infos()
+ */
 function del_field_index($indi){
-	global $db;
+	global $db, $umgvar;
 
-	$sqlquery = "DELETE FROM LMB_INDIZE_D WHERE TABID = ".$indi['tabid']." AND FIELDID = ".$indi['fieldid'];
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	$sqlquery = "DELETE FROM LMB_INDIZE_DS WHERE TABID = ".$indi['tabid']." AND FIELDID = ".$indi['fieldid'];
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
+	if ($umgvar['postgres_use_fulltextsearch']) {
+	    $emptyLangCol = '';
+        if (postgresFtsLangColNeeded()) {
+            $emptyLangCol = ", {$indi['fieldname']}_FTS_LANG = NULL";
+        }
+        $sqlquery = "UPDATE {$indi['tabname']} SET IND_{$indi['fieldid']} = " . LMB_DBDEF_FALSE . ", {$indi['fieldname']}_FTS_VECTOR = NULL $emptyLangCol";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, null, __FILE__, __LINE__);
+        if (!$rs) {$commit = 1;}
+    } else {
+        $sqlquery = "DELETE FROM LMB_INDIZE_D WHERE TABID = " . $indi['tabid'] . " AND FIELDID = " . $indi['fieldid'];
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, null, __FILE__, __LINE__);
+        if (!$rs) {$commit = 1;}
+        $sqlquery = "DELETE FROM LMB_INDIZE_DS WHERE TABID = " . $indi['tabid'] . " AND FIELDID = " . $indi['fieldid'];
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, null, __FILE__, __LINE__);
+        if (!$rs) {$commit = 1;}
 
-	$sqlquery = "UPDATE ".$indi['tabname']." SET IND_".$indi['fieldid']." = ".LMB_DBDEF_FALSE;
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
+        $sqlquery = "UPDATE " . $indi['tabname'] . " SET IND_" . $indi['fieldid'] . " = " . LMB_DBDEF_FALSE;
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, null, __FILE__, __LINE__);
+        if (!$rs) {$commit = 1;}
+    }
 }
 
 /**
-* Index löschen für Datei-Odner
-* @global db database handler
-* @param level Ordner-ID
-* @return null
-*/
-# -------- Datei Index löschen --------
+ * Deletes index for given folder
+ * @param $level int folder ID
+ */
 function del_dir_index($level){
-	global $db;
+	global $db, $umgvar;
 
-	$sqlquery = "SELECT ID FROM LDMS_FILES WHERE LEVEL = $level";
-	$rs = odbc_exec($db,$sqlquery) or errorhandle(odbc_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
+    if ($umgvar['postgres_use_fulltextsearch']) {
+        $clearLangCol = '';
+        if (postgresFtsLangColNeeded()) {
+            $clearLangCol = ', FTS_LANG = NULL';
+        }
+        $sqlquery = "UPDATE LDMS_FILES SET IND = " . LMB_DBDEF_FALSE . ", FTS_VECTOR = NULL {$clearLangCol} WHERE LEVEL = " . $level;
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+    } else {
+        $sqlquery = "SELECT ID FROM LDMS_FILES WHERE LEVEL = $level";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, null, __FILE__, __LINE__);
+        if (!$rs) {$commit = 1;}
 
-	while(odbc_fetch_row($rs)) {
-		del_file_index(odbc_result($rs,"ID"));
-	}
-}
-
-# -------- Datei Index löschen --------
-function del_file_index($fid){
-	global $db;
-
-	$sqlquery1 = "DELETE FROM LMB_INDIZE_F WHERE FID = ".$fid;
-	$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
-	if(!$rs1) {$commit = 1;}
-	$sqlquery1 = "DELETE FROM LMB_INDIZE_FS WHERE FID = ".$fid;
-	$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
-	if(!$rs1) {$commit = 1;}
-	$sqlquery1 = "UPDATE LDMS_FILES SET IND = ".LMB_DBDEF_FALSE." WHERE ID = ".$fid;
-	$rs1 = odbc_exec($db,$sqlquery1) or errorhandle(odbc_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
-	if(!$rs1) {$commit = 1;}
+        while (lmbdb_fetch_row($rs)) {
+            del_file_index(lmbdb_result($rs, "ID"));
+        }
+    }
 }
 
 /**
-* Periodische Indizierung anstoßen
-* @global db database handler
-* @global error_msg
-* @return null
-*/
+ * Deletes index for given file
+ * @param $fid int file ID
+ */
+function del_file_index($fid){
+	global $db, $umgvar;
+
+	if ($umgvar['postgres_use_fulltextsearch']) {
+	    $clearLangCol = '';
+	    if (postgresFtsLangColNeeded()) {
+	        $clearLangCol = ', FTS_LANG = NULL';
+        }
+        $sqlquery1 = "UPDATE LDMS_FILES SET IND = " . LMB_DBDEF_FALSE . ", FTS_VECTOR = NULL {$clearLangCol} WHERE ID = " . $fid;
+        $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
+        if(!$rs1) {$commit = 1;}
+    } else {
+        $sqlquery1 = "DELETE FROM LMB_INDIZE_F WHERE FID = " . $fid;
+        $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, null, __FILE__, __LINE__);
+        if (!$rs1) {$commit = 1;}
+        $sqlquery1 = "DELETE FROM LMB_INDIZE_FS WHERE FID = " . $fid;
+        $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, null, __FILE__, __LINE__);
+        if (!$rs1) {$commit = 1;}
+        $sqlquery1 = "UPDATE LDMS_FILES SET IND = " . LMB_DBDEF_FALSE . " WHERE ID = " . $fid;
+        $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, null, __FILE__, __LINE__);
+        if (!$rs1) {$commit = 1;}
+    }
+}
+
+/**
+ * Starts periodic indexing
+ * @param $cronval string value from LMB_CRONTAB.VAL
+ */
 function periodic_job($cronval){
-	global $db;
 	global $error_msg;
 	global $timeout;
 
@@ -654,9 +593,7 @@ function periodic_job($cronval){
 				$typ[] = "Databased Index";
 				if($timeout){break;}
 			}elseif($indize['typ'][$key] == 'file' AND $indize["file"][$key]){
-				$indi["tabid"] = 0;
-				$indi["fieldid"] = 0;
-				$indi = prepare_filelevel_indize($indize["file"][$key],$indi);
+				$indi = prepare_filelevel_indize($indize["file"][$key]);
 				$typ[] = "Filestructure Index";
 				if($timeout){break;}
 			}
@@ -679,12 +616,11 @@ function periodic_job($cronval){
 	}
 }
 
-
-
-
-
-
-# -------- delete job action --------
+/**
+ * Clears stored index values of field/folder
+ * @param $handle array ['field', $tabid, $fieldid] or ['file', $level]
+ * @param $subdir bool whether to include subdirectories
+ */
 function delede_dir_job($handle,$subdir){
 	if($handle[0] == "field"){
 		$indi = table_infos($handle[1],$handle[2]);
@@ -702,30 +638,139 @@ function delede_dir_job($handle,$subdir){
 	}
 }
 
-# --- refresh job -----
+/**
+ * Rebuilds index for field/folder
+ * @param $handle array ['field', $tabid, $fieldid] or ['file', $level]
+ * @param $subdir bool whether to include subdirectories
+ */
 function refresh_job($handle,$subdir){
 	global $timeout;
 
 	if($handle[0] == "field"){
 		$indi = table_infos($handle[1],$handle[2]);
 		del_field_index($indi);
-		$indi = prepare_memo_indize($indi);
+		prepare_memo_indize($indi);
 	}elseif($handle[0] == "file"){
 		# incl. Unterordner
 		if($subdir){
 			$subd = getasubdir($handle[1],1);
 			foreach ($subd as $key => $value){
 				del_dir_index($value);
-				$indi = prepare_filelevel_indize($value,$indi);
+				prepare_filelevel_indize($value);
 				if($timeout){break;}
 			}
 		}else{
 			del_dir_index($handle[1]);
-			$indi = prepare_filelevel_indize($handle[1],$indi);
+			prepare_filelevel_indize($handle[1]);
 		}
 	}
 
 }
 
+/**
+ * Adds a column to the table if the column doesn't exist
+ * @param $tableName
+ * @param $fieldName
+ * @param $fieldType
+ */
+function addColumnIfNotExists($tableName, $fieldName, $fieldType) {
+    global $action, $db;
 
-?>
+    if (!dbf_5(array($GLOBALS['DBA']['DBSCHEMA'], $tableName, $fieldName))) {
+        $sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'], $tableName, $fieldName, $fieldType, ''));
+        lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    }
+}
+
+/**
+ * Adds the field to ldms_files ($fieldName) and all fields (~field~_$fieldName) for which indexing is activated
+ * @param $fieldName
+ * @param $fieldType
+ */
+function postgresAddFtsFields($fieldName, $fieldType) {
+    global $action, $db;
+
+    // files
+    addColumnIfNotExists('LDMS_FILES', $fieldName, $fieldType);
+
+    // tables
+    $sqlquery = '
+      SELECT 
+        UPPER(LMB_CONF_TABLES.TABELLE) AS TAB,
+        UPPER(LMB_CONF_FIELDS.FIELD_NAME) AS FIELD
+      FROM LMB_CONF_FIELDS
+      JOIN LMB_CONF_TABLES ON LMB_CONF_FIELDS.TAB_ID = LMB_CONF_TABLES.ID
+      WHERE INDIZE=TRUE';
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    while (lmbdb_fetch_row($rs)) {
+        $table = lmbdb_result($rs, 'TAB');
+        $field = lmbdb_result($rs, 'FIELD') . '_' . $fieldName;
+        addColumnIfNotExists($table, $field, $fieldType);
+    }
+}
+
+/**
+ * Drops the column from the table if it exists
+ * @param $tableName
+ * @param $fieldName
+ */
+function dropColumnIfExists($tableName, $fieldName) {
+    global $action, $db;
+
+    if (dbf_5(array($GLOBALS['DBA']['DBSCHEMA'], $tableName, $fieldName))) {
+        $sqlquery = dbq_22(array($tableName, $fieldName));
+        lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    }
+}
+
+/**
+ * Removes the field from ldms_files ($fieldName) and all fields (~field~_$fieldName) for which indexing is activated
+ * @param $fieldName
+ */
+function postgresRemoveFtsFields($fieldName) {
+    global $action, $db;
+
+    // files
+    dropColumnIfExists('LDMS_FILES', $fieldName);
+
+    // tables
+    $sqlquery = '
+      SELECT 
+        UPPER(LMB_CONF_TABLES.TABELLE) AS TAB,
+        UPPER(LMB_CONF_FIELDS.FIELD_NAME) AS FIELD
+      FROM LMB_CONF_FIELDS
+      JOIN LMB_CONF_TABLES ON LMB_CONF_FIELDS.TAB_ID = LMB_CONF_TABLES.ID
+      WHERE INDIZE=TRUE';
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    while (lmbdb_fetch_row($rs)) {
+        $table = lmbdb_result($rs, 'TAB');
+        $field = lmbdb_result($rs, 'FIELD') . '_' . $fieldName;
+        dropColumnIfExists($table, $field);
+    }
+}
+
+/**
+ * Depending on umgvar, creates fts_vector and fts_lang fields in
+ *  - ldms_files (ldms_files.fts_vector)
+ *  - all columns for which indexing is activated (~table~.~field~_fts_vector)
+ */
+function postgresUpdateFtsFields() {
+    global $umgvar;
+
+    // changed at the moment -> take from session
+    $useFts = array_key_exists('postgres_use_fulltextsearch', $_SESSION['umgvar']) ? $_SESSION['umgvar']['postgres_use_fulltextsearch'] : $umgvar['postgres_use_fulltextsearch'];
+
+    // add/remove fulltextsearch vector fields
+    if ($useFts) {
+        postgresAddFtsFields('FTS_VECTOR', 'TSVECTOR');
+    } else {
+        postgresRemoveFtsFields('FTS_VECTOR');
+    }
+
+    // add/remove fulltextsearch language fields
+    if ($useFts && postgresFtsLangColNeeded()) {
+        postgresAddFtsFields('FTS_LANG', 'REGCONFIG');
+    } else {
+        postgresRemoveFtsFields('FTS_LANG');
+    }
+}

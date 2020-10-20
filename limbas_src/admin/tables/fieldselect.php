@@ -111,7 +111,7 @@
 
 
 <div class="lmbPositionContainerMainTabPool">
-<table class="tabpool" cellspacing="0" cellpadding="0" style="width:500px">
+<table class="tabpool" cellspacing="0" cellpadding="0" style="width:700px">
 
 <?php
 
@@ -423,7 +423,7 @@ if ($viewtyp == "tools") { # Tools
                             <td nowrap style="width:40px;vertical-align:top" <?= $selectOnClick ?>><?= $result_pool['id'][$key] ?></td>
                             <td nowrap style="vertical-align:top;cursor:pointer"<?= $selectOnClick ?>><?= htmlentities($result_pool['name'][$key], ENT_QUOTES, $umgvar['charset']) ?></td>
                             <td nowrap style="vertical-align:top"><?= $result_pool['num'][$key] ?></td>
-                            <td nowrap style="vertical-align:top">
+                            <td style="vertical-align:top;max-width:300px">
                             <?php
                             $isused = array();
                             foreach($gfield as $key0 => $value0){
