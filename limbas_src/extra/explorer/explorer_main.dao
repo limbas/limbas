@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -253,7 +253,7 @@ if(!$typ){
 	if(!$typ = $filestruct["typ"][$LID]){$typ = 2;}
 }
 
-$file_url = " /".set_url($level,$LID);
+$file_url = " /".lmb_getUrlFromLevel($level,$LID);
 
 # ---------------------------------------- Aktionen -------------------------------------------
 
@@ -264,7 +264,7 @@ $edit_element = explode(";",$edit_id);
 if($rename_file AND $LINK[116]){
 	# file
 	if($edit_element[1] == "d"){
-		if(!rename_file($edit_element[0],$rename_file,$LID)){lmb_EndTransaction(0);}else{lmb_EndTransaction(1);}
+		if(!lmb_renameFile($edit_element[0],$rename_file,$LID)){lmb_EndTransaction(0);}else{lmb_EndTransaction(1);}
 	# folder
 	}elseif($edit_element[1] == "f"){
 		if(!rename_dir($edit_element[0],$rename_file,$LID)){lmb_EndTransaction(0);}else{lmb_EndTransaction(1);get_filestructure();$onload = "parent.explorer_tree.document.form_menu.submit();\n";}
@@ -309,42 +309,46 @@ if($dublicate["type"][0]){
 # ---------- verschieben ---------------------
 if($move_file AND $LINK[130]){
 	$move_files = explode(";",$move_file);
-	$bzm = 0;
+	$duplicateTypes = explode(";",$duplicateTypes);
+
 	foreach($move_files as $key => $value){
-		if($dublicate["type"][$bzm] == "skip"){$bzm++;continue;}
+		if($duplicateTypes[$key] == "skip"){continue;}
 		$move_typ = lmb_substr($value,0,1);
 		$move_fid = lmb_substr($value,1,20);
+		$duplicate['type'] = $duplicateTypes[$key];
 		# file
 		if($move_typ == "d"){
 			lmb_StartTransaction();
-			if(!move_file($move_fid,$LID,$dublicate[$bzm])){lmb_EndTransaction(0);}else{lmb_EndTransaction(1);}
+			if(!move_file($move_fid,$LID,$duplicate)){lmb_EndTransaction(0);}else{lmb_EndTransaction(1);}
 		# folder
 		}elseif($move_typ == "f"){
 			lmb_StartTransaction();
-			if(!move_dir($move_fid,$LID,$dublicate[$bzm])){lmb_EndTransaction(0);}else{lmb_EndTransaction(1);get_filestructure();$onload = "parent.explorer_tree.document.form_menu.submit();\n";}
+			if(!move_dir($move_fid,$LID,$duplicate)){lmb_EndTransaction(0);}else{lmb_EndTransaction(1);get_filestructure();$onload = "parent.explorer_tree.document.form_menu.submit();\n";}
 		}
-		$bzm++;
 	}
 }
 
 # ---------- kopieren ---------------------
 if($copy_file AND $LINK[129]){
 	$copy_files = explode(";",$copy_file);
-	$bzm = 0;
+	$duplicateTypes = explode(";",$duplicateTypes);
+
 	foreach($copy_files as $key => $value){
-		if($dublicate[$bzm]["type"] == "skip"){$bzm++;continue;}
+	    $dublicate = array();
+		if($duplicateTypes[$key] == "skip"){continue;}
 		$copy_typ = lmb_substr($value,0,1);
 		$copy_fid = lmb_substr($value,1,20);
+		$duplicate['type'] = $duplicateTypes[$key];
 		# file
 		if($copy_typ == "d"){
 			lmb_StartTransaction();
-			if(!copy_file($copy_fid,$LID,$dublicate[$bzm])){lmb_EndTransaction(0);}else{lmb_EndTransaction(1);}
+			if(!copy_file($copy_fid,$LID,$duplicate)){lmb_EndTransaction(0);}else{lmb_EndTransaction(1);}
 		# folder
 		}elseif($copy_typ == "f"){
 			lmb_StartTransaction();
-			if(!copy_dir($copy_fid,$LID,$dublicate[$bzm])){lmb_EndTransaction(0);}else{lmb_EndTransaction(1);get_filestructure();$onload = "parent.explorer_tree.document.form_menu.submit();\n";}
+			if(!copy_dir($copy_fid,$LID,$duplicate)){lmb_EndTransaction(0);}else{lmb_EndTransaction(1);get_filestructure();$onload = "parent.explorer_tree.document.form_menu.submit();\n";}
 		}
-		$bzm++;
+
 	}
 }
 
@@ -356,33 +360,34 @@ if($files){
 		if($ffilter["force_delete"]){$forceDelnm = array("#all#");}else{$forceDelnm = null;}
 		foreach($files as $key => $value){
 			if($value){
-				lmb_StartTransaction();
 				if($value == 1){
 					# --- Datei löschen ----
 					if($del_file AND $LINK[171] AND $filestruct["del"][$LID]){
-						if(del_file($key,$forceDelnm)){lmb_EndTransaction(1);}else{lmb_EndTransaction(0);}
+						lmb_deleteFile($key,$forceDelnm);
 					}
 					# --- Datei in Favoriten ----
 					elseif($favorite_file AND $LINK[247]){
-						if(favorite_file($key,$session["user_id"],1,0)){lmb_EndTransaction(1);}else{lmb_EndTransaction(0);}
+						favorite_file($key,$session["user_id"],1,0);
 					}
 					# --- convert ----
 					elseif($convert_file AND $LINK[203]){
-						if(preview_archive(array($key),$convert_file,null,null,1)){lmb_EndTransaction(1);}else{lmb_EndTransaction(0);}
+						preview_archive(array($key),$convert_file,null,null,1);
 					}
 					# --- ocr ----
 					elseif($ocr_file AND $LINK[262] AND $umgvar["ocr_enable"]){
 						require_once("extra/explorer/explorer_ocr.lib");
-						if(LmEntGenerate_ocr($key,$LID,$ocr_destination,$ocr_format)){lmb_EndTransaction(1);}
-						else{lmb_EndTransaction(0);lmb_alert("for details check ocr_error.log");}
+
+						if(!LmEntGenerate_ocr($key,$LID,$ocr_destination,$ocr_format)){
+						    lmb_alert("for details check ocr_error.log");
+                        }
 					}
 				}elseif($value == 2 AND $filestruct["edit"][$LID]){
 					# --- Datei sortieren ----
 					if($files_order){
-						if(sort_file($key,$files_order[$key])){lmb_EndTransaction(1);}else{lmb_EndTransaction(0);}
+						sort_file($key,$files_order[$key]);
 					}elseif ($files_status){
 						# --- Datei Status ----
-						if(set_status($key,$files_status[$key])){lmb_EndTransaction(1);}else{lmb_EndTransaction(0);}
+						set_status($key,$files_status[$key]);
 					}
 				}
 			}
@@ -448,8 +453,10 @@ if($storage_folder AND $session['superadmin']){
             $commit = 1;
         }
         while (lmbdb_fetch_row($rs1)) {
-            if (file_exists($umgvar["uploadpfad"] . $old_path . lmbdb_result($rs1, "SECNAME") . "." . lmbdb_result($rs1, "EXT"))) {
-                rename($umgvar["uploadpfad"] . $old_path . lmbdb_result($rs1, "SECNAME") . "." . lmbdb_result($rs1, "EXT"), $umgvar["uploadpfad"] . $new_path . lmbdb_result($rs1, "SECNAME") . "." . lmbdb_result($rs1, "EXT"));
+            #if (file_exists($umgvar["upload_pfad"] . $old_path . lmbdb_result($rs1, "SECNAME") . "." . lmbdb_result($rs1, "EXT"))) {
+            if (file_exists(lmb_getFilePath(lmbdb_result($rs1, "ID"),$LID,lmbdb_result($rs1, "SECNAME"),lmbdb_result($rs1, "EXT")))) {
+                #rename($umgvar["upload_pfad"] . $old_path . lmbdb_result($rs1, "SECNAME") . "." . lmbdb_result($rs1, "EXT"), $umgvar["upload_pfad"] . $new_path . lmbdb_result($rs1, "SECNAME") . "." . lmbdb_result($rs1, "EXT"));
+                rename(lmb_getFilePath(lmbdb_result($rs1, "ID"),$LID,lmbdb_result($rs1, "SECNAME"),lmbdb_result($rs1, "EXT")) , lmb_getFilePath(lmbdb_result($rs1, "ID"),$new_path,lmbdb_result($rs1, "SECNAME"),lmbdb_result($rs1, "EXT")));
             }
         }
     }

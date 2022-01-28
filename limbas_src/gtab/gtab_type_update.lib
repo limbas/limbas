@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -24,6 +24,22 @@ function uftyp_1($gtab_id,$field_id,$ID,&$change_value) {
 	global $gfield;
 	
 	$change_value = trim($change_value);
+
+
+	/*
+	error_log($change_value);
+	$a = numfmt_create("de-DE", NumberFormatter::SCIENTIFIC);
+
+	$n = numfmt_format($a,$change_value);
+
+	error_log($n);
+
+	$m = numfmt_parse($a, $n);
+
+	error_log($m);
+    */
+
+
 	
 	# ----- percent ------
 	if($gfield[$gtab_id]["data_type"][$field_id] == 21){
@@ -47,22 +63,32 @@ function uftyp_1($gtab_id,$field_id,$ID,&$change_value) {
 }
 
 /* -------------------------- Text --------------------------------- */
-function uftyp_2($gtab_id,$field_id,$ID,&$change_value) {
+function uftyp_2($gtab_id,$field_id,$ID,&$change_value,$language=null) {
 	global $gfield;
-	
+
+	$fieldname = $gfield[$gtab_id]["field_name"][$field_id];
+    if($language){
+        $fieldname = 'LANG'.$language.'_'.$fieldname;
+    }
+
 	$change_value = parse_db_string($change_value,$gfield[$gtab_id]["size"][$field_id]);
-	$sqlquery = $gfield[$gtab_id]["field_name"][$field_id]." = '".$change_value."'";
+	$sqlquery = $fieldname." = '".$change_value."'";
 	$sqlquery = str_replace(array("\n", "\r"),"",$sqlquery);
 	
 	return $sqlquery;
 }
 
 /* -------------------------- Textblock --------------------------------- */
-function uftyp_3($gtab_id, $field_id, $ID, &$change_value) {
+function uftyp_3($gtab_id, $field_id, $ID, &$change_value,$language=null) {
     global $gfield;
 
+	$fieldname = $gfield[$gtab_id]["field_name"][$field_id];
+    if($language){
+        $fieldname = 'LANG'.$language.'_'.$fieldname;
+    }
+
     $change_value = parse_db_string($change_value,$gfield[$gtab_id]["size"][$field_id]);
-    $sqlquery = $gfield[$gtab_id]["field_name"][$field_id]." = '".$change_value."'";
+    $sqlquery = $fieldname." = '".$change_value."'";
 
     return $sqlquery;
 }
@@ -153,7 +179,6 @@ function uftyp_4($gtab_id,$field_id,$ID,&$change_value) {
 			return false;
 		}
 	}
-
 	return $sqlquery;
 }
 
@@ -170,6 +195,8 @@ function uftyp_5($gtab_id,$field_id,$ID,&$change_value) {
 	} else {
 		$sqlquery = $gfield[$gtab_id]["field_name"][$field_id]." = ".LMB_DBDEF_FALSE;
 	}
+
+	#error_log($change_value.' #### '.$sqlquery);
 	
 	return $sqlquery;
 }
@@ -244,7 +271,7 @@ function uftyp_12($gtab_id,$field_id,$ID,&$change_value) {
 	if($_REQUEST[$gfield[$gtab_id]["form_name"][$field_id]."_delete"]){
 		$delfiles = explode(";",$_REQUEST[$gfield[$gtab_id]["form_name"][$field_id]."_delete"]);
 		foreach ($delfiles as $dfkey => $dfval){
-			if($dfval){del_file($dfval);}
+			if($dfval){lmb_deleteFile($dfval);}
 		}
 	}
 	$file["file"] = $_FILES[$fformname]['tmp_name'];
@@ -254,7 +281,7 @@ function uftyp_12($gtab_id,$field_id,$ID,&$change_value) {
 	$level = $gfield[$gtab_id]["file_level"][$field_id];
 	if(array_filter($file["file"])){
 	    $dublicate['type'][0] = 'rename';
-		if(!$file_id = upload($file,$level,array("datid" => $ID,"gtabid" => $gtab_id,"fieldid" => $field_id),0,$dublicate)){return false;}
+		if(!$file_id = lmb_fileupload($file,$level,array("datid" => $ID,"gtabid" => $gtab_id,"fieldid" => $field_id),0,$dublicate)){return false;}
 		/*
 		# trigger
 		if($gfield[$gtab_id]["trigger"][$field_id]){
@@ -276,21 +303,25 @@ function uftyp_13($gtab_id,$field_id,$ID,&$change_value) {
 /* -------------------------- Relations --------------------------------- */
 function uftyp_14($gtab_id,$field_id,$ID,&$change_value) {
 	global $gfield;
-	
+
 	// drop relation for ajax relation fields if empty
-	if($change_value == '#L#delete'){$change_value=0; $verkn_del = $ID;}
+	if($change_value == '#L#delete'){$change_value=null; $verkn_del = $ID;}
+	elseif($change_value[0] == '#L#delete'){$change_value=null; $verkn_del = 'unlinkall';}
 	
 	// define relation
 	$verkn = set_verknpf($gtab_id,$field_id,$ID,is_numeric($change_value) ? array($change_value) : $change_value,$verkn_del,0,0);
-	
+
 	// ext-filesystem
 	if($LID = $gfield[$gtab_id]["file_level"][$field_id]){
         $verkn["linkParam"]["LID"] = $LID;
 	}
-	
+
 	// set relation
-	if(!set_joins($gtab_id,$verkn)){return false;}
-	
+	$sj = set_joins($gtab_id,$verkn);
+	if($sj === false){
+	    return false;
+	}
+
 	return true;
 }
 
@@ -314,7 +345,7 @@ function uftyp_18($gtab_id,$field_id,$ID,&$change_value) {
 }
 
 /* -------------------------- Long --------------------------------- */
-function uftyp_22($gtab_id,$field_id,$ID,&$change_value) {
+function uftyp_22($gtab_id,$field_id,$ID,&$change_value,$language=null) {
 	
 	global $db;
 	global $session;
@@ -325,6 +356,11 @@ function uftyp_22($gtab_id,$field_id,$ID,&$change_value) {
 	#if(LMB_DBFUNC_LONGHANDLE AND !$gfield[$gtab_id]["indize"][$field_id]){
     #    return uftyp_3($gtab_id,$field_id,$ID,$change_value);
     #}
+
+	$fieldname = $gfield[$gtab_id]["field_name"][$field_id];
+    if($language){
+        $fieldname = 'LANG'.$language.'_'.$fieldname;
+    }
 
     # --- old value ----
     if($gtab["trigger"][$gtab_id] OR $gtab["editrule"][$gtab_id] OR $gfield[$gtab_id]["editrule"] OR $gfield[$gtab_id]["trigger"] OR $gtab["logging"][$gtab_id] OR $gtab["versioning"][$gtab_id] OR $gtab["lockable"][$gtab_id] OR $gfield[$gtab_id]["sync"]){
@@ -344,9 +380,10 @@ function uftyp_22($gtab_id,$field_id,$ID,&$change_value) {
         if(!update_data_precheck($gtab_id,$ID,$query_dataid,$query_result,$old_gresult,$triggerResult)){return false;}
 
 		# --- prepare ---
-		$prepare_string = "UPDATE ".$gtab["table"][$gtab_id]." SET EDITDATUM = ".LMB_DBDEF_TIMESTAMP.", EDITUSER = ".$session['user_id'].", ".$gfield[$gtab_id]["field_name"][$field_id]." = ? WHERE ID = $ID";
+		$prepare_string = "UPDATE ".$gtab["table"][$gtab_id]." SET EDITDATUM = ".LMB_DBDEF_TIMESTAMP.", EDITUSER = ".$session['user_id'].", ".$fieldname." = ? WHERE ID = $ID";
         if(!lmb_PrepareSQL($prepare_string,array($change_value),__FILE__,__LINE__)){return false;}
 
+        // todo Multilang
 		if($gfield[$gtab_id]["indize"][$field_id]){
 			$sqlquery1 = "UPDATE ".$gtab["table"][$gtab_id]." SET IND_$field_id = ".LMB_DBDEF_FALSE." WHERE ID = $ID";
 			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
@@ -464,4 +501,211 @@ function uftyp_36($gtab_id,$field_id,$ID,&$change_value) {
 }
 
 
-?>
+/* -------------------------- validity --------------------------------- */
+function uftyp_37($gtab_id,$field_id,$ID,&$change_value) {
+    global $gtab;
+    global $gfield;
+    global $db;
+    global $umgvar;
+    static $valid_done;
+
+    // for table list update always/only LMB_VALIDFROM
+    #$valid_from_fieldID = $gfield[$gtab_id]["argresult_name"]['LMB_VALIDFROM'];
+    #if($valid_done[$gtab_id][$valid_from_fieldID]){return true;}
+    #$valid_done[$gtab_id][$valid_from_fieldID] = 1;
+
+    if($change_value[0] AND !$current_vfrom = get_stamp(convert_date($change_value[0],1))){
+        return false;
+    }
+    if($change_value[1] AND !$current_vto = get_stamp(convert_date($change_value[1],1))){
+        return false;
+    }
+
+    // get validity stamps with versioning
+    if($gtab['validity'][$gtab_id] == 2) {
+        $sqlquery = "SELECT LMB_VALIDFROM,LMB_VALIDTO,VPID,VID FROM " . $gtab['table'][$gtab_id] . " WHERE ID = $ID";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
+        if (!$rs) {$commit = 1;}
+        $cf = lmbdb_result($rs, 'LMB_VALIDFROM');
+        $ct = lmbdb_result($rs, 'LMB_VALIDTO');
+        if(!$current_vfrom AND $cf){$current_vfrom = get_stamp($cf);$vfromIsNULL = 1;}
+        if(!$current_vto AND $ct){$current_vto = get_stamp($ct);$vtoIsNULL = 1;}
+        $current_VPID = lmbdb_result($rs, 'VPID');
+        $current_VID = lmbdb_result($rs, 'VID');
+
+        // check if is last Version
+        $sqlquery = "SELECT ID FROM ".$gtab["table"][$gtab_id]." WHERE VPID = $current_VPID AND VID = ".($current_VID+1);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+        if(!lmbdb_result($rs,'ID')){
+            $is_lastVersion = 1;
+        }
+
+        if($current_VID == 1){
+            $is_firstVersion = 1;
+        }
+
+    // get validity stamps
+    }else{
+        $sqlquery = "SELECT LMB_VALIDFROM,LMB_VALIDTO FROM " . $gtab['table'][$gtab_id] . " WHERE ID = $ID";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
+        if (!$rs) {$commit = 1;}
+        $cf = lmbdb_result($rs, 'LMB_VALIDFROM');
+        $ct = lmbdb_result($rs, 'LMB_VALIDTO');
+        if(!$current_vfrom AND $cf){$current_vfrom = get_stamp($cf);$vfromIsNULL = 1;}
+        if(!$current_vto AND $ct){$current_vto = get_stamp($ct);$vtoIsNULL = 1;}
+        $is_lastVersion = 1;
+        $is_firstVersion = 1;
+    }
+
+    // from must smaller as to
+    if($current_vfrom AND $current_vto) {
+         if ($current_vfrom > $current_vto OR $current_vto < $current_vfrom) {
+             lmb_alert('from or to not plausibel - from must smaller as to and to must bigger as from');
+             return false;
+         }
+    }
+
+    // list 1:1 relations
+    if($gtab["raverkn"][$gtab["verkn"][$gtab_id]]){
+        foreach($gtab["raverkn"][$gtab["verkn"][$gtab_id]] as $key => $ragtabid){
+            $tablist[] = $ragtabid;
+        }
+    }
+
+    // validity versioning
+    if($gtab['validity'][$gtab_id] == 2) {
+
+        // from
+        if($current_vfrom){
+
+            // get previous Version
+            $sqlquery = "SELECT ID,LMB_VALIDFROM,LMB_VALIDTO FROM ".$gtab["table"][$gtab_id]." WHERE VPID = $current_VPID AND VID = ".($current_VID-1);
+            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+            $left_ID = lmbdb_result($rs,'ID');
+            $left_vfrom = lmbdb_result($rs,'LMB_VALIDFROM');
+            $left_vto = lmbdb_result($rs,'LMB_VALIDTO');
+
+            if($left_ID){
+                // insert at beginning
+                if($left_vfrom AND $current_vfrom <= get_stamp($left_vfrom)){
+                    $sqlquery = "SELECT ID,LMB_VALIDFROM,LMB_VALIDTO FROM ".$gtab["table"][$gtab_id]." WHERE VPID = $current_VPID AND VID = 1";
+                    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+                    $first_ID = lmbdb_result($rs,'ID');
+                    $first_vfrom = get_stamp(lmbdb_result($rs,'LMB_VALIDFROM'));
+                    $first_vto = get_stamp(lmbdb_result($rs,'LMB_VALIDTO'));
+
+                    // if to is empty
+                    if(!$current_vto){$current_vto = (drop_oneday($first_vto));}
+
+                    if($current_vto >= $first_vto OR $current_vfrom >= $first_vfrom){
+                        lmb_alert('not plausibel');
+                        return false;
+                    }
+
+                    // update 1:1 relations
+                    foreach ($tablist as $key => $vgtabid) {
+                        // update LMB_VALIDFROM for V 2
+                        $sqlquery = "UPDATE " . $gtab["table"][$vgtabid] . " SET LMB_VALIDFROM = '" . convert_stamp(add_oneday($current_vto)) . "' WHERE ID = $first_ID";
+                        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
+                        // rebuild VID
+                        $sqlquery = "UPDATE " . $gtab["table"][$vgtabid] . " SET VID = (VID + 1) WHERE VPID = $current_VPID";
+                        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
+                        $sqlquery = "UPDATE " . $gtab["table"][$vgtabid] . " SET VID = 1 WHERE ID = $ID";
+                        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
+                    }
+                    $ignore_vto = 1;
+
+                // insert at end
+                }else {
+                    $left_to = convert_stamp(drop_oneday($current_vfrom)); // -1 day
+
+                    // update 1:1 relations
+                    foreach ($tablist as $key => $vgtabid) {
+                        $sqlquery = "UPDATE " . $gtab["table"][$vgtabid] . " SET LMB_VALIDTO = '$left_to' WHERE ID = $left_ID";
+                        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
+                        if (!$rs) {$commit = 1;}
+                    }
+                }
+                # --- sync systemfields ----
+                if($gtab["datasync"][$gtab_id]){
+                    execute_sync($gtab_id,0,$left_ID,$null,null,null,3);
+                }
+            }
+
+        }
+
+        // to
+        if($current_vto AND !$ignore_vto){
+
+            $sqlquery = "SELECT ID,LMB_VALIDFROM,LMB_VALIDTO FROM ".$gtab["table"][$gtab_id]." WHERE VPID = $current_VPID AND VID = ".($current_VID+1);
+            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+            $right_ID = lmbdb_result($rs,'ID');
+            $right_vfrom = lmbdb_result($rs,'LMB_VALIDFROM');
+            $right_vto = lmbdb_result($rs,'LMB_VALIDTO');
+
+            if($right_ID){
+
+                if($right_vto AND get_stamp($right_vto) <= $current_vto){
+                    lmb_alert('to big');
+                    return false;
+                }
+
+                $right_from = convert_stamp(add_oneday($current_vto)); // +1 day
+                // update 1:1 relations
+                foreach($tablist as $key => $vgtabid){
+                    $sqlquery = "UPDATE ".$gtab["table"][$vgtabid]." SET LMB_VALIDFROM = '$right_from' WHERE ID = $right_ID";
+                    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+                    if(!$rs) {$commit = 1;}
+                }
+
+                # --- sync systemfields ----
+                if($gtab["datasync"][$gtab_id]){
+                    execute_sync($gtab_id,0,$right_ID,$null,null,null,3);
+                }
+
+            }
+
+        }
+
+    }
+
+    if($commit){return false;}
+
+
+    if($current_vfrom AND !($vfromIsNULL AND $is_firstVersion)) {
+        $current_vfrom = '\''.convert_stamp($current_vfrom).'\'';
+    }else {
+        $current_vfrom = 'NULL';
+    }
+
+    if($current_vto AND !($vtoIsNULL AND $is_lastVersion)) {
+        $current_vto = '\''.convert_stamp($current_vto).'\'';
+    }else {
+        $current_vto = 'NULL';
+    }
+
+    $sqlupdate = "LMB_VALIDFROM = $current_vfrom,LMB_VALIDTO = $current_vto";
+
+    // update 1:1 relations
+    foreach($tablist as $key => $vgtabid){
+        if($gtab['validity'][$vgtabid] == 2 AND $vgtabid != $gtab_id) {
+            $sqlquery = "UPDATE ".$gtab["table"][$vgtabid]." SET $sqlupdate WHERE ID = $ID";
+            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+            if(!$rs) {$commit = 1;}
+        }
+    }
+
+    if($commit){return false;}
+
+    // update main table
+    return $sqlupdate;
+
+}
+
+
+/* -------------------------- Boolean --------------------------------- */
+function uftyp_38($gtab_id,$field_id,$ID,&$change_value) {
+    global $gfield;
+
+    return $gfield[$gtab_id]["field_name"][$field_id]." = '" . lmb_encrypt($change_value) . "'";
+}

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -138,11 +138,37 @@ if($report_possize){
 				$report_[4] = ($report_[4] - 15);
 			}
 
-			if(!$report_[1] OR !preg_match("/^[0-9]{1,4}$/",$report_[1])){$report_[1] = "0";}
-			if(!$report_[2] OR !preg_match("/^[0-9]{1,4}$/",$report_[2])){$report_[2] = "0";}
+			if(!$report_[1] OR !preg_match("/^-?[0-9]{1,4}$/",$report_[1])){$report_[1] = "0";}
+			if(!$report_[2] OR !preg_match("/^-?[0-9]{1,4}$/",$report_[2])){$report_[2] = "0";}
 			if(!$report_[3] OR !preg_match("/^[0-9]{1,4}$/",$report_[3])){$report_[3] = "0";}
 			if(!$report_[4] OR !preg_match("/^[0-9]{1,4}$/",$report_[4])){$report_[4] = "0";}
 			if(!$report_[5] OR !preg_match("/^[0-9]{1,4}$/",$report_[5])){$report_[5] = "0";}
+
+			// allow images to be in page margin
+			$posx = floatval($report_[1]);
+            $posy = floatval($report_[2]);
+			if ($posx < 0 || $posy < 0) {
+				// load page style (margins)
+				$sqlquery = 'SELECT PAGE_STYLE FROM LMB_REPORT_LIST WHERE ID=' . $report_id;
+                $rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                $page_style = explode(';', lmbdb_result($rs1, 'PAGE_STYLE'));
+                $marginLeft = round(intval($page_style[4]) * 2.8346);
+                $marginTop = round(intval($page_style[2]) * 2.8346);
+			}
+            if ($posx < 0) {
+				if ($typ_ != 'bild') {
+                    $report_[1] = "0"; // not image -> negative value not allowed
+				} else if ($posx < -$marginLeft) {
+                    $report_[1] = -$marginLeft;
+                }
+			}
+            if ($posy < 0) {
+                if ($typ_ != 'bild') {
+                    $report_[2] = "0"; // not image -> negative value not allowed
+                } else if ($posy < -$marginTop) {
+                    $report_[2] = -$marginTop;
+                }
+            }
 
 			$prvalue = array();
 			
@@ -399,7 +425,7 @@ $pic_type=null,$pic_compress=null,$posy=null){
 
                 if($pic_type != "png" && $pic_type != "jpg"){$pic_type = "jpg";}
 
-                                # --- Kopiere Orginalbild -----
+                # --- Kopiere Orginalbild -----
 				if($mime[1] == "jpg" OR $mime[1] == "jpeg" OR $mime[1] == "png" OR $mime[1] == "pdf"){
 					$rupload = "UPLOAD/report/".$secname.".".$ext;
 					copy($file,$umgvar["pfad"]."/".$rupload);
@@ -416,7 +442,7 @@ $pic_type=null,$pic_compress=null,$posy=null){
 				if($rupload){
 					$rupload = $umgvar["pfad"]."/".$rupload;
 					$thumb = IMACK_ConvertThumbs($rupload,$width,null,null,$pic_type,"TEMP/thumpnails/report/".$secname.".".$pic_type,null,1);
-                                        if($thumb){
+					if($thumb){
 						# ----- Bildinfos -------
 						$pic_size = $width."x".$height;
 						$data_type = $pic_compress;
@@ -525,7 +551,7 @@ $pic_type=null,$pic_compress=null,$posy=null){
 		$height=100;
 	}elseif($report_add == "templ"){
 		if(!$report_templ_id){return false;}
-		$value = 'template: '.$gtab['table'][$report_templ_id];
+        $value = "<!-- Replace TemplateElementName with element name from {$gtab['table'][$report_templ_id]} -->\n\${TemplateElementName}";
 		$pic_type = $report_templ_id;
 		$width=300;
 		$height=200;

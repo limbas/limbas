@@ -12,7 +12,7 @@ class Request {
     /**
      * parameters used by api functions
      */
-    const API_PARAMETERS = array('page'=>'$page', 'sort'=>'$sort', 'fields'=>'$fields');
+    const API_PARAMETERS = array('page'=>'$page', 'sort'=>'$sort', 'fields'=>'$fields', 'archived'=>'$archived', 'validity'=>'$validity');
 
     /**
      * @var Router

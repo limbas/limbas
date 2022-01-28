@@ -28,4 +28,35 @@ abstract class AbstractHtmlPart {
         return array();
     }
 
+    /**
+     * Returns template group placeholders whose element has not been selected
+     * @return array of TemplateGroupPlaceholder
+     */
+    public function getUnresolvedTemplateGroupPlaceholders() {
+        return array();
+    }
+
+    /**
+     * Returns dynamic data placeholders where no value is set
+     * @return array of DynamicDataPlaceholder
+     */
+    public function getUnresolvedDynamicDataPlaceholders() {
+        return array();
+    }
+
+    /**
+     * Returns dynamic data placeholders
+     * @return array of DynamicDataPlaceholder
+     */
+    public function getAllDynamicDataPlaceholders() {
+        return array();
+    }
+
+    /**
+     * Returns repeated TableRows
+     * @return array of TableRow
+     */
+    public function getTableRows() {
+        return array();
+    }
 }

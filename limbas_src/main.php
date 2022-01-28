@@ -2,7 +2,7 @@
 
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH (support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH (support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -12,7 +12,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6  
+ * Version 4.3.36.1319
  */
 
 /*
@@ -94,6 +94,8 @@ if (lmb_substr($action, 0, 4) == "gtab") {
     $require_ = "gtab/gtab_type.lib";
     require_once ($require_);
     $require_ = "gtab/gtab_type_erg.lib";
+    require_once ($require_);
+    $require_ = "extra/report/report_select/report_select.php";
     require_once ($require_);
     
     if ($gformlist[$gtabid]["typ"][$gtab["tab_view_form"][$gtabid]]) {
@@ -301,12 +303,12 @@ elseif ($action == "gtab_change" and $LINK[$action] == 1) {
     $require2 = "gtab/html/gtab_change_col.php";
     $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
     $ONLOAD = "window.focus();";
-} 
+}
 
 elseif ($action == "gtab_form" and $LINK[132] == 1) {
     $require2 = "gtab/html/gtab_form.php";
     $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
-} 
+}
 
 elseif ($action == "add_select" and $LINK[$action] == 1) {
     $require1 = "gtab/gtab.lib";
@@ -411,9 +413,10 @@ elseif (($action == "explorer") and $LINK[$action] == 1) {
     $require2 = "extra/explorer/explorer_preview.php";
     $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
     $BODY = 1;
-} elseif ($action == "explorer_download" and $LINK[$action] == 1) {
+}elseif ($action == "download" and $LINK[$action] == 1) {
     $require1 = "extra/explorer/filestructure.lib";
-    $require2 = "extra/explorer/explorer_download.php";
+    $require2 = "extra/explorer/download.php";
+    $BODYHEADER = $HEADER;
     $BODY = 1;
 } elseif ($action == "explorer_upload") {
     $require1 = "extra/explorer/filestructure.lib";
@@ -475,7 +478,7 @@ elseif ($action == "lwf_mytask" and $LINK[$action] == 1) {
     $require2 = "extra/workflow/lwf_mytask.php";
     $ONLOAD = "window.focus();";
     $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
-} 
+}
 
 elseif ($action == "history" and $LINK[$action] == 1) {
     $require1 = "gtab/gtab.lib";
@@ -492,7 +495,9 @@ elseif ($action == "history" and $LINK[$action] == 1) {
     $require3 = "extra/report/report_" . lmb_substr($report_medium, 0, 3) . ".php";
     $ONLOAD = "window.focus();";
     $BODY = 1;
-} 
+} elseif ($action == 'report_preview') {
+    $require1 = 'extra/report/preview.php';
+}
 
 elseif ($action == "diag_erg") {
     $require1 = "extra/diagram.php";
@@ -501,12 +506,9 @@ elseif ($action == "diag_erg") {
         $BODY = 1;
     }
 }
-
-elseif ($action == "download" and $LINK[$action] == 1) {
-    $require1 = "extra/explorer/filestructure.lib";
-    $require2 = "extra/explorer/download.php";
-    $BODYHEADER = $HEADER;
-    $BODY = 1;
+elseif ($action == "user_reportmanager" || $action == "user_templatemanager") {
+    require_once($umgvar['path'].'/extra/reportManager/reportManager.php');
+    exit();
 } elseif ($LINK["extension"][$LINK_ID[$action]] and is_file($umgvar["pfad"] . $LINK["extension"][$LINK_ID[$action]])) {} elseif ($action == "null") {} else {
     $bzm = 0;
     foreach ($LINK["name"] as $key => $value) {
@@ -570,9 +572,9 @@ echo "<html>\n";
 
 <script type="text/javascript" src="lib/global.js?v=<?=$umgvar["version"]?>"></script>
 <script type="text/javascript" src="USER/<?=$session["user_id"]?>/syntaxcheck.js?v=<?=$umgvar["version"]?>" language="javascript"></script>
-<script type="text/javascript" src="extern/jquery/jquery-1.11.0.min.js?v=<?=$umgvar["version"]?>"></script>
+<script type="text/javascript" src="extern/jquery/jquery-3.2.1.min.js?v=<?=$umgvar["version"]?>"></script>
 
-<?php if ($action == 'gtab_erg' or $action == 'gtab_change' or $action == 'gtab_deterg' or $action == 'gtab_neu' or $action == 'gtab_search' or $action == 'gtab_form' or $action == 'diag_erg' or $action == 'diag_erg' or $action == 'explorer_tree' or $action == 'explorer_main' or $action == 'message_detail' or $action == 'message_main' or $action == 'message_tree' or $action == 'kalender' or $action == 'kanban' or $action == 'mini_explorer') {?>
+<?php if ($action == 'gtab_erg' or $action == 'gtab_change' or $action == 'gtab_deterg' or $action == 'gtab_neu' or $action == 'gtab_search' or $action == 'gtab_form' or $action == 'diag_erg' or $action == 'diag_erg' or $action == 'explorer_tree' or $action == 'explorer_main' or $action == 'message_detail' or $action == 'message_main' or $action == 'message_tree' or $action == 'kalender' or $action == 'kanban' or $action == 'mini_explorer' or $action=="report_preview") {?>
 	<script type="text/javascript" src="extra/explorer/file-cache.js?v=<?=$umgvar["version"]?>"></script>
 	<script type="text/javascript" src="EXTENSIONS/system/ext.js?v=<?=$umgvar["version"]?>"></script>
 	<script type="text/javascript" src="extern/jquery/jquery-ui-1.12.1.min.js?v=<?=$umgvar["version"]?>"></script>
@@ -607,6 +609,8 @@ if ($action == "kanban") {?>
 if ($action == "gtab_erg") {?>
         <script type="text/javascript" src="gtab/html/gtab.js?v=<?=$umgvar["version"]?>"></script>
         <script type="text/javascript" src="gtab/html/gtab_erg.js?v=<?=$umgvar["version"]?>"></script>
+        <script type="text/javascript" src="extern/select2-4.0.13/dist/js/select2.full.min.js"></script>
+        <script type="text/javascript" src="extern/select2-4.0.13/dist/js/i18n/<?= getLangShort() ?>.js"></script>
 <?php } elseif ($action == "gtab_change" or $action == "gtab_deterg" or $action == "gtab_neu" or $action == "explorer_detail") {?>
         <script type="text/javascript" src="gtab/html/gtab.js?v=<?=$umgvar["version"]?>"></script>
         <script type="text/javascript" src="gtab/html/gtab_change.js?v=<?=$umgvar["version"]?>"></script>
@@ -670,7 +674,6 @@ if ($LINK["extension"][$LINK_ID[$action]] and is_file($umgvar["pfad"] . $LINK["e
         require_once ($require1);
     }
     if ($require2) {
-        
         require_once ($require2);
     }
     if ($require3) {
@@ -719,24 +722,18 @@ if ($BODY != 1) {
 	<script language="JavaScript">
 	window.defaultStatus = 'Limbas Enterprise Unifying Framework V <?=$umgvar["version"]?>';
 	window.onerror = null;
+
 	<?php
-    // --- Fehlermeldungen -----
-    if (is_array($alert)) {
-        if ($alert and ! is_array($alert)) {
-            $alert = array(
-                $alert
-            );
-        }
-        $alert = array_unique($alert);
-        echo "showAlert('" . implode("\\n", $alert) . "');\n";
-    }
-    
     // ------------ Schnapschuß Navigationsrefresh -------------
     if ($new_snapshot) {
         echo "if(parent.nav){parent.nav.document.location.href = 'main.php?action=nav&sparte=gtab&tab_group=1&refresh=no&sess_refresh=1';};\nif(parent.parent.nav){parent.parent.nav.document.location.href = 'main.php?action=nav&sparte=gtab&tab_group=1&refresh=no&sess_refresh=1';};\n";
     }
     echo "var frameLoaded = true;\n";
     echo "</script>\n";
+
+    // --- error_alert -----
+    error_showalert($alert);
+
     if ($BODYHEADER) {
         echo "</td></tr></table>";
     }

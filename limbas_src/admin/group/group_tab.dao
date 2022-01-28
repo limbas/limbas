@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -23,7 +23,7 @@ if($session["superadmin"] == 1){
 	/* --- Tabellengruppen ----------------------------------------------- */
 	$sqlquery = "SELECT DISTINCT LMB_CONF_GROUPS.ID,LMB_CONF_GROUPS.NAME,LMB_CONF_GROUPS.BESCHREIBUNG,LMB_CONF_GROUPS.SORT,LMB_CONF_GROUPS.ICON FROM LMB_CONF_GROUPS,LMB_RULES_TABLES WHERE LMB_CONF_GROUPS.ID = LMB_RULES_TABLES.TAB_GROUP AND (LMB_RULES_TABLES.LMVIEW = ".LMB_DBDEF_TRUE." OR LMB_RULES_TABLES.GROUP_ID = 1) AND (LMB_RULES_TABLES.GROUP_ID = ".implode(" OR LMB_RULES_TABLES.GROUP_ID = ",$session["subgroup"]).") ORDER BY LMB_CONF_GROUPS.SORT";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	#$bzm = 1;
+
 	while(lmbdb_fetch_row($rs)) {
 		$i = lmbdb_result($rs, "ID");
 		$_tabgroup["id"][$i] = $i;
@@ -31,7 +31,6 @@ if($session["superadmin"] == 1){
         $_tabgroup["beschreibung"][$i] = $lang[lmbdb_result($rs,"BESCHREIBUNG")];
         $_tabgroup['icon'][$i] = lmbdb_result($rs, 'ICON');
 		#$_tabgroup["argid"][lmbdb_result($rs, "ID")] = $bzm-1;
-		#$bzm++;
 	}
 
 	/* --- Tabellen ------------------------------- */
@@ -144,17 +143,6 @@ function set_rights($ID,$ismaingroup,$addsub){
 				if(${"tabadd_".$srule[0]}){$perm = LMB_DBDEF_TRUE;} else {$perm = LMB_DBDEF_FALSE;}
 				if(!$ismaingroup AND !$addsub AND $perm == LMB_DBDEF_TRUE){$bzm++;continue;}
 				$sqlquery = "UPDATE LMB_RULES_TABLES SET LMADD = $perm WHERE GROUP_ID = $ID AND TAB_ID = ".$srule[0];
-				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-				if(!$rs) {$commit = 1;}
-			}
-			# sortieren
-			elseif($srule[2] == 7){
-				global ${"filtersort_".$srule[0]};
-				if(!$ismaingroup AND !$addsub){$bzm++;continue;}
-				$sqlquery = "UPDATE LMB_RULES_FIELDS SET SORT = 0 WHERE GROUP_ID = $ID AND TAB_ID = ".$srule[0];
-				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-				if(!$rs) {$commit = 1;}
-				$sqlquery = "UPDATE LMB_RULES_FIELDS SET SORT = ".${"filtersort_".$srule[0]}." WHERE GROUP_ID = $ID AND TAB_ID = ".$srule[0]." AND FIELD_ID = ".$srule[1];
 				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
 			}
@@ -291,6 +279,24 @@ function set_rights($ID,$ismaingroup,$addsub){
 				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
 			}
+			# Versionierungen editieren
+			elseif($srule[2] == 201){
+				global ${"tabeditver_".$srule[0]};
+				if(${"tabeditver_".$srule[0]}){$perm = LMB_DBDEF_TRUE;} else {$perm = LMB_DBDEF_FALSE;}
+				if(!$ismaingroup AND !$addsub AND $perm == LMB_DBDEF_TRUE){$bzm++;continue;}
+				$sqlquery = "UPDATE LMB_RULES_TABLES SET EDITVER = $perm WHERE GROUP_ID = $ID AND TAB_ID = ".$srule[0];
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs) {$commit = 1;}
+			}
+			# Versionierungen löschen
+			elseif($srule[2] == 202){
+				global ${"tabdelver_".$srule[0]};
+				if(${"tabdelver_".$srule[0]}){$perm = LMB_DBDEF_TRUE;} else {$perm = LMB_DBDEF_FALSE;}
+				if(!$ismaingroup AND !$addsub AND $perm == LMB_DBDEF_TRUE){$bzm++;continue;}
+				$sqlquery = "UPDATE LMB_RULES_TABLES SET DELVER = $perm WHERE GROUP_ID = $ID AND TAB_ID = ".$srule[0];
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs) {$commit = 1;}
+			}
 			# Datensatz sperren
 			elseif($srule[2] == 21){
 				global ${"lock_".$srule[0]};
@@ -397,6 +403,15 @@ function set_rights($ID,$ismaingroup,$addsub){
 				if(!$ismaingroup AND !$addsub){$bzm++;continue;}
 				$indicator_rule = ${"indicator_rule_".$srule[0]};
 				$sqlquery = "UPDATE LMB_RULES_TABLES SET INDICATOR = '". parse_db_string($indicator_rule,250)."' WHERE GROUP_ID = $ID AND TAB_ID = ".$srule[0];
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs) {$commit = 1;}
+			}
+			# sortieren
+			elseif($srule[2] == 7){
+				global ${"orderby_value_".$srule[0]};
+				if(!$ismaingroup AND !$addsub){$bzm++;continue;}
+				$orderby_value = ${"orderby_value_".$srule[0]};
+				$sqlquery = "UPDATE LMB_RULES_TABLES SET ORDERBY = '". parse_db_string($orderby_value,150)."' WHERE GROUP_ID = $ID AND TAB_ID = ".$srule[0];
 				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
 			}
@@ -510,6 +525,8 @@ foreach($_gtab["tab_id"] as $key => $value){
 				LMB_RULES_TABLES.USERRULES AS EDIT_USERRULES,
 				LMB_RULES_TABLES.USERPRIVILEGE AS EDIT_OWNUSERRULES,
 				LMB_RULES_TABLES.VIEWVER,
+				LMB_RULES_TABLES.EDITVER,
+				LMB_RULES_TABLES.DELVER,
 				LMB_RULES_TABLES.HIDEMENU,
                 LMB_RULES_FIELDS.LMVIEW,
                 LMB_RULES_FIELDS.EDIT,
@@ -532,7 +549,7 @@ foreach($_gtab["tab_id"] as $key => $value){
         		AND LMB_RULES_TABLES.GROUP_ID = " . $session["group_id"] . "
                 AND LMB_RULES_FIELDS.GROUP_ID = " . $session["group_id"] . "
                 AND LMB_RULES_FIELDS.TAB_ID = $key";
-        
+
         $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         $s_result[$key]["delete"] = lmbdb_result($rs, "DEL");
         $s_result[$key]["hide"] = lmbdb_result($rs, "HIDE");
@@ -541,6 +558,8 @@ foreach($_gtab["tab_id"] as $key => $value){
         $s_result[$key]["hierarchicprivilege"] = lmbdb_result($rs, "HIRAPRIVILEGE");
         $s_result[$key]["add"] = lmbdb_result($rs, "LMADD");
         $s_result[$key]["viewver"] = lmbdb_result($rs, "VIEWVER");
+        $s_result[$key]["editver"] = lmbdb_result($rs, "EDITVER");
+        $s_result[$key]["delver"] = lmbdb_result($rs, "DELVER");
         $s_result[$key]["lock"] = lmbdb_result($rs, "LMLOCK");
         $s_result[$key]["hidemenu"] = lmbdb_result($rs, "HIDEMENU");
 
@@ -587,6 +606,8 @@ foreach($_gtab["tab_id"] as $key => $value){
 				LMB_RULES_TABLES.USERPRIVILEGE,
 				LMB_RULES_TABLES.HIRAPRIVILEGE,
 				LMB_RULES_TABLES.VIEWVER,
+				LMB_RULES_TABLES.EDITVER,
+				LMB_RULES_TABLES.DELVER,
 				LMB_RULES_TABLES.LMLOCK,
         		LMB_RULES_TABLES.DEL,
 				LMB_RULES_TABLES.HIDE,
@@ -595,6 +616,7 @@ foreach($_gtab["tab_id"] as $key => $value){
 				LMB_RULES_TABLES.LMTRIGGER AS TABTRIGGER,
 				LMB_RULES_TABLES.EDITRULE AS TABEDITRULE,
 				LMB_RULES_TABLES.INDICATOR,
+				LMB_RULES_TABLES.ORDERBY,
 				LMB_RULES_FIELDS.VER,
 				LMB_RULES_FIELDS.CURRENCY,
 				LMB_RULES_FIELDS.EXT_TYPE,
@@ -624,9 +646,12 @@ foreach($_gtab["tab_id"] as $key => $value){
                     $l_result[$key]["userprivilege"] = lmbdb_result($rs, "USERPRIVILEGE");
                     $l_result[$key]["hierarchicprivilege"] = lmbdb_result($rs, "HIRAPRIVILEGE");
                     $l_result[$key]["viewver"] = lmbdb_result($rs, "VIEWVER");
+                    $l_result[$key]["delver"] = lmbdb_result($rs, "DELVER");
+                    $l_result[$key]["editver"] = lmbdb_result($rs, "EDITVER");
                     $l_result[$key]["lock"] = lmbdb_result($rs, "LMLOCK");
                     $l_result[$key]["tab_trigger"] = explode(",", lmbdb_result($rs, "TABTRIGGER"));
                     $l_result[$key]["indicator"] = explode(",", lmbdb_result($rs, "INDICATOR"));
+                    $l_result[$key]["orderby"] = explode(",", lmbdb_result($rs, "ORDERBY"));
                 }
 
                 $field_id = lmbdb_result($rs, "FIELD_ID");
@@ -684,7 +709,6 @@ foreach($_gtab["tab_id"] as $key => $value){
         		LMB_RULES_FIELDS.FILTER,
         		LMB_RULES_FIELDS.FILTERTYP,
         		LMB_RULES_FIELDS.LMTRIGGER AS FIELDTRIGGER,
-        		LMB_RULES_FIELDS.SORT,
         		LMB_RULES_FIELDS.NEED,
         		LMB_RULES_FIELDS.COPY,
         		LMB_RULES_FIELDS.FIELDOPTION,
@@ -705,6 +729,8 @@ foreach($_gtab["tab_id"] as $key => $value){
         		LMB_RULES_TABLES.HIRAPRIVILEGE,
         		LMB_RULES_TABLES.SPECIFICPRIVILEGE,
         		LMB_RULES_TABLES.VIEWVER,
+				LMB_RULES_TABLES.EDITVER,
+				LMB_RULES_TABLES.DELVER,
         		LMB_RULES_TABLES.LMLOCK,
         		LMB_RULES_TABLES.DEL,
         		LMB_RULES_TABLES.HIDE,
@@ -717,6 +743,7 @@ foreach($_gtab["tab_id"] as $key => $value){
 				LMB_RULES_TABLES.VER AS VERSIONING_TYPE,
 				LMB_RULES_TABLES.EDITRULE AS TABEDITRULE,
 				LMB_RULES_TABLES.INDICATOR,
+				LMB_RULES_TABLES.ORDERBY,
                 LMB_FIELD_TYPES.DATA_TYPE_EXP
                 FROM LMB_RULES_FIELDS,LMB_CONF_FIELDS,LMB_FIELD_TYPES,LMB_RULES_TABLES WHERE
         		LMB_RULES_FIELDS.TAB_ID = LMB_RULES_TABLES.TAB_ID
@@ -747,6 +774,8 @@ foreach($_gtab["tab_id"] as $key => $value){
                 $f_result[$key]["userprivilege"] = lmbdb_result($rs, "USERPRIVILEGE");
                 $f_result[$key]["hierarchicprivilege"] = lmbdb_result($rs, "HIRAPRIVILEGE");
                 $f_result[$key]["viewver"] = lmbdb_result($rs, "VIEWVER");
+                $f_result[$key]["editver"] = lmbdb_result($rs, "EDITVER");
+                $f_result[$key]["delver"] = lmbdb_result($rs, "DELVER");
                 $f_result[$key]["lock"] = lmbdb_result($rs, "LMLOCK");
                 $f_result[$key]["versioning_type"] = lmbdb_result($rs, "VERSIONING_TYPE");
                 $f_result[$key]["view_form"] = lmbdb_result($rs, "VIEW_FORM");
@@ -754,6 +783,7 @@ foreach($_gtab["tab_id"] as $key => $value){
                 $f_result[$key]["view_lform"] = lmbdb_result($rs, "VIEW_LFORM");
                 $f_result[$key]["tabeditrule"] = htmlentities(lmbdb_result($rs, "TABEDITRULE"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]);
                 $f_result[$key]["indicator"] = htmlentities(lmbdb_result($rs, "INDICATOR"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]);
+                $f_result[$key]["orderby"] = htmlentities(lmbdb_result($rs, "ORDERBY"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]);
                 $f_result[$key]["tab_trigger"] = explode(",", lmbdb_result($rs, "TABTRIGGER"));
                 $specificprivilege = explode(",", lmbdb_result($rs, "SPECIFICPRIVILEGE"));
                 foreach ($specificprivilege as $spkey => $spval) {

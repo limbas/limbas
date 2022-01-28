@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -122,8 +122,9 @@ echo "</form>";
 		echo "<SELECT STYLE=\"width:100%;\" onchange=\"document.form2.val.value=this.value;ajaxEditField('$fieldid','boolformat')\">";
 		$SELECTED[$result_fieldtype[$table_gtab[$bzm]]["listing_viewmode"][1]] = 'selected';
 		echo "<OPTION VALUE=\" \" $SELECTED[0]>Checkbox";
-		echo "<OPTION VALUE=\"1\" $SELECTED[1]>Radio";
 		echo "<OPTION VALUE=\"2\" $SELECTED[2]>Select";
+		echo "<OPTION VALUE=\"1\" $SELECTED[1]>Radio";
+		echo "<OPTION VALUE=\"3\" $SELECTED[3]>Radio reversed";
 		echo "</SELECT>";
 		echo "<br><i style=\"color:#AAAAAA\">".$lang[2999]."</i>";
 		echo "</td></tr>";
@@ -142,23 +143,26 @@ echo "</form>";
 	}
 	
 	/* --- Timestamp Format --------------------------------------- */
-	if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 2){
+	if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 2 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 24){
 		echo "<tr><td valign=\"top\">".$lang[2576]."</td><td>";
 		echo "<INPUT TYPE=\"TEXT\" STYLE=\"width:50%;\" VALUE=\"".$result_fieldtype[$table_gtab[$bzm]]["format"][1]."\" onchange=\"document.form2.val.value=this.value+' ';ajaxEditField('$fieldid','nformat')\">";
 		if($result_fieldtype[$table_gtab[$bzm]]["datatype"][1] == 11){
-			if($result_fieldtype[$table_gtab[$bzm]]["datetime"][1] == 1){$sel1 = "selected";}
-			elseif($result_fieldtype[$table_gtab[$bzm]]["datetime"][1] == 4){$sel4 = "selected";}
-			elseif($result_fieldtype[$table_gtab[$bzm]]["datetime"][1] == 2){$sel2 = "selected";}
-			elseif($result_fieldtype[$table_gtab[$bzm]]["datetime"][1] == 3){$sel3 = "selected";}
-			else{$sel0 = "selected";}
+			${'seldt'.$result_fieldtype[$table_gtab[$bzm]]["datetime"][1]} = 'selected';
 			echo "
 			<br><select style=\"width:100%\" onchange=\"document.form2.val.value=this.value;ajaxEditField('$fieldid','datetime')\">
-			<option value=\"1\" $sel1>".$lang[197]."</option>
-			<option value=\"4\" $sel4>".$lang[1723]."</option>
-			<option value=\"0\" $sel0>".$lang[2702]."</option></select>";
+			<option value=\"1\" $seldt1>".$lang[197]."</option>
+			<option value=\"4\" $seldt4>".$lang[1723]."</option>
+			<option value=\"0\" $seldt0>".$lang[2702]."</option></select>";
 			#<option value=\"2\" $sel2>Datum gesprochen kurz</option>
 			#<option value=\"3\" $sel3>Datum gesprochen lang</option>
 		}
+
+		${'seldp'.$result_fieldtype[$table_gtab[$bzm]]["select_pool"][1]} = 'selected';
+		echo "
+			<br><select style=\"width:100%\" onchange=\"document.form2.val.value=this.value;ajaxEditField('$fieldid','datepicker')\">
+			<option value=\"1\" $seldp1>UI datepicker</option>
+			<option value=\"2\" $seldp2 >browwser datepicker</option></select>";
+
 		echo "<br><i style=\"color:#AAAAAA\">".$lang[2602]."</i>";
 		echo "</td></tr>";
 		/* --- Time Format --------------------------------------- */
@@ -175,10 +179,16 @@ echo "</form>";
 		$SELECTED[$result_fieldtype[$table_gtab[$bzm]]["listing_viewmode"][1]] = 'selected';
 		echo "
 		<tr><td><hr></td><td><hr></td></tr>
-		<tr><td valign=\"top\">".$lang[2812]."</td><td><select style=\"width:100%\" onchange=\"document.form2.val.value=this.value+' ';ajaxEditField('$fieldid','relviewmode')\"><option value=\"1\" $SELECTED[1]>".$lang[2814]."</option><option value=\"2\" $SELECTED[2]>".$lang[2815]."</option><option value=\"3\" $SELECTED[3]>".$lang[2709]."</option><option value=\"4\" $SELECTED[4]>".$lang[2913]."</option></select>
+		<tr><td valign=\"top\">".$lang[2812]."</td><td><select style=\"width:100%\" onchange=\"document.form2.val.value=this.value+' ';ajaxEditField('$fieldid','relviewmode')\">
+		<option value=\"1\" $SELECTED[1]>".$lang[2814]."</option>
+		<option value=\"2\" $SELECTED[2]>".$lang[2815]."</option>";
+		if($result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 25) {
+            echo "<option value=\"3\" $SELECTED[3]>" . $lang[2709] . "</option>
+		    <option value=\"4\" $SELECTED[4]>" . $lang[2913] . "</option>";
+        }
+		echo "</select>
 		<br><i style=\"color:#AAAAAA\">".$lang[2848]."</i>
 		</td></tr>";
-
         // --- relations
 		if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 11) {
             $SELECTED = array();
@@ -339,7 +349,9 @@ echo "</form>";
 	}
 	
 	# --- unique ------
-	if(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 15 AND $result_fieldtype[$table_gtab[1]]["fieldtype"][1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 12 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 18 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 10 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 9 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 13 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 3 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 16 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 19){
+	if(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 15 AND $result_fieldtype[$table_gtab[1]]["fieldtype"][1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 12 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 18 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 10 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 9 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 13 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 3 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 16 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 19
+    AND !($result_fieldtype[$table_gtab[$bzm]]["datatype"][1] == 25 AND $result_fieldtype[$table_gtab[$bzm]]["verkntabletype"][1] == 2)
+    ){
 		echo "<tr><td valign=\"top\">".$lang[927]."</td><td>";
 		if($result_fieldtype[$table_gtab[$bzm]]["unique"][1] == 1){$unique = "CHECKED";} else{$unique = "";}
 		echo "<INPUT TYPE=\"CHECKBOX\" onclick=\"document.form2.val.value=this.checked;ajaxEditField('$fieldid','uniquefield')\"".$unique.">";
@@ -435,15 +447,36 @@ echo "</form>";
 		echo "<br><i style=\"color:#AAAAAA\">".$lang[2844]."</i>";
 		echo "</td></tr>";
 	}}
+
+
+	# --- long list edit ------
+	if(!$isview){
+	if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 3){
+		echo "<tr><td valign=\"top\">".$lang[1879]."</td><td>";
+		if($result_fieldtype[$table_gtab[$bzm]]["argument_edit"][1] == 1){$argument_edit = "CHECKED";}else{$argument_edit = " ";}
+		echo "<INPUT TYPE=\"CHECKBOX\" onclick=\"document.form2.val.value='$argument_edit';ajaxEditField('$fieldid','argument_edit')\" $argument_edit>";
+		echo "<br><i style=\"color:#AAAAAA\">".$lang[3050]."</i>";
+		echo "</td></tr>";
+	}}
 	
 	
 	# --- multi language ------
     if(!$isview){
-	if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 1 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 3 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 4){
+	if($result_fieldtype[$table_gtab[$bzm]]["datatype"][1] == 1 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 3 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 4){
 		echo "<tr><td valign=\"top\">".$lang[2895]."</td><td>";
 		if($result_fieldtype[$table_gtab[$bzm]]["multilang"][1] == 1){$collreplacevalue = "CHECKED";} else{$collreplacevalue = "";}
 		echo "<INPUT TYPE=\"CHECKBOX\" onclick=\"document.form2.val.value=this.checked;ajaxEditField('$fieldid','multilang')\"".$collreplacevalue.">";
 		echo "<br><i style=\"color:#AAAAAA\">".$lang[2896]."</i>";
+		echo "</td></tr>";
+	}}
+
+	# --- searchversion ------
+    if(!$isview){
+	if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] < 100 AND ($tab_versioning[$bzm] OR $table_validity[$bzm]) ){
+		echo "<tr><td valign=\"top\">".$lang[3045]."</td><td>";
+		if($result_fieldtype[$table_gtab[$bzm]]["searchversion"][1] == 1){$checked = "CHECKED";} else{$checked = "";}
+		echo "<INPUT TYPE=\"CHECKBOX\" onclick=\"document.form2.val.value=this.checked;ajaxEditField('$fieldid','searchversion')\"".$checked.">";
+		echo "<br><i style=\"color:#AAAAAA\">".$lang[3046]."</i>";
 		echo "</td></tr>";
 	}}
 	
@@ -604,7 +637,7 @@ echo "</form>";
         
         # configure
 		echo "<tr><td valign=\"top\">".$lang[2593]."</td><td $tdStyle><i style=\"cursor:pointer\" class=\"lmb-icon-cus lmb-rel-edit\" title=\"$lang[1301]\" OnClick=\"newwin5('".$result_fieldtype[$table_gtab[$bzm]]["field_id"][1]."','".$KEYID_gtab[$bzm]."','".$result_fieldtype[$table_gtab[$bzm]]["verkntabid"][1]."')\"></i></td>";
-		
+
 		# rebuild temp
         echo "<tr><td valign=\"top\">".$lang[2761]."</td><td><i style=\"cursor:pointer\" class=\"lmb-icon lmb-refresh\" onclick=\"document.form2.val.value=1;ajaxEditField('$fieldid','tablesync')\"></i>";
 		if($tablesync){echo " <i class=\"lmb-icon lmb-aktiv\"></i>";}

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -20,8 +20,6 @@
 
 set_time_limit(3600); #60min
 ob_implicit_flush();
-
-
 
 ?>
 <div class="lmbPositionContainerMain small">
@@ -143,6 +141,34 @@ function refreshHtaccess(){
 		fclose($htaccess_file);
 	}
 }
+
+
+function resetarguments(){
+    global $db;
+	global $session;
+	global $db;
+	global $gfield;
+	global $gtab;
+
+    set_time_limit(1800); # 30min
+    require_once ('admin/tables/argument.dao');
+
+    $sqlquery = "SELECT LMB_CONF_TABLES.TABELLE,LMB_CONF_FIELDS.FIELD_NAME,LMB_CONF_FIELDS.TAB_ID,LMB_CONF_FIELDS.FIELD_ID,LMB_CONF_FIELDS.ARGUMENT FROM LMB_CONF_FIELDS,LMB_CONF_TABLES WHERE LMB_CONF_FIELDS.ARGUMENT_TYP = 15 AND LMB_CONF_FIELDS.TAB_ID = LMB_CONF_TABLES.TAB_ID";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs)){
+        $tab_id = lmbdb_result($rs,"TAB_ID");
+        $field_id = lmbdb_result($rs,"FIELD_ID");
+        $argument = lmbdb_result($rs,"ARGUMENT");
+
+        if($argument) {
+            if(arg_refresh($tab_id, $field_id, $argument)){
+                lmb_alert('Rebuild complete for '. lmbdb_result($rs,"TABELLE"). ' '. lmbdb_result($rs,"FIELD_NAME"));
+            }
+        }
+    }
+
+}
+
 
 
 if($refresh_htaccess){
@@ -633,6 +659,9 @@ if($createExifConf){
 	
 }
 
+if($resetarguments){
+	resetarguments();
+}
 
 
 
@@ -648,6 +677,14 @@ function mselect(evt) {
 	if(link) {
 		limbasWaitsymbol(evt,1);
 		document.location.href="main_admin.php?action=setup_sysupdate&mselect=1";
+	}
+}
+
+function resetarguments(evt) {
+	link = confirm("<?=$lang[3069]?>");
+	if(link) {
+		limbasWaitsymbol(evt,1);
+		document.location.href="main_admin.php?action=setup_sysupdate&resetarguments=1";
 	}
 }
 
@@ -849,6 +886,8 @@ function showprocess(id,value){
 <TR class="tabSubHeader"><TD class="tabSubHeaderItem" colspan="3"><?=$lang[2481]?></TD></TR>
 <TR class="tabBody"><TD valign="top"><?=$lang[2030]?></TD>
     <TD align="RIGHT" valign="top"><input type="button" value="OK" onclick="mselect(event);"></TD></TR>
+<TR class="tabBody"><TD valign="top"><?=$lang[3069]?></TD>
+    <TD align="RIGHT" valign="top"><input type="button" value="OK" onclick="resetarguments(event);"></TD></TR>
 <TR class="tabBody"><TD valign="top"><?=$lang[2547]?></TD>
     <TD align="RIGHT" valign="top"><input type="button" value="OK" onclick="resetthumps(event);"></TD></TR>
 <TR class="tabBody"><TD valign="top"><?=$lang[2546]?></TD>

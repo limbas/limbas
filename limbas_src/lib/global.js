@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -88,7 +88,17 @@ function LmGs_elDisable(id) {
 	}
 }
 
-//search Formular
+/**
+ * Called when double clicking on search field above table.
+ * Opens search form in new overlay window
+ * @param evt browser mouse event
+ * @param el td element that was double clicked
+ * @param gtabid table id
+ * @param fieldid field id
+ * @param container id of container to open search form in
+ * @param snap_id id of currently opened snapshot
+ * @param module
+ */
 function limbasDetailSearch(evt,el,gtabid,fieldid,container,snap_id,module){
 	if(!fieldid){fieldid = '';}
 	if(!gtabid){gtabid = '';}
@@ -104,6 +114,7 @@ function limbasDetailSearch(evt,el,gtabid,fieldid,container,snap_id,module){
 		async: false,
 		data: "actid=gtabSearch&gtabid="+gtabid+"&fieldid="+fieldid+"&snap_id="+snap_id+'&module='+module,
 		success: function(data){
+            ajaxEvalScript(data);
 			document.getElementById(container).innerHTML = data;
 			$("#"+container).css({'position':'relative','left':'0','top':'0'}).dialog({
 				title: jsvar["lng_101"],
@@ -114,25 +125,181 @@ function limbasDetailSearch(evt,el,gtabid,fieldid,container,snap_id,module){
 				modal: true,
 				zIndex: 10
 			});
-			if(fieldid){LmGs_divchange(fieldid);};
+
+			// show row that corresponds to clicked search field
+			if (fieldid){
+                limbasAddSearchPara('', gtabid, fieldid);
+			}
 		}
 	});
 }
 
+/**
+ * Relevant when double clicking on search field above table.
+ * Called when searchfield selection dropdown was changed.
+ * Loads the corresponding search field and displays underneath.
+ * @param originStr string of <tabID>_<relationFieldId>_<filterIndex>_<tabID2>_...
+ * @param gtabid int id of table whose field should be searched
+ * @param fieldid int id of field in gtabid which should be searched in
+ */
+function limbasAddSearchPara(originStr, gtabid, fieldid){
+	// convention: recursive gsr has filterIndex != 0
+	if (originStr) {
+		const originParts = originStr.split('_');
+		for (let i = 0; i < originParts.length; i += 3) {
+			const filterIndex = parseInt(originParts[i + 2]);
+			if (filterIndex === 0) {
+				originParts[i + 2] = "1";
+			}
+		}
+		originStr = originParts.join('_');
+	}
 
-function limbasAddSearchPara(el){
-    $("#gdr_"+el.value+"_0").show();
-    $("#gdr_"+el.value+"_0 *[disabled]").prop('disabled', false);
-    $('[id^=gdr_' + el.value + '_]').css({ opacity: 1.0 });
-    el.value='';
+    // already added to list?
+	const originStrPad = originStr ? (originStr + '_') : '';
+    const identifierStr = originStrPad + gtabid + '_' + fieldid;
+    const tbody = $('#searchFilterRowTable').children('tbody');
+    const existingRows = tbody.children('[id="gdr_' + identifierStr + '_0"]');
+    if (existingRows.length > 0) {
+		existingRows.first()
+			.find('input[id^="gds_"]').focus() // focus text input
+			.closest('tr').show(); // un-hide row
+        return;
+	}
+
+	// parent already added to list -> increase filterIndex
+	const originParts = originStr.split('_');
+    for (let i = 0; i < originParts.length; i += 3) {
+    	const subIdentifierStr = originParts.slice(0, i + 3).join('_');
+    	const existingRow = tbody.children('[id="gdr_' + subIdentifierStr + '"]');
+    	if (existingRow.length > 0) {
+    		originParts[i + 2] = (parseInt(originParts[i + 2]) + 1).toString();
+		}
+	}
+
+    // fetch single tr
+    const params = $.param({
+        originStr: originParts.join('_'),
+        gtabid: gtabid,
+        fieldid: fieldid
+    });
+    ajaxGet(null, 'main_dyns.php', 'gtabSearchFilterRow&' + params, null, function(result) {
+        // add new row
+        $(result)
+            .appendTo($('#searchFilterRowTable').children('tbody'))
+            .find('input[id^="gds_"]')
+            .focus();
+	});
 }
 
-function limbasExpandSearchPara(ele, key){
-    $('[id^=gdr_' + key + '_]').show().prop('disabled', false);
-    $('[id^=gdr_' + key + '_] *[disabled]').prop('disabled', false);
-    $(ele).hide();
+/**
+ * Relevant when double clicking on search field above table.
+ * Called when "equals"/"contains"/"begins with" - dropdown of a filter row is changed.
+ * Enables/Disabled the corresponding "negate"/"case sensitive" checkboxes of that row.
+ * @param value string the value of the operator dropdown
+ * @param idStr string the gdsneg_xxx/gdscs_xxx suffix to identify the row
+ */
+function limbasSetSearchOptionsActive(value, idStr) {
+	if (!value) {
+		return;
+	}
+    value = parseInt(value);
+
+    // ["txt"] = 1 : %$%
+    // ["txt"] = 2 : ==
+    // ["txt"] = 3 : $%
+    // ["txt"] = 4 : Metaphone
+	// ["txt"] = 5 : %$
+	// ["txt"] = 7 : #NULL
+	// ["txt"] = 8 : #NOTNULL
+
+	const $negate = $('#gdsneg_' + idStr);
+    const $cs = $('#gdscs_' + idStr);
+    const $val = $('#gds_' + idStr);
+    if (value === 7 || value === 8) {
+		$negate.prop('checked', false).prop('disabled', true);
+        $cs.prop('checked', false).prop('disabled', true);
+        $val.val('').prop('disabled', true);
+    } else {
+        $negate.prop('disabled', false);
+        $cs.prop('disabled', false);
+        $val.prop('disabled', false);
+    }
 }
 
+/**
+ * Relevant when double clicking on search field above table.
+ * Called when clicking on plus icon in a filter row.
+ * Loads an additional row via ajax and displays underneath.
+ *
+ * @param el plus icon
+ * @param originStr
+ * @param gtabid
+ * @param fieldid
+ * @param filterIndex
+ */
+function limbasExpandSearchPara(el, originStr, gtabid, fieldid, filterIndex){
+    let $lastRowCurrentField = $(el).closest('tr').nextUntil('[id$="_0"]').last();
+    if ($lastRowCurrentField.length === 0) {
+        $lastRowCurrentField = $(el).closest('tr');
+    }
+    const lastFilterIndex = parseInt($lastRowCurrentField.attr('id').split('_').slice(-1)[0]);
+
+    // check if new identifier already exists
+    const identifierStr = originStr + gtabid + '_' + fieldid + '_' + (lastFilterIndex + 1);
+    if ($(el).closest('tbody').children('[id^="gdr_' + identifierStr + '"]').length > 0) {
+    	// this happens when both Relation and recursive Relation filters exist (e.g. Kunde and Kunde/Name)
+		// Kunde then has index 0, Kunde/Name has index 1
+		// if the plus icon is pressed for Kunde, then index 1 is not available anymore
+		// TODO solve in future if needed
+    	return;
+	}
+    const params = $.param({
+        originStr: originStr,
+        gtabid: gtabid,
+        fieldid: fieldid,
+        filterIndex: lastFilterIndex + 1
+    });
+    ajaxGet(null, 'main_dyns.php', 'gtabSearchFilterRow&' + params, null, function(result) {
+        $lastRowCurrentField.after(result);
+    });
+}
+
+/**
+ * Relevant when double clicking on search field above table.
+ * Called when clicking on X icon in a filter row.
+ * Hides the row and clears its input.
+ *
+ * @param el the X icon
+ * @param identifierStr originStr_gtabid_fieldid
+ * @param filterIndex
+ */
+function limbasHideFilterRow(el, identifierStr, filterIndex) {
+	// row has to be hidden (instead of removed) s.t. its empty value is still sent to server
+	var rows;
+	if (filterIndex > 0) {
+		// the current row
+		rows = $(el).closest('tr');
+    } else {
+		// all rows of that field
+		rows = $(el).closest('tr').nextUntil('[id$="_0"]').add($(el).closest('tr'));
+	}
+	rows.find('[name^=gs]').val('');
+	rows.hide();
+}
+
+function lmb_searchShowLevel(level) {
+
+    if($(".slevel-"+level).first().css("display") == "none"){
+        $(".slevel-"+level).show();
+    }else{
+        $(".slevel-"+level).hide();
+        $(".slevel-"+(level+1)).hide();
+        $(".slevel-"+(level+2)).hide();
+        $(".slevel-"+(level+3)).hide();
+    }
+
+}
 
 function lmb_searchDropdown(inputElem, selectID, openSize) {
     // default size
@@ -200,27 +367,23 @@ function lmb_searchDropdown(inputElem, selectID, openSize) {
     }
 }
 
-
-
-function LmGs_divchange(id) {
-	if(!id){return false;}
-
-	if ($("#gdsearchfield").length) {
-        // search
-        $("#gdsearchfield").val(id).change();
-
-        $('[id^=gdr_]').css({ opacity: 0.3 });
-        $('[id^=gdr_' + id + '_0]').find('i').eq(0).hide();
-        $('[id^=gdr_' + id + '_]').show().css({ opacity: 1.0 }).find(':input').prop('disabled',false);
-	} else {
-        // batch change
-        $('div[id^=gse]').hide();
-        $('tr[id^=gsea]').show();
-		$('[id^=gse_'+id+'_]').show();
-		$('[id^=gser_'+id+'_]').show();
-		$('[id^=gsec_'+id+'_]').show();
-		$('[id^=gseo_'+id+'_]').show();
+/**
+ * If batch change is enabled, in table under edit->batch change:
+ * Shows the value entry field if field was selected
+ * @param fieldID id of field that was selected
+ */
+function lmb_showReplaceField(fieldID) {
+	if (!fieldID) {
+		return;
 	}
+
+    // batch change
+    $('div[id^=gse]').hide();
+    $('tr[id^=gsea]').show();
+    $('[id^=gse_'+fieldID+'_]').show();
+    $('[id^=gser_'+fieldID+'_]').show();
+    $('[id^=gsec_'+fieldID+'_]').show();
+    $('[id^=gseo_'+fieldID+'_]').show();
 }
 
 // ------------------------------------------
@@ -266,7 +429,13 @@ function limbasSetCenterPos(el){
 
 }
 
-// wait Symbol
+/**
+ * Display/Hide a waiting symbol
+ * @param evt click event, optional
+ * @param inlay boolean (false means the whole document will be replaced by wait symbol)
+ * @param hide boolean true to hide
+ * @param symbol
+ */
 function limbasWaitsymbol(evt,inlay,hide,symbol){
 	
 	if(hide){
@@ -302,9 +471,6 @@ function limbasWaitsymbol(evt,inlay,hide,symbol){
 	}else{
 		limbasSetCenterPos(el);
 	}
-	
-	return true;
-	
 }
 
 function lmb_iniWYSIWYG(elname,params){
@@ -981,7 +1147,7 @@ function limbasParseDate(datestring,format) {
 	if(isNaN(dp[3])){dp[3] = '00';}
 	if(isNaN(dp[4])){dp[4] = '00';}
 	if(isNaN(dp[5])){dp[5] = '00';}
-	
+
 	//de d-m-Y H:i:s
 	if(format == 1){
 		var y = dp[2];
@@ -1016,7 +1182,43 @@ function limbasParseDate(datestring,format) {
 	return nd;
 }
 	
-	
+function limbasParseTimestamp(stamp,format,time) {
+
+	var t = new Date(stamp * 1000);
+    var y = t.getFullYear();
+    var m = t.getMonth()+1;
+    var d = t.getDate();
+    var h = t.getHours();
+    var i = t.getMinutes();
+    var s = t.getSeconds();
+
+	//de d-m-Y H:i:s
+	if(format == 1){
+	    if(1) {
+            return d+"-"+m+"-"+y;
+        }else{
+	        return d+"-"+m+"-"+y+" "+h+":"+i+":"+s;
+        }
+    // us Y-m-d H:i:s
+	}else if(format == 2){
+	    if(1) {
+            return y+"-"+m+"-"+d;
+        }else{
+	        return y+"-"+m+"-"+d+" "+h+":"+i+":"+s;
+        }
+    // fr m-d-Y H:i:s
+	}else if(format == 3){
+	    if(1) {
+            return m+"-"+d+"-"+y;
+        }else{
+	        return m+"-"+d+"-"+y+" "+h+":"+i+":"+s;
+        }
+    }
+
+
+}
+
+
 
 /** 
  *  Datepicker
@@ -1030,114 +1232,145 @@ function limbasParseDate(datestring,format) {
  *  selected - event function after selecting a date (functionname) 
  *  
  */
-function lmb_datepicker(event,showsat,formname,value,dateformat,left,selected) {
-	//activ_menu=1;
-	var showsecond = false;
-	var showtime = false;
-	var timeformat = '';
-	
-	pos = dateformat.indexOf(':');
-	if (pos > 0){
-		timeformat = dateformat.substr(pos-2,8);
-		dateformat = dateformat.substr(0,pos-3);
-	}
-	
-	if(timeformat.length == 8){
-		showsecond = true;
-	}
-	
-	if(typeof(showsat) == 'object'){
-		var sel = showsat;
-	}else if(showsat){
-		var sel = document.getElementById(showsat);
-	}
-        
-        // set to width of contextmenu
-        if(!left){left = $(sel).outerWidth();}
-	
-	if(typeof(formname) == 'object'){
-		cal_inputel = formname;
-	}else if(formname){
-		if(document.getElementsByName(formname)[0]){
-			cal_inputel = document.getElementsByName(formname)[0];
-		}
-		if(document.getElementById(formname)){
-			cal_inputel = document.getElementById(formname);
-		}
-	}else {
-		cal_inputel = sel.parentNode.firstChild;
-	}
-	
-	var elid = $(cal_inputel).attr('id');
-	$(cal_inputel).attr('id',elid+'_cal');
-	
-        // overwrite vor/zurück texts
-        $.datepicker.regional['de'].prevText = '';
-        $.datepicker.regional['de'].nextText = '';
-        $.datepicker.setDefaults($.datepicker.regional['de']);
+function lmb_datepicker(event, showsat, formname, value, dateformat, left, selected, extendOptions) {
+    //activ_menu=1;
+    var showsecond = false;
+    var timeformat = '';
 
-        if(timeformat){
+    var pos = dateformat.indexOf(':');
+    if (pos > 0) {
+        timeformat = dateformat.substr(pos - 2, 8);
+        dateformat = dateformat.substr(0, pos - 3);
+    }
 
-		$(cal_inputel).datetimepicker({
-			changeMonth: true,
-			changeYear: true,
-			dateFormat: dateformat,
-			timeFormat: timeformat,
-			showSecond: showsecond,
-			controlType: 'select',
-			beforeShow: function(input, inst) {
-                            $.datepicker._pos = $.datepicker._findPos(input); //this is the default position
-                            $.datepicker._pos[0] = findPosX(sel,1)+left; //left
-                            $.datepicker._pos[1] = findPosY(sel,1); //top
-                        },
-                        onClose: function() {
-                            $(this).attr('id',$(this).attr('id').replace(/_cal/g,''));
-                            $(this).datepicker( "destroy" );
-                        },
-                        onSelect: function(datestr,obj) {
-                            if ( (cal_inputel.onchange !== null) && (cal_inputel.onchange !== undefined) ) {
-                                cal_inputel.onchange();
-                            }
-                            eval('fnc = window.'+selected);
-                            if(fnc && typeof fnc == 'function') {
-                                fnc(datestr,obj);
-                            }
-                        }
-		});
+    if (timeformat.length === 8) {
+        showsecond = true;
+    }
 
-		try {$(cal_inputel).datetimepicker( "show" );} catch(e) {}
-	}else{
-		$(cal_inputel).datepicker({
-			changeMonth: true,
-			changeYear: true,
-			dateFormat: dateformat,
-			showButtonPanel: true,
-			beforeShow: function(input, inst)
-		    {
-		        $.datepicker._pos = $.datepicker._findPos(input); //this is the default position
-		        $.datepicker._pos[0] = findPosX(sel,1)+left; //left
-		        $.datepicker._pos[1] = findPosY(sel,1); //top
-		    },
-		    onClose: function(){
-		    	$(this).attr('id',$(this).attr('id').replace(/_cal/g,''));
-		    	$(this).datepicker( "destroy" );
-		    },
-		    onSelect: function(datestr,obj){
-				if ( (cal_inputel.onchange !== null) && (cal_inputel.onchange !== undefined) ) {
-					cal_inputel.onchange();
-				}
-		    	eval('fnc = window.'+selected);
-		    	if(fnc && typeof fnc == 'function') {
-		    		fnc(datestr,obj);
-		    	}
-		    }
-		});
-		try {$(cal_inputel).datepicker( "show" );} catch(e) {}
-	}
-	$('#ui-datepicker-div').css("z-index", 99999);
-	$("#ui-datepicker-div").click(function() {
-		activ_menu=1;
-	});
+    var sel = null;
+    if (typeof(showsat) === 'object') {
+        sel = showsat;
+    } else if (showsat) {
+        sel = document.getElementById(showsat);
+    }
+
+    // set to width of contextmenu
+    if (!left) {
+        left = $(sel).outerWidth();
+    }
+
+    if (typeof(formname) === 'object') {
+        cal_inputel = formname;
+    } else if (formname) {
+        if (document.getElementsByName(formname)[0]) {
+            cal_inputel = document.getElementsByName(formname)[0];
+        }
+        if (document.getElementById(formname)) {
+            cal_inputel = document.getElementById(formname);
+        }
+    } else {
+        //cal_inputel = sel.parentNode.firstChild;
+        cal_inputel = $(sel).siblings('input:first').get(0);
+    }
+
+    if (!extendOptions) {
+        extendOptions = {};
+    }
+
+    var elid = $(cal_inputel).attr('id');
+    $(cal_inputel).attr('id', elid + '_cal');
+
+    // overwrite vor/zurück texts
+    $.datepicker.regional['de'].prevText = '';
+    $.datepicker.regional['de'].nextText = '';
+    $.datepicker.setDefaults($.datepicker.regional['de']);
+
+    // fixes beforeShow not being called
+    // (from https://stackoverflow.com/questions/3961963/beforeshow-event-not-firing-on-jqueryui-datepicker)
+    $.extend($.datepicker, {
+        _inlineDatepicker2: $.datepicker._inlineDatepicker,
+        _inlineDatepicker: function (target, inst) {
+            this._inlineDatepicker2(target, inst);
+
+            var beforeShow = $.datepicker._get(inst, 'beforeShow');
+            if (beforeShow) {
+                beforeShow.apply(target, [target, inst]);
+            }
+        }
+    });
+
+    if (timeformat) {
+        $(cal_inputel).datetimepicker($.extend({
+            changeMonth: true,
+            changeYear: true,
+            dateFormat: dateformat,
+            timeFormat: timeformat,
+            showSecond: showsecond,
+            controlType: 'select',
+            beforeShow: function (input, inst) {
+            	if (sel) {
+                    $.datepicker._pos = $.datepicker._findPos(input); //this is the default position
+                    $.datepicker._pos[0] = findPosX(sel, 1) + left; //left
+                    $.datepicker._pos[1] = findPosY(sel, 1); //top
+                }
+            },
+            onClose: function () {
+                $(this).attr('id', $(this).attr('id').replace(/_cal/g, ''));
+                $(this).datepicker("destroy");
+            },
+            onSelect: function (datestr, obj) {
+                if ((cal_inputel.onchange !== null) && (cal_inputel.onchange !== undefined)) {
+                    cal_inputel.onchange();
+                }
+                $(cal_inputel).change();
+                eval('fnc = window.' + selected);
+                if (fnc && typeof fnc == 'function') {
+                    fnc(datestr, obj);
+                }
+            }
+        }, extendOptions));
+
+        try {
+            $(cal_inputel).datetimepicker("show");
+        } catch (e) {
+        }
+    } else {
+        $(cal_inputel).datepicker($.extend({
+            changeMonth: true,
+            changeYear: true,
+            dateFormat: dateformat,
+            showButtonPanel: true,
+            beforeShow: function (input, inst) {
+                if (sel) {
+                    $.datepicker._pos = $.datepicker._findPos(input); //this is the default position
+                    $.datepicker._pos[0] = findPosX(sel, 1) + left; //left
+                    $.datepicker._pos[1] = findPosY(sel, 1); //top
+                }
+            },
+            onClose: function () {
+                $(this).attr('id', $(this).attr('id').replace(/_cal/g, ''));
+                $(this).datepicker("destroy");
+            },
+            onSelect: function (datestr, obj) {
+                if ((cal_inputel.onchange !== null) && (cal_inputel.onchange !== undefined)) {
+                    cal_inputel.onchange();
+                }
+                $(cal_inputel).change();
+                eval('fnc = window.' + selected);
+                if (fnc && typeof fnc == 'function') {
+                    fnc(datestr, obj);
+                }
+            }
+        }, extendOptions));
+        try {
+            $(cal_inputel).datepicker("show");
+        } catch (e) {
+        }
+    }
+    $('#ui-datepicker-div').css("z-index", 99999);
+    $("#ui-datepicker-div").click(function () {
+        activ_menu = 1;
+    });
 }
 	
 
@@ -1188,7 +1421,7 @@ function findPosX(obj,abs)
  */
 function findPosY(obj,abs)
 {
-	
+
 	var offset = $(obj).offset();
 	return offset.top;
 
@@ -1394,7 +1627,6 @@ function lmb_progressbar(evt,w){
 	setTimeout("lmb_progressbar('',"+w+")",500);
 }
 
-
 // --- Plaziere DIV-Element auf Cursorposition -----------------------------------
 function setxypos(evt,el) {
 	if(typeof(el)!="object"){
@@ -1402,8 +1634,8 @@ function setxypos(evt,el) {
 	}
 
 	if(typeof(el)=="object" && evt.pageX) {
-	    el.style.left = evt.pageX - 5;
-	    el.style.top = evt.pageY - 5;
+        $(el).css("left",evt.pageX - 5);
+        $(el).css("top",evt.pageY - 5);
     }
 
 }
@@ -1587,6 +1819,9 @@ function limbasDivShow(el,parent,child,slide,display,abs,center,puttotop)
 			if (!e.target || $(e.target).is('input:not(:disabled),select:not(:disabled),textarea:not(:disabled,[readonly])'))
 				return;
 
+			if (e.keyCode === 13)
+			    return;
+
 			// abort if no context menu available
 			if (!childel)
 				return;
@@ -1665,6 +1900,16 @@ function lmbFilterContextMenu(contextMenu, searchString) {
 
     return elementsToFilter.not(hiddenElements);
 }
+
+
+function lmbSetContextActive(el,parent){
+
+    $($('#'+parent).find('i').detach()).appendTo($(el));
+
+
+}
+
+
 
 //----------------- Schließe alle Context-Menüs bei Klick auf Hintergrund -------------------
 function body_click(){
@@ -1924,7 +2169,6 @@ function getWindowHeight() {
 }
 
 function toggleHeight(el,maxHeight,maxWidth) {
-
     el = $('#'+el);
 
     if(!maxHeight){maxHeight = 100;}
@@ -1933,12 +2177,13 @@ function toggleHeight(el,maxHeight,maxWidth) {
     // toggle height
     const actualHeight = el.get(0).scrollHeight+10;
     const actualWidth = el.get(0).scrollWidth+10;
-    if (el.height() === actualHeight-10) {
+    if (el.attr('data-lmb-opened')) {
         el.animate({height: maxHeight + "px",width: maxWidth + "px"});
+        el.removeAttr('data-lmb-opened');
     } else {
         el.animate({height: actualHeight + "px",width: actualWidth + "px"});
+        el.attr('data-lmb-opened', true);
     }
-
 }
 
 function array_unique(arrayName) {
@@ -2056,42 +2301,6 @@ function limbasAjaxGtabRulesGroupsearchPost(result){
 	document.getElementById("ContainerGtabRulesGroupsearch").innerHTML = result;
 	limbasDivCloseTab.push('ContainerGtabRulesGroupsearch');
 	limbasDivCloseTab.push('ContainerGtabRulesUsersearch');
-}
-
-
-//---------------- Index ganzer Satz ----------------------
-function limbasCheckforindex(val,fkey,gtabid) {
-	val = val.replace(/\s+/," ");
-	// "
-	var part = val.split(" ");
-	if(part[0] == " "){part.shift();}
-	if(part[part.length] == " "){part.pop();}
-	if(part.length >= 2){
-		var zpart = new Array(0,0,0,0);
-		var part = part.concat(zpart);
-		part = part.slice(0,jsvar["searchcount"]);
-		for (var i in part){
-			if(part[i]){
-				var elid = "gse_"+ fkey + "_" + i;
-				var eolid = "gseo_"+ fkey + "_" + i;
-				var el = document.getElementById(elid);
-				var frm = el.childNodes[0].name;
-				document.form1.elements[frm].value = part[i];
-				var strname = "gs["+gtabid+"]["+fkey+"][string]["+i+"]";
-				var andorname = "gs["+gtabid+"]["+fkey+"][andor]["+i+"]";
-				var picname = "indpic_"+fkey+"_" + (i-1);
-				document.form1.elements[strname].value = 1;
-				document.getElementById(eolid).style.display='none';
-				if(document.getElementById(picname)){
-					document.form1.elements[andorname].selectedIndex = 0;
-					document.getElementById(picname).style.display='';
-				}
-			}else{
-				document.getElementById('gsea_'+i).style.display='none';
-				document.form1.elements[andorname].selectedIndex = 0;
-			}
-		}
-	}
 }
 
 /**

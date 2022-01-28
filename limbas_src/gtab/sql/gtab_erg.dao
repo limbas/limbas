@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -67,6 +67,7 @@ function get_groupresult($gtabid,$group_fields,$gsr){
 	global $gfield;
 	global $gtab;
 	global $filter;
+    global $umgvar;
 
 	foreach($group_fields as $key => $value){
 		$from[] = $gfield[$gtabid]["field_name"][$value];
@@ -91,6 +92,21 @@ function get_groupresult($gtabid,$group_fields,$gsr){
 	if($gtab["typ"][$gtabid] != 5){
 		$query["where"][] = "DEL = ".LMB_DBDEF_FALSE;
 	}
+
+    # Multitenant
+    if($umgvar['multitenant'] AND $gtab['multitenant'][$gtabid] AND !$session["superadmin"]) {
+        global $lmmultitenants;
+
+        if(!$session['mid']){
+            lmb_alert('you can not access data without multitenant ID');
+            return false;
+        }
+        if($filter["multitenant"][$gtabid]){
+            $query["where"][] = $gtab['table'][$gtabid] . '.LMB_MID IN ('.implode(',',$lmmultitenants['mid']) .')';
+        }else{
+            $query["where"][] = $gtab['table'][$gtabid] . '.LMB_MID = '.$lmmultitenants['mid'][$session['mid']];
+        }
+    }
 
 	if($query["where"]){
 		$where = "WHERE ".implode(" AND ",$query["where"]);
@@ -118,25 +134,40 @@ if($rowsize){
 # --- Datenatz-Update -----------------------------------
 if($history_fields AND $LINK[3]){
 	/* --- Transaktion START -------------------------------------- */
-	lmb_StartTransaction();
-
 	if($old_action == "gtab_erg"){$chtyp = 2;}else{$chtyp = 1;}
-	if(update_data($history_fields,$chtyp,$verkn)){
-		# --- Transaktion ENDE --------
-		lmb_EndTransaction(1);
+	if(update_data($history_fields,$chtyp,$verkn));
+}
+
+/*
+function getDefaultGresult($gtabid,$verkn,$form_id,$filter,$gsr,&$gresult){
+    global $gformlist;
+
+    # specific relation filter
+    if($verkn){
+        $vuniqueid = $gfield[$verkn['tabid']]['form_name'][$verkn['fieldid']].'_';
+        cftyp_ext_RelationFields(null,$verkn['tabid'],$verkn['fieldid'],$vuniqueid,null,null,$verkn,$null,$filter,$gsr,$extension,1);
+    }
+
+	if($gformlist[$gtabid]["id"][$form_id] AND $gformlist[$gtabid]["typ"][$form_id] == 2 AND $gform[$form_id]["used_fields"]){
+		$gresult = get_gresult($gtabid,1,$filter,$gsr,$verkn,$gform[$form_id]["used_fields"],null,$extension,null,1);
 	}else{
-		lmb_EndTransaction(0);
+		$gresult = get_gresult($gtabid,1,$filter,$gsr,$verkn,null,null,$extension,null,1);
 	}
 }
+*/
 
 
 #---- Tabellen-Abfrage -------
 if(!$popg[$gtabid]['null'] AND $gtabid AND ($action == "gtab_erg" OR $action == "gtab_exp")){
+
 	if($gformlist[$gtabid]["id"][$form_id] AND $gformlist[$gtabid]["typ"][$form_id] == 2 AND $gform[$form_id]["used_fields"]){
-		$gresult = get_gresult($gtabid,1,$filter,$gsr,$verkn,$gform[$form_id]["used_fields"],null,null,null,1);
+		$gresult = get_gresult($gtabid,1,$filter,$gsr,$verkn,$gform[$form_id]["used_fields"],null,$extension,null,1);
 	}else{
-		$gresult = get_gresult($gtabid,1,$filter,$gsr,$verkn,null,null,null,null,1);
+		$gresult = get_gresult($gtabid,1,$filter,$gsr,$verkn,null,null,$extension,null,1);
 	}
+
+    // $gresult = null;
+    // getDefaultGresult($gtabid,$verkn,$form_id,$filter,$gsr,$gresult);
 }
 
 #---- öffne alle Verknüpfungen -------

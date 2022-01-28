@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -57,7 +57,7 @@ function f_3(PARAMETER) {
 <TR><TD colspan="5"><HR></TD></TR>
 
 
-<TR class="tabHeader"><TD class="tabHeaderItem"><i class="lmb-icon-8 lmb-report"></i>&nbsp;<?=$lang[1788]?></TD><TD class="tabHeaderItem"><?=$lang[575]?></TD><TD class="tabHeaderItem"><?=$lang[2088]?></TD></TR>
+<TR class="tabHeader"><TD class="tabHeaderItem"><i class="lmb-icon-8 lmb-report"></i>&nbsp;<?=$lang[1788]?></TD><TD class="tabHeaderItem"><?=$lang[575]?></TD><TD class="tabHeaderItem"><?=$lang[2088]?></TD><td class="tabHeaderItem"><i class="lmb-icon lmb-pencil"></i></td></TR>
 <?php
 
 if($rulelist_){
@@ -67,12 +67,13 @@ if($rulelist_){
 		}else{
 			$desc = $lang[2512];
 		}
-		echo "<TR style=\"background-color:".$farbschema["WEB10"].";\"><TD style=\"color:" . $farbschema["WEB2"] . "\" colspan=\"3\"><i class=\"lmb-icon-8 lmb-table\"></i>&nbsp;".$desc."</TD></TR>";
+		echo "<TR style=\"background-color:".$farbschema["WEB10"].";\"><TD style=\"color:" . $farbschema["WEB2"] . "\" colspan=\"4\"><i class=\"lmb-icon-8 lmb-table\"></i>&nbsp;".$desc."</TD></TR>";
 		if($value["id"]){
 		foreach ($value["id"] as $key2 => $value2){
 			if($value2){
 					if($grouprule["hasview"][$value2]){$CHECKED1 = "CHECKED";}else{$CHECKED1 = "";}
 					if($grouprule["hashidden"][$value2]){$CHECKED2 = "CHECKED";}else{$CHECKED2 = "";}
+                    if($grouprule["hasedit"][$value2]){$CHECKED3 = "CHECKED";}else{$CHECKED3 = "";}
 					echo "<TR><TD width=\"200\">&nbsp;&nbsp;&nbsp;&nbsp;".$value["name"][$key2]."</TD><TD>";
 					if($levelrule["hasview"][$value2] OR !$group_level){
 						echo "<INPUT TYPE=\"CHECKBOX\" NAME=\"setrule[".$value2."]\" $CHECKED1>";
@@ -83,7 +84,11 @@ if($rulelist_){
 					if($CHECKED1){
 						echo "<INPUT TYPE=\"CHECKBOX\" NAME=\"sethidden[".$value2."]\" $CHECKED2>";
 					}
-					echo "</TD></TR>";
+                    echo" </TD><TD>";
+                    if($CHECKED1){
+                        echo "<INPUT TYPE=\"CHECKBOX\" NAME=\"setedit[".$value2."]\" $CHECKED3>";
+                    }
+                    echo "</TD></TR>";
 			}
 		}}
 	}

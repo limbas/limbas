@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH (support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH (support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6  
+ * Version 4.3.36.1319
  */
 
 /*
@@ -222,6 +222,184 @@ function dyns_formTabFieldList($para){
 
 	echo "</TABLE>\n";
 }
+
+/**
+ * form relation parameter
+ *
+ * @param $formid
+ * @param $elid
+ */
+function dyns_edit_relationparams($par){
+    global $lang;
+    global $db;
+
+    $formid = parse_db_int($par['formid']);
+    $elid = parse_db_int($par['elid']);
+    $params = $par['relation_params'];
+
+    if(!$formid or !$elid){return false;}
+
+    // get relation parameter
+    function getRelationParameter($formid,$elid){
+
+        global $db;
+
+        $sqlquery = "SELECT ID,PARAMETERS,EXTENSION FROM LMB_FORMS WHERE FORM_ID = $formid AND KEYID = $elid";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $relparams = lmbdb_result($rs, 'PARAMETERS');
+        $extension = lmbdb_result($rs, 'EXTENSION');
+        $id = lmbdb_result($rs, 'ID');
+
+        if($relparams) {
+            $params = lmb_eval($relparams . ";");
+
+            $evalparams = array('showfields','edit','width','order');
+            foreach ($evalparams as $key => $value) {
+                if ($params[$value]) {
+                    $params[$value] = var_export($params[$value],1);
+                }
+            }
+        }
+
+        if($extension) {
+            $params['extension'] = $extension;
+        }
+
+        if($params) {
+            return $params;
+        }
+
+
+    }
+
+
+    // set relation parameter
+    function setRelationParameter($formid,$elid,$params){
+
+        global $db;
+
+        $sqlquery = "SELECT ID FROM LMB_FORMS WHERE FORM_ID = $formid AND KEYID = $elid";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $id = lmbdb_result($rs, 'ID');
+
+        if($params['show_inframe'] == 'tag'){
+            $params['show_inframe'] = $params['show_inframe_tag'];
+        }
+        $params['show_inframe_tag'] = null;
+
+        $extension = $params['extension'];
+        unset($params['extension']);
+
+        $params = array_filter($params);
+
+        $evalparams = array('showfields','edit','width','order');
+        foreach ($evalparams as $key => $value) {
+            if ($params[$value]) {
+                $params[$value] = lmb_eval('return ' . $params[$value] . ";");
+            }
+        }
+
+        if(count($params) > 0) {
+            $p = var_export($params, 1);
+            $p = 'return '.$p.';';
+        }else{
+            $p = '';
+        }
+
+        $sqlquery = "UPDATE LMB_FORMS SET PARAMETERS = ? WHERE ID = $id";
+        $rs = lmb_PrepareSQL($sqlquery,array($p)) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $sqlquery = "UPDATE LMB_FORMS SET EXTENSION = ? WHERE ID = $id";
+        $rs = lmb_PrepareSQL($sqlquery,array($extension)) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+    }
+
+    if($params){
+        setRelationParameter($formid,$elid,$params);
+    }
+
+    $params = getRelationParameter($formid,$elid);
+    foreach ($params as $key => $value){
+        if($value == 1){
+            ${$key} = 'checked';
+        }
+    }
+
+    ${'show_inframe_'.$params['show_inframe']} = 'selected';
+    ${'viewmode_'.$params['viewmode']} = 'selected';
+    ${'validity_'.$params['validity']} = 'selected';
+
+    $show_inframe_mods = array('div','iframe','same','tab');
+    if($params['show_inframe'] AND !in_array($params['show_inframe'],$show_inframe_mods)){$show_inframe_tag = 'selected';}else{$params['show_inframe'] = null;}
+    if($params['show_inframe'] OR $show_inframe_tag){$inframe_tag_display = '';}else{$inframe_tag_display = 'none';}
+
+    echo "
+    <table>
+    
+    <tr><td colspan=\"2\">
+    {$lang[2569]}<br>
+    <TEXTAREA name=\"relation_params[extension]\" STYLE=\"width:100%;height:150px;background-color:inherit\" Onchange=\"edit_relationparams($elid,1)\">".htmlentities($params['extension'],ENT_QUOTES)."</TEXTAREA>
+    </td></tr>
+    
+    <tr><td><i>{$lang[3038]}</i></td><td>
+        <select name=\"relation_params[show_inframe]\" Onchange=\"if(this.value == 'tag'){document.getElementById('inframe_tag').style.display='';}else{edit_relationparams($elid,1);}\"><option>
+        <option value=\"div\" $show_inframe_div>div
+        <option value=\"iframe\" $show_inframe_iframe>iframe
+        <option value=\"same\" $show_inframe_same>same
+        <option value=\"tab\" $show_inframe_tab>new tab
+        <option value=\"tag\" $show_inframe_tag>tag (Element-ID)</select>&nbsp;
+    <input style=\"display:$inframe_tag_display\" id=\"inframe_tag\" type=\"text\" name=\"relation_params[show_inframe_tag]\" size=\"5\" value=\"".htmlentities($params['show_inframe'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\">
+    </td></tr>
+    <tr><td><i>{$lang[3014]}</i></td><td><select name=\"relation_params[viewmode]\" Onchange=\"edit_relationparams($elid,1)\">
+        <option>
+        <option value=\"dropdown\" $viewmode_dropdown>dropdown
+        <option value=\"single_ajax\" $viewmode_single_ajax>single_ajax
+        <option value=\"multi_ajax\" $viewmode_multi_ajax>multi_ajax
+        <option value=\"minimized\" $viewmode_minimized>minimized
+        </select>
+    </td></tr>
+    <tr><td><i>{$lang[3002]}</i></td><td><select name=\"relation_params[validity]\" Onchange=\"edit_relationparams($elid,1)\">
+        <option>
+        <option value=\"all\" $validity_all>all
+        <option value=\"allto\" $validity_allto>all from today
+        <option value=\"allfrom\" $validity_allfrom>all to today
+        </select>
+    </td></tr>
+    
+    <tr><td><i>{$lang[3015]}</i></td><td><input type=\"text\" name=\"relation_params[formid]\" value=\"".htmlentities($params['formid'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\"></td></tr>
+    <tr><td><i>{$lang[3049]}</i></td><td><input type=\"text\" name=\"relation_params[formsize]\" value=\"".htmlentities($params['formsize'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\"></td></tr>
+    <tr><td><i>{$lang[3016]}</i></td><td><input type=\"text\" name=\"relation_params[count]\" value=\"".htmlentities($params['count'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\"></td></tr>
+    <tr><td><i>{$lang[3017]}</i></td><td><input type=\"text\" name=\"relation_params[ondblclick]\" value=\"".htmlentities($params['ondblclick'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\"></td></tr>
+    <tr><td><i>{$lang[3039]}</i></td><td><input type=\"text\" name=\"relation_params[showfields]\" value=\"".htmlentities($params['showfields'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\"></td></tr>
+    <tr><td><i>{$lang[3041]}</i></td><td><input type=\"text\" name=\"relation_params[edit]\" value=\"".htmlentities($params['edit'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\"></td></tr>
+    <tr><td><i>{$lang[3040]}</i></td><td><input type=\"text\" name=\"relation_params[width]\" value=\"".htmlentities($params['width'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\"></td></tr>
+    <tr><td><i>{$lang[3042]}</i></td><td><input type=\"text\" name=\"relation_params[order]\" value=\"".htmlentities($params['order'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\"></td></tr>
+    <tr><td><i>{$lang[3070]}</i></td><td><input type=\"checkbox\" name=\"relation_params[applyfilter]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $applyfilter></td></tr>
+    <tr><td><i>{$lang[3029]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_menu]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_menu></td></tr>
+    <tr><td><i>{$lang[3018]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_add]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_add></td></tr>
+    <tr><td><i>{$lang[3019]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_new]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_new></td></tr>
+    <tr><td><i>{$lang[3020]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_edit]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_edit></td></tr>
+    <tr><td><i>{$lang[3021]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_replace]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_replace></td></tr>
+    <tr><td><i>{$lang[3022]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_search]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_search></td></tr>
+    <tr><td><i>{$lang[3023]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_copy]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_copy></td></tr>
+    <tr><td><i>{$lang[3024]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_delete]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_delete></td></tr>
+    <tr><td><i>{$lang[3025]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_sort]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_sort></td></tr>
+    <tr><td><i>{$lang[3026]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_link]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_link></td></tr>
+    <tr><td><i>{$lang[3027]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_openlist]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_openlist></td></tr>
+    <tr><td><i>{$lang[3028]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_fieldselect]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_fieldselect></td></tr>
+    <tr><td><i>{$lang[3051]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_validity]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_validity></td></tr>
+    <tr><td><i>{$lang[3030]}</i></td><td><input type=\"checkbox\" name=\"relation_params[search]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $search></td></tr>
+    <tr><td><i>{$lang[3031]}</i></td><td><input type=\"checkbox\" name=\"relation_params[showall]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $showall></td></tr>
+    <tr><td><i>{$lang[3032]}</i></td><td><input type=\"checkbox\" name=\"relation_params[getlongval]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $getlongval></td></tr>
+    <tr><td><i>{$lang[3033]}</i></td><td><input type=\"checkbox\" name=\"relation_params[nogresult]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $nogresult></td></tr>
+    <tr><td><i>{$lang[3034]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_calendar]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_calendar></td></tr>
+    <tr><td><i>{$lang[3035]}</i></td><td><input type=\"checkbox\" name=\"relation_params[pagination]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $pagination></td></tr>
+    <tr><td><i>{$lang[3036]}</i></td><td><input type=\"checkbox\" name=\"relation_params[indicator]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $indicator></td></tr>
+    <tr><td><i>{$lang[3037]}</i></td><td><input type=\"checkbox\" name=\"relation_params[show_relationpath]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $show_relationpath></td></tr>
+    </table>
+    ";
+
+}
+
 
 
 /**

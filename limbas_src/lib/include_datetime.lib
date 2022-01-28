@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -30,11 +30,11 @@
  * @param number $format (0,1,2,3,string)
  * @return datetime string
  */
-function stampToDate($stamp,$format=0){
+function stampToDate($stamp,$format=0,$country=null){
 	if(!$stamp){return false;}
 	
 	if(is_numeric($format)){
-		$format = setDateFormat($format);
+		$format = setDateFormat($format,null,$country);
 	}
 	
 	return strftime($format,$stamp);
@@ -222,11 +222,11 @@ function convert_stamp($stamp,$t=0){
  * @param number $typ (1=date, 2=datetime, strftime format))
  * @return date string
  */
-function get_date($db_date,$typ=0){
+function get_date($db_date,$typ=0,$country=null){
 	if(!$db_date OR $db_date == '0000-00-00 00:00:00'){return false;}
-	if($typ == 2){$typ = 0;}
+	if(!$typ OR $typ == 2){$typ = 0;}
 	$stamp = strtotime(substr($db_date,0,19)); // postgresql cut millisec !
-	return stampToDate($stamp,$typ);
+	return stampToDate($stamp,$typ,$country);
 }
 
 

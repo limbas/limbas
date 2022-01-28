@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -188,7 +188,7 @@ function set_fonts($pdf,$report_id){
 }
 
 /*----------------- Feldinhalte -------------------*/
-function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bzm2,$rowid,$fieldlist = null){
+function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bzm2,$rowid,$fieldlist = null, $gsr=array(), $filter=array(), $extension=array()){
 	global $db;
 	global $gtab;
 	global $userdat;
@@ -200,6 +200,9 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 	global $dingbats_char_on;
 	global $dingbats_char_off;
 	global $filestruct;
+
+
+	#error_log(print_r($gsr,1));
 	
 	$referenz_tab = $report["referenz_tab"];
 
@@ -229,26 +232,30 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 		$fieldid = $dbfield[1];
 		$tab = $gtab["table"][$gtabid];
 
-		$field = $gfield[$gtabid]["form_name"][$fieldid];
-		$md5tab = $gfield[$gtabid]["md5tab"][$fieldid];
-		$data_type = $gfield[$gtabid]["data_type"][$fieldid];
-		
-		# long handling 
+		if ($fieldid !== 'ID') {
+            $field = $gfield[$gtabid]["form_name"][$fieldid];
+            $md5tab = $gfield[$gtabid]["md5tab"][$fieldid];
+            $data_type = $gfield[$gtabid]["data_type"][$fieldid];
+        } else {
+		    $field = 'ID';
+        }
+
+		# long handling
 		#if($gfield[$gtabid]["data_type"][$fieldid] == 39 AND !$gfield[$gtabid]["longhandle"][$fieldid]){
 		#	continue;
 		#}
 		
 		# check if permission
-		if(!$gfield[$gtabid]["sort"][$fieldid]){
+		if($fieldid !== 'ID' and !$gfield[$gtabid]["sort"][$fieldid]){
 			#$db = "limbas-report : No permission for field: \"".$gtab["table"][$gtabid]." ".$gfield[$gtabid]["field_name"][$fieldid]." (tabid:$gtabid fieldid:$fieldid)\"";
 			#lmb_alert($db);
 			continue;
 		}
 
-
 		if($field AND $tab){
-
-			$onlyfield[$gtabid][] = $fieldid;
+            if ($fieldid !== 'ID') {
+                $onlyfield[$gtabid][] = $fieldid;
+            }
 
 			# --- extendet SQL ---
 			if($extvalue){
@@ -267,14 +274,20 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 				$extension["select"][] = $tab.".".$gtab["keyfield"][$gtabid]." AS IDALIAS_".$gtabid;
 			}
 
-            $extension["where"][] = $gtab["table"][$referenz_tab].".ID = ".$ID;
+			if (!$report["listmode"]) {
+                #$extension["where"][] = $gtab["table"][$referenz_tab].".ID = ".$ID;
+                #$filter['validity'][$referenz_tab] = 'all';
+                $single = $ID;
+            }
 			$extension["from"][] = $gtab["table"][$referenz_tab];
-
 			$currentTableID = $referenz_tab;
 
             /* --- Falls Verknüpfungstabelle --------------------------------------------- */
 			if($DBVERKNB){
 				$verkn_baum = explode("|",$DBVERKNB);
+
+				$verkn_baum_count = count($verkn_baum);
+				$bzm2 = 0;
 				$bzm3 = 0;
 				foreach ($verkn_baum as $bzm2 => $value2){
 					if (!$value2) {
@@ -285,15 +298,14 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
                     $baseTableID = $verkn_part[0];
                     $resultTableID = $verkn_part[1];
                     $relationFieldID = $verkn_part[2];
-                    #$verkn_part_3 = $gtab["table"][$verkn_part[3]]; #field_type (27 or 24)
-                    $verkn_part_4 = $gtab["table"][$verkn_part[4]];
 
-                    $baseTableName = $gtab["table"][$baseTableID];
-                    $resultTableName = $gtab["table"][$resultTableID];
-                    $relationTableName = $gfield[$baseTableID]["md5tab"][$relationFieldID];
+                    $baseTableName = $gtab['table'][$baseTableID];
+                    $resultTableName = $gtab['table'][$resultTableID];
+                    $relationTableName = $gfield[$baseTableID]['md5tab'][$relationFieldID];
+                    #$verkn_part_3 = $gtab["table"][$verkn_part[3]]; #field_type (27 or 24)
+                    $verkn_part_4 = $gtab['table'][$verkn_part[4]];
 
                     if(!$baseTableName OR !$resultTableName OR !$relationTableName){
-                        #lmb_alert("No permission for relation \"".$gtab["desc"][$verkn_part[0]]."\" to \"".$gtab["desc"][$verkn_part[1]]."\" (".$verkn_part[0]." -> ".$verkn_part[1].") ");
                         break;
                     }
 
@@ -303,32 +315,88 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
                         $extension["where"][] = $currentTableName.".ID = ".$baseTableName.".ID";
                     }
 
-                    $extension["where"][] = $baseTableName.".ID = ".$relationTableName.".ID";
-                    $extension["where"][] = $relationTableName.".VERKN_ID = ".$resultTableName.".ID";
+                    # 1:n direct relation
+                    if($gfield[$baseTableID]['data_type'][$relationFieldID] == 25){
+                        // backward relation
+                        if($gfield[$baseTableID]['verkntabletype'][$relationFieldID] == 2){
+                            $relationTableName = $gfield[$gfield[$baseTableID]['verkntabid'][$relationFieldID]]['md5tab'][$gfield[$baseTableID]['hasrecverkn'][$relationFieldID]];
+                            $extension['where'][] = $baseTableName . "." . $relationTableName . " = " . $resultTableName . ".ID";
+                            $extension['from'][] = $resultTableName;
+                            if (!$bzm3) {
+                                $extension['where'][] = $baseTableName . ".ID = " . $ID;
+                            }
+                        }else {
+                            $extension['where'][] = $resultTableName . "." . $relationTableName . " = " . $baseTableName . ".ID";
+                            $extension['from'][] = $resultTableName;
+                            if (!$bzm3) {
+                                $extension['where'][] = $baseTableName . ".ID = " . $ID;
+                            }
+                        }
+                    }else{
+
+                        // self relation
+                        $baseTableNameAlias = $baseTableName;
+                        if($baseTableID == $resultTableID){
+                            $baseTableNameAlias = $baseTableNameAlias.'_ALIAS';
+                            $baseTableName = $baseTableName.' AS '.$baseTableName.'_ALIAS';
+                            if($referenz_tab == $baseTableID AND !$bzm3) {
+                                $single = null;
+                            }
+                        }
+
+                        $extension['where'][] = $baseTableNameAlias.".ID = ".$relationTableName.".ID";
+                        $extension['where'][] = $relationTableName.".VERKN_ID = ".$resultTableName.".ID";
+                        if(!$bzm3){
+                            $extension['where'][] = $relationTableName.".ID = ".$ID;
+                        }
+                        $extension['from'][] = $baseTableName;
+                        $extension['from'][] = $resultTableName;
+                        $extension['from'][] = $relationTableName;
+
+                        #error_log(print_r($extension,1));
+                    }
+
+                    if($bzm2 == "0"){$where[] = $baseTableName.".ID = $ID";}
+
+                    ############ gsr
+                    if ($gsr && array_key_exists($resultTableID, $gsr)) {
+                        foreach ($gsr[$resultTableID] as $fieldID => $_) {
+                            $where = get_where($fieldID, $resultTableID, $gsr);
+                            array_push($extension['from'], ...$where['from_']);
+                            array_push($extension['where'], ...$where['where']);
+                            array_push($extension['where'], ...$where['where_glob']);
+                            if ($where['distinct']) {
+                                $extension['distinct'] = 'DISTINCT';
+                            }
+                        }
+                        unset($gsr[$resultTableID]);
+                    }
+
 
                     # set Active Elements
                     #if($style[33] != 'true' OR $verkn_part_4){
                     #	$extension["where"][] = $relationTableName.".AKTIV = ".LMB_DBDEF_TRUE;
                     #}
 
-                    $extension["from"][] = $baseTableName;
-                    $extension["from"][] = $resultTableName;
-                    $extension["from"][] = $relationTableName;
+
                     $bzm3++;
                     $currentTableID = $resultTableID;
-				}
-				
+                }
+
 				# order by sort
-				if($bzm3){
+				if($bzm3 AND $gfield[$baseTableID]['data_type'][$relationFieldID] != 25){
 					#$vuniqueid = $gfield[$gtabid]["form_name"][$fieldid];
 					#$filter = $GLOBALS["filter"]["ext_RelationFields"]["order"][$vuniqueid];
-					$extension["order"][] = $relationTableName.".SORT";
-					$extension["select"][] = $relationTableName.".SORT";
+					$extension['order'][] = $relationTableName.".SORT";
+					$extension['select'][] = $relationTableName.".SORT";
 				}
-				
+
+
+			}elseif($dbfield AND $style[33] != 'true' AND $gtab['keyfield'][$gtabid]){
+				$extension['where'][] = $tab.".".$gtab['keyfield'][$gtabid]." = ".$ID;
 			}
 
-			# 1:1 relation
+            # 1:1 relation
             if ($currentTableID != $gtabid) {
                 $currentTableName = $gtab["table"][$currentTableID];
                 $fieldName = $gtab["keyfield"][$gtabid] ? $gtab["keyfield"][$gtabid] : 'ID';
@@ -339,10 +407,22 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 
 	if($referenz_tab == $gtabid){
 		if($report["listmode"]){
-			$gsr = $GLOBALS["gsr"];
-			$filter = $GLOBALS["filter"];
+		    if (!$gsr) {
+		        if($GLOBALS['rgsr']){$gsr = $GLOBALS["rgsr"];}
+		        elseif($GLOBALS['gsr']){$gsr = $GLOBALS["gsr"];}
+            }
+            if (!$filter) {
+		        if($GLOBALS['rfilter']){$filter = $GLOBALS["rfilter"];}
+		        elseif($GLOBALS['filter']){$filter = $GLOBALS["filter"];}
+
+                $filter["anzahl"][$referenz_tab] = 'all';
+                $filter["nolimit"][$referenz_tab] = 1;
+                $filter["report"][$referenz_tab] = '1';
+            }
 		}else{
-			$filter["viewversion"][$referenz_tab] = "1";
+		    if (!$filter["viewversion"][$referenz_tab]) {
+                $filter["viewversion"][$referenz_tab] = "1";
+            }
 		}
 	}
 	
@@ -351,17 +431,41 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 	if($referenz_tab != $gtabid AND !$verkn_baum){
 		$referenz_tab = $gtabid;
 	}
-	
-	$filter["anzahl"][$referenz_tab] = "all";
-	$filter["nolimit"][$referenz_tab] = 1;
-	$filter["report"][$referenz_tab] = "1";
-	$extension["showdelete"] = 1;
 
-	$query = get_sqlquery($referenz_tab,1,$filter,$gsr,null,$onlyfield,null,$extension);
-	$rs1 = lmbdb_exec($db,$query["sql"]) or errorhandle(lmbdb_errormsg($db),$query["sql"],$action,__FILE__,__LINE__);
+    // validity
+	if($verkn_baum){
+	    $extension['from'] = array_unique($extension['from']);
+        foreach($extension['from'] as $fkey => $ftable){
+            $validity_tab = $gtab['argresult_id'][$ftable];
+            if($validity_tab == $referenz_tab){continue;}
+            if($gtab['validity'][$validity_tab]) {
+                // set validity
+                get_validity($validity_tab, $GLOBALS['filter']['validity'][$baseTableID], $extension["where"]);
+            }
+        }
+	}
+
+	if (!$filter["anzahl"][$referenz_tab]) {
+        $filter["anzahl"][$referenz_tab] = 'all';
+    }
+	if (!$filter["nolimit"][$referenz_tab]) {
+        $filter["nolimit"][$referenz_tab] = 1;
+    }
+	if (!$filter["report"][$referenz_tab]) {
+        $filter["report"][$referenz_tab] = '1';
+    }
+    if (!array_key_exists('showdelete', $extension)) {
+        $extension["showdelete"] = 1;
+    }
+
+
+
+	$query = get_sqlquery($referenz_tab,1,$filter,$gsr,null,$onlyfield,$single,$extension);
+	$rs1 = lmbdb_exec($db,$query["sql"]) or errorhandle(lmbdb_errormsg($db),$query['sql'],$action,__FILE__,__LINE__);
 
 	$bzm0 = 0;
 	while(lmbdb_fetch_row($rs1)) {
+	    $DBRESULT['id'][$bzm0] = lmbdb_result($rs1, 'IDALIAS_'.$gtabid);
 
 		# list of dbfields
 		$bzm3 = 0;
@@ -402,7 +506,7 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 
 				$oresult = lmbdb_result($rs1, $field);
 
-                                if($data_type == 30){
+                if($data_type == 30){
 					if(!$symbol = get_currency_symbol(lmbdb_result($rs1, $field."_C"))){$symbol = lmbdb_result($rs1, $field."_C");}
 					if($gfield[$gtabid]["nformat"][$fieldid]){
 						$DBRESULT[$bzm3][$bzm0] = convert_NumberFormat($oresult,$gfield[$gtabid]["nformat"][$fieldid])." ".$symbol;
@@ -481,7 +585,7 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 					$DBRESULT[$bzm3][$bzm0] = "HTML#*#".$oresult;
 					# --- Upload ---
 				}elseif($data_type == 13){
-					$sqlquery2 = "SELECT DISTINCT LDMS_FILES.SECNAME,LDMS_FILES.LEVEL,LDMS_FILES.SORT,LDMS_FILES.NAME,LMB_MIMETYPES.EXT,LDMS_FILES.SIZE,LMB_MIMETYPES.PIC,LMB_MIMETYPES.MIMETYPE FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND LDMS_FILES.TABID = $gtabid AND LDMS_FILES.FIELDID = $fieldid AND LDMS_FILES.DATID = ".lmbdb_result($rs1, "IDALIAS_".$gtabid)." AND TYP = 3  AND VID = 1 AND DEL = ".LMB_DBDEF_FALSE." ORDER BY LDMS_FILES.SORT";
+					$sqlquery2 = "SELECT DISTINCT LDMS_FILES.ID,LDMS_FILES.SECNAME,LDMS_FILES.LEVEL,LDMS_FILES.SORT,LDMS_FILES.NAME,LMB_MIMETYPES.EXT,LDMS_FILES.SIZE,LMB_MIMETYPES.PIC,LMB_MIMETYPES.MIMETYPE FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND LDMS_FILES.TABID = $gtabid AND LDMS_FILES.FIELDID = $fieldid AND LDMS_FILES.DATID = ".lmbdb_result($rs1, "IDALIAS_".$gtabid)." AND TYP = 3  AND VID = 1 AND DEL = ".LMB_DBDEF_FALSE." ORDER BY LDMS_FILES.SORT";
 					$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 					#while(lmbdb_fetch_row($rs2)) {
 					if(lmbdb_fetch_row($rs2)) {
@@ -489,9 +593,11 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 					    $level = lmbdb_result($rs2, "LEVEL");
 						$mime = explode("/",lmbdb_result($rs2, "MIMETYPE"));
 						if($mime[0] == "image"){
-							$DBRESULT[$bzm3][$bzm0] = "IMAGE#*#".$umgvar["uploadpfad"].$filestruct['path'][$level].lmbdb_result($rs2, "SECNAME").".".lmbdb_result($rs2, "EXT");
+							#$DBRESULT[$bzm3][$bzm0] = "IMAGE#*#".$umgvar["upload_pfad"].$filestruct['path'][$level].lmbdb_result($rs2, "SECNAME").".".lmbdb_result($rs2, "EXT");
+						    $DBRESULT[$bzm3][$bzm0] = "IMAGE#*#".lmb_getFilePath(lmbdb_result($rs2, "ID"),$level,lmbdb_result($rs2, "SECNAME"),lmbdb_result($rs2, "EXT"));
 						}elseif($mime[1] == "pdf"){
-							$DBRESULT[$bzm3][$bzm0] = "PDF#*#".$umgvar["uploadpfad"].$filestruct['path'][$level].lmbdb_result($rs2, "SECNAME").".".lmbdb_result($rs2, "EXT");
+							#$DBRESULT[$bzm3][$bzm0] = "PDF#*#".$umgvar["upload_pfad"].$filestruct['path'][$level].lmbdb_result($rs2, "SECNAME").".".lmbdb_result($rs2, "EXT");
+						    $DBRESULT[$bzm3][$bzm0] = "PDF#*#".lmb_getFilePath(lmbdb_result($rs2, "ID"),$level,lmbdb_result($rs2, "SECNAME"),lmbdb_result($rs2, "EXT"));
 						}
 					}
 					# --- sonstige ---
@@ -614,7 +720,7 @@ function element_list($ID,&$report,$TYP){
 	}
 
 	# Abfragen ausführen
-	if($preselect){
+	if($preselect AND $ID){
 		foreach ($preselect as $key => $value){
 			$cdb = get_dataArray($ID,null,null,$report,null,null,1,$preselect[$key]);
 			$bzm = 0;
@@ -692,7 +798,7 @@ function reportArchiv($temp_file_path,$report,$ID,$report_output){
 	$name = explode("/",$temp_file_path);
 	$name = $name[count($name)-1];
 
-	if(file_exists(lmb_utf8_encode($temp_file_path))){ 
+	if(file_exists(lmb_utf8_encode($temp_file_path))){
 
 		# ------- pdf archivieren ---------
 		if($report_output == 2 /* maybe also 3? */){
@@ -705,13 +811,19 @@ function reportArchiv($temp_file_path,$report,$ID,$report_output){
 					$level = lmbdb_result($rs, "ID");
 					$field_id = lmbdb_result($rs, "FIELD_ID");
 					$dublicate["forceDelnm"][0] = 1;
+
+					if(lmbdb_result($rs, "TYP") == 7){ // if target folder is type report
+					    $relation = array("datid" => $ID,"gtabid" => $report["referenz_tab"],"fieldid" => $field_id);
+                    }
+
 					$file["file"][0] = lmb_utf8_encode($temp_file_path);$file["file_name"][] = $name;$file["file_type"][] = 0;$file["file_archiv"][] = 0;
-					#$fileid = upload($file,$level,array("datid" => $ID,"gtabid" => $report["referenz_tab"],"fieldid" => $report["report_id"]),1,$dublicate);
-					$fileid = upload($file,$level,array("datid" => $ID,"gtabid" => $report["referenz_tab"],"fieldid" => $field_id),1,$dublicate);
+					#$fileid = lmb_fileUpload($file,$level,array("datid" => $ID,"gtabid" => $report["referenz_tab"],"fieldid" => $report["report_id"]),1,$dublicate);
+					$fileid = lmb_fileUpload($file,$level,$relation,1,$dublicate);
 
 					if(!$fileid){return false;}
 
 					# if target folder is type report
+                    /*
 					if(lmbdb_result($rs, "TYP") == 7){
 
 						$verkn_ = set_verknpf($report["referenz_tab"],lmbdb_result($rs, "FIELD_ID"),$ID,$fileid,0,0,0);
@@ -724,6 +836,7 @@ function reportArchiv($temp_file_path,$report,$ID,$report_output){
 							return false;
 						}
 					}
+                    */
 					return $fileid;
 				}
 			}

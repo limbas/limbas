@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -88,9 +88,9 @@ if($select_del AND $pool){
 	$levels = $remove = array();
 	global $gfield;
 	if($gfield[$atid]['data_type'][$fieldid] == 32){
-		$msqlquery = "select w.id,w.level,d.id as d_id from ".lmb_strtolower($typ)."_w as w
-			left join ".$typ."_D as d on(d.w_id=w.id)
-			where pool=".$gfield[$atid]['select_pool'][$fieldid];
+		$msqlquery = "sELECT W.ID,W.LEVEL,D.ID AS D_ID FROM ".lmb_strtolower($typ)."_W AS W
+			LEFT JOIN ".$typ."_D AS D ON(D.W_ID=W.ID)
+			WHERE POOL=".$gfield[$atid]['select_pool'][$fieldid];
 		$mrs = lmbdb_exec($db,$msqlquery) or errorhandle(lmbdb_errormsg($db),$msqlquery,$action,__FILE__,__LINE__);
 		if(!$mrs) {$commit = 1;}
 
@@ -311,7 +311,7 @@ if($select_hide AND $pool){
 }
 
 /* --- Sortierung --------------------------------------------- */
-if($select_sort AND $pool){
+if($fssort AND $pool AND $atid AND $fieldid){
 	$sqlquery = "UPDATE LMB_CONF_FIELDS SET SELECT_SORT = '".parse_db_string($fssort,20)."' WHERE TAB_ID = $atid AND FIELD_ID = $fieldid";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
@@ -512,10 +512,12 @@ if($pool){
 	$result_fieldselect['num_ges'] = lmbdb_result($rs, 'NUMR');
 
 	if($atid AND $fieldid){
-	$sqlquery = "SELECT SELECT_SORT,SELECT_POOL FROM LMB_CONF_FIELDS WHERE TAB_ID = $atid AND FIELD_ID = $fieldid";
+	$sqlquery = "SELECT SELECT_SORT,SELECT_POOL,FIELD_TYPE,DATA_TYPE FROM LMB_CONF_FIELDS WHERE TAB_ID = $atid AND FIELD_ID = $fieldid";
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		$result_fieldselect['sort'] = lmbdb_result($rs, 'SELECT_SORT');
 		$result_fieldselect['pool'] = lmbdb_result($rs, 'SELECT_POOL');
+        $result_fieldselect['field_type'] = lmbdb_result($rs, 'FIELD_TYPE');
+        $result_fieldselect['data_type'] = lmbdb_result($rs, 'DATA_TYPE');
 	}
 	
 

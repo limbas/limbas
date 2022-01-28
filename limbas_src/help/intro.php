@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -132,38 +132,35 @@ if(!$view){
 
     <TR>
         <TD valign=top class="bord">Added</TD>
-        <TD valign=top class="bord">PDO/ODBC</TD>
-        <TD valign=top class="bord">adding support for PDO and ODBC simultaneously</TD>
+        <TD valign=top class="bord">Validity functionality for tabledata</TD>
     </TR>
     <TR>
         <TD valign=top class="bord">Added</TD>
-        <TD valign=top class="bord">Multitenant</TD>
-        <TD valign=top class="bord">adding basic multitenant functionality</TD>
+        <TD valign=top class="bord">Extended multitenant functionality</TD>
     </TR>
     <TR>
         <TD valign=top class="bord">Added</TD>
-        <TD valign=top class="bord">Menueditor</TD>
-        <TD valign=top class="bord">adding additional menueditors for context and tabelmenus</TD>
+        <TD valign=top class="bord">Full template based reporting system</TD>
     </TR>
     <TR>
         <TD valign=top class="bord">Added</TD>
-        <TD valign=top class="bord">custvars</TD>
-        <TD valign=top class="bord">adding customized parameter table like environment variables</TD>
+        <TD valign=top class="bord">Template wysiwyg extension</TD>
     </TR>
     <TR>
         <TD valign=top class="bord">Added</TD>
-        <TD valign=top class="bord">HANA</TD>
-        <TD valign=top class="bord">adding SAP HANA Database support</TD>
+        <TD valign=top class="bord">inline editing for multilanguage values</TD>
     </TR>
     <TR>
         <TD valign=top class="bord">Added</TD>
-        <TD valign=top class="bord">Currency</TD>
-        <TD valign=top class="bord">adding currency conversion with validity support and exchange rates</TD>
+        <TD valign=top class="bord">User based reportManager</TD>
     </TR>
     <TR>
         <TD valign=top class="bord">Added</TD>
-        <TD valign=top class="bord">PHP Editor</TD>
-        <TD valign=top class="bord">adding native PHP editor in admin tools</TD>
+        <TD valign=top class="bord">global data synchronisation</TD>
+    </TR>
+    <TR>
+        <TD valign=top class="bord">Update</TD>
+        <TD valign=top class="bord">using jquery 3.2.1</TD>
     </TR>
 
 <TR>
@@ -177,7 +174,7 @@ if(!$view){
 }elseif($view == 'environment_check'){
 ?>
 
-    <link rel="stylesheet" href="extern/bootstrap/bootstrap.min.css">
+    <link rel="stylesheet" href="extern/bootstrap/bootstrap_3.3.7.min.css">
     <link rel="stylesheet" href="layout/comet/icons.css">
     <style>
         /* overwrite bootstrap's h2 settings */
@@ -242,7 +239,7 @@ require_once('admin/install/steps/2_dependencies.php');
 
 <br><br>
 <div class="footer">
-LIMBAS. Copyright &copy; 1998-2019 LIMBAS GmbH (info@limbas.com). LIMBAS is free software; You can redistribute it and/or modify it under the terms of the GPL General Public License V2 as published by the Free Software Foundation; Go to <a href="http://www.limbas.org/" title="LIMBAS Website" target="new">http://www.limbas.org/</a> for details. LIMBAS comes with ABSOLUTELY NO WARRANTY; Please note that some external scripts are copyright of their respective owners, and are released under different licences.
+LIMBAS. Copyright &copy; 1998-2021 LIMBAS GmbH (info@limbas.com). LIMBAS is free software; You can redistribute it and/or modify it under the terms of the GPL General Public License V2 as published by the Free Software Foundation; Go to <a href="http://www.limbas.org/" title="LIMBAS Website" target="new">http://www.limbas.org/</a> for details. LIMBAS comes with ABSOLUTELY NO WARRANTY; Please note that some external scripts are copyright of their respective owners, and are released under different licences.
 </div>
 
 </div>

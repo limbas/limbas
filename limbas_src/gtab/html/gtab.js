@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -71,7 +71,7 @@ function limbasColorSelectSet(val,formname,gtabid,fieldid,id){
 
 /* --- dynsPress ----------------------------------- */
 function lmbAjax_dynsearch(evt,el,actid,fname,par1,par2,par3,par4,par5,par6,gformid,formid,datatype,nextpage) {
-	if(evt){
+	if(evt === 'object'){
 	if (evt.keyCode == 27) {
 		var el = document.getElementById(el.name+"l");
 		el.innerHTML = '';
@@ -87,9 +87,14 @@ function lmbAjax_dynsearch(evt,el,actid,fname,par1,par2,par3,par4,par5,par6,gfor
 	if(!el){
 		el = document.getElementsByName(fname+"_ds")[0];
 	}
-	
-	dyns_value = el.value;
-	if(dyns_value.length > 1 || dyns_value == '*'){
+
+	if(typeof evt === 'string') {
+	    dyns_value = evt;
+    }else{
+        dyns_value = el.value;
+    }
+
+	if(dyns_value.length > 1 || dyns_value == '*' || nextpage){
 		url = "main_dyns.php";
 		actid = actid+"&form_name="+fname+"&form_value="+dyns_value+"&par1="+par1+"&par2="+par2+"&par3="+par3+"&par4="+par4+"&par5="+par5+"&par6="+par6+"&gformid="+gformid+"&formid="+formid+"&nextpage="+nextpage;
 		mainfunc = function(result){lmbAjax_dynsearchPost(result,el);};
@@ -131,6 +136,10 @@ function dynsClose(id) {
 // Ajax extended relation
 function LmExt_RelationFields(el,gtabid,gfieldid,viewmode,edittype,ID,orderfield,relationid,ExtAction,ExtValue,gformid,formid,ajaxpost,event){
 
+    if(!gformid){
+        gformid = $('#extRelationFieldsTab_'+gtabid+"_"+gfieldid).attr( "data-gformid" );
+    }
+
 	lmbCollReplaceSource = null;
 	if(ExtAction == "showall"){
 		var tel = document.getElementById("extRelationFieldsTab_"+gtabid+"_"+gfieldid);
@@ -163,6 +172,8 @@ function LmExt_RelationFields(el,gtabid,gfieldid,viewmode,edittype,ID,orderfield
 		lmbCollReplaceSource = Array(gtabid, gfieldid, ID, gformid, formid);
 		limbasCollectiveReplace(event,el,0,ExtValue);
 		return;
+	}else if(ExtAction == "unlinkall"){
+	    if(!confirm(jsvar['lng_2776'])){return;}
 	}
 	
 	var url = "main_dyns.php";
@@ -218,7 +229,7 @@ function LmExt_RelationFields(el,gtabid,gfieldid,viewmode,edittype,ID,orderfield
 	if(ExtAction == "showall"){return;}
 
 
-	if((ExtAction == "link" || ExtAction == "unlink") && !(event && event.shiftKey)){
+	if((ExtAction == "link" || ExtAction == "unlink" || ExtAction == "unlinkall") && !(event && event.shiftKey)){
 		document.getElementById('lmbAjaxContainer').style.display='none';
 	}
 }
@@ -268,11 +279,12 @@ function lmbAjax_multilang(el,gtabid,gfieldid,ID){
 		async: false,
 		data: actid,
 		success: function(data){
-			$('<div>').html('<div id="lmb_multiSelect">'+data+'</div>').children('div').css('width', '100%').css({'position':'relative','left':'0','top':'0','width':'100%'}).dialog({
-				resizable: true,
+			$('<div>').html('<div id="lmb_multilang">'+data+'</div>').children('div').css('width', '100%').css({'position':'relative','left':'0','top':'0','width':'100%'}).dialog({
+				appendTo: "#form1",
+                resizable: true,
 				modal: true,
-				width:'480',
-				title: el.title,
+				width:'600',
+				title: jsvar['lng_2897'],
 				close: function() {
 					$(this).dialog('destroy').remove();
 				}
@@ -476,7 +488,7 @@ function dyns_11_a(evt,el_value,el_id,form_name,fieldid,gtabid,ID,dash,attribute
             }
 
 			checktyp('32','',form_name,fieldid,gtabid,' ',ID);
-            ajaxGet(null,'main_dyns.php','11&fieldid='+fieldid+'&form_elid='+form_elid+'&ID='+ID,null,function(result) { $('#' + form_name + '_dse').html(result).show();if(typeof tagAttr_initSize==='function') {tagAttr_initSize();}},'form1');
+            ajaxGet(null,'main_dyns.php','11&gtabid='+gtabid+'&fieldid='+fieldid+'&form_elid='+form_elid+'&ID='+ID,null,function(result) { $('#' + form_name + '_dse').html(result).show();if(typeof tagAttr_initSize==='function') {tagAttr_initSize();}},'form1');
 			document.form1[form_name].value = '';
 			return;
 
@@ -606,9 +618,10 @@ function lmbSwitchTabulator(el,mainel,elkey,vert){
         }
         divel.className = cl;
         if(dsp) {
-            $('[id^='+nodel+']').show();
+            // $('[id^='+nodel+']').show(); // ??
+            $('#'+nodel).show();
         }else{
-            $('[id^='+nodel+']').hide();
+            $('#'+nodel).hide();
         }
     }
 
@@ -712,8 +725,9 @@ function LmExt_RelationList(el,gtabid,gfieldid,ID){
 
 /*----------------- Zeige Liste anzuzeigender Verknüpfungsfelder -------------------*/
 function lmb_relShowField(event,el,elname){
-	limbasDivShow(el,null,'lmbAjaxContainer','','',1);
-	document.getElementById("lmbAjaxContainer").innerHTML = document.getElementById(elname).innerHTML;
+
+    $($('#'+elname).detach()).appendTo('body');
+    limbasDivShow(el,null,elname,'','',1);
 
 	// put ajax container in front of jquery ui
 	var ui = $('.ui-front:visible');
@@ -775,13 +789,28 @@ function MultipleSelectShow(instance_name) {
 
 }
 
-function lmb_updateField(field_id,tab_id,id,changevalue,syntaxcheck,fielddesc,ajaxpost,fieldsize,el) {
-	checktyp(syntaxcheck,'g_'+tab_id+'_'+field_id,fielddesc,field_id,tab_id,changevalue,id,ajaxpost,fieldsize,el);
+function lmb_updateField(field_id,tab_id,id,changevalue,syntaxcheck,fielddesc,ajaxpost,fieldsize,el,parentage,language) {
+	checktyp(syntaxcheck,'g_'+tab_id+'_'+field_id,fielddesc,field_id,tab_id,changevalue,id,ajaxpost,fieldsize,el,parentage,language);
 }
 
-function checktyp(data_type,fieldname,fielddesc,field_id,tab_id,obj,id,ajaxpost,fieldsize,el,parentage) {
+/**
+ * Called on change of an input/select. Shows error message is the input's value is not in the correct format
+ * @param data_type int limbas datatype
+ * @param fieldname string name of the input/select html element
+ * @param fielddesc string readable description of the field to show in error messages. Defaults to fieldname
+ * @param field_id int limbas field id, optional
+ * @param tab_id int limbas table id, optional
+ * @param obj string the new value (often this.value)
+ * @param id int limbas dataset id, optional
+ * @param ajaxpost int 1 to update immediately via ajax
+ * @param fieldsize int the max length of the fields datatype, optional
+ * @param el html element
+ * @param parentage string parentage, optional
+ */
+function checktyp(data_type,fieldname,fielddesc,field_id,tab_id,obj,id,ajaxpost,fieldsize,el,parentage,language) {
 	if(!fielddesc){fielddesc = fieldname;}
     if(!parentage){parentage = '';}
+    if(!language){language = '';}
 
 	// no syntax check
 	if(!data_type && field_id && field_id){
@@ -808,7 +837,7 @@ function checktyp(data_type,fieldname,fielddesc,field_id,tab_id,obj,id,ajaxpost,
 	eval('var reg = /'+regexp+'/;');
 	if (obj != ''){
 		if (val && !reg.exec(val)){
-			newvalue = prompt(jsvar['lng_134']+'\n' + fielddesc +' \t '+DATA_TYPE_EXP[data_type]+' \t '+FORMAT[data_type]+' \n',obj);
+			newvalue = prompt(jsvar['lng_134']+'\n' + fielddesc +': '+DATA_TYPE_EXP[data_type]+' ('+FORMAT[data_type]+')',obj);
 			if(!newvalue){
 				limbasDuplicateForm(fieldname,'');
 				//eval("document.form1.elements['"+fieldname+"'].value='';");
@@ -821,7 +850,7 @@ function checktyp(data_type,fieldname,fielddesc,field_id,tab_id,obj,id,ajaxpost,
 				//eval("document.form1.elements['"+fieldname+"'].value=newvalue;");
 				if(field_id && tab_id){
 					if(id){
-						document.form1.history_fields.value=document.form1.history_fields.value + tab_id + ',' + field_id + ',' + id + ',' + parentage + ';';
+						document.form1.history_fields.value=document.form1.history_fields.value + tab_id + ',' + field_id + ',' + id + ',' + parentage + ',' + language + ';';
 						var isupdate = 1;
 					}else{
 						document.form1.history_search.value = document.form1.history_search.value + tab_id + ',' + field_id + ';';
@@ -834,7 +863,7 @@ function checktyp(data_type,fieldname,fielddesc,field_id,tab_id,obj,id,ajaxpost,
 		}else{
 			if(field_id && tab_id){
 				if(id){
-					document.form1.history_fields.value = document.form1.history_fields.value + tab_id + ',' + field_id + ',' + id + ',' + parentage + ';';
+					document.form1.history_fields.value = document.form1.history_fields.value + tab_id + ',' + field_id + ',' + id + ',' + parentage + ',' + language + ';';
 					var isupdate = 1;
 				}else{
 					document.form1.history_search.value = document.form1.history_search.value + tab_id + ',' + field_id + ';';
@@ -844,7 +873,7 @@ function checktyp(data_type,fieldname,fielddesc,field_id,tab_id,obj,id,ajaxpost,
 	}else{
 		if(field_id && tab_id){
 			if(id){
-				document.form1.history_fields.value = document.form1.history_fields.value + tab_id + ',' + field_id + ',' + id + ',' + parentage + ';';
+				document.form1.history_fields.value = document.form1.history_fields.value + tab_id + ',' + field_id + ',' + id + ',' + parentage + ',' + language + ';';
 				var isupdate = 1;
 			}else{
 				document.form1.history_search.value = document.form1.history_search.value + tab_id + ',' + field_id + ';';
@@ -854,7 +883,11 @@ function checktyp(data_type,fieldname,fielddesc,field_id,tab_id,obj,id,ajaxpost,
 	}
 
 	if(isupdate){
-		limbasDuplicateForm(el,fieldname,val);
+		limbasDuplicateForm(el,fieldname,val,obj);
+		if(!ajaxpost){
+		    // submit marker
+            $('.submit').addClass( "lmbSbmConfirm" );
+        }
 	}
 
 	if(isupdate && ajaxpost != 2 && id>0 && data_type != 13 && (ajaxpost == 1 || jsvar["ajaxpost"] == 1)){
@@ -872,12 +905,21 @@ function limbasDuplicateForm(el,name,val){
 	}else{
 		var ellist = document.getElementsByName(name);
 	}
-	
+
 	if(ellist.length > 1){
 		for(var i = 0; i < ellist.length; i++) {
 			var obj = ellist.item(i);
-			if(obj.type == 'checkbox'){
-				if(val){obj.checked = true;}else{obj.checked = false;}
+			if(obj == el){continue;}
+			if(obj.type == 'checkbox') {
+                if (val) {
+                    obj.checked = true;
+                } else {
+                    obj.checked = false;
+                }
+            }else if(obj.type == 'radio'){
+				if(obj.name+'_'+obj.getAttribute("data-index") == el.id) {
+                    obj.value = val;
+                }
 			}else{
 				obj.value = val;
 			}
@@ -946,7 +988,7 @@ function needfield(elid){
 				need[need.length] = nspell;
 				setbg($(this));
 			}
-			else if(ntype == 'select' && cc.selectedIndex <= 0 && nval == ''){
+			else if(ntype == 'select' && cc.selectedIndex <= 0 && (nval == '' || nval == '#L#delete')){
 				need[need.length] = nspell;
 				setbg($(this));
 			}
@@ -1000,64 +1042,158 @@ function lmb_needfieldChange(elid,status) {
 	}
 }
 
-// report menu options
-function limbasReportMenuOptions(evt,el,gtabid,reportid,ID,output,listmode,report_medium,report_rename,report_printer)
-{
-	activ_menu = 1;
-	linkadd = '';
-	if(!report_medium){report_medium = '';}
-	if(!el){
-		con = '';
-		use_record = '';
 
-		if(!report_medium && document.report_form){report_medium = document.report_form.report_medium.value;}
-		if(!report_rename && document.report_form && document.report_form.report_rename){report_rename = document.report_form.report_rename.value;}
-		if(!report_rename){report_rename = '';}
+/**
+ * report menu options
+ * @param preview load classic print menu or open preview
+ * @param evt js event
+ * @param el the button that was clicked
+ * @param gtabid limbas table id
+ * @param reportid limbas report id
+ * @param ID limbas dataset id
+ * @param output int (1=preview, 2=archive, 4=print)
+ * @param listmode bool whether the report is a report for the whole table
+ * @param report_medium string 'xml'/'pdf'/'tcpdf'/...
+ * @param report_rename string the file name
+ * @param report_printer int printer id, used when output=4
+ * @param resolvedTemplateGroups object see TemplateConfig::$resolvedTemplateGroups
+ * @param resolvedDynamicData object see TemplateConfig::$resolvedDynamicData
+ *
+ * @param saveAsTemplate if not empty, the selected configuration will be saved as template with this parameter as name
+ * @param callback function callback for receiving the report generation html
+ * @param context
+ */
+function limbasReportMenuHandler(preview,evt,el,gtabid,reportid,ID,output,listmode,report_medium,report_rename,report_printer, resolvedTemplateGroups={}, resolvedDynamicData={}, saveAsTemplate='', callback=null,context='old') {
+    activ_menu = 1;
 
-		if(listmode){
-			linkadd = "&report_output="+output+"&report_medium="+report_medium+"&report_rename="+report_rename+"&report_printer="+report_printer;
-		}else{
-			if(ID){
-				use_record = ID;
-			}else if(use_record = userecord('report',1)){
-				var count =	countofActiveRows();
-			}else{
-				use_record = "all";
-				if(document.getElementById("GtabResCount")){var count = document.getElementById("GtabResCount").innerHTML;}else{var count = 'undefined'}
-			}
-
-			if(count && !confirm(jsvar['lng_2676']+' '+count+'\n'+jsvar['lng_51'])){
-				activ_menu = 0;
-				limbasDivClose();
-				return;
-			}
-			linkadd = "&use_record="+use_record+"&report_output="+output+"&report_medium="+report_medium+"&report_rename="+report_rename+"&report_printer="+report_printer;
-		}
-
-		limbasWaitsymbol(evt,1);
-	}else{
-		linkadd = "&report_medium="+report_medium+"&report_output="+output+"&report_printer="+report_printer;
+    
+    
+    let $reportForm;    
+    if (context === 'bs4') {
+        $reportForm = $('#report_form_bs');
+	} else {
+        $reportForm = $('#report_form');
 	}
-	
-	actid = "menuReportOption&gtabid=" + gtabid + "&reportid=" + reportid + "&ID=" + ID + linkadd;
-	mainfunc = function(result){limbasReportMenuOptionsPost(result,el,output);};
-	ajaxGet(null,"main_dyns.php",actid,null,"mainfunc","form1");
+    
+	//console.log($reportForm);
+    
+    // get medium from input
+    if(!report_medium && $reportForm.length > 0){
+        report_medium = $reportForm.find("[name='report_medium']").val();
+    }
+
+    let params = {
+        gtabid: gtabid,
+        report_id: reportid,
+        report_output: output,
+        report_medium: report_medium,
+        report_printer: report_printer,
+        resolvedTemplateGroups: !$.isEmptyObject(resolvedTemplateGroups) ? JSON.stringify(resolvedTemplateGroups) : null,
+        resolvedDynamicData: !$.isEmptyObject(resolvedDynamicData) ? JSON.stringify(resolvedDynamicData) : null,
+		preview: preview,
+        context: context,
+        saveAsTemplate: saveAsTemplate
+    };
+
+    
+    if (preview) {
+        params.action = 'report_preview';
+    }
+
+
+    let count = 1;
+    // selected datasets
+    if (!listmode) {
+        if (ID && ID !== '0') {
+            params.ID = ID;
+            count = 1;
+        } else {
+            let use_record;
+
+            let datid = document.form1.ID.value;
+            if (datid > 0) {
+            	use_record = ID+"_"+gtabid;
+			} else {
+                let actrows = checkActiveRows();
+                if(actrows.length > 0){
+                    use_record = actrows.join(";");
+                }
+			}
+			
+			
+            if (use_record) {
+                params.use_record = use_record;
+                document.form1.use_record.value = use_record;
+                count = countofActiveRows();
+            } else {
+                params.use_record = "all";
+                const $countInput = $('#GtabResCount');
+                if ($countInput.length) {
+                    count = $countInput.html();
+                } else {
+                    count = 'undefined';
+                }
+            }
+        }
+        
+    }
+    
+    if (!el && output !== 0 && output != null) {
+    	
+        // ask user when many datasets selected
+        if (!listmode && count && count > 1) {
+            if (!confirm(`${jsvar['lng_2676']} ${count}\n${jsvar['lng_51']}`)) {
+                activ_menu = 0;
+                limbasDivClose();
+                return;
+            }
+        }
+        
+        
+    	let $report_rename = $reportForm.find("input[name='report_rename']");
+        if (report_rename == null && $report_rename.length > 0) {
+            report_rename = $report_rename.val();
+        }
+        if (!report_rename) {
+            report_rename = '';
+        }
+        params.report_rename = report_rename;
+
+        limbasWaitsymbol(evt,1);
+    }
+
+
+    const actid = "menuReportOption&" + $.param(params);
+    
+    if (callback === null) {
+        callback = function (result) {
+            limbasReportMenuOptionsPost(result, el, output);
+        };
+	}
+    
+    ajaxGet(null, "main_dyns.php", actid, null, callback, "form1");
 }
 
-
+/**
+ * @param result
+ * @param el
+ * @param output
+ */
 function limbasReportMenuOptionsPost(result,el,output){
 	// use Scripts
-	
-	ajaxEvalScript(result);
-	document.getElementById("limbasDivMenuReportOption").innerHTML = result;
-	if(el){
-		limbasDivShow(el,'limbasDivMenuBericht','limbasDivMenuReportOption');
-	}else{
-		limbasWaitsymbol(0,0,1);
-	}
+
+    if (!ajaxEvalScript(result)) {
+        $("#limbasDivMenuReportOption").html(result);
+        if (el) {
+            limbasDivShow(el, 'limbasDivMenuBericht', 'limbasDivMenuReportOption');
+        }else{
+            limbasWaitsymbol(0,0,1);
+        }
+    }
+    
 	
 	if(output==2){
-		document.getElementById("lmbReportMenuOptionsArchive").innerHTML = "<i class='lmb-icon lmb-aktiv' border=0></i>";
+		document.getElementById("lmbReportMenuOptionsArchive").innerHTML = "<i class='lmb-icon lmb-aktiv'></i>";
 	}else if(output==1 || output==4){
 		activ_menu = 0;
 		limbasDivClose();
@@ -1065,8 +1201,36 @@ function limbasReportMenuOptionsPost(result,el,output){
 	
 }
 
+/**
+ * [{name: 'name', value: 'value'}, {name: 'name2', value: 'value2'}] -> {name: value, name2: value2}
+ * used to convert jQuery::serializeArray to a usable format
+ * @param arr
+ * @returns {{}}
+ */
+function keyValueArrToObj(arr) {
+	if (!arr || !Array.isArray(arr)) {
+		return {};
+	}
 
+	const obj = {};
+	for (const entry of arr) {
+		obj[entry.name] = entry.value;
+	}
+	return obj;
+}
 
+function limbasReportSaveTemlpate(evt, gtabid, reportid, resolvedTemplateGroups={}) {
+
+	//TODO: language
+    let name = prompt('Template Name', '');
+
+    if (name != null) {
+        limbasReportMenuHandler(0,evt,null,gtabid,reportid,0,0,0,'pdf','',0, resolvedTemplateGroups, {}, name, function(result){
+            alert('Template gespeichert.');
+		});
+    }
+    
+}
 
 
 // Ajax reminder
@@ -1486,14 +1650,18 @@ function setSelectedText(evt,el,val) {
 }
 
 
+// ---- Tabellenkopf Notice ----------
+function lmbGlistBodyNotice(id,val,el) {
+    
+    // gtabBodyDetailFringe
 
+    if(document.getElementById('lmbGlistBodyNotice'+id)){
+        $('#lmbGlistBodyNotice'+id).replaceWith(val);
+    }else {
+        $('#GtabTableFull').prepend(val);
+    }
+    $('#GtabTableFull').first().css('float','');
 
-
-
-// --- Fenster fuer Detail  -----------------------------------
-function newwin2(TABID,V_TABID,V_FIELDID,V_ID,ID,FORMID) {
-	divclose();
-	relationa = open("main.php?&action=gtab_change&verknpf=1&verkn_showonly=1&ID=" + ID + "&verkn_ID=" + V_ID + "&gtabid=" + TABID + "&verkn_tabid=" + V_TABID + "&verkn_fieldid=" + V_FIELDID + "&form_id=" + FORMID + "&wfl_id=" + jsvar["wfl_id"] + "&wfl_inst=" + jsvar["wfl_inst"] ,"relationdetail","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=800,height=600");
 }
 
 // --- Fenster VERKNÜPFUNG 1:N / N:N -----------------------------------
@@ -1526,6 +1694,9 @@ function newwin6() {
 	hist = open("main.php?action=history&wfl_id=" + jsvar["wfl_id"] + "&wfl_inst=" + jsvar["wfl_inst"] + "&ID=" + ID + "&tab=" + gtabid + "" ,"History","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=600,height=600");
 }
 
+
+// document.form1.action.value,'5','4','4','30','98','0','','1','element2',''
+
 // show detail in dialog or new window
 function newwin7(action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimension,v_formid,inframe,show_relationpath) {
 
@@ -1536,7 +1707,7 @@ function newwin7(action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimension,v_
     if (v_tabid) {
         verknpf = 1;
     }
-    if (formdimension && formid != '0') {
+    if (formdimension) {
         var dimsn = formdimension.split("x");
         var x = (parseInt(dimsn[0]) + 20);
         var y = (parseInt(dimsn[1]) + 10);
@@ -1567,7 +1738,14 @@ function newwin7(action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimension,v_
 
     // show in new window
     if (!inframe) {
-        relationtab = open("main.php?action=" + action + "&verkn_showonly=1&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "&form_id=" + formid + "&verknpf=" + verknpf + "&verkn_formid=" + v_formid + '&verkn_addfrom='+relation_path, "relationtable", "toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=" + x + ",height=" + y);
+        var wpath = "main.php?action=" + action + "&verkn_showonly=1&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "&form_id=" + formid + "&verknpf=" + verknpf + "&verkn_formid=" + v_formid + '&verkn_addfrom='+relation_path;
+        relationtab = open(wpath, "relationtable", "toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=" + x + ",height=" + y);
+        return;
+    }
+
+    if (inframe == 'tab') {
+        wpath = "index.php?action=redirect&src=action=" + action + "%26verkn_showonly=1%26ID=" + id + "%26verkn_ID=" + v_id + "%26gtabid=" + gtabid + "%26verkn_tabid=" + v_tabid + "%26verkn_fieldid=" + v_fieldid + "%26form_id=" + formid + "%26verknpf=" + verknpf + "%26verkn_formid=" + v_formid + '%26verkn_addfrom='+relation_path;
+        relationtab = open(wpath, "_blank");
         return;
     }
 
@@ -1595,11 +1773,11 @@ function newwin7(action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimension,v_
         // show in frame as div
         $("#"+layername).remove();
         $.ajax({
-            type: "GET",
+            type: "POST",
             url: "main_dyns.php",
             async: false,
             dataType: "html",
-            data: "actid=openSubForm&ID=" + id + "&gtabid=" + gtabid + "&gformid=" + formid + "&action=" + action +"&verkn_ID=" + v_id + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + '&verkn_addfrom='+relation_path,
+            data: $('#form1 #' + layername + ' :input').add('[name=history_fields]').serialize()+"&actid=openSubForm&ID=" + id + "&gtabid=" + gtabid + "&gformid=" + formid + "&action=" + action +"&verkn_ID=" + v_id + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + '&verkn_addfrom='+relation_path + '&subformlayername='+layername,
             success: function (data) {
                 $("<div id='"+layername+"'></div>").html(data).css({'position': 'relative', 'left': '0', 'top': '0'}).dialog({
                     width: x,
@@ -1611,8 +1789,11 @@ function newwin7(action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimension,v_
                     close: function () {
                         $("#"+layername).dialog('destroy').remove();
                         document.body.style.cursor = 'default';
+                        $('[name=history_fields]').val('');
                     }
                 });
+
+                if(document.getElementById('lmbSbmClose')){document.getElementById('lmbSbmClose').style.display='';}
             }
         });
     // show in dialog as iframe
@@ -1629,9 +1810,9 @@ function newwin7(action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimension,v_
                 $('#lmb_gtabDetailIFrame').attr("src", "main.php?action=" + action + "&verkn_showonly=1&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "&form_id=" + formid + "&verknpf=" + verknpf + "&verkn_formid=" + v_formid + '&verkn_addfrom='+relation_path);
             },
             close: function () {
-                $("#"+layername).dialog('destroy').remove();
-                lmb_gtabDetailIFrame.document.form1.action.value = 'gtab_change';
-                lmb_gtabDetailIFrame.send_form(1, 0, 0, 1);
+               //lmb_gtabDetailIFrame.document.form1.action.value = 'gtab_change';
+               //lmb_gtabDetailIFrame.send_form(1, 0, 0, 1);
+               $("#"+layername).dialog('destroy').remove();
             }
         });
 
@@ -1639,14 +1820,16 @@ function newwin7(action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimension,v_
     }else if(document.getElementById(layername) && document.getElementById(layername).tagName.toLowerCase() == 'div') {
         // show in frame as div
         $.ajax({
-            type: "GET",
+            type: 'POST',
             url: "main_dyns.php",
             async: false,
             dataType: "html",
-            data: "actid=openSubForm&ID=" + id + "&gtabid=" + gtabid + "&gformid=" + formid + "&action=" + action +"&verkn_ID=" + v_id + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + '&verkn_addfrom='+relation_path,
+            data: $('#form1 #' + layername + ' :input').add('[name=history_fields]').serialize()+"&actid=openSubForm&ID=" + id + "&gtabid=" + gtabid + "&gformid=" + formid + "&action=" + action +"&verkn_ID=" + v_id + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + '&verkn_addfrom='+relation_path + '&subformlayername='+layername,
             success: function (data) {
                 $('#'+layername).html(data);
                 document.body.style.cursor = 'default';
+                $('[name=history_fields]').val('');
+                if(document.getElementById('lmbSbmClose')){document.getElementById('lmbSbmClose').style.display='';}
             }
         });
 

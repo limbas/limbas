@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -19,7 +19,7 @@
  */
 
 
-$jsvar_ = array(24,49,50,51,56,84,93,101,134,164,721,744,745,813,815,822,1311,1318,1424,1441,1504,1509,1560,1608,1615,1683,1733,126,1709,1717,1760,1868,1913,2006,2007,2008,2009,2010,2082,2083,2114,2138,2139,2146,2147,2153,2154,2155,2156,2157,2158,2186,2187,2219,2359,2433,2454,2676,2794,2354,2902,2705,2979);
+$jsvar_ = array(24,49,50,51,56,84,93,101,134,138,164,721,744,745,813,815,822,844,1311,1318,1424,1441,1504,1509,1560,1608,1615,1683,1733,126,1709,1717,1760,1868,1913,2006,2007,2008,2009,2010,2082,2083,2114,2138,2139,2146,2147,2153,2154,2155,2156,2157,2158,2186,2187,2219,2226,2354,2359,2433,2454,2676,2776,2794,2897,2902,2705,2979,3085);
 foreach($jsvar_ as $key => $value){
 	$jsvar .= "jsvar['lng_".$value."'] = \"".$lang[$value]."\";\n";
 }

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -305,21 +305,33 @@ function openMenu(id){
 }
 
 function selectMultitenant(el){
-
-    var left = $(el).offset().left;
-    var cont = "<div id='selectMultitenant' class='lmbContextMenu' style='position:absolute;left:"+left+";top:80px;'>"+$('#selectMultitenant').html()+"</div>";
-
-    if(!parent.document.getElementById('selectMultitenant')) {
-        $(cont).appendTo(parent.document.body);
+    // create element in top frame if not exists
+    if (!parent.document.getElementById('selectMultitenant')) {
+        $(parent.document.body).append("<div id='selectMultitenant' class='lmbContextMenu' style='position:absolute;top:80px;'>" + $('#selectMultitenant').html() + "</div>");
     }
 
-    parent.document.getElementById('selectMultitenant').style.display='';
+    // show and position
+    const left = $(el).offset().left - $(el).closest('body').scrollLeft();
+    const $div = $('#selectMultitenant', parent.document);
+    const oldWidth = $(parent.document).width();
+    $div.css({ left: left }).show();
+
+    // move left if it was too far right
+    const diff = $(parent.document).width() - oldWidth;
+    if(diff > 0) {
+        $div.css({ left: (left - diff - 5 /* a little margin for optical reasons */) });
+    }
 }
 
 function setMultitenant(id,name) {
     parent.document.getElementById('selectMultitenant').remove();
     parent.top1.document.getElementById('topframeMultitenants').innerHTML = '(' +name+')';
     parent.message.location.href = 'main.php?&action=top2&setMultitenant='+id;
+    if(parent.main.form1.action.value == 'gtab_erg'){
+        parent.main.send_form(1,2);
+    }else{
+        parent.main.location.href = 'main.php?&action=intro';
+    }
 }
 
 

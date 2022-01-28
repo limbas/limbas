@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -140,7 +140,17 @@ pop_top('limbasDivMenuBericht');
 if($greportlist[$gtabid]["id"]){
 	foreach($greportlist[$gtabid]["id"] as $key => $reportid){
 		if($greportlist[$gtabid]["hidden"][$key]){continue;}
-		$zl = "limbasReportMenuOptions(event,this,'$gtabid','$reportid','0','','".$greportlist[$gtabid]["listmode"][$key]."');";
+
+        $resolvedTemplateGroups = '';
+        if ($greportlist[$gtabid]["is_template"][$key]) {
+            $resolvedTemplateGroups = htmlspecialchars($greportlist[$gtabid]["saved_template"][$key], ENT_QUOTES);
+            $reportid = $greportlist[$gtabid]["parent_id"][$key];
+        }
+
+        $preview = ($greportlist[$gtabid]["preview"][$key] == 1 || $greportlist[$gtabid]["preview"][$key] == 3) ? 1 : 0;
+        
+        $zl = "limbasReportMenuHandler($preview,event,this,'$gtabid','$reportid','0','','{$greportlist[$gtabid]['listmode'][$key]}', null, null, null, $resolvedTemplateGroups)";
+		
 		pop_submenu2($greportlist[$gtabid]["name"][$key],$zl,"","","lmb-icon lmb-".$greportlist[$gtabid]["defformat"][$key]);
 		$greportlist_exist = 1;
 	}
@@ -289,7 +299,12 @@ if($verknpf == 1){
 if($gtab["viewver"][$gtabid]){
 	pop_menu(237,'','',$filter["viewversion"][$gtabid],0);	# zeige versionierte
 }
-if($gtab["sverkn"][$gtabid]){
+
+if($gtab["validity"][$gtabid]){
+	pop_submenu(312,'','',0);	# zeige valide
+}
+
+if($gtab["sverkn"][$gtabid] and $verkn){
 	pop_menu(261,'','',$filter["nosverkn"][$gtabid],0);		# zeige selbstverknüpfte
 }
 
@@ -335,8 +350,11 @@ pop_bottom();
 <div ID="limbasDivMenuExtras" class="lmbContextMenu" style="display:none;z-index:992" OnClick="activ_menu = 1;">
 <?php #----------------- Menü - Extras -------------------
 #pop_submenu(132,'','');			# Formulare
-if($LINK[131] AND $GLOBALS["greportlist_exist"] AND ($LINK[175] OR $LINK[176])){
+if($LINK[131] AND $GLOBALS["greportlist_exist"] AND ($LINK[175] OR $LINK[176] OR $LINK[315])){
 	pop_submenu(131,'','',0);			# Berichte
+    if ($LINK[315]) {
+        pop_submenu(315,'','',0);
+    }
 }
 if($gdiaglist[$gtabid]["id"]){
 	pop_submenu(232,'','',0);			# Diagramme
@@ -390,6 +408,28 @@ if($GLOBALS['gcustmenu'][$gtabid][2]['id'][0]){
 }
 ?>
 
+<DIV ID="limbasDivMenuValidity" class="lmbContextMenu" style="display:none;z-index:993" OnClick="activ_menu = 1;">
+<FORM NAME="formular_Validity" onsubmit="document.form1.filter_validity.value=this.lmbValidity.value;send_form(1);return false;">
+<?php
+pop_top('limbasDivMenuValidity');
+pop_left(null,'lmb-icon lmb-calendar');
+$dateformat = setDateFormat(1,2);
+$transl = array('all'=>$lang[3052],'allto'=>$lang[3054],'allfrom'=>$lang[3055]);
+$validityval = $filter["validity"][$gtabid];
+if($transl[$filter["validity"][$gtabid]]){$validityval = $transl[$filter["validity"][$gtabid]];}
+echo "<input type=\"text\" maxlength=\"20\" style=\"width:170px;\" value=\"".$validityval."\" name=\"lmbValidity\" id=\"lmbValidity\" onclick=\"activ_menu=1;\" onchange=\"document.form1.filter_validity.value=this.value;send_form(1);return;\" ondblclick=\"lmb_datepicker(event,this,'lmbValidity',document.getElementById('lmbValidity').value,'$dateformat',10);\">
+<i class=\"lmbContextRight lmb-icon lmb-caret-right-alt\" border=\"0\" onclick=\"lmb_datepicker(event,this,'lmbValidity',document.getElementById('lmbValidity').value,'$dateformat',10);\"></i>";
+pop_right();
+
+${'fvalidity_'.$filter["validity"][$gtabid]} = 1;
+pop_menu(0, "document.form1.filter_validity.value='all';send_form(1);return;", $lang[3052], $fvalidity_all, 0);
+pop_menu(0, "document.form1.filter_validity.value='allto';send_form(1);return;", $lang[3054], $fvalidity_allto, 0);
+pop_menu(0, "document.form1.filter_validity.value='allfrom';send_form(1);return;", $lang[3055], $fvalidity_allfrom, 0);
+
+pop_bottom();
+?>
+</FORM>
+</DIV>
 
 <DIV ID="limbasDivMenuSettings" class="lmbContextMenu" style="display:none;z-index:993" OnClick="activ_menu = 1;">
 <?php
@@ -408,7 +448,7 @@ pop_bottom();
 <?php #----------------- Verknüpfungs-Menü -------------------
 pop_top('limbasDivMenuLock');
 pop_left();
-echo "&nbsp;&nbsp;<input type=\"text\" maxlength=\"2\" style=\"width:30px;\" value=\"30\" id=\"lmbLockTime\">&nbsp;&nbsp;&nbsp;<select id=\"lmbLockUnit\" class=\"contextmenu\"><option value=\"m\">".$lang[1980]."<option value=\"h\">".$lang[1981]."<option value=\"d\">".$lang[1982]."</select>&nbsp;&nbsp;<input type=\"text\" value=\"sperren\" ID=\"LmbIconDataLock\" style=\"cursor:pointer;vertical-align:bottom;width:50px;text-align:center\" OnClick=\"document.form1.lockingtime.value=document.getElementById('lmbLockTime').value+'|'+document.getElementById('lmbLockUnit').value;userecord('lock');\">";
+echo "&nbsp;&nbsp;<input type=\"text\" maxlength=\"2\" style=\"width:30px;\" value=\"30\" id=\"lmbLockTime\">&nbsp;&nbsp;&nbsp;<select id=\"lmbLockUnit\" class=\"contextmenu\"><option value=\"m\">".$lang[1980]."<option value=\"h\">".$lang[1981]."<option value=\"d\">".$lang[1982]."</select>&nbsp;&nbsp;<input type=\"button\" value=\"".$lang[1218]."\" ID=\"LmbIconDataLock\" OnClick=\"document.form1.lockingtime.value=document.getElementById('lmbLockTime').value+'|'+document.getElementById('lmbLockUnit').value;userecord('lock');\">";
 pop_right();
 pop_bottom();
 ?>
@@ -561,7 +601,6 @@ jsvar["tablename"] = "<?php if($snapid){echo $gsnap[$gtabid]["name"][$snapid];}e
 jsvar["wfl_id"] = "<?=$wfl_id?>";
 jsvar["wfl_inst"] = "<?=$wfl_inst?>";
 jsvar["resultspace"] = "<?=$umgvar["resultspace"]?>";
-jsvar["searchcount"] = "<?=$umgvar["searchcount"]?>";
 jsvar["usetablebody"] = "<?=$umgvar["usetablebody"]?>";
 jsvar["action"] = "<?=$action?>";
 jsvar["detail_viewmode"] = "<?=$umgvar["detail_viewmode"]?>";
@@ -570,6 +609,14 @@ jsvar["tablename"] = "<?=$gtab["desc"][$gtabid]?>";
 
 // --------------------- Verknüpfungszusatz Datensatz markieren ------------------------
 </SCRIPT>
+
+<?php
+
+if($GLOBALS["greportlist_exist"] AND $LINK[315]){
+    LmbReportSelect::printReportSelect($gtabid);
+}
+
+ ?>
 
 	<?php /*-------------------------------------------- Formularkopf ----------------------------------------*/?>
 	<form action="main.php" method="post" id="lmbForm2" name="form2" autocomplete="off">
@@ -658,7 +705,8 @@ jsvar["tablename"] = "<?=$gtab["desc"][$gtabid]?>";
 	<input type="hidden" name="filter_force_delete">
     <input type="hidden" name="filter_tabulatorKey">
     <input type="hidden" name="filter_multitenant">
-	<input type="hidden" name="verkn_addfrom">
+    <input type="hidden" name="filter_validity">
+    <input type="hidden" name="filter_validity_all">
 	<input type="hidden" name="pop_choice">
 	<input type="hidden" name="grp_choice">
 	
@@ -666,6 +714,7 @@ jsvar["tablename"] = "<?=$gtab["desc"][$gtabid]?>";
 	<input type="hidden" name="history_search">
 	<input type="hidden" name="verknpf" VALUE="<?= $verknpf ?>">
 	<input type="hidden" name="verkn_poolid" VALUE="<?=$verkn_poolid;?>">
+	<input type="hidden" name="verkn_addfrom" VALUE="<?=$verkn_addfrom;?>">
 	<?php #--------------------- Verknüpfungszusatz ------------------------
 	if($verknpf){?>
 	<input type="hidden" name="verkn_ID" VALUE="<?= $verkn_ID ?>">
@@ -694,7 +743,7 @@ if(!$filter["hidecols"][$gtabid][0]){
 # ----- Formular -------
 if($form_id AND $gformlist[$gtabid]["id"][$form_id] AND $gformlist[$gtabid]["typ"][$form_id] == 2){
 	if($gformlist[$gtabid]["css"][$form_id]){
-		echo"<style type=\"text/css\">@import url(".$gformlist[$gtabid]["css"][$form_id].");</style>\n";
+		echo"<style type=\"text/css\">@import url(".$gformlist[$gtabid]["css"][$form_id]."?v={$umgvar['version']});</style>\n";
 	}
 	form_ergview($gtabid,$gresult,$form_id);
 }else{
@@ -750,7 +799,3 @@ view_copychange(".$rec[0].",".$rec[1].");
 </Script>
 ";
 }
-
-
-
-?>

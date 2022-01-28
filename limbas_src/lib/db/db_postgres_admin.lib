@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -395,9 +395,9 @@ function dbq_13($p){
 function dbq_14($p){
     $p[7] = parse_db_int($p[7],1);
     if($p[6]) {
-        return "lmb_vkn('" . $p[0] . '.' . $p[2] . "','" . $p[3] . "','" . $p[4] . "','" . $p[0] . "." . $p[5] . "','" . $p[6] . "','" . $p[7] . "');";
+        return "lmb_vkn('" . $p[0] . '.' . $p[2] . "','" . $p[3] . "','" . $p[4] . "','" . $p[5] . "','" . $p[6] . "','" . $p[7] . "');";
     }else{
-        return "lmb_vkn('" . $p[0] . '.' . $p[2] . "','" . $p[3] . "','" . $p[4] . "','','','" . $p[7] . "');";
+        return "lmb_vkn('" . $p[0] . '.' . $p[2] . "','" . $p[3] . "','" . $p[4] . "','" . $p[5] . "','','" . $p[7] . "');";
     }
 }
 
@@ -776,6 +776,7 @@ nid INTEGER;
 
 BEGIN
 
+
 IF TG_ARGV[2] = '+' THEN
      nid = new.id;
 END IF;
@@ -818,6 +819,13 @@ LANGUAGE 'plpgsql';
 ";
 
 	//RAISE EXCEPTION '!LMB%', statement;
+
+    //IF TG_ARGV[2] = '0' THEN
+    //    nid = new.TG_ARGV[4];
+    //    statement = 'update ' || TG_ARGV[0] || ' set ' || TG_ARGV[1] || ' = (select count(*) from ' || TG_RELNAME || ' where ' || TG_ARGV[4] || ' = ' || nid || ') where id = ' || nid;
+    //    return new;
+    //END IF;
+
 	
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,"create procedure lmb_vkn",__FILE__,__LINE__);
     if(!$rs){

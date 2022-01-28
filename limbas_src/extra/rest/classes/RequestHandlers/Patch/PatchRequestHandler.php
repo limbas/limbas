@@ -109,7 +109,7 @@ abstract class PatchRequestHandler extends RequestHandler {
 
         //TODO: backwards relation
         $relation = &init_relation($this->request->table_id,$fieldID,$this->request->id,$rel_add_id,$rel_del_id);
-        set_relation($relation);
+        #set_relation($relation);
         $result = set_relation($relation);
         if ($result === false) {
             throw new RestException('Could not add relation!', 400);

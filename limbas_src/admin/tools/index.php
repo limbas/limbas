@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -22,11 +22,11 @@
 
 <script language="JavaScript">
 
-function checkall(el){
+function checkall(el,name){
 	var ar = document.getElementsByTagName("input");
 	for (var i = ar.length; i > 0;) {
 		cc = ar[--i];
-		if(cc.name.substr(0,8) == 'useindex'){
+		if(cc.className == name){
 			if(el.checked){
 				cc.checked = 1;
 			}else{
@@ -90,8 +90,8 @@ function LIM_activate(el,elid){
 <?php
 
 # rebuild index
-if(($rebuild OR $delete) AND $useindex){
-	foreach ($useindex as $indname => $value){
+if(($rebuild OR $delete) AND $use_index){
+	foreach ($use_index as $indname => $value){
 		$indspec = explode('#',$value);
 		$indt = dbf_4($indspec[0]);
 		$indf = dbf_4($indspec[1]);
@@ -110,6 +110,39 @@ if(($rebuild OR $delete) AND $useindex){
 			if($rs){lmb_alert("index $indname created");}
 		}
 	}
+	$active_tab = 1;
+}
+
+# delete contraint
+if(($delete_constraint AND $use_constraint)){
+	foreach ($use_constraint as $constraint_name => $value){
+		$indspec = explode('#',$value);
+		$indt = dbf_4($indspec[0]);
+		$indf = dbf_4($indspec[1]);
+		$constraint_name = dbf_4($constraint_name);
+		if(!$constraint_name OR !$indt OR !$indf){continue;}
+		# drop constraint
+		$sqlquery = dbq_25(array($indt,$indf,$constraint_name));
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if($rs){lmb_alert("contraint $constraint_name deleted");}
+	}
+	$active_tab = 2;
+}
+
+# delete key
+if(($delete_fkey AND $use_fkey)){
+	foreach ($use_fkey as $fkey_name => $value){
+		$indspec = explode('#',$value);
+		$indt = dbf_4($indspec[0]);
+		$indf = dbf_4($indspec[1]);
+		$fkey_name = dbf_4($fkey_name);
+		if(!$fkey_name OR !$indt OR !$indf){continue;}
+		# drop constraint
+		$sqlquery = dbq_6(array($indt,$fkey_name));
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if($rs){lmb_alert("Foreign Keys $fkey_name deleted");}
+	}
+	$active_tab = 4;
 }
 
 
@@ -153,11 +186,10 @@ echo "<TR class=\"tabHeader\">
 <TD class=\"tabHeaderItem\"><a href=\"#\" onclick=\"ind_sort('column')\">$lang[168]</a></TD>
 <TD align=\"center\" class=\"tabHeaderItem\"><a href=\"#\" onclick=\"ind_sort('unique')\">unique</a></TD>
 <TD align=\"center\" class=\"tabHeaderItem\"><a href=\"#\" onclick=\"ind_sort('used')\">$lang[1856]</a></TD>
-<TD align=\"center\"><input style=\"margin:0px\" type=\"checkbox\" onclick=\"checkall(this)\"></TD>
+<TD align=\"center\"><input style=\"margin:0px\" type=\"checkbox\" onclick=\"checkall(this,'use_index')\"></TD>
 </TR>";
 
 if($ind["name"]){
-
 	foreach ($ind["key"] as $key => $value){
 			echo "<TR class=\"tabBody\">
 			<TD> ".$ind["name"][$key]." </TD>
@@ -166,9 +198,7 @@ if($ind["name"]){
 			<TD align=\"center\"> ".$ind["unique"][$key]." </TD>
 			<TD align=\"center\"> ".$ind["used"][$key]." </TD>
 			<TD align=\"center\">";
-			#if(lmb_strpos($ind["name"][$key],"lmbconst_") === false){
-				echo "<input style=\"margin:0px\" type=\"checkbox\" name=\"useindex[".$ind["name"][$key]."]\" value=\"".$ind["table"][$key]."#".$ind["column"][$key]."\">";
-			#}
+			echo "<input style=\"margin:0px\" type=\"checkbox\" class=\"use_index\" name=\"use_index[".$ind["name"][$key]."]\" value=\"".$ind["table"][$key]."#".$ind["column"][$key]."\">";
 			echo "</TD>
 			</TR>";
 	}
@@ -183,7 +213,8 @@ echo "</TABLE>";
 
 /* -------- foreign keys --------*/
 echo "<TABLE ID=\"tab2\" width=\"100%\" cellspacing=\"0\" cellpadding=\"1\" class=\"tabBody\" style=\"display:none;\">";
-echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\">".$lang[4]."</TD><TD class=\"tabHeaderItem\">".$lang[164]."</TD><TD class=\"tabHeaderItem\">".$lang[168]."</TD><TD class=\"tabHeaderItem\">".$lang[2727]."</TD><TD class=\"tabHeaderItem\">".$lang[2728]."</TD></TR>";
+echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\">".$lang[4]."</TD><TD class=\"tabHeaderItem\">".$lang[164]."</TD><TD class=\"tabHeaderItem\">".$lang[168]."</TD><TD class=\"tabHeaderItem\">".$lang[2727]."</TD><TD class=\"tabHeaderItem\">".$lang[2728]."</TD>
+<TD align=\"center\"><input style=\"margin:0px\" type=\"checkbox\" onclick=\"checkall(this,'use_fkey')\"></TD></TR>";
 
 # get foreign keys
 $fkey = lmb_getForeignKeys();
@@ -196,9 +227,13 @@ if($fkey["keyname"]){
 		<TD> ".$fkey["columnname"][$key]." </TD>
 		<TD> ".$fkey["reftablename"][$key]." </TD>
 		<TD> ".$fkey["refcolumnname"][$key]." </TD>
+		<TD align=\"center\">";
+		echo "<input style=\"margin:0px\" type=\"checkbox\" class=\"use_fkey\" name=\"use_fkey[".$fkey["keyname"][$key]."]\" value=\"".$fkey["tablename"][$key]."#".$fkey["columnname"][$key]."\">";
+		echo "</TD>
 		</TR>";
 	}
 	echo "<TR><TD COLSPAN=\"9\" class=\"tabFooter\"></TD></TR>";
+	echo "<TR><TD colspan=\"6\"><hr><input type=\"submit\" value=\"".$lang[160]."\" name=\"delete_fkey\"></TD></TR>";
 }
 
 
@@ -233,7 +268,9 @@ echo "</TABLE>";
 
 /* -------- unique constraints --------*/
 echo "<TABLE ID=\"tab4\" width=\"100%\" cellspacing=\"0\" cellpadding=\"1\" class=\"tabBody\" style=\"display:none;\">";
-echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\">".$lang[4]."</TD><TD class=\"tabHeaderItem\">".$lang[164]."</TD><TD class=\"tabHeaderItem\">".$lang[168]."</TD></TR>";
+echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\">".$lang[4]."</TD><TD class=\"tabHeaderItem\">".$lang[164]."</TD><TD class=\"tabHeaderItem\">".$lang[168]."</TD>
+<TD align=\"center\"><input style=\"margin:0px\" type=\"checkbox\" onclick=\"checkall(this,'use_constraint')\"></TD></TR>
+";
 
 # get unique constraints
 $constr = dbq_26(array($DBA["DBSCHEMA"]));
@@ -244,17 +281,32 @@ if($constr["TABLE_NAME"]){
 		<TD> ".$constr["PK_NAME"][$key]." </TD>
 		<TD> ".$constr["TABLE_NAME"][$key]." </TD>
 		<TD> ".$constr["COLUMN_NAME"][$key]." </TD>
+		<TD align=\"center\">";
+		echo "<input style=\"margin:0px\" type=\"checkbox\" class=\"use_constraint\" name=\"use_constraint[".$constr["PK_NAME"][$key]."]\" value=\"".$constr["TABLE_NAME"][$key]."#".$constr["COLUMN_NAME"][$key]."\">";
+		echo "</TD>
 		</TR>";
 	}
 	echo "<TR><TD COLSPAN=\"9\" class=\"tabFooter\"></TD></TR>";
+	echo "<TR><TD colspan=\"6\"><hr><input type=\"submit\" value=\"".$lang[160]."\" name=\"delete_constraint\"></TD></TR>";
+
+
 }
 
 echo "</TABLE>";
-
 ?>
 
 <TR><TD>
 </TABLE>
 
 </div>
+
+<?
+if($active_tab) {
+    error_log($active_tab);
+    echo "<script language=\"JavaScript\">
+    LIM_activate(null,'$active_tab');
+    </script>";
+}
+?>
+
 </FORM>

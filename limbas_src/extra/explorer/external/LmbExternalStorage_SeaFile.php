@@ -21,6 +21,13 @@ class LmbExternalStorage_SeaFile extends LmbExternalStorage {
 
         $response = json_decode($responseStr, true);
         $this->authToken = $response['token'];
+
+        # set folder
+        if ($this->config['folder']) {
+            $this->config['folder'] = trim($this->config['folder'], '/') . '/';
+        } else {
+            $this->config['folder'] = '';
+        }
     }
 
     /**
@@ -53,7 +60,7 @@ class LmbExternalStorage_SeaFile extends LmbExternalStorage {
 
         # get private download link
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->config['url'] . '/api2/repos/' . $this->config['repo'] . '/file/?p=/' . $this->config['folder'] . '/' . $externalFilename);
+        curl_setopt($ch, CURLOPT_URL, $this->config['url'] . '/api2/repos/' . $this->config['repo'] . '/file/?p=/' . $this->config['folder'] . $externalFilename);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
             'Authorization: Token ' . $this->authToken
         ));
@@ -93,7 +100,7 @@ class LmbExternalStorage_SeaFile extends LmbExternalStorage {
             'Authorization: Token ' . $this->authToken
         ));
         curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query(array(
-            'p' => '/' . $this->config['folder'] . '/' . $externalFilename
+            'p' => '/' . $this->config['folder'] . $externalFilename
         )));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
         curl_setopt($ch, CURLOPT_HEADER, 1);
@@ -121,7 +128,7 @@ class LmbExternalStorage_SeaFile extends LmbExternalStorage {
      */
     private function fileExists($externalFilename) {
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->config['url'] . '/api2/repos/' . $this->config['repo'] . '/file/detail/?p=/' . $this->config['folder'] . '/' . $externalFilename);
+        curl_setopt($ch, CURLOPT_URL, $this->config['url'] . '/api2/repos/' . $this->config['repo'] . '/file/detail/?p=/' . $this->config['folder'] . $externalFilename);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
             'Authorization: Token ' . $this->authToken
         ));
@@ -151,7 +158,7 @@ class LmbExternalStorage_SeaFile extends LmbExternalStorage {
 
         # get upload link
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, $this->config['url'] . '/api2/repos/' . $this->config['repo'] . '/' . $type . '-link/?p=' . $this->config['folder']);
+        curl_setopt($ch, CURLOPT_URL, $this->config['url'] . '/api2/repos/' . $this->config['repo'] . '/' . $type . '-link/?p=/' . $this->config['folder']);
         curl_setopt($ch, CURLOPT_HTTPHEADER, array(
             'Authorization: Token ' . $this->authToken
         ));
@@ -177,14 +184,14 @@ class LmbExternalStorage_SeaFile extends LmbExternalStorage {
             curl_setopt($ch, CURLOPT_POSTFIELDS, array(
                 'file' => $file,
                 'filename' => $externalFilename,
-                'parent_dir' => $this->config['folder']
+                'parent_dir' => '/' . $this->config['folder']
             ));
         } else {
             # update
             curl_setopt($ch, CURLOPT_POSTFIELDS, array(
                 'file' => $file,
                 'filename' => $externalFilename,
-                'target_file' => $this->config['folder'] . '/' . $externalFilename
+                'target_file' => '/' . $this->config['folder'] . $externalFilename
             ));
         }
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);

@@ -5,14 +5,23 @@ if($new_multitenant_name AND $add_multitenant){
     $NEXTID = next_db_id("LMB_MULTITENANT");
     if(!$new_multitenant_id){$new_multitenant_id = $NEXTID;}
     $sqlquery = "INSERT INTO LMB_MULTITENANT (ID, MID, NAME) VALUES($NEXTID, '".parse_db_string($new_multitenant_id,50)."', '".parse_db_string($new_multitenant_name,150)."')";
-
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+    if(!file_exists($umgvar['uploadpfad'].'/multitenant')){
+        mkdir($umgvar['uploadpfad'].'/multitenant');
+    }
+    if(!file_exists($umgvar['uploadpfad'].'/multitenant/'.$NEXTID)){
+        mkdir($umgvar['uploadpfad'].'/multitenant/'.$NEXTID);
+    }
+
 }
 
 
 if(is_numeric($drop_multitenant)){
     $sqlquery = "DELETE FROM LMB_MULTITENANT WHERE ID = ".parse_db_int($drop_multitenant);
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+    lmb_alert("multitenant datasets or files in ".$umgvar['uploadpfad']."/multitenant/".$drop_multitenant."\n not deleted! you must delete or copy the datasets and directory by yourself");
 
     // todo - delete all related Datasets
 

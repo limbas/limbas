@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,32 +11,30 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
  * ID: 102
  */
 
+require_once("gtab/gtab.lib");
 
-if($argument_change){
-	$argument = trim(parse_db_string($argument));
-	$sqlquery = "UPDATE LMB_CONF_FIELDS".$tab." SET ARGUMENT = '$argument' WHERE FIELD_ID = $fieldid AND TAB_GROUP = $tab_group AND TAB_ID = $tab_id";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+# EXTENSIONS
+if($GLOBALS["gLmbExt"]["ext_gtab.inc"]){
+	foreach ($GLOBALS["gLmbExt"]["ext_gtab.inc"] as $key => $extfile){
+		require_once($extfile);
+	}
 }
-
-/* --- Tabellen-Liste --------------------------------------------- */
-$sqlquery = "SELECT ARGUMENT_TYP,ARGUMENT,ID FROM LMB_CONF_FIELDS WHERE FIELD_ID = $fieldid AND TAB_GROUP = $tab_group AND TAB_ID = $tab_id";
-$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-if(lmbdb_fetch_row($rs)) {
-	$result_argument["argument"] = lmbdb_result($rs, "ARGUMENT");
-	$result_argument["argument_typ"] = lmbdb_result($rs, "ARGUMENT_TYP");
-	$result_argument["id"] = lmbdb_result($rs, "ID");
+if($GLOBALS["gLmbExt"]["ext_gtab_change.inc"]){
+	foreach ($GLOBALS["gLmbExt"]["ext_gtab_change.inc"] as $key => $extfile){
+		require_once($extfile);
+	}
 }
-
-
-if($result_argument["argument"] AND $argument_refresh){
-	$erg = arg_refresh($tab_id,$fieldid,$result_argument['argument']);
+if($GLOBALS["gLmbExt"]["ext_gtab_erg_dao.inc"]){
+	foreach ($GLOBALS["gLmbExt"]["ext_gtab_erg_dao.inc"] as $key => $extfile){
+		require_once($extfile);
+	}
 }
 
 /* -------------------------- Argument --------------------------------- */
@@ -45,9 +43,7 @@ function arg_refresh($tab_id,$fieldid,$argument) {
 	global $db;
 	global $gfield;
 	global $gtab;
-	
-	set_time_limit(900); #15min
-	
+
 	if(!$gfield[$tab_id]['field_name'][$fieldid]){
         echo '<div style="width:100%;text-align:center;color:red;">Please reset session!</div>';
 	}else{
@@ -112,14 +108,17 @@ function arg_refresh($tab_id,$fieldid,$argument) {
 			}
 			
 			$sqlquery1 = "UPDATE ".$gtab["table"][$tab_id]." SET ".$gfield[$tab_id]["field_name"][$fieldid]." = $arg_result WHERE ID = $ID";
-			$rs1 = lmbdb_exec($db,$sqlquery1);
+			if(!$rs1 = lmbdb_exec($db,$sqlquery1)){
+			    $commit = 1;
+            }
 
 		}
-		
-		
-		echo '<div style="width:100%;text-align:center;color:green;">Rebuild complete!</div>';
+
 	}
-	return true;
+	if(!$commit) {
+        return true;
+    }
+    return false;
 }
 ?>
 

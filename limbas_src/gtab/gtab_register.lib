@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -191,6 +191,19 @@ if($filter_reset AND !$snap_id){
 		if($filter["viewversion"][$gtabid]){$filter["viewversion"][$gtabid] = 0;}
 		else{$filter["viewversion"][$gtabid] = 1;}
 	}
+	if($filter_validity){
+	    if(substr($filter_validity,0,3) != 'all'){
+	        $filter_validity = stampToDate(dateToStamp(trim($filter_validity)),1);
+        }
+        if(!$filter_validity){$filter_validity = 'all';}
+		$filter["validity"][$gtabid] = $filter_validity;
+	}
+	/*
+	if($filter_validity_all){
+		if($filter["validity_all"][$gtabid]){$filter["validity_all"][$gtabid] = 0;}
+		else{$filter["validity_all"][$gtabid] = 1;}
+	}
+	*/
 	if($filter_multitenant){
 		if($filter["multitenant"][$gtabid]){$filter["multitenant"][$gtabid] = 0;
 		}else{$filter["multitenant"][$gtabid] = 1;}
@@ -279,13 +292,20 @@ if($filter_reset AND !$snap_id){
 	if($gs){
 		if($history_search){
 			$history_search = explode(";",$history_search);
+			$filter['page'][$gtabid] = 1;
 			foreach($history_search as $key => $value){
 				$search_el = explode(",",$history_search[$key]);
 				$gsr[$search_el[0]][$search_el[1]][0] = $gs[$search_el[0]][$search_el[1]][0];
 			}
 		# suche ohne history_search
 		}elseif($supersearch OR $gssearch){
+			#$gsr[$gtabid] = $gs[$gtabid];
 			$gsr = $gs;
+
+			// clean current table's gsr recursively (remove empty array entries)
+            if (!containsSearchValue($gsr[$gtabid])) {
+                unset($gsr[$gtabid]);
+            }
 		}
 	}
 	
@@ -345,6 +365,58 @@ if($filter_reset AND !$snap_id){
 		}
 	}
 
+}
+
+/**
+ * Cleans the array from empty search entries
+ * @param $gsrtab array $gsr[$gtabid]
+ * @return bool whether the array contains a search value
+ */
+function containsSearchValue(&$gsrtab) {
+    $containsValue = false;
+    foreach ($gsrtab as $fieldID => $_) {
+        foreach ($gsrtab[$fieldID] as $filterIndex => &$gsrres) {
+            // skip 'txt', 'num', ...
+            if (!is_numeric($filterIndex)) {
+                continue;
+            }
+
+            // check if this index is needed
+            $indexNeeded = true;
+            if ($gsrres) {
+                // value is array -> check recursively
+                if (is_array($gsrres)) {
+                    $nextGtabid = key($gsrres);
+                    if (!containsSearchValue($gsrres[$nextGtabid])) {
+                        $indexNeeded = false;
+                    }
+                }
+            } else {
+                // no value -> check if operator (null/notnull) doesnt need value
+                if ($operator = $gsrtab[$fieldID]['txt'][$filterIndex]) {
+                    if ($operator != 7 and $operator != 8) {
+                        $indexNeeded = false;
+                    }
+                } else if ($operator = $gsrtab[$fieldID]['num'][$filterIndex]) {
+                    if ($operator != 7 and $operator != 8) {
+                        $indexNeeded = false;
+                    }
+                } else {
+                    $indexNeeded = false;
+                }
+            }
+
+            // unset index if not needed
+            if (!$indexNeeded) {
+                unset($gsrtab[$fieldID][$filterIndex]);
+                unset($gsrtab[$fieldID]['txt'][$filterIndex]);
+                unset($gsrtab[$fieldID]['num'][$filterIndex]);
+            } else {
+                $containsValue = true;
+            }
+        }
+    }
+    return $containsValue;
 }
 
 

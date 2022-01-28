@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -153,6 +153,7 @@ function patch_17(){
         $rs = lmbdb_exec($db, $sqlquery_) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     }else{
         echo "$sqlquery : failed! Check it manualy";
+        return false;
     }
 
     return true;
@@ -160,7 +161,7 @@ function patch_17(){
 patch_scr(17,1,"patch_17","resize formular parameter",4);
 
 $nid = next_db_id("lmb_umgvar","ID");
-$sqlquery = "INSERT INTO LMB_UMGVAR VALUES($nid,162,'soap_base64 ','0','use base46 encoding for soap requests',2818)";
+$sqlquery = "INSERT INTO LMB_UMGVAR VALUES($nid,162,'soap_base64','0','use base46 encoding for soap requests',2818)";
 patch_db(18, 1, $sqlquery, 'update umgvar: add soap_base64 ', 4);
 
 
@@ -192,8 +193,6 @@ function patch_19()
 patch_scr(19,1,"patch_19","rebuild umgvar id",4);
 
 
-
-# rebuild umgvar id
 function patch_20()
 {
     global $db;
@@ -227,6 +226,12 @@ patch_db(24, 1, $sqlquery, 'add type column to lmb_code_favorties', 4);
 $sqlquery = dbq_4(array($GLOBALS['DBA']['DBSCHEMA'], 'LMBIND_6091EEA56B33', 'LMB_HISTORY_ACTION', 'USERID'));
 patch_db(25, 1, $sqlquery, 'add index to LMB_HISTORY_ACTION', 4);
 
+function patch_26(){
+    global $db;
+    dbq_16(array($GLOBALS['DBA']['DBSCHEMA'],1));
+    return true;
+}
+patch_scr(26,1,"patch_26","rebuild trigger procedure",4);
 
 echo "--><br>";
 

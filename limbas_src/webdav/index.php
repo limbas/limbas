@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -71,7 +71,7 @@ class MyCollection extends Sabre\DAV\Collection {
 		if($this->myPath == "/"){
 			$lid = 0;
 		}else{
-			$lid = parse_path(lmb_utf8_decode($this->myPath));
+			$lid = lmb_getLevelFromPath(lmb_utf8_decode($this->myPath));
 		}
 
 		global $db;
@@ -116,7 +116,7 @@ class MyCollection extends Sabre\DAV\Collection {
 		if($this->myPath == "/"){
 		$lid = 0;
 		}else{
-		$lid = parse_path(lmb_utf8_decode($this->myPath));
+		$lid = lmb_getLevelFromPath(lmb_utf8_decode($this->myPath));
 		}
 		*/
 		foreach($filestruct["id"] as $fid => $value){
@@ -165,7 +165,7 @@ class MyCollection extends Sabre\DAV\Collection {
 	
 	public function setName($newName){
 
-		$did = parse_path(lmb_utf8_decode(lmb_getPrevPath($this->myPath)));
+		$did = lmb_getLevelFromPath(lmb_utf8_decode(lmb_getPrevPath($this->myPath)));
 		if(!rename_dir($this->lid,lmb_utf8_decode($newName),$did)){
 			throw new Sabre\DAV\Exception\Forbidden('Permission denied to rename node');
 		}else{
@@ -216,7 +216,7 @@ class MyCollection extends Sabre\DAV\Collection {
 		
 		# LIMBAS uploadfunktion : replace mod
 		$file["file"][] = $tmppath;$file["file_name"][] = $name;$file["file_type"][] = 0;$file["file_archiv"][] = 0;$dublicate["type"][] = "overwrite";
-		if($fl = upload($file,$this->lid,array("datid" => 0,"gtabid" => 0,"fieldid" => 0),1,$dublicate)){
+		if($fl = lmb_fileUpload($file,$this->lid,null,1,$dublicate)){
 		# temp Datei löschen
 		unlink($tmppath);
 		}
@@ -233,7 +233,7 @@ class MyCollection extends Sabre\DAV\Collection {
 	# move folder
 	public function move($destination){
 		
-		$did = parse_path(lmb_utf8_decode($destination));
+		$did = lmb_getLevelFromPath(lmb_utf8_decode($destination));
 		if(!move_dir(array($this->lid),$did)){
 			throw new Sabre\DAV\Exception\Forbidden('Permission denied to move node');
 		}else{
@@ -245,7 +245,7 @@ class MyCollection extends Sabre\DAV\Collection {
 	# copy folder
 	public function copy($destination){
 	
-		$did = parse_path(lmb_utf8_decode($destination));
+		$did = lmb_getLevelFromPath(lmb_utf8_decode($destination));
 		if(!copy_dir(array($this->lid),$did,0)){
 			throw new Sabre\DAV\Exception\Forbidden('Permission denied to copy node');
 		}else{
@@ -293,7 +293,7 @@ class MyFile extends \Sabre\DAV\File {
 
 	function delete(){
 		
-		if(!del_file($this->fid,0)){
+		if(!lmb_deleteFile($this->fid,0)){
 			throw new Sabre\DAV\Exception\Forbidden('Permission denied to delete file');
 		}
 		
@@ -335,7 +335,7 @@ class MyFile extends \Sabre\DAV\File {
 		
 		# LIMBAS uploadfunktion : replace mod
 		$file["file"][] = $tmppath;$file["file_name"][] = $name;$file["file_type"][] = 0;$file["file_archiv"][] = 0;$dublicate["type"][] = "overwrite";
-		if($fl = upload($file,$this->lid,array("datid" => 0,"gtabid" => 0,"fieldid" => 0),1,$dublicate)){
+		if($fl = lmb_fileUpload($file,$this->lid,null,1,$dublicate)){
 		# temp Datei löschen
 			unlink($tmppath);
 		}
@@ -367,7 +367,7 @@ class MyFile extends \Sabre\DAV\File {
 	# rename
 	public function setName($newName){
 
-		if(!rename_file($this->fid,lmb_utf8_decode($newName),$this->lid)){
+		if(!lmb_renameFile($this->fid,lmb_utf8_decode($newName),$this->lid)){
 			throw new Sabre\DAV\Exception\Forbidden('Permission denied to rename file');
 		}
 		
@@ -376,7 +376,7 @@ class MyFile extends \Sabre\DAV\File {
 	# move file
 	public function move($destination){
 		
-		$did = parse_path(lmb_getPrevPath(lmb_utf8_decode($destination)));
+		$did = lmb_getLevelFromPath(lmb_getPrevPath(lmb_utf8_decode($destination)));
 		if(!move_file(array($this->fid),$did)){
 			throw new Sabre\DAV\Exception\Forbidden('Permission denied to move file');
 		}
@@ -386,7 +386,7 @@ class MyFile extends \Sabre\DAV\File {
 	# copy file
 	public function copy($destination){
 	
-		$did = parse_path(lmb_getPrevPath(lmb_utf8_decode($destination)));
+		$did = lmb_getLevelFromPath(lmb_getPrevPath(lmb_utf8_decode($destination)));
 		if(!copy_file(array($this->fid),$did)){
 			throw new Sabre\DAV\Exception\Forbidden('Permission denied to copy file');
 		}

@@ -4,21 +4,211 @@ Start
 Part
   = IfConstruct
   / TemplateTag
+  / IfConstructHtml
+  / TemplateTagHtml
+  / RepeatedDataRow
   / Html
 
+IfConstructHtml
+  = ifTag:IfTagHtml consequent:Part* elseifs:(ElseIfTagHtml Part*)* alternative:(ElseTagHtml Part*)? EndIfTagHtml
+  {
+      // check medium
+      if ($target = $ifTag['attributes']['target']) {
+          if (TemplateConfig::$instance->getMedium() !== $target) {
+              return TemplateConfig::$instance->getHtmlInstance("");
+          }
+      }
+
+      // get alternative (else)
+      if ($alternative) {
+          $alternative = $alternative[1]; // Part*
+      }
+
+      // transform elseifs (elseif (k + 1) will be alternative of elseif k)
+      if ($elseifs) {
+          $alternative = array_reduce(array_reverse($elseifs), function($carry, $item) {
+              return TemplateConfig::$instance->getIfPlaceholderInstance($item[0], $item[1], $carry);
+          }, $alternative);
+      }
+      return TemplateConfig::$instance->getIfPlaceholderInstance($ifTag['condition'], $consequent, $alternative);
+  }
+
+IfTagHtml
+  = "<lmb" _ attrBefore:AttributesHtml? _ 'type="if"' _ attrAfter:AttributesHtml? ">" _ condition:TemplateTagHtml _ "</lmb>"
+  { return array('attributes' => array_merge($attrBefore, $attrAfter), 'condition' => $condition); }
+
+ElseIfTagHtml
+  = "<lmb" _ AttributesHtml? _ 'type="elseif"' _ AttributesHtml? ">" _ condition:TemplateTagHtml _ "</lmb>"
+  { return $condition; }
+
+ElseTagHtml
+  = "<lmb" _ AttributesHtml? _ 'type="else"' _ AttributesHtml? "/>"
+    { return array('type' => 'else'); }
+  / "<lmb" _ AttributesHtml? _ 'type="else"' _ AttributesHtml? ">" _ "</lmb>"
+    { return array('type' => 'else'); }
+
+EndIfTagHtml
+  = "<lmb" _ attrBefore:AttributesHtml? _ 'type="endif"' _ attrAfter:AttributesHtml? "/>"
+    { return array('type' => 'endif', 'attributes' => array_merge($attrBefore, $attrAfter)); }
+  / "<lmb" _ attrBefore:AttributesHtml? _ 'type="endif"' _ attrAfter:AttributesHtml? ">" _ "</lmb>"
+    { return array('type' => 'endif', 'attributes' => array_merge($attrBefore, $attrAfter)); }
+
+TemplateTagHtml
+  = tag:TemplateTagHtmlInner
+    & { return array_key_exists('type', $tag['attributes']) || array_key_exists('param', $tag['attributes']) || array_key_exists('condition', $tag['attributes']); }
+    {
+        // check medium
+        if ($target = $tag['attributes']['target']) {
+            if (TemplateConfig::$instance->getMedium() !== $target) {
+                return TemplateConfig::$instance->getHtmlInstance("");
+            }
+        }
+
+        // get data-... options
+        $options = array();
+        foreach ($tag['attributes'] as $key => $value) {
+            if (substr($key, 0, 5) == 'data-') {
+                $options[substr($key, 5)] = $value;
+            }
+        }
+
+        $type = $tag['attributes']['type'];
+        switch($type) {
+            case 'data':
+                return TemplateConfig::$instance->getDataPlaceholderInstance($tag['attributes']['src'], $options, $tag['attributes']['alt']);
+
+            case 'template':
+                return TemplateConfig::$instance->getSubTemplateElementPlaceholderInstance($tag['attributes']['name'], $options);
+
+            case 'dynamicData':
+                return TemplateConfig::$instance->getDynamicDataPlaceholderInstance($tag['attributes']['title'], $options);
+
+            case 'group':
+                return TemplateConfig::$instance->getTemplateGroupPlaceholderInstance($tag['attributes']['name'], array('desc' => $tag['attributes']['title'], 'id' => $tag['attributes']['id']));
+
+            case 'func':
+                return TemplateConfig::$instance->getFunctionPlaceholderInstance($tag['attributes']['name'], $tag['children']);
+        }
+
+        // function params
+        $param = $tag['attributes']['param'];
+        switch($param) {
+            case 'data':
+                return TemplateConfig::$instance->getDataPlaceholderInstance($tag['attributes']['src'], $options, null);
+
+            case 'func':
+                return TemplateConfig::$instance->getFunctionPlaceholderInstance($tag['attributes']['name'], $tag['children']);
+
+            case 'value':
+                return $tag['attributes']['value'];
+        }
+
+        // if condition
+        $condition = $tag['attributes']['condition'];
+        switch($condition) {
+            case 'data':
+                return TemplateConfig::$instance->getDataPlaceholderInstance($tag['attributes']['src'], $options, null);
+
+            case 'func':
+                return TemplateConfig::$instance->getFunctionPlaceholderInstance($tag['attributes']['name'], $tag['children']);
+        }
+
+        throw new Exception("Unknown type {$type}, param {$param} or condition {$condition}!");
+    }
+
+TemplateTagHtmlInner
+  = "<lmb" _ attributes:AttributesHtml? "/>"
+  { return array('attributes' => $attributes); }
+  / "<lmb" _ attributes:AttributesHtml? ">" _ children:(TemplateTagHtml _)* "</lmb>"
+  { return array('attributes' => $attributes, 'children' => array_map(function($c) { return $c[0]; }, $children)); }
+
+AttributesHtml
+  = attributes:AttributeHtml*
+  { return array_merge(...$attributes); }
+
+AttributeHtml
+  = _ "src=" STRDELIMITER head:FieldIdentifier tail:(FieldIdentifier)* STRDELIMITER
+  { array_unshift($tail, $head); return array('src' => $tail); }
+  / _ "data-lmb-data-row=" STRDELIMITER TABLEDATASTART tableIdentifier:Identifier STRDELIMITER
+  { return array('data-lmb-data-row' => array(array('table' => $tableIdentifier))); }
+  / _ "data-lmb-data-row=" STRDELIMITER head:FieldIdentifier tail:(FieldIdentifier)* STRDELIMITER
+  { array_unshift($tail, $head); return array('data-lmb-data-row' => $tail); }
+  / _ "data-lmb-data-row-filter=" STRDELIMITER FUNCTIONSTART call:FunctionCall STRDELIMITER
+  { return array('data-lmb-data-row-filter' => $call); }
+  / _ key:AttributeHtmlKey "=" STRDELIMITER val:AttributeHtmlVal STRDELIMITER _
+  ! { return $key == 'type' && ($val == 'if' || $val == 'elseif' || $val == 'else' || $val == 'endif') || $key == 'src'; }
+  { return array($key => $val); }
+  / _ key:AttributeHtmlKey _
+  ! { return $key == 'type' || $key == 'src'; }
+  { return array($key => true); }
+
+AttributeHtmlKey
+  = (!">" !" " !"=" .)+
+  { return $this->text(); }
+
+AttributeHtmlVal
+  = (!STRDELIMITER .)*
+  { return html_entity_decode($this->text()); }
+
+RepeatedDataRow
+  = _ "<tr>" _ cells:RepeatedDataCell* _ "</tr>" _
+    { return TemplateConfig::$instance->getTableRowInstance($cells, array()); }
+  / _ "<tr " _ attributes:AttributesHtml? _ ">" _ cells:RepeatedDataCell* _ "</tr>" _
+    { return TemplateConfig::$instance->getTableRowInstance($cells, $attributes); }
+
+RepeatedDataCell
+  = _ "<td>" parts:(!"</td>" TdPart)* "</td>" _
+    { return TemplateConfig::$instance->getTableCellInstance(array_map(function($p) { return $p[1]; }, $parts), array()); }
+  / _ "<td " _ attributes:AttributesHtml? ">" parts:(!"</td>" TdPart)* "</td>" _
+    { return TemplateConfig::$instance->getTableCellInstance(array_map(function($p) { return $p[1]; }, $parts), $attributes); }
+
+TdPart
+  = IfConstruct
+  / TemplateTag
+  / IfConstructHtml
+  / TemplateTagHtml
+  / RepeatedDataRow
+  / TdHtml
+
+TdHtml
+  = (!TAGSTART !ESCAPEDTAGSTART !"<lmb " !"<tr " !"<tr>" !"<td " !"<td>" !"</td>" .)+
+    { return TemplateConfig::$instance->getHtmlInstance($this->text()); }
+
+// ==== parts ====
+
 IfConstruct
-  = condition:IfTag consequent:Part* ElseTag alternative:Part* EndifTag
-  { return $condition ? TemplateConfig::$instance->getIfPlaceholderInstance($condition, $consequent, $alternative) : TemplateConfig::$instance->getHtmlInstance(""); }
-  / condition:IfTag consequent:Part* EndifTag
-  { return $condition ? TemplateConfig::$instance->getIfPlaceholderInstance($condition, $consequent, null) : TemplateConfig::$instance->getHtmlInstance(""); }
+  = condition:IfTag consequent:Part* elseifs:(ElseIfTag Part*)* alternative:(ElseTag Part*)? EndifTag
+  {
+      // check medium
+      if (!$condition) {
+          return TemplateConfig::$instance->getHtmlInstance(""); // if has form: or report: and doesnt match
+      }
+
+      // get alternative (else)
+      if ($alternative) {
+          $alternative = $alternative[1]; // Part*
+      }
+
+      // transform elseifs (elseif (k + 1) will be alternative of elseif k)
+      if ($elseifs) {
+          $alternative = array_reduce(array_reverse($elseifs), function($carry, $item) {
+              return TemplateConfig::$instance->getIfPlaceholderInstance($item[0], $item[1], $carry);
+          }, $alternative);
+      }
+      return TemplateConfig::$instance->getIfPlaceholderInstance($condition, $consequent, $alternative);
+  }
 
 IfTag
-  = TAGSTART medium:Medium? IF condition:IfCondition TAGEND
+  = TAGSTART medium:Medium? IF _ condition:IfCondition TAGEND
   { return (!$medium || TemplateConfig::$instance->getMedium() === $medium) ? $condition : null; }
 
 IfCondition
   = DataPlaceholder
   / Function
+
+ElseIfTag
+  = TAGSTART ELSEIF _ condition:IfCondition TAGEND
+  { return $condition; }
 
 ElseTag
   = TAGSTART ELSE TAGEND
@@ -32,18 +222,26 @@ TemplateTag
   / TAGSTART medium:Medium? tpl:Template TAGEND
   { return (!$medium || TemplateConfig::$instance->getMedium() === $medium) ? $tpl : TemplateConfig::$instance->getHtmlInstance(""); }
 
-Medium
-  = medium:Identifier ":" _
-  { return $medium; }
-
 Template
   = DataPlaceholder
   / Function
   / Subtemplate
+  / TemplateGroup
+  / DynamicData
+
+Html
+  = (!TAGSTART !ESCAPEDTAGSTART !"<lmb " !"<tr " !"<tr>" .)+
+    { return TemplateConfig::$instance->getHtmlInstance($this->text()); }
+
+// ==== templates ====
 
 DataPlaceholder
   = head:FieldIdentifier tail:(FieldIdentifier)* options:Option* altvalue:AltValue?
   { array_unshift($tail, $head); return TemplateConfig::$instance->getDataPlaceholderInstance($tail, array_merge(...$options), $altvalue); }
+
+FieldIdentifier
+  = tableIdentifier:(TABLEDATASTART Identifier)? DATASTART fieldIdentifier:Identifier
+  { $ret = array('name' => $fieldIdentifier); if ($tableIdentifier) { $ret['table'] = $tableIdentifier[1]; } return $ret; }
 
 Option
   = OPTIONSTART key:OptionKey OPTIONEND
@@ -71,14 +269,6 @@ OptionValChar
 AltValue
   = "|" param:StringParam
   { return $param; }
-
-FieldIdentifier
-  = tableIdentifier:(TABLEDATASTART Identifier)? DATASTART fieldIdentifier:Identifier
-  { $ret = array('name' => $fieldIdentifier); if ($tableIdentifier) { $ret['table'] = $tableIdentifier[1]; } return $ret; }
-
-Identifier
-  = [A-Za-z0-9_]+
-  { return $this->text(); }
 
 Function
   = FUNCTIONSTART call:FunctionCall
@@ -114,15 +304,35 @@ NumberParam
   { return $decimal ? floatval($this->text()) : intval($this->text()); }
 
 Subtemplate
-  = (!FUNCTIONSTART !DATASTART !TAGEND !IF !ELSE !ENDIF .)+
-    { return TemplateConfig::$instance->getSubTemplateElementPlaceholderInstance($this->text()); }
+  = (!GROUPSTART !FUNCTIONSTART !DATASTART !TAGEND !IF !ELSE !ENDIF !STRDELIMITER !OPTIONSTART .)+ options:Option*
+    { return TemplateConfig::$instance->getSubTemplateElementPlaceholderInstance(html_entity_decode($this->text()), array_merge(...$options)); }
 
-Html
-  = (!TAGSTART !ESCAPEDTAGSTART .)+
-    { return TemplateConfig::$instance->getHtmlInstance($this->text()); }
+TemplateGroup
+  = GROUPSTART groupName:GroupName options:Option* TAGEND
+    { return TemplateConfig::$instance->getTemplateGroupPlaceholderInstance($groupName, array_merge(...$options)); }
+
+GroupName
+  = (!OPTIONSTART !TAGEND .)+
+    { return $this->text(); }
+
+DynamicData
+  = desc:StringParam options:Option*
+    { return TemplateConfig::$instance->getDynamicDataPlaceholderInstance($desc, array_merge(...$options)); }
+
+// ==== helpers ====
+
+Medium
+  = medium:Identifier ":" _
+  { return $medium; }
+
+Identifier
+  = [A-Za-z0-9_]+
+  { return $this->text(); }
 
 _ "whitespace"
-  = [ \t\n\r]*
+  = [ \t\n\r\u200b]*
+
+// ==== literals ====
 
 TAGSTART
   = "${"
@@ -132,6 +342,9 @@ ESCAPEDTAGSTART
 
 TAGEND
   = "}"
+
+GROUPSTART
+  = "{"
 
 FUNCTIONSTART
   = "="
@@ -152,6 +365,9 @@ IF
 
 ELSE
   = "else"
+
+ELSEIF
+  = "elseif"
 
 ENDIF
   = "endif"

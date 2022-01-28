@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -198,6 +198,17 @@ function lmb_alert($add_alert, $isError=false){
 }
 
 
+// eval function with error parsing
+function lmb_eval( $code ) {
+
+    try {
+        return eval($code);
+    } catch (Throwable $t) {
+        error_log($t);
+    }
+
+}
+
 function colorHexToDecArray($color){
 	$red = hexdec(lmb_substr($color,0,2));
 	$green = hexdec(lmb_substr($$color,2,2));
@@ -293,9 +304,9 @@ function parse_db_float($value,$length=100,$scale=0){
 
 function parse_db_bool($value){
 	$value = trim($value);
-	if(lmb_strtoupper($value) == "NULL"){return LMB_DBDEF_NULL;}
-	elseif(lmb_strtoupper($value) == "TRUE" OR lmb_strtoupper($value) == "ON" OR $value == 1){return LMB_DBDEF_TRUE;}
-	elseif(lmb_strtoupper($value) == "FALSE" OR lmb_strtoupper($value) == "OFF" OR $value == 0 OR !$value){return LMB_DBDEF_FALSE;}
+	if(lmb_strtoupper($value) == 'NULL'){return LMB_DBDEF_NULL;}
+	elseif(lmb_strtoupper($value) == 'TRUE' OR lmb_strtoupper($value) == 'ON' OR $value == 1){return LMB_DBDEF_TRUE;}
+	elseif(lmb_strtoupper($value) == 'FALSE' OR lmb_strtoupper($value) == 'OFF' OR $value == 0 OR !$value){return LMB_DBDEF_FALSE;}
 	else{return LMB_DBDEF_TRUE;}
 }
 
@@ -308,7 +319,10 @@ function convert_NumberFormat($value,$format){
 	$value = parse_db_float($value);
 	if (!is_numeric($value)) {
 		return $value;
-	}if($value == 0){return null;}
+	}
+	if (!$value) {
+	    $value = 0;
+	}
 	return eval("return number_format($value,$format);");
 }
 
@@ -356,10 +370,14 @@ function convert_FloatRound($value){
 function next_db_id($tab,$field="ID",$sequence=null,$filter=null){
 	global $db;
 	global $umgvar;
-	global $gtab;
 	
 	if(!$tab){return false;}
 	if($GLOBALS['lmb_useSequence'] === false){$lmb_useSequence = 0;}
+
+	if(is_numeric($tab) AND is_numeric($field)){
+	    $field = $GLOBALS['gfield'][$tab]['field_name'][$field];
+	    $tab = $GLOBALS['gtab']['table'][$tab];
+    }
 
 	if(LMB_DBFUNC_SEQUENCE AND $sequence){
 		return dbf_8("SEQ_".$tab."_".$field);
@@ -641,7 +659,7 @@ function errorhandle($FEHLER,$QUERY,$ACTION,$FILE,$LINE)
         lmb_alert($value);
 
     // userdefined error from database function "lmb_isnull()"
-    } elseif ($session['db-custerrors']){
+    } elseif ($umgvar['db-custerrors']){
         $ep = lmb_strpos($FEHLER,'<LMB');
         if ($ep !== FALSE){
             $FEHLER = substr($FEHLER,$ep+4,lmb_strpos($FEHLER,'LMB>')-$ep-4);
@@ -651,6 +669,22 @@ function errorhandle($FEHLER,$QUERY,$ACTION,$FILE,$LINE)
 
 	
 	return;
+}
+
+// --- Fehlermeldungen -----
+function error_showalert(&$alert)
+{
+    if (is_array($alert)) {
+        echo "<script language=\"JavaScript\">";
+        if ($alert and !is_array($alert)) {
+            $alert = array(
+                $alert
+            );
+        }
+        $alert = array_unique($alert);
+        echo "showAlert('" . implode("\\n", $alert) . "');\n";
+        echo "</script>";
+    }
 }
 
 # ------------- Dateigröße anzeigen -------------
@@ -714,12 +748,37 @@ if (!function_exists ("mime_content_type")) {
  * @return unknown
  */
 
-function IMACK_ConvertThumbs($file=null,$width=null,$height=null,$prop=null,$dest_format=null,$dest_path=null,$watermark=null,$rebuild=null){
+function IMACK_ConvertThumbs($file,$width=null,$height=null,$prop=null,$dest_format=null,$dest_path=null,$watermark=null,$rebuild=null){
 	global $umgvar;
 	global $session;
 	global $db;
 	global $gmimetypes;
 	global $filestruct;
+    global $gtab;
+
+
+	# proportional
+	if($prop){
+		if(!$width){$width = "";$width=$height;}
+		if(!$height){$height = "";$height=$width;}
+		$nameext .= "p";
+	}
+
+	# watermark
+	if($watermark){
+		if(is_numeric($watermark)){$w = $watermark;}else{$w = lmb_substr(md5($watermark),0,6);}
+		$nameext .= "w_$w";
+	}
+
+	# size
+	if($width AND $height){$size = $width."x".$height;}
+	elseif($width){$size = $width."x";}
+	elseif($height){$size = "x".$height;}
+
+	# $dest_format
+	if(!$dest_format){
+		$dest_format = $umgvar["thumbnail_type"];
+	}
 
 	# file from id or array
 	if(is_numeric($file) OR is_array($file)){
@@ -728,7 +787,8 @@ function IMACK_ConvertThumbs($file=null,$width=null,$height=null,$prop=null,$des
 	    if(!$filestruct){get_filestructure();}
 	    
 		if(is_numeric($file)){
-			$sqlquery = "SELECT ID,SECNAME,MIMETYPE,THUMB_OK,LEVEL FROM LDMS_FILES WHERE ID = $file AND THUMB_OK = ".LMB_DBDEF_TRUE;
+			if($GLOBALS['gtab']['multitenant'][$GLOBALS['gtab']['argresult_id']['LDMS_FILES']]){$selmid = ',LMB_MID';}
+			$sqlquery = "SELECT ID,SECNAME,MIMETYPE,THUMB_OK,LEVEL $selmid FROM LDMS_FILES WHERE ID = $file AND THUMB_OK = ".LMB_DBDEF_TRUE;
 			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 			if(!lmbdb_result($rs, "SECNAME")){return false;}
 			$file_id = lmbdb_result($rs, "ID");
@@ -736,119 +796,66 @@ function IMACK_ConvertThumbs($file=null,$width=null,$height=null,$prop=null,$des
 			$mimeid = lmbdb_result($rs, "MIMETYPE");
 			$thumb_ok = lmbdb_result($rs, "THUMB_OK");
 			$level = lmbdb_result($rs, "LEVEL");
+			$mid = lmbdb_result($rs, "LMB_MID");
 		}elseif(is_array($file)){
 			$file_id = $file[0];
 			$secname = $file[1];
 			$mimeid = $file[2];
 			$thumb_ok = $file[3];
 			$level = $file[4];
+			$mid = $file[5];
 		}
-		
-		if(!$thumb_ok AND !$rebuild){return false;}
 
-		$mimeext = $gmimetypes["ext"][$mimeid];
+		#$mid = $GLOBALS['lmmultitenants']['translate'][$mid];
+
+		#if(!$thumb_ok AND !$rebuild){return false;}
 		if(!$mimetype = $gmimetypes["mimetype"][$mimeid] AND $file_id){
 			IMACK_NoSuccess($file_id);
 			return false;
 		}
-		# file path
-		$file_path = $umgvar["uploadpfad"].$filestruct['path'][$level].$secname.".".$mimeext;
-		# file name
-		$file_name = explode("/",$file_path);
-		$file_name = end($file_name);
-	
-	# file from path
+		$ext = $gmimetypes["ext"][$mimeid];
+		$file_path = lmb_getFilePath($file_id,$level,$secname,$ext,$mid);
+        $dest_name = $secname.$size.$nameext;
+        $dest_path = lmb_getFilePath($file_id,$level,$dest_name,$dest_format,$mid,2);
+        $dest_url = ltrim(str_replace($umgvar["pfad"],"",$dest_path),"/");
+
+	# file from path / reports & forms
 	}elseif(is_string($file)){
 
+	    $file_path = $file;
 		if (lmb_substr($file,0,1) != "/") {
 			$file_path = $umgvar["pfad"]."/".$file;
-		}else{
-			$file_path = $file;
 		}
-		
-		if(!is_file($file_path)){
-			return false;
-		}
-
-		# mime type
-		$file_type = explode(".",$file_path);
-		$file_type = lmb_strtolower(end($file_type));
-		
-		foreach ($gmimetypes["ext"] as $key => $val){
-			if($val == $file_type){
-				$mimetype = $gmimetypes["mimetype"][$key];
-			}
-		}
-		if(!$mimetype){return false;}
-		
-		# file name
-		$file_name = explode("/",$file_path);
-		$file_name = end($file_name);
-	}else{
-		return false;
-	}
-	
-	#mimetype
-	$mime = explode("/",trim($mimetype));
-	
-	# proportional
-	if($prop){
-		if(!$width){$width = "";$width=$height;}
-		if(!$height){$height = "";$height=$width;}
-		$nameext .= "p";
-	}
-	
-	# watermark
-	if($watermark){
-		if(is_numeric($watermark)){$w = $watermark;}else{$w = lmb_substr(md5($watermark),0,6);}
-		$nameext .= "w_$w";
-	}
-	
-	# size
-	if($width AND $height){$size = $width."x".$height;}
-	elseif($width){$size = $width."x";}
-	elseif($height){$size = "x".$height;}
-	
-	# $dest_format
-	if(!$dest_format){
-		$dest_format = $umgvar["thumbnail_type"];
-	}
-	foreach ($gmimetypes["ext"] as $key => $val){
-		if($val == $dest_format){
-			$dest_format_ok = 1;
-		}
-	}
-	if(!$dest_format_ok){return false;}
-	
-	# destination
-	$default_dest = $umgvar["temp"]."/thumpnails/";
-	if($dest_path){
 		if (lmb_substr($dest_path,0,1) != "/") {
 			$dest_path = $umgvar["pfad"]."/".$dest_path;
 		}
+
+		# file name
+		$filename = explode('/',$file_path);
+		$filename = end($filename);
+		# mime type
+        $secname = lmb_substr($filename,0,lmb_strrpos($filename,'.'));
+        $ext = lmb_substr($filename,lmb_strrpos($filename,'.')+1);
+		$mimetype = $gmimetypes["resolve"][$ext];
+		$dest_name = $secname.$size.$nameext;
+        $dest_url = ltrim(str_replace($umgvar["pfad"],"",$dest_path),"/");
+
 	}else{
-		$dest_path = $default_dest;
+		return false;
 	}
-	
-	if(is_dir($dest_path) AND lmb_strpos($dest_path,$umgvar["pfad"]) !== false){
-		$dest_name = explode(".",$file_name);
-		$dest_name = $dest_name[0].$size.$nameext.".".$dest_format;
-		$dest_path = $dest_path.$dest_name;
-		$dest_url = ltrim(str_replace($umgvar["pfad"],"",$dest_path),"/");
-	}else{
-		$dest_path_ = explode("/",$dest_path);
-		unset($dest_path_[count($dest_path_)-1]);
-		$dest_path_ = implode("/",$dest_path_);
-		if(is_dir($dest_path_) AND lmb_strpos($dest_path,$umgvar["pfad"]) !== false){
-			$dest_url = ltrim(str_replace($umgvar["pfad"],"",$dest_path),"/");
-		}
-	}
-	
+
+    #mimetype
+    if(!$gmimetypes["resolve"][$ext] OR !is_file($file_path)){
+        return false;
+    }
+	$mime = explode("/",trim($mimetype));
+
 	$img = 0;
 	if(!file_exists($dest_path) OR $rebuild){
+
 		$out = 1;
 		if($mime[0] == "image" OR $mime[0] == "text" OR ($mime[1] == "pdf" AND $umgvar["imagemagickpdf"])){
-		
+
 			#if($mime[1] == "pdf" OR $mime[1] == "gif"){$page = "'[0]'";}
 			$page = "'[0]'";
 
@@ -861,7 +868,7 @@ function IMACK_ConvertThumbs($file=null,$width=null,$height=null,$prop=null,$des
 			}else{
 				$cmd = $umgvar["imagemagick"]."/convert ".$umgvar["imagemagicklimit"]." ".$file_path.$page." ".$dest_path;
 			}
-			
+
 			system($cmd,$out);
 			
 			# watermark
@@ -917,7 +924,8 @@ function IMACK_Watermark($dest,$watermark){
 			$sqlquery1 = "SELECT SECNAME,MIMETYPE,LEVEL FROM LDMS_FILES WHERE ID = $watermark";
 			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
 			if(lmbdb_result($rs1, "SECNAME")){
-				$wmark = $umgvar["uploadpfad"].$filestruct['path'][$level].lmbdb_result($rs1, "SECNAME").".".$gmimetypes["ext"][lmbdb_result($rs1, "MIMETYPE")];
+				#$wmark = $umgvar["upload_pfad"].$filestruct['path'][$level].lmbdb_result($rs1, "SECNAME").".".$gmimetypes["ext"][lmbdb_result($rs1, "MIMETYPE")];
+                $wmark = lmb_getFilePath($watermark,$level,lmbdb_result($rs1, "SECNAME"),$gmimetypes["ext"][lmbdb_result($rs1, "MIMETYPE")]);
 				$cmd = $umgvar["imagemagick"]."/composite -dissolve 25% -gravity northeast $wmark $dest $dest";
 				system($cmd,$out);
 			}
@@ -1143,7 +1151,7 @@ function history_update($tabid,$fieldid,$datid,$actionid,$value,$oldvalue){
 	# ---------- Max länge auf 250 Zeichen reduzieren -----------
 	if(lmb_strlen($value) > 990){$value = $value."...";}
 	$value = parse_db_string($value,990);
-	$sqlquery1 = "INSERT INTO LMB_HISTORY_UPDATE (ID,USERID,TAB,DATAID,FIELD,FIELDVALUE,ACTION_ID,LWF_ID,LWF_PRID,LWF_INID) VALUES ($NEXTID,".$session["user_id"].",".parse_db_int($tabid,5).",".parse_db_int($datid,18).",".parse_db_int($fieldid,5).",'".$value."',".parse_db_int($actionid,16).",".parse_db_int($lwf_id,2).",".parse_db_int($lwf_prid,2).",".parse_db_int($lwf_inid,16).")";
+	$sqlquery1 = "INSERT INTO LMB_HISTORY_UPDATE (ID,USERID,TAB,DATAID,FIELD,FIELDVALUE,ACTION_ID,LWF_ID,LWF_PRID,LWF_INID,LMB_MID) VALUES ($NEXTID,".$session["user_id"].",".parse_db_int($tabid,5).",".parse_db_int($datid,18).",".parse_db_int($fieldid,5).",'".$value."',".parse_db_int($actionid,16).",".parse_db_int($lwf_id,2).",".parse_db_int($lwf_prid,2).",".parse_db_int($lwf_inid,16).",".parse_db_int($GLOBALS['lmmultitenants']['mid'][$session['mid']],16).")";
 	$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
 	if(!$rs1) {return false;}
 
@@ -1333,8 +1341,14 @@ function historyGetEdituser($gtabid,$fieldid,$datid){
 	global $db;
 
 	if(!$gtabid OR !$fieldid OR !$datid){return false;}
+
+    // multitenant
+    if($umgvar['multitenant'] AND $GLOBALS['lmmultitenants']['mid'][$session['mid']]) {
+        $where = " LMB_MID = ".$GLOBALS['lmmultitenants']['mid'][$session['mid']];
+    }
+
 	if(LMB_DBFUNC_LIMIT){$limit = LMB_DBFUNC_LIMIT." 2";}
-	if(LMB_DBFUNC_ROWNO){$where = "AND ".LMB_DBFUNC_ROWNO." < 2";}
+	if(LMB_DBFUNC_ROWNO){$where .= "AND ".LMB_DBFUNC_ROWNO." < 2";}
 
 	$sqlquery = "SELECT USERID FROM LMB_HISTORY_UPDATE WHERE TAB = ".parse_db_int($gtabid,5)." AND FIELD = ".parse_db_int($fieldid,5)." AND DATAID = ".parse_db_int($datid,10)." $where ORDER BY ERSTDATUM DESC $limit";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
@@ -1386,11 +1400,11 @@ function fgrep_text($file,$searchval,$m,$w,$i){
 * 
 * 
 */
-function convert_to_text($file,$ext,$mimetype,$fid,$split,$getstream,$renew,$level){
+function convert_to_text($file,$ext,$mimetype,$fid,$split,$getstream,$renew,$level,$mid=null){
 	global $umgvar;
 	global $session;
 	global $filestruct;
-	
+
         if(!$filestruct){get_filestructure();}
         
     	# File-Header
@@ -1407,6 +1421,7 @@ function convert_to_text($file,$ext,$mimetype,$fid,$split,$getstream,$renew,$lev
 
         # Temporärer txt Pfad
         $resultpath = $umgvar["pfad"]."/TEMP/txt/".$file.".txt";
+        $resultpath = lmb_getFilePath($fid,$level, $file,'txt',$mid,3);
 
         # temporäre Textdatei erneuern
         if($renew){
@@ -1419,10 +1434,10 @@ function convert_to_text($file,$ext,$mimetype,$fid,$split,$getstream,$renew,$lev
         if(file_exists($resultpath)){
                 if($getstream){return strip_tags(implode("",file($resultpath)));}else{return true;}
         }
-        
-        
+
         # file to convert to text
-        $inputfile = $umgvar["uploadpfad"].$filestruct['path'][$level].$file.".".$ext;
+        #$inputfile = $umgvar["upload_pfad"].$filestruct['path'][$level].$file.".".$ext;
+        $inputfile = lmb_getFilePath($fid,$level,$file,$ext);
 
         # set output encoding to limbas encoding
         if(lmb_strtoupper($umgvar['charset']) == 'UTF-8') {
@@ -1562,10 +1577,14 @@ function mimetype($file)
  * @param number $cl 0=date, 1=DateClass, 2=Datepicker
  * @return format string
  */
-function setDateFormat($format,$cl=0){
-	global $session;
+function setDateFormat($format,$cl=0,$country=null){
+
+	if(!$country) {
+        $country = $GLOBALS['session']["dateformat"];
+    }
+
  	// german
-	if($session["dateformat"] == 1){
+	if($country == 1){
 		if($format == 1){
 			if($cl==1){return "d.m.Y";}
 			if($cl==2){return "dd.mm.yy";}
@@ -1588,7 +1607,7 @@ function setDateFormat($format,$cl=0){
 			return "%d.%m.%Y %H:%M:%S";
 		}
 	// US
-	}elseif($session["dateformat"] == 2){
+	}elseif($country == 2){
 		if($format == 1){
 			if($cl==1){return "Y-m-d";}
 			if($cl==2){return "yy-mm-dd";}
@@ -1611,7 +1630,7 @@ function setDateFormat($format,$cl=0){
 			return "%Y-%m-%d %H:%M:%S";
 		}
 	// fra
-	}elseif($session["dateformat"] == 3){
+	}elseif($country == 3){
 		if($format == 1){
 			if($cl==1){return "m-d-Y";}
 			if($cl==2){return "mm-dd-yy";}
@@ -1636,6 +1655,12 @@ function setDateFormat($format,$cl=0){
 	}
 }
 
+function add_oneday($stamp){
+    return mktime(0,0,0,date('m',$stamp),date('d',$stamp) + 1,date('Y',$stamp));
+}
+function drop_oneday($stamp){
+    return mktime(0,0,0,date('m',$stamp),date('d',$stamp) - 1,date('Y',$stamp));
+}
 
 function dateStringToDatepicker($dateString)
 {
@@ -2011,9 +2036,9 @@ function ODBCResourceToHTML($res, $sTable, $sRow, $numrows=100){
 	while(lmbdb_fetch_row($res)){
 
 	    if($bzm == 1) {
-            $strTable = "<table $sTable ><tr><td>nr</td>";
+            $strTable = "<table $sTable ><tr><th>nr</th>";
             for ($n = 1; $n <= $cFields; $n++) {
-                $strTable .= "<td $sRow><b>" . str_replace("_", " ", lmbdb_field_name($res, $n)) . "</b></td>";
+                $strTable .= "<th $sRow>" . str_replace("_", " ", lmbdb_field_name($res, $n)) . "</th>";
             }
             $strTable .= "</tr>";
         }
@@ -2030,17 +2055,22 @@ function ODBCResourceToHTML($res, $sTable, $sRow, $numrows=100){
 	}
 	$strTable .= "</table>";
 	return $strTable;
-} 
+}
 
 
-# ini wysiwyg editor
-function lmb_ini_wysiwyg($elid,$params=null,$changeEvent=null,$advanced=null){
+/**
+ * Init wysiwyg editor
+ * @param string $elid ID of the base textarea/element for the wysiwyg
+ * @param string $params string of PHP that returns user-specified params
+ * @param string $changeEvent JS to be executed on change
+ * @param int|array $advanced 1 for more advanced controls, array overwites $params (?)
+ * @return string JS initializing the wysiwyg editor
+ */
+function lmb_ini_wysiwyg($elid,$params=null,$changeEvent=null,$advanced=null,$height=null){
 	global $umgvar;
 	global $session;
 
-	$lang = "lang_1";
 	if($advanced AND $advanced != 1){$params = $advanced;}
-	if($session['language'] != 2){$lang = "lang_".$session['language'];}
 
 	$out = "<script type=\"text/javascript\">\n";
 	if($umgvar["wysiwygeditor"] == "openwysiwyg"){
@@ -2048,17 +2078,94 @@ function lmb_ini_wysiwyg($elid,$params=null,$changeEvent=null,$advanced=null){
 		$out .= "lmb_iniWYSIWYG(\"".$elid."\",\"$params\");\n";
 
 	}elseif($umgvar["wysiwygeditor"] == "TinyMCE"){
-	    $init = array('language:"'.$lang.'"', 'selector: "textarea#'.$elid.'"','force_p_newlines: false','force_br_newlines: false','forced_root_block: ""', 'width: "100%"');
-	    $plugins = array();
+	    // get user language
+	    $lang = getLangShort();
+	    if ($lang === 'fr') {
+	        // french is only available as 'fr_FR'
+	        $lang = 'fr_FR';
+        }
+
+        // read fonts
+        global $db;
+        $sqlquery = 'SELECT DISTINCT FAMILY FROM LMB_FONTS ORDER BY FAMILY';
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+        $fonts = array();
+        while (lmbdb_fetch_row($rs)) {
+            // "DejaVu Sans,DejaVu Sans Light" -> "DejaVu Sans Light"
+            // if not reduced to part after last comma, the wysiwyg editor will interpret it as a list of possible
+            // families and take the first one
+            $fontParts = explode(',', lmbdb_result($rs, 'FAMILY'));
+            $font = array_pop($fontParts);
+            $fonts[] = "$font=$font";
+        }
+        $fontList = implode(';', $fonts);
+
+        // layout
+        $skin = 'oxide';
+        $content_css = 'default';
+        if (lmbIsDarkLayout()) {
+            $skin = 'oxide-dark';
+
+            // although user has dark layout, leave content white if the current table is a template table s.t. it looks
+            //  consistent with the outcoming pdf
+            if (!$GLOBALS['gtabid'] || $GLOBALS['gtab']['typ'][$GLOBALS['gtabid']] != 8) {
+                $content_css = 'dark';
+            }
+        }
+
+	    $init = array(
+	        'language:"'.$lang.'"',
+            'selector: "textarea#'.$elid.'"',
+            'forced_root_block: false',
+            'width: "100%"',
+            "font_formats: \"$fontList\"",
+            'skin: "'.$skin.'"',
+            'content_css: "'.$content_css.'"',
+            'menubar: "file edit view insert format table lmbTemplate"',
+            "menu: {
+                file: { title: 'File', items: 'newdocument ' },
+                edit: { title: 'Edit', items: 'undo redo | cut copy paste | selectall' },
+                view: { title: 'View', items: 'visualaid' },
+                insert: { title: 'Insert', items: 'lmb-page-break' },
+                format: { title: 'Format', items: 'bold italic underline strikethrough superscript subscript codeformat | formats blockformats fontformats fontsizes align lineheight | forecolor backcolor | removeformat' },
+                table: { title: 'Table', items: 'inserttable | cell row column | tableprops deletetable | lmb-data-row lmb-data-row-filter' },
+                lmbTemplate: { title: 'Limbas Templates', items: 'lmbTemplateData lmbTemplateSubTemplate | lmbTemplateDynamicData lmbTemplateGroup | lmbTemplateFunction lmbTemplateIf lmbTemplateElseIf lmbTemplateElse lmbTemplateEndif' }
+            }",
+        );
+	    $plugins = array('lmbTemplate', 'noneditable', 'table');
 		$external_plugins = array();
 		$toolbar = array();
         $extended_valid_elements = array('@[nobr],table[*]'); /* this allows table[nobr], but also allows any other attribute of the table */
 
 		if($advanced == 1){
-		    $init = array('language:"'.$lang.'"', 'selector: "textarea#'.$elid.'"','force_p_newlines: false','force_br_newlines: false','forced_root_block: ""', 'width: "100%"');
-		    $plugins = array('advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'print', 'preview', 'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen', 'insertdatetime', 'media', 'table', 'contextmenu', 'paste', 'wordcount', 'hr', 'textcolor');
+            $init = array(
+		        'language:"'.$lang.'"',
+                'selector: "textarea#'.$elid.'"',
+                'forced_root_block: false',
+                'width: "100%"',
+                "font_formats: \"$fontList\"",
+                'auto_focus: "'.$elid.'"',
+                'skin: "'.$skin.'"',
+                'content_css: "'.$content_css.'"',
+                'menubar: "file edit view insert format tools table lmbTemplate"',
+                "menu: {
+                    file: { title: 'File', items: 'newdocument | preview | print ' },
+                    edit: { title: 'Edit', items: 'undo redo | cut copy paste | selectall | searchreplace' },
+                    view: { title: 'View', items: 'code | visualaid visualblocks | preview fullscreen' },
+                    insert: { title: 'Insert', items: 'image link media inserttable | charmap hr | anchor | insertdatetime | lmb-page-break' },
+                    format: { title: 'Format', items: 'bold italic underline strikethrough superscript subscript codeformat | formats blockformats fontformats fontsizes align lineheight | forecolor backcolor | removeformat' },
+                    tools: { title: 'Tools', items: 'code wordcount' },
+                    table: { title: 'Table', items: 'inserttable | cell row column | tableprops deletetable | lmb-data-row lmb-data-row-filter' },
+                    lmbTemplate: { title: 'Limbas Templates', items: 'lmbTemplateData lmbTemplateSubTemplate | lmbTemplateDynamicData lmbTemplateGroup | lmbTemplateFunction lmbTemplateIf lmbTemplateElseIf lmbTemplateElse lmbTemplateEndif' }
+                  }",
+            );
+		    $plugins = array('lmbTemplate', 'noneditable', 'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'print', 'preview', 'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen', 'insertdatetime', 'media', 'table', 'paste', 'wordcount', 'hr');
             $toolbar = array('styleselect', 'fontselect', 'fontsizeselect', 'bold italic', 'alignleft aligncenter alignright alignjustify', 'bullist numlist outdent indent', 'link image', 'forecolor backcolor');
 		}
+		
+		if (!empty($height)) {
+		    $init[] = 'height : "' . $height . '"';
+        }
 
         if($changeEvent){array_push($init,"setup: function(editor) { editor.on('change', function(e) {".$changeEvent.";});}");}
 
@@ -2070,36 +2177,37 @@ function lmb_ini_wysiwyg($elid,$params=null,$changeEvent=null,$advanced=null){
             $out .= "tinymce.init(Object.assign({language:\"$lang\", selector: \"textarea#$elid\", setup: function(editor) { editor.on('change', function(e) {".$changeEvent.";});}}, $params ));";
         // extend params
         }else{
-                if ($params['init']) {
-                    $init = array_unique(array_merge($init, $params['init']));
-                }
-                if ($params['plugins']) {
-                    $plugins = array_unique(array_merge($plugins, $params['plugins']));
-                }
-                if ($params['external_plugins']) {
-                    $external_plugins = array_unique(array_merge($external_plugins, $params['external_plugins']));
-                }
-                if ($params['toolbar']) {
-                    $toolbar = array_unique(array_merge($toolbar, $params['toolbar']));
-                }
-                if ($params['extended_valid_elements']) {
-                    $extended_valid_elements = array_unique(array_merge($extended_valid_elements, $params['extended_valid_elements']));
-                }
+            if ($params['init']) {
+                $init = array_unique(array_merge($init, $params['init']));
+            }
+            if ($params['plugins']) {
+                $plugins = array_unique(array_merge($plugins, $params['plugins']));
+            }
+            if ($params['external_plugins']) {
+                $external_plugins = array_unique(array_merge($external_plugins, $params['external_plugins']));
+            }
+            if ($params['toolbar']) {
+                $toolbar = array_unique(array_merge($toolbar, $params['toolbar']));
+            }
+            if ($params['extended_valid_elements']) {
+                $extended_valid_elements = array_unique(array_merge($extended_valid_elements, $params['extended_valid_elements']));
+            }
 
+            // template wysiwyg extension
+            $external_plugins['lmbTemplate'] = 'plugins/lmbTemplate/plugin.js';
+            $extended_valid_elements[] = 'lmb[type|name|target|class|title|param|value|src|condition|alt|id]';
+            $init_[] = 'custom_elements: "~lmb,style"'; // ~ to behave like span instead of div
+            $init_[] = 'content_style: "' . addslashes(str_replace("\n", ' ', file_get_contents('extra/template/wysiwyg/lmbTemplate.css'))) . '"';
+            $init_[] = 'table_sizing_mode: "relative"'; // for table plugin
 
-                if ($init) {$init_[] = implode(',', $init);}
-                if (count($plugins)) {$init_[] = 'plugins: "' . implode(',', $plugins).'"';}
-                if (count($external_plugins)) {$init_[] = 'external_plugins: "'. implode('|', $external_plugins).'"';}
-                if (count($toolbar)) {$init_[] = 'toolbar: "'. implode(' | ', $toolbar).'"';}
-                if (count($extended_valid_elements)) {$init_[] = 'extended_valid_elements: "'. implode('', $extended_valid_elements).'"';}
+            if ($init) {$init_[] = implode(',', $init);}
+            if (count($plugins)) {$init_[] = 'plugins: "' . implode(',', $plugins).'"';}
+            if (count($external_plugins)) {$init_[] = 'external_plugins: '. json_encode($external_plugins);}
+            if (count($toolbar)) {$init_[] = 'toolbar: "'. implode(' | ', $toolbar).'"';}
+            if (count($extended_valid_elements)) {$init_[] = 'extended_valid_elements: "'. implode(',', $extended_valid_elements).'"';}
 
-
-            $out .= "
-                tinymce.init({
-                    ".implode(',',$init_)."
-            });";
+            $out .= "tinymce.init({" . implode(',', $init_) . "});";
         }
-
 	}
 
 	$out .= "</script>\n";
@@ -2698,21 +2806,21 @@ class lmb_log
         }
 
         // user alert
-        if ($userMessage AND IS_SOAP !== true AND IS_CRON !== true) {
+        if ($userMessage AND !defined('IS_SOAP') AND !defined('IS_CRON') AND !defined('LMB_SYNC_PROC')) {
             // add table name
             if ($tabid) {
                 if(is_numeric($tabid)) {
                     $tabname = $gtab['table'][$tabid];
-                    $userMessage .= "\n - " . $lang[164] . ":\t\t" . $tabname;
+                    $userMessage .= "\n - " . $lang[164] . ": " . $tabname;
                 }
                 if(is_numeric($fieldid)) {
                     $fieldname = $gfield[$tabid]['spelling'][$fieldid];
-                    $userMessage .= "\n - " . $lang[168] . ":\t\t" . $fieldname;
+                    $userMessage .= "\n - " . $lang[168] . ": " . $fieldname;
                 }
               
                 // add datid
                 if ($datid) {
-                    $userMessage .= "\n - " . $lang[722] . "\t" . $datid;
+                    $userMessage .= "\n - " . $lang[722] . ": " . $datid;
                 }
                 $userMessage .= "\n";
             }
@@ -2928,4 +3036,55 @@ function postgresFtsLangColNeeded() {
     return $needed;
 }
 
-?>
+
+# --- User Verzeichnis hinzufügen -------
+function create_user_folder($ID){
+    global $umgvar;
+
+	if(!file_exists($umgvar['pfad']."/USER/$ID")){
+		$sys1 = mkdir($umgvar['pfad']."/USER/$ID",0777);
+		$sys1 = mkdir($umgvar['pfad']."/USER/$ID/menuicons",0777);
+		$sys1 = mkdir($umgvar['pfad']."/USER/$ID/temp",0777);
+		$sys1 = mkdir($umgvar['pfad']."/USER/$ID/download",0777);
+		$sys1 = mkdir($umgvar['pfad']."/USER/$ID/settings",0777);
+    }
+
+	if(!file_exists($umgvar['pfad']."/USER/$ID/menuicons")){
+		$sys1 = mkdir($umgvar['pfad']."/USER/$ID/menuicons",0777);
+	}
+	if(!file_exists($umgvar['pfad']."/USER/$ID/temp")){
+		$sys1 = mkdir($umgvar['pfad']."/USER/$ID/temp",0777);
+	}
+	if(!file_exists($umgvar['pfad']."/USER/$ID/download")){
+		$sys1 = mkdir($umgvar['pfad']."/USER/$ID/download",0777);
+	}
+	if(!file_exists($umgvar['pfad']."/USER/$ID/settings")){
+		$sys1 = mkdir($umgvar['pfad']."/USER/$ID/settings",0777);
+	}
+
+	if(file_exists($umgvar['pfad']."/USER/$ID")){return true;}else{return false;}
+}
+
+/**
+ * Returns the session language in 2 letters (e.g. de/en)
+ * @return string
+ */
+function getLangShort() {
+    global $session;
+    switch ($session['language']) {
+        case 1: return 'de';
+        case 2: return 'en';
+        case 3: return 'es';
+        case 4: return 'fr';
+        default: return 'en';
+    }
+}
+
+/**
+ * Returns whether the user has selected a dark layout
+ * @return bool
+ */
+function lmbIsDarkLayout() {
+    global $farbschema;
+    return lmb_strpos($farbschema['NAME'], 'dark') !== false;
+}

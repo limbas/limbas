@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -254,8 +254,11 @@ function lmbGlistMenu($gtabid,$subtab=null){
 		if($gtab["lockable"][$gtabid]){pop_picmenu(273,'','',$filter["locked"][$gtabid]);}		# zeige gesperrte
         if($gtab["multitenant"][$gtabid] AND count($GLOBALS['lmmultitenants']['mid']) > 1){pop_picmenu(309,'','',$filter["multitenant"][$gtabid]);}	# zeige Mandanten
 		echo "<td>&nbsp;&nbsp;</td>";
-		if($GLOBALS["greportlist_exist"] AND ($LINK[175] OR $LINK[176])){
+		if($GLOBALS["greportlist_exist"] AND ($LINK[175] OR $LINK[176] OR $LINK[315])){
 			pop_picmenu(131,'','');										# Berichte
+            if ($LINK[315]) {
+                pop_picmenu(315,'','');
+            }
 		}
 		if($GLOBALS["gdiaglist_exist"] AND $LINK[232]){
 			pop_picmenu(232,'','');										# Diagramme
@@ -264,6 +267,11 @@ function lmbGlistMenu($gtabid,$subtab=null){
 		echo "<td>&nbsp;&nbsp;</td>";
 		pop_picmenu(28,'','');											# refresh
 
+        # extension
+		if(function_exists($GLOBALS["gLmbExt"]["menuListIcons"][$gtabid])){
+			$GLOBALS["gLmbExt"]["menuListIcons"][$gtabid]($gtabid,$gresult);
+		}
+
         # global search
         if($gfield[$gtabid]["fullsearch"]) {
             echo "<td>&nbsp;&nbsp;</td>";
@@ -271,11 +279,6 @@ function lmbGlistMenu($gtabid,$subtab=null){
             echo "<input type=\"text\" id=\"globalSearch\" onclick=\"event.stopPropagation();\" class=\"gtabHeaderInputINP\" name=\"gs[$gtabid][0][0]\" value=\"" . $gsr[$gtabid][0][0] . "\" onchange=\"checktyp(13,'gs[$gtabid][0][0]','FulltextSearch','0','$gtabid',this.value,'');\" style=\"background-color:{$farbschema['WEB10']};\">";
             echo '</td>';
         }
-
-        # extension
-		if(function_exists($GLOBALS["gLmbExt"]["menuListIcons"][$gtabid])){
-			$GLOBALS["gLmbExt"]["menuListIcons"][$gtabid]($gtabid,$gresult);
-		}
 
 		echo "</tr></table></div></td></tr>\n";
 	}
@@ -334,14 +337,14 @@ function lmbGlistSearchDetail($gtabid,$key,$style=null,$event=null){
 	global $userdat;
 	global $groupdat;
 
-
+	$styleOriginal = $style;
 	$style = "style=\"width:100%;".$style."\"";
 
 	if($gfield[$gtabid]["field_type"][$key] == 13){return false;}
 	$event_change = "checktyp('".$gfield[$gtabid]["data_type"][$key]."','gs[".$gtabid."][".$gfield[$gtabid]["field_id"][$key]."][0]','".$gfield[$gtabid]["spelling"][$key]."','".$gfield[$gtabid]["field_id"][$key]."','".$gtabid."',this.value,'');";
 	$events = dftyp_events(1,$event,null,null,null,null,$event_change,$null,null,null);
 	
-	if($gfield[$gtabid]["artleiste"][$key] AND $gfield[$gtabid]["field_type"][$key] != 11){
+	if($gfield[$gtabid]["artleiste"][$key] AND !$gfield[$gtabid]["dynsearch"][$key]){
 		# ------- BOOLEAN -------
 		if($gfield[$gtabid]["field_type"][$key] == 10){
 			echo "<select class=\"gtabHeaderInputINP\" id=\"tdinp_".$gtabid."_".$gfield[$gtabid]["field_id"][$key]."\" $style name=\"gs[".$gtabid."][".$gfield[$gtabid]["field_id"][$key]."][0]\" $events>";
@@ -360,41 +363,60 @@ function lmbGlistSearchDetail($gtabid,$key,$style=null,$event=null){
 				if(lmbdb_result($rs,"WERT") == $gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0]){echo " selected";}
 				echo ">".lmbdb_result($rs,"WERT")."</option>";
 			}
-		# --- Alles andere --
-		}elseif($gfield[$gtabid]["field_type"][$key] != 6 AND $gfield[$gtabid]["field_type"][$key] != 3){
-			echo "<select class=\"gtabHeaderInputINP\" id=\"tdinp_".$gtabid."_".$gfield[$gtabid]["field_id"][$key]."\" $style name=\"gs[".$gtabid."][".$gfield[$gtabid]["field_id"][$key]."][0]\" $events>";
-			echo "<option>";
-			$sqlquery = "SELECT DISTINCT ".$gfield[$gtabid]["field_name"][$key]." FROM ".$gtab["table"][$gtabid]." ORDER BY ".$gfield[$gtabid]["field_name"][$key];
-			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		# --- ralations --
+        }elseif($gfield[$gtabid]["field_type"][$key] == 11){
+		    echo "<select class=\"gtabHeaderInputINP\" id=\"tdinp_".$gtabid."_".$gfield[$gtabid]["field_id"][$key]."\" $style name=\"gs[".$gtabid."][".$gfield[$gtabid]["field_id"][$key]."][0]\" $events>";
+		    echo "<option>";
+		    $sqlquery = "SELECT DISTINCT ".$gfield[$gfield[$gtabid]['verkntabid'][$key]]["field_name"][$gfield[$gtabid]['verknfieldid'][$key]]." FROM ".$gtab["table"][$gfield[$gtabid]['verkntabid'][$key]]." ORDER BY ".$gfield[$gfield[$gtabid]['verkntabid'][$key]]["field_name"][$gfield[$gtabid]['verknfieldid'][$key]];
+		    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			while(lmbdb_fetch_row($rs)) {
-				if(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key])){
-					echo "<option";
-					# --- DATUM --
-					if($gfield[$gtabid]["field_type"][$key] == 2){
-						$date = get_date(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]),1);
-						$date2 = get_date($gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0],1);
-						if($date === $date2){echo " SELECTED";}
-						echo " value=\"".lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key])."\">".$date;
-						# --- User/Gruppen-Liste --
-					#}elseif($gfield[$gtabid]["field_type"][$key] == 16) {
-					#	if(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]) == $gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0]){echo " SELECTED";}
-					#	if(lmb_substr(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]),0,1) == "u"){
-					#		echo " VALUE=\"".lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key])."\">U:".$userdat["bezeichnung"][lmb_substr(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]),1,99)];
-					#	}elseif(lmb_substr(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]),0,1) == "g"){
-					#		echo " VALUE=\"".lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key])."\">G:".$groupdat["beschreibung"][lmb_substr(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]),1,99)];
-					#	}
-						# --- Erst/Edit-User --
-					}elseif($gfield[$gtabid]["field_type"][$key] == 14) {
-						$field = $gfield[$gtabid]["field_name"][$gfield[$gtabid]["field_gtabid"][ $gtabid.$gfield[$gtabid]["field_id"][$key]]];
-						if(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]) == $gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0]){echo " selected";}
-						echo " value=\"".lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key])."\">".$userdat["bezeichnung"][lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key])];
-					}else{
-						if( lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]) == $gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0]){echo " selected";}
-						echo " value=\"".lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key])."\">".lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]);
-					}
-				}
-			}
-		}
+			    $value = lmbdb_result($rs,$gfield[$gfield[$gtabid]['verkntabid'][$key]]["field_name"][$gfield[$gtabid]['verknfieldid'][$key]]);
+				echo "<option ";
+				if($value == $gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0]){echo " selected";}
+				echo ">".$value."</option>";
+            }
+		# --- Alles andere --
+		}elseif($gfield[$gtabid]["field_type"][$key] != 6 AND $gfield[$gtabid]["field_type"][$key] != 3) {
+            echo "<select class=\"gtabHeaderInputINP\" id=\"tdinp_" . $gtabid . "_" . $gfield[$gtabid]["field_id"][$key] . "\" $style name=\"gs[" . $gtabid . "][" . $gfield[$gtabid]["field_id"][$key] . "][0]\" $events>";
+            echo "<option>";
+            $sqlquery = "SELECT DISTINCT " . $gfield[$gtabid]["field_name"][$key] . " FROM " . $gtab["table"][$gtabid] . " ORDER BY " . $gfield[$gtabid]["field_name"][$key];
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            while (lmbdb_fetch_row($rs)) {
+                if (lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key])) {
+                    echo "<option";
+                    # --- DATUM --
+                    if ($gfield[$gtabid]["field_type"][$key] == 2) {
+                        $date = get_date(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]), 1);
+                        $date2 = get_date($gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0], 1);
+                        if ($date === $date2) {
+                            echo " SELECTED";
+                        }
+                        echo " value=\"" . lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]) . "\">" . $date;
+                        # --- User/Gruppen-Liste --
+                        #}elseif($gfield[$gtabid]["field_type"][$key] == 16) {
+                        #	if(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]) == $gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0]){echo " SELECTED";}
+                        #	if(lmb_substr(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]),0,1) == "u"){
+                        #		echo " VALUE=\"".lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key])."\">U:".$userdat["bezeichnung"][lmb_substr(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]),1,99)];
+                        #	}elseif(lmb_substr(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]),0,1) == "g"){
+                        #		echo " VALUE=\"".lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key])."\">G:".$groupdat["beschreibung"][lmb_substr(lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]),1,99)];
+                        #	}
+                        # --- Erst/Edit-User --
+                    } elseif ($gfield[$gtabid]["field_type"][$key] == 14) {
+                        $field = $gfield[$gtabid]["field_name"][$gfield[$gtabid]["field_gtabid"][$gtabid . $gfield[$gtabid]["field_id"][$key]]];
+                        if (lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]) == $gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0]) {
+                            echo " selected";
+                        }
+                        echo " value=\"" . lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]) . "\">" . $userdat["bezeichnung"][lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key])];
+                    } else {
+                        if (lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]) == $gsr[$gtabid][$gfield[$gtabid]["field_id"][$key]][0]) {
+                            echo " selected";
+                        }
+                        echo " value=\"" . lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]) . "\">" . lmbdb_result($rs, $gfield[$gtabid]["field_name"][$key]);
+                    }
+                }
+            }
+        }
+
 		echo "</select>";
 
 	/* --- INPUT-FELDER --------------------------------------- */
@@ -403,7 +425,39 @@ function lmbGlistSearchDetail($gtabid,$key,$style=null,$event=null){
 	}else {
 		if($gfield[$gtabid]["quicksearch"][$key]){$onkeyup = "OnKeyUp=\"lmbQuickSearch(event,this,'".$gtabid."','".$key."')\"";$aclass='gtabHeaderInputINPajax';}else{$onkeyup = null;}
 		if($gfield[$gtabid]["size"][$key]){$maxlen = "MAXLENGTH=\"".($gfield[$gtabid]["size"][$key]+4)."\"";}else{$maxlen = "";}
-		echo "<input class=\"gtabHeaderInputINP $aclass\" $style id=\"tdinp_".$gtabid."_".$key."\" type=\"text\" name=\"gs[".$gtabid."][".$key."][0]\" value=\"".$gsr[$gtabid][$key][0]."\" $maxlen $onkeyup $events >";
+		// recursive gsr
+		$fieldIndexCount = 0;
+		$containsArray = false;
+		if($gsr[$gtabid][$key]){
+		foreach ($gsr[$gtabid][$key] as $fieldIndex => $gsrres) {
+			if (!is_numeric($fieldIndex)) {
+				continue;
+			}
+			if (is_array($gsrres)) {
+				$containsArray = true;
+			}
+			if ($gsrres) {
+				$fieldIndexCount++;
+			} else {
+				// null/notnull
+				if ($operator = $gsr[$gtabid][$key]['txt'][$fieldIndex] and ($operator == 7 or $operator == 8)) {
+					$fieldIndexCount++;
+				} else if ($operator = $gsr[$gtabid][$key]['num'][$fieldIndex] and ($operator == 7 or $operator == 8)) {
+					$fieldIndexCount++;
+				}
+			}
+		}}
+        if ($fieldIndexCount > 1 || $containsArray) {
+			$val = $lang[3065]; // "multiple"
+			$disabled = 'disabled'; // prevent overwrite
+			$name = '';
+            $style = "style=\"width:100%;font-style:italic;".$styleOriginal."\"";
+        } else {
+			$val = $gsr[$gtabid][$key][0];
+			$disabled = '';
+			$name = "gs[".$gtabid."][".$key."][0]";
+		}
+		echo "<input class=\"gtabHeaderInputINP $aclass\" $style id=\"tdinp_".$gtabid."_".$key."\" type=\"text\" name=\"$name\" value=\"$val\" $maxlen $onkeyup $events $disabled>";
 	}
 }
 
@@ -432,7 +486,7 @@ function lmbGlistHeader($gtabid,&$gresult,$utyp,$subtab=null){
 	echo "
 	<table id=\"lmbGlistHeaderTab\" class=\"lmbfringeGtabTable\" border=\"0\" cellspacing=\"1\" cellpadding=\"0\" style=\"width:".$filter["hidecols"][$gtabid][0]."\">
 	";
-	
+
 	echo "<tr id=\"table_head\">";
 	echo "<td id=\"gtdh_".$gtabid."_0\" class=\"gtabHeaderTitleTD\" valign=\"center\" style=\"width:".$gfield[$gtabid]["rowsize"][0]."px;\" onmousedown=\"startDrag(event,'".$gtabid."','0');\">";
 
@@ -446,6 +500,11 @@ function lmbGlistHeader($gtabid,&$gresult,$utyp,$subtab=null){
 	if($filter['reminder'][$gtabid]){
 		echo "<i class=\"lmb-icon lmb-filter\" title=\"$lang[425]\" border=\"0\" height=\"14\" onclick=\"limbasDivShowReminderFilter(event,this);return false;\" style=\"cursor:pointer;padding-left:2px;pointer;padding-right:2px;\"></i>";
 	}
+
+	// indicator header
+    if($gresult[$gtabid]["indicator"]["header"]) {
+        echo "<span> ".$gresult[$gtabid]["indicator"]["header"]." </span>";
+    }
 
 	echo "</td>";
 	
@@ -508,6 +567,102 @@ function lmbGlistHeaderDetail($gtabid,&$gresult,$key,$rowkey,$gformid,$utyp=null
 
 
 
+function lmbGlistNotice($gtabid,&$filter){
+    global $farbschema;
+    global $lang;
+    global $gtab;
+    global $LINK;
+
+
+    // notice validity all
+    /*
+    if ($gtab['validity'][$gtabid] AND $filter['validity_all'][$gtabid]) {
+        $val = "<div class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice1\" id=\"lmbGlistBodyNotice7\">{$lang[3008]}: {$lang[3044]}\
+         <i class=\"lmb-icon lmb-close-alt\" onclick=\"document.form1.filter_validity_all.value=1;send_form(1);\"></i> \
+         </div>";
+
+        echo "<script type=\"text/javascript\">
+	        lmbGlistBodyNotice(7,'$val');
+	    </script>\n";
+    }*/
+
+    // notice validity
+    if ($gtab['validity'][$gtabid] AND $filter['validity'][$gtabid] AND !$filter['validity_all'][$gtabid]) {
+        $dateformat = setDateFormat(1, 2);
+        $transl = array('all'=>$lang[3052],'allto'=>$lang[3054],'allfrom'=>$lang[3055]);
+        $validityval = $filter["validity"][$gtabid];
+        if($transl[$filter["validity"][$gtabid]]){$validityval = $transl[$filter["validity"][$gtabid]];}
+
+        $val = "<div class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice1\" id=\"lmbGlistBodyNotice1\"><div style=\"padding-top:3px;\">{$lang[3008]}:&nbsp;</div>\
+         <input type=\"text\" id=\"lmbValidityNotice\" style=\"height:19px;width:180px;background-color:inherit\" value=\"{$validityval}\" onchange=\"document.form1.filter_validity.value=this.value+\' \';send_form(1,2,1,1,1,0);\" \
+         ondblclick=\"lmb_datepicker(event,this,\'lmbValidityNotice\',document.getElementById(\'lmbValidityNotice\').value,\'{$dateformat}\',10);\"> \ ";
+         if($filter['validity'][$gtabid] != 'all') {
+             $val .= "<i class=\"lmb-icon lmb-close-alt\" onclick=\"document.form1.filter_validity.value=\'all\';send_form(1);\"></i> \ ";
+         }
+         $val .= "</div>";
+
+        echo "<script type=\"text/javascript\">
+	        lmbGlistBodyNotice(1,'$val');
+	    </script>\n";
+    }
+
+    // notice archive
+    if ($filter['unhide'][$gtabid]) {
+        $val = "<div class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice2\" id=\"lmbGlistBodyNotice2\">{$lang[1307]}: \
+         <i class=\"lmb-icon lmb-close-alt\" onclick=\"document.form1.filter_unhide.value=1;send_form(1)\"></i> \
+         </div>";
+
+        echo "<script type=\"text/javascript\">
+	        lmbGlistBodyNotice(2,'$val');
+	    </script>\n";
+    }
+
+    // notice versioned
+    if ($filter['viewversion'][$gtabid]) {
+        $val = "<div class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice3\" id=\"lmbGlistBodyNotice3\">{$lang[2140]}: \
+         <i class=\"lmb-icon lmb-close-alt\" onclick=\"document.form1.filter_version.value=1;send_form(1)\"></i> \
+         </div>";
+
+        echo "<script type=\"text/javascript\">
+	        lmbGlistBodyNotice(3,'$val');
+	    </script>\n";
+    }
+
+    // notice locked
+    if ($filter['locked'][$gtabid]) {
+        $val = "<div class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice4\" id=\"lmbGlistBodyNotice4\">{$lang[$LINK['desc'][273]]}: \
+         <i class=\"lmb-icon lmb-close-alt\" onclick=\"document.form1.filter_locked.value=1;send_form(1)\"></i> \
+         </div>";
+
+        echo "<script type=\"text/javascript\">
+	        lmbGlistBodyNotice(4,'$val');
+	    </script>\n";
+    }
+
+    // notice mandatory
+    if($gtab['multitenant'][$gtabid] AND $filter['multitenant'][$gtabid]){
+        $val = "<div class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice5\" id=\"lmbGlistBodyNotice5\">{$lang[$LINK['desc'][309]]}: \
+         <i class=\"lmb-icon lmb-close-alt\" onclick=\"document.form1.filter_multitenant.value=1;send_form(1);\"></i> \
+         </div>";
+
+        echo "<script type=\"text/javascript\">
+	        lmbGlistBodyNotice(5,'$val');
+	    </script>\n";
+    }
+
+    // notice data permission
+    if($gtab['has_userrules'][$gtabid] AND $filter['userrules'][$gtabid]){
+        $val = "<div class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice6\" id=\"lmbGlistBodyNotice6\">{$lang[$LINK['desc'][267]]}: \
+         <i class=\"lmb-icon lmb-close-alt\" onclick=\"document.form1.filter_userrules.value=1;send_form(1);\"></i> \
+         </div>";
+
+        echo "<script type=\"text/javascript\">
+	        lmbGlistBodyNotice(6,'$val');
+	    </script>\n";
+    }
+
+}
+
 /* ------------------- table-body -------------------------------------------- */
 /* ----------------------------------------------------------------------------- */
 /**
@@ -540,6 +695,11 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 	global $userdat;
 	global $lang;
 	global $pophist;
+
+
+    // show notice
+    lmbGlistNotice($gtabid,$filter);
+
 
 	if(!$subtab){
 		echo "<tr><td id=\"GtabBodyTableTD\">";
@@ -602,7 +762,7 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 		
 		# swich bg color
 		if($BGCLASS == 'gtabBodyTRColorB'){$BGCLASS = 'gtabBodyTRColorA';}else{$BGCLASS = 'gtabBodyTRColorB';}
-		
+
 		$BGCOLOR = '';
 		# row-color from indicator
 		if(is_array($gresult[$gtabid]["indicator"]["color"][$bzm])){
@@ -705,8 +865,8 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 
 		#echo "</td>\n";
 		
-		/*----------------- show indicator -------------------*/
-		if($filter["indicator"][$gtabid] AND $gresult[$gtabid]["indicator"]["object"][$bzm]){
+		/*----------------- show indicator object in first cell -------------------*/
+		if($gresult[$gtabid]["indicator"]["object"][$bzm]){
 			foreach ($gresult[$gtabid]["indicator"]["object"][$bzm] as $ikey => $ival){
 				echo "<span style=\"padding-left:2px;padding-right:2px;\">$ival</span>\n";
 			}
@@ -777,7 +937,9 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 
 		#---- show specific userrules -------
 		if($filter["userrules"][$gtabid] AND ($gtab["edit_userrules"][$gtabid] OR ($gtab["edit_ownuserrules"][$gtabid] AND $gresult[$gtabid]["IS_OWN_USER"][$bzm]))){
+		    echo "<TR><TD COLSPAN=\"".($gtab["fieldcount"][$gtabid]+1)."\">";
 			show_userRules($gtabid,$ID);
+			echo "</TD></TR>";
 		}
 		
 		#---- show popup relations -------
@@ -905,7 +1067,7 @@ function lmbGlistFooter($gtabid,&$gresult,$filter,$subtab=null,$style=null){
 		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-first\" style=\"cursor:pointer;\" border=\"0\" title=\"$lang[1294]\" onclick=\"document.form1.elements['filter_page[".$gtabid."]'].value='1';send_form(1,2);\"></i></td>\n";
 		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-previous\" style=\"cursor:pointer;font-size:1.5em;\" border=\"0\" title=\"$lang[1296]\" onclick=\"document.form1.elements['filter_page[".$gtabid."]'].value='".($filter["page"][$gtabid] - 1)."';send_form(1,2);\"></i></td>\n";
 	}
-	echo "<td class=\"gtabFooterTD\" nowrap style=\"width:20px;\"><input type=\"text\" style=\"width:60px;padding:0;text-align:center;\" name=\"filter_page[".$gtabid."]\" value=\"".$filter["page"][$gtabid]."/".$maxpage."\"></td>\n";
+	echo "<td class=\"gtabFooterTD gtabFooterPage\" nowrap style=\"width:20px;\"><input type=\"text\" style=\"width:60px;padding:0;text-align:center;\" name=\"filter_page[".$gtabid."]\" value=\"".$filter["page"][$gtabid]."/".$maxpage."\"></td>\n";
 	if($filter["page"][$gtabid] == $maxpage){
 		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-next\" style=\"opacity:0.4;filter:Alpha(opacity=40);font-size:1.5em;\" border=\"0\" title=\"$lang[1297]\"></i></td>\n";
 		echo "<td class=\"gtabFooterTD\" nowrap style=\"width:10px;\"><i class=\"lmb-icon lmb-last\" style=\"opacity:0.4;filter:Alpha(opacity=40);\" border=\"0\" title=\"$lang[1295]\"></i></td>\n";
@@ -916,7 +1078,7 @@ function lmbGlistFooter($gtabid,&$gresult,$filter,$subtab=null,$style=null){
 	echo "<td class=\"gtabFooterTD\" nowrap style=\"width:15px;\">&nbsp;<b style=\"color:green;\">|</b>&nbsp;$lang[96]&nbsp;</td>\n";
 	echo "<td class=\"gtabFooterTD\" style=\"width:30px;\"><input type=\"text\" style=\"width:30px;padding:0;text-align:center;\" value=\"".$filter["anzahl"][$gtabid]."\" name=\"filter_anzahl[".$gtabid."]\" maxlength=\"3\"></td>\n";
 	echo "<td class=\"gtabFooterTD\" style=\"width:30px;\">&nbsp;$lang[88]</td>\n\n";
-	echo "<td class=\"gtabFooterTD\" style=\"width:100px;color:#707070;\" nowrap>&nbsp;&nbsp;&nbsp;(".$gresult[$gtabid]["need_time"]." sec.)</td>\n";
+	if($session["debug"]){echo "<td class=\"gtabFooterTD\" style=\"width:100px;color:#707070;\" nowrap>&nbsp;&nbsp;&nbsp;(".$gresult[$gtabid]["need_time"]." sec.)</td>\n";}
 	echo "<td class=\"gtabFooterTD\" style=\"width:15px;\" nowrap>&nbsp;&nbsp;</TD>\n";
 	echo "<td class=\"gtabFooterTD\" nowrap id=\"messages\"></TD>\n";
 	echo "</tr>\n";
@@ -994,14 +1156,15 @@ function table_calculate($gtabid,&$gresult){
 
 	#echo "<tr bgcolor=\"".$farbschema["WEB4"]."\"><td colspan=\"".($gtab["fieldcount"][$gtabid]+1)."\" style=\"height:1px;overflow:hidden;\"></td></tr>\n";
 	echo "<tr id=\"elrow_".$gtabid."_0\" class=\"gtabBodyTR\"><td class=\"gtabBodyTD".$class."\" style=\"width:".$gfield[$gtabid]["rowsize"][0]."px;\"></td>";
-	/*----------------- zeige Überwachungsregeln (Ampeln) -------------------*/
-	if($GLOBALS["filter"]["indicator"][$gtabid]){echo "<td colspan=\"".$GLOBALS["filter"]["indicator"][$gtabid]."\"></td>\n";}
 	
 	/* --- SQL STATEMENT --------------------------------------- */
 	foreach($gfield[$gtabid]["sort"] as $key => $value){
 		if($gfield[$gtabid]["field_type"][$key] >= 100 OR $filter["hidecols"][$gtabid][$key]){continue;}
 		if($aggregate = $gfield[$gtabid]["aggregate"][$key] AND is_array($gresult[$gtabid][$key])){
 			$field = $gfield[$gtabid]["field_name"][$key];
+            if ($gfield[$gtabid]['argument_typ'][$key] == 47 /* sql argument */) {
+				$field = $gfield[$gtabid]['argument'][$key];
+			}
 			if(lmb_strpos($aggregate,'5') !== false){$sqls[] = "SUM($field) AS LS_$key";}
 			if(lmb_strpos($aggregate,'1') !== false){$sqls[] = "AVG($field) AS LA_$key";}
 			if(lmb_strpos($aggregate,'3') !== false){$sqls[] = "MAX($field) AS LMA_$key";}
@@ -1030,9 +1193,9 @@ function table_calculate($gtabid,&$gresult){
 
 			echo "<table collspan=0 rowspan=0>";
 			
-			if($gfield[$gtabid]["data_type"][$key] == 30){
-
-			}
+			#if($gfield[$gtabid]["data_type"][$key] == 30){
+            #
+			#}
 
 			# SUM
 			if(lmb_strpos($aggregate,'5') !== false){
@@ -1232,42 +1395,6 @@ function form_ergview($gtabid,&$gresult,$gformid){
 	}
 }
 
-
-function show_userRules($gtabid,$ID){
-	global $gtab;
-	global $db;
-	global $userdat;
-	global $groupdat;
-	global $farbschema;
-
-	echo "<TR><TD COLSPAN=\"".($gtab["fieldcount"][$gtabid]+1)."\">";
-
-	$sqlquery = "SELECT LMB_RULES_DATASET.USERID,LMB_RULES_DATASET.GROUPID,LMB_RULES_DATASET.EDIT,LMB_RULES_DATASET.DEL,LMB_RULES_DATASET.EDITUSER FROM LMB_RULES_DATASET WHERE LMB_RULES_DATASET.TABID = $gtabid AND LMB_RULES_DATASET.DATID = $ID ORDER BY GROUPID,USERID";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-
-	while(lmbdb_fetch_row($rs)) {
-		$userid = lmbdb_result($rs,"USERID");
-		$groupid = lmbdb_result($rs,"GROUPID");
-		if(lmbdb_result($rs,"DEL")){$dp = "<i class=\"lmb-icon-cus lmb-page-delete-fancy\" title=\"delete\"></i>";}else{$dp = "";}
-		if(lmbdb_result($rs,"EDIT")){$ep = "<i class=\"lmb-icon lmb-page-edit\" title=\"edit\"></i>";}else{$ep = "";}
-		if($userid){
-			$user[] = $userdat["bezeichnung"][$userid]." ".$ep."&nbsp;".$dp;
-		}elseif($groupid){
-			$groups[] = $groupdat["name"][$groupid]." ".$ep."&nbsp;".$dp;
-		}
-	}
-
-	if($user){
-		echo "<DIV style=\"background-color:".$farbschema["WEB11"].";width:100%\"><i class=\"lmb-icon lmb-user\" style=\"padding-left:10px;padding-right:10px;\"></i>".implode(" <span style=\"color:green;\">|</span> ",$user)."</DIV>";
-	}
-	if($groups){
-		echo "<DIV style=\"background-color:".$farbschema["WEB10"].";width:100%\"><i class=\"lmb-icon lmb-group\" style=\"padding-left:10px;padding-right:10px;\"></i>".implode(" <span style=\"color:green;\">|</span> ",$groups)."</DIV>";
-	}
-
-	echo "</DIV></TD></TR>";
-
-}
 
 
 

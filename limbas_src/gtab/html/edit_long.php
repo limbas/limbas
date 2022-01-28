@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -21,21 +21,26 @@
 
 if($gfield[$gtabid]["field_name"][$field_id] AND $gtab["table"][$gtabid] AND $ID AND $gfield[$gtabid]["data_type"][$field_id] == 39){
 
-	$formname = $gfield[$gtabid]["form_name"][$field_id];
+    $formname = $gfield[$gtabid]["form_name"][$field_id];
+	$onlyfield[$gtabid] = array($field_id);
+	$fieldname = $field_id;
+	if($language){
+	    $formname = 'LANG' . $language . '_' . $gfield[$gtabid]["form_name"][$field_id];
+	    $fieldname = 'LANG' . $language . '_' . $gfield[$gtabid]['rawfield_name'][$field_id];
+	    $onlyfield[$gtabid][] = $fieldname;
+	    $extension['select'][] = $fieldname;
+    }
 	
 	if($gfield[$gtabid]["sort"][$field_id] AND $gfield[$gtabid]["perm_edit"][$field_id]){
-	
 		# --- Inhalt ändern ---
 		if(${$formname}){
-			update_data("$gtabid,$field_id,$ID",1,null);
+			update_data("$gtabid,$field_id,$ID,null,$language",1,null);
 		}
 	}
-	
-	$onlyfield[$gtabid] = array($field_id);
-	$gresult = get_gresult($gtabid,1,null,null,null,$onlyfield,$ID);
-	$longresult = $gresult[$gtabid][$field_id][0];
-	
-	
+
+	$gresult = get_gresult($gtabid,1,null,null,null,$onlyfield,$ID,$extension);
+	$longresult = $gresult[$gtabid][$fieldname][0];
+
 	if($umgvar["wysiwygeditor"] == "openwysiwyg"){
 		echo "<script type=\"text/javascript\" src=\"extern/wysiwyg/openwysiwyg/scripts/wysiwyg.js?v=".$umgvar["version"]."\"></script>\n";
 	}elseif($umgvar["wysiwygeditor"] == "TinyMCE"){
@@ -56,7 +61,19 @@ if($gfield[$gtabid]["field_name"][$field_id] AND $gtab["table"][$gtabid] AND $ID
 		<input type="hidden" name="ID" value="<?= $ID ?>">
 		<textarea id="<?=$formname?>" NAME="<?=$formname?>" calss="gtabchange" style="width:100%;height:650px"><?=htmlentities($longresult,ENT_QUOTES,$umgvar["charset"])?></textarea>
 		<hr>
-		<input type="submit" value="<?=$lang[842]?>">
+		<input type="submit" value="<?=$lang[842]?>">&nbsp;&nbsp;&nbsp;
+
+        <?php
+        echo "<select name=\"language\" onchange=\"document.form1.submit()\">";
+        echo "<option value=\"0\">".$umgvar['multi_language_desc'][$session['dlanguage']];
+        if($umgvar['multi_language']){
+        foreach ($umgvar['multi_language'] as $lkey => $langID) {
+            if($language == $langID){$SELECTED = 'SELECTED';}else{$SELECTED = '';}
+            echo "<option value=\"".$langID."\" $SELECTED>".$umgvar['multi_language_desc'][$langID];
+        }}
+        echo "</select>";
+        ?>
+
 		</FORM>
 		</DIV>
 

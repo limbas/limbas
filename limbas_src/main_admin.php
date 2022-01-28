@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH (support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH (support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6  
+ * Version 4.3.36.1319
  */
 
 /*
@@ -425,6 +425,11 @@ elseif ($action == 'setup_printers' AND $LINK[$action] == 1) {
     $require1 = 'admin/setup/printers.dao';
     $require2 = 'admin/setup/printers.php';
     $BODYHEADER = $lang[$LINK['desc'][$LINK_ID[$action]]];
+}
+elseif ($action == 'setup_keymanager' AND $LINK[$action] == 1) {
+    $require1 = 'admin/setup/keyManager.dao';
+    $require2 = 'admin/setup/keyManager.php';
+    $BODYHEADER = $lang[$LINK['desc'][$LINK_ID[$action]]];
 }elseif ($action == "intro" or $action == "nav_info") {
     $require2 = "help/intro.php";
     $BODYHEADER = $lang[$LINK['desc'][$LINK_ID[$action]]];
@@ -580,28 +585,17 @@ if($BODY != 1){
 <title>Limbas Enterprise Unifying Framework V <?=$umgvar['version']?></title>
 
 <script type="text/javascript" src="lib/global.js?v=<?=$umgvar["version"]?>"></script>
-<script type='text/javascript' src='extern/jquery/jquery-1.11.0.min.js?v=<?=$umgvar["version"]?>'></script>
+<script type='text/javascript' src='extern/jquery/jquery-3.2.1.min.js?v=<?=$umgvar["version"]?>'></script>
 <script type='text/javascript' src='extern/jquery/jquery-ui-1.12.1.min.js?v=<?=$umgvar["version"]?>'></script>
 <script type='text/javascript' src='extern/jquery/colResizable-1.3.min.js?v=<?=$umgvar["version"]?>'></script>
 <script type='text/javascript' src='extern/jquery/jquery.ui.datepicker-de.js?v=<?=$umgvar["version"]?>'></script>
 <script type='text/javascript' src='extern/jquery/jquery-ui-timepicker-addon.js?v=<?=$umgvar["version"]?>'></script>
-<style type='text/css'>@import url(extern/jquery/theme/jquery-ui-1.12.1.min.css?v=<?=$umgvar["version"]?>);</style>
-<style type='text/css'>@import url(extern/jquery/theme/jquery-ui-timepicker-addon.css?v=<?=$umgvar["version"]?>);</style>
-<style type='text/css'>@import url(extern/jquery/colResizable.css?v=<?=$umgvar["version"]?>);</style>
-    
-    
-<?php
+<link rel="stylesheet" type="text/css" href="extern/jquery/theme/jquery-ui-1.12.1.min.css?v=<?=$umgvar["version"]?>">
+<link rel="stylesheet" type="text/css" href="extern/jquery/theme/jquery-ui-timepicker-addon.css?v=<?=$umgvar["version"]?>">
+<link rel="stylesheet" type="text/css" href="extern/jquery/colResizable.css?v=<?=$umgvar["version"]?>">
 
-//load layout / choose between new and legacy based on action and template //TODO: remove legacy switch in future version
-if (in_array($action,['setup_color_schema'])) {
-    if ($session['layout'] != 'barracuda') { ?>
-        <link rel="stylesheet" type="text/css" href="layout/css/barracuda.4.css?v=<?=$umgvar["version"]?>">
-    <?php } else { ?>
-        <link rel="stylesheet" type="text/css" href="layout/css/<?=$session['layout']?>.<?=$session['farbschema']?>.css?v=<?=$umgvar["version"]?>">
-    <?php } ?>
-<?php } else { ?>
-    <link rel="stylesheet" type="text/css" href="USER/<?=$session['user_id']?>/layout.css?v=<?=$umgvar["version"]?>">
-<?php } ?>
+
+<link rel="stylesheet" type="text/css" href="USER/<?=$session['user_id']?>/layout.css?v=<?=$umgvar["version"]?>">
     
 
 <?php if($action == "setup_user_tracking" OR $action == "setup_user_change_admin" OR $action == "setup_stat_user_det"){?>
@@ -657,20 +651,16 @@ if($BODY != 1){
 	<script language="JavaScript">
 	window.defaultStatus = 'Limbas Enterprise Unifying Framework V <?=$umgvar["version"]?>';
 	window.onerror = null;
+	</script>
 	<?php
-	# --- Fehlermeldungen -----
-	if(is_array($alert)){
-		if($alert AND !is_array($alert)){$alert = array($alert);}
-		array_unique($alert);
-		#echo "lmb_alert('".implode("\\n",$alert)."');\n";
-		echo "showAlert('".implode('\n',$alert)."');\n";
-	}
 
-	echo "</script>\n";
+    // --- error_alert -----
+    error_showalert($alert);
+
 	if($BODYHEADER){
 	echo "</td></tr></table>";
 	}
-	
+
 	echo "\n</html>\n";
 
 }

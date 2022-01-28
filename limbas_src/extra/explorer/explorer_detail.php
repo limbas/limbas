@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -68,7 +68,7 @@ function show_part(part) {
 <input type="hidden" name="show_part">
 <input type="hidden" name="history_fields">
 <input type="hidden" name="change_ok">
-<input type="hidden" name="verkn_addfrom">
+<input type="hidden" name="verkn_addfrom" VALUE="<?=$verkn_addfrom;?>">
 
 <div id="lmbAjaxContainer" class="ajax_container" style="position:absolute;visibility:hidden;" OnClick="activ_menu=1;"></div>
 
@@ -132,35 +132,10 @@ if($ffile["indize"]){
 
 # --- Vorschau ---
 $size = explode("x",$umgvar["thumbsize2"]);
-$img = IMACK_ConvertThumbs(array($ID,$ffile["secname"],$ffile["mimeid"],$ffile["thumb_ok"]),$size[0],$size[1],1);
+$img = IMACK_ConvertThumbs(array($ID,$ffile["secname"],$ffile["mimeid"],$ffile["thumb_ok"],null,$ffile["mid"]),$size[0],$size[1],1);
 if($img){
-	$filename = $umgvar["uploadpfad"].$ffile["secname"].".".$ffile["ext"];
-	/*
-	if(function_exists(imagecreatefrom.$mime[1])){
-		$fnc = imagecreatefrom.$mime[1];
-		$pic = $fnc($filename);
-		if($pic){
-			$i = 0;
-			for ($i = 0; $i <= 255; $i++){
-				$color = @colorDecArrayToHex(imagecolorsforindex($pic,$i));
-				$col[$color] = $color;
-			}
-
-			$col = array_unique($col);
-			sort($col);
-
-			echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\" COLSPAN=\"2\">$lang[2112]</TD></TR>";
-			echo "<TR class=\"tabBody\"><TD></TD><TD><table cellpadding=0 cellspacing=0 style=\"border:1px solid black\"><tr>";
-			foreach ($col as $key => $value){
-				echo "<td style=\"background-color:#".$value.";width:2px;height:20px\"></td>";
-			}
-			echo "</tr></table></TD></TR>";
-			imagedestroy($pic);
-		}else{
-			$img = "pic/fileicons/".$ffile["pic"];
-		}
-	}
-	*/
+	#$filename = $umgvar["upload_pfad"].$ffile["secname"].".".$ffile["ext"];
+	$filename = lmb_getFilePath($ID,$level,$ffile["secname"],$ffile["ext"]);
 	echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\" COLSPAN=\"2\">$lang[1739]</TD></TR>";
 	echo "<TR class=\"tabBody\"><TD></TD><TD><IMG SRC=\"$img\" BORDER=\"1\" STYLE=\"padding:10px;background-color:#CCCCCC\"></TD></TR>";
 }
@@ -249,7 +224,7 @@ if($exifdata){?>
 if($dfile["id"]){
 	foreach ($dfile["id"] as $key => $value){
 		echo "<tr><td nowrap><A HREF=\"main.php?&action=download&ID=".$dfile["id"][$key]."\" TARGET=\"new\">".$dfile["name"][$key]."</A></td><td nowrap>".file_size($dfile["size"][$key])."</td><td nowrap>".$userdat["vorname"][$dfile["erstuser"][$key]]." ".$userdat["name"][$dfile["erstuser"][$key]]."</td><td nowrap>".get_date($dfile["erstdatum"][$key],1)."</td></tr>";
-		echo "<TR><td colspan=\"4\" style=\"overflow:hidden;border-bottom:1px solid grey;\"><div style=\"overflow:hidden;width:100%;\"><I>"."/".set_url($dfile["level"][$key],0)."</I></A></div></td></TR>";
+		echo "<TR><td colspan=\"4\" style=\"overflow:hidden;border-bottom:1px solid grey;\"><div style=\"overflow:hidden;width:100%;\"><I>"."/".lmb_getUrlFromLevel($dfile["level"][$key],0)."</I></A></div></td></TR>";
 	}
 }
 ?>

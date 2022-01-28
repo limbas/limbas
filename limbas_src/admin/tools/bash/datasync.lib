@@ -16,6 +16,9 @@
  *   3.:  Back on master:
  *     $final = datasync_applyChangedData($return);
  */
+
+$gLmbExt = null; // drop all Extensions
+
 require_once('gtab/gtab.lib');
 require_once('gtab/gtab_type_erg.lib');
 require_once('gtab/gtab_type_update.lib');
@@ -29,7 +32,7 @@ global $sync_exceptions;
 global $additionalCronData;
 
 // start sync via cron job
-if (defined('IS_CRON') && IS_CRON === 1 && $additionalCronData) {
+if (defined('IS_CRON') && $additionalCronData) {
     datasync_runSyncWithMasterSocket($additionalCronData);
 }
 
@@ -508,9 +511,9 @@ function datasync_collectChangedData($newids = array()) {
     //TODO: Only tables of selected sync template
     //ORDER: delete (1) -> created (2) -> changed (3)
     if ($sync_master) {
-        $sqlquery = "SELECT TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID, ERSTDATUM FROM LMB_SYNC_CACHE WHERE SLAVE_ID = $sync_slave ORDER BY TYPE ASC";
+        $sqlquery = "SELECT DISTINCT TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID, ERSTDATUM FROM LMB_SYNC_CACHE WHERE SLAVE_ID = $sync_slave ORDER BY TYPE ASC";
     } else {
-        $sqlquery = "SELECT TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID, ERSTDATUM FROM LMB_SYNC_CACHE ORDER BY TYPE ASC";
+        $sqlquery = "SELECT DISTINCT TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID, ERSTDATUM FROM LMB_SYNC_CACHE ORDER BY TYPE ASC";
     }
     $rs = lmbdb_exec($db, $sqlquery);
 
@@ -567,8 +570,13 @@ function datasync_collectChangedData($newids = array()) {
 
             } //changed & not deleted & not created
             else if ($type == 3 && $data[$tabid][$slave_datid] !== false && !(array_key_exists('new', $data[$tabid]) && array_key_exists($datid, $data[$tabid]['new']))) {
-                if (in_array($fieldid, $syncfields[$tabid])) {
-                    $changedata = datasync_getData($tabid, $datid, array($fieldid), $erstdatum);
+                if (in_array($fieldid, $syncfields[$tabid]) || $fieldid == 0) {
+                    if ($fieldid == 0) {
+                        $changedata = datasync_getData($tabid, $datid, array(), $erstdatum);
+                    } else {
+                        $changedata = datasync_getData($tabid, $datid, array($fieldid), $erstdatum);
+                    }
+
                     if ($changedata === false) {
                         continue;
                     }
@@ -623,6 +631,12 @@ function datasync_applyChangedData($syncdata) {
     $newids = array();
     $relation = array();
     foreach ($syncdata['data'] as $tabid => $data) {
+
+        //check if table is a parameterized relation table //TODO: other way than name check
+        if (strtoupper(substr($gtab['table'][$tabid],0,5)) === 'VERK_') {
+            continue;
+        }
+
         $new = null;
         if (array_key_exists('new', $data)) {
             $new = $data['new'];
@@ -637,6 +651,17 @@ function datasync_applyChangedData($syncdata) {
                     datasync_setException('error', 4, 'New data failed: ' . lmb_log::getLogMessage(true), $tabid);
                     continue;
                 }
+
+                if ($sync_master) {
+                    //assign lmb_sync_slave and lmb_sync_id
+                    $table = dbf_4($gtab['table'][$tabid]);
+                    $sql = "UPDATE $table SET LMB_SYNC_SLAVE = $sync_slave, LMB_SYNC_ID = {$record['ID']} WHERE ID = $id";
+                    $rs = lmbdb_exec($db, $sql);
+                } else {
+                    //fill match array for master system
+                    $newids[$tabid][] = array('ID' => $record['ID'], 'slave_datid' => $id);
+                }
+
                 $update = array();
                 foreach ($record as $fieldid => $value) {
                     if ($fieldid == 'sys') {
@@ -652,16 +677,6 @@ function datasync_applyChangedData($syncdata) {
                             $relation[$tabid][$id][$fieldid] = $value['value'];
                         }
                     }
-                }
-
-                if ($sync_master) {
-                    //assign lmb_sync_slave and lmb_sync_id
-                    $table = dbf_4($gtab['table'][$tabid]);
-                    $sql = "UPDATE $table SET LMB_SYNC_SLAVE = $sync_slave, LMB_SYNC_ID = {$record['ID']} WHERE ID = $id";
-                    $rs = lmbdb_exec($db, $sql);
-                } else {
-                    //fill match array for master system
-                    $newids[$tabid][] = array('ID' => $record['ID'], 'slave_datid' => $id);
                 }
 
                 if (!empty($update) && update_data($update) !== true) {
@@ -736,6 +751,7 @@ function datasync_applyChangedData($syncdata) {
             }
         }
 
+        unset($syncdata['data'][$tabid]);
     }
 
     //update sync_ids of records created on slave
@@ -754,6 +770,7 @@ function datasync_applyChangedData($syncdata) {
     }
 
     //set or delete relations
+    //verbose
     foreach ($relation as $tabid => $records) {
         foreach ($records as $datid => $fields) {
             $sdatid = $datid;
@@ -764,6 +781,12 @@ function datasync_applyChangedData($syncdata) {
             foreach ($fields as $fieldid => $verknids) {
                 $verkntab = $gfield[$tabid]['verkntabid'][$fieldid];
 
+                //check if relation is hierarchical and ignore it
+                if (array_key_exists('verkntree',$gfield[$tabid]) && array_key_exists($fieldid,$gfield[$tabid]['verkntree'])) {
+                    continue;
+                }
+                
+                
                 //get exsting relations
                 $gsr[$tabid]['ID'] = $datid;
                 $filter["relationval"][$tabid] = 1;
@@ -790,26 +813,124 @@ function datasync_applyChangedData($syncdata) {
 
                 // add ids missing on current system
                 if ($verkn_add_ids = array_diff($verknids, $intersect)) {
-                    $relation = init_relation($tabid, $fieldid, $datid, $verkn_add_ids);
-                    if ($verkn_add_ids && !set_relation($relation)) {
-                        $errormsg = lmb_log::getLogMessage(true);
-                        //workaround for existing relations
-                        if (!(strpos($errormsg,'already joined') !== false)) {
-                            datasync_setException('error', 11, 'Add relations failed: ' . lmb_log::getLogMessage(true), $tabid, $sdatid, $fieldid);
+
+                    //table is published and synced too => set lmb_slave_id and keyid from slave
+                    //TODO: !!! vtabid instead of tabid
+                    if (array_key_exists($tabid,$gtab['datasync']) && $gtab['datasync'][$tabid] === true) {
+                        foreach ($verkn_add_ids as $keyid => $verknAddId) {
+                            
+                            //check if relation is parameterized and synced
+                            if (array_key_exists('verknparams',$gfield[$tabid]) && array_key_exists($fieldid,$gfield[$tabid]['verknparams']) && $gtab[$gfield[$tabid]['verknparams'][$fieldid]]['datasync'] == true) {
+                                $relation = init_relation($tabid, $fieldid, $datid, [$verknAddId], null, null,array('LMB_SYNC_SLAVE'=>$sync_slave,'LMB_SYNC_ID'=>$keyid));
+                            } else {
+                                $relation = init_relation($tabid, $fieldid, $datid, [$verknAddId]);
+                            }
+                            
+
+                            if (!set_relation($relation)) {
+                                $errormsg = lmb_log::getLogMessage(true);
+                                //workaround for existing relations
+                                if (!(strpos($errormsg,'already joined') !== false)) {
+                                    datasync_setException('error', 11, 'Add relations failed: ' . lmb_log::getLogMessage(true), $tabid, $sdatid, $fieldid);
+                                }
+                            }
+                        }
+                    } else {
+                        $relation = init_relation($tabid, $fieldid, $datid, $verkn_add_ids);
+
+                        if ($verkn_add_ids && !set_relation($relation)) {
+                            $errormsg = lmb_log::getLogMessage(true);
+                            //workaround for existing relations
+                            if (!(strpos($errormsg,'already joined') !== false)) {
+                                datasync_setException('error', 11, 'Add relations failed: ' . lmb_log::getLogMessage(true), $tabid, $sdatid, $fieldid);
+                            }
                         }
                     }
+
+
+
                 }
 
                 // delete ids missing on partner system
                 if ($verkn_del_ids = array_diff($existing_rel, $intersect)) {
                     $relation = init_relation($tabid, $fieldid, $datid, null, $verkn_del_ids);
                     if ($verkn_del_ids && !set_relation($relation)) {
-                        datasync_setException('error', 11, 'Remove relations failed: ' . lmb_log::getLogMessage(true), $tabid, $sdatid, $fieldid);
+                        //TODO: datasync_setException('error', 11, 'Remove relations failed: ' . lmb_log::getLogMessage(true), $tabid, $sdatid, $fieldid);
                     }
                 }
             }
         }
     }
+
+
+
+    //Update relations
+    foreach ($syncdata['data'] as $tabid => $data) {
+
+        //TODO: no delete entry for relation tables is set!!!
+
+        //update / delete records
+        foreach ($data as $id => $values) {
+            if ($id == 0) {
+                datasync_setException('error', 6, 'Record not found', $tabid, $id);
+                continue;
+            }
+
+            $sid = $id;
+            if ($sync_master) {
+                $id = datasync_convertID($tabid, $id, 0);
+                if ($id === false) {
+                    //if not deleted anyway
+                    if ($values !== false) {
+                        datasync_setException('error', 6, 'ID resolve failed', $tabid, $sid);
+                    }
+                    continue;
+                }
+            }
+
+            //deleted
+            if ($values === false) {
+                continue;
+            } //changed and not deleted
+            else if (!array_key_exists($tabid, $deleted) || !in_array($id, $deleted[$tabid])) {
+                $update = array();
+
+                //Update allowed
+                if ($sync_master) {
+                    $fids = $sync_template[$tabid]['master'];
+                } else {
+                    $fids = $sync_template[$tabid]['slave'];
+                }
+
+
+                foreach ($values as $fieldid => $value) {
+                    if ($fieldid == 'sys') {
+                        datasync_handleSystemFields($tabid, $id, $value, $update);
+                        continue;
+                    }
+
+                    if (!in_array($fieldid, $fids)) {
+                        continue;
+                    }
+
+                    $special = datasync_applyFieldType($tabid, $fieldid, $id, $value['value']);
+                    if ($special === true) {
+                        if (datasync_hasConflict($tabid, $id, $fieldid, $value)) {
+                            continue;
+                        }
+                        $update["$tabid,$fieldid,$id"] = $value['value'] . '';
+                    } else {
+                        continue;
+                    }
+                }
+                if (!empty($update) && update_data($update) !== true) {
+                    datasync_setException('error', 3, 'Update failed: ' . lmb_log::getLogMessage(true), $tabid, $sid);
+                }
+            }
+        }
+
+    }
+
 
     return $newids;
 }
@@ -823,11 +944,39 @@ function datasync_applyChangedData($syncdata) {
  * @param array $systemdata
  */
 function datasync_handleSystemFields($tabid, $id, $systemdata,&$update) {
-    if (array_key_exists('MID', $systemdata)) {
+
+    if (array_key_exists('MID', $systemdata) && !empty($systemdata['MID'])) {
         $update["$tabid,LMB_MID,$id"] = $systemdata['MID'];
     }
     if (array_key_exists('DEL', $systemdata)) {
         $update["$tabid,DEL,$id"] = ($systemdata['DEL']) ? LMB_DBDEF_TRUE : LMB_DBDEF_FALSE;
+    }
+
+    $vpid = null;
+    if (array_key_exists('VPID', $systemdata) && !empty($systemdata['VPID'])) {
+        $vpid = datasync_convertID($tabid,$systemdata['VPID']);
+        $update["$tabid,VPID,$id"] = $vpid;
+    }
+    if (array_key_exists('VID', $systemdata) && !empty($systemdata['VID'])) {
+        $update["$tabid,VID,$id"] = $systemdata['VID'];
+    }
+    if (array_key_exists('VDESC', $systemdata) && !empty($systemdata['VDESC'])) {
+        $update["$tabid,VDESC,$id"] = "'".$systemdata['VDESC']."'";
+    }
+    if (array_key_exists('VACT', $systemdata)) {
+        $update["$tabid,VACT,$id"] = $systemdata['VACT'] ? LMB_DBDEF_TRUE : LMB_DBDEF_FALSE;
+
+        //set all old versions to if updating active version
+        if ($systemdata['VACT'] && $vpid !== null) {
+            datasync_setVersionsInactive($tabid,$vpid);
+        }
+    }
+
+    if (array_key_exists('LMB_VALIDFROM', $systemdata) && !empty($systemdata['LMB_VALIDFROM'])) {
+        $update["$tabid,LMB_VALIDFROM,$id"] = "'".$systemdata['LMB_VALIDFROM']."'";
+    }
+    if (array_key_exists('LMB_VALIDTO', $systemdata) && !empty($systemdata['LMB_VALIDTO'])) {
+        $update["$tabid,LMB_VALIDTO,$id"] = "'".$systemdata['LMB_VALIDTO']."'";
     }
 }
 
@@ -846,12 +995,13 @@ function datasync_convertID($tabid, $cid, $dir = 0) {
     global $sync_slave;
 
     $table = dbf_4($gtab['table'][$tabid]);
+    $keyfield = $gtab['keyfield'][$tabid];
     if ($dir == 1) {
         //master ID to slave ID
-        $sql = "SELECT LMB_SYNC_ID AS CID FROM $table WHERE LMB_SYNC_SLAVE = $sync_slave AND ID = $cid";
+        $sql = "SELECT LMB_SYNC_ID AS CID FROM $table WHERE LMB_SYNC_SLAVE = $sync_slave AND $keyfield = $cid";
     } else {
         //slave ID to master ID
-        $sql = "SELECT ID AS CID FROM $table WHERE LMB_SYNC_SLAVE = $sync_slave AND LMB_SYNC_ID = $cid";
+        $sql = "SELECT $keyfield AS CID FROM $table WHERE LMB_SYNC_SLAVE = $sync_slave AND LMB_SYNC_ID = $cid";
     }
     $rs = lmbdb_exec($db, $sql);
 
@@ -861,6 +1011,47 @@ function datasync_convertID($tabid, $cid, $dir = 0) {
     return false;
 }
 
+
+/**
+ * Returns the real key id of a relation table
+ *
+ * @param int $tabid
+ * @param     $id
+ * @param     $verkn_id
+ *
+ * @return int|false converted id or false if not found
+ */
+function datasync_getRelKeyID($tabid, $id, $verkn_id) {
+    global $db;
+    global $gtab;
+
+    $table = dbf_4($gtab['table'][$tabid]);
+    $keyfield = $gtab['keyfield'][$tabid];
+    $sql = "SELECT $keyfield AS CID FROM $table WHERE ID = $id AND VERKN_ID = $verkn_id";
+    $rs = lmbdb_exec($db, $sql);
+
+    if (lmbdb_fetch_row($rs)) {
+        return lmbdb_result($rs, 'CID');
+    }
+    return false;
+}
+
+/**
+ * Set all old versions to inactive
+ *
+ * @param int $tabid
+ * @param     $id
+ *
+ * @return void converted id or false if not found
+ */
+function datasync_setVersionsInactive($tabid, $id) {
+    global $db;
+    global $gtab;
+
+    $table = dbf_4($gtab['table'][$tabid]);
+    $sql = "UPDATE $table SET VACT = ".LMB_DBDEF_FALSE." WHERE VPID = $id";
+    $rs = lmbdb_exec($db, $sql);
+}
 
 /**
  * Collects all relevant fields of a table for synchronization
@@ -899,20 +1090,23 @@ function datasync_getSyncFields($tabid) {
  * @return array | false
  */
 function datasync_getData($tabid, $id, $field_ids, $timestamp = null) {
-    $gsr[$tabid]['ID'] = $id;
+    global $gfield;
+    
+    //$gsr[$tabid]['ID'] = $id;
     $filter['relationval'][$tabid] = 1;
     $filter['getlongval'][$tabid] = 1;
     $filter['unhide'][$tabid] = -1;
 
     //TODO: filter for lmb_sync_slave?
     if ($field_ids === 'all') {
-        $gresult = get_gresult($tabid, 1, $filter, $gsr, null);
+        $gresult = get_gresult($tabid, 1, $filter, null, null,null,$id);
     } else {
-        $gresult = get_gresult($tabid, 1, $filter, $gsr, null, array($tabid => $field_ids));
+        $gresult = get_gresult($tabid, 1, $filter, null, null, array($tabid => $field_ids),$id);
 
         // ensure that all field ids are present
         foreach($field_ids as $field_id) {
-            if (!array_key_exists($field_id, $gresult[$tabid])) {
+            //TODO: Log field not in template
+            if (in_array($field_id,$gfield[$tabid]['field_id']) && !array_key_exists($field_id, $gresult[$tabid])) {
                 $gresult[$tabid][$field_id] = array();
             }
         }
@@ -926,11 +1120,11 @@ function datasync_getData($tabid, $id, $field_ids, $timestamp = null) {
     $data = array();
     foreach ($gresult[$tabid] as $fieldid => $value) {
         if (is_numeric($fieldid)) {
-            if (datasync_prepareFieldType($tabid, $fieldid, $value[0], $gresult)) {
+            if (datasync_prepareFieldType($tabid, $fieldid, $value[0], $gresult, $id)) {
                 $data[$fieldid] = array('value' => $value[0], 'time' => $timestamp);
             }
         } else {
-           //get all limbas system fields
+            //get all limbas system fields
             if (!isset($data['sys']))
             {
                 $data['sys'] = array();
@@ -951,28 +1145,65 @@ function datasync_getData($tabid, $id, $field_ids, $timestamp = null) {
  * @param mixed[] $gresult
  * @return bool|string
  */
-function datasync_prepareFieldType($tabid, $fieldid, &$value, $gresult) {
+function datasync_prepareFieldType($tabid, $fieldid, &$value, $gresult, $id) {
+    global $gtab;
     global $gfield;
     global $sync_master;
     global $sync_template;
 
-    //TODO: Attribut
     switch ($gfield[$tabid]['data_type'][$fieldid]) {
         //Backward relation
-        case 24:
+        case 23:
+            //Validity
+        case 53:
+        case 54:
+            //Multitenant
+        case 36:
+            //sync slave
+        case 35:
+            //version comment
+        case 43:
+            //erst / edit user / date
+        case 19:
+        case 20:
+            //ID field
+        case 22:
             return false;
-            break;
         //Relation: only valid if both, table and linked table, are synchronized
         case 27:
+        case 24:
+        case 25:
             $verkntab = $gfield[$tabid]['verkntabid'][$fieldid];
+            
             if (!array_key_exists($verkntab, $sync_template)) {
                 return false;
             }
+
+            //if relation table is synchronized
+            $md5_tab = $gfield[$tabid]['md5tab'][$fieldid];
+            $vtabid = null;
+            if (array_key_exists($md5_tab,$gtab['argresult_id'])) {
+                $vtabid = $gtab['argresult_id'][$md5_tab];
+            }
+
+            if (!empty($vtabid) && $gtab['datasync'][$vtabid] === true) {
+                $matched_values = [];
+                foreach ($value as $verknid) {
+                    $realID = datasync_getRelKeyID($vtabid,$id,$verknid);
+                    if ($realID) {
+                        $matched_values[$realID] = $verknid;
+                    }
+                }
+                $value = $matched_values;
+            }
+
             if ($sync_master) {
                 foreach ($value as &$verknid) {
                     $verknid = datasync_convertID($verkntab, $verknid, 1);
                 }
             }
+
+
             break;
         //Currency
         case 30:
@@ -980,10 +1211,11 @@ function datasync_prepareFieldType($tabid, $fieldid, &$value, $gresult) {
                 $value = $value['V'] . ' ' . $value['C'];
             }
             break;
-        //Auswahl (checkbox), Auswahl (multiselect), Auswahl (ajax)
+        //Auswahl (checkbox), Auswahl (multiselect), Auswahl (ajax), Attribute
         case 18:
         case 31:
         case 32:
+        case 46:
             if ($value > 0) {
                 $func = 'cftyp_' . $gfield[$tabid]['funcid'][$fieldid];
                 $values = $func(0, $fieldid, $tabid, 5, $gresult);
@@ -991,15 +1223,26 @@ function datasync_prepareFieldType($tabid, $fieldid, &$value, $gresult) {
                     $values = array();
                 }
                 $value = array();
-                foreach ($values as $id => $text) {
-                    if (is_numeric($id)) {
-                        $value[] = $id;
+
+                //Attribut Werte
+                if ($gfield[$tabid]['data_type'][$fieldid] == 46) {
+                    $value['values'] = [];
+                }
+
+                foreach ($values as $wid => $text) {
+                    if (is_numeric($wid)) {
+                        $value[] = $wid;
+                        if ($gfield[$tabid]['data_type'][$fieldid] == 46) {
+                            $value['values'][$wid] = datasync_getAttributeValue($tabid,$fieldid,$id,$wid);
+                        }
                     }
                 }
+
+
+
             } else {
                 $value = null;
             }
-            break;
     }
 
     return true;
@@ -1019,20 +1262,33 @@ function datasync_applyFieldType($tabid, $fieldid, $ID, &$value) {
     global $gfield;
     global $sync_template;
 
-    //TODO: Attribut
     switch ($gfield[$tabid]['data_type'][$fieldid]) {
         //Backward relation
-        case 24:
+        case 23:
+            //Validity
+        case 53:
+        case 54:
+            //Multitenant
+        case 36:
+            //sync slave
+        case 35:
+            //version comment
+        case 43:
+            //erst / edit user / date
+        case 19:
+        case 20:
+            //ID field
+        case 22:
             return false;
-            break;
         //Relation: only valid if both, table and linked table, are synchronized
         case 27:
+        case 24:
+        case 25:
             $verkntab = $gfield[$tabid]['verkntabid'][$fieldid];
             if (!array_key_exists($verkntab, $sync_template)) {
                 return false;
             }
             return 'rel';
-            break;
         //Currency
         case 30:
             if (is_array($value)) {
@@ -1043,43 +1299,136 @@ function datasync_applyFieldType($tabid, $fieldid, $ID, &$value) {
         case 18:
         case 31:
         case 32:
+        case 46:
             if (is_array($value)) {
                 if (datasync_hasConflict($tabid, $ID, $fieldid, $value)) {
                     return true;
                 }
-                /*$gsr[$tabid]['ID'] = $ID;
-                $gresult = get_gresult($tabid, 1, null, $gsr, null,array($tabid=>array($fieldid)));
-                if ($gresult[$tabid]['res_count']<=0)
-                {
-                    return false;
+
+                $wvalues = [];
+                if (array_key_exists('values',$value)) {
+                    $wvalues = $value['values'];
+                    unset($value['values']);
                 }
-                $func = 'cftyp_'.$gfield[$tabid]['funcid'][$fieldid];
-                $values = $func(0,$fieldid,$tabid,5,$gresult);
-                $existing = array();
-                if (!is_array($values))
-                {
-                    $values = array();
-                }
-                foreach ($values as $id => $text)
-                {
-                    if (is_numeric($id))
+
+
+                //compare exsting values only if attribute or ajax; others are already handled by uftyp
+                if ($gfield[$tabid]['data_type'][$fieldid] == 32 || $gfield[$tabid]['data_type'][$fieldid] == 46) {
+
+                    $gsr[$tabid]['ID'] = $ID;
+                    $gresult = get_gresult($tabid, 1, null, $gsr, null,array($tabid=>array($fieldid)));
+
+                    if ($gresult[$tabid]['res_count']>0)
                     {
-                        $existing[] = $id;
+                        $existing = array();
+                        datasync_prepareFieldType($tabid, $fieldid, $existing, $gresult, $ID);
+                        if (array_key_exists('values',$existing)) {
+                            unset($existing['values']);
+                        }
+
+                        $fvalue = [];
+                        $removes = array_diff($existing, $value);
+                        foreach ($removes as $rv) {
+                            $fvalue[] = 'd'.$rv;
+                        }
+
+                        $adds = array_diff($value,$existing);
+                        foreach ($adds as $av) {
+                            $fvalue[] = 'a'.$av;
+                        }
+
                     }
-                }*/
+
+                    $value = $fvalue;
+
+                }
 
                 if ($gfield[$tabid]['data_type'][$fieldid] == 32) {
-                    $value = ';' . implode(';', $value);
+                    //$value = ';' . implode(';', $value);
                 }
+
+
                 uftyp_23($tabid, $fieldid, $ID, $value);
+
+
+                if (!empty($wvalues)) {
+                    foreach ($wvalues as $wid => $val) {
+                        datasync_setAttributeValue($tabid,$fieldid,$ID,$wid,$val);
+                    }
+                }
+
+                return false;
             } else {
                 return false;
             }
-            return true;
-            break;
     }
 
     return true;
+}
+
+
+function datasync_getAttributeValue($tabid,$fieldid,$datid,$wid) {
+    global $db;
+
+    $sqlquery1 = "SELECT VALUE_STRING,VALUE_NUM,VALUE_DATE FROM LMB_ATTRIBUTE_D WHERE LMB_ATTRIBUTE_D.W_ID = $wid AND LMB_ATTRIBUTE_D.TAB_ID = $tabid AND LMB_ATTRIBUTE_D.FIELD_ID = $fieldid AND LMB_ATTRIBUTE_D.DAT_ID = $datid";
+
+
+    $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+
+    while (lmbdb_fetch_row($rs1)) {
+
+        $string_value = lmbdb_result($rs1, 'VALUE_STRING');
+        $num_value = lmbdb_result($rs1, 'VALUE_NUM');
+        $date_value = lmbdb_result($rs1, 'VALUE_DATE');
+
+        if (!empty($string_value)) {
+            return 's'.$string_value;
+        } elseif (!empty($date_value)) {
+            return 'd'.$date_value;
+        } elseif (!empty($num_value) || $num_value === 0 || $num_value === '0') {
+            return 'n'.$num_value;
+        }
+    }
+
+    return '';
+}
+
+function datasync_setAttributeValue($tabid,$fieldid,$datid,$wid,$value) {
+    global $db;
+
+    if (empty($value)) {
+        $sqlquery1 = "UPDATE LMB_ATTRIBUTE_D SET VALUE_STRING = '', VALUE_DATE = ".LMB_DBDEF_NULL.", VALUE_NUM = ".LMB_DBDEF_NULL."  WHERE LMB_ATTRIBUTE_D.W_ID = $wid AND LMB_ATTRIBUTE_D.TAB_ID = $tabid AND LMB_ATTRIBUTE_D.FIELD_ID = $fieldid AND LMB_ATTRIBUTE_D.DAT_ID = $datid";
+        $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+        return;
+    }
+
+    $type = $value[0];
+    $value = substr($value,1);
+
+    $update_field = '';
+    switch ($type)
+    {
+        case 's':
+            $update_field = 'VALUE_STRING';
+            $value = "'$value'";
+            break;
+        case 'd':
+            $update_field = 'VALUE_DATE';
+            $value = "'$value'";
+            break;
+        case 'n':
+            $update_field = 'VALUE_NUM';
+            break;
+    }
+
+    if (empty($update_field)) {
+        return;
+    }
+
+
+
+    $sqlquery1 = "UPDATE LMB_ATTRIBUTE_D SET $update_field = $value WHERE LMB_ATTRIBUTE_D.W_ID = $wid AND LMB_ATTRIBUTE_D.TAB_ID = $tabid AND LMB_ATTRIBUTE_D.FIELD_ID = $fieldid AND LMB_ATTRIBUTE_D.DAT_ID = $datid";
+    $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
 }
 
 

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -416,14 +416,14 @@ function del_erstuserRules($tabid,$rec){
 
 /* --- Feld löschen --------------------------------------------- */
 function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependency=null) {
-
+    global $action;
 	global $db;
-	global $del_tabelle;
-	global $column;
-	global $tab_group;
-	global $del_verkn;
-	global $verkntab;
-	global $gfield;
+	#global $del_tabelle;
+	#global $column;
+	#global $tab_group;
+	#global $del_verkn;
+	#global $verkntab;
+	#global $gfield;
 	global $gtab;
 	global $lang;
 	global $umgvar;
@@ -438,7 +438,7 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
 		$tab[lmbdb_result($rs,"TAB_ID")] = lmbdb_result($rs,"TABELLE");
 	}
 
-	$sqlquery0 = "SELECT FIELD_TYPE,DATA_TYPE,FIELD_NAME,MD5TAB,SPELLING,BESCHREIBUNG,VERKNTABLETYPE,HASRECVERKN,MULTILANG,VERKNPARAMS FROM LMB_CONF_FIELDS WHERE TAB_ID = $atid AND FIELD_ID = $column_id";
+	$sqlquery0 = "SELECT FIELD_TYPE,DATA_TYPE,FIELD_NAME,MD5TAB,SPELLING,BESCHREIBUNG,VERKNTABLETYPE,HASRECVERKN,MULTILANG,VERKNPARAMS,VERKNTABID FROM LMB_CONF_FIELDS WHERE TAB_ID = $atid AND FIELD_ID = $column_id";
 	$rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
 	if(lmbdb_fetch_row($rs0)) {
 		$field_type = lmbdb_result($rs0,"FIELD_TYPE");
@@ -451,33 +451,14 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
         $hasrecverkn = lmbdb_result($rs0, "HASRECVERKN");
         $multilang = lmbdb_result($rs0, "MULTILANG");
         $verknparams = lmbdb_result($rs0, "VERKNPARAMS");
+        $verkntabid = lmbdb_result($rs0, "VERKNTABID");
+        $verkntable = $tab[$verkntabid];
         $del_tabelle = $tab[$atid];
     } else {
         $commit = 1;
     }
-    
-    if ($field_name and $field_type) {
-        
-        // --------- auf rekursives Verknüpfungsview suchen -------------
-        if ($hasrecverkn) {
-            $sqlquery2 = "SELECT MD5TAB,FIELD_NAME,FIELD_ID,TAB_ID FROM LMB_CONF_FIELDS WHERE HASRECVERKN = (SELECT FIELD_ID FROM LMB_CONF_FIELDS WHERE UPPER(MD5TAB) = '" . lmb_strtoupper($md5tab) . "' AND VERKNTABLETYPE = 2)";
-            $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
-            $basemd5 = dbf_4(lmbdb_result($rs2, "MD5TAB"));
-            $basefield = dbf_4(lmbdb_result($rs2, "FIELD_NAME"));
-            $basetab = dbf_4($tab[lmbdb_result($rs2, "TAB_ID")]);
-            
-            if ($drop_physical) {
-                lmb_dropView($md5tab);
-            }
-            lmb_deleteTriggerForTable($basemd5);
-            // lmb_relationTrigger($basemd5,$basetab,$basefield,0,0);
-            
-            $sqlquery2 = "UPDATE LMB_CONF_FIELDS SET HASRECVERKN = 0,VERKNTABLETYPE = 1 WHERE FIELD_ID = " . lmbdb_result($rs2, "FIELD_ID") . " AND TAB_ID = " . lmbdb_result($rs2, "TAB_ID");
-            $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 
-			lmb_updateTrigger();
-		}
-		
+    if ($field_name and $field_type) {
 
 		/* --- Datensatz in CONF_Tabelle/Select_Tabelle löschen --------------------------------------------- */
 		$sqlquery2 = "DELETE FROM LMB_CONF_FIELDS WHERE FIELD_ID = $column_id AND TAB_ID = $atid";
@@ -496,6 +477,10 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
 		$sqlquery2 = "DELETE FROM LMB_INDIZE_DS WHERE TABID = $atid AND FIELDID = $column_id";
 		$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 		if(!$rs2) {$commit = 1;}
+		$sqlquery2 = "DELETE FROM LMB_SYNC_CONF WHERE TABID = $atid AND FIELDID = $column_id";
+		$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		if(!$rs2) {$commit = 1;}
+
 
 		$sqlquery3 = "SELECT ID FROM LMB_CONF_FIELDS WHERE TAB_ID = $atid ORDER BY SORT";
 		$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
@@ -548,39 +533,61 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
 		if(!$rs3) {$commit = 1;}
 
 		/* --- Verknüpfungstabelle löschen -------------------------------------- */
-		if($md5tab AND !$md5tab_allready_deleted AND $drop_physical) {
-			$odbc_table = dbf_20(array($DBA["DBSCHEMA"],$md5tab,"'TABLE','VIEW'"));
-			$md5tab = $odbc_table["table_name"][0];
-			if($md5tab) {
-				# --------- Verknüpfungstabelle löschen -------------
-				if($verkntabletype == 1 AND lmb_strtoupper($odbc_table["table_type"][0] == "TABLE")){
-				    # --------- Parametrisierungseinträge & tabelle löschen -------------
-				    if($verknparams) {
-                        delete_tab($verknparams, true);
-                    }else {
-				        # drop sequence
-					    if(LMB_DBFUNC_SEQUENCE){dbf_22(array("",dbf_4("SEQ_".dbf_4($md5tab)."_KEYID")));}
-					    # drop table
-					    if(!lmb_dropTable($md5tab)){
+		if($field_type == 11 AND !$md5tab_allready_deleted AND $drop_physical) {
+			// simple 1:n relation with relation field
+			if($data_type == 25 AND $md5tab) {
+			    // drop relation field
+                if(dbf_5(array($DBA["DBSCHEMA"],$verkntable,$md5tab))) {
+                    $sqlquery3 = dbq_22(array($verkntable, $md5tab));
+                    $rs3 = lmbdb_exec($db, $sqlquery3) or errorhandle(lmbdb_errormsg($db), $sqlquery3, $action, __FILE__, __LINE__);
+                }
+            // 1:n / n:m relation with relation table
+            }elseif($md5tab){
+                $odbc_table = dbf_20(array($DBA["DBSCHEMA"],$md5tab,"'TABLE','VIEW'"));
+                $md5tab = $odbc_table["table_name"][0];
+                if($md5tab) {
+                    # --------- Verknüpfungstabelle löschen -------------
+                    if ($verkntabletype == 1 AND lmb_strtoupper($odbc_table["table_type"][0] == "TABLE")) {
+                        # --------- Parametrisierungseinträge & tabelle löschen -------------
+                        if ($verknparams) {
+                            delete_tab($verknparams, true);
+                        } else {
+                            # drop sequence
+                            if (LMB_DBFUNC_SEQUENCE) {
+                                dbf_22(array("", dbf_4("SEQ_" . dbf_4($md5tab) . "_KEYID")));
+                            }
+                            # drop table
+                            if (!lmb_dropTable($md5tab)) {
                                 $commit = 2;
+                            }
+                        }
+                        # --------- drop relation view -------------
+                    } elseif (($verkntabletype == 2 OR $verkntabletype == 3) AND lmb_strtoupper($odbc_table["table_type"][0] == "VIEW")) {
+                        $viewinfo = lmb_getViewInfo($md5tab);
+                        if (!lmb_dropView($md5tab)) {
+                            $commit = 2;
+                        } else {
+                            lmb_deleteTriggerForTable($viewinfo);
                         }
                     }
-                # --------- drop relation view -------------
-				}elseif(($verkntabletype == 2 OR $verkntabletype == 3) AND lmb_strtoupper($odbc_table["table_type"][0] == "VIEW")){
-					$viewinfo = lmb_getViewInfo($md5tab);
-					if(!lmb_dropView($md5tab)){
-                        $commit = 2;
-					}else{
-			    	    lmb_deleteTriggerForTable($viewinfo);
-					}
-				}
-
-				lmb_updateTrigger();
+                    lmb_updateTrigger();
+                }
 			}
+
+            // drop backward relation
+            if($hasrecverkn AND $verkntabletype == 1){
+                lmb_alert('backward relation in table '.$gtab['table'][$verkntabid].' found! trying to drop it..');
+                delete_field_table($verkntabid,$hasrecverkn,$drop_physical);
+            }
+            // unset HASRECVERKN from beackward relation
+            if ($hasrecverkn AND $verkntabletype == 2){
+                $sqlquery2 = "UPDATE LMB_CONF_FIELDS SET HASRECVERKN = NULL WHERE FIELD_ID = $hasrecverkn AND TAB_ID = $verkntabid";
+                $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
+            }
 		}
 
 		# --------- Feld löschen -------------
-		if($field_type != 14 AND $field_type != 15 AND $data_type != 22 AND $data_type != 43 AND $data_type != 51 AND $data_type < 100 AND $drop_physical){
+		if($field_type != 14 AND $field_type != 15 AND $data_type != 22 AND $data_type != 43 AND $data_type != 51 AND $field_type != 24 AND $data_type < 100 AND $drop_physical){
 
 			$sqlquery1 = dbq_22(array($del_tabelle,$field_name));
 			$rs1 = lmbdb_exec($db,$sqlquery1);
@@ -633,7 +640,7 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
 	   require_once('extra/explorer/metadata.lib'); 
 	   create_exif_conf();
     }
-    
+
 	if($commit == 2){
 	   lmb_EndTransaction(0);
 	}else{
@@ -644,7 +651,10 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
 		#lmb_alert("$lang[922] $column $lang[770]");
 		flag_tableChanged();
 		return true;
-	}else{$GLOBALS["commit"] = 1;return false;}
+	}else{
+	    $GLOBALS["commit"] = 1;
+	    return false;
+	}
 }
 
 
@@ -799,6 +809,10 @@ function delete_tab($tabid,$drop_physical=true) {
 	$sqlquery = "DELETE FROM LMB_INDIZE_DS WHERE TABID = $tabid";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
+	$sqlquery = "DELETE FROM LMB_SYNC_CONF WHERE TABID = $tabid";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+
 	if($typ != 5){
 		$sqlquery = "DELETE FROM LMB_GTAB_PATTERN WHERE TABID = '$tabid'";
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -1187,7 +1201,8 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 
 	/* --- Feld umbenennen ------------- */
 	$field_ = $field;
-	if($import_typ != "convert"){$field = parse_db_syntax($field,$table);}
+	if(!$import_typ){$import_typ = 'default';}
+	if($import_typ != "convert" AND $import_typ != 'no_overwrite'){$field = parse_db_syntax($field,$table);}
 
 	$sqlquery =  "SELECT ID FROM LMB_CONF_FIELDS WHERE lower(FIELD_NAME) = lower('$field') AND TAB_ID = $gtabid";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -1322,11 +1337,14 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	/* --- Feld in Tabelle zufügen --------------------------------------------- */
 	if($fieldtyp != 14 AND $fieldtyp != 15 AND $fieldtyp != 17 AND $datatyp != 22 AND $datatyp != 41 AND $datatyp != 51 AND $datatyp != 52 AND $parsetype != 100){
 		if(!$datentyp){return false;}
-		if($import_typ != "convert"){
-			#$sqlquery =  "ALTER TABLE ".lmb_strtoupper($table)." ADD $field $datentyp $default";
-			$sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$table,$field,$datentyp,$default));
-			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			if(!$rs) {$commit = 1;}
+		if($import_typ != "convert" AND $import_typ != 'no_physical'){
+		    if (!dbf_5(array($DBA['DBSCHEMA'], $table, $field))) {
+                $sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'], $table, $field, $datentyp, $default));
+                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                if (!$rs) {
+                    $commit = 1;
+                }
+            }
 		}
 	}
 	/* --- Boolean Defaultwerte setzen --------------------------------------------- */
@@ -1372,8 +1390,7 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	$field_id = next_conf_id("LMB_CONF_FIELDS","FIELD_ID","AND TAB_ID = $gtabid",$allocate);
 	
 	if($field_id == 1){$fieldkey = LMB_DBDEF_TRUE;} else {$fieldkey = LMB_DBDEF_FALSE;}
-	/* --- Verknüpfungstabelle -------- */
-	if($datatyp == 24 OR $datatyp == 27){$newmd5tab = dbf_4("VERK_".lmb_substr(md5(lmb_strtoupper($table).lmb_strtoupper($field).time()),0,13));}
+
 	if($sort){$new_sort = $sort;}else{
 		$sqlquery =  "SELECT MAX(SORT) AS NEXTID FROM LMB_CONF_FIELDS WHERE TAB_ID = $gtabid";
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -1395,26 +1412,19 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 		$insd .= ",WYSIWYG";
 		$insv .= ",".LMB_DBDEF_TRUE;
     }
-	
-	$sqlquery = "INSERT INTO LMB_CONF_FIELDS (ID,FIELD_ID,TAB_ID,TAB_GROUP,SORT,FIELD_NAME,FORM_NAME,BESCHREIBUNG,FIELD_TYPE,DATA_TYPE,NEED,SPELLING,FIELDKEY,ARGUMENT,SELECT_SORT,NFORMAT,MD5TAB,INHERIT_TAB,INHERIT_FIELD,ARGUMENT_TYP,EXT_TYPE,SELECT_POOL $insd) VALUES
-	($new_id,$field_id,$gtabid,$groupid,$new_sort,'".lmb_strtoupper($field)."','".lmb_strtolower($field)."','$description_id',$fieldtyp,$datatyp,".LMB_DBDEF_FALSE.",'$spellingf_id',$fieldkey,'$argument','$select_sort','$nformat','".strtoupper($newmd5tab)."',$inherit_tab,$inherit_field,$argument_typ,'$extension',".parse_db_int($inherit_pool)." $insv)";
+	# Relation
+	if($fieldtyp == 11){
+		$insd .= ",DYNSEARCH";
+		$insv .= ",".LMB_DBDEF_TRUE;
+    }
+
+	$sqlquery = "INSERT INTO LMB_CONF_FIELDS (ID,FIELD_ID,TAB_ID,TAB_GROUP,SORT,FIELD_NAME,FORM_NAME,BESCHREIBUNG,FIELD_TYPE,DATA_TYPE,NEED,SPELLING,FIELDKEY,ARGUMENT,SELECT_SORT,NFORMAT,INHERIT_TAB,INHERIT_FIELD,ARGUMENT_TYP,EXT_TYPE,SELECT_POOL $insd) VALUES
+	($new_id,$field_id,$gtabid,$groupid,$new_sort,'".lmb_strtoupper($field)."','".lmb_strtolower($field)."','$description_id',$fieldtyp,$datatyp,".LMB_DBDEF_FALSE.",'$spellingf_id',$fieldkey,'$argument','$select_sort','$nformat',$inherit_tab,$inherit_field,$argument_typ,'$extension',".parse_db_int($inherit_pool)." $insv)";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
-	/* --- Verknüpfungstabelle n:m erstellen -------- */
-	if($datatyp == 24){
-		$sqlquery = "CREATE TABLE ".$newmd5tab." (KEYID ".LMB_DBTYPE_FIXED."(18) NOT NULL,ERSTDATUM ".LMB_DBTYPE_TIMESTAMP." DEFAULT ".LMB_DBDEF_TIMESTAMP.", ERSTUSER ".LMB_DBTYPE_SMALLINT.", ID ".LMB_DBTYPE_FIXED."(18),VERKN_ID ".LMB_DBTYPE_FIXED."(18),".LMB_DBFUNC_PRIMARY_KEY." (KEYID),SORT SMALLINT)";
-		$rs3 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!$rs3) {$commit = 1;}
-		lmb_rebuildSequences($newmd5tab,'KEYID');
-		/* --- Verknüpfungstabelle 1:n erstellen -------- */
-	}elseif($datatyp == 27){
-		$sqlquery = "CREATE TABLE ".$newmd5tab." (KEYID ".LMB_DBTYPE_FIXED."(18) NOT NULL,ERSTDATUM ".LMB_DBTYPE_TIMESTAMP." DEFAULT ".LMB_DBDEF_TIMESTAMP.", ERSTUSER ".LMB_DBTYPE_SMALLINT.", ID ".LMB_DBTYPE_FIXED."(18),VERKN_ID ".LMB_DBTYPE_FIXED."(18),".LMB_DBFUNC_PRIMARY_KEY." (KEYID),SORT SMALLINT)";
-		$rs3 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!$rs3) {$commit = 1;}
-		lmb_rebuildSequences($newmd5tab,'KEYID');
-		/* --- Wärung -------- */
-	}elseif($datatyp == 30){
+	/* --- Wärung -------- */
+	if($datatyp == 30){
 		#$sqlquery =  "ALTER TABLE ".lmb_strtoupper($table)." ADD ".$field."_C ".LMB_DBTYPE_VARCHAR."(5)";
 		$sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$table,$field.'_C',LMB_DBTYPE_VARCHAR.'(5)'));
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -1426,32 +1436,7 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 		create_fs_tab_dir($gtabid,$groupid,$field_id,$spellingf,3);
 	}
 	
-	/* --- build Index for relations ---- */
-	if($datatyp == 24 OR $datatyp == 27){
-		# ID
-		$sqlquery = dbq_4(array($DBA["DBSCHEMA"],"LMBINDV_".lmb_substr(md5($newmd5tab."_ID"),0,12),$newmd5tab,"ID"));
-		$rs3 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!$rs3) {$commit = 1;}
-		# SORT
-		$sqlquery = dbq_4(array($DBA["DBSCHEMA"],"LMBINDV_".lmb_substr(md5($newmd5tab."_SORT"),0,12),$newmd5tab,"SORT"));
-		$rs3 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!$rs3) {$commit = 1;}
-		
-		# VERKN_ID
-		$indname = "LMBINDV_".lmb_substr(md5($newmd5tab."_VERKN_ID"),0,12);
-		# only n:m
-		if($datatyp == 24){
-			$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$newmd5tab,"VERKN_ID"));
-			$rs3 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			if(!$rs3) {$commit = 1;}
-		# only 1:n
-		}else{
-			# add constraint
-			$sqlquery =  dbq_24(array($newmd5tab,'VERKN_ID',$indname));
-			$rs3 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		}
 
-	}
 	
 	if($add_permission){
 		$commit = add_fieldPermission($gtabid,$field_id,$groupid);
@@ -1893,9 +1878,9 @@ function add_fieldPermission($gtabid,$field_id,$tab_group){
 	while(lmbdb_fetch_row($rs)){
 		$group_id = lmbdb_result($rs,"GROUP_ID");
 		/*------------------------------ Spaltenrechte ------------------------------------*/
-		if($group_id == 1 OR $session["superadmin"]){$bool = LMB_DBDEF_TRUE;}else{$bool = LMB_DBDEF_FALSE;}
+		if($group_id == 1){$bool = LMB_DBDEF_TRUE;}else{$bool = LMB_DBDEF_FALSE;}
 		$NEXTID = next_db_id("LMB_RULES_FIELDS");
-		$sqlquery1 = "INSERT INTO LMB_RULES_FIELDS (ID,GROUP_ID,TAB_GROUP,TAB_ID,FIELD_ID,LMVIEW,EDIT,COPY,FIELDOPTION,COLOR,FILTER,SORT) VALUES ($NEXTID,$group_id,$tab_group,$gtabid,$field_id,$bool,$bool,$bool,$bool,'','',0)";
+		$sqlquery1 = "INSERT INTO LMB_RULES_FIELDS (ID,GROUP_ID,TAB_GROUP,TAB_ID,FIELD_ID,LMVIEW,EDIT,COPY,FIELDOPTION,COLOR,FILTER) VALUES ($NEXTID,$group_id,$tab_group,$gtabid,$field_id,$bool,$bool,$bool,$bool,'','')";
 		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}
@@ -1907,7 +1892,7 @@ function add_fieldPermission($gtabid,$field_id,$tab_group){
 # Default Extended fields
 function add_extended_fields($nfield,$gtabid,$add_permission){
 	foreach ($nfield as $key => $value){
-		add_field($value["field"],$gtabid,$value["typ"],$value["typ2"],$value["size"],0,$value["description"],$value["spellingf"],$value["default"],$value["sort"],$add_permission,0,0,'default',$value["ext"],$value["wysiwyg"]);
+		add_field($value["field"],$gtabid,$value["typ"],$value["typ2"],$value["size"],0,$value["description"],$value["spellingf"],$value["default"],$value["sort"],$add_permission,0,0,$value["import_typ"],$value["ext"],$value["wysiwyg"]);
 	}
 }
 
@@ -2104,7 +2089,17 @@ function extended_fields_kanban(){
 function extended_fields_report_templ(){
 	global $lang;
 	$nfield[] = array("field" => "NAME","typ" => 13,"typ2" => 0,"size" => 128,"description" => "NAME","spellingf" => "NAME","default" => "","sort" => "");
-	$nfield[] = array("field" => "CONTENT","typ" => 41,"typ2" => 0,"size" => 0,"description" => $lang[475],"spellingf" => $lang[475],"default" => "","sort" => "","wysiwyg" => "1");
+    $nfield[] = array("field" => "CONTENT","typ" => 41,"typ2" => 0,"size" => 0,"description" => $lang[475],"spellingf" => $lang[475],"default" => "","sort" => "","wysiwyg" => "1");
+    $nfield[] = array("field" => "GROUPS","typ" => 26,"typ2" => 0,"size" => 0,"description" => $lang[3066],"spellingf" => $lang[3066]);
+    $nfield[] = array("field" => "FORTABLE","typ" => 2,"typ2" => 0,"size" => 5,"description" => $lang[3067],"spellingf" => $lang[3067]);
+	return $nfield;
+}
+
+# Default validyty fields
+function extended_fields_validyty(){
+	global $lang;
+	$nfield[] = array("field" => "LMB_VALIDFROM","typ" => 71,"typ2" => 0,"size" => 0,"description" => $lang[3004].' '.$lang[1445],"spellingf" => $lang[3004].' '.$lang[1445],"default" => "","sort" => "", 'import_typ' => 'no_overwrite');
+    $nfield[] = array("field" => "LMB_VALIDTO","typ" => 71,"typ2" => 0,"size" => 0,"description" => $lang[3004].' '.$lang[1446],"spellingf" => $lang[3004].' '.$lang[1446],"default" => "","sort" => "",'import_typ' => 'no_overwrite');
 	return $nfield;
 }
 

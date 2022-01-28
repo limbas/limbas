@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -1009,7 +1009,7 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	mainisactive = 1;
 	if(!touchedElement) { touchedElement = el; }
 	active_field_type = dicoParams.get("FIELD_TYPE");
-	
+
 	TYP = dicoParams.get("TYP");
 	STYLE = dicoParams.get("STYLE");
 	EVENT1 = decodeURIComponent((dicoParams.get("EVENT1") || "").replace(/\+/g, ' '));
@@ -1120,7 +1120,7 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	document.form_menu.input_infofield.value = dicoParams.get("FIELD_NAME");
 
 	document.form_menu.ZIndex.value = document.getElementById(div).style.zIndex;
-	document.form_menu.input_fontface.value = document.getElementById(div).style.fontFamily;
+	document.form_menu.input_fontface.value = document.getElementById(div).style.fontFamily.replace(/"/g, "");
 	document.form_menu.input_fontsize.value = document.getElementById(div).style.fontSize;
 	document.fstyle_form.input_fontvalign.value = document.getElementById(div).style.fontValign;
 	var borderstyle = document.getElementById(div).style.borderStyle.split(' ');
@@ -1148,8 +1148,8 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 	if(style[34]){document.form_menu.input_cellstyle.value = style[34];}
 	if(style[36]){document.form_menu.input_maxlenght.value = style[36];}else{document.form_menu.input_maxlenght.value = '';}
 	if(style[37]){document.form_menu.input_rowspan.value = style[37];}else{document.form_menu.input_rowspan.value = '';}
-	if(style[38]){document.form_menu.input_tabuItemPos.value = style[38];}else{document.form_menu.input_tabuItemPos.value = 1;}
-	if(style[39]){document.form_menu.input_tabuItemMemPos.value = style[39];}else{document.form_menu.input_tabuItemMemPos.value = 1;}
+	if(style[38]){document.form_menu.input_tabuItemPos.value = style[38];}
+	if(style[39]){document.form_menu.input_tabuItemMemPos.value = style[39];}
 	if(style[27]){document.form_menu.input_borderradius.value = style[27];}else{document.form_menu.input_borderradius.value = '';}
 
 
@@ -1318,6 +1318,17 @@ function limbasMenuOpen(evt,el,id,dicoParams) {
 		parent.form_menu.document.form1.HPOSI.value = parseInt(document.getElementById(div).offsetHeight);
 		parent.form_menu.document.form1.WPOSI.value = parseInt(document.getElementById(div).offsetWidth);
 	}
+
+	// view relation params
+	if(active_field_type == 11){
+	    edit_relationparams(id);
+	    document.getElementById("relation_params").style.display='';
+	    document.getElementById("lmb_subform_params").style.display='none';
+    // view default params
+	}else{
+	    document.getElementById("relation_params").style.display='none';
+	    document.getElementById("lmb_subform_params").style.display='';
+    }
 	
 	// edit: uncommented to support codemirror
 	//Focus auf Element setzen (wichtig für Texteingabe bei Mozilla)
@@ -1330,4 +1341,19 @@ function enterfocus(){
 	if((currenttyp == 'text' || currenttyp == 'php' || currenttyp == 'inptext' || currenttyp == 'submt' || currenttyp == 'button' || currenttyp == 'inphidden' || currenttyp == 'inparea' || currenttyp == 'inpselect' || currenttyp == 'inpcheck' || currenttyp == 'inpradio' || currenttyp == 'js') && currentdiv){
 		document.getElementById(currentdiv).focus();
 	}
+}
+
+
+// edit formular parameter
+function edit_relationparams(elid,post){
+    var form = '';
+    if(post == 1){form = 'parameters';}
+    formid = document.form1.form_id.value;
+    var actid = "edit_relationparams&formid="+formid+"&elid="+elid;
+    ajaxGet(null,"main_dyns_admin.php",actid,null,"edit_relationparamsPost",form);
+}
+
+// edit formular parameter Post
+function edit_relationparamsPost(result){
+	document.getElementById("relation_params").innerHTML = result;
 }

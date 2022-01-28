@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -146,7 +146,16 @@ function lmb_pop_custmenu($custmenu,$gtabid,$ID,$gresult=null,$fieldid=null){
                 if(!$greportlist[$gtabid]["id"][$item]){continue;}
 
                 if(!is_numeric($ID)){$ID = '';}
-                $url = "limbasReportMenuOptions(event,this,'$gtabid','$item','$ID','1','" . $greportlist[$gtabid]["listmode"][$key] . "');";
+                
+                $preview = ($greportlist[$gtabid]["preview"][$key] == 1 || $greportlist[$gtabid]["preview"][$key] == 3) ? 1 : 0;
+                //report is a saved template
+                if ($greportlist[$gtabid]["is_template"][$key]) {
+                    $url = "limbasReportMenuHandler($preview,event,this,'$gtabid','$item','$ID','1','{$greportlist[$gtabid]["listmode"][$key]}', null, null, null, '".htmlspecialchars($greportlist[$gtabid]["template"][$key], ENT_QUOTES)."');";
+                } else {
+                    $url = "limbasReportMenuHandler($preview,event,this,'$gtabid','$item','$ID','1','{$greportlist[$gtabid]["listmode"][$key]}');";
+                }
+                
+                
                 pop_submenu2($greportlist[$gtabid]["name"][$item], $url, '', '', 'lmb-icon lmb-' . $greportlist[$gtabid]["defformat"][$item]);
             // submenu
             } elseif ($menuitems['typ'][$key] == 12) {
@@ -366,17 +375,20 @@ function pop_input($id,$zl,$name,$val,$readonly,$width=null){
 EOD;
 }
 
-function pop_input2($zl,$name,$val,$readonly,$title,$titlesize=null){
+function pop_input2($zl,$name,$val,$readonly,$title,$titlesize=null,$handler=null){
     if(!$title){$title = "";}
 	if($titlesize){
 		$width = "width:".(137-$titlesize)."px;";
 	}
+    if(!$handler) {
+        $handler = 'onchange';
+    }
 
 	echo <<<EOD
 	<div class="lmbContextRow" title="$title" style="vertical-align: middle;">
 		<div class="lmbContextItem" style="text-align:right">
 		    <span style="vertical-align: middle;">$title</span>
-			<input type="text" class="contextmenu" name="$name" id="$name" value="$val" $readonly onchange="$zl" style="{$width}margin-left:5px;">
+			<input type="text" class="contextmenu" name="$name" id="$name" value="$val" $readonly $handler="$zl" style="{$width}margin-left:5px;">
 		</div>
 	</div>
 EOD;
@@ -395,7 +407,6 @@ function pop_checkbox($id,$zl,$name,$val,$checked,$readonly,$title=null,$desc=nu
 			$img = "<i class=\"lmbContextLeft lmb-icon {$LINK["icon_url"][$id]}\" border=\"0\"></i>";
 			$class = "Icon";
 		}
-	
 	}
 
 	echo <<<EOD
@@ -404,7 +415,7 @@ function pop_checkbox($id,$zl,$name,$val,$checked,$readonly,$title=null,$desc=nu
                 $img
                 <span class="lmbContextItem$class" ID="pop_menu_{$id}">{$title}</span>
             </label>			
-			<input type="checkbox" class="contextmenu" name="$name" id="$name" value="$val" $checked $readonly onchange="$zl">
+			<div style="float:right"><input type="checkbox" class="contextmenu" name="$name" id="$name" value="$val" $checked $readonly onchange="$zl"></div>
 		</div>
 EOD;
 }
@@ -501,15 +512,15 @@ function pop_icon($classname=null){
     echo "<i class=\"lmbContextLeft lmb-icon $classname\" border=\"0\"></i>";
 }
 
-function pop_left($width=null){
-    echo "<div class=\"lmbContextRow\"><div class=\"lmbContextItem\">";
-
+function pop_left($width=null,$pic=null){
+    if($pic){$pic = "<i class=\"$pic\"></i>";$st='padding-left:5px;';}
+    echo "<div class=\"lmbContextRow\">$pic<span class=\"lmbContextItem\" style=\"$st\">";
     #global $farbschema;
     #echo "<TABLE CLASS=\"popmenu\" cellspacing=\"0\" cellpadding=\"0\"><TR CLASS=\"popmenu\"><TD STYLE=\"width:1px;background-color:$farbschema[WEB8]\"></TD><TD STYLE=\"width:1px;background-color:#FFFFFF\"></TD><TD STYLE=\"width:".($width-3)."px;overflow:hidden;background-color:$farbschema[WEB9];\">";
 }
 
 function pop_right($width=null){
-	echo "</div>\n</div>";
+	echo "</span>\n</div>";
 
     #global $farbschema;
     #echo "</TD><TD STYLE=\"width:1px;background-color:$farbschema[WEB3]\"></TD><TD STYLE=\"width:1px;background-color:$farbschema[WEB2]\"></TD></TR></TABLE>\n";

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -95,21 +95,32 @@ function show_linkinfo($gtabid,$fieldid,$vgtabid){
 	global $gfield;
 	global $gtab;
 	global $farbschema;
-	echo "<IMG SRC=\"pic/linkpfeil.gif\" STYLE=\"position:absolute;top:60px;left:5px;\">";
-	echo "<IMG SRC=\"pic/linkpfeil.gif\" STYLE=\"position:absolute;top:93px;left:233px;\">";
-	echo "<TABLE cellpadding=\"0\" cellspacing=\"0\" STYLE=\"border-collapse:collapse;width:300px;\">";
-	echo "<TR><TD valign=\"top\" align=\"right\" style=\"cursor:pointer;\"><i class=\"lmb-icon lmb-close\" border=\"0\" onclick=\"document.getElementById('fieldinfo').style.visibility='hidden';\"></i></TD></TR>";
-	echo "<TR><TD ALIGN=\"CENTER\"><TABLE cellpadding=\"0\" cellspacing=\"0\" STYLE=\"border-collapse:collapse;width:150px;border:1px solid black;\">";
-	echo "<TR STYLE=\"background-color:".$farbschema['WEB3']."\"><TD>".$gfield[$gtabid]['md5tab'][$fieldid]."</TD></TR>";
-	echo "<TR STYLE=\"background-color:".$farbschema['WEB4']."\"><TD STYLE=\"border-collapse:collapse;><DIV STYLE=\"height:1px;width:100%;\"></DIV></TD></TR>";
-	echo "<TR STYLE=\"background-color:".$farbschema['WEB8']."\"><TD TITLE=\"(primery key)\">KEY</TD></TR>";
-	echo "<TR STYLE=\"background-color:".$farbschema['WEB8']."\"><TD  TITLE=\"(create-user)\">ERSTDATUM</TD></TR>";
-	echo "<TR STYLE=\"background-color:".$farbschema['WEB8']."\"><TD  TITLE=\"(create-date)\">ERSTUSER</TD></TR>";
-	echo "<TR STYLE=\"background-color:".$farbschema['WEB8']."\"><TD>ID <I STYLE=\"color:green\">(ID ".$gtab['table'][$gtabid].")</I></TD></TR>";
-	echo "<TR STYLE=\"background-color:".$farbschema['WEB8']."\"><TD>VERKN_ID <I STYLE=\"color:green\">(ID ".$gtab['table'][$vgtabid].")</I></TD></TR>";
-	echo "<TR STYLE=\"background-color:".$farbschema['WEB8']."\"><TD  TITLE=\"(description)\">BEMERKUNG</TD></TR>";
-	echo "<TR STYLE=\"background-color:".$farbschema['WEB8']."\"><TD  TITLE=\"(activ link)\">AKTIV</TD></TR>";
-	echo "</TABLE></TD></TR>";
-	echo "<TR><TD>&nbsp;</TD></TR></TABLE>";
+
+	if($gfield[$gtabid]['data_type'][$fieldid] == 25){
+	    echo "<TABLE cellpadding=\"0\" cellspacing=\"0\" STYLE=\"border-collapse:collapse;width:300px;\">";
+        echo "<TR><TD valign=\"top\" align=\"right\" style=\"cursor:pointer;\"><i class=\"lmb-icon lmb-close\" border=\"0\" onclick=\"document.getElementById('fieldinfo').style.visibility='hidden';\"></i></TD></TR>";
+        echo "<TR><TD ALIGN=\"CENTER\"><TABLE cellpadding=\"0\" cellspacing=\"0\" STYLE=\"border-collapse:collapse;width:150px;border:1px solid black;\">";
+        echo "<TR STYLE=\"background-color:" . $farbschema['WEB3'] . "\"><TD>" . $gfield[$gtabid]['md5tab'][$fieldid] . "</TD></TR>";
+        echo "</TABLE></TD></TR>";
+        echo "<TR><TD>&nbsp;</TD></TR></TABLE>";
+	    return;
+    }else {
+        echo "<IMG SRC=\"pic/linkpfeil.gif\" STYLE=\"position:absolute;top:60px;left:5px;\">";
+        echo "<IMG SRC=\"pic/linkpfeil.gif\" STYLE=\"position:absolute;top:93px;left:233px;\">";
+        echo "<TABLE cellpadding=\"0\" cellspacing=\"0\" STYLE=\"border-collapse:collapse;width:300px;\">";
+        echo "<TR><TD valign=\"top\" align=\"right\" style=\"cursor:pointer;\"><i class=\"lmb-icon lmb-close\" border=\"0\" onclick=\"document.getElementById('fieldinfo').style.visibility='hidden';\"></i></TD></TR>";
+        echo "<TR><TD ALIGN=\"CENTER\"><TABLE cellpadding=\"0\" cellspacing=\"0\" STYLE=\"border-collapse:collapse;width:150px;border:1px solid black;\">";
+        echo "<TR STYLE=\"background-color:" . $farbschema['WEB3'] . "\"><TD>" . $gfield[$gtabid]['md5tab'][$fieldid] . "</TD></TR>";
+        echo "<TR STYLE=\"background-color:" . $farbschema['WEB4'] . "\"><TD STYLE=\"border-collapse:collapse;><DIV STYLE=\"height:1px;width:100%;\"></DIV></TD></TR>";
+        echo "<TR STYLE=\"background-color:" . $farbschema['WEB8'] . "\"><TD TITLE=\"(primery key)\">KEY</TD></TR>";
+        echo "<TR STYLE=\"background-color:" . $farbschema['WEB8'] . "\"><TD  TITLE=\"(create-user)\">ERSTDATUM</TD></TR>";
+        echo "<TR STYLE=\"background-color:" . $farbschema['WEB8'] . "\"><TD  TITLE=\"(create-date)\">ERSTUSER</TD></TR>";
+        echo "<TR STYLE=\"background-color:" . $farbschema['WEB8'] . "\"><TD>ID <I STYLE=\"color:green\">(ID " . $gtab['table'][$gtabid] . ")</I></TD></TR>";
+        echo "<TR STYLE=\"background-color:" . $farbschema['WEB8'] . "\"><TD>VERKN_ID <I STYLE=\"color:green\">(ID " . $gtab['table'][$vgtabid] . ")</I></TD></TR>";
+        echo "<TR STYLE=\"background-color:" . $farbschema['WEB8'] . "\"><TD  TITLE=\"(description)\">BEMERKUNG</TD></TR>";
+        echo "<TR STYLE=\"background-color:" . $farbschema['WEB8'] . "\"><TD  TITLE=\"(activ link)\">AKTIV</TD></TR>";
+        echo "</TABLE></TD></TR>";
+        echo "<TR><TD>&nbsp;</TD></TR></TABLE>";
+    }
 }
 ?>

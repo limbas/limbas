@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -47,13 +47,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	if($gtab["typ"][$gtabid] == 5){$isview = 1;}
 	$mwidth = 305;
 
-	# check for version
-	$versedit = 1;
-	if($gtab["ver"][$gtabid] AND !$gresult[$gtabid]["VACT"][0] AND !$GLOBALS['filter']["force_delete"][$gtabid]){
-		$versedit = 0;
-	}
 	?>
-	
 
 	<DIV ID="limbasDivMenuDateien" class="lmbContextMenu" style="position:absolute;display:none;z-index:995;"><FORM NAME="filemenu" OnClick="activ_menu = 1;">
 	<?php #----------------- Datei-Menü -------------------
@@ -76,7 +70,15 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	if($greportlist[$gtabid]["id"]){
 		foreach($greportlist[$gtabid]["id"] as $key => $reportid){
 			if($greportlist[$gtabid]["hidden"][$key] OR $greportlist[$gtabid]["listmode"][$key]){continue;}
-			$zl = "limbasReportMenuOptions(event,this,'$gtabid','$reportid','$ID','','".$greportlist[$gtabid]["listmode"][$key]."');";
+           
+			$preview = ($greportlist[$gtabid]["preview"][$key] == 1 || $greportlist[$gtabid]["preview"][$key] == 3) ? 1 : 0;
+            //report is a saved template
+            if ($greportlist[$gtabid]["is_template"][$key]) {
+                $zl = "limbasReportMenuHandler($preview,event,this,'$gtabid','$reportid','$ID',null,'{$greportlist[$gtabid]["listmode"][$key]}', null, null, null, '".htmlspecialchars($greportlist[$gtabid]["template"][$key], ENT_QUOTES)."');";
+            } else {
+                $zl = "limbasReportMenuHandler($preview,event,this,'$gtabid','$reportid','$ID',null,'{$greportlist[$gtabid]["listmode"][$key]}');";
+            }
+			
 			pop_submenu2($greportlist[$gtabid]["name"][$key],$zl,"","","lmb-icon lmb-".$greportlist[$gtabid]["defformat"][$key]);
 			$GLOBALS["greportlist_exist"] = 1;
 		}
@@ -143,7 +145,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	<?php #----------------- Verknüpfungs-Menü -------------------
 	pop_top('limbasDivMenuLock');
 	pop_left();
-	echo "&nbsp;&nbsp;<input type=\"text\" maxlength=\"2\" style=\"width:30px;\" value=\"30\" id=\"lmbLockTime\">&nbsp;&nbsp;&nbsp;<select id=\"lmbLockUnit\" class=\"contextmenu\"><option value=\"m\">".$lang[1980]."<option value=\"h\">".$lang[1981]."<option value=\"d\">".$lang[1982]."</select>&nbsp;&nbsp;<i class=\"lmb-icon lmb-lock\" ID=\"LmbIconDataLock\" style=\"cursor:pointer;vertical-align:middle;padding:0 5px;\" OnClick=\"document.form1.lockingtime.value=document.getElementById('lmbLockTime').value+'|'+document.getElementById('lmbLockUnit').value;userecord('lock');\"></i>";
+	echo "&nbsp;&nbsp;<input type=\"text\" maxlength=\"2\" style=\"width:30px;\" value=\"30\" id=\"lmbLockTime\">&nbsp;&nbsp;&nbsp;<select id=\"lmbLockUnit\" class=\"contextmenu\"><option value=\"m\">".$lang[1980]."<option value=\"h\">".$lang[1981]."<option value=\"d\">".$lang[1982]."</select>&nbsp;&nbsp;<input type=\"button\" value=\"".$lang[1218]."\" OnClick=\"document.form1.lockingtime.value=document.getElementById('lmbLockTime').value+'|'+document.getElementById('lmbLockUnit').value;userecord('lock');\">";
 	pop_right();
 	pop_bottom();
 	?>
@@ -201,21 +203,21 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 		pop_menu(201,'','');							# Datensatz kopieren
 	}
 	
-	if($gtab["ver"][$gtabid] == 1 AND $gtab["add"][$gtabid] AND $versedit){
+	if($gtab["ver"][$gtabid] == 1 AND $gtab["add"][$gtabid]){
 		pop_menu(235,'','');							# Datensatz versionieren
 	}
 
 	pop_line();
 	pop_menu(23,'','');									# drucken
 	pop_line();
-	if($gtab["hide"][$gtabid] AND $versedit AND !$readonly){
+	if($gtab["hide"][$gtabid] AND !$readonly){
 	if($gresult[$gtabid]["DEL"][0]){
 		pop_menu(166,'','');							# Archiv
 	}else{
 		pop_menu(164,'','');							# wiederherstellen Archiv
 	}}
 	
-	if($gtab["lock"][$gtabid] AND !$gresult[$gtabid]["LOCK"]["USER"][$ID] AND $versedit AND !$readonly){
+	if($gtab["lock"][$gtabid] AND !$gresult[$gtabid]["LOCK"]["USER"][$ID] AND !$readonly){
 	if($gresult[$gtabid]["LOCK"]["STATIC"][$ID]){
 		pop_menu(271,'','');							# freigeben
 	}else{
@@ -223,7 +225,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	}}
 	
 	pop_line();
-	if($gtab["delete"][$gtabid] AND $versedit AND !$readonly){pop_menu(11,'','');}	# löschen
+	if($gtab["delete"][$gtabid] AND !$readonly){pop_menu(11,'','');}	# löschen
 	
 	# extension
 	if(function_exists($GLOBALS["gLmbExt"]["menuChangeCContext"][$gtabid])){
@@ -254,7 +256,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 		pop_menu(10,'','');						# Liste
 		if($action == "gtab_change"){
 			pop_menu(6,'','');					# Detail
-		}elseif($gtab["edit"][$gtabid] AND $versedit AND !$readonly){
+		}elseif($gtab["edit"][$gtabid] AND !$readonly){
 			pop_menu(3,'','');					# bearbeiten
 		}
 		pop_line();
@@ -287,8 +289,11 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 		pop_submenu(132,'','');			# Formulare
 		$l = 1;
 	}
-	if($GLOBALS["greportlist_exist"] AND ($LINK[175] OR $LINK[176])){
+	if($GLOBALS["greportlist_exist"] AND ($LINK[175] OR $LINK[176] OR $LINK[315])){
 		pop_submenu(131,'','');			# Berichte
+        if ($LINK[315]) {
+            pop_submenu(315,'','');
+        }
 		$l = 1;
 	}
 	if($GLOBALS["gdiaglist_exist"] AND $LINK[232]){
@@ -423,6 +428,7 @@ function print_form(){
 <input type="hidden" name="filter_tabulatorKey">
 <input type="hidden" name="filter_save">
 <input type="hidden" name="filter_gwidth">
+<input type="hidden" name="filter_validity">
 <input type="hidden" name="versdesc">
 <input type="hidden" name="lockingtime">
 <input type="hidden" name="history_search">
@@ -470,15 +476,9 @@ function print_symbolbar($gtabid,&$gresult,$ID,$readonly=0){
 	global $userdat;
 	global $isview;
 
-	# check for version
-	$versedit = 1;
-	if($gtab["ver"][$gtabid] AND !$gresult[$gtabid]["VACT"][0] AND !$GLOBALS['filter']["force_delete"][$gtabid]){
-		$versedit = 0;
-	}
-
-	if($gtab["edit"][$gtabid] AND $action == "gtab_change" AND $versedit AND !$readonly){pop_picmenu(197,'','');}			# speichern
+	if($gtab["edit"][$gtabid] AND $action == "gtab_change" AND !$readonly){pop_picmenu(197,'','');}			# speichern
 	if($ID){
-	if($gtab["edit"][$gtabid] AND !$isview AND $versedit){
+	if($gtab["edit"][$gtabid] AND !$isview){
 		if($action == "gtab_change"){
 		    # show history
 		    $onClickShowContext = "limbasDivShowContext(event,this,'{$gresult[$gtabid]["id"][0]}','{$gtabid}','{$gresult[$gtabid]["ERSTDATUM"][0]}','{$gresult[$gtabid]["EDITDATUM"][0]}','{$userdat["bezeichnung"][$gresult[$gtabid]["ERSTUSER"][0]]}','{$userdat["bezeichnung"][$gresult[$gtabid]["EDITUSER"][0]]}');";
@@ -492,12 +492,12 @@ function print_symbolbar($gtabid,&$gresult,$ID,$readonly=0){
 
 	if($gtab["add"][$gtabid]){pop_picmenu(1,'','');}			# neuer Datensatz
 	if($gtab["add"][$gtabid] AND $gtab["copy"][$gtabid] AND !$readonly){pop_picmenu(201,'','');}			# Datensatz kopieren
-	if($gtab["ver"][$gtabid] == 1 AND $gtab["add"][$gtabid] AND $versedit AND !$readonly){		# versionieren
+	if($gtab["ver"][$gtabid] == 1 AND $gtab["add"][$gtabid] AND !$readonly){		# versionieren
 		pop_picmenu(235,'','');
 	}
-	if($gtab["delete"][$gtabid] AND $versedit AND !$readonly){pop_picmenu(11,'','');}		# löschen
+	if($gtab["delete"][$gtabid] AND !$readonly){pop_picmenu(11,'','');}		# löschen
 
-	if($gtab["lock"][$gtabid] AND !$gresult[$gtabid]["LOCK"]["USER"][$ID] AND $versedit AND !$readonly){
+	if($gtab["lock"][$gtabid] AND !$gresult[$gtabid]["LOCK"]["USER"][$ID] AND !$readonly){
 		if($gresult[$gtabid]["LOCK"]["STATIC"][$ID]){
 			pop_picmenu(271,'','');									# freigeben
 		}else{
@@ -505,7 +505,7 @@ function print_symbolbar($gtabid,&$gresult,$ID,$readonly=0){
 		}
 	}
 	
-	if($gtab["hide"][$gtabid] AND $versedit AND !$readonly){
+	if($gtab["hide"][$gtabid] AND !$readonly){
 		if($gresult[$gtabid]["DEL"][0]){
 			pop_picmenu(166,'','');									# Archiv wiederherstellen
 		}else{
@@ -519,8 +519,11 @@ function print_symbolbar($gtabid,&$gresult,$ID,$readonly=0){
 
 	echo "<TD>&nbsp;&nbsp;</TD>";
 
-	if($GLOBALS["greportlist_exist"] AND ($LINK[175] OR $LINK[176])){
+	if($GLOBALS["greportlist_exist"] AND ($LINK[175] OR $LINK[176] OR $LINK[315])){
 		pop_picmenu(131,'','');									# Berichte
+        if ($LINK[315]) {
+            pop_picmenu(315,'','');
+        }
 	}
 	if($GLOBALS["gformlist_exist"]){
 		pop_picmenu(132,'','');									# Formulare
@@ -565,7 +568,7 @@ function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0,$showheader=nu
     if(isset($showheader) AND !in_array('4',$showheader)){$verkn_addfrom = null;}
 	if(!$showheader AND $verkn_addfrom){
         echo "<TR><TD nowrap>";
-			print_verknaddfrom($verkn_addfrom,$gtabid);
+        print_verknaddfrom($verkn_addfrom,$gtabid);
         echo "</TD></TR>";
 		echo "<TR><TD COLSPAN=\"2\"><DIV width=\"100%\" class=\"lmbTableHeader\"></DIV></TD></TR>\n";
 	}
@@ -603,19 +606,6 @@ function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0,$showheader=nu
             </td>';
     }
 
-	# manuelles lock - lock freigeben
-	if($gtab["lock"][$gtabid] AND !$gresult[$gtabid]["LOCK"]["USER"][$ID] AND $gresult[$gtabid]["LOCK"]["STATIC"][$ID] AND $LINK["271"]){
-		echo "<TD class=\"gtabHeaderMenuTD\" ALIGN=\"CENTER\" title=\"".$lang[$LINK["desc"][271]]." - ".$gresult[$gtabid]["LOCK"]["TIME"][$ID]."\" OnClick=\"".$LINK["link_url"][271]."\">
-                <i class=\"lmb-icon lmb-locked\"></i>
-		</TD>";
-	}
-	# lock information
-	elseif($gtab["lockable"][$gtabid] AND $gresult[$gtabid]["LOCK"]["USER"][$ID]){
-		echo "<TD class=\"gtabHeaderMenuTD\" ALIGN=\"CENTER\" TITLE=\"".$lang[763]." (".$gresult[$gtabid]["LOCK"]["USER"][$ID]." - ".$lang[1722].$gresult[$gtabid]["LOCK"]["TIME"][$ID].")\">
-                <i class=\"lmb-icon lmb-forbidden\" ID=\"LmbIconDataLock2\"></i>
-		</TD>";
-	}
-
 	# Version
 	if($gtab["viewver"][$gtabid]){
 		echo "<TD class=\"gtabHeaderMenuTD\">&nbsp;</TD><TD SYTLE=\"border:1px solid grey;\">";
@@ -640,7 +630,7 @@ function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0,$showheader=nu
             $(function() {
                 // add resizable handle
                 $('#gtabDetail').resizable({
-                    handles: { e: '#gtabDetailResizeHandle' },
+                    handles: { e: $('#gtabDetailResizeHandle') },
                     stop: function(event, ui) {
                         resizeElementStep('gtabDetail', '', document.form1.filter_gwidth, ui.element.css('width'));
                     }
@@ -657,17 +647,17 @@ function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0,$showheader=nu
                             filter_gwidth: document.form1.filter_gwidth.value
                         },
                         success: function (data) {
-                            console.log(data);
+                            //console.log(data);
                         }
                     });
                 });
             });
         </script>";
-        echo "<TD class=\"gtabHeaderMenuTD\">&nbsp;&nbsp;
-            <i class=\"lmb-icon lmb-arrow-left-caret u-color-3\" onclick=\"resizeElementStep('gtabDetail','left',document.form1.filter_gwidth,'700px');\"></i>
+        echo "<TD class=\"gtabHeaderMenuTD\"><div class=\"gtabHeaderResize\">&nbsp;&nbsp;
+            <i class=\"lmb-icon lmb-arrow-left-caret u-color-3\" onclick=\"resizeElementStep('gtabDetail','left',document.form1.filter_gwidth,'1000px');\"></i>
             <i id=\"gtabDetailResizeHandle\" class=\"lmb-icon lmb-resize-form u-color-3 ui-resizable-handle ui-resizable-e\" style=\"position: relative;right:initial;\"></i>
             <i class=\"lmb-icon lmb-arrow-right-caret u-color-3\" onclick=\"resizeElementStep('gtabDetail','right',document.form1.filter_gwidth,'calc(100% - 80px)');\"></i>
-        </TD>";
+        </div></TD>";
 	}
 	echo "</TR></TABLE>";
 	echo "</TD></TR>";
@@ -692,9 +682,10 @@ function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0,$showheader=nu
 /* --- Version --------------------------------------- */
 function print_version($ID,$gtabid,&$gresult){
 	global $gresult;
+	global $gtab;
 
 	if($gresult[$gtabid]["V_ID"]){
-	if($gresult[$gtabid]["VACT"][0]){$c = "green";}else{$c = "red";}
+	if($gresult[$gtabid]["VACT"][0] OR $gtab['validity'][$gtabid] == 2){$c = "green";}else{$c = "red";}
 	echo "<SELECT class=\"contextmenu\" ID=\"versionSelection\" NAME=\"versionSelection_$c\" OnChange=\"document.form1.ID.value=this.value;send_form(1);\" STYLE=\"color:$c\">";
 	foreach ($gresult[$gtabid]["V_ID"] as $key => $value){
 		echo "<OPTION VALUE=\"$value\" ";
@@ -712,11 +703,219 @@ function print_scroll($ID){
 	echo "<TD class=\"gtabFooterTD\">$lang[722]&nbsp;</TD>";
 	echo "<TD class=\"gtabFooterTD\"><i TITLE=\"$lang[857]\" class=\"lmb-icon lmb-first\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"document.form1.scrollto.value='start';send_form('1');\"></i></TD>";
 	echo "<TD class=\"gtabFooterTD\"><i TITLE=\"$lang[860]\" class=\"lmb-icon lmb-previous\" STYLE=\"cursor:pointer;font-size:1.5em;\" BORDER=\"0\" OnClick=\"document.form1.scrollto.value='prev';send_form('1');\"></i></TD>";
-	echo "<TD class=\"gtabFooterTD\"><INPUT TYPE=\"TEXT\" STYLE=\"width:60px;\" VALUE=\" $ID\" OnChange=\"document.form1.scrollto.value=this.value;send_form('1');\"></TD>";
+	echo "<TD class=\"gtabFooterTD gtabFooterID\"><INPUT TYPE=\"TEXT\" STYLE=\"width:60px;\" VALUE=\" $ID\" OnChange=\"document.form1.scrollto.value=this.value;send_form('1');\"></TD>";
 	echo "<TD class=\"gtabFooterTD\"><i TITLE=\"$lang[859]\" class=\"lmb-icon lmb-next\" STYLE=\"cursor:pointer;font-size:1.5em;\" BORDER=\"0\" OnClick=\"document.form1.scrollto.value='next';send_form('1');\"></i></TD>";
 	echo "<TD class=\"gtabFooterTD\"><i TITLE=\"$lang[858]\" class=\"lmb-icon lmb-last\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"document.form1.scrollto.value='end';send_form('1');\"></i></TD>";
 	echo "</TR></TABLE>";
 }
+
+
+function print_notice($gtabid,$ID,&$gresult){
+    global $farbschema;
+    global $lang;
+    global $gtab;
+    global $LINK;
+    global $filter;
+    global $session;
+
+
+
+    echo "<div style=\"display: flex; flex-wrap: wrap\">";
+
+    // notice validity
+    if ($gtab['validity'][$gtabid] AND $filter['validity'][$gtabid]) {
+        $dateformat = setDateFormat(1, 2);
+        $validity = $filter['validity'][$gtabid];
+        if($filter['validity'][$gtabid] == 'all') {$validity = $GLOBALS['lang'][994];}
+        echo "<div class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice1\">{$lang[3008]}:&nbsp;
+         <input type=\"text\" id=\"lmbValidityNotice\" style=\"height:19px;width:80px;background-color:inherit\" value=\"{$validity}\" 
+         onchange=\"document.form1.filter_validity.value=this.value+' ';send_form(1);\"
+         ondblclick=\"lmb_datepicker(event,this,'lmbValidityNotice',document.getElementById('lmbValidityNotice').value,'{$dateformat}',10);\">&nbsp;";
+         if($filter['validity'][$gtabid] != 'all') {
+             echo "<i class=\"lmb-icon lmb-close-alt\" onclick=\"document.form1.filter_validity.value='all';send_form(1);\"></i>";
+         }
+         #echo "</div>";
+
+        #echo "<div id=\"notice_validity_line\" class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice1\" style=\"width:100%;\">";
+        // validity versioning
+        if($gtab['validity'][$gtabid] == 2) {
+            show_validity_line($gtabid, $ID, $gresult[$gtabid]['VPID'][0]);
+        }
+        #echo "</div>";
+        echo "</div>";
+    }
+
+    // notice archive
+    if ($gresult[$gtabid]['DEL'][0]) {
+        echo "<div class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice2\" style=\"padding-top:3px;\">{$lang[1312]}:
+         <i class=\"lmb-icon lmb-close-alt\" onclick=\"document.form1.filter_unhide.value=1;send_form(1)\"></i>
+         </div>";
+    }
+
+    // notice versioned
+    if ($filter['viewversion'][$gtabid]) {
+        $msg = '<b>'.$lang[2].' '.array_search($ID,$gresult[$gtabid]['V_ID']).'</b> - ';
+        if(trim($gresult[$gtabid]["VDESC"][0])){$msg .= ' (<i>'.$gresult[$gtabid]["VDESC"][0].'</i>) - ';}
+        if($gresult[$gtabid]['VACT'][0]){$msg .= $lang[2928];}
+        elseif($gtab['editver'][$gtabid]) {$msg .= $lang[3047]."&nbsp;<i class=\"lmb-icon lmb-exclamation-triangle\"></i>";}
+        else{$msg .= $lang[2928];}
+        echo "<div class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice3\">{$msg}</div>";
+    }
+
+    // notice locked
+	# manuelles lock - lock freigeben
+	if($gtab['lock'][$gtabid] AND !$gresult[$gtabid]['LOCK']['USER'][$ID] AND $gresult[$gtabid]['LOCK']['STATIC'][$ID] AND $LINK['271']){
+        $msg = $lang[$LINK['desc'][271]]." - ".$gresult[$gtabid]['LOCK']['TIME'][$ID];
+         echo "<div class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice4\">{$msg}:
+         <i class=\"lmb-icon lmb-undo\" onclick=\"".$LINK['link_url'][271]."\"></i>
+         </div>";
+	}elseif ($gtab['lockable'][$gtabid] AND $gresult[$gtabid]['LOCK']['USER'][$ID]) {
+        $msg = $lang[763]." (<b>User: ".$gresult[$gtabid]['LOCK']['USER'][$ID]."</b> - ".$lang[1722].$gresult[$gtabid]['LOCK']['TIME'][$ID];
+         echo "<div class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice4\">{$msg}:
+         <i class=\"lmb-icon lmb-undo\" onclick=\"document.form1.action.value='gtab_change';send_form(1)\"></i>
+         </div>";
+    }
+
+    // notice mandatory
+    if ($gtab["multitenant"][$gtabid]) {
+        global $lmmultitenants;
+
+        $msg = null;
+        if(!$gresult[$gtabid]['MID'][0]) {
+            $msg = $lang[3012];
+        }elseif($gresult[$gtabid]["MID"][0] != $lmmultitenants['mid'][$session['mid']]){
+            $msg = $lang[3011] . ' (<b>' . $lmmultitenants['name'][$lmmultitenants['translate'][$gresult[$gtabid]['MID'][0]]] . '</b>)';
+        }
+        if($msg) {
+            echo "<div class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice5\">{$msg}</div>";
+        }
+    }
+
+    // notice data permission
+    if($gtab['has_userrules'][$gtabid] AND $filter['userrules'][$gtabid]){
+        echo "<div class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice6\">{$lang[3043 ]}:&nbsp;";
+        show_userRules($gtabid,$ID);
+        echo "</div>";
+    }
+
+
+    /*
+    // notice validity line
+    if ($gtab['validity'][$gtabid] AND $filter['validity'][$gtabid]) {
+        #$arr = show_validity_line($gtabid,$gresult[$gtabid]['VPID'][0]);
+        echo "<div id=\"notice_validity_line\" class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice7\" style=\"width:100%;\">";
+
+        show_validity_line($gtabid,$gresult[$gtabid]['VPID'][0]);
+
+        echo "</div>";
+
+        #echo '<Script language="JavaScript">';
+        #echo '$(function() {';
+        #echo 'lmb_show_validity_line($(\'#notice_validity_line\'),\''.json_encode($arr).'\')';
+        #echo '});';
+        #echo '</Script>';
+
+    }
+    */
+
+    echo "</div>";
+
+    #echo "<div class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice7\" style=\"padding:none\">";
+        #show_validity_line($gtabid,$gresult[$gtabid]['VPID'][0]);
+    #echo "</div>";
+}
+
+/*
+// notice validity line
+function show_validity_linexxx($gtabid,$VPID){
+    global $lang;
+    global $gtab;
+    global $session;
+    global $db;
+
+        $sqlquery = "SELECT LMB_VALIDFROM,LMB_VALIDTO,VPID,VID,ID FROM " . $gtab['table'][$gtabid] . " WHERE VPID = $VPID ORDER BY VID";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
+        if (!$rs) {$commit = 1;}
+
+        while(lmbdb_fetch_row($rs)) {
+            $current['vfrom'][] = get_stamp(lmbdb_result($rs, 'LMB_VALIDFROM'));
+            $current['vto'][] = get_stamp(lmbdb_result($rs, 'LMB_VALIDTO'));
+            $current['vpid'][] = lmbdb_result($rs, 'VPID');
+            $current['vid'][] = lmbdb_result($rs, 'VID');
+            $current['id'][] = lmbdb_result($rs, 'ID');
+        }
+
+        $start = $current['vfrom'][0];
+        $end = $current['vto'][count($current['id'])-1];
+        $range = (($end-$start) / (60*60));
+
+        $validity['range'] = $range;
+        $validity['format'] = $session['dateformat'];
+
+        foreach($current['id'] as $vkey => $vvalue){
+            $lenth = (($current['vto'][$vkey]-$current['vfrom'][$vkey]) / (60*60));
+            $validity['id'][] = $vvalue;
+            $validity['from'][] = $current['vfrom'][$vkey];
+            $validity['to'][] = $current['vto'][$vkey];
+        }
+        return $validity;
+
+}
+*/
+
+// notice validity line
+function show_validity_line($gtabid,$ID,$VPID){
+    global $lang;
+    global $gtab;
+    global $session;
+    global $db;
+
+    if(!$VPID){return;}
+
+    $sqlquery = "SELECT LMB_VALIDFROM,LMB_VALIDTO,VPID,VID,VACT,ID FROM " . $gtab['table'][$gtabid] . " WHERE VPID = $VPID ORDER BY VID ASC";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
+    if (!$rs) {$commit = 1;}
+
+    while(lmbdb_fetch_row($rs)) {
+        if(!lmbdb_result($rs, 'LMB_VALIDFROM') AND !lmbdb_result($rs, 'LMB_VALIDTO')){continue;}
+
+        $current['vpid'][] = lmbdb_result($rs, 'VPID');
+        $current['vid'][] = lmbdb_result($rs, 'VID');
+        #$current['vact'][] = lmbdb_result($rs, 'VACT');
+        $current['id'][] = lmbdb_result($rs, 'ID');
+        if(lmbdb_result($rs, 'LMB_VALIDFROM') == lmbdb_result($rs, 'LMB_VALIDTO')){
+            $current['vfrom'][] = get_stamp(lmbdb_result($rs, 'LMB_VALIDFROM'));
+            $current['vto'][] = get_stamp(lmbdb_result($rs, 'LMB_VALIDTO')) + 86000;
+        }elseif(!lmbdb_result($rs, 'LMB_VALIDFROM') ){
+            $current['vfrom'][] = get_stamp(lmbdb_result($rs, 'LMB_VALIDTO')) - 86000;
+            $current['vto'][] = get_stamp(lmbdb_result($rs, 'LMB_VALIDTO'));
+        }elseif (!lmbdb_result($rs, 'LMB_VALIDTO') ){
+            $current['vfrom'][] = get_stamp(lmbdb_result($rs, 'LMB_VALIDFROM'));
+            $current['vto'][] = get_stamp(lmbdb_result($rs, 'LMB_VALIDFROM')) + 86000;
+        }else{
+            $current['vfrom'][] = get_stamp(lmbdb_result($rs, 'LMB_VALIDFROM'));
+            $current['vto'][] = get_stamp(lmbdb_result($rs, 'LMB_VALIDTO'));
+        }
+    }
+
+    $start = $current['vfrom'][0];
+    $end = $current['vto'][count($current['id'])-1];
+    $range = (($end-$start) / (60*60));
+    $linewidth = 100;
+    $factor = ($linewidth/$range);
+    $validity['format'] = $session['dateformat'];
+
+    foreach($current['id'] as $vkey => $vvalue){
+        $lenth = (($current['vto'][$vkey]-$current['vfrom'][$vkey]) / (60*60));
+        $width = round(($factor*$lenth)*100/$linewidth);
+        $st = '';
+        if($current['id'][$vkey] == $ID){$st = 'background-color:#588c46';}
+        $date = stampToDate($current['vto'][$vkey],1);
+        echo "<div onclick=\"document.form1.ID.value=".$current['id'][$vkey].";send_form(1);\" title=\"$date\" class=\"lmbValidity_list\" style=\"overflow:hidden;min-width:5%;width:".$width."%;$st\">".$date."&nbsp;</div>";
+    }
+}
+
+
 
 
 # --------------- Formularansicht --------------------------------------------
@@ -725,12 +924,7 @@ function form_view($gtabid,$ID,&$gresult,$gformid,$readonly=0){
 	global $gform;
 	global $action;
 	global $gtab;
-	
-	# versioning activated & dataset exists & is not latest version & force delete deactivated -> readonly form
-	if($gtab["ver"][$gtabid] AND $gresult[$gtabid] AND !$gresult[$gtabid]["VACT"][0] AND !$GLOBALS['filter']["force_delete"][$gtabid]){
-		$action = 'gtab_deterg';
-	}
-	
+
 	# Formular
 	print_form();
 
@@ -909,7 +1103,7 @@ function defaultViewElements($gtabid,$ID,&$gresult,$action='gtab_change',$readon
 	$gf = $filter["groupheaderKey"][$gtabid];
 	foreach ($gfield[$gtabid]["sort"] as $key => $value){
 
-		if($gfield[$gtabid]["grouping"][$key]){continue;}
+		if($gfield[$gtabid]["grouping"][$key] OR $gfield[$gtabid]["field_name"][$key] == 'LMB_VALIDTO'){continue;}
 
 		# ----------- Viewrule -----------
 		if($gfield[$gtabid]["viewrule"][$key]){
@@ -939,10 +1133,10 @@ function defaultViewElements($gtabid,$ID,&$gresult,$action='gtab_change',$readon
 			echo ">";
 			echo "<span style=\"cursor:help;\">".$gfield[$gtabid]["spelling"][$key].$indexed2."<span class=\"gtabBodyDetailNeedTitle\">".lmb_substr($gfield[$gtabid]["need"][$key],0,1)."</span></span>";
 			echo "</TD><TD class=\"gtabBodyDetailValTD\">";
-			
+
 			/* ------------------ Change-Typfunction --------------------- */
 			display_dftyp($gresult,$gtabid,$key,$ID,$edit,"gtabchange",null,null,$bzm);
-			
+
 			echo "</TD></TR>\n";
 
 			$bzm++;
@@ -964,10 +1158,27 @@ function defaultView($gtabid,$ID,&$gresult,$readonly=0,&$filter=null){
 	global $gtab;
 	
 	# versioning activated & dataset exists & is not latest version & force delete deactivated -> readonly form
-	if($gtab["ver"][$gtabid] AND $gresult[$gtabid] AND !$gresult[$gtabid]["VACT"][0] AND !$filter["force_delete"][$gtabid]){
-		$action = 'gtab_deterg';
-	}
-	
+	#if($gtab["ver"][$gtabid] AND $gresult[$gtabid] AND !$gresult[$gtabid]["VACT"][0] AND !$filter["force_delete"][$gtabid]){
+		#$action = 'gtab_deterg';
+    #    $readonly = 1;
+	#}
+
+    /*
+    if($gtab["lockable"][$gtabid] OR $gtab["versioning"][$gtabid]){
+        $lck = lock_data_check($gtabid,$dataid,$session['user_id'],$gresult[$gtabid]["INUSE_TIME"][0],$gresult[$gtabid]["INUSE_USER"][0],$gresult[$gtabid]["VACT"][0]);
+
+        # --- check if dataset is locked ----
+        if($lck["islocked"]){
+            $readonly = 1;
+        }
+
+        # --- check if version is locked ----
+        if ($lck["isversion"] AND !$gtab['editver'][$gtabid]) {
+            $readonly = 1;
+        }
+    }
+    */
+
 	# Formular
 	print_form();
 	
@@ -981,7 +1192,7 @@ function defaultView($gtabid,$ID,&$gresult,$readonly=0,&$filter=null){
 		return false;
 	}
 
-	if($filter["gwidth"][$gtabid]){$sw = $filter["gwidth"][$gtabid];}else{$sw = "700px";}
+	if($filter["gwidth"][$gtabid]){$sw = $filter["gwidth"][$gtabid];}else{$sw = "1000px";}
 	echo "<TABLE class=\"lmbfringeGtab\" ID=\"gtabDetail\" BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\" style=\"width:$sw\">\n";
         echo "<tbody style=\"display: table; width: 100%;\">";
 	# Formularreiter
@@ -1000,6 +1211,13 @@ function defaultView($gtabid,$ID,&$gresult,$readonly=0,&$filter=null){
 	print_menue($gtabid,$gresult,$GLOBALS["verkn_addfrom"],$readonly);
 	/* ------------------------------------------------ */
 	echo "</td></tr>";
+
+
+	/* --- Notice --------------------------------------- */
+	echo "<tr><td>";
+	print_notice($gtabid,$ID,$gresult);
+    echo "</td></tr>";
+
 
 	if(isset($ID)){
 		#echo "<TABLE class=\"gtabBodyDetailTab\" BORDER=\"0\" cellspacing=\"0\" cellpadding=\"0\">";
@@ -1033,7 +1251,7 @@ function defaultView($gtabid,$ID,&$gresult,$readonly=0,&$filter=null){
 		}else{
 			echo "<tr class=\"gtabBodyDetailBody\"><td>\n";
 		}
-		
+
 		echo "<div id=\"GtabTableBody\" style=\"overflow:auto;\"><table class=\"gtabBodyDetailTab\" width=\"100%\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\">\n";
 		defaultViewElements($gtabid,$ID,$gresult,$action,$readonly,$filter);
 		echo "</table></div>";
@@ -1053,9 +1271,9 @@ function defaultView($gtabid,$ID,&$gresult,$readonly=0,&$filter=null){
 	if(isset($ID)){
 		print_scroll($ID);
 		echo "</TD><TD>";
-		if($action == 'gtab_change' OR $action == 'gtab_neu'){
-			echo "<INPUT class=\"submit\" TYPE=\"button\" NAME=\"lmbSbm\" STYLE=\"cursor:pointer\" value=\"$lang[33]\" onclick=\"document.form1.action.value='gtab_change'; send_form('1');\">&nbsp;&nbsp;";
-			echo "<INPUT class=\"submit\" TYPE=\"button\" NAME=\"lmbSbmClose\" STYLE=\"cursor:pointer;display:none\" value=\"$lang[2796]\" onclick=\"document.form1.action.value='gtab_change'; send_form(1,0,0,1);\">";
+		if($action != 'gtab_deterg' AND !$readonly){
+			echo "<INPUT class=\"submit\" TYPE=\"button\" NAME=\"lmbSbm\" ID\"lmbSbm\" STYLE=\"cursor:pointer\" value=\"$lang[33]\" onclick=\"document.form1.action.value='gtab_change'; send_form('1');\">&nbsp;&nbsp;";
+			echo "<INPUT class=\"submit\" TYPE=\"button\" NAME=\"lmbSbmClose\" ID=\"lmbSbmClose\" STYLE=\"cursor:pointer;display:none\" value=\"$lang[2796]\" onclick=\"document.form1.action.value='gtab_change'; send_form(1,0,0,1);\">";
 		}
 	}
 	echo "</TD></TR></TABLE></TD></TR></TABLE>";
@@ -1076,15 +1294,11 @@ if($wind_force_close){
 	        $( document ).ready(function() {
                 // inner frame
                 if(parent.document.getElementById('lmb_gtabDetailFrame')){
-                    var form_id = '';
-                    if(parent.form1.form_id){form_id = parent.form1.form_id.value;}
-                    parent.LmExt_RelationFields(null,$verkn_tabid,$verkn_fieldid,'',1,$verkn_ID,'','','','',form_id,'$verkn_formid');
+                    parent.LmExt_RelationFields(null,$verkn_tabid,$verkn_fieldid,'',1,$verkn_ID,'','','','',null,'$verkn_formid');
                     parent.$('#lmb_gtabDetailFrame').dialog('close');
                 // new win
                 }else if(opener){
-                    var form_id = '';
-                    if(opener.form1.form_id){form_id = opener.form1.form_id.value;}
-                    opener.LmExt_RelationFields(null,$verkn_tabid,$verkn_fieldid,'',1,$verkn_ID,'','','','',form_id,'$verkn_formid');
+                    opener.LmExt_RelationFields(null,$verkn_tabid,$verkn_fieldid,'',1,$verkn_ID,'','','','',null,'$verkn_formid');
                     window.close();
                 }
             });

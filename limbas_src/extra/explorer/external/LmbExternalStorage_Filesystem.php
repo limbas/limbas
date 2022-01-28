@@ -1,5 +1,10 @@
 <?php
 
+
+// ignored - local filesystem instead used
+
+return;
+
 class LmbExternalStorage_Filesystem extends LmbExternalStorage {
 
     public function __construct($config) {

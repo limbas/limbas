@@ -53,7 +53,7 @@ class DeleteRelationRequestHandler extends DeleteRequestHandler {
         // delete relation
         $relation = &init_relation($this->request->table_id,$this->request->field_id,$this->request->id,array(),$rel_del_id);
         $result = set_relation($relation);
-        if ($result === false) {
+        if ($result['count'] === false) {
             throw new RestException('Deletion not possible.', 400);
         } else if ($result <= 0) {
             throw new RestException('Relation does not exit.', 400);

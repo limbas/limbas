@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,12 +10,63 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
  * ID:
  */
+
+
+// open upload options
+var tmp_el=null;
+var tmp_gformid=null;
+var tmp_elid=null;
+function lmb_formpic_open(id,name,elid,gformid){
+
+    tmp_el = id;
+    tmp_gformid = gformid;
+    tmp_elid = elid;
+
+    $('#'+id+'_detail').dialog({
+        appendTo: "#form1",
+        title: name,
+        resizable: true,
+        modal: true,
+        width:400,
+        height:400,
+        zIndex: 1000,
+        close: function () {
+            $('#'+id+'_detail').dialog("destroy");
+        }
+    });
+}
+
+// open upload preview
+function lmb_formpic_preview(url,name,size){
+    if(size){
+        size = size.split('x');
+        var width = size[0];
+        var height = size[1];
+    }else{
+        var height = 500;
+    }
+
+    height = 500;
+    width = 500;
+
+    $("<div><img src='" + url + "' height='100%' width='100%'></div>").dialog({
+        title: name,
+        width: width,
+        height: height,
+        resizable: false,
+        modal: true,
+        zIndex: 1000,
+        close: function () {
+            $('#lmbformpicpreview').dialog("destroy").remove();
+        }
+    });
+}
 
 // explorer select folder
 function LmExt_Ex_SelectFolder(LID,gtabid,gfieldid,ID){
@@ -25,9 +76,40 @@ function LmExt_Ex_SelectFolder(LID,gtabid,gfieldid,ID){
 	ajaxGet(null,url,actid,null,"mainfunc");
 }
 
-// explorer
+
+// explorer upload Extension
+function LmExt_Ex_RelationUploadDelete(gtabid,gfieldid,ID,LID,droprelation,max){
+    droprelation = $('#'+droprelation).attr("data-id");
+
+    if(droprelation == 0){return;}
+    droprelation = 'd_'+droprelation;
+
+	var url = "main_dyns.php";
+    actid = "extFileManager&gtabid=" + gtabid + "&gfieldid=" + gfieldid + "&LID="+ LID +"&ID=" + ID + "&droprelation=" + droprelation + "&delrelation=1";
+	ajaxGet(null,url,actid,null,"ajaxEvalScript");
+
+	lmb_formpicdmove(gtabid+'_'+gfieldid+'_'+ID,'1',max);
+}
+
+
+// explorer manager Extension
 function LmExt_Ex_RelationFields(gtabid,gfieldid,viewmode,edittype,ID,orderfield,addrelation,droprelation,delrelation,picshow,formid,addfolder,sub,search){
 	var url = "main_dyns.php";
+
+	if(tmp_elid && tmp_el) {
+	    $('#'+tmp_el+'_detail').dialog("destroy");
+        lmb_formRenderElement(tmp_el, ID, gtabid, tmp_gformid, tmp_elid);
+        tmp_el = null;
+        tmp_gformid = null;
+        tmp_elid = null;
+        return;
+    }
+
+	if(!document.getElementById("ExtFileManager_LID_"+gtabid+"_"+gfieldid)){
+	    send_form(1);
+	    return;
+	}
+
 	var LID = document.getElementById("ExtFileManager_LID_"+gtabid+"_"+gfieldid).value;
 	var textel = document.getElementById("extRelationFields_"+gtabid+"_"+gfieldid+"_"+viewmode);
 	if(document.form1.form_id){var gformid = document.form1.form_id.value;}

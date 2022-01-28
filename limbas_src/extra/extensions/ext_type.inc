@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,28 +11,35 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
  * ID:
  */
 
-/* -------------------------- Extended File-Manager --------------------------------- */
-function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$pos,$edittype,$z_index=null,$event=null,$gformid=null,$formid=null) {
+/* -------------------------- minimized upload view --------------------------------- */
+function lmb_extendedFileUpload($ID,$gresult,$fieldid,$gtabid,$class,$style,$pos,$edittype,$z_index=null,$event=null,$gformid=null,$formid=null) {
 	global $gtab;
 	global $gfield;
-	global $farbschema;
+	global $umgvar;
 	global $lang;
-	global $action;
 	global $session;
-	global $ufile;
 	global $gfile;
 	global $filestruct;
 	global $LINK;
 	global $ffilter;
-	
+	global $filter;
+	global $gform;
+
+
+
 	if(!$ID){return;}
+
+	#if(!$formid){
+	#    lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$pos,$edittype,$z_index,$event,$gformid,$formid);
+	#    return;
+	#}
 
 	require_once("extra/explorer/explorer_main.lib");
 	require_once("extra/explorer/filestructure.lib");
@@ -45,11 +52,14 @@ function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$p
 	$verkn["uniqueid"] = $gfield[$gtabid]["form_name"][$fieldid];
 	$vuniqueid = $gfield[$gtabid]["form_name"][$fieldid]."_".$gformid;
 	
-	if($verkn){
+	if(!$verkn) {return;}
 
 		# Anzuzeigende Ordner Ebene
 		$linklevel = $GLOBALS["temp"];
-		if($session["ExtFileManager"]["LID"][$verkn["uniqueid"]]){
+
+	if($filter["ext_RelationFields"]['formid'][$vuniqueid]){
+	    $LID = $filter["ext_RelationFields"]['formid'][$vuniqueid];
+	}elseif ($session["ExtFileManager"]["LID"][$verkn["uniqueid"]]) {
 			$LID = $session["ExtFileManager"]["LID"][$verkn["uniqueid"]];
 		}else{
 			$LID = $gfield[$gtabid]["file_level"][$fieldid];
@@ -63,11 +73,17 @@ function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$p
 		
 		# show files recursiv
 		$show_sub = $session["ExtFileManager"]["viewsub"][$verkn["uniqueid"]];
-		if(!$show_sub){$show_sub = 0;}else{$show_sub = 1;}
+    if (!$show_sub) {
+        $show_sub = 0;
+    } else {
+        $show_sub = 1;
+    }
 
 		# default height
 		if(!$filter["ext_RelationFields"]["showall"][$vuniqueid]){
-			if($vgresult[$vgtabid]["res_viewcount"] > 6){$bt = "height:110px;overflow:auto;";}
+        if ($vgresult[$vgtabid]["res_viewcount"] > 6) {
+            $bt = "height:110px;overflow:auto;";
+        }
 		}
 		
 		# order by
@@ -98,6 +114,241 @@ function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$p
 						$filter["ext_RelationFields"][$fkey][$vuniqueid] = $fval;
 					}
 				}
+			}
+		}
+
+    ##########
+
+    # ----- Ordnerstruktur ------
+    get_filestructure();
+    $rootlevel = $filestruct["level"][$gfield[$gtabid]["file_level"][$fieldid]];
+    $level = $filestruct["level"][$LID];
+    $typ = 7;
+    $file_path = lmb_getPathFromLevel($level,$LID);
+    array_splice($file_path,-4);
+    $filter["nolimit"][$LID] = 1;
+    $filter["page"][$LID] = 1;
+    $filter["viewmode"][$LID] = 5;
+    $filter["sub"] = $show_sub;
+    $verkn["parent_table"] = $gtab["table"][$gtabid];
+    $verkn["parent_datid"] = $ID;
+
+    # only images
+    #$filter[$gtab["argresult_id"]["FILES"]."_13"][$LID] = array("image");
+
+    # --- Abfrage starten ---
+    if($query = get_fwhere($LID,$filter,$typ,$verkn)){
+        if(!$ffile = get_ffile($query,$filter,$LID,$typ)){echo "no result for image!";return false;}
+    }
+    ###########
+
+    if($style){$style = "STYLE=\"border:1px solid grey;cursor:pointer;".$pos.$style."\"";}
+    #if($pos){$pos = "STYLE=\"".$pos."\"";}
+
+    #---- thumbs-Liste -----
+    $bzm1 = 0;
+    $img_sn = array();
+    $width = $gform[$gformid]["width"][$formid];
+    $height = $gform[$gformid]["height"][$formid];
+
+    foreach ($ffile['id'] as $fkey => $fID) {
+        if ($img2 = IMACK_ConvertThumbs(array($fID, $ffile['secname'][$fkey], $ffile['mimeid'][$fkey], $ffile['thumb_ok'][$fkey], $LID, $ffile['mid'][$fkey]), ($width - 2), $height, 1)) {
+            $bzm1++;
+            $img_sn[$bzm1] = $img2;
+            $img_id[$bzm1] = $fID;
+        }
+    }
+
+    if(!$bzm1 AND $edittype == 1){
+        $openParams = "OnClick=\"lmb_formpic_open('".$gfield[$gtabid]["form_name"][$fieldid]."','".$gfield[$gtabid]["spelling"][$fieldid]."','$formid','$gformid');event.stopPropagation();\"";
+    }
+
+    echo "<DIV ID=\"".$gfield[$gtabid]["form_name"][$fieldid]."\" data_form_elid=\"$formid\" $style $openParams>";
+
+    #---- Scriptliste aller Bilder -----
+    ?>
+    <Script language="JavaScript">
+
+    <?php
+    $fp = $gtabid."_".$fieldid."_".$ID;
+    echo "var formpicsn_" . $fp . " = new Array();
+    ";
+    $fieldid1 = 0;
+    echo "formpicsn_" . $fp . "[0] = \"#0\";";
+    foreach ($img_sn as $key => $value) {
+        $fieldid1++;
+        echo "formpicsn_" . $fp . "[" . $fieldid1 . "] = \"" . $img_sn[$key] . "#$img_id[$key]\"; ";
+    }
+    $max = $fieldid1;
+    if($bzm1){$min = 1;}else{$min = 0;}
+
+    echo "</Script>\n";
+
+    echo "<div style=\"display:none\" id=\"".$gfield[$gtabid]["form_name"][$fieldid]."_detail\"><TABLE><TR>
+    <TD><i title=\"$lang[2318]\" class=\"lmb-icon lmb-rep-dbnew\" STYLE=\"cursor:pointer;\" onclick=\"LmEx_showUploadField('LmEx_Ex_uploadfiles_".$gtabid."_".$fieldid."', '$LID', '".$gtabid."_".$fieldid."', '$gtabid', '$fieldid', '$ID');\">
+    <TD><i title=\"$lang[2318]\" class=\"lmb-icon lmb-page-delete-alt\" STYLE=\"cursor:pointer;\" OnClick=\"LmExt_Ex_RelationUploadDelete($gtabid,$fieldid,$ID,$LID,'formpicname0_$fp','$max');\"></i></TD>";
+
+    if (!$gfield[$gtabid]["unique"][$fieldid] OR !$LID) {
+        echo "<TD width=\"100%\">&nbsp;</TD>
+        <TD><i title=\"$lang[857]\" class=\"lmb-icon lmb-first\" STYLE=\"cursor:pointer;\" OnClick=\"lmb_formpicdmove('" . $fp . "','3','$max');\"></i></TD>
+        <TD><i title=\"$lang[860]\" class=\"lmb-icon lmb-previous\" STYLE=\"cursor:pointer;font-size:1.5em;\" OnClick=\"lmb_formpicdmove('" . $fp . "','2','$max');\"></i></TD>
+        <TD><i title=\"$lang[859]\" class=\"lmb-icon lmb-next\" STYLE=\"cursor:pointer;font-size:1.5em;\" OnClick=\"lmb_formpicdmove('" . $fp . "','1','$max');\"></i></TD>
+        <TD><i title=\"$lang[858]\" class=\"lmb-icon lmb-last\" STYLE=\"cursor:pointer;\" OnClick=\"lmb_formpicdmove('" . $fp . "','4','$max');\"></i></TD>
+        ";
+    }
+
+    echo "</TR>";
+
+    if (!$gfield[$gtabid]["unique"][$fieldid] OR !$LID) {
+        echo "<tr id=\"LmEx_Ex_uploadfile_".$gtabid."_".$fieldid."\" ><td colspan=\"9\" id=\"LmEx_Ex_uploadfiles_".$gtabid."_".$fieldid."\"><td></tr>";
+    }
+
+    echo "</TABLE>";
+    echo "<div style=\"width:100%;text-align:center;padding-top:10px\"><IMG id=\"formpicname0_$fp\" NAME=\"formpicname0_" . $fp . "\" SRC=\"" . $img_sn[$min] . "\" data-id=\"" . $img_id[$min] . "\"></div>";
+    echo "</div>";
+
+    if($bzm1){
+        $preview = "OnClick=\"lmb_formpic_preview('main.php?&action=download&ID=".$img_id[$min]."&sendas=a','".$gfield[$gtabid]["spelling"][$fieldid]."','".$filter['ext_RelationFields']['formsize'][$vuniqueid]."')\"";
+    }
+    echo "<div class=\"lmbImageUpload\">
+    <IMG style=\"position:absolute;\" id=\"formpicname_" . $fp . "\" NAME=\"formpicname_" . $fp . "\" SRC=\"" . $img_sn[$min] . "\" $preview>
+    <div class=\"lmbImageUploadOptions\" style=\"position:relative;top:0px;width:100%;height:30px;\">";
+    if($bzm1){
+        echo "<i class=\"lmb-icon lmb-download cursor-pointer\" style=\"position:absolute;top:5px;left:5px;\" border=\"0\" onclick=\"document.location.href='main.php?&action=download&ID=".$img_id[$min]."&sendas=a';\"></i>";
+    }
+    if($edittype == 1){
+        echo "<i class=\"lmb-icon lmb-cog-alt cursor-pointer\" style=\"position:absolute;top:5px;right:5px;\" border=\"0\" OnClick=\"lmb_formpic_open('".$gfield[$gtabid]["form_name"][$fieldid]."','".$gfield[$gtabid]["spelling"][$fieldid]."','$formid','$gformid');event.stopPropagation();\"></i>";
+    }
+    echo "
+    </div>
+    </div>
+    ";
+
+    echo "</DIV>";
+
+}
+
+/* -------------------------- Extended File-Manager List --------------------------------- */
+function lmbc_extendedFileManager($line,$fieldid,$gtabid,$edittyp,&$gresult,$event=null,$gformid=null,$formid=null) {
+    global $gfield;
+    global $gform;
+
+    $vuniqueid = $gfield[$gtabid]["form_name"][$fieldid]."_".$gformid;
+    $ID = $gresult[$gtabid]['id'][$line];
+
+    # specific rules
+    if($gform[$gformid]["parameters"][$formid]){
+        $filter_ = eval($GLOBALS["gform"][$gformid]["parameters"][$formid]);
+        if(is_array($filter_)){
+            foreach ($filter_ as $fkey => $fval){
+                $filter["ext_RelationFields"][$fkey][$vuniqueid] = $fval;
+            }
+        }
+    }
+
+    // minimized Upload view
+    if($filter["ext_RelationFields"]["viewmode"][$vuniqueid] == 'minimized'){
+        // readonly
+        $edittyp = 2;
+
+        echo "<div style=\"width:".$gform[$gformid]["width"][$formid]."px;height:".$gform[$gformid]["height"][$formid]."px;z-index:".$gform[$gformid]["z_index"][$formid]."\">";
+        lmb_extendedFileUpload($ID,$gresult,$fieldid,$gtabid,$class,$style,$pos,$edittyp,$z_index,$event,$gformid,$formid);
+        echo "</div>";
+    }else{
+        $fname = "cftyp_".$gfield[$gtabid]["funcid"][$fieldid];
+        $fname($line,$fieldid,$gtabid,$edittyp,$gresult,$gform[$gformid]["event"][$formid],$gformid,$formid);
+    }
+}
+
+
+/* -------------------------- Extended File-Manager --------------------------------- */
+function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$pos,$edittype,$z_index=null,$event=null,$gformid=null,$formid=null) {
+	global $gtab;
+	global $gfield;
+	global $farbschema;
+	global $lang;
+	global $action;
+	global $session;
+	global $ufile;
+	global $gfile;
+	global $filestruct;
+	global $LINK;
+	global $ffilter;
+	global $filter;
+
+	if(!$ID){return;}
+
+	$vuniqueid = $gfield[$gtabid]["form_name"][$fieldid]."_".$gformid;
+
+	require_once("extra/explorer/explorer_main.lib");
+	require_once("extra/explorer/filestructure.lib");
+
+	if($style){$style_abs = "STYLE=\"".$pos.$style."\"";}else{$style_abs = "STYLE=\"margin-top:5px;margin-bottom:5px;\"";}
+
+	# Verknüpfungswerte
+	$verkn = set_verknpf($gfield[$gtabid]["verkntabid"][$fieldid],$gfield[$gtabid]["verknfieldid"][$fieldid],0,0,0,0,0);
+	$verkn["md5tab"] = $gfield[$gtabid]["md5tab"][$fieldid];
+	$verkn["uniqueid"] = $gfield[$gtabid]["form_name"][$fieldid];
+
+	if($verkn){
+
+		# specific formular styles
+		if($gformid AND $formid){
+			$st = explode(";",$GLOBALS["gform"][$gformid]["style"][$formid]);
+			if($st[24]){ #overflow
+				$bt = "height:".$GLOBALS["gform"][$gformid]["height"][$formid]."px;overflow:".$st[24];
+			}else{
+				$bt = "";
+			}
+			$style_abs = str_replace(";height:",";height_:",$style_abs); # workaround to disable height
+			# specific rules
+			if($GLOBALS["gform"][$gformid]["parameters"][$formid]){
+				$filter_ = eval($GLOBALS["gform"][$gformid]["parameters"][$formid]);
+				if(is_array($filter_)){
+					foreach ($filter_ as $fkey => $fval){
+						$filter["ext_RelationFields"][$fkey][$vuniqueid] = $fval;
+					}
+				}
+			}
+		}
+
+        // minimized Upload view
+        if($filter["ext_RelationFields"]["viewmode"][$vuniqueid] == 'minimized'){
+            lmb_extendedFileUpload($ID,$gresult,$fieldid,$gtabid,$class,$style,$pos,$edittype,$z_index,$event,$gformid,$formid);
+            return;
+        }
+
+		# Anzuzeigende Ordner Ebene
+		$linklevel = $GLOBALS["temp"];
+		if($session["ExtFileManager"]["LID"][$verkn["uniqueid"]]){
+			$LID = $session["ExtFileManager"]["LID"][$verkn["uniqueid"]];
+		}else{
+			$LID = $gfield[$gtabid]["file_level"][$fieldid];
+		}
+
+		# get global ffilter
+		get_userShow($LID,1);
+
+		# viewmode
+		$show_details = $ffilter['viewmode'][$LID];
+
+		# show files recursiv
+		$show_sub = $session["ExtFileManager"]["viewsub"][$verkn["uniqueid"]];
+		if(!$show_sub){$show_sub = 0;}else{$show_sub = 1;}
+
+		# default height
+		if(!$filter["ext_RelationFields"]["showall"][$vuniqueid]){
+			if($vgresult[$vgtabid]["res_viewcount"] > 6){$bt = "height:110px;overflow:auto;";}
+		}
+
+		# order by
+		$filter["order"][$LID] = $ffilter["order"][$LID];
+
+		# search
+		foreach ($gfile['show'][$LID] as $key1 => $val1){
+			if($ffilter[$key1][$LID]){
+				$searchfield = explode('_',$key1);
+				$filter["gsr"][$searchfield[0]][$searchfield[1]] = $ffilter[$key1][$LID];
 			}
 		}
 
@@ -206,7 +457,7 @@ function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$p
 		$rootlevel = $filestruct["level"][$gfield[$gtabid]["file_level"][$fieldid]];
 		$level = $filestruct["level"][$LID];
 		$typ = 7;
-		$file_path = set_path($level,$LID);
+		$file_path = lmb_getPathFromLevel($level,$LID);
 		array_splice($file_path,-4);
 		$filter["nolimit"][$LID] = 1;
 		$filter["page"][$LID] = 1;
@@ -281,7 +532,7 @@ function extendedExplPicShow(&$ffile,$gtabid,$field_id,$ID,$gformid,$formid,$pic
 			$width = $size[0];
 			$height = $size[1];
 		}
-		$dest = IMACK_ConvertThumbs(array($cfid,$ffile["secname"][$cfid],$ffile["mimeid"][$cfid],$ffile["thumb_ok"][$cfid],$ffile["level"][$cfid]),$width,$height,1);
+		$dest = IMACK_ConvertThumbs(array($cfid,$ffile["secname"][$cfid],$ffile["mimeid"][$cfid],$ffile["thumb_ok"][$cfid],$ffile["level"][$cfid],$ffile["mid"][$cfid]),$width,$height,1);
 	}
 
 	echo "<TR><TD><TABLE CELLSPACING=\"0\" CELLPADDING=\"0\"><TR BGCOLOR=\"".$farbschema['WEB3']."\"><TD>&nbsp;</TD><TD><i TITLE=\"$lang[857]\" ALT=\"$lang[857]\" class=\"lmb-icon lmb-first\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3','$edittype',$ID,'','','','',1,'".$formid."','','','')\"></i></TD>";

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -106,14 +106,22 @@ function ajaxEditField(fieldid,act){
 }
 
 function ajaxEditFieldPost(result){
-	element = document.getElementById("lmbAjaxContainer");
+
+    var layername = 'lmbAjaxContainer';
+
+	element = document.getElementById(layername);
 	element.style.visibility = '';
 	element.innerHTML = result;
-	limbasSetCenterPos(element);
-	element.style.left = '180px';
+
+    $("#"+layername).css({'position': 'relative', 'left': '0', 'top': '0'}).dialog({
+        title: 'Field Settings',
+        width: 580,
+        resizable: true,
+        modal: true,
+        zIndex: 99999
+    });
+
 	ajaxEvalScript(result);
-	
-	//hide_selects(1);
 }
 
 
@@ -136,7 +144,6 @@ function change_wysiwyg(fieldid,el){
 	document.form1.fieldid.value = fieldid;
 	document.form1.wysiwyg.value=1;
 	document.form1.submit();
-
 }
 
 function newwin(FIELDID,ATID,POOL,TYP) {
@@ -152,13 +159,30 @@ function newwin4(FELD,TAB,ATID) {
 verknfield = open("main_admin.php?action=setup_verknfield&tab_group=<?= $tab_group ?>&typ=gtab_ftype&tabid=" + ATID + "&tab=" + TAB + "&fieldid=" + FELD + "" ,"Verknuepfung","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=420,height=300");
 }
 function newwin5(FELD,ATID,VERKNID) {
-verkn_editor = open("main_admin.php?action=setup_verkn_editor&tabid=" + ATID + "&fieldid=" + FELD + "&verkntabid=" + VERKNID + "" ,"Verknuepfung_Editor","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=550,height=600");
+    var layername = 'relationsetting'
+    $("#"+layername).remove();
+    $("body").append("<div id='"+layername+"' style='position:absolute;display:none;z-index:9999;overflow:hidden;width:300px;height:300px;padding:0;'><iframe id='relationsettingIFrame' style='width:100%;height:100%;overflow:auto;'></iframe></div>");
+        $("#"+layername).css({'position': 'relative', 'left': '0', 'top': '0'}).dialog({
+            title: '<?=$lang[$LINK['desc'][163]]?>',
+            width: 630,
+            height: 700,
+            resizable: true,
+            modal: true,
+            zIndex: 99999,
+            open: function (ev, ui) {
+                $('#relationsettingIFrame').attr("src", "main_admin.php?action=setup_verkn_editor&tabid=" + ATID + "&fieldid=" + FELD + "&verkntabid=" + VERKNID);
+            },
+            close: function () {
+                $("#"+layername).dialog('destroy').remove();
+            }
+        });
+//verkn_editor = open("main_admin.php?action=setup_verkn_editor&tabid=" + ATID + "&fieldid=" + FELD + "&verkntabid=" + VERKNID + "" ,"Verknuepfung_Editor","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=550,height=600");
 }
 function newwin6(FELD,TAB,ATID) {
 upload_editor = open("main_admin.php?action=setup_upload_editor&tab_group=<?= $tab_group ?>&tabid=" + ATID + "&tab=" + TAB + "&fieldid=" + FELD + "" ,"Verknuepfung","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=420,height=300");
 }
 function newwin7(FIELDID,TABID) {
-grouping_edior = open("main_admin.php?action=setup_grouping_editor&tabid=" + TABID + "&fieldid=" + FIELDID + "" ,"Grouping_Edito","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=420,height=300");
+grouping_editor = open("main_admin.php?action=setup_grouping_editor&tabid=" + TABID + "&fieldid=" + FIELDID + "" ,"Grouping_Edito","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=420,height=300");
 }
 
 
@@ -222,7 +246,6 @@ var activ_menu = null;
 function divclose(){
 	if(!activ_menu){
 		hide_trigger();
-		document.getElementById("lmbAjaxContainer").style.visibility="hidden";
 	}
 	activ_menu = 0;
 }
@@ -263,8 +286,7 @@ function LIM_activate(el,elid){
 </SCRIPT>
 
 
-<div id="lmbAjaxContainer" class="ajax_container"
-	style="position: absolute; visibility: hidden;" OnClick="activ_menu=1;"></div>
+<div id="lmbAjaxContainer" class="ajax_container" style="position: absolute; visibility: hidden;" ></div>
 
 <?php
 /* --- Tabellen-Liste --------------------------------------------- */
@@ -396,7 +418,8 @@ if($table_gtab[$bzm]) {
 	            # --- delete ------
 	            if((lmb_strtoupper($table_gtab[$bzm]) == "LDMS_FILES" AND $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] <= 33)
                     or (lmb_strtoupper($table_gtab[$bzm]) == "LDMS_META" and $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] <= 37)
-                    or ($table_typ[$bzm] == 8 and $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] <= 2)) {
+                    or ($table_typ[$bzm] == 8 and ($result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1] <= 3 or $result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1] === 'FORTABLE'))
+	                ) {
                     echo "<TD></TD>";
                 } else {
                     echo "<TD VALIGN=\"TOP\" ALIGN=\"CENTER\" style=\"cursor:pointer\">";
@@ -627,7 +650,7 @@ if($table_gtab[$bzm]) {
 	       		    // 1:n simple
 	       		    }elseif($result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 25) {
 	       		        $result_type_allow_convert_ = array(27);
-                    }
+	       		    }
 					
 	       			echo "<TD VALIGN=\"TOP\"><SELECT STYLE=\"width:150px\" OnChange=\"convert_field(this[this.selectedIndex].value,'".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$result_fieldtype[$table_gtab[$bzm]]['field'][$bzm1]."',0);\"><OPTION>";
 	       			foreach($result_type["id"] as $type_key => $type_value){
@@ -734,7 +757,9 @@ if($table_gtab[$bzm]) {
             # --- unique ------
             if(!$isview){
 	            echo "<TD  VALIGN=\"TOP\" ALIGN=\"CENTER\">";
-	            if(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][$bzm1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 15 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 12 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 18 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 10 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 9 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 13 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 3 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 19){
+	            if(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][$bzm1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 15 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 12 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 18 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 10 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 9 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 13 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 3 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 19
+                AND !($result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 25 AND $result_fieldtype[$table_gtab[$bzm]]["verkntabletype"][$bzm1] == 2)
+                ){
 	            	if($result_fieldtype[$table_gtab[$bzm]]["unique"][$bzm1] == 1){$unique = "CHECKED";}else{$unique = "";}
 	            	echo "<CENTER><INPUT TYPE=\"CHECKBOX\" $unique NAME=\"UNIQUE_".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."\" OnCLICK=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."'; this.form.uniquefield.value='uniquefield_$unique'; this.form.submit();\"></CENTER>";}
 	            echo "</TD>";
@@ -807,9 +832,6 @@ if($table_gtab[$bzm]) {
 	
 	if(!$isview){
 		?>
-		
-			
-			
 			<tr>
 				<td colspan="25"><hr
 						style="display: block; height: 1px; border: 0; border-top: 1px solid #ccc; margin: 1em 0; padding: 0;"></td>
@@ -820,28 +842,31 @@ if($table_gtab[$bzm]) {
 					ONCHANGE="this.form.spellingf.value=this.form.field_name.value; this.form.beschreibung.value=this.form.field_name.value;"></TD>
 				<TD VALIGN="TOP"><INPUT TYPE="TEXT" SIZE="25" NAME="beschreibung"></TD>
 				<TD VALIGN="TOP"><INPUT TYPE="TEXT" SIZE="16" NAME="spellingf"></TD>
-				<TD VALIGN="TOP"><SELECT NAME="typ" style="width: 150px"
-					OnChange="checkfiledtype(this,0)"><option></option>
+				<TD VALIGN="TOP"><SELECT NAME="typ" style="width: 150px" OnChange="checkfiledtype(this,0)"><option></option>
 		<?php
 		
 		
 		/* --- Vernüpfungsparameter-Tabelle -------- */
 		$sqlquery =  "SELECT VERKNPARAMS FROM LMB_CONF_FIELDS WHERE UPPER(MD5TAB) = '".lmb_strtoupper($table_gtab[$bzm])."' AND VERKNPARAMS > 0";
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(lmbdb_result($rs, "VERKNPARAMS")){$verknparams = array(1,2,3,4,5,7,8,10,14,15,18,21);}
+		if(lmbdb_result($rs, "VERKNPARAMS")){$verknparams = array(1,2,3,4,5,7,8,10,14,15,18,21,24);}
 		#$headerIds = array(1, 18, 48);
 
 		# Feldtypen
 		foreach ($result_type["id"] as $key => $value){
-			if($result_type["id"][$key] == 49 AND !$tab_versioning[$atid]){continue;}
-			if($verknparams AND !in_array($result_type["field_type"][$key],$verknparams)){continue;}
-			if($result_type["field_type"][$key] == 20 /* file content */ AND $gtab['argresult_id']['LDMS_FILES'] != $bzm){continue;}
-			if($result_type["hassize"][$key]){$hs = "ID=\"".$result_type["size"][$key]."\"";}else{$hs = "";}
 			if(!$result_type["field_type"][$key]) {
                 if ($key != $headerIds[0]) { echo "</OPTGROUP>"; }
                 echo "<OPTGROUP label=\"" . $result_type["beschreibung"][$key] . "\">";
                 continue;
             }
+
+            if(!$table_validity[$atid] AND $result_type["field_type"][$key] == 24){continue;}
+            if(!$table_multitenant[$atid] AND $result_type["field_type"][$key] == 23){continue;}
+            if(!$table_datasync[$atid] AND $result_type["field_type"][$key] == 22){continue;}
+			if($result_type["id"][$key] == 49 AND !$tab_versioning[$atid]){continue;}
+			if($verknparams AND !in_array($result_type["field_type"][$key],$verknparams)){continue;}
+			if($result_type["field_type"][$key] == 20 /* file content */ AND $gtab['argresult_id']['LDMS_FILES'] != $bzm){continue;}
+			if($result_type["hassize"][$key]){$hs = "ID=\"".$result_type["size"][$key]."\"";}else{$hs = "";}
 			echo "<OPTION VALUE=\"".$result_type["id"][$key]."\" $hs>".$result_type["beschreibung"][$key]."</OPTION>";
 		}
 		echo "</OPTGROUP>";
@@ -852,8 +877,9 @@ if($table_gtab[$bzm]) {
             <SELECT NAME="typ2" style="width: 150px" OnChange="checkfiledtype(0,this)">
             <?php
             foreach ($result_type["id"] as $key => $value) {
-                $contains = array(5,10,1,3,2);
-                if(in_array($result_type["field_type"][$key],$contains) AND $result_type["data_type"][$key] != 22 AND $result_type["data_type"][$key] != 44 AND $result_type["data_type"][$key] != 33) {
+                $allowed_fieldtype = array(5,10,1,3,2,23);
+                if(in_array($result_type["field_type"][$key],$allowed_fieldtype) AND $result_type["data_type"][$key] != 22 AND $result_type["data_type"][$key] != 44 AND $result_type["data_type"][$key] != 33) {
+                    if($result_type["field_type"][$key] == 23 AND !$table_multitenant[$table_id]){continue;}
                     echo "<OPTION VALUE=\"" . $result_type["id"][$key] . "\">" . $result_type["beschreibung"][$key];
                 }
             }

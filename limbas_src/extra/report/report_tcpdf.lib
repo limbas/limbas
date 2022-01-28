@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -276,7 +276,7 @@ function print_bild(LmbTcpdf &$pdf, $ID, &$report, $el) {
 
         $pdf->setSourceFile($report_value);
         $tplidx = $pdf->ImportPage(1);
-        $pdf->useTemplate($tplidx, $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el]);
+        $pdf->useTemplate($tplidx, $report['page_style'][4] + $report['posx'][$el], $report['page_style'][2] + $report['posy'][$el], $report['width'][$el], $report['height'][$el]);
 
         # Hintergrund-Rechteck ----------------------------
         # TODO maybe improve
@@ -291,27 +291,31 @@ function print_bild(LmbTcpdf &$pdf, $ID, &$report, $el) {
             }
         }
         if ($par[6]) {
-            $pdf->Rect($par[0] - $par[10][19] / 2, $par[1] - $par[10][19] / 2, $par[2] + $par[10][19], $par[3] + $par[10][19]);
+            $pdf->Rect($report['page_style'][4] + $par[0] - $par[10][19] / 2, $report['page_style'][2] + $par[1] - $par[10][19] / 2, $par[2] + $par[10][19], $par[3] + $par[10][19]);
         }
 
     } else { # Bilder
-        if ($pic_style AND file_exists($umgvar['uploadpfad'] . 'report/' . $pic_orgname)) {
-            if (!file_exists($umgvar['pfad'] . '/TEMP/thumpnails/report/r_' . $pic_name)) {
-                $target = $umgvar['pfad'] . '/TEMP/thumpnails/report/r_' . $pic_name;
-                copy($umgvar['uploadpfad'] . 'report/' . $pic_orgname, $target);
-                $picstyle = explode(';', $pic_style);
-                foreach ($picstyle as $key => $value) {
-                    $cmd = $umgvar['imagemagick'] . '/convert ' . $umgvar['imagemagicklimit'] . " -quality $pic_quality $value -strip $target $target";
-                    system($cmd);
-                }
-                if (file_exists($target)) {
+        if (lmb_strpos($pic_orgname, $umgvar['path']) === false) {
+            if ($pic_style AND file_exists($umgvar['uploadpfad'] . 'report/' . $pic_orgname)) {
+                if (!file_exists($umgvar['pfad'] . '/TEMP/thumpnails/report/r_' . $pic_name)) {
+                    $target = $umgvar['pfad'] . '/TEMP/thumpnails/report/r_' . $pic_name;
+                    copy($umgvar['uploadpfad'] . 'report/' . $pic_orgname, $target);
+                    $picstyle = explode(';', $pic_style);
+                    foreach ($picstyle as $key => $value) {
+                        $cmd = $umgvar['imagemagick'] . '/convert ' . $umgvar['imagemagicklimit'] . " -quality $pic_quality $value -strip $target $target";
+                        system($cmd);
+                    }
+                    if (file_exists($target)) {
+                        $report_value = 'TEMP/thumpnails/report/r_' . $pic_name;
+                    }
+                } else {
                     $report_value = 'TEMP/thumpnails/report/r_' . $pic_name;
                 }
             } else {
-                $report_value = 'TEMP/thumpnails/report/r_' . $pic_name;
+                $report_value = 'UPLOAD/report/' . $pic_orgname;
             }
         } else {
-            $report_value = 'UPLOAD/report/' . $pic_orgname;
+            $report_value = $pic_orgname;
         }
         $pdf->print_element($pdf->printcell($report_value, $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], 'bild'));
     }
@@ -352,6 +356,11 @@ function print_templ(LmbTcpdf &$pdf, $ID, &$report, $el) {
     global $greportlist;
     global $umgvar;
 
+    $style = &$report['style'][$el];
+    if (hide_element($pdf, $style[29])) {
+        return;
+    }
+
     $reportID = $report['report_id'];
     $reportTabID = $report['referenz_tab'];
     $templGtabid = $report['pic_typ'][$el];
@@ -359,10 +368,15 @@ function print_templ(LmbTcpdf &$pdf, $ID, &$report, $el) {
     $parameter = &$report['parameter'][$el];
 
     require_once('extra/template/report/ReportTemplateConfig.php');
-    TemplateConfig::$instance = new ReportTemplateConfig($report, $parameter);
+    TemplateConfig::$instance = new ReportTemplateConfig($report, $parameter, $ID);
+    if ($GLOBALS['resolvedTemplateGroups']) {
+        TemplateConfig::$instance->resolvedTemplateGroups = $GLOBALS['resolvedTemplateGroups'];
+    }
+    if ($GLOBALS['resolvedDynamicData']) {
+        TemplateConfig::$instance->resolvedDynamicData = $GLOBALS['resolvedDynamicData'];
+    }
     $baseElement = new ReportTemplateElement($templGtabid, 'lmbBaseElement', $content);
     $baseElement->resolve($ID);
-
     $htmlArr = &$baseElement->getAsHtmlArr();
 
     // add report's css file if set
@@ -880,6 +894,8 @@ function SetPageBreak(LmbTcpdf &$pdf, $footerpos, &$report) {
 
 # --- PDF erzeugen ---------------------------------
 function create_pdf(&$report, $ID) {
+    global $lmbOnCreatePdf;
+
     #Header - Elemente
     $rp['header'] = element_list($ID, $report, 'header');
     #Footer - Elemente
@@ -909,6 +925,11 @@ function create_pdf(&$report, $ID) {
 
     # set all needed fonts
     set_fonts($pdf, $report['report_id']);
+
+    // callback to modify pdf or elements
+    if (is_callable($lmbOnCreatePdf)) {
+        $lmbOnCreatePdf($pdf);
+    }
 
     $pdf->AddPage();
     $pdf->SetSubject($report['name'] . ' ' . date('Y.m.d'));
@@ -941,7 +962,7 @@ function store_pdf(LmbTcpdf &$pdf, &$report, $ID, $report_rename = null, $report
     # use postscript to compress
     if ($umgvar['use_gs'] AND file_exists($path)) {
         rename($path, $path . 'gs');
-        $sys = exec("cd ".$umgvar["pfad"]."/USER/".$session["user_id"]."/temp/; gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=".lmb_utf8_encode($name)." ".$path."gs");
+        $sys = exec("cd ".$umgvar["pfad"]."/USER/".$session["user_id"]."/temp/; gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=\"".lmb_utf8_encode($name)."\" \"".$path."gs\"");
         unlink($path . 'gs');
     }
 
@@ -1016,7 +1037,7 @@ function append_report(LmbTcpdf &$pdf, $report_id, $ID) {
 
 # Unterbericht einfügen
 function append_subReport(LmbTcpdf &$pdf, &$report, $ID, $el, $report_id, $height = 0, $width = 0) {
-    $subreportfile = generate_pdf($report_id, $ID, 0, 'temp_' . $report_id . '.pdf');
+    $subreportfile = lmb_reportCreatePDF($report_id, $ID, 0, 'temp_' . $report_id . '.pdf');
     $report['tab_size'][$el] = $subreportfile;
     if ($width) {
         $report['height'][$el] = 0;
@@ -1080,8 +1101,19 @@ function append_subChart(LmbTcpdf &$pdf, &$report, $ID, $el, $chart_id, $height 
     ));
 }
 
-# Generiere Berichte
+
+// lmb_reportCreatePDF - downward compatible - deprecated
 function generate_pdf($report_id, $ID, $report_output, $report_rename = null) {
+    lmb_reportCreatePDF($report_id, $ID, $report_output, $report_rename);
+}
+
+# Generiere Berichte
+function lmb_reportCreatePDF($report_id, $ID, $report_output, $report_rename = null, $gsr=null,$filter=null) {
+
+    // setting filter for listmode
+    $GLOBALS['rgsr'] = $gsr;
+    $GLOBALS['rfilter'] = $filter;
+
     $report = &get_report($report_id, 0);
     $pdf = create_pdf($report, $ID);
     if (!$pdf) {
@@ -1105,7 +1137,9 @@ function generate_pdf($report_id, $ID, $report_output, $report_rename = null) {
     }
 
     # Archivieren
-    $GLOBALS['archiv_file_id'] = reportArchiv($temp_file_path, $report, $ID, $report_output);
+    if($report_output == 2) {
+        $GLOBALS['archiv_file_id'] = reportArchiv($temp_file_path, $report, $ID, $report_output);
+    }
 
     return $temp_file_path;
 }
@@ -1113,7 +1147,7 @@ function generate_pdf($report_id, $ID, $report_output, $report_rename = null) {
 #region ExportFunctions
 
 # --- alle Berichte einer Tabelle -----------------------------------
-function LMB_pdfReportAll($gtabid, $report_id, $report_output, &$filter, &$gsr, &$verkn, $report_rename = null) {
+function lmb_reportCreatePDFlistFiler($gtabid, $report_id, $report_output, &$filter, &$gsr, &$verkn, $report_rename = null) {
     global $gresult;
 
     # Abfrage
@@ -1130,7 +1164,7 @@ function LMB_pdfReportAll($gtabid, $report_id, $report_output, &$filter, &$gsr, 
     $bzm = 0;
     while ($bzm < $gresult[$gtabid]['res_count']) {
         $ID = $gresult[$gtabid]['id'][$bzm];
-        $generated_file_path = generate_pdf($report_id, $ID, $report_output, $report_rename);
+        $generated_file_path = lmb_reportCreatePDF($report_id, $ID, $report_output, $report_rename.'_'.$bzm);
         $filelist[] = lmb_utf8_encode($generated_file_path);
         $bzm++;
     }
@@ -1143,14 +1177,14 @@ function LMB_pdfReportAll($gtabid, $report_id, $report_output, &$filter, &$gsr, 
 }
 
 # --- Berichtsliste mehrerer Datensätze -----------------------------------
-function LMB_pdfReportRecords($gtabid, $report_id, $report_output, $use_record, $report_rename = null) {
+function lmb_reportCreatePDFlistSel($gtabid, $report_id, $report_output, $use_record, $report_rename = null) {
     $use_record = explode(';', $use_record);
     $use_record = array_unique($use_record);
     foreach ($use_record as $key => $value) {
         $recel = explode('_', $value);
         if ($recel[1] == $gtabid) {
             $ID = $recel[0];
-            $generated_file_path = generate_pdf($report_id, $ID, $report_output, $report_rename);
+            $generated_file_path = lmb_reportCreatePDF($report_id, $ID, $report_output, $report_rename.'_'.$bzm);
             $filelist[] = lmb_utf8_encode($generated_file_path);
         }
     }
@@ -1162,39 +1196,101 @@ function LMB_pdfReportRecords($gtabid, $report_id, $report_output, $use_record, 
     }
 }
 
-# --- Einzelbericht eines Datensatzes -----------------------------------
-function LMB_pdfReportUnit($gtabid, $report_id, $report_output, $ID, $report_rename = null) {
-    $generated_file_path = generate_pdf($report_id, $ID, $report_output, $report_rename);
-    return $generated_file_path;
+function lmb_reportPDF($report_id,$gtabid=null,$ID=null,$report_output=null,$report_rename=null,$gsr=null,$filter=null,$use_record=null,$verkn=null){
+    global $umgvar;
+    global $session;
+    global $greportlist;
+    $generatedReport = false;
+
+    if(!$gtabid){
+        $gtabid = $greportlist["argresult_tabid"][$report_id];
+    }
+
+    $listmode = $greportlist[$gtabid]["listmode"][$report_id];
+    $extension = $greportlist[$gtabid]["extension"][$report_id];
+
+    if ($extension) {
+        if (file_exists($umgvar["pfad"] . $extension)) {
+            require_once($umgvar["pfad"] . $extension);
+        }
+    }
+    if($end){return;}
+
+    try {
+
+        # --- Einzelbericht eines Datensatzes -----------------------------------
+        if ($ID) {
+            $generatedReport = lmb_reportCreatePDF($report_id,$ID,$report_output,$report_rename);
+            # --- Einzelbericht mehrerer Datensätze (gefiltert)  -----------------------------------
+        } elseif ($use_record == "all" AND !$listmode) {
+            $generatedReport = lmb_reportCreatePDFlistFiler($gtabid, $report_id, $report_output, $filter, $gsr, $verkn, $report_rename);
+            # --- Einzelbericht mehrerer Datensätze (ausgewählt) -----------------------------------
+        } elseif ($use_record AND !$listmode) {
+            $generatedReport = lmb_reportCreatePDFlistSel($gtabid, $report_id, $report_output, $use_record, $report_rename);
+            # --- Listenbericht gefiltert -----------------------------------
+        } elseif ($report_id AND $listmode AND $gtabid) {
+            $generatedReport = lmb_reportCreatePDF($report_id,1,$report_output,$report_rename,$gsr,$filter);
+            # --- freier Einzelbericht ohne Tabelle -----------------------------------
+        } elseif ($report_id AND !$gtabid) {
+            $generatedReport = lmb_reportCreatePDF($report_id,0,1,$report_rename);
+        }
+
+    }catch (Exception $e){
+
+        if($session["debug"]) {
+            lmb_log::error($e,$e->getMessage());
+        }else{
+            lmb_log::error($e,$lang[56]);
+        }
+    }
+
+    return $generatedReport;
+
 }
 
 # --- Einzelbericht eines Datensatzes in DMS -----------------------------------
-function LMB_pdfReportUnitDMS($report_id,$ID,$report_name=null,$level=null,$v_gtabid=null,$v_gfieldid=null,$v_ID=null){
+function lmb_reportCreatePDFtoDMS($report_id,$gtabid=null,$ID=null,$level=null,$report_name=null,$relation=null,$gsr=null,$filter=null){
+    global $greportlist;
 
-	$filepath = generate_pdf($report_id,$ID,null,$report_name);
+    if($relation AND !is_array($relation['gtabid'])){
+        $relation['gtabid'][0] = $relation['gtabid'];
+        $relation['fieldid'][0] = $relation['fieldid'];
+        $relation['ID'][0] = $relation['ID'];
+    }
 
-    if(file_exists(lmb_utf8_encode($filepath))){
+    if(!$gtabid){
+        $gtabid = $greportlist["argresult_tabid"][$report_id];
+    }
 
-        $filename = explode('/', $filepath);
+    if(!$level) {
+        $level = $greportlist[$gtabid]["target"][$report_id];
+    }
+
+	$generatedReport = lmb_reportPDF($report_id,$gtabid,$ID,null,$report_name,$gsr,$filter);
+
+    if(file_exists(lmb_utf8_encode($generatedReport))){
+
+        $filename = explode('/', $generatedReport);
         $filename = $filename[count($filename) - 1];
 
         // upload in Filesystem
-        $file["file"][0] = $filepath;
+        $file["file"][0] = $generatedReport;
         $file["file_name"][0] = $filename;
-	    $tabrelation = array('datid' => $v_ID,'gtabid' => $v_gtabid,'fieldid' => $v_gfieldid);
-        $fileid = upload($file, $level, null, 1, $dublicate);
-
+        $fileid = lmb_fileUpload($file, $level, null, 1);
 
         // Verknüpfen
-        if ($fileid AND $v_gtabid AND $v_gfieldid AND $v_ID) {
-            $verkn = init_relation($v_gtabid, $v_gfieldid, $v_ID, $fileid);
-            $verkn["linkParam"]["LID"] = $level;
-            set_joins($v_gtabid, $verkn);
+        if($relation AND is_array($relation['gtabid'])) {
+            foreach ($relation['gtabid'] as $key => $value) {
+                $verkn = init_relation($relation['gtabid'][0], $relation['fieldid'][0], $relation['ID'][0], $fileid);
+                $verkn["linkParam"]["LID"] = $level;
+                set_joins($relation['gtabid'][0], $verkn);
+            }
         }
 
         return $fileid;
-
     }
+
+    return $generatedReport;
 
 }
 

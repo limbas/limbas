@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -81,15 +81,42 @@ if($edit_template AND $rules){
 	foreach($arule as $tkey => $tval){
         $srule = explode("_",$arule[$tkey]);
 
-		$sqlquery = "DELETE FROM LMB_SYNC_CONF WHERE TABID = ".parse_db_int($srule[0])." AND FIELDID = ".parse_db_int($srule[1])." AND TEMPLATE = ".$template;
-	    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        // params
+        if($srule[2] == 3) {
 
-        // add
-        if($templ_conf[$srule[0]][$srule[1]][1] OR $templ_conf[$srule[0]][$srule[1]][2]){
-    	    $NEXTID = next_db_id("LMB_SYNC_CONF");
-    		$sqlquery = "INSERT INTO LMB_SYNC_CONF (ID,TABID,FIELDID,TEMPLATE,MASTER,SLAVE) VALUES( $NEXTID, ".parse_db_int($srule[0]).",".parse_db_int($srule[1]).",".parse_db_int($template).",".parse_db_bool($templ_conf[$srule[0]][$srule[1]][1]).",".parse_db_bool($templ_conf[$srule[0]][$srule[1]][2]).")";
-    		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    	    if(!$rs) {$commit = 1;}
+            $paramID = null;
+            $sqlquery = "SELECT ID FROM LMB_SYNC_PARAMS WHERE TEMPLATE = ".parse_db_int($template)." AND TABID = " . parse_db_int($srule[0]);
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (!$rs) {$commit = 1;}
+            $paramID = lmbdb_result($rs, "ID");
+
+            if($paramID){
+                $sqlquery = "UPDATE LMB_SYNC_PARAMS SET PARAMS = '".parse_db_string($templ_params[$srule[0]], 400)."' WHERE ID = $paramID";
+                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                if (!$rs) {
+                    $commit = 1;
+                }
+            }else {
+                $NEXTID = next_db_id("LMB_SYNC_PARAMS");
+                $sqlquery = "INSERT INTO LMB_SYNC_PARAMS (ID,TEMPLATE,TABID,PARAMS) VALUES( $NEXTID, " . parse_db_int($template) . "," . parse_db_int($srule[0]) . ",'" . parse_db_string($templ_params[$srule[0]], 400) . "')";
+                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                if (!$rs) {
+                    $commit = 1;
+                }
+            }
+        // field config
+        }else {
+            $sqlquery = "DELETE FROM LMB_SYNC_CONF WHERE TABID = " . parse_db_int($srule[0]) . " AND FIELDID = " . parse_db_int($srule[1]) . " AND TEMPLATE = " . parse_db_int($template);
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+            // add
+            if ($templ_conf[$srule[0]][$srule[1]][1] OR $templ_conf[$srule[0]][$srule[1]][2]) {
+                $NEXTID = next_db_id("LMB_SYNC_CONF");
+                $sqlquery = "INSERT INTO LMB_SYNC_CONF (ID,TABID,FIELDID,TEMPLATE,MASTER,SLAVE) VALUES( $NEXTID, " . parse_db_int($srule[0]) . "," . parse_db_int($srule[1]) . "," . parse_db_int($template) . "," . parse_db_bool($templ_conf[$srule[0]][$srule[1]][1]) . "," . parse_db_bool($templ_conf[$srule[0]][$srule[1]][2]) . ")";
+                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                if (!$rs) {$commit = 1;}
+            }
+
         }
     
     }
@@ -117,6 +144,11 @@ while(lmbdb_fetch_row($rs)) {
 	$result_template['mode'][$tid] = lmbdb_result($rs, "CONFLICT_MODE");
 }
 
+$sqlquery = "SELECT ID,TABID,PARAMS FROM LMB_SYNC_PARAMS WHERE TEMPLATE = " . parse_db_int($template);
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+	$result_params['params'][lmbdb_result($rs, "TABID")] = lmbdb_result($rs, "PARAMS");
+}
 
 $sqlquery = "SELECT ID,TEMPLATE,TABID,FIELDID,MASTER,SLAVE FROM LMB_SYNC_CONF";
 $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -130,6 +162,9 @@ while(lmbdb_fetch_row($rs)) {
 	$result_conf[$ctemplate][$ctabid][$cfieldid]['master'] = lmbdb_result($rs, "MASTER");
 	$result_conf[$ctemplate][$ctabid][$cfieldid]['slave'] = lmbdb_result($rs, "SLAVE");
 }
+
+
+
 
 if($popup){$is_popup = explode(";",$popup);}
 

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -66,7 +66,7 @@
         }
 
         if ($form["form_typ"] == 1 || $form["form_typ"] == 2) {
-            array_push($reset, 'wflhist', 'reminder', 'dbdat', 'dbdesc', 'dbnew', 'text', 'datum', 'relpath', 'scroll', 'js', 'php', 'submt', 'button', 'inptext', 'inparea', 'inpselect', 'inpcheck', 'inpradio', 'inphidden', 'chart', 'templ', 'frame','tabulator','tab','uform','html');
+            array_push($reset, 'wflhist', 'reminder', 'dbdat', 'dbdesc', 'dbnew', 'text', 'datum', 'relpath', 'notice', 'scroll', 'js', 'php', 'submt', 'button', 'inptext', 'inparea', 'inpselect', 'inpcheck', 'inpradio', 'inphidden', 'chart', 'templ', 'frame','tabulator','tab','uform','html');
             echo "$('#new_dbdat_area').hide();";
             echo "$('#new_wflhist_area').hide();";
         }
@@ -296,27 +296,22 @@
         <TD WIDTH="10">&nbsp;</TD>
         <TD>
 
-            <FORM ENCTYPE="multipart/form-data" ACTION="main_admin.php"
-                  METHOD="post" name="form1">
-                <input type="hidden"
-                                                                name="action" value="setup_form_menu"> <input
-                        type="hidden"
-                        name="form_id" value="<?= $form_id ?>"> <input type="hidden"
-                                                                            name="form_name"
-                                                                            value="<?= $form_name ?>"> <input
-                        type="hidden" name="referenz_tab" value="<?= $referenz_tab ?>">
-                <input type="hidden" name="form_id"
-                       value="<?= $form["form_id"] ?>"> <input type="hidden"
-                                                                    name="form_typ"
-                                                                    value="<?= $form["form_typ"] ?>"> <input
-                        type="hidden" name="form_add"> <input type="hidden" name="form_tab">
-                <input type="hidden" name="form_tab_el"> <input type="hidden"
-                                                                name="objekt"> <input type="hidden" name="aktiv_id">
-                <input
-                        type="hidden" name="aktiv_tabcontainer"> <input type="hidden"
-                                                                        name="aktiv_tabulator"> <input type="hidden"
-                                                                                                       name="form_dimension">
-                <input type="hidden" name="default_class">
+        <FORM ENCTYPE="multipart/form-data" ACTION="main_admin.php" METHOD="post" name="form1">
+            <input type="hidden" name="action" value="setup_form_menu">
+            <input type="hidden" name="form_id" value="<?= $form_id ?>">
+            <input type="hidden" name="form_name" value="<?= $form_name ?>">
+            <input type="hidden" name="referenz_tab" value="<?= $referenz_tab ?>">
+            <input type="hidden" name="form_id" value="<?= $form["form_id"] ?>">
+            <input type="hidden" name="form_typ" value="<?= $form["form_typ"] ?>">
+            <input type="hidden" name="form_add">
+            <input type="hidden" name="form_tab">
+            <input type="hidden" name="form_tab_el">
+            <input type="hidden" name="objekt">
+            <input type="hidden" name="aktiv_id">
+            <input type="hidden" name="aktiv_tabcontainer">
+            <input type="hidden" name="aktiv_tabulator">
+            <input type="hidden" name="form_dimension">
+            <input type="hidden" name="default_class">
 
 
                 <TABLE class="formeditorPanel" cellspacing="0" cellpadding="2">
@@ -581,7 +576,9 @@
                                     <TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="datum" class="lmb-icon lmb-rep-date btn" TITLE="<?= $lang[197] ?>" VALUE="datum" OnMouseDown="pressbutton('datum', 'inset', '<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('datum', 'outset', '<?= $farbschema['WEB7'] ?>');add('datum');send();"></i></TD>
                                     <?php if ($form["form_typ"] == 1) {$st = "";} else {$st = "none";} ?>
                                     <TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="relpath" class="lmb-icon lmb-arrow-right btn" TITLE="relation path" VALUE="relpath" OnMouseDown="pressbutton('relpath', 'inset', '<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('relpath', 'outset', '<?= $farbschema['WEB7'] ?>');add('relpath');send();"></i></TD>
-                                </TR>
+                                    <?php if ($form["form_typ"] == 1 or $form["form_typ"] == 2) {$st = "";} else {$st = "none";} ?>
+                                    <TD VALIGN="TOP" STYLE="display:<?= $st ?>;"><i ID="notice" class="lmb-icon lmb-exclamation-triangle btn" TITLE="notice bar" VALUE="notice" OnMouseDown="pressbutton('notice', 'inset', '<?= $farbschema['WEB10'] ?>');" OnMouseUp="pressbutton('notice', 'outset', '<?= $farbschema['WEB7'] ?>');add('notice');send();"></i></TD>
+                                 </TR>
                             </TABLE>
                         </TD>
                     </TR>
@@ -733,8 +730,15 @@
                                 <div id="uform_table" style="display: none; padding: 2px;"><?= $lang[1171] ?>:<BR>
                                     <SELECT NAME="uform_tab" STYLE="width: 90%;">
                                         <?php
-                                       foreach ($gtab["table"] as $tid => $tval) {
-                                            echo "<OPTION VALUE=\"" . $tid . "\">" . $gtab["table"][$tid];
+                                        # tables grouped by tabgroup
+                                        foreach ($tabgroup['id'] as $groupKey => $groupID) {
+                                            echo "<optgroup label=\"{$tabgroup['name'][$groupKey]}\">";
+                                            foreach ($gtab['tab_id'] as $tabKey => $tabID) {
+                                                if($gtab['tab_group'][$tabKey] == $groupID) {
+                                                    echo "<option value=\"{$tabID}\">{$gtab['desc'][$tabKey]}</option>";
+                                                }
+                                            }
+                                            echo "</optgroup>";
                                         }
                                         ?>
                                     </SELECT>
@@ -757,9 +761,9 @@
                                 <div id="uform_form" style="padding: 2px;">
                                     <SELECT NAME="tile_form" STYLE="width: 190px;">
                                         <?php
-                                       foreach ($formlist["id"] as $fid => $fval) {
+                                        foreach ($formlist["id"] as $fid => $fval) {
                                             if($fval != $form_id AND $formlist["typ"][$fid] == 2 AND $formlist["ref_tab"][$fid] == $form["referenz_tab"] ){
-                                            echo "<OPTION VALUE=\"" . $fval . "\">" . $formlist["name"][$fid];
+                                                echo "<OPTION VALUE=\"" . $fval . "\">" . $formlist["name"][$fid];
                                             }
                                         }
                                         ?>

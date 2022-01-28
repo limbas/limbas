@@ -64,17 +64,27 @@ abstract class GetRequestHandler extends RequestHandler {
                             continue;
                         }
 
+                        if ($gfield[$gtabid]['data_type'][$fieldID] == 25 AND $gfield[$gtabid]['verkntabletype'][$fieldID] == 2) {
+                            # direct backwards relation (contains only one result)
+                            $data = array(array(
+                                'id' => $value[$bzm]
+                            ));
+                        } else {
+                            # other relations
+                            $data = array_map(function($relationID) {
+                                return array(
+                                    'id' => $relationID /* TODO attributes */
+                                );
+                            }, $value[$bzm]);
+                        }
+
                         # params
                         $resultData[$bzm][$fieldName] = array(
                             'links' => array(
                                 'self' => $this->getRelationTableLinkSelf($gresult[$gtabid]['id'][$bzm], $fieldID),
                                 'related' => $this->getRelationTableLinkRelated($fieldID)
                             ),
-                            'data' => array_map(function($relationID) {
-                                return array(
-                                    'id' => $relationID /* TODO attributes */
-                                );
-                            }, $value[$bzm])
+                            'data' => $data
                         );
                     } else {
                         $fname = 'cftyp_' . $gfield[$gtabid]['funcid'][$fieldID];
@@ -198,6 +208,50 @@ abstract class GetRequestHandler extends RequestHandler {
             list($sortTableID, $sortFieldID) = $this->getTableAndFieldIDFromDottedIdentifier($sortFieldStr);
 
             $filter['order'][$this->request->table_id][] = array($sortTableID, $sortFieldID, $sortDirection);
+        }
+    }
+
+    /**
+     * @param $filter
+     * @throws RestException
+     */
+    protected function setArchivedFilter(&$filter) {
+        $queryParams = &$this->request->api_params;
+        $paramname = Request::API_PARAMETERS['archived'];
+
+        if (!array_key_exists($paramname, $queryParams)) {
+            return;
+        }
+
+        $param = lmb_strtolower($queryParams[$paramname]);
+        if ($param === 'all') {
+            $filter['unhide'][$this->request->table_id] = -1;
+        } else if ($param == 1 || $param === 'true') {
+            $filter['unhide'][$this->request->table_id] = 1;
+        } else if ($param == 0 || $param === 'false') {
+            $filter['unhide'][$this->request->table_id] = 0;
+        } else {
+            throw new RestException("Invalid param '$param' for option $paramname.", 400);
+        }
+    }
+
+    /**
+     * @param $filter
+     * @throws RestException
+     */
+    protected function setValidityFilter(&$filter) {
+        $queryParams = &$this->request->api_params;
+        $paramname = Request::API_PARAMETERS['validity'];
+
+        if (!array_key_exists($paramname, $queryParams)) {
+            return;
+        }
+
+        $param = lmb_strtolower($queryParams[$paramname]);
+        if ($param == 'all' OR $param == 'allto' OR $param == 'allfrom' OR convert_date($param)) {
+            $filter['validity'][$this->request->table_id] = $param;
+        } else {
+            throw new RestException("Invalid param '$param' for option $paramname.", 400);
         }
     }
 

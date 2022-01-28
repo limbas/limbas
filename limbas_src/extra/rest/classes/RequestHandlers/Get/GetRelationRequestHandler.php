@@ -25,6 +25,8 @@ class GetRelationRequestHandler extends GetRequestHandler {
         $filter = array();
         $this->setPaginationFilter($filter);
         $this->setSortingFilter($filter);
+        $this->setArchivedFilter($filter);
+        $this->setValidityFilter($filter);
 
         $onlyfield = array();
         $this->setIncludedFields($onlyfield);

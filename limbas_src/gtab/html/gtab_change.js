@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -31,8 +31,6 @@ function limbasCollectiveReplace(evt,el,confirming,gtabid)
 			document.form11.use_records.value = actrows.join(";");
 		}
 	}else {alert(jsvar["lng_2083"]);return;}
-	
-
 	
 	actid = "gtabReplace&confirm=" + confirming + "&gtabid=" + gtabid;
 	mainfunc = function(result){limbasCollectiveReplacePost(result,evt,el,confirming);};
@@ -82,6 +80,32 @@ function limbasVersionDiff(gtabid,formid,ID,VID,pdf){
 		}
 	});
 }
+
+
+
+function limbasOpenRelationMinimized(elid,header,size) {
+
+    if(size){
+        size = size.split('x');
+        var height = size[1];
+        var width = size[0];
+    }else{
+        var height = 400;
+        var width = 800;
+    }
+
+    $("#g_"+elid).css({'position': 'relative', 'left': '0', 'top': '0'}).dialog({
+        title: header,
+        width: width,
+        height: height,
+        resizable: true,
+        modal: true,
+        zIndex: 99999
+    });
+
+}
+
+
 
 // change value of header-fields
 var lmbSubheaderSelection = new Array();
@@ -160,18 +184,21 @@ function limbasAjxLockData(gtabid,ID,time){
 
 // Ajax update locking of datasets output
 function limbasAjxLockDataPost(result){
-        if(result == 'free'){            
-                var icon = $('#LmbIconDataLock2');                
-                if(icon){
-                    icon.removeClass('lmb-forbidden');
-                    icon.addClass('lmb-unlocked');			
-		}  
-                // was before in else if
-                if(LockTimer){
+    if(result == 'free'){
+        var icon = $('#LmbIconDataLock2');
+        if(icon){
+            icon.removeClass('lmb-forbidden');
+            icon.addClass('lmb-unlocked');
+        }
+        // was before in else if
+        if(LockTimer){
 			window.clearInterval(LockTimer);
-		}
+        }
 		
-	} /*else if(result == 'lock'){
+	}
+
+
+	/*else if(result == 'lock'){
 		if(LockTimer){
 			window.clearInterval(LockTimer);
 		}
@@ -222,7 +249,22 @@ function lmb_syncTable(id){
 
 
 
-
+function lmb_formRenderElement(el,ID,gtabid,gformid,elid){
+    actid = "actid=formRenderElement&gtabid=" + gtabid + "&gformid=" + gformid + "&ID=" + ID + "&elid=" + elid;
+    //if(typeof el != 'object'){el = $('#'+el);}
+    el = $('#'+el);
+	$.ajax({
+		type: "GET",
+		url: "main_dyns.php",
+		async: false,
+		data: actid,
+		success: function(data){
+            el.replaceWith(data)
+			//el.innerHTML = data;
+		    ajaxEvalScript(data);
+		}
+	});
+}
 
 
 
@@ -338,7 +380,70 @@ function lmb_activate_file(evt,id,filename,lid,norm){
 // form ID ; ajax Post ; container ID for checking needed fields 
 var sendFormTimeout = null;
 var dyns_time = null;
+
+// validate ajax request
 function send_form(id,ajax,need,wclose) {
+
+    // no changes // no validate
+    if(!jsvar["validate"] || !document.form1.history_fields.value){
+        confirm_form(id,ajax,need,wclose);
+        return;
+    }
+
+    // mandatory fields
+    var needok = needfield(need);
+    if(needok) {
+        alert(jsvar["lng_1509"] + "\n\n" + needok);
+        return;
+    }
+
+    query = ajaxFormToURL('form'+id,'gtabValidate');
+	$.ajax({
+		type: "POST",
+		url: "main_dyns.php?actid=gtabValidate",
+		data: query,
+        dataType:'json',
+		success: function(obj){
+
+		    if(obj.status == 'submit'){
+		        confirm_form(id,ajax,need,wclose);
+		        return;
+            }
+
+		    if(!ajax){ajax = null;}
+		    if(!need){need = null;}
+		    if(!wclose){wclose = null;}
+
+		    var confirm_ok = "<div style='float:left;width:49%'><input type='button' value='OK' class='submit lmbSbmConfirm' onclick='confirm_form("+id+","+ajax+","+need+","+wclose+")'></div>";
+            var confirm_abort = "<div style='float:right;width:49%;text-align:right'><input type='button' value='abbrechen' class='submit lmbSbmAbort' onclick=\"$('#lmbAjaxContainer').dialog('destroy')\"></div>";
+
+            //var obj = JSON.parse(data);
+			document.getElementById("lmbAjaxContainer").innerHTML = obj.value;
+
+			if(obj.status == 'notice'){
+			    document.getElementById("lmbAjaxContainer").innerHTML += "<br><br><br><hr>"+confirm_ok;
+            }
+			else if(obj.status == 'alert'){
+			    document.getElementById("lmbAjaxContainer").innerHTML += "<br><br><br><hr>"+confirm_abort;
+            }
+			else if(obj.status == 'confirm'){
+			    document.getElementById("lmbAjaxContainer").innerHTML += "<br><br><br><hr>"+confirm_ok + confirm_abort;
+            }else{
+			    confirm_form(id,ajax,need,wclose);
+            }
+
+			$("#lmbAjaxContainer").css({'position':'relative','left':'0','top':'0'}).dialog({
+				resizable: true,
+				modal: true,
+				title: jsvar['lng_138'],
+				width:'auto'
+			});
+		}
+	});
+}
+
+// post request
+function confirm_form(id,ajax,need,wclose) {
 	var needok = needfield(need);
 	set_focus();
 	
@@ -497,8 +602,8 @@ function gtabSetTablePosition(reset,scrolltoY){
     lmb_setAutoHeight(document.getElementById("GtabTableBody"), 20 /* px margin-bottom */, reset);
 
     document.getElementById("GtabTableBody").scrollTop=scrolltoY;
-	
-	if(!parent.main && document.form1.lmbSbmClose){document.form1.lmbSbmClose.style.display='';}
+
+	if(!parent.main && document.getElementById('lmbSbmClose')){document.getElementById('lmbSbmClose').style.display='';}
 }
 
 
@@ -623,8 +728,8 @@ function show_zoom(evt,el) {
 var LockTimer;
 function inusetime(gtabid,ID) {
 	if(jsvar["lockable"] && (jsvar["action"] == 'gtab_change' || jsvar["action"] == 'gtab_deterg') && ID){
-		locktime = ((jsvar["inusetime"] * 1000 * 60) - 3000);
-		LockTimer = window.setInterval("limbasAjxLockData("+gtabid+","+ID+",0)", locktime);
+		intervall = ((jsvar["inusetime"] * 1000 * 60) - 3000);
+		LockTimer = window.setInterval("limbasAjxLockData("+gtabid+","+ID+",0)", intervall);
 	}
 }
 
@@ -681,6 +786,30 @@ function limbasChangeCurrency(el,formname,fieldid){
 }
 
 
+// show validity line
+function lmb_show_validity_line(el,value){
+
+    var obj = JSON.parse(value);
+    var result = '';
+
+    var linewidth = el.width();
+    var range = obj['range'];
+    var format = obj['format'];
+    var factor = parseFloat(linewidth/range).toFixed(2);
+
+    for(var i in obj['id']) {
+        var length = ((obj['to'][i] - obj['from'][i]) / (60*60))
+        var width = Math.round(Math.round(factor*length)*100/linewidth);
+        var val = limbasParseTimestamp(obj['from'][i],format,null);
+        var color = lmbSuggestColor(el.css("background-color"));
+        result += "<div class='lmbGlistBodyNotice validity_list' style='width:"+width+"%;color:"+color+"'>"+val+"</div>";
+    }
+
+    if(length){
+        el.html(result);
+    }
+
+}
 
 
 // --- jsGraphics -----------------------------------
@@ -699,56 +828,6 @@ function js_ellipse(jg,x,y,col,he){
 }
 function js_clear(jg){
 	eval(jg+".clear();");
-}
-
-var nr = 0;
-function lmb_formpicdmove(id,way,max){
-	max = max-1;
-	if(way == 1){
-		nr = (nr + 1);
-	}else if(way == 2){
-		nr = (nr - 1);
-	}else if(way == 3){
-		nr = 0;
-	}else if(way == 4){
-		nr = max;
-	}
-	if(nr > max){
-		nr = 0;
-	}else if(nr < 0){
-		 nr = max;
-	}
-
-
-	$("#formpicname_"+id).hide();
-
-	eval("var pic = formpicsn_"+id+"["+nr+"].split('#');");
-	eval("document.formpicname_"+id+".src = pic[0];");
-	document.getElementById('formpicid_'+id).value = pic[1];
-	
-	$("#formpicname_"+id).show('slow');
-	
-}
-
-function lmb_formpicdelete(fel,fp){
-	
-	if(confirm('delete file?')){
-		document.getElementsByName(fel+'_delete')[0].value = document.getElementById('formpicid_'+fp).value;
-		send_form(1);
-	}
-}
-
-
-// --------------- Datei Funktionen ---------------------
-function multiupload(NR,LID){
-	for (var i = 1; i <= 10; i++) {
-		el = "f_"+LID+"_"+i;
-		if(i <= NR){
-			document.getElementById(el).style.display = '';
-		}else{
-			document.getElementById(el).style.display = 'none';
-		}
-	}
 }
 
 
@@ -845,7 +924,7 @@ function newwin8(ID,TAB_ID,REP_ID,MEDIUM,PRINT) {
 
 // --- Fenster Long-Feld editieren -----------------------------------
 function newwin9(FIELDID,TABID,ID,GFORMID,FORMID) {
-	editlong = open("main.php?action=edit_long&wfl_id=" + jsvar["wfl_id"] + "&wfl_inst=" + jsvar["wfl_inst"] + "&ID=" + ID + "&field_id=" + FIELDID + "&gtabid=" + TABID + "&gformid=" + GFORMID + "&formid=" + FORMID ,"Texteditor","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=650,height=800");
+	editlong = open("main.php?action=edit_long&wfl_id=" + jsvar["wfl_id"] + "&wfl_inst=" + jsvar["wfl_inst"] + "&ID=" + ID + "&field_id=" + FIELDID + "&gtabid=" + TABID + "&gformid=" + GFORMID + "&formid=" + FORMID ,"Texteditor","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=1090,height=800");
 }
 
 // explorer

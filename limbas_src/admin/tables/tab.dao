@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -53,7 +53,7 @@ function set_version($tabid,$tabname,$versioning){
         }
     } elseif (!$versioning) {
         // not delete for DMS
-        if ($tabid != $gtab["argresult_id"]["LDMS_FILES"] AND $tabid != $gtab["argresult_id"]["LDMS_FILES_META"]) {
+        if ($tabid != $gtab["argresult_id"]["LDMS_FILES"] AND $tabid != $gtab["argresult_id"]["LDMS_META"]) {
 
             /*
             $sqlquery1 = "ALTER TABLE $tabname 
@@ -138,7 +138,7 @@ function set_multitenant($tabid,$tabname,$multitenant){
     if(lmbdb_result($rs, 'TYP') == 5){$isview = 1;}else{$isview = 0;}
 
 	// check if field LMB_MID exists
-	$odbc_column = dbf_5(array($DBA["DBSCHEMA"],$tabname,"LMB_MID"));
+	$odbc_column = dbf_5(array($DBA["DBSCHEMA"],$tabname,dbf_4('LMB_MID')));
 
 
     if($isview){
@@ -164,7 +164,7 @@ function set_multitenant($tabid,$tabname,$multitenant){
             if (!$rs1) {
                 $commit = 1;
             }
-        } elseif ($multitenant == LMB_DBDEF_FALSE) {
+        } elseif ($multitenant == LMB_DBDEF_FALSE AND $odbc_column) {
             #$sqlquery1 =  "ALTER TABLE $tabname ".LMB_DBFUNC_DROP_COLUMN_FIRST." LMB_MID";
             $sqlquery1 = dbq_22(array($tabname, 'LMB_MID'));
             $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
@@ -312,6 +312,14 @@ if($ajaxpost) {
         if(!$rs) {$commit = 1;}
 }
 
+/* --- Validate -------------------------------------- */
+if($validate) {
+        if($validate == 1){$validate = LMB_DBDEF_TRUE;}else{$validate = LMB_DBDEF_FALSE;}
+		$sqlquery =  "UPDATE LMB_CONF_TABLES SET VALIDATE = $validate WHERE TAB_ID = $tabid";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+}
+
 /* --- Logging -------------------------------------- */
 if($logging) {
         if($logging == 1){$logging = LMB_DBDEF_TRUE;}else{$logging = LMB_DBDEF_FALSE;}
@@ -359,13 +367,90 @@ if($versioning) {
 	}
 }
 
+/* --- validity -------------------------------------- */
+if($validity OR $validity_version) {
+
+    if($validity_version == 1){
+        $validity = 1; $validity_ = 2;
+    }elseif($validity_version == 2){
+        $validity = 3; $validity_ = 1;
+    }
+
+    #if($validity == 1){
+        #$validity = LMB_DBDEF_TRUE;
+    if($validity == 1) {
+
+        if(!$validity_){$validity_ = 1;}
+
+        /*
+        // add datetime fields
+        if (!dbf_5(array($DBA['DBSCHEMA'], $tablename, 'LMB_VALIDFROM'))) {
+            $sqlquery = dbq_29(array($DBA['DBSCHEMA'], $tablename, 'LMB_VALIDFROM', LMB_DBTYPE_TIMESTAMP));
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (!$rs) {
+                $commit = 1;
+            }
+        }
+        if (!dbf_5(array($DBA['DBSCHEMA'], $tablename, 'LMB_VALIDTO'))) {
+            $sqlquery = dbq_29(array($DBA['DBSCHEMA'], $tablename, 'LMB_VALIDTO', LMB_DBTYPE_TIMESTAMP));
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (!$rs) {
+                $commit = 1;
+            }
+        }
+        */
+
+        // add datetime fields
+        if(!$validity_version) {
+            $nfield = extended_fields_validyty();
+            add_extended_fields($nfield, $tabid, 1);
+        }
+
+    }elseif($validity == 2){
+
+        $validity_ = 'NULL';
+        #$validity = LMB_DBDEF_FALSE;
+
+        /*
+        // drop datetime fields
+        if(dbf_5(array($DBA['DBSCHEMA'],$tablename,'LMB_VALIDFROM'))){
+            $sqlquery = dbq_22(array($tablename,'LMB_VALIDFROM'));
+            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+            if(!$rs) {$commit = 1;}
+        }
+        if(dbf_5(array($DBA['DBSCHEMA'],$tablename,'LMB_VALIDTO'))){
+            $sqlquery = dbq_22(array($tablename,'LMB_VALIDTO'));
+            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+            if(!$rs) {$commit = 1;}
+        }
+        */
+
+        // drop datetime fields
+        $sqlquery = "SELECT FIELD_ID FROM LMB_CONF_FIELDS WHERE TAB_ID = $tabid AND FIELD_TYPE = 24";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        while(lmbdb_fetch_row($rs)) {
+            delete_field_table($tabid, lmbdb_result($rs, 'FIELD_ID'), false);
+        }
+
+    }
+
+    if(!$commit) {
+        $sqlquery = "UPDATE LMB_CONF_TABLES SET VALIDITY = $validity_ WHERE TAB_ID = $tabid";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        if (!$rs) {
+            $commit = 1;
+        }
+    }
+}
+
+
 /* --- datasync -------------------------------------- */
 if($datasync) {
         set_datasync($tabid,$tablename,$datasync);
 }
 
 /* --- datasync -------------------------------------- */
-if($multitenant) {
+if($multitenant AND $tabid) {
         set_multitenant($tabid,$tablename,$multitenant);
 }
 
@@ -410,7 +495,14 @@ if($indicator AND $tabid) {
 	if(!$rs) {$commit = 1;}
 }
 
-/* --- indicator -------------------------------------- */
+/* --- orderby -------------------------------------- */
+if($orderby AND $tabid) {
+	$sqlquery =  "UPDATE LMB_CONF_TABLES SET ORDERBY = '".trim(parse_db_string($orderby,250))."' WHERE TAB_ID = $tabid";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
+/* --- keyfield -------------------------------------- */
 if($keyfield AND $tabid) {
 	$sqlquery =  "UPDATE LMB_CONF_TABLES SET KEYFIELD = '".trim(parse_db_string($keyfield,30))."' WHERE TAB_ID = $tabid";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -471,16 +563,18 @@ lmb_EndTransaction(!$commit);
 if(!$import){
 	/* --- Groups and Tables --------------------------------------------- */
     $sqlquery = "
-        SELECT 
+        SELECT DISTINCT
             LMB_CONF_GROUPS.ID AS GROUPID, 
             LMB_CONF_GROUPS.NAME, 
             LMB_CONF_GROUPS.BESCHREIBUNG AS GROUPDESC, 
             LMB_CONF_GROUPS.SORT AS GROUPSORT, 
+            LMB_CONF_GROUPS.SORT, 
             LMB_CONF_GROUPS.LEVEL, 
             LMB_CONF_GROUPS.ICON,
             LMB_CONF_TABLES.ID AS TABLEID,
             LMB_CONF_TABLES.TAB_ID,
             LMB_CONF_TABLES.SORT AS TABLESORT,
+            LMB_CONF_TABLES.SORT,
             LMB_CONF_TABLES.TABELLE,
             LMB_CONF_TABLES.BESCHREIBUNG AS TABLEDESC,
             LMB_CONF_TABLES.LOCKABLE,
@@ -495,27 +589,22 @@ if(!$import){
             LMB_CONF_TABLES.VERKN,
             LMB_CONF_TABLES.LMTRIGGER,
             LMB_CONF_TABLES.INDICATOR,
+            LMB_CONF_TABLES.ORDERBY,
             LMB_CONF_TABLES.AJAXPOST,
+            LMB_CONF_TABLES.VALIDATE,
             LMB_CONF_TABLES.NUMROWCALC,
             LMB_CONF_TABLES.RESERVEID,
             LMB_CONF_TABLES.DATASYNC,
+            LMB_CONF_TABLES.VALIDITY,
             LMB_CONF_TABLES.PARAMS1,
             LMB_CONF_TABLES.PARAMS2,
 			LMB_CONF_VIEWS.VIEWTYPE,
 			LMB_CONF_TABLES.KEYFIELD,
-			TABLES2.BESCHREIBUNG AS TABLE2DESC,
-			LMB_CONF_FIELDS.ID AS FIELDSID,
-			(
-			    SELECT COUNT(*) AS ANZAHL 
-			    FROM LMB_CONF_FIELDS 
-			    WHERE TAB_GROUP = LMB_CONF_GROUPS.ID 
-			    AND TAB_ID = LMB_CONF_TABLES.TAB_ID
-            ) AS ANZAHL
+			TABLES2.BESCHREIBUNG AS TABLE2DESC
         FROM LMB_CONF_GROUPS 
         LEFT JOIN LMB_CONF_TABLES ON (LMB_CONF_GROUPS.ID = LMB_CONF_TABLES.TAB_GROUP)
 		LEFT JOIN LMB_CONF_VIEWS ON (LMB_CONF_VIEWS.ID = LMB_CONF_TABLES.ID)
 		LEFT JOIN LMB_CONF_TABLES AS TABLES2 ON (TABLES2.TAB_ID = LMB_CONF_TABLES.VERKN)
-		LEFT JOIN LMB_CONF_FIELDS ON (LMB_CONF_FIELDS.TAB_ID = LMB_CONF_TABLES.TAB_ID AND LMB_CONF_FIELDS.VERKNTABID = LMB_CONF_TABLES.TAB_ID)
         ORDER BY LMB_CONF_GROUPS.SORT, LMB_CONF_TABLES.SORT";
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     unset($tabgroup_);
@@ -557,6 +646,7 @@ if(!$import){
             $result_gtab[$tabgroupid]['verknid'][$tabIndex] = lmbdb_result($rs, 'VERKN');
             $result_gtab[$tabgroupid]['trigger'][$tabIndex] = explode(',', lmbdb_result($rs, 'LMTRIGGER'));
             $result_gtab[$tabgroupid]['indicator'][$tabIndex] = lmbdb_result($rs, 'INDICATOR');
+            $result_gtab[$tabgroupid]['orderby'][$tabIndex] = lmbdb_result($rs, 'ORDERBY');
             $result_gtab[$tabgroupid]['ajaxpost'][$tabIndex] = lmbdb_result($rs, 'AJAXPOST');
             $result_gtab[$tabgroupid]['numrowcalc'][$tabIndex] = lmbdb_result($rs, 'NUMROWCALC');
             $result_gtab[$tabgroupid]['reserveid'][$tabIndex] = lmbdb_result($rs, 'RESERVEID');
@@ -566,6 +656,9 @@ if(!$import){
             $result_gtab[$tabgroupid]['params1'][$tabIndex] = lmbdb_result($rs, 'PARAMS1');
             $result_gtab[$tabgroupid]['params2'][$tabIndex] = unserialize(lmbdb_result($rs, 'PARAMS2'));
             $result_gtab[$tabgroupid]['keyfield'][$tabIndex] = lmbdb_result($rs, 'KEYFIELD');
+            $result_gtab[$tabgroupid]['validity'][$tabIndex] = lmbdb_result($rs, 'VALIDITY');
+            $result_gtab[$tabgroupid]['validate'][$tabIndex] = lmbdb_result($rs, 'VALIDATE');
+            $result_gtab[$tabgroupid]['recursiv_delete'][$tabIndex] = lmbdb_result($rs, 'RECURSIV_DELETE');
 
             # count tables per group
             $tabgroup_['tabellen'][$tabgroupid]++;
@@ -584,11 +677,13 @@ if(!$import){
                 $result_gtab[$tabgroupid]['viewtype'][$tabIndex] = lmbdb_result($rs, 'VIEWTYPE');
             }
 
-            if(lmbdb_result($rs,'FIELDSID')) {
+            if(lmbdb_result($rs,'FIELDSID') > 0) {
                 $result_gtab[$tabgroupid]['sverkn'][$tabIndex] = 1;
             }
 
-            $result_gtab[$tabgroupid]['num_gtab'][$tabIndex] = lmbdb_result($rs, 'ANZAHL');
+            $sqlquery1 = "SELECT COUNT(*) AS ANZAHL FROM LMB_CONF_FIELDS WHERE TAB_GROUP = $tabgroupid AND TAB_ID = ".$result_gtab[$tabgroupid]['id'][$tabIndex];
+            $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+            $result_gtab[$tabgroupid]['num_gtab'][$tabIndex] = lmbdb_result($rs1, 'ANZAHL');
 
             $tabIndex++;
         }

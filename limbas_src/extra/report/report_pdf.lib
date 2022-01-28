@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -987,10 +987,10 @@ function create_pdf($report,$ID){
 }
 
 # --- PDF füllen ---------------------------------
-function fill_pdf(&$pdf,$report,$ID,$subform=0){
+function fill_pdf(&$pdf,$report,$ID,$subform=null,$gsr=null){
 	#global $pdf;
 
-	$rep = element_list($ID,$report,'');
+	$rep = element_list($ID,$report,null);
 	list_elements_pdf($pdf,$ID,$rep,$subform);
 }
 
@@ -1015,7 +1015,7 @@ function store_pdf(&$pdf,$report,$ID,$report_rename=null,$report_output=null){
     # use postscript to compress
 	if($umgvar["use_gs"] AND file_exists($path)){
 		rename($path,$path."gs");
-		$sys = exec("cd ".$umgvar["pfad"]."/USER/".$session["user_id"]."/temp/; gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=".lmb_utf8_encode($name)." ".$path."gs");
+		$sys = exec("cd ".$umgvar["pfad"]."/USER/".$session["user_id"]."/temp/; gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=\"".lmb_utf8_encode($name)."\" \"".$path."gs\"");
 		unlink($path."gs");
 	}
 
@@ -1124,7 +1124,7 @@ function append_report($pdf,$report_id,$ID){
 function append_subReport($pdf,$report,$ID,$el,$report_id,$height=0,$width=0){
 
 	$report_rename = "temp_".$report_id.".pdf";
-	$subreportfile = generate_pdf($report_id,$ID,0,"temp_".$report_id.".pdf");
+	$subreportfile = lmb_reportCreatePDF($report_id,$ID,0,"temp_".$report_id.".pdf");
 	$report["tab_size"][$el] = $subreportfile;
 	if($width){$report["height"][$el] = 0;}
 	if($height){$report["width"][$el] = 0;}
@@ -1186,14 +1186,21 @@ function append_subChart($pdf,$report,$ID,$el,$chart_id,$height=0,$width=0){
         }        
 }
 
-
+// lmb_reportCreatePDF - downward compatible - deprecated
+function generate_pdf($report_id, $ID, $report_output, $report_rename = null) {
+    lmb_reportCreatePDF($report_id, $ID, $report_output, $report_rename);
+}
 # Generiere Berichte
-function generate_pdf($report_id,$ID,$report_output,$report_rename=null){
+function lmb_reportCreatePDF($report_id,$ID,$report_output,$report_rename=null,$gsr=null,$filter=null){
+
+    // setting filter for listmode
+    $GLOBALS['rgsr'] = $gsr;
+    $GLOBALS['rfilter'] = $filter;
 
 	$report = get_report($report_id,0);
 	if($pdf = create_pdf($report,$ID)){
 		# fill pdf with elements
-		fill_pdf($pdf,$report,$ID);
+		fill_pdf($pdf,$report,$ID, null);
 		if(!$temp_file_path = store_pdf($pdf,$report,$ID,$report_rename, $report_output)){
 			$pdf->Close();
 			foreach ($pdf as &$value) {
@@ -1214,18 +1221,18 @@ function generate_pdf($report_id,$ID,$report_output,$report_rename=null){
 	}
 
 	# Archivieren
-	$GLOBALS['archiv_file_id'] = reportArchiv($temp_file_path,$report,$ID,$report_output);
+    if($report_output == 2) {
+        $GLOBALS['archiv_file_id'] = reportArchiv($temp_file_path, $report, $ID, $report_output);
+    }
 	
 	return $temp_file_path;
 }
 
 
-
-
 # --- alle Berichte einer Tabelle -----------------------------------
-function LMB_pdfReportAll($gtabid,$report_id,$report_output,&$filter,&$gsr,&$verkn,$report_rename=null){
+function lmb_reportCreatePDFlistFiler($gtabid,$report_id,$report_output,&$filter,&$gsr,&$verkn,$report_rename=null){
 	global $gresult;
-	
+
 	# Abfrage
 	$filter["anzahl"][$gtabid] = "all";
 	$gresult = get_gresult($gtabid,1,$filter,$gsr,$verkn);
@@ -1239,10 +1246,11 @@ function LMB_pdfReportAll($gtabid,$report_id,$report_output,&$filter,&$gsr,&$ver
 		#if($RID = relationResult($gtabid,$report_id,$gresult[$gtabid]["id"][$bzm])){$ID = $RID;}else{$ID = $gresult[$gtabid]["id"][$bzm];}
 		$ID = $gresult[$gtabid]["id"][$bzm];
 		#$GLOBALS["ID"] = $ID;
-		$generated_file_path = generate_pdf($report_id,$ID,$report_output,$report_rename);
+		$generated_file_path = lmb_reportCreatePDF($report_id,$ID,$report_output,$report_rename.'_'.$bzm);
 		$filelist[] = lmb_utf8_encode($generated_file_path);
 		$bzm++;
 	}
+
 	if(count($filelist) > 1){
 		$mergefile = merge_report($filelist,'0',$report_rename);
 		return ($mergefile);
@@ -1252,7 +1260,7 @@ function LMB_pdfReportAll($gtabid,$report_id,$report_output,&$filter,&$gsr,&$ver
 }
 
 # --- Berichtsliste mehrerer Datensätze -----------------------------------
-function LMB_pdfReportRecords($gtabid,$report_id,$report_output,$use_record,$report_rename=null){
+function lmb_reportCreatePDFlistSel($gtabid,$report_id,$report_output,$use_record,$report_rename=null){
 	$use_record = explode(";",$use_record);
 	$use_record = array_unique($use_record);
 	#$grouplist = get_report_group($report_id,array());
@@ -1262,7 +1270,7 @@ function LMB_pdfReportRecords($gtabid,$report_id,$report_output,$use_record,$rep
 			#if($RID = relationResult($gtabid,$report_id,$recel[0])){$ID = $RID;}else{$ID = $recel[0];}
 			$ID = $recel[0];
 			#$GLOBALS["ID"] = $ID;
-			$generated_file_path = generate_pdf($report_id,$ID,$report_output,$report_rename);
+			$generated_file_path = lmb_reportCreatePDF($report_id,$ID,$report_output,$report_rename.'_'.$bzm);
 			$filelist[] = lmb_utf8_encode($generated_file_path);
 		}
 	}
@@ -1274,41 +1282,109 @@ function LMB_pdfReportRecords($gtabid,$report_id,$report_output,$use_record,$rep
 	}
 }
 
-# --- Einzelbericht eines Datensatzes -----------------------------------
-function LMB_pdfReportUnit($gtabid,$report_id,$report_output,$ID,$report_rename=null){
+function lmb_reportPDF($report_id,$gtabid=null,$ID=null,$report_output=null,$report_rename=null,$gsr=null,$filter=null,$use_record=null,$verkn=null){
+    global $umgvar;
+    global $session;
+    global $greportlist;
+    $generatedReport = false;
 
-	$generated_file_path = generate_pdf($report_id,$ID,$report_output,$report_rename);
-	return ($generated_file_path);
+    if(!$gtabid){
+        $gtabid = $greportlist["argresult_tabid"][$report_id];
+    }
+
+    $listmode = $greportlist[$gtabid]["listmode"][$report_id];
+    $extension = $greportlist[$gtabid]["extension"][$report_id];
+
+    if ($extension) {
+        if (file_exists($umgvar["pfad"] . $extension)) {
+            require_once($umgvar["pfad"] . $extension);
+        }
+    }
+    if($end){return;}
+
+    try {
+
+        # --- Einzelbericht eines Datensatzes -----------------------------------
+        if ($ID) {
+            $generatedReport = lmb_reportCreatePDF($report_id,$ID,$report_output,$report_rename);
+            # --- Einzelbericht mehrerer Datensätze (gefiltert)  -----------------------------------
+        } elseif ($use_record == "all" AND !$listmode) {
+            $generatedReport = lmb_reportCreatePDFlistFiler($gtabid, $report_id, $report_output, $filter, $gsr, $verkn, $report_rename);
+            # --- Einzelbericht mehrerer Datensätze (ausgewählt) -----------------------------------
+        } elseif ($use_record AND !$listmode) {
+            $generatedReport = lmb_reportCreatePDFlistSel($gtabid, $report_id, $report_output, $use_record, $report_rename);
+            # --- Listenbericht gefiltert -----------------------------------
+        } elseif ($report_id AND $listmode AND $gtabid) {
+            $generatedReport = lmb_reportCreatePDF($report_id,1,$report_output,$report_rename,$gsr,$filter);
+            # --- freier Einzelbericht ohne Tabelle -----------------------------------
+        } elseif ($report_id AND !$gtabid) {
+            $generatedReport = lmb_reportCreatePDF($report_id,0,1,$report_rename);
+        }
+
+    }catch (Exception $e){
+
+        if($session["debug"]) {
+            lmb_log::error($e,$e->getMessage());
+        }else{
+            lmb_log::error($e,$lang[56]);
+        }
+    }
+
+    return $generatedReport;
+
 }
 
 # --- Einzelbericht eines Datensatzes in DMS -----------------------------------
-function LMB_pdfReportUnitDMS($report_id,$ID,$report_name=null,$level=null,$v_gtabid=null,$v_gfieldid=null,$v_ID=null){
+function lmb_reportCreatePDFtoDMS($report_id,$gtabid=null,$ID=null,$level=null,$report_name=null,$relation=null,$gsr=null,$filter=null){
+    global $greportlist;
 
-	$filepath = generate_pdf($report_id,$ID,null,$report_name);
+    if($relation AND !is_array($relation['gtabid'])){
+        $relation['gtabid'][0] = $relation['gtabid'];
+        $relation['fieldid'][0] = $relation['fieldid'];
+        $relation['ID'][0] = $relation['ID'];
+    }
 
-    if(file_exists(lmb_utf8_encode($filepath))){
+    if(!$gtabid){
+        $gtabid = $greportlist["argresult_tabid"][$report_id];
+    }
 
-        $filename = explode('/', $filepath);
+    if(!$level) {
+        $level = $greportlist[$gtabid]["target"][$report_id];
+    }
+
+	$generatedReport = lmb_reportPDF($report_id,$gtabid,$ID,null,$report_name,$gsr,$filter);
+
+    if(file_exists(lmb_utf8_encode($generatedReport))){
+
+        $filename = explode('/', $generatedReport);
         $filename = $filename[count($filename) - 1];
 
         // upload in Filesystem
-        $file["file"][0] = $filepath;
+        $file["file"][0] = $generatedReport;
         $file["file_name"][0] = $filename;
-	    $tabrelation = array('datid' => $v_ID,'gtabid' => $v_gtabid,'fieldid' => $v_gfieldid);
-        $fileid = upload($file, $level, null, 1, $dublicate);
-
+        $fileid = lmb_fileUpload($file, $level, null, 1);
 
         // Verknüpfen
-        if ($fileid AND $v_gtabid AND $v_gfieldid AND $v_ID) {
-            $verkn = init_relation($v_gtabid, $v_gfieldid, $v_ID, $fileid);
-            $verkn["linkParam"]["LID"] = $level;
-            set_joins($v_gtabid, $verkn);
+        if($relation AND is_array($relation['gtabid'])) {
+            foreach ($relation['gtabid'] as $key => $value) {
+                $verkn = init_relation($relation['gtabid'][0], $relation['fieldid'][0], $relation['ID'][0], $fileid);
+                $verkn["linkParam"]["LID"] = $level;
+                set_joins($relation['gtabid'][0], $verkn);
+            }
         }
 
         return $fileid;
-
     }
+
+    return $generatedReport;
 
 }
 
 ?>
+
+
+
+
+
+
+

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -72,7 +72,7 @@ if($trigger_typ == 1){
 	foreach ($result_trigger as $key1 => $value1){
 		
 		foreach ($value1["id"] as $key2 => $value2){
-			if(!$showsystr AND (lmb_substr($value1["name"][$key2],0,12) == "INSERT_VERK_" OR lmb_substr($value1["name"][$key2],0,12) == "UPDATE_VERK_" OR lmb_substr($value1["name"][$key2],0,16) == "LMB_LASTMODIFIED")) {continue 2;}
+			if(!$showsystr AND (strtoupper(lmb_substr($value1["name"][$key2],0,12)) == "INSERT_VERK_" OR strtoupper(lmb_substr($value1["name"][$key2],0,12)) == "UPDATE_VERK_" OR strtoupper(lmb_substr($value1["name"][$key2],0,16)) == "LMB_LASTMODIFIED")) {continue 2;}
 		}
 		
 		echo "<TR class=\"tabSubHeader\"><TD colspan=\"7\" class=\"tabSubHeaderItem\">$lang[164]: <b>".$key1."</b></TD></TR>";

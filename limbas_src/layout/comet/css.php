@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -41,6 +41,7 @@ if($umgvar['waitsymbol']){$waitsymbol = $umgvar['waitsymbol'];}else{$waitsymbol 
 $fontc3 = lmbSuggestColor($farbschema['WEB14'],"222222","7D7D7D");
 $fontc7 = lmbSuggestColor($farbschema['WEB7'],"5a5a5a","333333");
 $fontc14 = lmbSuggestColor($farbschema['WEB14']);
+$sgc = 'lmbSuggestColor';
 
 $fontsize07 = "0.7em";
 $fontsize09 = "0.9em";
@@ -992,6 +993,17 @@ td .lmbGtabTabSpace {
     width: 100%;
 }
 
+.gtabFooterTD {
+
+}
+
+.gtabFooterID {
+
+}
+
+.gtabFooterPage {
+
+}
 
 /* gtab Tabelle Details */
 
@@ -1450,7 +1462,70 @@ table.hoverable tr.tabBody:hover {
 	/* color:{$fontc14};*/
 }
 
+.lmbGlistBodyNotice {
+    color: {$farbschema['WEB2']};
+    padding:4px;
+    display: flex;
+    border:1px solid {$farbschema['WEB5']};
+    border-bottom:1px solid {$farbschema['WEB5']};
+    border-radius: 3px 3px 3px 3px;
+    white-space:nowrap;
+    align-items: center;
+    margin-right:1px;
+    margin-left:1px;
+}
 
+.lmbGlistBodyNotice.notice1 {
+    background-color: #74ba6a;
+    color: {$sgc('74ba6a')};
+    align-items: baseline;
+    flex-basis:100%;
+    /* flex-wrap: wrap; */
+    order:0;
+}
+.lmbGlistBodyNotice.notice2 {
+    background-color: #f09b4d;
+    color: {$sgc('f09b4d')};
+    order:1;
+}
+.lmbGlistBodyNotice.notice3 {
+    background-color: #f0cd4d;
+    color: {$sgc('f0cd4d')};
+    order:1;
+}
+.lmbGlistBodyNotice.notice4 {
+    background-color: #ff725c;
+    color: {$sgc('ff725c')};
+    order:1;
+}
+.lmbGlistBodyNotice.notice5 {
+    background-color: #c593ed;
+    color: {$sgc('c593ed')};
+    order:1;
+}
+.lmbGlistBodyNotice.notice6 {
+    background-color: #32a852;
+    color: {$sgc('32a852')};
+    color: #000000;
+    order:1;
+}
+.lmbGlistBodyNotice.notice7 {
+    background-color: #74ba6a;
+    color: {$sgc('74ba6a')};
+    order:1;
+}
+.lmbValidity_list {
+    background-color: #74ba5c;
+    color: {$sgc('74ba5c')};
+    font-weight:bold;
+	border:1px solid {$farbschema['WEB5']};
+	border-radius: 3px 3px 3px 3px;
+	padding:2px;
+	margin-left:2px;
+	text-align:right;
+	height:12px;
+	cursor:pointer;
+}
 
 /* relation tree ------------------------------------------------------------------------*/
         
@@ -1465,7 +1540,6 @@ table.hoverable tr.tabBody:hover {
 
 .rtree2 {
     background: {$farbschema["WEB10"]};
-
 	border:1px solid {$farbschema['WEB12']};
 	border-radius: 3px 3px 3px 3px;
 	padding: 3px;
@@ -1631,6 +1705,15 @@ body.lmbBodyDropareaActive .lmbUploadDroparea {
         z-index: 99990;
 }
 
+.ui-button{
+	background-color: {$farbschema['WEB8']} !important;
+    border: 1px solid {$farbschema['WEB7']} !important;
+    color:{$farbschema["WEB2"]} !important;
+    padding:3px;
+    padding-left:10px;
+    padding-right:10px;
+}
+
 .markAsActive{
 	background-image:url(../../pic/ok.gif);
 	background-position:right;
@@ -1749,9 +1832,11 @@ SELECT.contextmenu {
 
 INPUT {
 	font-weight: normal;
+    border: 1px solid {$farbschema['WEB3']};
+    font-size: {$umgvar['fontsize']}px;
+}
+INPUT:not(:disabled) {
 	background-color: {$farbschema['WEB13']};
-        border: 1px solid {$farbschema['WEB3']};
-        font-size: {$umgvar['fontsize']}px;
 }
         
 INPUT[type=button] {
@@ -1773,6 +1858,14 @@ INPUT.submit {
     padding:3px;
     padding-left:10px;
     padding-right:10px;
+}
+
+INPUT.lmbSbmConfirm {
+	background-color: green;
+}
+
+INPUT.lmbSbmAbort {
+	border: 1px solid red;
 }
     
 INPUT.contextmenu {
@@ -2685,7 +2778,96 @@ card-assigned-value{
 label input {
     vertical-align: middle;
 }
+.select2-container--default .select2-selection--multiple {
+    border-radius: 0!important;
+}
+.select2-container .select2-selection--multiple {
+    min-height: 0!important;
+}
+.select2-results__options {
+    text-align: left;
+}
+.select2-dropdown .select2-results__option--link {
+    margin: -6px; /* revert padding of parent */
+}
 
+/* Set the padding again that was removed in .select2-results__option--link */
+.select2-dropdown .select2-results__option--link__text {
+    padding: 6px;
+}
+
+.select2-container--default .select2-selection--multiple {
+	background-color: {$farbschema['WEB13']} !important;
+	color: {$farbschema['WEB2']};
+}
+
+.select2-dropdown {
+	background-color: {$farbschema['WEB13']} !important;
+	border: 1px solid {$farbschema['WEB3']} !important;
+}
+
+.select2-container--default.select2-container--focus .select2-selection--multiple {
+    border:1px solid {$farbschema['WEB1']} !important;
+}
+
+.flex-basis-50 {
+    flex-basis: 50%;
+}
+.border-bottom {
+    border-bottom: 1px solid #dee2e6!important;
+}
+.border-secondary {
+    border-color: {$farbschema['WEB3']}!important;
+}
+.d-flex {
+    display: flex!important;
+}
+.justify-content-between {
+    justify-content: space-between!important;
+}
+.rounded-0 {
+    border-radius: 0!important;
+}
+.text-center {
+    text-align: center!important;
+}
+.text-left {
+    text-align: left;
+}
+.align-self-center {
+    align-self: center!important;
+}
+.select2-dropdown .btn {
+    display: inline-block;
+    /*font-weight: 400;*/
+    color: #212529;
+    text-align: center;
+    vertical-align: middle;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background-color: transparent;
+    border: 1px solid transparent;
+    /*padding: .375rem .75rem;*/
+    /*font-size: 1rem;*/
+    line-height: 1.5;
+    border-radius: .25rem;
+    transition: color .15s ease-in-out, background-color .15s ease-in-out, border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+
+    cursor: pointer;
+}
+.select2-dropdown .btn-secondary {
+    color: #fff;
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+.full-height {
+    height: 100%;
+}
+.font-small {
+    font-size: small;
+}
 ";
     
 # EXTENSIONS

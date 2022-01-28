@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -31,7 +31,7 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 
 	
 ?>
-	<table cellspacing="0" cellpadding="0" style="width:450px;">
+	<table cellspacing="0" cellpadding="0" style="width:750px;">
 	
 	<tr><td>
 	<table cellspacing="0" cellpadding="0" width="100%"><tr class="tabpoolItemTR">
@@ -44,7 +44,7 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 	<tr><td valign="top" class="tabpoolfringe">
 	<div id="tab1" style="padding:5px;">
 
-	<table><tr><td valign="top">
+	<table><tr><td valign="top" style="width:350px">
 	
 	<?php
 	
@@ -107,17 +107,33 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 	if($result_gtab[$tabgroup]["versioning"][$tbzm] == 1){$selected_1 = "selected";$det = $lang[2142];}
 	if($result_gtab[$tabgroup]["versioning"][$tbzm] == 2){$selected_2 = "selected";$det = $lang[2142];}
 	if($result_gtab[$tabgroup]["id"][$tbzm] == $result_gtab[$tabgroup]["verknid"][$tbzm]){
-		echo "<select  onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','versioning')\">
+		echo "<select onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','versioning')\">
         <option value=\"-1\" $selected_0>
         <option value=\"1\" $selected_1>".$lang[2142]."
         <option value=\"2\" $selected_2>".$lang[2143]."
         </select>";
+		if(!$result_gtab[$tabgroup]["versioning"][$tbzm] AND $result_gtab[$tabgroup]["validity"][$tbzm] == 2){echo "<i style='color:red'> ".$lang[3008]."</i>";}
 	}else{
 		echo $det;
 	}
 	echo "<br><i style=\"color:#AAAAAA\">".$lang[2822]."</i>";
 	echo "</td></tr>";
 	}
+
+
+	/*
+    # validity
+    $selected=null;
+	${'selected_'.$result_gtab[$tabgroup]["validity"][$tbzm]} = 'selected';
+    echo "<tr><td valign=\"top\">".$lang[3000]."</td><td valign=\"top\">
+    <select onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','validity')\">
+    <option value=\"0\" $selected_0></option>
+    <option value=\"1\" $selected_1>".$lang[3009]."</option>
+    <option value=\"2\" $selected_2>".$lang[3008]."</option>
+    </select>
+    <br><i style=\"color:#AAAAAA\">".$lang[3001]."</i>
+    </td></tr>";
+    */
 
 	# numrowcalc
 	if($result_gtab[$tabgroup]["num_gtab"][$tbzm] > 0){
@@ -135,8 +151,13 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 	}
 
 	# indicator
-	echo "<tr><td valign=\"top\">".$lang[1255]."</td><td><textarea style=\"width:200px;height:30px\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','indicator')\">".$result_gtab[$tabgroup]["indicator"][$tbzm]."</textarea>
+	echo "<tr><td valign=\"top\">".$lang[1255]."</td><td><textarea style=\"width:250px;height:30px\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','indicator')\">".$result_gtab[$tabgroup]["indicator"][$tbzm]."</textarea>
 	<br><i style=\"color:#AAAAAA\">".$lang[2824]."</i>
+	</td></tr>";
+
+	# order by
+	echo "<tr><td valign=\"top\">".$lang[1837]."</td><td><textarea style=\"width:250px;height:30px\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','orderby')\">".$result_gtab[$tabgroup]["orderby"][$tbzm]."</textarea>
+	<br><i style=\"color:#AAAAAA\">".$lang[3048]."</i>
 	</td></tr>";
 	
 	# trigger
@@ -325,9 +346,26 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 
     }
 
-		
-		
-	echo "</table></td><td valign=\"top\"><table style=\"width:250px;\">";
+    if(!$isview) {
+
+        echo "<tr><td><hr></td><td><hr></td></tr>";
+
+        # rebuild rules
+        echo "<tr><td valign=\"top\">" . $lang[575] . "</td><td><i style=\"cursor:pointer\" class=\"lmb-icon lmb-refresh\" onclick=\"open('main_admin.php?action=setup_grusrref&check_table=$tabid&check_all=1' ,'refresh','toolbar=0,location=0,status=1,menubar=0,scrollbars=1,resizable=1,width=550,height=400')\"></i>
+        <br><i style=\"color:#AAAAAA\">" . $lang[1054] . "</i>
+        </td></tr>";
+
+        # rebuild temp
+        echo "<tr><td valign=\"top\">" . $lang[2761] . "</td><td><i style=\"cursor:pointer\" class=\"lmb-icon lmb-refresh\" onclick=\"ajaxEditTable(this,'$tabid','$tabgroup','tablesync')\"></i>";
+        if ($tablesync) {
+            echo " <i class=\"lmb-icon lmb-aktiv\"></i>";
+        }
+        echo "<br><i style=\"color:#AAAAAA\">" . $lang[2030] . "</i>
+        </td></tr>";
+
+    }
+
+	echo "</table></td><td valign=\"top\"><table style=\"width:350px;\">";
 	
 	
 	# logging
@@ -351,6 +389,11 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 		echo "<tr><td valign=\"top\">".$lang[575]."</td><td valign=\"top\"><input type=\"checkbox\" value=\"1\" $CHECKED onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','userrules')\">
 		<br><i style=\"color:#AAAAAA\">".$lang[2829]."</i>
 		</td></tr>";
+		# validate
+		if($result_gtab[$tabgroup]["validate"][$tbzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}
+		echo "<tr><td valign=\"top\">".$lang[3071]."</td><td valign=\"top\"><input type=\"checkbox\" value=\"1\" $CHECKED onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','validate')\">
+		<br><i style=\"color:#AAAAAA\">".$lang[3072]."</i>
+		</td></tr>";
 		# ajaxpost
 		if($result_gtab[$tabgroup]["ajaxpost"][$tbzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}
 		echo "<tr><td valign=\"top\">".$lang[2640]."</td><td valign=\"top\"><input type=\"checkbox\" value=\"1\" $CHECKED onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','ajaxpost')\">
@@ -371,24 +414,24 @@ echo "<input type=\"hidden\" name=\"tabgroup\" value=\"$tabgroup\">";
 		echo "<tr><td valign=\"top\">".$lang[2915]."</td><td valign=\"top\"><input type=\"checkbox\" value=\"1\" $CHECKED onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','datasync')\">
 		<br><i style=\"color:#AAAAAA\">".$lang[2963]."</i>
 		</td></tr>";
+
+        # validity
+        if($result_gtab[$tabgroup]["validity"][$tbzm] >= 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}
+        echo "<tr><td valign=\"top\">".$lang[3000]."</td><td valign=\"top\"><input type=\"checkbox\" value=\"1\" $CHECKED onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','validity')\">";
+        if($result_gtab[$tabgroup]["validity"][$tbzm] == 2){$CHECKED = "CHECKED";}else{$CHECKED = "";}
+        echo "&nbsp;&nbsp;&nbsp;".$lang[2132]."&nbsp;<input type=\"checkbox\" value=\"1\" $CHECKED onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','validity_version')\">";
+        echo "<br><i style=\"color:#AAAAAA\">".$lang[3001]."</i>
+        </td></tr>";
 	}
+
+
+
 
     # multitenant
     if($result_gtab[$tabgroup]["multitenant"][$tbzm] == 1){$CHECKED = "CHECKED";}else{$CHECKED = "";}
     echo "<tr><td valign=\"top\">".$lang[2961]."</td><td valign=\"top\"><input type=\"checkbox\" value=\"1\" $CHECKED onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','multitenant')\">
     <br><i style=\"color:#AAAAAA\">".$lang[2964]."</i>
     </td></tr>";
-
-	# rebuild rules
-	echo "<tr><td valign=\"top\">".$lang[575]."</td><td><i style=\"cursor:pointer\" class=\"lmb-icon lmb-refresh\" onclick=\"open('main_admin.php?action=setup_grusrref&check_table=$tabid&check_all=1' ,'refresh','toolbar=0,location=0,status=1,menubar=0,scrollbars=1,resizable=1,width=550,height=400')\"></i>
-	<br><i style=\"color:#AAAAAA\">".$lang[1054]."</i>
-	</td></tr>";
-
-	# rebuild temp
-	echo "<tr><td valign=\"top\">".$lang[2761]."</td><td><i style=\"cursor:pointer\" class=\"lmb-icon lmb-refresh\" onclick=\"ajaxEditTable(this,'$tabid','$tabgroup','tablesync')\"></i>";
-	if($tablesync){echo " <i class=\"lmb-icon lmb-aktiv\"></i>";}
-	echo "<br><i style=\"color:#AAAAAA\">".$lang[2030]."</i>
-	</td></tr>";
 	
 	echo "</table>";
 

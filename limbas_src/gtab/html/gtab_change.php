@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -46,7 +46,16 @@ if($scrollto){
 #----------------- Plausibilitätsprüfung -------------------
 if(!is_numeric($ID)){
 	if($db){lmbdb_close($db);}
-	die("<BODY BGCOLOR=\"$farbschema[WEB8]\"><Script language=\"JavaScript\">\nalert('$lang[764]');\nfunction inusetime(){};</SCRIPT></BODY>");
+
+    lmb_alert($lang[764]);
+    error_showalert($GLOBALS['alert']);
+    die("</BODY>");
+
+	#die("<BODY BGCOLOR=\"$farbschema[WEB8]\"><Script language=\"JavaScript\">\nalert('$lang[764]');\nfunction inusetime(){};</SCRIPT></BODY>");
+}
+
+if(!isset($ID) AND !$form_id){
+	lmb_alert($lang["98"]);
 }
 
 # ---------------- File-upload für EXT Explorer -----------------------
@@ -64,7 +73,7 @@ if($_FILES AND $f_LID AND $LINK[128]){
 		$singlefile["file_name"][1] = $filelist["file_name"][$key];
 		$singlefile["file_type"][1] = $filelist["file_type"][$key];
 
-		$ufileId = upload($singlefile,$f_datid,array("datid" => $f_datid),0,$dublicate);
+		$ufileId = lmb_fileUpload($singlefile,$f_datid,array("datid" => $f_datid),0,$dublicate);
 		get_filestructure();
 
 		$verkn = set_verknpf($f_gtabid,$f_fieldid,$f_datid,$ufileId,0,0,0);
@@ -73,10 +82,6 @@ if($_FILES AND $f_LID AND $LINK[128]){
 	}
 }
 */
-
-if(!isset($ID) AND !$form_id){
-	lmb_alert($lang["98"]);
-}
 
 
 if($gtab["typ"][$i] == 5){$action = "gtab_deterg";}
@@ -104,10 +109,11 @@ jsvar["wfl_inst"] = "<?=$wfl_inst?>";
 jsvar["ajaxpost"] = "<?=$gtab["ajaxpost"][$gtabid]?>";
 jsvar["mainfield"] = "<?=$gfield[$gtabid]["mainfield"]?>";
 jsvar["tablename"] = "<?=$gtab["desc"][$gtabid]?>";
+jsvar["validate"] = "<?=$gtab["validate"][$gtabid]?>";
 
 <?php
 if($form_id){echo "jsvar[\"is_form\"] = \"1\";\n";}
-if(count($gformlist[$gtabid]["id"]) > 0){echo "jsvar[\"is_formlist\"] = \"1\";\n";}
+if($gformlist[$gtabid] AND count($gformlist[$gtabid]["id"]) > 0){echo "jsvar[\"is_formlist\"] = \"1\";\n";}
 
 #echo "jsvar[\"currency\"] = new Array('".implode("','",$lmcurrency["currency"])."');\n";
 if($lmcurrency){
@@ -159,17 +165,12 @@ if($gformlist[$gtabid]["extension"][$form_id]){
         $gresult = get_default_values($gtabid);
     }
 	
-	$readonly = 0;
-	# ----------- edit Permission -----------
-	if($gtab["editrule"][$gtabid]){
-		$readonly = check_GtabRules($ID,$gtabid,null,$gtab["editrule"][$gtabid],0,$gresult);
-	}
-	# --- specific user/grouprules  --------------------------------------
-	if($gtab["has_userrules"][$gtabid] AND !$readonly AND !$gtab["edit_userrules"][$gtabid]){
-		$readonly = !check_GtabUserRules($gtabid,$ID,$session["user_id"],"edit");
-	}
+	$readonly = check_DataPermission($gtabid,$ID,$gresult);
 
 	printContextMenus($gtabid,$form_id,$ID,$gresult,$readonly);
+    if($GLOBALS["greportlist_exist"] AND $LINK[315]){
+        LmbReportSelect::printReportSelect($gtabid);
+    }
 	form_view($gtabid,$ID,$gresult,$form_id,$readonly);
 # --- zeige Standard-Ansicht -----
 }else{
@@ -184,24 +185,27 @@ if($gformlist[$gtabid]["extension"][$form_id]){
         $gresult = get_default_values($gtabid);
     }
 
+	$readonly = check_DataPermission($gtabid,$ID,$gresult);
+
     # ----------- multitenant permission  -----------
     if($umgvar['multitenant'] AND $gtab['multitenant'][$gtabid] AND $lmmultitenants['mid'][$session['mid']] != $gresult[$gtabid]['MID'][0] AND !$session["superadmin"]){
         $action = 'gtab_deterg';
+        $readonly = 1;
     }
 	
-	$readonly = 0;
-	# ----------- edit Permission -----------
-	if($gtab["editrule"][$gtabid]){
-		$readonly = check_GtabRules($ID,$gtabid,null,$gtab["editrule"][$gtabid],0,$gresult);
-	}
-	# --- specific user/grouprules  --------------------------------------
-	if($gtab["has_userrules"][$gtabid] AND !$readonly AND !$gtab["edit_userrules"][$gtabid]){
-		$readonly = !check_GtabUserRules($gtabid,$ID,$session["user_id"],"edit");
-	}
-	
 	printContextMenus($gtabid,$form_id,$ID,$gresult,$readonly);
+    if($GLOBALS["greportlist_exist"] AND $LINK[315]){
+        LmbReportSelect::printReportSelect($gtabid);
+    }
 	defaultView($gtabid,$ID,$gresult,$readonly,$filter);
 }
+
+
+
+
+
+
+
 
 unset($commit);
 ?>

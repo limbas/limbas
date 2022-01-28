@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -25,15 +25,7 @@ if($action == "gtab_neu" AND isset($gtabid)){
 		if($gtab['reserveid'][$gtabid]){
 			$ID = 0;
 		}else{
-			lmb_StartTransaction();
 			$ID = new_record($gtabid,$verknpf,$verkn_fieldid,$verkn_tabid,$verkn_ID,0,0);
-			if(!$ID){
-				lmb_EndTransaction(0);
-				#if($db){lmbdb_close($db);}
-				#die("\n\n<BODY BGCOLOR=\"$farbschema[WEB8]\">\n<Script Language=\"JavaScript\">\nalert('".$alert.$lang[1317]."');\nfunction inusetime(){};\nvar jsvar = 0;\n</SCRIPT></BODY>");
-			}else{
-				lmb_EndTransaction(1);
-			}
 		}
 	}else{
 		lmb_alert($lang[114]);
@@ -49,14 +41,8 @@ elseif($use_typ == 'copy' AND $use_record){
 		$ID_ = $use_[0];
 		$gtabid_ = $use_[1];
 		if($gtab["add"][$gtabid_] AND $gtab["copy"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[201]){
-			lmb_StartTransaction();
 			# --- anlegen ---
-			if(!$ID = new_record($gtabid_,$verknpf,$verkn_fieldid,$verkn_tabid,$verkn_ID,$ID_,0)){
-				lmb_EndTransaction(0,"ID ".$ID_);
-				#if($db){lmbdb_close($db);}
-				#die("\n\n<BODY BGCOLOR=\"$farbschema[WEB8]\">\n<Script Language=\"JavaScript\">\nalert('".$alert.$lang[1317]."');\nfunction inusetime(){};\nvar jsvar = 0;\n</SCRIPT></BODY>");
-			}else{
-				lmb_EndTransaction(1);
+			if($ID = new_record($gtabid_,$verknpf,$verkn_fieldid,$verkn_tabid,$verkn_ID,$ID_,0)){
 				$history_fields = updateHistoryFields($history_fields,$gtabid_,$ID_,$ID);
 				$useetecount++;
 			}
@@ -78,16 +64,8 @@ elseif($use_typ == 'versioning' AND $use_record){
 		$ID_ = $use_[0];
 		$gtabid_ = $use_[1];
 		if($gtab["ver"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[235]){
-			lmb_StartTransaction();
 			# --- anlegen ---
-			if(!$ID = new_record($gtabid_,$verknpf,$verkn_fieldid,$verkn_tabid,$verkn_ID,$ID_,1)){
-				lmb_EndTransaction(0,"ID ".$ID_);
-				#if($db){lmbdb_close($db);}
-				#die("\n\n<BODY BGCOLOR=\"$farbschema[WEB8]\">\n<Script Language=\"JavaScript\">\nalert('".$alert.$lang[1317]."');\nfunction inusetime(){};\nvar jsvar = 0;\n</SCRIPT></BODY>");
-			}elseif($ID == $ID_){
-				lmb_EndTransaction(0,$lang[2152]."\\nID ".$ID_);
-			}else{
-				lmb_EndTransaction(1);
+			if($ID = new_record($gtabid_,$verknpf,$verkn_fieldid,$verkn_tabid,$verkn_ID,$ID_,true)){
 				$history_fields = updateHistoryFields($history_fields,$gtabid_,$ID_,$ID);
 				$useetecount++;
 			}
@@ -119,15 +97,11 @@ elseif($use_typ == 'delete' AND $use_record){
 					$ID = scroll_to('prev',$gtabid,$ID,$null,$filter,$verkn);
 				}
 			}
-
-			lmb_StartTransaction();
 			$forceDelnm = $filter["force_delete"][$gtabid_];
 			if(!$LINK[276]){$forceDelnm = 0;}
 			if(del_data($gtabid_,$ID_,$use_typ,$forceDelnm)){
-				lmb_EndTransaction(1);
 				$useetecount++;
 			}else{
-				lmb_EndTransaction(0,"ID ".$ID_);
 				$falsecount++;
 			}
 		}else{
@@ -150,12 +124,9 @@ elseif($use_typ == 'hide' AND $use_record){
 		$ID_ = $use_[0];
 		$gtabid_ = $use_[1];
 		if($gtab["hide"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[164]){
-			lmb_StartTransaction();
 			if(hide_data($gtabid_,$ID_,$use_typ)){
-				lmb_EndTransaction(1);
 				$useetecount++;
 			}else{
-				lmb_EndTransaction(0,"ID ".$ID_);
 				$falsecount++;
 			}
 		}else{
@@ -177,12 +148,9 @@ elseif($use_typ == 'unhide' AND $use_record){
 		$ID_ = $use_[0];
 		$gtabid_ = $use_[1];
 		if($gtab["hide"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[166]){
-			lmb_StartTransaction();
 			if(hide_data($gtabid_,$ID_,$use_typ)){
-				lmb_EndTransaction(1);
 				$useetecount++;
 			}else{
-				lmb_EndTransaction(0,"ID ".$ID_);
 				$falsecount++;
 			}
 		}else{
@@ -217,9 +185,9 @@ elseif($use_typ == 'link' AND $use_record AND $verknpf){
 			$verkn = set_verknpf($verkn_tabid,$verkn_fieldid,$verkn_ID,$verkn_add_ID,0,$verkn_showonly,$verknpf);
 			if($verkn AND $verkn["typ"] AND $verkn["id"] AND $verkn["add_id"]){
 				if($useetecount = set_joins($gtabid,$verkn)){
-					if($useetecount > 1 OR !$useetecount){
+					if($useetecount['count'] > 1){
 						lmb_alert($useetecount." ".$lang[2183]);
-					}elseif($useetecount == 1){
+					}elseif($useetecount['count'] == 1){
 						lmb_alert($useetecount." ".$lang[2182]);
 					}
 				}
@@ -254,9 +222,9 @@ elseif($use_typ == 'unlink' AND $use_record AND $verknpf){
 			$verkn = set_verknpf($verkn_tabid,$verkn_fieldid,$verkn_ID,0,$verkn_del_ID,$verkn_showonly,$verknpf);
 			if($verkn AND $verkn["typ"] AND $verkn["id"] AND $verkn["del_id"]){
 				if($useetecount = set_joins($gtabid,$verkn)){
-					if($useetecount > 1 OR !$useetecount){
+					if($useetecount['count'] > 1){
 						lmb_alert($useetecount." ".$lang[2185]);
-					}elseif($useetecount == 1){
+					}elseif($useetecount['count'] == 1){
 						lmb_alert($useetecount." ".$lang[2184]);
 					}
 				}
@@ -332,12 +300,8 @@ elseif($use_typ == 'unlock' AND $use_record){
 # --- Datenatz-Update -----------------------------------
 if($change_ok AND $history_fields AND $LINK[3]){
 	if($old_action == "gtab_erg"){$chtyp = 2;}else{$chtyp = 1;}
-	lmb_StartTransaction();
 	if($cid = update_data($history_fields,$chtyp,0)){
 		if(is_numeric($cid)){$ID = $cid;}
-		lmb_EndTransaction(1);
-	}else{
-		lmb_EndTransaction(0);
 	}
 }
 

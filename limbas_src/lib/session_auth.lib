@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -24,10 +24,8 @@ function lmb_authLDAP($auth_user,$auth_pass){
 	global $lang;
 	
 	# EXTENSIONS
-	if($GLOBALS["gLmbExt"]["ext_ldap.inc"]){
-		foreach ($GLOBALS["gLmbExt"]["ext_ldap.inc"] as $key => $extfile){
-			require_once($extfile);
-		}
+	if(file_exists($umgvar['path'].'EXTENSIONS/ldap/ext_ldap.inc')){
+        require_once($umgvar['path'].'EXTENSIONS/ldap/ext_ldap.inc');
 	}
 	
 	require_once('extern/adLDAP/src/adLDAP.php');
@@ -254,7 +252,11 @@ if($ipok AND !$_REQUEST["rslogout"] AND session_id()) {
 	
 	/* --- URL ------------------- */
 	if(!$umgvar["url"]){
-		$url = explode("/",$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']);
+        $url = explode("/",$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']);
+
+        if ($_SERVER['SERVER_PORT'] != 80 && $_SERVER['SERVER_PORT'] != 443) {
+            $url = explode("/",$_SERVER['SERVER_NAME'].':'.$_SERVER['SERVER_PORT'].$_SERVER['REQUEST_URI']);
+        }
 		$last = count($url)-1;
 
 		if(lmb_strpos($_SERVER['REQUEST_URI'],".php")){
@@ -319,10 +321,10 @@ if($ipok AND !$_REQUEST["rslogout"] AND session_id()) {
 	$session["superadmin"] =  lmbdb_result($rs2,"SUPERADMIN");
 	$session["gc_maxlifetime"] = lmbdb_result($rs2,"GC_MAXLIFETIME");
 	$session["multiframe"] = $umgvar["multiframe"];
-	if($multitenant = lmbdb_result($rs2,"MULTITENANT")){
-	    $multitenant = explode(',',$multitenant);
-	    $session["multitenant"] = explode(';',$multitenant[0]);
-	    $session["mid"] = $multitenant[1];
+	if($multitenant_ = lmbdb_result($rs2,"MULTITENANT")){
+	    $multitenant_ = explode(',',$multitenant_);
+	    $session["multitenant"] = explode(';',$multitenant_[0]);
+	    $session["mid"] = $multitenant_[1];
 	    if(!$session["mid"]){$session["mid"] = $session["multitenant"][0];}
 	}
 	if(!lmbdb_result($rs2,"DATEFORMAT")){$session["dateformat"] = 1;}else{$session["dateformat"] = lmbdb_result($rs2,"DATEFORMAT");} #1=de, 2=usa, 3=fr}
@@ -345,7 +347,16 @@ if($ipok AND !$_REQUEST["rslogout"] AND session_id()) {
 
 	// data language
 	if(!$session['dlanguage']){$session['dlanguage'] = $session['language'];}
-	
+	// Multilanguage description
+    if($umgvar["multi_language"]) {
+        // language definition
+        $sqlquery3 = "SELECT LANGUAGE_ID,LANGUAGE FROM LMB_LANG GROUP BY LANGUAGE_ID,LANGUAGE";
+        $rs3 = lmbdb_exec($db, $sqlquery3) or errorhandle(lmbdb_errormsg($db), $sqlquery3, $action, __FILE__, __LINE__);
+        while(lmbdb_fetch_row($rs3)){
+            $umgvar['multi_language_desc'][lmbdb_result($rs3,'LANGUAGE_ID')] = lmbdb_result($rs3,'LANGUAGE');
+        }
+    }
+
 	/* --- timezone setzen ------------------- */
 	setlocale(LC_ALL, $session["setlocale"]);
 	date_default_timezone_set($session["timezone"]);
@@ -613,7 +624,7 @@ if($ipok AND !$_REQUEST["rslogout"] AND session_id()) {
         UNION
         SELECT DISTINCT LMB_ACTION_DEPEND.HELP_URL,LMB_ACTION_DEPEND.TARGET,LMB_ACTION_DEPEND.EXTENSION,LMB_ACTION_DEPEND.SORT,LMB_ACTION_DEPEND.SUBGROUP,LMB_ACTION_DEPEND.MAINGROUP,LMB_ACTION_DEPEND.LINK_NAME,LMB_ACTION_DEPEND.LINK_URL,LMB_ACTION_DEPEND.BESCHREIBUNG,LMB_ACTION_DEPEND.ID,LMB_ACTION_DEPEND.ICON_URL,LMB_ACTION_DEPEND.ACTION FROM LMB_RULES_ACTION,LMB_ACTION_DEPEND
         WHERE (LMB_RULES_ACTION.GROUP_ID = ".implode(" OR LMB_RULES_ACTION.GROUP_ID = ",$session["subgroup"]).") AND LMB_RULES_ACTION.PERM = 2 AND LMB_ACTION_DEPEND.ID = LMB_RULES_ACTION.LINK_ID
-        ORDER BY MAINGROUP,SUBGROUP,SORT
+        ORDER BY 6,5,4
         ";
 	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 	if(!$rs3) {$commit = 1;}
@@ -756,14 +767,12 @@ if($ipok AND !$_REQUEST["rslogout"] AND session_id()) {
 		$gmimetypes["mimetype"][$key] = lmbdb_result($rs3, "MIMETYPE");
 		$gmimetypes["ext"][$key] = lmbdb_result($rs3, "EXT");
 		$gmimetypes["pic"][$key] = lmbdb_result($rs3, "PIC");
+		$gmimetypes["resolve"][$gmimetypes["ext"][$key]] = $gmimetypes["mimetype"][$key];
 	}
 
 	# auf Userverzeichniss prüfen
-	if(!is_dir($umgvar['pfad']."/USER/".$session['user_id'])){
-		require_once("lib/include_admin.lib");
-		create_user_folder($session["user_id"],$session["username"],$auth_pass);
-	}
-	
+    create_user_folder($session["user_id"]);
+
 	
 	# EXTENSION Dateien einbinden
 	if(is_dir($umgvar["pfad"]."/EXTENSIONS/")){

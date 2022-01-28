@@ -60,10 +60,16 @@ if ($delPrinter) {
 }
 
 # get available printers
-exec('lpstat ' . strval($umgvar['lpstat_params']) . ' -p | awk \'$1 == "printer" {print $2}\'', $availablePrinterNames, $exitCode);
+exec('lpstat ' . strval($umgvar['lpstat_params']) . ' -p', $availablePrinterNames, $exitCode);
 if ($exitCode != 0) {
     echo '<pre>Could not determine installed printers! Exit code ' . $exitCode . '. Output: ' . print_r($availablePrinterNames, true) . '</pre>';
     $availablePrinterNames = array();
+} else {
+    // get name from output
+    foreach ($availablePrinterNames as &$name) {
+        $name = explode(' ', $name);
+        $name = $name[1];
+    }
 }
 
 # check if lpstat is installed

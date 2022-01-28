@@ -16,8 +16,13 @@ class SubTemplateElementPlaceholder extends AbstractHtmlPart {
      */
     protected $templateElement = null;
 
-    public function __construct($name) {
+    protected $options = array();
+
+    public function __construct($name, $options) {
         $this->name = $name;
+        if ($options) {
+            $this->options = $options;
+        }
     }
 
     public function getAsHtmlArr() {
@@ -42,6 +47,35 @@ class SubTemplateElementPlaceholder extends AbstractHtmlPart {
         return $this->templateElement->getUnresolvedDataPlaceholders();
     }
 
+    public function getUnresolvedTemplateGroupPlaceholders() {
+        if (!$this->templateElement) {
+            return array();
+        }
+        return $this->templateElement->getUnresolvedTemplateGroupPlaceholders();
+    }
+
+    public function getUnresolvedDynamicDataPlaceholders() {
+        if (!$this->templateElement) {
+            return array();
+        }
+        return $this->templateElement->getUnresolvedDynamicDataPlaceholders();
+    }
+
+    public function getAllDynamicDataPlaceholders() {
+        if (!$this->templateElement) {
+            return array();
+        }
+        return $this->templateElement->getAllDynamicDataPlaceholders();
+    }
+
+    public function getTableRows() {
+        if (!$this->templateElement) {
+            return array();
+        }
+        return $this->templateElement->getTableRows();
+    }
+
+
     public function getName() {
         return $this->name;
     }
@@ -50,8 +84,9 @@ class SubTemplateElementPlaceholder extends AbstractHtmlPart {
         return $this->templateElement;
     }
 
-    public function setTemplateElement(TemplateElement $templateElement) {
-        $this->templateElement = $templateElement;
+    public function createTemplateElement($templateElementGtabid, $name, &$html, $id, $recursion = 1) {
+        $this->templateElement = TemplateConfig::$instance->getTemplateElementInstance($templateElementGtabid, $name, $html, $id, $this->options['gtabid'], $this->options['datid'], $recursion);
+        return $this->templateElement;
     }
 
 }

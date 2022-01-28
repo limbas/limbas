@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -147,13 +147,16 @@ function restoreOCR($ID){
 	global $umgvar;
 	global $gmimetypes;
 
-	$sqlquery = "SELECT ID,OCRD,OCRT,OCRS,NAME,SECNAME,MIMETYPE FROM LDMS_FILES WHERE ID = ".$ID." AND DEL = FALSE AND VACT = TRUE";
+	$sqlquery = "SELECT ID,LEVEL,OCRD,OCRT,OCRS,NAME,SECNAME,MIMETYPE FROM LDMS_FILES WHERE ID = ".$ID." AND DEL = FALSE AND VACT = TRUE";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	if(lmbdb_fetch_row($rs)){
 		$fname = lmbdb_result($rs,"SECNAME").".".$gmimetypes["ext"][lmbdb_result($rs, "MIMETYPE")];
-		$upath = $umgvar["pfad"]."/UPLOAD/".$fname;
+		#$upath = $umgvar["pfad"]."/UPLOAD/".$fname;
+		#$fpath = $umgvar["ocr_save_copy"]."/".$fname;
+		$upath = lmb_getFilePath($ID,lmbdb_result($rs,"LEVEL"),lmbdb_result($rs,"SECNAME"),$gmimetypes["ext"][lmbdb_result($rs, "MIMETYPE")]);
 		$fpath = $umgvar["ocr_save_copy"]."/".$fname;
+
 		if(file_exists($fpath)){
 			# restore original file
 
@@ -277,7 +280,7 @@ function LmEntGenerate_ocr($ID,$level,$ocr_destination=null,$ocr_format=null){
 						lmb_loghandle("ocr.log",$path,$zeit_main);
 						$commit = 0;
 					}else{
-						del_file($new_ID);
+						lmb_deleteFile($new_ID);
 						lmb_loghandle("ocr_error.log","ocr failed for file: $ID $path");
 						#lmb_EndTransaction(0);
 						LmEntSetOCRStatus (-1,$ID,$new_ID);
@@ -311,9 +314,9 @@ function LmEntGenerate_ocr($ID,$level,$ocr_destination=null,$ocr_format=null){
 					$file["file_name"][] = $newname;
 					$file["file_type"][] = $newmime;
 					
-					if($new_ID = upload($file,lmbdb_result($rs, "LEVEL"),0,1,$dublicate)){
+					if($new_ID = lmb_fileUpload($file,lmbdb_result($rs, "LEVEL"),0,1,$dublicate)){
 						if($ocr_destination == "overwrite"){
-							del_file($ID);
+							lmb_deleteFile($ID);
 						}
 						#lmb_EndTransaction(1);
 						LmEntSetOCRStatus ($zeit_main,$ID,$new_ID);

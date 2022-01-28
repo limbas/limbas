@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -185,51 +185,21 @@ if($reportcopy AND $new){
 		lmb_EndTransaction(0);
 	} else {
 		lmb_EndTransaction(1);
+        
 	}
+
+    if(!$commit AND $new AND !$reporttarget){
+        lmb_createReportFileStructure($referenz_tab,$report_id,$report_name,$action);
+    }
 
 #---------------------------- neuer Bericht -------------------------
-}elseif($new AND $referenz_tab){
-	if(!$report_name){
-		$report_name = "new report";
-	}
-
-	/* --- Transaktion START -------------------------------------- */
-	lmb_StartTransaction();
-
-	#$report_name = preg_replace("/[^A-Za-z0-9]/","_",$report_name);
-	#$report_name = lmb_substr(preg_replace("/[_]{1,}/","_",$report_name),0,18);
-	$report_name = parse_db_string($report_name,160);
-	
-	# ------- Next ID ----------
-	$report_id = next_conf_id("LMB_REPORT_LIST");
-	if(!$reporttarget){$reporttarget_ = $report_id;}
-	$sqlquery = "INSERT INTO LMB_REPORT_LIST (ID,ERSTUSER,NAME,BESCHREIBUNG,PAGE_STYLE,REFERENZ_TAB,TARGET,EXTENSION,DEFFORMAT) VALUES($report_id,{$session['user_id']},'".parse_db_string($report_name,50)."','".str_replace("'","''",$report_desc)."','210;295;5;5;5;5',".parse_db_int($referenz_tab,3).",".parse_db_int($reporttarget_,3).",'".parse_db_string($reportextension,160)."','pdf')";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	$NEXTID = next_db_id("LMB_RULES_REPFORM");
-	$sqlquery = "INSERT INTO LMB_RULES_REPFORM (ID,TYP,GROUP_ID,LMVIEW,REPFORM_ID) VALUES ($NEXTID,1,".$session["group_id"].",".LMB_DBDEF_TRUE.",$report_id)";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-
-	/* --- Transaktion ENDE -------------------------------------- */
-	if($commit == 1){
-		lmb_EndTransaction(0);
-	} else {
-		lmb_EndTransaction(1);
-	}
-
-}elseif($new){
-	die("<Script language=\"JavaScript\">document.location.href='main_admin.php?action=setup_report_select'</Script>");
 }
+elseif($new AND $referenz_tab){
+    $report_id = lmb_insertNewReport($report_name,$reporttarget,$report_desc,$referenz_tab,$reportextension,$action,$report_format);
 
-
-# ---- Filestructure ----------------
-if(!$commit AND $new AND !$reporttarget){
-	if($lid = create_fs_report_dir($referenz_tab,$report_id,$report_name)){
-		$sqlquery = "UPDATE LMB_REPORT_LIST SET TARGET = $lid WHERE ID = $report_id";
-		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!$rs) {$commit = 1;}
-		get_filestructure(1);
-	}
+}
+elseif($new){
+	die("<Script language=\"JavaScript\">document.location.href='main_admin.php?action=setup_report_select'</Script>");
 }
 
 if($reportextension){
@@ -237,10 +207,82 @@ if($reportextension){
 }
 
 
+
+function lmb_insertNewReport($report_name,$reporttarget,$report_desc,$referenz_tab,$reportextension,$action,$format='pdf',$parent_id=null,$saveTemplate=null) {
+    global $db;
+    global $session;
+    
+    if(!$report_name){
+        $report_name = "new report";
+    }
+
+    /* --- Transaktion START -------------------------------------- */
+    lmb_StartTransaction();
+
+    #$report_name = preg_replace("/[^A-Za-z0-9]/","_",$report_name);
+    #$report_name = lmb_substr(preg_replace("/[_]{1,}/","_",$report_name),0,18);
+    $report_name = parse_db_string($report_name,160);
+
+
+    # ------- handle template configuration ----------
+    $noFileStruct = false;
+    if (!empty($parent_id) && $saveTemplate !== null) {
+        $finalTemplate = [];
+        foreach ($saveTemplate as $name => $value) {
+            $finalTemplate[parse_db_string($name)] = parse_db_string($value);
+        }
+        $templateColumns = ', PARENT_ID, SAVED_TEMPLATE';
+        $templateValues = ', '.parse_db_int($parent_id).', \''.json_encode($finalTemplate).'\'';
+        $noFileStruct = true;
+    }
+    
+    
+    
+    # ------- Next ID ----------
+    $report_id = next_conf_id("LMB_REPORT_LIST");
+    if(!$reporttarget){$reporttarget_ = $report_id;}
+    $sqlquery = "INSERT INTO LMB_REPORT_LIST (ID,ERSTUSER,NAME,BESCHREIBUNG,PAGE_STYLE,REFERENZ_TAB,TARGET,EXTENSION,DEFFORMAT $templateColumns) VALUES($report_id,{$session['user_id']},'".parse_db_string($report_name,50)."','".str_replace("'","''",$report_desc)."','210;295;5;5;5;5',".parse_db_int($referenz_tab,3).",".parse_db_int($reporttarget_,3).",'".parse_db_string($reportextension,160)."','$format' $templateValues)";
+    
+    
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs) {$commit = 1;}
+    $NEXTID = next_db_id("LMB_RULES_REPFORM");
+    $sqlquery = "INSERT INTO LMB_RULES_REPFORM (ID,TYP,GROUP_ID,LMVIEW,REPFORM_ID) VALUES ($NEXTID,1,".$session["group_id"].",".LMB_DBDEF_TRUE.",$report_id)";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+    /* --- Transaktion ENDE -------------------------------------- */
+    if($commit == 1){
+        lmb_EndTransaction(0);
+    } else {
+        lmb_EndTransaction(1);
+    }
+
+
+    # ---- Filestructure ----------------
+    if(!$commit && !$noFileStruct){
+        lmb_createReportFileStructure($referenz_tab,$report_id,$report_name,$action);
+    }
+    
+    return $report_id;
+}
+
+function lmb_createReportFileStructure($referenz_tab,$report_id,$report_name,$action) {
+    global $db;
+    if($lid = create_fs_report_dir($referenz_tab,$report_id,$report_name)){
+        $sqlquery = "UPDATE LMB_REPORT_LIST SET TARGET = $lid WHERE ID = $report_id";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+        get_filestructure(1);
+    }
+}
+
 /* --- Frameset ---------------------------------------------------------- */
+if (!isset($noReportFrameSet)) :
 ?>
 
 <div class="frame-container">
     <iframe name="report_main" src="main_admin.php?&action=setup_report_main&report_id=<?=$report_id?>&referenz_tab=<?=$referenz_tab?>&report_id=<?=$report_id?>" class="frame-fill"></iframe>
     <iframe name="report_menu" src="main_admin.php?&action=setup_report_menu&report_id=<?=$report_id?>&referenz_tab=<?=$referenz_tab?>&report_id=<?=$report_id?>" style="width: 240px;"></iframe>
 </div>
+
+<?php endif; ?>

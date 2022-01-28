@@ -124,6 +124,7 @@ $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$ac
 
 # --- update include_db.lib ----------------------------
 $dblibvalue = fopen($setup_path_project."/inc/include_db.lib","w+");
+$enc_key = bin2hex(random_bytes(32));
 
 $line=<<<EOD
 <?php
@@ -157,13 +158,13 @@ This copyright notice MUST APPEAR in all copies of the script!
 \$DBA['DBSCHEMA'] = '$setup_dbschema';		/* DB schema */
 \$DBA['DBHOST'] = '$setup_host';			/* DB hostname or IP */
 \$DBA['LMHOST'] = '$setup_host';			/* LIMBAS hostname or IP */
-\$DBA['DBPATH'] = '$setup_dbpath';	            /* Path to database */
+\$DBA['DBPATH'] = '$setup_dbpath';	        /* Path to database */
 \$DBA['LMPATH'] = '$setup_path_project';	/* Path to LIMBAS */
 \$DBA['ODBCDRIVER'] = '$setup_dbdriver';	/* unixODBC Driver */
 \$DBA['PORT'] = '$setup_dbport';			/* database Port */
-\$DBA['VERSION'] = '{$DBA['VERSION']}';	/* database version */
+\$DBA['VERSION'] = '{$DBA['VERSION']}';	    /* database version */
+define('LMB_ENC_KEY','{$enc_key}');         /* generated encryption key */
 
-require_once("{\$DBA['LMPATH']}/lib/db/db_{\$DBA['DB']}.lib");
 ?>
 EOD;
 

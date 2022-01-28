@@ -2,12 +2,26 @@
 
 class ReportDataPlaceholder extends DataPlaceholder {
 
+    public function __construct($fieldIdentifiers, $options, $altValue, $noResolve)
+    {
+        parent::__construct($fieldIdentifiers, $options, $altValue, $noResolve);
+    }
+
     protected function resolve() {
+        if ($this->noResolve) {
+            return true;
+        }
+        
         $report = TemplateConfig::$instance->report;
 
         # not a valid field -> return true -> dont lookup in db
         if ($this->fieldlist === null) {
             return true;
+        }
+
+        # I fetch all IDs of base table -> no fieldid -> cannot be resolved
+        if ($this->modeFetchBaseTable) {
+            return false;
         }
 
         # resolve from existing report element

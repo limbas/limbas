@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -145,12 +145,17 @@ if($ffilter["force_delete"]){$checked = "checked";}else{$checked = null;}
 pop_checkbox(276,"document.form1.ffilter_force_delete.value=this.checked;","",1,$checked,0);
 // storage path
 if($session['superadmin']){
+
+    if($session['mid']){
+        $mPath = 'multitenant/'.$session['mid'].'/';
+    }
+
     $default = '--default--';
     $opt = array(
         'val' => array($default),
         'desc' => array($default)
     );
-    $dirpath = read_dir($umgvar['path'].'/UPLOAD/STORAGE',0);
+    $dirpath = read_dir($umgvar['path'].'/UPLOAD/'.$mPath.'STORAGE',0);
     $selected = $default;
     foreach($dirpath['name'] as $dirkey => $dirname){
         $opt['val'][] = $dirname;
@@ -223,10 +228,10 @@ pop_bottom();
 <?php
 pop_top('downloadmenu');
 pop_header('', $lang[1762]);
-pop_menu(0, "LmEx_download_archive('1');", "&nbsp;zip <span style=\"color:".$farbschema["WEB4"].";\">(windows)</span>");
-pop_menu(0, "LmEx_download_archive('2');", "&nbsp;tar.gz <span style=\"color:".$farbschema["WEB4"].";\">(unix)</span>");
-pop_menu(0, "LmEx_download_archive('3');", "&nbsp;tar.bz2 <span style=\"color:".$farbschema["WEB4"].";\">(unix)</span>");
-pop_menu(0, "LmEx_download_archive('4');", "&nbsp;7z <span style=\"color:".$farbschema["WEB4"].";\">(all)</span>");
+pop_menu(0, "LmEx_download_archive('1');", "&nbsp;zip <span style=\"color:".$farbschema["WEB4"].";\"></span>");
+pop_menu(0, "LmEx_download_archive('2');", "&nbsp;tar.gz <span style=\"color:".$farbschema["WEB4"].";\"></span>");
+pop_menu(0, "LmEx_download_archive('3');", "&nbsp;tar.bz2 <span style=\"color:".$farbschema["WEB4"].";\"></span>");
+pop_menu(0, "LmEx_download_archive('4');", "&nbsp;7z <span style=\"color:".$farbschema["WEB4"].";\"></span>");
 pop_bottom();
 ?>
 </DIV>
@@ -351,7 +356,6 @@ jsvar["res_viewcount"] = "<?=$ffile["res_viewcount"]?>";
 jsvar["resultspace"] = "<?=$umgvar["resultspace"]?>";
 jsvar["message1"] = "<?=$lang[1696]?>";
 jsvar["gtabid"] = <?=$gtab["argresult_id"]["LDMS_FILES"]?>;
-jsvar["searchcount"] = "<?=$umgvar["searchcount"]?>";
 
 // ----- Onload-Aktionen --------
 <?php
@@ -386,6 +390,8 @@ if($onload){
 <input type="hidden" name="rename_file">
 <input type="hidden" name="refresh_file">
 <input type="hidden" name="favorite_file">
+<input type="hidden" name="duplicateTypes">
+
 <input type="hidden" name="ocr_file">
 <input type="hidden" name="ocr_format">
 <input type="hidden" name="ocr_destination">

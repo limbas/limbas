@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -42,9 +42,11 @@ if($new_group AND $report_list) {
 				$group_list = implode(";",$group_list);
 
 				# Report
-				$sqlquery = "INSERT INTO LMB_REPORT_LIST (ID,NAME,ERSTDATUM,ERSTUSER,REFERENZ_TAB,GROUPLIST,TARGET) VALUES ($NEXTID,'$report_name',".LMB_DBTYPE_TIMESTAMP.",'".$session["user_id"]."',".$key.",'".$group_list."',$NEXTID)";
+				$sqlquery = "INSERT INTO LMB_REPORT_LIST (ID,NAME,ERSTDATUM,ERSTUSER,REFERENZ_TAB,GROUPLIST,TARGET,DEFFORMAT) VALUES ($NEXTID,'$report_name',".LMB_DBDEF_TIMESTAMP.",'".$session["user_id"]."',".$key.",'".$group_list."',$NEXTID,'".parse_db_string($report_format)."')";
 				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
+
+				echo $sqlquery;
 
 				$NEXTID2 = next_db_id("LMB_RULES_REPFORM");
 				$sqlquery = "INSERT INTO LMB_RULES_REPFORM VALUES ($NEXTID2,1,".$session["group_id"].",".LMB_DBDEF_TRUE.",$NEXTID)";
@@ -312,6 +314,7 @@ function resultreportlist_(){
 	WHERE LMB_RULES_REPFORM.REPFORM_ID = LMB_REPORT_LIST.ID
 	AND LMB_RULES_REPFORM.TYP = 1
 	AND LMB_RULES_REPFORM.GROUP_ID IN (".implode(",",$session["subgroup"]).")
+	AND PARENT_ID IS NULL
 	ORDER BY REFERENZ_TAB,NAME";
 
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -406,7 +409,7 @@ if($greportlist_){
 				#echo "<TD NOWRAP valign=\"top\">".$userdat["bezeichnung"][$greportlist_[$gtabid]["erstuser"][$key]]."</TD>";
 				echo "<TD><select name=\"report_defaultformat[$key]\" style=\"width:80px;\" onchange=\"document.form1.changedefaultformat_id.value='$key';document.form1.action.value='setup_report_select';document.form1.submit();\">";
 				if($greportlist_[$gtabid]["defaultformat"][$key] == 'pdf'){$SELECTED="SELECTED";}else{$SELECTED="";}
-				echo "<option value=\"pdf\" $SELECTED>pdf</option>";
+				echo "<option value=\"pdf\" $SELECTED>fpdf</option>";
                 if($greportlist_[$gtabid]["defaultformat"][$key] == 'tcpdf'){$SELECTED="SELECTED";}else{$SELECTED="";}
                 echo "<option value=\"tcpdf\" $SELECTED>tcpdf</option>";
 				if($greportlist_[$gtabid]["defaultformat"][$key] == 'odt'){$SELECTED="SELECTED";}else{$SELECTED="";}
@@ -457,6 +460,7 @@ function rep_sub_folderlist($LEVEL,$select,$space=null){
 <TD colspan="3"></TD>
 <TD class="tabHeaderItem"><?=$lang[4]?></TD>
 <TD class="tabHeaderItem"><?=$lang[164]?></TD>
+<TD class="tabHeaderItem"><?=$lang[1163]?></TD>
 <TD class="tabHeaderItem"><?=$lang[1464]?></TD>
 <TD colspan="5" class="tabHeaderItem">&nbsp</TD>
 
@@ -479,6 +483,14 @@ foreach ($tabgroup["id"] as $key0 => $value0) {
 }
 ?>
 </SELECT></TD>
+        
+<TD><select name="report_format" style="width:80px;">
+<option value="pdf">fpdf</option>
+<option value="tcpdf">tcpdf</option>
+<option value="odt">odt</option>
+<option value="xml">xml</option>
+</select></TD>
+        
 
 <TD>
 <SELECT NAME="reportcopy"><OPTION VALUE="0"></OPTION>

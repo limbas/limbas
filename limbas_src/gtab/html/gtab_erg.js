@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -53,10 +53,12 @@ function send_form(id,ajax,b,f,h,s) {
 		clearTimeout(dyns_time);
 		lmbAjax_postHistoryResult("form"+id);
 		document.form1.history_fields.value='';
+		document.form1.history_search.value = '';
 	}else if(ajax == 2 && !jsvar["form_id"]){
 		clearTimeout(dyns_time);
 		lmbAjax_resultGtab("form1",b,f,h,s);
 		document.form1.history_fields.value='';
+		document.form1.history_search.value = '';
 	}else{
 		if(parent.detail && document.form1.action.value != "gtab_erg"){document.form1.target='detail';}else{document.form1.target='_self';};
 		document.form1.target='_self';
@@ -247,6 +249,8 @@ function lmbAjax_resultGtabPost(result){
 		}
 		if(result[3] && result[3].trim()){document.getElementById("GtabTableFooter").innerHTML = result[3];}
 	}
+
+	pagination_h = null;
 	gtabSetTablePosition();
 }
 
@@ -642,7 +646,7 @@ function gtabSetTablePosition(posx,posy){
                     $('#lmbGlistBodyTab > tbody > tr').find('td:last').css('-moz-box-sizing', "border-box");
                     $('#lmbGlistBodyTab > tbody > tr').find('td:last').css('-webkit-box-sizing', "border-box");
                     $('#lmbGlistBodyTab > tbody > tr').find('td:last').css('box-sizing', "border-box");
-            }   
+            }
     }
 
     if(!pagination_h) {

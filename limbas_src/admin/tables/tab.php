@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -184,7 +184,6 @@ function LIM_activate(el,elid){
 // Ajax edit table
 function ajaxEditTable(el,gtabid,tabgroup,act){
 	if(el){
-		
 		if(act == 'trigger'){
 			document.form3.val.value=gtabid;
 			var i = 0;
@@ -205,16 +204,44 @@ function ajaxEditTable(el,gtabid,tabgroup,act){
 			document.form3.val.value=el.value+' ';
 		}
 	}
+
+
 	ajaxGet(null,"main_dyns_admin.php","editTable&tabid="+gtabid+"&tabgroup="+tabgroup+"&act=" + act,null,"ajaxEditTablePost","form3");
 }
 
 function ajaxEditTablePost(result){
-	element = document.getElementById("lmbAjaxContainer");
-	element.style.visibility = '';
-	element.innerHTML = result;
-	limbasSetCenterPos(element);
-	element.style.left = '180px';
-	//hide_selects(1);
+
+    ajaxEvalScript(result);
+
+    if(document.getElementById("tablesettingsContainer")){
+        document.getElementById("tablesettingsContainer").innerHTML = result;
+        return;
+    }
+
+    $("<div id='tablesettingsContainer' class='ajax_container' OnClick='activ_menu=1;' style='width:100%;'></div>").dialog({
+            title: '<?=$lang[1896]?>',
+            width: 800,
+            height: 800,
+            resizable: true,
+            modal: true,
+            zIndex: 99999,
+            open: function (ev, ui) {
+                document.getElementById("tablesettingsContainer").style.visibility = '';
+                document.getElementById("tablesettingsContainer").innerHTML = result;
+            },
+            close: function () {
+                $("#tablesettingsContainer").dialog('destroy').remove();
+            }
+    });
+
+
+
+	//element = document.getElementById("lmbAjaxContainer");
+	//element.style.visibility = '';
+	//element.innerHTML = result;
+	//limbasSetCenterPos(element);
+	//element.style.left = '180px';
+
 }
 </Script>
 

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -238,31 +238,6 @@ function lmb_htaccessGroup(){
 }
 
 
-
-# --- User Verzeichnis hinzufügen -------
-function create_user_folder($ID,$username,$passwort){
-    global $umgvar;
-
-	if(!file_exists($umgvar['pfad']."/USER/$ID")){
-		$sys1 = mkdir($umgvar['pfad']."/USER/$ID",0777);
-		if(!$sys1){$commit = 1;}
-		$sys1 = mkdir($umgvar['pfad']."/USER/$ID/menuicons",0777);
-		if(!$sys1){$commit = 1;}
-		$sys1 = mkdir($umgvar['pfad']."/USER/$ID/temp",0777);
-		if(!$sys1){$commit = 1;}
-		$sys1 = mkdir($umgvar['pfad']."/USER/$ID/download",0777);
-		if(!$sys1){$commit = 1;}
-		$sys1 = mkdir($umgvar['pfad']."/USER/$ID/settings",0777);
-		if(!$sys1){$commit = 1;}
-	}
-
-	# --- htaccess ---------
-	lmb_htaccess($ID,$username,$passwort);
-
-	if(file_exists("USER/$ID")){return true;}else{return false;}
-}
-
-
 # Type-Extensions
 function getTypeExensions(){
 	global $gLmbExt;
@@ -458,7 +433,7 @@ function lmb_deleteTriggerForTable($tablename){
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 
-function lmb_relationTrigger($verknTabName,$elternTab,$elternFeld,$kindTab,$kindFeld,$archive=1){
+function lmb_relationTrigger($verknTabName,$elternTab,$elternFeld,$kindTab,$kindFeld=null,$archive=1){
 	global $db;
 	global $DBA;
 
@@ -757,7 +732,7 @@ function lmb_checkViewDependency($tablename,$fieldname=null,$debug=null,$clear=n
     static $dependency;
     global $DBA;
 
-    if(!LMB_DBFUNC_VIEWDEPENDENCY){return false;}
+    if(!LMB_DBFUNC_VIEWDEPENDENCY){return true;}
     if(!$dependency OR !$clear){$dependency = array();}
     
     if($dep = dbf_25(array($DBA['DBSCHEMA'],$tablename,$fieldname))){
@@ -961,54 +936,78 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
 		$sqlquery1 = "SELECT FIELD_ID,FIELD_NAME,DATA_TYPE,FIELD_TYPE,MD5TAB,VERKNTABID,VERKNFIELDID,VERKNTABLETYPE,REFINT,HASRECVERKN FROM LMB_CONF_FIELDS WHERE TAB_ID = $tableid $q";
 		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		while(lmbdb_fetch_row($rs1)){
+            $datatype = lmbdb_result($rs1,"DATA_TYPE");
+            $verkntabid = lmbdb_result($rs1,"VERKNTABID");
 
 			# foreign keys
-			if(lmbdb_result($rs1,"DATA_TYPE") == 27 AND lmbdb_result($rs1,"VERKNTABID") AND lmbdb_result($rs1,"MD5TAB")){
-				if(lmbdb_result($rs1,"VERKNTABLETYPE") == 1){
+			if(lmbdb_result($rs1,"VERKNTABID") AND lmbdb_result($rs1,"MD5TAB") AND lmbdb_result($rs1,"VERKNTABLETYPE") == 1){
 
-					# foreign keys
-						$ftable = lmbdb_result($rs1,"MD5TAB");
-						$ffield = "VERKN_ID";
-						$ptable = $tab[lmbdb_result($rs1,"VERKNTABID")];
-						$pfield = "ID";
-						#$fkname = "LMB_".$tableid."_".lmbdb_result($rs1,"FIELD_ID")."_VID_".lmbdb_result($rs1,"VERKNTABID");
-						# search foreign key
-						
-						if($fkys["keyname"]){
-						foreach ($fkys["keyname"] as $key => $value){
-							if($fkys["tablename"][$key] == dbf_4($ftable) AND $fkys["columnname"][$key] == dbf_4($ffield) AND $fkys["reftablename"][$key] == dbf_4($ptable) AND $fkys["refcolumnname"][$key] == dbf_4($pfield)){
-								$f1 = $fkys["keyname"][$key];
-							}
-						}}
-						# add foreign key
-						if(!$f1){
-							$f1 = "LMB_KEY_".lmb_substr(md5($ftable."_".$ffield."_".$ptable."_".$pfield),0,18);
-							if(!lmb_addForeignKey($ftable,$ffield,$ptable,$pfield,$f1)){
-								$commit = 1;
-							}
-						}
-	
-						$ftable = lmbdb_result($rs1,"MD5TAB");
-						$ffield = "ID";
-						$ptable = $tab[$tableid];
-						$pfield = "ID";
-						#$fkname = "LMB_".$tableid."_".lmbdb_result($rs1,"FIELD_ID")."_ID_".lmbdb_result($rs1,"VERKNTABID");
-						# search foreign key
-						if($fkys["keyname"]){
-						foreach ($fkys["keyname"] as $key => $value){
-							if($fkys["tablename"][$key] == dbf_4($ftable) AND $fkys["columnname"][$key] == dbf_4($ffield) AND $fkys["reftablename"][$key] == dbf_4($ptable) AND $fkys["refcolumnname"][$key] == dbf_4($pfield)){
-								$f2 = $fkys["keyname"][$key];
-							}
-						}}
-						# add foreign key
-						if(!$f2){
-							$f2 = "LMB_KEY_".lmb_substr(md5($ftable."_".$ffield."_".$ptable."_".$pfield),0,18);
-							if(!lmb_addForeignKey($ftable,$ffield,$ptable,$pfield,$f2)){
-								$commit = 1;
-							}
-						}
-				}
-				$ffieldname = lmbdb_result($rs1,"FIELD_NAME");
+                if($datatype == 27 OR $datatype == 24) {
+                    # foreign keys
+                    $ftable = lmbdb_result($rs1, "MD5TAB");
+                    $ffield = "VERKN_ID";
+                    $ptable = $tab[lmbdb_result($rs1, "VERKNTABID")];
+                    $pfield = "ID";
+                    #$fkname = "LMB_".$tableid."_".lmbdb_result($rs1,"FIELD_ID")."_VID_".lmbdb_result($rs1,"VERKNTABID");
+                    # search foreign key
+
+                    if ($fkys["keyname"]) {
+                        foreach ($fkys["keyname"] as $key => $value) {
+                            if ($fkys["tablename"][$key] == dbf_4($ftable) AND $fkys["columnname"][$key] == dbf_4($ffield) AND $fkys["reftablename"][$key] == dbf_4($ptable) AND $fkys["refcolumnname"][$key] == dbf_4($pfield)) {
+                                $f1 = $fkys["keyname"][$key];
+                            }
+                        }
+                    }
+                    # add foreign key
+                    if (!$f1) {
+                        $f1 = "LMB_KEY_" . lmb_substr(md5($ftable . "_" . $ffield . "_" . $ptable . "_" . $pfield), 0, 18);
+                        if (!lmb_addForeignKey($ftable, $ffield, $ptable, $pfield, $f1)) {
+                            $commit = 1;
+                        }
+                    }
+
+                    $ftable = lmbdb_result($rs1, "MD5TAB");
+                    $ffield = "ID";
+                    $ptable = $tab[$tableid];
+                    $pfield = "ID";
+                    #$fkname = "LMB_".$tableid."_".lmbdb_result($rs1,"FIELD_ID")."_ID_".lmbdb_result($rs1,"VERKNTABID");
+                    # search foreign key
+                    if ($fkys["keyname"]) {
+                        foreach ($fkys["keyname"] as $key => $value) {
+                            if ($fkys["tablename"][$key] == dbf_4($ftable) AND $fkys["columnname"][$key] == dbf_4($ffield) AND $fkys["reftablename"][$key] == dbf_4($ptable) AND $fkys["refcolumnname"][$key] == dbf_4($pfield)) {
+                                $f2 = $fkys["keyname"][$key];
+                            }
+                        }
+                    }
+                    # add foreign key
+                    if (!$f2) {
+                        $f2 = "LMB_KEY_" . lmb_substr(md5($ftable . "_" . $ffield . "_" . $ptable . "_" . $pfield), 0, 18);
+                        if (!lmb_addForeignKey($ftable, $ffield, $ptable, $pfield, $f2)) {
+                            $commit = 1;
+                        }
+                    }
+
+                }elseif($datatype == 25) {
+                    $ftable = $tab[$verkntabid];
+                    $ffield = lmbdb_result($rs1, "MD5TAB");
+                    $ptable = $tab[$tableid];
+                    $pfield = "ID";
+                    # search foreign key
+                    if ($fkys["keyname"]) {
+                        foreach ($fkys["keyname"] as $key => $value) {
+                            if ($fkys["tablename"][$key] == dbf_4($ftable) AND $fkys["columnname"][$key] == dbf_4($ffield) AND $fkys["reftablename"][$key] == dbf_4($ptable) AND $fkys["refcolumnname"][$key] == dbf_4($pfield)) {
+                                $f1 = $fkys["keyname"][$key];
+                            }
+                        }
+                    }
+                    # add foreign key
+                    if (!$f1) {
+                        $f1 = "LMB_KEY_" . lmb_substr(md5($ftable . "_" . $ffield . "_" . $ptable . "_" . $pfield), 0, 18);
+                        if (!lmb_addForeignKey($ftable, $ffield, $ptable, $pfield, $f1)) {
+                            $commit = 1;
+                        }
+                    }
+                }
 			}
 		}
 	}
@@ -1175,7 +1174,7 @@ function lmb_rebuildIndex(){
 	foreach ($gfield as $gtabid => $value){
 		foreach ($gfield[$gtabid]["md5tab"] as $fieldid => $md5tab){
 			# only right relation
-			if($gfield[$gtabid]["verkntabletype"][$fieldid] == 1 AND !$gfield[$gtabid]["verkntree"][$fieldid]){
+			if($gfield[$gtabid]["verkntabletype"][$fieldid] == 1 AND $gfield[$gtabid]["field_type"][$fieldid] == 11 AND $gfield[$gtabid]["data_type"][$fieldid] != 25 AND !$gfield[$gtabid]["verkntree"][$fieldid]){
 				if(!$ind[dbf_4($md5tab)][dbf_4('ID')]){
 					$indname = "LMBINDV_".lmb_substr(md5($md5tab."_ID"),0,12);
 					$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$md5tab,"ID"));
@@ -1234,6 +1233,7 @@ function lmb_rebuildIndex(){
 	$systemindex[] = array('lmb_select_w'=>'sort');
 	$systemindex[] = array('lmb_select_w'=>'pool');
 	$systemindex[] = array('lmb_select_w'=>'wert');
+	$systemindex[] = array('lmb_history_action'=>'userid');
 
 	foreach ($systemindex as $key => $value){
 
@@ -1469,14 +1469,27 @@ function soap_call_client($lmpar,$LIM){
 		
 		#"location" => $LIM["lim_url"]."/main_soap.php?".$lmbs["session"]["s_name"]."=".$lmbs["session"]["s_id"],
 
+
+        if($GLOBALS['umgvar']['soap_base64']) {
+            $lmpar = array(base64_encode(serialize($lmpar)));
+        }else {
+            $lmpar = array(serialize($lmpar));
+        }
+
 		try{
-			$lmb = $client->__soapCall("runlmb", array(serialize($lmpar)), array("uri" => "urn:xmethodsLimbasServer","soapaction" => "urn:xmethodsLimbasServer"));
+			$lmb = $client->__soapCall("runlmb", $lmpar, array("uri" => "urn:xmethodsLimbasServer","soapaction" => "urn:xmethodsLimbasServer"));
 		}catch(Exception $e){
 			lmb_alert('can not access to '.$LIM["lim_url"].'\n'.$e->getMessage());
 			return false;
 		}
 
-		if($lmb){$lmb = unserialize($lmb);}
+		if($lmb){
+            if($GLOBALS['umgvar']['soap_base64']) {
+                $lmb = unserialize(base64_decode($lmb));
+            }else {
+                $lmb = unserialize($lmb);
+            }
+		}
 	
 		if(is_array($lmb) AND array_key_exists('session', $lmb) AND array_key_exists('s_id', $lmb["session"])){
 			$lmbs["session"] = $lmb["session"];

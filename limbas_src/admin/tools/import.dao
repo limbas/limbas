@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -291,7 +291,7 @@ function import_create_addtable($import_typ, $ifield, $add_permission = null, $v
                 if(!in_array(lmb_strtolower($ifield['name'][$bzm9]),$systemfields)){
                     if ($new_field_id = add_field($ifield['name'][$bzm9], $new_gtabid, $ifield['typ'][$bzm9], 0, $ifield['size'][$bzm9], $ifield['id'], $ifield['desc'][$bzm9], $ifield['spelling'][$bzm9], null, null, null, null, null, $import_typ)) {
                         // add field permission
-                        add_fieldPermission($new_gtabid,$new_field_id,1);
+                        add_fieldPermission($new_gtabid,$new_field_id,$ifield['tablegroup']);
                         if($verbose){echo "--> " . $lang[168] . " <b>" . $ifield['name'][$bzm9] . "</b> " . $lang[1018] . "<br>";}
                     }
                 }else{
@@ -326,7 +326,7 @@ function import_create_addtable($import_typ, $ifield, $add_permission = null, $v
     }
 
     // add table permissions
-    $commit = add_tablePermission($new_gtabid,1);
+    $commit = add_tablePermission($new_gtabid,$ifield['tablegroup']);
 
 
     return $ifield;
@@ -466,7 +466,7 @@ function import_create_sqlvalue($fkey,&$ifield,&$insert_,&$value_,&$NEXTID,&$ERS
         if ($value AND $value != '0000-00-00 00:00:00') {
             // DATE
             if ($ifield['datatype'][$fkey] == 40) {
-                $value = lmb_substr(convert_date($value, 0, 10));
+                $value = lmb_substr(convert_date($value), 0, 10);
             // TIMESTAMP
             }else{
                 $value = convert_date($value);
@@ -1796,6 +1796,19 @@ function import_complete($del_all,$txt_encode=null, $txt_terminate=null,$txt_enc
 			echo "drop existing views ... <b>done</b><br><br>";
 		}
 	}
+
+	# procedures
+	if(LMB_DBFUNC_PROCEDUREHANDLE){
+		# drop functions
+		dbq_21(array($DBA["DBSCHEMA"]));
+
+		# add functions
+		if(!dbq_16(array($DBA["DBSCHEMA"]))){
+			echo "<span style=\"color:red\">error by adding stored procedures!</span><br>";
+		}else{
+			echo "adding stored procedures ... <b>done</b><br>";
+		}
+	}
 	
 	# fullimport
 	import('','over',null,$txt_encode, $txt_terminate,$txt_enclosure,null,1);
@@ -1808,19 +1821,6 @@ function import_complete($del_all,$txt_encode=null, $txt_terminate=null,$txt_enc
 	}else{
 		if($GLOBALS["action"]){
 			echo "rebuild foreign keys... <b><font style=\"color:red\">failed</font></b><br>";
-		}
-	}
-	
-	# procedures
-	if(LMB_DBFUNC_PROCEDUREHANDLE){
-		# drop functions
-		dbq_21(array($DBA["DBSCHEMA"]));
-
-		# add functions
-		if(!dbq_16(array($DBA["DBSCHEMA"]))){
-			echo "<span style=\"color:red\">error by adding stored procedures!</span><br>";
-		}else{
-			echo "adding stored procedures ... <b>done</b><br>";
 		}
 	}
 	

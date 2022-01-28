@@ -1,0 +1,129 @@
+/* This css is used to style lmb template elements */
+lmb[type] {
+    border: 1px solid #999;
+    background: #eee;
+    padding: 1px;
+}
+lmb[type]:hover {
+    opacity: 0.8;
+}
+
+/* data */
+lmb[type=data],
+lmb[param=data],
+lmb[condition=data] {
+    background: lightblue;
+    color: black;
+}
+lmb[type=data]:before {
+    content: attr(src);
+}
+lmb[type=data][alt]:after {
+    font-size: smaller;
+    content: " | \"" attr(alt) "\"";
+}
+
+/* subtemplate */
+lmb[type=template] {
+    background: mediumseagreen;
+}
+lmb[type=template]:before {
+    content: "{" attr(name) "}";
+}
+
+/* dynamic data */
+lmb[type=dynamicData] {
+    background: deepskyblue;
+}
+lmb[type=dynamicData]:before {
+    content: "\"" attr(title) "\"";
+}
+
+/* group */
+lmb[type=group] {
+    background: palevioletred;
+}
+lmb[type=group]:before {
+    content: "{{" attr(name) "}}";
+}
+
+/* function */
+lmb[type=func],
+lmb[param=func],
+lmb[condition=func] {
+    background: darkblue;
+    color: white;
+}
+lmb[type=func]:before {
+    content: "=" attr(name) "(";
+}
+lmb[type=func]:after {
+    content: ")";
+}
+
+/* function params */
+lmb[param] {
+    border: 1px solid red;
+    margin: 2px;
+    padding: 1px;
+}
+lmb[param=value]:before {
+    content: "\"" attr(value) "\"";
+}
+lmb[param] + lmb[param=value]:before {
+    content: ", \"" attr(value) "\"";
+}
+lmb[param=data]:before {
+    content: attr(src);
+}
+lmb[param] + lmb[param=data]:before {
+    content: ", "  attr(src);
+}
+lmb[param=func]:before {
+    content: "=" attr(name) "(";
+}
+lmb[param=func]:after {
+    content: ")";
+}
+lmb[param] + lmb[param=func]:before {
+    content: ", =" attr(name) "(";
+}
+
+/* if */
+lmb[type=if],
+lmb[type=elseif],
+lmb[type=else],
+lmb[type=endif] {
+    background: darkgreen;
+    color: white;
+}
+lmb[type=if]:before {
+    content: "if ";
+}
+lmb[type=elseif]:before {
+    content: "else if ";
+}
+lmb[type=else]:before {
+    content: "else ";
+}
+lmb[type=endif]:before {
+    content: "end if ";
+}
+lmb[condition] {
+    font-size: smaller;
+    vertical-align: middle;
+}
+lmb[condition=data]:before {
+    content: attr(src);
+}
+lmb[condition=func]:before {
+    content: "=" attr(name) "(";
+}
+lmb[condition=func]:after {
+    content: ")";
+}
+
+tr[data-lmb-data-row] {
+    border-bottom-style: dotted;
+    border-top-style: dotted;
+}

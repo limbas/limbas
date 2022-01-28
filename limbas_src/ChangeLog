@@ -1,23 +1,351 @@
+2022-01-10 16:31:42 fixing update encodings
+2022-01-10 14:34:19 fixing some validate issues
+2021-12-22 17:42:17 fixing view field translation - adding line display for fieltype radio
+2021-12-20 18:50:16 fixing DMS versioning for 1:1 relations
+2021-12-17 17:31:46 fixing validate functions - fixing converting functions
+2021-12-14 14:21:32 filter formlist for typ 2 or extensions in menueditor
+2021-12-14 11:55:48 fix multiple index setting in formulareditor - add php manuel link to menueditor
+2021-12-08 12:07:18 adding relation, multiselect, Tags to validate function
+2021-12-03 11:01:51 adding dependend field_types
+2021-11-22 18:45:33 adding datatables to simple views
+2021-11-16 12:28:35 fix relation trigger update for archived datasets - adding datatable sto sql editor
+2021-11-12 15:54:00 modify select / multiselct / atrribute handling
+2021-11-11 15:26:33 fixing raw export for relations - removing htmlencode
+2021-11-10 15:48:55 fixing table width in formular editor
+2021-11-10 14:23:56 fixing active form tabulator
+2021-11-02 10:17:32 adding radio and checkbox handling for report templates
+2021-10-25 12:11:35 expand fieldname / tablename
+2021-10-21 16:40:17 adding option setting for fieldtype argument in group settings - adjust select pool settings for different field types - resize serach length of relation fields to 36
+2021-10-15 13:05:04 FIXED: datasync job locking
+2021-10-15 11:23:32 ADDED: datasync job locking
+2021-10-12 16:11:12 FIXED: datasync include achieved or invalid relations
+2021-10-12 16:04:06 adding detailmode for get_gresult
+2021-10-08 16:26:58 FIXED: sidebar state saving; datasync show all validity
+2021-10-07 11:50:40 fixing dublicate files for relation fileupload
+2021-10-06 13:17:15  adjust transaction handling
+2021-10-05 09:08:07 adding validation to versioned relations
+2021-09-30 15:58:17 changing transsactions series
+2021-09-30 09:25:38 fixing DMS issues , overwrite files
+2021-09-29 16:32:37 fixing DMS issues , delete files, create folder
+2021-09-29 09:59:48 CHANGED: report background adjustments
+2021-09-28 10:41:34 CHANGED: datasync backward relation not ignored
+2021-09-27 15:15:28 fixing some maxdb issues - fixing self relation loop
+2021-09-23 11:44:22 fixing global datasync
+2021-09-22 15:54:11 ADDED: header/footer and background elements in mpdf report
+2021-09-22 14:18:53 CHANGED: version.inf
+2021-09-22 14:16:12 FIXED: datasync 1:n direct relation
+2021-09-17 14:03:00 FIXED: datasync 1:n direct relation
+2021-09-17 13:47:56 fixing php type issues
+2021-09-10 14:17:08 adding pre validation in listmode - adding table parameter for delete recursive datasets - adding transaktion for function del_data in api - support dataset copy with multitenants and versioning
+2021-09-10 13:05:09 FIXED: Sidebars hiding on click
+2021-09-08 17:22:33 adding pre validation for 'update', 'versioning', 'copy', 'delete', 'hide', 'unhide', 'lock', 'unlock'
+2021-09-06 13:37:40 copy dataset using different multitenants - versioning dataset using different target ID
+2021-08-13 15:20:16 FIXED: sidebar close / open size
+2021-08-13 13:41:33 FIXED: Datasync file level id in relation
+2021-08-13 13:39:25 FIXED: Datasync file level id in relation
+2021-08-13 13:28:12 adding relation ID for 1:n direct backward for relationval parameter - adding picture upload relation extension in listmode
+2021-08-11 10:37:52 adding ldms_filedID to template, support archive ID in Template
+2021-08-09 13:08:53 Adjustments: Datasync / Reports
+2021-08-09 13:03:19 margin for mpdf
+2021-08-06 09:35:52 Changed: MPDF preview
+2021-08-04 14:20:18 margin for mpdf
+2021-08-04 13:18:42 some fixes for mpdf
+2021-08-04 11:20:49 Added: MPDF menu & preview integration
+2021-08-02 10:47:50 extend image upload with dynamic reload
+2021-07-29 11:06:30 -fixing dublicate relation after versioning
+2021-07-23 11:57:13 fixing relation parameter show_inframe
+2021-07-22 10:52:36 fixing tablesettings in bootstrap
+2021-07-20 16:49:20 fixing select display in table search relation
+2021-07-20 15:34:19 adding simple upload view to relation parameter
+2021-07-19 15:23:45 fixing relation parameter settings gtabid - fining next prev pagination for quickrelation - fixing vaidity update in table lists
+2021-07-15 12:47:15 adding File Upload Extension - adding validity in REST API - fixing convert import Tables - fixing ldms_upload API relation parameter - fixing Synctrigger for datasync functions
+2021-07-12 16:50:54 fixing drop all relations in ajax based realtion view
+2021-07-12 16:00:38 fixing sync slave issue - fixing menueditor for editing info menus - adding validity filter to REST
+2021-07-12 12:48:30 mpdf systemfields
+2021-07-09 18:46:32 support mpdf phase 3
+2021-07-09 15:26:35 support mpdf phase 2
+2021-07-07 13:49:56 Fixed: Report preview nested iframes
+2021-07-07 13:27:33 Fixes: bootstrap layout
+2021-07-07 12:41:33 Added: new report editor
+2021-07-07 12:18:56 support mpdf phase 1
+2021-07-06 14:55:46 fixing converting relations fom 1:n to 1:n direct
+2021-07-05 15:16:25 bootstrap fixes & datasync fixes & report preview adjustments
+2021-07-05 14:44:09 fixing skiping LDMS_FILES.ID in DMS - fixing dublicate handling for copy&paste in DMS - using real mandatory folder names in DMS
+2021-07-02 10:55:48 adding Primary key ID after table copy
+2021-06-29 11:04:53 adding sidemenu extension for tabulator frames in forms
+2021-06-25 13:41:16 Bootstrap fixes
+2021-06-25 13:37:57 activate rsync functions
+2021-06-23 12:10:45 Bootstrap fixes
+2021-06-22 18:15:20 fixing upload field_type in DMS
+2021-06-21 15:34:59 adding minimized viewmode for relations
+2021-06-16 12:27:05 Minor bootstrap fixes
+2021-06-14 14:47:35 fixing DMS requirements
+2021-06-11 13:20:43 Minor bootstrap fixes
+2021-06-09 12:20:46 Further bootstrap adjustments
+2021-06-02 12:15:24 Fixed: Navbar overflow
+2021-05-28 15:52:27 Added: global table sync on all clients
+2021-05-28 10:27:47 update script v 4.3.32
+2021-05-28 10:20:25 adding rsync filesync editor
+2021-05-26 15:55:47 Changed: Major implementation of bootstrap on admin side
+2021-05-14 11:07:07 First Part of Admin Bootstrap Layout
+2021-05-12 11:59:19 adding one way sync trigger
+2021-05-11 10:33:31 adding report API
+2021-05-06 17:43:28 rename DMS & report functions - fixing radio update issue
+2021-04-30 11:00:38 DMS PGP encryption Phase1
+2021-04-29 11:00:42 ReportManager adjustments and report menu fixes
+2021-04-29 10:53:46 DMS PGP encryption Manager
+2021-04-26 13:37:38 DMS PHP Upload / Download refactoring
+2021-04-15 11:36:31 fixing tablepermissions after table copy
+2021-04-15 11:19:34 show process time only in debug mode
+2021-04-14 17:26:58 fixing disabled relation parameter values in forms with invalid validity
+2021-04-09 11:44:24 ReportManager adjustments
+2021-04-09 11:31:09 adding sync filter
+2021-04-08 12:11:46 ReportManager adjustments
+2021-04-08 11:53:18 fixing deprecated relation filter - removing dublicate fomular css inclusion
+2021-04-06 10:22:49 ReportManager adjustments
+2021-04-06 10:19:39 adding reportmanager menu - adding multitenant for history tables
+2021-03-29 15:47:43 update script 3.19
+2021-03-26 17:47:20 Fixed: ReportManager after merge conflicts
+2021-03-26 15:50:57 Added: ReportManager first version
+2021-03-26 15:23:19 adding multitenant functions for DMS - fixing Boolean Checkbox issue after Post
+2021-03-17 11:37:28 fixed validity NULL issue - fixed no_sort relation parameter
+2021-03-14 16:58:30 Translation of repeated data row in Wysiwyg extension
+2021-03-12 11:35:11 Template wysiwyg extension: Functionality to modify function params
+2021-03-12 10:48:04 Table search now works with relation params
+2021-03-11 16:40:07 Fix rest api for direct backwards relation
+2021-03-11 16:28:52 TemplateSystem: Specific dataset for template elements
+2021-03-11 15:09:21 TemplateSystem: First version of data row filter
+2021-03-11 11:41:32 Postgres fulltextsearch: Search by and/or/phrase in table
+2021-03-10 16:39:06 Bugfix: Preview doesnt show multiple pdfs
+2021-03-08 15:49:22 Fullsearch for relations
+2021-03-06 11:42:05 Easier initialization of template elements in report/form editor
+2021-03-06 11:18:13 Wysiwyg-Extension: "Writable" checkbox
+2021-03-06 11:11:54 Wysiwyg-Extension: "Back" button for table selection
+2021-03-05 18:29:36 Dynamic data type now selectable from wysiwyg editor
+2021-03-05 17:41:04 Handle html special chars
+2021-03-05 17:29:55 Only order by postgres rank if search term was entered
+2021-03-05 17:29:18 Catch full search error
+2021-02-28 11:18:00 Template system: Remove html comments
+2021-02-26 13:15:38 include extended libs to rebuild arguments - add extended relation filter to quick search results
+2021-02-25 17:44:07 Utility functions for template system
+2021-02-24 13:12:59 Added: Port to dynamic url
+2021-02-24 12:59:33 VACT handling for validity versioning - adjust validation behavior
+2021-02-24 12:51:07 VACT handling for validity versioning - adjust validation behavior
+2021-02-24 12:16:42 Fix merge mishaps
+2021-02-23 10:58:51 fixing footer function for relations - change ajax select behavior - Onclick show all results - fixing tabulator display function inf forms
+2021-02-19 17:14:58 add pagination to ajax relation AND dropdown results - adding Validate Extension for POst Requests / lmb_ValidatePostRequest - adding validity extension for adding new versions to the beginning - change parameter behavior for extensions and gsr filter - adding submit notice after changing field values - adding save and close button also in innerframe popups - adding class to pagination submit and resize tag - adding innerframe popups also in tablelist - recalc php arguments in systemsettings , adding extension functions to recalc function
+2021-02-19 17:01:12 add pagination to ajax relation AND dropdown results - adding Validate Extension for POst Requests / lmb_ValidatePostRequest - adding validity extension for adding new versions to the beginning - change parameter behavior for extensions and gsr filter - adding submit notice after changing field values - adding save and close button also in innerframe popups - adding class to pagination submit and resize tag - adding innerframe popups also in tablelist - recalc php arguments in systemsettings , adding extension functions to recalc function
+2021-02-19 16:58:23 add pagination to ajax relation AND dropdown results - adding Validate Extension for POst Requests / lmb_ValidatePostRequest - adding validity extension for adding new versions to the beginning - change parameter behavior for extensions and gsr filter - adding submit notice after changing field values - adding save and close button also in innerframe popups - adding class to pagination submit and resize tag - adding innerframe popups also in tablelist - recalc php arguments in systemsettings , adding extension functions to recalc function
+2021-02-19 11:16:53 Template Wysiwyg: Datid function
+2021-02-19 10:45:10 Template Wysiwyg: Searchable fields/functions
+2021-02-13 16:55:44 List reports from nav: Open in preview
+2021-02-13 16:47:57 Template-system: Prevent recursion
+2021-02-13 15:50:08 Form/Report editor now shows template table in title
+2021-02-13 15:40:11 Wysiwyg-extension: Own tab for system functions
+2021-02-13 15:30:37 Add pagebreak button
+2021-02-12 15:00:21 Fix listmode preview
+2021-02-12 14:23:37 Parentage
+2021-02-12 13:49:04 Template-System: Allow list forms
+2021-02-12 11:04:56 Remove invalid characters from lmb_log::error
+2021-02-11 16:43:48 Template-System: Data improvements
+2021-02-11 10:56:52 Fix 0,00 in convert_NumberFormat
+2021-02-05 12:34:02 Template-System: Storing tablerow results for user calculations
+2021-02-04 15:44:21 Template-System: Repeated table row for forms
+2021-02-04 12:48:38 indicate submit botton after update - support dimension for adding new relation datasets
+2021-02-04 10:39:13 Template-System: Repeated table row for reports + Wysiwyg extension
+2021-02-03 16:26:08 copy version settings after versioning validity relations - prevent recursiv versioning
+2021-02-01 10:23:46 adding extended validity filter to reports
+2021-01-29 17:22:21 adding validity filter to reports - fixing pdf report preview for placeholders
+2021-01-28 16:12:42 Correct language entries
+2021-01-27 14:35:00 validity fix for direct recursiv versioning
+2021-01-22 12:42:26 extends datetime class for country format
+2021-01-21 17:11:22 adding validity setting to relationview
+2021-01-19 14:36:57 validity fix in params
+2021-01-16 16:56:50 Template-system: Wysiwyg editor extension
+2021-01-15 16:03:43 adding browser date function in date fields - adding parameter to enable edit long fields in Tablelist - fixing permissions to edit relation parameter
+2021-01-15 12:40:37 Fix toggleHeight function for tile/list form
+2021-01-14 16:55:45 adding formular size in relation parameters
+2021-01-14 14:50:20 adding oder_by default parameter in groups und table settings - fixing missing tab-index for relations
+2020-12-23 12:19:44 additional edit permission if user in multitenant group
+2020-12-23 11:33:46 fix validity submit in tablelist - fix default form resizing - adding validity parameter for relations
+2020-12-22 09:44:11 Bugfix for 1:1 related tables in template system
+2020-12-21 13:23:05 mark already joint in relation quicksearch
+2020-12-21 12:52:56 fixing relation parameter editor - adding popup relations in new tab
+2020-12-21 11:00:58 fixes systemtrigger filter
+2020-12-21 10:54:14 support tab and fieldid in next_db_id() function
+2020-12-16 10:44:37 Fixed: report menu dropped selected templates
+2020-12-15 12:58:51 Added: version parameter to all css & js urls
+2020-12-11 09:34:09 fixes some issues
+2020-12-10 12:05:37 Bugfix datepicker not saving
+2020-12-10 10:54:30 Bugfix calendar beforeShow
+2020-12-03 18:24:25 issue validity filter - count display for 1:n direct relations
+2020-12-03 12:29:19 Report bugfix: Background doesnt overwrite Header now
+2020-12-03 09:22:33 cftyp_ functions must not echo in all cases, otherwise rest doesnt work
+2020-12-02 17:29:17 vaidity versioning for 1:1 relations
+2020-12-01 09:25:40 order by in versioning context - handle alert notice
+2020-12-01 09:17:29 Report templates: Minor IfPlacholder adjustments
+2020-11-30 10:27:57 fixing some foreign and indexing keys for 1;n direct relations
+2020-11-28 19:09:08 Fix php short open tag
+2020-11-27 19:43:57 Better error messages for template system
+2020-11-27 19:26:56 Report preview in new tab
+2020-11-27 17:55:06 Fix printer querying
+2020-11-27 15:23:32 adding select field from onlyfield
+2020-11-26 13:23:26 adding inline editing for multilanguage values
+2020-11-24 17:09:29 report templates: minor adjustments
+2020-11-24 17:07:10 fix for 1:1 relation array sort
+2020-11-19 17:14:45 Tcpdf: Hidden elements for template tags
+2020-11-19 17:07:46 Tcpdf: Fix wrong header height when only visible on following pages
+2020-11-18 16:24:02 changes on constant handling
+2020-11-18 14:14:29 datasync: ignore hierarchical relation
+2020-11-17 09:47:19 fix some sync issues
+2020-11-16 18:27:35 datasync: check if relation is parameterized and synced
+2020-11-16 18:15:19 datasync: ignore outdated configuration
+2020-11-13 17:16:42 drop missing rule entries in systools
+2020-11-13 11:13:37 support splitscreen for default formular
+2020-11-12 19:03:09 aadding notice bar to forms
+2020-11-12 16:45:54 adding backward 1:n direct get_gresult value - do not use extensions in datasync
+2020-11-12 14:18:44 Fix multitenant window being too far right
+2020-11-12 13:25:03 notice gui adjustments - sync systemfields
+2020-11-11 09:36:52 Datasync: systemfields adjustments Session auth LDAP extension
+2020-11-09 11:05:44 validity adjustments
+2020-11-06 17:25:46 Tinymce light skin when in template table
+2020-11-06 17:10:52 Template system quality of life functions
+2020-11-06 16:25:25 Wysiwyg dark layout
+2020-11-06 13:29:11 Tinymce update. Requires new independent/wysiwyg/tinymce
+2020-11-06 11:22:18 Template system: Show title/description
+2020-11-05 13:40:38 Template background improvement:
+2020-11-05 13:39:52 Template groups bug fix when there exist multiple template elements
+2020-11-04 10:34:38 fixing sync issues in template editor
+2020-11-04 10:00:23 Datasync: systemfields only
+2020-11-03 14:52:49 adding validity override & validity show all
+2020-10-30 13:49:39 Template tag for background images
+2020-10-30 09:59:33 fixing pagination issue
+2020-10-29 17:23:25 adding status info for dataset permissions
+2020-10-29 15:38:31 Php editor in barracuda layout
+2020-10-29 15:38:03 Template system: Date/Number/Select/Extension for dynamic data placeholders
+2020-10-29 14:51:54 fixing dataset rule setting in tablerights
+2020-10-29 14:38:16 fixing synctemplate shown tables
+2020-10-29 11:48:11 adding relation params for formelements
+2020-10-28 17:01:18 Datasync: fix version handling
+2020-10-23 12:17:51 fixing valitity behavior - fixing soap base64 behavior - adding relation params to GUI - multitenant in sync processs
+2020-10-22 14:36:50 Correct access/edit rights for template-element-forms
+2020-10-20 09:20:51 addning relatopn parameter to GUI
+2020-10-20 09:10:41 Datasync: attributes and all relations with parameters
+2020-10-15 15:40:04 Use options for TemplateGroup
+2020-10-15 13:53:13 Select2 dark layout
+2020-10-14 16:40:17 Recursive relation search for new 1:n backwards
+2020-10-09 15:55:58 Fixed direct self relation
+2020-10-09 15:41:01 bugfix subform reloading with wrong formid
+2020-10-09 10:08:38 Implemented backwards direct relation
+2020-10-08 16:22:33 Bugfix pool sorting
+2020-10-08 14:30:53 adding multitenant ID in parameter relation tables
+2020-10-06 15:43:34 validate validity inputs update info markers
+2020-10-02 16:52:57 changes in lock data and notice
+2020-10-02 15:14:45 Bugfix report menu
+2020-10-02 14:24:22 report bugfix
+2020-09-29 10:33:59 Recursive relation now works with direct relations
+2020-09-28 19:46:47 Revert "Convert number format for currency and float field types"
+2020-09-28 13:55:58 Fix sum aggregate for sql-argument field type
+2020-09-28 13:30:34 First version of dynamic data placeholders
+2020-09-28 12:02:53 Restructure grammar file
+2020-09-28 10:38:25 Bugfix: Kanban not showing all cards
+2020-09-28 10:31:11 Convert number format for currency and float field types
+2020-09-28 09:41:00 Bugfix in update script
+2020-09-25 17:10:08 Template system: UI for group selection
+2020-09-25 14:39:48 bugfix versioning / relation
+2020-09-25 13:16:41 File manager bugfixes
+2020-09-25 12:18:16 Bugfix for Kundenliste
+2020-09-22 19:36:03 redesign versioning with validity V1
+2020-09-22 18:30:15 Cleanup of limbasReportMenuOptions
+2020-09-22 16:23:54 Prevent "do you want to print report for 1 datasets" popup
+2020-09-22 16:21:44 Template system: Unique ids for template groups
+2020-09-22 15:21:13 Template system: Group functionality
+2020-09-22 12:16:13 Bugfix: Font was loaded from wrong folder by accident
+2020-09-22 11:09:06 Remove umgvar searchcount
+2020-09-22 10:45:36 Bugfix when importing dates
+2020-09-18 16:48:28 Added lmb-copy-(minus|edit|eye) icons
+2020-09-18 15:07:48 Report editor: Allow image to be in page margin
+2020-09-10 15:31:02 Recursive search: Last improvements/bugfixes:
+2020-09-08 13:18:41 Search window: Show relation field name instead of table name
+2020-09-08 13:06:46 Search window: Add new filter now works correctly
+2020-09-08 12:42:31 Search window: Activate negation/case sensitivity depending on selected operator
+2020-09-08 12:27:53 Redesign search window
+2020-08-21 17:26:26 Bugfix: A filter row is now shown for the search field that was clicked
+2020-08-21 17:21:17 Cleanup
+2020-08-21 17:21:05 Select2 integration in filter selection
+2020-08-14 09:34:41 Group tables by tabgroup in form -> uform -> table
+2020-08-11 13:55:21 Only show installed limbas fonts in wysiwyg editor
+2020-08-11 13:49:15 Increase max font size
+2020-08-11 12:18:59 Font family is being set correctly in report/form in chrome
+2020-08-10 17:44:22 adding relation parameter to default formular
+2020-08-07 13:45:38 fixing missing verkn_addfrom
+2020-08-07 12:56:35 adding validity filter with date/time selection
+2020-08-07 12:16:05 Archived filter for REST api
+2020-08-07 10:01:12 External cloud storage: Folder is now optional
+2020-07-29 14:37:08 adding validity filter part 1
+2020-07-28 12:35:50 remove deprecated error_logs
+2020-07-24 14:10:10 fixing some js issues
+2020-07-22 16:22:03 adding ajax submit button for div based subforms
+2020-07-21 15:49:36 checking for missing user directories after session refresh - adding foreign key for n:m relations
+2020-07-21 15:05:41 header layout for grouping frame
+2020-07-17 11:42:12 Extend datepicker options using form parameter
 2020-07-09 16:27:58 bugfix in formular list
+2020-07-08 11:46:44 prevent converting i:n relations without referential tntegrity
+2020-07-07 15:01:35 Template system: Elseif support
+2020-07-03 10:28:40 Fixing some relation converting issues
+2020-07-02 18:29:13 Filter row will always be loaded via ajax now, fixed too much filter rows
+2020-06-30 17:46:21 FIX converting 1:n relation - Fix formular listing mode
+2020-06-30 10:59:35 Fixed wrong search input name, "Mehrere" search input now disabled instead of readonly
+2020-06-30 10:29:19 Replace odbc_ functions with lmbdb_ functions in barracuda
 2020-06-24 14:56:22 -FIX tablerights for views
 2020-06-24 14:02:20 -support LMB_MID multitenant for Views -FIX multitenant in usersettings
+2020-06-23 15:28:09 Replaced "Array" in table list with "multiple"
+2020-06-23 15:12:01 [wip] Fixed focus
+2020-06-23 15:03:39 [wip] Removed searchcount umgvar
+2020-06-23 14:49:28 [wip] Fixed plus and X icons
+2020-06-23 13:27:05 [wip] Improved recursive gsr handling
 2020-06-22 16:26:21 FIX - Menueditor Link zu Tabellenlosen Formular FIX - Formularliste Typ  Erweiterung doppelt FIX - Wiedervorlage anlegen Admin form zu klein FIX - Formular Rechteck ohne Rahmen CSS FIX - Rechte oberstes Häckchen deaktiviert FIX - Formularrechte Name ohne lang[] FIX - delete physical files after deleting corresponding dataset
 2020-06-19 16:30:41 bootstrap layout first version fully integrated
+2020-06-16 13:58:10 Filter rows can be loaded via ajax
+2020-06-16 12:43:45 Removed unnecessary disabled attribute
+2020-06-16 12:39:08 Fixed LmGs_divchange doing 2 tasks
+2020-06-16 12:04:37 Refactoring: Move filter row printing into own function
+2020-06-16 10:21:20 recursiv relation search dropdown
 2020-06-16 09:55:29 Template-System: Check edit rights
 2020-06-12 09:23:50 added postgres global variables
+2020-06-08 12:19:53 Recursive gsr handling in get_where
+2020-06-06 17:51:37 Code improvement: Quick search for date
 2020-05-29 18:07:43 Bugfix: Another infinite loop in template system
+2020-05-28 19:47:06 bugfix in dropping relation fields recursiv - adding self relation in 1:n direct relations
 2020-05-26 16:08:09 Bugfix: Infinite loop in template system
+2020-05-26 14:55:24 Bugfix postscript report
+2020-05-26 10:53:13 Get_where documentation, code style
+2020-05-24 12:50:17 Sverkn is also set for new 1:n relation
+2020-05-24 12:06:28 Safety check to not delete all view dependencies
+2020-05-24 11:29:37 Showing relation fields in relation editor, but unable to select as primary relation field
+2020-05-22 11:30:47 Bugfix: Duplicate results in old 1:n relation
+2020-05-22 11:09:18 Bugfix: NULL/NOTNULL for new 1:n
+2020-05-21 12:02:53 Bugfix: Prevent dropping all dependencies when deleting 1:n backwards relation
 2020-05-21 10:37:14 Bugfixes for css class in template report
 2020-05-21 10:26:25 Add css column to lmb_report_list
 2020-05-21 10:18:39 Remove short open tags
 2020-05-18 11:13:27 adding css class to tcpdf reports
+2020-05-18 10:57:49 some code improvments
+2020-05-17 11:21:57 Bugfix: Self relation for direct 1:n
+2020-05-17 10:30:18 Remove short open tags
 2020-05-15 17:07:32 update language file
+2020-05-15 15:25:32 Bugfix: Self-linked dataset not showing in relation view (old 1:n)
 2020-05-15 11:09:22 noheader params for extensions - bugfix in check_grourights
+2020-05-15 10:34:13 get_where for direct 1:n relation
 2020-05-14 14:42:14 add boolean format checkbox, radio, select
+2020-05-14 11:25:24 1:n direct relation - report handling
 2020-05-11 13:28:43 merge master
+2020-05-08 09:53:13 new systemtables
+2020-05-08 09:48:47 1:n to simple 1:n backward relation
 2020-05-06 10:58:45 Template-System: Support for custom css class
 2020-04-30 18:44:35 Template-System: Support for displaying template elements only in form/report
 2020-04-24 17:59:16 Template-System: Support for 1:1 relation and numeric function param
+2020-04-15 15:39:58 1:n to simple 1:n basics
 2020-04-08 10:43:31 Postgres fts: Remove todo file
 2020-04-08 10:37:28 Postgres fts: Rank by relevance
 2020-04-07 11:04:36 Loading icon in explorer
@@ -53,6 +381,7 @@
 2020-03-18 13:40:07 Added todo
 2020-03-17 12:40:52 Form and Report: Showing user's (unsaved) changes when opening menu
 2020-03-12 11:02:39 release 4.1
+2020-03-12 09:33:47 basics for direct 1:n relation
 2020-03-10 17:55:20 Bugfix: Wrong hash function type
 2020-03-10 15:40:37 Bugfix: Prepare with missing data
 2020-03-10 15:30:45 Bugfix: Prepare statement without quotes
@@ -165,7 +494,6 @@
 2019-09-04 15:30:19 delete skalar layout, old pics
 2019-09-04 14:19:15 version 4.0.14
 2019-09-04 14:14:42 adding exensions to menugenerator
-2019-09-03 15:46:57 -
 2019-09-03 13:38:18 auto resize relation tables in hidden tabs
 2019-08-21 11:22:39 Fixed: table excel export record limit and depth
 2019-08-09 16:04:15 Improved install step 1
@@ -184,7 +512,6 @@
 2019-08-02 17:03:07 Improved template system by using parser instead of regex
 2019-08-02 10:34:30 Hopefully fixed odbc_fetch_array result keys
 2019-08-02 10:24:43 Hopefully fixed odbc_fetch_array result keys
-2019-08-01 17:58:23 administrate relation params in relation settings - changemod for relation params in n:m relations - usable values for input form elememts -
 2019-07-25 14:47:09 Fixed bug in FormDataPlaceholder
 2019-07-23 18:15:22 edit relation in table mode
 2019-07-23 16:19:35 limit argument field types for SQL / PHP Arguments
@@ -242,7 +569,6 @@
 2019-03-21 10:22:34 First version of rest api
 2019-03-21 10:12:58 Small fixes
 2019-03-20 12:04:28 fix some sql issues in tableeditor
-2019-03-19 11:38:10 -
 2019-03-19 11:35:30 empty default value of tablefields
 2019-03-18 15:12:42 Code cleanup, quick fixes
 2019-03-18 14:11:18 Fixed remote import bug, fixed legacy hover using js
@@ -623,7 +949,6 @@
 2017-09-14 19:49:17 calender todos
 2017-09-14 17:57:25 bugfix : calender contextmenu - adding : gant-calender using multible resources
 2017-09-12 12:27:13 rebuild import funktions - odbc import
-2017-09-12 12:26:03 -
 2017-08-31 17:51:39 Added default popup in table (backend only)
 2017-08-31 16:50:37 Added speech recognition for text fields
 2017-08-31 12:22:09 Added listedit backend
@@ -670,7 +995,6 @@
 2017-06-13 15:01:26 sync export can copy extensions - sync export can call extension function - sync export can display different column more handy - sync export compares more - sync export doesnt overwrite all umgvar - moved and enhanced function delete_user_filesave - sync export only secure now
 2017-06-09 11:16:33 Changed kanban multiframe
 2017-06-05 19:15:43 advanced sync functions
-2017-05-29 15:30:50 -
 2017-05-29 15:17:38 Added view definitions to export.php in sync export and import
 2017-05-29 14:44:11 Added new sync export types - Added return of 'success' variable from sync import
 2017-05-29 12:41:14 convert fields to type

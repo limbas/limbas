@@ -1,0 +1,306 @@
+<?php
+
+
+if($keytype == 2){
+    $crypto_key = 'PRIVATE';
+}else{
+    $keytype = 1;
+    $crypto_key = 'PUBLIC';
+}
+
+
+function add_cryptoKey($new_crypto_keys,$crypto_key){
+    global $umgvar;
+    global $db;
+
+
+    if($crypto_key == 'PRIVATE') {
+
+        if ($umgvar['multitenant']) {
+            if (!$new_crypto_keys['mid']) {
+                lmb_alert('please select an multitenant!');
+                return;
+            }
+            $sqlquery = "SELECT COUNT(*) AS CT FROM LMB_CRYPTO_{$crypto_key}_KEYS WHERE MID = ".$new_crypto_keys['mid'];
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (lmbdb_result($rs, "CT") > 0) {
+                lmb_alert('you can only use one private key per multitenant!');
+                return;
+            }
+        }else {
+
+            $sqlquery = "SELECT COUNT(*) AS CT FROM LMB_CRYPTO_{$crypto_key}_KEYS";
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (lmbdb_result($rs, "CT") > 0) {
+                lmb_alert('you can only use one private key!');
+                return;
+            }
+        }
+    }
+
+    $NEXTID = next_db_id("LMB_CRYPTO_{$crypto_key}_KEYS");
+    $sqlquery = "INSERT INTO LMB_CRYPTO_{$crypto_key}_KEYS (ID, NAME, MID) VALUES($NEXTID, '" . parse_db_string($new_crypto_keys['name'], 50) . "'," . parse_db_int($new_crypto_keys['mid']) . ")";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+}
+
+
+if(is_numeric($drop_crypto_keys)){
+    $sqlquery = "DELETE FROM LMB_CRYPTO_{$crypto_key}_KEYS WHERE ID = ".parse_db_int($drop_crypto_keys);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+if($edit_crypto_keys){
+    foreach($crypto_keys['edit'] as $kID => $value){
+        if(!$value){continue;}
+
+        $prepare_string = "UPDATE LMB_CRYPTO_{$crypto_key}_KEYS SET 
+        NAME = '".parse_db_string($crypto_keys['name'][$kID],150)."', 
+        TYPE = ".parse_db_int($crypto_keys['mid'][$kID]).",
+        ACTIVE = ".parse_db_bool($crypto_keys['active'][$kID]).",
+        KEY = ? 
+        WHERE ID = $kID";
+        if(!lmb_PrepareSQL($prepare_string,array($crypto_keys['value'][$kID]),__FILE__,__LINE__)){$commit = 1;}
+
+    }
+
+}
+
+
+if ($new_crypto_keys['name'] AND $add_crypto_keys) {
+
+    add_cryptoKey($new_crypto_keys,$crypto_key);
+
+}
+
+
+$sqlquery = "SELECT ID,NAME,KEY,MID,ACTIVE FROM LMB_CRYPTO_{$crypto_key}_KEYS ORDER BY NAME";
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+    $kid = lmbdb_result($rs, "ID");
+	$result_crypto_keys['name'][$kid] = lmbdb_result($rs, "NAME");
+	$result_crypto_keys['key'][$kid] = lmbdb_result($rs, "KEY");
+	$result_crypto_keys['mid'][$kid] = lmbdb_result($rs, "MID");
+	$result_crypto_keys['active'][$kid] = lmbdb_result($rs, "ACTIVE");
+}
+
+
+
+
+
+/**
+ * Define the number of blocks that should be read from the source file for each chunk.
+ * For 'AES-128-CBC' each block consist of 16 bytes.
+ * So if we read 10,000 blocks we load 160kb into memory. You may adjust this value
+ * to read/write shorter or longer chunks.
+ */
+define('FILE_ENCRYPTION_BLOCKS', 10000);
+
+/**
+ * Encrypt the passed file and saves the result in a new file with ".enc" as suffix.
+ *
+ * @param string $source Path to file that should be encrypted
+ * @param string $key    The key used for the encryption
+ * @param string $dest   File name where the encryped file should be written to.
+ * @return string|false  Returns the file name that has been created or FALSE if an error occured
+ */
+function encryptFile($source, $key, $dest)
+{
+    $key = substr(sha1($key, true), 0, 16);
+    $iv = openssl_random_pseudo_bytes(16);
+
+    $error = false;
+    if ($fpOut = fopen($dest, 'w')) {
+        // Put the initialzation vector to the beginning of the file
+        fwrite($fpOut, $iv);
+        if ($fpIn = fopen($source, 'rb')) {
+            while (!feof($fpIn)) {
+                $plaintext = fread($fpIn, 16 * FILE_ENCRYPTION_BLOCKS);
+                $ciphertext = openssl_encrypt($plaintext, 'AES-128-CBC', $key, OPENSSL_RAW_DATA, $iv);
+                // Use the first 16 bytes of the ciphertext as the next initialization vector
+                $iv = substr($ciphertext, 0, 16);
+                fwrite($fpOut, $ciphertext);
+            }
+            fclose($fpIn);
+        } else {
+            $error = true;
+        }
+        fclose($fpOut);
+    } else {
+        $error = true;
+    }
+
+    return $error ? false : $dest;
+}
+
+
+/**
+ * Dencrypt the passed file and saves the result in a new file, removing the
+ * last 4 characters from file name.
+ *
+ * @param string $source Path to file that should be decrypted
+ * @param string $key    The key used for the decryption (must be the same as for encryption)
+ * @param string $dest   File name where the decryped file should be written to.
+ * @return string|false  Returns the file name that has been created or FALSE if an error occured
+ */
+function decryptFile($source, $key, $dest)
+{
+    $key = substr(sha1($key, true), 0, 16);
+
+    $error = false;
+    if ($fpOut = fopen($dest, 'w')) {
+        if ($fpIn = fopen($source, 'rb')) {
+            // Get the initialzation vector from the beginning of the file
+            $iv = fread($fpIn, 16);
+            while (!feof($fpIn)) {
+                $ciphertext = fread($fpIn, 16 * (FILE_ENCRYPTION_BLOCKS + 1)); // we have to read one block more for decrypting than for encrypting
+                $plaintext = openssl_decrypt($ciphertext, 'AES-128-CBC', $key, OPENSSL_RAW_DATA, $iv);
+                // Use the first 16 bytes of the ciphertext as the next initialization vector
+                $iv = substr($ciphertext, 0, 16);
+                fwrite($fpOut, $plaintext);
+            }
+            fclose($fpIn);
+        } else {
+            $error = true;
+        }
+        fclose($fpOut);
+    } else {
+        $error = true;
+    }
+
+    return $error ? false : $dest;
+}
+
+
+
+
+
+
+function keyEncryptFile($source, $key, $dest)
+{
+
+    $iv = openssl_random_pseudo_bytes(16);
+    $pkeyid = openssl_get_publickey($key);
+
+    $error = false;
+    if ($fpOut = fopen($dest, 'w')) {
+        // Put the initialzation vector to the beginning of the file
+        fwrite($fpOut, $iv);
+        if ($fpIn = fopen($source, 'rb')) {
+            while (!feof($fpIn)) {
+                $plaintext = fread($fpIn, 16 * FILE_ENCRYPTION_BLOCKS);
+                #$ciphertext = openssl_encrypt($plaintext, 'AES-128-CBC', $key, OPENSSL_RAW_DATA, $iv);
+                openssl_seal($plaintext, $ciphertext, $ekeys, array($key), "AES256", $iv);
+
+
+                error_log(print_r($ekeys,1));
+
+                // Use the first 16 bytes of the ciphertext as the next initialization vector
+                $iv = substr($ciphertext, 0, 16);
+                fwrite($fpOut, $ciphertext);
+            }
+            fclose($fpIn);
+        } else {
+            $error = true;
+        }
+        fclose($fpOut);
+    } else {
+        $error = true;
+    }
+
+    return $error ? false : $dest;
+}
+
+
+function KeyDecryptFile($source, $key, $dest)
+{
+
+
+    $pkeyid = openssl_get_privatekey($key);
+
+    $error = false;
+    if ($fpOut = fopen($dest, 'w')) {
+        if ($fpIn = fopen($source, 'rb')) {
+            // Get the initialzation vector from the beginning of the file
+            while (!feof($fpIn)) {
+                $iv = fread($fpIn, 16);
+                $ciphertext = fread($fpIn, 16 * (FILE_ENCRYPTION_BLOCKS + 1)); // we have to read one block more for decrypting than for encrypting
+
+
+
+                openssl_open($ciphertext, $plaintext, $env_key, $key[0],  "AES256", $iv);
+
+                error_log($plaintext);
+
+
+                // Use the first 16 bytes of the ciphertext as the next initialization vector
+                $iv = substr($ciphertext, 0, 16);
+                fwrite($fpOut, $plaintext);
+            }
+            fclose($fpIn);
+        } else {
+            $error = true;
+        }
+        fclose($fpOut);
+    } else {
+        $error = true;
+    }
+
+    return $error ? false : $dest;
+}
+
+
+
+
+
+
+
+// --- Zeitmessung ---------------------------------------------------
+function is_firsttime()
+{
+    list ($usec, $sec) = explode(" ", microtime());
+    return ((float) $usec + (float) $sec);
+}
+
+
+
+
+
+
+
+
+
+#$key = 'afdioazhfdoqihfakj239487698fashf';
+#encryptFile('/TEMP/pgp/golf.mp4', $key, '/TEMP/pgp/golf.mp4.enc');
+#decryptFile('/TEMP/pgp/golf.mp4.enc', $key, '/TEMP/pgp/golf.mp4.enc.mp4');
+
+
+
+
+
+
+$publkey= file_get_contents('/TEMP/pgp/ssl/mykey1.pub');
+$privkey= file_get_contents('/TEMP/pgp/ssl/mykey1.pem');
+
+keyEncryptFile('/TEMP/pgp/data0.txt', $publkey, '/TEMP/pgp/data0.txt.enc');
+keyDecryptFile('/TEMP/pgp/data0.txt.enc', $privkey, '/TEMP/pgp/data0.txt.enc.txt');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+$zeit_now = is_firsttime();
+echo "<div style=\"color:white\">".($zeit_now - $zeit_main)."</div>";
+
+
+?>

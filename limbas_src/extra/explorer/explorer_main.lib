@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -64,12 +64,11 @@ function explSearch($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=null) {
 		echo "<TR class=\"gtabHeaderInputTR\"><TD class=\"gtabHeaderInputTD\" nowrap><input class=\"gtabHeaderInputINP\" type=\"text\" style=\"width:300px;\" value=\"".$ffilter["content"][$fid]."\" name=\"ffilter_content\" maxlength=\"50\">&nbsp;";
 
 		if ($umgvar['postgres_use_fulltextsearch']) {
-		    // TODO lang
             echo '<select name="fts_search_mode" onchange="document.form1.ffilter_fts_search_mode.value = this.value;">';
-            echo '<option value="and" ' . ($ffilter['fts_search_mode'][$fid] == 'and' ? 'selected' : '') . '>Und (Alle Wörter)</option>';
-            echo '<option value="or" ' . ($ffilter['fts_search_mode'][$fid] == 'or' ? 'selected' : '') . '>Oder (Eins der Wörter)</option>';
+            echo '<option value="and" ' . ($ffilter['fts_search_mode'][$fid] == 'and' ? 'selected' : '') . '>', $lang[3062], '</option>';
+            echo '<option value="or" ' . ($ffilter['fts_search_mode'][$fid] == 'or' ? 'selected' : '') . '>', $lang[3063], '</option>';
             if (!$umgvar['postgres_strip_tsvector']) {
-                echo '<option value="phrase" ' . ($ffilter['fts_search_mode'][$fid] == 'phrase' ? 'selected' : '') . '>Satz</option>';
+                echo '<option value="phrase" ' . ($ffilter['fts_search_mode'][$fid] == 'phrase' ? 'selected' : '') . '>', $lang[3064], '</option>';
             }
             echo '</select>';
 
@@ -260,8 +259,6 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 				}else{
 					$islocked = "";
 				}
-				#$size = explode("x",$umgvar["thumbsize2"]);
-				#$img2 = IMACK_ConvertThumbs(array($value,$ffile["secname"][$key],$ffile["mimeid"][$key],$ffile["thumb_ok"][$key]),$size[0],$size[1]);
 				echo "<TD class=\"gtabBodyTD\" NOWRAP VALIGN=\"TOP\"><DIV ID=\"td_".$gtab["argresult_id"]["LDMS_FILES"]."_11_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;width:".$ffilter["rowsize"][$LID][1]."px;\">";
 				if($umgvar["file_quickdownload"]){echo "<A class=\"link\" HREF=\"main.php?action=download&ID=$key\" TARGET=\"new\">";}
 				echo $islocked.$ffile["name"][$key];
@@ -285,9 +282,9 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 				# Thumb
 				if($gfile["name"][$gkey] == "THUMB_OK"){
 					$size = explode("x",$umgvar["thumbsize1"]);
-					$img1 = IMACK_ConvertThumbs(array($value,$ffile["secname"][$key],$ffile["mimeid"][$key],$ffile["thumb_ok"][$key],$ffile["level"][$key]),$size[0],$size[1],1);
+					$img1 = IMACK_ConvertThumbs(array($value,$ffile["secname"][$key],$ffile["mimeid"][$key],$ffile["thumb_ok"][$key],$ffile["level"][$key],$ffile["mid"][$key]),$size[0],$size[1],1);
 					$size = explode("x",$umgvar["thumbsize2"]);
-					$img2 = IMACK_ConvertThumbs(array($value,$ffile["secname"][$key],$ffile["mimeid"][$key],$ffile["thumb_ok"][$key],$ffile["level"][$key]),$size[0],$size[1],1);
+					$img2 = IMACK_ConvertThumbs(array($value,$ffile["secname"][$key],$ffile["mimeid"][$key],$ffile["thumb_ok"][$key],$ffile["level"][$key],$ffile["mid"][$key]),$size[0],$size[1],1);
 					echo "<TD class=\"gtabBodyTD\" VALIGN=\"TOP\" ALIGN=\"$align\"><DIV ID=\"td_".$key1."_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;width:".$ffilter["rowsize"][$LID][$key1]."px;\">";
 					if($img1){
 						echo "&nbsp;<IMG SRC=\"$img1\" BORDER=\"1\" STYLE=\"margin:1px;cursor:pointer;\" ";
@@ -362,6 +359,7 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 function explFooter($LID,$fid,&$ffile,&$ffilter){
 	global $lang;
 	global $umgvar;
+    global $session;
 
 	# ----------- Scrollleiste ----------------
 	echo "<div class=\"gtabFooterTR\"><TABLE cellspacing=\"0\" cellpadding=\"0\" class=\"gtabFooterTAB\"><TR><TD NOWRAP>\n";
@@ -396,7 +394,7 @@ function explFooter($LID,$fid,&$ffile,&$ffilter){
 		echo "<TD class=\"gtabFooterTD\" NOWRAP style=\"width:10px;\"><i class=\"lmb-icon lmb-last\" STYLE=\"cursor:pointer;\" BORDER=\"0\" TITLE=\"$lang[1295]\" OnClick=\"document.form1.ffilter_page.value='".$maxpage."';LmEx_send_form(1,1);\"></i></TD>\n";
 	}
 	echo "<TD NOWRAP>&nbsp;<B style=\"color:green;\">|</B>&nbsp;$lang[96]&nbsp;</TD><TD><INPUT TYPE=\"TEXT\" STYLE=\"width:30px;padding:0px;text-align:center;\" VALUE=\"".$ffilter["anzahl"][$fid]."\" NAME=\"ffilter_anzahl\" MAXLENGTH=\"3\"></TD><TD>&nbsp;$lang[88]</TD>\n";
-	echo "<TD NOWRAP style=\"color:#707070\">&nbsp;&nbsp;&nbsp;(".$ffile["need_time"]." sec.)</TD>";
+	if($session["debug"]){echo "<TD NOWRAP style=\"color:#707070\">&nbsp;&nbsp;&nbsp;(".$ffile["need_time"]." sec.)</TD>";}
 	echo "</TR><TR><TD STYLE=\"height:3px;\"></TD></TR></TABLE>";
 	echo "</TD></TR></TABLE></div>\n";
 }
@@ -423,7 +421,7 @@ function explPicShow(&$ffile,$gtabid,$field_id,$ID,$gformid,$formid,$picshow){
 			$width = $size[0];
 			$height = $size[1];
 		}
-		$pic = IMACK_ConvertThumbs(array($cfid,$ffile["secname"][$cfid],$ffile["mimeid"][$cfid],$ffile["thumb_ok"][$cfid],$ffile["level"][$cfid]),$width,$height,1);
+		$pic = IMACK_ConvertThumbs(array($cfid,$ffile["secname"][$cfid],$ffile["mimeid"][$cfid],$ffile["thumb_ok"][$cfid],$ffile["level"][$cfid],$ffile["mid"][$cfid]),$width,$height,1);
 	}
 
 	echo "<TR><TD><TABLE CELLSPACING=\"0\" CELLPADDING=\"0\"><TR><TD>&nbsp;</TD><TD><i TITLE=\"$lang[857]\" class=\"lmb-icon lmb-first\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3',$ID,'','','',1,'".$formid."','','','')\"></i></TD>";
@@ -449,9 +447,9 @@ function explPicSummery(&$ffile,$gtabid,$field_id,$ID,$gformid,$formid){
 	foreach ($ffile["id"] as $key => $value){
 
 		$size = explode("x",$umgvar["thumbsize1"]);
-		$img1 = IMACK_ConvertThumbs(array($key,$ffile["secname"][$key],$ffile["mimeid"][$key],$ffile["thumb_ok"][$key],$ffile["level"][$key]),$size[0],$size[1],1);
+		$img1 = IMACK_ConvertThumbs(array($key,$ffile["secname"][$key],$ffile["mimeid"][$key],$ffile["thumb_ok"][$key],$ffile["level"][$key],$ffile["mid"][$key]),$size[0],$size[1],1);
 		$size = explode("x",$umgvar["thumbsize2"]);
-		$img2 = IMACK_ConvertThumbs(array($key,$ffile["secname"][$key],$ffile["mimeid"][$key],$ffile["thumb_ok"][$key],$ffile["level"][$key]),$size[0],$size[1],1);
+		$img2 = IMACK_ConvertThumbs(array($key,$ffile["secname"][$key],$ffile["mimeid"][$key],$ffile["thumb_ok"][$key],$ffile["level"][$key],$ffile["mid"][$key]),$size[0],$size[1],1);
 		if($img1){
 			echo "<IMG SRC=\"".$img1."\" style=\"padding:5px;margin:5px;border:1px solid #CCCCCC;cursor:pointer\" OnClick=\"LmEx_preview_thumbs(event,'$img2')\" TITLE=\"".$ffile["name"][$key]."\">";
 		}else{

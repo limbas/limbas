@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -398,6 +398,8 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 		$value = "Datum";
 	}elseif($form_add == "relpath"){
 		$value = "relation path";
+	}elseif($form_add == "notice"){
+		$value = "relation notice bar";
 	}elseif($form_add == "uform"){
 		if($uform_style == 1){$uform_style_ = "iframe";}else{$uform_style_ = "div";}
 		if($uform_typ == 1){			#userdefined
@@ -510,7 +512,7 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
         $value = $form_add;
     }elseif($form_add == "templ"){
 		if(!$form_templ_id){return false;}
-		$value = 'template: '.$gtab['table'][$form_templ_id];
+		$value = "<!-- Replace TemplateElementName with element name from {$gtab['table'][$form_templ_id]} -->\n\${TemplateElementName}";
 		$pic_type = $form_templ_id;
 		$width=300;
 		$height=200;
@@ -1119,7 +1121,7 @@ if($action == 'setup_form_menu'){
 		$formlist['ref_tab'][] = lmbdb_result($rs, "REFERENZ_TAB");
 	}
 
-	$sqlquery = "SELECT LMB_CONF_FIELDS.FIELD_ID,LMB_CONF_FIELDS.SPELLING,LMB_CONF_FIELDS.TAB_GROUP,LMB_CONF_FIELDS.TAB_ID FROM LMB_CONF_FIELDS,LMB_FIELD_TYPES WHERE LMB_CONF_FIELDS.DATA_TYPE = LMB_FIELD_TYPES.DATA_TYPE AND LMB_FIELD_TYPES.FIELD_TYPE = 11 AND LMB_CONF_FIELDS.TAB_ID = ".$form["referenz_tab"];
+	$sqlquery = "SELECT LMB_CONF_FIELDS.FIELD_ID,LMB_CONF_FIELDS.SPELLING,LMB_CONF_FIELDS.TAB_GROUP,LMB_CONF_FIELDS.TAB_ID FROM LMB_CONF_FIELDS,LMB_FIELD_TYPES WHERE LMB_CONF_FIELDS.DATA_TYPE = LMB_FIELD_TYPES.DATA_TYPE AND LMB_FIELD_TYPES.FIELD_TYPE = 11 AND LMB_CONF_FIELDS.TAB_ID = ".parse_db_int($form["referenz_tab"]);
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	while(lmbdb_fetch_row($rs)) {
 		$formfield['id'][] = lmbdb_result($rs, "FIELD_ID");

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -422,8 +422,11 @@ function check_grouprights1($group_id,$group_name="",$num_group=0,$check_table=0
 	global $farbschema;
 	global $num;
 
+	// drop missing rule entries
+    del_tablerights($check_table);
+
 	if(is_numeric($check_table) AND $check_table){$check_table = " WHERE LMB_CONF_TABLES.TAB_ID = $check_table ";}else{$check_table = '';}
-	
+
 	$sqlquery = "SELECT LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.TAB_ID,LMB_CONF_TABLES.BESCHREIBUNG,LMB_CONF_TABLES.TAB_GROUP,LMB_CONF_VIEWS.VIEWTYPE
 FROM LMB_CONF_TABLES LEFT OUTER JOIN LMB_CONF_VIEWS ON (LMB_CONF_TABLES.TAB_ID = LMB_CONF_VIEWS.ID)
 $check_table
@@ -481,7 +484,7 @@ ORDER BY TAB_GROUP,TAB_ID";
 			$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 			if (!lmbdb_fetch_row($rs2)) {
 				$NEXTID = next_db_id("LMB_RULES_FIELDS");				
-				$sqlquery3 = "INSERT INTO LMB_RULES_FIELDS (ID,GROUP_ID,TAB_GROUP,TAB_ID,FIELD_ID,LMVIEW,EDIT,COLOR,FILTER,SORT) VALUES ($NEXTID,$group_id,".$gtab['tab_group'][$bzm].",".$gtab['tab_id'][$bzm].",".lmbdb_result($rs,"FIELD_ID").",$BOOL,$BOOL,'','',0)";
+				$sqlquery3 = "INSERT INTO LMB_RULES_FIELDS (ID,GROUP_ID,TAB_GROUP,TAB_ID,FIELD_ID,LMVIEW,EDIT,COLOR,FILTER) VALUES ($NEXTID,$group_id,".$gtab['tab_group'][$bzm].",".$gtab['tab_id'][$bzm].",".lmbdb_result($rs,"FIELD_ID").",$BOOL,$BOOL,'','')";
 				$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 			}
 		}
@@ -543,7 +546,7 @@ function check_grouprights2($group_id,$group_name="",$num_group=0,$showstatus=nu
 		if(lmbdb_result($rs,"SORT")){$sort = lmbdb_result($rs,"SORT");}else{$sort = 0;}
 		
 		$NEXTID = next_db_id("LMB_RULES_FIELDS");
-		$sqlquery1 = "INSERT INTO LMB_RULES_FIELDS (ID,GROUP_ID,TAB_GROUP,TAB_ID,FIELD_ID,LMVIEW,EDIT,COLOR,FILTER,SORT) VALUES ($NEXTID,$group_id,".lmbdb_result($rs, "TAB_GROUP").",".lmbdb_result($rs, "TAB_ID").",".lmbdb_result($rs,"FIELD_ID").",$view,$edit,'".lmbdb_result($rs,"COLOR")."','".str_replace("'","''",lmbdb_result($rs,"FILTER"))."',".$sort.")";
+		$sqlquery1 = "INSERT INTO LMB_RULES_FIELDS (ID,GROUP_ID,TAB_GROUP,TAB_ID,FIELD_ID,LMVIEW,EDIT,COLOR,FILTER) VALUES ($NEXTID,$group_id,".lmbdb_result($rs, "TAB_GROUP").",".lmbdb_result($rs, "TAB_ID").",".lmbdb_result($rs,"FIELD_ID").",$view,$edit,'".lmbdb_result($rs,"COLOR")."','".str_replace("'","''",lmbdb_result($rs,"FILTER"))."')";
 		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 	}
 
@@ -559,7 +562,7 @@ function check_grouprights2($group_id,$group_name="",$num_group=0,$showstatus=nu
 
 function check_grouprightsAll($showstatus=null){
     global $db;
-    
+
     $sqlquery = "Select COUNT(*) AS ANZAHL from LMB_GROUPS";
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     $num_group = lmbdb_result($rs,"ANZAHL");
@@ -616,12 +619,12 @@ function del_grouprights($groupid,$groupname="",$num_group=0){
 	global $db;
 	global $lang;
 
-	$sqlquery = "Select COUNT(*) AS ANZAHL from LMB_GROUPS";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$sqlquery = "SELECT COUNT(*) AS ANZAHL FROM LMB_GROUPS";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 	$num_group = lmbdb_result($rs,"ANZAHL");
 
 	$sqlquery = "SELECT LINK_ID FROM LMB_RULES_ACTION WHERE GROUP_ID = ".$groupid;
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 	while(lmbdb_fetch_row($rs)) {
 		$link_id = lmbdb_result($rs,"LINK_ID");
 		if($link_id < 1000){
@@ -629,12 +632,57 @@ function del_grouprights($groupid,$groupname="",$num_group=0){
 		}else{
 			$sqlquery2 = "SELECT ID FROM LMB_ACTION_DEPEND WHERE ID = ".$link_id;
 		}
-		$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+		$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$GLOBALS['action'],__FILE__,__LINE__);
 		if (!lmbdb_fetch_row($rs2)) {
 			$sqlquery3 = "DELETE FROM LMB_RULES_ACTION WHERE LINK_ID = ".$link_id." AND GROUP_ID = ".$groupid;
-			$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+			$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$GLOBALS['action'],__FILE__,__LINE__);
 			$del_link++;
 		}
 	}
 }
+
+
+function del_tablerights($tabid=null){
+	global $db;
+	global $lang;
+
+	if($tabid){$gqr = "AND TAB_ID = $tabid";}
+
+    // table rules
+	$sqlquery = "DELETE FROM LMB_RULES_TABLES WHERE
+    NOT EXISTS (
+        SELECT ID FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = LMB_RULES_TABLES.TAB_ID
+    ) $gqr";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+
+	// field rules
+	$sqlquery = "DELETE FROM LMB_RULES_FIELDS WHERE
+    NOT EXISTS (
+        SELECT ID FROM LMB_CONF_FIELDS WHERE LMB_CONF_FIELDS.TAB_ID = LMB_RULES_FIELDS.TAB_ID AND LMB_CONF_FIELDS.FIELD_ID = LMB_RULES_FIELDS.FIELD_ID
+    ) $gqr";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+
+	if($tabid){$gqr = "AND TABID = $tabid";}
+
+	// sync template
+    /*
+	$sqlquery = "DELETE FROM LMB_SYNC_TEMPLATE WHERE
+    NOT EXISTS (
+        SELECT ID FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = LMB_SYNC_TEMPLATE.TABID
+    ) $gqr";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    */
+
+	// sync rules
+	$sqlquery = "DELETE FROM LMB_SYNC_CONF WHERE
+    NOT EXISTS (
+        SELECT ID FROM LMB_CONF_FIELDS WHERE LMB_CONF_FIELDS.TAB_ID = LMB_SYNC_CONF.TABID AND LMB_CONF_FIELDS.FIELD_ID = LMB_SYNC_CONF.FIELDID
+    ) $gqr";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+
+}
+
+
+
+
 ?>

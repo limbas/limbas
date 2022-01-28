@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -328,7 +328,7 @@ function publicHTMLPost(result){
 					echo "<TD NOWRAP style=\"width:15px;\"><IMG SRC=\"pic/scrollright.gif\" STYLE=\"cursor:pointer;\" BORDER=\"0\" TITLE=\"eine Seite weiter\" OnClick=\"document.form1.filter_page.value='".($filter["page"] + 1)."';document.form1.submit();\"></TD>\n";
 					echo "<TD NOWRAP style=\"width:15px;\"><IMG SRC=\"pic/scrollend.gif\" STYLE=\"cursor:pointer;\" BORDER=\"0\" TITLE=\"zur letzen Seite\" OnClick=\"document.form1.filter_page.value='".(ceil($lmb[1]["ffile"]["max_count"]/$filter["anzahl"]))."';document.form1.submit();\"\"></TD>\n";
 					echo "<TD NOWRAP>&nbsp;<B style=\"color:green;\">|</B>&nbsp;".$la["zeige"]."&nbsp;</TD><TD><INPUT TYPE=\"TEXT\" STYLE=\"width:30px;height:13px;font-size:9;padding:0px;text-align:center;border:1px solid black\" VALUE=\"".$filter["anzahl"]."\" NAME=\"filter_anzahl\" MAXLENGTH=\"2\"></TD><TD>&nbsp;".$la["zeilen"]."</TD>\n";
-					echo "<TD NOWRAP style=\"color:#707070\">&nbsp;&nbsp;&nbsp;(".$lmb[1]["ffile"]["need_time"]." sec.)</TD>";
+					if($session["debug"]){echo "<TD NOWRAP style=\"color:#707070\">&nbsp;&nbsp;&nbsp;(".$lmb[1]["ffile"]["need_time"]." sec.)</TD>";}
 					echo "</TR><TR><TD STYLE=\"height:3px;\"></TD></TR></TABLE></TD></TR>\n";
 					?>
 

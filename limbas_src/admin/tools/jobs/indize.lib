@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -192,7 +192,8 @@ function prepare_filelevel_indize($level){
 
 	# get files
 	if($umgvar['indize_header']){$indw = "(IND = ".LMB_DBDEF_FALSE." OR INDM = ".LMB_DBDEF_FALSE.")";}else{$indw = "IND = ".LMB_DBDEF_FALSE;}
-	$sqlquery = "SELECT DISTINCT LDMS_FILES.ID,LDMS_FILES.LEVEL,LDMS_FILES.NAME,LDMS_FILES.IND,LDMS_FILES.INDM,LDMS_FILES.SECNAME,LMB_MIMETYPES.MIMETYPE,LMB_MIMETYPES.EXT FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.LEVEL = $level AND LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND DEL = ".LMB_DBDEF_FALSE." AND $indw";
+	$mttfilter = set_mttfilter()['where'];
+	$sqlquery = "SELECT DISTINCT LDMS_FILES.ID,LDMS_FILES.LEVEL,LDMS_FILES.NAME,LDMS_FILES.IND,LDMS_FILES.INDM,LDMS_FILES.SECNAME,LMB_MIMETYPES.MIMETYPE,LMB_MIMETYPES.EXT FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.LEVEL = $level AND LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND DEL = ".LMB_DBDEF_FALSE." AND $indw $mttfilter";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$bzm = 1;
@@ -216,10 +217,11 @@ function prepare_filelevel_indize($level){
 
 		# Datei-Inhalt
 		if(($umgvar['indize_filetype'][0] == 1 OR in_array($ext,$umgvar['indize_filetype']))
-            AND $ctt = convert_to_text(lmbdb_result($rs,"SECNAME"),$ext,lmbdb_result($rs,"MIMETYPE"),lmbdb_result($rs, "ID"),1,0,1,lmbdb_result($rs, "LEVEL"))) {
+            AND $ctt = convert_to_text(lmbdb_result($rs,"SECNAME"),$ext,lmbdb_result($rs,"MIMETYPE"),lmbdb_result($rs, "ID"),1,0,1,lmbdb_result($rs, "LEVEL"),lmbdb_result($rs, "LMB_MID"))) {
 
 		    if ($umgvar['postgres_use_fulltextsearch']) {
-                $resultpath = $umgvar['pfad'] . "/TEMP/txt/" . lmbdb_result($rs, "SECNAME") . ".txt";
+		        #$resultpath = $umgvar['pfad'] . "/TEMP/txt/" . lmbdb_result($rs, "SECNAME") . ".txt";
+		        $resultpath = lmb_getFilePath($indi["fileid"],$level, lmbdb_result($rs, "SECNAME"),'txt',lmbdb_result($rs, "LMB_MID"),3);
                 $text = &file_get_contents($resultpath);
                 indize_create_postgres($indi, $text);
             } else {
@@ -251,7 +253,8 @@ function prepare_filelevel_indize($level){
                     # Inhalt und Metadaten indizieren
                 } else {
                     # Temporärer TXT Pfad
-                    $resultpath = $umgvar['pfad'] . "/TEMP/txt/" . lmbdb_result($rs, "SECNAME") . ".txt";
+                    #$resultpath = $umgvar['pfad'] . "/TEMP/txt/" . lmbdb_result($rs, "SECNAME") . ".txt";
+                    $resultpath = lmb_getFilePath($indi["fileid"],$level, lmbdb_result($rs, "SECNAME"),'txt',lmbdb_result($rs, "LMB_MID"),3);
 
                     if (file_exists($resultpath)) {
                         $tf = fopen($resultpath, "r");

@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -45,20 +45,29 @@ $nid = next_db_id("lmb_umgvar","ID");
 $sqlquery = "INSERT INTO LMB_UMGVAR VALUES($nid,5,'postgres_rank_func','TS_RANK','DMS: the postgres function to order search results by relevance (''TS_RANK''/''TS_RANK_CD''). Leave empty for no order',2995)";
 patch_db(5, 2, $sqlquery, 'update umgvar: add postgres_rank_func', 4);
 
-function patch_6(){
-    global $db;
-    dbq_16(array($GLOBALS['DBA']['DBSCHEMA'],1));
-    return true;
-}
-patch_scr(6,2,"patch_6","rebuild trigger procedure",4);
+$sqlquery = dbq_15(array($DBA['DBSCHEMA'],'LMB_CONF_FIELDS','MD5TAB','VARCHAR(32)'));
+patch_db(6, 2, $sqlquery, 'resize relation field description', 4);
 
 $sqlquery = dbq_29(array($DBA['DBSCHEMA'],'LMB_REPORT_LIST','CSS','VARCHAR(120)'));
 patch_db(7, 2, $sqlquery, 'update lmb_report_list: add css field', 4);
 
+$sqlquery = dbq_29(array($DBA['DBSCHEMA'],'LMB_CONF_TABLES','VALIDITY',LMB_DBTYPE_FIXED.'(1)'));
+patch_db(8, 2, $sqlquery, 'update lmb_conf_tables: add validity field', 4);
+
+$sqlquery = "ALTER TABLE LMB_CONF_FIELDS ADD RELPARAMS ".LMB_DBTYPE_LONG;
+patch_db(9, 2,$sqlquery,"add RELPARAMS for LMB_CONF_FIELDS", 4);
+
+function patch_10(){
+    global $db;
+    dbq_16(array($GLOBALS['DBA']['DBSCHEMA'],1));
+    return true;
+}
+patch_scr(10,2,"patch_10","rebuild trigger procedure",4);
+
 echo "--><br>";
 
 #lmb_rebuildSequences();
-$impsystables = array("lmb_lang.tar.gz","lmb_action.tar.gz");
+#$impsystables = array("lmb_lang.tar.gz","lmb_action.tar.gz");
 
 $releasenotes = '
 <li>adding postgresql vector fulltextsearch indexing functionality</li>

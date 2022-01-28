@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -151,6 +151,7 @@ function parse_action($lmpar){
 	$lmb = array();
 
 	require_once("gtab/gtab.lib");
+    require_once("gtab/gtab_type.lib");
 	require_once("gtab/gtab_type_erg.lib");
 
 	# ------- Limbas Session Variablen --------
@@ -286,7 +287,7 @@ function parse_action($lmpar){
                     	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
                     } else {
                         require_once('extra/explorer/filestructure.lib');
-                    	del_file($fileID); # TODO forcedelnm?
+                    	lmb_deleteFile($fileID); # TODO forcedelnm?
 					}
                 }
 
@@ -688,7 +689,7 @@ function actionDMS(&$lmpart,&$lmb,$action){
 					$relation = $lmpart['upload_file']['relation'][$ukey];
 
 					$lmb[$action]['upload']['file_name'][] = $lmpart['upload_file']['name'][$ukey];
-					if($nfid = upload($file,$fid,$relation,$noupload,$dublicate)){
+					if($nfid = lmb_fileUpload($file,$fid,$relation,$noupload,$dublicate)){
 						$lmb[$action]['upload']['file_id'][] = $nfid;
 
 						if ($noupload === 3) {
@@ -714,9 +715,9 @@ function actionDMS(&$lmpart,&$lmb,$action){
 		if($lmpart['delete_file']['id']){
 			if(is_array($lmpart['delete_file']['id'])){
 				foreach ($lmpart['delete_file']['id'] as $dkey => $dval)
-				del_file($dval);
+				lmb_deleteFile($dval);
 			}elseif(is_numeric($lmpart['delete_file']['id'])){
-				del_file($lmpart['delete_file']['id']);
+				lmb_deleteFile($lmpart['delete_file']['id']);
 			}
 		}
 		
@@ -1041,7 +1042,7 @@ function getGtabLevel(&$lmpart,&$lmb,$action,$gtabid,$verkn=null,$rec=null){
 									$size = explode("x",$lmpart[$gtabid_]["thumbsize"][$key]);
 									if($piclist = $fresult[$rgtabid_][$did][$rkey]){
 										foreach($piclist["id"] as $key1 => $value1){
-											$piclist["url"][$key1] = IMACK_ConvertThumbs(array($key1,$piclist["secname"][$key1],$piclist["mimeid"][$key1],$piclist["thumb_ok"][$key1],$piclist["level"][$key1]),$size[0],$size[1],1);
+											$piclist["url"][$key1] = IMACK_ConvertThumbs(array($key1,$piclist["secname"][$key1],$piclist["mimeid"][$key1],$piclist["thumb_ok"][$key1],$piclist["level"][$key1],$piclist["mid"][$key1]),$size[0],$size[1],1);
 										}
 										$fresult[$rgtabid_][$did][$rkey] = $piclist;
 									}
@@ -1100,24 +1101,28 @@ function getGtabLevel(&$lmpart,&$lmb,$action,$gtabid,$verkn=null,$rec=null){
 			$still_done[$gtabid] = null;
 			$still_sdone[$gtabid] = null;
 
+            if(!$rec){
+
+                /*
+                if($GLOBALS["lmpar"]["use_noids"]){
+                    $gtabid_ = "#".$gtab["table"][$gtabid];
+                }else{
+                    $gtabid_ = $gtabid;
+                }
+                */
+
+                $lmb[$action]["result"]["res_count"][$gtabid_] = $gresult[$gtabid]["res_count"];
+                $lmb[$action]["result"]["max_count"][$gtabid_] = $gresult[$gtabid]["max_count"];
+                $lmb[$action]["result"]["page"][$gtabid_] = $filter["page"][$gtabid];
+            }
+
 			$bzm++;
 		}
 
 
 
 
-		if(!$rec){
 
-		    if($GLOBALS["lmpar"]["use_noids"]){
-				$gtabid_ = "#".$gtab["table"][$gtabid];
-			}else{
-				$gtabid_ = $gtabid;
-			}
-
-			$lmb[$action]["result"]["res_count"][$gtabid_] = $gresult[$gtabid]["res_count"];
-			$lmb[$action]["result"]["max_count"][$gtabid_] = $gresult[$gtabid]["max_count"];
-			$lmb[$action]["result"]["page"][$gtabid_] = $filter["page"][$gtabid];
-		}
 
 		return $fresult;
 	}

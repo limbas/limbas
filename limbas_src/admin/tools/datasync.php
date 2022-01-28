@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -137,7 +137,7 @@ if($tab == 1){
 ?>
 	<TABLE BORDER="0" cellspacing="0" cellpadding="0"><TR class="tabpoolItemTR">
 	<TD nowrap class="tabpoolItemInactive" OnClick="document.location.href='main_admin.php?action=setup_datasync&tab=1'">Clients</TD>
-	<TD nowrap class="tabpoolItemActive" >Templates</TD>
+	<TD nowrap class="tabpoolItemActive" OnClick="document.location.href='main_admin.php?action=setup_datasync&tab=2'">Templates</TD>
 	<TD class="tabpoolItemSpace">&nbsp;</TD>
 	</TR></TABLE>
 
@@ -170,25 +170,22 @@ if($tab == 1){
         }}
         echo "
         <TR></TR><TD colspan=\"4\"><HR></TD><TR>
-        <TR><TD colspan=\"3\"><input type=\"TEXT\" name=\"new_template\" style=\"width:300\"></TD><TD><input type=\"submit\" VALUE=\"".$lang[540]."\" name=\"add_template\"></TD></TR>";
+        <TR><TD colspan=\"3\"><input type=\"text\" name=\"new_template\" style=\"width:300\"></TD><TD><input type=\"submit\" VALUE=\"".$lang[540]."\" name=\"add_template\"></TD></TR>";
     }else{
     
         
     foreach($tabgroup['id'] as $bzm => $val) {
     	foreach($gtab["tab_id"] as $key => $tabid){
-    	   if($gtab["tab_group"][$key] != $tabgroup["id"][$bzm] OR $gtab["typ"][$key] == 5 OR !$gtab["datasync"][$tabid]){continue;}
+    	   if($gtab["tab_group"][$key] != $tabgroup["id"][$bzm] OR $gtab["typ"][$key] == 5 OR !$gtab["datasync"][$key]){continue;}
     	   $hasgroup[$bzm] = 1;
     	}
     }
-    	    
 
-    echo "<TR class=\"tabSubHeader\"><TD colspan=\"5\" class=\"tabSubHeaderItem\"><b>&nbsp;".$result_template['name'][$template]."</b></TD></TR>";
+    echo "<TR class=\"tabSubHeader\"><TD colspan=\"6\" class=\"tabSubHeaderItem\"><b>&nbsp;".$result_template['name'][$template]."</b></TD></TR>";
 
     foreach($hasgroup as $bzm => $val) {
         
-        if(in_array($gfield[$tabid]["field_type"][$fkey],$skipftype)){continue;}
-        
-    	echo "<TR><TD colspan=\"2\"><span style=\"color:blue\">".$tabgroup['name'][$bzm]." (".$tabgroup['beschreibung'][$bzm].")</span></TD></TR>";
+    	echo "<TR><TD colspan=\"2\">".$tabgroup['name'][$bzm]."</TD></TR>";
     	foreach($gtab["tab_id"] as $key => $tabid){
             
     		if($gtab["tab_group"][$key] != $tabgroup["id"][$bzm] OR $gtab["typ"][$key] == 5 OR !$gtab["datasync"][$tabid]){continue;}
@@ -200,10 +197,11 @@ if($tab == 1){
 			<TD style="width:50px" align="left"><IMG src="pic/outliner/<?=$icon?>.gif" tabid="<?=$key?>" NAME="popicon_<?=$key?>" CLASS="popicon" BORDER="0" STYLE="cursor:pointer" OnClick="pops('<?=$key?>')"></TD>
 			<TD style="width:400px" align="left" ><FONT COLOR="green"><?=$gtab['table'][$key]?> (<?=$gtab['desc'][$key]?>)&nbsp;</TD>
 			<TD style="width:300px"></TD>
-			<TD style="width:50px" class="tabHeaderItem">master</TD>
-			<TD style="width:50px" class="tabHeaderItem">client</TD>
+            <TD style="width:50px" class="tabHeaderItem" nowrap><?=$lang[1078]?>:&nbsp;<input type="text" NAME="templ_params[<?=$tabid?>]" onchange="save_rules('<?=$tabid?>','',3)" VALUE="<?=$result_params['params'][$tabid]?>"></TD>
+			<TD style="width:50px;text-align:center" class="tabHeaderItem">master</TD>
+			<TD style="width:50px;text-align:center" class="tabHeaderItem">client</TD>
 			</TR>
-			<TR ID="table_<?=$tabid?>" style="display:<?=$display?>"><TD colspan="5">
+			<TR ID="table_<?=$tabid?>" style="display:<?=$display?>"><TD colspan="6">
 			<TABLE BORDER="0" width="850" cellspacing="2" cellpadding="0">
 			<?php
 			
@@ -218,10 +216,10 @@ if($tab == 1){
 				echo "<TD style=\"width:300px;\">".$gfield[$tabid]["data_type_exp"][$fkey]."</TD>";
 				
 			    if($result_conf[$template][$tabid][$fkey]['master']){$CHECKED = "CHECKED";}else{$CHECKED = '';}
-				echo "<TD style=\"width:50px;\"><INPUT TYPE=\"checkbox\" NAME=\"templ_conf[$tabid][$fkey][1]\" onclick=\"save_rules('$tabid','$fkey',1)\" VALUE=\"1\" $CHECKED>";
+				echo "<TD style=\"width:50px;text-align:center\"><INPUT TYPE=\"checkbox\" NAME=\"templ_conf[$tabid][$fkey][1]\" onclick=\"save_rules('$tabid','$fkey',1)\" VALUE=\"1\" $CHECKED>";
 				
 			    if($result_conf[$template][$tabid][$fkey]['slave']){$CHECKED = "CHECKED";}else{$CHECKED = '';}
-				echo "<TD style=\"width:50px;\"><INPUT TYPE=\"checkbox\" NAME=\"templ_conf[$tabid][$fkey][2]\" onclick=\"save_rules('$tabid','$fkey',2)\" VALUE=\"1\" $CHECKED>";
+				echo "<TD style=\"width:50px;text-align:center\"><INPUT TYPE=\"checkbox\" NAME=\"templ_conf[$tabid][$fkey][2]\" onclick=\"save_rules('$tabid','$fkey',2)\" VALUE=\"1\" $CHECKED>";
 				
 				echo "</TR>";
 			}
@@ -229,8 +227,8 @@ if($tab == 1){
     	}
     	echo "</TD></TR>";
     }
-    echo "<TR><TD colspan=\"5\"><hr></TD></TR>";
-    echo "<TR><TD colspan=\"5\"><input type=\"button\" VALUE=\"".$lang[33]."\" onclick=\"send_form()\"></TD></TR>";
+    echo "<TR><TD colspan=\"6\"><hr></TD></TR>";
+    echo "<TR><TD colspan=\"6\"><input type=\"button\" VALUE=\"".$lang[33]."\" onclick=\"send_form()\"></TD></TR>";
     }
 
     ?>

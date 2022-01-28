@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -87,16 +87,8 @@ function selectDublicateUploads(fileCount){
 		// destroy duplicate dialog
         $('#dublicateCheckLayer.ui-dialog-content').dialog('destroy');
 
-		if (LmEx_pasteTyp === 'copy') {
-			LmEx_copy_file(LmEx_pasteFilelist);
-		} else if (LmEx_pasteTyp === 'move') {
-			LmEx_move_file(LmEx_pasteFilelist);
-		} else {
             var duplicateTypes = [];
             var versionNames = [];
-            var formel = document.form1;
-            var upload = false;
-
             for (var i = 1; i <= fileCount; i++){
                 if(document.getElementById("fileVersionId_" + i)){
                     var duplicateType = radioValue(document.getElementsByName("fileVersionType_" + i)) || '';
@@ -109,6 +101,12 @@ function selectDublicateUploads(fileCount){
                     versionNames.push('');
                 }
             }
+
+		if (LmEx_pasteTyp === 'copy') {
+			LmEx_copy_file(LmEx_pasteFilelist,duplicateTypes,versionNames);
+		} else if (LmEx_pasteTyp === 'move') {
+			LmEx_move_file(LmEx_pasteFilelist,duplicateTypes,versionNames);
+		} else {
 
             lmbUploadData.duplicateTypes = duplicateTypes;
             lmbUploadData.versionNames = versionNames;
@@ -248,7 +246,7 @@ function LmEx_showUploadField(parentID, folderID, fp, gtabid, fieldid, datid) {
 								' + jsvar['lng_1560'] + ':\
 								<input style="vertical-align:bottom" type="checkbox" id="file_archiv[' + fp + ']" name="file_archiv[0]">\
 							</span>\
-							<input type="button" value="' + jsvar['lng_815'] + '" style="vertical-align:middle" onclick="activ_menu=1; LmEx_uploadFilesPrecheck($(this).closest(\'.lmbUploadDiv\').find(\'input[type=file]\').get(0).files, \'' + folderID + '\', \'' + fp + '\', \'' + gtabid + '\', \'' + fieldid + '\', \'' + datid + '\');">\
+							<input type="button" class="submit" value="' + jsvar['lng_815'] + '" style="vertical-align:middle" onclick="activ_menu=1; LmEx_uploadFilesPrecheck($(this).closest(\'.lmbUploadDiv\').find(\'input[type=file]\').get(0).files, \'' + folderID + '\', \'' + fp + '\', \'' + gtabid + '\', \'' + fieldid + '\', \'' + datid + '\');">\
 						</div>\
 					</td>\
 				</tr>\
@@ -343,7 +341,6 @@ function LmEx_uploadFiles(files, uploadUrl) {
     for (var i = 0; i < files.length; i++) {
         var formData = new FormData();
         formData.append('file[0]', files[i]);
-
         if (lmbUploadData.hasDuplicates) {
             var dupType = lmbUploadData.duplicateTypes[i];
             if (dupType === 'skip') {
@@ -408,6 +405,7 @@ function LmEx_uploadFile(fileFormData, uploadUrl, onProgress) {
         data: fileFormData,
         success: function(data) {
             onProgress(100);
+            data = data.trim();
             if (data) {
 				if (!ajaxEvalScript(data)) {
 					alert(data);
@@ -451,7 +449,7 @@ function LmEx_ajaxPasteCheck(evt,filelist,typ) {
 	LmEx_pasteFilelist = filelist;
 	LmEx_pasteTyp = typ;
 	LmEx_setxypos(evt,"dublicateCheckLayer");
-	var getstring = "&level="+document.form1.LID.value+"&filelist="+encodeURIComponent(filelist);
+	var getstring = "&level="+document.form1.LID.value+"&filelist="+filelist;
 	ajaxGet(null,'main_dyns.php','filePasteCheck' + getstring,null,'LmEx_ajaxResultPasteCheck');
 }
 
@@ -523,7 +521,7 @@ var LmEx_edit_norm = null;
 function LmEx_send_form(id,ajax) {
 	if(tbwidth && rowsize){LmEx_tdsize();}
 	if(document.form1.edit_id && LmEx_edit_id){document.form1.edit_id.value = LmEx_edit_id+";"+LmEx_edit_norm;}
-
+    limbasWaitsymbol(null, true);
 	if(ajax && document.getElementById('gtabExplBody')){
 		$.ajax({
 			type: "POST",
@@ -538,9 +536,9 @@ function LmEx_send_form(id,ajax) {
 		rowsize = 0;
 		document.form1.rowsize.value='';
 	}else{
+	    limbasWaitsymbol(null, true, true);
 		eval("document.form"+id+".submit();");
 	}
-    limbasWaitsymbol(null, true);
 }
 
 // ---------------- Sendkeypress----------------------
@@ -712,29 +710,15 @@ function LmEx_activate_file(evt,id,filename,lid,norm){
 
 	var filelist = LmEx_selectedFileList(lid);
 	if(filelist){
-		if(browser_ns5){
 			if(document.getElementById("conextIcon_129")){document.getElementById("conextIcon_129").style.opacity = '1.0';}
 			if(document.getElementById("conextIcon_130")){document.getElementById("conextIcon_130").style.opacity = '1.0';}
 			if(document.getElementById("conextIcon_171")){document.getElementById("conextIcon_171").style.opacity = '1.0';}
 			if(document.getElementById("conextIcon_190")){document.getElementById("conextIcon_190").style.opacity = '1.0';}
-		}else{
-			if(document.getElementById("conextIcon_129")){document.getElementById("conextIcon_129").style.filter = 'Alpha(opacity=100)';}
-			if(document.getElementById("conextIcon_130")){document.getElementById("conextIcon_130").style.filter = 'Alpha(opacity=100)';}
-			if(document.getElementById("conextIcon_171")){document.getElementById("conextIcon_171").style.filter = 'Alpha(opacity=100)';}
-			if(document.getElementById("conextIcon_190")){document.getElementById("conextIcon_190").style.filter = 'Alpha(opacity=100)';}
-		}
 	}else{
-		if(browser_ns5){
 			if(document.getElementById("conextIcon_129")){document.getElementById("conextIcon_129").style.opacity = '0.3';}
 			if(document.getElementById("conextIcon_130")){document.getElementById("conextIcon_130").style.opacity = '0.3';}
 			if(document.getElementById("conextIcon_171")){document.getElementById("conextIcon_171").style.opacity = '0.3';}
 			if(document.getElementById("conextIcon_190")){document.getElementById("conextIcon_190").style.opacity = '0.3';}
-		}else{
-			if(document.getElementById("conextIcon_129")){document.getElementById("conextIcon_129").style.filter = 'Alpha(opacity=30)';}
-			if(document.getElementById("conextIcon_130")){document.getElementById("conextIcon_130").style.filter = 'Alpha(opacity=30)';}
-			if(document.getElementById("conextIcon_171")){document.getElementById("conextIcon_171").style.filter = 'Alpha(opacity=30)';}
-			if(document.getElementById("conextIcon_190")){document.getElementById("conextIcon_190").style.filter = 'Alpha(opacity=30)';}
-		}
 	}
 
 	if(document.form1.filename){
@@ -773,16 +757,44 @@ function LmEx_check_all(val,lid){
 	}
 }
 
-function LmEx_newfile(){
+// refresh thumbs
+function LmEx_refresh_thumbs(){
 	LmEx_divclose();
-	var filename = prompt(jsvar["lng_813"]);
-	if(name){
-		LmEx_divclose();
-		document.form1.add_file.value = filename;
-		document.form1.submit();
-	}
+	document.form1.refresh_file.value = 1;
+	LmEx_send_form(1);
 }
 
+
+// copy file
+function LmEx_copy_file(val,duplicateTypes,versionNames){
+	LmEx_divclose();
+	document.form1.copy_file.value = val;
+	document.form1.duplicateTypes.value = duplicateTypes.join(';')
+    // todo versionNames
+	LmEx_send_form(1);
+}
+
+// move file
+function LmEx_move_file(val,duplicateTypes,versionNames){
+	LmEx_divclose();
+	document.form1.move_file.value = val;
+	document.form1.duplicateTypes.value = duplicateTypes.join(';')
+    // todo versionNames
+	LmEx_send_form(1);
+}
+
+// create new folder
+function LmEx_newfile(){
+ 	LmEx_divclose();
+ 	var filename = prompt(jsvar["lng_813"]);
+ 	if(name){
+ 		LmEx_divclose();
+ 		document.form1.add_file.value = filename;
+ 		LmEx_send_form(1);
+ 	}
+}
+
+// delete file
 function LmEx_delfile(){
 	LmEx_divclose();
 	count =	LmEx_check_selected(jsvar["LID"]);
@@ -790,11 +802,12 @@ function LmEx_delfile(){
 		var del = confirm(jsvar["lng_822"] + ' (' + count + ')');
 		if(del){
 			document.form1.del_file.value = 1;
-			document.form1.submit();
+			LmEx_send_form(1);
 		}
 	}else{alert(jsvar["lng_1717"]);}
 }
 
+// favorite file
 function LmEx_favorite_file(){
 	LmEx_divclose();
 	count =	LmEx_check_selected(jsvar["LID"]);
@@ -802,27 +815,12 @@ function LmEx_favorite_file(){
 		var del = confirm(jsvar["lng_2219"] + ' (' + count + ')');
 		if(del){
 			document.form1.favorite_file.value = 1;
-			document.form1.submit();
+			LmEx_send_form(1);
 		}
 	}else{alert(jsvar["lng_1717"]);}
 }
 
-//function LmEx_empty_file(){
-//	LmEx_divclose();
-//	var del = confirm(jsvar["lng_1709"]);
-//	if(del){
-//		document.form1.del_file.value = 2;
-//		document.form1.submit();
-//	}
-//}
-
-function LmEx_refresh_thumbs(){
-	LmEx_divclose();
-
-	document.form1.refresh_file.value = 1;
-	document.form1.submit();
-}
-
+// OCR file
 function LmEx_ocrfile(format,destination,quality){
 	LmEx_divclose();
 	count =	LmEx_check_selected(jsvar["LID"]);
@@ -835,25 +833,27 @@ function LmEx_ocrfile(format,destination,quality){
 			document.form1.ocr_file.value = 1;
 			document.form1.ocr_format.value = format+'&'+quality;
 			document.form1.ocr_destination.value = destination;
-			document.form1.submit();
+			LmEx_send_form(1);
 		}
 	}else{alert(jsvar["lng_1717"]);}
 }
 
+// download archiv
 function LmEx_download_archive(method){
 	LmEx_divclose();
 	count =	LmEx_check_selected(jsvar["LID"]);
 	if(count > 0){
-		document.form1.action.value = "explorer_download";
+		document.form1.action.value = "download";
 		document.form1.target = "new";
 		document.form1.download_archive.value = method;
 		LmEx_send_form(1);
-		document.form1.action.value = "explorer_main";
-		document.form1.target = "_self";
+		document.form2.action.value = "download";
+		document.form1.download_archive.value = ''
+		document.form1.target = '';
 	}else{alert(jsvar["lng_1717"]);}
 }
 
-
+// convert file
 function LmEx_preview_archive(method,size){
 	LmEx_divclose();
 
@@ -866,7 +866,8 @@ function LmEx_preview_archive(method,size){
 		var convert = confirm(jsvar["lng_1760"] + ' (' + count + ')');
 		if(convert){
 			document.form1.convert_file.value = method;
-			document.form1.submit();
+			LmEx_send_form(1);
+			document.form1.convert_file.value = '';
 		}
 	}else if(LmEx_edit_id){
 		LmEx_open_preview(jsvar["LID"],LmEx_edit_id,method,'')
@@ -925,22 +926,6 @@ function LmEx_uploadFromPath(el,LID){
 		}
 	});
 	
-}
-
-
-
-// copy file
-function LmEx_copy_file(val){
-	LmEx_divclose();
-	document.form1.copy_file.value = val;
-	document.form1.submit();
-}
-
-// move file
-function LmEx_move_file(val){
-	LmEx_divclose();
-	document.form1.move_file.value = val;
-	document.form1.submit();
 }
 
 // Dateien in Cookie speichern
@@ -1126,6 +1111,62 @@ function LmEx_setxypos(evt,el) {
 	}else{
 		document.getElementById(el).style.left = window.event.clientX + document.body.scrollLeft;
 		document.getElementById(el).style.top = window.event.clientY + document.body.scrollTop;
+	}
+}
+
+
+// fieldtype upload
+var LmEx_uploadNr = 1;
+function lmb_formpicdmove(id,way,max){
+
+	if(way == 1){
+		LmEx_uploadNr = (LmEx_uploadNr + 1);
+	}else if(way == 2){
+		LmEx_uploadNr = (LmEx_uploadNr - 1);
+	}else if(way == 3){
+		LmEx_uploadNr = 1;
+	}else if(way == 4){
+		LmEx_uploadNr = max;
+	}
+
+	if(LmEx_uploadNr > max){
+		LmEx_uploadNr = 0;
+	}else if(LmEx_uploadNr <= 0){
+        LmEx_uploadNr = 0;
+	}
+
+	if(way == 5){
+		LmEx_uploadNr = 0;
+	}
+
+	var el1 = $("#formpicname_"+id);
+	var el2 = $("#formpicname0_"+id);
+
+	el1.hide();
+	el2.hide();
+
+	eval("var pic = formpicsn_"+id+"["+LmEx_uploadNr+"].split('#');");
+
+	el1.attr("src",pic[0]);
+	el2.attr("src",pic[0]);
+
+	el2.attr("data-id",pic[1]);
+
+	el1.show('slow');
+	el2.show('slow');
+
+}
+
+function lmb_formpicdelete(fel,fp){
+
+    var bzm = document.getElementById('formpicid_'+fp).value;
+    var el = eval('formpicsn_'+fp+'['+bzm+']');
+    el = el.split('#');
+    var elID = el[1];
+
+	if(confirm('delete file?')){
+		document.getElementsByName(fel+'_delete')[0].value = elID;
+		send_form(1);
 	}
 }
 

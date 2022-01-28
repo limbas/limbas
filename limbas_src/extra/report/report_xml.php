@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,12 +11,13 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
  * ID:
  */
+global $session;
 
 if($report_xml){
 	require_once('extra/report/report_xml.lib');
@@ -39,7 +40,7 @@ if($report_id){
 	if($report_medium == "xml"){
 		if($generatedReport = store_xml($dom[0],$report_,$ID,$report_output)){
 			# nur Report generieren
-			if($report_output != 2 AND !$params){
+			if($report_output != 2 AND $report_output != 5 AND !$params){
 				echo "<script language=\"JavaScript\">document.location.href = 'USER/".$session["user_id"]."/temp/".$generatedReport."';</script>";
 			}
 		}

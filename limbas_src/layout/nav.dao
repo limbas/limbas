@@ -1,7 +1,7 @@
 <?php
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -11,7 +11,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -133,6 +133,9 @@ function menu_get_reports($tabid, $typ, $depth = null){
 	$menu = array();
 	if($greportlist[$tabid]["id"]){
         foreach ($greportlist[$tabid]["id"] as $key => $value){
+            if ($greportlist[$tabid]['is_template'][$key]) {
+                continue;
+            }
             $menu[] = menu_get_report($tabid, $value, $typ, $depth);
         }
 	}
@@ -468,7 +471,8 @@ function menu_get_admin_setup(){
     if($LINK[307]){$menu0 = menu_get_standard(307,11);$menu1 = array_merge($menu1,$menu0);}
     if($LINK[310]){$menu0 = menu_get_standard(310,12);$menu1 = array_merge($menu1,$menu0);}
     if($LINK[303]){$menu0 = menu_get_standard(303,13);$menu1 = array_merge($menu1,$menu0);}
-    if($LINK[207]){$menu0 = menu_get_standard(207,14);$menu1 = array_merge($menu1,$menu0);}
+    if($LINK[316]){$menu0 = menu_get_standard(316,14);$menu1 = array_merge($menu1,$menu0);}
+    if($LINK[207]){$menu0 = menu_get_standard(207,15);$menu1 = array_merge($menu1,$menu0);}
     return $menu1;
 }
 
@@ -761,6 +765,8 @@ if($LINK[21]){
 		if($LINK[40]){$menu2 = menu_get_standard(40,4); $menu0 = array_merge($menu0,$menu2);}
 		# workflow
 		#if($LINK[228]){$menu2 = menu_get_standard(228,5); $menu0 = array_merge($menu0,$menu2);}
+        // reportManager
+        if($LINK[313]){$menu2 = menu_get_standard(313,5); $menu0 = array_merge($menu0,$menu2);}
 
 		$menu1[1]["child"] = $menu0;
 	}
@@ -868,13 +874,6 @@ if($LINK[17]){
 	$menu[17] = $menu1;
 }
 
-
-
-# custom menu
-require_once('layout/nav_depend.dao');
-
-
-
 # EXTENSIONS
 if($gLmbExt["ext_nav.inc"]){
 	foreach ($gLmbExt["ext_nav.inc"] as $key => $extfile){
@@ -882,6 +881,8 @@ if($gLmbExt["ext_nav.inc"]){
 	}
 }
 
+# custom menu
+require_once('layout/nav_depend.dao');
 
 
 

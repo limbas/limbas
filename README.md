@@ -15,7 +15,7 @@ As a graphical database front-end, it enables the efficient processing of data s
 * Linux server
 * Apache
 * PHP
-* unixODBC
+* PDO / unixODBC
 
 ## More information
 * [Free Demoserver](https://www.limbas.com/en/Service___Support/Demoserver/)

@@ -1,6 +1,6 @@
 /*
  * Copyright notice
- * (c) 1998-2019 Limbas GmbH(support@limbas.org)
+ * (c) 1998-2021 Limbas GmbH(support@limbas.org)
  * All rights reserved
  * This script is part of the LIMBAS project. The LIMBAS project is free software; you can redistribute it and/or modify it on 2 Ways:
  * Under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
@@ -10,7 +10,7 @@
  * A copy is found in the textfile GPL.txt and important notices to the license from the author is found in LICENSE.txt distributed with these scripts.
  * This script is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  * This copyright notice MUST APPEAR in all copies of the script!
- * Version 3.6
+ * Version 4.3.36.1319
  */
 
 /*
@@ -29,9 +29,9 @@
     font-family: 'LMBFont';
     src:    url('../../layout/comet/fonts/lmb-font.eot?v=1.0');
     src:    url('../../layout/comet/fonts/lmb-font.eot?#iefix&v=1.0') format('embedded-opentype'),
-        url('../../layout/comet/fonts/lmb-font.ttf?v=1.0') format('truetype'),
-        url('../../layout/comet/fonts/lmb-font.woff?v=1.0') format('woff'),
-        url('../../layout/comet/fonts/lmb-font.svg?v=1.0#lmb-font') format('svg');
+            url('../../layout/comet/fonts/lmb-font.ttf?v=1.0') format('truetype'),
+            url('../../layout/comet/fonts/lmb-font.woff?v=1.0') format('woff'),
+            url('../../layout/comet/fonts/lmb-font.svg?v=1.0#lmb-font') format('svg');
     font-weight: normal;
     font-style: normal;
 }
@@ -153,8 +153,12 @@
     content: "\f0db";
 }
 
-.lmb-page-key::before, .lmb-versioning::before, .lmb-page-key-green::before { /* former .fa-file-archive-o */
+.lmb-page-key::before, .lmb-page-key-green::before { /* former .fa-file-archive-o */
     content: "\f1c6";
+}
+
+.lmb-versioning::before { /* former .fa-file-archive-o */
+    content: "\f0c5";
 }
 
 .lmb-page-find::before, .lmb-rep-dbsearch::before, .lmb-mail-search::before { /* former .fa-search */
@@ -170,7 +174,15 @@
 }
 
 .lmb-show-versioned::before { /* former .fa-archive */
-    content: "\f187";
+    content: "\f0c5";
+}
+
+.lmb-edit-versioned::before { /* former .fa-archive */
+    content: "\f0c5";
+}
+
+.lmb-del-versioned::before { /* former .fa-archive */
+    content: "\f0c5";
 }
 
 .lmb-report::before, .lmb-report-key::before { /* former .fa-book */
@@ -282,6 +294,9 @@
 .lmb-clock::before { /* former .fa-clock-o */
     content: "\f017";
 }
+.lmb-step-forward::before { /* former .fa-step-forward */
+    content: "\f051";
+}
 .lmb-interactive::before { /* former .fa-hand-paper-o */
     content: "\f256";
 }
@@ -293,6 +308,15 @@
 }
 .lmb-calendar::before { /* former .fa-calendar */
     content: "\f073";
+}
+.lmb-calendar-times-o::before { /* former .fa-calendar */
+    content: "\f273";
+}
+.lmb-calendar-plus-o::before { /* former .fa-calendar */
+    content: "\f271";
+}
+.lmb-calendar-check-o::before { /* former .fa-calendar */
+    content: "\f274";
 }
 .lmb-job-history::before { /* former .fa-history */
     content: "\f1da";
@@ -1223,4 +1247,12 @@
 .lmb-universal-access::before {  /* former .universal-access */
     content: "\f29a";
 }
-
+.lmb-icon-cus.lmb-copy-eye::before {
+    content: "\e94a";
+}
+.lmb-icon-cus.lmb-copy-minus::before {
+    content: "\e94b";
+}
+.lmb-icon-cus.lmb-copy-edit::before {
+    content: "\e94c";
+}
