@@ -1,0 +1,350 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+# --- add dataset ------
+if($action == "gtab_neu" AND isset($gtabid)){
+	if($LINK[1] AND $gtab["add"][$gtabid]){
+		# --- anlegen ---
+		if($gtab['reserveid'][$gtabid]){
+			$ID = 0;
+		}else{
+			$ID = new_record($gtabid,$verknpf,$verkn_fieldid,$verkn_tabid,$verkn_ID,0,0);
+		}
+	}else{
+		lmb_alert($lang[114]);
+	}
+}
+# --- copy dataset ------
+elseif($use_typ == 'copy' AND $use_record){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+	foreach ($use as $key => $value){
+		$use_ = explode("_",$use[$key]);
+		$ID_ = $use_[0];
+		$gtabid_ = $use_[1];
+		if($gtab["add"][$gtabid_] AND $gtab["copy"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[201]){
+			# --- anlegen ---
+			if($ID = new_record($gtabid_,$verknpf,$verkn_fieldid,$verkn_tabid,$verkn_ID,$ID_,0)){
+				$history_fields = updateHistoryFields($history_fields,$gtabid_,$ID_,$ID);
+				$useetecount++;
+			}else{
+                $ID = $ID_;
+                break;
+            }
+		}else{
+			lmb_alert($lang[114]);
+		}
+	}
+
+	if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[2151]);}
+	elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[2150]);}
+}
+# --- versioning dataset ------
+elseif($use_typ == 'versioning' AND $use_record){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+	foreach ($use as $key => $value){
+		$use_ = explode("_",$use[$key]);
+		$ID_ = $use_[0];
+		$gtabid_ = $use_[1];
+		if($gtab["ver"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[235]){
+			# --- anlegen ---
+			if($ID = new_record($gtabid_,$verknpf,$verkn_fieldid,$verkn_tabid,$verkn_ID,$ID_,true)){
+				$history_fields = updateHistoryFields($history_fields,$gtabid_,$ID_,$ID);
+				$useetecount++;
+			}else{
+                $ID = $ID_;
+                break;
+            }
+		}else{
+			lmb_alert($lang[114]);
+		}
+	}
+
+	if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[2149]);}
+	elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[2148]);}
+
+}
+# --- delete dataset ------
+elseif($use_typ == 'delete' AND $use_record){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$usec = lmb_count($use);
+	$useetecount = 0;
+	$bzm = 1;
+	foreach ($use as $key => $value){
+		$use_ = explode("_",$use[$key]);
+		$ID_ = $use_[0];
+		$gtabid_ = $use_[1];
+		if($gtab["delete"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[11]){
+			
+			# falls letztes Element - vorherigen Datensatz zum anzeigen berechnen
+			if($action != 'gtab_erg' AND $bzm == $usec){
+				if(!$falsecount){
+					$ID = scroll_to('prev',$gtabid,$ID,$null,$filter,$verkn);
+				}
+			}
+			$forceDelnm = $filter["force_delete"][$gtabid_];
+			if(!$LINK[276]){$forceDelnm = 0;}
+			if(del_data($gtabid_,$ID_,$use_typ,$forceDelnm)){
+				$useetecount++;
+			}else{
+                $ID = $ID_;
+				$falsecount++;
+			}
+		}else{
+			lmb_alert($lang[114]);
+		}
+		$bzm++;
+	}
+
+	if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[1325]);}
+	elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[116]);}
+	
+}
+
+# --- set status of dataset ------
+elseif(((($use_typ == 'trash' OR $use_typ == 'restore') AND $LINK[313]) OR (($use_typ == 'archive' OR $use_typ == 'restore') AND $LINK[164])) AND $use_record){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+	foreach ($use as $key => $value){
+		$use_ = explode("_",$use[$key]);
+		$ID_ = $use_[0];
+		$gtabid_ = $use_[1];
+		if($gtab["hide"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[164]){
+			if(hide_data($gtabid_,$ID_,$use_typ)){
+				$useetecount++;
+			}else{
+				$falsecount++;
+			}
+		}else{
+			lmb_alert($lang[114]);
+		}
+	}
+
+    if($use_typ == 'trash') {
+        if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[3100]);}
+        elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[3098]);}
+    }elseif($use_typ == 'archive'){
+        if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[1326]);}
+        elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[1312]);}
+    }elseif($use_typ == 'restore'){
+        if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[1327]);}
+        elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[1313]);}
+    }
+
+}
+
+
+
+/*
+# --- Datensatz archivieren ------
+elseif($use_typ == 'hide' AND $use_record){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+	foreach ($use as $key => $value){
+		$use_ = explode("_",$use[$key]);
+		$ID_ = $use_[0];
+		$gtabid_ = $use_[1];
+		if($gtab["hide"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[164]){
+			if(hide_data($gtabid_,$ID_,$use_typ)){
+				$useetecount++;
+			}else{
+				$falsecount++;
+			}
+		}else{
+			lmb_alert($lang[114]);
+		}
+	}
+
+	if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[1326]);}
+	elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[1312]);}
+
+}
+# --- Datensatz wiederherstellen ------
+elseif($use_typ == 'unhide' AND $use_record){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+	foreach ($use as $key => $value){
+		$use_ = explode("_",$use[$key]);
+		$ID_ = $use_[0];
+		$gtabid_ = $use_[1];
+		if($gtab["hide"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[166]){
+			if(hide_data($gtabid_,$ID_,$use_typ)){
+				$useetecount++;
+			}else{
+				$falsecount++;
+			}
+		}else{
+			lmb_alert($lang[114]);
+		}
+	}
+
+	if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[1327]);}
+	elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[1313]);}
+}
+*/
+
+# --- add relation ------
+elseif($use_typ == 'link' AND $use_record AND $verknpf){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+	unset($verkn_add_ID);
+	if($LINK[157] AND $gfield[$verkn_tabid]["perm_edit"][$verkn_fieldid]){
+
+		foreach ($use as $key => $value){
+			$use_ = explode("_",$use[$key]);
+			$ID_ = $use_[0];
+			$gtabid_ = $use_[1];
+			if($ID_ AND $gtabid_){
+				$verkn_add_ID[] = $ID_;
+			}else{
+				lmb_alert($lang[114]);
+			}
+		}
+
+		if($verkn_add_ID){
+			$verkn_add_ID = implode(",",$verkn_add_ID);
+			$verkn = set_verknpf($verkn_tabid,$verkn_fieldid,$verkn_ID,$verkn_add_ID,0,$verkn_showonly,$verknpf);
+			if($verkn AND $verkn["typ"] AND $verkn["id"] AND $verkn["add_id"]){
+				if($useetecount = set_joins($gtabid,$verkn)){
+					if($useetecount['count'] > 1){
+						lmb_alert($useetecount." ".$lang[2183]);
+					}elseif($useetecount['count'] == 1){
+						lmb_alert($useetecount." ".$lang[2182]);
+					}
+				}
+			}
+			$verkn["showonly"] = 1;
+			$verkn_showonly = 1;
+		}
+
+	}else{
+		lmb_alert($lang[114]);
+	}
+}
+# --- delete relation ------
+elseif($use_typ == 'unlink' AND $use_record AND $verknpf){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+	unset($verkn_del_ID);
+	if($LINK[158] AND $gfield[$verkn_tabid]["perm_edit"][$verkn_fieldid]){
+		foreach ($use as $key => $value){
+			$use_ = explode("_",$use[$key]);
+			$ID_ = $use_[0];
+			$gtabid_ = $use_[1];
+			if($ID_ AND $gtabid_){
+				$verkn_del_ID[] = $ID_;
+				$useetecount++;
+			}
+		}
+
+		if($verkn_del_ID){
+			$verkn_del_ID = implode(",",$verkn_del_ID);
+			$verkn = set_verknpf($verkn_tabid,$verkn_fieldid,$verkn_ID,0,$verkn_del_ID,$verkn_showonly,$verknpf);
+			if($verkn AND $verkn["typ"] AND $verkn["id"] AND $verkn["del_id"]){
+				if($useetecount = set_joins($gtabid,$verkn)){
+					if($useetecount['count'] > 1){
+						lmb_alert($useetecount." ".$lang[2185]);
+					}elseif($useetecount['count'] == 1){
+						lmb_alert($useetecount." ".$lang[2184]);
+					}
+				}
+			}
+			$verkn["showonly"] = 1;
+			$verkn_showonly = 1;
+		}
+
+	}else{
+		lmb_alert($lang[114]);
+	}
+}
+
+# --- lock dataset ------
+elseif($use_typ == 'lock' AND $use_record){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+	if($lockingtime){$lockingtime = explode("|",$lockingtime);}
+	foreach ($use as $key => $value){
+		$use_ = explode("_",$use[$key]);
+		$ID_ = $use_[0];
+		$gtabid_ = $use_[1];
+		if($gtab["lock"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[270]){
+			$lock = lock_data_check($gtabid_,$ID_,$session["user_id"]);
+			if($lock["isselflocked"] OR !$lock){
+				if(lock_data_set($gtabid_,$ID_,$session["user_id"],$lockingtime)){
+					$useetecount++;
+				}else{
+					$falsecount++;
+				}
+			}else{
+				$falsecount++;
+			}
+		}else{
+			lmb_alert($lang[114]);
+		}
+	}
+
+	if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[2436]);}
+	elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[2435]);}
+}
+
+# --- unlock dataset ------
+elseif($use_typ == 'unlock' AND $use_record){
+	$use = explode(";",$use_record);
+	$use = array_unique($use);
+	$useetecount = 0;
+	foreach ($use as $key => $value){
+		$use_ = explode("_",$use[$key]);
+		$ID_ = $use_[0];
+		$gtabid_ = $use_[1];
+		if($gtab["lock"][$gtabid_] AND $ID_ AND $gtabid_ AND $LINK[271]){
+			$lock = lock_data_check($gtabid_,$ID_,$session["user_id"]);
+			if($lock["isselflocked"] OR !$lock){
+				if(lock_data_set($gtabid_,$ID_,$session["user_id"],"unlock")){
+					$useetecount++;
+				}else{
+					$falsecount++;
+				}
+			}else{
+				$falsecount++;
+			}
+		}else{
+			lmb_alert($lang[114]);
+		}
+	}
+
+	if($useetecount > 1 OR !$useetecount){lmb_alert($useetecount." ".$lang[2438]);}
+	elseif($useetecount == 1){lmb_alert($useetecount." ".$lang[2437]);}
+}
+
+# --- update dataset -----------------------------------
+if($change_ok AND $history_fields AND $LINK[3]){
+	if($old_action == "gtab_erg"){$chtyp = 2;}else{$chtyp = 1;}
+    $verkn = null;
+    if($verknpf) {
+        $verkn = set_verknpf($verkn_tabid, $verkn_fieldid, $verkn_ID, null, null, null, $verknpf);
+    }
+	if($cid = update_data($history_fields,$chtyp,$verkn)){
+		if(is_numeric($cid)){$ID = $cid;}
+	}
+}
+
+
+?>

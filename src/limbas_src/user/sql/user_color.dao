@@ -1,0 +1,63 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+if($action == "user_color"){$uid = $session['user_id'];$main_action = "main.php";}elseif($action == "setup_color"){$uid = "0";$main_action = "main_admin.php";}
+
+if($add_color){
+	$add_color = explode(";",$add_color);
+	foreach($add_color AS $key => $value) {
+		$sqlquery = "SELECT ID FROM LMB_USER_COLORS WHERE WERT = '$value' AND USERID = $uid";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!lmbdb_fetch_row($rs)){
+			/* --- Next ID ---------------------------------------- */		
+			$NEXTID = next_db_id("LMB_USER_COLORS");
+			$sqlquery1 = "INSERT INTO LMB_USER_COLORS (ID,WERT,USERID) VALUES ($NEXTID,'$value',$uid)";
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);		
+		}
+	}
+}
+
+
+if($del_color){
+	$del_c = explode(";",$del_color);
+	foreach($del_c AS $key => $value) {
+		$sqlquery = "DELETE FROM LMB_USER_COLORS WHERE WERT = '$value' AND USERID = ".$uid;
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);			
+	}
+}
+
+
+/* --- Farb-Liste ---------------------------------------------*/
+if(($add_color OR $del_color) AND $action == "user_color"){
+	$user_colors = null;
+	$user_colors['wert'][] = "transparent";
+	$user_colors['wert'][] = "#000000";
+	$user_colors['wert'][] = "#FFFFFF";
+}
+
+$result_colors['maxid'] = 0;
+
+$sqlquery = "SELECT MAX(ID) AS MAXID,ID,WERT FROM LMB_USER_COLORS WHERE USERID = $uid GROUP BY ID,WERT ORDER BY WERT";
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+$bzm = 1;
+while(lmbdb_fetch_row($rs)) {
+	if(($add_color OR $del_color) AND $action == "user_color"){
+		$user_colors['wert'][] = "#".lmbdb_result($rs, "WERT");
+	}
+	$result_colors['id'][$bzm] = lmbdb_result($rs, "ID");
+	$result_colors['wert'][$bzm] = lmbdb_result($rs, "WERT");
+	$result_colors['maxid'] = lmbdb_result($rs, "MAXID");
+	$bzm++;
+}
+
+
+?>
+

@@ -1,0 +1,73 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+define("IS_STRUCTURESYNC",1);
+
+
+require_once(COREPATH . 'extra/lmbObject/log/LimbasLogger.php');
+require_once(COREPATH . 'admin/tools/export_sync_ajax.php');
+
+
+/**
+ * Enter description here...
+ *
+ * @param unknown_type $cronval
+ */
+function periodic_job($cronval){
+	global $umgvar;
+    global $db;
+
+	$cronval = explode(";",$cronval);
+	$template = $cronval[0];
+
+    if(!$template OR !is_numeric($template)){
+        return false;
+    }
+
+    // get sync template
+    $sqlquery = "SELECT MODUL FROM LMB_SYNCSTRUCTURE_TEMPLATE WHERE ID = ".parse_db_int($template);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $syncModule = json_decode(lmbdb_result($rs, "MODUL"),true);
+
+
+    // list of slaves to sync
+    $synctoslaves = $syncModule['syncToSlavesActive'];
+    if(!is_array($synctoslaves)){
+        return false;
+    }
+    unset($syncModule['syncToSlavesActive']);
+
+    foreach($synctoslaves as $syncid => $value){
+
+        $params['syncid'] = $syncid;                        # sync slave ID
+        $params['sync_to_slaves']  = 'sync_to_clients';     # sync to host or slaves
+        $params['sync_export_remote'] = 'confirm';          # precheck / confirm
+        $params['precheck_level'] = 2;
+        $params['stamp'] = time();
+
+        $params['syncmodule'] = $syncModule;
+
+        #error_log(print_r($params,1));
+        #ob_start();
+
+        lmb_syncToClient($params);
+
+        #$output = json_decode(ob_get_contents());
+        #error_log(print_r($output,1));
+        #ob_end_clean();
+
+        sleep(5);
+
+    }
+
+
+
+
+}

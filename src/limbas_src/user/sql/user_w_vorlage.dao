@@ -1,0 +1,117 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+# --- id Löschen -----------
+if($del_id){
+	$sqlquery = "DELETE FROM LMB_REMINDER WHERE USER_ID = ".$session['user_id']." AND ID = $del_id AND CATEGORY = 0";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+# --- tab Löschen -----------
+if($del_tab){
+	$sqlquery = "DELETE FROM LMB_REMINDER WHERE USER_ID = ".$session['user_id']." AND TAB_ID = $del_tab AND CATEGORY = 0";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+
+
+# --- Tabellen -----------
+$qucat = " AND CATEGORY = 0";
+if(is_numeric($gfrist)){
+    $qucat = " AND CATEGORY = ".$gfrist;
+}
+$sqlquery = "SELECT ID,TAB_ID,FRIST,DESCRIPTION,DAT_ID,CONTENT,FROMUSER FROM LMB_REMINDER WHERE USER_ID = ".$session["user_id"]." $qucat ORDER BY TAB_ID,FRIST";
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+while(lmbdb_fetch_row($rs)) {
+	$remtab = lmbdb_result($rs, "TAB_ID");
+	$remgr = $gtab["tab_group"][$remtab];
+
+	$remdata["id"][$remgr][$remtab][] = lmbdb_result($rs, "ID");
+	$remdata["tab_id"][$remgr][$remtab][] = lmbdb_result($rs, "TAB_ID");
+	$remdata["frist"][$remgr][$remtab][] = lmbdb_result($rs, "FRIST");
+	$remdata["description"][$remgr][$remtab][] = lmbdb_result($rs, "DESCRIPTION");
+	$remdata["dat_id"][$remgr][$remtab][] = lmbdb_result($rs, "DAT_ID");
+	$remdata["content"][$remgr][$remtab][] = lmbdb_result($rs, "CONTENT");
+	$remdata["fromuser"][$remgr][$remtab][] = lmbdb_result($rs, "FROMUSER");
+}
+
+
+
+
+$curDate = time();
+
+echo '<div class="lmbPositionContainerMain small">';
+echo '<table class="tabfringe hoverable" cellpadding="4" style="border-collapse: collapse;">';
+
+if(!$remdata){
+    echo '<tr class="tabHeader"><td class="tabHeaderItem">' . $lang[98] . '</td></tr>';
+}else{
+
+	foreach ($remdata["id"] as $groupid => $groupData) {
+
+        # tabgroup header
+        echo '<tr class="tabHeader">';
+        echo '<td class="tabHeaderItem" colspan="4">' . $tabgroup['beschreibung'][$groupid] . '</td>';
+        echo '</tr>';
+
+		foreach ($groupData as $tabid => $tabData){
+
+            # table header
+            echo '<tr class="tabSubHeader">';
+            echo '<td class="tabSubHeaderItem"></td>';
+            echo '<td class="tabSubHeaderItem" colspan="3">';
+            echo "<a href=\"main.php?action=gtab_erg&source=root&gtabid={$tabid}&gfrist=1\">{$gtab['desc'][$tabid]}</a>";
+            echo '</td>';
+            echo '</tr>';
+
+			foreach ($tabData as $remKey => $remval){
+                $reminderFrist = $remdata['frist'][$groupid][$tabid][$remKey];
+				$readableDate = get_date($reminderFrist, 4);
+
+				# reminder in past?
+                $color = '';
+                if ($curDate >= get_stamp($reminderFrist)) {
+					$color = 'style="color:green"';
+				}
+
+                echo "<tr class=\"tabBody\" style=\"cursor: pointer;\" onclick=\"document.location.href='main.php?action=gtab_change&gtabid={$tabid}&ID={$remdata['dat_id'][$groupid][$tabid][$remKey]}'\">";
+
+                # date
+                echo "<td $color >{$readableDate}</td>";
+
+                # dataset description
+                echo '<td><b>' . $remdata['content'][$groupid][$tabid][$remKey] . '</b></td>';
+
+                # user
+                echo '<td><i>' . $userdat['bezeichnung'][$remdata['fromuser'][$groupid][$tabid][$remKey]] . '</i></td>';
+
+                # delete
+                echo '<td onclick="event.preventDefault();event.stopPropagation();return false;">';
+                echo "<i class=\"lmb-icon lmb-trash\" onclick=\"document.location.href='main.php?action=user_w_vorlage&del_id={$remdata['id'][$groupid][$tabid][$remKey]}'\" style=\"cursor:pointer;\"></i>";
+                echo '</td>';
+                echo '</tr>';
+
+                # reminder description
+                if ($desc = $remdata['description'][$groupid][$tabid][$remKey]) {
+                    echo '<tr>';
+                    echo '<td></td>';
+                    echo '<td colspan="2"><i>' . $desc . '</i></td>';
+                    echo '</tr>';
+                }
+			}
+		}
+	}
+}
+
+echo '</table>';
+echo '</div>';
+?>

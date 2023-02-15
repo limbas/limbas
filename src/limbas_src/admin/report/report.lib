@@ -1,0 +1,506 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+function lmb_report_add_root_template($report_id,$template_gtabid=null)
+{
+    global $gtab;
+    global $db;
+
+    require_once(COREPATH . 'gtab/gtab.lib');
+
+
+    if($template_gtabid){
+
+        // get old template IDs
+        $sqlquery = "SELECT ROOT_TEMPLATE,ROOT_TEMPLATE_ID FROM LMB_REPORT_LIST WHERE ID = $report_id";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $old_template = lmbdb_result($rs, "ROOT_TEMPLATE");
+        $old_template_id = lmbdb_result($rs, "ROOT_TEMPLATE_ID");
+
+        if($old_template == $template_gtabid){
+            return;
+        }
+
+        // get old template Content
+        $sqlquery = "SELECT CONTENT FROM {$gtab['table'][$old_template]} WHERE ID = $old_template_id";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $old_content = lmbdb_result($rs, "CONTENT");
+
+        // delete old template
+        del_data($old_template, $old_template_id);
+    }
+
+
+    if(!$template_gtabid) {
+        $template_gtabid = $gtab["argresult_id"]["LMB_REPORT_TEMPLATES"];
+    }
+
+    if ($template_id = new_data($template_gtabid)) {
+        $name = preg_replace(array('/Ä/', '/Ö/', '/Ü/', '/ä/', '/ö/', '/ü/', '/ß/'), array('Ae', 'Oe', 'Ue', 'ae', 'oe', 'ue', 'ss'), $report_name);
+        $name = preg_replace('/[^a-z0-9]/i', '_', $name);
+        $name = preg_replace("/[_]{1,}/", "_", $name);
+        $update = [
+            "$template_gtabid,1,$template_id" => "root_body_$name",
+            "$template_gtabid,2,$template_id" => $old_content
+        ];
+        update_data($update);
+
+        $sqlquery = "UPDATE LMB_REPORT_LIST SET 
+        ROOT_TEMPLATE = ".parse_db_int($template_gtabid).", 
+        ROOT_TEMPLATE_ID = ".parse_db_int($template_id).",
+        PAGE_STYLE = 'A4',
+        DPI = 72,
+        USED_FONTS = 'DejaVu Sans',
+        ORIENTATION = 'L'
+        WHERE ID = $report_id
+        ";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    }
+}
+
+
+function lmb_report_create($report_name,$reporttarget,$report_desc,$referenz_tab,$reportextension,$action,$format='pdf',$parent_id=null,$saveTemplate=null) {
+    global $db;
+    global $session;
+    global $gtab;
+
+    if(!$report_name){
+        $report_name = "new report";
+    }
+
+    /* --- Transaktion START -------------------------------------- */
+    lmb_StartTransaction();
+
+    $report_name = parse_db_string($report_name,160);
+
+    # ------- handle template configuration ----------
+    $noFileStruct = false;
+    if (!empty($parent_id) && $saveTemplate !== null) {
+        $finalTemplate = [];
+        foreach ($saveTemplate as $name => $value) {
+            $finalTemplate[parse_db_string($name)] = parse_db_string($value);
+        }
+        $templateColumns = ', PARENT_ID, SAVED_TEMPLATE';
+        $templateValues = ', '.parse_db_int($parent_id).', \''.json_encode($finalTemplate).'\'';
+        $noFileStruct = true;
+    }
+
+    # ------- Next ID ----------
+    $report_id = next_conf_id("LMB_REPORT_LIST");
+    if(!$reporttarget){$reporttarget_ = $report_id;}
+    $sqlquery = "INSERT INTO LMB_REPORT_LIST (ID,ERSTUSER,NAME,BESCHREIBUNG,PAGE_STYLE,REFERENZ_TAB,TARGET,EXTENSION,DEFFORMAT $templateColumns) VALUES($report_id,{$session['user_id']},'".parse_db_string($report_name,50)."','".str_replace("'","''",$report_desc)."','210;295;5;5;5;5',".parse_db_int($referenz_tab,3).",".parse_db_int($reporttarget_,3).",'".parse_db_string($reportextension,160)."','$format' $templateValues)";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs) {$commit = 1;}
+    $NEXTID = next_db_id("LMB_RULES_REPFORM");
+    $sqlquery = "INSERT INTO LMB_RULES_REPFORM (ID,TYP,GROUP_ID,LMVIEW,REPFORM_ID) VALUES ($NEXTID,1,".$session["group_id"].",".LMB_DBDEF_TRUE.",$report_id)";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+
+   # ---- adding root template ----------------
+    if($format == 'mpdf'){
+        lmb_report_add_root_template($report_id);
+    }
+
+    /* --- Transaktion ENDE -------------------------------------- */
+    if($commit == 1){
+        lmb_EndTransaction(0);
+    } else {
+        lmb_EndTransaction(1);
+    }
+
+    # ---- Filestructure ----------------
+    if(!$commit && !$noFileStruct){
+        lmb_createReportFileStructure($referenz_tab,$report_id,$report_name,$action);
+    }
+
+
+
+    return $report_id;
+}
+
+function lmb_createReportFileStructure($referenz_tab,$report_id,$report_name,$action) {
+    global $db;
+
+    if($lid = create_fs_report_dir($referenz_tab,$report_id,$report_name)){
+        $sqlquery = "UPDATE LMB_REPORT_LIST SET TARGET = $lid WHERE ID = $report_id";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {return false;}
+        get_filestructure(1);
+    }
+}
+
+function lmb_report_extension($changeext_id)
+{
+    global $db;
+    global $report_extension;
+
+    $sqlquery = "UPDATE LMB_REPORT_LIST SET EXTENSION='" . parse_db_string($report_extension[$changeext_id], 160) . "' WHERE ID = " . parse_db_int($changeext_id, 3);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if(!$rs) {return false;}
+
+}
+
+function lmb_report_target($changetarget_id){
+    global $db;
+    global $report_changetarget;
+
+    $sqlquery = "UPDATE LMB_REPORT_LIST SET TARGET=" . parse_db_int($report_changetarget[$changetarget_id], 16) . " WHERE ID = " . parse_db_int($changetarget_id, 3);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if(!$rs) {return false;}
+
+}
+
+function lmb_report_rename($changename_id){
+    global $db;
+    global $report_changename;
+
+    $sqlquery = "UPDATE LMB_REPORT_LIST SET NAME='" . parse_db_string($report_changename[$changename_id], 160) . "' WHERE ID = " . parse_db_int($changename_id, 3);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if(!$rs) {return false;}
+
+}
+
+/*----------------- Report umbenennen -------------------*/
+function lmb_report_savename($savename_id){
+
+    global $db;
+    global $report_savename;
+
+    $sqlquery = "UPDATE LMB_REPORT_LIST SET SAVENAME='".parse_db_string($report_savename[$savename_id],160)."' WHERE ID = ".parse_db_int($savename_id,3);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs) {return false;}
+
+}
+
+function lmb_report_format($changedefaultformat_id){
+    global $db;
+    global $report_defaultformat;
+
+    $sqlquery = "UPDATE LMB_REPORT_LIST SET DEFFORMAT='" . parse_db_string($report_defaultformat[$changedefaultformat_id]) . "' WHERE ID = " . parse_db_int($changedefaultformat_id, 3);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if(!$rs) {return false;}
+}
+
+function lmb_report_odt_template($savename_id){
+
+    if ($changeootemplate_id) {
+
+        $tmp_ = explode('-', $changeootemplate_id);
+        $changeootemplate_id = $tmp_[0];
+        $format = $tmp_[1];
+
+        #$fname = get_NameFromID($report_ootemplate[$changeootemplate_id]);
+        #$fext = array_pop(explode(".",$fname));
+        #if(lmb_strtolower($fext) == "odt"){
+        #}else{
+        #	echo "only OpenOffice templates permitted!<br>";
+        #}
+
+        if ($format == 'odt') {
+            $ootplid = parse_db_int($report_odt_template[$changeootemplate_id]);
+            $sqlquery = "UPDATE LMB_REPORT_LIST SET ODT_TEMPLATE=" . $ootplid . "  WHERE ID = " . parse_db_int($changeootemplate_id, 3);
+        } elseif ($format == 'ods') {
+            $ootplid = parse_db_int($report_ods_template[$changeootemplate_id]);
+            $sqlquery = "UPDATE LMB_REPORT_LIST SET ODS_TEMPLATE=" . $ootplid . "  WHERE ID = " . parse_db_int($changeootemplate_id, 3);
+        }
+
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        if (!$rs) {
+            $commit = 1;
+        }
+    }
+}
+
+
+/*----------------- Report löschen -------------------*/
+function lmb_report_delete($report_id){
+
+    global $db;
+    global $umgvar;
+
+    /* --- Transaktion START -------------------------------------- */
+    lmb_StartTransaction();
+
+    $sqlquery = "SELECT REFERENZ_TAB,GROUPLIST FROM LMB_REPORT_LIST WHERE ID = $report_id";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
+    $rep_ref_tab = lmbdb_result($rs, "REFERENZ_TAB");
+    $group_list = lmbdb_result($rs, "GROUPLIST");
+
+
+    if (!$group_list) {
+        $sqlquery = "SELECT TAB_SIZE FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TYP = 'bild'";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        if (!$rs) {
+            $commit = 1;
+        }
+        while (lmbdb_fetch_row($rs)) {
+            if (file_exists(UPLOADPATH . 'report/' . lmbdb_result($rs, "TAB_SIZE"))) {
+                unlink(UPLOADPATH . 'report/' . lmbdb_result($rs, "TAB_SIZE"));
+            }
+            if (file_exists(TEMPPATH . 'thumpnails/report/' . lmbdb_result($rs, "TAB_SIZE"))) {
+                unlink(TEMPPATH . 'thumpnails/report/' . lmbdb_result($rs, "TAB_SIZE"));
+            }
+        }
+    }
+
+    $sqlquery = "DELETE FROM LMB_REPORTS WHERE BERICHT_ID = $report_id";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
+    $sqlquery = "DELETE FROM LMB_REPORT_LIST WHERE ID = $report_id";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
+    $sqlquery = "DELETE FROM LMB_RULES_REPFORM WHERE REPFORM_ID = $report_id AND TYP = 1";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    # --- Filestructure ------
+    $sqlquery = "SELECT ID FROM LDMS_STRUCTURE WHERE TAB_ID = $rep_ref_tab AND FIELD_ID = $report_id AND TYP = 5";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
+
+    if (!$commit AND lmbdb_result($rs, "ID")) {
+        $GLOBALS["filestruct"]['admin'] = 1;
+        if (!delete_dir(lmbdb_result($rs, "ID"))) {
+            $commit = 1;
+        }
+    }
+
+
+    /* --- Transaktion ENDE -------------------------------------- */
+    if ($commit == 1) {
+        lmb_EndTransaction(0);
+    } else {
+        lmb_EndTransaction(1);
+    }
+
+
+}
+
+function rep_sub_folderlist($LEVEL,$select,$space=null){
+    global $filestruct;
+    global $ffilter;
+
+    get_filestructure();
+
+    $output = '';
+
+    if($filestruct["id"]){
+        foreach($filestruct["id"] as $key => $value){
+            if($filestruct["level"][$key] == $LEVEL AND $filestruct["view"][$key]){
+                if($select == $filestruct["id"][$key]){$SELECTED = "SELECTED";}else{$SELECTED = "";}
+                $output .= "<option value=\"$key\" $SELECTED>".$space.$filestruct["name"][$key].'</option>';
+                if(in_array($filestruct["id"][$key],$filestruct["level"])){
+                    $space .= "--";
+                    $output .= rep_sub_folderlist($filestruct["id"][$key],$select,$space);
+                }
+            }
+        }
+    }
+    return $output;
+}
+
+
+
+function lmb_report_copy($reportcopy,$report_name){
+
+    global $db;
+    global $session;
+    global $umgvar;
+
+	/* --- Transaktion START -------------------------------------- */
+	lmb_StartTransaction();
+
+    // copy lmb_report_list
+	if(!$report_name){
+		$report_name = "new report";
+	}
+    $report_name = parse_db_string($report_name,160);
+	$report_id = next_conf_id("LMB_REPORT_LIST");
+    $copyfields = array('BESCHREIBUNG','PAGE_STYLE','SQL_STATEMENT','REFERENZ_TAB','GROUPLIST','TARGET','SAVENAME','TAGMOD','EXTENSION','INDEXORDER','ODT_TEMPLATE','DEFFORMAT','LISTMODE','ODS_TEMPLATE','CSS','SAVED_TEMPLATE','PARENT_ID','ROOT_TEMPLATE','DPI','ROOT_TEMPLATE_ID','DEFAULT_FONT','USED_FONTS','ORIENTATION','DEFAULT_FONT_SIZE');
+
+	$sqlquery = "INSERT INTO LMB_REPORT_LIST (
+	ID,
+	ERSTDATUM,
+	ERSTUSER,
+	NAME,
+	";
+    $sqlquery .= implode(',',$copyfields);
+    $sqlquery .= ") SELECT 
+    $report_id AS ID,
+	".LMB_DBDEF_TIMESTAMP." AS ERSTDATUM,
+	{$session['user_id']} AS ERSTUSER,
+	'$report_name' AS NAME,
+	";
+    $sqlquery .= implode(',',$copyfields);
+    $sqlquery .= " FROM LMB_REPORT_LIST WHERE ID = $reportcopy";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+
+    // copy lmb_report
+    $copyfields = array('EL_ID','TYP','POSX','POSY','HEIGHT','WIDTH','INHALT','DBFIELD','VERKN_BAUM','STYLE','DB_DATA_TYPE','SHOW_ALL','Z_INDEX','LISTE','TAB','TAB_EL_COL','TAB_EL_ROW','TAB_EL_COL_SIZE','HEADER','FOOTER','PIC_TYP','PIC_STYLE','PIC_SIZE','PIC_RES','BG','EXTVALUE','TAB_EL');
+
+	/* --- Berichtdetail ---------------------------------------- */
+    $NEXTKEYID = next_db_id("LMB_REPORTS");
+	$sqlquery0 = "SELECT ID,EL_ID,TYP,TAB_SIZE,PIC_NAME FROM LMB_REPORTS WHERE BERICHT_ID = $reportcopy";
+	$rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+	if(!$rs0) {$commit = 1;}
+
+	while(lmbdb_fetch_row($rs0)) {
+
+		$typ = lmbdb_result($rs0,"TYP");
+		$tab_size = lmbdb_result($rs0,"TAB_SIZE");
+		$pic_name = lmbdb_result($rs0,"PIC_NAME");
+		$elid = lmbdb_result($rs0,"EL_ID");
+        $id = lmbdb_result($rs0,"ID");
+
+		if($typ == 'bild'){
+			$ext = explode(".",$pic_name);
+			$secname = $elid.substr(md5($elid.date("U").$pic_name),0,12).".".$ext[1];
+			if(file_exists(UPLOADPATH . 'report/'.$tab_size)){
+				copy(UPLOADPATH . 'report/'.$tab_size,UPLOADPATH . 'report/'.$secname);
+				if(file_exists(TEMPPATH . 'thumpnails/report/'.$tab_size)){
+					copy(TEMPPATH . 'thumpnails/report/'.$tab_size,TEMPPATH . 'thumpnails/report/'.$secname);
+				}
+			}
+            $tab_size = parse_db_string($tab_size);
+            $pic_name = parse_db_string($pic_name);
+
+		}elseif($typ = 'template'){ // todo
+
+
+        }
+
+        $sqlquery = "INSERT INTO LMB_REPORTS (
+        ID,
+        BERICHT_ID,
+        ERSTDATUM,
+        ERSTUSER,
+        TAB_SIZE,
+        PIC_NAME,
+        ";
+        $sqlquery .= implode(',',$copyfields);
+        $sqlquery .= ") SELECT 
+        $NEXTKEYID AS ID,
+        $report_id AS BERICHT_ID,
+        ".LMB_DBDEF_TIMESTAMP." AS ERSTDATUM,
+        {$session['user_id']} AS ERSTUSER,
+        '$tab_size' AS TAB_SIZE,
+        '$pic_name' AS PIC_NAME,
+        ";
+        $sqlquery .= implode(',',$copyfields);
+        $sqlquery .= " FROM LMB_REPORTS WHERE ID = $id";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+
+        $NEXTKEYID++;
+
+	}
+
+    // adding rules
+    $NEXTID = next_db_id("LMB_RULES_REPFORM");
+	$sqlquery = "INSERT INTO LMB_RULES_REPFORM (ID,TYP,GROUP_ID,LMVIEW,REPFORM_ID) VALUES ($NEXTID,1,".$session["group_id"].",".LMB_DBDEF_TRUE.",$report_id)";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs) {$commit = 1;}
+
+	/* --- Transaktion ENDE -------------------------------------- */
+	if($commit == 1){
+		lmb_EndTransaction(0);
+	} else {
+		lmb_EndTransaction(1);
+	}
+
+    if(!$commit AND $new AND !$reporttarget){
+        lmb_createReportFileStructure($referenz_tab,$report_id,$report_name,$action);
+    }
+
+
+}
+
+
+function lmb_report_getRootTemplate($ID,$gtabid)
+{
+    global $db;
+    global $gtab;
+
+    if(!$ID){
+        lmb_alert('no root template defined!');
+        return;
+    }
+
+    $sqlquery = "SELECT NAME,CONTENT FROM {$gtab['table'][$gtabid]} WHERE ID = $ID";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs) {return false;}
+
+    return array('name'=>lmbdb_result($rs, "NAME"),'content'=>lmbdb_result($rs, "CONTENT"));
+}
+
+function resultreportlist(){
+    global $db;
+    global $session;
+
+    $sqlquery = "SELECT DISTINCT LMB_REPORT_LIST.ORIENTATION, LMB_REPORT_LIST.USED_FONTS,LMB_REPORT_LIST.LISTMODE, LMB_REPORT_LIST.CSS, LMB_REPORT_LIST.PAGE_STYLE,LMB_REPORT_LIST.ROOT_TEMPLATE_ID,LMB_REPORT_LIST.ROOT_TEMPLATE,LMB_REPORT_LIST.DEFFORMAT,LMB_REPORT_LIST.ODT_TEMPLATE,LMB_REPORT_LIST.ODS_TEMPLATE,LMB_REPORT_LIST.EXTENSION,LMB_REPORT_LIST.SAVENAME,LMB_REPORT_LIST.TARGET,LMB_REPORT_LIST.ERSTUSER,LMB_REPORT_LIST.ID,LMB_REPORT_LIST.GROUPLIST,LMB_REPORT_LIST.NAME,LMB_REPORT_LIST.REFERENZ_TAB,0 AS FID, 0 AS LEVEL
+	FROM LMB_REPORT_LIST,LMB_RULES_REPFORM
+	WHERE LMB_RULES_REPFORM.REPFORM_ID = LMB_REPORT_LIST.ID
+	AND LMB_RULES_REPFORM.TYP = 1
+	AND LMB_RULES_REPFORM.GROUP_ID IN (".implode(",",$session["subgroup"]).")
+	AND PARENT_ID IS NULL
+	ORDER BY REFERENZ_TAB,NAME";
+
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs) {$commit = 1;}
+    while(lmbdb_fetch_row($rs)) {
+        $key = lmbdb_result($rs, "ID");
+        $gtabid = lmbdb_result($rs, "REFERENZ_TAB");
+        $greportlist['gtabid'][$key] = $gtabid;
+        $greportlist[$gtabid]["id"][$key] = lmbdb_result($rs, "ID");
+        $greportlist[$gtabid]["name"][$key] = lmbdb_result($rs, "NAME");
+        $greportlist[$gtabid]["erstuser"][$key] = lmbdb_result($rs, "ERSTUSER");
+        $greportlist[$gtabid]["target"][$key] = lmbdb_result($rs, "TARGET");
+        $greportlist[$gtabid]["savename"][$key] = lmbdb_result($rs, "SAVENAME");
+        $greportlist[$gtabid]["extension"][$key] = lmbdb_result($rs, "EXTENSION");
+        $greportlist[$gtabid]["odt_template"][$key] = lmbdb_result($rs, "ODT_TEMPLATE");
+        $greportlist[$gtabid]["ods_template"][$key] = lmbdb_result($rs, "ODS_TEMPLATE");
+        $greportlist[$gtabid]["defaultformat"][$key] = lmbdb_result($rs, "DEFFORMAT");
+        $greportlist[$gtabid]["used_fonts"][$key] = explode(';',lmbdb_result($rs, "USED_FONTS"));
+        $greportlist[$gtabid]["root_template"][$key] = lmbdb_result($rs, "ROOT_TEMPLATE");
+        $greportlist[$gtabid]["root_template_id"][$key] = lmbdb_result($rs, "ROOT_TEMPLATE_ID");
+        $greportlist[$gtabid]["listmode"][$key] = lmbdb_result($rs, "LISTMODE");
+        $greportlist[$gtabid]["css"][$key] = lmbdb_result($rs, "CSS");
+        $greportlist[$gtabid]["page_style"][$key] = explode(';',lmbdb_result($rs, "PAGE_STYLE"));
+        $greportlist[$gtabid]["orientation"][$key] = lmbdb_result($rs, "ORIENTATION");
+
+        if($greportlist[$gtabid]["odt_template"][$key]){$greportlist[$gtabid]["odt_template"][$key] = get_NameFromID($greportlist[$gtabid]["odt_template"][$key]);}else{$greportlist[$gtabid]["odt_template"][$key] = "";}
+        if($greportlist[$gtabid]["ods_template"][$key]){$greportlist[$gtabid]["ods_template"][$key] = get_NameFromID($greportlist[$gtabid]["ods_template"][$key]);}else{$greportlist[$gtabid]["ods_template"][$key] = "";}
+    }
+    return $greportlist;
+}
+
+
+function lmb_report_getsysfonts()
+{
+    global $db;
+    $sqlquery = "SELECT DISTINCT FAMILY FROM LMB_FONTS ORDER BY FAMILY";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
+    $sysfont = array();
+    while (lmbdb_fetch_row($rs)) {
+        $sysfont[] = trim(lmbdb_result($rs, "FAMILY"));
+    }
+
+    return $sysfont;
+}

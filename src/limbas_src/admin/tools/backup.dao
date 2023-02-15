@@ -1,0 +1,348 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+set_time_limit(1200); #20min
+
+if($DBA["LMHOST"] == $DBA["DBHOST"] OR $DBA["DBHOST"] == "127.0.0.1" OR $DBA["DBHOST"] == "localhost"){
+	$bu["path"] = $DBA["DBPATH"];
+}else{
+	$bu["path"] = "ssh ".$DBA["DBHOST"]." ".$DBA["DBPATH"];
+	$bu["sshpath"] = "ssh ".$DBA["DBHOST"];
+}
+
+$bu["server"] = $DBA["DBHOST"];
+$bu["database"] = $DBA["DBNAME"];
+$bu["user"] = $DBA["DBCUSER"];
+$bu["pass"] = $DBA["DBCPASS"];
+$bu["host"] = $DBA["DBHOST"];
+
+
+if(!$umgvar){
+	$sqlquery = "SELECT FORM_NAME,NORM FROM LMB_UMGVAR";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	while(lmbdb_fetch_row($rs)) {
+		$umgvar[lmbdb_result($rs,"FORM_NAME")] = lmbdb_result($rs,"NORM");
+	}
+}
+
+
+
+# ---- lösche Backups ----
+function delete_backup($server,$location,$path=null,$job=null){
+    global $db;
+    $success = 1;
+    
+	if($location){
+		$location = str_replace("*","",$location);
+		if(file_exists($location)){
+			unlink($location);
+			if(file_exists($location)){
+			     $success = 0;
+			}
+		}elseif($path["server"]){
+			$p = explode(":",$location);
+			if($p[1]){
+				$cmd = "ssh ".$path["server"]." rm ".$p[1];
+				exec($cmd,$out,$ret);
+			}
+		}else{
+			error_log("file does not exist: ".$location);
+		}
+		
+		if($success AND $date AND $cron_id){
+            $sqlquery = "DELETE FROM LMB_HISTORY_BACKUP WHERE ID = '".parse_db_int($job)."'";
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+		}
+		
+		return true;
+	}
+}
+
+# ---- abgelaufene Backups löschen ----
+function delete_backup_list($days,$cron_id,$path){
+	global $db;
+	global $bu;
+
+	if($date = convert_stamp(mktime(0,0,0,date("m"),date("d")-$days,date("Y")))){
+		$sqlquery = "SELECT * FROM LMB_HISTORY_BACKUP WHERE ERSTDATUM < '".$date."' AND CRON_ID = $cron_id";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		while(lmbdb_fetch_row($rs)) {
+			if(delete_backup(lmbdb_result($rs,"SERVER"),lmbdb_result($rs,"LOCATION"),$path,lmbdb_result($rs,"ID"))){
+				$sqlquery1 = "DELETE FROM LMB_HISTORY_BACKUP WHERE ID = ".lmbdb_result($rs,"ID");
+				$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+				if(!$rs1) {$commit = 1;}
+			}
+		}
+	}
+}
+
+# ---- History ----
+function fill_backup_history($out,$path,$typ){
+	global $umgvar;
+	global $db;
+	global $bu;
+	
+	if($out[0] == "OK"){
+		$res = LMB_DBDEF_TRUE;
+		$size = $out[7];
+		$medium = $out[10];
+		$location = $out[11];
+		$label = $out[13];
+		$consistent = $out[12];
+		$logpage = $out[15];
+		$ext = "gz";
+	}elseif($typ == "TXT"){
+		$res = LMB_DBDEF_TRUE;
+		$size = ($out[7]/1024);
+		$medium = $out[10];
+		$location = $out[11];
+		$ext = "tar";
+	}else{
+		if($out){$mess = parse_db_string(implode(" ",$out),230);}
+		$res = LMB_DBDEF_FALSE;
+		$medium =  $path["medname"];
+	}
+
+
+	$action = "SAVE ".$typ;
+	if(!$size){$size = 0;}
+	if(!$logpage){$logpage = 0;}
+
+	if($path['server'] == "localhost" AND $DBA['LMHOST'] != $bu['server']){
+		$path['server'] = $bu['server'];
+	}
+	if($path['scppath']){
+		$store = $path['scppath'].".$ext";
+	}else{
+		$store = $path["path"].".$ext";
+	}
+	$cronid = parse_db_int($GLOBALS["cron_id"],3);
+
+	
+	$NEXTID = next_db_id("LMB_HISTORY_BACKUP");
+	$sqlquery = "INSERT INTO LMB_HISTORY_BACKUP (ID,LABEL,ACTION,RESULT,MEDIUM,SIZE,NEXTLOGPAGE,SERVER,LOCATION,MESSAGE,CRON_ID) VALUES($NEXTID,'$label','$action',$res,'".trim($medium)."',".parse_db_int(round($size/1024)).",$logpage,'".$path['server']."','$store','$mess',$cronid)";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+
+	return $out;
+}
+
+
+# ---- Pfad definieren ----
+function set_backup_path($medium,$path1,$path2,$typ){
+	global $umgvar;
+	global $DBA;
+
+	$path['medname'] = $typ.date("ymdis");
+	$path["filename"] = date("y_m_d_i_s").".".$typ;
+	$path1 = trim($path1);
+
+	# --- File ---
+	if($medium == "1" AND $path1){
+		$pos = lmb_strpos($path1,":");
+		$path['server'] = lmb_substr($path1,0,$pos);
+		# remote Server
+		if((preg_match("/^[0-9]/",lmb_substr($path["server"],0,1)) OR preg_match("/@[0-9]/",$path["server"])) AND lmb_strtolower($path["server"]) != "localhost" AND $path["server"] != $DBA["LMHOST"]){
+			$path["path"] = TEMPPATH . $path["filename"];
+			$path["scp"] = $path1."/";
+			$path["scppath"] = $path1."/".$path["filename"];
+		# lokaler Server
+		}else{
+			if($path["server"] == $DBA["LMHOST"]){
+				$path["path"] = lmb_substr($path1,$pos+1,200)."/".$path["filename"];
+			}elseif(lmb_strtolower($path['server']) == "localhost"){
+				$path["path"] = lmb_substr($path1,$pos+1,200)."/".$path["filename"];
+			}else{
+				$path["path"] = "/".$path1."/".$path["filename"];
+				$path["path"] = str_replace("//","/",$path["path"]);
+			}
+		}
+		$path['type'] = "FILE";
+		$path['size'] = "0";
+		$path['over'] = "YES";
+	# --- Tape ---
+	}elseif($medium == "2" AND $path2){
+		$path["path"] = $path2;
+		$path['type'] = "TAPE";
+		$path['size'] = "64000";
+		$path['over'] = "NO";
+	}
+	return $path;
+}
+
+/**
+* crontab Datei anpassen
+* @global db database handler
+* @global umgvar Array Umgebungvariablen
+* @return BOOLEAN
+*/
+function update_backup_crontab(){
+	global $db;
+	global $umgvar;
+
+	if(is_writable("/etc/crontab")){
+		# --- lesen ----
+		$handle = fopen("/etc/crontab","r");
+			while($line = fgets($handle, 1000)){
+				if(!lmb_strpos($line,$umgvar["pfad"])){
+					$crontab[] = $line;
+				}
+			}
+		fclose($handle);
+
+		# --- schreiben alter Inhalte ----
+		$handle = fopen("/etc/crontab","w");
+		if($crontab){
+		foreach($crontab as $key => $value){
+			fputs($handle,$value);
+		}
+		}
+		# --- schreiben neuer Inhalte ----
+		$sqlquery = "SELECT * FROM LMB_CRONTAB WHERE ACTIV = ".LMB_DBDEF_TRUE." ORDER BY ERSTDATUM";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		while(lmbdb_fetch_row($rs)){
+			fputs($handle,str_replace(";"," ",lmbdb_result($rs,"START"))."\twebuser (/usr/local/bin/php \"".$umgvar["pfad"]."/lib/cron.php\" < /bin/echo ".lmbdb_result($rs,"ID").")\n");
+		}
+		fclose($handle);
+		return true;
+	}else{
+		return false;
+	}
+}
+
+
+# --- Backup löschen ---
+if($delete_backup){
+	$sqlquery = "SELECT * FROM LMB_HISTORY_BACKUP WHERE ID = $delete_backup";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$bzm = 1;
+	if(lmbdb_fetch_row($rs)) {
+		if(delete_backup(lmbdb_result($rs,"SERVER"),lmbdb_result($rs,"LOCATION"))){
+			$sqlquery1 = "DELETE FROM LMB_HISTORY_BACKUP WHERE ID = ".lmbdb_result($rs,"ID");
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			if(!$rs1) {$commit = 1;}
+		}
+	}
+}
+
+
+
+# ---- Database Backup ----
+if(!$path1 OR $path1 == "localhost"){
+	$path1 = "localhost:".$umgvar["pfad"]."/BACKUP";
+}
+
+if($int_backup){
+	if($device == 1){
+		#--- DB Intern Backup ---
+		if($art == 1){
+			$typ = "DATA";
+		}elseif($art == 2){
+			$typ = "PAGES";
+		}elseif($art == 3){
+			$typ = "LOG";
+		}
+
+		$path = set_backup_path($medium,$path1,$path2,$typ);
+		if($path){$medium = create_medium($path,$typ);}
+		if($medium){
+			$out = backup_data($medium,$path,$typ);
+			$out2 = delete_medium($path["medname"],$typ);
+		}
+		if($path["scp"] AND $path["path"]){
+			$sys = "scp ".$path["path"].".gz ".$path["scp"];
+			$ex = `$sys`;
+			if(file_exists($path["path"].".gz")){
+				unlink($path["path"].".gz");
+			}
+		}
+		if($message = fill_backup_history($out,$path,$typ)){
+			$message = implode("<br>",$message);
+		}
+	# ---- text base Backup ----
+	}elseif($device == 2){
+		$action1 = "all";
+		require(COREPATH . 'admin/tools/export.dao');
+		$path = set_backup_path(1,$path1,0,"TXT");
+		if($DBA["DBHOST"] != $DBA["LMHOST"]){
+			$path1 = "localhost:".$umgvar["pfad"]."/BACKUP";
+			$path["path"] = lmb_substr($path_backup,0,lmb_strlen($path_backup)-4);
+		}
+
+		$out[7] = filesize($path_backup);
+		$out[11] = $path["path"].".tar";
+		$out[10] = $path["medname"];
+		fill_backup_history($out,$path,"TXT");
+		if($DBA["DBHOST"] != $DBA["LMHOST"]){
+			if($path['scp'] AND $path["scppath"]){
+				$sys = "scp ".$path_backup." ".$path["scppath"].".tar";
+				$ex = `$sys`;
+				unlink($path_backup);
+			}elseif($path["path"]){
+				$sys = "mv ".$path_backup." ".$path["path"].".tar";
+				$ex = `$sys`;
+			}
+		}
+	}
+	# -- lösche alte Backups ---
+	if($backup_alive AND $cron_id){
+		delete_backup_list($backup_alive,$cron_id,$path);
+	}
+}
+
+
+
+# ---- Cron Job löschen ----
+if($del_job){
+	$sqlquery = "DELETE FROM LMB_CRONTAB WHERE ID = $del_job AND KATEGORY = 'BACKUP'";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	#if(!update_backup_crontab()){lmb_alert("no permission to /etc/crontab\\ncheck it manualy");};
+}elseif($cron_backup){
+	if($art == 1){
+		$desc .= "Complete ";
+	}elseif($art == 2){
+		$desc .= "Incremental ";
+	}elseif($art == 3){
+		$desc .= "Log ";
+	}
+
+	if($device == 1){
+		$desc .= "Internal Database Backup ";
+	}elseif($device == 2){
+		$desc .= "Limbas Text Export ";
+	}
+
+	if($medium == 1){
+		$desc .= "to File";
+	}elseif($medium == 2){
+		$desc .= "to Tape";
+	}
+
+	if(!preg_match("/^[0-9]{1,4}$/",$alive)){
+		$alive = 31;
+	}
+
+	$val = "int_backup,1;device,$device;art,$art;medium,$medium;path1,$path1;path2,$path2";
+
+	$NEXTID = next_db_id("LMB_CRONTAB");
+	$sqlquery = "INSERT INTO LMB_CRONTAB (ID,KATEGORY,START,VAL,DESCRIPTION,ACTIV,ALIVE) VALUES($NEXTID,'BACKUP','$cron_1;$cron_2;$cron_3;$cron_4;$cron_5','$val','$desc',".LMB_DBDEF_TRUE.",$alive)";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	#if(!update_backup_crontab()){lmb_alert("no permission to /etc/crontab\\ncheck it manualy");};
+}
+
+
+?>

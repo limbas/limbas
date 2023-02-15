@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  - @copyright Limbas GmbH <https://limbas.com>
+  - @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+  -
+  - This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+  - This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+  -->
+
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="32"
+   height="32"
+   viewBox="0 0 32.000005 32.000008"
+   id="svg6063"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="timespan.svg">
+  <defs
+     id="defs6065">
+    <pattern
+       inkscape:isstock="true"
+       inkscape:stockid="Wavy"
+       id="Wavy"
+       height="5.1805778"
+       width="30.066020"
+       patternUnits="userSpaceOnUse"
+       inkscape:collect="always">
+      <path
+         id="path5721"
+         d="M 7.597,0.061 C 5.079,-0.187 2.656,0.302 -0.01,1.788 L -0.01,3.061 C 2.773,1.431 5.173,1.052 7.472,1.280 C 9.770,1.508 11.969,2.361 14.253,3.218 C 18.820,4.931 23.804,6.676 30.066,3.061 L 30.062,1.788 C 23.622,5.497 19.246,3.770 14.691,2.061 C 12.413,1.207 10.115,0.311 7.597,0.061 z "
+         style="fill:black;stroke:none;" />
+    </pattern>
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#Packedcircles"
+       id="pattern5974"
+       patternTransform="matrix(9.9999982,0,0,9.9999976,-18.282992,-971.79347)" />
+    <pattern
+       inkscape:stockid="Packed circles"
+       id="Packedcircles"
+       patternTransform="translate(0,0) scale(10,10)"
+       height="1.73205080756"
+       width="1"
+       patternUnits="userSpaceOnUse"
+       inkscape:collect="always">
+      <circle
+         id="circle5178"
+         r="0.5"
+         cy="0.5"
+         cx="0"
+         style="fill:black;stroke:none" />
+      <circle
+         id="circle5180"
+         r="0.5"
+         cy="0.5"
+         cx="1"
+         style="fill:black;stroke:none" />
+      <circle
+         id="circle5182"
+         r="0.5"
+         cy="1.36602540378"
+         cx="0.5"
+         style="fill:black;stroke:none" />
+      <circle
+         id="circle5184"
+         r="0.5"
+         cy="-0.366025403784"
+         cx="0.5"
+         style="fill:black;stroke:none" />
+    </pattern>
+    <pattern
+       patternUnits="userSpaceOnUse"
+       width="69.696705"
+       height="19.999975"
+       patternTransform="translate(18.282995,971.7937)"
+       id="pattern5971">
+      <path
+         id="rect4371"
+         d="m 0,0 69.696705,0 0,19.999975 -69.696705,0 z"
+         style="fill:url(#pattern5974);fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:8.19999981;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         inkscape:connector-curvature="0" />
+    </pattern>
+    <pattern
+       patternTransform="translate(0.15228489,-2.460238)"
+       id="pattern5993"
+       xlink:href="#Wavy-6"
+       inkscape:collect="always" />
+    <pattern
+       inkscape:isstock="true"
+       inkscape:stockid="Wavy"
+       id="Wavy-6"
+       height="5.1805778"
+       width="30.066020"
+       patternUnits="userSpaceOnUse"
+       inkscape:collect="always">
+      <path
+         id="path5721-1"
+         d="M 7.597,0.061 C 5.079,-0.187 2.656,0.302 -0.01,1.788 L -0.01,3.061 C 2.773,1.431 5.173,1.052 7.472,1.280 C 9.770,1.508 11.969,2.361 14.253,3.218 C 18.820,4.931 23.804,6.676 30.066,3.061 L 30.062,1.788 C 23.622,5.497 19.246,3.770 14.691,2.061 C 12.413,1.207 10.115,0.311 7.597,0.061 z "
+         style="fill:black;stroke:none;" />
+    </pattern>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="25.6875"
+     inkscape:cx="16"
+     inkscape:cy="16"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     units="px"
+     inkscape:window-width="1920"
+     inkscape:window-height="1007"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid6071"
+       empspacing="4" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata6068">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-1020.2988)">
+    <g
+       id="g4150"
+       transform="matrix(0.28376412,0,0,0.28376412,-2.1609036,755.85507)">
+      <path
+         inkscape:connector-curvature="0"
+         d="m 19.684175,1036.6459 18.131047,0 0,-18.131 -18.131047,0 0,18.131 z m 22.157037,0 20.144041,0 0,-18.131 -20.144041,0 0,18.131 z m -22.157037,-22.157 18.131047,0 0,-20.14405 -18.131047,0 0,20.14405 z m 22.157037,0 20.144041,0 0,-20.14405 -20.144041,0 0,20.14405 z m -22.157037,-24.17708 18.131047,0 0,-18.13105 -18.131047,0 0,18.13105 z m 46.334116,46.33408 20.14404,0 0,-18.131 -20.14404,0 0,18.131 z m -24.177079,-46.33408 20.144041,0 0,-18.13105 -20.144041,0 0,18.13105 z m 48.350632,46.33408 18.131046,0 0,-18.131 -18.131046,0 0,18.131 z m -24.173553,-22.157 20.14404,0 0,-20.14405 -20.14404,0 0,20.14405 z m -22.16056,-54.39314 0,-18.13104 q 0,-0.81789 -0.599315,-1.41721 -0.599315,-0.59931 -1.417204,-0.59931 l -4.029516,0 q -0.817888,0 -1.417203,0.59931 -0.599315,0.59932 -0.599315,1.41721 l 0,18.13104 q 0,0.81789 0.599315,1.4172 0.599315,0.59932 1.417203,0.59932 l 4.029516,0 q 0.817889,0 1.417204,-0.59932 0.599315,-0.59931 0.599315,-1.4172 z m 46.334113,54.39314 18.131046,0 0,-20.14405 -18.131046,0 0,20.14405 z m -24.173553,-24.17708 20.14404,0 0,-18.13105 -20.14404,0 0,18.13105 z m 24.173553,0 18.131046,0 0,-18.13105 -18.131046,0 0,18.13105 z m 2.012993,-30.21606 0,-18.13104 q 0,-0.81789 -0.599315,-1.41721 -0.599315,-0.59931 -1.417203,-0.59931 l -4.029513,0 q -0.817889,0 -1.417204,0.59931 -0.599315,0.59932 -0.599315,1.41721 l 0,18.13104 q 0,0.81789 0.599315,1.4172 0.599315,0.59932 1.417204,0.59932 l 4.029513,0 q 0.817888,0 1.417203,-0.59932 0.599315,-0.59931 0.599315,-1.4172 z m 24.173553,-4.02951 0,80.57965 q 0,3.2751 -2.39373,5.6653 -2.39374,2.3902 -5.66529,2.3937 l -88.638721,0 q -3.27508,0 -5.66529,-2.3937 -2.390209,-2.3938 -2.393735,-5.6653 l 0,-80.57965 q 0,-3.27508 2.393735,-5.66529 2.393735,-2.39021 5.66529,-2.39374 l 8.059029,0 0,-6.0425 q 0,-4.15643 2.957796,-7.11423 2.957796,-2.95779 7.114222,-2.95779 l 4.029516,0 q 4.156427,0 7.114223,2.95779 2.957796,2.9578 2.957796,7.11423 l 0,6.0425 24.173553,0 0,-6.0425 q 0,-4.15643 2.9578,-7.11423 2.957796,-2.95779 7.114222,-2.95779 l 4.029513,0 q 4.156426,0 7.114225,2.95779 2.957796,2.9578 2.957796,7.11423 l 0,6.0425 8.05903,0 q 3.27508,0 5.66529,2.39374 2.39021,2.39373 2.39373,5.66529 z"
+         id="path4296" />
+      <rect
+         id="rect5976"
+         y="971.66742"
+         x="19.313454"
+         height="19.999981"
+         width="69.696716"
+         style="fill:url(#Wavy);fill-opacity:1;stroke:none" />
+      <rect
+         id="rect5976-7"
+         y="969.2074"
+         x="19.465742"
+         height="19.999985"
+         width="69.696732"
+         style="fill:url(#pattern5993);fill-opacity:1;stroke:none" />
+    </g>
+  </g>
+</svg>

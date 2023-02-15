@@ -1,0 +1,148 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+$elid = 1;
+$menu = array();
+
+// file explorer
+if($LINK[142]){
+	$melements["id"] = $elid++;
+	$melements["name"] = $lang[$LINK["name"][142]];
+	#$melements["count"] = multiframeGetCount("Explorer");
+	$melements["link"] = "main.php?&action=explorer";
+	$melements["target"] = "main";
+	$melements["preview"] = "Explorer";
+	$melements["gicon"] = "lmb-icon-32 lmb-file-manager";
+	$melements["autorefresh"] = $umgvar['menurefresh'];
+	$menu[0][] = $melements;
+}
+
+
+// calendar tables
+if($LINK[169]){
+	if($gtab["tab_id"]){
+	foreach ($gtab["tab_id"] as $key => $value){
+		if($gtab["typ"][$key] == 2){
+			unset($melements);
+			$melements["id"] = $elid++;
+			$melements["gtabid"] = $key;
+			$melements["name"] = $gtab["desc"][$key];
+			$melements["desc"] = $gtab["desc"][$key];
+			#$melements["count"] = multiframeGetCount("Calendar",$gtab["table"][$key]);
+			$melements["link"] = "main.php?&action=kalender&ctyp=pro&gtabid=$value";
+			$melements["target"] = "main";
+			$melements["preview"] = "Calendar";
+			
+			if($gtab["params1"][$key]){
+				$melements["gicon"] = "lmb-icon-32 lmb-gantt";
+			}else{
+				$melements["gicon"] = "lmb-icon-32 lmb-calendar";
+			}
+			$melements["autorefresh"] = $umgvar['menurefresh'];
+			$menu[0][] = $melements;
+		}
+	}}
+}
+
+
+// email tables
+if($LINK[35]){
+	if($gtab["tab_id"]){
+	foreach ($gtab["tab_id"] as $key => $value){
+		if($gtab["typ"][$key] == 6 AND $session["e_setting"][$value]["full_name"]){
+			unset($melements);
+			$melements["id"] = $elid++;
+			$melements["gtabid"] = $key;
+			$melements["name"] = $gtab["desc"][$key];
+			$melements["desc"] = $gtab["desc"][$key];
+			#$melements["count"] = multiframeGetCount("Calendar",$gtab["table"][$key]);
+			$melements["link"] = "main.php?&action=messages&quickview=1&gtabid=$value";
+			$melements["target"] = "main";
+			$melements["preview"] = "Message";
+			$melements["gicon"] = "lmb-icon-32 lmb-email";
+			$melements["autorefresh"] = $umgvar['menurefresh'];
+			$menu[0][] = $melements;
+		}
+	}}
+}
+
+// default reminder
+if($LINK[40]){
+	$melements["id"] = $elid++;
+	$melements["name"] = $lang[$LINK["name"][40]];
+	#$melements["count"] = multiframeGetCount("Reminder");
+	$melements["link"] = "main.php?&action=user_w_vorlage";
+	$melements["target"] = "main";
+	$melements["preview"] = "Reminder";
+	$melements["params"] = "category=0";
+	$melements["gicon"] = "lmb-icon-32 lmb-reminder";
+	$melements["autorefresh"] = $umgvar['menurefresh'];
+	$menu[0][] = $melements;
+}
+
+// userdefined reminder tables
+if($greminder){
+foreach ($greminder as $tabid => $reminder){
+    if($reminder['name']){
+    foreach ($reminder['name'] as $rid => $rname){
+        unset($melements);
+        $melements["id"] = $elid++;
+        $melements["gtabid"] = $tabid;
+        $melements["name"] = $rname;
+        $melements["desc"] = $rname;
+        if(!$tabid){
+            $melements["link"] = "main.php?&action=user_w_vorlage&gfrist=$rid";
+        }else {
+            $melements["link"] = "main.php?action=gtab_erg&source=root&gtabid=$tabid&gfrist=$rid&form_id=" . $reminder['forml_id'][$rid];
+        }
+        $melements["target"] = "main";
+        $melements["preview"] = "Reminder";
+        $melements["params"] = "category=$rid";
+        $melements["gicon"] = "lmb-icon-cus lmb-icon-32 lmb-time-akq";
+        $melements["autorefresh"] = $umgvar['menurefresh'];
+        $menu[0][] = $melements;
+    }}
+}}
+
+
+
+// kanban tables
+if($LINK[169]){
+	if($gtab["tab_id"]){
+	foreach ($gtab["tab_id"] as $key => $value){
+		if($gtab["typ"][$key] == 7){
+			unset($melements);
+			$melements["id"] = $elid++;
+			$melements["gtabid"] = $key;
+			$melements["name"] = $gtab["desc"][$key];
+			$melements["desc"] = $gtab["desc"][$key];
+			#$melements["count"] = multiframeGetCount("Calendar",$gtab["table"][$key]);
+			$melements["link"] = "main.php?&action=kanban&gtabid=$value";
+			$melements["target"] = "main";
+			$melements["preview"] = "Kanban";
+			
+			$melements["gicon"] = "lmb-icon-32 lmb-columns";
+                        
+			$menu[0][] = $melements;
+		}
+	}}
+}
+
+
+
+# include extensions
+if($gLmbExt["ext_multiframe.inc"]){
+	foreach ($gLmbExt["ext_multiframe.inc"] as $key => $extfile){
+		require_once($extfile);
+	}
+}
+
+?>

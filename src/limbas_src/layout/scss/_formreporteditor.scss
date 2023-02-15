@@ -1,0 +1,48 @@
+/*!
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+/* Form Editor  /  Report - Editor
+------------------------------------------------------------------------*/
+
+.formeditorPanel {
+  background-color: $farbschemaWEB8;
+  color: $fontc14;
+  border: 1px solid $farbschemaWEB3;
+  width: 240px;
+
+}
+
+.formeditorPanel td {
+  padding: 2px;
+  overflow: hidden;
+}
+
+.formeditorPanel.no-padding td {
+  padding: 0;
+}
+
+.formeditorPanelHead {
+  height: 15px;
+  padding: 3px;
+  color: $fontc7;
+  background-color: $farbschemaWEB7;
+  text-align: left;
+  margin-top: 10px;
+  cursor: s-resize;
+}
+
+.formeditorPanel .btn {
+  border: 1px outset;
+  cursor: pointer;
+  padding: 1px;
+}
+
+#itemlist_area td {
+  border-bottom: 1px solid $farbschemaWEB3;
+  padding: 1px;
+}

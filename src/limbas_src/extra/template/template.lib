@@ -1,0 +1,45 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+require_once(COREPATH . 'extra/template/report/ReportTemplateConfig.php');
+
+/**
+ * renders a specific html template
+ * 
+ * @param int $templGtabid gtabid of the table holding the template elements
+ * @param int $templId record id of one template element
+ * @param int|null $gtabid (optional) gtabid of the table of the record to resolve
+ * @param int|null $ID (optional) id of the record whose data needs to be resolved; needed if any data placeholder needs to be resolved
+ * @param array $resolvedTemplateGroups (optional) if the template contains any template group, the templates to be used can be passed
+ * @param array $resolvedDynamicData (optional) if the template contains any data input, the date to be used can be passed
+ *
+ * @return string
+ */
+function lmbRenderTemplateElement($templGtabid, $templId, $gtabid = null, $ID = null, $resolvedTemplateGroups = [], $resolvedDynamicData = [])
+{
+
+    $report = [
+        'referenz_tab' => $gtabid
+    ];
+    $parameter = [];
+
+    TemplateConfig::$instance = new ReportTemplateConfig($report, $parameter, $ID);
+
+    if (!empty($resolvedTemplateGroups)) {
+        TemplateConfig::$instance->resolvedTemplateGroups = $resolvedTemplateGroups;
+    }
+    if (!empty($resolvedDynamicData)) {
+        TemplateConfig::$instance->resolvedDynamicData = $resolvedDynamicData;
+    }
+
+    $baseElement = ReportTemplateElement::fromID($templGtabid, $templId);
+    $baseElement->resolve($ID);
+    $htmlArr = $baseElement->getAsHtmlArr();
+
+    return implode('', $htmlArr);
+}

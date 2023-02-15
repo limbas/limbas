@@ -1,0 +1,23 @@
+Satisfy any
+
+order deny,allow
+allow from all
+
+<IfModule mod_rewrite.c>
+
+    RewriteEngine on
+    #RewriteBase /
+    
+    RewriteRule ^(.*install)$ %{REQUEST_URI}/ [NC,R=301,L]
+        
+    RewriteCond %{REQUEST_URI} !(assets|localassets|USER|TEMP)
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteCond %{REQUEST_FILENAME} !-d
+    RewriteRule ^(.*)$ index.php [L,QSA]
+    
+</IfModule>
+
+
+<IfModule mod_env.c>
+    SetEnvIf Authorization "(.*)" HTTP_AUTHORIZATION=$1
+</IfModule>

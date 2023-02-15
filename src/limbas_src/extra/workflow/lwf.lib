@@ -1,0 +1,384 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+#require_once("gtab/gtab.lib");
+#require_once("gtab/gtab_type_erg.lib");
+
+/**
+ * init workflow
+ *
+ * @param number $wfl_id
+ * @param number $wfl_inst
+ * @param array $params
+ * @param number $tab_id
+ * @param number $dat_id
+ * @return number
+ */
+function lmb_wfl_init($wfl_id,$wfl_inst,$task_id,$tab_id=null,$dat_id=null,$params=null){
+	
+	if($wfl_inst){
+		# get active task
+		$active_task = lmb_wfl_getTask($wfl_id,$wfl_inst,$tab_id,$dat_id);
+	}else{
+		# active task is 0
+		$active_task = "0";
+	}
+	
+	if(!$task_id AND $task_id != 0){
+		$task_id = $active_task;
+	}
+	
+	lmb_StartTransaction();
+	
+	$fnct = "lmbWfl_$task_id";
+	
+	if(function_exists($fnct)){
+		$next_task = $fnct($wfl_inst,$active_task,$tab_id,$dat_id,$params);
+		# success - next task is number
+		if(is_numeric($next_task)){
+			$task_id = lmb_wfl_setTask($wfl_id,$wfl_inst,$next_task,$tab_id,$dat_id);
+			if($task_id === false){lmb_EndTransaction(0);return false;}else{
+				lmb_wfl_setHistory($wfl_id,$wfl_inst,$active_task,$task_id,$tab_id,$dat_id);
+				lmb_EndTransaction(1);
+				return $task_id;
+			}
+		# false
+		}elseif($next_task === false){
+			lmb_EndTransaction(0);
+			return false;
+		# true - success 
+		}else{
+			lmb_EndTransaction(1);
+			return true;
+		}
+	}
+	
+	lmb_EndTransaction(0);
+	return false;
+}
+
+/**
+ * get aktive task_id from workflow instance
+ *
+ * @param unknown_type $wlf_id
+ * @param unknown_type $wfl_inst
+ * @param unknown_type $gtabid
+ * @param unknown_type $ID
+ * @return task_id
+ */
+function lmb_wfl_getTask($wlf_id,$wfl_inst,$tab_id=null,$dat_id=null){
+	global $db;
+	
+	if(!$wfl_inst){return false;}
+	
+	$sqlquery = "SELECT TASK_ID FROM LMB_WFL_INST WHERE ID = ".parse_db_int($wfl_inst);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	
+	#if(lmbdb_fetch_row($rs)){
+		return lmbdb_result($rs, "TASK_ID");
+	#}elseif($wlf_id){
+	#	$wfl_start = lmb_wfl_start($wfl_id,$wfl_inst,$tab_id,$dat_id);
+		#$GLOBALS['wfl_inst'] = $wfl_start[0];
+	#	return $wfl_start;
+	#}
+}
+
+
+/**
+ * get next task from task definition
+ *
+ * @param unknown_type $wlf_id
+ * @param unknown_type $wfl_inst
+ * @param unknown_type $task_id
+ * @return task_id
+ */
+function lmb_wfl_getNextTask($wfl_id,$wfl_inst,$task_id=null){
+	global $db;
+	global $gwfl;
+	
+	if(!$task_id){
+		$task_id = lmb_wfl_getTask($wfl_id,$wfl_inst);
+	}
+	
+	$task = $gwfl[$wfl_id]["task"]["name"];
+	next($task);
+
+	return key($task);
+}
+
+/**
+ * get wfl_inst_id from workflow instance with tab and dat-id
+ *
+ * @param unknown_type $wlf_id
+ * @param unknown_type $tab_id
+ * @param unknown_type $dat_id
+ * @return task_id
+ */
+function lmb_wfl_getRecordInst($wlf_id,$tab_id,$dat_id){
+	global $db;
+	
+	if(!$tab_id OR !$dat_id){return false;}
+	
+	$sqlquery = "SELECT ID FROM LMB_WFL_INST WHERE TAB_ID = ".parse_db_int($tab_id)." AND DAT_ID = ".parse_db_int($dat_id)." AND WFL_ID = ".parse_db_int($wlf_id);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+	if(lmbdb_fetch_row($rs)){
+		return lmbdb_result($rs, "ID");
+	}else{
+		return false;
+	}
+}
+
+/**
+ * start workflow
+ *
+ * @param unknown_type $wfl_id
+ * @param unknown_type $start_task
+ * @param unknown_type $tab_id
+ * @param unknown_type $dat_id
+ * @return task_id
+ * @global wfl_inst
+ */
+function lmb_wfl_start($wfl_id,$task_id=null,$tab_id=null,$dat_id=null){
+	global $db;
+	global $gwfl;
+
+	# using first task from list
+	if($task_id === null){
+		$task = $gwfl[$wlf_id]["task"]["name"];
+		reset($task);
+		$task_id = key($task);
+		
+		#$sqlquery = "SELECT ID FROM LMB_WFL_TASK WHERE WFL_ID = $wlf_id ORDER BY SORT";
+		#$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		#$task_id = lmbdb_result($rs, "ID");
+	}
+
+	$NEXTID = next_db_id("LMB_WFL_INST","ID",1);
+	$sqlquery = "INSERT INTO LMB_WFL_INST (ID,TAB_ID,DAT_ID,TASK_ID,WFL_ID) VALUES($NEXTID,".parse_db_int($tab_id).",".parse_db_int($dat_id).",".parse_db_int($task_id).",".parse_db_int($wfl_id).")";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+	$GLOBALS['wfl_inst'] = $NEXTID;
+	#array($NEXTID,$task_id);
+	
+	return $task_id;
+}
+
+
+
+function lmb_wfl_end($wfl_id,$wfl_inst,$tab_id=0,$dat_id=0){
+	global $db;
+
+	if(!$wfl_id){return;}
+	
+	if($tab_id and $dat_id){
+		$sqlquery = "DELETE FROM LMB_WFL_INST WHERE TAB_ID = $tab_id AND DAT_ID = $dat_id";
+	}elseif($wfl_inst){
+		$sqlquery = "DELETE FROM LMB_WFL_INST WHERE WFL_ID = $wfl_id AND ID = $wfl_inst";
+	}else{
+		return;
+	}
+
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	
+	unset($GLOBALS['wfl_inst']);
+	
+	return true;
+}
+
+
+/**
+ * set task in workflow instance
+ *
+ * @param unknown_type $wfl_id
+ * @param unknown_type $wfl_inst
+ * @param unknown_type $task_id
+ * @param unknown_type $tab_id
+ * @param unknown_type $dat_id
+ * @return task_id
+ */
+function lmb_wfl_setTask($wfl_id,$wfl_inst,$task_id,$tab_id=null,$dat_id=null){
+	global $db;
+	
+	if($wfl_inst){
+		$sqlquery = "UPDATE LMB_WFL_INST SET TASK_ID = ".parse_db_int($task_id).", TAB_ID = ".parse_db_int($tab_id).", DAT_ID = ".parse_db_int($dat_id)." WHERE ID = ".parse_db_int($wfl_inst);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if($rs){return $task_id;}else{return false;}
+	}else{
+		$task_id = lmb_wfl_start($wfl_id,$task_id,$tab_id,$dat_id);
+		#$GLOBALS['wfl_inst'] = $wfl_start[0];
+		return $task_id;
+	}
+}
+
+/**
+ * fill history
+ *
+ * @param unknown_type $wfl_id
+ * @param unknown_type $wfl_inst
+ * @param unknown_type $task_id
+ * @param unknown_type $user_id
+ * @param unknown_type $tab_id
+ * @param unknown_type $dat_id
+ * $lmb_wflHistory global array for userdefined Log
+ * @return success
+ */
+function lmb_wfl_setHistory($wfl_id,$wfl_inst,$old_task,$new_task,$tab_id=null,$dat_id=null){
+	global $db;
+	global $session;
+	global $lmb_wflHistory;
+	
+	
+	if(!$wfl_inst){
+		if(!$GLOBALS['wfl_inst']){
+			return;
+		}else{
+			$wfl_inst = $GLOBALS['wfl_inst'];
+		}
+	}
+	
+	if(is_array($lmb_wflHistory)){
+		foreach($lmb_wflHistory as $key => $value){
+			$sqli .= ",$key";
+			$sqlv .= ",$value";
+		}
+		$lmb_wflHistory = null;
+	}
+
+	$NEXTID = next_db_id("LMB_WFL_HISTORY");
+	$sqlquery = "INSERT INTO LMB_WFL_HISTORY (ID,ERSTDATUM,WFL_ID,INST_ID,TASK_ID,USER_ID,TAB_ID,DAT_ID $sqli) VALUES($NEXTID,".LMB_DBDEF_TIMESTAMP.",".parse_db_int($wfl_id).",".parse_db_int($wfl_inst).",".parse_db_int($new_task).",".$session['user_id'].",".parse_db_int($tab_id).",".parse_db_int($dat_id).$sqlv.")";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	
+	if($rs){return true;}else{return false;}
+}
+
+
+function lmb_wfl_getHistory($wfl_id,$wfl_inst,$task_id=null,$user_id=null,$tab_id=null,$dat_id=null,$order_by=null){
+	global $db;
+	global $session;
+	
+	if(is_numeric($wfl_inst)){
+		$where[] = "INST_ID = ".parse_db_int($wfl_inst);
+	}
+	if(is_numeric($task_id)){
+		$where[] = "TASK_ID = ".parse_db_int($task_id);
+	}
+	if($user_id){
+		$where[] = "USER_ID = ".parse_db_int($user_id);
+	}
+	if($tab_id){
+		$where[] = "TAB_ID = ".parse_db_int($tab_id);
+	}
+	if($dat_id){
+		$where[] = "DAT_ID = ".parse_db_int($dat_id);
+	}
+	
+	if($where){
+		$where = implode(" AND ",$where);
+	}else{
+		return false;
+	}
+    
+    if(!$order_by){
+        $order_by = 'ID';
+    }
+	
+	$wfl['task_id'] = array();
+	
+	$sqlquery = "SELECT * FROM LMB_WFL_HISTORY WHERE WFL_ID = ".parse_db_int($wfl_id)." AND $where ORDER BY $order_by";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while (lmbdb_fetch_row($rs)){
+		$wfl['task_id'][] = lmbdb_result($rs, "TASK_ID");
+		$wfl['date'][] = lmbdb_result($rs, "ERSTDATUM");
+		$wfl['user_id'][] = lmbdb_result($rs, "USER_ID");
+		$wfl['tab_id'][] = lmbdb_result($rs, "TAB_ID");
+		$wfl['dat_id'][] = lmbdb_result($rs, "DAT_ID");
+	}
+
+	if($rs){return $wfl;}else{return false;}
+}
+
+function lmb_wfl_printHistory($wfl_id, $wfl_inst) {
+    global $gwfl;
+    global $userdat;
+    global $gtab;
+    global $gform;
+    
+    # get workflow data ordered by date
+    $history = lmb_wfl_getHistory($wfl_id, $wfl_inst, null, null, null, null, 'ERSTDATUM DESC');
+    
+    # map to readable values
+    foreach($history['task_id'] as $key => $task_id) {
+        # map task id to task name
+        $history['task'][$key] = $gwfl[$wfl_id]['task']['name'][$task_id];
+        
+        # map user id to description | full name | username
+        $user_id = $history['user_id'][$key];
+        $user_desc = $userdat['bezeichnung'][$user_id];
+        $user_full_name = $userdat['vorname'][$user_id] . " " . $userdat['name'][$user_id];
+        $user_username = $userdat['username'][$user_id];
+        $history['user'][$key] = $user_desc ? $user_desc : ($user_full_name ? $user_full_name : $user_username);
+        
+        # map table id to table name
+        $tab_id = $history['tab_id'][$key];
+        $history['tab'][$key] = $gtab['desc'][$tab_id];
+        
+        # map date to german format
+        $history['date'][$key] = get_date($history['date'][$key]);
+    }
+    
+    # set headers (title lang => $history index)
+    $headers = array(
+        "Date" => 'date',
+        "User" => 'user',
+        "Task" => 'task',
+        "Table" => 'tab'
+    );
+    
+    # print as table
+    $output = "<div class=\"gtabFringeRelationBody\" style=\"width:100%;height:100%;overflow-y:auto;\">";
+    $output.= "<table id=\"wflHistory_".$wfl_id."\" class=\"lmbfringeGtabBody\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"border:none;width:100%;\">
+	<thead>";
+		
+	# print headers
+	$output.= "<TR class=\"gtabHeaderTitleTR\">";	
+	foreach ($headers as $description => $key){		
+		$output.= "
+			<th nowrap align=\"left\" class=\"gtabHeaderTitleTD\" valign=\"top\" style=\"cursor:auto;\">
+			<div class=\"gtabHeaderTitleTDItem\" style=\"width:100%;text-align:left;\">$description</div>
+			</th>";
+        $bzmrk++;
+	}
+	$output.= "</TR>";	
+	$output.= "</thead><tbody>";
+
+	# print data		
+	foreach($history['date'] as $historyKey => $date) {
+		$output.= "<tr id=\"elrow_".$wfl_id."_".$historyKey."\" class=\"gtabBodyTR\"";		
+		$output.= "onmouseover=\"this.style.backgroundColor='".$farbschema["WEB7"]."'\" onmouseout=\"this.style.backgroundColor=''\" ";
+		$output.= ">";
+
+        foreach ($headers as $desctiption => $headerKey){
+            $output.= "<td class=\"gtabBodyTD\" align=\"left\">";
+            $output.= $history[$headerKey][$historyKey];
+            $output.= "</td>";
+        }
+		$output.= "</tr>";
+	}
+		
+	$output.= "</tbody><tfoot>";	
+	$output.= "<tr class=\"gtabBodyTR\"><td style=\"height:100%\" colspan=\"".$bzmrk."\"></td></tr>";	
+	$output.= "</tfoot></table>";
+	$output.= "</div>";
+    
+    return $output;    
+}
+?>

@@ -1,0 +1,112 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+
+
+function lmb_TabschemaGetAliasName($tabname,$viewid,$num=0){
+	static $pat;
+	
+	if($num > 10){return;}
+	
+	if(!$pat){
+		$pat = lmb_GetTabschemaPattern($viewid);
+	}
+	
+	if($num > 0){$tabname_ = $tabname."#".$num;}else{$tabname_ = $tabname;}
+	if($pat["name"] AND $tabname_){
+	if(in_array($tabname_,$pat["name"])){
+		$num = lmb_TabschemaGetAliasName($tabname,$viewid,$num+1);
+	}}
+	
+	return $num;
+}
+
+
+function lmb_SetTabschemaPattern($setdrag,$viewid=0,$relationstring=0){
+	global $db;
+	global $session;
+
+	if($part_tabs = explode(":",$setdrag)){
+		foreach ($part_tabs as $key => $part_tab_){
+			if($part_tab_){
+				$part_tab = explode(";",$part_tab_);
+				$size = explode(",",$part_tab[1]);
+				$pos = explode(",",$part_tab[2]);
+
+				$tabid = $part_tab[0];
+				$sizex = $size[0];
+				$sizey = $size[1];
+				$posx = str_replace("px","",$pos[0]);
+				$posy = str_replace("px","",$pos[1]);
+				$del = $part_tab[3];
+				
+				# check for aliases
+				if($del == "add" AND !is_numeric($tabid) AND $viewid){
+					if($num = lmb_TabschemaGetAliasName(base64_decode($tabid),$viewid)){
+						$tabid = base64_encode(base64_decode($tabid)."#".$num);
+					}
+					$del = 0;
+				}
+
+				if($viewid){$sql = "AND VIEWID = $viewid";}
+
+				$sqlquery = "SELECT ID FROM LMB_GTAB_PATTERN WHERE TABID = '".parse_db_string($tabid,50)."' $sql";
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(lmbdb_fetch_row($rs)){
+					if($del AND $viewid){
+						$sqlquery1 = "DELETE FROM LMB_GTAB_PATTERN WHERE TABID = '".parse_db_string($tabid,50)."' $sql";
+						$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+						$sqlquery1 = "DELETE FROM LMB_CONF_VIEWFIELDS WHERE TABLENAME = '".base64_decode($tabid)."' $sql";
+						$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+						$deltable = $tabid;
+						# drop relation
+						lmb_createQuestRelation($viewid,$relationstring);
+					}else{
+						$sqlquery1 = "UPDATE LMB_GTAB_PATTERN SET POSX = ".parse_db_int($posx,6).", POSY = ".parse_db_int($posy,6).", WIDTH = ".parse_db_int($sizex,6).", HEIGHT = ".parse_db_int($sizey,6)." WHERE TABID = '".parse_db_string($tabid,50)."' $sql";
+						$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+					}
+				}else{
+					if($deltable != $tabid){
+						$NEXTID = next_db_id("LMB_GTAB_PATTERN");
+						$sqlquery1 = "INSERT INTO LMB_GTAB_PATTERN (ID,ERSTUSER,TABID,POSX,POSY,WIDTH,HEIGHT,VIEWID) VALUES (".$NEXTID.",".$session["user_id"].",'".parse_db_string(str_replace("=","",$tabid),50)."',".parse_db_int($posx,6).",".parse_db_int($posy,6).",".parse_db_int($sizex,6).",".parse_db_int($sizey,6).",".parse_db_int($viewid).")";
+						$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+					}
+				}
+			}
+		}
+	}
+}
+
+function lmb_GetTabschemaPattern($viewid=0){
+	global $db;
+	
+	if($viewid){
+		$sqlquery = "SELECT * FROM LMB_GTAB_PATTERN WHERE VIEWID = ".$viewid." ORDER BY ID";
+	}else{
+		$sqlquery = "SELECT * FROM LMB_GTAB_PATTERN WHERE VIEWID = 0 ORDER BY ID";
+	}
+	
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+		$key = lmbdb_result($rs,"TABID");
+		$pat["id"][$key] = lmbdb_result($rs,"ID");
+		$pat["posx"][$key] = lmbdb_result($rs,"POSX");
+		$pat["posy"][$key] = lmbdb_result($rs,"POSY");
+		$pat["height"][$key] = lmbdb_result($rs,"HEIGHT");
+		$pat["width"][$key] = lmbdb_result($rs,"WIDTH");
+		$pat["visible"][$key] = lmbdb_result($rs,"VISIBLE");
+		$pat["name"][$key] = base64_decode($key);
+	}
+	
+	return $pat;
+}
+
+?>

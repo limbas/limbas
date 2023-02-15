@@ -1,0 +1,29 @@
+/*!
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+/*
+  styles for installation of Limbas
+ */
+
+.main-install {
+  .copyright-header img {
+    margin-top: 40px;
+    margin-bottom: 15px;
+    height: 90px;
+  }
+
+  .scrollcontainer {
+    max-height: calc(100% - 5px);
+    overflow-y: auto;
+  }
+
+  .previous-step {
+    color: #777;
+    background-color: #eee;
+  }
+}

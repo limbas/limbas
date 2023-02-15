@@ -1,0 +1,170 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+
+
+/* ---Sprach-Liste --------------------------------------------- */
+function get_language_list($langtyp=null){
+	global $db;
+	$langtyp = dbf_4($langtyp);
+
+	$sqlquery = "SELECT DISTINCT LANGUAGE,LANGUAGE_ID FROM LMB_LANG ORDER BY LANGUAGE";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
+		$sqlquery1 = "SELECT COUNT(*) AS RES FROM LMB_LANG$langtyp WHERE EDIT = ".LMB_DBDEF_FALSE." AND LANGUAGE_ID = ".lmbdb_result($rs, "LANGUAGE_ID");
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		
+		$lid = lmbdb_result($rs, "LANGUAGE_ID");
+		$result_language["edit"][$lid] = lmbdb_result($rs1, "RES");
+	    $result_language["language"][$lid] = lmbdb_result($rs, "LANGUAGE");
+	    $result_language["language_id"][$lid] = lmbdb_result($rs, "LANGUAGE_ID");
+	}
+
+	return $result_language;
+}
+
+
+/* --- löschen --------------------------------------------- */
+function lang_delete($del,$langtyp=null){
+	global $db;
+	global $lang;
+	$langtyp = dbf_4($langtyp);
+
+	if(is_numeric($del)){
+		$sqlquery1 = "DELETE FROM LMB_LANG$langtyp WHERE ELEMENT_ID = $del";
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		if(!$rs1) {$commit = 1;}
+
+		# update Session
+		unset($_SESSION["lang"][$del]);
+	}
+}
+
+/* --- ändern --------------------------------------------- */
+function lang_change($id,$element_id,$new_value,$language_id,$langtyp,$typ=1,$file="unknown"){
+	global $db;
+	global $lang;
+	global $session;
+	$langtyp = dbf_4($langtyp);
+
+	if($id){
+		$sqlquery = "UPDATE LMB_LANG{$langtyp} SET WERT = '".parse_db_string($new_value,249)."',EDIT = ".LMB_DBDEF_TRUE." WHERE ID = $id";
+	}elseif($element_id){
+		$sqlquery0 = "SELECT ID FROM LMB_LANG{$langtyp} WHERE ELEMENT_ID = $element_id";
+		$rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+		# no element found
+		if(!lmbdb_fetch_row($rs0)){
+			lang_add($session["language"],$typ,$file,$new_value,$langtyp,$element_id);
+		}
+		$sqlquery = "UPDATE LMB_LANG{$langtyp} SET WERT = '".parse_db_string($new_value,249)."',EDIT = ".LMB_DBDEF_TRUE." WHERE ELEMENT_ID = $element_id AND LANGUAGE_ID = ".$session["language"];
+	}else{return false;}
+
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+	if($language_id == 1){
+		if(!$element_id){
+			$sqlquery1 = "SELECT ELEMENT_ID FROM LMB_LANG{$langtyp} WHERE ID = $id";
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$element_id = lmbdb_result($rs1, "ELEMENT_ID");
+		}
+		$sqlquery1 = "UPDATE LMB_LANG{$langtyp} SET EDIT = ".LMB_DBDEF_FALSE." WHERE NOT LANGUAGE_ID = 1 AND ELEMENT_ID = ".$element_id;
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+	}
+
+	# update Session
+	$_SESSION["lang"][$element_id] = $new_value;
+	$lang[$element_id] = $new_value;
+}
+
+/* --- ändern js --------------------------------------------- */
+function lang_changejs($id,$new_js,$language_id,$langtyp){
+	global $db;
+	$langtyp = dbf_4($langtyp);
+
+	if($id){
+		$sqlquery = "UPDATE LMB_LANG$langtyp SET JS = ".parse_db_bool($new_js)." WHERE ELEMENT_ID = (SELECT ELEMENT_ID FROM LMB_LANG$langtyp WHERE ID = $id))";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	}
+
+}
+
+/* --- ändern override --------------------------------------------- */
+function lang_changeoverride($id,$new_override,$language_id,$langtyp){
+	global $db;
+	$langtyp = dbf_4($langtyp);
+
+	if($id){
+		$sqlquery = "UPDATE LMB_LANG$langtyp SET OVERRIDE = ".parse_db_int($new_override)." WHERE ELEMENT_ID = (SELECT ELEMENT_ID FROM LMB_LANG$langtyp WHERE ID = $id)";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	}
+
+}
+
+/* ---hinzufügen --------------------------------------------- */
+function lang_add($language_id,$typ,$file,$wert,$langtyp=null,$element_id=null){
+	global $db;
+	global $lang;
+	global $umgvar;
+	$langtyp = dbf_4($langtyp);
+
+	$result_language = get_language_list($langtyp);
+
+	// set default language
+	$language_id = $umgvar['default_language'];
+	
+	$NEXTID1 = next_db_id("LMB_LANG$langtyp");
+	$NEXTID2 = next_db_id("LMB_LANG$langtyp","ELEMENT_ID");
+
+	# beginning from 10000
+	if($langtyp){
+		if($NEXTID2 < 10000){
+			$NEXTID2 = 10000;
+			$NEXTID1 = 100000;
+		}
+		if($element_id){
+			$NEXTID2 = $element_id;
+		}
+	}
+
+
+	foreach ($result_language["language_id"] as $bzm => $lval){
+
+		if($result_language["language_id"][$bzm] == $language_id){
+		    $ed = LMB_DBDEF_TRUE;
+			$wrt = stripcslashes(parse_db_string($wert,249));
+			# update Session
+			$_SESSION["lang"][$NEXTID2] = $wrt;
+		}else{
+		    $ed = LMB_DBDEF_FALSE;
+		    $wrt = "";
+		}
+		
+		if(!$file){$file = "0";}
+		$sqlquery = "INSERT INTO LMB_LANG$langtyp (ID,LANGUAGE_ID,ELEMENT_ID,TYP,LMFILE,LANGUAGE,EDIT,WERT) VALUES ($NEXTID1,".$result_language["language_id"][$bzm].",$NEXTID2,$typ,'".parse_db_string($file,250)."','".$result_language["language"][$bzm]."',$ed,'".$wrt."')";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+		$NEXTID1++;
+	}
+
+	# update Session
+	$_SESSION["lang"][$NEXTID2] = $wert;
+	$lang[$NEXTID2] = $wert;
+	
+	if($NEXTID2){
+		return $NEXTID2;
+	}else{
+		return false;
+	}
+}
+
+
+
+?>

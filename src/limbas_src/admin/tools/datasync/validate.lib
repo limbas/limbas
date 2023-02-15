@@ -1,0 +1,145 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+// generate diff reult
+
+function lmb_SyncValidate($cliID){
+
+    $local = lmb_getSyncValidate($cliID);
+    $remote = lmb_getRemoteSyncValidate($cliID);
+
+    $diff = array();
+
+    if(is_array($local) AND is_array($remote)) {
+        $sum = 0;
+        foreach ($local as $table => $value) {
+            if ($value != $remote[$table]) {
+                $diff['diff'][$table] = (intval($value) - intval($remote[$table]));
+                $diff['master'][$table] = intval($value);
+                $diff['slave'][$table] = intval($remote[$table]);
+                $sum += abs($diff['diff'][$table]);
+            }
+        }
+        $diff['abs_sumdiff'] = $sum;
+    }else{
+        $diff['abs_sumdiff'] = 'no valid data';
+    }
+
+    return $diff;
+
+}
+
+function lmb_SyncValidatePhase2($cliID,$table){
+
+    $local = lmb_getSyncValidatePhase2($table);
+    $remote = lmb_getRemoteSyncValidatePhase2($cliID,$table);
+
+    $diff['client'] = array_diff($local,$remote);
+    $diff['master'] = array_diff($remote,$local);
+
+    return $diff;
+
+}
+
+
+// get full data
+
+function lmb_getSyncValidate($cliID){
+    global $db;
+
+    $sqlquery = "SELECT MD5TAB,DATA_TYPE,
+    (SELECT TABELLE FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.TAB_ID) AS LEFTTAB ,
+    (SELECT TABELLE FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.VERKNTABID) AS RIGHTTAB
+    FROM LMB_CONF_FIELDS
+    WHERE (SELECT DATASYNC FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.TAB_ID) = 1
+    AND (DATA_TYPE = 27 OR DATA_TYPE = 24)
+    AND VERKNTABLETYPE = 1";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs)) {
+        $md5tab = strtoupper(lmbdb_result($rs, 'MD5TAB'));
+        $lefttab = strtoupper(lmbdb_result($rs, 'LEFTTAB'));
+        $righttab = strtoupper(lmbdb_result($rs, 'RIGHTTAB'));
+        $datatype = lmbdb_result($rs, 'DATA_TYPE');
+
+        // select count from relation tables
+        $sqlquery1 = "SELECT COUNT($lefttab.ID) AS RESC FROM $md5tab,$lefttab WHERE  $lefttab.ID = $md5tab.ID ".(is_numeric($cliID) ? "AND $lefttab.LMB_SYNC_SLAVE = $cliID" : '');
+        $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+        $validate[$md5tab] = lmbdb_result($rs1, 'RESC');
+    }
+
+
+    $sqlquery = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE DATASYNC = 1";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs)) {
+        // select count from tables
+        $table = strtoupper(lmbdb_result($rs, 'TABELLE'));
+        $sqlquery1 = "SELECT COUNT(*) AS RESC FROM $table ".(is_numeric($cliID) ? "WHERE LMB_SYNC_SLAVE = $cliID" : '');
+        $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+        $validate[$table] = lmbdb_result($rs1, 'RESC');
+    }
+
+
+    return $validate;
+}
+
+
+function lmb_getSyncValidatePhase2($table){
+    global $db;
+
+    $sqlquery = "SELECT ID FROM ".parse_db_string($table,128)." ORDER BY ID";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs)) {
+        // get all IDs
+        $validate[] = lmbdb_result($rs, 'ID');
+    }
+
+    return $validate;
+}
+
+// get soap client values
+
+function lmb_getRemoteSyncValidate($cliID){
+
+    $slave = lmb_GetSyncSlaves($cliID);
+
+    # config soap
+    $LIM = array(
+        'lim_url' => $slave['slave_url'][$cliID],
+        'username' => $slave['slave_username'][$cliID],
+        'pass' => $slave['slave_pass'][$cliID],
+    );
+
+    $lmpar[0]['action'] = 'validate_datasync';
+    $lmpar[0]['phase'] = 1;
+
+    return soap_call_client($lmpar, $LIM);
+
+}
+
+function lmb_getRemoteSyncValidatePhase2($cliID,$table){
+
+    $slave = lmb_GetSyncSlaves($cliID);
+
+    # config soap
+    $LIM = array(
+        'lim_url' => $slave['slave_url'][$cliID],
+        'username' => $slave['slave_username'][$cliID],
+        'pass' => $slave['slave_pass'][$cliID],
+    );
+
+    $lmpar[0]['action'] = 'validate_datasync';
+    $lmpar[0]['phase'] = 2;
+    $lmpar[0]['table'] = $table;
+    return soap_call_client($lmpar, $LIM);
+
+}
+
+
+?>

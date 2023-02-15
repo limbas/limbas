@@ -1,0 +1,1606 @@
+/*!
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+@font-face {
+  font-family: 'FontAwesome';
+  src: url('../fonts/fontawesome-webfont.eot?v=4.5.0');
+  src: url('../fonts/fontawesome-webfont.eot?#iefix&v=4.5.0') format('embedded-opentype'), url('../fonts/fontawesome-webfont.woff2?v=4.5.0') format('woff2'), url('../fonts/fontawesome-webfont.woff?v=4.5.0') format('woff'), url('../fonts/fontawesome-webfont.ttf?v=4.5.0') format('truetype'), url('../fonts/fontawesome-webfont.svg?v=4.5.0#fontawesomeregular') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'LMBFont';
+  src: url('../fonts/lmb-font.eot?v=1.0');
+  src: url('../fonts/lmb-font.eot?#iefix&v=1.0') format('embedded-opentype'),
+  url('../fonts/lmb-font.ttf?v=1.0') format('truetype'),
+  url('../fonts/lmb-font.woff?v=1.0') format('woff'),
+  url('../fonts/lmb-font.svg?v=1.0#lmb-font') format('svg');
+  font-weight: normal;
+  font-style: normal;
+}
+
+.lmb-icon, .ui-widget .ui-widget-header .ui-icon { /* former .fa */
+  display: inline-block;
+  /* edit by matthias - earlier 1.3em - even earlier 14px*/
+  font: normal normal normal 1.3em/1 FontAwesome;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  width: 1.28571429em; /* fixed width */
+  text-align: center; /* fixed width */
+}
+
+.lmb-icon-cus { /* for the lmb-custom icons */
+  display: inline-block;
+  /* edit by matthias - earlier 1.3em - even earlier 14px */
+  font-family: LMBFont !important;
+  font-style: normal;
+  font-size: 1.3em;
+  line-height: 1;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  width: 1.28571429em; /* fixed width */
+  text-align: center; /* fixed width */
+}
+
+.lmb-icon-aw {
+  width: auto;
+}
+
+.lmb-icon-8 {
+  display: inline-block;
+  font: normal normal normal 14px/1 FontAwesome;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 0.9em;
+}
+
+.lmb-icon-32 {
+  display: inline-block;
+  font: normal normal normal 14px/1 FontAwesome;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 2.6em;
+}
+
+@-webkit-keyframes rotating /* Safari and Chrome */
+{
+  from {
+    -webkit-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  to {
+    -webkit-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rotating {
+  from {
+    -ms-transform: rotate(0deg);
+    -moz-transform: rotate(0deg);
+    -webkit-transform: rotate(0deg);
+    -o-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  to {
+    -ms-transform: rotate(360deg);
+    -moz-transform: rotate(360deg);
+    -webkit-transform: rotate(360deg);
+    -o-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+.lmb-rotating {
+  -webkit-animation: rotating 2s linear infinite;
+  -moz-animation: rotating 2s linear infinite;
+  -ms-animation: rotating 2s linear infinite;
+  -o-animation: rotating 2s linear infinite;
+  animation: rotating 2s linear infinite;
+}
+
+.lmb-sess-refresh {
+  color: $sess-refresh-color;
+}
+
+.lmb-icon.lmb-icon-on-input {
+  margin-left: -1.28571429em; /* width of .lmb-icon */
+}
+
+.lmb-icon-cus.lmb-plusonly::before {
+  content: "\e948";
+}
+
+.lmb-icon-cus.lmb-minusonly::before {
+  content: "\e949";
+}
+
+.lmb-table-godown::before, .lmb-table::before, .lmb-table::before,
+.lmb-rep-table::before, .lmb-table-key::before, .lmb-table-alt::before { /* former .fa-table */
+  content: "\f0ce";
+}
+
+.lmb-page-save::before, .lmb-save::before { /* former .fa-save */
+  content: "\f0c7";
+}
+
+.lmb-page-new::before, .lmb-bullet-plus::before { /* former .fa-plus-square */
+  content: "\f0fe";
+}
+
+.lmb-compare-version::before, .lmb-page-copy::before, .lmb-application-double::before { /* former .fa-clone */
+  content: "\f24d";
+}
+
+.lmb-compare-version2::before { /* former .fa-columns */
+  content: "\f0db";
+}
+
+.lmb-page-key::before, .lmb-page-key-green::before { /* former .fa-file-archive-o */
+  content: "\f1c6";
+}
+
+.lmb-versioning::before { /* former .fa-file-archive-o */
+    content: "\f0c5";
+}
+
+.lmb-page-find::before, .lmb-rep-dbsearch::before, .lmb-mail-search::before { /* former .fa-search */
+  content: "\f002";
+}
+
+.lmb-rep-table-menu::before { /* former .fa-cog */
+  content: "\f013";
+}
+
+.lmb-page-edit::before, .lmb-organisation-edit::before, .lmb-mail-new::before { /* former .fa-pencil-square-o */
+  content: "\f044";
+}
+
+.lmb-show-versioned::before { /* former .fa-archive */
+    content: "\f0c5";
+}
+
+.lmb-edit-versioned::before { /* former .fa-archive */
+    content: "\f0c5";
+}
+
+.lmb-del-versioned::before { /* former .fa-archive */
+    content: "\f0c5";
+}
+
+.lmb-report::before, .lmb-report-key::before { /* former .fa-book */
+  content: "\f02d";
+}
+
+.lmb-undo::before { /* former .fa-undo */
+  content: "\f0e2";
+}
+
+.lmb-caret-square-down::before, .lmb-rep-select::before,
+.lmb-caret-square-down-alt::before, .lmb-arrow-down-squared::before { /* former .fa-caret-square-o-down */
+  content: "\f150";
+}
+
+.lmb-caret-square-up::before, .lmb-arrow-up-squared::before { /* former .fa-caret-square-o-up */
+  content: "\f151";
+}
+
+.lmb-caret-left::before, .lmb-previous::before, .lmb-top-y::before,
+.lmb-arrow-left-caret::before { /* former .fa-caret-left */
+  content: "\f0d9";
+}
+
+.lmb-caret-right::before, .lmb-caret-right-alt::before, .lmb-next::before,
+.lmb-edit-caret::before, .lmb-top-x::before, .lmb-arrow-right-caret::before,
+.lmb-small-arrow-right::before { /* former .fa-caret-right */
+  content: "\f0da";
+}
+
+.lmb-caret-down::before, .lmb-caret-down::before, .lmb-caret-down-alt::before,
+.lmb-caret-down-alt2::before, .lmb-small-arrow-down::before { /* former .fa-caret-down */
+  content: "\f0d7";
+}
+
+.lmb-camera::before, .lmb-camera-plus::before { /* former .fa-camera */
+  content: "\f030";
+}
+
+.lmb-pdf::before, .lmb-tcpdf::before, .lmb-file-pdf::before { /* former .fa-file-pdf-o */
+  content: "\f1c1";
+}
+
+.lmb-xml::before, .lmb-file-excel::before, .lmb-file-ods::before,
+.lmb-excel-alt2::before { /* former .fa-file-excel-o */
+  content: "\f1c3";
+}
+
+/* TODO: optimize further */
+.lmb-odt::before { /* former .fa-file-word-o */
+  content: "\f1c2";
+}
+
+.lmb-line-chart::before { /* former .fa-line-chart */
+  content: "\f201";
+}
+
+.lmb-plus-square::before { /* former .fa-plus-square-o */
+  content: "\f196";
+}
+
+.lmb-query::before { /* former .fa-table */
+  content: "\f0ce";
+}
+
+.lmb-cog::before { /* former .fa-cog */
+  content: "\f013";
+}
+
+.lmb-cogs::before { /* former .fa-cogs */
+  content: "\f085";
+}
+
+.lmb-wrench::before { /* former .fa-wrench */
+  content: "\f0ad";
+}
+
+.lmb-group::before { /* former .fa-users */
+  content: "\f0c0";
+}
+
+.lmb-icon-cus.lmb-form-black::before, .lmb-icon-cus.lmb-form::before {
+  content: "\e900";
+}
+
+.lmb-file-text-black::before { /* former .fa-file-text */
+  content: "\f15c";
+}
+
+.lmb-bar-chart::before { /* former .fa-bar-chart */
+  content: "\f080";
+}
+
+.lmb-tree::before { /* former .fa-sitemap */
+  content: "\f0e8";
+}
+
+.lmb-reminder::before { /* former .fa-paperclip */
+  content: "\f0c6";
+}
+
+.lmb-workflow::before { /* former .fa-briefcase */
+  content: "\f0b1";
+}
+
+.lmb-globe::before { /* former .fa-globe */
+  content: "\f0ac";
+}
+
+.lmb-cubes::before { /* former .fa-cubes */
+  content: "\f1b3";
+}
+
+.lmb-menu::before { /* former .fa-bars */
+  content: "\f0c9";
+}
+
+.lmb-color-swatch::before { /* former .fa-tachometer */
+  content: "\f0e4";
+}
+
+.lmb-picture::before { /* former .fa-picture-o */
+  content: "\f03e";
+}
+
+.lmb-language::before { /* former .fa-flag-o */
+  content: "\f11d";
+}
+
+.lmb-font::before { /* former .fa-font */
+  content: "\f031";
+}
+
+.lmb-list-ul::before { /* former .fa-list-ul */
+  content: "\f0ca";
+}
+
+.lmb-clock::before { /* former .fa-clock-o */
+  content: "\f017";
+}
+
+.lmb-step-forward::before { /* former .fa-step-forward */
+    content: "\f051";
+}
+
+.lmb-interactive::before { /* former .fa-hand-paper-o */
+  content: "\f256";
+}
+
+.lmb-history::before { /* former .fa-history */
+  content: "\f1da";
+}
+
+.lmb-system-job::before { /* former .fa-desktop */
+  content: "\f108";
+}
+
+.lmb-calendar::before { /* former .fa-calendar */
+  content: "\f073";
+}
+.lmb-calendar-times-o::before { /* former .fa-calendar */
+    content: "\f273";
+}
+.lmb-calendar-plus-o::before { /* former .fa-calendar */
+    content: "\f271";
+}
+.lmb-calendar-check-o::before { /* former .fa-calendar */
+    content: "\f274";
+}
+.lmb-job-history::before { /* former .fa-history */
+  content: "\f1da";
+}
+
+.lmb-download::before { /* former .fa-download */
+  content: "\f019";
+}
+
+.lmb-upload::before { /* former .fa-upload */
+  content: "\f093";
+}
+
+.lmb-sitemap::before { /* former .fa-sitemap */
+  content: "\f0e8";
+}
+
+.lmb-code::before { /* former .fa-code */
+  content: "\f121";
+}
+
+.lmb-arrow-up::before { /* former .fa-arrow-up */
+  content: "\f062";
+}
+
+.lmb-arrow-down::before { /* former .fa-arrow-down */
+    content: "\f063";
+}
+.lmb-arrow-left::before { /* former .fa-arrow-left */
+    content: "\f060";
+}
+.lmb-arrow-right::before { /* former .fa-arrow-right */
+    content: "\f061";
+}
+
+.lmb-terminal::before { /* former .fa-terminal */
+  content: "\f120";
+}
+
+.lmb-puzzle-piece::before { /* former .fa-puzzle-piece */
+  content: "\f12e";
+}
+
+.lmb-exclamation-triangle::before { /* former .fa-exclamation-triangle */
+  content: "\f071";
+}
+
+.lmb-database::before { /* former .fa-database */
+  content: "\f1c0";
+}
+
+.lmb-chain::before { /* former .fa-link */
+  content: "\f0c1";
+}
+
+.lmb-user-circle-o::before {
+  content: "\f2be";
+}
+
+.lmb-user-list::before { /* former .fa-list-alt */
+  content: "\f022";
+}
+
+.lmb-user-plus::before { /* former .fa-user-plus */
+  content: "\f234";
+}
+
+.lmb-group-plus::before { /* former .fa-users */
+  content: "\f0c0"; /* TODO */
+}
+
+.lmb-list-users::before { /* former .fa-list */
+  content: "\f03a";
+}
+
+.lmb-help::before { /* former .fa-question-circle */
+  content: "\f059";
+}
+
+.lmb-view-versioned::before { /* former .fa-eye */
+  content: "\f06e";
+}
+
+.lmb-check::before { /* former .fa-check */
+  content: "\f00c";
+}
+
+.lmb-print::before { /* former .fa-print */
+  content: "\f02f";
+}
+
+.lmb-symbols::before { /* former .fa-ellipsis-h */
+  content: "\f141";
+}
+
+.lmb-space-h::before, .lmb-arrows-h::before { /* former .fa-arrows-h */
+  content: "\f07e";
+}
+
+.lmb-icon-cus.lmb-select-list::before {
+  content: "\e938";
+}
+
+.lmb-chain-broken::before { /* former .fa-chain-broken */
+  content: "\f127";
+}
+
+.lmb-minus-circle::before { /* former .fa-minus-circle */
+  content: "\f056";
+}
+
+.lmb-manage-snapshot::before { /* former .fa-list-alt */
+  content: "\f022";
+}
+
+.lmb-list-ul-alt::before { /* former .fa-table */
+  content: "\f0ce";
+}
+
+.lmb-user-setting::before { /* former .fa-cog */
+  content: "\f013";
+}
+
+.lmb-folder::before { /* former .fa-folder-o */
+  content: "\f114";
+}
+
+.lmb-lock::before { /* former .fa-lock */
+  content: "\f023";
+}
+
+.lmb-selflock::before { /* former .fa-lock */
+  content: "\f023";
+  color: green;
+}
+
+.lmb-bell::before { /* former .fa-bell-o */
+  content: "\f0a2";
+}
+
+.lmb-user-alt::before { /* former .fa-user */
+  content: "\f007";
+}
+
+.lmb-wrench-alt::before { /* former .fa-wrench */
+  content: "\f0ad";
+}
+
+.lmb-mail::before { /* former .fa-envelope-o */
+  content: "\f003";
+}
+
+.lmb-cog-alt::before { /* former .fa-cog */
+  content: "\f013";
+}
+
+.lmb-pencil::before { /* former .fa-pencil */
+  content: "\f040";
+}
+
+.lmb-trash::before { /* former .fa-trash */
+  content: "\f1f8";
+}
+
+.lmb-resizer::before { /* former .fa-arrows */
+  content: "\f047";
+}
+
+.lmb-rep-txt::before { /* former .fa-font */
+  content: "\f031";
+}
+
+.lmb-rep-db::before { /* former .fa-database */
+  content: "\f1c0";
+}
+
+.lmb-rep-dbdesc::before { /* former .fa-header */
+  content: "\f1dc";
+}
+
+.lmb-rep-dbnew::before { /* former .fa-plus */
+  content: "\f067";
+}
+
+.lmb-rep-pic::before { /* former .fa-image */
+  content: "\f03e";
+}
+
+.lmb-icon-cus.lmb-rep-uform::before {
+  content: "\e900";
+}
+
+.lmb-rep-date::before { /* former .fa-calendar */
+  content: "\f073";
+}
+
+.lmb-rep-circle::before { /* former .fa-circle-o */
+  content: "\f10c";
+}
+
+.lmb-rep-line::before { /* former .fa-minus */
+  content: "\f068";
+}
+
+.lmb-rep-rect::before { /* former .fa-square-o */
+  content: "\f096";
+}
+
+.lmb-rep-menu::before { /* former .fa-folder-o */
+  content: "\f114";
+}
+
+.lmb-rep-tab::before { /* former .fa-object-ungroup */
+  content: "\f248";
+}
+
+.lmb-rep-frame::before { /* former .fa-object-group */
+  content: "\f247";
+}
+
+.lmb-rep-submit::before { /* former .fa-check-square */
+  content: "\f14a";
+}
+
+.lmb-rep-button::before { /* former .fa-hand-pointer-o */
+  content: "\f25a";
+}
+
+.lmb-rep-scroll::before { /* former .fa-arrows-h */
+  content: "\f07e";
+}
+
+.lmb-rep-text::before { /* former .fa-mobile */
+  content: "\f10b";
+}
+
+.lmb-rep-area::before { /* former .fa-tablet */
+  content: "\f10a";
+}
+
+.lmb-rep-check::before { /* former .fa-check-square-o */
+  content: "\f046";
+}
+
+.lmb-rep-radio::before { /* former .fa-check-circle-o */
+  content: "\f05d";
+}
+
+.lmb-rep-hidden::before { /* former .fa-eye-slash */
+  content: "\f070";
+}
+
+.lmb-rep-js::before { /* former .fa-code */
+  content: "\f121";
+}
+
+.lmb-rep-php::before { /* former .fa-terminal */
+  content: "\f120";
+}
+
+.lmb-eye::before { /* former .fa-eye */
+  content: "\f06e";
+}
+
+.lmb-create-file::before { /* former .fa-file-o */
+  content: "\f016";
+}
+
+.lmb-create-folder::before { /* former .fa-folder-o */
+  content: "\f114";
+}
+
+.lmb-lock-file::before { /* former .fa-lock */
+  content: "\f023";
+}
+
+.lmb-info-circle::before { /* former .fa-info-circle */
+  content: "\f05a";
+}
+
+.lmb-eye-slash::before { /* former .fa-eye-slash */
+  content: "\f070";
+}
+
+.lmb-group-gear::before { /* former .fa-users */
+  content: "\f0c0";
+}
+
+.lmb-user-gear::before { /* former .fa-user */
+  content: "\f007";
+}
+
+.lmb-groups::before { /* former .fa-users */
+  content: "\f0c0";
+}
+
+.lmb-page-delete-alt::before { /* former .fa-minus */
+  content: "\f068";
+}
+
+.lmb-exclamation::before { /* former .fa-exclamation */
+  content: "\f12a";
+}
+
+.lmb-copy::before { /* former .fa-copy */
+  content: "\f0c5";
+}
+
+.lmb-versioning-type::before { /* former .fa-clock-o */
+  content: "\f017";
+}
+
+.lmb-colors::before { /* former .fa-paint-brush */
+  content: "\f1fc";
+}
+
+.lmb-indicator-rule::before { /* former .fa-lightbulb-o */
+  content: "\f0eb";
+}
+
+.lmb-icon-cus.lmb-form-alt::before {
+  content: "\e900";
+}
+
+.lmb-group-key::before { /* former .fa-users */
+  content: "\f0c0";
+}
+
+.lmb-application-key::before { /* former .fa-tablet */
+  content: "\f10a";
+}
+
+.lmb-folder-key::before { /* former .fa-folder-o */
+  content: "\f114";
+}
+
+.lmb-application-form-key::before { /* former .fa-list-alt */
+  content: "\e93f";
+}
+
+.lmb-chart-curve-key::before { /* former .fa-line-chart */
+  content: "\f201";
+}
+
+.lmb-bell-key::before { /* former .fa-bell-o */
+  content: "\f0a2";
+}
+
+.lmb-cog-key::before { /* former .fa-cog */
+  content: "\f013";
+}
+
+.lmb-rep-snr::before { /* former .fa-files-o */
+  content: "\f0c5";
+}
+
+.lmb-rep-formel::before { /* former .fa-subscript */
+  content: "\f12c";
+}
+
+.lmb-file-odt::before { /* former .fa-file-word-o */
+  content: "\f1c2";
+}
+
+.lmb-aktiv::before { /* former .fa-check */
+  content: "\f00c";
+}
+
+.lmb-erase::before { /* former .fa-times */
+  content: "\f00d";
+}
+
+.lmb-calendar-alt::before { /* former .fa-calendar */
+  content: "\f073";
+}
+
+.lmb-long-arrow-up::before { /* former .fa-long-arrow-up */
+  content: "\f176";
+}
+
+.lmb-long-arrow-up { /* prevents line-wrapping */
+  width: 7px;
+}
+
+.lmb-long-arrow-down::before { /* former .fa-long-arrow-down */
+  content: "\f175";
+}
+
+.lmb-long-arrow-down { /* prevents line-wrapping */
+  width: 7px;
+}
+
+.lmb-connection::before { /* former .fa-code-fork */
+  content: "\f126";
+}
+
+.lmb-first::before { /* former .fa-step-backward */
+  content: "\f048";
+}
+
+.lmb-last::before { /* former .fa-step-forward */
+  content: "\f051";
+}
+
+.lmb-switch::before { /* former .fa-random */
+  content: "\f074";
+}
+
+.lmb-long-arrow-left::before { /* former .fa-long-arrow-left */
+  content: "\f177";
+}
+
+.lmb-refresh::before { /* former .fa-refresh */
+  content: "\f021";
+}
+
+.lmb-close::before { /* former .fa-times-circle-o */
+  content: "\f05c";
+}
+
+.lmb-check-alt::before { /* former .fa-check */
+  content: "\f00c";
+}
+
+.lmb-long-arrow-right::before { /* former .fa-long-arrow-right */
+  content: "\f178";
+}
+
+.lmb-close-alt::before { /* former .fa-times */
+  content: "\f00d";
+}
+
+.lmb-chain-alt::before { /* former .fa-chain */
+  content: "\f0c1";
+}
+
+.lmb-file-text::before { /* former .fa-file-text-o */
+  content: "\f0f6";
+}
+
+.lmb-arrow-right::before { /* former .fa-arrow-right */
+  content: "\f061";
+}
+
+.lmb-info-circle-alt::before { /* former .fa-info-circle */
+  content: "\f05a";
+}
+
+.lmb-action::before { /* former .fa-retweet */
+  content: "\f079";
+}
+
+.lmb-application-refresh::before { /* former .fa-retweet */
+  content: "\f079";
+}
+
+.lmb-calendar-alt2::before { /* former .fa-calendar */
+  content: "\f073";
+}
+
+.lmb-folder-open::before { /* former .fa-folder-open-o */
+  content: "\f115";
+}
+
+.lmb-folder2-open::before { /* former .fa-folder-open-o */
+  content: "\f115";
+  color: #A3A3A3;
+}
+
+.lmb-folder3-open::before { /* former .fa-folder-open-o */
+  content: "\f115";
+  color: green;
+}
+
+.lmb-folder4-open::before { /* former .fa-folder-open-o */
+  content: "\f115";
+}
+
+.lmb-folder5-open::before { /* former .fa-folder-open-o */
+  content: "\f115";
+  color: #5996d6;
+}
+
+.lmb-folder-closed::before { /* former .fa-folder-o */
+  content: "\f114";
+}
+
+.lmb-folder2-closed::before { /* former .fa-folder-o */
+  content: "\f114";
+  color: #A3A3A3;
+}
+
+.lmb-folder3-closed::before { /* former .fa-folder-o */
+  content: "\f114";
+  color: green;
+}
+
+.lmb-folder4-closed::before { /* former .fa-folder-o */
+  content: "\f114";
+}
+
+.lmb-folder5-closed::before { /* former .fa-folder-o */
+  content: "\f114";
+  color: #5996d6;
+}
+
+.lmb-pencil-alt::before { /* former .fa-pencil */
+  content: "\f040";
+}
+
+.lmb-clock-alt::before { /* former .fa-clock-o */
+  content: "\f017";
+}
+
+.lmb-connect::before { /* former .fa-chain */
+  content: "\f0c1";
+}
+
+.lmb-expand-all::before { /* former .fa-expand */
+  content: "\f065";
+}
+
+.lmb-collapse-all::before { /* former .fa-compress */
+  content: "\f066";
+}
+
+.lmb-expand-some::before { /* former .fa-thumbs-o-up */
+  content: "\f087";
+}
+
+.lmb-page-lock::before { /* former .fa-lock */
+  content: "\f023";
+}
+
+.lmb-info-circle-alt2::before { /* former .fa-info-circle */
+  content: "\f05a";
+}
+
+.lmb-history-alt::before { /* former .fa-history */
+  content: "\f1da";
+}
+
+.lmb-detail::before { /* former .fa-info-circle */
+  content: "\f05a";
+}
+
+.lmb-table-color::before { /* former .fa-paint-brush */
+  content: "\f1fc";
+}
+
+.lmb-caret-up::before { /* former .fa-caret-up */
+  content: "\f0d8";
+}
+
+.lmb-key::before { /* former .fa-key */
+  content: "\f084";
+}
+
+.lmb-textsort-up::before { /* former .fa-sort-alpha-asc */
+  content: "\f15d";
+}
+
+.lmb-textsort-down::before { /* former .fa-sort-alpha-desc */
+  content: "\f15e";
+}
+
+.lmb-email::before { /* former .fa-envelope-o */
+  content: "\f003";
+}
+
+.lmb-user::before { /* former .fa-user */
+  content: "\f007";
+}
+
+.lmb-angle-down::before { /* former .fa-angle-down */
+  content: "\f107";
+}
+
+.lmb-angle-double-down::before { /* former .fa-angle-double-down */
+  content: "\f103";
+}
+
+.lmb-angle-up::before { /* former .fa-angle-up */
+  content: "\f106";
+}
+
+.lmb-eye-slash::before { /* former .fa-eye-slash */
+  content: "\f070";
+}
+
+.lmb-hide-col::before { /* former .fa-eye-slash */
+  content: "\f070";
+}
+
+.lmb-feed::before { /* former .fa-rss */
+  content: "\f09e";
+}
+
+.lmb-tag::before { /* former .fa-tag */
+  content: "\f02b";
+}
+
+.lmb-plus::before { /* former .fa-plus */
+  content: "\f067";
+}
+
+.lmb-mail-forward::before { /* former .fa-mail-forward */
+  content: "\f064";
+}
+
+.lmb-mail-reply::before { /* former .fa-reply */
+  content: "\f112";
+}
+
+.lmb-link::before { /* former .fa-link */
+  content: "\f0c1";
+}
+
+.lmb-file-code::before { /* former .fa-file-code-o */
+  content: "\f1c9";
+}
+
+.lmb-sign-out::before { /* former .fa-sign-out */
+  content: "\f08b";
+}
+
+.lmb-reset::before { /* former .fa-undo */
+  content: "\f0e2";
+}
+
+.lmb-home::before { /* former .fa-home */
+  content: "\f015";
+}
+
+.lmb-align-justify::before { /* former .fa-align-justify */
+  content: "\f039";
+}
+
+.lmb-arrow-left::before { /* former .fa-arrow-left */
+  content: "\f060";
+}
+
+.lmb-play-circle::before { /* former .fa-play-circle */
+  content: "\f144";
+}
+
+.lmb-stop-circle::before { /* former .fa-stop-circle */
+  content: "\f28d";
+}
+
+.lmb-edit::before { /* former .fa-pencil */
+  content: "\f040";
+}
+
+.lmb-edit-caret { /* to work around the line wrapping! */
+  width: 6px;
+}
+
+.lmb-house::before { /* former .fa-home */
+  content: "\f015";
+}
+
+.lmb-picture-icon::before { /* former .fa-picture-o */
+  content: "\f03e";
+}
+
+.lmb-check-alt2::before { /* former .fa-check */
+  content: "\f00c";
+}
+
+.lmb-caret-up-alt::before { /* former .fa-caret-up */
+  content: "\f0d8";
+}
+
+.lmb-long-arrow-right-alt::before { /* former .fa-long-arrow-right */
+  content: "\f178";
+}
+
+.lmb-calendar-alt3::before { /* former .fa-calendar */
+  content: "\f073";
+}
+
+.lmb-user1-1::before { /* former .fa-user */
+  content: "\f007";
+}
+
+.lmb-user1-3::before { /* former .fa-user-times */
+  content: "\f235";
+}
+
+.lmb-user1-4::before { /* former .fa-user */
+  content: "\f007";
+  color: green;
+}
+
+.lmb-user2-1::before { /* former .fa-user */
+  content: "\f007";
+  opacity: 0.3;
+}
+
+.lmb-user2-2::before { /* TODO */
+
+  opacity: 0.3;
+}
+
+.lmb-user2-3::before { /* former .fa-user-times */
+  content: "\f235";
+  opacity: 0.3;
+}
+
+.lmb-tutorial::before { /* former .fa-graduation-cap */
+  content: "\f19d";
+}
+
+.lmb-tutorial-queries::before { /* former .fa-database */
+  content: "\f1c0";
+}
+
+.lmb-cogs-alt::before { /* former .fa-cogs */
+  content: "\f085";
+}
+
+.lmb-monitor::before { /* former .fa-desktop */
+  content: "\f108";
+}
+
+.lmb-line-chart-alt::before { /* former .fa-line-chart */
+  content: "\f201";
+}
+
+.lmb-plugin::before { /* former .fa-puzzle-piece */
+  content: "\f12e";
+}
+
+.lmb-plugin-time::before { /* former .fa-calendar */
+  content: "\f073";
+}
+
+.lmb-history-alt-alt::before { /* former .fa-history */
+  content: "\f1da";
+}
+
+.lmb-icon-cus.lmb-col-edit::before {
+  content: "\e90a";
+}
+
+.lmb-icon-cus.lmb-rel-add::before {
+  content: "\e932";
+}
+
+.lmb-icon-cus.lmb-rel-del::before {
+  content: "\e933";
+}
+
+.lmb-icon-cus.lmb-folder-add::before {
+  content: "\e911";
+}
+
+.lmb-icon-cus.lmb-folder-edit::before {
+  content: "\e914";
+}
+
+.lmb-icon-cus.lmb-folder-del::before {
+  content: "\e913";
+}
+
+.lmb-icon-cus.lmb-folder-wrench::before {
+  content: "\e919";
+}
+
+.lmb-icon-cus.lmb-folder-search::before {
+  content: "\e915";
+}
+
+.lmb-icon-cus.lmb-folder-page::before {
+  content: "\e916";
+}
+
+.lmb-icon-cus.lmb-email-del::before {
+  content: "\e90d";
+}
+
+.lmb-icon-cus.lmb-email-open::before {
+  content: "\e90f";
+}
+
+.lmb-icon-cus.lmb-email-link::before {
+  content: "\e90e";
+}
+
+.lmb-icon-cus.lmb-txt-ol-active::before {
+  content: "\e938";
+}
+
+.lmb-icon-cus.lmb-txt-linespace::before {
+  content: "\e937";
+}
+
+.lmb-icon-cus.lmb-txt-col::before {
+  content: "\e935";
+}
+
+.lmb-icon-cus.lmb-pics::before {
+  content: "\e924";
+}
+
+.lmb-icon-cus.lmb-layout::before {
+  content: "\e91b";
+}
+
+.lmb-icon-cus.lmb-tables::before {
+  content: "\e930";
+}
+
+.lmb-icon-cus.lmb-pfeildown2::before {
+  content: "\e923";
+}
+
+.lmb-icon-cus.lmb-folder-up::before {
+  content: "\e918";
+}
+
+.lmb-icon-cus.lmb-user1-2::before {
+  content: "\e946";
+}
+
+.lmb-icon-cus.lmb-page-new::before {
+  content: "\e921";
+}
+
+.lmb-icon-cus.lmb-page-down::before {
+  content: "\e91e";
+}
+
+.lmb-icon-cus.lmb-script-edit::before {
+  content: "\e91f";
+}
+
+.lmb-icon-cus.lmb-folder-open::before {
+  content: "\e944";
+}
+
+.lmb-icon-cus.lmb-page-save::before {
+  content: "\e910";
+}
+
+.lmb-icon-cus.lmb-page-cut::before {
+  content: "\e91d";
+}
+
+.lmb-icon-cus.lmb-page-go::before {
+  content: "\e920";
+}
+
+.lmb-icon-cus.lmb-folder-magnify::before {
+  content: "\e915";
+}
+
+.lmb-icon-cus.lmb-cal-month::before {
+  content: "\e903";
+}
+
+.lmb-icon-cus.lmb-cal-day::before {
+  content: "\e902";
+}
+
+.lmb-icon-cus.lmb-cal-week::before {
+  content: "\e904";
+}
+
+.lmb-icon-cus.lmb-cal-span::before {
+  content: "\e93b";
+}
+
+.lmb-icon-cus.lmb-view-locked::before {
+  content: "\e93d";
+}
+
+.lmb-icon-cus.lmb-hide-locked::before {
+  content: "\e91a";
+}
+
+.lmb-icon-cus.lmb-script-go::before {
+  content: "\e92b";
+}
+
+.lmb-icon-cus.lmb-script-save::before {
+  content: "\e92c";
+}
+
+.lmb-icon-cus.lmb-folder-table::before {
+  content: "\e917";
+}
+
+.lmb-icon-cus.lmb-txt-caps::before {
+  content: "\e936";
+}
+
+.lmb-icon-cus.lmb-report-edit::before {
+  content: "\e926";
+}
+
+.lmb-icon-cus.lmb-table-refresh::before {
+  content: "\e931";
+}
+
+.lmb-icon-cus.lmb-report-user::before {
+  content: "\e92a";
+}
+
+.lmb-icon-cus.lmb-user-chart::before {
+  content: "\e907";
+}
+
+.lmb-icon-cus.lmb-table-edit::before {
+  content: "\e92f";
+}
+
+.lmb-icon-cus.lmb-rel-edit::before {
+  content: "\e934";
+}
+
+.lmb-icon-cus.lmb-chart-edit::before {
+  content: "\e906";
+}
+
+.lmb-icon-cus.lmb-txt-ol-add::before {
+  content: "\e947";
+}
+
+.lmb-icon-cus.lmb-center-shape::before {
+  content: "\e92d";
+}
+
+.lmb-icon-cus.lmb-report-magnify::before {
+  content: "\e928";
+}
+
+.lmb-icon-cus.lmb-report-save::before {
+  content: "\e925";
+}
+
+.lmb-icon-cus.lmb-report-go::before {
+  content: "\e927";
+}
+
+.lmb-icon-cus.lmb-rel-view::before {
+  content: "\e93e";
+}
+
+.lmb-icon-cus.lmb-door-out::before {
+  content: "\e90b";
+}
+
+.lmb-icon-cus.lmb-email-copy::before {
+  content: "\e90c";
+}
+
+.lmb-icon-cus.lmb-style-go::before {
+  content: "\e92e";
+}
+
+.lmb-icon-cus.lmb-page-edit::before {
+  content: "\e91f";
+}
+
+.lmb-icon-cus.lmb-dir-cam::before {
+  content: "\e912";
+}
+
+.lmb-icon-cus.lmb-report-picture::before {
+  content: "\e929";
+}
+
+.lmb-icon-cus.lmb-cog-edit::before {
+  content: "\e909";
+}
+
+.lmb-icon-cus.lmb-cog-add::before {
+  content: "\e908";
+}
+
+.lmb-icon-cus.lmb-cam-link::before {
+  content: "\e905";
+}
+
+.lmb-icon-cus.lmb-tables::before {
+  content: "\e930";
+}
+
+.lmb-icon-cus.lmb-time-akq::before {
+  content: "\e93a";
+}
+
+.lmb-icon-cus.lmb-workflow-car::before {
+  content: "\e941";
+}
+
+.lmb-icon-cus.lmb-page-delete-fancy::before {
+  content: "\e940";
+}
+
+.lmb-icon-cus.lmb-save-search::before {
+  content: "\e942";
+}
+
+.lmb-icon-32.lmb-calendar::before { /* former .fa-calendar */
+  content: "\f073";
+}
+
+.lmb-page-key-green::before { /* former .fa-file-archive-o */
+  content: "\f1c6";
+  color: green;
+}
+
+.lmb-page-lock-green::before { /* former .fa-lock */
+  content: "\f023";
+  color: green;
+}
+
+.lmb-rel-comment::before { /* former .fa-comment */
+  content: "\f075";
+}
+
+.lmb-paste::before { /* former .fa-clipboard */
+  content: "\f0ea";
+}
+
+.lmb-space-words::before, .lmb-exchange::before { /* former .fa-exchange */
+  content: "\f0ec";
+}
+
+.lmb-fav::before { /* former .fa-star-o */
+  content: "\f006";
+}
+
+.lmb-fav-filled::before { /* former .fa-star */
+  content: "\f005";
+}
+
+.lmb-search::before { /* former .fa-search */
+  content: "\f002";
+}
+
+.lmb-file-info::before { /* former .fa-info */
+  content: "\f129";
+}
+
+.lmb-file-upload::before { /* former .fa-upload */
+  content: "\f093";
+}
+
+.lmb-icon-cus.lmb-save-dir-view::before { /* dir-cam */
+  content: "\e912";
+}
+
+.lmb-periodic::before { /* former .fa-calendar */
+  content: "\f073";
+}
+
+.lmb-icon-cus.lmb-select-all::before {
+  content: "\e938";
+}
+
+.lmb-new-window::before { /* former .fa-external-link */
+  content: "\f08e";
+}
+
+.lmb-icon-cus.lmb-list-edit::before { /* list-edit */
+  content: "\e943";
+}
+
+.lmb-icon-cus.lmb-view-archived::before { /* view-archived */
+  content: "\e945";
+}
+
+.lmb-icon-32.lmb-crm::before,
+.lmb-icon.lmb-crm::before { /* former .fa-group */
+  content: "\f0c0";
+}
+
+.lmb-icon-32.lmb-file-manager::before { /* former .fa-folder-open-o */
+  content: "\f115";
+}
+
+.lmb-gantt::before { /* former .fa-calendar */
+  content: "\f073";
+}
+
+.lmb-icon-cus.lmb-file-text-black::before {
+  content: "\e926";
+}
+
+.lmb-icon-cus.lmb-icon-32.lmb-workflow-menu::before {
+  content: "\e941";
+}
+
+.lmb-forbidden::before { /* former .fa-lock */
+  content: "\f023";
+  color: red;
+}
+
+.lmb-forbidden {
+  border: 2px dashed red;
+  padding: 2px;
+}
+
+.lmb-icon-cus.lmb-archived::before { /* view-archived */
+  content: "\e945";
+  color: orange;
+}
+
+.lmb-icon-cus.lmb-archived {
+  border: 2px dashed orange;
+  padding: 2px;
+}
+
+.lmb-unlocked::before { /* former .fa-unlock */
+  content: "\f09c";
+  color: green;
+}
+
+.lmb-unlocked {
+  border: 2px dashed green;
+  padding: 2px;
+}
+
+.lmb-locked::before { /* former .fa-lock */
+  content: "\f023";
+  color: green;
+}
+
+.lmb-locked {
+  border: 2px dashed green;
+  padding: 2px;
+}
+
+.lmb-storage-folder::before { /* former .fa-hdd-o */
+  content: "\f0a0";
+}
+
+.lmb-mimetype::before { /* former .fa-file-image-o */
+  content: "\f1c5";
+}
+
+.lmb-folder-back::before { /* former .fa-long-arrow-left */
+  content: "\f177";
+}
+
+.lmb-phone::before { /* former .fa-phone */
+  content: "\f095";
+}
+
+.lmb-revisioner::before { /* former .fa-code-fork  */
+  content: "\f126";
+}
+
+.lmb-columns::before {
+  content: "\f0db";
+}
+
+.lmb-filter::before { /* former .fa-filter */
+  content: "\f0b0";
+}
+
+.lmb-microphone::before { /* former .fa-microphone */
+  content: "\f130";
+}
+
+.lmb-microphone-slash::before { /* former .fa-microphone-slash */
+  content: "\f131";
+}
+
+.lmb-tile::before { /* former .fa-th-large */
+  content: "\f009";
+}
+
+.lmb-italic::before { /* former .fa-italic */
+  content: "\f033";
+}
+
+.lmb-bold::before { /* former .fa-bold */
+  content: "\f032";
+}
+
+.lmb-underline::before { /* former .fa-underline */
+  content: "\f0cd";
+}
+
+.lmb-align-left::before { /* former .fa-align-left */
+  content: "\f036";
+}
+
+.lmb-align-bottom::before { /* former .fa-align-center */
+  content: "\f037";
+}
+
+.lmb-space-v::before { /* former .fa-arrows-v */
+  content: "\f07d";
+}
+
+.lmb-resize-form::before { /* */
+  content: "\f07e";
+}
+
+.lmb-icon.lmb-indent::before {
+  content: "\f03c"; /* indent */
+}
+
+.lmb-icon.lmb-status-1::before {
+  content: "\f00c"; /* fa-check */
+}
+
+.lmb-icon.lmb-status-2::before {
+  content: "\f00c"; /* fa-check */
+}
+
+.lmb-icon.lmb-status-3::before {
+  content: "\f00d"; /* fa-times */
+}
+
+.lmb-icon.lmb-status-4::before {
+  content: "\f00d"; /* fa-times */
+}
+
+.lmb-money::before { /* former .fa-money */
+  content: "\f0d6";
+}
+.lmb-universal-access::before {  /* former .universal-access */
+    content: "\f29a";
+}
+.lmb-icon-cus.lmb-copy-eye::before {
+    content: "\e94a";
+}
+.lmb-icon-cus.lmb-copy-minus::before {
+    content: "\e94b";
+}
+.lmb-icon-cus.lmb-copy-edit::before {
+    content: "\e94c";
+}
+.lmb-spinner::before { /* former .fa-spinner */
+  content: "\f110";
+}
+.fa-spin {
+  -webkit-animation: fa-spin 2s infinite linear;
+  animation: fa-spin 2s infinite linear;
+}
+@keyframes fa-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  100% {
+    transform: rotate(360deg);
+  }
+}

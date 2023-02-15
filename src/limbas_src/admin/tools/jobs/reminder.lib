@@ -1,0 +1,58 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+
+/**
+ * Enter description here...
+ *
+ * @param unknown_type $cronval
+ */
+function periodic_reminder($cronval){
+	if($category){
+		$header = $greminder[$gtabid]['name'][$category];
+	}else{
+		$header = $gtab['desc'][$gtabid];
+		$category = 0;
+	}
+
+	foreach ($maillist as $mkey => $userid){
+		if($userdat["email"][$userid]){
+
+			if($greminder[$gtabid]["message"][$category]){
+				$fnc = $greminder[$gtabid]['message'][0];
+				$message = $fnc($userid,$gtabid,$ID,$category,$gfrist,$gfrist_desc,$fielddesc,$wfl_inst);
+			}else{
+
+				$message ="
+		    		<br><br>
+		    		
+		    		hallo ".$userdat["bezeichnung"][$userid]."<br><br>
+		    		".$session['vorname']." ".$session['name']." send you a $header - reminder for:<br>
+		    		<i><b><a href=\"".$umgvar['url']."/main.php?action=\"> $fielddesc </a></b></i><br><br><br>";
+
+				if($gfrist_desc){
+					$message .= "$gfrist_desc<br><br>";
+				}
+
+				$message .="
+		    		-------------------------------------------------------------------------------------<br>
+		    		This is an automatically generated email, please do not reply!<br>
+		    		-------------------------------------------------------------------------------------<br><br><br>
+		    		";
+			}
+
+			lmb_sendMail($userdat["email"][$userid],$session["email"],"Limbas - $lang[425] für $fielddesc ".$greminder[$gtabid]['name'][$category],$message);
+		}
+	}
+}
+
+
+?>

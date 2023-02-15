@@ -1,0 +1,78 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+/* --- mimetype ändern --------------------------------------------- */
+if($changeactive) {
+
+    $sqlquery = "UPDATE LMB_MIMETYPES SET ACTIVE=".LMB_DBDEF_FALSE;
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+    foreach ($active as $key => $value) {
+            $sqlquery = "UPDATE LMB_MIMETYPES SET ACTIVE=".parse_db_bool($value)." WHERE ID = $key";
+   			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    }
+
+}
+
+if($change && $changeIds){
+	$changeIds = explode(";", $changeIds);
+	$changeIds = array_unique($changeIds);
+	
+	foreach ($changeIds as $key => $id){
+		if(is_numeric($id)){
+                        $id = parse_db_int($id);
+                        $mimetype = parse_db_string( cleanMimetype( ${"mimetype_".$id} ) );
+                        $ext = parse_db_string( cleanMimetype( ${"ext_".$id} ) );
+                        $pic = parse_db_string( ${"pic_".$id} );
+
+            $sqlquery = "UPDATE LMB_MIMETYPES SET MIMETYPE='$mimetype', EXT='$ext', PIC='$pic' WHERE ID = $id";
+   			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		}
+	}
+}
+
+/* --- mimetype hinzufügen --------------------------------------------- */
+if($add){                
+        $nextId = next_db_id("LMB_MIMETYPES");
+        $new_mimetype = parse_db_string( cleanMimetype($new_mimetype) , 255);
+        $new_ext = parse_db_string( cleanMimetype($new_ext) , 255);
+        $new_pic = parse_db_string( $new_pic, 255);
+                
+        $sqlquery = "INSERT INTO LMB_MIMETYPES (ID, MIMETYPE, EXT, PIC) VALUES ($nextId, '$new_mimetype', '$new_ext', '$new_pic')";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+/* --- mimetype löschen --------------------------------------------- */
+if($del){
+        $del = parse_db_int($del);
+	$sqlquery = "DELETE FROM LMB_MIMETYPES WHERE ID = $del";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+
+
+/* --- Mimetype-Liste --------------------------------------------- */
+$sqlquery = "SELECT ID, MIMETYPE, EXT, PIC, ACTIVE FROM LMB_MIMETYPES ORDER BY MIMETYPE";
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+$result_mimetypes = array();
+while(lmbdb_fetch_row($rs)) {
+    $result_mimetypes['id'][] = lmbdb_result($rs, 'ID');
+    $result_mimetypes['mimetype'][] = lmbdb_result($rs, 'MIMETYPE');
+    $result_mimetypes['ext'][] = lmbdb_result($rs, 'EXT');
+    $result_mimetypes['pic'][] = lmbdb_result($rs, 'PIC');
+    $result_mimetypes['active'][] = lmbdb_result($rs, 'ACTIVE');
+}
+
+function cleanMimetype($mimetype) {
+    // removes all characters that are not a-z, -, /, _, 0-9
+    return preg_replace('/[^a-z_.\/\-0-9]/', '', $mimetype);
+}
+
+?>

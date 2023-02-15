@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  - @copyright Limbas GmbH <https://limbas.com>
+  - @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+  -
+  - This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+  - This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+  -->
+
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="32"
+   height="32"
+   viewBox="0 0 32.000005 32.000008"
+   id="svg6063"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="lmbicon.svg">
+  <defs
+     id="defs6065">
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#Packedcircles"
+       id="pattern5974"
+       patternTransform="matrix(9.9999982,0,0,9.9999976,-18.282992,-971.79347)" />
+    <pattern
+       inkscape:stockid="Packed circles"
+       id="Packedcircles"
+       patternTransform="translate(0,0) scale(10,10)"
+       height="1.73205080756"
+       width="1"
+       patternUnits="userSpaceOnUse"
+       inkscape:collect="always">
+      <circle
+         id="circle5178"
+         r="0.5"
+         cy="0.5"
+         cx="0"
+         style="fill:black;stroke:none" />
+      <circle
+         id="circle5180"
+         r="0.5"
+         cy="0.5"
+         cx="1"
+         style="fill:black;stroke:none" />
+      <circle
+         id="circle5182"
+         r="0.5"
+         cy="1.36602540378"
+         cx="0.5"
+         style="fill:black;stroke:none" />
+      <circle
+         id="circle5184"
+         r="0.5"
+         cy="-0.366025403784"
+         cx="0.5"
+         style="fill:black;stroke:none" />
+    </pattern>
+    <pattern
+       patternUnits="userSpaceOnUse"
+       width="69.696705"
+       height="19.999975"
+       patternTransform="translate(18.282995,971.7937)"
+       id="pattern5971">
+      <path
+         id="rect4371"
+         d="m 0,0 69.696705,0 0,19.999975 -69.696705,0 z"
+         style="fill:url(#pattern5974);fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:8.19999981;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         inkscape:connector-curvature="0" />
+    </pattern>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="5.6"
+     inkscape:cx="65.573595"
+     inkscape:cy="21.181497"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     units="px"
+     inkscape:window-width="1920"
+     inkscape:window-height="1007"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid6071"
+       empspacing="4" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata6068">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-1020.2988)">
+    <g
+       id="g4146"
+       transform="matrix(0.30272099,0,0,0.30272099,-4.4336642,736.78675)">
+      <path
+         sodipodi:nodetypes="csssccc"
+         inkscape:connector-curvature="0"
+         id="path3424"
+         d="m 26.127809,1000.5232 c 5.172533,-15.96457 25.35645,-25.71555 45.468054,-21.96586 20.111593,3.74968 32.799857,19.6294 28.582727,35.77206 -4.217145,16.1428 -23.798317,26.6481 -44.110259,23.6653 -20.311927,-2.9829 -33.930391,-18.3635 -30.678148,-34.6479 l 0.29258,-1.4667 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3.08563042;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="ccccc"
+         inkscape:connector-curvature="0"
+         id="path4231"
+         d="m 45.999996,940.29879 c 7,0 10,38 10,38 l 9,-0.10714 c -3.533807,-5.40115 -0.690157,-25.37175 -15,-37.89286 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="ccsccsc"
+         inkscape:connector-curvature="0"
+         id="path4233"
+         d="m 14.999996,1012.2988 5,0 c 0,0 2.926791,-23.99825 14.107142,-35.17858 10.000009,-9.99999 24.642858,-11.78572 24.642858,-11.78572 l -3.75,-18.03571 c 0,0 -20,5 -30,20 -10,15 -10,45.00001 -10,45.00001 z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="ccsccsc"
+         inkscape:connector-curvature="0"
+         id="path4235"
+         d="m 120,1002.2988 -5,0 c 0,0 -7.84684,-13.56457 -25.000004,-25.00001 -14.999986,-9.99999 -30.357143,-11.25 -30.357143,-11.25 l -4.642857,-18.75 c 0,0 20,0 40,20 C 115,987.29879 120,1002.2988 120,1002.2988 Z"
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    </g>
+  </g>
+</svg>

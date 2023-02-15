@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  - @copyright Limbas GmbH <https://limbas.com>
+  - @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+  -
+  - This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+  - This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+  -->
+
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="32"
+   height="32"
+   viewBox="0 0 31.999999 31.999998"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="style_go.svg">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="25.6875"
+     inkscape:cx="16"
+     inkscape:cy="16"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:window-width="1920"
+     inkscape:window-height="1007"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     units="px">
+    <inkscape:grid
+       type="xygrid"
+       id="grid3344"
+       empspacing="4" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-1020.3622)">
+    <g
+       id="g4139"
+       transform="matrix(0.30108078,0,0,0.30108078,-1.1296368,736.31704)">
+      <g
+         id="text3397"
+         style="font-style:normal;font-weight:normal;font-size:98.19197083px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1">
+        <path
+           id="path4165"
+           d="m 48.929739,996.31216 -29.246632,0 -6.568506,18.21924 -9.4931691,0 26.6575861,-69.80838 8.05481,0 26.705531,69.80838 -9.445224,0 -6.664396,-18.21924 z m -26.465805,-7.57536 23.732923,0 -11.890434,-32.65075 -11.842489,32.65075 z"
+           inkscape:connector-curvature="0" />
+      </g>
+      <g
+         id="text3401"
+         style="font-style:normal;font-weight:normal;font-size:98.19233704px;line-height:125%;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1">
+        <path
+           id="path4162"
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:serif;-inkscape-font-specification:serif"
+           d="m 43.378147,1036.2887 5.178112,-0.7192 24.404248,-63.04828 8.102785,0 23.972738,63.04828 5.13017,0.7192 0,6.0411 -20.041213,0 0,-6.0411 5.274003,-0.911 -4.602766,-12.8493 -27.952213,0 -4.746602,12.8493 5.274002,0.911 0,6.0411 -19.993264,0 0,-6.0411 z m 22.390538,-21.6714 22.150811,0 -10.835678,-29.96587 -0.287673,0 -11.02746,29.96587 z"
+           inkscape:connector-curvature="0" />
+      </g>
+      <path
+         inkscape:connector-curvature="0"
+         d="m 49.526608,1025.755 q 0,-0.7958 -0.529988,-1.3274 l -13.355387,-13.3554 q -0.529988,-0.53 -1.327448,-0.53 -0.79746,0 -1.327449,0.53 l -2.682964,2.6829 q -0.529989,0.53 -0.529989,1.3275 0,0.7974 0.529989,1.3274 l 5.572311,5.5723 -14.800061,0 q -0.76609,0 -1.327448,0.5597 -0.561359,0.5598 -0.559708,1.3275 l 0,3.7743 q 0,0.7661 0.559708,1.3275 0.559707,0.5613 1.327448,0.5597 l 14.800061,0 -5.572311,5.5723 q -0.559708,0.5597 -0.559708,1.3274 0,0.7678 0.559708,1.3275 l 2.682964,2.6829 q 0.529989,0.53 1.327449,0.53 0.79746,0 1.327448,-0.53 l 13.355387,-13.3553 q 0.529988,-0.53 0.529988,-1.3275 z m 7.401683,0 q 0,6.1617 -3.036291,11.3659 -3.036292,5.2041 -8.240418,8.2404 -5.204127,3.0363 -11.365865,3.0363 -6.16174,0 -11.365866,-3.0363 -5.204126,-3.0363 -8.240417,-8.2404 -3.036291,-5.2042 -3.036291,-11.3659 0,-6.1617 3.036291,-11.3659 3.036291,-5.2041 8.240417,-8.2404 5.204126,-3.0363 11.365866,-3.0363 6.161738,0 11.365865,3.0363 5.204126,3.0363 8.240418,8.2404 3.036291,5.2042 3.036291,11.3659 z"
+         id="path3407" />
+    </g>
+  </g>
+</svg>

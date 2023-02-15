@@ -1,0 +1,92 @@
+/*!
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+$sgc1: lmbSuggestColor(#74ba6a) !default;
+$sgc2: lmbSuggestColor(#f09b4d) !default;
+$sgc3: lmbSuggestColor(#f0cd4d) !default;
+$sgc4: lmbSuggestColor(#ff725c) !default;
+$sgc5: lmbSuggestColor(#c593ed) !default;
+$sgc6: lmbSuggestColor(#32a852) !default;
+$sgc7: lmbSuggestColor(#74ba6a) !default;
+$sgc8: lmbSuggestColor(#74ba5c) !default;
+
+.lmbFileTreeItem{
+  cursor:pointer;
+}
+
+.lmbFileTreeItem:hover{
+  cursor:pointer;
+  background-color: $farbschemaWEB10;
+  text-decoration:none;
+}
+
+.lmbGlistBodyNotice {
+  color: $farbschemaWEB2;
+  padding:4px;
+  display: flex;
+  border:1px solid $farbschemaWEB5;
+  border-bottom:1px solid $farbschemaWEB5;
+  border-radius: 3px 3px 3px 3px;
+  white-space:nowrap;
+  align-items: center;
+  margin-right:1px;
+  margin-left:1px;
+}
+
+.lmbGlistBodyNotice.notice1 {
+  background-color: #74ba6a;
+  color: $sgc1;
+  align-items: baseline;
+  flex-basis:100%;
+  /* flex-wrap: wrap; */
+  order:0;
+}
+.lmbGlistBodyNotice.notice2 {
+  background-color: #f09b4d;
+  color: $sgc2;
+  order:1;
+}
+.lmbGlistBodyNotice.notice3 {
+  background-color: #f0cd4d;
+  color: $sgc3;
+  order:1;
+}
+.lmbGlistBodyNotice.notice4 {
+  background-color: #ff725c;
+  color: $sgc4;
+  order:1;
+}
+.lmbGlistBodyNotice.notice5 {
+  background-color: #c593ed;
+  color: $sgc5;
+  order:1;
+}
+.lmbGlistBodyNotice.notice6 {
+  background-color: #32a852;
+  color: $sgc6;
+  color: #000000;
+  order:1;
+}
+.lmbGlistBodyNotice.notice7 {
+  background-color: #74ba6a;
+  color: $sgc7;
+  order:1;
+}
+.lmbValidity_list {
+  background-color: #74ba5c;
+  color: $sgc8;
+  font-weight:bold;
+  border:1px solid $farbschemaWEB5;
+  border-radius: 3px 3px 3px 3px;
+  padding:2px;
+  margin-left:2px;
+  text-align:right;
+  height:12px;
+  cursor:pointer;
+}

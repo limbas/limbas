@@ -1,0 +1,131 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+if($trigger_typ == 2){
+	$intern = 1;
+}else{
+	$trigger_typ = 1;
+	$intern = 0;
+}
+
+
+if($sortup_definition OR $sortdown_definition){
+
+	$sqlquery = "SELECT ID,SORT FROM LMB_TRIGGER WHERE INTERN = ".parse_db_bool($intern)." ORDER BY SORT ";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$bzm = 1;
+	while(lmbdb_fetch_row($rs)) {
+
+		if($sortup_definition == lmbdb_result($rs,"ID")){
+			$orderres[lmbdb_result($rs,"ID")] = ($bzm-1.1);
+		}elseif($sortdown_definition == lmbdb_result($rs,"ID")){
+			$orderres[lmbdb_result($rs,"ID")] = ($bzm+1.1);
+		}else{
+			$orderres[lmbdb_result($rs,"ID")] = $bzm;
+		}
+
+		$bzm++;
+	}
+	
+	asort($orderres);
+	
+	$bzm = 1;
+	foreach ($orderres as $key => $value){
+		$sqlquery = "UPDATE LMB_TRIGGER SET SORT = $bzm WHERE ID = ".$key." AND INTERN = ".parse_db_bool($intern);
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$bzm++;
+	}
+
+}
+
+
+if($change AND $trigger_definition){
+	foreach ($trigger_definition as $key => $value){
+		if(${"definition_change_$key"} == 1){
+			$sqlquery = "UPDATE LMB_TRIGGER SET TRIGGER_VALUE = '".parse_db_string($value,4000)."',ACTIVE = " . ($active[$key]=="on"?LMB_DBDEF_TRUE:LMB_DBDEF_FALSE) . "  WHERE ID = $key AND INTERN = ".parse_db_bool($intern);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		}elseif(${"definition_change_$key"} == 2){
+			$sqlquery = "DELETE FROM LMB_TRIGGER WHERE ID = $key AND INTERN = ".parse_db_bool($intern);
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		}
+	}
+	
+	if($trigger_typ == 1){
+		lmb_updateTrigger();
+	}
+
+}
+
+if($add AND $add_trigger_table AND $add_trigger_name){
+	
+	lmb_addTrigger($add_trigger_name,$add_trigger_type,$add_trigger_table,'',$intern,$add_trigger_pos);
+	
+	$nextid = next_db_id("LMB_TRIGGER");
+	if($intern){
+		$key = $nextid;
+		$tabid = $gtab["argresult_id"][$add_trigger_table];
+		$gtrigger[$tabid]["id"][$key] = $nextid;
+		$gtrigger[$tabid]["table_name"][$key] = $add_trigger_table;
+		$gtrigger[$tabid]["type"][$key] = $add_trigger_type;
+		$gtrigger[$tabid]["trigger_name"][$key] = $add_trigger_name;
+	}
+}
+
+if($syncronize){
+	$nextId = next_db_id("LMB_TRIGGER");
+	
+	if($triggerlist = dbf_3(array($DBA["DBSCHEMA"]))){
+
+	foreach ($triggerlist["triggername"] as $tkey => $tname){
+	
+		$tableName = $triggerlist["tablename"][$tkey];
+		$trigerName = $triggerlist["triggername"][$tkey];
+		$definition = explode(LMB_DBFUNC_SPLIT_TRIGGER,$triggerlist["definition"][$tkey]);
+		unset($definition[0]);
+		$definition = implode(LMB_DBFUNC_SPLIT_TRIGGER,$definition);
+		$definition = trim($definition);
+
+		$desc = lmb_strtoupper($triggerlist["event"][$tkey])."_".$triggerlist["tablename"][$tkey];
+		$sqlquery0 = "SELECT ID FROM LMB_TRIGGER WHERE LOWER(NAME) = '".lmb_strtolower(parse_db_string($trigerName,25))."' AND LOWER(TABLE_NAME) = '".lmb_strtolower($triggerlist["tablename"][$tkey])."' AND LOWER(TYPE) = '".lmb_strtolower($triggerlist["event"][$tkey])."' LIMIT 1";
+		
+		$rs0 = lmbdb_exec($db,$sqlquery0);
+		if(!lmbdb_fetch_row($rs0)){
+			$sqlquery1 = "INSERT INTO LMB_TRIGGER(ID,ERSTDATUM,EDITDATUM,EDITUSER,ERSTUSER,NAME,TABLE_NAME,TYPE,TRIGGER_VALUE,ACTIVE,DESCRIPTION) VALUES(" . $nextId++ . ",".LMB_DBDEF_TIMESTAMP.",".LMB_DBDEF_TIMESTAMP.",".parse_db_int($session["user_id"]).",".parse_db_int($session["user_id"]).",'".parse_db_string($trigerName,25)."','".$triggerlist["tablename"][$tkey]."','INSERT','" . ltrim(rtrim(parse_db_string($definition,4000),")"),"(") .  "',".LMB_DBDEF_TRUE.",'".parse_db_string($desc,50)."')";
+			lmbdb_exec($db,$sqlquery1);
+		}
+	}}
+
+	lmb_updateTrigger();
+}
+
+
+$result_trigger = array();
+
+$sqlquery = "SELECT * FROM LMB_TRIGGER WHERE INTERN = ".parse_db_bool($intern)." ORDER BY SORT,ERSTDATUM";
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+	$result_trigger[lmbdb_result($rs, "TABLE_NAME")]["id"][] = lmbdb_result($rs, "ID");
+	$result_trigger[lmbdb_result($rs, "TABLE_NAME")]["erstdatum"][] = lmbdb_result($rs, "ERSTDATUM");
+	$result_trigger[lmbdb_result($rs, "TABLE_NAME")]["erstuser"][] = lmbdb_result($rs, "ERSTUSER");
+	$result_trigger[lmbdb_result($rs, "TABLE_NAME")]["editdatum"][] = lmbdb_result($rs, "EDITDATUM");
+	$result_trigger[lmbdb_result($rs, "TABLE_NAME")]["edituser"][] = lmbdb_result($rs, "EDITUSER");
+	$result_trigger[lmbdb_result($rs, "TABLE_NAME")]["tablename"][] = lmbdb_result($rs, "TABLE_NAME");
+	$result_trigger[lmbdb_result($rs, "TABLE_NAME")]["type"][] = lmbdb_result($rs, "TYPE");
+	$result_trigger[lmbdb_result($rs, "TABLE_NAME")]["value"][] = trim(lmbdb_result($rs, "TRIGGER_VALUE")); # longtext handle
+	$result_trigger[lmbdb_result($rs, "TABLE_NAME")]["active"][] = lmbdb_result($rs, "ACTIVE");
+	$result_trigger[lmbdb_result($rs, "TABLE_NAME")]["name"][] = lmbdb_result($rs, "DESCRIPTION");
+	$result_trigger[lmbdb_result($rs, "TABLE_NAME")]["intern"][] = lmbdb_result($rs, "INTERN");
+	$result_trigger[lmbdb_result($rs, "TABLE_NAME")]["position"][] = lmbdb_result($rs, "POSITION");
+}
+
+
+
+?>

@@ -1,0 +1,71 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+/*
+Typ 1 = public-files
+Typ 2 = messgages
+Typ 3 = tables
+Typ 4 = Webdav
+*/
+
+/* --- Transaktion START -------------------------------------- */
+lmb_StartTransaction();
+
+# -------------------- Ordnerstruktur ----------------------
+get_filestructure();
+#$level = $filestruct[akt_level];
+$level = $filestruct['level'][$LID];
+
+# --------------- Aktionen --------------------------------
+# --------------- Ordner umbenennen -----------------------
+if($LID AND $rename_file AND $LINK[116]){
+	if(!rename_dir($LID,$rename_file,$level)){
+		lmb_alert($lang[56]);
+	}else{
+		get_filestructure();
+	}
+}
+
+# ---------------- Ordner hinzufügen -----------------------
+if(($add_file AND $LINK[119]) AND ($LID OR ($LID == 0 AND $session["user_id"] == 1))){
+	if(add_file($LID,$add_file)){lmb_EndTransaction(1);$onload = "parent.explorer_tree.document.form_menu.submit();\n";}else{lmb_EndTransaction(0);}
+	get_filestructure();
+}
+
+# ---------------- Ordner löschen -----------------------
+if($del_file AND $LID){
+	if(!delete_dir($del_file)){
+		lmb_alert($lang[56]);
+	}else{
+		get_filestructure();
+	}
+}
+
+# ---------------- Ordner kopieren -----------------------
+if($LID AND $copy_file){
+	$copy_file = lmb_substr($copy_file,1,5000);
+	$copy_file = explode(";",$copy_file);
+	if(!copy_dir($copy_file,$LID,0)){
+		lmb_alert($lang[56]);
+	}else{
+		get_filestructure();
+	}
+}
+
+
+# --- Transaktion ENDE --------
+if($commit == 1){
+	lmb_EndTransaction(0);
+} else {
+	lmb_EndTransaction(1);
+}
+
+?>

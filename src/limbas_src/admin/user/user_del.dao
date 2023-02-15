@@ -1,0 +1,95 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+
+
+/* ---Delete SQL-Query --------------------------------------------- */
+function delete_user($ID,$duf=null,$duk=null){
+	global $db;
+	global $umgvar;
+	global $lang;
+	
+	require_once(COREPATH . 'extra/explorer/filestructure.lib');
+
+	lmb_StartTransaction();
+
+	$sqlquery = "SELECT USERNAME FROM LMB_USERDB WHERE USER_ID = $ID";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$user_name = lmbdb_result($rs, "USERNAME");
+
+	#-------- LMB_USER_COLORS ----------
+	$sqlquery = "DELETE FROM LMB_USER_COLORS WHERE USERID = $ID";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	#-------- LMB_REMINDER ----------
+	$sqlquery = "DELETE FROM LMB_REMINDER WHERE USER_ID = $ID";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	#-------- LMB_GTAB_ROWSIZE ----------
+	$sqlquery = "DELETE FROM LMB_GTAB_ROWSIZE WHERE USER_ID = $ID";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	#-------- SESSION ----------
+	$sqlquery = "DELETE FROM LMB_SESSION WHERE USER_ID = $ID";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	#-------- Snapshot ----------
+	$sqlquery = "DELETE FROM LMB_SNAP WHERE USER_ID = $ID";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	#-------- Snapshot ----------
+	$sqlquery = "DELETE FROM LMB_RULES_DATASET WHERE USERID = $ID";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+
+	#-------- LMB_USERDB ----------
+	if(!$commit AND $duk){
+		$duf = 1;
+		$sqlquery = "DELETE FROM LMB_USERDB WHERE USER_ID = $ID";
+	}else{
+		$sqlquery = "UPDATE LMB_USERDB SET DEL = ".LMB_DBDEF_TRUE.",GROUP_ID = 0, SUB_GROUP = '' WHERE USER_ID = $ID";
+	}
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+
+	/* --- User Verzeichnis löschen --------------------------------------------- */
+	if(!$commit AND $duf){
+		#-------- Persöhnlicher Ordner / Nachrichten ----------
+		$sqlquery = "UPDATE LDMS_STRUCTURE SET FIX = ".LMB_DBDEF_FALSE." WHERE ERSTUSER = $ID AND TYP = 4";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		# ID des Persöhnlichen Ordners
+		$sqlquery = "SELECT MIN(ID) AS ID FROM LDMS_STRUCTURE WHERE TYP = 4 AND LEVEL = 0 AND ERSTUSER = $ID";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		$GLOBALS["filestruct"]["admin"] = 1;
+
+		# Filestructure löschen
+		if(lmbdb_result($rs, "ID")){
+		if(!delete_dir(lmbdb_result($rs, "ID"))){
+			$GLOBALS["alert"] .= "can not delete Filestructure\\n";
+		}}
+
+		# Home - Verszeichniss löschen
+		rmdirr(USERPATH . $ID,1,0,1);
+		if(file_exists(USERPATH . $ID)){
+			lmb_alert($lang[1686]." (".USERPATH."$ID)");
+		}
+	}
+
+	if($commit){
+		lmb_EndTransaction(0);
+		return false;
+	} else {
+		lmb_EndTransaction($user_name." ".$lang[657]);
+		return true;
+	}
+}

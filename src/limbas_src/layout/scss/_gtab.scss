@@ -1,0 +1,623 @@
+/*!
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+/* gtab Tabelle außen */
+
+.lmbfringeGtab {
+  background-color: $farbschemaWEB13;
+  margin: 20px;
+  overflow: auto;
+  position: relative;
+  border:1px solid $farbschemaWEB3;
+  padding:20px;
+  display:block;
+}
+
+
+
+/* gtab Popup-Tabelle außen */
+.lmbPopupDiv{
+  padding-left:8px;
+  padding-bottom:4px;
+  width:100%;
+  background-color:$farbschemaWEB14;
+}
+.lmbPopupGtab{
+  background-color:$farbschemaWEB14;
+  width:100%;
+  overflow:visible;
+}
+
+
+/* gtab Tabelle Relation Tabmenu */
+
+.lmbGtabTabmenuTable{
+  border-collapse:collapse;
+  border-spacing:1px;
+}
+
+.lmbGtabTabmenuActive{
+  display:none;
+  color:$farbschemaWEB2;
+  font-size:$fontsize13;
+  white-space:nowrap;
+  overflow:visible;
+  padding: 3px 20px 3px 0;
+  border:1px solid $farbschemaWEB1;
+  border-bottom:none;
+  cursor:pointer;
+}
+
+.lmbGtabTabmenuInactive, .lmbGtabTabmenuTable .lmbGtabTabmenuActive{
+  background-color:$farbschemaWEB13;
+  //color:$fontc3;
+  //font-size:{$fontsize11};
+  white-space:nowrap;
+  overflow:visible;
+  padding: 3px 20px 5px 0;
+  border: none;
+  border-bottom:1px solid $farbschemaWEB3;
+  cursor:pointer;
+  float:left;
+  margin: 3px 0;
+}
+
+
+
+.lmbGtabTabmenuTable.multiTab .lmbGtabTabmenuActive{
+  color:$farbschemaWEB2;
+  clear: none;
+  float: left;
+  margin: 1px 0;
+  padding: 3px 20px 3px 0;
+  width: auto;
+}
+
+table .lmbGtabTab {
+  clear: none;
+  margin: 1px 0;
+  padding: 3px 20px 3px 0;
+  width: auto;
+  border-spacing: 0;
+}
+
+td .lmbGtabTabActive {
+  color: $fontc7;
+  font-size: $fontsize13;
+}
+
+.lmbGtabTabInactive, .lmbGtabTabActive {
+  color: $fontc3;
+  font-size: $fontsize11;
+  white-space: nowrap;
+  overflow: visible;
+  padding: 3px 10px 3px 10px;
+  border: none;
+  border-bottom: 1px solid $farbschemaWEB3;
+  cursor: pointer;
+  margin: 3px 0;
+  vertical-align: baseline;
+}
+
+td .lmbGtabTabSpace {
+  width:100%;
+}
+
+.lmbGtabTabBody {
+  font-weight: normal;
+  border: 1px solid $farbschemaWEB3;
+  width: calc(95% - 2px); /* 2x border */
+}
+
+
+
+
+.lmbGtabTabmenuSpace{
+  display:none;
+  width:100%;
+  background-color:$farbschemaWEB14;
+  border:1px solid $farbschemaWEB14;
+  border-bottom:1px solid $farbschemaWEB3;
+  border-left:1px solid $farbschemaWEB3;
+  font-size:$fontsize11;
+  padding:3px;
+  padding-top:4px;
+}
+
+
+.GtabTableFringeHeader .lmbGtabTabmenuActive {
+  border: none;
+  /* maybe for 100% header width */
+  box-sizing: border-box;
+  width: 100%;
+  border-bottom:1px solid $farbschemaWEB1;
+  display: block;
+  margin-bottom: 5px;
+  clear: both;
+}
+
+
+.lmbGtabTabmenuTable .lmbGtabTabmenuActive {
+  /* maybe for 100% header width */
+  box-sizing: border-box;
+  width: 100%;
+  margin-top: 0px;
+  display: table-cell;
+  font-size: 1.3em;
+  clear: both;
+}
+
+
+
+/* gtab Tabelle Subheader Tabmenu */
+
+.lmbGtabSubheaderTable{
+  width:100%;
+  border-collapse:collapse;
+  border-spacing:1px;
+}
+
+.lmbGtabSubheaderActive{
+  background-color:$farbschemaWEB8;
+  color:$fontc7;
+  text-align:center;
+  font-size:$fontsize11;
+  white-space:nowrap;
+  overflow:visible;
+  padding:3px;
+  padding-left:20px;
+  padding-right:20px;
+  border:1px solid $farbschemaWEB3;
+  border-bottom:none;
+  cursor:pointer;
+}
+
+.lmbGtabSubheaderInactive{
+  background-color:$farbschemaWEB13;
+  color:$fontc3;
+  text-align:center;
+  font-size:$fontsize11;
+  white-space:nowrap;
+  overflow:visible;
+  padding:3px;
+  cursor:pointer;
+  padding-left:20px;
+  padding-right:20px;
+  border:1px solid $farbschemaWEB3;
+}
+
+
+/* Tabulator Tabelle Formular oben positioniert*/
+
+.lmbGtabTabulatorFrame{
+  background-color:$farbschemaWEB14;
+  border: 1px solid $farbschemaWEB3;
+  z-index:1;
+}
+
+.lmbGtabTabulatorActive{
+  background-color:$farbschemaWEB14;
+  color:$fontc7;
+  font-size:$fontsize11;
+  white-space:nowrap;
+  overflow:visible;
+  padding:3px;
+  padding-left:20px;
+  padding-right:20px;
+  border:1px solid $farbschemaWEB3;
+  border-bottom:none;
+  cursor:pointer;
+  float:left;
+  position:relative;
+  bottom:-1px;
+  z-index:2;
+}
+
+.lmbGtabTabulatorInactive{
+  background-color:$farbschemaWEB8;
+  color:$fontc7;
+  font-size:$fontsize11;
+  white-space:nowrap;
+  overflow:visible;
+  padding:3px;
+  cursor:pointer;
+  padding-left:20px;
+  padding-right:20px;
+  border:1px solid $farbschemaWEB3;
+  border-bottom:none;
+  float:left;
+}
+
+.lmbGtabTabulatorSpace{
+  font-size:$fontsize11;
+  padding:3px;
+  padding-top:4px;
+  border-bottom:1px solid $farbschemaWEB3;
+  border-bottom:none;
+}
+
+
+/* Tabulator Tabelle Formular links positioniert */
+
+.lmbGtabTabulatorLeftFrame{
+  background-color:$farbschemaWEB9;
+  border-collapse:collapse;
+  border: 1px solid $farbschemaWEB3;
+  border-left:none;
+}
+
+.lmbGtabTabulatorLeftActive{
+  background-color:$farbschemaWEB9;
+  color:$fontc7;
+  font-size:$fontsize11;
+  white-space:nowrap;
+  overflow:visible;
+  padding:5px;
+  padding-left:20px;
+  padding-right:20px;
+  border:1px solid $farbschemaWEB3;
+  border-right:1px solid transparent;
+  cursor:pointer;
+}
+
+.lmbGtabTabulatorLeftInactive{
+  background-color:$farbschemaWEB13;
+  color:$fontc3;
+  font-size:$fontsize11;
+  white-space:nowrap;
+  overflow:visible;
+  padding:5px;
+  cursor:pointer;
+  padding-left:20px;
+  padding-right:20px;
+  border:1px solid $farbschemaWEB3;
+}
+
+.lmbGtabTabulatorLeftSpace{
+  font-size:$fontsize11;
+  opacity:0.4;
+  height:100%;
+  overflow:hidden;
+  border-right:1px solid $farbschemaWEB3;
+}
+
+
+
+/* gtab Tabelle Liste Kopf */
+
+.lmbGtabTop{
+  padding:5px;
+  padding-left:10px;
+  padding-right:10px;
+  height:1px;
+}
+
+.gtabHeaderTop{
+  border-top:1px solid $farbschemaWEB3;
+  height:8px;
+}
+
+.gtabHeaderMenuTR{
+  overflow:hidden;
+  padding: 2px 0;
+}
+
+.gtabHeaderMenuTD{
+  cursor:pointer;
+  color:$farbschemaWEB2;
+  padding-left:5px;
+  padding-right:5px;
+  height:18px;
+}
+
+.gtabHeaderMenuTD.hoverable:hover{
+  text-decoration:underline;
+}
+
+.gtabHeaderSymbolTR{
+  background-color: $farbschemaWEB13;
+}
+
+.gtabHeaderSymbolTD{
+  margin-top:0px;
+  height:23px;
+}
+
+.gtabHeaderInputTD{
+  background-color: $farbschemaWEB13;
+  overflow:hidden;
+  padding:2px;
+  border:1px solid $farbschemaWEB1;
+}
+
+.gtabHeaderInputINP{
+  background-image: url('../images/legacy/find.png');
+  padding-left:14px;
+  background-repeat: no-repeat;
+  background-position: 2px 3px;
+  margin: 3px 0;
+  border:1px solid $farbschemaWEB1;
+}
+
+.gtabHeaderInputINPajax{
+  background-image: url('../images/legacy/find_green.png');
+}
+
+.gtabHeaderTitleTD {
+  background-color: $farbschemaWEB8;
+  vertical-align: middle;
+  overflow: hidden;
+  cursor:col-resize;
+  padding-left: 4px;
+  border-right: 1px solid $farbschemaWEB1;
+  border-left: 1px solid $farbschemaWEB1;
+  line-height: 20px;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.gtabHeaderTitleTDOver {
+  background-color: $farbschemaWEB8;
+  background-image: url('../images/legacy/arrow_bullet_left.gif');
+  background-repeat: no-repeat;
+  padding-left: 20px;
+}
+
+.gtabHeaderTitleTDItem {
+  font-weight: bold;
+  cursor: pointer;
+  float: left;
+  overflow:hidden;
+  white-space:nowrap;
+}
+
+.gtabHeaderTitleTDItemOver{
+  background-color: $farbschemaWEB8;
+  border: 1px solid grey;
+  padding-left: 5;
+  padding-right: 5;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+
+
+
+/* gtab Tabelle Liste Body */
+
+.lmbfringeGtabSearch{
+  background-color: $farbschemaWEB8;
+  border-collapse:collapse;
+  border-spacing:1px;
+  table-layout:fixed;
+}
+
+.lmbfringeGtabTable{
+  background-color: $farbschemaWEB4;
+  border-collapse:collapse;
+  border-spacing:1px;
+  table-layout:fixed;
+}
+
+.lmbfringeGtabBody{
+  background-color: $farbschemaWEB8;
+  border-collapse:collapse;
+  border-spacing:1px;
+  opacity: .9;
+}
+
+.gtabBodyTR{
+  background-color:$farbschemaWEB13;
+  overflow:hidden;
+}
+
+.gtabBodyTRColorA{
+  background-color:$white;
+}
+
+.gtabBodyTRColorB{
+  background-color: $gray-100;
+}
+
+
+.gtabBodyTD{
+  vertical-align: top;
+  overflow:hidden;
+  padding:2px;
+  border:1px solid $farbschemaWEB1;
+}
+
+
+.gtabBodyTDCL{
+  vertical-align: top;
+  overflow:hidden;
+  padding:2px;
+  border:1px solid $farbschemaWEB1;
+}
+.gtabBodyTDCL .gtabBodyINP{
+  background-color:transparent;
+}
+
+.gtabBodyINP{
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
+
+
+/* gtab Tabelle Liste Fuß */
+
+.lmbGtabBottom{
+  display:none;
+}
+
+.gtabFooterTAB {
+  height: 23px;
+  vertical-align: middle;
+  width: 100%;
+}
+
+
+/* gtab Tabelle Details */
+
+.gtabBodyDetailFringe{
+  background-color:$farbschemaWEB8;
+  border:1px solid $farbschemaWEB3;
+}
+
+.gtabBodyDetailTopBorder{
+  height:1px;
+  background-color:$farbschemaWEB3;
+}
+
+.gtabBodyDetailTopSpace{
+  height:5px;
+}
+
+.gtabBodyDetailBody{
+
+}
+
+.gtabBodyDetailTD{
+  border:none;
+  padding:5px;
+  padding-right:30px;
+  width:30%;
+}
+
+.gtabBodyDetailNeedTitle{
+  color:red;
+}
+
+.gtabBodyDetailNeedVal{
+  border: 2px solid red !important;
+}
+
+.gtabBodyDetailValTD{
+  border:none;
+  padding-top:4px;
+  padding-bottom:4px;
+  padding-right:20px;
+  overflow:hidden;
+  width:70%;
+}
+
+.gtabBodyDetailValLI{
+  list-style-type:disc;
+}
+
+.gtabGrouping{
+  background-color:$farbschemaWEB7;
+  padding: 2px;
+}
+
+.gtabchange{
+  font-weight: normal;
+  width: 95%;
+}
+
+DIV.gtabchange{
+  border: 1px solid $farbschemaWEB3;
+  min-height: 18px;
+  box-sizing: border-box;
+  padding:2px;
+}
+
+INPUT.gtabchange, TEXTAREA.gtabchange, SELECT.gtabchange{
+  font-weight: normal;
+  background-color: $farbschemaWEB13;
+  border: 1px solid $farbschemaWEB3;
+  font-size: $umgvarfontsize;
+}
+
+input, select, textarea {
+  color: inherit; /* to prevent the default black of some browsers */
+}
+
+.fgtabchange{
+  background-color: $farbschemaWEB8;
+  border: 1px solid $farbschemaWEB3;
+  padding:0px;
+  margin:0px;
+  font-size: $umgvarfontsize;
+  opacity:0.8;
+  filter:Alpha(opacity=70);
+  box-sizing: border-box;
+  overflow: auto; /* fixes IE-Scrollbar-Bug */
+}
+
+INPUT.fgtabchange, TEXTAREA.fgtabchange, SELECT.fgtabchange, TABLE.fgtabchange, TD.fgtabchange{
+  background-color: $farbschemaWEB13;
+  border: 1px solid $farbschemaWEB3;
+  opacity:1;
+  filter:Alpha(opacity=100);
+  font-size: $umgvarfontsize;
+  padding:2px;
+  color:$farbschemaWEB2;
+}
+
+DIV.fgtabchange{
+  min-height: 18px;
+  overflow-y:auto;
+  padding:2px;
+  box-sizing: border-box;
+}
+
+INPUT.gmultilang {
+  background-image: url('../images/legacy/fa-language_16.png');
+  background-repeat: no-repeat;
+  background-position: right center;
+}
+
+
+/* gtab Tabelle Relation */
+
+.gtabHeaderRelationTAB{
+  border: 1px solid $farbschemaWEB3;
+}
+
+.gtabFringeRelationBody{
+  background-color:$farbschemaWEB8;
+  border: 1px solid $farbschemaWEB3;
+  width: 94%;
+}
+
+.gtabHeaderRelationTAB i {
+  padding:3px;
+}
+
+.gtabHeaderRelationTAB input {
+  margin: 3px;
+}
+
+
+
+
+/*INPUT[readonly][id^=g_]*/
+
+
+
+/* Tabelle Kacheldarstellung */
+
+
+.tabTileSubform:hover .tabTileResize{
+  display:block;
+}
+
+.tabTileResize{
+  position:absolute;
+  display:none;
+  right:0px;
+  bottom:2px;
+  opacity:0.7;
+  cursor:pointer;
+  z-index:99999;
+}

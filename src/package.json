@@ -1,0 +1,312 @@
+{
+  "name": "limbas",
+  "version": "5.0.58",
+  "description": "Limbas is a database framework for creating database-driven business applications. As a graphical database front-end, it enables the efficient processing of data stocks and the flexible development of comfortable low-code database applications.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/limbas/limbas.git"
+  },
+  "keywords": [
+    "framework",
+    "database",
+    "limbas"
+  ],
+  "author": "Limbas GmbH",
+  "license": "GPL-2.0",
+
+  "dependencies": {
+    "bootstrap": "5.1.3",
+    "codemirror": "5.21.0",
+    "colresizable": "1.6.0",
+    "datatables.net-bs5": "1.11.3",
+    "fontawesome-legacy": "npm:font-awesome@4.7.0",
+    "@fortawesome/fontawesome-free": "6.1.0",
+    "jquery": "3.2.1",
+    "jquery-ui-dist": "1.12.1",
+    "select2": "4.0.13",
+    "spectrum-colorpicker": "^1.8.1",
+    "sql-formatter": "11.0.0",
+    "tinymce": "5.5.1",
+    "tinymce-i18n": "^22.8.26",
+    "gridstack": "^6.0.2",
+    "chart.js": "^3.9.1"
+  },
+  "scripts": {
+    "clean": "rm -rf public/assets/js && rm -rf public/assets/fonts && rm -rf public/assets/images && rm -rf public/assets/vendor && rm -rf limbas_src/resources/vendor",
+    "lwatch:js": "onchange -v \"./dependent/EXTENSIONS/**/*.js\" -- npm run local:js",
+    "lwatch:css": "cleancss --watch -o ./public/localassets --batch --batch-suffix '' \"./dependent/EXTENSIONS/**/*.css\"",
+    "local:js": "uglifyjs-folder ./dependent/EXTENSIONS --output ./public/localassets --each --keep-fnames -x .js",
+    "local:css": "cleancss -o ./public/localassets --batch --batch-suffix '' \"./dependent/EXTENSIONS/**/*.css\"",
+    "localwatch": "npm-run-all --parallel lwatch:*",
+    "watch:js": "onchange -v \"./limbas_src/resources/**/*.js\" -- npm run build:js",
+    "build:js": "uglifyjs-folder ./limbas_src/resources/js --output ./public/assets/js --each --keep-fnames -x .js",
+    "build:vendor": "mkdir -p public/assets/fonts && vendor-copy && sed -i 's/if(FE/if(false/g' public/assets/vendor/tinymce/tinymce.min.js",
+    "watch": "npm-run-all --parallel watch:*",
+    "build": "npm-run-all clean build:*"
+  },
+  "devDependencies": {
+    "clean-css-cli": "^5.6.2",
+    "pegjs": "^0.10.0",
+    "phpegjs": "^1.0.0-beta7",
+    "node-sass": "^7.0.3",
+    "uglify-js": "^3.17.2",
+    "uglifyjs-folder": "3.1.3",
+    "onchange": "^7.1.0",
+    "npm-run-all": "^4.1.5",
+    "vendor-copy": "^3.0.1"
+  },
+  "vendorCopy": [
+    {
+      "from": "node_modules/bootstrap/LICENSE",
+      "to": "limbas_src/resources/vendor/bootstrap/LICENSE"
+    },
+    {
+      "from": "node_modules/bootstrap/scss",
+      "to": "limbas_src/resources/vendor/bootstrap/scss"
+    },
+    {
+      "from": "node_modules/bootstrap/dist/js/bootstrap.bundle.min.js",
+      "to": "public/assets/vendor/bootstrap/bootstrap.bundle.min.js"
+    },
+    {
+      "from": "node_modules/bootstrap/LICENSE",
+      "to": "public/assets/vendor/bootstrap/LICENSE"
+    },
+    {
+      "from": "node_modules/chart.js/dist/chart.min.js",
+      "to": "public/assets/vendor/chart.js/chart.min.js"
+    },
+    {
+      "from": "node_modules/chart.js/LICENSE.md",
+      "to": "public/assets/vendor/chart.js/LICENSE.md"
+    },
+    {
+      "from": "node_modules/colresizable/colResizable-1.6.min.js",
+      "to": "public/assets/vendor/colresizeable/colResizable.min.js"
+    },
+    {
+      "from": "node_modules/codemirror/LICENSE",
+      "to": "public/assets/vendor/codemirror/LICENSE"
+    },
+    {
+      "from": "node_modules/codemirror/addon/edit/matchbrackets.js",
+      "to": "public/assets/vendor/codemirror/addon/edit/matchbrackets.js"
+    },
+    {
+      "from": "node_modules/codemirror/addon/edit/matchtags.js",
+      "to": "public/assets/vendor/codemirror/addon/edit/matchtags.js"
+    },
+    {
+      "from": "node_modules/codemirror/addon/hint/show-hint.js",
+      "to": "public/assets/vendor/codemirror/addon/hint/show-hint.js"
+    },
+    {
+      "from": "node_modules/codemirror/addon/hint/show-hint.css",
+      "to": "public/assets/vendor/codemirror/addon/hint/show-hint.css"
+    },
+    {
+      "from": "node_modules/codemirror/addon/hint/sql-hint.js",
+      "to": "public/assets/vendor/codemirror/addon/hint/sql-hint.js"
+    },
+    {
+      "from": "node_modules/codemirror/lib/codemirror.js",
+      "to": "public/assets/vendor/codemirror/lib/codemirror.js"
+    },
+    {
+      "from": "node_modules/codemirror/lib/codemirror.css",
+      "to": "public/assets/vendor/codemirror/lib/codemirror.css"
+    },
+    {
+      "from": "node_modules/codemirror/mode/htmlmixed/htmlmixed.js",
+      "to": "public/assets/vendor/codemirror/mode/htmlmixed/htmlmixed.js"
+    },
+    {
+      "from": "node_modules/codemirror/mode/xml/xml.js",
+      "to": "public/assets/vendor/codemirror/mode/xml/xml.js"
+    },
+    {
+      "from": "node_modules/codemirror/mode/javascript/javascript.js",
+      "to": "public/assets/vendor/codemirror/mode/javascript/javascript.js"
+    },
+    {
+      "from": "node_modules/codemirror/mode/css/css.js",
+      "to": "public/assets/vendor/codemirror/mode/css/css.js"
+    },
+    {
+      "from": "node_modules/codemirror/mode/clike/clike.js",
+      "to": "public/assets/vendor/codemirror/mode/clike/clike.js"
+    },
+    {
+      "from": "node_modules/codemirror/mode/php/php.js",
+      "to": "public/assets/vendor/codemirror/mode/php/php.js"
+    },
+    {
+      "from": "node_modules/codemirror/mode/sql/sql.js",
+      "to": "public/assets/vendor/codemirror/mode/sql/sql.js"
+    },
+    {
+      "from": "node_modules/datatables.net/License.txt",
+      "to": "public/assets/vendor/datatables/License.txt"
+    },
+    {
+      "from": "node_modules/datatables.net/js/jquery.dataTables.js",
+      "to": "public/assets/vendor/datatables/jquery.dataTables.js"
+    },
+    {
+      "from": "node_modules/datatables.net-bs5/css/dataTables.bootstrap5.min.css",
+      "to": "public/assets/vendor/datatables/dataTables.bootstrap5.min.css"
+    },
+    {
+      "from": "node_modules/datatables.net-bs5/js/dataTables.bootstrap5.min.js",
+      "to": "public/assets/vendor/datatables/dataTables.bootstrap5.min.js"
+    },
+    {
+      "from": "node_modules/@fortawesome/fontawesome-free/LICENSE.txt",
+      "to": "limbas_src/resources/vendor/fontawesome/LICENSE.txt"
+    },
+    {
+      "from": "node_modules/@fortawesome/fontawesome-free/scss",
+      "to": "limbas_src/resources/vendor/fontawesome/scss"
+    },
+    {
+      "from": "limbas_src/resources/legacy/fullcalendar",
+      "to": "public/assets/vendor/fullcalendar"
+    },
+    {
+      "from": "limbas_src/resources/legacy/jsgraphics",
+      "to": "public/assets/vendor/jsgraphics"
+    },
+    {
+      "from": "node_modules/gridstack/dist/gridstack-all.js",
+      "to": "public/assets/vendor/gridstack/gridstack-all.js"
+    },
+    {
+      "from": "node_modules/gridstack/dist/gridstack.min.css",
+      "to": "public/assets/vendor/gridstack/gridstack.min.css"
+    },
+    {
+      "from": "node_modules/gridstack/LICENSE",
+      "to": "public/assets/vendor/gridstack/LICENSE"
+    },
+    {
+      "from": "node_modules/jquery/LICENSE.txt",
+      "to": "public/assets/vendor/jquery/LICENSE.txt"
+    },
+    {
+      "from": "node_modules/jquery/dist/jquery.min.js",
+      "to": "public/assets/vendor/jquery/jquery.min.js"
+    },
+    {
+      "from": "node_modules/jquery-ui-dist/LICENSE.txt",
+      "to": "public/assets/vendor/jquery-ui/LICENSE.txt"
+    },
+    {
+      "from": "node_modules/jquery-ui-dist/jquery-ui.min.js",
+      "to": "public/assets/vendor/jquery-ui/jquery-ui.min.js"
+    },
+    {
+      "from": "node_modules/jquery-ui-dist/jquery-ui.min.css",
+      "to": "public/assets/vendor/jquery-ui/jquery-ui.min.css"
+    },
+    {
+      "from": "node_modules/jquery-ui-dist/images",
+      "to": "public/assets/vendor/jquery-ui/images"
+    },
+    {
+      "from": "limbas_src/resources/legacy/jquery-ui",
+      "to": "public/assets/vendor/jquery-ui"
+    },
+    {
+      "from": "node_modules/select2/LICENSE.md",
+      "to": "public/assets/vendor/select2/LICENSE.md"
+    },
+    {
+      "from": "node_modules/select2/dist/css/select2.min.css",
+      "to": "public/assets/vendor/select2/select2.min.css"
+    },
+    {
+      "from": "node_modules/select2/dist/js/select2.full.min.js",
+      "to": "public/assets/vendor/select2/select2.full.min.js"
+    },
+    {
+      "from": "node_modules/select2/dist/js/i18n/de.js",
+      "to": "public/assets/vendor/select2/i18n/de.js"
+    },
+    {
+      "from": "node_modules/select2/dist/js/i18n/en.js",
+      "to": "public/assets/vendor/select2/i18n/en.js"
+    },
+    {
+      "from": "node_modules/select2/dist/js/i18n/es.js",
+      "to": "public/assets/vendor/select2/i18n/es.js"
+    },
+    {
+      "from": "node_modules/select2/dist/js/i18n/fr.js",
+      "to": "public/assets/vendor/select2/i18n/fr.js"
+    },
+    {
+      "from": "node_modules/spectrum-colorpicker/LICENSE",
+      "to": "public/assets/vendor/spectrum/LICENSE"
+    },
+    {
+      "from": "node_modules/spectrum-colorpicker/spectrum.css",
+      "to": "public/assets/vendor/spectrum/spectrum.css"
+    },
+    {
+      "from": "node_modules/spectrum-colorpicker/spectrum.js",
+      "to": "public/assets/vendor/spectrum/spectrum.js"
+    },
+    {
+      "from": "node_modules/sql-formatter/LICENSE",
+      "to": "public/assets/vendor/sql-formatter/LICENSE"
+    },
+    {
+      "from": "node_modules/sql-formatter/dist/sql-formatter.min.js",
+      "to": "public/assets/vendor/sql-formatter/sql-formatter.min.js"
+    },
+    {
+      "from": "node_modules/tinymce/license.txt",
+      "to": "public/assets/vendor/tinymce/license.txt"
+    },
+    {
+      "from": "node_modules/tinymce/tinymce.min.js",
+      "to": "public/assets/vendor/tinymce/tinymce.min.js"
+    },
+    {
+      "from": "node_modules/tinymce/icons/default/icons.min.js",
+      "to": "public/assets/vendor/tinymce/icons/default/icons.min.js"
+    },
+    {
+      "from": "node_modules/tinymce/skins",
+      "to": "public/assets/vendor/tinymce/skins"
+    },
+    {
+      "from": "node_modules/tinymce/themes/silver",
+      "to": "public/assets/vendor/tinymce/themes/silver"
+    },
+    {
+      "from": "node_modules/tinymce/plugins",
+      "to": "public/assets/vendor/tinymce/plugins"
+    },
+    {
+      "from": "node_modules/tinymce-i18n/langs5/de.js",
+      "to": "public/assets/vendor/tinymce/langs/de.js"
+    },
+    {
+      "from": "node_modules/fontawesome-legacy/fonts",
+      "to": "public/assets/fonts/"
+    },
+    {
+      "from": "node_modules/@fortawesome/fontawesome-free/webfonts",
+      "to": "public/assets/fonts/"
+    },
+    {
+      "from": "limbas_src/resources/fonts",
+      "to": "public/assets/fonts/"
+    },
+    {
+      "from": "limbas_src/resources/images",
+      "to": "public/assets/images/"
+    }
+  ]
+}

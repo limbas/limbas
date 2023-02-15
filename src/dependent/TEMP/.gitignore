@@ -1,0 +1,11 @@
+*
+!conf
+!fonts
+!log
+!thumpnails
+!thumpnails/report
+!txt
+!wsdl
+!wsdl/models
+!.gitignore
+!.htaccess

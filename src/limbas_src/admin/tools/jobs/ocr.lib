@@ -1,0 +1,169 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+# Zeitlimit
+if($umgvar["indize_timeout"]){
+	set_time_limit(($umgvar["ocr_timeout"]*60) + 3600);
+	ob_implicit_flush();
+}
+
+
+require_once(COREPATH . 'extra/explorer/explorer_ocr.lib');
+$starttime = check_timeout($umgvar["ocr_timeout"]);
+
+/**
+ * Enter description here...
+ *
+ * @param unknown_type $level
+ * @return unknown
+ */
+function LmEntDirStartOcr($level){
+	global $db;
+	global $umgvar;
+	global $logfile;
+	global $zeit_main;
+
+	# Ordnername
+	$sqlquery = "SELECT NAME FROM LDMS_STRUCTURE WHERE ID = $level";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$filename = lmbdb_result($rs,"NAME");
+
+	$sqlquery = "SELECT COUNT(*) ANZAHL FROM LDMS_FILES WHERE LDMS_FILES.LEVEL = $level AND OCR = FALSE AND VACT = TRUE AND DEL = FALSE";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$jobsum = lmbdb_result($rs,"ANZAHL");
+	if(!$jobsum){return true;}
+
+	# --- Status ----
+	$stat_name = "file_".$level;
+	if (!$GLOBALS['cronjob']) {createProgressBar($stat_name, $filename);}
+
+	$sqlquery = "SELECT DISTINCT LDMS_FILES.ID,LDMS_FILES.NAME FROM LDMS_FILES WHERE LDMS_FILES.LEVEL = $level AND VACT = TRUE AND OCR = FALSE AND DEL = FALSE";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$bzm = 1;
+	while(lmbdb_fetch_row($rs)) {
+		# Zeitlimit
+		if($GLOBALS["timeout"] = check_timeout($umgvar["ocr_timeout"])){
+			echo "<span style=\"color:red\"> Maximum execution time of ".$umgvar["ocr_timeout"]." minutes exceeded! process finished!</span><br>";
+			lmb_loghandle("ocr_error.log","Maximum execution time exceeded");
+			return true;
+		}
+		# status
+        if (!$umgvar['IS_CRON']) {updateProgressBar($stat_name, $bzm - 1, $jobsum, $filename . ': ' . lmbdb_result($rs, 'NAME'));}
+		LmEntGenerate_ocr(lmbdb_result($rs,"ID"),$level);
+		if (!$umgvar["IS_CRON"]) {updateProgressBar($stat_name, $bzm, $jobsum);}
+		$bzm++;
+	}
+    if (!$umgvar["IS_CRON"]) {finishProgressBar($stat_name, $jobsum);}
+}
+
+/**
+ * Enter description here...
+ *
+ * @param unknown_type $level
+ */
+function LmEntDirDeleteOcr($level){
+	global $db;
+	global $umgvar;
+	global $logfile;
+
+	$sqlquery = "UPDATE LDMS_FILES SET OCR = FALSE,OCRT = 0 WHERE LDMS_FILES.LEVEL = $level AND DEL = FALSE";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
+
+# --- refresh job -----
+/**
+ * Enter description here...
+ *
+ * @param unknown_type $handle
+ * @param unknown_type $subdir
+ */
+function refresh_job($handle,$subdir){
+	if($handle[0] == "file"){
+		# incl. Unterordner
+		if($subdir){
+			$subd = getasubdir($handle[1],1);
+			foreach ($subd as $key => $value){
+				$indi = LmEntDirStartOcr($value);
+				# Zeitlimit
+				if($timeout){break;}
+			}
+		}else{
+			$indi = LmEntDirStartOcr($handle[1]);
+		}
+	}
+}
+
+# -------- delete job action --------
+/**
+ * Enter description here...
+ *
+ * @param unknown_type $handle
+ * @param unknown_type $subdir
+ */
+function delede_dir_job($handle,$subdir){
+	if($handle[0] == "file"){
+		# incl. Unterordner
+		if($subdir){
+			$subd = getasubdir($handle[1],1);
+			foreach ($subd as $key => $value){
+				LmEntDirDeleteOcr($value);
+			}
+		}else{
+			LmEntDirDeleteOcr($handle[1]);
+		}
+	}
+}
+
+
+/**
+ * Enter description here...
+ *
+ * @param unknown_type $cronval
+ */
+function periodic_job($cronval){
+	global $db;
+	global $error_msg;
+	global $timeout;
+
+	$zeit_main = gettime();
+	# -------- Liste zu bearbeitenden Ordnern --------
+	if($indize = field_list($cronval)){
+		# --- Feldliste ---
+		foreach($indize["id"] as $key => $value){
+			if($indize['typ'][$key] == 'file' AND $indize["file"][$key]){
+				$indi = LmEntDirStartOcr($indize["file"][$key]);
+				# Zeitlimit
+				if($timeout){break;}
+			}
+		}
+
+		$zeit_now = gettime();
+		$zeit_dauer = number_format(($zeit_now - $zeit_main),4,'.','');
+		# -------- History-Eintrag --------
+		if($indi["gnumf"]){$gnum = $indi["gnumf"];}elseif($indi["gnumfs"]){$gnum = $indi["gnumfs"];}
+		if($error_msg){
+			fill_history("OCR","FALSE",$zeit_dauer,$gnum,$indi["jnumfs"],"errors listed in TEMP/ocr_error.log");
+		}else{
+			fill_history("OCR","TRUE",$zeit_dauer,$gnum,$indi["jnumfs"],'');
+		}
+	}
+
+	# close Logfile
+	if($error_logfile){fclose($error_logfile);}
+	if($logfile){fclose($logfile);}
+}
+
+?>

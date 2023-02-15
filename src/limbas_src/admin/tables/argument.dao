@@ -1,0 +1,204 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+require_once(COREPATH . 'gtab/gtab.lib');
+
+# include extensions
+if($GLOBALS["gLmbExt"]["ext_gtab.inc"]){
+	foreach ($GLOBALS["gLmbExt"]["ext_gtab.inc"] as $key => $extfile){
+		require_once($extfile);
+	}
+}
+if($GLOBALS["gLmbExt"]["ext_gtab_change.inc"]){
+	foreach ($GLOBALS["gLmbExt"]["ext_gtab_change.inc"] as $key => $extfile){
+		require_once($extfile);
+	}
+}
+if($GLOBALS["gLmbExt"]["ext_gtab_erg_dao.inc"]){
+	foreach ($GLOBALS["gLmbExt"]["ext_gtab_erg_dao.inc"] as $key => $extfile){
+		require_once($extfile);
+	}
+}
+
+/* -------------------------- Argument --------------------------------- */
+function arg_refresh($tab_id,$fieldid,$argument) {
+	global $session;
+	global $db;
+	global $gfield;
+	global $gtab;
+
+	if(!$gfield[$tab_id]['field_name'][$fieldid]){
+        echo '<div style="width:100%;text-align:center;color:red;">Please reset session!</div>';
+	}else{
+	
+		/* --- Alle Daten aktualisieren --------------------------------------------- */
+		$sqlquery = "SELECT * FROM ".$gtab["table"][$tab_id]." WHERE DEL = ".LMB_DBDEF_FALSE;
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs)) {
+			
+			unset($arg_result);
+			unset($result);
+			$val = "";
+			$ID = lmbdb_result($rs, "ID");
+			$arg = explode("#", $argument);
+			
+			foreach($arg as $key => $value){
+				if(lmb_substr($arg[$key],0,1) == '*'){
+					$gf_id = lmb_substr($value,1,3);
+					$gf_typ = $gfield[$tab_id]["field_type"][$gf_id];
+					$gf_dtyp = $gfield[$tab_id]["data_type"][$gf_id];
+					$gf_name = $gfield[$tab_id]["field_name"][$gf_id];
+					# --- date ---
+					if($gf_typ == 2){
+						$value = get_date(lmbdb_result($rs, $gf_name),1);
+					# --- currency ---
+					}elseif($gf_dtyp == 30){
+						$value = lmbdb_result($rs, $gf_name)." ".lmbdb_result($rs, $gf_name."_C");
+					# --- System Date ---
+					}elseif($gf_dtyp == 15){
+						$value = get_date(lmbdb_result($rs, $gf_name),1);
+					}else{
+						$value = lmbdb_result($rs, $gf_name);
+					}
+					$value = str_replace("\"","\\\"",$value);
+					if(!$value AND ($gf_typ == 5 OR $gf_typ == 17)){$value = 0;}
+				}
+				$result .= $value;
+			}
+			
+			$result = trim($result);
+			
+			if($result OR $arg == "0"){
+				$arg_result = eval($result.";");
+				$arg_result = trim($arg_result);
+			}
+			
+			# date
+			if($gfield[$tab_id]["parse_type"][$fieldid] == 4){
+				$arg_result = "'".convert_date($arg_result)."'";
+			# integer
+			}elseif($gfield[$tab_id]["parse_type"][$fieldid] == 1){
+				$arg_result = parse_db_int($arg_result,$gfield[$tab_id]["size"][$fieldid]);
+			# float
+			}elseif($gfield[$tab_id]["parse_type"][$fieldid] == 6){
+				$arg_result = parse_db_float($arg_result,$gfield[$tab_id]["size"][$fieldid]);
+			# boolean
+			}elseif($gfield[$tab_id]["parse_bool"][$fieldid] == 3){
+				$arg_result = parse_db_bool($arg_result);
+			# string
+			}else{
+				$arg_result = "'".parse_db_string($arg_result,$gfield[$tab_id]["size"][$fieldid])."'";
+			}
+			
+			$sqlquery1 = "UPDATE ".$gtab["table"][$tab_id]." SET ".$gfield[$tab_id]["field_name"][$fieldid]." = $arg_result WHERE ID = $ID";
+			if(!$rs1 = lmbdb_exec($db,$sqlquery1)){
+			    $commit = 1;
+            }
+
+		}
+
+	}
+	if(!$commit) {
+        return true;
+    }
+    return false;
+}
+
+
+function lmb_editFieldTypeArgumentDyns($par) {
+    global $db;
+    global $gfield;
+    global $lang;
+
+    $tabid = $par['tabid'];
+    $fieldid = $par['fieldid'];
+    $tabgroup = $par['tabgroup'];
+    
+    // change Argument
+    if(array_key_exists('argument',$par)){
+        $argument = trim(parse_db_string($par['argument']));
+        $sqlquery = 'UPDATE LMB_CONF_FIELDS".$tab." SET ARGUMENT = \'' . $argument . '\' WHERE FIELD_ID = ' . parse_db_int($fieldid). ' AND TAB_GROUP = ' . parse_db_int($tabgroup). ' AND TAB_ID = ' . parse_db_int($tabid);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    }
+
+    
+// get Argument
+    $sqlquery = 'SELECT ARGUMENT_TYP,ARGUMENT,ID FROM LMB_CONF_FIELDS WHERE FIELD_ID = ' . parse_db_int($fieldid). ' AND TAB_GROUP =  ' . parse_db_int($tabgroup). ' AND TAB_ID =  ' . parse_db_int($tabid);
+    
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(lmbdb_fetch_row($rs)) {
+        $result_argument["argument"] = lmbdb_result($rs, "ARGUMENT");
+        $result_argument["argument_typ"] = lmbdb_result($rs, "ARGUMENT_TYP");
+        $result_argument["id"] = lmbdb_result($rs, "ID");
+    }
+    
+    $arg_type = 'sql';
+    if ($result_argument["argument_typ"] == 15) {
+        $arg_type = 'php';
+    }
+    
+    
+    $output = [];
+    
+    if ($arg_type == 'php') {
+        $output['title'] = $lang[1375];
+        $output['fields'] = [];
+        
+        if($gfield[$tabid]["field_id"]){
+            foreach($gfield[$tabid]["field_id"] as $key => $value){
+                $output['fields'][$gfield[$tabid]['field_id'][$key]] = '('.$gfield[$tabid]['field_id'][$key].') '.$gfield[$tabid]['field_name'][$key];
+            }
+        }
+
+        $output['fields'] = (object)$output['fields'];
+        
+        $output['example'] = 'eg ( return "hello world #*1#"; )';
+        
+        
+    } else {
+        $output['title'] = $lang[2256];
+        $output['example'] = 'eg ( CUSTOMER.FIRSTNAME '.LMB_DBFUNC_CONCAT.' CUSTOMER.LASTNAME )';
+    }
+    
+    $output['argument'] = $result_argument['argument'];
+
+    header('Content-Type: application/json');
+    echo json_encode($output);
+}
+
+function lmb_refreshFieldTypeArgumentDyns($par) {
+    global $db;
+
+    $sqlquery = 'SELECT ARGUMENT_TYP,ARGUMENT,ID FROM LMB_CONF_FIELDS WHERE FIELD_ID = ' . parse_db_int($par['fieldid']). ' AND TAB_GROUP =  ' . parse_db_int($par['tabgroup']). ' AND TAB_ID =  ' . parse_db_int($par['tabid']);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(lmbdb_fetch_row($rs)) {
+        $result_argument["argument"] = lmbdb_result($rs, "ARGUMENT");
+        $result_argument["argument_typ"] = lmbdb_result($rs, "ARGUMENT_TYP");
+        $result_argument["id"] = lmbdb_result($rs, "ID");
+    }
+
+
+    header('Content-Type: application/json');
+    $success = false;
+    if($result_argument["argument"]){
+        set_time_limit(900); #15min
+        sleep(3);
+        if(arg_refresh($par['tabid'],$par['fieldid'],$result_argument['argument'])){
+            $success = true;
+        }
+    }
+    echo json_encode(['success'=>$success]);
+}
+
+
+
+?>
+

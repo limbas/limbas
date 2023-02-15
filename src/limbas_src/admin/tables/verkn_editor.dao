@@ -1,0 +1,865 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+
+if($relation_extension){
+	$prepare_string = "UPDATE LMB_CONF_FIELDS SET RELEXT = ? WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+	if(!lmb_PrepareSQL($prepare_string,array($relation_value),__FILE__,__LINE__)){$commit = 1;}
+}
+
+if($relation_parameter){
+	$prepare_string = "UPDATE LMB_CONF_FIELDS SET RELPARAMS = ? WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+	if(!lmb_PrepareSQL($prepare_string,array($relparams_value),__FILE__,__LINE__)){$commit = 1;}
+}
+
+// table details
+$sqlquery = "SELECT TAB_ID,TABELLE,BESCHREIBUNG FROM LMB_CONF_TABLES";
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)){
+	$tab[lmbdb_result($rs,"TAB_ID")] = lmbdb_result($rs,"TABELLE");
+}
+
+if($params AND $relation_parameter){
+    setRelationParameter($tabid,$fieldid,$params);
+}
+
+// field details
+if($fieldid AND $tabid){
+	$sqlquery =  "SELECT * FROM LMB_CONF_FIELDS WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+
+	if(lmbdb_result($rs, "VERKNSEARCH")){$rfield['verknsearchid'] = explode(",",lmbdb_result($rs, "VERKNSEARCH"));}
+	if(lmbdb_result($rs, "VERKNVIEW")){$verknviewid_ = explode("?",lmbdb_result($rs, "VERKNVIEW"));$rfield['verknviewid'] = explode(",",$verknviewid_[0]); $rfield['viewidcut'] = $verknviewid_[1];}
+	if(lmbdb_result($rs, "VERKNFIND")){$verknfindid_ = explode("?",lmbdb_result($rs, "VERKNFIND"));$rfield['verknfindid'] = explode(",",$verknfindid_[0]); $rfield['findidcut'] = $verknfindid_[1];}
+	if(lmbdb_result($rs, "VERKNTABID")){$rfield['verkntabid'] = lmbdb_result($rs, "VERKNTABID");}
+	$rfield['veknfieldid'] = lmbdb_result($rs, "VERKNFIELDID");
+	$rfield['verknparams'] = lmbdb_result($rs, "VERKNPARAMS");
+	$rfield['md5tab'] = lmbdb_result($rs, "MD5TAB");
+	$rfield['refint'] = lmbdb_result($rs, "REFINT");
+	$rfield['datatype'] = lmbdb_result($rs, "DATA_TYPE");
+	$rfield['verkntabletype'] = lmbdb_result($rs, "VERKNTABLETYPE");
+	$rfield['fieldspelling'] = $lang[lmbdb_result($rs, "SPELLING")];
+	$rfield['groupid'] = lmbdb_result($rs, "TAB_GROUP");
+	$rfield['relext'] = lmbdb_result($rs, "RELEXT");
+	$rfield['fieldname'] = dbf_4(lmbdb_result($rs, "FIELD_NAME"));
+	$rfield['verkntree'] = lmbdb_result($rs, "VERKNTREE");
+    $rfield['tabname'] = dbf_4($tab[$tabid]);
+    $rfield['verkntabname'] = dbf_4($tab[$rfield['verkntabid']]);
+    $rfield['relparams'] = lmbdb_result($rs, "RELPARAMS");
+}
+
+# --- get forein keys ----------------------------------------------
+if($rfield['verkntabid']){
+	$sqlquery =  "SELECT TABELLE,BESCHREIBUNG FROM LMB_CONF_TABLES WHERE TAB_ID = ".$rfield['verkntabid'];
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$rfield['verkntabname'] = lmbdb_result($rs, "TABELLE");
+
+	$fkys = lmb_getForeignKeys();
+
+	if($fkys["keyname"]){
+	foreach ($fkys["keyname"] as $key => $value){
+	    // TAB.ID -> ID
+	    if($fkys["tablename"][$key] == dbf_4($rfield['md5tab']) AND $fkys["columnname"][$key] == dbf_4("ID") AND $fkys["reftablename"][$key] == dbf_4($rfield['tabname']) AND $fkys["refcolumnname"][$key] == dbf_4("ID")){
+			$rfield['f1'] = $fkys["keyname"][$key];
+		// VERKN_ID -> TAB-ID
+	    }elseif($fkys["tablename"][$key] == dbf_4($rfield['md5tab']) AND $fkys["columnname"][$key] == dbf_4("VERKN_ID") AND $fkys["reftablename"][$key] == dbf_4($rfield['verkntabname']) AND $fkys["refcolumnname"][$key] == dbf_4("ID")){
+			$rfield['f2']  = $fkys["keyname"][$key];
+		// direct 1:n
+		}elseif($fkys["tablename"][$key] == dbf_4($rfield['verkntabname']) AND $fkys["columnname"][$key] == dbf_4($rfield['md5tab']) AND $fkys["reftablename"][$key] == dbf_4($rfield['tabname']) AND $fkys["refcolumnname"][$key] == dbf_4("ID")){
+			$rfield['f3']  = $fkys["keyname"][$key];
+		}
+	}}
+}
+
+/* --- Referentielle Integrität ändern ---------------------------------------------*/
+if($rfield['veknfieldid'] AND $new_refint_rule AND !$recursrelation){
+	lmb_set_relation_foreignkey($fieldid,$tabid,$new_refint);
+}
+
+/* --- Relation Tree --------------------------------------------- */
+if ($fieldid and $tabid and $relationtree) {
+    createRecRelation($tabid, $fieldid, $relationtree);
+    $rfield['verkntabletype'] = 3;
+}
+
+/* --- Verknüpfungs-Tabelle eintragen --------------------------------------------- */
+if($new_verkntabid) {
+    $rfield['verkntabid'] = lmb_set_relation_table($tabid,$fieldid,$new_verkntabid);
+}
+
+# --- Verknüpfungs-Feld eintragen -----------------
+if ($set_verknfieldid AND $new_verknfieldid) {
+    lmb_set_relation_field($fieldid,$tabid,$new_verknfieldid);
+}
+
+# --- Verknüpfungs-Parameter eintragen -----------------
+if($vknsave){
+    lmb_set_relation_params($fieldid,$tabid,$new_verknsearchid,$new_verknfindid,$new_verknviewid,$verknsort,$verknsortf,$viewidCut,$findidCut);
+}
+
+/* --- Verknüpfung aus ID Feldern neu füllen --------------------------------------------- */
+if($verknrefresh AND $rfield['verkntabid']){
+    set_time_limit(10000);
+    lmb_rebuild_relation();
+}
+
+# --- Verknüpfungs-Parameterisierung -----------------
+if($set_vparams AND $fieldid AND $tabid AND $rfield['veknfieldid'] AND !$recursrelation){
+	$verknparams = createRelationParams($tabid,$fieldid);
+}
+
+if($new_backview_verkn){
+    $new_backview_verkn = explode('_',$new_backview_verkn);
+    if($new_backview_verkn[0] AND $new_backview_verkn[1]) {
+        $rfield['verkntabid'] = lmb_set_relation_table($tabid, $fieldid, $new_backview_verkn[0],$new_backview_verkn[1]);
+    }
+}
+
+
+
+function lmb_set_relation_table($tabid,$fieldid,$new_verkntabid,$new_verknfieldid=null){
+	global $db;
+	global $umgvar;
+	global $session;
+	global $rfield;
+	global $action;
+	global $DBA;
+
+	$sqlquery =  "SELECT TAB_ID,TABELLE,TYP FROM LMB_CONF_TABLES WHERE TAB_ID = $new_verkntabid";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	$verkntabname = dbf_4(lmbdb_result($rs, "TABELLE"));
+	$tabtyp = lmbdb_result($rs, "TYP");
+	$datatype = $rfield['datatype'];
+
+    // new md5tab tablename
+    $new_md5tab = dbf_4("VERK_" . lmb_substr(md5(lmb_strtoupper($rfield['tabname']) . lmb_strtoupper($rfield['fieldname']) . time()), 0, 13));
+
+    // adding module extensions
+    if($datatype == 24 OR $datatype == 27) {
+        if ($tabtyp == 2) {
+            $insv[] = "EXT_TYPE = 'extendedCalender'";
+        } elseif ($tabtyp == 3) {
+            $insv[] = "EXT_TYPE = 'extendedFileManager'";
+        } elseif ($tabtyp == 6) {
+            $insv[] = "EXT_TYPE = 'extendedMessages'";
+        }
+    }
+
+    // add simple 1:n relation - add ID field in relation table
+    if ($datatype == 25) {
+        $refieldname = 'LMB_' . substr($rfield['tabname'], 0, 10) . '_' . substr($rfield['fieldname'], 0, 10) . '_ID';
+        $refieldname = dbf_4(parse_db_syntax($refieldname, $verkntabname));
+        if (!dbf_5(array($DBA["DBSCHEMA"], $verkntabname, $refieldname))) {
+            $sqlquery = dbq_29(array($DBA["DBSCHEMA"], $verkntabname, $refieldname, LMB_DBTYPE_FIXED . '(18)'));
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if ($rs) {
+                // create index
+                $indname = lmb_getConstraintName('LMB_INDV', $verkntabname, $refieldname);
+                $sqlquery1 = dbq_4(array($DBA["DBSCHEMA"], $indname, $verkntabname, $refieldname));
+                $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            }else{$commit = 1;}
+        }
+
+        $insv[] = "MD5TAB = '" . $refieldname . "'";
+        $rfield['md5tab'] = $refieldname;
+
+    // add new n:m relation table
+    } elseif ($datatype == 24) {
+        $sqlquery = "CREATE TABLE " . $new_md5tab . " (KEYID " . LMB_DBTYPE_FIXED . "(18) NOT NULL,ERSTDATUM " . LMB_DBTYPE_TIMESTAMP . " DEFAULT " . LMB_DBDEF_TIMESTAMP . ", ERSTUSER " . LMB_DBTYPE_SMALLINT . ", ID " . LMB_DBTYPE_FIXED . "(18),VERKN_ID " . LMB_DBTYPE_FIXED . "(18)," . LMB_DBFUNC_PRIMARY_KEY . " (KEYID),SORT SMALLINT)";
+        $rs3 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        if (!$rs3) {
+            $commit = 1;
+        }
+        lmb_rebuildSequences($new_md5tab, 'KEYID');
+        $insv[] = "MD5TAB = '" . dbf_4($new_md5tab) . "'";
+        $rfield['md5tab'] = dbf_4($new_md5tab);
+
+        # trigger count value
+        lmb_relationTrigger($new_md5tab, $rfield['tabname'], $rfield['fieldname'],0,0,0);
+        lmb_updateTrigger();
+
+        // add new 1:n relation table
+    } elseif ($datatype== 27) {
+        $sqlquery = "CREATE TABLE " . $new_md5tab . " (KEYID " . LMB_DBTYPE_FIXED . "(18) NOT NULL,ERSTDATUM " . LMB_DBTYPE_TIMESTAMP . " DEFAULT " . LMB_DBDEF_TIMESTAMP . ", ERSTUSER " . LMB_DBTYPE_SMALLINT . ", ID " . LMB_DBTYPE_FIXED . "(18),VERKN_ID " . LMB_DBTYPE_FIXED . "(18)," . LMB_DBFUNC_PRIMARY_KEY . " (KEYID),SORT SMALLINT)";
+        $rs3 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        if (!$rs3) {
+            $commit = 1;
+        }
+        lmb_rebuildSequences($new_md5tab, 'KEYID');
+        $insv[] = "MD5TAB = '" . dbf_4($new_md5tab) . "'";
+        $rfield['md5tab'] = dbf_4($new_md5tab);
+
+        # trigger count value
+        lmb_relationTrigger($new_md5tab, $rfield['tabname'], $rfield['fieldname'],0,0,0);
+        lmb_updateTrigger();
+
+        // add new back view relation
+    } elseif ($datatype == 23 AND $new_verkntabid AND $new_verknfieldid) {
+
+        $sqlquery1 = "SELECT LMB_CONF_FIELDS.ISUNIQUE,LMB_CONF_FIELDS.MD5TAB,LMB_CONF_FIELDS.FIELD_NAME,LMB_CONF_FIELDS.DATA_TYPE,LMB_CONF_TABLES.TABELLE FROM LMB_CONF_TABLES,LMB_CONF_FIELDS WHERE LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.TAB_ID AND LMB_CONF_TABLES.TAB_ID = $new_verkntabid AND LMB_CONF_FIELDS.FIELD_ID = $new_verknfieldid";
+        $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+        if (!$rs) {
+            $commit = 1;
+        }
+        $origin_md5tab = lmbdb_result($rs1, 'MD5TAB');
+        $origin_fieldname = lmbdb_result($rs1, 'FIELD_NAME');
+        $origin_tabname = lmbdb_result($rs1, 'TABELLE');
+        $origin_datatype = lmbdb_result($rs1, 'DATA_TYPE');
+        $origin_isunique = lmbdb_result($rs1, 'ISUNIQUE');
+
+        # n:m unique -> 1:n
+        $backview_datatype = $origin_datatype;
+        if ($origin_datatype == 24 AND $origin_isunique) {
+            $backview_datatype = 27;
+        # n:m -> n:m
+        } elseif ($origin_datatype == 24) {
+            $backview_datatype = 24;
+        # 1:n -> n:m unique
+        } elseif ($origin_datatype == 27) {
+            $backview_datatype = 24;
+            $insv[] = "ISUNIQUE = ".LMB_DBDEF_TRUE;
+        # 1:n simple -> n:m unique
+        } elseif ($origin_datatype == 25) {
+            $backview_datatype = 25;
+            $insv[] = "ISUNIQUE = ".LMB_DBDEF_TRUE;
+        }
+
+        if ($backview_datatype == 24 OR $backview_datatype == 27) {
+            if (lmb_createView("SELECT KEYID,ERSTDATUM,ERSTUSER,ID AS VERKN_ID,VERKN_ID AS ID,SORT FROM " . dbf_4($origin_md5tab), dbf_4($new_md5tab))) {
+                if ($backview_datatype == 27) {
+                    $unique = ",ISUNIQUE = " . LMB_DBDEF_TRUE;
+                }
+                $sqlquery2 = "UPDATE LMB_CONF_FIELDS SET HASRECVERKN = $new_verknfieldid, VERKNTABLETYPE = 2 $unique WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+                $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
+                $sqlquery2 = "UPDATE LMB_CONF_FIELDS SET HASRECVERKN = $fieldid WHERE FIELD_ID = $new_verknfieldid AND TAB_ID = $new_verkntabid";
+                $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
+
+                $rfield['verkntabletype'] = 2;
+
+                # trigger count value
+                lmb_relationTrigger($origin_md5tab, $origin_tabname, $origin_fieldname, $rfield['tabname'], $rfield['fieldname']);
+                lmb_updateTrigger();
+            } else {
+                $commit = 1;
+            }
+            $insv[] = "MD5TAB = '" . dbf_4($new_md5tab) . "'";
+            $rfield['md5tab'] = dbf_4($new_md5tab);
+
+        }elseif($backview_datatype == 25){
+            $sqlquery2 = "UPDATE LMB_CONF_FIELDS SET HASRECVERKN = $new_verknfieldid, VERKNTABLETYPE = 2 $unique WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+            $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
+            $sqlquery2 = "UPDATE LMB_CONF_FIELDS SET HASRECVERKN = $fieldid WHERE FIELD_ID = $new_verknfieldid AND TAB_ID = $new_verkntabid";
+            $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
+
+            $refieldname = 'LMB_' . substr($rfield['tabname'], 0, 12) . '_' . substr($rfield['fieldname'], 0, 12) . '_ID';
+            $insv[] = "MD5TAB = '" . dbf_4($refieldname) . "'";
+
+        }
+
+        $rfield['datatype'] = $backview_datatype;
+        $insv[] = "DATA_TYPE = $backview_datatype";
+
+    }
+
+    // build Index for relation tables
+    if ($datatype == 24 OR $datatype == 27) {
+        # ID - Index
+        $indname = lmb_getConstraintName('LMB_INDV',$new_md5tab,'ID');
+        $sqlquery = dbq_4(array($DBA["DBSCHEMA"], $indname, $new_md5tab, 'ID'));
+        $rs3 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        if (!$rs3) {
+            $commit = 1;
+        }
+        # SORT - Index
+        $indname = lmb_getConstraintName('LMB_INDV',$new_md5tab,'SORT');
+        $sqlquery = dbq_4(array($DBA["DBSCHEMA"], $indname, $new_md5tab, "SORT"));
+        $rs3 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        if (!$rs3) {
+            $commit = 1;
+        }
+
+        # n:m VERKN_ID - Index
+        if ($datatype == 24) {
+            $indname = lmb_getConstraintName('LMB_INDV',$new_md5tab,'VERKN_ID');
+            $sqlquery = dbq_4(array($DBA["DBSCHEMA"], $indname, $new_md5tab, "VERKN_ID"));
+            $rs3 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (!$rs3) {
+                $commit = 1;
+            }
+        # 1:m VERKN_ID - unique constraint
+        } else {
+            $indname = lmb_getConstraintName('LMB_CONSTR',$new_md5tab,'VERKN_ID');
+            $sqlquery = dbq_24(array($new_md5tab, 'VERKN_ID', $indname));
+            $rs3 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        }
+
+    }
+
+    if($insv){
+        $insv = ','.implode(',',$insv);
+    }
+
+	$sqlquery =  "UPDATE LMB_CONF_FIELDS SET VERKNTABID = $new_verkntabid $insv WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+
+    // simple 1:n relation
+    // add relation ID field in relation table
+    // TODO Axel
+    if($gfield[16]['data_type'][4] == 25){
+        $sqlquery = dbq_29(array($DBA["DBSCHEMA"],dbf_4($verkntabname),dbf_4('LMB_'.substr($tabname,0,12).'_'.substr($gfield[16]['field_name'][4],0,12).'_ID'),LMB_DBTYPE_FIXED.'(18)'));
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+    }
+
+	# ---- für Explorer-Tabelle -----------------
+	if($tabtyp == 3){
+		require_once(COREPATH . 'extra/explorer/filestructure.lib');
+		require_once(COREPATH . 'admin/tools/add_filestruct.lib');
+		# ---- Upload Ordnerstruktur anlegen -----------------
+		create_fs_tab_dir($tabid,$rfield['groupid'],$fieldid,$rfield['fieldspelling'],7);
+
+		# ---- md5tab ändern -----------------
+		$sqlquery1 = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$rfield['md5tab'],'LID',LMB_DBTYPE_FIXED.'(10)'));
+		$rs1 = lmbdb_exec($db,$sqlquery1);
+	}
+
+    return $new_verkntabid;
+
+}
+
+
+function lmb_set_relation_field($fieldid,$tabid,$new_verknfieldid,$backview=null){
+	global $db;
+	global $umgvar;
+	global $session;
+	global $rfield;
+	global $action;
+
+    $verkntabid = $rfield['verkntabid'];
+    $fieldname = $rfield['fieldname'];
+    $md5tab = $rfield['md5tab'];
+
+    $sqlquery = "UPDATE LMB_CONF_FIELDS SET VERKNFIELDID = $new_verknfieldid WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    } else {
+        $rfield['veknfieldid'] = $new_verknfieldid;
+    }
+
+    $sqlquery = "SELECT ID,MD5TAB,FIELD_NAME FROM LMB_CONF_FIELDS WHERE VERKNTABID = $tabid AND TAB_ID = $verkntabid AND FIELD_ID = $new_verknfieldid";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
+
+
+    if ($rfield['verkntree']) {return $new_verknfieldid;}
+
+    /*
+
+    // relation without relation table
+    if ($rfield['datatype'] == 25) {
+        # back view relation
+        if ($backview AND lmbdb_result($rs, "MD5TAB")) {
+            $sqlquery2 = "UPDATE LMB_CONF_FIELDS SET HASRECVERKN = $new_verknfieldid, VERKNTABLETYPE = 2,ISUNIQUE = " . LMB_DBDEF_TRUE . " WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+            $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
+            $sqlquery2 = "UPDATE LMB_CONF_FIELDS SET HASRECVERKN = $fieldid WHERE FIELD_ID = $new_verknfieldid AND TAB_ID = $verkntabid";
+            $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
+            $rfield['verkntabletype'] = 2;
+        }
+
+        else {
+
+            $sqlquery2 = "UPDATE LMB_CONF_FIELDS SET HASRECVERKN = 0,VERKNTABLETYPE = 1 WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+            $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
+            $sqlquery2 = "UPDATE LMB_CONF_FIELDS SET HASRECVERKN = 0 WHERE HASRECVERKN = $fieldid AND TAB_ID = $verkntabid";
+            $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
+            $rfield['verkntabletype'] = 1;
+        }
+
+
+    // relation with relation table
+    } elseif ($rfield['datatype'] == 24 OR $rfield['datatype'] == 27) {
+
+        # back view relation
+        if ($backview AND lmbdb_result($rs, "MD5TAB")) {
+            $recursrelation = 1;
+
+
+        }
+    }
+
+    */
+
+}
+
+# --- Verknüpfungsfeld (search) in LMB_CONF_FIELDS eintragen -----------------
+function lmb_set_relation_params($fieldid,$tabid,$new_verknsearchid,$new_verknfindid,$new_verknviewid,$verknsort,$verknsortf,$viewidcut,$findidcut){
+	global $db;
+	global $umgvar;
+	global $session;
+	global $rfield;
+	global $action;
+
+	if(is_array($new_verknsearchid)){$new_verknsearchid = implode(",",$new_verknsearchid);}
+	if(is_array($new_verknviewid)){
+		asort($verknsort);
+		foreach ($verknsort as $key => $value) {
+			if($value){
+				$vviewid[] = $new_verknviewid[$key];
+			}
+		}
+		$new_verknviewid = implode(",",$vviewid).'?'.$viewidcut;
+	}
+
+	if(is_array($new_verknfindid)){
+		asort($verknsortf);
+		foreach ($verknsortf as $key => $value) {
+			if($value){
+				$vfiewid[] = $new_verknfindid[$key];
+			}
+		}
+		$new_verknfindid = implode(",",$vfiewid).'?'.$findidcut;
+	}
+
+	$sqlquery =  "UPDATE LMB_CONF_FIELDS SET VERKNSEARCH = '".parse_db_string($new_verknsearchid,50)."',VERKNVIEW = '".parse_db_string($new_verknviewid,50)."',VERKNFIND = '".parse_db_string($new_verknfindid,50)."' WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}else{
+        $rfield['verknsearchid'] = explode(",",$new_verknsearchid);
+        $verknviewid_ = explode("?",$new_verknviewid);$rfield['verknviewid'] = explode(",",$verknviewid_[0]); $rfield['viewidcut'] = $verknviewid_[1];
+        $verknfindid_ = explode("?",$new_verknfindid);$rfield['verknfindid'] = explode(",",$verknfindid_[0]); $rfield['findidcut'] = $verknfindid_[1];
+	}
+
+
+}
+
+
+function lmb_set_relation_foreignkey($fieldid,$tabid,$new_refint){
+    global $db;
+    global $lang;
+    global $rfield;
+    global $message1;
+
+    $refint = $rfield['refint'];
+
+    # add
+	if($new_refint AND !$refint){
+		if(lmb_rebuildForeignKey(null,array($tabid),$fieldid)){
+			$new_refint = LMB_DBDEF_TRUE;
+
+			$sqlquery = "UPDATE LMB_CONF_FIELDS SET REFINT = $new_refint WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			if(!$rs) {$commit = 1;}
+
+			$rfield['refint'] = 1;
+			$message1 = "$lang[941] <B><FONT COLOR=\"green\">$lang[942]</FONT></B><BR>";
+		}else{
+			$message1 = "$lang[941] <B><FONT COLOR=\"red\">$lang[942]</FONT> failed!</B><BR>";
+		}
+	# drop
+	}elseif(!$new_refint AND $refint){
+	    // TAB.ID -> ID
+		if($rfield['f1']){
+			lmb_dropForeignKey($rfield['md5tab'] ,$rfield['f1']);
+		}
+		// VERKN_ID -> TAB-ID
+		if($rfield['f2']){
+			lmb_dropForeignKey($rfield['md5tab'] ,$rfield['f2']);
+		}
+		// direct 1:n
+		if($rfield['f3']){
+			lmb_dropForeignKey($rfield['verkntabname'] ,$rfield['f3']);
+		}
+
+		$sqlquery = "UPDATE LMB_CONF_FIELDS SET REFINT = ".LMB_DBDEF_FALSE." WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+
+		$rfield['refint'] = 0;
+		$message1 = "$lang[941] <B><FONT COLOR=\"green\">$lang[770]</FONT></B><BR>";
+	}
+
+}
+
+/* --- Verknüpfungs Parametrisierung ---------------------------------------------*/
+/**
+ * Enter description here...
+ *
+ * @param unknown_type $md5tab
+ * @param unknown_type $groupid
+ */
+function createRelationParams($tabid,$fieldid){
+	global $db;
+	global $umgvar;
+	global $session;
+	global $rfield;
+
+	require_once(COREPATH . 'admin/setup/language.lib');
+	require_once(COREPATH . 'admin/tables/tab.lib');
+	require_once(COREPATH . 'admin/tools/import.dao');
+
+	$md5tab = $rfield['md5tab'];
+    $fieldspelling = $rfield['fieldspelling'];
+
+	# drop relation params
+	if($rfield['verknparams']){
+		$sqlquery = "UPDATE LMB_CONF_FIELDS SET VERKNPARAMS = 0 WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$GLOBALS['message'] = "--> recursiv relation removed. table $md5tab not changed!";
+		$rfield['verknparams'] = 0;
+
+	# create relation params
+	}else{
+		
+		# check if table exists
+		$sqlquery = "SELECT TAB_ID FROM LMB_CONF_TABLES WHERE TABELLE = '$md5tab'";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if($new_gtabid = lmbdb_result($rs, "TAB_ID")){
+			$GLOBALS['message'] = "--> table $md5tab already exists!";
+		}else{
+			# convert relation table to limbas table 
+			$fieldspelling = $fieldspelling.'_params';
+            $ifield['tablename'] = $md5tab;
+            $ifield['tablegroup'] = $rfield['groupid'];
+            $ifield['tablespelling'] = $fieldspelling;
+			$new_gtabid = import_create_addtable('convert',$ifield,1);
+			$new_gtabid = $new_gtabid['new_gtabid'];
+		}
+		
+		$sqlquery = "UPDATE LMB_CONF_FIELDS SET VERKNPARAMS = ".parse_db_int($new_gtabid)." WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		
+		$sqlquery = "UPDATE LMB_CONF_TABLES SET KEYFIELD = 'KEYID' WHERE TABELLE = '$md5tab'";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+		$rfield['verknparams'] = $new_gtabid;
+
+		return $new_gtabid;
+	}
+	return false;
+}
+
+
+
+/* --- Recusive Verknüpfung ---------------------------------------------*/
+
+function createRecRelation($tabid,$fieldid,$relationtree){
+	global $db;
+	global $DBA;
+	global $rfield;
+	global $gfield;
+	global $gtab;
+
+	$tree = explode(',',$relationtree);
+	if ($tree) {
+	    # handle relations
+        $sortField = null;
+        $lastIdField = null;
+        for ($i = 0; $i < lmb_count($tree); $i++) {
+            $relation = getRelationFromMd5($tree[$i]);
+            if ($relation['typ'] == 27 or $relation['typ'] == 24 /* relation table */) {
+                $leftIdField = "{$relation['md5tab']}.ID";
+                $from[] = $relation['md5tab'];
+                $rightIdField = "{$relation['md5tab']}.VERKN_ID";
+                $sortField = "{$relation['md5tab']}.SORT";
+            } else if ($relation['typ'] == 25 /* direct relation */) {
+                if ($gfield[$relation['tabid']]['verkntabletype'][$relation['fieldid']] == 2) {
+                    // backward relation
+                    $leftIdField = "{$relation['tab']}.ID";
+                    $from[] = $relation['tab'];
+                    $forwardRelationFieldid = $gfield[$relation['tabid']]['hasrecverkn'][$relation['fieldid']];
+                    $rightIdField = "{$relation['tab']}.{$gfield[$relation['vtabid']]['md5tab'][$forwardRelationFieldid]}";
+                } else {
+                    // forward relation
+                    $relatedTableName = $gtab['table'][$relation['vtabid']];
+                    $relatedFieldName = $relation['md5tab'];
+                    $leftIdField = "{$relatedTableName}.{$relatedFieldName}";
+                    $from[] = $relatedTableName;
+                    $rightIdField = "{$relatedTableName}.ID";
+                }
+            }
+
+            if ($i == 0) {
+                # first table's id
+                $select[] = "{$leftIdField} AS ID";
+                $lastIdField = $rightIdField;
+            } else {
+                if ($lastIdField != $leftIdField) { // if needed for direct backward relation (to remove b.id = b.id)
+                    $where[] = "{$lastIdField} = {$leftIdField}";
+                }
+                $lastIdField = $rightIdField;
+            }
+        }
+
+        # last table's id
+        $select[] = '1 AS KEYID';
+        $select[] = 'NULL AS ERSTDATUM';
+        $select[] = 'NULL AS ERSTUSER';
+        $select[] = "{$lastIdField} AS VERKN_ID";
+
+        // take last relation table sort field or last id field if there is no relation table
+        if ($sortField == null) {
+            $sortField = $lastIdField;
+        }
+        $select[] = "{$sortField} AS SORT";
+	}
+
+	# drop TABLE
+    $md5tab = $rfield['md5tab'];
+    if($odbc_table = dbf_20(array($DBA["DBSCHEMA"],$md5tab,"'TABLE'"))){
+	    if(!lmb_dropTable($md5tab)){
+		    echo lmbdb_errormsg($db).'<br>';
+	    }
+	}
+	# drop VIEW
+	elseif($odbc_table = dbf_20(array($DBA["DBSCHEMA"],$md5tab,"'VIEW'"))){
+	    if($md5tab and !lmb_dropView($md5tab)){
+		    echo lmbdb_errormsg($db).'<br>';
+	    }
+	}
+
+    $from = implode(',', array_unique($from));
+    $select = implode(',', $select);
+    $where = implode(' AND ', $where);
+
+    $sqlquery = "CREATE VIEW $md5tab AS SELECT DISTINCT $select FROM $from WHERE $where";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+	if($rs){
+        $tree_identifier = md5($relationtree);
+        $sqlquery0 = "UPDATE LMB_CONF_FIELDS SET VERKNTREE = '".parse_db_string($tree_identifier,32)."',VERKNTABLETYPE = 3 WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
+		$rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+		
+		$rfield['verkntree'] = $tree_identifier;
+	}else{
+		echo lmbdb_errormsg($db);
+	}
+}
+
+
+
+/*
+ * Checks if given array contains duplicates.
+ * Retur
+ns boolean
+ */
+function lmb_has_duplicates($array){
+	$dupe_array = array();
+	foreach($array as $val){
+		if(++$dupe_array[$val] > 1){
+			return true;
+		}
+	}
+	return false;
+}
+
+
+/*
+* Returns array of all verkntabs from tabid to verkntabid
+*/
+function recrelationtree(){
+	global $tabid;
+
+	// Collect data
+	$branches = recrelationsubtree(2,$tabid);
+	// List of verkntabs -> List of tables ids
+	$branchesFiltered = array();
+	$branchesIds = array();
+	foreach($branches as $branch){
+		$tabids = array();
+		array_push($tabids,$tabid);
+		foreach($branch as $key => $md5tab){
+			array_push($tabids, getTabFromMd5($md5tab));
+		}
+		if(!lmb_has_duplicates($tabids)){
+			array_shift($tabids);
+			if(!in_array($gtabid,$tabids)){
+				array_push($branchesFiltered,$branch);
+				array_push($branchesIds,$tabids);
+			}
+		}
+	}
+	return $branchesFiltered; //removeDuplicates($branchesIds,$branchesFiltered);
+}
+
+/*
+* Recursive function for recrelationtree()
+*/
+function recrelationsubtree($first,$gtabid,$searched=null){
+	global $gfield;
+	global $gtab;
+	global $rfield;
+
+	if($searched==null){
+		$searched=array();
+	}
+	//Ich = gesuchte Tabelle?
+	if(($gtabid == $rfield['verkntabid'] && $first != 1) || in_array($gtabid,$searched)){
+		return;
+	}else{
+		array_push($searched,$gtabid);
+		$vtables = array();
+		//Für jede Verknüpfte Tabelle
+		foreach($gfield[$gtabid]['verkntabid'] as $fieldid => $reltabid){
+			//Wenn keine Rückwärtige Verknüpfung
+			#if($gfield[$gtabid]['verkntabletype'][$fieldid] != 2){
+			//Rekursiver Aufruf
+			$branch = recrelationsubtree($first - 1,$reltabid,$searched);
+			if(!is_array($branch)){
+				//Verknüpfte Tabelle ist die gesuchte Tabelle
+				$r = array();
+				array_push($r,$gfield[$gtabid]['md5tab'][$fieldid]);
+				array_push($vtables, $r);
+			}else{
+				foreach($branch as $entry){
+					array_unshift($entry,$gfield[$gtabid]['md5tab'][$fieldid]);
+					array_push($vtables, $entry);
+				}
+			}
+			#}
+		}
+		return $vtables;
+	}
+}
+
+/*
+* rebuild 1:n relation from fieldvalues
+*/
+function lmb_rebuild_relation(){
+
+	/* --- Transaktion START ------------------------------------------------ */
+	#lmb_StartTransaction();
+
+	$sqlquery = "DELETE FROM ".$rfield['md5tab'];
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+	$sqlquery =  "SELECT ID,$v_field1 FROM ".$rfield['tabname'];
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	while(lmbdb_fetch_row($rs)) {
+		$ID = lmbdb_result($rs, "ID");
+		if(lmbdb_result($rs, $v_field1)){
+			$sqlquery1 =  "SELECT ID FROM ".$rfield['verkntabname']." WHERE ".$v_field2." = '".lmbdb_result($rs, $v_field1)."'";
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			if(!$rs1) {$commit = 1;}
+			$bzm1 = 0;
+			while(lmbdb_fetch_row($rs1)) {
+				$NEXTID = next_db_id($rfield['md5tab'],"KEYID",1);
+				$sqlquery3 =  "INSERT INTO ".$rfield['md5tab']." (KEYID,ERSTUSER,ID,VERKN_ID) VALUES ($NEXTID,".$session["user_id"].",".$ID.",".lmbdb_result($rs1, "ID").")";
+				$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+				if(!$rs3) {$commit = 1;}
+				$bzm1++;
+			}
+			if($bzm1 > 0){
+				$sqlquery3 =  "UPDATE ".$rfield['tabname']." SET ".$rfield['fieldname']." = $bzm1 WHERE ID = $ID";
+				$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+				if(!$rs3) {$commit = 1;}
+			}
+		}
+		$bzm++;
+	}
+	$message2 = "<span class=\"fw-bold\">$NEXTID</span> {$lang[939]} <span class=\"fw-bold\">{$rfield['md5tab']}</span> {$lang[940]}!";
+
+	# --- Transaktion ENDE --------
+	#lmb_EndTransaction(!$commit);
+
+}
+
+
+function getTabFromMd5($md5tab){
+	global $db;
+
+	$sqlquery =  "SELECT VERKNTABID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".lmb_strtolower($md5tab)."'";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	return lmbdb_result($rs, "VERKNTABID");
+
+}
+
+function getRelationFromMd5($md5tab) {
+    global $db;
+    global $action;
+
+    $sqlquery =  "SELECT TAB_ID, FIELD_ID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".lmb_strtolower($md5tab)."'";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+    require_once(COREPATH . 'gtab/gtab.lib');
+    return init_relation(lmbdb_result($rs, 'TAB_ID'), lmbdb_result($rs, 'FIELD_ID'), 0);
+}
+
+
+// get relation parameter
+function getRelationParameter($tabid,$fieldid){
+
+    global $db;
+
+    $sqlquery = "SELECT ID,RELPARAMS FROM LMB_CONF_FIELDS WHERE TAB_ID = $tabid AND FIELD_ID = $fieldid";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $relparams = lmbdb_result($rs, 'RELPARAMS');
+    $id = lmbdb_result($rs, 'ID');
+
+    if($relparams) {
+        $params = lmb_eval($relparams . ";");
+
+        $evalparams = array('showfields','edit','width','order');
+        foreach ($evalparams as $key => $value) {
+            if ($params[$value]) {
+                $params[$value] = var_export($params[$value],1);
+            }
+        }
+        return $params;
+    }
+
+}
+
+
+// set relation parameter
+function setRelationParameter($tabid,$fieldid,$params){
+
+    global $db;
+
+    $sqlquery = "SELECT ID,RELPARAMS FROM LMB_CONF_FIELDS WHERE TAB_ID = $tabid AND FIELD_ID = $fieldid";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $relparams = lmbdb_result($rs, 'RELPARAMS');
+    $id = lmbdb_result($rs, 'ID');
+
+    if($params['show_inframe'] == 'tag'){
+        $params['show_inframe'] = $params['show_inframe_tag'];
+    }
+    $params['show_inframe_tag'] = null;
+    $params = array_filter($params);
+
+    $evalparams = array('showfields','edit','width','order');
+    foreach ($evalparams as $key => $value) {
+        if ($params[$value]) {
+            $params[$value] = lmb_eval('return ' . $params[$value] . ";");
+        }
+    }
+
+    if(lmb_count($params) > 0) {
+        $p = var_export($params, 1);
+        $p = 'return '.$p.';';
+    }else{
+        $p = '';
+    }
+
+	$sqlquery = "UPDATE LMB_CONF_FIELDS SET RELPARAMS = ? WHERE ID = $id";
+    $rs = lmb_PrepareSQL($sqlquery,array($p)) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+}
+
+
+?>

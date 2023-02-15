@@ -1,0 +1,50 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+
+define("IS_DATASYNC",1);
+
+require_once(COREPATH . 'admin/tools/datasync/loaddatasync.php');
+
+global $additionalCronData;
+
+if (defined('IS_CRON') && $additionalCronData) {
+    $datasync = new DatasyncClientProcess($template);
+    $datasync->runSyncWithMasterSocket($additionalCronData);
+}
+
+/**
+ * Enter description here...
+ *
+ * @param unknown_type $cronval
+ */
+function periodic_job($cronval){
+    global $umgvar;
+    
+    
+    
+    try {
+        $cronval = explode(";", $cronval);
+        $templateId = intval($cronval[0]);
+
+        $datasync = new DatasyncProcess();
+        $datasync->start($templateId);
+
+        // rsync files
+        lmb_fileSync_init($templateId);
+    }
+    catch(Throwable $t) {
+        error_log(print_r($t));
+    }
+    
+    
+
+}

@@ -1,0 +1,40 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+if (!function_exists('getenv_docker')) {
+    function getenv_docker($env, $default) {
+        if ($fileEnv = getenv($env . '_FILE')) {
+            return rtrim(file_get_contents($fileEnv), "\r\n");
+        }
+        else if (($val = getenv($env)) !== false) {
+            return $val;
+        }
+        else {
+            return $default;
+        }
+    }
+}
+
+
+$DBA['DB'] = getenv_docker('LIMBAS_DB_TYPE', 'postgres');				/* maxdb76 | masbd77 | postgres | ingres */
+$DBA['DBCUSER'] = getenv_docker('LIMBAS_DB_USER','limbasuser'); 		/* DB control user */
+$DBA['DBCPASS'] = getenv_docker('LIMBAS_DB_PASSWORD','limbaspass'); 	/* DB control password */
+$DBA['DBCNAME'] = getenv_docker('LIMBAS_DB_NAME','openlimbas'); 	    /* DB control name */
+	
+$DBA['DBUSER'] = $DBA['DBCUSER'];		    /* DB username */
+$DBA['DBPASS'] = $DBA['DBCPASS'];	    /* DB password */
+$DBA['DBNAME'] = $DBA['DBCNAME'];		    /* DB instance name */
+$DBA['DBSCHEMA'] = 'public';		/* DB schema */
+$DBA['DBHOST'] = getenv_docker('LIMBAS_DB_HOST','limbas_pgsql');			/* DB hostname or IP */
+$DBA['LMHOST'] = getenv_docker('LIMBAS_HOST','localhost');			/* LIMBAS hostname or IP */
+$DBA['DBPATH'] = '';	            /* Path to database */
+$DBA['ODBCDRIVER'] = 'PDO';	/* unixODBC Driver */
+$DBA['PORT'] = getenv_docker('LIMBAS_DB_PORT','');			/* database Port */
+$DBA['VERSION'] = getenv_docker('LIMBAS_DB_VERSION','');	/* database version */
+
+define('LMB_ENC_KEY','unique key');

@@ -1,0 +1,186 @@
+/*!
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+/*Global*/
+
+
+
+
+/*
+ * List with hierarchy markers
+ */
+.list-hierarchy,
+.list-hierarchy ul,
+.list-hierarchy li {
+  position: relative;
+}
+
+.list-hierarchy ul {
+  list-style: none;
+  padding-left: 32px;
+}
+
+.list-hierarchy li::before,
+.list-hierarchy li::after {
+  content: "";
+  position: absolute;
+  left: -12px;
+}
+
+.list-hierarchy li::before {
+  border-top: 1px solid #000;
+  top: 9px;
+  width: 8px;
+  height: 0;
+}
+
+.list-hierarchy li::after {
+  border-left: 1px solid #000;
+  height: 100%;
+  width: 0px;
+  top: 2px;
+}
+
+.list-hierarchy ul>li:last-child::after {
+  height: 8px;
+}
+
+
+
+/*A:link {
+  text-decoration: none;
+  color: $farbschemaWEB2;
+}
+
+A:visited {
+  text-decoration: none;
+  color: $farbschemaWEB2;
+}
+
+A:hover {
+  text-decoration: underline;
+  color: $farbschemaWEB12;
+  cursor: pointer
+}
+
+.link {
+  text-decoration: none;
+  color: $farbschemaWEB2;
+  cursor: pointer;
+}
+
+SPAN.HEADER {
+  FONT-STYLE: oblique;
+  font-size: $fontsize11;
+  color: $farbschemaWEB2;
+}
+
+DEL {
+  background-color: #fcc;
+}
+
+INS {
+  background-color: #cfc;
+}
+
+TABLE.popmenu {
+  border-collapse: collapse;
+  border-spacing: 0;
+  EMPTY-CELLS: show;
+  table-layout: fixed;
+  padding: 0;
+  border: none;
+  background-color: $farbschemaWEB3;
+}
+
+TR.popmenu {
+  font-weight: normal;
+  color: $farbschemaWEB2;
+  overflow: hidden;
+  background-color: $farbschemaWEB3;
+}
+
+
+SELECT {
+  font-weight: normal;
+  background-color: $farbschemaWEB13;
+  border: 1px solid $farbschemaWEB3;
+  font-size: $umgvarfontsize;
+}
+
+SELECT.contextmenu {
+  font-weight: normal;
+  background-color: $farbschemaWEB8;
+}
+
+INPUT {
+  font-weight: normal;
+  background-color: $farbschemaWEB13;
+  border: 1px solid $farbschemaWEB3;
+  font-size: $umgvarfontsize;
+}
+
+INPUT[type=button] {
+  cursor: pointer;
+}
+
+INPUT.checkbox {
+  font-weight: normal;
+  background-color: transparent;
+  border: none;
+  height: 12px;
+  width: 12px;
+}
+
+INPUT.submit {
+  font-size: $fontsize11;
+  background-color: $farbschemaWEB8;
+  border: 1px solid $farbschemaWEB7;
+  padding: 3px;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+INPUT.contextmenu {
+  vertical-align: middle;
+  background-color: $farbschemaWEB8;
+}
+
+TEXTAREA {
+  font-family: $umgvarfont;
+  resize: none;
+  font-weight: normal;
+  background-color: $farbschemaWEB13;
+  border: 1px solid $farbschemaWEB3;
+  font-size: $umgvarfontsize;
+  resize: none;
+}
+
+i.lmb-icon[onclick] {
+  cursor: pointer;
+}
+
+// for the translation form: Textarea is 2 line high, the height can be increased by the user
+.language-table TEXTAREA {
+  resize: vertical;
+  height: 2.5em;
+}
+
+FORM {
+  font-weight: normal;
+  color: $farbschemaWEB2;
+  margin: 0;
+  padding: 0;
+}
+
+
+//adjust height of spectrum color select to fit input height
+.sp-replacer {
+  height: $input-height !important;
+}
+*/

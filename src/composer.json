@@ -1,0 +1,39 @@
+{
+  "name": "limbas/limbas",
+  "type": "project",
+  "description": "Limbas is a database framework for creating database-driven business applications. As a graphical database front-end, it enables the efficient processing of data stocks and the flexible development of comfortable low-code database applications.",
+  "keywords": ["framework", "database", "limbas"],
+  "license": "GPL-2.0",
+  "version": "5.0.0",
+  "require": {
+    "php": "^8.0",
+    "mpdf/mpdf": "v8.0.17",
+    "phpmailer/phpmailer": "v6.6.0",
+    "clue/socket-raw": "v1.5.0",
+    "sabre/dav": "4.1.5",
+    "scssphp/scssphp": "v1.10.2",
+    "tecnickcom/tcpdf": "6.4.4",
+    "setasign/fpdi": "v2.3.6",
+    "ext-sockets": "*",
+    "ext-gd": "*",
+    "ext-pdo": "*",
+    "ext-soap": "*",
+    "ext-dom": "*",
+    "ext-odbc": "*",
+    "ext-zlib": "*",
+    "ext-mbstring": "*",
+    "ext-imap": "*",
+    "ext-openssl": "*",
+    "ext-curl": "*",
+    "ext-iconv": "*",
+    "ext-gnupg": "*",
+    "ext-simplexml": "*"
+  },
+  "config": {
+    "optimize-autoloader": true,
+    "preferred-install": "dist",
+    "sort-packages": true
+  },
+  "minimum-stability": "dev",
+  "prefer-stable": true
+}

@@ -1,0 +1,99 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+/* --- umgvar ändern --------------------------------------------- */
+if($change AND $changecat){
+	
+	$ctval = explode(",",$changecat);
+	$ctval = array_unique($ctval);
+
+    foreach ($ctval as $key => $umgvar_id) {
+        if (is_numeric($umgvar_id)) {
+            $sqlquery = "SELECT DISTINCT * FROM LMB_UMGVAR WHERE ID = $umgvar_id";
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            $umgvar_id = lmbdb_result($rs, "ID");
+            $name = lmbdb_result($rs, "FORM_NAME");
+            $val = lmbdb_result($rs, "NORM");
+            $norm = preg_replace("/ {2,}/", " ", ${"umg_" . $umgvar_id});
+            $sql = "";
+            if ($umgvar["admin_mode"]) {
+                $sql = ",CATEGORY = " . parse_db_int($cat[$umgvar_id]);
+            }
+            $sqlquery1 = "UPDATE LMB_UMGVAR SET NORM = '" . parse_db_string($norm, 200) . "' $sql WHERE ID = $umgvar_id";
+            $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            $_SESSION["umgvar"][$name] = $norm;
+            if ($name === "thumbsize") {
+                /* --- Thumpnails löschen --------------------------------------------- */
+                $rsc = 'rm ' . TEMPPATH . 'thumpnails/*';
+                system($rsc);
+            } else if ($name === 'postgres_use_fulltextsearch' || $name === 'postgres_indize_lang') {
+                // add/remove postgres fulltextsearch fields
+				require_once(COREPATH . 'admin/tools/jobs/indize.lib');
+				postgresUpdateFtsFields();
+            }
+        }
+    }
+}
+
+/* --- umgvar hinzufügen --------------------------------------------- */
+if($add){
+	$name = parse_db_string( cleanUmgvar($name) );
+	$norm = parse_db_string( preg_replace("/ {2,}/"," ", $norm) );
+	$beschreibung = parse_db_string( preg_replace("/ {2,}/"," ", $beschreibung) );
+	
+	$sort = next_db_id("LMB_UMGVAR","SORT");
+	
+	if($category == ""){
+		$newcategory = parse_db_string(preg_replace("/ {2,}/", " ", $newcategory));
+
+		include("language.lib");
+		global $session;
+		$category = lang_add($session['language'],3,'umgvar',$newcategory,'_DEPEND');		
+	}
+	
+	/* --- Next ID ---------------------------------------- */
+	$NEXTID = next_db_id("LMB_UMGVAR");
+    
+	$sqlquery = "INSERT INTO LMB_UMGVAR (ID,SORT,FORM_NAME,NORM,BESCHREIBUNG,CATEGORY) VALUES ($NEXTID,$sort,'".lmb_strtolower($name)."','$norm','$beschreibung',".parse_db_int($category).")";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+/* --- umgvar löschen --------------------------------------------- */
+if($del){
+        $id = parse_db_int($id);
+	$sqlquery = "DELETE FROM LMB_UMGVAR WHERE ID = $id";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+/* --- Tabellen-Liste --------------------------------------------- */
+$sqlquery = "SELECT DISTINCT * FROM LMB_UMGVAR ORDER BY CATEGORY,SORT";
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+        $result_umgvar["id"][] = lmbdb_result($rs, "ID");
+        $result_umgvar["form_name"][] = lmbdb_result($rs, "FORM_NAME");
+        $result_umgvar["norm"][] = lmbdb_result($rs, "NORM");
+        $result_umgvar["beschreibung"][] = lmbdb_result($rs, "BESCHREIBUNG");
+        $result_umgvar["category"][] = lmbdb_result($rs, "CATEGORY");
+
+        $result_umgvar['field_type'][] = lmbdb_result($rs, 'FIELD_TYPE');
+        $result_umgvar['field_options'][] = lmbdb_result($rs, 'FIELD_OPTIONS');
+}
+$result_category = array_unique($result_umgvar["category"]); //Fehlt: ImageMagick,ghostscript,System
+//$result_category = array(0=>$lang[1634],1=>$lang[1894],2=>$lang[698],3=>$lang[1896],4=>$lang[1898],12=>$lang[2700],5=>$lang[1899],6=>$lang[1900],11=>"System",7=>$lang[911],8=>"ImageMagick",10=>"ghostscript");
+
+        
+function cleanUmgvar($umgvar) {
+    // removes all characters that are not a-z, -, /, _, 0-9
+    return preg_replace('/[^a-z_\/\-0-9]/', '', $umgvar);
+}        
+        
+?>
+

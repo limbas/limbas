@@ -1,0 +1,388 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+function lmbcs_load_schema($id=null, $usedefault=false) {
+    
+    $db = Database::get();
+
+    $layouts = Layout::getAvailableLayouts();
+
+    $color_schemas = [];
+    $inicache = [];
+
+    $sqlquery = 'SELECT DISTINCT * FROM LMB_COLORSCHEMES '.(($id)?'WHERE ID = '.parse_db_int($id):'').' ORDER BY ID';
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs)) {
+        $layout = lmbdb_result($rs, 'LAYOUT');
+        $color_schema =[
+            'id' => lmbdb_result($rs, 'ID'),
+            'name' => lmbdb_result($rs, 'NAME'),
+            'layout' => $layout,
+            'valid' => in_array($layout,$layouts),
+            'regenerate' => true,
+            'variables' => [
+                'Legacy' => [
+                    'web1' => lmbdb_result($rs, 'WEB1'),
+                    'web2' => lmbdb_result($rs, 'WEB2'),
+                    'web3' => lmbdb_result($rs, 'WEB3'),
+                    'web4' => lmbdb_result($rs, 'WEB4'),
+                    'web5' => lmbdb_result($rs, 'WEB5'),
+                    'web6' => lmbdb_result($rs, 'WEB6'),
+                    'web7' => lmbdb_result($rs, 'WEB7'),
+                    'web8' => lmbdb_result($rs, 'WEB8'),
+                    'web9' => lmbdb_result($rs, 'WEB9'),
+                    'web10' => lmbdb_result($rs, 'WEB10'),
+                    'web11' => lmbdb_result($rs, 'WEB11'),
+                    'web12' => lmbdb_result($rs, 'WEB12'),
+                    'web13' => lmbdb_result($rs, 'WEB13'),
+                    'web14' => lmbdb_result($rs, 'WEB14')
+                ]
+            ],
+            'edited' => [],
+            'custvars' => []
+        ];
+
+
+        //load layout specific variables
+        if (!$color_schema['valid']) {
+            if ($id != null) {
+                return $color_schema;
+            }
+            continue;
+        }
+
+        //load variables from inifile
+        $inifile = EXTENSIONSPATH . 'layout/' . $color_schema['layout'] . '/variables.ini';
+        if (!file_exists($inifile)) {
+            $inifile = COREPATH . 'layout/variables.ini';
+        }
+        
+        if (array_key_exists($inifile,$inicache)) {
+            $color_schema['variables'] += $inicache[$inifile];
+        } else if (file_exists($inifile)) {
+            $inivars = parse_ini_file($inifile, true);
+            $inicache[$inifile] = $inivars;
+            $color_schema['variables'] += $inivars;
+        }
+
+
+        //load variables from db
+        if (!$usedefault) {
+            $sqlquery = 'SELECT * FROM LMB_COLORVARS WHERE SCHEMA_ID = ' . $color_schema['id'];
+            $rs2 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            while (lmbdb_fetch_row($rs2)) {
+                $color_schema['edited'][lmbdb_result($rs2,'name')] = lmbdb_result($rs2,'value');
+                $color_schema['custvars'][lmbdb_result($rs2,'name')] = lmbdb_result($rs2,'value');
+            }
+
+
+            //override defaults
+            foreach ($color_schema['variables'] as $gname => $group) {
+                foreach ($group as $key => $value) {
+                    if (array_key_exists($key, $color_schema['edited'])) {
+                        $color_schema['variables'][$gname][$key] = $color_schema['edited'][$key];
+                        unset($color_schema['custvars'][$key]);
+                    }
+                }
+            }
+        }
+
+        if ($id != null) {
+            return $color_schema;
+        }
+        $color_schemas[lmbdb_result($rs, 'ID')] = $color_schema;
+    }
+
+    return $color_schemas;
+}
+
+function lmbcs_generate_css($color_schema) {
+
+    $scsspath = EXTENSIONSPATH . 'layout/' . $color_schema['layout'] . '/scss/';
+    if (!file_exists($scsspath)) {
+        $scsspath = COREPATH . 'layout/scss/';
+    }
+    $bootstrappath = COREPATH . 'resources/vendor';
+
+    $scss = new ScssPhp\ScssPhp\Compiler();
+    $scss->setImportPaths([$scsspath,$bootstrappath]);
+
+    # include extensions
+    $extscss = '';
+    $extscssv = '';
+    if($GLOBALS['gLmbExt']['ext_scssv.inc']){
+        foreach ($GLOBALS['gLmbExt']['ext_scssv.inc'] as $key => $extfile){
+            $extscssv .= file_get_contents($extfile);
+        }
+    }
+    if($GLOBALS['gLmbExt']['ext_scss.inc']){
+        foreach ($GLOBALS['gLmbExt']['ext_scss.inc'] as $key => $extfile){
+            $extscss .= file_get_contents($extfile);
+        }
+    }
+
+    //insert edited variables from db
+    $extscssv .= "\n\n";
+    foreach ($color_schema['edited'] as $key => $value) {
+        $extscssv .= "\$$key: $value;\n";
+    }
+    $extscssv .= "\n\n";
+
+    try {
+
+        # include extensions
+        $extCss = '';
+        if($GLOBALS['gLmbExt']['ext_css.inc']){
+            $buf = '';
+            foreach ($GLOBALS['gLmbExt']['ext_css.inc'] as $key => $extfile){
+                require($extfile);
+            }
+            $extCss = $buf;
+        }
+                
+        $layoutCss = $scss->compileString(
+            '@import "_lmbvariables";
+        '.$extscssv.'
+        @import "lmbbootstrap";
+        @import "limbas";
+        '.$extscss.' '.$extCss
+        )->getCss();
+        
+        $cssdir = ASSETSPATH . 'css/';
+        $filepath = $cssdir.$color_schema['layout'].'-'.$color_schema['id'].'.css';
+        
+        if (!is_writable($cssdir) || (file_exists($filepath) AND !is_writable($filepath))) {
+            return 'Directory or file not writable (' . $filepath . ')';
+        } else {
+            file_put_contents($filepath, $layoutCss);   
+        }
+
+    }
+    catch (ScssPhp\ScssPhp\Exception\SassException $e) {
+        $error = 'SCSS parse error: '.$e->getMessage();
+        if (!empty($extCss)) {
+            $error .= '<br>Hint: css extensions that use old $farbschema variable must include <span class="font-italic">global $farbschema;</span>';
+        }
+        return $error;
+    }
+    catch (Throwable $t) {
+        return 'Error: '.$t->getMessage();
+    }
+
+    return lmbcs_generate_legacy_css($color_schema['id']);
+}
+
+function lmbcs_add_schema($name, $layout) {
+    global $color_schemas;
+
+    $db = Database::get();
+    
+    $name = parse_db_string($name);
+
+    /* --- Next ID ---------------------------------------- */
+    $NEXTID = next_db_id('LMB_COLORSCHEMES');
+    $sqlquery = "INSERT INTO LMB_COLORSCHEMES (ID,NAME,LAYOUT,WEB1,WEB2,WEB3,WEB4,WEB5,WEB6,WEB7,WEB8,WEB9,WEB10,WEB11,WEB12,WEB13,WEB14) VALUES ($NEXTID,'$name','$layout','','','','','','','','','','','','','','')";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $color_schemas[$NEXTID] = lmbcs_load_schema($NEXTID);
+    lmbcs_generate_css($color_schemas[$NEXTID]);
+}
+
+function lmbcs_delete_schema($id) {
+    $db = Database::get();
+    $sqlquery = 'DELETE FROM LMB_COLORVARS WHERE SCHEMA_ID = '.parse_db_int($id);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $sqlquery = 'DELETE FROM LMB_COLORSCHEMES WHERE ID = '.parse_db_int($id);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+function lmbcs_save_colors($id,$addvartitle=null,$addvarvalue=null) {
+    global $color_schemas;
+
+    $db = Database::get();
+
+
+    $color_schemas[$id] = lmbcs_load_schema($id,true);
+    $vars = $_POST['var'];
+    $id = parse_db_int($id);
+
+    //update legacy vars
+    for($i=1;$i<=14;$i++){
+        $query[] = "WEB$i = '".parse_db_string($vars["web$i"])."'";
+        unset($vars["web$i"]);
+    }
+
+    if(!empty($query)){
+        $sqlquery1 = 'UPDATE LMB_COLORSCHEMES SET '.implode(',',$query).' WHERE ID = '.$id;
+        $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+    }
+
+    //check if vars are same as default or edited/added by user
+    $tochange = [];
+    foreach ($color_schemas[$id]['variables'] as $group) {
+        foreach ($group as $key => $value) {
+
+            //check if variable was submitted and differs from default
+            if (array_key_exists($key,$vars)) {
+                if (strtolower($vars[$key]) != strtolower($value)) {
+                    $tochange[strtolower($key)] = strtolower($vars[$key]);
+                }
+                unset($vars[$key]);
+            }
+        }
+    }
+
+    //left variables are not defined in layout.ini
+    foreach ($vars as $key => $value) {
+        $tochange[$key] = $vars[$key];
+    }
+
+    //delete all variables that are not assigned anymore
+    $sqlquery = 'DELETE FROM LMB_COLORVARS WHERE SCHEMA_ID = ' . parse_db_int($id) . ' AND NAME NOT IN (\'' . implode("','", array_keys($tochange)) . '\')';
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    //update all existing variables
+    $sqlquery = 'SELECT * FROM LMB_COLORVARS WHERE SCHEMA_ID = ' . parse_db_int($id);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    while (lmbdb_fetch_row($rs)) {
+        $var = lmbdb_result($rs, 'NAME');
+        if (array_key_exists($var, $tochange)) {
+            lmbdb_exec($db, 'UPDATE LMB_COLORVARS SET VALUE = \''.parse_db_string($tochange[$var]).'\'  WHERE ID = ' . lmbdb_result($rs, 'ID'));
+            unset($tochange[$var]);
+        }
+    }
+
+
+    //insert another custvar if filled
+    if (!empty($addvartitle)) {
+        $tochange[$addvartitle] = $addvarvalue;
+    }
+
+    //insert new variables
+    foreach ($tochange as $key => $value) {
+        $NEXTID = next_db_id('LMB_COLORVARS');
+        $sqlquery = "INSERT INTO LMB_COLORVARS (ID,SCHEMA_ID,NAME,VALUE) VALUES ($NEXTID,$id,'".parse_db_string($key)."','".parse_db_string($value)."')";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    }
+
+
+
+
+
+    $color_schemas[$id] = lmbcs_load_schema($id);
+    lmbcs_generate_css($color_schemas[$id]);
+}
+
+function lmbcs_reset($id) {
+    global $color_schemas;
+
+    $db = Database::get();
+
+    //delete all variables that are not assigned anymore
+    $sqlquery = 'DELETE FROM LMB_COLORVARS WHERE SCHEMA_ID = ' . parse_db_int($id);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+
+    $color_schemas[$id] = lmbcs_load_schema($id,true);
+    lmbcs_generate_css($color_schemas[$id]);
+}
+
+
+
+function lmbcs_generate_legacy_css($schemaId) {
+    global $umgvar;
+    global $farbschema;    
+
+    
+    if ($umgvar['waitsymbol']) {
+        $waitsymbol = $umgvar['waitsymbol'];
+    } else {
+        $waitsymbol = '../images/legacy/wait1.gif';
+    }
+
+    $fontc3 = lmbSuggestColor($farbschema['WEB14'], '222222', '7D7D7D');
+    $fontc7 = lmbSuggestColor($farbschema['WEB7'], '5a5a5a', '333333');
+    $fontc14 = lmbSuggestColor($farbschema['WEB14']);
+    
+
+    $variables = '';
+    for($i=1;$i<=14;$i++) {
+        $variables .= '$farbschemaWEB' . $i . ': ' . $farbschema['WEB' . $i] . ' !default;' . "\n";
+    }
+    
+    $variables .= '
+
+$waitsymbol: url("' . $waitsymbol . '");
+
+$fontc3: ' . $fontc3 . ';
+$fontc7: ' . $fontc7 . ';
+$fontc14: ' . $fontc14 . ';
+
+
+$sgc1: ' . lmbSuggestColor('74ba6a'). ';
+$sgc2: ' . lmbSuggestColor('f09b4d'). ';
+$sgc3: ' . lmbSuggestColor('f0cd4d'). ';
+$sgc4: ' . lmbSuggestColor('ff725c'). ';
+$sgc5: ' . lmbSuggestColor('c593ed'). ';
+$sgc6: ' . lmbSuggestColor('32a852'). ';
+$sgc7: ' . lmbSuggestColor('74ba6a'). ';
+$sgc8: ' . lmbSuggestColor('74ba5c'). ';
+
+
+';
+
+    $scsspath = EXTENSIONSPATH . 'layout/' . $color_schema['layout'] . '/scss/';
+    if (!file_exists($scsspath)) {
+        $scsspath = COREPATH . 'layout/scss/';
+    }
+    
+    $scss = new ScssPhp\ScssPhp\Compiler();
+    $scss->setImportPaths([$scsspath]);
+
+    try {
+
+        # include extensions
+        $extCss = '';
+        if($GLOBALS['gLmbExt']['ext_css.inc']){
+            $buf = '';
+            foreach ($GLOBALS['gLmbExt']['ext_css.inc'] as $key => $extfile){
+                require($extfile);
+            }
+            $extCss = $buf;
+        }
+
+        $layoutCss = $scss->compileString(
+            $variables.'
+        @import "legacy";
+        '.$extCss
+        )->getCss();
+
+        $cssdir = ASSETSPATH . 'css/';
+        $filepath = $cssdir.'legacy-'.$schemaId.'.css';;
+
+        if (!is_writable($cssdir) || (file_exists($filepath) AND !is_writable($filepath))) {
+            return 'Directory or file not writable (' . $filepath . ')';
+        } else {
+            file_put_contents($filepath, $layoutCss);
+        }
+
+    }
+    catch (ScssPhp\ScssPhp\Exception\SassException $e) {
+        $error = 'SCSS parse error (legacy): '.$e->getMessage();
+        if (!empty($extCss)) {
+            $error .= '<br>Hint: css extensions that use old $farbschema variable must include <span class="font-italic">global $farbschema;</span>';
+        }
+        return $error;
+    }
+    catch (Throwable $t) {
+        return 'Error: '.$t->getMessage();
+    }
+    
+    return true;
+}

@@ -1,0 +1,145 @@
+/*!
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+.ui-dialog-titlebar-close {
+  @extend .btn;
+  @include button-outline-variant($secondary);
+
+  &:after {
+    content: 'x';
+  }
+  
+}
+
+/* jquery UI ------------------------------------------------------------------------*/
+/*
+.ui-widget {
+  color: $farbschemaWEB10;
+  background-color: $farbschemaWEB10;
+}
+
+.ui-selecting {
+
+}
+
+.ui-selectable-helper {
+  border-color: $farbschemaWEB2;
+}
+
+.ui-selected {
+  //background:orange !important;
+  -moz-box-shadow: 3px 3px 3px #619A00;
+  -webkit-box-shadow: 3px 3px 3px #619A00;
+  box-shadow: 3px 3px 3px #619A00;
+}
+
+.ui-state-disabled {
+  opacity: 0.60;
+}
+
+.ui-dialog .ui-dialog-content {
+  background: $farbschemaWEB13;
+}
+
+.ui-widget .ui-widget-header {
+  background: $farbschemaWEB10;
+  border-color: $farbschemaWEB7;
+  color: $farbschemaWEB3;
+}
+
+.ui-widget-content {
+  color: $farbschemaWEB2;
+  background-image: none;
+}
+
+.ui-widget.ui-widget-content .ui-state-default {
+  color: $farbschemaWEB4;
+}
+
+.ui-widget.ui-widget-content .ui-state-hover, .ui-widget.ui-widget-content .ui-state-active {
+  border-color: $farbschemaWEB7;
+  color: $farbschemaWEB2;
+}
+
+.ui-widget.ui-widget-content .ui-state-highlight,
+.ui-widget.ui-widget-content .ui-widget-header .ui-state-hover {
+  background: $farbschemaWEB7;
+  border-color: $farbschemaWEB12;
+  color: $farbschemaWEB2;
+}
+
+.ui-widget .ui-widget-header .ui-icon {
+  text-indent: 0;
+  background-image: none;
+  color: $farbschemaWEB12;
+}
+
+.ui-widget .ui-widget-header .ui-state-hover .ui-icon {
+  background-image: none;
+  color: $farbschemaWEB2;
+}
+
+.ui-widget .ui-widget-header .ui-icon.ui-icon-circle-triangle-e:before {
+  content: '\f138';
+}
+
+.ui-widget .ui-widget-header .ui-icon.ui-icon-circle-triangle-w:before {
+  content: '\f137';
+}
+
+.ui-widget .ui-widget-header .ui-icon.ui-icon-closethick {
+  left: 0px;
+  margin-left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.ui-widget .ui-widget-header .ui-icon.ui-icon-closethick:before {
+  content: '\f00d';
+}
+
+div.calendar table {
+  background: $farbschemaWEB10;
+}
+
+div.calendar tbody td.weekend, div.calendar thead .weekend {
+  color: $farbschemaWEB12;
+}
+
+div.calendar tbody td.today {
+  background: $farbschemaWEB10;
+  color: $farbschemaWEB7;
+}
+
+div.calendar tbody .rowhilite td.wn {
+  background: $farbschemaWEB10
+}
+
+.ui-datepicker {
+  background: linear-gradient($farbschemaWEB11, $farbschemaWEB10);
+  width: inherit;
+}
+
+.ui-widget-content .ui-datepicker-calendar a.ui-state-default {
+  background-color: $farbschemaWEB8;
+  color: $farbschemaWEB12;
+  background-image: none;
+}
+
+.ui-widget-content .ui-datepicker-calendar a.ui-state-active {
+  background-color: $farbschemaWEB12;
+  color: $farbschemaWEB8;
+}
+
+.ui-widget-overlay {
+  background-image: none;
+  opacity: .6;
+  filter: Alpha(Opacity=60);
+}
+*/

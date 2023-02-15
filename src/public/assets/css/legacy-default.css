@@ -1,0 +1,3919 @@
+@charset "UTF-8";
+/*!
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+@font-face {
+    font-family: "FontAwesome";
+    src: url("../fonts/fontawesome-webfont.eot?v=4.5.0");
+    src: url("../fonts/fontawesome-webfont.eot?#iefix&v=4.5.0") format("embedded-opentype"), url("../fonts/fontawesome-webfont.woff2?v=4.5.0") format("woff2"), url("../fonts/fontawesome-webfont.woff?v=4.5.0") format("woff"), url("../fonts/fontawesome-webfont.ttf?v=4.5.0") format("truetype"), url("../fonts/fontawesome-webfont.svg?v=4.5.0#fontawesomeregular") format("svg");
+    font-weight: normal;
+    font-style: normal;
+}
+@font-face {
+    font-family: "LMBFont";
+    src: url("../fonts/lmb-font.eot?v=1.0");
+    src: url("../fonts/lmb-font.eot?#iefix&v=1.0") format("embedded-opentype"), url("../fonts/lmb-font.ttf?v=1.0") format("truetype"), url("../fonts/lmb-font.woff?v=1.0") format("woff"), url("../fonts/lmb-font.svg?v=1.0#lmb-font") format("svg");
+    font-weight: normal;
+    font-style: normal;
+}
+.lmb-icon, .ui-widget .ui-widget-header .ui-icon {
+    /* former .fa */
+    display: inline-block;
+    /* edit by matthias - earlier 1.3em - even earlier 14px*/
+    font: normal normal normal 1.3em/1 FontAwesome;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    width: 1.28571429em;
+    /* fixed width */
+    text-align: center;
+    /* fixed width */
+}
+.lmb-icon-cus {
+    /* for the lmb-custom icons */
+    display: inline-block;
+    /* edit by matthias - earlier 1.3em - even earlier 14px */
+    font-family: LMBFont !important;
+    font-style: normal;
+    font-size: 1.3em;
+    line-height: 1;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    width: 1.28571429em;
+    /* fixed width */
+    text-align: center;
+    /* fixed width */
+}
+.lmb-icon-aw {
+    width: auto;
+}
+.lmb-icon-8 {
+    display: inline-block;
+    font: normal normal normal 14px/1 FontAwesome;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 0.9em;
+}
+.lmb-icon-32 {
+    display: inline-block;
+    font: normal normal normal 14px/1 FontAwesome;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    font-size: 2.6em;
+}
+@-webkit-keyframes rotating /* Safari and Chrome */ {
+    from {
+        -webkit-transform: rotate(0deg);
+        -o-transform: rotate(0deg);
+        transform: rotate(0deg);
+    }
+    to {
+        -webkit-transform: rotate(360deg);
+        -o-transform: rotate(360deg);
+        transform: rotate(360deg);
+    }
+}
+@keyframes rotating {
+    from {
+        -ms-transform: rotate(0deg);
+        -moz-transform: rotate(0deg);
+        -webkit-transform: rotate(0deg);
+        -o-transform: rotate(0deg);
+        transform: rotate(0deg);
+    }
+    to {
+        -ms-transform: rotate(360deg);
+        -moz-transform: rotate(360deg);
+        -webkit-transform: rotate(360deg);
+        -o-transform: rotate(360deg);
+        transform: rotate(360deg);
+    }
+}
+.lmb-rotating {
+    -webkit-animation: rotating 2s linear infinite;
+    -moz-animation: rotating 2s linear infinite;
+    -ms-animation: rotating 2s linear infinite;
+    -o-animation: rotating 2s linear infinite;
+    animation: rotating 2s linear infinite;
+}
+.lmb-sess-refresh {
+    color: #e4d314;
+}
+.lmb-icon.lmb-icon-on-input {
+    margin-left: -1.28571429em;
+    /* width of .lmb-icon */
+}
+.lmb-icon-cus.lmb-plusonly::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-minusonly::before {
+    content: "";
+}
+.lmb-table-godown::before, .lmb-table::before, .lmb-rep-table::before, .lmb-table-key::before, .lmb-table-alt::before {
+    /* former .fa-table */
+    content: "";
+}
+.lmb-page-save::before, .lmb-save::before {
+    /* former .fa-save */
+    content: "";
+}
+.lmb-page-new::before, .lmb-bullet-plus::before {
+    /* former .fa-plus-square */
+    content: "";
+}
+.lmb-compare-version::before, .lmb-page-copy::before, .lmb-application-double::before {
+    /* former .fa-clone */
+    content: "";
+}
+.lmb-compare-version2::before {
+    /* former .fa-columns */
+    content: "";
+}
+.lmb-page-key::before, .lmb-page-key-green::before {
+    /* former .fa-file-archive-o */
+    content: "";
+}
+.lmb-versioning::before {
+    /* former .fa-file-archive-o */
+    content: "";
+}
+.lmb-page-find::before, .lmb-rep-dbsearch::before, .lmb-mail-search::before {
+    /* former .fa-search */
+    content: "";
+}
+.lmb-rep-table-menu::before {
+    /* former .fa-cog */
+    content: "";
+}
+.lmb-page-edit::before, .lmb-organisation-edit::before, .lmb-mail-new::before {
+    /* former .fa-pencil-square-o */
+    content: "";
+}
+.lmb-show-versioned::before {
+    /* former .fa-archive */
+    content: "";
+}
+.lmb-edit-versioned::before {
+    /* former .fa-archive */
+    content: "";
+}
+.lmb-del-versioned::before {
+    /* former .fa-archive */
+    content: "";
+}
+.lmb-report::before, .lmb-report-key::before {
+    /* former .fa-book */
+    content: "";
+}
+.lmb-undo::before {
+    /* former .fa-undo */
+    content: "";
+}
+.lmb-caret-square-down::before, .lmb-rep-select::before, .lmb-caret-square-down-alt::before, .lmb-arrow-down-squared::before {
+    /* former .fa-caret-square-o-down */
+    content: "";
+}
+.lmb-caret-square-up::before, .lmb-arrow-up-squared::before {
+    /* former .fa-caret-square-o-up */
+    content: "";
+}
+.lmb-caret-left::before, .lmb-previous::before, .lmb-top-y::before, .lmb-arrow-left-caret::before {
+    /* former .fa-caret-left */
+    content: "";
+}
+.lmb-caret-right::before, .lmb-caret-right-alt::before, .lmb-next::before, .lmb-edit-caret::before, .lmb-top-x::before, .lmb-arrow-right-caret::before, .lmb-small-arrow-right::before {
+    /* former .fa-caret-right */
+    content: "";
+}
+.lmb-caret-down::before, .lmb-caret-down-alt::before, .lmb-caret-down-alt2::before, .lmb-small-arrow-down::before {
+    /* former .fa-caret-down */
+    content: "";
+}
+.lmb-camera::before, .lmb-camera-plus::before {
+    /* former .fa-camera */
+    content: "";
+}
+.lmb-pdf::before, .lmb-tcpdf::before, .lmb-file-pdf::before {
+    /* former .fa-file-pdf-o */
+    content: "";
+}
+.lmb-xml::before, .lmb-file-excel::before, .lmb-file-ods::before, .lmb-excel-alt2::before {
+    /* former .fa-file-excel-o */
+    content: "";
+}
+/* TODO: optimize further */
+.lmb-odt::before {
+    /* former .fa-file-word-o */
+    content: "";
+}
+.lmb-line-chart::before {
+    /* former .fa-line-chart */
+    content: "";
+}
+.lmb-plus-square::before {
+    /* former .fa-plus-square-o */
+    content: "";
+}
+.lmb-query::before {
+    /* former .fa-table */
+    content: "";
+}
+.lmb-cog::before {
+    /* former .fa-cog */
+    content: "";
+}
+.lmb-cogs::before {
+    /* former .fa-cogs */
+    content: "";
+}
+.lmb-wrench::before {
+    /* former .fa-wrench */
+    content: "";
+}
+.lmb-group::before {
+    /* former .fa-users */
+    content: "";
+}
+.lmb-icon-cus.lmb-form-black::before, .lmb-icon-cus.lmb-form::before {
+    content: "";
+}
+.lmb-file-text-black::before {
+    /* former .fa-file-text */
+    content: "";
+}
+.lmb-bar-chart::before {
+    /* former .fa-bar-chart */
+    content: "";
+}
+.lmb-tree::before {
+    /* former .fa-sitemap */
+    content: "";
+}
+.lmb-reminder::before {
+    /* former .fa-paperclip */
+    content: "";
+}
+.lmb-workflow::before {
+    /* former .fa-briefcase */
+    content: "";
+}
+.lmb-globe::before {
+    /* former .fa-globe */
+    content: "";
+}
+.lmb-cubes::before {
+    /* former .fa-cubes */
+    content: "";
+}
+.lmb-menu::before {
+    /* former .fa-bars */
+    content: "";
+}
+.lmb-color-swatch::before {
+    /* former .fa-tachometer */
+    content: "";
+}
+.lmb-picture::before {
+    /* former .fa-picture-o */
+    content: "";
+}
+.lmb-language::before {
+    /* former .fa-flag-o */
+    content: "";
+}
+.lmb-font::before {
+    /* former .fa-font */
+    content: "";
+}
+.lmb-list-ul::before {
+    /* former .fa-list-ul */
+    content: "";
+}
+.lmb-clock::before {
+    /* former .fa-clock-o */
+    content: "";
+}
+.lmb-step-forward::before {
+    /* former .fa-step-forward */
+    content: "";
+}
+.lmb-interactive::before {
+    /* former .fa-hand-paper-o */
+    content: "";
+}
+.lmb-history::before {
+    /* former .fa-history */
+    content: "";
+}
+.lmb-system-job::before {
+    /* former .fa-desktop */
+    content: "";
+}
+.lmb-calendar::before {
+    /* former .fa-calendar */
+    content: "";
+}
+.lmb-calendar-times-o::before {
+    /* former .fa-calendar */
+    content: "";
+}
+.lmb-calendar-plus-o::before {
+    /* former .fa-calendar */
+    content: "";
+}
+.lmb-calendar-check-o::before {
+    /* former .fa-calendar */
+    content: "";
+}
+.lmb-job-history::before {
+    /* former .fa-history */
+    content: "";
+}
+.lmb-download::before {
+    /* former .fa-download */
+    content: "";
+}
+.lmb-upload::before {
+    /* former .fa-upload */
+    content: "";
+}
+.lmb-sitemap::before {
+    /* former .fa-sitemap */
+    content: "";
+}
+.lmb-code::before {
+    /* former .fa-code */
+    content: "";
+}
+.lmb-arrow-up::before {
+    /* former .fa-arrow-up */
+    content: "";
+}
+.lmb-arrow-down::before {
+    /* former .fa-arrow-down */
+    content: "";
+}
+.lmb-arrow-left::before {
+    /* former .fa-arrow-left */
+    content: "";
+}
+.lmb-arrow-right::before {
+    /* former .fa-arrow-right */
+    content: "";
+}
+.lmb-terminal::before {
+    /* former .fa-terminal */
+    content: "";
+}
+.lmb-puzzle-piece::before {
+    /* former .fa-puzzle-piece */
+    content: "";
+}
+.lmb-exclamation-triangle::before {
+    /* former .fa-exclamation-triangle */
+    content: "";
+}
+.lmb-database::before {
+    /* former .fa-database */
+    content: "";
+}
+.lmb-chain::before {
+    /* former .fa-link */
+    content: "";
+}
+.lmb-user-circle-o::before {
+    content: "";
+}
+.lmb-user-list::before {
+    /* former .fa-list-alt */
+    content: "";
+}
+.lmb-user-plus::before {
+    /* former .fa-user-plus */
+    content: "";
+}
+.lmb-group-plus::before {
+    /* former .fa-users */
+    content: "";
+    /* TODO */
+}
+.lmb-list-users::before {
+    /* former .fa-list */
+    content: "";
+}
+.lmb-help::before {
+    /* former .fa-question-circle */
+    content: "";
+}
+.lmb-view-versioned::before {
+    /* former .fa-eye */
+    content: "";
+}
+.lmb-check::before {
+    /* former .fa-check */
+    content: "";
+}
+.lmb-print::before {
+    /* former .fa-print */
+    content: "";
+}
+.lmb-symbols::before {
+    /* former .fa-ellipsis-h */
+    content: "";
+}
+.lmb-space-h::before, .lmb-arrows-h::before {
+    /* former .fa-arrows-h */
+    content: "";
+}
+.lmb-icon-cus.lmb-select-list::before {
+    content: "";
+}
+.lmb-chain-broken::before {
+    /* former .fa-chain-broken */
+    content: "";
+}
+.lmb-minus-circle::before {
+    /* former .fa-minus-circle */
+    content: "";
+}
+.lmb-manage-snapshot::before {
+    /* former .fa-list-alt */
+    content: "";
+}
+.lmb-list-ul-alt::before {
+    /* former .fa-table */
+    content: "";
+}
+.lmb-user-setting::before {
+    /* former .fa-cog */
+    content: "";
+}
+.lmb-folder::before {
+    /* former .fa-folder-o */
+    content: "";
+}
+.lmb-lock::before {
+    /* former .fa-lock */
+    content: "";
+}
+.lmb-selflock::before {
+    /* former .fa-lock */
+    content: "";
+    color: green;
+}
+.lmb-bell::before {
+    /* former .fa-bell-o */
+    content: "";
+}
+.lmb-user-alt::before {
+    /* former .fa-user */
+    content: "";
+}
+.lmb-wrench-alt::before {
+    /* former .fa-wrench */
+    content: "";
+}
+.lmb-mail::before {
+    /* former .fa-envelope-o */
+    content: "";
+}
+.lmb-cog-alt::before {
+    /* former .fa-cog */
+    content: "";
+}
+.lmb-pencil::before {
+    /* former .fa-pencil */
+    content: "";
+}
+.lmb-trash::before {
+    /* former .fa-trash */
+    content: "";
+}
+.lmb-resizer::before {
+    /* former .fa-arrows */
+    content: "";
+}
+.lmb-rep-txt::before {
+    /* former .fa-font */
+    content: "";
+}
+.lmb-rep-db::before {
+    /* former .fa-database */
+    content: "";
+}
+.lmb-rep-dbdesc::before {
+    /* former .fa-header */
+    content: "";
+}
+.lmb-rep-dbnew::before {
+    /* former .fa-plus */
+    content: "";
+}
+.lmb-rep-pic::before {
+    /* former .fa-image */
+    content: "";
+}
+.lmb-icon-cus.lmb-rep-uform::before {
+    content: "";
+}
+.lmb-rep-date::before {
+    /* former .fa-calendar */
+    content: "";
+}
+.lmb-rep-circle::before {
+    /* former .fa-circle-o */
+    content: "";
+}
+.lmb-rep-line::before {
+    /* former .fa-minus */
+    content: "";
+}
+.lmb-rep-rect::before {
+    /* former .fa-square-o */
+    content: "";
+}
+.lmb-rep-menu::before {
+    /* former .fa-folder-o */
+    content: "";
+}
+.lmb-rep-tab::before {
+    /* former .fa-object-ungroup */
+    content: "";
+}
+.lmb-rep-frame::before {
+    /* former .fa-object-group */
+    content: "";
+}
+.lmb-rep-submit::before {
+    /* former .fa-check-square */
+    content: "";
+}
+.lmb-rep-button::before {
+    /* former .fa-hand-pointer-o */
+    content: "";
+}
+.lmb-rep-scroll::before {
+    /* former .fa-arrows-h */
+    content: "";
+}
+.lmb-rep-text::before {
+    /* former .fa-mobile */
+    content: "";
+}
+.lmb-rep-area::before {
+    /* former .fa-tablet */
+    content: "";
+}
+.lmb-rep-check::before {
+    /* former .fa-check-square-o */
+    content: "";
+}
+.lmb-rep-radio::before {
+    /* former .fa-check-circle-o */
+    content: "";
+}
+.lmb-rep-hidden::before {
+    /* former .fa-eye-slash */
+    content: "";
+}
+.lmb-rep-js::before {
+    /* former .fa-code */
+    content: "";
+}
+.lmb-rep-php::before {
+    /* former .fa-terminal */
+    content: "";
+}
+.lmb-eye::before {
+    /* former .fa-eye */
+    content: "";
+}
+.lmb-create-file::before {
+    /* former .fa-file-o */
+    content: "";
+}
+.lmb-create-folder::before {
+    /* former .fa-folder-o */
+    content: "";
+}
+.lmb-lock-file::before {
+    /* former .fa-lock */
+    content: "";
+}
+.lmb-info-circle::before {
+    /* former .fa-info-circle */
+    content: "";
+}
+.lmb-eye-slash::before {
+    /* former .fa-eye-slash */
+    content: "";
+}
+.lmb-group-gear::before {
+    /* former .fa-users */
+    content: "";
+}
+.lmb-user-gear::before {
+    /* former .fa-user */
+    content: "";
+}
+.lmb-groups::before {
+    /* former .fa-users */
+    content: "";
+}
+.lmb-page-delete-alt::before {
+    /* former .fa-minus */
+    content: "";
+}
+.lmb-exclamation::before {
+    /* former .fa-exclamation */
+    content: "";
+}
+.lmb-copy::before {
+    /* former .fa-copy */
+    content: "";
+}
+.lmb-versioning-type::before {
+    /* former .fa-clock-o */
+    content: "";
+}
+.lmb-colors::before {
+    /* former .fa-paint-brush */
+    content: "";
+}
+.lmb-indicator-rule::before {
+    /* former .fa-lightbulb-o */
+    content: "";
+}
+.lmb-icon-cus.lmb-form-alt::before {
+    content: "";
+}
+.lmb-group-key::before {
+    /* former .fa-users */
+    content: "";
+}
+.lmb-application-key::before {
+    /* former .fa-tablet */
+    content: "";
+}
+.lmb-folder-key::before {
+    /* former .fa-folder-o */
+    content: "";
+}
+.lmb-application-form-key::before {
+    /* former .fa-list-alt */
+    content: "";
+}
+.lmb-chart-curve-key::before {
+    /* former .fa-line-chart */
+    content: "";
+}
+.lmb-bell-key::before {
+    /* former .fa-bell-o */
+    content: "";
+}
+.lmb-cog-key::before {
+    /* former .fa-cog */
+    content: "";
+}
+.lmb-rep-snr::before {
+    /* former .fa-files-o */
+    content: "";
+}
+.lmb-rep-formel::before {
+    /* former .fa-subscript */
+    content: "";
+}
+.lmb-file-odt::before {
+    /* former .fa-file-word-o */
+    content: "";
+}
+.lmb-aktiv::before {
+    /* former .fa-check */
+    content: "";
+}
+.lmb-erase::before {
+    /* former .fa-times */
+    content: "";
+}
+.lmb-calendar-alt::before {
+    /* former .fa-calendar */
+    content: "";
+}
+.lmb-long-arrow-up::before {
+    /* former .fa-long-arrow-up */
+    content: "";
+}
+.lmb-long-arrow-up {
+    /* prevents line-wrapping */
+    width: 7px;
+}
+.lmb-long-arrow-down::before {
+    /* former .fa-long-arrow-down */
+    content: "";
+}
+.lmb-long-arrow-down {
+    /* prevents line-wrapping */
+    width: 7px;
+}
+.lmb-connection::before {
+    /* former .fa-code-fork */
+    content: "";
+}
+.lmb-first::before {
+    /* former .fa-step-backward */
+    content: "";
+}
+.lmb-last::before {
+    /* former .fa-step-forward */
+    content: "";
+}
+.lmb-switch::before {
+    /* former .fa-random */
+    content: "";
+}
+.lmb-long-arrow-left::before {
+    /* former .fa-long-arrow-left */
+    content: "";
+}
+.lmb-refresh::before {
+    /* former .fa-refresh */
+    content: "";
+}
+.lmb-close::before {
+    /* former .fa-times-circle-o */
+    content: "";
+}
+.lmb-check-alt::before {
+    /* former .fa-check */
+    content: "";
+}
+.lmb-long-arrow-right::before {
+    /* former .fa-long-arrow-right */
+    content: "";
+}
+.lmb-close-alt::before {
+    /* former .fa-times */
+    content: "";
+}
+.lmb-chain-alt::before {
+    /* former .fa-chain */
+    content: "";
+}
+.lmb-file-text::before {
+    /* former .fa-file-text-o */
+    content: "";
+}
+.lmb-arrow-right::before {
+    /* former .fa-arrow-right */
+    content: "";
+}
+.lmb-info-circle-alt::before {
+    /* former .fa-info-circle */
+    content: "";
+}
+.lmb-action::before {
+    /* former .fa-retweet */
+    content: "";
+}
+.lmb-application-refresh::before {
+    /* former .fa-retweet */
+    content: "";
+}
+.lmb-calendar-alt2::before {
+    /* former .fa-calendar */
+    content: "";
+}
+.lmb-folder-open::before {
+    /* former .fa-folder-open-o */
+    content: "";
+}
+.lmb-folder2-open::before {
+    /* former .fa-folder-open-o */
+    content: "";
+    color: #A3A3A3;
+}
+.lmb-folder3-open::before {
+    /* former .fa-folder-open-o */
+    content: "";
+    color: green;
+}
+.lmb-folder4-open::before {
+    /* former .fa-folder-open-o */
+    content: "";
+}
+.lmb-folder5-open::before {
+    /* former .fa-folder-open-o */
+    content: "";
+    color: #5996d6;
+}
+.lmb-folder-closed::before {
+    /* former .fa-folder-o */
+    content: "";
+}
+.lmb-folder2-closed::before {
+    /* former .fa-folder-o */
+    content: "";
+    color: #A3A3A3;
+}
+.lmb-folder3-closed::before {
+    /* former .fa-folder-o */
+    content: "";
+    color: green;
+}
+.lmb-folder4-closed::before {
+    /* former .fa-folder-o */
+    content: "";
+}
+.lmb-folder5-closed::before {
+    /* former .fa-folder-o */
+    content: "";
+    color: #5996d6;
+}
+.lmb-pencil-alt::before {
+    /* former .fa-pencil */
+    content: "";
+}
+.lmb-clock-alt::before {
+    /* former .fa-clock-o */
+    content: "";
+}
+.lmb-connect::before {
+    /* former .fa-chain */
+    content: "";
+}
+.lmb-expand-all::before {
+    /* former .fa-expand */
+    content: "";
+}
+.lmb-collapse-all::before {
+    /* former .fa-compress */
+    content: "";
+}
+.lmb-expand-some::before {
+    /* former .fa-thumbs-o-up */
+    content: "";
+}
+.lmb-page-lock::before {
+    /* former .fa-lock */
+    content: "";
+}
+.lmb-info-circle-alt2::before {
+    /* former .fa-info-circle */
+    content: "";
+}
+.lmb-history-alt::before {
+    /* former .fa-history */
+    content: "";
+}
+.lmb-detail::before {
+    /* former .fa-info-circle */
+    content: "";
+}
+.lmb-table-color::before {
+    /* former .fa-paint-brush */
+    content: "";
+}
+.lmb-caret-up::before {
+    /* former .fa-caret-up */
+    content: "";
+}
+.lmb-key::before {
+    /* former .fa-key */
+    content: "";
+}
+.lmb-textsort-up::before {
+    /* former .fa-sort-alpha-asc */
+    content: "";
+}
+.lmb-textsort-down::before {
+    /* former .fa-sort-alpha-desc */
+    content: "";
+}
+.lmb-email::before {
+    /* former .fa-envelope-o */
+    content: "";
+}
+.lmb-user::before {
+    /* former .fa-user */
+    content: "";
+}
+.lmb-angle-down::before {
+    /* former .fa-angle-down */
+    content: "";
+}
+.lmb-angle-double-down::before {
+    /* former .fa-angle-double-down */
+    content: "";
+}
+.lmb-angle-up::before {
+    /* former .fa-angle-up */
+    content: "";
+}
+.lmb-eye-slash::before {
+    /* former .fa-eye-slash */
+    content: "";
+}
+.lmb-hide-col::before {
+    /* former .fa-eye-slash */
+    content: "";
+}
+.lmb-feed::before {
+    /* former .fa-rss */
+    content: "";
+}
+.lmb-tag::before {
+    /* former .fa-tag */
+    content: "";
+}
+.lmb-plus::before {
+    /* former .fa-plus */
+    content: "";
+}
+.lmb-mail-forward::before {
+    /* former .fa-mail-forward */
+    content: "";
+}
+.lmb-mail-reply::before {
+    /* former .fa-reply */
+    content: "";
+}
+.lmb-link::before {
+    /* former .fa-link */
+    content: "";
+}
+.lmb-file-code::before {
+    /* former .fa-file-code-o */
+    content: "";
+}
+.lmb-sign-out::before {
+    /* former .fa-sign-out */
+    content: "";
+}
+.lmb-reset::before {
+    /* former .fa-undo */
+    content: "";
+}
+.lmb-home::before {
+    /* former .fa-home */
+    content: "";
+}
+.lmb-align-justify::before {
+    /* former .fa-align-justify */
+    content: "";
+}
+.lmb-arrow-left::before {
+    /* former .fa-arrow-left */
+    content: "";
+}
+.lmb-play-circle::before {
+    /* former .fa-play-circle */
+    content: "";
+}
+.lmb-stop-circle::before {
+    /* former .fa-stop-circle */
+    content: "";
+}
+.lmb-edit::before {
+    /* former .fa-pencil */
+    content: "";
+}
+.lmb-edit-caret {
+    /* to work around the line wrapping! */
+    width: 6px;
+}
+.lmb-house::before {
+    /* former .fa-home */
+    content: "";
+}
+.lmb-picture-icon::before {
+    /* former .fa-picture-o */
+    content: "";
+}
+.lmb-check-alt2::before {
+    /* former .fa-check */
+    content: "";
+}
+.lmb-caret-up-alt::before {
+    /* former .fa-caret-up */
+    content: "";
+}
+.lmb-long-arrow-right-alt::before {
+    /* former .fa-long-arrow-right */
+    content: "";
+}
+.lmb-calendar-alt3::before {
+    /* former .fa-calendar */
+    content: "";
+}
+.lmb-user1-1::before {
+    /* former .fa-user */
+    content: "";
+}
+.lmb-user1-3::before {
+    /* former .fa-user-times */
+    content: "";
+}
+.lmb-user1-4::before {
+    /* former .fa-user */
+    content: "";
+    color: green;
+}
+.lmb-user2-1::before {
+    /* former .fa-user */
+    content: "";
+    opacity: 0.3;
+}
+.lmb-user2-2::before {
+    /* TODO */
+    opacity: 0.3;
+}
+.lmb-user2-3::before {
+    /* former .fa-user-times */
+    content: "";
+    opacity: 0.3;
+}
+.lmb-tutorial::before {
+    /* former .fa-graduation-cap */
+    content: "";
+}
+.lmb-tutorial-queries::before {
+    /* former .fa-database */
+    content: "";
+}
+.lmb-cogs-alt::before {
+    /* former .fa-cogs */
+    content: "";
+}
+.lmb-monitor::before {
+    /* former .fa-desktop */
+    content: "";
+}
+.lmb-line-chart-alt::before {
+    /* former .fa-line-chart */
+    content: "";
+}
+.lmb-plugin::before {
+    /* former .fa-puzzle-piece */
+    content: "";
+}
+.lmb-plugin-time::before {
+    /* former .fa-calendar */
+    content: "";
+}
+.lmb-history-alt-alt::before {
+    /* former .fa-history */
+    content: "";
+}
+.lmb-icon-cus.lmb-col-edit::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-rel-add::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-rel-del::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-folder-add::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-folder-edit::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-folder-del::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-folder-wrench::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-folder-search::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-folder-page::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-email-del::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-email-open::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-email-link::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-txt-ol-active::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-txt-linespace::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-txt-col::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-pics::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-layout::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-tables::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-pfeildown2::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-folder-up::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-user1-2::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-page-new::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-page-down::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-script-edit::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-folder-open::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-page-save::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-page-cut::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-page-go::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-folder-magnify::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-cal-month::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-cal-day::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-cal-week::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-cal-span::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-view-locked::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-hide-locked::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-script-go::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-script-save::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-folder-table::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-txt-caps::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-report-edit::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-table-refresh::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-report-user::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-user-chart::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-table-edit::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-rel-edit::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-chart-edit::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-txt-ol-add::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-center-shape::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-report-magnify::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-report-save::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-report-go::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-rel-view::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-door-out::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-email-copy::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-style-go::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-page-edit::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-dir-cam::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-report-picture::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-cog-edit::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-cog-add::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-cam-link::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-tables::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-time-akq::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-workflow-car::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-page-delete-fancy::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-save-search::before {
+    content: "";
+}
+.lmb-icon-32.lmb-calendar::before {
+    /* former .fa-calendar */
+    content: "";
+}
+.lmb-page-key-green::before {
+    /* former .fa-file-archive-o */
+    content: "";
+    color: green;
+}
+.lmb-page-lock-green::before {
+    /* former .fa-lock */
+    content: "";
+    color: green;
+}
+.lmb-rel-comment::before {
+    /* former .fa-comment */
+    content: "";
+}
+.lmb-paste::before {
+    /* former .fa-clipboard */
+    content: "";
+}
+.lmb-space-words::before, .lmb-exchange::before {
+    /* former .fa-exchange */
+    content: "";
+}
+.lmb-fav::before {
+    /* former .fa-star-o */
+    content: "";
+}
+.lmb-fav-filled::before {
+    /* former .fa-star */
+    content: "";
+}
+.lmb-search::before {
+    /* former .fa-search */
+    content: "";
+}
+.lmb-file-info::before {
+    /* former .fa-info */
+    content: "";
+}
+.lmb-file-upload::before {
+    /* former .fa-upload */
+    content: "";
+}
+.lmb-icon-cus.lmb-save-dir-view::before {
+    /* dir-cam */
+    content: "";
+}
+.lmb-periodic::before {
+    /* former .fa-calendar */
+    content: "";
+}
+.lmb-icon-cus.lmb-select-all::before {
+    content: "";
+}
+.lmb-new-window::before {
+    /* former .fa-external-link */
+    content: "";
+}
+.lmb-icon-cus.lmb-list-edit::before {
+    /* list-edit */
+    content: "";
+}
+.lmb-icon-cus.lmb-view-archived::before {
+    /* view-archived */
+    content: "";
+}
+.lmb-icon-32.lmb-crm::before, .lmb-icon.lmb-crm::before {
+    /* former .fa-group */
+    content: "";
+}
+.lmb-icon-32.lmb-file-manager::before {
+    /* former .fa-folder-open-o */
+    content: "";
+}
+.lmb-gantt::before {
+    /* former .fa-calendar */
+    content: "";
+}
+.lmb-icon-cus.lmb-file-text-black::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-icon-32.lmb-workflow-menu::before {
+    content: "";
+}
+.lmb-forbidden::before {
+    /* former .fa-lock */
+    content: "";
+    color: red;
+}
+.lmb-forbidden {
+    border: 2px dashed red;
+    padding: 2px;
+}
+.lmb-icon-cus.lmb-archived::before {
+    /* view-archived */
+    content: "";
+    color: orange;
+}
+.lmb-icon-cus.lmb-archived {
+    border: 2px dashed orange;
+    padding: 2px;
+}
+.lmb-unlocked::before {
+    /* former .fa-unlock */
+    content: "";
+    color: green;
+}
+.lmb-unlocked {
+    border: 2px dashed green;
+    padding: 2px;
+}
+.lmb-locked::before {
+    /* former .fa-lock */
+    content: "";
+    color: green;
+}
+.lmb-locked {
+    border: 2px dashed green;
+    padding: 2px;
+}
+.lmb-storage-folder::before {
+    /* former .fa-hdd-o */
+    content: "";
+}
+.lmb-mimetype::before {
+    /* former .fa-file-image-o */
+    content: "";
+}
+.lmb-folder-back::before {
+    /* former .fa-long-arrow-left */
+    content: "";
+}
+.lmb-phone::before {
+    /* former .fa-phone */
+    content: "";
+}
+.lmb-revisioner::before {
+    /* former .fa-code-fork  */
+    content: "";
+}
+.lmb-columns::before {
+    content: "";
+}
+.lmb-filter::before {
+    /* former .fa-filter */
+    content: "";
+}
+.lmb-microphone::before {
+    /* former .fa-microphone */
+    content: "";
+}
+.lmb-microphone-slash::before {
+    /* former .fa-microphone-slash */
+    content: "";
+}
+.lmb-tile::before {
+    /* former .fa-th-large */
+    content: "";
+}
+.lmb-italic::before {
+    /* former .fa-italic */
+    content: "";
+}
+.lmb-bold::before {
+    /* former .fa-bold */
+    content: "";
+}
+.lmb-underline::before {
+    /* former .fa-underline */
+    content: "";
+}
+.lmb-align-left::before {
+    /* former .fa-align-left */
+    content: "";
+}
+.lmb-align-bottom::before {
+    /* former .fa-align-center */
+    content: "";
+}
+.lmb-space-v::before {
+    /* former .fa-arrows-v */
+    content: "";
+}
+.lmb-resize-form::before {
+    /* */
+    content: "";
+}
+.lmb-icon.lmb-indent::before {
+    content: "";
+    /* indent */
+}
+.lmb-icon.lmb-status-1::before {
+    content: "";
+    /* fa-check */
+}
+.lmb-icon.lmb-status-2::before {
+    content: "";
+    /* fa-check */
+}
+.lmb-icon.lmb-status-3::before {
+    content: "";
+    /* fa-times */
+}
+.lmb-icon.lmb-status-4::before {
+    content: "";
+    /* fa-times */
+}
+.lmb-money::before {
+    /* former .fa-money */
+    content: "";
+}
+.lmb-universal-access::before {
+    /* former .universal-access */
+    content: "";
+}
+.lmb-icon-cus.lmb-copy-eye::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-copy-minus::before {
+    content: "";
+}
+.lmb-icon-cus.lmb-copy-edit::before {
+    content: "";
+}
+.lmb-spinner::before {
+    /* former .fa-spinner */
+    content: "";
+}
+.fa-spin {
+    -webkit-animation: fa-spin 2s infinite linear;
+    animation: fa-spin 2s infinite linear;
+}
+@keyframes fa-spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+/* to replace frames with iframes */
+.frame-container {
+    display: flex;
+    height: 100%;
+}
+.frame-container-vertical {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.frame-fill {
+    flex-grow: 1;
+}
+/*global*/
+body {
+    font-size: 11px;
+    font-family: Verdana, Arial, Helvetica;
+    background-color: #fffbf6;
+    color: #444444;
+    margin: 0;
+    padding: 0;
+    height: 95%;
+}
+/*global*/
+table {
+    font-size: 11px;
+    font-family: Verdana, Arial, Helvetica;
+    color: #444444;
+}
+/*global*/
+th {
+    font-weight: normal;
+}
+/*global*/
+iframe {
+    border: none;
+}
+/*navigation menu frame*/
+body.nav {
+    padding-left: 5px;
+    padding-bottom: 5px;
+}
+/*tools menu frame*/
+body.multiframe {
+    padding-right: 5px;
+    padding-bottom: 5px;
+}
+.lmbFrameShow {
+    background-color: #ffffff;
+    border: 1px solid #c0c0c0;
+    border-top: none;
+    height: 28px;
+    padding-left: 20%;
+    padding-top: 12px;
+}
+/* Frame Top */
+.lmbfringeFrameTop {
+    background-color: #ffffff;
+    margin: 5px;
+    margin-top: 0px;
+    margin-bottom: 0px;
+    height: 29px;
+}
+.lmbItemInfoTop {
+    background-color: transparent;
+    color: #909090;
+    font-size: 1.2em;
+    position: absolute;
+    left: 10px;
+    top: 5px;
+}
+.lmbItemUsernameTop {
+    background-color: transparent;
+    color: #909090;
+    font-size: 0.9em;
+    position: absolute;
+    right: 6px;
+    top: 8px;
+}
+.lmbItemLogoTopLeft {
+    background-color: transparent;
+    position: absolute;
+    left: 5px;
+}
+.lmbItemLogoTopRight {
+    background-color: transparent;
+    right: 20px;
+    top: 0px;
+    position: absolute;
+}
+#big_image {
+    text-align: center;
+}
+/* Frame Top 2 */
+.lmbfringeMenuTop2 {
+    position: absolute;
+    vertical-align: middle;
+    margin-left: 5px;
+    margin-right: 5px;
+    border-collapse: collapse;
+    height: 100%;
+    border: 1px solid #c0c0c0;
+}
+.lmbMenuItemTop2 {
+    color: #909090;
+    vertical-align: middle;
+    padding: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    margin: 0px;
+    font-size: 1.5em;
+    border: none;
+    text-decoration: none;
+    display: block;
+    cursor: pointer;
+    -webkit-touch-callout: none;
+    /* prevent selection of text */
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.lmbMenuItemTop2:hover {
+    text-decoration: none;
+}
+.lmbMenuItemInactiveTop2:hover {
+    text-decoration: none;
+    background-color: #fdfefd;
+}
+.lmbMenuItemspaceTop2 {
+    color: #909090;
+    padding: 10px;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    margin: 0px;
+    font-size: 1.2em;
+    overflow: hidden;
+    background: #ffffff;
+}
+.lmbMenuItemActiveTop2 {
+    background-color: #fdfefd;
+    cursor: pointer;
+}
+.lmbMenuItemInactiveTop2 {
+    background-color: #ffffff;
+    cursor: pointer;
+}
+.lmbMenuItemTop2Icon {
+    text-align: center;
+}
+.lmbMenuItemTop2Text {
+    text-align: center;
+    font-size: 0.7em;
+}
+.lmbMenuSpaceBottom {
+    display: none;
+}
+.lmbUpdateAvailable .lmbMenuItemTop2Icon {
+    color: #f9d421;
+}
+/* Frame nav */
+.lmbfringeFrameNav {
+    cursor: w-resize;
+    height: 100%;
+    width: 100%;
+}
+.lmbfringeFrameMultiframe {
+    height: 100%;
+    width: 100%;
+    cursor: w-resize;
+}
+.lmbfringeMenuNav {
+    background-color: #ffffff;
+    border: 1px solid #bbbbbb;
+    border-top: none;
+    color: #909090;
+    cursor: default;
+    width: 100%;
+    /* prevent selection of text */
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.lmbMenuHeaderNav {
+    background-color: #f5f5f5;
+    color: #909090;
+    cursor: pointer;
+    font-size: 1.2em;
+    height: 40px;
+    padding: 11px 0;
+    vertical-align: top;
+    position: relative;
+}
+.lmbMenuHeaderNavContent {
+    border-top: 1px solid #d0d0d0;
+}
+.lmbMenuHeaderImage {
+    border-right: 1px solid #d0d0d0;
+    cursor: pointer;
+    max-height: 30px;
+    max-width: 30px;
+    height: 30px;
+    padding: 5px;
+    position: absolute;
+    top: 0;
+    font-size: 25px;
+    width: 30px;
+    text-align: center;
+    line-height: 30px;
+}
+.lmbMenuItemHeaderNav {
+    text-align: left;
+    padding-left: 47px;
+    white-space: nowrap;
+    overflow: hidden;
+}
+.lmbMenuBodyNav {
+    overflow: hidden;
+    padding-left: 17px;
+    padding-top: 8px;
+    padding-right: 3px;
+    padding-bottom: 8px;
+    text-align: left;
+    box-sizing: border-box;
+    width: 100%;
+    table-layout: fixed;
+}
+.lmbMenuBodyNav td {
+    padding: 0;
+}
+.nav #multiframe .lmbMenuBodyNav tr td:first-child {
+    width: 20px;
+    text-align: center;
+}
+.nav #multiframe .lmbMenuBodyNav tr td:nth-child(3) {
+    width: 20px;
+    text-align: right;
+    cursor: pointer;
+}
+.lmbMenuSubBodyNav {
+    overflow: hidden;
+    width: 100%;
+    table-layout: fixed;
+    border-spacing: 0;
+    border-collapse: collapse;
+    white-space: nowrap;
+}
+.lmbMenuSubBodyNav td {
+    padding: 0;
+}
+.lmbMenuHide {
+    cursor: pointer;
+    height: 10px;
+    padding: 5px;
+    text-align: center;
+    border: 1px solid #c0c0c0;
+    border-top: none;
+    border-radius: 0 0 3px 3px;
+}
+.lmbMenuItemBodyNav {
+    text-align: left;
+    overflow: hidden;
+    line-height: 20px;
+}
+a.lmbMenuItemBodyNav {
+    display: block;
+}
+.lmbMenuItemBodyNav:hover {
+    text-decoration: none;
+}
+.lmbMenuItemBodyNav:not(.lmbMenuItemHeader):not(:nth-child(3)):hover {
+    background-color: #eaf3ee;
+}
+.lmbMenuItemImage {
+    margin-right: 4px;
+}
+.lmbMenuItemCaret {
+    color: #97c5ab;
+    font-size: 26px;
+    position: absolute;
+    right: 3px;
+}
+.lmbMenuItemActive {
+    color: #97c5ab;
+}
+.lmbNaviconLeftNav {
+    position: relative;
+    float: left;
+    left: -5px;
+    top: 0px;
+    cursor: pointer;
+}
+.lmbNaviconRightNav {
+    position: relative;
+    float: right;
+    right: -5px;
+    top: 0px;
+    cursor: pointer;
+}
+/* Frame main header */
+.lmbItemHeaderMain {
+    background-color: #ffffff;
+    border-bottom: 1px solid #c0c0c0;
+    box-sizing: border-box;
+    color: #909090;
+    cursor: default;
+    font-size: 1.4em;
+    height: 41px;
+    padding: 11px 20px;
+}
+.lmbItemHeaderMain td {
+    color: #909090;
+    font-size: 1.4em;
+}
+.helplink {
+    position: absolute;
+    right: 20px;
+}
+/* Frame main */
+.lmbfringeFrameMain {
+    height: 100%;
+    width: 100%;
+}
+.lmbPositionContainerMain {
+    background-color: #ffffff;
+    margin: 20px;
+    padding: 20px;
+    overflow: auto;
+    position: relative;
+    border: 1px solid #c0c0c0;
+    display: block;
+}
+.lmbPositionContainerMain.small {
+    width: 800px;
+}
+.lmbPositionContainerMainTabPool.small {
+    width: 800px;
+}
+/* 100% width/height of tabpool minus padding */
+.lmbPositionContainerMainTabPool.lmbFullSize {
+    height: calc(100% - 20px);
+    /* padding-bottom of 20px */
+}
+.lmbPositionContainerMainTabPool.lmbFullSize .tabpool {
+    height: calc(100% - 20px);
+    width: calc(100% - 40px);
+}
+.lmbPositionContainerMainTabPool.lmbFullSize .tabpool tr:last-child {
+    height: 100%;
+}
+/* Information Frame */
+.lmbfringeFrameMain .lmbinfo {
+    border: 1px solid #c0c0c0;
+    margin: 20px;
+    width: 800px;
+}
+.lmbfringeFrameMain .lmbinfo h2 {
+    background-color: #ffffff;
+    border-bottom: 1px solid #c0c0c0;
+    margin: 0 0;
+    padding: 10px;
+}
+.lmbfringeFrameMain .lmbinfo .infonav {
+    margin: 0 0 10px;
+    padding: 10px;
+}
+.lmbfringeFrameMain .lmbinfo table {
+    margin: 10px;
+    width: 95%;
+}
+.lmbfringeFrameMain .lmbinfo .footer {
+    border-top: 1px solid #c0c0c0;
+    background-color: #f5f5f5;
+    padding: 10px;
+    text-align: justify;
+}
+/* gtab Tabelle außen */
+.lmbfringeGtab {
+    background-color: #ffffff;
+    margin: 20px;
+    overflow: auto;
+    position: relative;
+    border: 1px solid #c0c0c0;
+    padding: 20px;
+    display: block;
+}
+/* gtab Popup-Tabelle außen */
+.lmbPopupDiv {
+    padding-left: 8px;
+    padding-bottom: 4px;
+    width: 100%;
+    background-color: #f5f5f5;
+}
+.lmbPopupGtab {
+    background-color: #f5f5f5;
+    width: 100%;
+    overflow: visible;
+}
+/* gtab Tabelle Relation Tabmenu */
+.lmbTableHeader {
+    display: flex;
+    flex-wrap: wrap;
+    width: 100%;
+    border-bottom: 1px solid #c0c0c0;
+}
+.lmbTableHeader .lmbGtabTabmenuInactive, .lmbTableHeader .lmbGtabTabmenuActive {
+    clear: none;
+    float: none;
+    width: initial;
+    display: inline-block;
+    border: 0;
+}
+.lmbGtabTabmenuTable {
+    border-collapse: collapse;
+    border-spacing: 1px;
+}
+.lmbGtabTabmenuActive {
+    display: none;
+    color: #444444;
+    font-size: 1.3em;
+    white-space: nowrap;
+    overflow: visible;
+    padding: 3px 20px 3px 0;
+    border: 1px solid #d0d0d0;
+    border-bottom: none;
+    cursor: pointer;
+}
+.lmbGtabTabmenuInactive, .lmbGtabTabmenuTable .lmbGtabTabmenuActive {
+    background-color: #ffffff;
+    white-space: nowrap;
+    overflow: visible;
+    padding: 3px 20px 5px 0;
+    border: none;
+    border-bottom: 1px solid #c0c0c0;
+    cursor: pointer;
+    float: left;
+    margin: 3px 0;
+}
+.lmbGtabTabmenuTable.multiTab .lmbGtabTabmenuActive {
+    color: #444444;
+    clear: none;
+    float: left;
+    margin: 1px 0;
+    padding: 3px 20px 3px 0;
+    width: auto;
+}
+table .lmbGtabTab {
+    clear: none;
+    margin: 1px 0;
+    padding: 3px 20px 3px 0;
+    width: auto;
+    border-spacing: 0;
+}
+td .lmbGtabTabActive {
+    color: #333333;
+    font-size: 1.3em;
+}
+.lmbGtabTabInactive, .lmbGtabTabActive {
+    color: #7D7D7D;
+    font-size: 1.1em;
+    white-space: nowrap;
+    overflow: visible;
+    padding: 3px 10px 3px 10px;
+    border: none;
+    border-bottom: 1px solid #c0c0c0;
+    cursor: pointer;
+    margin: 3px 0;
+    vertical-align: baseline;
+}
+td .lmbGtabTabSpace {
+    width: 100%;
+}
+.lmbGtabTabBody {
+    font-weight: normal;
+    border: 1px solid #c0c0c0;
+    width: calc(95% - 2px);
+    /* 2x border */
+}
+.lmbGtabTabmenuSpace {
+    display: none;
+    width: 100%;
+    background-color: #f5f5f5;
+    border: 1px solid #f5f5f5;
+    border-bottom: 1px solid #c0c0c0;
+    border-left: 1px solid #c0c0c0;
+    font-size: 1.1em;
+    padding: 3px;
+    padding-top: 4px;
+}
+.GtabTableFringeHeader .lmbGtabTabmenuActive {
+    border: none;
+    /* maybe for 100% header width */
+    box-sizing: border-box;
+    width: 100%;
+    border-bottom: 1px solid #d0d0d0;
+    display: block;
+    margin-bottom: 5px;
+    clear: both;
+}
+.lmbGtabTabmenuTable .lmbGtabTabmenuActive {
+    /* maybe for 100% header width */
+    box-sizing: border-box;
+    width: 100%;
+    margin-top: 0px;
+    display: table-cell;
+    font-size: 1.3em;
+    clear: both;
+}
+/* gtab Tabelle Subheader Tabmenu */
+.lmbGtabSubheaderTable {
+    width: 100%;
+    border-collapse: collapse;
+    border-spacing: 1px;
+}
+.lmbGtabSubheaderActive {
+    background-color: #eeeeee;
+    color: #333333;
+    text-align: center;
+    font-size: 1.1em;
+    white-space: nowrap;
+    overflow: visible;
+    padding: 3px;
+    padding-left: 20px;
+    padding-right: 20px;
+    border: 1px solid #c0c0c0;
+    border-bottom: none;
+    cursor: pointer;
+}
+.lmbGtabSubheaderInactive {
+    background-color: #ffffff;
+    color: #7D7D7D;
+    text-align: center;
+    font-size: 1.1em;
+    white-space: nowrap;
+    overflow: visible;
+    padding: 3px;
+    cursor: pointer;
+    padding-left: 20px;
+    padding-right: 20px;
+    border: 1px solid #c0c0c0;
+}
+/* Tabulator Tabelle Formular oben positioniert*/
+.lmbGtabTabulatorFrame {
+    background-color: #f5f5f5;
+    border: 1px solid #c0c0c0;
+    z-index: 1;
+}
+.lmbGtabTabulatorActive {
+    background-color: #f5f5f5;
+    color: #333333;
+    font-size: 1.1em;
+    white-space: nowrap;
+    overflow: visible;
+    padding: 3px;
+    padding-left: 20px;
+    padding-right: 20px;
+    border: 1px solid #c0c0c0;
+    border-bottom: none;
+    cursor: pointer;
+    float: left;
+    position: relative;
+    bottom: -1px;
+    z-index: 2;
+}
+.lmbGtabTabulatorInactive {
+    background-color: #eeeeee;
+    color: #333333;
+    font-size: 1.1em;
+    white-space: nowrap;
+    overflow: visible;
+    padding: 3px;
+    cursor: pointer;
+    padding-left: 20px;
+    padding-right: 20px;
+    border: 1px solid #c0c0c0;
+    border-bottom: none;
+    float: left;
+}
+.lmbGtabTabulatorSpace {
+    font-size: 1.1em;
+    padding: 3px;
+    padding-top: 4px;
+    border-bottom: 1px solid #c0c0c0;
+    border-bottom: none;
+}
+/* Tabulator Tabelle Formular links positioniert */
+.lmbGtabTabulatorLeftFrame {
+    background-color: #f5f5f5;
+    border-collapse: collapse;
+    border: 1px solid #c0c0c0;
+    border-left: none;
+}
+.lmbGtabTabulatorLeftActive {
+    background-color: #f5f5f5;
+    color: #333333;
+    font-size: 1.1em;
+    white-space: nowrap;
+    overflow: visible;
+    padding: 5px;
+    padding-left: 20px;
+    padding-right: 20px;
+    border: 1px solid #c0c0c0;
+    border-right: 1px solid transparent;
+    cursor: pointer;
+}
+.lmbGtabTabulatorLeftInactive {
+    background-color: #ffffff;
+    color: #7D7D7D;
+    font-size: 1.1em;
+    white-space: nowrap;
+    overflow: visible;
+    padding: 5px;
+    cursor: pointer;
+    padding-left: 20px;
+    padding-right: 20px;
+    border: 1px solid #c0c0c0;
+}
+.lmbGtabTabulatorLeftSpace {
+    font-size: 1.1em;
+    opacity: 0.4;
+    height: 100%;
+    overflow: hidden;
+    border-right: 1px solid #c0c0c0;
+}
+/* gtab Tabelle Liste Kopf */
+.lmbGtabTop {
+    padding: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    height: 1px;
+}
+.gtabHeaderTop {
+    border-top: 1px solid #c0c0c0;
+    height: 8px;
+}
+.gtabHeaderMenuTR {
+    overflow: hidden;
+    padding: 2px 0;
+}
+.gtabHeaderMenuTD {
+    cursor: pointer;
+    color: #444444;
+    padding-left: 5px;
+    padding-right: 5px;
+    height: 18px;
+}
+.gtabHeaderMenuTD.hoverable:hover {
+    text-decoration: underline;
+}
+.gtabHeaderSymbolTR {
+    background-color: #ffffff;
+}
+.gtabHeaderSymbolTD {
+    margin-top: 0;
+    height: 23px;
+}
+.gtabHeaderInputTD {
+    background-color: #ffffff;
+    overflow: hidden;
+    padding: 2px;
+    border: 1px solid #d0d0d0;
+}
+.gtabHeaderInputINP {
+    background-image: url("../images/legacy/find.png");
+    padding-left: 14px;
+    background-repeat: no-repeat;
+    background-position: 2px 3px;
+    margin: 3px 0;
+    border: 1px solid #d0d0d0;
+}
+select.gtabHeaderInputINP {
+    background-color: white;
+    padding: 0.1rem;
+}
+.gtabHeaderInputINPajax {
+    background-image: url("../images/legacy/find_green.png");
+}
+.gtabHeaderTitleTD {
+    background-color: #eeeeee;
+    vertical-align: middle;
+    overflow: hidden;
+    cursor: col-resize;
+    padding-left: 4px;
+    border-right: 1px solid #d0d0d0;
+    border-left: 1px solid #d0d0d0;
+    line-height: 20px;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+.gtabHeaderTitleTDOver {
+    background-color: #eeeeee;
+    background-image: url("../images/legacy/arrow_bullet_left.gif");
+    background-repeat: no-repeat;
+    padding-left: 20px;
+}
+.gtabHeaderTitleTDItem {
+    font-weight: bold;
+    cursor: pointer;
+    float: left;
+    overflow: hidden;
+    white-space: nowrap;
+}
+.gtabHeaderTitleTDItemOver {
+    background-color: #eeeeee;
+    border: 1px solid grey;
+    padding-left: 5;
+    padding-right: 5;
+    font-weight: bold;
+    cursor: pointer;
+}
+/* gtab Tabelle Liste Body */
+.lmbfringeGtabSearch {
+    background-color: #eeeeee;
+    border-collapse: collapse;
+    border-spacing: 1px;
+    table-layout: fixed;
+}
+.lmbfringeGtabTable {
+    background-color: #bbbbbb;
+    border-collapse: collapse;
+    border-spacing: 1px;
+    table-layout: fixed;
+}
+.lmbfringeGtabBody {
+    background-color: #eeeeee;
+    border-collapse: collapse;
+    border-spacing: 1px;
+    opacity: 0.9;
+}
+.gtabBodyTR {
+    background-color: #ffffff;
+    overflow: hidden;
+}
+.gtabBodyTRColorA {
+    background-color: #ffffff;
+}
+.gtabBodyTRColorB {
+    background-color: none;
+}
+.gtabBodyTD {
+    vertical-align: top;
+    overflow: hidden;
+    padding: 2px;
+    border: 1px solid #d0d0d0;
+}
+.gtabBodyTDCL {
+    vertical-align: top;
+    overflow: hidden;
+    padding: 2px;
+    border: 1px solid #d0d0d0;
+}
+.gtabBodyTDCL .gtabBodyINP {
+    background-color: transparent;
+}
+.gtabBodyINP {
+    background-color: rgba(255, 255, 255, 0.3);
+}
+/* gtab Tabelle Liste Fuß */
+.lmbGtabBottom {
+    display: none;
+}
+.gtabFooterTAB {
+    height: 23px;
+    vertical-align: middle;
+    width: 100%;
+}
+/* gtab Tabelle Details */
+.gtabBodyDetailFringe {
+    background-color: #eeeeee;
+    border: 1px solid #c0c0c0;
+}
+.gtabBodyDetailTopBorder {
+    height: 1px;
+    background-color: #c0c0c0;
+}
+.gtabBodyDetailTopSpace {
+    height: 5px;
+}
+.gtabBodyDetailTD {
+    border: none;
+    padding: 5px;
+    padding-right: 30px;
+    width: 30%;
+}
+.gtabBodyDetailNeedTitle {
+    color: red;
+}
+.gtabBodyDetailNeedVal {
+    border: 2px solid red !important;
+}
+.gtabBodyDetailValTD {
+    border: none;
+    padding-top: 4px;
+    padding-bottom: 4px;
+    padding-right: 20px;
+    overflow: hidden;
+    width: 70%;
+}
+.gtabBodyDetailValLI {
+    list-style-type: disc;
+}
+.gtabGrouping {
+    background-color: #97c5ab;
+    padding: 2px;
+}
+.gtabchange {
+    font-weight: normal;
+    width: 95%;
+}
+DIV.gtabchange {
+    border: 1px solid #c0c0c0;
+    min-height: 18px;
+    box-sizing: border-box;
+    padding: 2px;
+}
+INPUT.gtabchange, TEXTAREA.gtabchange, SELECT.gtabchange {
+    font-weight: normal;
+    background-color: #ffffff;
+    border: 1px solid #c0c0c0;
+    font-size: 11px;
+}
+input, select, textarea {
+    color: inherit;
+    /* to prevent the default black of some browsers */
+}
+.fgtabchange {
+    background-color: #eeeeee;
+    border: 1px solid #c0c0c0;
+    padding: 0px;
+    margin: 0px;
+    font-size: 11px;
+    opacity: 0.8;
+    filter: alpha(opacity=70);
+    box-sizing: border-box;
+    overflow: auto;
+    /* fixes IE-Scrollbar-Bug */
+}
+INPUT.fgtabchange, TEXTAREA.fgtabchange, SELECT.fgtabchange, TABLE.fgtabchange, TD.fgtabchange {
+    background-color: #ffffff;
+    border: 1px solid #c0c0c0;
+    opacity: 1;
+    filter: alpha(opacity=100);
+    font-size: 11px;
+    padding: 2px;
+    color: #444444;
+}
+DIV.fgtabchange {
+    min-height: 18px;
+    overflow-y: auto;
+    padding: 2px;
+    box-sizing: border-box;
+}
+INPUT.gmultilang {
+    background-image: url("../images/legacy/fa-language_16.png");
+    background-repeat: no-repeat;
+    background-position: right center;
+}
+/* gtab Tabelle Relation */
+.gtabHeaderRelationTAB {
+    border: 1px solid #c0c0c0;
+}
+.gtabFringeRelationBody {
+    background-color: #eeeeee;
+    border: 1px solid #c0c0c0;
+    width: 94%;
+}
+.gtabHeaderRelationTAB i {
+    padding: 3px;
+}
+.gtabHeaderRelationTAB input {
+    margin: 3px;
+}
+/*INPUT[readonly][id^=g_]*/
+/* Tabelle Kacheldarstellung */
+.tabTileSubform:hover .tabTileResize {
+    display: block;
+}
+.tabTileResize {
+    position: absolute;
+    display: none;
+    right: 0px;
+    bottom: 2px;
+    opacity: 0.7;
+    cursor: pointer;
+    z-index: 99999;
+}
+/* Tabelle allgemein */
+.tabfringe {
+    background-color: #ffffff;
+    padding: 0px;
+}
+table.hoverable tr.tabBody:hover {
+    background-color: #eaf3ee;
+}
+.tabHeader {
+    background-position: top;
+    background-repeat: repeat-x;
+    background-color: #ffffff;
+}
+.tabHeaderItem {
+    font-weight: bold;
+    padding: 5px 5px 5px 0;
+    vertical-align: top;
+}
+.tabSubHeader {
+    background-color: #97c5ab;
+}
+.tabSubHeaderItem {
+    padding: 2px;
+}
+.tabItem2 {
+    background-color: #c0c0c0;
+}
+.tabSortableHandle {
+    cursor: move;
+}
+.vAlignMiddle {
+    vertical-align: middle;
+}
+.vAlignTop {
+    vertical-align: top;
+}
+.txtAlignCenter {
+    text-align: center;
+}
+.txtAlignLeft {
+    text-align: left;
+}
+/* Reiter vertikal Tabelle  */
+.tabHpoolfringe {
+    border: 1px solid #c0c0c0;
+    background-color: #ffffff;
+    border-collapse: collapse;
+    border-spacing: 1px;
+    padding: 5px;
+}
+.tabHpoolItemTR {
+    border: none;
+}
+.tabHpoolItemActive {
+    color: #000000;
+    font-size: 1.1em;
+    white-space: nowrap;
+    overflow: visible;
+    padding: 10px;
+    padding-left: 20px;
+    padding-right: 20px;
+    background-color: #ffffff;
+    border: 1px solid #c0c0c0;
+    border-right: none;
+    border-bottom: none;
+    cursor: pointer;
+}
+.tabHpoolItemTR:nth-last-child(2) .tabHpoolItemActive {
+    border-bottom: 1px solid #c0c0c0;
+}
+.tabHpoolItemInactive {
+    color: #909090;
+    font-size: 1.1em;
+    white-space: nowrap;
+    overflow: visible;
+    padding: 10px;
+    cursor: pointer;
+    padding-left: 20px;
+    padding-right: 20px;
+    border: 1px solid #c0c0c0;
+}
+.tabHpoolItemSpaceGtab {
+    height: 100%;
+}
+/* Reiter horizontal Tabelle */
+.tabpool {
+    margin: 20px;
+}
+.tabpoolfringe {
+    border: 1px solid #c0c0c0;
+    background-color: #ffffff;
+    border-top: none;
+    border-collapse: collapse;
+    border-spacing: 1px;
+    padding: 5px;
+    margin: 20px;
+}
+.tabpoolItemActive {
+    background-color: #ffffff;
+    color: #000000;
+    text-align: center;
+    font-size: 1.1em;
+    white-space: nowrap;
+    overflow: visible;
+    padding: 3px;
+    padding-left: 20px;
+    padding-right: 20px;
+    border: 1px solid #c0c0c0;
+    border-bottom-color: #ffffff;
+    cursor: pointer;
+}
+.tabpoolItemInactive {
+    color: #909090;
+    text-align: center;
+    font-size: 1.1em;
+    white-space: nowrap;
+    overflow: visible;
+    padding: 3px;
+    cursor: pointer;
+    padding-left: 20px;
+    padding-right: 20px;
+    border: 1px solid #c0c0c0;
+}
+.tabpoolItemSpace {
+    width: 100%;
+    border-bottom: 1px solid #c0c0c0;
+    background-color: transparent;
+}
+.tabpoolItemSpaceGtab {
+    width: 100%;
+    border-bottom: 1px solid #c0c0c0;
+}
+.tabpoolItemInactive:hover {
+    background-color: #c0c0c0;
+}
+.lmb-tabpoolItemnohover:hover {
+    background-color: #ffffff;
+    cursor: default;
+}
+/* Kontextmenus */
+/*!
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+/* Kontextmenus */
+.lmbContextMenu {
+    background-color: #ffffff;
+    border: 1px solid #c0c0c0;
+    border-left: 3px solid #97c5ab;
+    min-width: 150px;
+    padding: 5px;
+    position: absolute;
+    box-shadow: 7px 8px 9px -4px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+}
+.lmbContextMenu.lmbContextMenuMove {
+    padding: 0px 5px 5px 5px;
+}
+.lmbContextMenu .lmbContextLink {
+    color: #444444;
+    cursor: pointer;
+    display: block;
+    padding: 5px 2px;
+    text-decoration: none;
+}
+.lmbContextMenu .lmbContextLink:hover {
+    background-color: #eaf3ee;
+    color: #444444;
+    text-decoration: none;
+}
+.lmbContextMenu .lmbContextLink:visited {
+    color: #444444;
+}
+.lmbContextMenu .lmbContextRow {
+    text-decoration: none;
+    display: block;
+    padding: 3px 2px;
+}
+.lmbContextMenu .lmbContextRow.lmbContextRowMove {
+    padding-top: 5px;
+    cursor: move;
+}
+.lmbContextMenu .lmbContextRowSeparatorLine {
+    background-color: #c0c0c0;
+    height: 1px;
+    left: 4px;
+    margin: 5px 0;
+    overflow: hidden;
+    width: 100%;
+}
+.lmbContextMenu .lmbContextLeft {
+    vertical-align: middle;
+    margin-right: 3px;
+}
+.lmbContextMenu .lmbContextRight {
+    vertical-align: middle;
+    margin-left: 6px;
+    right: 4px;
+    position: absolute;
+}
+.lmbContextMenu .lmbContextItem {
+    padding: 0 16px;
+    /* earlier 12 */
+}
+.lmbContextMenu .lmbContextItemIcon {
+    padding-right: 12px;
+    /* earlier pad-left: 6 */
+}
+.lmbContextMenu .lmbContextItem.inactive {
+    opacity: 0.5;
+    font-style: oblique;
+}
+.lmbContextMenu .lmbContextItemIcon.inactive {
+    opacity: 0.5;
+    font-style: oblique;
+}
+.lmbContextMenu .lmbContextTop {
+    cursor: pointer;
+    padding-bottom: 8px;
+}
+.lmbContextMenu .lmbContextHeader {
+    height: 18px;
+    font-weight: bold;
+    background-color: #ffffff;
+    padding-top: 6px;
+    border-bottom: 1px solid #c0c0c0;
+    border-top: 1px solid #c0c0c0;
+    margin: 0 -5px;
+    text-align: center;
+}
+.lmbContextMenu .lmbContextHeader:first-child {
+    margin-top: -5px;
+    border-top: none;
+}
+.lmbContextMenu .lmbContextHeader[onclick] {
+    cursor: pointer;
+}
+.lmbContextMenu .lmbContextHeader[onclick]:hover {
+    background-color: #97c5ab;
+}
+/*!
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+.lmbFileTreeItem {
+    cursor: pointer;
+}
+.lmbFileTreeItem:hover {
+    cursor: pointer;
+    background-color: #ffffff;
+    text-decoration: none;
+}
+.lmbGlistBodyNotice {
+    color: #444444;
+    padding: 4px;
+    display: flex;
+    border: 1px solid #eaf3ee;
+    border-bottom: 1px solid #eaf3ee;
+    border-radius: 3px 3px 3px 3px;
+    white-space: nowrap;
+    align-items: center;
+    margin-right: 1px;
+    margin-left: 1px;
+}
+.lmbGlistBodyNotice.notice1 {
+    background-color: #74ba6a;
+    color: #000000;
+    align-items: baseline;
+    flex-basis: 100%;
+    order: 0;
+    /* flex-wrap: wrap; */
+}
+.lmbGlistBodyNotice.notice2 {
+    background-color: #f09b4d;
+    color: #000000;
+    order: 1;
+}
+.lmbGlistBodyNotice.notice3 {
+    background-color: #f0cd4d;
+    color: #000000;
+    order: 1;
+}
+.lmbGlistBodyNotice.notice4 {
+    background-color: #ff725c;
+    color: #000000;
+    order: 1;
+}
+.lmbGlistBodyNotice.notice5 {
+    background-color: #c593ed;
+    color: #000000;
+    order: 1;
+}
+.lmbGlistBodyNotice.notice6 {
+    background-color: #32a852;
+    color: #FFFFFF;
+    color: #000000;
+    order: 1;
+}
+.lmbGlistBodyNotice.notice7 {
+    background-color: #74ba6a;
+    color: #000000;
+    order: 1;
+}
+.lmbValidity_list {
+    background-color: #74ba5c;
+    color: #000000;
+    font-weight: bold;
+    border: 1px solid #eaf3ee;
+    border-radius: 3px 3px 3px 3px;
+    padding: 2px;
+    margin-left: 2px;
+    text-align: right;
+    height: 12px;
+    cursor: pointer;
+}
+/* relation tree ------------------------------------------------------------------------*/
+.rtree1 {
+    background: #97c5ab;
+    color: white;
+    font-weight: bold;
+    border: 1px solid #bbbbbb;
+    border-radius: 3px 3px 3px 3px;
+    padding: 3px;
+}
+.rtree2 {
+    background: #ffffff;
+    border: 1px solid #909090;
+    border-radius: 3px 3px 3px 3px;
+    padding: 3px;
+}
+.lmb-green-hover-red {
+    color: green;
+}
+.lmb-black-hover-red {
+    color: #444444;
+}
+.lmb-green-hover-red:hover, .lmb-black-hover-red:hover {
+    color: red;
+}
+.lmb-table-search-hide {
+    display: none;
+}
+label {
+    cursor: pointer;
+}
+.lmbfringeMenuSearch {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    transition: box-shadow 0.3s ease-in-out;
+}
+.lmbfringeMenuSearch .lmbMenuHeaderNav {
+    padding-top: 7px;
+    padding-bottom: unset;
+}
+.lmbTableSearch {
+    width: calc(100% - 7px);
+    padding: 5px;
+    transition: box-shadow 0.3s ease-in-out;
+}
+.lmbTableSearch:not(:placeholder-shown) {
+    box-shadow: 0 0 2px 1px #97c5ab;
+    border: 1px solid #97c5ab;
+}
+/* Sonstiges */
+/*ajax container*/
+DIV.ajax_container {
+    z-index: 99999;
+    background-color: #ffffff;
+    border: 1px solid #c0c0c0;
+    border-left: 3px solid #97c5ab;
+    min-width: 150px;
+    padding: 5px;
+    position: absolute;
+}
+/*container allgemein*/
+.lmb_container {
+    padding: 5px;
+    background-color: #eeeeee;
+    border: 1px solid #c0c0c0;
+    border-radius: 3px 3px 3px 3px;
+}
+.lmbFileVersionDiff {
+    border-width: 1px;
+    border-color: #d0d0d0;
+    background-color: #FFFF9C;
+    border-style: solid;
+    /* TODO: custom color - this is an old yellow*/
+    position: absolute;
+    z-index: 999999;
+    overflow: visible;
+    padding: 10px;
+}
+.lmbUploadProgress {
+    height: 14px;
+    width: 100%;
+    border: 1px solid #c0c0c0;
+    background-color: #eeeeee;
+    font-style: italic;
+    float: left;
+    position: relative;
+    display: none;
+}
+.lmbUploadProgressBar {
+    background-color: #97c5ab;
+    width: 0%;
+    height: 100%;
+    overflow: hidden;
+    white-space: nowrap;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+}
+.progress {
+    height: 20px;
+    margin-bottom: 20px;
+    overflow: hidden;
+    background-color: #f5f5f5;
+    border-radius: 4px;
+    -webkit-box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+.progress-bar {
+    float: left;
+    width: 0;
+    height: 100%;
+    font-size: 12px;
+    line-height: 20px;
+    color: #fff;
+    text-align: center;
+    background-color: #337ab7;
+    -webkit-box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+    box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.15);
+    /* takes too long for quick progress updates -> progress bar half full on 100% */
+    /* -webkit-transition:width .6s ease; */
+    /* -o-transition:width .6s ease;transition:width .6s ease; */
+}
+.lmbUploadDragenter {
+    background: #f5f5f5;
+    opacity: 0.2;
+    filter: alpha(opacity=20);
+}
+/* Drop-Area border */
+.lmbUploadDroparea {
+    border: 2px dashed transparent;
+    margin: -2px;
+    /* because of dropover/dropleave events firing too fast */
+    transition: border-color 0.2s ease-in-out;
+}
+body.lmbBodyDropareaActive * {
+    pointer-events: none;
+}
+body.lmbBodyDropareaActive .lmbUploadDroparea {
+    pointer-events: stroke;
+    border-color: #97c5ab;
+    transition-duration: 0.01s;
+}
+.lmbUploadDroparea.lmbUploadDropareaHover {
+    border-color: green;
+}
+.lmbUploadDroparea.lmbUploadDropareaHover * {
+    pointer-events: none;
+}
+.modalOverlay {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0px;
+    left: 0px;
+    background-color: rgba(0, 0, 0, 0.3);
+    /* black semi-transparent */
+    z-index: 99990;
+}
+.ui-button {
+    background-color: #eeeeee !important;
+    border: 1px solid #97c5ab !important;
+    color: #444444 !important;
+    padding: 3px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+.markAsActive {
+    background-image: url(../images/legacy/ok.gif);
+    background-position: right;
+    background-repeat: no-repeat;
+    padding-right: 20px;
+}
+.markAsDisabled {
+    opacity: 0.6;
+}
+.markForDelete {
+    color: red;
+    text-decoration: line-through;
+}
+/*waitsymbol*/
+.lmbWaitSymbol {
+    background-color: transparent;
+    background-image: "../images/legacy/wait1.gif";
+    background-repeat: no-repeat;
+    z-index: 99999;
+    height: 150px;
+    width: 150px;
+}
+/*hover in Upload minimized */
+.lmbImageUpload:hover > div {
+    visibility: visible;
+}
+.lmbImageUploadOptions {
+    visibility: hidden;
+    background-color: #ffffff;
+    opacity: 0.93;
+}
+/*Global*/
+A:link {
+    text-decoration: none;
+    color: #444444;
+}
+A:visited {
+    text-decoration: none;
+    color: #444444;
+}
+A:hover {
+    text-decoration: underline;
+    color: #909090;
+    cursor: pointer;
+}
+.link {
+    text-decoration: none;
+    color: #444444;
+    cursor: pointer;
+}
+SPAN.HEADER {
+    FONT-STYLE: oblique;
+    font-size: 1.1em;
+    color: #444444;
+}
+DEL {
+    background-color: #fcc;
+}
+INS {
+    background-color: #cfc;
+}
+TABLE.popmenu {
+    border-collapse: collapse;
+    border-spacing: 0;
+    EMPTY-CELLS: show;
+    table-layout: fixed;
+    padding: 0;
+    border: none;
+    background-color: #c0c0c0;
+}
+TR.popmenu {
+    font-weight: normal;
+    color: #444444;
+    overflow: hidden;
+    background-color: #c0c0c0;
+}
+TD {
+    font-weight: normal;
+    /* color: $farbschemaWEB2; */
+}
+SELECT {
+    font-weight: normal;
+    background-color: #ffffff;
+    border: 1px solid #c0c0c0;
+    font-size: 11px;
+}
+SELECT.contextmenu {
+    font-weight: normal;
+    background-color: #eeeeee;
+}
+INPUT {
+    font-weight: normal;
+    border: 1px solid #c0c0c0;
+    font-size: 11px;
+    background-color: #ffffff;
+}
+INPUT:disabled {
+    opacity: 0.8;
+}
+INPUT[type=button] {
+    cursor: pointer;
+}
+INPUT.checkbox {
+    font-weight: normal;
+    background-color: transparent;
+    border: none;
+    height: 12px;
+    width: 12px;
+}
+INPUT.submit {
+    font-size: 1.1em;
+    background-color: #eeeeee;
+    border: 1px solid #97c5ab;
+    padding: 3px;
+    padding-left: 10px;
+    padding-right: 10px;
+}
+INPUT.lmbSbmConfirm {
+    background-color: green;
+}
+INPUT.lmbSbmAbort {
+    border: 1px solid red;
+}
+INPUT.contextmenu {
+    vertical-align: middle;
+    background-color: #eeeeee;
+}
+TEXTAREA {
+    font-family: Verdana, Arial, Helvetica;
+    resize: none;
+    font-weight: normal;
+    background-color: #ffffff;
+    border: 1px solid #c0c0c0;
+    font-size: 11px;
+    resize: none;
+}
+i.lmb-icon[onclick] {
+    cursor: pointer;
+}
+/* for the translation form:
+    Textarea is 2 line high, the height can be increased by the user */
+.language-table TEXTAREA {
+    resize: vertical;
+    height: 2.5em;
+}
+FORM {
+    font-weight: normal;
+    color: #444444;
+    margin: 0px;
+    padding: 0px;
+}
+INS {
+    color: #222222;
+    padding: 2px;
+}
+DEL {
+    color: #222222;
+    padding: 2px;
+}
+/* fullcalendar ------------------------------------------------------------------------*/
+.fc-widget-header, .fc-widget-content {
+    /* <th>, usually */
+    /* <td>, usually */
+    border: 1px solid #ccc;
+    /* background: linear-gradient(to bottom, $farbschemaWEB14, $farbschemaWEB13 20px); */
+}
+.fc-widget-header {
+    vertical-align: bottom !important;
+}
+.fc-state-highlight {
+    /* <td> today cell */
+    /* TODO: add .fc-today to <th> */
+    background: #eaf3ee;
+}
+.fc-cell-overlay {
+    /* semi-transparent rectangle while dragging */
+    background: #97c5ab;
+    opacity: 0.3;
+    filter: alpha(opacity=30);
+    /* for IE */
+}
+.fc-resourceName {
+    border: 1px solid #ccc;
+    background: linear-gradient(to bottom, #ffffff 70%, #fdfefd);
+    font-weight: bold;
+    font-style: italic;
+}
+.fc-day-header, .fc-week-number, .fc-widget-header {
+    background: #ffffff;
+}
+.fc-event {
+    border: 1px solid #3a87ad;
+    /* default BORDER color */
+    background-color: #3a87ad;
+    /* default BACKGROUND color */
+    color: #fff;
+    /* default TEXT color  */
+    font-size: 0.85em;
+    cursor: default;
+    border-radius: 3px;
+}
+a.fc-event {
+    text-decoration: none;
+}
+.fc-ltr .fc-event-hori.fc-event-start, .fc-rtl .fc-event-hori.fc-event-end {
+    border-left-width: 1px;
+    border-top-left-radius: 3px;
+    border-bottom-left-radius: 3px;
+}
+.fc-ltr .fc-event-hori.fc-event-end, .fc-rtl .fc-event-hori.fc-event-start {
+    border-right-width: 1px;
+    border-top-right-radius: 3px;
+    border-bottom-right-radius: 3px;
+}
+.fc-view-resourceWeek tr:nth-child(even), .fc-view-resourceMonth tr:nth-child(even), .fc-view-resourceDay tr:nth-child(even) {
+    background: #ffffff;
+}
+.fc .fc-week-number {
+    width: 25px;
+    text-align: center;
+}
+/* fullcalendar holidays extension
+------------------------------------------------------------------------*/
+.fcr-holiday-title-M {
+    top: 60px;
+}
+.fcr-holiday-title-M, .fcr-holiday-title-aW, .fcr-holiday-title-bW {
+    color: #aaaaaa;
+    font-weight: bold;
+    height: 32px;
+    left: 2px;
+    overflow: hidden;
+    position: absolute;
+    width: 98%;
+}
+/* fullcalendar Resource month, Resource week, Resource day
+------------------------------------------------------------------------*/
+td.fc-resourceName {
+    border-left: 1px solid #ddd;
+    border-top: 1px solid #ddd;
+    padding: 0px 5px 0px 5px;
+    white-space: nowrap;
+    font-weight: bold;
+}
+tr.fc-last td.fc-resourceName {
+    border-bottom: 1px solid #ddd;
+}
+th.fc-resourceName {
+    border-bottom: 1px solid #ddd;
+}
+/* Form Editor  /  Report - Editor
+------------------------------------------------------------------------*/
+.formeditorPanel {
+    background-color: #eeeeee;
+    color: #000000;
+    border: 1px solid #c0c0c0;
+    width: 240px;
+}
+.formeditorPanel td {
+    padding: 2px;
+    overflow: hidden;
+}
+.formeditorPanel.no-padding td {
+    padding: 0;
+}
+.formeditorPanelHead {
+    height: 15px;
+    padding: 3px;
+    color: #333333;
+    background-color: #97c5ab;
+    text-align: left;
+    margin-top: 10px;
+    cursor: s-resize;
+}
+.formeditorPanel .btn {
+    border: 1px outset;
+    cursor: pointer;
+    padding: 1px;
+}
+#itemlist_area td {
+    border-bottom: 1px solid #c0c0c0;
+    padding: 1px;
+}
+/* ######### user-icon replacement helper classes ####### */
+.u-color-3 {
+    color: #909090;
+}
+.u-color-4 {
+    color: #909090;
+}
+/* jquery UI ------------------------------------------------------------------------*/
+.ui-widget {
+    color: #ffffff;
+    background-color: #ffffff;
+}
+.ui-selectable-helper {
+    border-color: #444444;
+}
+.ui-selected {
+    -moz-box-shadow: 3px 3px 3px #619A00;
+    -webkit-box-shadow: 3px 3px 3px #619A00;
+    box-shadow: 3px 3px 3px #619A00;
+}
+.ui-state-disabled {
+    opacity: 0.6;
+}
+.ui-dialog .ui-dialog-content {
+    background: #ffffff;
+}
+.ui-dialog {
+    z-index: 9999 !important;
+}
+.ui-widget .ui-widget-header {
+    background: #ffffff;
+    border-color: #97c5ab;
+    color: #c0c0c0;
+}
+.ui-widget-content {
+    color: #444444;
+    background-image: none;
+}
+.ui-widget.ui-widget-content .ui-state-default {
+    color: #bbbbbb;
+}
+.ui-widget.ui-widget-content .ui-state-hover, .ui-widget.ui-widget-content .ui-state-active {
+    border-color: #97c5ab;
+    color: #444444;
+}
+.ui-widget.ui-widget-content .ui-state-highlight, .ui-widget.ui-widget-content .ui-widget-header .ui-state-hover {
+    background: #97c5ab;
+    border-color: #909090;
+    color: #444444;
+}
+.ui-widget .ui-widget-header .ui-icon {
+    text-indent: 0;
+    background-image: none;
+    color: #909090;
+}
+.ui-widget .ui-widget-header .ui-state-hover .ui-icon {
+    background-image: none;
+    color: #444444;
+}
+.ui-widget .ui-widget-header .ui-icon.ui-icon-circle-triangle-e:before {
+    content: "";
+}
+.ui-widget .ui-widget-header .ui-icon.ui-icon-circle-triangle-w:before {
+    content: "";
+}
+.ui-widget .ui-widget-header .ui-icon.ui-icon-closethick {
+    left: 0px;
+    margin-left: 0;
+    width: 100%;
+    height: 100%;
+}
+.ui-widget .ui-widget-header .ui-icon.ui-icon-closethick:before {
+    content: "";
+}
+div.calendar table {
+    background: #ffffff;
+}
+div.calendar tbody td.weekend, div.calendar thead .weekend {
+    color: #909090;
+}
+div.calendar tbody td.today {
+    background: #ffffff;
+    color: #97c5ab;
+}
+div.calendar tbody .rowhilite td.wn {
+    background: #ffffff;
+}
+.ui-datepicker {
+    background: linear-gradient(#fdfefd, #ffffff);
+    width: inherit;
+}
+.ui-widget-content .ui-datepicker-calendar a.ui-state-default {
+    background-color: #eeeeee;
+    color: #909090;
+    background-image: none;
+}
+.ui-widget-content .ui-datepicker-calendar a.ui-state-active {
+    background-color: #909090;
+    color: #eeeeee;
+}
+.ui-widget-overlay {
+    background-image: none;
+    opacity: 0.6;
+    filter: alpha(Opacity=60);
+}
+/* canban ------------------------------------------------------------------------*/
+.kanban-wrapper {
+    display: flex;
+    height: 95%;
+    max-width: 100%;
+    overflow: auto;
+    width: 100%;
+}
+.kanban {
+    /*table-layout: fixed;
+    border-collapse: separate;
+    border-spacing: 10px 0;*/
+}
+.kanban-header {
+    display: flex;
+    flex-direction: row;
+    overflow: hidden;
+    width: 100%;
+}
+.kanban-body {
+    display: flex;
+    flex-direction: row;
+    height: calc(100% - 35px);
+    height: -moz-calc(100% - 35px);
+    height: -webkit-calc(100% - 35px);
+    overflow: hidden;
+    width: 100%;
+}
+.kanban-column {
+    -moz-box-flex: 0;
+    -webkit-box-flex: 0;
+    flex: 0 0 280px;
+    margin: 0 5px 0 0;
+    max-width: 280px;
+    overflow-y: auto;
+    overflow-x: hidden;
+    width: 280px;
+    background-color: #f5f5f5;
+    box-sizing: border-box;
+}
+.kanban-column-header {
+    background-color: #ffffff;
+}
+.kanban-header .kanban-column {
+    border-top: 3px solid;
+    clear: both;
+    color: #444444;
+    font-weight: bold;
+    height: 30px;
+    padding: 7px 10px;
+    text-transform: uppercase;
+    overflow: hidden;
+}
+.kanban-body .kanban-column {
+    padding: 5px 10px;
+}
+.kanban-header .kanban-filter {
+    border-color: #909090;
+}
+.kanban-body .kanban-filter {
+    background-color: #eeeeee;
+    border: 1px solid #909090;
+}
+.kanban .col-title {
+    float: left;
+}
+.kanban .col-add, .kanban .col-filterico {
+    float: right;
+    cursor: pointer;
+}
+.kanban .card {
+    background-color: #eeeeee;
+    box-shadow: 1px 1px 3px #545454;
+    border-radius: 3px 3px 3px 3px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+.kanban .card-new:hover {
+    background-color: #DDDDDD;
+    color: #666666;
+}
+.kanban .kanban-drop {
+    background-color: #fdfefd;
+    border: 1px dashed #97c5ab;
+    padding: 15px;
+    margin-bottom: 10px;
+}
+.kanban .card .card-tags {
+    display: flex;
+}
+.kanban .card .card-tags .card-tag {
+    -moz-box-flex: 1;
+    -webkit-box-flex: 1;
+    display: block;
+    -webkit-flex: 1 1 0;
+    -moz-flex: 1 1 0;
+    -ms-flex: 1 1 0;
+    flex: 1 1 0;
+    height: 0.5rem;
+}
+.kanban .card .card-title {
+    padding: 10px;
+}
+.kanban .card .card-meta {
+    display: none;
+}
+.card-assigned {
+    text-align: right;
+}
+card-assigned-value {
+    background-color: #fdfefd;
+}
+.card-assigned div {
+    display: inline-block;
+    margin: 0 5px 5px 0;
+    background-color: #fdfefd;
+    padding: 5px;
+}
+/*
+ * Filter
+ ***************************************
+ */
+#kanban-filter ul {
+    list-style: outside none none;
+    margin: 0;
+    padding: 0;
+}
+#kanban-filter li {
+    border-bottom: 1px solid #666666;
+    clear: both;
+}
+#kanban-filter li a {
+    display: block;
+    padding: 0.5rem 0.5rem 0.5rem 1.5rem;
+}
+#kanban-filter li a:hover {
+    text-decoration: none;
+}
+#kanban-filter .filter-title {
+    text-transform: uppercase;
+}
+#kanban-filter .filter-item {
+    background-color: #fdfefd;
+    border: 1px solid #afafaf;
+    cursor: pointer;
+    margin: 15px;
+    padding: 10px 40px 10px 10px;
+    position: relative;
+}
+#kanban-filter .filter-item .name {
+    display: block;
+    max-width: 100%;
+    overflow: hidden;
+    overflow-wrap: normal;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    width: 100%;
+}
+#kanban-filter .filter-item .counter {
+    background-color: #afafaf;
+    box-sizing: border-box;
+    color: #ffffff;
+    height: 100%;
+    padding: 10px;
+    position: absolute;
+    right: 0;
+    top: 0;
+}
+#kanban-filter .filter-item .lmb-close-alt {
+    position: absolute;
+    right: 10px;
+    top: 12px;
+}
+#kanban-filter .filter-item[data-factive="1"] {
+    border: 2px solid green;
+}
+#kanban-filter .filter-list {
+    display: none;
+    max-height: 300px;
+    overflow: auto;
+}
+/*
+ * Default-Formular
+ ***************************************
+ */
+.kanban-default-form input[type=text], .kanban-default-form select {
+    height: 20px;
+    width: 100%;
+}
+.kanban-default-form > tbody > tr > td {
+    padding: 10px;
+    vertical-align: top;
+}
+.kanban-default-form p {
+    margin-bottom: 5px;
+}
+/* Smaller version of .lmbContextLink for use in attribute fieldtype */
+.lmbSelectLink {
+    color: #444444;
+    cursor: pointer;
+    padding: 3px 1px 3px 0;
+    text-decoration: none;
+}
+.lmbSelectLink:hover {
+    background-color: #eaf3ee;
+}
+/*special icon colors*/
+.lmb-query::before {
+    color: #97c5ab;
+}
+/*
+ * Attribute Tag-Mode
+ ***************************************
+ */
+.tagattr {
+    /* default .fgtabchange */
+    min-height: 18px;
+    padding: 2px;
+    box-sizing: border-box;
+    margin: 0;
+    font-size: 11px;
+    overflow: hidden;
+    /* flex container */
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row-reverse;
+    -ms-flex-direction: row-reverse;
+    flex-direction: row-reverse;
+    -webkit-flex-wrap: nowrap;
+    -ms-flex-wrap: nowrap;
+    flex-wrap: nowrap;
+    -webkit-justify-content: flex-end;
+    -ms-flex-pack: end;
+    justify-content: flex-end;
+    -webkit-align-content: flex-end;
+    -ms-flex-line-pack: flex-end;
+    align-content: flex-end;
+    -webkit-align-items: flex-start;
+    -ms-flex-align: start;
+    align-items: flex-start;
+    border: none;
+    background: transparent;
+}
+.tagattr input {
+    margin-left: 0.1rem;
+    padding: 0;
+}
+.tagattr table {
+    display: block;
+}
+.tagattr tbody {
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    -webkit-flex-wrap: wrap;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    -webkit-justify-content: flex-start;
+    -ms-flex-pack: start;
+    justify-content: flex-start;
+    -webkit-align-content: flex-start;
+    -ms-flex-line-pack: start;
+    align-content: flex-start;
+    -webkit-align-items: flex-start;
+    -ms-flex-align: start;
+    align-items: flex-start;
+}
+.tagattr tr {
+    /* tr as flex item */
+    -webkit-order: 0;
+    -ms-flex-order: 0;
+    order: 0;
+    -webkit-flex: 0 1 auto;
+    -ms-flex: 0 1 auto;
+    flex: 0 1 auto;
+    -webkit-align-self: auto;
+    -ms-flex-item-align: auto;
+    align-self: auto;
+    /* tr as flex container */
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-align-items: stretch;
+    -ms-flex-align: stretch;
+    align-items: stretch;
+    /* other styles */
+    background: transparent;
+    margin-right: 0.4rem;
+    margin-bottom: 0.3rem;
+    border-radius: 5px;
+    padding: 0;
+    min-height: 1.3rem;
+    height: 1.3rem;
+}
+.tagattr tr td:nth-child(2), .tagattr tr td:nth-child(3) {
+    padding-top: 0.1rem;
+}
+.tagattr tr td:nth-child(2) {
+    padding-right: 0.2rem;
+}
+/* hide tag with empty input */
+.tagattr tr:not(.empty) td[data-hidetag="1"] {
+    display: none;
+}
+.tagattr td {
+    width: auto !important;
+    padding: 0;
+    display: flex;
+    -webkit-flex-direction: row;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+}
+/* search field */
+.tagattr > input:first-child {
+    width: 1.3rem !important;
+    height: 1.3rem;
+    margin: 0;
+    border-radius: 3px;
+    background-color: #ffffff;
+    text-align: center;
+    cursor: pointer;
+}
+/*.tagattr > input:first-child,*/
+.tagattr.transition > input:first-child {
+    -webkit-transition: width 0.3s ease-in-out;
+    -moz-transition: width 0.3s ease-in-out;
+    -ms-transition: width 0.3s ease-in-out;
+    -o-transition: width 0.3s ease-in-out;
+    transition: width 0.3s ease-in-out;
+}
+/* input attribute */
+.tagattr tr input[type="text"] {
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+    margin-right: 0.1rem;
+    -webkit-appearance: none;
+}
+.tagattr.transition tr input[type="text"] {
+    -webkit-transition: width 0.3s ease;
+    -moz-transition: width 0.3s ease;
+    -ms-transition: width 0.3s ease;
+    -o-transition: width 0.3s ease;
+    transition: width 0.3s ease;
+}
+.tagattr tr input[type="text"]:focus {
+    background-color: #ffffff;
+    color: #444444;
+    border: 1px solid #c0c0c0;
+    border-radius: 3px;
+}
+.tagattr.transition tr input[type="text"]:focus {
+    -webkit-transition: width 0.3s ease;
+    -moz-transition: width 0.3s ease;
+    -ms-transition: width 0.3s ease;
+    -o-transition: width 0.3s ease;
+    transition: width 0.3s ease;
+}
+/* select attribute */
+.tagattr select {
+    -moz-appearance: none;
+    -webkit-appearance: none;
+    appearance: none;
+    border: none;
+    cursor: pointer;
+    background: transparent;
+    padding: 0;
+    height: 1rem;
+    font-family: Verdana, Arial, Helvetica, sans-serif;
+}
+.tagattr.transition select {
+    -webkit-transition: width 0.3s ease-in-out;
+    -moz-transition: width 0.3s ease-in-out;
+    -ms-transition: width 0.3s ease-in-out;
+    -o-transition: width 0.3s ease-in-out;
+    transition: width 0.3s ease-in-out;
+}
+.tagattr tr.empty input[type="text"], .tagattr tr.empty select {
+    border-bottom: 1px solid;
+}
+/* checkbox attribute */
+.tagattr input[type=checkbox] {
+    display: none;
+}
+.tagattr input[type=checkbox] ~ label {
+    margin-left: 0.2rem;
+}
+.tagattr input[type=checkbox] ~ label:before {
+    font-family: FontAwesome;
+    display: inline-block;
+    font-size: 1rem;
+    letter-spacing: 10px;
+    content: "";
+}
+.tagattr input[type=checkbox]:checked + label:before {
+    content: "";
+    letter-spacing: 5px;
+}
+/*
+ * Multiselect Tag-Mode
+ ***************************************
+ */
+.tagattr .tagmulti {
+    display: -ms-flexbox;
+    display: -webkit-flex;
+    display: flex;
+    -webkit-flex-direction: row;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    -webkit-flex-wrap: wrap;
+    -ms-flex-wrap: wrap;
+    flex-wrap: wrap;
+    -webkit-justify-content: flex-start;
+    -ms-flex-pack: start;
+    justify-content: flex-start;
+    -webkit-align-content: flex-start;
+    -ms-flex-line-pack: start;
+    align-content: flex-start;
+    -webkit-align-items: flex-start;
+    -ms-flex-align: start;
+    align-items: flex-start;
+}
+.tagattr .tagmulti > span {
+    margin-right: 0.3rem;
+    margin-bottom: 0.3rem;
+    width: auto !important;
+    display: flex;
+    -webkit-flex-direction: row;
+    -ms-flex-direction: row;
+    flex-direction: row;
+    -webkit-justify-content: center;
+    -ms-flex-pack: center;
+    justify-content: center;
+    -webkit-align-items: center;
+    -ms-flex-align: center;
+    align-items: center;
+    border-radius: 5px;
+    padding: 0.2rem 0.3rem;
+    border: 1px solid #c0c0c0;
+}
+.tagattr .tagmulti br {
+    display: none;
+}
+.lmb-progress {
+    height: 2em;
+    max-width: 250px;
+    background-color: #ffffff;
+    position: relative;
+    margin-top: 0.3em;
+    margin-bottom: 1.2em;
+}
+.lmb-progress .lmb-progress-valtext {
+    position: absolute;
+    text-align: center;
+    top: 5px;
+    left: 0;
+    right: 0;
+}
+.lmb-progress .lmb-progress-val {
+    background-color: #97c5ab;
+    display: inline-block;
+    height: 100%;
+}
+.first-letter-red {
+    display: inline-block;
+    /* for ::first-letter to work */
+}
+.first-letter-red::first-letter {
+    color: red;
+}
+label input {
+    vertical-align: middle;
+}
+.select2-container--default .select2-selection--multiple {
+    border-radius: 0 !important;
+}
+.select2-container .select2-selection--multiple {
+    min-height: 0 !important;
+}
+.select2-results__options {
+    text-align: left;
+}
+.select2-dropdown .select2-results__option--link {
+    margin: -6px;
+    /* revert padding of parent */
+}
+/* Set the padding again that was removed in .select2-results__option--link */
+.select2-dropdown .select2-results__option--link__text {
+    padding: 6px;
+}
+.select2-container--default .select2-selection--multiple {
+    background-color: #ffffff !important;
+    color: #444444;
+}
+.select2-dropdown {
+    background-color: #ffffff !important;
+    border: 1px solid #c0c0c0 !important;
+}
+.select2-container--default.select2-container--focus .select2-selection--multiple {
+    border: 1px solid #d0d0d0 !important;
+}
+.flex-basis-50 {
+    flex-basis: 50%;
+}
+.border-bottom {
+    border-bottom: 1px solid #dee2e6 !important;
+}
+.border-secondary {
+    border-color: #c0c0c0 !important;
+}
+.d-flex {
+    display: flex !important;
+}
+.justify-content-between {
+    justify-content: space-between !important;
+}
+.rounded-0 {
+    border-radius: 0 !important;
+}
+.text-center {
+    text-align: center !important;
+}
+.text-start {
+    text-align: left;
+}
+.align-self-center {
+    align-self: center !important;
+}
+.select2-dropdown .btn {
+    display: inline-block;
+    /*font-weight: 400;*/
+    color: #212529;
+    text-align: center;
+    vertical-align: middle;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+    background-color: transparent;
+    border: 1px solid transparent;
+    /*padding: .375rem .75rem;*/
+    /*font-size: 1rem;*/
+    line-height: 1.5;
+    border-radius: 0.25rem;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    cursor: pointer;
+}
+.select2-dropdown .btn-secondary {
+    color: #fff;
+    background-color: #6c757d;
+    border-color: #6c757d;
+}
+.full-height {
+    height: 100%;
+}
+.font-small {
+    font-size: small;
+}
+/**
+ * Override styles to force old forms to look "new"
+ */
+.form-switch-new td {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+.form-switch-new .lmbGtabTabulatorInactive, .form-switch-new .lmbGtabTabulatorActive, .form-switch-new .lmbGtabSubheaderActive, .form-switch-new .lmbGtabSubheaderInactive {
+    padding: 0.5rem 1rem;
+    background-color: #fff;
+}
+.form-switch-new .lmbGtabSubheaderInactive, .form-switch-new .lmbGtabTabulatorInactive {
+    border: none;
+    border-bottom: 1px solid #c0c0c0;
+}
+.form-switch-new .tabpoolItemSpaceGtab {
+    background-color: transparent;
+}
+.form-switch-new .gtabBodyDetailFringe {
+    border: none;
+    background-color: white;
+    border-collapse: collapse;
+}
+.form-switch-new .lmbGtabTabulatorFrame {
+    background-color: white;
+}
+.form-switch-new .gtabFooterTR, .form-switch-new .gtabFooterTR > td {
+    padding: 0.5rem 1rem;
+    background-color: rgba(0, 0, 0, 0.03);
+    border: 1px solid #c0c0c0;
+}
+.form-switch-new .lmbfringeGtab {
+    border: none;
+    background-color: transparent;
+    padding: 0;
+}
+.form-switch-new .gtabBodyDetailBody #GtabTableBody {
+    border-left: 1px solid #c0c0c0;
+    border-right: 1px solid #c0c0c0;
+}
+.form-switch-new .gtabHeaderMenuTR {
+    padding: 0.5rem;
+    margin-bottom: 0.5rem;
+    border: none;
+    color: #fff;
+    background-color: #4E4E4E;
+}
+.form-switch-new .gtabHeaderMenuTD, .form-switch-new .gtabHeaderMenuTR td {
+    color: #fff;
+}
+.form-switch-new .gtabHeaderSymbolTD, .form-switch-new .gtabHeaderSymbolTR {
+    color: #fff;
+    background: #4E4E4E;
+}
+.form-switch-new .lmbTableHeader {
+    border: none;
+}
+.form-switch-new .lmbTableHeader .lmbGtabTabmenuInactive, .form-switch-new .lmbTableHeader .lmbGtabTabmenuActive {
+    padding: 0.5rem 1rem;
+    margin: 0;
+    background: transparent;
+}
+.form-switch-new .lmbTableHeader .lmbGtabTabmenuActive {
+    color: #fff;
+    background-color: #588100;
+    font-size: inherit;
+}

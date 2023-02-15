@@ -1,0 +1,39 @@
+/*!
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+/*
+  extend or override bootstrap v4
+ */
+
+.modal-fullscreen {
+  width: 100vw;
+  max-width: none;
+  height: -webkit-calc(100% - #{$top-nav-height});
+  height: -moz-calc(100% - #{$top-nav-height});
+  height: calc(100% - #{$top-nav-height});
+  margin: 0;
+  margin-top: $top-nav-height;
+}
+
+.modal-fullscreen .modal-content {
+  height: 100%;
+  border: 0;
+  border-radius: 0;
+}
+
+.modal-fullscreen .modal-header {
+  border-radius: 0;
+}
+
+.modal-fullscreen .modal-body {
+  overflow-y: auto;
+}
+
+.modal-fullscreen .modal-footer {
+  border-radius: 0;
+}

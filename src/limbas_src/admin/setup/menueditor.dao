@@ -1,0 +1,680 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+?>
+
+
+
+<?php
+
+require_once (COREPATH . 'lib/include_admin.lib');
+require_once (COREPATH . 'admin/setup/language.lib');
+
+
+
+function lmb_custmenuEdit(&$custmenu,$par){
+
+    global $db;
+    global $session;
+
+    $ID = $par['id'];
+    $linkid = $par['linkid'];
+    $act = $par['act'];
+    $parent = $par['parent'];
+    $value = $par['menudetail'];
+
+    if($par['act'] == 'update') {
+
+        if(($value['typ'] <= 1 OR $value['typ'] == 8 OR $value['typ'] == 13) AND isset($value['name'])) {
+            // change lang value
+            if ($custmenu['name'][$ID]) {
+                lang_change(null,$custmenu['name'][$ID],$value['name'],$session["language"],'_DEPEND');
+            // new lang value
+            }else{
+                $name_id =  lang_add($session["language"],4,'Custmenu: ',$value['name'],'_DEPEND');
+                $sql[] = "NAME = ".parse_db_int($name_id);
+            }
+        }elseif(is_numeric($value['name'])){
+            $sql[] = "NAME = '".parse_db_int($value['name'])."'";
+        }
+
+        // title
+        if(isset($value['title'])) {
+            // change lang value
+            if ($custmenu['title'][$ID]) {
+                lang_change(null,$custmenu['title'][$ID],$value['title'],$session["language"],'_DEPEND');
+            // new lang value
+            }else{
+                $name_id =  lang_add($session["language"],4,'Custmenu: ',$value['title'],'_DEPEND');
+                $sql[] = "TITLE = ".parse_db_int($name_id);
+            }
+        }
+        // url
+        if(isset($value['url'])) {
+             $sql[] = "URL = '".parse_db_string($value['url'],150)."'";
+        }
+        // attribute
+        if(isset($value['attribute'])) {
+             $sql[] = "URL = '".parse_db_string($value['attribute'],150)."'";
+        }
+        // icon
+        if(isset($value['icon'])) {
+             $sql[] = "ICON = '".parse_db_string($value['icon'],60)."'";
+        }
+        // class
+        if(isset($value['class'])) {
+             $sql[] = "CLASS = '".parse_db_string($value['class'],60)."'";
+        }
+        // bg
+        if(isset($value['bg'])) {
+             $sql[] = "BG = '".parse_db_string($value['bg'],7)."'";
+        }
+        // typ
+        if($value['typ']) {
+             $sql[] = "TYP = ".parse_db_int($value['typ']);
+        }
+        // inactive
+        if(isset($value['inactive'])) {
+             $sql[] = "INACTIVE = '".parse_db_string($value['inactive'],150)."'";
+        }
+        // disabled
+        if(isset($value['disabled'])) {
+             $sql[] = "DISABLED = '".parse_db_string($value['disabled'],150)."'";
+        }
+
+        if($sql) {
+            $sql_ = implode(',',$sql);
+            $sqlquery = "UPDATE LMB_CUSTMENU SET $sql_ WHERE ID = $ID";
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        }
+
+    }elseif($par['act'] == 'add'){
+        $NEXTID = next_db_id("LMB_CUSTMENU");
+
+        $sqlquery = "SELECT MAX(SORT) AS NEXTSORT FROM LMB_CUSTMENU WHERE LINKID = $linkid AND PARENT = ".parse_db_int($parent);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        $NEXTSORT = (lmbdb_result($rs, 'NEXTSORT')+1);
+
+        $sqlquery = "INSERT INTO LMB_CUSTMENU (ID,LINKID,PARENT,TYP,SORT) VALUES ($NEXTID,$linkid,".parse_db_int($parent).",".parse_db_int($value['name']).",$NEXTSORT)";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    }elseif($par['act'] == 'delete'){
+
+        $sqlquery = "DELETE FROM LMB_CUSTMENU WHERE ID = $ID AND LINKID = $linkid";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+        $sqlquery = "UPDATE LMB_CUSTMENU SET PARENT = ".$custmenu['parent'][$ID]." WHERE PARENT = $ID AND LINKID = $linkid";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+        if($custmenu['typ'][$ID] <= 1 OR $custmenu['typ'][$ID] == 8 OR $custmenu['typ'][$ID] == 13) {
+            lang_delete($custmenu['name'][$ID],'_DEPEND');
+            lang_delete($custmenu['title'][$ID],'_DEPEND');
+        }
+
+    }elseif($par['act'] == 'up' OR $par['act'] == 'down'){
+        lmb_sortConf($par['act'],$ID,'LMB_CUSTMENU','SORT',"LINKID = $linkid AND PARENT = ".parse_db_int($parent));
+    }
+
+
+}
+
+function lmb_custmenuGet($linkid){
+    global $db;
+    global $lang;
+
+    $sqlquery = "SELECT * FROM LMB_CUSTMENU WHERE LINKID = " . parse_db_int($linkid)." ORDER BY PARENT,SORT";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    while (lmbdb_fetch_row($rs)) {
+
+        $key = lmbdb_result($rs, 'ID');
+
+        $custmenu['id'][$key] = $key;
+        $custmenu['parent'][$key] = lmbdb_result($rs, 'PARENT');
+        $custmenu['typ'][$key] = lmbdb_result($rs, 'TYP');
+        $custmenu['name'][$key] = lmbdb_result($rs, 'NAME');
+        $custmenu['title'][$key] = lmbdb_result($rs, 'TITLE');
+        $custmenu['linkid'][$key] = lmbdb_result($rs, 'LINKID');
+        $custmenu['sort'][$key] = lmbdb_result($rs, 'SORT');
+        $custmenu['url'][$key] = lmbdb_result($rs, 'URL');
+        $custmenu['icon'][$key] = lmbdb_result($rs, 'ICON');
+        $custmenu['class'][$key] = lmbdb_result($rs, 'CLASS');
+        $custmenu['bg'][$key] = lmbdb_result($rs, 'BG');
+        $custmenu['disabled'][$key] = lmbdb_result($rs, 'DISABLED');
+        $custmenu['inactive'][$key] = lmbdb_result($rs, 'INACTIVE');
+    }
+
+    return $custmenu;
+
+}
+
+function lmb_custmenulistEdit($listact,$linkid,$custmenulist){
+    global $db;
+    global $lang;
+    global $session;
+
+    if($listact == 'add' AND $custmenulist['add']['name']){
+        $name_id =  lang_add($session["language"],4,'Custmenu: ',$custmenulist['add']['name'],'_DEPEND');
+        $NEXTID = next_db_id("LMB_CUSTMENU_LIST");
+        $sqlquery = "INSERT INTO LMB_CUSTMENU_LIST (ID,NAME) VALUES ($NEXTID,$name_id)";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    }elseif($listact == 'change' AND $custmenulist[$linkid]['name']){
+
+       $custmenu_list = lmb_custmenulistGet();
+
+       // change lang value
+       if ($custmenu_list['name'][$linkid]) {
+            lang_change(null,$custmenu_list['name'][$linkid],$custmenulist[$linkid]['name'],$session["language"],'_DEPEND');
+        // new lang value
+        }else{
+            $name_id =  lang_add($session["language"],4,'Custmenu: ',$custmenulist[$linkid]['name'],'_DEPEND');
+            $sql = ", NAME = ".parse_db_int($name_id);
+        }
+
+        $sqlquery = "UPDATE LMB_CUSTMENU_LIST SET 
+        TABID = ".parse_db_int($custmenulist[$linkid]['tabid']).",
+        TYPE = ".parse_db_int($custmenulist[$linkid]['type']).",
+        FIELDID = ".parse_db_int($custmenulist[$linkid]['fieldid'])."
+        $sql
+        WHERE ID = ".parse_db_int($linkid);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    }elseif($listact == 'del' AND $linkid){
+        $custmenu = lmb_custmenuGet($linkid);
+        foreach($custmenu['id'] as $key => $value){
+            if($custmenu['typ'][$key] <= 1 OR $custmenu['typ'][$key] == 8 OR $custmenu['typ'][$key] == 13) {
+                lang_delete($custmenu['name'][$key], '_DEPEND');
+                lang_delete($custmenu['title'][$key], '_DEPEND');
+            }
+        }
+
+        $custmenu_list = lmb_custmenulistGet();
+        if($custmenu_list['name'][$linkid]){
+            lang_delete($custmenu_list['name'][$linkid], '_DEPEND');
+        }
+
+        $sqlquery = "DELETE FROM LMB_CUSTMENU_LIST WHERE ID = ".parse_db_int($linkid);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        $sqlquery = "DELETE FROM LMB_CUSTMENU WHERE LINKID = ".parse_db_int($linkid);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    }
+
+}
+
+
+function lmb_custmenulistGet(){
+    global $db;
+    global $lang;
+
+    $sqlquery = "SELECT * FROM LMB_CUSTMENU_LIST ORDER BY TABID,TYPE,NAME";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    while (lmbdb_fetch_row($rs)) {
+
+        $key = lmbdb_result($rs, 'ID');
+
+        $custmenu_list['id'][$key] = $key;
+        $custmenu_list['name'][$key] = lmbdb_result($rs, 'NAME');
+        $custmenu_list['tabid'][$key] = lmbdb_result($rs, 'TABID');
+        $custmenu_list['type'][$key] = lmbdb_result($rs, 'TYPE');
+        $custmenu_list['fieldid'][$key] = lmbdb_result($rs, 'FIELDID');
+    }
+
+    return $custmenu_list;
+}
+
+
+function lmb_custmenuDetail(&$custmenu,$params){
+    global $lang;
+    global $tabgroup;
+    global $gtab;
+
+    $id = $params['id'];
+    $tab = $params['tab'];
+    $linkid = $params['linkid'];
+
+
+    // tab 1 = Mainmenu
+    // tab 2 = contextmenu
+
+    if($linkid >= 1000){
+        $tab = 1;
+    }else{
+        $tab = 2;
+    }
+
+    if($custmenu['typ'][$id]){$disabled = 'disabled style="opacity:0.6;width:100%"';}else{$disabled = 'style="width:100%"';}
+
+    echo "
+    <form name=\"form11\" method=\"get\">
+    <table width=\"100%\"  cellpadding=4 cellspacing=2>";
+
+    ${'typ'.$custmenu['typ'][$id]} = "SELECTED";
+
+    echo "<tr><td>Typ</td><td>
+    <select onchange=\"lmb_loadMenueDetail($id,'update')\" id=\"menutyp_$parent\" name=\"menudetail[typ]\" $disabled><option>";
+
+    if($tab == 1) {
+        echo "
+        <option value=\"1\" $typ1>{$lang[2144]}
+        <option value=\"2\" $typ2>{$lang[577]}
+        <option value=\"3\" $typ3>{$lang[2608]}
+        <option value=\"4\" $typ4>{$lang[1137]}
+        <option value=\"5\" $typ5>{$lang[1179]}
+        <option value=\"6\" $typ6>{$lang[2119]}
+        <option value=\"7\" $typ7>{$lang[573]}
+        ";
+    }elseif($tab == 2){
+        echo "
+        <option value=\"8\" $typ8>{$lang[2144]}
+        <option value=\"9\" $typ9>{$lang[573]}
+        <option value=\"10\" $typ10>{$lang[1179]}
+        <option value=\"11\" $typ11>{$lang[1137]}
+        <option value=\"12\" $typ12>{$lang[2985]}
+        <option value=\"13\" $typ13>{$lang[2625]}
+        ";
+    }
+
+
+
+    echo "</select></td></tr>
+    <tr><td colspan=\"2\"><hr></td></tr>";
+
+
+    ############################## main menu ###############################
+
+    // manuell
+    if($custmenu['typ'][$id] == 1) {
+        echo "<tr><td>Name</td><td><input type=\"text\" name=\"menudetail[name]\" style=\"width:100%\" value=\"".$lang[$custmenu['name'][$id]]."\"></td></tr>";
+        echo "<tr><td>Title</td><td><input type=\"text\" name=\"menudetail[title]\" style=\"width:100%\" value=\"".$lang[$custmenu['title'][$id]]."\"></td></tr>";
+        echo "<tr><td>URL</td><td><input type=\"text\" name=\"menudetail[url]\" style=\"width:100%\" value=\"".htmlentities($custmenu['url'][$id],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\"></td></tr>";
+        echo "<tr><td>Icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
+        echo "<tr><td>Class</td><td><input type=\"text\" name=\"menudetail[class]\" style=\"width:100%\" value=\"".$custmenu['class'][$id]."\"></td></tr>";
+        echo "<tr><td>{$lang[ 1107]}</td><td><input type=\"text\" name=\"menudetail[bg]\" style=\"width:100%\" value=\"".$custmenu['bg'][$id]."\"></td></tr>";
+    }
+    // tables
+    elseif($custmenu['typ'][$id] == 2) {
+
+        echo "<tr><td valign=\"top\" style=\"width:100px;\">".$lang[577]."</td><td valign=\"top\">
+        <input class=\"gtabHeaderInputINP\"  id=\"gdquicksearch\" style=\"width:100%;height:20px;\" onclick=\"lmb_searchDropdown(this,'gdsearchfield',15);\">
+        <select id=\"gdsearchfield\" name=\"menudetail[name]\" style=\"width: 100%;max-height:200px\"><option value=\"0\">";
+
+        foreach ($tabgroup['id'] as $groupKey => $groupID) {
+            $tabgroupOptions = '';
+            foreach ($gtab['tab_id'] as $tabKey => $tabID) {
+                if($gtab['tab_group'][$tabKey] == $groupID){
+                    if($custmenu['name'][$id] == $tabKey){$SELECTED = 'SELECTED';}else{$SELECTED = '';}
+                    $tabgroupOptions .= "<option value=\"{$tabID}\" $SELECTED>{$gtab['desc'][$tabKey]}</option>";
+                }
+            }
+            if ($tabgroupOptions) {
+                echo "<optgroup label=\"{$tabgroup['name'][$groupKey]}\">{$tabgroupOptions}</optgroup>";
+            }
+        }
+        echo "</select><br>";
+        echo "<tr><td>Icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
+        echo "<tr><td>Class</td><td><input type=\"text\" name=\"menudetail[class]\" style=\"width:100%\" value=\"".$custmenu['class'][$id]."\"></td></tr>";
+        echo "</td></tr>";
+        #echo "<tr><td>icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
+
+    }
+
+    // snapshot
+    elseif($custmenu['typ'][$id] == 3) {
+        global $gsnap;
+
+        echo "<tr><td valign=\"top\" style=\"width:100px;\">".$lang[2608]."</td><td valign=\"top\">
+        <input class=\"gtabHeaderInputINP\" id=\"gdquicksearch\" style=\"width:100%;height:20px;\" onclick=\"lmb_searchDropdown(this,'gdsearchfield',15);\">
+        <select id=\"gdsearchfield\" name=\"menudetail[name]\" style=\"width: 100%;max-height:200px\"><option value=\"0\">";
+
+        foreach ($gsnap as $tableid => $snapgroup) {
+            $tabgroupOptions = '';
+            foreach ($snapgroup["id"] as $snapkey => $snapid) {
+                #if($gsnap[$tableid]["glob"][$snapkey]) {
+                if($custmenu['name'][$id] == $snapkey){$SELECTED = 'SELECTED';}else{$SELECTED = '';}
+                $tabgroupOptions .= "<option value=\"{$snapid}\" $SELECTED>{$snapgroup["name"][$snapkey]}</option>";
+                #}
+            }
+            if ($tabgroupOptions) {
+                echo "<optgroup label=\"{$gtab['desc'][$tableid]}\">{$tabgroupOptions}</optgroup>";
+            }
+        }
+        echo "</select>";
+        echo "<tr><td>Icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
+        echo "<tr><td>Class</td><td><input type=\"text\" name=\"menudetail[class]\" style=\"width:100%\" value=\"".$custmenu['class'][$id]."\"></td></tr>";
+        echo "</td></tr>";
+        #echo "<tr><td>icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
+
+    }
+    // reports
+    elseif($custmenu['typ'][$id] == 4  OR $custmenu['typ'][$id] == 11) {
+        global $greportlist;
+
+        echo "<tr><td valign=\"top\" style=\"width:100px;\">".$lang[1137]."</td><td valign=\"top\">
+        <input class=\"gtabHeaderInputINP\" id=\"gdquicksearch\" style=\"width:100%;height:20px;\" onclick=\"lmb_searchDropdown(this,'gdsearchfield',15);\">
+        <select id=\"gdsearchfield\" name=\"menudetail[name]\" style=\"width: 100%;max-height:200px\"><option value=\"0\">";
+
+        foreach ($greportlist as $tableid => $reportgroup) {
+            $tabgroupOptions = '';
+            foreach ($reportgroup["id"] as $reportkey => $reportid) {
+                if($greportlist[$tableid]["listmode"][$reportkey]) {
+                    if($custmenu['name'][$id] == $reportkey){$SELECTED = 'SELECTED';}else{$SELECTED = '';}
+                    $tabgroupOptions .= "<option value=\"{$reportid}\" $SELECTED>{$reportgroup["name"][$reportkey]}</option>";
+                }
+            }
+            if ($tabgroupOptions) {
+                echo "<optgroup label=\"{$gtab['desc'][$tableid]}\">{$tabgroupOptions}</optgroup>";
+            }
+        }
+        echo "</select>";
+        echo "<tr><td>Icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
+        echo "<tr><td>Class</td><td><input type=\"text\" name=\"menudetail[class]\" style=\"width:100%\" value=\"".$custmenu['class'][$id]."\"></td></tr>";
+        echo "</td></tr>";
+        #echo "<tr><td>icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
+    }
+    // forms
+    elseif($custmenu['typ'][$id] == 5 OR $custmenu['typ'][$id] == 10) {
+        global $gformlist;
+
+        echo "<tr><td valign=\"top\" style=\"width:100px;\">".$lang[1179]."</td><td valign=\"top\">
+        <input class=\"gtabHeaderInputINP\" id=\"gdquicksearch\" style=\"width:100%;height:20px;\" onclick=\"lmb_searchDropdown(this,'gdsearchfield',15);\">
+        <select id=\"gdsearchfield\" name=\"menudetail[name]\" style=\"width: 100%;max-height:200px\"><option value=\"0\">";
+
+        foreach ($gformlist as $tableid => $formgroup) {
+            $tabgroupOptions = '';
+            foreach ($formgroup["id"] as $formkey => $formid) {
+                if($tab== 2 OR $formgroup['typ'][$formkey] == 2 OR !$formgroup['ref_tab'][$formkey] OR $formgroup['extension'][$formkey]) {
+                    if ($custmenu['name'][$id] == $formkey) {
+                        $SELECTED = 'SELECTED';
+                    } else {
+                        $SELECTED = '';
+                    }
+                    $tabgroupOptions .= "<option value=\"{$formid}\" $SELECTED>{$formgroup["name"][$formkey]}</option>";
+                }
+            }
+            if ($tabgroupOptions) {
+                echo "<optgroup label=\"{$gtab['desc'][$tableid]}\">{$tabgroupOptions}</optgroup>";
+            }
+        }
+        echo "</select>";
+        echo "<tr><td>Icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
+        echo "<tr><td>Class</td><td><input type=\"text\" name=\"menudetail[class]\" style=\"width:100%\" value=\"".$custmenu['class'][$id]."\"></td></tr>";
+        echo "</td></tr>";
+
+        if($custmenu['typ'][$id] == 10){
+            echo "<tr><td>Attributes</td><td><input type=\"text\" name=\"menudetail[attribute]\" value=\"".$custmenu['url'][$id]."\"></td></tr>";
+        }
+
+        #echo "<tr><td>icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
+    }
+    // diagramm
+    elseif($custmenu['typ'][$id] == 6) {
+        global $gdiaglist;
+
+        echo "<tr><td valign=\"top\" style=\"width:100px;\">".$lang[2119]."</td><td valign=\"top\">
+        <input class=\"gtabHeaderInputINP\" id=\"gdquicksearch\" style=\"width:100%;height:20px;\" onclick=\"lmb_searchDropdown(this,'gdsearchfield',15);\">
+        <select id=\"gdsearchfield\" name=\"menudetail[name]\" style=\"width: 100%;max-height:200px\"><option value=\"0\">";
+
+        foreach ($gdiaglist as $tableid => $formgroup) {
+            $tabgroupOptions = '';
+            foreach ($formgroup["id"] as $formkey => $formid) {
+                if($custmenu['name'][$id] == $formkey){$SELECTED = 'SELECTED';}else{$SELECTED = '';}
+                $tabgroupOptions .= "<option value=\"{$formid}\" $SELECTED>{$formgroup["name"][$formkey]}</option>";
+            }
+            if ($tabgroupOptions) {
+                echo "<optgroup label=\"{$gtab['desc'][$tableid]}\">{$tabgroupOptions}</optgroup>";
+            }
+        }
+        echo "</select>";
+        echo "<tr><td>Icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
+        echo "<tr><td>Class</td><td><input type=\"text\" name=\"menudetail[class]\" style=\"width:100%\" value=\"".$custmenu['class'][$id]."\"></td></tr>";
+        echo "</td></tr>";
+        #echo "<tr><td>icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
+    }
+
+    // System
+    elseif($custmenu['typ'][$id] == 7) {
+        global $LINK;
+
+        # ------- Gruppenschema ----------
+        $link_groupdesc[1][0] = $lang[1809];		#main
+        $link_groupdesc[1][1] = "Frameset";		#frameset
+        $link_groupdesc[1][2] = $lang[1809];	#main
+        $link_groupdesc[1][3] = $lang[1872];	#info
+
+        $link_groupdesc[2][0] = $lang[1810];		#admin
+        $link_groupdesc[2][1] = $lang[$LINK['name'][58]];		#setup
+        $link_groupdesc[2][2] = $lang[$LINK['name'][59]];		#tools
+        $link_groupdesc[2][3] = $lang[$LINK['name'][54]];		#User/Gruppen
+        $link_groupdesc[2][4] = $lang[$LINK['name'][56]];		#Tabellen
+        $link_groupdesc[2][6] = $lang[$LINK['name'][107]];	#Formulare
+        $link_groupdesc[2][8] = $lang[$LINK['name'][65]];		#Berichte
+        $link_groupdesc[2][7] = $lang[$LINK['name'][114]];	#Diagramme
+        $link_groupdesc[2][9] = "Workflow";					#Workflow
+
+        $link_groupdesc[4][0] = $lang[1812];		#user
+        $link_groupdesc[4][3] = $lang[$LINK['name'][29]];		#Einstellungen
+        $link_groupdesc[4][6] = $lang[$LINK['name'][189]];	#Schnappschuss
+        $link_groupdesc[4][7] = $lang[2059];	#workflow
+        $link_groupdesc[4][8] = $lang[$LINK['name'][40]];		#Wiedervorlage
+        $link_groupdesc[4][9] = $lang[$LINK['name'][32]];		#Farben
+
+        $link_groupdesc[5][0] = $lang[1813];		#add_on
+
+        echo "<tr><td valign=\"top\" style=\"width:100px;\">".$lang[573],"</td><td valign=\"top\">
+        <input class=\"gtabHeaderInputINP\" id=\"gdquicksearch\" style=\"width:100%;height:20px;\" onclick=\"lmb_searchDropdown(this,'gdsearchfield',15);\">
+        <select id=\"gdsearchfield\" name=\"menudetail[name]\" style=\"width: 100%;max-height:200px\"><option value=\"0\">";
+
+        foreach ($link_groupdesc as $gkey => $subgroup) {
+            foreach ($subgroup as $sgey => $subgroupDesc) {
+
+                # collect tables of that tabgroup
+                $tabgroupOptions = '';
+                foreach ($LINK["name"] as $LinkKey => $LinkID) {
+                    if($LINK['subgroup'][$LinkKey] == $sgey AND $LINK['typ'][$LinkKey] == $gkey AND ($LINK['link_url'][$LinkKey] OR $LINK['extension'][$LinkKey])){
+                        if($custmenu['name'][$id] == $LinkKey){$SELECTED = 'SELECTED';}else{$SELECTED = '';}
+                        $tabgroupOptions .= "<option value=\"{$LinkKey}\" $SELECTED>{$lang[$LINK['name'][$LinkKey]]}</option>";
+                    }
+                }
+                # only show tabgroup if tables are available
+                if ($tabgroupOptions) {
+                    echo "<optgroup label=\"{$subgroupDesc}\">{$tabgroupOptions}</optgroup>";
+                }
+            }
+        }
+        echo "</select>";
+        echo "<tr><td>URL</td><td><input type=\"text\" name=\"menudetail[url]\" style=\"width:100%\" value=\"".htmlentities($custmenu['url'][$id],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\"></td></tr>";
+        echo "<tr><td>Icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
+        echo "<tr><td>Class</td><td><input type=\"text\" name=\"menudetail[class]\" style=\"width:100%\" value=\"".$custmenu['class'][$id]."\"></td></tr>";
+
+        echo "</td></tr>";
+
+        ############################## context menu ###############################
+
+
+        // contextmenu - manuel
+    }elseif($custmenu['typ'][$id] == 8) {
+        echo "<tr><td>Name</td><td><input type=\"text\" name=\"menudetail[name]\" style=\"width:100%\" value=\"".$lang[$custmenu['name'][$id]]."\"></td></tr>";
+        echo "<tr><td>Title</td><td><input type=\"text\" name=\"menudetail[title]\" style=\"width:100%\" value=\"".$lang[$custmenu['title'][$id]]."\"></td></tr>";
+        echo "<tr><td>URL</td><td><input type=\"text\" name=\"menudetail[url]\" style=\"width:100%\" value=\"".$custmenu['url'][$id]."\"></td></tr>";
+        echo "<tr><td>ICON</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
+        echo "<tr><td>{$lang[ 1107]}</td><td><input type=\"text\" name=\"menudetail[bg]\" style=\"width:100%\" value=\"".$custmenu['bg'][$id]."\"></td></tr>";
+        echo "<tr><td>disabled</td><td><input type=\"text\" name=\"menudetail[disabled]\" style=\"width:100%\" value=\"".$custmenu['disabled'][$id]."\"></td></tr>";
+        echo "<tr><td>inactive</td><td><input type=\"text\" name=\"menudetail[inactive]\" style=\"width:100%\" value=\"".$custmenu['inactive'][$id]."\"></td></tr>";
+
+        // contextmenu - function
+    }elseif($custmenu['typ'][$id] == 13) {
+        echo "<tr><td>Name</td><td><input type=\"text\" name=\"menudetail[name]\" style=\"width:100%\" value=\"".$lang[$custmenu['name'][$id]]."\"></td></tr>";
+        echo "<tr><td>Funktionsname</td><td><input type=\"text\" name=\"menudetail[url]\" style=\"width:100%\" value=\"".$custmenu['url'][$id]."\"></td></tr>";
+
+        // contextmenu - system
+    }elseif($custmenu['typ'][$id] == 9) {
+        global $LINK;
+
+        $link_groupdesc = array();
+        # ------- Gruppenschema ----------
+        $link_groupdesc[3][1] = $lang[545];	    #Datei
+        $link_groupdesc[3][2] = $lang[843];	    #Bearbeiten
+        $link_groupdesc[3][3] = $lang[1625];	#Ansicht
+        $link_groupdesc[3][7] = $lang[1939];	#Extras
+        $link_groupdesc[5][0] = $lang[1813];	#add_on
+
+        echo "<tr><td valign=\"top\" style=\"width:100px;\">".$lang[573],"</td><td valign=\"top\">
+        <input class=\"gtabHeaderInputINP\" id=\"gdquicksearch\" style=\"width:100%;height:20px;\" onclick=\"lmb_searchDropdown(this,'gdsearchfield',15);\">
+        <select id=\"gdsearchfield\" name=\"menudetail[name]\" style=\"width: 100%;max-height:200px\"><option value=\"0\">";
+
+        foreach ($link_groupdesc as $gkey => $subgroup) {
+            foreach ($subgroup as $sgey => $subgroupDesc) {
+
+                # collect tables of that tabgroup
+                $tabgroupOptions = '';
+                foreach ($LINK["name"] as $LinkKey => $LinkID) {
+                    if($LINK['subgroup'][$LinkKey] == $sgey AND $LINK['typ'][$LinkKey] == $gkey AND ($LINK['link_url'][$LinkKey] OR $LINK['extension'][$LinkKey])){
+                        if($custmenu['name'][$id] == $LinkKey){$SELECTED = 'SELECTED';}else{$SELECTED = '';}
+                        $tabgroupOptions .= "<option value=\"{$LinkKey}\" $SELECTED>{$lang[$LINK['name'][$LinkKey]]}</option>";
+                    }
+                }
+                # only show tabgroup if available
+                if ($tabgroupOptions) {
+                    echo "<optgroup label=\"{$subgroupDesc}\">{$tabgroupOptions}</optgroup>";
+                }
+            }
+        }
+        echo "</select>";
+        echo "<tr><td>Icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
+        echo "<tr><td>Class</td><td><input type=\"text\" name=\"menudetail[class]\" style=\"width:100%\" value=\"".$custmenu['class'][$id]."\"></td></tr>";
+        echo "</td></tr>";
+
+    }elseif($custmenu['typ'][$id] == 12) {
+        $custmenu_list = lmb_custmenulistGet();
+
+        echo "<tr><td valign=\"top\" style=\"width:100px;\">".$lang[573],"</td><td valign=\"top\">
+        <input class=\"gtabHeaderInputINP\" id=\"gdquicksearch\" style=\"width:100%;height:20px;\" onclick=\"lmb_searchDropdown(this,'gdsearchfield',15);\">
+        <select id=\"gdsearchfield\" name=\"menudetail[name]\" style=\"width: 100%;max-height:200px\"><option value=\"0\">";
+
+
+        foreach($custmenu_list['name'] as $ufkey => $ufvalue){
+            if($custmenu['name'][$id] == $ufkey){$SELECTED = 'SELECTED';}else{$SELECTED = '';}
+            echo "<option $SELECTED value=\"{$ufkey}\">{$lang[$ufvalue]}</option>";
+        }
+        echo "</select>";
+        echo "<tr><td>Icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
+        echo "<tr><td>Class</td><td><input type=\"text\" name=\"menudetail[class]\" style=\"width:100%\" value=\"".$custmenu['class'][$id]."\"></td></tr>";
+        echo "</td></tr>";
+    }
+
+
+    echo "<tr><td colspan=\"2\"><div style=\"height:20px\"></div></TD></TR>";
+    echo "<tr><td colspan=\"2\" align=\"right\"><input type=\"button\" onclick=\"lmb_loadMenueditor(null,$id,'','update')\" name=\"menudetail[update]\" value=".$lang[33]."></TD></TR>";
+
+    echo "</form></table>";
+
+}
+
+function lmb_custmenu(&$custmenu,$linkid,$parent){
+    global $lang;
+    global $farbschema;
+    global $gtab;
+    global $gsnap;
+    global $greportlist;
+    global $gformlist;
+    global $gdiaglist;
+    global $LINK;
+    global $custmenu_list;
+
+    $types[1] = $lang[2144];
+    $types[2] = $lang[577];
+    $types[3] = $lang[2608];
+    $types[4] = $lang[1137];
+    $types[5] = $lang[1179];
+    $types[6] = $lang[2119];
+    $types[7] = $lang[573];
+    $types[8] = $lang[2144];
+    $types[9] = $lang[573];
+    $types[10] = $lang[1179];
+    $types[11] = $lang[1137];
+    $types[12] = $lang[2985];
+    $types[13] = $lang[2625];
+
+    if(!$custmenu_list){$custmenu_list = lmb_custmenulistGet();}
+
+    if(!$parent) {
+        echo "<div class=\"tabSubHeader tabSubHeaderItem\">" . $lang[$custmenu_list['name'][$linkid]] . "</div><br>";
+    }
+
+    echo "<table border=0 style=\"border-collapse: collapse;\">";
+    foreach ($custmenu['id'] as $key => $id) {
+        if($custmenu['parent'][$key] == $parent) {
+            $cli = null;
+            $cl = null;
+            $readonly = null;
+
+            if($parent) {
+                if($custmenu['typ'][$key] != 1) {
+                    $readonly = 'readonly disabled';
+                }
+                $cli = "<a onclick=\"lmb_loadMenueDetail($id)\"><div style=\"width:15px\" border=\"0\" class=\"lmb-icon lmb-edit\"></div></a>";
+            }else{
+                $cl = "class=\"lmbMenuHeaderNav\"";
+            }
+
+            $name = '';
+            if($custmenu['typ'][$key] <= 1 OR $custmenu['typ'][$key] == 8 OR $custmenu['typ'][$key] == 13){
+                $name = $lang[$custmenu['name'][$key]];
+            }elseif($custmenu['typ'][$key] == 2){
+                $name = $gtab['desc'][$custmenu['name'][$key]];
+            }elseif($custmenu['typ'][$key] == 3){
+                $gtabid = lmb_getGElementTabID($gsnap,$custmenu['name'][$key]);
+                $name = $gsnap[$gtabid]['name'][$custmenu['name'][$key]];
+            }elseif($custmenu['typ'][$key] == 4 OR $custmenu['typ'][$key] == 11){
+                $gtabid = lmb_getGElementTabID($greportlist,$custmenu['name'][$key]);
+                $name = $greportlist[$gtabid]['name'][$custmenu['name'][$key]];
+            }elseif($custmenu['typ'][$key] == 5 OR $custmenu['typ'][$key] == 10){
+                $gtabid = lmb_getGElementTabID($gformlist,$custmenu['name'][$key]);
+                $name = $gformlist[$gtabid]['name'][$custmenu['name'][$key]];
+            }elseif($custmenu['typ'][$key] == 6){
+                $gtabid = lmb_getGElementTabID($gdiaglist,$custmenu['name'][$key]);
+                $name = $gdiaglist[$gtabid]['name'][$custmenu['name'][$key]];
+            }elseif($custmenu['typ'][$key] == 7 OR $custmenu['typ'][$key] == 9){
+                $name = $lang[$LINK['name'][$custmenu['name'][$key]]];
+            }elseif($custmenu['typ'][$key] == 12){
+                $name = $lang[$custmenu_list['name'][$custmenu['name'][$key]]];
+            }
+
+            echo "<tr title=\"".$types[$custmenu['typ'][$key]]."\">
+            <td>$cli</td>
+            <td $cl><input $readonly type=\"text\" style=\"width:100%\" value=\"".$name."\" onchange=\"lmb_loadMenueditor(this,$id,'$parent','update')\"></td>
+            <td align=\"right\"><a onclick=\"lmb_loadMenueditor(null,$id,'$parent','delete')\"><i class=\"lmb-icon lmb-trash\" border=\"0\"></i></a></td>
+            <td><a onclick=\"lmb_loadMenueditor(null,$id,'$parent','up')\"><i class=\"lmb-icon lmb-long-arrow-up\" border=\"0\"></i></a></td>
+            <td><a onclick=\"lmb_loadMenueditor(null,$id,'$parent','down')\"><i class=\"lmb-icon lmb-long-arrow-down\" border=\"0\"></i></a></td>
+
+            
+            </tr>";
+
+            if(in_array($id,$custmenu['parent'])) {
+                echo "<tr><td><div style=\"width:15px\">&nbsp;</div></td><td colspan=\"4\">";
+                lmb_custmenu($custmenu,$linkid,$id);
+                echo "</td></tr>";
+            }
+            $id_ = $id;
+        }
+    }
+
+    echo "<tr>
+    <td style=\"opacity:0.3;background-color:".$farbschema['WEB7']."\"></td>
+    <td style=\"opacity:0.3;background-color:".$farbschema['WEB7']."\"></td>
+    <td align=\"right\"><a onclick=\"lmb_loadMenueditor(document.getElementById('menutyp_$parent'),null,'$parent','add')\"><i class=\"lmb-icon lmb-plus\" border=\"0\"></a></i></td>
+    <td colspan=\"2\"><a onclick=\"lmb_loadMenueditor(document.getElementById('menutyp_$parent'),null,'$id_','add')\"><i class=\"lmb-icon lmb-long-arrow-right\" border=\"0\"></a></i></td>
+    </tr>";
+
+
+    echo "</table>";
+}

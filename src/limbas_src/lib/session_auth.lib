@@ -1,0 +1,661 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+    global $db;
+    global $action;
+    global $DBA;
+    global $auth_group;
+
+    $globvars = Session::$globvars;
+    
+    foreach ($globvars as $globvar) {
+        global $$globvar;
+    }
+	
+	/* --- umgvar defaults ------------------- */
+	$sqlquery3 = "SELECT FORM_NAME,NORM FROM LMB_UMGVAR";
+	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+	if(!$rs3) {$commit = 1;}
+	while(lmbdb_fetch_row($rs3)) {
+		$umgvar[lmbdb_result($rs3,"FORM_NAME")] = lmbdb_result($rs3,"NORM");
+	}
+
+    $umgvar["charset"] = lmb_strtoupper($umgvar["charset"]);
+    
+	if($umgvar["update_metadata"]){$umgvar["update_metadata"] = explode(',',$umgvar["update_metadata"]);}
+	if($umgvar["read_metadata"]){$umgvar["read_metadata"] = explode(',',$umgvar["read_metadata"]);}
+	if($umgvar["indize_filetype"]){$umgvar["indize_filetype"] = explode(',',$umgvar["indize_filetype"]);}
+    if($umgvar["multi_language"]){$umgvar["multi_language"] = explode(',',$umgvar["multi_language"]);}
+    if($umgvar['postgres_use_fulltextsearch'] and $DBA['DB'] !== 'postgres'){$umgvar['postgres_use_fulltextsearch'] = false;}
+
+    /* --- Pfade ------------------- */
+	$umgvar["path"] = rtrim(DEPENDENTPATH,"/");
+	$umgvar["pfad"] = rtrim(DEPENDENTPATH,"/");
+	$umgvar["pdfpfad"] = $umgvar["pfad"]."/inc/fonts/";
+	
+	/* --- URL ------------------- */
+	if(!$umgvar["url"]){
+        $url = explode("/",$_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI']);
+
+        if ($_SERVER['SERVER_PORT'] != 80 && $_SERVER['SERVER_PORT'] != 443) {
+            $url = explode("/",$_SERVER['SERVER_NAME'].':'.$_SERVER['SERVER_PORT'].$_SERVER['REQUEST_URI']);
+        }
+		$last = lmb_count($url)-1;
+
+		if(lmb_strpos($_SERVER['REQUEST_URI'],".php")){
+		    while($url[$last]){
+		        if(lmb_strpos($url[$last],".php") === false){
+		            unset($url[$last]);
+                }else{
+		            unset($url[$last]);
+		            break;
+                }
+
+		        $last--;
+            }
+		}
+
+		$url = implode("/",$url);
+		
+		if($_SERVER['HTTPS']){
+			$umgvar["url"] = "https://".$url;
+		}else{
+			$umgvar["url"] = "http://".$url;
+		}
+	}
+	
+	# first setting of time-zone
+	date_default_timezone_set("Europe/Berlin");
+
+
+    /* --- load user data ------------------- */
+
+    $sqlquery2 = "SELECT * FROM LMB_USERDB WHERE USERNAME = '" . parse_db_string($_SESSION['authUser'], 30) . "'";
+    if ($_SESSION['authUser'] !== 'admin') {
+        $sqlquery2 .= ' AND (VALIDDATE >= ' . LMB_DBDEF_TIMESTAMP . ' OR VALID = ' . LMB_DBDEF_FALSE . ') AND DEL = ' . LMB_DBDEF_FALSE;
+    }
+    $rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+    if (!$rs2) {
+        return false;
+    }
+	
+	/* --- session ------------------- */
+	#@session_unset();
+	#@session_destroy();
+    $session['lastreset'] = time();
+	$session["s_id"] = session_id();
+	$session["s_name"] = session_name();
+	$session["group_id"] = lmbdb_result($rs2,"GROUP_ID");
+	$session["user_id"] = lmbdb_result($rs2,"USER_ID");
+	$session["username"] = lmbdb_result($rs2,"USERNAME");
+	$session["vorname"] = lmbdb_result($rs2,"VORNAME");
+	$session["name"] = lmbdb_result($rs2,"NAME");
+	$session["email"] = lmbdb_result($rs2,"EMAIL");
+	$session["usercolor"] = lmbdb_result($rs2,"USERCOLOR");
+	$session["maxresult"] = lmbdb_result($rs2,"MAXRESULT");
+	$session["farbschema"] = lmbdb_result($rs2,"FARBSCHEMA");
+	$session["data_hide"] = lmbdb_result($rs2,"DATA_HIDE");
+	$session["data_display"] = lmbdb_result($rs2,"DATA_DISPLAY");
+	$session["data_color"] = lmbdb_result($rs2,"DATA_COLOR");
+	$session["language"] = lmbdb_result($rs2,"LANGUAGE");
+	$session["dlanguage"] = lmbdb_result($rs2,"DLANGUAGE");
+	$session["layout"] = lmbdb_result($rs2,"LAYOUT");
+	$session["uploadsize"] = lmbdb_result($rs2,"UPLOADSIZE");
+	$session["debug"] = lmbdb_result($rs2,"DEBUG");
+	$session["logging"] = lmbdb_result($rs2,"LOGGING");
+	$session["login_date"] = date("U");
+	$session["change_pass"] = lmbdb_result($rs2,"CHANGE_PASS");
+	$session["symbolbar"] = lmbdb_result($rs2,"SYMBOLBAR");
+	$session["lockbackend"] = lmbdb_result($rs2,"LOCKBACKEND");
+	$session["superadmin"] =  lmbdb_result($rs2,"SUPERADMIN");
+	$session["gc_maxlifetime"] = lmbdb_result($rs2,"GC_MAXLIFETIME");
+	$session["multiframe"] = $umgvar["multiframe"];
+	if($multitenant_ = lmbdb_result($rs2,"MULTITENANT")){
+	    $multitenant_ = explode(',',$multitenant_);
+	    $session["multitenant"] = explode(';',$multitenant_[0]);
+	    $session["mid"] = $multitenant_[1];
+	    if(!$session["mid"]){$session["mid"] = $session["multitenant"][0];}
+	}
+	if(!lmbdb_result($rs2,"DATEFORMAT")){$session["dateformat"] = 1;}else{$session["dateformat"] = lmbdb_result($rs2,"DATEFORMAT");} #1=de, 2=usa, 3=fr}
+	if(!lmbdb_result($rs2,"SETLOCAL")){$session["setlocale"] = "de_DE";}else{$session["setlocale"] = lmbdb_result($rs2,"SETLOCAL");}
+	if(!lmbdb_result($rs2,"TIME_ZONE")){$session["timezone"] = "Europe/Berlin";}else{$session["timezone"] = lmbdb_result($rs2,"TIME_ZONE");}
+	if($session["superadmin"]){$session["debug"] = 1;}
+
+    // User admin always superadmin
+    if($session["user_id"] == 1){
+        $session["superadmin"] = 1;
+    }
+
+	# use system language
+	if($session["language"] == -1){
+		if(lmb_substr($_SERVER['HTTP_ACCEPT_LANGUAGE'],0,2) == 'de'){
+			$session["language"] = 1;
+		}elseif(lmb_substr($_SERVER['HTTP_ACCEPT_LANGUAGE'],0,2) == 'fr'){
+			$session["language"] = 4;
+		}elseif(lmb_substr($_SERVER['HTTP_ACCEPT_LANGUAGE'],0,2) == 'es'){
+			$session["language"] = 3;
+		}else{
+			$session["language"] = 2;
+		}
+	}
+
+	// data language
+	if(!$session['dlanguage']){$session['dlanguage'] = $session['language'];}
+	// Multilanguage description
+    if($umgvar["multi_language"]) {
+        // language definition
+        $sqlquery3 = "SELECT LANGUAGE_ID,LANGUAGE FROM LMB_LANG GROUP BY LANGUAGE_ID,LANGUAGE";
+        $rs3 = lmbdb_exec($db, $sqlquery3) or errorhandle(lmbdb_errormsg($db), $sqlquery3, $action, __FILE__, __LINE__);
+        while(lmbdb_fetch_row($rs3)){
+            $umgvar['multi_language_desc'][lmbdb_result($rs3,'LANGUAGE_ID')] = lmbdb_result($rs3,'LANGUAGE');
+        }
+    }
+
+    /* --- set main css ------------------- */
+    $session['css'] = $session['layout'] . '-' . $session['farbschema'] . '.css';
+    $session['legacyCss'] = 'legacy-' . $session['farbschema'] . '.css';
+    if (!file_exists(ASSETSPATH . 'css/' . $session['css'])) {
+        $session['css'] = 'default.css';
+    }
+    
+    if (!file_exists(ASSETSPATH . 'css/' . $session['legacyCss'])) {
+        $session['legacyCss'] = 'legacy-default.css';
+    }
+    
+
+	/* --- timezone setzen ------------------- */
+	setlocale(LC_ALL, $session["setlocale"]);
+	date_default_timezone_set($session["timezone"]);
+	
+	if(!lmbdb_result($rs2,"SOUNDLIST")){
+		$session["soundlist"] = array('notify.wav','rinring.wav','latetermin.wav');
+	}else{
+		$session["soundlist"] = explode(";",lmbdb_result($rs2,"SOUNDLIST"));
+	}
+
+	#----------------- subgroup -------------------
+	// extern auth
+	if(defined('IS_SOAP') AND is_array($auth_group)){
+	    $session["subgroup"] = $auth_group;
+	// intern/LDAP auth
+	}elseif($sub_group = lmbdb_result($rs2,"SUB_GROUP")){
+	    $session["subgroup"] = explode(";",$sub_group);
+	}
+	$session["subgroup"][] = lmbdb_result($rs2,"GROUP_ID");
+
+	#----------------- multitenant -------------------
+    if($session["multitenant"]){
+        $mltm = implode(',',$session["multitenant"]);
+        $sqlquery3 = "SELECT ID,MID,NAME,SYNCSLAVE FROM LMB_MULTITENANT WHERE ID in ($mltm)";
+        $rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+        while(lmbdb_fetch_row($rs3)) {
+            $mid = lmbdb_result($rs3, "ID");
+            $lmmultitenants['name'][$mid] = lmbdb_result($rs3, "NAME");
+            $lmmultitenants['mid'][$mid] = lmbdb_result($rs3, "MID");
+            $lmmultitenants['translate'][lmbdb_result($rs3, "MID")] = $mid;
+            $lmmultitenants['syncslave'][$mid] = lmbdb_result($rs3, "SYNCSLAVE");
+            # $lmmultitenants['mid'][$mid] = strval(lmbdb_result($rs3, "MID")); // todo char based
+        }
+    }
+
+	if($esetting = lmbdb_result($rs2,"E_SETTING")){$session["e_setting"] = unserialize($esetting);}
+	if($msetting = lmbdb_result($rs2,"M_SETTING")){$session["m_setting"] = unserialize($msetting);}
+	$ugtab = unserialize(lmbdb_result($rs2,"UGTAB"));
+	$filter = $ugtab["filter"];
+	
+	#$sqlquery3 = "SELECT UGTAB FROM LMB_USERDB WHERE USER_ID = ".$session["user_id"];
+	#$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+	#if(!$rs3) {$commit = 1;}
+	#if($ugtab = lmbdb_result($rs3,"UGTAB")){
+		#$ugtab = unserialize(@gzuncompress(base64_decode($ugtab)));
+		#$filter = $ugtab["filter"];
+	#}
+	
+	#if(lmbdb_result($rs2,"T_SETTING")){$session["t_setting"] = explode(";",lmbdb_result($rs2,"T_SETTING"));}
+
+	/* --- Letzter Login ------------------- */
+	$sqlquery3 = "SELECT MAX(LOGIN_DATE) AS LASTLOGIN FROM LMB_HISTORY_USER WHERE USERID = ".$session["user_id"];
+	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+	$session["lastlogin"] = get_date(lmbdb_result($rs3, "LASTLOGIN"),2);
+
+	/* --- Datei Standardordner --------------------------------------------- */
+	$sqlquery3 = "SELECT DISTINCT ID,LEVEL FROM LDMS_STRUCTURE WHERE FIX = ".LMB_DBDEF_TRUE." AND TYP = 1 AND LEVEL = 0";
+	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+	if(!$rs3) {$commit = 1;}
+	if(lmbdb_fetch_row($rs3)) {
+		$session["filestruct"]["root"] = lmbdb_result($rs3,"ID");
+	}
+
+	/* --- Sprachtabelle system auslesen (default) ------------------- */
+	if($session["language"] != $umgvar["default_language"]){
+		$sqlquery3 = "SELECT ELEMENT_ID,WERT,JS FROM LMB_LANG WHERE LANGUAGE_ID = ".$umgvar["default_language"];
+		$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+		if(!$rs3) {$commit = 1;}
+		while(lmbdb_fetch_row($rs3)) {
+            $debug_lang = '';
+			if($session["group_id"] == 1 AND $umgvar["debug_lang"])
+            {
+                $debug_lang = "(".lmbdb_result($rs3,"ELEMENT_ID").")";
+            }
+			$lvalue = lmbdb_result($rs3,"WERT");
+			if(lmbdb_result($rs3,"JS")){
+				$lvalue = str_replace("\r\n","\\n",$lvalue);
+				$lvalue = str_replace("\n","\\n",$lvalue);
+				$lvalue = str_replace("\t","\\t",$lvalue);
+				$lvalue = str_replace("'","\\'",$lvalue);
+			}else{
+				$lvalue = str_replace("\n","<br>",$lvalue);
+				$lvalue = str_replace("\t","&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;",$lvalue);
+			}
+			$lang[lmbdb_result($rs3,"ELEMENT_ID")] = $debug_lang.$lvalue;
+		}
+	}
+
+	/* --- Sprachtabelle system auslesen ------------------- */
+	$sqlquery3 = "SELECT ELEMENT_ID,WERT,JS FROM LMB_LANG WHERE LANGUAGE_ID = ".$session['language'];
+	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+	if(!$rs3) {$commit = 1;}
+	while(lmbdb_fetch_row($rs3)) {
+        $debug_lang = '';
+		if($session["group_id"] == 1 AND $umgvar["debug_lang"])
+        {
+            $debug_lang = "(".lmbdb_result($rs3,"ELEMENT_ID").")";
+        }
+		if($lvalue = lmbdb_result($rs3,"WERT")){
+			if(lmbdb_result($rs3,"JS")){
+				$lvalue = str_replace("\r\n","\\n",$lvalue);
+				$lvalue = str_replace("\n","\\n",$lvalue);
+				$lvalue = str_replace("\t","\\t",$lvalue);
+				$lvalue = str_replace("'","\\'",$lvalue);
+			}else{
+				$lvalue = str_replace("\n","<br>",$lvalue);
+				$lvalue = str_replace("\t","&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;",$lvalue);
+			}
+			$lang[lmbdb_result($rs3,"ELEMENT_ID")] = $debug_lang.$lvalue;
+		}
+	}
+
+	/* --- Sprachtabelle local default language auslesen ------------------- */
+	if($session["language"] != $umgvar["default_language"]){
+		$sqlquery3 = "SELECT ELEMENT_ID,WERT,OVERRIDE FROM LMB_LANG_DEPEND WHERE LANGUAGE_ID = ".$umgvar["default_language"];
+		$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+		if(!$rs3) {$commit = 1;}
+		while(lmbdb_fetch_row($rs3)) {
+            $lid = lmbdb_result($rs3,"ELEMENT_ID");
+			$wert = trim(lmbdb_result($rs3,"WERT"));
+            $override = trim(lmbdb_result($rs3,"OVERRIDE"));
+			if($wert){
+                $debug_lang = '';
+				if($session["group_id"] == 1 AND $umgvar["debug_lang"]) {$debug_lang = "(".$lid.")";}
+				$lang[$lid] = $debug_lang.str_replace(chr(10),"",$wert);
+                if($override){
+                    $lang[$override] = $lang[$lid];
+                }
+			}
+		}
+	}
+
+	/* --- Sprachtabelle local user language auslesen ------------------- */
+	$sqlquery3 = "SELECT ELEMENT_ID,WERT,OVERRIDE FROM LMB_LANG_DEPEND WHERE LANGUAGE_ID = ".$session["language"];
+	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+	if(!$rs3) {$commit = 1;}
+	while(lmbdb_fetch_row($rs3)) {
+        $lid = lmbdb_result($rs3,"ELEMENT_ID");
+		$wert = trim(lmbdb_result($rs3,"WERT"));
+        $override = trim(lmbdb_result($rs3,"OVERRIDE"));
+		if($wert){
+			if($session["group_id"] == 1 AND $umgvar["debug_lang"]){$debug_lang = "(".$lid.")";}
+			$lang[$lid] = $debug_lang.str_replace(chr(10),"",$wert);
+            if($override){
+                $lang[$override] = $lang[$lid];
+            }
+		}
+	}
+
+	/* --- Prüfung ob gesperrt --------------------------------- */
+	if(($umgvar["lock"] OR lmbdb_result($rs2,"LMLOCK")) AND !$session["superadmin"]){
+		require_once(COREPATH . 'lib/auth/html/lock.php');
+		session_destroy();
+		die();
+	}
+    
+
+
+    /* --- load custom variables ------------------- */
+    $custvar = array();
+    $sqlquery3 = 'SELECT CKEY, CVALUE FROM LMB_CUSTVAR WHERE ACTIVE = '.LMB_DBDEF_TRUE;
+    $rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+    if(!$rs3) {$commit = 1;}
+    while(lmbdb_fetch_row($rs3)) {
+        $custvar[lmbdb_result($rs3,"CKEY")] = lmbdb_result($rs3,"CVALUE");
+    }
+
+    /* --- load custom variables depend ------------------- */
+    # multitenant
+    if($umgvar['multitenant'] AND $lmmultitenants['mid'][$session['mid']]) {
+        $sqlquery3 = "SELECT ID FROM LMB_CONF_TABLES WHERE UPPER(TABELLE) = 'LMB_CUSTVAR_DEPEND' AND MULTITENANT = ".LMB_DBDEF_TRUE;
+        $rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+        if(lmbdb_fetch_row($rs3)) {
+            $sqlmt = "AND LMB_CUSTVAR_DEPEND.LMB_MID = ".$lmmultitenants['mid'][$session['mid']];
+        }
+    }
+    #$sqlquery3 = 'SELECT LMB_CUSTVAR_DEPEND.CKEY, LMB_CUSTVAR_DEPEND.CVALUE FROM LMB_CUSTVAR_DEPEND LEFT JOIN LMB_CUSTVAR ON LMB_CUSTVAR_DEPEND.CKEY = LMB_CUSTVAR.CKEY WHERE LMB_CUSTVAR.OVERRIDABLE = '.LMB_DBDEF_TRUE.' AND LMB_CUSTVAR.ACTIVE = '.LMB_DBDEF_TRUE.' AND LMB_CUSTVAR_DEPEND.ACTIVE = '.LMB_DBDEF_TRUE.' '.$sqlmt.' OR LMB_CUSTVAR.ID IS NULL';
+    $sqlquery3 = 'SELECT LMB_CUSTVAR_DEPEND.CKEY, LMB_CUSTVAR_DEPEND.CVALUE 
+    FROM LMB_CUSTVAR_DEPEND LEFT JOIN LMB_CUSTVAR ON LMB_CUSTVAR_DEPEND.CKEY = LMB_CUSTVAR.CKEY AND LMB_CUSTVAR.ACTIVE = TRUE AND LMB_CUSTVAR.OVERRIDABLE = FALSE
+    WHERE LMB_CUSTVAR_DEPEND.ACTIVE = '.LMB_DBDEF_TRUE.' AND LMB_CUSTVAR.ID IS NULL '.$sqlmt;
+    $rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+    if(!$rs3) {$commit = 1;}
+    while(lmbdb_fetch_row($rs3)) {
+        $custvar[lmbdb_result($rs3,"CKEY")] = lmbdb_result($rs3,"CVALUE");
+    }
+
+	/* --- Userdaten auslesen ------------------- */
+	$bzm = 1;
+	$sqlquery3 = "SELECT LMB_USERDB.HIDDEN,LMB_USERDB.MULTITENANT,LMB_USERDB.TEL,LMB_USERDB.FAX,LMB_USERDB.POSITION,LMB_USERDB.EMAIL,LMB_USERDB.SUB_GROUP,LMB_USERDB.USERCOLOR,LMB_USERDB.USER_ID,LMB_USERDB.USERNAME,LMB_USERDB.NAME,LMB_USERDB.VORNAME,LMB_GROUPS.NAME AS GROUPNAME,LMB_USERDB.BESCHREIBUNG AS BU,LMB_GROUPS.DESCRIPTION AS BG,LMB_GROUPS.GROUP_ID FROM LMB_USERDB,LMB_GROUPS WHERE LMB_USERDB.GROUP_ID = LMB_GROUPS.GROUP_ID AND LMB_USERDB.DEL = ".LMB_DBDEF_FALSE;
+	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+	if(!$rs3) {$commit = 1;}
+	while(lmbdb_fetch_row($rs3)) {
+		$tmp = lmbdb_result($rs3,"USER_ID");
+
+        /*
+        if($session["multitenant"]){
+            $multitenant_ = explode(';',lmbdb_result($rs3,"MULTITENANT"));
+            if($userdat["multitenant"][$tmp] AND !in_array($session["mid"],$userdat["multitenant"][$tmp])){
+                continue;
+            }
+            $userdat["multitenant"][$tmp] = $multitenant_;
+        }
+        */
+
+		$userdat["id"][$bzm-1] = $tmp;
+		$userdat["userid"][$tmp] = $tmp;
+		$userdat["username"][$tmp] = lmbdb_result($rs3,"USERNAME");
+		$userdat["name"][$tmp] = lmbdb_result($rs3,"NAME");
+		$userdat["vorname"][$tmp] = lmbdb_result($rs3,"VORNAME");
+		$userdat["bezeichnung"][$tmp] = $userdat["vorname"][$tmp]." ".$userdat["name"][$tmp];
+		if(lmbdb_result($rs3,"BU")){$userdat["userdesc"][$tmp] = lmbdb_result($rs3,"BU");}
+		$userdat["groupname"][$tmp] = lmbdb_result($rs3,"GROUPNAME");
+		if(lmbdb_result($rs3,"BG")){$userdat["groupdesc"][$tmp] = lmbdb_result($rs3,"BG");}
+		if(lmbdb_result($rs3,"USERCOLOR")){$userdat["usercolor"][$tmp] = lmbdb_result($rs3,"USERCOLOR");}
+		$userdat["groupid"][$tmp] = lmbdb_result($rs3,"GROUP_ID");
+		$userdat["email"][$tmp] = lmbdb_result($rs3,"EMAIL");
+		if(lmbdb_result($rs3,"TEL")){$userdat["tel"][$tmp] = lmbdb_result($rs3,"TEL");}
+		if(lmbdb_result($rs3,"FAX")){$userdat["fax"][$tmp] = lmbdb_result($rs3,"FAX");}
+		if(lmbdb_result($rs3,"POSITION")){$userdat["position"][$tmp] = lmbdb_result($rs3,"POSITION");}
+        $userdat["multitenant"][$tmp] = explode(';',lmbdb_result($rs3,"MULTITENANT"));
+        $userdat["hidden"][$tmp] = lmbdb_result($rs3,"HIDDEN");
+		if($sub_group = lmbdb_result($rs3,"SUB_GROUP")){
+			$userdat["subgroup"][$tmp] = $userdat["groupid"][$tmp].",".str_replace(";",",",$sub_group);
+		}else{
+			$userdat["subgroup"][$tmp] = $userdat["groupid"][$tmp];
+		}
+
+		$bzm++;
+	}
+
+	/* --- Groupdaten auslesen ------------------- */
+	$bzm = 1;
+	$sqlquery3 = "SELECT GROUP_ID,NAME,DESCRIPTION,REDIRECT,MULTIFRAMELIST,LEVEL FROM LMB_GROUPS WHERE DEL = ".LMB_DBDEF_FALSE;
+	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+	if(!$rs3) {$commit = 1;}
+	while(lmbdb_fetch_row($rs3)) {
+		$tmp = lmbdb_result($rs3,"GROUP_ID");
+		$groupdat["id"][$bzm-1] = $tmp;
+		$groupdat["name"][$tmp] = lmbdb_result($rs3,"NAME");
+		if(lmbdb_result($rs3,"DESCRIPTION")){$groupdat["beschreibung"][$tmp] = lmbdb_result($rs3,"DESCRIPTION");}
+		if(lmbdb_result($rs3,"REDIRECT")){$groupdat["redirect"][$tmp] = lmbdb_result($rs3,"REDIRECT");}
+		$groupdat["level"][$tmp] = lmbdb_result($rs3,"LEVEL");
+		$mflist = lmbdb_result($rs3,"MULTIFRAMELIST");
+		if($mflist){$groupdat["multiframelist"][$tmp] = explode(";",$mflist);}
+		$bzm++;
+	}
+
+	/* --- LINK System ------------------------------- */
+	/*
+	$sqlquery3 = "SELECT DISTINCT LMB_ACTION.HELP_URL,LMB_ACTION.TARGET,LMB_ACTION.EXTENSION,LMB_ACTION.SORT,LMB_ACTION.SUBGROUP,LMB_ACTION.MAINGROUP,LMB_ACTION.LINK_NAME,LMB_ACTION.LINK_URL,LMB_ACTION.BESCHREIBUNG,LMB_ACTION.ID,LMB_ACTION.ICON_URL,LMB_ACTION.ACTION FROM LMB_RULES_ACTION,LMB_ACTION
+        WHERE (LMB_RULES_ACTION.GROUP_ID = ".implode(" OR LMB_RULES_ACTION.GROUP_ID = ",$session["subgroup"]).") AND LMB_RULES_ACTION.PERM = 2 AND LMB_ACTION.ID = LMB_RULES_ACTION.LINK_ID ORDER BY LMB_ACTION.MAINGROUP,LMB_ACTION.SUBGROUP,LMB_ACTION.SORT";
+	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+	 */
+	$sqlquery3 = "SELECT DISTINCT LMB_ACTION.HELP_URL,LMB_ACTION.TARGET,LMB_ACTION.EXTENSION,LMB_ACTION.SORT,LMB_ACTION.SUBGROUP,LMB_ACTION.MAINGROUP,LMB_ACTION.LINK_NAME,LMB_ACTION.LINK_URL,LMB_ACTION.BESCHREIBUNG,LMB_ACTION.ID,LMB_ACTION.ICON_URL,LMB_ACTION.ACTION FROM LMB_RULES_ACTION,LMB_ACTION
+        WHERE (LMB_RULES_ACTION.GROUP_ID = ".implode(" OR LMB_RULES_ACTION.GROUP_ID = ",$session["subgroup"]).") AND LMB_RULES_ACTION.PERM = 2 AND LMB_ACTION.ID = LMB_RULES_ACTION.LINK_ID
+        UNION
+        SELECT DISTINCT LMB_ACTION_DEPEND.HELP_URL,LMB_ACTION_DEPEND.TARGET,LMB_ACTION_DEPEND.EXTENSION,LMB_ACTION_DEPEND.SORT,LMB_ACTION_DEPEND.SUBGROUP,LMB_ACTION_DEPEND.MAINGROUP,LMB_ACTION_DEPEND.LINK_NAME,LMB_ACTION_DEPEND.LINK_URL,LMB_ACTION_DEPEND.BESCHREIBUNG,LMB_ACTION_DEPEND.ID,LMB_ACTION_DEPEND.ICON_URL,LMB_ACTION_DEPEND.ACTION FROM LMB_RULES_ACTION,LMB_ACTION_DEPEND
+        WHERE (LMB_RULES_ACTION.GROUP_ID = ".implode(" OR LMB_RULES_ACTION.GROUP_ID = ",$session["subgroup"]).") AND LMB_RULES_ACTION.PERM = 2 AND LMB_ACTION_DEPEND.ID = LMB_RULES_ACTION.LINK_ID
+        ORDER BY 6,5,4
+        ";
+	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+	if(!$rs3) {$commit = 1;}
+	while(lmbdb_fetch_row($rs3)) {
+		$link_id = lmbdb_result($rs3,"ID");
+		$LINK[$link_id] = 1;
+		$LINK["name"][$link_id] = lmbdb_result($rs3,"LINK_NAME");
+		$LINK["desc"][$link_id] = lmbdb_result($rs3,"BESCHREIBUNG");
+		$LINK["icon_url"][$link_id] = lmbdb_result($rs3,"ICON_URL");
+		$LINK["link_url"][$link_id] = lmbdb_result($rs3,"LINK_URL");
+		$LINK["typ"][$link_id] = lmbdb_result($rs3,"MAINGROUP");
+		$LINK["subgroup"][$link_id] = lmbdb_result($rs3,"SUBGROUP");
+		$help_url = lmbdb_result($rs3,"HELP_URL");
+		if($help_url AND $umgvar["helplink"]){$LINK["help_url"][$link_id] = trim($umgvar["helplink"],"/")."/".$help_url;}
+		$extens = lmbdb_result($rs3,"EXTENSION");
+		if($extens){$LINK["extension"][$link_id] = $extens;}
+		$target = lmbdb_result($rs3,"TARGET");
+		if($target){$LINK["target"][$link_id] = $target;}
+		$tmp = lmbdb_result($rs3,"ACTION");
+		if($tmp){
+			$LINK_ID[$tmp] = $link_id;
+			$LINK[$tmp] = 1;
+			$LINK_ACTION[$link_id] = lmbdb_result($rs3,"ACTION");
+		}
+	}
+
+	/* --- LINK local ------------------------------- */
+	/*
+	$sqlquery3 = "SELECT DISTINCT LMB_ACTION_DEPEND.HELP_URL,LMB_ACTION_DEPEND.TARGET,LMB_ACTION_DEPEND.EXTENSION,LMB_ACTION_DEPEND.SORT,LMB_ACTION_DEPEND.SUBGROUP,LMB_ACTION_DEPEND.MAINGROUP,LMB_ACTION_DEPEND.LINK_NAME,LMB_ACTION_DEPEND.LINK_URL,LMB_ACTION_DEPEND.BESCHREIBUNG,LMB_ACTION_DEPEND.ID,LMB_ACTION_DEPEND.ICON_URL,LMB_ACTION_DEPEND.ACTION FROM LMB_RULES_ACTION,LMB_ACTION_DEPEND
+        WHERE (LMB_RULES_ACTION.GROUP_ID = ".implode(" OR LMB_RULES_ACTION.GROUP_ID = ",$session["subgroup"]).") AND LMB_RULES_ACTION.PERM = 2 AND LMB_ACTION_DEPEND.ID = LMB_RULES_ACTION.LINK_ID ORDER BY LMB_ACTION_DEPEND.MAINGROUP,LMB_ACTION_DEPEND.SUBGROUP,LMB_ACTION_DEPEND.SORT";
+	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+	if(!$rs3) {$commit = 1;}
+	while(lmbdb_fetch_row($rs3)) {
+		$link_id = lmbdb_result($rs3,"ID");
+		$LINK[$link_id] = 1;
+		$LINK["name"][$link_id] = lmbdb_result($rs3,"LINK_NAME");
+		$LINK["desc"][$link_id] = lmbdb_result($rs3,"BESCHREIBUNG");
+		$LINK["icon_url"][$link_id] = lmbdb_result($rs3,"ICON_URL");
+		$LINK["link_url"][$link_id] = lmbdb_result($rs3,"LINK_URL");
+		$LINK["typ"][$link_id] = lmbdb_result($rs3,"MAINGROUP");
+		$LINK["subgroup"][$link_id] = lmbdb_result($rs3,"SUBGROUP");
+		$help_url = lmbdb_result($rs3,"HELP_URL");
+		if($help_url){$LINK["help_url"][$link_id] = $help_url;}
+		$extens = lmbdb_result($rs3,"EXTENSION");
+		if($extens){$LINK["extension"][$link_id] = $extens;}
+		$target = lmbdb_result($rs3,"TARGET");
+		if($target){$LINK["target"][$link_id] = $target;}
+		$tmp = lmbdb_result($rs3,"ACTION");
+		if($tmp){
+			$LINK_ID[$tmp] = $link_id;
+			$LINK[$tmp] = 1;
+			$LINK_ACTION[$link_id] = lmbdb_result($rs3,"ACTION");
+		}
+	}
+	*/
+
+	/* --- Farbschema auslesen ------------------- */
+	$sqlquery3 = "SELECT * FROM LMB_COLORSCHEMES WHERE ID = ".$session["farbschema"];
+	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+	if(!$rs3) {$commit = 1;}
+	if(lmbdb_fetch_row($rs3)) {
+		$session["farbschema"] = lmbdb_result($rs3,"ID");
+		$farbschema["NAME"] = lmbdb_result($rs3,"NAME");
+
+		for($i = 1;$i <= 14; $i++){
+			$farbschema['WEB'.$i] = lmbdb_result($rs3,"WEB".$i);
+			$farbschema['RGB'.$i] = hexdec(lmb_substr(lmbdb_result($rs3,"WEB".$i), 1, 2)).", ".hexdec(lmb_substr(lmbdb_result($rs3,"WEB".$i), 3, 2)).", ".hexdec(lmb_substr(lmbdb_result($rs3,"WEB".$i), 5, 2));
+		}
+	}
+
+	/* --- Farbliste auslesen ------------------- */
+	$sqlquery3 = "SELECT WERT FROM LMB_USER_COLORS WHERE USERID = ".$session['user_id']." OR USERID = 0";
+	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+    $user_colors = [];
+	$user_colors["wert"][] = "";
+	$user_colors["wert"][] = "transparent";
+	$user_colors["wert"][] = "000000";
+	$user_colors["wert"][] = "FFFFFF";
+	while(lmbdb_fetch_row($rs3)) {
+		$user_colors['wert'][] = lmbdb_result($rs3, "WERT");
+	}
+
+
+    /* --- field_type ------------------- */
+
+    // catogorie translate
+    $categorie_spell[1] = $lang[2944];
+    $categorie_spell[2] = $lang[1397];
+    $categorie_spell[3] = $lang[1961];
+    $categorie_spell[4] = $lang[1460];
+    $categorie_spell[5] = $lang[545];
+    $categorie_spell[6] = $lang[2362];
+    $categorie_spell[7] = $lang[1924];
+    $categorie_spell[10] = $lang[1813];
+
+    $sqlquery3 = "SELECT * FROM LMB_FIELD_TYPES ORDER BY CATEGORIE,SORT";
+    $rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs3)) {
+    	#$rid = lmbdb_result($rs3, "ID");
+        $rid = lmbdb_result($rs3,"DATA_TYPE");
+    	$lmfieldtype["id"][$rid] = lmbdb_result($rs3, "ID");
+        $lmfieldtype["categorie"][$rid] = $categorie_spell[lmbdb_result($rs3, "CATEGORIE")];
+    	$lmfieldtype["field_type"][$rid] = lmbdb_result($rs3, "FIELD_TYPE");
+    	$lmfieldtype["data_type"][$rid] = $rid;
+    	$lmfieldtype["parse_type"][$rid] = lmbdb_result($rs3, "PARSE_TYPE");
+        $lmfieldtype["db_datatype"][$rid] = lmbdb_result($rs3, "DATENTYP");
+    	$lmfieldtype["funcid"][$rid] = lmbdb_result($rs3, "FUNCID");
+    	$lmfieldtype["size"][$rid] = lmbdb_result($rs3, "SIZE");
+    	$lmfieldtype["hassize"][$rid] = lmbdb_result($rs3, "HASSIZE");
+        $lmfieldtype["regex"][$rid] = lmbdb_result($rs3, "LMRULE");
+    	$lmfieldtype["description"][$rid] = $lang[lmbdb_result($rs3, "FORMAT")];
+        $lmfieldtype["name"][$rid] = $lang[lmbdb_result($rs3, "DATA_TYPE_EXP")];
+    }
+
+    $sqlquery3 = "SELECT * FROM LMB_FIELD_TYPES_DEPEND ORDER BY CATEGORIE,SORT";
+    $rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs3)) {
+    	#$rid = lmbdb_result($rs3, "ID");
+        $rid = lmbdb_result($rs3,"DATA_TYPE");
+    	$lmfieldtype["id"][$rid] = lmbdb_result($rs3, "ID");
+        $lmfieldtype["categorie"][$rid] = $categorie_spell[lmbdb_result($rs3, "CATEGORIE")];
+    	$lmfieldtype["field_type"][$rid] = lmbdb_result($rs3, "FIELD_TYPE");
+    	$lmfieldtype["data_type"][$rid] = $rid;
+    	$lmfieldtype["parse_type"][$rid] = lmbdb_result($rs3, "PARSE_TYPE");
+        $lmfieldtype["db_datatype"][$rid] = lmbdb_result($rs3, "DATENTYP");
+    	$lmfieldtype["funcid"][$rid] = lmbdb_result($rs3, "FUNCID");
+    	$lmfieldtype["size"][$rid] = lmbdb_result($rs3, "SIZE");
+    	$lmfieldtype["hassize"][$rid] = lmbdb_result($rs3, "HASSIZE");
+        $lmfieldtype["regex"][$rid] = lmbdb_result($rs3, "LMRULE");
+    	$lmfieldtype["description"][$rid] = $lang[lmbdb_result($rs3, "FORMAT")];
+        $lmfieldtype["name"][$rid] = $lang[lmbdb_result($rs3, "DATA_TYPE_EXP")];
+    }
+
+    /* --- Währungskurstabelle auslesen ------------------- */
+    $lmcurrencyrate = [];
+    $sqlquery3 = 'SELECT LCR1.CURFROM, LCR1.CURTO, LCR1.RATE FROM LMB_CURRENCY_RATE LCR1 LEFT JOIN LMB_CURRENCY_RATE LCR2 ON ( LCR1.CURFROM = LCR2.CURFROM AND LCR1.RDAY < LCR2.RDAY ) WHERE LCR2.RDAY IS NULL';
+    $rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+
+    while(lmbdb_fetch_row($rs3)) {
+        $curfrom = lmbdb_result($rs3, 'CURFROM');
+        $lmcurrencyrate[$curfrom][lmbdb_result($rs3, 'CURTO')] = parse_db_float(lmbdb_result($rs3, 'RATE'));
+    }
+
+
+	/* --- Währungstabelle auslesen ------------------- */
+	$sqlquery3 = "SELECT * FROM LMB_CURRENCY ORDER BY CODE";
+	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs3)) {
+        $cid = lmbdb_result($rs3, "ID");
+		$code = lmbdb_result($rs3, "CODE");
+        $lmcurrency["id"][$code] = $cid;
+		$lmcurrency["currency"][$code] = lmbdb_result($rs3, "CURRENCY");
+		$lmcurrency["code"][$code] = lmbdb_result($rs3, "CODE");
+        $lmcurrency["rate"][$code] = [];
+		if (array_key_exists($cid,$lmcurrencyrate)) {
+            $lmcurrency["rate"][$code] = $lmcurrencyrate[$cid];
+        }
+		$lmcurrency["symbol"][$code] = lmbdb_result($rs3, "SYMBOL");
+	}
+
+	#----------------- Mimetypes -------------------
+	$sqlquery3 = "SELECT * FROM LMB_MIMETYPES WHERE ACTIVE = ".LMB_DBDEF_TRUE.' ORDER BY MIMETYPE';
+	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs3)) {
+		$key = lmbdb_result($rs3, "ID");
+		$gmimetypes["mimetype"][$key] = lmbdb_result($rs3, "MIMETYPE");
+		$gmimetypes["ext"][$key] = lmbdb_result($rs3, "EXT");
+		$gmimetypes["pic"][$key] = lmbdb_result($rs3, "PIC");
+		$gmimetypes["resolve"][$gmimetypes["ext"][$key]] = $gmimetypes["mimetype"][$key];
+	}
+
+	# auf Userverzeichniss prüfen
+    create_user_folder($session["user_id"]);
+
+	
+	# EXTENSION Dateien einbinden
+	if(is_dir(EXTENSIONSPATH)){
+		if($extdir = read_dir(EXTENSIONSPATH,1)){
+			foreach ($extdir["name"] as $key => $value){
+				$filetype = explode(".",$value);
+				if($extdir["typ"][$key] == "file" AND ($filetype[lmb_count($filetype)-1] == "inc" OR $filetype[lmb_count($filetype)-1] == "js" OR $filetype[lmb_count($filetype)-1] == "css")){
+					if($filetype[lmb_count($filetype)-1] == "js" OR $filetype[lmb_count($filetype)-1] == "css"){
+						$gLmbExt[$value][] = ltrim(str_replace(EXTENSIONSPATH,"localassets/",$extdir["path"][$key]),'/').$value;
+					}else{
+						$gLmbExt[$value][] = $extdir["path"][$key].$value;
+					}
+				}
+			}
+		}
+	}
+
+	/* --- gtab_array ---------------------------------------------- */
+	$tmp = COREPATH . 'gtab/gtab_array.lib';
+	require($tmp);
+
+	/* --- temp-Verzeichnis löschen ---------------------------------------------- */
+	rmdirr(USERPATH.$session["user_id"]."/temp");
+	/* --- download-Verzeichnis löschen ---------------------------------------------- */
+	rmdirr(USERPATH.$session["user_id"]."/download");
+
+
+	/* --- Userstatistik eintragen ---------------------------------------- */
+	$sqlquery4 = "SELECT ID FROM LMB_HISTORY_USER WHERE SESSIONID = '".session_id()."' AND USERID = ".$session["user_id"]." AND IP = '".lmb_getIpAddr()."' AND LOGIN_DATE >= '".convert_stamp($session["login_date"])."'";
+	$rs4 = lmbdb_exec($db,$sqlquery4) or errorhandle(lmbdb_errormsg($db),$sqlquery4,$action,__FILE__,__LINE__);
+	if(!$rs4) {$commit = 1;}
+	if(!lmbdb_fetch_row($rs4)){
+		/* --- Next ID -------------------------------------------------------- */
+		$NEXTID = next_db_id('LMB_HISTORY_USER','ID',1);
+		$sqlquery5 = "INSERT INTO LMB_HISTORY_USER (ID,USERID,SESSIONID,IP,HOST) VALUES (".$NEXTID.",".$session["user_id"].",'".session_id()."','".lmb_getIpAddr()."','".$_SERVER['REMOTE_HOST']."')";
+		$rs5 = lmbdb_exec($db,$sqlquery5) or errorhandle(lmbdb_errormsg($db),$sqlquery5,$action,__FILE__,__LINE__);
+		if(!$rs5) {$commit = 1;}
+	}else{
+		$sqlquery5 = "UPDATE LMB_HISTORY_USER SET UPDATE_DATE = '".convert_stamp(time())."',LOGIN_TIME = ".(date("U") - $session["login_date"])." WHERE SESSIONID = '".session_id()."' AND USERID = ".$session["user_id"]." AND LOGIN_DATE >= '".convert_stamp($session["login_date"])."'";
+		$rs5 = lmbdb_exec($db,$sqlquery5) or errorhandle(lmbdb_errormsg($db),$sqlquery5,$action,__FILE__,__LINE__);
+		if(!$rs5) {$commit = 1;}
+	}
+	
+	# include extensions
+	if($GLOBALS["gLmbExt"]["ext_session_auth.inc"]){
+		foreach ($GLOBALS["gLmbExt"]["ext_session_auth.inc"] as $key => $extfile){
+			require_once($extfile);
+		}
+	}
+
+	# save session variables
+	save_sessionvars($globvars);
+	
+
+unset($commit);

@@ -1,0 +1,209 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+# simple shortcut -> readable code
+function db_ex($sqlquery) {
+    global $db;
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    return $rs;
+}
+
+/* --- modify existing record  --------------------------------------------- */
+if($update_data){
+        $func = function($n) {return parse_db_int($n, 10);};
+        $change = array_map($func, array_filter(explode(";", $update_data))); # delete null values and parse db int
+
+        # foreach id to change
+        foreach($change as $id) {
+
+            # check destination
+            if($id >= 1000 OR !$umgvar["admin_mode"]){
+                $prefix = "_DEPEND";
+                $depend = true;
+            }else{
+                $prefix = "";
+                $depend = false;
+            }
+
+            # check if primary dataset already exists
+            $rs_primary = db_ex("SELECT ID,DATA_TYPE_EXP,FORMAT FROM LMB_FIELD_TYPES WHERE ID = $id");
+            if(lmbdb_fetch_row($rs_primary)) {
+                $lang_exp = lmbdb_result($rs_primary,"DATA_TYPE_EXP");
+                $lang_format = lmbdb_result($rs_primary,"FORMAT");
+                $has_primary = 1;
+            }
+
+            # add copy to dependent table if not existent
+            if($depend) {
+                # check if dependent dataset already exists
+                $rs_depend = db_ex("SELECT ID,DATA_TYPE_EXP,FORMAT FROM LMB_FIELD_TYPES_DEPEND WHERE ID = $id");
+                if(!lmbdb_fetch_row($rs_depend) AND $has_primary) {
+                    # crate new dependent dataset
+                    db_ex("INSERT INTO LMB_FIELD_TYPES_DEPEND (SELECT * FROM LMB_FIELD_TYPES WHERE ID = $id)");
+                    # crate new language entries
+                    $lang_exp = lang_add($session["language"], 2, 0, lmbdb_result($rs_primary, "DATA_TYPE_EXP"), $prefix);
+                    $lang_format = lang_add($session["language"], 2, 0, lmbdb_result($rs_primary, "FORMAT"), $prefix);
+                    # update new language entries
+                    db_ex("UPDATE LMB_FIELD_TYPES_DEPEND SET DATA_TYPE_EXP = $lang_exp, FORMAT = $lang_format  WHERE ID = $id");
+                }else{
+                    $lang_exp = lmbdb_result($rs_depend,"DATA_TYPE_EXP");
+                    $lang_format = lmbdb_result($rs_depend,"FORMAT");
+                }
+            }
+            
+            # parse given data
+            if(${"field_type_".$id} AND is_numeric(${"field_type_".$id})){$field_type = ${"field_type_".$id};}else{$field_type = "0";}
+            if(${"parse_type_".$id} AND is_numeric(${"parse_type_".$id})){$parse_type = ${"parse_type_".$id};}else{$parse_type = "0";}
+            if(${"data_type_".$id} AND is_numeric(${"data_type_".$id})){$data_type = ${"data_type_".$id};}else{$data_type = "0";}
+            if(${"funcid_".$id} AND is_numeric(${"funcid_".$id})){$funcid = ${"funcid_".$id};}else{$funcid = "0";}
+            if(${"size_".$id} AND is_numeric(${"size_".$id})){$size = ${"size_".$id};}else{$size = "0";}
+            if(${"data_type_exp_".$id}){$data_type_exp = preg_replace("/ {2,}/"," ",str_replace("'","", ${"data_type_exp_".$id}));}else{$data_type_exp = "";}
+            if(${"datentyp_".$id}){$datentyp = preg_replace("/ {2,}/"," ",str_replace("'","", ${"datentyp_".$id}));}else{$datentyp = "0";}
+            if(${"rule_".$id}){$rule = preg_replace("/ {2,}/"," ",str_replace("'","", ${"rule_".$id}));}else{$rule = "";}
+            if(${"format_".$id}){$format = preg_replace("/ {2,}/"," ",str_replace("'","", ${"format_".$id}));}else{$format = "";}
+
+            # update
+            $update_query = "UPDATE LMB_FIELD_TYPES{$prefix} SET PARSE_TYPE = ".parse_db_int($parse_type,5).",FIELD_TYPE = ".parse_db_int($field_type,5).",DATA_TYPE = ".parse_db_int($data_type,5).",FUNCID = ".parse_db_int($funcid,5).",SIZE = ".parse_db_int($size,5).",DATENTYP = '".parse_db_string($datentyp,20)."',LMRULE = '".parse_db_string($rule,300)."'WHERE ID = $id";
+            db_ex($update_query);
+
+            # language update
+            lang_change(null, $lang_exp, $data_type_exp, $session["language"], $prefix, 2);
+            lang_change(null, $lang_format, $format, $session["language"], $prefix, 2);
+        }
+                
+}
+
+/* --- add new record  --------------------------------------------- */
+if($add_data){
+
+    # check destination
+    if(!$umgvar["admin_mode"]){
+        $prefix = "_DEPEND";
+        $depend = true;
+    }else{
+        $prefix = "";
+        $depend = false;
+    }
+
+    if($depend) {
+        $ID = max(next_db_id('LMB_FIELD_TYPES_DEPEND'), 1000); # beginning from 1000
+        $funcid = max($funcid, 1000); # beginning from 1000
+        $data_type = max($data_type, 1000); # beginning from 1000
+        $categorie = 10;
+    } else {
+        $ID = next_db_id("LMB_FIELD_TYPES");
+    }
+
+    # add language entries
+	if(!$data_type_exp){ $data_type_exp = "-"; }
+	$data_type_exp = lang_add($session["language"], 2, 0, $data_type_exp, $prefix);
+	if(!$format){$format = "-";}
+	$format = lang_add($session["language"], 2, 0, $format, $prefix);
+
+    # add fieldtype values
+	$sqlquery = "INSERT INTO LMB_FIELD_TYPES{$prefix} (ID,FIELD_TYPE,DATA_TYPE,FUNCID,DATA_TYPE_EXP,DATENTYP,SIZE,LMRULE,SORT,FORMAT,PARSE_TYPE,CATEGORIE) VALUES (
+            $ID,
+            ".parse_db_int($field_type,5).",
+            ".parse_db_int($data_type,5).",
+            '".parse_db_int($funcid,5)."',
+            '".parse_db_string($data_type_exp,50)."',
+            '".parse_db_string($datentyp,20)."',
+            ".parse_db_int($size,10).",
+            '".parse_db_string($rule,300)."',
+            $ID,
+            '".parse_db_string($format,50)."',
+            ".parse_db_int($parse_type,5).",
+            ".parse_db_int($categorie,2).")";
+        db_ex($sqlquery);
+}
+
+/* --- delete record  --------------------------------------------- */
+if($del_data){
+        $del = parse_db_int($del_data, 10);
+
+        # check destination
+        if($del >= 1000 OR !$umgvar["admin_mode"]){
+            $prefix = "_DEPEND";
+            $depend = true;
+        }else{
+            $prefix = "";
+            $depend = false;
+        }
+
+        # get language ids of system table
+        $lang_rs = db_ex("SELECT DATA_TYPE_EXP,FORMAT FROM LMB_FIELD_TYPES{$prefix} WHERE ID = $del");
+        if(lmbdb_fetch_row($lang_rs)) {
+            $ft_data_type_exp = lmbdb_result($lang_rs,"DATA_TYPE_EXP");
+            $ft_format = lmbdb_result($lang_rs,"FORMAT");
+        }
+        
+        # check if entry exists
+        if(db_ex("SELECT ID FROM LMB_FIELD_TYPES{$prefix}  WHERE ID = $del")) {
+            lang_delete($ft_data_type_exp, $prefix);
+            lang_delete($ft_format, $prefix);
+            db_ex("DELETE FROM LMB_FIELD_TYPES{$prefix} WHERE ID = $del");
+        }
+        
+}
+
+/* --- list records --------------------------------------------- */
+$rs = db_ex("SELECT ID,PARSE_TYPE,FIELD_TYPE,DATA_TYPE,FUNCID,DATA_TYPE_EXP,DATENTYP,SIZE,LMRULE,FORMAT,CATEGORIE,SORT FROM LMB_FIELD_TYPES ORDER BY CATEGORIE,SORT");
+while(lmbdb_fetch_row($rs)) {
+    $id = lmbdb_result($rs, "ID");
+	$result_ftype["id"][$id] = $id;
+	$result_ftype["parse_type"][$id] = lmbdb_result($rs, "PARSE_TYPE");
+	$result_ftype["field_type"][$id] = lmbdb_result($rs, "FIELD_TYPE");
+	$result_ftype["data_type"][$id] = lmbdb_result($rs, "DATA_TYPE");
+	$result_ftype["funcid"][$id] = lmbdb_result($rs, "FUNCID");
+	$result_ftype["data_type_exp"][$id] = $lang[lmbdb_result($rs, "DATA_TYPE_EXP")];
+	$result_ftype["data_type_exp_id"][$id] = lmbdb_result($rs, "DATA_TYPE_EXP");
+	$result_ftype["datentyp"][$id] = lmbdb_result($rs, "DATENTYP");
+	$result_ftype["size"][$id] = lmbdb_result($rs, "SIZE");
+	$result_ftype["rule"][$id] = trim(lmbdb_result($rs, "LMRULE"));  # longtext handle
+	$result_ftype["format"][$id] = $lang[lmbdb_result($rs, "FORMAT")];
+	$result_ftype["format_id"][$id] = lmbdb_result($rs, "FORMAT");
+    $result_ftype["categorie"][$id] = lmbdb_result($rs, "CATEGORIE");
+}
+
+
+/* --- list local records -----------------------------------------*/
+$rs = db_ex("SELECT ID,PARSE_TYPE,FIELD_TYPE,DATA_TYPE,FUNCID,DATA_TYPE_EXP,DATENTYP,SIZE,LMRULE,FORMAT,CATEGORIE FROM LMB_FIELD_TYPES_DEPEND ORDER BY CATEGORIE,SORT");
+while(lmbdb_fetch_row($rs)) {
+    $id = lmbdb_result($rs, "ID");
+	$result_ftype["id"][$id] = $id;
+	$result_ftype["parse_type"][$id] = lmbdb_result($rs, "PARSE_TYPE");
+	$result_ftype["field_type"][$id] = lmbdb_result($rs, "FIELD_TYPE");
+	$result_ftype["data_type"][$id] = lmbdb_result($rs, "DATA_TYPE");
+	$result_ftype["funcid"][$id] = lmbdb_result($rs, "FUNCID");
+	$result_ftype["data_type_exp"][$id] = $lang[lmbdb_result($rs, "DATA_TYPE_EXP")];
+	$result_ftype["datentyp"][$id] = lmbdb_result($rs, "DATENTYP");
+	$result_ftype["size"][$id] = lmbdb_result($rs, "SIZE");
+	$result_ftype["rule"][$id] = trim(lmbdb_result($rs, "LMRULE"));  # longtext handle
+	$result_ftype["format"][$id] = $lang[lmbdb_result($rs, "FORMAT")];
+    $result_ftype["categorie"][$id] = lmbdb_result($rs, "CATEGORIE");
+    $result_ftype["depend"][$id] = 1;
+}
+
+# check destination
+$prefix = "";
+$max = 1;
+if(!$umgvar["admin_mode"]){
+    $prefix = "_DEPEND";
+    $max = 1000;
+}
+
+/* --- get max entries? -----------------------------------------*/
+$rs = db_ex("Select MAX(FIELD_TYPE)+1 AS MAXFTYPE, MAX(DATA_TYPE)+1 AS MAXDTYPE, MAX(FUNCID)+1 AS MAXFID FROM LMB_FIELD_TYPES{$prefix} WHERE FIELD_TYPE != 100");
+$result_ftype["maxftype"] = max(lmbdb_result($rs, "MAXFTYPE"),$max);
+$result_ftype["maxdtype"] = max(lmbdb_result($rs, "MAXDTYPE"),$max);
+$result_ftype["maxfid"] = max(lmbdb_result($rs, "MAXFID"),$max);
+
+?>

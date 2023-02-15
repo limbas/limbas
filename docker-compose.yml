@@ -1,0 +1,39 @@
+version: '3'
+services:
+  limbas_pgsql:
+    image: postgres
+    restart: always
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: limbasuser
+      POSTGRES_PASSWORD: limbaspass
+      POSTGRES_DB: openlimbas
+      POSTGRES_INITDB_ARGS: '--locale=C --encoding=UTF8'
+      
+  limbas_web:
+    depends_on:
+      - limbas_pgsql
+    build: .
+    ports:
+      - "8001:80"
+    restart: always
+    volumes:
+      - extensions:/var/www/html/openlimbas/dependent/EXTENSIONS
+      - upload:/var/www/html/openlimbas/dependent/UPLOAD
+      - user:/var/www/html/openlimbas/dependent/USER
+      - temp:/var/www/html/openlimbas/dependent/TEMP
+      - inc:/var/www/html/openlimbas/dependent/inc
+      - backup:/var/www/html/openlimbas/dependent/BACKUP
+    environment:
+        LIMBAS_DB_HOST: limbas_pgsql
+    
+
+volumes:
+  extensions:
+  upload:
+  user:
+  temp:
+  inc:
+  backup:
+  postgres-data:

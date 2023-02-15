@@ -1,0 +1,143 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+function dropMultitenantData($mid){
+    global $db;
+
+    #lmb_dropALLForeignKeys();
+
+    $sqlquery = "SELECT MID FROM LMB_MULTITENANT WHERE ID = $mid";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(lmbdb_fetch_row($rs)) {
+        $mid = lmbdb_result($rs, "MID");
+    }
+
+    if(!is_numeric($mid)){return false;}
+
+    // remove or empty relations - resolve ref int
+    $sqlquery = "SELECT DISTINCT MD5TAB,DATA_TYPE,
+    (SELECT TABELLE FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.TAB_ID) AS LEFTTAB ,
+    (SELECT TABELLE FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.VERKNTABID) AS RIGHTTAB
+    FROM LMB_CONF_FIELDS
+    WHERE (SELECT MULTITENANT FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.TAB_ID) = TRUE
+    AND (DATA_TYPE = 27 OR DATA_TYPE = 24 OR DATA_TYPE = 25)
+    AND VERKNTABLETYPE = 1";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs)) {
+        $md5tab = strtoupper(lmbdb_result($rs, 'MD5TAB'));
+        $lefttab = strtoupper(lmbdb_result($rs, 'LEFTTAB'));
+        $righttab = strtoupper(lmbdb_result($rs, 'RIGHTTAB'));
+        $datatype = lmbdb_result($rs, 'DATA_TYPE');
+
+        // with relation table
+        if($datatype == 24 OR $datatype == 27) {
+            // delete all relation data
+            $sqlquery1 = "DELETE FROM $md5tab
+             WHERE ID IN 
+            (SELECT $lefttab.ID FROM $md5tab,$lefttab WHERE  $lefttab.ID = $md5tab.ID AND $lefttab.LMB_MID = $mid)";
+            $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+
+        // without relation table
+        }elseif($datatype == 25){
+            $sqlquery1 = "UPDATE $righttab SET $md5tab = NULL
+             WHERE $md5tab IN 
+            (SELECT $lefttab.ID FROM $lefttab WHERE $lefttab.LMB_MID = $mid)";
+            $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+        }
+    }
+
+    // remove dataset
+    $sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES WHERE MULTITENANT = TRUE AND TYP != 5 ORDER BY TAB_ID DESC";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs)) {
+        // delete table data
+        $table = strtoupper(lmbdb_result($rs, 'TABELLE'));
+        $sqlquery1 = "DELETE FROM $table WHERE LMB_MID = $mid";
+        $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+if($new_multitenant_name AND $add_multitenant){
+    $NEXTID = next_db_id("LMB_MULTITENANT");
+    if(!$new_multitenant_id){$new_multitenant_id = $NEXTID;}
+    $sqlquery = "INSERT INTO LMB_MULTITENANT (ID, MID, NAME, SYNCSLAVE) VALUES($NEXTID, '".parse_db_string($new_multitenant_id,50)."', '".parse_db_string($new_multitenant_name,150)."',".parse_db_int($new_multitenant_syncslave).")";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+    if(!file_exists(UPLOADPATH . '/multitenant/'.$NEXTID)){
+        mkdir(UPLOADPATH . '/multitenant/'.$NEXTID);
+    }
+}
+
+
+if(is_numeric($drop_multitenant)){
+
+    if($drop_multitenant_level == 1 OR $drop_multitenant_level == 3){
+        $sqlquery = "DELETE FROM LMB_MULTITENANT WHERE ID = ".parse_db_int($drop_multitenant);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if($drop_multitenant_level == 1){
+            lmb_alert("multitenant datasets or files in " . UPLOADPATH . "/multitenant/".$drop_multitenant."\n not deleted! you must delete or copy the datasets and directory by yourself");
+        }
+    }
+
+    if($drop_multitenant_level > 1){
+        dropMultitenantData($drop_multitenant);
+    }
+
+}
+
+if($edit_multitenant){
+    foreach($multitenant['edit'] as $mkey => $mval){
+        if(!$mkey){continue;}
+        $sqlquery = "UPDATE LMB_MULTITENANT SET 
+            MID = '".parse_db_string($multitenant['mid'][$mkey],50)."',
+            NAME = '".parse_db_string($multitenant['name'][$mkey],150)."',
+            SYNCSLAVE = ".parse_db_int($multitenant['syncslave'][$mkey])."
+        WHERE ID = $mkey";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    }
+}
+
+$sqlquery = "SELECT ID,NAME FROM LMB_SYNC_CLIENTS ORDER BY NAME";
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)){
+    $lmb_sync_clients[lmbdb_result($rs, 'ID')] = lmbdb_result($rs, 'NAME');
+}
+
+
+$sqlquery = "SELECT ID,MID,NAME,SYNCSLAVE FROM LMB_MULTITENANT";
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+    $mid = lmbdb_result($rs, "ID");
+	$result_multitenant['name'][$mid] = lmbdb_result($rs, "NAME");
+	$result_multitenant['mid'][$mid] = lmbdb_result($rs, "MID");
+	$result_multitenant['syncslave'][$mid] = lmbdb_result($rs, "SYNCSLAVE");
+}
+
+/*
+$sqlquery = "SELECT ID,NAME,TYPE,KEY FROM LMB_CRYPTO_KEYS WHERE TYPE = 1";
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+while(lmbdb_fetch_row($rs)) {
+    $kid = lmbdb_result($rs, "ID");
+	$result_crypto_keys[$kid] = lmbdb_result($rs, "NAME");
+}
+*/
+
+
+
+?>

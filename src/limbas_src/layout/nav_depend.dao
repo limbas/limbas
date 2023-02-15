@@ -1,0 +1,121 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+
+function lmb_getCustmenu(){
+    global $db;
+    global $lang;
+
+    $sqlquery = "SELECT * FROM LMB_CUSTMENU WHERE LINKID >= 1000 ORDER BY LINKID,PARENT,SORT";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    while (lmbdb_fetch_row($rs)) {
+
+        $key = lmbdb_result($rs, 'ID');
+        $LINKID = lmbdb_result($rs, 'LINKID');
+
+        $custmenu[$LINKID]['id'][$key] = $key;
+        $custmenu[$LINKID]['parent'][$key] = lmbdb_result($rs, 'PARENT');
+        $custmenu[$LINKID]['typ'][$key] = lmbdb_result($rs, 'TYP');
+        $custmenu[$LINKID]['name'][$key] = lmbdb_result($rs, 'NAME');
+        $custmenu[$LINKID]['title'][$key] = lmbdb_result($rs, 'TITLE');
+        $custmenu[$LINKID]['linkid'][$key] = lmbdb_result($rs, 'LINKID');
+        $custmenu[$LINKID]['sort'][$key] = lmbdb_result($rs, 'SORT');
+        $custmenu[$LINKID]['url'][$key] = lmbdb_result($rs, 'URL');
+        $custmenu[$LINKID]['icon'][$key] = lmbdb_result($rs, 'ICON');
+        $custmenu[$LINKID]['bg'][$key] = lmbdb_result($rs, 'BG');
+        $custmenu[$LINKID]['class'][$key] = lmbdb_result($rs, 'CLASS');
+    }
+
+    return $custmenu;
+
+}
+
+
+function lmb_buildCustmenu(&$custmenu,$parent,$menu=array()){
+    global $lang;
+    $ebzm = 0;
+
+    foreach ($custmenu['id'] as $key => $id) {
+        if($custmenu['parent'][$key] == $parent) {
+            $elid = $custmenu['name'][$key];
+            $typ = $custmenu['typ'][$key];
+
+            $menuElement = [];
+            if($typ <= 1){
+                $menuElement['id'] = $ebzm;
+                $menuElement['name'] = $lang[$custmenu['name'][$key]];
+                $menuElement['desc'] = $lang[$custmenu['title'][$key]];
+                $menuElement['link'] = $custmenu['url'][$key];
+                $menuElement['bg'] = $custmenu['bg'][$key];
+                #$menu[$ebzm]['icon'] = $custmenu['icon'][$key];
+                #$menu[$ebzm]['iconsize'] = $custmenu['iconsize'][$key];
+                // use php
+                if(substr($menuElement['link'],0,7) == 'return '){
+                    $menuElement['link'] = eval($menuElement['link'].';');
+                }
+            }elseif($typ == 2) {
+                $menuElement = menu_get_table($elid);
+            }elseif($typ == 3) {
+                $gtabid = lmb_getGElementTabID($GLOBALS['gsnap'],$elid);
+                $menuElement = menu_get_snapshot($gtabid, $elid);
+            }elseif($typ == 4) {
+                $gtabid = lmb_getGElementTabID($GLOBALS['greportlist'],$elid);
+                $menuElement = menu_get_report($gtabid, $elid);
+            }elseif($typ == 5) {
+                $gtabid = lmb_getGElementTabID($GLOBALS['gformlist'],$elid);
+                $menuElement = menu_get_form($gtabid, $elid);
+            }elseif($typ == 6) {
+                $gtabid = lmb_getGElementTabID($GLOBALS['gdiaglist'],$elid);
+                $menuElement = menu_get_diagram($gtabid, $elid);
+            }elseif($typ == 7) {
+                $menuElement = menu_get_standard($elid, $ebzm);
+            }
+
+
+            
+            
+            if ($typ == 7) {
+                if($custmenu['icon'][$key]){$menuElement[$ebzm]['icon'] = $custmenu['icon'][$key];}
+                if($custmenu['class'][$key]){$menuElement[$ebzm]['class'] = $custmenu['class'][$key];}
+                if($custmenu['url'][$key]){$menuElement[$ebzm]['link'] = $custmenu['url'][$key];}
+                if(substr($menuElement[$ebzm]['link'],0,7) == 'return '){
+                    $menuElement[$ebzm]['link'] = eval($menuElement[$ebzm]['link'].';');
+                }
+                $menu = array_merge($menu,$menuElement);
+            } else {
+                if($custmenu['icon'][$key]){$menuElement['icon'] = $custmenu['icon'][$key];}
+                if($custmenu['class'][$key]){$menuElement['class'] = $custmenu['class'][$key];}
+                $menu = array_merge($menu,[$ebzm => $menuElement]);
+            }
+            
+            
+
+            if(in_array($id,$custmenu['parent'])) {
+                $menu[$ebzm]["child"] = lmb_buildCustmenu($custmenu,$id);
+            }
+
+            $ebzm++;
+        }
+    }
+
+    return $menu;
+
+}
+
+
+$custmenu = lmb_getCustmenu();
+
+foreach ($custmenu as $key => $submenu) {
+
+    $menu[$key] = lmb_buildCustmenu($submenu, 0);
+
+}

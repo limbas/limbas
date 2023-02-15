@@ -1,0 +1,218 @@
+/*
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+table {
+	font-family:inherit;
+	font-size:inherit;
+}
+
+#mail_main{
+
+}
+
+hr { color:silver; }
+h3{	padding:0px; margin:4px; border:0px;}
+
+#mail_tab{
+	display:inline;
+}
+
+#mail_menu{
+	height:28px;
+	border-bottom: solid 1px ThreeDShadow;
+}
+
+#mail_textmenu{
+	padding-left:10px;
+	padding-bottom:2px;
+}
+
+#mail_buttons{
+	padding-left:4px;
+}
+
+img.mail_button_img{}
+div.mail_button_container{
+	padding:4px;
+}
+
+div#mail_list{
+	width:100%;
+	/*height:100%;*/
+	overflow:auto;
+}
+table.mail_list{
+	width:100%;
+}
+
+th.mail_list{
+	border-bottom: solid 1px ThreeDShadow;
+	border-left: solid 1px ThreeDShadow;
+	cursor:pointer;
+	background-color: Scrollbar;
+}
+
+a.mail{
+	text-decoration:none;
+	color:black;
+}
+a.mail_unread{
+	text-decoration:none;
+	color:black;
+	font-weight:bold;
+}
+ul.mail{
+	margin:0;
+	padding: 0 0 0 10px;
+	list-style: none inside;
+}
+
+div.mail_toggle{
+	font-size:7.5pt;
+	border:solid 1px #dddddd;
+	background-color:#eeeeee;
+	color:#333333;
+	margin:1px;
+	width:7px;
+	line-height:7px;
+	text-align:center;
+	vertical-align:middle;
+	float:left;
+	cursor:pointer;
+}
+
+div.mail_toggle_dummy{
+	width:10px;
+	height:10px;
+	float:left;
+}
+
+tr.mail_odd{
+	cursor:pointer;
+}
+
+tr.mail_even{
+	cursor:pointer;
+	background-color:#f0f0ff;
+}
+
+td.mail_unread{
+	font-weight:bold;
+}
+
+.mail_info{
+	padding:24px;
+	margin:24px;
+	border:solid 1px silver;
+	background-color:#f0f0ff;
+	color:gray;
+	max-width:420px;
+}
+
+#mail_left_column{
+	border-top:0px;
+	border-bottom:0px;
+	border-right:0px;
+}
+
+div#mail_folders{
+	height:100%;
+	overflow:auto;
+        position:absolute;
+}
+
+#mail_message{
+	position:absolute;
+	left:190px;
+	top:0px;
+	display:none;
+	border:solid 1px silver;
+	background-color:#eeeeee;
+}
+
+#mail_desc{
+	background-color:#f0f0ff;
+	border-bottom:solid 1px silver;
+}
+
+table.mail_desc{
+	font-family:inherit;
+	font-size:inherit;
+}
+.mail_desc_name{
+	padding-right:4px;
+	padding-left:4px;
+	/*font-weight:bold;*/
+}
+#mail_body{
+        background-color: #ffffff;
+	padding:4px;
+}
+#mail_attachments{
+	background-color:#f0f0ff;
+	border-top:solid 1px silver;
+	padding-top:4px;
+}
+#mail_upload_panel{
+	background-color:#f0f0ff;
+	border-top:solid 1px silver;
+	padding-top:4px;
+}
+
+#mail_status{
+	height:22px;
+/*	background-color: Scrollbar;
+	border:solid 1px gray;
+	border-left:none;
+	border-right:none;
+	text-align:right;
+*/
+	padding: 0 8px;
+}
+#mail_bottom_spacer{
+	height:5px;
+}
+
+ input[type="submit"],
+input[type="reset"], input[type="file"], button {
+	background-color: buttonface;
+	border: 2px outset buttonface;
+	color: buttontext;
+	cursor: default;
+	padding: 2px 6px 3px 6px;
+	text-align: center;
+	-webkit-box-align: center;
+	-webkit-box-sizing: border-box;
+}
+
+textarea{
+	padding:0px;
+	margin:0px;
+}
+
+div#mail_panel{
+	overflow:auto;
+	height:100%;
+}
+
+#mail_hsizer{
+	width:2px;
+	height:100%;
+	border-left:solid 1px #aaaaaa;
+	background-color:#cccccc;
+	border-right:solid 1px #eeeeee;
+	cursor:col-resize;
+}
+#mail_vsizer{
+	height:4px;
+	border-top:solid 1px #aaaaaa;
+	background-color:#cccccc;
+	border-bottom:solid 1px #eeeeee;
+	cursor:row-resize;
+}

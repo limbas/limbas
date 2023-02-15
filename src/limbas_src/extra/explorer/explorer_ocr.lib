@@ -1,0 +1,336 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+function LmEntExecute_ocr($path,$ocr_destination=null,$ocr_format=null,$ocr_params=null){
+	global $umgvar;
+
+	$fnc = "LmEntExecute_ocr_".$umgvar["ocr_engine"];
+	if(function_exists($fnc)){
+		$out = $fnc($path,$ocr_destination,$ocr_format,$ocr_params);
+		return $out;
+	}else{
+		lmb_loghandle("ocr_error.log","no ocrengine found or installed (".$umgvar["ocr_engine"].") ");
+		return false;
+	}
+}
+
+function LmEntOcr_copy($ID,$ocr_destination=null,$ocr_format=null,$ocr_params=null){
+
+	global $db;
+	global $umgvar;
+	global $gmimetypes;
+	global $session;
+
+	$out = true;
+	if($ID){
+		$sqlquery = "SELECT SECNAME,MIMETYPE FROM LDMS_FILES WHERE ID = $ID";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		if(lmbdb_fetch_row($rs)){
+			$name = lmbdb_result($rs, "SECNAME").".".$gmimetypes["ext"][lmbdb_result($rs, "MIMETYPE")];
+			$path = UPLOADPATH . $name;
+			$mimetype = $gmimetypes["mimetype"][lmbdb_result($rs, "MIMETYPE")];
+			$out = $name;
+		}
+	}
+
+	if(!file_exists($path)){
+		lmb_loghandle("ocr_error.log","file does not exist for file: $ID $path");
+		return false;
+	}
+
+	# run ocr
+	if($newpath = LmEntExecute_ocr($path,$ocr_destination,$ocr_format,$ocr_params)){
+		# overwrite original file
+		rename($newpath,$path);
+		if(file_exists($path)){
+			# metadata
+			if($ID){
+				if($meta = getmeta_from_file($path,$mimetype,1)){
+					# put metadata
+					putmeta_to_db($ID,$meta);
+					return $out;
+				}
+			}
+			return $out;
+		}
+	}
+
+
+	return false;
+}
+
+function LmEntCheckOCRStatus($path,$ID,$mimetype){
+	global $db;
+	global $umgvar;
+	global $session;
+
+	if(!lmb_strpos(";".$umgvar["ocr_filetypes"],$mimetype)){
+		LmEntSetOCRStatus (-2,$ID);
+		return false;
+	}elseif($mimetype == "pdf"){
+		$out = USERPATH.$session["user_id"]."/temp/ocrpdftotxt.txt";
+		if(file_exists($out)){unlink($out);}
+
+		$sys = "pdftotext ".$path." ".$out;
+		$res = `$sys`;
+
+		$buffer = array();
+		$buffer_ = array();
+
+		if(file_exists($out)){
+			$handle = fopen ($out, "r");
+			while (!feof($handle)) {
+			    $line = fgets($handle, 4096);
+				$buffer_ = explode(" ",$line);
+				$buffer = array_merge($buffer_,$buffer);
+				if(lmb_count($buffer) > $umgvar["ocr_validate_pdf"]){
+					fclose ($handle);
+					unlink($out);
+					LmEntSetOCRStatus (-2,$ID);
+					lmb_loghandle("ocr_error.log","file: $ID $path is pdf but seems to be already text based");
+					if($GLOBALS["action"]){echo "file: $ID <i>$path</i><br>is <b>pdf</b> but seems to be <b>already text based</b>";}
+					return false;
+				}
+			}
+			fclose ($handle);
+			unlink($out);
+		}else{
+			lmb_loghandle("ocr_error.log","pdftotext failed for file: $ID $path");
+		}
+	}
+
+	return true;
+}
+
+function LmEntSetOCRStatus ($zeit_main,$ID=0,$new_ID=0){
+	global $db;
+
+	if($zeit_main < 0){
+		$zeit_dauer = $zeit_main;
+	}else{
+		$zeit_now = gettime();
+		$zeit_dauer = number_format(($zeit_now - $zeit_main),4,'.','');
+	}
+
+	if($new_ID){
+		$sqlquery1 = "UPDATE LDMS_FILES SET OCR = TRUE,OCRT = $zeit_dauer, OCRD = ".LMB_DBDEF_TIMESTAMP.", OCRS = $ID WHERE LDMS_FILES.ID = ".$new_ID;
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
+		if(!$rs1) {$commit = 1;}
+	}
+	if($ID){
+		$sqlquery1 = "UPDATE LDMS_FILES SET OCR = TRUE,OCRT = $zeit_dauer, OCRD = ".LMB_DBDEF_TIMESTAMP.", OCRS = $new_ID WHERE LDMS_FILES.ID = ".$ID;
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
+		if(!$rs1) {$commit = 1;}
+	}
+}
+
+function restoreOCR($ID){
+	global $db;
+	global $umgvar;
+	global $gmimetypes;
+
+	$sqlquery = "SELECT ID,LEVEL,OCRD,OCRT,OCRS,NAME,SECNAME,MIMETYPE FROM LDMS_FILES WHERE ID = ".$ID." AND DEL = FALSE AND VACT = TRUE";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	if(lmbdb_fetch_row($rs)){
+		$fname = lmbdb_result($rs,"SECNAME").".".$gmimetypes["ext"][lmbdb_result($rs, "MIMETYPE")];
+		#$upath = UPLOADPATH . $fname;
+		#$fpath = $umgvar["ocr_save_copy"]."/".$fname;
+		$upath = lmb_getFilePath($ID,lmbdb_result($rs,"LEVEL"),lmbdb_result($rs,"SECNAME"),$gmimetypes["ext"][lmbdb_result($rs, "MIMETYPE")]);
+		$fpath = $umgvar["ocr_save_copy"]."/".$fname;
+
+		if(file_exists($fpath)){
+			# restore original file
+
+			# file restore
+			rename($fpath, $upath);
+
+			# meta update
+			if($meta = getmeta_from_file($upath,$gmimetypes["mimetype"][lmbdb_result($rs, "MIMETYPE")],1)){
+				# put metadata
+				putmeta_to_db($ID,$meta);
+			}
+
+			# OCR reset
+			$sqlquery1 = "UPDATE LDMS_FILES SET OCR = FALSE, OCRT = 0, OCRD = NULL WHERE ID = ".$ID;
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
+			if(!$rs1) {$commit = 1;}
+
+			# delete inize
+ 			delFileIndex($ID);
+
+			return true;
+		}
+	}
+
+	return false;
+}
+
+# -------- Datei Index löschen --------
+function delFileIndex($ID){
+	global $db;
+
+	$sqlquery1 = "DELETE FROM LMB_INDIZE_F WHERE FID = ".$ID;
+	$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
+	if(!$rs1) {$commit = 1;}
+	$sqlquery1 = "DELETE FROM LMB_INDIZE_FS WHERE FID = ".$ID;
+	$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
+	if(!$rs1) {$commit = 1;}
+	$sqlquery1 = "UPDATE LDMS_FILES SET IND = FALSE WHERE ID = ".$ID;
+	$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,null,__FILE__,__LINE__);
+	if(!$rs1) {$commit = 1;}
+}
+
+function LmEntGenerate_ocr($ID,$level,$ocr_destination=null,$ocr_format=null){
+	global $db;
+	global $umgvar;
+	global $gmimetypes;
+
+	if(lmb_strpos($ocr_format,"&") !== false){
+		$params = explode("&",$ocr_format);
+		$ocr_params = $ocr_format;
+		$ocr_format = $params[0];
+	}
+
+	if(!$ID){lmb_loghandle("ocr_error.log","no file ID set");return false;}
+	if(!$ocr_format){$ocr_format = $umgvar["ocr_format"];}
+	if(!$ocr_destination){$ocr_destination = $umgvar["ocr_destination"];}
+	if(!$ocr_format OR !$ocr_destination){lmb_loghandle("ocr_error.log","no ocr parameter defined or ocrengine installed");return false;}
+
+	$zeit_main = gettime();
+
+	$sqlquery = "SELECT SECNAME,MIMETYPE,NAME,LEVEL FROM LDMS_FILES WHERE ID = $ID";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,null,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	if(lmbdb_fetch_row($rs)){
+		$name = lmbdb_result($rs, "SECNAME").".".$gmimetypes["ext"][lmbdb_result($rs, "MIMETYPE")];
+		$path = UPLOADPATH . $name;
+		$mimetypeext = $gmimetypes["ext"][lmbdb_result($rs, "MIMETYPE")];
+		$mimetype = $gmimetypes["mimetype"][lmbdb_result($rs, "MIMETYPE")];
+	}else{
+		lmb_loghandle("ocr_error.log","file not found for ID:$ID");
+		return false;
+	}
+
+	if(LmEntCheckOCRStatus($path,$ID,$mimetypeext)){
+		#lmb_StartTransaction();
+
+		# preview
+		if($ocr_destination == "preview"){
+			if($newpath = LmEntExecute_ocr($path,$ocr_destination,$ocr_format,$ocr_params)){
+				#lmb_EndTransaction(1);
+				return $newpath;
+			}
+		# same output format
+		}elseif($mimetypeext == $ocr_format OR $mimetypeext == lmb_substr($ocr_format,0,3)){
+			# save security-copy
+			#if($ocr_destination == "overwrite" AND $umgvar["ocr_save_copy"]){
+			if($umgvar["ocr_save_copy"] AND file_exists($umgvar["ocr_save_copy"])){
+				copy($path,$umgvar["ocr_save_copy"]."/".$name);
+			}
+
+			# overwrite source
+			if($ocr_destination == "overwrite"){
+				if($same_name = LmEntOcr_copy($ID,$ocr_destination,$ocr_format,$ocr_params)){
+					LmEntSetOCRStatus ($zeit_main,$ID);
+					# rename security-copy to new name
+					if($ocr_destination == "overwrite" AND $umgvar["ocr_save_copy"] AND file_exists($umgvar["ocr_save_copy"]."/".$name)){
+						rename($umgvar["ocr_save_copy"]."/".$name,$umgvar["ocr_save_copy"]."/".$same_name);
+						$test = $umgvar["ocr_save_copy"]."/".$name."<-->".$umgvar["ocr_save_copy"]."/".$same_name;
+					}
+					# delete Indize
+					delFileIndex($ID);
+					# log
+					lmb_loghandle("ocr.log",$path,$zeit_main);
+				}else{
+					LmEntSetOCRStatus (-1,$ID);
+					#lmb_EndTransaction(0);
+					lmb_loghandle("ocr_error.log","ocr failed for file: $ID $path");
+					return false;
+				}
+			# copy/versioning source
+			}else{
+				$dublicate[]["type"] = $ocr_destination;
+				if($new_ID = copy_file(array($ID),$level,$dublicate)){
+					if($old_name = LmEntOcr_copy($new_ID,$ocr_destination,$ocr_format,$ocr_params)){
+						LmEntSetOCRStatus ($zeit_main,$ID,$new_ID);
+						# rename security-copy to new name
+						if($umgvar["ocr_save_copy"] AND file_exists($umgvar["ocr_save_copy"]."/".$name)){
+							rename($umgvar["ocr_save_copy"]."/".$name,$umgvar["ocr_save_copy"]."/".$old_name);
+						}
+						# log
+						lmb_loghandle("ocr.log",$path,$zeit_main);
+						$commit = 0;
+					}else{
+						lmb_deleteFile($new_ID);
+						lmb_loghandle("ocr_error.log","ocr failed for file: $ID $path");
+						#lmb_EndTransaction(0);
+						LmEntSetOCRStatus (-1,$ID,$new_ID);
+						return false;
+					}
+				}else{
+					lmb_loghandle("ocr_error.log","copy file before ocr failed for file: $ID $path");
+					return false;
+				}
+			}
+		# different output format
+		}else{
+			$point = lmb_strrpos(lmbdb_result($rs, "NAME"),".");
+			$newname = lmb_substr(lmbdb_result($rs, "NAME"),0,$point);
+			if($ocr_format == "text"){
+				$newmime = "text/plain";
+				$newname = $newname.".txt";
+			}elseif($ocr_format == "html"){
+				$newmime = "text/html";
+				$newname = $newname.".html";
+			}elseif($ocr_format == "xml"){
+				$newmime = "text/xml";
+				$newname = $newname.".xml";
+			}
+
+			$dublicate["type"][] = $ocr_destination;
+
+			if($newmime){
+				if($newpath = LmEntExecute_ocr($path,$ocr_destination,$ocr_format,$ocr_params)){
+					$file["file"][] = $newpath;
+					$file["file_name"][] = $newname;
+					$file["file_type"][] = $newmime;
+					
+					if($new_ID = lmb_fileUpload($file,lmbdb_result($rs, "LEVEL"),0,1,$dublicate)){
+						if($ocr_destination == "overwrite"){
+							lmb_deleteFile($ID);
+						}
+						#lmb_EndTransaction(1);
+						LmEntSetOCRStatus ($zeit_main,$ID,$new_ID);
+						# log
+						lmb_loghandle("ocr.log",$newpath,$zeit_main);
+						return true;
+					}else{
+						LmEntSetOCRStatus (-1,$ID,$new_ID);
+						lmb_loghandle("ocr_error.log","create new file (upload) after ocr failed for file: $ID $path");
+						# log
+						lmb_loghandle("ocr.log",$newpath,$zeit_main);
+						return false;
+					}
+				}else{
+					lmb_loghandle("ocr_error.log","ocr failed for file: $ID $path");
+				}
+			}
+		}
+	}
+
+	#lmb_EndTransaction(1);
+	
+	return true;
+	
+}
+?>

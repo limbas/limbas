@@ -1,0 +1,100 @@
+/*!
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+#report_preview_wrapper {
+  background-color: #525659; /* from chrome preview */
+  padding: 20px;
+  border: 1px solid black;
+  overflow-y: auto;
+}
+#report_preview {
+  background-color: white;
+  /* from chrome preview */
+  -webkit-box-shadow: 0 0 9px 1px rgba(0,0,0,0.7);
+  -moz-box-shadow: 0 0 9px 1px rgba(0,0,0,0.7);
+  box-shadow: 0 0 9px 1px rgba(0,0,0,0.7);
+  padding: 3em;
+  position: relative;
+}
+
+#report_preview table,
+#report_preview tr,
+#report_preview td,
+#report_preview a,
+#report_preview del,
+#report_preview ins,
+#report_preview form,
+#report_preview select,
+#report_preview textarea,
+#report_preview input {
+  color: black;
+  background-color: white;
+}
+
+#report_preview .form-control {
+  width: auto;
+  display: inline;
+}
+
+#report_preview .lmb-preview-hide {
+  display: none;
+}
+
+
+#report_preview htmlpageheader,
+#report_preview htmlpagefooter {
+  display: block;
+  width: 100%;
+  position: relative;
+  margin: 1rem 0;
+  border: 1px dashed #888;
+  padding: 1.1rem 0.2rem 0.2rem 0.2rem;
+}
+
+#report_preview htmlpageheader:before,
+#report_preview htmlpagefooter:before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  content: attr(data-type) attr(data-is-first-page);
+  font-size: 0.7rem;
+  font-style: italic;
+  color: #888;
+  border-right: 1px dashed;
+  border-bottom: 1px dashed;
+  padding: 0 1rem;
+}
+
+#report_preview .lmb-preview-hide {
+  display: none;
+}
+
+
+#report_preview htmlpageheader,
+#report_preview htmlpagefooter {
+  display: block;
+  width: 100%;
+  position: relative;
+  margin: 1rem 0;
+  border: 1px dashed #888;
+  padding: 1.1rem 0.2rem 0.2rem 0.2rem;
+}
+
+#report_preview htmlpageheader:before,
+#report_preview htmlpagefooter:before {
+  position: absolute;
+  top: 0;
+  left: 0;
+  content: attr(data-type) attr(data-is-first-page);
+  font-size: 0.7rem;
+  font-style: italic;
+  color: #888;
+  border-right: 1px dashed;
+  border-bottom: 1px dashed;
+  padding: 0 1rem;
+}

@@ -1,0 +1,94 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+
+function lmb_fileSync_init($template){
+    global $db;
+
+    # --- check for sync params ------
+    $sqlquery = "SELECT SLAVE_URL,RS_USER,RS_PATH,RS_PARAMS FROM LMB_SYNC_CLIENTS WHERE ACTIVE = " . LMB_DBDEF_TRUE;
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+	while(lmbdb_fetch_row($rs)) {
+
+	    $host = explode('//',lmbdb_result($rs, "SLAVE_URL"));
+	    $host_ = explode('/',$host[1]);
+	    $sl['host']= $host_[0];
+	    $sl['path'] = rtrim(lmbdb_result($rs, "RS_PATH"),'/');
+        $sl['user'] = lmbdb_result($rs, "RS_USER");
+        $sl['params'] = lmbdb_result($rs, "RS_PARAMS");
+
+        lmb_fileSyncTemplate($template,$sl,'master');
+        lmb_fileSyncTemplate($template,$sl,'slave');
+
+    }
+
+}
+
+
+function lmb_fileSyncTemplate($template,$sl,$masterslave){
+    global $db;
+
+
+	# --- check for sync files ------
+	$sqlquery = "SELECT FIELDID FROM LMB_SYNC_CONF WHERE TEMPLATE = $template AND TABID = -1 AND ".strtoupper($masterslave)."= ".LMB_DBDEF_TRUE;
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs){$commit = 1;}
+
+	while(lmbdb_fetch_row($rs)) {
+	    $level[] = lmbdb_result($rs, "FIELDID");
+    }
+
+    if(!$level){return;}
+
+    $config = TEMPPATH . "conf/rsync_$masterslave.conf";
+
+    if(file_exists($config)) {
+        unlink($config);
+    }
+    $rf = fopen($config, "w");
+    fputs($rf, '+ */'."\n");
+
+	$w = null;
+	foreach($level as $lkey => $lid) {
+	    if($lid > 0) {
+            fputs($rf, '+ l' . $lid . '_*'."\n");
+            $w = 1;
+        }
+    }
+
+    fputs($rf, '- *');
+    fclose($rf);
+
+    if($w AND file_exists($config)) {
+
+        if ($masterslave == 'master') {
+            $sys = "rsync -r -u {$sl['params']} -h -v -f=\"merge $config\" " . UPLOADPATH . " " . $sl['user'] . "@" . $sl['host'] . ":" . $sl['path'] . "/UPLOAD/";
+        } elseif ($masterslave == 'slave') {
+            $sys = "rsync -r -u {$sl['params']} -h -v -f=\"merge $config\" " . $sl['user'] . "@" . $sl['host'] . ":" . $sl['path'] . "/UPLOAD/ " . UPLOADPATH;
+        }
+
+        #error_log($sys);
+        $d = date('r');
+        $output = "########## $masterslave - $d #########\n";
+        $output .= `$sys`;
+        #error_log($output);
+
+        if ($output) {
+            file_put_contents(TEMPPATH . 'log/rsync.log', $output, FILE_APPEND);
+        }
+
+        unlink($config);
+    }
+
+}
+
+
+?>

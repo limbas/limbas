@@ -1,0 +1,187 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+$ID = $session["user_id"];
+
+
+# ------------- htaccess ---------------
+function htuseraccess($ID,$user,$pass){
+	global $db;
+	global $session;
+	global $umgvar;
+
+	$sqlquery = "SELECT USERNAME,PASSWORT,CLEARPASS FROM LMB_USERDB WHERE USER_ID = $ID";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	if(lmbdb_fetch_row($rs)) {
+
+		if(!$user){$user = lmbdb_result($rs, "USERNAME");}
+		if(!$pass){$pass = lmbdb_result($rs, "CLEARPASS");}
+
+		if(!$user){return false;}
+
+		$path = USERPATH.$ID;
+
+		# --- htaccess ---
+		$htaccess_file = fopen($path."/.htaccess","w");
+		$value = "AuthName \"$user\"\nAuthType Basic\nAuthUserFile ".$path."/.htpasswd\nrequire valid-user";
+		fputs($htaccess_file,$value);
+		fclose($htaccess_file);
+
+		# --- htpasswd ---
+		if(is_file($path."/.htpasswd") AND !$pass){
+
+		}elseif(!is_file($path."/.htpasswd") AND !$pass AND file_exists($path."/.htaccess")){
+			unlink($path."/.htaccess");
+		}else{
+			if($pass){
+				$htpasswd_file = fopen($path."/.htpasswd","w");
+				$pass = crypt($pass);
+				$value = "{$user}:{$pass}\n";
+				fputs($htpasswd_file,$value);
+				fclose($htpasswd_file);
+			}elseif(file_exists($path."/.htaccess")){
+				unlink($path."/.htaccess");
+			}
+		}
+	}
+}
+
+/* --- User ändern --------------------------------------------- */
+if($user_change) {
+		$sqlquery = "UPDATE LMB_USERDB SET ";
+		
+		if($session["change_pass"]){
+			if($passwort AND $hashedPass = Auth::lmbPasswordHash($passwort)){
+				$sqlquery .= "PASSWORT = '$hashedPass',";
+				htuseraccess($session["user_id"],$username,$passwort);
+				if($umgvar["clear_password"]){
+					$sqlquery .= "CLEARPASS = '".$passwort."',";
+				}
+			}
+			if($vorname){$sqlquery .= "VORNAME = '$vorname',";}
+	        if($name){$sqlquery .= "NAME = '$name',";}
+	        if($email){$sqlquery .= "EMAIL = '$email',";}
+		}
+        
+        # layout not changed but new color scheme
+        if($layout == $session['layout'] && $farbe){$sqlquery .= "FARBSCHEMA = '$farbe',";}
+        if($language){$sqlquery .= "LANGUAGE = '$language',";}
+        
+        # layout changed
+        if($layout != $session['layout']){
+            $sqlquery .= "LAYOUT = '$layout',";
+            
+            # try to find color scheme with same name of new layout ( e.g. basic(skalar) -> basic(comet) )
+            $indexColor = lmb_strpos($farbschema['NAME'], '(');
+            $schemaName = lmb_substr($farbschema['NAME'], 0, $indexColor);            
+                        
+            $sqlquery2 = "SELECT ID FROM LMB_COLORSCHEMES WHERE NAME='" . $schemaName . "(" . $layout . ")'";
+            $rs1 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+            lmbdb_fetch_row($rs1);
+            $id = lmbdb_result($rs1, 'ID');
+            
+            if(!$id) {
+                # try to find any color scheme
+                $sqlquery3 = "SELECT ID FROM LMB_COLORSCHEMES WHERE NAME LIKE '%(" . $layout . ")'";
+                $rs2 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+                lmbdb_fetch_row($rs2);
+                $id = lmbdb_result($rs2, 'ID');
+            }
+                       
+            if($id) {
+                $sqlquery .= "FARBSCHEMA= '$id',";
+            }
+            
+        }
+        if($data_display){$sqlquery .= "DATA_DISPLAY = $data_display,";}
+        if($dateformat){$sqlquery .= "DATEFORMAT = ".parse_db_int($dateformat,1).",";}
+        if($tel){$sqlquery .= "TEL = '".parse_db_string($tel,25)."',";}
+        if($fax){$sqlquery .= "FAX = '".parse_db_string($fax,25)."',";}
+        if($position){$sqlquery .= "POSITION = '".parse_db_string($position,50)."',";}
+		$sqlquery .= "SYMBOLBAR = ".parse_db_bool($symbolbar);
+        $sqlquery .= " WHERE USER_ID = $ID";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+        if(is_array($e_setting)){
+			$prepare_string = "UPDATE LMB_USERDB SET E_SETTING = ? WHERE USER_ID = ".$ID;
+			lmb_PrepareSQL($prepare_string,array(serialize($e_setting)),__FILE__,__LINE__);
+        }
+	
+        /* --- session löschen ----*/
+        #$sqlquery = "DELETE FROM LMB_SESSION WHERE ID = '".session_id()."' AND USER_ID = $ID";
+        #$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+if($farbe_change == 1){
+		/* --- Farbschema auslesen ------------------- */
+		$sqlquery4 = "SELECT * FROM LMB_COLORSCHEMES WHERE ID = $farbe";
+        $rs4 = lmbdb_exec($db,$sqlquery4) or errorhandle(lmbdb_errormsg($db),$sqlquery4,$action,__FILE__,__LINE__);
+		$bin4 = lmbdb_binmode($rs4,2);
+		if(lmbdb_fetch_row($rs4)) {
+			$session['farbschema'] = lmbdb_result($rs4,"ID");
+			$farbschema["NAME"] = lmbdb_result($rs4,"NAME");
+			$farbschema["WEB1"] = lmbdb_result($rs4,"WEB1");
+			$farbschema["WEB2"] = lmbdb_result($rs4,"WEB2");
+			$farbschema["WEB3"] = lmbdb_result($rs4,"WEB3");
+			$farbschema["WEB4"] = lmbdb_result($rs4,"WEB4");
+			$farbschema["WEB5"] = lmbdb_result($rs4,"WEB5");
+			$farbschema["WEB6"] = lmbdb_result($rs4,"WEB6");
+			$farbschema["WEB7"] = lmbdb_result($rs4,"WEB7");
+			$farbschema["WEB8"] = lmbdb_result($rs4,"WEB8");
+			$farbschema["WEB9"] = lmbdb_result($rs4,"WEB9");
+			$farbschema["WEB10"] = lmbdb_result($rs4,"WEB10");
+			$farbschema["WEB11"] = lmbdb_result($rs4,"WEB11");
+			$farbschema["WEB12"] = lmbdb_result($rs4,"WEB12");
+		}
+
+        /* --- session löschen ----*/
+        $sqlquery = "DELETE FROM LMB_SESSION WHERE ID = '".session_id()."' AND USER_ID = $ID";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        
+        
+}
+
+
+/* --- Select SQL-Query --------------------------------------------- */
+$sqlquery = "SELECT LMB_USERDB.TEL,LMB_USERDB.FAX,LMB_USERDB.POSITION,LMB_USERDB.DATEFORMAT,LMB_USERDB.SYMBOLBAR,LMB_USERDB.USERNAME,LMB_USERDB.SOUNDLIST,LMB_USERDB.E_SETTING,LMB_USERDB.T_SETTING,LMB_USERDB.LAYOUT,LMB_USERDB.DATA_DISPLAY,LMB_USERDB.LANGUAGE,LMB_USERDB.PASSWORT,LMB_USERDB.USER_ID,LMB_USERDB.VORNAME,LMB_USERDB.NAME,LMB_USERDB.EMAIL,LMB_USERDB.FARBSCHEMA,LMB_USERDB.ERSTDATUM,LMB_USERDB.EDITDATUM,LMB_GROUPS.NAME AS GROUPNAME,LMB_GROUPS.GROUP_ID FROM LMB_USERDB,LMB_GROUPS WHERE LMB_USERDB.GROUP_ID = LMB_GROUPS.GROUP_ID AND USER_ID = $ID";
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+if(lmbdb_fetch_row($rs)) {
+    $result_user["username"] = lmbdb_result($rs, "USERNAME");
+    $result_user["passwort"] = lmbdb_result($rs, "PASSWORT");
+    $result_user["user_id"] = lmbdb_result($rs, "USER_ID");
+    $result_user["vorname"] = lmbdb_result($rs, "VORNAME");
+	$result_user["name"] = lmbdb_result($rs, "NAME");
+	$result_user["email"] = lmbdb_result($rs, "EMAIL");
+	$result_user["tel"] = lmbdb_result($rs, "TEL");
+	$result_user["fax"] = lmbdb_result($rs, "FAX");
+	$result_user["position"] = lmbdb_result($rs, "POSITION");
+	$result_user["gruppe"] = lmbdb_result($rs, "GROUPNAME");
+	$result_user["gruppen_id"] = lmbdb_result($rs, "GROUP_ID");
+    $result_user["data_display"] = lmbdb_result($rs, "DATA_DISPLAY");
+	$result_user["farbschema"] = lmbdb_result($rs, "FARBSCHEMA");
+	$result_user["language"] = lmbdb_result($rs, "LANGUAGE");
+    $result_user["layout"] = lmbdb_result($rs, "LAYOUT");
+	$result_user["symbolbar"] = lmbdb_result($rs, "SYMBOLBAR");
+	$result_user["dateformat"] = lmbdb_result($rs, "DATEFORMAT");
+	#if(lmbdb_result($rs, "SOUNDLIST")){$result_user["soundlist"] = explode(";",lmbdb_result($rs, "SOUNDLIST"));}
+	$eset = lmbdb_result($rs, "E_SETTING");
+	if($eset){
+    	$result_user["e_setting"] = unserialize($eset);
+	}
+	#if(lmbdb_result($rs, "T_SETTING")){$result_user["t_setting"] = explode(";",lmbdb_result($rs, "T_SETTING"));}
+    $result_user["erstdatum"] = get_date(lmbdb_result($rs, "ERSTDATUM"),2);
+	$result_user["editdatum"] = get_date(lmbdb_result($rs, "EDITDATUM"),2);
+}
+
+
+?>
+

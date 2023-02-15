@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+  - @copyright Limbas GmbH <https://limbas.com>
+  - @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+  -
+  - This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+  - This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+  -->
+
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="32"
+   height="32"
+   viewBox="0 0 31.999999 31.999998"
+   id="svg3407"
+   version="1.1"
+   inkscape:version="0.91 r13725"
+   sodipodi:docname="folder_edit.svg">
+  <defs
+     id="defs3409" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="15.839192"
+     inkscape:cx="20.888972"
+     inkscape:cy="24.79962"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     units="px"
+     inkscape:window-width="1920"
+     inkscape:window-height="1007"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1">
+    <inkscape:grid
+       type="xygrid"
+       id="grid4135"
+       empspacing="4"
+       visible="true"
+       enabled="true" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata3412">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-1020.3622)">
+    <path
+       id="path3428"
+       d="m 29.538461,1047.2714 0,-16.0001 q 0,-0.9091 -0.539072,-1.5448 -0.539084,-0.6356 -1.307083,-0.637 l -13.538459,0 q -0.769232,0 -1.307077,-0.6371 -0.537846,-0.6372 -0.539077,-1.5447 l 0,-1.4547 q 0,-0.909 -0.539076,-1.5447 -0.539079,-0.6357 -1.307078,-0.637 l -6.1538459,0 q -0.7692308,0 -1.3070774,0.637 -0.5378457,0.6372 -0.5390765,1.5447 l 0,21.8184 q 0,0.9089 0.5390765,1.5446 0.5390776,0.6357 1.3070774,0.6372 l 23.3846129,0 q 0.769226,0 1.307083,-0.6372 0.537845,-0.6372 0.539072,-1.5446 z m 2.461534,-16.0001 0,16.0001 q 0,2.09 -1.268916,3.5911 -1.268929,1.5011 -3.038773,1.4997 l -23.3846129,0 q -1.7686155,0 -3.0387691,-1.4997 -1.27015358,-1.4996 -1.2689228085187,-3.5911 l 0,-21.8184 q 0,-2.0901 1.2689228085187,-3.5912 1.2689229,-1.5011 3.0387691,-1.4996 l 6.1538459,0 q 1.768615,0 3.03877,1.4996 1.270153,1.4996 1.268922,3.5912 l 0,0.7273 12.923075,0 q 1.768619,0 3.038773,1.4997 1.270154,1.4996 1.268916,3.5913 z"
+       inkscape:connector-curvature="0" />
+    <path
+       id="path3439"
+       d="m 11.111711,1046.8048 1.099633,-1.0996 -2.8395583,-2.8396 -1.0996329,1.0996 0,1.293 1.5466004,0 0,1.5466 1.2929578,0 z m 6.31941,-11.2129 q 0,-0.266 -0.266015,-0.266 -0.120635,0 -0.205698,0.084 l -6.54908,6.5491 q -0.08429,0.084 -0.08429,0.2057 0,0.266 0.266015,0.266 0.120635,0 0.205698,-0.084 l 6.549079,-6.5491 q 0.08429,-0.084 0.08429,-0.2057 z m -0.652665,-2.3199 5.026452,5.0265 -10.052904,10.0529 -5.0264517,0 0,-5.0265 z m 8.25266,1.16 q 0,0.6403 -0.446968,1.0873 l -2.00594,2.0059 -5.026452,-5.0265 2.005941,-1.9935 q 0.434595,-0.4594 1.08726,-0.4594 0.640293,0 1.099633,0.4594 l 2.839558,2.8272 q 0.446968,0.4709 0.446968,1.0996 z"
+       inkscape:connector-curvature="0" />
+  </g>
+</svg>

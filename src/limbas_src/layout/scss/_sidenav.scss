@@ -1,0 +1,230 @@
+/*!
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+.mainsidebar {
+  overflow: auto;
+  height: 100%;
+  resize: horizontal;
+  max-width: 20%;
+}
+
+#sidenav, #framecontext {
+  height: 100%;
+}
+
+#sidenav {
+  border-right: $nav-left-right-border;
+}
+
+/* Frame nav */
+
+.sidenav-quicksearch input {
+  display: inline-block;
+  margin-left: 0.3rem;
+  width: 80%;
+  width: -webkit-calc(100% - 2rem);
+  width: -moz-calc(100% - 2rem);
+  width: calc(100% - 2rem);
+}
+
+html, body.nav {
+  height: 100%;
+}
+
+.lmbfringeFrameNav {
+  min-height: 100%;
+  width: 100%;
+  background: $nav-left-background-color;
+
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.lmbfringeFrameNav ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* first menu level */
+
+.lmbfringeFrameNav .menu-side-header {
+  color: $nav-left-header-color;
+  background-color: $nav-left-header-background-color;
+  padding: 0.4rem 0.4rem 0.4rem 0.8rem;
+  border: $nav-left-header-border;
+}
+
+.lmbfringeFrameNav > ul > li {
+  background-color: $nav-left-inner-background-color;
+  color: $nav-left-inner-color;
+  cursor: pointer;
+  font-size: 0.9rem;
+  vertical-align: top;
+  line-height: 2;
+  display: block;
+}
+
+.lmbfringeFrameNav > ul > li a {
+  color: $nav-left-inner-color;
+  display: block;
+}
+
+.lmbfringeFrameNav > ul > li > .menu-side-header > a {
+  color: $nav-left-header-color;
+  text-decoration: none;
+}
+
+.lmbfringeFrameNav > ul > li:hover > .menu-side-header > a {
+  color: $nav-left-header-hover-color;
+  text-decoration: none;
+}
+
+.lmbfringeFrameNav > ul > li:hover .menu-side-header {
+  color: $nav-left-header-hover-color;
+  background: $nav-left-header-hover-background-color;
+}
+
+/* first child is search input -> no effect on hover */
+.lmbfringeFrameNav > ul > li.sidenav-quicksearch:hover,
+.lmbfringeFrameNav > ul > li.sidenav-quicksearch:hover .menu-side-header {
+  background-color: $nav-left-header-background-color;
+}
+
+.lmbfringeFrameNav > ul > li > .menu-side-header > i {
+  cursor: pointer;
+  max-width: 1.3rem;
+  font-size: 1rem;
+  width: 1.3rem;
+  line-height: 1.8;
+  text-align: center;
+  margin-right: 0.4rem;
+}
+
+.lmbfringeFrameNav > ul > li.open {
+  color: $nav-left-inner-color;
+  background: $nav-left-inner-open-background-color;
+}
+
+.lmbfringeFrameNav > ul > li.open .menu-side-header {
+  color: $nav-left-header-open-color;
+  background: $nav-left-header-open-background-color;
+}
+
+/* second menu level */
+.lmbfringeFrameNav > ul > li > ul > li > a {
+  display: block;
+}
+
+.lmbfringeFrameNav > ul > li > ul {
+  padding: 0.5rem 0.8rem 0.5rem 1rem;
+  font-size: 0.8rem;
+  border: $nav-left-inner-border;
+  
+  table {
+    font-size: 0.8rem;
+  }
+}
+
+.lmbfringeFrameNav > ul > li > ul > li i {
+  cursor: pointer;
+  max-width: 1.3rem;
+  font-size: 0.8rem;
+  width: 1.3rem;
+}
+
+/*.lmbfringeFrameNav > ul > li > ul > li:hover > a,*/
+.lmbfringeFrameNav > ul > li > ul > li a:not([href]):not([tabindex]):hover,
+.lmbfringeFrameNav a:hover {
+  color: $nav-left-inner-hover-color;
+  text-decoration: none;
+}
+
+/* third menu level or more */
+.lmbfringeFrameNav > ul > li > ul > li ul {
+  padding-left: 1rem;
+}
+
+/* TODO correct? */
+.lmbfringeFrameNav li > ul {
+  display: none;
+}
+
+.lmbfringeFrameNav li.open > ul {
+  display: block;
+}
+
+.lmbfringeFrameNav a.lmbFileTreeItem:not([href]):not([tabindex]) {
+  color: $nav-left-inner-color;
+}
+
+.lmbfringeFrameNav .lmbFileTreeItem:hover {
+  color: $nav-left-inner-hover-color;
+  background-color: transparent;
+}
+
+.lmbMenuProfileDropdown {
+  white-space: nowrap;
+}
+
+.lmbMenuProfileDropdown img {
+  max-height: 2.5rem;
+}
+
+.lmbFrameShow {
+  background-color: $showmenu-background-color;
+  color: $showmenu-color;
+  border: $showmenu-border;
+  border-top: none;
+  height: 2.7rem;
+  padding-left: 20%;
+  padding-top: 12px;
+  font-size: 0.8rem;
+}
+
+.evt-hide-frame {
+  text-align: center;
+  font-size: 1rem;
+  padding: 0.3rem 0;
+  color: $nav-left-hide-color;
+}
+
+@media (max-width: 992px) {
+
+  .mainsidebar {
+    -webkit-transition: width 0.3s;
+    transition: width 0.3s;
+  }
+
+  .mainsidebar {
+    position: absolute;
+    z-index: 99999;
+    max-width: none;
+  }
+
+  .mainsidebar.open {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  #multiframecont {
+    right: 0;
+  }
+}
+
+.lmb-query::before {
+  color: $nav-left-query-icon-color;
+}
+
+.lmbfringeFrameNav .new-data {
+  color: $nav-left-new-data-color;
+}

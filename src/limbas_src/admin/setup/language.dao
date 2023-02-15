@@ -1,0 +1,260 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+
+/* --- Transaktion START -------------------------------------- */
+lmb_StartTransaction();
+
+if(!$language_typ){$language_typ = 1;}
+
+if(($language_typ == 1 AND !$LINK[108]) OR ($language_typ == 2 AND !$LINK[258]) OR !is_numeric($language_typ)){
+	die("permission denied!");
+}
+
+if($language_typ == 2){
+	$langtyp = "_DEPEND";
+}else{
+	$langtyp = "";
+}
+
+$langtypname[0] = $lang[994];
+$langtypname[1] = $lang[1219];
+$langtypname[2] = $lang[1220];
+$langtypname[3] = $lang[1221];
+$langtypname[4] = $lang[577];
+$langtypname[5] = $lang[1986];
+
+
+$langtyplist[] = "";
+$langtyplist[] = "_DEPEND";
+
+foreach ($langtyplist as $typkey => $langtyppart){
+	/* --- neue Sprache --------------------------------------------- */
+	if($add_lang){
+		$NEXTID = next_db_id("LMB_LANG$langtyppart","LANGUAGE_ID");
+		$NEXTID1 = next_db_id("LMB_LANG$langtyppart");
+
+		$sqlquery = "SELECT * FROM LMB_LANG$langtyppart WHERE LANGUAGE_ID = 1";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs1) {$commit = 1;}
+		while(lmbdb_fetch_row($rs)) {
+			if(lmbdb_result($rs, "LMFILE")){$fl = lmbdb_result($rs, "LMFILE");}else{$fl = '0';}
+			$sqlquery1 = "INSERT INTO LMB_LANG$langtyppart (ID,LANGUAGE_ID,ELEMENT_ID,TYP,LMFILE,LANGUAGE,EDIT,WERT) VALUES ($NEXTID1,$NEXTID,".lmbdb_result($rs, "ELEMENT_ID").",".parse_db_int(lmbdb_result($rs, "TYP"),5).",'".parse_db_string($fl,250)."','".parse_db_string($add_lang,20)."',".LMB_DBDEF_FALSE.",'')";
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			$NEXTID1++;
+		}
+	}
+
+	/* --- Sprache löschen --------------------------------------------- */
+	if($del_lang){
+		$sqlquery = "DELETE FROM LMB_LANG$langtyppart WHERE LANGUAGE_ID = $language_id";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+	}
+}
+
+
+// multilanguage
+if($language_id AND $multilang){
+
+    require_once(COREPATH . 'admin/tables/tab.lib');
+
+    if($umgvar['multi_language']) {
+        $multi_language = $umgvar['multi_language'];
+    }
+
+
+    $sqlquery = "SELECT LMB_CONF_FIELDS.FIELD_ID,LMB_CONF_FIELDS.TAB_ID FROM LMB_CONF_FIELDS,LMB_CONF_TABLES WHERE LMB_CONF_FIELDS.TAB_ID = LMB_CONF_TABLES.TAB_ID AND LMB_CONF_TABLES.TYP != 5 AND LMB_CONF_FIELDS.MULTILANG = ".LMB_DBDEF_TRUE;
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (! $rs1) {$commit = 1;}
+    while (lmbdb_fetch_row($rs)) {
+        $mtable[] = lmbdb_result($rs, "TAB_ID");
+        $mfield[] = lmbdb_result($rs, "FIELD_ID");
+    }
+    
+    if($multilang == 'true' AND $language_id != $umgvar['default_language']){
+        $multi_language[] = $language_id;
+        $m = 1;
+    }elseif($language_id == $umgvar['default_language']){
+        unset($multi_language[array_search($language_id,$multi_language)]);
+        $m = 0;
+    }else{
+        unset($multi_language[array_search($language_id,$multi_language)]);
+        $m = 0;
+    }
+
+
+    $dfkey = array_search($umgvar['default_language'],$multi_language);
+    if($dfkey !== false) {
+        unset($multi_language[$dfkey]);
+    }
+    
+    $multi_language = array_filter($multi_language);
+    $multi_language = array_unique($multi_language);
+    $_SESSION['umgvar']['multi_language'] = $multi_language;
+    $umgvar['multi_language'] = $multi_language;
+    $multi_language = implode(',',$multi_language);
+    
+    $sqlquery = "UPDATE LMB_UMGVAR SET NORM = '$multi_language' WHERE FORM_NAME = 'multi_language'";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    if($mtable){
+       foreach($mtable as $mkey => $mval){
+            lmb_set_multi_language($mtable[$mkey],$mfield[$mkey],$m,$language_id);
+       }
+    }
+
+
+}
+
+
+$result_language = get_language_list($langtyp);
+
+if($language_id AND $list){
+
+	/* --- löschen --------------------------------------------- */
+	if($del){
+		lang_delete($del,$langtyp);
+	/* --- hinzufügen --------------------------------------------- */
+	}elseif($add){
+		lang_add($language_id,$typ,$file,$wert,$langtyp);
+	}else{
+
+		/* --- ändern --------------------------------------------- */
+		if($is_value){
+			$is_value = array_unique(explode(";",$is_value));
+			foreach($is_value as $key => $val){
+				lang_change($val,null,$new_value[$val],$language_id,$langtyp);
+			}
+		}
+	
+		/* --- ändern js --------------------------------------------- */
+		if($is_js){
+			$is_js = array_unique(explode(";",$is_js));
+			foreach($is_js as $key => $val){
+				lang_changejs($val,$new_js[$val],$language_id,$langtyp);
+			}
+		}
+
+        /* --- ändern override --------------------------------------------- */
+		if($is_override){
+			$is_override = array_unique(explode(";",$is_override));
+			foreach($is_override as $key => $val){
+				lang_changeoverride($val,$new_override[$val],$language_id,$langtyp);
+			}
+		}
+	
+	}
+
+	if(!$showlimit){$showlimit = 100;}
+
+	# suchen
+	if($ID){$where[] = "ELEMENT_ID = $ID";}
+	if($TYP){$where[] = "TYP = $TYP";}
+	if($FILE){$where[] = "LMFILE LIKE '%".lmb_strtoupper($FILE)."%'";}
+	if($EDIT AND $EDIT != 'a'){
+	   $EDIT = parse_db_bool($EDIT);
+	   if($EDIT == LMB_DBDEF_TRUE){$where[] = "EDIT = ".LMB_DBDEF_TRUE;$EDIT = LMB_DBDEF_TRUE;}elseif($EDIT == LMB_DBDEF_FALSE){$where[] = "EDIT = ".LMB_DBDEF_FALSE;$EDIT = LMB_DBDEF_FALSE;}
+	}
+	if($WERT){$where[] = "LOWER(WERT) LIKE '%".str_replace("'","''",lmb_strtolower($WERT))."%'";}
+	if($JS){$where[] = "JS = ".LMB_DBDEF_TRUE;}
+    if($override){$where[] = "(OVERRIDE > 0)";}
+	$where[] = "LANGUAGE_ID = $language_id";
+	if($where){$where  = " WHERE ".implode(" AND ",array_unique($where));}
+	if($order == "ELEMENT_ID" OR $order == "EDIT" OR $order == "TYP"){$order_ = "ORDER BY $order";}
+	elseif($order == "LMFILE" OR $order == "LANGUAGE" OR $order == "LMFILE" OR $order == "WERT"){$order_ = "ORDER BY lower($order)";}
+	elseif($order == "REF"){$revvalue = 1; $order_ = "ORDER BY LOWER(WERT)";}
+	else{$order_ = "ORDER BY ID";}
+	
+	/* ---Element-Liste --------------------------------------------- */
+	$sqlquery = "SELECT * FROM LMB_LANG$langtyp $where $order_";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
+			$el_id = lmbdb_result($rs, "ELEMENT_ID");
+            $result_el["id"][$el_id] = lmbdb_result($rs, "ID");
+            $result_el["language_id"][$el_id] = lmbdb_result($rs, "LANGUAGE_ID");
+            $result_el["element_id"][$el_id] = $el_id;
+            $result_el["typ"][$el_id] = lmbdb_result($rs, "TYP");
+            $result_el["wert"][$el_id] = trim(lmbdb_result($rs, "WERT")); # longtext handle
+            if(lmbdb_result($rs, "LMFILE")){$result_el["file"][$el_id] = lmbdb_result($rs, "LMFILE");}else{$result_el["file"][$el_id] = "system";}
+            $result_el["language"][$el_id] = lmbdb_result($rs, "LANGUAGE");
+            $result_el["edit"][$el_id] = lmbdb_result($rs, "EDIT");
+            $result_el["override"][$el_id] = lmbdb_result($rs, "OVERRIDE");
+            $result_el["js"][$el_id] = lmbdb_result($rs, "JS");
+            #if($bzm > $showlimit){break;}
+	}
+
+
+	/* ---Element-Liste Referenz --------------------------------------------- */
+	if(!$ref_id){$ref_id = 1;}
+
+	unset($where);
+	if($REFWERT){
+		$revvalue = 1;
+		if($ID){$where[] = "ELEMENT_ID = $ID";}
+		if($TYP){$where[] = "TYP = $TYP";}
+		if($FILE){$where[] = "LMFILE = $FILE";}
+		$where[] = "LOWER(WERT) LIKE '%".str_replace("'","''",lmb_strtolower($REFWERT))."%'";
+	}
+	
+	$where[] = "LANGUAGE_ID = $ref_id";
+	if($where){$where  = " WHERE ".implode(" AND ",array_unique($where));}
+
+	$sqlquery = "SELECT * FROM LMB_LANG$langtyp $where $order_";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)) {
+			$el_id = lmbdb_result($rs, "ELEMENT_ID");
+			$result_ref["element_id"][$el_id] = $el_id;
+            $result_ref["id"][$el_id] = lmbdb_result($rs, "ID");
+            $result_ref["language_id"][$el_id] = lmbdb_result($rs, "LANGUAGE_ID");
+            $result_ref["wert"][$el_id] = htmlentities(trim(lmbdb_result($rs, "WERT")),ENT_QUOTES,$umgvar["charset"]);  # longtext handle
+            #if($bzm > $showlimit){break;}
+	}
+}
+
+
+/* --- Sprachfileimport --------------------------------------------- */
+/*
+if($import AND $import_lang){
+	set_time_limit(10000);
+	ob_implicit_flush();
+
+	$sep = "\t";
+	# ---------------------- Textdatei öffnen ----------------------
+	$pfad = $umgvar[pfad]."/USER/".$session[user_id]."/temp/";
+	if($import){$copy = copy ($import, $pfad."txtimport.txt");}
+	$txtdat = fopen($pfad."txtimport.txt","r");
+	while($line = fgets($txtdat, 1000)){
+		$part = explode($sep,$line);
+		if(preg_match("/^[0-9]{1,10}$/",$part[0]) AND $part[1]){
+			$sqlquery = "SELECT ID,WERT FROM LMB_LANG$langtyp WHERE LANGUAGE_ID = $import_lang AND ELEMENT_ID = ".$part[0];
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			if(lmbdb_result($rs, "ID") > 0){
+				$value = lmb_substr(str_replace("'","''",$part[1]),0,249);
+				$value = str_replace("\r\n"," ",$value);
+				$value = str_replace("\t"," ",$value);
+				$value = str_replace("\n"," ",$value);
+				$sqlquery1 = "UPDATE LMB_LANG$langtyp SET WERT = '".$value."',EDIT = ".LMB_DBDEF_TRUE.",JS = ".parse_db_bool($part[2])." WHERE ID = ".lmbdb_result($rs, "ID")." AND LANGUAGE_ID = $import_lang AND ELEMENT_ID = ".$part[0];
+				$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			}
+		}
+	}
+}
+*/
+
+/* --- Transaktion ENDE -------------------------------------- */
+if($commit){
+	lmb_EndTransaction(0);
+} else {
+	lmb_EndTransaction(1);
+}
+?>
+

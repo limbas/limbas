@@ -1,0 +1,179 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+$printerMsg = [];
+
+# add printer
+if ($addPrinter and $addPrinterName and $addPrinterSysName) {
+    $addPrinterName = parse_db_string($addPrinterName);
+    $addPrinterSysName = parse_db_string($addPrinterSysName);
+    $nextID = next_db_id('LMB_PRINTERS');
+
+    $sqlquery = "INSERT INTO LMB_PRINTERS (ID, NAME, SYSNAME) VALUES ($nextID, '$addPrinterName', '$addPrinterSysName')";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    if (!$rs) {
+        $printerMsg[] = 'Could not insert printer!';
+    }
+}
+
+# change default printer
+if ($defaultPrinter) {
+    $defaultPrinter = parse_db_int($defaultPrinter);
+
+    $sqlquery = "UPDATE LMB_PRINTERS SET DEF = TRUE WHERE ID = $defaultPrinter";
+    $rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+
+    $sqlquery = "UPDATE LMB_PRINTERS SET DEF = FALSE WHERE ID != $defaultPrinter";
+    $rs2 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    if (!$rs1 or !$rs2) {
+        $printerMsg[] = 'Could not change default printer!';
+    }
+}
+
+# change printer
+if ($changePrinter) {
+    $printerName = parse_db_string(${'printerName_' . $changePrinter});
+    $changePrinter = parse_db_int($changePrinter);
+    $sqlquery = "UPDATE LMB_PRINTERS SET NAME = '$printerName' WHERE ID=$changePrinter";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    if (!$rs) {
+        $printerMsg[] = 'Could not update printer!';
+    }
+}
+
+# store config
+if ($saveSelectedConfig and $configPrinter) {
+    $selectedConfig = parse_db_string($selectedConfig);
+    $configPrinter = parse_db_int($configPrinter);
+    $sqlquery = "UPDATE LMB_PRINTERS SET CONFIG='$selectedConfig' WHERE ID=$configPrinter";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    if (!$rs) {
+        $printerMsg[] = 'Could not save config!';
+    }
+    $configPrinter = null;
+}
+
+# remove printer
+if ($delPrinter) {
+    $delPrinter = parse_db_int($delPrinter);
+    $sqlquery = "DELETE FROM LMB_PRINTERS WHERE ID=$delPrinter";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    if (!$rs) {
+        $printerMsg[] = 'Could not delete printer!';
+    }
+}
+
+# get available printers
+exec('lpstat ' . strval($umgvar['lpstat_params']) . ' -p', $availablePrinterNames, $exitCode);
+if ($exitCode != 0) {
+    $printerMsg[] = 'Could not determine installed printers! Exit code ' . $exitCode . '. Output: ' . print_r($availablePrinterNames, true);
+    $availablePrinterNames = array();
+} else {
+    // get name from output
+    foreach ($availablePrinterNames as &$name) {
+        $name = explode(' ', $name);
+        $name = $name[1];
+    }
+}
+
+# check if lpstat is installed
+if (!$availablePrinterNames) {
+    $location = exec('which lpstat 2>/dev/null');
+    if (!$location) {
+        $printerMsg[] = 'Could not find lpstat command. Is CUPS installed?';
+    }
+}
+
+# get limbas printers
+$sqlquery = 'SELECT ID, NAME, SYSNAME, CONFIG, DEF FROM LMB_PRINTERS ORDER BY ID';
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+
+$printers = array();
+while (lmbdb_fetch_row($rs)) {
+    $printerSysName = lmbdb_result($rs, 'SYSNAME');
+    $printer = array(
+        'name' => lmbdb_result($rs, 'NAME'),
+        'sysName' => $printerSysName,
+        'config' => lmbdb_result($rs, 'CONFIG')
+    );
+
+    if (lmbdb_result($rs, 'DEF')) {
+        $printer['default'] = 1;
+    }
+
+    # selected printer not found
+    if (!in_array($printerSysName, $availablePrinterNames)) {
+        $printerMsg[] = "Printer $printerSysName not found on system!";
+        $printer['error'] = true;
+    }
+    $printers[lmbdb_result($rs, 'ID')] = $printer;
+}
+
+# collect information about installed printers
+$availablePrinterConfigs = array();
+foreach($availablePrinterNames as $printerSysName) {
+    $availablePrinterConfigs[$printerSysName] = array();
+
+    # get printer config
+    $outputArr = array();
+    exec('lpoptions ' . strval($umgvar['lpoptions_params']) . " -p '$printerSysName' -l", $outputArr, $exitCode);
+    if ($exitCode != 0) {
+        $printerMsg[] = "Could not get configuration of printer $printerSysName";
+        continue;
+    }
+
+    # store config as array
+    foreach ($outputArr as $line) {
+        list($key, $value) = explode(':', $line, 2);
+        $availablePrinterConfigs[$printerSysName][trim($key)] = array_filter(explode(' ', $value));
+    }
+}
+
+/**
+ * Parses the specified config string and returns all recognized options based on the passed available options.
+ * Prints warnings for parts that cannot be parsed.
+ *
+ * @param $configStr
+ * @return array
+ */
+function parseConfig($configStr) {
+    $configArr = array();
+
+    if (preg_match_all('/-o (.*?)=(.*?)( |$)/', $configStr, $matches)) {
+        foreach ($matches[1] as $key => $optionName) {
+            $configArr[$optionName] = $matches[2][$key];
+        }
+    }
+
+    return $configArr;
+}
+
+/**
+ * Checks if the given optionName and optionValue are supported options for the printer specified.
+ *
+ * @param $availablePrinterOptions
+ * @param $optionName
+ * @param $optionValue
+ * @return bool
+ */
+function isValidPrinterOption($availablePrinterOptions, $optionName, $optionValue) {
+    # check all available options
+    foreach ($availablePrinterOptions as $availableOptionName => $availableOptionValues) {
+        # option name found?
+        if (lmb_substr($availableOptionName, 0, lmb_strlen($optionName) + 1) === $optionName . '/') {
+            # option value found?
+            if (in_array($optionValue, $availableOptionValues) || in_array('*' . $optionValue, $availableOptionValues)) {
+                return true;
+            } else {
+                return false; # value not found in available option
+            }
+        }
+    }
+    return false; # name not found in available options
+}

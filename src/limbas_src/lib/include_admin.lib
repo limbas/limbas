@@ -1,0 +1,2042 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+function paintTextToImageSetColor($img){
+	global $farbschema;
+	$rgb[0] = ImageColorAllocate ($img, 0, 0, 0);
+	$rgb[2] = ImageColorAllocate ($img, 255, 255, 255);
+	$RGB = explode(",",hexdec(lmb_substr($farbschema['WEB8'], 1, 2)).",".hexdec(lmb_substr($farbschema['WEB8'], 3, 2)).",".hexdec(lmb_substr($farbschema['WEB8'], 5, 2)));
+	$rgb[1] = imagecolorallocate($img, $RGB[0], $RGB[1], $RGB[2]);
+	return $rgb;
+}
+	
+	
+function paintTextToImage($text,$size=12,$font=null){
+
+	global $umgvar;
+	global $session;
+	global $farbschema;
+	
+	if(!$font){
+		if(file_exists($umgvar["pfad"]."/inc/fonts/DejaVuSans.ttf")){
+			$font = $umgvar["pfad"]."/inc/fonts/DejaVuSans.ttf";
+		}else{
+		    lmb_alert('failure in textToImage - no font (DejaVuSans) available!');
+			return false;
+		}
+	}elseif($font){
+		if(lmb_strpos($font,"/") === false){
+			$font = $umgvar["pfad"]."/inc/fonts/$font";
+		}
+	}
+
+	if($box = imagettfbbox($size,0,$font,$text)){
+			$x = abs($box[2]) + 5;
+			$y = abs($box[5]) + 5;
+			$img = imagecreate($x,$y);
+			$rgb = paintTextToImageSetColor($img);
+			imagefill($img, 0, 0, $rgb[2]);
+			imagettftext($img, $size, 0, 0, ($y - 3), $rgb[0], $font, $text);
+			$ok = imagepng($img, USERPATH.$session["user_id"]."/temp/textimage.png");
+			imagedestroy($img);
+	}
+	
+	if(file_exists(USERPATH.$session["user_id"]."/temp/textimage.png")){
+		return USERPATH.$session["user_id"]."/temp/textimage.png";
+	}else{
+		return false;
+	}
+
+}
+
+function make_fileArchive($path,$name){
+	global $umgvar;
+	global $session;
+	
+	#$path,"export_bundle")
+	
+	if(lmb_substr($path,lmb_strlen($path),1) != "/"){
+		$path = $path."/";
+	}
+	
+	$url = $path;
+	$path = $umgvar["pfad"]."/".$path;
+
+	if($folderval = read_dir($path)){
+		foreach($folderval["name"] as $key => $value){
+			if($folderval["typ"][$key] == "file"){
+				$exp_files .= $value." ";
+			}
+		}
+	}
+
+	$systemquery = "tar -c -z -C ".$path." -f ".$path."/$name.tar.gz ".$exp_files;
+	$sys = exec($systemquery);
+	
+	# delete temporary files
+	foreach($folderval["name"] as $key => $value){
+		if($folderval["typ"][$key] == "file" AND $value != $name.'.tar.gz'){
+			unlink($path.$value);
+		}
+	}    
+	
+	if(file_exists($url.$name.".tar.gz")){return $url.$name.".tar.gz";}else{return false;}
+}
+
+# grouplist
+function viewgrouptree($LEVEL,$l,$select=null){
+	static $grouptree;
+	global $db;
+
+
+	if(!$grouptree){
+		$sqlquery = "SELECT GROUP_ID,NAME,LEVEL,LOWER(NAME),DESCRIPTION FROM LMB_GROUPS WHERE DEL = ".LMB_DBDEF_FALSE." ORDER BY GROUP_ID";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$grouptree = array();
+
+		while(lmbdb_fetch_row($rs)){
+			$grouptree["id"][] = lmbdb_result($rs, "GROUP_ID");
+			$grouptree["name"][] = lmbdb_result($rs, "NAME");
+			$grouptree["level"][] = lmbdb_result($rs, "LEVEL");
+		}
+	}
+
+	if($LEVEL){$l .= "--";}
+
+	foreach($grouptree["id"] as $key => $value){
+		if($grouptree["level"][$key] == $LEVEL){
+			if($select){if(in_array($grouptree["id"][$key],$select)){$SELECTED="SELECTED";}else{$SELECTED="";}}
+			echo "<OPTION VALUE=\"".$grouptree["id"][$key]."\" $SELECTED>".$l.$grouptree["name"][$key]."</OPTION>";
+
+			if(in_array($grouptree["id"][$key],$grouptree["level"])){
+				viewgrouptree($grouptree["id"][$key],$l,$select);
+			}
+		}
+	}
+}
+
+
+
+# ------------- htaccess ---------------
+function lmb_htaccess($ID,$user,$pass){
+	global $db;
+	global $session;
+	global $umgvar;
+
+	$sqlquery = "SELECT USERNAME,PASSWORT,CLEARPASS FROM LMB_USERDB WHERE USER_ID = $ID";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	if(lmbdb_fetch_row($rs)) {
+
+		if(!$user){$user = lmbdb_result($rs, "USERNAME");}
+		if(!$pass){$pass = lmbdb_result($rs, "CLEARPASS");}
+
+		if(!$user){return false;}
+
+		$path = USERPATH.$ID;
+
+		######## single htaccess for userdirectory ##########
+		
+		# --- htaccess ---
+		$htaccess_file = fopen($path."/.htaccess","w");
+		$value = "AuthName \"$user\"\nAuthType Basic\nAuthUserFile ".$path."/.htpasswd\nrequire valid-user\nallow from all";
+		if($htaccess_file) {
+			fputs($htaccess_file,$value);
+			fclose($htaccess_file);
+		}
+
+		# --- htpasswd ---
+		if(is_file($path."/.htpasswd") AND !$pass){
+			return file_get_contents($path."/.htpasswd");
+		}elseif(!is_file($path."/.htpasswd") AND !$pass AND file_exists($path."/.htaccess")){
+			#unlink($path."/.htaccess");
+			$htaccess_file = fopen($path."/.htaccess","w");
+			$value = "allow from all";
+			if ($htaccess_file) {
+				fputs($htaccess_file,$value);
+				fclose($htaccess_file);
+			}
+		}else{
+			if($pass){
+				$htpasswd_file = fopen($path."/.htpasswd","w");
+				$pass = password_hash($pass,PASSWORD_BCRYPT);
+				$value = "{$user}:{$pass}\n";
+				if($htpasswd_file) {
+					fputs($htpasswd_file,$value);
+					fclose($htpasswd_file);
+				}
+				return "{$user}:{$pass}";
+			}elseif(file_exists($path."/.htaccess")){
+				#unlink($path."/.htaccess");
+				$htaccess_file = fopen($path."/.htaccess","w");
+				$value = "allow from all";
+				if ($htaccess_file) {
+					fputs($htaccess_file,$value);
+					fclose($htaccess_file);
+				}
+			}
+		}
+	}
+	return false;
+}
+
+
+/**
+ * htpasswd for TEMP Directory
+ *
+ * @param unknown_type $user
+ * @param unknown_type $pass
+ */
+function lmb_htaccessGroup(){
+
+	global $db;
+	
+	$sqlquery = "SELECT USER_ID FROM LMB_USERDB WHERE DEL = FALSE AND LMLOCK = FALSE";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	while(lmbdb_fetch_row($rs)) {
+		
+		$userid = lmbdb_result($rs, "ID");
+		
+		if($pass AND $user){
+			$pass = crypt($pass);
+			$passgrp[] = "{$user}:{$pass}\n";
+		}
+		
+		if($passgrp){
+			$htaccess_file = fopen(TEMPPATH.'/.htaccess',"w");
+			$value = "AuthName \"$user\"\nAuthType Basic\nAuthUserFile ".TEMPPATH."/.htpasswd\nrequire valid-user\nallow from all";
+			if ($htaccess_file) {
+				fputs($htaccess_file,$value);
+				fclose($htaccess_file);
+			}
+			
+
+			$value = implode("\n",$passgrp);
+			$htpasswd_file = fopen(TEMPPATH.'/.htpasswd',"w");
+			if($htpasswd_file) {
+				fputs($htpasswd_file,$value);
+				fclose($htpasswd_file);
+			}
+		}else{
+			$htaccess_file = fopen(TEMPPATH.'/.htaccess',"w");
+			$value = "allow from all";
+			if ($htaccess_file) {
+				fputs($htaccess_file,$value);
+				fclose($htaccess_file);
+			}
+		}
+		
+		
+	}
+		
+}
+
+
+# Type-Extensions
+function getTypeExensions(){
+	global $gLmbExt;
+        
+	if($gLmbExt){
+            foreach($gLmbExt["ext_type.inc"] as $key => $value){
+                    $file = fopen($value,"r");
+                    while($line = fgets($file, 100000)){
+                            if($fline = lmb_stristr($line,"function")){
+                                    $na = trim(lmb_substr($fline,9,(lmb_strpos($fline,"(")-9)));
+                                    if(lmb_stristr($line,"lmbd_") OR lmb_stristr($line,"lmbc_") OR lmb_stristr($line,"lmbu_")){
+                                        $na = preg_replace("/lmbd_/","",$na);
+                                        $na = preg_replace("/lmbc_/","",$na);
+                                        $na = preg_replace("/lmbu_/","",$na);
+                                        $name[] = $na;
+                                    }
+                            }
+                    }
+                    fclose($file);
+            }
+        }
+
+    if($name){
+        $name = array_unique($name);
+    }
+	
+	return $name;
+}
+
+# grouplist
+function GroupTreeList($name,$items,$selected,$LEVEL=0,$l=null){
+	global $grouptree;
+	global $db;
+	
+	if(!$LEVEL){
+		$sqlquery = "SELECT GROUP_ID,NAME,LEVEL,LOWER(NAME),DESCRIPTION FROM LMB_GROUPS WHERE DEL = ".LMB_DBDEF_FALSE." ORDER BY GROUP_ID";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		$grouptree = array();
+		while(lmbdb_fetch_row($rs)){
+			$grouptree["id"][] = lmbdb_result($rs, "GROUP_ID");
+			$grouptree["name"][] = lmbdb_result($rs, "NAME");
+			$grouptree["level"][] = lmbdb_result($rs, "LEVEL");
+		}
+	}
+
+	if($LEVEL){$l .= "&nbsp;&nbsp;&nbsp;";}
+
+	foreach($grouptree["id"] as $key => $value){
+		if($grouptree["level"][$key] == $LEVEL){
+
+            echo '<div class="dropdown-item" title="'.$mid.'">
+					<div class="form-check">
+						<label class="form-check-label">';
+							
+
+                        foreach ($items["name"] as $ikey => $ival){
+                            if(!$items["typ"][$ikey]){$items["typ"][$ikey] = "checkbox";}
+                            echo '<input class="form-check-input mt-0" type="'.$items["typ"][$ikey].'" value="'.$grouptree["id"][$key].'" name="grouptreelist['.$ival.'][]" '.(is_array($selected[$ival]) && in_array($grouptree["id"][$key],$selected[$ival])?'checked':'').'>';
+                        }
+			
+							echo $l.$grouptree["name"][$key].'
+						</label>
+					</div>
+                  </div>';
+			
+			
+			
+			
+			if(is_array($grouptree["level"]) && in_array($grouptree["id"][$key],$grouptree["level"])){
+				GroupTreeList($name,$items,$selected,$grouptree["id"][$key],$l);
+			}
+		}
+	}
+}
+
+function getGroupTree($name,$items,$selected=null,$LEVEL=0,$l=null){
+	GroupTreeList($name,$items,$selected,$LEVEL,$l);
+}
+
+
+
+
+
+################### trigger #############################
+
+
+/*
+trigger name = LMB_TRG_md5(TABNAME_EVENT)
+*/
+function lmb_updateTrigger(){
+	global $db;
+	global $DBA;
+
+	lmb_dropAllDBTrigger();
+
+	$sqlquery = "SELECT * FROM LMB_TRIGGER WHERE ACTIVE = ".LMB_DBDEF_TRUE." AND TYPE IS NOT NULL AND INTERN = ".LMB_DBDEF_FALSE." ORDER BY TABLE_NAME,TYPE";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+	while(lmbdb_fetch_row($rs)){
+		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],lmbdb_result($rs,"TABLE_NAME"),"'TABLE'"));
+		if(!$odbc_table){
+			lmb_deleteTriggerForTable(lmbdb_result($rs,"TABLE_NAME"));
+		}else{
+			$triggers["name"][] = lmbdb_result($rs,"NAME");
+			$triggers["table"][] = lmbdb_result($rs,"TABLE_NAME");
+			$triggers["type"][] = lmbdb_result($rs,"TYPE");
+			$triggers["value"][] = lmbdb_result($rs,"TRIGGER_VALUE");
+			$triggers["vendor"][] = lmbdb_result($rs,"DBVENDOR");
+			$triggers["position"][] = lmbdb_result($rs,"POSITION");
+		}
+	}
+
+	if($triggers){
+		foreach($triggers["name"] as $key => $value){
+			if($triggers["value"][$key] AND $triggers["name"][$key] AND lmb_strtolower($triggers["vendor"][$key]) == lmb_strtolower($DBA["DB"])){
+				if(!$triggers["position"][$key]){$triggers["position"][$key] = "AFTER";}
+				$sqlquery = dbq_13(array($DBA["DBSCHEMA"],$triggers["name"][$key],$triggers["table"][$key],$triggers["type"][$key],$triggers["value"][$key],$triggers["position"][$key]));
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs){$commit = 1;}
+			}
+		}
+	}
+	if($commit){
+		lmb_alert("Error during update of triggers, please check the error log\nThe other triggers have been updated successfully.");
+		return false;
+	}else{
+		return true;
+	}
+}
+
+function lmb_dropAllDBTrigger($triggername=null,$delData=false){
+	global $db;
+	global $DBA;
+	
+	# delete database trigger
+	if($triggerlist = dbf_3(array($DBA["DBSCHEMA"],$triggername))){
+		foreach ($triggerlist["triggername"] as $tkey => $tname){
+			#if(lmb_substr($tname,0,12) == "INSERT_VERK_" AND lmb_substr($tname,0,12) == "INSERT_VERK_"){continue;}
+			$sqlquery = dbq_10(array($triggerlist["triggername"][$tkey],$triggerlist["tablename"][$tkey]));
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			if(!$rs) {$commit = 1;}
+		}
+	}
+	# delete limbas trigger
+	if($delData){
+		if($triggername){$where = "AND NAME LIKE '$triggername'";}
+		$sqlquery = "DELETE FROM LMB_TRIGGER WHERE INTERN = ".LMB_DBDEF_FALSE." AND (DESCRIPTION LIKE 'INSERT_VERK_%' OR DESCRIPTION LIKE 'DELETE_VERK_%') ".$where;
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+	}
+	
+	if($commit){return false;}else{return true;}
+}
+
+function lmb_addTrigger($desc,$type,$table,$value,$intern=null,$position="AFTER",$replace=null){
+	global $db;
+	global $session;
+	global $DBA;
+
+	if(!$position){$position = "AFTER";}
+	
+	// check for duplicates in DB Trigger
+	if(!$intern){
+    	$sqlquery0 = "SELECT ID FROM LMB_TRIGGER WHERE LOWER(TABLE_NAME) = '".lmb_strtolower(parse_db_string($table,20))."' AND TYPE = '$type' AND POSITION = '$position' AND INTERN = ".LMB_DBDEF_FALSE;
+    	$rs0 = lmbdb_exec($db,$sqlquery0);
+    	while(lmbdb_fetch_row($rs0)){
+    		if($replace){
+    			$sqlquery1 = "DELETE FROM LMB_TRIGGER WHERE ID = ".lmbdb_result($rs0,"ID");
+    			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+    		}else{
+    			if($GLOBALS["action"] == "setup_trigger"){
+    				lmb_alert("trigger already exists!");
+    			}
+    			return false;  ### check for database if supported!
+    		}
+    	}
+	}
+	
+	$md5Hash = md5($table . "_" . $type . "_" . $position);
+	$trigerName = lmb_substr("LMB_TRG_" . $md5Hash ,0,18);
+	$nextid = next_db_id("LMB_TRIGGER");
+	$sqlquery = "INSERT INTO LMB_TRIGGER (ID,ERSTDATUM,EDITDATUM,EDITUSER,ERSTUSER,NAME,TABLE_NAME,TYPE,TRIGGER_VALUE,DESCRIPTION,ACTIVE,INTERN,SORT,DBVENDOR,POSITION) VALUES ($nextid,".LMB_DBDEF_TIMESTAMP.",".LMB_DBDEF_TIMESTAMP.",".parse_db_int($session["user_id"]).",".parse_db_int($session["user_id"]).",'".parse_db_string(lmb_strtoupper($trigerName),25)."','".parse_db_string(lmb_strtoupper($table),50)."','".parse_db_string($type,20)."','".parse_db_string($value,4000)."','".parse_db_string($desc,50)."',".LMB_DBDEF_TRUE.",".parse_db_bool($intern).",0,'".parse_db_string($DBA["DB"],15)."','".parse_db_string($position,6)."')";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs){
+		return false;
+	}
+
+	return true;
+}
+
+function lmb_deleteTriggerForTable($tablename){
+	global $db;
+	$sqlquery = "DELETE FROM LMB_TRIGGER WHERE LOWER(TABLE_NAME) = '".lmb_strtolower(parse_db_string($tablename,40))."' AND INTERN = ".LMB_DBDEF_FALSE;
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+}
+
+function lmb_relationTrigger($verknTabName,$elternTab,$elternFeld,$kindTab,$kindFeld=null,$archive=1){
+	global $db;
+	global $DBA;
+
+	# backward relation (view)
+	if($kindFeld){
+		$trigger_add_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'+',dbf_4($kindTab),dbf_4($kindFeld),$archive));
+		$trigger_del_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'-',dbf_4($kindTab),dbf_4($kindFeld),$archive));
+	}else{
+		$trigger_add_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'+',dbf_4($kindTab),null,$archive));
+		$trigger_del_func = dbq_14(array($DBA["DBSCHEMA"],dbf_4($verknTabName),dbf_4($elternTab),dbf_4($elternFeld),'-',dbf_4($kindTab),null,$archive));
+	}
+
+	$success1 = lmb_addTrigger("INSERT_".$verknTabName,"INSERT",$verknTabName,$trigger_add_func,0,0,1);
+	$success2 = lmb_addTrigger("DELETE_".$verknTabName,"DELETE",$verknTabName,$trigger_del_func,0,0,1);
+	
+	if($success1 AND $success2){
+		return true;
+	}else{
+		return false;
+	}
+	
+}
+
+
+/**
+ * rebuild limbas specific triggers
+ *
+ * @param array $gtabid
+ */
+function lmb_rebuildTrigger($deleteall=null,$onlytabs=null){
+	global $db;
+	
+	if(!LMB_DBFUNC_PROCEDUREHANDLE){return true;}
+	
+	# drop all limbas trigger
+	if($deleteall){
+		#lmb_dropAllDBTrigger("LMB_TRG_%",1);
+		lmb_dropAllDBTrigger(null,1);
+	}
+	
+	$sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+		$tab[lmbdb_result($rs,"TAB_ID")] = lmbdb_result($rs,"TABELLE");
+	}
+	
+	if(is_array($onlytabs)){$qu = "WHERE TAB_ID IN (".implode(",",$onlytabs).")";}
+	$sqlquery = "SELECT TAB_ID,TABELLE,VERKN,TYP FROM LMB_CONF_TABLES $qu";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+
+		$tablename = lmbdb_result($rs,"TABELLE");
+		$tableid = lmbdb_result($rs,"TAB_ID");
+		$sverkn = lmbdb_result($rs,"VERKN");
+		$typ = lmbdb_result($rs,"TYP");
+		
+		# Calendar Trigger
+		if($typ == 2){
+			# kalendar trigger lastmodified
+			lmb_addTrigger("LMB_LASTMODIFIED_".$tableid,"UPDATE",$tablename,dbq_27(array($GLOBALS['DBA']["DBSCHEMA"],$tableid)),0,0,1);
+		}
+				
+		# Relation Trigger
+		$sqlquery1 = "SELECT FIELD_ID,FIELD_NAME,DATA_TYPE,FIELD_TYPE,MD5TAB,VERKNTABID,VERKNFIELDID,VERKNTABLETYPE,REFINT,HASRECVERKN,VERKNGROUP FROM LMB_CONF_FIELDS WHERE TAB_ID = $tableid AND FIELD_TYPE = 11";
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs1)){
+			# limbas relations
+			if(lmbdb_result($rs1,"VERKNTABID") AND lmbdb_result($rs1,"MD5TAB")){
+				if(lmbdb_result($rs1,"VERKNTABLETYPE") == 1){
+					# relation trigger
+					$ptable = $tab[lmbdb_result($rs1,"VERKNTABID")];
+					$ftable = lmbdb_result($rs1,"MD5TAB");
+					// VERKNGROUP used for archived triggercount if VERKNGROUP = 2
+					$archive = lmbdb_result($rs1,"VERKNGROUP");
+						
+					if(lmbdb_result($rs1,"HASRECVERKN")){
+						$sqlquery2 = "SELECT FIELD_NAME FROM LMB_CONF_FIELDS WHERE TAB_ID = ".lmbdb_result($rs1,"VERKNTABID")." AND FIELD_ID = ".lmbdb_result($rs1,"HASRECVERKN");
+						$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+						$pfieldname = lmbdb_result($rs2,"FIELD_NAME");
+						if($pfieldname){
+							$updtrigg = 1;
+							if(!lmb_relationTrigger($ftable,$tablename,lmbdb_result($rs1,"FIELD_NAME"),$ptable,$pfieldname,$archive)){
+								$commit = 1;
+							}
+						}else{
+							$updtrigg = 1;
+							if(!$success = lmb_relationTrigger($ftable,$tablename,lmbdb_result($rs1,"FIELD_NAME"),$ptable,0,$archive)){
+								$commit = 1;
+							}
+						}
+					}else{
+						$updtrigg = 1;
+						if(!lmb_relationTrigger($ftable,$tablename,lmbdb_result($rs1,"FIELD_NAME"),$ptable,0,$archive)){
+							$commit = 1;
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	if($updtrigg AND !$commit){
+		if(lmb_updateTrigger()){
+			return true;
+		}else{
+			return false;
+		}
+	}elseif($commit){
+		return false;
+	}
+	
+	return true;
+}
+
+################### tables #############################
+
+function lmb_dropTable($name=null){
+	global $db;
+	global $DBA;
+
+	if($name){
+		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],$name,"'TABLE'"));
+		if($odbc_table) {
+
+            // check dependency views
+            if(lmb_checkViewDependency($name, null, 1) === false) {
+                return false;
+            }
+
+			$sqlquery1 = dbq_28(array(dbf_4($name)));
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+			if($rs1){
+			    return true;
+			}else{
+			    return false;
+            }
+		}
+	}
+	return true;
+}
+
+
+
+################### views #############################
+
+# --- create db view  -----------------------------------
+function lmb_createView($query,$name){
+	global $db;
+	global $session;
+	global $DBA;
+	
+	if($query AND $name){
+		$odbc_table = dbf_20(array($DBA["DBSCHEMA"],$name,"'VIEW'"));
+		if($odbc_table) {
+			lmb_alert("View $name already exists!");
+			return true;
+		}else{
+			$sqlquery = "CREATE VIEW ".dbf_4($name)." AS ".$query;
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+			if($rs){return true;}else{return  false;}
+		}
+	}
+}
+
+/*
+// --- create limbas views -----------------------------------
+function lmb_createlmbViews($name=null){
+    global $DB;
+    global $db;
+    
+    if($name){$sql = "WHERE LOWER(TABELLE) = ".strtolower($name);}
+    $sqlquery = "SELECT TABELLE, TAB_ID, VIEWDEF FROM LMB_CONF_VIEWS INNER JOIN LMB_CONF_TABLES ON (LMB_CONF_VIEWS.ID = LMB_CONF_TABLES.TAB_ID) $sql";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    while (lmbdb_fetch_row($rs)) {
+        $tabid = lmbdb_result($rs, "TAB_ID");
+        $viewname = lmbdb_result($rs, "TABELLE");
+        $viewdef = lmbdb_result($rs, "VIEWDEF");
+
+        // create view
+        $sqlquery2 = dbq_19(array($viewname,$viewdef));
+        $rs = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
+        if (! $rs) {
+            lmb_alert("cannot create view $viewname!");
+        }
+    }
+    
+    return true;
+
+}
+*/
+
+
+// drop single view
+function lmb_dropView($name=null){
+	global $db;
+	global $DBA;
+
+
+	if(!$name){return;}
+
+    $odbc_table = dbf_20(array($DBA["DBSCHEMA"],$name,"'VIEW'"));
+    if($odbc_table) {
+
+        // check dependency views
+        if(lmb_checkViewDependency($name, null, 1) === false) {
+            return false;
+        }
+
+        $sqlquery1 = dbq_20(array(dbf_4($name)));
+        $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+        if($rs1){
+            return true;
+        }else{
+            LimbasLogger::log("Could not delete view! [$name]", LimbasLogger::LL_ERROR);
+            return false;
+        }
+    }
+}
+
+// drop all views
+function lmb_dropAllViews(){
+	global $db;
+	global $DBA;
+
+    if($viewlist = lmb_getFullViewDepPath()){
+        arsort($viewlist);
+        foreach ($viewlist as $key => $value){
+            if(!lmb_dropView($key)){
+               return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+
+/*
+// --- drop limbas views -----------------------------------
+function lmb_droplmbViews($name=null,$config=null){
+    global $DB;
+    global $db;
+    
+    // drop views in order of field "SORT" for view relation
+    if($name){$sql = "WHERE LOWER(TABELLE) = ".strtolower($name);}
+    $sqlquery = "SELECT TABELLE, TAB_ID FROM LMB_CONF_VIEWS INNER JOIN LMB_CONF_TABLES ON (LMB_CONF_VIEWS.ID = LMB_CONF_TABLES.TAB_ID) $sql ORDER BY SORT DESC";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    while (lmbdb_fetch_row($rs)) {
+        $tabid = lmbdb_result($rs, "TAB_ID");
+        $viewname = lmbdb_result($rs, "TABELLE");
+        
+        // drop view & config
+        if($config){
+            if(!delete_tab($tabid)){return false;}
+        // drop view
+        }else{
+            if(!lmb_dropView($viewname)){return false;}
+        }
+        
+        return true;
+    }
+
+}
+*/
+
+# --- get info for limbas relation views -----------------------------------
+function lmb_getViewInfo($name){
+	global $db;
+	#global $DBA;
+	
+	$sqlquery = "SELECT MD5TAB FROM LMB_CONF_FIELDS WHERE HASRECVERKN = (SELECT FIELD_ID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".dbf_4($name)."' AND VERKNTABLETYPE = 2)";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	return dbf_4(lmbdb_result($rs, "MD5TAB"));
+	
+	/*
+	$sqlquery = dbq_12(array($DBA["DBSCHEMA"],$name));
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_fetch_row($rs)) {
+		return dbf_4(lmbdb_result($rs, "TABLENAME"));
+	}
+	*/
+}
+
+
+# --- get view definition-----------------------------------
+function lmb_getViewDef($name){
+	global $db;
+	global $DBA;
+
+	if(!$name){return false;}
+	$sqlquery = dbq_8(array($DBA["DBSCHEMA"],$name));
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(lmbdb_fetch_row($rs)) {
+		return lmbdb_result($rs, "DEFINITION");
+	}
+}
+
+
+
+# --- get dependency tree of views -----------------------------------
+function lmb_checkViewDependency($tablename,$fieldname=null,$debug=null,$clear=null,$rec=false){
+    static $dependency;
+    global $DBA;
+
+    if(!LMB_DBFUNC_VIEWDEPENDENCY){return true;}
+    if(!$dependency OR !$clear){$dependency = array();}
+    
+    if($dep = dbf_25(array($DBA['DBSCHEMA'],$tablename,$fieldname))){
+
+        foreach($dep as $key => $value){
+            if(!in_array($value,$dependency)){
+                array_push($dependency,$value);
+                if($rec){
+                    lmb_checkViewDependency($value,null,$debug,1,1);
+                }
+            }
+        }
+    }
+
+    $dependency = array_unique($dependency);
+
+    if($debug AND lmb_count($dependency) > 0){
+        lmb_alert("found view dependencies! check it manually!\n".implode("\n",$dependency));
+        return false;
+    }
+
+    return $dependency;
+}
+
+/*
+ * get dependent view list to drop
+ * lmb_getViewDepDropList
+ */
+
+function lmb_getViewDepPath($table,$fieldname=null,$level=0){
+    static $depview;
+
+    if(!$level){$depview = null;}
+    $table = dbf_4($table);
+    $level++;
+
+    if($dep = lmb_checkViewDependency($table,$fieldname)) {
+        foreach ($dep as $k => $v) {
+            $v = dbf_4($v);
+            if(!$depview[$v] OR $depview[$v] < $level){
+                $depview[$v] = $level;
+            }
+            lmb_getViewDepPath($v,$fieldname,$level);
+        }
+    }
+
+    if($depview) {
+        return $depview;
+    }
+
+    return false;
+
+}
+
+/**
+function lmb_getFullViewDepPathXXX(){
+    global $DBA;
+
+    $tables = dbf_20(array($DBA['DBSCHEMA'],null,'VIEW'));
+    $tables = $tables["table_name"];
+    foreach($tables as $key => $table) {
+
+        if(!$fullpath[$table]){$fullpath[$table] = 0;}
+        if($singlepath = lmb_getViewDepPath($table)) {
+
+            foreach($singlepath as $view => $level){
+
+                if(!$fullpath[$view] OR $fullpath[$view] < $level) {
+                    $fullpath[$view] = $level;
+                }
+
+            }
+
+        }
+    }
+
+    return $fullpath;
+
+}
+**/
+
+function lmb_getFullViewDepPath(){
+    global $DBA;
+
+    $tables = dbf_20(array($DBA['DBSCHEMA'],null,'TABLE'));
+    $tables = $tables["table_name"];
+    foreach($tables as $key => $table) {
+
+        if($singlepath = lmb_getViewDepPath($table)) {
+
+            foreach($singlepath as $view => $level){
+
+                if(!$fullpath[$view] OR $fullpath[$view] < $level) {
+                    $fullpath[$view] = $level;
+                }
+
+            }
+
+        }
+    }
+
+    return $fullpath;
+
+}
+
+
+/*
+ * remember & drop dependent views
+ */
+function lmb_dropDependViews($table){
+
+    if(!LMB_DBFUNC_VIEWDEPENDENCY){return;}
+
+    $dep = lmb_getViewDepPath($table);
+
+    if(!$dep){return;}
+    arsort($dep);
+
+    foreach ($dep as $viewname => $level) {
+        $viewname = dbf_4($viewname);
+        if ($def[$viewname] = lmb_getViewDef($viewname)) {
+            if (!lmb_dropView($viewname)) {
+                LimbasLogger::log("Could not drop view '$viewName'!", LimbasLogger::LL_ERROR);
+                $commit = 1;
+                break;
+            }
+        }
+    }
+
+    if ($commit) {
+        return false;
+    } else {
+        return $def;
+    }
+}
+
+
+/*
+ * remember & add dependent views
+ */
+function lmb_addDependViews($viewdef,$viewexists=null){
+
+    if(!LMB_DBFUNC_VIEWDEPENDENCY){return true;}
+
+    if(is_array($viewdef)) {
+        $viewdef = array_reverse($viewdef);
+        foreach ($viewdef as $viewname => $query) {
+
+            // get definition from import $viewDefinitions array
+            if($viewexists AND in_array($viewname,$viewexists)){
+                $query = $viewexists[$viewname];
+            }
+
+            if (!lmb_createView($query, $viewname)) {
+                LimbasLogger::log("Could not add view '$viewName'!", LimbasLogger::LL_ERROR);
+                $commit = 1;
+            }
+        }
+    }
+    
+    if($commit){return false;}
+    return true;
+}
+
+
+################### foreign key #############################
+
+
+/**
+ * rebuild limbas specific foreign keys and triggers
+ *
+ * @param array $gtabid
+ */
+function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
+	global $db;
+	
+	# limbas keyname syntax:  "LMB_[parent-tableid]_[parent-fieldid]_V/ID_[child-tableid]"
+	# for 1:1 relation parent-fieldid = "0"
+	
+	# drop all foreign keys
+	if($deleteall){
+		#lmb_dropALLForeignKeys("LMB_KEY_%");
+		lmb_dropALLForeignKeys();
+	}
+
+
+	# get all foreign keys
+	$fkys = lmb_getForeignKeys();
+
+	#if(!$fkeylist){$fkeylist = array();}
+	
+	
+	$sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+		$tab[lmbdb_result($rs,"TAB_ID")] = lmbdb_result($rs,"TABELLE");
+	}
+	
+	if(is_array($onlytabs)){$qu = "WHERE TAB_ID IN (".implode(",",$onlytabs).")";}
+	$sqlquery = "SELECT TAB_ID,TABELLE,VERKN FROM LMB_CONF_TABLES $qu";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+	while(lmbdb_fetch_row($rs)){
+		$f0 = null;
+		$tablename = lmbdb_result($rs,"TABELLE");
+		$tableid = lmbdb_result($rs,"TAB_ID");
+		$sverkn = lmbdb_result($rs,"VERKN");
+
+		# 1:1 relation
+		if($sverkn != $tableid){
+			$ftable = $tab[$tableid];
+			$ffield = "ID";
+			$ptable = $tab[$sverkn];
+			$pfield = "ID";
+			#$fkname = "LMB_".$tableid."_0_ID_".$sverkn;
+
+			# search foreign key
+			if($fkys["keyname"]){
+			foreach ($fkys["keyname"] as $key => $value){
+				if($fkys["tablename"][$key] == dbf_4($ftable) AND $fkys["columnname"][$key] == dbf_4($ffield) AND $fkys["reftablename"][$key] == dbf_4($ptable) AND $fkys["refcolumnname"][$key] == dbf_4($pfield)){
+					$f0 = $fkys["keyname"][$key];
+				}
+			}}
+
+			# add foreign key
+			if(!$f0){
+				$f0 = "LMB_KEY_".lmb_substr(md5($ftable."_".$ffield."_".$ptable."_".$pfield),0,18);
+				if(!lmb_addForeignKey($ftable,$ffield,$ptable,$pfield,$f0)){
+                    $commit = 1;
+                }
+			}
+		}
+
+		if($onlyfield){$q = "AND FIELD_ID = $onlyfield";}else{$q = "AND REFINT = ".LMB_DBDEF_TRUE;}
+
+		$sqlquery1 = "SELECT FIELD_ID,FIELD_NAME,DATA_TYPE,FIELD_TYPE,MD5TAB,VERKNTABID,VERKNFIELDID,VERKNTABLETYPE,REFINT,HASRECVERKN FROM LMB_CONF_FIELDS WHERE TAB_ID = $tableid $q";
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs1)){
+            $datatype = lmbdb_result($rs1,"DATA_TYPE");
+            $verkntabid = lmbdb_result($rs1,"VERKNTABID");
+            $f1 = 0;
+            $f2 = 0;
+
+			# foreign keys
+			if(lmbdb_result($rs1,"VERKNTABID") AND lmbdb_result($rs1,"MD5TAB") AND lmbdb_result($rs1,"VERKNTABLETYPE") == 1){
+
+                if($datatype == 27 OR $datatype == 24) {
+
+                    # foreign keys
+                    $ftable = lmbdb_result($rs1, "MD5TAB");
+                    $ffield = "VERKN_ID";
+                    $ptable = $tab[lmbdb_result($rs1, "VERKNTABID")];
+                    $pfield = "ID";
+                    #$fkname = "LMB_".$tableid."_".lmbdb_result($rs1,"FIELD_ID")."_VID_".lmbdb_result($rs1,"VERKNTABID");
+                    # search foreign key
+
+                    if ($fkys["keyname"]) {
+                        foreach ($fkys["keyname"] as $key => $value) {
+                            if ($fkys["tablename"][$key] == dbf_4($ftable) AND $fkys["columnname"][$key] == dbf_4($ffield) AND $fkys["reftablename"][$key] == dbf_4($ptable) AND $fkys["refcolumnname"][$key] == dbf_4($pfield)) {
+                                $f1 = $fkys["keyname"][$key];
+                            }
+                        }
+                    }
+                    # add foreign key
+                    if (!$f1) {
+                        $f1 = "LMB_KEY_" . lmb_substr(md5($ftable . "_" . $ffield . "_" . $ptable . "_" . $pfield), 0, 18);
+                        if (!lmb_addForeignKey($ftable, $ffield, $ptable, $pfield, $f1)) {
+                            $commit = 1;
+                        }
+                    }
+
+                    $ftable = lmbdb_result($rs1, "MD5TAB");
+                    $ffield = "ID";
+                    $ptable = $tab[$tableid];
+                    $pfield = "ID";
+                    #$fkname = "LMB_".$tableid."_".lmbdb_result($rs1,"FIELD_ID")."_ID_".lmbdb_result($rs1,"VERKNTABID");
+                    # search foreign key
+                    if ($fkys["keyname"]) {
+                        foreach ($fkys["keyname"] as $key => $value) {
+                            if ($fkys["tablename"][$key] == dbf_4($ftable) AND $fkys["columnname"][$key] == dbf_4($ffield) AND $fkys["reftablename"][$key] == dbf_4($ptable) AND $fkys["refcolumnname"][$key] == dbf_4($pfield)) {
+                                $f2 = $fkys["keyname"][$key];
+                            }
+                        }
+                    }
+                    # add foreign key
+                    if (!$f2) {
+                        $f2 = "LMB_KEY_" . lmb_substr(md5($ftable . "_" . $ffield . "_" . $ptable . "_" . $pfield), 0, 18);
+                        if (!lmb_addForeignKey($ftable, $ffield, $ptable, $pfield, $f2)) {
+                            $commit = 1;
+                        }
+                    }
+
+                }elseif($datatype == 25) {
+                    $ftable = $tab[$verkntabid];
+                    $ffield = lmbdb_result($rs1, "MD5TAB");
+                    $ptable = $tab[$tableid];
+                    $pfield = "ID";
+                    # search foreign key
+                    if ($fkys["keyname"]) {
+                        foreach ($fkys["keyname"] as $key => $value) {
+                            if ($fkys["tablename"][$key] == dbf_4($ftable) AND $fkys["columnname"][$key] == dbf_4($ffield) AND $fkys["reftablename"][$key] == dbf_4($ptable) AND $fkys["refcolumnname"][$key] == dbf_4($pfield)) {
+                                $f1 = $fkys["keyname"][$key];
+                            }
+                        }
+                    }
+                    # add foreign key
+                    if (!$f1) {
+                        $f1 = "LMB_KEY_" . lmb_substr(md5($ftable . "_" . $ffield . "_" . $ptable . "_" . $pfield), 0, 18);
+                        if (!lmb_addForeignKey($ftable, $ffield, $ptable, $pfield, $f1)) {
+                            $commit = 1;
+                        }
+                    }
+                }
+			}
+		}
+	}
+	
+	if($commit){return false;}else{return true;}
+}
+
+
+/**
+ * add foreign key
+ *
+ * @param string $ftable
+ * @param string $ffield
+ * @param string $ptable
+ * @param string $pfield
+ * @param string $fkname
+ * @return success
+ */
+function lmb_addForeignKey($ftable,$ffield,$ptable,$pfield,$fkname){
+	global $db;
+	
+	$sqlquery = dbq_11(array($ftable,$ffield,$ptable,$pfield,$fkname));
+	$rs = lmbdb_exec($db,$sqlquery);
+	if(!$rs){
+		LimbasLogger::error('error adding foreign key - '.lmbdb_errormsg($db));
+	}else{
+        LimbasLogger::info("adding foreign key $fkname");
+    }
+	if($rs){return true;}else{return false;}
+}
+
+
+/**
+ * drop all foreign keys found in db
+ * @return successunknown_type
+ *
+ */
+function lmb_dropAllForeignKeys($only_lmb=null){
+	global $db;
+	global $DBA;
+	
+	if($only_lmb){$qu = dbf_4("LMB_%");}else{$qu = null;}
+	$sqlquery = dbq_3(array($DBA["DBSCHEMA"],null,$qu));
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+		if(!lmb_dropForeignKey(lmbdb_result($rs,"TABLENAME"),lmbdb_result($rs,"FKEYNAME"))){
+            $commit = 1;
+        }
+	}
+	if($commit){return false;}
+    return true;
+}
+
+/**
+ * drop foreign key
+ *
+ * @param string $ftable
+ * @param string $fkname
+ * @return success
+ */
+function lmb_dropForeignKey($ftable,$fkname){
+	global $db;
+	
+	$sqlquery = dbq_6(array($ftable,$fkname));
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs){
+        LimbasLogger::error('error deleting foreign key - '.lmbdb_errormsg($db));
+        return false;
+    }else{
+        LimbasLogger::info("delete foreign key $fkname");
+	    return true;
+    }
+}
+
+
+
+/**
+ * get foreign keys
+ *
+ * @param array $ftable
+ * @param array $fkname
+ * @return array
+ */
+function lmb_getForeignKeys($ftable=null,$fkname=null){
+	global $db;
+	global $DBA;
+	
+	# get foreign keys
+	$sqlquery = dbq_3(array($DBA["DBSCHEMA"],$ftable,$fkname));
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+		$fk["keyname"][] = dbf_4(lmbdb_result($rs,"FKEYNAME"));
+		$fk["tablename"][] = dbf_4(lmbdb_result($rs,"TABLENAME"));
+		$fk["columnname"][] = dbf_4(lmbdb_result($rs,"COLUMNNAME"));
+		$fk["reftablename"][] = dbf_4(lmbdb_result($rs,"REFTABLENAME"));
+		$fk["refcolumnname"][] = dbf_4(lmbdb_result($rs,"REFCOLUMNNAME"));
+	}
+	return $fk;
+}
+
+
+
+/**
+ * rebulid sequences
+ *
+ * @return unknown
+ */
+function lmb_rebuildSequences($tablename=null,$field=null,$rebuild=null){
+	global $db;
+	global $DBA;
+	
+	if(!LMB_DBFUNC_SEQUENCE){return false;}
+
+    // drop all sequences
+    if($rebuild){
+        $sequence = dbf_26(array($DBA["DBSCHEMA"]));
+        foreach ($sequence as $key => $squname) {
+            dbf_22(array($DBA["DBSCHEMA"], dbf_4($squname)));
+        }
+    }
+
+
+	if($tablename){
+	    if(!$field){$field = 'ID';}
+		$table = array(array($tablename,$field));
+	}else{
+	
+		# system tables
+		$table = array(array('LMB_HISTORY_ACTION','ID'),array('LMB_HISTORY_UPDATE','ID'),array('LMB_HISTORY_USER','ID'),array('LMB_WFL_INST','ID'),array('LMB_REMINDER','ID'));
+		
+		# project tables
+		$sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES WHERE TYP != 5";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		while(lmbdb_fetch_row($rs)){
+			$table[] = array(lmbdb_result($rs,"TABELLE"),'ID');
+		}
+		
+		# relation tables
+		$rellist = dbf_20(array($DBA["DBSCHEMA"],dbf_4("VERK_%"),"'TABLE'"));
+		foreach ($rellist["table_name"] as $rkey => $rval){
+			$table[] = array($rval,'KEYID');
+		}
+	
+	}
+
+	# create sequence
+	foreach ($table as $key => $value){
+
+		$tablename = $value[0];
+		$field = $value[1];
+
+		$lastid = next_db_id($tablename,$field);
+		# add new sequence
+		if(!dbf_21(array("",dbf_4("LMB_".$tablename."_".$field),$lastid))){
+			$error = 1;
+		}
+	}
+	
+	
+
+	if(!$error){return true;}else{return false;}
+}
+
+
+/**
+ * generate constraint name
+ *
+ * @param $name
+ * @param $table
+ * @param $field
+ * @return string
+ */
+function lmb_getConstraintName($name,$table,$field){
+    return dbf_4(substr($name.'_'.md5(dbf_4($table).'_'.dbf_4($field)),0,LMB_DBFUNC_MAXTABLENAMESIZE));
+}
+
+
+
+function lmb_dropAllConstraints($systemindex=null){
+	global $db;
+	global $DBA;
+
+    // gat all system indexes
+    if(!$systemindex) {
+        $systemindex = lmb_getSystemConstraints();
+    }
+
+    #echo "<pre>";
+    #print_r($systemindex);
+
+    // drop unique constraints
+    $contraint = dbq_26(array($DBA["DBSCHEMA"]));
+    if(is_array($contraint)){
+        foreach($contraint["TABLE_NAME"] as $key => $table){
+
+            // check if is systemindex
+            if(!$systemindex[dbf_4($table)][dbf_4($contraint['COLUMN_NAME'][$key])]){continue;}
+
+            $sqlquery =  dbq_25(array(dbf_4($contraint['TABLE_NAME'][$key]), dbf_4($contraint['COLUMN_NAME'][$key]), dbf_4($contraint['PK_NAME'][$key])));
+			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+            if($rs) {
+                $ind[$md5tab][$ind_field] = 1;
+                LimbasLogger::info('drop contraint '.$contraint['PK_NAME'][$key].' for '.$contraint['TABLE_NAME'][$key].' ('.$contraint['COLUMN_NAME'][$key].')');
+            }else{
+                $commit = 1;
+                LimbasLogger::error('drop contraint '.$contraint['PK_NAME'][$key].' for '.$contraint['TABLE_NAME'][$key].' ('.$contraint['COLUMN_NAME'][$key].') : '.lmbdb_errormsg($db));
+            }
+        }
+    }
+
+    // drop indizes
+	$sqlquery = dbq_2(array($DBA["DBSCHEMA"],null,null,1));
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs){$commit = 1;}
+	while(lmbdb_fetch_row($rs)){
+
+        $tablename = dbf_4(lmbdb_result($rs, "TABLENAME"));
+        $fieldname = dbf_4(lmbdb_result($rs, "COLUMNNAME"));
+        $indexname = dbf_4(lmbdb_result($rs, "INDEXNAME"));
+
+        // check if is systemindex
+        if(!$systemindex[$tablename][$fieldname]){continue;}
+
+		$sqlquery1 = dbq_5(array($DBA["DBSCHEMA"],$indexname,$tablename));
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+            if($rs1) {
+                $ind[$md5tab][$ind_field] = 1;
+                LimbasLogger::info('drop index '.$indexname.' for '.$tablename.' ('.$fieldname.')');
+            }else{
+                $commit = 1;
+                LimbasLogger::error('drop index '.$indexname.' for '.$tablename.' ('.$fieldname.') : '.lmbdb_errormsg($db));
+            }
+	}
+
+    if($commit){
+        return false;
+    }
+
+    return true;
+
+}
+
+
+
+
+# -------------------- indizes erneuern ---------------
+function lmb_rebuildIndex($rebuild=null){
+	global $db;
+	global $DBA;
+
+    // system indexes
+    $systemIndex = lmb_getSystemConstraints();
+
+    if($rebuild) {
+        // drop all constraints
+        lmb_dropAllConstraints($systemIndex);
+        sleep(3);
+    }
+
+    // existing indexes
+	$sqlquery = dbq_2(array($DBA["DBSCHEMA"],null,null,1));
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs){$commit = 1;}
+	while(lmbdb_fetch_row($rs)){
+		$table = dbf_4(lmbdb_result($rs,"TABLENAME"));
+		$field = dbf_4(lmbdb_result($rs,"COLUMNNAME"));
+		$existingIndexes[$table][$field] = 1;
+	}
+
+    foreach($systemIndex as $table => $tabindexes){
+        if(is_array($tabindexes)) {
+            foreach ($tabindexes as $field => $value) {
+
+                if($existingIndexes[$table][$field]){continue;}
+
+                $indextype = key($value);
+                $indexname = $value[$indextype];
+
+                if($indextype == 'index') {
+                    $sqlquery = dbq_4(array($DBA["DBSCHEMA"], $indexname, $table, $field));
+                }else{
+                    $sqlquery = dbq_24(array($table,$field,$indexname));
+                }
+                $rs1 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                if ($rs1) {
+                    $existingIndexes[$table][$field] = 1;
+                    LimbasLogger::info("adding $indextype $indexname for $table ($field)");
+                } else {
+                    $commit = 1;
+                    LimbasLogger::error("adding $indextype failed $indexname for $table ($field) : " . lmbdb_errormsg($db));
+                }
+
+            }
+        }
+    }
+
+    if($commit){return false;}else{return true;}
+
+}
+
+
+# -------------------- get intern system indizes ---------------
+function lmb_getSystemConstraints(){
+	global $db;
+	global $gtab;
+	global $gfield;
+	global $DBA;
+
+	// Relation indexes
+    /*
+	foreach ($gfield as $gtabid => $value){
+		foreach ($gfield[$gtabid]["md5tab"] as $fieldid => $md5tab){
+            $md5tab = dbf_4($md5tab);
+			# only right relation
+			if($gfield[$gtabid]["verkntabletype"][$fieldid] == 1 AND $gfield[$gtabid]["field_type"][$fieldid] == 11 AND !$gfield[$gtabid]["verkntree"][$fieldid]){
+
+                if($gfield[$gtabid]["data_type"][$fieldid] != 25) {
+                    $ind_field = dbf_4('ID');
+                    $indname = lmb_getConstraintName('LMB_INDV', $md5tab, $ind_field);
+                    $index[$md5tab][$ind_field] = array('index' => $indname);
+
+                    $ind_field = dbf_4('SORT');
+                    $indname = lmb_getConstraintName('LMB_INDV', $md5tab, $ind_field);
+                    $index[$md5tab][$ind_field] = array('index' => $indname);
+                }
+
+                $ind_field = dbf_4('VERKN_ID');
+                # only n:m
+                if($gfield[$gtabid]["data_type"][$fieldid] == 24){
+                    $indname = lmb_getConstraintName('LMB_INDV',$md5tab,$ind_field);
+                    $index[$md5tab][$ind_field] = array('index'=>$indname);
+                # only 1:n
+                }elseif($gfield[$gtabid]["data_type"][$fieldid] == 27){
+                    # add unique constraint
+                    $indname = lmb_getConstraintName('LMB_CONSTR',$md5tab,$ind_field);
+                    $index[$md5tab][$ind_field] = array('constraint'=>$indname);
+                # i:n direct
+                }elseif($gfield[$gtabid]["data_type"][$fieldid] == 25){
+                    $ind_field = dbf_4($gfield[$gtabid]['md5tab'][$fieldid]);
+                    $md5tab = dbf_4($gtab['table'][$gfield[$gtabid]['verkntabid'][$fieldid]]);
+                    $indname = lmb_getConstraintName('LMB_INDV',$md5tab,$ind_field);
+                    $index[$md5tab][$ind_field] = array('index'=>$indname);
+                }
+			}
+		}
+	}
+    */
+
+	// Relation indexes
+    $sqlquery = "SELECT 
+    LMB_CONF_FIELDS.FIELD_NAME, 
+    LMB_CONF_FIELDS.DATA_TYPE,
+    LMB_CONF_FIELDS.MD5TAB,
+    LMB_CONF_FIELDS.VERKNTABID
+    FROM LMB_CONF_FIELDS 
+    WHERE LMB_CONF_FIELDS.field_type = 11
+    AND LMB_CONF_FIELDS.verkntabletype = 1
+    AND (LMB_CONF_FIELDS.VERKNTREE = '' OR LMB_CONF_FIELDS.VERKNTREE IS NULL)";
+    $rs = lmbdb_exec($db,$sqlquery);
+    while(lmbdb_fetch_row($rs)) {
+
+        $field_name = dbf_4(lmbdb_result($rs,"FIELD_NAME"));
+        $md5tab = dbf_4(lmbdb_result($rs,"MD5TAB"));
+        $data_type = lmbdb_result($rs,"DATA_TYPE");
+        $verkntabid = lmbdb_result($rs,"VERKNTABID");
+
+        if(!$md5tab){continue;}
+
+        if($data_type != 25) {
+            $ind_field = dbf_4('ID');
+            $indname = lmb_getConstraintName('LMB_INDV', $md5tab, $ind_field);
+            $index[$md5tab][$ind_field] = array('index' => $indname);
+
+            /*
+            $ind_field = dbf_4('SORT'); // todo - check if needed
+            #$indname = lmb_getConstraintName('LMB_INDV', $md5tab, $ind_field);
+            #$index[$md5tab][$ind_field] = array('index' => $indname);
+            */
+        }
+
+        $ind_field = dbf_4('VERKN_ID');
+        # only n:m
+        if($data_type == 24){
+            $indname = lmb_getConstraintName('LMB_INDV',$md5tab,$ind_field);
+            $index[$md5tab][$ind_field] = array('index'=>$indname);
+        # only 1:n
+        }elseif($data_type == 27){
+            # add unique constraint
+            $indname = lmb_getConstraintName('LMB_CONSTR',$md5tab,$ind_field);
+            $index[$md5tab][$ind_field] = array('constraint'=>$indname);
+        # i:n direct
+        }elseif($data_type == 25){
+            $ind_field = dbf_4($md5tab);
+            $sqlquery1 = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE TAB_ID = $verkntabid";
+            $rs1 = lmbdb_exec($db,$sqlquery1);
+            $md5tab = lmbdb_result($rs1,"TABELLE");
+            if($md5tab) {
+                $indname = lmb_getConstraintName('LMB_INDV', $md5tab, $ind_field);
+                $index[$md5tab][$ind_field] = array('index' => $indname);
+            }
+        }
+    }
+
+    // sync indexes
+    $ind_field = dbf_4('LMB_SYNC_ID');
+    $sqlquery = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE DATASYNC = 1";
+    $rs = lmbdb_exec($db,$sqlquery);
+    while(lmbdb_fetch_row($rs)){
+        $table = dbf_4(lmbdb_result($rs, "TABELLE"));
+        $indname = lmb_getConstraintName('LMB_INDS',$table,$ind_field);
+        $index[$table][$ind_field] = array('index'=>$indname);
+    }
+
+    // userdefined unique contraints
+    $sqlquery = "SELECT LMB_CONF_TABLES.TABELLE, LMB_CONF_FIELDS.FIELD_NAME FROM LMB_CONF_FIELDS,LMB_CONF_TABLES 
+    WHERE LMB_CONF_FIELDS.TAB_ID = LMB_CONF_TABLES.TAB_ID 
+    AND LMB_CONF_FIELDS.FIELD_TYPE NOT IN (6,11,10,19)
+    AND LMB_CONF_FIELDS.DATA_TYPE NOT IN (18,31,32,47)
+    AND LMB_CONF_FIELDS.ISUNIQUE = ".LMB_DBDEF_TRUE;
+    $rs = lmbdb_exec($db,$sqlquery);
+    while(lmbdb_fetch_row($rs)){
+        $table = dbf_4(lmbdb_result($rs, "TABELLE"));
+        $ind_field = dbf_4(lmbdb_result($rs, "FIELD_NAME"));
+        $indname = lmb_getConstraintName('LMB_CONSTR',$table,$ind_field);
+        $index[$table][$ind_field] = array('constraint'=>$indname);
+    }
+
+
+    // userdefined indizes
+    $sqlquery = "SELECT LMB_CONF_TABLES.TABELLE, LMB_CONF_FIELDS.FIELD_NAME FROM LMB_CONF_FIELDS,LMB_CONF_TABLES 
+    WHERE LMB_CONF_FIELDS.TAB_ID = LMB_CONF_TABLES.TAB_ID 
+    AND LMB_CONF_FIELDS.FIELD_TYPE NOT IN (6,11,10,19)
+    AND LMB_CONF_FIELDS.DATA_TYPE NOT IN (18,31,32,47)
+    AND LMB_CONF_FIELDS.INDEXED = ".LMB_DBDEF_TRUE;
+    $rs = lmbdb_exec($db,$sqlquery);
+    while(lmbdb_fetch_row($rs)){
+        $table = dbf_4(lmbdb_result($rs, "TABELLE"));
+        $ind_field = dbf_4(lmbdb_result($rs, "FIELD_NAME"));
+        $indname = lmb_getConstraintName('LMB_IND',$table,$ind_field);
+        $index[$table][$ind_field] = array('index'=>$indname);
+    }
+	
+	//  System Indexes
+	$systemindex[] = array('lmb_gtab_groupdat'=>'dat_id');
+	$systemindex[] = array('lmb_indize_d'=>'ref');
+	$systemindex[] = array('lmb_indize_d'=>'wid');
+	$systemindex[] = array('lmb_indize_d'=>'sid');
+	$systemindex[] = array('lmb_indize_ds'=>'wid');
+	$systemindex[] = array('lmb_indize_ds'=>'sid');
+	$systemindex[] = array('lmb_indize_ds'=>'ref');
+	$systemindex[] = array('lmb_indize_f'=>'wid');
+	$systemindex[] = array('lmb_indize_f'=>'sid');
+	$systemindex[] = array('lmb_indize_f'=>'fid');
+	$systemindex[] = array('lmb_indize_fs'=>'sid');
+	$systemindex[] = array('lmb_indize_fs'=>'fid');
+	$systemindex[] = array('lmb_indize_fs'=>'wid');
+	$systemindex[] = array('lmb_indize_w'=>'metaphone');
+	$systemindex[] = array('lmb_indize_w'=>'val');
+	$systemindex[] = array('lmb_select_d'=>'dat_id');
+	$systemindex[] = array('lmb_select_d'=>'w_id');
+	$systemindex[] = array('lmb_select_w'=>'sort');
+	$systemindex[] = array('lmb_select_w'=>'pool');
+	$systemindex[] = array('lmb_select_w'=>'wert');
+	$systemindex[] = array('lmb_history_action'=>'userid');
+    $systemindex[] = array('lmb_history_user'=>'sessionid');
+
+	foreach ($systemindex as $key => $value){
+		$table = dbf_4(key($value));
+		$ind_field = dbf_4(current($value));
+        $indname = lmb_getConstraintName('LMB_INDS',$table,$ind_field);
+        $index[$table][$ind_field] = array('index'=>$indname);
+	}
+
+    return $index;
+
+}
+
+
+
+/**
+ * # sorting config Tables
+ *
+ * @param unknown_type $act
+ * @param unknown_type $sortid
+ * @param unknown_type $table
+ * @param unknown_type $field
+ * @param unknown_type $filter
+ */
+function lmb_sortConf($act,$sortid,$table,$field='SORT',$filter=null){
+	global $db;
+	
+	if($filter){$filter = "WHERE $filter";}
+	
+	$sqlquery = "SELECT ID,$field FROM $table $filter ORDER BY $field";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	
+	$bzm = 0;
+	while(lmbdb_fetch_row($rs)){
+		$bzm = $bzm+2;
+		$sort[lmbdb_result($rs, 'ID')] = $bzm;
+	}
+	
+	if($act == 'up'){
+		$sort[$sortid] = $sort[$sortid]-3;
+	}elseif($act == 'down'){
+		$sort[$sortid] = $sort[$sortid]+3;
+	}
+	
+	asort($sort);
+	
+	$bzm = 1;
+	foreach ($sort as $key => $value){
+		$sqlquery = "UPDATE $table SET $field = $bzm WHERE ID = $key";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+		if(!$rs) {$commit = 1;}
+		$bzm++;
+	}
+	
+}
+
+/**
+ * find maching fieldtype
+ *
+ * @param string $fype_type
+ * @param string $fype_size
+ * @param string $field_name
+ * @return field_type
+ */
+function translate_fieldtype($fype_type,$fype_size,$fype_scale,$field_name){
+
+	if(lmb_strtoupper($field_name) == "ID"){
+		#return 19;
+        return 22;
+	}elseif(lmb_strtoupper($field_name) == "ERSTUSER"){
+		#return 36;
+        return 34;
+	}elseif(lmb_strtoupper($field_name) == "EDITUSER"){
+		#return 37;
+        return 35;
+	}elseif(lmb_strtoupper($field_name) == "ERSTDATUM"){
+		#return 38;
+        return 36;
+	}elseif(lmb_strtoupper($field_name) == "EDITDATUM"){
+		#return 39;
+        return 37;
+	}
+
+	if(defined("LMB_DBRETYPE_".trim(lmb_strtoupper($fype_type)))){
+		$realtype = constant("LMB_DBRETYPE_".trim(lmb_strtoupper($fype_type)));
+	}else{
+		$realtype = $fype_type;
+	}
+	
+	if(lmb_stripos($realtype,"INTEGER") !== false OR lmb_stripos($realtype,"SMALLINT") !== false OR lmb_stripos($realtype,"FIXED") !== false){
+		if($fype_scale){	# if scale detected
+			#return 5;
+            return 19;
+		}else{
+			#return 2;
+            return 16;
+		}
+	}elseif(lmb_stripos($realtype,"NUMERIC") !== false){
+		#return 5;
+        return 19;
+	}elseif(lmb_stripos($realtype,"FLOAT") !== false){
+		#return 56;
+        return 49;
+	}elseif(lmb_stripos($realtype,"CHAR") !== false){
+		if($fype_size < 399){
+            #return 13;
+            return 1;
+        }
+		elseif($fype_size <= 1000){
+            #return 15;
+            return 10;
+        }
+		else{
+            #return 41;
+            return 39;
+        }
+	}elseif(lmb_stripos($realtype,"TIMESTAMP") !== false){
+		#return 16;
+        return 11;
+	}elseif(lmb_stripos($realtype,"TIME") !== false){
+		#return 43;
+        return 26;
+	}elseif(lmb_stripos($realtype,"DATE") !== false){
+		#return 44;
+        return 40;
+	}elseif(lmb_stripos($realtype,"BOOLEAN") !== false){
+		#return 17;
+        return 20;
+	}elseif(lmb_stripos($realtype,"LONG") !== false OR lmb_stripos($realtype,"TEXT") !== false){
+		#return 41;
+        return 39;
+	}
+
+}
+
+
+/**
+ * parse default database fields
+ *
+ * @param unknown_type $domain_columns
+ * @param unknown_type $key1
+ * @param unknown_type $value1
+ * @return unknown
+ */
+function lmb_parseImport($value,$domain_columns,$key1){
+
+	# TIMESTAMP
+	if(constant("LMB_DBRETYPE_".lmb_strtoupper($domain_columns["datatype"][$key1])) == 'TIMESTAMP'){
+		if($value){
+			$qu_value = "'".$value."'";
+		}else{
+			$qu_value = 'NULL';
+		}
+	# boolean
+	}elseif(constant("LMB_DBRETYPE_".lmb_strtoupper($domain_columns["datatype"][$key1])) == 'BOOLEAN'){
+		$qu_value = parse_db_bool($value);
+	# string
+	}elseif(constant("LMB_DBRETYPE_".lmb_strtoupper($domain_columns["datatype"][$key1])) == 'VARCHAR' OR
+	constant("LMB_DBRETYPE_".lmb_strtoupper($domain_columns["datatype"][$key1])) == 'CHAR' OR
+	constant("LMB_DBRETYPE_".lmb_strtoupper($domain_columns["datatype"][$key1])) == 'LONG'){
+		$qu_value = "'".parse_db_string($value,$domain_columns["length"][$key1])."'";
+	# numeric
+	}else{
+		$qu_value = parse_db_int($value,$domain_columns["length"][$key1]);
+	}
+
+	return $qu_value;
+
+}
+
+
+/**
+ * fgetcsv - for different php versions
+ * 
+ * @param unknown $table_datei
+ * @param unknown $line
+ */
+function lmb_fgetcsv(&$handle, $length = 0, $delimiter = ",", $enclosure = '"', $escape = "\\"){
+    
+    if($delimiter == '\t'){$delimiter = chr(9);}
+    
+    // check if php support csv escape
+    return fgetcsv($handle, $length, $delimiter, $enclosure, $escape);
+}
+ 
+/**
+ * fputcsv - for different php versions
+ * 
+ * @param unknown $table_datei
+ * @param unknown $line
+ */
+function lmb_fputcsv(&$table_datei, $line, $intern=0) {
+    global $umgvar;
+    static $csv_delimiter;
+    static $csv_enclosure;
+    static $csv_escape;
+    
+    if(!$csv_delimiter){
+        if(!$intern){
+            $csv_delimiter = $umgvar['csv_delimiter'];
+            $csv_enclosure = $umgvar['csv_enclosure'];
+            $csv_escape = $umgvar['csv_escape'];
+        }
+        if(!$csv_delimiter){$csv_delimiter = ',';}
+        if(!$csv_enclosure){$csv_enclosure = '"';}
+        if(!$csv_escape){$csv_escape = '\\';}
+        if($csv_delimiter == '\t'){$csv_delimiter = chr(9);}
+    }
+
+    // check if php support csv ecape
+    if ($GLOBALS['phpvok']) {
+        fputcsv($table_datei, $line, $csv_delimiter, $csv_enclosure, $csv_escape);
+    } else {
+        fputcsv($table_datei, $line, $csv_delimiter, $csv_enclosure);
+    }
+}
+
+
+
+function lmb_GetSyncSlaves($slaveID=null){
+    global $db;
+
+    if($slaveID){
+        $sql = "WHERE ID = ".parse_db_int($slaveID);
+    }
+
+    $sqlquery = "SELECT ID,NAME,SLAVE_URL,SLAVE_USERNAME,SLAVE_PASS,RS_USER,RS_PARAMS,RS_PATH,ACTIVE FROM LMB_SYNC_CLIENTS $sql ORDER BY NAME";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs)) {
+        $sid = lmbdb_result($rs, "ID");
+        $result_slave['name'][$sid] = lmbdb_result($rs, "NAME");
+        $result_slave['slave_url'][$sid] = lmbdb_result($rs, "SLAVE_URL");
+        $result_slave['slave_username'][$sid] = lmbdb_result($rs, "SLAVE_USERNAME");
+        $result_slave['slave_pass'][$sid] = lmbdb_result($rs, "SLAVE_PASS");
+        $result_slave['slave_rs_path'][$sid] = lmbdb_result($rs, "RS_PATH");
+        $result_slave['slave_rs_user'][$sid] = lmbdb_result($rs, "RS_USER");
+        $result_slave['slave_rs_params'][$sid] = lmbdb_result($rs, "RS_PARAMS");
+        $result_slave['slave_active'][$sid] = lmbdb_result($rs, "ACTIVE");
+
+        if($result_slave['slave_active'][$sid]){
+            $result_slave['count']++;
+        }
+    }
+
+    return $result_slave;
+}
+
+
+
+/**
+ * soap client
+ *
+ * @param array $lmpar
+ * @return result array
+ */
+function soap_call_client($lmpar,$LIM){
+	global $lmbs;
+	global $umgvar;
+
+	$lmpar["lmbs"] = $lmbs["session"]["s_id"]; # Session OK
+	
+	# ----- Aktion ausführen ----------
+	if($lmpar) {
+		
+		$client = new SoapClient(NULL,
+		array(
+		"login" =>$LIM["username"], 
+		"password" => $LIM["pass"], 
+		"location" => $LIM["lim_url"]."/main_soap.php",
+		"uri" => "urn:xmethodsSoapServer",
+		"style" => SOAP_RPC,
+		"use" => SOAP_ENCODED,
+		"compression" => SOAP_COMPRESSION_ACCEPT | SOAP_COMPRESSION_DEFLATE,
+		"encoding"=>$umgvar['charset']
+		));
+		
+		#"location" => $LIM["lim_url"]."/main_soap.php?".$lmbs["session"]["s_name"]."=".$lmbs["session"]["s_id"],
+
+
+        if($GLOBALS['umgvar']['soap_base64']) {
+            $lmpar = array(base64_encode(serialize($lmpar)));
+        }else {
+            $lmpar = array(serialize($lmpar));
+        }
+
+		try{
+			$lmb = $client->__soapCall("runlmb", $lmpar, array("uri" => "urn:xmethodsLimbasServer","soapaction" => "urn:xmethodsLimbasServer"));
+		}catch(Exception $e){
+			//lmb_alert('can not access to '.$LIM["lim_url"].'\n'.$e->getMessage());
+            LimbasLogger::log('can not access to '.$LIM["lim_url"].'\n'.$e->getMessage(), LimbasLogger::LL_ERROR);
+			return false;
+		}
+
+		if($lmb){
+            if($GLOBALS['umgvar']['soap_base64']) {
+                $lmb = unserialize(base64_decode($lmb));
+            }else {
+                $lmb = unserialize($lmb);
+            }
+		}
+
+		if(is_array($lmb) AND array_key_exists('session', $lmb) AND array_key_exists('s_id', $lmb["session"])){
+			$lmbs["session"] = $lmb["session"];
+			$_SESSION["lmbs"] = $lmbs;
+		}
+		
+	}
+	
+	return $lmb;
+}
+
+/**
+ * deletes ufile and ugtab from all users
+ *
+ * @return boolean success
+ */
+function lmb_delete_user_filesave(){
+	global $db;
+	
+	$prepare_string = "UPDATE LMB_USERDB SET UFILE = ?,UGTAB = ?";
+	return lmb_PrepareSQL($prepare_string, array('',''), __FILE__, __LINE__);		
+}
+
+
+# -------------------- indizes prüfen ---------------
+function lmb_rebuildIndexxx($rebuild=null){
+	global $db;
+	global $gtab;
+	global $gfield;
+	global $DBA;
+
+    if($rebuild) {
+        lmb_dropAllConstraints();
+    }
+
+    // existing indexes
+	$sqlquery = dbq_2(array($DBA["DBSCHEMA"],null,null,1));
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs){$commit = 1;}
+	while(lmbdb_fetch_row($rs)){
+		$table = dbf_4(lmbdb_result($rs,"TABLENAME"));
+		$field = dbf_4(lmbdb_result($rs,"COLUMNNAME"));
+		$ind[$table][$field] = 1;
+	}
+
+	// Relation indexes
+	foreach ($gfield as $gtabid => $value){
+		foreach ($gfield[$gtabid]["md5tab"] as $fieldid => $md5tab){
+            $md5tab = dbf_4($md5tab);
+			# only right relation
+			if($gfield[$gtabid]["verkntabletype"][$fieldid] == 1 AND $gfield[$gtabid]["field_type"][$fieldid] == 11 AND $gfield[$gtabid]["data_type"][$fieldid] != 25 AND !$gfield[$gtabid]["verkntree"][$fieldid]){
+
+                $ind_field = dbf_4('ID');
+                if(!$ind[$md5tab][$ind_field]){
+                    $indname = lmb_getConstraintName('LMB_INDV',$md5tab,$ind_field);
+					$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$md5tab,$ind_field));
+					$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					if($rs1) {
+                        $ind[$md5tab][$ind_field] = 1;
+                        LimbasLogger::info("adding index $indname for $md5tab ($ind_field)");
+                    }else{
+                        LimbasLogger::error("adding index failed $indname for $md5tab ($ind_field) : ".lmbdb_errormsg($db));
+					}
+				}
+
+                $ind_field = dbf_4('SORT');
+				if(!$ind[$md5tab][$ind_field]){
+                    $indname = lmb_getConstraintName('LMB_INDV',$md5tab,$ind_field);
+					$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$md5tab,$ind_field));
+					$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+					if($rs1) {
+                        $ind[$md5tab][$ind_field] = 1;
+                        LimbasLogger::info("adding index $indname for $md5tab ($ind_field)");
+                    }else{
+                        LimbasLogger::error("adding index failed $indname for $md5tab ($ind_field) : ".lmbdb_errormsg($db));
+					}
+				}
+
+                $ind_field = dbf_4('VERKN_ID');
+				if(!$ind[$md5tab][$ind_field]){
+					# only n:m
+					if($gfield[$gtabid]["data_type"][$fieldid] == 24){
+                        $indname = lmb_getConstraintName('LMB_INDV',$md5tab,$ind_field);
+						$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$md5tab,$ind_field));
+						$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                        if($rs1) {
+                            $ind[$md5tab][$ind_field] = 1;
+                            LimbasLogger::info("adding index $indname for $md5tab ($ind_field)");
+                        }else{
+                            LimbasLogger::error("adding index failed $indname for $md5tab ($ind_field) : ".lmbdb_errormsg($db));
+                        }
+					# only 1:n
+					}else{
+						# add unique constraint
+                        $indname = lmb_getConstraintName('LMB_CONSTR',$md5tab,$ind_field);
+						$sqlquery =  dbq_24(array($md5tab,$ind_field,$indname));
+						$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                        if($rs1) {
+                            $ind[$md5tab][$ind_field] = 1;
+                            LimbasLogger::info("adding constraint $indname for $md5tab ($ind_field)");
+                        }else{
+                            LimbasLogger::error("adding constraint failed $indname for $md5tab ($ind_field) : ".lmbdb_errormsg($db));
+                        }
+					}
+				}
+			}
+		}
+	}
+
+    // sync indexes
+    $ind_field = dbf_4('LMB_SYNC_ID');
+    $sqlquery = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE DATASYNC = 1";
+    $rs = lmbdb_exec($db,$sqlquery);
+    while(lmbdb_fetch_row($rs)){
+        $table = dbf_4(lmbdb_result($rs, "TABELLE"));
+        if(!$ind[$table][$ind_field]){
+            $indname = lmb_getConstraintName('LMB_INDS',$table,$ind_field);
+            $sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$table,$ind_field));
+            $rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+            if($rs1) {
+                $ind[$table][$ind_field] = 1;
+                LimbasLogger::info("adding index $indname for $table ($ind_field)");
+            }else{
+                LimbasLogger::error("adding index failed $indname for $table ($ind_field) : ".lmbdb_errormsg($db));
+            }
+        }
+    }
+
+    // userdefined unique contraints
+    $sqlquery = "SELECT LMB_CONF_TABLES.TABELLE, LMB_CONF_FIELDS.FIELD_NAME FROM LMB_CONF_FIELDS,LMB_CONF_TABLES 
+    WHERE LMB_CONF_FIELDS.TAB_ID = LMB_CONF_TABLES.TAB_ID 
+    AND LMB_CONF_FIELDS.FIELD_TYPE NOT IN (6,11,10,19)
+    AND LMB_CONF_FIELDS.DATA_TYPE NOT IN (18,31,32,47)
+    AND LMB_CONF_FIELDS.ISUNIQUE = ".LMB_DBDEF_TRUE;
+    $rs = lmbdb_exec($db,$sqlquery);
+    while(lmbdb_fetch_row($rs)){
+        $table = dbf_4(lmbdb_result($rs, "TABELLE"));
+        $ind_field = dbf_4(lmbdb_result($rs, "FIELD_NAME"));
+        if(!$ind[$table][$ind_field]){
+            $indname = lmb_getConstraintName('LMB_CONSTR',$table,$ind_field);
+            $sqlquery =  dbq_24(array($table,$ind_field,$indname));
+            $rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+            if($rs1) {
+                $ind[$table][$ind_field] = 1;
+                LimbasLogger::info("adding constraint $indname for $table ($ind_field)");
+            }else{
+                LimbasLogger::error("adding constraint failed $indname for $table ($ind_field) : ".lmbdb_errormsg($db));
+            }
+        }
+    }
+
+
+    // userdefined indizes
+    $sqlquery = "SELECT LMB_CONF_TABLES.TABELLE, LMB_CONF_FIELDS.FIELD_NAME FROM LMB_CONF_FIELDS,LMB_CONF_TABLES 
+    WHERE LMB_CONF_FIELDS.TAB_ID = LMB_CONF_TABLES.TAB_ID 
+    AND LMB_CONF_FIELDS.FIELD_TYPE NOT IN (6,11,10,19)
+    AND LMB_CONF_FIELDS.DATA_TYPE NOT IN (18,31,32,47)
+    AND LMB_CONF_FIELDS.INDEXED = ".LMB_DBDEF_TRUE;
+    $rs = lmbdb_exec($db,$sqlquery);
+    while(lmbdb_fetch_row($rs)){
+        $table = dbf_4(lmbdb_result($rs, "TABELLE"));
+        $ind_field = dbf_4(lmbdb_result($rs, "FIELD_NAME"));
+        if(!$ind[$table][$ind_field]){
+            $indname = lmb_getConstraintName('LMB_IND',$table,$ind_field);
+            $sqlquery1 = dbq_4(array($DBA["DBSCHEMA"],$indname,$table,$ind_field));
+            $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+            if($rs1) {
+                $ind[$table][$ind_field] = 1;
+                LimbasLogger::info("adding index $indname for $table ($ind_field)");
+            }else{
+                LimbasLogger::error("adding index failed $indname for $table ($ind_field) : ".lmbdb_errormsg($db));
+            }
+        }
+    }
+
+	//  System Indexes
+	$systemindex[] = array('lmb_gtab_groupdat'=>'dat_id');
+	$systemindex[] = array('lmb_indize_d'=>'ref');
+	$systemindex[] = array('lmb_indize_d'=>'wid');
+	$systemindex[] = array('lmb_indize_d'=>'sid');
+	$systemindex[] = array('lmb_indize_ds'=>'wid');
+	$systemindex[] = array('lmb_indize_ds'=>'sid');
+	$systemindex[] = array('lmb_indize_ds'=>'ref');
+	$systemindex[] = array('lmb_indize_f'=>'wid');
+	$systemindex[] = array('lmb_indize_f'=>'sid');
+	$systemindex[] = array('lmb_indize_f'=>'fid');
+	$systemindex[] = array('lmb_indize_fs'=>'sid');
+	$systemindex[] = array('lmb_indize_fs'=>'fid');
+	$systemindex[] = array('lmb_indize_fs'=>'wid');
+	$systemindex[] = array('lmb_indize_w'=>'metaphone');
+	$systemindex[] = array('lmb_indize_w'=>'val');
+	$systemindex[] = array('lmb_select_d'=>'dat_id');
+	$systemindex[] = array('lmb_select_d'=>'w_id');
+	$systemindex[] = array('lmb_select_w'=>'sort');
+	$systemindex[] = array('lmb_select_w'=>'pool');
+	$systemindex[] = array('lmb_select_w'=>'wert');
+	$systemindex[] = array('lmb_history_action'=>'userid');
+    $systemindex[] = array('lmb_history_user'=>'sessionid');
+
+	foreach ($systemindex as $key => $value){
+
+		$table = dbf_4(key($value));
+		$field = dbf_4(current($value));
+
+		if(!$ind[$table][$field]){
+            $indname = lmb_getConstraintName('LMB_INDS',$table,$field);
+			$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$table,$field));
+			$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+            if($rs1) {
+                $ind[$table][$field] = 1;
+                LimbasLogger::info("adding index $indname for $table ($field)");
+            }else{
+                LimbasLogger::error("adding index failed $indname for $table ($field) : ".lmbdb_errormsg($db));
+            }
+		}
+	}
+
+    return true;
+
+}
+
+?>

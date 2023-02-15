@@ -1,0 +1,194 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+/* --- User löschen --------------------------------------------- */
+if($user_del AND $user_del != 1){
+	/* --- Transaktion START -------------------------------------- */
+	lmb_StartTransaction();
+
+	if(delete_user($user_del,$delete_user_files,$delete_user_total)){
+		lmb_EndTransaction(1);
+	}else{
+		lmb_EndTransaction(0);
+	}
+}
+
+/* --- Aktion auf mehrere User --------------------------------------------- */
+if(is_array($edit_user)){
+	require_once(COREPATH . 'admin/user/user_change_admin.lib');
+	foreach ($edit_user as $key => $value){
+		if($send_message){
+			mailUserInfo($key,1);
+		}
+	}
+}
+
+/* --- User sperren --------------------------------------------- */
+if($lock){
+		/* --- Transaktion START -------------------------------------- */
+		lmb_StartTransaction();
+		
+        $sqlquery = "DELETE FROM LMB_SESSION WHERE USER_ID = $lock";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+        $sqlquery = "SELECT LMLOCK FROM LMB_USERDB WHERE USER_ID = $lock";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+        if(lmbdb_result($rs,"LMLOCK") == 1){$LOCK = LMB_DBDEF_FALSE;}else{$LOCK = LMB_DBDEF_TRUE;}
+        $sqlquery = "UPDATE LMB_USERDB SET LMLOCK = $LOCK WHERE USER_ID = $lock";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+        $sqlquery = "DELETE FROM LMB_SESSION WHERE USER_ID = $lock";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}else{system("rm ".USERPATH."$lock/temp/*",$sys1);}
+
+		lmb_EndTransaction(!$commit);
+}
+
+/* --- Debug --------------------------------------------- */
+if($debug){
+        $sqlquery = "DELETE FROM LMB_SESSION WHERE USER_ID = $debug";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+        $sqlquery = "SELECT DEBUG FROM LMB_USERDB WHERE USER_ID = $debug";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+        if(lmbdb_result($rs,"DEBUG") == 1){$DEBUG = LMB_DBDEF_FALSE;}else{$DEBUG = LMB_DBDEF_TRUE;}
+        $sqlquery = "UPDATE LMB_USERDB SET DEBUG = $DEBUG WHERE USER_ID = $debug";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+        $sqlquery = "DELETE FROM LMB_SESSION WHERE USER_ID = $debug";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+}
+
+
+/* --- Logout --------------------------------------------- */
+if($logout){
+        $sqlquery = "UPDATE LMB_SESSION SET LOGOUT = ".LMB_DBDEF_TRUE." WHERE USER_ID = $logout";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}	
+}
+
+
+
+if($session['group_id'] != 1){
+	$where[] = "LMB_USERDB.USER_ID = ".$session["user_id"];
+}
+
+/* --- Select SQL-Query --------------------------------------------- */
+if($ufilter == "viewdel"){$where[] = "LMB_USERDB.DEL = ".LMB_DBDEF_TRUE;}
+if($ufilter == "lock"){$where[] = "LMB_USERDB.LMLOCK = ".LMB_DBDEF_TRUE." AND LMB_USERDB.DEL = ".LMB_DBDEF_FALSE;}
+
+if($ufilter_user){
+	$where[] = "LOWER(LMB_USERDB.USERNAME) LIKE '%".lmb_strtolower(parse_db_string($ufilter_user,50))."%'";
+}
+if($ufilter_vorname){
+	$where[] = "LOWER(LMB_USERDB.VORNAME) LIKE '%".lmb_strtolower(parse_db_string($ufilter_vorname,50))."%'";
+}
+if($ufilter_name){
+	$where[] = "LOWER(LMB_USERDB.NAME) LIKE '%".lmb_strtolower(parse_db_string($ufilter_name,50))."%'";
+}
+if($ufilter_group){
+	$where[] = "LOWER(LMB_GROUPS.NAME) LIKE '%".lmb_strtolower(parse_db_string($ufilter_group,50))."%'";
+}
+
+# hope to change this in future
+if($DBA["DB"] == 'mssql'){
+	$where[] = "LMB_HISTORY_USER.UPDATE_DATE IS NOT NULL";
+}
+
+
+if($where){$where = "WHERE ".implode(" AND ",$where);}
+
+if($order){$ORDER = "ORDER BY LOWER($order)";}
+else{$ORDER = "ORDER BY LMB_USERDB.USER_ID,LMB_USERDB.GROUP_ID";}
+
+$sqlquery = "SELECT 
+MAX(LMB_HISTORY_USER.UPDATE_DATE) AS LASTKLICK,
+LMB_USERDB.MULTITENANT,LMB_USERDB.SUB_GROUP,LMB_USERDB.GROUP_ID,LMB_USERDB.LOGGING,LMB_USERDB.DEBUG,LMB_USERDB.USERNAME,LOWER(LMB_USERDB.USERNAME),LMB_USERDB.PASSWORT,LMB_USERDB.USER_ID,LMB_USERDB.VORNAME,LMB_USERDB.NAME AS U_NAME,LMB_USERDB.EMAIL,LMB_USERDB.LMLOCK,LMB_USERDB.BESCHREIBUNG AS U_BESCHREIBUNG,LMB_USERDB.ERSTDATUM AS U_ERSTDATUM,LMB_USERDB.EDITDATUM AS U_EDITDATUM,LMB_USERDB.DEL,LMB_GROUPS.NAME AS G_NAME,LOWER(LMB_GROUPS.NAME),LMB_GROUPS.GROUP_ID 
+FROM LMB_USERDB
+LEFT JOIN LMB_GROUPS ON (LMB_USERDB.GROUP_ID = LMB_GROUPS.GROUP_ID)
+LEFT JOIN LMB_HISTORY_USER ON (LMB_USERDB.USER_ID = LMB_HISTORY_USER.USERID)
+$where 
+GROUP BY LMB_USERDB.SUB_GROUP,LMB_USERDB.GROUP_ID,LMB_USERDB.LOGGING,LMB_USERDB.DEBUG,LMB_USERDB.USERNAME,LMB_USERDB.PASSWORT,LMB_USERDB.USER_ID,LMB_USERDB.VORNAME,LMB_USERDB.NAME,LMB_USERDB.EMAIL,LMB_USERDB.LMLOCK,LMB_USERDB.BESCHREIBUNG,LMB_USERDB.ERSTDATUM,LMB_USERDB.EDITDATUM,LMB_USERDB.DEL,LMB_GROUPS.NAME,LMB_GROUPS.GROUP_ID
+";
+
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+if(!$rs) {$commit = 1;}
+
+
+$bzm = 1;
+while(lmbdb_fetch_row($rs)) {
+
+    // filter multitenants
+    if($umgvar['multitenant']) {
+        $multitenant = explode(';', lmbdb_result($rs, "MULTITENANT"));
+        if ($mid and !in_array($mid, $multitenant)) {
+            continue;
+        }
+    }
+
+	$view = 1;
+	
+	if($ufilter_group){
+		if(lmb_strtolower($ufilter_group) == lmb_strtolower(lmbdb_result($rs, "G_NAME"))){
+			$view = 1;
+		}else{
+			$view = 0;
+			$subgr = explode(";",lmbdb_result($rs, "SUB_GROUP"));
+			if(in_array($group_id,$subgr)){
+				$view = 1;
+			}else{
+				$view = 0;
+			}
+		}
+	}
+	
+	
+	if($group_id){
+		if($group_id == lmbdb_result($rs, "GROUP_ID")){
+			$view = 1;
+		}else{
+			$view = 0;
+			$subgr = explode(";",lmbdb_result($rs, "SUB_GROUP"));
+			if(in_array($group_id,$subgr)){
+				$view = 1;
+			}else{
+				$view = 0;
+			}
+		}
+	}
+
+	if($view){
+	    $result_user["username"][$bzm] = lmbdb_result($rs, "USERNAME");
+	    $result_user["passwort"][$bzm] = lmbdb_result($rs, "PASSWORT");
+	    $result_user["user_id"][$bzm] = lmbdb_result($rs, "USER_ID");
+	    $result_user["vorname"][$bzm] = lmbdb_result($rs, "VORNAME");
+		$result_user["name"][$bzm] = lmbdb_result($rs, "U_NAME");
+		$result_user["email"][$bzm] = lmbdb_result($rs, "EMAIL");
+	    $result_user["lock"][$bzm] = lmbdb_result($rs, "LMLOCK");
+	    $result_user["debug"][$bzm] = lmbdb_result($rs, "DEBUG");
+	    $result_user["logging"][$bzm] = lmbdb_result($rs, "LOGGING");
+	    $result_user["beschreibung"][$bzm] = lmbdb_result($rs, "U_BESCHREIBUNG");
+		$result_user["gruppe"][$bzm] = lmbdb_result($rs, "G_NAME");
+		$result_user["gruppen_id"][$bzm] = lmbdb_result($rs, "GROUP_ID");
+		$result_user["del"][$bzm] = lmbdb_result($rs, "DEL");
+		$result_user["erstdatum"][$bzm] = get_date(lmbdb_result($rs, "U_ERSTDATUM"),1);
+		$result_user["editdatum"][$bzm] = get_date(lmbdb_result($rs, "U_EDITDATUM"),1);
+		$result_user["lastklick"][$bzm] = lmbdb_result($rs, "LASTKLICK");
+		$lastklick = mktime(intval(lmb_substr($result_user["lastklick"][$bzm],11,2)), intval(lmb_substr($result_user["lastklick"][$bzm],14,2)) + intval($umgvar["inactive_duration"]), intval(lmb_substr($result_user["lastklick"][$bzm],17,2)), intval(lmb_substr($result_user["lastklick"][$bzm],5,2)), intval(lmb_substr($result_user["lastklick"][$bzm],8,2)), intval(lmb_substr($result_user["lastklick"][$bzm],0,4)));
+		$stamp = local_stamp(2);
+		if($lastklick >= $stamp){$result_user["aktiv"][$bzm] = sprintf("%.2f",($lastklick - $stamp)/60);}
+	}
+	
+$bzm++;
+}

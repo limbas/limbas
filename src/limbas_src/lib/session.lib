@@ -1,0 +1,81 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+/*
+ 
+LMB_SESSION
+
+
+ */
+
+require_once(__DIR__ . '/../bootstrap.php');
+require_once(COREPATH . 'lib/db/db_wrapper.lib');
+require_once (COREPATH . 'lib/include.lib');
+
+
+require_once COREPATH . 'lib/auth/Session.php';
+require_once COREPATH . 'lib/auth/Auth.php';
+require_once COREPATH . 'lib/db/Database.php';
+
+
+$db = Database::get();
+Database::checkIfInstalled();
+
+if (!isset($DBA['CHARSET'])) {
+    $DBA['CHARSET'] = 'UTF-8';
+}
+
+# --- mbstring include -------------------------------------------
+if(strtoupper($DBA['CHARSET']) == 'UTF-8'){
+    require_once(COREPATH . 'lib/include_mbstring.lib');
+    ini_set('default_charset', 'utf-8');
+}else{
+    require_once(COREPATH . 'lib/include_string.lib');
+    ini_set('default_charset', lmb_strtoupper($DBA['CHARSET']));
+}
+
+# --- time library -------------------------------------------
+require_once(COREPATH . 'lib/include_DateTime.lib');
+
+
+
+// get login method
+$authenticator = Auth::getAuthenticator();
+
+$authenticator::checkLogout();
+
+// check if user is authenticated
+try {
+    //try to authenticate user
+    $authenticator->authenticate();
+}
+catch(Throwable $t) {
+    $authenticator::deny();
+}
+
+//extract input variables to global
+extract($_GET, EXTR_SKIP);
+extract($_POST, EXTR_SKIP);
+extract($_COOKIE, EXTR_SKIP);
+extract($_SERVER, EXTR_SKIP);
+
+// load limbas session
+Session::load();
+
+//extract input variables to global
+extract($_SESSION, EXTR_SKIP);
+
+foreach (Session::$globvars as $globvar) {
+    global $$globvar;
+}
+
+global $globvars;
+$globvars = Session::$globvars;

@@ -1,0 +1,113 @@
+/*!
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+/* Frame Top */
+
+#lmbtopnav {
+  font-size: 1rem;
+  z-index: 99;
+  height: $top-nav-height;
+  background: $top-nav-background-color;
+}
+
+#main-nav-dropdown {
+  background: $top-nav-background-color;
+}
+
+.bg-nav {
+  background: $top-nav-background-color;
+}
+
+/* Logo top left styles */
+
+.top-logo-limbas {
+  font-size: 2rem;
+  font-weight: bold;
+  line-height: 1;
+  vertical-align: middle;
+  margin-left: 0.8rem;
+  font-family: sans-serif;
+}
+
+/* Frame Top 2 */
+
+.lmbMenuItemTop2Icon {
+  text-align: center;
+}
+
+.lmbMenuItemTop2Text {
+  text-align: center;
+  font-size: 0.7rem;
+}
+
+.lmbUpdateAvailable .lmbMenuItemTop2Icon {
+  color: #f9d421;
+}
+
+/* Frame main header */
+.lmbItemHeaderMain {
+  background-color: $top-info-area-background-color;
+  border-bottom: $top-info-border-bottom;
+  box-sizing: border-box;
+  color: $top-info-area-color;
+  cursor: default;
+  font-size: 1rem;
+  padding: 0 1rem;
+  line-height: 2.7;
+  height: 2.7rem;
+}
+
+[data-lmb-dptoggle="hover"]:hover > .dropdown-menu {
+  display: block;
+}
+
+.nav-link:hover {
+  cursor: pointer;
+}
+
+.navbar-nav .nav-link {
+  line-height: 1.2;
+}
+
+@media (max-width: 992px) {
+  .lmbMenuItemTop2Icon {
+    text-align: left;
+    display: inline-block;
+  }
+
+  .lmbMenuItemTop2Text {
+    text-align: center;
+    font-size: 1rem;
+    display: inline-block;
+  }
+
+  #lmbtopnav .dropdown-menu {
+    display: block;
+  }
+
+  .nav-item.dropdown {
+    border: none !important;
+  }
+
+  .dropdown-item {
+    padding: 0.5rem 0;
+  }
+
+  .dropdown-divider {
+    display: none;
+  }
+
+  #lmb-main-title {
+    padding-left: 1.5rem;
+  }
+
+  #lmbtopnav {
+    height: auto;
+  }
+
+}
