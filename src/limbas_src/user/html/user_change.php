@@ -114,31 +114,20 @@ echo "<TR class=\"tabBody\"><TD width=150>$lang[2576]</TD><TD><SELECT STYLE=\"wi
 
 /* --- Farbschema Liste --------------------------------------------- */
 echo "<TR class=\"tabBody\"><TD width=150>$lang[623]</TD><TD><SELECT STYLE=\"width:160px;\" name=\"farbe\" OnChange=\"this.form.farbe_change.value='1';\">";
-$sqlquery = "SELECT * FROM LMB_COLORSCHEMES WHERE LOWER(NAME) LIKE '%".lmb_strtolower($result_user["layout"])."%' ORDER BY ID";
+$sqlquery = "SELECT * FROM LMB_COLORSCHEMES";
 $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 while(lmbdb_fetch_row($rs)) {
-$farbid = lmbdb_result($rs,"ID");
-if($result_user["farbschema"] == $farbid){$SELECTED =  "SELECTED";}else {unset($SELECTED);}
-echo "<OPTION VALUE=\"".urlencode($farbid)."\" $SELECTED>".str_replace("(".$result_user["layout"].")","",lmbdb_result($rs,"NAME"));
+    $farbid = lmbdb_result($rs,"ID");
+    echo '<OPTION VALUE="'.$farbid.'" '.(($result_user["farbschema"] == $farbid) ? 'selected' : '').'>'.lmbdb_result($rs,"NAME").'</option>';;
 }
 echo "</SELECT></TD></TR>";
 
 /* --- Layout Liste --------------------------------------------- */
 echo "<TR class=\"tabBody\"><TD width=150>$lang[698]</TD><TD><SELECT STYLE=\"width:160px;\" NAME=\"layout\">";
-if($path = read_dir($umgvar["pfad"]."/layout")){
-if(!$result_user["layout"]){$result_user["layout"] = $umgvar["default_layout"];}
-foreach($path["name"] as $key => $value){
-	if($path["typ"][$key] == "dir"){
-		if($result_user["layout"] == $value){
-			$SELECTED =  "SELECTED";
-		}else{
-		 	unset($SELECTED);
-		}
-		echo "<OPTION VALUE=\"".$value."\" $SELECTED>".$value;
-	}
+$layouts = Layout::getAvailableLayouts();
+foreach($layouts as $layout){
+    echo '<option value="'.$layout.'" '.(($result_user["layout"] == $layout) ? 'selected' : '').'>'.$layout.'</option>';
 }
-}
-unset($pfad);
 echo "</SELECT></TD></TR>";
 
 #echo "<TR class=\"tabBody\"><TD style=\"width:150px;\">$lang[704]</TD><TD><SELECT STYLE=\"width:160px;\" name=\"data_display\"><OPTION VALUE=1 "; if($result_user["data_display"] == "1"){echo "SELECTED";} echo">$lang[1246]<OPTION VALUE=2 ";  if($result_user['data_display'] == "2"){echo "SELECTED";} echo">$lang[1244]<OPTION VALUE=3 ";  if($result_user['data_display'] == "3"){echo "SELECTED";} echo">$lang[1245]</SELECT></TD></TR>";

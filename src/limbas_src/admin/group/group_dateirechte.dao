@@ -176,7 +176,7 @@ while(lmbdb_fetch_row($rs)) {
 
 
 # Rechte schreiben
-if($update_rules){
+if($change_rules){
 
 	if($change_subgroup){$chsub["all"] = 1;}
 

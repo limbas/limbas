@@ -538,10 +538,6 @@ INPUT.gtabchange, TEXTAREA.gtabchange, SELECT.gtabchange{
   font-size: $umgvarfontsize;
 }
 
-input, select, textarea {
-  color: inherit; /* to prevent the default black of some browsers */
-}
-
 .fgtabchange{
   background-color: $farbschemaWEB8;
   border: 1px solid $farbschemaWEB3;

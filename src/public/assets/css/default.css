@@ -17519,10 +17519,6 @@ html, body.nav {
   border: 1px solid #C0C0C0;
   font-size: 11px;
 }
-.legacy-table input, .legacy-table select, .legacy-table textarea {
-  color: inherit;
-  /* to prevent the default black of some browsers */
-}
 .legacy-table .fgtabchange {
   background-color: #EEEEEE;
   border: 1px solid #C0C0C0;
@@ -17583,7 +17579,7 @@ html, body.nav {
 }
 .legacy-table select.gtabHeaderInputINP {
   background-color: white;
-  padding: 0.1rem;
+  padding: 0.1rem 0.1rem 0.1rem 0.75rem;
 }
 .form-legacy .form-control, .form-legacy .form-select {
   width: 95%;

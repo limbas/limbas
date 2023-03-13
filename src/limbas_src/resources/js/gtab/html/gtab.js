@@ -175,7 +175,7 @@ function LmExt_RelationFields(el,gtabid,gfieldid,viewmode,edittype,ID,orderfield
 	// ajax based POST of complete formular
 	if(ajaxpost){
 		document.getElementById("myExtForms").innerHTML = "<input type='hidden' name='gfieldid' value='"+gfieldid+"'><input type='hidden' name='viewmode' value='"+viewmode+"'><input type='hidden' name='ExtAction' value='"+ExtAction+"'><input type='hidden' name='ExtValue' value='"+ExtValue+"'><input type='hidden' name='edittype' value='"+edittype+"'><input type='hidden' name='ID' value='"+ID+"'><input type='hidden' name='orderfield' value='"+orderfield+"'><input type='hidden' name='relationid' value='"+relationid+"'><input type='hidden' name='gformid' value='"+gformid+"'><input type='hidden' name='formid' value='"+formid+"'>";
-		var actid = "extRelationFields&gtabid="+gtabid+"&gfieldid="+gfieldid+"&ID="+ID; // overwrite form
+		var actid = "extRelationFields&gtabid="+gtabid+"&gfieldid="+gfieldid+"&ID="+ID+"&relationid="+relationid+"&ExtAction="+ExtAction; // overwrite form
 		dynfunc = function(result){LmExt_RelationFieldsPost(result,gtabid,gfieldid);};
 		ajaxGet(null,url,actid,null,"dynfunc","form1");
 		document.getElementById("myExtForms").innerHTML = "";
@@ -189,8 +189,6 @@ function LmExt_RelationFields(el,gtabid,gfieldid,viewmode,edittype,ID,orderfield
         if(contextChildren.length > 0) {
         	text = contextChildren.first().html();
         }
-
-
 
 		// no ajax update (userdefined formular) - use formid as formname
 		if(formid && isNaN(formid)){
@@ -457,7 +455,7 @@ function lmbAjax_multiSelect(change){
 			}
 
 			// add new select element if not exists
-			if ($(sel_element_).is("select") && $(sel_element_).find('option[value=' + checkedValue_ + ']').length == 0){
+			if ($(sel_element_).is("select") && $(sel_element_).find('option[value="' + checkedValue_ + '"]').length == 0){
 				sel_element_.options[sel_element_.options.length]= new Option(checkedValue, checkedValue_);
 			}
 

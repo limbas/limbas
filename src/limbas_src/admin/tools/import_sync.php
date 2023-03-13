@@ -152,9 +152,7 @@ class importSync
                 foreach ($odbc_table['table_name'] as $tkey => $table) {
                     # stripos for case insensitivity
                     # dont include systemtables, system_files, ldms_*
-                    if (lmb_stripos($table, 'lmb_') === false
-                        && lmb_stripos($table, 'ldms_') === false
-                    ) {
+                    if ((lmb_stripos($table, 'lmb_') === false && lmb_stripos($table, 'ldms_') === false) OR lmb_strtoupper($table) == 'LMB_CUSTVAR_DEPEND') {
                         $expTablesConf[] = $table;
                     }
                 }
@@ -374,7 +372,7 @@ class importSync
                     $tablename = str_replace('.tar', '', str_replace('.gz', '', $fileName));
 
                     # add to list if lmb_* table
-                    if (lmb_stripos($tablename, 'lmb_') !== false or lmb_stripos($tablename, 'ldms_') !== false) {
+                    if (lmb_stripos($tablename, 'lmb_') !== false OR lmb_stripos($tablename, 'ldms_') !== false) {
                         $tablegrouplist[$tablename] = 1;
                     }
                 }

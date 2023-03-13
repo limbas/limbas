@@ -42,10 +42,6 @@ if(!$GLOBALS['umgvar']['csv_escape']){
     $phpvok = false;
 }
 
-/* --- Transaktion START -------------------------------------- */
-#lmb_StartTransaction();
-
-
 $info = "
 Copyright notice
 (c) Limbas GmbH (support@limbas.org)
@@ -1855,7 +1851,7 @@ function import_complete($del_all,$txt_encode=null, $txt_terminate=null,$txt_enc
 # 987 / 1014 <?=lang('Limbas is already installed.')
 	if($GLOBALS["action"]){
 		echo "<BR><BR><HR><H4>".lang('Limbas has been successfully installed').",</H4>";
-		echo "<a href=\"../\" class=\"btn btn-primary pull-right\">".lang('start Limbas now!')."</a><br>
+		echo "<a class=\"btn btn-primary pull-right\" onclick=\"top.window.location.reload();\">".lang('start Limbas now!')."</a><br>
         <div>(default-user: <b>admin</b> | default password: <b>limbas</b>)</div><BR><BR><BR>";
 		echo "<script>//<!--\nscrolldown();\n//--></script>";
         unset($_SESSION);

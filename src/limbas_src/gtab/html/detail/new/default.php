@@ -134,6 +134,7 @@ if ($filter["gwidth"][$gtabid]) {
             <?php
             $previousActiveTab = intval($filter['groupheaderKey'][$gtabid]);
             $activeTab = false;
+            $activeTabKey = null;
             $hasAnyTab = false;
             
             foreach ($gfield[$gtabid]['sort'] as $gkey => $gvalue):
@@ -153,6 +154,7 @@ if ($filter["gwidth"][$gtabid]) {
                     
                     if($previousActiveTab === $gkey) {
                         $activeTab = true;
+                        $activeTabKey = $gkey;
                     }
                     
                 ?>
@@ -207,7 +209,7 @@ if ($filter["gwidth"][$gtabid]) {
                         <?php if(!$firstTab): ?>
                             </div>
                         <?php endif; ?>
-                        <div class="tab-pane <?=$firstTab?'show active':''?>" id="section-<?=$key?>">
+                        <div class="tab-pane <?=$activeTabKey === $key ?'show active':''?>" id="section-<?=$key?>">
                 <?php $firstTab = false; endif; ?>
             <?php else: ?>
                     <h5 class="my-2 py-2 px-3 bg-secondary text-white" title="<?=$gfield[$gtabid]['beschreibung'][$key]?>"><?= $gfield[$gtabid]["spelling"][$key] ?></h5>

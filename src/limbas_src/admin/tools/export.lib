@@ -399,11 +399,10 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
 				$expTables[] = $table;
 			} else
             // tables for config only export
-            if (lmb_strpos(lmb_strtolower($table),'lmb_') === false && lmb_strpos(lmb_strtolower($table),'ldms_') === false && $exporttabs)
+            if (((lmb_strpos(lmb_strtolower($table),'lmb_') === false OR lmb_strtoupper($table) == 'LMB_CUSTVAR_DEPEND')) && lmb_strpos(lmb_strtolower($table),'ldms_') === false && $exporttabs)
             {
                 $expTableConf[] =  $table;
             }
-
 		}
 
 		# collect view definitions

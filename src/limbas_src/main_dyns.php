@@ -224,6 +224,8 @@ function dyns_extRelationFields($params){
     # only for relation based table
     if($isrelation){
 
+        error_log(print_r($params,1));
+
         if(!$noedit) {
             # add relation
             if ($params["ExtAction"] == 'link' AND $params["relationid"]) {
@@ -415,16 +417,24 @@ function dyns_extRelationFields($params){
         save_viewSettings($vuniqueid);
     }
 
-    if($filter["ext_RelationFields"]["search"][$vuniqueid] OR $filter["ext_RelationFields"]["searchval"][$vuniqueid]){
+    # full search
+    #if($params["ExtAction"] == 'searchval'){
+    #    $filter["ext_RelationFields"]["searchval"][$vuniqueid] = $params["ExtValue"];
+    #}
+
+
+
+    if($filter["ext_RelationFields"]["search"][$vuniqueid] OR $filter["ext_RelationFields"]["searchval"][$vuniqueid] OR $params["ExtAction"] == 'searchval'){
         ########### relation params ##########
         $vgtabid_ = $vgtabid;
         if($params["relationid"] > 1000){
             $vgtabid_ = $gfield[$gtabid]["verknparams"][$field_id];
         }
         ########### /relation params ##########
+
+        // fullsearch
         $gsr = $filter["ext_RelationFields"]["searchval"][$vuniqueid];
         if($params["ExtAction"] == 'searchval'){
-            // fullsearch
             if (!$params['relationid']) {
                 $params['relationid'] = 0;
             }

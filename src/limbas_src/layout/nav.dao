@@ -755,7 +755,7 @@ if($LINK[21]){
 		# usersettings
 		#if($LINK[35]){$menu0 = menu_get_standard(35,0);}
 		# dashboard
-		if($LINK[254]){$menu2 = menu_get_standard(254,1); $menu0 = array_merge($menu0,$menu2);}
+		if($LINK[318]){$menu2 = menu_get_standard(318,1); $menu0 = array_merge($menu0,$menu2);}
 		# filemanager
 		if($LINK[142]){$menu2 = menu_get_standard(142,2); $menu0 = array_merge($menu0,$menu2);}
 		# snappshot

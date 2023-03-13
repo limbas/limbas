@@ -336,6 +336,7 @@ abstract class Datasync
 
 
                         // add data to default update array
+                        $newdata['new'] = true;
                         $data[$tabid][$datid] = $newdata;
 
                         $newid = [
@@ -485,7 +486,7 @@ abstract class Datasync
                                 $this->putInCache($tabid, 0, $id, 2);
                             } else {
                                 //fill match array for master system
-                                $newids[$tabid][] = array('ID' => $record['ID'], 'slave_datid' => $id);
+                                $newids[$tabid][$record['ID']] = array('ID' => $record['ID'], 'slave_datid' => $id);
                             }
 
                         }
@@ -501,6 +502,17 @@ abstract class Datasync
                         $this->setException('error', 6, 'Record not found', $tabid, $id);
                         continue;
                     }
+
+
+                    // on slave check if data belongs to new record and translate id
+                    if(!$this->is_main && is_array($values) && array_key_exists('new', $values) && array_key_exists($tabid, $newids) && array_key_exists($id,$newids[$tabid])) {
+                        $id = $newids[$tabid][$id]['slave_datid'];
+                        unset($values['new']);
+                    } elseif(!$this->is_main && is_array($values) && array_key_exists('new', $values)) {
+                        $this->setException('error', 6, 'ID resolve failed', $tabid, $id);
+                        continue;
+                    }
+                    
 
                     $sid = $id;
                     if ($this->is_main) {
@@ -520,7 +532,9 @@ abstract class Datasync
                         //TODO: relation check
 
                         try {
-                            $delResult = del_data($tabid, $id);
+                            $recordExists = $this->recordExists(intval($tabid), intval($id));
+                            $delResult = !$recordExists || del_data($tabid, $id);
+                            
                             if (!$delResult) {
                                 //if not exists returns false 
                                 $this->setException('error', 2, 'Delete failed: ' . lmb_log::getLogMessage(true), $tabid, $sid);
@@ -549,6 +563,9 @@ abstract class Datasync
 
 
                             foreach ($values as $fieldid => $value) {
+                                if ($fieldid == 'new') {
+                                    continue;
+                                }
                                 if ($fieldid == 'sys') {
                                     $this->handleSystemFields($tabid, $id, $value, $update);
                                     continue;
@@ -612,6 +629,16 @@ abstract class Datasync
                         //set lmb_sync_slave and lmb_sync_id
                         $sql = "UPDATE $table SET LMB_SYNC_SLAVE = {$this->current_client}, LMB_SYNC_ID = $sync_datid WHERE ID = $id";
                         $rs = lmbdb_exec($db, $sql);
+                        
+                        
+                        // foreach relation field => create update entry
+                        foreach($gfield[$tabid]['data_type'] as $fieldId => $dataType) {
+                            if(in_array($dataType,[24,25,27])) {
+                                $null = null;
+                                execute_sync($tabid,$fieldId,$id,$null,$sync_datid,$this->current_client,3, true);
+                            }
+                        }
+                        
                     }
                 }
             }
@@ -644,11 +671,24 @@ abstract class Datasync
                         $firstValueKey = array_key_first($verknids);
                         $hasLevelIds = false;
                         $levelIds = [];
-                        if (is_array($verknids[$firstValueKey])) {
+                        if (is_array($verknids[$firstValueKey]) && array_key_exists('LID',$verknids[$firstValueKey])) {
                             $hasLevelIds = true;
                             foreach ($verknids as $key => &$verknid) {
                                 $levelIds[$verknid['id']] = $verknid['LID'];
                                 $verknid = $verknid['id'];
+                            }
+                        } elseif(!$this->is_main) {
+                            foreach ($verknids as $key => &$verknid) {                                
+                                if(is_array($verknid) && array_key_exists('new',$verknid)) {
+                                    
+                                    $relTabId = $gfield[$tabid]['verkntabid'][$fieldid];
+                                    
+                                    if(array_key_exists($relTabId,$newids) && array_key_exists($verknid['id'],$newids[$relTabId])) {
+                                        $verknid = $newids[$relTabId][$verknid['id']]['slave_datid'];
+                                    } else {
+                                        unset($verknids[$key]);
+                                    }
+                                }
                             }
                         }
 
@@ -867,7 +907,10 @@ abstract class Datasync
         if (!$new) {
             $vpid = null;
             if (array_key_exists('VPID', $systemdata) && !empty(trim($systemdata['VPID']))) {
-                $vpid = $this->convertID($tabid, $systemdata['VPID']);
+                $vpid = $systemdata['VPID'];
+                if($this->is_main) {
+                    $vpid = $this->convertID($tabid, $systemdata['VPID']);
+                }
                 if (!empty($vpid)) {
                     $update["$tabid,VPID,$id"] = $vpid;
                 }
@@ -912,7 +955,7 @@ abstract class Datasync
 
         //if table is global keep same ids on main and client and don't convert
         if ($this->template[$tabid]['global']) {
-            return $cid;
+            return intval($cid);
         }
 
 
@@ -935,7 +978,7 @@ abstract class Datasync
         $rs = lmbdb_exec($db, $sql);
 
         if (lmbdb_fetch_row($rs)) {
-            return lmbdb_result($rs, 'CID');
+            return intval(lmbdb_result($rs, 'CID'));
         }
         return false;
     }
@@ -1059,6 +1102,12 @@ abstract class Datasync
                 if (!isset($data['sys'])) {
                     $data['sys'] = array();
                 }
+                
+                // convert id on master to slave id before send
+                if ($this->is_main && $fieldid === 'VPID' && !empty(trim($value[0]))) {
+                    $value[0] = $this->convertID($tabid, $value[0], 1);
+                }
+                
                 $data['sys'][$fieldid] = $value[0];
             }
         }
@@ -1156,15 +1205,24 @@ abstract class Datasync
 
                 if ($this->is_main) {
                     foreach ($value as &$verknid) {
+                        $orgVerknId = $verknid;
                         $verknid = $this->convertID($verkntab, $verknid, 1);
+                        // related entry is new and doesn't have a client id yet
+                        if(empty($verknid)) {
+                            $verknid = ['id'=>$orgVerknId,'new'=>true];
+                        }
                     }
                 }
 
                 if ($levelIds !== false && is_array($levelIds)) {
                     foreach ($value as &$verknid) {
                         $levelId = null;
-                        if (array_key_exists($verknid, $levelIds)) {
-                            $levelId = $levelIds[$verknid];
+                        $orgVerknId = $verknid;
+                        if(is_array($verknid)) {
+                            $orgVerknId = $verknid['id'];
+                        }
+                        if (array_key_exists($orgVerknId, $levelIds)) {
+                            $levelId = $levelIds[$orgVerknId];
                         }
                         $verknid = ['LID' => $levelId, 'id' => $verknid];
                     }
@@ -1716,4 +1774,25 @@ abstract class Datasync
             lmb_EndTransaction($status);
         }
     }
+    
+    
+    private function recordExists(int $tabId, int $id): bool {
+        global $gtab;
+        
+        $db = Database::get();
+        
+        try {
+            $table = dbf_4($gtab['table'][$tabId]);
+            $keyfield = $gtab['keyfield'][$tabId];
+
+            $sql = "SELECT $keyfield AS CID FROM $table WHERE $keyfield = $id";
+            $rs = lmbdb_exec($db, $sql);
+            if (lmbdb_fetch_row($rs)) {
+                return true;
+            }
+        } catch (Throwable){}
+        
+        return false;
+    }
+    
 }

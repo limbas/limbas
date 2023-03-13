@@ -446,7 +446,7 @@ foreach ($tabgroup["id"] as $key0 => $value0) {
 <div ID="el_0">
 <?php
 /*----------------- Tabellenliste -------------------*/
-include_once("admin/report/report_tabliste.php");
+require_once(COREPATH . 'admin/report/report_tabliste.php');
 ?>
 </div>
 </td></tr></table>

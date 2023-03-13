@@ -17,6 +17,12 @@ if(str_contains($_SERVER['REQUEST_URI'],'install')) {
 }
 
 $file = basename($_SERVER['REQUEST_URI'], '?' . $_SERVER['QUERY_STRING']);
+
+// define IS_SOAP here because of remote update via soap
+if($file === 'main_soap.php') {
+    define('IS_SOAP', true);
+}
+
 require_once(__DIR__ . '/../limbas_src/lib/session.lib');
 
 switch ($file) {

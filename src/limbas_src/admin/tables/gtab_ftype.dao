@@ -23,7 +23,7 @@ function get_fieldname($atid,$ftid){
 $ext_fk = getTypeExensions();
 
 /* --- Transaktion START ------------------------------------------------ */
-lmb_StartTransaction();
+lmb_StartTransaction(1);
 
 /* --- Tabellen-Array --------------------------------- */
 unset($table_gtab);

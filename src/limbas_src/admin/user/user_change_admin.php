@@ -449,7 +449,6 @@ function newwin2(USERID) {
                                     echo '<option value="'.$layout.'" '.(($result_user["layout"] == $layout) ? 'selected' : '').'>'.$layout.'</option>';
                                 }
                                 ?>
-                                
                             </SELECT>
                             
                         </div>

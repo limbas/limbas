@@ -199,7 +199,7 @@ function lmb_convert_fieldtype($source_data_type, $source_parse_type, $source_fi
 
     // manual modify
     if (!$success) {
-        lmb_StartTransaction();
+        lmb_StartTransaction(1);
 
         lmb_alert("databased conversion failed!, trying to replace field $source_fieldname manualy ...");
         
@@ -416,7 +416,7 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
 	global $DBA;
 	
 	
-	lmb_StartTransaction();
+	lmb_StartTransaction(1);
 		
 	$sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -665,7 +665,7 @@ function delete_tab($tabid,$drop_physical=true) {
 	global $lang;
 
 	
-	lmb_StartTransaction();
+	lmb_StartTransaction(1);
 	
 	flag_tableChanged();
 

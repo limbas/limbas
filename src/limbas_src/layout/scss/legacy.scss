@@ -33,6 +33,7 @@ $sess-refresh-color: #e4d314 !default;
 
 @import '_icons';
 
+@import '_legacystyles';
 
 /* to replace frames with iframes */
 .frame-container {
@@ -1055,10 +1056,6 @@ INPUT.gtabchange, TEXTAREA.gtabchange, SELECT.gtabchange{
   background-color: $farbschemaWEB13;
   border: 1px solid $farbschemaWEB3;
   font-size: $umgvarfontsize;
-}
-
-input, select, textarea {
-  color: inherit; /* to prevent the default black of some browsers */
 }
 
 .fgtabchange{

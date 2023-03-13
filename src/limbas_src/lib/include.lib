@@ -1973,7 +1973,16 @@ function USER_display($userList,$carriageReturn = "<BR>"){
 }
 
 # Transaktion Start
-function lmb_StartTransaction(){
+function lmb_StartTransaction($has_schema=null){
+
+    if(!LMB_DBFUNC_TRANSACTION){return true;}
+
+    // mysql / oracle not support transactions with editing schemas
+    if($has_schema AND !LMB_DBFUNC_TRANSACTION_WITH_SCHEMA){
+        $GLOBALS["lmb_transaction"] = 100;
+        return true;
+    }
+
 	global $db;
 	
 	if($GLOBALS["lmb_transaction"]){
@@ -1992,6 +2001,9 @@ function lmb_EndTransaction($success,$message=null, $showAlerts = true){
 	global $db;
 	global $lang;
 	global $alert;
+
+    if(!LMB_DBFUNC_TRANSACTION){return true;}
+
 	$GLOBALS["lmb_transaction"]--;
 
 	if($GLOBALS["lmb_transaction"]){

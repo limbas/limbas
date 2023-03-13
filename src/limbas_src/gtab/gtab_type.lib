@@ -1252,12 +1252,12 @@ function dftyp_9($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$ev
 			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
 
-            $def_desc = $gfield[$gtabid]["beschreibung"][$bzm];
-            if($def_desc AND !$gresult[$gtabid][$bzm][0]) {
-                echo "<OPTION disabled selected hidden> $def_desc";
-            }else{
+            #$def_desc = $gfield[$gtabid]["beschreibung"][$bzm];
+            #if($def_desc AND !$gresult[$gtabid][$bzm][0]) {
+            #    echo "<OPTION disabled selected hidden> $def_desc";
+            #}else{
                 echo '<OPTION>';
-            }
+            #}
 
 			while(lmbdb_fetch_row($rs)) {
 				$wert = lmbdb_result($rs, $field_name);

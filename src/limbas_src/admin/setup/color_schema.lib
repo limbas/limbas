@@ -176,7 +176,7 @@ function lmbcs_generate_css($color_schema) {
         return 'Error: '.$t->getMessage();
     }
 
-    return lmbcs_generate_legacy_css($color_schema['id']);
+    return lmbcs_generate_legacy_css($color_schema['id'],$color_schema);
 }
 
 function lmbcs_add_schema($name, $layout) {
@@ -295,7 +295,7 @@ function lmbcs_reset($id) {
 
 
 
-function lmbcs_generate_legacy_css($schemaId) {
+function lmbcs_generate_legacy_css($schemaId,$color_schema) {
     global $umgvar;
     global $farbschema;    
 
@@ -336,6 +336,13 @@ $sgc8: ' . lmbSuggestColor('74ba5c'). ';
 
 
 ';
+
+    //insert edited variables from db
+    $variables .= "\n\n";
+    foreach ($color_schema['edited'] as $key => $value) {
+        $variables .= "\$$key: $value;\n";
+    }
+    $variables .= "\n\n";
 
     $scsspath = EXTENSIONSPATH . 'layout/' . $color_schema['layout'] . '/scss/';
     if (!file_exists($scsspath)) {

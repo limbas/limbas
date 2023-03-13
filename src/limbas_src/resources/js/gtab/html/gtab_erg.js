@@ -713,9 +713,11 @@ function gtabSetTablePagination(){
 
     var gtabTableBody = document.getElementById("GtabTableBody");
     var gtabTableGroup = document.getElementById("GtabTableGroup");
-	if(gtabTableBody && gtabTableBody.scrollHeight == $('#GtabTableBody').outerHeight()){
+
+    // Math.round($('#GtabTableBody').outerHeight()
+	if(gtabTableBody && gtabTableBody.scrollHeight == gtabTableBody.offsetHeight){
 	    hasScrollBar = false;
-    } else if(gtabTableGroup && gtabTableGroup.scrollHeight == $('#GtabTableGroup').outerHeight()){
+    } else if(gtabTableGroup && gtabTableGroup.scrollHeight == gtabTableGroup.offsetHeight){
         hasScrollBar = false;
     }
 

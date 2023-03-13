@@ -66,7 +66,7 @@ if ($rgsr) {
 
 //load layout / choose between new and legacy based on action and template //TODO: remove legacy switch in future version
 
-if (in_array($action,['setup_color_schema','report_preview','intro','nav_info','quickstart','maintenance','intro','edit_long'])) {
+if (in_array($action,['user_color','report_preview','intro','nav_info','quickstart','maintenance','intro','edit_long'])) {
     $layout_bootstrap = true;
 }
 

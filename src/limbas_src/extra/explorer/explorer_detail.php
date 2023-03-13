@@ -54,6 +54,7 @@ function show_part(part) {
 
 <FORM ACTION="main.php" METHOD="post" name="form1">
 <input type="hidden" name="action" value="explorer_detail">
+<input type="hidden" name="gtabid" value="<?=$gtabid?>">
 <input type="hidden" name="ID" value="<?=$ID?>">
 <input type="hidden" name="LID" value="<?=$LID?>">
 <input type="hidden" name="show_part">

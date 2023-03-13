@@ -6,6 +6,8 @@ ENV APACHE_DOCUMENT_ROOT /var/www/html/openlimbas/public
 # adding needed modules
 RUN apt-get update -y \
     && apt-get install -y --no-install-recommends \
+    fontconfig \
+    ghostscript \
     imagemagick \
     libfreetype6-dev \
     libimage-exiftool-perl \

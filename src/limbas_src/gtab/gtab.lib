@@ -344,7 +344,7 @@ function execute_trigger($typ,$position,$gtabid,$fieldid,$trigger,$ID,$new_value
 
 #$gtabid,$fieldid,$dataid,$value,$old_gresult[$gtabid]['SYNC_ID'][0],$old_gresult[$gtabid]['SYNC_SLAVE'][0]
 
-function execute_sync($gtabid,$fieldid,$datid,&$value,$sync_id,$sync_slave,$type){
+function execute_sync($gtabid,$fieldid,$datid,&$value,$sync_id,$sync_slave,$type,$force=false){
     global $db;
     global $umgvar;
     global $gfield;
@@ -352,7 +352,7 @@ function execute_sync($gtabid,$fieldid,$datid,&$value,$sync_id,$sync_slave,$type
     $commit = false;
 
     // protect self processing
-    if(defined('LMB_SYNC_PROC')){return true;}
+    if(defined('LMB_SYNC_PROC') && $force !== true){return true;}
 
     #if($GLOBALS["lmb_trigger_off"][$gtabid]){return true;}
 
@@ -448,7 +448,6 @@ function execute_sync($gtabid,$fieldid,$datid,&$value,$sync_id,$sync_slave,$type
 
         // datasync == 2 use one way sync
         }elseif(($sync_slave AND $sync_id) OR $gtab['datasync'][$gtabid] == 2){
-
             // delete all cache entries after delete
             if($type == 1){ // delete
                 $sqlquery = "DELETE FROM LMB_SYNC_CACHE WHERE SLAVE_DATID = ".parse_db_int($sync_id)." AND SLAVE_ID = ".parse_db_int($sync_slave)." AND TABID = $gtabid AND DATID = ".parse_db_int($datid);
@@ -461,13 +460,14 @@ function execute_sync($gtabid,$fieldid,$datid,&$value,$sync_id,$sync_slave,$type
             if(!$rs){lmb_log::error('execute_sync master - SQL error on insert', null, $gtabid, $fieldid, $datid);$commit = 1;}
 
         // adding new dataset
-        }elseif($type == 2){
+        }
+        elseif($type == 2){
             // matching sync_client with multitenant
             if($sync_slave = $GLOBALS['lmmultitenants']['syncslave'][$GLOBALS['session']['mid']]){
                 $nextCacheId = next_db_id('LMB_SYNC_CACHE');
-                $sqlquery = "INSERT INTO LMB_SYNC_CACHE (ID,TABID,FIELDID,DATID,SLAVE_ID,TYPE) VALUES($nextCacheId,$gtabid,0,".parse_db_int($datid).",".parse_db_int($sync_slave).",2)";
+                $sqlquery = "INSERT INTO LMB_SYNC_CACHE (ID,TABID,FIELDID,DATID,SLAVE_ID,TYPE) VALUES($nextCacheId,$gtabid,1,".parse_db_int($datid).",".parse_db_int($sync_slave).",2)";
                 $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-                if(!$rs){lmb_log::error('execute_sync master - SQL error on insert', null, $gtabid, 0, $datid);$commit = 1;}
+                if(!$rs){lmb_log::error('execute_sync master - SQL error on insert', null, $gtabid, 1, $datid);$commit = 1;}
             }
         }
 
@@ -2815,8 +2815,7 @@ function insert_newdata($gtabid,$ID,$copyid,$version){
                 $dflt_v[] = $bzm;
 
                 if ($fres) {
-                    $require = "gtab/sql/add_select.dao";
-                    require_once($require);
+                    require_once(COREPATH.'gtab/sql/add_select.dao');
                     pool_select_update($gtabid, $key, $ID, $fres);
                 }
 
@@ -6466,8 +6465,7 @@ function lmb_addReminder($gfrist,$gfrist_desc,$gtabid,$ID,$to=null,$category=0,$
 
     # Bezeichner
     if(!$fielddesc AND $gfield[$gtabid]["mainfield"]){
-        $require = "gtab/gtab_type_erg.lib";
-        require_once($require);
+        require_once(COREPATH.'gtab/gtab_type_erg.lib');
         $ffieldid = $gfield[$gtabid]["mainfield"];
         $gresult = get_gresult($gtabid,1,null,null,null,array($gtabid=>array($gtabid=>$ffieldid)),$ID);
         $fname = "cftyp_".$gfield[$gtabid]["funcid"][$ffieldid];

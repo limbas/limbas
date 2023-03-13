@@ -201,6 +201,14 @@ while(lmbdb_fetch_row($rs)) {
 		$gtab["lock"][$i] = null;
 	}
 
+	# table is param relation // todo - set extra flag in lmb_conf_tables
+	if(strtoupper(substr($gtab["table"][$i],0,5)) == 'VERK_'){
+		$gtab["versioning"][$i] = null;
+		$gtab["delete"][$i] = null;
+		$gtab["add"][$i] = null;
+		$gtab["lock"][$i] = null;
+	}
+
 	#----- File-Level ----------------------------------
 	#$sqlquery1 = "SELECT ID FROM LDMS_STRUCTURE WHERE TABGROUP_ID = ".lmbdb_result($rs,"TAB_GROUP")." AND TAB_ID = $i AND FIELD_ID = 0 AND FIX = TRUE";
 	#$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);

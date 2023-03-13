@@ -58,7 +58,7 @@ function tabpool($gtabid){
 	
 		$globid = rand(1,10000);
 	
-		echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">\n";
+		echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\" style=\"border-collapse:collapse\">\n";
 		echo "<TR><TD><A HREF=\"Javascript:LmAdm_getFields('$value','$globid','')\"><IMG SRC=\"assets/images/legacy/outliner/plusonly.gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\" NAME=\"tab_".$globid."_plusminus\"><i class=\"lmb-icon lmb-folder-closed\" WIDTH=\"16\" HEIGHT=\"13\" ALIGN=\"TOP\" BORDER=\"0\" NAME=\"tab_".$globid."_box\"></i></A> <B>".$gtab["desc"][$value]."</B></TD></TR>\n";
 		echo "<TR><TD ID=\"el_$globid\">";
 		

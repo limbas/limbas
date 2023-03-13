@@ -41,8 +41,8 @@ $maxpage = ceil($gresult[$gtabid]['max_count']/$filter['anzahl'][$gtabid]);
         <i class="lmb-icon lmb-first text-muted" title="<?=$lang[1294]?>"></i>
         <i class="lmb-icon lmb-previous text-muted" title="<?=$lang[1296]?>"></i>
     <?php else: ?>
-        <i class="lmb-icon lmb-first" title="<?=$lang[1294]?>" onclick="document.form1.elements['filter_page[<?=$gtabid?>]'].value='1';send_form(1,2);"></i>";
-        <i class="lmb-icon lmb-previous" title="<?=$lang[1296]?>" onclick="document.form1.elements['filter_page[<?=$gtabid?>]'].value='<?=($filter['page'][$gtabid] - 1)?>';send_form(1,2);"></i>";
+        <i class="lmb-icon lmb-first" title="<?=$lang[1294]?>" onclick="document.form1.elements['filter_page[<?=$gtabid?>]'].value='1';send_form(1,2);"></i>
+        <i class="lmb-icon lmb-previous" title="<?=$lang[1296]?>" onclick="document.form1.elements['filter_page[<?=$gtabid?>]'].value='<?=($filter['page'][$gtabid] - 1)?>';send_form(1,2);"></i>
     <?php endif; ?>
 
     <input type="text" class="form-control form-select-sm d-inline w-auto" name="filter_page[<?=$gtabid?>]" value="<?=$filter['page'][$gtabid]?>/<?=$maxpage?>">

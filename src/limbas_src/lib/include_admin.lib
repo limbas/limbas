@@ -1182,7 +1182,7 @@ function lmb_rebuildSequences($tablename=null,$field=null,$rebuild=null){
 	}else{
 	
 		# system tables
-		$table = array(array('LMB_HISTORY_ACTION','ID'),array('LMB_HISTORY_UPDATE','ID'),array('LMB_HISTORY_USER','ID'),array('LMB_WFL_INST','ID'),array('LMB_REMINDER','ID'));
+		$table = array(array('LMB_HISTORY_ACTION','ID'),array('LMB_HISTORY_UPDATE','ID'),array('LMB_HISTORY_USER','ID'),array('LMB_WFL_INST','ID'),array('LMB_REMINDER','ID'),array('LMB_CUSTVAR_DEPEND','ID'));
 		
 		# project tables
 		$sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES WHERE TYP != 5";

@@ -88,6 +88,10 @@
 
 <script>
 
+    $(function(){
+       $('[data-pops-tab]').click(pops);
+    });
+    
 var activ_menu = null;
 function divclose(){
 	if(!activ_menu){
@@ -160,15 +164,19 @@ function div1(el,gtabid) {
 
 // --- Popup-funktion ----------
 var popups = new Array();
-function pops(tab){
-	eval("var ti = 'table_"+tab+"';");
-	eval("var pi = 'popicon_"+tab+"';");
+function pops(){
+    
+    let $this = $(this);
+    let tab = $this.data('pops-tab');
+    
+    let ti = 'table_' + tab;
+    
 	if(document.getElementById(ti).style.display){
 		document.getElementById(ti).style.display='';
-		eval("document."+pi+".src='assets/images/legacy/outliner/minusonly.gif';");
+        $this.removeClass('fa-plus-square').addClass('fa-minus-square');
 	}else{
 		document.getElementById(ti).style.display='none';
-		eval("document."+pi+".src='assets/images/legacy/outliner/plusonly.gif';");
+        $this.removeClass('fa-minus-square').addClass('fa-plus-square');
 	}
 }
 
@@ -832,7 +840,9 @@ echo "<div class=\"dropdown\"><i class=\"lmb-icon lmb-groups cursor-pointer\" da
                             ?>
 
                             <TR>
-                                <TD width="20" align="left"><IMG SRC="assets/images/legacy/outliner/<?=$icon?>.gif" tabid="<?=$key?>" CLASS="popicon" NAME="popicon_<?=$key?>" BORDER="0" STYLE="cursor:pointer" OnClick="pops('<?=$key?>')"></TD>
+                                <TD width="20" align="left">
+                                    <i class="fa fa-plus-square cursor-pointer" data-pops-tab="<?=$key?>"></i>
+                                </TD>
                                 <TD width="300" align="left"><FONT><?=$_gtab['table'][$key]?> (<?=$key?>)&nbsp;</TD>
 
 

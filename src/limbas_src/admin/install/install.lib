@@ -76,7 +76,7 @@ function testDatabase($configFile = null)
             $msg = [];
             $msic = [];
 
-            lmb_StartTransaction();
+            lmb_StartTransaction(1);
 
             if ($DBA['DB'] == 'mysql' and $DBA['ODBCDRIVER'] != 'PDO') { // check for lower case table names
                 $sqlquery1 = "SELECT CASE WHEN @@lower_case_table_names = 1 THEN 1 ELSE 2 END AS CSENSITIV";
@@ -109,10 +109,9 @@ function testDatabase($configFile = null)
 
 
             // drop test table
-            if ($odbc_table) {
-                $sqlquery1 = "DROP TABLE " . dbf_4("LIMBASTEST");
-                $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, 'install', __FILE__, __LINE__);
-            }
+            #$sqlquery1 = "DROP TABLE " . dbf_4("LIMBASTEST");
+            #$rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, 'install', __FILE__, __LINE__);
+
 
             // create table
             $sqlquery = "CREATE TABLE " . dbf_4("LIMBASTEST") . " (ID " . LMB_DBTYPE_INTEGER . ",ERSTDATUM " . LMB_DBTYPE_TIMESTAMP . " DEFAULT " . LMB_DBDEF_TIMESTAMP . ",TXT " . LMB_DBTYPE_VARCHAR . "(6))";

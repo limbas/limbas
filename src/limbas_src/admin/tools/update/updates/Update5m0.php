@@ -205,7 +205,7 @@ class Update5m0 extends Update
      */
     protected function patch17(): bool
     {
-        return $this->databaseUpdate('ALTER TABLE LMB_REPORT_LIST ADD DEFAULT_FONT ' . LMB_DBTYPE_SMALLINT);
+        return $this->databaseUpdate('ALTER TABLE LMB_REPORT_LIST ADD DEFAULT_FONT VARCHAR(50)');
     }
 
     /**
@@ -214,7 +214,7 @@ class Update5m0 extends Update
      */
     protected function patch18(): bool
     {
-        return $this->databaseUpdate('ALTER TABLE LMB_SYNC_SLAVES RENAME TO  LMB_SYNC_CLIENTS');
+        return $this->databaseUpdate('ALTER TABLE LMB_SYNC_SLAVES RENAME TO LMB_SYNC_CLIENTS');
     }
 
     /**
@@ -933,7 +933,7 @@ class Update5m0 extends Update
             dbf_22(array($DBA["DBSCHEMA"], dbf_4($squname)));
         }
 
-        return lmb_rebuildSequences();
+        return lmb_rebuildSequences(null,null,1);
     }
 
     /**
@@ -963,6 +963,19 @@ class Update5m0 extends Update
     protected function patch68(): bool
     {
         return $this->databaseUpdate("UPDATE LMB_UMGVAR SET BESCHREIBUNG = 'http server authentication method (default / htacces / custom classname)',NORM = 'htaccess' WHERE FORM_NAME = 'server_auth'");
+    }
+
+    /**
+     * change fieldtype of DEFAULT_FONT in LMB_REPORT_LIST
+     * @return bool
+     */
+    protected function patch69(): bool
+    {
+        $sqlQueries = [
+            'ALTER TABLE LMB_REPORT_LIST DROP DEFAULT_FONT',
+            'ALTER TABLE LMB_REPORT_LIST ADD DEFAULT_FONT VARCHAR(50)'
+        ];
+        return $this->databaseUpdate($sqlQueries);
     }
 
 }

@@ -310,7 +310,7 @@ function lmb_getFilePath($ID,$LID,$filename,$ext,$mid=null,$typ=null){
     #error_log($mid);
 
     if((!$LID OR !$filename OR !$ext) AND $ID){
-        $sqlquery = "SELECT SECNAME,LEVEL,MIMETYPE,LMB_MID FROM LDMS_FILES WHERE ID = $ID";
+        $sqlquery = "SELECT SECNAME,LEVEL,MIMETYPE FROM LDMS_FILES WHERE ID = $ID";
         $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
         #$mid = $GLOBALS['lmmultitenants']['translate'][lmbdb_result($rs, "LMB_MID")]; todo - translated MID
         $LID = lmbdb_result($rs, "LEVEL");

@@ -1,7 +1,6 @@
 Satisfy any
 
-order deny,allow
-allow from all
+Require all granted
 
 <IfModule mod_rewrite.c>
 

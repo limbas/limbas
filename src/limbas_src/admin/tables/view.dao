@@ -79,7 +79,7 @@ function lmb_QuestConfig($viewid,$view_group,$view_name){
 	require_once(COREPATH . 'admin/setup/language.lib');
 	require_once(COREPATH . 'admin/group/group.lib');
 
-	lmb_StartTransaction();
+	lmb_StartTransaction(1);
 
 	// get view name
     if(!$view_name) {

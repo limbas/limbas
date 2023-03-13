@@ -88,9 +88,14 @@ function dyns_reportTabFieldList($para){
 	
 	$gtabid = $para["gtabid"];
 	$parentrel = $para["parentrel"];
-	
-	
-	echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">\n";
+
+	echo "
+    <style>
+        .formeditorPanelFieldlist td{
+            padding:0px;
+        }
+    </style>
+	<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\" style=\"border-collapse:collapse\" class=\"formeditorPanelFieldlist\">\n";
 	
 	$bzm = 1;
 	foreach ($gfield[$gtabid]["sort"] as $key => $value){
@@ -108,12 +113,11 @@ function dyns_reportTabFieldList($para){
 				$globid = rand(1,10000);
 				
 				echo "<TR><TD>\n";
-				echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\"><TR><TD BACKGROUND=\"assets/images/legacy/outliner/line.gif\" VALIGN=\"top\"><IMG SRC=\"assets/images/legacy/outliner/".$outliner.".gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\"></TD><TD>\n";
+				echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\" style=\"border-collapse:collapse;\"><TR><TD BACKGROUND=\"assets/images/legacy/outliner/line.gif\" VALIGN=\"top\"><IMG SRC=\"assets/images/legacy/outliner/".$outliner.".gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\"></TD><TD>\n";
 					
-				echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">\n";
+				echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\" style=\"border-collapse:collapse;\">\n";
 				echo "<TR><TD TITLE=\"table : ".$gtab["desc"][$valueskn]."\"><A HREF=\"Javascript:LmAdm_getFields(".$valueskn.",$globid,'".$parentrel."|".$parentrel2."')\"><IMG SRC=\"assets/images/legacy/outliner/plusonly.gif\" WIDTH=\"18\" HEIGHT=\"16\" ALIGN=\"TOP\" BORDER=\"0\" NAME=\"tab_".$globid."_plusminus\"><i class=\"lmb-icon lmb-folder-closed\" WIDTH=\"16\" HEIGHT=\"13\" ALIGN=\"TOP\" BORDER=\"0\" NAME=\"tab_".$globid."_box\"></i></A> <B title=\"".$gtab["table"][$keyskn]."\">".$gtab["desc"][$keyskn]."</B></TD></TR>\n";
 				echo "<TR><TD ID=\"el_$globid\">";
-								
 				echo "</TR></TD>";
 				echo "</TABLE>\n";
 
@@ -148,7 +152,13 @@ function dyns_formTabFieldList($para){
 	$parentrelpath = $para["parentrelpath"];
 
 
-	echo "<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\">\n";
+	echo "
+    <style>
+        .formeditorPanelFieldlist td{
+            padding:0px;
+        }
+    </style>
+	<TABLE BORDER=\"0\" CELLPADDING=\"0\" CELLSPACING=\"0\" style=\"border-collapse:collapse\" class=\"formeditorPanelFieldlist\">\n";
 	
 	$bzm = 1;
 	foreach ($gfield[$gtabid]["sort"] as $key => $value){

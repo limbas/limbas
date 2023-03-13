@@ -168,7 +168,16 @@ function lmb_minimizedFileUpload($ID,$gresult,$fieldid,$gtabid,$class,$style,$po
         echo "formpicsn_" . $fe . "[" . $fieldid1 . "] = \"" . $img_sn[$key] . "#$img_id[$key]\"; ";
     }
     $max = $fieldid1;
-    if($bzm1){$min = 1;}else{$min = 0;$placeholder = 'EXTENSIONS/customization/placeholder.png';}
+    if($bzm1){$min = 1;}else{
+        $min = 0;
+        if(file_exists(LOCALASSETSPATH.'images/placeholder.png')) {
+            $placeholder = 'localassets/images/placeholder.png';
+        }
+        #else{
+        #    $placeholder = 'assets/images/placeholder.png';
+            #$placeholderFont = '<i class=\"lmb-icon lmb-icon-8 lmb-user\"></i>';
+        #}
+    }
 
     echo "</Script>\n";
 

@@ -8,8 +8,10 @@
  */
 
 
+if(!defined('IS_SOAP')) {
+    define('IS_SOAP', true);
+}
 
-define("IS_SOAP",true);
 ini_set("session.use_only_cookies",0);
 # ------- Limbas include Dateien --------
 require_once(__DIR__ . '/lib/session.lib');

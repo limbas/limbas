@@ -74,7 +74,7 @@ class LMBForm
             
             $fieldId = $gfield[$this->gtabid]['field_id'][$key];
             
-            $field = new LMBField($this->gtabid, $fieldId, $this->gresult);
+            $field = null; // new LMBField($this->gtabid, $fieldId, $this->gresult);
 
             $formElement = new DataElement($field);
             

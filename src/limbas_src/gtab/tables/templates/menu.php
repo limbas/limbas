@@ -25,7 +25,6 @@ global $gsr;
 
 if(!$subtab){$cl = 'class="gtabHeaderMenuTR"';}
 
-
 if(isset($applyLegacy)): ?>
 
     <tr><td>
@@ -85,7 +84,7 @@ if(isset($applyLegacy)): ?>
                 }
             }
     
-            if($gtab["lock"][$gtabid] AND !$readonly){
+            if($gtab["lock"][$gtabid] AND !$readonly AND !$readonly){
                 if($filter["locked"][$gtabid]){
                     pop_picmenu(271,'','');									# unlock
                 }else{
@@ -96,14 +95,14 @@ if(isset($applyLegacy)): ?>
             pop_picmenu(14,'','');											# search
     
             if($gtab["edit"][$gtabid]){
-                if($LINK[161] AND $LINK[3] AND $filter["alter"][$gtabid]){ 	# edit list
+                if($LINK[161] AND $LINK[3] AND $filter["alter"][$gtabid] AND !$readonly){ 	# edit list
                     pop_picmenu(161,'','',1);
                 }elseif($LINK[161] AND $LINK[10]){
                     pop_picmenu(161,'','');
                 }
             }
     
-            if($GLOBALS["verknpf"]){
+            if($GLOBALS["verknpf"] AND !$readonly){
                 if($GLOBALS["verkn_showonly"]){
                     pop_picmenu(158,'','');                                 # link
                 }else{
@@ -164,7 +163,7 @@ if(isset($applyLegacy)): ?>
 
     <nav class="navbar navbar-expand-sm navbar-light bg-nav mb-3">
         <div class="container-fluid">
-            <a class="navbar-brand" href=""><?=$gtab['desc'][$gtabid]?></a>
+            <a class="navbar-brand" href="#" onclick="send_form('1');"><?=$gtab['desc'][$gtabid]?></a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#lmbDetailsNavbar" aria-controls="lmbDetailsNavbar" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>

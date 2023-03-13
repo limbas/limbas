@@ -138,7 +138,7 @@ if(($remoteimport AND (!empty($_FILES["fileproject"])) AND $_FILES["fileproject"
 	$lmpar[0]["exptables"] = $exptable;
 	
 	/* --- Transaktion START --------------------------------------- */
-	lmb_StartTransaction();
+	lmb_StartTransaction(1);
 
 	if(!remote_mergeTables($lmbs,$path,$precheck)){$commit=1;}
 	if(!remote_mergeForms($exptable,$precheck)){$commit=1;}

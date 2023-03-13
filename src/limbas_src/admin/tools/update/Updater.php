@@ -10,6 +10,7 @@ namespace admin\tools\update;
 
 require_once(COREPATH . 'lib/db/db_wrapper.lib');
 require_once(COREPATH . 'lib/db/db_' . $DBA['DB'] . '_admin.lib');
+require_once(COREPATH . 'lib/include_admin.lib');
 require_once(COREPATH . 'admin/tools/datasync/DatasyncClient.php');
 
 use Database;

@@ -1268,7 +1268,6 @@ function LmEx_closeIframeDialog() {
 function LmEx_open_details(evt,ID,LID,gtab_id,form_id,dimension) {
 	LmEx_divclose();
 
-	if(!evt.ctrlKey && !evt.shiftKey){
 		if(!document.getElementById("LmEx_DetailFrame")){
 			$("body").append('<div id="LmEx_DetailFrame" style="position:absolute;display:none;z-index:9999;overflow:hidden;width:300px;height:300px;"><iframe id="LmEx_DetailOpen" style="width:100%;height:100%;overflow:auto;"></iframe></div>');
 		}
@@ -1300,16 +1299,14 @@ function LmEx_open_details(evt,ID,LID,gtab_id,form_id,dimension) {
 			}
 		});
 
-	}else{
-		filechange=open('main.php?action=explorer_detail&LID='+LID+'&ID='+ID ,'detail','toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=800,height=650');
-	}
 }
 
 function LmEx_file_detail(id){
 	if(!id && LmEx_edit_norm == 'd'){id = LmEx_edit_id;}
     if(id){
         LmEx_divclose();
-		detail = open("main.php?action=explorer_detail&level="+jsvar["level"]+"&LID="+jsvar["LID"]+"&ID=" + id + "" ,"Info","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650");
+        LmEx_open_details(null,id,jsvar["LID"],null,null,null);
+		//detail = open("main.php?action=explorer_detail&level="+jsvar["level"]+"&LID="+jsvar["LID"]+"&ID=" + id + "" ,"Info","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650");
 	}
 }
 

@@ -120,7 +120,7 @@ if($umgvar["multitenant"] AND lmb_count($lmmultitenants['mid']) > 1){
     //<li class="nav-item pt-lg-2 me-lg-2"><a class="nav-link active-tenant">'.$lmmultitenants['name'][$session["mid"]].'</a></li>
     $multitenantMenuWrapper = '
 <li class="nav-item dropdown ps-lg-2" data-lmb-dptoggle="hover">
-                <a class="nav-link "><div class="lmbMenuItemTop2Icon"><i class="lmb-icon lmb-user-circle-o"></i></div><div class="lmbMenuItemTop2Text">%s</div></a>
+                <a class="nav-link h-100 d-flex flex-column justify-content-between align-items-center"><div class="lmbMenuItemTop2Icon"><i class="lmb-icon lmb-user-circle-o"></i></div><div class="lmbMenuItemTop2Text">%s</div></a>
                 <div class="dropdown-menu rounded-0 py-0 mt-0">
                     '.$selectmultitenant.'
                 </div>
@@ -130,13 +130,14 @@ if($umgvar["multitenant"] AND lmb_count($lmmultitenants['mid']) > 1){
 
 
 $profileMenuWrapper = '<li class="nav-item dropdown ps-lg-2 ms-lg-2 border-left" data-lmb-dptoggle="hover">
-                <a class="nav-link lmbMenuProfileDropdown" data-bs-toggle="dropdown">';
+                <a class="nav-link lmbMenuProfileDropdown d-flex flex-column gap-1 align-items-start" data-bs-toggle="dropdown">';
 
 if ($umgvar["multitenant"]) {
-    $profileMenuWrapper .= '<div class="row">
-                        <div class="col-12"><span class="lmbMenuItemTop2Text align-middle text-start">'.$session["vorname"].' '.$session["name"].'<br><span class="active-tenant fw-bold">'.$lmmultitenants['name'][$session["mid"]].'</span></div>';
+    $profileMenuWrapper .= //'<div class="d-flex flex-column">'.
+                           '<span class="lmbMenuItemTop2Text">'.$session["vorname"].' '.$session["name"] . '</span>'.
+                           '<span class="active-tenant lmbMenuItemTop2Text fw-bold">'.$lmmultitenants['name'][$session["mid"]].'</span>';
                         //TODO: Profile Pic <div class="col-3 text-end p-0"><img class="rounded-circle" src=""></div>
-    $profileMenuWrapper .= '</div>';
+                           //'</div>';
 } else {
     $profileMenuWrapper .= '<span class="lmbMenuItemTop2Text align-middle">'.$session["vorname"].' '.$session["name"].'</span>';
     //TODO: Profile Pic '<img class="rounded-circle" src="">';
@@ -185,7 +186,7 @@ $profileMenuWrapper .= '</a><div class="dropdown-menu rounded-0 border-light py-
     
                         if($bzm == 1){$active = 'active';}else{$active = '';}
                         
-                        echo "<li class=\"nav-item $active\" data-id=\"$key\" onclick=\"$onclick;limbasSetActiveClass(this,'#lmbtopnav','li')\" title=\"" . $value["desc"] . "\"><a class=\"nav-link\">".(($value['icon']) ? '<div class="lmbMenuItemTop2Icon"><i class="lmb-icon '.$value['icon'].'"></i></div><div class="lmbMenuItemTop2Text">'.$value["name"].'</div>' : $value["name"])."</a></li>";
+                        echo "<li class=\"nav-item $active\" data-id=\"$key\" onclick=\"$onclick;limbasSetActiveClass(this,'#lmbtopnav','li')\" title=\"" . $value["desc"] . "\"><a class=\"nav-link h-100 d-flex flex-column justify-content-between align-items-center\">".(($value['icon']) ? '<div class="lmbMenuItemTop2Icon"><i class="lmb-icon '.$value['icon'].'"></i></div><div class="lmbMenuItemTop2Text">'.$value["name"].'</div>' : $value["name"])."</a></li>";
                         
                         $bzm++;
                     }
@@ -235,7 +236,7 @@ $profileMenuWrapper .= '</a><div class="dropdown-menu rounded-0 border-light py-
                         } else if ($key == 308) {
                             echo sprintf($multitenantMenuWrapper,$value["name"]);
                         } else {
-                            echo "<li class=\"nav-item ps-lg-2\" onclick=\"$onclick\" title=\"" . $value["desc"] . "\"><a class=\"nav-link $class\">".(($value['icon']) ? '<div class="lmbMenuItemTop2Icon"><i class="lmb-icon '.$value['icon'].'"></i></div><div class="lmbMenuItemTop2Text">'.$value["name"].'</div>' : $value["name"])."</a></li>";
+                            echo "<li class=\"nav-item ps-lg-2\" onclick=\"$onclick\" title=\"" . $value["desc"] . "\"><a class=\"nav-link h-100 d-flex flex-column justify-content-between align-items-center $class\">".(($value['icon']) ? '<div class="lmbMenuItemTop2Icon"><i class="lmb-icon '.$value['icon'].'"></i></div><div class="lmbMenuItemTop2Text">'.$value["name"].'</div>' : $value["name"])."</a></li>";
                         }
     
                         $bzm++;
