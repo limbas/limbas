@@ -25,6 +25,7 @@ services:
       - temp:/var/www/html/openlimbas/dependent/TEMP
       - inc:/var/www/html/openlimbas/dependent/inc
       - backup:/var/www/html/openlimbas/dependent/BACKUP
+      - localassets:/var/www/html/openlimbas/public/localassets
     environment:
         LIMBAS_DB_HOST: limbas_pgsql
     
@@ -36,4 +37,5 @@ volumes:
   temp:
   inc:
   backup:
+  localassets:
   postgres-data:

@@ -145,7 +145,7 @@ class Updater
         $updateNeeded = version_compare($versions['source'], $versions['db'], '>');
 
 
-        if ($updateNeeded && (defined('IS_SOAP') || defined('IS_WEBDAV') || defined('IS_WSDL'))) {
+        if ($updateNeeded && (defined('IS_SOAP') || defined('IS_WEBDAV') || defined('IS_WSDL') || defined('IS_CRON'))) {
             return $updateNeeded;
         }
 
@@ -494,7 +494,7 @@ class Updater
 
         $versionParts = $update->getVersion(true);
 
-        $patch = self::getPatch($patchNr);
+        $patch = self::getPatch($patchNr,$updateKey);
         if (!$patch) {
             return false;
         }
@@ -545,9 +545,7 @@ class Updater
 
         $msg = '';
 
-        if (empty($patchNr)) {
-            $success = false;
-        } elseif (!empty($clientId) && !$isRemote) {
+        if (!empty($clientId) && !$isRemote) {
             $response = Updater::runRemoteAction('runPatch', $clientId, $params);
             if ($response === false) {
                 $success = 'false';

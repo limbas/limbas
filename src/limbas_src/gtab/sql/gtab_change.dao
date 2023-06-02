@@ -40,7 +40,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 
 	?>
 
-	<DIV ID="limbasDivMenuDateien" class="lmbContextMenu" style="position:absolute;display:none;z-index:995;"><FORM NAME="filemenu" OnClick="activ_menu = 1;">
+	<DIV ID="limbasDivMenuDateien" class="lmbContextMenu lmbGtabmenu-detail lmbGtabmenu-table-<?=$gtabid?>" style="position:absolute;display:none;z-index:995;"><FORM NAME="filemenu" OnClick="activ_menu = 1;">
 	<?php #----------------- Datei-Menü -------------------
 	pop_top('limbasDivMenuDateien');
 	foreach ($gfield[$gtabid]["id"] as $key => $value){
@@ -54,7 +54,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	</FORM></DIV>
 	
 	
-	<DIV ID="limbasDivMenuBericht" class="lmbContextMenu" style="display:none;z-index:993;" OnClick="activ_menu = 1;">
+	<DIV ID="limbasDivMenuBericht" class="lmbContextMenu lmbGtabmenu-detail lmbGtabmenu-table-<?=$gtabid?>" style="display:none;z-index:993;" OnClick="activ_menu = 1;">
 	<?php #----------------- Berichts-Menü -------------------
 	pop_top('limbasDivMenuBericht');
 	
@@ -83,9 +83,9 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	?>
 	</DIV>
 	
-	<DIV ID="limbasDivMenuReportOption" class="lmbContextMenu" style="display:none;z-index:993;" OnClick="activ_menu = 1;"></DIV>
+	<DIV ID="limbasDivMenuReportOption" class="lmbContextMenu lmbGtabmenu-detail lmbGtabmenu-table-<?=$gtabid?>" style="display:none;z-index:993;" OnClick="activ_menu = 1;"></DIV>
 
-	<DIV ID="limbasDivMenuFormulare" class="lmbContextMenu" style="position: absolute;display:none;z-index:994;" OnClick="activ_menu = 1;">
+	<DIV ID="limbasDivMenuFormulare" class="lmbContextMenu lmbGtabmenu-detail lmbGtabmenu-table-<?=$gtabid?>" style="position: absolute;display:none;z-index:994;" OnClick="activ_menu = 1;">
 	<?php #----------------- Formular-Menü -------------------
 	pop_top('limbasDivMenuFormulare');
 	pop_menu2($lang[2503], null, null, "lmb-icon lmb-icon-cus lmb-form", null, "document.form1.set_form.value='0';send_form('1');");
@@ -102,7 +102,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	?>
 	</DIV>
         
-	<div ID="limbasDivMenuDiagramme" class="lmbContextMenu" style="position:absolute;display:none;z-index:9992" OnClick="activ_menu = 1;">
+	<div ID="limbasDivMenuDiagramme" class="lmbContextMenu lmbGtabmenu-detail lmbGtabmenu-table-<?=$gtabid?>" style="position:absolute;display:none;z-index:9992" OnClick="activ_menu = 1;">
 	<?php #----------------- Diagramme - Menü -------------------
 	if($gdiaglist[$gtabid]["id"]){
 		pop_top('limbasDivMenuDiagramme');
@@ -116,7 +116,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	?>
 	</div>
 
-	<DIV ID="limbasDivMenuLink" class="lmbContextMenu" style="position: absolute;display:none;z-index:995;"><FORM NAME="formular_verknpf" OnClick="activ_menu = 1;">
+	<DIV ID="limbasDivMenuLink" class="lmbContextMenu lmbGtabmenu-detail lmbGtabmenu-table-<?=$gtabid?>" style="position: absolute;display:none;z-index:995;"><FORM NAME="formular_verknpf" OnClick="activ_menu = 1;">
 	<?php #----------------- Verknüpfungs-Menü -------------------
 	pop_top('limbasDivMenuLink');
 	if($gfield[$gtabid]["r_verkntabid"] AND $LINK[133]){
@@ -132,7 +132,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	</FORM></DIV>
 	
 	
-	<DIV ID="limbasDivMenuLock" class="lmbContextMenu" style="position: absolute;display:none;z-index:995;"><FORM NAME="formular_lock" OnClick="activ_menu = 1;">
+	<DIV ID="limbasDivMenuLock" class="lmbContextMenu lmbGtabmenu-detail lmbGtabmenu-table-<?=$gtabid?>" style="position: absolute;display:none;z-index:995;"><FORM NAME="formular_lock" OnClick="activ_menu = 1;">
 	<?php #----------------- Verknüpfungs-Menü -------------------
 	pop_top('limbasDivMenuLock');
 	pop_left();
@@ -142,7 +142,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	?>
 	</FORM></DIV>
 
-	<DIV ID="limbasDivMenuInfo" class="lmbContextMenu" class="lmbContextMenu" style="position: absolute;display:none;z-index:992;" OnClick="activ_menu = 1;">
+	<DIV ID="limbasDivMenuInfo" class="lmbContextMenu lmbGtabmenu-detail lmbGtabmenu-table-<?=$gtabid?>" class="lmbContextMenu lmbGtabmenu-detail lmbGtabmenu-table-<?=$gtabid?>" style="position: absolute;display:none;z-index:992;" OnClick="activ_menu = 1;">
 	<FORM NAME="info_form">
 	<?php #----------------- Info-Menü -------------------
 	pop_menu2('','','lmbInfoCreate',"lmb-icon-cus lmb-page-new");
@@ -171,7 +171,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	?>
 	</FORM></DIV>
 
-	<DIV ID="limbasDivMenuContext" class="lmbContextMenu" style="position:absolute;display:none;z-index:991;" OnClick="activ_menu = 1;">
+	<DIV ID="limbasDivMenuContext" class="lmbContextMenu lmbGtabmenu-detail lmbGtabmenu-table-<?=$gtabid?>" style="position:absolute;display:none;z-index:991;" OnClick="activ_menu = 1;">
 	<?php #----------------- Datei -------------------
 	if($form_id){pop_top('limbasDivMenuContext');}
 	
@@ -193,8 +193,8 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	if($gtab["copy"][$gtabid] AND !$readonly){
 		pop_menu(201,'','');							# Datensatz kopieren
 	}
-	
-	if($gtab["ver"][$gtabid] == 1 AND $gtab["add"][$gtabid]){
+
+	if($gtab["ver"][$gtabid] == 1 AND $gtab["add"][$gtabid] AND $gresult[$gtabid]["VACT"][0] AND !$readonly){
 		pop_menu(235,'','');							# Datensatz versionieren
 	}
 
@@ -244,7 +244,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	?>
 	</DIV>
 
-	<DIV ID="limbasDivMenuAnsicht" class="lmbContextMenu" style="position:absolute;display:none;z-index:991" OnClick="activ_menu = 1;">
+	<DIV ID="limbasDivMenuAnsicht" class="lmbContextMenu lmbGtabmenu-detail lmbGtabmenu-table-<?=$gtabid?>" style="position:absolute;display:none;z-index:991" OnClick="activ_menu = 1;">
 	<?php #----------------- Ansicht -------------------
 	if($form_id){pop_top('limbasDivMenuAnsicht');}
 
@@ -278,7 +278,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	?>
 	</DIV>
 
-	<DIV ID="limbasDivMenuExtras" class="lmbContextMenu" style="position:absolute;display:none;z-index:991" OnClick="activ_menu = 1;">
+	<DIV ID="limbasDivMenuExtras" class="lmbContextMenu lmbGtabmenu-detail lmbGtabmenu-table-<?=$gtabid?>" style="position:absolute;display:none;z-index:991" OnClick="activ_menu = 1;">
 	<?php
 	if($ID){
 	#----------------- Extras -------------------
@@ -288,14 +288,12 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 		pop_submenu(132,'','');			# Formulare
 		$l = 1;
 	}
-	if($GLOBALS["greportlist_exist"] AND ($LINK[175] OR $LINK[176] OR $LINK[315])){
-		pop_submenu(131,'','');			# Berichte
-        if ($LINK[315]) {
-            pop_submenu(315,'','');
-        }
+	if($GLOBALS["greportlist_exist"]){
+		#pop_submenu(131,'','');			# Berichte
+        pop_submenu(315,'','');
 		$l = 1;
 	}
-	if($GLOBALS["gdiaglist_exist"] AND $LINK[232]){
+	if($GLOBALS["gdiaglist_exist"]){
 		pop_submenu(232,'','');			# Diagramme
 		$l = 1;
 	}
@@ -361,7 +359,7 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	</DIV>
 	
 	
-	<DIV ID="limbasDivMenuSettings" class="lmbContextMenu" style="visibility:hidden;z-index:993" OnClick="activ_menu = 1;">
+	<DIV ID="limbasDivMenuSettings" class="lmbContextMenu lmbGtabmenu-detail lmbGtabmenu-table-<?=$gtabid?>" style="visibility:hidden;z-index:993" OnClick="activ_menu = 1;">
 	<?php
 	pop_top('limbasDivMenuSettings');
 	if(!$isview AND $gtab["delete"][$gtabid]){
@@ -497,7 +495,7 @@ function print_symbolbar($gtabid,&$gresult,$ID,$readonly=0){
 
 	if($gtab["add"][$gtabid]){pop_picmenu(1,'','');}			# neuer Datensatz
 	if($gtab["add"][$gtabid] AND $gtab["copy"][$gtabid] AND !$readonly){pop_picmenu(201,'','');}			# Datensatz kopieren
-	if($gtab["ver"][$gtabid] == 1 AND $gtab["add"][$gtabid] AND !$readonly){		# versionieren
+	if($gtab["ver"][$gtabid] == 1 AND $gtab["add"][$gtabid] AND $gresult[$gtabid]["VACT"][0] AND !$readonly){		# versionieren
 		pop_picmenu(235,'','');
 	}
 	if($gtab["delete"][$gtabid] AND !$readonly){pop_picmenu(11,'','');}		# löschen
@@ -529,11 +527,8 @@ function print_symbolbar($gtabid,&$gresult,$ID,$readonly=0){
 
 	echo "<TD>&nbsp;&nbsp;</TD>";
 
-	if($GLOBALS["greportlist_exist"] AND ($LINK[175] OR $LINK[176] OR $LINK[315])){
-		pop_picmenu(131,'','');									# Berichte
-        if ($LINK[315]) {
-            pop_picmenu(315,'','');
-        }
+	if($GLOBALS["greportlist_exist"]){ # Berichte
+        pop_picmenu(315,'','');
 	}
 	if($GLOBALS["gformlist_exist"]){
 		pop_picmenu(132,'','');									# Formulare
@@ -570,8 +565,8 @@ function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0,$showheader=nu
 	global $greportlist;
 	global $farbschema;
 	global $action;
-	
-    echo "<div class=\"gtabHeaderMenuTR\">";
+
+    echo "<div class=\"gtabHeaderMenuTR lmbGtabmenu lmbGtabmenu-detail lmbGtabmenu-table-$gtabid\">";
 	echo "<TABLE BORDER=\"0\" cellspacing=\"0\" cellpadding=\"0\" WIDTH=\"100%\">";
 	
 	# ----------- Verknüpfungsreiter ------------
@@ -586,11 +581,11 @@ function print_menue($gtabid,&$gresult,$verkn_addfrom,$readonly=0,$showheader=nu
 	echo "<TR><TD COLSPAN=\"2\">";
 	echo "<TABLE BORDER=\"0\" cellspacing=\"0\" cellpadding=\"0\" width=\"100%\">\n";
 	# ----------- Datei -----------
-	echo "<TR><TD class=\"gtabHeaderMenuTD hoverable\" nowrap OnClick=\"limbasDivShowContext(event,this,'".$gresult[$gtabid]["id"][0]."','".$gtabid."','".$gresult[$gtabid]["ERSTDATUM"][0]."','".$gresult[$gtabid]["EDITDATUM"][0]."','".$userdat['bezeichnung'][$gresult[$gtabid]["ERSTUSER"][0]]."','".$userdat['bezeichnung'][$gresult[$gtabid]["EDITUSER"][0]]."')\">$lang[545]</TD><TD>&nbsp;|&nbsp;</TD>";
+	echo "<TR><TD class=\"gtabHeaderMenuTD hoverable lmbGtabmenu-file\" nowrap OnClick=\"limbasDivShowContext(event,this,'".$gresult[$gtabid]["id"][0]."','".$gtabid."','".$gresult[$gtabid]["ERSTDATUM"][0]."','".$gresult[$gtabid]["EDITDATUM"][0]."','".$userdat['bezeichnung'][$gresult[$gtabid]["ERSTUSER"][0]]."','".$userdat['bezeichnung'][$gresult[$gtabid]["EDITUSER"][0]]."')\">$lang[545]</TD><TD>&nbsp;|&nbsp;</TD>";
 	# ----------- Ansicht -----------
-	echo "<TD class=\"gtabHeaderMenuTD hoverable\" nowrap OnClick=\"limbasDivShow(this,'','limbasDivMenuAnsicht');\">$lang[1625]</TD><TD>&nbsp;|&nbsp;</TD>";
+	echo "<TD class=\"gtabHeaderMenuTD hoverable lmbGtabmenu-view\" nowrap OnClick=\"limbasDivShow(this,'','limbasDivMenuAnsicht');\">$lang[1625]</TD><TD>&nbsp;|&nbsp;</TD>";
 	# ----------- Extras -----------
-	echo "<TD class=\"gtabHeaderMenuTD hoverable\" nowrap OnClick=\"limbasDivShow(this,'','limbasDivMenuExtras');\">$lang[1939]</TD>";
+	echo "<TD class=\"gtabHeaderMenuTD hoverable lmbGtabmenu-extra\" nowrap OnClick=\"limbasDivShow(this,'','limbasDivMenuExtras');\">$lang[1939]</TD>";
 
 	# extension
 	if(function_exists($GLOBALS["gLmbExt"]["menuChangeItems"][$gtabid])){
@@ -714,7 +709,9 @@ function print_scroll($ID){
 
 function print_notice($gtabid,$ID,&$gresult){
     $applyLegacy = true;
-    require COREPATH . 'gtab/forms/templates/notices.php';
+    if($ID) {
+        require COREPATH . 'gtab/html/forms/parts/notices.php';
+    }
 }
 
 /*
@@ -797,7 +794,13 @@ function show_validity_line($gtabid,$ID,$VPID){
     }
     $range = (($end-$start) / (60*60));
     $linewidth = 100;
-    $factor = ($linewidth/$range);
+
+    if($range) {
+        $factor = ($linewidth / $range);
+    }else{
+        $range = 1;
+    }
+
     $validity['format'] = $session['dateformat'];
 
     $output = '';
@@ -807,7 +810,7 @@ function show_validity_line($gtabid,$ID,$VPID){
         $st = '';
         if($current['id'][$vkey] == $ID){$st = 'background-color:#588c46';}
         $date = stampToDate($current['vto'][$vkey],1);
-        $output .= "<div onclick=\"document.form1.ID.value=".$current['id'][$vkey].";send_form(1);\" title=\"$date\" class=\"lmbValidity_list\" style=\"overflow:hidden;min-width:5%;width:".$width."%;$st\">".$date."&nbsp;</div>";
+        $output .= "<div onclick=\"document.form1.ID.value=".$current['id'][$vkey].";send_form(1);\" title=\"$date\" class=\"lmbValidity_list\" style=\"overflow:hidden;min-height:20px;min-width:5%;width:".$width."%;$st\">".$date."&nbsp;</div>";
     }
     return $output;
 }
@@ -873,7 +876,7 @@ function print_verknaddfrom($verkn_addfrom,$gtabid,$style=null){
 # --------------- Verknüpfungsreiter --------------------------------------------
 function print_linktags($gtabid,$verkn_poolid,$ID,&$gresult,$onlyfirst=0){
     $applyLegacy = true;
-    require COREPATH . 'gtab/forms/templates/linktags.php';
+    require COREPATH . 'gtab/html/forms/parts/linktags.php';
 }
 
 # --------------- Formularreiter --------------------------------------------

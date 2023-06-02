@@ -186,6 +186,16 @@ function lmb_report_format($changedefaultformat_id){
     if(!$rs) {return false;}
 }
 
+function lmb_report_printer($changeprinter_id){
+    global $db;
+    global $report_printer;
+
+    $sqlquery = "UPDATE LMB_REPORT_LIST SET PRINTER='" . parse_db_int($report_printer[$changeprinter_id]) . "' WHERE ID = " . parse_db_int($changeprinter_id);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if(!$rs) {return false;}
+}
+
+
 function lmb_report_odt_template($savename_id){
 
     if ($changeootemplate_id) {
@@ -264,7 +274,10 @@ function lmb_report_delete($report_id){
     $sqlquery = "DELETE FROM LMB_RULES_REPFORM WHERE REPFORM_ID = $report_id AND TYP = 1";
     $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
 
+
+
     # --- Filestructure ------
+/*
     $sqlquery = "SELECT ID FROM LDMS_STRUCTURE WHERE TAB_ID = $rep_ref_tab AND FIELD_ID = $report_id AND TYP = 5";
     $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     if (!$rs) {
@@ -273,11 +286,11 @@ function lmb_report_delete($report_id){
 
     if (!$commit AND lmbdb_result($rs, "ID")) {
         $GLOBALS["filestruct"]['admin'] = 1;
-        if (!delete_dir(lmbdb_result($rs, "ID"))) {
+        if (!delete_dir(lmbdb_result($rs, "ID"),1)) {
             $commit = 1;
         }
     }
-
+*/
 
     /* --- Transaktion ENDE -------------------------------------- */
     if ($commit == 1) {
@@ -451,7 +464,7 @@ function resultreportlist(){
     global $db;
     global $session;
 
-    $sqlquery = "SELECT DISTINCT LMB_REPORT_LIST.ORIENTATION, LMB_REPORT_LIST.USED_FONTS,LMB_REPORT_LIST.LISTMODE, LMB_REPORT_LIST.CSS, LMB_REPORT_LIST.PAGE_STYLE,LMB_REPORT_LIST.ROOT_TEMPLATE_ID,LMB_REPORT_LIST.ROOT_TEMPLATE,LMB_REPORT_LIST.DEFFORMAT,LMB_REPORT_LIST.ODT_TEMPLATE,LMB_REPORT_LIST.ODS_TEMPLATE,LMB_REPORT_LIST.EXTENSION,LMB_REPORT_LIST.SAVENAME,LMB_REPORT_LIST.TARGET,LMB_REPORT_LIST.ERSTUSER,LMB_REPORT_LIST.ID,LMB_REPORT_LIST.GROUPLIST,LMB_REPORT_LIST.NAME,LMB_REPORT_LIST.REFERENZ_TAB,0 AS FID, 0 AS LEVEL
+    $sqlquery = "SELECT DISTINCT LMB_REPORT_LIST.PRINTER, LMB_REPORT_LIST.ORIENTATION, LMB_REPORT_LIST.USED_FONTS,LMB_REPORT_LIST.LISTMODE, LMB_REPORT_LIST.CSS, LMB_REPORT_LIST.PAGE_STYLE,LMB_REPORT_LIST.ROOT_TEMPLATE_ID,LMB_REPORT_LIST.ROOT_TEMPLATE,LMB_REPORT_LIST.DEFFORMAT,LMB_REPORT_LIST.ODT_TEMPLATE,LMB_REPORT_LIST.ODS_TEMPLATE,LMB_REPORT_LIST.EXTENSION,LMB_REPORT_LIST.SAVENAME,LMB_REPORT_LIST.TARGET,LMB_REPORT_LIST.ERSTUSER,LMB_REPORT_LIST.ID,LMB_REPORT_LIST.GROUPLIST,LMB_REPORT_LIST.NAME,LMB_REPORT_LIST.REFERENZ_TAB,0 AS FID, 0 AS LEVEL
 	FROM LMB_REPORT_LIST,LMB_RULES_REPFORM
 	WHERE LMB_RULES_REPFORM.REPFORM_ID = LMB_REPORT_LIST.ID
 	AND LMB_RULES_REPFORM.TYP = 1
@@ -481,6 +494,9 @@ function resultreportlist(){
         $greportlist[$gtabid]["css"][$key] = lmbdb_result($rs, "CSS");
         $greportlist[$gtabid]["page_style"][$key] = explode(';',lmbdb_result($rs, "PAGE_STYLE"));
         $greportlist[$gtabid]["orientation"][$key] = lmbdb_result($rs, "ORIENTATION");
+        $greportlist[$gtabid]["printer"][$key] = lmbdb_result($rs, "PRINTER");
+
+
 
         if($greportlist[$gtabid]["odt_template"][$key]){$greportlist[$gtabid]["odt_template"][$key] = get_NameFromID($greportlist[$gtabid]["odt_template"][$key]);}else{$greportlist[$gtabid]["odt_template"][$key] = "";}
         if($greportlist[$gtabid]["ods_template"][$key]){$greportlist[$gtabid]["ods_template"][$key] = get_NameFromID($greportlist[$gtabid]["ods_template"][$key]);}else{$greportlist[$gtabid]["ods_template"][$key] = "";}

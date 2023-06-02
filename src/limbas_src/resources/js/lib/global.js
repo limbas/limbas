@@ -21,16 +21,33 @@ function set_focus() {
 
 function LmGs_sendForm(reset,gtabid){
 
-    if(reset){document.form11.filter_reset.value=1;}
-    if($("#gdssnapid").val() != 0 && $("#gdssnapid").val()){
-        $('#tabs_'+gtabid).html($("#gdssnapid option:selected").text());
-        document.form1.snap_id.value = $("#gdssnapid").val();
+    if(reset){
+        document.form11.filter_reset.value = 1;
+        $("#gdssnapid").val(0);
     }
+
+    if($("#gdssnapid").val()) {
+        //$('#tabs_' + gtabid).html($("#gdssnapid option:selected").text()); // header tablename
+        document.form1.snap_id.value = $("#gdssnapid").val(); // set form snap_id
+        $("#globalFilter option[value='" + $('#gdssnapid').val() + "']").attr('selected', true);
+    }else{
+        document.form1.snap_id.value = $("#gdssnapid").val();
+        $("#globalFilter option[value='0']").attr('selected', true);
+    }
+
+    if(document.form2.verknpf){document.form11.verknpf.value = document.form2.verknpf.value}
+    if(document.form2.verkn_ID){document.form11.verkn_ID.value = document.form2.verkn_ID.value}
+    if(document.form2.verkn_tabid){document.form11.verkn_tabid.value = document.form2.verkn_tabid.value}
+    if(document.form2.verkn_fieldid){document.form11.verkn_fieldid.value = document.form2.verkn_fieldid.value}
+    if(document.form2.verkn_showonly){document.form11.verkn_showonly.value = document.form2.verkn_showonly.value}
 
     if(document.form1.action.value == 'explorer_main') {
         document.form11.action.value = 'explorer_main';
         document.form11.LID.value = document.form1.LID.value;
         LmEx_send_form(11, 1);
+    // legacy form list
+    }else if(document.form1.action.value == 'gtab_erg' && document.form1.form_id.value) {
+        send_form(11);
     }else if(document.form1.action.value == 'gtab_erg') {
         lmbAjax_resultGtab('form11', 1, 1, 1, 1);
     }
@@ -93,17 +110,24 @@ function LmGs_elDisable(id) {
 function limbasDetailSearch(evt,el,gtabid,fieldid,container,snap_id,module){
 	if(!fieldid){fieldid = '';}
 	if(!gtabid){gtabid = '';}
-	if(!snap_id){snap_id = '';}
+	if(!snap_id && snap_id != 0){snap_id = '';}
     if(!module){module = '';}
     if(!container){container = 'lmbAjaxContainer';}
+    legacy = ''
     if(!document.getElementById(container)) {
         $("body").append('<div id="'+container+'"></div>');
     }
+
+    // legacy mode for list forms
+    if (!$.fn.modal) {
+        legacy = document.form1.form_id.value;
+    }
+
 	$.ajax({
 		type: "GET",
 		url: "main_dyns.php",
 		async: false,
-		data: "actid=gtabSearch&gtabid="+gtabid+"&fieldid="+fieldid+"&snap_id="+snap_id+'&module='+module,
+		data: "actid=gtabSearch&gtabid="+gtabid+"&fieldid="+fieldid+"&snap_id="+snap_id+'&module='+module+'&legacy='+legacy,
 		success: function(data){
             ajaxEvalScript(data);
 			document.getElementById(container).innerHTML = data;
@@ -580,7 +604,7 @@ function showAlertXXX(output_msg, title_msg)
 
     if (!output_msg)
         return;
-    
+
     output_msg = output_msg.replace('\n','<br>');
 
     $("<div></div>").html(output_msg).dialog({
@@ -588,7 +612,7 @@ function showAlertXXX(output_msg, title_msg)
         resizable: false,
         modal: true,
         buttons: {
-            "Ok": function() 
+            "Ok": function()
             {
                 $( this ).dialog( "destroy" );
             }

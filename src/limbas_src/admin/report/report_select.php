@@ -45,9 +45,13 @@ if($savename_id){
 if($changedefaultformat_id){
     lmb_report_format($changedefaultformat_id);
 }
+if ($changeprinter_id) {
+    lmb_report_printer($changeprinter_id);
+}
 if ($del AND $report_id) {
     lmb_report_delete($report_id);
 }
+
 
 $greport = resultreportlist();
 
@@ -122,6 +126,7 @@ function lmb_openMiniexplorer(elid,format) {
         <input type="hidden" name="changeext_id">
         <input type="hidden" name="changeootemplate_id">
         <input type="hidden" name="changedefaultformat_id">
+        <input type="hidden" name="changeprinter_id">
 
         <table class="table table-sm table-striped mb-0 border bg-white">
 
@@ -136,9 +141,7 @@ function lmb_openMiniexplorer(elid,format) {
                     <th><?=$lang[2111]?></th>
                     <th><?=$lang[2511]?></th>
                     <th>Report Class</th>
-                    <!--<th><?=$lang[1161]?></th>
-                    <th><?=$lang[1161]?></th>
-                    -->
+                    <th><?=$lang[2935]?></th>
                 </tr>
             </thead>
 
@@ -184,7 +187,7 @@ function lmb_openMiniexplorer(elid,format) {
                                 <td>
                                     <?php if($extfiles["name"]){ ?>
 
-                                        <SELECT NAME="report_extension[<?=$key?>]" OnChange="document.form1.changeext_id.value='<?=$key?>';document.form1.action='main_admin.php';document.form1.action.value='setup_report_select';document.form1.submit();" style="width:100px;" class="form-select form-select-sm">
+                                        <SELECT NAME="report_extension[<?=$key?>]" OnChange="document.form1.changeext_id.value='<?=$key?>';document.form1.action='main_admin.php';document.form1.action.value='setup_report_select';document.form1.submit();" style="max-width:160px;" class="form-select form-select-sm">
                                             <option></option>
                                                 
                                                 
@@ -227,10 +230,16 @@ function lmb_openMiniexplorer(elid,format) {
                                         } ?>
                                     </select>
                                 </td>
-                                <!--
-                                <td nowrap><div class="input-group"><INPUT TYPE="TEXT" NAME="report_odt_template[<?=$key?>]" VALUE="<?=$greport[$gtabid]["odt_template"][$key]?>" STYLE="width:100px" onchange="document.form1.changeootemplate_id.value='<?=$key?>-odt';document.form1.action.value='setup_report_select';document.form1.submit();" class="form-control form-control-sm">&nbsp;<i class="lmb-icon lmb-file-odt cursor-pointer" onclick="lmb_openMiniexplorer(<?=$key?>,'odt');" title="odt-template"></i></div></td>
-                                <td nowrap><div class="input-group"><INPUT TYPE="TEXT" NAME="report_ods_template[<?=$key?>]" VALUE="<?=$greport[$gtabid]["ods_template"][$key]?>" STYLE="width:100px" onchange="document.form1.changeootemplate_id.value='<?=$key?>-ods';document.form1.action.value='setup_report_select';document.form1.submit();" class="form-control form-control-sm">&nbsp;<i class="lmb-icon lmb-file-ods cursor-pointer" onclick="lmb_openMiniexplorer(<?=$key?>,'ods');" title="ods-template"></i></div></td>
-                                -->
+
+                                <td>
+                                    <select name="report_printer[<?=$key?>]" style="max-width:160px;" name="report_printer" class="form-select form-select-sm" OnChange="document.form1.changeprinter_id.value='<?=$key?>';document.form1.action.value='setup_report_select';document.form1.submit();"><option value='0'>
+                                        <?php foreach ($gprinter as $id => &$printer): ?>
+                                            <option value="<?=$id?>" <?=($greport[$gtabid]["printer"][$key] == $id) ? 'selected' : ''?>><?=$printer['name']?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </td>
+
+
                             </tr>
 
                             <input type="hidden" name="report_<?=$key?>" VALUE="<?=htmlentities($greport[$gtabid]["sql"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])?>">

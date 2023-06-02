@@ -7,10 +7,9 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
 ?>
 
-<Script language="JavaScript">
+<script>
 /* --- Berichtmenü ----------------------------------- */
 function showdiv(evt,NAME) {
     document.getElementById("farbschema").style.visibility='hidden';
@@ -40,151 +39,234 @@ function check_pass(pass2) {
 	}
 }
 
-</Script>
+</script>
+
+
+<div class="p-3">
+    <FORM ACTION="main.php" METHOD="post" NAME="form1">
+        <input type="hidden" name="action" value="user_change">
+        <input type="hidden" name="ID" value="<?=$ID?>">
+        <input type="hidden" name="user_change" value="1">
+        <input type="hidden" name="farbe_change">
+        <input type="hidden" name="lang_change">
+        <input type="hidden" name="fileview_change">
+        <input type="hidden" name="username" value="<?=$result_user["username"]?>">
+
+        <div class="container-fluid bg-white p-3 border">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5><i class="lmb-icon lmb-user"></i><?=$lang[140]?></h5>
+                    <hr>
+
+                    <div class="row">
+                        <label class="col-sm-4 col-form-label"><?=$lang[519]?></label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control form-control-sm" name="vorname" readonly disabled value="<?=$result_user["username"]?>">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label class="col-sm-4 col-form-label"><?=$lang[142]?></label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control form-control-sm" name="vorname" value="<?=$result_user['vorname']?>" <?= !$session['change_pass'] ? 'readonly disabled' : ''?>>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label class="col-sm-4 col-form-label"><?=$lang[4]?></label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control form-control-sm" name="name" value="<?=$result_user['name']?>" <?= !$session['change_pass'] ? 'readonly disabled' : ''?>>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label class="col-sm-4 col-form-label"><?=$lang[612]?></label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control form-control-sm" name="email" value="<?=$result_user['email']?>" <?= !$session['change_pass'] ? 'readonly disabled' : ''?>>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label class="col-sm-4 col-form-label">Tel</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control form-control-sm" name="tel" value="<?=$result_user['tel']?>">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label class="col-sm-4 col-form-label">Fax</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control form-control-sm" name="fax" value="<?=$result_user['fax']?>">
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <label class="col-sm-4 col-form-label">Position</label>
+                        <div class="col-sm-8">
+                            <input type="text" class="form-control form-control-sm" name="position" value="<?=$result_user['position']?>">
+                        </div>
+                    </div>
+                    <?php if($session["change_pass"]): ?>
+                        <div class="row">
+                            <label class="col-sm-4 col-form-label"><?=$lang[141]?></label>
+                            <div class="col-sm-8">
+                                <input type="password" class="form-control form-control-sm" name="paswort">
+                            </div>
+                        </div>
+                        <div class="row mb-4">
+                            <label class="col-sm-4 col-form-label"><?=$lang[1600]?></label>
+                            <div class="col-sm-8">
+                                <input type="password" class="form-control form-control-sm" name="passwort2" onchange="check_pass(this.value)">
+                            </div>
+                        </div>
+                    <?php endif; ?>
 
 
 
+                    <?php
+                    if(!$result_user["uploadsize"]){$result_user["uploadsize"] = $umgvar["default_uloadsize"];}
+                    if(!$result_user["maxresult"]){$result_user["maxresult"] = $umgvar["default_results"];}
+                    if(!isset($result_user["logging"])){$result_user["logging"] = $umgvar["default_loglevel"];}
+                    if(!$result_user["dateformat"]){$result_user["dateformat"] = $umgvar["default_dateformat"];}
+                    if(!$result_user["timezone"]){$result_user["timezone"] = $umgvar["default_timezone"];}
+                    if(!$result_user["setlocale"]){$result_user["setlocale"] = $umgvar["default_setlocale"];}
+                    if(!$result_user["farbschema"]){$result_user["farbschema"] = $umgvar["default_usercolor"];}
+                    if(!$result_user["language"]){$result_user["language"] = $umgvar["default_language"];}
+                    ?>
 
-<?php /*----------------- Farbschema -------------------*/?>
-<div ID="farbschema" style="position:absolute;visibility:hidden;top:100px;left:100px;z-index:1;" OnClick="this.style.visibility='hidden'">
-<TABLE BORDER="0" cellspacing="2" cellpadding="0" STYLE="border:2px solid black" BGCOLOR="<?=$farbschema['WEB8']?>">
-<?php
-$sqlquery = "SELECT DISTINCT * FROM LMB_COLORSCHEMES";
-$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(lmbdb_fetch_row($rs)) {
-    echo "<TR><TD>".lmbdb_result($rs, "NAME")."</TD><TD BGCOLOR=\"".lmbdb_result($rs, "WEB1")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".lmbdb_result($rs, "WEB2")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".lmbdb_result($rs, "WEB3")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".lmbdb_result($rs, "WEB4")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".lmbdb_result($rs, "WEB8")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".lmbdb_result($rs, "WEB3")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".lmbdb_result($rs, "WEB7")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD><TD BGCOLOR=\"".lmbdb_result($rs, "WEB8")."\">&nbsp;&nbsp;&nbsp;&nbsp;</TD></TR>";
-}
-?>
-</TABLE>
+                    <h5><i class="lmb-icon lmb-wrench-alt"></i><?=$lang[146]?></h5>
+
+                    <hr>
+
+                    <div class="row">
+                        <label class="col-sm-4 col-form-label"><?=$lang[624]?></label>
+                        <div class="col-sm-8">
+                            <SELECT NAME="language" class="form-select form-select-sm">
+                                <OPTION VALUE="-1">system</OPTION>
+                                <?php
+                                $sqlquery = "SELECT DISTINCT LANGUAGE,LANGUAGE_ID FROM LMB_LANG";
+                                $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                                while(lmbdb_fetch_row($rs)) {
+                                    $langid = lmbdb_result($rs,"LANGUAGE_ID");
+                                    if($result_user["language"] == $langid){$SELECTED =  "SELECTED";}else {unset($SELECTED);}
+                                    echo "<OPTION VALUE=\"".urlencode($langid)."\" $SELECTED>".lmbdb_result($rs,"LANGUAGE");
+                                }
+                                ?>
+                            </SELECT>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <label class="col-sm-4 col-form-label"><?=$lang[2576]?></label>
+                        <div class="col-sm-8">
+                            <SELECT name="dateformat" class="form-select form-select-sm">
+                                <OPTION VALUE="1" <?=($result_user["dateformat"] == '1')?'selected':''?>>deutsch</OPTION>
+                                <OPTION VALUE="2" <?=($result_user["dateformat"] == '2')?'selected':''?>>english</OPTION>
+                                <OPTION VALUE="3" <?=($result_user["dateformat"] == '3')?'selected':''?>>us</OPTION>
+                            </SELECT>
+                        </div>
+                    </div>
+
+
+
+                    <div class="row">
+                        <label class="col-sm-4 col-form-label"><?=$lang[623]?></label>
+                        <div class="col-sm-8">
+                            <SELECT name="farbe" class="form-select form-select-sm" OnChange="this.form.farbe_change.value='1';">
+                                <?php
+                                $sqlquery = "SELECT * FROM LMB_COLORSCHEMES";
+                                $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+                                while(lmbdb_fetch_row($rs)) {
+                                    $farbid = lmbdb_result($rs,"ID");
+                                    echo '<OPTION VALUE="'.$farbid.'" '.(($result_user["farbschema"] == $farbid) ? 'selected' : '').'>'.lmbdb_result($rs,"NAME").'</option>';;
+                                }
+                                ?>
+                            </SELECT>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <label class="col-sm-4 col-form-label"><?=$lang[698]?></label>
+                        <div class="col-sm-8">
+                            <SELECT NAME="layout" class="form-select form-select-sm">
+                                <?php
+                                $layouts = Layout::getAvailableLayouts();
+                                foreach($layouts as $layout){
+                                    echo '<option value="'.$layout.'" '.(($result_user['layout'] == $layout) ? 'selected' : '').'>'.$layout.'</option>';
+                                }
+                                ?>
+                            </SELECT>
+
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <label class="col-4 col-form-label"><?=$lang[2167]?></label>
+                        <div class="col-8 pt-2">
+                            <INPUT TYPE="CHECKBOX" value="1" NAME="symbolbar" <?=($result_user["symbolbar"])?'checked':''?>>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="col-md-6 pt-3 pt-md-0">
+
+                    <?php 
+                    $isFirstMail = true;
+                    foreach ($gtab['table'] as $key => $value):
+                    if($gtab['typ'][$key] == 6): ?>
+                        <div class="<?=$isFirstMail ? '' : 'pt-3'?>">
+                            <h5><i class="lmb-icon lmb-mail"></i><?=$gtab['desc'][$key]?></h5>
+                            <hr>
+                            <div class="row">
+                                <label class="col-sm-4 col-form-label"><?=$lang[4]?></label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control form-control-sm" name="e_setting[<?=$key?>][full_name" value="<?=$result_user['e_setting'][$key]['full_name']?>">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-form-label"><?=$lang[2519]?></label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control form-control-sm" name="e_setting[<?=$key?>][email_address]" value="<?=$result_user['e_setting'][$key]['email_address']?>">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-form-label"><?=$lang[2520]?></label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control form-control-sm" name="e_setting[<?=$key?>][reply_address]" value="<?=$result_user['e_setting'][$key]['reply_address']?>">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-form-label"><?=$lang[2521]?></label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control form-control-sm" name="e_setting[<?=$key?>][imap_hostname]" value="<?=$result_user['e_setting'][$key]['imap_hostname']?>">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-form-label"><?=$lang[2522]?></label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control form-control-sm" name="e_setting[<?=$key?>][imap_username]" value="<?=$result_user['e_setting'][$key]['imap_username']?>">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-form-label"><?=$lang[2524]?></label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control form-control-sm" name="e_setting[<?=$key?>][imap_password]" value="<?=$result_user['e_setting'][$key]['imap_password']?>">
+                                </div>
+                            </div>
+                            <div class="row">
+                                <label class="col-sm-4 col-form-label"><?=$lang[2523]?>(143)</label>
+                                <div class="col-sm-8">
+                                    <input type="text" class="form-control form-control-sm" name="e_setting[<?=$key?>][imap_port]" value="<?=$result_user['e_setting'][$key]['imap_port']?>">
+                                </div>
+                            </div>
+                        </div>
+                    
+                    <?php
+                        $isFirstMail = false;
+                    endif;
+                    endforeach;?>
+                </div>
+            </div>
+
+            <hr>
+
+            <button type="submit" class="btn btn-outline-secondary" value="<?=$lang[842]?>"><?=$lang[842]?></button>
+        </div>
+
+
+    </FORM>
 </div>
-
-
-<FORM ACTION="main.php" METHOD="post" NAME="form1">
-<input type="hidden" name="action" value="user_change">
-<input type="hidden" name="ID" value="<?=$ID?>">
-<input type="hidden" name="user_change" value="1">
-<input type="hidden" name="farbe_change">
-<input type="hidden" name="lang_change">
-<input type="hidden" name="fileview_change">
-<input type="hidden" name="username" value="<?=$result_user["username"]?>">
-
-<div class="lmbPositionContainerMain">
-
-<?php
-/* --- Userdaten --------------------------------------- */
-echo "<TABLE class=\"tabfringe\" border=0 cellspacing=\"0\" cellpadding=\"0\"><TR><TD VALIGN=\"top\">";
-
-
-if(!$session["change_pass"]){$redo = "readonly disabled";}
-
-echo "<TABLE style=\"width:400px;\">";
-echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\" COLSPAN=2><i class=\"lmb-icon lmb-user\" align=\"texttop\"></i>&nbsp;$lang[140]</TD></TR>";
-echo "<TR class=\"tabBody\"><TD style=\"width:150px;\">$lang[519]</TD><TD><INPUT TYPE=TEXT style=\"width:150px;\" name=\"vorname\" readonly disabled VALUE=\"".$result_user["username"]."\"></TD></TR>";
-echo "<TR class=\"tabBody\"><TD style=\"width:150px;\">$lang[142]</TD><TD><INPUT TYPE=TEXT style=\"width:150px;\" name=\"vorname\" $redo VALUE=\"".$result_user["vorname"]."\"></TD></TR>";
-echo "<TR class=\"tabBody\"><TD style=\"width:150px;\">$lang[4]</TD><TD><INPUT TYPE=TEXT style=\"width:150px;\" name=\"name\" $redo VALUE=\"".$result_user["name"]."\"></TD></TR>";
-echo "<TR class=\"tabBody\"><TD style=\"width:150px;\">$lang[144]</TD><TD><INPUT TYPE=TEXT style=\"width:150px;\" name=\"email\" $redo VALUE=\"".$result_user["email"]."\"></TD></TR>";
-echo "<TR class=\"tabBody\"><TD style=\"width:150px;\">Tel</TD><TD><INPUT TYPE=TEXT style=\"width:150px;\" name=\"tel\" VALUE=\"".$result_user["tel"]."\"></TD></TR>";
-echo "<TR class=\"tabBody\"><TD style=\"width:150px;\">Fax</TD><TD><INPUT TYPE=TEXT style=\"width:150px;\" name=\"fax\" VALUE=\"".$result_user["fax"]."\"></TD></TR>";
-echo "<TR class=\"tabBody\"><TD style=\"width:150px;\">Position</TD><TD><INPUT TYPE=TEXT style=\"width:150px;\" name=\"position\" VALUE=\"".$result_user["position"]."\"></TD></TR>";
-if($session["change_pass"]){echo "<TR><TD width=150>$lang[141]</TD><TD><INPUT TYPE=password style=\"width:150px;\" name=\"passwort\"></TD></TR>";}
-if($session["change_pass"]){echo "<TR><TD width=150>$lang[1600]</TD><TD><INPUT TYPE=password style=\"width:150px;\" name=\"passwort2\" Onchange=\"check_pass(this.value)\"></TD></TR>";}
-echo "<TR class=\"tabFooter\"><TD COLSPAN=\"2\"></TD></TR>";
-echo "</TABLE>";
-?>
-
-
-<?php /* --- Allg. Einstellungen --------------------------------------------- */
-echo "<TABLE style=\"width:400px;\">";
-echo "<TR class=\"tabHeader\"><TD class=\"tabHeaderItem\" COLSPAN=2><i class=\"lmb-icon lmb-wrench-alt\" align=\"texttop\"></i>&nbsp;$lang[146]</TD></TR>";
-
-/* --- Sprach Liste --------------------------------------------- */
-echo "<TR class=\"tabBody\"><TD width=150>$lang[624]</TD><TD><SELECT STYLE=\"width:160px;\" NAME=\"language\" OnChange=\"this.form.lang_change.value='1';\">";
-echo "<OPTION VALUE=\"-1\">system";
-$sqlquery = "Select DISTINCT LANGUAGE,LANGUAGE_ID FROM LMB_LANG";
-$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(lmbdb_fetch_row($rs)) {
-$langid = lmbdb_result($rs,"LANGUAGE_ID");
-if($result_user["language"] == $langid){$SELECTED =  "SELECTED";}else {unset($SELECTED);}
-echo "<OPTION VALUE=\"".urlencode($langid)."\" $SELECTED>".lmbdb_result($rs,"LANGUAGE");
-}
-echo "</SELECT></TD></TR>";
-
-# Datumsformat
-echo "<TR class=\"tabBody\"><TD width=150>$lang[2576]</TD><TD><SELECT STYLE=\"width:160px;\" name=\"dateformat\"><OPTION VALUE=1 "; if($result_user["dateformat"] == "1"){echo "SELECTED";} echo">deutsch<OPTION VALUE=2 ";  if($result_user["dateformat"] == "2"){echo "SELECTED";} echo">english<OPTION VALUE=3 "; if($result_user["dateformat"] == "3"){echo "SELECTED";} echo">us</SELECT></TD></TR>";
-
-/* --- Farbschema Liste --------------------------------------------- */
-echo "<TR class=\"tabBody\"><TD width=150>$lang[623]</TD><TD><SELECT STYLE=\"width:160px;\" name=\"farbe\" OnChange=\"this.form.farbe_change.value='1';\">";
-$sqlquery = "SELECT * FROM LMB_COLORSCHEMES";
-$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-while(lmbdb_fetch_row($rs)) {
-    $farbid = lmbdb_result($rs,"ID");
-    echo '<OPTION VALUE="'.$farbid.'" '.(($result_user["farbschema"] == $farbid) ? 'selected' : '').'>'.lmbdb_result($rs,"NAME").'</option>';;
-}
-echo "</SELECT></TD></TR>";
-
-/* --- Layout Liste --------------------------------------------- */
-echo "<TR class=\"tabBody\"><TD width=150>$lang[698]</TD><TD><SELECT STYLE=\"width:160px;\" NAME=\"layout\">";
-$layouts = Layout::getAvailableLayouts();
-foreach($layouts as $layout){
-    echo '<option value="'.$layout.'" '.(($result_user["layout"] == $layout) ? 'selected' : '').'>'.$layout.'</option>';
-}
-echo "</SELECT></TD></TR>";
-
-#echo "<TR class=\"tabBody\"><TD style=\"width:150px;\">$lang[704]</TD><TD><SELECT STYLE=\"width:160px;\" name=\"data_display\"><OPTION VALUE=1 "; if($result_user["data_display"] == "1"){echo "SELECTED";} echo">$lang[1246]<OPTION VALUE=2 ";  if($result_user['data_display'] == "2"){echo "SELECTED";} echo">$lang[1244]<OPTION VALUE=3 ";  if($result_user['data_display'] == "3"){echo "SELECTED";} echo">$lang[1245]</SELECT></TD></TR>";
-if($result_user["symbolbar"]){$CHECKED = "CHECKED";}else{$CHECKED = "";}
-echo "<TR class=\"tabBody\"><TD>$lang[2167]</TD><TD><INPUT TYPE=\"CHECKBOX\" NAME=\"symbolbar\" VALUE=\"1\" $CHECKED STYLE=\"border:none;background-color:{$farbschema['WEB8']}\"></TD></TR>";
-echo "<TR class=\"tabFooter\"><TD COLSPAN=\"2\"></TD></TR>";
-echo "</TABLE>";
-?>
-
-
-
-
-
-</TD><TD valign="top">
-
-
-<?php
-foreach ($gtab["table"] as $key => $value){
-	if($gtab["typ"][$key] == 6){
-		echo "<table style=\"width:400px;\">";
-		echo "<tr class=\"tabHeader\"><td class=\"tabHeaderItem\" colspan=2><i class=\"lmb-icon lmb-mail\" align=\"texttop\"></i>&nbsp;".$gtab["desc"][$key]."</td></tr>";
-		echo "<tr class=\"tabBody\"><td style=\"width:200px;\">".$lang[4]."</td><td><input type=\"text\" style=\"width:150px;\" name=\"e_setting[$key][full_name]\" value=\"".$result_user["e_setting"][$key]["full_name"]."\"></td></tr>";
-		echo "<tr class=\"tabBody\"><td style=\"width:200px;\">".$lang[2519]."</td><td><input type=\"text\" style=\"width:150px;\" name=\"e_setting[$key][email_address]\" value=\"".$result_user["e_setting"][$key]["email_address"]."\"></td></tr>";
-		echo "<tr class=\"tabBody\"><td style=\"width:200px;\">".$lang[2520]."</td><td><input type=\"text\" style=\"width:150px;\" name=\"e_setting[$key][reply_address]\" value=\"".$result_user["e_setting"][$key]["reply_address"]."\"></td></tr>";
-		echo "<tr class=\"tabBody\"><td style=\"width:200px;\">".$lang[2521]."</td><td><input type=\"text\" style=\"width:150px;\" name=\"e_setting[$key][imap_hostname]\" value=\"".$result_user["e_setting"][$key]["imap_hostname"]."\"></td></tr>";
-		echo "<tr class=\"tabBody\"><td style=\"width:200px;\">".$lang[2522]."</td><td><input type=\"text\" style=\"width:150px;\" name=\"e_setting[$key][imap_username]\" value=\"".$result_user["e_setting"][$key]["imap_username"]."\"></td></tr>";
-		echo "<tr class=\"tabBody\"><td style=\"width:200px;\">".$lang[2524]."</td><td><input type=\"password\" style=\"width:150px;\" name=\"e_setting[$key][imap_password]\" value=\"".$result_user["e_setting"][$key]["imap_password"]."\"></td></tr>";
-		echo "<tr class=\"tabBody\"><td style=\"width:200px;\">".$lang[2523]." (143)</td><td><input type=\"text\" style=\"width:150px;\" name=\"e_setting[$key][imap_port]\" value=\"".$result_user["e_setting"][$key]["imap_port"]."\"></td></tr>";
-		#echo "<tr class=\"tabBody\"><td style=\"width:200px;\">smtp_hostname</td><td><input type=\"text\" name=\"e_setting[$key][arch_hostname]\" value=\"".$result_user["e_setting"][$key]["arch_hostname"]."\"></td></tr>";
-		#echo "<tr class=\"tabBody\"><td style=\"width:200px;\">smtp_port</td><td><input type=\"text\" name=\"e_setting[$key][arch_port]\" value=\"".$result_user["e_setting"][$key]["arch_port"]."\"></td></tr>";
-		#echo "<tr class=\"tabBody\"><td style=\"width:200px;\">smtp_username</td><td><input type=\"text\" name=\"e_setting[$key][arch_username]\" value=\"".$result_user["e_setting"][$key]["arch_username"]."\"></td></tr>";
-		#echo "<tr class=\"tabBody\"><td style=\"width:200px;\">smtp_password</td><td><input type=\"password\" name=\"e_setting[$key][arch_password]\" value=\"".$result_user["e_setting"][$key]["arch_password"]."\"></td></tr>";
-		#$tls = $result_user["e_setting"][$key]["smtp_encode"];
-		#if($tls == 1){$tls_1 = "SELECTED";}elseif($tls == 2){$tls_2 = "SELECTED";}else{$tls_0 = "SELECTED";}
-		#echo "<tr class=\"tabBody\"><td style=\"width:200px;\">SMTP-Verschlüsselung</td><td><select style=\"width:160px;\"  name=\"e_setting[$key][smtp_encode]\"><option $tls_0 value=\"0\">keine<option $tls_1 value=\"1\">TLS<option $tls_2 value=\"2\">SSL</select></td></tr>";
-		#$ssl = $result_user["e_setting"][$key]["imap_encode"];
-		#if($ssl == 1){$ssl_1 = "SELECTED";}elseif($ssl == 2){$ssl_2 = "SELECTED";}else{$ssl_0 = "SELECTED";}
-		#echo "<tr class=\"tabBody\"><td style=\"width:200px;\">IMAP-Verschlüsselung</td><td><select style=\"width:160px;\"  name=\"e_setting[$key][imap_encode]\"><option $ssl_0 value=\"0\">keine<option $ssl_1 value=\"1\">TLS<option $ssl_2 value=\"2\">SSL</select></td></tr>";
-		echo "</table>";
-	}
-}
-?>
-
-
-
-
-
-
-</TD></TR>
-
-<TR><TD COLSPAN="2"><HR></TD></TR>
-
-<TR><TD VALIGN="top">
-<TABLE>
-<TR><TD><INPUT TYPE="submit" value="<?=$lang[842]?>"></TD></TR>
-</TABLE>
-</TD></TR></TABLE>
-
-</div>
-</FORM>

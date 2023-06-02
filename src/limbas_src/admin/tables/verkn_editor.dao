@@ -42,19 +42,29 @@ if($fieldid AND $tabid){
 	if(lmbdb_result($rs, "VERKNFIND")){$verknfindid_ = explode("?",lmbdb_result($rs, "VERKNFIND"));$rfield['verknfindid'] = explode(",",$verknfindid_[0]); $rfield['findidcut'] = $verknfindid_[1];}
 	if(lmbdb_result($rs, "VERKNTABID")){$rfield['verkntabid'] = lmbdb_result($rs, "VERKNTABID");}
 	$rfield['veknfieldid'] = lmbdb_result($rs, "VERKNFIELDID");
+    $rfield['verknparams'] = lmbdb_result($rs, "VERKNPARAMS");
+    $rfield['verkntabname'] = dbf_4($tab[$rfield['verkntabid']]);
+    $rfield['hasrecverkn'] = dbf_4('HASRECVERKN');
+    $rfield['verkntabletype'] = lmbdb_result($rs, "VERKNTABLETYPE");
 	$rfield['verknparams'] = lmbdb_result($rs, "VERKNPARAMS");
 	$rfield['md5tab'] = lmbdb_result($rs, "MD5TAB");
 	$rfield['refint'] = lmbdb_result($rs, "REFINT");
 	$rfield['datatype'] = lmbdb_result($rs, "DATA_TYPE");
-	$rfield['verkntabletype'] = lmbdb_result($rs, "VERKNTABLETYPE");
+    $rfield['fieldtype'] = lmbdb_result($rs, "FIELD_TYPE");
 	$rfield['fieldspelling'] = $lang[lmbdb_result($rs, "SPELLING")];
 	$rfield['groupid'] = lmbdb_result($rs, "TAB_GROUP");
 	$rfield['relext'] = lmbdb_result($rs, "RELEXT");
 	$rfield['fieldname'] = dbf_4(lmbdb_result($rs, "FIELD_NAME"));
 	$rfield['verkntree'] = lmbdb_result($rs, "VERKNTREE");
     $rfield['tabname'] = dbf_4($tab[$tabid]);
-    $rfield['verkntabname'] = dbf_4($tab[$rfield['verkntabid']]);
     $rfield['relparams'] = lmbdb_result($rs, "RELPARAMS");
+
+    if($rfield['fieldtype'] == 11 AND $rfield['verkntabid']) {
+        $sqlquery1 = "SELECT FIELD_NAME FROM LMB_CONF_FIELDS WHERE TAB_ID = ".$rfield['verkntabid']." AND FIELD_ID = ".$rfield['hasrecverkn'];
+        $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+        $rfield['verknfieldname'] = lmbdb_result($rs1, "FIELD_NAME");
+    }
+
 }
 
 # --- get forein keys ----------------------------------------------
@@ -262,8 +272,10 @@ function lmb_set_relation_table($tabid,$fieldid,$new_verkntabid,$new_verknfieldi
             $sqlquery2 = "UPDATE LMB_CONF_FIELDS SET HASRECVERKN = $fieldid WHERE FIELD_ID = $new_verknfieldid AND TAB_ID = $new_verkntabid";
             $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
 
-            $refieldname = 'LMB_' . substr($rfield['tabname'], 0, 12) . '_' . substr($rfield['fieldname'], 0, 12) . '_ID';
-            $insv[] = "MD5TAB = '" . dbf_4($refieldname) . "'";
+            #$refieldname = 'LMB_' . substr($rfield['tabname'], 0, 12) . '_' . substr($rfield['fieldname'], 0, 12) . '_ID';
+            #$insv[] = "MD5TAB = '" . dbf_4($refieldname) . "'";
+            #$insv[] = "MD5TAB = NULL";
+
 
         }
 

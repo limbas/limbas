@@ -92,11 +92,11 @@
 
                     <p class="fw-bold">
                         <?php
-                        echo $rfield['verkntabname'];
+                        echo $rfield['verkntabname']. ' | '.$rfield['verknfieldname'];
                         if($rfield['verkntabletype'] == 3){
-                            echo "&nbsp; &nbsp;&nbsp;$lang[2855]&nbsp;&nbsp;<i style=\"vertical-align:text-bottom\" class=\"lmb-icon lmb-switch\"></i>";
+                            echo "&nbsp; &nbsp;&nbsp;($lang[2855]&nbsp;&nbsp;<i style=\"vertical-align:text-bottom\" class=\"lmb-icon lmb-switch\"></i>) ";
                         }elseif($rfield['verkntabletype'] == 2){
-                            echo "&nbsp;&nbsp;$lang[2371]&nbsp;&nbsp;<i style=\"vertical-align:text-bottom\" class=\"lmb-icon lmb-long-arrow-left\"></i> ";
+                            echo "&nbsp;&nbsp;($lang[2371]&nbsp;&nbsp;<i style=\"vertical-align:text-bottom\" class=\"lmb-icon lmb-long-arrow-left\"></i>) ";
                         }
                         ?>
                     </p>

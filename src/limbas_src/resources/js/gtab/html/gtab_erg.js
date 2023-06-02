@@ -262,8 +262,8 @@ function lmbAjax_resultGtabPost(result){
 	ajaxEvalScript(result);
 	if(result){
 		result = result.split("#LMBSPLIT#");
-		if(result[0] && result[0].trim()){document.getElementById("GtabTableSearch").innerHTML = result[0];}
-		if(result[1] && result[1].trim()){document.getElementById("GtabTableHeader").innerHTML = result[1];}
+		if(result[0] && result[0].trim() && document.getElementById("GtabTableSearch")){document.getElementById("GtabTableSearch").innerHTML = result[0];}
+		if(result[1] && result[1].trim() && document.getElementById("GtabTableHeader")){document.getElementById("GtabTableHeader").innerHTML = result[1];}
 		if(result[2] && result[2].trim()){
 		    if(pagination_s) {
 		        n1 = result[2].search('LMB_STARTTAB') + 13;
@@ -274,7 +274,7 @@ function lmbAjax_resultGtabPost(result){
 		        document.getElementById("GtabTableBody").innerHTML = result[2];
 		    }
 		}
-		if(result[3] && result[3].trim()){document.getElementById("GtabTableFooter").innerHTML = result[3];}
+		if(result[3] && result[3].trim() && document.getElementById("GtabTableFooter")){document.getElementById("GtabTableFooter").innerHTML = result[3];}
 	}
 
 	pagination_h = null;
@@ -358,20 +358,47 @@ function limbasCollectiveReplaceRefresh(){
 //}
 
 
-//function limbasWorkflowStartWithTablePost(string)
-//{
-//	divclose();
-//	if(string){
-//		alert(string);
-//	}else{
-//		alert(jsvar["lng_2082"]);
-//	}
-//}
-
-function limbasSnapshotSaveas()
+function limbasSnapshotMenu()
 {
-	var parameters = new Array("gtabid","tab_group","limbasSnapshotName");
-	ajaxGet(0,"main_dyns.php","snapshotSaveas",parameters,"limbasSnapshotSaveasPost");
+    $("#snapfilter-menu").dialog({
+        resizable: true,
+        modal: true,
+        title: 'Filter',
+        width:'auto'
+    });
+}
+
+function limbasSnapshotManage(gtabid)
+{
+    $('#snapfilter-menu').modal('hide');
+    document.getElementById('snapfilter-manage-content').src = 'main.php?action=user_snapshot&gtabfilter='+gtabid;
+    $('#snapfilter-manage').modal('show');
+}
+
+function limbasSnapshotManageLegacy(gtabid)
+{
+    $("#snapfilter-menu").dialog('close');
+    if(!document.getElementById("snapfilter-manage-content-legacy")){
+        $("body").append('<div id="snapfilter-manage-content-legacy" style="position:absolute;display:none;z-index:9999;overflow:hidden;width:600px;height:800px;"><iframe id="snapfilter-manage-content-legacy-iframe" style="width:100%;height:100%;overflow:auto;"></iframe></div>');
+    }
+    // display in iframe
+    $("#snapfilter-manage-content-legacy").css({'position':'relative'}).dialog({
+        width: 900,
+        height: 800,
+        resizable: true,
+        modal: true,
+        zIndex: 10,
+        open: function(ev, ui){
+            document.getElementById('snapfilter-manage-content-legacy-iframe').src = 'main.php?action=user_snapshot&gtabfilter='+gtabid;
+        }
+    });
+
+}
+
+function limbasSnapshotSaveas(gtabid,name)
+{
+    var parameters = 'snapshotSaveas&gtabid='+gtabid+'&limbasSnapshotName='+name;
+	ajaxGet(0,"main_dyns.php",parameters,"","limbasSnapshotSaveasPost");
 }
 function limbasSnapshotSaveasPost(string)
 {
@@ -525,7 +552,7 @@ function create_new() {
 
 //----------------- Bearbeitungsansicht -------------------
 function view_detail(newwin,id) {
-	if(this.gtabDetailIframe){document.form2.target='gtabDetailIframe';}else{document.form2.target='_self';};
+	if(this.gtabDetailIframe){document.form2.target='gtabDetailIframe';}else{document.form2.target='_self';}
 
 	document.form2.action.value='gtab_change';
 
@@ -569,17 +596,20 @@ function view_copychange(id,gtabid) {
 }
 
 // ---------------- Sendkeypress----------------------
-function view_contextDetail() {
+function view_contextDetail(id,tab_id,form_id,form_typ,form_dimension) {
 
-    if(tmp_form_id) {
-        ID = document.form2.ID.value;
-        gtabid = document.form2.gtabid.value;
+    if(tab_id){gtabid = tab_id;}else{gtabid = document.form2.gtabid.value;}
+    if(id){ID = id;}else{ID = document.form2.ID.value;}
+    if(form_id){formid = form_id;}else{formid = tmp_form_id}
+    if(form_typ){formtyp = form_typ;}else{formtyp = tmp_form_typ}
+    if(form_dimension){formdimension = form_dimension;}else{formdimension = tmp_form_dimension}
 
+    if(formid) {
         var t = 'div';
-        if (tmp_form_typ == 1) {
+        if (formtyp == 1) {
             t = 'iframe';
         }
-        newwin7(null,null, gtabid, null, null, null, ID, tmp_form_id, tmp_form_dimension, null, t);
+        newwin7(null,null, gtabid, null, null, null, ID, formid, formdimension, null, t);
     }else{
         view_detail();
     }

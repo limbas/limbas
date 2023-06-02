@@ -391,13 +391,14 @@ if($files){
 $files = $activelist["f"][$LID];
 if($files){
 	if(in_array("1",$files)){
+        if($ffilter["force_delete"]){$forceDelnm = array("#all#");}else{$forceDelnm = null;}
 		foreach($files as $key => $value){
 			if($value){
 				lmb_StartTransaction();
 				if($value == 1){
 					# --- Ordner löschen ----
 					if($del_file AND $LINK[171] AND $filestruct["del"][$key]){
-						if(delete_dir($key)){lmb_EndTransaction(1);}else{lmb_EndTransaction(0);}
+						if(delete_dir($key,$forceDelnm)){lmb_EndTransaction(1);}else{lmb_EndTransaction(0);}
 					}
 					# --- Datei in Favoriten ----
 					elseif($favorite_file AND $LINK[247]){

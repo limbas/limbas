@@ -45,8 +45,8 @@ if($del){
 
 if($snap_edit AND $snapid){
 	if($snap_name = trim($snap_name)){
-		$update[] = "NAME = '".parse_db_string(str_replace(";",",",$snap_name),30)."'";
-		$gsnap[$gtabid]['name'][$snapid] = lmb_substr(str_replace(";",",",$snap_name),0,30);
+		$update[] = "NAME = '".parse_db_string(str_replace(";",",",$snap_name),50)."'";
+		$gsnap[$gtabid]['name'][$snapid] = lmb_substr(str_replace(";",",",$snap_name),0,50);
 	}
 	if($snap_group){
 		$update[] = "SNAPGROUP = '".parse_db_string(str_replace(";",",",$snap_group),50)."'";

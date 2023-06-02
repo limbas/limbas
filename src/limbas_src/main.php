@@ -66,7 +66,7 @@ if ($rgsr) {
 
 //load layout / choose between new and legacy based on action and template //TODO: remove legacy switch in future version
 
-if (in_array($action,['user_color','report_preview','intro','nav_info','quickstart','maintenance','intro','edit_long'])) {
+if (in_array($action,['user_color','report_preview','intro','nav_info','quickstart','maintenance','intro','edit_long','user_printer_cache','user_change', 'user_snapshot', 'user_w_vorlage', 'user_lock'])) {
     $layout_bootstrap = true;
 }
 
@@ -167,17 +167,27 @@ elseif ($action === 'maintenance') {
             $layout_bootstrap = true;
         }
         
+        // check if form is a list form and disable bootstrap
+        if($form_id AND $gformlist[$gtabid]["id"][$form_id] AND $gformlist[$gtabid]["typ"][$form_id] == 2) {
+            $layout_bootstrap = false;
+        }
+        
         $ONLOAD = "gtabSetTablePosition('$posx','$posy')";
         $ONKEYDOWN = "OnKeydown=\"return sendkeydown(event);\"";
         $ONCLICK = "OnClick=\"body_click();\"";
     }
-    
-    $BODYHEADER = $tabgroup["name"][$gtab["tab_group"][$gtabid]];
+
+    if ($HEADER) {
+        $BODYHEADER = $HEADER;
+    } else {
+        $BODYHEADER = $tabgroup["name"][$gtab["tab_group"][$gtabid]];
+    }
+
 } 
 
 elseif ($action == "gtab_exp" and $LINK[$action] == 1) {
     $require2 = "gtab/gtab_register.lib";
-    $require4 = "gtab/html/gtab_erg_exp.php";
+    $require4 = 'gtab/export/gtab_erg_exp.php';
     $BODY = 1;
 }
 
@@ -304,6 +314,7 @@ elseif ($action == "user_change" and $LINK[$action] == 1) {
     $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 } elseif ($action == "user_w_vorlage" and $LINK[$action] == 1) {
     $require1 = "user/sql/user_w_vorlage.dao";
+    $require2 = "user/html/user_w_vorlage.php";
     $ONLOAD = "";
     $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 } elseif ($action == "user_color" and $LINK[$action] == 1) {
@@ -410,7 +421,7 @@ elseif (($action == "explorer") and $LINK[$action] == 1) {
     $ONLOAD = "window.focus()";
 }/* ---------------------- Kalender -------------------------- */
 elseif ($action == "kalender" and $LINK[$action] == 1) {
-    $require1 = "gtab/html/gtab_erg.lib";
+    $require1 = "gtab/gtab_erg.lib";
     $require2 = "gtab/gtab_type.lib";
     $require3 = "extra/calendar/fullcalendar/cal.dao";
     $require4 = "extra/calendar/fullcalendar/cal.php";
@@ -418,7 +429,7 @@ elseif ($action == "kalender" and $LINK[$action] == 1) {
     $ONCLICK = "OnClick=\"body_click();\"";
 }/* ---------------------- Kanban -------------------------- */
 elseif ($action == "kanban") {// and $LINK[$action] == 1) {
-    $require1 = "gtab/html/gtab_erg.lib";
+    $require1 = "gtab/gtab_erg.lib";
     $require2 = "gtab/gtab_type.lib";
     $require3 = "gtab/gtab.lib";
     $require4 = "gtab/gtab_type_erg.lib";
@@ -461,7 +472,7 @@ elseif ($action == "history" and $LINK[$action] == 1) {
     $ONLOAD = "window.focus();";
     $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 } elseif ($action == "report" and $LINK[176] == 1) {
-    if (! $report_medium || $report_medium == 'pdf') {
+    if (!$report_medium || $report_medium == 'pdf') {
         $report_medium = 'tcpdf';
     }
     $require1 = "extra/explorer/filestructure.lib";
@@ -469,6 +480,14 @@ elseif ($action == "history" and $LINK[$action] == 1) {
     $require3 = "extra/report/report_" . lmb_substr($report_medium, 0, 3) . ".php";
     $ONLOAD = "window.focus();";
     $BODY = 1;
+
+/* ---------------------- printer cache -------------------------- */
+}elseif ($action == "user_printer_cache" and $LINK[$action] == 1) {
+    $require1 = "user/html/user_printer_cache.php";
+    #$require2 = "extra/workflow/lwf_mytask.php";
+    $ONLOAD = "window.focus();";
+    $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
+
 } elseif ($action == 'report_preview') {
     $require1 = 'extra/report/preview.php';
 }

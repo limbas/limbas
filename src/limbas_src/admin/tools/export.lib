@@ -360,6 +360,8 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
             # put source into tar gz
             $limbasSrcOutputFile = DEPENDENTPATH . "USER/".$session["user_id"]."/temp/limbas_src.tar.gz";
             system("tar cz --exclude='.git' -C '".COREPATH."..' -f '$limbasSrcOutputFile' 'limbas_src/'", $returnCode);
+            $assetsOutputFile = DEPENDENTPATH . "USER/".$session["user_id"]."/temp/assets.tar.gz";
+            system("tar cz --exclude='.git' -C '".PUBLICPATH."' -f '$assetsOutputFile' 'assets/'", $returnCode);
 		}
 
         // extensions
@@ -368,6 +370,8 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
             # put extensions into tar gz
             $extensionOutputFile = DEPENDENTPATH . "USER/".$session["user_id"]."/temp/extensions.tar.gz";
             system("tar cz --exclude='.git' -C '".DEPENDENTPATH."' -f '$extensionOutputFile' 'EXTENSIONS/'", $returnCode);
+            $localassetsOutputFile = DEPENDENTPATH . "USER/".$session["user_id"]."/temp/localassets.tar.gz";
+            system("tar cz --exclude='.git' -C '".PUBLICPATH."' -f '$localassetsOutputFile' 'localassets'", $returnCode);
         }
 
         // call extension function

@@ -17,7 +17,7 @@ if($GLOBALS["gLmbExt"]["ext_gtab_erg.inc"]){
 }
 
 #if (!($gtab['theme'][$gtabid])) {
-    require(COREPATH . 'gtab/tables/templates/contextmenus.php');
+    require(COREPATH . 'gtab/html/table/contextmenus.php');
 #}
 
 ?>
@@ -46,6 +46,8 @@ pop_bottom();
 <?php }?>
 
 <?php /*----------------- Javascript Functionen -------------------*/?>
+
+
 <Script language="JavaScript">
 
 // ----- Js-Script-Variablen --------
@@ -54,7 +56,7 @@ jsvar["snap_id"] = "<?=$snap_id?>";
 jsvar["user_id"] = "<?=$session["user_id"]?>";
 jsvar["verkn_ID"] = "<?=$verkn_ID?>";
 jsvar["form_id"] = "<?=$form_id?>";
-jsvar["tablename"] = "<?php if($snapid){echo $gsnap[$gtabid]["name"][$snapid];}else{echo $gtab["table"][$gtabid];}?>";
+jsvar["tablename"] = "<?=$gtab["desc"][$gtabid]?>";
 jsvar["wfl_id"] = "<?=$wfl_id?>";
 jsvar["wfl_inst"] = "<?=$wfl_inst?>";
 jsvar["resultspace"] = "<?=$umgvar["resultspace"]?>";
@@ -62,7 +64,6 @@ jsvar["usetablebody"] = "<?=$umgvar["usetablebody"]?>";
 jsvar["action"] = "<?=$action?>";
 jsvar["detail_viewmode"] = "<?=$umgvar["detail_viewmode"]?>";
 jsvar["ajaxpost"] = "<?=$gtab["ajaxpost"][$gtabid]?>";
-jsvar["tablename"] = "<?=$gtab["desc"][$gtabid]?>";
 jsvar["confirm_level"] = "<?=$umgvar["confirm_level"]?>";
 jsvar["modal_size"] = "<?=$umgvar["modal_size"]?>";
 jsvar["modal_opener"] = "<?=$umgvar["modal_opener"]?>";
@@ -70,7 +71,7 @@ jsvar["modal_opener"] = "<?=$umgvar["modal_opener"]?>";
 
 <?php
 
-if($GLOBALS["greportlist_exist"] AND $LINK[315]){
+if($GLOBALS["greportlist_exist"] AND ($LINK[175] OR $LINK[176] OR $LINK[315])){
     LmbReportSelect::printReportSelect($gtabid);
 }
 
@@ -95,8 +96,8 @@ if($GLOBALS["greportlist_exist"] AND $LINK[315]){
 	<input type="hidden" name="posx">
 	<input type="hidden" name="posy">
 	<input type="hidden" name="funcid">
-	<input type="hidden" name="verknpf" VALUE="<?= $verknpf ?>">
 	<?php /* --------------------- Verknüpfungszusatz ------------------------ */?>
+	<input type="hidden" name="verknpf" VALUE="<?= $verknpf ?>">
 	<input type="hidden" name="verkn_ID" VALUE="<?= $verkn_ID ?>">
 	<input type="hidden" name="verkn_add_ID" VALUE="<?= $verkn_add_ID ?>">
 	<input type="hidden" name="verkn_del_ID" VALUE="<?= $verkn_del_ID ?>">
@@ -139,6 +140,7 @@ if($GLOBALS["greportlist_exist"] AND $LINK[315]){
 	<input type="hidden" name="view_symbolbar">
 	<input type="hidden" name="view_version_status" value="<?=$view_version_status;?>">
 	<input type="hidden" name="td_sort">
+	<input type="hidden" name="td_size_global">
 	<input type="hidden" name="use_record">
 	<input type="hidden" name="use_typ">
 	<input type="hidden" name="readonly" value="<?=$readonly;?>">
@@ -189,7 +191,7 @@ $still_done = array();
 if (!$filter["anzahl"][$gtabid]){$filter["anzahl"][$gtabid] = $session["maxresult"];}
 
 # Layout lib
-require_once(COREPATH . 'gtab/html/gtab_erg.lib');
+require_once(COREPATH . 'gtab/gtab_erg.lib');
 
 #---- Tabellen-funktionen aufrufen -------
 
@@ -201,14 +203,14 @@ if(!$filter["hidecols"][$gtabid][0]){
 # ----- Formular -------
 if($form_id AND $gformlist[$gtabid]["id"][$form_id] AND $gformlist[$gtabid]["typ"][$form_id] == 2){
 
-        // display custmenu
-        if($cm = $gformlist[$gtabid]["custmenu"][$form_id]){
-            echo "
-            <script>
-            top.openMenu({$cm});
-            </script>
-            ";
-        }
+    // display custmenu
+    if($cm = $gformlist[$gtabid]["custmenu"][$form_id]){
+        echo "
+        <script>
+        top.openMenu({$cm});
+        </script>
+        ";
+    }
 
 	if($gformlist[$gtabid]["css"][$form_id]){
 		echo"<style type=\"text/css\">@import url(".$gformlist[$gtabid]["css"][$form_id]."?v={$umgvar['version']});</style>\n";
@@ -218,8 +220,7 @@ if($form_id AND $gformlist[$gtabid]["id"][$form_id] AND $gformlist[$gtabid]["typ
     echo '</div>';
 }else{
     if ($gtab['theme'][$gtabid]) {
-        require_once __DIR__ . '/../../loadClasses.php';
-        include(__DIR__ . '/../templates/defaultTable.php');
+        require(COREPATH . 'gtab/html/table/new/default.php');
     } else {
 
         // display custmenu

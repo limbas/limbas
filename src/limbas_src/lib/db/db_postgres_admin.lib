@@ -1056,7 +1056,11 @@ function backup_data($medium,$path,$typ){
         $host = '-h '.$DBA['DBHOST'];
     }
 
-	$sys = "pg_dump $host ".$DBA["DBCNAME"]." -U ".$DBA["DBCUSER"]." | gzip > ".$path["path"].".gz";
+    if($DBA['PORT']){
+        $port = '-p '.$DBA['PORT'];
+    }
+
+	$sys = "pg_dump $host $port ".$DBA["DBCNAME"]." -U ".$DBA["DBCUSER"]." | gzip > ".$path["path"].".gz";
 	exec($sys,$res,$ret);
 
 	if(!$ret){

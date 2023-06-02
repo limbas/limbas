@@ -415,20 +415,57 @@ if (file_exists($extcss)) {
         $('#reportOutput').val(2);
         const fields = ['gtabid', 'report_id', 'ID', 'use_record', 'report_medium', 'report_rename', 'report_printer', 'resolvedTemplateGroups', 'resolvedDynamicData', 'report_output'];
         const callback = function(result) {
-            limbasWaitsymbol(null, true, true);
 
+            limbasWaitsymbol(null, true, true);
             if (ajaxEvalScript(result)) {
+                if(!$(button).hasClass("btn-success") || !result) {
+                    $('#report_Archive').addClass("btn btn-danger");
+                    $('#report_Archive').html($('#report_Archive').html() + " <i class='lmb-icon lmb-exclamation'></i>");
+                }
                 return; // error
             }
-            /*const fileID = parseInt(result);
-            if (!fileID) {
-                showAlert(jsvar['lng_56']);
-                return;
-            }*/
+            if(!$(button).hasClass("btn-success")) {
+                $(button).prop('disabled', true); // disable button
+                $(report_form.report_rename).prop('disabled', true); // disable name field
+                $(button).addClass("btn btn-success");
+                $(button).html($(button).html() + " <i class='lmb-icon lmb-check'></i>");
+                document.getElementById("report_source").src = result;
+            }
+        };
+        ajaxGet(null,'main_dyns.php','reportAction',fields,callback,'report_form');
+    }
 
+    /**
+     * Regenerates and prints the previewed pdf
+     */
+    function reportPrint(button) {
+        limbasWaitsymbol(null, true);
+
+        $('#reportOutput').val(4);
+        const fields = ['gtabid', 'report_id', 'ID', 'use_record', 'report_medium', 'report_rename', 'report_printer', 'resolvedTemplateGroups', 'resolvedDynamicData', 'report_output'];
+        const callback = function(result) {
+
+            limbasWaitsymbol(null, true, true);
+            if (ajaxEvalScript(result) || !result) {
+                if(!$('#report_Archive').hasClass("btn-danger")) {
+                    $('#report_Archive').addClass("btn btn-danger");
+                    $('#report_Archive').html($('#report_Archive').html() + " <i class='lmb-icon lmb-exclamation'></i>");
+                }
+                return; // error
+            }
             $(button).prop('disabled', true); // disable button
             $(report_form.report_rename).prop('disabled', true); // disable name field
-            $(button).after("<i class='lmb-icon lmb-aktiv'></i>"); // show check mark
+            $(button).addClass("btn btn-success");
+            $(button).html($(button).html() + " <i class='lmb-icon lmb-check'></i>");
+
+            <?php if($umgvar['printer_cache']){?>
+            if(!$('#report_Archive').hasClass("btn-success")) {
+                $('#report_Archive').prop('disabled', true); // disable button
+                $('#report_Archive').addClass("btn btn-success");
+                $('#report_Archive').html($('#report_Archive').html() + " <i class='lmb-icon lmb-check'></i>");
+                document.getElementById("report_source").src = result;
+            }
+            <?php }?>
         };
         ajaxGet(null,'main_dyns.php','reportAction',fields,callback,'report_form');
     }
@@ -459,21 +496,6 @@ if (file_exists($extcss)) {
     }
 
     /**
-     * Regenerates and prints the previewed pdf
-     */
-    function reportPrint() {
-        limbasWaitsymbol(null, true);
-
-        $('#reportOutput').val(4);
-        const fields = ['gtabid', 'report_id', 'ID', 'use_record', 'report_medium', 'report_rename', 'report_printer', 'resolvedTemplateGroups', 'resolvedDynamicData', 'report_output'];
-        const callback = function(result) {
-            limbasWaitsymbol(null, true, true);
-            ajaxEvalScript(result);
-        };
-        ajaxGet(null,'main_dyns.php','reportAction',fields,callback,'report_form');
-    }
-
-    /**
      * Gets all set values of inputs, selects and textareas in the given html container
      * @param $container jQuery
      */
@@ -495,7 +517,7 @@ if (file_exists($extcss)) {
     // on load
     $(function() {
         // set correct medium
-        report_form.report_medium.value= '<?= $report_medium ?>';
+        //report_form.report_medium.value= '<?= $report_medium ?>';
 
         // update left/right inputs if right/left changed
         $('input[name],select[name],textarea[name]').change(function() {
@@ -612,26 +634,30 @@ if (file_exists($extcss)) {
                     <div class="row">
                             <div class="col-md-6 mb-2 pt-2">
                                 <div class="row row-cols-lg-auto g-3">
-                                    
                                     <?php if ($LINK[304] and $gprinter): ?>
-                                        <div>
-                                            <select name="report_printer" class="form-select form-select-sm me-2">
-                                                <?php foreach ($gprinter as $id => &$printer): ?>
-                                                    <option value="<?=$id?>" <?=($printer['default']) ? 'selected' : ''?>><?=$printer['name']?></option>
-                                                <?php endforeach; ?>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <button type="button" class="btn btn-outline-dark me-4" onclick="reportPrint()"><?=$lang[391]?></button>
-                                        </div>
+                                        <button type="button" id="report_Print" class="btn btn-outline-dark ms-2 me-2" onclick="reportPrint(this)"><?=$lang[391]?></button>
                                     <?php endif; ?>
-
+                                    <button type="button" id="report_Archive" class="btn btn-outline-dark me-4" onclick="reportArchive(this)"><?=$lang[1787]?></button>
                                     <button type="button" class="btn btn-outline-dark me-2" onclick="openInNewTab()"><?=$lang[2321]?></button>
-                                    <button type="button" class="btn btn-outline-dark me-2" onclick="downloadUrl('<?=$report_name?>')"><?=$lang[1612]?></button>
+                                    <?php /*<button type="button" class="btn btn-outline-dark me-2" onclick="downloadUrl('<?=$report_name?>')"><?=$lang[1612]?></button> */?>
                                 </div>
                             </div>
                             <div class="col-md-6 mb-2 pt-2">
                                 <div class="row row-cols-lg-auto g-3 justify-content-end">
+
+                                    <?php if ($LINK[304] and $gprinter): ?>
+                                        <div>
+                                            <label><?=$lang[2935]?>
+                                            <select name="report_printer" class="form-select form-select-sm me-2">
+                                                <?php foreach ($gprinter as $id => &$printer): ?>
+                                                    <option value="<?=$id?>" <?=($greportlist[$gtabid]["printer"][$report_id] == $id) ? 'selected' : ''?>><?=$printer['name']?></option>
+                                                <?php endforeach; ?>
+                                            </select>
+                                            </label>
+                                        </div>
+                                    <?php endif; ?>
+
+                                    <?php /*
                                     <div>
                                         <label><?=$lang[2502]?>
                                             <select name="report_medium" onchange="report_form.submit();" class="form-select form-select-sm me-2">
@@ -650,21 +676,21 @@ if (file_exists($extcss)) {
                                             </select>
                                         </label>
                                     </div>
+                                    */
+                                    ?>
+
                                     <div>
                                         <label><?=$lang[4]?><input type="text" name="report_rename" class="form-control form-control-sm me-2" value="<?=$report_name?>"></label>
-                                    </div>
-                                    <div class="pt-2">
-                                        <button type="button" class="btn btn-outline-dark" onclick="reportArchive(this)"><?=$lang[1787]?></button>
                                     </div>
                                     
                                 </div>
                             </div>
                     </div>
 
-                    <iframe src="<?=$path?>" class="h-100 w-100"></iframe>
+                    <iframe id="report_source" src="<?=$path?>" class="h-100 w-100"></iframe>
                 <?php else: ?>
 
-                    <input type="hidden" name="report_medium" id="report_medium" value="pdf">
+                    <input type="hidden" name="report_medium" id="report_medium" value="<?=$report_medium?>">
                 
                     <div class="text-center pt-5">
                         <button type="button" class="btn btn-outline-dark" onclick="loadPreview()"><?=$lang[1500]?></button>

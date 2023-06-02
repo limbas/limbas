@@ -407,7 +407,7 @@ var actfile = null;
 function lmb_ExtSubmit(todo) {
     	//Statt lmb_ExtSubmit("upload") kann auch einfach refreshTree() aufgerufen werden. Problem ist nur, dass das Contextmenu nicht geschlossen wird!
 	if(todo == 'edit'){
-		newexplorer=open("main_admin.php?action=setup_exteditor&fpath=/" + encodeURIComponent(actfile) ,"File_Edit","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=800,height=600");
+		newexplorer=open("main_admin.php?action=setup_exteditor&fpath=" + encodeURIComponent('/' + actfile) ,"File_Edit","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=800,height=600");
 	}else if(todo == 'download'){
 		newexplorer=open(actfile ,"File_Download","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=800,height=600");
 	}else{

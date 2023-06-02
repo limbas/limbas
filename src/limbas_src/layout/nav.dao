@@ -758,16 +758,18 @@ if($LINK[21]){
 		if($LINK[318]){$menu2 = menu_get_standard(318,1); $menu0 = array_merge($menu0,$menu2);}
 		# filemanager
 		if($LINK[142]){$menu2 = menu_get_standard(142,2); $menu0 = array_merge($menu0,$menu2);}
+		# printer cache
+		if($LINK[319]){$menu2 = menu_get_standard(319,3); $menu0 = array_merge($menu0,$menu2);}
 		# snappshot
-		if($LINK[189]){$menu2 = menu_get_standard(189,3); $menu0 = array_merge($menu0,$menu2);}
+		if($LINK[189]){$menu2 = menu_get_standard(189,4); $menu0 = array_merge($menu0,$menu2);}
 		# lock data
-		if($LINK[272]){$menu2 = menu_get_standard(272,4); $menu0 = array_merge($menu0,$menu2);}
+		if($LINK[272]){$menu2 = menu_get_standard(272,5); $menu0 = array_merge($menu0,$menu2);}
 		# reminder
-		if($LINK[40]){$menu2 = menu_get_standard(40,5); $menu0 = array_merge($menu0,$menu2);}
+		if($LINK[40]){$menu2 = menu_get_standard(40,6); $menu0 = array_merge($menu0,$menu2);}
 		# workflow
 		#if($LINK[228]){$menu2 = menu_get_standard(228,5); $menu0 = array_merge($menu0,$menu2);}
         // reportManager
-        if($LINK[317]){$menu2 = menu_get_standard(317,6); $menu0 = array_merge($menu0,$menu2);}
+        if($LINK[317]){$menu2 = menu_get_standard(317,7); $menu0 = array_merge($menu0,$menu2);}
 
 		$menu1[1]["child"] = $menu0;
 	}

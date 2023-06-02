@@ -36,10 +36,12 @@ function periodic_job($cronval){
         $templateId = intval($cronval[0]);
 
         $datasync = new DatasyncProcess();
-        $datasync->start($templateId);
+        $clientid = $datasync->start($templateId);
 
         // rsync files
-        lmb_fileSync_init($templateId);
+        if(is_numeric($clientid) && $clientid > 0) {
+            lmb_fileSync_init($templateId, $clientid);
+        }
     }
     catch(Throwable $t) {
         error_log(print_r($t));

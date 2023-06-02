@@ -851,6 +851,7 @@ td .lmbGtabTabSpace {
 select.gtabHeaderInputINP {
   background-color: white;
   padding: 0.1rem;
+  padding-left:14px;
 }
 
 .gtabHeaderInputINPajax{
@@ -1399,7 +1400,6 @@ DIV.ajax_container {
 
 /*container allgemein*/
 .lmb_container {
-  padding:5px;
   background-color:$farbschemaWEB8;
   border:1px solid $farbschemaWEB3;
   border-radius: 3px 3px 3px 3px;

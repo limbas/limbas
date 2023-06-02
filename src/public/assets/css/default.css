@@ -17084,7 +17084,6 @@ html, body.nav {
 }
 .legacy-table * {
   margin: 0;
-  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
 }
 .legacy-table img, .legacy-table picture, .legacy-table video, .legacy-table canvas, .legacy-table svg {
@@ -17958,7 +17957,6 @@ DIV.ajax_container {
 }
 /*container allgemein*/
 .lmb_container {
-  padding: 5px;
   background-color: #EEEEEE;
   border: 1px solid #C0C0C0;
   border-radius: 3px 3px 3px 3px;
@@ -18706,9 +18704,8 @@ div.calendar tbody .rowhilite td.wn {
   font-weight: bold;
   border: 1px solid #EAF3EE;
   border-radius: 3px 3px 3px 3px;
-  padding: 2px;
   margin-left: 2px;
   text-align: right;
-  height: 12px;
+  height: 20px;
   cursor: pointer;
 }

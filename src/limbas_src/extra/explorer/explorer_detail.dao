@@ -255,40 +255,7 @@ if(lmbdb_fetch_row($rs)){
 		$droprelation = explode("_",$drop_relation);
 	}
 
-	# Herkunft
-	foreach($gtab["table"] as $key0 => $value0){
-		if($gverkn[$key0]["id"]){
-			foreach($gverkn[$key0]["id"] as $key => $value){
-				if($gtab["typ"][$value] == 3 AND $gfield[$key0]["verkntabletype"][$key] == 1){
-					if($gfield[$key0]["field_name"][$gfield[$key0]["mainfield"]]){
-						$mainfield = $gfield[$key0]["field_name"][$gfield[$key0]["mainfield"]];
-					}else{
-						$mainfield = $gfield[$key0]["field_name"][$key];
-					}
-					if($gtab["table"][$key0] AND $gfield[$key0]["md5tab"][$key] AND $gtab["table"][$key0] AND $mainfield){
-						$sqlquery = "SELECT DISTINCT ".$gtab["table"][$key0].".ID,".$gtab["table"][$key0].".".$mainfield.",".$gfield[$key0]["md5tab"][$key].".LID FROM ".$gtab["table"][$key0].",".$gfield[$key0]["md5tab"][$key].",".$gtab["table"][$value]." WHERE ".$gtab["table"][$key0].".ID = ".$gfield[$key0]["md5tab"][$key].".ID AND ".$gfield[$key0]["md5tab"][$key].".VERKN_ID = ".$gtab["table"][$value].".ID AND ".$gtab["table"][$value].".ID = $ID";
-						$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-						if(!$rs) {$commit = 1;}
-						while(lmbdb_fetch_row($rs)){
-							# delete relation
-							if($droprelation[0] == $key0 AND $droprelation[1] == $key AND $droprelation[2] == lmbdb_result($rs, "ID")){
-								require_once(COREPATH . 'gtab/gtab.lib');
-								$verkn = set_verknpf($droprelation[0],$droprelation[1],$droprelation[2],0,$ID,0,0);
-								if($verkn AND $verkn["typ"] AND $verkn["id"] AND $verkn["del_id"]){
-									set_joins($value,$verkn);
-								}
-							}else{
-								$forigin[$key0][$key]["value"][] = lmbdb_result($rs, $mainfield);
-								$forigin[$key0][$key]["id"][] = lmbdb_result($rs, "ID");
-								$forigin[$key0][$key]["field"] = $gfield[$key0]["beschreibung"][$key];
-								$forigin[$key0][$key]["folder"][] = $filestruct["name"][lmbdb_result($rs, "LID")];
-							}
-						}
-					}
-				}
-			}
-		}
-	}
+    $forigin = lmb_getFileRelations($ID,$droprelation);
 
 
 }else{

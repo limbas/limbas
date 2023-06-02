@@ -133,7 +133,6 @@ while(lmbdb_fetch_row($rs)) {
         $orderby = null;
     }
 
-
     ##### 1:1 Verknüpfungen #####
 	# alle 1:1 Verknüpfungen mit Rechten ohne Sortierung
 	$gtab["rverkn"][$gtab["verkn"][$i]][$i] = $i;
@@ -309,7 +308,7 @@ function gfield_array(&$gtab,&$gfield,$gtabid){
 
 	# ------- Spalten-Array ------
 	$sqlquery = "SELECT 
-                        LMB_CONF_FIELDS.FULLSEARCH,LMB_CONF_FIELDS.SEARCHVERSION,LMB_CONF_FIELDS.POPUPDEFAULT,LMB_CONF_FIELDS.VERKNTREE,LMB_CONF_FIELDS.LISTING_VIEWMODE,LMB_CONF_FIELDS.LISTING_CUT,LMB_CONF_FIELDS.RELPARAMS,LMB_CONF_FIELDS.VERKNPARAMS,LMB_CONF_FIELDS.SCALE,LMB_CONF_FIELDS.AGGREGATE,LMB_CONF_FIELDS.COLLREPLACE,LMB_CONF_FIELDS.FIELD_SIZE,LMB_CONF_FIELDS.AJAXPOST,LMB_CONF_FIELDS.POTENCY, LMB_CONF_FIELDS.EDITRULE AS GEDITRULE,LMB_CONF_FIELDS.VIEWRULE,LMB_CONF_FIELDS.QUICKSEARCH,LMB_CONF_FIELDS.HASRECVERKN,LMB_CONF_FIELDS.DEFAULTVALUE,LMB_CONF_FIELDS.LMTRIGGER,LMB_CONF_FIELDS.RELEXT,LMB_CONF_FIELDS.MAINFIELD,LMB_CONF_FIELDS.VERKNTABLETYPE,LMB_CONF_FIELDS.EXT_TYPE,LMB_CONF_FIELDS.INHERIT_TAB,LMB_CONF_FIELDS.INHERIT_FIELD,LMB_CONF_FIELDS.INHERIT_SEARCH,LMB_CONF_FIELDS.INHERIT_GROUP,LMB_CONF_FIELDS.INHERIT_EVAL,LMB_CONF_FIELDS.INHERIT_FILTER,LMB_CONF_FIELDS.SELECT_CUT,LMB_CONF_FIELDS.ID,LMB_CONF_FIELDS.SELECT_POOL,LMB_CONF_FIELDS.DATETIME,LMB_CONF_FIELDS.WYSIWYG,LMB_CONF_FIELDS.GROUPABLE,LMB_CONF_FIELDS.CURRENCY,LMB_CONF_FIELDS.NFORMAT,LMB_CONF_FIELDS.INDIZE,LMB_CONF_FIELDS.INDEXED,LMB_CONF_FIELDS.SELECT_SORT,LMB_CONF_FIELDS.MD5TAB,LMB_CONF_FIELDS.FIELD_ID,LMB_CONF_FIELDS.TAB_ID,LMB_CONF_FIELDS.TAB_GROUP,LMB_CONF_FIELDS.SORT,LMB_CONF_FIELDS.DATA_TYPE,LMB_CONF_FIELDS.FIELD_TYPE,LMB_CONF_FIELDS.FIELD_NAME,LMB_CONF_FIELDS.BESCHREIBUNG,LMB_CONF_FIELDS.SPELLING,LMB_CONF_FIELDS.FIELDKEY,LMB_CONF_FIELDS.ISUNIQUE,LMB_CONF_FIELDS.VERKNFIELDID,LMB_CONF_FIELDS.DYNSEARCH,LMB_CONF_FIELDS.VERKNSEARCH,LMB_CONF_FIELDS.VERKNVIEW,LMB_CONF_FIELDS.VERKNFIND,LMB_CONF_FIELDS.ARTLEISTE,LMB_CONF_FIELDS.VERKNTABID,LMB_CONF_FIELDS.GENLINK,LMB_CONF_FIELDS.ARGUMENT,LMB_CONF_FIELDS.ARGUMENT_EDIT,LMB_CONF_FIELDS.ARGUMENT_TYP,LMB_CONF_FIELDS.MULTILANG,LMB_CONF_FIELDS.VERKNGROUP, LMB_CONF_FIELDS.ENCRYPTION_MODE,
+                        LMB_CONF_FIELDS.FULLSEARCH,LMB_CONF_FIELDS.SEARCHVERSION,LMB_CONF_FIELDS.POPUPDEFAULT,LMB_CONF_FIELDS.VERKNTREE,LMB_CONF_FIELDS.LISTING_VIEWMODE,LMB_CONF_FIELDS.LISTING_CUT,LMB_CONF_FIELDS.RELPARAMS,LMB_CONF_FIELDS.VERKNPARAMS,LMB_CONF_FIELDS.SCALE,LMB_CONF_FIELDS.AGGREGATE,LMB_CONF_FIELDS.COLLREPLACE,LMB_CONF_FIELDS.FIELD_SIZE,LMB_CONF_FIELDS.ROW_SIZE,LMB_CONF_FIELDS.COL_HIDE,LMB_CONF_FIELDS.AJAXPOST,LMB_CONF_FIELDS.POTENCY, LMB_CONF_FIELDS.EDITRULE AS GEDITRULE,LMB_CONF_FIELDS.VIEWRULE,LMB_CONF_FIELDS.QUICKSEARCH,LMB_CONF_FIELDS.HASRECVERKN,LMB_CONF_FIELDS.DEFAULTVALUE,LMB_CONF_FIELDS.LMTRIGGER,LMB_CONF_FIELDS.RELEXT,LMB_CONF_FIELDS.MAINFIELD,LMB_CONF_FIELDS.VERKNTABLETYPE,LMB_CONF_FIELDS.EXT_TYPE,LMB_CONF_FIELDS.INHERIT_TAB,LMB_CONF_FIELDS.INHERIT_FIELD,LMB_CONF_FIELDS.INHERIT_SEARCH,LMB_CONF_FIELDS.INHERIT_GROUP,LMB_CONF_FIELDS.INHERIT_EVAL,LMB_CONF_FIELDS.INHERIT_FILTER,LMB_CONF_FIELDS.SELECT_CUT,LMB_CONF_FIELDS.ID,LMB_CONF_FIELDS.SELECT_POOL,LMB_CONF_FIELDS.DATETIME,LMB_CONF_FIELDS.WYSIWYG,LMB_CONF_FIELDS.GROUPABLE,LMB_CONF_FIELDS.CURRENCY,LMB_CONF_FIELDS.NFORMAT,LMB_CONF_FIELDS.INDIZE,LMB_CONF_FIELDS.INDEXED,LMB_CONF_FIELDS.SELECT_SORT,LMB_CONF_FIELDS.MD5TAB,LMB_CONF_FIELDS.FIELD_ID,LMB_CONF_FIELDS.TAB_ID,LMB_CONF_FIELDS.TAB_GROUP,LMB_CONF_FIELDS.SORT,LMB_CONF_FIELDS.DATA_TYPE,LMB_CONF_FIELDS.FIELD_TYPE,LMB_CONF_FIELDS.FIELD_NAME,LMB_CONF_FIELDS.BESCHREIBUNG,LMB_CONF_FIELDS.SPELLING,LMB_CONF_FIELDS.FIELDKEY,LMB_CONF_FIELDS.ISUNIQUE,LMB_CONF_FIELDS.VERKNFIELDID,LMB_CONF_FIELDS.DYNSEARCH,LMB_CONF_FIELDS.VERKNSEARCH,LMB_CONF_FIELDS.VERKNVIEW,LMB_CONF_FIELDS.VERKNFIND,LMB_CONF_FIELDS.ARTLEISTE,LMB_CONF_FIELDS.VERKNTABID,LMB_CONF_FIELDS.GENLINK,LMB_CONF_FIELDS.ARGUMENT,LMB_CONF_FIELDS.ARGUMENT_EDIT,LMB_CONF_FIELDS.ARGUMENT_TYP,LMB_CONF_FIELDS.MULTILANG,LMB_CONF_FIELDS.VERKNGROUP, LMB_CONF_FIELDS.ENCRYPTION_MODE,
                         LMB_RULES_FIELDS.LMVIEW,LMB_RULES_FIELDS.EXT_TYPE AS GROUPEXT_TYPE,LMB_RULES_FIELDS.VER,LMB_RULES_FIELDS.LMTRIGGER AS RECHTE_TRIGGER,LMB_RULES_FIELDS.EDITRULE,LMB_RULES_FIELDS.COPY,LMB_RULES_FIELDS.FIELDOPTION,LMB_RULES_FIELDS.DEFLT,LMB_RULES_FIELDS.NEED,LMB_RULES_FIELDS.CURRENCY AS GROUPCURRENCY,LMB_RULES_FIELDS.NFORMAT AS GROUPNFORMAT,LMB_RULES_FIELDS.COLOR AS GROUPCOLOR,LMB_RULES_FIELDS.FILTER AS GROUPFILTER,LMB_RULES_FIELDS.FILTERTYP AS GROUPFILTERTYP,LMB_RULES_FIELDS.EDIT AS GROUPEDIT,LMB_RULES_FIELDS.LISTEDIT,LMB_RULES_FIELDS.SPEECHREC,
                         CASE LMB_RULES_FIELDS.GROUP_ID WHEN ".$session["group_id"]." THEN 2 ELSE 1 END AS GROUP_SORT
                         FROM LMB_CONF_FIELDS,LMB_RULES_FIELDS
@@ -502,7 +501,9 @@ function gfield_array(&$gtab,&$gfield,$gtabid){
 			if(lmbdb_result($rs,"RELPARAMS")){$gfield[$gtabid]["relparams"][$bzm0] = lmbdb_result($rs,"RELPARAMS");}
 			if(lmbdb_result($rs,"ENCRYPTION_MODE")){$gfield[$gtabid]["encryption_mode"][$bzm0] = lmbdb_result($rs,"ENCRYPTION_MODE");}
 			if(lmbdb_result($rs,"VERKNSEARCH")){$gfield[$gtabid]["verknsearch"][$bzm0] = explode(",",lmbdb_result($rs,"VERKNSEARCH"));}else{$gfield[$gtabid]["verknsearch"][$bzm0][0] = lmbdb_result($rs,"VERKNFIELDID");}
-			if(lmbdb_result($rs,"VERKNVIEW")){
+			if(lmbdb_result($rs,"COL_HIDE")){$gfield[$gtabid]["col_hide"][$bzm0] = 1;}
+
+            if(lmbdb_result($rs,"VERKNVIEW")){
 				$verknview = explode("?",lmbdb_result($rs,"VERKNVIEW"));
 				if(isset($verknview[1])){
 					$gfield[$gtabid]["verknviewcut"][$bzm0] = $verknview[1];
@@ -655,7 +656,9 @@ function gfield_array(&$gtab,&$gfield,$gtabid){
 			# ------- Spaltenbreiten eintragen ------
 			if($tabrse[$gtabid][$bzm0]){
 				$gfield[$gtabid]["rowsize"][$bzm0] = $tabrse[$gtabid][$bzm0];
-			}else{
+			}elseif(lmbdb_result($rs,"ROW_SIZE")) {
+                $gfield[$gtabid]["rowsize"][$bzm0] = lmbdb_result($rs,"ROW_SIZE");
+            }else{
 				$gfield[$gtabid]["rowsize"][$bzm0] = $umgvar["default_fieldwidth"];
 			}
 
@@ -776,7 +779,7 @@ function resultreportlist(){
 	";
 */
 	$sqlquery = "
-	SELECT DISTINCT LMB_REPORT_LIST.LISTMODE,LMB_REPORT_LIST.EXTENSION,LMB_REPORT_LIST.DEFFORMAT,LMB_REPORT_LIST.CSS,LMB_REPORT_LIST.SAVENAME,LMB_REPORT_LIST.ODT_TEMPLATE,LMB_REPORT_LIST.ODS_TEMPLATE,LMB_REPORT_LIST.ID,LMB_REPORT_LIST.TARGET,LMB_REPORT_LIST.NAME,LMB_REPORT_LIST.REFERENZ_TAB,LMB_RULES_REPFORM.HIDDEN,LMB_RULES_REPFORM.EDITABLE, LMB_REPORT_LIST.PARENT_ID, LMB_REPORT_LIST.SAVED_TEMPLATE
+	SELECT DISTINCT LMB_REPORT_LIST.PRINTER,LMB_REPORT_LIST.LISTMODE,LMB_REPORT_LIST.EXTENSION,LMB_REPORT_LIST.DEFFORMAT,LMB_REPORT_LIST.CSS,LMB_REPORT_LIST.SAVENAME,LMB_REPORT_LIST.ODT_TEMPLATE,LMB_REPORT_LIST.ODS_TEMPLATE,LMB_REPORT_LIST.ID,LMB_REPORT_LIST.TARGET,LMB_REPORT_LIST.NAME,LMB_REPORT_LIST.REFERENZ_TAB,LMB_RULES_REPFORM.HIDDEN,LMB_RULES_REPFORM.EDITABLE, LMB_REPORT_LIST.PARENT_ID, LMB_REPORT_LIST.SAVED_TEMPLATE
 	FROM LMB_REPORT_LIST,LMB_RULES_REPFORM
 	WHERE LMB_RULES_REPFORM.REPFORM_ID = LMB_REPORT_LIST.ID
 	AND LMB_RULES_REPFORM.TYP = 1
@@ -797,6 +800,7 @@ function resultreportlist(){
 		if(lmbdb_result($rs, "SAVENAME")){$greportlist[$gtabid]["savename"][$key] = lmbdb_result($rs, "SAVENAME");}
 		if(lmbdb_result($rs, "LISTMODE")){$greportlist[$gtabid]["listmode"][$key] = lmbdb_result($rs, "LISTMODE");}
 		if(lmbdb_result($rs, "EXTENSION")){$greportlist[$gtabid]["extension"][$key] = lmbdb_result($rs, "EXTENSION");}
+        if(lmbdb_result($rs, "PRINTER")){$greportlist[$gtabid]["printer"][$key] = lmbdb_result($rs, "PRINTER");}
         $greportlist[$gtabid]["target"][$key] = lmbdb_result($rs, "TARGET");
         $greportlist[$gtabid]["parent_id"][$key] = lmbdb_result($rs, "PARENT_ID");
         $greportlist[$gtabid]["saved_template"][$key] = lmbdb_result($rs, "SAVED_TEMPLATE");
@@ -852,7 +856,7 @@ function resultreminder(){
 	global $session;
 	global $lang;
 
-	$sqlquery = "SELECT DISTINCT LMB_REMINDER_LIST.ID,LMB_REMINDER_LIST.SORT,LMB_REMINDER_LIST.TAB_ID,LMB_REMINDER_LIST.NAME,LMB_REMINDER_LIST.GROUPBASED,LMB_REMINDER_LIST.FORML_ID,LMB_REMINDER_LIST.FORMD_ID,LMB_RULES_REPFORM.HIDDEN
+	$sqlquery = "SELECT DISTINCT LMB_REMINDER_LIST.ID,LMB_REMINDER_LIST.DEFAULTSELECTION,LMB_REMINDER_LIST.SORT,LMB_REMINDER_LIST.TAB_ID,LMB_REMINDER_LIST.NAME,LMB_REMINDER_LIST.GROUPBASED,LMB_REMINDER_LIST.FORML_ID,LMB_REMINDER_LIST.FORMD_ID,LMB_RULES_REPFORM.HIDDEN
 	FROM LMB_REMINDER_LIST,LMB_RULES_REPFORM
 	WHERE LMB_RULES_REPFORM.REPFORM_ID = LMB_REMINDER_LIST.ID
 	AND LMB_RULES_REPFORM.TYP = 4
@@ -870,6 +874,7 @@ function resultreminder(){
 		$greminder[$gtabid]["forml_id"][$key] = lmbdb_result($rs, "FORML_ID");
 		$greminder[$gtabid]["formd_id"][$key] = lmbdb_result($rs, "FORMD_ID");
 		$greminder[$gtabid]["groupbased"][$key] = lmbdb_result($rs, "GROUPBASED");
+        $greminder[$gtabid]["default"][$key] = lmbdb_result($rs, "DEFAULTSELECTION");
 		$greminder["argresult_id"][$key] = $gtabid;
 		if(lmbdb_result($rs, "HIDDEN") AND $greminder[$gtabid]["hidden"][$key] !== 0){$greminder[$gtabid]["hidden"][$key] = 1;}
 		else{$greminder[$gtabid]["hidden"][$key] = 0;}
@@ -1075,7 +1080,17 @@ function resultfiles(){
 			if(in_array($gfield[$gtabid]["field_name"][$key],$fields)){
 				$fkey = $gtab["argresult_id"]["LDMS_FILES"]."_".$key;
 				$gfile["form_name"][$fkey] = "g_".$gtab["argresult_id"]["LDMS_FILES"]."_".$key;
-				$gfile["id"][$fkey] = $fkey;$gfile["fid"][$fkey] = $key;$gfile["name"][$fkey] = $gfield[$gtabid]["field_name"][$key];$gfile["title"][$fkey] = $gfield[$gtabid]["spelling"][$key];$gfile["desc"][$fkey] = $gfield[$gtabid]["beschreibung"][$key];$gfile["tabid"][$fkey] = $gtab["argresult_id"]["LDMS_FILES"];$gfile["tab"][$fkey] = $tab;$gfile["typ"][$fkey] = $gfield[$gtabid]["parse_type"][$key];$gfile["size"][$fkey] = $gfield[$gtabid]["size"][$key];$gfile["field_type"][$fkey] = $gfield[$gtabid]["field_type"][$key];$gfile["data_type"][$fkey] = $gfield[$gtabid]["data_type"][$key];
+				$gfile["id"][$fkey] = $fkey;
+                $gfile["fid"][$fkey] = $key;
+                $gfile["name"][$fkey] = $gfield[$gtabid]["field_name"][$key];
+                $gfile["title"][$fkey] = $gfield[$gtabid]["spelling"][$key];
+                $gfile["desc"][$fkey] = $gfield[$gtabid]["beschreibung"][$key];
+                $gfile["tabid"][$fkey] = $gtab["argresult_id"]["LDMS_FILES"];
+                $gfile["tab"][$fkey] = $tab;
+                $gfile["typ"][$fkey] = $gfield[$gtabid]["parse_type"][$key];
+                $gfile["size"][$fkey] = $gfield[$gtabid]["size"][$key];
+                $gfile["field_type"][$fkey] = $gfield[$gtabid]["field_type"][$key];
+                $gfile["data_type"][$fkey] = $gfield[$gtabid]["data_type"][$key];
 			}
 			$bzm++;
 		}
@@ -1089,7 +1104,17 @@ function resultfiles(){
 					foreach($gfield[$metatabid]["sort"] as $key => $val){
 						$fkey = $metatabid."_".$key;
 						$gfile["form_name"][$fkey] = "g_".$metatabid."_".$key;
-						$gfile["id"][$fkey] = $fkey;$gfile["fid"][$fkey] = $key;$gfile["name"][$fkey] = $gfield[$metatabid]["field_name"][$key];$gfile["title"][$fkey] = $gfield[$metatabid]["spelling"][$key];$gfile["desc"][$fkey] = $gfield[$metatabid]["beschreibung"][$key];$gfile["tabid"][$fkey] = $metatabid;$gfile["tab"][$fkey] = $gtab["table"][$metatabid];$gfile["typ"][$fkey] = $gfield[$metatabid]["parse_type"][$key];$gfile["size"][$fkey] = $gfield[$metatabid]["size"][$key];$gfile["field_type"][$fkey] = $gfield[$metatabid]["field_type"][$key];$gfile["data_type"][$fkey] = $gfield[$metatabid]["data_type"][$key];
+						$gfile["id"][$fkey] = $fkey;
+                        $gfile["fid"][$fkey] = $key;
+                        $gfile["name"][$fkey] = $gfield[$metatabid]["field_name"][$key];
+                        $gfile["title"][$fkey] = $gfield[$metatabid]["spelling"][$key];
+                        $gfile["desc"][$fkey] = $gfield[$metatabid]["beschreibung"][$key];
+                        $gfile["tabid"][$fkey] = $metatabid;
+                        $gfile["tab"][$fkey] = $gtab["table"][$metatabid];
+                        $gfile["typ"][$fkey] = $gfield[$metatabid]["parse_type"][$key];
+                        $gfile["size"][$fkey] = $gfield[$metatabid]["size"][$key];
+                        $gfile["field_type"][$fkey] = $gfield[$metatabid]["field_type"][$key];
+                        $gfile["data_type"][$fkey] = $gfield[$metatabid]["data_type"][$key];
 						$bzm++;
 					}}
 				}
@@ -1229,8 +1254,17 @@ function result_wfl(){
 #----------------- Printer -------------------
 function resultPrinter() {
     global $db;
+    global $umgvar;
+    global $lmmultitenants;
 
-    $sqlquery = 'SELECT ID, NAME, SYSNAME, CONFIG, DEF FROM LMB_PRINTERS ORDER BY ID';
+
+    // multitenant
+    $mut = 0;
+    if($umgvar['multitenant'] AND is_array($lmmultitenants['mid'])) {
+        $where = 'WHERE LMB_MID IN ('.implode(',',$lmmultitenants['mid']) .',0,NULL)';
+    }
+
+    $sqlquery = "SELECT ID, NAME, SYSNAME, CONFIG, DEF FROM LMB_PRINTERS $where ORDER BY ID";
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 
     $printers = array();
@@ -1245,6 +1279,7 @@ function resultPrinter() {
         }
         $printers[lmbdb_result($rs, 'ID')] = $printer;
     }
+
     return $printers;
 }
 

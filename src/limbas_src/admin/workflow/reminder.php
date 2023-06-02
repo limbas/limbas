@@ -38,6 +38,7 @@
                 <th><?=$lang[2756]?></th>
                 <th><?=$lang[1169]?></th>
                 <th><?=$lang[2742]?></th>
+                <th><?=$lang[2685]?></th>
             </tr>
             </thead>
 
@@ -48,7 +49,7 @@
                 foreach ($reminder as $tabid => $value):
                     #if($tabid == "name_id") { continue; }
 
-                    echo '<tr><td colspan="8">'.$gtab['table'][$tabid].'</td></tr>';
+                    echo '<tr><td colspan="9">'.$gtab['table'][$tabid].'</td></tr>';
 
                     foreach ($value['name'] as $id => $name): ?>
                         
@@ -97,6 +98,8 @@
 
                                         <select name="reminderformd[<?=$id?>]" onchange="document.form1.editid.value=<?=$id?>;document.form1.submit();" class="form-select form-select-sm">
                                             <option></option>
+                                            <option value="-1" <?if($value['formd_id'][$id] == -1){echo 'selected';}?>>-<?=$lang[2710]?>-</option>
+                                            <option disabled>________________</option>
                                             <?=$forms?>
                                         </select>
                                     <?php
@@ -107,7 +110,8 @@
                                 ?>
                             </td>
                             <td><input type="checkbox" name="remindergrouping[<?=$id?>]" <?=$value['groupbased'][$id]?'checked':''?> value="1" onchange="document.form1.editid.value=<?=$id?>;document.form1.submit();"></td>
-                    </tr>
+                            <td><input type="checkbox" name="reminderdefault[<?=$id?>]" <?=$value['defaultselection'][$id]?'checked':''?> value="1" onchange="document.form1.editid.value=<?=$id?>;document.form1.submit();"></td>
+                        </tr>
                     <?php
                     endforeach;
                 endforeach;
@@ -122,6 +126,7 @@
                     <th colspan="3"></th>
                     <th><?=$lang[4]?></th>
                     <th><?=$lang[164]?></th>
+                    <th></th>
                     <th></th>
                     <th></th>
                     <th></th>
@@ -141,6 +146,7 @@
                         </SELECT>
                     </td>
                     <td><button type="submit" name="new_reminder" class="btn btn-primary btn-sm" value="1"><?=$lang[2740]?></button></td>
+                    <td></td>
                     <td></td>
                     <td></td>
                 </tr>

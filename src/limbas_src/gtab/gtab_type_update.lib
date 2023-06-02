@@ -556,10 +556,10 @@ function uftyp_37($gtab_id,$field_id,$ID,&$change_value) {
     global $umgvar;
     static $valid_done;
 
-    // for table list update always/only LMB_VALIDFROM
-    #$valid_from_fieldID = $gfield[$gtab_id]["argresult_name"]['LMB_VALIDFROM'];
-    #if($valid_done[$gtab_id][$valid_from_fieldID]){return true;}
-    #$valid_done[$gtab_id][$valid_from_fieldID] = 1;
+    // skip update if version or copy
+    if($GLOBALS['use_typ'] == 'versioning' OR $GLOBALS['use_typ'] == 'copy'){
+        return true;
+    }
 
     if($change_value[0] AND !$current_vfrom = get_stamp(convert_date($change_value[0],1))){
         return false;
@@ -568,32 +568,77 @@ function uftyp_37($gtab_id,$field_id,$ID,&$change_value) {
         return false;
     }
 
+    if($gtab["datasync"][$gtab_id]) {
+        $sqlsync = ",LMB_SYNC_ID,LMB_SYNC_SLAVE";
+    }
+
     // get validity stamps with versioning
     if($gtab['validity'][$gtab_id] == 2) {
-        $sqlquery = "SELECT LMB_VALIDFROM,LMB_VALIDTO,VPID,VID FROM " . $gtab['table'][$gtab_id] . " WHERE ID = $ID";
+
+        // get current data
+        $sqlquery = "SELECT LMB_VALIDFROM,LMB_VALIDTO,VPID,VID $sqlsync FROM " . $gtab['table'][$gtab_id] . " WHERE ID = $ID";
         $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
         if (!$rs) {$commit = 1;}
-        $cf = lmbdb_result($rs, 'LMB_VALIDFROM');
-        $ct = lmbdb_result($rs, 'LMB_VALIDTO');
-        if(!$current_vfrom AND $cf){$current_vfrom = get_stamp($cf);$vfromIsNULL = 1;}
-        if(!$current_vto AND $ct){$current_vto = get_stamp($ct);$vtoIsNULL = 1;}
+        if($cf = lmbdb_result($rs, 'LMB_VALIDFROM')){$cf = get_stamp($cf);}
+        if($ct = lmbdb_result($rs, 'LMB_VALIDTO')){$ct = get_stamp($ct);}
+        if($current_vfrom AND $current_vfrom != $cf){$current_vfrom_update = 1;}
+        if($current_vto AND $current_vto != $ct){$current_vto_update = 1;}
+        if(!$current_vfrom AND $cf){$current_vfrom = $cf;$vfromIsNULL = 1;}
+        if(!$current_vto AND $ct){$current_vto = $ct;$vtoIsNULL = 1;}
         $current_VPID = lmbdb_result($rs, 'VPID');
         $current_VID = lmbdb_result($rs, 'VID');
-
-        // check if is last Version
-        $sqlquery = "SELECT ID FROM ".$gtab["table"][$gtab_id]." WHERE VPID = $current_VPID AND VID = ".($current_VID+1);
-        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-        if(!lmbdb_result($rs,'ID')){
-            $is_lastVersion = 1;
+        if($gtab["datasync"][$gtab_id]) {
+            $SYNC_ID = lmbdb_result($rs, 'LMB_SYNC_ID');
+            $SYNC_SLAVE = lmbdb_result($rs, 'LMB_SYNC_SLAVE');
         }
 
-        if($current_VID == 1){
+        // get first Version
+        $sqlquery = "SELECT ID,LMB_VALIDFROM,LMB_VALIDTO FROM ".$gtab["table"][$gtab_id]." WHERE VPID = $current_VPID AND VID = 1";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+        $first_ID = lmbdb_result($rs,'ID');
+        $first_vfrom = get_stamp(lmbdb_result($rs,'LMB_VALIDFROM'));
+        $first_vto = get_stamp(lmbdb_result($rs,'LMB_VALIDTO'));
+
+        // get last Version
+        $sqlquery = "SELECT ID,LMB_VALIDFROM,LMB_VALIDTO FROM ".$gtab["table"][$gtab_id]." WHERE VPID = $current_VPID AND VID = (SELECT MAX(VID) FROM ".$gtab["table"][$gtab_id]." WHERE VPID = $current_VPID)";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+        $last_ID = lmbdb_result($rs,'ID');
+        $last_vfrom = get_stamp(lmbdb_result($rs,'LMB_VALIDFROM'));
+        $last_vto = get_stamp(lmbdb_result($rs,'LMB_VALIDTO'));
+
+        // get previous Version
+        $sqlquery = "SELECT ID,LMB_VALIDFROM,LMB_VALIDTO $sqlsync FROM ".$gtab["table"][$gtab_id]." WHERE VPID = $current_VPID AND VID = ".($current_VID-1);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+        $left_ID = lmbdb_result($rs,'ID');
+        $left_vfrom = lmbdb_result($rs,'LMB_VALIDFROM');
+        $left_vto = lmbdb_result($rs,'LMB_VALIDTO');
+        if($gtab["datasync"][$gtab_id]) {
+            $left_SYNC_ID = lmbdb_result($rs, 'LMB_SYNC_ID');
+            $left_SYNC_SLAVE = lmbdb_result($rs, 'LMB_SYNC_SLAVE');
+        }
+
+        // get next Version
+        $sqlquery = "SELECT ID,LMB_VALIDFROM,LMB_VALIDTO $sqlsync FROM ".$gtab["table"][$gtab_id]." WHERE VPID = $current_VPID AND VID = ".($current_VID+1);
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+        $right_ID = lmbdb_result($rs,'ID');
+        $right_vfrom = lmbdb_result($rs,'LMB_VALIDFROM');
+        $right_vto = lmbdb_result($rs,'LMB_VALIDTO');
+        if($gtab["datasync"][$gtab_id]) {
+            $right_SYNC_ID = lmbdb_result($rs, 'LMB_SYNC_ID');
+            $right_SYNC_SLAVE = lmbdb_result($rs, 'LMB_SYNC_SLAVE');
+        }
+
+        // check if is first Version
+        if($first_ID == $ID){
             $is_firstVersion = 1;
+        }
+        if($last_ID == $ID){
+            $is_lastVersion = 1;
         }
 
     // get validity stamps
     }else{
-        $sqlquery = "SELECT LMB_VALIDFROM,LMB_VALIDTO FROM " . $gtab['table'][$gtab_id] . " WHERE ID = $ID";
+        $sqlquery = "SELECT LMB_VALIDFROM,LMB_VALIDTO $sqlsync FROM " . $gtab['table'][$gtab_id] . " WHERE ID = $ID";
         $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
         if (!$rs) {$commit = 1;}
         $cf = lmbdb_result($rs, 'LMB_VALIDFROM');
@@ -602,14 +647,30 @@ function uftyp_37($gtab_id,$field_id,$ID,&$change_value) {
         if(!$current_vto AND $ct){$current_vto = get_stamp($ct);$vtoIsNULL = 1;}
         $is_lastVersion = 1;
         $is_firstVersion = 1;
+        if($gtab["datasync"][$gtab_id]) {
+            $SYNC_ID = lmbdb_result($rs, 'LMB_SYNC_ID');
+            $SYNC_SLAVE = lmbdb_result($rs, 'LMB_SYNC_SLAVE');
+        }
     }
 
     // from must smaller as to
     if($current_vfrom AND $current_vto) {
          if ($current_vfrom > $current_vto OR $current_vto < $current_vfrom) {
-             lmb_alert('from or to not plausibel - from must smaller as to and to must bigger as from');
+             lmb_alert('from or to not plausibel - from must smaller as to');
              return false;
          }
+    }
+
+    // valid-to must not be empty
+    if($vfromIsNULL AND !$is_firstVersion) {
+        lmb_alert('valid-from must not be empty');
+        return false;
+    }
+
+    // valid-from must not be empty
+    if($vtoIsNULL AND !$is_lastVersion) {
+        lmb_alert('valid-to must not be empty');
+        return false;
     }
 
     // list 1:1 relations
@@ -622,30 +683,22 @@ function uftyp_37($gtab_id,$field_id,$ID,&$change_value) {
     // validity versioning
     if($gtab['validity'][$gtab_id] == 2) {
 
-        // from
-        if($current_vfrom){
+        // update LMB_VALIDFROM
+        if($current_vfrom_update AND $current_vfrom){
 
-            // get previous Version
-            $sqlquery = "SELECT ID,LMB_VALIDFROM,LMB_VALIDTO FROM ".$gtab["table"][$gtab_id]." WHERE VPID = $current_VPID AND VID = ".($current_VID-1);
-            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-            $left_ID = lmbdb_result($rs,'ID');
-            $left_vfrom = lmbdb_result($rs,'LMB_VALIDFROM');
-            $left_vto = lmbdb_result($rs,'LMB_VALIDTO');
-
+            // if previos Version exists
             if($left_ID){
-                // insert at beginning
+                // insert at beginning - rebuild VID
                 if($left_vfrom AND $current_vfrom <= get_stamp($left_vfrom)){
-                    $sqlquery = "SELECT ID,LMB_VALIDFROM,LMB_VALIDTO FROM ".$gtab["table"][$gtab_id]." WHERE VPID = $current_VPID AND VID = 1";
-                    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-                    $first_ID = lmbdb_result($rs,'ID');
-                    $first_vfrom = get_stamp(lmbdb_result($rs,'LMB_VALIDFROM'));
-                    $first_vto = get_stamp(lmbdb_result($rs,'LMB_VALIDTO'));
+                    lmb_alert($lang[3122].' '.get_date($left_vfrom));
+                    return false;
 
+                    /*
                     // if to is empty
                     if(!$current_vto){$current_vto = (drop_oneday($first_vto));}
 
                     if($current_vto >= $first_vto OR $current_vfrom >= $first_vfrom){
-                        lmb_alert('not plausibel');
+                        lmb_alert('from or to is behind first version');
                         return false;
                     }
 
@@ -660,10 +713,14 @@ function uftyp_37($gtab_id,$field_id,$ID,&$change_value) {
                         $sqlquery = "UPDATE " . $gtab["table"][$vgtabid] . " SET VID = 1 WHERE ID = $ID";
                         $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
                     }
+
+                    // ignore LMB_VALIDTO - set here
                     $ignore_vto = 1;
+                    */
 
                 // insert at end
                 }else {
+
                     $left_to = convert_stamp(drop_oneday($current_vfrom)); // -1 day
 
                     // update 1:1 relations
@@ -671,45 +728,45 @@ function uftyp_37($gtab_id,$field_id,$ID,&$change_value) {
                         $sqlquery = "UPDATE " . $gtab["table"][$vgtabid] . " SET LMB_VALIDTO = '$left_to' WHERE ID = $left_ID";
                         $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
                         if (!$rs) {$commit = 1;}
+                        # --- sync systemfields ----
+                        if($gtab["datasync"][$vgtabid]){
+                            execute_sync($vgtabid,0,$left_ID,$null,$left_SYNC_ID,$left_SYNC_SLAVE,3);
+                        }
                     }
                 }
-                # --- sync systemfields ----
-                if($gtab["datasync"][$gtab_id]){
-                    execute_sync($gtab_id,0,$left_ID,$null,null,null,3);
-                }
+
             }
 
         }
 
-        // to
+        // LMB_VALIDTO
         if($current_vto AND !$ignore_vto){
 
-            $sqlquery = "SELECT ID,LMB_VALIDFROM,LMB_VALIDTO FROM ".$gtab["table"][$gtab_id]." WHERE VPID = $current_VPID AND VID = ".($current_VID+1);
-            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-            $right_ID = lmbdb_result($rs,'ID');
-            $right_vfrom = lmbdb_result($rs,'LMB_VALIDFROM');
-            $right_vto = lmbdb_result($rs,'LMB_VALIDTO');
-
+            // if next Version exists
             if($right_ID){
 
                 if($right_vto AND get_stamp($right_vto) <= $current_vto){
-                    lmb_alert('to big');
+                    lmb_alert($lang[3121].' '.get_date($right_vto));
                     return false;
                 }
 
                 $right_from = convert_stamp(add_oneday($current_vto)); // +1 day
-                // update 1:1 relations
+                // update only 1:1 relations
                 foreach($tablist as $key => $vgtabid){
-                    $sqlquery = "UPDATE ".$gtab["table"][$vgtabid]." SET LMB_VALIDFROM = '$right_from' WHERE ID = $right_ID";
-                    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-                    if(!$rs) {$commit = 1;}
+                    if($gtab['validity'][$vgtabid] == 2) {
+                        if($vgtabid != $gtab_id) { // skip self
+                            $sqlquery = "UPDATE " . $gtab["table"][$vgtabid] . " SET $sqlupdate WHERE ID = $ID";
+                            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
+                            if (!$rs) {
+                                $commit = 1;
+                            }
+                        }
+                        # --- sync systemfields ----
+                        if($gtab["datasync"][$vgtabid]){
+                            execute_sync($vgtabid,0,$ID,$null,$SYNC_ID,$SYNC_SLAVE,3);
+                        }
+                    }
                 }
-
-                # --- sync systemfields ----
-                if($gtab["datasync"][$gtab_id]){
-                    execute_sync($gtab_id,0,$right_ID,$null,null,null,3);
-                }
-
             }
 
         }
@@ -735,10 +792,16 @@ function uftyp_37($gtab_id,$field_id,$ID,&$change_value) {
 
     // update 1:1 relations
     foreach($tablist as $key => $vgtabid){
-        if($gtab['validity'][$vgtabid] == 2 AND $vgtabid != $gtab_id) {
-            $sqlquery = "UPDATE ".$gtab["table"][$vgtabid]." SET $sqlupdate WHERE ID = $ID";
-            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-            if(!$rs) {$commit = 1;}
+        if($gtab['validity'][$vgtabid] == 2) {
+            if($vgtabid != $gtab_id) { // skip self
+                $sqlquery = "UPDATE " . $gtab["table"][$vgtabid] . " SET $sqlupdate WHERE ID = $ID";
+                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
+                if (!$rs) {$commit = 1;}
+            }
+            # --- sync systemfields ----
+            if($gtab["datasync"][$vgtabid]){
+                execute_sync($vgtabid,0,$ID,$null,$SYNC_ID,$SYNC_SLAVE,3);
+            }
         }
     }
 

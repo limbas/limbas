@@ -328,8 +328,8 @@ elseif ($action == "setup_tab" AND $LINK[$action] == 1) {
 	}
 }
 elseif ($action == "setup_tabschema" AND $LINK[$action] == 1) {
-	$require2 = "admin/tables/tabschema.dao";
-	$require3 = "admin/tables/tabschema.php";
+	$require2 = "admin/tables/tabschema/tabschema.dao";
+	$require3 = "admin/tables/tabschema/index.php";
 	$ONKEYDOWN = "OnKeydown=\"sendkeydown(event);\"";
 	$ONLOAD = "OnLoad=\"paint_lines();\"";
 	#$ONMOUSEUP = "OnMouseUp=\"paint_lines();\"";

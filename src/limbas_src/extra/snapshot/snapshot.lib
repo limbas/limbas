@@ -330,26 +330,29 @@ function SNAP_delete($id,$gtabid)
 {
 	global $db;
 	global $session;
-	global $filter;
-	global $gsr;
-	global $gfield;
 	global $gsnap;
-	
-	if(!$gsnap[$gtabid]["owner"][$id] AND !$gsnap[$gtabid]["del"][$id]){return false;}
 
-	if($id>0)
-	{
-		$sqlquery = "DELETE FROM LMB_SNAP WHERE ID = ".$id;
-		$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!$rs1) {$commit = 1;}
-		$sqlquery = "DELETE FROM LMB_SNAP_SHARED WHERE SNAPSHOT_ID = ".$id;
-		$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!$rs1) {$commit = 1;}
-		unset($gsnap[$gtabid]["id"][$id]);
-		return true;
-	}
-	else
-	return false;
+	if(($gsnap[$gtabid]["owner"][$id] OR $session['group_id'] == 1) OR $gsnap[$gtabid]["del"][$id]) {
+
+        if ($id > 0) {
+            $sqlquery = "DELETE FROM LMB_SNAP WHERE ID = " . $id;
+            $rs1 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (!$rs1) {
+                $commit = 1;
+            }
+            $sqlquery = "DELETE FROM LMB_SNAP_SHARED WHERE SNAPSHOT_ID = " . $id;
+            $rs1 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (!$rs1) {
+                $commit = 1;
+            }
+            unset($gsnap[$gtabid]["id"][$id]);
+            unset($gsnap[$gtabid]["name"][$id]);
+            return true;
+        } else
+            return false;
+
+    }
+    return false;
 }
 
 
@@ -376,7 +379,9 @@ function SNAP_save($gtabid,$name,$id,$snapf = "null"){
 		$snapfilter["hidecols"] = $filter["hidecols"][$gtabid];
 		$snapfilter["form"] = $filter["form"][$gtabid];
 		$snapfilter["gsr"] = $gsr[$gtabid];
-		$snapfilter["sort"] = $gfield[$gtabid]["sort"]; # unknown
+		$snapfilter["sort"] = $gfield[$gtabid]["sort"];
+        $snapfilter["rowsize"] = $gfield[$gtabid]["rowsize"];
+
 		$snapf = serialize($snapfilter);
 	}
 	
@@ -394,7 +399,7 @@ function SNAP_save($gtabid,$name,$id,$snapf = "null"){
 	elseif ($name){
 		#$_SESSION["gsnap"] = null;
 
-		$sqlquery = "SELECT ID FROM LMB_SNAP WHERE NAME = '".parse_db_string(str_replace(";",",",$name),30)."' AND TABID = $gtabid AND USER_ID = " .$session["user_id"];
+		$sqlquery = "SELECT ID FROM LMB_SNAP WHERE NAME = '".parse_db_string(str_replace(";",",",$name),50)."' AND TABID = $gtabid AND USER_ID = " .$session["user_id"];
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		if(lmbdb_fetch_row($rs)){
@@ -404,7 +409,7 @@ function SNAP_save($gtabid,$name,$id,$snapf = "null"){
 		}else{
 			lmb_StartTransaction();
 			$NEXTID = next_db_id("LMB_SNAP");
-			$sqlquery1 = "INSERT INTO LMB_SNAP (ID,USER_ID,TABID,NAME) VALUES ($NEXTID,".$session["user_id"] . ",$gtabid,'".parse_db_string(str_replace(";",",",$name),30)."')";
+			$sqlquery1 = "INSERT INTO LMB_SNAP (ID,USER_ID,TABID,NAME) VALUES ($NEXTID,".$session["user_id"] . ",$gtabid,'".parse_db_string(str_replace(";",",",$name),50)."')";
 			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 			$prepare_string = "UPDATE LMB_SNAP SET FILTER = ? WHERE ID = ".$NEXTID;
@@ -461,6 +466,7 @@ function SNAP_get_filter($snap_id,$gtabid){
 	$GLOBALS["filter"]["hidecols"][$gtabid] = $snapfilter["hidecols"];
 	$GLOBALS["filter"]["form"][$gtabid] = $snapfilter["form"];
 	$GLOBALS["gfield"][$gtabid]["sort"] = $snapfilter["sort"];
+    if($snapfilter["rowsize"]){$GLOBALS["gfield"][$gtabid]["rowsize"] = $snapfilter["rowsize"];}
 	$GLOBALS["gsr"][$gtabid] = $snapfilter["gsr"];
 
     if($gsnap[$gtabid]["ext"][$snap_id]){
@@ -501,7 +507,8 @@ function SNAP_set_reminder($gtabid){
 	$filter["status"] = $GLOBALS["filter"]["status"][$gtabid];
 	$filter["hidecols"] = $GLOBALS["filter"]["hidecols"][$gtabid];
 	$filter["form"] = $GLOBALS["filter"]["form"][$gtabid];
-	$filter["sort"] = $GLOBALS["gfield"][$gtabid]["sort"]; # unknown 
+	$filter["sort"] = $GLOBALS["gfield"][$gtabid]["sort"];
+    $filter["rowsize"] = $GLOBALS["gfield"][$gtabid]["rowsize"];
 	$filter["gsr"] = $GLOBALS["gsr"][$gtabid];
 	
 	$GLOBALS["session"]["snapreminder"][$gtabid] = $filter;
@@ -516,13 +523,34 @@ function SNAP_get_reminder($gtabid){
 		$GLOBALS["filter"]["status"][$gtabid] = $GLOBALS["session"]["snapreminder"][$gtabid]["status"];
 		$GLOBALS["filter"]["hidecols"][$gtabid] = $GLOBALS["session"]["snapreminder"][$gtabid]["hidecols"];
 		$GLOBALS["filter"]["form"][$gtabid] = $GLOBALS["session"]["snapreminder"][$gtabid]["form"];
-		$GLOBALS["gfield"][$gtabid]["sort"] = $GLOBALS["session"]["snapreminder"][$gtabid]["sort"]; # unknown 
+		$GLOBALS["gfield"][$gtabid]["sort"] = $GLOBALS["session"]["snapreminder"][$gtabid]["sort"];
+        $GLOBALS["gfield"][$gtabid]["rowsize"] = $GLOBALS["session"]["snapreminder"][$gtabid]["rowsize"];
 		$GLOBALS["gsr"][$gtabid] = $GLOBALS["session"]["snapreminder"][$gtabid]["gsr"];
 		$GLOBALS["filter"]["extension"][$gtabid] = null;
 	}
 	
 	$GLOBALS["session"]["snapreminder"][$gtabid] = null;
 }
+
+function SNAP_td_size_global($rowsize,$gtabid){
+    global $db;
+
+	$rsize = explode(";",$rowsize);
+
+	foreach ($rsize as $bzm => $value){
+		$element = explode(",",$rsize[$bzm]);
+
+        $field_id = $element[0];
+        $width = parse_db_int($element[1]);
+        if($width <= 10){$width = 10;}
+
+		$sqlquery = "UPDATE LMB_CONF_FIELDS SET ROW_SIZE = $width WHERE FIELD_ID = $field_id AND TAB_ID = $gtabid";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+	}
+}
+
+
 
 
 ?>

@@ -32,12 +32,14 @@ const USERPATH = DEPENDENTPATH . 'USER/';
 
 require_once(VENDORPATH . 'autoload.php');
 
+require_once(COREPATH . 'autoload.php');
+
 
 
 
 
 // require dependencies
-if (!defined('LIMBAS_INSTALL')) {
+if (!defined('LIMBAS_INSTALL') AND !defined('IS_CRON')) {
     require_once COREPATH . 'admin/tools/update/Updater.php';
     require_once COREPATH . 'admin/tools/update/Update.php';
     require_once COREPATH . 'layout/Layout.php';

@@ -342,8 +342,8 @@ class importSync
 
             // extension
             if($confirm_syncimport AND $callExtensionFunctionName) {
-                if (is_dir($umgvar["pfad"] . "/EXTENSIONS/")) {
-                    if ($extdir = read_dir($umgvar["pfad"] . "/EXTENSIONS/", 1)) {
+                if (is_dir(EXTENSIONSPATH)) {
+                    if ($extdir = read_dir(EXTENSIONSPATH, 1)) {
                         foreach ($extdir["name"] as $key => $value) {
                             if ($value == 'ext_import.inc') {
                                 require_once($extdir["path"][$key] . $value);
@@ -1199,20 +1199,21 @@ class importSync
             if (in_array('source', $types)) {
                 $limbasSrcTarGz = $path . 'limbas_src.tar.gz';
                 if (file_exists($limbasSrcTarGz)) {
-                    $pathLmb = COREPATH.'../';
-
-                    # remove old source
-                    $lmbSrcDir = $pathLmb . 'limbas_src';
-                    #system("rm -r '$lmbSrcDir'", $returnCode);
-                    #if ($returnCode != 0) {
-                    #   LimbasLogger::log("could not delete imbas_src directory: return code $returnCode!", LimbasLogger::LL_ERROR);
-                    #}
-
+                    $pathCore = COREPATH.'../';
                     # extract new source
-                    system("tar xzf '$limbasSrcTarGz' -C '$pathLmb'");
+                    system("tar xzf '$limbasSrcTarGz' -C '$pathCore'");
                     LimbasLogger::log("overwrite limbas_src directory", LimbasLogger::LL_NOTICE);
                 }else{
                     LimbasLogger::log("overwrite limbas_src directory failed, $limbasSrcTarGz does not exist!", LimbasLogger::LL_ERROR);
+                }
+                $limbasAssetsTarGz = $path . 'assets.tar.gz';
+                if (file_exists($limbasAssetsTarGz)) {
+                    $pathAssets = PUBLICPATH;
+                    # extract new assets
+                    system("tar xzf '$limbasAssetsTarGz' -C '$pathAssets'");
+                    LimbasLogger::log("overwrite limbas_src directory", LimbasLogger::LL_NOTICE);
+                }else{
+                    LimbasLogger::log("overwrite assets directory failed, $limbasAssetsTarGz does not exist!", LimbasLogger::LL_ERROR);
                 }
             }
 
@@ -1221,10 +1222,10 @@ class importSync
                 # copy extensions
                 $extensionsTarGz = $path . 'extensions.tar.gz';
                 if (file_exists($extensionsTarGz)) {
-                    $pathLmb = DEPENDENTPATH.'EXTENSIONS';
+                    $pathExt = DEPENDENTPATH.'EXTENSIONS';
 
                     # remove old extensions
-                    system("rm -r '$pathLmb'", $returnCode);
+                    system("rm -r '$pathExt'", $returnCode);
                     if ($returnCode != 0) {
                         LimbasLogger::log("could not delete EXTENSIONS directory: return code $returnCode!", LimbasLogger::LL_ERROR);
                     }
@@ -1234,6 +1235,24 @@ class importSync
                     LimbasLogger::log("overwrite EXTENSIONS directory", LimbasLogger::LL_NOTICE);
                 }else{
                     LimbasLogger::log("overwrite EXTENSIONS directory failed, $extensionsTarGz does not exist!", LimbasLogger::LL_ERROR);
+                }
+
+                # copy localassets
+                $limbasLocalassetsTarGz = $path . 'localassets.tar.gz';
+                if (file_exists($limbasLocalassetsTarGz)) {
+                    $pathLass = rtrim(LOCALASSETSPATH,'/');
+
+                    # remove old extensions
+                    system("rm -r '$pathLass'", $returnCode);
+                    if ($returnCode != 0) {
+                        LimbasLogger::log("could not delete localassets directory: return code $returnCode!", LimbasLogger::LL_ERROR);
+                    }
+
+                    # extract new extensions
+                    system("tar xzf '$limbasLocalassetsTarGz' -C '".PUBLICPATH."'");
+                    LimbasLogger::log("overwrite localassets directory", LimbasLogger::LL_NOTICE);
+                }else{
+                    LimbasLogger::log("overwrite localassets directory failed, $limbasLocalassetsTarGz does not exist!", LimbasLogger::LL_ERROR);
                 }
             }
 

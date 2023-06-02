@@ -1838,7 +1838,13 @@ function lmb_delete_user_filesave(){
 	global $db;
 	
 	$prepare_string = "UPDATE LMB_USERDB SET UFILE = ?,UGTAB = ?";
-	return lmb_PrepareSQL($prepare_string, array('',''), __FILE__, __LINE__);		
+	lmb_PrepareSQL($prepare_string, array('',''), __FILE__, __LINE__);
+
+	$sqlquery = "DELETE FROM LMB_GTAB_ROWSIZE";
+	$rs = lmbdb_exec($db,$sqlquery);
+
+    return true;
+
 }
 
 

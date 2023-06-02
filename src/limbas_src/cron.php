@@ -45,19 +45,18 @@ if($argv[2] AND $argv[3]){
 $cronjob = 1;
 
 require_once(__DIR__ . '/bootstrap.php');
-
-require_once(COREPATH . 'lib/db/db_wrapper.lib');
-require_once(COREPATH . 'lib/db/db_' . $DBA['DB'] . '_admin.lib');
 require_once(COREPATH . 'lib/include.lib');
 require_once(COREPATH . 'lib/include_admin.lib');
-
+require_once(COREPATH . 'lib/db/db_wrapper.lib');
+require_once(COREPATH . 'lib/db/db_' . $DBA['DB'] . '_admin.lib');
 
 // session present
 if($auth_user){
 	require_once(COREPATH . 'lib/session.lib');
 // create needed vars
 }else{
-    
+    require_once(COREPATH . 'lib/auth/Session.php');
+
     # --- Datenbankverbindung -------------------------------------------
     $db = dbq_0($DBA["DBHOST"],$DBA["DBNAME"],$DBA["DBUSER"],$DBA["DBPASS"],$DBA["ODBCDRIVER"],$DBA["PORT"]);
     

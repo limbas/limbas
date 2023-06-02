@@ -21,8 +21,18 @@
         }
     }
 
+    function copyPrinter(id) {
+        document.form1.copyPrinter.value = id;
+        document.form1.submit();
+    }
+
     function changePrinter(id) {
         document.form1.changePrinter.value = id;
+        document.form1.submit();
+    }
+
+    function changeDefault(id) {
+        document.form1.changeDefault.value = id;
         document.form1.submit();
     }
 </script>
@@ -35,8 +45,9 @@
     <input type="hidden" name="delPrinter" value="">
     <input type="hidden" name="configPrinter" value="<?= $configPrinter ?>">
     <input type="hidden" name="changePrinter" value="">
-
-
+    <input type="hidden" name="changeDefault" value="">
+    <input type="hidden" name="copyDefault" value="">
+    <input type="hidden" name="copyPrinter" value="">
 
     <div class="container-fluid p-3">
 
@@ -116,7 +127,6 @@
                 <?php foreach ($availableConfig as $key => $values):
                     # split into system key / readable key
                     list($sysKey, $userKey) = explode('/', $key, 2); ?>
-
                     <tr>
                         <td><?= $userKey ?> (<b><?= $sysKey ?></b>)</td>
                         <td>
@@ -146,25 +156,50 @@
             <thead>
                 <tr>
                     <th>ID</th>
-                    <th>Default</th>
                     <th>Description</th>
                     <th>System Name</th>
+                    <th><?=$lang[2962]?></th>
                     <th>Config</th>
+                    <?php if($umgvar['multitenant']){?>
+                        <th>Default</th>
+                    <?php }?>
+                    <th>Copy</th>
                     <th>Delete</th>
                 </tr>
             </thead>
 
             <tbody>
             <?php foreach ($printers as $id => $printer): ?>
-                <tr <?= $printer['error'] ? 'class="text-danger"' : '' ?>>
+
+                <tr class="<?= ($printer['error'] ? 'table-danger' : '') ?> <?= ($nextCopyID == $id ? 'table-success' : '') ?>">
                     <td><?= $id ?></td>
-                    <td><input type="radio" name="defaultPrinter" value="<?= $id ?>" onchange="document.form1.submit();" <?= $printer['default'] ? 'checked' : ''?> class="form-control form-control-sm"></td>
+
                     <td><input type="text" name="printerName_<?= $id ?>" value="<?= $printer['name'] ?>" onchange="window.changePrinter(<?= $id ?>)" class="form-control form-control-sm"></td>
                     <td><?= $printer['sysName'] ?></td>
+
+                    <?php if($umgvar['multitenant']){?>
+                    <td>
+                        <select class="form-select form-select-sm" name="printerMID_<?= $id ?>" onchange="window.changePrinter(<?= $id ?>)"><option>
+                            <?php
+                            $sqlquery3 = "SELECT ID,MID,NAME,SYNCSLAVE FROM LMB_MULTITENANT";
+                            $rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+                            while(lmbdb_fetch_row($rs3)) {
+                                echo '<option value="'.lmbdb_result($rs3, "MID").'" '.(($printer['mid'] == lmbdb_result($rs3, "MID")) ? 'selected' : '').'>'.lmbdb_result($rs3,"NAME").'</option>';;
+                            }
+                            ?>
+                    </td>
+                    <?php }?>
+
+
                     <td>
                         <i class="lmb-icon lmb-cog cursor-pointer" onclick="configPrinter(<?= $id ?>)"></i>
                         <?= $printer['config'] ?>
                     </td>
+
+                    <td><input type="checkbox" name="printerDefault_<?= $id ?>" value="<?= $id ?>" onchange="window.changeDefault(<?= $id ?>)" <?= $printer['default'] ? 'checked' : ''?> class="form-check-input"></td>
+
+                    <td><i class="lmb-icon lmb-page-copy cursor-pointer" onclick="copyPrinter(<?= $id ?>)"></i></td>
+
                     <td><i class="lmb-icon lmb-trash cursor-pointer" onclick="delPrinter(<?= $id ?>)"></i></td>
                 </tr>
             <?php endforeach; ?>
@@ -175,7 +210,7 @@
 
             <TR>
                 <td></td>
-                <td></td>
+
                 <TD><input type="TEXT" name="addPrinterName" class="form-control form-control-sm"></TD>
                 <TD>
                     <select name="addPrinterSysName" class="form-select form-select-sm">
@@ -185,6 +220,7 @@
                         <?php endforeach; ?>
                     </select>
                 </TD>
+                <td></td>
                 <td></td>
                 <td><button class="btn btn-sm btn-primary" type="submit" name="addPrinter" value="1"><?= $lang[540] ?></button></td>
             </TR>

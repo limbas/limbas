@@ -233,9 +233,13 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 		$key2 = 1;
 		foreach($ffile["id"] as $key => $value){
 			echo "<TR class=\"gtabBodyTR\" ID=\"elline_d_".$LID."_".$key."\" TITLE=\"".($ffile['storageID'][$key] ? '[' . $externalStorage['desc'][$ffile['storageID'][$key]] . '] ' : '').$ffile["url"][$key]."\" style=\"cursor:context-menu;" . ($ffile['storageID'][$key] ? 'font-style: italic;' : '') . "\" 
-			OnClick=\"LmEx_activate_file(event,'$key','".preg_replace("/\'\"\//","",$ffile["name"][$key])."','$LID','d')\" 
-			ondblclick=\"LmEx_open_details(event,$value,$LID,$tabid_files,'".$gtab["tab_view_form"][$tabid_files]."','".$gformlist[$tabid_files]["dimension"][$gtab["tab_view_form"][$tabid_files]]."')\"
-			OnMouseOver=\"LmEx_explorerLineOver(this,$key,1,'$LID','d')\" OnMouseOut=\"LmEx_explorerLineOver(this,$key,2,'$LID','d')\" 
+			OnClick=\"LmEx_activate_file(event,'$key','".preg_replace("/\'\"\//","",$ffile["name"][$key])."','$LID','d')\" ";
+			if($gtab["tab_view_form"][$tabid_files]){
+			    echo "ondblclick=\"LmEx_open_details(event,$value,$LID,$tabid_files,'".$gtab["tab_view_form"][$tabid_files]."','".$gformlist[$tabid_files]["dimension"][$gtab["tab_view_form"][$tabid_files]]."')\"";
+			}else {
+			    echo "ondblclick=\"LmEx_file_detail('$key')\"";
+			}
+			echo "OnMouseOver=\"LmEx_explorerLineOver(this,$key,1,'$LID','d')\" OnMouseOut=\"LmEx_explorerLineOver(this,$key,2,'$LID','d')\" 
 			oncontextmenu=\"LmEx_activate_file(event,'$key','".preg_replace("/\'\"\//","",$ffile["name"][$key])."','$LID','d');return LmEx_open_detail(event,this,$key,'$LID','".$GLOBALS['gcustmenu'][$tabid_files][1]['id'][0]."');return false;\">";
 			# ---------------- Google Schema ------------------
 			if($ffilter["viewmode"][$LID] == 2){

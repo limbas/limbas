@@ -23,7 +23,7 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
 
     # check param
     if(!$entry) { return; }
-    
+
     # depth 0 -> User-menu / Admin-menu / Tables ...
     if($depth == 0) {
         # session refresh: restore last active menu
@@ -53,6 +53,10 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
 
     # depth 1 -> e.g. "Beispiel-CRM"-Header
     else if($depth == 1) {
+
+        // skip empty childs
+        if(!$entry['child'] AND !$entry['eval'] AND !$entry['link'] AND !$entry['extension']){return;}
+
         $combinedId = $data['depth0Key'] . '_' . $entryKey;
 
         # get onclick for header and angle up/down icon

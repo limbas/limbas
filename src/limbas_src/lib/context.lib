@@ -226,8 +226,10 @@ EOD;
 
 
 function pop_line($width=null){
+    if($GLOBALS['menuLine']){return;}
 	if($width) $width = "width:".$width."px";
     echo "<div class=\"lmbContextRowSeparator\" style=\"".$width."\"><div class=\"lmbContextRowSeparatorLine\">&nbsp;</div></div>";
+    $GLOBALS['menuLine'] = 1;
 }
 
 function pop_picmenu($id,$zl,$zv,$active=null,$evt=null,$altpic=null){
@@ -240,7 +242,7 @@ function pop_picmenu($id,$zl,$zv,$active=null,$evt=null,$altpic=null){
     	if($altpic){$pic = explode(".",$LINK["icon_url"][$id]);$pic = $pic[0].$altpic.".".$pic[1];}else{$pic = $LINK["icon_url"][$id];}
         $pic = $LINK["icon_url"][$id];
     	if($active){$st = "style=\"opacity:0.3;filter:Alpha(opacity=30);\"";}
-            echo "<td align=\"center\" style=\"cursor:pointer;width:20px;height:20px\"><i id=\"conextIcon_$id\" $st class=\"lmb-icon $pic\" $evt title=\"".$lang[$LINK["desc"][$id]]."\" OnMouseDown=\"this.style.border='1px solid black';\" OnMouseUp=\"this.style.border='';\"></i></td>\n";
+        echo "<td class=\"lmbGtabmenuIcon-$id\" align=\"center\" style=\"cursor:pointer;width:20px;height:20px\"><i id=\"conextIcon_$id\" $st class=\"lmb-icon $pic\" $evt title=\"".$lang[$LINK["desc"][$id]]."\" OnMouseDown=\"this.style.border='1px solid black';\" OnMouseUp=\"this.style.border='';\"></i></td>\n";
     }
 }
 
@@ -249,6 +251,7 @@ function pop_menu($id,$zl=null,$zv=null,$active=null,$line=null,$imgclass=null){
     global $farbschema,
     	$LINK,
     	$lang;
+    $GLOBALS['menuLine'] = 0;
 
     if($LINK[$id] OR $id == "0"){
 		$id = intval($id);
@@ -272,7 +275,7 @@ function pop_menu($id,$zl=null,$zv=null,$active=null,$line=null,$imgclass=null){
         }
 
         echo <<<EOD
-        <a class="lmbContextLink" onclick="{$zl}{$LINK["link_url"][$id]};return false;" title="{$lang[$LINK["desc"][$id]]}">
+        <a class="lmbContextLink lmbGtabmenu-$id" onclick="{$zl}{$LINK["link_url"][$id]};return false;" title="{$lang[$LINK["desc"][$id]]}">
             $img
             <span class="lmbContextItem$class" ID="pop_menu_{$id}" $acst>$tmp</span>
             $activeicon
@@ -285,6 +288,7 @@ EOD;
 
 //changed do not display both from menu and given name
 function pop_menu2($val,$desc=null,$fname=null,$imgclass=null,$style=null,$event=null,$class=null){
+    $GLOBALS['menuLine'] = 0;
 
 	$class_ = "";
     $img = "";
@@ -306,6 +310,7 @@ EOD;
 function pop_submenu($id,$zl,$zv,$line=null){
     global $LINK;
     global $lang;
+    $GLOBALS['menuLine'] = 0;
 
     if($LINK[$id] OR $id == "0"){
 		$id = intval($id);
@@ -319,7 +324,7 @@ function pop_submenu($id,$zl,$zv,$line=null){
     	}
 
                 echo <<<EOD
-                <a class="lmbContextLink" ID="pop_menu_{$id}" onclick="{$zl}{$LINK["link_url"][$id]};return false;" title="{$lang[$LINK["desc"][$id]]}">
+                <a class="lmbContextLink lmbGtabmenu-$id" ID="pop_menu_{$id}" onclick="{$zl}{$LINK["link_url"][$id]};return false;" title="{$lang[$LINK["desc"][$id]]}">
 			$img<span class="lmbContextItem$class">$tmp</span>
                         <i class="lmbContextRight lmb-icon lmb-caret-right-alt" border="0"></i>
 		</a>
@@ -336,6 +341,7 @@ EOD;
 }
 
 function pop_submenu2($val,$zl,$zv=null,$width=null,$imgclass=null){
+    $GLOBALS['menuLine'] = 0;
 
 	$class = "";
     $img = "";
@@ -356,11 +362,12 @@ EOD;
 function pop_input($id,$zl,$name,$val,$readonly,$width=null){
     global $LINK;
     global $lang;
+    $GLOBALS['menuLine'] = 0;
 
 	if($width) $width = "style=\"width:".$width."px\"";
 
 	echo <<<EOD
-	<div class="lmbContextRow" title="{$lang[$LINK["desc"][$id]]}">
+	<div class="lmbContextRow lmbGtabmenu-$id" title="{$lang[$LINK["desc"][$id]]}">
 		<div class="lmbContextItem">
 			<input type="text" class="contextmenu" name="$name" id="$name" value="$val" $readonly onchange="$zl" {$width}>
 		</div>
@@ -369,6 +376,8 @@ EOD;
 }
 
 function pop_input2($zl,$name,$val,$readonly,$title,$titlesize=null,$handler=null){
+    $GLOBALS['menuLine'] = 0;
+
     if(!$title){$title = "";}
 	if($titlesize){
 		$width = "width:".(137-$titlesize)."px;";
@@ -390,6 +399,7 @@ EOD;
 function pop_checkbox($id,$zl,$name,$val,$checked,$readonly,$title=null,$desc=null,$img=null){
 	global $LINK;
 	global $lang;
+    $GLOBALS['menuLine'] = 0;
 
 	if($LINK[$id]){
 		$title = $lang[$LINK['name'][$id]];
@@ -403,7 +413,7 @@ function pop_checkbox($id,$zl,$name,$val,$checked,$readonly,$title=null,$desc=nu
 	}
 
 	echo <<<EOD
-		<div style="clear: both" class="lmbContextLink" style="padding-top:0; padding-bottom:0;" title="{$desc}">
+		<div style="clear: both" class="lmbContextLink lmbGtabmenu-$id" style="padding-top:0; padding-bottom:0;" title="{$desc}">
 		    <label for="$name" style="vertical-align: middle;">
                 $img
                 <span class="lmbContextItem$class" ID="pop_menu_{$id}">{$title}</span>
@@ -417,6 +427,7 @@ EOD;
  * @deprecated
  */
 function pop_checkbox2($zl,$name,$val,$checked,$readonly){
+    $GLOBALS['menuLine'] = 0;
     echo <<<EOD
     <div class="lmbContextRow">
         <span class="lmbContextItem$class">fgdfg</span>
@@ -429,6 +440,7 @@ EOD;
 #"fill_style('0','fontFamily',this.value);",$opt,"",1,"input_fontface","Font",50
 
 function pop_select($zl,$opt,$sel,$size,$name,$title=null,$titlesize=null,$icon=null){
+    $GLOBALS['menuLine'] = 0;
 
     if(!is_array($opt) || empty($opt)) return;
 
@@ -486,21 +498,25 @@ function pop_color($funcname=null,$fparams=null,$container=null){
 	$bzm1 = 1;
 	echo "<table border=\"0\" cellspacing=\"3\" cellpadding=\"0\"><tr>\n";
 	foreach ($user_colors["wert"] as $key => $value){
-		if($bzm1 == 8){$bzm1 = 1;echo "</tr><tr>";}
+        $trash = '';
+		if($bzm1 == 10){$bzm1 = 1;echo "</tr><tr>";}
 		if($value){
 		    $b = "border:1px solid black;";
 		    $value = trim($value,'#');
 		}
 		if (!empty($value)) {
 		    $value = '#'.$value;
+        }else{
+            $trash = "<i class=\"lmb-icon lmb-trash\" style=\"display:inline;\"></i>";
         }
-		echo "<td style=\"width:14px;height:14px;cursor:pointer;background-color:".$value.";$b;\" OnClick=\"$funcname('".$value."'$fparams);\" title=\"$value\"><div style=\"width:14px;height:14px;\"></div></td>\n";
+		echo "<td style=\"width:18px;height:18px;cursor:pointer;background-color:".$value.";$b;\" OnClick=\"$funcname('".$value."'$fparams);\" title=\"$value\"><div style=\"width:18px;height:18px;\">$trash</div></td>\n";
 		$bzm1++;
 	}
 	echo "</tr></table></div></div>\n";
 }
 
 function pop_icon($classname=null){
+    $GLOBALS['menuLine'] = 0;
 	if(!$classname) $classname = "";
     echo "<i class=\"lmbContextLeft lmb-icon $classname\" border=\"0\"></i>";
 }

@@ -444,7 +444,7 @@ function store_xml($dom,$rep,$ID,$report_output){
 		# ------- archivieren ---------
 		if($report_output == 2){
 			# Archivieren
-			reportArchiv($out,$rep,$ID,$report_output);
+			reportArchiv($out,$rep,$ID);
 		}else{
 			return $name;
 		}

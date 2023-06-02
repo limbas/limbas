@@ -145,20 +145,27 @@ function limbasShowGroupsPost(result){
                             <?=$lang[2081]?> <INPUT TYPE="CHECKBOX" ID="inclsub" CLASS="checkb">
                         </div>
                         <div class="col-4">
-                            <table class="table table-sm table-borderless">
+
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col w-100"></div>
+                        <div class="col-auto me-3">
+                            <table class="table table-sm p-0 m-0 table-borderless">
                                 <TR>
-                                    <TD><i class="lmb-icon lmb-eye" TITLE="<?=$lang[2295]?>"></i></TD>
-                                    <TD><i class="lmb-icon lmb-create-file" TITLE="<?=$lang[2296]?>"></i></TD>
-                                    <TD><i class="lmb-icon lmb-create-folder" TITLE="<?=$lang[2297]?>"></i></TD>
-                                    <TD><i class="lmb-icon lmb-pencil" TITLE="<?=$lang[2299]?>"></i></TD>
-                                    <TD><i class="lmb-icon lmb-trash" TITLE="<?=$lang[2298]?>"></i></TD>
-                                    <TD><i class="lmb-icon lmb-lock-file" TITLE="<?=$lang[2300]?>"></i></TD>
+                                    <TD><i class="lmb-icon lmb-eye px-0 mx-2" TITLE="<?=$lang[2295]?>"></i></TD>
+                                    <TD><i class="lmb-icon lmb-create-file px-0 mx-2" TITLE="<?=$lang[2296]?>"></i></TD>
+                                    <TD><i class="lmb-icon lmb-create-folder px-0 mx-2" TITLE="<?=$lang[2297]?>"></i></TD>
+                                    <TD><i class="lmb-icon lmb-pencil px-0 mx-2" TITLE="<?=$lang[2299]?>"></i></TD>
+                                    <TD><i class="lmb-icon lmb-trash px-0 mx-2" TITLE="<?=$lang[2298]?>"></i></TD>
+                                    <TD><i class="lmb-icon lmb-lock-file px-0 mx-2" TITLE="<?=$lang[2300]?>"></i></TD>
                                 </TR>
                             </table>
                         </div>
                     </div>
 
-                    
+
+
                     <?php
                     function files1($LEVEL,$sub_view,$sub_add,$sub_addf,$sub_edit,$sub_del,$id='',$colid=''){
                         global $file_struct;
@@ -168,8 +175,9 @@ function limbasShowGroupsPost(result){
                         global $lang;
                         global $dspl_;
 
+
                         if($LEVEL){
-                            echo '<div class="collapse multi-collapse ps-2 '.((in_array($id,$dspl_))?'show':'').'" '.(!empty($colid)?'id="'.$colid.'"':'').' data-id="'.$id.'" data-level="'.$LEVEL.'">';
+                            echo '<div class="collapse multi-collapse ps-2'.((in_array($id,$dspl_))?'show':'').'" '.(!empty($colid)?'id="'.$colid.'"':'').' data-id="'.$id.'" data-level="'.$LEVEL.'">';
                         }
 
                         foreach ($file_struct["id"] as $bzm => $value) {
@@ -190,51 +198,52 @@ function limbasShowGroupsPost(result){
                                 
                                 if (true) {
 
-                                    echo '<div class="row clearfix" title="'.htmlentities($file_struct["name"][$bzm],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]).'">';
-                                    
-                                    echo '<div class="col-8">';
+                                    echo '<div class="row w-100" title="'.htmlentities($file_struct["name"][$bzm],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]).'">';
+                                    echo '<div class="col w-100">';
+                                    echo '<span>';
                                         echo $pic;
-                                        echo '<i class="lmb-icon lmb-folder-closed"></i>';
+                                        echo '<i class="lmb-icon lmb-folder-closed align-middle"></i>';
                                         echo $file_struct['name'][$bzm];
+                                        echo '</span>';
                                     echo '</div>';
 
-                                    echo '<div class="col-4">';
+                                    echo '<div class="col-auto float-end">';
                                     
                                         if (true) {
-                                        echo '<table class="w-100 table-borderless pull-right m-0"><tr>';
+                                        echo '<table class="w-100 table-borderless mx-5"><tr>';
 
                                         # --- view ---
-                                        echo "<TD><INPUT ID=\"fv".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2295]\" NAME=\"frule[v][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"checkb\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','v',this.checked)\"";
+                                        echo "<TD><INPUT ID=\"fv".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2295]\" NAME=\"frule[v][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"form-check-input mx-2\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','v',this.checked)\"";
                                         if($filerules[$file_struct["id"][$bzm]]["view"]){echo " CHECKED";}
                                         echo "><INPUT TYPE=\"hidden\" ID=\"hv".$file_struct["id"][$bzm]."\" NAME=\"hhv".$file_struct["level"][$bzm]."\" VALUE=\"".$file_struct["level"][$bzm]."\"></TD>";
 
                                         # --- add ---
-                                        echo "<TD><INPUT ID=\"fa".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2296]\" NAME=\"frule[a][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"checkb\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','a',this.checked)\"";
+                                        echo "<TD><INPUT ID=\"fa".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2296]\" NAME=\"frule[a][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"form-check-input mx-2\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','a',this.checked)\"";
                                         if($filerules[$file_struct["id"][$bzm]]["add"]){echo " CHECKED";}
                                         echo "><INPUT TYPE=\"hidden\" ID=\"ha".$file_struct["id"][$bzm]."\" NAME=\"hha".$file_struct["level"][$bzm]."\" VALUE=\"".$file_struct["level"][$bzm]."\"></TD>";
 
                                         # --- addf ---
-                                        echo "<TD><INPUT ID=\"fc".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2297]\" NAME=\"frule[c][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"checkb\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','c',this.checked)\"";
+                                        echo "<TD><INPUT ID=\"fc".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2297]\" NAME=\"frule[c][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"form-check-input mx-2\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','c',this.checked)\"";
                                         if($filerules[$file_struct["id"][$bzm]]["addf"]){echo " CHECKED";}
                                         echo "><INPUT TYPE=\"hidden\" ID=\"hc".$file_struct["id"][$bzm]."\" NAME=\"hhc".$file_struct["level"][$bzm]."\" VALUE=\"".$file_struct["level"][$bzm]."\"></TD>";
 
                                         # --- edit ---
-                                        echo "<TD><INPUT ID=\"fe".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2299]\" NAME=\"frule[e][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"checkb\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','e',this.checked)\"";
+                                        echo "<TD><INPUT ID=\"fe".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2299]\" NAME=\"frule[e][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"form-check-input mx-2\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','e',this.checked)\"";
                                         if($filerules[$file_struct["id"][$bzm]]["edit"]){echo " CHECKED";}
                                         echo "><INPUT TYPE=\"hidden\" ID=\"he".$file_struct["id"][$bzm]."\" NAME=\"hhe".$file_struct["level"][$bzm]."\" VALUE=\"".$file_struct["level"][$bzm]."\"></TD>";
 
                                         # --- del ---
-                                        echo "<TD><INPUT ID=\"fd".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2298]\" NAME=\"frule[d][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"checkb\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','d',this.checked)\"";
+                                        echo "<TD><INPUT ID=\"fd".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2298]\" NAME=\"frule[d][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"form-check-input mx-2\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','d',this.checked)\"";
                                         if($filerules[$file_struct["id"][$bzm]]["del"]){echo " CHECKED";}
                                         echo "><INPUT TYPE=\"hidden\" ID=\"hd".$file_struct["id"][$bzm]."\" NAME=\"hhd".$file_struct["level"][$bzm]."\" VALUE=\"".$file_struct["level"][$bzm]."\"></TD>";
 
                                         # --- lock ---
-                                        echo "<TD><INPUT ID=\"fl".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2300]\" NAME=\"frule[l][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"checkb\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','l',this.checked)\"";
+                                        echo "<TD><INPUT ID=\"fl".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2300]\" NAME=\"frule[l][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"form-check-input mx-2\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','l',this.checked)\"";
                                         if($filerules[$file_struct["id"][$bzm]]["lock"]){echo " CHECKED";}
                                         echo "><INPUT TYPE=\"hidden\" ID=\"hl".$file_struct["id"][$bzm]."\" NAME=\"hhl".$file_struct["level"][$bzm]."\" VALUE=\"".$file_struct["level"][$bzm]."\"></TD>";
 
                                         # --- lock ---
-                                        echo "<TD><i class=\"lmb-icon lmb-info-circle\" style=\"cursor:pointer\" OnClick=\"limbasShowGroups(this,'$value')\" title=\"$lang[2301]\"></i></TD>";
+                                        echo "<TD class=''><i class=\"lmb-icon lmb-info-circle\" style=\"cursor:pointer\" OnClick=\"limbasShowGroups(this,'$value')\" title=\"$lang[2301]\"></i></TD>";
 
 
                                         echo '</tr></table>';

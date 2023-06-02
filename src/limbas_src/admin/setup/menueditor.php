@@ -88,10 +88,12 @@
                             <table class="table table-sm table-striped mb-0">
                                 <thead>
                                     <tr>
+                                        <th></th>
                                         <th><?=$lang[4]?></th>
                                         <th><?=$lang[164]?></th>
                                         <th><?=$lang[168]?></th>
                                         <th><?=$lang[925]?></th>
+                                        <th></th>
                                     </tr>
                                 </thead>
                                 
@@ -119,7 +121,7 @@
                                             <option></option>
                                             <?php if($tabid = $custmenu_list['tabid'][$id]): ?>
                                                 <?php foreach($gfield[$tabid]['field_name'] as $fkey => $fval): ?>
-                                                    <option value="<?=$fkey?>" <?=$custmenu_list['fieldid'][$id] == $fkey ? 'selected' : ''?>><?=$fkey?></option>
+                                                    <option value="<?=$fkey?>" <?=$custmenu_list['fieldid'][$id] == $fkey ? 'selected' : ''?>><?=$fval?></option>
                                                 <?php endforeach; ?>
                                             <?php endif; ?>
                                         </select>
@@ -147,6 +149,11 @@
                                                 <option value="12" <?=$type_[12]?>><?=$lang[2984]?></option>
                                             </optgroup>
                                         </select>
+                                    </td>
+                                    <td>
+                                        <a href="javascript:if(confirm('delete?')){document.form1.listact.value='del';document.form1.linkid.value='<?=$id?>';document.form1.submit();}">
+                                        <i class="lmb-icon lmb-trash"></i>
+                                        </a>
                                     </td>
                                 </tr>
                                 

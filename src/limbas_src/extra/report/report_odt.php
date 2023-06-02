@@ -75,7 +75,7 @@ if ($template->save()){
 		file_put_contents($generatedReport,$output);
 		# reset basepath
 		chdir($umgvar["pfad"]);
-		reportArchiv($generatedReport,$report,$ID,$report_output);
+		reportArchiv($generatedReport,$report,$ID);
 	}
 } else
     echo "ERROR: failed updating content! (no write permissions for ".

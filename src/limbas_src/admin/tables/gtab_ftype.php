@@ -773,6 +773,9 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                             // 1:n simple
                         }elseif($result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 25) {
                             $lmfieldtype_allow_convert_ = array(27);
+                        // backward
+                        }else {
+                            $lmfieldtype_allow_convert_ = array();
                         }
 
                         echo "<TD VALIGN=\"TOP\"><SELECT class=\"form-select form-select-sm\" OnChange=\"convert_field(this[this.selectedIndex].value,'".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."','".$result_fieldtype[$table_gtab[$bzm]]['field'][$bzm1]."',0);\"><OPTION>";

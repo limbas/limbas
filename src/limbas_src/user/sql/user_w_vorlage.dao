@@ -47,71 +47,7 @@ while(lmbdb_fetch_row($rs)) {
 
 
 
-$curDate = time();
 
-echo '<div class="lmbPositionContainerMain small">';
-echo '<table class="tabfringe hoverable" cellpadding="4" style="border-collapse: collapse;">';
 
-if(!$remdata){
-    echo '<tr class="tabHeader"><td class="tabHeaderItem">' . $lang[98] . '</td></tr>';
-}else{
 
-	foreach ($remdata["id"] as $groupid => $groupData) {
-
-        # tabgroup header
-        echo '<tr class="tabHeader">';
-        echo '<td class="tabHeaderItem" colspan="4">' . $tabgroup['beschreibung'][$groupid] . '</td>';
-        echo '</tr>';
-
-		foreach ($groupData as $tabid => $tabData){
-
-            # table header
-            echo '<tr class="tabSubHeader">';
-            echo '<td class="tabSubHeaderItem"></td>';
-            echo '<td class="tabSubHeaderItem" colspan="3">';
-            echo "<a href=\"main.php?action=gtab_erg&source=root&gtabid={$tabid}&gfrist=1\">{$gtab['desc'][$tabid]}</a>";
-            echo '</td>';
-            echo '</tr>';
-
-			foreach ($tabData as $remKey => $remval){
-                $reminderFrist = $remdata['frist'][$groupid][$tabid][$remKey];
-				$readableDate = get_date($reminderFrist, 4);
-
-				# reminder in past?
-                $color = '';
-                if ($curDate >= get_stamp($reminderFrist)) {
-					$color = 'style="color:green"';
-				}
-
-                echo "<tr class=\"tabBody\" style=\"cursor: pointer;\" onclick=\"document.location.href='main.php?action=gtab_change&gtabid={$tabid}&ID={$remdata['dat_id'][$groupid][$tabid][$remKey]}'\">";
-
-                # date
-                echo "<td $color >{$readableDate}</td>";
-
-                # dataset description
-                echo '<td><b>' . $remdata['content'][$groupid][$tabid][$remKey] . '</b></td>';
-
-                # user
-                echo '<td><i>' . $userdat['bezeichnung'][$remdata['fromuser'][$groupid][$tabid][$remKey]] . '</i></td>';
-
-                # delete
-                echo '<td onclick="event.preventDefault();event.stopPropagation();return false;">';
-                echo "<i class=\"lmb-icon lmb-trash\" onclick=\"document.location.href='main.php?action=user_w_vorlage&del_id={$remdata['id'][$groupid][$tabid][$remKey]}'\" style=\"cursor:pointer;\"></i>";
-                echo '</td>';
-                echo '</tr>';
-
-                # reminder description
-                if ($desc = $remdata['description'][$groupid][$tabid][$remKey]) {
-                    echo '<tr>';
-                    echo '<td></td>';
-                    echo '<td colspan="2"><i>' . $desc . '</i></td>';
-                    echo '</tr>';
-                }
-			}
-		}
-	}
-}
-
-echo '</table>';
-echo '</div>';
 ?>

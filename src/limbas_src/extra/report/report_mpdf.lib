@@ -175,7 +175,8 @@ function create_pdf(&$report, $ID) {
 
 
 # Generiere Berichte
-function lmb_reportCreatePDF($report_id, $ID, $report_output, $report_rename = null, $gsr=null,$filter=null) {
+function lmb_reportCreatePDF($report_id, $ID, $report_output, $report_rename = null, $gsr=null,$filter=null,$printer=null) {
+
 
     // setting filter for listmode
     $GLOBALS['rgsr'] = $gsr;
@@ -209,9 +210,15 @@ function lmb_reportCreatePDF($report_id, $ID, $report_output, $report_rename = n
         return false;
     }
 
-    # archive PDF
-    if($report_output == 2) {
-        reportArchiv($temp_file_path, $report, $ID, $report_output);
+
+    # archive to DMS
+    if($report_output == 2 OR ($report_output == 4 AND $GLOBALS['umgvar']['printer_cache'])) {
+        # new DMS record
+        $report['archive_fileID'] = reportArchiv($temp_file_path, $report, $ID);
+    }
+
+    if ($report_output == 4 AND $GLOBALS['LINK'][304] AND !lmbPrint($printer, lmb_utf8_encode($temp_file_path), $report['archive_fileID'])) {
+        lmb_log::error('print failed', 'print failed!', $report['report_rename']);
     }
 
     # clear memory (workaround)
@@ -343,7 +350,7 @@ function generate_pdf($report_id, $ID, $report_output, $report_rename = null) {
 #region ExportFunctions
 
 # --- alle Berichte einer Tabelle -----------------------------------
-function lmb_reportCreatePDFlistFiler($gtabid, $report_id, $report_output, &$filter, &$gsr, &$verkn, $report_rename = null) {
+function lmb_reportCreatePDFlistFiler($gtabid, $report_id, $report_output, &$filter, &$gsr, &$verkn, $report_rename = null,$printer=null) {
     global $gresult;
 
     # Abfrage
@@ -362,7 +369,7 @@ function lmb_reportCreatePDFlistFiler($gtabid, $report_id, $report_output, &$fil
     $bzm = 0;
     while ($bzm < $gresult[$gtabid]['res_count']) {
         $ID = $gresult[$gtabid]['id'][$bzm];
-        $generated_file_path = lmb_reportCreatePDF($report_id, $ID, $report_output, $report_rename.'_'.$bzm);
+        $generated_file_path = lmb_reportCreatePDF($report_id, $ID, $report_output, $report_rename.'_'.$bzm,null,null,$printer);
         $filelist[] = lmb_utf8_encode($generated_file_path);
         $bzm++;
     }
@@ -375,14 +382,14 @@ function lmb_reportCreatePDFlistFiler($gtabid, $report_id, $report_output, &$fil
 }
 
 # --- Berichtsliste mehrerer Datensätze -----------------------------------
-function lmb_reportCreatePDFlistSel($gtabid, $report_id, $report_output, $use_record, $report_rename = null) {
+function lmb_reportCreatePDFlistSel($gtabid, $report_id, $report_output, $use_record, $report_rename = null,$printer=null) {
     $use_record = explode(';', $use_record);
     $use_record = array_unique($use_record);
     foreach ($use_record as $key => $value) {
         $recel = explode('_', $value);
         if ($recel[1] == $gtabid) {
             $ID = $recel[0];
-            $generated_file_path = lmb_reportCreatePDF($report_id, $ID, $report_output, $report_rename.'_'.$bzm);
+            $generated_file_path = lmb_reportCreatePDF($report_id, $ID, $report_output, $report_rename.'_'.$bzm,null,null,$printer);
             $filelist[] = lmb_utf8_encode($generated_file_path);
         }
     }
@@ -394,7 +401,7 @@ function lmb_reportCreatePDFlistSel($gtabid, $report_id, $report_output, $use_re
     }
 }
 
-function lmb_reportPDF($report_id,$gtabid=null,$ID=null,$report_output=null,$report_rename=null,$gsr=null,$filter=null,$use_record=null,$verkn=null){
+function lmb_reportPDF($report_id,$gtabid=null,$ID=null,$report_output=null,$report_rename=null,$gsr=null,$filter=null,$use_record=null,$verkn=null,$printer=null){
     global $umgvar;
     global $session;
     global $greportlist;
@@ -418,19 +425,19 @@ function lmb_reportPDF($report_id,$gtabid=null,$ID=null,$report_output=null,$rep
 
         # --- Einzelbericht eines Datensatzes -----------------------------------
         if ($ID) {
-            $generatedReport = lmb_reportCreatePDF($report_id,$ID,$report_output,$report_rename);
+            $generatedReport = lmb_reportCreatePDF($report_id,$ID,$report_output,$report_rename,null,null,$printer);
             # --- Einzelbericht mehrerer Datensätze (gefiltert)  -----------------------------------
         } elseif ($use_record == "all" AND !$listmode) {
-            $generatedReport = lmb_reportCreatePDFlistFiler($gtabid, $report_id, $report_output, $filter, $gsr, $verkn, $report_rename);
+            $generatedReport = lmb_reportCreatePDFlistFiler($gtabid, $report_id, $report_output, $filter, $gsr, $verkn, $report_rename, $printer);
             # --- Einzelbericht mehrerer Datensätze (ausgewählt) -----------------------------------
         } elseif ($use_record AND !$listmode) {
-            $generatedReport = lmb_reportCreatePDFlistSel($gtabid, $report_id, $report_output, $use_record, $report_rename);
+            $generatedReport = lmb_reportCreatePDFlistSel($gtabid, $report_id, $report_output, $use_record, $report_rename, $printer);
             # --- Listenbericht gefiltert -----------------------------------
         } elseif ($report_id AND $listmode AND $gtabid) {
-            $generatedReport = lmb_reportCreatePDF($report_id,1,$report_output,$report_rename,$gsr,$filter);
+            $generatedReport = lmb_reportCreatePDF($report_id,1,$report_output,$report_rename,$gsr,$filter, $printer);
             # --- freier Einzelbericht ohne Tabelle -----------------------------------
         } elseif ($report_id AND !$gtabid) {
-            $generatedReport = lmb_reportCreatePDF($report_id,0,1,$report_rename);
+            $generatedReport = lmb_reportCreatePDF($report_id,0,1,$report_rename,null,null,$printer);
         }
 
     }catch (Exception $e){

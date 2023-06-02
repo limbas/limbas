@@ -302,7 +302,6 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                         
                     if((($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 1 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 5 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 4 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 3 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 18 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 11) AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] < 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 22 AND !$result_fieldtype[$table_gtab[$bzm]]["argument_typ"][1]) || $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 101):
 
-
                         if($result_fieldtype[$table_gtab[$bzm]]["datatype"][1] == 18 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] == 31 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] == 32){
                             $result_type_allow_convert = array(18,31,32);
                         }elseif($result_fieldtype[$table_gtab[$bzm]]["datatype"][1] == 24) {
@@ -330,11 +329,10 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                                     }
                                     ?>
                                 </select>
-
                                 <small class="form-text text-muted"><?=$lang[2589]?></small>
                             </div>
                         </div>
-                    
+
                     <hr>
                     
                     <?php 
@@ -342,8 +340,31 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                     endif;
                     endif; ?>
 
+                    <?php
+                    if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] < 100){
+                    ?>
 
+                    <div class="mb-3 row p-0">
+                        <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2861]?></label>
+                        <div class="col-sm-3">
+                            <input type="text" class="form-control form-control-sm" value="<?=$result_fieldtype[$table_gtab[$bzm]]["row_size"][1]?>" onchange="document.form2.val.value=this.value;ajaxEditField('<?=$fieldid?>','row_size')">
+                        </div>
+                        <label class="col-sm-3 col-form-label col-form-label-sm"><?=$lang[2638]?></label>
+                        <div class="col-sm-2">
+                            <input type="checkbox" value="1" <?=($result_fieldtype[$table_gtab[$bzm]]['col_hide'][1] == 1)?'':'checked'?> onchange="document.form2.val.value=this.checked;ajaxEditField('<?=$fieldid?>','col_hide')">
+                        </div>
+                    </div>
 
+                    <div class="mb-3 row p-0">
+                        <div class="col-sm-4 col-form-label col-form-label-sm"></div>
+                        <div class="col-sm-8">
+                        <small class="form-text text-muted"><?=$lang[3125]?></small>
+                        </div>
+                    </div>
+
+                    <?php
+                    }
+                    ?>
 
                     <?php //extension
                     if(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][1] AND $ext_fk AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] < 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 22 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 15 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 16): ?>

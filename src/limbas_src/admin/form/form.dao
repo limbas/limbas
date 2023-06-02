@@ -255,7 +255,7 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 	
 	unset($height);
 	unset($width);
-	if(!$default_font){$default_font = 'Verdana';}
+	if(!$default_font){$default_font = 'DejaVu Sans';}
 	if(!$default_size){$default_size = 11;}
 	$tab = 0;
 	$field_id = 0;

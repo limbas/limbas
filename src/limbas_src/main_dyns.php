@@ -52,6 +52,10 @@ function dyns_layoutSettings($params){
         $m_setting = unserialize($m_setting);
     }
 
+    if(!is_array($m_setting)){
+        $m_setting = array();
+    }
+
     if($params["frame"] AND array_key_exists('open',$params)){
         $m_setting["frame"]['open'][$params["frame"]] = filter_var(   $params['open'], FILTER_VALIDATE_BOOLEAN);
     }
@@ -223,8 +227,6 @@ function dyns_extRelationFields($params){
 
     # only for relation based table
     if($isrelation){
-
-        error_log(print_r($params,1));
 
         if(!$noedit) {
             # add relation
@@ -781,7 +783,7 @@ function dyns_gresultGtab($params){
     }
 
     require_once(COREPATH . 'gtab/gtab.lib');
-    require_once(COREPATH . 'gtab/html/gtab_erg.lib');
+    require_once(COREPATH . 'gtab/gtab_erg.lib');
     require_once(COREPATH . 'gtab/gtab_type_erg.lib');
     require_once(COREPATH . 'gtab/gtab_type.lib');
     require_once(COREPATH . 'gtab/gtab_register.lib');
@@ -806,7 +808,6 @@ function dyns_gresultGtab($params){
         }
         */
     }
-
 
     require_once(COREPATH . 'gtab/sql/gtab_erg.dao');
 
@@ -835,6 +836,12 @@ function dyns_gresultGtab($params){
     echo "#LMBSPLIT#";
     if($view_footer){
         lmbGlistFooter($gtabid,$gresult,$filter,1);
+    }
+
+    if($gsr[$gtabid]){
+        echo "<script>$('#fullsearchInfo').show();</script>";
+    }else{
+        echo "<script>$('#fullsearchInfo').hide();</script>";
     }
 
 }
@@ -1283,7 +1290,7 @@ function dyns_linkPopup($params){
     require_once(COREPATH . 'gtab/gtab.lib');
     require_once(COREPATH . 'gtab/gtab_type_erg.lib');
     require_once(COREPATH . 'gtab/gtab_type.lib');
-    require_once(COREPATH . 'gtab/html/gtab_erg.lib');
+    require_once(COREPATH . 'gtab/gtab_erg.lib');
 
     global $gtab;
     global $gfield;
@@ -1451,14 +1458,21 @@ function dyns_gtabSearch($params){
     $gtabid = $params["gtabid"];
     $fieldid = $params["fieldid"];
     $module = $params["module"];
+    $snap_id = $params["snap_id"];
+    $form_id = $params["legacy"];
+    $action = 'gtab_erg';
 
-    if($params["snap_id"]){
-        $filter["snapid"][$gtabid] = $params["snap_id"];
-        SNAP_get_filter($params["snap_id"],$gtabid);
+    if(!$params["snap_id"] AND $params["snap_id"] != '0'){
+        $snap_id = $filter["snapid"][$gtabid];
     }
 
     require_once(COREPATH . 'gtab/gtab_register.lib');
-    require_once(COREPATH . 'gtab/html/contextmenus/gtab_search.php');
+    if($params["legacy"]){
+        require_once(COREPATH . 'gtab/html/contextmenus/gtab_search_legacy.php');
+    }else{
+        require_once(COREPATH . 'gtab/html/contextmenus/gtab_search.php');
+    }
+
 }
 
 # ---- Search Menu row ------
@@ -1662,7 +1676,7 @@ function dyns_showReminder($params){
 
             // add reminder
             if($add){
-                if(lmb_addReminder($params["REMINDER_DATE_TIME"],$params["REMINDER_BEMERKUNG"],$params["gtabid"],$id,$params["REMINDER_USERGROUP"],$category,null,null,$params["REMINDER_MAIL"])){
+                if(lmb_addReminder($params["REMINDER_DATE_TIME"],$params["REMINDER_BEMERKUNG"],$params["gtabid"],$id,$params["REMINDER_USERGROUP"],$category,null,null,$params["REMINDER_MAIL"],$params["form_id"])){
                     $success ++;
                     $msg = $lang[2901];
                 }
@@ -1676,10 +1690,10 @@ function dyns_showReminder($params){
         }
 
         // singlemode
-    }elseif($ID){
+    }elseif(is_numeric($ID)){
         // add reminder
         if($add){
-            if(lmb_addReminder($params["REMINDER_DATE_TIME"],$params["REMINDER_BEMERKUNG"],$gtabid,$ID,$params["REMINDER_USERGROUP"],$category,null,null,$params["REMINDER_MAIL"])){
+            if(lmb_addReminder($params["REMINDER_DATE_TIME"],$params["REMINDER_BEMERKUNG"],$gtabid,$ID,$params["REMINDER_USERGROUP"],$category,null,null,$params["REMINDER_MAIL"],$params["form_id"])){
                 $success ++;
                 $msg = $lang[2901];
             }
@@ -1718,9 +1732,9 @@ function dyns_showReminder($params){
         echo "<TABLE width='100%'><TR><TD nowrap>
             &nbsp;$lang[1975] <INPUT onchange='setReminderDateTime(\"REMINDER_VALUE\",\"REMINDER_UNIT\",\"REMINDER_DATE_TIME\");' TYPE=\"TEXT\" NAME=\"REMINDER_VALUE\" STYLE=\"width:25px;\" MAX=4>
             <SELECT NAME=REMINDER_UNIT onchange='setReminderDateTime(\"REMINDER_VALUE\",\"REMINDER_UNIT\",\"REMINDER_DATE_TIME\");' >
+            <OPTION VALUE=day>$lang[1982]</OPTION>
             <OPTION VALUE=min>$lang[1980]</OPTION>
             <OPTION VALUE=hour>$lang[1981]</OPTION>
-            <OPTION VALUE=day>$lang[1982]</OPTION>
             <OPTION VALUE=week>$lang[1983]</OPTION>
             <OPTION VALUE=month>$lang[296]</OPTION>
             <OPTION VALUE=year>$lang[1985]</OPTION>
@@ -1785,23 +1799,28 @@ function dyns_showReminder($params){
         echo "<tr style=\"display:none;\"><td><input type=\"hidden\" name=\"REMINDER_CATEGORY\" value=\"{$defaults['category']}\"></td></tr>";
     } else {
         if(!$changeViewId AND $greminder[$gtabid]['name'] OR $greminder[0]['name']){
-            echo "<tr><td valign=\"top\">Kategorie:</td><td colspan=\"5\"><input type=\"radio\" name=\"REMINDER_CATEGORY\" value=\"0\" checked>&nbsp;default<br>";
+            echo "<tr><td valign=\"top\">Kategorie:</td><td colspan=\"5\">";
             if($greminder[0]['name']){
-            foreach ($greminder[0]['name'] as $rkey => $rval){
-                echo "<input type=\"radio\" name=\"REMINDER_CATEGORY\" value=\"$rkey\">&nbsp;".$rval."<br>";
-            }}
+
+            // all table based reminder
             if($greminder[$gtabid]['name']){
             foreach ($greminder[$gtabid]['name'] as $rkey => $rval){
-                echo "<input type=\"radio\" name=\"REMINDER_CATEGORY\" value=\"$rkey\">&nbsp;".$rval."<br>";
+                echo "<input type=\"radio\" name=\"REMINDER_CATEGORY\" value=\"$rkey\"";
+                if($greminder[$gtabid]['default'][$rkey] AND !$s){echo 'checked';$s = 1;}
+                echo ">&nbsp;".$rval."<br>";
             }}
+            // all independent reminder
+            foreach ($greminder[0]['name'] as $rkey => $rval){
+                echo "<input type=\"radio\" name=\"REMINDER_CATEGORY\" value=\"$rkey\"";
+                if($greminder[0]['default'][$rkey] AND !$s){echo 'checked';$s = 1;}
+                echo ">&nbsp;".$rval."<br>";
+            }}
+
+            echo "<input type=\"radio\" name=\"REMINDER_CATEGORY\" value=\"0\"";
+            if(!$s) {echo 'checked';}
+            echo ">&nbsp;-{$lang[1219]}-<br>";
+
             echo "</td></tr>";
-            /*
-            echo "<tr><td valign=\"top\">Kategorie:</td><td colspan=\"5\"><select name=\"REMINDER_CATEGORY\"><option>";
-            foreach ($greminder[$gtabid]['name'] as $rkey => $rval){
-                echo "<option value=\"$rkey\">".$rval;
-            }
-            echo "</select></td></tr>";
-            */
         }
     }
 
@@ -1815,7 +1834,7 @@ function dyns_showReminder($params){
         echo "
 			<tr><td valign=\"top\"><b>$lang[2644]:</b></td>
 			<td>".$greminder[$gtabid]["name"][$gfrist]."</td>
-			<td><i class=\"lmb-icon lmb-close-alt\" style=\"cursor:pointer;\" OnClick=\"limbasDivShowReminder(event,'','','$gfrist');\" Title=\"".$lang[721]."\"></i></td>
+			<td><i class=\"lmb-icon lmb-close-alt\" style=\"cursor:pointer;\" OnClick=\"limbasDivShowReminder(event,'','','$gfrist','','','','$gtabid','$ID');\" Title=\"".$lang[721]."\"></i></td>
 			</tr>";
         # delete single category
     }elseif(!$changeViewId AND $reminder = lmb_getReminder($gtabid,$ID,$category) AND !$defaults['hidecurrent']){
@@ -1845,8 +1864,8 @@ function dyns_showReminder($params){
                 $remval = $reminder["id"][$remkey];
                 echo "<tr>
 				<td></td>
-				<td><a href=\"#\" title=\"".$reminder["desc"][$remkey]."\" onclick=\"limbasDivShowReminder(event,'','','','$remval');\">".lmb_substr($reminder["datum"][$remkey],0,16)."</a></td>
-				<td><i class=\"lmb-icon lmb-close-alt\" style=\"cursor:pointer;\" OnClick=\"limbasDivShowReminder(event,'','','$remval');\" Title=\"".$lang[721]."\"></i></td>";
+				<td><a href=\"#\" title=\"".$reminder["desc"][$remkey]."\" onclick=\"limbasDivShowReminder(event,'','','','$remval','','','$gtabid','$ID');\">".lmb_substr($reminder["datum"][$remkey],0,16)."</a></td>
+				<td><i class=\"lmb-icon lmb-close-alt\" style=\"cursor:pointer;\" OnClick=\"limbasDivShowReminder(event,'','','$remval','','','','$gtabid','$ID');\" Title=\"".$lang[721]."\"></i></td>";
                 if($reminder["from"][$remkey]){echo "<br><i>".$userdat["bezeichnung"][$reminder["from"][$remkey]]."</i>";}
                 echo "</tr>";
             }
@@ -1861,7 +1880,7 @@ function dyns_showReminder($params){
 
 
     pop_left($mwidth);
-    echo "<CENTER><input type=button value=\"" . ($changeViewId ? $lang[2443] : $lang[1038]) . "\" onclick=\"" . ($changeViewId ? "limbasDivShowReminder(event,'','','','','$changeViewId');" : "limbasDivShowReminder(event,'','1');") . "\">&nbsp;<input type=button value=$lang[844] onClick='activ_menu=0;divclose();'></CENTER>";
+    echo "<CENTER><input type=button value=\"" . ($changeViewId ? $lang[2443] : $lang[1038]) . "\" onclick=\"" . ($changeViewId ? "limbasDivShowReminder(event,'','','','','$changeViewId','','$gtabid','$ID');" : "limbasDivShowReminder(event,'','1','','','','','$gtabid','$ID');") . "\">&nbsp;<input type=button value=$lang[844] onClick='activ_menu=0;divclose();'></CENTER>";
     echo "<INPUT TYPE=HIDDEN NAME=WIEDERVORLAGENAME ID=WIEDERVORLAGEID>";
     pop_right();
 
@@ -3017,53 +3036,64 @@ function dyns_inheritFrom($params){
     $sourceGtabid = $gfield[$destGtabid]["inherit_tab"][$destFieldId];
     $sourceFieldid = $gfield[$destGtabid]["inherit_field"][$destFieldId];
     $sourceGroup = $gfield[$destGtabid]["inherit_group"][$destFieldId];
-    $gresultDest = get_gresult($sourceGtabid,1,null,null,null,null,$sourceId);
+    if($sourceId) {
+        $gresultDest = get_gresult($sourceGtabid, 1, null, null, null, null, $sourceId);
+    }
 
     foreach ($gfield[$destGtabid]["inherit_tab"] as $fieldId => $inherit_tabid) {
         if($inherit_tabid == $sourceGtabid AND $sourceGroup == $gfield[$destGtabid]["inherit_group"][$fieldId]){
-            $srcFieldName = $gfield[$sourceGtabid]["field_name"][$gfield[$destGtabid]["inherit_field"][$fieldId]];
-            $srcFieldId = $gfield[$sourceGtabid]["field_id"][$gfield[$destGtabid]["inherit_field"][$fieldId]];
 
-            $resultval = $gresultDest[$sourceGtabid][$srcFieldId][0];
-            if($gfield[$destGtabid]["inherit_eval"][$fieldId]){
-                if(!$gresult){$gresult = get_gresult($destGtabid,1,null,null,null,null,$destId);}
-                $resultval = eval("return \"".trim($resultval)."\";");
-            }
+            if($sourceId) {
 
-            // currency
-            if($gfield[$destGtabid]["data_type"][$fieldId] == 30){
-                if($gresultDest[$sourceGtabid][$srcFieldId][0]['C']){
-                    $resultval = $gresultDest[$sourceGtabid][$srcFieldId][0]['V']." ".$gresultDest[$sourceGtabid][$srcFieldId][0]['C'];
-                }else{
-                    $resultval = $gresultDest[$sourceGtabid][$srcFieldId][0]['V'];
+                $srcFieldName = $gfield[$sourceGtabid]["field_name"][$gfield[$destGtabid]["inherit_field"][$fieldId]];
+                $srcFieldId = $gfield[$sourceGtabid]["field_id"][$gfield[$destGtabid]["inherit_field"][$fieldId]];
+
+                $resultval = $gresultDest[$sourceGtabid][$srcFieldId][0];
+                if ($gfield[$destGtabid]["inherit_eval"][$fieldId]) {
+                    if (!$gresult) {
+                        $gresult = get_gresult($destGtabid, 1, null, null, null, null, $destId);
+                    }
+                    $resultval = eval("return \"" . trim($resultval) . "\";");
                 }
-            }
 
-            // relations
-            if($gfield[$destGtabid]["field_type"][$fieldId] == 11){
-
-                # delete old relations
-                if($gfield[$destGtabid]["data_type"][$fieldId] != 25) {
-                    $sqlquery = "DELETE FROM " . $gfield[$destGtabid]["md5tab"][$fieldId] . " WHERE ID = " . $destId;
-                    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
-                    if (!$rs) {
-                        $commit = 1;
+                // currency
+                if ($gfield[$destGtabid]["data_type"][$fieldId] == 30) {
+                    if ($gresultDest[$sourceGtabid][$srcFieldId][0]['C']) {
+                        $resultval = $gresultDest[$sourceGtabid][$srcFieldId][0]['V'] . " " . $gresultDest[$sourceGtabid][$srcFieldId][0]['C'];
+                    } else {
+                        $resultval = $gresultDest[$sourceGtabid][$srcFieldId][0]['V'];
                     }
                 }
 
-                $filter["relationval"][$sourceGtabid] = 1;
-                $onlyfield[$sourceGtabid] = array($srcFieldId);
-                $gresult_ = get_gresult($sourceGtabid,1,$filter,null,null,$onlyfield,$sourceId);
-                if($gresult_ = $gresult_[$sourceGtabid][$srcFieldId][0]){
-                    #$relation = init_relation($destGtabid,$fieldId,$destId,$gresult_);
-                    #set_relation($relation);
-                    $result["resultval"][] = implode(',',$gresult_);
-                }else{
-                    continue;
+                // relations
+                if ($gfield[$destGtabid]["field_type"][$fieldId] == 11) {
+
+                    # delete old relations
+                    if ($gfield[$destGtabid]["data_type"][$fieldId] != 25) {
+                        $sqlquery = "DELETE FROM " . $gfield[$destGtabid]["md5tab"][$fieldId] . " WHERE ID = " . $destId;
+                        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
+                        if (!$rs) {
+                            $commit = 1;
+                        }
+                    }
+
+                    $filter["relationval"][$sourceGtabid] = 1;
+                    $onlyfield[$sourceGtabid] = array($srcFieldId);
+                    $gresult_ = get_gresult($sourceGtabid, 1, $filter, null, null, $onlyfield, $sourceId);
+                    if ($gresult_ = $gresult_[$sourceGtabid][$srcFieldId][0]) {
+                        #$relation = init_relation($destGtabid,$fieldId,$destId,$gresult_);
+                        #set_relation($relation);
+                        $result["resultval"][] = implode(',', $gresult_);
+                    } else {
+                        continue;
+                    }
+
+                } else {
+                    $result["resultval"][] = lmb_utf8_encode($resultval);
                 }
 
             }else{
-                $result["resultval"][] = lmb_utf8_encode($resultval);
+                $result["resultval"][] = '';
             }
 
             $result["destId"][] = $destId;
@@ -3615,6 +3645,7 @@ function dyns_showUserGroupsSearch($params){
     global $db;
     global $gtab;
     global $session;
+    global $umgvar;
 
     $typ = $params["typ"];
     $ID = $params["ID"];
@@ -3627,40 +3658,33 @@ function dyns_showUserGroupsSearch($params){
     pop_closetop($usefunction.$typ);
 
     if($typ == "user"){
-        $sqlquery = "SELECT LMB_USERDB.USER_ID
-			FROM LMB_USERDB WHERE LMB_USERDB.DEL = ".LMB_DBDEF_FALSE;
-		if($searchvalue != "*"){
-			$sqlquery .= " AND (LOWER(LMB_USERDB.USERNAME) LIKE '%".lmb_strtolower($searchvalue)."%' OR LOWER(LMB_USERDB.VORNAME) LIKE '%".lmb_strtolower($searchvalue)."%' OR LOWER(LMB_USERDB.NAME) LIKE '%".lmb_strtolower($searchvalue)."%')";
-		}
-		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!$rs) {$commit = 1;}
-		while(lmbdb_fetch_row($rs)) {
-            $key = lmbdb_result($rs,"USER_ID");
+
+		foreach($userdat["username"] as $key => $value) {
 
             // filter hidden user
             if($userdat["hidden"][$key]){continue;}
 
-            // filter multitenants
-            if($session["multitenant"] AND !in_array($session["mid"],$userdat["multitenant"][$key])){
-                continue;
+            // filter searchvalue
+            if($searchvalue && $searchvalue != "*") {
+                if(stripos($userdat["bezeichnung"][$key],$searchvalue) === false AND stripos($userdat["username"][$key],$searchvalue) === false){
+                    continue;
+                }
             }
 
             pop_menu2($userdat["bezeichnung"][$key], null, null, "lmb-user", null, "$usefunction('".$key."_u','".$userdat["bezeichnung"][$key]."','$gtabid','$fieldid','$ID','$parameter');");
 		}
 	}elseif($typ == "group"){
-		$sqlquery = "SELECT LMB_GROUPS.GROUP_ID 
-			FROM LMB_GROUPS WHERE LMB_GROUPS.DEL = ".LMB_DBDEF_FALSE;
-		if($searchvalue != "*"){
-			$sqlquery .= " AND LOWER(LMB_GROUPS.NAME) LIKE '%".lmb_strtolower($searchvalue)."%'";
-		}
-		
-		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!$rs) {$commit = 1;}
 
-		while(lmbdb_fetch_row($rs)) {
-			$key = lmbdb_result($rs,"GROUP_ID");
-            pop_menu2($groupdat["name"][$key], null, null, "lmb-group", null, "$usefunction('".$key."_g','".$groupdat["name"][$key]."','$gtabid','$fieldid','$ID','$parameter');");
-		}
+        foreach($groupdat["name"] as $key => $value) {
+            // filter searchvalue
+            if($searchvalue && $searchvalue != "*") {
+                if(stripos($value,$searchvalue) === false){
+                    continue;
+                }
+            }
+
+            pop_menu2($value, null, null, "lmb-group", null, "$usefunction('" . $key . "_g','" . $value . "','$gtabid','$fieldid','$ID','$parameter');");
+        }
 	}
 	
 	pop_bottom();
@@ -4254,6 +4278,15 @@ function reminderPreview($userid,$params)
     if($gresult["LMBREM_ID"]){
         echo "<TABLE width='100%'>";
         foreach ($gresult["LMBREM_ID"] as $key => $value){
+
+            // set formular
+            $form_id = '';
+            if($greminder[$gtabid]["formd_id"][$category] == -1 AND $gresult["LMBREM_FORMID"][$key]){
+                $form_id = $gresult["LMBREM_FORMID"][$key];
+            }elseif($greminder[$gtabid]["formd_id"][$category] >= 1){
+                $form_id = $greminder[$gtabid]["formd_id"][$category];
+            }
+
             $found=true;
             if($category AND $gtabid){
                 $gresult["LMBREM_TABID"][$key] = $gtabid;
@@ -4266,7 +4299,7 @@ function reminderPreview($userid,$params)
             }
             $datum = lmb_substr(get_date($gresult["LMBREM_FRIST"][$key],0),0,16);
             echo "<TR><TD class=\"pb-2\" style=\"padding-left:20px\" TITLE=\"".$gresult["LMBREM_CONTENT"][$key]."\">";
-            echo "<A TARGET=\"main\" HREF=\"main.php?&action=gtab_change&gtabid=".$gresult["LMBREM_TABID"][$key]."&ID=".$gresult["LMBREM_DATID"][$key]."&gfrist=$gfrist&form_id=".$greminder[$gtabid]["formd_id"][$category]."&wfl_id=".$gresult["LMBREM_WFLID"][$key]."\" style=\"color:green\">";
+            echo "<A TARGET=\"main\" HREF=\"main.php?&action=gtab_change&gtabid=".$gresult["LMBREM_TABID"][$key]."&ID=".$gresult["LMBREM_DATID"][$key]."&gfrist=$gfrist&form_id=".$form_id."&wfl_id=".$gresult["LMBREM_WFLID"][$key]."\" style=\"color:green\">";
             echo $datum."</A>";
             if($gresult["LMBREM_USER"][$key] AND $gresult["LMBREM_USER"][$key] != $session["user_id"])
             {
@@ -4537,6 +4570,11 @@ function dyns_setMultitenant($params) {
 
     $_SESSION['session']["mid"] = $setMultitenant;
     $session["mid"] = $setMultitenant;
+
+    // Finally, destroy the session.
+    if($params['session_destroy']) {
+        session_destroy();
+    }
 }
 
 /**
@@ -4554,6 +4592,9 @@ function dyns_gtabFieldsSelect2($params) {
         'children' => array()
     );
     foreach ($gfield[$tabID]['sort'] as $key => $fieldName) {
+
+        if($gfield[$tabID]["col_hide"][$key]){continue;}
+
         if ($gfield[$tabID]['field_type'][$key] > 100) {
             continue;
         } else if ($gfield[$tabID]['field_type'][$key] == 100) { // sparte
@@ -4648,8 +4689,10 @@ if($actid AND function_exists("dyns_".$actid)){
     #}else{
     if($_REQUEST){
         foreach ($_REQUEST as $keyR=>$valR){
-            if($keyR AND $valR){
-                if(is_string($valR)){
+            if($keyR AND ($valR OR $valR == '0')){
+                if(is_numeric($valR)){
+                    $_REQUEST[$keyR] = $valR;
+                }elseif(is_string($valR)){
                     $_REQUEST[$keyR] = lmb_utf8_decode($valR);
                 }elseif(is_array($valR)){
                     $_REQUEST[$keyR] = lmb_arrayDecode($valR,1);

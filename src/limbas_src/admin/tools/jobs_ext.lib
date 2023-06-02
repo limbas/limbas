@@ -134,7 +134,7 @@ function update_crontab(){
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		while(lmbdb_fetch_row($rs)){
-			fputs($handle,str_replace(";"," ",lmbdb_result($rs,"START"))."\twebuser (/usr/local/bin/php \"".$umgvar['pfad']."/cron.php\" < /bin/echo ".lmbdb_result($rs,"ID").")\n");
+			fputs($handle,str_replace(";"," ",lmbdb_result($rs,"START"))."\t php \"".COREPATH."cron.php\" ".lmbdb_result($rs,"ID")."\n");
 			}
 		fclose($handle);
 		return true;
@@ -389,7 +389,7 @@ function get_cron_tab() {
 
     $cronStr = '';
     while(lmbdb_fetch_row($rs)){
-        $cronStr .= str_replace(";", " ", str_replace(";"," ",lmbdb_result($rs,"START"))." php \"".$umgvar["pfad"]."/cron.php\" ".lmbdb_result($rs,"ID")).' '.lmbdb_result($rs,"JOB_USER"). "\n";
+        $cronStr .= str_replace(";", " ", str_replace(";"," ",lmbdb_result($rs,"START"))." php \"".COREPATH."/cron.php\" ".lmbdb_result($rs,"ID")).' '.lmbdb_result($rs,"JOB_USER"). "\n";
     }
 
 

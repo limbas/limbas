@@ -643,7 +643,13 @@ function error_showalert(&$alert)
                 $alert
             );
         }
+
+        if($GLOBALS['session']['debug']){
+            $alert[] = str_replace("\n","\\n",lmb_log::getLogMessage(true));
+        }
+
         $alert = array_unique($alert);
+
         echo "showAlert('" . implode("\\n", $alert) . "');\n";
         echo "</script>";
     }
@@ -2635,6 +2641,8 @@ function lmbGetAuthTokenUser($auth_token) {
     return false;
 }
 
+
+
 /**
  * Prints a file on the specified printer
  *
@@ -2642,9 +2650,16 @@ function lmbGetAuthTokenUser($auth_token) {
  * @param $file string full path to a file
  * @return bool success
  */
-function lmbPrint($printerID, $file) {
+function lmbPrint($printerID, $file, $fileID = false, $force = false) {
     global $gprinter;
     global $umgvar;
+
+    require_once(COREPATH.'extra/explorer/filestructure.lib');
+
+    if(!$GLOBALS['LINK'][304]){
+        lmb_log::error('permission deny for printing documents');
+        return false;
+    }
 
     # check if printer in session
     if (!array_key_exists($printerID, $gprinter)) {
@@ -2652,10 +2667,23 @@ function lmbPrint($printerID, $file) {
         return false;
     }
 
+    // get file ID and check permission
+    if($force AND is_numeric($fileID)) {
+        if (!$file = file_download($fileID)['path']) {
+            lmb_log::error("File has no permission!");
+            return false;
+        }
+    }
+
     # check if file exists
     if (!file_exists($file)) {
         lmb_log::error("File does not exist!");
         return false;
+    }
+
+    // send to printer cache
+    if(!$force && $umgvar['printer_cache']){
+        return lmb_printToCache($fileID,$printerID);
     }
 
     # no config?
@@ -2666,6 +2694,13 @@ function lmbPrint($printerID, $file) {
 
     # print
     exec('lp ' . strval($umgvar['lp_params']) . " -d {$gprinter[$printerID]['sysName']} {$config} '$file'", $outputLines, $exitCode);
+    #exec('lp ' . strval($umgvar['lp_params']) . " -d test123 {$config} '$file'", $outputLines, $exitCode);
+
+    if(is_array($outputLines) AND count($outputLines)){
+        $outputLines = print_r($outputLines, true);
+    }else{
+        $outputLines = '';
+    }
 
     # handle errors
     if ($exitCode != 0) {

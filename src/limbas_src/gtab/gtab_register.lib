@@ -374,6 +374,12 @@ if($filter_reset AND !$snap_id){
 		}
 	}
 
+	if($td_size_global){
+
+        SNAP_td_size_global($rowsize,$gtabid);
+
+    }
+
 }
 
 

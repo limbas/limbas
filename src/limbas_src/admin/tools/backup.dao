@@ -212,7 +212,7 @@ function update_backup_crontab(){
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		while(lmbdb_fetch_row($rs)){
-			fputs($handle,str_replace(";"," ",lmbdb_result($rs,"START"))."\twebuser (/usr/local/bin/php \"".$umgvar["pfad"]."/lib/cron.php\" < /bin/echo ".lmbdb_result($rs,"ID").")\n");
+			fputs($handle,str_replace(";"," ",lmbdb_result($rs,"START"))."\tphp \"".COREPATH."cron.php\" ".lmbdb_result($rs,"ID")."\n");
 		}
 		fclose($handle);
 		return true;

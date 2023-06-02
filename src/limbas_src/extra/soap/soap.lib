@@ -786,7 +786,7 @@ function getGtabLevel(&$lmpart,&$lmb,$action,$gtabid,$verkn=null,$rec=null){
 			}}
 		}}
 	}}
-	
+
 
 	# ---- Sortierung ------
 	if(is_array($order)){

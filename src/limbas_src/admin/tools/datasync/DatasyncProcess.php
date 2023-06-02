@@ -17,9 +17,9 @@ class DatasyncProcess
      *
      * @param int $templateId
      * @param int|null $clientId
-     * @return void
+     * @return int|null
      */
-    public function start(int $templateId, int $clientId = null): void
+    public function start(int $templateId, int $clientId = null): ?int
     {
 
         $this->log = [];
@@ -28,7 +28,7 @@ class DatasyncProcess
 
         if ($fp === false || !flock($fp, LOCK_EX | LOCK_NB)) {
             // Sync already running
-            return;
+            return null;
         }
 
 
@@ -39,15 +39,16 @@ class DatasyncProcess
         }
 
         if (!$client) {
-            return;
+            return null;
         }
 
         define('LMB_SYNC_PROC', true);
 
         $this->runSync($templateId, $client);
 
-
         fclose($fp);
+
+        return $client->id;
     }
 
     /**

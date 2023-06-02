@@ -9,13 +9,25 @@
 
 $printerMsg = [];
 
+
+/*
+ *
+ *     // filter multitenants
+    if($umgvar['multitenant']) {
+        $multitenant = explode(';', lmbdb_result($rs, "MULTITENANT"));
+        if ($mid and !in_array($mid, $multitenant)) {
+            continue;
+        }
+    }
+ */
+
 # add printer
 if ($addPrinter and $addPrinterName and $addPrinterSysName) {
     $addPrinterName = parse_db_string($addPrinterName);
     $addPrinterSysName = parse_db_string($addPrinterSysName);
     $nextID = next_db_id('LMB_PRINTERS');
 
-    $sqlquery = "INSERT INTO LMB_PRINTERS (ID, NAME, SYSNAME) VALUES ($nextID, '$addPrinterName', '$addPrinterSysName')";
+    $sqlquery = "INSERT INTO LMB_PRINTERS (ID, NAME, SYSNAME, LMB_MID) VALUES ($nextID, '$addPrinterName', '$addPrinterSysName', 0)";
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
     if (!$rs) {
         $printerMsg[] = 'Could not insert printer!';
@@ -23,14 +35,21 @@ if ($addPrinter and $addPrinterName and $addPrinterSysName) {
 }
 
 # change default printer
-if ($defaultPrinter) {
-    $defaultPrinter = parse_db_int($defaultPrinter);
+if ($changeDefault) {
+    $changeDefault = parse_db_int($changeDefault);
 
-    $sqlquery = "UPDATE LMB_PRINTERS SET DEF = TRUE WHERE ID = $defaultPrinter";
+    $default = parse_db_bool(${'printerDefault_'.$changeDefault});
+
+    $sqlquery = "SELECT LMB_MID FROM LMB_PRINTERS WHERE ID = $changeDefault";
+    $rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    $mid = parse_db_int(lmbdb_result($rs1, 'LMB_MID'));
+
+    $sqlquery = "UPDATE LMB_PRINTERS SET DEF = FALSE WHERE LMB_MID = $mid";
     $rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 
-    $sqlquery = "UPDATE LMB_PRINTERS SET DEF = FALSE WHERE ID != $defaultPrinter";
+    $sqlquery = "UPDATE LMB_PRINTERS SET DEF = $default WHERE ID = $changeDefault";
     $rs2 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+
     if (!$rs1 or !$rs2) {
         $printerMsg[] = 'Could not change default printer!';
     }
@@ -39,8 +58,9 @@ if ($defaultPrinter) {
 # change printer
 if ($changePrinter) {
     $printerName = parse_db_string(${'printerName_' . $changePrinter});
+    $printrmid = parse_db_int(${'printerMID_'.$changePrinter});
     $changePrinter = parse_db_int($changePrinter);
-    $sqlquery = "UPDATE LMB_PRINTERS SET NAME = '$printerName' WHERE ID=$changePrinter";
+    $sqlquery = "UPDATE LMB_PRINTERS SET NAME = '$printerName', LMB_MID = $printrmid WHERE ID=$changePrinter";
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
     if (!$rs) {
         $printerMsg[] = 'Could not update printer!';
@@ -69,6 +89,22 @@ if ($delPrinter) {
     }
 }
 
+# copy printer
+if ($copyPrinter) {
+    $copyPrinter = parse_db_int($copyPrinter);
+    $nextCopyID = next_db_id('LMB_PRINTERS');
+
+    $sqlquery = "INSERT INTO LMB_PRINTERS (ID, NAME, SYSNAME, LMB_MID) VALUES (
+    $nextCopyID,
+    (SELECT NAME FROM LMB_PRINTERS WHERE ID = $copyPrinter),
+    (SELECT SYSNAME FROM LMB_PRINTERS WHERE ID = $copyPrinter),
+     0)";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    if (!$rs) {
+        $printerMsg[] = 'Could not insert printer!';
+    }
+}
+
 # get available printers
 exec('lpstat ' . strval($umgvar['lpstat_params']) . ' -p', $availablePrinterNames, $exitCode);
 if ($exitCode != 0) {
@@ -91,7 +127,7 @@ if (!$availablePrinterNames) {
 }
 
 # get limbas printers
-$sqlquery = 'SELECT ID, NAME, SYSNAME, CONFIG, DEF FROM LMB_PRINTERS ORDER BY ID';
+$sqlquery = 'SELECT ID, NAME, SYSNAME, CONFIG, DEF, LMB_MID FROM LMB_PRINTERS ORDER BY LMB_MID,NAME';
 $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 
 $printers = array();
@@ -100,7 +136,8 @@ while (lmbdb_fetch_row($rs)) {
     $printer = array(
         'name' => lmbdb_result($rs, 'NAME'),
         'sysName' => $printerSysName,
-        'config' => lmbdb_result($rs, 'CONFIG')
+        'config' => lmbdb_result($rs, 'CONFIG'),
+        'mid' => lmbdb_result($rs, 'LMB_MID')
     );
 
     if (lmbdb_result($rs, 'DEF')) {

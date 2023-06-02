@@ -160,7 +160,7 @@ class DatasyncClientProcess extends Datasync
         $authKey = 'limbas_socket_sync_' . $authKey;
 
         // open socket server
-        $result = shell_exec('php ' . $umgvar['path'] . '/cron.php datasync.lib admin limbas123 "' . $authKey . '" >/dev/null 2>&1 &');
+        $result = shell_exec('php ' . COREPATH . 'cron.php datasync.lib admin limbas123 "' . $authKey . '" >/dev/null 2>&1 &');
 
         // check status code
         if (!empty($result)) {

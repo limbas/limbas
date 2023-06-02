@@ -417,10 +417,10 @@ function dyns_edit_relationparams($par){
  */
 function dyns_tabschemaInfos($par){
 	if($par['act'] == 1){
-		require_once(COREPATH . 'admin/tables/tabschema_dyn.php');
+		require_once(COREPATH . 'admin/tables/tabschema/tabschema_dyn.php');
 		show_fieldinfo($par["par1"],$par["par2"]);}
 	elseif($par['act'] == 2){
-		require_once(COREPATH . 'admin/tables/tabschema_dyn.php');
+		require_once(COREPATH . 'admin/tables/tabschema/tabschema_dyn.php');
 		show_linkinfo($par["par1"],$par["par2"],$par["par3"]);}
 	elseif($par['act'] == 3){
 		require_once(COREPATH . 'admin/tables/view.dao');
@@ -435,22 +435,28 @@ function dyns_tabschemaInfos($par){
  * @$par array fieldid
  */
 function dyns_VieweditorPattern($par){
-	if(!$viewid = $par["viewid"]){return false;};
-	global $db;
-	global $session;
-	global $DBA;
-	global $farbschema;
+	if(!$viewid = $par["viewid"]){
+        $setdrag = $par["setdrag"];
+        require_once(COREPATH . 'admin/tables/tabschema/tabschema.dao');
+        require_once(COREPATH . 'admin/tables/tabschema/tabschema.php');
+    } else {
+        global $db;
+        global $session;
+        global $DBA;
+        global $farbschema;
 
-	require_once(COREPATH . 'admin/tables/view.dao');
-	
-	$gview = lmb_getQuestValue($viewid);
-	
-	$setdrag = $par["setdrag"];
-	if($par["setrelation"]){
-		$gview["relationstring"] = lmb_createQuestRelation($viewid,$gview["relationstring"],$par["setrelation"],$par["settype"]);
-	}
 
-	require_once(COREPATH . 'admin/tables/viewschema.php');
+        require_once(COREPATH . 'admin/tables/view.dao');
+
+        $gview = lmb_getQuestValue($viewid);
+
+        $setdrag = $par["setdrag"];
+        if ($par["setrelation"]) {
+            $gview["relationstring"] = lmb_createQuestRelation($viewid, $gview["relationstring"], $par["setrelation"], $par["settype"]);
+        }
+
+        require_once(COREPATH . 'admin/tables/view/viewschema.php');
+    }
 }
 
 /**

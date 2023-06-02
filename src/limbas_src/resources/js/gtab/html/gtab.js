@@ -957,7 +957,7 @@ function checktyp(data_type,fieldname,fielddesc,field_id,tab_id,obj,id,ajaxpost,
     if(!language){language = '';}
 
 	// no syntax check
-	if(!data_type && field_id && field_id){
+	if(!data_type && tab_id && field_id){
 		document.form1.history_fields.value=document.form1.history_fields.value + tab_id + ',' + field_id + ',' + id + ';';
 		var isupdate = 1;
 	}
@@ -1026,18 +1026,21 @@ function checktyp(data_type,fieldname,fielddesc,field_id,tab_id,obj,id,ajaxpost,
 		}
 	}
 
-	if(isupdate){
-		limbasDuplicateForm(el,fieldname,val,obj);
-		if(!ajaxpost){
-		    // submit marker
-            $('.submit').addClass( "lmbSbmConfirm" );
-        }
-	}
+    if(!isupdate){return;}
 
-	if(isupdate && ajaxpost != 2 && id>0 && data_type != 13 && (ajaxpost == 1 || jsvar["ajaxpost"] == 1)){
+    limbasDuplicateForm(el, fieldname, val, obj);
+
+	if(ajaxpost != 2 && id>0 && data_type != 13 && (ajaxpost == 1 || jsvar["ajaxpost"] == 1)){
 		send_form(1,1);
 		document.form1.history_fields.value = '';  //???? 0 war vorher; '' ist aber richtig
+        return;
 	}
+
+    // submit marker
+    $('.submit').addClass( "lmbSbmConfirm" ); // legacy formular
+    $('.submit').removeClass( "btn-outline-secondary" );
+    $('.submit').addClass( "btn-primary" );
+
 }
 
 
@@ -1393,7 +1396,7 @@ function limbasReportSaveTemlpate(evt, gtabid, reportid, resolvedTemplateGroups=
 
 
 // Ajax reminder
-function limbasDivShowReminder(evt,el,add,remove,changeView,change,defaults) {
+function limbasDivShowReminder(evt,el,add,remove,changeView,change,defaults,gtabid,ID) {
         activ_menu = 1;
 	if(el){
 		limbasDivShow(el,'limbasDivMenuExtras','lmbAjaxContainer');
@@ -1403,8 +1406,22 @@ function limbasDivShowReminder(evt,el,add,remove,changeView,change,defaults) {
 	var verkn = '';
 	var gfrist = '';
 	var listmode = '';
-	if(document.form1.gfrist.value){var gfrist = '&gfrist='+document.form1.gfrist.value;}
+	var form_id = '';
+
+    if(document.form1.gfrist.value){var gfrist = '&gfrist='+document.form1.gfrist.value;}
 	if(document.form1.action.value == 'gtab_erg'){var listmode = 1;}
+
+    if(!gtabid || typeof gtabid === 'undefined'){
+        var gtabid = jsvar['gtabid'];
+    }
+
+    if(!ID || typeof ID === 'undefined'){
+        var ID = jsvar['ID'];
+    }
+
+    if(document.form1.form_id.value){
+        form_id = document.form1.form_id.value;
+    }
 
 	// listmode
         // TODO auch für change/view?
@@ -1413,7 +1430,7 @@ function limbasDivShowReminder(evt,el,add,remove,changeView,change,defaults) {
                 var count = countofActiveRows();
                 // use selected rows
                 if(count > 0){
-                        var actrows = checkActiveRows(jsvar['gtabid']);
+                        var actrows = checkActiveRows(gtabid);
                         if(actrows.length > 0){
                                 var use_records = actrows.join(";");
                         }else{alert(jsvar["lng_2083"]);return;}
@@ -1435,16 +1452,18 @@ function limbasDivShowReminder(evt,el,add,remove,changeView,change,defaults) {
                 }
 	}
 
+    // add reminder
 	if(add){
-		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+jsvar['gtabid']+'&ID='+jsvar['ID']+'&listmode='+listmode+gfrist+'&add=1'+verkn+'&use_records='+use_records,null,'limbasDivShowReminderPost','form_reminder');
-	}else if(remove){
-		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+jsvar['gtabid']+'&ID='+jsvar['ID']+'&listmode='+listmode+gfrist+'&remid='+remove+'&use_records='+use_records,null,'limbasDivShowReminderPost');
+		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&add=1'+verkn+'&use_records='+use_records+'&form_id='+form_id,null,'limbasDivShowReminderPost','form_reminder');
+	// delete reminder
+    }else if(remove){
+		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&remid='+remove+'&use_records='+use_records,null,'limbasDivShowReminderPost');
 	}else if(changeView){
-		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+jsvar['gtabid']+'&ID='+jsvar['ID']+'&listmode='+listmode+gfrist+'&changeViewId='+changeView,null,'limbasDivShowReminderPost');
-        }else if(change){
-		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+jsvar['gtabid']+'&ID='+jsvar['ID']+'&listmode='+listmode+gfrist+'&changeId='+change,null,'limbasDivShowReminderPost','form_reminder');
-        }else {
-		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+jsvar['gtabid']+'&ID='+jsvar['ID']+'&listmode='+listmode+gfrist+'&defaults='+defaults,null,'limbasDivShowReminderPost');
+		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&changeViewId='+changeView,null,'limbasDivShowReminderPost');
+    }else if(change){
+		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&changeId='+change,null,'limbasDivShowReminderPost','form_reminder');
+    }else {
+		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&defaults='+defaults,null,'limbasDivShowReminderPost');
 	}
 }
 
@@ -1903,7 +1922,7 @@ function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimensio
 	}
 
     // default action
-    if (action != 'gtab_erg' && action != 'gtab_deterg' && action != 'gtab_neu') {
+    if (action != 'gtab_erg' && action != 'gtab_deterg' && action != 'gtab_neu' && action != 'gtab_form') {
         action = 'gtab_change'
     }
 
@@ -1993,7 +2012,8 @@ function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimensio
     }
 
     if (inframe == 'tab') {
-        wpath = "index.php?action=redirect&src=action=" + action + "%26verkn_showonly=1%26ID=" + id + "%26verkn_ID=" + v_id + "%26gtabid=" + gtabid + "%26verkn_tabid=" + v_tabid + "%26verkn_fieldid=" + v_fieldid + "%26form_id=" + formid + "%26verknpf=" + verknpf + "%26verkn_formid=" + v_formid + '%26verkn_addfrom='+relation_path + '&readonly='+readonly+use_typ;
+        // todo + "%26verknpf=" + verknpf // do not show close&save button
+        wpath = "index.php?action=redirect&src=action=" + action + "%26verkn_showonly=1%26ID=" + id + "%26verkn_ID=" + v_id + "%26gtabid=" + gtabid + "%26verkn_tabid=" + v_tabid + "%26verkn_fieldid=" + v_fieldid + "%26form_id=" + formid + "%26verkn_formid=" + v_formid + '%26verkn_addfrom='+relation_path + '&readonly='+readonly+use_typ;
         relationtab = open(wpath, "_blank");
         return;
     }
@@ -2007,9 +2027,9 @@ function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimensio
         document.form1.verkn_ID.value = v_id;
         document.form1.verkn_tabid.value = v_tabid;
         document.form1.verkn_fieldid.value = v_fieldid;
+        //todo document.form1.verknpf.value = verknpf; // do not show close&save button
         document.form1.gtabid.value = gtabid;
         document.form1.verkn_showonly.value = "1";
-        //document.form1.verknpf.value = "1";
         document.form1.verkn_addfrom.value = relation_path;
         if (!document.form1.verkn_poolid.value) {
             document.form1.verkn_poolid.value = v_tabid;

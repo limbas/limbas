@@ -8,181 +8,214 @@
  */
 
 
+require_once(COREPATH . 'admin/tables/tabschema/tabschema.dao');
 
-require_once(COREPATH . 'admin/tables/tabschema.dao');
+function lmb_questerror($error, $view_def)
+{
+    global $lang;
+    global $farbschema;
 
-function lmb_questerror($error,$view_def){
-	global $lang;
-	global $farbschema;
-	
-	echo "<div style=\"border:1px solid red;background-color:".$farbschema["WEB11"].";padding:10px;position:absolute;left:50px;top:50px;height:80%;width:80%;overflow:auto;z-index:9999;\">
-	<span style=\"background-color:".$farbschema["WEB10"].";\">$error</span>
+    echo "<div style=\"border:1px solid red;background-color:" . $farbschema["WEB11"] . ";padding:10px;position:absolute;left:50px;top:50px;height:80%;width:80%;overflow:auto;z-index:9999;\">
+	<span style=\"background-color:" . $farbschema["WEB10"] . ";\">$error</span>
 	<hr>
 	<span>$view_def</span>
 	<hr>
-	<input type=\"button\" value=\"".$lang[844]."\" onclick=\"this.parentNode.style.display='none'\">
+	<input type=\"button\" value=\"" . $lang[844] . "\" onclick=\"this.parentNode.style.display='none'\">
 	</div>";
 }
 
 
-function lmb_QuestDeleteConfig($tabid,$fieldid=null){
-	global $db;
-	global $DBA;
-	global $session;
-	
-	if($fieldid){
-		$sqlfield = "AND FIELD_ID = $fieldid";
-	}
-	
-	# drop language
-	$sqlquery =  "SELECT DISTINCT MD5TAB,SPELLING,BESCHREIBUNG,DATA_TYPE,VERKNTABLETYPE FROM LMB_CONF_FIELDS WHERE TAB_ID = $tabid $sqlfield";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	while(lmbdb_fetch_row($rs)) {
-		$sqlquery1 = "DELETE FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = ".parse_db_int(lmbdb_result($rs,"SPELLING"))." OR ELEMENT_ID = ".parse_db_int(lmbdb_result($rs,"BESCHREIBUNG"));
-		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-		if(!$rs1) {$commit = 1;}
-	}
-	# drop old config
-	$sqlquery = "DELETE FROM LMB_CONF_FIELDS WHERE TAB_ID = $tabid $sqlfield";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	# drop old rules
-	$sqlquery = "DELETE FROM LMB_RULES_FIELDS WHERE TAB_ID = $tabid $sqlfield";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
+function lmb_QuestDeleteConfig($tabid, $fieldid = null)
+{
+    global $db;
+    global $DBA;
+    global $session;
 
-	$sqlquery = "UPDATE LMB_CONF_VIEWS SET ISPUBLIC = ".LMB_DBDEF_FALSE." WHERE ID = $tabid";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
+    if ($fieldid) {
+        $sqlfield = "AND FIELD_ID = $fieldid";
+    }
+
+    # drop language
+    $sqlquery = "SELECT DISTINCT MD5TAB,SPELLING,BESCHREIBUNG,DATA_TYPE,VERKNTABLETYPE FROM LMB_CONF_FIELDS WHERE TAB_ID = $tabid $sqlfield";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
+    while (lmbdb_fetch_row($rs)) {
+        $sqlquery1 = "DELETE FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = " . parse_db_int(lmbdb_result($rs, "SPELLING")) . " OR ELEMENT_ID = " . parse_db_int(lmbdb_result($rs, "BESCHREIBUNG"));
+        $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+        if (!$rs1) {
+            $commit = 1;
+        }
+    }
+    # drop old config
+    $sqlquery = "DELETE FROM LMB_CONF_FIELDS WHERE TAB_ID = $tabid $sqlfield";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
+    # drop old rules
+    $sqlquery = "DELETE FROM LMB_RULES_FIELDS WHERE TAB_ID = $tabid $sqlfield";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
+
+    $sqlquery = "UPDATE LMB_CONF_VIEWS SET ISPUBLIC = " . LMB_DBDEF_FALSE . " WHERE ID = $tabid";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
 
 }
 
 
-function lmb_QuestOptions($viewid,$options){
-	global $db;
+function lmb_QuestOptions($viewid, $options)
+{
+    global $db;
 
-	if($options['params']){$options['params'] = serialize($options['params']);}
+    if ($options['params']) {
+        $options['params'] = serialize($options['params']);
+    }
 
-	$sqlquery = "UPDATE LMB_CONF_TABLES SET EVENT = '".parse_db_string($options['event'])."', PARAMS2 = '".parse_db_string($options['params'])."' WHERE TAB_ID = $viewid";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	
+    $sqlquery = "UPDATE LMB_CONF_TABLES SET EVENT = '" . parse_db_string($options['event']) . "', PARAMS2 = '" . parse_db_string($options['params']) . "' WHERE TAB_ID = $viewid";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
+
 }
 
-function lmb_QuestConfig($viewid,$view_group,$view_name){
-	global $db;
-	global $DBA;
-	global $session;
+function lmb_QuestConfig($viewid, $view_group, $view_name)
+{
+    global $db;
+    global $DBA;
+    global $session;
     global $lmfieldtype;
 
-	require_once(COREPATH . 'admin/setup/language.lib');
-	require_once(COREPATH . 'admin/group/group.lib');
+    require_once(COREPATH . 'admin/setup/language.lib');
+    require_once(COREPATH . 'admin/group/group.lib');
 
-	lmb_StartTransaction(1);
+    lmb_StartTransaction(1);
 
-	// get view name
-    if(!$view_name) {
+    // get view name
+    if (!$view_name) {
         $sqlquery = "SELECT TABELLE,TAB_GROUP FROM LMB_CONF_TABLES WHERE TAB_ID = $viewid";
         $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         $view_name = lmbdb_result($rs, "TABELLE");
         $view_group = lmbdb_result($rs, "TAB_GROUP");
     }
 
-	$field = dbf_5(array($DBA["DBSCHEMA"],$view_name));
-	if(!$field){return false;}
+    $field = dbf_5(array($DBA["DBSCHEMA"], $view_name));
+    if (!$field) {
+        return false;
+    }
 
-	# old conf values
-	$cfield = array();
-	$sqlquery = "SELECT ID,FIELD_ID,TAB_ID,FIELD_NAME FROM LMB_CONF_FIELDS WHERE TAB_ID = $viewid";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	while(lmbdb_fetch_row($rs)){
-		if(!in_array(dbf_4(lmbdb_result($rs,"FIELD_NAME")),$field["columnname_lower"])){
-			# drop old conf value if not exist
-			lmb_QuestDeleteConfig($viewid,lmbdb_result($rs,"FIELD_ID"));
-		}else{
-			$cfield[] = dbf_4(lmbdb_result($rs,"FIELD_NAME"));
-		}
-	}
-	
-	$next_confid = next_db_id("LMB_CONF_FIELDS");
-	#$next_ruleid = next_db_id("LMB_RULES_FIELDS");
-	$sort = 0;
-	
-	foreach ($field["columnname"] as $key => $value){
-		$sort++;
+    # old conf values
+    $cfield = array();
+    $sqlquery = "SELECT ID,FIELD_ID,TAB_ID,FIELD_NAME FROM LMB_CONF_FIELDS WHERE TAB_ID = $viewid";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
+    while (lmbdb_fetch_row($rs)) {
+        if (!in_array(dbf_4(lmbdb_result($rs, "FIELD_NAME")), $field["columnname_lower"])) {
+            # drop old conf value if not exist
+            lmb_QuestDeleteConfig($viewid, lmbdb_result($rs, "FIELD_ID"));
+        } else {
+            $cfield[] = dbf_4(lmbdb_result($rs, "FIELD_NAME"));
+        }
+    }
 
-		# skip if already exist
-		if(in_array(dbf_4($value),$cfield)){
-			$sqlquery = "UPDATE LMB_CONF_FIELDS SET SORT = $sort WHERE TAB_ID = $viewid AND FIELD_NAME = '$value'";
-			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			if(!$rs) {$commit = 1;}
-			continue;
-		}
+    $next_confid = next_db_id("LMB_CONF_FIELDS");
+    #$next_ruleid = next_db_id("LMB_RULES_FIELDS");
+    $sort = 0;
 
-		$typeid = translate_fieldtype($field["datatype"][$key],$field["length"][$key],$field["scale"][$key],$value);
-		$field_type = $lmfieldtype["field_type"][$typeid];
-		$data_type = $lmfieldtype["data_type"][$typeid];
-		if($lmfieldtype["hassize"][$typeid]){$field_size = $field["length"][$key];}
-		
-		$next_fieldid = next_conf_id("LMB_CONF_FIELDS","FIELD_ID","AND TAB_ID = $viewid");
-		
-		/* --- Sprachtabelle -------- */
-	    $description_id = lang_add($session["language"],4,$view_name.":".lmb_strtoupper($value),$value,"_DEPEND");
-	    $spellingf_id = lang_add($session["language"],4,$view_name.":".lmb_strtoupper($value),$value,"_DEPEND");
-		
-		$sqlquery = "INSERT INTO LMB_CONF_FIELDS (ID,FIELD_ID,TAB_ID,TAB_GROUP,SORT,FIELD_NAME,BESCHREIBUNG,SPELLING,FIELD_TYPE,DATA_TYPE,FIELD_SIZE,NEED) VALUES
-			($next_confid,$next_fieldid,$viewid,$view_group,$sort,'".lmb_strtoupper(parse_db_string($value))."',".parse_db_int($description_id).",".parse_db_int($spellingf_id).",".$field_type.",".$data_type.",".parse_db_int($field_size).",".LMB_DBDEF_FALSE.")";
-		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!$rs) {$commit = 1;}
+    foreach ($field["columnname"] as $key => $value) {
+        $sort++;
 
-		$group_id = $session["group_id"];
-		if($group_id == 1){$bool = LMB_DBDEF_TRUE;}else{$bool = LMB_DBDEF_FALSE;}
+        # skip if already exist
+        if (in_array(dbf_4($value), $cfield)) {
+            $sqlquery = "UPDATE LMB_CONF_FIELDS SET SORT = $sort WHERE TAB_ID = $viewid AND FIELD_NAME = '$value'";
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            if (!$rs) {
+                $commit = 1;
+            }
+            continue;
+        }
 
-		/*
-		$sqlquery = "INSERT INTO LMB_RULES_FIELDS (ID,GROUP_ID,TAB_GROUP,TAB_ID,FIELD_ID,LMVIEW,EDIT,COPY,COLOR,FILTER,SORT) VALUES 
-			($next_ruleid,$group_id,$view_group,$viewid,$next_fieldid,$bool,$bool,$bool,'','',0)";
-		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!$rs) {$commit = 1;}
-		*/
-		#$next_ruleid++;
-		$next_confid++;
-	}
+        $typeid = translate_fieldtype($field["datatype"][$key], $field["length"][$key], $field["scale"][$key], $value);
+        $field_type = $lmfieldtype["field_type"][$typeid];
+        $data_type = $lmfieldtype["data_type"][$typeid];
+        if ($lmfieldtype["hassize"][$typeid]) {
+            $field_size = $field["length"][$key];
+        }
 
-	// set rules to admin
-	//check_grouprights1($session['group_id'],null,null,$viewid);
+        $next_fieldid = next_conf_id("LMB_CONF_FIELDS", "FIELD_ID", "AND TAB_ID = $viewid");
+
+        /* --- Sprachtabelle -------- */
+        $description_id = lang_add($session["language"], 4, $view_name . ":" . lmb_strtoupper($value), $value, "_DEPEND");
+        $spellingf_id = lang_add($session["language"], 4, $view_name . ":" . lmb_strtoupper($value), $value, "_DEPEND");
+
+        $sqlquery = "INSERT INTO LMB_CONF_FIELDS (ID,FIELD_ID,TAB_ID,TAB_GROUP,SORT,FIELD_NAME,BESCHREIBUNG,SPELLING,FIELD_TYPE,DATA_TYPE,FIELD_SIZE,NEED) VALUES
+			($next_confid,$next_fieldid,$viewid,$view_group,$sort,'" . lmb_strtoupper(parse_db_string($value)) . "'," . parse_db_int($description_id) . "," . parse_db_int($spellingf_id) . "," . $field_type . "," . $data_type . "," . parse_db_int($field_size) . "," . LMB_DBDEF_FALSE . ")";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        if (!$rs) {
+            $commit = 1;
+        }
+
+        $group_id = $session["group_id"];
+        if ($group_id == 1) {
+            $bool = LMB_DBDEF_TRUE;
+        } else {
+            $bool = LMB_DBDEF_FALSE;
+        }
+
+        /*
+        $sqlquery = "INSERT INTO LMB_RULES_FIELDS (ID,GROUP_ID,TAB_GROUP,TAB_ID,FIELD_ID,LMVIEW,EDIT,COPY,COLOR,FILTER,SORT) VALUES
+            ($next_ruleid,$group_id,$view_group,$viewid,$next_fieldid,$bool,$bool,$bool,'','',0)";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        if(!$rs) {$commit = 1;}
+        */
+        #$next_ruleid++;
+        $next_confid++;
+    }
+
+    // set rules to admin
+    //check_grouprights1($session['group_id'],null,null,$viewid);
 
     // set group rights
-    check_grouprights1All(null,$viewid);
+    check_grouprights1All(null, $viewid);
 
-	// update view params
-	$sqlquery = "UPDATE LMB_CONF_VIEWS SET ISPUBLIC = ".LMB_DBDEF_TRUE." WHERE ID = $viewid";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    // update view params
+    $sqlquery = "UPDATE LMB_CONF_VIEWS SET ISPUBLIC = " . LMB_DBDEF_TRUE . " WHERE ID = $viewid";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
 
-	if($commit){
-	    lmb_EndTransaction(0);
-	}else{
-	    lmb_EndTransaction(1);
+    if ($commit) {
+        lmb_EndTransaction(0);
+    } else {
+        lmb_EndTransaction(1);
     }
 }
 
 
-
-function lmb_paramTransView($viewid,$view_def){
-	global $db;
+function lmb_paramTransView($viewid, $view_def)
+{
+    global $db;
     global $gview;
 
-    if(!trim($view_def)){return false;}
+    if (!trim($view_def)) {
+        return false;
+    }
 
-    if(!$gview) {
+    if (!$gview) {
         $gview = lmb_getQuestValue($viewid);
     }
 
-    if($gview["params"]) {
+    if ($gview["params"]) {
         eval($gview["params"]);
-        return eval("return \"".$view_def."\";");
-    }else{
+        return eval("return \"" . $view_def . "\";");
+    } else {
         return $view_def;
     }
 
@@ -198,39 +231,45 @@ function lmb_paramTransView($viewid,$view_def){
  * @param bool|null $setManually whether the view was stored manually
  * @return bool
  */
-function lmb_saveViewDefinition($viewid,$view_def,$isvalid=null,$setManually=null){
-	global $db;
-	global $DBA;
+function lmb_saveViewDefinition($viewid, $view_def, $isvalid = null, $setManually = null)
+{
+    global $db;
+    global $DBA;
 
-	if(!trim($view_def)){return false;}
+    if (!trim($view_def)) {
+        return false;
+    }
 
-	//mark checked as false
+    //mark checked as false
     if (!$isvalid) {
-	    $isvalid_ = "ISVALID = ".LMB_DBDEF_FALSE.",";
-	}
-	if ($setManually !== null) {
+        $isvalid_ = "ISVALID = " . LMB_DBDEF_FALSE . ",";
+    }
+    if ($setManually !== null) {
         if (!$setManually) {
             $setManually = 'SETMANUALLY = ' . LMB_DBDEF_FALSE . ',';
         } else {
             $setManually = 'SETMANUALLY = ' . LMB_DBDEF_TRUE . ',';
         }
     } else {
-	    $setManually = '';
+        $setManually = '';
     }
 
     $prepare_string = "UPDATE LMB_CONF_VIEWS SET $isvalid_ $setManually VIEWDEF = ? WHERE ID = $viewid";
-	if(!lmb_PrepareSQL($prepare_string,array($view_def),__FILE__,__LINE__)){$commit = 1;}
+    if (!lmb_PrepareSQL($prepare_string, array($view_def), __FILE__, __LINE__)) {
+        $commit = 1;
+    }
 
 }
 
 
-function lmb_deleteView($view_name){
+function lmb_deleteView($view_name)
+{
     global $db;
 
     $sqlquery = dbq_20(array($view_name));
-    $rs = lmbdb_exec($db,$sqlquery) or $error = str_replace("\n","\\n",lmbdb_errormsg($db));
-    if(!$rs) {
-        errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db, $sqlquery) or $error = str_replace("\n", "\\n", lmbdb_errormsg($db));
+    if (!$rs) {
+        errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         lmb_alert($error);
         return false;
     }
@@ -238,30 +277,33 @@ function lmb_deleteView($view_name){
 }
 
 
-function lmb_precheckView($viewid,$view_def){
+function lmb_precheckView($viewid, $view_def)
+{
     global $db;
 
 
-    if($GLOBALS["gLmbExt"]["ext_gtab.inc"]){
-        foreach ($GLOBALS["gLmbExt"]["ext_gtab.inc"] as $key => $extfile){
+    if ($GLOBALS["gLmbExt"]["ext_gtab.inc"]) {
+        foreach ($GLOBALS["gLmbExt"]["ext_gtab.inc"] as $key => $extfile) {
             require_once($extfile);
         }
     }
 
     // replace params if exists
-	$view_def = lmb_paramTransView($viewid,$view_def);
+    $view_def = lmb_paramTransView($viewid, $view_def);
 
-    $rs = lmbdb_exec($db,$view_def);
-	$error = str_replace("\n","\\n",lmbdb_errormsg($db));
-	if(!$rs AND $view_def){lmb_alert($error);return false;}
+    $rs = lmbdb_exec($db, $view_def);
+    $error = str_replace("\n", "\\n", lmbdb_errormsg($db));
+    if (!$rs and $view_def) {
+        lmb_alert($error);
+        return false;
+    }
 
-	// mark checked as true
-	$sqlquery = "UPDATE LMB_CONF_VIEWS SET ISVALID = ".LMB_DBDEF_TRUE." WHERE ID = $viewid" ;
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    // mark checked as true
+    $sqlquery = "UPDATE LMB_CONF_VIEWS SET ISVALID = " . LMB_DBDEF_TRUE . " WHERE ID = $viewid";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
 
     return true;
 }
-
 
 
 /**
@@ -274,294 +316,330 @@ function lmb_precheckView($viewid,$view_def){
  * @param null $view_drop
  * @return bool
  */
-function lmb_createQuestView($viewid,$view_def,$view_public=null,$view_drop=null,$view_replace=null){
-	global $db;
-	global $DBA;
-
-	// get view name
-	$sqlquery = "SELECT TABELLE,TAB_GROUP FROM LMB_CONF_TABLES WHERE TAB_ID = $viewid";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$view_name = lmbdb_result($rs,"TABELLE");
-	$view_group = lmbdb_result($rs,"TAB_GROUP");
-	
-	// drop view
-	if($view_drop){
-	   if(!lmb_deleteView($view_name)){return false;}
-	   // only drop view
-	   if($view_drop){return true;}
-	}
-
-	// no view definition
-    if(!$view_def){return;}
-
-	// replace params if exists
-	$view_def_ = lmb_paramTransView($viewid,$view_def);
-
-    // precheck if view is valid
-    if(!lmb_precheckView($viewid,$view_def)){return false;}
-
-	// try to create or replace view
-	$sqlquery = dbq_19(array($view_name,$view_def_));
-	#$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	$rs = lmbdb_exec($db,$sqlquery) or $error = str_replace("\n","\\n",lmbdb_errormsg($db));
-
-	// drop view first if failed
-	if(!$rs AND $view_replace){
-	    $error = '';
-	    if(!lmb_deleteView($view_name)){return false;}
-	    // try to create view again
-        $rs = lmbdb_exec($db,$sqlquery) or $error = str_replace("\n","\\n",lmbdb_errormsg($db));
-	    if(!$rs) {
-	        errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	        lmb_alert($error);
-	        return false;
-	    }
-	}elseif(!$rs){
-        errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	    lmb_alert($error);
-	    return false;
-    }
-
-	lmb_saveViewDefinition($viewid, $view_def, 1);
-
-	// rebuild lmb_conf_fields
-	if($view_public){
-		lmb_QuestConfig($viewid,$view_group,$view_name);
-	}
-	
-	return true;
-}
-
-
-function lmb_getQuestRelation($viewid,$relationstring=null){
-
-	if($relationstring){
-		$relationset = explode("|",$relationstring);
-	}else{
-		$gview = lmb_getQuestValue($viewid);
-		$relationset = explode("|",$gview["relationstring"]);
-	}
-	
-	if(!$relationset){return false;}
-	foreach ($relationset as $key => $value){
-		if($value){
-			$part = explode(";",$value);
-			$partl = explode("_",$part[0]);
-			$partr = explode("_",$part[1]);
-
-			$rel["ljoin"][] = $part[0];
-			$rel["rjoin"][] = $part[1];
-			$rel["jtype"][] = $part[2];
-			$rel["tabl"][] = $partl[0];
-			$rel["fieldl"][] = $partl[1];
-			$rel["tabr"][] = $partr[0];
-			$rel["fieldr"][] = $partr[1];
-		}
-	}
-	
-	return $rel;
-	
-}
-
-
-function lmb_createQuestRelation($viewid,$relationstring,$addrelation=null,$settype=null){
-	global $db;
-
-	$pat = lmb_GetTabschemaPattern($viewid);
-
-	if($relationstring){
-		$relationset = explode("|",$relationstring);
-	}
-	
-	# add new realtion
-	if(!$settype AND $addrelation){
-		$addrelation = str_replace("opt_","",$addrelation);
-		$relationset[] = $addrelation.";1";
-	}
-	
-	if($relationset){
-		foreach ($relationset as $key => $value){
-			if($value){
-				$isok1 = 0;
-				$isok2 = 0;
-				$part = explode(";",$value);
-				$partl = explode("_",$part[0]);
-				$partr = explode("_",$part[1]);
-				
-				# set type of relation
-				if($settype AND $part[0].";".$part[1] == $addrelation){
-					# remove relation
-					if($settype == 4){continue;}
-					# modify relation
-					$part[2] = $settype;
-					$value = $part[0].";".$part[1].";".$part[2];
-				}
-	
-				# check if table is present
-				foreach ($pat["id"] as $rkey => $rval){
-					if($partl[0] == $rkey){$isok1=1;}
-					if($partr[0] == $rkey){$isok2=1;}
-				}
-				
-				if($isok1 AND $isok2){
-					$relationset_[] = str_replace("=","",$value);
-				}
-			}
-		}
-	
-		if($relationset_){
-			$relation = implode("|",array_unique($relationset_));
-		}
-	}
-
-	$prepare_string = "UPDATE LMB_CONF_VIEWS SET RELATION = ? WHERE ID = $viewid";
-	if(!lmb_PrepareSQL($prepare_string,array($relation),__FILE__,__LINE__)){$commit = 1;}
-
-	return $relation;
-	
-}
-
-function lmb_getQuestValue($viewid){
-	global $db;
+function lmb_createQuestView($viewid, $view_def, $view_public = null, $view_drop = null, $view_replace = null)
+{
+    global $db;
     global $DBA;
 
-	$sqlquery = "SELECT LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.EVENT,LMB_CONF_TABLES.PARAMS2,LMB_CONF_VIEWS.VIEWDEF,LMB_CONF_VIEWS.ISPUBLIC,LMB_CONF_VIEWS.HASID,LMB_CONF_VIEWS.USESYSTABS,LMB_CONF_VIEWS.RELATION,LMB_CONF_VIEWS.ISVALID,LMB_CONF_VIEWS.SETMANUALLY FROM LMB_CONF_VIEWS,LMB_CONF_TABLES WHERE LMB_CONF_VIEWS.ID = LMB_CONF_TABLES.TAB_ID AND LMB_CONF_TABLES.TAB_ID = ".parse_db_int($viewid);
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	if(lmbdb_fetch_row($rs)){
-		$gview["viewdef"] = lmbdb_result($rs,"VIEWDEF");
-		$gview["ispublic"] = lmbdb_result($rs,"ISPUBLIC");
-		$gview["viewname"] = lmbdb_result($rs,"TABELLE");
-		$gview["relationstring"] = lmbdb_result($rs,"RELATION");
-		$gview["showsystabs"] = lmbdb_result($rs,"USESYSTABS");
-		$gview["event"] = lmbdb_result($rs,"EVENT");
-        $gview["isvalid"] = lmbdb_result($rs,"ISVALID");
-        $gview["setManually"] = lmbdb_result($rs,"SETMANUALLY");
-		if($gview["params"] = lmbdb_result($rs,"PARAMS2")){
-		    $gview["params"] = unserialize($gview["params"]);
+    // get view name
+    $sqlquery = "SELECT TABELLE,TAB_GROUP FROM LMB_CONF_TABLES WHERE TAB_ID = $viewid";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    $view_name = lmbdb_result($rs, "TABELLE");
+    $view_group = lmbdb_result($rs, "TAB_GROUP");
+
+    // drop view
+    if ($view_drop) {
+        if (!lmb_deleteView($view_name)) {
+            return false;
         }
-
-		$gview["viewexists"] = 0;
-	}
-
-    if($s = dbf_20(array($DBA["DBSCHEMA"],$gview["viewname"],'VIEW'))){
-	    $gview["viewexists"] = 1;
+        // only drop view
+        if ($view_drop) {
+            return true;
+        }
     }
 
-	return $gview;
+    // no view definition
+    if (!$view_def) {
+        return;
+    }
+
+    // replace params if exists
+    $view_def_ = lmb_paramTransView($viewid, $view_def);
+
+    // precheck if view is valid
+    if (!lmb_precheckView($viewid, $view_def)) {
+        return false;
+    }
+
+    // try to create or replace view
+    $sqlquery = dbq_19(array($view_name, $view_def_));
+    #$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db, $sqlquery) or $error = str_replace("\n", "\\n", lmbdb_errormsg($db));
+
+    // drop view first if failed
+    if (!$rs and $view_replace) {
+        $error = '';
+        if (!lmb_deleteView($view_name)) {
+            return false;
+        }
+        // try to create view again
+        $rs = lmbdb_exec($db, $sqlquery) or $error = str_replace("\n", "\\n", lmbdb_errormsg($db));
+        if (!$rs) {
+            errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            lmb_alert($error);
+            return false;
+        }
+    } elseif (!$rs) {
+        errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        lmb_alert($error);
+        return false;
+    }
+
+    lmb_saveViewDefinition($viewid, $view_def, 1);
+
+    // rebuild lmb_conf_fields
+    if ($view_public) {
+        lmb_QuestConfig($viewid, $view_group, $view_name);
+    }
+
+    return true;
 }
 
-function lmb_getQuestFields($viewid){
-	global $db;
-	
-	$sqlquery = "SELECT * FROM LMB_CONF_VIEWFIELDS WHERE VIEWID = ".parse_db_int($viewid)." ORDER BY SORT";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	while(lmbdb_fetch_row($rs)){
-		$key = lmbdb_result($rs,"ID");
-		$fieldname = lmbdb_result($rs,"QFIELD");
-		$gviewfields["id"][$key] = lmbdb_result($rs,"TABLENAME")."_".$fieldname;
-		$gviewfields["fieldname"][$key] = $fieldname;
-		$gviewfields["tablename"][$key] = lmbdb_result($rs,"TABLENAME");
-		$gviewfields["order"][$key] = lmbdb_result($rs,"QORDER");
-		$gviewfields["filter"][$key] = lmbdb_result($rs,"QFILTER");
-		$gviewfields["alias"][$key] = lmbdb_result($rs,"QALIAS");
-		$gviewfields["show"][$key] = lmbdb_result($rs,"QSHOW");
-		$gviewfields["sort"][$key] = lmbdb_result($rs,"SORT");
-		$gviewfields["func"][$key] = lmbdb_result($rs,"QFUNC");
-	}
 
-	return $gviewfields;
+function lmb_getQuestRelation($viewid, $relationstring = null)
+{
+
+    if ($relationstring) {
+        $relationset = explode("|", $relationstring);
+    } else {
+        $gview = lmb_getQuestValue($viewid);
+        $relationset = explode("|", $gview["relationstring"]);
+    }
+
+    if (!$relationset) {
+        return false;
+    }
+    foreach ($relationset as $key => $value) {
+        if ($value) {
+            $part = explode(";", $value);
+            $partl = explode("_", $part[0]);
+            $partr = explode("_", $part[1]);
+
+            $rel["ljoin"][] = $part[0];
+            $rel["rjoin"][] = $part[1];
+            $rel["jtype"][] = $part[2];
+            $rel["tabl"][] = $partl[0];
+            $rel["fieldl"][] = $partl[1];
+            $rel["tabr"][] = $partr[0];
+            $rel["fieldr"][] = $partr[1];
+        }
+    }
+
+    return $rel;
+
 }
 
-function lmb_editQuestFields($viewid,&$par){
-	global $db;
 
-	$formid = $par["formid"];
-	$fieldid = explode("_",$par["setviewfield"]);
-	$table_name = $fieldid[0];
-	$field_name = $fieldid[1];
+function lmb_createQuestRelation($viewid, $relationstring, $addrelation = null, $settype = null)
+{
+    global $db;
 
-	if($par["view_newalias"] === 0){$par["view_newalias"] = "0";}
-	
-	if($par["act"] == 'add'){
-		$next_id = next_db_id("LMB_CONF_VIEWFIELDS");
-		$next_sort = next_db_id("LMB_CONF_VIEWFIELDS","SORT");
-		$sqlquery = "INSERT INTO LMB_CONF_VIEWFIELDS (ID,VIEWID,TABLENAME,QFIELD,SORT) VALUES
-			(".parse_db_int($next_id).",".parse_db_int($viewid).",'".parse_db_string(base64_decode($table_name))."','".parse_db_string(base64_decode($field_name))."',".parse_db_int($next_sort).")";
-                $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	}elseif($par["act"] == 'addalias'){
-		if($table_name==1){$table_name = "";}
-		$next_id = next_db_id("LMB_CONF_VIEWFIELDS");
-		$next_sort = next_db_id("LMB_CONF_VIEWFIELDS","SORT");
-		$sqlquery = "INSERT INTO LMB_CONF_VIEWFIELDS (ID,VIEWID,TABLENAME,QFIELD,QALIAS,SORT) VALUES 
-			(".parse_db_int($next_id).",".parse_db_int($viewid).",'".parse_db_string($table_name)."','".parse_db_string($par["view_newalias"])."','".parse_db_string("Ausdruck$next_sort")."',".parse_db_int($next_sort).")";
-		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	}elseif($par["act"] == 'del'){
-		$sqlquery = "DELETE FROM LMB_CONF_VIEWFIELDS WHERE VIEWID = ".parse_db_int($viewid)." AND ID=".parse_db_int($field_name);
-		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	}elseif($par["act"] == 'alias'){
-		$alias = preg_replace('/[^a-z0-9]/i','_',$par["view_alias_$formid"]);
-		$alias = preg_replace("/[_]{1,}/","_",$alias);
-		if(!preg_match("/[A-Za-z]/",lmb_substr($alias,0,1)) AND $alias){$alias = "L".$alias;}
-		$alias = lmb_substr($alias,0,50);
-		$sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET QALIAS = '".parse_db_string($alias,50)."' WHERE VIEWID = ".parse_db_int($viewid)." AND ID=".parse_db_int($field_name);
-		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	}elseif($par["act"] == 'order'){
-		$sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET QORDER = ".parse_db_int($par["view_order_$formid"])." WHERE VIEWID = ".parse_db_int($viewid)." AND ID=".parse_db_int($field_name);
-		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	}elseif($par["act"] == 'show'){
-		$sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET QSHOW = ".parse_db_bool($par["view_show_$formid"])." WHERE VIEWID = ".parse_db_int($viewid)." AND ID=".parse_db_int($field_name);
-		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	}elseif($par["act"] == 'field'){
-		$prepare_string = "UPDATE LMB_CONF_VIEWFIELDS SET QFIELD = ? WHERE VIEWID = ".parse_db_int($viewid)." AND ID=".parse_db_int($field_name);
-		lmb_PrepareSQL($prepare_string,array($par["view_field_$formid"]),__FILE__,__LINE__);
-	}elseif($par["act"] == 'filter'){
-		$prepare_string = "UPDATE LMB_CONF_VIEWFIELDS SET QFILTER = ? WHERE VIEWID = ".parse_db_int($viewid)." AND ID=".parse_db_int($field_name);
-		lmb_PrepareSQL($prepare_string,array($par["view_filter_$formid"]),__FILE__,__LINE__);
-	}elseif($par["act"] == 'func'){
-		$sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET QFUNC = ".parse_db_int($par["view_func_$formid"])." WHERE VIEWID = ".parse_db_int($viewid)." AND ID=".parse_db_int($field_name);
-		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	}elseif($par["act"] == 'move'){
-		if($gviewfields = lmb_getQuestFields($viewid)){
-			$bzm = 1;
-			foreach ($gviewfields["id"] as $key => $value){
-				if ($key == $formid)
-				{
-				}elseif($key == $par["setviewfield"]){
-					if($gviewfields["sort"][$formid] < $gviewfields["sort"][$par["setviewfield"]]){
-						$sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET SORT = $bzm WHERE VIEWID = ".parse_db_int($viewid)." AND ID = $key";
-						$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-						$bzm++;
-						$sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET SORT = $bzm WHERE VIEWID = ".parse_db_int($viewid)." AND ID = $formid";
-						$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-						$bzm++;
-					}else{
-						$sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET SORT = $bzm WHERE VIEWID = ".parse_db_int($viewid)." AND ID = $formid";
-						$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-						$bzm++;
-						$sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET SORT = $bzm WHERE VIEWID = ".parse_db_int($viewid)." AND ID = $key";
-						$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-						$bzm++;
-					}
-				}else{
-					$sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET SORT = $bzm WHERE VIEWID = ".parse_db_int($viewid)." AND ID = $key";
-					$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-					$bzm++;
-				}
-			}
-		}
+    $pat = lmb_GetTabschemaPattern($viewid);
 
-	}
-        
-        lmb_addAliasToDuplicateNames($viewid);
+    if ($relationstring) {
+        $relationset = explode("|", $relationstring);
+    }
+
+    # add new realtion
+    if (!$settype and $addrelation) {
+        $addrelation = str_replace("opt_", "", $addrelation);
+        $relationset[] = $addrelation . ";1";
+    }
+
+    if ($relationset) {
+        foreach ($relationset as $key => $value) {
+            if ($value) {
+                $isok1 = 0;
+                $isok2 = 0;
+                $part = explode(";", $value);
+                $partl = explode("_", $part[0]);
+                $partr = explode("_", $part[1]);
+
+                # set type of relation
+                if ($settype and $part[0] . ";" . $part[1] == $addrelation) {
+                    # remove relation
+                    if ($settype == 4) {
+                        continue;
+                    }
+                    # modify relation
+                    $part[2] = $settype;
+                    $value = $part[0] . ";" . $part[1] . ";" . $part[2];
+                }
+
+                # check if table is present
+                foreach ($pat["id"] as $rkey => $rval) {
+                    if ($partl[0] == $rkey) {
+                        $isok1 = 1;
+                    }
+                    if ($partr[0] == $rkey) {
+                        $isok2 = 1;
+                    }
+                }
+
+                if ($isok1 and $isok2) {
+                    $relationset_[] = str_replace("=", "", $value);
+                }
+            }
+        }
+
+        if ($relationset_) {
+            $relation = implode("|", array_unique($relationset_));
+        }
+    }
+
+    $prepare_string = "UPDATE LMB_CONF_VIEWS SET RELATION = ? WHERE ID = $viewid";
+    if (!lmb_PrepareSQL($prepare_string, array($relation), __FILE__, __LINE__)) {
+        $commit = 1;
+    }
+
+    return $relation;
+
+}
+
+function lmb_getQuestValue($viewid)
+{
+    global $db;
+    global $DBA;
+
+    $sqlquery = "SELECT LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.EVENT,LMB_CONF_TABLES.PARAMS2,LMB_CONF_VIEWS.VIEWDEF,LMB_CONF_VIEWS.ISPUBLIC,LMB_CONF_VIEWS.HASID,LMB_CONF_VIEWS.USESYSTABS,LMB_CONF_VIEWS.RELATION,LMB_CONF_VIEWS.ISVALID,LMB_CONF_VIEWS.SETMANUALLY FROM LMB_CONF_VIEWS,LMB_CONF_TABLES WHERE LMB_CONF_VIEWS.ID = LMB_CONF_TABLES.TAB_ID AND LMB_CONF_TABLES.TAB_ID = " . parse_db_int($viewid);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
+    if (lmbdb_fetch_row($rs)) {
+        $gview["viewdef"] = lmbdb_result($rs, "VIEWDEF");
+        $gview["ispublic"] = lmbdb_result($rs, "ISPUBLIC");
+        $gview["viewname"] = lmbdb_result($rs, "TABELLE");
+        $gview["relationstring"] = lmbdb_result($rs, "RELATION");
+        $gview["showsystabs"] = lmbdb_result($rs, "USESYSTABS");
+        $gview["event"] = lmbdb_result($rs, "EVENT");
+        $gview["isvalid"] = lmbdb_result($rs, "ISVALID");
+        $gview["setManually"] = lmbdb_result($rs, "SETMANUALLY");
+        if ($gview["params"] = lmbdb_result($rs, "PARAMS2")) {
+            $gview["params"] = unserialize($gview["params"]);
+        }
+
+        $gview["viewexists"] = 0;
+    }
+
+    if ($s = dbf_20(array($DBA["DBSCHEMA"], $gview["viewname"], 'VIEW'))) {
+        $gview["viewexists"] = 1;
+    }
+
+    return $gview;
+}
+
+function lmb_getQuestFields($viewid)
+{
+    global $db;
+
+    $sqlquery = "SELECT * FROM LMB_CONF_VIEWFIELDS WHERE VIEWID = " . parse_db_int($viewid) . " ORDER BY SORT";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
+    while (lmbdb_fetch_row($rs)) {
+        $key = lmbdb_result($rs, "ID");
+        $fieldname = lmbdb_result($rs, "QFIELD");
+        $gviewfields["id"][$key] = lmbdb_result($rs, "TABLENAME") . "_" . $fieldname;
+        $gviewfields["fieldname"][$key] = $fieldname;
+        $gviewfields["tablename"][$key] = lmbdb_result($rs, "TABLENAME");
+        $gviewfields["order"][$key] = lmbdb_result($rs, "QORDER");
+        $gviewfields["filter"][$key] = lmbdb_result($rs, "QFILTER");
+        $gviewfields["alias"][$key] = lmbdb_result($rs, "QALIAS");
+        $gviewfields["show"][$key] = lmbdb_result($rs, "QSHOW");
+        $gviewfields["sort"][$key] = lmbdb_result($rs, "SORT");
+        $gviewfields["func"][$key] = lmbdb_result($rs, "QFUNC");
+    }
+
+    return $gviewfields;
+}
+
+function lmb_editQuestFields($viewid, &$par)
+{
+    global $db;
+
+    $formid = $par["formid"];
+    $fieldid = explode("_", $par["setviewfield"]);
+    $table_name = $fieldid[0];
+    $field_name = $fieldid[1];
+
+    if ($par["view_newalias"] === 0) {
+        $par["view_newalias"] = "0";
+    }
+
+    if ($par["act"] == 'add') {
+        $next_id = next_db_id("LMB_CONF_VIEWFIELDS");
+        $next_sort = next_db_id("LMB_CONF_VIEWFIELDS", "SORT");
+        $sqlquery = "INSERT INTO LMB_CONF_VIEWFIELDS (ID,VIEWID,TABLENAME,QFIELD,SORT) VALUES
+			(" . parse_db_int($next_id) . "," . parse_db_int($viewid) . ",'" . parse_db_string(base64_decode($table_name)) . "','" . parse_db_string(base64_decode($field_name)) . "'," . parse_db_int($next_sort) . ")";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    } elseif ($par["act"] == 'addalias') {
+        if ($table_name == 1) {
+            $table_name = "";
+        }
+        $next_id = next_db_id("LMB_CONF_VIEWFIELDS");
+        $next_sort = next_db_id("LMB_CONF_VIEWFIELDS", "SORT");
+        $sqlquery = "INSERT INTO LMB_CONF_VIEWFIELDS (ID,VIEWID,TABLENAME,QFIELD,QALIAS,SORT) VALUES 
+			(" . parse_db_int($next_id) . "," . parse_db_int($viewid) . ",'" . parse_db_string($table_name) . "','" . parse_db_string($par["view_newalias"]) . "','" . parse_db_string("Ausdruck$next_sort") . "'," . parse_db_int($next_sort) . ")";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    } elseif ($par["act"] == 'del') {
+        $sqlquery = "DELETE FROM LMB_CONF_VIEWFIELDS WHERE VIEWID = " . parse_db_int($viewid) . " AND ID=" . parse_db_int($field_name);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    } elseif ($par["act"] == 'alias') {
+        $alias = preg_replace('/[^a-z0-9]/i', '_', $par["view_alias_$formid"]);
+        $alias = preg_replace("/[_]{1,}/", "_", $alias);
+        if (!preg_match("/[A-Za-z]/", lmb_substr($alias, 0, 1)) and $alias) {
+            $alias = "L" . $alias;
+        }
+        $alias = lmb_substr($alias, 0, 50);
+        $sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET QALIAS = '" . parse_db_string($alias, 50) . "' WHERE VIEWID = " . parse_db_int($viewid) . " AND ID=" . parse_db_int($field_name);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    } elseif ($par["act"] == 'order') {
+        $sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET QORDER = " . parse_db_int($par["view_order_$formid"]) . " WHERE VIEWID = " . parse_db_int($viewid) . " AND ID=" . parse_db_int($field_name);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    } elseif ($par["act"] == 'show') {
+        $sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET QSHOW = " . parse_db_bool($par["view_show_$formid"]) . " WHERE VIEWID = " . parse_db_int($viewid) . " AND ID=" . parse_db_int($field_name);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    } elseif ($par["act"] == 'field') {
+        $prepare_string = "UPDATE LMB_CONF_VIEWFIELDS SET QFIELD = ? WHERE VIEWID = " . parse_db_int($viewid) . " AND ID=" . parse_db_int($field_name);
+        lmb_PrepareSQL($prepare_string, array($par["view_field_$formid"]), __FILE__, __LINE__);
+    } elseif ($par["act"] == 'filter') {
+        $prepare_string = "UPDATE LMB_CONF_VIEWFIELDS SET QFILTER = ? WHERE VIEWID = " . parse_db_int($viewid) . " AND ID=" . parse_db_int($field_name);
+        lmb_PrepareSQL($prepare_string, array($par["view_filter_$formid"]), __FILE__, __LINE__);
+    } elseif ($par["act"] == 'func') {
+        $sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET QFUNC = " . parse_db_int($par["view_func_$formid"]) . " WHERE VIEWID = " . parse_db_int($viewid) . " AND ID=" . parse_db_int($field_name);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    } elseif ($par["act"] == 'move') {
+        if ($gviewfields = lmb_getQuestFields($viewid)) {
+            $bzm = 1;
+            foreach ($gviewfields["id"] as $key => $value) {
+                if ($key == $formid) {
+                } elseif ($key == $par["setviewfield"]) {
+                    if ($gviewfields["sort"][$formid] < $gviewfields["sort"][$par["setviewfield"]]) {
+                        $sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET SORT = $bzm WHERE VIEWID = " . parse_db_int($viewid) . " AND ID = $key";
+                        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                        $bzm++;
+                        $sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET SORT = $bzm WHERE VIEWID = " . parse_db_int($viewid) . " AND ID = $formid";
+                        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                        $bzm++;
+                    } else {
+                        $sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET SORT = $bzm WHERE VIEWID = " . parse_db_int($viewid) . " AND ID = $formid";
+                        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                        $bzm++;
+                        $sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET SORT = $bzm WHERE VIEWID = " . parse_db_int($viewid) . " AND ID = $key";
+                        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                        $bzm++;
+                    }
+                } else {
+                    $sqlquery = "UPDATE LMB_CONF_VIEWFIELDS SET SORT = $bzm WHERE VIEWID = " . parse_db_int($viewid) . " AND ID = $key";
+                    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                    $bzm++;
+                }
+            }
+        }
+
+    }
+
+    lmb_addAliasToDuplicateNames($viewid);
 
 }
 
 /*
  * if there are duplicate names in a view, it adds an alias to the name with the higher id
  */
-function lmb_addAliasToDuplicateNames($viewid) {
+function lmb_addAliasToDuplicateNames($viewid)
+{
     global $db;
 
     # select pairs in a view that have the same alias
@@ -573,10 +651,10 @@ function lmb_addAliasToDuplicateNames($viewid) {
                 AND A.VIEWID=B.VIEWID 
                 AND (A.QALIAS=B.QALIAS OR (A.QALIAS IS NULL AND B.QALIAS IS NULL AND A.QFIELD=B.QFIELD))
                 WHERE A.VIEWID=$viewidEsc";
-    $rsPairs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rsPairs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
 
     # fix each pair
-    while(lmbdb_fetch_row($rsPairs)) {
+    while (lmbdb_fetch_row($rsPairs)) {
         $aid = lmbdb_result($rsPairs, "AID");
         $oldName = lmbdb_result($rsPairs, "QFIELD");
 
@@ -588,7 +666,7 @@ function lmb_addAliasToDuplicateNames($viewid) {
             $sqlquery = "SELECT ID FROM LMB_CONF_VIEWFIELDS
                           WHERE VIEWID=$viewidEsc  
                           AND (QFIELD='$newAliasEsc' OR QALIAS='$newAliasEsc')";
-            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
             $suffixNumber++;
         } while (lmbdb_num_rows($rs) > 0);
 
@@ -596,36 +674,40 @@ function lmb_addAliasToDuplicateNames($viewid) {
         $sqlquery = "UPDATE LMB_CONF_VIEWFIELDS 
                       SET QALIAS='$newAliasEsc' 
                       WHERE ID=$aid";
-        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     }
-        
+
 }
 
 # --- Verknüpfungsinformationen -----
-function show_viewlinkinfo($viewid,$ljoin,$rjoin,$settype=null){
-	global $lang;
-	global $farbschema;
-	global $lang;
-	
-	$gview = lmb_getQuestValue($viewid);
-	$relationstring = $gview["relationstring"];
-	$modrelation = "$ljoin;$rjoin";
-	if($settype){$relationstring = lmb_createQuestRelation($viewid,$relationstring,$modrelation,$settype);}
-	$rel = lmb_getQuestRelation($viewid,$relationstring);
+function show_viewlinkinfo($viewid, $ljoin, $rjoin, $settype = null)
+{
+    global $lang;
+    global $farbschema;
+    global $lang;
 
-	if($rel){
-	foreach ($rel["ljoin"] as $key => $value){
-		if(($ljoin == $rel["ljoin"][$key] AND $rjoin == $rel["rjoin"][$key]) OR ($ljoin == $rel["rjoin"][$key] AND $rjoin == $rel["ljoin"][$key])){
-			${"check".$rel["jtype"][$key]} = "checked";
-		}
-	}}
-	
-	$ltable = explode("_",$ljoin);
-	$ltable = base64_decode($ltable[0]);
-	$rtable = explode("_",$rjoin);
-	$rtable = base64_decode($rtable[0]);
+    $gview = lmb_getQuestValue($viewid);
+    $relationstring = $gview["relationstring"];
+    $modrelation = "$ljoin;$rjoin";
+    if ($settype) {
+        $relationstring = lmb_createQuestRelation($viewid, $relationstring, $modrelation, $settype);
+    }
+    $rel = lmb_getQuestRelation($viewid, $relationstring);
 
-	echo "
+    if ($rel) {
+        foreach ($rel["ljoin"] as $key => $value) {
+            if (($ljoin == $rel["ljoin"][$key] and $rjoin == $rel["rjoin"][$key]) or ($ljoin == $rel["rjoin"][$key] and $rjoin == $rel["ljoin"][$key])) {
+                ${"check" . $rel["jtype"][$key]} = "checked";
+            }
+        }
+    }
+
+    $ltable = explode("_", $ljoin);
+    $ltable = base64_decode($ltable[0]);
+    $rtable = explode("_", $rjoin);
+    $rtable = base64_decode($rtable[0]);
+
+    echo "
 	<table cellpadding=\"0\" cellspacing=\"0\" STYLE=\"border-collapse:collapse;width:300px;\">
 	<tr><td valign=\"top\" style=\"padding:5px;\"><input type=\"radio\" name=\"viewreltype\" value=\"1\" $check1 onclick=\"lmbAjax_fieldinfo(event,3,document.form1.viewid.value,'$ljoin','$rjoin',1);\"></td>
 	<td valign=\"top\" style=\"padding:5px;\">$lang[2617]</td></tr>
@@ -637,302 +719,510 @@ function show_viewlinkinfo($viewid,$ljoin,$rjoin,$settype=null){
 	<td valign=\"top\" style=\"padding:5px;color:red;\">$lang[2621]</td></tr>
 	";
 
-	echo "</TABLE>";
+    echo "</TABLE>";
 }
 
 
-function show_viewFields($viewid){
-	global $lang;
+function show_viewFields($viewid)
+{
+    global $lang;
 
-	if(!$gviewfields = lmb_getQuestFields($viewid)){$gviewfields["fieldname"] = array();}
-	
-	echo "<table border=\"0\" cellspacing=\"0\" cellpadding=\"1\" style=\"border-collapse:collapse;\">";
-	
-	
-	echo "<tr><td class=\"this_viewfieldtd\"><b>$lang[922]</b></td>\n";
-	foreach ($gviewfields["fieldname"] as $key => $value){
-		echo "<td class=\"this_viewfieldtd\" style=\"width:100px;\" valign=\"top\" 
+    if (!$gviewfields = lmb_getQuestFields($viewid)) {
+        $gviewfields["fieldname"] = array();
+    }
+
+    echo "<div class='container-fluid py-0 px-2 overflow-x-auto'>";
+
+    /*
+     * Feldname
+     */
+    echo "<div class='row flex-row flex-nowrap pt-2'><div class='col-1 d-flex align-items-center'><b>$lang[922]</b></div>\n";
+    foreach ($gviewfields["fieldname"] as $key => $value) {
+        //textarea uses innerhtml for initial value, changed to value attribute in input => problem?
+        echo "<div class='col-2 border-end m-0 p-1 px-2' 
 		OnMouseUp=\"lmbAjax_EditViewfield(event,this,'move','$key',viewsortid);viewsortid=null;\">
-		<textarea class=\"this_viewfieldform\" name=\"view_field_$key\" style=\"overflow:auto;width:80px\" 
+            <div class='row'>
+            <div class='col pe-0'><input class='form-control form-control-sm' name=\"view_field_$key\" 
+            oncontextmenu=\"ZoomViewField(event,this,'$key');return false;\"
+            OnMousedown=\"viewsortid=$key;iniDrag(event,document.getElementById('relationSign'),this);this.focus();return false;\" 
+            OnChange=\"lmbAjax_EditViewfield(event,this,'field','key_$key','$key')\"
+            value='" . $gviewfields["fieldname"][$key] . "'>
+            </div>
+            <div class='col-auto ps-1'>
+            <i class=\"lmb-icon lmb-close-alt align-middle\" OnClick=\"lmbAjax_EditViewfield(event,this,'del','key_$key')\" style=\"cursor:pointer;\"></i>
+            </div>
+            </div>
+		</div>";
+    }
+    echo "<div class='col-1' OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\"><input name=\"view_newalias\" OnChange=\"lmbAjax_EditViewfield(event,this,'addalias')\" type=\"text\" style=\"width:100px;border:none;background-color:transparent;overflow:visible\"></div></div>\n";
+
+    /*
+     * Tabellenname
+     */
+    echo "<div class='row flex-row flex-nowrap'><div class='col-1 d-flex align-items-center'><b>$lang[951]</b></div>\n";
+    foreach ($gviewfields["fieldname"] as $key => $value) {
+        echo "<div class='col-2 border-end m-0 p-1 px-2'><input class='form-control-plaintext w-100' type=\"text\" value=\"" . $gviewfields["tablename"][$key] . "\" readonly></div>\n";
+    }
+    echo "<div class='col-1' OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</div></div>\n";
+
+
+    /*
+     * Alias
+     */
+    echo "<div class='row flex-row flex-nowrap'><div class='col-1 d-flex align-items-center'><b>$lang[2624]</b></div>\n";
+    foreach ($gviewfields["fieldname"] as $key => $value) {
+        echo "<div class='col-2 border-end m-0 p-1 px-2'><input class='form-control form-control-sm w-100' type=\"text\" name=\"view_alias_$key\" value=\"" . $gviewfields["alias"][$key] . "\" OnChange=\"lmbAjax_EditViewfield(event,this,'alias','key_$key','$key')\"></div>\n";
+    }
+    echo "<div class='col-1' OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</div></div>\n";
+
+    /*
+     * Funktion
+     */
+    echo "<div class='row flex-row flex-nowrap'><div class='col-1 d-flex align-items-center'><b>$lang[2625]</b></div>\n";
+    foreach ($gviewfields["fieldname"] as $key => $value) {
+        $selv = array("", "$lang[2498]", "$lang[2627]", "$lang[2628]", "$lang[2629]");
+        echo "<div class='col-2 border-end m-0 p-1 px-2'><select class='form-select form-select-sm overflow-hidden' name=\"view_func_$key\" OnChange=\"lmbAjax_EditViewfield(event,this,'func','key_$key','$key')\">\n";
+        foreach ($selv as $skey => $svalue) {
+            if ($skey == $gviewfields["func"][$key]) {
+                $SELECTED = "selected";
+            } else {
+                $SELECTED = "";
+            }
+            echo "<option value=\"$skey\" $SELECTED>$svalue</option>";
+        }
+        echo "</select></div>\n";
+    }
+
+    echo "<div class='col-1' OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\"><i>$lang[3126]</i></div></div>\n";
+
+    /*
+     * Sortierung
+     */
+    echo "<div class='row flex-row flex-nowrap'><div class='col-1 d-flex align-items-center'><b>$lang[1837]</b></div>\n";
+    foreach ($gviewfields["fieldname"] as $key => $value) {
+        $selected1 = null;
+        $selected2 = null;
+        if ($gviewfields["order"][$key]) {
+            ${"selected" . $gviewfields["order"][$key]} = "selected";
+        }
+        echo "<div class='col-2 border-end m-0 p-1 px-2'>";
+        echo "<select class='form-select form-select-sm overflow-hidden' name=\"view_order_$key\" OnChange=\"lmbAjax_EditViewfield(event,this,'order','key_$key','$key')\">";
+        echo "<option value=0>";
+        echo "<option value=1 $selected1>$lang[2633]";
+        echo "<option value=2 $selected2>$lang[2634]";
+        echo "</select></div>";
+    }
+    echo "<div class='col-1' OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</div></div>\n";
+
+    /*
+     * Anzeigen
+     */
+    echo "<div class='row flex-row flex-nowrap'><div class='col-1 d-flex align-items-center'><b>$lang[2631]</b></div>\n";
+    foreach ($gviewfields["fieldname"] as $key => $value) {
+        $checked = null;
+        if ($gviewfields["show"][$key]) {
+            $checked = "checked";
+        }
+        echo "<div class='col-2 border-end m-0 p-1 px-2'><input class='form-check-input' type='checkbox' $checked name=\"view_show_$key\" OnChange=\"this.value=this.checked;lmbAjax_EditViewfield(event,this,'show','key_$key','$key')\"></div>\n";
+    }
+    echo "<div class='col-1' OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</div></div>\n";
+
+    /*
+     * Kriterien
+     */
+    echo "<div class='row flex-row flex-nowrap mt-0 pb-2'><div class='col-1 d-flex align-items-center'><b>$lang[2632]</b></div>\n";
+    foreach ($gviewfields["fieldname"] as $key => $value) {
+        echo "<div class='col-2 border-end m-0 p-1 px-2' style=\"100px;\"><textarea class='form-control' name=\"view_filter_$key\" style=\"overflow:auto;\" OnKeyUp=\"this.style.width='300px';this.style.height='100px';stopEvent=1;\" onblur=\"this.style.width='100px;';this.style.height='';stopEvent=0;\" OnChange=\"lmbAjax_EditViewfield(event,this,'filter','key_$key','$key')\">" . htmlentities($gviewfields["filter"][$key], ENT_QUOTES, $GLOBALS["umgvar"]["charset"]) . "</textarea></div>\n";
+    }
+    echo "<div class='col-1' OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</div></div>\n";
+
+    echo "</div>";
+
+}
+
+/*
+function show_viewFields($viewid)
+{
+    global $lang;
+
+    if (!$gviewfields = lmb_getQuestFields($viewid)) {
+        $gviewfields["fieldname"] = array();
+    }
+
+    echo "<table class='table table-sm table-bordered w-100'>";
+
+    echo "<tr><td><b>$lang[922]</b></td>\n";
+    foreach ($gviewfields["fieldname"] as $key => $value) {
+        echo "<td
+		OnMouseUp=\"lmbAjax_EditViewfield(event,this,'move','$key',viewsortid);viewsortid=null;\">
+		<div class='row'>
+		<div class='col'><textarea class='form-control' name=\"view_field_$key\"
 		oncontextmenu=\"ZoomViewField(event,this,'$key');return false;\"
-		OnMousedown=\"viewsortid=$key;iniDrag(event,document.getElementById('relationSign'),this);this.focus();return false;\" 
-		OnKeyUp=\"this.style.width='300px';this.style.height='100px';stopEvent=1;\" OnBlur=\"this.style.width='80px';this.style.height='';stopEvent=0;\" 
-		OnChange=\"lmbAjax_EditViewfield(event,this,'field','key_$key','$key')\">".$gviewfields["fieldname"][$key]."</textarea>
-		<i align=\"right\" class=\"lmb-icon lmb-close-alt\" OnClick=\"lmbAjax_EditViewfield(event,this,'del','key_$key')\" style=\"cursor:pointer;\"></i></td>\n";
-	}
-	echo "<td class=\"this_viewfieldtd\" OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\"><input name=\"view_newalias\" OnChange=\"lmbAjax_EditViewfield(event,this,'addalias')\" type=\"text\" style=\"width:100px;border:none;background-color:transparent;overflow:visible\"></td></tr>\n";
-	
-	
-	echo "<tr><td class=\"this_viewfieldtd\"><b>$lang[951]</b></td>\n";
-	foreach ($gviewfields["fieldname"] as $key => $value){
-		echo "<td class=\"this_viewfieldtd\"><input class=\"this_viewfieldform\" type=\"text\" value=\"".$gviewfields["tablename"][$key]."\" readonly></td>\n";
-	}
-	echo "<td class=\"this_viewfieldtd\" OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</td></tr>\n";
-	
-	
-	echo "<tr><td class=\"this_viewfieldtd\"><b>$lang[2624]</b></td>\n";
-	foreach ($gviewfields["fieldname"] as $key => $value){
-		echo "<td class=\"this_viewfieldtd\"><input class=\"this_viewfieldform\" type=\"text\" name=\"view_alias_$key\" value=\"".$gviewfields["alias"][$key]."\" OnChange=\"lmbAjax_EditViewfield(event,this,'alias','key_$key','$key')\"></td>\n";
-	}
-	echo "<td class=\"this_viewfieldtd\" OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</td></tr>\n";
-	
-	echo "<tr><td class=\"this_viewfieldtd\"><b>$lang[2625]</b></td>\n";
-	foreach ($gviewfields["fieldname"] as $key => $value){
-		$selv = array("","$lang[2498]","$lang[2627]","$lang[2628]","$lang[2629]");
-		echo "<td class=\"this_viewfieldtd\"><select class=\"this_viewfieldform\" name=\"view_func_$key\" OnChange=\"lmbAjax_EditViewfield(event,this,'func','key_$key','$key')\">\n";
-		foreach ($selv as $skey => $svalue){
-			if($skey == $gviewfields["func"][$key]){$SELECTED = "selected";}else{$SELECTED = "";}
-			echo "<option value=\"$skey\" $SELECTED>$svalue</option>";
-		}		
-		echo "</select></td>\n";
-	}
-	echo "<td class=\"this_viewfieldtd\" OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</td></tr>\n";
-	
-	echo "<tr><td class=\"this_viewfieldtd\"><b>$lang[1837]</b></td>\n";
-	foreach ($gviewfields["fieldname"] as $key => $value){
-		$selected1=null;$selected2=null;
-		if($gviewfields["order"][$key]){${"selected".$gviewfields["order"][$key]} = "selected";}
-		echo "<td class=\"this_viewfieldtd\"><select class=\"this_viewfieldform\" name=\"view_order_$key\" OnChange=\"lmbAjax_EditViewfield(event,this,'order','key_$key','$key')\"><option value=0><option value=1 $selected1>$lang[2633]<option value=2 $selected2>$lang[2634]</select></td>\n";
-	}
-	echo "<td class=\"this_viewfieldtd\" OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</td></tr>\n";
-	
-	
-	echo "<tr><td class=\"this_viewfieldtd\"><b>$lang[2631]</b></td>\n";
-	foreach ($gviewfields["fieldname"] as $key => $value){
-		$checked=null;
-		if($gviewfields["show"][$key]){$checked = "checked";}
-		echo "<td class=\"this_viewfieldtd\" align=\"center\"><input type=\"checkbox\" $checked name=\"view_show_$key\" OnChange=\"this.value=this.checked;lmbAjax_EditViewfield(event,this,'show','key_$key','$key')\"></td>\n";
-	}
-	echo "<td class=\"this_viewfieldtd\" OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</td></tr>\n";
-	
-	
-	echo "<tr><td class=\"this_viewfieldtd\"><b>$lang[2632]</b></td>\n";
-	foreach ($gviewfields["fieldname"] as $key => $value){
-		echo "<td class=\"this_viewfieldtd\" style=\"100px;\" valign=\"top\"><textarea class=\"this_viewfieldform\" name=\"view_filter_$key\" style=\"overflow:auto;\" OnKeyUp=\"this.style.width='300px';this.style.height='100px';stopEvent=1;\" onblur=\"this.style.width='100px;';this.style.height='';stopEvent=0;\" OnChange=\"lmbAjax_EditViewfield(event,this,'filter','key_$key','$key')\">".htmlentities($gviewfields["filter"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</textarea></td>\n";
-	}
-	echo "<td class=\"this_viewfieldtd\" OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</td></tr>\n";
+		OnMousedown=\"viewsortid=$key;iniDrag(event,document.getElementById('relationSign'),this);this.focus();return false;\"
+		OnChange=\"lmbAjax_EditViewfield(event,this,'field','key_$key','$key')\">" . $gviewfields["fieldname"][$key] . "</textarea>
+		</div>
+		<div class='col-auto'>
+		<i class=\"lmb-icon lmb-close-alt align-middle\" OnClick=\"lmbAjax_EditViewfield(event,this,'del','key_$key')\" style=\"cursor:pointer;\"></i>
+		</div>
+		</div>
+		</td>\n";
+    }
+    echo "<td OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\"><input name=\"view_newalias\" OnChange=\"lmbAjax_EditViewfield(event,this,'addalias')\" type=\"text\" style=\"width:100px;border:none;background-color:transparent;overflow:visible\"></td></tr>\n";
 
-	echo "</table>";
+
+    echo "<tr><td><b>$lang[951]</b></td>\n";
+    foreach ($gviewfields["fieldname"] as $key => $value) {
+        echo "<td><input class='form-control-plaintext w-100' type=\"text\" value=\"" . $gviewfields["tablename"][$key] . "\" readonly></td>\n";
+    }
+    echo "<td OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</td></tr>\n";
+
+
+    echo "<tr><td><b>$lang[2624]</b></td>\n";
+    foreach ($gviewfields["fieldname"] as $key => $value) {
+        echo "<td><input class='form-control-sm w-100' type=\"text\" name=\"view_alias_$key\" value=\"" . $gviewfields["alias"][$key] . "\" OnChange=\"lmbAjax_EditViewfield(event,this,'alias','key_$key','$key')\"></td>\n";
+    }
+    echo "<td OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</td></tr>\n";
+
+    echo "<tr><td><b>$lang[2625]</b></td>\n";
+    foreach ($gviewfields["fieldname"] as $key => $value) {
+        $selv = array("", "$lang[2498]", "$lang[2627]", "$lang[2628]", "$lang[2629]");
+        echo "<td><select class='form-select form-select-sm' name=\"view_func_$key\" OnChange=\"lmbAjax_EditViewfield(event,this,'func','key_$key','$key')\">\n";
+        foreach ($selv as $skey => $svalue) {
+            if ($skey == $gviewfields["func"][$key]) {
+                $SELECTED = "selected";
+            } else {
+                $SELECTED = "";
+            }
+            echo "<option value=\"$skey\" $SELECTED>$svalue</option>";
+        }
+        echo "</select></td>\n";
+    }
+    echo "<td OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</td></tr>\n";
+
+    echo "<tr><td><b>$lang[1837]</b></td>\n";
+    foreach ($gviewfields["fieldname"] as $key => $value) {
+        $selected1 = null;
+        $selected2 = null;
+        if ($gviewfields["order"][$key]) {
+            ${"selected" . $gviewfields["order"][$key]} = "selected";
+        }
+        echo "<td><select class='form-select form-select-sm' name=\"view_order_$key\" OnChange=\"lmbAjax_EditViewfield(event,this,'order','key_$key','$key')\"><option value=0><option value=1 $selected1>$lang[2633]<option value=2 $selected2>$lang[2634]</select></td>\n";
+    }
+    echo "<td OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</td></tr>\n";
+
+
+    echo "<tr><td><b>$lang[2631]</b></td>\n";
+    foreach ($gviewfields["fieldname"] as $key => $value) {
+        $checked = null;
+        if ($gviewfields["show"][$key]) {
+            $checked = "checked";
+        }
+        echo "<td><input class='form-check-input' type='checkbox' $checked name=\"view_show_$key\" OnChange=\"this.value=this.checked;lmbAjax_EditViewfield(event,this,'show','key_$key','$key')\"></td>\n";
+    }
+    echo "<td OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</td></tr>\n";
+
+
+    echo "<tr><td><b>$lang[2632]</b></td>\n";
+    foreach ($gviewfields["fieldname"] as $key => $value) {
+        echo "<td style=\"100px;\"><textarea class='form-control' name=\"view_filter_$key\" style=\"overflow:auto;\" OnKeyUp=\"this.style.width='300px';this.style.height='100px';stopEvent=1;\" onblur=\"this.style.width='100px;';this.style.height='';stopEvent=0;\" OnChange=\"lmbAjax_EditViewfield(event,this,'filter','key_$key','$key')\">" . htmlentities($gviewfields["filter"][$key], ENT_QUOTES, $GLOBALS["umgvar"]["charset"]) . "</textarea></td>\n";
+    }
+    echo "<td OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</td></tr>\n";
+
+    echo "</table>";
+}
+ */
+
+
+function lmb_questCreateSQL($viewid)
+{
+    global $db;
+
+    $qfields = lmb_getQuestFields($viewid);
+    $rel = lmb_getQuestRelation($viewid);
+    $fromj = array();
+
+    if ($rel["ljoin"]) {
+        $bzm = 0;
+        foreach ($rel["ljoin"] as $rkey => $rval) {
+            $tabl_ = explode("#", base64_decode($rel["tabl"][$rkey]));
+            $tabr_ = explode("#", base64_decode($rel["tabr"][$rkey]));
+
+            # check for alias
+            if ($tabl_[1]) {
+                $tabl = $tabl_[0] . "__" . $tabl_[1];
+                $tablAlias = $tabl_[0] . " AS " . $tabl;
+            } else {
+                $tabl = $tabl_[0];
+                $tablAlias = $tabl_[0];
+            }
+            if ($tabr_[1]) {
+                $tabr = $tabr_[0] . "__" . $tabr_[1];
+                $tabrAlias = $tabr_[0] . " AS " . $tabr;
+            } else {
+                $tabr = $tabr_[0];
+                $tabrAlias = $tabr_[0];
+            }
+
+            $fieldl = base64_decode($rel["fieldl"][$rkey]);
+            $fieldr = base64_decode($rel["fieldr"][$rkey]);
+            $relt = $rel["jtype"][$rkey];
+            $jkey = $tabr . "#" . $tabl;
+            $jrkey = $tabl . "#" . $tabr;
+            # use alias if exist
+            $tabj = $tabrAlias;
+            $fj = null;
+            # use alias if exist
+            if (!$join) {
+                $fj = $tablAlias;
+            }
+
+
+            if ($relt == 1) {
+                $jdi = "INNER";
+                # left outerjoin
+            } elseif ($relt == 2) {
+                $jdi = "LEFT";
+                # right outerjoin
+            } elseif ($relt == 3) {
+                $jdi = "RIGHT";
+            }
+
+            if ($samejoin[$jkey]) {
+                $onjoin = $samejoin[$jkey] . " AND $tabl.$fieldl = $tabr.$fieldr";
+                $samejoin[$jkey] = $onjoin;
+            } elseif ($samejoin[$tabr]) {
+                $jkey = $jrkey;
+                if ($sameOjoin[$jkey]) {
+                    $onjoin = $sameOjoin[$jkey] . " AND $tabl.$fieldl = $tabr.$fieldr";
+                } else {
+                    $onjoin = "$tabl.$fieldl = $tabr.$fieldr";
+                }
+
+                # use alias if exist
+                $tabj = $tablAlias;
+                if ($jdi == "LEFT") {
+                    $jdi = "RIGHT";
+                } elseif ($jdi == "RIGHT") {
+                    $jdi = "LEFT";
+                }
+                $sameOjoin[$jkey] = $onjoin;
+            } else {
+                $onjoin = "$tabl.$fieldl = $tabr.$fieldr";
+                $samejoin[$jkey] = $onjoin;
+                $samefrom[$jkey] = $fj;
+            }
+            $samejoin[$tabr] = 1;
+
+
+            $join[$jkey] = $samefrom[$jkey] . " $jdi JOIN $tabj ON ($onjoin)";
+            # use alias if exist !!!!! must check
+            $fromj[] = $tablAlias;
+            $fromj[] = $tabrAlias;
+        }
+    }
+    if ($qfields["id"]) {
+        foreach ($qfields["id"] as $fkey => $fval) {
+
+            # check for alias
+            $qftn = $qfields["tablename"][$fkey];
+            if (lmb_strpos($qftn, "#")) {
+                $qftn_ = explode("#", $qftn);
+                $qftn = str_replace("#", "__", $qftn);
+                $qftnAlias = $qftn_[0] . " AS " . $qftn;
+            } else {
+                $qftnAlias = $qftn;
+            }
+
+            if ($qftn) {
+                $fn = $qftn . "." . $qfields["fieldname"][$fkey];
+            } else {
+                $fn = $qfields["fieldname"][$fkey];
+            }
+            # alias
+            if ($qfields["alias"][$fkey]) {
+                $alias = " AS " . $qfields["alias"][$fkey];
+                $ofn = $qfields["alias"][$fkey];
+            } else {
+                $alias = null;
+                $ofn = $fn;
+            }
+            # order
+            if ($qfields["order"][$fkey] == 1) {
+                $order[] = $ofn . " ASC";
+            }
+            if ($qfields["order"][$fkey] == 2) {
+                $order[] = $ofn . " DESC";
+            }
+            # select
+            if ($qfields["show"][$fkey]) {
+                # function
+                if ($qfields["func"][$fkey]) {
+                    # group
+                    /*
+                    if($qfields["func"][$fkey] == 1){
+                        $select[] = $fn.$alias;
+                        if($alias AND LMB_DBFUNC_VIEWGALIAS){
+                            $group[] = $qfields["alias"][$fkey];
+                        }else{
+                            $group[] = $fn;
+                        }
+                        # sum
+                    }else
+                    */
+                    # sum
+                    if ($qfields["func"][$fkey] == 2) {
+                        $select[] = "SUM(" . $fn . ")" . $alias;
+                        # min
+                    } elseif ($qfields["func"][$fkey] == 3) {
+                        $select[] = "MIN(" . $fn . ")" . $alias;
+                        # max
+                    } elseif ($qfields["func"][$fkey] == 4) {
+                        $select[] = "MAX(" . $fn . ")" . $alias;
+                    } else {
+                        $select[] = $fn . $alias;
+                    }
+                } else {
+                    $select[] = $fn . $alias;
+                }
+            }
+            # group
+            if ($qfields["func"][$fkey] == 1) {
+                #$select[] = $fn.$alias;
+                if ($alias and LMB_DBFUNC_VIEWGALIAS) {
+                    $group[] = $qfields["alias"][$fkey];
+                } else {
+                    $group[] = $fn;
+                }
+            }
+
+            # filter
+            $fw = trim($qfields["filter"][$fkey]);
+            if ($fw or $fw == "0") {
+                #$fw = parse_db_string(trim($qfields["filter"][$fkey]));
+                # filter starts with fieldname
+                if (lmb_strpos(lmb_strtolower($fw), lmb_strtolower($fn)) === 0) {
+                    #if(preg_match("/^".lmb_strtolower($fn)."/",lmb_strtolower($fw))){
+                    #$fwhere = $fwhere;
+                    # filter start with nothing
+                } elseif (preg_match("/^([<>=!]|NOT|LIKE|IS)/i", $fw)) {
+                    $fw = "$fn $fw";
+                    # filter start with where
+                    #}elseif(lmb_substr($fw,0,1) == "\"" AND lmb_substr($fw,lmb_strlen($fw)-1,1) == "\""){
+                    #$fw = lmb_substr($fw,1,lmb_strlen($fw)-2);
+                } elseif (preg_match("/^(WHERE)/i", $fw)) {
+                    $fw = preg_replace("/^(WHERE)/i", "", $fw);
+                    # filter start with expression
+                } else {
+                    if (lmb_strtolower($fw) == 'false' or lmb_strtolower($fw) == 'true') {
+                        $fw = "$fn = " . parse_db_bool($fw);
+                    } else {
+                        $fw = "$fn = '$fw'";
+                    }
+                }
+                $where[] = "(" . $fw . ")";
+            }
+
+            # use alias if exist
+            if (!in_array($qftnAlias, $fromj) and $qftnAlias) {
+                $from[] = $qftnAlias;
+            }
+        }
+    }
+    if ($join) {
+        foreach ($join as $jkey => $jval) {
+            if ($wherej) {
+                #$wherej = "($wherej) $jval"; MAXDB have problems with ()
+                $wherej = "$wherej $jval";
+            } else {
+                $wherej = $jval;
+            }
+        }
+        $from[] = $wherej;
+    }
+    if ($select) {
+        $select = implode(",", array_unique($select));
+    }
+    if ($from) {
+        $from = "FROM " . implode(",", array_unique($from));
+    }
+    if ($where) {
+        $where = "WHERE " . implode(" AND ", array_unique($where));
+    }
+    if ($group) {
+        $group = " GROUP BY " . implode(",", array_unique($group));
+    }
+    if ($order) {
+        $order = " ORDER BY " . implode(",", array_unique($order));
+    }
+    if ($select and $from) {
+        $sql = "SELECT $select $from $where $group $order";
+        return $sql;
+    } else {
+        return false;
+    }
+
+
 }
 
+function viewschema_tab(&$pat, $tabname)
+{
+    global $farbschema;
+    global $DBA;
 
+    $posx = $pat["posx"][$tabname];
+    $posy = $pat["posy"][$tabname];
 
-function lmb_questCreateSQL($viewid){
-	global $db;
+    $widthint = $pat["width"][$tabname];
+    if($widthint){
+        $width = "width:".$widthint."px;";
+    }else{
+        $width = "";
+    }
 
-	$qfields = lmb_getQuestFields($viewid);
-	$rel = lmb_getQuestRelation($viewid);
-	$fromj = array();
+    $heightint = $pat["height"][$tabname];
+    if($heightint){
+        $height = "height:".$heightint."px;";
+    }else{
+        $height = "";
+    }
 
-	if($rel["ljoin"]){
-		$bzm=0;
-		foreach ($rel["ljoin"] as $rkey => $rval){
-			$tabl_ = explode("#",base64_decode($rel["tabl"][$rkey]));
-			$tabr_ = explode("#",base64_decode($rel["tabr"][$rkey]));
-			
-			# check for alias
-			if($tabl_[1]){
-				$tabl = $tabl_[0]."__".$tabl_[1];
-				$tablAlias = $tabl_[0]." AS ".$tabl;
-			}else{
-				$tabl = $tabl_[0];
-				$tablAlias = $tabl_[0];
-			}
-			if($tabr_[1]){
-				$tabr = $tabr_[0]."__".$tabr_[1];
-				$tabrAlias = $tabr_[0]." AS ".$tabr;
-			}else{
-				$tabr = $tabr_[0];
-				$tabrAlias = $tabr_[0];
-			}
-			
-			$fieldl = base64_decode($rel["fieldl"][$rkey]);
-			$fieldr = base64_decode($rel["fieldr"][$rkey]);
-			$relt = $rel["jtype"][$rkey];
-			$jkey = $tabr."#".$tabl;
-			$jrkey = $tabl."#".$tabr;
-			# use alias if exist
-			$tabj = $tabrAlias;
-			$fj = null;
-			# use alias if exist
-			if(!$join){$fj = $tablAlias;}
-			
+    echo "<div class='lmb_container card' ID=\"tabsh_" . $tabname . "\" STYLE=\"max-height:100%; position:absolute;".$width.$height."left:" . $posx . "px;top:" . $posy . "px;border:1px solid black;background-color:" . $farbschema["WEB7"] . ";overflow:hidden;z-index:" . $pat["id"][$tabname] . "\">";
 
-			if ($relt == 1) {
-				$jdi = "INNER";
-				# left outerjoin
-			}elseif ($relt == 2) {
-				$jdi = "LEFT";
-				# right outerjoin
-			}elseif ($relt == 3) {
-				$jdi = "RIGHT";
-			}
+    echo "<div class='card-header'><div class='row'><div class='col' onmousedown=\"iniDrag(event,'$tabname');\"><B>" . base64_decode($tabname) . "</B></div>";
+    echo "<div class='col-auto'><i class=\"lmb-icon lmb-close-alt align-middle m-0 p-0\" style=\"cursor:pointer;\" onclick=\"lmbAjax_ViewEditorPattern('$tabname;;;1')\"></i></div>";
+    echo "</div></div>";
+    # &nbsp;<input type=\"text\" style=\"width:150px;opacity: 0.5\"> # table alias
+    echo "<div class='card-body px-0 py-1 m-0 overflow-auto' ID=\"selsh_$tabname\" onscroll='paint_lines();' onmouseup=\"paint_lines();\">";
+    echo "<ul class='list-group p-0 m-0'>";
 
-			if($samejoin[$jkey]){
-				$onjoin = $samejoin[$jkey]." AND $tabl.$fieldl = $tabr.$fieldr";
-				$samejoin[$jkey] = $onjoin;
-			}elseif($samejoin[$tabr]){
-				$jkey = $jrkey;
-				if($sameOjoin[$jkey]){
-					$onjoin = $sameOjoin[$jkey]." AND $tabl.$fieldl = $tabr.$fieldr";
-				}else{
-					$onjoin = "$tabl.$fieldl = $tabr.$fieldr";
-				}
+    $tabname_ = explode("#", base64_decode($tabname));
+    $fields = dbf_5(array($DBA["DBSCHEMA"], $tabname_[0], null, null, 1));
+    if ($fields["columnname"]) {
+        foreach ($fields["columnname"] as $key => $fieldname) {
+            echo "<li class='list-group-item py-0 px-1' id=\"opt_" . $tabname . "_" . str_replace("=", "", base64_encode($fieldname)) . "\" OnMouseOver=\"this.style.fontWeight='bold'\" OnMouseOut=\"this.style.fontWeight='normal'\" OnMousedown=\"iniDrag(event,document.getElementById('relationSign'),this);return false;\" OnMouseUp=\"iniRelation(event,this)\">";
+            echo $fieldname;
+            echo "</li>";
+        }
+    }
 
-				# use alias if exist
-				$tabj = $tablAlias;
-				if($jdi == "LEFT"){$jdi = "RIGHT";}
-				elseif($jdi == "RIGHT"){$jdi = "LEFT";}
-				$sameOjoin[$jkey] = $onjoin;
-			}else{
-				$onjoin = "$tabl.$fieldl = $tabr.$fieldr";
-				$samejoin[$jkey] = $onjoin;
-				$samefrom[$jkey] = $fj;
-			}
-			$samejoin[$tabr] = 1;
-
-
-			$join[$jkey] = $samefrom[$jkey]." $jdi JOIN $tabj ON ($onjoin)";
-			# use alias if exist !!!!! must check
-			$fromj[] = $tablAlias;
-			$fromj[] = $tabrAlias;
-		}
-	}
-	if($qfields["id"]){
-		foreach ($qfields["id"] as $fkey => $fval){
-			
-			# check for alias
-			$qftn = $qfields["tablename"][$fkey];
-			if(lmb_strpos($qftn,"#")){
-				$qftn_ = explode("#",$qftn);
-				$qftn = str_replace("#","__",$qftn);
-				$qftnAlias = $qftn_[0]." AS ".$qftn;
-			}else{
-				$qftnAlias = $qftn;
-			}
-			
-			if($qftn){
-				$fn = $qftn.".".$qfields["fieldname"][$fkey];
-			}else{
-				$fn = $qfields["fieldname"][$fkey];
-			}
-			# alias
-			if($qfields["alias"][$fkey]){
-				$alias = " AS ".$qfields["alias"][$fkey];
-				$ofn = $qfields["alias"][$fkey];
-			}else{
-				$alias = null;
-				$ofn = $fn;
-			}
-			# order
-			if($qfields["order"][$fkey] == 1){$order[] = $ofn." ASC";}
-			if($qfields["order"][$fkey] == 2){$order[] = $ofn." DESC";}
-			# select
-			if($qfields["show"][$fkey]){
-				# function
-				if($qfields["func"][$fkey]){
-					# group
-					/*
-					if($qfields["func"][$fkey] == 1){
-						$select[] = $fn.$alias;
-						if($alias AND LMB_DBFUNC_VIEWGALIAS){
-							$group[] = $qfields["alias"][$fkey];
-						}else{
-							$group[] = $fn;
-						}
-						# sum
-					}else
-					*/
-					# sum
-					if($qfields["func"][$fkey] == 2){
-						$select[] = "SUM(".$fn.")".$alias;
-						# min
-					}elseif($qfields["func"][$fkey] == 3){
-						$select[] = "MIN(".$fn.")".$alias;
-						# max
-					}elseif($qfields["func"][$fkey] == 4){
-						$select[] = "MAX(".$fn.")".$alias;
-					}else{
-						$select[] = $fn.$alias;
-					}
-				}else{
-					$select[] = $fn.$alias;
-				}
-			}
-			# group
-			if($qfields["func"][$fkey] == 1){
-				#$select[] = $fn.$alias;
-				if($alias AND LMB_DBFUNC_VIEWGALIAS){
-					$group[] = $qfields["alias"][$fkey];
-				}else{
-					$group[] = $fn;
-				}
-			}
-			
-			# filter
-			$fw = trim($qfields["filter"][$fkey]);
-			if($fw OR $fw == "0"){
-				#$fw = parse_db_string(trim($qfields["filter"][$fkey]));
-				# filter starts with fieldname
-				if(lmb_strpos(lmb_strtolower($fw),lmb_strtolower($fn)) === 0){
-					#if(preg_match("/^".lmb_strtolower($fn)."/",lmb_strtolower($fw))){
-					#$fwhere = $fwhere;
-					# filter start with nothing
-				}elseif(preg_match("/^([<>=!]|NOT|LIKE|IS)/i",$fw)){
-					$fw = "$fn $fw";
-					# filter start with where
-				#}elseif(lmb_substr($fw,0,1) == "\"" AND lmb_substr($fw,lmb_strlen($fw)-1,1) == "\""){
-                #$fw = lmb_substr($fw,1,lmb_strlen($fw)-2); 
-				}elseif(preg_match("/^(WHERE)/i",$fw)){
-					$fw = preg_replace("/^(WHERE)/i","",$fw);
-					# filter start with expression
-				}else{
-					if(lmb_strtolower($fw) == 'false' OR lmb_strtolower($fw) == 'true'){$fw = "$fn = ".parse_db_bool($fw);}
-					else{$fw = "$fn = '$fw'";}
-				}
-				$where[] = "(".$fw.")";
-			}
-
-			# use alias if exist
-			if(!in_array($qftnAlias,$fromj) AND $qftnAlias){
-				$from[] = $qftnAlias;
-			}
-		}
-	}
-	if($join){
-		foreach ($join as $jkey => $jval){
-			if($wherej){
-				#$wherej = "($wherej) $jval"; MAXDB have problems with ()
-				$wherej = "$wherej $jval";
-			}else{
-				$wherej = $jval;
-			}
-		}
-		$from[] = $wherej;
-	}
-	if ($select) {
-		$select = implode(",",array_unique($select));
-	}
-	if ($from) {
-		$from = "FROM ".implode(",",array_unique($from));
-	}
-	if ($where) {
-		$where = "WHERE ".implode(" AND ",array_unique($where));
-	}
-	if ($group) {
-		$group = " GROUP BY ".implode(",",array_unique($group));
-	}
-	if ($order) {
-		$order = " ORDER BY ".implode(",",array_unique($order));
-	}
-	if($select AND $from){
-		$sql = "SELECT $select $from $where $group $order";
-		return $sql;
-	}else{
-		return false;
-	}
-
-
+    echo "</ul>";
+    echo "</div>";
+    echo "<div class='card-footer' style=\"cursor:se-resize;\" OnMousedown=\"iniResize(event,'$tabname');\"></div>";
+    echo "</div>";
 }
 
-?>
+function viewschema_link(&$relationset, $key, $bzm)
+{
+    global $gfield;
+    global $gtab;
+
+    $fel = $relationset["tabl"][$key] . "_" . $relationset["fieldl"][$key];
+    $tel = $relationset["tabr"][$key] . "_" . $relationset["fieldr"][$key];
+
+    echo "<DIV STYLE=\"position:absolute;\" ID=\"di_" . $bzm . "\">
+    <script type=\"text/javascript\">
+        s_link[$bzm] = \"" . $relationset["tabl"][$key] . "," . $relationset["tabr"][$key] . ",," . $fel . "," . $tel . "," . $bzm . "," . $dtp . "\";
+    </script>
+</DIV>
+\n\n";
+}

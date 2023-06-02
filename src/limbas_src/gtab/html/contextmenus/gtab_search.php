@@ -8,7 +8,6 @@
  */
 
 
-
 require_once(COREPATH . 'gtab/html/contextmenus/gtab_search.lib');
 
 // explorer extension
@@ -18,7 +17,6 @@ if($module == 'explorer_search') {
 
 ?>
 
-<br>
 <link href="assets/vendor/select2/select2.min.css" rel="stylesheet">
 <script type="text/javascript">
     /**
@@ -196,7 +194,8 @@ if($module == 'explorer_search') {
         showFields(<?= $gtabid ?>);
     });
 </script>
-<form action="main.php" method="post" name="form11" id="form11">
+
+<form action="main.php" method="post" name="form11" id="form11" class="form-inline">
     <input type="hidden" name="action" value="gtab_erg">
     <input type="hidden" name="gtabid" value="<?= $gtabid ?>">
     <input type="hidden" name="gfrist">
@@ -205,41 +204,46 @@ if($module == 'explorer_search') {
     <input type="hidden" name="supersearch" value="1">
     <input type="hidden" name="filter_reset">
     <input type="hidden" name="fieldid">
+    <input type="hidden" name="verknpf">
+	<input type="hidden" name="verkn_ID">
+	<input type="hidden" name="verkn_tabid">
+	<input type="hidden" name="verkn_fieldid">
+	<input type="hidden" name="verkn_showonly">
 
-    <table style="width: 100%">
-        <tr>
-            <td nowrap>
-                <label>
-                    <span style="vertical-align: sub"><?= $lang[103] ?></span>
-                    <select id="gdsearchfield" data-relation-field-names="[]" style="width:300px;padding-left:15px"></select>
-                </label>
-            </td>
-            <td nowrap align="right">
-                <?php
-                    if($gsnap[$gtabid]["id"]) {
-                        echo '<label>';
-                        echo '<i class="lmb-icon lmb-camera-plus" title="'.$lang[1602].'" style="vertical-align: bottom; padding-right: 0.3em;"></i>';
-                        echo '<select id="gdssnapid" name="snap_id" style="min-width:120px" onchange="limbasDetailSearch(event,this,'.$gtabid.',null,null,this.value)"><option value="0">';
-                        foreach ($gsnap[$gtabid]["id"] as $snapkey => $snapID) {
-                            if($filter["snapid"][$gtabid] == $snapID){$SELECTED = 'SELECTED';}else{$SELECTED = '';}
-                            echo '<option value="' . $snapID . '" '.$SELECTED.'>' . $gsnap[$gtabid]["name"][$snapkey] . '</option>';
-                        }
-                        echo '</select>';
-                        echo '</label>';
-                    }
-                ?>
-            </td>
-        </tr>
-    </table>
+    
+    <div class="row">
+        <div class="col-sm-6">
+            <div class="d-flex align-items-center">
+                <label for="gdsearchfield" class="form-label m-0 text-nowrap me-2"><?= $lang[103] ?></label>
+                <select class="form-select form-select-sm w-100" type="text" id="gdsearchfield"
+                        data-relation-field-names="[]"></select>
+            </div>
+            
+        </div>
+        
+            <?php
+            $filterlist = SNAP_get_filtergroup($gtabid);
+            if($filterlist): ?>
+        <div class="col-sm-6">
+                <div class="input-group mb-3">
+                    <label for="gdssnapid" class="input-group-text" ><i class="lmb-icon lmb-filter" title="<?=$lang[1602]?>"></i></label>
+                    <select id="gdssnapid" name="snap_id" class="form-select" style="min-width:120px" onchange="limbasDetailSearch(event,this,<?=$gtabid?>,null,null,this.value)">
+                        <option value="0">
+                            <?php foreach ($filterlist as $snapID => $snapName): ?>
+                        <option value="<?=$snapID?>" <?=$snapID == $filter["snapid"][$gtabid] ? 'selected' : ''?>><?=$snapName?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+        </div>
+            <?php endif; ?>
+    </div>
 
-    <br><hr><br>
-
-    <table id="searchFilterRowTable" border="0" cellspacing="0" cellpadding="3" style="padding:0;width:100%">
+    <table id="searchFilterRowTable" class="table table-sm table-borderless table-hover p-0 m-0 w-100 align-middle">
         <tbody>
         <?php
         // list of search fields
-        foreach ($gsr[$gtabid] as $key => $gval){
-            if(is_array($gsr[$gtabid][$key])) {
+        foreach ($gsr[$gtabid] as $key => $gval) {
+            if (is_array($gsr[$gtabid][$key])) {
                 ksort($gsr[$gtabid][$key]);
                 foreach ($gsr[$gtabid][$key] as $nkey => $gsrres) {
                     if (!is_numeric($nkey))
@@ -260,8 +264,6 @@ if($module == 'explorer_search') {
         });
     </script>
 
-    <br><hr><br>
-
     <?php
     $or = '';
     $and = '';
@@ -272,29 +274,44 @@ if($module == 'explorer_search') {
     }
     ?>
 
-    <table style="width: 100%">
-        <tr>
-            <td>
+    <div class="container text-center w-100 align-top m-2">
+        <div class="row align-items-center">
+            <div class="col">
+                <table>
+                    <tr>
+                        <td>
+                            <i class="lmb-icon lmb-globe p-1 align-middle"></i>
+                        </td>
+                        <td>
+                            <label>
+                            <select class="form-select form-select-sm align-middle" name="gs[<?= $gtabid ?>][andor]">
+                                <option value="1" <?= $and ?>><?= $lang[854] ?></option>
+                                <option value="2" <?= $or ?>><?= $lang[855] ?></option>
+                            </select>
+                            </label>
+                        </td>
+                    </tr>
+                </table>
+
+            </div>
+            <div class="col">
                 <label>
-                    <i class="lmb-icon lmb-globe" style="padding:2px"></i>
-                    <select name="gs[<?= $gtabid ?>][andor]">
-                        <option value="1" <?= $and ?>><?= $lang[854] ?></option>
-                        <option value="2" <?= $or ?>><?= $lang[855] ?></option>
-                    </select>
+                    <i class="lmb-icon lmb-undo p-1 align-middle"></i>
+                    <button type="button" class="btn btn-primary btn-sm align-middle" name="reset"
+                            OnClick="LmGs_sendForm(1);">
+                        <?= $lang[1891] ?>
+                    </button>
                 </label>
-            </td>
-            <td align="center">
+            </div>
+            <div class="col">
                 <label>
-                    <i class="lmb-icon lmb-undo" style="padding:2px;color:red;"></i>
-                    <input type="button" value="<?= $lang[1891] ?>" name="reset" OnClick="LmGs_sendForm(1);">
+                    <i class="lmb-icon lmb-page-find p-1 align-middle"></i>
+                    <button type="button" class="btn btn-primary btn-sm align-middle" name="search"
+                            OnClick="LmGs_sendForm(0, '<?= $gtabid ?>');">
+                        <?= $lang[30] ?>
+                    </button>
                 </label>
-            </td>
-            <td align="right">
-                <label>
-                    <i class="lmb-icon lmb-page-find" style="padding:2px"></i>
-                    <input type="button" style="font-weight:bold;" value="<?= $lang[30] ?>" name="search" OnClick="LmGs_sendForm(0, '<?= $gtabid ?>');">
-                </label>
-            </td>
-        </tr>
-    </table>
+            </div>
+        </div>
+    </div>
 </form>

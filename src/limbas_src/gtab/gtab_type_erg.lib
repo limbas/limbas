@@ -722,6 +722,7 @@ function cftyp_36($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
 
 # -------------------------- Validity -- field_type 24 ---------------------------------
 function cftyp_37($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
+    if($typ == 1){$typ = 2;} // readonly in table
     return cftyp_4($bzm,$field_id,$gtabid,$typ,$gresult,$event);
 }
 
@@ -1172,7 +1173,11 @@ function cftyp_14_gresult($bzm, $field_id, $gtabid, $typ, &$gresult, $event = nu
                     continue;
                 }
                 $fname = "cftyp_" . $gfield[$linklevel["tabid"]]["funcid"][$ffieldid];
-                $retrn[] = $fname($vkey, $ffieldid, $linklevel["tabid"], $typ_, $vgresult, 0, $gformid, $formid);
+                $subrtn = $fname($vkey, $ffieldid, $linklevel["tabid"], $typ_, $vgresult, 0, $gformid, $formid);
+                if($typ > 3 && is_array($subrtn)){
+                    $subrtn = implode($gfield[$gtabid]['verknviewcut'][$field_id],$subrtn);
+                }
+                $retrn[] = $subrtn;
             }
             if (! $retrn) {
                 $retrn[0] = $vval;
@@ -1347,6 +1352,8 @@ function cftyp_14_d(&$vgresult,$rscount,$typ,$verkn,$gtabid,$vgtabid,$bzm,$ID,$V
 
 		foreach ($filter["ext_RelationFields"][$vuniqueid] as $key1 => $value1){
 
+            if($gfield[$vgtabid_]["col_hide"][$value1]){continue;}
+
 			####################
 			$vgtabid_ = $linklevel["tabid"];
 			if($gfield[$gtabid]["verknparams"][$bzm] AND $value1 > 1000){
@@ -1389,6 +1396,7 @@ function cftyp_14_d(&$vgresult,$rscount,$typ,$verkn,$gtabid,$vgtabid,$bzm,$ID,$V
 	foreach ($filter["ext_RelationFields"][$vuniqueid] as $key1 => $value1){
 		
 	    if($gfield[$vgtabid_]['field_type'][$value1] >= 100){continue;}
+        if($gfield[$vgtabid_]["col_hide"][$value1]){continue;}
 		
 		/* noch nicht für Liste
 		# no view permission
@@ -1574,6 +1582,7 @@ function cftyp_14_d(&$vgresult,$rscount,$typ,$verkn,$gtabid,$vgtabid,$bzm,$ID,$V
 			foreach ($filter["ext_RelationFields"][$vuniqueid] as $key1 => $value1){
 			    
 			    if($gfield[$vgtabid_]['field_type'][$value1] >= 100){continue;}
+                if($gfield[$vgtabid_]["col_hide"][$value1]){continue;}
 
 				########## use params ##########
 				$vgtabid_ = $linklevel["tabid"];

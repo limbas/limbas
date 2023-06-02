@@ -180,7 +180,7 @@ function device_path(device) {
                     <?php
                         
                         
-                        $cronvalue[] = lmbdb_result($rs,"START")."\twebuser (php \"".$umgvar['pfad']."/cron.php\" < /bin/echo ".lmbdb_result($rs,"ID").")";
+                        $cronvalue[] = lmbdb_result($rs,"START")."\tphp \"".COREPATH."cron.php\" ".lmbdb_result($rs,"ID");
                     endwhile;
 
                     ?>

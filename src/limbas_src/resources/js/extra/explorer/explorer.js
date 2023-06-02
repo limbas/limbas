@@ -443,7 +443,6 @@ function LmEx_ajaxPasteCheck(evt,filelist,typ) {
 	if(!filelist){return;}
 	LmEx_pasteFilelist = filelist;
 	LmEx_pasteTyp = typ;
-	LmEx_setxypos(evt,"dublicateCheckLayer");
 	var getstring = "&level="+document.form1.LID.value+"&filelist="+filelist;
 	ajaxGet(null,'main_dyns.php','filePasteCheck' + getstring,null,'LmEx_ajaxResultPasteCheck');
 }
@@ -626,6 +625,7 @@ function fieldlist(field){
 	}
 	document.form1.ffilter_fl_show.value = flshow.join(";");
 	document.form1.ffilter_fl_hide.value = flhide.join(";");
+    document.form1.save_setting.value=1;
 	tbwidth = 1;
 	
 	LmEx_send_form(1,1);
@@ -1063,6 +1063,7 @@ function LmEx_drag(e) {
 
 function LmEx_endDrag() {
 	document.onmousemove = null;
+    document.form1.save_setting.value=1;
 	eltd = null;
 	eltb = null;
 	return true;

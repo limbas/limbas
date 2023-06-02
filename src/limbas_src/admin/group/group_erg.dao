@@ -28,7 +28,7 @@ if($ID){
 
 # Gruppe anlegen
 if($action == "setup_group_add" AND $LINK[138] == 1){
-	$ID = add_group($group_name,$group_beschr,$group_level,$use_parent_filesettings,$use_parent_menusettings,$use_parent_tabsettings,$use_parent_formsettings);
+	$ID = add_group($group_name,$group_beschr,$group_level,$use_parent);
 }
 
 /* --- Gruppe und Untergruppen löschen ---------------------------- */
@@ -61,24 +61,39 @@ if($change){
 	}
 }
 
-# Dateirechte von Obergruppe übernehmen
-if($update_parent_filesettings AND $update_parent_group){  
-	$commit = updateParentFilesettings($ID,$update_parent_group,1);
-}
+if($update_parent_group AND $update_parent) {
 
-# Menürechte von Obergruppe übernehmen
-if($update_parent_menusettings AND $update_parent_group){
-	$commit = updateParentMenusettings($ID,$update_parent_group,1);
-}
+    if ($update_parent['file']) {
+        $commit = updateParentFilesettings($ID, $update_parent_group);
+    }
 
-# Tabrechte von Obergruppe übernehmen
-if($update_parent_tabsettings AND $update_parent_group){
-	$commit = updateParentTabsettings($ID,$update_parent_group,1);
-}
+    if ($update_parent['menu']) {
+        $commit = updateParentMenusettings($ID, $update_parent_group);
+    }
 
-# Tabrechte von Obergruppe übernehmen
-if($update_parent_formsettings AND $update_parent_group){
-	$commit = updateParentFormsettings($ID,$update_parent_group,1);
+    if ($update_parent['table']) {
+        $commit = updateParentTabsettings($ID, $update_parent_group);
+    }
+
+    if ($update_parent['report']) {
+        $commit = updateParentFormsettings($ID, $update_parent_group, 1);
+    }
+
+    if ($update_parent['form']) {
+        $commit = updateParentFormsettings($ID, $update_parent_group, 2);
+    }
+
+    if ($update_parent['diagramm']) {
+        $commit = updateParentFormsettings($ID, $update_parent_group, 3);
+    }
+
+    if ($update_parent['reminder']) {
+        $commit = updateParentFormsettings($ID, $update_parent_group, 4);
+    }
+
+    if ($update_parent['workflow']) {
+        $commit = updateParentFormsettings($ID, $update_parent_group, 5);
+    }
 }
 
 

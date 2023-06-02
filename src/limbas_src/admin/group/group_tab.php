@@ -36,7 +36,7 @@
 </DIV>
 
 
-<!--<div ID="element4" class="lmbContextMenu" style="visibility:hidden;z-index:10001;" OnClick="activ_menu = 1;">
+<div ID="element4" class="lmbContextMenu" style="visibility:hidden;z-index:10001;" OnClick="activ_menu = 1;">
     <FORM NAME="fcolor_form">
         <?php #----------------- Farb-Menü -------------------
         unset($opt);
@@ -45,7 +45,7 @@
         pop_bottom();
         ?>
     </FORM>
-</div>-->
+</div>
 
 
 <DIV ID="element5" class="lmbContextMenu" style="position:absolute;visibility:hidden;z-index:10001;" onclick="activ_menu=1">

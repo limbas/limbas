@@ -96,6 +96,9 @@ abstract class Datasync
                         continue;
                     }
                     foreach ($record as $fieldid => $msg) {
+                        if(array_key_exists($fieldid, $msg) && $msg[$fieldid]['code'] === 9) {
+                            continue;
+                        }
                         $this->processExceptions($tabid, $datid, $msg);
                         if ($fieldid == 0) {
                             $con[] = "(TABID = $tabid AND SLAVE_DATID = $datid)";
@@ -701,7 +704,7 @@ abstract class Datasync
                         $gresult = get_gresult($tabid, 1, $filter, $gsr, null, array($tabid => array($fieldid)));
                         $existing_rel = [];
                         if ($gresult[$tabid]['res_count'] > 0) {
-                            $existing_rel = $gresult[$tabid][$fieldid][0];
+                            $existing_rel = array_filter($gresult[$tabid][$fieldid][0]);
                         }
                         if (empty($existing_rel)) {
                             $existing_rel = [];

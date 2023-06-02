@@ -149,7 +149,7 @@ function delete_group_list($ID){
 
 
 # Dateirechte von Obergruppe übernehmen
-function updateParentFilesettings($ID,$group_level,$use_parent_filesettings){
+function updateParentFilesettings($ID,$group_level){
 	global $db;
 	
 	if(!$group_level){return false;}
@@ -164,11 +164,33 @@ function updateParentFilesettings($ID,$group_level,$use_parent_filesettings){
 	while(lmbdb_fetch_row($rs)) {
 		/* --- Next ID ---------------------------------------- */
 		$NEXTID1 = next_db_id("LDMS_RULES");
-		if($use_parent_filesettings){
-			$sqlquery1 = "INSERT INTO LDMS_RULES (ID,ERSTDATUM,GROUP_ID,FILE_ID,FILE_TYP,LMVIEW,LMADD,DEL,ADDF,EDIT) VALUES (".$NEXTID1.",".LMB_DBDEF_TIMESTAMP.",".$ID.",".parse_db_int(lmbdb_result($rs, "FILE_ID"),16).",".parse_db_int(lmbdb_result($rs, "FILE_TYP"),5).",".parse_db_bool(lmbdb_result($rs, "LMVIEW")).",".parse_db_bool(lmbdb_result($rs, "LMADD")).",".parse_db_bool(lmbdb_result($rs, "DEL")).",".parse_db_bool(lmbdb_result($rs, "ADDF")).",".parse_db_bool(lmbdb_result($rs, "EDIT")).")";
-		}else{
-			$sqlquery1 = "INSERT INTO LDMS_RULES (ID,ERSTDATUM,GROUP_ID,FILE_ID,FILE_TYP,LMVIEW,LMADD,DEL,ADDF,EDIT) VALUES (".$NEXTID1.",".LMB_DBDEF_TIMESTAMP.",".$ID.",".parse_db_int(lmbdb_result($rs, "FILE_ID"),16).",".parse_db_int(lmbdb_result($rs, "FILE_TYP"),5).",".LMB_DBDEF_FALSE.",".LMB_DBDEF_FALSE.",".LMB_DBDEF_FALSE.",".LMB_DBDEF_FALSE.",".LMB_DBDEF_FALSE.")";
-		}
+
+        $sqlquery1 = "INSERT INTO LDMS_RULES (
+        ID,
+        ERSTDATUM,
+        GROUP_ID,
+        FILE_ID,
+        FILE_TYP,
+        LMVIEW,
+        LMADD,
+        DEL,
+        ADDF,
+        EDIT,
+        LMLOCK
+        ) VALUES (
+        ".$NEXTID1.",
+        ".LMB_DBDEF_TIMESTAMP.",
+        ".$ID.",
+        ".parse_db_int(lmbdb_result($rs, "FILE_ID"),16).",
+        ".parse_db_int(lmbdb_result($rs, "FILE_TYP"),5).",
+        ".parse_db_bool(lmbdb_result($rs, "LMVIEW")).",
+        ".parse_db_bool(lmbdb_result($rs, "LMADD")).",
+        ".parse_db_bool(lmbdb_result($rs, "DEL")).",
+        ".parse_db_bool(lmbdb_result($rs, "ADDF")).",
+        ".parse_db_bool(lmbdb_result($rs, "EDIT")).",
+        ".parse_db_bool(lmbdb_result($rs, "LMLOCK"))."
+        )";
+
 		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 	}
@@ -179,7 +201,7 @@ function updateParentFilesettings($ID,$group_level,$use_parent_filesettings){
 
 
 # --- Menürechte von Obergruppe übernehmen ------------------------
-function updateParentMenusettings($ID,$group_level,$use_parent_menusettings){
+function updateParentMenusettings($ID,$group_level){
 	global $db;
 	
 	if(!$group_level){return false;}
@@ -187,88 +209,139 @@ function updateParentMenusettings($ID,$group_level,$use_parent_menusettings){
 	$sqlquery = "DELETE FROM LMB_RULES_ACTION WHERE GROUP_ID = $ID";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-	if($use_parent_menusettings){
-		$sqlquery = "SELECT * FROM LMB_RULES_ACTION WHERE GROUP_ID = $group_level ORDER BY ID";
-		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!$rs) {$commit = 1;}
-		while(lmbdb_fetch_row($rs)) {
-			/* --- Next ID ---------------------------------------- */
-			$NEXTID1 = next_db_id("LMB_RULES_ACTION");
-			$sqlquery1 = "INSERT INTO LMB_RULES_ACTION (ID,LINK_ID,GROUP_ID,PERM,SORT) VALUES (".$NEXTID1.",".parse_db_int(lmbdb_result($rs,"LINK_ID"),10).",$ID,".parse_db_int(lmbdb_result($rs,"PERM"),10).",".parse_db_int(lmbdb_result($rs,"SORT"),5).")";
-			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-			if(!$rs1) {$commit = 1;}
-		}
-	}else{
-		$sqlquery = "SELECT ID FROM LMB_ACTION UNION SELECT ID FROM LMB_ACTION_DEPEND";
-		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!$rs) {$commit = 1;}
-		while(lmbdb_fetch_row($rs)) {
-			/* --- Next ID ---------------------------------------- */
-			$NEXTID1 = next_db_id("LMB_RULES_ACTION");
-			#if(lmbdb_result($rs,"MAINGROUP") != 2){$perm = 2;}else{$perm = 1;}
-			$perm = 1;
-			$sqlquery1 = "INSERT INTO LMB_RULES_ACTION (ID,LINK_ID,GROUP_ID,PERM) VALUES (".$NEXTID1.",'".lmbdb_result($rs,"ID")."','".$ID."','$perm')";
-			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-			if(!$rs1) {$commit = 1;}
-		}
-	}
+    $sqlquery = "SELECT * FROM LMB_RULES_ACTION WHERE GROUP_ID = $group_level ORDER BY ID";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs) {$commit = 1;}
+    while(lmbdb_fetch_row($rs)) {
+        /* --- Next ID ---------------------------------------- */
+        $NEXTID1 = next_db_id("LMB_RULES_ACTION");
+        $sqlquery1 = "INSERT INTO LMB_RULES_ACTION (
+        ID,
+        LINK_ID,
+        GROUP_ID,
+        PERM,
+        SORT
+        ) VALUES (
+        ".$NEXTID1.",
+        ".parse_db_int(lmbdb_result($rs,"LINK_ID"),10).",
+        $ID,
+        ".parse_db_int(lmbdb_result($rs,"PERM"),10).",
+        ".parse_db_int(lmbdb_result($rs,"SORT"),5)."
+        )";
+        $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+        if(!$rs1) {$commit = 1;}
+    }
+
 }
 
 
 # --- Formularrechte von Obergruppe übernehmen ------------------------
-function updateParentFormsettings($ID,$group_level,$use_parent_formsettings){
+function updateParentFormsettings($ID,$group_level,$typ=null){
 	global $db;
 	
 	if(!$group_level){return false;}
+    if($typ){$sql = "AND TYP = ".parse_db_int($typ);}
 
-	$sqlquery = "DELETE FROM LMB_RULES_REPFORM WHERE GROUP_ID = $ID";
+	$sqlquery = "DELETE FROM LMB_RULES_REPFORM WHERE GROUP_ID = $ID $sql";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 
-	if($use_parent_formsettings){
-		$sqlquery = "SELECT ID,TYP,REPFORM_ID,LMVIEW FROM LMB_RULES_REPFORM WHERE GROUP_ID = $group_level ORDER BY ID";
-		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!$rs) {$commit = 1;}
-		while(lmbdb_fetch_row($rs)) {
-			/* --- Next ID ---------------------------------------- */
-			$NEXTID1 = next_db_id("LMB_RULES_REPFORM");
-			$sqlquery1 = "INSERT INTO LMB_RULES_REPFORM (ID,TYP,GROUP_ID,REPFORM_ID,LMVIEW) VALUES (".$NEXTID1.",".parse_db_int(lmbdb_result($rs,"TYP"),1).",$ID,".parse_db_int(lmbdb_result($rs,"REPFORM_ID"),5).",".parse_db_bool(lmbdb_result($rs,"LMVIEW")).")";
-			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-			if(!$rs1) {$commit = 1;}
-		}
-	}
+    $sqlquery = "SELECT * FROM LMB_RULES_REPFORM WHERE GROUP_ID = $group_level $sql ORDER BY ID";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs) {$commit = 1;}
+    while(lmbdb_fetch_row($rs)) {
+        /* --- Next ID ---------------------------------------- */
+        $NEXTID1 = next_db_id("LMB_RULES_REPFORM");
+        $sqlquery1 = "INSERT INTO LMB_RULES_REPFORM (
+        ID,
+        TYP,
+        GROUP_ID,
+        REPFORM_ID,
+        LMVIEW,
+        HIDDEN,
+        EDITABLE
+        ) VALUES (
+        ".$NEXTID1.",
+        ".parse_db_int(lmbdb_result($rs,"TYP"),1).",
+        $ID,
+        ".parse_db_int(lmbdb_result($rs,"REPFORM_ID"),5).",
+        ".parse_db_bool(lmbdb_result($rs,"LMVIEW")).",
+        ".parse_db_bool(lmbdb_result($rs,"HIDDEN")).",
+        ".parse_db_bool(lmbdb_result($rs,"EDITABLE"))."
+        )";
+        $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+        if(!$rs1) {$commit = 1;}
+    }
+
 }
 
 
 # --- Tabellenrechte von Obergruppe übernehmen ------------------------
-function updateParentTabsettings($ID,$group_level,$use_parent_tabsettings){
+function updateParentTabsettings($ID,$group_level){
 	global $db;
-	
+
 	if(!$group_level){return false;}
 
 	$sqlquery = "DELETE FROM LMB_RULES_TABLES WHERE GROUP_ID = $ID";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
-	$sqlquery = "SELECT ID,EDIT,LMVIEW,DEL,HIDE,LMADD,TAB_ID,VIEW_FORM,TAB_GROUP,VIEW_TFORM,VIEW_PERIOD,VIEW_PERIOD,LMTRIGGER FROM LMB_RULES_TABLES WHERE GROUP_ID = $group_level";
+	$sqlquery = "SELECT * FROM LMB_RULES_TABLES WHERE GROUP_ID = $group_level";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	while(lmbdb_fetch_row($rs)){
-		if(lmbdb_result($rs, "EDIT")){$edit = LMB_DBDEF_TRUE;}else{$edit = LMB_DBDEF_FALSE;}
-		if(lmbdb_result($rs, "LMVIEW")){$view = LMB_DBDEF_TRUE;}else{$view = LMB_DBDEF_FALSE;}
-		if(lmbdb_result($rs, "DEL")){$delete = LMB_DBDEF_TRUE;}else{$delete = LMB_DBDEF_FALSE;}
-		if(lmbdb_result($rs, "HIDE")){$hide = LMB_DBDEF_TRUE;}else{$hide = LMB_DBDEF_FALSE;}
-		if(lmbdb_result($rs, "LMADD")){$add = LMB_DBDEF_TRUE;}else{$add = LMB_DBDEF_FALSE;}
-		
+
 		$NEXTID = next_db_id("LMB_RULES_TABLES");
-		if($use_parent_tabsettings){
-			$sqlquery1 = "INSERT INTO LMB_RULES_TABLES (ID,GROUP_ID,TAB_ID,TAB_GROUP,EDIT,LMVIEW,DEL,HIDE,LMADD,VIEW_FORM,VIEW_TFORM,VIEW_PERIOD,LMTRIGGER) VALUES ($NEXTID, $ID,".lmbdb_result($rs, "TAB_ID").",".lmbdb_result($rs, "TAB_GROUP").",".$edit.",".$view.",".$delete.",".$hide.",".$add.",".parse_db_int(lmbdb_result($rs, "VIEW_FORM"),5).",".parse_db_int(lmbdb_result($rs, "VIEW_TFORM"),5).",".parse_db_int(lmbdb_result($rs, "VIEW_PERIOD"),5).",'".parse_db_string(lmbdb_result($rs, "LMTRIGGER"),20)."')";
-		}else{
-			$sqlquery1 = "INSERT INTO LMB_RULES_TABLES (ID,GROUP_ID,TAB_ID,TAB_GROUP,EDIT,LMVIEW,DEL,HIDE,LMADD) VALUES ($NEXTID, $ID,".lmbdb_result($rs, "TAB_ID").",".lmbdb_result($rs, "TAB_GROUP").",".$edit.",".$view.",".$delete.",".$hide.",".$add.")";
-		}
+
+        $sqlquery1 = "INSERT INTO LMB_RULES_TABLES (
+        ID,
+        GROUP_ID,
+        TAB_ID,
+        TAB_GROUP,
+        EDIT,
+        LMVIEW,
+        VIEW_PERIOD,
+        VIEW_FORM,
+        DEL,
+        HIDE,
+        LMADD,
+        NEED,
+        LMTRIGGER,
+        VIEW_TFORM,
+        VER,
+        EDITRULE,
+        HIDEMENU,
+        USERRULES,
+        VIEWVER,
+        LMLOCK,
+        USERPRIVILEGE
+        
+        ) VALUES (
+        $NEXTID, 
+        $ID,
+        ".lmbdb_result($rs, "TAB_ID").",
+        ".lmbdb_result($rs, "TAB_GROUP").",
+        ".parse_db_bool(lmbdb_result($rs, "EDIT")).",
+        ".parse_db_bool(lmbdb_result($rs, "LMVIEW")).",
+        ".parse_db_int(lmbdb_result($rs, "VIEW_PERIOD"),5).",
+        ".parse_db_int(lmbdb_result($rs, "VIEW_FORM"),5).",
+        ".parse_db_bool(lmbdb_result($rs, "DEL")).",
+        ".parse_db_bool(lmbdb_result($rs, "HIDE")).",
+        ".parse_db_bool(lmbdb_result($rs, "LMADD")).",
+        ".parse_db_bool(lmbdb_result($rs, "NEED")).",
+        '".parse_db_string(lmbdb_result($rs, "LMTRIGGER"),20)."',
+        ".parse_db_int(lmbdb_result($rs, "VIEW_TFORM"),5).",
+        ".parse_db_int(lmbdb_result($rs, "VER"),2).",
+        '".parse_db_string(lmbdb_result($rs, "EDITRULE"),255)."',
+        ".parse_db_bool(lmbdb_result($rs, "HIDEMENU")).",
+        ".parse_db_bool(lmbdb_result($rs, "USERRULES")).",
+        ".parse_db_bool(lmbdb_result($rs, "VIEWVER")).",
+        ".parse_db_bool(lmbdb_result($rs, "LMLOCK")).",
+        ".parse_db_bool(lmbdb_result($rs, "USERPRIVILEGE"))."
+        )";
+
 		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 	}
-
 
 	/*------------------------------ LMB_RULES_FIELDS ------------------------------------*/
 	$sqlquery = "DELETE FROM LMB_RULES_FIELDS WHERE GROUP_ID =  $ID";
@@ -278,18 +351,58 @@ function updateParentTabsettings($ID,$group_level,$use_parent_tabsettings){
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	while(lmbdb_fetch_row($rs)) {
-		if(lmbdb_result($rs, "EDIT")){$edit = LMB_DBDEF_TRUE;}else{$edit = LMB_DBDEF_FALSE;}
-		if(lmbdb_result($rs, "LMVIEW")){$view = LMB_DBDEF_TRUE;}else{$view = LMB_DBDEF_FALSE;}
-		if(lmbdb_result($rs, "COPY")){$copy = LMB_DBDEF_TRUE;}else{$copy = LMB_DBDEF_FALSE;}
-		if(lmbdb_result($rs, "NEED")){$need = LMB_DBDEF_TRUE;}else{$need = LMB_DBDEF_FALSE;}
-		if(lmbdb_result($rs,"SORT")){$sort = lmbdb_result($rs,"SORT");}else{$sort = 0;}
-		
+
 		$NEXTID = next_db_id("LMB_RULES_FIELDS");
-		if($use_parent_tabsettings){
-			$sqlquery1 = "INSERT INTO LMB_RULES_FIELDS (ID,GROUP_ID,TAB_GROUP,TAB_ID,FIELD_ID,LMVIEW,EDIT,COPY,NEED,COLOR,FILTER,FILTERTYP,SORT,LMTRIGGER,NFORMAT,CURRENCY,EXT_TYPE,DEFLT) VALUES ($NEXTID, $ID,".lmbdb_result($rs, "TAB_GROUP").",".lmbdb_result($rs, "TAB_ID").",".lmbdb_result($rs,"FIELD_ID").",$view,$edit,$copy,$need,'".parse_db_string(lmbdb_result($rs, "COLOR"),8)."','".parse_db_string(lmbdb_result($rs, "FILTER"),499)."','".parse_db_int(lmbdb_result($rs, "FILTERTYP"),1)."','".parse_db_int($sort,5)."','".parse_db_string(lmbdb_result($rs, "LMTRIGGER"),20)."','".parse_db_string(lmbdb_result($rs, "NFORMAT"),30)."','".parse_db_string(lmbdb_result($rs, "CURRENCY"),5)."','".parse_db_string(lmbdb_result($rs, "EXT_TYPE"),50)."','".parse_db_string(lmbdb_result($rs, "DEFLT"),25)."')";
-		}else{
-			$sqlquery1 = "INSERT INTO LMB_RULES_FIELDS (ID,GROUP_ID,TAB_GROUP,TAB_ID,FIELD_ID,LMVIEW,EDIT,SORT) VALUES ($NEXTID, $ID,".lmbdb_result($rs, "TAB_GROUP").",".lmbdb_result($rs, "TAB_ID").",".lmbdb_result($rs,"FIELD_ID").",$view,$edit,$sort)";
-		}
+
+        $sqlquery1 = "INSERT INTO LMB_RULES_FIELDS (
+        ID,
+        GROUP_ID,
+        TAB_ID,
+        FIELD_ID,
+        TAB_GROUP,
+        LMVIEW,
+        EDIT,
+        COLOR,
+        FILTER,
+        NEED,
+        FILTERTYP,
+        NFORMAT,
+        CURRENCY,
+        DEFLT,
+        COPY,
+        LMTRIGGER,
+        EXT_TYPE,
+        VER,
+        EDITRULE,
+        FIELDOPTION,
+        LISTEDIT
+        
+        ) VALUES (
+        
+        $NEXTID, 
+        $ID,
+        ".lmbdb_result($rs, "TAB_ID").",
+        ".lmbdb_result($rs,"FIELD_ID").",
+        ".lmbdb_result($rs, "TAB_GROUP").",
+        ".parse_db_bool(lmbdb_result($rs, "LMVIEW")).",
+        ".parse_db_bool(lmbdb_result($rs, "EDIT")).",
+        '".parse_db_string(lmbdb_result($rs, "COLOR"),8)."',
+        '".parse_db_string(lmbdb_result($rs, "FILTER"),499)."',
+        ".parse_db_bool(lmbdb_result($rs, "NEED")).",
+        '".parse_db_int(lmbdb_result($rs, "FILTERTYP"),1)."',
+        '".parse_db_string(lmbdb_result($rs, "NFORMAT"),30)."',
+        '".parse_db_string(lmbdb_result($rs, "CURRENCY"),5)."',
+        '".parse_db_string(lmbdb_result($rs, "DEFLT"),25)."',
+        ".parse_db_bool(lmbdb_result($rs, "COPY")).",
+        '".parse_db_string(lmbdb_result($rs, "LMTRIGGER"),20)."',
+        '".parse_db_string(lmbdb_result($rs, "EXT_TYPE"),50)."',
+        ".parse_db_bool(lmbdb_result($rs, "VER")).",
+        '".parse_db_string(lmbdb_result($rs, "EDITRULE"),250)."',
+        ".parse_db_bool(lmbdb_result($rs, "FIELDOPTION")).",
+        ".parse_db_bool(lmbdb_result($rs, "LISTEDIT"))."
+        )";
+
+
 		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 	}
@@ -302,7 +415,7 @@ function updateParentTabsettings($ID,$group_level,$use_parent_tabsettings){
 
 
 # Gruppe anlegen
-function add_group($group_name,$group_beschr,$group_level,$use_parent_filesettings,$use_parent_menusettings,$use_parent_tabsettings,$use_parent_formsettings){
+function add_group($group_name,$group_beschr,$group_level,$use_parent){
 	global $db;
 	global $lang;
 	global $groupdat;
@@ -341,26 +454,18 @@ function add_group($group_name,$group_beschr,$group_level,$use_parent_filesettin
 		}
 
 		# if parent group
-		if($group_level){
-			/* --- Tabrechte ------------------------ */
-			if($use_parent_tabsettings){
-				$commit = updateParentTabsettings($ID,$group_level,$use_parent_tabsettings);
-			}else{
-				check_grouprights1($ID);
-			}
-			
-			/* --- Menürechte ------------------------ */
-			if($use_parent_menusettings){
-				$commit = updateParentMenusettings($ID,$group_level,$use_parent_menusettings);
-			}else{
-				check_grouprights($ID);
-			}
-			
-			/* --- Dateirechte ------------------------ */
-			$commit = updateParentFilesettings($ID,$group_level,$use_parent_filesettings);
-	
-			/* --- Formularrechte ------------------------ */
-			$commit = updateParentFormsettings($ID,$group_level,$use_parent_formsettings);
+		if($group_level AND $use_parent){
+            updateParentTabsettings($ID,$group_level);
+            updateParentMenusettings($ID,$group_level);
+            updateParentFilesettings($ID, $group_level);
+            updateParentFormsettings($ID, $group_level, 1);
+            updateParentFormsettings($ID, $group_level, 2);
+            updateParentFormsettings($ID, $group_level, 3);
+            updateParentFormsettings($ID, $group_level, 4);
+            updateParentFormsettings($ID, $group_level, 5);
+        }else{
+            check_grouprights1($ID);
+            check_grouprights($ID);
 		}
 
 		/* --- Transaktion ENDE -------------------------------------- */

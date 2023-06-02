@@ -1003,6 +1003,25 @@ function extend_field($extend_func,$fieldid,$tabid){
 	return true;
 }
 
+function row_size($row_size,$fieldid,$tabid){
+	global $db;
+	$sqlquery = "UPDATE LMB_CONF_FIELDS SET ROW_SIZE = ".parse_db_int($row_size)." WHERE TAB_ID = $tabid AND FIELD_ID = $fieldid";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {return false;}
+
+	return true;
+}
+
+function col_hide($col_hide,$fieldid,$tabid){
+	global $db;
+    if($col_hide == "col_hide_CHECKED" OR $col_hide == "false"){$col_hide = LMB_DBDEF_TRUE;}else{$col_hide = LMB_DBDEF_FALSE;}
+	$sqlquery = "UPDATE LMB_CONF_FIELDS SET COL_HIDE = ".$col_hide." WHERE TAB_ID = $tabid AND FIELD_ID = $fieldid";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {return false;}
+
+	return true;
+}
+
 /* --- Feld Konvertieren ---------------------------------------------*/
 if($convert_value AND $fieldid){
 	if(!convert_field($convert_value,$convert_size,$fieldid,$atid,lmb_strtoupper($new_gtab),$solve_dependency)){$commit = 1;}
@@ -1011,6 +1030,16 @@ if($convert_value AND $fieldid){
 /* --- Extension ---------------------------------------------*/
 if($extend_value AND $fieldid){
 	if(!extend_field($extend_value,$fieldid,$atid)){$commit = 1;}
+}
+
+/* --- row size ---------------------------------------------*/
+if($row_size AND $fieldid){
+    if(!row_size($row_size,$fieldid,$atid)){$commit = 1;}
+}
+
+/* --- row view ---------------------------------------------*/
+if($col_hide AND $fieldid){
+    if(!col_hide($col_hide,$fieldid,$atid)){$commit = 1;}
 }
 
 /* --- Feld hinzufügen --------------------------------------------- */
@@ -1043,7 +1072,7 @@ if($table_gtab[$bzm]) {
     #,LMB_FIELD_TYPES.DATA_TYPE_EXP,LMB_FIELD_TYPES.FORMAT,LMB_FIELD_TYPES.FIELD_TYPE,LMB_FIELD_TYPES.DATA_TYPE,LMB_FIELD_TYPES.ID AS DATA_TYPE_ID,LMB_CONF_FIELDS.POPUPDEFAULT,LMB_CONF_FIELDS.VERKNGROUP
 	
 	/* --- Tabellen-Abfrage --------------------------------------------- */
-	$sqlquery = "SELECT LMB_CONF_FIELDS.FIELD_TYPE,LMB_CONF_FIELDS.DATA_TYPE,LMB_CONF_FIELDS.FULLSEARCH,LMB_CONF_FIELDS.SEARCHVERSION,LMB_CONF_FIELDS.MULTILANG,LMB_CONF_FIELDS.VERKNTREE,LMB_CONF_FIELDS.LISTING_VIEWMODE,LMB_CONF_FIELDS.LISTING_CUT,LMB_CONF_FIELDS.AGGREGATE,LMB_CONF_FIELDS.COLLREPLACE,LMB_CONF_FIELDS.FIELD_SIZE,LMB_CONF_FIELDS.RELEXT,LMB_CONF_FIELDS.AJAXPOST,LMB_CONF_FIELDS.POTENCY,LMB_CONF_FIELDS.EDITRULE,LMB_CONF_FIELDS.VIEWRULE,LMB_CONF_FIELDS.QUICKSEARCH,LMB_CONF_FIELDS.LMTRIGGER,LMB_CONF_FIELDS.DEFAULTVALUE,LMB_CONF_FIELDS.MAINFIELD,LMB_CONF_FIELDS.VERKNTABLETYPE,LMB_CONF_FIELDS.EXT_TYPE,LMB_CONF_FIELDS.INHERIT_TAB,LMB_CONF_FIELDS.INHERIT_EVAL,LMB_CONF_FIELDS.INHERIT_GROUP,LMB_CONF_FIELDS.INHERIT_SEARCH,LMB_CONF_FIELDS.INHERIT_FILTER,LMB_CONF_FIELDS.INHERIT_FIELD,LMB_CONF_FIELDS.INDEXED,LMB_CONF_FIELDS.SELECT_CUT,LMB_CONF_FIELDS.SELECT_POOL,LMB_CONF_FIELDS.VERKNSEARCH,LMB_CONF_FIELDS.WYSIWYG,LMB_CONF_FIELDS.DATETIME,LMB_CONF_FIELDS.MD5TAB,LMB_CONF_FIELDS.FIELD_ID,LMB_CONF_FIELDS.CURRENCY,LMB_CONF_FIELDS.NFORMAT,LMB_CONF_FIELDS.INDIZE,LMB_CONF_FIELDS.GROUPABLE,LMB_CONF_FIELDS.ARGUMENT_EDIT,LMB_CONF_FIELDS.VERKNTABID,LMB_CONF_FIELDS.ARGUMENT,LMB_CONF_FIELDS.DYNSEARCH,LMB_CONF_FIELDS.ISUNIQUE,LMB_CONF_FIELDS.FIELDKEY,LMB_CONF_FIELDS.GENLINK,LMB_CONF_FIELDS.FIELD_NAME,LMB_CONF_FIELDS.ARTLEISTE,LMB_CONF_FIELDS.VERKNFIELDID,LMB_CONF_FIELDS.BESCHREIBUNG,LMB_CONF_FIELDS.SPELLING,LMB_CONF_FIELDS.ARGUMENT_TYP,LMB_CONF_FIELDS.POPUPDEFAULT,LMB_CONF_FIELDS.VERKNGROUP, LMB_CONF_FIELDS.ENCRYPTION_MODE
+	$sqlquery = "SELECT LMB_CONF_FIELDS.COL_HIDE,LMB_CONF_FIELDS.ROW_SIZE,LMB_CONF_FIELDS.HASRECVERKN,LMB_CONF_FIELDS.FIELD_TYPE,LMB_CONF_FIELDS.DATA_TYPE,LMB_CONF_FIELDS.FULLSEARCH,LMB_CONF_FIELDS.SEARCHVERSION,LMB_CONF_FIELDS.MULTILANG,LMB_CONF_FIELDS.VERKNTREE,LMB_CONF_FIELDS.LISTING_VIEWMODE,LMB_CONF_FIELDS.LISTING_CUT,LMB_CONF_FIELDS.AGGREGATE,LMB_CONF_FIELDS.COLLREPLACE,LMB_CONF_FIELDS.FIELD_SIZE,LMB_CONF_FIELDS.RELEXT,LMB_CONF_FIELDS.AJAXPOST,LMB_CONF_FIELDS.POTENCY,LMB_CONF_FIELDS.EDITRULE,LMB_CONF_FIELDS.VIEWRULE,LMB_CONF_FIELDS.QUICKSEARCH,LMB_CONF_FIELDS.LMTRIGGER,LMB_CONF_FIELDS.DEFAULTVALUE,LMB_CONF_FIELDS.MAINFIELD,LMB_CONF_FIELDS.VERKNTABLETYPE,LMB_CONF_FIELDS.EXT_TYPE,LMB_CONF_FIELDS.INHERIT_TAB,LMB_CONF_FIELDS.INHERIT_EVAL,LMB_CONF_FIELDS.INHERIT_GROUP,LMB_CONF_FIELDS.INHERIT_SEARCH,LMB_CONF_FIELDS.INHERIT_FILTER,LMB_CONF_FIELDS.INHERIT_FIELD,LMB_CONF_FIELDS.INDEXED,LMB_CONF_FIELDS.SELECT_CUT,LMB_CONF_FIELDS.SELECT_POOL,LMB_CONF_FIELDS.VERKNSEARCH,LMB_CONF_FIELDS.WYSIWYG,LMB_CONF_FIELDS.DATETIME,LMB_CONF_FIELDS.MD5TAB,LMB_CONF_FIELDS.FIELD_ID,LMB_CONF_FIELDS.CURRENCY,LMB_CONF_FIELDS.NFORMAT,LMB_CONF_FIELDS.INDIZE,LMB_CONF_FIELDS.GROUPABLE,LMB_CONF_FIELDS.ARGUMENT_EDIT,LMB_CONF_FIELDS.VERKNTABID,LMB_CONF_FIELDS.ARGUMENT,LMB_CONF_FIELDS.DYNSEARCH,LMB_CONF_FIELDS.ISUNIQUE,LMB_CONF_FIELDS.FIELDKEY,LMB_CONF_FIELDS.GENLINK,LMB_CONF_FIELDS.FIELD_NAME,LMB_CONF_FIELDS.ARTLEISTE,LMB_CONF_FIELDS.VERKNFIELDID,LMB_CONF_FIELDS.BESCHREIBUNG,LMB_CONF_FIELDS.SPELLING,LMB_CONF_FIELDS.ARGUMENT_TYP,LMB_CONF_FIELDS.POPUPDEFAULT,LMB_CONF_FIELDS.VERKNGROUP, LMB_CONF_FIELDS.ENCRYPTION_MODE
                     FROM LMB_CONF_FIELDS
 					WHERE LMB_CONF_FIELDS.TAB_ID = $atid $sql
 					ORDER BY LMB_CONF_FIELDS.SORT";
@@ -1064,6 +1093,8 @@ if($table_gtab[$bzm]) {
 		$result_fieldtype[$table_gtab[$bzm]]["verkntab"][$bzm1] = lmbdb_result($rs, "MD5TAB");
 		$result_fieldtype[$table_gtab[$bzm]]["verkntabid"][$bzm1] = lmbdb_result($rs, "VERKNTABID");
 		$result_fieldtype[$table_gtab[$bzm]]["verknfieldid"][$bzm1] = lmbdb_result($rs, "VERKNFIELDID");
+        $result_fieldtype[$table_gtab[$bzm]]["verkntabletype"][$bzm1] = lmbdb_result($rs, "VERKNTABLETYPE");
+        $result_fieldtype[$table_gtab[$bzm]]["hasrecverkn"][$bzm1] = lmbdb_result($rs, "HASRECVERKN");
 		$result_fieldtype[$table_gtab[$bzm]]["fieldkey"][$bzm1] = lmbdb_result($rs, "FIELDKEY");
 		$result_fieldtype[$table_gtab[$bzm]]["mainfield"][$bzm1] = lmbdb_result($rs, "MAINFIELD");
 		$result_fieldtype[$table_gtab[$bzm]]["unique"][$bzm1] = lmbdb_result($rs, "ISUNIQUE");
@@ -1087,7 +1118,6 @@ if($table_gtab[$bzm]) {
 		$result_fieldtype[$table_gtab[$bzm]]["inherit_filter"][$bzm1] = lmbdb_result($rs, "INHERIT_FILTER");
 		$result_fieldtype[$table_gtab[$bzm]]["inherit_tab"][$bzm1] = lmbdb_result($rs, "INHERIT_TAB");
 		$result_fieldtype[$table_gtab[$bzm]]["ext_type"][$bzm1] = lmbdb_result($rs, "EXT_TYPE");
-		$result_fieldtype[$table_gtab[$bzm]]["verkntabletype"][$bzm1] = lmbdb_result($rs, "VERKNTABLETYPE");
 		$result_fieldtype[$table_gtab[$bzm]]["trigger"][$bzm1] = explode(",",lmbdb_result($rs, "LMTRIGGER"));
 		$result_fieldtype[$table_gtab[$bzm]]["domain_default"][$bzm1] = lmbdb_result($rs, "DEFAULTVALUE");
 		$result_fieldtype[$table_gtab[$bzm]]["quicksearch"][$bzm1] = lmbdb_result($rs, "QUICKSEARCH");
@@ -1096,6 +1126,8 @@ if($table_gtab[$bzm]) {
 		$result_fieldtype[$table_gtab[$bzm]]["potency"][$bzm1] = lmbdb_result($rs, "POTENCY");
 		$result_fieldtype[$table_gtab[$bzm]]["options"][$bzm1] = trim(lmbdb_result($rs, "RELEXT")); # longtext handle
 		$result_fieldtype[$table_gtab[$bzm]]["field_size"][$bzm1] = lmbdb_result($rs, "FIELD_SIZE");
+        $result_fieldtype[$table_gtab[$bzm]]["row_size"][$bzm1] = lmbdb_result($rs, "ROW_SIZE");
+        $result_fieldtype[$table_gtab[$bzm]]["col_hide"][$bzm1] = lmbdb_result($rs, "COL_HIDE");
 		$result_fieldtype[$table_gtab[$bzm]]["collreplace"][$bzm1] = lmbdb_result($rs, "COLLREPLACE");
 		$result_fieldtype[$table_gtab[$bzm]]["multilang"][$bzm1] = lmbdb_result($rs, "MULTILANG");
 		$result_fieldtype[$table_gtab[$bzm]]["searchversion"][$bzm1] = lmbdb_result($rs, "SEARCHVERSION");
@@ -1121,11 +1153,20 @@ if($table_gtab[$bzm]) {
 			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			$result_fieldtype[$table_gtab[$bzm]]["verkn"][$bzm1] = lmbdb_result($rs1, "TABELLE");
 		}
+
+        /*
 		if(lmbdb_result($rs, "VERKNFIELDID")){
-			$sqlquery1 = "	SELECT FIELD_NAME,SPELLING FROM LMB_CONF_FIELDS WHERE FIELD_ID = ".lmbdb_result($rs, "VERKNFIELDID");
+			$sqlquery1 = "	SELECT FIELD_NAME,SPELLING,MD5TAB FROM LMB_CONF_FIELDS WHERE TAB_ID = $atid AND FIELD_ID = ".lmbdb_result($rs, "VERKNFIELDID");
 			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			$result_fieldtype[$table_gtab[$bzm]]["verknfield"][$bzm1] = lmbdb_result($rs1, "FIELD_NAME");
-		}
+		}*/
+
+        // backward 1:n direct md5 fieldname
+        if($result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 25 AND $result_fieldtype[$table_gtab[$bzm]]["verkntabletype"][$bzm1] == 2) {
+			$sqlquery1 = "SELECT MD5TAB FROM LMB_CONF_FIELDS WHERE TAB_ID = ".$result_fieldtype[$table_gtab[$bzm]]["verkntabid"][$bzm1]." AND FIELD_ID = ".$result_fieldtype[$table_gtab[$bzm]]["hasrecverkn"][$bzm1];
+            $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+            $result_fieldtype[$table_gtab[$bzm]]["verkntab"][$bzm1] = lmbdb_result($rs1, "MD5TAB");
+        }
 
 		if(lmbdb_result($rs, "ARGUMENT_TYP")){$gfield[$atid]["argument_typ"][lmbdb_result($rs, "FIELD_ID")] = lmbdb_result($rs, "ARGUMENT_TYP");}
 

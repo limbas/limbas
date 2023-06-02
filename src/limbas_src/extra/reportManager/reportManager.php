@@ -27,7 +27,6 @@ require_once __DIR__ . '/reportManager.dao';
     <script type="text/javascript" src="assets/js/extra/extensions/ext.js?v=<?=$umgvar["version"]?>"></script>
 
     <link rel="stylesheet" type="text/css" href="assets/css/<?=$session['css']?>?v=<?=$umgvar["version"]?>">
-    <link href="<?=$umgvar['url']?>/extra/reportManager/assets/css/reportManager.css" rel="stylesheet">
 </head>
 
 <body>

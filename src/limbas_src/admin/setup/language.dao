@@ -48,7 +48,6 @@ foreach ($langtyplist as $typkey => $langtyppart){
 		while(lmbdb_fetch_row($rs)) {
 			if(lmbdb_result($rs, "LMFILE")){$fl = lmbdb_result($rs, "LMFILE");}else{$fl = '0';}
 			$sqlquery1 = "INSERT INTO LMB_LANG$langtyppart (ID,LANGUAGE_ID,ELEMENT_ID,TYP,LMFILE,LANGUAGE,EDIT,WERT) VALUES ($NEXTID1,$NEXTID,".lmbdb_result($rs, "ELEMENT_ID").",".parse_db_int(lmbdb_result($rs, "TYP"),5).",'".parse_db_string($fl,250)."','".parse_db_string($add_lang,20)."',".LMB_DBDEF_FALSE.",'')";
-			error_log($sqlquery1);
             $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
             $NEXTID1++;

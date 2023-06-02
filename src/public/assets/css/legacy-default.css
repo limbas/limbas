@@ -1532,7 +1532,6 @@
 }
 .legacy-table * {
     margin: 0;
-    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
 }
 .legacy-table img, .legacy-table picture, .legacy-table video, .legacy-table canvas, .legacy-table svg {
@@ -2815,6 +2814,7 @@ td .lmbGtabTabSpace {
 select.gtabHeaderInputINP {
     background-color: white;
     padding: 0.1rem;
+    padding-left: 14px;
 }
 .gtabHeaderInputINPajax {
     background-image: url("../images/legacy/find_green.png");
@@ -3343,10 +3343,9 @@ table.hoverable tr.tabBody:hover {
     font-weight: bold;
     border: 1px solid #eaf3ee;
     border-radius: 3px 3px 3px 3px;
-    padding: 2px;
     margin-left: 2px;
     text-align: right;
-    height: 12px;
+    height: 20px;
     cursor: pointer;
 }
 /* relation tree ------------------------------------------------------------------------*/
@@ -3411,7 +3410,6 @@ DIV.ajax_container {
 }
 /*container allgemein*/
 .lmb_container {
-    padding: 5px;
     background-color: #eeeeee;
     border: 1px solid #c0c0c0;
     border-radius: 3px 3px 3px 3px;

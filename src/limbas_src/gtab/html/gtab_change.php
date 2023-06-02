@@ -7,10 +7,6 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
-
-require_once __DIR__ . '/../loadClasses.php';
-
 $result_report["count"] = 0;
 
 
@@ -141,16 +137,14 @@ if($gformlist[$gtabid]["extension"][$form_id] AND file_exists(EXTENSIONSPATH.$gf
 # --- zeige Formular-Ansicht -----
 }elseif($gform[$form_id] AND $gformlist[$gtabid]["id"][$form_id] AND $gformlist[$gtabid]["typ"][$form_id] == 1){
 
-	include(__DIR__ . '/detail/customForm.php');
+    require(__DIR__ . '/forms/customForm.php');
 	
 # --- zeige Standard-Ansicht -----
 }else{
 
-    include(__DIR__ . '/detail/defaultForm.php');
+    require(__DIR__ . '/forms/defaultForm.php');
     
 }
-
-
 
 unset($commit);
 ?>

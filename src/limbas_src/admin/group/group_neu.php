@@ -18,7 +18,7 @@ if(!$rs){$commit = 1;}
 
 <div class="container-fluid p-3">
     <div class="row">
-        <div class="col-sm-6">
+        <div class="col-sm-8">
             <FORM ACTION="main_admin.php" METHOD="post" name="form1">
                 <input type="hidden" name="action" value="setup_group_add">
 
@@ -50,33 +50,12 @@ if(!$rs){$commit = 1;}
 
                         <hr>
 
-                        <p><?=$lang[2585]?></p>
-
                         <div class="row">
-                            <label class="col-sm-4 col-form-label"><?=$lang[2129]?></label>
-                            <div class="col-sm-8">
-                                <INPUT TYPE="checkbox" NAME="update_parent_tabsettings" VALUE="1" checked>
-                            </div>
+                        <label class="col-sm-5 col-form-label"><?=$lang[2585]?></label>
+                        <div class="col-sm-2">
+                            <INPUT TYPE="checkbox" NAME="use_parent" VALUE="1" checked>
                         </div>
-                        <div class="row">
-                            <label class="col-sm-4 col-form-label"><?=$lang[2130]?></label>
-                            <div class="col-sm-8">
-                                <INPUT TYPE="checkbox" NAME="update_parent_filesettings" VALUE="1" checked>
-                            </div>
                         </div>
-                        <div class="row">
-                            <label class="col-sm-4 col-form-label"><?=$lang[2131]?></label>
-                            <div class="col-sm-8">
-                                <INPUT TYPE="checkbox" NAME="update_parent_menusettings" VALUE="1" checked>
-                            </div>
-                        </div>
-                        <div class="mb-3 row">
-                            <label class="col-sm-4 col-form-label"><?=$lang[2306]?></label>
-                            <div class="col-sm-8">
-                                <INPUT TYPE="checkbox" NAME="update_parent_formsettings" VALUE="1" checked>
-                            </div>
-                        </div>
-
 
                         <div class="text-end">
                             <button type="submit" class="btn btn-primary"><?=$lang[571]?></button>

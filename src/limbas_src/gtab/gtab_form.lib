@@ -477,14 +477,33 @@ function form_dbdesc($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field
 
 #------------ dbsearch ---------------------
 function form_dbsearch($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id,$tab_id){
-    $style = $style.';'.$pos;
+
+    echo "<div style=\"$pos\">";
     // table based search
     if($field_id) {
         lmbGlistSearchDetail($tab_id, $field_id, $style);
     // full search
     }else{
-        echo "<input style=\"$style\" id=\"globalSearch\" onclick=\"event.stopPropagation();\" class=\"gtabHeaderInputINP\" name=\"gs[$tab_id][0][0]\" value=\"".$GLOBALS['gsr'][$tab_id][0][0]."\" onchange=\"checktyp(13,'gs[$tab_id][0][0]','FulltextSearch','0','$tab_id',this.value,'');\" type=\"text\">";
+        lmbGlistGlobalSearch($gtabid,$style);
     }
+    echo "</div>";
+}
+
+#------------ filter menue ---------------------
+function form_filter($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id,$tab_id,&$gresult){
+	global $gform;
+	#$style = "STYLE=\"".$pos.$style."\"";
+
+    # parse parameters
+    if(substr($gform[$gformid]["parameters"][$key],0,6) == 'return'){
+        $filtergroup = eval($gform[$gformid]["parameters"][$key].';');
+    }elseif($gform[$gformid]["parameters"][$key]){
+        $filtergroup = $gform[$gformid]["parameters"][$key];
+    }
+    echo "<div style=\"$pos\">";
+    lmbGlistSearchFilter($gtabid, $filtergroup, $style);
+    echo "</div>";
+
 }
 
 #------------ dbnew ---------------------
@@ -591,7 +610,7 @@ function form_uform($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_
 			echo "<div id=\"element".$gform[$gformid]["fid"][$key]."\" title=\"".htmlentities($gform[$gformid]["title"][$key],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" style=\"$styleset\">";
 			if($gformlist[$gform[$gformid]["tab_id"][$key]]["typ"][$gform[$gformid]["tab_group"][$key]] == 2){
 				$ugresult = get_gresult($gform[$gformid]["tab_id"][$key],null,$filter,$gsr,$verkn,$onlyfield);
-				require_once(COREPATH . 'gtab/html/gtab_erg.lib');
+				require_once(COREPATH . 'gtab/gtab_erg.lib');
 				form_ergview($gform[$gformid]["tab_id"][$key],$ugresult,$gform[$gformid]["tab_group"][$key]);
 			}else{
 				$ugresult = get_gresult($gform[$gformid]["tab_id"][$key],null,$filter,$gsr,$verkn,$onlyfield,$ID);
@@ -610,6 +629,9 @@ function form_uform($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_
 			$linklevel["tabid"] = $gtabid;
 			$gsr = $filter["ext_RelationFields"]["searchval"][$vuniqueid];
 			$vfilter["order"][$gtabid] = $filter["ext_RelationFields"]["order"][$vuniqueid];
+
+            // check for permission
+            if(!$gtab['table'][$gtabid]){return;}
 
 			# specific formular styles
 			$st = explode(";",$gform[$gformid]["style"][$key]);
@@ -1209,45 +1231,17 @@ function form_text($key,$gformid,$pos,$style,$class,$ID,$gtabid){
 #------------ notice bar ---------------------
 function form_notice($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id,$tab_id,&$gresult){
 	global $gform;
+    global $filter;
+
 	$style = "STYLE=\"".$pos.$style."\"";
 
 	echo "<DIV ID=\"element".$gform[$gformid]["fid"][$key]."\" $class $style>";
-	print_notice($gtabid,$ID,$gresult);
+    if($ID AND function_exists('print_notice')) {
+        print_notice($gtabid, $ID, $gresult);
+    }else{
+        lmbGlistNotice($gtabid,$filter);
+    }
 	echo "</DIV>";
-}
-
-#------------ filter menue ---------------------
-function form_filter($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id,$tab_id,&$gresult){
-	global $gform;
-	$style = "STYLE=\"".$pos.$style."\"";
-
-    # parse parameters
-    if(substr($gform[$gformid]["parameters"][$key],0,6) == 'return'){
-        $filtergroup = eval($gform[$gformid]["parameters"][$key].';');
-    }elseif($gform[$gformid]["parameters"][$key]){
-        $filtergroup = $gform[$gformid]["parameters"][$key];
-    }
-
-    $filterlist = SNAP_get_filtergroup($gtabid,$filtergroup);
-	echo "<select ID=\"element".$gform[$gformid]["fid"][$key]."\" $class $style onchange=\"document.form1.snap_id.value=this.value;send_form(1);\"><option value=''>";
-    foreach($filterlist as $key => $value){
-        echo "<option value=\"$key\" ";
-        if($GLOBALS['snap_id'] == $key){echo "selected";}
-        echo ">$value</option>";
-    }
-
-	echo "</select>";
-}
-
-#------------ global search ---------------------
-function form_globsearch($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id,$tab_id,&$gresult){
-	global $gform;
-    global $farbschema;
-    global $gsr;
-
-	$style = "STYLE=\"".$pos.$style."\"";
-    echo "<input $class $style type=\"text\" id=\"globalSearch\" onclick=\"event.stopPropagation();\" name=\"gs[$gtabid][0][0]\" value=\"" . $gsr[$gtabid][0][0] . "\" onchange=\"checktyp(13,'gs[$gtabid][0][0]','FulltextSearch','0','$gtabid',this.value,'');\" style=\"background-color:{$farbschema['WEB10']};\">";
-
 }
 
 #------------ workflow-history ---------------------
@@ -1303,7 +1297,7 @@ function form_php($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id
 function form_reminder($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id,$tab_id) {
 	global $gform;
 
-    /* config syntax:
+    /* default values - config syntax:
      *
      * datetime => string | e.g. '16.03.2016 22:44'
      * usergroups => string | e.g. '33_u;22_g;55_u' or '' for the current user
@@ -1311,7 +1305,8 @@ function form_reminder($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$fie
      * mail => 0 or 1
      * category => int | id of category to use, 0 for default
      * hidecurrent => 1 to hide
-    
+     * gtabid
+     * ID
     /*
     $config = array(
         'datetime' => '10.03.2017 22:55',
@@ -1321,18 +1316,23 @@ function form_reminder($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$fie
         'category' => 2,
         'hidecurrent' => 1
     );
+    $gtabid = 1;
+    ID = 23;
      */
 
     $defaults = json_encode(eval($gform[$gformid]["parameters"][$key]));
 
     if($event = dftyp_events(1,$gform[$gformid]['event'][$key],null,null,null,null,null,$null,$gtabid,null)){$style .= ";cursor:pointer;";}
 	$style = "STYLE=\"".$pos.$style."\"";
-    echo "{$gform[$gformid]["inhalt"][$key]}<i class=\"lmb-icon lmb-bell\" ID=\"element".$gform[$gformid]["fid"][$key]."\" $class $style $event onclick=\"limbasDivShowReminder(event,this,null,null,null,null,'" . htmlentities($defaults) . "');\" onmousedown=\"this.style.border='1px solid black';\" onmouseup=\"this.style.border='';\"></i>";
+    echo "{$gform[$gformid]["inhalt"][$key]}<i class=\"lmb-icon lmb-bell\" ID=\"element".$gform[$gformid]["fid"][$key]."\" $class $style $event onclick=\"limbasDivShowReminder(event,this,null,null,null,null,'" . htmlentities($defaults) . "','$gtabid','$ID');\" onmousedown=\"this.style.border='1px solid black';\" onmouseup=\"this.style.border='';\"></i>";
 }
 
 #-------- html template -----------
 function form_templ($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_id,$tab_id,&$gresult) {
     global $gform;
+
+    if(!$ID){return;}
+
     require_once(COREPATH . 'extra/template/form/FormTemplateConfig.php');
 
     $content = $gform[$gformid]['inhalt'][$key];
@@ -1565,6 +1565,31 @@ function formlist_scroll($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$dati
     $style = "STYLE=\"position:relative;width:".formlist_handlePx($gform[$gformid]["width"][$key]).";height:".formlist_handlePx($gform[$gformid]["height"][$key]).";left:".formlist_handlePx($gform[$gformid]["posx"][$key]).";top:".formlist_handlePx($gform[$gformid]["posy"][$key]).";".$stylevalue."\"";
     echo "<div $style>";
     lmbGlistFooter($gtabid,$gresult,$GLOBALS['filter'],1);
+    echo "</div>";
+}
+
+#------------ global search ---------------------
+function formlist_globsearch($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$datid){
+    global $gform;
+
+    $stylearray = explode(";",$gform[$gformid]["style"][$key]);
+    $style = set_style($stylearray).';width:'.formlist_handlePx($gform[$gformid]["width"][$key]).';height:'.formlist_handlePx($gform[$gformid]["height"][$key]);
+    $pos = "style=\"position:absolute;width:".formlist_handlePx($gform[$gformid]["width"][$key]).";height:".formlist_handlePx($gform[$gformid]["height"][$key]).";left:".formlist_handlePx($gform[$gformid]["posx"][$key]).";top:".formlist_handlePx($gform[$gformid]["posy"][$key]).";\"";
+    echo "<div $pos>";
+    lmbGlistGlobalSearch($gtabid,$style);
+    echo "</div>";
+}
+
+#------------ notice bar ---------------------
+function formlist_notice($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$datid){
+    global $gform;
+    global $filter;
+
+    $stylearray = explode(";",$gform[$gformid]["style"][$key]);
+    $stylevalue = set_style($stylearray);
+    $style = "style=\"position:absolute;width:".formlist_handlePx($gform[$gformid]["width"][$key]).";height:".formlist_handlePx($gform[$gformid]["height"][$key]).";left:".formlist_handlePx($gform[$gformid]["posx"][$key]).";top:".formlist_handlePx($gform[$gformid]["posy"][$key]).";".$stylevalue."\"";
+    echo "<div $style id=\"GtabTableFull\" style=\"overflow-x:auto;overflow-y:hidden;\">";
+    lmbGlistNotice($gtabid,$filter);
     echo "</div>";
 }
 
@@ -1842,11 +1867,13 @@ function formlist_tabulator($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$d
     #echo "</DIV>";
 }
 
+// Unterformular
 function formlist_uform($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$datid){
     $ID = $gresult[$gtabid]['id'][$datid];
     form_uform($key,$gformid,null,null,null,$ID,$gtabid,$action,$field_id,$tab_id,$gresult,null,null,null);
 }
 
+// Listenformular
 function formlist_tile($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult){
     global $gform;
     global $gfield;
@@ -1900,6 +1927,7 @@ function formlist_tile($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult){
 function formlist_templ($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$datid,$tile=null) {
     global $gform;
 
+    if(!$gresult[$gtabid]['id'][$datid]){return;}
 
     require_once(COREPATH . 'extra/template/form/FormTemplateConfig.php');
 

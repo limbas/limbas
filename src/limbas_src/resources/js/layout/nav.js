@@ -872,7 +872,7 @@ function setMultitenant() {
     var id = $(this).data('mid');
     $('.active-tenant').text($(this).data('mname'));
 
-    ajaxGet(null,'main_dyns.php','setMultitenant&mid='+id,'',function(result){
+    ajaxGet(null,'main_dyns.php','setMultitenant&session_destroy=1&mid='+id,'',function(result){
         let $mainframe = $('iframe#main');
         let $mainframeContent = $mainframe.contents();        
         let action_val = $mainframeContent.find('form[name="form1"]').find('input[name="action"]').val();

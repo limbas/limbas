@@ -10,17 +10,27 @@
 
 
 
-function lmb_fileSync_init($template){
+function lmb_fileSync_init($template,$client){
     global $db;
 
+    $pidfile = TEMPPATH.'sync_'.$client.'.pid';
+    if(file_exists($pidfile)){
+        return;
+    }
+
+    $pidalive = filemtime($pidfile);
+
+    file_put_contents($pidfile,$client);
+
     # --- check for sync params ------
-    $sqlquery = "SELECT SLAVE_URL,RS_USER,RS_PATH,RS_PARAMS FROM LMB_SYNC_CLIENTS WHERE ACTIVE = " . LMB_DBDEF_TRUE;
+    $sqlquery = "SELECT ID,SLAVE_URL,RS_USER,RS_PATH,RS_PARAMS FROM LMB_SYNC_CLIENTS WHERE ID = ".parse_db_int($client)." AND ACTIVE = " . LMB_DBDEF_TRUE;
     $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-	while(lmbdb_fetch_row($rs)) {
+	if(lmbdb_fetch_row($rs)) {
 
 	    $host = explode('//',lmbdb_result($rs, "SLAVE_URL"));
 	    $host_ = explode('/',$host[1]);
-	    $sl['host']= $host_[0];
+        $sl['id'] = lmbdb_result($rs, "ID");
+	    $sl['host'] = $host_[0];
 	    $sl['path'] = rtrim(lmbdb_result($rs, "RS_PATH"),'/');
         $sl['user'] = lmbdb_result($rs, "RS_USER");
         $sl['params'] = lmbdb_result($rs, "RS_PARAMS");
@@ -29,6 +39,8 @@ function lmb_fileSync_init($template){
         lmb_fileSyncTemplate($template,$sl,'slave');
 
     }
+
+    unlink($pidfile);
 
 }
 
@@ -48,7 +60,7 @@ function lmb_fileSyncTemplate($template,$sl,$masterslave){
 
     if(!$level){return;}
 
-    $config = TEMPPATH . "conf/rsync_$masterslave.conf";
+    $config = TEMPPATH . "conf/rsync_".$masterslave."_".$sl['id'].".conf";
 
     if(file_exists($config)) {
         unlink($config);

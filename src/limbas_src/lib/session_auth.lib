@@ -127,7 +127,6 @@
 	if(!lmbdb_result($rs2,"DATEFORMAT")){$session["dateformat"] = 1;}else{$session["dateformat"] = lmbdb_result($rs2,"DATEFORMAT");} #1=de, 2=usa, 3=fr}
 	if(!lmbdb_result($rs2,"SETLOCAL")){$session["setlocale"] = "de_DE";}else{$session["setlocale"] = lmbdb_result($rs2,"SETLOCAL");}
 	if(!lmbdb_result($rs2,"TIME_ZONE")){$session["timezone"] = "Europe/Berlin";}else{$session["timezone"] = lmbdb_result($rs2,"TIME_ZONE");}
-	if($session["superadmin"]){$session["debug"] = 1;}
 
     // User admin always superadmin
     if($session["user_id"] == 1){
@@ -194,7 +193,7 @@
 	#----------------- multitenant -------------------
     if($session["multitenant"]){
         $mltm = implode(',',$session["multitenant"]);
-        $sqlquery3 = "SELECT ID,MID,NAME,SYNCSLAVE FROM LMB_MULTITENANT WHERE ID in ($mltm)";
+        $sqlquery3 = "SELECT ID,MID,NAME,SYNCSLAVE FROM LMB_MULTITENANT WHERE ID in ($mltm) ORDER BY NAME";
         $rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
         while(lmbdb_fetch_row($rs3)) {
             $mid = lmbdb_result($rs3, "ID");
@@ -365,15 +364,15 @@
 	while(lmbdb_fetch_row($rs3)) {
 		$tmp = lmbdb_result($rs3,"USER_ID");
 
-        /*
+        // multitenant filter
         if($session["multitenant"]){
-            $multitenant_ = explode(';',lmbdb_result($rs3,"MULTITENANT"));
-            if($userdat["multitenant"][$tmp] AND !in_array($session["mid"],$userdat["multitenant"][$tmp])){
+            $multitenant_ = explode(',',lmbdb_result($rs3,"MULTITENANT"));
+            $multitenant_ = explode(';',$multitenant_[0]);
+            if(!in_array($session["mid"],$multitenant_) AND !$session["superadmin"]){
                 continue;
             }
             $userdat["multitenant"][$tmp] = $multitenant_;
         }
-        */
 
 		$userdat["id"][$bzm-1] = $tmp;
 		$userdat["userid"][$tmp] = $tmp;
@@ -390,7 +389,6 @@
 		if(lmbdb_result($rs3,"TEL")){$userdat["tel"][$tmp] = lmbdb_result($rs3,"TEL");}
 		if(lmbdb_result($rs3,"FAX")){$userdat["fax"][$tmp] = lmbdb_result($rs3,"FAX");}
 		if(lmbdb_result($rs3,"POSITION")){$userdat["position"][$tmp] = lmbdb_result($rs3,"POSITION");}
-        $userdat["multitenant"][$tmp] = explode(';',lmbdb_result($rs3,"MULTITENANT"));
         $userdat["hidden"][$tmp] = lmbdb_result($rs3,"HIDDEN");
 		if($sub_group = lmbdb_result($rs3,"SUB_GROUP")){
 			$userdat["subgroup"][$tmp] = $userdat["groupid"][$tmp].",".str_replace(";",",",$sub_group);

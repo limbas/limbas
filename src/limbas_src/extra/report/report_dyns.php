@@ -112,8 +112,6 @@ function dyns_reportAction($params){
             'showonly' => $params['verkn_showonly']
             ];
     }
-    
-    
 
     limbasGenerateReport($params['report_id'], $params['gtabid'], $params['ID'], $params['report_output'], $params['report_medium'], $params['report_rename'], $params['use_record'], $params['report_printer'], $params['report_ext'], $params['resolvedTemplateGroups'], $params['resolvedDynamicData'], $relation);
 }
@@ -173,27 +171,24 @@ function limbasGenerateReport($report_id, $gtabid, $ID, $report_output, $report_
     $GLOBALS['resolvedDynamicData'] = $resolvedDynamicData;
 
 
-
     require_once(COREPATH . 'extra/explorer/filestructure.lib');
     require_once(COREPATH . 'extra/report/report_'.lmb_substr($report_medium,0,3).'.php');
-    
-    
+
 
     if(!file_exists(lmb_utf8_encode($generatedReport))){
         return false;
     }
 
     $filePath = trim(str_replace($umgvar['pfad'], '', $generatedReport), '/') . '?v=' . date('U');
-    
+
     $output = '';
     switch ($report_output) {
         case 2: // archive
             //echo $report['archive_fileID'];
+            $output = $filePath;
             break;
         case 4: // print
-            if ($LINK[304] && !lmbPrint($report_printer, lmb_utf8_encode($generatedReport))) {
-                lmb_log::error('print failed', 'print failed!', $gtabid);
-            }           
+            $output = $filePath;
             break;
         case 5:
             $output = $filePath;

@@ -117,7 +117,7 @@ class Session {
             self::loadExisting();
         }
 
-        if ($action !== 'setup_update' && $action !== 'maintenance') {
+        if ($action !== 'setup_update' && $action !== 'maintenance' && !defined('LIMBAS_INSTALL') AND !defined('IS_CRON')) {
             Updater::checkVersion();
         }
         

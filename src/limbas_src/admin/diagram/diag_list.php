@@ -210,7 +210,7 @@ while(lmbdb_fetch_row($rs)) {
                         ?>
                     </SELECT>
                 </td>
-                <td><button type="submit" name="new_diag" class="btn btn-primary btn-sm"><?=$lang[1191]?></button></td>
+                <td><button type="submit" name="new_diag" class="btn btn-primary btn-sm" value="1"><?=$lang[1191]?></button></td>
                 <td></td>
             </tr>
             </tfoot>

@@ -215,7 +215,7 @@ function set_fonts($pdf,$report){
 		}
 	}
 
-	if(!$mpdf_font){return false;}
+	if(!$mpdf_font){return [];}
 
 	return $mpdf_font;
 }
@@ -861,14 +861,13 @@ function reportSavename($report_name,$report_savename,$ID,$report_medium,$report
 		$name = trim($report_rename);
 	# defined name
 	}elseif($report_savename AND $report_savename != "default"){
-		$name = eval("return ".trim($report_savename).";");
+        $report_savename = ltrim($report_savename,'return');
+        $report_savename = trim($report_savename);
+		$name = eval("return $report_savename;");
 	# default name
 	}else{
 		$name = $report_name.$idpref. ($add_timestamp ? ('_' . date("U")) : '') . ".".$report_medium;
 	}
-
-    #if($umgvar['charset'] == 'UTF-8'){$u = 'u';}
-	#$name = preg_replace("/[^[:alnum:]\.]|[ ]/$u",'',$name);
 
     $name = str_replace(' ','',$name);
 	$name = str_replace(".pdf","",$name);
@@ -884,7 +883,7 @@ function reportSavename($report_name,$report_savename,$ID,$report_medium,$report
 
 
 # --- PDF archivieren ---------------------------------
-function reportArchiv($temp_file_path,$report,$ID,$report_output){
+function reportArchiv($temp_file_path,$report,$ID){
 	global $session;
 	global $umgvar;
 	global $db;

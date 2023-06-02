@@ -135,6 +135,9 @@ function dateToStamp($dateString, $getObj = false) {
 			}
 		}
 
+        // replace separator
+        $dateString = preg_replace("/[+\/,]{1}/",'-',$dateString);
+
 		# replace two-digit year with four-digit year
         $dateString = preg_replace_callback('/^(\d\d?\.\d\d?\.)(\d\d)$/', function($match) {
 			return $match[1] . getFourDigitYear($match[2]);

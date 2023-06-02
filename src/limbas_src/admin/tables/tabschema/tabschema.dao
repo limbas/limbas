@@ -1,0 +1,328 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+function lmb_TabschemaGetAliasName($tabname, $viewid, $num = 0)
+{
+    static $pat;
+
+    if ($num > 10) {
+        return;
+    }
+
+    if (!$pat) {
+        $pat = lmb_GetTabschemaPattern($viewid);
+    }
+
+    if ($num > 0) {
+        $tabname_ = $tabname . "#" . $num;
+    } else {
+        $tabname_ = $tabname;
+    }
+    if ($pat["name"] and $tabname_) {
+        if (in_array($tabname_, $pat["name"])) {
+            $num = lmb_TabschemaGetAliasName($tabname, $viewid, $num + 1);
+        }
+    }
+
+    return $num;
+}
+
+function lmb_SetTabschemaPattern($setdrag, $viewid = 0, $relationstring = 0, $groupname = 0)
+{
+    global $db;
+    global $session;
+
+    if ($part_tabs = explode(":", $setdrag)) {
+        foreach ($part_tabs as $key => $part_tab_) {
+            if ($part_tab_) {
+                $part_tab = explode(";", $part_tab_);
+                $size = explode(",", $part_tab[1]);
+                $pos = explode(",", $part_tab[2]);
+
+                $tabid = $part_tab[0];
+                $sizex = $size[0];
+                $sizey = $size[1];
+                $posx = str_replace("px", "", $pos[0]);
+                $posy = str_replace("px", "", $pos[1]);
+                $del = $part_tab[3];
+
+                # check for aliases
+                if ($del == "add" and !is_numeric($tabid) and $viewid) {
+                    if ($num = lmb_TabschemaGetAliasName(base64_decode($tabid), $viewid)) {
+                        $tabid = base64_encode(base64_decode($tabid) . "#" . $num);
+                    }
+                    $del = 0;
+                }
+
+                if ($del == "add" and is_numeric($tabid)) {
+                    $del = 0;
+                }
+
+                //TABSCHEMA
+                if (!$viewid) {
+                    if ($groupname) {
+                        $viewandgroupsql = " AND VIEWID = 0 AND GROUPNAME = '" . parse_db_string($groupname) . "'";
+                    } else {
+                        $viewandgroupsql = " AND VIEWID = 0 AND GROUPNAME IS NULL";
+                    }
+                    $sqlquery = "SELECT ID FROM LMB_GTAB_PATTERN WHERE TABID = '" . parse_db_string($tabid, 50) . "'" . $viewandgroupsql;
+                    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                    if (lmbdb_fetch_row($rs)) {
+                        if ($del) {
+                            $sqlquery1 = "DELETE FROM LMB_GTAB_PATTERN WHERE TABID = '" . parse_db_string($tabid, 50) . "'" . $viewandgroupsql;
+                            $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+                            $deltable = $tabid;
+                        } else {
+                            $sqlquery1 = "UPDATE LMB_GTAB_PATTERN SET POSX = " . parse_db_int($posx, 6) . ", POSY = " . parse_db_int($posy, 6) . ", WIDTH = " . parse_db_int($sizex, 6) . ", HEIGHT = " . parse_db_int($sizey, 6) . " WHERE TABID = '" . parse_db_string($tabid, 50) . "'" . $viewandgroupsql;
+                            $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+                        }
+                    } else {
+                        if ($deltable != $tabid) {
+                            $NEXTID = next_db_id("LMB_GTAB_PATTERN");
+                            if ($groupname) {
+                                $sqlquery1 = "INSERT INTO LMB_GTAB_PATTERN (ID,ERSTUSER,TABID,POSX,POSY,WIDTH,HEIGHT,VIEWID, GROUPNAME) VALUES (" . $NEXTID . "," . $session["user_id"] . ",'" . parse_db_string(str_replace("=", "", $tabid), 50) . "'," . parse_db_int($posx, 6) . "," . parse_db_int($posy, 6) . "," . parse_db_int($sizex, 6) . "," . parse_db_int($sizey, 6) . "," . parse_db_int($viewid) . ",'" . $groupname . "')";
+                            } else {
+                                $sqlquery1 = "INSERT INTO LMB_GTAB_PATTERN (ID,ERSTUSER,TABID,POSX,POSY,WIDTH,HEIGHT,VIEWID, GROUPNAME) VALUES (" . $NEXTID . "," . $session["user_id"] . ",'" . parse_db_string(str_replace("=", "", $tabid), 50) . "'," . parse_db_int($posx, 6) . "," . parse_db_int($posy, 6) . "," . parse_db_int($sizex, 6) . "," . parse_db_int($sizey, 6) . "," . parse_db_int($viewid) . ",NULL)";
+                            }
+                            $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+                        }
+                    }
+                } else {
+                    //VIEWSCHEMA
+
+                    $sql = "AND VIEWID = $viewid";
+                    $sqlquery = "SELECT ID FROM LMB_GTAB_PATTERN WHERE TABID = '" . parse_db_string($tabid, 50) . "' $sql";
+                    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                    if (lmbdb_fetch_row($rs)) {
+                        if ($del and $viewid) {
+                            $sqlquery1 = "DELETE FROM LMB_GTAB_PATTERN WHERE TABID = '" . parse_db_string($tabid, 50) . "' $sql";
+                            $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+                            $sqlquery1 = "DELETE FROM LMB_CONF_VIEWFIELDS WHERE TABLENAME = '" . base64_decode($tabid) . "' $sql";
+                            $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+                            $deltable = $tabid;
+                            # drop relation
+                            lmb_createQuestRelation($viewid, $relationstring);
+                        } else {
+                            $sqlquery1 = "UPDATE LMB_GTAB_PATTERN SET POSX = " . parse_db_int($posx, 6) . ", POSY = " . parse_db_int($posy, 6) . ", WIDTH = " . parse_db_int($sizex, 6) . ", HEIGHT = " . parse_db_int($sizey, 6) . " WHERE TABID = '" . parse_db_string($tabid, 50) . "' $sql";
+                            $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+                        }
+                    } else {
+
+                        if ($deltable != $tabid) {
+                            $NEXTID = next_db_id("LMB_GTAB_PATTERN");
+                            $sqlquery1 = "INSERT INTO LMB_GTAB_PATTERN (ID,ERSTUSER,TABID,POSX,POSY,WIDTH,HEIGHT,VIEWID) VALUES (" . $NEXTID . "," . $session["user_id"] . ",'" . parse_db_string(str_replace("=", "", $tabid), 50) . "'," . parse_db_int($posx, 6) . "," . parse_db_int($posy, 6) . "," . parse_db_int($sizex, 6) . "," . parse_db_int($sizey, 6) . "," . parse_db_int($viewid) . ")";
+                            $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+function lmb_GetTabschemaPattern($viewid = 0, $groupname = 0)
+{
+    global $db;
+
+    if ($viewid) {
+        $sqlquery = "SELECT * FROM LMB_GTAB_PATTERN WHERE VIEWID = " . parse_db_int($viewid) . " ORDER BY ID";
+    } else {
+        if ($groupname) {
+            $sqlquery = "SELECT * FROM LMB_GTAB_PATTERN WHERE VIEWID = 0 AND GROUPNAME = '" . parse_db_string($groupname) . "' ORDER BY ID";
+        } else {
+            $sqlquery = "SELECT * FROM LMB_GTAB_PATTERN WHERE VIEWID = 0 AND GROUPNAME IS NULL ORDER BY ID";
+        }
+    }
+
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    while (lmbdb_fetch_row($rs)) {
+        $key = lmbdb_result($rs, "TABID");
+        $pat["id"][$key] = lmbdb_result($rs, "ID");
+        $pat["posx"][$key] = lmbdb_result($rs, "POSX");
+        $pat["posy"][$key] = lmbdb_result($rs, "POSY");
+        $pat["height"][$key] = lmbdb_result($rs, "HEIGHT");
+        $pat["width"][$key] = lmbdb_result($rs, "WIDTH");
+        $pat["visible"][$key] = lmbdb_result($rs, "VISIBLE");
+        $pat["name"][$key] = base64_decode($key);
+    }
+
+    return $pat;
+}
+
+function lmb_DeleteGroup($groupname)
+{
+    global $db;
+    if ($groupname) {
+        $sqlquery = "DELETE FROM LMB_GTAB_PATTERN WHERE GROUPNAME = '" . parse_db_string($groupname) . "';";
+
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    }
+}
+
+function schema_tab(&$pat, $gtabid, $posx, $posy, $groupname = '')
+{
+    global $gtab;
+    global $gfield;
+    global $farbschema;
+
+    $widthint = $pat["width"][$gtabid];
+    if ($widthint) {
+        $width = "width:" . $widthint . "px;";
+    } else {
+        $width = "";
+    }
+
+    $heightint = $pat["height"][$gtabid];
+    if ($heightint) {
+        $height = "height:" . $heightint . "px;";
+    } else {
+        $height = "";
+    }
+
+    echo "<div class='lmb_container card' ID=\"tabsh_$gtabid\" style=\"position:absolute;" . $width . $height . "left:" . $posx . "px;top:" . $posy . "px;border:1px solid black;background-color:" . $farbschema["WEB7"] . ";overflow:hidden;z-index:$gtabid\">";
+    echo "<div class='card-header' title='" . $gtab['desc'][$gtabid] . "'>";
+    echo "<div class='row'>";
+
+    echo "<div class='col' onmousedown=\"iniDrag(event,'$gtabid');\">";
+    echo "<B>" . $gtab["table"][$gtabid] . "</B>($gtabid)";
+    echo "</div>";
+
+
+    if ($groupname) {
+        echo "<div class='col-auto'>";
+        echo "<i class=\"lmb-icon lmb-close-alt align-middle m-0 p-0\" style=\"cursor:pointer;\" data-tabremove=\"$gtabid\"></i>";
+        echo "</div>";
+    }
+
+
+    echo "</div>";
+    echo "</div>";
+
+    echo "<div class='card-body px-0 py-1 m-0 overflow-auto' ID=\"selsh_$gtabid\" onscroll='paint_lines();' onmouseup=\"paint_lines();\">";
+    echo "<ul class='list-group p-0 m-0'>";
+
+    if ($gfield[$gtabid]["id"]) {
+        foreach ($gfield[$gtabid]["id"] as $key => $fieldid) {
+            if ($gfield[$gtabid]["field_type"][$key] == 11) {
+                $style = "color:green;";
+            } else {
+                $style = "color:black;";
+            }
+            echo "<li class='list-group-item py-0 px-1' style=\"$style\" id=\"opt_" . $gtabid . "_" . $fieldid . "\" OnMouseOver=\"this.style.fontWeight='bold'\" OnMouseOut=\"this.style.fontWeight='normal'\" OnClick=\"lmbAjax_fieldinfo(event,'1','$gtabid','$fieldid');\" TITLE=" . $gfield[$gtabid]["spelling"][$fieldid] . ">";
+            echo $gfield[$gtabid]["field_name"][$fieldid] . " (" . $fieldid . ");";
+            echo "</li>";
+        }
+    }
+
+    echo "</ul>";
+    echo "</div>";
+    echo "<div class='card-footer' style=\"cursor:se-resize;\" OnMousedown=\"iniResize(event,'$gtabid');\"></div>";
+    echo "</div>";
+}
+
+function schema_link($gtabid)
+{
+    global $gfield;
+    global $gtab;
+
+    if (!$GLOBALS["linknr"]) {
+        $GLOBALS["linknr"] = 0;
+    }
+
+    $bzm = $GLOBALS["linknr"];
+    foreach ($gfield[$gtabid]["id"] as $key => $fieldid) {
+        if ($gfield[$gtabid]["field_type"][$key] == 11 and $gfield[$gtabid]["verkntabletype"][$key] == 1) {
+            if ($gfield[$gtabid]["data_type"][$key] == 27) {
+                $dtp = "1:n";
+            } elseif ($gfield[$gtabid]["data_type"][$key] == 24) {
+                $dtp = "n:m";
+            }
+            $fel = $gtabid . "_" . $fieldid;
+            $tel = $gfield[$gtabid]["verkntabid"][$key] . "_" . $gfield[$gtabid]["verknfieldid"][$key];
+            echo "
+			<div STYLE=\"position:absolute;\" ID=\"di_" . $fel . "\">
+			<script type=\"text/javascript\">
+			    s_link[$bzm]=\"" . $gtabid . "," . $gfield[$gtabid]["verkntabid"][$key] . "," . $fieldid . "," . $fel . "," . $tel . "," . $fel . "," . $dtp . "\";
+			</script>
+			</div>
+			\n\n";
+            $bzm++;
+        }
+    }
+    $GLOBALS["linknr"] = $bzm;
+}
+
+function lmb_make_tree($value, $callTrace = array())
+{
+    static $outputCache;
+    # first call -> init output cache
+    if (!$outputCache) {
+        $outputCache = array();
+    }
+    # return from cache if existent
+    if (array_key_exists($value, $outputCache)) {
+        echo $outputCache[$value];
+        return;
+    }
+    # prevent recursion
+    if (in_array($value, $callTrace)) {
+        echo "<li>Recursive call to $value!</li>";
+        return;
+    }
+
+    if ($dep = lmb_checkViewDependency($value)) {
+        ob_start();
+        echo '<ul>';
+        foreach ($dep as $k => $v) {
+            echo '<li>';
+            echo "<div class=\"view_$v\" onclick=\"lmb_show_relations('$v')\" ondblclick=\"lmb_show_relations('$v',1)\">$v</div>";
+            $callTrace[] = $value;
+            lmb_make_tree($v, $callTrace);
+            echo '</li>';
+        }
+        echo "</ul>";
+        $output = ob_get_clean();
+        $outputCache[$value] = $output;
+        echo $output;
+        #return $dep;
+    }
+}
+
+function lmb_getGroupNames()
+{
+    global $db;
+    $query = "SELECT DISTINCT GROUPNAME FROM LMB_GTAB_PATTERN";
+    $rs = lmbdb_exec($db, $query);
+    $groupnames = [];
+    while (lmbdb_fetch_row($rs)) {
+        $groupnames[] = lmbdb_result($rs, "GROUPNAME");
+    }
+    return $groupnames;
+}
+
+function lmb_getTabNameByGroup($group_name)
+{
+    global $db;
+    global $gtab;
+
+    if ($group_name) {
+        $query = "SELECT DISTINCT TABID FROM LMB_GTAB_PATTERN WHERE VIEWID = 0 AND GROUPNAME = '" . parse_db_string($group_name) . "';";
+    } else {
+        $query = "SELECT DISTINCT TABID FROM LMB_GTAB_PATTERN WHERE VIEWID = 0;";
+    }
+    $rs = lmbdb_exec($db, $query);
+    $id_arr = [];
+    while (lmbdb_fetch_row($rs)) {
+        if ($gtab["table"][lmbdb_result($rs, "TABID")]) {
+            $id_arr[$gtab["table"][lmbdb_result($rs, "TABID")]] = lmbdb_result($rs, "TABID");
+        }
+    }
+    return $id_arr;
+}

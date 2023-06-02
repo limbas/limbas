@@ -62,6 +62,13 @@ if ($installPackage === 'demo.tar.gz') {
             echo '<div class="alert alert-success">' . lang('If you want extension files for demonstration purposes, you can extract the file') . ' dependent/EXTENSIONS/demo.tar.gz</div>';
         }
     }
+    $demoAssetsPath = LOCALASSETSPATH . 'demo.tar.gz';
+    if (file_exists($demoAssetsPath)) {
+        $success = system("tar xzf '$demoAssetsPath' -C '" . LOCALASSETSPATH . "'");
+        if (!$success) {
+            echo '<div class="alert alert-success">' . lang('If you want extension files for demonstration purposes, you can extract the file') . ' public/localassets/demo.tar.gz</div>';
+        }
+    }
 }
 
 

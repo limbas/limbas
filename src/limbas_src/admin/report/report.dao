@@ -344,7 +344,8 @@ $pic_type=null,$pic_compress=null,$posy=null){
 	$tab_el_col_size = 0;
 	$pic_res = 0;
 	$tab_el_col_size = 0;
-	if(!$default_font){$default_font = 'Verdana';}
+	if(!$default_font){$default_font = 'DejaVu Sans';}
+	if(!$default_size){$default_size = 11;}
 
 	/* --- Next Z-Index ---------------------------------------- */
 	$sqlquery = "SELECT MAX(Z_INDEX) AS NEXTID FROM LMB_REPORTS WHERE BERICHT_ID = $report_id AND TAB_EL_ROW <= 0 AND TAB_EL_COL <= 0";

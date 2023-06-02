@@ -418,7 +418,7 @@ class Update5m0 extends Update
         $sqlquery = 'CREATE TABLE LMB_SYNCSTRUCTURE_TEMPLATE (
      ID ' . LMB_DBTYPE_INTEGER . ' NOT NULL ' . LMB_DBFUNC_PRIMARY_KEY . ',
      NAME ' . LMB_DBTYPE_VARCHAR . '(50),
-     MODUL ' . LMB_DBTYPE_VARCHAR . ' ' . LMB_DBTYPE_LONG . '
+     MODUL ' . LMB_DBTYPE_LONG . '
 )';
 
         return $this->databaseUpdate($sqlquery);
@@ -754,7 +754,7 @@ class Update5m0 extends Update
      */
     protected function patch55(): bool
     {
-        $tables = array('lmb_lang', 'lmb_action', 'lmb_field_types', 'lmb_mimetypes', 'lmb_sync_cache');
+        $tables = array('LMB_LANG', 'LMB_ACTION', 'LMB_FIELD_TYPES', 'LMB_MIMETYPES', 'LMB_SYNC_CACHE');
         return $this->importTables($tables);
     }
 
@@ -976,6 +976,16 @@ class Update5m0 extends Update
             'ALTER TABLE LMB_REPORT_LIST ADD DEFAULT_FONT VARCHAR(50)'
         ];
         return $this->databaseUpdate($sqlQueries);
+    }
+
+
+    /**
+     * change M_SETTING in LMB_USERDB to NULL
+     * @return bool
+     */
+    protected function patch70(): bool
+    {
+        return $this->databaseUpdate("UPDATE LMB_USERDB SET M_SETTING = NULL");
     }
 
 }

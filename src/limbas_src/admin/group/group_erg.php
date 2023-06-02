@@ -31,6 +31,16 @@ function del() {
         }
 }
 
+function activate_subrules(val) {
+    if(val == '0'){
+        $('.subrules').prop( "checked", false );
+    }else{
+        $('.subrules').prop( "checked", true);
+    }
+}
+
+
+
 </script>
 
 
@@ -106,7 +116,7 @@ function del() {
 
                         <?php if($ID != 1 AND $session["superadmin"] == 1):?>
                             <div class="mb-3 row">
-                                <label class="col-sm-4 col-form-label"><?=$lang[900]?></label>
+                                <label class="col-sm-4 col-form-label"><?=$lang[3120]?></label>
                                 <div class="col-sm-8">
                                     <select id="userdata_group_id" name="userdata[group_id]" class="form-select form-select-sm" onchange="document.form1.maingroup.value=this.value;">
                                         <option value="0"></option>
@@ -168,13 +178,13 @@ function del() {
                                 </div>
                             </div>
 
-                            <?php if($group_level): ?>
+
                             
                             <hr>
                                 <div class="mb-3 row">
                                     <label class="col-sm-4 col-form-label"><?=$lang[2585]?></label>
                                     <div class="col-sm-8">
-                                        <select name="update_parent_group" class="form-select form-select-sm">
+                                        <select name="update_parent_group" class="form-select form-select-sm" onchange="activate_subrules(this.value);">
                                             <option value="0"></option>
                                                 <?php
                                                 viewgrouptree($startgroup,'');
@@ -182,31 +192,55 @@ function del() {
                                         </select>
                                     </div>
                                 </div>
-                                <div class="row">
+
+
+                                <div class="row row-cols-2">
+                                    <label class="col-sm-4 col-form-label"><?=$lang[483]?></label>
+                                    <div class="col-sm-2">
+                                        <INPUT  class="subrules" TYPE="checkbox" NAME="update_parent[menu]" VALUE="1">
+                                    </div>
+
+                                    <label class="col-sm-4 col-form-label"><?=$lang[2745]?></label>
+                                    <div class="col-sm-2">
+                                        <INPUT class="subrules" TYPE="checkbox" NAME="update_parent[form]" VALUE="1">
+                                    </div>
+                                </div>
+
+                                <div class="row row-cols-2">
                                     <label class="col-sm-4 col-form-label"><?=$lang[2129]?></label>
-                                    <div class="col-sm-8">
-                                        <INPUT TYPE="checkbox" NAME="update_parent_tabsettings" VALUE="1">
+                                    <div class="col-sm-2">
+                                        <INPUT class="subrules" TYPE="checkbox" NAME="update_parent[table]" VALUE="1">
                                     </div>
+
+                                    <label class="col-sm-4 col-form-label"><?=$lang[2747]?></label>
+                                    <div class="col-sm-2">
+                                        <INPUT class="subrules" TYPE="checkbox" NAME="update_parent[diagramm]" VALUE="1">
+                                    </div>
+
                                 </div>
-                                <div class="row">
+                                <div class="row row-cols-2">
                                     <label class="col-sm-4 col-form-label"><?=$lang[2130]?></label>
-                                    <div class="col-sm-8">
-                                        <INPUT TYPE="checkbox" NAME="update_parent_filesettings" VALUE="1">
+                                    <div class="col-sm-2">
+                                        <INPUT  class="subrules" TYPE="checkbox" NAME="update_parent[file]" VALUE="1">
+                                    </div>
+
+                                    <label class="col-sm-4 col-form-label"><?=$lang[2743]?></label>
+                                    <div class="col-sm-2">
+                                        <INPUT class="subrules" TYPE="checkbox" NAME="update_parent[reminder}" VALUE="1">
+                                    </div>
+
+                                </div>
+                                <div class="row row-cols-2">
+                                    <label class="col-sm-4 col-form-label"><?=$lang[2277]?></label>
+                                    <div class="col-sm-2">
+                                        <INPUT class="subrules" TYPE="checkbox" NAME="update_parent[report]" VALUE="1">
+                                    </div>
+                                    <label class="col-sm-4 col-form-label"><?=$lang[2749]?></label>
+                                    <div class="col-sm-2">
+                                        <INPUT class="subrules" TYPE="checkbox" NAME="update_parent[workflow]" VALUE="1">
                                     </div>
                                 </div>
-                                <div class="row">
-                                    <label class="col-sm-4 col-form-label"><?=$lang[2131]?></label>
-                                    <div class="col-sm-8">
-                                        <INPUT TYPE="checkbox" NAME="update_parent_menusettings" VALUE="1">
-                                    </div>
-                                </div>
-                                <div class="row">
-                                    <label class="col-sm-4 col-form-label"><?=$lang[2306]?></label>
-                                    <div class="col-sm-8">
-                                        <INPUT TYPE="checkbox" NAME="update_parent_formsettings" VALUE="1">
-                                    </div>
-                                </div>
-                            <?php endif; ?>
+
                         
                         <?php endif; ?>
                     </div>
