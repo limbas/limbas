@@ -27,7 +27,7 @@
     "select2": "4.0.13",
     "spectrum-colorpicker": "^1.8.1",
     "sql-formatter": "11.0.0",
-    "tinymce": "5.5.1",
+    "tinymce": "5.10.8",
     "tinymce-i18n": "^22.8.26"
   },
   "scripts": {
