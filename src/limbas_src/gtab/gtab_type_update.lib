@@ -11,45 +11,32 @@
 
 
 /* -------------------------- Number --------------------------------- */
-function uftyp_1($gtab_id,$field_id,$ID,&$change_value) {
-	global $gfield;
-	
-	$change_value = trim($change_value);
+function uftyp_1($gtab_id,$field_id,$ID,&$change_value){
+    global $gfield;
 
+    $change_value = trim($change_value);
 
-	/*
-	error_log($change_value);
-	$a = numfmt_create("de-DE", NumberFormatter::SCIENTIFIC);
+    # ----- percent ------
+    if ($gfield[$gtab_id]["data_type"][$field_id] == 21) {
+        $change_value = trim(str_replace("%", "", $change_value));
+    }
 
-	$n = numfmt_format($a,$change_value);
-
-	error_log($n);
-
-	$m = numfmt_parse($a, $n);
-
-	error_log($m);
-    */
-
-
-	
-	# ----- percent ------
-	if($gfield[$gtab_id]["data_type"][$field_id] == 21){
-		$change_value = trim(str_replace("%","",$change_value));
-	}
-	# ----- float ------
-	if($gfield[$gtab_id]["parse_type"][$field_id] == 6){
+    if ($change_value === null OR $change_value == '') {
+        return $gfield[$gtab_id]["field_name"][$field_id]." = NULL";
+    # ----- float ------
+    }elseif($gfield[$gtab_id]["parse_type"][$field_id] == 6){
 		$change_value = parse_db_float($change_value,$gfield[$gtab_id]["size"][$field_id],$gfield[$gtab_id]["scale"][$field_id]);
 	# ----- numeric ------
 	}else{
 		$change_value = parse_db_int($change_value);
 	}
 	
-	if(!preg_match("/".$gfield[$gtab_id]["regel"][$field_id]."/",$change_value)){
+	if($change_value && !preg_match("/".$gfield[$gtab_id]["regel"][$field_id]."/",$change_value)){
 		return false;
 	}
 
 	$sqlquery = $gfield[$gtab_id]["field_name"][$field_id]." = ".$change_value;
-	
+
 	return $sqlquery;
 }
 
@@ -568,7 +555,7 @@ function uftyp_37($gtab_id,$field_id,$ID,&$change_value) {
         return false;
     }
 
-    if($gtab["datasync"][$gtab_id]) {
+    if($gtab["datasync"][$gtab_id] == 1) {
         $sqlsync = ",LMB_SYNC_ID,LMB_SYNC_SLAVE";
     }
 
@@ -587,7 +574,7 @@ function uftyp_37($gtab_id,$field_id,$ID,&$change_value) {
         if(!$current_vto AND $ct){$current_vto = $ct;$vtoIsNULL = 1;}
         $current_VPID = lmbdb_result($rs, 'VPID');
         $current_VID = lmbdb_result($rs, 'VID');
-        if($gtab["datasync"][$gtab_id]) {
+        if($gtab["datasync"][$gtab_id] == 1) {
             $SYNC_ID = lmbdb_result($rs, 'LMB_SYNC_ID');
             $SYNC_SLAVE = lmbdb_result($rs, 'LMB_SYNC_SLAVE');
         }
@@ -612,7 +599,7 @@ function uftyp_37($gtab_id,$field_id,$ID,&$change_value) {
         $left_ID = lmbdb_result($rs,'ID');
         $left_vfrom = lmbdb_result($rs,'LMB_VALIDFROM');
         $left_vto = lmbdb_result($rs,'LMB_VALIDTO');
-        if($gtab["datasync"][$gtab_id]) {
+        if($gtab["datasync"][$gtab_id] == 1) {
             $left_SYNC_ID = lmbdb_result($rs, 'LMB_SYNC_ID');
             $left_SYNC_SLAVE = lmbdb_result($rs, 'LMB_SYNC_SLAVE');
         }
@@ -623,7 +610,7 @@ function uftyp_37($gtab_id,$field_id,$ID,&$change_value) {
         $right_ID = lmbdb_result($rs,'ID');
         $right_vfrom = lmbdb_result($rs,'LMB_VALIDFROM');
         $right_vto = lmbdb_result($rs,'LMB_VALIDTO');
-        if($gtab["datasync"][$gtab_id]) {
+        if($gtab["datasync"][$gtab_id] == 1) {
             $right_SYNC_ID = lmbdb_result($rs, 'LMB_SYNC_ID');
             $right_SYNC_SLAVE = lmbdb_result($rs, 'LMB_SYNC_SLAVE');
         }
@@ -647,7 +634,7 @@ function uftyp_37($gtab_id,$field_id,$ID,&$change_value) {
         if(!$current_vto AND $ct){$current_vto = get_stamp($ct);$vtoIsNULL = 1;}
         $is_lastVersion = 1;
         $is_firstVersion = 1;
-        if($gtab["datasync"][$gtab_id]) {
+        if($gtab["datasync"][$gtab_id] == 1) {
             $SYNC_ID = lmbdb_result($rs, 'LMB_SYNC_ID');
             $SYNC_SLAVE = lmbdb_result($rs, 'LMB_SYNC_SLAVE');
         }
@@ -754,12 +741,10 @@ function uftyp_37($gtab_id,$field_id,$ID,&$change_value) {
                 // update only 1:1 relations
                 foreach($tablist as $key => $vgtabid){
                     if($gtab['validity'][$vgtabid] == 2) {
-                        if($vgtabid != $gtab_id) { // skip self
-                            $sqlquery = "UPDATE " . $gtab["table"][$vgtabid] . " SET $sqlupdate WHERE ID = $ID";
-                            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
-                            if (!$rs) {
-                                $commit = 1;
-                            }
+                        $sqlquery = "UPDATE " . $gtab["table"][$vgtabid] . " SET LMB_VALIDFROM = '$right_from' WHERE ID = $right_ID";
+                        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
+                        if (!$rs) {
+                            $commit = 1;
                         }
                         # --- sync systemfields ----
                         if($gtab["datasync"][$vgtabid]){
@@ -790,7 +775,7 @@ function uftyp_37($gtab_id,$field_id,$ID,&$change_value) {
 
     $sqlupdate = "LMB_VALIDFROM = $current_vfrom,LMB_VALIDTO = $current_vto";
 
-    // update 1:1 relations
+    // update only 1:1 relations
     foreach($tablist as $key => $vgtabid){
         if($gtab['validity'][$vgtabid] == 2) {
             if($vgtabid != $gtab_id) { // skip self

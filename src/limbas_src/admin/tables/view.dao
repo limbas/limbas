@@ -277,9 +277,13 @@ function lmb_deleteView($view_name)
 }
 
 
-function lmb_precheckView($viewid, $view_def)
+function lmb_precheckView($viewid, $view_def): bool
 {
     global $db;
+
+    if(!$view_def){
+        return false;
+    }
 
 
     if ($GLOBALS["gLmbExt"]["ext_gtab.inc"]) {
@@ -731,15 +735,20 @@ function show_viewFields($viewid)
         $gviewfields["fieldname"] = array();
     }
 
-    echo "<div class='container-fluid py-0 px-2 overflow-x-auto'>";
+    //echo "<div class='container py-0 px-2 overflow-x-auto'>";
+    echo "<div class='table-responsive'>";
+    echo "<table class='table table-borderless'>";
 
     /*
      * Feldname
      */
-    echo "<div class='row flex-row flex-nowrap pt-2'><div class='col-1 d-flex align-items-center'><b>$lang[922]</b></div>\n";
+    echo "<tr class=''>";
+    echo "<td class='h-100 d-flex align-items-center pe-3'>";
+    echo "<b>$lang[922]</b>";
+    echo "</td>";
     foreach ($gviewfields["fieldname"] as $key => $value) {
         //textarea uses innerhtml for initial value, changed to value attribute in input => problem?
-        echo "<div class='col-2 border-end m-0 p-1 px-2' 
+        echo "<td class='border-end m-0 p-1 px-2' 
 		OnMouseUp=\"lmbAjax_EditViewfield(event,this,'move','$key',viewsortid);viewsortid=null;\">
             <div class='row'>
             <div class='col pe-0'><input class='form-control form-control-sm' name=\"view_field_$key\" 
@@ -752,36 +761,39 @@ function show_viewFields($viewid)
             <i class=\"lmb-icon lmb-close-alt align-middle\" OnClick=\"lmbAjax_EditViewfield(event,this,'del','key_$key')\" style=\"cursor:pointer;\"></i>
             </div>
             </div>
-		</div>";
+		</td>";
     }
-    echo "<div class='col-1' OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\"><input name=\"view_newalias\" OnChange=\"lmbAjax_EditViewfield(event,this,'addalias')\" type=\"text\" style=\"width:100px;border:none;background-color:transparent;overflow:visible\"></div></div>\n";
+    echo "<td class='m-0 p-1 px-2' OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">";
+    echo "<input class='form-control form-control-sm' name=\"view_newalias\" OnChange=\"lmbAjax_EditViewfield(event,this,'addalias')\" type=\"text\" style=\"width:100px;overflow:visible\">";
+    echo "</td>";
+    echo "</tr>";
 
     /*
-     * Tabellenname
-     */
-    echo "<div class='row flex-row flex-nowrap'><div class='col-1 d-flex align-items-center'><b>$lang[951]</b></div>\n";
+ * Tabellenname
+ */
+    echo "<tr><td class='d-flex align-items-center'><b>$lang[951]</b></td>";
     foreach ($gviewfields["fieldname"] as $key => $value) {
-        echo "<div class='col-2 border-end m-0 p-1 px-2'><input class='form-control-plaintext w-100' type=\"text\" value=\"" . $gviewfields["tablename"][$key] . "\" readonly></div>\n";
+        echo "<td class='border-end m-0 p-1 px-2'><input class='form-control-plaintext w-100' type=\"text\" value=\"" . $gviewfields["tablename"][$key] . "\" readonly></td>\n";
     }
-    echo "<div class='col-1' OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</div></div>\n";
+    echo "<td rowspan='6' class='align-middle' OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\"><i>$lang[3126]</i></td></tr>";
 
 
     /*
      * Alias
      */
-    echo "<div class='row flex-row flex-nowrap'><div class='col-1 d-flex align-items-center'><b>$lang[2624]</b></div>\n";
+    echo "<tr><td class='d-flex align-items-center'><b>$lang[2624]</b></td>";
     foreach ($gviewfields["fieldname"] as $key => $value) {
-        echo "<div class='col-2 border-end m-0 p-1 px-2'><input class='form-control form-control-sm w-100' type=\"text\" name=\"view_alias_$key\" value=\"" . $gviewfields["alias"][$key] . "\" OnChange=\"lmbAjax_EditViewfield(event,this,'alias','key_$key','$key')\"></div>\n";
+        echo "<td class='border-end m-0 p-1 px-2'><input class='form-control form-control-sm w-100' type=\"text\" name=\"view_alias_$key\" value=\"" . $gviewfields["alias"][$key] . "\" OnChange=\"lmbAjax_EditViewfield(event,this,'alias','key_$key','$key')\"></td>\n";
     }
-    echo "<div class='col-1' OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</div></div>\n";
+    echo "</tr>";
 
     /*
      * Funktion
      */
-    echo "<div class='row flex-row flex-nowrap'><div class='col-1 d-flex align-items-center'><b>$lang[2625]</b></div>\n";
+    echo "<tr><td class='d-flex align-items-center'><b>$lang[2625]</b></td>";
     foreach ($gviewfields["fieldname"] as $key => $value) {
         $selv = array("", "$lang[2498]", "$lang[2627]", "$lang[2628]", "$lang[2629]");
-        echo "<div class='col-2 border-end m-0 p-1 px-2'><select class='form-select form-select-sm overflow-hidden' name=\"view_func_$key\" OnChange=\"lmbAjax_EditViewfield(event,this,'func','key_$key','$key')\">\n";
+        echo "<td class='border-end m-0 p-1 px-2'><select class='form-select form-select-sm overflow-hidden' name=\"view_func_$key\" OnChange=\"lmbAjax_EditViewfield(event,this,'func','key_$key','$key')\">\n";
         foreach ($selv as $skey => $svalue) {
             if ($skey == $gviewfields["func"][$key]) {
                 $SELECTED = "selected";
@@ -790,148 +802,57 @@ function show_viewFields($viewid)
             }
             echo "<option value=\"$skey\" $SELECTED>$svalue</option>";
         }
-        echo "</select></div>\n";
+        echo "</select></td>";
     }
 
-    echo "<div class='col-1' OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\"><i>$lang[3126]</i></div></div>\n";
+    echo "</tr>\n";
 
     /*
      * Sortierung
      */
-    echo "<div class='row flex-row flex-nowrap'><div class='col-1 d-flex align-items-center'><b>$lang[1837]</b></div>\n";
+    echo "<tr><td class='d-flex align-items-center'><b>$lang[1837]</b></td>";
     foreach ($gviewfields["fieldname"] as $key => $value) {
         $selected1 = null;
         $selected2 = null;
         if ($gviewfields["order"][$key]) {
             ${"selected" . $gviewfields["order"][$key]} = "selected";
         }
-        echo "<div class='col-2 border-end m-0 p-1 px-2'>";
+        echo "<td class='border-end m-0 p-1 px-2'>";
         echo "<select class='form-select form-select-sm overflow-hidden' name=\"view_order_$key\" OnChange=\"lmbAjax_EditViewfield(event,this,'order','key_$key','$key')\">";
         echo "<option value=0>";
         echo "<option value=1 $selected1>$lang[2633]";
         echo "<option value=2 $selected2>$lang[2634]";
-        echo "</select></div>";
+        echo "</select></td>";
     }
-    echo "<div class='col-1' OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</div></div>\n";
+    echo "</tr>";
 
     /*
      * Anzeigen
      */
-    echo "<div class='row flex-row flex-nowrap'><div class='col-1 d-flex align-items-center'><b>$lang[2631]</b></div>\n";
+    echo "<tr><td class='d-flex align-items-center'><b>$lang[2631]</b></td>";
     foreach ($gviewfields["fieldname"] as $key => $value) {
         $checked = null;
         if ($gviewfields["show"][$key]) {
             $checked = "checked";
         }
-        echo "<div class='col-2 border-end m-0 p-1 px-2'><input class='form-check-input' type='checkbox' $checked name=\"view_show_$key\" OnChange=\"this.value=this.checked;lmbAjax_EditViewfield(event,this,'show','key_$key','$key')\"></div>\n";
+        echo "<td class='border-end m-0 p-1 px-2'><input class='form-check-input' type='checkbox' $checked name=\"view_show_$key\" OnChange=\"this.value=this.checked;lmbAjax_EditViewfield(event,this,'show','key_$key','$key')\"></td>\n";
     }
-    echo "<div class='col-1' OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</div></div>\n";
+    echo "</tr>";
 
     /*
      * Kriterien
      */
-    echo "<div class='row flex-row flex-nowrap mt-0 pb-2'><div class='col-1 d-flex align-items-center'><b>$lang[2632]</b></div>\n";
+    echo "<tr><td class='d-flex align-items-center'><b>$lang[2632]</b></td>";
     foreach ($gviewfields["fieldname"] as $key => $value) {
-        echo "<div class='col-2 border-end m-0 p-1 px-2' style=\"100px;\"><textarea class='form-control' name=\"view_filter_$key\" style=\"overflow:auto;\" OnKeyUp=\"this.style.width='300px';this.style.height='100px';stopEvent=1;\" onblur=\"this.style.width='100px;';this.style.height='';stopEvent=0;\" OnChange=\"lmbAjax_EditViewfield(event,this,'filter','key_$key','$key')\">" . htmlentities($gviewfields["filter"][$key], ENT_QUOTES, $GLOBALS["umgvar"]["charset"]) . "</textarea></div>\n";
+        echo "<td class='border-end m-0 p-1 px-2' style=\"100px;\"><textarea class='form-control' name=\"view_filter_$key\" style=\"overflow:auto;\" OnKeyUp=\"this.style.width='300px';this.style.height='100px';stopEvent=1;\" onblur=\"this.style.width='100px;';this.style.height='';stopEvent=0;\" OnChange=\"lmbAjax_EditViewfield(event,this,'filter','key_$key','$key')\">" . htmlentities($gviewfields["filter"][$key], ENT_QUOTES, $GLOBALS["umgvar"]["charset"]) . "</textarea></td>\n";
     }
-    echo "<div class='col-1' OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</div></div>\n";
+    echo "</tr>";
 
+
+    echo "</table>";
     echo "</div>";
 
 }
-
-/*
-function show_viewFields($viewid)
-{
-    global $lang;
-
-    if (!$gviewfields = lmb_getQuestFields($viewid)) {
-        $gviewfields["fieldname"] = array();
-    }
-
-    echo "<table class='table table-sm table-bordered w-100'>";
-
-    echo "<tr><td><b>$lang[922]</b></td>\n";
-    foreach ($gviewfields["fieldname"] as $key => $value) {
-        echo "<td
-		OnMouseUp=\"lmbAjax_EditViewfield(event,this,'move','$key',viewsortid);viewsortid=null;\">
-		<div class='row'>
-		<div class='col'><textarea class='form-control' name=\"view_field_$key\"
-		oncontextmenu=\"ZoomViewField(event,this,'$key');return false;\"
-		OnMousedown=\"viewsortid=$key;iniDrag(event,document.getElementById('relationSign'),this);this.focus();return false;\"
-		OnChange=\"lmbAjax_EditViewfield(event,this,'field','key_$key','$key')\">" . $gviewfields["fieldname"][$key] . "</textarea>
-		</div>
-		<div class='col-auto'>
-		<i class=\"lmb-icon lmb-close-alt align-middle\" OnClick=\"lmbAjax_EditViewfield(event,this,'del','key_$key')\" style=\"cursor:pointer;\"></i>
-		</div>
-		</div>
-		</td>\n";
-    }
-    echo "<td OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\"><input name=\"view_newalias\" OnChange=\"lmbAjax_EditViewfield(event,this,'addalias')\" type=\"text\" style=\"width:100px;border:none;background-color:transparent;overflow:visible\"></td></tr>\n";
-
-
-    echo "<tr><td><b>$lang[951]</b></td>\n";
-    foreach ($gviewfields["fieldname"] as $key => $value) {
-        echo "<td><input class='form-control-plaintext w-100' type=\"text\" value=\"" . $gviewfields["tablename"][$key] . "\" readonly></td>\n";
-    }
-    echo "<td OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</td></tr>\n";
-
-
-    echo "<tr><td><b>$lang[2624]</b></td>\n";
-    foreach ($gviewfields["fieldname"] as $key => $value) {
-        echo "<td><input class='form-control-sm w-100' type=\"text\" name=\"view_alias_$key\" value=\"" . $gviewfields["alias"][$key] . "\" OnChange=\"lmbAjax_EditViewfield(event,this,'alias','key_$key','$key')\"></td>\n";
-    }
-    echo "<td OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</td></tr>\n";
-
-    echo "<tr><td><b>$lang[2625]</b></td>\n";
-    foreach ($gviewfields["fieldname"] as $key => $value) {
-        $selv = array("", "$lang[2498]", "$lang[2627]", "$lang[2628]", "$lang[2629]");
-        echo "<td><select class='form-select form-select-sm' name=\"view_func_$key\" OnChange=\"lmbAjax_EditViewfield(event,this,'func','key_$key','$key')\">\n";
-        foreach ($selv as $skey => $svalue) {
-            if ($skey == $gviewfields["func"][$key]) {
-                $SELECTED = "selected";
-            } else {
-                $SELECTED = "";
-            }
-            echo "<option value=\"$skey\" $SELECTED>$svalue</option>";
-        }
-        echo "</select></td>\n";
-    }
-    echo "<td OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</td></tr>\n";
-
-    echo "<tr><td><b>$lang[1837]</b></td>\n";
-    foreach ($gviewfields["fieldname"] as $key => $value) {
-        $selected1 = null;
-        $selected2 = null;
-        if ($gviewfields["order"][$key]) {
-            ${"selected" . $gviewfields["order"][$key]} = "selected";
-        }
-        echo "<td><select class='form-select form-select-sm' name=\"view_order_$key\" OnChange=\"lmbAjax_EditViewfield(event,this,'order','key_$key','$key')\"><option value=0><option value=1 $selected1>$lang[2633]<option value=2 $selected2>$lang[2634]</select></td>\n";
-    }
-    echo "<td OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</td></tr>\n";
-
-
-    echo "<tr><td><b>$lang[2631]</b></td>\n";
-    foreach ($gviewfields["fieldname"] as $key => $value) {
-        $checked = null;
-        if ($gviewfields["show"][$key]) {
-            $checked = "checked";
-        }
-        echo "<td><input class='form-check-input' type='checkbox' $checked name=\"view_show_$key\" OnChange=\"this.value=this.checked;lmbAjax_EditViewfield(event,this,'show','key_$key','$key')\"></td>\n";
-    }
-    echo "<td OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</td></tr>\n";
-
-
-    echo "<tr><td><b>$lang[2632]</b></td>\n";
-    foreach ($gviewfields["fieldname"] as $key => $value) {
-        echo "<td style=\"100px;\"><textarea class='form-control' name=\"view_filter_$key\" style=\"overflow:auto;\" OnKeyUp=\"this.style.width='300px';this.style.height='100px';stopEvent=1;\" onblur=\"this.style.width='100px;';this.style.height='';stopEvent=0;\" OnChange=\"lmbAjax_EditViewfield(event,this,'filter','key_$key','$key')\">" . htmlentities($gviewfields["filter"][$key], ENT_QUOTES, $GLOBALS["umgvar"]["charset"]) . "</textarea></td>\n";
-    }
-    echo "<td OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">&nbsp;</td></tr>\n";
-
-    echo "</table>";
-}
- */
-
 
 function lmb_questCreateSQL($viewid)
 {

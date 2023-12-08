@@ -172,7 +172,7 @@ $db_vendor = $_POST['db_vendor'];
             $('input[name="setup_database"]').parent().parent().children().first().html('Database Name:');
 
             // remove driver
-            $('#db_driver').val('');
+            //$('#db_driver').val('');
 
             // write correct driver
             update_dbvendor();
@@ -411,8 +411,6 @@ $db_vendor = $_POST['db_vendor'];
                 echo 'readonly';
             } ?>></td>
     </tr>
-    
-    
         <input type="hidden" name="db_version" value="<?= $_POST['db_version'] ?>">
     </tbody>
 </table>

@@ -12,7 +12,8 @@
 
 
 /* ---Delete SQL-Query --------------------------------------------- */
-function delete_user($ID,$duf=null,$duk=null){
+function delete_user($ID, $fileDelete=null, $dbDelete=null): bool
+{
 	global $db;
 	global $umgvar;
 	global $lang;
@@ -51,17 +52,18 @@ function delete_user($ID,$duf=null,$duk=null){
 	if(!$rs) {$commit = 1;}
 
 	#-------- LMB_USERDB ----------
-	if(!$commit AND $duk){
-		$duf = 1;
+	if(!$commit AND $dbDelete){
+		$fileDelete = 1;
 		$sqlquery = "DELETE FROM LMB_USERDB WHERE USER_ID = $ID";
 	}else{
-		$sqlquery = "UPDATE LMB_USERDB SET DEL = ".LMB_DBDEF_TRUE.",GROUP_ID = 0, SUB_GROUP = '' WHERE USER_ID = $ID";
-	}
+		//$sqlquery = "UPDATE LMB_USERDB SET DEL = ".LMB_DBDEF_TRUE.",GROUP_ID = 0, SUB_GROUP = '' WHERE USER_ID = $ID";
+        $sqlquery = "UPDATE LMB_USERDB SET DEL = ".LMB_DBDEF_TRUE.", SUB_GROUP = '' WHERE USER_ID = $ID";
+    }
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
 	/* --- User Verzeichnis löschen --------------------------------------------- */
-	if(!$commit AND $duf){
+	if(!$commit AND $fileDelete){
 		#-------- Persöhnlicher Ordner / Nachrichten ----------
 		$sqlquery = "UPDATE LDMS_STRUCTURE SET FIX = ".LMB_DBDEF_FALSE." WHERE ERSTUSER = $ID AND TYP = 4";
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);

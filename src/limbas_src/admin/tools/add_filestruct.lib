@@ -33,18 +33,30 @@ function create_fs_tab_dir($gtabid,$groupid,$field_id,$field_name,$typ){
 	$sqlquery = "SELECT ID FROM LDMS_STRUCTURE WHERE TYP = $typ AND TAB_ID = $gtabid AND FIELD_ID = $field_id";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$FNEXTID = parse_db_int($flresult["FNEXTID"],16);
+    $level = lmbdb_result($rs, "ID");
 
-	if(!lmbdb_result($rs, "ID")){
-		$sqlquery = "INSERT INTO LDMS_STRUCTURE (ID,NAME,LEVEL,TYP,ERSTUSER,ERSTGROUP,TABGROUP_ID,TAB_ID,FIELD_ID,FIX) VALUES ($FNEXTID,'".parse_db_string($field_name,32)."',".parse_db_int($flresult["tab_level"],16).",$typ,".$session["user_id"].",".$session["group_id"].",$groupid,$gtabid,$field_id,".LMB_DBDEF_TRUE.")";
+	if(!$level){
+        $NEXTID = parse_db_int($flresult["FNEXTID"],16);
+
+		$sqlquery = "INSERT INTO LDMS_STRUCTURE (ID,NAME,LEVEL,TYP,ERSTUSER,ERSTGROUP,TABGROUP_ID,TAB_ID,FIELD_ID,FIX) VALUES ($NEXTID,'".parse_db_string($field_name,32)."',".parse_db_int($flresult["tab_level"],16).",$typ,".$session["user_id"].",".$session["group_id"].",$groupid,$gtabid,$field_id,".LMB_DBDEF_TRUE.")";
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		if(!check_fs_tab_path($FNEXTID,$session["group_id"])){
-			rebuild_folder_permission($FNEXTID,$flresult["tab_level"]);
+		if(!check_fs_tab_path($NEXTID,$session["group_id"])){
+			rebuild_folder_permission($NEXTID,$flresult["tab_level"]);
 		}
+        $level = $NEXTID;
 	}
 
-	if($commit){return false;}else{return true;}
+    // update LEVEL in lmb_conf
+    if($gtabid && $field_id){
+		$sqlquery = "UPDATE LMB_CONF_FIELDS SET LEVEL = $level WHERE TAB_ID = $gtabid AND FIELD_ID = $field_id";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    }elseif($gtabid){
+		$sqlquery = "UPDATE LMB_CONF_TABLES SET LEVEL = $level WHERE TAB_ID = $gtabid";
+		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    }
+
+	if($commit){return false;}else{return $level;}
 }
 
 # ---- Report Feld zu Ordnerstuktur hinzufügen ----------------
@@ -164,6 +176,54 @@ function create_fs_tab_path($tabid){
     return $flresult;
 }
 
+/**
+ * update LEVEL TO LMB_CONF_TABLE & LMB_CONF_FIELDS
+ * @return bool
+ */
+function rebuild_fs_level($returnError) {
+       global $db;
+       global $action;
+       $success = true;
 
-?>
+       $sqlquery = "SELECT DISTINCT ID, TAB_ID, FIELD_ID FROM LDMS_STRUCTURE WHERE FIX = TRUE ORDER BY TAB_ID,FIELD_ID";
+       $rs = lmbdb_exec($db, $sqlquery);
+	   if(!$rs) {
+		   if($returnError) {
+			   return lmbdb_errormsg($db);
+		   }
+		   else {
+			   errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+		   }
+	   }
+       while (lmbdb_fetch_row($rs)) {
+           $level = lmbdb_result($rs, "ID");
+           $tab_id = lmbdb_result($rs, "TAB_ID");
+           $field_id = lmbdb_result($rs, "FIELD_ID");
+
+           if($tab_id && $field_id){
+               $sqlquery1 = "UPDATE LMB_CONF_FIELDS SET LEVEL = $level WHERE TAB_ID = $tab_id AND FIELD_ID = $field_id";
+               
+           }elseif($tab_id){
+               $sqlquery1 = "UPDATE LMB_CONF_TABLES SET LEVEL = $level WHERE TAB_ID = $tab_id";
+           }
+
+		   if($tab_id) {
+			   $rs1 = lmbdb_exec($db, $sqlquery1);
+			   if(!$rs1) {
+				   if($returnError) {
+					   return lmbdb_errormsg($db);
+				   }
+				   else {
+					   $success = false;
+					   errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+				   }
+			   }
+		   }
+		   
+       }
+
+       return $success;
+
+    }
+
 

@@ -108,10 +108,10 @@ function change_file(val) {
                                 <SELECT class="form-select form-select-sm" NAME="TYP" OnChange="document.form1.submit();">
                                     <OPTION VALUE="0" <?=($TYP == 0)?'selected':''?>><?=$lang[994]?>
                                     <OPTION VALUE="1" <?=($TYP == 1)?'selected':''?>><?=$lang[1219]?>
-                                    <OPTION VALUE="3" <?=($TYP == 2)?'selected':''?>><?=$lang[1220]?>
-                                    <OPTION VALUE="2" <?=($TYP == 3)?'selected':''?>><?=$lang[1221]?>
+                                    <OPTION VALUE="2" <?=($TYP == 2)?'selected':''?>><?=$lang[1221]?>
+                                    <OPTION VALUE="3" <?=($TYP == 3)?'selected':''?>><?=$lang[1220]?>
                                     <OPTION VALUE="4" <?=($TYP == 4)?'selected':''?>><?=$lang[577]?>
-                                    <OPTION VALUE="5" <?=($TYP == 4)?'selected':''?>><?=$lang[1986]?>
+                                    <OPTION VALUE="5" <?=($TYP == 5)?'selected':''?>><?=$lang[1986]?>
                                 </SELECT>
                             </td>
                             <td>
@@ -210,8 +210,8 @@ function change_file(val) {
                             <TD></TD>
                             <TD><SELECT NAME="typ" class="form-select form-select-sm">
                                     <OPTION VALUE="1" <?php if($typ == 1){echo "SELECTED";}?>><?=$lang[1219]?>
-                                    <OPTION VALUE="3" <?php if($typ == 3){echo "SELECTED";}?>><?=$lang[1220]?>
                                     <OPTION VALUE="2" <?php if($typ == 2){echo "SELECTED";}?>><?=$lang[1221]?>
+                                    <OPTION VALUE="3" <?php if($typ == 3){echo "SELECTED";}?>><?=$lang[1220]?>
                                     <OPTION VALUE="4" <?php if($typ == 4){echo "SELECTED";}?>><?=$lang[577]?>
                                     <OPTION VALUE="5" <?php if($typ == 5){echo "SELECTED";}?>><?=$lang[1986]?>
                                 </SELECT></TD>

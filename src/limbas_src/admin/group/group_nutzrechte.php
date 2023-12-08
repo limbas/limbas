@@ -93,7 +93,7 @@ function check_all(kat,val,sub,main){
                                 if($result_links["maingroup"][$bzm] == $key AND $result_links["subgroup"][$bzm] == $key2){
                                     if($result_links["subgroup"][$bzm] != $tmpsubg):?>
                                         
-                                    <tr class="table-sub-section"><td colspan="3"><?=$link_groupdesc[$key][$result_links["subgroup"][$bzm]]?></td><td><input type="checkbox" onchange="check_all('<?=$result_links['subgroup'][$bzm]?>',this,1,'<?=$key?>');"></td></tr>    
+                                    <tr class="table-sub-section"><td colspan="3"><?=$link_groupdesc[$key][$result_links["subgroup"][$bzm]]?></td><td><input type="checkbox" onchange="check_all('<?=$result_links['subgroup'][$bzm]?>',this,2,'<?=$key?>');"></td></tr>
                                     
                                         <?php
                                     endif;

@@ -20,7 +20,7 @@ require_once(COREPATH . 'extra/lmbObject/log/LimbasLogger.php');
 spl_autoload_register(function ($className) {
 //	echo 'spl_autoload ' . $className . "\n";
 	LimbasLogger::trace('spl_autoload ' . $className);
-	if (file_exists('extra/lmbObject/base/' . $className . '.php')) {
+	if (file_exists(COREPATH.'extra/lmbObject/base/' . $className . '.php')) {
 		require_once COREPATH . 'extra/lmbObject/base/' . $className . '.php';
 		return true;
 	}

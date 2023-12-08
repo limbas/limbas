@@ -164,13 +164,16 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
         echo ">$lang[1507]</select>";
 
         # ------- Selectfelder -------
-    } elseif ($gfield[$gtabid]['field_type'][$fieldid] == 4 and $gfield[$gtabid]['artleiste'][$fieldid]) {
+    } elseif (($gfield[$gtabid]['field_type'][$fieldid] == 4 || $gfield[$gtabid]['field_type'][$fieldid] == 19) && $gfield[$gtabid]['artleiste'][$fieldid]) {
 
         echo "<select class='form-select form-select-sm w-100 align-middle' id=\"gds_{$originStr}{$gtabid}_{$fieldid}_{$filterIndex}\" name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][{$filterIndex}]\" onClick=\"setTimeout('this.focus()',100);\"><option>";
         if (!$gfield[$gtabid]['select_sort'][$fieldid]) {
             $gfield[$gtabid]['select_sort'][$fieldid] = "SORT";
         }
-        $sqlquery = "SELECT DISTINCT WERT,{$gfield[$gtabid]['select_sort'][$fieldid]} FROM LMB_SELECT_W WHERE POOL = {$gfield[$gtabid]['select_pool'][$fieldid]} ORDER BY " . $gfield[$gtabid]['select_sort'][$fieldid];
+        
+        $selectTable = $gfield[$gtabid]['field_type'][$fieldid] == 19 ? 'LMB_ATTRIBUTE_W' : 'LMB_SELECT_W';
+        
+        $sqlquery = "SELECT DISTINCT WERT,{$gfield[$gtabid]['select_sort'][$fieldid]} FROM $selectTable WHERE POOL = {$gfield[$gtabid]['select_pool'][$fieldid]} ORDER BY " . $gfield[$gtabid]['select_sort'][$fieldid];
         $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         while (lmbdb_fetch_row($rs)) {
             if (lmb_strtolower($gsrres) == lmb_strtolower(lmbdb_result($rs, "WERT"))) {

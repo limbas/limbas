@@ -7,6 +7,16 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+namespace Limbas\extra\template\base;
+
+use Exception;
+use Limbas\extra\template\base\HtmlParts\AbstractHtmlPart;
+use Limbas\extra\template\base\HtmlParts\SubTemplateElementPlaceholder;
+use lmb_log;
+use Parser;
+use SyntaxError;
+
+require_once COREPATH . 'gtab/gtab.lib';
 
 /**
  * Class TemplateElement
@@ -42,6 +52,11 @@ class TemplateElement {
     protected $parts;
 
     /**
+     * @var string the plain unresolved html
+     */
+    protected string $html;
+
+    /**
      * @var integer used for infinite loop detection
      */
     protected $trackRecursion;
@@ -65,6 +80,7 @@ class TemplateElement {
         $this->templateElementGtabid = $templateElementGtabid;
         $this->id = $id;
         $this->name = $name;
+        $this->html = $html;
         $this->trackRecursion = $recursion;
         // specific dataset?
         if ($gtabid && $datid) {
@@ -108,6 +124,25 @@ class TemplateElement {
         }, $this->parts));
     }
 
+
+
+
+    public function resolve($datid, &$gresult=null) {
+        do {
+            $successData = $this->resolveDataPlaceholders($datid);
+            $successTpl = $this->resolveTemplates();
+        } while ($successTpl || $successData);
+    }
+
+    public static function resolveDataPlaceholdersForTable($datid, &$dataPlaceholders){
+        return true;
+    }
+
+    protected function resolveDataPlaceholders($datid, &$gresult = null){
+        $unresolvedDataPlaceholders = $this->getUnresolvedDataPlaceholders();
+        return self::resolveDataPlaceholdersForTable($datid, $unresolvedDataPlaceholders);
+    }
+    
     /**
      * Resolve all SubTemplateElementPlaceholders to their corresponding TemplateElements
      * @param int $depth
@@ -275,5 +310,10 @@ class TemplateElement {
 
     public function setParts($parts) {
         $this->parts = $parts;
+    }
+
+    public function getHtml(): string
+    {
+        return $this->html;
     }
 }

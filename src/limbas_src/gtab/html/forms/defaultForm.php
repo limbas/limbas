@@ -6,6 +6,9 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
+
+use Limbas\extra\template\select\TemplateSelector;
+
 if($ID){
     if($gtab["typ"][$gtabid] == 5){
         # need filter and search-params for using pointer
@@ -26,9 +29,8 @@ if($umgvar['multitenant'] AND $gtab['multitenant'][$gtabid] AND $lmmultitenants[
 }
 
 printContextMenus($gtabid,$form_id,$ID,$gresult,$readonly);
-if($GLOBALS["greportlist_exist"] AND ($LINK[175] OR $LINK[176] OR $LINK[315])){
-    LmbReportSelect::printReportSelect($gtabid);
-}
+
+TemplateSelector::printTemplateSelectModal(intval($gtabid));
 
 
 if ($gtab['theme'][$gtabid]) {

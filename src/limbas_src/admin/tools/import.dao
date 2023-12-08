@@ -258,7 +258,7 @@ function import_create_addtable($import_typ, $ifield, $add_permission = null, $v
     if ($import_typ != 'convert') {
         if($verbose){echo "<br>--> " . $lang[164] . " <b>" . $ifield['tablename'] . "</b> " . $lang[1018] . "<br>";}
     }
-    
+
     $new_gtabid = $new_[0];
     $ifield['new_gtabid'] = $new_[0];
     $ifield['new_gtab'] = $new_[1];

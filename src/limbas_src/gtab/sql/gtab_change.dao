@@ -530,6 +530,9 @@ function print_symbolbar($gtabid,&$gresult,$ID,$readonly=0){
 	if($GLOBALS["greportlist_exist"]){ # Berichte
         pop_picmenu(315,'','');
 	}
+    if($LINK[322]){
+        pop_picmenu(322,'','');									# Mails
+    }
 	if($GLOBALS["gformlist_exist"]){
 		pop_picmenu(132,'','');									# Formulare
 	}

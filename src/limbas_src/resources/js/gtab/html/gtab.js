@@ -130,6 +130,8 @@ function dynsClose(id) {
 // Ajax extended relation
 function LmExt_RelationFields(el,gtabid,gfieldid,viewmode,edittype,ID,orderfield,relationid,ExtAction,ExtValue,gformid,formid,ajaxpost,event){
 
+    var relationkeyid = '';
+
     if(!gformid){
         gformid = $('#extRelationFieldsTab_'+gtabid+"_"+gfieldid).attr( "data-gformid" );
     }
@@ -152,15 +154,27 @@ function LmExt_RelationFields(el,gtabid,gfieldid,viewmode,edittype,ID,orderfield
 		if(ExtAction == "delete"){var mess = jsvar['lng_2153'];}
 		else if (ExtAction == "unlink") {var mess = jsvar['lng_2359'];}
 		else if (ExtAction == "copy") {var mess = jsvar['lng_2156'];}
+        var actrows_keyid = Array();
 		if(!relationid){
-			var actrows = checkActiveRows(ExtValue);
+			var actrows_ = checkActiveRows(ExtValue,1);
+            var actrows = actrows_[0];
+            var actrows_keyid = actrows_[1];
 		}else{
 			var actrows = new Array(relationid);
 		}
+
 		ExtValue = '';
 		if(actrows.length > 0){
 			if(!confirm(mess+' ('+actrows.length+')')){return;}
-			var relationid = actrows.join(",");
+
+            // multirelation
+            //for (var i in actrows) {
+            //    actrows_keyid[i] = $('#'+actrows[i]).attr("data-keyid");
+            //}
+
+            var relationid = actrows.join(",");
+            var relationkeyid = actrows_keyid.join(",");
+
 		}else {alert(jsvar["lng_2083"]);return;}
 	}else if(ExtAction == "replace"){
 		lmbCollReplaceSource = Array(gtabid, gfieldid, ID, gformid, formid);
@@ -175,7 +189,7 @@ function LmExt_RelationFields(el,gtabid,gfieldid,viewmode,edittype,ID,orderfield
 	// ajax based POST of complete formular
 	if(ajaxpost){
 		document.getElementById("myExtForms").innerHTML = "<input type='hidden' name='gfieldid' value='"+gfieldid+"'><input type='hidden' name='viewmode' value='"+viewmode+"'><input type='hidden' name='ExtAction' value='"+ExtAction+"'><input type='hidden' name='ExtValue' value='"+ExtValue+"'><input type='hidden' name='edittype' value='"+edittype+"'><input type='hidden' name='ID' value='"+ID+"'><input type='hidden' name='orderfield' value='"+orderfield+"'><input type='hidden' name='relationid' value='"+relationid+"'><input type='hidden' name='gformid' value='"+gformid+"'><input type='hidden' name='formid' value='"+formid+"'>";
-		var actid = "extRelationFields&gtabid="+gtabid+"&gfieldid="+gfieldid+"&ID="+ID+"&relationid="+relationid+"&ExtAction="+ExtAction; // overwrite form
+		var actid = "extRelationFields&gtabid="+gtabid+"&gfieldid="+gfieldid+"&ID="+ID+"&edittype="+edittype+"&relationid="+relationid+"&relationkeyid="+relationkeyid+"&ExtAction="+ExtAction; // overwrite form
 		dynfunc = function(result){LmExt_RelationFieldsPost(result,gtabid,gfieldid);};
 		ajaxGet(null,url,actid,null,"dynfunc","form1");
 		document.getElementById("myExtForms").innerHTML = "";
@@ -214,7 +228,7 @@ function LmExt_RelationFields(el,gtabid,gfieldid,viewmode,edittype,ID,orderfield
 		// ajax update GET of single relation
 		}else{
             confirm_submit = function() {
-                var actid = "extRelationFields&gtabid=" + gtabid + "&gfieldid=" + gfieldid + "&viewmode=" + viewmode + "&edittype=" + edittype + "&ID=" + ID + "&orderfield=" + orderfield + "&relationid=" + relationid + "&ExtAction=" + ExtAction + "&ExtValue=" + ExtValue + "&gformid=" + gformid + "&formid=" + formid;
+                var actid = "extRelationFields&gtabid=" + gtabid + "&gfieldid=" + gfieldid + "&viewmode=" + viewmode + "&edittype=" + edittype + "&ID=" + ID + "&orderfield=" + orderfield + "&relationid=" + relationid + "&relationkeyid="+relationkeyid + "&ExtAction=" + ExtAction + "&ExtValue=" + ExtValue + "&gformid=" + gformid + "&formid=" + formid;
                 dynfunc = function (result) {
                     LmExt_RelationFieldsPost(result, gtabid, gfieldid, viewmode, el, ID);
                 };
@@ -232,8 +246,7 @@ function LmExt_RelationFields(el,gtabid,gfieldid,viewmode,edittype,ID,orderfield
                 confirm_submit();
             }
 
-
-            var actid = "extRelationFields&gtabid=" + gtabid + "&gfieldid=" + gfieldid + "&viewmode=" + viewmode + "&edittype=" + edittype + "&ID=" + ID + "&orderfield=" + orderfield + "&relationid=" + relationid + "&ExtAction=" + ExtAction + "&ExtValue=" + ExtValue + "&gformid=" + gformid + "&formid=" + formid;
+            var actid = "extRelationFields&gtabid=" + gtabid + "&gfieldid=" + gfieldid + "&viewmode=" + viewmode + "&edittype=" + edittype + "&ID=" + ID + "&orderfield=" + orderfield + "&relationid=" + relationid + "&relationkeyid="+relationkeyid + "&ExtAction=" + ExtAction + "&ExtValue=" + ExtValue + "&gformid=" + gformid + "&formid=" + formid;
 
             //$('#extRelationTab_4_4').DataTable({
                 //destroy: true,
@@ -963,10 +976,10 @@ function checktyp(data_type,fieldname,fielddesc,field_id,tab_id,obj,id,ajaxpost,
 	}
 
 	if(!data_type){obj = '';}
-	val = obj;
+	let val = obj;
 
 	var regexp = RULE[data_type];
-	if(fieldname.substr(0,2) == 'gs'){
+	if(fieldname.substr(0,2) === 'gs'){
 		val = obj.replace(/^(>|<|<=|>=|!=|#NOTNULL#|#NULL#|#NOT#)?( )?/g,'');
 	}
 
@@ -978,7 +991,7 @@ function checktyp(data_type,fieldname,fielddesc,field_id,tab_id,obj,id,ajaxpost,
         regexp = regexp.replace(/xx/g,'');
 	}
 
-	eval('var reg = /'+regexp+'/;');
+	const reg = new RegExp(regexp);
 	if (obj != ''){
 		if (val && !reg.exec(val)){
 			newvalue = prompt(jsvar['lng_134']+'\n' + fielddesc +': '+DATA_TYPE_EXP[data_type]+' ('+FORMAT[data_type]+')',obj);
@@ -1207,159 +1220,38 @@ function lmb_needfieldChange(formid,status) {
  *
  * @param saveAsTemplate if not empty, the selected configuration will be saved as template with this parameter as name
  * @param callback function callback for receiving the report generation html
- * @param context
  */
-function limbasReportMenuHandler(preview,evt,el,gtabid,reportid,ID,output,listmode,report_medium,report_rename,report_printer, resolvedTemplateGroups={}, resolvedDynamicData={}, saveAsTemplate='', callback=null,context='old') {
-    activ_menu = 1;
-
-
-
-    let $reportForm;
-    if (context === 'bs4') {
-        $reportForm = $('#report_form_bs');
-	} else {
-        $reportForm = $('#report_form');
-	}
-
-    // get medium from input
-    if(!report_medium && $reportForm.length > 0){
-        report_medium = $reportForm.find("[name='report_medium']").val();
-    }
-
-    let params = {
-        gtabid: gtabid,
-        report_id: reportid,
-        report_output: output,
-        report_medium: report_medium,
-        report_printer: report_printer,
-        resolvedTemplateGroups: !$.isEmptyObject(resolvedTemplateGroups) ? JSON.stringify(resolvedTemplateGroups) : null,
-        resolvedDynamicData: !$.isEmptyObject(resolvedDynamicData) ? JSON.stringify(resolvedDynamicData) : null,
-		preview: preview,
-        context: context,
-        saveAsTemplate: saveAsTemplate
-    };
-
-
-    if (preview) {
-        params.action = 'report_preview';
-    }
-
-
-    let count = 1;
-    // selected datasets
-    if (!listmode) {
-        if (ID && ID !== '0') {
-            params.ID = ID;
-            count = 1;
-        } else {
-            let use_record;
-
-            let datid = document.form1.ID.value;
-            if (datid > 0) {
-            	use_record = ID+"_"+gtabid;
-			} else {
-                let actrows = checkActiveRows();
-                if(actrows.length > 0){
-                    use_record = actrows.join(";");
-                }
-			}
-
-
-            if (use_record) {
-                params.use_record = use_record;
-                document.form1.use_record.value = use_record;
-                count = countofActiveRows();
-            } else {
-                params.use_record = "all";
-                const $countInput = $('#GtabResCount');
-                if ($countInput.length) {
-                    count = $countInput.html();
-                } else {
-                    count = 'undefined';
-                }
-            }
-        }
-
-    }
-
-    if (!el && output !== 0 && output != null) {
-
-        // ask user when many datasets selected
-        if (!listmode && count && count > 1) {
-            if (!confirm(`${jsvar['lng_2676']} ${count}\n${jsvar['lng_51']}`)) {
-                activ_menu = 0;
-                limbasDivClose();
-                return;
-            }
-        }
-
-
-    	let $report_rename = $reportForm.find("input[name='report_rename']");
-        if (report_rename == null && $report_rename.length > 0) {
-            report_rename = $report_rename.val();
-        }
-        if (!report_rename) {
-            report_rename = '';
-        }
-        params.report_rename = report_rename;
-
-        limbasWaitsymbol(evt,1);
-    }
-
-
-    const actid = "menuReportOption&" + $.param(params);
-
-    let fcallback;
-
-    if (callback === null) {
-        fcallback = function (result) {
-            limbasReportMenuOptionsPost(result, el, output);
-        };
-	} else {
-        fcallback = function (result) {
-            callback(result, el, output);
-        };
-	}
-
-    ajaxGet(null, "main_dyns.php", actid, null, fcallback, "form1");
+function limbasReportMenuHandler(preview,evt,el,gtabid,reportid,ID,output,listmode,report_medium,report_rename,report_printer, resolvedTemplateGroups={}, resolvedDynamicData={}, saveAsTemplate='', callback=null) {
+	console.warn('Deprecated function limbasReportMenuHandler called.');
+	directlyOpenReportPreview(gtabid,reportid,ID,resolvedTemplateGroups);
 }
 
-function directlyOpenReportPreview(event,gtabid,reportid,id,resolvedTemplateGroups={}, resolvedDynamicData={}) {
-	reportModalSelectItem(event,null,gtabid,reportid,id,1,'',null,null,null, resolvedTemplateGroups, resolvedDynamicData,1);
-}
-
-/**
- * @param result
- * @param el
- * @param output
- */
-function limbasReportMenuOptionsPost(result,el,output){
-	// use Scripts
-
-    if (!ajaxEvalScript(result)) {
-        $("#limbasDivMenuReportOption").html(result);
-        if (el) {
-            limbasDivShow(el, 'limbasDivMenuBericht', 'limbasDivMenuReportOption');
-        }else{
-            limbasWaitsymbol(0,0,1);
-        }
-    }
-
-	if(output==2){
-        $('#lmbReportMenuOptionsArchive').html('<i class="lmb-icon lmb-aktiv"></i>');
-	}else if(output==1 || output==4){
-		activ_menu = 0;
-		limbasDivClose();
+function directlyOpenReportPreview(gtabid,reportId,id,resolvedTemplateGroups={}) {
+	let $templateSelect = $('#lmbTemplateSelect');
+	
+	if($templateSelect.length <= 0) {
+		$templateSelect = $('<div id="lmbTemplateSelect" data-type="report"></div>');
+		$('body').append($templateSelect);
+	}
+	
+	if(resolvedTemplateGroups === null) {
+		resolvedTemplateGroups = {};
 	}
 
+	$templateSelect.data('type', 'report');
+	selectTemplate('-', reportId, gtabid, resolvedTemplateGroups, id);
 }
 
 
 function limbasReportShowPreview(url,report_name) {
 	//TODO: if not bootstrap layout
-    if (!showFullPageModal('Vorschau: ' + report_name,'<iframe src="'+url+'" class="w-100 h-100"></iframe>')) {
+    if (!showFullPageModal('Vorschau: ' + report_name,'<iframe src="'+url+'" class="w-100 h-100"></iframe>','fullscreen')) {
     	open(url);
 	}
+}
+
+function lmbOpenMailForm(url) {
+	showFullPageModal('E-Mail verfassen','<iframe src="'+url+'" class="w-100 h-100"></iframe>','fullscreen');
 }
 
 
@@ -1397,7 +1289,7 @@ function limbasReportSaveTemlpate(evt, gtabid, reportid, resolvedTemplateGroups=
 
 // Ajax reminder
 function limbasDivShowReminder(evt,el,add,remove,changeView,change,defaults,gtabid,ID) {
-        activ_menu = 1;
+    activ_menu = 1;
 	if(el){
 		limbasDivShow(el,'limbasDivMenuExtras','lmbAjaxContainer');
 	}
@@ -1410,6 +1302,11 @@ function limbasDivShowReminder(evt,el,add,remove,changeView,change,defaults,gtab
 
     if(document.form1.gfrist.value){var gfrist = '&gfrist='+document.form1.gfrist.value;}
 	if(document.form1.action.value == 'gtab_erg'){var listmode = 1;}
+    if(document.form_reminder && document.form_reminder.REMINDER_CATEGORY) {
+        var category = document.form_reminder.REMINDER_CATEGORY.value;
+    }else{
+        var category = 0;
+    }
 
     if(!gtabid || typeof gtabid === 'undefined'){
         var gtabid = jsvar['gtabid'];
@@ -1426,50 +1323,59 @@ function limbasDivShowReminder(evt,el,add,remove,changeView,change,defaults,gtab
 	// listmode
         // TODO auch für change/view?
 	if(listmode && (add || remove)){
-                listmode = 1;
-                var count = countofActiveRows();
-                // use selected rows
-                if(count > 0){
-                        var actrows = checkActiveRows(gtabid);
-                        if(actrows.length > 0){
-                                var use_records = actrows.join(";");
-                        }else{alert(jsvar["lng_2083"]);return;}
-                // use filter
-                }else{
-                        var use_records = 'all';
-                        // if relation
-                        if(document.form1.verkn_ID){
-                                var verkn = '&verkn_tabid='+document.form1.verkn_tabid+'&verkn_fieldid='+document.form1.verkn_fieldid+'&verkn_ID='+document.form1.verkn_ID+'&verkn_showonly='+document.form1.verkn_showonly;
-                        }
-                        // get count from result
-                        if(document.getElementById("GtabResCount")){var count = document.getElementById("GtabResCount").innerHTML;}else{var count = 'undefined'}
+        listmode = 1;
+        var count = countofActiveRows();
+        // use selected rows
+        if(count > 0){
+                var actrows = checkActiveRows(gtabid);
+                if(actrows.length > 0){
+                        var use_records = actrows.join(";");
+                }else{alert(jsvar["lng_2083"]);return;}
+        // use filter
+        }else{
+                var use_records = 'all';
+                // if relation
+                if(document.form1.verkn_ID){
+                        var verkn = '&verkn_tabid='+document.form1.verkn_tabid+'&verkn_fieldid='+document.form1.verkn_fieldid+'&verkn_ID='+document.form1.verkn_ID+'&verkn_showonly='+document.form1.verkn_showonly;
                 }
+                // get count from result
+                if(document.getElementById("GtabResCount")){var count = document.getElementById("GtabResCount").innerHTML;}else{var count = 'undefined'}
+        }
 
-                if(count && !confirm(jsvar['lng_2676']+' '+count+'\n'+jsvar['lng_2902'])){
-                        activ_menu = 0;
-                        limbasDivClose();
-                        return;
-                }
+        if(count && !confirm(jsvar['lng_2676']+' '+count+'\n'+jsvar['lng_2902'])){
+                activ_menu = 0;
+                limbasDivClose();
+                return;
+        }
 	}
+
+    dynfunc = function(result){limbasDivShowReminderPost(result,gtabid,category);};
 
     // add reminder
 	if(add){
-		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&add=1'+verkn+'&use_records='+use_records+'&form_id='+form_id,null,'limbasDivShowReminderPost','form_reminder');
+		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&add=1'+verkn+'&use_records='+use_records+'&form_id='+form_id,null,'dynfunc','form_reminder');
 	// delete reminder
     }else if(remove){
-		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&remid='+remove+'&use_records='+use_records,null,'limbasDivShowReminderPost');
+		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&remid='+remove+'&use_records='+use_records,null,'dynfunc','form_reminder');
 	}else if(changeView){
-		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&changeViewId='+changeView,null,'limbasDivShowReminderPost');
+		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&changeViewId='+changeView,null,'dynfunc');
     }else if(change){
-		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&changeId='+change,null,'limbasDivShowReminderPost','form_reminder');
+		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&changeId='+change,null,'dynfunc','form_reminder');
     }else {
-		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&defaults='+defaults,null,'limbasDivShowReminderPost');
+		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&defaults='+defaults,null,'dynfunc');
 	}
+
 }
 
 // reminder post
-function limbasDivShowReminderPost(result){
+function limbasDivShowReminderPost(result,gtabid,category){
+
 	document.getElementById("lmbAjaxContainer").innerHTML = result;
+
+    // refresh multiframe preview
+    if($('#limbasMultiframeItemReload').val()){
+        top.limbasMultiframePreview($('#limbasMultiframeItemReload').val(),'Reminder' ,0, 0 ,gtabid,'category='+category);
+    }
 }
 
 // reminder
@@ -1669,10 +1575,11 @@ function lmbTableClickEvent(evt,el) {
 }
 
 /*----------------- prüfe selektierte Reihen -------------------*/
-function checkActiveRows(gtabid) {
+function checkActiveRows(gtabid,getkey) {
 
 	var actrows = new Array();
 	var actrows_ = new Array();
+    var actrowskey_ = new Array();
 	var rsel = null;
 	if(!gtabid && document.form2 && document.form2.ID.value){
 		actrows[0] = document.form2.ID.value+"_"+document.form2.gtabid.value;var bzm = 1;
@@ -1684,18 +1591,28 @@ function checkActiveRows(gtabid) {
 		if(selected_rows[key]){
 			rsel = key.split("_");
 			if(gtabid && rsel[2] != gtabid){continue;}
-			actrows[bzm] = rsel[1]+"_"+rsel[2];
-			actrows_[bzm] = rsel[1];
+            actrowskey_[bzm] = rsel[4];
+            actrows_[bzm] = rsel[1];
+            actrows[bzm] = rsel[1]+"_"+rsel[2];
 			bzm++;
 		}
 	}
 
 	if(gtabid){
-		return actrows_;
+        // multiselect
+        if(getkey) {
+            return  [actrows_,actrowskey_];
+        }else {
+            return actrows_;
+        }
 	}else{
-		return actrows;
+        return actrows;
 	}
 
+}
+
+function set_activ_menu(){
+	activ_menu=0;
 }
 
 // de/aktivate single row
@@ -1882,7 +1799,7 @@ function lmbUndefToNull(value){
 // show detail in dialog or new window
 function lmbOpenForm(evt,gtabid,id,params) {
     if(!params){params = new Array();}
-    return newwin7(evt,lmbUndefToNull(params['action']),gtabid,lmbUndefToNull(params['v_tabid']) ,lmbUndefToNull(params['v_fieldid']),lmbUndefToNull(params['v_id']),id,lmbUndefToNull(params['formid']),lmbUndefToNull(params['formdimension']),lmbUndefToNull(params['v_formid']),lmbUndefToNull(params['inframe']),lmbUndefToNull(params['show_relationpath']),lmbUndefToNull(params['readonly']),lmbUndefToNull(params['dataAction']));
+    return newwin7(evt,lmbUndefToNull(params['action']),gtabid,lmbUndefToNull(params['v_tabid']) ,lmbUndefToNull(params['v_fieldid']),lmbUndefToNull(params['v_id']),id,lmbUndefToNull(params['formid']),lmbUndefToNull(params['formdimension']),lmbUndefToNull(params['v_formid']),lmbUndefToNull(params['inframe']),lmbUndefToNull(params['show_relationpath']),lmbUndefToNull(params['readonly']),lmbUndefToNull(params['dataAction']),lmbUndefToNull(params['force']));
 }
 
 
@@ -1904,8 +1821,9 @@ function lmbOpenForm(evt,gtabid,id,params) {
  * params['show_relationpath'] : 0 / 1
  * params['readonly'] : 0 / 1
  * params['dataAction'] : copy / versioning
+ * params['dataAction'] : force / force settings
  */
-function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimension,v_formid,inframe,show_relationpath,readonly,dataAction) {
+function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimension,v_formid,inframe,show_relationpath,readonly,dataAction,force) {
 
     divclose();
 	
@@ -1973,7 +1891,7 @@ function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimensio
     }
 
     // resize window if window in window
-    if(inframe == 'iframe' || inframe == 'div') {
+    if(!force && (inframe == 'iframe' || inframe == 'div')) {
         // check if modal already exists
         if($('#lmbSbmClose_'+v_tabid+'_'+v_id).is(':visible')){
             // size of modal
@@ -2012,8 +1930,7 @@ function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimensio
     }
 
     if (inframe == 'tab') {
-        // todo + "%26verknpf=" + verknpf // do not show close&save button
-        wpath = "index.php?action=redirect&src=action=" + action + "%26verkn_showonly=1%26ID=" + id + "%26verkn_ID=" + v_id + "%26gtabid=" + gtabid + "%26verkn_tabid=" + v_tabid + "%26verkn_fieldid=" + v_fieldid + "%26form_id=" + formid + "%26verkn_formid=" + v_formid + '%26verkn_addfrom='+relation_path + '&readonly='+readonly+use_typ;
+        wpath = "index.php?action=redirect&src=action=" + action + "%26verkn_showonly=1%26ID=" + id + "%26verkn_ID=" + v_id + "%26gtabid=" + gtabid + "%26verkn_tabid=" + v_tabid + "%26verkn_fieldid=" + v_fieldid + "%26form_id=" + formid + "%26verkn_formid=" + v_formid + '%26verkn_addfrom='+relation_path + '%26readonly='+readonly+use_typ+'%26verknpf=' + verknpf;
         relationtab = open(wpath, "_blank");
         return;
     }
@@ -2027,7 +1944,8 @@ function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimensio
         document.form1.verkn_ID.value = v_id;
         document.form1.verkn_tabid.value = v_tabid;
         document.form1.verkn_fieldid.value = v_fieldid;
-        //todo document.form1.verknpf.value = verknpf; // do not show close&save button
+        // todo + "%26verknpf=" + verknpf // do not show close&save button but is needed for filter relations
+        document.form1.verknpf.value = verknpf;
         document.form1.gtabid.value = gtabid;
         document.form1.verkn_showonly.value = "1";
         document.form1.verkn_addfrom.value = relation_path;

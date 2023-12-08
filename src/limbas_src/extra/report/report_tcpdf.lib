@@ -8,6 +8,7 @@
  */
 
 
+use Limbas\extra\template\report\ReportTemplateRender;
 
 $fontdir = $GLOBALS['umgvar']['pfad'].'/inc/fonts/';
 if(file_exists($fontdir)) {
@@ -376,23 +377,14 @@ function print_templ(LmbTcpdf &$pdf, $ID, &$report, $el) {
     $content = &$report['value'][$el];
     $parameter = &$report['parameter'][$el];
 
-    require_once(COREPATH . 'extra/template/report/ReportTemplateConfig.php');
-    TemplateConfig::$instance = new ReportTemplateConfig($report, $parameter, $ID);
-    if ($GLOBALS['resolvedTemplateGroups']) {
-        TemplateConfig::$instance->resolvedTemplateGroups = $GLOBALS['resolvedTemplateGroups'];
-    }
-    if ($GLOBALS['resolvedDynamicData']) {
-        TemplateConfig::$instance->resolvedDynamicData = $GLOBALS['resolvedDynamicData'];
-    }
-    $baseElement = new ReportTemplateElement($templGtabid, 'lmbBaseElement', $content);
-    $baseElement->resolve($ID);
-    $htmlArr = $baseElement->getAsHtmlArr();
-
+    $templateRender = new ReportTemplateRender();
+    $html = $templateRender->getHtml($report,intval($templGtabid),0,intval($reportTabID), $ID, $GLOBALS['resolvedTemplateGroups'] ?? [], $GLOBALS['resolvedDynamicData'] ?? [], $content);
+    
     // add report's css file if set
     if ($cssFile = $greportlist[$reportTabID]['css'][$reportID]) {
-        array_unshift($htmlArr, '<style>', file_get_contents($umgvar['path'] . '/' . $cssFile), '</style>');
+        $html = '<style>' . file_get_contents($umgvar['path'] . '/' . $cssFile) . '</style>' . $html;
     }
-    $printedCell = $pdf->printcell(implode('', $htmlArr), $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], 'html');
+    $printedCell = $pdf->printcell($html, $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], 'html');
     $pdf->print_element($printedCell);
 }
 
@@ -1239,6 +1231,7 @@ function lmb_reportPDF($report_id,$gtabid=null,$ID=null,$report_output=null,$rep
     if(!$gtabid){
         $gtabid = $greportlist["argresult_tabid"][$report_id];
     }
+    if($gtabid <= 0){$gtabid = null;}
 
     $listmode = $greportlist[$gtabid]["listmode"][$report_id];
     $extension = $greportlist[$gtabid]["extension"][$report_id];
@@ -1265,7 +1258,7 @@ function lmb_reportPDF($report_id,$gtabid=null,$ID=null,$report_output=null,$rep
         } elseif ($report_id AND $listmode AND $gtabid) {
             $generatedReport = lmb_reportCreatePDF($report_id,1,$report_output,$report_rename,$gsr,$filter,$printer);
             # --- freier Einzelbericht ohne Tabelle -----------------------------------
-        } elseif ($report_id AND !$gtabid) {
+        } elseif ($report_id AND $gtabid) {
             $generatedReport = lmb_reportCreatePDF($report_id,0,1,$report_rename,null,null,$printer);
         }
 

@@ -7,47 +7,54 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+require_once(COREPATH.'extra/reminder/reminder.lib');
 
 
-# --- id Löschen -----------
+if(is_numeric($category)){
+    $category = parse_db_int($category);
+    $reminderlist[$category] = $category;
+}else{
+    $reminderlist = $greminder['argresult_id'];
+    $reminderlist[0] = 0;
+}
+
+if(!is_array($reminderlist)){return;}
+
+if($valid == 'true') {
+    $valid = null;
+}else{
+    $valid = 1;
+}
+
 if($del_id){
-	$sqlquery = "DELETE FROM LMB_REMINDER WHERE USER_ID = ".$session['user_id']." AND ID = $del_id AND CATEGORY = 0";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    lmb_dropReminder($del_id);
 }
 
-# --- tab Löschen -----------
-if($del_tab){
-	$sqlquery = "DELETE FROM LMB_REMINDER WHERE USER_ID = ".$session['user_id']." AND TAB_ID = $del_tab AND CATEGORY = 0";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+foreach($reminderlist as $categoryid => $gtabid) {
+    // filter
+    $sql = array();
+
+    lmb_reminderFilter($sql, category: $categoryid, valid: $valid);
+    $where = implode(' AND ', $sql);
+    $sqlquery = "SELECT * FROM LMB_REMINDER WHERE
+    $where
+    ORDER BY TAB_ID,FRIST";
+
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    while (lmbdb_fetch_row($rs)) {
+        $remtab = lmbdb_result($rs, "TAB_ID");
+        $remgr = $gtab["tab_group"][$remtab];
+        $remdata["id"][$remgr][$remtab][] = lmbdb_result($rs, "ID");
+        $remdata["tab_id"][$remgr][$remtab][] = lmbdb_result($rs, "TAB_ID");
+        $remdata["validdate"][$remgr][$remtab][] = lmbdb_result($rs, "FRIST");
+        $remdata["desc"][$remgr][$remtab][] = lmbdb_result($rs, "DESCRIPTION");
+        $remdata["dat_id"][$remgr][$remtab][] = lmbdb_result($rs, "DAT_ID");
+        $remdata["content"][$remgr][$remtab][] = lmbdb_result($rs, "CONTENT");
+        $remdata["fromuser"][$remgr][$remtab][] = lmbdb_result($rs, "FROMUSER");
+        $remdata["category"][$remgr][$remtab][] = lmbdb_result($rs, "CATEGORY");
+    }
+
 }
-
-
-
-# --- Tabellen -----------
-$qucat = " AND CATEGORY = 0";
-if(is_numeric($gfrist)){
-    $qucat = " AND CATEGORY = ".$gfrist;
-}
-$sqlquery = "SELECT ID,TAB_ID,FRIST,DESCRIPTION,DAT_ID,CONTENT,FROMUSER FROM LMB_REMINDER WHERE USER_ID = ".$session["user_id"]." $qucat ORDER BY TAB_ID,FRIST";
-$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-
-while(lmbdb_fetch_row($rs)) {
-	$remtab = lmbdb_result($rs, "TAB_ID");
-	$remgr = $gtab["tab_group"][$remtab];
-
-	$remdata["id"][$remgr][$remtab][] = lmbdb_result($rs, "ID");
-	$remdata["tab_id"][$remgr][$remtab][] = lmbdb_result($rs, "TAB_ID");
-	$remdata["frist"][$remgr][$remtab][] = lmbdb_result($rs, "FRIST");
-	$remdata["description"][$remgr][$remtab][] = lmbdb_result($rs, "DESCRIPTION");
-	$remdata["dat_id"][$remgr][$remtab][] = lmbdb_result($rs, "DAT_ID");
-	$remdata["content"][$remgr][$remtab][] = lmbdb_result($rs, "CONTENT");
-	$remdata["fromuser"][$remgr][$remtab][] = lmbdb_result($rs, "FROMUSER");
-}
-
-
-
-
-
 
 
 ?>

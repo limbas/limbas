@@ -7,6 +7,12 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+namespace Limbas\extra\template\base\HtmlParts;
+
+use Limbas\extra\template\base\TemplateConfig;
+use Limbas\extra\template\base\TemplateElement;
+use lmb_log;
+
 /**
  * Class FunctionPlaceholder
  * A placeholder for a function call
@@ -64,7 +70,8 @@ class FunctionPlaceholder extends AbstractHtmlPart {
         $this->minTableIndexDependencyDepth = $this->getMinTableIndexDependencyDepth();
     }
 
-    public function getAsHtmlArr() {
+    public function getAsHtmlArr(): array
+    {
         # function call failed?
         $success = $this->tryFunctionCall(true);
         if (!$success) {

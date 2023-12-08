@@ -30,6 +30,9 @@
                     "Ctrl-Space": "autocomplete"
                 }
             });
+            $('.CodeMirror').css('height','auto');
+            let $cm_s = $('.CodeMirror-scroll')
+            $cm_s.css('max-height','77vh');
             editor.on('blur', formatSQL);
             formatSQL();
         });

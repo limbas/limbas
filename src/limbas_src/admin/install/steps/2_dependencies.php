@@ -85,6 +85,16 @@ if (function_exists('imap_open')) {
     $commit = 2;
 }
 
+/* --- intl --- */
+if(function_exists('collator_create')) {
+    $msg['func_intl'] = Msg::ok();
+    $msic['func_intl'] = '1';
+} else {
+    $msg['func_intl'] = Msg::warn();
+    $msic['func_intl'] = '4';
+    $commit = 2;
+}
+
 /* --- utf8_decode --- */
 if (function_exists('utf8_decode')) {
     $msg['func_utf8_decode'] .= Msg::ok();
@@ -313,6 +323,10 @@ if ($msic['func_php_odbc'] == '4' and $msic['func_php_pdo'] == '4') {
     <tr><?= Msg::icon($msic['func_imap']); ?>
         <td>Imap</td>
         <td><?= $msg['func_imap'] ?></td>
+    </tr>
+    <tr><?= Msg::icon($msic['func_intl']); ?>
+        <td>Intl</td>
+        <td><?= $msg['func_intl'] ?></td>
     </tr>
     <tr><?= Msg::icon($msic['func_utf8_decode']); ?>
         <td>utf8_decode</td>

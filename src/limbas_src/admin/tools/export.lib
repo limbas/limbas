@@ -349,7 +349,7 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
 	    // system
         if (in_array('system',$tableprefix))
         {
-            $tosync = array_merge($tosync, array('lmb_dbpatch','lmb_umgvar','lmb_field_types','lmb_field_types_depend','lmb_fonts','lmb_mimetypes','lmb_lang','lmb_action') );
+            $tosync = array_merge($tosync, array('lmb_field_types','lmb_fonts','lmb_mimetypes','lmb_lang','lmb_action') );
         }
 
         // === /sonst ===
@@ -362,6 +362,8 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
             system("tar cz --exclude='.git' -C '".COREPATH."..' -f '$limbasSrcOutputFile' 'limbas_src/'", $returnCode);
             $assetsOutputFile = DEPENDENTPATH . "USER/".$session["user_id"]."/temp/assets.tar.gz";
             system("tar cz --exclude='.git' -C '".PUBLICPATH."' -f '$assetsOutputFile' 'assets/'", $returnCode);
+            $vendorOutputFile = DEPENDENTPATH . "USER/".$session["user_id"]."/temp/vendor.tar.gz";
+            system("tar cz --exclude='.git' -C '".COREPATH."..' -f '$vendorOutputFile' 'vendor/'", $returnCode);
 		}
 
         // extensions
@@ -411,7 +413,7 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
 
 		# collect view definitions
 		$viewDefinitions = array();
-		if ($exporttabs){
+		if ($exporttabs OR $globalSyncTables){
     		$vd = lmb_getFullViewDepPath();
             asort($vd);
             foreach ($vd as $viewName => $level) {
@@ -1186,8 +1188,8 @@ function lmb_availableSyncModules()
         'synchronisation'=>array('name'=>$lang[2914],'title'=>'lmb_sync_conf lmb_sync_template','group'=>2),
         'custvar'=>array('name'=>$lang[2958],'title'=>'lmb_custvar','group'=>2),
         'rules'=>array('name'=>$lang[994].' '.$lang[575].' '.$lang[854].' '.$lang[1469],'title'=>'lmb_groups, lmb_rules_action,lmb_rules_repform, lmb_rules_tables, lmb_rules_fields, ldms_rules','group'=>2),
+        'system'=>array('name'=>'Systemtables','title'=>'lmb_field_types, lmb_fonts, lmb_mimetypes, lmb_lang, lmb_action','group'=>2),
         'globalsynctables'=>array('name'=>'global sync tables','title'=>'global sync tables','group'=>2),
-        #'system'=>array('name'=>'System','title'=>'lmb_umgvar, lmb_dbpatch, lmb_field_types, lmb_field_types_depend, lmb_fonts, lmb_mimetypes, lmb_lang, lmb_action','group'=>2),
 
         'functmpfields'=>array('name'=>$lang[2030],'title'=>'','group'=>3),
         'functmpfiles'=>array('name'=>$lang[2367],'title'=>'','group'=>3),

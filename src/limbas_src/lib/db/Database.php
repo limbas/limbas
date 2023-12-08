@@ -9,10 +9,10 @@
 class Database
 {
 
-    private static $instances = [];
+    private static array $instances = [];
     
     
-    public static function get($key = 0) {
+    public static function get(int $key = 0) {
         
         if (!array_key_exists($key,self::$instances)) {
             self::$instances[$key] = self::connect();
@@ -22,22 +22,26 @@ class Database
     }
     
     
-    private static function connect() {
+    private static function connect(): PDO|bool|null
+    {
         global $DBA;
         global $db; //legacy
-        $db = dbq_0($DBA["DBHOST"],$DBA["DBNAME"],$DBA["DBUSER"],$DBA["DBPASS"],$DBA["ODBCDRIVER"],$DBA["PORT"]);
+        $db = dbq_0($DBA['DBHOST'],$DBA['DBNAME'],$DBA['DBUSER'],$DBA['DBPASS'],$DBA['ODBCDRIVER'],$DBA['PORT']);
         return $db;
     }
 
-    private static function close($key = 0) {
+    private static function close(int $key = 0): void
+    {
         lmbdb_close(self::get($key));
     }
     
-    private static function closeAll() {
+    private static function closeAll(): void
+    {
         lmbdb_close_all();
     }
     
-    public static function checkIfInstalled() {
+    public static function checkIfInstalled(): void
+    {
         $db = self::get();
 
         $sqlquery = 'SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE lower(TABLE_NAME) = \'lmb_umgvar\'';
@@ -59,20 +63,34 @@ class Database
      * @param int|null $limit
      * @return bool|PDOStatement
      */
-    public static function select(string $table, array $fields = [], array $where = [], int $limit = null): bool|PDOStatement
+    public static function select(string $table, array $fields = [], array $where = [], int $limit = null, array $orderBy = []): bool|PDOStatement
     {
         $db = self::get();
 
         $whereString = '';
-        
+        $orderString = '';
+
+        $values = [];
         if (!empty($where)) {
-            $values = [];
             $whereFields = [];
             foreach($where as $field => $value) {
-                $values[] = $value;
-                $whereFields[] = $field . ' = ?';
+                if($value === null) {
+                    $whereFields[] = $field . ' IS ' . LMB_DBDEF_NULL;
+                } else {
+                    $values[] = $value;
+                    $whereFields[] = $field . ' = ?';
+                }
+                
             }
             $whereString = ' WHERE ' . implode(' AND ', $whereFields);
+        }
+
+        if(!empty($orderBy)) {
+            $orderString = ' ORDER BY ' . implode(', ', array_map(
+                    function ($field, $dir) { return $field . ' ' . $dir; },
+                    array_keys($orderBy),
+                    $orderBy
+                ));
         }
         
 
@@ -83,7 +101,7 @@ class Database
         
         $fieldString = empty($fields) ? '*' : implode(',',$fields);
 
-        $sql = 'SELECT ' . $fieldString . ' FROM ' . $table . $whereString . $limitString;
+        $sql = 'SELECT ' . $fieldString . ' FROM ' . $table . $whereString . $orderString . $limitString;
 
         $stmt = lmbdb_prepare($db,$sql);
         lmbdb_execute($stmt, $values);
@@ -127,13 +145,27 @@ class Database
             $values[] = $value;
         }
 
-        $whereString = [];
-        foreach($where as $field => $value) {
-            $values[] = $value;
-            $whereString[] = $field . ' = ?';
+        $whereString = '';
+        if(!empty($where)) {
+            $whereArray = [];
+            foreach($where as $field => $value) {
+                if($value === null) {
+                    $whereArray[] = $field . ' IS ' . LMB_DBDEF_NULL;
+                } else {
+                    $values[] = $value;
+                    $whereArray[] = $field . ' = ?';
+                }
+                $whereString = ' WHERE ' . implode(' AND ', $whereArray);
+            }
         }
+        
 
-        $sql = 'UPDATE ' . $table . ' SET ' . implode(',', $fields) . ' WHERE ' . implode(',', $whereString);
+        $sql = 'UPDATE ' . $table . ' SET ' . implode(',', $fields) . $whereString;
+
+        /*
+        UPDATE LMB_MAIL_ACCOUNTS SET USER_ID = ?,TENANT_ID = ?,NAME = ?,EMAIL = ?,IS_ACTIVE = ?,IS_HIDDEN = ?,TRANSPORT_TYPE = ?,IMAP_HOST = ?,IMAP_PORT = ?,IMAP_USER = ?,SMTP_HOST = ?,SMTP_PORT = ?,SMTP_USER = ? WHERE ID = ?
+        UPDATE LMB_MAIL_ACCOUNTS SET IS_DEFAULT = ? WHERE USER_ID IS NULL AND TENANT_ID IS NULL
+        UPDATE LMB_MAIL_ACCOUNTS SET IS_DEFAULT = ? WHERE ID = ?*/
 
         return lmbdb_execute(lmbdb_prepare($db,$sql), $values);
     }
@@ -141,7 +173,6 @@ class Database
     /**
      * @param string $table
      * @param array $where
-     * @param ?int $limit
      * @return bool
      */
     public static function delete(string $table, array $where): bool

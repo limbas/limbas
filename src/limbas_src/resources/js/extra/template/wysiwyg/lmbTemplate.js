@@ -236,7 +236,7 @@ tinymce.PluginManager.add('lmbTemplate', function (editor, url) {
                     // require user to set table
                     const newWin = editor.windowManager.openUrl({
                         title: 'Select data table',
-                        url: 'main_dyns.php?actid=forTableSelection',
+                        url: 'main_dyns.php?actid=manageTemplates&action=wysiwyg&taction=forTableSelection',
                         onMessage: function (api, details) {
                             if (details.mceAction === 'lmbTableSelected') {
                                 const forTable = details.data;
@@ -301,7 +301,9 @@ tinymce.PluginManager.add('lmbTemplate', function (editor, url) {
                 const newWin = editor.windowManager.openUrl({
                     title: 'Select field',
                     url: 'main_dyns.php?' + $.param({
-                        actid: 'dataFieldSelection',
+                        actid: 'manageTemplates',
+                        action: 'wysiwyg',
+                        taction: 'dataFieldSelection',
                         forTable: tableID,
                         relationFieldsOnly: relationFieldsOnly ? true : null,
                         allowListSelection: allowListSelection ? true : null,
@@ -350,7 +352,7 @@ tinymce.PluginManager.add('lmbTemplate', function (editor, url) {
         return new Promise(function(resolve, reject) {
             const newWin = editor.windowManager.openUrl({
                 title: 'Select function',
-                url: 'main_dyns.php?actid=functionSelection',
+                url: 'main_dyns.php?actid=manageTemplates&action=wysiwyg&taction=functionSelection',
                 onMessage: function (api, details) {
                     if (details.mceAction === 'lmbFunctionSelected') {
                         newWin.close();
@@ -372,7 +374,7 @@ tinymce.PluginManager.add('lmbTemplate', function (editor, url) {
         return new Promise(function (resolve, reject) {
             const dialog = editor.windowManager.openUrl({
                 title: 'Set parameters',
-                url: `main_dyns.php?actid=paramSelection&functionName=${functionName}&windowId=${thisWindowId}`,
+                url: `main_dyns.php?actid=manageTemplates&action=wysiwyg&taction=paramSelection&functionName=${functionName}&windowId=${thisWindowId}`,
                 buttons: [
                     {
                         type: 'custom',
@@ -1186,7 +1188,7 @@ tinymce.PluginManager.add('lmbTemplate', function (editor, url) {
 
         // load available template groups
         if (!('availableTemplateGroups' in initialData)) {
-            ajaxGet(null, 'main_dyns.php', `getTemplateGroups&templateTable=${gtabid}`, null, function (response) {
+            ajaxGet(null, 'main_dyns.php', `manageTemplates&action=wysiwyg&taction=getTemplateGroups&templateTable=${gtabid}`, null, function (response) {
                 initialData.availableTemplateGroups = JSON.parse(response.trim());
                 newWin.redial(getConfig(initialData));
             });

@@ -9,6 +9,9 @@
 /* Useful functions: */
 
 /* chr_unicode - get unicode character from its char code */
+
+use Limbas\extra\template\base\TemplateConfig;
+
 if (!function_exists("chr_unicode")) {
     function chr_unicode($code) {
         return html_entity_decode('&#$code;', ENT_QUOTES, "UTF-8");

@@ -101,11 +101,17 @@ abstract class Auth {
      * Checks based on the current request if the user wants to log out
      */
     public static function checkLogout() {
+
         Session::start();
+        $userid = $_SESSION['authId'];
         $loggedIn = isset($_SESSION['authenticated']) && $_SESSION['authenticated'] === true;
         Session::abort();
-        
+
         if ($loggedIn && (isset($_POST['logout']) || isset($_REQUEST['logout']))) {
+            // --- temp-Verzeichnis löschen ----
+            rmdirr(USERPATH.$userid."/temp");
+            // --- download-Verzeichnis löschen ----
+            rmdirr(USERPATH.$userid."/download");
             self::deny();
         }
     }

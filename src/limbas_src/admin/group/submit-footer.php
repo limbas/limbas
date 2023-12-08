@@ -8,7 +8,7 @@ else: ?>
         <?php else: ?>
             <button type="submit" class="btn btn-primary" value="1" name="change_rules"><?=$lang[33]?></button>
         <?php endif; ?>
-        
+
         <div class="form-check">
             <input class="form-check-input" type="checkbox" value="1" id="addsubgroup" name="addsubgroup">
             <label class="form-check-label" for="addsubgroup">

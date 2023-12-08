@@ -274,6 +274,7 @@ function lmbAjax_resultGtabPost(result){
 		        document.getElementById("GtabTableBody").innerHTML = result[2];
 		    }
 		}
+
 		if(result[3] && result[3].trim() && document.getElementById("GtabTableFooter")){document.getElementById("GtabTableFooter").innerHTML = result[3];}
 	}
 
@@ -821,10 +822,11 @@ function td_resize() {
 				gtb.rows[i].cells[e].style.width = tdw;
 			}
 		}
+
 		tabw += tdw;
-		gts.rows[0].cells[e].style.width = tdw;
-		gtb.rows[0].cells[e].style.width = tdw;
-		gth.rows[0].cells[e].style.width = tdw;
+		gts.rows[0].cells[e].style.width = tdw+'px';
+		gtb.rows[0].cells[e].style.width = tdw+'px';
+		gth.rows[0].cells[e].style.width = tdw+'px';
 	}
 	gts.style.width = tabw;
 	gth.style.width = tabw;
@@ -1011,6 +1013,7 @@ function endDrag() {
 	document.onmousemove = null;
 	//if(evw){gtabSetTablePosition();}
 	//setGlobalBorderWidth();
+    send_form(1,2);
 	return false;
 }
 
@@ -1392,11 +1395,6 @@ function div_menu(evt,el,divid){
 		document.getElementById(divid).style.top = 20;
 	}
 	document.getElementById(divid).style.visibility='visible';
-}
-
-
-function set_activ_menu(){
-	activ_menu=0;
 }
 
 var cell_id = null;

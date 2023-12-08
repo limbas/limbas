@@ -6,62 +6,10 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
-function lmb_report_add_root_template($report_id,$template_gtabid=null)
-{
-    global $gtab;
-    global $db;
-
-    require_once(COREPATH . 'gtab/gtab.lib');
 
 
-    if($template_gtabid){
+use Limbas\extra\template\TemplateTable;
 
-        // get old template IDs
-        $sqlquery = "SELECT ROOT_TEMPLATE,ROOT_TEMPLATE_ID FROM LMB_REPORT_LIST WHERE ID = $report_id";
-        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-        $old_template = lmbdb_result($rs, "ROOT_TEMPLATE");
-        $old_template_id = lmbdb_result($rs, "ROOT_TEMPLATE_ID");
-
-        if($old_template == $template_gtabid){
-            return;
-        }
-
-        // get old template Content
-        $sqlquery = "SELECT CONTENT FROM {$gtab['table'][$old_template]} WHERE ID = $old_template_id";
-        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-        $old_content = lmbdb_result($rs, "CONTENT");
-
-        // delete old template
-        del_data($old_template, $old_template_id);
-    }
-
-
-    if(!$template_gtabid) {
-        $template_gtabid = $gtab["argresult_id"]["LMB_REPORT_TEMPLATES"];
-    }
-
-    if ($template_id = new_data($template_gtabid)) {
-        $name = preg_replace(array('/Ä/', '/Ö/', '/Ü/', '/ä/', '/ö/', '/ü/', '/ß/'), array('Ae', 'Oe', 'Ue', 'ae', 'oe', 'ue', 'ss'), $report_name);
-        $name = preg_replace('/[^a-z0-9]/i', '_', $name);
-        $name = preg_replace("/[_]{1,}/", "_", $name);
-        $update = [
-            "$template_gtabid,1,$template_id" => "root_body_$name",
-            "$template_gtabid,2,$template_id" => $old_content
-        ];
-        update_data($update);
-
-        $sqlquery = "UPDATE LMB_REPORT_LIST SET 
-        ROOT_TEMPLATE = ".parse_db_int($template_gtabid).", 
-        ROOT_TEMPLATE_ID = ".parse_db_int($template_id).",
-        PAGE_STYLE = 'A4',
-        DPI = 72,
-        USED_FONTS = 'DejaVu Sans',
-        ORIENTATION = 'L'
-        WHERE ID = $report_id
-        ";
-        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    }
-}
 
 
 function lmb_report_create($report_name,$reporttarget,$report_desc,$referenz_tab,$reportextension,$action,$format='pdf',$parent_id=null,$saveTemplate=null) {
@@ -103,7 +51,13 @@ function lmb_report_create($report_name,$reporttarget,$report_desc,$referenz_tab
 
    # ---- adding root template ----------------
     if($format == 'mpdf'){
-        lmb_report_add_root_template($report_id);
+        $templateTable = TemplateTable::getDefaultTable();
+        $rootTemplateElementId = $templateTable->insertRootElement($report_name);
+        if($rootTemplateElementId !== false) {
+            $commit = Database::update('LMB_REPORT_LIST', ['ROOT_TEMPLATE' => $templateTable->id, 'ROOT_TEMPLATE_ID' => $rootTemplateElementId], ['ID' => $report_id]) ? 0 : 1;
+        } else {
+            $commit = 1;
+        }
     }
 
     /* --- Transaktion ENDE -------------------------------------- */
@@ -442,23 +396,6 @@ function lmb_report_copy($reportcopy,$report_name){
 
 }
 
-
-function lmb_report_getRootTemplate($ID,$gtabid)
-{
-    global $db;
-    global $gtab;
-
-    if(!$ID){
-        lmb_alert('no root template defined!');
-        return;
-    }
-
-    $sqlquery = "SELECT NAME,CONTENT FROM {$gtab['table'][$gtabid]} WHERE ID = $ID";
-    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    if(!$rs) {return false;}
-
-    return array('name'=>lmbdb_result($rs, "NAME"),'content'=>lmbdb_result($rs, "CONTENT"));
-}
 
 function resultreportlist(){
     global $db;

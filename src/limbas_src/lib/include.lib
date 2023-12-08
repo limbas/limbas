@@ -7,7 +7,8 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
+use Limbas\extra\mail\LmbMail;
+use Limbas\extra\mail\MailAccount;
 
 
 /**
@@ -220,23 +221,29 @@ function parse_db_blob($value){
 	return dbf_6($value);
 }
 
-function parse_db_int($value,$length=100){
-	if(!$value OR lmb_strlen($value) > $length OR !is_numeric($value)){return "0";}else{return str_replace(",",".",$value);}
+function parse_db_int($value, $length=100) {
+	if(!$value OR lmb_strlen($value) > $length OR !is_numeric($value)){
+        return 0;
+    }else{
+        return str_replace(",",".",$value);
+    }
 }
 
-function parse_db_float($value,$length=100,$scale=0){
-	if($value){$value = lmb_strtoupper(str_replace(",",".",$value));}else{return 0;}
-	
-	# more then one .
+function parse_db_float($value,$length=100,$scale=0) {
+	if($value) {
+        $value = lmb_strtoupper(str_replace(",",".",$value));
+        $value = str_replace(" ", "", $value);
+    } else {
+        return 0;
+    }
+	# more than one .
 	if(lmb_substr_count($value,".") > 1){
-		$pos = lmb_strpos($value,".");
-		$value = str_replace(".","",$value);
-		$value = substr($value,0,$pos).".".lmb_substr($value,$pos,20);
+		$pos = lmb_strrpos($value,".");
+		$value = str_replace(".", "", substr($value,0,$pos)).".".lmb_substr($value,$pos+1,20);
 	}
-	
 	if(!$value){return 0;}
 	$part = explode('.',$value);
-	
+    $part[1] = explode('E', $part[1])[0];
 	# with scale
 	if($scale){
 		if(lmb_strlen($part[0]) > ($length-$scale)){return 0;}
@@ -246,7 +253,9 @@ function parse_db_float($value,$length=100,$scale=0){
 	}else{
 		if(lmb_strlen($part[0])+lmb_strlen($part[1]) > $length){return "0";}
 	}
-	if(!preg_match("/[0-9.-]/",$value)){return "0";}
+	if(!preg_match("/[0-9.-]/",$value)){
+        return 0;
+    }
 
 	return $value;
 }
@@ -265,15 +274,74 @@ function convert_Checkbox($value){
 }
 
 function convert_NumberFormat($value,$format){
-	if(!$format){return $value;}
-	$value = parse_db_float($value);
-	if (!is_numeric($value)) {
-		return $value;
-	}
-	if (!$value) {
-	    $value = 0;
-	}
-	return eval("return number_format($value,$format);");
+    if (!$value) {
+        $value = 0;
+    }
+	if(!$format){
+        return $value;
+    }
+    $value = parse_db_float($value);
+    if (!is_numeric($value)) {
+        return $value;
+    }
+    $format_arr = splitFormat($format);
+
+    if($format_arr) {
+        if($format_arr[0] == 'locale') {
+            return convert_NumberFormatLocale($value);
+        }
+        if(count($format_arr) == 1) {
+            return number_format($value,
+                $format_arr[0]);
+        }
+        elseif(count($format_arr) == 3) {
+            return number_format($value,
+                $format_arr[0],
+                $format_arr[1],
+                $format_arr[2]
+            );
+        }
+    }
+    return $value;
+}
+
+function splitFormat($format) : array {
+    $formatvals = explode(',', $format, 2);
+    if (isset($formatvals[0])) {
+        if($formatvals[0] == 'locale') {
+            return ["locale"];
+        }
+        if (isset($formatvals[1]) && is_numeric($decimals = $formatvals[0])) {
+            $separators = explode('\'', $formatvals[1]);
+            if (count($separators) == 5) {
+                $decimal_separator = $separators[1];
+                $thousands_separator = $separators[3];
+                return [$decimals, $decimal_separator, $thousands_separator];
+            }
+        }
+        return [$decimals];
+    }
+    return [];
+}
+
+function convert_NumberFormatLocale($value) {
+    global $session;
+    $value = parse_db_float($value);
+    if (!$value) {
+        $value = 0;
+    }
+    if (!is_numeric($value)) {
+        return $value;
+    }
+    $locale = $session['setlocale'];
+
+    //todo add NumberFormatter to composer.json
+    /*
+    $numberFormatter = NumberFormatter::create($locale, NumberFormatter::DECIMAL);
+    $formattedNumber = $numberFormatter->format($value);
+    */
+    $formattedNumber = $value;
+    return $formattedNumber;
 }
 
 function parse_db_status($status){
@@ -287,13 +355,24 @@ function parse_db_status($status){
 }
 
 
-function convert_FloatToScientific($value,$dec=0){
+function convert_FloatToScientific($value, $dec=0, $format=null){
 	$value = str_replace(",",".",$value);
 	if(lmb_strpos($value,"E")){return strval($value);}
-	if(lmb_strlen($value) <= $dec OR !$dec){return $value;}
-	$value = sprintf("%.10e",$value);
-	$value = preg_replace("/\.[0]{1,}e/","E",$value);
-	$value = preg_replace("/[0]{1,}e/","E",$value);
+	if(lmb_strlen($value) <= $dec OR !$dec){
+        return convert_NumberFormat($value, $format);
+    }
+	$value = sprintf("%.10E",$value);
+	$value = preg_replace("/\.[0]{1,}E/","E",$value);
+	$value = preg_replace("/[0]{1,}E/","E",$value);
+    if($format) {
+        $value_arr = explode('E', $value);
+        $format_arr = explode(',', $format, 2);
+        $format_arr[0] = strlen(explode('.', $value_arr[0])[1]);
+        $format = implode(',', $format_arr);
+        $value_arr[0] = convert_NumberFormat($value_arr[0], $format);
+        $value = implode('E', $value_arr);
+        return $value;
+    }
 	if(is_numeric($value)){return $value;}else{return 0;}
 }
 
@@ -2291,234 +2370,40 @@ function lmbGetMenuSetting(){
 }
 
 
-
-
-function lmb_PHPMailer($to, $from, $subject, $message, $attachment=null, $IsHTML=null, $SMTP=null){
-    global $session;
-    global $userdat;
-    global $umgvar;
-
-    $from_mail = $from;
-    $from_name = null;
-    if(!$from){
-        $from[0] = $session['email'];
-        $from[1] = $userdat["bezeichnung"][$session['user_id']];
-    }
-    if(is_array($from)){
-        $from_mail = $from[0];
-        $from_name = $from[1];
-    }
-    
-    $to_mail = $to;
-    $to_name = null;
-    if(is_array($to)){
-        $to_mail = $to[0];
-        $to_name = $to[1];
-    }
-    
-    $mail = new PHPMailer\PHPMailer\PHPMailer();
-
-    // IsHTML=1;IsSMTP=1;HOST=123;Port=123;Auth=true;User=abc;From=abc;Pass=abc;Sec=tls;
-    if($SMTP) {
-        $params_ = explode(';', $SMTP);
-    }else{
-        $params_ = explode(';', $umgvar['php_mailer']);
-    }
-
-    foreach($params_ as $key => $value){
-        $p = explode('=',$value);
-        $params[trim($p[0])] = trim($p[1]);
-    }
-
-    if($IsHTML OR $params['IsHTML']){
-        $mail->IsHTML(true);
-    }
-    if($params['IsSMTP']){
-        $mail->IsSMTP();
-        if($params['HOST']){
-            $mail->Host = $params['HOST'];
-        }
-        if($params['Port']){
-            $mail->Port = $params['Port'];
-        }
-        if($params['Auth']){
-            $mail->SMTPAuth = $params['Auth'];
-        }
-        if($params['User']){
-            $mail->Username = $params['User'];
-        }
-        if($params['Pass']){
-            $mail->Password = $params['Pass'];
-        }
-        if($params['Sec']){
-            $mail->SMTPSecure = $params['Sec'];
-        }
-        if($params['From']){
-            $from_mail = $params['From'];
-        }
-        $mail->SMTPOptions = ['ssl'=>[
-        'verify_peer' => false,
-        'verify_peer_name' => false,
-        'allow_self_signed' => true
-        ]];
-
-        $mailer->AuthType='PLAIN';
-        #$mail->SMTPDebug = 4;
-        #$mail->SMTPAutoTLS = true;
-    }
-
-    $mail -> CharSet = "UTF-8";
-    $mail->AddReplyTo($from_mail,$from_name);
-    $mail->SetFrom($from_mail, $from_name);   
-    $mail->AddAddress($to_mail, $to_name);
-    $mail->Subject = lmb_utf8_encode($subject);
-    $mail->MsgHTML(lmb_utf8_encode($message));
-    
-    #$mail->AltBody = "To view the message, please use an HTML compatible email viewer!";
-    #$mail->AltBody = strip_tags(str_replace('<br>','\n',str_replace('<p>','\n',$message)));
-
-    if($attachment){
-        if(!is_array($attachment)){$attachment = array($attachment);}
-        $bzm = 0;
-        foreach($attachment as $key => $value){
-            if(!$value){continue;}
-            $ext = explode('.',$value);
-            if($ext[1] == 'png' OR $ext[1] == 'gif' OR $ext[1] == 'jpg' OR $ext[1] == 'jpeg') {
-                $bzm++;
-                $mail->AddEmbeddedImage($value, 'attach-' . $bzm);      // image
-            }else{
-                $mail->AddAttachment($value);                           // attachment
-            }
-        }
-    }
-    
-    if(!$mail->Send()) {
-        lmb_alert($mail->ErrorInfo);
-        return false;
-    } else {
-        return true;
-    }
-
+/**
+ * @param $to
+ * @param $from
+ * @param $subject
+ * @param $message
+ * @param $attachment
+ * @param $IsHTML
+ * @param $SMTP
+ * @return void
+ * @deprecated use LmbMail->send instead
+ */
+function lmb_PHPMailer($to, $from, $subject, $message, $attachment=null, $IsHTML=null, $SMTP=null): void
+{
+    trigger_error('Method ' . __METHOD__ . ' is deprecated. Use LmbMail->send instead.', E_USER_DEPRECATED);
 }
 
 
-/* send Mail with attachment
+/** send Mail with attachment
  * @param string $to
  * @param string $from
  * @param string $subject
  * @param string $message
- * @param path / array $attachment
- * @param string / array $cc
- * @param string / array $bcc
+ * @param $attachment / array $attachment
+ * @param string $cc / array $cc
+ * @param string $bcc / array $bcc
+ * @deprecated use LmbMail->send instead
  */
-function lmb_sendMail($to,$from,$subject,$message,$attachment=null,$cc=null,$bcc=null){
-	global $session;
-	global $umgvar;
+function lmb_sendMail($to,$from,$subject,$message,$attachment=null,$cc=null,$bcc=null): void
+{
+    trigger_error('Method ' . __METHOD__ . ' is deprecated. Use LmbMail->send instead.', E_USER_DEPRECATED);
 
-	// use PHPMailer
-	if($umgvar['use_phpmailer']){
-	   return lmb_PHPMailer($to, $from, $subject, $message, $attachment);
-	}
-
-	$reply = $from;
-	
-	if(!$subject){$subject = 'no subject';}
-	
-	$subject = '=?utf-8?B?'.base64_encode($subject).'?=';
-
-	if($attachment){
-	require_once(COREPATH . 'gtab/gtab.lib');
-	require_once(COREPATH . 'extra/explorer/filestructure.lib');
-	}
-
-	$mime_boundary = "------------" . md5(uniqid(mt_rand(), 1));
-	$mime_boundary2 = "------------" . md5(uniqid(mt_rand(), 1));
-	
-	#$header  ="From:".$from."<".$from.">\n";
-	$header  ="From: ".$from."\r\n";
-	$header .= "Reply-To: ".$reply."\r\n";
-	$header.= "MIME-Version: 1.0\r\n";
-	
-	if($cc){
-	    if(is_array($cc)){
-	       foreach($cc as $cc_key => $cc_val){
-	           $header .= 'Cc: '.$cc_val."\n";
-	       }
-	    }else{
-	       $header .= 'Cc: '.$cc."\n";
-	    }
-	}
-	if($bcc){
-	    if(is_array($bcc)){
-	       foreach($bcc as $bcc_key => $bcc_val){
-	           $header .= 'Bcc: '.$bcc_val."\n";
-	       }
-	    }else{
-	       $header .= 'Bcc: '.$bcc."\n";
-	    }
-	}
-	
-	$header.= "Content-Type: multipart/mixed; boundary=\"".$mime_boundary."\"\n\n";
-	$content = "This is a multi-part message in MIME format.\n";
-	$content.= "--".$mime_boundary."\n";
-	$content.= "Content-Type: multipart/alternative; boundary=\"".$mime_boundary2."\"\n\n";
-	
-	$content.= "--".$mime_boundary2."\n";
-	$content.= "Content-Type: text/plain; charset=utf-8; format=flowed\n";
-	$content.= "Content-Transfer-Encoding: quoted-printable\n";
-	$content.= "Content-Transfer-Encoding: 8bit\n\n";
-	$content.= strip_tags($message)."\n\n";
-	
-	$content.= "--".$mime_boundary2."\n";
-	$content.= "Content-Type: text/html charset=utf-8\n";
-	$content.= "Content-Transfer-Encoding: quoted-printable\n";
-	$content.= "Content-Transfer-Encoding: 8bit\n\n";
-	$content.= $message."\n\n";
-	$content.= "--".$mime_boundary2."--\n";
-	
-	if($attachment AND !is_array($attachment)){
-		$attachment = array($attachment);
-	}
-	
-	if(is_array($attachment)){
-		$bzm=1000;
-		foreach($attachment as $ID){
-			
-			# file from disc
-			if(file_exists($ID)){
-				$file_ = explode("/",$ID);
-				$file['name'] = $file_[lmb_count($file_)-1];
-				$fileE = explode('.',$file['name']);
-				$fileE = $fileE[lmb_count($fileE)-1];
-				$file['size'] = filesize($ID);
-				if($fileE == 'ics'){
-					$file['mimetype'] = 'text/calendar';
-				}else{
-					$file['mimetype'] = mime_content_type($ID);
-				}
-				$file["path"] = $ID;
-			# file-id from limbas
-			}elseif(is_numeric($ID) AND $file = file_download($ID)){
-				$file['size'] = filesize($file["path"]);
-			}else{
-				continue;
-			}
-			
-			$content.= "--".$mime_boundary."\n";
-			$content.= "Content-Type: ".$file['mimetype']."; name=\"".$file['name']."\"\n";
-			$content.= "Content-ID:$bzm\n";
-			$content.= "Content-Disposition: attachment; filename=\"".$file['name']."\"\n";
-			$content.= "Content-Length: .".$file['size']."\n";
-			$content.= "Content-Transfer-Encoding: base64\n\n";
-			$content.= chunk_split(base64_encode(file_get_contents($file["path"])))."\n";
-		    $bzm++;
-		}
-		$content .= "--".$mime_boundary."--\n";
-	}
-
-
-	if(@mail($to, $subject, $content, $header, '-f '.$from)) return true;
-	else return false;
+    $lmbMail = new LmbMail();    
+    $fromAccount = new MailAccount('',$from, MailAccount::TRANSPORT_SENDMAIL);
+    $lmbMail->send($fromAccount, $to, $subject,$message, $attachment,$cc, $bcc);
 }
 
 
@@ -2990,4 +2875,18 @@ function lmb_count($value) {
         $count = count($value);
     }
     return $count;
+}
+
+
+if (! function_exists('e')) {
+    /**
+     * Encode HTML special characters in a string.
+     *
+     * @param string|null $value
+     * @return string
+     */
+    function e(?string $value)
+    {
+        return htmlentities($value ?? '', encoding: 'UTF-8');
+    }
 }

@@ -183,16 +183,20 @@ function cftyp_1($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
 	if($typ == 1){
 		# Potenz-Dartsellung
 		if($gfield[$gtabid]["potency"][$field_id]){
-			$result = convert_FloatToScientific($result,$gfield[$gtabid]["potency"][$field_id]);
-		}
+			$result = convert_FloatToScientific($result,$gfield[$gtabid]["potency"][$field_id], $gfield[$gtabid]["nformat"][$field_id]);
+		} else {
+            $result = convert_NumberFormat($gresult[$gtabid][$field_id][$bzm], $gfield[$gtabid]["nformat"][$field_id]);
+        }
 		echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%;text-align:right;\" MAXLENGTH=\"".($gfield[$gtabid]["size"][$field_id]+6)."\" VALUE=\"".$result."\" $events>";
 	}elseif($typ == 2) {
         # Potenz-Dartsellung
         if ($gfield[$gtabid]["potency"][$field_id]) {
-            $value = convert_FloatToScientific($result, $gfield[$gtabid]["potency"][$field_id]);
+            $value = convert_FloatToScientific($result, $gfield[$gtabid]["potency"][$field_id], $gfield[$gtabid]["nformat"][$field_id]);
             if (lmb_strpos($value, "E")) {
                 $value = explode("E", $value);
-                $result = ($value[0] * 10) . "<sup>" . $value[1] . "</sup>";
+                $result = $value[0] . "e" . "<sup>" . $value[1] . "</sup>";
+            } else {
+                $result = $value;
             }
             # Format-Darstellung
         } elseif ($gfield[$gtabid]["nformat"][$field_id]) {
@@ -722,7 +726,7 @@ function cftyp_36($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
 
 # -------------------------- Validity -- field_type 24 ---------------------------------
 function cftyp_37($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
-    if($typ == 1){$typ = 2;} // readonly in table
+    if($GLOBALS['action' == 'gtab_erg']){$typ = 2;} // readonly in table
     return cftyp_4($bzm,$field_id,$gtabid,$typ,$gresult,$event);
 }
 
@@ -1239,6 +1243,7 @@ function cftyp_14($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$gformid=nul
 	global $lang;
 	global $umgvar;
 	global $db;
+    global $filter;
 
 	$ID = $gresult[$gtabid]['id'][$bzm];
 	$rscount = $gresult[$gtabid][$field_id][$bzm];
@@ -1253,6 +1258,9 @@ function cftyp_14($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$gformid=nul
     $rscount = $vgresult[$gfield[$gtabid]['verkntabid'][$field_id]]['res_count'];
     */
 
+#http://10.100.44.12/main.php?action=gtab_erg&verkn_showonly=1&ID=&verkn_ID=697&gtabid=1&verkn_tabid=248&verkn_fieldid=16&form_id=&verknpf=1&verkn_formid=null&verkn_addfrom=&readonly=
+#http://10.100.44.12/main.php?action=gtab_erg&verkn_showonly=1&ID=&verkn_ID=699&gtabid=247&verkn_tabid=248&verkn_fieldid=6&form_id=&verkn_formid=null&verkn_addfrom=
+
 	if(!$ID){return;}
 
 	# editmode / viewmode
@@ -1263,7 +1271,18 @@ function cftyp_14($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$gformid=nul
 	    // show rowcount
 	    }elseif($rscount > 1 AND ($gfield[$gtabid]["listing_viewmode"][$field_id] == 1 OR !$gfield[$gtabid]["listing_viewmode"][$field_id]) AND !($gfield[$gtabid]["data_type"][$field_id] == 25 AND $gfield[$gtabid]['verkntabletype'][$field_id] == 2)){
             #$event2["click"] = "newwin5(event,'".$gfield[$gtabid]["verkntabid"][$field_id]."','".$gtabid."','".$gfield[$gtabid]["field_id"][$field_id]."','".$gresult[$gtabid]["id"][$bzm]."')";
-			$event2["click"] = "lmbOpenForm(event,'{$gfield[$gtabid]["verkntabid"][$field_id]}','',{action:'gtab_erg', v_tabid:'$gtabid',v_fieldid:'{$gfield[$gtabid]["field_id"][$field_id]}',v_id:'{$gresult[$gtabid]["id"][$bzm]}'});";
+            # specific relation params
+
+            // specific relation params & filter // generate only once
+            static $ext_RelationFields;
+            $vuniqueid = $gfield[$gtabid]["form_name"][$field_id].'_';
+            if(!$ext_RelationFields) {
+                cftyp_ext_RelationFields($ID, $gtabid, $field_id, $vuniqueid, $formid, $gformid, null, $gresult, $filter, $gsr, $extension);
+            }
+            $ext_RelationFields = 1;
+
+            $show_inframe = $filter["ext_RelationFields"]["show_inframe"][$vuniqueid];
+			$event2["click"] = "lmbOpenForm(event,'{$gfield[$gtabid]["verkntabid"][$field_id]}','',{action:'gtab_erg', v_tabid:'$gtabid',v_fieldid:'{$gfield[$gtabid]["field_id"][$field_id]}',v_id:'{$gresult[$gtabid]["id"][$bzm]}',inframe:'$show_inframe'});";
             $events = cftyp_events(0,$event,$event2,$gresult,$gtabid,$field_id,$bzm);
 			echo "<a $events>".$rscount."&nbsp;$lang[86]</a>";
 			// show details in dialog in editmode
@@ -1447,12 +1466,7 @@ function cftyp_14_d(&$vgresult,$rscount,$typ,$verkn,$gtabid,$vgtabid,$bzm,$ID,$V
 	
 	echo "</thead><tbody>";
 
-	// typ 1 = global editmode ; typ 2 = global viewmode
-    // $editmode 1 = element editmode ; $editmode null = viewmode
-	if($filter["ext_RelationFields"]["edit"][$vuniqueid] AND $typ == 1){
-		if(is_array($filter["ext_RelationFields"]["edit"][$vuniqueid])){
-			$extedit = $filter["ext_RelationFields"]["edit"][$vuniqueid];
-		}
+    if($filter["ext_RelationFields"]["edit"][$vuniqueid] AND $typ == 1){
 		$editmode = 1;
 	}
 
@@ -1518,20 +1532,18 @@ function cftyp_14_d(&$vgresult,$rscount,$typ,$verkn,$gtabid,$vgtabid,$bzm,$ID,$V
             }
         }
 
-		echo "<tr id=\"elrow_".$VID."_".$vgtabid."_".$bzm."\" title=\"".$title."\" data-id=\"$VID\" class=\"gtabBodyTR $indicatorClass\" $indicatorAttribute style=\"background-color:$BGCOLOR;\" lmbbgcolor=\"$BGCOLOR\" onclick=\"lmbTableClickEvent(event,this)\" ";
-		# Explorer Zusatz
+		echo "<tr id=\"elrow_".$VID."_".$vgtabid."_".$bzm."_".$vgresult[$vgtabid]["verkn_keyid"][$key]."\" data-keyid=\"".$vgresult[$vgtabid]["verkn_keyid"][$key]."\" data-id=\"$VID\" title=\"".$title."\"  class=\"gtabBodyTR $indicatorClass\" $indicatorAttribute style=\"background-color:$BGCOLOR;\" lmbbgcolor=\"$BGCOLOR\" onclick=\"lmbTableClickEvent(event,this)\" ";
+
+        # Contextmenu
+        if($GLOBALS['gcustmenu'][$vgtabid][20]['id'][0]) {
+            echo "oncontextmenu=\"lmbRelationContextMenu(event,this,$VID,$vgtabid,'" . $GLOBALS['gcustmenu'][$vgtabid][20]['id'][0] . "')\" ";
+        }
+
+        # Explorer Zusatz
 		if($gtab["typ"][$gfield[$gtabid]["verkntabid"][$bzm]] == 3){
 			echo "ondblclick=\"open('main.php?action=explorer_detail&ID=".$VID."','filedetails','toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650')\"";
 		# Messages
-		}else if($gtab["typ"][$gfield[$gtabid]["verkntabid"][$bzm]] == 6){
-			/* -- <fetch mail configuration> --------------------------------------------- */
-			$buf_gtabid = $GLOBALS["gtabid"];
-			$GLOBALS["gtabid"] = $vgtabid;
-			require_once(COREPATH . 'extra/messages/config.php');
-			$imap_cfg = lmb_getImapCfg($gtabid);
-			echo "ondblclick=\"open('main_dyns.php?actid=messages&amp;gtabid={$vgtabid}"."&amp;mbox=".urlencode($imap_cfg["arch_mbox"])."&amp;uid={$vgresult[$vgtabid][6][$key]}','File_Download','toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=850,height=500')\"";
-			$GLOBALS["gtabid"] = $buf_gtabid;
-			/* -- </fetch mail configuration> --------------------------------------------- */
+        // todo
 		# Default
 		}else{
 		    if($filter["ext_RelationFields"]["ondblclick"][$vuniqueid]) {
@@ -1548,30 +1560,19 @@ function cftyp_14_d(&$vgresult,$rscount,$typ,$verkn,$gtabid,$vgtabid,$bzm,$ID,$V
 		echo ">";
 
 		if($typ == 1){
-			# Messages
-			if($gtab["typ"][$gfield[$gtabid]["verkntabid"][$bzm]] == 6){
-				echo "<td class=\"gtabBodyTD\" valign=\"bottom\" align=\"center\" style=\"width:50px;\" nowrap>";
-				echo "&nbsp;<i class=\"lmb-icon-cus lmb-page-delete-fancy\" height=\"12\" width=\"12\" style=\"cursor:pointer;\" title=\"".$lang[160]."\" name=\"mail_delete\" id=\"{$VID}_{$gtabid}_{$bzm}_{$ID}_{$typ}\"></i>";
-				$editmode = 0; // readonly
-				echo "&nbsp;&nbsp;<i class=\"lmb-icon lmb-caret-down-alt2\" style=\"cursor:pointer;\" title=\"".$lang[862]."\" onclick=\"LmExt_RelationFields(this,'$gtabid','$bzm','','$typ','$ID','','$VID','sortdown','','$gformid','$formid')\"></i>
-					<i class=\"lmb-icon lmb-caret-up-alt\" style=\"cursor:pointer;\" title=\"".$lang[861]."\" onclick=\"LmExt_RelationFields(this,'$gtabid','$bzm','','$typ','$ID','','$VID','sortup','','$gformid','$formid')\"></i>
-					&nbsp;</td>";
-			# Default
-			}else{
-				if(!$filter["ext_RelationFields"]["no_sort"][$vuniqueid] AND $gfield[$gtabid]["data_type"][$bzm]){
-					echo "<td class=\"gtabBodyTD\" valign=\"bottom\" align=\"center\" style=\"width:50px;\" nowrap>";
-						if($isrelation AND $gfield[$gtabid]['data_type'][$bzm] != 25){
-							echo "&nbsp;&nbsp;<i class=\"lmb-icon lmb-caret-down-alt2\" style=\"cursor:pointer;\" TITLE=\"".$lang[862]."\" OnClick=\"LmExt_RelationFields(this,'$gtabid','$bzm','','$typ','$ID','','$VID','sortdown','','$gformid','$formid')\"></i>
-						<i class=\"lmb-icon lmb-caret-up-alt\" style=\"cursor:pointer;\" TITLE=\"".$lang[861]."\" OnClick=\"LmExt_RelationFields(this,'$gtabid','$bzm','','$typ','$ID','','$VID','sortup','','$gformid','$formid')\"></i>&nbsp;";
-						}
-					echo "</td>";
-				}
-			}
+            if(!$filter["ext_RelationFields"]["no_sort"][$vuniqueid] AND $gfield[$gtabid]["data_type"][$bzm]){
+                echo "<td class=\"element-cell gtabBodyTD\" data-fieldid=\"0\"  valign=\"bottom\" align=\"center\" style=\"width:50px;\" nowrap>";
+                    if($isrelation AND $gfield[$gtabid]['data_type'][$bzm] != 25){
+                        echo "&nbsp;&nbsp;<i class=\"lmb-icon lmb-caret-down-alt2\" style=\"cursor:pointer;\" TITLE=\"".$lang[862]."\" OnClick=\"LmExt_RelationFields(this,'$gtabid','$bzm','','$typ','$ID','','$VID','sortdown','','$gformid','$formid')\"></i>
+                    <i class=\"lmb-icon lmb-caret-up-alt\" style=\"cursor:pointer;\" TITLE=\"".$lang[861]."\" OnClick=\"LmExt_RelationFields(this,'$gtabid','$bzm','','$typ','$ID','','$VID','sortup','','$gformid','$formid')\"></i>&nbsp;";
+                    }
+                echo "</td>";
+            }
 		}
 
 		/*----------------- show indicator object in first cell -------------------*/
 		if($filter["ext_RelationFields"]["indicator"][$vuniqueid] AND $vgresult[$vgtabid]["indicator"]["object"][$key]){
-		    echo "<td class=\"gtabBodyTD\" valign=\"bottom\" align=\"center\" nowrap>";
+		    echo "<td class=\"element-cell gtabBodyTD\" data-fieldid=\"0\"  valign=\"bottom\" align=\"center\" nowrap>";
 			foreach ($vgresult[$vgtabid]["indicator"]["object"][$key] as $ikey => $ival){
 				echo "<span style=\"padding-left:2px;padding-right:2px;\">$ival</span>\n";
 			}
@@ -1580,7 +1581,7 @@ function cftyp_14_d(&$vgresult,$rscount,$typ,$verkn,$gtabid,$vgtabid,$bzm,$ID,$V
 
 		if($filter["ext_RelationFields"][$vuniqueid]){
 			foreach ($filter["ext_RelationFields"][$vuniqueid] as $key1 => $value1){
-			    
+
 			    if($gfield[$vgtabid_]['field_type'][$value1] >= 100){continue;}
                 if($gfield[$vgtabid_]["col_hide"][$value1]){continue;}
 
@@ -1601,17 +1602,13 @@ function cftyp_14_d(&$vgresult,$rscount,$typ,$verkn,$gtabid,$vgtabid,$bzm,$ID,$V
 				    $edittyp = 1;
 
 				    // no writable for n:m realtions exept relation params
-                    if($gfield[$gtabid]["data_type"][$bzm] == 24 AND $value1 < 1000){
+                    if($gfield[$gtabid]["data_type"][$bzm] == 24 AND $value1 < 1000 AND !$filter['ext_RelationFields']['editnm'][$vuniqueid]){
                         $edittyp = 2;
                     }
 
 					# specific field setting from extension (ext_RelationFields)
-					if($extedit){
-						if(in_array($value1,$extedit)){
-							$edittyp = 1;
-						}else{
-							$edittyp = 2;
-						}
+					if($filter['ext_RelationFields']['readonly'][$vuniqueid] AND in_array($value1,$filter['ext_RelationFields']['readonly'][$vuniqueid])){
+                        $edittyp = 2;
 					}
 
 					# editmode
@@ -1648,7 +1645,7 @@ function cftyp_14_d(&$vgresult,$rscount,$typ,$verkn,$gtabid,$vgtabid,$bzm,$ID,$V
 				}
 
 				#if(!$val){$val == "--";}
-				echo "<td class=\"gtabBodyTD\" align=\"$align\" style=\"width:$width\">";
+				echo "<td class=\"element-cell gtabBodyTD\" data-fieldid=\"$value1\"  align=\"$align\" style=\"width:$width\">";
 				/* ------------------ Typefunction --------------------- */
 				$retrn = $fname($key,$value1,$vgtabid_,$edittyp,$vgresult);
 				/* ------------------ /Typefunction -------------------- */

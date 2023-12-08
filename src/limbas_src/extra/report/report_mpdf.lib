@@ -8,6 +8,7 @@
  */
 
 
+use Limbas\extra\template\report\ReportTemplateRender;
 
 require_once(COREPATH . 'extra/report/report_mpdf_class.lib');
 require_once(COREPATH . 'gtab/gtab.lib');
@@ -16,35 +17,9 @@ require_once(COREPATH . 'gtab/gtab.lib');
 
 /*------- report template ---------*/
 function print_templ(LmbMpdf &$pdf, $ID, &$report) {
-    global $greportlist;
-    global $umgvar;
-    global $db;
-    global $gtab;
-
-
-    #$style = &$report['style'][$el];
-    $reportID = $report['report_id'];
-    $reportTabID = $report['referenz_tab'];
-    $templGtabid = $report['root_template'];
-    #$parameter = &$report['parameter'][$el];
-
-	$sqlquery = "SELECT CONTENT FROM {$gtab['table'][$report['root_template']]} WHERE ID = {$report['root_template_id']}";
-	$rs = lmbdb_exec($db,$sqlquery);
-	$content = lmbdb_result($rs, "CONTENT");
-
-    require_once(COREPATH . 'extra/template/report/ReportTemplateConfig.php');
-    TemplateConfig::$instance = new ReportTemplateConfig($report, $parameter, $ID);
-    if ($GLOBALS['resolvedTemplateGroups']) {
-        TemplateConfig::$instance->resolvedTemplateGroups = $GLOBALS['resolvedTemplateGroups'];
-    }
-    if ($GLOBALS['resolvedDynamicData']) {
-        TemplateConfig::$instance->resolvedDynamicData = $GLOBALS['resolvedDynamicData'];
-    }
-    $baseElement = new ReportTemplateElement($templGtabid, 'lmbBaseElement', $content);
-    $baseElement->resolve($ID);
-    $htmlArr = $baseElement->getAsHtmlArr();
-
-    $pdf->WriteHTML(implode('', $htmlArr));
+    $templateRender = new ReportTemplateRender();
+    $html = $templateRender->getHtml($report,intval($report['root_template']),intval($report['root_template_id']), intval($report['referenz_tab'] ?? 0),$ID, $GLOBALS['resolvedTemplateGroups'] ?? [], $GLOBALS['resolvedDynamicData'] ?? []);
+    $pdf->WriteHTML($html);
 }
 
 # RGB Color ----------------------------
@@ -187,7 +162,7 @@ function lmb_reportCreatePDF($report_id, $ID, $report_output, $report_rename = n
     $report['report_rename'] = $report_rename;
 
     // get new ldms_files ID / create DMS record if archived
-    if($report_output == 2) {
+    if($report_output == 2 OR ($report_output == 4 AND $GLOBALS['umgvar']['printer_cache'])) {
         # new DMS record
         $report['archive_fileID'] = next_db_id('LDMS_FILES', 'ID', 1);
         if(!new_record($GLOBALS['gtab']['argresult_id']['LDMS_FILES'],null,null,null,null,null,null,$report['archive_fileID'])){
@@ -195,15 +170,23 @@ function lmb_reportCreatePDF($report_id, $ID, $report_output, $report_rename = n
         }
     }
 
+    // workaround - use archive_fileID from lmb_reportCreatePDFtoDMS() - todo
+    if($GLOBALS['archive_fileID']){
+        $report['archive_fileID'] = $GLOBALS['archive_fileID'];
+    }
+
+
+
     // generate PDF
     $pdf = create_pdf($report, $ID);
     if (!$pdf) {
         return false;
     }
 
-    # fill pdf with template
+    # fill PDF from template
     print_templ($pdf, $ID, $report);
 
+    # save PDF
     $temp_file_path = store_pdf($pdf, $report, $ID, $report_rename, $report_output);
 
     if (!$temp_file_path) {
@@ -217,6 +200,7 @@ function lmb_reportCreatePDF($report_id, $ID, $report_output, $report_rename = n
         $report['archive_fileID'] = reportArchiv($temp_file_path, $report, $ID);
     }
 
+    # to printer cache
     if ($report_output == 4 AND $GLOBALS['LINK'][304] AND !lmbPrint($printer, lmb_utf8_encode($temp_file_path), $report['archive_fileID'])) {
         lmb_log::error('print failed', 'print failed!', $report['report_rename']);
     }
@@ -410,6 +394,7 @@ function lmb_reportPDF($report_id,$gtabid=null,$ID=null,$report_output=null,$rep
     if(!$gtabid){
         $gtabid = $greportlist["argresult_tabid"][$report_id];
     }
+    if($gtabid <= 0){$gtabid = null;}
 
     $listmode = $greportlist[$gtabid]["listmode"][$report_id];
     $extension = $greportlist[$gtabid]["extension"][$report_id];
@@ -471,6 +456,12 @@ function lmb_reportCreatePDFtoDMS($report_id,$gtabid=null,$ID=null,$level=null,$
         $level = $greportlist[$gtabid]["target"][$report_id];
     }
 
+    // workaround - archive_fileID - todo
+    $GLOBALS['archive_fileID'] = next_db_id('LDMS_FILES', 'ID', 1);
+    if(!new_record($GLOBALS['gtab']['argresult_id']['LDMS_FILES'],null,null,null,null,null,null,$GLOBALS['archive_fileID'])){
+        return false;
+    }
+
 	$generatedReport = lmb_reportPDF($report_id,$gtabid,$ID,null,$report_name,$gsr,$filter);
 
     if(file_exists(lmb_utf8_encode($generatedReport))){
@@ -481,6 +472,7 @@ function lmb_reportCreatePDFtoDMS($report_id,$gtabid=null,$ID=null,$level=null,$
         // upload in Filesystem
         $file["file"][0] = $generatedReport;
         $file["file_name"][0] = $filename;
+        $file["forceNewID"][0] = $GLOBALS['archive_fileID']; // workaround - archive_fileID - todo
         $fileid = lmb_fileUpload($file, $level, null, 1);
 
         // Verknüpfen

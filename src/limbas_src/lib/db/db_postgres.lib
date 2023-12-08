@@ -157,7 +157,7 @@ function dbf_1($p,$t=0){
 			return $p->format("Y-m-d H:i:s");
 		} else {
 			return date("Y-m-d H:i:s",1);
-		}		
+		}
 	}
 }
 

@@ -27,6 +27,7 @@
         <input type="hidden" name="action" value="setup_reminder">
         <input type="hidden" name="editid">
 
+        <div class="table-responsive">
         <table class="table table-sm table-striped mb-0 border bg-white">
             <thead>
             <tr>
@@ -39,78 +40,96 @@
                 <th><?=$lang[1169]?></th>
                 <th><?=$lang[2742]?></th>
                 <th><?=$lang[2685]?></th>
+                <th><?=$lang[363]?></th>
+                <th><?=$lang[1858]?> (Min)</th>
             </tr>
             </thead>
 
             <?php
             
             if($reminder):
-                
+
                 foreach ($reminder as $tabid => $value):
                     #if($tabid == "name_id") { continue; }
 
-                    echo '<tr><td colspan="9">'.$gtab['table'][$tabid].'</td></tr>';
+                    echo '<tr><td colspan="11">'.$gtab['table'][$tabid].'</td></tr>';
 
                     foreach ($value['name'] as $id => $name): ?>
-                        
+
                         <tr>
                             <td><?=$id?></td>
                             <td><i class="lmb-icon lmb-trash cursor-pointer" onclick="deleteReminder(<?=$id?>, '<?=$name?>')"></i></td>
-                            <td><a href="main_admin.php?action=setup_reminder&sort=up&sortid=<?=$id?>&tabid=<?=$tabid?>"><i class="lmb-icon lmb-long-arrow-up"></i></a>&nbsp;<a href="main_admin.php?action=setup_reminder&sort=down&sortid=<?=$id?>&tabid=<?=$tabid?>"><i class="lmb-icon lmb-long-arrow-down"></i></a></td>
-                            <td><input type="text" name="remindername[<?=$id?>]" value="<?=$name?>" onchange="document.form1.editid.value=<?=$id?>;document.form1.submit();" class="form-control form-control-sm"></td>
+                            <td nowrap>
+                                <a href="main_admin.php?action=setup_reminder&sort=up&sortid=<?=$id?>&tabid=<?=$tabid?>">
+                                    <i class="lmb-icon lmb-long-arrow-up"></i>
+                                </a>
+                                <a href="main_admin.php?action=setup_reminder&sort=down&sortid=<?=$id?>&tabid=<?=$tabid?>">
+                                    <i class="lmb-icon lmb-long-arrow-down"></i>
+                                </a>
+                            </td>
+                            <td>
+                                <input
+                                        class="w-100 form-control form-control-sm"
+                                        style="min-width: 100px"
+                                        type="text"
+                                        name="remindername[<?=$id?>]"
+                                        value="<?=$name?>"
+                                        onchange="document.form1.editid.value=<?=$id?>;document.form1.submit();"
+                                >
+                            </td>
                             <td><?=$gtab['table'][$tabid]?></td>
                             <td>
                                 <?php
-                                if($gformlist[$tabid]['desc']):
-                                    $forms = '';
-                                    foreach($gformlist[$tabid]["name"] as $key => $val){
-                                        if($gformlist[$tabid]["typ"][$key] == 2){
-                                            if($key == $value['forml_id'][$id]){$SELECTED = "SELECTED";}else{$SELECTED = "";}
-                                            $forms .= "<option value=\"".$key."\" $SELECTED>".$val;
+                                $forms = '';
+                                if($gformlist[$tabid]['name']) {
+                                    foreach ($gformlist[$tabid]["name"] as $key => $val) {
+                                        if ($gformlist[$tabid]["typ"][$key] == 2) {
+                                            if ($key == $value['forml_id'][$id]) {
+                                                $SELECTED = "SELECTED";
+                                            } else {
+                                                $SELECTED = "";
+                                            }
+                                            $forms .= "<option value=\"" . $key . "\" $SELECTED>" . $val;
                                         }
                                     }
-
-                                    if ($forms): ?>
-
+                                }
+                                if($tabid OR $forms){?>
                                         <select name="reminderforml[<?=$id?>]" onchange="document.form1.editid.value=<?=$id?>;document.form1.submit();" class="form-select form-select-sm">
-                                            <option></option>
+                                            <option></option><option value="-1" <?=($value['forml_id'][$id] == -1 ? 'selected' : '')?>><?=$lang[3142]?></option>
                                             <?=$forms?>
                                         </select>
-                                <?php
-                                        
-                                    endif;
-                                endif;
-                                
-                                ?>
+                                <?php }?>
                             </td>
                             <td>
                                 <?php
-                                if($gformlist[$tabid]['name']):
-                                    $forms = '';
-                                    foreach($gformlist[$tabid]["name"] as $key => $val){
-                                        if($gformlist[$tabid]["typ"][$key] == 1){
-                                            if($key == $value['formd_id'][$id]){$SELECTED = "SELECTED";}else{$SELECTED = "";}
-                                            $forms .= "<option value=\"".$key."\" $SELECTED>".$val;
+                                $forms = '';
+                                if($gformlist[$tabid]['name']) {
+                                    foreach ($gformlist[$tabid]["name"] as $key => $val) {
+                                        if ($gformlist[$tabid]["typ"][$key] == 1) {
+                                            if ($key == $value['formd_id'][$id]) {
+                                                $SELECTED = "SELECTED";
+                                            } else {
+                                                $SELECTED = "";
+                                            }
+                                            $forms .= "<option value=\"" . $key . "\" $SELECTED>" . $val;
                                         }
                                     }
+                                }
 
-                                    if ($forms): ?>
+                                if($tabid OR $forms){?>
+                                    <select name="reminderformd[<?=$id?>]" onchange="document.form1.editid.value=<?=$id?>;document.form1.submit();" class="form-select form-select-sm">
+                                        <option></option>
+                                        <option value="-1" <?if($value['formd_id'][$id] == -1){echo 'selected';}?>>-<?=$lang[2710]?>-</option>
+                                        <option disabled>________________</option>
+                                        <?=$forms?>
+                                    </select>
+                                <?php } ?>
 
-                                        <select name="reminderformd[<?=$id?>]" onchange="document.form1.editid.value=<?=$id?>;document.form1.submit();" class="form-select form-select-sm">
-                                            <option></option>
-                                            <option value="-1" <?if($value['formd_id'][$id] == -1){echo 'selected';}?>>-<?=$lang[2710]?>-</option>
-                                            <option disabled>________________</option>
-                                            <?=$forms?>
-                                        </select>
-                                    <?php
-
-                                    endif;
-                                endif;
-
-                                ?>
                             </td>
                             <td><input type="checkbox" name="remindergrouping[<?=$id?>]" <?=$value['groupbased'][$id]?'checked':''?> value="1" onchange="document.form1.editid.value=<?=$id?>;document.form1.submit();"></td>
                             <td><input type="checkbox" name="reminderdefault[<?=$id?>]" <?=$value['defaultselection'][$id]?'checked':''?> value="1" onchange="document.form1.editid.value=<?=$id?>;document.form1.submit();"></td>
+                            <td><input type="checkbox" name="reminderinfo[<?=$id?>]" <?=$value['info'][$id]?'checked':''?> value="1" onchange="document.form1.editid.value=<?=$id?>;document.form1.submit();"></td>
+                            <td><input type="text" name="reminderrfresh[<?=$id?>]" value="<?=$value['refresh'][$id]?>" onchange="document.form1.editid.value=<?=$id?>;document.form1.submit();" class="form-control form-control-sm" style="width:50px"></td>
                         </tr>
                     <?php
                     endforeach;
@@ -126,6 +145,8 @@
                     <th colspan="3"></th>
                     <th><?=$lang[4]?></th>
                     <th><?=$lang[164]?></th>
+                    <th></th>
+                    <th></th>
                     <th></th>
                     <th></th>
                     <th></th>
@@ -149,11 +170,14 @@
                     <td></td>
                     <td></td>
                     <td></td>
+                    <td></td>
+                    <td></td>
                 </tr>
             </tfoot>
             
             
         </table>
+        </div>
 
 
     </FORM>

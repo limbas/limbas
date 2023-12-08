@@ -348,9 +348,11 @@ $sgc8: ' . lmbSuggestColor('74ba5c'). ';
     if (!file_exists($scsspath)) {
         $scsspath = COREPATH . 'layout/scss/';
     }
-    
+
+    $vendorPath = COREPATH . 'resources/vendor';
+
     $scss = new ScssPhp\ScssPhp\Compiler();
-    $scss->setImportPaths([$scsspath]);
+    $scss->setImportPaths([$scsspath,$vendorPath]);
 
     try {
 

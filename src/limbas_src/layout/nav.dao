@@ -151,7 +151,7 @@ function menu_get_report($tabid, $reportid, $typ = 1, $depth = null) {
 
         $menu["link"] = "print_report($tabid,$reportid,'".$greportlist[$tabid]["defformat"][$reportid]."');";
     }else{
-        $menu["link"] = "main_admin.php?action=setup_report_frameset&report_id=$reportid&referenz_tab=$tabid";
+        $menu["link"] = "main_admin.php?action=setup_report_frameset&report_id=$reportid&referenz_tab=$tabid&type=report";
     }
 
     $menu["depth"] = $depth;
@@ -452,6 +452,7 @@ function menu_get_calendar(){
 # admin setup
 function menu_get_admin_setup(){
 	global $LINK;
+    global $LINK_ID;
 
 	$menu1 = array();
 
@@ -472,6 +473,8 @@ function menu_get_admin_setup(){
     if($LINK[303]){$menu0 = menu_get_standard(303,13);$menu1 = array_merge($menu1,$menu0);}
     if($LINK[316]){$menu0 = menu_get_standard(316,14);$menu1 = array_merge($menu1,$menu0);}
     if($LINK[207]){$menu0 = menu_get_standard(207,15);$menu1 = array_merge($menu1,$menu0);}
+    if($LINK[$LINK_ID['setup_mails']]){$menu0 = menu_get_standard($LINK_ID['setup_mails'],16);$menu1 = array_merge($menu1,$menu0);}
+    if($LINK[$LINK_ID['setup_mail_templates']]){$menu0 = menu_get_standard($LINK_ID['setup_mail_templates'],17);$menu1 = array_merge($menu1,$menu0);}
     return $menu1;
 }
 
@@ -635,6 +638,7 @@ function menu_get_admin_workflow(){
 
 # -------------------------------------------------------------------------------------------------------------
 global $LINK;
+global $LINK_ID;
 global $session;
 global $gLmbExt;
 
@@ -770,6 +774,8 @@ if($LINK[21]){
 		#if($LINK[228]){$menu2 = menu_get_standard(228,5); $menu0 = array_merge($menu0,$menu2);}
         // reportManager
         if($LINK[317]){$menu2 = menu_get_standard(317,7); $menu0 = array_merge($menu0,$menu2);}
+        # manage mail accounts
+        if($LINK[$LINK_ID['user_mails']]){$menu2 = menu_get_standard($LINK_ID['user_mails'],8); $menu0 = array_merge($menu0,$menu2);}
 
 		$menu1[1]["child"] = $menu0;
 	}

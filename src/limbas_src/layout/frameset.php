@@ -54,7 +54,6 @@ require_once (COREPATH . 'lib/context.lib');
 <link rel="stylesheet" type="text/css" href="assets/css/<?=$session['css']?>?v=<?=$umgvar["version"]?>">
 <script type="text/javascript" src="assets/js/lib/global.js?v=<?=$umgvar["version"]?>"></script>
 <script type="text/javascript" src="assets/vendor/jquery/jquery.min.js?v=<?=$umgvar["version"]?>"></script>
-
 <script src="assets/js/layout/nav.js?v=<?=$umgvar["version"]?>"></script>
 
 
@@ -131,7 +130,7 @@ require_once (COREPATH . 'lib/context.lib');
     </div>
 
     <div class="modal" id="general-main-modal" tabindex="-1">
-        <div class="modal-dialog modal-fullscreen">
+        <div class="modal-dialog">
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="general-main-modal-title"></h5>
@@ -144,6 +143,20 @@ require_once (COREPATH . 'lib/context.lib');
                     <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Schließen</button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+        <div id="toast-success" class="toast text-bg-success">
+            <div class="toast-body" id="toast-success-body"></div>
+        </div>
+    
+        <div id="toast-error" class="toast text-bg-danger">
+            <div class="toast-body" id="toast-error-body"></div>
+        </div>
+    
+        <div id="toast-warning" class="toast text-bg-warning">
+            <div class="toast-body" id="toast-warning-body"></div>
         </div>
     </div>
 

@@ -6,18 +6,26 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
-class ReportDataPlaceholder extends DataPlaceholder {
+
+namespace Limbas\extra\template\report;
+
+use Limbas\extra\template\base\HtmlParts\DataPlaceholder;
+use Limbas\extra\template\base\TemplateConfig;
+
+class ReportDataPlaceholder extends DataPlaceholder
+{
 
     public function __construct($fieldIdentifiers, $options, $altValue, $noResolve)
     {
         parent::__construct($fieldIdentifiers, $options, $altValue, $noResolve);
     }
 
-    protected function resolve() {
+    protected function resolve()
+    {
         if ($this->noResolve) {
             return true;
         }
-        
+
         $report = TemplateConfig::$instance->report;
 
         # not a valid field -> return true -> dont lookup in db
@@ -32,7 +40,7 @@ class ReportDataPlaceholder extends DataPlaceholder {
 
         # resolve from existing report element
         $rdbfieldCount = 0;
-        if(is_array($report['dbfield'])) {
+        if (is_array($report['dbfield'])) {
             $rdbfieldCount = lmb_count($report['dbfield']);
         }
         for ($i = 0; $i < $rdbfieldCount; $i++) {
@@ -68,7 +76,8 @@ class ReportDataPlaceholder extends DataPlaceholder {
         return false;
     }
 
-    public function getAsHtmlArr() {
+    public function getAsHtmlArr(): array
+    {
         $htmlArr = parent::getAsHtmlArr();
 
         // option: css class

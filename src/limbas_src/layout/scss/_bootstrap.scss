@@ -11,13 +11,12 @@
  */
 
 .modal-fullscreen {
-  width: 100vw;
+  width: 99vw;
   max-width: none;
-  height: -webkit-calc(100% - #{$top-nav-height});
-  height: -moz-calc(100% - #{$top-nav-height});
-  height: calc(100% - #{$top-nav-height});
-  margin: 0;
-  margin-top: $top-nav-height;
+  height: -webkit-calc(100% - #{$top-nav-height} - 0.5rem);
+  height: -moz-calc(100% - #{$top-nav-height} - 0.5rem);
+  height: calc(100% - #{$top-nav-height} - 0.5rem);
+  margin: $top-nav-height 0.5vw 0 0.5vw;
 }
 
 .modal-fullscreen .modal-content {

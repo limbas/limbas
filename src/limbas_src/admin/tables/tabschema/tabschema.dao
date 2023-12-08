@@ -279,9 +279,9 @@ function lmb_make_tree($value, $callTrace = array())
 
     if ($dep = lmb_checkViewDependency($value)) {
         ob_start();
-        echo '<ul>';
+        echo '<ul class="list-unstyled">';
         foreach ($dep as $k => $v) {
-            echo '<li>';
+            echo '<li class="ps-5">';
             echo "<div class=\"view_$v\" onclick=\"lmb_show_relations('$v')\" ondblclick=\"lmb_show_relations('$v',1)\">$v</div>";
             $callTrace[] = $value;
             lmb_make_tree($v, $callTrace);

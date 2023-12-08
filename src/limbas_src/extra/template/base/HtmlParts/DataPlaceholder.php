@@ -7,6 +7,11 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+namespace Limbas\extra\template\base\HtmlParts;
+
+use Limbas\extra\template\base\TemplateConfig;
+use lmb_log;
+
 /**
  * Class DataPlaceholder
  * A placeholder for a field of a dataset
@@ -120,7 +125,7 @@ abstract class DataPlaceholder extends AbstractHtmlPart {
             if ($tableID != $currentGtabid) {
                 lmb_log::error(
                     "Given table '$tableName' ($tableID) doesn't match base table {$gtab['table'][$currentGtabid]} ($currentGtabid)!",
-                    'Repeating table row: Given table doesn\'t match report/form base table!',
+                    'Repeating table row: Given table doesn\'t match base table!',
                     $currentGtabid
                 );
             }
@@ -181,7 +186,9 @@ abstract class DataPlaceholder extends AbstractHtmlPart {
             # resolve field name -> id
             $fieldID = $gfield[$currentGtabid]['argresult_name'][lmb_strtoupper($fieldIdentifiers[$i]['name'])];
             if ($fieldID === null) {
-                lmb_log::error("Invalid field {$fieldIdentifiers[$i]['name']} in placeholder {$this->fullMatch}!", "Invalid field {$fieldIdentifiers[$i]['name']}!", $currentGtabid);
+                if(!empty($currentGtabid)) {
+                    lmb_log::error("Invalid field {$fieldIdentifiers[$i]['name']} in placeholder {$this->fullMatch}!", "Invalid field {$fieldIdentifiers[$i]['name']}!", $currentGtabid);   
+                }
                 $this->fieldlist = null;
                 $this->setValue('');
                 return;
@@ -214,7 +221,8 @@ abstract class DataPlaceholder extends AbstractHtmlPart {
         $this->trace = implode(',', $trace);
     }
 
-    public function getAsHtmlArr() {
+    public function getAsHtmlArr(): array
+    {
         // if i fetch the base table, I must not be dependent on another table row
         if ($this->isModeFetchBaseTable() && $this->isDependent()) {
             lmb_log::error(

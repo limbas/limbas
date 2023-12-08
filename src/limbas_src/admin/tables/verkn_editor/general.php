@@ -14,11 +14,11 @@
     <input type="hidden" name="drop_viev">
     <input type="hidden" name="set_verknfieldid">
     <input type="hidden" name="category" value="edit">
-    <input type="hidden" name="set_vparams">
     <input type="hidden" name="relationtree">
-    
-
-
+    <input type="hidden" name="change_vparams">
+    <input type="hidden" name="change_refint">
+    <input type="hidden" name="change_multiralation">
+    <input type="hidden" name="change_uniqueralation">
 
 
                 <?php if(!$rfield['verkntabid'] AND $rfield['datatype'] == 23){?>
@@ -92,7 +92,7 @@
 
                     <p class="fw-bold">
                         <?php
-                        echo $rfield['verkntabname']. ' | '.$rfield['verknfieldname'];
+                        echo $rfield['verkntabname'];
                         if($rfield['verkntabletype'] == 3){
                             echo "&nbsp; &nbsp;&nbsp;($lang[2855]&nbsp;&nbsp;<i style=\"vertical-align:text-bottom\" class=\"lmb-icon lmb-switch\"></i>) ";
                         }elseif($rfield['verkntabletype'] == 2){
@@ -228,34 +228,61 @@
 
     <?php if($rfield['verkntabletype'] == 1 AND $rfield['verkntabid'] AND $rfield['datatype'] != 23): ?>
     <hr>
-    
-        <div class="row mb-3">
-            <div class="col-sm-6">
-                <p class="m-0"><?=$lang[941]?></p>
-                <input type="checkbox" name="new_refint" <?=($rfield['refint'])?'checked':''?>>&nbsp;
-                <select name="new_refint_rule" class="form-select form-select-sm d-inline-block w-75">
-                    <option value="1" <?=($refint_rule == "DELETE RESTRICT")?'selected':''?>>DELETE RESTRICT</option>
-                </select>
-                <BR>
-                <?php if($refint_rule){echo "( $f1 | $f2 )";}?>
-            </div>
-            
 
-            <?php if($rfield['datatype'] != 25): ?>
-            <div class="col-sm-6">
-                    <p class="m-0"><?=$lang[2809]?></p>
-                
-                    <input type="checkbox" name="new_vparams" <?=($rfield['verknparams'])?'checked':''?> onchange="document.form1.set_vparams.value=1">&nbsp;<?php if($rfield['verknparams']){echo "(ID: ".$rfield['verknparams'].")";}?><br>
-                    <span class="text-success"><?= $GLOBALS['message'] ?></span>
-            </div>
-            <?php endif; ?>
-            
+
+    <div class="mb-0 row">
+        <label class="col-sm-6 col-form-label">
+            <?=$lang[941]?><br>
+            <small class="form-text text-muted">(DELETE RESTRICT)</small>
+        </label>
+        <div class="col-sm-6 pt-2">
+            <input type="checkbox" name="new_refint" <?=($rfield['refint'])?'checked':''?> onchange="document.form1.change_refint.value=1">
+            <?php if($refint_rule){echo "( $f1 | $f2 )";}?>
+            <?=$message1?>
+            <input type="hidden" name="new_refint_rule" value="1">
         </div>
-    
+    </div>
+
+    <div class="mb-0 row">
+        <label class="col-sm-6 col-form-label ">
+            <?=$lang[3147]?><br>
+            <small class="form-text text-muted"> <?=$lang[3148]?></small>
+        </label>
+        <div class="col-sm-6 pt-2">
+            <input type="checkbox" name="new_isunique" <?=($rfield['isunique'])?'checked':''?> onchange="document.form1.change_uniqueralation.value=1">
+        </div>
+    </div>
+
+    <?php if($rfield['datatype'] == 24): ?>
+    <div class="mb-0 row">
+        <label class="col-sm-6 col-form-label">
+            <?=$lang[3149]?><br>
+            <small class="form-text text-muted"><?=$lang[3150]?></small>
+        </label>
+        <div class="col-sm-6 pt-2">
+            <input type="checkbox" name="new_multiralation" <?=($rfield['multirelation'])?'checked':''?> onchange="document.form1.change_multiralation.value=1">
+        </div>
+    </div>
     <?php endif; ?>
 
+    <?php if($rfield['datatype'] != 25): ?>
+    <div class="mb-0 row">
+        <label class="col-sm-6 col-form-label ">
+            <?=$lang[2809]?><br>
+            <small class="form-text text-muted"><?=$lang[3151]?></small>
+        </label>
+        <div class="col-sm-6 pt-2">
+            <input type="checkbox" name="new_vparams" value="1" <?=($rfield['verknparams'])?'checked':''?> onchange="document.form1.change_vparams.value=1">
+            <?php if($rfield['verknparams']){echo "(ID: ".$rfield['verknparams'].")";}?>
+            <span class="text-success"><?= $GLOBALS['message'] ?></span>
+        </div>
+    </div>
+    <?php endif; ?>
+
+
+    <?php endif; ?>
     
-    <?=$message1?>
+
         
 
     <div class="text-center">

@@ -530,7 +530,7 @@ function gtabSetTablePosition(reset,scrolltoY){
 	}
 
 	// show save&close button for open in iframe
-	if(jsvar['verknpf'] || !parent.main) {
+	if((jsvar['verknpf'] || !parent.main) && parent.window.location.href.indexOf("redirect") < 1) {
 		$("#lmbSbmClose_" + jsvar['gtabid'] + "_" + jsvar['ID']).show();
 	}
 	
@@ -662,6 +662,30 @@ function sendverknpf(KEY) {
 	getScrollPos();
 	document.form1.lmbSbm.click();
 }
+
+
+function lmbRelationContextMenu(evt,el,ID,gtabid,custmenu) {
+
+    divclose();
+    evt.preventDefault();
+    var child = 'lmb_custmenu_'+custmenu;
+
+	if(!document.getElementById(child)){
+        $('#limbasDivMenuContext').after("<div id='"+child+"' class='lmbContextMenu' style='position:absolute;z-index:992;' onclick='activ_menu = 1;'>");
+    }
+
+    var fieldid = $(evt.target).closest('.element-cell').attr( "data-fieldid" );
+    if(!fieldid){fieldid = '';}
+    var actid = "gtabCustmenu&custmenu=" + custmenu + "&ID=" + ID + "&gtabid=" + gtabid + "&fieldid="+ fieldid;
+    ajaxGet(null, "main_dyns.php", actid, null, '', null, child);
+
+    limbasDivShow(el, evt, child);
+	window.setTimeout('set_activ_menu()',500);
+
+	return false;
+}
+
+
 
 /* --- show_zoom ----------------------------------- */
 function show_zoom(evt,el) {

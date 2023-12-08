@@ -6,29 +6,31 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
-require_once(__DIR__ . '/TemplateConfigInterface.php');
-require_once(__DIR__ . '/DynamicDataUnresolvedException.php');
-require_once(__DIR__ . '/TemplateElement.php');
-require_once(__DIR__ . '/TemplateGroupUnresolvedException.php');
-require_once(__DIR__ . '/HtmlParts/AbstractHtmlPart.php');
-require_once(__DIR__ . '/HtmlParts/DataPlaceholder.php');
-require_once(__DIR__ . '/HtmlParts/DynamicDataPlaceholder.php');
-require_once(__DIR__ . '/HtmlParts/FunctionPlaceholder.php');
-require_once(__DIR__ . '/HtmlParts/Html.php');
-require_once(__DIR__ . '/HtmlParts/IfPlaceholder.php');
-require_once(__DIR__ . '/HtmlParts/SubTemplateElementPlaceholder.php');
-require_once(__DIR__ . '/HtmlParts/TableRow.php');
-require_once(__DIR__ . '/HtmlParts/TableCell.php');
-require_once(__DIR__ . '/HtmlParts/TemplateGroupPlaceholder.php');
-require_once(__DIR__ . '/HtmlParts/HeaderFooter.php');
-require_once(__DIR__ . '/HtmlParts/Background.php');
 
-abstract class TemplateConfig implements TemplateConfigInterface {
+namespace Limbas\extra\template\base;
+
+use Limbas\extra\template\base\HtmlParts\Background;
+use Limbas\extra\template\base\HtmlParts\DynamicDataPlaceholder;
+use Limbas\extra\template\base\HtmlParts\FunctionPlaceholder;
+use Limbas\extra\template\base\HtmlParts\HeaderFooter;
+use Limbas\extra\template\base\HtmlParts\Html;
+use Limbas\extra\template\base\HtmlParts\IfPlaceholder;
+use Limbas\extra\template\base\HtmlParts\SubTemplateElementPlaceholder;
+use Limbas\extra\template\base\HtmlParts\TableCell;
+use Limbas\extra\template\base\HtmlParts\TableRow;
+use Limbas\extra\template\base\HtmlParts\TemplateGroupPlaceholder;
+
+abstract class TemplateConfig implements TemplateConfigInterface
+{
+    
+    /** @var int the gtabid of the data source table */
+    protected int $dataTabId;
+    
 
     /**
-     * @var TemplateConfig
+     * @var TemplateConfig|null
      */
-    public static $instance = null;
+    public static ?TemplateConfig $instance = null;
 
     /**
      * Used to resolve TemplateGroups to the corresponding TemplateElement
@@ -36,7 +38,7 @@ abstract class TemplateConfig implements TemplateConfigInterface {
      * where key is an identifier returned by TemplateGroupPlaceholder::getIdentifier()
      * and value is the name of a valid TemplateElement
      */
-    public $resolvedTemplateGroups = array();
+    public array $resolvedTemplateGroups = [];
 
     /**
      * Used to resolve DynamicDataPlaceholders to their corresponding value
@@ -44,7 +46,7 @@ abstract class TemplateConfig implements TemplateConfigInterface {
      * where key is an identifier returned by DynamicDataPlaceholder::getIdentifier()
      * and value is an (html) string
      */
-    public $resolvedDynamicData = array();
+    public array $resolvedDynamicData = [];
 
     /**
      * Used to retrieve the current index of each TableRow. The innermost TableRow will have key 0 and set the value to
@@ -52,7 +54,7 @@ abstract class TemplateConfig implements TemplateConfigInterface {
      * by one and start iterating on key 0 itself (e.g. 1=>2,0=>0; 1=>2,0=>1; ...).
      * @var array TableRowDepth => Row Index
      */
-    public $tableRowIndex = array();
+    public array $tableRowIndex = [];
 
     /**
      * Used to retrieve the current column index of each TableRow. The innermost TableRow will have key 0 and set the value to
@@ -60,7 +62,7 @@ abstract class TemplateConfig implements TemplateConfigInterface {
      * by one and start iterating on key 0 itself (e.g. 1=>2,0=>0; 1=>2,0=>1; ...).
      * @var array TableRowDepth => Column Index
      */
-    public $tableColIndex = array();
+    public array $tableColIndex = [];
 
     /**
      * Stores values of DataPlaceholders and FunctionPlaceholders:
@@ -69,31 +71,29 @@ abstract class TemplateConfig implements TemplateConfigInterface {
      * [->arrow->identifier][row][col][->sub->arrow->identifier][row]...
      * @var array
      */
-    public $tableData = array();
+    public array $tableData = [];
 
     /**
      * Like tableData but for each layer of TablesRows
      * $currentTableData[0] will contain data of the innermost table that is currently being iterated over.
      * @var array TableRowDepth => TableData
      */
-    public $currentTableData = array();
+    public array $currentTableData = [];
 
-    public $datIDs = array();
+    public array $datIDs = [];
 
     /**
      * @var bool if set to false, all data placeholders are ignored and not resolved
      */
-    public $resolveDataPlaceholders = true;
+    public bool $resolveDataPlaceholders = true;
 
     /**
      * @var bool if set to true, all function placeholders are ignored and not resolved
      */
-    public $noFunctionExecute = false;
+    public bool $noFunctionExecute = false;
     
 
-    public abstract function getGtabid();
-
-    public abstract function getFunctionPrefix();
+    public abstract function getFunctionPrefix(): string;
 
     /**
      * Used to filter template elements to some medium, e.g.:
@@ -102,55 +102,69 @@ abstract class TemplateConfig implements TemplateConfigInterface {
      * "form" or "report" is what should be returned by getMedium()
      * @return string the medium this TemplateConfig generates html for
      */
-    public abstract function getMedium();
+    public abstract function getMedium(): string;
 
-    public function getTemplateElementInstance($templateElementGtabid, $name, &$html, $id = 0, $gtabid = null, $datid = null, $recursion = 0) {
+    public function getGtabid(): int
+    {
+        return $this->dataTabId;
+    }
+    
+    public function getTemplateElementInstance($templateElementGtabid, $name, &$html, $id = 0, $gtabid = null, $datid = null, $recursion = 0): TemplateElement
+    {
         return new TemplateElement($templateElementGtabid, $name, $html, $id, $gtabid, $datid, $recursion);
     }
 
     public abstract function getDataPlaceholderInstance($chain, $options, $altValue);
 
-    public function getFunctionPlaceholderInstance($name, $params) {
+    public function getFunctionPlaceholderInstance($name, $params): FunctionPlaceholder
+    {
         return new FunctionPlaceholder($name, $params);
     }
 
-    public function getHtmlInstance($html) {
+    public function getHtmlInstance($html): Html
+    {
         return new Html($html);
     }
 
-    public function getIfPlaceholderInstance($condition, $consequent, $alternative) {
+    public function getIfPlaceholderInstance($condition, $consequent, $alternative): IfPlaceholder
+    {
         return new IfPlaceholder($condition, $consequent, $alternative);
     }
 
-    public function getSubTemplateElementPlaceholderInstance($name, $options) {
+    public function getSubTemplateElementPlaceholderInstance($name, $options): SubTemplateElementPlaceholder
+    {
         return new SubTemplateElementPlaceholder($name, $options);
     }
 
-    public function getTemplateGroupPlaceholderInstance($groupName, $options) {
+    public function getTemplateGroupPlaceholderInstance($groupName, $options): TemplateGroupPlaceholder
+    {
         return new TemplateGroupPlaceholder($groupName, $options);
     }
 
-    public function getDynamicDataPlaceholderInstance($description, $options) {
+    public function getDynamicDataPlaceholderInstance($description, $options): DynamicDataPlaceholder
+    {
         return new DynamicDataPlaceholder($description, $options);
     }
 
-    public function getTableRowInstance($cells, $attributes) {
+    public function getTableRowInstance($cells, $attributes): TableRow
+    {
         return new TableRow($cells, $attributes);
     }
 
-    public function getTableCellInstance($parts, $attributes) {
+    public function getTableCellInstance($parts, $attributes): TableCell
+    {
         return new TableCell($parts, $attributes);
     }
 
-    public function getHeaderFooterInstance($type, $attributes, $options) {
+    public function getHeaderFooterInstance($type, $attributes, $options): HeaderFooter
+    {
         return new HeaderFooter($type, $attributes, $options);
     }
 
-    public function getBackgroundInstance($attributes, $options) {
+    public function getBackgroundInstance($attributes, $options): Background
+    {
         return new Background($attributes, $options);
     }
-
-
 
 
     public abstract function forTemporaryBaseTable($gtabid, $func);

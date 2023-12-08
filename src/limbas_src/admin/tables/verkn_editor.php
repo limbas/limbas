@@ -285,7 +285,7 @@ function edit_relationparams($tabid,$fieldid){
     <tr><td><i>{$lang[3016]}</i></td><td><input type=\"text\" name=\"params[count]\" value=\"".htmlentities($params['count'],ENT_QUOTES)."\"></td></tr>
     <tr><td><i>{$lang[3017]}</i></td><td><input type=\"text\" name=\"params[ondblclick]\" value=\"".htmlentities($params['ondblclick'],ENT_QUOTES)."\"></td></tr>
     <tr><td><i>{$lang[3039]}</i></td><td><input type=\"text\" name=\"params[showfields]\" value=\"".htmlentities($params['showfields'],ENT_QUOTES)."\"></td></tr>
-    <tr><td><i>{$lang[3041]}</i></td><td><input type=\"text\" name=\"params[edit]\" value=\"".htmlentities($params['edit'],ENT_QUOTES)."\"></td></tr>
+    <tr><td><i>{$lang[3041]}</i></td><td><input type=\"text\" name=\"params[readonly]\" value=\"".htmlentities($params['readonly'],ENT_QUOTES)."\"></td></tr>
     <tr><td><i>{$lang[3040]}</i></td><td><input type=\"text\" name=\"params[width]\" value=\"".htmlentities($params['width'],ENT_QUOTES)."\"></td></tr>
     <tr><td><i>{$lang[3042]}</i></td><td><input type=\"text\" name=\"params[order]\" value=\"".htmlentities($params['order'],ENT_QUOTES)."\"></td></tr>
     <tr><td><i>{$lang[3070]}</i></td><td><input type=\"checkbox\" name=\"params[applyfilter]\" value=\"1\" $applyfilter></td></tr>
@@ -303,6 +303,8 @@ function edit_relationparams($tabid,$fieldid){
     <tr><td><i>{$lang[3028]}</i></td><td><input type=\"checkbox\" name=\"params[no_fieldselect]\" value=\"1\" $no_fieldselect></td></tr>
     <tr><td><i>{$lang[3051]}</i></td><td><input type=\"checkbox\" name=\"params[no_validity]\" value=\"1\" $no_validity></td></tr>
     <tr><td><i>{$lang[3030]}</i></td><td><input type=\"checkbox\" name=\"params[search]\" value=\"1\" $search></td></tr>
+    <tr><td><i>{$lang[3143]}</i></td><td><input type=\"checkbox\" name=\"params[edit]\" value=\"1\" $edit></td></tr>
+    <tr><td><i>{$lang[3144]}</i></td><td><input type=\"checkbox\" name=\"params[editnm]\" value=\"1\" $editnm></td></tr>
     <tr><td><i>{$lang[3031]}</i></td><td><input type=\"checkbox\" name=\"params[showall]\" value=\"1\" $showall></td></tr>
     <tr><td><i>{$lang[3032]}</i></td><td><input type=\"checkbox\" name=\"params[getlongval]\" value=\"1\" $getlongval></td></tr>
     <tr><td><i>{$lang[3033]}</i></td><td><input type=\"checkbox\" name=\"params[nogresult]\" value=\"1\" $nogresult></td></tr>
@@ -310,7 +312,7 @@ function edit_relationparams($tabid,$fieldid){
     <tr><td><i>{$lang[3035]}</i></td><td><input type=\"checkbox\" name=\"params[pagination]\" value=\"1\" $pagination></td></tr>
     <tr><td><i>{$lang[3036]}</i></td><td><input type=\"checkbox\" name=\"params[indicator]\" value=\"1\" $indicator></td></tr>
     <tr><td><i>{$lang[3037]}</i></td><td><input type=\"checkbox\" name=\"params[show_relationpath]\" value=\"1\" $show_relationpath></td></tr>
-    
+
     </table>
     ";
 

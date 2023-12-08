@@ -8,7 +8,7 @@
  */
 require_once COREPATH . 'lib/include_admin.lib';
 
-use admin\tools\update\Updater;
+use Limbas\admin\tools\update\Updater;
 
 function dyns_updateRunPatch($params)
 {

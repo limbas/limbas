@@ -9,13 +9,7 @@
 
 
 
-function get_fieldname($atid,$ftid){
-	global $db;
-	
-	$sqlquery = "SELECT FIELD_NAME,FIELD_TYPE FROM LMB_CONF_FIELDS WHERE TAB_ID = $atid AND FIELD_ID = $ftid";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	return array(lmbdb_result($rs,"FIELD_NAME"),lmbdb_result($rs,"FIELD_TYPE"));
-}
+
 
 ##DATA_TYPE NOT IN (18,31,32,43,48,41,47,13,38,46)
 
@@ -187,37 +181,9 @@ if($mainfield){
 
 /* --- UNIQUE ändern --------------------------------------------- */
 if($uniquefield){
-	if($uniquefield == "uniquefield_CHECKED" OR $uniquefield == "false"){$uniquefield = LMB_DBDEF_FALSE;}else{$uniquefield = LMB_DBDEF_TRUE;}
-
-	$field_ = get_fieldname($atid,$fieldid);
-	$field_name = dbf_4($field_[0]);
-	$field_type = $field_[1];
-
-    // get contraints
-    $contraints = dbq_26(array($DBA["DBSCHEMA"],$table_gtab[$atid],$field_name));
-    $contraint = $contraints['PK_NAME'][0];
-
-	if($field_type != 11 AND $field_type != 4 AND $field_type != 6){
-        $constrname = lmb_getConstraintName('LMB_CONSTR',$table_gtab[$atid],$field_name);
-		if($uniquefield == LMB_DBDEF_TRUE AND !$contraint){
-			# add constraint
-			$sqlquery =  dbq_24(array(dbf_4($table_gtab[$atid]),$field_name,$constrname));
-			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-            if(!$rs){$commit = 1;}
-		}elseif($contraint){
-			# drop constraint
-			$sqlquery =  dbq_25(array(dbf_4($table_gtab[$atid]),$field_name,$contraint));
-			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-            if(!$rs){$commit = 1;}
-		}
-	}
-
-	if(!$commit){
-		$sqlquery =  "UPDATE LMB_CONF_FIELDS SET ISUNIQUE = $uniquefield WHERE FIELD_ID = $fieldid AND TAB_GROUP = $tab_group AND TAB_ID = $atid";
-		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-		if(!$rs) {$commit = 1;}
-	}
+    lmb_set_uniquefield($atid,$fieldid,$uniquefield,$rfield);
 }
+
 
 /* --- INDEX ändern --------------------------------------------- */
 if($fieldindex){

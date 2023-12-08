@@ -7,6 +7,11 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+namespace Limbas\extra\template\base\HtmlParts;
+
+use Limbas\extra\template\base\TemplateConfig;
+use RuntimeException;
+
 /**
  * Class IfPlaceholder
  *
@@ -42,7 +47,8 @@ class IfPlaceholder extends AbstractHtmlPart {
         $this->alternative = $alternative;
     }
 
-    public function getAsHtmlArr() {
+    public function getAsHtmlArr(): array
+    {
         $parts = $this->getParts();
         if (!$parts) {
             return array();

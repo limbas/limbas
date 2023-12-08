@@ -52,32 +52,32 @@ if ($showsystabs) {
     </table>
 </div>
 
-<table class="table table-borderless table-sm tabBody">
+<div class="container-fluid tabBody">
 
-    <TR>
-        <Th><?= $gview["viewname"] ?></Th>
-    </TR>
+    <div class="row">
+        <div class="col"><?= $gview["viewname"] ?></div>
+    </div>
 
-    <TR>
-        <TD class="border bg-light" style="height:70vh;">
+    <div class="row">
+        <div class="col border bg-light" style="height:70vh;">
             <div id="vieweditorPattern" class="overflow-auto w-100 h-100 position-relative"
                  oncontextmenu="limbasDivShow('',event,'tablist');return false;">
                 <?php
                 require_once(COREPATH . 'admin/tables/view/viewschema.php');
                 ?>
             </div>
-        </TD>
-    </TR>
-    <TR>
-        <TD class="w-100 p-1 border-bottom">
-            <div id="lmbViewfieldContainer" class="overflow-auto">
+        </div>
+    </div>
+    <div class="row">
+        <div class="col p-1 border-bottom">
+            <div id="lmbViewfieldContainer" class="">
                 <?php
                 show_viewFields($viewid);
                 ?>
             </div>
-        </TD>
-    </TR>
-</table>
+        </div>
+    </div>
+</div>
 
 <?php
 $confirm = '';

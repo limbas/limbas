@@ -176,6 +176,12 @@ if(!$showheader AND $verkn_addfrom){
                             </li>
                         <?php endif; ?>
 
+                        <?php if($LINK[322]): ?>
+                            <li class="nav-item lmbGtabmenuIcon-322">
+                                <?= LMBAction::ren(322,'icon'); // Mails ?>
+                            </li>
+                        <?php endif; ?>
+
                         <?php if($GLOBALS['gformlist_exist']): ?>
                             <li class="nav-item lmbGtabmenuIcon-132">
                                 <?= LMBAction::ren(132,'icon'); // Formulare ?>

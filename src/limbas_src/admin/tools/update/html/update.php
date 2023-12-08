@@ -11,7 +11,7 @@
 
 require_once(COREPATH . 'admin/tools/datasync/DatasyncClient.php');
 
-use admin\tools\update\Updater;
+use Limbas\admin\tools\update\Updater;
 
 global $umgvar;
 

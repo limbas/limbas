@@ -7,6 +7,8 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+namespace Limbas\extra\template\base\HtmlParts;
+
 /**
  * Class Background
  * Placeholder for background (only supported by mpdf)
@@ -71,7 +73,8 @@ class Background extends AbstractHtmlPart {
         
     }
 
-    public function getAsHtmlArr() {
+    public function getAsHtmlArr(): array
+    {
         
         $first = '';
         if ($this->firstPage) {

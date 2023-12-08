@@ -772,6 +772,7 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 		}
 
         # open in form from indicator
+        $form_id = null;
         if ($gresult[$gtabid]['indicator']['form_id'][$bzm]) {
 			$form_id = $gresult[$gtabid]['indicator']['form_id'][$bzm];
 		}elseif($GLOBALS['greminder'][$gtabid]["formd_id"][$filter['reminder'][$gtabid]]){
@@ -861,7 +862,7 @@ function lmbGlistBody($gtabid,&$gresult,$utyp,$verkn,$verknpf,$filter,$prev_id,$
 		
 		# reminder
 		if($gresult[$gtabid]["LMBREM_FRIST"][$bzm]){
-			echo "<span style=\"padding-left:2px;padding-right:2px;\" title=\"".$gresult[$gtabid]["LMBREM_DESCR"][$bzm]."\">".get_date($gresult[$gtabid]["LMBREM_FRIST"][$bzm],1)." ".$userdat["bezeichnung"][$gresult[$gtabid]["LMBREM_USER"][$bzm]]."</span>\n";
+			echo "<span style=\"padding-left:2px;padding-right:2px;\" title=\"".get_date($gresult[$gtabid]["LMBREM_FRIST"][$bzm],1). ' - ' . $userdat["bezeichnung"][$gresult[$gtabid]["LMBREM_USER"][$bzm]] . ' - '.strip_tags($gresult[$gtabid]["LMBREM_DESCR"][$bzm])."\">". ($gresult[$gtabid]["LMBREM_CONTENT"][$bzm] ? strip_tags($gresult[$gtabid]["LMBREM_CONTENT"][$bzm]) : get_date($gresult[$gtabid]["LMBREM_FRIST"][$bzm],1) )."</span>\n";
 		}
 		
 		echo "&nbsp;</td>\n";

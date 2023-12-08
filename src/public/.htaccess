@@ -9,7 +9,7 @@ Require all granted
     
     RewriteRule ^(.*install)$ %{REQUEST_URI}/ [NC,R=301,L]
         
-    RewriteCond %{REQUEST_URI} !(assets|localassets|USER|TEMP)
+    RewriteCond %{REQUEST_URI} !(assets|localassets|USER|TEMP|BACKUP)
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteRule ^(.*)$ index.php [L,QSA]

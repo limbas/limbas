@@ -27,8 +27,8 @@ if($language_typ == 2){
 
 $langtypname[0] = $lang[994];
 $langtypname[1] = $lang[1219];
-$langtypname[2] = $lang[1220];
-$langtypname[3] = $lang[1221];
+$langtypname[2] = $lang[1221];
+$langtypname[3] = $lang[1220];
 $langtypname[4] = $lang[577];
 $langtypname[5] = $lang[1986];
 
@@ -62,7 +62,6 @@ foreach ($langtyplist as $typkey => $langtyppart){
 	}
 }
 
-
 // multilanguage
 if($language_id AND $multilang){
 
@@ -75,11 +74,13 @@ if($language_id AND $multilang){
 
     $sqlquery = "SELECT LMB_CONF_FIELDS.FIELD_ID,LMB_CONF_FIELDS.TAB_ID FROM LMB_CONF_FIELDS,LMB_CONF_TABLES WHERE LMB_CONF_FIELDS.TAB_ID = LMB_CONF_TABLES.TAB_ID AND LMB_CONF_TABLES.TYP != 5 AND LMB_CONF_FIELDS.MULTILANG = ".LMB_DBDEF_TRUE;
     $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-    if (! $rs1) {$commit = 1;}
+    if (!$rs) {$commit = 1;}
     while (lmbdb_fetch_row($rs)) {
         $mtable[] = lmbdb_result($rs, "TAB_ID");
         $mfield[] = lmbdb_result($rs, "FIELD_ID");
     }
+
+
     
     if($multilang == 'true' AND $language_id != $umgvar['default_language']){
         $multi_language[] = $language_id;

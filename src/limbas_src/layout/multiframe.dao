@@ -11,6 +11,7 @@
 
 $elid = 1;
 $menu = array();
+$multiframeCount = array();
 
 // file explorer
 if($LINK[142]){
@@ -21,7 +22,7 @@ if($LINK[142]){
 	$melements["target"] = "main";
 	$melements["preview"] = "Explorer";
 	$melements["gicon"] = "lmb-icon-32 lmb-file-manager";
-	$melements["autorefresh"] = $umgvar['menurefresh'];
+	$melements["autorefresh"] = $umgvar['multiframe_refresh'];
 	$menu[0][] = $melements;
 }
 
@@ -46,8 +47,12 @@ if($LINK[169]){
 			}else{
 				$melements["gicon"] = "lmb-icon-32 lmb-calendar";
 			}
-			$melements["autorefresh"] = $umgvar['menurefresh'];
+			$melements["autorefresh"] = $umgvar['multiframe_refresh'];
 			$menu[0][] = $melements;
+
+            $multiframeCount['type'][] = 'calendar';
+            $multiframeCount['id'][] = $melements["id"];
+            $multiframeCount['value'][] = $value;
 		}
 	}}
 }
@@ -68,10 +73,16 @@ if($LINK[35]){
 			$melements["target"] = "main";
 			$melements["preview"] = "Message";
 			$melements["gicon"] = "lmb-icon-32 lmb-email";
-			$melements["autorefresh"] = $umgvar['menurefresh'];
+			$melements["autorefresh"] = $umgvar['multiframe_refresh'];
 			$menu[0][] = $melements;
+
+            $multiframeCount['type'][] = 'email';
+            $multiframeCount['id'][] = $melements["id"];
+            $multiframeCount['value'][] = $value;
 		}
-	}}
+	}
+
+    }
 }
 
 // default reminder
@@ -79,13 +90,17 @@ if($LINK[40]){
 	$melements["id"] = $elid++;
 	$melements["name"] = $lang[$LINK["name"][40]];
 	#$melements["count"] = multiframeGetCount("Reminder");
-	$melements["link"] = "main.php?&action=user_w_vorlage";
+	$melements["link"] = "main.php?&action=user_w_vorlage&category=0";
 	$melements["target"] = "main";
 	$melements["preview"] = "Reminder";
 	$melements["params"] = "category=0";
 	$melements["gicon"] = "lmb-icon-32 lmb-reminder";
-	$melements["autorefresh"] = $umgvar['menurefresh'];
+	$melements["autorefresh"] = $umgvar['multiframe_refresh'];
 	$menu[0][] = $melements;
+
+    $multiframeCount['type'][] = 'dreminder';
+    $multiframeCount['id'][] = $melements["id"];
+    $multiframeCount['value'][] = '';
 }
 
 // userdefined reminder tables
@@ -98,8 +113,8 @@ foreach ($greminder as $tabid => $reminder){
         $melements["gtabid"] = $tabid;
         $melements["name"] = $rname;
         $melements["desc"] = $rname;
-        if(!$tabid){
-            $melements["link"] = "main.php?&action=user_w_vorlage&gfrist=$rid";
+        if(!$tabid OR $reminder['forml_id'][$rid] === -1){
+            $melements["link"] = "main.php?&action=user_w_vorlage&category=$rid";
         }else {
             $melements["link"] = "main.php?action=gtab_erg&source=root&gtabid=$tabid&gfrist=$rid&form_id=" . $reminder['forml_id'][$rid];
         }
@@ -107,8 +122,12 @@ foreach ($greminder as $tabid => $reminder){
         $melements["preview"] = "Reminder";
         $melements["params"] = "category=$rid";
         $melements["gicon"] = "lmb-icon-cus lmb-icon-32 lmb-time-akq";
-        $melements["autorefresh"] = $umgvar['menurefresh'];
+        $melements["autorefresh"] = ($greminder[$tabid]["refreshtime"][$rid] ? $greminder[$tabid]["refreshtime"][$rid] : $umgvar['multiframe_refresh']);
         $menu[0][] = $melements;
+
+        $multiframeCount['type'][] = 'reminder';
+        $multiframeCount['id'][] = $melements["id"];
+        $multiframeCount['value'][] = $rid;
     }}
 }}
 
@@ -128,10 +147,13 @@ if($LINK[169]){
 			$melements["link"] = "main.php?&action=kanban&gtabid=$value";
 			$melements["target"] = "main";
 			$melements["preview"] = "Kanban";
-			
 			$melements["gicon"] = "lmb-icon-32 lmb-columns";
-                        
+            #$melements["autorefresh"] = $umgvar['multiframe_refresh'];
 			$menu[0][] = $melements;
+
+            $multiframeCount['type'][] = 'kanban';
+            $multiframeCount['id'][] = $melements["id"];
+            $multiframeCount['value'][] = $value;
 		}
 	}}
 }
@@ -142,7 +164,14 @@ if($LINK[169]){
 if($gLmbExt["ext_multiframe.inc"]){
 	foreach ($gLmbExt["ext_multiframe.inc"] as $key => $extfile){
 		require_once($extfile);
+
+        $multiframeCount['type'][] = 'extension';
+        $multiframeCount['id'][] = $melements["id"];
+        #$multiframeCount['value'][] = '';
 	}
 }
+
+
+$_SESSION['multiframeCount'] = $multiframeCount;
 
 ?>

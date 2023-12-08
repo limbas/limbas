@@ -12,16 +12,14 @@ $tables = $tables["table_name"];
 ?>
 
 <div class="list-hierarchy">
-    <ul>
+    <ul class="list-group list-group-flush">
         <?php
         foreach ($tables as $key => $value):
             if ($dep = lmb_checkViewDependency($value)): ?>
-
-                <li class="roottree">
+                <li class="roottree list-group-item">
                     <div><?= $value ?></div>
                     <?= lmb_make_tree($value); ?>
                 </li>
-
             <?php endif;
         endforeach;
         ?>

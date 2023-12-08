@@ -8,17 +8,14 @@
  */
 
 
+use Limbas\admin\templates\TemplateController;
+use Limbas\extra\mail\MailController;
+use Limbas\extra\template\select\TemplateSelectController;
 
 require_once(__DIR__ . '/lib/session.lib');
 require_once(COREPATH . 'lib/context.lib');
 require_once(COREPATH . 'extra/snapshot/snapshot.lib');
 #require_once(COREPATH . 'extra/workflow/workflow.lib');
-
-# Template system wysiwyg extension
-require_once(COREPATH . 'extra/template/wysiwyg/ext_ajax.inc');
-
-# Report admin extension
-require_once(COREPATH . 'extra/reportManager/ext_ajax.inc');
 
 # General report funtions
 require_once(COREPATH . 'extra/report/report_dyns.php');
@@ -240,9 +237,9 @@ function dyns_extRelationFields($params){
                 new_record($vgtabid, 1, $field_id, $gtabid, $ID);
             }
 
-            # drop relation
+            # drop relation (multirelation compatible)
             if ($params["ExtAction"] == 'unlink' AND $params["relationid"]) {
-                $verkn = set_verknpf($gtabid, $field_id, $ID, 0, $params["relationid"], 0, 0);
+                $verkn = set_verknpf($gtabid, $field_id, $ID, 0, $params['relationid'], 0, 0, 0, 0, $params['relationkeyid']);
                 set_joins($gtabid, $verkn);
             }
 
@@ -284,7 +281,7 @@ function dyns_extRelationFields($params){
 
         }
 
-        # set relation
+        # set relation (not multirelation compatible todo)
         $verkn = set_verknpf($gtabid,$field_id,$ID,0,0,1,1);
 
         # change relation based order
@@ -645,6 +642,7 @@ function dyns_14_b($params){
     if($gresult[$vgtabid]["id"][0]){
         /* ------------------ Default --------------------- */
         foreach ($gresult[$vgtabid]["id"] as $key => $value) {
+
             $retrn = array();
             /* ------------------ Typefunction --------------------- */
             foreach ($fields[$vgtabid] as $fkey => $ffieldid){
@@ -670,8 +668,19 @@ function dyns_14_b($params){
 
             $icon = 'lmb-icon-cus lmb-rel-add';
             if($gresult[$vgtabid]['verkn_id'][$key]){
+
+                // multirelation - show only first relation
+                if($gfield[$gtabid]["multirelation"][$fieldid]) {
+                    if($multirelation[$gresult[$vgtabid]['verkn_id'][$key]]){
+                        continue;
+                    }
+                    $multirelation[$gresult[$vgtabid]['verkn_id'][$key]] = 1;
+                }
+
                 $icon = 'lmb-icon lmb-check';
-                $func = '';
+                if (!$gfield[$gtabid]['multirelation'][$fieldid]) {
+                    $func = '';
+                }
             }
 
             pop_menu2($path.$retrn, "", "", $icon, "", $func);
@@ -837,6 +846,8 @@ function dyns_gresultGtab($params){
     if($view_footer){
         lmbGlistFooter($gtabid,$gresult,$filter,1);
     }
+
+    echo "#LMBSPLIT#";
 
     if($gsr[$gtabid]){
         echo "<script>$('#fullsearchInfo').show();</script>";
@@ -1629,269 +1640,6 @@ function dyns_gtabReplace($params){
     require_once (COREPATH . 'gtab/html/contextmenus/gtab_replace.php');
 }
 
-
-/**
- * Manage the reminder add from xml HTTP request
- *
- * @param unknown_type $params
- */
-function dyns_showReminder($params){
-    global $lang;
-    global $farbschema;
-    global $greminder;
-
-    require_once(COREPATH . 'gtab/gtab.lib');
-
-    $gtabid = $params["gtabid"];
-    $ID = $params["ID"];
-    $remid = $params["remid"];
-    $add = $params["add"];
-    $changeViewId = $params["changeViewId"];
-    $changeId = $params["changeId"];
-    $use_records = $params["use_records"];
-    $category = $params["REMINDER_CATEGORY"];
-    $gfrist = $params["gfrist"];
-    $listmode = $params["listmode"];
-    $mwidth = "";
-    $defaults = $params['defaults'] ? json_decode($params['defaults'], 1) : array();
-
-    // listmode
-    if($listmode AND $use_records){
-        // use filter
-        if($use_records == 'all'){
-            require_once(COREPATH . 'gtab/gtab.lib');
-            if($params["verkn_ID"]){
-                $verkn = set_verknpf($params["verkn_tabid"],$params["verkn_fieldid"],$params["verkn_ID"],null,null,$params["verkn_showonly"],1);
-            }
-            if($gresult = get_gresult($gtabid,1,$GLOBALS["filter"],$GLOBALS["gsr"],$verkn,'ID')){
-                $use_records = $gresult[$gtabid]['id'];
-            }
-            // use selected rows
-        }else{
-            $use_records = explode(';',$use_records);
-        }
-
-        // set reminder
-        foreach ($use_records as $key => $id){
-
-            // add reminder
-            if($add){
-                if(lmb_addReminder($params["REMINDER_DATE_TIME"],$params["REMINDER_BEMERKUNG"],$params["gtabid"],$id,$params["REMINDER_USERGROUP"],$category,null,null,$params["REMINDER_MAIL"],$params["form_id"])){
-                    $success ++;
-                    $msg = $lang[2901];
-                }
-                // drop reminder
-            }elseif($remid){
-                if(lmb_dropReminder(null,$gtabid,$remid,$id)){
-                    $success ++;
-                    $msg = $lang[2900];
-                }
-            }
-        }
-
-        // singlemode
-    }elseif(is_numeric($ID)){
-        // add reminder
-        if($add){
-            if(lmb_addReminder($params["REMINDER_DATE_TIME"],$params["REMINDER_BEMERKUNG"],$gtabid,$ID,$params["REMINDER_USERGROUP"],$category,null,null,$params["REMINDER_MAIL"],$params["form_id"])){
-                $success ++;
-                $msg = $lang[2901];
-            }
-            // drop reminder
-        }elseif($remid){
-            if(lmb_dropReminder($remid,$gtabid)){
-                $success ++;
-                $msg = $lang[2900];
-            }
-        }elseif($changeId){
-            if(lmb_changeReminder($changeId, $params["REMINDER_DATE_TIME"], $params["REMINDER_BEMERKUNG"])){
-                $success ++;
-                $msg = $lang[729] . " " . $lang[2006]; // TODO own lang entry
-            }
-        }
-    }
-
-    if($success){
-        $out = "<span style=\"color:green\">$success $msg</span><center><hr></center>";
-    }
-
-    echo "<FORM NAME=\"form_reminder\">";
-
-    pop_top('lmbAjaxContainer',$mwidth);
-
-    if($changeViewId AND $reminder = lmb_getReminder($gtabid,$ID,$category)) {
-        $changedate = $reminder["datum"][$changeViewId];
-        $changedesc = $reminder["desc"][$changeViewId];
-    }
-
-    # date time selection
-    if($defaults['datetime']) {
-        echo "<INPUT TYPE=\"hidden\" NAME=\"REMINDER_DATE_TIME\" VALUE=\"{$defaults['datetime']}\" MAX=16>";
-    } else {
-        pop_left($mwidth);
-        echo "<TABLE width='100%'><TR><TD nowrap>
-            &nbsp;$lang[1975] <INPUT onchange='setReminderDateTime(\"REMINDER_VALUE\",\"REMINDER_UNIT\",\"REMINDER_DATE_TIME\");' TYPE=\"TEXT\" NAME=\"REMINDER_VALUE\" STYLE=\"width:25px;\" MAX=4>
-            <SELECT NAME=REMINDER_UNIT onchange='setReminderDateTime(\"REMINDER_VALUE\",\"REMINDER_UNIT\",\"REMINDER_DATE_TIME\");' >
-            <OPTION VALUE=day>$lang[1982]</OPTION>
-            <OPTION VALUE=min>$lang[1980]</OPTION>
-            <OPTION VALUE=hour>$lang[1981]</OPTION>
-            <OPTION VALUE=week>$lang[1983]</OPTION>
-            <OPTION VALUE=month>$lang[296]</OPTION>
-            <OPTION VALUE=year>$lang[1985]</OPTION>
-            </SELECT></TD>
-            <TD nowrap align='right'>$lang[1976]
-            <INPUT onchange='setReminderValue(\"REMINDER_DATE_TIME\",\"REMINDER_VALUE\",\"REMINDER_UNIT\");' TYPE=TEXT NAME=\"REMINDER_DATE_TIME\" STYLE=\"width:115px;\" VALUE=\"".($changeViewId ? $changedate : local_date(1))."\" MAX=16>
-            <i class=\"lmb-icon lmb-caret-right\" style=\"cursor:pointer\" id=\"CALENDER_DISPLAY\" onclick=\"document.getElementsByName('REMINDER_UNIT')[0][2].selected=true; lmb_datepicker(event,this,'REMINDER_DATE_TIME',document.getElementsByName('REMINDER_DATE_TIME')[0].value,'".dateStringToDatepicker(setDateFormat(0,1))."',10);\"></i>&nbsp;&nbsp;</TD></TR></TABLE>
-            <div style=\"text-align: center;\"><hr></div>";
-        pop_right();
-    }
-
-    pop_left($mwidth);
-    echo "<TABLE>";
-
-    # user group selection    
-    if(!is_null($defaults['usergroups'])) {
-        echo "<tr style=\"display:none;\"><td><input type=\"hidden\" ID=\"REMINDER_USERGROUP\" NAME=\"REMINDER_USERGROUP\" VALUE=\"{$defaults['usergroups']}\"></td></tr>";
-    } else {
-        if(!$changeViewId) {
-            echo "<TR>
-                <TD valign=top>$lang[2643]:</TD>
-                <TD>
-                	<input type=\"hidden\" ID=\"REMINDER_USERGROUP\" NAME=\"REMINDER_USERGROUP\">
-                    <div class=\"fgtabchange\">
-                        <TABLE cellpadding=0 cellspacing=0 width=\"100%\">
-                            <TR>
-                                <TD nowrap>
-                                    <input type=\"text\" style=\"width:65px;\" OnKeyup=\"lmbAjax_showUserGroupsSearch(event,this.value,'".$ID."','".$gtabid."','','lmb_reminderAddUserGroup','','user','')\" OnDblClick=\"this.value='*';$(this).keyup();\">&nbsp;
-                                    <i class=\"lmb-icon lmb-user\" style=\"cursor:pointer;vertical-align:text-bottom\" OnClick=\"lmbAjax_showUserGroupsSearch(event,'*','".$ID."','".$gtabid."','','lmb_reminderAddUserGroup','','user')\"></i>
-                                </TD>
-                                <TD align=\"right\">
-                                    <input type=\"text\" style=\"width:65px;\" OnKeyup=\"lmbAjax_showUserGroupsSearch(event,this.value,'".$ID."','".$gtabid."','','lmb_reminderAddUserGroup','','group','')\" OnDblClick=\"this.value='*';$(this).keyup();\">&nbsp;
-                                    <i class=\"lmb-icon lmb-group\" style=\"cursor:pointer;vertical-align:text-bottom\" OnClick=\"lmbAjax_showUserGroupsSearch(event,'*','".$ID."','".$gtabid."','','lmb_reminderAddUserGroup','','group','')\"></i>
-                                </TD>
-                            </TR>
-                        </TABLE>
-                        <div id=\"contWvUGList\" style=\"width:100%;background-color:".$farbschema["WEB8"]."\"></div>
-                    </div>
-                    <div id=\"lmb_reminderAddUserGroupuser\" class=\"ajax_container\" style=\"display:none;position:absolute;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>
-                    <div id=\"lmb_reminderAddUserGroupgroup\" class=\"ajax_container\" style=\"text-align:left;display:none;position:absolute;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>
-                </TD>
-            </TR>";
-        }
-    }
-
-    # remark
-    if(!is_null($defaults['remark'])){
-        echo "<tr style=\"display:none;\"><td><textarea name=\"REMINDER_BEMERKUNG\">{$defaults['remark']}</textarea></td></tr>";
-    } else {
-        echo "<tr><td valign=\"top\">$lang[295]:</td><td><textarea name=\"REMINDER_BEMERKUNG\" style=\"width:190px;height:20px;\" onkeyup=\"limbasResizeTextArea(this,5);\">" . ($changeViewId ? $changedesc : "") . "</textarea></td></tr>";
-    }
-
-    # mail
-    if(!is_null($defaults['mail'])) {
-        echo "<tr style=\"display:none;\"><td><input type=\"hidden\" name=\"REMINDER_MAIL\" value=\"{$defaults['mail']}\"></td></tr>";
-    } else if(!$changeViewId){
-        echo "<tr title=\"".$lang[2577]."\"><td valign=\"top\">$lang[612]:</td><td><input type=\"checkbox\" name=\"REMINDER_MAIL\"></td></tr>";
-    }
-
-    # category selection
-    if(!is_null($defaults['category'])) {
-        echo "<tr style=\"display:none;\"><td><input type=\"hidden\" name=\"REMINDER_CATEGORY\" value=\"{$defaults['category']}\"></td></tr>";
-    } else {
-        if(!$changeViewId AND $greminder[$gtabid]['name'] OR $greminder[0]['name']){
-            echo "<tr><td valign=\"top\">Kategorie:</td><td colspan=\"5\">";
-            if($greminder[0]['name']){
-
-            // all table based reminder
-            if($greminder[$gtabid]['name']){
-            foreach ($greminder[$gtabid]['name'] as $rkey => $rval){
-                echo "<input type=\"radio\" name=\"REMINDER_CATEGORY\" value=\"$rkey\"";
-                if($greminder[$gtabid]['default'][$rkey] AND !$s){echo 'checked';$s = 1;}
-                echo ">&nbsp;".$rval."<br>";
-            }}
-            // all independent reminder
-            foreach ($greminder[0]['name'] as $rkey => $rval){
-                echo "<input type=\"radio\" name=\"REMINDER_CATEGORY\" value=\"$rkey\"";
-                if($greminder[0]['default'][$rkey] AND !$s){echo 'checked';$s = 1;}
-                echo ">&nbsp;".$rval."<br>";
-            }}
-
-            echo "<input type=\"radio\" name=\"REMINDER_CATEGORY\" value=\"0\"";
-            if(!$s) {echo 'checked';}
-            echo ">&nbsp;-{$lang[1219]}-<br>";
-
-            echo "</td></tr>";
-        }
-    }
-
-    # separator
-    if(is_null($defaults['remark']) AND is_null($defaults['mail']) AND is_null($defaults['category'])) {
-        echo "<tr><td colspan=\"2\"><div style=\"text-align: center;\"><hr></div><td></tr>";
-    }
-
-    # delete all in list
-    if($listmode AND $gfrist){
-        echo "
-			<tr><td valign=\"top\"><b>$lang[2644]:</b></td>
-			<td>".$greminder[$gtabid]["name"][$gfrist]."</td>
-			<td><i class=\"lmb-icon lmb-close-alt\" style=\"cursor:pointer;\" OnClick=\"limbasDivShowReminder(event,'','','$gfrist','','','','$gtabid','$ID');\" Title=\"".$lang[721]."\"></i></td>
-			</tr>";
-        # delete single category
-    }elseif(!$changeViewId AND $reminder = lmb_getReminder($gtabid,$ID,$category) AND !$defaults['hidecurrent']){
-        echo "
-		<tr><td valign=\"top\"><b>$lang[2644]:</b></td><td>
-		<table cellpadding=2 cellspacing=0>
-		";
-
-        # sort reminder by group
-        $groups = array();
-        foreach ($reminder["id"] as $remkey => $remval){
-            if(!$groups[$reminder['name'][$remkey]]) {
-                $groups[$reminder['name'][$remkey]] = array();
-            }
-            $groups[$reminder['name'][$remkey]][] = $remkey;
-        }
-
-        # display reminder sorted into groups
-        foreach ($groups as $groupLangId => $remKeyArr) {
-
-            # display group name
-            $groupname = $groupLangId ? $lang[$groupLangId] : "default";
-            echo "<tr><td><i>" . $groupname . "</i></td><td></td><td></td></tr>";
-
-            # display reminders
-            foreach($remKeyArr as $notused => $remkey) {
-                $remval = $reminder["id"][$remkey];
-                echo "<tr>
-				<td></td>
-				<td><a href=\"#\" title=\"".$reminder["desc"][$remkey]."\" onclick=\"limbasDivShowReminder(event,'','','','$remval','','','$gtabid','$ID');\">".lmb_substr($reminder["datum"][$remkey],0,16)."</a></td>
-				<td><i class=\"lmb-icon lmb-close-alt\" style=\"cursor:pointer;\" OnClick=\"limbasDivShowReminder(event,'','','$remval','','','','$gtabid','$ID');\" Title=\"".$lang[721]."\"></i></td>";
-                if($reminder["from"][$remkey]){echo "<br><i>".$userdat["bezeichnung"][$reminder["from"][$remkey]]."</i>";}
-                echo "</tr>";
-            }
-        }
-
-        echo "</table></td></tr>";
-    }
-
-    echo "</TABLE>
-		$out";
-    pop_right();
-
-
-    pop_left($mwidth);
-    echo "<CENTER><input type=button value=\"" . ($changeViewId ? $lang[2443] : $lang[1038]) . "\" onclick=\"" . ($changeViewId ? "limbasDivShowReminder(event,'','','','','$changeViewId','','$gtabid','$ID');" : "limbasDivShowReminder(event,'','1','','','','','$gtabid','$ID');") . "\">&nbsp;<input type=button value=$lang[844] onClick='activ_menu=0;divclose();'></CENTER>";
-    echo "<INPUT TYPE=HIDDEN NAME=WIEDERVORLAGENAME ID=WIEDERVORLAGEID>";
-    pop_right();
-
-    pop_left($mwidth);
-    echo "&nbsp;";
-    pop_right();
-
-    pop_bottom($mwidth);
-    echo "</FORM>";
-}
-
 /**
  * show multilang values for single field
  * @param unknown $params
@@ -1936,7 +1684,7 @@ function dyns_gmultilang($params){
             }
 
             echo "<tr><td valign=\"top\"><b>".$umgvar['multi_language_desc'][$langID]."</b></td><td>";
-            $fname($ID,$gresult,$fieldid,$gtabid,"CLASS=\"$class\"",$style,$pos,$edittyp,null,null,null,null,$langID);
+            $fname($ID,$gresult,$fieldid,$gtabid,$class,$style,$pos,$edittyp,null,null,null,null,$langID);
             echo "</td></tr>";
 
             /*
@@ -4018,11 +3766,10 @@ function dyns_colorSelect($params){
 
 ########## multiframe ##############
 
-function dyns_multiframePreview($params)
-{
+function dyns_multiframePreview($params){
 
     global $session;
-    echo $params["id"]."#L#";
+    #echo $params["id"]."#L#";
 
     if($params["limbasMultiframeItem"]=="Message" AND $params["gtabid"]){
         messagePreview($params["gtabid"]);
@@ -4031,6 +3778,7 @@ function dyns_multiframePreview($params)
     }elseif($params["limbasMultiframeItem"]=="Explorer"){
         filesFavoritePreview($session["user_id"],$params);
     }elseif($params["limbasMultiframeItem"]=="Reminder"){
+        require_once (COREPATH . 'extra/reminder/reminder.lib');
         reminderPreview($session["user_id"],$params);
     }elseif($params["limbasMultiframeItem"]=="Workflow"){
         workflowPreview($session["user_id"]);
@@ -4044,6 +3792,47 @@ function dyns_multiframePreview($params)
     #}elseif($params["limbasMultiframeItem"]=="myWorkflow"){
     #	myworkflowPreview($session["user_id"]);
     #}
+}
+
+function dyns_multiframeCount($params){
+    global $greminder;
+
+    require_once(COREPATH . 'gtab/gtab.lib');
+
+    $multiframeCount = $_SESSION['multiframeCount'];
+
+    $count = array();
+
+    if(is_array($multiframeCount)){
+        foreach($multiframeCount['type'] as $key => $type){
+
+            if($type == 'dreminder' OR $type == 'reminder'){
+                $remID = $multiframeCount['value'][$key];
+                $count['count'][$multiframeCount['id'][$key]] = lmb_getReminderCount($remID);
+                $count['info'][$multiframeCount['id'][$key]] = $greminder[$greminder["argresult_id"][$remID]]["notification"][$remID];
+            }else if($type == 'kanban'){ // todo
+
+            }else if($type == 'email'){ // todo
+
+            }else if($type == 'calendar'){ // todo
+
+            }
+        }
+    }
+
+    echo json_encode($count);
+}
+
+/**
+ * Manage the reminder add from xml HTTP request
+ *
+ * @param unknown_type $params
+ */
+function dyns_showReminder($params){
+    require_once (COREPATH . 'extra/reminder/reminder.lib');
+
+    lmb_showReminder($params);
+
 }
 
 /**
@@ -4229,101 +4018,6 @@ function kanbanPreview($gtabid){
 
     echo $lmb_kanban->get_kanbanPreview();
 
-}
-
-
-/**
- * write the preview of the reminder for the multiframe menu
- *
- * @param unknown_type $userid
- */
-function reminderPreview($userid,$params)
-{
-    global $db;
-    global $session;
-    global $tabgroup;
-    global $gtab;
-    global $lang;
-    global $userdat;
-    global $umgvar;
-    global $greminder;
-
-    require_once(COREPATH . 'gtab/gtab.lib');
-
-    echo "<span>";
-    $dropitem = $params["dropitem"];
-    $category = $params["category"];
-    $gtabid = $params["gtabid"];
-
-    if($dropitem){
-        lmb_dropReminder($dropitem,$gtabid,$category);
-        if(!$greminder["argresult_id"][$dropitem]){
-            $gtabid = null;
-        }
-    }
-
-    if($category AND $gtabid){
-        $filter["reminder"][$gtabid] = $category;
-        $gresult = get_gresult($gtabid,1,$filter,null,null,'ID');
-        $gresult = $gresult[$gtabid];
-    }else{
-        $gresult = lmb_getReminderAktive($gtabid,$params["id"],$category);
-    }
-
-
-    if($category){$gfrist = $category;}else{$gfrist = 'true';}
-
-    $currentTabId = 0;
-
-    if($gresult["LMBREM_ID"]){
-        echo "<TABLE width='100%'>";
-        foreach ($gresult["LMBREM_ID"] as $key => $value){
-
-            // set formular
-            $form_id = '';
-            if($greminder[$gtabid]["formd_id"][$category] == -1 AND $gresult["LMBREM_FORMID"][$key]){
-                $form_id = $gresult["LMBREM_FORMID"][$key];
-            }elseif($greminder[$gtabid]["formd_id"][$category] >= 1){
-                $form_id = $greminder[$gtabid]["formd_id"][$category];
-            }
-
-            $found=true;
-            if($category AND $gtabid){
-                $gresult["LMBREM_TABID"][$key] = $gtabid;
-            }elseif($currentTabId!=$gresult["LMBREM_TABID"][$key]){
-                echo "<TR><TD colspan=\"2\">";
-                print_r($gtab[1]);
-                echo "<I><A TARGET=\"main\" HREF=\"main.php?&action=gtab_erg&source=root&gtabid=".$gresult["LMBREM_TABID"][$key]."&gfrist=true\">".$gtab["desc"][$gresult["LMBREM_TABID"][$key]]."</A></I>";
-                echo "</TD></TR>";
-                $currentTabId=$gresult["LMBREM_TABID"][$key];
-            }
-            $datum = lmb_substr(get_date($gresult["LMBREM_FRIST"][$key],0),0,16);
-            echo "<TR><TD class=\"pb-2\" style=\"padding-left:20px\" TITLE=\"".$gresult["LMBREM_CONTENT"][$key]."\">";
-            echo "<A TARGET=\"main\" HREF=\"main.php?&action=gtab_change&gtabid=".$gresult["LMBREM_TABID"][$key]."&ID=".$gresult["LMBREM_DATID"][$key]."&gfrist=$gfrist&form_id=".$form_id."&wfl_id=".$gresult["LMBREM_WFLID"][$key]."\" style=\"color:green\">";
-            echo $datum."</A>";
-            if($gresult["LMBREM_USER"][$key] AND $gresult["LMBREM_USER"][$key] != $session["user_id"])
-            {
-                echo "<i class=\"lmb-icon lmb-tag\" title=\"".$userdat["bezeichnung"][$gresult["LMBREM_USER"][$key]]."\"></i>";
-            }
-            if($gresult["LMBREM_DESCR"][$key]){
-                echo "<i style=\"color:grey\">".lmb_substr($gresult["LMBREM_DESCR"][$key],0,25)."</i>";
-            }
-            elseif($gresult["LMBREM_CONTENT"][$key]){
-                echo "<span style=\"color:grey\">".lmb_substr($gresult["LMBREM_CONTENT"][$key],0,25)."</span>";
-            }
-            echo "</TD>";
-            if(!$gresult["LMBREM_WFLINST"][$key]){
-                echo "<TD VALIGN=\"TOP\" ALIGN=\"RIGHT\" STYLE=\"width:10%;overflow:hidden\"><i class=\"lmb-icon lmb-close-alt\" BORDER=\"0\"  STYLE=\"cursor:pointer\" OnClick=\"limbasMultiframePreview(".$params["id"].",'Reminder',null,'".$gresult["LMBREM_ID"][$key]."',".$gresult["LMBREM_TABID"][$key].",'category=$category');\"></i></TD>";
-            }
-            echo "</TD></TR>";
-        }
-        echo "</TABLE>";
-    }else{
-        echo '&nbsp;'.$lang[98];
-    }
-
-
-    echo "</span>";
 }
 
 
@@ -4675,6 +4369,33 @@ function dyns_lmbDecryptField($params) {
  */
 function dyns_dashboard($params) {
     require_once(COREPATH . 'extra/dashboard/dashboard.dyns.dao');
+}
+
+
+function dyns_handleMail($params): void
+{
+    global $alert;
+    $dynsController = new MailController();
+    $result = $dynsController->handleRequest($params);
+    $alert = null;
+    echo json_encode($result);
+}
+
+function dyns_manageTemplates($params): void
+{
+    header('Content-Type: application/json; charset=utf-8');
+    $dynsController = new TemplateController();
+    $result = $dynsController->handleRequest($params);
+    echo json_encode($result);
+}
+
+
+function dyns_selectTemplates($params): void
+{
+    header('Content-Type: application/json; charset=utf-8');
+    $dynsController = new TemplateSelectController();
+    $result = $dynsController->handleRequest($params);
+    echo json_encode($result);
 }
 
 # Buffer

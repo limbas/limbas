@@ -7,7 +7,7 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
+use Limbas\extra\template\select\TemplateSelector;
 
 # include extensions
 if($GLOBALS["gLmbExt"]["ext_gtab_erg.inc"]){
@@ -35,7 +35,7 @@ echo "<table>
 <tr><td>".$lang[1446]."</td><td><input type=\"text\" onchange=\"document.form1.filter_reminder_to.value=this.value+' ';checktyp(11,'lmb_ReminderFilterTo','','','',this.value)\" name=\"lmb_ReminderFilterTo\" value=\"".$filter['reminder_to'][$gfrist]."\" MAX=16>
 <i class=\"lmb-icon lmb-edit-caret\" style=\"cursor:pointer\" onclick=\"lmb_datepicker(event,this,'lmb_ReminderFilterTo',this.previousSibling.value,'".dateStringToDatepicker(setDateFormat(0,1))."',10);\"></i></td>
 </tr>
-<tr><td>".$lang[3]."</td><td><input type=\"text\" onchange=\"document.form1.filter_reminder_create.value=this.value+' ';checktyp(1,'lmb_ReminderFilterCreate','','','',this.value)\" name=\"lmb_ReminderFilterCreate\" value=\"".$filter['reminder_create'][$gfrist]."\" MAX=30></td></tr>
+<tr><td>".$lang[1445]."</td><td><input type=\"text\" onchange=\"document.form1.filter_reminder_create.value=this.value+' ';checktyp(1,'lmb_ReminderFilterCreate','','','',this.value)\" name=\"lmb_ReminderFilterCreate\" value=\"".$filter['reminder_create'][$gfrist]."\" MAX=30></td></tr>
 </table>
 ";
 pop_right();
@@ -71,9 +71,7 @@ jsvar["modal_opener"] = "<?=$umgvar["modal_opener"]?>";
 
 <?php
 
-if($GLOBALS["greportlist_exist"] AND ($LINK[175] OR $LINK[176] OR $LINK[315])){
-    LmbReportSelect::printReportSelect($gtabid);
-}
+TemplateSelector::printTemplateSelectModal(intval($gtabid));
 
  ?>
 
@@ -255,19 +253,19 @@ if($form_id AND $gformlist[$gtabid]["id"][$form_id] AND $gformlist[$gtabid]["typ
         }else{
             $usedef = 1;
         }
-        
+
         if($usedef){
             lmbGlistOpen();
             lmbGlistTabs($gtabid,$verkn_poolid,$snap_id);
             lmbGlistMenu($gtabid);
-            
+
             # scrolling Header X-position
             echo "<tr><td><div id=\"GtabTableFull\" style=\"overflow-x:auto;overflow-y:hidden;\"><table cellpadding=\"0\" cellspacing=\"0\">";
             lmbGlistSearch($gtabid,$verknpf,$verkn);
             lmbGlistHeader($gtabid,$gresult,0);
             lmbGlistBody($gtabid,$gresult,0,$verkn,$verknpf,$filter,0,0,0,0,1);
             echo "</table></div></td></tr>";
-            
+
             lmbGlistFooter($gtabid,$gresult,$filter);
             lmbGlistClose();
         }

@@ -451,10 +451,12 @@ if ($ldms_foldersetting_key AND $session['superadmin']) {
 
 }
 
-/* --- favorites reload--------------------------------------------- */
+/* --- multiframe reload after add to favorite --------------------------------------------- */
 if($favorite_file){
 	echo "<script language=\"JavaScript\">
-	top.multiframe.limbasMultiframePreview(top.multiframe.document.getElementsByName('multiframeType_Explorer')[0].value,'Explorer');
+    if(top.document.getElementById('multiframeType_Explorer').value){
+	top.limbasMultiframePreview(top.document.getElementById('multiframeType_Explorer').value,'Explorer');
+	}
 	</SCRIPT>";
 }
 

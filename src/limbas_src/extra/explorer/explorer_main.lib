@@ -99,15 +99,18 @@ function explSearch($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=null) {
 		echo '</TABLE></TD></TR>';
 	}else{
 		# ---------------- Suchfelder ------------------
-		#if(!$ffilter["rowsize"][$LID][1]){$ffilter["rowsize"][$LID][1] = "100%";}
-		#echo "<TR class=\"gtabHeaderInputTR\"><TD class=\"gtabHeaderInputTD\"><input type=\"text\" ID=\"tabsearch_".$gtab["argresult_id"]["LDMS_FILES"]."_11\" name=\"fs[".$gtab["argresult_id"]["LDMS_FILES"]."_11][$fid][0]\" value=\"".$ffilter[$gtab["argresult_id"]["LDMS_FILES"]."_11"][$fid][0]."\" CLASS=\"gtabHeaderInputINP\" style=\"width:".$ffilter["rowsize"][$LID][$gtab["argresult_id"]["LDMS_FILES"]."_11"].";\"></TD>";
-		if($ID){
+        if($ID){
 			$onchange = "onchange=\"LmExt_Ex_RelationFields('$gtabid','$fieldid','','','$ID','','','','','','','','',this)\"";
 		}
 
+        // name always first element
+        $key1 = $gtab["argresult_id"]["LDMS_FILES"]."_11";
+        echo "<TD class=\"gtabHeaderInputTD\"><input type=\"text\" $onchange ID=\"tabsearch_$key1\" name=\"fs[$key1][$fid][0]\" value=\"".$ffilter[$key1][$fid][0]."\" CLASS=\"gtabHeaderInputINP\" style=\"width:".$ffilter["rowsize"][$LID][$key1].";\"></TD>";
+
 		foreach ($gfile['show'][$LID] as $key1 => $val1){
 			# Felder ohne Rechte
-			if(!$gfile["id"][$key1]){continue;}
+            if(!$gfile["id"][$key1] OR $gtab["argresult_id"]["LDMS_FILES"]."_11" == $key1){continue;}
+
 			# Sonderfelder
 			if($gtab["argresult_id"]["LDMS_FILES"]."_34" == $key1 OR $gtab["argresult_id"]["LDMS_FILES"]."_36" == $key1){echo "<TD></TD>";continue;}
 			if($ID OR !$ffilter["rowsize"][$LID][$key1]){$ffilter["rowsize"][$LID][$key1] = "100%";}
@@ -131,12 +134,18 @@ function explHeader($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=null){
 	global $gfile;
 	global $gtab;
 
-	#echo "<TR class=\"gtabHeaderTitleTR\">";
-	#echo "<TD class=\"gtabHeaderTitleTD\" ID=\"tabheader_".$gtab["argresult_id"]["LDMS_FILES"]."_11\" onMousedown=\"LmEx_startDrag(event,'".$gtab["argresult_id"]["LDMS_FILES"]."_11');\" HEIGHT=\"20\" STYLE=\"cursor:e-resize;width:".$ffilter["rowsize"][$LID][$gtab["argresult_id"]["LDMS_FILES"]."_11"]."px;$style\" $colspan>
-	#<span class=\"gtabHeaderTitleTDItem\" OnClick=\"document.form1.ffilter_order.value='".$gtab["argresult_id"]["LDMS_FILES"]."_11';LmEx_send_form(1,1);\" style=\"cursor:pointer\">".$lang[209]."</span>
-	#</TD>\n";
+
+    // name always first element
+    $key1 = $gtab["argresult_id"]["LDMS_FILES"]."_11";
+	echo "<TR class=\"gtabHeaderTitleTR\">";
+	echo "<TD class=\"gtabHeaderTitleTD\" ID=\"tabheader_$key1\" onMousedown=\"LmEx_startDrag(event,'$key1');\" HEIGHT=\"20\" STYLE=\"cursor:e-resize;width:".$ffilter["rowsize"][$LID][$key1]."px;$style\" $colspan>
+	<span class=\"gtabHeaderTitleTDItem\" OnClick=\"document.form1.ffilter_order.value='$key1';LmEx_send_form(1,1);\" style=\"cursor:pointer\">".$lang[209]."</span>
+	</TD>\n";
 
 	foreach ($gfile['show'][$LID] as $key1 => $val1){
+
+        # Felder ohne Rechte / Feld "Name"
+        if(!$gfile["id"][$key1] OR $gtab["argresult_id"]["LDMS_FILES"]."_11" == $key1){continue;}
 		
 		# if extrelation
 		if($ID){
@@ -146,9 +155,7 @@ function explHeader($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=null){
 			$onclick="onclick=\"document.form1.ffilter_order.value='".$key1."';LmEx_send_form(1,1);document.form1.ffilter_order.value=''\"";
 			$onmove = "onmousedown=\"LmEx_startDrag(event,'$key1');\"";
 		}
-		
-		# Felder ohne Rechte
-		if(!$gfile["id"][$key1]){continue;}
+
 		echo "<TD class=\"gtabHeaderTitleTD\" ID=\"tabheader_$key1\"  HEIGHT=\"20\" $onmove STYLE=\"cursor:e-resize;width:".$ffilter["rowsize"][$LID][$key1]."px;\" title=\"".htmlentities($lang[$gfile['desc'][$key1]],ENT_QUOTES,$umgvar["charset"])."\">";
 		if($ffilter["order"][$fid][0] == $key1){$style = "text-decoration:underline;";}else{$style = "";}
 		if($gfile['typ'][$key1] AND $gfile['data_type'][$key1] != 39){echo "<span class=\"gtabHeaderTitleTDItem\" $onclick STYLE=\"cursor:pointer;white-space:nowrap;$style\">";}
@@ -232,6 +239,7 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 	if($ffile["res_viewcount"]){
 		$key2 = 1;
 		foreach($ffile["id"] as $key => $value){
+
 			echo "<TR class=\"gtabBodyTR\" ID=\"elline_d_".$LID."_".$key."\" TITLE=\"".($ffile['storageID'][$key] ? '[' . $externalStorage['desc'][$ffile['storageID'][$key]] . '] ' : '').$ffile["url"][$key]."\" style=\"cursor:context-menu;" . ($ffile['storageID'][$key] ? 'font-style: italic;' : '') . "\" 
 			OnClick=\"LmEx_activate_file(event,'$key','".preg_replace("/\'\"\//","",$ffile["name"][$key])."','$LID','d')\" ";
 			if($gtab["tab_view_form"][$tabid_files]){
@@ -256,7 +264,9 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
                 if(lock_file_check($key,$ffile["level"],$ffile["LOCK"][$key],$ffile["LOCKDATE"][$key],$ffile["LOCKUSER"][$key])){
 					$islocked = "<i class=\"lmb-icon lmb-selflock\" BORDER=\"0\" TITLE=\"".$userdat["bezeichnung"][$ffile["LOCKUSER"][$key]]."- ".get_date($ffile["LOCKDATE"][$key],2)."\"></i>&nbsp;";
 				}
-				echo "<TD class=\"gtabBodyTD\" NOWRAP VALIGN=\"TOP\"><DIV ID=\"td_".$gtab["argresult_id"]["LDMS_FILES"]."_11_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;width:".$ffilter["rowsize"][$LID][1]."px;\">";
+                // name always first element
+                $key1 = $gtab["argresult_id"]["LDMS_FILES"]."_11";
+				echo "<TD class=\"gtabBodyTD\" NOWRAP VALIGN=\"TOP\"><DIV ID=\"td_".$key1."_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;width:".$ffilter["rowsize"][$LID][1]."px;\">";
 				if($umgvar["file_quickdownload"]){echo "<A class=\"link\" HREF=\"main.php?action=download&ID=$key\" TARGET=\"new\">";}
 				echo $islocked.$ffile["name"][$key];
 				if($umgvar["file_quickdownload"]){echo  "</A>";}

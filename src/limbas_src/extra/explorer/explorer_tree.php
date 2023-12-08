@@ -343,7 +343,7 @@ function files1($LEVEL,$start,$only_typ){
 			#	echo ">&nbsp;".$filestruct[name][$key]."</TD></TR></TABLE></div>\n";
 			#	# ---- Limbas-Verzeichnis ----
 			#}else{
-				echo "<div ID=\"f_".$filestruct["id"][$key]."\"><TABLE CELLPADDING=\"1\" CELLSPACING=\"0\" BORDER=\"0\"><TR TITLE=\"(".$filestruct["id"][$key].")\" STYLE=\"cursor:context-menu\" ONCONTEXTMENU=\"limbasDivClose();open_filemenu(event,'".$filestruct['name'][$key]."','".$filestruct["id"][$key]."','".$filestruct['typ'][$key]."','$LEVEL');return false;\"><TD>$pic</TD><TD><i class=\"lmb-icon lmb-folder" .$filterpic. "-closed\" ID=\"p".$filestruct["id"][$key]."\" NAME=\"p".$filestruct["id"][$key]."\"></i></TD><TD ";
+				echo "<div ID=\"f_".$filestruct["id"][$key]."\"><TABLE CELLPADDING=\"1\" CELLSPACING=\"0\" BORDER=\"0\"><TR TITLE=\"(".$filestruct["id"][$key].")\" STYLE=\"cursor:context-menu\" oncontextmenu=\"limbasDivClose();open_filemenu(event,'".$filestruct['name'][$key]."','".$filestruct["id"][$key]."','".$filestruct['typ'][$key]."','$LEVEL');return false;\"><TD>$pic</TD><TD><i class=\"lmb-icon lmb-folder" .$filterpic. "-closed\" ID=\"p".$filestruct["id"][$key]."\" NAME=\"p".$filestruct["id"][$key]."\"></i></TD><TD ";
                 echo "class=\"lmbFileTreeItem\" OnClick=\"listlmdata('".$filestruct["id"][$key]."','$LEVEL','".$filestruct["typ"][$key]."')\"";
 				echo ">&nbsp;".$filestruct['name'][$key]."</TD></TR></TABLE></div>\n";
 			#}

@@ -212,19 +212,14 @@ class importSync
                 $exptables[] = dbf_4('lmb_external_storage');
             }
 
-            // system -- todo (used in update script)
-            /*
+            // system --
             if (in_array('system', $types)) {
                 $exptables[] = dbf_4('lmb_field_types');
-                #$exptables[] = dbf_4('lmb_field_types_depend');
                 $exptables[] = dbf_4('lmb_fonts');
                 $exptables[] = dbf_4('lmb_mimetypes');
                 $exptables[] = dbf_4('lmb_lang');
-                $exptables[] = dbf_4('lmb_umgvar');
-                #$exptables[] = dbf_4('lmb_custvar');
                 $exptables[] = dbf_4('lmb_action');
-                #$exptables[] = dbf_4('lmb_dbpatch');
-            }*/
+            }
 
             // === sonst ===
             // snapshot
@@ -450,7 +445,8 @@ class importSync
         }
 
         // drop all views - resolve dependencies
-        if ((in_array('tabs', $types) OR in_array('globalsynctables', $types)) AND $confirm_syncimport) {
+        if (is_array($viewDefinitions) AND (in_array('tabs', $types) OR in_array('globalsynctables', $types)) AND $confirm_syncimport) {
+            LimbasLogger::log("function : drop dependency views", LimbasLogger::LL_NOTICE);
             if (!lmb_dropAllViews()) {
                 LimbasLogger::log("Could not delete dependency views! - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
                 return false;
@@ -1140,24 +1136,6 @@ class importSync
                 LimbasLogger::log("function : refresh table/field rules ", LimbasLogger::LL_NOTICE);
             }
 
-            if (in_array('funcsequ', $types)) {
-                if (lmb_rebuildSequences()) {
-                    LimbasLogger::log("function : rebuild sequences ", LimbasLogger::LL_NOTICE);
-                } else {
-                    LimbasLogger::log("function : rebuild sequences failed - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
-                    return false;
-                }
-            }
-
-            if (in_array('functrigger', $types)) {
-                if (lmb_rebuildTrigger(1)) {
-                    LimbasLogger::log("function : rebuild trigger ", LimbasLogger::LL_NOTICE);
-                } else {
-                    LimbasLogger::log("function : rebuild trigger failed - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
-                    return false;
-                }
-            }
-
             if (in_array('funcproz', $types)) {
                 if (dbq_16(array($DBA["DBSCHEMA"], 1))) {
                     LimbasLogger::log("function : rebuild db prozedures ", LimbasLogger::LL_NOTICE);
@@ -1178,6 +1156,24 @@ class importSync
                     return false;
                 }
                 $rebuild = null;
+            }
+
+            if (in_array('funcsequ', $types)) {
+                if (lmb_rebuildSequences()) {
+                    LimbasLogger::log("function : rebuild sequences ", LimbasLogger::LL_NOTICE);
+                } else {
+                    LimbasLogger::log("function : rebuild sequences failed - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                    return false;
+                }
+            }
+
+            if (in_array('functrigger', $types)) {
+                if (lmb_rebuildTrigger(1)) {
+                    LimbasLogger::log("function : rebuild trigger ", LimbasLogger::LL_NOTICE);
+                } else {
+                    LimbasLogger::log("function : rebuild trigger failed - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                    return false;
+                }
             }
 
             if (in_array('functmpfiles', $types)) {
@@ -1211,9 +1207,18 @@ class importSync
                     $pathAssets = PUBLICPATH;
                     # extract new assets
                     system("tar xzf '$limbasAssetsTarGz' -C '$pathAssets'");
-                    LimbasLogger::log("overwrite limbas_src directory", LimbasLogger::LL_NOTICE);
+                    LimbasLogger::log("overwrite assets directory", LimbasLogger::LL_NOTICE);
                 }else{
                     LimbasLogger::log("overwrite assets directory failed, $limbasAssetsTarGz does not exist!", LimbasLogger::LL_ERROR);
+                }
+                $limbasVendorTarGz = $path . 'vendor.tar.gz';
+                if (file_exists($limbasVendorTarGz)) {
+                    $pathVendor = COREPATH.'../';
+                    # extract new assets
+                    system("tar xzf '$limbasVendorTarGz' -C '$pathVendor'");
+                    LimbasLogger::log("overwrite vendor directory", LimbasLogger::LL_NOTICE);
+                }else{
+                    LimbasLogger::log("overwrite vendor directory failed, $limbasVendorTarGz does not exist!", LimbasLogger::LL_ERROR);
                 }
             }
 

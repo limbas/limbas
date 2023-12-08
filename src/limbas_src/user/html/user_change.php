@@ -104,7 +104,7 @@ function check_pass(pass2) {
                         <div class="row">
                             <label class="col-sm-4 col-form-label"><?=$lang[141]?></label>
                             <div class="col-sm-8">
-                                <input type="password" class="form-control form-control-sm" name="paswort">
+                                <input type="password" class="form-control form-control-sm" name="passwort">
                             </div>
                         </div>
                         <div class="row mb-4">

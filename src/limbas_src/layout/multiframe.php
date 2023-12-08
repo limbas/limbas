@@ -13,22 +13,28 @@ $multfrdispl = "";
 $hiddendispl = "display:none";
 
 $menu_setting = lmbGetMenuSetting();
-if(!$rightMenuOpen){
-	$multfrdispl = "display:none";
-	$hiddendispl = "";
-	?>
-	<SCRIPT LANGUAGE="JavaScript">
-	noMoreRefresh = 1;
-	</SCRIPT>
-	<?php
-}
-?>
 
-        <div id="hiddenmultiframe" style="height:90%;cursor:pointer;<?=$hiddendispl?>" data-hideshow-sidebars="multi">
-            <div class="lmbFrameShow">
-                <i class="lmb-icon lmb-icon-aw lmb-caret-left"></i>
-            </div>
-        </div>
+?>
+<SCRIPT LANGUAGE="JavaScript">
+
+    <?php
+    if(!$rightMenuOpen){
+        $multfrdispl = "display:none";
+        $hiddendispl = "";
+    ?>
+	noMoreRefresh = 1;
+    <?php } ?>
+
+    var multiframe_refresh = '<?=$umgvar['multiframe_refresh']?>'
+
+</SCRIPT>
+
+
+<div id="hiddenmultiframe" style="height:90%;cursor:pointer;<?=$hiddendispl?>" data-hideshow-sidebars="multi">
+    <div class="lmbFrameShow">
+        <i class="lmb-icon lmb-icon-aw lmb-caret-left"></i>
+    </div>
+</div>
 
 <div id="multiframe" style="<?=$multfrdispl?>">
 
@@ -37,7 +43,7 @@ if(!$rightMenuOpen){
 
 if($groupdat["multiframelist"][$session["group_id"]]){
 	foreach ($groupdat["multiframelist"][$session["group_id"]] as $key => $value){
-		if($value == $session["multiframe"]){
+		if($value == $session['multiframe']){
 			echo "&nbsp;<span style=\"color:green;\">".lmb_substr($value,0,lmb_strlen($value)-4)."</span><BR>";
 		}else{
 			echo "&nbsp;<span style=\"color:".$farbschema["WEB12"].";\" OnClick=\"change_frame('".rawurlencode($value)."')\" style=\"cursor:pointer;\" onmouseout=\"this.style.fontWeight='normal';\" onmouseover=\"this.style.fontWeight='bold';\">".lmb_substr($value,0,lmb_strlen($value)-4)."</span><BR>";
@@ -50,10 +56,8 @@ if($groupdat["multiframelist"][$session["group_id"]]){
 
 
 <div id="lmbAjaxContainer" class="ajax_container" style="position:absolute;display: none" OnClick="activ_menu=1;"></div>
-
     <div id="framecontext" class="evt-hide-frame-con" data-hideshow-sidebars-right="multi">
         <div class="lmbfringeFrameNav multiframe clearfix">
-
             <div class="evt-hide-frame text-center d-lg-none p-3 multiframe"  data-hideshow-sidebars="multi"><i class="lmb-icon lmb-erase"></i></div>
 <?php
 
@@ -82,10 +86,9 @@ foreach($menu as $key1 => $menuType){
 
 	foreach ($menuType as $key2 => $firstLevel) {
 
-
 		if($firstLevel["preview"]){
-			echo "<input type=\"hidden\" id=\"autorefreshPreviewWorkflow_".$firstLevel["id"]."\" VALUE=\"".$firstLevel["autorefresh"]."\">";
-			echo "<input type=\"hidden\" name=\"multiframeType_".$firstLevel["preview"]."\" value=\"".$firstLevel["id"]."\">";
+			echo "<input type=\"hidden\" id=\"multiframeAutorefresh_".$firstLevel["id"]."\" VALUE=\"".$firstLevel["autorefresh"]."\">";
+			echo "<input type=\"hidden\" id=\"multiframeType_".$firstLevel["preview"]."\" value=\"".$firstLevel["id"]."\">";
 			$preview = ",'" . $firstLevel["preview"] . "'";
 		}else{
 			$preview = "";
@@ -108,12 +111,10 @@ foreach($menu as $key1 => $menuType){
 			$cursor = "";
 		}
 
-
         echo '<li><div class="menu-side-header" '.$onClick.'>
                 <i class="lmbMenuHeaderImage lmb-icon-32 '.($firstLevel['gicon'] ?? $firstLevel['icon']).'"></i>
             <span class="hide-menu">'.$firstLevel["name"].'</span>
             ';
-
 
 		// default event is "hideShow"
 		$event = "hideShowMulti";
@@ -126,6 +127,8 @@ foreach($menu as $key1 => $menuType){
 		if($firstLevel["child"] || $firstLevel["preview"] || $firstLevel["event"]){
             echo '<i id="HS'.$firstLevel["id"].'" onclick="'.$onclick.'" class="lmb-icon lmb-angle-down  float-end" valign="top" style="cursor:pointer"></i>';
 		}
+
+        echo '<span id="multiframeCount_'.$firstLevel["id"].'" class="badge bg-warning rounded-2 d-none float-end mt-1"></span>';
 
 		$autoopen='';
         if($menu_setting["menu"][$firstLevel["name"]]){

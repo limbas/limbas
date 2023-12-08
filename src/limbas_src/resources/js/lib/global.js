@@ -594,7 +594,8 @@ function limbasGlobalGetIndexofValueInSelect(selectName,value)
 }
 
 function showAlert(val) {
-	alert(val);
+	//alert(val);
+    lmbShowWarningMsg(val);
 }
 
 function showAlertXXX(output_msg, title_msg)
@@ -2290,7 +2291,7 @@ function isInIframe () {
     }
 }
 
-function showFullPageModal(title,body) {
+function showFullPageModal(title,body,className='fullscreen') {
 
     let $modal;
     let $modalBody;
@@ -2310,10 +2311,26 @@ function showFullPageModal(title,body) {
     	return false;
 	}
 
+	$modal.find('.modal-dialog').addClass('modal-' + className);
+	
     $modalTitle.html(title);
     $modalBody.html(body);
     $modal.modal('show');
     return true;
+}
+
+function hideFullPageModal() {
+	let $modal;
+	if (isInIframe()) {
+		$modal = window.top.$("#general-main-modal");
+	} else {
+		$modal = $("#general-main-modal");
+	}
+	if ($modal.length <= 0) {
+		return false;
+	}
+	$modal.modal('hide');
+	return true;
 }
 
 
@@ -2334,4 +2351,47 @@ function lmbAjax_decryptField(){
 	ajaxGet(null,url,actid,null,function(result){
 		$this.replaceWith(result);
 	});
+}
+
+
+function lmbShowToast(type, msg) {
+
+	let $toast;
+	let $toastBody;
+	
+	if(type !== 'success' && type !== 'warning' && type !== 'error') {
+		return false;
+	}
+
+	if (isInIframe()) {
+		$toast = window.top.$('#toast-' + type);
+		$toastBody = window.top.$('#toast-' + type + '-body');
+	} else {
+		$toast = $('#toast-' + type);
+		$toastBody = $('#toast-' + type + '-body');
+	}
+
+	if ($toast.length <= 0) {
+		return false;
+	}
+
+
+	$toast.closest('.toast-container').css('z-index',99999);
+	$toastBody.text(msg);
+	$toast.toast('show');
+	
+	return true;
+	
+}
+
+function lmbShowSuccessMsg(msg) {
+	lmbShowToast('success', msg);
+}
+
+function lmbShowWarningMsg(msg) {
+	lmbShowToast('warning', msg);
+}
+
+function lmbShowErrorMsg(msg) {
+	lmbShowToast('error', msg);
 }

@@ -364,7 +364,7 @@ if($newsystem){
 	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_PRINTERS";
 	$rs = lmbdb_exec($db,$sqlquery);
-	$sqlquery = "DELETE FROM LMB_REPORT_TEMPLATES";
+	$sqlquery = "DELETE FROM LMB_DEFAULT_TEMPLATES";
 	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_SYNC_CACHE";
 	$rs = lmbdb_exec($db,$sqlquery);

@@ -33,6 +33,10 @@ $sess-refresh-color: #e4d314 !default;
 
 @import '_icons';
 
+$fa-font-path: '../fonts';
+@import 'fontawesome/scss/fontawesome';
+@import 'fontawesome/scss/solid';
+
 @import '_legacystyles';
 
 /* to replace frames with iframes */

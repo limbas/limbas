@@ -6,7 +6,15 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
-class FormDataPlaceholder extends DataPlaceholder {
+
+namespace Limbas\extra\template\form;
+
+use Limbas\extra\template\base\HtmlParts\DataPlaceholder;
+use Limbas\extra\template\base\TemplateConfig;
+use lmb_log;
+
+class FormDataPlaceholder extends DataPlaceholder
+{
 
     // key in the gresult that corresponds to the dataset
     protected $key;
@@ -16,13 +24,14 @@ class FormDataPlaceholder extends DataPlaceholder {
 
     protected $readOnly = false;
 
-    public function resolve($gresultKey=null, $key=null) {
+    public function resolve($gresultKey = null, $key = null)
+    {
         global $gfield;
 
         if ($this->noResolve) {
             return true;
         }
-        
+
         $gresult = &$this->gresult;
         if (!$gresult and $gresultKey !== null) {
             $gresult = &TemplateConfig::$instance->gresults[$gresultKey];
@@ -69,13 +78,15 @@ class FormDataPlaceholder extends DataPlaceholder {
         return false; # no resolve
     }
 
-    public function resetValue() {
+    public function resetValue()
+    {
         parent::resetValue();
         $this->key = null;
         $this->gresult = null;
     }
 
-    public function getStructure() {
+    public function getStructure()
+    {
         if ($this->fieldlist === null || !$this->trace) {
             return null;
         }
@@ -90,12 +101,12 @@ class FormDataPlaceholder extends DataPlaceholder {
         $parts = explode(',', $this->trace);
         $structure = array();
         $currentStruct = &$structure;
-        
+
         $partCount = 0;
         if (is_array($parts)) {
             $partCount = lmb_count($parts);
         }
-        
+
         for ($i = 1; $i < $partCount; $i += 2) {
             $relationGtabID = $parts[$i - 1];
             $relationFieldID = $parts[$i];
@@ -109,7 +120,8 @@ class FormDataPlaceholder extends DataPlaceholder {
         return $structure;
     }
 
-    public function getAsHtmlArr() {
+    public function getAsHtmlArr(): array
+    {
         global $gfield;
 
         if ($this->isModeFetchArr()) {
@@ -131,7 +143,7 @@ class FormDataPlaceholder extends DataPlaceholder {
         $datid = $this->gresult[$gtabid]['id'][$this->key];
 
         // check edit rights
-        if (!$this->readOnly AND $gfield[$gtabid]["editrule"][$fieldid]) {
+        if (!$this->readOnly and $gfield[$gtabid]["editrule"][$fieldid]) {
             $this->readOnly = check_GtabRules($datid, $gtabid, $fieldid, $gfield[$gtabid]["editrule"][$fieldid], $this->key, $this->gresult);
         }
         // option: writeable
@@ -165,7 +177,8 @@ class FormDataPlaceholder extends DataPlaceholder {
         return array('<span style="display: inline-table">' . $out . '</span>');
     }
 
-    public function setReadOnly() {
+    public function setReadOnly()
+    {
         $this->readOnly = true;
     }
 

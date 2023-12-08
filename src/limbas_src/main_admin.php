@@ -410,12 +410,12 @@ elseif ($action == "setup_report_frameset" AND $LINK["setup_report_select"] == 1
 	$require1 = "admin/tools/add_filestruct.lib";
 	$require2 = "extra/explorer/filestructure.lib";
     $require3 = "admin/report/report.lib";
-	$require4 = "admin/report/report_frameset.php";
+	$require4 = 'admin/templates/html/editor/init.php';
 }
 elseif ($action == "setup_report_main" AND $LINK["setup_report_select"] == 1) {
 	$form_typ = 2;
 	$require1 = "admin/report/report.dao";
-	$require2 = "admin/report/report_main.php";
+	$require2 = "admin/report/html/editor_old/main.php";
 	$ONKEYDOWN = "OnKeydown=\"movex(event);\"";
 	# TODO ! also in form
 	$ONLOAD = "OnLoad=\"window.setTimeout('create_list()',500)\"";
@@ -426,13 +426,13 @@ elseif ($action == "setup_report_menu" AND $LINK["setup_report_select"] == 1) {
 	$require1 = "extra/explorer/filestructure.lib";
 	$require2 = "extra/explorer/metadata.lib";
 	$require3 = "admin/report/report.dao";
-	$require4 = "admin/report/report_menu.php";
+	$require4 = "admin/report/html/editor_old/sidebar.php";
 	$ONKEYDOWN = "OnKeydown=\"sendkeydown(event);\"";
 }
 elseif ($action == "setup_report_select" AND $LINK["setup_report_select"] == 1) {
 	$require1 = "admin/tools/add_filestruct.lib";
 	$require2 = "extra/explorer/filestructure.lib";
-	$require3 = "admin/report/report_select.php";
+	$require3 = "admin/report/report_list.php";    
 	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 }
 
@@ -498,6 +498,29 @@ elseif ($action == "gtab_form" and $LINK[132] == 1) {
     } else {
         $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
     }
+}
+
+elseif ($action == 'setup_mails' AND $LINK[$LINK_ID[$action]] == 1) {
+    $require1 = 'admin/setup/mail/mail.dao';
+    $require2 = 'admin/setup/mail/mail.php';
+    $BODYHEADER = $lang[$LINK['desc'][$LINK_ID[$action]]];
+}
+
+elseif ($action == 'setup_mail_templates' AND $LINK[$LINK_ID[$action]] == 1) {
+    $require1 = 'admin/mailTemplates/mail.dao';
+    $require2 = 'admin/mailTemplates/mail.php';
+    $BODYHEADER = $lang[$LINK['desc'][$LINK_ID[$action]]];
+}
+
+elseif ($action == 'setup_mail_templates' AND $LINK[$LINK_ID[$action]] == 1) {
+    $require1 = 'admin/mailTemplates/mail.dao';
+    $require2 = 'admin/mailTemplates/mail.php';
+    $BODYHEADER = $lang[$LINK['desc'][$LINK_ID[$action]]];
+}
+
+elseif ($action == 'setup_template_editor'){// AND $LINK[$LINK_ID[$action]] == 1) {
+    $require1 = 'admin/templates/html/editor/init.php';
+    $BODYHEADER = '';//$lang[$LINK['desc'][$LINK_ID[$action]]];
 }
 
 else{

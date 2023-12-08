@@ -418,22 +418,40 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
                 <div class="mb-3 row">
                     <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[575]?></label>
                     <div class="col-sm-8">
-                        <div class="form-control-plaintext"><i class="lmb-icon lmb-refresh cursor-pointer" onclick="open('main_admin.php?action=setup_grusrref&check_table=<?=$tabid?>&check_all=1' ,'refresh','toolbar=0,location=0,status=1,menubar=0,scrollbars=1,resizable=1,width=550,height=400')"></i></div>
+                        <i class="lmb-icon lmb-refresh cursor-pointer" onclick="open('main_admin.php?action=setup_grusrref&check_table=<?=$tabid?>&check_all=1' ,'refresh','toolbar=0,location=0,status=1,menubar=0,scrollbars=1,resizable=1,width=550,height=400')"></i>
                         <small class="form-text text-muted"><?=$lang[1054]?></small>
+                    </div>
+                </div>
+
+                <?php // rebuild temp ?>
+                <div class="mb-3 row">
+                    <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2761]?></label>
+                    <div class="col-sm-8">
+                        <i class="lmb-icon lmb-refresh cursor-pointer" onclick="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','tablesync')"></i>
+                        <?php if($tablesync): ?>
+                            <i class="lmb-icon lmb-aktiv"></i>
+                        <?php endif; ?>
+                        <small class="form-text text-muted"><?=$lang[2030]?></small>
                     </div>
                 </div>
 
                 <?php // rebuild rules ?>
                 <div class="mb-3 row">
-                    <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2761]?></label>
+                    <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2662]?></label>
                     <div class="col-sm-8">
-                        <div class="form-control-plaintext"><i class="lmb-icon lmb-refresh cursor-pointer" onclick="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','tablesync')"></i>
-                        <?php if($tablesync): ?>
+                        <i class="lmb-icon lmb-refresh cursor-pointer" onclick="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','tablesequence')"></i>
+                        <?php if($tablesequence): ?>
                             <i class="lmb-icon lmb-aktiv"></i>
                         <?php endif; ?>
-                        </div>
-                        <small class="form-text text-muted"><?=$lang[2030]?></small>
+                        <small class="form-text text-muted"><?=$lang[2662]?></small>
+
+                        <div class="fst-italic text-muted"><small>(
+                            <?php
+                            echo dbf_4("LMB_".$result_gtab[$tabgroup]['tabelle'][$tbzm]."_ID");
+                            ?>
+                        </small>)</div>
                     </div>
+
                 </div>
                 
                 <?php endif; ?>

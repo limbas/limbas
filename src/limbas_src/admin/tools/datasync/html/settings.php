@@ -124,7 +124,7 @@
     function lmb_validateDetail(syncid,result) {
 
         var detailElement = $('.validate-detail').filter('div[data-id='+syncid+']');
-        var text = '<div class="row row-cols-2">';
+        var text = '<div class="row row-cols-4">';
         for (var i in result['diff']) {
             if(i == 'abs_sumdiff'){continue;}
             var c = result['diff'][i];
@@ -139,7 +139,11 @@
                 var color = 'info';
             }
 
-            text += '<div class="col-sm-3 cursor-pointer" data-bs-toggle="modal" data-bs-target="#SynValidatePhase2Modal" onclick="lmb_validatePhase2('+syncid+',\''+i+'\')"><i class="fa fa-circle text-'+color+'" aria-hidden="true"></i> ' + i + ' </div><div class="col-sm-3">' + result['diff'][i] + ' (' + result['master'][i] + ' / ' + result['slave'][i] + ')</div>';
+            text += '<div class="col cursor-pointer" title="'+i+'" data-bs-toggle="modal" data-bs-target="#SynValidatePhase2Modal" onclick="lmb_validatePhase2('+syncid+',\''+i+'\')"><i class="fa fa-circle text-'+color+'" aria-hidden="true"></i> ' + result['spelling'][i] + ' </div>';
+            text += '<div class="col">' + result['diff'][i] + ' ';
+            text += '(<span class="cursor-pointer" id="validateDiff_1_'+syncid+'_'+i+'" onclick="lmb_validateRebuild('+syncid+',\''+i+'\',1)" title="sync to master">' + result['slave'][i] + '<i class="lmb-icon lmb-arrow-right" border="0"></i></span> / ';
+            text += '<span class="cursor-pointer" id="validateDiff_2_'+syncid+'_'+i+'" onclick="lmb_validateRebuild('+syncid+',\''+i+'\',2)" title="sync to slave">' + result['master'][i] + ' <i class="lmb-icon lmb-arrow-right" border="0"></i></span>)';
+            text += '</div>';
 
             i++;
         }
@@ -155,36 +159,77 @@
 
     function lmb_validatePhase2Detail(result,syncid,table) {
 
-        $('#SynValidatePhase2ModalTitle').append(' ('+table+')');
+        $('#SynValidatePhase2Modal').attr('data-syncid', syncid);
+        $('#SynValidatePhase2Modal').attr('data-table', table);
+
+        $('#SynValidatePhase2ModalTitle').html(' ('+table+')');
+        $('#detailMasterPhase2').html('');
+
+        if(table.substring(0,5) == 'VERK_') {
+            $('.SynValidatePhase2ModalTitleRow').html('<?=$lang[1460]?>:');
+            var noticecolor = 'alert-success';
+        }else{
+            $('.SynValidatePhase2ModalTitleRow').html('<?=$lang[722]?>');
+            var noticecolor = 'alert-danger';
+        }
 
         result = JSON.parse(result);
 
-        //var text = '';
-        //for (var i in result['master']) {
-        //    text += result['master'][i]+', ';
-        //    i++;
-        //}
-        $('#detailMasterPhase2').html(Object.values(result['master']).join(", "));
-        $('#detailClientPhase2').html(Object.values(result['client']).join(", "));
+        var clientdiff = Object.values(result['client']);
+        var masterIDdiff = Object.values(result['masterID']);
 
+        var masterdiff = new Array;
+        for (var id in result['master']){
+            masterdiff.push(id+'(<span title="LMB_SYNC_ID" class="'+noticecolor+'">'+result['master'][id]+'</span>)');
+        }
+
+        $('#detailMasterPhase2').html(clientdiff.join(", "));
+        $('#detailClientPhase2').html(masterIDdiff.join(", "));
+        if(masterIDdiff.length > 0){$('#detailClientPhase2').append('<br>');}
+        $('#detailClientPhase2').append(masterdiff.join(", "));
+
+        $('.lmbWaitSymbol').hide();
     }
 
+
+    function lmb_validateRebuildPhase2(type){
+        var syncid = $('#SynValidatePhase2Modal').attr('data-syncid');
+        var table = $('#SynValidatePhase2Modal').attr('data-table');
+        lmb_validateRebuild(syncid,table,type);
+    }
+
+    function lmb_validateRebuild(syncid,table,type) {
+        postfunc = function(result){lmb_validateRebuildDetail(result,syncid,table,type);};
+        ajaxGet(null,'main_dyns_admin.php','syncValidate&rebuild=1&type='+type+'&syncid='+syncid+'&table='+table,null,'postfunc',null,null,null,1);
+    }
+
+    function lmb_validateRebuildDetail(result,syncid,table,type) {
+        $('#validateDiff_'+type+'_'+syncid+'_'+table).css({'color':'orange'});
+    }
 
 </script>
 
 
-<div class="modal fade" id="SynValidatePhase2Modal" tabindex="-1">
+<div class="modal fade" id="SynValidatePhase2Modal" tabindex="-1" data-table="" data-syncid="">
   <div class="modal-dialog  modal-lg" >
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="SynValidatePhase2ModalTitle"><?=$lang[3071]?></h5>
+        <h5 class="modal-title"><?=$lang[3071]?> <span id="SynValidatePhase2ModalTitle"></span></h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body" id="detailElementPhase2">
           <div class="row row-cols-2">
-              <div class="col"><h5>Master</h5></div><div class="col"><h5>Client</h5></div>
+              <div class="col h5"><span class="SynValidatePhase2ModalTitleRow"><?=$lang[722]?></span> <?=$lang[3139]?> <u>Master</u>
+                  <span class="cursor-pointer" onclick="lmb_validateRebuildPhase2(1)" title="sync to master"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
+              </div>
+              <div class="col h5"><span class="SynValidatePhase2ModalTitleRow"><?=$lang[722]?></span> <?=$lang[3139]?> <u>Client</u>
+                  <span class="cursor-pointer" onclick="lmb_validateRebuildPhase2(2)" title="sync to slave"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
+              </div>
               <div class="col" id="detailMasterPhase2"></div><div id="detailClientPhase2" class="col"></div>
           </div>
+      </div>
+      <div class="modal-footer" style="justify-content: center">
+        <i class='lmbWaitSymbol'></i>
       </div>
     </div>
   </div>
@@ -358,9 +403,7 @@
                                             <td><?=$fkey?></td>
                                             <td title="<?=$gfield[$tabid]["beschreibung"][$fkey]?>" nowrap><?=$gfield[$tabid]['field_name'][$fkey]?>&nbsp;(<?=$gfield[$tabid]["spelling"][$fkey]?>)</td>
                                             <td><?=$lmfieldtype["name"][$gfield[$tabid]["data_type"][$fkey]]?></td>
-
                                             <td class="text-center"><input TYPE="checkbox" NAME="templ_conf[<?=$tabid?>][<?=$fkey?>][1]" onclick="save_rules('<?=$tabid?>','<?=$fkey?>',1)" VALUE="1" <?=($result_conf[$template][$tabid][$fkey]['master']) ? 'checked' : '' ?>></td>
-
                                             <td class="text-center"><input TYPE="checkbox" NAME="templ_conf[<?=$tabid?>][<?=$fkey?>][2]" onclick="save_rules('<?=$tabid?>','<?=$fkey?>',2)" VALUE="1" <?=($result_conf[$template][$tabid][$fkey]['slave']) ? 'checked' : '' ?>></td>
                                         </tr>
 

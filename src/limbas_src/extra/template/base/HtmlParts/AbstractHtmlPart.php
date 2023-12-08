@@ -7,6 +7,8 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+namespace Limbas\extra\template\base\HtmlParts;
+
 /**
  * Class AbstractHtmlPart
  * One TemplateElement's content consists of multiple of these parts
@@ -17,7 +19,7 @@ abstract class AbstractHtmlPart {
      * To convert the html part into its html representation
      * @return array of html
      */
-    public abstract function getAsHtmlArr();
+    public abstract function getAsHtmlArr(): array;
 
     /**
      * Returns any placeholder for a TemplateElement that the html part might hold, which hasn't been resolved yet

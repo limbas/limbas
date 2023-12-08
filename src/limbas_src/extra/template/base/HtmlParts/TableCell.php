@@ -7,6 +7,8 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+namespace Limbas\extra\template\base\HtmlParts;
+
 /**
  * Class TableCell
  * Corresponds to a <td>
@@ -28,7 +30,8 @@ class TableCell extends AbstractHtmlPart {
         $this->attributes = $attributes;
     }
 
-    public function getAsHtmlArr() {
+    public function getAsHtmlArr(): array
+    {
         $attributesStrArr = array();
         foreach ($this->attributes as $key => $val) {
             $attributesStrArr[] = "{$key}=\"{$val}\"";

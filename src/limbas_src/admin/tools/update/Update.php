@@ -6,7 +6,7 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
-namespace admin\tools\update;
+namespace Limbas\admin\tools\update;
 
 require_once(COREPATH . 'lib/db/db_wrapper.lib');
 
@@ -17,6 +17,7 @@ use Throwable;
 
 abstract class Update
 {
+    protected int $id;
 
     protected int $major;
     protected int $minor;
@@ -25,6 +26,16 @@ abstract class Update
     protected array $patches;
 
     public bool $completed;
+
+    /**
+     * Return the unique id of this update file
+     * @return int
+     */
+    public function getId(): int
+    {
+        return $this->id;
+    }
+    
 
     /**
      * Run all patches of this updates
@@ -53,7 +64,11 @@ abstract class Update
      */
     public function runPatch($patchNr): bool
     {
+        global $alert;
+        $alert = null;
+        
         #lmb_StartTransaction();
+        
         
         $this->getPatches();
         try {
@@ -114,7 +129,8 @@ abstract class Update
                     $this->patches[$patchNr] = [
                         'status' => $status,
                         'desc' => $this->getPatchDescription($patchNr),
-                        'error' => $this->getPatchMessage($patchNr)
+                        'error' => $this->getPatchMessage($patchNr),
+                        'uid' => $this->id
                     ];
                     if (!$status) {
                         $allSuccessful = false;

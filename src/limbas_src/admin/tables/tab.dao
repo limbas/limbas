@@ -536,11 +536,16 @@ if($theme AND $tabid) {
 
 
 
-/* --- temprefresh -------------------------------------- */
+/* --- temp refresh -------------------------------------- */
 if($tablesync AND $tabid) {
 	require_once(COREPATH . 'admin/tools/multiselect_refresh.lib');
 	multiselectRefreshCount($tabid);
     relationRefreshCount($tabid);
+}
+
+/* --- sequence refresh -------------------------------------- */
+if($tablesequence AND $tabid) {
+	lmb_rebuildSequences($tablename, 'ID');
 }
 
 

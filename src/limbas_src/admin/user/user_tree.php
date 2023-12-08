@@ -106,7 +106,7 @@ function setxypos(evt,el) {
                     }
                     $bzm = 0;
                     while($userstruct['id'][$bzm]){
-                        if($userstruct['level'][$bzm] == $LEVEL){
+                        if($userstruct['level'][$bzm] == $LEVEL && !$userstruct['del'][$bzm]){
                             if(in_array($userstruct['id'][$bzm],$userstruct['level'])){
                                 $next = 1;
                                 $pic = "<IMG SRC=\"assets/images/legacy/outliner/plusonly.gif\" NAME=\"i".$userstruct['id'][$bzm]."\" OnClick=\"popup('".$userstruct['id'][$bzm]."','$LEVEL','".$userstruct['tabid'][$bzm]."','".$userstruct['typ'][$bzm]."')\" STYLE=\"cursor:pointer\">";
@@ -118,19 +118,17 @@ function setxypos(evt,el) {
                             if($userstruct['user_id'][$bzm]){
                                 # --- Hauptgruppe ----
                                 if($userstruct['maingroup'][$bzm]){
-                                    if($userstruct['del'][$bzm]){$iconclass = "lmb-user1-3";}
-                                    elseif($userstruct['lock'][$bzm]){$iconclass = "lmb-user1-2";}
+                                    if($userstruct['lock'][$bzm]){$iconclass = "lmb-user1-2";}
                                     else{$iconclass = "lmb-user1-1";}
                                     # --- Untergruppe ----
                                 }else{
-                                    if($userstruct['del'][$bzm]){$iconclass = "lmb-user2-3";}
-                                    elseif($userstruct['lock'][$bzm]){$iconclass = "lmb-user2-2";}
+                                    if($userstruct['lock'][$bzm]){$iconclass = "lmb-user2-2";}
                                     else{$iconclass = "lmb-user2-1";}
                                 }
                                 echo "<div ID=\"u_".$userstruct['id'][$bzm]."_$LEVEL\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR><TD>$pic</TD><TD><i class=\"lmb-icon " .$iconclass. "\" ID=\"u".$userstruct['id'][$bzm]."\" NAME=\"u".$userstruct['id'][$bzm]."\" ";
-                                if(!$userstruct['del'][$bzm]){echo "OnClick=\"showuser('".$userstruct['user_id'][$bzm]."')\" STYLE=\"cursor:hand\" ";}
+                                echo "OnClick=\"showuser('".$userstruct['user_id'][$bzm]."')\" STYLE=\"cursor:hand\" ";
                                 echo "TITLE=\"".$userstruct['user_name'][$bzm]."\"></i></TD><TD ";
-                                if(!$userstruct['del'][$bzm]){echo "style=\"cursor:pointer;\" OnClick=\"showuser('".$userstruct['user_id'][$bzm]."')\"";}
+                                echo "style=\"cursor:pointer;\" OnClick=\"showuser('".$userstruct['user_id'][$bzm]."')\"";
                                 echo "></i>&nbsp;".$userstruct['name'][$bzm]."</TD></TR></TABLE></div>\n";
                             }else{
                                 echo "<div ID=\"f_".$userstruct['id'][$bzm]."_$LEVEL\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR><TD>$pic</TD><TD><i class=\"lmb-icon lmb-folder-closed\" ID=\"p".$userstruct['id'][$bzm]."\" NAME=\"p".$userstruct['id'][$bzm]."\" OnClick=\"listdata('".$userstruct['id'][$bzm]."','$LEVEL','".$userstruct['tabid'][$bzm]."','".$userstruct['typ'][$bzm]."','".$userstruct['name'][$bzm]."')\" STYLE=\"cursor:pointer\" title=\"show user\"></i></TD><TD ";

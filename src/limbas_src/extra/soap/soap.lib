@@ -7,12 +7,8 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
-
-require_once(COREPATH . 'admin/tools/update/Updater.php');
-
 # ------- soap-Funktion --------
-use admin\tools\update\Updater;
+use Limbas\admin\tools\update\Updater;
 
 function runlmb($lmpar){
     if($GLOBALS['umgvar']['soap_base64']) {
@@ -145,7 +141,8 @@ function parse_action($lmpar){
 	$lmb = array();
 
 	require_once(COREPATH . 'gtab/gtab.lib');
-	require_once(COREPATH . 'gtab/gtab_type_erg.lib');
+	require_once(COREPATH . 'gtab/gtab_type.lib');
+    require_once(COREPATH . 'gtab/gtab_type_erg.lib');
 
 	# ------- Limbas Session Variablen --------
 	if(!$lmpar['lmbs']){
@@ -390,6 +387,8 @@ function parse_action($lmpar){
                     return lmb_getSyncValidate(null);
                 }elseif($lmpart['phase'] == 2){
                     return lmb_getSyncValidatePhase2($lmpart['table']);
+                }elseif($lmpart['phase'] == 5){
+                    return lmb_SyncValidateRebuildCache($lmpart['table'],$lmpart['diff']);
                 }
 
 			}

@@ -6,6 +6,12 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
+
+namespace Limbas\extra\template\form;
+
+use Limbas\extra\template\base\TemplateConfig;
+use Limbas\extra\template\base\TemplateElement;
+
 class FormTemplateElement extends TemplateElement {
 
     public function __construct($templateElementGtabid, $name, $html, $id = 0, $gtabid = null, $datid = null, $recursion = 0) {
@@ -32,7 +38,7 @@ class FormTemplateElement extends TemplateElement {
      * @param $dataPlaceholders
      * @return bool
      */
-    public static function resolveDataPlaceholdersForTable($datid, $dataPlaceholders) {
+    public static function resolveDataPlaceholdersForTable($datid, &$dataPlaceholders) {
         # group by trace
         $placeholdersByStructure = array();
         foreach ($dataPlaceholders as &$placeholder) {
@@ -119,7 +125,7 @@ class FormTemplateElement extends TemplateElement {
      * @param $gresult
      * @return bool
      */
-    protected function resolveDataPlaceholders($datid, &$gresult) {
+    protected function resolveDataPlaceholders($datid, &$gresult = null) {
         $allDataPlaceholders = $this->getUnresolvedDataPlaceholders();
         if (!$allDataPlaceholders) {
             return false;

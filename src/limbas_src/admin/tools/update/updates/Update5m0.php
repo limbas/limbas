@@ -8,10 +8,10 @@
  */
 
 
-namespace admin\tools\update\updates;
+namespace Limbas\admin\tools\update\updates;
 
-use admin\tools\update\Update;
-use admin\tools\update\Updater;
+use Limbas\admin\tools\update\Update;
+use Limbas\admin\tools\update\Updater;
 
 use Database;
 use Throwable;
@@ -21,6 +21,7 @@ class Update5m0 extends Update
 
     public function __construct()
     {
+        $this->id = 0;
         $this->major = 5;
         $this->minor = 0;
     }

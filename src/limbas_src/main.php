@@ -66,7 +66,7 @@ if ($rgsr) {
 
 //load layout / choose between new and legacy based on action and template //TODO: remove legacy switch in future version
 
-if (in_array($action,['user_color','report_preview','intro','nav_info','quickstart','maintenance','intro','edit_long','user_printer_cache','user_change', 'user_snapshot', 'user_w_vorlage', 'user_lock'])) {
+if (in_array($action,['user_color','report_preview','intro','nav_info','quickstart','maintenance','intro','edit_long','user_printer_cache','user_change', 'user_snapshot', 'user_w_vorlage', 'user_lock','user_mails','mail_preview'])) {
     $layout_bootstrap = true;
 }
 
@@ -89,7 +89,6 @@ if (lmb_substr($action, 0, 4) == "gtab") {
     require_once (COREPATH . 'gtab/gtab_form.lib');
     require_once (COREPATH . 'gtab/gtab_type.lib');
     require_once (COREPATH . 'gtab/gtab_type_erg.lib');
-    require_once (COREPATH . 'extra/report/report_select/report_select.php');
     
     if ($gformlist[$gtabid]["typ"][$gtab["tab_view_form"][$gtabid]]) {
         if (! $form_id and $form_id != '0' and $gtab["tab_view_form"][$gtabid]) {
@@ -508,6 +507,13 @@ elseif ($action == "user_reportmanager" || $action == "user_templatemanager") {
 elseif($action === 'syntaxcheckjs') {
     require_once(COREPATH . 'lib/syntaxcheck.php');
     exit();
+}
+elseif ($action == 'user_mails'  and $LINK[$action] == 1) {
+    $require1 = 'admin/setup/mail/mail_user.dao';
+    $require2 = 'admin/setup/mail/mail.php';
+}
+elseif ($action == 'mail_preview') {
+    $require1 = 'extra/mail/html/init.php';
 }
 elseif ($LINK["extension"][$LINK_ID[$action]] and is_file($umgvar["pfad"] . $LINK["extension"][$LINK_ID[$action]])) {} elseif ($action == "null") {} else {
     $bzm = 0;

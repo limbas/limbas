@@ -15,6 +15,11 @@ function add_reminder($new_remindername,$new_remindertable,$new_reminderform){
 	global $db;
 	global $session;
 
+    #if(!$new_remindertable){
+    #    lmb_alert('no table selected!');
+    #    return;
+    #}
+
 	require_once(COREPATH . 'admin/setup/language.lib');
 	
 	// language
@@ -55,6 +60,8 @@ function get_reminder(){
 		$reminder[$tabid]['formd_id'][$key] = lmbdb_result($rs, "FORMD_ID");
 		$reminder[$tabid]['groupbased'][$key] = lmbdb_result($rs, "GROUPBASED");
         $reminder[$tabid]['defaultselection'][$key] = lmbdb_result($rs, "DEFAULTSELECTION");
+        $reminder[$tabid]['info'][$key] = lmbdb_result($rs, "NOTIFICATION");
+        $reminder[$tabid]['refresh'][$key] = lmbdb_result($rs, "REFRESHTIME");
         $reminder['name_id'][$key] = lmbdb_result($rs, "NAME");
 	}
 	return $reminder;
@@ -68,6 +75,8 @@ function edit_reminder($id){
 	global $remindername;
 	global $remindergrouping;
     global $reminderdefault;
+    global $reminderinfo;
+    global $reminderrfresh;
 	global $session;
 	
 	require_once(COREPATH . 'admin/setup/language.lib');
@@ -80,7 +89,7 @@ function edit_reminder($id){
 	   lang_change(null,$name_id,$name,$session["language"],"_DEPEND");
 	}
 	
-	$sqlquery = "UPDATE LMB_REMINDER_LIST SET FORML_ID = ".parse_db_int($reminderforml[$id]).",FORMD_ID = ".parse_db_int($reminderformd[$id]).", GROUPBASED = ".parse_db_bool($remindergrouping[$id]).", DEFAULTSELECTION = ".parse_db_bool($reminderdefault[$id])." where ID = $id";
+	$sqlquery = "UPDATE LMB_REMINDER_LIST SET FORML_ID = ".parse_db_int($reminderforml[$id]).",FORMD_ID = ".parse_db_int($reminderformd[$id]).", GROUPBASED = ".parse_db_bool($remindergrouping[$id]).", DEFAULTSELECTION = ".parse_db_bool($reminderdefault[$id]).", NOTIFICATION = ".parse_db_bool($reminderinfo[$id]).", REFRESHTIME = ".parse_db_int($reminderrfresh[$id])." WHERE ID = $id";
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 }
 

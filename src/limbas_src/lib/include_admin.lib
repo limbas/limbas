@@ -475,7 +475,7 @@ function lmb_rebuildTrigger($deleteall=null,$onlytabs=null){
 		#lmb_dropAllDBTrigger("LMB_TRG_%",1);
 		lmb_dropAllDBTrigger(null,1);
 	}
-	
+
 	$sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	while(lmbdb_fetch_row($rs)){
@@ -931,8 +931,8 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
 	$fkys = lmb_getForeignKeys();
 
 	#if(!$fkeylist){$fkeylist = array();}
-	
-	
+
+
 	$sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	while(lmbdb_fetch_row($rs)){

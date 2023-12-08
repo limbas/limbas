@@ -69,7 +69,8 @@ function loadStructure(sender, element,reportid,gtabid,tgtabid,template,settings
         dataType:'json',
         url: 'main_dyns.php',
         data: {
-            actid: 'reportManagerLoadStructure',
+            actid: 'manageTemplates',
+            action: 'loadStructure',
             reportid:reportid,
             gtabid:gtabid,
             tgtabid: tgtabid,
@@ -245,7 +246,8 @@ function loadForm(gtabid,id) {
         dataType:'json',
         url: 'main_dyns.php',
         data: {
-            actid: 'reportManagerGetForm',
+            actid: 'manageTemplates',
+            action: 'getForm',
             gtabid:gtabid,
             id: id,
         },
@@ -304,7 +306,8 @@ function addTemplateToGroup() {
         dataType:'json',
         url: 'main_dyns.php',
         data: {
-            actid: 'reportManagerAddTemplate',
+            actid: 'manageTemplates',
+            action: 'addTemplate',
             tgtabid:tgtabid,
             group: group,
             name: name,
@@ -334,7 +337,8 @@ function saveTemplate() {
         dataType:'json',
         url: 'main_dyns.php',
         data: {
-            actid: 'reportManagerSaveTemplate',
+            actid: 'manageTemplates',
+            action: 'saveSingleTemplate',
             gtabid:$('#form_gtabid').val(),
             id: $('#form_id').val(),
             content: ed.getContent()
@@ -368,7 +372,8 @@ function deleteTemplate() {
         dataType:'json',
         url: 'main_dyns.php',
         data: {
-            actid: 'reportManagerDeleteTemplate',
+            actid: 'manageTemplates',
+            action: 'deleteTemplate',
             gtabid: gtabid,
             id: id
         }

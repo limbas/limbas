@@ -6,7 +6,9 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
-namespace admin\tools\update;
+namespace Limbas\admin\tools\update;
+
+global $DBA;
 
 require_once(COREPATH . 'lib/db/db_wrapper.lib');
 require_once(COREPATH . 'lib/db/db_' . $DBA['DB'] . '_admin.lib');
@@ -229,12 +231,12 @@ class Updater
     /**
      * Get all patches of an updates
      *
-     * @param int $key
+     * @param int $id
      * @return array
      */
-    private static function getUpdatePatches(int $key = 0): array
+    private static function getUpdatePatches(int $id = 0): array
     {
-        $update = self::getUpdate($key);
+        $update = self::getUpdate($id);
 
         if (!$update) {
             return [];
@@ -246,12 +248,12 @@ class Updater
     /**
      * Check if whole update is completed
      *
-     * @param int $key
+     * @param int $id
      * @return bool
      */
-    private static function getUpdateCompleted(int $key = 0): bool
+    private static function getUpdateCompleted(int $id = 0): bool
     {
-        $update = self::getUpdate($key);
+        $update = self::getUpdate($id);
 
         if (!$update) {
             return true;
@@ -264,13 +266,13 @@ class Updater
      * Run specific patch of specific update
      *
      * @param int $patchNr
-     * @param int $updateKey
+     * @param int $updateId
      * @return bool
      */
-    public static function runPatch(int $patchNr, int $updateKey = 0): bool
+    public static function runPatch(int $patchNr, int $updateId = 0): bool
     {
 
-        $update = self::getUpdate($updateKey);
+        $update = self::getUpdate($updateId);
 
         if (!$update) {
             return true;
@@ -282,12 +284,12 @@ class Updater
     /**
      * Get specific patch of specific update
      * @param int $patchNr
-     * @param int $updateKey
+     * @param int $updateId
      * @return mixed|null
      */
-    public static function getPatch(int $patchNr, int $updateKey = 0): mixed
+    public static function getPatch(int $patchNr, int $updateId = 0): mixed
     {
-        $update = self::getUpdate($updateKey);
+        $update = self::getUpdate($updateId);
 
         return $update?->getPatch($patchNr);
 
@@ -296,10 +298,10 @@ class Updater
     /**
      * Get specific update
      *
-     * @param int $key
+     * @param int $id
      * @return Update|null
      */
-    private static function getUpdate(int $key = 0): ?Update
+    private static function getUpdate(int $id = 0): ?Update
     {
         self::loadUpdates();
 
@@ -307,12 +309,12 @@ class Updater
             return null;
         }
 
-        if (!array_key_exists($key, self::$updates)) {
+        if (!array_key_exists($id, self::$updates)) {
             return null;
         }
 
         /** @var Update $update */
-        return self::$updates[$key];
+        return self::$updates[$id];
     }
 
 
@@ -329,53 +331,51 @@ class Updater
         }
 
         $versions = self::getVersions();
-
-        $versionParts = array_map('intval', explode('.', $versions['source']));
-
+        
+        $versions['source'] = preg_replace('/(\d+)\.(\d+)\.\d+/', '$1.$2.0', $versions['source']);
+        $versions['db'] = preg_replace('/(\d+)\.(\d+)\.\d+/', '$1.$2.0', $versions['db']);
+        
         $updateClasses = [];
+        
+        // load all available updates
+        $availableUpdateFiles = array_diff(scandir(__DIR__ . '/updates' ), ['.', '..']);
+        $availableUpdateVersions = array_map( function($value) {
+            $matches = [];
+            preg_match('/(\d+)m(\d+)/', $value, $matches);
+            return $matches[1] . '.' . $matches[2] . '.0';
+        }, $availableUpdateFiles);
 
-        // zero index is always current update
-        $updateClasses[0] = 'Update' . $versionParts[0] . 'm' . $versionParts[1];
+        $neededUpdateVersions = array_filter($availableUpdateVersions, function($version) use ($versions) {
+            return version_compare($versions['db'], $version, '<=');
+        });
+        
 
-        // if previous version is a minor version of current major version
-        if ($versionParts[1] - 1 >= 0) {
-            $updateClasses[] = 'Update' . $versionParts[0] . 'm' . ($versionParts[1] - 1);
-        } elseif($versionParts[1] - 1 < 0) {
-            
-            $previousMajor = $versionParts[0] - 1;
-
-            $availableUpdateFiles = array_diff(scandir(__DIR__ . '/updates' ), ['.', '..']);
-            $availableUpdateFiles = array_filter($availableUpdateFiles, function($value) use ($previousMajor) {
-                return str_starts_with($value, 'Update' . $previousMajor);
-            });
-            
-            $previousMinorVersions = [];
-            foreach($availableUpdateFiles as $availableUpdateFile) {
-                $fileVersion = explode('m', str_replace(['Update','.php'],'',$availableUpdateFile));
-                $previousMinorVersions[] = intval($fileVersion[1]);
-            }
-
-            if (!empty($previousMinorVersions)) {
-                $previousMinor = max($previousMinorVersions);
-                
-                //previous major release
-                $updateClasses[] = 'Update' . $previousMajor . 'm' . $previousMinor;
-            }
-            
-            
+        usort($neededUpdateVersions, 'version_compare');
+        
+        if(count($neededUpdateVersions) <= 1) {
+            $secondUpdateVersion = array_pop($availableUpdateVersions);
+            $firstUpdateVersion = array_pop($availableUpdateVersions);
+        }
+        else {
+            $firstUpdateVersion = array_shift($neededUpdateVersions);
+            $secondUpdateVersion = array_shift($neededUpdateVersions);
         }
 
-
+        if($secondUpdateVersion !== null) {
+            $secondUpdateVersionParts = array_map('intval', explode('.', $secondUpdateVersion));
+            $updateClasses[] = 'Update' . $secondUpdateVersionParts[0] . 'm' . $secondUpdateVersionParts[1];
+        }
+        if($firstUpdateVersion !== null) {
+            $firstUpdateVersionParts = array_map('intval', explode('.', $firstUpdateVersion));
+            $updateClasses[] = 'Update' . $firstUpdateVersionParts[0] . 'm' . $firstUpdateVersionParts[1];
+        }
         
-        
 
-        foreach ($updateClasses as $key => $update) {
-            $updateFile = __DIR__ . '/updates/' . $update . '.php';
-            if (file_exists($updateFile)) {
-                require_once $updateFile;
-                $className = '\\admin\\tools\\update\\updates\\' . $update;
-                self::$updates[$key] = new $className(); //new \admin\tools\update\updates\Update4m4();//
-            }
+        foreach ($updateClasses as $updateClass) {
+            $className = '\\Limbas\\admin\\tools\\update\\updates\\' . $updateClass;
+            /** @var Update $update */
+            $update = new $className();
+            self::$updates[$update->getId()] = $update;
         }
 
     }
@@ -383,12 +383,13 @@ class Updater
     /**
      * Get the version number of the previous version
      *
+     * @param int $id
      * @return array|false|string
      */
-    private static function getPreviousVersionNumber(): bool|array|string
+    private static function getUpdateVersionNumber(int $id = 0): bool|array|string
     {
 
-        $update = self::getUpdate(1);
+        $update = self::getUpdate($id);
 
         if (!$update) {
             return false;
@@ -480,13 +481,13 @@ class Updater
     /**
      * Set a patch as done independent of status
      * @param int $patchNr
-     * @param int $updateKey
+     * @param int $updateId
      * @return bool
      */
-    public static function setPatchDone(int $patchNr, int $updateKey = 0): bool
+    public static function setPatchDone(int $patchNr, int $updateId = 0): bool
     {
 
-        $update = self::getUpdate($updateKey);
+        $update = self::getUpdate($updateId);
 
         if (!$update) {
             return false;
@@ -494,7 +495,7 @@ class Updater
 
         $versionParts = $update->getVersion(true);
 
-        $patch = self::getPatch($patchNr,$updateKey);
+        $patch = self::getPatch($patchNr,$updateId);
         if (!$patch) {
             return false;
         }
@@ -514,20 +515,32 @@ class Updater
 
         $versions = Updater::getVersions();
 
+        self::loadUpdates();
+        
+        $updateIds = array_keys(self::$updates);
+        
+        $firstUpdateId = array_shift($updateIds);
+        $secondUpdateId = array_shift($updateIds);
+        
+        
         return [
             'versions' => $versions,
             'updateNecessary' => Updater::checkVersion(false),
             'version' => [
-                'current' => $versions['source'],
-                'previous' => Updater::getPreviousVersionNumber()
+                'current' => Updater::getUpdateVersionNumber($firstUpdateId),
+                'previous' => Updater::getUpdateVersionNumber($secondUpdateId)
             ],
             'patches' => [
-                'current' => Updater::getUpdatePatches(),
-                'previous' => Updater::getUpdatePatches(1)
+                'current' => Updater::getUpdatePatches($firstUpdateId),
+                'previous' => Updater::getUpdatePatches($secondUpdateId)
             ],
             'completed' => [
-                'current' => Updater::getUpdateCompleted(),
-                'previous' => Updater::getUpdateCompleted(1)
+                'current' => Updater::getUpdateCompleted($firstUpdateId),
+                'previous' => Updater::getUpdateCompleted($secondUpdateId)
+            ],
+            'id' => [
+                'current' => $firstUpdateId,
+                'previous' => $secondUpdateId
             ]
         ];
     }
@@ -539,9 +552,9 @@ class Updater
      */
     public static function dynsRunPatch(array $params, bool $isRemote = false): array
     {
-        $patchNr = $params['patch'] ?? 0;
-        $update = $params['update'] ?? 0;
-        $clientId = $params['client'] ?? 0;
+        $patchNr = intval($params['patch']);
+        $updateId = intval($params['update']);
+        $clientId = intval($params['client']);
 
         $msg = '';
 
@@ -557,9 +570,9 @@ class Updater
 
         } else {
 
-            $success = Updater::runPatch($patchNr, $update);
+            $success = Updater::runPatch($patchNr, $updateId);
             if (!$success) {
-                $patch = Updater::getPatch($patchNr, $update);
+                $patch = Updater::getPatch($patchNr, $updateId);
                 if ($patch) {
                     $msg = $patch['error'];
                 }

@@ -236,7 +236,7 @@ $profileMenuWrapper .= '</a><div class="dropdown-menu rounded-0 border-light py-
                         } else if ($key == 308) {
                             echo sprintf($multitenantMenuWrapper,$value["name"]);
                         } else {
-                            echo "<li class=\"nav-item ps-lg-2\" onclick=\"$onclick\" title=\"" . $value["desc"] . "\"><a class=\"nav-link h-100 d-flex flex-column justify-content-between align-items-center $class\">".(($value['icon']) ? '<div class="lmbMenuItemTop2Icon"><i class="lmb-icon '.$value['icon'].'"></i></div><div class="lmbMenuItemTop2Text">'.$value["name"].'</div>' : $value["name"])."</a></li>";
+                            echo "<li class=\"nav-item ps-lg-2\" id=\"lmbMenuItemInfo_$key\" onclick=\"$onclick\" title=\"" . $value["desc"] . "\"><a class=\"nav-link h-100 d-flex flex-column justify-content-between align-items-center $class\">".(($value['icon']) ? '<div class="lmbMenuItemTop2Icon"><i class="lmb-icon '.$value['icon'].'"></i></div><div class="lmbMenuItemTop2Text">'.$value["name"].'</div>' : $value["name"])."</a></li>";
                         }
     
                         $bzm++;

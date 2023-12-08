@@ -68,8 +68,7 @@ if (!defined('LIMBAS_INSTALL')) {
     <tr>
         <td><?= lang('Color Scheme') ?>:</td>
         <td><select class="form-select" name="setup_color_scheme">
-                <option value="2" <?= $_POST['setup_color_scheme'] == '2' ? 'selected' : '' ?>>Default</option>
-                <option value="3" <?= $_POST['setup_color_scheme'] == '3' ? 'selected' : '' ?>>Dark</option>
+                <option value="1" <?= $_POST['setup_color_scheme'] == '1' ? 'selected' : '' ?>>Default</option>
             </select>
         </td>
     </tr>

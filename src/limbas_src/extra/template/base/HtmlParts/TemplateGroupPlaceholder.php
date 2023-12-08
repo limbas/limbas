@@ -7,6 +7,11 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+namespace Limbas\extra\template\base\HtmlParts;
+
+use Limbas\extra\template\base\Exceptions\TemplateGroupUnresolvedException;
+use Limbas\extra\template\base\TemplateConfig;
+
 /**
  * Class TemplateGroupPlaceholder
  * Placeholder for one of many template elements in a specific group
@@ -64,7 +69,8 @@ class TemplateGroupPlaceholder extends AbstractHtmlPart {
         }
     }
 
-    public function getAsHtmlArr() {
+    public function getAsHtmlArr(): array
+    {
         if (!$this->subTemplateElementPlaceholder) {
             throw new TemplateGroupUnresolvedException($this, "TemplateGroup placeholder {$this->identifier} could not be resolved!");
         }

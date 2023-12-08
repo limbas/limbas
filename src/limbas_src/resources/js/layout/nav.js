@@ -11,6 +11,7 @@
  */
 var noMoreRefresh = 0;
 var refreshMultiPreview = [];
+var refreshMultiCount = [];
 var hide_sidenav_size = 200;
 var hide_multiframe_size = 200;
 var dropel = null;
@@ -122,7 +123,6 @@ function hideShowMulti(evt,id,name,gtabid,params,type,manual){
 
     var $angle = $('#HS' + id);
     var $el = $angle.parents('li');
-
 
     if ($el.hasClass('open')) {
         $el.removeClass('open');
@@ -480,6 +480,12 @@ function lmbFilterTablesTimer(event, searchFieldEl, navID) {
 
 
 function startautoopen(){
+
+
+
+    limbasMultiframeCount();
+
+
     var t = 0;
     $('[data-autoopen]').each(function(){
         t = t + 1000;
@@ -510,29 +516,66 @@ function body_click(){
 
 function limbasMultiframePreview(id,type,manual,dropitem,gtabid,params){
     if(!noMoreRefresh || manual){
-        ajaxGet(0,"main_dyns.php","multiframePreview&limbasMultiframeItem="+type+"&id="+id+"&gtabid="+gtabid+"&dropitem="+dropitem+"&"+params,null,"limbasMultiframePreviewPost");
+
+
+
+        dynfunc = function(result){limbasMultiframePreviewPost(result,id);};
+        ajaxGet(0,"main_dyns.php","multiframePreview&limbasMultiframeItem="+type+"&id="+id+"&gtabid="+gtabid+"&dropitem="+dropitem+"&"+params,null,"dynfunc");
         if (refreshMultiPreview[id]) {
             window.clearInterval(refreshMultiPreview[id]);
         }
         var fct = "limbasMultiframePreview(" + id + ",'" + type + "',0,0,'"+gtabid+"','"+params+"')";
-        var rateEl = document.getElementById("autorefreshPreviewWorkflow_"+id);
+        var rateEl = document.getElementById("multiframeAutorefresh_"+id);
         if(rateEl && rateEl.value){
             var rate = rateEl.value;
-
             refreshMultiPreview[id] = window.setInterval(fct,rate*60*1000);
         }
     }
 }
 
-function limbasMultiframePreviewPost(string){
-    var string_ = string.split("#L#");
-    var string_type = string_[0].trim();
-    var string_value = string_[1].trim();
-    var ldmfpstring = document.getElementById("limbasDivMultiframePreview"+string_type);
-    if(string != "" && ldmfpstring){
-        ldmfpstring.innerHTML = string_value;
-        ldmfpstring.style.visibility = "visible";
+function limbasMultiframePreviewPost(string,id){
+
+    //ajaxEvalScript(string);
+    $('#limbasDivMultiframePreview'+id).html(string);
+    $('#limbasDivMultiframePreview'+id).show();
+
+}
+
+
+function limbasMultiframeCount(){
+
+    ajaxGet(0,"main_dyns.php","multiframeCount",null,"limbasMultiframeCountPost");
+
+    //$('#lmbMenuItemInfo_324').hide();
+    $('#lmbMenuItemInfo_324').children().last().removeClass("text-warning");
+
+    if (!refreshMultiCount[0] && multiframe_refresh) {
+        var fct = "limbasMultiframeCount()";
+        refreshMultiCount[0] = window.setInterval(fct, multiframe_refresh * 60 * 1000);
     }
+}
+
+function limbasMultiframeCountPost(string){
+
+    if(!string){return;}
+    var obj = JSON.parse(string);
+    if(!obj){return;}
+
+    for(var key in obj['count']) {
+        if(obj['count'][key] > 0) {
+            $('#multiframeCount_' + key).html(obj['count'][key]);
+            $('#multiframeCount_' + key).removeClass("d-none");
+            if(obj['info'][key]) {
+                //$('#lmbMenuItemInfo_324').show();
+                $('#lmbMenuItemInfo_324').children().last().addClass("text-warning");
+            }
+        }else{
+            if(!$('#multiframeCount_' + key).hasClass("none")){
+                $('#multiframeCount_' + key).addClass("d-none");
+            }
+        }
+    }
+
 }
 
 /**

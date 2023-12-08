@@ -13,6 +13,7 @@ use limbas\rest\ErrorHandler;
 use limbas\rest\RestException;
 use limbas\rest\Router;
 
+header('Access-Control-Allow-Origin: *');
 header('Content-type: application/json; charset=utf-8');
 
 require_once('classes/ErrorHandler.php');

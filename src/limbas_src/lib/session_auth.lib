@@ -117,7 +117,7 @@
 	$session["lockbackend"] = lmbdb_result($rs2,"LOCKBACKEND");
 	$session["superadmin"] =  lmbdb_result($rs2,"SUPERADMIN");
 	$session["gc_maxlifetime"] = lmbdb_result($rs2,"GC_MAXLIFETIME");
-	$session["multiframe"] = $umgvar["multiframe"];
+	$session["multiframe"] = $umgvar['multiframe'];
 	if($multitenant_ = lmbdb_result($rs2,"MULTITENANT")){
 	    $multitenant_ = explode(',',$multitenant_);
 	    $session["multitenant"] = explode(';',$multitenant_[0]);

@@ -11,7 +11,7 @@ global $lang;
 global $session;
 global $DBA;
 
-use admin\tools\update\Updater; ?>
+use Limbas\admin\tools\update\Updater; ?>
 
 <div class="card h-100">
     <div class="card-header">
@@ -37,7 +37,7 @@ use admin\tools\update\Updater; ?>
                 </tr>
                 <tr>
                     <td><?= $lang[2] ?>:</td>
-                    <td class="text-muted"><?= $umgvar['dev-version'] ?></td>
+                    <td class="text-muted"><?= $umgvar['version'] ?></td>
                 </tr>
                 <?php if ($session['user_id'] == 1) {
                     $latestVersion = Updater::checkNewVersionAvailable();

@@ -449,6 +449,7 @@ function add_group($group_name,$group_beschr,$group_level,$use_parent){
 			$group_level = lmbdb_result($rs, "LEVEL");
 		}else{
 			$group_level = 0;
+            // drop missing rule entries
 			check_grouprights1($ID);
 			check_grouprights($ID);
 		}
@@ -489,6 +490,9 @@ function add_group($group_name,$group_beschr,$group_level,$use_parent){
 /*------------------------------ Für alle Gruppen - Tabellen/Spalten-Rechte ------------------------------------*/
 function check_grouprights1All($showstatus=null,$check_table=null){
     global $db;
+
+    // drop missing rule entries
+    del_tablerights($check_table);
     
     $commit = false;
 	$sqlquery = "SELECT COUNT(*) AS ANZAHL FROM LMB_GROUPS";
@@ -517,9 +521,6 @@ function check_grouprights1($group_id,$group_name="",$num_group=0,$check_table=0
 	global $lang;
 	global $farbschema;
 	global $num;
-
-	// drop missing rule entries
-    del_tablerights($check_table);
 
 	if(is_numeric($check_table) AND $check_table){$check_table = " WHERE LMB_CONF_TABLES.TAB_ID = $check_table ";}else{$check_table = '';}
 
@@ -664,6 +665,8 @@ function check_grouprightsAll($showstatus=null){
 		check_grouprights(lmbdb_result($rs,"GROUP_ID"),lmbdb_result($rs,"NAME"),$num_group,$showstatus);
 		del_grouprights(lmbdb_result($rs,"GROUP_ID"),lmbdb_result($rs,"NAME"),$num_group);
 	}
+
+    return true;
     
 }
 
@@ -737,7 +740,9 @@ function del_tablerights($tabid=null){
 	global $db;
 	global $lang;
 
-	if($tabid){$gqr = "AND TAB_ID = $tabid";}
+	if($tabid){
+        $gqr = "AND TAB_ID = $tabid";
+    }
 
     // table rules
 	$sqlquery = "DELETE FROM LMB_RULES_TABLES WHERE
@@ -753,7 +758,6 @@ function del_tablerights($tabid=null){
     ) $gqr";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 
-	if($tabid){$gqr = "AND TABID = $tabid";}
 
 	// sync template
     /*
@@ -763,6 +767,12 @@ function del_tablerights($tabid=null){
     ) $gqr";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
     */
+
+	if($tabid){
+        $gqr = "AND TABID = $tabid";
+    }else{
+        $gqr = "AND TABID != -1";
+    }
 
 	// sync rules
 	$sqlquery = "DELETE FROM LMB_SYNC_CONF WHERE

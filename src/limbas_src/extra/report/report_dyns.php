@@ -8,76 +8,6 @@
  */
 
 
-
-/**
- * # report menu
- *
- * @param array $params
- * @return void
- */
-function dyns_menuReportOption($params){
-    global $greportlist;
-
-    $reportspec = $greportlist[$params['gtabid']];
-    if(!$reportspec){return;}
-
-    require_once(COREPATH . 'extra/report/report.dao');
-    lmbReportLoadClasses();
-
-    $report_id = $params['report_id'];
-    $report_defformat = $reportspec['defformat'][$report_id];
-    $report_medium = $params['report_medium'];
-    $report_output = $params['report_output'];
-    $gtabid = $params['gtabid'];
-    $use_record = $params['use_record'];
-    $ID = $params['ID'];
-    $listmode = $greportlist[$gtabid]['listmode'][$report_id];
-    if(!$report_medium){$report_medium = $report_defformat;}
-    $preview = $params['preview'];
-    $context = $params['context'];
-
-    $action = $params['action'];
-    $report_rename = $params['report_rename'];
-
-    $resolvedTemplateGroups = $params['resolvedTemplateGroups'];
-    $resolvedDynamicData = $params['resolvedDynamicData'];
-    $saveAsTemplate = $params['saveAsTemplate'];
-
-    $nodata = false;
-    if ($preview) {
-        $report_output = 0;
-        $nodata = true;
-        $resolvedDynamicData = null;
-    }
-
-    $menuRender = ReportMenuRenderFactory::getMenuRender($context);
-
-    //if template based report -> check if something needs to be resolved
-    if ($report_defformat === 'tcpdf' || $report_defformat === 'mpdf') { #REPTYPE#
-        if ($menuRender->printReportTemplateOptions($preview,$gtabid, $report_id, $ID, $report_output, $use_record, $resolvedTemplateGroups, $listmode, $nodata, $resolvedDynamicData, $saveAsTemplate)) {
-            return;
-        }
-    }
-
-    //open the preview of a report in a new tab
-    if ($preview) {
-        $menuRender->printReportPreviewUrl($report_id, $gtabid, $ID, $use_record, $resolvedTemplateGroups);
-        return;
-    }
-    
-    
-    //if everything is resolved and user has selected an action => generate final report
-    if($report_output){
-        dyns_reportAction($params);
-    }
-
-    
-    //if the user did not open the preview -> print acton form as last step
-    $menuRender->printReportPrintForm($action, $report_id, $gtabid, $ID, $resolvedTemplateGroups, $resolvedDynamicData);
-
-}
-
-
 /**
  * # report menu
  *
@@ -91,7 +21,6 @@ function dyns_reportAction($params){
     if(!$reportspec){return;}
 
     require_once(COREPATH . 'extra/report/report.dao');
-    lmbReportLoadClasses();
 
     $report_output = $params['report_output'];
     
@@ -114,16 +43,6 @@ function dyns_reportAction($params){
     }
 
     limbasGenerateReport($params['report_id'], $params['gtabid'], $params['ID'], $params['report_output'], $params['report_medium'], $params['report_rename'], $params['use_record'], $params['report_printer'], $params['report_ext'], $params['resolvedTemplateGroups'], $params['resolvedDynamicData'], $relation);
-}
-
-
-function dyns_lmbGetReportList($params) {
-    header('Content-Type: application/json');
-
-    require_once COREPATH . 'extra/report/report_select/report_select.php';
-
-    $reportlist = LmbReportSelect::getReportListTable($params['gtabid'],$params['search'],$params['page'],$params['perPage']);
-    echo json_encode($reportlist);
 }
 
 
@@ -184,7 +103,6 @@ function limbasGenerateReport($report_id, $gtabid, $ID, $report_output, $report_
     $output = '';
     switch ($report_output) {
         case 2: // archive
-            //echo $report['archive_fileID'];
             $output = $filePath;
             break;
         case 4: // print
@@ -206,15 +124,6 @@ function limbasGenerateReport($report_id, $gtabid, $ID, $report_output, $report_
     echo $output;
     
     return true;
-}
-
-
-
-function lmbReportLoadClasses() {
-    require_once(__DIR__.'/report_menu/ReportMenuRender.php');
-    require_once(__DIR__.'/report_menu/ReportMenuRenderBs4.php');
-    require_once(__DIR__.'/report_menu/ReportMenuRenderOld.php');
-    require_once(__DIR__.'/report_menu/ReportMenuRenderFactory.php');
 }
 
 

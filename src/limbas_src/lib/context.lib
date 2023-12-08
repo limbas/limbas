@@ -38,7 +38,6 @@ function lmb_pop_custmenu($custmenu,$gtabid,$ID,$gresult=null,$fieldid=null){
         $menuitems['id'][] = lmbdb_result($rs,'ID');
     }
 
-
     if(!$menuitems){return false;}
 
     foreach($menuitems['id'] as $hkey => $hvalue){

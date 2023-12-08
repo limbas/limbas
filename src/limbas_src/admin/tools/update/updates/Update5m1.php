@@ -8,15 +8,16 @@
  */
 
 
-namespace admin\tools\update\updates;
+namespace Limbas\admin\tools\update\updates;
 
-use admin\tools\update\Update;
+use Limbas\admin\tools\update\Update;
 
 class Update5m1 extends Update
 {
 
     public function __construct()
     {
+        $this->id = 1;
         $this->major = 5;
         $this->minor = 1;
     }

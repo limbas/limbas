@@ -26,7 +26,8 @@ function testDatabase($configFile = null)
         if ($_POST['radio_odbc'] == 'pdo') {
             $DBA['ODBCDRIVER'] = 'PDO';
         } else {
-            $DBA['ODBCDRIVER'] = 'ODBC';
+            #$DBA['ODBCDRIVER'] = 'ODBC';
+            $DBA['ODBCDRIVER'] = $_POST['setup_dbdriver'];
         }
 
         $DBA['DBUSER'] = $_POST['setup_dbuser'];
@@ -58,7 +59,6 @@ function testDatabase($configFile = null)
     require_once(COREPATH  . 'lib/include.lib');
 
     try {
-
         /* --- check basic connection and get database Version --- */
         if ($db = dbq_0($DBA['DBHOST'], $DBA['DBNAME'], $DBA['DBUSER'], $DBA['DBPASS'], $DBA['ODBCDRIVER'], $DBA['PORT'])) {
             // database version

@@ -31,6 +31,9 @@ function htuseraccess($ID,$user,$pass){
 
 		# --- htaccess ---
 		$htaccess_file = fopen($path."/.htaccess","w");
+		if($htaccess_file === false) {
+			return false;
+		}
 		$value = "AuthName \"$user\"\nAuthType Basic\nAuthUserFile ".$path."/.htpasswd\nrequire valid-user";
 		fputs($htaccess_file,$value);
 		fclose($htaccess_file);

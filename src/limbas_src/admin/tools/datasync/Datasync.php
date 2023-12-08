@@ -230,6 +230,7 @@ abstract class Datasync
     protected function collectChangedData($newids = array()): bool|array
     {
         global $umgvar;
+        global $gtab;
 
         $db = Database::get();
 
@@ -279,7 +280,7 @@ abstract class Datasync
             
             if ($rowCount > 0) {
                 while (lmbdb_fetch_row($rs)) {
-                    $tabid = lmbdb_result($rs, 'TABID');
+                    $tabid = intval(lmbdb_result($rs, 'TABID'));
                     $fieldid = lmbdb_result($rs, 'FIELDID');
                     $datid = lmbdb_result($rs, 'DATID');
                     $slave_datid = lmbdb_result($rs, 'SLAVE_DATID');
@@ -316,42 +317,73 @@ abstract class Datasync
                     } //created & not deleted
                     elseif ($type == 2 && $data[$tabid][$slave_datid] !== false) {
 
-                        //only take all data if fieldid = 1
-                        if ($fieldid == 1) {
-                            $newdata = $this->getData($tabid, $datid, $syncFields[$tabid], skipRelations: true);
-                        } else {
-                            //otherwise, take only system fields
-                            $newdata = $this->getData($tabid, $datid, [], $erstdatum, skipRelations: true);
-                        }
-                        if ($newdata === false) {
-                            continue;
-                        }
+                        $newTabIds = [$tabid];
+                        $isOneOneRelation = false;
+                        if(array_key_exists('raverkn', $gtab) && is_array($gtab['raverkn']) && array_key_exists($tabid,$gtab['raverkn']) && is_array($gtab['raverkn'][$tabid])){
+                            foreach($gtab['raverkn'][$tabid] as $rTabId){
 
-                        //always remove specific values systemdata
-                        if (array_key_exists('sys', $newdata)) {
-                            $ignore = ['VPID', 'VACT'];
-                            foreach ($ignore as $i) {
-                                if (array_key_exists($i, $newdata['sys'])) {
-                                    unset($newdata['sys'][$i]);
+                                if (is_array($this->template) && !array_key_exists($rTabId, $this->template)) {
+                                    continue;
+                                }
+                                
+                                if($rTabId !== $tabid) {
+                                    $newTabIds[] = intval($rTabId);
                                 }
                             }
+                            $isOneOneRelation = true;
                         }
+                        
+                        // in case of 1:1 relations all related tables are send
+                        foreach($newTabIds as $newTabId) {
+
+                            if (!array_key_exists($newTabId, $data)) {
+                                $data[$newTabId] = [];
+                                //cache syncfields per table
+                                $syncFields[$newTabId] = $this->getSyncFields($newTabId);
+                            }
+                            
+                            //only take all data if fieldid = 1
+                            if ($fieldid == 1) {
+                                $newdata = $this->getData($newTabId, $datid, $syncFields[$newTabId], skipRelations: true);
+                            } else {
+                                //otherwise, take only system fields
+                                $newdata = $this->getData($newTabId, $datid, [], $erstdatum, skipRelations: true);
+                            }
+                            if ($newdata === false) {
+                                continue;
+                            }
+
+                            //always remove specific values systemdata
+                            if (array_key_exists('sys', $newdata)) {
+                                $ignore = ['VPID', 'VACT'];
+                                foreach ($ignore as $i) {
+                                    if (array_key_exists($i, $newdata['sys'])) {
+                                        unset($newdata['sys'][$i]);
+                                    }
+                                }
+                            }
 
 
-                        // add data to default update array
-                        $newdata['new'] = true;
-                        $data[$tabid][$datid] = $newdata;
+                            // add data to default update array
+                            $newdata['new'] = true;
+                            $data[$newTabId][$datid] = $newdata;
 
-                        $newid = [
-                            'ID' => $datid,
-                            'slave_datid' => 0
-                        ];
+                            $newid = [
+                                'ID' => $datid,
+                                'slave_datid' => 0,
+                                'relOne' => $isOneOneRelation,
+                                'relTab' => $tabid
+                            ];
 
-                        if (!$this->is_main) {
-                            $data[$tabid]['new'][$datid] = $newid;
-                        } else {
-                            $data[$tabid]['new'][] = $newid;
+                            if (!$this->is_main) {
+                                $data[$newTabId]['new'][$datid] = $newid;
+                            } else {
+                                $data[$newTabId]['new'][] = $newid;
+                            }
                         }
+                        
+                        
+                        
 
                     } //changed & not deleted
                     elseif ($type == 3 && $data[$tabid][$slave_datid] !== false) {
@@ -425,6 +457,7 @@ abstract class Datasync
         $newids = array();
         $relation = array();
         try {
+            $tabIdMatching = []; // only relevant for 1:1 relations
             foreach ($syncdata['data'] as $tabid => $data) {
 
                 //check if table is a parameterized relation table //TODO: other way than name check
@@ -450,29 +483,54 @@ abstract class Datasync
                             $table = dbf_4($gtab['table'][$tabid]);
                             $orgId = $record['ID'];
 
-                            if ($this->template[$tabid]['global']) {
-                                //check if record already exists
-                                $id = $orgId;
-                                $sql = "SELECT ID FROM $table WHERE ID = $id";
-                                $rs = lmbdb_exec($db, $sql);
-                                if (!lmbdb_result($rs, 'ID')) {
-                                    //it does not exist => force id
-                                    $id = new_data($tabid, null, null, null, $id);
-                                }
-                            } else {
-                                if ($this->is_main) {
+                            $skipCreate = false;
+                            $createTabId = $tabid;
+                            
+                            // if record in original 1:1 table has not been created yet => create it
+                            if(!array_key_exists($record['relTab'],$tabIdMatching)) {
+                                $tabIdMatching[$record['relTab']] = [];
+                                $createTabId = $record['relTab'];
+                            }
+                                
+                            // if record in original 1:1 table has been created => use id of it and skip creation
+                            if($record['relOne'] === true && array_key_exists($orgId,$tabIdMatching[$record['relTab']])) {
+                                $id = $tabIdMatching[$record['relTab']][$orgId];
+                                $skipCreate = true;
+                            }
+
+
+                            if($skipCreate) {
+                                $newids[$tabid][$record['ID']] = array('ID' => $record['ID'], 'slave_datid' => $id);
+                                continue;
+                            }
+                            
+                            if(!$skipCreate) {
+                                if ($this->template[$createTabId]['global']) {
                                     //check if record already exists
-                                    $sql = "SELECT ID FROM $table WHERE LMB_SYNC_SLAVE = {$this->current_client} AND LMB_SYNC_ID = {$orgId}";
+                                    $id = $orgId;
+                                    $sql = "SELECT ID FROM $table WHERE ID = $id";
                                     $rs = lmbdb_exec($db, $sql);
-                                    $id = lmbdb_result($rs, 'ID');
-                                    if (empty($id)) {
-                                        $id = new_data($tabid);
+                                    if (!lmbdb_result($rs, 'ID')) {
+                                        //it does not exist => force id
+                                        $id = new_data($createTabId, null, null, null, $id);
                                     }
                                 } else {
-                                    $id = new_data($tabid);
+                                    if ($this->is_main) {
+                                        //check if record already exists
+                                        $sql = "SELECT ID FROM $table WHERE LMB_SYNC_SLAVE = {$this->current_client} AND LMB_SYNC_ID = {$orgId}";
+                                        $rs = lmbdb_exec($db, $sql);
+                                        $id = lmbdb_result($rs, 'ID');
+                                        if (empty($id)) {
+                                            $id = new_data($createTabId);
+                                        }
+                                    } else {
+                                        $id = new_data($createTabId);
+                                    }
                                 }
 
+                                $tabIdMatching[$createTabId][$orgId] = $id;
                             }
+                            
 
 
                             if (empty($id)) {
@@ -481,9 +539,18 @@ abstract class Datasync
                             }
 
                             if ($this->is_main && !$this->template[$tabid]['global']) {
-                                //assign lmb_sync_slave and lmb_sync_id
-                                $sql = "UPDATE $table SET LMB_SYNC_SLAVE = {$this->current_client}, LMB_SYNC_ID = {$record['ID']} WHERE ID = $id";
-                                $rs = lmbdb_exec($db, $sql);
+                                // assign lmb_sync_slave and lmb_sync_id
+                                if(array_key_exists('raverkn', $gtab) && is_array($gtab['raverkn']) && array_key_exists($tabid,$gtab['raverkn']) && is_array($gtab['raverkn'][$tabid])){
+                                    foreach($gtab['raverkn'][$tabid] as $rTabId) {
+                                        $rTable = dbf_4($gtab['table'][$rTabId]);
+                                        $sql = "UPDATE $rTable SET LMB_SYNC_SLAVE = {$this->current_client}, LMB_SYNC_ID = {$record['ID']} WHERE ID = $id";
+                                        $rs = lmbdb_exec($db, $sql);
+                                    }
+                                } else {
+                                    $sql = "UPDATE $table SET LMB_SYNC_SLAVE = {$this->current_client}, LMB_SYNC_ID = {$record['ID']} WHERE ID = $id";
+                                    $rs = lmbdb_exec($db, $sql);
+                                }
+                                
                             } elseif ($this->is_main && $this->template[$tabid]['global']) {
                                 //global sync does not need SYNC_SLAVE AND SYNC_ID SET but a new entry in the cache table so it is synced to all other clients
                                 $this->putInCache($tabid, 0, $id, 2);
@@ -677,17 +744,30 @@ abstract class Datasync
                         if (is_array($verknids[$firstValueKey]) && array_key_exists('LID',$verknids[$firstValueKey])) {
                             $hasLevelIds = true;
                             foreach ($verknids as $key => &$verknid) {
-                                $levelIds[$verknid['id']] = $verknid['LID'];
+                                if(is_array($verknid['id'])) {
+                                    $levelIds[$verknid['id']['id']] = $verknid['LID'];
+                                } else {
+                                    $levelIds[$verknid['id']] = $verknid['LID'];   
+                                }
                                 $verknid = $verknid['id'];
                             }
-                        } elseif(!$this->is_main) {
+                        }
+                        if(!$this->is_main) {
                             foreach ($verknids as $key => &$verknid) {                                
                                 if(is_array($verknid) && array_key_exists('new',$verknid)) {
                                     
                                     $relTabId = $gfield[$tabid]['verkntabid'][$fieldid];
                                     
                                     if(array_key_exists($relTabId,$newids) && array_key_exists($verknid['id'],$newids[$relTabId])) {
+                                        
+                                        $orgVerknId = $verknid['id'];                                        
                                         $verknid = $newids[$relTabId][$verknid['id']]['slave_datid'];
+
+                                        if(array_key_exists($orgVerknId,$levelIds)) {
+                                            $levelId = $levelIds[$orgVerknId];
+                                            unset($levelIds[$orgVerknId]);
+                                            $levelIds[$verknid] = $levelId;
+                                        }
                                     } else {
                                         unset($verknids[$key]);
                                     }
@@ -931,9 +1011,13 @@ abstract class Datasync
 
         if (array_key_exists('LMB_VALIDFROM', $systemdata) && !empty($systemdata['LMB_VALIDFROM'])) {
             $update["$tabid,LMB_VALIDFROM,$id"] = "'" . $systemdata['LMB_VALIDFROM'] . "'";
+        } elseif(array_key_exists('LMB_VALIDFROM', $systemdata)) {
+            $update["$tabid,LMB_VALIDFROM,$id"] = LMB_DBDEF_NULL;
         }
         if (array_key_exists('LMB_VALIDTO', $systemdata) && !empty($systemdata['LMB_VALIDTO'])) {
             $update["$tabid,LMB_VALIDTO,$id"] = "'" . $systemdata['LMB_VALIDTO'] . "'";
+        } elseif(array_key_exists('LMB_VALIDTO', $systemdata)) {
+            $update["$tabid,LMB_VALIDTO,$id"] = LMB_DBDEF_NULL;
         }
 
         if (array_key_exists('LID', $systemdata) && !empty($systemdata['LID'])) {
@@ -1163,7 +1247,6 @@ abstract class Datasync
             case 13:
             case 48:
                 //TODO: PHP-Argument
-            case 31:
                 //SQL-Argument
             case 47:
                 return false; // ignore
@@ -1207,7 +1290,11 @@ abstract class Datasync
                 }
 
                 if ($this->is_main) {
-                    foreach ($value as &$verknid) {
+                    foreach ($value as $key => &$verknid) {
+                        if(empty($verknid)) {
+                            unset($value[$key]);
+                            continue;
+                        }
                         $orgVerknId = $verknid;
                         $verknid = $this->convertID($verkntab, $verknid, 1);
                         // related entry is new and doesn't have a client id yet
@@ -1220,9 +1307,10 @@ abstract class Datasync
                 if ($levelIds !== false && is_array($levelIds)) {
                     foreach ($value as &$verknid) {
                         $levelId = null;
-                        $orgVerknId = $verknid;
                         if(is_array($verknid)) {
                             $orgVerknId = $verknid['id'];
+                        } else {
+                            $orgVerknId = $verknid;
                         }
                         if (array_key_exists($orgVerknId, $levelIds)) {
                             $levelId = $levelIds[$orgVerknId];
@@ -1341,7 +1429,6 @@ abstract class Datasync
             case 13:
             case 48:
                 //TODO: PHP-Argument
-            case 31:
                 //SQL-Argument
             case 47:
                 return false; // ignore

@@ -7,6 +7,11 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+namespace Limbas\extra\template\base\HtmlParts;
+
+use Limbas\extra\template\base\Exceptions\DynamicDataUnresolvedException;
+use Limbas\extra\template\base\TemplateConfig;
+
 /**
  * Class DynamicDataPlaceholder
  * A placeholder for a value that is set by the user just before printing
@@ -31,7 +36,8 @@ class DynamicDataPlaceholder extends AbstractHtmlPart {
         $this->options = $options ? $options : array();
     }
 
-    public function getAsHtmlArr() {
+    public function getAsHtmlArr(): array
+    {
         $identifier = $this->getIdentifier();
         if (!array_key_exists($identifier, TemplateConfig::$instance->resolvedDynamicData)) {
             throw new DynamicDataUnresolvedException($this, "Dynamic data placeholder unresolved!");

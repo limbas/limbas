@@ -8,6 +8,10 @@
  */
 
 
+use Limbas\admin\group\GroupRightsController;
+use Limbas\admin\mailTemplates\MailTemplateController;
+use Limbas\admin\templates\TemplateController;
+use Limbas\extra\mail\MailController;
 
 require_once(__DIR__ . '/lib/session.lib');
 require_once(COREPATH . 'lib/db/db_'.$DBA['DB'].'_admin.lib');
@@ -15,9 +19,6 @@ require_once(COREPATH . 'extra/lmbObject/log/LimbasLogger.php');
 
 # Update functions
 require_once(COREPATH . 'admin/tools/update/update_dyns.php');
-
-# Report admin extension
-require_once(COREPATH . 'admin/report/ext_ajax.inc');
 
 # include extensions
 if($gLmbExt["ext_ajax_admin.inc"]){
@@ -708,20 +709,47 @@ function dyns_syncToClient($par){
  * @param $par
  */
 function dyns_syncValidate($par){
+    require_once(COREPATH . 'gtab/gtab.lib');
     require_once(COREPATH . 'admin/tools/datasync/validate.lib');
 
-    if($par['phase'] == 2){
-        echo json_encode(lmb_SyncValidatePhase2($par['syncid'],$par['table']));
+    if($par['phase'] == 2) {
+        echo json_encode(lmb_SyncValidatePhase2($par['syncid'], $par['table']));
+
+    }else if($par['rebuild']){
+        echo json_encode(lmb_SyncValidateRebuild($par['syncid'],$par['table'],$par['type']));
+
     }else {
         echo json_encode(lmb_SyncValidate($par['syncid']));
     }
 }
 
 
+function dyns_manageMailAccounts($params): void
+{
+    $dynsController = new MailController(true);
+    $result = $dynsController->handleRequest($params);
+    echo json_encode($result);
+}
 
+function dyns_manageTemplates($params): void
+{
+    $dynsController = new TemplateController();
+    $result = $dynsController->handleRequest($params);
+    echo json_encode($result);
+}
 
+function dyns_manageMailTemplates($params): void
+{
+    $dynsController = new MailTemplateController();
+    $result = $dynsController->handleRequest($params);
+    echo json_encode($result);
+}
 
-
+function dyns_manageGroupRights($par): void
+{
+    $controller = new GroupRightsController();
+    $controller->handleRequest($par);
+}
 
 
 

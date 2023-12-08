@@ -12,6 +12,7 @@ $versions = $systemInformation['versions'];
 $version = $systemInformation['version'];
 $patches = $systemInformation['patches'];
 $completed = $systemInformation['completed'];
+$uIds = $systemInformation['id'];
 
 ?>
 
@@ -94,8 +95,9 @@ $completed = $systemInformation['completed'];
         <p class="fw-bold">Steps to update your system:</p>
         <ul>
             <li>download latest "LIMBAS source"</li>
-            <li>backup your system! (including a copy of old "limbas_src" and "vendor" directories)</li>
+            <li>backup your system! (including a copy of old "limbas_src", "public/assets" and "vendor" directories)</li>
             <li>replace old "limbas_src" directory with its newest version.</li>
+            <li>replace the "public/assets" directory with its newest version.</li>
             <li>replace the "vendor" directory with its newest version.</li>
             <li>login to limbas</li>
             <li>limbas will redirect you to the "system update page" (this page)</li>
@@ -108,7 +110,7 @@ $completed = $systemInformation['completed'];
 
 <div class="row">
 
-    <?php foreach(['current','previous'] as $versionKey => $versionName): ?>
+    <?php foreach(['current','previous'] as $versionName): ?>
 
         <?php if($version[$versionName] !== false): ?>
             <div class="col-md-6">
@@ -116,9 +118,9 @@ $completed = $systemInformation['completed'];
                     <div class="card-body">
 
                         <div class="d-flex justify-content-between align-items-center mb-2">
-                            <h2 class="card-title"><?= ucfirst($versionName) ?> Version <?= $version[$versionName] ?> <i class="fas fa<?= $completed[$versionName] ? '-check-circle text-success" title="All patches successful' : '-times-circle text-danger" title="Some patches failed.' ?>"></i></h2>
+                            <h2 class="card-title">Version <?= $version[$versionName] ?> <i class="fas fa<?= $completed[$versionName] ? '-check-circle text-success" title="All patches successful' : '-times-circle text-danger" title="Some patches failed.' ?>"></i></h2>
                             <?php if(!$completed[$versionName] && !(!$completed['previous'] && $versionName === 'current')): ?>
-                                <button class="btn btn-outline-<?= $updateNecessary && !$completed[$versionName] ? 'danger' : 'warning' ?> btn-run-all" type="button" data-version="<?=$versionKey?>" data-client="<?= $clientId ?>">Run all updates</button>
+                                <button class="btn btn-outline-<?= $updateNecessary && !$completed[$versionName] ? 'danger' : 'warning' ?> btn-run-all" type="button" data-version="<?=$uIds[$versionName]?>" data-client="<?= $clientId ?>">Run all updates</button>
                             <?php endif; ?>
                         </div>
                         
@@ -134,7 +136,7 @@ $completed = $systemInformation['completed'];
                             <tbody>
                             <?php foreach($patches[$versionName] as $patchNr => $patch): ?>
                             
-                                <?php $ident = $versionKey . $patchNr . '-' . $clientId ?>
+                                <?php $ident = $patch['uid'] . $patchNr . '-' . $clientId ?>
                             
                                 <tr>
                                     <td><?= $patchNr ?></td>
@@ -143,14 +145,14 @@ $completed = $systemInformation['completed'];
                                         <i id="patch<?=$ident?>success" class="fas fa-check-circle text-success <?= $patch['status'] ? '' : 'd-none' ?>" data-bs-trigger="hover" data-bs-toggle="popover" data-bs-content="Successfully applied."></i>
                                         <i id="patch<?=$ident?>loading" class="fas fa-spinner fa-spin text-muted d-none"></i>
                                         <?php if(!$patch['status']): ?>
-                                            <div id="patch<?=$ident?>actions" data-pending="<?=$patchNr?>" data-version="<?=$versionKey?>" data-client="<?= $clientId ?>">
+                                            <div id="patch<?=$ident?>actions" data-pending="<?=$patchNr?>" data-version="<?=$patch['uid']?>" data-client="<?= $clientId ?>">
 
                                                 <i class="fas fa-times-circle text-danger me-2 <?=$patch['status'] !== false ? 'd-none' : ''?>" id="patch<?=$ident?>error-content" data-bs-trigger="hover" data-bs-toggle="popover" title="Patch with error" data-bs-content=" <?=htmlspecialchars($patch['error'])?>"></i>
 
                                                 <i class="fas fa-info-circle text-warning me-2 <?=$patch['status'] === false ? 'd-none' : ''?>" id="patch<?=$ident?>new"  data-bs-trigger="hover" data-bs-toggle="popover" data-bs-content="New patch"></i>
 
-                                                <i class="fas fa-rotate text-muted cursor-pointer me-2" title="run patch" data-update="<?=$versionKey?>" data-run="<?=$patchNr?>" data-client="<?= $clientId ?>"></i>
-                                                <i class="fas fa-check cursor-pointer" title="mark as done" data-update="<?=$versionKey?>" data-done="<?=$patchNr?>" data-client="<?= $clientId ?>"></i>
+                                                <i class="fas fa-rotate text-muted cursor-pointer me-2" title="run patch" data-update="<?=$patch['uid']?>" data-run="<?=$patchNr?>" data-client="<?= $clientId ?>"></i>
+                                                <i class="fas fa-check cursor-pointer" title="mark as done" data-update="<?=$patch['uid']?>" data-done="<?=$patchNr?>" data-client="<?= $clientId ?>"></i>
                                             </div>
                                         <?php endif; ?>
                                     </td>

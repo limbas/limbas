@@ -6,6 +6,12 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
+namespace Limbas\extra\template\report;
+
+use Limbas\extra\template\base\HtmlParts\DataPlaceholder;
+use Limbas\extra\template\base\TemplateConfig;
+use Limbas\extra\template\base\TemplateElement;
+
 require_once(COREPATH . 'gtab/gtab.lib');
 require_once(COREPATH . 'extra/report/report.dao');
 
@@ -15,7 +21,7 @@ class ReportTemplateElement extends TemplateElement {
      * Resolve templates and data placeholders until everything is resolved
      * @param $datid
      */
-    public function resolve($datid) {
+    public function resolve($datid, &$gresult=null) {
         do {
             $successData = $this->resolveDataPlaceholders($datid);
             $successTpl = $this->resolveTemplates();
@@ -28,7 +34,7 @@ class ReportTemplateElement extends TemplateElement {
      * @param $datid int current dataset id for which the template is being resolved
      * @return bool whether a placeholder was resolved
      */
-    public function resolveDataPlaceholders($datid) {
+    public function resolveDataPlaceholders($datid, &$gresult = null) {
         $unresolvedDataPlaceholders = $this->getUnresolvedDataPlaceholders();
         return self::resolveDataPlaceholdersForTable($datid, $unresolvedDataPlaceholders);
     }
@@ -39,19 +45,20 @@ class ReportTemplateElement extends TemplateElement {
      * @param $allDataPlaceholders DataPlaceholder[] placeholders to resolve
      * @return bool whether a placeholder was resolved
      */
-    public static function resolveDataPlaceholdersForTable($datid, &$allDataPlaceholders) {
+    public static function resolveDataPlaceholdersForTable($datid, &$dataPlaceholders): bool
+    {
         global $gfield;
 
         $report = &TemplateConfig::$instance->report;
         $parameter = &TemplateConfig::$instance->parameter;
 
-        if (!$allDataPlaceholders) {
+        if (!$dataPlaceholders) {
             return false;
         }
 
         # group by trace
         $placeholdersByTrace = array();
-        foreach ($allDataPlaceholders as &$placeholder) {
+        foreach ($dataPlaceholders as &$placeholder) {
             $placeholdersByTrace[$placeholder->getTrace()][] = $placeholder;
         }
 

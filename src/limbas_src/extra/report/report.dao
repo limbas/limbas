@@ -916,7 +916,7 @@ function reportArchiv($temp_file_path,$report,$ID){
                 $file["file_name"][0] = $name;
                 $file["file_type"][0] = 0;
                 $file["file_archiv"][0] = 0;
-                $file['forceNewID'][0] = $report['archive_fileID'];
+                if($report['archive_fileID']){$file['forceNewID'][0] = $report['archive_fileID'];};
                 $fileid = lmb_fileUpload($file,$level,$relation,1,$dublicate);
                 if(!$fileid){return false;}
 

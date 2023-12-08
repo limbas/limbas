@@ -1,4 +1,7 @@
 <?php
+
+use Limbas\extra\mail\LmbMail;
+
 /**
  * @copyright Limbas GmbH <https://limbas.com>
  * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
@@ -65,7 +68,7 @@ function create_user($userdata){
 	$layout = $userdata["layout"];
 	$results = $userdata["results"];
 	$uloadsize = $userdata["uloadsize"];
-	$usercolor = $userdata["usercolor"];
+	$colorschema = $userdata["usercolor"];
 	$language = $userdata["language"];
 	$dlanguage = $userdata["dlanguage"];
 	$dateformat = $userdata["dateformat"];
@@ -76,7 +79,7 @@ function create_user($userdata){
 	if(!$layout){$layout = $umgvar['default_layout'];}
 	if(!$results){$results = $umgvar['default_results'];}
 	if(!$uloadsize){$uloadsize = ($umgvar['default_uloadsize']*1024*1024);}
-	if(!$coloschema){$coloschema = $umgvar['default_usercolor'];}
+	if(!$colorschema){$colorschema = $umgvar['default_usercolor'];}
 	if(!$language){$language = $umgvar['default_language'];}
 	if(!$dateformat){$dateformat = $umgvar['default_dateformat'];}
 	if(!$timezone){$timezone = $umgvar['default_timezone'];}
@@ -113,7 +116,7 @@ function create_user($userdata){
 		$sqlquery = "SELECT ID FROM LMB_COLORSCHEMES WHERE NORM = ".LMB_DBDEF_TRUE;
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		if(!$coloschema){$coloschema = lmbdb_result($rs, "ID");}
+		if(!$colorschema){$colorschema = lmbdb_result($rs, "ID");}
 
 		# password hash
 		$hashedPass = Auth::lmbPasswordHash($passwort);
@@ -126,7 +129,7 @@ function create_user($userdata){
 		$NEXTID = next_db_id("LMB_USERDB","USER_ID");
 		$sqlquery = "INSERT INTO LMB_USERDB (ID,USER_ID,USERNAME,PASSWORT,GROUP_ID,SUB_GROUP,EMAIL,VORNAME,NAME,BESCHREIBUNG,DATA_HIDE,DATA_DISPLAY,IPRANGE,DEL,
 		 LAYOUT,MAXRESULT,UPLOADSIZE,FARBSCHEMA,LANGUAGE,DLANGUAGE,DATEFORMAT,TIME_ZONE,SETLOCAL,LOGGING) VALUES($NEXTID,$NEXTID,'$username','$hashedPass',$group_id,'$subgroup','$email','$vorname','$name','$beschreibung',1,2,'',".LMB_DBDEF_FALSE.",
-		'".parse_db_string($layout)."',".parse_db_int($results).",".parse_db_int($uloadsize).",'".parse_db_string($coloschema)."',".parse_db_int($language).",".parse_db_int($dlanguage).",".parse_db_int($dateformat).",'".parse_db_string($timezone)."','".parse_db_string($setlocale)."',".parse_db_int($loglevel).")";
+		'".parse_db_string($layout)."',".parse_db_int($results).",".parse_db_int($uloadsize).",'".parse_db_string($colorschema)."',".parse_db_int($language).",".parse_db_int($dlanguage).",".parse_db_int($dateformat).",'".parse_db_string($timezone)."','".parse_db_string($setlocale)."',".parse_db_int($loglevel).")";
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		$ID = $NEXTID;
@@ -388,7 +391,8 @@ function mailUserInfo($result_user,$send_usermail,$userdata=null){
 		</html>\n\n";
 
 		if($send_usermail){
-            lmb_sendMail($result_user["email"],'',"Limbas User-Information",$subject,$passimage);
+            $lmbMail = new LmbMail();
+            $lmbMail->sendFromDefault($result_user["email"], "Limbas User-Information", $subject, [$passimage]);
 		}
 	}
 

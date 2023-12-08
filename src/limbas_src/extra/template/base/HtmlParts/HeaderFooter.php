@@ -7,6 +7,10 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+namespace Limbas\extra\template\base\HtmlParts;
+
+use Limbas\extra\template\base\TemplateConfig;
+
 /**
  * Class HeaderFooter
  * Placeholder for header or footer (only supported by mpdf)
@@ -48,7 +52,8 @@ class HeaderFooter extends AbstractHtmlPart {
     }
 
 
-    public function getAsHtmlArr() {
+    public function getAsHtmlArr(): array
+    {
         
         // get html of linked template element
         $htmlArr = $this->subTemplateElementPlaceholder->getAsHtmlArr();
