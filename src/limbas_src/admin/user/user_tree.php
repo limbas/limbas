@@ -75,7 +75,7 @@ function setxypos(evt,el) {
             <a class="nav-link" id="users-tab" data-bs-toggle="tab" href="#tab-users" role="tab" aria-controls="tab-users" aria-selected="false"><?=$lang[1242]?></a>
         </li>
     </ul>
-    <div class="tab-content bg-white border border-top-0 p-2 pt-3 h-75">
+    <div class="tab-content bg-contrast border border-top-0 p-2 pt-3 h-75">
 
         <?php if($umgvar['multitenant']) {?>
         <SELECT class="form-select form-select-sm" onchange="document.form2.mid.value=this.value; document.form2.submit(); document.form1.mid.value=this.value; document.form1.submit();"><option>

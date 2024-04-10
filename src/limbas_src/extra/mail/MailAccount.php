@@ -10,8 +10,9 @@
 namespace Limbas\extra\mail;
 
 use Database;
+use Limbas\lib\LimbasModel;
 
-class MailAccount
+class MailAccount extends LimbasModel
 {
     public const TRANSPORT_SMTP = 1;
     public const TRANSPORT_SENDMAIL = 2;
@@ -333,7 +334,7 @@ class MailAccount
 
     public function getMailTable(): ?MailTable
     {
-        return MailTable::get($this->mailTableId);
+        return $this->mailTableId !== null ? MailTable::get($this->mailTableId) : null;
     }
 
 }

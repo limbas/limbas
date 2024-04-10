@@ -42,7 +42,7 @@ global $umgvar;
                 </textarea>
 
                 <?php
-                echo lmb_ini_wysiwyg('g_0_0',null,null,1,650);
+                echo lmb_ini_wysiwyg('g_0_0',null,null,1,650,  intval($templateTableId));
                 ?>
 
             </div>

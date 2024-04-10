@@ -138,7 +138,7 @@ class LmbMail
             if (!is_array($bcc)) {
                 $bcc = [$bcc];
             }
-            $email->cc(...$bcc);
+            $email->bcc(...$bcc);
         }
         
         if(!empty($attachments)) {

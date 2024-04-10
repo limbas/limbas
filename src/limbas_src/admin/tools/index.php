@@ -108,7 +108,7 @@ function ind_sort(val){
                 <a class="nav-link" id="unique-tab" data-bs-toggle="tab" href="#unique" role="tab" aria-controls="unique" aria-selected="false"><?=$lang[2724]?></a>
             </li>
         </ul>
-        <div class="tab-content bg-white border border-top-0" id="nav-tabContent">
+        <div class="tab-content bg-contrast border border-top-0" id="nav-tabContent">
 
             <div class="tab-pane show active" id="indexes" role="tabpanel" aria-labelledby="indexes-tab">
                 <table class="table table-sm table-striped table-hover mb-0">

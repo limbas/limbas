@@ -98,7 +98,7 @@ function delete_group($ID){
         $sqlquery = "DELETE FROM LMB_GROUPS WHERE GROUP_ID = $ID";
         $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
-        $sqlquery = "DELETE FROM LMB_REMINDER WHERE GROUP_ID = $ID";
+        $sqlquery = "DELETE FROM LMB_REMINDER WHERE ID IN (SELECT DISTINCT LMB_REMINDER.ID FROM LMB_REMINDER,LMB_REMINDER_GROUP WHERE LMB_REMINDER.ID = LMB_REMINDER_GROUP.REMINDER_ID AND LMB_REMINDER_GROUP.GROUP_ID = $ID)";
         $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if(!$rs) {$commit = 1;}
         
@@ -527,7 +527,7 @@ function check_grouprights1($group_id,$group_name="",$num_group=0,$check_table=0
 	$sqlquery = "SELECT LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.TAB_ID,LMB_CONF_TABLES.BESCHREIBUNG,LMB_CONF_TABLES.TAB_GROUP,LMB_CONF_VIEWS.VIEWTYPE
 FROM LMB_CONF_TABLES LEFT OUTER JOIN LMB_CONF_VIEWS ON (LMB_CONF_TABLES.TAB_ID = LMB_CONF_VIEWS.ID)
 $check_table
-ORDER BY TAB_GROUP,TAB_ID";
+ORDER BY TAB_ID";
 	
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
@@ -574,10 +574,10 @@ ORDER BY TAB_GROUP,TAB_ID";
 
             
 		/*------------------------------ Spaltenrechte ------------------------------------*/
-		$sqlquery = "SELECT * FROM LMB_CONF_FIELDS WHERE TAB_GROUP = ".$gtab['tab_group'][$bzm]." AND TAB_ID = ".$gtab['tab_id'][$bzm]." ORDER BY TAB_GROUP,TAB_ID,FIELD_ID";
+		$sqlquery = "SELECT * FROM LMB_CONF_FIELDS WHERE TAB_ID = ".$gtab['tab_id'][$bzm]." ORDER BY TAB_ID,FIELD_ID";
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		while(lmbdb_fetch_row($rs)) {
-			$sqlquery2 = "SELECT ID FROM LMB_RULES_FIELDS WHERE FIELD_ID = ".lmbdb_result($rs,"FIELD_ID")." AND TAB_ID = ".$gtab['tab_id'][$bzm]." AND TAB_GROUP = ".$gtab['tab_group'][$bzm]." AND GROUP_ID = $group_id";
+			$sqlquery2 = "SELECT ID FROM LMB_RULES_FIELDS WHERE FIELD_ID = ".lmbdb_result($rs,"FIELD_ID")." AND TAB_ID = ".$gtab['tab_id'][$bzm]." AND GROUP_ID = $group_id";
 			$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 			if (!lmbdb_fetch_row($rs2)) {
 				$NEXTID = next_db_id("LMB_RULES_FIELDS");				

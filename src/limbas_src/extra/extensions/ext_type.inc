@@ -112,7 +112,7 @@ function lmb_minimizedFileUpload($ID,$gresult,$fieldid,$gtabid,$class,$style,$po
     $filter["nolimit"][$LID] = 1;
     $filter["page"][$LID] = 1;
     $filter["viewmode"][$LID] = 5;
-    $filter["order"][$LID] = array($gtab["argresult_id"]["LDMS_FILES"].'_3','DESC');
+    $filter["order"][$LID] = array($gtab["argresult_id"]["LDMS_FILES"].'_7','ASC',$gtab["argresult_id"]["LDMS_FILES"].'_3','DESC');
     $filter["sub"] = $show_sub;
     $verkn["parent_table"] = $gtab["table"][$gtabid];
     $verkn["parent_datid"] = $ID;
@@ -275,6 +275,8 @@ function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$p
 	global $LINK;
 	global $ffilter;
 	global $filter;
+    global $fileupdate;
+    global $files_order;
 
 	if(!$ID){return;}
 
@@ -282,6 +284,7 @@ function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$p
 
 	require_once(COREPATH . 'extra/explorer/explorer_main.lib');
 	require_once(COREPATH . 'extra/explorer/filestructure.lib');
+    #require_once(COREPATH . 'extra/explorer/explorer_main.dao');
 
 	if($style){$style_abs = "STYLE=\"".$pos.$style."\"";}else{$style_abs = "STYLE=\"margin-top:5px;margin-bottom:5px;\"";}
 
@@ -289,7 +292,8 @@ function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$p
 	$verkn = set_verknpf($gfield[$gtabid]["verkntabid"][$fieldid],$gfield[$gtabid]["verknfieldid"][$fieldid],0,0,0,0,0);
 	$verkn["md5tab"] = $gfield[$gtabid]["md5tab"][$fieldid];
 	$verkn["uniqueid"] = $gfield[$gtabid]["form_name"][$fieldid];
-	
+
+
 	if($verkn){
 
 		# specific formular styles
@@ -331,7 +335,14 @@ function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$p
         }else{
 			$LID = $gfield[$gtabid]["file_level"][$fieldid];
 		}
-		
+
+        // order
+        foreach ($fileupdate[$LID] as $key => $value) {
+            if($value == 'sort'){
+                sort_file($key, $files_order[$key]);
+            }
+        }
+
 		# get global ffilter
 		get_userShow($LID,1);
 		
@@ -349,7 +360,7 @@ function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$p
 		
 		# order by
 		$filter["order"][$LID] = $ffilter["order"][$LID];
-		
+
 		# search
 		foreach ($gfile['show'][$LID] as $key1 => $val1){
 			if($ffilter[$key1][$LID]){

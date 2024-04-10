@@ -256,6 +256,7 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 				echo $ffile["context"][$key]."<BR>";
 				echo "<span style=\"color:grey;\">URL: ".$ffile["url"][$key]."</span><BR>";
 				echo "<INPUT TYPE=\"HIDDEN\" NAME=\"activelist[d][$LID][$key]\" ID=\"filestatus_d_".$LID."_".$key."\" VALUE=\"0\">";
+                echo "<INPUT TYPE=\"HIDDEN\" NAME=\"fileupdate[$LID][$key]\" ID=\"fileupdate_".$LID."_".$key."\" VALUE=\"0\">";
 				echo "</TD>";
 				# ---------------- Datei Ansicht ------------------
 			}else{
@@ -272,6 +273,7 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 				if($umgvar["file_quickdownload"]){echo  "</A>";}
 				echo "</DIV>";
 				echo "<INPUT TYPE=\"HIDDEN\" NAME=\"activelist[d][$LID][$key]\" ID=\"filestatus_d_".$LID."_".$key."\" VALUE=\"0\">";
+                echo "<INPUT TYPE=\"HIDDEN\" NAME=\"fileupdate[$LID][$key]\" ID=\"fileupdate_".$LID."_".$key."\" VALUE=\"0\">";
 				echo "</TD>";
 			}
 
@@ -317,7 +319,7 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 					# Sort
 				}elseif($gfile["name"][$gkey] == "SORT"){
 					echo "<TD class=\"gtabBodyTD\" data-fieldid=\"$key1\"  ID=\"td_".$key1."_".$key2."\" VALIGN=\"TOP\" ALIGN=\"$align\"><DIV ID=\"td_".$key1."_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;width:".$ffilter["rowsize"][$LID][$key1]."px;\">";
-					echo "&nbsp;<INPUT TYPE=\"TEXT\" STYLE=\"width:30px;border:none\" MAXSIZE=\"4\" NAME=\"files_order[".$ffile["id"][$key]."]\" VALUE=\"".number_format($ffile[$gkey][$key],1,".","")."\" OnChange=\"document.getElementById('filestatus_d_".$LID."_".$key."').value=2;\">&nbsp;";
+					echo "&nbsp;<INPUT TYPE=\"TEXT\" STYLE=\"width:30px;border:none\" MAXSIZE=\"4\" NAME=\"files_order[".$ffile["id"][$key]."]\" VALUE=\"".$ffile[$gkey][$key]."\" OnChange=\"document.getElementById('fileupdate_".$LID."_".$key."').value='sort';\">&nbsp;";
 					echo "</DIV></TD>";
 					# Checked
 				}elseif($gfile["name"][$gkey] == "CHECKED"){

@@ -101,7 +101,7 @@ class MailTemplateSelector extends TemplateSelector
     }
 
 
-    protected function getFinalResolvedParameters(int $elementId, int $gtabid, int $id, $use_record, $resolvedTemplateGroups): array
+    protected function getFinalResolvedParameters(int $elementId, int $gtabid, ?int $id, $use_record, $resolvedTemplateGroups): array
     {
 
         $url = 'main.php?' . http_build_query(array(

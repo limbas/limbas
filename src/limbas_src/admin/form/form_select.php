@@ -369,7 +369,7 @@ function form_delete(ID){
         <input type="hidden" name="referenz_tab" value="<?=$referenz_tab?>">
         <input type="hidden" name="new_form" value="1">
 
-        <table class="table table-sm table-striped border bg-white">
+        <table class="table table-sm table-striped border bg-contrast">
             <thead>
             <tr>
                 <th>ID</th>
@@ -447,7 +447,7 @@ function form_delete(ID){
 
         </table>
 
-        <table class="table table-sm table-striped mb-0 border bg-white">
+        <table class="table table-sm table-striped mb-0 border bg-contrast">
             <thead>
             <tr>
                 <TD><?=$lang[4]?></TD>

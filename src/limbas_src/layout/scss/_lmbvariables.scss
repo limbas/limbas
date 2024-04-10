@@ -27,18 +27,25 @@ $farbschemaWEB12: #909090 !default;
 $farbschemaWEB13: #FFFFFF !default;
 $farbschemaWEB14: #F5F5F5 !default;
 
-$fontsize07: 0.7em;
-$fontsize09: 0.9em;
-$fontsize11: 1.1em;
-$fontsize12: 1.2em;
-$fontsize13: 1.3em;
-$fontsize14: 1.4em;
-$fontsize15: 1.5em;
+$legacy-table-color: $farbschemaWEB2 !default;
+$legacy-table-hover-color: $legacy-table-color !default;
+$legacy-table-hover-bg-color: $farbschemaWEB7 !default;
+
+$gtab-header-bg: $farbschemaWEB13 !default;
+$find-icon-path: url("../images/legacy/find.png") !default;
+
+$fontsize07: 0.7em !default;
+$fontsize09: 0.9em !default;
+$fontsize11: 1.1em !default;
+$fontsize12: 1.2em !default;
+$fontsize13: 1.3em !default;
+$fontsize14: 1.4em !default;
+$fontsize15: 1.5em !default;
 $waitsymbol: "../images/legacy/wait1.gif";
 //if($umgvar['waitsymbol']){$waitsymbol = $umgvar['waitsymbol'];}else{$waitsymbol = "assets/images/legacy/wait1.gif";}
 
-$umgvarfont: Verdana, Arial, Helvetica;
-$umgvarfontsize: 11px;
+$umgvarfont: Verdana, Arial, Helvetica !default;
+$umgvarfontsize: 11px !default;
 
 @function lmbSuggestColor($color, $wc: #FFFFFF, $bc: #000000) {
   $red: red($color);
@@ -55,20 +62,36 @@ $umgvarfontsize: 11px;
 
 }
 
-$fontc3: lmbSuggestColor($farbschemaWEB14, #222222, #7D7D7D);
-$fontc7: lmbSuggestColor($farbschemaWEB7, #5a5a5a, #333333);
-$fontc14: lmbSuggestColor($farbschemaWEB14);
+
+
+//:root,
+//data-bs-theme="light"] {
+$lmbFontc3: lmbSuggestColor($farbschemaWEB14, #222222, #7D7D7D) !default;
+$lmbFontc7: lmbSuggestColor($farbschemaWEB7, #5a5a5a, #333333) !default;
+$lmbFontc14: lmbSuggestColor($farbschemaWEB14) !default;
+//}
+/*[data-bs-theme="dark"] {
+  --lmb-fontc3: lmbSuggestColor($farbschemaWEB14, #ffffff, #ffffff);
+  --lmb-fontc7: lmbSuggestColor($farbschemaWEB7, #ffffff, #ffffff);
+  --lmb-fontc14: lmbSuggestColor($farbschemaWEB14, #000000, #ffffff);
+}*/
+
 //legacy end
 
 
 // global defaults
 
+$body-color: #44444f !default;
 $body-bg: #fffbf6 !default;
 $default-color: #333333 !default;
 $default-bg-color: #f9f8f3 !default;
 $default-border-color: #c0c0c0 !default;
 $font-size-base: 0.8rem !default;
 $sess-refresh-color: #e4d314 !default;
+
+$bg-differ: #ffffff !default;
+
+$fa-font-path: '../../assets/fonts' !default;
 
 //bootstrap defaults
 
@@ -95,7 +118,13 @@ $border-color: $default-border-color !default;
 
 $nav-tabs-link-active-bg: $white !default;
 
-// Top navigation
+$card-bg: $white !default;
+
+$input-bg: $bg-differ;
+
+$table-bg: $bg-differ !default;
+
+  // Top navigation
 $top-nav-height: 3.5rem !default;
 $top-nav-background-color: #4E4E4E !default;
 $navbar-light-color: #fff !default;
@@ -131,6 +160,10 @@ $nav-left-hide-color: #fff !default;
 
 $nav-left-query-icon-color: #ffca7d !default;
 $nav-left-new-data-color: #A3F401 !default;
+
+//Center Navigation
+$nav-center-color: $navbar-light-color !default;
+$nav-center-background-color: $top-nav-background-color !default;
 
 // Right navigation
 $nav-right-background-color: #ffffff !default;
@@ -176,6 +209,9 @@ $table-section-color: inherit !default;
 $table-sub-section-background-color: $gray-300 !default;
 $table-sub-section-color: inherit !default;
 
+// Jquery UI
+$jquery-ui-header-color: $body-color !default;
+$jquery-ui-header-bg: $body-bg !default;
 
 
 

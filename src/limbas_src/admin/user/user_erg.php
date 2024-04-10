@@ -63,7 +63,7 @@ function select_all_user(el){
         <input type="hidden" name="ufilter_name" VALUE="<?=$ufilter_name?>">
         <input type="hidden" name="ufilter_group" VALUE="<?=$ufilter_group?>">
 
-        <table class="table table-sm table-striped mb-0 border bg-white">
+        <table class="table table-sm table-striped mb-0 border bg-contrast">
             <thead>
             <tr>
                 <th><INPUT TYPE="CHECKBOX" onclick="select_all_user(this);"></th>
@@ -156,7 +156,7 @@ function select_all_user(el){
 
         </table>
         
-        <div class="bg-white border p-2">
+        <div class="bg-contrast border p-2">
             <div class="form-check form-check-inline">
                 <label class="form-check-label">
                     <input class="form-check-input" type="radio" value="" name="ufilter" OnClick="document.form1.submit();" <?=(!$ufilter)?'checked':''?>>

@@ -162,8 +162,7 @@ class Updater
             } else {
                 header('Location: main.php?action=maintenance');
             }
-
-            exit(1);
+            exit(0);
         }
 
         return $updateNeeded;

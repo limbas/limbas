@@ -39,8 +39,15 @@
 
 
   select.gtabHeaderInputINP {
-    background-color: white;
     padding: 0.1rem 0.1rem 0.1rem 0.75rem;
+  }
+
+  .lmbfringeGtabBody tr:hover td {
+    background-color: $legacy-table-hover-bg-color !important;
+    color: $legacy-table-hover-color !important;
+    a {
+      color: $legacy-table-hover-color !important;
+    }
   }
   
 }
@@ -92,7 +99,7 @@
 
   .gtabBodyDetailFringe {
     border: none;
-    background-color: white;
+    background-color: $bg-differ;
     border-collapse: collapse;
   }
 
@@ -149,7 +156,7 @@
   .gtabHeaderSymbolTD,
   .gtabHeaderSymbolTR {
     color: #fff;
-    background: $top-nav-background-color;
+    background: $nav-center-background-color;
   }
 
 

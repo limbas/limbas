@@ -128,6 +128,7 @@ function SNAP_loadInSession($snap_changed=null,$admin=null){
 					LMB_SNAP.GLOBAL,
 					LMB_SNAP.FILTER,
 					LMB_SNAP.EXT,
+					LMB_SNAP.TYPE,
 					LMB_SNAP_SHARED.ENTITY_TYPE,
 					LMB_SNAP_SHARED.ENTITY_ID,
 					LMB_SNAP_SHARED.EDIT,
@@ -172,6 +173,7 @@ function SNAP_loadInSession($snap_changed=null,$admin=null){
 		$gsnap[$snaptabid]["glob"][$snapid] = lmbdb_result($rs1,"GLOBAL");
 		$gsnap[$snaptabid]["del"][$snapid] = lmbdb_result($rs1,"DEL");
 		$gsnap[$snaptabid]["edit"][$snapid] = lmbdb_result($rs1,"EDIT");
+        $gsnap[$snaptabid]["type"][$snapid] = lmbdb_result($rs1,"TYPE");
         $gsnap["argresult_id"][$snapid] = $snaptabid;
 
         $vtabid = $gtab['argresult_id'][$md5_tab];
@@ -230,9 +232,6 @@ function SNAP_loadInSession($snap_changed=null,$admin=null){
 		$sqlquery = "UPDATE LMB_SESSION SET SNAP_CHANGED = ".LMB_DBDEF_FALSE." WHERE USER_ID = " . $session["user_id"];
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	}
-
-
-    #error_log(print_r($gsnap,1));
 	
 	return $gsnap;
 }
@@ -315,6 +314,7 @@ function SNAP_getParam($id)
 		$result["global"] = lmbdb_result($rs,"GLOBAL");
 		$result["filter"] = lmbdb_result($rs,"FILTER");
 		$result["owner"] = lmbdb_result($rs,"USER_ID");
+        $result["type"] = lmbdb_result($rs,"TYPE");
 	}
 
 	return $result;
@@ -358,7 +358,7 @@ function SNAP_delete($id,$gtabid)
 
 //from gtab_erg.dao
 # --------Schnapschuß eintragen ------------
-function SNAP_save($gtabid,$name,$id,$snapf = "null"){
+function SNAP_save($gtabid,$name,$id,$snapf = "null",$type=1){
 	global $db;
 	global $session;
 	global $filter;
@@ -371,19 +371,20 @@ function SNAP_save($gtabid,$name,$id,$snapf = "null"){
 	
 	if($id AND !$gsnap[$gtabid]["owner"][$id] AND !$gsnap[$gtabid]["edit"][$id]){return false;}
 	if($id == 0 AND !$LINK[188]){return false;}
-	
-	if($snapf == "null"){
-		$snapfilter["order"] = $filter["order"][$gtabid]; //[$gtabid]
-		$snapfilter["popups"] = $filter["popups"][$gtabid];
-		$snapfilter["status"] = $filter["status"][$gtabid];
-		$snapfilter["hidecols"] = $filter["hidecols"][$gtabid];
-		$snapfilter["form"] = $filter["form"][$gtabid];
-		$snapfilter["gsr"] = $gsr[$gtabid];
-		$snapfilter["sort"] = $gfield[$gtabid]["sort"];
-        $snapfilter["rowsize"] = $gfield[$gtabid]["rowsize"];
 
+	if($snapf == "null"){
+        $snapfilter["order"] = $filter["order"][$gtabid]; //[$gtabid]
+        $snapfilter["popups"] = $filter["popups"][$gtabid];
+        $snapfilter["status"] = $filter["status"][$gtabid];
+        $snapfilter["hidecols"] = $filter["hidecols"][$gtabid];
+        $snapfilter["form"] = $filter["form"][$gtabid];
+        $snapfilter["gsr"] = $gsr[$gtabid];
+        $snapfilter["sort"] = $gfield[$gtabid]["sort"];
+        $snapfilter["rowsize"] = $gfield[$gtabid]["rowsize"];
 		$snapf = serialize($snapfilter);
-	}
+	}else{
+        $snapf = serialize($snapf);
+    }
 	
 	// update the snapshot
 	if($id>0)
@@ -409,7 +410,7 @@ function SNAP_save($gtabid,$name,$id,$snapf = "null"){
 		}else{
 			lmb_StartTransaction();
 			$NEXTID = next_db_id("LMB_SNAP");
-			$sqlquery1 = "INSERT INTO LMB_SNAP (ID,USER_ID,TABID,NAME) VALUES ($NEXTID,".$session["user_id"] . ",$gtabid,'".parse_db_string(str_replace(";",",",$name),50)."')";
+			$sqlquery1 = "INSERT INTO LMB_SNAP (ID,USER_ID,TABID,NAME,TYPE) VALUES ($NEXTID,".$session["user_id"] . ",$gtabid,'".parse_db_string(str_replace(";",",",$name),50)."',$type)";
 			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 			$prepare_string = "UPDATE LMB_SNAP SET FILTER = ? WHERE ID = ".$NEXTID;
@@ -457,24 +458,33 @@ function SNAP_get_filter($snap_id,$gtabid){
     #global $gsr;
 
 	//get filter from snapshot
-	$snapfilter = $gsnap[$gtabid]["filter"][$snap_id];
-	$GLOBALS["filter"]["snapisset"][$snap_id] = $snap_id;
-	$GLOBALS["filter"]["snapid"][$gtabid] = $snap_id;
-	$GLOBALS["filter"]["order"][$gtabid] = $snapfilter["order"];
-	$GLOBALS["filter"]["popups"][$gtabid] = $snapfilter["popups"];
-	$GLOBALS["filter"]["status"][$gtabid] = $snapfilter["status"];
-	$GLOBALS["filter"]["hidecols"][$gtabid] = $snapfilter["hidecols"];
-	$GLOBALS["filter"]["form"][$gtabid] = $snapfilter["form"];
-	$GLOBALS["gfield"][$gtabid]["sort"] = $snapfilter["sort"];
-    if($snapfilter["rowsize"]){$GLOBALS["gfield"][$gtabid]["rowsize"] = $snapfilter["rowsize"];}
-	$GLOBALS["gsr"][$gtabid] = $snapfilter["gsr"];
+    $snapfilter = $gsnap[$gtabid]["filter"][$snap_id];
 
-    if($gsnap[$gtabid]["ext"][$snap_id]){
-        eval($gsnap[$gtabid]["ext"][$snap_id]);
-        $GLOBALS["filter"]["extension"][$gtabid] = $extension;
-        $GLOBALS["gsr"][$gtabid] = $gsr[$gtabid];
-    }else{
-        $GLOBALS["filter"]["extension"][$gtabid] = '';
+    // searchselect
+    if($gsnap[$gtabid]["type"][$snap_id] == 2){
+        $GLOBALS["gsr"][$gtabid] = $snapfilter["gsr"];
+        $GLOBALS["filter"]["snapid"][$gtabid] = $snap_id;
+    // filter
+    }else {
+        $GLOBALS["filter"]["snapisset"][$snap_id] = $snap_id;
+        $GLOBALS["filter"]["snapid"][$gtabid] = $snap_id;
+        $GLOBALS["filter"]["order"][$gtabid] = $snapfilter["order"];
+        $GLOBALS["filter"]["popups"][$gtabid] = $snapfilter["popups"];
+        $GLOBALS["filter"]["status"][$gtabid] = $snapfilter["status"];
+        $GLOBALS["filter"]["hidecols"][$gtabid] = $snapfilter["hidecols"];
+        $GLOBALS["filter"]["form"][$gtabid] = $snapfilter["form"];
+        $GLOBALS["gfield"][$gtabid]["sort"] = $snapfilter["sort"];
+        if ($snapfilter["rowsize"]) {
+            $GLOBALS["gfield"][$gtabid]["rowsize"] = $snapfilter["rowsize"];
+        }
+        $GLOBALS["gsr"][$gtabid] = $snapfilter["gsr"];
+        if($gsnap[$gtabid]["ext"][$snap_id]){
+            eval($gsnap[$gtabid]["ext"][$snap_id]);
+            $GLOBALS["filter"]["extension"][$gtabid] = $extension;
+            $GLOBALS["gsr"][$gtabid] = $gsr[$gtabid];
+        }else{
+            $GLOBALS["filter"]["extension"][$gtabid] = '';
+        }
     }
 
     $gsnap[$gtabid]["gsr_md5"][$snap_id] = md5(serialize($snapfilter["gsr"]));
@@ -482,16 +492,22 @@ function SNAP_get_filter($snap_id,$gtabid){
 	//speichern der filter und gsr in session
 }
 
-function SNAP_get_filtergroup($gtabid=null,$groupid=null){
+function SNAP_get_filtergroup($gtabid=null,$groupid=null,int $type=1 ){
     global $gsnap;
 
     if($groupid) {
         foreach ($gsnap[-1][$groupid] as $snapid => $value) {
             $snaptabid = $gsnap["argresult_id"][$snapid];
+            if($type !== intval($gsnap[$snaptabid]["type"][$snapid])){
+                continue;
+            }
             $filterlist[$snapid] = $gsnap[$snaptabid]["name"][$snapid];
         }
     }elseif($gtabid){
         foreach ($gsnap[$gtabid]['name'] as $snapid => $value) {
+            if($type !== intval($gsnap[$gtabid]["type"][$snapid])){
+                continue;
+            }
             $filterlist[$snapid] = $gsnap[$gtabid]["name"][$snapid];
         }
     }
@@ -550,7 +566,29 @@ function SNAP_td_size_global($rowsize,$gtabid){
 	}
 }
 
+function lmb_register_snapshot($gtabid,$snap_id,$filter_reset=null){
+    global $gsnap;
+    global $filter;
 
+    if($snap_id AND $gsnap[$gtabid]["id"][$snap_id]){
+        if(!$filter_reset AND (!$filter["snapisset"][$snap_id] OR $filter["snapid"][$gtabid] != $snap_id)){
+            if(!$filter["snapid"][$gtabid]){
+                SNAP_set_reminder($gtabid);
+            }
+            SNAP_get_filter($snap_id,$gtabid);
+        }elseif($filter_reset){
+            filter_reset($gtabid);
+            SNAP_get_filter($snap_id,$gtabid);
+        }
+    }else{
+        if($filter["snapid"][$gtabid]){
+            filter_reset($gtabid);
+            SNAP_get_reminder($gtabid);
+        }
+        $filter["snapid"][$gtabid] = 0;
+    }
+
+}
 
 
 ?>

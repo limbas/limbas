@@ -31,9 +31,10 @@ function delete_user($ID, $fileDelete=null, $dbDelete=null): bool
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	#-------- LMB_REMINDER ----------
-	$sqlquery = "DELETE FROM LMB_REMINDER WHERE USER_ID = $ID";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
+    // LMB_REMINDER_GROUP deleted from foreign key
+    $sqlquery = "DELETE FROM LMB_REMINDER WHERE ID IN (SELECT DISTINCT LMB_REMINDER.ID FROM LMB_REMINDER,LMB_REMINDER_GROUP WHERE LMB_REMINDER.ID = LMB_REMINDER_GROUP.REMINDER_ID AND LMB_REMINDER_GROUP.USER_ID = $ID)";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs) {$commit = 1;}
 	#-------- LMB_GTAB_ROWSIZE ----------
 	$sqlquery = "DELETE FROM LMB_GTAB_ROWSIZE WHERE USER_ID = $ID";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);

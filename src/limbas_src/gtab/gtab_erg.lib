@@ -509,11 +509,6 @@ function lmbGlistHeaderDetail($gtabid,&$gresult,$key,$rowkey,$gformid,$utyp=null
  */
 function lmb_GlistActiveSearch($gtabid){
 
-
-    #error_log(print_r($GLOBALS['gsr'][$gtabid],1));
-    #error_log(print_r($GLOBALS['gsnap'][$gtabid]["gsr_md5"][$GLOBALS['snap_id']] ,1));
-    #error_log(print_r(md5(serialize($GLOBALS['gsr'][$gtabid])) ,1));
-
     if($GLOBALS['snap_id']){
         if($GLOBALS['gsnap'][$gtabid]["gsr_md5"][$GLOBALS['snap_id']] != md5(serialize($GLOBALS['gsr'][$gtabid]))){
             return 1;

@@ -10,6 +10,7 @@
 namespace Limbas\admin\templates;
 
 use Database;
+use Limbas\admin\report\Report;
 use Limbas\extra\template\TemplateTable;
 
 class ReportTemplateEditor extends TemplateEditor
@@ -27,19 +28,17 @@ class ReportTemplateEditor extends TemplateEditor
         $greportlist = resultreportlist();
         $greport = $greportlist[$greportlist['gtabid'][$report_id]];
 
-        if ($greport['defaultformat'][$report_id] !== 'mpdf') {
+        $report = Report::get(intval($report_id));
+
+        if ($report->defFormat !== 'mpdf') {
             return $this->renderOld();
         }
 
-        $templateTableId = $greport['root_template'][$report_id];
-        $templateId = $greport['root_template_id'][$report_id];
-
-        $title = $greport['name'][$report_id];
-        $tableName = $gtab['desc'][$greportlist['gtabid'][$report_id]];
+        $tableName = $gtab['desc'][$report->gtabId];
 
         $editorSettings = $this->renderSettings();
 
-        return $this->renderMain($report_id, $templateTableId, $templateId, $title, $tableName, $editorSettings);
+        return $this->renderMain($report_id, $report->rootTemplateTabId, $report->rootTemplateElementId, $report->name, $tableName, $editorSettings);
     }
 
 

@@ -403,7 +403,7 @@ function LmEx_uploadFile(fileFormData, uploadUrl, onProgress) {
             data = data.trim();
             if (data) {
 				if (!ajaxEvalScript(data)) {
-					alert(data);
+					lmbShowErrorMsg(data);
 				}
             }
             lmb_uploadCount--;
@@ -413,7 +413,7 @@ function LmEx_uploadFile(fileFormData, uploadUrl, onProgress) {
             }
         },
 		error: function() {
-            alert(jsvar["lng_56"]);
+            lmbShowErrorMsg(jsvar["lng_56"]);
 		}
 	});
 }

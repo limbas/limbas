@@ -7,7 +7,7 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
+use Limbas\lib\auth\LmbSession;
 
     global $db;
     global $action;
@@ -159,15 +159,7 @@
     }
 
     /* --- set main css ------------------- */
-    $session['css'] = $session['layout'] . '-' . $session['farbschema'] . '.css';
-    $session['legacyCss'] = 'legacy-' . $session['farbschema'] . '.css';
-    if (!file_exists(ASSETSPATH . 'css/' . $session['css'])) {
-        $session['css'] = 'default.css';
-    }
-    
-    if (!file_exists(ASSETSPATH . 'css/' . $session['legacyCss'])) {
-        $session['legacyCss'] = 'legacy-default.css';
-    }
+    LmbSession::loadCss();
     
 
 	/* --- timezone setzen ------------------- */
@@ -491,6 +483,7 @@
 	if(lmbdb_fetch_row($rs3)) {
 		$session["farbschema"] = lmbdb_result($rs3,"ID");
 		$farbschema["NAME"] = lmbdb_result($rs3,"NAME");
+        $farbschema['theme'] = lmbdb_result($rs3,'THEME');
 
 		for($i = 1;$i <= 14; $i++){
 			$farbschema['WEB'.$i] = lmbdb_result($rs3,"WEB".$i);
@@ -617,6 +610,13 @@
 				}
 			}
 		}
+
+        // include global extensions
+        if ($gLmbExt["ext_global.inc"]) {
+            foreach ($gLmbExt["ext_global.inc"] as $key => $extfile) {
+                require_once ($extfile);
+            }
+        }
 	}
 
 	/* --- gtab_array ---------------------------------------------- */
@@ -635,7 +635,7 @@
 	if(!$rs4) {$commit = 1;}
 	if(!lmbdb_fetch_row($rs4)){
 		/* --- Next ID -------------------------------------------------------- */
-		$NEXTID = next_db_id('LMB_HISTORY_USER','ID',1);
+		$NEXTID = next_db_id('LMB_HISTORY_USER','ID');
 		$sqlquery5 = "INSERT INTO LMB_HISTORY_USER (ID,USERID,SESSIONID,IP,HOST) VALUES (".$NEXTID.",".$session["user_id"].",'".session_id()."','".lmb_getIpAddr()."','".$_SERVER['REMOTE_HOST']."')";
 		$rs5 = lmbdb_exec($db,$sqlquery5) or errorhandle(lmbdb_errormsg($db),$sqlquery5,$action,__FILE__,__LINE__);
 		if(!$rs5) {$commit = 1;}

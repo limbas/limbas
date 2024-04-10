@@ -67,7 +67,7 @@ function highlightSearchTerms(searchText, treatAsPhrase, warnOnFailure, highligh
   
   if (!document.body || typeof(document.body.innerHTML) == "undefined") {
     if (warnOnFailure) {
-      alert("Sorry, for some reason the text of this page is unavailable. Searching will not work.");
+      lmbShowErrorMsg("Sorry, for some reason the text of this page is unavailable. Searching will not work.");
     }
     return false;
   }
@@ -114,7 +114,7 @@ function searchPrompt(defaultText, treatAsPhrase, textColor, bgColor)
   searchText = prompt(promptText, defaultText);
 
   if (!searchText)  {
-    alert("No search terms were entered. Exiting function.");
+    lmbShowErrorMsg("No search terms were entered. Exiting function.");
     return false;
   }
   

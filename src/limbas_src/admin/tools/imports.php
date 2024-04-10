@@ -48,22 +48,22 @@ alert('<?=$lang[988]?>:\n\n<?= $imp_msg ?>');
 
         <ul class="nav nav-tabs">
             <li class="nav-item">
-                <a class="nav-link <?=($aktivid==1)?'active bg-white':''?>" href="#" onclick="document.form1.aktivid.value=1;document.form1.submit();"><?=$lang[990]?></a>
+                <a class="nav-link <?=($aktivid==1)?'active bg-contrast':''?>" href="#" onclick="document.form1.aktivid.value=1;document.form1.submit();"><?=$lang[990]?></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link <?=($aktivid==2)?'active bg-white':''?>" href="#" onclick="document.form1.aktivid.value=2;document.form1.submit();"><?=$lang[1006]?></a>
+                <a class="nav-link <?=($aktivid==2)?'active bg-contrast':''?>" href="#" onclick="document.form1.aktivid.value=2;document.form1.submit();"><?=$lang[1006]?></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link <?=($aktivid==5)?'active bg-white':''?>" href="#" onclick="document.form1.aktivid.value=5;document.form1.submit();"><?=$lang[2240]?></a>
+                <a class="nav-link <?=($aktivid==5)?'active bg-contrast':''?>" href="#" onclick="document.form1.aktivid.value=5;document.form1.submit();"><?=$lang[2240]?></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link <?=($aktivid==3)?'active bg-white':''?>" href="#" onclick="document.form1.aktivid.value=3;document.form1.submit();"><?=$lang[2208]?></a>
+                <a class="nav-link <?=($aktivid==3)?'active bg-contrast':''?>" href="#" onclick="document.form1.aktivid.value=3;document.form1.submit();"><?=$lang[2208]?></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link <?=($aktivid==6)?'active bg-white':''?>" href="#" onclick="document.form1.aktivid.value=6;document.form1.submit();"><?=$lang[2860]?></a>
+                <a class="nav-link <?=($aktivid==6)?'active bg-contrast':''?>" href="#" onclick="document.form1.aktivid.value=6;document.form1.submit();"><?=$lang[2860]?></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link <?=($aktivid==7)?'active bg-white':''?>" href="#" onclick="document.form1.aktivid.value=7;document.form1.submit();">ODBC Import</a>
+                <a class="nav-link <?=($aktivid==7)?'active bg-contrast':''?>" href="#" onclick="document.form1.aktivid.value=7;document.form1.submit();">ODBC Import</a>
             </li>
         </ul>
 

@@ -7,6 +7,9 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+if($manual_backup) {
+    lmb_backup_database($path1,$path2,$medium,$device,$art);
+}
 
 ?>
 
@@ -72,7 +75,7 @@ function device_path(device) {
                     <input type="text" class="form-control form-control-sm" id="path2" NAME="path2" VALUE="/dev/rft0">
                 </div>
         
-                <button type="submit" NAME="int_backup" class="btn btn-primary" onclick="limbasWaitsymbol(event,1);" value="1"><?=$lang[2751]?></button>
+                <button type="submit" NAME="manual_backup" class="btn btn-primary" onclick="limbasWaitsymbol(event,1);" value="1"><?=$lang[2751]?></button>
         
         
         

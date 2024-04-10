@@ -12,8 +12,9 @@ namespace Limbas\admin\templates;
 use JetBrains\PhpStorm\NoReturn;
 use Limbas\extra\template\report\ReportTemplateResolver;
 use Limbas\extra\template\wysiwyg\Wysiwyg;
+use Limbas\lib\LimbasController;
 
-class TemplateController
+class TemplateController extends LimbasController
 {
 
     /**
@@ -194,7 +195,7 @@ class TemplateController
         $id = $params['id'];
         $gtabid = $params['gtabid'];
 
-        return ['success'=>del_data($id,$gtabid)];
+        return ['success'=>del_data($gtabid, $id)];
     }
 
     #[NoReturn] protected function handleWysiwygAction(array $params): array
@@ -217,6 +218,9 @@ class TemplateController
                 break;
             case 'dataFieldSelection':
                 $wysiwyg->dataFieldSelection($params);
+                break;
+            case 'uploadImage':
+                $wysiwyg->uploadImage($params);
                 break;
         }
 

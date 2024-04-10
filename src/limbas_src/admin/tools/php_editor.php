@@ -108,7 +108,8 @@
             },
             error: function (_jqXHR, textStatus, errorThrown) {
                 limbasWaitsymbol(null, 1, 1);
-                alert(textStatus + ': ' + errorThrown);
+                // alert(textStatus + ': ' + errorThrown);
+                lmbShowErrorMsg(textStatus + ': ' + errorThrown);
 
                 resultWrapper.hide();
             }

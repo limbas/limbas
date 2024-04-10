@@ -169,6 +169,7 @@ if(lmbdb_fetch_row($rs)) {
 			${"$key"} = $value;
 		}
 		require_once(COREPATH . 'admin/tools/backup.dao');
+        lmb_backup_database($path1,$path2,$medium,$device,$art);
 
 	}else{
 		$templatefile = COREPATH . "admin/tools/jobs/$kattempl.lib";

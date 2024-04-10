@@ -149,7 +149,7 @@ $slaves = lmb_GetSyncSlaves();
                 </li>
             </ul>
 
-            <div class="tab-content border border-top-0 bg-white mb-3">
+            <div class="tab-content border border-top-0 bg-contrast mb-3">
 
                 <?php /* --- Teilexport ------------------------------- */?>
                 <div class="tab-pane p-3 <?=($openTab == 1)?'show active':''?>" id="part-exp"role="tabpanel" aria-labelledby="part-exp-tab">
@@ -466,7 +466,13 @@ $slaves = lmb_GetSyncSlaves();
                                         <input type="text" id="synccallextensionfunction" name="syncmodule[synccallextensionfunction]" class="form-control form-control-sm syncexportf" value="<?=($syncmodule['synccallextensionfunction']?$syncmodule['synccallextensionfunction']:'')?>">
                                         <i>usage: functionname<br>@param ('before' | 'after') </i>
                                     </div>
+                                </div>
 
+
+                                <div class="form-row mb-2" title="<?=$params['title']?>">
+                                    <label class="col-sm-2 form-check-label" for="mod-backup">backup:</label>
+                                    <input class="form-check-input syncexport" type="checkbox" value="1" id="mod-backup" name="syncmodule[backup]" <?=($syncmodule['backup']?'checked':'')?>>
+                                    <i>backup remote database</i>
                                 </div>
                                 
                             </div>
@@ -756,7 +762,7 @@ $slaves = lmb_GetSyncSlaves();
                     }
 
                     ?>
-                    <table class="table table-sm table-striped mb-0 border bg-white">
+                    <table class="table table-sm table-striped mb-0 border bg-contrast">
                         <thead>
                         <tr>
                             <th>Name</th>

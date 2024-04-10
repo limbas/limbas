@@ -7,10 +7,11 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 use Limbas\admin\tools\update\Updater;
+use Limbas\lib\auth\LmbSession;
 
 class Session {
     
-    public static array $globvars = array('session','umgvar','custvar','userdat','groupdat','user_colors','lmcurrency','lmfieldtype','LINK','LINK_ID','LINK_ACTION','farbschema','lang','gsr','filter','mfilter','ffilter','popc','popg','gsnap','gform','gformlist','greportlist','gdiaglist','gtabletree','tabgroup','gtab','grule','gfield','gverkn','gfile','ufile','filestruct','verknpool','gmimetypes','gtrigger','greminder','gwfl','gLmbExt','externalStorage','gprinter','lmmultitenants','gcustmenu');
+    public static array $globvars = array('session','umgvar','custvar','userdat','groupdat','user_colors','lmcurrency','lmfieldtype','LINK','LINK_ID','LINK_ACTION','farbschema','lang','gsr','filter','mfilter','ffilter','popc','popg','gsnap','gform','gformlist','greportlist','gdiaglist','gtabletree','tabgroup','gtab','grule','gfield','gverkn','gfile','ufile','filestruct','verknpool','gmimetypes','gselectpool','gtrigger','greminder','gwfl','gLmbExt','externalStorage','gprinter','lmmultitenants','gcustmenu');
     
     
     public static function start($sess_id = null, $use_cookies = null): void
@@ -167,7 +168,9 @@ class Session {
         }else{
             ini_set("display_errors","0");
         }
-        
+
+
+        LmbSession::loadCss();
 
         /* --- Userstatistik eintragen ---------------------------------------- */
         $sqlquery1 = "UPDATE LMB_HISTORY_USER SET UPDATE_DATE = '".convert_stamp(time())."',LOGIN_TIME = ".(date("U") - $session["login_date"])." WHERE SESSIONID = '".session_id()."' AND USERID = ".$session["user_id"]." AND LOGIN_DATE >= '".convert_stamp($session["login_date"])."'";

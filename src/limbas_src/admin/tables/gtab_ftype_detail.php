@@ -41,6 +41,9 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
         <li class="nav-item" role="presentation">
             <a class="nav-link" id="info-tab" data-bs-toggle="tab" href="#info" role="tab"><?=$lang[2836]?></a>
         </li>
+        <li class="nav-item" role="presentation">
+            <a class="nav-link" id="info-tab" data-bs-toggle="tab" href="#grouprights" role="tab"><?=$lang[575]?></a>
+        </li>
     </ul>
     <div class="tab-content">
         <div class="tab-pane show active py-3" id="options" role="tabpanel">
@@ -649,7 +652,6 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                             </div>
                         <?php endif; ?>
 
-
                         <?php // long list edit
                         if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 3):
                             ?>
@@ -702,6 +704,23 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                             </div>
                         <?php endif; ?>
 
+                        <?php // in sync template
+                        if($result_fieldtype[$table_gtab[$bzm]]["sync_slave"][1] OR $result_fieldtype[$table_gtab[$bzm]]["sync_master"][1]){
+                            ?>
+                            <div class="mb-3 row">
+                                <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2914]?></label>
+                                <div class="col-sm-8">
+                                    <?php
+                                    if($result_fieldtype[$table_gtab[$bzm]]["sync_master"][1]){
+                                        echo '<div>Master: '.implode(', ',$result_fieldtype[$table_gtab[$bzm]]["sync_master"][1]).'</div>';
+                                    }
+                                    if($result_fieldtype[$table_gtab[$bzm]]["sync_slave"][1]){
+                                        echo '<div>Slave: '.implode(', ',$result_fieldtype[$table_gtab[$bzm]]["sync_slave"][1]).'</div>';
+                                    }
+                                    ?>
+                                </div>
+                            </div>
+                        <?php }?>
 
                     <?php endif; ?>
 
@@ -1094,18 +1113,12 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                 </div>
             </div>
             
-            
-            
-            
-
-
-
-
 
         </div>
         <div class="tab-pane" id="info" role="tabpanel">
             
             <table class="table table-sm table-striped table-hover">
+                <tr><td colspan="2"><hr></td></tr>
                 <?php
                 if($rs = dbf_5(array($DBA["DBSCHEMA"],$table_gtab[$bzm],dbf_4($result_fieldtype[$table_gtab[$bzm]]["field"][1]),1))):
 
@@ -1130,4 +1143,41 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
             </table>
 
         </div>
+
+
+        <div class="tab-pane" id="grouprights" role="tabpanel">
+            
+            <table class="table table-sm table-striped table-hover">
+            <tr><td colspan="9"><hr></td></tr>
+            <tr><td tyle="width:90%"></td>
+            <td style="width:25px"><i class="lmb-icon lmb-eye"></i></td>
+            <td style="width:25px"><i class="lmb-icon lmb-pencil"></i></td>
+            <td style="width:25px"><i class="lmb-icon lmb-copy"></i></td>
+            <td style="width:25px"><i class="lmb-icon lmb-exclamation"></i></td>
+            <td style="width:40px"><i class="fa-solid fa-filter"></i>v</td>
+            <td style="width:40px"></i><i class="fa-solid fa-filter"></i>e</td>
+            <td style="width:25px">Default</td>
+            </tr>
+	
+            <?php
+            global $groupdat;
+            foreach($result_fieldtype[$table_gtab[$bzm]]["group_rights"][1] as $key => $value){
+            ?>
+                <tr>
+                <td><?=$groupdat["name"][$value[0]]?></td>
+                <td><?php echo ($value[1] ? '<i class="lmb-icon lmb-check-alt"></i>' : '<input type="checkbox" class="checkb" disabled>') ?></td>
+                <td><?php echo ($value[2] ? '<i class="lmb-icon lmb-check-alt"></i>' : '<input type="checkbox" class="checkb" disabled>') ?></td>
+                <td><?php echo ($value[3] ? '<i class="lmb-icon lmb-check-alt"></i>' : '<input type="checkbox" class="checkb" disabled>') ?></td>
+                <td><?php echo ($value[4] ? '<i class="lmb-icon lmb-check-alt"></i>' : '<input type="checkbox" class="checkb" disabled>') ?></td>
+                <td><?php echo ($value[5] ? '<i class="lmb-icon lmb-check-alt" title="'.$value.'"></i>' : '') ?></td>
+                <td><?php echo ($value[6] ? '<i class="lmb-icon lmb-check-alt" title="'.$value.'"></i>' : '') ?></td>
+                <td><?php echo ($value[7] ? $value : '') ?></td>
+                </tr>
+
+            <?php } ?>
+            </table>
+
+        </div>
+
+
     </div>

@@ -65,7 +65,8 @@ tinymce.PluginManager.add('lmbTemplate', function (editor, url) {
         'Image resize': 'Bild-Größe',
         'Repeat background': 'Hintergrundbild wiederholen',
         'Use LIMBAS DMS': 'Limbas DMS benutzen',
-        'ID of source table': 'ID Quelltabelle'
+        'ID of source table': 'ID Quelltabelle',
+        'Upload Image': 'Bild Hochladen'
     });
     //endregion
     //region Helper functions
@@ -76,10 +77,11 @@ tinymce.PluginManager.add('lmbTemplate', function (editor, url) {
      */
     let uniqueWindowIdCounter = 1;
 
-    let gtabid = jsvar.gtabid ? jsvar.gtabid : form1.gtabid.value;
-    let ID = jsvar.ID ? jsvar.ID : form1.ID.value;
+    let gtabid = jsvar.gtabid ?? form1.gtabid.value;
+    let ID = jsvar.ID ?? form1.ID.value;
 
     // fix for contenteditable="false" not reacting to styling in editor
+    /*
     editor.on('init', function () {
         const $ = tinymce.dom.DomQuery;
         const nonEditableClass = editor.getParam('noneditable_noneditable_class', 'mceNonEditable');
@@ -104,6 +106,9 @@ tinymce.PluginManager.add('lmbTemplate', function (editor, url) {
             $(editor.getBody()).find('.' + nonEditableClass).attr('contenteditable', false);
         });
     });
+
+    */
+
 
     /**
      * Trick tinymce to not translate the given string by setting its translation for the current lang to itself
@@ -683,7 +688,7 @@ tinymce.PluginManager.add('lmbTemplate', function (editor, url) {
         text.value = "\u200b";
         node.append(text);
 
-        editor.insertContent(new tinymce.html.Serializer().serialize(node));
+        editor.insertContent(tinymce.html.Serializer().serialize(node));
     }
 
     /**
@@ -699,7 +704,7 @@ tinymce.PluginManager.add('lmbTemplate', function (editor, url) {
             text.value = "\u200b";
             node.append(text);
 
-            editor.selection.setContent(new tinymce.html.Serializer().serialize(node));
+            editor.selection.setContent(tinymce.html.Serializer().serialize(node));
         } else {
             const selectedEl = editor.selection.getNode();
 
@@ -1687,7 +1692,7 @@ tinymce.PluginManager.add('lmbTemplate', function (editor, url) {
                 getInput('New value', attrs.value)
                     .then((newValue) => {
                         attrs.value = newValue;
-                        editor.selection.setContent(new tinymce.html.Serializer().serialize(tinymce.html.Node.create('lmb', attrs)));
+                        editor.selection.setContent(tinymce.html.Serializer().serialize(tinymce.html.Node.create('lmb', attrs)));
                     })
                     .catch(() => {});
             } else if (param === 'data') {
@@ -1697,7 +1702,7 @@ tinymce.PluginManager.add('lmbTemplate', function (editor, url) {
                         .then((arrowStr) => {
                             attrs.src = arrowStr;
                             attrs['data-mce-src'] = arrowStr;
-                            editor.selection.setContent(new tinymce.html.Serializer().serialize(tinymce.html.Node.create('lmb', attrs)));
+                            editor.selection.setContent(tinymce.html.Serializer().serialize(tinymce.html.Node.create('lmb', attrs)));
                         })
                         .catch(() => {});
             } else if (param === 'func') {
@@ -1710,7 +1715,7 @@ tinymce.PluginManager.add('lmbTemplate', function (editor, url) {
                                 el.append(paramToEl(param));
                             }
                         }
-                        editor.selection.setContent(new tinymce.html.Serializer().serialize(el));
+                        editor.selection.setContent(tinymce.html.Serializer().serialize(el));
                     })
                     .catch(() => reject());
             }
@@ -1743,7 +1748,7 @@ tinymce.PluginManager.add('lmbTemplate', function (editor, url) {
             }
         },
         onSetup: function(api) {
-            api.setDisabled(dataRowButtonDisabled);
+            api.setEnabled(!dataRowButtonDisabled);
             api.setActive(dataRowButtonSet);
             return function() {};
         }
@@ -1767,7 +1772,7 @@ tinymce.PluginManager.add('lmbTemplate', function (editor, url) {
             }
         },
         onSetup: function(api) {
-            api.setDisabled(!dataRowButtonSet);
+            api.setEnabled(dataRowButtonSet);
             api.setActive(dataRowFilterSet);
             return function() {};
         }
@@ -1803,3 +1808,5 @@ tinymce.PluginManager.add('lmbTemplate', function (editor, url) {
     };
     // endregion
 });
+
+

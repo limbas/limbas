@@ -238,12 +238,14 @@ function dbq_3($p){
  * @return sql string
  */
 function dbq_11($p){
-	$p[5] = "DELETE RESTRICT";
+    if(!$p[5]) {
+        $p[5] = "RESTRICT";
+    }
 
 	return "ALTER TABLE ".$p[0]." 
 		ADD CONSTRAINT ".$p[4]." FOREIGN KEY (".$p[1].") 
 		REFERENCES ".$p[2]."(".$p[3].") 
-		ON ".$p[5];
+		ON DELETE ".$p[5];
 }
 
 
@@ -725,13 +727,17 @@ function dbq_21($p){
 
 ################# BACKUP #################
 
-
-
 # -------- create Medium --------
 function create_medium($path,$typ){
-	global $bu;
+	global $DBA;
 
-	$sys = $bu['path']."/dbmcli -n ".$bu["host"]." -d ".$bu["database"]." -u ".$bu["user"].",".$bu["pass"]." medium_put ".$path["medname"]." ".$path["path"]." ".$path["type"]." $typ ".$path["size"]." 0 ".$path["over"];
+    if($DBA["LMHOST"] == $DBA["DBHOST"] OR $DBA["DBHOST"] == "127.0.0.1" OR $DBA["DBHOST"] == "localhost"){
+        $bu["path"] = $DBA["DBPATH"];
+    }else{
+        $bu["path"] = "ssh ".$DBA["DBHOST"]." ".$DBA["DBPATH"];
+    }
+
+	$sys = $bu['path']."/dbmcli -n ".$DBA["DBHOST"]." -d ".$DBA["DBNAME"]." -u ".$DBA["DBCUSER"].",".$DBA["DBCPASS"]." medium_put ".$path["medname"]." ".$path["path"]." ".$path["type"]." $typ ".$path["size"]." 0 ".$path["over"];
 	$out = `$sys`;
 	$out = explode("\n",$out);
 	if($out[0] == "OK"){return $path['medname'];}else{
@@ -744,9 +750,15 @@ function create_medium($path,$typ){
 
 # -------- delete medium --------
 function delete_medium($medium,$typ){
-	global $bu;
+	global $DBA;
 
-	$sys = $bu["path"]."/dbmcli -n ".$bu["host"]." -d ".$bu["database"]." -u ".$bu["user"].",".$bu["pass"]." medium_delete ".$medium;
+    if($DBA["LMHOST"] == $DBA["DBHOST"] OR $DBA["DBHOST"] == "127.0.0.1" OR $DBA["DBHOST"] == "localhost"){
+        $bu["path"] = $DBA["DBPATH"];
+    }else{
+        $bu["path"] = "ssh ".$DBA["DBHOST"]." ".$DBA["DBPATH"];
+    }
+
+	$sys = $bu["path"]."/dbmcli -n ".$DBA["DBHOST"]." -d ".$DBA["DBNAME"]." -u ".$DBA["DBCUSER"].",".$DBA["DBCPASS"]." medium_delete ".$medium;
 	$out = `$sys`;
 	$out = explode("\n",$out);
 	if($out[0] == "OK"){return true;}else{
@@ -759,11 +771,18 @@ function delete_medium($medium,$typ){
 
 # -------- start backup --------
 function backup_data($medium,$path,$typ){
-	global $bu;
+	global $DBA;
 
-	$sys = $bu["path"]."/dbmcli -n ".$bu["host"]." -d ".$bu["database"]." -uUTL -u ".$bu["user"].",".$bu["pass"]." backup_start $medium RECOVERY $typ";
+    if($DBA["LMHOST"] == $DBA["DBHOST"] OR $DBA["DBHOST"] == "127.0.0.1" OR $DBA["DBHOST"] == "localhost"){
+        $bu["path"] = $DBA["DBPATH"];
+    }else{
+        $bu["path"] = "ssh ".$DBA["DBHOST"]." ".$DBA["DBPATH"];
+        $bu["sshpath"] = "ssh ".$DBA["DBHOST"];
+    }
+
+	$sys = $bu["path"]."/dbmcli -n ".$DBA["DBHOST"]." -d ".$DBA["DBNAME"]." -uUTL -u ".$DBA["DBCUSER"].",".$DBA["DBCPASS"]." backup_start $medium RECOVERY $typ";
 	exec($sys,$out,$ret);
-	
+
 	if($out[0] == "OK"){
 
 		foreach ($out as $key => $value){
@@ -772,7 +791,7 @@ function backup_data($medium,$path,$typ){
 				$outres[] = $det[lmb_count($det)-1];
 			}
 		}
-			
+
 		if($typ == "DATA"){
 			$outres[7] = ($outres[7]*2);
 		}elseif($typ == "PAGES"){
@@ -795,5 +814,6 @@ function backup_data($medium,$path,$typ){
 		return false;
 	}
 }
+
 
 ?>

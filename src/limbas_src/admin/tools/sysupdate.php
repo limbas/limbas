@@ -250,6 +250,8 @@ if($newsystem){
 	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_REMINDER";
 	$rs = lmbdb_exec($db,$sqlquery);
+	$sqlquery = "DELETE FROM LMB_REMINDER_GROUP";
+	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_REMINDER_LIST";
 	$rs = lmbdb_exec($db,$sqlquery);
 	$sqlquery = "DELETE FROM LMB_HISTORY_ACTION";
@@ -610,6 +612,7 @@ if($mselect){
 	require_once(COREPATH . 'admin/tools/multiselect_refresh.lib');
 	multiselectRefreshCount();
 	relationRefreshCount();
+    usergroupRefreshCount();
 }
 
 if($specific_userrules){

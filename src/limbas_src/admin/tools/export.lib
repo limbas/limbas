@@ -1163,8 +1163,7 @@ function lmbExport_remoteSync($toSync, $remoteHost, $remoteUser, $remotePass, $p
 	return $result;
 }
 
-function lmb_availableSyncModules()
-{
+function lmb_availableSyncModules(){
     global $lang;
 
     $modules = array(
@@ -1195,14 +1194,20 @@ function lmb_availableSyncModules()
         'functmpfiles'=>array('name'=>$lang[2367],'title'=>'','group'=>3),
         'funcforkey'=>array('name'=>$lang[2476],'title'=>'','group'=>3),
         'funcindize'=>array('name'=>$lang[2721],'title'=>'','group'=>3),
-        'funcproz'=>array('name'=>$lang[2652],'title'=>'','group'=>3),
+        'funcindize_rebuild'=>array('name'=>$lang[2721].' + '.$lang[1858],'title'=>'','group'=>3),
         'functrigger'=>array('name'=>$lang[2488],'title'=>'','group'=>3),
+        'functrigger_rebuild'=>array('name'=>$lang[2488].' + '.$lang[1858],'title'=>'','group'=>3),
         'funcsequ'=>array('name'=>$lang[2662],'title'=>'','group'=>3),
+        'funcsequ_rebuild'=>array('name'=>$lang[2662].' + '.$lang[1858],'title'=>'','group'=>3),
+        'funcproz'=>array('name'=>$lang[2652],'title'=>'','group'=>3),
         'funcmenurefresh'=>array('name'=>$lang[1056],'title'=>'','group'=>3),
         'functablerefresh'=>array('name'=>$lang[1054],'title'=>'','group'=>3),
         'funcdelsession'=>array('name'=>$lang[1057],'title'=>'','group'=>3),
         'extensions'=>array('name'=>$lang[1813],'title'=>'','group'=>3),
         'source'=>array('name'=>'source','title'=>'','group'=>3),
+
+        'synccallextensionfunction'=>array('name'=>'source','title'=>'','group'=>4),
+        'backup'=>array('name'=>'source','title'=>'','group'=>4),
     );
 
     return $modules;

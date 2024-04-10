@@ -347,6 +347,7 @@ if($copy_file AND $LINK[129]){
 /* --- Actionliste Dateien --------------------------------------------- */
 #$files = $files[$LID];
 $files = $activelist["d"][$LID];
+
 if($files){
 	if(in_array("1",$files)){
 		if($ffilter["force_delete"]){$forceDelnm = array("#all#");}else{$forceDelnm = null;}

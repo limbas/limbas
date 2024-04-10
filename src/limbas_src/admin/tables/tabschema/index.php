@@ -15,18 +15,18 @@
     <ul class="nav nav-tabs">
         <?php if ($LINK[108]): ?>
             <li class="nav-item">
-                <a class="nav-link <?= (!$typ || $typ == 1) ? 'active bg-white' : '' ?>"
+                <a class="nav-link <?= (!$typ || $typ == 1) ? 'active bg-contrast' : '' ?>"
                    href="main_admin.php?action=setup_tabschema&typ=1"><?= $lang[$LINK["desc"][215]] ?></a>
             </li>
         <?php endif; ?>
         <?php if ($LINK[258]): ?>
             <li class="nav-item">
-                <a class="nav-link <?= ($typ == 2) ? 'active bg-white' : '' ?>"
+                <a class="nav-link <?= ($typ == 2) ? 'active bg-contrast' : '' ?>"
                    href="main_admin.php?action=setup_tabschema&typ=2"><?= $lang[2912] ?></a>
             </li>
         <?php endif; ?>
     </ul>
-    <div class="tab-content border border-top-0 bg-white">
+    <div class="tab-content border border-top-0 bg-contrast">
         <div class="tab-pane active p-3">
             <?php if ($typ == 2) {
                 require(__DIR__ . '/relations.php');

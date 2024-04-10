@@ -559,15 +559,6 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
                     </div>
                 </div>
 
-                <?php // theme ?>
-                <div class="mb-3 row">
-                    <label class="col-sm-4 col-form-label col-form-label-sm">Theme</label>
-                    <div class="col-sm-8">
-                        <input type="checkbox" value="1" <?=($result_gtab[$tabgroup]['theme'][$tbzm] == 1)?'checked':''?> onchange="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','theme')">
-                        <small class="form-text text-muted">disable bootstrap theme</small>
-                    </div>
-                </div>
-
             </div>
         </div>
 

@@ -6,6 +6,7 @@ Part
   / TemplateTag
   / IfConstructHtml
   / TemplateTagHtml
+  / ImageTag
   / RepeatedDataRow
   / Html
 
@@ -55,7 +56,7 @@ EndIfTagHtml
 
 TemplateTagHtml
   = tag:TemplateTagHtmlInner
-    & { return array_key_exists('type', $tag['attributes']) || array_key_exists('param', $tag['attributes']) || array_key_exists('condition', $tag['attributes']); }
+    & { return array_key_exists('type', $tag['attributes'] ?? []) || array_key_exists('param', $tag['attributes'] ?? []) || array_key_exists('condition', $tag['attributes'] ?? []); }
     {
         // check medium
         if ($target = $tag['attributes']['target']) {
@@ -156,6 +157,23 @@ AttributeHtmlVal
   = (!STRDELIMITER .)*
   { return html_entity_decode($this->text()); }
 
+
+ImageTag
+  = tag:ImageTagInner
+  
+ImageTagInner
+  = "<img" _ attributes:AttributesImg? _? [/]? ">"
+  { return TemplateConfig::$instance->getImageInstance($attributes); }
+
+AttributesImg
+  = attributes:AttributeImg*
+  { return array_merge(...$attributes); }
+
+AttributeImg
+  = _ key:AttributeHtmlKey "=" STRDELIMITER val:AttributeHtmlVal STRDELIMITER _
+  { return array($key => $val); }
+
+
 RepeatedDataRow
   = _ "<tr>" _ cells:RepeatedDataCell* _ "</tr>" _
     { return TemplateConfig::$instance->getTableRowInstance($cells, array()); }
@@ -173,11 +191,12 @@ TdPart
   / TemplateTag
   / IfConstructHtml
   / TemplateTagHtml
+  / ImageTag
   / RepeatedDataRow
   / TdHtml
 
 TdHtml
-  = (!TAGSTART !ESCAPEDTAGSTART !"<lmb " !"<tr " !"<tr>" !"<td " !"<td>" !"</td>" .)+
+  = (!TAGSTART !ESCAPEDTAGSTART !"<lmb " !"<img " !"<tr " !"<tr>" !"<td " !"<td>" !"</td>" .)+
     { return TemplateConfig::$instance->getHtmlInstance($this->text()); }
 
 // ==== parts ====
@@ -236,7 +255,7 @@ Template
   / DynamicData
 
 Html
-  = (!TAGSTART !ESCAPEDTAGSTART !"<lmb " !"<tr " !"<tr>" .)+
+  = (!TAGSTART !ESCAPEDTAGSTART !"<lmb " !"<tr " !"<tr>" !"<img " .)+
     { return TemplateConfig::$instance->getHtmlInstance($this->text()); }
 
 // ==== templates ====

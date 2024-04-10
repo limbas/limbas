@@ -119,7 +119,7 @@ function changeorderf(el,id){
     </div>
 
 
-    <div class="tab-content border border-top-0 bg-white p-3">
+    <div class="tab-content border border-top-0 bg-contrast p-3">
         <div class="tab-pane <?=(!$category || $category=='edit')?'show active':''?>" id="general" role="tabpanel">
             <?php include(__DIR__.'/verkn_editor/general.php'); ?>
         </div>

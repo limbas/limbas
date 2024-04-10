@@ -24,13 +24,13 @@
 
     <ul class="nav nav-tabs">        
         <li class="nav-item">
-            <a class="nav-link <?=(isset($currates))?'':'active bg-white'?>" href="main_admin.php?action=setup_currency"><?=$lang[$LINK["name"][$LINK_ID['setup_currency']]]?></a>
+            <a class="nav-link <?=(isset($currates))?'':'active bg-contrast'?>" href="main_admin.php?action=setup_currency"><?=$lang[$LINK["name"][$LINK_ID['setup_currency']]]?></a>
         </li>
         <li class="nav-item">
-            <a class="nav-link <?=(isset($currates))?'active bg-white':''?>" href="main_admin.php?action=setup_currency&currates=1"><?=$lang[2973]?></a>
+            <a class="nav-link <?=(isset($currates))?'active bg-contrast':''?>" href="main_admin.php?action=setup_currency&currates=1"><?=$lang[2973]?></a>
         </li>
     </ul>
-    <div class="tab-content border border-top-0 bg-white">
+    <div class="tab-content border border-top-0 bg-contrast">
         <div class="tab-pane active">
 
             

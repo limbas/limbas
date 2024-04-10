@@ -41,7 +41,7 @@ function change_file(val) {
             
             <?php if($language_typ == 1) : ?>
                     <li class="nav-item">
-                        <a class="nav-link active bg-white" href="#"><?=$lang[$LINK["desc"][108]]?></a>
+                        <a class="nav-link active bg-contrast" href="#"><?=$lang[$LINK["desc"][108]]?></a>
                     </li>
                 <?php if ($LINK[258]) : ?>
                     <li class="nav-item">
@@ -57,7 +57,7 @@ function change_file(val) {
                     </li>
                 <?php endif; ?>
                 <li class="nav-item">
-                    <a class="nav-link active bg-white" href="#"><?=$lang[$LINK["desc"][258]]?></a>
+                    <a class="nav-link active bg-contrast" href="#"><?=$lang[$LINK["desc"][258]]?></a>
                 </li>
             <?php endif; ?>
         </ul>
@@ -65,7 +65,7 @@ function change_file(val) {
         
                 
                 <?php if($language_id AND $list) : ?>
-        <div class="tab-content border border-top-0 bg-white">
+        <div class="tab-content border border-top-0 bg-contrast">
             <div class="tab-pane active">
                 <table class="table table-sm mb-0">
                     
@@ -235,7 +235,7 @@ function change_file(val) {
 
                     <div class="row">
                         <div class="col-md-6 col-lg-4">
-                            <div class="tab-content border border-top-0 bg-white">
+                            <div class="tab-content border border-top-0 bg-contrast">
                                 <div class="tab-pane active">
                                     <table class="table table-sm mb-0">
                                         <thead>

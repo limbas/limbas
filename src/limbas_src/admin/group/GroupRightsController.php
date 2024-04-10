@@ -2,14 +2,17 @@
 
 namespace Limbas\admin\group;
 
-class GroupRightsController
+use Limbas\lib\LimbasController;
+
+class GroupRightsController extends LimbasController
 {
-    public function handleRequest(array $request): void
+    public function handleRequest(array $request): array
     {
         switch ($request['action']) {
             case 'tabRowsModal':
                 $this->createTabRowsModal($request);
         }
+        return [];
     }
 
     private function createTabRowsModal(array $request): void

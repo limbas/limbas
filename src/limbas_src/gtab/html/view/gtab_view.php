@@ -11,7 +11,7 @@
 ?>
 
 <link rel="stylesheet" type="text/css" href="assets/vendor/datatables/dataTables.bootstrap5.min.css"/>
-<script type="text/javascript" src="assets/vendor/datatables/jquery.dataTables.js"></script>
+<script type="text/javascript" src="assets/vendor/datatables/dataTables.min.js"></script>
 <script type="text/javascript" src="assets/vendor/datatables/dataTables.bootstrap5.min.js"></script>
 
 

@@ -9,12 +9,14 @@
 
 namespace Limbas\extra\template\base\HtmlParts;
 
+use Limbas\extra\template\base\HtmlParts\Traits\TraitImage;
+
 /**
  * Class Background
  * Placeholder for background (only supported by mpdf)
  */
 class Background extends AbstractHtmlPart {
-    
+    use TraitImage;
     
     /**
      * @var boolean defines if this background is used on page one
@@ -94,38 +96,5 @@ class Background extends AbstractHtmlPart {
         return array('<style>',$css,'</style>');
     }
 
-    /**
-     * Resolves a given ID or path in the dms to the real path of the file
-     * 
-     * @param string|int $pathOrId the id or path to a file in Limbas dms
-     * @return string
-     */
-    private function getLmbFilePath($pathOrId) {        
-        global $db, $action;
-        global $gmimetypes;
-
-        require_once(COREPATH . 'extra/explorer/filestructure.lib');
-
-
-        // path -> file id
-        if (is_numeric($pathOrId)) {
-            $fileID = $pathOrId;
-        } else {
-            $fileparts = explode('/', html_entity_decode($pathOrId));
-            $filename = array_pop($fileparts);
-            $folder = implode('/', $fileparts);
-            $fileID = lmb_getFileIDFromName(lmb_getLevelFromPath($folder), $filename);
-        }
-        
-        // file id -> secname
-        $mttfilter = set_mttfilter()['where'];
-        $sqlquery = 'SELECT SECNAME, MIMETYPE, LEVEL FROM LDMS_FILES WHERE ID='.parse_db_int($fileID).' '.$mttfilter;
-        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-        $ext = $gmimetypes['ext'][lmbdb_result($rs, 'MIMETYPE')];
-        #$secname = $umgvar['upload_pfad'] . lmbdb_result($rs, 'SECNAME') . '.' . $ext;
-        $secname = lmb_getFilePath($fileID,lmbdb_result($rs, 'LEVEL'),lmbdb_result($rs, 'SECNAME'),$ext);
-        
-        return $secname;        
-    }
 
 }

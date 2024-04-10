@@ -13,6 +13,8 @@ require_once(COREPATH . 'admin/tools/datasync/filesync.lib');
 
 define("IS_RSYNC",1);
 
+
+
 /**
  * Enter description here...
  *
@@ -22,7 +24,19 @@ function periodic_job($cronval){
     global $umgvar;
     global $db;
 
-    // rsync files
-    lmb_fileSync_init($templateId);
+    $params = explode(';',$cronval);
+    $templateId = $params[0];
+    if(!$templateId){return false;}
+
+    $slaves = lmb_GetSyncSlaves();
+    if(is_array($slaves)){
+        foreach($slaves['slave_active'] as $slaveid => $sctive){
+            if(!$sctive){continue;}
+
+            // rsync files
+            lmb_fileSync_init($templateId,$slaveid);
+
+        }
+    }
 
 }

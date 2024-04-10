@@ -14,7 +14,7 @@ use Limbas\extra\template\TemplateTable;
 
 <div class="container-fluid p-3">
 
-    <table class="table table-sm table-striped table-hover border bg-white align-middle">
+    <table class="table table-sm table-striped table-hover border bg-contrast align-middle">
         <thead>
         <tr>
             <th></th>

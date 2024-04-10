@@ -465,13 +465,13 @@ function lmb_relationTrigger($verknTabName,$elternTab,$elternFeld,$kindTab,$kind
  *
  * @param array $gtabid
  */
-function lmb_rebuildTrigger($deleteall=null,$onlytabs=null){
+function lmb_rebuildTrigger($rebuild=null,$onlytabs=null){
 	global $db;
 	
 	if(!LMB_DBFUNC_PROCEDUREHANDLE){return true;}
 	
 	# drop all limbas trigger
-	if($deleteall){
+	if($rebuild){
 		#lmb_dropAllDBTrigger("LMB_TRG_%",1);
 		lmb_dropAllDBTrigger(null,1);
 	}
@@ -933,6 +933,39 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
 	#if(!$fkeylist){$fkeylist = array();}
 
 
+    // specific foreign keys
+
+    // reminder
+    $spForKey['ftable'][] = 'LMB_REMINDER_GROUP';
+    $spForKey['ffield'][] = 'REMINDER_ID';
+    $spForKey['ptable'][] = 'LMB_REMINDER';
+    $spForKey['pfield'][] = 'ID';
+    $spForKey['ondelete'][] = 'CASCADE';
+
+    foreach($spForKey['ftable'] as $fkey => $ftable){
+
+        # search foreign key
+        foreach ($fkys["keyname"] as $key => $keyname){
+            if($fkys["tablename"][$key] == dbf_4($spForKey['ftable'][$fkey]) &&
+                $fkys["columnname"][$key] == dbf_4($spForKey['ffield'][$fkey]) &&
+                $fkys["reftablename"][$key] == dbf_4($spForKey['ptable'][$fkey]) &&
+                $fkys["refcolumnname"][$key] == dbf_4($spForKey['pfield'][$fkey])){
+
+                $f0 = $keyname;
+            }
+        }
+        if(!$f0) {
+            $f0 = "LMB_KEY_".lmb_substr(md5($spForKey['ftable'][$fkey]."_".$spForKey['ffield'][$fkey]."_".$spForKey['ptable'][$fkey]."_".$spForKey['pfield'][$fkey]),0,18);
+            if (!lmb_addForeignKey($spForKey['ftable'][$fkey], $spForKey['ffield'][$fkey], $spForKey['ptable'][$fkey], $spForKey['pfield'][$fkey], $f0, $spForKey['ondelete'][$fkey])) {
+                $commit = 1;
+            }
+        }
+
+    }
+
+
+    // relation foreign keys
+
 	$sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	while(lmbdb_fetch_row($rs)){
@@ -987,6 +1020,7 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
 			# foreign keys
 			if(lmbdb_result($rs1,"VERKNTABID") AND lmbdb_result($rs1,"MD5TAB") AND lmbdb_result($rs1,"VERKNTABLETYPE") == 1){
 
+                // relations with table
                 if($datatype == 27 OR $datatype == 24) {
 
                     # foreign keys
@@ -1033,6 +1067,7 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
                         }
                     }
 
+                // direct relations without table
                 }elseif($datatype == 25) {
                     $ftable = $tab[$verkntabid];
                     $ffield = lmbdb_result($rs1, "MD5TAB");
@@ -1072,10 +1107,10 @@ function lmb_rebuildForeignKey($deleteall=null,$onlytabs=null,$onlyfield=null){
  * @param string $fkname
  * @return success
  */
-function lmb_addForeignKey($ftable,$ffield,$ptable,$pfield,$fkname){
+function lmb_addForeignKey($ftable,$ffield,$ptable,$pfield,$fkname,$ondelete=null){
 	global $db;
 	
-	$sqlquery = dbq_11(array($ftable,$ffield,$ptable,$pfield,$fkname));
+	$sqlquery = dbq_11(array($ftable,$ffield,$ptable,$pfield,$fkname,$ondelete));
 	$rs = lmbdb_exec($db,$sqlquery);
 	if(!$rs){
 		LimbasLogger::error('error adding foreign key - '.lmbdb_errormsg($db));
@@ -1519,6 +1554,7 @@ function lmb_getSystemConstraints(){
 	$systemindex[] = array('lmb_select_w'=>'wert');
 	$systemindex[] = array('lmb_history_action'=>'userid');
     $systemindex[] = array('lmb_history_user'=>'sessionid');
+    $systemindex[] = array('lmb_reminder_group'=>'reminder_id');
 
 	foreach ($systemindex as $key => $value){
 		$table = dbf_4(key($value));

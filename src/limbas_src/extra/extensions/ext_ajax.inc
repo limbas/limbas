@@ -508,7 +508,7 @@ function dyns_extComposeMessage($params){
 	<meta http-equiv="Expires" content="0">
 	<meta name="robots" content="noindex, nofollow">
 	<title>Compose message as {$imap_cfg['full_name']}</title>
-	<link rel="stylesheet" type="text/css" href="assets/css/{$session['legacyCss']}?v={$umgvar['version']}">
+	<link rel="stylesheet" type="text/css" href="{$session['legacyCss']}?v={$umgvar['version']}">
 </head>
 <body>
 <form name="compose_form" method="POST" action="main_dyns.php?actid=extSendMessage&amp;gtabid={$params["gtabid"]}&amp;fldid={$params["fldid"]}&amp;id={$params["id"]}&amp;edittype={$params["edittype"]}">

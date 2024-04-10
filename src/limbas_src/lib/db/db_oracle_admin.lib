@@ -207,10 +207,12 @@ function dbq_3($p){
 
 
 function dbq_11($p){
-	$p[5] = "DELETE RESTRICT";
+    if(!$p[5]) {
+        $p[5] = "RESTRICT";
+    }
 	
 	#return "ALTER TABLE ".$p[0]." ADD CONSTRAINT ".$p[4]." FOREIGN KEY (".$p[1].") REFERENCES ".$p[2]." (".$p[3].") ;";	
-	return "ALTER TABLE ".$p[0]." add CONSTRAINT ".$p[4]." FOREIGN KEY(".$p[1].") REFERENCES ".$p[2]." (".$p[3].") ;";
+	return "ALTER TABLE ".$p[0]." add CONSTRAINT ".$p[4]." FOREIGN KEY(".$p[1].") REFERENCES ".$p[2]." (".$p[3].") ON DELETE ".$p[5].";";
 	
 	
 	
@@ -730,9 +732,16 @@ function delete_medium($medium,$typ){
 
 # -------- start backup --------
 function backup_data($medium,$path,$typ){
-	global $bu;
+	global $DBA;
 
-	$sys = $bu["path"]."/dbmcli -n ".$bu["host"]." -d ".$bu["database"]." -uUTL -u ".$bu["user"].",".$bu["pass"]." backup_start $medium RECOVERY $typ";
+    if($DBA["LMHOST"] == $DBA["DBHOST"] OR $DBA["DBHOST"] == "127.0.0.1" OR $DBA["DBHOST"] == "localhost"){
+        $bu["path"] = $DBA["DBPATH"];
+    }else{
+        $bu["path"] = "ssh ".$DBA["DBHOST"]." ".$DBA["DBPATH"];
+        $bu["sshpath"] = "ssh ".$DBA["DBHOST"];
+    }
+
+	$sys = $bu["path"]."/dbmcli -n ".$DBA["DBHOST"]." -d ".$DBA["DBNAME"]." -uUTL -u ".$DBA["DBCUSER"].",".$DBA["DBCPASS"]." backup_start $medium RECOVERY $typ";
 	exec($sys,$out,$ret);
 	
 	if($out[0] == "OK"){

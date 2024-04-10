@@ -87,12 +87,12 @@ table .lmbGtabTab {
 }
 
 td .lmbGtabTabActive {
-  color: $fontc7;
+  color: $lmbFontc7;
   font-size: $fontsize13;
 }
 
 .lmbGtabTabInactive, .lmbGtabTabActive {
-  color: $fontc3;
+  color: $lmbFontc3;
   font-size: $fontsize11;
   white-space: nowrap;
   overflow: visible;
@@ -164,7 +164,7 @@ td .lmbGtabTabSpace {
 
 .lmbGtabSubheaderActive{
   background-color:$farbschemaWEB8;
-  color:$fontc7;
+  color:$lmbFontc7;
   text-align:center;
   font-size:$fontsize11;
   white-space:nowrap;
@@ -179,7 +179,7 @@ td .lmbGtabTabSpace {
 
 .lmbGtabSubheaderInactive{
   background-color:$farbschemaWEB13;
-  color:$fontc3;
+  color:$lmbFontc3;
   text-align:center;
   font-size:$fontsize11;
   white-space:nowrap;
@@ -202,7 +202,7 @@ td .lmbGtabTabSpace {
 
 .lmbGtabTabulatorActive{
   background-color:$farbschemaWEB14;
-  color:$fontc7;
+  color:$lmbFontc7;
   font-size:$fontsize11;
   white-space:nowrap;
   overflow:visible;
@@ -220,7 +220,7 @@ td .lmbGtabTabSpace {
 
 .lmbGtabTabulatorInactive{
   background-color:$farbschemaWEB8;
-  color:$fontc7;
+  color:$lmbFontc7;
   font-size:$fontsize11;
   white-space:nowrap;
   overflow:visible;
@@ -253,7 +253,7 @@ td .lmbGtabTabSpace {
 
 .lmbGtabTabulatorLeftActive{
   background-color:$farbschemaWEB9;
-  color:$fontc7;
+  color:$lmbFontc7;
   font-size:$fontsize11;
   white-space:nowrap;
   overflow:visible;
@@ -267,7 +267,7 @@ td .lmbGtabTabSpace {
 
 .lmbGtabTabulatorLeftInactive{
   background-color:$farbschemaWEB13;
-  color:$fontc3;
+  color:$lmbFontc3;
   font-size:$fontsize11;
   white-space:nowrap;
   overflow:visible;
@@ -320,7 +320,8 @@ td .lmbGtabTabSpace {
 }
 
 .gtabHeaderSymbolTR{
-  background-color: $farbschemaWEB13;
+  background-color: $nav-center-background-color;
+  color: $nav-center-color !important;
 }
 
 .gtabHeaderSymbolTD{
@@ -336,16 +337,18 @@ td .lmbGtabTabSpace {
 }
 
 .gtabHeaderInputINP{
-  background-image: url('../images/legacy/find.png');
+  background-image: $find-icon-path;
   padding-left:14px;
   background-repeat: no-repeat;
   background-position: 2px 3px;
   margin: 3px 0;
   border:1px solid $farbschemaWEB1;
+  background-color: $bg-differ;
+  color: $body-color;
 }
 
 .gtabHeaderInputINPajax{
-  background-image: url('../images/legacy/find_green.png');
+  background-image: $find-icon-path;
 }
 
 .gtabHeaderTitleTD {
@@ -469,7 +472,7 @@ td .lmbGtabTabSpace {
 /* gtab Tabelle Details */
 
 .gtabBodyDetailFringe{
-  background-color:$farbschemaWEB8;
+  background-color: $bg-differ;
   border:1px solid $farbschemaWEB3;
 }
 

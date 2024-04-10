@@ -7,7 +7,12 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
+# include extensions
+if($gLmbExt["ext_soap.inc"]){
+    foreach ($gLmbExt["ext_soap.inc"] as $key => $extfile){
+        require_once($extfile);
+    }
+}
 
 require_once(COREPATH . 'extra/soap/soap.lib');
 

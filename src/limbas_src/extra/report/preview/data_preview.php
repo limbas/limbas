@@ -1,4 +1,9 @@
+<?php
 
+use Limbas\extra\template\report\ReportTemplateRender;
+
+$reportTemplateRender = new ReportTemplateRender();
+?>
 <div class="row h-100">
     <div class="col-md-6 pt-2">
 
@@ -13,11 +18,9 @@
                     </li>
                 </ul>
             </div>
-            <?php if($path != null): ?>
-                <div class="col-sm-4 text-end">
-                    <button type="button" class="btn btn-outline-dark" onclick="loadPreview()"><?=$lang[33]?></button>
-                </div>
-            <?php endif; ?>
+            <div class="col-sm-4 text-end">
+                <button type="button" class="btn btn-outline-dark" data-report-action="preview"><?=$lang[33]?></button>
+            </div>
         </div>
 
         <div class="tab-content">
@@ -26,16 +29,14 @@
                     <div id="report_preview">
                         <div id="report_preview_form">
                             <?php
-                            $reportTemplateRender->renderDynamicDataHtmlPreview($reportTemplateElements, $report_defformat);
+                            $reportTemplateRender->renderDynamicDataHtmlPreview($reportTemplateElements, intval($gtabid), intval($report_id));
                             ?>
                         </div>
                     </div>
                 </div>
-                <?php if($path != null): ?>
-                    <div class="text-end mt-3">
-                        <button type="button" class="btn btn-outline-dark" onclick="loadPreview()"><?=$lang[33]?></button>
-                    </div>
-                <?php endif; ?>
+                <div class="text-end mt-3">
+                    <button type="button" class="btn btn-outline-dark" data-report-action="preview"><?=$lang[33]?></button>
+                </div>
             </div>
             <div class="tab-pane" id="data" role="tabpanel" aria-labelledby="data-tab">
 
@@ -62,11 +63,9 @@
 
                 </div>
 
-                <?php if($path != null): ?>
-                    <div class="text-end">
-                        <button type="button" class="btn btn-outline-dark" onclick="loadPreview()"><?=$lang[33]?></button>
-                    </div>
-                <?php endif; ?>
+                <div class="text-end">
+                    <button type="button" class="btn btn-outline-dark" data-report-action="preview"><?=$lang[33]?></button>
+                </div>
             </div>
         </div>
 

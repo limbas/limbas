@@ -79,7 +79,7 @@ function multitenant_delete(mid,name){
 
     <div class="container-fluid p-3">
 
-        <table class="table table-sm table-striped mb-0 border bg-white">
+        <table class="table table-sm table-striped mb-0 border bg-contrast">
             <thead>
                 <tr>
                     <th></th>

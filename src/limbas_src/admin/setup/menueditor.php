@@ -23,13 +23,13 @@
 
         <ul class="nav nav-tabs">
             <li class="nav-item">
-                <a class="nav-link <?=(($tab==1)?'active bg-white':'')?>" href="main_admin.php?action=setup_menueditor&tab=1"><?=$lang[2981]?></a>
+                <a class="nav-link <?=(($tab==1)?'active bg-contrast':'')?>" href="main_admin.php?action=setup_menueditor&tab=1"><?=$lang[2981]?></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link <?=(($tab==2)?'active bg-white':'')?>" href="main_admin.php?action=setup_menueditor&tab=2"><?=$lang[2982]?></a>
+                <a class="nav-link <?=(($tab==2)?'active bg-contrast':'')?>" href="main_admin.php?action=setup_menueditor&tab=2"><?=$lang[2982]?></a>
             </li>
         </ul>
-        <div class="tab-content border border-top-0 bg-white">
+        <div class="tab-content border border-top-0 bg-contrast">
             <div class="tab-pane active p-3">
 
                 <?php if($tab == 1): ?>

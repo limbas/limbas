@@ -240,6 +240,7 @@ function loadForm(gtabid,id) {
     let ed = tinymce.activeEditor;
 
     ed.plugins.lmbTemplate.setLmbIDs(gtabid, id);
+    ed.options.images_upload_url = 'main_dyns.php?actid=manageTemplates&action=wysiwyg&taction=uploadImage&gtabid=' + gtabid;
 
     ed.setProgressState(true);
     $.ajax({

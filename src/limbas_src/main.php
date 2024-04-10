@@ -1,5 +1,7 @@
 <?php
 
+use Limbas\extra\report\Report;
+
 /**
  * @copyright Limbas GmbH <https://limbas.com>
  * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
@@ -476,7 +478,7 @@ elseif ($action == "history" and $LINK[$action] == 1) {
     }
     $require1 = "extra/explorer/filestructure.lib";
     $require2 = "extra/report/report.dao";
-    $require3 = "extra/report/report_" . lmb_substr($report_medium, 0, 3) . ".php";
+    $require3 = "extra/report/report_dyns.php";
     $ONLOAD = "window.focus();";
     $BODY = 1;
 
@@ -488,12 +490,16 @@ elseif ($action == "history" and $LINK[$action] == 1) {
     $BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
 
 } elseif ($action == 'report_preview') {
-    $require1 = 'extra/report/preview.php';
+    $require1 = 'extra/report/preview/preview.php';
 }
 
 // deprecated - move to dashboard
 elseif ($action == "diag_erg") {
-    $require1 = 'extra/diagram/LmbChart.php';
+    if ($gdiaglist[$gtabid]["template"][$diag_id] AND file_exists(DEPENDENTPATH . $gdiaglist[$gtabid]["template"][$diag_id])) {
+        require_once (DEPENDENTPATH . $gdiaglist[$gtabid]["template"][$diag_id]);
+    }else {
+        $require1 = 'extra/diagram/LmbChart.php';
+    }
     $BODYHEADER = $HEADER;
     if ($noheader OR $gdiaglist[$gdiaglist['gtabid'][$diag_id]]["noheader"][$diag_id]) {
         $BODY = 1;
@@ -586,6 +592,8 @@ if ($action == "kalender") {?>
     <link rel="stylesheet" type="text/css" href="assets/vendor/fullcalendar/fullcalendar.print.css?v=<?=$umgvar["version"]?>" media='print' />
     <script type="text/javascript" src="assets/vendor/fullcalendar/fullcalendar.js?v=<?=$umgvar["version"]?>"></script>
     <script type="text/javascript" src="assets/js/extra/calendar/fullcalendar/cal.js?v=<?=$umgvar["version"]?>"></script>
+    <script src="assets/vendor/select2/select2.full.min.js"></script>
+    <script src="assets/vendor/select2/i18n/<?= getLangShort() ?>.js"></script>
 <?php }
 
 if ($action == "intro") { ?>
@@ -601,6 +609,8 @@ if ($action == "kanban") {?>
 	<script src="assets/js/gtab/html/gtab.js?v=<?=$umgvar["version"]?>"></script>
 	<script src="assets/js/gtab/html/gtab_change.js?v=<?=$umgvar["version"]?>"></script>
 	<script src="assets/js/extra/kanban/kanban.js?v=<?=$umgvar["version"]?>"></script>
+    <script src="assets/vendor/select2/select2.full.min.js"></script>
+    <script src="assets/vendor/select2/i18n/<?= getLangShort() ?>.js"></script>
 <?php }
 
 if ($action == "gtab_erg" OR $action == "explorer_main") {?>
@@ -624,10 +634,10 @@ if ($gfield[$gtabid]["wysiwyg"]) {
 
     
 if ($layout_bootstrap) { ?>
-    <link rel="stylesheet" type="text/css" href="assets/css/<?=$session['css']?>?v=<?=$umgvar["version"]?>">
+    <link rel="stylesheet" type="text/css" href="<?=$session['css']?>?v=<?=$umgvar["version"]?>">
     <script src="assets/vendor/bootstrap/bootstrap.bundle.min.js?v=<?=$umgvar['version']?>"></script>
     <?php } elseif($action != "report_html") { ?>
-    <link rel="stylesheet" type="text/css" href="assets/css/<?=$session['legacyCss']?>?v=<?=$umgvar["version"]?>">
+    <link rel="stylesheet" type="text/css" href="<?=$session['legacyCss']?>?v=<?=$umgvar["version"]?>">
 <?php }
     
 // include extensions
@@ -695,7 +705,6 @@ if ($LINK["extension"][$LINK_ID[$action]] and is_file(DEPENDENTPATH . $LINK["ext
         require_once (COREPATH . $require11);
     }
 }
-
 /* -------------------------------------------------------------------- */
 
 // ---- History Eintrag ---------

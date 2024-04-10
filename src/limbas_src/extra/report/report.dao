@@ -52,7 +52,7 @@ function get_report($report_id,$new){
 	if($new){system("rm ".USERPATH.$session['user_id']."/temp/*");}
 
 	$sqlquery = "SELECT ID,NAME,BESCHREIBUNG,ORIENTATION,USED_FONTS,ROOT_TEMPLATE,ROOT_TEMPLATE_ID,CSS,DPI,DEFFORMAT,PAGE_STYLE,SQL_STATEMENT,REFERENZ_TAB,GROUPLIST,TARGET,SAVENAME,TAGMOD,EXTENSION,INDEXORDER,LISTMODE,DEFAULT_FONT,DEFAULT_FONT_SIZE FROM LMB_REPORT_LIST WHERE ID = $report_id";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,'',__FILE__,__LINE__);
 	if(lmbdb_fetch_row($rs)) {
 		$report["name"] = lmbdb_result($rs, "NAME");
 		$report["savename"] = lmbdb_result($rs, "SAVENAME");
@@ -847,105 +847,3 @@ function breakFooter($report_id){
 	}
 	return $pos;
 }
-
-# --- PDF name ---------------------------------
-function reportSavename($report_name,$report_savename,$ID,$report_medium,$report_rename=null,$add_timestamp=false){
-    global $umgvar;
-
-    if($ID){$idpref = "_".$ID;}
-    $report_medium = str_replace('tcpdf','pdf',$report_medium); #REPTYPE#
-    $report_medium = str_replace('mpdf','pdf',$report_medium);
-
-	# own name
-	if($report_rename){
-		$name = trim($report_rename);
-	# defined name
-	}elseif($report_savename AND $report_savename != "default"){
-        $report_savename = ltrim($report_savename,'return');
-        $report_savename = trim($report_savename);
-		$name = eval("return $report_savename;");
-	# default name
-	}else{
-		$name = $report_name.$idpref. ($add_timestamp ? ('_' . date("U")) : '') . ".".$report_medium;
-	}
-
-    $name = str_replace(' ','',$name);
-	$name = str_replace(".pdf","",$name);
-	$name = str_replace(".xml","",$name);
-	$name = str_replace(".odt","",$name);
-	
-	if(lmb_strtolower(lmb_substr($name,(lmb_strlen($name)-lmb_strlen($report_medium)-1),5)) != ".".lmb_strtolower($report_medium)){
-		$name .= ".".$report_medium;
-	}
-
-	return $name;
-}
-
-
-# --- PDF archivieren ---------------------------------
-function reportArchiv($temp_file_path,$report,$ID){
-	global $session;
-	global $umgvar;
-	global $db;
-	global $lang;
-
-	$name = explode("/",$temp_file_path);
-	$name = $name[lmb_count($name)-1];
-
-	if(file_exists(lmb_utf8_encode($temp_file_path))){
-
-		# ------- pdf archivieren ---------
-        if(is_numeric($report["target"])){
-            $sqlquery = "SELECT FIELD_ID,TAB_ID,TYP,LEVEL,ID FROM LDMS_STRUCTURE WHERE ID = ".$report["target"];
-            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-
-            if(!$rs) {$commit = 1;}
-            if(lmbdb_result($rs, "ID")){
-
-                $level = lmbdb_result($rs, "ID");
-                $field_id = lmbdb_result($rs, "FIELD_ID");
-                $dublicate["forceDelnm"][0] = 1;
-
-                // use relation destination from LDMS_STRUCTURE
-                #if(lmbdb_result($rs, "TYP") == 7){
-                if($ID AND $field_id){
-                    $relation = array("datid" => $ID,"gtabid" => $report["referenz_tab"],"fieldid" => $field_id);
-                }
-
-                $file["file"][0] = lmb_utf8_encode($temp_file_path);
-                $file["file_name"][0] = $name;
-                $file["file_type"][0] = 0;
-                $file["file_archiv"][0] = 0;
-                if($report['archive_fileID']){$file['forceNewID'][0] = $report['archive_fileID'];};
-                $fileid = lmb_fileUpload($file,$level,$relation,1,$dublicate);
-                if(!$fileid){return false;}
-
-                return $fileid;
-            }
-        }
-	}
-	
-	return false;
-}
-
-
-# zeige Bericht
-function view_report($temp_file){
-	global $session;
-	global $alert;
-	global $session;
-	
-	if(is_array($alert) AND $session["debug"]){
-		if($alert AND !is_array($alert)){$alert = array($alert);}
-		$alert = array_unique($alert);
-		echo "<script language=\"JavaScript\">\n";
-		echo "alert('".implode("\\n",$alert)."');\n";
-		echo "</script>\n";
-	}
-
-	$name = explode("/",$temp_file);
-	$name = $name[lmb_count($name)-1];
-	echo "<script language=\"JavaScript\">document.location.href = 'USER/".$session["user_id"]."/temp/".$name."';</script>";
-}
-
-?>

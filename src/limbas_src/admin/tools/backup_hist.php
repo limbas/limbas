@@ -19,7 +19,7 @@ function f_3(PARAMETER) {
 
 <div class="container-fluid p-3">
 
-    <table class="table table-sm table-striped mb-0 border bg-white">
+    <table class="table table-sm table-striped mb-0 border bg-contrast">
         <thead>
         <tr>
             <th>Nr</th>
@@ -54,14 +54,14 @@ function f_3(PARAMETER) {
             ?>
 
             <TR style="background-color:<?=$bgColor?>; color:<?=$color?>;">
-            <TD><?= lmbdb_result($rs,"ID") ?></TD>
-            <TD><?= lmbdb_result($rs,"ACTION") ?></TD>
-            <TD><?= get_date(lmbdb_result($rs,"ERSTDATUM"),2) ?></TD>
-            <TD><?= $status.' '.lmbdb_result($rs,"MESSAGE") ?></TD>
-            <TD><?= lmbdb_result($rs,"MEDIUM") ?></TD>
-            <TD><?= file_size(lmbdb_result($rs,"SIZE")*1024) ?></TD>
-            <TD><?= lmbdb_result($rs,"SERVER") ?></TD>
-            <TD><?= lmbdb_result($rs,"LOCATION") ?></TD>
+            <TD style="background-color: inherit; color: inherit;"><?= lmbdb_result($rs,"ID") ?></TD>
+            <TD style="background-color: inherit; color: inherit;"><?= lmbdb_result($rs,"ACTION") ?></TD>
+            <TD style="background-color: inherit; color: inherit;"><?= get_date(lmbdb_result($rs,"ERSTDATUM"),2) ?></TD>
+            <TD style="background-color: inherit; color: inherit;"><?= $status.' '.lmbdb_result($rs,"MESSAGE") ?></TD>
+            <TD style="background-color: inherit; color: inherit;"><?= lmbdb_result($rs,"MEDIUM") ?></TD>
+            <TD style="background-color: inherit; color: inherit;"><?= file_size(lmbdb_result($rs,"SIZE")*1024) ?></TD>
+            <TD style="background-color: inherit; color: inherit;"><?= lmbdb_result($rs,"SERVER") ?></TD>
+            <TD style="background-color: inherit; color: inherit;"><?= lmbdb_result($rs,"LOCATION") ?></TD>
             </TR>
             
         <?php

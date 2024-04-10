@@ -83,7 +83,7 @@
             document.form1.user_add.value = '1';
         }
         if ((document.form1.elements['userdata[passwort]'].value.length < 5 && document.form1.elements['userdata[passwort]'].value.length > 0) || document.form1.elements['userdata[username]'].value.length < 5) {
-            alert('<?=$lang[1315]?>');
+            lmbShowWarningMsg('<?=$lang[1315]?>');
         } else {
             document.form1.submit();
         }
@@ -112,7 +112,7 @@
         <input type="hidden" name="lock">
         <input type="hidden" name="delete_user_total">
 
-        <div class="container-fluid bg-white p-3 border">
+        <div class="container-fluid bg-contrast p-3 border">
             <div class="row">
                 <div class="col-6">
                     <h5><?= ($result_user['lock']) ? '<i class="lmb-icon-cus lmb-user1-2"></i>' : '' ?> <?= ($result_user['aktiv']) ? '<i class="lmb-icon lmb-user1-4"></i>' : '<i class="lmb-icon lmb-user1-1"></i>' ?> <?= $lang[140] ?></h5>

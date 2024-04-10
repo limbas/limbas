@@ -10,7 +10,7 @@ if ($layout_bootstrap){  //check legacy switch TODO: remove in future versions
     echo '<!doctype html>'."\n";
 }
 ?>
-<html>
+<html data-bs-theme="<?=$farbschema['theme']?>">
 
 <head>
     <title>Limbas Enterprise Unifying Framework V <?=$umgvar['version']?></title>
@@ -21,7 +21,6 @@ if ($layout_bootstrap){  //check legacy switch TODO: remove in future versions
     <meta name="copyright" content="LIMBAS GmbH">
     <meta name="description" content="Limbas Enterprise Unifying Framework">
     <meta name="version" content="<?=$umgvar['version'] ?>">
-    <meta name="date" content="2023-02-15">
 
     <meta charset="<?=$umgvar['charset'] ?>" />
 

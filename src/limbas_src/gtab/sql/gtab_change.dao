@@ -152,15 +152,18 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 		pop_line();
 		pop_menu2("<i>".$gresult[$gtabid]["VDESC"][0]."</i>",'','',"lmb-icon lmb-versioning");
 	}
-	
-	pop_line();
+
+    // todo fix/remove shortcuts (descriptions)
+    /*
+    pop_line();
 	pop_left();
-	echo "&nbsp;$lang[33]:<BR>&nbsp;<FONT COLOR=\"green\">[STRG][SHIFT][s]</FONT><BR>";
-	echo "&nbsp;$lang[1531]:<BR>&nbsp;<FONT COLOR=\"green\">[STRG][SHIFT][y]</FONT><BR>";
-	echo "&nbsp;$lang[1530]:<BR>&nbsp;<FONT COLOR=\"green\">[STRG][SHIFT][x]</FONT><BR>";
-	echo "&nbsp;$lang[1524]:<BR>&nbsp;<FONT COLOR=\"green\">[STRG][SHIFT][n]</FONT><BR>";
-	echo "&nbsp;$lang[1526]:<BR>&nbsp;<FONT COLOR=\"green\">[STRG][SHIFT][l]</FONT><BR>";
+	echo "&nbsp;$lang[33]:<br>&nbsp;<span style='color: green;'>[STRG][s]</span><br>";
+	echo "&nbsp;$lang[1531]:<br>&nbsp;<span style='color: green;'>[STRG][y]</span><br>";
+	echo "&nbsp;$lang[1530]:<br>&nbsp;<span style='color: green;'>[STRG][x]</span><br>";
+	echo "&nbsp;$lang[1524]:<br>&nbsp;<span style='color: green;'>[STRG][n]</span><br>";
+	echo "&nbsp;$lang[1526]:<br>&nbsp;<span style='color: green;'>[STRG][l]</span><br>";
 	pop_right();
+    */
 	
 	# extension
 	if(function_exists($GLOBALS["gLmbExt"]["menuChangeCInfo"][$gtabid])){
@@ -174,7 +177,6 @@ function printContextMenus($gtabid,$form_id,$ID,&$gresult,$readonly=0){
 	<DIV ID="limbasDivMenuContext" class="lmbContextMenu lmbGtabmenu-detail lmbGtabmenu-table-<?=$gtabid?>" style="position:absolute;display:none;z-index:991;" OnClick="activ_menu = 1;">
 	<?php #----------------- Datei -------------------
 	if($form_id){pop_top('limbasDivMenuContext');}
-	
 	if(!$isview){pop_submenu(9,'','');}					# Infomenü
 	if($gtab["logging"][$gtabid]){
 		pop_submenu(173,'','');							# History

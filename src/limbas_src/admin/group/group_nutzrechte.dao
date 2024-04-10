@@ -53,7 +53,7 @@ if($rules){group_list($ID,1,$addsubgroup);}
 
 
 /* --- Rechte Übergruppe - system --------------------------------------------- */
-if($group_level AND $session["user_id"] != 1){
+if($group_level AND !($session["superadmin"] AND $umgvar['override_group_perm'])){
 $sqlquery = "SELECT DISTINCT LMB_ACTION.ID,LMB_RULES_ACTION.PERM,LMB_ACTION.MAINGROUP,LMB_ACTION.SUBGROUP,LMB_ACTION.SORT 
 FROM LMB_RULES_ACTION,LMB_ACTION 
 WHERE LMB_RULES_ACTION.GROUP_ID = $group_level AND LMB_RULES_ACTION.LINK_ID = LMB_ACTION.ID ORDER BY LMB_ACTION.MAINGROUP,LMB_ACTION.SUBGROUP,LMB_ACTION.SORT";
@@ -65,7 +65,7 @@ while(lmbdb_fetch_row($rs)) {
 }
 
 /* --- Rechte Übergruppe - depend --------------------------------------------- */
-if($group_level AND $session["user_id"] != 1){
+if($group_level AND !($session["superadmin"] AND $umgvar['override_group_perm'])){
 $sqlquery = "SELECT DISTINCT LMB_ACTION_DEPEND.ID,LMB_RULES_ACTION.PERM,LMB_ACTION_DEPEND.MAINGROUP,LMB_ACTION_DEPEND.SUBGROUP,LMB_ACTION_DEPEND.SORT 
 FROM LMB_RULES_ACTION,LMB_ACTION_DEPEND 
 WHERE LMB_RULES_ACTION.GROUP_ID = $group_level AND LMB_RULES_ACTION.LINK_ID = LMB_ACTION_DEPEND.ID ORDER BY LMB_ACTION_DEPEND.MAINGROUP,LMB_ACTION_DEPEND.SUBGROUP,LMB_ACTION_DEPEND.SORT";

@@ -40,6 +40,7 @@ function menu_get_snapshots($tabid, $depth = null){
 	$menu = array();
 	if($gsnap[$tabid]["id"]){
         foreach ($gsnap[$tabid]["id"] as $key => $value){
+            if($gsnap[$tabid]["type"][$key] == 2){continue;}
             $menu[] = menu_get_snapshot($tabid, $value, $depth);
 	    }
 	}
@@ -332,7 +333,7 @@ function menu_get_child_artifacts($isAdmin, $parentTabGroupId = 0, $depth=0) {
             $allDiags = array_merge($allDiags, $childDiags);
 
             # store subchildren
-            $allEntries[$bzm]['child'] = array_merge($childNewEntry, $childSnapshots, $childForms, $childReports, $childDiags);
+            $allEntries[$bzm]['child'] = array_merge($childNewEntry, $childSnapshots, $childForms, $childDiags);
 
             $bzm++;
         }

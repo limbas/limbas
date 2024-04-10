@@ -19,7 +19,6 @@ table select.form-select {
 }
 
 .form-control {
-  background-color: $white;
   
   &.readonly {
     background-color: $input-disabled-bg;
@@ -27,8 +26,4 @@ table select.form-select {
     opacity: 1;
   }
   
-}
-
-.form-select {
-  background-color: $white;
 }

@@ -10,11 +10,15 @@
 namespace Limbas\admin\mailTemplates;
 
 use Database;
+use Limbas\admin\templates\HasTemplateRoot;
 use Limbas\extra\template\mail\MailTemplateRender;
-use Limbas\extra\template\TemplateTable;
+use Limbas\lib\LimbasModel;
 
-class MailTemplate
+class MailTemplate extends LimbasModel
 {
+    use HasTemplateRoot;
+    
+    protected static string $tableName = 'LMB_MAIL_TEMPLATES';
 
     /**
      * @param string $name
@@ -73,7 +77,7 @@ class MailTemplate
     public static function all(array $where = []): array
     {
 
-        $rs = Database::select('LMB_MAIL_TEMPLATES', where: $where, orderBy: ['TAB_ID' => 'asc']);
+        $rs = Database::select(self::$tableName, where: $where, orderBy: ['TAB_ID' => 'asc']);
 
         $output = [];
 
@@ -119,75 +123,21 @@ class MailTemplate
 
         if (empty($this->id)) {
 
-            $nextId = next_db_id('LMB_MAIL_TEMPLATES');
+            $nextId = next_db_id(self::$tableName);
 
             $data['ID'] = $nextId;
 
-            $result = Database::insert('LMB_MAIL_TEMPLATES', $data);
+            $result = Database::insert(self::$tableName, $data);
 
             if ($result) {
                 $this->id = $nextId;
                 $this->insertOrUpdateTemplateRoot();
-
             }
         } else {
-            $result = Database::update('LMB_MAIL_TEMPLATES', $data, ['ID' => $this->id]);
+            $result = Database::update(self::$tableName, $data, ['ID' => $this->id]);
         }
 
         return $result;
-    }
-
-
-    /**
-     * @param int|bool $newRootTemplateTabId
-     * @return bool
-     */
-    public function insertOrUpdateTemplateRoot(int|bool $newRootTemplateTabId = false): bool
-    {
-        $insert = false;
-        if (empty($this->rootTemplateElementId)) {
-            $insert = true;
-        }
-
-        if ($newRootTemplateTabId === false && !$insert) {
-            // element already exists
-            return true;
-        }
-
-        $templateTable = TemplateTable::get($this->rootTemplateTabId);
-        if ($templateTable === null) {
-            return true;
-        }
-
-        if ($newRootTemplateTabId === $templateTable->id && !$insert) {
-            // new and old root table are the same and element already exists
-            return true;
-        }
-
-        $changeTable = false;
-        if ($newRootTemplateTabId !== false && $insert) {
-            $templateTable = TemplateTable::get($newRootTemplateTabId);
-
-        } elseif ($newRootTemplateTabId !== false) {
-            $templateTable = TemplateTable::get($newRootTemplateTabId);
-            $changeTable = true;
-        }
-
-
-        if ($changeTable && !$insert) {
-            $rootTemplateElementId = $templateTable->insertRootElement($this->name, $this->rootTemplateTabId, $this->rootTemplateElementId);
-        } else {
-            $rootTemplateElementId = $templateTable->insertRootElement($this->name);
-        }
-
-
-        if ($rootTemplateElementId !== false) {
-            $this->rootTemplateTabId = $templateTable->id;
-            $this->rootTemplateElementId = $rootTemplateElementId;
-            return Database::update('LMB_MAIL_TEMPLATES', ['ROOT_TEMPLATE_TAB_ID' => $this->rootTemplateTabId, 'ROOT_TEMPLATE_ELEMENT_ID' => $this->rootTemplateElementId], ['ID' => $this->id]);
-        }
-
-        return false;
     }
 
 
@@ -198,7 +148,7 @@ class MailTemplate
     {
         $db = Database::get();
 
-        $sqlQuery = 'DELETE FROM LMB_MAIL_TEMPLATES WHERE ID = ?';
+        $sqlQuery = 'DELETE FROM ' . self::$tableName . ' WHERE ID = ?';
 
         $stmt = lmbdb_prepare($db, $sqlQuery);
         return lmbdb_execute($stmt, [$this->id]);
@@ -219,7 +169,8 @@ class MailTemplate
         return $gtab['desc'][$this->tabId] ?: '';
     }
 
-    public function getRendered(int $gtabid, int $id, array $resolvedTemplateGroups = [], array $resolvedDynamicData = []) {
+    public function getRendered(int $gtabid, int $id, array $resolvedTemplateGroups = [], array $resolvedDynamicData = []): string
+    {
         $templateRender = new MailTemplateRender();
         return $templateRender->getHtml([],$this->rootTemplateTabId,$this->rootTemplateElementId,$gtabid,$id, $resolvedTemplateGroups, $resolvedDynamicData);
     }

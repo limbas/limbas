@@ -25,6 +25,25 @@ $(function(){
 });
 
 
+function lmbTemplateGetSelectedId(id) {
+    if(id === 0) {
+        id = parseInt($('#form1').find('input[name="ID"]').val());
+    }
+
+    if(isNaN(id) && Array.isArray(selected_rows)) {
+        let ids = [];
+        for (let rowId in selected_rows) {
+            if(selected_rows[rowId]) {
+                let rowIdParts = rowId.split('_');
+                ids.push(rowIdParts[1]);
+            }
+        }
+        id = ids;
+    }
+    console.log(id);
+    return id;
+}
+
 /* region template list and initial loading*/
 
 function lmbShowTemplateModal(gtabid, type) {
@@ -111,10 +130,7 @@ function lmbLoadTemplateList(searchValue,page, id = 0) {
         $('#lmbTemplateSelect-search-reset').closest('.input-group-text').removeClass('d-none');
     }
 
-    if(id === 0) {
-        id = parseInt($('#form1').find('input[name="ID"]').val());
-    }
-
+    id = lmbTemplateGetSelectedId(id);
 
     return new Promise((resolve, reject) => {
         $.ajax({
@@ -181,10 +197,8 @@ function selectTemplate(templateName, elementId, gtabid, resolvedTemplateGroups=
     let $loader = $('#lmbTemplateSelectLoader');
     let $contentList = $('#lmbTemplateSelect-list');
     let $singleContent = $('#lmbTemplateSelect-single');
-    
-    if(id === 0) {
-        id = parseInt($('#form1').find('input[name="ID"]').val());
-    }
+
+    id = lmbTemplateGetSelectedId(id);
 
     $loader.show();
     $contentList.hide();

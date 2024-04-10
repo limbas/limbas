@@ -21,9 +21,9 @@ if ($systemInformation) {
 
 ?>
 
-<div class="accordion-item mb-3 border bg-white" id="client-<?=$client->id?>">
+<div class="accordion-item mb-3 border bg-contrast" id="client-<?=$client->id?>">
     <div class="accordion-header" id="heading<?=$client->id?>">
-        <div class="accordion-button collapsed bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<?=$client->id?>" aria-expanded="true" aria-controls="collapse<?=$client->id?>">
+        <div class="accordion-button collapsed bg-contrast" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<?=$client->id?>" aria-expanded="true" aria-controls="collapse<?=$client->id?>">
             <div class="row w-100 align-items-center">
                 <div class="col-md-1">
                     <?php if($statusLoaded): ?>

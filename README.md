@@ -68,7 +68,7 @@ UPDATE
 ------
 
 Make sure to **back up** the directories before updating.\
-To update an existing Limbas system, replace the "limbas_src" and "vendor" folders.
+To update an existing Limbas system, replace the "limbas_src", "vendor" and "assets" (in "public") folders.
 
 Default credentials
 -------------------

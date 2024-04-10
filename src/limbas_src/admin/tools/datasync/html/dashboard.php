@@ -60,9 +60,9 @@ $status = DatasyncProcess::status();
         /** @var DatasyncClient $client */
         foreach($clients as $client): ?>
 
-            <div class="accordion-item mb-3 border bg-white">
+            <div class="accordion-item mb-3 border bg-contrast">
                 <div class="accordion-header" id="heading<?=$client->id?>">
-                    <div class="accordion-button collapsed bg-white" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<?=$client->id?>" aria-expanded="true" aria-controls="collapse<?=$client->id?>">
+                    <div class="accordion-button collapsed bg-contrast" type="button" data-bs-toggle="collapse" data-bs-target="#collapse<?=$client->id?>" aria-expanded="true" aria-controls="collapse<?=$client->id?>">
                         <div class="row w-100 align-items-center">
                             <div class="col-md-1">
                                 <?php if($client->getStatus()->status == 0): ?>
@@ -165,7 +165,7 @@ $status = DatasyncProcess::status();
                                                 <?php endif; ?>
                                             </div>
                                             <div id="collapseHist<?=$histEntry->id?>" class="accordion-collapse collapse">
-                                                <div class="accordion-body bg-white border border-top-0">
+                                                <div class="accordion-body bg-contrast border border-top-0">
                                                     <?=nl2br($histEntry->log)?>
                                                 </div>
                                             </div>

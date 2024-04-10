@@ -100,7 +100,7 @@ function index_refresh(val) {
             <?php foreach ($jobdir['name'] as $key => $jobName): ?>
             
                 <li class="nav-item">
-                    <a class="nav-link <?= ($kategorie == $jobName) ? 'active bg-white' : '' ?>" onclick="document.form1.kategorie.value='<?= $jobName ?>';document.form1.submit();"><?= $jobName ?></a>
+                    <a class="nav-link <?= ($kategorie == $jobName) ? 'active bg-contrast' : '' ?>" onclick="document.form1.kategorie.value='<?= $jobName ?>';document.form1.submit();"><?= $jobName ?></a>
                 </li>
             <?php endforeach; ?>
             
@@ -110,7 +110,7 @@ function index_refresh(val) {
 
                 <div class="row">
                     <div class="col-md-10">
-                        <table class="table table-sm table-striped mb-0 border border-top-0 bg-white">
+                        <table class="table table-sm table-striped mb-0 border border-top-0 bg-contrast">
                             <thead>
                             <tr>
                                 <th class="border-top-0"><?=$lang[2068]?></th>

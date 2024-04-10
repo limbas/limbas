@@ -10,34 +10,40 @@
 
 
 
-function lmb_fileSync_init($template,$client){
+function lmb_fileSync_init($template,$slaveid){
     global $db;
+    global $lmmultitenants;
 
-    $pidfile = TEMPPATH.'sync_'.$client.'.pid';
+    if(!$slaveid || !$template){return;}
+
+    $pidfile = TEMPPATH.'sync_'.$slaveid.'.pid';
     if(file_exists($pidfile)){
         return;
     }
 
     $pidalive = filemtime($pidfile);
+    file_put_contents($pidfile,$slaveid);
 
-    file_put_contents($pidfile,$client);
+    $slaves = lmb_GetSyncSlaves($slaveid);
+    if($slaves['slave_active'][$slaveid]) {
 
-    # --- check for sync params ------
-    $sqlquery = "SELECT ID,SLAVE_URL,RS_USER,RS_PATH,RS_PARAMS FROM LMB_SYNC_CLIENTS WHERE ID = ".parse_db_int($client)." AND ACTIVE = " . LMB_DBDEF_TRUE;
-    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-	if(lmbdb_fetch_row($rs)) {
+        $host = explode('//',$slaves['slave_url'][$slaveid]);
+        $host_ = explode('/',$host[1]);
+        $sl['id'] = $slaveid;
+        $sl['host'] = $host_[0];
+        $sl['path'] = rtrim($slaves['slave_rs_path'][$slaveid],'/');
+        $sl['user'] = $slaves['slave_rs_user'][$slaveid];
+        $sl['params'] = $slaves['slave_rs_params'][$slaveid];
 
-	    $host = explode('//',lmbdb_result($rs, "SLAVE_URL"));
-	    $host_ = explode('/',$host[1]);
-        $sl['id'] = lmbdb_result($rs, "ID");
-	    $sl['host'] = $host_[0];
-	    $sl['path'] = rtrim(lmbdb_result($rs, "RS_PATH"),'/');
-        $sl['user'] = lmbdb_result($rs, "RS_USER");
-        $sl['params'] = lmbdb_result($rs, "RS_PARAMS");
+        // get
+        $sqlquery = "SELECT ID,MID FROM LMB_MULTITENANT WHERE SYNCSLAVE = $slaveid ORDER BY NAME";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        while(lmbdb_fetch_row($rs)) {
+            $sl['mid'][] = lmbdb_result($rs, "MID");
+        }
 
         lmb_fileSyncTemplate($template,$sl,'master');
         lmb_fileSyncTemplate($template,$sl,'slave');
-
     }
 
     unlink($pidfile);
@@ -66,7 +72,17 @@ function lmb_fileSyncTemplate($template,$sl,$masterslave){
         unlink($config);
     }
     $rf = fopen($config, "w");
-    fputs($rf, '+ */'."\n");
+
+
+    // adding multitenant folders
+    if ($masterslave == 'master' && is_array($sl['mid'])) {
+        foreach ($sl['mid'] as $key => $mid) {
+            fputs($rf, '+ /' .  $mid . '/' . "\n"); // all multitenant files from slave
+        }
+    // adding all folders
+    }else {
+        fputs($rf, '+ */' . "\n");
+    }
 
 	$w = null;
 	foreach($level as $lkey => $lid) {

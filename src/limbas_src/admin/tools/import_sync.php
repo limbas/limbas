@@ -143,6 +143,15 @@ class importSync
                 return false;
             }
 
+
+
+            # add tabs
+            if (in_array('backup', $types)) {
+                require_once(COREPATH . 'admin/tools/backup.dao');
+                lmb_backup_database();
+            }
+
+
             # collect tables to export locally
             $exptables = array();
 
@@ -435,7 +444,8 @@ class importSync
         # call extension function before
         if ($confirm_syncimport AND $callExtensionFunctionName AND is_callable($callExtensionFunctionName)) {
             # call function by passed name
-            if ($callExtensionFunctionName('before') === false) {
+            $extension = array();
+            if ($callExtensionFunctionName('before',$extension) === false) {
                 LimbasLogger::log("Function '$callExtensionFunctionName' returned failure!", LimbasLogger::LL_ERROR);
                 return false;
             } else {
@@ -535,9 +545,11 @@ class importSync
                         $output[$table]['createfield'][] = '<p style="color:#05ce05">create field ' . $field . ' ' . $imptableconf[$table]['table'][$field]['datatype'] . '(' . $newsize . ')</p>'; // in table '.$table.'</p>';
                         $hasoutput['createfield'] = 1;
 
+                        /* --- create new field --------------------------------------------- */
                         if ($confirm_syncimport) {
-                            /* --- create new field --------------------------------------------- */
-                            $def = lmb_get_db_defaultValue($imptableconf[$table]['table'][$field]['default'],$exttableconf[$table]['table'][$field]['datatype']);
+
+                            // default value
+                            $def = lmb_get_db_defaultValue($imptableconf[$table]['table'][$field]['default'],$imptableconf[$table]['table'][$field]['datatype']);
 
                             #$newsize = ($imptableconf[$table]['table'][$field]['scale'] == 0 OR !$imptableconf[$table]['table'][$field]['scale']) ? $imptableconf[$table]['table'][$field]['fieldlength'] : $imptableconf[$table]['table'][$field]['fieldlength'] . ',' . $imptableconf[$table]['table'][$field]['scale'];
                             $ct = parse_db_type($imptableconf[$table]['table'][$field]['datatype'], $newsize, $imptableconf[$table]['table'][$field]['fieldlength']);
@@ -1000,8 +1012,15 @@ class importSync
                 }else{
                     continue;
                 }
+
+                // use extension to define import strategie
+                $import_overwrite = 'over'; // over, add, add_with_ID
+                if($extension['import_overwrite'][$table]){
+                    $import_overwrite = $ext['import_overwrite'][$table];
+                }
+
                 if(deleteExistingTab($table)) {
-                    if(import(false, 'over', null, null, null, null, 'export')){
+                    if(import(false, $import_overwrite, null, null, null, null, 'export')){
                         LimbasLogger::log("import table $table", LimbasLogger::LL_INFO);
                     }else{
                         LimbasLogger::log("import table $table - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
@@ -1020,8 +1039,15 @@ class importSync
                 }else{
                     continue;
                 }
+
+                // use extension to define import strategie
+                $import_overwrite = 'over'; // over, add, add_with_ID
+                if($ext['import_overwrite'][$table]){
+                    $import_overwrite = $ext['import_overwrite'][$table];
+                }
+
                 if(deleteExistingTab($table)) {
-                    if(import(false, 'over', null, null, null, null, 'export')){
+                    if(import(false, $import_overwrite, null, null, null, null, 'export')){
                         LimbasLogger::log("import table $table", LimbasLogger::LL_INFO);
                     }else{
                         LimbasLogger::log("import table $table - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
@@ -1145,9 +1171,9 @@ class importSync
                 }
             }
 
-            if (in_array('funcindize', $types)) {
+            if (in_array('funcindize', $types) || in_array('funcindize_rebuild', $types)) {
                 $rebuild = null;
-                if (in_array('funcindize_rebuild', $types)) {$rebuild = 1;} // get from extension
+                if (in_array('funcindize_rebuild', $types)) {$rebuild = 1;}
 
                 if (lmb_rebuildIndex($rebuild)) {
                     LimbasLogger::log("function : rebuild db indexes ", LimbasLogger::LL_NOTICE);
@@ -1158,22 +1184,28 @@ class importSync
                 $rebuild = null;
             }
 
-            if (in_array('funcsequ', $types)) {
-                if (lmb_rebuildSequences()) {
+            if (in_array('funcsequ', $types) || in_array('funcsequ_rebuild', $types)) {
+                $rebuild = null;
+                if (in_array('funcsequ_rebuild', $types)) {$rebuild = 1;}
+                if (lmb_rebuildSequences(rebuild:$rebuild)) {
                     LimbasLogger::log("function : rebuild sequences ", LimbasLogger::LL_NOTICE);
                 } else {
                     LimbasLogger::log("function : rebuild sequences failed - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
                     return false;
                 }
+                $rebuild = null;
             }
 
-            if (in_array('functrigger', $types)) {
-                if (lmb_rebuildTrigger(1)) {
+            if (in_array('functrigger', $types) || in_array('functrigger_rebuild', $types)) {
+                $rebuild = null;
+                if (in_array('functrigger_rebuild', $types)) {$rebuild = 1;}
+                if (lmb_rebuildTrigger($rebuild)) {
                     LimbasLogger::log("function : rebuild trigger ", LimbasLogger::LL_NOTICE);
                 } else {
                     LimbasLogger::log("function : rebuild trigger failed - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
                     return false;
                 }
+                $rebuild = null;
             }
 
             if (in_array('functmpfiles', $types)) {
@@ -1189,6 +1221,7 @@ class importSync
                 require_once(COREPATH . 'admin/tools/multiselect_refresh.lib');
                 multiselectRefreshCount();
                 relationRefreshCount();
+                usergroupRefreshCount();
                 LimbasLogger::log("function : rebuild temporary tables values ", LimbasLogger::LL_NOTICE);
             }
 
@@ -1830,7 +1863,7 @@ function lmb_renderDiffToBootstrap($diff){
     ?>
 
 
-    <link rel="stylesheet" type="text/css" href="../../../assets/css/<?=$session['css']?>?v=<?=$umgvar["version"]?>">
+    <link rel="stylesheet" type="text/css" href="../../../<?=$session['css']?>?v=<?=$umgvar["version"]?>">
     <script src="../../../assets/vendor/bootstrap/bootstrap.bundle.min.js?v=<?=$umgvar['version']?>"></script>
     
     <?php

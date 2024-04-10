@@ -43,7 +43,7 @@ class WidgetFunction extends Widget
         }
 
 
-        return '<div class="bg-white h-100 w-100 p-2 border">' . $output . '</div>';
+        return '<div class="bg-contrast h-100 w-100 p-2 border">' . $output . '</div>';
     }
 
 

@@ -76,10 +76,16 @@
         pop_menu2('','','lmbInfoEdit',"lmb-page-edit");
         pop_line();
         pop_left();
-        echo "&nbsp;$lang[1527]:&nbsp;<FONT COLOR=\"green\">[RETURN]</FONT><hr>";
-        echo "&nbsp;$lang[357]:&nbsp;<FONT COLOR=\"green\">[Mouse DblClick]</FONT><hr>";
-        echo "&nbsp;$lang[1529]:&nbsp;<FONT COLOR=\"green\">[SHIFT][Mouse DblClick]</FONT><hr>";
-        echo "&nbsp;$lang[2821]:&nbsp;<FONT COLOR=\"green\">[CTRL][Right Mouse Click]</FONT>";
+        echo "&nbsp;$lang[1527]:&nbsp;<span style='color: green'>[RETURN]</span>";
+        pop_right();
+        pop_left();
+        echo "&nbsp;$lang[357]:&nbsp;<span style='color: green'>[Mouse DblClick]</span>";
+        pop_right();
+        pop_left();
+        echo "&nbsp;$lang[1529]:&nbsp;<span style='color: green'>[SHIFT][Mouse DblClick]</span>";
+        pop_right();
+        pop_left();
+        echo "&nbsp;$lang[2821]:&nbsp;<span style='color: green'>[CTRL][Right Mouse Click]</span>";
         pop_right();
         # extension
         if(function_exists($GLOBALS["gLmbExt"]["menuListCInfo"][$gtabid])){
@@ -170,13 +176,14 @@
     ?>
 </div>
 
-<div ID="limbasDivMenuExport" class="lmbContextMenu lmbGtabmenu-list lmbGtabmenu-table-<?=$gtabid?>" style="display:none;z-index:994" OnClick="activ_menu = 1;">
-    <FORM NAME="export_form">
+<div id="limbasDivMenuExport" class="lmbContextMenu lmbGtabmenu-list lmbGtabmenu-table-<?=$gtabid?>" style="display:none;z-index:994" onclick="activ_menu = 1;">
+    <form name="export_form">
         <?php #----------------- Export-Menü -------------------
         unset($opt);
         pop_top('limbasDivMenuExport');
-        $opt['val'] = array("1","3","2");
-        $opt['desc'] = array($lang[2016],'CSV',$lang[2017]);
+        $tableExportTypesCases = \Limbas\gtab\export\TableExportTypes::cases();
+        $opt['val'] = array_column($tableExportTypesCases, 'value');
+        $opt['desc'] = array_column($tableExportTypesCases, 'name');
         pop_select('',$opt,'',1,'lmbFormExportTyp',$lang[2502]."&nbsp",'');
         pop_line();
         $zl = "divclose();this.checked='';gtab_export(1,document.export_form.lmbFormExportTyp[document.export_form.lmbFormExportTyp.selectedIndex].value);";
@@ -185,7 +192,8 @@
         pop_menu2($lang[994], null, null, null, null, $zl);
         pop_bottom();
         ?>
-    </FORM></div>
+    </form>
+</div>
 
 
 
@@ -481,7 +489,8 @@ if($GLOBALS['gcustmenu'][$gtabid][2]['id'][0]){
     # list of snapshots
     if($gsnap[$gtabid]){
         pop_line();
-        foreach($gsnap[$gtabid]["id"] as $key => $value){
+        $filterlist = SNAP_get_filtergroup($gtabid);
+        foreach($filterlist as $key => $value){
             $zl = "document.form1.snap_id.value=$key;send_form(1);";
             pop_menu2($gsnap[$gtabid]["name"][$key], null, null, null, null, $zl);
         }
@@ -496,7 +505,8 @@ if($GLOBALS['gcustmenu'][$gtabid][2]['id'][0]){
     <?php #----------------- SubMenü - Schnapschuß -------------------
 
     pop_top("limbasDivSnapshotSaveas");
-    pop_input2("limbasSnapshotSaveas(jsvar['gtabid'],this.value);", "limbasSnapshotName", "", "", $lang[4] . ":");
+    pop_input2("", "limbasSnapshotName", '', '', '');
+    pop_menu(0,"limbasSnapshotSaveas(jsvar['gtabid'],document.getElementById('limbasSnapshotName').value);",$lang[842], null, null, 'lmb-save');
     ?>
 </div>
 
@@ -508,6 +518,15 @@ if($GLOBALS['gcustmenu'][$gtabid][2]['id'][0]){
     pop_top("limbasDivMenuFields");
 
     $header = false;
+
+
+    pop_left();
+    ?>
+    <i class="lmbContextLeft lmb-icon lmb-icon lmb-eye" style="float:right" border="0" onclick="lmbShowColumn(<?=$gtabid?>,'all')"></i>
+    <i class="lmbContextLeft lmb-icon lmb-icon lmb-rep-hidden" style="float:right" border="0" onclick="lmbShowColumn(<?=$gtabid?>,'none')"></i>
+    <?php
+    pop_right();
+
     foreach ($gfield[$gtabid]['sort'] as $key => $value){
 
         if($gfield[$gtabid]["col_hide"][$key]){continue;}
@@ -531,7 +550,7 @@ if($GLOBALS['gcustmenu'][$gtabid][2]['id'][0]){
             pop_menu2(
                 $gfield[$gtabid]["spelling"][$key],
                 $gfield[$gtabid]["spelling"][$key],
-                "lmbViewFieldItem_" . $gtabid . "_" . $key . "\" style=\"color:$color;cursor:pointer;",
+                "lmbViewFieldItem_" . $gtabid . "_" . $key . "\" data-gtabid=\"$gtabid\" data-fieldid=\"$key\" style=\"color:$color;cursor:pointer;",
                 "lmb-icon lmb-check\" style=\"visibility: $icdis",
                 null,
                 "lmbShowColumn($gtabid,$key);"

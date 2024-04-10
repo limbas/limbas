@@ -23,7 +23,7 @@
         foreach($links as $link):
             if($LINK[$link]): ?>
                 <li class="nav-item">
-                    <a class="nav-link <?=($link == $activeTabLinkId)?'active bg-white border-end-0 border-bottom border-left border-top':' border-end'?>" href="#" onclick="<?=$LINK["link_url"][$link]?>" title="<?=$lang[$LINK["desc"][$link]]?>"><i class="lmb-icon <?=$LINK["icon_url"][$link]?>"></i> <?=$lang[$LINK["name"][$link]]?></a>
+                    <a class="nav-link <?=($link == $activeTabLinkId)?'active bg-contrast border-end-0 border-bottom border-left border-top':' border-end'?>" href="#" onclick="<?=$LINK["link_url"][$link]?>" title="<?=$lang[$LINK["desc"][$link]]?>"><i class="lmb-icon <?=$LINK["icon_url"][$link]?>"></i> <?=$lang[$LINK["name"][$link]]?></a>
                 </li>
             <?php
             endif;

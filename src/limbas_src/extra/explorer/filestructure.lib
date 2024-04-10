@@ -212,7 +212,7 @@ function lmb_getFileIDFromName($level,$name){
 	if($level AND $name){
 
 		$mttfilter = set_mttfilter()['where'];
-		
+
 		$sqlquery = "SELECT ID FROM LDMS_FILES WHERE LEVEL = $level AND NAME = '".parse_db_string($name,128)."' $mttfilter";
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs){$commit = 1;}
@@ -799,26 +799,27 @@ function get_filestructure($reset=null){
                 if ($storageID = lmbdb_result($rs, 'STORAGE_ID')) {
                     $filestruct['storageID'][$id] = $storageID;
                 }
-
-                if($typ == 2 OR $typ == 4) {
-                	# home directory
-                    $filestruct['view'][$id] = 1;
-                    $filestruct['add'][$id] = 1;
-                    $filestruct['del'][$id] = 1;
-                    $filestruct['addf'][$id] = 1;
-                    $filestruct['edit'][$id] = 1;
-                    $filestruct['lock'][$id] = 1;
-                } else {
-                    # permissions from LDMS_RULES
-                    $filestruct['view'][0] = 1;
-                    if(lmbdb_result($rs, 'LMVIEW')){$filestruct['view'][$id] = 1;}
-                    if(lmbdb_result($rs, 'LMADD')){$filestruct['add'][$id] = 1;}
-                    if(lmbdb_result($rs, 'DEL')){$filestruct['del'][$id] = 1;}
-                    if(lmbdb_result($rs, 'ADDF')){$filestruct['addf'][$id] = 1;}
-                    if(lmbdb_result($rs, 'EDIT')){$filestruct['edit'][$id] = 1;}
-                    if(lmbdb_result($rs, 'LMLOCK')){$filestruct['lock'][$id] = 1;}
-				}
             }
+
+            if($typ == 2 OR $typ == 4) {
+                # home directory
+                $filestruct['view'][$id] = 1;
+                $filestruct['add'][$id] = 1;
+                $filestruct['del'][$id] = 1;
+                $filestruct['addf'][$id] = 1;
+                $filestruct['edit'][$id] = 1;
+                $filestruct['lock'][$id] = 1;
+            } else {
+                # permissions from LDMS_RULES
+                $filestruct['view'][0] = 1;
+                if(lmbdb_result($rs, 'LMVIEW')){$filestruct['view'][$id] = 1;}
+                if(lmbdb_result($rs, 'LMADD')){$filestruct['add'][$id] = 1;}
+                if(lmbdb_result($rs, 'DEL')){$filestruct['del'][$id] = 1;}
+                if(lmbdb_result($rs, 'ADDF')){$filestruct['addf'][$id] = 1;}
+                if(lmbdb_result($rs, 'EDIT')){$filestruct['edit'][$id] = 1;}
+                if(lmbdb_result($rs, 'LMLOCK')){$filestruct['lock'][$id] = 1;}
+            }
+
 		}
 
 	}
@@ -1117,7 +1118,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
 	# benötigte Libs
 	require_once(COREPATH."extra/explorer/metadata.lib");
 	require_once(COREPATH."gtab/gtab.lib");
-	
+
 	// extension pipe
     if(function_exists('lmb_extendedFileUpload')){
         if(lmb_extendedFileUpload($file,$level,$relation,$dublicate) === false){
@@ -1171,8 +1172,9 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
 	if(!$filestruct){$filestruct["add"][$level] = 1;}
 
     if(!$filestruct["add"][$level]) {
-        lmb_alert($lang[1726]);
-        lmb_alert("file: ".$fl["filename"]);
+        $path = implode('/',array_reverse(lmb_getPathFromLevel($filestruct["level"][$level],$level)));
+        lmb_alert($lang[2310]);
+        lmb_alert(' ('.$path.')');
         return false;
     }
 
@@ -3420,10 +3422,9 @@ function lmb_DecryptFile($file){
 function sort_file($ID,$value){
 	global $db;
 
-	if(!$ID){return false;}
-
-	if(is_numeric($value) AND $GLOBALS["gfile"]["id"][9]){
-		$sqlquery = "UPDATE LDMS_FILES SET SORT = ".parse_db_int($value,6)." WHERE ID = $ID";
+	if(!$ID || !is_numeric($ID)){return false;}
+	if(is_numeric($value)){
+		$sqlquery = "UPDATE LDMS_FILES SET SORT = ".parse_db_int($value,5)." WHERE ID = $ID";
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		if(!$commit){return true;}else{$GLOBALS["commit"] = 1;return false;}
@@ -3862,7 +3863,7 @@ function download_archive($filellist,$LEVEL,$method){
 	global $filestruct;
 	global $userdat;
 
-	function download_archive_file($id,$path){
+	function download_archive_file($ID,$path){
 		global $db;
 		global $session;
 		global $umgvar;
@@ -3877,25 +3878,21 @@ function download_archive($filellist,$LEVEL,$method){
 
 		$sqlquery = "SELECT LDMS_FILES.ID,LDMS_FILES.NAME,LDMS_FILES.SECNAME,LDMS_FILES.LEVEL,LDMS_FILES.TABID,LDMS_FILES.FIELDID,LDMS_FILES.DATID,LDMS_FILES.LMLOCK,LDMS_FILES.LOCKDATE,LDMS_FILES.LOCKUSER,LMB_MIMETYPES.EXT 
 		FROM LDMS_FILES,LMB_MIMETYPES 
-		WHERE LDMS_FILES.ID = $id AND LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID $mttfilter";
+		WHERE LDMS_FILES.ID = $ID AND LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID $mttfilter";
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
+
 		# ---- Rechte ----
 		if(lmbdb_fetch_row($rs)){
 			$level = lmbdb_result($rs,"LEVEL");
 			# --- is allready locked ---------
 			if($filestruct["view"][$level] == 1){
-					$filepath = lmb_getFilePath($id,$level,lmbdb_result($rs, "SECNAME"),lmbdb_result($rs, "EXT"));
-                    if(!copy($filepath, $path."/".lmbdb_result($rs, "NAME"))) {
+					$filepath = lmb_getFilePath($ID,$level,lmbdb_result($rs, "SECNAME"),lmbdb_result($rs, "EXT"));
 
+                    if(!copy($filepath, $path."/".lmbdb_result($rs, "NAME"))) {
 					    return false;
 					}else{
 						$archive_list[] = lmbdb_result($rs, "NAME");
-
-						# ---  Lock File ---------
-						#if($filestruct["lock"][$level]){
-							#lock_file(lmbdb_result($rs, "ID"));
-						#}
 
 						# --- History-Array ---------
 						if($session["logging"] == 2){
@@ -4042,6 +4039,9 @@ function get_fwhere($LID,$ffilter,$typ,$verkn=null){
 	if($key = $ffilter["order"][$fid]){
 		$ffilter["order"] = null;
 		$ffilter["order"][$gtabid][0] = array($gfile['tabid'][$key[0]],$gfile['fid'][$key[0]],$key[1]);
+        if($key[2]){
+            $ffilter["order"][$gtabid][1] = array($gfile['tabid'][$key[2]],$gfile['fid'][$key[2]],$key[3]);
+        }
 	} else if ($umgvar['postgres_use_fulltextsearch'] and $umgvar['postgres_rank_func'] and $ffilter["content"][$fid]) {
 		// rank func should be empty, TS_RANK or TS_RANK_CD
         $extension["order"][] = "{$umgvar['postgres_rank_func']}(LDMS_FILES.FTS_VECTOR, {$ftsQuery}) DESC";
@@ -4248,7 +4248,7 @@ function get_fwhere($LID,$ffilter,$typ,$verkn=null){
 
 	if(!$query_["value"]){return false;}
 
-	#echo $query_["value"];
+	#error_log( $query_["value"]);
 	return $query_;
 }
 
@@ -4520,6 +4520,52 @@ function get_ffile($query,$ffilter,$LID,$typ){
 	return $ffile;
 }
 
+
+/**
+ * @param int $printerID
+ * @param array $fileIDs
+ * @return bool
+ */
+function lmb_printFileFromDMS(int $printerID,array $fileIDs, array $printerOptions = []) : bool{
+
+    global $umgvar;
+    global $LINK;
+
+    $success = true;
+
+    if (!$LINK[304]) {
+        lmb_log::error('Print failed - permission denied', 'Drucken fehlgeschlagen - keine Berechtigung!');
+        return false;
+    }
+
+	$forcePrint = array_key_exists('directPrint', $printerOptions) && $printerOptions['directPrint'];
+
+    foreach ($fileIDs as $fileID) {
+        $fileID = parse_db_int($fileID);
+        $file = file_download($fileID);
+        $filePath = $file['path'];
+        if (!$file) {
+            $success = false;
+            lmb_log::error('Print failed - permission denied', 'drucken fehlgeschlagen - keine Berechtigung!');
+            $success = false;
+        }
+
+        # try to convert to pdf
+        if (LmbUnoconv::isEnabled() and $file['mimetype'] != 'application/pdf') {
+            $newFilePath = $filePath . '.pdf';
+            if (LmbUnoconv::convertFile($filePath, $newFilePath, 'pdf')) {
+                $filePath = $newFilePath;
+            }
+        }
+        if (!lmbPrint($printerID, $filePath, $fileID, $forcePrint, $printerOptions)) {
+            lmb_log::error('Print failed', 'drucken fehlgeschlagen!');
+            $success = false;
+        }
+    }
+
+    return $success;
+
+}
 
 
 ?>

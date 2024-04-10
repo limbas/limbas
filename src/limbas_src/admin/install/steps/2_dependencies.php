@@ -251,7 +251,7 @@ if ($msic['func_php_odbc'] == '4' and $msic['func_php_pdo'] == '4') {
 }
 ?>
 
-<table class="table table-sm mb-3 table-striped bg-white border">
+<table class="table table-sm mb-3 table-striped bg-contrast border">
     <thead>
     <tr>
         <th colspan="3">

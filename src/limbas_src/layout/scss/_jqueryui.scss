@@ -17,6 +17,18 @@
   
 }
 
+.ui-widget-content {
+  color: $showmenu-color;
+  background-color: $default-bg-color;
+}
+
+.ui-widget-header {
+  color: $jquery-ui-header-color;
+  background-color: $jquery-ui-header-bg;
+  border: $default-border-color;
+  font-weight: bold;
+}
+
 /* jquery UI ------------------------------------------------------------------------*/
 /*
 .ui-widget {

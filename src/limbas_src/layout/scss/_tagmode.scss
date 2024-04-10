@@ -6,6 +6,7 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+
 /*
  * Attribute Tag-Mode
  ***************************************
@@ -280,4 +281,14 @@
 
 .tagattr .tagmulti br {
   display: none;
+}
+
+.select2-dropdown {
+  background-color: $default-bg-color !important;
+  border: 1px solid $default-border-color !important;
+}
+
+.select2-container--default .select2-selection--multiple {
+  background-color: $default-bg-color !important;
+  color: $showmenu-color;
 }

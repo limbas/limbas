@@ -36,10 +36,18 @@ foreach($reminderlist as $categoryid => $gtabid) {
 
     lmb_reminderFilter($sql, category: $categoryid, valid: $valid);
     $where = implode(' AND ', $sql);
-    $sqlquery = "SELECT * FROM LMB_REMINDER WHERE
-    $where
-    ORDER BY TAB_ID,FRIST";
-
+    $sqlquery = "SELECT DISTINCT
+    LMB_REMINDER.ID,
+    LMB_REMINDER.FRIST,
+    LMB_REMINDER.DESCRIPTION,
+    LMB_REMINDER.CONTENT,
+    LMB_REMINDER.TAB_ID,
+    LMB_REMINDER.DAT_ID,
+    LMB_REMINDER.FORM_ID,
+    LMB_REMINDER.CATEGORY,
+    LMB_REMINDER.FROMUSER
+    FROM LMB_REMINDER,LMB_REMINDER_GROUP
+	WHERE $where ORDER BY LMB_REMINDER.TAB_ID,LMB_REMINDER.FRIST";
     $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     while (lmbdb_fetch_row($rs)) {
         $remtab = lmbdb_result($rs, "TAB_ID");

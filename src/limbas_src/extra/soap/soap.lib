@@ -144,6 +144,10 @@ function parse_action($lmpar){
 	require_once(COREPATH . 'gtab/gtab_type.lib');
     require_once(COREPATH . 'gtab/gtab_type_erg.lib');
 
+    # ------- Limbas Session --------
+    $lmb["session"]["s_name"] = $session['s_name'];
+    $lmb["session"]["s_id"] = $session['s_id'];
+
 	# ------- Limbas Session Variablen --------
 	if(!$lmpar['lmbs']){
 		if(is_array($lmpar[0]['getvars'])){

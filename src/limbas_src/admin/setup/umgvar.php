@@ -15,7 +15,7 @@
             <!-- navbar oben -->
             <ul class="nav nav-tabs">
                 <li class="nav-item">
-                    <a class="nav-link active bg-white" href="#"><?= $lang[$LINK["desc"][43]] ?></a>
+                    <a class="nav-link active bg-contrast" href="#"><?= $lang[$LINK["desc"][43]] ?></a>
                 </li>
                 <?php if ($LINK['setup_custvar']): ?>
                     <li class="nav-item">
@@ -26,7 +26,7 @@
             </ul>
 
             <!-- Umgvar Liste -->
-            <div class="tab-content border border-top-0 bg-white">
+            <div class="tab-content border border-top-0 bg-contrast">
                 <div class="tab-pane active">
                     <table class="table table-sm table-striped mb-0">
                         <?php

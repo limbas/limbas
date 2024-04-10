@@ -18,7 +18,7 @@ if ($BODYHEADER):
 	# add help icon
 	$helpIcon = '';
 	if ($LINK['help_url'][$LINK_ID[$action]] && $LINK[18]) {
-		$helpIcon = "<a href=\"{$LINK['help_url'][$LINK_ID[$action]]}\" target=\"new\" class=\"d-inline-block pt-2\"><i class=\"lmb-icon lmb-help\"></i></a>";
+		$helpIcon = "<a href=\"{$LINK['help_url'][$LINK_ID[$action]]}\" target=\"new\" class=\"d-inline-block\"><i class=\"lmb-icon lmb-help\"></i></a>";
 	}
 
 	# replace non-breaking whitespaces

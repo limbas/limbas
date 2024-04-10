@@ -22,14 +22,14 @@
         
         require(__DIR__.'/group_tabs.php') ?>
 
-        <div class="tab-content col-9 border border-start-0 bg-white">
+        <div class="tab-content col-9 border border-start-0 bg-contrast">
             <div class="tab-pane active p-3">
 
                 <h5><i class="lmb-icon lmb-group"></i>&nbsp;<?=$groupdat["name"][$ID]?></h5>
 
                 <hr>
 
-                <table class="table table-sm table-striped table-hover border bg-white">
+                <table class="table table-sm table-striped table-hover border bg-contrast">
                     <thead>
                     <tr>
                         <th><i class="lmb-icon-8 lmb-report"></i>&nbsp;<?=$lang[1788]?></th>

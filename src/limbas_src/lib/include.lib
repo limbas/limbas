@@ -269,6 +269,17 @@ function parse_db_bool($value){
 	else{return LMB_DBDEF_TRUE;}
 }
 
+function parse_bool($value){
+
+    $value = parse_db_bool($value);
+    if($value == LMB_DBDEF_TRUE){
+        return 1;
+    }else{
+        return 0;
+    }
+
+}
+
 function convert_Checkbox($value){
 	if($value == 'true'){return true;}else{return false;}
 }
@@ -411,6 +422,12 @@ function next_db_id($tab,$field="ID",$sequence=null,$filter=null){
 	global $db;
 	global $umgvar;
 
+    // get next key from extension
+    if(function_exists('lmb_next_db_id_'.strtolower($tab))){
+        $fc = 'lmb_next_db_id_'.strtolower($tab);
+        return $fc($tab,$field);
+    }
+
 	if(!$tab){return false;}
 	if($GLOBALS['lmb_useSequence'] === false){$lmb_useSequence = 0;}
 
@@ -426,9 +443,13 @@ function next_db_id($tab,$field="ID",$sequence=null,$filter=null){
 		$sqlquery = "SELECT MAX($field) AS NEXTID FROM ".dbf_4($tab);
 		if($filter){$sqlquery .= " WHERE $filter";}
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-		if($NEXTID = lmbdb_result($rs,"NEXTID")+1){
-			return $NEXTID;
+		$NEXTID = (lmbdb_result($rs,"NEXTID")+1);
+
+        if($NEXTID <= 0){
+			return 1;
 		}
+        return $NEXTID;
+
 	}
 	
 	return false;
@@ -450,7 +471,7 @@ function next_conf_id($tab,$field="ID",$ext=null,$allocate=null){
 		$to = parse_db_int($range[1]);
 	}else{
 		$from = 1;
-		$to = 999+$allocate;
+		$to = 9999+$allocate;
 	}
 
 	if($from AND $to){
@@ -1649,8 +1670,8 @@ function mimetype($file)
  * set date format
  *
  * @param number $format
- * @param number $cl 0=date, 1=DateClass, 2=Datepicker
- * @return format string
+ * @param number $cl 0=date, 1=DateClass, 2=Datepicker, 3=DateTime/Export
+ * @return string format
  */
 function setDateFormat($format,$cl=0,$country=null){
 
@@ -1658,76 +1679,92 @@ function setDateFormat($format,$cl=0,$country=null){
         $country = $GLOBALS['session']["dateformat"];
     }
 
- 	// german
-	if($country == 1){
-		if($format == 1){
-			if($cl==1){return "d.m.Y";}
-			if($cl==2){return "dd.mm.yy";}
-			return "%d.%m.%Y";
-		}elseif($format == 2){
-			if($cl==1){return "l - j F Y";}
-			if($cl==2){return "DD - m MM yy";}
-			return "%A - %e %B %Y";
-		}elseif($format == 3){
-			if($cl==1){return "l d.m.y H:i";}
-			if($cl==2){return "DD - dd.mm.y HH:mm";}
-			return "%A %d.%m.%y %H:%M";
-		}elseif($format == 4){
-			if($cl==1){return "d.m.Y H:i";}
-			if($cl==2){return "dd.mm.yy HH:mm";}
-			return "%d.%m.%Y %H:%M";
-		}else{
-			if($cl==1){return "d.m.Y H:i:s";}
-			if($cl==2){return "dd.mm.yy HH:mm:ss";}
-			return "%d.%m.%Y %H:%M:%S";
-		}
-	// US
-	}elseif($country == 2){
-		if($format == 1){
-			if($cl==1){return "Y-m-d";}
-			if($cl==2){return "yy-mm-dd";}
-			return "%Y-%m-%d";
-		}elseif($format == 2){
-			if($cl==1){return "l - Y F j";}
-			if($cl==2){return "DD - yy MM d";}
-			return "%A - %Y %B %e";
-		}elseif($format == 3){
-			if($cl==1){return "l y-m-d H:i";}
-			if($cl==2){return "DD y-mm-dd HH:mm";}
-			return "%A %y-%m-%d %H:%M";
-		}elseif($format == 4){
-			if($cl==1){return "Y-m-d H:i";}
-			if($cl==2){return "yy-mm-dd HH:mm";}
-			return "%Y-%m-%d %H:%M";
-		}else{
-			if($cl==1){return "Y-m-d H:i:s";}
-			if($cl==2){return "yy-mm-dd HH:mm:ss";}
-			return "%Y-%m-%d %H:%M:%S";
-		}
-	// fra
-	}elseif($country == 3){
-		if($format == 1){
-			if($cl==1){return "m-d-Y";}
-			if($cl==2){return "mm-dd-yy";}
-			return "%m-%d-%Y";
-		}elseif($format == 2){
-			if($cl==1){return "l - F j Y";}
-			if($cl==2){return "DD - MM d yy";}
-			return "%A - %B %e %Y";
-		}elseif($format == 3){
-			if($cl==1){return "l m-d-y H:i";}
-			if($cl==2){return "DD mm-dd-y HH:mm";}
-			return "%A %m-%d-%y %H:%M";
-		}elseif($format == 4){
-			if($cl==1){return "m-d-Y H:i";}
-			if($cl==2){return "mm-dd-yy HH:mm";}
-			return "%m-%d-%Y %H:%M";
-		}else{
-			if($cl==1){return "m-d-Y H:i:s";}
-			if($cl==2){return "mm-dd-yy HH:mm:ss";}
-			return "%m-%d-%Y %H:%M:%S";
-		}
-	}
+    return match ($country) {
+        // DE
+        1 => match ($format) {
+            1 => match ($cl) {
+                1 => "d.m.Y",
+                2 => "dd.mm.yy",
+                default => "%d.%m.%Y",
+            },
+            2 => match ($cl) {
+                1 => "l - j F Y",
+                2 => "DD - m MM yy",
+                default => "%A - %e %B %Y",
+            },
+            3 => match ($cl) {
+                1 => "l d.m.y H:i",
+                2 => "DD - dd.mm.y HH:mm",
+                default => "%A %d.%m.%y %H:%M",
+            },
+            4 => match ($cl) {
+                1 => "d.m.Y H:i",
+                2 => "dd.mm.yy HH:mm",
+                default => "%d.%m.%Y %H:%M",
+            },
+            default => match ($cl) {
+                1 => "d.m.Y H:i:s",
+                2 => "dd.mm.yy HH:mm:ss",
+                default => "%d.%m.%Y %H:%M:%S",
+            },
+        },
+        // US
+        2 => match ($format) {
+            1 => match ($cl) {
+                1 => "Y-m-d",
+                2 => "yy-mm-dd",
+                default => "%Y-%m-%d",
+            },
+            2 => match ($cl) {
+                1 => "l - Y F j",
+                2 => "DD - yy MM d",
+                default => "%A - %Y %B %e",
+            },
+            3 => match ($cl) {
+                1 => "l y-m-d H:i",
+                2 => "DD y-mm-dd HH:mm",
+                default => "%A %y-%m-%d %H:%M",
+            },
+            4 => match ($cl) {
+                1 => "Y-m-d H:i",
+                2 => "yy-mm-dd HH:mm",
+                default => "%Y-%m-%d %H:%M",
+            },
+            default => match ($cl) {
+                1 => "Y-m-d H:i:s",
+                2 => "yy-mm-dd HH:mm:ss",
+                default => "%Y-%m-%d %H:%M:%S",
+            },
+        },
+        //FRA
+        3 => match ($format) {
+            1 => match ($cl) {
+                1 => "m-d-Y",
+                2 => "mm-dd-yy",
+                default => "%m-%d-%Y",
+            },
+            2 => match ($cl) {
+                1 => "l - F j Y",
+                2 => "DD - MM d yy",
+                default => "%A - %B %e %Y",
+            },
+            3 => match ($cl) {
+                1 => "l m-d-y H:i",
+                2 => "DD mm-dd-y HH:mm",
+                default => "%A %m-%d-%y %H:%M",
+            },
+            4 => match ($cl) {
+                1 => "m-d-Y H:i",
+                2 => "mm-dd-yy HH:mm",
+                default => "%m-%d-%Y %H:%M",
+            },
+            default => match ($cl) {
+                1 => "m-d-Y H:i:s",
+                2 => "mm-dd-yy HH:mm:ss",
+                default => "%m-%d-%Y %H:%M:%S",
+            },
+        },
+    };
 }
 
 function add_oneday($stamp){
@@ -2152,19 +2189,15 @@ function ODBCResourceToHTML($res, $sTable, $sRow, $numrows=100){
 /**
  * Init wysiwyg editor
  * @param string $elid ID of the base textarea/element for the wysiwyg
- * @param string $params string of PHP that returns user-specified params
+ * @param string $params deprecated, string of PHP that returns user-specified params
  * @param string $changeEvent JS to be executed on change
- * @param int|array $advanced 1 for more advanced controls, array overwites $params (?)
+ * @param int|array $advanced deprecated, 1 for more advanced controls, array overwites $params (?)
  * @return string JS initializing the wysiwyg editor
  */
-function lmb_ini_wysiwyg($elid,$params=null,$changeEvent=null,$advanced=null,$height=null){
+function lmb_ini_wysiwyg($elid,$params=null,$changeEvent=null,$advanced=null,int $height=null, int $gtabid = null): string
+{
 	global $umgvar;
-	global $session;
-
-	if($advanced AND $advanced != 1){$params = $advanced;}
-
-	$out = "<script type=\"text/javascript\">\n";
-
+    
     // get user language
     $lang = getLangShort();
     if ($lang === 'fr') {
@@ -2189,114 +2222,94 @@ function lmb_ini_wysiwyg($elid,$params=null,$changeEvent=null,$advanced=null,$he
 
     // layout
     $skin = 'oxide';
-    $content_css = 'default';
+    $contentCss = 'default';
     if (lmbIsDarkLayout()) {
         $skin = 'oxide-dark';
 
         // although user has dark layout, leave content white if the current table is a template table s.t. it looks
         //  consistent with the outcoming pdf
         if (!$GLOBALS['gtabid'] || $GLOBALS['gtab']['typ'][$GLOBALS['gtabid']] != 8) {
-            $content_css = 'dark';
+            $contentCss = 'dark';
         }
     }
+    
 
-    $init = array(
-        'language:"'.$lang.'"',
-        'selector: "textarea#'.$elid.'"',
-        'forced_root_block: false',
-        'width: "100%"',
-        "font_formats: \"$fontList\"",
-        'skin: "'.$skin.'"',
-        'content_css: "'.$content_css.'"',
-        'menubar: "file edit view insert format table lmbTemplate"',
-        "menu: {
-                file: { title: 'File', items: 'newdocument ' },
-                edit: { title: 'Edit', items: 'undo redo | cut copy paste | selectall' },
-                view: { title: 'View', items: 'visualaid' },
-                insert: { title: 'Insert', items: 'lmb-page-break' },
-                format: { title: 'Format', items: 'bold italic underline strikethrough superscript subscript codeformat | formats blockformats fontformats fontsizes align lineheight | forecolor backcolor | removeformat' },
-                table: { title: 'Table', items: 'inserttable | cell row column | tableprops deletetable | lmb-data-row lmb-data-row-filter' },
-                lmbTemplate: { title: 'Limbas Platzhalter', items: 'lmbTemplateData lmbTemplateSubTemplate | lmbTemplateDynamicData lmbTemplateGroup | lmbTemplateFunction lmbTemplateIf lmbTemplateElseIf lmbTemplateElse lmbTemplateEndif' }
-            }",
-    );
-    $plugins = array('lmbTemplate', 'noneditable', 'table');
-    $external_plugins = array();
-    $toolbar = array();
-    $extended_valid_elements = array('@[nobr],table[*]'); /* this allows table[nobr], but also allows any other attribute of the table */
+    // template wysiwyg extension
+    $externalPlugins = json_encode([
+        'lmbTemplate' => rtrim($umgvar['url'],'/') . '/assets/js/extra/template/wysiwyg/lmbTemplate.js'
+    ]);
+    
+    
 
-    if($advanced == 1){
-        $init = array(
-            'language:"'.$lang.'"',
-            'selector: "textarea#'.$elid.'"',
-            'forced_root_block: false',
-            'width: "100%"',
-            "font_formats: \"$fontList\"",
-            'auto_focus: "'.$elid.'"',
-            'skin: "'.$skin.'"',
-            'content_css: "'.$content_css.'"',
-            'menubar: "file edit view insert format tools table lmbTemplate"',
-            "menu: {
-                    file: { title: 'File', items: 'newdocument | preview | print ' },
-                    edit: { title: 'Edit', items: 'undo redo | cut copy paste | selectall | searchreplace' },
-                    view: { title: 'View', items: 'code | visualaid visualblocks | preview fullscreen' },
-                    insert: { title: 'Insert', items: 'image link media inserttable | charmap hr | anchor | insertdatetime | lmb-page-break' },
-                    format: { title: 'Format', items: 'bold italic underline strikethrough superscript subscript codeformat | formats blockformats fontformats fontsizes align lineheight | forecolor backcolor | removeformat' },
-                    tools: { title: 'Tools', items: 'code wordcount' },
-                    table: { title: 'Table', items: 'inserttable | cell row column | tableprops deletetable | lmb-data-row lmb-data-row-filter' },
-                    lmbTemplate: { title: 'Limbas Platzhalter', items: 'lmbTemplateData lmbTemplateSubTemplate | lmbTemplateDynamicData lmbTemplateGroup | lmbTemplateFunction lmbTemplateIf lmbTemplateElseIf lmbTemplateElse lmbTemplateEndif | lmbTemplateHeaderFooter lmbTemplateBackground' }
-                  }",
-        );
-        $plugins = array('lmbTemplate', 'noneditable', 'advlist', 'autolink', 'lists', 'link', 'image', 'charmap', 'print', 'preview', 'anchor', 'searchreplace', 'visualblocks', 'code', 'fullscreen', 'insertdatetime', 'media', 'table', 'paste', 'wordcount', 'hr');
-        $toolbar = array('styleselect', 'fontselect', 'fontsizeselect', 'bold italic', 'alignleft aligncenter alignright alignjustify', 'bullist numlist outdent indent', 'link image', 'forecolor backcolor');
+    $contentStyle = addslashes(str_replace("\n", ' ', file_get_contents(COREPATH . 'extra/template/wysiwyg/lmbTemplate.css')));
+
+    
+    $heightOption = '';
+    if($height !== null) {
+        $heightOption = 'height: \'' . $height . '\',';
     }
-
-    if (!empty($height)) {
-        $init[] = 'height : "' . $height . '"';
-    }
-
-    if($changeEvent){array_push($init,"setup: function(editor) { editor.on('change', function(e) {".$changeEvent.";});}");}
-
-    // eval params
-    if($params){$params = eval($params.';');}
-
-    // use object
-    if(is_string($params)){
-        $out .= "tinymce.init(Object.assign({language:\"$lang\", selector: \"textarea#$elid\", setup: function(editor) { editor.on('change', function(e) {".$changeEvent.";});}}, $params ));";
-        // extend params
-    }else{
-        if ($params['init']) {
-            $init = array_unique(array_merge($init, $params['init']));
-        }
-        if ($params['plugins']) {
-            $plugins = array_unique(array_merge($plugins, $params['plugins']));
-        }
-        if ($params['external_plugins']) {
-            $external_plugins = array_unique(array_merge($external_plugins, $params['external_plugins']));
-        }
-        if ($params['toolbar']) {
-            $toolbar = array_unique(array_merge($toolbar, $params['toolbar']));
-        }
-        if ($params['extended_valid_elements']) {
-            $extended_valid_elements = array_unique(array_merge($extended_valid_elements, $params['extended_valid_elements']));
-        }
-
-        // template wysiwyg extension
-        $external_plugins['lmbTemplate'] = rtrim($umgvar['url'],'/') . '/assets/js/extra/template/wysiwyg/lmbTemplate.js';
-        $extended_valid_elements[] = 'lmb[type|name|target|class|title|param|value|src|condition|alt|id]';
-        $init_[] = 'custom_elements: "~lmb,style"'; // ~ to behave like span instead of div
-        $init_[] = 'content_style: "' . addslashes(str_replace("\n", ' ', file_get_contents(COREPATH . 'extra/template/wysiwyg/lmbTemplate.css'))) . '"';
-        $init_[] = 'table_sizing_mode: "relative"'; // for table plugin
-
-        if ($init) {$init_[] = implode(',', $init);}
-        if (lmb_count($plugins)) {$init_[] = 'plugins: "' . implode(',', $plugins).'"';}
-        if (lmb_count($external_plugins)) {$init_[] = 'external_plugins: '. json_encode($external_plugins);}
-        if (lmb_count($toolbar)) {$init_[] = 'toolbar: "'. implode(' | ', $toolbar).'"';}
-        if (lmb_count($extended_valid_elements)) {$init_[] = 'extended_valid_elements: "'. implode(',', $extended_valid_elements).'"';}
-
-        $out .= "tinymce.init({" . implode(',', $init_) . "});";
-    }
-
-	$out .= "</script>\n";
+    
+    
+    $out = <<<EOD
+    <script>
+        tinymce.init({
+            cache_suffix: '?v={$umgvar['version']}',
+            language:'$lang',
+            selector: 'textarea#$elid',
+            width: '100%',
+            font_formats: '$fontList',
+            promotion: false,
+            auto_focus: '$elid',
+            skin: '$skin',
+            content_css: '$contentCss',
+            content_style: '$contentStyle',
+            custom_elements: '~lmb,style', // ~ to behave like span instead of div
+            menubar: 'file edit view insert format tools table lmbTemplate upload',
+            toolbar: 'styleselect fontselect fontsizeselect bold italic alignleft aligncenter alignright alignjustify bullist numlist outdent indent link image forecolor backcolor',
+            menu: {
+                        file: { 
+                            title: 'File', 
+                            items: 'newdocument | preview | print ' },
+                        edit: { 
+                            title: 'Edit', 
+                            items: 'undo redo | cut copy paste pastetext | selectall | searchreplace' },
+                        view: { 
+                            title: 'View', 
+                            items: 'code | visualaid visualblocks | preview fullscreen' },
+                        insert: { 
+                            title: 'Insert', 
+                            items: 'image link media inserttable | charmap hr | anchor | insertdatetime | lmb-page-break' },
+                        format: { 
+                            title: 'Format', 
+                            items: 'bold italic underline strikethrough superscript subscript codeformat | formats blockformats fontformats fontsizes align lineheight | forecolor backcolor | removeformat' },
+                        tools: { 
+                            title: 'Tools', 
+                            items: 'code wordcount' },
+                        table: { 
+                            title: 'Table', 
+                            items: 'inserttable | cell row column | tableprops deletetable | lmb-data-row lmb-data-row-filter' },
+                        lmbTemplate: { 
+                            title: 'Limbas Platzhalter', 
+                            items: 'lmbTemplateData lmbTemplateSubTemplate | lmbTemplateDynamicData lmbTemplateGroup | lmbTemplateFunction lmbTemplateIf lmbTemplateElseIf lmbTemplateElse lmbTemplateEndif | lmbTemplateHeaderFooter lmbTemplateBackground' }
+            },
+            plugins: 'lmbTemplate advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table wordcount',
+            automatic_uploads: true,
+            image_uploadtab: true,
+            images_upload_url: 'main_dyns.php?actid=manageTemplates&action=wysiwyg&taction=uploadImage&gtabid=$gtabid',
+            extended_valid_elements: '@[nobr],table[*],lmb[type|name|target|class|title|param|value|src|condition|alt|id]',
+            table_sizing_mode: 'relative', // for table plugin
+            setup: function (ed) {
+                ed.on('change', function () {
+                    $changeEvent
+                })
+            },
+            external_plugins: $externalPlugins,
+            paste_block_drop: false,
+            paste_as_text: true, //TODO: remove and replace by extension
+            $heightOption
+        })
+    </script>
+    EOD;
 	
 	return $out;
 }
@@ -2535,7 +2548,8 @@ function lmbGetAuthTokenUser($auth_token) {
  * @param $file string full path to a file
  * @return bool success
  */
-function lmbPrint($printerID, $file, $fileID = false, $force = false) {
+function lmbPrint($printerID, $file, $fileID = false, bool $forcePrint = false, array $printerOptions = []): bool
+{
     global $gprinter;
     global $umgvar;
 
@@ -2552,9 +2566,10 @@ function lmbPrint($printerID, $file, $fileID = false, $force = false) {
         return false;
     }
 
-    // get file ID and check permission
-    if($force AND is_numeric($fileID)) {
-        if (!$file = file_download($fileID)['path']) {
+    // get filepath from ID and check permission
+    if($forcePrint AND is_numeric($fileID)) {
+        $file = file_download($fileID)['path'];
+        if (!$file) {
             lmb_log::error("File has no permission!");
             return false;
         }
@@ -2567,7 +2582,7 @@ function lmbPrint($printerID, $file, $fileID = false, $force = false) {
     }
 
     // send to printer cache
-    if(!$force && $umgvar['printer_cache']){
+    if(!$forcePrint && $fileID && $umgvar['printer_cache']){
         return lmb_printToCache($fileID,$printerID);
     }
 
@@ -2575,6 +2590,16 @@ function lmbPrint($printerID, $file, $fileID = false, $force = false) {
     $config = $gprinter[$printerID]['config'];
     if (!$config) {
         $config = '';
+    }
+
+    // Standard Printing Options
+    if($printerOptions){
+        foreach($printerOptions as $option => $value){
+            // num-copies
+            if($option == 'pageCount' && is_numeric($value) && $value > 1){
+                $config .= " -n $value -o collate=true";
+            }
+        }
     }
 
     # print
@@ -2622,29 +2647,31 @@ class lmb_log
      * @param number    $datid          Id of current dataset
      * @param number    $level          level - 3 = no error_log
      */
-    public static function error($errorMessage, $userMessage=null, $tabid=null, $fieldid=null, $datid=null, $level=1) {
+    public static function error($errorMessage, $userMessage=null, $tabid=null, $fieldid=null, $datid=null, int $level=E_ERROR) {
         global $session;
         global $lang;
         global $gtab;
         global $gfield;
         global $umgvar;
 
-        // collect log messages as array
-        self::$log[] = array(
-            'message' => $errorMessage,
-            'tabid' => $tabid,
-            'fieldid' => $fieldid,
-            'datid' => $datid
-        );
-
         // error log
-        if ($session['debug'] AND $level < 3) {
+        if ($session['debug']) {
             try {
                 throw new Exception();
             } catch (Exception $e) {
                 $trace = str_replace(str_replace("/dependent", "", rtrim($umgvar['path'], "/")), "", $e->getTraceAsString());
                 error_log(/*local_date(0) .*/"$errorMessage (tabid: $tabid, fieldid: $fieldid, datid: $datid), at:\n$trace");
             }
+        }
+
+        if($level === E_ERROR) {
+            // collect log messages as array
+            self::$log[] = array(
+                'message' => $errorMessage,
+                'tabid' => $tabid,
+                'fieldid' => $fieldid,
+                'datid' => $datid
+            );
         }
 
         // user alert

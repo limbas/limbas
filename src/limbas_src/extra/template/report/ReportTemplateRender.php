@@ -23,8 +23,10 @@ class ReportTemplateRender extends TemplateRender
      * @param $reportTemplateElements
      * @param $report_defformat
      */
-    public function renderDynamicDataHtmlPreview(&$reportTemplateElements, $report_defformat): void
+    public function renderDynamicDataHtmlPreview(&$reportTemplateElements, int $tabId, int $reportId): void
     {
+        global $greportlist;
+        
         // group by yAbs s.t. elements that are on same y can be displayed next to each other
         $listByY = array();
         foreach ($reportTemplateElements as &$element) {
@@ -35,7 +37,7 @@ class ReportTemplateRender extends TemplateRender
             }
         }
 
-        $mpdf = ($report_defformat == 'mpdf');
+        $mpdf = ($greportlist[$tabId]['defformat'][$reportId] === 'mpdf');
 
         //if ($mpdf) {
         #echo '<div>';

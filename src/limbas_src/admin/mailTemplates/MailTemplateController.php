@@ -10,8 +10,9 @@
 namespace Limbas\admin\mailTemplates;
 
 use Limbas\extra\template\TemplateTable;
+use Limbas\lib\LimbasController;
 
-class MailTemplateController
+class MailTemplateController extends LimbasController
 {
 
     /**

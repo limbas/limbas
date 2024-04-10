@@ -73,13 +73,13 @@ if(!$diag_bis){$diag_bis = date("d.m.Y");}
 
         <ul class="nav nav-tabs">
             <li class="nav-item">
-                <a class="nav-link <?=($typ == 1)?'active bg-white':''?>" onclick="document.form1.typ.value='1';document.form1.submit();" href="#"><?=$lang[1431]?></a>
+                <a class="nav-link <?=($typ == 1)?'active bg-contrast':''?>" onclick="document.form1.typ.value='1';document.form1.submit();" href="#"><?=$lang[1431]?></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link <?=($typ == 2)?'active bg-white':''?>" onclick="document.form1.typ.value='2';document.form1.submit();" href="#"><?=$lang[544]?></a>
+                <a class="nav-link <?=($typ == 2)?'active bg-contrast':''?>" onclick="document.form1.typ.value='2';document.form1.submit();" href="#"><?=$lang[544]?></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link <?=($typ == 3)?'active bg-white':''?>" onclick="document.form1.typ.value='3';document.form1.submit();" href="#"><?=$lang[1433]?></a>
+                <a class="nav-link <?=($typ == 3)?'active bg-contrast':''?>" onclick="document.form1.typ.value='3';document.form1.submit();" href="#"><?=$lang[1433]?></a>
             </li>
             
             <?php if ($typ == 3): ?>
@@ -92,7 +92,7 @@ if(!$diag_bis){$diag_bis = date("d.m.Y");}
             
         </ul>
         
-        <div class="tab-content border border-top-0 bg-white">
+        <div class="tab-content border border-top-0 bg-contrast">
             <div class="tab-pane active <?=($typ != 3)?'pt-2':''?>">
                 
                 

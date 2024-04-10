@@ -54,14 +54,14 @@
 </div>
 
 <div class="modal fade" id="snapfilter-manage" tabindex="-1" data-backdrop="static" data-keyboard="false">
-    <div class="modal-dialog modal-dialog-centered modal-xl lmb-modalAutoHeight">
+    <div id="modald-snapfilter_manage" class="modal-dialog modal-dialog-centered modal-xl overflow-hidden h-100">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="snapfilter-manage-title"><?=$lang[2608]?></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body" id="napfilter-manage-body">
-              <iframe id="snapfilter-manage-content" style="width:100%;height:100%"></iframe>
+            <div class="modal-body overflow-hidden" id="napfilter-manage-body">
+              <iframe id="snapfilter-manage-content" class="w-100 h-100"></iframe>
             </div>
         </div>
     </div>

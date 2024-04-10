@@ -25,6 +25,7 @@ function lmbcs_load_schema($id=null, $usedefault=false) {
             'id' => lmbdb_result($rs, 'ID'),
             'name' => lmbdb_result($rs, 'NAME'),
             'layout' => $layout,
+            'theme' => lmbdb_result($rs, 'THEME'),
             'valid' => in_array($layout,$layouts),
             'regenerate' => true,
             'variables' => [
@@ -61,7 +62,13 @@ function lmbcs_load_schema($id=null, $usedefault=false) {
         //load variables from inifile
         $inifile = EXTENSIONSPATH . 'layout/' . $color_schema['layout'] . '/variables.ini';
         if (!file_exists($inifile)) {
-            $inifile = COREPATH . 'layout/variables.ini';
+
+            $iniFileName = 'variables.ini';
+            if($color_schema['theme'] === 'dark') {
+                $iniFileName = 'variables-dark.ini';
+            }
+            
+            $inifile = COREPATH . 'layout/' . $iniFileName;
         }
         
         if (array_key_exists($inifile,$inicache)) {
@@ -135,6 +142,11 @@ function lmbcs_generate_css($color_schema) {
     }
     $extscssv .= "\n\n";
 
+    foreach ($color_schema['variables']['Legacy'] as $key => $value) {
+        $key = strtoupper($key);
+        $extscssv .= "\$farbschema$key: $value;\n";
+    }
+
     try {
 
         # include extensions
@@ -146,16 +158,21 @@ function lmbcs_generate_css($color_schema) {
             }
             $extCss = $buf;
         }
-                
+        
+        $variablesFile = '_lmbvariables';
+        if($color_schema['theme'] === 'dark') {
+            $variablesFile = '_lmbvariables-dark';
+        }
+        
         $layoutCss = $scss->compileString(
-            '@import "_lmbvariables";
+            '@import "' . $variablesFile . '";
         '.$extscssv.'
         @import "lmbbootstrap";
         @import "limbas";
         '.$extscss.' '.$extCss
         )->getCss();
         
-        $cssdir = ASSETSPATH . 'css/';
+        $cssdir = LOCALASSETSPATH . 'css/';
         $filepath = $cssdir.$color_schema['layout'].'-'.$color_schema['id'].'.css';
         
         if (!is_writable($cssdir) || (file_exists($filepath) AND !is_writable($filepath))) {
@@ -210,18 +227,22 @@ function lmbcs_save_colors($id,$addvartitle=null,$addvarvalue=null) {
 
     $color_schemas[$id] = lmbcs_load_schema($id,true);
     $vars = $_POST['var'];
-    $id = parse_db_int($id);
+    $id = intval($id);
 
     //update legacy vars
+    $update = [];
     for($i=1;$i<=14;$i++){
-        $query[] = "WEB$i = '".parse_db_string($vars["web$i"])."'";
+        $update['WEB' . $i] = $vars["web$i"];
         unset($vars["web$i"]);
     }
 
-    if(!empty($query)){
-        $sqlquery1 = 'UPDATE LMB_COLORSCHEMES SET '.implode(',',$query).' WHERE ID = '.$id;
-        $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+    $update['name'] = $_POST['name'];
+    $update['theme'] = $_POST['theme'];
+    if(!empty($update['custom_theme']) && $update['custom_theme'] !== 'light' && $update['custom_theme'] !== 'dark') {
+        $update['theme'] = $_POST['custom_theme'];
     }
+
+    Database::update('LMB_COLORSCHEMES', $update, ['ID'=>$id]);
 
     //check if vars are same as default or edited/added by user
     $tochange = [];
@@ -309,7 +330,10 @@ function lmbcs_generate_legacy_css($schemaId,$color_schema) {
     $fontc3 = lmbSuggestColor($farbschema['WEB14'], '222222', '7D7D7D');
     $fontc7 = lmbSuggestColor($farbschema['WEB7'], '5a5a5a', '333333');
     $fontc14 = lmbSuggestColor($farbschema['WEB14']);
-    
+
+    $dark_fontc3 = lmbSuggestColor($farbschema['WEB14'], 'FFFFFF', 'FFFFFF');
+    $dark_fontc7 = lmbSuggestColor($farbschema['WEB7'], 'FFFFFF', 'FFFFFF');
+    $dark_fontc14 = lmbSuggestColor($farbschema['WEB14'], '000000', 'FFFFFF');
 
     $variables = '';
     for($i=1;$i<=14;$i++) {
@@ -320,9 +344,17 @@ function lmbcs_generate_legacy_css($schemaId,$color_schema) {
 
 $waitsymbol: url("' . $waitsymbol . '");
 
-$fontc3: ' . $fontc3 . ';
-$fontc7: ' . $fontc7 . ';
-$fontc14: ' . $fontc14 . ';
+:root,
+[data-bs-theme="light"] {
+    --lmb-fontc3: ' . $fontc3 . ';
+    --lmb-fontc7: ' . $fontc7 . ';
+    --lmb-fontc14: ' . $fontc14 . ';
+}
+[data-bs-theme="dark"] {
+    --lmb-fontc3: ' . $dark_fontc3 . ';
+    --lmb-fontc7: ' . $dark_fontc7 . ';
+    --lmb-fontc14: ' . $dark_fontc14 . ';
+}
 
 
 $sgc1: ' . lmbSuggestColor('74ba6a'). ';
@@ -366,13 +398,19 @@ $sgc8: ' . lmbSuggestColor('74ba5c'). ';
             $extCss = $buf;
         }
 
+        $variablesFile = '_lmbvariables';
+        if($color_schema['theme'] === 'dark') {
+            $variablesFile = '_lmbvariables-dark';
+        }
+
         $layoutCss = $scss->compileString(
-            $variables.'
-        @import "legacy";
-        '.$extCss
+            '@import "' . $variablesFile . '";
+            '.$variables.'
+            @import "legacy";
+            '.$extCss
         )->getCss();
 
-        $cssdir = ASSETSPATH . 'css/';
+        $cssdir = LOCALASSETSPATH . 'css/';
         $filepath = $cssdir.'legacy-'.$schemaId.'.css';;
 
         if (!is_writable($cssdir) || (file_exists($filepath) AND !is_writable($filepath))) {

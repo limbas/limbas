@@ -1437,7 +1437,7 @@ function ResourceManager(options) {
                         resources = res;
                     },
                     error: function() {
-                        alert("ajax error getting json from "+url);
+                        lmbShowErrorMsg("ajax error getting json from "+url);
                     },
                     async: false  // too much work coordinating callbacks so dumb it down
                 }));

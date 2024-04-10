@@ -7,10 +7,13 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+namespace Limbas\extra\report;
 
 
+use setasign\Fpdi\Tcpdf\Fpdi;
+use TCPDF_FONTS;
 
-class LmbTcpdf extends \setasign\Fpdi\Tcpdf\Fpdi {
+class LmbTcpdf extends Fpdi {
 
     var $rp;
     var $report;
@@ -27,7 +30,7 @@ class LmbTcpdf extends \setasign\Fpdi\Tcpdf\Fpdi {
     }
 
 
-        # -------------- concat pdf ---------------------
+    # -------------- concat pdf ---------------------
     function concat(&$files) {
         foreach ($files as $file) {
             $pagecount = $this->setSourceFile($file);
@@ -103,7 +106,8 @@ class LmbTcpdf extends \setasign\Fpdi\Tcpdf\Fpdi {
     # Kopf Elemente
     function Header() {
         $this->Background();
-        list_elements_pdf($this, $this->ID, $this->rp['header']);
+        $report = new ReportTcpdf();
+        $report->list_elements_pdf($this, $this->ID, $this->rp['header']);
 
         # set page margins for current page according to header height (if header elements exist)
 //        if (!$this->headerMarginSet and $this->rp['header']['id']) {
@@ -119,14 +123,16 @@ class LmbTcpdf extends \setasign\Fpdi\Tcpdf\Fpdi {
 
     # Fuß Elemente
     function Footer() {
-        list_elements_pdf($this, $this->ID, $this->rp['footer']);
+        $report = new ReportTcpdf();
+        $report->list_elements_pdf($this, $this->ID, $this->rp['footer']);
     }
 
     # Hintergrund
     function Background() {
         $sy = $this->GetY();
         $sx = $this->GetX();
-        list_elements_pdf($this, $this->ID, $this->rp['background']);
+        $report = new ReportTcpdf();
+        $report->list_elements_pdf($this, $this->ID, $this->rp['background']);
         # position ----------------------------
         $this->SetY($sy);
         $this->SetX($sx);
@@ -379,6 +385,3 @@ class LmbTcpdf extends \setasign\Fpdi\Tcpdf\Fpdi {
     }
 
 }
-
-
-?>

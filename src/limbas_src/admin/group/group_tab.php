@@ -296,7 +296,7 @@
 
 
             <div class="tab-content col-9 ps-0">
-                <div class="tab-pane active p-3 d-inline-block border border-start-0 bg-white">
+                <div class="tab-pane active p-3 d-inline-block border border-start-0 bg-contrast">
 
                     <h5 class=""><i class="lmb-icon lmb-group"></i>&nbsp;<?= $groupdat["name"][$ID] ?></h5>
 

@@ -20,16 +20,16 @@
         
         <ul class="nav nav-tabs">
             <li class="nav-item">
-                <a class="nav-link <?= $log_typ == 1 || !$log_typ ? 'active bg-white' : '' ?>" href="main_admin.php?action=setup_error_msg&log_typ=1">sql_error.log</a>
+                <a class="nav-link <?= $log_typ == 1 || !$log_typ ? 'active bg-contrast' : '' ?>" href="main_admin.php?action=setup_error_msg&log_typ=1">sql_error.log</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link <?= $log_typ == 2 ? 'active bg-white' : '' ?>" href="main_admin.php?action=setup_error_msg&log_typ=2">indize_error.log</a>
+                <a class="nav-link <?= $log_typ == 2 ? 'active bg-contrast' : '' ?>" href="main_admin.php?action=setup_error_msg&log_typ=2">indize_error.log</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link <?= $log_typ == 3 ? 'active bg-white' : '' ?>" href="main_admin.php?action=setup_error_msg&log_typ=3">indize.log</a>
+                <a class="nav-link <?= $log_typ == 3 ? 'active bg-contrast' : '' ?>" href="main_admin.php?action=setup_error_msg&log_typ=3">indize.log</a>
             </li>
         </ul>
-        <div class="tab-content border border-top-0 bg-white">
+        <div class="tab-content border border-top-0 bg-contrast">
             <div class="tab-pane active">
 
                 <?php

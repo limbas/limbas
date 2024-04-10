@@ -109,16 +109,16 @@ function lmbGetResultlimitPost(result) {
 
 /* --- ajax_11_a ----------------------------------- */
 function ajax_22_a(evt,old_value,id,form_name,fieldid,gtabid,ID,dash,act) {
-	var new_value = new Array();
-	var new_zvalue = new Array();
-	var add = 1;
+	let new_value = [];
+	const new_zvalue = [];
+	let add = 1;
 	var value = document.form1[form_name].value;
 	if(value){new_value = value.split(';');}
 
 	if(act == 1){
-		for (var z in new_value){
+		for (let z in new_value){
 			if(new_value[z] == id){
-				var add = 0;
+				add = 0;
 			}
 		}
 		if(add){
@@ -128,7 +128,7 @@ function ajax_22_a(evt,old_value,id,form_name,fieldid,gtabid,ID,dash,act) {
 			checktyp('32','',form_name,fieldid,gtabid,' ',ID);
 		}
 	}else{
-		for (var z in new_value){
+		for (let z in new_value){
 			if(new_value[z] != id){
 				new_zvalue.push(new_value[z]);
 			}
@@ -405,9 +405,9 @@ function limbasSnapshotSaveasPost(string)
 {
 	divclose();
 	if(isNaN(string)){
-		alert(jsvar["lng_56"]+": " + string);
+		showAlert(jsvar["lng_56"]+": " + string);
 	}else{
-		alert(jsvar["lng_2006"]);
+		showAlert(jsvar["lng_2006"]);
 		refreshMenuOnSnapshot();
 		document.form1.snap_id.value=string;
 		send_form(1);
@@ -619,44 +619,41 @@ function view_contextDetail(id,tab_id,form_id,form_typ,form_dimension) {
 
 // ---------------- Sendkeypress----------------------
 function sendkeydown(evt) {
-
     if(evt.altKey) {
+		if (evt.key === 's') {
+			evt.preventDefault();
+			alert('save');
+		}
 
-        // s
-        if (evt.keyCode == 83) {
-            alert('save');
-        }
+		if (evt.key === 'f') {
+			evt.preventDefault();
+			alert('find');
+		}
 
-        // f
-        if (evt.keyCode == 70) {
-            alert('find');
-        }
+		if (evt.key === 'a') {
+			evt.preventDefault();
+			alert('new');
+		}
 
-        // a
-        if (evt.keyCode == 65) {
-            alert('new');
-        }
+		if (evt.key === 'c') {
+			evt.preventDefault();
+			alert('copy');
+		}
 
-        // c
-        if (evt.keyCode == 67) {
-            alert('copy');
-        }
-
-        // d
-        if (evt.keyCode == 68) {
-            alert('delete');
-        }
+		if (evt.key === 'd') {
+			evt.preventDefault();
+			alert('delete');
+		}
 
         return false;
 
     }
-
-
-	if(evt.keyCode == 13 && !evt.shiftKey){
+	if(evt.key === 'Enter' && !evt.shiftKey){
+		evt.preventDefault();
 		//set_focus();
-		document.form1.select.value=1;
-		if(limbasDivCloseTab.length == 0 || validEnter){
-			var etarget = (evt.target) ? evt.target : evt.srcElement;
+		document.form1.select.value = 1;
+		if(limbasDivCloseTab.length === 0 || validEnter){
+			const etarget = (evt.target) ? evt.target : evt.srcElement;
 			if(etarget.onchange){
 				etarget.onchange();
 			}
@@ -1013,7 +1010,9 @@ function endDrag() {
 	document.onmousemove = null;
 	//if(evw){gtabSetTablePosition();}
 	//setGlobalBorderWidth();
-    send_form(1,2);
+    if(rowsize) {
+        send_form(1, 2);
+    }
 	return false;
 }
 
@@ -1035,17 +1034,37 @@ function tdsize(start){
 
 
 // Tabellenspalte verstecken - anzeigen
-function lmbShowColumn(tabid,fieldid){
-	var menuitem = document.getElementById("lmbViewFieldItem_"+tabid+"_"+fieldid);
-	document.form1.filter_hidecols.value = tabid+"_"+fieldid;
+function lmbShowColumn(tabid,fieldid) {
 
-	if(menuitem.style.color == 'green'){
-		menuitem.previousSibling.style.visibility='hidden';
-		menuitem.style.color='';
-	}else{
-		menuitem.previousSibling.style.visibility='';
-		menuitem.style.color='green';
-	}
+    if (fieldid == 'all') {
+        $("span[id^=lmbViewFieldItem_]").each(function () {
+            this.previousSibling.style.visibility = '';
+            this.style.color = 'green';
+
+            document.form1.filter_hidecols.value += $(this).attr("data-gtabid")+'_'+$(this).attr("data-fieldid")+'_1;';
+
+        });
+        document.form1.filter_hidecols.value += 'none';
+    } else if (fieldid == 'none') {
+        $("span[id^=lmbViewFieldItem_]").each(function () {
+            this.previousSibling.style.visibility = 'hidden';
+            this.style.color = '';
+
+            document.form1.filter_hidecols.value += $(this).attr("data-gtabid")+'_'+$(this).attr("data-fieldid")+'_2;';
+        });
+
+    } else {
+        var menuitem = document.getElementById("lmbViewFieldItem_" + tabid + "_" + fieldid);
+        document.form1.filter_hidecols.value = tabid + "_" + fieldid;
+
+        if (menuitem.style.color == 'green') {
+            menuitem.previousSibling.style.visibility = 'hidden';
+            menuitem.style.color = '';
+        } else {
+            menuitem.previousSibling.style.visibility = '';
+            menuitem.style.color = 'green';
+        }
+    }
 
 	lmbAjax_resultGtab("form1",1,1,1,1);
 	document.form1.filter_hidecols.value = '';

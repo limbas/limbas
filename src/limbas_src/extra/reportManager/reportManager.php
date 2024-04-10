@@ -26,7 +26,7 @@ require_once __DIR__ . '/reportManager.dao';
     
     <script type="text/javascript" src="assets/js/extra/extensions/ext.js?v=<?=$umgvar["version"]?>"></script>
 
-    <link rel="stylesheet" type="text/css" href="assets/css/<?=$session['css']?>?v=<?=$umgvar["version"]?>">
+    <link rel="stylesheet" type="text/css" href="<?=$session['css']?>?v=<?=$umgvar["version"]?>">
 </head>
 
 <body>
@@ -37,7 +37,7 @@ require_once __DIR__ . '/reportManager.dao';
     <ul class="nav nav-tabs">
         <?php if (!$type) : ?>
             <li class="nav-item">
-                <a class="nav-link active bg-white" href="#"><?=$lang[$LINK["name"][$LINK_ID['user_reportmanager']]]?></a>
+                <a class="nav-link active bg-contrast" href="#"><?=$lang[$LINK["name"][$LINK_ID['user_reportmanager']]]?></a>
             </li>
             <?php if ($LINK['user_templatemanager'] && !empty($reportTemplates)): ?>
                 <li class="nav-item">
@@ -52,12 +52,12 @@ require_once __DIR__ . '/reportManager.dao';
             <?php endif; ?>
             
             <li class="nav-item">
-                <a class="nav-link active bg-white"><?=$lang[$LINK["name"][$LINK_ID['user_templatemanager']]]?></a>
+                <a class="nav-link active bg-contrast"><?=$lang[$LINK["name"][$LINK_ID['user_templatemanager']]]?></a>
             </li>
             
         <?php endif; ?>
     </ul>
-    <div class="tab-content border border-top-0 bg-white">
+    <div class="tab-content border border-top-0 bg-contrast">
         <div class="tab-pane active p-3">
 
             <div class="row">

@@ -35,29 +35,9 @@ function filter_reset($gtabid=null){
 }
 
 # ----- Snapshot --------------
-#if(!$form_id){
-if($action == 'gtab_erg'){
-    #$snaptabid = $gsnap["argresult_id"][$snap_id];
-	if($snap_id AND $gsnap[$gtabid]["id"][$snap_id]){
-		if(!$filter_reset AND (!$filter["snapisset"][$snap_id] OR $filter["snapid"][$gtabid] != $snap_id)){
-			if(!$filter["snapid"][$gtabid]){
-				SNAP_set_reminder($gtabid);
-			}
-			SNAP_get_filter($snap_id,$gtabid);
-		}elseif($filter_reset){
-			filter_reset($gtabid);
-			SNAP_get_filter($snap_id,$gtabid);
-		}
-	}else{
-		if($filter["snapid"][$gtabid]){
-			filter_reset($gtabid);
-			SNAP_get_reminder($gtabid);
-		}
-		$filter["snapid"][$gtabid] = 0;
-	}
+if($action == 'gtab_erg') {
+    lmb_register_snapshot($gtabid,$snap_id,$filter_reset);
 }
-
-
 
 /* --- Variablen zurücksetzen ------*/
 if($filter_reset AND !$snap_id){
@@ -221,9 +201,9 @@ if($filter_reset AND !$snap_id){
 		$filter_hidecols_ = explode(";",$filter_hidecols);
 		foreach($filter_hidecols_ as $key => $value){
 			$hidecols = explode("_",$filter_hidecols_[$key]);
-			if($filter["hidecols"][$hidecols[0]][$hidecols[1]]){
+			if($hidecols[2] == 1 OR (!$hidecols[2] AND $filter["hidecols"][$hidecols[0]][$hidecols[1]])){
 				unset($filter["hidecols"][$hidecols[0]][$hidecols[1]]);
-			}else{
+			}elseif($hidecols[2] == 2 OR !$hidecols[2]){
 				$filter["hidecols"][$hidecols[0]][$hidecols[1]] = 1;
 			}
 		}

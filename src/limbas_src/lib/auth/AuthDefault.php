@@ -8,7 +8,6 @@
  */
 class AuthDefault extends Auth {
 
-
     protected function handleAuthentication()
     {
         if( ! (defined('IS_REST') || defined('IS_WSDL') || defined('IS_WEBDAV') || !empty($auth_token))) {
@@ -20,6 +19,34 @@ class AuthDefault extends Auth {
             }
         }
 
+        [$auth_user, $auth_pass, $auth_token] = $this->getCredentialsFromRequest();
+
+        if(empty($auth_user) && empty($auth_token)){
+            self::deny();
+        }
+
+        if(($auth_user AND $auth_pass) OR $auth_token){
+
+            $this->authUser = $auth_user;
+
+            // REST / WSDL - use credentials
+            if(defined('IS_REST') OR defined('IS_WSDL') OR defined('IS_WEBDAV')) {
+                return $this->apiAuth($auth_user, $auth_pass);
+            }
+            elseif ($auth_token) {
+                return $this->tokenAuth($auth_token, $auth_user, $auth_pass);
+            }
+
+            return $this->defaultAuth($auth_user, $auth_pass);
+
+        }
+
+
+
+        return false;
+    }
+
+    protected function getCredentialsFromRequest() {
         $auth_user = '';
         $auth_pass = '';
         $auth_token = '';
@@ -51,29 +78,7 @@ class AuthDefault extends Auth {
         $auth_pass = dbf_7(substr($auth_pass,0,30));
         $auth_token = dbf_7($auth_token);
 
-        if(empty($auth_user) && empty($auth_token)){
-            self::deny();
-        }
-
-        if(($auth_user AND $auth_pass) OR $auth_token){
-
-            $this->authUser = $auth_user;
-
-            // REST / WSDL - use credentials
-            if(defined('IS_REST') OR defined('IS_WSDL') OR defined('IS_WEBDAV')) {
-                return $this->apiAuth($auth_user, $auth_pass);
-            }
-            elseif ($auth_token) {
-                return $this->tokenAuth($auth_token, $auth_user, $auth_pass);
-            }
-
-            return $this->defaultAuth($auth_user, $auth_pass);
-
-        }
-
-
-
-        return false;
+        return [$auth_user, $auth_pass, $auth_token];
     }
 
     /**

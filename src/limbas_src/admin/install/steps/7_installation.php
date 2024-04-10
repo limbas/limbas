@@ -167,7 +167,7 @@ function seedDatabase($configFile)
     <?php
 
     require_once(COREPATH . 'admin/tools/import.dao');
-    import_complete(1);
+    import_complete(1,isInstaller: true);
 
 
 

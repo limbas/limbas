@@ -75,7 +75,7 @@ class TemplateTable
         $templateContent = '';
 
         // move root element 
-        if (!empty($oldTemplateTableId) && !empty($oldTemplateElementId) && $this->id !== $oldTemplateTableId) {
+        if (!empty($oldTemplateTableId) && !empty($oldTemplateElementId)) {
 
             TemplateConfig::$instance = new ReportTemplateConfig([], null, 0, null);
             $oldTemplate = TemplateElement::fromId($oldTemplateTableId, $oldTemplateElementId);
@@ -83,8 +83,10 @@ class TemplateTable
                 $templateContent = $oldTemplate->getHtml();
             }
 
-            // delete old template
-            del_data($oldTemplateTableId, $oldTemplateElementId);
+            // delete old template otherwise it is a copy
+            if($this->id !== $oldTemplateTableId) {
+                del_data($oldTemplateTableId, $oldTemplateElementId);
+            }
         }
 
         $templateElementId = intval(new_data($this->id));

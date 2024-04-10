@@ -9,7 +9,9 @@
 
 namespace Limbas\extra\template\select;
 
-class TemplateSelectController
+use Limbas\lib\LimbasController;
+
+class TemplateSelectController extends LimbasController
 {
 
     /**
@@ -28,7 +30,13 @@ class TemplateSelectController
     private function loadList(array $request): array
     {
         $type = $request['type'] ?? 'report';
-        $id = intval($request['id'] ?? 0);
+
+        $id = $request['id'] ?? 0;
+        if(is_array($id) && !empty($id)) {
+            $id = $id[0];
+        }
+        $id = intval($id);
+        
         $templateSelector = TemplateSelector::getTemplateSelectorByType($type);
         return $templateSelector->getElementListRendered(intval($request['gtabid']), $request['search'] ?? '', intval($request['page']), intval($request['perPage']), $id);
     }

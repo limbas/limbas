@@ -208,13 +208,13 @@ function lmb_compare_revision($compare_revision1, $compare_version1, $compare_re
 
         <ul class="nav nav-tabs">
             <li class="nav-item">
-                <a class="nav-link <?=($revisioner_typ==1)?'active bg-white':''?>" href="main_admin.php?action=setup_revisioner&revisioner_typ=1">Revision<?= $lang[992450] ?></a>
+                <a class="nav-link <?=($revisioner_typ==1)?'active bg-contrast':''?>" href="main_admin.php?action=setup_revisioner&revisioner_typ=1">Revision<?= $lang[992450] ?></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link <?=($revisioner_typ==2)?'active bg-white':''?>" href="main_admin.php?action=setup_revisioner&revisioner_typ=2">Historie<?= $lang[992451] ?></a>
+                <a class="nav-link <?=($revisioner_typ==2)?'active bg-contrast':''?>" href="main_admin.php?action=setup_revisioner&revisioner_typ=2">Historie<?= $lang[992451] ?></a>
             </li>
         </ul>
-        <div class="tab-content border border-top-0 bg-white">
+        <div class="tab-content border border-top-0 bg-contrast">
             <div class="tab-pane active">
 
 

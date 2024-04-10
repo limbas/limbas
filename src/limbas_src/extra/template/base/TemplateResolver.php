@@ -603,8 +603,8 @@ class TemplateResolver
             $datid = $ID ?: lmb_split('_', $use_record, 2)[0];
             $reportParams = array('listmode' => $report['listmode']);
             TemplateConfig::$instance = new FillableTemplateConfig($reportParams, $parameter, $gtabid, $datid);
-            TemplateConfig::$instance->resolvedTemplateGroups = $resolvedTemplateGroups;
-            TemplateConfig::$instance->resolvedDynamicData = $resolvedDynamicData;
+            TemplateConfig::$instance->resolvedTemplateGroups = $resolvedTemplateGroups ?? [];
+            TemplateConfig::$instance->resolvedDynamicData = $resolvedDynamicData ?? [];
 
             // create initial element and build tree
             $baseElement = new ReportTemplateElement($templGtabid, 'lmbBaseElement', $content);

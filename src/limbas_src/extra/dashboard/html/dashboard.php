@@ -58,7 +58,7 @@ require_once( COREPATH . 'extra/dashboard/dashboard.dao');
         </div>
     </div>
     <div class="text-end">
-        <div class="border bg-white border-top-0 p-2 d-inline-block dashboard-options" data-bs-toggle="collapse" data-bs-target="#lmb-dashboard-options" aria-expanded="false" aria-controls="dashboardOptions">
+        <div class="border bg-contrast border-top-0 p-2 d-inline-block dashboard-options" data-bs-toggle="collapse" data-bs-target="#lmb-dashboard-options" aria-expanded="false" aria-controls="dashboardOptions">
             <i class="lmb-icon lmb-cog"></i>
         </div>
     </div>

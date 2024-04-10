@@ -64,13 +64,15 @@ function lmb_getSyncValidate($cliID){
     global $db;
     global $gfield;
 
+
+    // relations 1:n / n:m
     $sqlquery = "SELECT MD5TAB,FIELD_ID,TAB_ID,DATA_TYPE,
     (SELECT TABELLE FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.TAB_ID) AS LEFTTAB ,
     (SELECT TABELLE FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.VERKNTABID) AS RIGHTTAB
     FROM LMB_CONF_FIELDS
     WHERE (SELECT DATASYNC FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.VERKNTABID) = 1
-    AND (DATA_TYPE = 27 OR DATA_TYPE = 24)
-    AND VERKNTABLETYPE = 1";
+    AND FIELD_TYPE = 11
+    AND VERKNTABLETYPE = 1 ORDER BY ID";
 
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     while(lmbdb_fetch_row($rs)) {
@@ -83,24 +85,27 @@ function lmb_getSyncValidate($cliID){
 
         // select count from relation tables
         #$sqlquery1 = "SELECT COUNT($lefttab.ID) AS RESC FROM $md5tab,$lefttab WHERE  $lefttab.ID = $md5tab.ID ".(is_numeric($cliID) ? "AND $righttab.LMB_SYNC_SLAVE = $cliID" : '');
-        $sqlquery1 = "SELECT COUNT($md5tab.ID) AS RESC FROM $md5tab,$righttab WHERE $righttab.ID = $md5tab.VERKN_ID ".(is_numeric($cliID) ? "AND $righttab.LMB_SYNC_SLAVE = $cliID" : '');
+        if($datatype == 27 OR $datatype == 24) {
+            $sqlquery1 = "SELECT COUNT($md5tab.ID) AS RESC FROM $md5tab,$righttab WHERE $righttab.ID = $md5tab.VERKN_ID " . (is_numeric($cliID) ? "AND $righttab.LMB_SYNC_SLAVE = $cliID" : '');
+        }elseif($datatype == 25) {
+            $sqlquery1 = "SELECT COUNT(*) AS RESC FROM $righttab WHERE $righttab.$md5tab IS NOT NULL " . (is_numeric($cliID) ? "AND $righttab.LMB_SYNC_SLAVE = $cliID" : '');
+        }
         $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
-        $validate['resc'][] = lmbdb_result($rs1, 'RESC');
-        $validate['table'][] = $md5tab;
-        $validate['spelling'][] = $lefttab.'->'.$gfield[$tab_id]['field_name'][$fieldid];
+        $validate['resc'][$md5tab] = lmbdb_result($rs1, 'RESC');
+        $validate['table'][$md5tab] = $md5tab;
+        $validate['spelling'][$md5tab] = $lefttab.'->'.$gfield[$tab_id]['field_name'][$fieldid];
     }
 
-
-    $sqlquery = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE DATASYNC = 1";
+    $sqlquery = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE DATASYNC = 1 ORDER BY ID";
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     while(lmbdb_fetch_row($rs)) {
         // select count from tables
         $table = strtoupper(lmbdb_result($rs, 'TABELLE'));
         $sqlquery1 = "SELECT COUNT(*) AS RESC FROM $table ".(is_numeric($cliID) ? "WHERE LMB_SYNC_SLAVE = $cliID" : '');
         $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
-        $validate['resc'][] = lmbdb_result($rs1, 'RESC');
-        $validate['table'][] = $table;
-        $validate['spelling'][] = $table;
+        $validate['resc'][$table] = lmbdb_result($rs1, 'RESC');
+        $validate['table'][$table] = $table;
+        $validate['spelling'][$table] = $table;
     }
 
 
@@ -119,14 +124,25 @@ function lmb_getSyncValidatePhase2($table,$cliID=null,$master=null){
 
     $idfield = 'ID';
     if($master){
-        // relation table
-        if(strtoupper(substr($table,0,5)) == 'VERK_'){
-            $sqlquery0 = "SELECT TAB_ID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".strtolower($table)."'";
-            $rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+        // relation table 1:n / n:m
+        if(strtoupper(substr($table,0,5)) == 'VERK_') {
+            $sqlquery0 = "SELECT TAB_ID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '" . strtolower($table) . "'";
+            $rs0 = lmbdb_exec($db, $sqlquery0) or errorhandle(lmbdb_errormsg($db), $sqlquery0, $action, __FILE__, __LINE__);
             $reltable = parse_db_string($gtab["table"][lmbdb_result($rs0, 'TAB_ID')], 128);
-            if($reltable) {
+            if ($reltable) {
                 $sqlquery = "SELECT DISTINCT $reltable.ID,$reltable.LMB_SYNC_ID FROM $table,$reltable WHERE $table.ID = $reltable.ID AND $reltable.LMB_SYNC_SLAVE = $cliID AND $reltable.LMB_SYNC_ID IS NOT NULL ORDER BY $reltable.LMB_SYNC_ID";
             }
+        // relation table 1:n direct
+        }elseif(strtoupper(substr($table,0,4)) == 'LMB_'){
+            $md5tab = $table;
+            $sqlquery0 = "SELECT TAB_ID,VERKNTABID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".strtolower($md5tab)."'";
+            $rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+            $table = parse_db_string($gtab["table"][lmbdb_result($rs0, 'VERKNTABID')], 128);
+            $reltable = parse_db_string($gtab["table"][lmbdb_result($rs0, 'TAB_ID')], 128);
+            if($reltable) {
+                $sqlquery = "SELECT DISTINCT $table.ID,$table.LMB_SYNC_ID FROM $table WHERE $table.LMB_SYNC_SLAVE = $cliID AND $table.$md5tab IS NOT NULL AND $table.LMB_SYNC_ID IS NOT NULL ORDER BY $table.LMB_SYNC_ID";
+            }
+        // table
         }else{
             $sqlquery = "SELECT ID,LMB_SYNC_ID FROM $table WHERE LMB_SYNC_SLAVE = $cliID ORDER BY LMB_SYNC_ID";
         }
@@ -134,9 +150,18 @@ function lmb_getSyncValidatePhase2($table,$cliID=null,$master=null){
         $idv = 'LMB_SYNC_ID';
 
     }else{
-        // relation table
+        // relation table 1:n / n:m
         if(strtoupper(substr($table,0,5)) == 'VERK_') {
             $sqlquery = "SELECT ID FROM " . $table . " ORDER BY ID";
+            $idk = 'ID';
+            $idv = 'ID';
+            // relation table 1:n direct
+        }elseif(strtoupper(substr($table,0,4)) == 'LMB_') {
+            $md5tab = $table;
+            $sqlquery0 = "SELECT TAB_ID,VERKNTABID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".strtolower($md5tab)."'";
+            $rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+            $table = parse_db_string($gtab["table"][lmbdb_result($rs0, 'VERKNTABID')], 128);
+            $sqlquery = "SELECT ID FROM " . $table . " WHERE $md5tab IS NOT NULL ORDER BY ID";
             $idk = 'ID';
             $idv = 'ID';
         }else {
@@ -167,7 +192,7 @@ function lmb_getRemoteSyncValidate2Phase2($table,$cliID){
     $validate = array();
 
     // master relation table
-    if(strtoupper(substr($table,0,5)) != 'VERK_') {
+    if(strtoupper(substr($table,0,5)) != 'VERK_' AND strtoupper(substr($table,0,4)) != 'LMB_') {
         $sqlquery = "SELECT ID FROM $table WHERE LMB_SYNC_ID IS NULL AND LMB_SYNC_SLAVE = $cliID ";
         $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         while (lmbdb_fetch_row($rs)) {

@@ -751,11 +751,11 @@ function show_viewFields($viewid)
         echo "<td class='border-end m-0 p-1 px-2' 
 		OnMouseUp=\"lmbAjax_EditViewfield(event,this,'move','$key',viewsortid);viewsortid=null;\">
             <div class='row'>
-            <div class='col pe-0'><input class='form-control form-control-sm' name=\"view_field_$key\" 
+            <div class='col pe-0'><textarea class='form-control form-control-sm' name=\"view_field_$key\" 
             oncontextmenu=\"ZoomViewField(event,this,'$key');return false;\"
             OnMousedown=\"viewsortid=$key;iniDrag(event,document.getElementById('relationSign'),this);this.focus();return false;\" 
             OnChange=\"lmbAjax_EditViewfield(event,this,'field','key_$key','$key')\"
-            value='" . $gviewfields["fieldname"][$key] . "'>
+            >" . $gviewfields["fieldname"][$key] . "</textarea>
             </div>
             <div class='col-auto ps-1'>
             <i class=\"lmb-icon lmb-close-alt align-middle\" OnClick=\"lmbAjax_EditViewfield(event,this,'del','key_$key')\" style=\"cursor:pointer;\"></i>

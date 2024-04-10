@@ -338,10 +338,9 @@ function lmb_custmenuDetail(&$custmenu,$params){
         foreach ($gsnap as $tableid => $snapgroup) {
             $tabgroupOptions = '';
             foreach ($snapgroup["id"] as $snapkey => $snapid) {
-                #if($gsnap[$tableid]["glob"][$snapkey]) {
+                if($gsnap[$tableid]["type"][$snapid] == 2){continue;}
                 if($custmenu['name'][$id] == $snapkey){$SELECTED = 'SELECTED';}else{$SELECTED = '';}
                 $tabgroupOptions .= "<option value=\"{$snapid}\" $SELECTED>{$snapgroup["name"][$snapkey]}</option>";
-                #}
             }
             if ($tabgroupOptions) {
                 echo "<optgroup label=\"{$gtab['desc'][$tableid]}\">{$tabgroupOptions}</optgroup>";
@@ -623,7 +622,7 @@ function lmb_custmenu(&$custmenu,$linkid,$parent){
                 }
                 $cli = "<a onclick=\"lmb_loadMenueDetail($id)\"><div style=\"width:15px\" border=\"0\" class=\"lmb-icon lmb-edit\"></div></a>";
             }else{
-                $cl = "class=\"lmbMenuHeaderNav\"";
+                $cl = "lmbMenuHeaderNav";
             }
 
             $name = '';
@@ -651,7 +650,7 @@ function lmb_custmenu(&$custmenu,$linkid,$parent){
 
             echo "<tr title=\"".$types[$custmenu['typ'][$key]]."\">
             <td>$cli</td>
-            <td $cl><input $readonly type=\"text\" style=\"width:100%\" value=\"".$name."\" onchange=\"lmb_loadMenueditor(this,$id,'$parent','update')\"></td>
+            <td class=\"$cl\"><input $readonly type=\"text\" class=\"form-control\" style=\"width:100%\" value=\"".$name."\" onchange=\"lmb_loadMenueditor(this,$id,'$parent','update')\"></td>
             <td align=\"right\"><a onclick=\"lmb_loadMenueditor(null,$id,'$parent','delete')\"><i class=\"lmb-icon lmb-trash\" border=\"0\"></i></a></td>
             <td><a onclick=\"lmb_loadMenueditor(null,$id,'$parent','up')\"><i class=\"lmb-icon lmb-long-arrow-up\" border=\"0\"></i></a></td>
             <td><a onclick=\"lmb_loadMenueditor(null,$id,'$parent','down')\"><i class=\"lmb-icon lmb-long-arrow-down\" border=\"0\"></i></a></td>

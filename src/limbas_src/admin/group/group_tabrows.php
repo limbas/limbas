@@ -24,7 +24,7 @@ if ($gtab["typ"][$gtabid] == 5) {
 
     <div ID="table_<?= $gtabid ?>" class="container-fluid w-100 px-0 pt-1">
         <table class="table table-sm table-striped">
-            <thead class="sticky-top bg-white mt-1">
+            <thead class="sticky-top bg-contrast mt-1">
             <tr>
                 <td colspan="4" class="align-top">
                     <table>

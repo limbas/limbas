@@ -7,22 +7,7 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
-
 set_time_limit(1200); #20min
-
-if($DBA["LMHOST"] == $DBA["DBHOST"] OR $DBA["DBHOST"] == "127.0.0.1" OR $DBA["DBHOST"] == "localhost"){
-	$bu["path"] = $DBA["DBPATH"];
-}else{
-	$bu["path"] = "ssh ".$DBA["DBHOST"]." ".$DBA["DBPATH"];
-	$bu["sshpath"] = "ssh ".$DBA["DBHOST"];
-}
-
-$bu["server"] = $DBA["DBHOST"];
-$bu["database"] = $DBA["DBNAME"];
-$bu["user"] = $DBA["DBCUSER"];
-$bu["pass"] = $DBA["DBCPASS"];
-$bu["host"] = $DBA["DBHOST"];
 
 
 if(!$umgvar){
@@ -33,8 +18,6 @@ if(!$umgvar){
 		$umgvar[lmbdb_result($rs,"FORM_NAME")] = lmbdb_result($rs,"NORM");
 	}
 }
-
-
 
 # ---- lösche Backups ----
 function delete_backup($server,$location,$path=null,$job=null){
@@ -67,10 +50,17 @@ function delete_backup($server,$location,$path=null,$job=null){
 	}
 }
 
+function delete_backup_cronjob($del_job){
+    global $db;
+
+	$sqlquery = "DELETE FROM LMB_CRONTAB WHERE ID = ".parse_db_int($del_job)." AND KATEGORY = 'BACKUP'";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
 # ---- abgelaufene Backups löschen ----
 function delete_backup_list($days,$cron_id,$path){
 	global $db;
-	global $bu;
 
 	if($date = convert_stamp(mktime(0,0,0,date("m"),date("d")-$days,date("Y")))){
 		$sqlquery = "SELECT * FROM LMB_HISTORY_BACKUP WHERE ERSTDATUM < '".$date."' AND CRON_ID = $cron_id";
@@ -90,7 +80,7 @@ function delete_backup_list($days,$cron_id,$path){
 function fill_backup_history($out,$path,$typ){
 	global $umgvar;
 	global $db;
-	global $bu;
+	global $DBA;
 	
 	if($out[0] == "OK"){
 		$res = LMB_DBDEF_TRUE;
@@ -118,8 +108,8 @@ function fill_backup_history($out,$path,$typ){
 	if(!$size){$size = 0;}
 	if(!$logpage){$logpage = 0;}
 
-	if($path['server'] == "localhost" AND $DBA['LMHOST'] != $bu['server']){
-		$path['server'] = $bu['server'];
+	if($path['server'] == "localhost" AND $DBA['LMHOST'] != $DBA["DBHOST"]){
+		$path['server'] = $DBA["DBHOST"];
 	}
 	if($path['scppath']){
 		$store = $path['scppath'].".$ext";
@@ -135,6 +125,48 @@ function fill_backup_history($out,$path,$typ){
 	if(!$rs) {$commit = 1;}
 
 	return $out;
+}
+
+function add_backup_cronjob($path1,$path2,$cron,$art=1,$device=1,$medium=1,$alive=31){
+
+    global $db;
+
+    # ---- Database Backup ----
+    if(!$path1 OR $path1 == "localhost"){
+        $path1 = "localhost:".$umgvar["pfad"]."/BACKUP";
+    }
+
+	if($art == 1){
+		$desc .= "Complete ";
+	}elseif($art == 2){
+		$desc .= "Incremental ";
+	}elseif($art == 3){
+		$desc .= "Log ";
+	}
+
+	if($device == 1){
+		$desc .= "Internal Database Backup ";
+	}elseif($device == 2){
+		$desc .= "Limbas Text Export ";
+	}
+
+	if($medium == 1){
+		$desc .= "to File";
+	}elseif($medium == 2){
+		$desc .= "to Tape";
+	}
+
+	if(!preg_match("/^[0-9]{1,4}$/",$alive)){
+		$alive = 31;
+	}
+
+	$val = "int_backup,1;device,$device;art,$art;medium,$medium;path1,$path1;path2,$path2";
+
+	$NEXTID = next_db_id("LMB_CRONTAB");
+	$sqlquery = "INSERT INTO LMB_CRONTAB (ID,KATEGORY,START,VAL,DESCRIPTION,ACTIV,ALIVE) VALUES($NEXTID,'BACKUP','$cron[1];$cron[2];$cron[3];$cron[4];$cron[5]','$val','$desc',".LMB_DBDEF_TRUE.",$alive)";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	#if(!update_backup_crontab()){lmb_alert("no permission to /etc/crontab\\ncheck it manualy");};
 }
 
 
@@ -222,127 +254,78 @@ function update_backup_crontab(){
 }
 
 
-# --- Backup löschen ---
-if($delete_backup){
-	$sqlquery = "SELECT * FROM LMB_HISTORY_BACKUP WHERE ID = $delete_backup";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	$bzm = 1;
-	if(lmbdb_fetch_row($rs)) {
-		if(delete_backup(lmbdb_result($rs,"SERVER"),lmbdb_result($rs,"LOCATION"))){
-			$sqlquery1 = "DELETE FROM LMB_HISTORY_BACKUP WHERE ID = ".lmbdb_result($rs,"ID");
-			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-			if(!$rs1) {$commit = 1;}
-		}
-	}
-}
-
-
-
 # ---- Database Backup ----
-if(!$path1 OR $path1 == "localhost"){
-	$path1 = "localhost:".$umgvar["pfad"]."/BACKUP";
+function lmb_backup_database($path1=null,$path2=null,$medium=1,$device=1,$art=1){
+
+    global $umgvar;
+    global $message;
+    global $DBA;
+
+
+    if (!$path1 or $path1 == "localhost") {
+        $path1 = "localhost:" . DEPENDENTPATH . "BACKUP";
+    }
+
+    if ($device == 1) {
+        #--- DB Intern Backup ---
+        if ($art == 1) {
+            $typ = "DATA";
+        } elseif ($art == 2) {
+            $typ = "PAGES";
+        } elseif ($art == 3) {
+            $typ = "LOG";
+        }
+
+        $path = set_backup_path($medium, $path1, $path2, $typ);
+        if ($path) {
+            $medium = create_medium($path, $typ);
+        }
+        if ($medium) {
+            $out = backup_data($medium, $path, $typ);
+            $out2 = delete_medium($path["medname"], $typ);
+        }
+        if ($path["scp"] and $path["path"]) {
+            $sys = "scp " . $path["path"] . ".gz " . $path["scp"];
+            $ex = `$sys`;
+            if (file_exists($path["path"] . ".gz")) {
+                unlink($path["path"] . ".gz");
+            }
+        }
+        if ($message = fill_backup_history($out, $path, $typ)) {
+            $message = implode("<br>", $message);
+        }
+        # ---- text base Backup ----
+    } elseif ($device == 2) {
+        $action1 = "all";
+        require(COREPATH . 'admin/tools/export.dao');
+        $path = set_backup_path(1, $path1, 0, "TXT");
+        if ($DBA["DBHOST"] != $DBA["LMHOST"]) {
+            $path1 = "localhost:" . $umgvar["pfad"] . "/BACKUP";
+            $path["path"] = lmb_substr($path_backup, 0, lmb_strlen($path_backup) - 4);
+        }
+
+        $out[7] = filesize($path_backup);
+        $out[11] = $path["path"] . ".tar";
+        $out[10] = $path["medname"];
+        fill_backup_history($out, $path, "TXT");
+        if ($DBA["DBHOST"] != $DBA["LMHOST"]) {
+            if ($path['scp'] and $path["scppath"]) {
+                $sys = "scp " . $path_backup . " " . $path["scppath"] . ".tar";
+                $ex = `$sys`;
+                unlink($path_backup);
+            } elseif ($path["path"]) {
+                $sys = "mv " . $path_backup . " " . $path["path"] . ".tar";
+                $ex = `$sys`;
+            }
+        }
+    }
+    # -- lösche alte Backups ---
+    if ($backup_alive and $cron_id) {
+        delete_backup_list($backup_alive, $cron_id, $path);
+    }
+
+
+
 }
-
-if($int_backup){
-	if($device == 1){
-		#--- DB Intern Backup ---
-		if($art == 1){
-			$typ = "DATA";
-		}elseif($art == 2){
-			$typ = "PAGES";
-		}elseif($art == 3){
-			$typ = "LOG";
-		}
-
-		$path = set_backup_path($medium,$path1,$path2,$typ);
-		if($path){$medium = create_medium($path,$typ);}
-		if($medium){
-			$out = backup_data($medium,$path,$typ);
-			$out2 = delete_medium($path["medname"],$typ);
-		}
-		if($path["scp"] AND $path["path"]){
-			$sys = "scp ".$path["path"].".gz ".$path["scp"];
-			$ex = `$sys`;
-			if(file_exists($path["path"].".gz")){
-				unlink($path["path"].".gz");
-			}
-		}
-		if($message = fill_backup_history($out,$path,$typ)){
-			$message = implode("<br>",$message);
-		}
-	# ---- text base Backup ----
-	}elseif($device == 2){
-		$action1 = "all";
-		require(COREPATH . 'admin/tools/export.dao');
-		$path = set_backup_path(1,$path1,0,"TXT");
-		if($DBA["DBHOST"] != $DBA["LMHOST"]){
-			$path1 = "localhost:".$umgvar["pfad"]."/BACKUP";
-			$path["path"] = lmb_substr($path_backup,0,lmb_strlen($path_backup)-4);
-		}
-
-		$out[7] = filesize($path_backup);
-		$out[11] = $path["path"].".tar";
-		$out[10] = $path["medname"];
-		fill_backup_history($out,$path,"TXT");
-		if($DBA["DBHOST"] != $DBA["LMHOST"]){
-			if($path['scp'] AND $path["scppath"]){
-				$sys = "scp ".$path_backup." ".$path["scppath"].".tar";
-				$ex = `$sys`;
-				unlink($path_backup);
-			}elseif($path["path"]){
-				$sys = "mv ".$path_backup." ".$path["path"].".tar";
-				$ex = `$sys`;
-			}
-		}
-	}
-	# -- lösche alte Backups ---
-	if($backup_alive AND $cron_id){
-		delete_backup_list($backup_alive,$cron_id,$path);
-	}
-}
-
-
-
-# ---- Cron Job löschen ----
-if($del_job){
-	$sqlquery = "DELETE FROM LMB_CRONTAB WHERE ID = $del_job AND KATEGORY = 'BACKUP'";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	#if(!update_backup_crontab()){lmb_alert("no permission to /etc/crontab\\ncheck it manualy");};
-}elseif($cron_backup){
-	if($art == 1){
-		$desc .= "Complete ";
-	}elseif($art == 2){
-		$desc .= "Incremental ";
-	}elseif($art == 3){
-		$desc .= "Log ";
-	}
-
-	if($device == 1){
-		$desc .= "Internal Database Backup ";
-	}elseif($device == 2){
-		$desc .= "Limbas Text Export ";
-	}
-
-	if($medium == 1){
-		$desc .= "to File";
-	}elseif($medium == 2){
-		$desc .= "to Tape";
-	}
-
-	if(!preg_match("/^[0-9]{1,4}$/",$alive)){
-		$alive = 31;
-	}
-
-	$val = "int_backup,1;device,$device;art,$art;medium,$medium;path1,$path1;path2,$path2";
-
-	$NEXTID = next_db_id("LMB_CRONTAB");
-	$sqlquery = "INSERT INTO LMB_CRONTAB (ID,KATEGORY,START,VAL,DESCRIPTION,ACTIV,ALIVE) VALUES($NEXTID,'BACKUP','$cron_1;$cron_2;$cron_3;$cron_4;$cron_5','$val','$desc',".LMB_DBDEF_TRUE.",$alive)";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	#if(!update_backup_crontab()){lmb_alert("no permission to /etc/crontab\\ncheck it manualy");};
-}
-
 
 ?>

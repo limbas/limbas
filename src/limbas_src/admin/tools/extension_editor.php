@@ -28,7 +28,7 @@ if ($extsave AND $fvalue AND $fpath) {
     <meta charset="UTF-8">
     <meta HTTP-EQUIV="Content-Type" content="text/html; charset=UTF-8">
     <title></title>
-    <link rel="stylesheet" type="text/css" href="assets/css/<?=$session['legacyCss']?>?v=<?=$umgvar["version"]?>">
+    <link rel="stylesheet" type="text/css" href="<?=$session['legacyCss']?>?v=<?=$umgvar["version"]?>">
     <script src="assets/vendor/codemirror/lib/codemirror.js?v=<?=$umgvar["version"]?>"></script>
     <link rel="stylesheet" href="assets/vendor/codemirror/lib/codemirror.css?v=<?=$umgvar["version"]?>">
     <script src="assets/vendor/codemirror/addon/edit/matchbrackets.js?v=<?=$umgvar["version"]?>"></script>

@@ -183,18 +183,32 @@ function pool_select_add($select_add,$wert,$keywords,$gtabid,$field_id,$ID,$leve
 		if(lmbdb_fetch_row($rs1)){
 			return lmbdb_result($rs1,"ID");
 		}else{
-			/* --- Next Sort-ID ---------------------------------------- */
+			// Next Sort-ID
 			lmb_StartTransaction();
 			$sqlquery = "SELECT MAX(SORT) AS NEXTSORT FROM ".$typ."_W WHERE POOL = ".$gfield[$gtabid]["select_pool"][$field_id]." AND LEVEL = ".parse_db_int($level_id);
 			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$rs) {$commit = 1;}
 			$NEXTSORT = lmbdb_result($rs,"NEXTSORT") + 1;
-			/* --- Next ID ---------------------------------------- */
+
+            // Next ID
 			$NEXTID = next_db_id($typ."_W");
+
+            // default type
+            if($gfield[$gtabid]["field_type"][$field_id] == 19){
+                if($gfield[$gtabid]["select_defaulttype"][$field_id]){
+                    $sqlf[] = 'TYPE';
+                    $sqlv[] = $gfield[$gtabid]["select_defaulttype"][$field_id];
+                }
+            }
+
+            if($sqlf){
+                $sqlf = ','.implode(',',$sqlf);
+                $sqlv = ','.implode(',',$sqlv);
+            }
 			
-			$sqlquery = "INSERT INTO ".$typ."_W (ID,SORT,$fieldname,KEYWORDS,ERSTUSER,POOL,LEVEL) VALUES($NEXTID,$NEXTSORT,'".parse_db_string($wert,255)."','".parse_db_string($keywords,250)."',{$session["user_id"]},".$gfield[$gtabid]["select_pool"][$field_id].",".parse_db_int($level_id).")";
+			$sqlquery = "INSERT INTO ".$typ."_W (ID,SORT,$fieldname,KEYWORDS,ERSTUSER,POOL,LEVEL $sqlf) VALUES($NEXTID,$NEXTSORT,'".parse_db_string($wert,255)."','".parse_db_string($keywords,250)."',{$session["user_id"]},".$gfield[$gtabid]["select_pool"][$field_id].",".parse_db_int($level_id)." {$sqlv})";
 			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			if(!$rs) {$commit = 1;}
+            if(!$rs) {$commit = 1;}
 			$select_id = $NEXTID;
 			if($gfield[$gtabid]["data_type"][$field_id] == 31 OR $gfield[$gtabid]["data_type"][$field_id] == 32){
 				$fs_sel[] = $select_id;
@@ -652,9 +666,10 @@ function pool_select_update_old($gtabid,$field_id,$ID,$fs_sel){
                     static $pool_setting;
                     if(!$pool_setting) {
                         // Poolsettings
-                        $sqlquery = "SELECT {$tabtyp}_P.MULTIMODE FROM {$tabtyp}_P WHERE ID = " . $gfield[$gtabid]["select_pool"][$field_id];
-                        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-                        $pool_multimode = lmbdb_result($rs, "MULTIMODE");
+                        $pool_multimode = $GLOBALS['gselectpool'][$tabtyp]['multimode'][$gfield[$gtabid]["select_pool"][$field_id]];
+                        #$sqlquery = "SELECT {$tabtyp}_P.MULTIMODE FROM {$tabtyp}_P WHERE ID = " . $gfield[$gtabid]["select_pool"][$field_id];
+                        #$rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                        #$pool_multimode = lmbdb_result($rs, "MULTIMODE");
                         $pool_setting = 1;
                     }
 
@@ -908,9 +923,10 @@ function pool_select_update($gtabid,$field_id,$ID,$change_array){
 
     // Poolsettings / multiple mode
     #if ($gfield[$gtabid]['field_type'][$field_id] == 19) {
-        $sqlquery = "SELECT {$tabtyp}_P.MULTIMODE,{$tabtyp}_P.MULTIMODE FROM {$tabtyp}_P WHERE ID = " . $gfield[$gtabid]["select_pool"][$field_id];
-        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-        $multimode = lmbdb_result($rs, "MULTIMODE");
+        $multimode = $GLOBALS['gselectpool'][$tabtyp]['multimode'][$gfield[$gtabid]["select_pool"][$field_id]];
+        #$sqlquery = "SELECT {$tabtyp}_P.MULTIMODE,{$tabtyp}_P.MULTIMODE FROM {$tabtyp}_P WHERE ID = " . $gfield[$gtabid]["select_pool"][$field_id];
+        #$rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        #$multimode = lmbdb_result($rs, "MULTIMODE");
     #}
 
     //  get old value if needed

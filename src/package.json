@@ -15,10 +15,10 @@
   "license": "GPL-2.0",
 
   "dependencies": {
-    "bootstrap": "5.1.3",
+    "bootstrap": "^5.3.3",
     "codemirror": "5.21.0",
     "colresizable": "1.6.0",
-    "datatables.net-bs5": "1.11.3",
+    "datatables.net-bs5": "2.0.1",
     "fontawesome-legacy": "npm:font-awesome@4.7.0",
     "@fortawesome/fontawesome-free": "6.1.0",
     "jquery": "3.2.1",
@@ -26,7 +26,7 @@
     "select2": "4.0.13",
     "spectrum-colorpicker": "^1.8.1",
     "sql-formatter": "11.0.0",
-    "tinymce": "5.5.1",
+    "tinymce": "^6.8.3",
     "tinymce-i18n": "^22.8.26",
     "gridstack": "^6.0.2",
     "chart.js": "^3.9.1"
@@ -40,7 +40,7 @@
     "localwatch": "npm-run-all --parallel lwatch:*",
     "watch:js": "onchange -v \"./limbas_src/resources/**/*.js\" -- npm run build:js",
     "build:js": "uglifyjs-folder ./limbas_src/resources/js --output ./public/assets/js --each --keep-fnames -x .js",
-    "build:vendor": "mkdir -p public/assets/fonts && vendor-copy && sed -i 's/if(FE/if(false/g' public/assets/vendor/tinymce/tinymce.min.js",
+    "build:vendor": "mkdir -p public/assets/fonts && vendor-copy && sed -i 's/oB=\"CSS1Compat\"!/oB=false=/g' public/assets/vendor/tinymce/tinymce.min.js",
     "watch": "npm-run-all --parallel watch:*",
     "build": "npm-run-all clean build:*"
   },
@@ -48,7 +48,6 @@
     "clean-css-cli": "^5.6.2",
     "pegjs": "^0.10.0",
     "phpegjs": "^1.0.0-beta7",
-    "node-sass": "^7.0.3",
     "uglify-js": "^3.17.2",
     "uglifyjs-folder": "3.2.0",
     "onchange": "^7.1.0",
@@ -149,8 +148,8 @@
       "to": "public/assets/vendor/datatables/License.txt"
     },
     {
-      "from": "node_modules/datatables.net/js/jquery.dataTables.js",
-      "to": "public/assets/vendor/datatables/jquery.dataTables.js"
+      "from": "node_modules/datatables.net/js/dataTables.min.js",
+      "to": "public/assets/vendor/datatables/dataTables.min.js"
     },
     {
       "from": "node_modules/datatables.net-bs5/css/dataTables.bootstrap5.min.css",
@@ -287,6 +286,10 @@
     {
       "from": "node_modules/tinymce/plugins",
       "to": "public/assets/vendor/tinymce/plugins"
+    },
+    {
+      "from": "node_modules/tinymce/models/dom/model.min.js",
+      "to": "public/assets/vendor/tinymce/models/dom/model.min.js"
     },
     {
       "from": "node_modules/tinymce-i18n/langs5/de.js",

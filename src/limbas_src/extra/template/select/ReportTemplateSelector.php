@@ -37,7 +37,7 @@ class ReportTemplateSelector extends TemplateSelector
 
                 if ($greportlist[$gtabid]["is_template"][$key]) {
 
-                    $reportlist = array_merge($reportlist, $this->getPartsListOfTemplate($key, $gtabid, intval($greportlist[$gtabid]['parent_id'][$key]), json_decode($greportlist[$gtabid]['saved_template'][$key], true), $duplicateFilter));
+                    $reportlist = array_merge($reportlist, $this->getPartsListOfTemplate($key, $gtabid, intval($greportlist[$gtabid]['parent_id'][$key]), json_decode($greportlist[$gtabid]['saved_template'][$key], true) ?: [], $duplicateFilter));
 
                 } else {
 
@@ -129,7 +129,7 @@ class ReportTemplateSelector extends TemplateSelector
         return parent::resolveSelect($params);
     }
 
-    protected function getFinalResolvedParameters(int $elementId, int $gtabid, int $id, $use_record, $resolvedTemplateGroups): array
+    protected function getFinalResolvedParameters(int $elementId, int $gtabid, ?int $id, $use_record, $resolvedTemplateGroups): array
     {
         global $greportlist;
 

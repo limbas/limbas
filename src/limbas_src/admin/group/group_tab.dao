@@ -507,6 +507,7 @@ if(!$_gtab["table"]){return;}
 foreach($_gtab["tab_id"] as $key => $value){
         
     // #########################--- eigene Rechte -----#########################
+    #if (!($session["superadmin"] AND $umgvar['override_group_perm'])){
     if ($session["user_id"] != 1 AND !$session["superadmin"]) {
         
         $sqlquery = "SELECT
@@ -567,6 +568,7 @@ foreach($_gtab["tab_id"] as $key => $value){
     }
     
     // ##################### --- Rechte Obergruppe ----- #########################
+    #if ($group_level AND !($session["superadmin"] AND $umgvar['override_group_perm'])){
     if ($group_level AND $session["user_id"] != 1 AND !$session["superadmin"]) {
         
         // is view

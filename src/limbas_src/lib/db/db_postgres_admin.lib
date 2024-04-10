@@ -299,12 +299,14 @@ function dbq_3($p){
  * @return sql string
  */
 function dbq_11($p){
-	$p[5] = "DELETE RESTRICT";
-	
+    if(!$p[5]) {
+        $p[5] = "RESTRICT";
+    }
+
 	return "ALTER TABLE ".$p[0]." 
 		ADD CONSTRAINT ".$p[4]." FOREIGN KEY (".$p[1].") 
 		REFERENCES ".$p[2]."(".$p[3].") 
-		ON ".$p[5];
+		ON DELETE ".$p[5];
 }
 
 

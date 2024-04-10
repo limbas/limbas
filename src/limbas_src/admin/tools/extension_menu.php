@@ -226,7 +226,7 @@ function SingleFileUpload(temp_file,act_file,progressbar,numberFiles){
     formData.append("todo","uploadFileFromDesktop");
     
     client.onerror = function(e) {
-        alert("onError");
+        lmbShowErrorMsg("onError");
     };
  
     client.onload = function(e) {
@@ -235,13 +235,13 @@ function SingleFileUpload(temp_file,act_file,progressbar,numberFiles){
     };
  
     client.upload.onprogress = function(e) {
-        var p = Math.round((100 / e.total * e.loaded)/numberFiles*numberFilesUploaded);
-       	progressbar.value = p;     
+        const p = Math.round((100 / e.total * e.loaded) / numberFiles * numberFilesUploaded);
+        progressbar.value = p;
        	document.getElementById("percent").innerHTML = p + "%";
     };
  
     client.onabort = function(e) {
-        alert("Upload aborted!");
+        lmbShowErrorMsg("Upload aborted!");
     };
     
     client.onreadystatechange = function(e) {
@@ -295,14 +295,14 @@ function uploadFileFromDesktop(){
 
 function uploadAbort(){
     if(client instanceof XMLHttpRequest){
-	client.abort();
+	    client.abort();
     }
 }
 
 //Drag and Drop move file
 function moveFileDragAndDrop(src,dest,id){
     if(src == null || dest == null || id == null){
-	return;
+	    return;
     }
     
     var formData = new FormData();
@@ -314,11 +314,11 @@ function moveFileDragAndDrop(src,dest,id){
     formData.append("todo","moveFileDragAndDrop");
     
     client.onerror = function(e) {
-	alert("onError");
+        lmbShowErrorMsg("onError");
     };
         
     client.onabort = function(e) {
-        alert("Upload aborted!");
+        lmbShowErrorMsg("Upload aborted!");
     };
 
     client.onreadystatechange = function(e) {

@@ -34,16 +34,21 @@ function multiselectRefreshCount($gtabid=null,$field_id=null){
 
 
 
-function relationRefreshCountField($tabname,$fieldname,$md5tab,$verkntab,$datatype,$archive){
+function relationRefreshCountField($tabname,$fieldname,$md5tab,$verkntab,$verkntabletype,$datatype,$archive){
 	global $db;
 
     // direct 1:n relation
     if ($datatype == 25) {
+
+        // skip backward relation
+        if($verkntabletype == 2) {
+            return;
+        }
         if ($archive == 2) {
             // ignore archived relations
-            $sqlquery = "UPDATE $tabname SET $fieldname = (SELECT COUNT(*) FROM $verkntab WHERE " . $verkntab . ".$md5tab = ".$tabname.".ID AND " . $verkntab . ".DEL = FALSE) WHERE ID = ID";
+            $sqlquery = "UPDATE $tabname SET $fieldname = (SELECT COUNT(*) FROM $verkntab WHERE " . $verkntab . ".$md5tab = " . $tabname . ".ID AND " . $verkntab . ".DEL = FALSE) WHERE ID = ID";
         } else {
-            $sqlquery = "UPDATE $tabname SET $fieldname = (SELECT COUNT(*) FROM $verkntab WHERE " . $verkntab . ".$md5tab = ".$tabname.".ID) WHERE ID = ID";
+            $sqlquery = "UPDATE $tabname SET $fieldname = (SELECT COUNT(*) FROM $verkntab WHERE " . $verkntab . ".$md5tab = " . $tabname . ".ID) WHERE ID = ID";
         }
 
     // relations with md5 relation table
@@ -66,7 +71,10 @@ function relationRefreshCount($gtabid=null,$field_id=null){
 	
 	if($gtabid){$whr = "AND LMB_CONF_TABLES.TAB_ID = $gtabid";}
 	if($field_id){$whr .= " AND LMB_CONF_FIELDS.FIELD_ID = $field_id";}
-	$sqlquery = "SELECT DISTINCT LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.TAB_ID,LMB_CONF_FIELDS.FIELD_NAME,LMB_CONF_FIELDS.FIELD_ID,LMB_CONF_FIELDS.DATA_TYPE,LMB_CONF_FIELDS.MD5TAB,LMB_CONF_FIELDS.VERKNTABID,LMB_CONF_FIELDS.VERKNGROUP FROM LMB_CONF_TABLES,LMB_CONF_FIELDS WHERE LMB_CONF_FIELDS.TAB_ID = LMB_CONF_TABLES.TAB_ID AND LMB_CONF_FIELDS.FIELD_TYPE = 11 $whr";
+	$sqlquery = "SELECT DISTINCT LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.TAB_ID,
+	LMB_CONF_FIELDS.FIELD_NAME,LMB_CONF_FIELDS.FIELD_ID,LMB_CONF_FIELDS.DATA_TYPE,LMB_CONF_FIELDS.MD5TAB,LMB_CONF_FIELDS.VERKNTABID,LMB_CONF_FIELDS.VERKNGROUP,LMB_CONF_FIELDS.VERKNTABLETYPE
+	FROM LMB_CONF_TABLES,LMB_CONF_FIELDS 
+	WHERE LMB_CONF_FIELDS.TAB_ID = LMB_CONF_TABLES.TAB_ID AND LMB_CONF_FIELDS.FIELD_TYPE = 11 $whr";
 
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	while(lmbdb_fetch_row($rs)){
@@ -81,7 +89,28 @@ function relationRefreshCount($gtabid=null,$field_id=null){
 	        $verkntab = dbf_4(lmbdb_result($rs1,"TABELLE"));
         }
 
-		relationRefreshCountField(dbf_4(lmbdb_result($rs,"TABELLE")),dbf_4(lmbdb_result($rs,"FIELD_NAME")),dbf_4(lmbdb_result($rs,"MD5TAB")),$verkntab,lmbdb_result($rs,"DATA_TYPE"),$archive);
+		relationRefreshCountField(dbf_4(lmbdb_result($rs,"TABELLE")),dbf_4(lmbdb_result($rs,"FIELD_NAME")),dbf_4(lmbdb_result($rs,"MD5TAB")),$verkntab,dbf_4(lmbdb_result($rs,"VERKNTABLETYPE")),lmbdb_result($rs,"DATA_TYPE"),$archive);
+	}
+}
+
+
+function usergroupRefreshCount($gtabid=null,$field_id=null){
+	global $db;
+
+	if($gtabid){$whr = "AND LMB_CONF_TABLES.TAB_ID = $gtabid";}
+	if($field_id){$whr .= " AND LMB_CONF_FIELDS.FIELD_ID = $field_id";}
+	$sqlquery = "SELECT DISTINCT LMB_CONF_TABLES.TABELLE, LMB_CONF_FIELDS.FIELD_NAME, LMB_CONF_TABLES.TAB_ID,LMB_CONF_FIELDS.FIELD_ID FROM LMB_CONF_TABLES,LMB_CONF_FIELDS WHERE LMB_CONF_FIELDS.TAB_ID = LMB_CONF_TABLES.TAB_ID AND LMB_CONF_FIELDS.FIELD_TYPE = 16 $whr";
+
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	while(lmbdb_fetch_row($rs)){
+        $tabid = lmbdb_result($rs,"TAB_ID");
+        $fieldid = lmbdb_result($rs,"FIELD_ID");
+        $tabname = strtoupper(lmbdb_result($rs,"TABELLE"));
+        $fieldname = strtoupper(lmbdb_result($rs,"FIELD_NAME"));
+
+        $sqlquery1 = "UPDATE $tabname SET $fieldname = (SELECT COUNT(*) RESULT FROM LMB_UGLST WHERE TABID = $tabid AND FIELDID = $fieldid AND DATID = $tabname.ID)";
+        $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+
 	}
 }
 

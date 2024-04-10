@@ -785,9 +785,9 @@ function delete_tab($tabid,$drop_physical=true) {
 	$sqlquery = "DELETE FROM LMB_GTAB_GROUPDAT WHERE TAB_ID = $tabid";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
-	$sqlquery = "DELETE FROM LMB_REMINDER WHERE TAB_ID = $tabid";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
+    $sqlquery = "DELETE FROM LMB_REMINDER WHERE LMB_REMINDER.TAB_ID = $tabid";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs) {$commit = 1;}
 	$sqlquery = "DELETE FROM LMB_GTAB_ROWSIZE WHERE TAB_ID = $tabid";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
@@ -1176,7 +1176,7 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 }
 
 /* --- Feld hinzufügen --------------------------------------------- */
-function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$spellingf,$default,$sort,$add_permission,$inherit_tab,$inherit_field,$import_typ='default',$extension=null,$wysiwyg=null){
+function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$spellingf,$default,$sort,$add_permission,$inherit_tab,$inherit_field,$import_typ='default',$extension=null,$wysiwyg=null,$add_datasync=null){
 // typ = 34 typ=1
 	global $db;
 	global $session;
@@ -1462,6 +1462,10 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	if($add_permission){
 		$commit = add_fieldPermission($gtabid,$field_id,$groupid);
 	}
+
+    if($add_datasync){
+        $commit = add_fieldDatasync($gtabid,$field_id);
+    }
 	
 	// create EXIF conf
 	if(lmb_strtolower($table) == 'ldms_meta'){
@@ -1912,6 +1916,26 @@ function add_fieldPermission($gtabid,$field_id,$tab_group){
 	
 	return $commit;
 }
+
+function add_fieldDatasync($gtabid,$field_id){
+	global $db;
+	global $umgvar;
+
+    $commit = false;
+    if(!$umgvar['sync_template']){return false;}
+    $templates = explode(',',$umgvar['sync_template']);
+    foreach($templates as $key => $templid){
+        $templid = trim($templid);
+        if(is_numeric($templid)){
+            $NEXTID = next_db_id("LMB_SYNC_CONF");
+            $sqlquery1 = "INSERT INTO LMB_SYNC_CONF (ID,TEMPLATE,TABID,FIELDID,MASTER,SLAVE) VALUES ($NEXTID,$templid,$gtabid,$field_id,".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.")";
+            $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+            if(!$rs1) {$commit = 1;}
+        }
+    }
+    return $commit;
+}
+
 
 function get_fieldname($atid,$ftid){
 	global $db;

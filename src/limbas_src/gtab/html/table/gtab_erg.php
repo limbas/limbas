@@ -29,13 +29,13 @@ if($GLOBALS["gLmbExt"]["ext_gtab_erg.inc"]){
 pop_header(null,$lang[425],$elementWidth);
 pop_left();
 echo "<table>
-<tr><td>".$lang[1445]."</td><td><input type=\"text\" onchange=\"document.form1.filter_reminder_from.value=this.value+' ';checktyp(11,'lmb_ReminderFilterFrom','','','',this.value)\" name=\"lmb_ReminderFilterFrom\" value=\"".$filter['reminder_from'][$gfrist]."\" MAX=16>
+<tr><td>".$lang[1445]."&nbsp;</td><td><input type=\"text\" onchange=\"document.form1.filter_reminder_from.value=this.value+' ';checktyp(11,'lmb_ReminderFilterFrom','','','',this.value)\" name=\"lmb_ReminderFilterFrom\" value=\"".$filter['reminder_from'][$gfrist]."\" MAX=16>
 <i class=\"lmb-icon lmb-edit-caret\" style=\"cursor:pointer\" onclick=\"lmb_datepicker(event,this,'lmb_ReminderFilterFrom',this.previousSibling.value,'".dateStringToDatepicker(setDateFormat(0,1))."',10);\"></i></td>
 </tr>
-<tr><td>".$lang[1446]."</td><td><input type=\"text\" onchange=\"document.form1.filter_reminder_to.value=this.value+' ';checktyp(11,'lmb_ReminderFilterTo','','','',this.value)\" name=\"lmb_ReminderFilterTo\" value=\"".$filter['reminder_to'][$gfrist]."\" MAX=16>
+<tr><td>".$lang[1446]."&nbsp;</td><td><input type=\"text\" onchange=\"document.form1.filter_reminder_to.value=this.value+' ';checktyp(11,'lmb_ReminderFilterTo','','','',this.value)\" name=\"lmb_ReminderFilterTo\" value=\"".$filter['reminder_to'][$gfrist]."\" MAX=16>
 <i class=\"lmb-icon lmb-edit-caret\" style=\"cursor:pointer\" onclick=\"lmb_datepicker(event,this,'lmb_ReminderFilterTo',this.previousSibling.value,'".dateStringToDatepicker(setDateFormat(0,1))."',10);\"></i></td>
 </tr>
-<tr><td>".$lang[1445]."</td><td><input type=\"text\" onchange=\"document.form1.filter_reminder_create.value=this.value+' ';checktyp(1,'lmb_ReminderFilterCreate','','','',this.value)\" name=\"lmb_ReminderFilterCreate\" value=\"".$filter['reminder_create'][$gfrist]."\" MAX=30></td></tr>
+<tr><td>".$lang[2389]."&nbsp;</td><td><input type=\"text\" onchange=\"document.form1.filter_reminder_create.value=this.value+' ';checktyp(1,'lmb_ReminderFilterCreate','','','',this.value)\" name=\"lmb_ReminderFilterCreate\" value=\"".$filter['reminder_create'][$gfrist]."\" MAX=30></td></tr>
 </table>
 ";
 pop_right();

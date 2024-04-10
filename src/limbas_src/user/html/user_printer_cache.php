@@ -62,7 +62,7 @@ if($print_selected && is_array($cache_select)) {
             continue;
         }
 
-        if (!lmbPrint($printer, null, $cache[$printer][$key]['file_id'], 1)) {
+        if (!lmbPrint($printer, null, $cache[$printer][$key]['file_id'], true)) {
             lmb_log::error('print failed');
             $errormsg = lmb_log::getLogMessage(true);
             lmb_alert(print_r($errormsg,1));
@@ -103,10 +103,10 @@ function select_all(val) {
 
     <ul class="nav nav-tabs">
         <li class="nav-item">
-            <a class="nav-link active bg-white'?>" href="main.php?action=user_printer_cache"><?=$lang[$LINK["name"][$LINK_ID['user_printer_cache']]]?></a>
+            <a class="nav-link active bg-contrast'?>" href="main.php?action=user_printer_cache"><?=$lang[$LINK["name"][$LINK_ID['user_printer_cache']]]?></a>
         </li>
     </ul>
-    <div class="tab-content border border-top-0 bg-white">
+    <div class="tab-content border border-top-0 bg-contrast">
         <div class="tab-pane active">
 
                 <table class="table table-sm table-striped mb-0">

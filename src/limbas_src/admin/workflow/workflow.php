@@ -19,7 +19,7 @@
 
         <?php if ($wflid): ?>
         
-        <table class="table table-sm table-striped mb-0 border bg-white">
+        <table class="table table-sm table-striped mb-0 border bg-contrast">
             <thead>
             <tr><th colspan="5"><?=$wfltask["wfl_name"]?></th>
             <tr>
@@ -80,7 +80,7 @@
 
         <?php else: ?>
 
-            <table class="table table-sm table-striped mb-0 border bg-white">
+            <table class="table table-sm table-striped mb-0 border bg-contrast">
                 
                 <?php if($workflow): ?>
                 <thead>

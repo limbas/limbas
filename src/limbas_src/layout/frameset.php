@@ -51,7 +51,7 @@ require_once (COREPATH . 'lib/context.lib');
 
 <body>
 
-<link rel="stylesheet" type="text/css" href="assets/css/<?=$session['css']?>?v=<?=$umgvar["version"]?>">
+<link rel="stylesheet" type="text/css" href="<?=$session['css']?>?v=<?=$umgvar["version"]?>">
 <script type="text/javascript" src="assets/js/lib/global.js?v=<?=$umgvar["version"]?>"></script>
 <script type="text/javascript" src="assets/vendor/jquery/jquery.min.js?v=<?=$umgvar["version"]?>"></script>
 <script src="assets/js/layout/nav.js?v=<?=$umgvar["version"]?>"></script>

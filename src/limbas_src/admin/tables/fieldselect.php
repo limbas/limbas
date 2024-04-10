@@ -89,6 +89,7 @@
 <input type="hidden" name="select_keyw_change">
 <input type="hidden" name="select_sort">
 <input type="hidden" name="select_sort_d">
+<input type="hidden" name="select_defaulttype">
 <input type="hidden" name="select_del">
 <input type="hidden" name="select_default">
 <input type="hidden" name="select_hide">
@@ -99,6 +100,7 @@
 <input type="hidden" name="viewtyp">
 <input type="hidden" name="tag_mode">
 <input type="hidden" name="multi_mode">
+<input type="hidden" name="recursive_mode">
 
 <input type="hidden" name="level_id" value="<?= isset($level_id) ? $level_id : 0 ?>">
 
@@ -109,18 +111,18 @@
         <ul class="nav nav-tabs">
             <?php if(($fieldid AND $result_fieldselect['field_type'] == 4) OR !$fieldid){?>
             <li class="nav-item">
-                <a class="nav-link <?= ($typ !== 'LMB_ATTRIBUTE' && $viewtyp != 'tools') ? 'active bg-white' : ''?>" href="#" onclick="viewPoolTypes('LMB_SELECT')"><?=$lang[1830]?></a>
+                <a class="nav-link <?= ($typ !== 'LMB_ATTRIBUTE' && $viewtyp != 'tools') ? 'active bg-contrast' : ''?>" href="#" onclick="viewPoolTypes('LMB_SELECT')"><?=$lang[1830]?></a>
             </li>
             <?php }?>
             <?php if(($fieldid AND $result_fieldselect['field_type'] == 19) OR !$fieldid){?>
             <li class="nav-item">
-                <a class="nav-link <?= ($typ === 'LMB_ATTRIBUTE' && $viewtyp != 'tools') ? 'active bg-white' : ''?>" href="#" onclick="viewPoolTypes('LMB_ATTRIBUTE')"><?=$lang[2211]?></a>
+                <a class="nav-link <?= ($typ === 'LMB_ATTRIBUTE' && $viewtyp != 'tools') ? 'active bg-contrast' : ''?>" href="#" onclick="viewPoolTypes('LMB_ATTRIBUTE')"><?=$lang[2211]?></a>
             </li>
             <?php }?>
             <?php if($viewtyp == 'tools' || $pool) : ?>
 
             <li class="nav-item">
-                <a class="nav-link <?= ($viewtyp == 'tools') ? 'active bg-white ' : ''?>" href="#" onclick="document.form1.viewtyp.value='tools';document.form1.submit();">Tools</a>
+                <a class="nav-link <?= ($viewtyp == 'tools') ? 'active bg-contrast ' : ''?>" href="#" onclick="document.form1.viewtyp.value='tools';document.form1.submit();">Tools</a>
             </li>
             
             <?php endif; ?>
@@ -128,7 +130,7 @@
         </ul>
         
         
-        <div class="tab-content border border-top-0 bg-white">
+        <div class="tab-content border border-top-0 bg-contrast">
             <div class="tab-pane active">
                 
                 
@@ -192,13 +194,29 @@
                                         onchange="document.form1.select_sort.value='1'; document.form1.submit();"
                                         class="form-select form-select-sm d-inline w-75">
                                     <?php if ($typ == 'LMB_ATTRIBUTE') { ?>
-                                        <option
-                                        value="" <?= $result_fieldselect['sort'] == '' ? 'selected' : '' ?>><?= $lang[1838] ?></option><?php } ?>
+                                        <option value="" <?= $result_fieldselect['sort'] == '' ? 'selected' : '' ?>><?= $lang[1838] ?></option>
+                                    <?php } ?>
                                     <option value="SORT" <?= $result_fieldselect['sort'] == 'SORT' ? 'selected' : '' ?>><?= $lang[1837] ?></option>
                                     <option value="WERT ASC" <?= $result_fieldselect['sort'] == 'WERT ASC' ? 'selected' : '' ?>><?= $lang[1840] ?></option>
                                     <option value="WERT DESC" <?= $result_fieldselect['sort'] == 'WERT DESC' ? 'selected' : '' ?>><?= $lang[1839] ?></option>
                                 </select>
                             </div>
+
+                            <?php if ($typ == 'LMB_ATTRIBUTE' AND ($result_fieldselect['field_type'] == 19 OR $result_fieldselect['data_type'] == 32)) { ?>
+                            <div class="col-2">
+                                <?= $lang[1614] ?> <?= $lang[925] ?> <br>
+                                <select name="fsdefault"
+                                        onchange="document.form1.select_defaulttype.value='1'; document.form1.submit();"
+                                        class="form-select form-select-sm d-inline w-75">
+                                    <option value="0"><?=$lang[1246]?></option>
+                                    <option value="-1" disabled>-----------</option>
+                                    <?php foreach ($attributeTypes as $type => $name) {?>
+                                        <option value="<?=$type?>" <?= $result_fieldselect['defaulttype'] == $type ? 'selected' : '' ?>><?= $name ?></option>
+                                    <?php }?>
+
+                                </select>
+                            </div>
+                            <?php } ?>
 
                             <?php if ($result_fieldselect['field_type'] == 19 or $result_fieldselect['data_type'] == 32) { ?>
                                 <div class="col text-end">
@@ -208,6 +226,9 @@
                                     <input type="checkbox" <?= $result_pool['multi_mode'][$pool] ? 'checked' : '' ?>
                                            onchange="document.form1.multi_mode.value=1;document.form1.submit();"
                                            class="ms-3 me-2">Multiple-Mode
+                                    <input type="checkbox" <?= $result_pool['recursive_mode'][$pool] ? 'checked' : '' ?>
+                                           onchange="document.form1.recursive_mode.value=1;document.form1.submit();"
+                                           class="ms-3 me-2">Recusiv-Mode
                                 </div>
                             <?php } ?>
                         </div>
@@ -366,12 +387,13 @@
                             <td><input type="text" name="new_keyword" class="form-control form-control-sm"></td>
                             <?php if($typ == 'LMB_ATTRIBUTE') { ?>
                                 <td></td><td colspan="3">
-                                    <select name="new_fieldtype" onchange="if(this.value=='12'){$('#new_attrpool').show();}else{$('#new_attrpool').hide();};"  class="form-select form-select-sm"><option value="0"><?=$lang[1246]?></option><option value="-1">-----------</option>
+                                    <select name="new_fieldtype" onchange="if(this.value=='12'){$('#new_attrpool').show();}else{$('#new_attrpool').hide();};"  class="form-select form-select-sm">
+                                        <option value="0"><?=$lang[1246]?></option>
+                                        <option value="-1" disabled>-----------</option>
                                         <?php
-                                        foreach ($attributeTypes as $type => $name) {
-                                            echo "<option value=\"$type\">$name</option>";
-                                        }
-                                        ?>
+                                        foreach ($attributeTypes as $type => $name) {?>
+                                            <option value="<?=$type?>" <?= $result_fieldselect['defaulttype'] == $type ? 'selected' : ''?> ><?= $name?></option>
+                                        <?php } ?>
                                     </select>
                                     <select name="new_attrpool" id="new_attrpool" style="display:none" class="form-select form-select-sm">
                                         <?php

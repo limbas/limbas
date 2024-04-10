@@ -70,7 +70,7 @@ if($gfield[$gtabid]["field_name"][$field_id] AND $gtab["table"][$gtabid] AND $ID
         }else{
             $params = 1;
         }
-        echo lmb_ini_wysiwyg($formname,$gfield[$gtabid]["relext"][$field_id],null,$params);
+        echo lmb_ini_wysiwyg($formname,$gfield[$gtabid]["relext"][$field_id],null,$params, gtabid: intval($gtabid));
         ?>
 
 

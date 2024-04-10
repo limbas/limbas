@@ -28,12 +28,8 @@ $bgcolor1: $farbschemaWEB10;
 
 $sess-refresh-color: #e4d314 !default;
 
-@import '_lmbvariables';
-
-
 @import '_icons';
 
-$fa-font-path: '../fonts';
 @import 'fontawesome/scss/fontawesome';
 @import 'fontawesome/scss/solid';
 
@@ -58,7 +54,7 @@ body{
   font-size: $umgvarfontsize;
   font-family: $umgvarfont;
   background-color: $body-bg;
-  color: $farbschemaWEB2;
+  color: $body-color;
   margin: 0;
   padding: 0;
   height: 95%;
@@ -68,7 +64,7 @@ body{
 table{
   font-size: $umgvarfontsize;
   font-family: $umgvarfont;
-  color: $farbschemaWEB2;
+  color: $legacy-table-color;
 }
 
 /*global*/
@@ -598,12 +594,12 @@ table .lmbGtabTab {
 }
 
 td .lmbGtabTabActive {
-  color: $fontc7;
+  color: $lmbFontc7;
   font-size: $fontsize13;
 }
 
 .lmbGtabTabInactive, .lmbGtabTabActive {
-  color: $fontc3;
+  color: $lmbFontc3;
   font-size: $fontsize11;
   white-space: nowrap;
   overflow: visible;
@@ -672,7 +668,7 @@ td .lmbGtabTabSpace {
 
 .lmbGtabSubheaderActive{
   background-color:$farbschemaWEB8;
-  color:$fontc7;
+  color:$lmbFontc7;
   text-align:center;
   font-size:$fontsize11;
   white-space:nowrap;
@@ -687,7 +683,7 @@ td .lmbGtabTabSpace {
 
 .lmbGtabSubheaderInactive{
   background-color:$farbschemaWEB13;
-  color:$fontc3;
+  color:$lmbFontc3;
   text-align:center;
   font-size:$fontsize11;
   white-space:nowrap;
@@ -710,7 +706,7 @@ td .lmbGtabTabSpace {
 
 .lmbGtabTabulatorActive{
   background-color:$farbschemaWEB14;
-  color:$fontc7;
+  color:$lmbFontc7;
   font-size:$fontsize11;
   white-space:nowrap;
   overflow:visible;
@@ -728,7 +724,7 @@ td .lmbGtabTabSpace {
 
 .lmbGtabTabulatorInactive{
   background-color:$farbschemaWEB8;
-  color:$fontc7;
+  color:$lmbFontc7;
   font-size:$fontsize11;
   white-space:nowrap;
   overflow:visible;
@@ -761,7 +757,7 @@ td .lmbGtabTabSpace {
 
 .lmbGtabTabulatorLeftActive{
   background-color:$farbschemaWEB9;
-  color:$fontc7;
+  color:$lmbFontc7;
   font-size:$fontsize11;
   white-space:nowrap;
   overflow:visible;
@@ -775,7 +771,7 @@ td .lmbGtabTabSpace {
 
 .lmbGtabTabulatorLeftInactive{
   background-color:$farbschemaWEB13;
-  color:$fontc3;
+  color:$lmbFontc3;
   font-size:$fontsize11;
   white-space:nowrap;
   overflow:visible;
@@ -828,7 +824,7 @@ td .lmbGtabTabSpace {
 }
 
 .gtabHeaderSymbolTR{
-  background-color: $farbschemaWEB13;
+  background-color: $gtab-header-bg;
 }
 
 .gtabHeaderSymbolTD{
@@ -844,16 +840,16 @@ td .lmbGtabTabSpace {
 }
 
 .gtabHeaderInputINP {
-  background-image: url("../images/legacy/find.png");
+  background-image: $find-icon-path;
   padding-left:14px;
   background-repeat: no-repeat;
   background-position: 2px 3px;
   margin: 3px 0;
-  border:1px solid $farbschemaWEB1;
+  border:1px solid $bg-differ;
 }
 
 select.gtabHeaderInputINP {
-  background-color: white;
+  background-color: $bg-differ;
   padding: 0.1rem;
   padding-left:14px;
 }
@@ -1218,7 +1214,7 @@ table.hoverable tr.tabBody:hover {
 }
 
 .tabHpoolItemActive{
-  color:$fontc14;
+  color:$lmbFontc14;
   font-size:$fontsize11;
   white-space:nowrap;
   overflow:visible;
@@ -1276,7 +1272,7 @@ table.hoverable tr.tabBody:hover {
 
 .tabpoolItemActive{
   background-color:$farbschemaWEB13;
-  color:$fontc14;
+  color:$lmbFontc14;
   text-align:center;
   font-size:$fontsize11;
   white-space:nowrap;
@@ -1618,6 +1614,7 @@ TD {
 }
 
 SELECT {
+  color: $default-color;
   font-weight: normal;
   background-color: $farbschemaWEB13;
   border: 1px solid $farbschemaWEB3;
@@ -1634,6 +1631,7 @@ INPUT {
   border: 1px solid $farbschemaWEB3;
   font-size: $umgvarfontsize;
   background-color: $farbschemaWEB13;
+  color: $body-color;
 }
 
 INPUT:disabled {
@@ -1828,7 +1826,7 @@ th.fc-resourceName {
 
 .formeditorPanel {
   background-color:$farbschemaWEB8;
-  color: $fontc14;
+  color: $lmbFontc14;
   border:1px solid $farbschemaWEB3;
   width:240px;
 
@@ -1846,7 +1844,7 @@ th.fc-resourceName {
 .formeditorPanelHead {
   height:15px;
   padding:3px;
-  color:$fontc7;
+  color:$lmbFontc7;
   background-color:$farbschemaWEB7;
   text-align:left;
   margin-top:10px;
@@ -1924,7 +1922,7 @@ th.fc-resourceName {
 }
 
 .ui-widget-content {
-  color:$farbschemaWEB2;
+  color: $farbschemaWEB2;
   background-image: none;
 }
 
@@ -2688,7 +2686,8 @@ label input {
   .lmbGtabSubheaderActive,
   .lmbGtabSubheaderInactive {
     padding: 0.5rem 1rem;
-    background-color: #fff;
+    background-color: $farbschemaWEB8;
+    color: $farbschemaWEB2;
   }
 
   .lmbGtabSubheaderInactive,
@@ -2703,8 +2702,9 @@ label input {
 
 
   .gtabBodyDetailFringe {
+    background-color: $bg-differ;
+    color: $body-color;
     border: none;
-    background-color: white;
     border-collapse: collapse;
   }
 
@@ -2747,7 +2747,7 @@ label input {
   .gtabHeaderSymbolTD,
   .gtabHeaderSymbolTR {
     color: #fff;
-    background: $top-nav-background-color;
+    background: $nav-center-background-color;
   }
 
 
@@ -2768,6 +2768,10 @@ label input {
     }
     
   }
+}
+
+.bg-contrast {
+  background-color: $bg-differ;
 }
 
 

@@ -39,7 +39,7 @@ function set_subgroup(val){
             foreach($link_groupdesc as $key => $value) :
             ?>
 
-        <table class="table table-sm table-striped border bg-white">
+        <table class="table table-sm table-striped border bg-contrast">
             
             <thead>
                 <tr><th COLSPAN="12"><?=$link_groupdesc[$key][0];?></th></tr>
@@ -194,11 +194,11 @@ function set_subgroup(val){
             endforeach;
             ?>
             
-        <div class="bg-white p-3 border mb-3">
+        <div class="bg-contrast p-3 border mb-3">
             <button class="btn btn-sm btn-primary" type="submit" name="change" value="1"><?= $lang[522] ?></button>
         </div>
             
-            <table class="table table-sm table-striped border mb-0 bg-white">
+            <table class="table table-sm table-striped border mb-0 bg-contrast">
                 <thead>
                 <tr>
                     <td><?=$lang[1814]?></td>

@@ -257,7 +257,7 @@ $db_vendor = $_POST['db_vendor'];
 </script>
 
 
-<table class="table table-sm mb-3 table-striped bg-white border">
+<table class="table table-sm mb-3 table-striped bg-contrast border">
     <thead>
     <tr>
         <th>
@@ -316,7 +316,7 @@ $db_vendor = $_POST['db_vendor'];
 </table>
 
 
-<table class="table table-sm mb-3 table-striped bg-white border">
+<table class="table table-sm mb-3 table-striped bg-contrast border">
     <thead>
     <tr>
         <th colspan="2">
@@ -422,7 +422,7 @@ if ($db_test) {
     ?>
 
     <?php if ($dbConOk): ?>
-        <table class="table table-sm mb-3 table-striped bg-white border">
+        <table class="table table-sm mb-3 table-striped bg-contrast border">
             <thead>
             <tr>
                 <th colspan="3">
@@ -468,7 +468,7 @@ if ($db_test) {
     <?php endif; ?>
 
 
-    <table class="table table-sm mb-3 table-striped bg-white border">
+    <table class="table table-sm mb-3 table-striped bg-contrast border">
         <thead>
         <tr>
             <th colspan="3">
@@ -546,7 +546,7 @@ if ($db_test) {
 if ($db_test != 'valid') {
     ?>
 
-    <table class="table table-sm mb-3 table-striped bg-white border showIfODBC">
+    <table class="table table-sm mb-3 table-striped bg-contrast border showIfODBC">
         <thead>
         <tr>
             <th class="showIfResource" style="display: none;">

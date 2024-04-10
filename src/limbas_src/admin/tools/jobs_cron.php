@@ -20,7 +20,7 @@
         </div>
     </div>
     
-    <table class="table table-sm table-striped border bg-white">
+    <table class="table table-sm table-striped border bg-contrast">
         <thead>
             <tr>
                 <th><?=$lang[2068]?></th>

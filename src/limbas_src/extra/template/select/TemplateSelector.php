@@ -45,7 +45,7 @@ abstract class TemplateSelector
 
     protected abstract function getElementList(int $gtabid, string $search = '', int $page = 1, int $perPage = 10): array;
 
-    protected abstract function getFinalResolvedParameters(int $elementId, int $gtabid, int $id, $use_record, $resolvedTemplateGroups): array;
+    protected abstract function getFinalResolvedParameters(int $elementId, int $gtabid, ?int $id, $use_record, $resolvedTemplateGroups): array;
 
     protected abstract function getTemplateResolver(int $elementId): TemplateResolver;
 
@@ -139,8 +139,16 @@ abstract class TemplateSelector
 
         $elementId = intval($params['elementId']);
         $gtabid = intval($params['gtabid']);
-        $use_record = $params['use_record'];
-        $ID = intval($params['id']);
+        $use_record = null;
+
+        $id = $params['id'] ?? 0;
+        if(is_array($id) && !empty($id)) {
+            $use_record = array_filter(array_map('intval', $id));
+            $use_record = implode(';', array_map(fn($value): string => $value . '_' . $gtabid, $use_record));
+            
+            $id = $id[0];
+        }
+        $id = intval($id);
 
 
         $resolvedTemplateGroups = $params['resolvedTemplateGroups'];
@@ -148,7 +156,7 @@ abstract class TemplateSelector
 
 
         //check if anything needs to be resolved
-        $hasTemplateOptions = $this->printReportTemplateOptions($gtabid, $elementId, $ID, $use_record, $resolvedTemplateGroups, $saveAsTemplate);
+        $hasTemplateOptions = $this->printReportTemplateOptions($gtabid, $elementId, $id, $use_record, $resolvedTemplateGroups, $saveAsTemplate);
 
         if ($hasTemplateOptions !== false) {
             return [
@@ -158,13 +166,17 @@ abstract class TemplateSelector
             ];
         }
 
+        if($use_record !== null) {
+            $id = null;
+        }
+        
 
         ///everything is resolved => load final parameters
         return [
             'resolved' => true,
             'html' => '',
             'type' => $this->type,
-            'params' => $this->getFinalResolvedParameters($elementId, $gtabid, $ID, $use_record, $resolvedTemplateGroups)
+            'params' => $this->getFinalResolvedParameters($elementId, $gtabid, $id, $use_record, $resolvedTemplateGroups)
         ];
     }
 

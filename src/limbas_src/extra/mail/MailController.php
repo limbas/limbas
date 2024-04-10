@@ -10,8 +10,9 @@
 namespace Limbas\extra\mail;
 
 use Limbas\extra\mail\attachments\FileMailAttachment;
+use Limbas\lib\LimbasController;
 
-class MailController
+class MailController extends LimbasController
 {
 
     public function __construct(

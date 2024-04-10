@@ -182,7 +182,7 @@ $(function() {
         <TR><TD><?php pop_bottom();?></TD></TR>
     </TABLE></FORM>
 </DIV>
-<div class="bg-white p-3 border">
+<div class="bg-contrast p-3 border">
 <div class="row">
     <div class="col-6">
         <h5><?= htmlentities($gdiaglist[$diag_tab_id]["name"][$diag_id]) . " (" . $lang[2023] . ": " . htmlentities($gtab["desc"][$diag_tab_id]) . ")" ?></h5>

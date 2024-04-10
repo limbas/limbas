@@ -234,7 +234,3 @@ function files1($template,$LEVEL,$id='',$colid='',$rec=0){
         echo '</div>';
     }
 }
-
-// only for testing
-#require_once("admin/tools/datasync/filesync.lib");
-#lmb_fileSync_init(1);

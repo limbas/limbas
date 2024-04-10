@@ -352,9 +352,9 @@ var dyns_time = null;
 function send_form(id,ajax,wclose,typ) {
 
     // mandatory fields
-    if(typ != 'delete'){
-    var needok = needfield('form'+id);
-    if(needok) {
+    if(typ !== 'delete'){
+		const needok = needfield('form' + id);
+		if(needok) {
         alert(jsvar["lng_1509"] + "\n\n" + needok);
         return;
     }}
@@ -628,31 +628,46 @@ function memokeypress(evt,el,searchval) {
 
 /* --- SendKeypress ----------------------------------- */
 function sendkeydown(evt) {
-	if(evt.ctrlKey && evt.shiftKey){
+	//todo fix/remove shortcuts
+	/*
+	if (evt.ctrlKey) {
 		// ändern
-		if(evt.keyCode == 83){
+		if (evt.key === 's') {
+			evt.preventDefault();
+			alert("CTRL s");
 			send_form(1);
 		}
+
 		// vorheriger
-		else if(evt.keyCode == 88){
-			document.form1.scrollto.value='next';
+		else if (evt.key === 'x') {
+			evt.preventDefault();
+			document.form1.scrollto.value = 'next';
 			send_form(1);
 		}
+
 		// nächster
-		else if(evt.keyCode == 89){
-			document.form1.scrollto.value='prev';
+		else if (evt.key === 'y') {
+			evt.preventDefault();
+			document.form1.scrollto.value = 'prev';
 			send_form(1);
 		}
+
 		// anlegen
-		else if(evt.keyCode == 78){
+		else if (evt.key === 'n') {
+			evt.preventDefault();
+			alert("CTRL n");
 			create_new();
 		}
+
 		// liste
-		else if(evt.keyCode == 76){
-			document.form1.action.value='gtab_erg';send_form('1');
+		else if (evt.key === 'l') {
+			evt.preventDefault();
+			document.form1.action.value = 'gtab_erg';
+			send_form('1');
 		}
 		return true;
 	}
+	*/
 }
 
 /* --- view_all_verkn ----------------------------------- */
@@ -897,11 +912,6 @@ function newwin3(TAB,FIELD,ID) {
 function newwin4(ID,LEVEL) {
 	divclose();
 	detail = open("main.php?action=explorer_detail&level=" + LEVEL + "&ID=" + ID + "" ,"Info","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650");
-}
-// --- Fenster Bericht -----------------------------------------------
-function newwin8(ID,TAB_ID,REP_ID,MEDIUM,PRINT) {
-	var UNIQUE = Date.parse(Date());
-	bericht = open("main.php?&action=report&wfl_id=" + jsvar["wfl_id"] + "&wfl_inst=" + jsvar["wfl_inst"] + "&ID=" + ID + "&gtabid=" + TAB_ID + "&report_id=" + REP_ID + "&report_output=" + PRINT + "&report_medium=" + MEDIUM + "&unique=" + UNIQUE + ".pdf" ,"Bericht","toolbar=1,location=0,status=1,menubar=1,scrollbars=1,resizable=1,width=650,height=880");
 }
 
 // --- Fenster Long-Feld editieren -----------------------------------

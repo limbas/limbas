@@ -8,7 +8,7 @@
  */
 if (!defined('LIMBAS_INSTALL')) { return; } ?>
 
-<table class="table table-sm mb-3 table-striped bg-white border">
+<table class="table table-sm mb-3 table-striped bg-contrast border">
     <thead>
     <tr>
         <th colspan="2">
@@ -53,7 +53,7 @@ if (!defined('LIMBAS_INSTALL')) { return; } ?>
     </tbody>
 </table>
 
-<table class="table table-sm mb-3 table-striped bg-white border">
+<table class="table table-sm mb-3 table-striped bg-contrast border">
     <tbody>
     <tr>
         <td class="w-50"><?= lang('Language') ?></td>

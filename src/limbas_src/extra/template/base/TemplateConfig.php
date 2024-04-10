@@ -15,6 +15,7 @@ use Limbas\extra\template\base\HtmlParts\FunctionPlaceholder;
 use Limbas\extra\template\base\HtmlParts\HeaderFooter;
 use Limbas\extra\template\base\HtmlParts\Html;
 use Limbas\extra\template\base\HtmlParts\IfPlaceholder;
+use Limbas\extra\template\base\HtmlParts\Image;
 use Limbas\extra\template\base\HtmlParts\SubTemplateElementPlaceholder;
 use Limbas\extra\template\base\HtmlParts\TableCell;
 use Limbas\extra\template\base\HtmlParts\TableRow;
@@ -164,6 +165,11 @@ abstract class TemplateConfig implements TemplateConfigInterface
     public function getBackgroundInstance($attributes, $options): Background
     {
         return new Background($attributes, $options);
+    }
+
+    public function getImageInstance($attributes): Image
+    {
+        return new Image($attributes);
     }
 
 

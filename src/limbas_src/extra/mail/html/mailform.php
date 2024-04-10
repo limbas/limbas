@@ -105,7 +105,7 @@
                     <textarea class="form-control" id="mail_message" rows="20">
                     <?=e($templateHtml)?>
                 </textarea>
-                    <?= lmb_ini_wysiwyg('mail_message',null,null,1,650); ?>
+                    <?= lmb_ini_wysiwyg('mail_message',null,null,1,650, intval($gtabid)); ?>
                 </div>
             </div>
         </div>

@@ -1,0 +1,647 @@
+<?php
+/**
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+
+
+function gftype_date($gtabid,$fieldid,$field_condition,$gsparams,&$gsrres){
+
+    global $gtab;
+    global $gfield;
+
+    $like_neg = $gsparams['like_neg'];
+    $like_sens_b = $gsparams['like_sens_b'];
+
+    if($gfield[$gtabid]["data_type"][$fieldid] == 40 OR $gfield[$gtabid]["data_type"][$fieldid] == 53){
+        $onlydate = 1;
+        #$gsrres = str_replace(' 00:00:00','',$gsrres);
+    }else{
+        $onlydate = 0;
+    }
+
+    # NULL value
+    if($gsrres==="#NULL#"){
+        $whr = $field_condition . " IS NULL";
+        # NOT NULL value
+    }elseif($gsrres==="#NOTNULL#"){
+        $whr = $field_condition. " IS NOT NULL";
+        # Kalenderwoche
+    }elseif(preg_match("/^[CKWckw]{2}\s?\d{1,2}[.\/:,\-+]\d{0,4}$/",$gsrres)){
+        #Bspw. KW 50.2001, cw3.23
+        $gsrres_ = trim(preg_replace("/^[CKWckw]{2}[^\d]?/","",$gsrres));
+        $gsrres_ = preg_replace("/[^\d]/","-",$gsrres_);
+        $gsrres_ = explode("-",$gsrres_);
+        if(lmb_strlen($gsrres_[1]) == 2){$gsrres_[1] = "20".$gsrres_[1];}
+        if(!$gsrres_[1]){$gsrres_[1] = date("Y");}
+        $gsrres_stamp = get_mondaykw($gsrres_[0],$gsrres_[1]);
+        $gsrres_m = convert_stamp($gsrres_stamp,$onlydate);
+        $gsrres_s = convert_stamp($gsrres_stamp+604800,$onlydate); #518400
+        if($like_sens_b == ">" OR $like_sens_b == "<="){
+            $whr = $like_neg." ".$field_condition." $like_sens_b '$gsrres_s'";
+        }elseif($like_sens_b == "<" OR $like_sens_b == ">="){
+            $whr = $like_neg." ".$field_condition." $like_sens_b '$gsrres_m'";
+        }else{
+            $whr = $like_neg." (".$field_condition." >= '$gsrres_m' AND ".$field_condition." < '$gsrres_s')";
+        }
+        # falls nur Jahr eingegeben wurde, funktioniert nur bei spaltensuche, nicht bei globaler suche
+    }elseif(preg_match("/^(([12][9870])?\d)?\d$/",$gsrres)){
+        #Bspw. 1870, 1999, 2023
+        if(!$gsr[$gtabid][0][0]) {
+            $year = $gsrres;
+            if (lmb_strlen($gsrres) <= 2) {
+                $year = getFourDigitYear($gsrres);
+            }
+            $whr = $like_neg . " " . LMB_DBFUNC_YEAR . $field_condition . ") $like_sens_b $year";
+        }
+        # falls nur Jahr mit Monat
+    }elseif(preg_match("/^(([01]?\d[.\/:,\-+][12]?[9870]?\d\d)|([12][9870]\d\d[.\/:,\-+][01]?\d))$/",$gsrres)){
+        #Bspw. 23.2023, 04.1900
+        if($gfield[$gtabid]["data_type"][$fieldid] == 11 OR $gfield[$gtabid]["field_type"][$fieldid] == 15){$t = 0;}else{$t = 1;}
+        $gsrres_ = preg_replace("/\D/","-",$gsrres);
+        $gsrres_ = explode("-",$gsrres_);
+        if (count($gsrres_) == 2) {
+            if(strlen($gsrres_[0]) == 4) {
+                $tempRes = $gsrres_[0];
+                $gsrres_[0] = $gsrres_[1];
+                $gsrres_[1] = $tempRes;
+            }
+        $gsrres_m = convert_stamp(mktime(0,0,0,$gsrres_[0],1,$gsrres_[1]),$t);
+        $gsrres_s = convert_stamp(mktime(23,59,59,$gsrres_[0]+1,0,$gsrres_[1]),$t);
+            if ($like_sens_b == ">" or $like_sens_b == "<=") {
+            $whr = $like_neg." ".$field_condition." $like_sens_b '".$gsrres_s."' ";
+            } elseif ($like_sens_b == "<" or $like_sens_b == ">=") {
+            $whr = $like_neg." ".$field_condition." $like_sens_b '".$gsrres_m."' ";
+        }else{
+            $whr = $like_neg." (".$field_condition." >= '".$gsrres_m."' AND ".$field_condition." <= '".$gsrres_s."') ";
+        }
+        }
+        # falls ganzes Datum mit oder ohne Zeit
+    }elseif(preg_match("/^(((([0123]?\d[.\/:,\-+])?[01]?\d[.\/:,\-+])?[12]?[9870]?\d?\d)|([12]?[9870]?\d?\d([.\/:,\-+][01]?\d([.\/:,\-+][0123]?\d)?)?))([\s][0-2]?\d?[:.-][0-5]?\d?([:.-][0-5]?\d?)?)?$/",$gsrres) and $convertedDate = convert_date(preg_replace("/[\/]/", "-", $gsrres),$onlydate)){
+
+        // is DATE
+        if($gfield[$gtabid]["data_type"][$fieldid] == 40
+            OR $gfield[$gtabid]["data_type"][$fieldid] == 53
+            OR $gfield[$gtabid]["datetime"][$fieldid] == 1
+            OR strlen(trim($convertedDate)) == 10
+            OR lmb_substr($convertedDate,11,8) == '00:00:00' // todo
+        ){
+            $convertedDate = str_replace(' 00:00:00','',$convertedDate);
+            $whr = $like_neg." " . LMB_DBFUNC_DATE . $field_condition .") $like_sens_b '". $convertedDate ."' ";
+        // is DATETIME
+        }else{
+            $whr = $like_neg." " . $field_condition . " $like_sens_b '".$convertedDate."' ";
+        }
+    }
+
+    return $whr;
+}
+
+function gftype_time($gtabid,$fieldid,$field_condition,$gsparams,&$gsrres){
+
+    global $gtab;
+    global $gfield;
+
+    $like_neg = $gsparams['like_neg'];
+    $like_sens_b = $gsparams['like_sens_b'];
+
+    if (preg_match("/^(\d\d:\d\d:\d\d)$/", $gsrres)) {
+        if ($gsrres === "#NULL#") {
+            $whr = $field_condition . " IS NULL";
+        } elseif ($gsrres === "#NOTNULL#") {
+            $whr = $field_condition . " IS NOT NULL";
+        } else {
+            $whr = $like_neg . " " . $field_condition . " $like_sens_b '$gsrres' ";
+        }
+    }
+
+    return $whr;
+}
+
+function gftype_numeric($gtabid,$fieldid,$field_condition,$gsparams,&$gsrres){
+
+    global $gtab;
+    global $gfield;
+
+    $like_neg = $gsparams['like_neg'];
+    $like_sens_b = $gsparams['like_sens_b'];
+
+    # --- Filesize --
+    if($gfield[$gtabid]["data_type"][$fieldid] == 44){
+        $gsrres = file_size_convert($gsrres);
+    }
+
+    # --- Number --
+    if($gsrres==='#NULL#'){
+        $whr = $field_condition . " IS NULL";
+    }elseif($gsrres==="#NOTNULL#"){
+        $whr = $field_condition . " IS NOT NULL";
+    }else{
+        $whr = $like_neg." " . $field_condition . " $like_sens_b ".parse_db_float($gsrres)." ";
+    }
+
+    return $whr;
+}
+
+function gftype_boolean($gtabid,$fieldid,$field_condition,$gsparams,&$gsrres){
+
+    global $gtab;
+    global $gfield;
+
+    if(is_null($gsrres) || $gsrres == "0" || lmb_strtoupper($gsrres) === "FALSE"){$gsrres = LMB_DBDEF_FALSE;}
+    else{$gsrres = LMB_DBDEF_TRUE;}
+    if($gsrres==="#NULL#"){
+        $whr = $field_condition . " IS NULL";
+    }elseif($gsrres==="#NOTNULL#"){
+        $whr = $field_condition . " IS NOT NULL";
+    }else{
+        $whr = $field_condition . " = ".$gsrres." ";
+    }
+
+    return $whr;
+}
+
+function gftype_string($gtabid,$fieldid,$field_condition,$gsparams,&$gsrres){
+
+    global $gtab;
+    global $gfield;
+
+    $like_neg = $gsparams['like_neg'];
+    $style_sens_b = $gsparams['style_sens_b'];
+    $style_sens_e = $gsparams['style_sens_e'];
+    $case_sens_b = $gsparams['case_sens_b'];
+    $case_sens_e = $gsparams['case_sens_e'];
+
+    if($gsrres === "#NULL#"){
+        $whr = "(" . $field_condition . " IS NULL OR " . $field_condition . " = '')";
+    }elseif($gsrres=="#NOTNULL#"){
+        $whr = "(" . $field_condition . " IS NOT NULL AND " . $field_condition . " != '')";
+    }else{
+        $whr = $style_sens_b.$field_condition.$style_sens_e." $like_neg LIKE $style_sens_b'$case_sens_b".ltrim(parse_db_string($gsrres,250))."$case_sens_e'$style_sens_e ";
+    }
+
+    return $whr;
+}
+
+
+
+function gftype_long($gtabid,$fieldid,$field_condition,$gsparams,&$gsrres,&$query){
+
+    global $gtab;
+    global $gfield;
+
+    $tab = $gsparams['tab'];
+    $like_neg = $gsparams['like_neg'];
+    $case_sens_b = $gsparams['case_sens_b'];
+    $case_sens_e = $gsparams['case_sens_e'];
+    $gsandor = $gsparams['gsandor'];
+    $gsstxt = $gsparams['gsstxt'];
+
+    if ($gsrres === '#NULL#') {
+        if ($gfield[$gtabid]["field_type"][$fieldid] == 6) { # upload
+            $whr[] = "NOT EXISTS(SELECT 1 FROM LDMS_FILES WHERE LDMS_FILES.TABID = $gtabid AND LDMS_FILES.FIELDID = $fieldid AND $tab.ID = LDMS_FILES.DATID)";
+        } elseif ($gfield[$gtabid]["data_type"][$fieldid] == 39) { # long
+            $whr[] = "$field_condition IS NULL";
+        } elseif ($gfield[$gtabid]["field_type"][$fieldid] == 20) { # document content (in LDMS_FILES)
+            $whr[] = 'LDMS_FILES.IND = ' . LMB_DBDEF_FALSE;
+        }
+    } else if ($gsrres == '#NOTNULL#') {
+        if ($gfield[$gtabid]["field_type"][$fieldid] == 6) { # upload
+            $whr[] = "EXISTS(SELECT 1 FROM LDMS_FILES WHERE LDMS_FILES.TABID = $gtabid AND LDMS_FILES.FIELDID = $fieldid AND $tab.ID = LDMS_FILES.DATID)";
+        } elseif ($gfield[$gtabid]["data_type"][$fieldid] == 39) { # long
+            $whr[] = "$field_condition IS NOT NULL";
+        } elseif ($gfield[$gtabid]["field_type"][$fieldid] == 20) { # document content (in LDMS_FILES)
+            $whr[] = 'LDMS_FILES.IND = ' . LMB_DBDEF_TRUE;
+        }
+    } else if ($umgvar['postgres_use_fulltextsearch']) {
+        $searchWords = explode(' ', $gsrres);
+
+        $mode = 'and';
+        if ($gsstxt == 10) {
+            $mode = 'or';
+        } else if ($gsstxt == 11) {
+            $mode = 'phrase';
+        }
+
+        if ($gfield[$gtabid]["field_type"][$fieldid] == 6) { # upload
+            $query["from_"][] = "LDMS_FILES";
+            $whr[] = "LDMS_FILES.TABID = $gtabid AND LDMS_FILES.FIELDID = $fieldid AND $tab.ID = LDMS_FILES.DATID AND $like_neg LDMS_FILES.FTS_VECTOR @@ " . postgresGetFtsQuery($searchWords, $mode, "LDMS_FILES.FTS_LANG");
+        } elseif ($gfield[$gtabid]["data_type"][$fieldid] == 39) { # long
+            $whr[] = $like_neg . " {$field_condition}_FTS_VECTOR @@ " . postgresGetFtsQuery($searchWords, $mode, "{$field_condition}_FTS_LANG");
+        } elseif ($gfield[$gtabid]["field_type"][$fieldid] == 20) { # document content (in LDMS_FILES)
+            $whr[] = $like_neg . ' LDMS_FILES.FTS_VECTOR @@ ' . postgresGetFtsQuery($searchWords, $mode, "LDMS_FILES.FTS_LANG");
+        }
+    } else {
+        if ($gfield[$gtabid]["field_type"][$fieldid] == 6) { # upload
+            $df = "F";
+            $rf = "FID";
+            $tb = "LDMS_FILES";
+            $query["from_"][] = "LDMS_FILES";
+            $tr = " AND LDMS_FILES.TABID = $gtabid AND LDMS_FILES.FIELDID = $fieldid AND $tab.ID = LDMS_FILES.DATID";
+        } elseif ($gfield[$gtabid]["data_type"][$fieldid] == 39) { # long
+            $df = "D";
+            $rf = "REF";
+            $tf = " AND TABID = $gtabid AND FIELDID = $fieldid";
+            $tb = $tab;
+        } elseif ($gfield[$gtabid]["field_type"][$fieldid] == 20) { # document content (in LDMS_FILES)
+            $df = "F";
+            $rf = "FID";
+            $tb = $tab;
+        }
+
+        # Wortliste
+        $tmp = explode(" ", $gsrres);
+        $gsrres = implode(" ", $tmp);
+
+        # as default search for whole word
+        if (!$gsstxt) {
+            $case_sens_b = "";
+            $case_sens_e = "";
+        }
+
+        # ganzer Satz
+        $s = "S";
+        if ($gsstring) {
+            $s = "";
+        }
+
+        # next gsandor
+        $gsandor_next = $gsr[$gtabid][$fieldid]["andor"][$gsrnext[$bzm + 1]];
+
+        # Index Level
+        if ($umgvar["indize_level"] == 1 /* no sentence search */) {
+            $s = "S";
+        }
+
+        foreach ($tmp as $fieldid2 => $value2) {
+
+            $val = parse_db_string($value2, 40);
+            # Metaphone
+            if ($gsstxt == 4) {
+                $mf = "METAPHONE";
+                $ffilter["content_ts"][$fid] = "checked";
+                $ffilter["content_ts"][$fid] = "";
+                $val = soundex($val);
+                $ml = "=";
+                $case_sens_b = "";
+                $case_sens_e = "";
+            } # CaseSensitiv
+            elseif ($umgvar["indize_cs"]) {
+                if ($gsscs) {
+                    $mf = "VAL";
+                } else {
+                    $mf = "UPPERVAL";
+                    $val = lmb_strtoupper($val);
+                }
+            } else {
+                $mf = "VAL";
+                $val = lmb_strtolower($val);
+            }
+
+            # Casesensitiv
+            if ($case_sens_b or $case_sens_e) {
+                $ml = "LIKE";
+            } else {
+                $ml = "=";
+            }
+
+            $view_query2[$fieldid2] = "LMB_INDIZE_W." . $mf . " $like_neg $ml '" . $case_sens_b . $val . $case_sens_e . "'";
+            # ODER Abfrage
+            if ($gsandor == 2 or $gsandor_next == 2) {
+                $view_orquery[] = $view_query2[$fieldid2];
+                # UND Abfrage
+            } elseif ($gsandor == 1) {
+                $view_query[] = "SELECT DISTINCT LMB_INDIZE_$df$s.$rf AS LMB_INDIZE_REF_" . $gfield[$gtabid]["form_name"][$fieldid] . " FROM LMB_INDIZE_$df$s,(SELECT ID AS LMB_INDIZE_ID_" . $gfield[$gtabid]["form_name"][$fieldid] . "  FROM LMB_INDIZE_W WHERE " . $view_query2[$fieldid2] . ") AS QUWA" . ($quwac++) . " WHERE LMB_INDIZE_ID_" . $gfield[$gtabid]["form_name"][$fieldid] . " = LMB_INDIZE_$df$s.WID $tf";
+            }
+        }
+    }
+    
+    return array($whr,$view_query,$view_orquery,$tb,$df,$s,$rf,$tf,$tr);
+    
+}
+
+function gftype_usergroup($gtabid,$fieldid,$field_condition,$gsparams,&$gsrres,&$query){
+
+    global $gtab;
+    global $gfield;
+
+    $like_neg = $gsparams['like_neg'];
+    $like_sens_b = $gsparams['like_sens_b'];
+    $style_sens_b = $gsparams['style_sens_b'];
+    $style_sens_e = $gsparams['style_sens_e'];
+    $case_sens_b = $gsparams['case_sens_b'];
+    $case_sens_e = $gsparams['case_sens_e'];
+
+
+    if (lmb_strpos($gsrres, "#") !== false) {
+        if (lmb_strtolower(lmb_substr($gsrres, 0, 3)) == "#u#") {
+            $gsrres = trim(lmb_substr($gsrres, 3, 99));
+            $onlyuser = 1;
+        } elseif (lmb_strtolower(lmb_substr($gsrres, 0, 3)) == "#g#") {
+            $gsrres = trim(lmb_substr($gsrres, 3, 99));
+            $onlygroup = 1;
+        }
+    }
+
+    if ($onlygroup) {
+        $whr[] = $gtab["table"][$gtabid] . ".ID = LMB_UGLST.DATID";
+        $whr[] = "LMB_UGLST.TYP = 'g'";
+        if (is_numeric($gsrres)) {
+            $whr[] = "LMB_UGLST.UGID $like_sens_b " . parse_db_int($gsrres, 8);
+        } else {
+            $query["from_"][] = "LMB_GROUPS";
+            $whr[] = "LMB_UGLST.UGID = LMB_GROUPS.GROUP_ID";
+            $whr[] = "$style_sens_b LMB_GROUPS.NAME $style_sens_e $like_neg LIKE $style_sens_b'$case_sens_b" . parse_db_string($gsrres, 80) . "$case_sens_e'$style_sens_e";
+        }
+    } elseif ($onlyuser) {
+        $whr[] = $gtab["table"][$gtabid] . ".ID = LMB_UGLST.DATID";
+        $whr[] = "LMB_UGLST.TYP = 'u'";
+        if (is_numeric($gsrres)) {
+            $whr[] = "LMB_UGLST.UGID $like_sens_b " . parse_db_int($gsrres, 8);
+        } else {
+            $query["from_"][] = "LMB_USERDB";
+            $whr[] = "LMB_UGLST.UGID = LMB_USERDB.USER_ID";
+            $whr[] = "$style_sens_b LMB_USERDB.VORNAME" . LMB_DBFUNC_CONCAT . "' '" . LMB_DBFUNC_CONCAT . "LMB_USERDB.NAME $style_sens_e $like_neg LIKE $style_sens_b'$case_sens_b" . parse_db_string($gsrres, 80) . "$case_sens_e'$style_sens_e";
+        }
+    } else {
+        $whr[] = $gtab["table"][$gtabid] . ".ID = LMB_UGLST.DATID";
+
+        if (is_numeric($gsrres)) {
+            $whr[] = "(
+						" . $gtab["table"][$gtabid] . ".ID = LMB_UGLST.DATID
+						AND
+						LMB_UGLST.UGID $like_sens_b " . parse_db_int($gsrres, 8) . ")";
+        } else {
+            $query["from_"][] = "LMB_GROUPS";
+            $query["from_"][] = "LMB_USERDB";
+            $whr[] = "(
+						" . $gtab["table"][$gtabid] . ".ID = LMB_UGLST.DATID
+						AND
+						(
+						($style_sens_b LMB_USERDB.VORNAME" . LMB_DBFUNC_CONCAT . "' '" . LMB_DBFUNC_CONCAT . "LMB_USERDB.NAME $style_sens_e $like_neg LIKE $style_sens_b'$case_sens_b" . parse_db_string($gsrres, 80) . "$case_sens_e'$style_sens_e
+						AND LMB_UGLST.TYP = 'u' AND LMB_UGLST.UGID = LMB_USERDB.USER_ID)
+						OR
+						($style_sens_b LMB_GROUPS.NAME $style_sens_e $like_neg LIKE $style_sens_b'$case_sens_b" . parse_db_string($gsrres, 80) . "$case_sens_e'$style_sens_e
+						AND LMB_UGLST.TYP = 'g' AND LMB_UGLST.UGID = LMB_GROUPS.GROUP_ID)
+						)
+						)
+						";
+        }
+    }
+    $query["from_"][] = "LMB_UGLST";
+    $query["distinct"] = 1; // todo a better way
+
+    return $whr;
+
+}
+
+
+function gftype_systemuser($gtabid,$fieldid,$field_condition,$gsparams,&$gsrres,&$query){
+
+    global $gtab;
+    global $gfield;
+
+    $like_neg = $gsparams['like_neg'];
+    $style_sens_b = $gsparams['style_sens_b'];
+    $style_sens_e = $gsparams['style_sens_e'];
+    $case_sens_b = $gsparams['case_sens_b'];
+    $case_sens_e = $gsparams['case_sens_e'];
+    
+    if (is_numeric($gsrres)) {
+        if ($gfield[$gtabid]["field_type"][$fieldid] == 16) {
+            $whr[] = $field_condition . " = '" . parse_db_int($gsrres, 10) . "' ";
+        } else {
+            $whr[] = $field_condition . " = " . parse_db_int($gsrres, 10) . " ";
+        }
+    } else {
+        $whr_tmp1 = "(" . $style_sens_b . "LMB_USERDB.USERNAME" . $style_sens_e . " $like_neg LIKE $style_sens_b'$case_sens_b" . parse_db_string($gsrres, 50) . "$case_sens_e'$style_sens_e ";
+        $whr_tmp1 .= "OR " . $style_sens_b . "LMB_USERDB.VORNAME" . $style_sens_e . " $like_neg LIKE $style_sens_b'$case_sens_b" . parse_db_string($gsrres, 50) . "$case_sens_e'$style_sens_e ";
+        $whr_tmp1 .= "OR " . $style_sens_b . "LMB_USERDB.NAME" . $style_sens_e . " $like_neg LIKE $style_sens_b'$case_sens_b" . parse_db_string($gsrres, 50) . "$case_sens_e'$style_sens_e )";
+        $whr[] = $whr_tmp1;
+        if ($gfield[$gtabid]["field_type"][$fieldid] == 16) {
+            $whr[] = "LMB_USERDB.USER_ID = NUM('0' & SUBSTR(" . $field_condition . ",2,10))";
+        } else {
+            $whr[] = "LMB_USERDB.USER_ID = " . $field_condition;
+        }
+        $query["from_"][] = "LMB_USERDB";
+    }
+    
+    return $whr;
+}
+
+
+function gftype_mselect($gtabid,$fieldid,$field_condition,$gsparams,&$gsrres){
+
+    global $db;
+    global $gtab;
+    global $gfield;
+    global $session;
+    static $msel_count;
+    static $attrtype;
+
+    $like_neg = $gsparams['like_neg'];
+    $style_sens_b = $gsparams['style_sens_b'];
+    $style_sens_e = $gsparams['style_sens_e'];
+    $case_sens_b = $gsparams['case_sens_b'];
+    $case_sens_e = $gsparams['case_sens_e'];
+    $tablename = $gsparams['tablename'];
+    $andor = $gsparams['andor'];
+    $nextandor = $gsparams['nextandor'];
+
+    // SELECT / ATTRIBUTE
+    if ($gfield[$gtabid]["field_type"][$fieldid] == 19) {
+        $mselecttype = "LMB_ATTRIBUTE";
+    } else {
+        $mselecttype = "LMB_SELECT";
+    }
+
+
+    // multilang
+    $field_name = 'WERT';
+    if ($gfield[$gtabid]['multilang'][$fieldid] == 2) {
+        $field_name = 'LANG' . $session['dlanguage'] . '_WERT';
+    }
+
+    // attribute / mselect
+    if ($andor <= 2) {
+        if ($gsrres === '#NULL#' || $gsrres == '#NOTNULL#') { # no entry
+            $tmpNot = '';
+            if ($gsrres === '#NULL#') {
+                $tmpNot = 'NOT';
+            }
+
+            $msel_count++;
+            $msd = "LMB_MSEL_D_" . $fieldid . '_' . $msel_count;
+            $whr3 = "$tablename.ID $tmpNot IN (SELECT DAT_ID FROM {$mselecttype}_D AS $msd WHERE TAB_ID = $gtabid AND FIELD_ID = $fieldid)";
+
+        } else {
+            $whr = "{$style_sens_b}W.{$field_name}{$style_sens_e} {$like_neg} LIKE {$style_sens_b}'{$case_sens_b}" . parse_db_string($gsrres, 160) . "{$case_sens_e}'{$style_sens_e}";
+
+            // open bracket - check if next search is attribute value
+            if ($nextandor > 2) {
+                $sqlquery2 = "SELECT ID,TYPE FROM LMB_ATTRIBUTE_W WHERE POOL = " . $gfield[$gtabid]["select_pool"][$fieldid] . " AND LOWER(WERT) = '" . parse_db_string(lmb_strtolower($gsrres), 160) . "'";
+                $rs2 = lmbdb_exec($GLOBALS['db'], $sqlquery2) or errorhandle(lmbdb_errormsg($GLOBALS['db']), $sqlquery2, $GLOBALS['action'], __FILE__, __LINE__);
+                $attrtype = lmbdb_result($rs2, "TYPE");
+                $openbracket = 1;
+            }
+        }
+        // attribute with value
+    } elseif ($andor > 2 and $gfield[$gtabid]["field_type"][$fieldid] == 19) {
+
+        if ($attrtype) {
+
+            // text
+            if ($attrtype == 1 or $attrtype == 12) {
+                $attrtypefunc = 'gftype_string';
+                $valuefield = 'VALUE_STRING';
+                // numeric
+            } elseif ($attrtype == 16 or $attrtype == 49) {
+                $attrtypefunc = 'gftype_numeric';
+                $valuefield = 'VALUE_NUM';
+                // date
+            } elseif ($attrtype == 40) {
+                $attrtypefunc = 'gftype_date';
+                $valuefield = 'VALUE_DATE';
+                // boolean
+            } elseif ($attrtype == 20) {
+                $gsrres = parse_bool($gsrres);
+                $attrtypefunc = 'gftype_numeric';
+                $valuefield = 'VALUE_NUM';
+            }
+
+            if ($attrtypefunc) {
+
+                $whr = $attrtypefunc($gtabid, $fieldid, 'D.' . $valuefield, $gsparams, $gsrres);
+
+                // close bracket - check if next search is NOT attribute value
+                if ($nextandor <= 2) {
+                    $closebracket = 1;
+                }
+
+            }
+
+        }
+
+    }
+
+    return array($whr,$whr3,$openbracket,$closebracket);
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+function gftype_mselect_merge($gtabid,$fieldid,$tablename,$whr2,$whr3,&$query){
+
+    global $gtab;
+    global $gfield;
+    static $msel_count;
+
+    if($gfield[$gtabid]["field_type"][$fieldid] == 19){$tb = "LMB_ATTRIBUTE";}else{$tb = "LMB_SELECT";}
+    $msel_where = array();
+
+    if ($whr3) {
+        $msel_where[] = $whr3;
+    }
+    if ($whr2) {
+        $pool = $gfield[$gtabid]['select_pool'][$fieldid];
+        $initialQuery = "
+                        SELECT DISTINCT D.DAT_ID
+                        FROM 
+                        {$tb}_D D,
+                        {$tb}_W W
+                        WHERE 
+                        D.TAB_ID={$gtabid}
+                        AND D.FIELD_ID={$fieldid}
+                        AND W.POOL={$pool}
+                        AND D.W_ID = W.ID
+                        AND ({$whr2})";
+        $msel_count++;
+        $totalRecursiveQueryName = $tb.'_DATA_'.$fieldid.'_'.$msel_count;
+        $query["from_"][] = "($initialQuery) AS {$totalRecursiveQueryName}";
+        $msel_where[] = "$totalRecursiveQueryName.DAT_ID = $tablename.ID";
+        $query["distinct"] = 1;
+    }
+    if ($msel_where) {
+        $query["where"][] = '(' . implode(' OR ', $msel_where) . ')';
+    }
+
+}
+
+
+function gftype_mselect_merge_recursive($gtabid,$fieldid,$tablename,$whr2,$whr3,&$query){
+
+    global $gtab;
+    global $gfield;
+    static $msel_count;
+
+    if($gfield[$gtabid]["field_type"][$fieldid] == 19){$tb = "LMB_ATTRIBUTE";}else{$tb = "LMB_SELECT";}
+
+    $msel_where = array();
+
+    #if($attributehasvalue){
+    #    $atthvFrom = ",LMB_ATTRIBUTE_D D";
+    #    $atthvSelect = " AND D.W_ID = W.ID AND D.TAB_ID={$gtabid} AND D.FIELD_ID={$fieldid}";
+    #}
+
+    if ($whr3) {
+        $msel_where[] = $whr3;
+    }
+    if ($whr2) {
+        $msel_count++;
+        $pool = $gfield[$gtabid]['select_pool'][$fieldid];
+        $recursiveQueryName = $tb.'_REC_'.$fieldid.'_'.$msel_count;
+        $initialQuery = "
+                        SELECT W.ID 
+                        FROM {$tb}_W W 
+                        $atthvFrom
+                        WHERE W.POOL={$pool} 
+                        $atthvSelect
+                        AND ({$whr2})";
+
+        $recursiveSubquery = "
+                        SELECT W.ID 
+                        FROM {$recursiveQueryName} 
+                        JOIN {$tb}_W W ON {$recursiveQueryName}.ID = W.LEVEL";
+
+        $finalQuery = "
+                        SELECT DISTINCT D.DAT_ID 
+                        FROM {$recursiveQueryName} R 
+                        JOIN {$tb}_W W ON R.ID = W.ID 
+                        JOIN {$tb}_D D ON W.ID = D.W_ID 
+                        WHERE D.TAB_ID={$gtabid} 
+                        AND D.FIELD_ID={$fieldid}";
+
+        $recursiveQuery = LMB_DBFUNC_WITH_RECURSIVE . "
+                        {$recursiveQueryName}(id) AS (
+                            {$initialQuery} 
+                            UNION 
+                            {$recursiveSubquery}
+                        ) $finalQuery";
+
+        $totalRecursiveQueryName = $tb.'_DATA_'.$fieldid.'_'.$msel_count;
+        $query["from_"][] = "($recursiveQuery) AS {$totalRecursiveQueryName}";
+        $msel_where[] = "$totalRecursiveQueryName.DAT_ID = $tablename.ID";
+        $query["distinct"] = 1;
+    }
+    if ($msel_where) {
+        $query["where"][] = '(' . implode(' OR ', $msel_where) . ')';
+    }
+
+}

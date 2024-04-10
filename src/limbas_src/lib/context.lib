@@ -503,9 +503,9 @@ function pop_color($funcname=null,$fparams=null,$container=null){
 		    $b = "border:1px solid black;";
 		    $value = trim($value,'#');
 		}
-		if (!empty($value)) {
+        if (!empty($value) && $value !== 'transparent') {
 		    $value = '#'.$value;
-        }else{
+        }elseif($value !== 'transparent'){
             $trash = "<i class=\"lmb-icon lmb-trash\" style=\"display:inline;\"></i>";
         }
 		echo "<td style=\"width:18px;height:18px;cursor:pointer;background-color:".$value.";$b;\" OnClick=\"$funcname('".$value."'$fparams);\" title=\"$value\"><div style=\"width:18px;height:18px;\">$trash</div></td>\n";

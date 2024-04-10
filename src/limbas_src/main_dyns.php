@@ -10,6 +10,7 @@
 
 use Limbas\admin\templates\TemplateController;
 use Limbas\extra\mail\MailController;
+use Limbas\extra\report\ReportController;
 use Limbas\extra\template\select\TemplateSelectController;
 
 require_once(__DIR__ . '/lib/session.lib');
@@ -1129,10 +1130,11 @@ function dyns_11_a($params){
     }
 
     // multimode from Pool
-    $sqlquery = "SELECT MULTIMODE FROM {$tabtyp}_P WHERE ID = $pool";
-    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    if(!$rs) {$commit = 1;}
-    $multimode = lmbdb_result($rs, 'MULTIMODE');
+    $multimode = $GLOBALS['gselectpool'][$tabtyp]['multimode'][$pool];
+    #$sqlquery = "SELECT MULTIMODE FROM {$tabtyp}_P WHERE ID = $pool";
+    #$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    #if(!$rs) {$commit = 1;}
+    #$multimode = lmbdb_result($rs, 'MULTIMODE');
 
     // maxresult
     $maxresult = $session['maxresult'];
@@ -1471,13 +1473,14 @@ function dyns_gtabSearch($params){
     $module = $params["module"];
     $snap_id = $params["snap_id"];
     $form_id = $params["legacy"];
-    $action = 'gtab_erg';
 
-    if(!$params["snap_id"] AND $params["snap_id"] != '0'){
+    if(!$snap_id AND $snap_id != '0'){
         $snap_id = $filter["snapid"][$gtabid];
+    }else{
+        require_once(COREPATH . 'gtab/gtab_register.lib');
+        lmb_register_snapshot($gtabid,$snap_id);
     }
 
-    require_once(COREPATH . 'gtab/gtab_register.lib');
     if($params["legacy"]){
         require_once(COREPATH . 'gtab/html/contextmenus/gtab_search_legacy.php');
     }else{
@@ -2487,6 +2490,7 @@ function dyns_snapshotSaveas($params){
     global $gtab;
     global $db;
     global $filter;
+    global $lang;
 
     require_once(COREPATH . 'extra/snapshot/snapshot.lib');
     $snapid = SNAP_save($params["gtabid"],$params["limbasSnapshotName"],0);
@@ -2864,30 +2868,6 @@ function dyns_inheritFrom($params){
 
 
 /**
- * show diff of versioned PDFs
- *
- * @param unknown_type $params
- */
-function dyns_versionDiffPDF($params){
-    global $greportlist;
-    global $umgvar;
-
-    $GLOBALS["tmp"]["params"] = $params;
-
-    foreach($greportlist[-1]["name"] as $key => $value){
-        if ($value == "_LimbasVersionDiff") {
-            $report_id = $greportlist[-1]["id"][$key];
-        }
-    }
-
-    if($report_id){
-        require_once(COREPATH . 'extra/report/report.dao');
-        require_once(COREPATH . 'extra/report/report_pdf.php');
-    }
-}
-
-
-/**
  * show diff of versioned dataset
  *
  * @param unknown_type $params
@@ -3258,39 +3238,13 @@ function dyns_fileVersionDiff($params){
 
 
 function dyns_printFile($params) {
-    global $umgvar;
-    global $LINK;
 
-    if (!$LINK[304]) {
-        return;
-    }
+    require_once(COREPATH . 'extra/explorer/filestructure.lib');
 
     $printerID = intval($params['printerID']);
     $fileIDs = json_decode($params['fileIDs']);
 
-    require_once(COREPATH . 'extra/explorer/filestructure.lib');
-
-    foreach ($fileIDs as $fileID) {
-        $fileID = parse_db_int($fileID);
-        $file = file_download($fileID);
-        if (!$file) {
-            continue; # TODO maybe user message
-        }
-
-        $filePath = $umgvar['path'] . '/' . $file['path'];
-
-        # try to convert to pdf
-        if (LmbUnoconv::isEnabled() and $file['mimetype'] != 'application/pdf') {
-            $newFilePath = $filePath . '.pdf';
-            if (LmbUnoconv::convertFile($filePath, $newFilePath, 'pdf')) {
-                $filePath = $newFilePath;
-            }
-        }
-
-        if (!lmbPrint($printerID, $filePath)) {
-            lmb_log::error('Print failed', 'Drucken fehlgeschlagen!');
-        }
-    }
+    return lmb_printFileFromDMS($printerID,$fileIDs);
 }
 
 
@@ -4109,8 +4063,6 @@ function dyns_fullcalendar(&$params)
         unset($gsr[$gfield[$gtabid]['verkntabid'][$gtab["params1"][$gtabid]]]);
     }
 
-    //error_log(print_r($gsr,1));
-
     require_once(COREPATH . 'gtab/gtab.lib');
     require_once(COREPATH . 'extra/calendar/fullcalendar/cal.dao');
     require_once(COREPATH . 'extra/calendar/fullcalendar/cal_dyns.php');
@@ -4392,10 +4344,22 @@ function dyns_manageTemplates($params): void
 
 function dyns_selectTemplates($params): void
 {
+    global $alert;
     header('Content-Type: application/json; charset=utf-8');
     $dynsController = new TemplateSelectController();
     $result = $dynsController->handleRequest($params);
     echo json_encode($result);
+    $alert = false;
+}
+
+function dyns_reportAction($params): void
+{
+    global $alert;
+    header('Content-Type: application/json; charset=utf-8');
+    $dynsController = new ReportController();
+    $result = $dynsController->handleRequest($params);
+    echo json_encode($result);
+    $alert = false;
 }
 
 # Buffer

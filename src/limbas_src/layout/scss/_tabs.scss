@@ -8,6 +8,7 @@
 
 /* Tabelle allgemein */
 
+
 .table-section {
 
   top: 0;
@@ -16,9 +17,10 @@
   > td,
   > th {
     background-color: $table-section-background-color !important;
-    color: $table-section-color;
+    color: $table-section-color !important;
   }
-  
+
+
 }
 
 .table-sub-section {

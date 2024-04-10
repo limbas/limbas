@@ -49,7 +49,7 @@ function delete_definition(id){
             
             <?php if ($trigger_typ == 1): ?>
                 <li class="nav-item">
-                    <a class="nav-link active bg-white" href="#"><?=$lang[2450]?></a>
+                    <a class="nav-link active bg-contrast" href="#"><?=$lang[2450]?></a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="main_admin.php?action=setup_trigger&trigger_typ=2"><?=$lang[2451]?></a>
@@ -59,13 +59,13 @@ function delete_definition(id){
                     <a class="nav-link" href="main_admin.php?action=setup_trigger&trigger_typ=1"><?=$lang[2450]?></a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link active bg-white" href="#"><?=$lang[2451]?></a>
+                    <a class="nav-link active bg-contrast" href="#"><?=$lang[2451]?></a>
                 </li>
             <?php endif; ?>
 
 
         </ul>
-        <div class="tab-content border border-top-0 bg-white">
+        <div class="tab-content border border-top-0 bg-contrast">
             <div class="tab-pane active">
                 
                     <table class="table table-sm table-striped mb-0">

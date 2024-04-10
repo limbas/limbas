@@ -223,7 +223,7 @@ if ($fileOwner && $fileGroup) {
 ?>
 
 
-<table class="table table-sm mb-3 table-striped bg-white border">
+<table class="table table-sm mb-3 table-striped bg-contrast border">
     <thead>
     <tr>
         <th colspan="3">
@@ -277,7 +277,7 @@ if ($fileOwner && $fileGroup) {
     </tbody>
 </table>
 
-<table class="table table-sm table-striped bg-white border">
+<table class="table table-sm table-striped bg-contrast border">
     <thead>
     <tr>
         <th colspan="3">

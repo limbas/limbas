@@ -253,7 +253,7 @@ if(!$tab_group) : ?>
             <input type="hidden" name="icongroup_change">
             <input type="hidden" name="tab_group" value="<?=$tab_group;?>">
 
-            <table class="table table-sm table-striped mb-0 border bg-white">
+            <table class="table table-sm table-striped mb-0 border bg-contrast">
         <thead>
             <tr>
                 <th><?=$lang[949]?>&nbsp;</th>
@@ -374,7 +374,7 @@ else :?>
 
             <h3><?= $lang[1029] ?>: <?= $tabgroup_["name"][$tab_group] ?></h3>
         
-        <table class="table table-sm table-striped border bg-white">
+        <table class="table table-sm table-striped border bg-contrast">
             <thead>
                 <tr>
                     <th nowrap>ID</th>
@@ -611,7 +611,7 @@ else :?>
         <?php endif; ?>
 
 
-        <table class="table table-sm table-striped mb-0 border bg-white">
+        <table class="table table-sm table-striped mb-0 border bg-contrast">
             <thead>
             <tr>
                 <th><?=$lang[951]?></th>

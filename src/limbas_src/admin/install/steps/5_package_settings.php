@@ -74,7 +74,7 @@ if($index = array_search("clean.tar.gz", $demoPaths)) {
 ?>
 
 
-<table class="table mb-3 table-striped bg-white border">  
+<table class="table mb-3 table-striped bg-contrast border">
     <thead>
         <tr>
             <th>

@@ -950,14 +950,11 @@ function fill($tab,$file,$ctyp,$ktyp,$cname,$kkey,$partimport,$import_overwrite,
 		if($install == "install" OR $install == "reinstall"){
 			$pfad2 = $umgvar["pfad"]."/BACKUP/".$backupdir."/$file";
 		}
-	}elseif(
-		$partimport){$pfad2 = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.dat";
-	}elseif($syncimport)
-        {
-            $pfad2 = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/sync/export.dat";
-        }
-        else    
-        {
+	} elseif($partimport){
+        $pfad2 = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.dat";
+    } elseif($syncimport) {
+        $pfad2 = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/sync/export.dat";
+    } else {
 		$pfad2 = $umgvar["pfad"]."/BACKUP/".$backupdir."/$file";
 	}
 
@@ -1749,7 +1746,7 @@ function import_tab_pool($import_typ,$import_overwrite,$import_count,$partimport
 }
 
 # Komplett Import
-function import_complete($del_all,$txt_encode=null, $txt_terminate=null,$txt_enclosure=null){
+function import_complete($del_all,$txt_encode=null, $txt_terminate=null,$txt_enclosure=null, bool $isInstaller = false){
 	global $db;
 	global $lang;
 	global $setup_dbuser;
@@ -1851,8 +1848,16 @@ function import_complete($del_all,$txt_encode=null, $txt_terminate=null,$txt_enc
 # 987 / 1014 <?=lang('Limbas is already installed.')
 	if($GLOBALS["action"]){
 		echo "<BR><BR><HR><H4>".lang('Limbas has been successfully installed').",</H4>";
-		echo "<a class=\"btn btn-primary pull-right\" onclick=\"top.window.location.reload();\">".lang('start Limbas now!')."</a><br>
+        
+        if($isInstaller) {
+            echo '<a class="btn btn-primary pull-right" href="../">'.lang('start Limbas now!')."</a><br>
         <div>(default-user: <b>admin</b> | default password: <b>limbas</b>)</div><BR><BR><BR>";
+        } else {
+            echo "<a class=\"btn btn-primary pull-right\" onclick=\"top.window.location.reload();\">".lang('start Limbas now!')."</a><br>
+        <div>(default-user: <b>admin</b> | default password: <b>limbas</b>)</div><BR><BR><BR>";
+        }
+        
+		
 		echo "<script>//<!--\nscrolldown();\n//--></script>";
         unset($_SESSION);
         session_unset();

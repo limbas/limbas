@@ -28,7 +28,7 @@
         <input type="hidden" name="editid">
 
         <div class="table-responsive">
-        <table class="table table-sm table-striped mb-0 border bg-white">
+        <table class="table table-sm table-striped mb-0 border bg-contrast">
             <thead>
             <tr>
                 <th>ID</th>
@@ -119,7 +119,7 @@
                                 if($tabid OR $forms){?>
                                     <select name="reminderformd[<?=$id?>]" onchange="document.form1.editid.value=<?=$id?>;document.form1.submit();" class="form-select form-select-sm">
                                         <option></option>
-                                        <option value="-1" <?if($value['formd_id'][$id] == -1){echo 'selected';}?>>-<?=$lang[2710]?>-</option>
+                                        <option value="-1" <?=$value['formd_id'][$id] == -1 ? 'selected' : ''?>>-<?=$lang[2710]?>-</option>
                                         <option disabled>________________</option>
                                         <?=$forms?>
                                     </select>

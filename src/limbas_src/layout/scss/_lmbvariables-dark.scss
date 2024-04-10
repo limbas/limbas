@@ -1,0 +1,233 @@
+/*!
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+
+// Variables
+//
+// Variables should follow the `$component-state-property-size` formula for
+// consistent naming. Ex: $nav-link-disabled-color and $modal-content-box-shadow-xs.
+
+//legacy
+$farbschemaWEB1: gray !default;
+$farbschemaWEB2: #E3E3E3 !default;
+$farbschemaWEB3: gray !default;
+$farbschemaWEB4: gray !default;
+$farbschemaWEB5: gray !default;
+$farbschemaWEB6: red !default;
+$farbschemaWEB7: #74ba6a !default;
+$farbschemaWEB8: #212529 !default;
+$farbschemaWEB9: #545454 !default;
+$farbschemaWEB10: #383838 !default;
+$farbschemaWEB11: gray !default;
+$farbschemaWEB12: #E3E3E3 !default;
+$farbschemaWEB13: #000 !default;
+$farbschemaWEB14: #222222 !default;
+
+$legacy-table-color: #e3e3e3 !default;
+$legacy-table-hover-color: $legacy-table-color !default;
+$legacy-table-hover-bg-color: $farbschemaWEB7 !default;
+
+$gtab-header-bg: #343a40 !default; //same as $nav-center-background-color
+$find-icon-path: url("../images/legacy/find-dark.png") !default;
+
+$fontsize07: 0.7em !default;
+$fontsize09: 0.9em !default;
+$fontsize11: 1.1em !default;
+$fontsize12: 1.2em !default;
+$fontsize13: 1.3em !default;
+$fontsize14: 1.4em !default;
+$fontsize15: 1.5em !default;
+$waitsymbol: "../images/legacy/wait1.gif" !default;
+//if($umgvar['waitsymbol']){$waitsymbol = $umgvar['waitsymbol'];}else{$waitsymbol = "assets/images/legacy/wait1.gif";}
+
+$umgvarfont: Verdana, Arial, Helvetica !default;
+$umgvarfontsize: 11px !default;
+
+@function lmbSuggestColor($color, $wc: #FFFFFF, $bc: #000000) {
+  $red: red($color);
+  $green: green($color);
+  $blue: blue($color);
+
+  $o: ($red * 299 + $green * 587 + $blue * 114) / 1000;
+
+  @if ($o > 125) {
+    @return $bc;
+  } @else {
+    @return $wc;
+  }
+
+}
+
+
+
+/*:root,
+[data-bs-theme="light"] {
+  --lmb-fontc3: lmbSuggestColor($farbschemaWEB14, #222222, #7D7D7D);
+  --lmb-fontc7: lmbSuggestColor($farbschemaWEB7, #5a5a5a, #333333);
+  --lmb-fontc14: #dee2e7;
+}
+[data-bs-theme="dark"] {*/
+$lmbFontc3: lmbSuggestColor($farbschemaWEB14, #ffffff, #ffffff) !default;
+$lmbFontc7: lmbSuggestColor($farbschemaWEB7, #ffffff, #ffffff) !default;
+$lmbFontc14: #dee2e6 !default;
+//}
+
+//legacy end
+
+
+// global defaults
+
+$body-color: #adb5bd !default;
+$body-bg: #212529 !default;
+$default-color: #dee2e6 !default;
+$default-bg-color: #212529 !default;
+$default-border-color: #c0c0c0 !default;
+$font-size-base: 0.8rem !default;
+$sess-refresh-color: #e4d314 !default;
+
+$bg-differ: #343a40 !default;
+
+$fa-font-path: '../../assets/fonts' !default;
+
+//bootstrap defaults
+
+$enable-rounded: false !default;
+
+$primary: #699900 !default;
+$success: #00bc67 !default;
+
+
+$white:    #fff !default;
+$gray-100: #f8f9fa !default;
+$gray-200: #e9ecef !default;
+$gray-300: #dee2e6 !default;
+$gray-400: #ced4da !default;
+$gray-500: #adb5bd !default;
+$gray-600: #6c757d !default;
+$gray-700: #495057 !default;
+$gray-800: #343a40 !default;
+$gray-900: #212529 !default;
+$black:    #000 !default;
+
+$input-focus-border-color: #9fe900 !default;
+$border-color: $default-border-color !default;
+
+
+//bootstrap overwrites because of no support for data-bs-theme
+$nav-tabs-link-active-bg: #343a40 !default;
+$nav-tabs-link-active-color: #dee2e6 !default;
+
+$card-bg: $gray-800 !default;
+
+$input-bg: $bg-differ;
+
+$table-bg: $gray-900 !default;
+$table-striped-bg: rgba(255, 255, 255, 0.1) !default;
+
+$input-disabled-border-color: $black !default;
+$input-disabled-bg: $gray-700 !default;
+
+$list-group-color: $body-color !default;
+$list-group-bg: $gray-800 !default;
+
+
+  // Top navigation
+$top-nav-height: 3.5rem !default;
+$top-nav-background-color: #212529 !default;
+$navbar-light-color: #ced4da !default;
+$navbar-light-hover-color: #9fe900 !default; //#a5ef00;
+$navbar-light-active-color: #9fe900 !default; //#a5ef00;
+$navbar-light-brand-color: $navbar-light-color !default;
+$navbar-light-brand-hover-color: $navbar-light-color !default;
+
+// Show menu
+$showmenu-color: #f8f9fa !default;
+$showmenu-background-color: #343a40 !default;
+$showmenu-border: 1px solid #9fe900 !default;
+
+// Left navigation
+
+$nav-left-background-color: #343a40 !default;
+$nav-left-right-border: none !default;
+
+$nav-left-header-color: #ced4da !default;
+$nav-left-header-hover-color: #f18e00 !default;
+$nav-left-header-open-color: #ced4da !default;
+$nav-left-header-background-color: $nav-left-background-color !default;
+$nav-left-header-hover-background-color: #495057 !default;
+$nav-left-header-open-background-color: #495057 !default;
+$nav-left-header-border: none !default;
+
+$nav-left-inner-color: $nav-left-header-color !default;
+$nav-left-inner-hover-color: #f18e00 !default;
+$nav-left-inner-background-color: #6c757d !default;
+$nav-left-inner-open-background-color: darken($nav-left-background-color, 12) !default;
+$nav-left-inner-border: none !default;
+$nav-left-hide-color: #e9ecef !default;
+
+$nav-left-query-icon-color: #e9ecef !default;
+$nav-left-new-data-color: #00ff00 !default;
+
+//Center Navigation
+$nav-center-color: $navbar-light-color !default;
+$nav-center-background-color: #343a40 !default;
+
+// Right navigation
+$nav-right-background-color: #343a40 !default;
+$nav-right-left-border: 1px solid #e9ecef !default;
+
+$nav-right-header-color: #ced4da !default;
+$nav-right-header-hover-color: #f18e00 !default;
+$nav-right-header-open-color: #ced4da !default;
+$nav-right-header-background-color: #343a40 !default;
+$nav-right-header-hover-background-color: #495057 !default;
+$nav-right-header-open-background-color: #495057 !default;
+$nav-right-header-border: none !default;
+
+$nav-right-inner-color: #ced4da !default;
+$nav-right-inner-hover-color: #f18e00 !default;
+$nav-right-inner-background-color: #e9ecef !default;
+$nav-right-inner-open-background-color: #6c757d !default;
+$nav-right-inner-border: none !default;
+$nav-right-hide-color: #e9ecef !default;
+
+// Top info area
+$top-info-area-color: #ced4da !default;
+$top-info-area-background-color: #495057 !default;
+$top-info-border-bottom: 1px solid $default-border-color !default;
+
+// Kanban
+$kanban-colum-color: $default-color !default;
+$kanban-colum-background-color: $default-bg-color !default;
+$kanban-colum-header-color: $default-color !default;
+$kanban-colum-header-background-color: #ffffff !default;
+$kanban-card-background-color: $kanban-colum-background-color !default;
+$kanban-assigned-background-color: lighten($kanban-card-background-color, 10) !default;
+$kanban-filter-background-color: $kanban-colum-background-color !default;
+$kanban-filter-border: 1px solid $default-border-color !default;
+$kanban-filter-item-background-color: lighten($kanban-filter-background-color, 10) !default;
+$kanban-filter-item-border: 1px solid $default-border-color !default;
+$kanban-card-drop-background-color: lighten($kanban-filter-background-color, 10) !default;
+$kanban-card-drop-border: 1px dashed $default-border-color !default;
+
+// Table styles
+$table-section-background-color: #f18e00 !default;
+$table-section-color: #212529 !default;
+$table-sub-section-background-color: #4d6c19 !default;
+$table-sub-section-color: #ffffff !default;
+
+// Jquery UI
+$jquery-ui-header-color: $body-color !default;
+$jquery-ui-header-bg: $body-bg !default;
+
+
+
+
+
+
+
+

@@ -57,7 +57,7 @@ function activate_subrules(val) {
         $activeTabLinkId = 135;
         require(__DIR__.'/group_tabs.php') ?>
         
-        <div class="tab-content col-9 border border-start-0 bg-white">
+        <div class="tab-content col-9 border border-start-0 bg-contrast">
             <div class="tab-pane active p-3">
 
                 <h5><i class="lmb-icon lmb-group"></i>&nbsp;<?=$groupdat["name"][$ID]?></h5>

@@ -7,6 +7,8 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\admin\report\ReportController;
+
 $layout_bootstrap = true; // TODO: remove -> check layout/parts
 
 # --- Zeitmessung ---------------------------------------------------
@@ -429,11 +431,9 @@ elseif ($action == "setup_report_menu" AND $LINK["setup_report_select"] == 1) {
 	$require4 = "admin/report/html/editor_old/sidebar.php";
 	$ONKEYDOWN = "OnKeydown=\"sendkeydown(event);\"";
 }
-elseif ($action == "setup_report_select" AND $LINK["setup_report_select"] == 1) {
-	$require1 = "admin/tools/add_filestruct.lib";
-	$require2 = "extra/explorer/filestructure.lib";
-	$require3 = "admin/report/report_list.php";    
-	$BODYHEADER = $lang[$LINK["desc"][$LINK_ID[$action]]];
+elseif ($action == 'setup_report_select' AND $LINK['setup_report_select'] == 1) {
+    $controllerAction = [ReportController::class, 'index'];
+	$BODYHEADER = $lang[$LINK['desc'][$LINK_ID[$action]]];
 }
 
 /* ------------------ workflow ------------------------ */
@@ -512,12 +512,6 @@ elseif ($action == 'setup_mail_templates' AND $LINK[$LINK_ID[$action]] == 1) {
     $BODYHEADER = $lang[$LINK['desc'][$LINK_ID[$action]]];
 }
 
-elseif ($action == 'setup_mail_templates' AND $LINK[$LINK_ID[$action]] == 1) {
-    $require1 = 'admin/mailTemplates/mail.dao';
-    $require2 = 'admin/mailTemplates/mail.php';
-    $BODYHEADER = $lang[$LINK['desc'][$LINK_ID[$action]]];
-}
-
 elseif ($action == 'setup_template_editor'){// AND $LINK[$LINK_ID[$action]] == 1) {
     $require1 = 'admin/templates/html/editor/init.php';
     $BODYHEADER = '';//$lang[$LINK['desc'][$LINK_ID[$action]]];
@@ -546,10 +540,10 @@ if($BODY != 1){
 
 //load layout / choose between new and legacy based on action and template //TODO: remove legacy switch in future version
     if ($layout_bootstrap) { ?>
-        <link rel="stylesheet" type="text/css" href="assets/css/<?=$session['css']?>?v=<?=$umgvar["version"]?>">
+        <link rel="stylesheet" type="text/css" href="<?=$session['css']?>?v=<?=$umgvar["version"]?>">
         <script type="text/javascript" src="assets/vendor/bootstrap/bootstrap.bundle.min.js?v=<?=$umgvar["version"]?>"></script>
     <?php } else { ?>
-        <link rel="stylesheet" type="text/css" href="assets/css/<?=$session['legacyCss']?>?v=<?=$umgvar["version"]?>">
+        <link rel="stylesheet" type="text/css" href="<?=$session['legacyCss']?>?v=<?=$umgvar["version"]?>">
     <?php } ?>
         
 
@@ -580,7 +574,13 @@ if($BODY != 1){
 # EXTENSION
 if($LINK["extension"][$LINK_ID[$action]] AND is_file($umgvar["pfad"].$LINK["extension"][$LINK_ID[$action]])){
 	require($umgvar["pfad"].$LINK["extension"][$LINK_ID[$action]]);
-}else{
+}
+elseif(isset($controllerAction))
+{
+    echo (new $controllerAction[0])->{$controllerAction[1]}();
+}
+else
+{
 	if ($require1) { require_once(COREPATH . $require1); }
 	if ($require2) { require_once(COREPATH . $require2); }
 	if ($require3) { require_once(COREPATH . $require3); }

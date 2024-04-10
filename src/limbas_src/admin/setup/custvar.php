@@ -22,10 +22,10 @@
                 </li>
             <?php endif; ?>
             <li class="nav-item">
-                <a class="nav-link active bg-white" href="#"><?=$lang[$LINK["desc"][$LINK_ID['setup_custvar']]]?></a>
+                <a class="nav-link active bg-contrast" href="#"><?=$lang[$LINK["desc"][$LINK_ID['setup_custvar']]]?></a>
             </li>
         </ul>
-        <div class="tab-content border border-top-0 bg-white">
+        <div class="tab-content border border-top-0 bg-contrast">
             <div class="tab-pane active">
 
                 <table class="table table-sm table-striped mb-0">

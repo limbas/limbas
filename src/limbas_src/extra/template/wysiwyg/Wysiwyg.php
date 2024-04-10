@@ -16,6 +16,34 @@ use ReflectionParameter;
 class Wysiwyg
 {
 
+    public function uploadImage($params): void
+    {
+        global $gtab;
+        require_once(COREPATH . 'extra/explorer/filestructure.lib');
+        
+        $gtabId = intval($params['gtabid']);
+
+        
+        if(is_array($gtab['level']) && array_key_exists($gtabId, $gtab['level'])) {
+            $level = $gtab['level'][$gtabId];
+        } else {
+            http_response_code(400);
+            return;
+        }
+        
+
+        $file['file'][0] = $_FILES['file']['tmp_name'];
+        $file['file_name'][0] = $_FILES['file']['name'];
+        $file['file_type'][0] = $_FILES['file']['type'];
+        $dublicate['type'][0] = 'rename';
+
+        $id = lmb_fileUpload($file,$level,null,null,$dublicate);
+        $success = $id !== false;
+        
+        
+        header('Content-Type: application/json');
+        echo json_encode(['success'=>$success,'id'=>$id,'location'=>'main.php?action=download&ID=' . $id]);
+    }
 
     /**
      * Returns b from strings of form a_b
@@ -46,8 +74,12 @@ class Wysiwyg
             }
         }
 
+        // require limbas functions
+        require_once COREPATH . 'extra/template/report/functions.php';
+        require_once COREPATH . 'extra/template/form/functions.php';
+
         // include bootstrap
-        echo '<link rel="stylesheet" href="assets/css/' . $session['css'] . '?v=' . $umgvar["version"] . '">';
+        echo '<link rel="stylesheet" href="' . $session['css'] . '?v=' . $umgvar["version"] . '">';
         echo "<script src=\"assets/vendor/jquery/jquery.min.js?v={$umgvar["version"]}\"></script>";
         echo "<script src=\"assets/vendor/bootstrap/bootstrap.bundle.min.js?v={$umgvar["version"]}\"></script>";
         echo <<<EOD
@@ -89,10 +121,13 @@ EOD;
         $lmbFunctions = array('pagebreak', 'background', 'tablerowdata', 'colindex', 'index');
         $config = array(
             'show_both' => function ($name) use ($lmbFunctions) {
-                if (!str_starts_with($name, 'report_')) {
-                    return false;
+                if (str_starts_with($name, 'report_')) {
+                    return function_exists('report_' . $this->removePrefix($name)) && !in_array($this->removePrefix($name), $lmbFunctions);
                 }
-                return function_exists('form_' . $this->removePrefix($name)) && !in_array($this->removePrefix($name), $lmbFunctions);
+                elseif (str_starts_with($name, 'form_')) {
+                    return function_exists('form_' . $this->removePrefix($name)) && !in_array($this->removePrefix($name), $lmbFunctions);
+                }
+                return false;
             },
             'show_report' => function ($name) use ($lmbFunctions) {
                 return str_starts_with($name, 'report_') && !in_array($this->removePrefix($name), $lmbFunctions);
@@ -101,7 +136,7 @@ EOD;
                 return str_starts_with($name, 'form_') && !in_array($this->removePrefix($name), $lmbFunctions);
             },
             'show_lmb' => function ($name) use ($lmbFunctions) {
-                if (!str_starts_with($name, 'report_')) {
+                if (!str_starts_with($name, 'report_') && !str_starts_with($name, 'form_')) {
                     return false;
                 }
                 return in_array($this->removePrefix($name), $lmbFunctions);
@@ -185,7 +220,7 @@ EOD;
         }
 
         // include bootstrap
-        echo '<link rel="stylesheet" href="assets/css/' . $session['css'] . '?v=' . $umgvar["version"] . '">';
+        echo '<link rel="stylesheet" href="' . $session['css'] . '?v=' . $umgvar["version"] . '">';
         echo "<script src=\"assets/vendor/jquery/jquery.min.js?v={$umgvar["version"]}\"></script>";
         echo "<script src=\"assets/vendor/bootstrap/bootstrap.bundle.min.js?v={$umgvar["version"]}\"></script>";
 
@@ -462,7 +497,7 @@ EOD;
         global $umgvar;
         global $session;
         // include bootstrap
-        echo '<link rel="stylesheet" href="assets/css/' . $session['css'] . '?v=' . $umgvar["version"] . '">';
+        echo '<link rel="stylesheet" href="' . $session['css'] . '?v=' . $umgvar["version"] . '">';
         echo "<script src=\"assets/vendor/jquery/jquery.min.js?v={$umgvar["version"]}\"></script>";
         echo "<script src=\"assets/vendor/bootstrap/bootstrap.bundle.min.js?v={$umgvar["version"]}\"></script>";
 
@@ -481,7 +516,7 @@ EOD;
         global $gtab, $gfield, $lang, $umgvar, $session;
 
         // include bootstrap
-        echo '<link rel="stylesheet" href="assets/css/' . $session['css'] . '?v=' . $umgvar["version"] . '">';
+        echo '<link rel="stylesheet" href="' . $session['css'] . '?v=' . $umgvar["version"] . '">';
         echo "<script src=\"assets/vendor/jquery/jquery.min.js?v={$umgvar["version"]}\"></script>";
         echo "<script src=\"assets/vendor/bootstrap/bootstrap.bundle.min.js?v={$umgvar["version"]}\"></script>";
         echo <<<EOD

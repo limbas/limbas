@@ -29,7 +29,7 @@ function del_field(id) {
 
         <ul class="nav nav-tabs">
             <li class="nav-item">
-                <a class="nav-link active bg-white" href="#"><?=$lang[$LINK["desc"][177]]?></a>
+                <a class="nav-link active bg-contrast" href="#"><?=$lang[$LINK["desc"][177]]?></a>
             </li>
             <?php if ($LINK['setup_ftype_depend']): ?>
                 <li class="nav-item">
@@ -37,7 +37,7 @@ function del_field(id) {
                 </li>
             <?php endif; ?>
         </ul>
-        <div class="tab-content border border-top-0 bg-white">
+        <div class="tab-content border border-top-0 bg-contrast">
             <div class="tab-pane active">
 
 

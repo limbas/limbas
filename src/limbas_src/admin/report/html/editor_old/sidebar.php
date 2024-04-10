@@ -307,30 +307,23 @@ function displayPanel(el,id){
     <TD><?= $lang[2581] ?></TD>
     <TD COLSPAN="3">
         <select name="default_class" onchange="document.form1.submit();" style="width:100px;">
-            <option value="NULL">
+            <option value=""></option>
             <?php
-           if (file_exists(EXTENSIONSPATH . 'css')) {
-                $extfiles = read_dir(EXTENSIONSPATH . 'css', 0);
 
-                $extfiles['name'][] = 'layout.css';
-                $extfiles['typ'][] = 'file';
-                $extfiles['path'][] = EXTENSIONSPATH . 'css/layout.css';
-                $extfiles['ext'][] = 'css';
+            if (file_exists(EXTENSIONSPATH . 'css') && $handle = opendir(EXTENSIONSPATH . 'css')):
+                while (false !== ($file = readdir($handle))):
 
-                if ($extfiles['name']) {
-                    foreach ($extfiles['name'] as $key1 => $filename) {
-                        if ($extfiles['typ'][$key1] == 'file' AND $extfiles['ext'][$key1] == 'css') {
-                            $path = lmb_substr($extfiles['path'][$key1], lmb_strlen($umgvar['pfad']), 100);
-                            if ($report['css'] == $path . $filename) {
-                                $selected = 'SELECTED';
-                            } else {
-                                $selected = '';
-                            }
-                            echo '<option value="' . $path . $filename . '" ' . $selected . '>' . str_replace('/EXTENSIONS/css/', '', $path) . $filename;
-                        }
-                    }
-                }
-            }
+                    $pathParts = pathinfo($file);
+
+                    if($pathParts['extension'] === 'css'): ?>
+            <option value="<?=e($pathParts['basename'])?>" <?=$pathParts['basename'] === $report['css'] ? 'selected' : ''?>><?=e($pathParts['basename'])?></option>
+                    
+                    <?php
+                    endif;
+
+                endwhile;
+                closedir($handle);
+            endif;
             ?>
 
         </select>

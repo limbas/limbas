@@ -167,7 +167,7 @@ function lmb_subtree($treetab,$gtabid,$treeid,$sub=0){
         
         <?php else: ?>
         
-        <table class="table table-sm table-striped mb-0 border bg-white">
+        <table class="table table-sm table-striped mb-0 border bg-contrast">
 
             <?php                
                 

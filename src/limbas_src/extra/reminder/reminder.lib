@@ -32,12 +32,14 @@ function lmb_reminderFilter(&$sql,$category=null,$gtabid=null,$ID=null,$valid=nu
         }
     }
 
+    $sql[] = "LMB_REMINDER.ID = LMB_REMINDER_GROUP.REMINDER_ID";
+
     // group based
     if($greminder[$rgtabid]["groupbased"][$category]){
-        $sql[] = "(LMB_REMINDER.GROUP_ID IN (".implode(",",$session["subgroup"]).") OR LMB_REMINDER.USER_ID = ".$session["user_id"].")";
+        $sql[] = "(LMB_REMINDER_GROUP.GROUP_ID IN (".implode(",",$session["subgroup"]).") OR LMB_REMINDER_GROUP.USER_ID = ".$session["user_id"].")";
     // user based
     }else{
-        $sql[] = "LMB_REMINDER.USER_ID = ".$session["user_id"];
+        $sql[] = "LMB_REMINDER_GROUP.USER_ID = ".$session["user_id"];
     }
 
     // is valid
@@ -167,25 +169,42 @@ function lmb_addReminder($gfrist,$gfrist_desc,$gtabid,$ID,$to=null,$category=0,$
     if($gfrist){$gfrist = convert_date($gfrist);}
     if(!$gfrist){$gfrist = convert_stamp(time());}
 
+    if($groupbased) {
+        $NEXTID_REM = next_db_id('LMB_REMINDER', 'ID', 1);
+        $sqlquery = "INSERT INTO LMB_REMINDER (ID,TAB_ID,DAT_ID,FRIST,DESCRIPTION,FROMUSER,CONTENT,CATEGORY,WFL_INST,FORM_ID,LMB_MID) VALUES ($NEXTID_REM," . $gtabid . ",$ID,'" . convert_date($gfrist) . "','" . parse_db_string($gfrist_desc, 250) . "'," . parse_db_int($session["user_id"]) . ",'" . parse_db_string($fielddesc, 160) . "'," . parse_db_int($category) . "," . parse_db_int($wfl_inst) . "," . parse_db_int($form_id) . ", " . parse_db_int($MID) . ")";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
+        if(!$rs) {
+            return false;
+        }
+    }
+
     if($userlist){
         foreach ($userlist as $lkey => $lval){
-            $NEXTID = next_db_id('LMB_REMINDER','ID',1);
-            $sqlquery = "INSERT INTO LMB_REMINDER (ID,USER_ID,TAB_ID,DAT_ID,FRIST,DESCRIPTION,FROMUSER,CONTENT,CATEGORY,WFL_INST,FORM_ID,LMB_MID) VALUES ($NEXTID,".$lval.",".$gtabid.",$ID,'".convert_date($gfrist)."','".parse_db_string($gfrist_desc,250)."',".parse_db_int($session["user_id"]).",'".parse_db_string($fielddesc,160)."',".parse_db_int($category).",".parse_db_int($wfl_inst).",".parse_db_int($form_id).", ".parse_db_int($MID).")";
-            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-            $out[] = $lval;
-            $NEXTID++;
+            if(!$groupbased) {
+                $NEXTID_REM = next_db_id('LMB_REMINDER', 'ID', 1);
+                $sqlquery = "INSERT INTO LMB_REMINDER (ID,TAB_ID,DAT_ID,FRIST,DESCRIPTION,FROMUSER,CONTENT,CATEGORY,WFL_INST,FORM_ID,LMB_MID) VALUES ($NEXTID_REM," . $gtabid . ",$ID,'" . convert_date($gfrist) . "','" . parse_db_string($gfrist_desc, 250) . "'," . parse_db_int($session["user_id"]) . ",'" . parse_db_string($fielddesc, 160) . "'," . parse_db_int($category) . "," . parse_db_int($wfl_inst) . "," . parse_db_int($form_id) . ", " . parse_db_int($MID) . ")";
+                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
+            }
+            if($rs) {
+                $sqlquery = "INSERT INTO LMB_REMINDER_GROUP (REMINDER_ID,USER_ID) VALUES ($NEXTID_REM , $lval)";
+                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
+                $out[] = $lval;
+            }
+            #$NEXTID++;
             if(!$rs) {$commit = 1;}
         }}
 
     if($grouplist){
         foreach ($grouplist as $lkey => $lval){
-            $NEXTID = next_db_id('LMB_REMINDER','ID',1);
-            $sqlquery = "INSERT INTO LMB_REMINDER (ID,GROUP_ID,TAB_ID,DAT_ID,FRIST,DESCRIPTION,FROMUSER,CONTENT,CATEGORY,WFL_INST,FORM_ID,LMB_MID) VALUES ($NEXTID,".$lval.",".$gtabid.",$ID,'".convert_date($gfrist)."','".parse_db_string($gfrist_desc,250)."',".parse_db_int($session["user_id"]).",'".parse_db_string($fielddesc,160)."',".parse_db_int($category).",".parse_db_int($wfl_inst).",".parse_db_int($form_id).", ".parse_db_int($MID).")";
+            $sqlquery = "INSERT INTO LMB_REMINDER_GROUP (REMINDER_ID,GROUP_ID) VALUES ($NEXTID_REM , $lval)";
             $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
             $out[] = $lval;
-            $NEXTID++;
+            #$NEXTID++;
             if(!$rs) {$commit = 1;}
-        }}
+        }
+    }
+
+
 
     # send mail to userlist
     if($sendmail AND $maillist){
@@ -267,16 +286,31 @@ function lmb_dropReminder($rem_id,$gtabid=null,$category=null,$ID=null,$wfl_inst
         $category = parse_db_int(lmbdb_result($rs, 'CATEGORY'));
     }
 
+    # check if is category
+    if($category){
+        $gtabid_reminder = 0;
+        if($greminder["argresult_id"][$category]){
+            $gtabid_reminder = $greminder["argresult_id"][$category];
+        }
+        if($greminder[$gtabid_reminder]["groupbased"][$category]){
+            $groupbased = 1;
+        }
+    }
+
+    // filter
+    lmb_reminderFilter($sql, $category,$gtabid,$ID,$valid);
+
     if($wfl_inst){$sql[] = "LMB_REMINDER.WFL_INST = ".parse_db_int($wfl_inst);}
     if($rem_id){$sql[] = "LMB_REMINDER.ID = ".parse_db_int($rem_id);}
 
-    // filter
-    lmb_reminderFilter($sql, $category,$gtabinull,$ID,$valid);
+    $where = implode(" AND ",$sql);
 
-    $sql = implode(" AND ",$sql);
-    $sqlquery = "DELETE FROM LMB_REMINDER WHERE ".$sql;
+    // LMB_REMINDER_GROUP deleted from foreign key
+    $sqlquery = "DELETE FROM LMB_REMINDER WHERE ID IN (SELECT DISTINCT LMB_REMINDER.ID FROM LMB_REMINDER,LMB_REMINDER_GROUP WHERE " . $where . ")";
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+
     if(!$rs) {return false;}else{return true;}
+
 }
 
 /**
@@ -324,8 +358,8 @@ function lmb_getReminderCount($category){
     // filter
     lmb_reminderFilter($sql,parse_db_int($category), valid: 1);
     $where = implode(' AND ',$sql);
-
-    $sqlquery = "SELECT COUNT(*) FROM LMB_REMINDER WHERE ".$where;
+    #$sqlquery = "SELECT COUNT(*) FROM LMB_REMINDER,LMB_REMINDER_GROUP WHERE ".$where;
+    $sqlquery = "SELECT COUNT(*) FROM LMB_REMINDER WHERE ID IN (SELECT DISTINCT LMB_REMINDER.ID FROM LMB_REMINDER,LMB_REMINDER_GROUP WHERE " . $where . ")";
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
 
     if(!$rs) {$commit = 1;}
@@ -363,8 +397,20 @@ function lmb_getReminder($gtabid=null,$ID=null,$category=null,$wfl_inst=null,$va
 
     $where = implode(" AND ",$sql);
 
-    $sqlquery = "SELECT * FROM LMB_REMINDER
-		WHERE $where ORDER BY TAB_ID,FRIST";
+    $sqlquery = "SELECT DISTINCT
+    LMB_REMINDER.ID,
+    LMB_REMINDER.FRIST,
+    LMB_REMINDER.DESCRIPTION,
+    LMB_REMINDER.CONTENT,
+    LMB_REMINDER.TAB_ID,
+    LMB_REMINDER.DAT_ID,
+    LMB_REMINDER.FORM_ID,
+    LMB_REMINDER.WFL_INST,
+    LMB_REMINDER.CATEGORY,
+    LMB_REMINDER.FROMUSER
+    FROM LMB_REMINDER,LMB_REMINDER_GROUP
+	WHERE $where ORDER BY LMB_REMINDER.TAB_ID,LMB_REMINDER.FRIST";
+
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
     if(!$rs) {$commit = 1;}
     while(lmbdb_fetch_row($rs)){
@@ -380,8 +426,6 @@ function lmb_getReminder($gtabid=null,$ID=null,$category=null,$wfl_inst=null,$va
         $reminder["category"][$id] = lmbdb_result($rs, "CATEGORY");
         $reminder["fromuser"][$id] = lmbdb_result($rs, "FROMUSER");
     }
-
-    #error_log($sqlquery);
 
     if($reminder){
         return $reminder;

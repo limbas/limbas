@@ -1280,7 +1280,7 @@ function limbasReportSaveTemlpate(evt, gtabid, reportid, resolvedTemplateGroups=
 
     if (name != null) {
         limbasReportMenuHandler(0,evt,null,gtabid,reportid,0,0,0,'pdf','',0, resolvedTemplateGroups, {}, name, function(result){
-            alert('Template gespeichert.');
+            lmbShowSuccessMsg('Template gespeichert.');
 		});
     }
 

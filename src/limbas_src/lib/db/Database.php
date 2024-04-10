@@ -75,10 +75,10 @@ class Database
             $whereFields = [];
             foreach($where as $field => $value) {
                 if($value === null) {
-                    $whereFields[] = $field . ' IS ' . LMB_DBDEF_NULL;
+                    $whereFields[] = strtoupper($field) . ' IS ' . LMB_DBDEF_NULL;
                 } else {
                     $values[] = $value;
-                    $whereFields[] = $field . ' = ?';
+                    $whereFields[] = strtoupper($field) . ' = ?';
                 }
                 
             }
@@ -87,7 +87,7 @@ class Database
 
         if(!empty($orderBy)) {
             $orderString = ' ORDER BY ' . implode(', ', array_map(
-                    function ($field, $dir) { return $field . ' ' . $dir; },
+                    function ($field, $dir) { return strtoupper($field) . ' ' . $dir; },
                     array_keys($orderBy),
                     $orderBy
                 ));
@@ -99,7 +99,7 @@ class Database
             $limitString = ' LIMIT ' .$limit;
         }
         
-        $fieldString = empty($fields) ? '*' : implode(',',$fields);
+        $fieldString = empty($fields) ? '*' : implode(',',array_map('strtoupper', $fields));
 
         $sql = 'SELECT ' . $fieldString . ' FROM ' . $table . $whereString . $orderString . $limitString;
 
@@ -123,7 +123,7 @@ class Database
         $fieldCount = count($data);
         $valueString = '?' . str_repeat(',?', $fieldCount - 1);
 
-        $sql = 'INSERT INTO ' . $table . ' (' . implode(',', $fields) . ') VALUES (' . $valueString  . ')';
+        $sql = 'INSERT INTO ' . $table . ' (' . implode(',', array_map('strtoupper', $fields)) . ') VALUES (' . $valueString  . ')';
         
         return lmbdb_execute(lmbdb_prepare($db,$sql), $values);
     }
@@ -150,10 +150,10 @@ class Database
             $whereArray = [];
             foreach($where as $field => $value) {
                 if($value === null) {
-                    $whereArray[] = $field . ' IS ' . LMB_DBDEF_NULL;
+                    $whereArray[] = strtoupper($field) . ' IS ' . LMB_DBDEF_NULL;
                 } else {
                     $values[] = $value;
-                    $whereArray[] = $field . ' = ?';
+                    $whereArray[] = strtoupper($field) . ' = ?';
                 }
                 $whereString = ' WHERE ' . implode(' AND ', $whereArray);
             }
@@ -183,10 +183,10 @@ class Database
         $whereString = [];
         foreach($where as $field => $value) {
             $values[] = $value;
-            $whereString[] = $field . ' = ?';
+            $whereString[] = strtoupper($field) . ' = ?';
         }
 
-        $sql = 'DELETE FROM ' . $table . ' WHERE ' . implode(',', $whereString);
+        $sql = 'DELETE FROM ' . $table . ' WHERE ' . implode(' AND ', $whereString);
 
         return lmbdb_execute(lmbdb_prepare($db,$sql), $values);
     }

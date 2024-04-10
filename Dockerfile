@@ -1,4 +1,4 @@
-FROM php:8.1-apache
+FROM php:8.2-apache
 MAINTAINER Limbas GmbH <info@limbas.com>
 
 ENV APACHE_DOCUMENT_ROOT /var/www/html/openlimbas/public

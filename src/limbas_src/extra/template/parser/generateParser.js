@@ -36,6 +36,7 @@ fs.readFile(__dirname + "/grammar.txt", "utf-8", function(err, grammar) {
 
     parser = parser.replace(/strlen\(/g, "lmb_strlen(");
     parser = parser.replace(/substr\(/g, "lmb_substr(");
+    parser = parser.replace('<?php','<?php' + "\n" + 'use Limbas\\extra\\template\\base\\TemplateConfig;');
 
     fs.writeFile("searchParserGenerated.php", parser, function(err) {
         if (err) {

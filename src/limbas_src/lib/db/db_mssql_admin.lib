@@ -286,14 +286,16 @@ function dbq_3($p){
  * @return sql string
  */
 function dbq_11($p){
-	$p[5] = "DELETE RESTRICT";
+    if(!$p[5]) {
+        $p[5] = "RESTRICT";
+    }
 	
 	/*return "ALTER TABLE ".$p[0]." 
 		ADD FOREIGN KEY ".$p[4]." (".$p[1].") 
 		REFERENCES ".$p[2]." 
 		ON ".$p[5];*/
 	
-	return "ALTER TABLE ".$p[0]." ADD CONSTRAINT ".$p[4]." FOREIGN KEY (".$p[1].") REFERENCES ".$p[2]." (".$p[3].") ;";
+	return "ALTER TABLE ".$p[0]." ADD CONSTRAINT ".$p[4]." FOREIGN KEY (".$p[1].") REFERENCES ".$p[2]." (".$p[3].") ON DELETE ".$p[5].";";
 
 }
 
@@ -896,21 +898,18 @@ function dbq_21($p){
 
 # -------- create Medium --------
 function create_medium($path,$typ){
-	global $bu;
 
 	return true;
 }
 
 # -------- delete medium --------
 function delete_medium($medium,$typ){
-	global $bu;
 
 	return true;
 }
 
 # -------- start backup --------
 function backup_data($medium,$path,$typ){
-	global $bu;
 	
 	return false;
 }

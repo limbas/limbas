@@ -141,7 +141,7 @@ function change_wysiwyg(fieldid,el){
 }
 
 function newwin(FIELDID,ATID,POOL,TYP) {
-fieldselect = open("main_admin.php?action=setup_fieldselect&fieldid=" + FIELDID + "&atid=" + ATID + "&pool=" + POOL + "&field_pool=" + POOL + "&typ=" + TYP ,"Auswahlfelder","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=750,height=500");
+fieldselect = open("main_admin.php?action=setup_fieldselect&fieldid=" + FIELDID + "&atid=" + ATID + "&pool=" + POOL + "&field_pool=" + POOL + "&typ=" + TYP ,"Auswahlfelder","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=0,width=1000,height=600");
 }
 
 function newwin3(FIELDID,TABID,ATID,ARGTYP,ARGUMENT) {
@@ -450,7 +450,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
             <?php endif; ?>
         </h3>
 
-        <table id="fieldtable" class="table table-sm table-striped table-hover mb-0 border bg-white">
+        <table id="fieldtable" class="table table-sm table-striped table-hover mb-0 border bg-contrast">
             
             
             <thead>
@@ -481,6 +481,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                 <th><?=$lang[2922]?></th>
                 <th><?=$lang[1459]?></th>
                 <th><?=$lang[2672]?></th>
+                <?php if($table_datasync[$atid]){?><th><?=$lang[2914 ]?></th><?php }?>
             </tr>
             </thead>
 
@@ -1001,6 +1002,27 @@ if($table_typ[$bzm] == 5){$isview = 1;}
 
                     <?php endif; ?>
                 </td>
+
+                <?php if($table_datasync[$atid]):?>
+                <td>
+                    <?php // --- in sync template ------
+                    if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100):
+
+                        if($result_fieldtype[$table_gtab[$bzm]]["sync_master"][$bzm1]){
+                            ?>
+                                <span title="Master(<?=count($result_fieldtype[$table_gtab[$bzm]]["sync_master"][$bzm1])?>)">m</span>
+                            <?php
+                        }
+                        if($result_fieldtype[$table_gtab[$bzm]]["sync_slave"][$bzm1]){
+                            ?>
+                                <span title="Slave(<?=count($result_fieldtype[$table_gtab[$bzm]]["sync_slave"][$bzm1])?>))">s</span>
+                            <?php
+                        }
+                        ?>
+
+                    <?php endif; ?>
+                </td>
+                <?php endif; ?>
             </TR>
                 
                 
@@ -1130,8 +1152,12 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                     </td>
                     <td><input class="form-control form-control-sm" type="text" id="typ_size" name="typ_size" style="visibility: hidden"></td>
 
-                    <td colspan="14">
-                        <button class="btn btn-primary btn-sm" type="submit" name="add" value="1"><?=$lang[540]?></button> <label class="ms-3"><?=$lang[1263]?> <INPUT type="CHECKBOX" name="add_permission" value="1" CHECKED></label>
+                    <td colspan="18">
+                        <button class="btn btn-primary btn-sm" type="submit" name="add" value="1"><?=$lang[540]?></button>
+                        <label class="ms-3"><?=$lang[1263]?> <INPUT type="CHECKBOX" name="add_permission" value="1" CHECKED></label>
+                        <?php if($table_datasync[$atid] && $umgvar['sync_template']){?>
+                        <label class="ms-3"><?=$lang[2915]?> <INPUT type="CHECKBOX" name="add_datasync" value="1" <?php $add_datasync ? 'checked' : '';?>></label>
+                        <?php }?>
                     </td>
                 </TR>
                 </tfoot>

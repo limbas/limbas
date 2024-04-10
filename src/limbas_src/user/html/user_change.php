@@ -52,7 +52,7 @@ function check_pass(pass2) {
         <input type="hidden" name="fileview_change">
         <input type="hidden" name="username" value="<?=$result_user["username"]?>">
 
-        <div class="container-fluid bg-white p-3 border">
+        <div class="container-fluid bg-contrast p-3 border">
             <div class="row">
                 <div class="col-md-6">
                     <h5><i class="lmb-icon lmb-user"></i><?=$lang[140]?></h5>

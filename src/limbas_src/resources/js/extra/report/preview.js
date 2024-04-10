@@ -6,191 +6,248 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+
+
+$(function() {
+   $('[data-report-action]').on('click', reportActionClick);
+
+   
+   if(!$('#report_form').data('has-data')) {
+       reportAction('preview');
+   }
+
+    // update left/right inputs if right/left changed
+    $('input[name],select[name],textarea[name]').on('change', reportHandleDataChange);
+    
+
+    //move all footer elements to the bottom
+    $('htmlpagefooter').appendTo($('#report_preview_form'))
+   
+});
+
+/**
+ * Handle report button click
+ */
+function reportActionClick() {
+    reportAction($(this).data('report-action'));
+}
+
+/**
+ * Handle report actions
+ */
+function reportAction(action, params={}) {
+    return new Promise((resolve, reject) => {
+        $('#report_source').addClass('d-none');
+        $('.btn-show-preview').addClass('d-none');
+        $('.load-preview').removeClass('d-none');
+
+        if(action === 'preview') {
+            reportSetArchiveBtn(null);
+        }
+        
+        let data = {
+            actid: 'reportAction',
+            action: action,
+            gtabid: $('input[name="gtabid"]').val(),
+            report_id: $('input[name="report_id"]').val(),
+            ID: $('input[name="ID"]').val(),
+            use_record: $('input[name="use_record"]').val(),
+            report_rename: $('input[name="report_rename"]').val(),
+            report_printer: $('select[name="report_printer"]').val(),
+            resolvedTemplateGroups: $('input[name="resolvedTemplateGroups"]').val(),
+            resolvedDynamicData: $('input[name="resolvedDynamicData"]').val(),
+            dmsIds: $('#btn-report-archive').data('ids')
+        }
+        
+        
+        if(action === 'print' || action === 'archivePrint') {
+            // add printer options
+            data = {...data, ...getPrinterOptions()};
+        }
+
+        data = {...data, ...params};        
+
+        $.get({
+            dataType:'json',
+            url: 'main_dyns.php',
+            data: data,
+            success: function (data) {
+                if(action === 'preview') {
+                    reportPreviewCallback(data);
+                }
+                else if(action === 'print' || action === 'archivePrint') {
+                    reportArchiveCallback(data);
+                }
+                else if(action === 'archive') {
+                    reportArchiveCallback(data);
+                }
+                resolve(data);
+            },
+            error: function () {
+                if(action === 'preview') {
+                    reportPreviewCallback({success:false});
+                }
+                else if(action === 'print' || action === 'archivePrint') {
+                    reportArchiveCallback({success:false});
+                }
+                else if(action === 'archive') {
+                    reportArchiveCallback({success:false});
+                }
+                reject();
+            }
+        });
+    });
+}
+
+/**
+ * Loads the iframe preview on the specified side
+ */
+function reportPreviewCallback(data) {
+
+    let $btnShowPreview = $('.btn-show-preview');
+    $('.load-preview').addClass('d-none');
+    
+    if(!data.success) {
+        $btnShowPreview.removeClass('d-none');
+        lmbShowErrorMsg('Preview could not be loaded.');
+    } else {
+        const $iframe = $('#report_source');
+        $iframe.removeClass('d-none');
+        $iframe.attr('src', data.url);
+        $('.link-open-report').attr('target','_blank').attr('href', data.url);
+        $btnShowPreview.addClass('d-none');
+    }
+
+}
+
+/**
+ * Archives the previewed file
+ * @param data
+ */
+function reportArchiveCallback(data) {
+
+    let $btnArchive = $('#btn-report-archive');
+    
+    if(data.success) {
+
+        $('input[name="report_rename"]').prop('disabled', true); // disable name field
+        
+        reportSetArchiveBtn(1);
+
+        $('.load-preview').addClass('d-none');
+
+        const $iframe = $('#report_source');
+        $iframe.removeClass('d-none');
+        
+        if(data.hasOwnProperty('url')) {
+            $iframe.attr('src', data.url);
+            $('.link-open-report').attr('target','_blank').attr('href', data.url);
+        }
+
+        if(data.hasOwnProperty('ids')) {
+            $btnArchive.data('ids',data.ids);
+        }
+        
+        
+    } else {
+        reportSetArchiveBtn(0);
+    }
+}
+
+
+function reportSetArchiveBtn(status) {
+    let $btnArchive = $('#btn-report-archive');
+    $btnArchive.removeClass('btn-outline-dark btn-outline-success btn-outline-danger');
+
+    $btnArchive.text($btnArchive.data('text'));
+    $btnArchive.prop('disabled', false);
+    
+    if(status === 1) {
+        // successfully archived
+        $btnArchive.prop('disabled', true);
+        $btnArchive.addClass('btn-outline-success');
+        $btnArchive.html($btnArchive.html() + ' <i class="lmb-icon lmb-check"></i>');
+    }
+    else if(status === 0) {
+        // archive failed
+        $btnArchive.addClass('btn-outline-danger');
+        $btnArchive.html($btnArchive.html() + ' <i class="lmb-icon lmb-exclamation"></i>');
+    } else {
+        // reset to default
+        $btnArchive.addClass('btn-outline-dark');
+        $btnArchive.removeData('ids');
+    }
+}
+
+
 /**
  * Replaces entries in object base with entries of object overwrites, if set
  * @param base
  * @param overwrites
+ * @param dontIgnoreEmpty
  * @returns object
  */
-function objectReplace(base, overwrites) {
+function reportObjectReplace(base, overwrites, dontIgnoreEmpty) {
     for (const propName in overwrites) {
-        if (overwrites[propName]) {
+        if (overwrites[propName] || dontIgnoreEmpty) {
             base[propName] = overwrites[propName];
         }
     }
     return base;
 }
 
-/**
- * Loads the iframe preview on the specified side
- */
-function loadPreview() {
-    report_form.preview.value = 1;
-
-    // store dynamic data
-    const contentPreviewForm = $('#report_preview_form');
-    const leftElements = getFormValues(contentPreviewForm);
-
-    const contentForm = $('#content_form');
-    const rightElements = getFormValues(contentForm);
-
-    const hiddenInput = $('input[name=resolvedDynamicData]');
-    let dynamicData = hiddenInput.val() ? JSON.parse(hiddenInput.val()) : {};
-    dynamicData = objectReplace(dynamicData, leftElements);
-    dynamicData = objectReplace(dynamicData, rightElements);
-    hiddenInput.val(JSON.stringify(dynamicData));
-
-    const iframe = $('#preview_frame');
-    if (iframe.length) {
-        // reload using ajax
-        fetchReportPreview(function(path) {
-            preview_path = path;
-            iframe.attr('src', path);
-        });
-    } else {
-        // submit
-        const mainForm = $('#report_form');
-        mainForm.submit();
-    }
-}
-
-/**
- * Downloads the previewed file with the given name
- * @param name
- */
-function downloadUrl(name) {
-    const link = document.createElement("a");
-    link.download = name;
-    link.href = preview_path;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-}
-
-/**
- * Opens the previewed file in a new tab
- */
-function openInNewTab() {
-    open(preview_path, '_blank');
-}
-
-/**
- * Archives the previewed file
- * @param button
- */
-function reportArchive(button) {
-    limbasWaitsymbol(null, true);
-
-    $('#reportOutput').val(2);
-    const fields = ['gtabid', 'report_id', 'ID', 'use_record', 'report_medium', 'report_rename', 'report_printer', 'resolvedTemplateGroups', 'resolvedDynamicData', 'report_output'];
-    const callback = function(result) {
-
-        limbasWaitsymbol(null, true, true);
-        if (ajaxEvalScript(result)) {
-            if(!$(button).hasClass("btn-success") || !result) {
-                $('#report_Archive').addClass("btn btn-danger");
-                $('#report_Archive').html($('#report_Archive').html() + " <i class='lmb-icon lmb-exclamation'></i>");
-            }
-            return; // error
-        }
-        if(!$(button).hasClass("btn-success")) {
-            $(button).prop('disabled', true); // disable button
-            $(report_form.report_rename).prop('disabled', true); // disable name field
-            $(button).addClass("btn btn-success");
-            $(button).html($(button).html() + " <i class='lmb-icon lmb-check'></i>");
-            document.getElementById("report_source").src = result;
-        }
-    };
-    ajaxGet(null,'main_dyns.php','reportAction',fields,callback,'report_form');
-}
-
-/**
- * Regenerates and prints the previewed pdf
- */
-function reportPrint(button) {
-    limbasWaitsymbol(null, true);
-
-    $('#reportOutput').val(4);
-    const fields = ['gtabid', 'report_id', 'ID', 'use_record', 'report_medium', 'report_rename', 'report_printer', 'resolvedTemplateGroups', 'resolvedDynamicData', 'report_output'];
-    const callback = function(result) {
-
-        limbasWaitsymbol(null, true, true);
-        if (ajaxEvalScript(result) || !result) {
-            if(!$('#report_Archive').hasClass("btn-danger")) {
-                $('#report_Archive').addClass("btn btn-danger");
-                $('#report_Archive').html($('#report_Archive').html() + " <i class='lmb-icon lmb-exclamation'></i>");
-            }
-            return; // error
-        }
-        $(button).prop('disabled', true); // disable button
-        $(report_form.report_rename).prop('disabled', true); // disable name field
-        $(button).addClass("btn btn-success");
-        $(button).html($(button).html() + " <i class='lmb-icon lmb-check'></i>");
-
-        /*<?php if($umgvar['printer_cache']){?>
-            if(!$('#report_Archive').hasClass("btn-success")) {
-                $('#report_Archive').prop('disabled', true); // disable button
-                $('#report_Archive').addClass("btn btn-success");
-                $('#report_Archive').html($('#report_Archive').html() + " <i class='lmb-icon lmb-check'></i>");
-                document.getElementById("report_source").src = result;
-            }
-            <?php }?>*/
-    };
-    ajaxGet(null,'main_dyns.php','reportAction',fields,callback,'report_form');
-}
-
-/**
- * Generates a pdf preview with ajax
- * @param callbackOuter function(filePath)
- */
-function fetchReportPreview(callbackOuter) {
-    limbasWaitsymbol(null, true);
-
-    $('#reportOutput').val(5);
-    const fields = ['gtabid', 'report_id', 'ID', 'use_record', 'report_medium', 'report_rename', 'report_printer', 'resolvedTemplateGroups', 'resolvedDynamicData', 'report_output'];
-    const callback = function(result) {
-        limbasWaitsymbol(null, true, true);
-
-        if (ajaxEvalScript(result)) {
-            return; // error
-        }
-        const path = result.trim();
-        if (!path) {
-            showAlert(jsvar['lng_56']);
-            return;
-        }
-        callbackOuter(path);
-    };
-    ajaxGet(null,'main_dyns.php','reportAction',fields,callback,'report_form');
-}
 
 /**
  * Gets all set values of inputs, selects and textareas in the given html container
  * @param $container jQuery
  */
-function getFormValues($container) {
+function reportGetFormValues($container) {
     const elements = $container.find('input[name],select[name],textarea[name]');
     const keyVal = {};
     elements.each(function() {
-        keyVal[$(this).attr('name')] = $(this).val();
+        const type = $(this).attr('type');
+        if(type === 'checkbox') {
+            if($(this).prop('checked')) {
+                keyVal[$(this).attr('name')] = $(this).val();
+            } else {
+                keyVal[$(this).attr('name')] = '';
+            }
+        } else {
+            keyVal[$(this).attr('name')] = $(this).val();
+        }
     });
     return keyVal;
 }
 
-// on load
-$(function() {
-    // set correct medium
-    //report_form.report_medium.value= '<?= $report_medium ?>';
 
-    // update left/right inputs if right/left changed
-    $('input[name],select[name],textarea[name]').change(function() {
-        const changedEl = $(this);
-        const otherEl = $('[name="' + changedEl.attr('name') + '"]').not(changedEl);
-        if (otherEl.length === 1) {
+/**
+ * update left/right inputs if right/left changed
+ * save data to hidden dynamic data input
+ */
+function reportHandleDataChange() {
+    const changedEl = $(this);
+    const type = $(this).attr('type');   
+    
+    const otherEl = $('[name="' + changedEl.attr('name') + '"]').not(changedEl);
+    if (otherEl.length === 1) {
+        if(type === 'checkbox') {
+            otherEl.prop('checked', changedEl.prop('checked'))
+        } else {
             otherEl.val(changedEl.val());
         }
-    })
+    }
 
-    //move all footer elements to the bottom
-    $('htmlpagefooter').appendTo($('#report_preview_form'))
-});
+    // store dynamic data
+    const contentPreviewForm = $('#report_preview_form');
+    const leftElements = reportGetFormValues(contentPreviewForm);
+
+    const contentForm = $('#content_form');
+    const rightElements = reportGetFormValues(contentForm);
+
+    const hiddenInput = $('input[name=resolvedDynamicData]');
+    let dynamicData = hiddenInput.val() ? JSON.parse(hiddenInput.val()) : {};
+    dynamicData = reportObjectReplace(dynamicData, leftElements, type === 'checkbox');
+    dynamicData = reportObjectReplace(dynamicData, rightElements, type === 'checkbox');
+    hiddenInput.val(JSON.stringify(dynamicData));
+    
+}

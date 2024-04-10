@@ -10,6 +10,7 @@
 
 use Limbas\admin\group\GroupRightsController;
 use Limbas\admin\mailTemplates\MailTemplateController;
+use Limbas\admin\report\ReportController;
 use Limbas\admin\templates\TemplateController;
 use Limbas\extra\mail\MailController;
 
@@ -726,22 +727,28 @@ function dyns_syncValidate($par){
 
 function dyns_manageMailAccounts($params): void
 {
+    global $alert;
     $dynsController = new MailController(true);
     $result = $dynsController->handleRequest($params);
+    $alert = null;
     echo json_encode($result);
 }
 
 function dyns_manageTemplates($params): void
 {
+    global $alert;
     $dynsController = new TemplateController();
     $result = $dynsController->handleRequest($params);
+    $alert = null;
     echo json_encode($result);
 }
 
 function dyns_manageMailTemplates($params): void
 {
+    global $alert;
     $dynsController = new MailTemplateController();
     $result = $dynsController->handleRequest($params);
+    $alert = null;
     echo json_encode($result);
 }
 
@@ -749,6 +756,15 @@ function dyns_manageGroupRights($par): void
 {
     $controller = new GroupRightsController();
     $controller->handleRequest($par);
+}
+
+function dyns_manageReports($params): void
+{
+    global $alert;
+    $dynsController = new ReportController();
+    $result = $dynsController->handleRequest($params);
+    $alert = null;
+    echo json_encode($result);
 }
 
 

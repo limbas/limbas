@@ -290,5 +290,3 @@ if ($filter["gwidth"][$gtabid]) {
         
     </div>
 </div>
-
-</form>

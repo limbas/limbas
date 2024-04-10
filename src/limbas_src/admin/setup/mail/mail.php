@@ -20,7 +20,7 @@ if($umgvar['multitenant'] && !empty($lmmultitenants['mid'])) {
 <input type="hidden" value="<?=$adminMails?'1':'0'?>" id="is-admin">
 <div class="container-fluid p-3">
 
-    <table class="table table-sm table-striped table-hover border bg-white align-middle">
+    <table class="table table-sm table-striped table-hover border bg-contrast align-middle">
         <thead>
         <tr>
             <th></th>

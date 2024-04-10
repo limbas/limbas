@@ -81,7 +81,7 @@ if($gtab["typ"][$i] == 5){$action = "gtab_deterg";}
 <div id="lmbZoomContainer" class="ajax_container" style="position:absolute;display:none;font-size:18px;font-weight:bold" OnClick="activ_menu=1;"></div>
 
 <link rel="stylesheet" type="text/css" href="assets/vendor/datatables/dataTables.bootstrap5.min.css"/>
-<script type="text/javascript" src="assets/vendor/datatables/jquery.dataTables.js"></script>
+<script type="text/javascript" src="assets/vendor/datatables/dataTables.min.js"></script>
 <script type="text/javascript" src="assets/vendor/datatables/dataTables.bootstrap5.min.js"></script>
 
 <script>

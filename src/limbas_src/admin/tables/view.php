@@ -182,25 +182,25 @@ $(function() {
         
         <ul class="nav nav-tabs">
             <li class="nav-item">
-                <a class="nav-link <?= ($view_section == 1) ? 'active bg-white' : '" onclick="document.form1.view_section.value=\'1\';document.form1.submit();' ?>" href="#" ><?=$lang[2026]?></a>
+                <a class="nav-link <?= ($view_section == 1) ? 'active bg-contrast' : '" onclick="document.form1.view_section.value=\'1\';document.form1.submit();' ?>" href="#" ><?=$lang[2026]?></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link <?= ($view_section == 2) ? 'active bg-white' : '" onclick="document.form1.view_section.value=\'2\';document.form1.submit();' ?>" href="#" ><?=$lang[2612]?></a>
+                <a class="nav-link <?= ($view_section == 2) ? 'active bg-contrast' : '" onclick="document.form1.view_section.value=\'2\';document.form1.submit();' ?>" href="#" ><?=$lang[2612]?></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link <?= ($view_section == 3) ? 'active bg-white' : '" onclick="document.form1.view_section.value=\'3\';document.form1.submit();' ?>" href="#" ><?=$lang[1739]?></a>
+                <a class="nav-link <?= ($view_section == 3) ? 'active bg-contrast' : '" onclick="document.form1.view_section.value=\'3\';document.form1.submit();' ?>" href="#" ><?=$lang[1739]?></a>
             </li>
             <li class="nav-item">
-                <a class="nav-link <?= ($view_section == 4) ? 'active bg-white' : '" onclick="document.form1.view_section.value=\'4\';document.form1.submit();' ?>" href="#" ><?=$lang[2795]?></a>
+                <a class="nav-link <?= ($view_section == 4) ? 'active bg-contrast' : '" onclick="document.form1.view_section.value=\'4\';document.form1.submit();' ?>" href="#" ><?=$lang[2795]?></a>
             </li>
             
             <?php if($gview["ispublic"]): ?>
                 <li class="nav-item">
-                    <a class="nav-link <?= ($view_section == 5) ? 'active bg-white' : '" onclick="document.form1.view_section.value=\'5\';document.form1.submit();' ?>" href="#" ><?=$lang[953]?></a>
+                    <a class="nav-link <?= ($view_section == 5) ? 'active bg-contrast' : '" onclick="document.form1.view_section.value=\'5\';document.form1.submit();' ?>" href="#" ><?=$lang[953]?></a>
                 </li>
             <?php endif; ?>
         </ul>
-        <div class="tab-content border border-top-0 bg-white">
+        <div class="tab-content border border-top-0 bg-contrast">
             <div class="tab-pane active p-3">
 
                 <div id="ZoomFieldContainer" class="ajax_container" style="position:absolute;visibility:hidden;width:600px;z-index:999;" onclick="activ_menu=1;">

@@ -151,19 +151,21 @@
         detailElement.html(text);
     }
 
-
     function lmb_validatePhase2(syncid,table) {
+        $('.lmbWaitSymbol').show();
+        $('#SynValidatePhase2Modal').attr('data-syncid', syncid);
+        $('#SynValidatePhase2Modal').attr('data-table', table);
+        $('#SynValidatePhase2ModalTitle').html(' ('+table+')');
+        $('#detailMasterPhase2').html('');
+        $('#detailClientPhase2').html('');
+
         postfunc = function(result){lmb_validatePhase2Detail(result,syncid,table);};
         ajaxGet(null,'main_dyns_admin.php','syncValidate&phase=2&syncid='+syncid+'&table='+table,null,'postfunc',null,null,null,1);
     }
 
     function lmb_validatePhase2Detail(result,syncid,table) {
 
-        $('#SynValidatePhase2Modal').attr('data-syncid', syncid);
-        $('#SynValidatePhase2Modal').attr('data-table', table);
 
-        $('#SynValidatePhase2ModalTitle').html(' ('+table+')');
-        $('#detailMasterPhase2').html('');
 
         if(table.substring(0,5) == 'VERK_') {
             $('.SynValidatePhase2ModalTitleRow').html('<?=$lang[1460]?>:');
@@ -270,7 +272,7 @@
 
         <?php include 'tabs.php' ?>
         
-        <div class="tab-content border border-top-0 bg-white">
+        <div class="tab-content border border-top-0 bg-contrast">
             <div class="tab-pane active">
 
                 <?php if ($tab == 1): ?>

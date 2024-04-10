@@ -23,15 +23,17 @@ function LmGs_sendForm(reset,gtabid){
 
     if(reset){
         document.form11.filter_reset.value = 1;
-        $("#gdssnapid").val(0);
+        $("#snap_id").val(0);
     }
 
-    if($("#gdssnapid").val()) {
-        //$('#tabs_' + gtabid).html($("#gdssnapid option:selected").text()); // header tablename
-        document.form1.snap_id.value = $("#gdssnapid").val(); // set form snap_id
-        $("#globalFilter option[value='" + $('#gdssnapid').val() + "']").attr('selected', true);
+    console.log($("#snap_id").val());
+
+    if($("#snap_id").val()) {
+        //$('#tabs_' + gtabid).html($("#snap_id option:selected").text()); // header tablename
+        document.form1.snap_id.value = $("#snap_id").val(); // set form snap_id
+        $("#globalFilter option[value='" + $('#snap_id').val() + "']").attr('selected', true);
     }else{
-        document.form1.snap_id.value = $("#gdssnapid").val();
+        document.form1.snap_id.value = $("#snap_id").val();
         $("#globalFilter option[value='0']").attr('selected', true);
     }
 
@@ -107,12 +109,20 @@ function LmGs_elDisable(id) {
  * @param snap_id id of currently opened snapshot
  * @param module
  */
-function limbasDetailSearch(evt,el,gtabid,fieldid,container,snap_id,module){
+function limbasDetailSearch(evt,el,gtabid,fieldid,container,snap_id,module,save_search_selection){
 	if(!fieldid){fieldid = '';}
 	if(!gtabid){gtabid = '';}
 	if(!snap_id && snap_id != 0){snap_id = '';}
     if(!module){module = '';}
     if(!container){container = 'lmbAjaxContainer';}
+
+    if(save_search_selection){
+        var formname = 'form11';
+    }else{
+        var formname = '';
+        save_search_selection = '';
+    }
+
     legacy = ''
     if(!document.getElementById(container)) {
         $("body").append('<div id="'+container+'"></div>');
@@ -120,33 +130,53 @@ function limbasDetailSearch(evt,el,gtabid,fieldid,container,snap_id,module){
 
     // legacy mode for list forms
     if (!$.fn.modal) {
-        legacy = document.form1.form_id.value;
+        legacy = 1;
+        if(document.form1.form_id) {
+            legacy = document.form1.form_id.value;
+        }
     }
 
-	$.ajax({
-		type: "GET",
-		url: "main_dyns.php",
-		async: false,
-		data: "actid=gtabSearch&gtabid="+gtabid+"&fieldid="+fieldid+"&snap_id="+snap_id+'&module='+module+'&legacy='+legacy,
-		success: function(data){
-            ajaxEvalScript(data);
-			document.getElementById(container).innerHTML = data;
-			$("#"+container).css({'position':'relative','left':'0','top':'0'}).dialog({
-				title: jsvar["lng_101"],
-				width: 650,
-                minHeight: 400,
-				maxHeight: 700,
-				resizable: false,
-				modal: true,
-				zIndex: 10
-			});
+    ajaxfunc = function(data){
+        ajaxEvalScript(data,fieldid);
+        document.getElementById(container).innerHTML = data;
+        $("#"+container).css({'position':'relative','left':'0','top':'0'}).dialog({
+            title: jsvar["lng_101"],
+            width: 650,
+            minHeight: 400,
+            maxHeight: 700,
+            resizable: false,
+            modal: true,
+            zIndex: 10
+        });
 
-			// show row that corresponds to clicked search field
-			if (fieldid){
-                limbasAddSearchPara('', gtabid, fieldid);
-			}
-		}
-	});
+        // show row that corresponds to clicked search field
+        if (fieldid){
+            limbasAddSearchPara('', gtabid, fieldid);
+        }
+    };
+    actid = "gtabSearch&gtabid="+gtabid+"&snap_id="+snap_id+'&module='+module+'&legacy='+legacy+'&save_search_selection='+save_search_selection;
+    ajaxGet(null,"main_dyns.php",actid,null,"ajaxfunc",formname);
+
+}
+
+function limbasDetailSearchPost(data,gtabid){
+
+    ajaxEvalScript(data);
+    document.getElementById(container).innerHTML = data;
+    $("#"+container).css({'position':'relative','left':'0','top':'0'}).dialog({
+        title: jsvar["lng_101"],
+        width: 650,
+        minHeight: 400,
+        maxHeight: 700,
+        resizable: false,
+        modal: true,
+        zIndex: 10
+    });
+
+    // show row that corresponds to clicked search field
+    if (fieldid){
+        limbasAddSearchPara('', gtabid, fieldid);
+    }
 }
 
 /**
@@ -898,10 +928,10 @@ function ajaxContainerPost(string,container)
 {
 	if(!container) {
         container = 'lmbAjaxContainer';
-        limbasDivCloseTab.push(container)
+        limbasDivCloseTab.push(container);
     }
 
-	if(! document.getElementById(container)){
+	if(!document.getElementById(container)){
 	    $("<div id='"+container+"'></div>").appendTo(document.body);
     }
 

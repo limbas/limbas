@@ -569,7 +569,7 @@ function dftyp_22($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 				echo "<td class=\"" . $class . "\" style=\"$width\"><div name=\"".$formname."\" style=\"$style\" $events>".$gresult[$gtabid][$bzm][0]."</div>";
 			}else{
 				echo "<td style=\"$width\"><TEXTAREA ID=\"".$formname."\" class=\"form-control " . $class . "\" $style_ ROWS=\"5\" WRAP=\"virtual\" NAME=\"".$formname."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" TABINDEX=\"$z_index\" $events>".htmlentities($gresult[$gtabid][$bzm][0],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</TEXTAREA>";
-				echo lmb_ini_wysiwyg($formname,$gfield[$gtabid]["relext"][$bzm],$event_change,$gform[$gformid]["parameters"][$formid]);
+				echo lmb_ini_wysiwyg($formname,$gfield[$gtabid]["relext"][$bzm],$event_change,$gform[$gformid]["parameters"][$formid], gtabid: intval($gtabid));
 			}
 			echo "</td>";
 			if(preg_match('/display:none/',$style)){$sdpl="display:none;";}
@@ -619,7 +619,7 @@ function dftyp_4($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$ev
 	$dp = 'text';
 	if($pos){$pos = "STYLE=\"".$pos."\"";}
 	if($style){$style = "STYLE=\"".$style."\"";}
-	$dateformat = $gfield[$gtabid]["datetime"][$bzm]; // 1 = DATE or 2 = DATETIME
+	$dateformat = $gfield[$gtabid]["datetime"][$bzm]; // 1 = date or 0 = date+time+sec or 4 = data+time
     if($gfield[$gtabid]["data_type"][$bzm] == 40){$dateformat = 1;} // DATE
 
 	echo "<div $pos>";
@@ -1498,13 +1498,15 @@ function dftyp_11($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 	}
 
 	// SELECT / ATTRIBUTE
-	if($gfield[$gtabid]["field_type"][$bzm] == 19){$tabtyp = "ATTRIBUTE";}else{$tabtyp = "SELECT";}
+	if($gfield[$gtabid]["field_type"][$bzm] == 19){$tabtyp = "LMB_ATTRIBUTE";}else{$tabtyp = "LMB_SELECT";}
 
 	// Poolsettings
-    $sqlquery = "SELECT LMB_{$tabtyp}_P.TAGMODE,LMB_{$tabtyp}_P.MULTIMODE FROM LMB_{$tabtyp}_P WHERE ID = ".$gfield[$gtabid]["select_pool"][$bzm];
-    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    $pool_tagmode = lmbdb_result($rs, 'TAGMODE');
-    $pool_multimode = lmbdb_result($rs, "MULTIMODE");
+    $pool_tagmode = $GLOBALS['gselectpool'][$tabtyp]['tagmode'][$gfield[$gtabid]["select_pool"][$bzm]];
+    $pool_multimode = $GLOBALS['gselectpool'][$tabtyp]['multimode'][$gfield[$gtabid]["select_pool"][$bzm]];
+    #$sqlquery = "SELECT LMB_{$tabtyp}_P.TAGMODE,LMB_{$tabtyp}_P.MULTIMODE FROM LMB_{$tabtyp}_P WHERE ID = ".$gfield[$gtabid]["select_pool"][$bzm];
+    #$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    #$pool_tagmode = lmbdb_result($rs, 'TAGMODE');
+    #$pool_multimode = lmbdb_result($rs, "MULTIMODE");
 
 	if($typ == 1){
 
@@ -2630,7 +2632,7 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 
 		if($linklevel["is_subrelation"]) {$typ = 2;}
 		
-		if($style){$style_abs = "STYLE=\"".$pos.$style."overflow-x:hidden;$minimized\"";}else{$style_abs = "STYLE=\"margin-top:5px;margin-bottom:5px;$minimized\"";}
+		if($style){$style_abs = "STYLE=\"".$pos.$style.";overflow-x:hidden;$minimized\"";}else{$style_abs = "STYLE=\"margin-top:5px;margin-bottom:5px;$minimized\"";}
 
 		# default height
 		if(!$filter["ext_RelationFields"]["showall"][$vuniqueid]){

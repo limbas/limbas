@@ -7,6 +7,14 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+# ---- Cron Job löschen ----
+if($del_backup_cronjob){
+    delete_backup_cronjob($del_backup_cronjob);
+}
+
+if($add_backup_cronjob) {
+    add_backup_cronjob($path1,$path2,$cron,$art,$device,$medium,$alive);
+}
 
 ?>
 
@@ -99,11 +107,11 @@ function device_path(device) {
                                         <th>day of week</th>
                                     </tr>
                                     <TR>
-                                        <TD><INPUT TYPE="TEXT" NAME="cron_1" VALUE="0" class="form-control form-control-sm"></TD>
-                                        <TD><INPUT TYPE="TEXT" NAME="cron_2" VALUE="1" class="form-control form-control-sm"></TD>
-                                        <TD><INPUT TYPE="TEXT" VALUE="*" NAME="cron_3" class="form-control form-control-sm"></TD>
-                                        <TD><INPUT TYPE="TEXT" NAME="cron_4" VALUE="*" class="form-control form-control-sm"></TD>
-                                        <TD><INPUT TYPE="TEXT" NAME="cron_5" VALUE="*" class="form-control form-control-sm"></TD>
+                                        <TD><INPUT TYPE="TEXT" NAME="cron[1]" VALUE="0" class="form-control form-control-sm"></TD>
+                                        <TD><INPUT TYPE="TEXT" NAME="cron[2]" VALUE="1" class="form-control form-control-sm"></TD>
+                                        <TD><INPUT TYPE="TEXT" NAME="cron[3]" VALUE="*" class="form-control form-control-sm"></TD>
+                                        <TD><INPUT TYPE="TEXT" NAME="cron[4]" VALUE="*" class="form-control form-control-sm"></TD>
+                                        <TD><INPUT TYPE="TEXT" NAME="cron[5]" VALUE="*" class="form-control form-control-sm"></TD>
                                     </TR>
                                 </table>
 
@@ -111,7 +119,7 @@ function device_path(device) {
                             </div>
                         </div>
                         <div class="text-end pt-3">
-                            <button type="submit" NAME="cron_backup" value="1" class="btn btn-primary btn-sm">add Job!</button>
+                            <button type="submit" NAME="add_backup_cronjob" value="1" class="btn btn-primary btn-sm">add Job!</button>
                         </div>
                         
 
@@ -140,7 +148,7 @@ function device_path(device) {
                 </div>
 
 
-                <table class="table table-sm table-striped mb-0 border bg-white">
+                <table class="table table-sm table-striped mb-0 border bg-contrast">
                     <thead>
                     <tr>
                         <th>Nr</th>
@@ -174,7 +182,7 @@ function device_path(device) {
                         <td><?=lmbdb_result($rs,"DESCRIPTION")?></td>
                         <td><?=lmbdb_result($rs,"ACTIV")?></td>
                         <td><?=lmbdb_result($rs,"ALIVE")?></td>
-                        <td><a href="main_admin.php?action=setup_backup_cron&del_job=<?=lmbdb_result($rs,"ID")?>"><i class="lmb-icon lmb-trash"></i></a></td>
+                        <td><a href="main_admin.php?action=setup_backup_cron&del_backup_cronjob=<?=lmbdb_result($rs,"ID")?>"><i class="lmb-icon lmb-trash"></i></a></td>
                     </tr>
                     
                     <?php

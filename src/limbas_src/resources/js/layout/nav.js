@@ -271,10 +271,10 @@ function delayedSidebarWidthSave(element) {
     let elw = $sidebar.width();
 
     if (frameName === 'nav') {
-        hide_sidenav_size = elw+10;
+        hide_sidenav_size = elw;
     }
     else {
-        hide_multiframe_size = elw+10;
+        hide_multiframe_size = elw;
     }
     ajaxGet(null,'main_dyns.php','layoutSettings&frame=' + frameName + '&open=1&size='+elw,null);
 }

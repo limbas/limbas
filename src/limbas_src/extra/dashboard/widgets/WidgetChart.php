@@ -36,7 +36,7 @@ class WidgetChart extends Widget
         }
 
 
-        return '<div class="bg-white h-100 w-100 p-2 border">' . $uninitialized . '<canvas id="dash-chart-' . $this->id . '" ' . $display . ' data-chartid="' . $this->options['chartid'] . '"></canvas></div>';
+        return '<div class="bg-contrast h-100 w-100 p-2 border">' . $uninitialized . '<canvas id="dash-chart-' . $this->id . '" ' . $display . ' data-chartid="' . $this->options['chartid'] . '"></canvas></div>';
     }
 
     /**
