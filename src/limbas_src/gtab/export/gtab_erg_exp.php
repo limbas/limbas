@@ -15,7 +15,7 @@ use Limbas\gtab\export\TableExportTypes;
 
 set_time_limit(1200); #20min
 
-$showAllRows = $exp_typ == 2;
-$tableExport = new TableExport($gtabid, TableExportTypes::from($exp_medium), $verkn, $showAllRows);
+$onlyGetVisibleRows = intval($exp_typ) === 1;
+$tableExport = new TableExport($gtabid, TableExportTypes::from($exp_medium), $verkn, $onlyGetVisibleRows);
 $tableExport->export();
 

@@ -123,9 +123,10 @@ function get_filerules($ID){
 	$filerules = array();
 
 	while(lmbdb_fetch_row($rs)) {
-		if($id == lmbdb_result($rs, "FILE_ID")){
-			$sqlquery1 = "DELETE FROM LDMS_RULES WHERE GROUP_ID = $ID AND ID = ".lmbdb_result($rs, "ID");
-			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        // delete duplicates
+		if(isset($id) && $id == lmbdb_result($rs, "FILE_ID")){
+			$sqlquery1 = "DELETE FROM LDMS_RULES WHERE GROUP_ID = $ID AND ID = ".lmbdb_result($rs, "FILE_ID");
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
 		}
 		
 		$id = lmbdb_result($rs, "FILE_ID");

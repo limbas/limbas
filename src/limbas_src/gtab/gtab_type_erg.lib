@@ -401,14 +401,14 @@ function cftyp_19($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
         global $userdat;
 
 		$events = cftyp_events(0,$event,null,$gresult,$gtabid,$field_id,$bzm);
+		$systemfield = strtoupper($gfield[$gtabid]["field_name"][$field_id]);
 
-		$field = $gfield[$gtabid]["field_name"][$field_id];
         if($typ == 1 OR $typ == 2){
-        	echo ($events ? "<span $events>":"").htmlentities($userdat["bezeichnung"][$gresult[$gtabid][$field][$bzm]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]).($events ? "</span>":"");
+        	echo ($events ? "<span $events>":"").htmlentities($userdat["bezeichnung"][$gresult[$gtabid][$systemfield][$bzm]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]).($events ? "</span>":"");
         }elseif($typ == 3 OR $typ == 4){
-			return htmlentities($userdat["bezeichnung"][$gresult[$gtabid][$field][$bzm]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+			return htmlentities($userdat["bezeichnung"][$gresult[$gtabid][$systemfield][$bzm]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
         }else{
-        	return $userdat["bezeichnung"][$gresult[$gtabid][$field][$bzm]];
+        	return $userdat["bezeichnung"][$gresult[$gtabid][$systemfield][$bzm]];
         }
 }
 
@@ -419,18 +419,18 @@ function cftyp_20($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
 
         $dateformat = $gfield[$gtabid]['datetime'][$field_id]; // 1 = DATE or 2 = DATETIME
 		$events = cftyp_events(0,$event,null,$gresult,$gtabid,$field_id,$bzm);
-        $field = $gfield[$gtabid]["field_name"][$field_id];
+        $systemfield = strtoupper($gfield[$gtabid]["field_name"][$field_id]);
 
         // REST
         if($typ == 6) {
-            return convert_date($gresult[$gtabid][$field][$bzm]);
+            return convert_date($gresult[$gtabid][$systemfield][$bzm]);
         } if($typ == 7) {
-            return get_stamp($gresult[$gtabid][$field][$bzm]);
+            return get_stamp($gresult[$gtabid][$systemfield][$bzm]);
         } else{
             if($gfield[$gtabid]['nformat'][$field_id]){
-                $value = get_format_date($gresult[$gtabid][$field_id][$bzm],$gfield[$gtabid]['nformat'][$field]);
+                $value = get_format_date($gresult[$gtabid][$systemfield][$bzm],$gfield[$gtabid]['nformat'][$field_id]);
             }else{
-                $value = get_date($gresult[$gtabid][$field][$bzm],$dateformat);
+                $value = get_date($gresult[$gtabid][$systemfield][$bzm],$dateformat);
             }
             if($typ == 1 OR $typ == 2) {
                 echo ($events ? "<span $events>" : "") . $value . ($events ? "</span>" : "");

@@ -237,4 +237,14 @@ class Update5m3 extends Update
         return $success;
     }
 
+    /**
+     * bug fixes
+     * @return bool
+     */
+    protected function patch13(): bool
+    {
+        // code fixes only
+        return true;
+    }
+
 }

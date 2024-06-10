@@ -173,6 +173,15 @@ if (is_writable(USERPATH)) {
     $msic['func_wr_user'] = '4';
     $commit = 1;
 }
+if (is_writable(EXTENSIONSPATH)) {
+    $msg['func_wr_ext'] = Msg::ok();
+    $msic['func_wr_ext'] = '1';
+} else {
+    $msg['func_wr_ext'] = Msg::error() . ' (' . lang('apache needs recursive write permissions') . ')';
+    $msic['func_wr_ext'] = '4';
+    $commit = 1;
+}
+
 $adminPath = USERPATH . '1/temp';
 if(!file_exists(USERPATH . '1')){
     mkdir(USERPATH . '1');
@@ -181,8 +190,6 @@ if(!file_exists($adminPath)){
     mkdir($adminPath);
 }
 if (is_writable($adminPath)) {
-    $fileOwner = fileowner($adminPath);
-    $fileGroup = filegroup($adminPath);
     $msg['func_wr_user_temp'] = Msg::ok();
     $msic['func_wr_user_temp'] = '1';
 } else {
@@ -191,17 +198,16 @@ if (is_writable($adminPath)) {
     $commit = 1;
 }
 
-if ($fileOwner && $fileGroup) {
     $iter = new RecursiveIteratorIterator(
-        new RecursiveDirectoryIterator(DEPENDENTPATH, RecursiveDirectoryIterator::SKIP_DOTS),
+    new RecursiveDirectoryIterator(DEPENDENTPATH, FilesystemIterator::SKIP_DOTS),
         RecursiveIteratorIterator::SELF_FIRST,
         RecursiveIteratorIterator::CATCH_GET_CHILD
     );
 
-    $failedPaths = array();
+$failedPaths = [];
     foreach ($iter as $path => $dir) {
-        if ($dir->isDir() && !is_link($path)) {
-            if (fileowner($path) != $fileOwner || filegroup($path) != $fileGroup) {
+    if ($dir->isDir() && !is_link($path) && !str_contains($path, 'EXTENSIONS')) {
+        if (!is_writable($path)) {
                 $failedPaths[] = $path;
             }
         }
@@ -211,13 +217,7 @@ if ($fileOwner && $fileGroup) {
         $msg['func_wr_dependent'] = Msg::ok();
         $msic['func_wr_dependent'] = '1';
     } else {
-        $msg['func_wr_dependent'] = lang('apache might need recursive write permissions') . ':<ul>' . implode('', array_map(function ($p) {
-                return '<li>' . $p . '</li>';
-            }, $failedPaths)) . '</ul>';
-        $msic['func_wr_dependent'] = '2';
-    }
-} else {
-    $msg['func_wr_dependent'] = lang('apache might need recursive write permissions');
+    $msg['func_wr_dependent'] = lang('apache might need recursive write permissions') . ':<ul>' . implode('', array_map(fn($p) => '<li>' . $p . '</li>', $failedPaths)) . '</ul>';
     $msic['func_wr_dependent'] = '2';
 }
 ?>
@@ -311,6 +311,10 @@ if ($fileOwner && $fileGroup) {
     <tr><?= Msg::icon($msic['func_wr_user_temp']); ?>
         <td>USER/1/temp</td>
         <td><?= $msg['func_wr_user_temp'] ?></td>
+    </tr>
+    <tr><?= Msg::icon($msic['func_wr_ext']); ?>
+        <td>EXTENSIONS</td>
+        <td><?= $msg['func_wr_ext'] ?></td>
     </tr>
     <tr><?= Msg::icon($msic['func_wr_dependent']); ?>
         <td>dependent/.*</td>

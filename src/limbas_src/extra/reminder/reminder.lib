@@ -17,6 +17,9 @@ function lmb_reminderFilter(&$sql,$category=null,$gtabid=null,$ID=null,$valid=nu
     global $greminder;
     global $gtab;
 
+    // permissions
+    if($category && !$greminder["argresult_id"][$category]){return array();}
+
     $rgtabid = $greminder["argresult_id"][$category];
 
     // multitenat

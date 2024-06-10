@@ -380,7 +380,7 @@ function dyns_edit_relationparams($par){
     <tr><td><i>{$lang[3016]}</i></td><td><input type=\"text\" name=\"relation_params[count]\" value=\"".htmlentities($params['count'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\"></td></tr>
     <tr><td><i>{$lang[3017]}</i></td><td><input type=\"text\" name=\"relation_params[ondblclick]\" value=\"".htmlentities($params['ondblclick'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\"></td></tr>
     <tr><td><i>{$lang[3039]}</i></td><td><input type=\"text\" name=\"relation_params[showfields]\" value=\"".htmlentities($params['showfields'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\"></td></tr>
-    <tr><td><i>{$lang[3041]}</i></td><td><input type=\"text\" name=\"relation_params[edit]\" value=\"".htmlentities($params['edit'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\"></td></tr>
+    <tr><td><i>{$lang[3041]}</i></td><td><input type=\"text\" name=\"relation_params[readonly]\" value=\"".htmlentities($params['edit'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\"></td></tr>
     <tr><td><i>{$lang[3040]}</i></td><td><input type=\"text\" name=\"relation_params[width]\" value=\"".htmlentities($params['width'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\"></td></tr>
     <tr><td><i>{$lang[3042]}</i></td><td><input type=\"text\" name=\"relation_params[order]\" value=\"".htmlentities($params['order'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\"></td></tr>
     <tr><td><i>{$lang[3070]}</i></td><td><input type=\"checkbox\" name=\"relation_params[applyfilter]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $applyfilter></td></tr>
@@ -398,6 +398,7 @@ function dyns_edit_relationparams($par){
     <tr><td><i>{$lang[3028]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_fieldselect]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_fieldselect></td></tr>
     <tr><td><i>{$lang[3051]}</i></td><td><input type=\"checkbox\" name=\"relation_params[no_validity]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $no_validity></td></tr>
     <tr><td><i>{$lang[3030]}</i></td><td><input type=\"checkbox\" name=\"relation_params[search]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $search></td></tr>
+    <tr><td><i>{$lang[3143]}</i></td><td><input type=\"checkbox\" name=\"relation_params[edit]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $edit></td></tr>
     <tr><td><i>{$lang[3031]}</i></td><td><input type=\"checkbox\" name=\"relation_params[showall]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $showall></td></tr>
     <tr><td><i>{$lang[3032]}</i></td><td><input type=\"checkbox\" name=\"relation_params[getlongval]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $getlongval></td></tr>
     <tr><td><i>{$lang[3033]}</i></td><td><input type=\"checkbox\" name=\"relation_params[nogresult]\" value=\"1\" Onchange=\"edit_relationparams($elid,1)\" $nogresult></td></tr>

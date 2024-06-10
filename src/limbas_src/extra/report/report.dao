@@ -576,10 +576,12 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 					}
 					# --- Sys-User ---
 				}elseif($data_type == 34 OR $data_type == 35){
-					$DBRESULT[$bzm3][$bzm0] = $userdat['bezeichnung'][$oresult];
+                    $systemfield = strtoupper($gfield[$gtabid]["field_name"][$fieldid]);
+					$DBRESULT[$bzm3][$bzm0] = $userdat['bezeichnung'][lmbdb_result($rs1, $systemfield)];
 					# --- Sys-Date ---
 				}elseif($data_type == 36 OR $data_type == 37){
-					$DBRESULT[$bzm3][$bzm0] = get_date($oresult,1);
+                    $systemfield = strtoupper($gfield[$gtabid]["field_name"][$fieldid]);
+					$DBRESULT[$bzm3][$bzm0] = get_date(lmbdb_result($rs1, $systemfield),1);
 					# --- DateTime ---
 				}elseif($data_type == 11){
 					if($gfield[$gtabid]["nformat"][$fieldid]){
