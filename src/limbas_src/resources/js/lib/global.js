@@ -26,8 +26,7 @@ function LmGs_sendForm(reset,gtabid){
         $("#snap_id").val(0);
     }
 
-    console.log($("#snap_id").val());
-
+    if(document.form1.snap_id){
     if($("#snap_id").val()) {
         //$('#tabs_' + gtabid).html($("#snap_id option:selected").text()); // header tablename
         document.form1.snap_id.value = $("#snap_id").val(); // set form snap_id
@@ -35,7 +34,7 @@ function LmGs_sendForm(reset,gtabid){
     }else{
         document.form1.snap_id.value = $("#snap_id").val();
         $("#globalFilter option[value='0']").attr('selected', true);
-    }
+    }}
 
     if(document.form2.verknpf){document.form11.verknpf.value = document.form2.verknpf.value}
     if(document.form2.verkn_ID){document.form11.verkn_ID.value = document.form2.verkn_ID.value}
@@ -47,14 +46,14 @@ function LmGs_sendForm(reset,gtabid){
         document.form11.action.value = 'explorer_main';
         document.form11.LID.value = document.form1.LID.value;
         LmEx_send_form(11, 1);
-    // legacy form list
     }else if(document.form1.action.value == 'gtab_erg' && document.form1.form_id.value) {
         send_form(11);
     }else if(document.form1.action.value == 'gtab_erg') {
         lmbAjax_resultGtab('form11', 1, 1, 1, 1);
     }
 
-    $( '#lmbAjaxContainer' ).dialog( "destroy" );
+    //$( '#lmbAjaxContainer' ).dialog( "destroy" );
+    $('#searchFilterModal').modal('hide');
 
 	//if(typeof(window.send_form) == "function") {
 	//	document.form11.action.value = 'gtab_erg';
@@ -114,7 +113,9 @@ function limbasDetailSearch(evt,el,gtabid,fieldid,container,snap_id,module,save_
 	if(!gtabid){gtabid = '';}
 	if(!snap_id && snap_id != 0){snap_id = '';}
     if(!module){module = '';}
-    if(!container){container = 'lmbAjaxContainer';}
+    //if(!container){container = 'lmbAjaxContainer';}
+
+    container = 'searchFilterModal-body';
 
     if(save_search_selection){
         var formname = 'form11';
@@ -123,60 +124,40 @@ function limbasDetailSearch(evt,el,gtabid,fieldid,container,snap_id,module,save_
         save_search_selection = '';
     }
 
-    legacy = ''
-    if(!document.getElementById(container)) {
-        $("body").append('<div id="'+container+'"></div>');
-    }
+    //if(!document.getElementById(container)) {
+        //$("body").append('<div id="'+container+'"></div>');
+    //}
 
-    // legacy mode for list forms
-    if (!$.fn.modal) {
-        legacy = 1;
-        if(document.form1.form_id) {
-            legacy = document.form1.form_id.value;
-        }
+    if(document.form1.form_id){
+        form_id = document.form1.form_id.value;
+    }else{
+        form_id = '';
     }
 
     ajaxfunc = function(data){
         ajaxEvalScript(data,fieldid);
         document.getElementById(container).innerHTML = data;
-        $("#"+container).css({'position':'relative','left':'0','top':'0'}).dialog({
-            title: jsvar["lng_101"],
-            width: 650,
-            minHeight: 400,
-            maxHeight: 700,
-            resizable: false,
-            modal: true,
-            zIndex: 10
-        });
+
+        $('#searchFilterModal').modal('show');
+
+        // $("#"+container).css({'position':'relative','left':'0','top':'0'}).dialog({
+        //     title: jsvar["lng_101"],
+        //     width: 650,
+        //     minHeight: 400,
+        //     maxHeight: 700,
+        //     resizable: false,
+        //     modal: true,
+        //     zIndex: 10
+        // });
 
         // show row that corresponds to clicked search field
         if (fieldid){
             limbasAddSearchPara('', gtabid, fieldid);
         }
     };
-    actid = "gtabSearch&gtabid="+gtabid+"&snap_id="+snap_id+'&module='+module+'&legacy='+legacy+'&save_search_selection='+save_search_selection;
+    actid = "gtabSearch&gtabid="+gtabid+"&snap_id="+snap_id+'&module='+module+'&form_id='+form_id+'&save_search_selection='+save_search_selection;
     ajaxGet(null,"main_dyns.php",actid,null,"ajaxfunc",formname);
 
-}
-
-function limbasDetailSearchPost(data,gtabid){
-
-    ajaxEvalScript(data);
-    document.getElementById(container).innerHTML = data;
-    $("#"+container).css({'position':'relative','left':'0','top':'0'}).dialog({
-        title: jsvar["lng_101"],
-        width: 650,
-        minHeight: 400,
-        maxHeight: 700,
-        resizable: false,
-        modal: true,
-        zIndex: 10
-    });
-
-    // show row that corresponds to clicked search field
-    if (fieldid){
-        limbasAddSearchPara('', gtabid, fieldid);
-    }
 }
 
 /**
@@ -306,7 +287,16 @@ function limbasExpandSearchPara(el, originStr, gtabid, fieldid, filterIndex){
         filterIndex: lastFilterIndex + 1
     });
     ajaxGet(null, 'main_dyns.php', 'gtabSearchFilterRow&' + params, null, function(result) {
-        $lastRowCurrentField.after(result);
+		const $result = $(result);
+		const $selectCombinator = $result.find('select[name^="gs"]');
+
+		// check if row above is attribute, and hide 'oder Inhalt'
+		if ($lastRowCurrentField.attr('id').endsWith('0')) {
+			if ($selectCombinator.length > 0) {
+				$selectCombinator.find('option[value="4"]').remove();
+			}
+		}
+        $lastRowCurrentField.after($result);
     });
 }
 
@@ -508,7 +498,6 @@ function limbasWaitsymbol(evt,inlay,hide,symbol){
 			el.style.display='';
 		}
 	}else{
-		//document.body.innerHTML = "<img src='assets/images/legacy/wait1.gif' id='limbasWaitsymbol' style='z-index:99999;'>";
 		document.body.innerHTML = "<i class='lmbWaitSymbol'></i>";
 		el = document.getElementById("lmbWaitSymbol");
 	}
@@ -1642,14 +1631,14 @@ var validEnter = false;
 /**
  * this function display a hierachy of div
  * if there is no parent then all the element displayed with this function are closed. Then parent is not specified
- * @param el (string|object) either an object or an id of an element on which the new element will be displayed below or the location splited with ;
- * @param parent (string|object)  the parent of the new element in the div hierarchy. Either the name or the element itself for top floating menu use event
- * @param child (string)  the id of the new element to display
- * @param slide (string) slide position relative to XxY
- * @param display (bool) use display instead visibility 
- * @param abs (bool) force absolute position (ignoring relative parent elements) to find XY position
- * @param center (bool) center element to window
- * @param puttotop (bool) cut and paste child to body
+ * @param {(string|object)} el either an object or an id of an element on which the new element will be displayed below or the location splited with ;
+ * @param {(string|object)} parent the parent of the new element in the div hierarchy. Either the name or the element itself for top floating menu use event
+ * @param {string} child the id of the new element to display
+ * @param {string} slide slide position relative to XxY
+ * @param {boolean} display use display instead visibility
+ * @param {boolean} abs force absolute position (ignoring relative parent elements) to find XY position
+ * @param {boolean} center center element to window
+ * @param {boolean} puttotop cut and paste child to body
 */
 function limbasDivShow(el,parent,child,slide,display,abs,center,puttotop)
 {
@@ -1674,7 +1663,7 @@ function limbasDivShow(el,parent,child,slide,display,abs,center,puttotop)
 	let $child = $('#' + child);
         
     var parel;
-	if(parent !="" && parent != null)
+	if(parent != "" && parent != null)
 	{
 		//!="string")
 		if(typeof(parent)=="string")
@@ -2321,32 +2310,63 @@ function isInIframe () {
     }
 }
 
-function showFullPageModal(title,body,className='fullscreen') {
+
+function MultitemantChangeNotice () {
+
+    $modal = showFullPageModal(jsvar['lng_2968'], '<div class="alert alert-info">'+jsvar['lng_3172']+'</div>', 'sm','<button type="button" class="btn btn-dark" data-bs-dismiss="modal" onclick="window.location=window.location.href.split(\'?\')[0]">'+jsvar['lng_844']+'</button>');
+    //window.location = window.location.href.split("?")[0];
+
+}
+
+/**
+ *
+ * @param title
+ * @param body
+ * @param className
+ * @param footer
+ * @return {jQuery|HTMLElement|*|null}
+ */
+function showFullPageModal(title,body,className='fullscreen', footer = null) {
 
     let $modal;
     let $modalBody;
     let $modalTitle;
+    let $modalFooter;
+	let $modalFooterDefault;
     
     if (isInIframe()) {
         $modal = window.top.$("#general-main-modal");
         $modalBody = window.top.$("#general-main-modal-body");
         $modalTitle = window.top.$("#general-main-modal-title");
+        $modalFooter = window.top.$("#general-main-modal-footer");
+		$modalFooterDefault = window.top.$("#general-main-modal-footer-default");
 	} else {
         $modal = $("#general-main-modal");
         $modalBody = $("#general-main-modal-body");
         $modalTitle = $("#general-main-modal-title");
+        $modalFooter = $("#general-main-modal-footer");
+		$modalFooterDefault = $("#general-main-modal-footer-default");
 	}
 
     if ($modal.length <= 0) {
-    	return false;
+    	return null;
 	}
 
 	$modal.find('.modal-dialog').addClass('modal-' + className);
+
+    if (footer) {
+        $modalFooter.html(footer).show();
+		$modalFooterDefault.hide();
+    }
+	else {
+		$modalFooter.hide();
+		$modalFooterDefault.show();
+	}
 	
     $modalTitle.html(title);
     $modalBody.html(body);
     $modal.modal('show');
-    return true;
+    return $modal;
 }
 
 function hideFullPageModal() {
@@ -2424,4 +2444,100 @@ function lmbShowWarningMsg(msg) {
 
 function lmbShowErrorMsg(msg) {
 	lmbShowToast('error', msg);
+}
+
+function confirmDelete($element, callback) {
+    
+    const instanceExists = $element.data('bs.popover.exists');    
+    
+    if(instanceExists === undefined) {
+        $element.popover({
+            html: true,
+            sanitize: false,
+            trigger: 'click focus',
+            content: '<p class="font-weight-bold text-danger">Confirm delete</p>' +
+                '<button type="button" class="btn btn-sm btn-black pr-2 btn-cancel-delete">Cancel</button>' +
+                '<button type="button" class="btn btn-sm btn-danger btn-confirm-delete">Delete</button>',
+            placement: 'top'
+        }).on('inserted.bs.popover', function () {
+            let $this = $(this);
+            let $popover = $('#'+$this.attr('aria-describedby'));
+
+            $popover.find('.btn-cancel-delete').on('click',function(){
+                $this.popover('hide');
+            });
+
+            $popover.find('.btn-confirm-delete').on('click',function(){
+                $this.popover('hide');
+                callback($element);
+            });
+
+            $element.data('bs.popover.exists', true);
+        }).popover('show');
+    }
+    
+    
+}
+
+
+function lmbShowProgress(showHide, progressValue = null, progressBase = null, msg= null) {
+
+	let $modal;
+	let $spinner;
+	let $progressBar;
+	let $messageHolder;
+
+	if (isInIframe()) {
+		$modal = window.top.$('#progress-modal');
+		$spinner = window.top.$('#progress-modal-spinner');
+		$progressBar = window.top.$('#progress-modal-progress');
+		$messageHolder = window.top.$('#progress-modal-msg');
+	} else {
+		$modal = $('#progress-modal');
+		$spinner = $('#progress-modal-spinner');
+		$progressBar = $('#progress-modal-progress');
+		$messageHolder = $('#progress-modal-msg');
+	}
+
+	if($modal.length <= 0) {
+		return;
+	}
+	
+	if(showHide) {
+		$modal.modal('show');
+	}
+	else {
+		$modal.modal('hide');
+		return;
+	}
+	
+	
+	let text = jsvar['lng_3153'] + '... ' + jsvar['lng_3154'];
+	
+	if(progressBase !== null && progressValue !== null) {
+		
+		if(progressValue >= progressBase) {
+			$modal.modal('hide');
+			return;
+		}
+		
+		$spinner.addClass('d-none');
+		$progressBar.removeClass('d-none');
+		
+		const currentValue = Math.floor((progressValue / progressBase) * 100);
+		$progressBar.find('.progress-bar').css('width', currentValue + '%');
+		
+		text = progressValue + ' / ' + progressBase;
+		
+	}
+	else {
+		$spinner.removeClass('d-none');
+		$progressBar.addClass('d-none');
+	}
+	
+	if(msg !== null) {
+		text = msg;
+	}
+
+	$messageHolder.text(text);
 }

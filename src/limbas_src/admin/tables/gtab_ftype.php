@@ -12,9 +12,13 @@
 
 ?>
 
+<script src="assets/vendor/select2/select2.full.min.js"></script>
+<link href="assets/vendor/select2/select2.min.css" rel="stylesheet">
+
 <script>
 
-    var argumenteditor = null;
+var argumenteditor = null;
+
 $(function() {
     // sort table field rows
     $("#fieldtable").sortable({
@@ -42,6 +46,9 @@ $(function() {
     
     $('#argument-change').click(saveArgument);
     $('#argument-refresh').click(refreshArgument);
+
+    $('.select2-selection').select2();
+
 });
 
 /* --- delete field ----------------------------------- */
@@ -111,11 +118,22 @@ function ajaxEditField(fieldid,act){
 
 function ajaxEditFieldPost(result){
 
-
     ajaxEvalScript(result);
 
-    $('#fieldsettingsContent').html(result);
+    $('#fieldsettingsBody').html(result);
     $('#fieldsettingsModal').modal('show');
+
+    // multiselect trigger
+    $('#field_trigger').select2({
+        multiple:true,
+        dropdownParent: $('#fieldsettingsContent')
+    });
+
+    $("#field_trigger").on('change', function() {
+        document.form2.val.value=' '+$(this).val().join(',');
+        ajaxEditField($(this).attr('data-fieldid'),'trigger');
+    })
+
 }
 
 
@@ -248,9 +266,9 @@ function newwin3(FIELDID,TABID,ATID,ARGTYP,ARGUMENT) {
 
         newwin3(
             $this.data('fieldid'),
-        $this.data('tabid'),
-        $this.data('atid'),
-        $this.data('argtype'),
+            $this.data('tabid'),
+            $this.data('atid'),
+            $this.data('argtype'),
             argumenteditor.getValue()
         );
     
@@ -419,6 +437,8 @@ if($table_typ[$bzm] == 5){$isview = 1;}
         <input type="hidden" name="atid" value="<?= $bzm ?>">
         <input type="hidden" name="def">
         <input type="hidden" name="verk">
+        <input type="hidden" name="detailsearch">
+        <input type="hidden" name="col_hide">
         <input type="hidden" name="artleiste">
         <input type="hidden" name="groupable">
         <input type="hidden" name="dynsearch">
@@ -442,8 +462,8 @@ if($table_typ[$bzm] == 5){$isview = 1;}
         <input type="hidden" name="ajaxsave">
         <input type="hidden" name="collreplace">
         <input type="hidden" name="solve_dependency">
-        
-        
+        <input type="hidden" name="checksum">
+
         <h3><?=$lang[164] . ': ' . $table_gtab[$bzm]." (".$beschreibung_gtab[$bzm].")"; ?>
             <?php if($isview): ?>
                 <a href="main_admin.php?&action=setup_gtab_view&viewid=<?=$atid?>"><i class="lmb-icon lmb-organisation-edit cursor-pointer"></i></a>
@@ -474,13 +494,16 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                 <th><?=$lang[2235]?></th>
                 <?php if(!$isview){?><th><?=$lang[1720]?></th><?php }?>
                 <?php if(!$isview){?><th><?=$lang[927]?></th><?php }?>
-                <?php if(!$isview){?><th><?=$lang[2639]?></th><?php }?>
                 <?php if(!$isview){?><th><?=$lang[2640]?></th><?php }?>
+                <?php if(!$isview){?><th><?=$lang[2639]?></th><?php }?>
+                <th><?=$lang[101]?></th>
                 <th><?=$lang[932]?></th>
                 <th><?=$lang[2507]?></th>
                 <th><?=$lang[2922]?></th>
+                <th><?=$lang[2638]?></th>
                 <th><?=$lang[1459]?></th>
                 <th><?=$lang[2672]?></th>
+                <th>checksum</th>
                 <?php if($table_datasync[$atid]){?><th><?=$lang[2914 ]?></th><?php }?>
             </tr>
             </thead>
@@ -615,14 +638,13 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                             }
 
                         }else{
+                            $selected = array();
                             if(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][$bzm1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 22 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 32 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 31 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 18 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 6 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 8 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 10 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 9 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 11 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 12 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 13 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 19 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 18 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 15 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 44 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] < 100 AND !$result_fieldtype[$table_gtab[$bzm]]["argument_typ"][$bzm1]){
                                 echo "<INPUT TYPE=\"TEXT\" class=\"form-control form-control-sm\" NAME=\"".$result_fieldtype[$table_gtab[$bzm]]["field"][$bzm1]."\" VALUE=\"".htmlentities($result_fieldtype[$table_gtab[$bzm]]["domain_default"][$bzm1],ENT_QUOTES,$umgvar["charset"])."\" OnChange=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.def.value=this.value+' '; this.form.column.value='".$result_fieldtype[$table_gtab[$bzm]]['field'][$bzm1]."'; this.form.submit();\">";
-                            }elseif(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][$bzm1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 10)
-                            {
+                            }elseif(!$result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][$bzm1] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 10) {
                                 $selected[$result_fieldtype[$table_gtab[$bzm]]["domain_default"][$bzm1]] = 'selected';
-
                                 echo "<SELECT NAME=\"".$result_fieldtype[$table_gtab[$bzm]]['field'][$bzm1]."\" class=\"form-select form-select-sm\" onchange=\"this.form.fieldid.value='".$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]."';this.form.def.value=this.value; this.form.column.value='".$result_fieldtype[$table_gtab[$bzm]]['field'][$bzm1]."'; this.form.submit();\">
-                                <OPTION value='NULL'>
+                                <OPTION value='FALSE'>
                                 <OPTION value='TRUE' {$selected['TRUE']}>{$lang[1506]}
                                 <OPTION value='FALSE' {$selected['FALSE']}>{$lang[1507]}
                                 </SELECT>
@@ -851,21 +873,27 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                 <?php if(!$isview && $gtrigger[$bzm]): ?>
                     <td>
                         <?php // --- Trigger ------  
-                        if($LINK[226] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] < 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 22):
-                            $fid = $result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1];
-                            ?>
-                            <select class="form-select form-select-sm" NAME="field_trigger_<?=$fid?>[]" onchange="document.form1.trigger.value='<?=$fid?>';if(document.form1.trigger.value=='<?=$fid?>'){document.form1.submit();}">
-                                <option value=""></option>
-                            <?php
-                            
-                            $trlist = array();
-                            foreach($gtrigger[$bzm]["id"] as $trid => $trval):
-                                if(in_array($trid,$result_fieldtype[$table_gtab[$bzm]]["trigger"][$bzm1])){$SELECTED = "SELECTED";$trlist[] = $gtrigger[$bzm]["trigger_name"][$trid];}else{$SELECTED = "";} ?>
-                                <option VALUE="<?=$trid?>" <?=$SELECTED?>><?=$gtrigger[$bzm]["trigger_name"][$trid]?> (<?=$gtrigger[$bzm]["type"][$trid]?>)</option>
-                                <?php endforeach; ?>
+                        if($LINK[226] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] < 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 22):?>
+                            <SPAN STYLE="display:none;position:absolute;width:200px" ID="field_trigger_<?=$bzm1?>" OnClick="activ_menu=1;ajaxEditField('<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>')">
+                                <ul class="list-group w-100">
+                                <?php
+                                $trlist = array();
+                                foreach($gtrigger[$bzm]["id"] as $trid => $trval){
+                                    if(in_array($trid,$result_fieldtype[$table_gtab[$bzm]]["trigger"][$bzm1])){
+                                        $trlist[] = $gtrigger[$bzm]["trigger_name"][$trid];
+                                        ?>
+                                        <li class="list-group-item"><?=$gtrigger[$bzm]["trigger_name"][$trid]?> <br>(<?=$gtrigger[$bzm]["type"][$trid]?>)</li>
+                                        <?php
+                                    }
+                                }
+                                ?>
+                                </ul>
+                            </SPAN>
+                            <INPUT readonly class="form-control form-control-sm" TYPE="TEXT" STYLE="width:100px;" VALUE="<?=implode(";",$trlist)?>"
+                                   <?php if(count($trlist) > 0){?>
+                                   OnClick="activ_menu=1;document.getElementById('field_trigger_<?=$bzm1?>').style.display=''"
+                                   <?php }?> >
 
-                            </select>
-                        
                         <?php endif; ?>
                     </td>
                 <?php endif; ?>
@@ -923,6 +951,19 @@ if($table_typ[$bzm] == 5){$isview = 1;}
 
                 <?php if(!$isview): ?>
                     <td>
+                        <?php // --- dynamic post ------
+                        if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] <= 100 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 20 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 15 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 9 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 8 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 6 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 19 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16):
+                            if($result_fieldtype[$table_gtab[$bzm]]["ajaxsave"][$bzm1] == 1){$ajaxsave = "CHECKED";}else{$ajaxsave = "";}
+                            ?>
+
+                            <INPUT TYPE="CHECKBOX" <?=$ajaxsave?> NAME="AJAXSAVE_<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>" onclick="this.form.fieldid.value='<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>';this.form.ajaxsave.value='ajaxsave_<?=$ajaxsave?>'; this.form.submit();">
+
+                        <?php endif; ?>
+                    </td>
+                <?php endif; ?>
+
+                <?php if(!$isview): ?>
+                    <td>
                         <?php // --- dynamic search ------  
                         if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 11 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 12 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 32 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16):
                             if($result_fieldtype[$table_gtab[$bzm]]["dynsearch"][$bzm1] == 1){$dynsearch = "CHECKED";}else{$dynsearch = "";}
@@ -935,18 +976,14 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                 <?php endif; ?>
 
 
-                <?php if(!$isview): ?>
-                    <td>
-                        <?php // --- dynamic post ------  
-                        if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] <= 100 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 20 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 14 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 15 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 9 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 8 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 6 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 19 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16):
-                            if($result_fieldtype[$table_gtab[$bzm]]["ajaxsave"][$bzm1] == 1){$ajaxsave = "CHECKED";}else{$ajaxsave = "";}
-                            ?>
-
-                            <INPUT TYPE="CHECKBOX" <?=$ajaxsave?> NAME="AJAXSAVE_<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>" onclick="this.form.fieldid.value='<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>';this.form.ajaxsave.value='ajaxsave_<?=$ajaxsave?>'; this.form.submit();">
-
-                        <?php endif; ?>
-                    </td>
-                <?php endif; ?>
+                <td>
+                    <?php // --- detailsearch ------
+                    if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16):
+                        if($result_fieldtype[$table_gtab[$bzm]]["detailsearch"][$bzm1] == 1){$detailsearchvalue = "";}else{$detailsearchvalue = "CHECKED";}
+                        ?>
+                        <INPUT TYPE="CHECKBOX" <?=$detailsearchvalue?> NAME="DETAILSEARCH_<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>" onclick="this.form.fieldid.value='<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>'; this.form.detailsearch.value='detailsearch_<?=$detailsearchvalue?>'; this.form.submit();">
+                    <?php endif; ?>
+                </td>
 
                 <td>
                     <?php // --- Select ------  
@@ -982,6 +1019,15 @@ if($table_typ[$bzm] == 5){$isview = 1;}
                 </td>
 
                 <td>
+                    <?php // --- display in list ------
+                    if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16):
+                        if($result_fieldtype[$table_gtab[$bzm]]["col_hide"][$bzm1] == 1){$col_hidevalue = "";}else{$col_hidevalue = "CHECKED";}
+                        ?>
+                        <INPUT TYPE="CHECKBOX" <?=$col_hidevalue?> NAME="COL_HIDE_<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>" onclick="this.form.fieldid.value='<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>'; this.form.col_hide.value='col_hide_<?=$col_hidevalue?>'; this.form.submit();">
+                    <?php endif; ?>
+                </td>
+
+                <td>
                     <?php // --- Gruppierbar ------  
                     if(($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100) && !($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 11 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 3 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 22 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 13 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 31 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 32 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 18  OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] == 13 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 16)):
                         if($result_fieldtype[$table_gtab[$bzm]]["groupable"][$bzm1] == 1){$groupablevalue = "CHECKED";}else{$groupablevalue = "";}
@@ -994,11 +1040,22 @@ if($table_typ[$bzm] == 5){$isview = 1;}
 
                 <td>
                     <?php // --- coll_replace ------  
-                    if(($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100) && !($result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 22 AND !$result_fieldtype[$table_gtab[$bzm]]["argument"][$bzm1] AND ($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 4 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 5 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 1 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 2 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 10 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 21 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 18))):
+                    if(($result_fieldtype[$table_gtab[$bzm]]["parsetype"][$bzm1] != 100) && !($result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 22 AND !$result_fieldtype[$table_gtab[$bzm]]["argument"][$bzm1] AND ($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 4 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 5 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 1 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 2 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 10 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 21 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] == 18))):
                         if($result_fieldtype[$table_gtab[$bzm]]["collreplace"][$bzm1] == 1){$collreplacevalue = "CHECKED";}else{$collreplacevalue = "";}
                         ?>
 
                         <INPUT TYPE="CHECKBOX" <?=$collreplacevalue?> NAME="COLLREPLACE_<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>" onclick="this.form.fieldid.value='<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>'; this.form.collreplace.value='collreplace_<?=$collreplacevalue?>'; this.form.submit();">
+
+                    <?php endif; ?>
+                </td>
+
+                <td>
+                    <?php // --- md5  ------
+                    if($result_fieldtype[$table_gtab[$bzm]]["parsetype"][$bzm1] != 100 && $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 11 && $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 18 && $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 31 && $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 32 && $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 46):
+                        if($result_fieldtype[$table_gtab[$bzm]]["checksum"][$bzm1] == 1){$checksumvalue = "CHECKED";}else{$checksumvalue = "";}
+                        ?>
+
+                        <INPUT TYPE="CHECKBOX" <?=$checksumvalue?> NAME="CHECKSUM_<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>" onclick="this.form.fieldid.value='<?=$result_fieldtype[$table_gtab[$bzm]]["field_id"][$bzm1]?>'; this.form.checksum.value='checksum_<?=$checksumvalue?>'; this.form.submit();">
 
                     <?php endif; ?>
                 </td>
@@ -1215,14 +1272,14 @@ endif;
     </div>
 </div>
 
-<div class="modal fade" id="fieldsettingsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+<div class="modal fade" id="fieldsettingsModal">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content" id="fieldsettingsContent">
             <div class="modal-header">
                 <h5 class="modal-title">Field Settings</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body" id="fieldsettingsContent"></div>
+            <div class="modal-body" id="fieldsettingsBody"></div>
         </div>
     </div>
 </div>

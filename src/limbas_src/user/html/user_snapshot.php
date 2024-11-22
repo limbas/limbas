@@ -71,9 +71,7 @@ foreach ($gsnap as $tabid => $snapshotData) {
 
 ?>
 
-
 <script>
-
     function edit_snap(gtabid, snapid, val, typ) {
         document.form1.gtabid.value = gtabid;
         document.form1.snapid.value = snapid;
@@ -136,7 +134,7 @@ foreach ($gsnap as $tabid => $snapshotData) {
 
     function deleteSnap(tabid, snapid) {
         if (confirm("<?= $lang[2010] ?>?")) {
-            document.location.href = 'main.php?action=user_snapshot&gtabid=' + tabid + '&del=' + snapid + '&gtabfilter='+<?=$gtabfilter?>;
+            document.location.href = 'main.php?action=user_snapshot&gtabid=' + tabid + '&del=' + snapid + '&gtabfilter=' + <?=$gtabfilter ?: "''"?>;
         }
     }
 
@@ -170,7 +168,7 @@ foreach ($gsnap as $tabid => $snapshotData) {
 
 <div class="p-3">
 
-    <FORM ACTION="main.php" METHOD="post" name="form1">
+    <form action="main.php" method="post" name="form1">
         <input type="hidden" name="action" value="user_snapshot">
         <input type="hidden" name="gtabid">
         <input type="hidden" name="gtabfilter" value="<?= $gtabfilter ?>">
@@ -209,65 +207,78 @@ foreach ($gsnap as $tabid => $snapshotData) {
                     } ?>
 
 
-                    <div class="row p-1">
-                        <div class="col-12">
-                            <div class="bg-secondary py-1 px-2">
-                                <?= $tabName ?>
+                    <div class="border border-primary-subtle bg-primary-subtle my-1">
+                        <div class="row p-1 pb-0">
+                            <div class="col-12">
+                                <div class="bg-primary-subtle py-1 px-2">
+                                    <?= $tabName ?>
+                                </div>
                             </div>
                         </div>
+
+
+                        <?php
+                        # every snapshot of that table
+                        foreach ($gsnap[$tabid]['name'] as $snapID => $snapName):
+                            if ($gsnap[$tabid]['type'][$snapID] == 2) {
+                                $icon = 'fa-solid fa-magnifying-glass';
+                                $title = $lang[3161];
+                            } else {
+                                $icon = 'fa-solid fa-filter';
+                                $title = $lang[1602];
+                            }
+                            ?>
+
+
+                            <div class="row p-1 pt-0">
+                                <div class="col">
+                                    <div class="input-group">
+                                        <span class="input-group-text" title="<?= $title ?>"><i class="<?= $icon ?>"></i></span>
+                                        <?php if ($LINK[225] and ($gsnap[$tabid]["owner"][$snapID] or $session['group_id'] == 1)): ?>
+                                            <input type="text" class='form-control' value="<?= $snapName ?>"
+                                                   onchange="edit_snap('<?= $tabid ?>','<?= $snapID ?>',this.value,1);">
+                                        <?php else: ?>
+                                            <input type="text" class='form-control' value="<?= $snapName ?>" readonly
+                                                   disabled>
+                                        <?php endif; ?>
+                                    </div>
+                                </div>
+
+                                <div class="col-auto d-flex align-items-center ps-0 me-2">
+                                    <i class="lmb-icon lmb-list-ul-alt cursor-pointer"
+                                       onclick="viewSnap(<?= $tabid ?>,<?= $snapID ?>);" title="<?= $lang[301] ?>"></i>
+
+                                    <?php
+                                    # share snap
+                                    if ($LINK[225] and ($gsnap[$tabid]["owner"][$snapID] or $session['group_id'] == 1)) {
+                                        $style = 'opacity: 0.4;';
+                                        $text = '';
+                                        if ($sharedCount[$snapID]) {
+                                            $style = '';
+                                            $text = '&nbsp;(' . $sharedCount[$snapID] . ')';
+                                        } ?>
+                                    <i class="lmb-icon lmb-group cursor-pointer"
+                                       onclick="limbasSnapshotShare(this, <?= $snapID ?>, '');" style="<?= $style ?>"
+                                       title="<?= $lang[1966] ?>"></i><?= $text ?>
+                                    <?php }
+
+                                    # delete snapF
+                                    if (($gsnap[$tabid]["owner"][$snapID] or $session['group_id'] == 1) or $gsnap[$tabid]["del"][$snapID]): ?>
+                                        <i class="lmb-icon lmb-trash cursor-pointer"
+                                           onclick="deleteSnap(<?= $tabid ?>, <?= $snapID ?>);"
+                                           title="<?= $lang[2010] ?>"></i>
+                                    <?php endif; ?>
+
+                                </div>
+
+                            </div>
+
+                        <?php
+
+                        endforeach;
+                        ?>
                     </div>
-
-
-                    <?php
-                    # every snapshot of that table
-                    foreach ($gsnap[$tabid]['name'] as $snapID => $snapName): ?>
-
-                        <div class="row p-1">
-
-                            <div class="col-8">
-
-                                <?php if ($LINK[225] and ($gsnap[$tabid]["owner"][$snapID] or $session['group_id'] == 1)): ?>
-                                    <input type="text" class='form-control' value="<?= $snapName ?>"
-                                           onchange="edit_snap('<?=$tabid?>','<?=$snapID?>',this.value,1);">
-                                <?php else: ?>
-                                    <input type="text" class='form-control' value="<?= $snapName ?>" readonly disabled>
-                                <?php endif; ?>
-                                
-                            </div>
-
-                            <div class="col-4 d-flex align-items-center ps-0">
-                                <i class="lmb-icon lmb-list-ul-alt cursor-pointer"
-                                   onclick="viewSnap(<?= $tabid ?>,<?= $snapID ?>);" title="<?= $lang[301] ?>"></i>
-
-                                <?php
-                                # share snap
-                                if ($LINK[225] and ($gsnap[$tabid]["owner"][$snapID] or $session['group_id'] == 1)) {
-                                    $style = 'opacity: 0.4;';
-                                    $text = '';
-                                    if ($sharedCount[$snapID]) {
-                                        $style = '';
-                                        $text = '&nbsp;(' . $sharedCount[$snapID] . ')';
-                                    } ?>
-                                <i class="lmb-icon lmb-group cursor-pointer"
-                                   onclick="limbasSnapshotShare(this, <?= $snapID ?>, '');" style="<?= $style ?>"
-                                   title="<?= $lang[1966] ?>"></i><?= $text ?>
-                                <?php }
-
-                                # delete snap
-                                if (($gsnap[$tabid]["owner"][$snapID] or $session['group_id'] == 1) or $gsnap[$tabid]["del"][$snapID]): ?>
-                                    <i class="lmb-icon lmb-trash cursor-pointer"
-                                       onclick="deleteSnap(<?= $tabid ?>, <?= $snapID ?>);"
-                                       title="<?= $lang[2010] ?>"></i>
-                                <?php endif; ?>
-
-                            </div>
-
-                        </div>
-
-                    <?php
-
-                    endforeach;
-
+                <?php
 
                 endforeach;
 
@@ -278,6 +289,6 @@ foreach ($gsnap as $tabid => $snapshotData) {
         endforeach; ?>
 
 
-    </FORM>
+    </form>
 </div>
 

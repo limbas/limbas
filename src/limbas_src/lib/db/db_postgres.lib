@@ -102,6 +102,7 @@ define("LMB_DBFUNC_MAXFIELDNAMESIZE",120);
 define("LMB_DBFUNC_MAXTABLENAMESIZE",30);
 define("LMB_DBFUNC_TRANSACTION",1);
 define("LMB_DBFUNC_TRANSACTION_WITH_SCHEMA",1);
+define("LMB_DBFUNC_UMASCB","\\");
 
 if($DBA['ODBCDRIVER'] == 'PDO') {
     define("LMB_DBFUNC_PREPAREHANDLE", 1);
@@ -110,12 +111,13 @@ if($DBA['ODBCDRIVER'] == 'PDO') {
 }
 
 # workaround for postgresql versions
+/*
 if($DBA['VERSION'] AND $DBA['VERSION'] < 90100){
 	define("LMB_DBFUNC_UMASCB","\\\\");
 }else{
 	define("LMB_DBFUNC_UMASCB","\\");
 }
-
+*/
 
 
 # odbc connect:
@@ -243,6 +245,27 @@ function dbf_9($p){
  */
 function dbf_10($p){
 	return "(".$p[1]."-".$p[0].")";
+}
+
+/**
+ * calculate checksum
+ *
+ * @param $field
+ * @param $type
+ * @return string
+ */
+function dbf_12($field,$type=null){
+    global $db;
+    global $gtab;
+    global $gfield;
+
+    if($type == 4){
+        return "coalesce(md5(floor(extract(epoch from $field))::text), ' ')";
+    } else if($gfield[$gtabid]['parse_type'][$fieldid] == 3){
+        return "coalesce(md5($field::integer::text), ' ')";
+    }else {
+        return "coalesce(md5($field::text), ' ')";
+    }
 }
 
 

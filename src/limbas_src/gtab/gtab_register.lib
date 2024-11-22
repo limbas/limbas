@@ -11,36 +11,15 @@
 
 /* --- Session Register-Variablen ----------------------------------- */
 
-function filter_reset($gtabid=null){
-	#$GLOBALS['filter'] = null;
-	if($gtabid){
-    	$GLOBALS['popc'][$gtabid] = null;
-    	$GLOBALS['popg'][$gtabid] = null;
-    	$GLOBALS['gs'][$gtabid] = null;
-    	$GLOBALS['gsr'][$gtabid] = null;
-    	$GLOBALS["filter"]["hidecols"][$gtabid] = null;
-    	$GLOBALS["filter"]["order"][$gtabid] = null;
-	}else{
-    	$GLOBALS['popc'] = null;
-    	$GLOBALS['popg'] = null;
-    	$GLOBALS['gs']= null;
-    	$GLOBALS['gsr'] = null;
-    	$GLOBALS["filter"]["hidecols"] = null;
-    	$GLOBALS["filter"]["order"] = null;
-	}
-	$GLOBALS['filter']['reminder_from'] = null;
-	$GLOBALS['filter']['reminder_to'] = null;
-	$GLOBALS['filter']['reminder_create'] = null;
-	$GLOBALS['view_version_status'] = null;
-}
-
 # ----- Snapshot --------------
+use Limbas\lib\globals\SearchRequest;
+
 if($action == 'gtab_erg') {
     lmb_register_snapshot($gtabid,$snap_id,$filter_reset);
 }
 
 /* --- Variablen zurücksetzen ------*/
-if($filter_reset AND !$snap_id){
+if($filter_reset AND !$snap_id AND $action != 'explorer_main'){
 	filter_reset($gtabid);
 	$next = 1;
 	$anzahl = $session["anzahl"];
@@ -203,6 +182,10 @@ if($filter_reset AND !$snap_id){
 			$hidecols = explode("_",$filter_hidecols_[$key]);
 			if($hidecols[2] == 1 OR (!$hidecols[2] AND $filter["hidecols"][$hidecols[0]][$hidecols[1]])){
 				unset($filter["hidecols"][$hidecols[0]][$hidecols[1]]);
+                // snapshot workaround for missing fields
+                if(!$GLOBALS['gfield'][$hidecols[0]]['rowsize'][$hidecols[1]]) {
+                    $GLOBALS['gfield'][$hidecols[0]]['rowsize'][$hidecols[1]] = $GLOBALS['umgvar']["default_fieldwidth"];
+                }
 			}elseif($hidecols[2] == 2 OR !$hidecols[2]){
 				$filter["hidecols"][$hidecols[0]][$hidecols[1]] = 1;
 			}
@@ -273,30 +256,7 @@ if($filter_reset AND !$snap_id){
 	}else{$filter["reminder"][$gtabid] = 0;}
 	
 	# --- Für Feldinhalte(Suchbegriffe) ------
-	if($gs){
-		if($history_search){
-			$history_search = explode(";",$history_search);
-			$filter['page'][$gtabid] = 1;
-			foreach($history_search as $key => $value){
-				$search_el = explode(",",$history_search[$key]);
-				$gsr[$search_el[0]][$search_el[1]][0] = $gs[$search_el[0]][$search_el[1]][0];
-			}
-
-            lmb_clean_gsr($gtabid,$gsr);
-
-		# suche ohne history_search
-		}elseif($supersearch OR $gssearch){
-			#$gsr[$gtabid] = $gs[$gtabid];
-			$gsr = $gs;
-
-			// clean current table's gsr recursively (remove empty array entries)
-            #if (!containsSearchValue($gsr[$gtabid])) {
-            #    unset($gsr[$gtabid]);
-            #}
-
-            lmb_clean_gsr($gtabid,$gsr);
-		}
-	}
+    SearchRequest::fillFromRequest();
 	
 	# gsf => nur für Formulare ohne Session-Speicherung
 	
@@ -363,57 +323,6 @@ if($filter_reset AND !$snap_id){
 }
 
 
-
-/**
- * Cleans the array from empty search entries
- * @param $gsr array $gsr[$gtabid]
- */
-function lmb_clean_gsr($gtabid,&$gsr){
-    static $attr = array('txt','num','cs','andor','string','neg');
-
-    function lmb_clean_gsrAtrr(&$gsr,$key1,&$attr){
-
-        unset($gsr[$key1]);
-        foreach($attr as $attrk => $attrv){
-            unset($gsr[$attrv][$key1]);
-            if (!$gsr[$attrv]) {
-                unset($gsr[$attrv]);
-            }
-        }
-    }
-
-    // first level
-    foreach($gsr[$gtabid] as $key => $value) {
-
-        foreach($gsr[$gtabid][$key] as $key1 => $value1) {
-
-            // skip 'txt', 'num', ...
-            if (!is_numeric($key1)) {
-                continue;
-            }
-
-            if (!$value1 and $value1 !== '0' and !$gsr[$gtabid][$key]['txt'][$key1] >= 7 and !$gsr[$gtabid][$key]['num'][$key1] >= 7) { // not unset 0, IS NULL, IS NOT NULL
-                lmb_clean_gsrAtrr($gsr[$gtabid][$key],$key1,$attr);
-            }
-
-            if(!$gsr[$gtabid][$key]){
-                unset($gsr[$gtabid][$key]);
-            }
-        }
-
-        if(is_array($gsr[$gtabid]) AND !is_numeric(key($gsr[$gtabid])) ){
-            unset($gsr[$gtabid]['andor']);
-        }
-
-        if(!$gsr[$gtabid]){
-            unset($gsr[$gtabid]);
-        }
-    }
-
-}
-
-
-
 /**
  * Cleans the array from empty search entries
  * @param $gsrtab array $gsr[$gtabid]
@@ -467,7 +376,3 @@ function containsSearchValue(&$gsrtab) {
     return $containsValue;
 }
 */
-
-
-
-?>

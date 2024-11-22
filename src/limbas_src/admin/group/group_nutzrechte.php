@@ -8,6 +8,24 @@
  */
 
 
+/* --- Übergruppe --------------------------------------------- */
+$sqlquery = "SELECT LEVEL FROM LMB_GROUPS WHERE GROUP_ID = $ID";
+$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+if(lmbdb_result($rs, "LEVEL")){$group_level = lmbdb_result($rs, "LEVEL");}else{$group_level = 0;}
+
+
+if($rules){group_list($ID,1,$addsubgroup);}
+
+if($group_level AND !($session["superadmin"] AND $umgvar['override_group_perm'])) {
+    $result_lgroup_link = groupActionRuleSystemPrev($group_level);
+}
+
+$result_links = groupActionRule(array($ID));
+
+$link_groupdesc = groupActionGrouping();
+
+
+
 ?>
 
 <script>
@@ -112,7 +130,7 @@ function check_all(kat,val,sub,main){
                                             <?php if($result_lgroup_link["PERM"][$bzm] == 2 OR !$result_lgroup_link["PERM"]): ?>
                                                 <input type="checkbox" ID="menu_<?=$key?>_<?=$tmpsubg?>_<?=$result_links["link_id"][$bzm]?>" name="menu[<?=$result_links['link_id'][$bzm]?>]" onchange="save_rules('<?=$result_links['link_id'][$bzm]?>');" <?=($result_links["perm"][$bzm] == 2)?'checked':''?>>
                                             <?php else: ?>
-                                                <input type="checkbox" readonly disabled>
+                                                <input type="checkbox" readonly disabled <?=($result_links["perm"][$bzm] == 2)?'checked':''?>>
                                             <?php endif; ?>
                                         </td>
                                     </tr>

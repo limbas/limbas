@@ -10,7 +10,16 @@
 
 ?>
 
+<script>
 
+  function setrule(id){
+      $('#editsetrule_'+id).val(1);
+  }
+  function sethidden(id){
+      $('#editsethidden_'+id).val(1);
+  }
+
+</script>
 
 <div class="container-fluid p-3">
     <FORM ACTION="main_admin.php" METHOD="post" name="form1">
@@ -61,14 +70,16 @@
                                                 <td><?=$value["name"][$key2]?></td>
                                                 <td>
                                                     <?php if($levelrule["hasview"][$value2] OR !$group_level): ?>
-                                                        <input type="checkbox" name="setrule[<?=$value2?>]" <?=$CHECKED1?>>
+                                                        <input type="checkbox" name="setrule[<?=$value2?>]" <?=$CHECKED1?> onchange="setrule('<?=$value2?>')">
+                                                        <input type="hidden" name="editsetrule[<?=$value2?>]" id="editsetrule_<?=$value2?>">
                                                     <?php else: ?>
                                                         <input type="checkbox" <?=$CHECKED1?> readonly disabled>";
                                                     <?php endif; ?>
                                                 </td>
                                                 <td>
                                                     <?php if($CHECKED1): ?>
-                                                        <input type="checkbox" name="sethidden[<?=$value2?>]" <?=$CHECKED2?>>
+                                                        <input type="checkbox" name="sethidden[<?=$value2?>]" <?=$CHECKED2?> onchange="sethidden('<?=$value2?>')">
+                                                        <input type="hidden" name="editsethidden[<?=$value2?>]" id="editsethidden_<?=$value2?>">
                                                     <?php endif; ?>
                                                 </td>
                                             </tr>

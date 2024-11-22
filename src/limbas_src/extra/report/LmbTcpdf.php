@@ -10,6 +10,7 @@
 namespace Limbas\extra\report;
 
 
+use Limbas\admin\setup\fonts\Font;
 use setasign\Fpdi\Tcpdf\Fpdi;
 use TCPDF_FONTS;
 
@@ -348,12 +349,8 @@ class LmbTcpdf extends Fpdi {
 
     /*------- Add-Font ---------*/
     function add_font($font) {
-        global $sysfont;
-
-        if (!$sysfont) {
-            $sysfont = get_fonts();
-        }
-
+        $sysfont = get_fonts();       
+        
         if ($sysfont['family'][$font][0]) {
             # Font eintragen
             foreach ($sysfont['family'][$font] as $key => $val) {

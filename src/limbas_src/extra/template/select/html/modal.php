@@ -9,8 +9,26 @@
 ?>
 <style>
     /*
-    Bootstrap Style polyfill //TODO: remove when bootstrap is implemented
+    Bootstrap Style polyfill //TODO: remove when bootstrap is fully implemented
      */
+    :root,
+    [data-bs-theme="light"] {
+        --legacy-modal-color: #495057;
+        --legacy-modal-color-2: #212529;
+        --legacy-modal-background-color: #fff;
+        --legacy-modal-background-color-2: #e9ecef;
+        --legacy-modal-grayed: #6c757d;
+        --legacy-modal-highlight: #007bff;
+    }
+    [data-bs-theme="dark"] {
+        --legacy-modal-color: #e9ecef;
+        --legacy-modal-color-2: #fff;
+        --legacy-modal-background-color: #000;
+        --legacy-modal-background-color-2: #495057;
+        --legacy-modal-grayed: #6c757d;
+        --legacy-modal-highlight: #007bff;
+    }
+
     #lmbTemplateSelect .form-control,
     #lmbTemplateSelect .form-select {
         display: block;
@@ -20,8 +38,8 @@
         font-size: 1rem;
         font-weight: 400;
         line-height: 1.5;
-        color: #495057;
-        background-color: #fff;
+        color: var(--legacy-modal-color);
+        background-color: var(--legacy-modal-background-color);
         background-clip: padding-box;
         border: 1px solid #ced4da;
         border-radius: .25rem;
@@ -43,7 +61,7 @@
     #lmbTemplateSelect .table {
         width: 100%;
         margin-bottom: 1rem;
-        color: #212529;
+        color: var(--legacy-modal-color-2);
         border-collapse: collapse;
     }
 
@@ -64,7 +82,7 @@
         background-color: rgba(0,0,0,.05);
     }
     #lmbTemplateSelect .table-hover tbody tr:hover {
-        color: #212529;
+        color: var(--legacy-modal-color-2);
         background-color: rgba(0,0,0,.075);
     }
 
@@ -122,10 +140,10 @@
         font-size: 1rem;
         font-weight: 400;
         line-height: 1.5;
-        color: #495057;
+        color: var(--legacy-modal-color);
         text-align: center;
         white-space: nowrap;
-        background-color: #e9ecef;
+        background-color: var(--legacy-modal-background-color-2);
         border: 1px solid #ced4da;
         border-radius: .25rem;
     }
@@ -145,7 +163,7 @@
     #lmbTemplateSelect .btn {
         display: inline-block;
         font-weight: 400;
-        color: #212529;
+        color: var(--legacy-modal-color-2);
         text-align: center;
         vertical-align: middle;
         -webkit-user-select: none;
@@ -174,12 +192,12 @@
         cursor: pointer;
     }
     #lmbTemplateSelect .btn-outline-secondary:hover {
-        color: #fff;
-        background-color: #6c757d;
-        border-color: #6c757d;
+        color: var(--legacy-modal-background-color);
+        background-color: var(--legacy-modal-grayed);
+        border-color: var(--legacy-modal-grayed);
     }
     #lmbTemplateSelect .btn:hover {
-        color: #212529;
+        color: var(--legacy-modal-color-2);
         text-decoration: none;
     }
 
@@ -248,15 +266,15 @@
         padding: .25rem .5rem;
         margin-left: -1px;
         line-height: 1.25;
-        color: #007bff;
-        background-color: #fff;
+        color: var(--legacy-modal-highlight);
+        background-color: var(--legacy-modal-background-color);
         border: 1px solid #dee2e6;
     }
     #lmbTemplateSelect .page-item.disabled .page-link {
-        color: #6c757d;
+        color: var(--legacy-modal-grayed);
         pointer-events: none;
         cursor: auto;
-        background-color: #fff;
+        background-color: var(--legacy-modal-background-color);
         border-color: #dee2e6;
     }
     #lmbTemplateSelect .page-item:first-child .page-link {

@@ -1,20 +1,20 @@
-<style>
 
-.lmb-modalAutoHeight{
-            height:100%
-        }
-        .modal-content{
-            height:90%
-        }
-        .modal-body{
-            height:100%;
-            overflow:auto
-        }
-</style>
+<div class="modal fade" id="searchFilterModal" tabindex="-1" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content mh-90">
+            <div class="modal-header">
+                <h5 class="modal-title"><?=$lang[2608]?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body overflow-visible" id="searchFilterModal-body">
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="modal fade" id="snapfilter-menu" tabindex="-1" data-backdrop="static" data-keyboard="false">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content">
+        <div class="modal-content mh-90">
             <div class="modal-header">
                 <h5 class="modal-title" id="snapfilter-menu-title"><?=$lang[2608]?> <?=$gsnap[$gtabid]["name"][$snap_id]?></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -55,7 +55,7 @@
 
 <div class="modal fade" id="snapfilter-manage" tabindex="-1" data-backdrop="static" data-keyboard="false">
     <div id="modald-snapfilter_manage" class="modal-dialog modal-dialog-centered modal-xl overflow-hidden h-100">
-        <div class="modal-content">
+        <div class="modal-content mh-90">
             <div class="modal-header">
                 <h5 class="modal-title" id="snapfilter-manage-title"><?=$lang[2608]?></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
@@ -66,3 +66,5 @@
         </div>
     </div>
 </div>
+
+<?php require(COREPATH . 'extra/explorer/mini_explorer_modal.php'); ?>

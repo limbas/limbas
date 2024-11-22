@@ -8,32 +8,12 @@
  */
 
 
-
-use limbas\rest\ErrorHandler;
-use limbas\rest\RestException;
-use limbas\rest\Router;
+use Limbas\extra\rest\classes\ErrorHandler;
+use Limbas\extra\rest\classes\RestException;
+use Limbas\extra\rest\classes\Router;
 
 header('Access-Control-Allow-Origin: *');
 header('Content-type: application/json; charset=utf-8');
-
-require_once('classes/ErrorHandler.php');
-require_once('classes/Request.php');
-require_once('classes/RequestHandlers/RequestHandler.php');
-require_once('classes/RequestHandlers/Delete/DeleteRequestHandler.php');
-require_once('classes/RequestHandlers/Delete/DeleteDatasetRequestHandler.php');
-require_once('classes/RequestHandlers/Delete/DeleteRelationRequestHandler.php');
-require_once('classes/RequestHandlers/Get/GetRequestHandler.php');
-require_once('classes/RequestHandlers/Get/GetTableRequestHandler.php');
-require_once('classes/RequestHandlers/Get/GetDatasetRequestHandler.php');
-require_once('classes/RequestHandlers/Get/GetRelationRequestHandler.php');
-require_once('classes/RequestHandlers/Patch/PatchRequestHandler.php');
-require_once('classes/RequestHandlers/Patch/PatchDatasetRequestHandler.php');
-require_once('classes/RequestHandlers/Patch/PatchRelationRequestHandler.php');
-require_once('classes/RequestHandlers/Post/PostRequestHandler.php');
-require_once('classes/RequestHandlers/Post/PostTableRequestHandler.php');
-require_once('classes/RequestHandlers/Post/PostRelationRequestHandler.php');
-require_once('classes/Router.php');
-require_once('classes/RestException.php');
 
 require_once(COREPATH . 'gtab/gtab.lib');
 require_once(COREPATH . 'gtab/gtab_type_erg.lib');

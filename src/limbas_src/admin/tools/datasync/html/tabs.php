@@ -12,10 +12,14 @@
         <a class="nav-link <?= $tab == 3 ? ' active bg-contrast" href="' : '" href="main_admin.php?action=setup_datasync&tab=3' ?>">Dashboard</a>
     </li>
     <li class="nav-item">
+        <a class="nav-link <?= $tab == 5 ? ' active bg-contrast" href="' : '" href="main_admin.php?action=setup_datasync&tab=5' ?>">Cache</a>
+    </li>
+    <li class="nav-item">
         <a class="nav-link <?= $tab == 1 ? ' active bg-contrast" href="' : '" href="main_admin.php?action=setup_datasync&tab=1' ?>">Clients</a>
     </li>
     <li class="nav-item">
-        <a class="nav-link <?= $tab == 2 ? ' active bg-contrast" href="' : '" href="main_admin.php?action=setup_datasync&tab=2' ?>">Templates</a>
+        <a class="nav-link <?= $tab == 2 ? ' active bg-contrast' : '' ?>"
+           href="main_admin.php?action=setup_datasync&tab=2">Templates</a>
     </li>
     <li class="nav-item">
         <a class="nav-link <?= $tab == 4 ? ' active bg-contrast" href="' : '" href="main_admin.php?action=setup_datasync&tab=4' ?>">Validate</a>

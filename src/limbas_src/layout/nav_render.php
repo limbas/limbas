@@ -87,12 +87,16 @@ function recRender($entryKey, $entry, $depth = 0, $data = null) {
         # title
         $title = (is_numeric($entry['name']) ? $lang[$entry['name']] : $entry['name']);
 
+        $entryIcon = $entry['gicon'] ?? $entry['icon'];
 
-        echo '<li id="menu-side-header-'.$data['depth0Key'].'" '.$onHeaderSymbolClick.' class="clearfix '.$eldispl.'">
-                <div class="menu-side-header"><i class="lmbMenuHeaderImage lmb-icon-32 '.($entry['gicon'] ?? $entry['icon']).'"></i>
-            <span class="hide-menu">'.$title.'</span>
-            '.$popupIcon.'</div>
-           <ul id="CONTENT_'.$combinedId.'">';
+        echo <<<HTML
+            <li id="menu-side-header-{$data['depth0Key']}" class="clearfix $eldispl">
+                <div class="menu-side-header" $onHeaderSymbolClick>
+                    <i class="lmbMenuHeaderImage lmb-icon-32 $entryIcon"></i>
+                    <span class="hide-menu">$title</span>$popupIcon
+                </div>
+                <ul id="CONTENT_$combinedId">
+        HTML;
 
         if ($entry['eval']) {
             // TODO still works?

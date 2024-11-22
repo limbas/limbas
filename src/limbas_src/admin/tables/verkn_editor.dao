@@ -54,10 +54,6 @@ if($rfield['verkntabid']){
 
 /* --- Referentielle Integrität ändern ---------------------------------------------*/
 if($change_refint AND $new_refint_rule AND $rfield['veknfieldid']  AND !$recursrelation){
-    error_log($fieldid);
-    error_log($tabid);
-    error_log(print_r($new_refint,1));
-    error_log(print_r($rfield,1));
 	lmb_set_relation_foreignkey($fieldid,$tabid,$new_refint,$rfield);
 }
 
@@ -76,7 +72,7 @@ if($change_multiralation AND $rfield['veknfieldid'] AND !$recursrelation){
 
 /* --- Relation Tree --------------------------------------------- */
 if ($fieldid and $tabid and $relationtree) {
-    createRecRelation($tabid, $fieldid, $relationtree);
+    createRecRelation($tabid, $fieldid, $relationtree, $rfield);
     $rfield['verkntabletype'] = 3;
 }
 
@@ -92,13 +88,17 @@ if ($set_verknfieldid AND $new_verknfieldid) {
 
 # --- Verknüpfungs-Parameter eintragen -----------------
 if($vknsave){
-    lmb_set_relation_params($fieldid,$tabid,$new_verknsearchid,$new_verknfindid,$new_verknviewid,$verknsort,$verknsortf,$viewidCut,$findidCut);
+    if($rfield['veknfieldid']) {
+        lmb_set_relation_params($fieldid, $tabid, $new_verknsearchid, $new_verknfindid, $new_verknviewid, $verknsort, $verknsortf, $viewidCut, $findidCut, $rfield);
+    }else{
+        lmb_alert($lang[2331] . ' "' . $lang[1825] . '" ' . $lang[3158]);
+    }
 }
 
 /* --- Verknüpfung aus ID Feldern neu füllen --------------------------------------------- */
 if($verknrefresh AND $rfield['verkntabid']){
     set_time_limit(10000);
-    lmb_rebuild_relation();
+    lmb_rebuild_relation($rfield, $v_field1, $v_field2);
 }
 
 # --- Verknüpfungs-Parameterisierung -----------------

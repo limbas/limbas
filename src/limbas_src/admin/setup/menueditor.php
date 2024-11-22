@@ -141,12 +141,14 @@
                                                 <option value="5" <?=$type_[5]?>><?=$lang[1625]?></option>
                                                 <option value="6" <?=$type_[6]?>><?=$lang[1939]?></option>
                                                 <option value="2" <?=$type_[2]?>><?=$lang[2984]?></option>
+                                                <option value="17" <?=$type_[17]?>><?=$lang[2984] . " 2"?></option>
                                             </optgroup>
                                             <optgroup label="<?=$lang[357]?>">
                                                 <option value="13" <?=$type_[13]?>><?=$lang[545]?></option>
                                                 <option value="15" <?=$type_[15]?>><?=$lang[1625]?></option>
                                                 <option value="16" <?=$type_[16]?>><?=$lang[1939]?></option>
                                                 <option value="12" <?=$type_[12]?>><?=$lang[2984]?></option>
+                                                <option value="14" <?=$type_[14]?>><?=$lang[2984] . " 2"?></option>
                                             </optgroup>
                                             <optgroup label="<?=$lang[1460]?>">
                                                 <option value="20" <?=$type_[20]?>><?=$lang[2983]?></option>

@@ -77,8 +77,9 @@ function start_syncExportPost(data,el,syncid,stamp){
 
     el.removeClass("spinner-border");
 
-    if(resultObj.notice){
+    if(resultObj.notice && resultObj.url){
         var notice = resultObj.notice;
+        var url = resultObj.url;
     }else{
         var notice = 'no valid data';
     }
@@ -87,7 +88,7 @@ function start_syncExportPost(data,el,syncid,stamp){
     if(resultObj && resultObj.success){
 
         // adding status text
-        $('.sync-status').filter('div[data-id='+syncid+']').append("<a target='_new' href='USER/<?=$session["user_id"]?>/temp/syncexp_"+syncid+".html'>"+notice+"</a>");
+        $('.sync-status').filter('div[data-id='+syncid+']').append("<a target='_new' href='"+url+"'>"+notice+"</a>");
         // adding status symbol
         el.addClass("fa-solid fa-circle-check fa-3x text-success");
 
@@ -205,14 +206,6 @@ $slaves = lmb_GetSyncSlaves();
                                     </label>
                                 </div>
 
-
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" value="1" id="part-exp-txt-encode" name="txt_encode" <?=($txt_encode)?'checked':''?>>
-                                    <label class="form-check-label" for="part-exp-txt-encode">
-                                        utf8 en/decode
-                                    </label>
-                                </div>
-                                
                             </div>
                             
                         </div>
@@ -464,7 +457,7 @@ $slaves = lmb_GetSyncSlaves();
                                     <label for="synccallextensionfunction" class="col-sm-2 col-form-label">run:</label>
                                     <div class="col-sm-10">
                                         <input type="text" id="synccallextensionfunction" name="syncmodule[synccallextensionfunction]" class="form-control form-control-sm syncexportf" value="<?=($syncmodule['synccallextensionfunction']?$syncmodule['synccallextensionfunction']:'')?>">
-                                        <i>usage: functionname<br>@param ('before' | 'after') </i>
+                                        <i>usage: functionname<br>@params ('before' | 'after' , &$extension) </i>
                                     </div>
                                 </div>
 
@@ -616,17 +609,15 @@ $slaves = lmb_GetSyncSlaves();
                         </p>
                         <p>
                             <?=$lang[974]?>:<BR><BR>
-                            <a href="<?=$path_backup?>" class="text-success" target="_blank"><i class="lmb-icon lmb-download"></i>&nbsp;<?=$path_backup?></a> (export dump)
+                            <a href="<?=$path_backup['url']?>" class="text-success" target="_blank"><i class="lmb-icon lmb-download"></i>&nbsp;<?=$path_backup['name']?></a> (export dump)
                         </p>
                     </div>
                 </div>
 
                 <?php
             }elseif(($single_export OR $group_export) AND is_array($exptable)){
-                if($result_backup = lmbExport($exptable,$format,$export_filter,null,$txt_encode)){
+                if($result_backup = lmbExport($exptable,$format,$export_filter,null)){
                     ?>
-
-
                     <div class="card">
                         <div class="card-body">
                             <h4 class="card-title"><?=$lang[970]?>!</h4>
@@ -644,17 +635,17 @@ $slaves = lmb_GetSyncSlaves();
                                 <?php
                                 if(array_key_exists('path', $result_backup)):
                                     foreach ($result_backup["path"] as $key => $value): ?>
-                                        <li><a name="download" href="<?=$value?>" class="text-success" target="_blank"><?=$result_backup["name"][$key]?></a></li>
+                                        <li><a href="<?=$value?>" class="text-success" target="_blank"><?=$result_backup["name"][$key]?></a></li>
                                     <?php endforeach;
                                     
                                     if(lmb_count($result_backup["path"]) > 1): ?>
-                                    <li class="pt-3"><i class="lmb-icon lmb-collapse-all"></i><a href="#" onclick="document.form1.make_package.value=1;document.form1.submit();"><?=$lang[977]?>!</a></li>   
+                                    <li class="pt-3"><i class="lmb-icon lmb-collapse-all"></i><a href="#" onclick="document.form1.make_package.value=1;document.form1.submit();"><?=$lang[977]?>!</a></li>
                                 <?php
                                     endif;
                                     
                                 else: ?>
 
-                                    <li><a name="download" HREF="<?=$result_backup?>" class="text-success" target="_blank"><?=$result_backup?></a></I></li>
+                                    <li><a HREF="<?=$result_backup?>" class="text-success" target="_blank"><?=$result_backup?></a></I></li>
                                     <script>limbasWaitsymbol(false,false,true);</script>
                                 
                                 <?php endif; ?>
@@ -667,14 +658,15 @@ $slaves = lmb_GetSyncSlaves();
                 }
 
             }elseif($make_package){
-                $path = "USER/".$session["user_id"]."/temp";
-                if($path_ = make_fileArchive($path,"export_dump")): ?>
+                if(make_fileArchive("export_dump")):
+                    $url = lmb_getDownloadHash(USERPATH . $session["user_id"] . '/temp','export_dump.tar.gz','application/x-tar');
+                    ?>
 
                     <div class="card">
                         <div class="card-body">
                             <h4 class="card-title"><?=$lang[970]?>!</h4>
                             <p><i class="lmb-icon lmb-download"></i> <?=$lang[975]?></p>
-                            <p><a name="download" href="<?=$path_?>" class="text-success" target="_blank"><?=$path_?></a></p>
+                            <p><a href="<?=$url?>" class="text-success" target="_blank">export_dump.tar.gz</a></p>
 
                         </div>
                     </div>
@@ -685,7 +677,7 @@ $slaves = lmb_GetSyncSlaves();
             }
 
             // Sync export
-            elseif($sync_to_slaves && ($sync_export_local || $sync_export_remote || $sync_export_config))
+            elseif(($sync_to_slaves && $sync_export_remote) || $sync_export_local || $sync_export_config)
             {
 
                 // get active modules
@@ -698,17 +690,18 @@ $slaves = lmb_GetSyncSlaves();
 
                 # export config as file
                 if ($sync_export_config) :
-                    $configFilePath = $umgvar['path'] . '/TEMP/conf/autosync.conf.php';
+                    $configFilePath =  TEMPPATH. 'conf/autosync.conf.php';
                     $handle = fopen($configFilePath, 'w+');
                     fwrite($handle, '<?php $syncModules = ' . var_export($syncModules, true) . '; ?>');
                     fclose($handle);
+                    $url = lmb_getDownloadHash(TEMPPATH. 'conf','autosync.conf.php','application/x-httpd-php');
                     ?>
                 
                     <div class="card">
                         <div class="card-body">
                             <h4 class="card-title"><?=$lang[970]?>!</h4>
                             <p><i class="lmb-icon lmb-download"></i> <?=$lang[975]?></p>
-                            <p><a name="download" href="TEMP/conf/autosync.conf.php" class="text-success" target="_blank">autosync.conf.php</a></p>
+                            <p><a href="<?=$url?>" class="text-success" target="_blank">autosync.conf.php</a></p>
 
                         </div>
                     </div>
@@ -720,7 +713,7 @@ $slaves = lmb_GetSyncSlaves();
 
                 # local export
                 if($sync_export_local) {
-                    if($result_backup = lmbExport(null,$format,null,$syncModules,$txt_encode)){
+                    if($result_backup = lmbExport(null,$format,null,$syncModules)){
                         ?>
 
                         <div class="card">
@@ -733,7 +726,7 @@ $slaves = lmb_GetSyncSlaves();
                                 </p>
 
                                 <p><i class="lmb-icon lmb-download"></i> <?=$lang[975]?></p>
-                                <p><a name="download" href="<?=$result_backup?>" class="text-success" target="_blank"><?=$result_backup?></a></p>
+                                <p><a href="<?=$result_backup['path'][0]?>" class="text-success" target="_blank"><?=$result_backup['name'][0]?></a></p>
 
                             </div>
                         </div>

@@ -7,17 +7,15 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
-
+use Limbas\extra\diagram\LmbChart;
 
 $gtabid = $gdiaglist['gtabid'][$diag_id];
 if ($gdiaglist[$gtabid]["id"][$diag_id]) {
     if ($gdiaglist[$gtabid]["template"][$diag_id] AND file_exists($umgvar["pfad"] . $gdiaglist[$gtabid]["template"][$diag_id])) {
         require_once ($umgvar["pfad"] . $gdiaglist[$gtabid]["template"][$diag_id]);
     } else {
-        require_once (COREPATH . 'extra/diagram/LmbChart.php');
-        $link = LmbChart::makeChart($diag_id, $gsr, $filter, $verkn, $extension);
-        $link = trim(str_replace(DEPENDENTPATH,'',$link),'/');
+        $path = LmbChart::makeChart($diag_id, $gsr, $filter, $verkn, $extension);
+        $link = lmb_getDownloadHash($path,'','image/png');
         ?>
             <style>
                 .diagramm-wrapper { 

@@ -7,6 +7,12 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+namespace Limbas\admin\tools\datasync;
+
+use Limbas\lib\db\Database;
+use LimbasLogger;
+use Throwable;
+
 class DatasyncProcess
 {
 
@@ -168,7 +174,7 @@ class DatasyncProcess
                 $cacheId = lmbdb_result($rs, 'CACHE_ID');
                 $cc = (int)lmbdb_result($rs, 'CC');
 
-                if ($clientCount >= $cc) {
+                if ($cc >= $clientCount) {
                     $obsoleteCacheIds[] = $cacheId;
                 }
 

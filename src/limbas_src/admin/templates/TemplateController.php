@@ -9,7 +9,6 @@
 
 namespace Limbas\admin\templates;
 
-use JetBrains\PhpStorm\NoReturn;
 use Limbas\extra\template\report\ReportTemplateResolver;
 use Limbas\extra\template\wysiwyg\Wysiwyg;
 use Limbas\lib\LimbasController;
@@ -198,7 +197,7 @@ class TemplateController extends LimbasController
         return ['success'=>del_data($gtabid, $id)];
     }
 
-    #[NoReturn] protected function handleWysiwygAction(array $params): array
+    protected function handleWysiwygAction(array $params): array
     {
         header('Content-Type: text/html; charset=utf-8');
         $wysiwyg = new Wysiwyg();

@@ -9,9 +9,9 @@
 
 namespace Limbas\extra\report;
 
+use Limbas\extra\diagram\LmbChart;
 use Limbas\extra\template\report\ReportTemplateRender;
 use lmb_log;
-use LmbChart;
 use ParseError;
 
 class ReportTcpdf extends Report
@@ -50,7 +50,6 @@ class ReportTcpdf extends Report
 
         } else {
             # use the diag editor
-            require_once(COREPATH . 'extra/diagram/LmbChart.php');
             $link = LmbChart::makeChart($chart_id, $gsr, $filter);
         }
         if (!file_exists($link)) {
@@ -539,7 +538,7 @@ class ReportTcpdf extends Report
         }
 
         if ($valuetype == 'IMAGE') {
-            $printedCell = $pdf->printcell($value, $report['posx'][$el], $report['posy'][$el], $report['width'][$el], $report['height'][$el], $report['style'][$el], 'bild');
+            $printedCell = $pdf->printcell($value, $report['posx'][$el], $report['posy'][$el], $report['width'][$el], null, $report['style'][$el], 'bild');
             $pdf->print_element($printedCell);
         } elseif ($valuetype == 'PDF') {
             $pdf->setSourceFile($value);
@@ -569,8 +568,6 @@ class ReportTcpdf extends Report
         if ($this->hide_element($pdf, $report['style'][$el][29])) {
             return true;
         }
-
-        require_once(COREPATH . 'extra/diagram/LmbChart.php');
 
         $width = $report['width'][$el];
         $height = $report['height'][$el];

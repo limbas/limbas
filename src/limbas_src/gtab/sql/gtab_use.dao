@@ -7,7 +7,7 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
+global $ID;
 
 # --- add dataset ------
 if($action == "gtab_neu" AND isset($gtabid)){
@@ -94,9 +94,9 @@ elseif($use_typ == 'delete' AND $use_record){
 					$ID = scroll_to('prev',$gtabid,$ID,$null,$filter,$verkn);
 				}
 			}
-			$forceDelnm = $filter["force_delete"][$gtabid_];
-			if(!$LINK[276]){$forceDelnm = 0;}
-			if(del_data($gtabid_,$ID_,$use_typ,$forceDelnm)){
+			$delete_recursive = $filter["force_delete"][$gtabid_];
+			if(!$LINK[276]){$delete_recursive = 0;}
+			if(del_data($gtabid_,$ID_,$use_typ,$delete_recursive)){
 				$useetecount++;
 			}else{
                 $ID = $ID_;

@@ -59,7 +59,7 @@ class MyCollection extends Sabre\DAV\Collection {
 		if($this->myPath == "/"){
 			$lid = 0;
 		}else{
-			$lid = lmb_getLevelFromPath(lmb_utf8_decode($this->myPath));
+			$lid = lmb_getLevelFromPath($this->myPath);
 		}
 
 		global $db;
@@ -87,7 +87,6 @@ class MyCollection extends Sabre\DAV\Collection {
 			if($ffile = get_ffile($query,$ffilter,$this->lid,1)){
 				if ($ffile['id']) {
 					foreach($ffile['name'] as $id => $name) {
-						$name = lmb_utf8_encode($name);
 						$this->collection[$name] = new MyFile($this->lid,$id, $this->myPath . (1 != lmb_strlen($this->myPath) ? '/' : '') . $name, $ffile['size'][$id], $ffile['mimetype'][$id], dateToStamp($ffile['editdatum'][$id]), $ffile['realname'][$id]);
 					}
 				}
@@ -99,17 +98,9 @@ class MyCollection extends Sabre\DAV\Collection {
 	private function getFolderChildren() {
 
 		global $filestruct;
-		# LEVEL
-		/*
-		if($this->myPath == "/"){
-		$lid = 0;
-		}else{
-		$lid = lmb_getLevelFromPath(lmb_utf8_decode($this->myPath));
-		}
-		*/
 		foreach($filestruct["id"] as $fid => $value){
 			if($filestruct["level"][$fid] == $this->lid AND $filestruct["view"][$fid]){
-				$name = lmb_utf8_encode($filestruct["name"][$fid]);
+				$name = $filestruct["name"][$fid];
 				$this->collection[$name] = new MyCollection($fid, $this->myPath . (1 != lmb_strlen($this->myPath) ? '/' : '') . $name);
 			}
 		}
@@ -153,8 +144,8 @@ class MyCollection extends Sabre\DAV\Collection {
 	
 	public function setName($newName){
 
-		$did = lmb_getLevelFromPath(lmb_utf8_decode(lmb_getPrevPath($this->myPath)));
-		if(!rename_dir($this->lid,lmb_utf8_decode($newName),$did)){
+		$did = lmb_getLevelFromPath(lmb_getPrevPath($this->myPath));
+		if(!rename_dir($this->lid,$newName,$did)){
 			throw new Sabre\DAV\Exception\Forbidden('Permission denied to rename node');
 		}else{
 			flag_filestructure();
@@ -165,7 +156,7 @@ class MyCollection extends Sabre\DAV\Collection {
 	public function childExists($name) {
 		global $db;
 		
-		$sqlquery = "SELECT ID FROM LDMS_FILES WHERE LEVEL = ".$this->lid." AND LOWER(NAME) = '".parse_db_string(lmb_strtolower(lmb_utf8_decode($name)),40)."'";
+		$sqlquery = "SELECT ID FROM LDMS_FILES WHERE LEVEL = ".$this->lid." AND LOWER(NAME) = '".parse_db_string(lmb_strtolower($name),40)."'";
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(lmbdb_result($rs, "ID")){
 			return true;
@@ -221,7 +212,7 @@ class MyCollection extends Sabre\DAV\Collection {
 	# move folder
 	public function move($destination){
 		
-		$did = lmb_getLevelFromPath(lmb_utf8_decode($destination));
+		$did = lmb_getLevelFromPath($destination);
 		if(!move_dir(array($this->lid),$did)){
 			throw new Sabre\DAV\Exception\Forbidden('Permission denied to move node');
 		}else{
@@ -233,7 +224,7 @@ class MyCollection extends Sabre\DAV\Collection {
 	# copy folder
 	public function copy($destination){
 	
-		$did = lmb_getLevelFromPath(lmb_utf8_decode($destination));
+		$did = lmb_getLevelFromPath($destination);
 		if(!copy_dir(array($this->lid),$did,0)){
 			throw new Sabre\DAV\Exception\Forbidden('Permission denied to copy node');
 		}else{
@@ -355,7 +346,7 @@ class MyFile extends \Sabre\DAV\File {
 	# rename
 	public function setName($newName){
 
-		if(!lmb_renameFile($this->fid,lmb_utf8_decode($newName),$this->lid)){
+		if(!lmb_renameFile($this->fid,$newName,$this->lid)){
 			throw new Sabre\DAV\Exception\Forbidden('Permission denied to rename file');
 		}
 		
@@ -364,7 +355,7 @@ class MyFile extends \Sabre\DAV\File {
 	# move file
 	public function move($destination){
 		
-		$did = lmb_getLevelFromPath(lmb_getPrevPath(lmb_utf8_decode($destination)));
+		$did = lmb_getLevelFromPath(lmb_getPrevPath($destination));
 		if(!move_file(array($this->fid),$did)){
 			throw new Sabre\DAV\Exception\Forbidden('Permission denied to move file');
 		}
@@ -374,7 +365,7 @@ class MyFile extends \Sabre\DAV\File {
 	# copy file
 	public function copy($destination){
 	
-		$did = lmb_getLevelFromPath(lmb_getPrevPath(lmb_utf8_decode($destination)));
+		$did = lmb_getLevelFromPath(lmb_getPrevPath($destination));
 		if(!copy_file(array($this->fid),$did)){
 			throw new Sabre\DAV\Exception\Forbidden('Permission denied to copy file');
 		}

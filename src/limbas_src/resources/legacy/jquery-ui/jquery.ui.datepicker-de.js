@@ -2,7 +2,7 @@
 
 jQuery(function($){
 	$.datepicker.regional['de'] = {
-		closeText: 'Schlie&szlig;en',
+		closeText: 'Schließen',
 		prevText: '&#x3C;zurück',
 		nextText: 'Vor&#x3E;',
 		currentText: 'heute',

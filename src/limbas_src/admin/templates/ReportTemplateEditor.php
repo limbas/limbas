@@ -9,9 +9,10 @@
 
 namespace Limbas\admin\templates;
 
-use Database;
 use Limbas\admin\report\Report;
+use Limbas\admin\setup\fonts\Font;
 use Limbas\extra\template\TemplateTable;
+use Limbas\lib\db\Database;
 
 class ReportTemplateEditor extends TemplateEditor
 {
@@ -48,8 +49,9 @@ class ReportTemplateEditor extends TemplateEditor
         global $greport;
         global $greportlist;
 
+        $fonts = Font::all();
+        
         ob_start();
-
         require(COREPATH . 'admin/report/html/editor/settings.php');
 
         return ob_get_clean() ?: '';

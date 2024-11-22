@@ -70,7 +70,6 @@ ob_end_clean();
 <div class="container-fluid p-3">
 	<div class="card">
 		<div class="card-body">
-			<p><a href="main_admin.php?action=setup_user_overview&pdf=1"><?=$lang[2355]?>&nbsp;<i class="lmb-icon lmb-file-pdf"></i></a></p>
 			<?=$output?>
 		</div>
 	</div>
@@ -79,38 +78,6 @@ ob_end_clean();
 <?php
 
 
-
-if($pdf){
-
-	$output = "<html><body>
-	$output
-	</body></html>";
-	
-	$filename = USERPATH.$session["user_id"]."/temp/user_overview";
-	
-	#$url = explode("/",$umgvar["url"]);
-	#$url[2] = "localhost";
-	#$url = implode("/",$url);
-	#$output = str_replace($umgvar["url"],$url,$output);
-	
-	
-	if ($handle = fopen($filename.".html", "w")) {
-		fwrite($handle, $output);
-	}
-	
-	$cmd = "htmldoc --size 295x210mm --left 10mm --right 10mm --top 10mm --bottom 10mm --webpage --header ... --footer ... -f ".$filename.".pdf $filename.html";
-	$pdfout = `$cmd`;
-	
-	if(file_exists(USERPATH.$session["user_id"]."/temp/user_overview.pdf")){
-		echo "
-			<script language=\"JavaScript\">
-			document.location.href='USER/".$session["user_id"]."/temp/user_overview.pdf';
-			</script>
-		";
-	}else{
-		echo "pdf generation failed! check if htmldoc is installed.";
-	}
-}
 
 ?>
 

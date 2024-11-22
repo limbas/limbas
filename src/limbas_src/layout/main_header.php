@@ -7,11 +7,16 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+if ($BODYHEADER || $HEADER):
 
+    if($HEADER){
+        $BODYHEADER = $HEADER;
+    }
 
-if ($BODYHEADER):
-	# add icon
-	if($LINK['icon_url'][$LINK_ID[$action]]){
+    # add icon
+    if($HEADERICON){
+        $BODYHEADER = "<i class=\"{$HEADERICON}\" style=\"vertical-align:middle;\"></i>&nbsp;&nbsp;" . $BODYHEADER;
+    }else if($LINK['icon_url'][$LINK_ID[$action]]){
 		$BODYHEADER = "<i class=\"lmb-icon {$LINK["icon_url"][$LINK_ID[$action]]}\" style=\"vertical-align:middle;\"></i>&nbsp;&nbsp;" . $BODYHEADER;
 	}
 

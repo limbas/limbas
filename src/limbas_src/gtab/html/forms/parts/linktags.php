@@ -11,7 +11,7 @@ global $greminder;
 
 $groupable = $gtab["groupable"][$gtabid];
 
-if(!isset($applyLegacy) && !$groupable) {
+if(!$groupable) {
     return;
 }
 
@@ -19,12 +19,7 @@ if(!isset($applyLegacy) && !$groupable) {
 
 
 
-<?php if(!isset($applyLegacy)): ?>
-    <nav class="nav nav-pills nav-fill">
-<?php else: ?>
-    <div class="lmbTableHeader">
-<?php endif; ?>
-
+<nav class="nav nav-pills nav-fill">
 
     
 
@@ -48,19 +43,8 @@ if(!isset($applyLegacy) && !$groupable) {
 
 
                 ?>
-                    
-                <?php if(!isset($applyLegacy)): ?>
-                
+
                 <a class="nav-link" id="tabs_<?=$value?>" OnClick="limbasLinkTags(event,'<?=$value?>','0','<?=$value?>','<?=$gfield[$gtabid]["r_verknfieldid"][$key]?>','<?=$ID?>',2,'<?=$act?>','1','<?=$gtabid?>',0)"><?=$gtab["desc"][$value]?></a>
-                
-                <?php else: ?>
-                
-                <?php
-                    if($gtab["markcolor"][$value]){$mst = "style=\"background-color:".$gtab["markcolor"][$value]."\"";}else{$mst = null;}
-                    echo "<div class=\"lmbGtabTabmenuInactive\" $mst id=\"tabs_".$value."\" OnClick=\"limbasLinkTags(event,'".$value."','0','".$value."','".$gfield[$gtabid]["r_verknfieldid"][$key]."','".$ID."',2,'".$act."','1','".$gtabid."',0)\">".$gtab["desc"][$value]."</div>";
-                ?>
-                
-                <?php endif; ?>
 
                 <?php
 
@@ -74,23 +58,10 @@ if(!isset($applyLegacy) && !$groupable) {
     # ------- Aktuelle Tabelle -----------------------------------------
     ?>
 
-    
-    
 
-    <?php if(!isset($applyLegacy)): ?>
 
-        <a class="nav-link active" aria-current="page" href="#" id="tabs_<?=$gtabid?>" onclick="document.form1.action.value='gtab_erg';document.form1.form_id.value=document.form1.formlist_id.value;send_form('1');"><?=$gtab["desc"][$gtabid]?></a>
 
-    <?php else: ?>
-        <?php
-    
-        if($gtab["markcolor"][$gtabid]){$mst = "style=\"background-color:".$gtab["markcolor"][$gtabid]."\"";}else{$mst = null;}
-#echo "<div class=\"lmbGtabTabmenuActive\" $mst id=\"tabs_".$gtabid."\" onclick=\"send_form('1');\">".$gtab["desc"][$gtabid];
-        echo "<div class=\"lmbGtabTabmenuActive\" $mst id=\"tabs_".$gtabid."\" onclick=\"document.form1.action.value='gtab_erg';document.form1.form_id.value=document.form1.formlist_id.value;send_form('1');\">".$gtab["desc"][$gtabid];
-        if($greminder[$gtabid]['name'][$GLOBALS['gfrist']]){echo "&nbsp;(<i>".$greminder[$gtabid]["name"][$GLOBALS['gfrist']]."</i>)";}
-        echo "</div>";
-        ?>
-    <?php endif; ?>
+    <a class="nav-link active" aria-current="page" href="#" id="tabs_<?=$gtabid?>" onclick="document.form1.action.value='gtab_erg';document.form1.form_id.value=document.form1.formlist_id.value;send_form('1');"><?=$gtab["desc"][$gtabid]?></a>
     
     <?php
 
@@ -103,18 +74,7 @@ if(!isset($applyLegacy) && !$groupable) {
                 if($gfield[$gtabid]["unique"][$key]){$act = "gtab_change";}else{$act = "gtab_erg";} ?>
 
 
-                <?php if(!isset($applyLegacy)): ?>
-
-                        <a class="nav-link" id="tabs_<?=$value?>" OnClick="limbasLinkTags(event,'<?=$value?>','0','<?=$gtabid?>','<?=$gfield[$gtabid]["field_id"][$key]?>','<?=$ID?>',1,'<?=$act?>','1','<?=$gtabid?>',0)"><?=$gtab["desc"][$value]?> (<?=$gresult[$gtabid][$key][0]?>)</a>
-                        
-                <?php else: ?>
-                    <?php
-                    if($gtab["markcolor"][$value]){$mst = "style=\"background-color:".$gtab["markcolor"][$value]."\"";}else{$mst = null;}
-                    # Anzahl Vernüpfungen
-                    $count = "<span style=\"font-size:9;color:green\">(".$gresult[$gtabid][$key][0].")</span>";
-                    echo "<div class=\"lmbGtabTabmenuInactive\" $mst id=\"tabs_".$value."\" OnClick=\"limbasLinkTags(event,'".$value."','0','".$gtabid."','".$gfield[$gtabid]["field_id"][$key]."','".$ID."',1,'".$act."','1','".$gtabid."',0);\">".$gtab["desc"][$value]."&nbsp;".$count."</div>";
-                    ?>
-                <?php endif; ?>
+                <a class="nav-link" id="tabs_<?=$value?>" OnClick="limbasLinkTags(event,'<?=$value?>','0','<?=$gtabid?>','<?=$gfield[$gtabid]["field_id"][$key]?>','<?=$ID?>',1,'<?=$act?>','1','<?=$gtabid?>',0)"><?=$gtab["desc"][$value]?> (<?=$gresult[$gtabid][$key][0]?>)</a>
                 
                 
                 <?php
@@ -128,8 +88,4 @@ if(!isset($applyLegacy) && !$groupable) {
 
 
 
-<?php if(!isset($applyLegacy)): ?>
-    </nav>
-<?php else: ?>
-    </div>
-<?php endif; ?>
+</nav>

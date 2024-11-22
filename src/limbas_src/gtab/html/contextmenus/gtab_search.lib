@@ -6,7 +6,8 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
-function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$gsrresParent){
+function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$gsrresParent)
+{
     global $lang;
     global $gfield;
     global $db;
@@ -14,7 +15,7 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
     global $umgvar;
 
     // global hide column extension
-    if($gfield[$gtabid]['col_hide'][$fieldid]){return;}
+    // if($gfield[$gtabid]['col_hide'][$fieldid]){return;}
 
     // this value is array -> recursively show trs for subarray
     if (is_array($gsrres)) {
@@ -52,6 +53,65 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
         $originStr .= '_';
     }
 
+
+    ################## find search type #################
+
+    // searchoption
+    if ($gfield[$gtabid]['field_type'][$fieldid] == 2 or $gfield[$gtabid]['field_type'][$fieldid] == 7 or $gfield[$gtabid]['field_type'][$fieldid] == 5 or $gfield[$gtabid]['field_type'][$fieldid] == 12 or $gfield[$gtabid]['field_type'][$fieldid] == 15 or $gfield[$gtabid]['field_type'][$fieldid] == 24) {
+        $searchoption = 'number';
+    } else {
+        $searchoption = 'text';
+    }
+
+    // searchvalue
+    if ($gfield[$gtabid]['field_type'][$fieldid] == 10) {
+        $searchvalue = 'boolean';
+    } elseif (($gfield[$gtabid]['field_type'][$fieldid] == 4 || $gfield[$gtabid]['field_type'][$fieldid] == 19) && $gfield[$gtabid]['artleiste'][$fieldid] && $gsrresParent["andor"][$filterIndex] <= 2) {
+        $searchvalue = 'select';
+    } elseif ($gfield[$gtabid]["parse_type"][$fieldid] == 4) {
+        $searchvalue = 'date';
+    } else {
+        $searchvalue = 'text';
+    }
+
+    // find alternative field type for attributes
+    if ($gfield[$gtabid]['field_type'][$fieldid] == 19 && $gsrresParent["andor"][$filterIndex] > 2 && $gfield[$gtabid]['artleiste'][$fieldid]) {
+        $sqlquery2 = "SELECT ID,TYPE FROM LMB_ATTRIBUTE_W WHERE POOL = " . $gfield[$gtabid]["select_pool"][$fieldid] . " AND LOWER(WERT) = '" . parse_db_string(lmb_strtolower($gsrresParent[0]), 160) . "'";
+        $rs2 = lmbdb_exec($GLOBALS['db'], $sqlquery2) or errorhandle(lmbdb_errormsg($GLOBALS['db']), $sqlquery2, $GLOBALS['action'], __FILE__, __LINE__);
+        $attrtype = lmbdb_result($rs2, "TYPE");
+
+        if ($attrtype) {
+            // text
+            if ($attrtype == 1 or $attrtype == 12) {
+                $searchvalue = 'text';
+                $searchoption = 'text';
+                // date
+            } elseif ($attrtype == 40) {
+                $searchvalue = 'date';
+                $searchoption = 'number';
+                // numeric
+            } elseif ($attrtype == 16 or $attrtype == 49) {
+                $searchvalue = 'text';
+                $searchoption = 'number';
+                // boolean
+            } elseif ($attrtype == 20) {
+                $searchvalue = 'boolean';
+                $searchoption = 'boolean';
+            }
+        }
+    }
+
+    // if select/attribute with artleiste
+    $selectsearch = 0;
+    if (($gfield[$gtabid]['field_type'][$fieldid] == 4 || $gfield[$gtabid]['field_type'][$fieldid] == 19) && $gfield[$gtabid]['artleiste'][$fieldid] && $gsrresParent["andor"][$filterIndex] <= 2) {
+        $selectsearch = 1;
+    }
+
+
+
+
+
+
     echo "<tr class='m-0 p-0' id=\"gdr_{$originStr}{$gtabid}_{$fieldid}_{$filterIndex}\">";
 
     // ###################### searchfield ########################
@@ -75,12 +135,14 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
         echo '<td>';
 
         if (!$gsrresParent['string'][0]) {
-            echo "<select class='form-select form-select-sm' name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][andor][{$filterIndex}]\">";
+            echo "<select class='form-select form-select-sm' name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][andor][{$filterIndex}]\" onchange=\"limbasDetailSearch(event,this,{$gtabid},null,null,null,null,1);\">";
             echo "<option value=\"1\"" . ($gsrresParent["andor"][$filterIndex] == 1 ? " selected" : "") . ">" . $lang[854];
             echo "<option value=\"2\"" . ($gsrresParent["andor"][$filterIndex] == 2 ? " selected" : "") . ">" . $lang[855];
 
-            echo "<option value=\"3\"" . ($gsrresParent["andor"][$filterIndex] == 3 ? " selected" : "") . ">" . $lang[854].' Inhalt';
-            echo "<option value=\"4\"" . ($gsrresParent["andor"][$filterIndex] == 4 ? " selected" : "") . ">" . $lang[855].' Inhalt';
+            if ($filterIndex > 0 && $gfield[$gtabid]['field_type'][$fieldid] == 19) {
+                echo "<option value=\"3\"" . ($gsrresParent["andor"][$filterIndex] == 3 ? " selected" : "") . ">" . $lang[854] . ' Inhalt';
+                echo "<option value=\"4\"" . ($gsrresParent["andor"][$filterIndex] == 4 ? " selected" : "") . ">" . $lang[855] . ' Inhalt';
+            }
 
             echo "</select>";
         }
@@ -89,10 +151,26 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
 
     }
 
+
     // ###################### searchoptions ########################
 
-    // date, time, auto-id, post-date
-    if ($gfield[$gtabid]['field_type'][$fieldid] == 2 or $gfield[$gtabid]['field_type'][$fieldid] == 7 or $gfield[$gtabid]['field_type'][$fieldid] == 5 or $gfield[$gtabid]['field_type'][$fieldid] == 12 or $gfield[$gtabid]['field_type'][$fieldid] == 15 or $gfield[$gtabid]['field_type'][$fieldid] == 24) {
+    // text / select
+    if ($searchoption == 'boolean') {
+
+        // if select/attribute with artleiste
+        $selectsearch = 0;
+        if (($gfield[$gtabid]['field_type'][$fieldid] == 4 || $gfield[$gtabid]['field_type'][$fieldid] == 19) && $gfield[$gtabid]['artleiste'][$fieldid] && $gsrresParent["andor"][$filterIndex] <= 2) {
+            $selectsearch = 1;
+        }
+
+        echo "<td>
+        <input type=\"hidden\" name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][num][{$filterIndex}]\" value=\"1\"
+        </td>
+        <td nowrap>
+        </td>";
+
+    // date, time, number
+    }elseif ($searchoption == 'number') {
         // search options
         echo '<td>';
         echo "<select class='form-select form-select-sm' id=\"gdsnum_{$originStr}{$gtabid}_{$fieldid}_{$filterIndex}\" name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][num][{$filterIndex}]\">";
@@ -111,11 +189,12 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
         echo "</select>";
         echo '</td>';
 
-        // negate/case sensitive
+
         echo '<td></td>';
 
+    // text / select
     } else {
-        // search options
+
         echo '<td>';
         echo "<select class='form-select form-select-sm w-100' id=\"gdstxt_{$originStr}{$gtabid}_{$fieldid}_{$filterIndex}\" name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][txt][{$filterIndex}]\" onchange=\"limbasSetSearchOptionsActive(this.value, '{$originStr}{$gtabid}_{$fieldid}_{$filterIndex}')\">";
 
@@ -123,13 +202,15 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
         $isBlob = $gfield[$gtabid]["data_type"][$fieldid] == 39 or $gfield[$gtabid]["data_type"][$fieldid] == 13;
         if (!($isBlob and $umgvar['postgres_use_fulltextsearch'])) {
             echo "<option value=\"2\"" . ($gsrresParent["txt"][$filterIndex] == 2 ? " selected" : "") . ">$lang[107]"; // is
-            echo "<option value=\"1\"" . (($gsrresParent["txt"][$filterIndex] == 1 or !$gsrresParent["txt"][$filterIndex]) ? " selected" : "") . ">$lang[106]"; // contains
-            echo "<option value=\"3\"" . ($gsrresParent["txt"][$filterIndex] == 3 ? " selected" : "") . ">$lang[108]"; // startswith
+            if(!$selectsearch) {
+                echo "<option value=\"1\"" . (($gsrresParent["txt"][$filterIndex] == 1 or !$gsrresParent["txt"][$filterIndex]) ? " selected" : "") . ">$lang[106]"; // contains
+                echo "<option value=\"3\"" . ($gsrresParent["txt"][$filterIndex] == 3 ? " selected" : "") . ">$lang[108]"; // startswith
+            }
         }
-        if ($isBlob and !$umgvar['postgres_use_fulltextsearch']) {
+        if ($isBlob and !$umgvar['postgres_use_fulltextsearch'] && !$selectsearch) {
             echo "<option value=\"4\"" . ($gsrresParent["txt"][$filterIndex] == 4 ? " selected" : "") . ">$lang[1597]"; // sounds like
         }
-        if ($isBlob and $umgvar['postgres_use_fulltextsearch']) {
+        if ($isBlob and $umgvar['postgres_use_fulltextsearch'] && !$selectsearch) {
             echo "<option value=\"9\"" . ($gsrresParent["txt"][$filterIndex] == 9 ? " selected" : "") . ">$lang[3062]"; // all words
             echo "<option value=\"10\"" . ($gsrresParent["txt"][$filterIndex] == 10 ? " selected" : "") . ">$lang[3063]"; // one of the words
             echo "<option value=\"11\"" . ($gsrresParent["txt"][$filterIndex] == 11 ? " selected" : "") . ">$lang[1903]"; // whole sentence
@@ -141,10 +222,12 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
         echo "</select>";
         echo '</td>';
 
-        // negate/case sensitive
+        // negate / case sensitive
         echo '<td nowrap>';
         echo "<label><i class=\"lmb-icon lmb-exclamation align-middle ps-0 pe-1\" title=\"{$lang[2683]}\"></i><input class='form-check-input align-middle m-1' type=\"checkbox\" id=\"gdsneg_{$originStr}{$gtabid}_{$fieldid}_{$filterIndex}\" value=\"1\" title=\"{$lang[2683]}\" name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][neg][{$filterIndex}]\" " . ($gsrresParent["neg"][$filterIndex] == 1 ? "checked" : "") . "></label>";
-        echo "<label><i class=\"lmb-icon lmb-font align-middle ps-1 pe-2\" title=\"{$lang[109]}\"></i><input class='form-check-input align-middle m-1' type=\"checkbox\" id=\"gdscs_{$originStr}{$gtabid}_{$fieldid}_{$filterIndex}\" value=\"1\" title=\"{$lang[109]}\" name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][cs][{$filterIndex}]\" " . ($gsrresParent["cs"][$filterIndex] == 1 ? 'checked' : '') . "></label>";
+        if(!$selectsearch) {
+            echo "<label><i class=\"lmb-icon lmb-font align-middle ps-1 pe-2\" title=\"{$lang[109]}\"></i><input class='form-check-input align-middle m-1' type=\"checkbox\" id=\"gdscs_{$originStr}{$gtabid}_{$fieldid}_{$filterIndex}\" value=\"1\" title=\"{$lang[109]}\" name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][cs][{$filterIndex}]\" " . ($gsrresParent["cs"][$filterIndex] == 1 ? 'checked' : '') . "></label>";
+        }
         echo '</td>';
     }
 
@@ -153,7 +236,7 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
     echo "<td valign=\"top\" nowrap>";
 
     #------- BOOLEAN -------
-    if ($gfield[$gtabid]['field_type'][$fieldid] == 10) {
+    if ($searchvalue == 'boolean') {
 
         echo "<select class='form-select form-select-sm w-100 align-middle' id=\"gds_{$originStr}{$gtabid}_{$fieldid}_{$filterIndex}\" name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][{$filterIndex}]\"><option>
 	                <option value=\"TRUE\"";
@@ -167,16 +250,21 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
         echo ">$lang[1507]</select>";
 
         # ------- Selectfelder -------
-    } elseif (($gfield[$gtabid]['field_type'][$fieldid] == 4 || $gfield[$gtabid]['field_type'][$fieldid] == 19) && $gfield[$gtabid]['artleiste'][$fieldid]) {
+    } elseif ($searchvalue == 'select') {
 
-        echo "<select class='form-select form-select-sm w-100 align-middle' id=\"gds_{$originStr}{$gtabid}_{$fieldid}_{$filterIndex}\" name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][{$filterIndex}]\" onClick=\"setTimeout('this.focus()',100);\"><option>";
+        $selectTable = 'LMB_SELECT_W';
+        $onclick = "";
+        if($gfield[$gtabid]['field_type'][$fieldid] == 19){
+            $onclick = "limbasDetailSearch(event,this,{$gtabid},null,null,null,null,1);stopPropagation();return false;\"";
+            $selectTable = 'LMB_ATTRIBUTE_W';
+        }
+
+        echo "<select class='form-select form-select-sm w-100 align-middle' id=\"gds_{$originStr}{$gtabid}_{$fieldid}_{$filterIndex}\" name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][{$filterIndex}]\" onchange=\"$onclick\"'><option>";
         if (!$gfield[$gtabid]['select_sort'][$fieldid]) {
             $gfield[$gtabid]['select_sort'][$fieldid] = "SORT";
         }
         
-        $selectTable = $gfield[$gtabid]['field_type'][$fieldid] == 19 ? 'LMB_ATTRIBUTE_W' : 'LMB_SELECT_W';
-        
-        $sqlquery = "SELECT DISTINCT WERT,{$gfield[$gtabid]['select_sort'][$fieldid]} FROM $selectTable WHERE POOL = {$gfield[$gtabid]['select_pool'][$fieldid]} ORDER BY " . $gfield[$gtabid]['select_sort'][$fieldid];
+        $sqlquery = "SELECT DISTINCT WERT ".($gfield[$gtabid]['select_sort'][$fieldid] ? ','.$gfield[$gtabid]['select_sort'][$fieldid] : '')." FROM $selectTable WHERE POOL = {$gfield[$gtabid]['select_pool'][$fieldid]} ".($gfield[$gtabid]["select_sort"][$fieldid] ? " ORDER BY ".$gfield[$gtabid]["select_sort"][$fieldid] : '');
         $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         while (lmbdb_fetch_row($rs)) {
             if (lmb_strtolower($gsrres) == lmb_strtolower(lmbdb_result($rs, "WERT"))) {
@@ -188,24 +276,25 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
 
         }
         echo "</select>";
-        # ------- Upload/Memo (Index) ------
-    } elseif ($gfield[$gtabid]["data_type"][$fieldid] == 39 or $gfield[$gtabid]["data_type"][$fieldid] == 13) {
-
-        // TODO Axel: hidden input noch gebraucht?
-        echo "<input class='form-control form-control-sm' type=\"text\" id=\"gds_{$originStr}{$gtabid}_{$fieldid}_{$filterIndex}\" name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][{$filterIndex}]\" value=\"{$gsrres}\">";
-        echo "<input type=\"hidden\" id=\"gds_{$originStr}{$gtabid}_{$fieldid}_{$filterIndex}\" name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][string][{$filterIndex}]\" value=\"{$gsrresParent['string'][$filterIndex]}\">";
 
         # ------- Date ------
-    } elseif ($gfield[$gtabid]["parse_type"][$fieldid] == 4) {
-        echo "<input class='form-control form-control-sm' style='width:95%;' type=\"text\" id=\"gds_{$originStr}{$gtabid}_{$fieldid}_{$filterIndex}\" name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][{$filterIndex}]\" value=\"{$gsrres}\">";
+    } elseif ($searchvalue == 'date') {
         $dateformat = $gfield[$gtabid]["datetime"][$fieldid];
         if ($gfield[$gtabid]["data_type"][$fieldid] == 40) {
             $dateformat = 1;
         }
         $dateformat = dateStringToDatepicker(setDateFormat($dateformat, 1));
-        echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret pe-1 \" style=\"cursor:pointer\" OnClick=\"lmb_datepicker(event,this,'',this.value,'{$dateformat}',20)\"></i>";
+        ?>
 
-    } elseif ($gfield[$gtabid]["field_type"][$fieldid] != 8) {
+        <div class="input-group">
+          <input type="text" class="form-control form-control-sm" id="gds_<?=$originStr?><?=$gtabid?>_<?=$fieldid?>_<?=$filterIndex?>" name="gs<?=$originBrackets?>[<?=$gtabid?>][<?=$fieldid?>][<?=$filterIndex?>]" value="<?=$gsrres?>">
+          <div class="input-group-append" OnClick="lmb_datepicker(event,this,'',parentElement.value,'<?=$dateformat?>',20)">
+              <i class="input-group-text lmb-icon lmb-edit-caret px-3 cursor-pointer"></i>
+          </div>
+        </div>
+
+        <?php
+    } elseif ($searchvalue == 'text') {
         echo "<input class='form-control form-control-sm' type=\"text\" id=\"gds_{$originStr}{$gtabid}_{$fieldid}_{$filterIndex}\" name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][{$filterIndex}]\" value=\"{$gsrres}\">";
     }
 

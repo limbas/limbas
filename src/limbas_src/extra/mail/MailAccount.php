@@ -9,7 +9,7 @@
 
 namespace Limbas\extra\mail;
 
-use Database;
+use Limbas\lib\db\Database;
 use Limbas\lib\LimbasModel;
 
 class MailAccount extends LimbasModel

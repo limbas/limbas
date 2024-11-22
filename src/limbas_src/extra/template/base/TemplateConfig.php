@@ -92,6 +92,12 @@ abstract class TemplateConfig implements TemplateConfigInterface
      * @var bool if set to true, all function placeholders are ignored and not resolved
      */
     public bool $noFunctionExecute = false;
+
+
+    /**
+     * @var bool if set to true, images are not resolved to their local paths
+     */
+    public bool $noImageReplacement = false;
     
 
     public abstract function getFunctionPrefix(): string;

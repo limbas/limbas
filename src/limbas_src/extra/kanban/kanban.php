@@ -59,12 +59,19 @@ if ($gtab['params2'][$gtabid]['showactive']){
 </script>
 
 
-<div class="lmbfringegtab" style="box-sizing: border-box;">
-    <table cellspacing="0" cellpadding="0" border="0" style="border-collapse:collapse;width:100%" class="GtabTableFringeHeader"><tbody><tr><td nowrap="" class="lmbGtabTabmenuActive" onclick="kanban_reload()">
-<?= $gtab['desc'][$gtabid] ?></td><td width="100%" class="lmbGtabTabmenuSpace"></td></tr></tbody></table>
-  
-<?= $kanban ?>
+<div class="p-3 d-flex flex-column">
+<nav class="navbar navbar-expand-sm navbar-light bg-nav mb-3 lmbGtabmenu lmbGtabmenu-list lmbGtabmenu-table-20">
+<div class="container-fluid">
+    <a class="navbar-brand" href="#" onclick="kanban_reload()"><span nowrap="" class="lmbGtabTabmenuActive"><?= $gtab['desc'][$gtabid] ?></span></a>
+</div>
+</nav>
 
+<div class="container-fluid p-0">
+<?= $kanban ?>
+</div>
+</div>
+
+<?php require(COREPATH  . 'gtab/html/contextmenus/gtab_filter.php'); ?>
 
 <div id="lmbAjaxContainer" class="ajax_container" style="position:absolute;display:none;" OnClick="activ_menu=1;"></div>
 <div id="limbasAjaxGtabContainer" class="ajax_container" style="padding:1px;position:absolute;display:none;" onclick="activ_menu=1;"></div>

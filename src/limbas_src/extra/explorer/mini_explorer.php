@@ -17,39 +17,30 @@ if(isset($session["miniexplorer_path"]) AND $home_level){
 	$LID = 0;
 }
 
+$gtabid = $gtab["argresult_id"]["LDMS_FILES"];
+
 get_filestructure();
 $level = $filestruct["level"][$LID];
 if(!$typ){$typ = $filestruct["typ"][$LID];}
 $file_path = array_reverse(lmb_getPathFromLevel($level,$LID));
 
-
-if($show_details){
-	$filter = get_userShow($LID,1);
-}else{
-	$gfile['show'][$LID] = null;
-	$filter = get_userShow($LID,0);
-}
-
-if($ffilter_order){
-	if($ffilter["order"][$LID][0] == $ffilter_order AND !$ffilter["order"][$LID][1]){
-		$ffilter["order"][$LID][1] = 'DESC';
-	}else{
-		$ffilter["order"][$LID][1] = null;
-	}
-	$ffilter["order"][$LID][0] = $ffilter_order;
-}
+/*
 $filter["order"][$LID] = $ffilter["order"][$LID];
+$filter["anzahl"][$LID] = $ffilter["anzahl"][$LID];
+$filter["viewmode"][$LID] = 1;
+$filter["page"][$LID] = $ffilter["page"][$LID];
+$filter["gsr"] = $ffilter["gsr"];
+$ffilter[$key1][$fid][0];
+$filter["rowsize"][$LID] = null;
+#$filter = $ffilter;
+*/
 
-$filter["nolimit"][$LID] = 1;
-$filter["page"][$LID] = 1;
+
+$tmpgfile = $gfile['show'][$LID];
+$gfile['show'][$LID] = array("{$gtabid}_11"=>1,"{$gtabid}_3"=>1,"{$gtabid}_14"=>1);
 if(!$home_level){$home_level = 0;}
 
 $_SESSION["session"]["miniexplorer_path"] = $LID;
-
-# ----- Usereinstellungen auslesen und zwischenspeichern ------
-$tmpgfile = $gfile['show'][$LID];
-
-$filter["rowsize"][$LID] = null;
 
 # ---------------- Ordner hinzufügen -----------------------
 if(($add_folder AND $LINK[119]) AND ($LID OR ($LID == '0' AND $session["user_id"] == 1))){
@@ -98,29 +89,14 @@ if($files){
 	}
 }
 
-
 # --- Abfrage starten ---
-if($query = get_fwhere($LID,$filter,$typ)){
-	$ffile = get_ffile($query,$filter,$LID,$typ);
+if($query = get_fwhere($LID,$ffilter,$typ)){
+	$ffile = get_ffile($query,$ffilter,$LID,$typ);
 }
 
-# Funktionparameter auslesen
-if($funcname){
-	if($funcpara){
-		$postaction = $funcname."($funcpara,";
-	}else{
-		$postaction = $funcname."(";
-	}
-}
-
-if($postaction AND $home_level){
-	$home = $home_level;
-}else{
-	$home = 0;
-}
 ?>
 
-<script language="JavaScript">
+<script>
 // ----- Js-Script-Variablen --------
 jsvar["ID"] = "<?=$ID?>";
 jsvar["LID"] = "<?=$LID?>";
@@ -133,93 +109,88 @@ jsvar["resultspace"] = "<?=$umgvar["resultspace"]?>";
 jsvar["message1"] = "<?=$lang[1696]?>";
 
 
-
-
 function postSelectedFiles(){
 
-	<?php if($postaction){?>
+    let selectedFiles = [];
+    const LID = <?=$LID?>;
+    const fileList = LmEx_selectedFileList(LID);
 
-	var selectedfiles = new Array();
-	var filelist = LmEx_selectedFileList(<?=$LID?>);
+    if(fileList){
+		for (let i in fileList){
+			if(fileList[i]){
+                let cid = i.split('_');
+                let row = $('#elline_'+cid[0]+'_'+LID+'_'+cid[1]);
 
-	if(filelist){
-		for (var i in filelist){
-			if(filelist[i]){
-				selectedfiles.push(i);
+                if(row) {
+                    selectedFiles.push(
+                        {
+                            'id': cid[1],
+                            'name': row.attr('data-name'),
+                            'path': row.attr('title'),
+                            'type': cid[0],
+                            'desc': i
+                        }
+                    )
+                }
+
 			}
 		}
 
-		var sfiles = selectedfiles.join("-");
-		opener.<?=$postaction?>sfiles,null,null,null,null,null,null,null,null,null,null,null);
+        window.parent.LmEx_handle_miniexplorer(selectedFiles);
+
 		self.focus();
 	}else{
 		alert(jsvar["lng_1717"]);
 	}
-
-	<?php }?>
 
 }
 
 $(function() {
     LmEx_createDropArea($('body'), function(files) {
         //console.log(files);
-        LmEx_showUploadField();
+        LmEx_showUploadField('lmbUploadLayer', <?= $LID ?>, 1);
         LmEx_uploadFilesPrecheck(files, <?= $LID ?>, 1);
     });
 });
 
-
-<?php
-if($uploadlink AND $upload_file AND $ufileId){
-?>
-opener.<?=$postaction.$ufileId?>);
-<?php
-}
-?>
 </script>
-
-
-<form enctype="multipart/form-data" action="main.php" method="post" name="form1">
 
 <div id="lmbAjaxContainer" class="ajax_container" style="position:absolute;visibility:hidden;" OnClick="activ_menu=1;"></div>
 
-<div style="border: 1px solid black;margin:5px;background-color:<?=$farbschema["WEB8"]?>">
+<nav class="navbar navbar-expand navbar-light bg-nav p-0 lmbGtabmenu lmbGtabmenu-list">
+<ul class="navbar-nav ms-auto">
+    <?php if($level OR $level == '0'){ ?>
+    <li class="nav-item nav-link lmb-folder-up">
+    <?php pop_picmenu(326,'', '','');?>
+    </li>
+    <?php } ?>
 
-<table><tr>
-<td nowrap style="width:60px;"><?=$lang[2229]?>:&nbsp;</td><td>
-<select style="width:150px;height:15px;" OnChange="document.form1.LID.value=this.value;document.form1.submit();">
-<?php
-$bzm = 1;
-foreach($file_path as $key => $value){
-	if(lmb_count($file_path) == $bzm){$sel = "SELECTED";}else{$sel = "";}
-	echo "<option value=\"".$key."\" $sel>".$sp.$value;
-	$sp .= "&nbsp;";
-	$bzm++;
-}
+    <li class="nav-item nav-link lmbGtabmenuIcon-327">
+    <?php pop_picmenu(327,'', '','');?>
+    </li>
 
-?>
-</td><td>&nbsp;</td>
-<td><i class="lmb-icon-cus lmb-folder-up" style="cursor:pointer;" onclick="document.form1.LID.value='<?=$filestruct['level'][$LID];?>';document.form1.submit();" title="<?=$lang[2225]?>"></i></td>
-<td><i class="lmb-icon lmb-home" style="cursor:pointer;" onclick="document.form1.LID.value='<?=$home?>';document.form1.submit();" title="<?=$lang[2230]?>"></i></td>
-    <?php if($LINK[119] AND $LID){?><td>&nbsp;</td><td><i class="lmb-icon-cus lmb-folder-add" style="cursor:pointer;" onclick="document.getElementById('uploadfile').style.display='none';document.getElementById('createfolder').style.display='';" title="<?=$lang[2231]?>"></i></td><?php }?>
-    <?php if($LINK[128] AND $LID){?><td><i class="lmb-icon lmb-file-upload" style="cursor:pointer;" onclick="document.getElementById('createfolder').style.display='none';document.getElementById('uploadfile').style.display='';document.getElementById('lmbUploadLayer').innerHTML='';LmEx_showUploadField();" title="<?=$lang[2232]?>"></i></td><?php }?>
-        <?php if($LINK[171] AND $LID){?><td><i class="lmb-icon lmb-page-delete-alt" style="cursor:pointer;" onclick="LmEx_delfile();" title="<?=$lang[2318]?>"></i></td><?php }?>
+    <li class="nav-item nav-link lmbGtabmenuIcon-217">
+    <?php pop_picmenu(217,'', '','');?>
+    </li>
 
-<td>&nbsp;</td>
-<?php if($show_details){$style1="opacity:0.3;filter:Alpha(opacity=30)";}else{$style="opacity:0.3;filter:Alpha(opacity=30)";}?>
-<td><i class="lmb-icon lmb-align-justify" style="cursor:pointer;<?=$style?>" onclick="document.form1.show_details.value='0';document.form1.submit();" title="<?=$lang[2233]?>"></i></td>
-<td><i class="lmb-icon-cus lmb-txt-col" style="cursor:pointer;<?=$style1?>" onclick="document.form1.show_details.value='1';document.form1.submit();" title="<?=$lang[2234]?>"></i></td>
-</tr>
-<tr id="createfolder" style="display:none;"><td colspan="12"><input type="text" name="addfolder" style="width:200px;">&nbsp;<input type="button" value="<?=$lang[571]?>" style="cursor:pointer;" Onclick="document.form1.add_folder.value=document.form1.addfolder.value;document.form1.submit();"></td></tr>
-<tr id="uploadfile"><td style="padding-left:3px;" id="lmbUploadLayer" style="width:100%" colspan="12"></td></tr>
-</table>
+</ul>
+</nav>
 
+
+<div class="mt-3" id="createfolder" style="display:none;"><input type="text" name="addfolder" style="width:200px;">&nbsp;<input type="button" value="<?=$lang[571]?>" style="cursor:pointer;" Onclick="document.form1.add_folder.value=document.form1.addfolder.value;document.form1.submit();"></div>
+<div class="mt-3" id="uploadfile"><div id="lmbUploadLayer" style="width:100%" colspan="12"></div></div>
+
+<form action="main.php" method="post" name="form2" id="form2">
+<input type="hidden" name="action" value="mini_explorer">
+<input type="hidden" name="MID" value="<?=$MID;?>">
+<input type="hidden" name="LID" value="<?=$LID;?>">
+<input type="hidden" name="filter_reset" value="1">
+</form>
+
+<form enctype="multipart/form-data" action="main.php" method="post" name="form1">
 <input type="hidden" name="action" value="mini_explorer">
 <input type="hidden" name="LID" value="<?=$LID?>">
 <input type="hidden" name="ID">
-<input type="hidden" name="show_details" value="<?=$show_details?>">
-<input type="hidden" name="funcname" value="<?=$funcname?>">
-<input type="hidden" name="funcpara" value="<?=$funcpara?>">
 <input type="hidden" name="typ" value="<?=$typ?>">
 <input type="hidden" name="ffilter_order">
 <input type="hidden" name="edit_id">
@@ -229,26 +200,30 @@ foreach($file_path as $key => $value){
 <input type="hidden" name="dublicate[type]">
 <input type="hidden" name="dublicate[subj]">
 <input type="hidden" name="rowsize">
+<input type="hidden" name="level" value="<?=$level;?>">
 
-<div id="fileresultlist" style="border: 1px solid black;margin:6px;height:200px;background-color:<?=$farbschema["WEB8"]?>;overflow:scroll;">
-<table id="filetab" cellpadding="0" cellspacing="0" border="0" width="100%" style="border-collapse:collapse">
+<div id="fileresultlist">
+<?php
+if($file_path){
+echo '<div class="container-fluid border p-0 mb-1 mt-3 bg-secondary-subtle">
+            <i class="lmb-icon lmb-icon-8 lmb-folder"></i>
+            <span class="w-100">/' . implode("/",$file_path) . '</span></div>';
+}
+?>
+<div class='table-responsive'>
+<table class="table w-100 table-striped-columns table-hover border" id="filetab">
 <?php
 
-if($file_path){echo "<TR><TD colspan=\"10\"><DIV style=\"background-color:".$farbschema["WEB11"]."\">&nbsp;<i class=\"lmb-icon lmb-icon-8 lmb-folder\"></i>&nbsp;<INPUT TYPE=\"TEXT\" STYLE=\"border:none;width:94%;height:17px;background-color:".$farbschema["WEB11"].";color:color:".$farbschema["WEB8"].".;z-index:1;\" VALUE=\"/".implode("/",$file_path)."\" READONLY></DIV></TD></TR>";}
-
-explHeader($LID,0,$filter);
-explFolders($LID,$fid,0,$level,$filter);
-explFiles($LID,$fid,$level,$ffile,$filter);
+explSearchBootstrap($LID,$fid,$ffilter);
+explHeaderBootstrap($LID,0,$ffilter);
+explFolders($LID,$fid,0,$level,$ffilter);
+explFiles($LID,$fid,$level,$ffile,$ffilter);
+explFooter($LID,$fid,$ffile,$ffilter);
 
 if($tmpgfile){$gfile['show'][$LID] = $tmpgfile;}
 ?>
-</table></div></form>
+</table></div></div></form>
 
-<table><tr>
-<td><input type="button" value="<?=$lang[2226]?>" OnClick="postSelectedFiles();"></td>
-<td><input type="button" value="<?=$lang[2227]?>" OnClick="window.close();"></td>
-</tr></table>
-
-
+<div class="d-flex justify-content-end">
+    <button class="btn btn-sm btn-outline-secondary me-3" type="button" OnClick="postSelectedFiles();"><?=$lang[2226]?></button>
 </div>
-

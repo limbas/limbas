@@ -7,59 +7,10 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\extra\form\TinyMce;
 use Limbas\extra\mail\LmbMail;
 use Limbas\extra\mail\MailAccount;
-
-
-/**
- * set global variables from session
- *
- * @param unknown_type $globvars
- */
-function assign_sessionvars($globvars){
-	foreach ($globvars as $key => $gvar) {
-		$GLOBALS[$gvar] = $_SESSION[$gvar];
-	}
-}
-
-/**
- * init session variables
- *
- * @param unknown_type $globvars
- */
-function init_sessionvars($globvars){
-	foreach ($globvars as $key => $gvar) {
-		$_SESSION[$gvar] = array();
-	}
-}
-
-/**
- * save session variables
- *
- * @param unknown_type $globvars
- */
-function save_sessionvars($globvars){
-	foreach ($globvars as $key => $gvar) {
-		$_SESSION[$gvar] = $GLOBALS[$gvar];
-	}
-}
-
-/**
- * get Client IP
- *
- */
-function lmb_getIpAddr(){
-    $ip = '0.0.0.0';
-    if (!empty($_SERVER['HTTP_CLIENT_IP'])) {
-      $ip=$_SERVER['HTTP_CLIENT_IP'];
-    } elseif (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-      $ip=$_SERVER['HTTP_X_FORWARDED_FOR'];
-    } elseif (array_key_exists('REMOTE_ADDR',$_SERVER)) {
-      $ip=$_SERVER['REMOTE_ADDR'];
-    }
-
-    return $ip;
-}
+use Limbas\lib\auth\Session;
 
 
 # --- Zeitmessung ---------------------------------------------------
@@ -130,7 +81,7 @@ function lmb_alert($add_alert, $isError=false){
 
     if($umgvar['debug_messages']){
         $logpath = TEMPPATH . 'log/messages.log';
-        $value = date("Y-m-d H:i:s")."\t".$session["username"]."\t".$action."\t".str_replace("\\n"," ",lmb_utf8_encode($add_alert))."\n";
+        $value = date("Y-m-d H:i:s")."\t".$session["username"]."\t".$action."\t".str_replace("\\n"," ",$add_alert)."\n";
         $rf = fopen($logpath,"a");
         fputs($rf,$value);
         fclose($rf);
@@ -594,6 +545,48 @@ function lmb_PrepareSQL($prepare_string,$bindvalue,$FILE=null,$LINE=null) {
 }
 
 /**
+ * calculate Checksum from dataset
+ *
+ * @param $gtabid
+ * @param $ID
+ * @return bool
+ */
+function lmb_calculateChecksum($gtabid,$ID=null){
+    global $db;
+    global $gtab;
+    global $gfield;
+    global $umgvar;
+
+    $keyfield = 'ID';
+    if($umgvar['sync_mode'] != 1 && $gtab['datasync'][$gtabid] == 1){
+        $keyfield = 'LMB_SYNC_ID';
+    }
+
+    // default ID
+    $qu[] = dbf_12($keyfield,1);
+
+    foreach($gfield[$gtabid]['checksum'] as $fieldid => $value){
+        $qu[] = dbf_12($gfield[$gtabid]['field_name'][$fieldid],$gfield[$gtabid]['parse_type'][$fieldid]);
+    }
+
+    $sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET LMB_CHECKSUM = MD5(".implode(' || ',$qu).")  ".($ID ? "WHERE ID = $ID" : '');
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
+    #error_log($sqlquery);
+    if(!$rs){
+        return false;
+    }
+
+    /*
+    select
+    sum(('x' || substring(LMB_CHECKSUM, 1, 8))::bit(32)::bigint) as ZAHL
+    from ebene1
+     */
+
+    return true;
+
+}
+
+/**
  * array merge with replace also keys
  *
  * @param unknown_type $arr1
@@ -801,22 +794,135 @@ if (!function_exists ("mime_content_type")) {
 	}
 }
 
+function lmb_getDownloadHash($path,$name,$mimetype,$disposition=null,$permanent=null){
+
+    $download['name'] = $name;
+    $download['path'] = $path.($name ? '/'.$name : '');
+    $download['mimetype'] = $mimetype;
+    $download['disposition'] = $disposition;
+    $download['permanent'] = $permanent;
+    $hash = bin2hex(random_bytes(8));
+    $_SESSION['session']['download'][$hash] = $download;
+    $GLOBALS['session']['download'][$hash] = $download;
+    $url = "main.php?action=download&hash=$hash";
+
+    #error_log(print_r($GLOBALS['session']['download'],1));
+
+    return $url;
+}
+
+/**
+ * Create a GdImage from a path
+ * @param string $filePath path to jpeg, png, gif or pdf file
+ * @return GdImage|false the created GdImage or false if the file could not be loaded
+ */
+function lmb_gdGetFromFile(string $filePath): GdImage|false {
+    return match (pathinfo($filePath, PATHINFO_EXTENSION)) {
+        'jpg', 'jpeg' => imagecreatefromjpeg($filePath),
+        'png' => imagecreatefrompng($filePath),
+        'gif' => imagecreatefromgif($filePath),
+        'pdf' => imagecreatefromjpeg(lmb_createJpegFromPdf($filePath)),
+        default => false
+    };
+}
+
+/**
+ * Create a jpeg from a pdf file
+ * @param string $filePath the path to the pdf file
+ * @return string the path to the created jpeg file, or an empty string if conversion failed
+ */
+function lmb_createJpegFromPdf(string $filePath): string {
+    global $session;
+
+    [
+        'extension' => $extension,
+        'filename' => $fileName
+    ] = pathinfo($filePath);
+
+    if ($extension !== 'pdf') {
+        return "";
+    }
+
+    $filePathNew = USERPATH . $session['user_id'] . '/temp/' . $fileName;
+
+    // convert first page to jpeg
+    $cmd = "pdftoppm -f 1 -l 1 -jpeg -r 72 $filePath $filePathNew";
+    exec($cmd);
+
+    // remove page number from filename
+    if(!rename($filePathNew . '-01.jpg', $filePathNew . '.jpg')) {
+        return "";
+    }
+
+    return $filePathNew . '.jpg';
+}
+
+function lmb_gdImageScaleProportional(GdImage $image, int $width, int $height): GdImage {
+    $imageWidth = imagesx($image);
+    $imageHeight = imagesy($image);
+
+    $scale = min($width / $imageWidth, $height / $imageHeight);
+
+    $newWidth = (int)($imageWidth * $scale);
+    $newHeight = (int)($imageHeight * $scale);
+
+    $scaledImage = imagecreatetruecolor($newWidth, $newHeight);
+
+    imagealphablending($scaledImage, false);
+    imagesavealpha($scaledImage, true);
+
+    $transparentColor = imagecolorallocatealpha($scaledImage, 0, 0, 0, 127);
+    imagefill($scaledImage, 0, 0, $transparentColor);
+
+    imagecopyresampled($scaledImage, $image, 0, 0, 0, 0, $newWidth, $newHeight, $imageWidth, $imageHeight);
+
+    return $scaledImage;
+}
+
+/**
+ * Extend the image to the given dimensions and center it
+ * @param GdImage $image
+ * @param int $newWidth
+ * @param int $newHeight
+ * @return GdImage
+ */
+function lmb_gdCenterAndExtent(GdImage $image, int $newWidth, int $newHeight): GdImage {
+    $imageWidth = imagesx($image);
+    $imageHeight = imagesy($image);
+
+    $newImage = imagecreatetruecolor($newWidth, $newHeight);
+
+    $backgroundColor = imagecolorallocate($newImage, 255, 255, 255);
+
+    imagefill($newImage, 0, 0, $backgroundColor);
+
+    $x = ($newWidth - $imageWidth) / 2;
+    $y = ($newHeight - $imageHeight) / 2;
+
+    imagecopy($newImage, $image, $x, $y, 0, 0, $imageWidth, $imageHeight);
+
+    return $newImage;
+}
+
+
 /**
  * ImageMagick convert thumbs
  *
- * @param unknown_type $file			optional file_id or array of fileinfos (id,name,mimetype,thum_ok)
- * @param unknown_type $file_path		optional path of source file
- * @param unknown_type $dest_path		optional path of destination	
- * @param unknown_type $dest_format 	optional format to convert
- * @param unknown_type $width			optional widh to convert
- * @param unknown_type $height			optional height to convert
- * @param unknown_type $prop			optional force proportion with white overflow
- * @param unknown_type $watermark		optional use watermark (file_id of image or Text)
- * @param unknown_type $rebuild			optional force to rebuild thumpnail
+ * @param unknown_type $file optional file_id or array of fileinfos (id,name,mimetype,thum_ok)
+ * @param unknown_type $file_path optional path of source file
+ * @param unknown_type $dest_path optional path of destination
+ * @param unknown_type $dest_format optional format to convert
+ * @param unknown_type $width optional widh to convert
+ * @param unknown_type $height optional height to convert
+ * @param unknown_type $prop optional force proportion with white overflow
+ * @param unknown_type $watermark optional use watermark (file_id of image or Text)
+ * @param unknown_type $rebuild optional force to rebuild thumpnail
  * @return unknown
+ * @throws ImagickException
  */
 
-function IMACK_ConvertThumbs($file,$width=null,$height=null,$prop=null,$dest_format=null,$dest_path=null,$watermark=null,$rebuild=null){
+
+function lmb_getThumbnail($file,$width=null,$height=null,$prop=null,$dest_format=null,$dest_path=null,$watermark=null,$rebuild=null,$getpath=null,$geturl=null){
 	global $umgvar;
 	global $session;
 	global $db;
@@ -850,10 +956,10 @@ function IMACK_ConvertThumbs($file,$width=null,$height=null,$prop=null,$dest_for
 
 	# file from id or array
 	if(is_numeric($file) OR is_array($file)){
-	    
+
 	    require_once(COREPATH . 'extra/explorer/filestructure.lib');
 	    if(!$filestruct){get_filestructure();}
-	    
+
 		if(is_numeric($file)){
 			if($GLOBALS['gtab']['multitenant'][$GLOBALS['gtab']['argresult_id']['LDMS_FILES']]){$selmid = ',LMB_MID';}
 			$sqlquery = "SELECT ID,SECNAME,MIMETYPE,THUMB_OK,LEVEL $selmid FROM LDMS_FILES WHERE ID = $file AND THUMB_OK = ".LMB_DBDEF_TRUE;
@@ -917,6 +1023,10 @@ function IMACK_ConvertThumbs($file,$width=null,$height=null,$prop=null,$dest_for
 		return false;
 	}
 
+    $thumbnail['name'] = $dest_name.'.'.$dest_format;
+    $thumbnail['path'] = $dest_path;
+    $thumbnail['mimetype'] = $dest_format;
+
     #mimetype
     if(!$gmimetypes["resolve"][$ext] OR !is_file($file_path)){
         return false;
@@ -927,22 +1037,61 @@ function IMACK_ConvertThumbs($file,$width=null,$height=null,$prop=null,$dest_for
 	if(!file_exists($dest_path) OR $rebuild){
 
 		$out = 1;
-		if($mime[0] == "image" OR $mime[0] == "text" OR ($mime[1] == "pdf" AND $umgvar["imagemagickpdf"])){
+		if($mime[0] == "image" OR $mime[1] == "pdf"){
+            if ($umgvar["image_processing"] == 'Imagick') {
+                if ($mime[1] == "pdf") {
+                    $file_path = lmb_createJpegFromPdf($file_path);
+                }
 
-			#if($mime[1] == "pdf" OR $mime[1] == "gif"){$page = "'[0]'";}
-			$page = "'[0]'";
+                try {
+                    $image = new Imagick($file_path);
+                } catch (Exception $e) {
+                    return false;
+                }
 
-			# proportional
-			if($prop AND $size){
-				$cmd = $umgvar["imagemagick"]."/convert ".$umgvar["imagemagicklimit"]." -auto-orient -thumbnail '".$size.">' -gravity center -extent ".$size." ".$file_path.$page." ".$dest_path;
-			# normal
-			}elseif($size){
-				$cmd = $umgvar["imagemagick"]."/convert ".$umgvar["imagemagicklimit"]." -thumbnail $size ".$file_path.$page." ".$dest_path;
-			}else{
-				$cmd = $umgvar["imagemagick"]."/convert ".$umgvar["imagemagicklimit"]." ".$file_path.$page." ".$dest_path;
-			}
+                if ($prop && $size) {
+                    $image->autoOrient();
+                    $image->thumbnailImage($width, $height, true);
+                    $image->setImageBackgroundColor('white');
+                    $image->setGravity(Imagick::GRAVITY_CENTER);
+                    $image->extentImage(
+                        $width,
+                        $height,
+                        ($image->getImageWidth() - $width) / 2,
+                        ($image->getImageHeight() - $height) / 2,
+                    );
+                } elseif ($size) {
+                    $image->resizeImage($width, $height, Imagick::FILTER_LANCZOS, 1);
+                }
 
-			system($cmd,$out);
+                if ($dest_format == 'png') {
+                    $image->setImageFormat('png');
+                } else {
+                    $image->setImageFormat('jpeg');
+                }
+                $image->writeImage($dest_path);
+                $image->clear();
+
+            } else {
+                $gdImage = lmb_gdGetFromFile($file_path);
+
+                if (!$gdImage) {
+                    return false;
+                }
+
+                if ($prop && $size) {
+                    $gdImage = lmb_gdImageScaleProportional($gdImage, $width, $height);
+                    $gdImage = lmb_gdCenterAndExtent($gdImage, $width, $height);
+                } elseif ($size) {
+                    $gdImage = imagescale($gdImage, $width, $height);
+                }
+
+                if ($dest_format == 'png') {
+                    imagepng($gdImage, $dest_path);
+                } else {
+                    imagejpeg($gdImage, $dest_path);
+                }
+            }
 
 			# watermark
 			if($watermark){
@@ -950,7 +1099,11 @@ function IMACK_ConvertThumbs($file,$width=null,$height=null,$prop=null,$dest_for
 			}
 
 			if(file_exists($dest_path)){
-				return $dest_url;
+                if($getpath){return $dest_path;}
+                if($geturl){return $dest_url;}
+                return lmb_getDownloadHash($thumbnail['path'],null,$thumbnail['mimetype']);
+
+                return 'main.php?action=download&thumbnail='.$hash;
 			}elseif($file_id){
 				IMACK_NoSuccess($file_id);
 				return false;
@@ -963,11 +1116,14 @@ function IMACK_ConvertThumbs($file,$width=null,$height=null,$prop=null,$dest_for
 		}
 		return false;
 	}else{
-		return $dest_url;
+        if($getpath){return $dest_path;}
+        if($geturl){return $dest_url;}
+        return lmb_getDownloadHash($thumbnail['path'],null,$thumbnail['mimetype']);
 	}
 
 	return false;
 }
+
 
 function IMACK_NoSuccess($file_id){
 	global $db;
@@ -1416,11 +1572,11 @@ function arrayDiff($result1,$result2){
 	if(!$result2){$result2 = array();}
 
 	if($del = array_diff($result1,$result2)){
-		$output = "<del>".implode("</del><br><del>",$del)."</del> ";
+		$output = "<del class=\"bg-danger-subtle p-1 mx-1\">".implode("</del><br><del class=\"bg-danger-subtle p-1 mx-1\">",$del)."</del> ";
 	}
 
 	if($add = array_diff($result2,$result1)){
-		$output .= "<ins>".implode("</ins><br><ins>",$add)."</ins> ";
+		$output .= "<ins class=\"bg-success-subtle p-1 mx-1\">".implode("</ins><br><ins class=\"bg-success-subtle p-1 mx-1\">",$add)."</ins> ";
 	}
 	
 	if($del AND $add){$output .= "<br>";}
@@ -1459,9 +1615,8 @@ function historyGetEdituser($gtabid,$fieldid,$datid){
 
 
 function get_currency_symbol($currency){
-    $isUtf8 = (lmb_strtoupper($GLOBALS['umgvar']['charset']) === 'UTF-8');
     if($currency == 'EUR'){
-        return $isUtf8 ? '€' : chr(128);
+        return '€';
 	}elseif($currency == 'USD'){
         return '$';
 	}
@@ -1812,44 +1967,29 @@ function dateStringToDatepicker($dateString)
 }
 
 /**
- * Encodes an string to UTF-8
+ * Encodes string to UTF-8
  *
  * @param string $value
  * @return string
  */
 function lmb_utf8_encode($value){
-	if($GLOBALS["umgvar"]["charset"] == "UTF-8"){
-		return $value;
-	}else{
-		return iconv($GLOBALS["umgvar"]["charset"],"UTF-8//IGNORE",$value);
-	}
+    return iconv($GLOBALS["umgvar"]["charset"],"UTF-8//IGNORE",$value);
 }
 
 /**
- * Decode UTF-8 to iso string
+ * Decode string to charset
  *
  * @param string $value
  * @return string
  */
-function lmb_utf8_decode($value,$recursive=null){
-	if($recursive){
-		if($GLOBALS["umgvar"]["charset"] == "UTF-8"){
-			#return utf8_decode($value);
-			return iconv("UTF-8","CP1252//IGNORE",$value);
-		}else{
-			return $value;
-		}
-	}else{
-		if($GLOBALS["umgvar"]["charset"] == "UTF-8"){
-			return $value;
-		}else{
-			#return utf8_decode($value);
-			return iconv("UTF-8",$GLOBALS["umgvar"]["charset"].'//IGNORE',$value);
-		}
-	}
+
+/*
+function lmb_utf8_decode($value){
+    return iconv("UTF-8",$GLOBALS["umgvar"]["charset"].'//IGNORE',$value);
 }
+*/
 
-
+/*
 function lmb_arrayDecode(array $array,$toISO=null) {
 	if($GLOBALS["umgvar"]["charset"] == "UTF-8"){return $array;}
 	$convertedArray = array();
@@ -1869,12 +2009,13 @@ function lmb_arrayDecode(array $array,$toISO=null) {
 	}
 	return $convertedArray;
 }
-
+*/
 
 # check if UTF-8
 function lmb_utf8_check($value) {
-        return (iconv('UTF-8', 'UTF-8', $value) == $value);
+    return (iconv('UTF-8', 'UTF-8', $value) == $value);
 }
+
 
 /**
  * Encodes utf8 to unicode
@@ -1882,6 +2023,7 @@ function lmb_utf8_check($value) {
  * @param string $value
  * @return string
  */
+/*
 function utf8ToUnicode ($source) {
    // array used to figure what number to decrement from character order value
    // according to number of characters used to map unicode to ascii by utf-8
@@ -1956,7 +2098,7 @@ function utf8ToUnicode ($source) {
 
    return $encodedString;
 }
-
+*/
 
 
 
@@ -2024,20 +2166,6 @@ function getAllIdFromSnapshot($snapid){
 
 
 	return $gresult[$tabid]["id"];
-}
-
-
-function set2Digit($val){
-
-	if(is_integer($val)){
-		if($val>-1 && $val<10)
-			return "0" . $val;
-		else
-			return $val;
-	}else{
-		return $val;
-	}
-
 }
 
 
@@ -2187,131 +2315,57 @@ function ODBCResourceToHTML($res, $sTable, $sRow, $numrows=100){
 
 
 /**
- * Init wysiwyg editor
- * @param string $elid ID of the base textarea/element for the wysiwyg
- * @param string $params deprecated, string of PHP that returns user-specified params
- * @param string $changeEvent JS to be executed on change
- * @param int|array $advanced deprecated, 1 for more advanced controls, array overwites $params (?)
- * @return string JS initializing the wysiwyg editor
+ * @param string $elementId ID of the base textarea/element for the wysiwyg
+ * @param int|null $height
+ * @param int|null $tabId
+ * @param string|null $changeEvent
+ * @param TinyMce|null $tinyMce
+ * @return string
  */
-function lmb_ini_wysiwyg($elid,$params=null,$changeEvent=null,$advanced=null,int $height=null, int $gtabid = null): string
+function lmbInitTinyMce(string $elementId, ?int $height = null, ?int $tabId = null, ?string $changeEvent = null, ?TinyMce $tinyMce = null): string
 {
-	global $umgvar;
-    
-    // get user language
-    $lang = getLangShort();
-    if ($lang === 'fr') {
-        // french is only available as 'fr_FR'
-        $lang = 'fr_FR';
-    }
-
-    // read fonts
-    global $db;
-    $sqlquery = 'SELECT DISTINCT FAMILY FROM LMB_FONTS ORDER BY FAMILY';
-    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-    $fonts = array();
-    while (lmbdb_fetch_row($rs)) {
-        // "DejaVu Sans,DejaVu Sans Light" -> "DejaVu Sans Light"
-        // if not reduced to part after last comma, the wysiwyg editor will interpret it as a list of possible
-        // families and take the first one
-        $fontParts = explode(',', lmbdb_result($rs, 'FAMILY'));
-        $font = array_pop($fontParts);
-        $fonts[] = "$font=$font";
-    }
-    $fontList = implode(';', $fonts);
-
-    // layout
-    $skin = 'oxide';
-    $contentCss = 'default';
-    if (lmbIsDarkLayout()) {
-        $skin = 'oxide-dark';
-
-        // although user has dark layout, leave content white if the current table is a template table s.t. it looks
-        //  consistent with the outcoming pdf
-        if (!$GLOBALS['gtabid'] || $GLOBALS['gtab']['typ'][$GLOBALS['gtabid']] != 8) {
-            $contentCss = 'dark';
-        }
+    if(empty($tinyMce)) {
+        $tinyMce = new TinyMce($elementId, $tabId);    
     }
     
-
-    // template wysiwyg extension
-    $externalPlugins = json_encode([
-        'lmbTemplate' => rtrim($umgvar['url'],'/') . '/assets/js/extra/template/wysiwyg/lmbTemplate.js'
-    ]);
-    
-    
-
-    $contentStyle = addslashes(str_replace("\n", ' ', file_get_contents(COREPATH . 'extra/template/wysiwyg/lmbTemplate.css')));
-
-    
-    $heightOption = '';
-    if($height !== null) {
-        $heightOption = 'height: \'' . $height . '\',';
+    if(!empty($height)) {
+        $tinyMce->setHeight($height);
     }
+
+    if(!empty($changeEvent)) {
+        $tinyMce->setOnChangeEvent($changeEvent);
+    }
+
+    return $tinyMce->getConfigurationScript();
+}
+
+/**
+ * @deprecated Use lmbInitTinyMce or TinyMce class instead.
+ * 
+ * @param string $elementId ID of the base textarea/element for the wysiwyg
+ * @param string $params deprecated string of PHP that returns user-specified params
+ * @param string|null $changeEvent JS to be executed on change
+ * @param int|array $advanced deprecated, 1 for more advanced controls, array overwites $params (?)
+ * @param int|null $height
+ * @param int|null $tabId
+ * @return string JS initializing the wysiwyg editor
+ *
+ */
+function lmb_ini_wysiwyg(string $elementId, $params=null, ?string $changeEvent = null, $advanced=null, int $height = null, int $tabId = null): string
+{
+    trigger_error('Method ' . __METHOD__ . ' is deprecated. Use lmbInitTinyMce or TinyMce class instead.', E_USER_DEPRECATED);
     
-    
-    $out = <<<EOD
-    <script>
-        tinymce.init({
-            cache_suffix: '?v={$umgvar['version']}',
-            language:'$lang',
-            selector: 'textarea#$elid',
-            width: '100%',
-            font_formats: '$fontList',
-            promotion: false,
-            auto_focus: '$elid',
-            skin: '$skin',
-            content_css: '$contentCss',
-            content_style: '$contentStyle',
-            custom_elements: '~lmb,style', // ~ to behave like span instead of div
-            menubar: 'file edit view insert format tools table lmbTemplate upload',
-            toolbar: 'styleselect fontselect fontsizeselect bold italic alignleft aligncenter alignright alignjustify bullist numlist outdent indent link image forecolor backcolor',
-            menu: {
-                        file: { 
-                            title: 'File', 
-                            items: 'newdocument | preview | print ' },
-                        edit: { 
-                            title: 'Edit', 
-                            items: 'undo redo | cut copy paste pastetext | selectall | searchreplace' },
-                        view: { 
-                            title: 'View', 
-                            items: 'code | visualaid visualblocks | preview fullscreen' },
-                        insert: { 
-                            title: 'Insert', 
-                            items: 'image link media inserttable | charmap hr | anchor | insertdatetime | lmb-page-break' },
-                        format: { 
-                            title: 'Format', 
-                            items: 'bold italic underline strikethrough superscript subscript codeformat | formats blockformats fontformats fontsizes align lineheight | forecolor backcolor | removeformat' },
-                        tools: { 
-                            title: 'Tools', 
-                            items: 'code wordcount' },
-                        table: { 
-                            title: 'Table', 
-                            items: 'inserttable | cell row column | tableprops deletetable | lmb-data-row lmb-data-row-filter' },
-                        lmbTemplate: { 
-                            title: 'Limbas Platzhalter', 
-                            items: 'lmbTemplateData lmbTemplateSubTemplate | lmbTemplateDynamicData lmbTemplateGroup | lmbTemplateFunction lmbTemplateIf lmbTemplateElseIf lmbTemplateElse lmbTemplateEndif | lmbTemplateHeaderFooter lmbTemplateBackground' }
-            },
-            plugins: 'lmbTemplate advlist autolink lists link image charmap preview anchor searchreplace visualblocks code fullscreen insertdatetime media table wordcount',
-            automatic_uploads: true,
-            image_uploadtab: true,
-            images_upload_url: 'main_dyns.php?actid=manageTemplates&action=wysiwyg&taction=uploadImage&gtabid=$gtabid',
-            extended_valid_elements: '@[nobr],table[*],lmb[type|name|target|class|title|param|value|src|condition|alt|id]',
-            table_sizing_mode: 'relative', // for table plugin
-            setup: function (ed) {
-                ed.on('change', function () {
-                    $changeEvent
-                })
-            },
-            external_plugins: $externalPlugins,
-            paste_block_drop: false,
-            paste_as_text: true, //TODO: remove and replace by extension
-            $heightOption
-        })
-    </script>
-    EOD;
-	
-	return $out;
+    $tinyMce = new TinyMce($elementId, $tabId);
+
+    if(!empty($height)) {
+        $tinyMce->setHeight($height);
+    }
+
+    if(!empty($changeEvent)) {
+        $tinyMce->setOnChangeEvent($changeEvent);
+    }
+
+    return lmbInitTinyMce($elementId, $height, $tabId, $changeEvent);
 }
 
 
@@ -2419,25 +2473,6 @@ function lmb_sendMail($to,$from,$subject,$message,$attachment=null,$cc=null,$bcc
     $lmbMail->send($fromAccount, $to, $subject,$message, $attachment,$cc, $bcc);
 }
 
-
-// function to parse the http auth header
-function http_digest_parse($txt)
-{
-
-	// protect against missing data
-	$needed_parts = array('nonce'=>1, 'nc'=>1, 'cnonce'=>1, 'qop'=>1, 'username'=>1, 'uri'=>1, 'response'=>1);
-	$authdigest = array();
-	$keys = implode('|', array_keys($needed_parts));
-
-	preg_match_all('@(' . $keys . ')=(?:([\'"])([^\2]+?)\2|([^\s,]+))@', $txt, $matches, PREG_SET_ORDER);
-
-	foreach ($matches as $m) {
-		$authdigest[$m[1]] = $m[3] ? $m[3] : $m[4];
-		unset($needed_parts[$m[1]]);
-	}
-
-	return $needed_parts ? false : $authdigest;
-}
 
 // download progres status
 function lmb_ajaxProgresStatus($total,$progress){
@@ -2664,6 +2699,7 @@ class lmb_log
             }
         }
 
+        $error = false;
         if($level === E_ERROR) {
             // collect log messages as array
             self::$log[] = array(
@@ -2672,6 +2708,7 @@ class lmb_log
                 'fieldid' => $fieldid,
                 'datid' => $datid
             );
+            $error = 1;
         }
 
         // user alert
@@ -2694,7 +2731,7 @@ class lmb_log
                 $userMessage .= "\n";
             }
               
-            lmb_alert($userMessage,true);
+            lmb_alert($userMessage,$error);
         }
     }
 
@@ -2851,15 +2888,11 @@ function create_user_folder($ID){
 	if(!file_exists(USERPATH . $ID)){
 		$sys1 = mkdir(USERPATH . $ID,0777);
 		$sys1 = mkdir(USERPATH."$ID/temp",0777);
-		$sys1 = mkdir(USERPATH."$ID/download",0777);
 		$sys1 = mkdir(USERPATH."$ID/settings",0777);
     }
     
 	if(!file_exists(USERPATH."$ID/temp")){
 		$sys1 = mkdir(USERPATH."$ID/temp",0777);
-	}
-	if(!file_exists(USERPATH."$ID/download")){
-		$sys1 = mkdir(USERPATH."$ID/download",0777);
 	}
 	if(!file_exists(USERPATH."$ID/settings")){
 		$sys1 = mkdir(USERPATH."$ID/settings",0777);
@@ -2915,5 +2948,26 @@ if (! function_exists('e')) {
     function e(?string $value)
     {
         return htmlentities($value ?? '', encoding: 'UTF-8');
+    }
+}
+
+if (!function_exists('getenv_docker')) {
+
+    /**
+     * get an environment variable
+     * @param $env
+     * @param $default
+     * @return array|false|mixed|string
+     */
+    function getenv_docker($env, $default) {
+        if ($fileEnv = getenv($env . '_FILE')) {
+            return rtrim(file_get_contents($fileEnv), "\r\n");
+        }
+        else if (($val = getenv($env)) !== false) {
+            return $val;
+        }
+        else {
+            return $default;
+        }
     }
 }

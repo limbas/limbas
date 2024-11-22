@@ -8,6 +8,7 @@
  */
 
 
+use Limbas\extra\template\select\TemplateSelector;
 
 set_time_limit(3600); #60min
 ob_implicit_flush();
@@ -97,40 +98,6 @@ function create_default_dir($userid,$groupid,$username){
 	echo $info;
 }
 
-
-
-function refreshHtaccess(){
-	global $umgvar;
-
-	$sub = read_dir(USERPATH,0);
-	foreach ($sub["path"] as $key => $value){
-		if($sub["typ"][$key] == "dir" AND is_numeric($sub["name"][$key])){
-			if($psswd = lmb_htaccess($sub["name"][$key],0,0)){
-				$psswdlist[] = $psswd;
-			}
-		}
-	}
-	
-
-	if($psswdlist AND $umgvar["protect_temp_directory"]){
-		$htaccess_file = fopen(TEMPPATH.'/.htaccess',"w");
-		$value = "AuthName ByPassword\nAuthType Basic\nAuthUserFile ".TEMPPATH."/.htpasswd\nrequire valid-user\nallow from all";
-		fputs($htaccess_file,$value);
-		fclose($htaccess_file);
-
-		$value = implode("\n",$psswdlist);
-		$htpasswd_file = fopen(TEMPPATH.'/.htpasswd',"w");
-		fputs($htpasswd_file,$value);
-		fclose($htpasswd_file);
-	}else{
-		$htaccess_file = fopen(TEMPPATH.'/.htaccess',"w");
-		$value = "allow from all";
-		fputs($htaccess_file,$value);
-		fclose($htaccess_file);
-	}
-}
-
-
 function resetarguments(){
     global $db;
 	global $session;
@@ -155,12 +122,6 @@ function resetarguments(){
         }
     }
 
-}
-
-
-
-if($refresh_htaccess){
-	refreshHtaccess();
 }
 
 
@@ -644,6 +605,10 @@ if($deleteuserfilesave){
     lmb_delete_user_filesave();
 }
 
+if($deletereportcache){
+    TemplateSelector::resetTemplateCache();
+}
+
 #if($snaprefresh){
 #	snaprefresh();
 #}
@@ -669,6 +634,21 @@ if($refresh_procedures){
 	}else{
 		lmb_alert("database procedures successfully build!");
 	}
+}
+
+if($refresh_hashes){
+    $success = 1;
+    if(!$gtab["checksum"]){return;}
+    foreach($gtab["checksum"] as $tabid => $value){
+        if(!lmb_calculateChecksum($tabid)){
+            $success = 0;
+        }
+    }
+    if($success) {
+        lmb_alert("dataset hashes successfully build!");
+    } else {
+        lmb_alert("some errors by rebuild dataset hashes, check error logs..");
+    }
 }
 
 if($refresh_squences){
@@ -853,6 +833,14 @@ function procedurerefresh(evt) {
 	}
 }
 
+function hashrefresh(evt) {
+	link = confirm("<?=$lang[3156]?> <?=$lang[1038]?>");
+	if(link) {
+		limbasWaitsymbol(evt,1);
+		document.location.href="main_admin.php?action=setup_sysupdate&refresh_hashes=1";
+	}
+}
+
 function squencerefresh(evt) {
 	link = confirm("<?= $lang[2663] ?>");
 	if(link) {
@@ -920,14 +908,6 @@ function snaprefresh(evt) {
 	}
 }
 
-function refresh_htaccess(evt) {
-	link = confirm("<?=$lang[2329]?>");
-	if(link) {
-		limbasWaitsymbol(evt,1);
-		document.location.href="main_admin.php?action=setup_sysupdate&refresh_htaccess=1";
-	}
-}
-
 function sessiondel(evt) {
 	link = confirm("<?=$lang[1048]?>");
 	if(link) {
@@ -964,6 +944,13 @@ function createExifConf(evt) {
 
     limbasWaitsymbol(evt, 1);
     document.location.href = "main_admin.php?action=setup_sysupdate&createExifConf=1";
+
+}
+
+function deletereportcache(evt) {
+
+    limbasWaitsymbol(evt, 1);
+    document.location.href = "main_admin.php?action=setup_sysupdate&deletereportcache=1";
 
 }
 
@@ -1011,6 +998,8 @@ function validateFiles(evt) {
                                 <TD class="text-end"><button type="button" class="btn btn-primary btn-sm" onclick="resortselect(event);">OK</button></TD></TR>
                             <TR><TD><?=$lang[2862]?></TD>
                                 <TD class="text-end"><button type="button" class="btn btn-primary btn-sm" onclick="createExifConf(event);">OK</button></TD></TR>
+                            <TR><TD><?=$lang[1137]?> Cache <?=$lang[550]?></TD>
+                                <TD class="text-end"><button type="button" class="btn btn-primary btn-sm" onclick="deletereportcache(event);">OK</button></TD></TR>
 
                             <TR class="table-section"><TD colspan="3">DMS</TD></TR>
                             <TR><TD><?=$lang[3114]?></TD>
@@ -1030,8 +1019,14 @@ function validateFiles(evt) {
                                     <TR><TD><?=$lang[2662]?></TD>
                                         <TD class="text-end">rebuild <input type="checkbox" id="rebuild_sequ"> <button type="button" class="btn btn-primary btn-sm" onclick="squencerefresh(event);">OK</button></TD></TR>
                                 <?php }}?>
-                                <TR><TD><?=$lang[2652]?></TD>
-                                    <TD class="text-end"><button type="button" class="btn btn-primary btn-sm" onclick="procedurerefresh(event);">OK</button></TD></TR>
+                            <TR><TD><?=$lang[2652]?></TD>
+                                <TD class="text-end"><button type="button" class="btn btn-primary btn-sm" onclick="procedurerefresh(event);">OK</button></TD></TR>
+
+                            <?php if($gtab["checksum"]){?>
+                            <TR><TD><?=$lang[3156]?> <?=$lang[1038]?></TD>
+                                <TD class="text-end"><button type="button" class="btn btn-primary btn-sm" onclick="hashrefresh(event);">OK</button></TD></TR>
+                            <?php } ?>
+
                             <TR class="table-section"><TD colspan="3"><?=$lang[2484]?></TD></TR>
 
                             <TR><TD><?=$lang[1056]?></TD>
@@ -1079,9 +1074,6 @@ function validateFiles(evt) {
 <TR><TD><?=$lang[2343]?></TD>
 <TD class="text-end"><button type="button" class="btn btn-primary btn-sm" onclick="snaprefresh(event);">OK</button></TD></TR>
 */?>
-
-                            <TR><TD><?=$lang[2327]?></TD>
-                                <TD class="text-end"><button type="button" class="btn btn-primary btn-sm" onclick="refresh_htaccess(event);">OK</button></TD></TR>
 
                             <TR><TD><?=$lang[1057]?></TD>
                                 <TD class="text-end"><button type="button" class="btn btn-primary btn-sm" onclick="sessiondel(event);">OK</button></TD></TR>

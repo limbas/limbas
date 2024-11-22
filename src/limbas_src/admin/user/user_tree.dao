@@ -7,7 +7,8 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
+global $userstruct;
+global $alluser;
 
 
 $sqlquery1 = "SELECT USER_ID,USERNAME,VORNAME,NAME,LMLOCK,DEL,GROUP_ID,SUB_GROUP,CLEARPASS,MULTITENANT FROM LMB_USERDB ORDER BY USERNAME";
@@ -33,7 +34,7 @@ while(lmbdb_fetch_row($rs1)) {
 	if(lmbdb_result($rs1, "SUB_GROUP")){$alluser['subgroup'][] = explode(";",lmbdb_result($rs1, "SUB_GROUP"));}else{$alluser['subgroup'][] = array(0);}
 }
 
-$sqlquery = "SELECT GROUP_ID,NAME,LEVEL FROM LMB_GROUPS WHERE DEL IS NOT ".LMB_DBDEF_TRUE." ORDER BY GROUP_ID";
+$sqlquery = "SELECT GROUP_ID,NAME,LEVEL FROM LMB_GROUPS WHERE DEL != ".LMB_DBDEF_TRUE." ORDER BY GROUP_ID";
 $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 if(!$rs){$commit = 1;}
 

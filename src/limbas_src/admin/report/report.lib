@@ -85,20 +85,3 @@ function resultreportlist(){
     }
     return $greportlist;
 }
-
-
-function lmb_report_getsysfonts()
-{
-    global $db;
-    $sqlquery = "SELECT DISTINCT FAMILY FROM LMB_FONTS ORDER BY FAMILY";
-    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-    if (!$rs) {
-        $commit = 1;
-    }
-    $sysfont = array();
-    while (lmbdb_fetch_row($rs)) {
-        $sysfont[] = trim(lmbdb_result($rs, "FAMILY"));
-    }
-
-    return $sysfont;
-}

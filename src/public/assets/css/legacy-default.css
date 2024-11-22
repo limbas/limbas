@@ -6,6 +6,11 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
+/*[data-bs-theme="dark"] {
+  --lmb-fontc3: lmbSuggestColor($farbschemaWEB14, #ffffff, #ffffff);
+  --lmb-fontc7: lmbSuggestColor($farbschemaWEB7, #ffffff, #ffffff);
+  --lmb-fontc14: lmbSuggestColor($farbschemaWEB14, #000000, #ffffff);
+}*/
 :root, [data-bs-theme="light"] {
     --lmb-fontc3: #7D7D7D;
     --lmb-fontc7: #333333;
@@ -16,6 +21,20 @@
     --lmb-fontc7: #FFFFFF;
     --lmb-fontc14: #FFFFFF;
 }
+/*!
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+/*!
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
 @font-face {
     font-family: "FontAwesome";
     src: url("../../assets/fonts/fontawesome-webfont.eot?v=4.5.0");
@@ -1521,6 +1540,9 @@
     100% {
         transform: rotate(360deg);
     }
+}
+.lmb-image-as-icon {
+    filter: invert(0%);
 }
 /*!
  * Font Awesome Free 6.1.0 by @fontawesome - https://fontawesome.com
@@ -8022,7 +8044,7 @@ readers do not read off random characters that represent icons */
     border: 1px solid #d0d0d0;
 }
 .legacy-table .gtabHeaderInputINP {
-    background-image: url("../images/legacy/find.png");
+    background-image: url("../../assets/images/legacy/find.png");
     padding-left: 14px;
     background-repeat: no-repeat;
     background-position: 2px 3px;
@@ -8032,7 +8054,7 @@ readers do not read off random characters that represent icons */
     color: #44444f;
 }
 .legacy-table .gtabHeaderInputINPajax {
-    background-image: url("../images/legacy/find.png");
+    background-image: url("../../assets/images/legacy/find.png");
 }
 .legacy-table .gtabHeaderTitleTD {
     background-color: #EEEEEE;
@@ -8094,10 +8116,10 @@ readers do not read off random characters that represent icons */
     overflow: hidden;
 }
 .legacy-table .gtabBodyTRColorA {
-    background-color: #fff;
+    background-color: #f9f8f3;
 }
 .legacy-table .gtabBodyTRColorB {
-    background-color: #f9f8f3;
+    background-color: #ffffff;
 }
 .legacy-table .gtabBodyTD {
     vertical-align: top;
@@ -8240,12 +8262,11 @@ readers do not read off random characters that represent icons */
 .legacy-table select.gtabHeaderInputINP {
     padding: 0.1rem 0.1rem 0.1rem 0.75rem;
 }
-.legacy-table .lmbfringeGtabBody tr:hover td
-{
+.legacy-table .lmbfringeGtabBody tr:hover td, .legacy-table .gtabBodyTRActive td {
     background-color: #97C5AB !important;
     color: #444444 !important;
 }
-.legacy-table .lmbfringeGtabBody tr:hover td a {
+.legacy-table .lmbfringeGtabBody tr:hover td a, .legacy-table .gtabBodyTRActive td a {
     color: #444444 !important;
 }
 .form-legacy .form-control, .form-legacy .form-select {
@@ -8311,7 +8332,7 @@ readers do not read off random characters that represent icons */
     color: #fff;
 }
 .form-legacy .gtabHeaderSymbolTD, .form-legacy .gtabHeaderSymbolTR {
-    color: #fff;
+    color: #fff !important;
     background: #4E4E4E;
 }
 .form-legacy .lmbTableHeader {
@@ -8329,6 +8350,19 @@ readers do not read off random characters that represent icons */
 }
 .form-legacy .gtabFringeRelationBody {
     border: 1px solid #c0c0c0;
+}
+.form-legacy .lmbfringeGtabBody tr:hover td, .form-legacy .gtabBodyTRActive td {
+    background-color: #97C5AB !important;
+    color: #444444 !important;
+}
+.form-legacy .lmbfringeGtabBody tr:hover td a, .form-legacy .gtabBodyTRActive td a {
+    color: #444444 !important;
+}
+.form-legacy .gtabBodyTRColorA {
+    background-color: #f9f8f3;
+}
+.form-legacy .gtabBodyTRColorB {
+    background-color: #ffffff;
 }
 .tabTileSubform:hover .tabTileResize {
     display: block;
@@ -9024,7 +9058,7 @@ td .lmbGtabTabSpace {
     border: 1px solid #d0d0d0;
 }
 .gtabHeaderInputINP {
-    background-image: url("../images/legacy/find.png");
+    background-image: url("../../assets/images/legacy/find.png");
     padding-left: 14px;
     background-repeat: no-repeat;
     background-position: 2px 3px;
@@ -9100,10 +9134,10 @@ select.gtabHeaderInputINP {
     overflow: hidden;
 }
 .gtabBodyTRColorA {
-    background-color: #EAF3EE;
+    background-color: #f9f8f3;
 }
 .gtabBodyTRColorB {
-    background-color: none;
+    background-color: #ffffff;
 }
 .gtabBodyTD {
     vertical-align: top;
@@ -9202,6 +9236,7 @@ INPUT.gtabchange, TEXTAREA.gtabchange, SELECT.gtabchange {
 INPUT.fgtabchange, TEXTAREA.fgtabchange, SELECT.fgtabchange, TABLE.fgtabchange, TD.fgtabchange {
     background-color: #FFFFFF;
     border: 1px solid #C0C0C0;
+    display: inline-block;
     opacity: 1;
     filter: alpha(opacity=100);
     font-size: 11px;
@@ -9733,10 +9768,11 @@ body.lmbBodyDropareaActive .lmbUploadDroparea {
     padding-right: 10px;
 }
 .markAsActive {
-    background-image: url(../images/legacy/ok.gif);
+    background-image: url(../../assets/images/legacy/ok.gif);
     background-position: right;
     background-repeat: no-repeat;
     padding-right: 20px;
+    background-color: #9fe900;
 }
 .markAsDisabled {
     opacity: 0.6;
@@ -9764,19 +9800,6 @@ body.lmbBodyDropareaActive .lmbUploadDroparea {
     opacity: 0.93;
 }
 /*Global*/
-A:link {
-    text-decoration: none;
-    color: #444444;
-}
-A:visited {
-    text-decoration: none;
-    color: #444444;
-}
-A:hover {
-    text-decoration: underline;
-    color: #909090;
-    cursor: pointer;
-}
 .link {
     text-decoration: none;
     color: #444444;
@@ -10703,6 +10726,10 @@ label input {
     background-color: #EEEEEE;
     color: #444444;
 }
+.form-switch-new .lmbGtabTabulatorActive, .form-switch-new .lmbGtabSubheaderActive {
+    background-color: #ffffff;
+    color: #44444f;
+}
 .form-switch-new .lmbGtabSubheaderInactive, .form-switch-new .lmbGtabTabulatorInactive {
     border: none;
     border-bottom: 1px solid #c0c0c0;
@@ -10744,7 +10771,7 @@ label input {
     color: #fff;
 }
 .form-switch-new .gtabHeaderSymbolTD, .form-switch-new .gtabHeaderSymbolTR {
-    color: #fff;
+    color: #fff !important;
     background: #4E4E4E;
 }
 .form-switch-new .lmbTableHeader {

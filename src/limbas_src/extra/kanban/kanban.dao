@@ -106,8 +106,8 @@ class lmb_kanban {
         {
             $card = array();
             $card['id'] = $id;
-            $card['status'] = lmb_utf8_decode(($status == '') ? $this->get_status_id($gresult[$this->gtabid][$this->lmbKanFieldsID['STATUS']][$datakey]) : $status);
-            $card['title'] = lmb_utf8_encode($gresult[$this->gtabid][$this->lmbKanFieldsID['TITLE']][$datakey]);
+            $card['status'] = ($status == '') ? $this->get_status_id($gresult[$this->gtabid][$this->lmbKanFieldsID['STATUS']][$datakey]) : $status;
+            $card['title'] = $gresult[$this->gtabid][$this->lmbKanFieldsID['TITLE']][$datakey];
 
 
             //Get Tags
@@ -117,7 +117,7 @@ class lmb_kanban {
             unset($row['keyword']);
             foreach ($row as $key => $tag)
             {
-                $card['tags'][] = array('tag'=>lmb_utf8_decode($tag),'color'=>($colors[$key]) ? $colors[$key] : '#bbbbbb');
+                $card['tags'][] = array('tag'=>$tag,'color'=>($colors[$key]) ? $colors[$key] : '#bbbbbb');
             }
 
 
@@ -160,7 +160,7 @@ class lmb_kanban {
                     unset($row['keyword']);
                     foreach ($row as $value)
                     {
-                        $filters[$fname][] = lmb_utf8_decode(lmb_strtolower($value));
+                        $filters[$fname][] = lmb_strtolower($value);
                     }
 
                     break;
@@ -180,7 +180,7 @@ class lmb_kanban {
                     }
                     break;
                 default:
-                    $filters[$fname] = lmb_utf8_decode(lmb_strtolower($gresult[$this->gtabid][$field][$datakey]));
+                    $filters[$fname] = lmb_strtolower($gresult[$this->gtabid][$field][$datakey]);
             }
         }
         $card['filters'] = $filters;
@@ -415,9 +415,11 @@ class lmb_kanban {
 
         $filter_out .= '</form>';
 
-        $search_buttons = '<table style="width:100%;margin-top:20px;" cellspacing="0" cellpadding="2">
-                            <tbody><tr><td colspan="2" align="center"><input value="' . $lang[773] . '" onclick="limbasDetailSearch(event,this,\''.$this->gtabid.'\',\'\',\'lmbKanAjaxContainer\')" type="button">&nbsp;<input value="' . $lang[1875] . '" onclick="kanban_filter_reset()" type="button"></td></tr>
-                        </tbody></table>';
+        $search_buttons = "";
+        $search_buttons .= '<div class="d-flex mt-2 justify-content-evenly">
+                                <button class="btn btn-primary" type="button" onclick="limbasDetailSearch(event,this,\''.$this->gtabid.'\',\'\',\'lmbKanAjaxContainer\')">'.$lang[773].'</button>
+                                <button class="btn btn-primary" type="button" onclick="kanban_filter_reset()">' . $lang[1875] . '</button>
+                            </div>';
 
 
         return "<div id=\"active-filters\"></div><ul>$filter_out</ul>".$search_buttons;

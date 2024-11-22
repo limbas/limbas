@@ -7,6 +7,7 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+global $group_level;
 
 
 if($session["superadmin"] == 1){
@@ -214,7 +215,7 @@ function set_rights($ID,$ismaingroup,$addsub){
 				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
 			}
-			# Tabellen Trigger
+			# field Trigger
 			elseif($srule[2] == 14){
 				if(!$ismaingroup AND !$addsub){$bzm++;continue;}
 				global ${"triggerrule_".$srule[0]."_".$srule[1]};
@@ -338,12 +339,22 @@ function set_rights($ID,$ismaingroup,$addsub){
 				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
 			}
-			# Feld Trigger
+			# table Trigger
 			elseif($srule[2] == 26){
 				global ${"tab_trigger_".$srule[0]};
 				if(!$ismaingroup AND !$addsub){$bzm++;continue;}
 				if(is_array(${"tab_trigger_".$srule[0]})){$tab_trigger = implode(",",${"tab_trigger_".$srule[0]});}	
 				$sqlquery = "UPDATE LMB_RULES_TABLES SET LMTRIGGER = '". parse_db_string($tab_trigger,20)."' WHERE GROUP_ID = $ID AND TAB_ID = ".$srule[0];
+				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+				if(!$rs) {$commit = 1;}
+			}
+			# table global filter
+			elseif($srule[2] == 35){
+				global ${"tab_globalfilter_".$srule[0]};
+				if(!$ismaingroup AND !$addsub){$bzm++;continue;}
+				if(is_array(${"tab_globalfilter_".$srule[0]})){$tab_globalfilter = implode(",",${"tab_globalfilter_".$srule[0]});}
+				$sqlquery = "UPDATE LMB_RULES_TABLES SET GLOBALFILTER = '". parse_db_string($tab_globalfilter,250)."' WHERE GROUP_ID = $ID AND TAB_ID = ".$srule[0];
+                error_log($sqlquery);
 				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
 			}
@@ -504,342 +515,67 @@ if(lmbdb_result($rs, "LEVEL")){$group_level = lmbdb_result($rs, "LEVEL");}else{$
 /* --- Tabellen-Liste --------------------------------------------- */
 if(!$_gtab["table"]){return;}
 
-foreach($_gtab["tab_id"] as $key => $value){
-        
-    // #########################--- eigene Rechte -----#########################
-    #if (!($session["superadmin"] AND $umgvar['override_group_perm'])){
-    if ($session["user_id"] != 1 AND !$session["superadmin"]) {
-        
-        $sqlquery = "SELECT
-				LMB_RULES_TABLES.USERRULES,
-				LMB_RULES_TABLES.HIRAPRIVILEGE,
-				LMB_RULES_TABLES.LMLOCK,
-        		LMB_RULES_TABLES.DEL,
-				LMB_RULES_TABLES.HIDE,
-				LMB_RULES_TABLES.TRASH,
-				LMB_RULES_TABLES.LMADD,
-				LMB_RULES_TABLES.USERRULES AS EDIT_USERRULES,
-				LMB_RULES_TABLES.USERPRIVILEGE AS EDIT_OWNUSERRULES,
-				LMB_RULES_TABLES.VIEWVER,
-				LMB_RULES_TABLES.EDITVER,
-				LMB_RULES_TABLES.DELVER,
-				LMB_RULES_TABLES.HIDEMENU,
+// #########################--- eigene Rechte -----#########################
+#if (!($session["superadmin"] AND $umgvar['override_group_perm'])){
+if ($session["user_id"] != 1 AND !$session["superadmin"]) {
+
+	$sqlquery = "SELECT DISTINCT
                 LMB_RULES_FIELDS.LMVIEW,
                 LMB_RULES_FIELDS.EDIT,
-                LMB_RULES_FIELDS.COLOR,
         		LMB_RULES_FIELDS.FIELD_ID,
-        		LMB_RULES_FIELDS.FILTER,
-				LMB_RULES_FIELDS.FILTERTYP,
-				LMB_RULES_FIELDS.LMTRIGGER AS FIELDTRIGGER,
-				LMB_RULES_FIELDS.NEED,
-				LMB_RULES_FIELDS.COPY,
-				LMB_RULES_FIELDS.FIELDOPTION,
-				LMB_RULES_FIELDS.DEFLT,
-				LMB_RULES_FIELDS.EDITRULE,
-				LMB_RULES_FIELDS.VER,
-				LMB_RULES_FIELDS.CURRENCY,
-				LMB_RULES_FIELDS.EXT_TYPE,
-				LMB_RULES_FIELDS.NFORMAT
+        		LMB_RULES_FIELDS.TAB_ID
                 FROM LMB_RULES_FIELDS,LMB_RULES_TABLES WHERE
         		LMB_RULES_FIELDS.TAB_ID = LMB_RULES_TABLES.TAB_ID
         		AND LMB_RULES_TABLES.GROUP_ID = " . $session["group_id"] . "
-                AND LMB_RULES_FIELDS.GROUP_ID = " . $session["group_id"] . "
-                AND LMB_RULES_FIELDS.TAB_ID = $key";
+                AND LMB_RULES_FIELDS.GROUP_ID = " . $session["group_id"];
 
-        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-        $s_result[$key]["delete"] = lmbdb_result($rs, "DEL");
-        $s_result[$key]["hide"] = lmbdb_result($rs, "HIDE");
-        $s_result[$key]["trash"] = lmbdb_result($rs, "TRASH");
-        $s_result[$key]["edit_userrules"] = lmbdb_result($rs, "EDIT_USERRULES");
-        $s_result[$key]["edit_ownuserrules"] = lmbdb_result($rs, "EDIT_OWNUSERRULES");
-        $s_result[$key]["hierarchicprivilege"] = lmbdb_result($rs, "HIRAPRIVILEGE");
-        $s_result[$key]["add"] = lmbdb_result($rs, "LMADD");
-        $s_result[$key]["viewver"] = lmbdb_result($rs, "VIEWVER");
-        $s_result[$key]["editver"] = lmbdb_result($rs, "EDITVER");
-        $s_result[$key]["delver"] = lmbdb_result($rs, "DELVER");
-        $s_result[$key]["lock"] = lmbdb_result($rs, "LMLOCK");
-        $s_result[$key]["hidemenu"] = lmbdb_result($rs, "HIDEMENU");
-
-        while (lmbdb_fetch_row($rs)) {
-            $field_id = lmbdb_result($rs, "FIELD_ID");
-            $s_result[$key]["view"][$field_id] = lmbdb_result($rs, "LMVIEW");
-            $s_result[$key]["edit"][$field_id] = lmbdb_result($rs, "EDIT");
-        }
-    }
-    
-    // ##################### --- Rechte Obergruppe ----- #########################
-    #if ($group_level AND !($session["superadmin"] AND $umgvar['override_group_perm'])){
-    if ($group_level AND $session["user_id"] != 1 AND !$session["superadmin"]) {
-        
-        // is view
-        if ($_gtab["typ"][$key] == 5 AND !$gfield[$key]['id']) {
-            $sqlquery = "SELECT DISTINCT LMB_RULES_TABLES.LMVIEW AS TABVIEW, LMB_RULES_TABLES.HIDEMENU 
-	               FROM LMB_RULES_TABLES 
-	               WHERE LMB_RULES_TABLES.GROUP_ID = $group_level
-	               AND LMB_RULES_TABLES.TAB_ID = $key
-	                ";
-            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-            $f_result[$key]["tabview"] = lmbdb_result($rs, "TABVIEW");
-            $f_result[$key]["hidemenu"] = lmbdb_result($rs, "HIDEMENU");
-        } else {
-            
-            $sqlquery = "SELECT
-                LMB_RULES_FIELDS.LMVIEW,
-                LMB_RULES_FIELDS.EDIT,
-                LMB_RULES_FIELDS.COLOR,
-        		LMB_RULES_FIELDS.FIELD_ID,
-        		LMB_RULES_FIELDS.FILTER,
-				LMB_RULES_FIELDS.FILTERTYP,
-				LMB_RULES_FIELDS.LMTRIGGER AS FIELDTRIGGER,
-				LMB_RULES_FIELDS.NEED,
-				LMB_RULES_FIELDS.COPY,
-				LMB_RULES_FIELDS.FIELDOPTION,
-				LMB_RULES_FIELDS.DEFLT,
-				LMB_RULES_FIELDS.EDITRULE,
-        		LMB_RULES_TABLES.EDIT AS TABEDIT,
-        		LMB_RULES_TABLES.LMVIEW AS TABVIEW,
-        		LMB_RULES_TABLES.NEED AS TABNEED,
-        		LMB_RULES_TABLES.COPY AS TABCOPY,
-				LMB_RULES_TABLES.USERRULES,
-				LMB_RULES_TABLES.USERPRIVILEGE,
-				LMB_RULES_TABLES.HIRAPRIVILEGE,
-				LMB_RULES_TABLES.VIEWVER,
-				LMB_RULES_TABLES.EDITVER,
-				LMB_RULES_TABLES.DELVER,
-				LMB_RULES_TABLES.LMLOCK,
-        		LMB_RULES_TABLES.DEL,
-				LMB_RULES_TABLES.HIDE,
-				LMB_RULES_TABLES.TRASH,
-				LMB_RULES_TABLES.HIDEMENU,
-				LMB_RULES_TABLES.LMADD,
-				LMB_RULES_TABLES.LMTRIGGER AS TABTRIGGER,
-				LMB_RULES_TABLES.EDITRULE AS TABEDITRULE,
-				LMB_RULES_TABLES.INDICATOR,
-				LMB_RULES_TABLES.ORDERBY,
-				LMB_RULES_FIELDS.VER,
-				LMB_RULES_FIELDS.CURRENCY,
-				LMB_RULES_FIELDS.EXT_TYPE,
-				LMB_RULES_FIELDS.NFORMAT,
-				LMB_RULES_FIELDS.LISTEDIT,
-				LMB_RULES_FIELDS.SPEECHREC
-                FROM LMB_RULES_FIELDS,LMB_RULES_TABLES WHERE
-        		LMB_RULES_FIELDS.TAB_ID = LMB_RULES_TABLES.TAB_ID
-        		AND LMB_RULES_TABLES.GROUP_ID = $group_level
-                AND LMB_RULES_FIELDS.GROUP_ID = $group_level
-                AND LMB_RULES_FIELDS.TAB_ID = $key";
-            
-            $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-            $bzm=1;
-            while (lmbdb_fetch_row($rs)) {
-                if($bzm == 1) {
-                    $l_result[$key]["tabedit"] = lmbdb_result($rs, "TABEDIT");
-                    $l_result[$key]["tabview"] = lmbdb_result($rs, "TABVIEW");
-                    $l_result[$key]["tabneed"] = lmbdb_result($rs, "TABNEED");
-                    $l_result[$key]["tabcopy"] = lmbdb_result($rs, "TABCOPY");
-                    $l_result[$key]["taboption"] = lmbdb_result($rs, "FIELDOPTION");
-                    $l_result[$key]["delete"] = lmbdb_result($rs, "DEL");
-                    $l_result[$key]["hide"] = lmbdb_result($rs, "HIDE");
-                    $l_result[$key]["trash"] = lmbdb_result($rs, "TRASH");
-                    $l_result[$key]["hidemenu"] = lmbdb_result($rs, "HIDEMENU");
-                    $l_result[$key]["add"] = lmbdb_result($rs, "LMADD");
-                    $l_result[$key]["userrules"] = lmbdb_result($rs, "USERRULES");
-                    $l_result[$key]["userprivilege"] = lmbdb_result($rs, "USERPRIVILEGE");
-                    $l_result[$key]["hierarchicprivilege"] = lmbdb_result($rs, "HIRAPRIVILEGE");
-                    $l_result[$key]["viewver"] = lmbdb_result($rs, "VIEWVER");
-                    $l_result[$key]["delver"] = lmbdb_result($rs, "DELVER");
-                    $l_result[$key]["editver"] = lmbdb_result($rs, "EDITVER");
-                    $l_result[$key]["lock"] = lmbdb_result($rs, "LMLOCK");
-                    $l_result[$key]["tab_trigger"] = explode(",", lmbdb_result($rs, "TABTRIGGER"));
-                    $l_result[$key]["indicator"] = explode(",", lmbdb_result($rs, "INDICATOR"));
-                    $l_result[$key]["orderby"] = explode(",", lmbdb_result($rs, "ORDERBY"));
-                }
-
-                $field_id = lmbdb_result($rs, "FIELD_ID");
-                $l_result[$key]["view"][$field_id] = lmbdb_result($rs, "LMVIEW");
-                $l_result[$key]["edit"][$field_id] = lmbdb_result($rs, "EDIT");
-                $l_result[$key]["color"][$field_id] = lmbdb_result($rs, "COLOR");
-                $l_result[$key]["nformat"][$field_id] = lmbdb_result($rs, "NFORMAT");
-                $l_result[$key]["currency"][$field_id] = lmbdb_result($rs, "CURRENCY");
-                $l_result[$key]["ext_type"][$field_id] = lmbdb_result($rs, "EXT_TYPE");
-                $l_result[$key]["filter"][$field_id] = trim(lmbdb_result($rs, "FILTER")); // longtext handle
-                $l_result[$key]["editrule"][$field_id] = htmlentities(lmbdb_result($rs, "EDITRULE"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]);
-                $l_result[$key]["field_trigger"][$field_id] = explode(",", lmbdb_result($rs, "FIELDTRIGGER"));
-                $l_result[$key]["filtertyp"][$field_id] = lmbdb_result($rs, "FILTERTYP");
-                $l_result[$key]["need"][$field_id] = lmbdb_result($rs, "NEED");
-                $l_result[$key]["copy"][$field_id] = lmbdb_result($rs, "COPY");
-                $l_result[$key]["option"][$field_id] = lmbdb_result($rs, "FIELDOPTION");
-                $l_result[$key]["versionable"][$field_id] = lmbdb_result($rs, "VER");
-                $l_result[$key]["def"][$field_id] = lmbdb_result($rs, "DEFLT");
-                $l_result[$key]["listedit"][$field_id] = lmbdb_result($rs, "LISTEDIT");
-                $l_result[$key]["speechrec"][$field_id] = lmbdb_result($rs, "SPEECHREC");
-
-                $bzm++;
-            }
-        }
-    }
-    
-    
-    
-    // ##################### --- Rechte Obergruppe ----- #########################
-    
-    // is view
-    if ($_gtab["typ"][$key] == 5 AND !$gfield[$key]['id']) {
-        $sqlquery = "SELECT DISTINCT LMB_RULES_TABLES.LMVIEW AS TABVIEW, LMB_RULES_TABLES.HIDEMENU 
-	               FROM LMB_RULES_TABLES 
-	               WHERE LMB_RULES_TABLES.GROUP_ID = $ID
-	               AND LMB_RULES_TABLES.TAB_ID = $key
-	                ";
-        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-        $f_result[$key]["tabview"] = lmbdb_result($rs, "TABVIEW");
-        $f_result[$key]["hidemenu"] = lmbdb_result($rs, "HIDEMENU");
-    } else {
-        $sqlquery = "SELECT DISTINCT
-                LMB_CONF_FIELDS.FIELD_ID,
-                LMB_CONF_FIELDS.TAB_ID,
-                LMB_CONF_FIELDS.FIELD_NAME,
-                LMB_CONF_FIELDS.BESCHREIBUNG,
-        		LMB_CONF_FIELDS.FIELD_TYPE,
-				LMB_CONF_FIELDS.DATA_TYPE,
-        		LMB_CONF_FIELDS.SPELLING,
-        		LMB_CONF_FIELDS.SORT,
-        		LMB_CONF_FIELDS.ARGUMENT_TYP,
-                LMB_RULES_FIELDS.LMVIEW,
-                LMB_RULES_FIELDS.EDIT,
-                LMB_RULES_FIELDS.COLOR,
-        		LMB_RULES_FIELDS.FILTER,
-        		LMB_RULES_FIELDS.FILTERTYP,
-        		LMB_RULES_FIELDS.LMTRIGGER AS FIELDTRIGGER,
-        		LMB_RULES_FIELDS.NEED,
-        		LMB_RULES_FIELDS.COPY,
-        		LMB_RULES_FIELDS.FIELDOPTION,
-        		LMB_RULES_FIELDS.NFORMAT,
-        		LMB_RULES_FIELDS.CURRENCY,
-        		LMB_RULES_FIELDS.EXT_TYPE,
-        		LMB_RULES_FIELDS.DEFLT,
-        		LMB_RULES_FIELDS.VER,
-        		LMB_RULES_FIELDS.EDITRULE,
-        		LMB_RULES_FIELDS.LISTEDIT,
-        		LMB_RULES_FIELDS.SPEECHREC,
-        		LMB_RULES_TABLES.EDIT AS TABEDIT,
-        		LMB_RULES_TABLES.LMVIEW AS TABVIEW,
-        		LMB_RULES_TABLES.COPY AS TABCOPY,
-        		LMB_RULES_TABLES.NEED AS TABNEED,
-        		LMB_RULES_TABLES.USERRULES,
-        		LMB_RULES_TABLES.USERPRIVILEGE,
-        		LMB_RULES_TABLES.HIRAPRIVILEGE,
-        		LMB_RULES_TABLES.SPECIFICPRIVILEGE,
-        		LMB_RULES_TABLES.VIEWVER,
-				LMB_RULES_TABLES.EDITVER,
-				LMB_RULES_TABLES.DELVER,
-        		LMB_RULES_TABLES.LMLOCK,
-        		LMB_RULES_TABLES.DEL,
-        		LMB_RULES_TABLES.HIDE,
-        		LMB_RULES_TABLES.TRASH,
-        		LMB_RULES_TABLES.HIDEMENU,
-        		LMB_RULES_TABLES.LMADD,
-        		LMB_RULES_TABLES.LMTRIGGER AS TABTRIGGER,
-				LMB_RULES_TABLES.VIEW_FORM,
-				LMB_RULES_TABLES.VIEW_TFORM,
-				LMB_RULES_TABLES.VIEW_LFORM,
-				LMB_RULES_TABLES.VER AS VERSIONING_TYPE,
-				LMB_RULES_TABLES.EDITRULE AS TABEDITRULE,
-				LMB_RULES_TABLES.INDICATOR,
-				LMB_RULES_TABLES.ORDERBY
-                FROM LMB_RULES_FIELDS,LMB_CONF_FIELDS,LMB_RULES_TABLES 
-                WHERE
-        		LMB_RULES_FIELDS.TAB_ID = LMB_RULES_TABLES.TAB_ID
-        		AND LMB_RULES_TABLES.GROUP_ID = $ID
-                AND LMB_RULES_FIELDS.FIELD_ID = LMB_CONF_FIELDS.FIELD_ID
-        		AND LMB_RULES_FIELDS.TAB_ID = LMB_CONF_FIELDS.TAB_ID
-                AND LMB_RULES_FIELDS.GROUP_ID = $ID
-                AND LMB_RULES_FIELDS.TAB_ID = $key
-                AND LMB_CONF_FIELDS.TAB_ID = $key
-                ORDER BY LMB_CONF_FIELDS.SORT";
-        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-
-        $bzm = 1;
-        while (lmbdb_fetch_row($rs)) {
-
-            if($bzm == 1) {
-                $f_result[$key]["tabedit"] = lmbdb_result($rs, "TABEDIT");
-                $f_result[$key]["tabview"] = lmbdb_result($rs, "TABVIEW");
-                $f_result[$key]["tabneed"] = lmbdb_result($rs, "TABNEED");
-                $f_result[$key]["tabcopy"] = lmbdb_result($rs, "TABCOPY");
-                $f_result[$key]["taboption"] = lmbdb_result($rs, "FIELDOPTION");
-                $f_result[$key]["delete"] = lmbdb_result($rs, "DEL");
-                $f_result[$key]["hide"] = lmbdb_result($rs, "HIDE");
-                $f_result[$key]["trash"] = lmbdb_result($rs, "TRASH");
-                $f_result[$key]["hidemenu"] = lmbdb_result($rs, "HIDEMENU");
-                $f_result[$key]["add"] = lmbdb_result($rs, "LMADD");
-                $f_result[$key]["userrules"] = lmbdb_result($rs, "USERRULES");
-                $f_result[$key]["userprivilege"] = lmbdb_result($rs, "USERPRIVILEGE");
-                $f_result[$key]["hierarchicprivilege"] = lmbdb_result($rs, "HIRAPRIVILEGE");
-                $f_result[$key]["viewver"] = lmbdb_result($rs, "VIEWVER");
-                $f_result[$key]["editver"] = lmbdb_result($rs, "EDITVER");
-                $f_result[$key]["delver"] = lmbdb_result($rs, "DELVER");
-                $f_result[$key]["lock"] = lmbdb_result($rs, "LMLOCK");
-                $f_result[$key]["versioning_type"] = lmbdb_result($rs, "VERSIONING_TYPE");
-                $f_result[$key]["view_form"] = lmbdb_result($rs, "VIEW_FORM");
-                $f_result[$key]["view_tform"] = lmbdb_result($rs, "VIEW_TFORM");
-                $f_result[$key]["view_lform"] = lmbdb_result($rs, "VIEW_LFORM");
-                $f_result[$key]["tabeditrule"] = htmlentities(lmbdb_result($rs, "TABEDITRULE"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]);
-                $f_result[$key]["indicator"] = htmlentities(lmbdb_result($rs, "INDICATOR"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]);
-                $f_result[$key]["orderby"] = htmlentities(lmbdb_result($rs, "ORDERBY"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]);
-                $f_result[$key]["tab_trigger"] = explode(",", lmbdb_result($rs, "TABTRIGGER"));
-                $specificprivilege = explode(",", lmbdb_result($rs, "SPECIFICPRIVILEGE"));
-                foreach ($specificprivilege as $spkey => $spval) {
-                    if ($spval) {
-                        if (is_numeric($spval)) {
-                            $f_result[$key]["specificprivilege"]["view_$key"][] = $spval;
-                            $f_result[$key]["specificprivilege"]["edit_$key"][] = $spval;
-                            $f_result[$key]["specificprivilege"]["delete_$key"][] = $spval;
-                        } else {
-                            $f_result[$key]["specificprivilege"]["view_$key"][] = preg_replace("/[ved]/", "", $spval);
-                            if (lmb_strpos($spval, "e")) {
-                                $f_result[$key]["specificprivilege"]["edit_$key"][] = preg_replace("/[ved]/", "", $spval);
-                            }
-                            if (lmb_strpos($spval, "d")) {
-                                $f_result[$key]["specificprivilege"]["delete_$key"][] = preg_replace("/[ved]/", "", $spval);
-                            }
-                        }
-                    }
-                }
-            }
-
-            $field_id = lmbdb_result($rs, "FIELD_ID");
-            if ($s_result[$key]["view"][$field_id] or ! $s_result) {
-                $f_result[$key]["field_id"][$field_id] = $field_id;
-                $f_result[$key]["field"][$field_id] = lmbdb_result($rs, "FIELD_NAME");
-                $f_result[$key]["spelling"][$field_id] = $lang[lmbdb_result($rs, "SPELLING")];
-                $f_result[$key]["beschreibung"][$field_id] = $lang[lmbdb_result($rs, "BESCHREIBUNG")];
-
-                $f_result[$key]["view"][$field_id] = lmbdb_result($rs, "LMVIEW");
-                $f_result[$key]["edit"][$field_id] = lmbdb_result($rs, "EDIT");
-                $f_result[$key]["need"][$field_id] = lmbdb_result($rs, "NEED");
-                $f_result[$key]["copy"][$field_id] = lmbdb_result($rs, "COPY");
-                $f_result[$key]["option"][$field_id] = lmbdb_result($rs, "FIELDOPTION");
-                $f_result[$key]["versionable"][$field_id] = lmbdb_result($rs, "VER");
-                $f_result[$key]["color"][$field_id] = lmbdb_result($rs, "COLOR");
-                $f_result[$key]["nformat"][$field_id] = lmbdb_result($rs, "NFORMAT");
-                $f_result[$key]["currency"][$field_id] = lmbdb_result($rs, "CURRENCY");
-                $f_result[$key]["ext_type"][$field_id] = lmbdb_result($rs, "EXT_TYPE");
-                $f_result[$key]["filter"][$field_id] = trim(lmbdb_result($rs, "FILTER"));
-                $f_result[$key]["filtertyp"][$field_id] = lmbdb_result($rs, "FILTERTYP");
-                $f_result[$key]["editrule"][$field_id] = htmlentities(lmbdb_result($rs, "EDITRULE"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]); // longtext handle
-                $f_result[$key]["field_trigger"][$field_id] = explode(",", lmbdb_result($rs, "FIELDTRIGGER"));
-                $f_result[$key]["sort"][$field_id] = lmbdb_result($rs, "SORT");
-                $f_result[$key]["field_type"][$field_id] = lmbdb_result($rs, "FIELD_TYPE");
-                $f_result[$key]["data_type"][$field_id] = lmbdb_result($rs, "DATA_TYPE");
-                $f_result[$key]["def"][$field_id] = lmbdb_result($rs, "DEFLT");
-                $f_result[$key]["argument_typ"][$field_id] = lmbdb_result($rs, "ARGUMENT_TYP");
-                $f_result[$key]["listedit"][$field_id] = lmbdb_result($rs, "LISTEDIT");
-                $f_result[$key]["speechrec"][$field_id] = lmbdb_result($rs, "SPEECHREC");
-                $f_result[$key]["typ"][$field_id]  = $lmfieldtype["name"][lmbdb_result($rs,"DATA_TYPE")];
-            }
-            $bzm ++;
-        }
-    }
+	$rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+	while (lmbdb_fetch_row($rs)) {
+		$key = lmbdb_result($rs, "TAB_ID");
+		$field_id = lmbdb_result($rs, "FIELD_ID");
+		$s_result[$key]["view"][$field_id] = lmbdb_result($rs, "LMVIEW");
+		$s_result[$key]["edit"][$field_id] = lmbdb_result($rs, "EDIT");
+	}
 }
+
+    
+// ##################### --- Rechte Obergruppe ----- #########################
+$sqlquery = "SELECT DISTINCT
+		LMB_CONF_FIELDS.FIELD_ID,
+		LMB_CONF_FIELDS.TAB_ID,
+		LMB_CONF_FIELDS.SORT,
+		LMB_RULES_TABLES.LMTRIGGER AS TABTRIGGER,
+		LMB_RULES_TABLES.GLOBALFILTER,
+		LMB_RULES_TABLES.VIEW_FORM,
+		LMB_RULES_TABLES.VIEW_TFORM,
+		LMB_RULES_TABLES.VIEW_LFORM,
+		LMB_RULES_TABLES.VER AS VERSIONING_TYPE,
+		LMB_RULES_TABLES.EDITRULE AS TABEDITRULE,
+		LMB_RULES_TABLES.INDICATOR,
+		LMB_RULES_TABLES.ORDERBY
+		FROM LMB_CONF_FIELDS,LMB_RULES_TABLES 
+		WHERE
+		LMB_RULES_TABLES.GROUP_ID = $ID
+		AND LMB_CONF_FIELDS.TAB_ID = LMB_RULES_TABLES.TAB_ID
+		ORDER BY LMB_CONF_FIELDS.SORT";
+$rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+while (lmbdb_fetch_row($rs)) {
+	$key = lmbdb_result($rs, 'TAB_ID');
+
+	if (!$f_result[$key]) {
+		$f_result[$key]["versioning_type"] = lmbdb_result($rs, "VERSIONING_TYPE");
+		$f_result[$key]["view_form"] = lmbdb_result($rs, "VIEW_FORM");
+		$f_result[$key]["view_tform"] = lmbdb_result($rs, "VIEW_TFORM");
+		$f_result[$key]["view_lform"] = lmbdb_result($rs, "VIEW_LFORM");
+		$f_result[$key]["tabeditrule"] = htmlentities(lmbdb_result($rs, "TABEDITRULE"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]);
+		$f_result[$key]["indicator"] = htmlentities(lmbdb_result($rs, "INDICATOR"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]);
+		$f_result[$key]["orderby"] = htmlentities(lmbdb_result($rs, "ORDERBY"), ENT_QUOTES, $GLOBALS["umgvar"]["charset"]);
+		$f_result[$key]["tab_trigger"] = explode(",", lmbdb_result($rs, "TABTRIGGER"));
+		$f_result[$key]["tab_globalfilter"] = explode(",", lmbdb_result($rs, "GLOBALFILTER"));
+	}
+
+}
+
 
 
 if($popup){$is_popup = explode(";",$popup);}

@@ -10,7 +10,7 @@
 require_once('Dashboard.php');
 require_once('WidgetFactory.php');
 
-use extra\dashboard\Dashboard;
+use Limbas\extra\dashboard\Dashboard;
 
 $output = [];
 switch($params['action']) {

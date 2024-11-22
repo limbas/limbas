@@ -7,19 +7,27 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 
+// download from DMS
+if ($ID && is_numeric($ID)) {
+    lmb_fileDownload($ID, $disposition);
 
+// download zip archive
+} elseif ($activelist and $download_archive and $LINK[190]) {
+    if ($archivefile = download_archive($activelist, $LID)) {
+        lmb_PHPDownload($archivefile, $disposition);
+    }
 
-if($activelist AND $download_archive AND $LINK[190]){
-	if($download_link['url'] = download_archive($activelist,$LID,$download_archive)){
-	    echo $download_link['url'];
-	    lmb_HTMLDownload($download_link);
-	}
-}elseif($ID){
-    lmb_fileDownload($ID,$sendas);
-}else{
-	header("HTTP/1.1 401 Unauthorized",true);
-	echo "<BR><BR>".$lang[114];
+// download from hash
+} elseif ($hash && $GLOBALS['session']['download'][$hash]) {
+    lmb_PHPDownload($GLOBALS['session']['download'][$hash]);
+    if (!$GLOBALS['session']['download'][$hash]['permanent']) {
+        unset($GLOBALS['session']['download'][$hash]);
+    }
+
+} else {
+    throw new AccessDeniedHttpException();
 }
 
-?>
+exit(1);

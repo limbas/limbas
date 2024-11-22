@@ -33,7 +33,7 @@ class Horde_Text_Diff_Renderer_Inline extends Horde_Text_Diff_Renderer
      *
      * @var string
      */
-    protected $_ins_prefix = '<ins>';
+    protected $_ins_prefix = '<ins class="bg-success-subtle p-1 mx-1">';
 
     /**
      * Suffix for inserted text.
@@ -47,7 +47,7 @@ class Horde_Text_Diff_Renderer_Inline extends Horde_Text_Diff_Renderer
      *
      * @var string
      */
-    protected $_del_prefix = '<del>';
+    protected $_del_prefix = '<del class="bg-danger-subtle p-1 mx-1">';
 
     /**
      * Suffix for deleted text.

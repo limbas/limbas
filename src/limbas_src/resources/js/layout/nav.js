@@ -51,8 +51,14 @@ $(function(){
 /** Linkfunktionen */
 
 /* ---------------- User ------------------ */
-function f_2(act,frame1,frame2,main) {
-    window.main.location.href = "main.php?action="+ act + "&frame1para=" + frame1 + "&frame2para=" + frame2;
+function f_2(act,HEADER,HEADERICON) {
+    if(HEADER){
+        var header = '&HEADER='+HEADER;
+    }
+    if(HEADERICON){
+        var headericon = '&HEADERICON='+HEADERICON;
+    }
+    window.main.location.href = "main.php?action="+ act;
 }
 
 function f_3(act,frame1,frame2) {
@@ -561,6 +567,12 @@ function limbasMultiframeCountPost(string){
     var obj = JSON.parse(string);
     if(!obj){return;}
 
+    // multitenant
+    var mid = document.form1.mid.value;
+    if(mid && obj['mid'] && obj['mid'] != mid){
+        MultitemantChangeNotice ();
+    }
+
     for(var key in obj['count']) {
         if(obj['count'][key] > 0) {
             $('#multiframeCount_' + key).html(obj['count'][key]);
@@ -702,6 +714,11 @@ function lmbFilterTables(event, searchFieldEl, navID, enterPressed=false) {
             return true;
         }
         const oldOnclick = elem.attr('onclick');
+
+        if (!oldOnclick) {
+            return false;
+        }
+
         elem.attr('lmb-table-search-onclick', oldOnclick);
 
         const newOnclick = oldOnclick
@@ -916,15 +933,20 @@ function setMultitenant() {
     $('.active-tenant').text($(this).data('mname'));
 
     ajaxGet(null,'main_dyns.php','setMultitenant&session_destroy=1&mid='+id,'',function(result){
-        let $mainframe = $('iframe#main');
-        let $mainframeContent = $mainframe.contents();        
-        let action_val = $mainframeContent.find('form[name="form1"]').find('input[name="action"]').val();
+
+        //let $mainframe = $('iframe#main');
+        //let $mainframeContent = $mainframe.contents();
+        //let action_val = $mainframeContent.find('form[name="form1"]').find('input[name="action"]').val();
         
-        if(action_val === 'gtab_erg'){
-            $mainframe[0].contentWindow.send_form(1,2);
-        }else{
-            $mainframe.attr('src', 'main.php?&action=intro');
-        }
+        //if(action_val === 'gtab_erg'){
+        //    $mainframe[0].contentWindow.send_form(1,2);
+        //}else{
+        //    $mainframe.attr('src', 'main.php?&action=intro');
+        //}
+
+        window.location = window.location.href.split("?")[0];
+
+
     });
     lmb_collapse_mainnav();
     

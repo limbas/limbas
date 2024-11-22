@@ -17,12 +17,13 @@ global $action;
 
 # ----------- Verknüpfungsreiter ------------ // TODO
 if(isset($showheader) AND !in_array('4',$showheader)){$verkn_addfrom = null;}
-if(!$showheader AND $verkn_addfrom){
-    echo "<TR><TD nowrap>";
-    print_verknaddfrom($verkn_addfrom,$gtabid);
-    echo "</TD></TR>";
-    echo "<TR><TD COLSPAN=\"2\"><DIV width=\"100%\" class=\"lmbTableHeader\"></DIV></TD></TR>\n";
-}
+if(!$showheader AND $verkn_addfrom):
+    ?>
+<div class="clearfix">
+    <?php print_verknaddfrom($verkn_addfrom,$gtabid); ?>
+</div>
+<?php
+endif;
 
 ?>
 
@@ -58,9 +59,15 @@ if(!$showheader AND $verkn_addfrom){
                 <?php
                 // custmenu
                 if($GLOBALS['gcustmenu'][$gtabid][12]['id'][0]):
-                    foreach($GLOBALS['gcustmenu'][$gtabid][12]['id'] as $cmkey => $cmid): ?>
+                    foreach($GLOBALS['gcustmenu'][$gtabid][12]['id'] as $cmkey => $cmid):
+                        if($GLOBALS['gcustmenu'][$gtabid][12]['directlink'][$cmkey]){
+                            $clink = lmb_pop_custmenu($cmid,$gtabid, $ID, linkonly:1);
+                        }else{
+                            $clink = "limbasDivShow(this,'','limbasDivCustMenu_$cmid');";
+                        }
+                        ?>
                         <li class="nav-item">
-                            <a class="nav-link" href="#" onclick="limbasDivShow(this,'','limbasDivCustMenu_<?=$cmid?>');"><?=$lang[$GLOBALS['gcustmenu'][$gtabid][2]['name'][$cmkey]]?></a>
+                            <a class="nav-link" href="#" onclick="<?=$clink?>"><?=$lang[$GLOBALS['gcustmenu'][$gtabid][12]['name'][$cmkey]]?></a>
                         </li>
                 <?php
                     endforeach;
@@ -95,16 +102,16 @@ if(!$showheader AND $verkn_addfrom){
 
                     <?php if(!empty($ID)): ?>
 
-                        <?php if($gtab["edit"][$gtabid] && !$isview): ?>
+                        <?php if($gtab['add'][$gtabid] && $action == 'gtab_change' && !$readonly): ?>
+                            <li class="nav-item lmbGtabmenuIcon-1">
+                                <?= LMBAction::ren(1,'icon'); // neuer Datensatz ?>
+                            </li>
+                        <?php endif; ?>
 
+                        <?php if($gtab["edit"][$gtabid] && !$isview): ?>
                             <?php if($action == "gtab_change"): ?>
                                 <li class="nav-item lmbGtabmenuIcon-6">
-                                <?php
-                                # show history
-                                $onClickShowContext = "limbasDivShowContext(event,this,'{$gresult[$gtabid]["id"][0]}','{$gtabid}','{$gresult[$gtabid]["ERSTDATUM"][0]}','{$gresult[$gtabid]["EDITDATUM"][0]}','{$userdat["bezeichnung"][$gresult[$gtabid]["ERSTUSER"][0]]}','{$userdat["bezeichnung"][$gresult[$gtabid]["EDITUSER"][0]]}');";
-                                $onClickOpenMenu = "limbasDivShow(this,null,'limbasDivMenuInfo');";
-                                echo LMBAction::ren(6,'icon', event: 'onclick="' . $onClickShowContext . $onClickOpenMenu . '"');
-                                ?>
+                                    <?= LMBAction::ren(6,'icon'); // Datensatz kopieren ?>
                                 </li>
 
                             <?php elseif($gtab["edit"][$gtabid] && !$readonly): ?>
@@ -114,13 +121,6 @@ if(!$showheader AND $verkn_addfrom){
                             <?php endif; ?>
                         <?php endif; ?>
 
-
-
-                        <?php if($gtab['add'][$gtabid] && $action == 'gtab_change' && !$readonly): ?>
-                            <li class="nav-item lmbGtabmenuIcon-1">
-                                <?= LMBAction::ren(1,'icon'); // neuer Datensatz ?>
-                            </li>
-                        <?php endif; ?>
 
                         <?php if($gtab['add'][$gtabid] && $gtab['copy'][$gtabid] && !$readonly): ?>
                             <li class="nav-item lmbGtabmenuIcon-201">
@@ -153,17 +153,38 @@ if(!$showheader AND $verkn_addfrom){
 
                         <?php endif; ?>
 
-                        <?php if($gtab['hide'][$gtabid] && !$readonly): ?>
-                            <?php if($gresult[$gtabid]['DEL'][0]): ?>
+
+                        <?php if(($gtab['hide'][$gtabid] || $gtab['trash'][$gtabid]) && !$readonly): ?>
+
+                            <?php if($gresult[$gtabid]['LMB_STATUS'][0]): ?>
                                 <li class="nav-item lmbGtabmenuIcon-166">
                                     <?= LMBAction::ren(166,'icon'); // Archiv wiederherstellen ?>
                                 </li>
                             <?php else: ?>
+                                <?php if($gtab['trash'][$gtabid]): ?>
+                                <li class="nav-item lmbGtabmenuIcon-313">
+                                    <?= LMBAction::ren(313,'icon'); // trash ?>
+                                </li>
+                                <?php endif; ?>
+                                <?php if($gtab['hide'][$gtabid]): ?>
                                 <li class="nav-item lmbGtabmenuIcon-164">
                                     <?= LMBAction::ren(164,'icon'); // archivieren ?>
                                 </li>
+                                <?php endif; ?>
                             <?php endif; ?>
 
+                        <?php endif; ?>
+
+
+                        <?php if($LINK[9]): ?>
+                            <li class="nav-item lmbGtabmenuIcon-9">
+                            <?php
+                            # show history
+                            $onClickShowContext = "limbasDivShowContext(event,this,'{$gresult[$gtabid]["id"][0]}','{$gtabid}','{$gresult[$gtabid]["ERSTDATUM"][0]}','{$gresult[$gtabid]["EDITDATUM"][0]}','{$userdat["bezeichnung"][$gresult[$gtabid]["ERSTUSER"][0]]}','{$userdat["bezeichnung"][$gresult[$gtabid]["EDITUSER"][0]]}');";
+                            $onClickOpenMenu = "limbasDivShow(this,null,'limbasDivMenuInfo');";
+                            echo LMBAction::ren(9,'icon', event: 'onclick="' . $onClickShowContext . $onClickOpenMenu . '"');
+                            ?>
+                            </li>
                         <?php endif; ?>
 
                         <li class="nav-item lmbGtabmenuIcon-10">

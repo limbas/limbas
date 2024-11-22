@@ -42,7 +42,7 @@
     padding: 0.1rem 0.1rem 0.1rem 0.75rem;
   }
 
-  .lmbfringeGtabBody tr:hover td {
+  .lmbfringeGtabBody tr:hover td, .gtabBodyTRActive td {
     background-color: $legacy-table-hover-bg-color !important;
     color: $legacy-table-hover-color !important;
     a {
@@ -155,7 +155,7 @@
 
   .gtabHeaderSymbolTD,
   .gtabHeaderSymbolTR {
-    color: #fff;
+    color: $nav-center-color !important;
     background: $nav-center-background-color;
   }
 
@@ -182,6 +182,23 @@
     border: 1px solid $default-border-color;
   }
   
+  .lmbfringeGtabBody tr:hover td, .gtabBodyTRActive td {
+    background-color: $legacy-table-hover-bg-color !important;
+    color: $legacy-table-hover-color !important;
+    a {
+      color: $legacy-table-hover-color !important;
+    }
+  }
+
+  .gtabBodyTRColorA{
+    background-color:$legacy-table-bg-a-color;
+  }
+
+  .gtabBodyTRColorB{
+    background-color: $legacy-table-bg-b-color;
+  }
+
+
 }
 
 

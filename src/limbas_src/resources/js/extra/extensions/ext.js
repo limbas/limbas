@@ -42,13 +42,11 @@ function lmb_formpic_preview(url,name,size){
         var width = size[0];
         var height = size[1];
     }else{
-        var height = 500;
+        height = undefined;
+        width = undefined;
     }
 
-    height = 500;
-    width = 500;
-
-    $("<div><img src='" + url + "' height='100%' width='100%'></div>").dialog({
+    $("<div><img src='" + url + "'></div>").dialog({
         title: name,
         width: width,
         height: height,
@@ -99,12 +97,12 @@ function LmExt_Ex_RelationFields(gtabid,gfieldid,viewmode,edittype,ID,orderfield
         return;
     }
 
-	if(!document.getElementById("ExtFileManager_LID_"+gtabid+"_"+gfieldid)){
+	if(!document.getElementById("LID_"+gtabid+"_"+gfieldid)){
 	    send_form(1);
 	    return;
 	}
 
-	var LID = document.getElementById("ExtFileManager_LID_"+gtabid+"_"+gfieldid).value;
+	var LID = document.getElementById("LID_"+gtabid+"_"+gfieldid).value;
 	var textel = document.getElementById("extRelationFields_"+gtabid+"_"+gfieldid+"_"+viewmode);
 	if(document.form1.form_id){var gformid = document.form1.form_id.value;}
 	if(typeof search == 'object'){var searchval = search.value;var searchfield = search.id;}else{var searchval = '';var searchfield = search;}
@@ -114,8 +112,15 @@ function LmExt_Ex_RelationFields(gtabid,gfieldid,viewmode,edittype,ID,orderfield
 }
 
 // action of miniexplorer
-function LmExt_Ex_LinkMiniEx(gtabid,gfieldid,ID,result){
-	LmExt_Ex_RelationFields(gtabid,gfieldid,'','',ID,'',result,'','','','','','','');
+function LmExt_Ex_LinkMiniEx(result,params){
+    resarray = new Array();
+    if(result) {
+        for (var i in result) {
+            resarray.push(result[i]['desc']);
+        }
+        resstr = resarray.join('-');
+        LmExt_Ex_RelationFields(params["gtabid"], params["fieldid"], '', '', params["ID"], '', resstr, '', '', '', '', '', '', '');
+    }
 }
 
 // unlink files

@@ -7,7 +7,9 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
+use Limbas\admin\form\Form;
+use Limbas\admin\form\FormMode;
+use Limbas\admin\form\FormType;
 
 function menu_get_standard($id, $bzm){
 	global $LINK;
@@ -67,52 +69,67 @@ function menu_get_snapshot($tabid, $snapid, $depth = null) {
 }
 
 # tables formulars
-function menu_get_forms($tabid, $typ, $depth = null){
-	global $gformlist;
-
-	$menu = array();
-	if($gformlist[$tabid]["id"]){
-        foreach ($gformlist[$tabid]["id"] as $key => $value){
-            $menu[] = menu_get_form($tabid, $value, $typ, $depth);
-        }
-	}
+function menu_get_forms(int $tabId, bool $isAdmin, $depth = null): array
+{
+    
+    $forms = Form::all(['REFERENZ_TAB'=>$tabId]);
+    
+	$menu = [];
+    foreach ($forms as $form){
+        $menu[] = menu_get_form( $form->id, $isAdmin, $depth,  $form);
+    }
+    
 	return $menu;
 }
 
-function menu_get_form($tabid, $formid, $typ = 1, $depth = null) {
+function menu_get_form(int $formId, bool $isAdmin = false, $depth = null, Form $form = null): ?array
+{
     global $gformlist;
+    
+    
+    if($form === null) {
+        $form = Form::get($formId);
+    }
 
     # check privilege
-    if (!$gformlist[$tabid]) {
+    if (!$gformlist[$form->gtabId]) {
         return null;
     }
 
-    $menu = array();
-    if ($typ == 1) {
+    $menu = [];
+    if (!$isAdmin) {
+        
         # hidden form
-        if ($gformlist[$tabid]["hidden"][$formid]) {
+        if ($gformlist[$form->gtabId]['hidden'][$form->id]) {
             return null;
         }
         # not list-form
-        if($gformlist[$tabid]["typ"][$formid] != "2"){
+        if($form->formType === FormType::DETAILS){
             return null;
         }
 
-        if($tabid){
-            $menu["link"] = "main.php?action=gtab_erg&gtabid=$tabid&form_id=$formid&HEADER=".urlencode($gformlist[$tabid]["name"][$formid])."&ID=0";
+        if($form->gtabId){
+            $menu['link'] = 'main.php?action=gtab_erg&gtabid=' . $form->gtabId . '&form_id=' . $form->id . '&HEADER='.urlencode($form->name)."&ID=0";
         }else{
-            $menu["link"] = "main.php?action=gtab_form&form_id=$formid&HEADER=".urlencode($gformlist[$tabid]["name"][$formid]);
+            $menu["link"] = 'main.php?action=gtab_form&form_id=' . $form->id . '&HEADER='.urlencode($form->name);
         }
     } else {
-        $menu["link"] = "main_admin.php?action=setup_form_frameset&form_typ=".$gformlist[$tabid]["typ"][$formid]."&form_id=$formid&referenz_tab=".$gformlist[$tabid]["ref_tab"][$formid];
+        
+        if($form->mode === FormMode::NEW) {
+            $menu['link'] = 'main_admin.php?action=setup_form_show&id=' . $form->id;
+        } else {
+            $menu['link'] = 'main_admin.php?action=setup_form_frameset&form_typ=' . $form->formType->value . '&form_id=' . $form->id . '&referenz_tab=' . $form->gtabId . '&type=form';
+        }
+        
+        
     }
 
-    $menu["depth"] = $depth;
-    $menu["name"] = $gformlist[$tabid]["name"][$formid];
-    $menu["desc"] = $gformlist[$tabid]["name"][$formid] . " ($formid)";
-    $menu["icon"] = " lmb-icon-cus lmb-icon-8 lmb-form ";
-    $menu["child"] = null;
-    $menu["attr"] = 'data-lmb-type="form" data-lmb-id="' . $formid . '" data-lmb-tabid="' . $tabid . '"';
+    $menu['depth'] = $depth;
+    $menu['name'] = $gformlist[$form->gtabId]['name'][$form->id];
+    $menu['desc'] = $gformlist[$form->gtabId]['name'][$form->id] . " ($form->id)";
+    $menu['icon'] = $form->formType === FormType::SEARCH ? ' fa-search' : ' lmb-icon-cus lmb-icon-8 lmb-form ';
+    $menu['child'] = null;
+    $menu['attr'] = 'data-lmb-type="form" data-lmb-id="' . $form->id . '" data-lmb-tabid="' . $form->gtabId . '"';
 
     return $menu;
 }
@@ -321,7 +338,7 @@ function menu_get_child_artifacts($isAdmin, $parentTabGroupId = 0, $depth=0) {
             $childSnapshots = menu_get_snapshots($tableId, $depth);
 
             # get forms
-            $childForms = menu_get_forms($tableId, $isAdmin ? 2 : 1, $depth);
+            $childForms = menu_get_forms($tableId, $isAdmin, $depth);
             $allForms = array_merge($allForms, $childForms);
 
             # get reports
@@ -333,7 +350,7 @@ function menu_get_child_artifacts($isAdmin, $parentTabGroupId = 0, $depth=0) {
             $allDiags = array_merge($allDiags, $childDiags);
 
             # store subchildren
-            $allEntries[$bzm]['child'] = array_merge($childNewEntry, $childSnapshots, $childForms, $childDiags);
+            $allEntries[$bzm]['child'] = array_merge($childNewEntry, $childForms, $childDiags, $childSnapshots);
 
             $bzm++;
         }
@@ -591,11 +608,39 @@ function menu_get_admin_tables(){
 
 # admin forms
 function menu_get_admin_forms(){
-	global $adminArtifacts;
+	global $gtab;
+    global $lang;
 
-	$menu1 = $adminArtifacts['allForms'];
+    $output = [];
+    
+    $forms = Form::all();
+    $currentGtabId = null;
+    foreach ($forms as $form) {
+        if ($currentGtabId !== $form->gtabId) {
+            $currentGtabId = $form->gtabId;
+            if ($gtab['table'][$currentGtabId]) {
+                $name = $gtab['desc'][$currentGtabId];
+            } else {
+                $name = $lang[1986];
+            }
+            
+            $output[$form->gtabId] = [
+                'depth' => 0,
+                'parent' => 0,
+                'name' => $name,
+                'desc' => '',
+                'link' => '',
+                'icon' => 'lmb-table',
+                'header' => 1,
+                'child' => [],
+            ];
+            
+        }
 
-	return $menu1;
+        $output[$form->gtabId]['child'][] = menu_get_form($form->id, true, form: $form);
+    }
+    
+	return $output;
 }
 
 
@@ -642,6 +687,8 @@ global $LINK;
 global $LINK_ID;
 global $session;
 global $gLmbExt;
+global $adminArtifacts;
+global $userArtifacts;
 
 $menu = [];
 $adminArtifacts = menu_get_artifacts(TRUE);
@@ -720,7 +767,7 @@ if ($LINK[301]) {
             list ($type, $tabid, $id) = explode(';', $menuItemKey);
 
             if ($type === 'form') {
-                $menu[301][0]['child'][] = menu_get_form($tabid, $id, 1, 0);
+                $menu[301][0]['child'][] = menu_get_form( $id, false, 0);
             } else if ($type === 'rep') {
                 $menu[301][0]['child'][] = menu_get_report($tabid, $id, 1, 0);
             } else if ($type === 'diag') {

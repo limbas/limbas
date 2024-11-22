@@ -7,8 +7,14 @@
  */
 
 /*
-  extend or override bootstrap v4
+  extend or override bootstrap
  */
+
+.mh-90 {
+  height: 90%;
+  min-height: 90%;
+}
+
 
 .modal-fullscreen {
   width: 99vw;

@@ -269,9 +269,13 @@ function lmbAjax_resultGtabPost(result){
 		        n1 = result[2].search('LMB_STARTTAB') + 13;
 		        n2 = result[2].search('LMB_ENDTAB') - 9;
                 result[2] = result[2].substring(n1, n2);
-                $('#lmbGlistBodyTab').append(result[2]);
+				
+				const $html = $(result[2]).find('[data-decrypt]').click(lmbAjax_decryptField);
+				
+                $('#lmbGlistBodyTab').append($html);
             }else{
 		        document.getElementById("GtabTableBody").innerHTML = result[2];
+				$('#GtabTableBody').find('[data-decrypt]').click(lmbAjax_decryptField);
 		    }
 		}
 
@@ -359,41 +363,11 @@ function limbasCollectiveReplaceRefresh(){
 //}
 
 
-function limbasSnapshotMenu()
-{
-    $("#snapfilter-menu").dialog({
-        resizable: true,
-        modal: true,
-        title: 'Filter',
-        width:'auto'
-    });
-}
-
 function limbasSnapshotManage(gtabid)
 {
     $('#snapfilter-menu').modal('hide');
     document.getElementById('snapfilter-manage-content').src = 'main.php?action=user_snapshot&gtabfilter='+gtabid;
     $('#snapfilter-manage').modal('show');
-}
-
-function limbasSnapshotManageLegacy(gtabid)
-{
-    $("#snapfilter-menu").dialog('close');
-    if(!document.getElementById("snapfilter-manage-content-legacy")){
-        $("body").append('<div id="snapfilter-manage-content-legacy" style="position:absolute;display:none;z-index:9999;overflow:hidden;width:600px;height:800px;"><iframe id="snapfilter-manage-content-legacy-iframe" style="width:100%;height:100%;overflow:auto;"></iframe></div>');
-    }
-    // display in iframe
-    $("#snapfilter-manage-content-legacy").css({'position':'relative'}).dialog({
-        width: 900,
-        height: 800,
-        resizable: true,
-        modal: true,
-        zIndex: 10,
-        open: function(ev, ui){
-            document.getElementById('snapfilter-manage-content-legacy-iframe').src = 'main.php?action=user_snapshot&gtabfilter='+gtabid;
-        }
-    });
-
 }
 
 function limbasSnapshotSaveas(gtabid,name)
@@ -425,15 +399,15 @@ function limbasSnapshotDisplaySaveas()
 
 function limbasSnapshotSave()
 {
-	conf = confirm(jsvar["lng_2009"]);
-	if(conf)
-	{
+	//conf = confirm(jsvar["lng_2009"]);
+	//if(conf)
+	//{
 		var parameters = new Array("snap_id","gtabid","tab_group");
 		ajaxGet(0,"main_dyns.php","snapshotSave",parameters,"limbasSnapshotSavePost");
-	}
-	else{
+	//}
+	//else{
 		divclose();
-	}
+	//}
 }
 function limbasSnapshotSavePost(string)
 {
@@ -524,7 +498,7 @@ function lmbAjax_lmbDiagrammPost(result){
         result = result.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, '');
     }
 	if(result){
-		diagramm = open(result+'?'+Date.now() ,"Diagram");
+		diagramm = open(result,"Diagram");
 	}
 }
 
@@ -921,30 +895,6 @@ function lmbShowRowSort(el,set) {
 }
 
 
-var lmbCollReplaceField = '';
-function lmbSetColSetting(el,gtabid,key,res_next,sortid,collreplace){
-
-	lmbSetGlobVar('res_next',res_next);
-	lmbSetGlobVar('sortid',sortid);
-	lmbSetGlobVar('ActiveRow',key);
-	lmbSetGlobVar('ActiveTab',gtabid);
-
-	// show/hide coll replace menu
-	if(collreplace){
-		lmbCollReplaceField = collreplace;
-		$("#limbasDivRowSetting span[id='pop_menu_287']").parent().prev().css("display","");
-		$("#limbasDivRowSetting span[id='pop_menu_287']").parent().css("display","");
-	}else{
-		lmbCollReplaceField = '';
-		$("#limbasDivRowSetting span[id='pop_menu_287']").parent().prev().css("display","none");
-		$("#limbasDivRowSetting span[id='pop_menu_287']").parent().css("display","none");
-	}
-
-	limbasDivShow(el,'','limbasDivRowSetting');
-}
-
-
-
 
 var tdwidth = null;
 var posx = null;
@@ -1126,7 +1076,7 @@ function noLimit(){
 }
 
 // handle klick on row
-function lmbTableDblClickEvent(evt,el,gtabid,ID,frame,poolid,form_id,V_ID,V_GID,V_FID,V_TYP) {
+function lmbTableDblClickEvent(evt,el,gtabid,ID,frame,poolid,form_id,V_ID,V_GID,V_FID,V_TYP,newwin) {
 
 	if(evt.ctrlKey){return;}
 
@@ -1139,7 +1089,7 @@ function lmbTableDblClickEvent(evt,el,gtabid,ID,frame,poolid,form_id,V_ID,V_GID,
 	if(form_id > 0){document.form2.form_id.value=form_id;}
 
 	aktivateRows(0);
-	if(evt.shiftKey){
+	if(evt.shiftKey || newwin == 3){
 		view_detail(1,ID);
 	}else{
 		view_detail(0,ID);
@@ -1424,7 +1374,6 @@ var tmp_form_dimension = null;
 // --- Editmenüsteuerung -----------------------------------
 function lmbTableContextMenu(evt,el,ID,gtabid,custmenu,parentid,form_id,form_typ,form_dimension,ERSTDATUM,EDITDATUM,ERSTUSER,EDITUSER,V_ID,V_GID,V_FID,V_TYP) {
 
-
 	// --------- deactivate all rows -------------
 	//aktivateRows(0);
 	// --------- activate single row -------------
@@ -1433,6 +1382,11 @@ function lmbTableContextMenu(evt,el,ID,gtabid,custmenu,parentid,form_id,form_typ
 
     child = 'limbasDivMenuContext';
     parent = evt;
+
+    // use data attribute
+    if(!custmenu) {
+        var custmenu = $(evt.target).closest('.element-cell').attr("data-custmenu");
+    }
 
     if(parentid){
 	    parent = 'lmb_custmenu_'+parentid;
@@ -1452,6 +1406,8 @@ function lmbTableContextMenu(evt,el,ID,gtabid,custmenu,parentid,form_id,form_typ
             lmbTableClickEvent(evt, el);
         }
     }
+
+
 
     // use custmenu
     if(custmenu) {

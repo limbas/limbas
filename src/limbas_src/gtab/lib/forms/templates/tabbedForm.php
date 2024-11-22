@@ -102,7 +102,7 @@ if($GLOBALS["old_action"] == 'gtab_readonly'){$action = 'gtab_change';} # for sc
             <div class="nav nav-tabs" role="tablist">
 
                 <?php
-                /** @var \gtab\forms\elements\SectionElement $sectionElement */
+                /** @var Limbas\gtab\lib\forms\elements\SectionElement $sectionElement */
                 foreach($this->sections as $key => $sectionElement): ?>
 
                     <button class="nav-link <?=$key === 0 ? 'active' : ''?>" id="section-<?=$sectionElement->getId()?>-tab" data-bs-toggle="tab" data-bs-target="#section-<?=$sectionElement->getId()?>" type="button" role="tab" aria-controls="section-<?=$sectionElement->getId()?>" aria-selected="true"><?=$sectionElement->getLabel()?></button>
@@ -152,11 +152,11 @@ if($GLOBALS["old_action"] == 'gtab_readonly'){$action = 'gtab_change';} # for sc
                     <?php endif; ?>
                     <div class="card-body tab-content">
                         <?php
-                        /** @var \gtab\forms\elements\SectionElement $sectionElement */
+                        /** @var Limbas\gtab\lib\forms\elements\SectionElement $sectionElement */
                         foreach($this->sections as $key => $sectionElement): ?>
                             <div class="tab-pane <?=$key === 0 ? 'show active' : ''?>" id="section-<?=$sectionElement->getId()?>" role="tabpanel" aria-labelledby="section-<?=$sectionElement->getId()?>-tab" tabindex="0">
                                 <?php
-                                /** @var \gtab\forms\elements\LMBFormElement $formElement */
+                                /** @var Limbas\gtab\lib\forms\elements\LMBFormElement $formElement */
                                 foreach($sectionElement->getChildren() as $formElement): ?>
 
                                     <?php if ($formElement->getType() !== 'section'): ?>

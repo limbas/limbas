@@ -171,10 +171,41 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
                 </div>
                 <?php endif; ?>
 
+                <?php // detail formular ?>
+                <div class="mb-3 row">
+                    <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[1169]?></label>
+                    <div class="col-sm-8">
+                        <select class="form-select form-select-sm" onchange="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','detailform')">
+                            <option value="-1"></option>
+                            <?php
+                            global $gformlist;
+                            foreach ($gformlist[$tabid]['name'] as $key => $value) {
+                                if($gformlist[$tabid]["typ"][$key] != 1){continue;}
+                                if($key == $result_gtab[$tabgroup]['detailform'][$tbzm]){$SELECTED = 'SELECTED';}else{$SELECTED = '';}
+                                echo "<option value=\"$key\" $SELECTED>" . $value . "</option>";
+                            }
+                            ?>
+                        </select>
+                        <small class="form-text text-muted"><?=$lang[3170]?></small>
+                    </div>
+                </div>
+
+                <?php // detail formular open as ?>
+                <div class="mb-3 row">
+                    <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2321]?></label>
+                    <div class="col-sm-8">
+                        <select class="form-select form-select-sm" onchange="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','detailform_opener')">
+                            <option value="-1">inframe</option>
+                            <option value="2" <?=($result_gtab[$tabgroup]['detailform_opener'][$tbzm] == 2)?'selected':''?>>modal</option>
+                            <option value="3" <?=($result_gtab[$tabgroup]['detailform_opener'][$tbzm] == 3)?'selected':''?>>browser tabulator</option>
+                        </select>
+                        <small class="form-text text-muted"><?=$lang[3038]?></small>
+                    </div>
+                </div>
 
                 <?php // custmenu ?>
                 <div class="mb-3 row">
-                    <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2555]?></label>
+                    <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2982]?></label>
                     <div class="col-sm-8">
                         <select class="form-select form-select-sm" onchange="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','custmenu')">
                             <option value="-1"></option>
@@ -210,22 +241,7 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
                     </div>
                 </div>
                 
-                <?php // trigger
-                if($gtrigger[$tabid]["id"]){
-                ?>
-                <div class="mb-3 row">
-                    <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2216]?></label>
-                    <div class="col-sm-8" <div id="triggerpool">
-                        <?php
-                        foreach($gtrigger[$tabid]["id"] as $trid => $trval){
-                            if(in_array($trid,$result_gtab[$tabgroup]["trigger"][$tbzm])){$CHECKED = "CHECKED";}else{$CHECKED = "";}
-                            echo "<input type=\"checkbox\" id=\"trigger_$trid\" $CHECKED onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','trigger')\"> ".$gtrigger[$tabid]["trigger_name"][$trid]." (".$gtrigger[$tabid]["type"][$trid].")<br>";
-                        }
-                        ?>
-                        <small class="form-text text-muted"><?=$lang[2825]?></small>
-                    </div>
-                </div>
-                <?php }?>
+
 
 
 
@@ -234,151 +250,181 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
                 <?php
                 /* --------------------------------------------------------- */
                 /* ----------------- Calendar settings --------------------- */
-                if($result_gtab[$tabgroup]["typ"][$tbzm] == 2){
-                    echo "<tr><td><hr></td><td><hr></td></tr>
-		<tr><td colspan=\"2\" align=\"center\" class=\"tabHeaderItem\">".$lang[2852]."</td></tr>";
-                    echo "<tr><td valign=\"top\">".$lang[2850]."</td><td>";
-                    echo "<select onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params1')\"><option>";
-                    $sqlquery = "SELECT FIELD_ID,FIELD_NAME FROM LMB_CONF_FIELDS WHERE TAB_ID = $tabid AND FIELD_TYPE = 11 AND DATA_TYPE = 24";
-                    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                    while(lmbdb_fetch_row($rs)) {
-                        if(lmbdb_result($rs, "FIELD_ID") == $result_gtab[$tabgroup]["params1"][$tbzm]){$selected = 'selected';}else{$selected = '';}
-                        echo "<option value=\"".lmbdb_result($rs, "FIELD_ID")."\" $selected>".lmbdb_result($rs, "FIELD_NAME");
-                    }
-                    echo "</select>
-		<br><i style=\"color:#AAAAAA\">".$lang[2851]."</i>
-		</td></tr>";
 
-                    # viewmode
-                    ${'viewmode_'.$result_gtab[$tabgroup]["params2"][$tbzm]['viewmode']} = 'selected';
-                    echo "<tr><td valign=\"top\">viewmode</td><td><select name=\"param2[viewmode]\" style=\"width:100%\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\">
-		<option>
-		<option $viewmode_month>month
-		<option $viewmode_agendaWeek>agendaWeek
-		<option $viewmode_agendaDay>agendaDay
-		<option $viewmode_basicWeek>basicWeek
-		<option $viewmode_basicDay>basicDay";
+                if ($result_gtab[$tabgroup]["typ"][$tbzm] == 2): ?>
+                    <hr>
+                <div class="row">
+                    <div class="col" class="tabHeaderItem"><?= $lang[2852] ?></div>
+                </div>
 
-                    if($result_gtab[$tabgroup]["params1"][$tbzm]){
-                        echo "<option $viewmode_resourceDay>resourceDay
-		<option $viewmode_resourceWeek>resourceWeek
-		<option $viewmode_resourceNextWeeks>resourceNextWeeks
-		<option $viewmode_resourceMonth>resourceMonth";
-                    }
+                <?php /* viewmode */ ?>
+                <?php ${'viewmode_' . $result_gtab[$tabgroup]["params2"][$tbzm]['viewmode']} = 'selected'; ?>
+                <div class="row pt-2">
+                    <div class="col" valign="top">viewmode</div>
+                    <div class="col">
+                        <select
+                                class="form-select form-select-sm"
+                                name="param2[viewmode]"
+                                onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')">
+                            <option></option>
+                            <option <?= $viewmode_dayGridMonth ?>>dayGridMonth</option>
+                            <option <?= $viewmode_timeGridWeek ?>>timeGridWeek</option>
+                            <option <?= $viewmode_timeGridDay ?>>timeGridDay</option>
+                            <option <?= $viewmode_listMonth ?>>listMonth</option>
+                            <option <?= $viewmode_listWeek ?>>listWeek</option>
+                            <option <?= $viewmode_listDay ?>>listDay</option>
+                        </select>
+                    </div>
+                </div>
 
-                    echo "</select>
-		</td></tr>";
+                <?php /* weekNumberTitle */ ?>
+                <div class="row pt-2">
+                    <div class="col">weekNumberTitle</div>
+                    <div class="col">
+                        <input
+                                class="form-control form-control-sm"
+                                type="text"
+                                name="param2[weekNumberTitle]"
+                                value="<?= $result_gtab[$tabgroup]["params2"][$tbzm]['weekNumberTitle'] ?>"
+                                onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')">
+                    </div>
+                </div>
 
-                    # weekNumberTitle
-                    echo "<tr><td style=\"width:90px;\" valign=\"top\">weekNumberTitle</td><td><input type=\"text\" name=\"param2[weekNumberTitle]\" style=\"width:100%\" value=\"".$result_gtab[$tabgroup]["params2"][$tbzm]['weekNumberTitle']."\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\"></td></tr>";
+                <?php /* search Calendar -- disabled ?>
+                <div class="row pt-2">
+                    <div class="col" valign="top">searchCalendar</div>
+                    <div class="col">
+                        <select
+                                class="form-select form-select-sm"
+                                multiple
+                                name="param2[searchCalendar]"
+                                onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')">
+                            <option></option>
+                            <?php foreach ($gfield[$tabid]['field_name'] as $key => $value) {
+                                echo "<option value=\"$key\"";
+                                if (is_array($result_gtab[$tabgroup]["params2"][$tbzm]['searchCalendar']) && in_array($key, $result_gtab[$tabgroup]["params2"][$tbzm]['searchCalendar'])) {
+                                    echo 'selected';
+                                }
+                                echo ">$value</option>";
+                            } ?>
+                        </select>
+                    </div>
+                </div>
+                <?php  */ ?>
 
+               <?php /* minTime */ ?>
+                    <div class="row pt-3">
+                                <div class="col">minTime</div>
+                                <div class="col">
+                                    <select
+                                            class="form-select form-select-sm"
+                                            name="param2[minTime]"
+                                            onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')">
+                                        <option></option>
+                                        <?php for ($i = 0; $i <= 23; $i++):
+                                            $timeString = (strlen((string)$i) == 1 ? '0' . $i : $i) . ':00';
+                                            ?>
+                                            <option <?= $result_gtab[$tabgroup]["params2"][$tbzm]['minTime'] == $timeString ? 'selected' : '' ?>>
+                                                <?= $timeString ?>
+                                            </option>
+                                        <?php
+                                        endfor; ?>
+                                    </select>
+                                </div>
+                    </div>
 
-                    # search Calendar
-                    echo "<tr><td valign=\"top\">searchCalendar</td><td><select multiple style=\"width:100%\" name=\"param2[searchCalendar]\" size=\"2\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\"><option>";
-                    foreach ($gfield[$tabid]['field_name'] as $key => $value){
-                        echo "<option value=\"$key\" ";
-                        if(is_array($result_gtab[$tabgroup]["params2"][$tbzm]['searchCalendar']) AND in_array($key,$result_gtab[$tabgroup]["params2"][$tbzm]['searchCalendar'])){echo 'selected';}
-                        echo ">$value";
-                    }
-                    echo "</select></td></tr>";
-
-                    # search Resource
-                    if($result_gtab[$tabgroup]["params1"][$tbzm]){
-                        $rtabid = $gfield[$tabid]['verkntabid'][$result_gtab[$tabgroup]["params1"][$tbzm]];
-                        echo "<tr><td valign=\"top\">searchResource</td><td><select multiple style=\"width:100%\" name=\"param2[searchResource]\" size=\"2\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\"><option>";
-                        foreach ($gfield[$rtabid]['field_name'] as $key => $value){
-                            echo "<option value=\"$key\" ";
-                            if(is_array($result_gtab[$tabgroup]["params2"][$tbzm]['searchResource']) AND in_array($key,$result_gtab[$tabgroup]["params2"][$tbzm]['searchResource'])){echo 'selected';}
-                            echo ">$value";
-                        }
-                        echo "</select></td></tr>";
-                    }
-
-                    echo "<tr><td colspan=2><table cellpadding=1 cellspacing=0 style=\"width:300px\">";
-                    # minTime
-                    echo "<tr><td style=\"width:82px;\" valign=\"top\">minTime</td><td style=\"width:50px;\" align=\"right\"><select name=\"param2[minTime]\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\"><option>";
-                    for ($i=0;$i<=23;$i++){
-                        echo "<option ";
-                        if($result_gtab[$tabgroup]["params2"][$tbzm]['minTime'] == $i){echo 'selected';}
-                        echo ">$i";
-                    }
-                    echo "</td><td style=\"width:40px;\">&nbsp;</td>";
-                    # maxTime
-                    echo "<td valign=\"top\">maxTime</td><td style=\"width:50px;\" align=\"right\"><select name=\"param2[maxTime]\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\"><option>";
-                    for ($i=1;$i<=24;$i++){
-                        echo "<option ";
-                        if($result_gtab[$tabgroup]["params2"][$tbzm]['maxTime'] == $i){echo 'selected';}
-                        echo ">$i";
-                    }
-                    echo "</td></tr>";
-
-
-                    # firsthour
-                    echo "<tr><td align=\"top\">firstHour</td><td style=\"width:50px;\" align=\"right\"><select name=\"param2[firstHour]\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\"><option>";
-                    for ($i=1;$i<=24;$i++){
-                        echo "<option ";
-                        if($result_gtab[$tabgroup]["params2"][$tbzm]['firstHour'] == $i){echo 'selected';}
-                        echo ">$i";
-                    }
-                    echo "</select></td><td style=\"width:40px;\">&nbsp;</td>";
-                    # slotminutes
-                    echo "<td valign=\"top\">slotMinutes</td><td align=\"right\"><select name=\"param2[slotMinutes]\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\"><option>";
-                    for ($i=5;$i<=240;$i=$i+5){
-                        echo "<option ";
-                        if($result_gtab[$tabgroup]["params2"][$tbzm]['slotMinutes'] == $i){echo 'selected';}
-                        echo ">$i";
-                    }
-                    echo "</select></td></tr>";
-
-                    # firstday
-                    echo "<tr><td valign=\"top\">firstDay</td><td align=\"right\"><select name=\"param2[firstDay]\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\"><option>";
-                    for ($i=1;$i<=31;$i++){
-                        echo "<option ";
-                        if($result_gtab[$tabgroup]["params2"][$tbzm]['firstDay'] == $i){echo 'selected';}
-                        echo ">$i";
-                    }
-                    echo "</select></td><td>&nbsp;</td>";
-                    # snapMinutes
-                    echo "<td valign=\"top\">snapMinutes</td><td align=\"right\"><select name=\"param2[snapMinutes]\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\"><option>";
-                    for ($i=5;$i<=240;$i=$i+5){
-                        echo "<option ";
-                        if($result_gtab[$tabgroup]["params2"][$tbzm]['snapMinutes'] == $i){echo 'selected';}
-                        echo ">$i";
-                    }
-                    echo "</select></td></tr>";
-                    echo "</table></td></tr>";
+                    <div class="row pt-2">
+                        <?php /* maxTime */ ?>
+                        <div class="col">maxTime</div>
+                        <div class="col">
+                            <select
+                                    class="form-select form-select-sm"
+                                    name="param2[maxTime]"
+                                    onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')">
+                                <option></option>
+                                <?php for ($i = 0; $i <= 24; $i++):
+                                    $timeString = (strlen((string)$i) == 1 ? '0' . $i : $i) . ':00';
+                                    ?>
+                                    <option <?= $result_gtab[$tabgroup]["params2"][$tbzm]['maxTime'] == $timeString ? 'selected' : '' ?>>
+                                        <?= $timeString ?>
+                                    </option>
+                                <?php
+                                endfor; ?>
+                            </select>
+                        </div>
+                    </div>
 
 
-                    echo "<tr><td colspan=2><table cellpadding=0 cellspacing=0 style=\"width:300px\">";
-                    # editable
-                    echo "<tr><td style=\"width:90px;\"  valign=\"top\">editable</td><td style=\"width:50px;\" align=\"right\"><input type=\"checkbox\" value=\"1\" name=\"param2[editable]\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\" ";
-                    if($result_gtab[$tabgroup]["params2"][$tbzm]['editable']){echo 'checked';}
-                    echo "></td><td style=\"width:40px;\">&nbsp;</td>";
-                    # selectable
-                    echo "<td valign=\"top\">selectable</td><td align=\"right\"><input type=\"checkbox\" value=\"1\" name=\"param2[selectable]\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\" ";
-                    if($result_gtab[$tabgroup]["params2"][$tbzm]['selectable']){echo 'checked';}
-                    echo "></td></tr>";
+                    <div class="row pt-2">
+                        <?php /* slotminutes */ ?>
+                        <div class="col">slotMinutes</div>
+                        <div class="col">
+                            <select
+                                    class="form-select form-select-sm"
+                                    name="param2[slotMinutes]"
+                                    onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')">
+                                <option></option>
+                                <?php for ($i = 5; $i <= 240; $i = $i + 5):
+                                    $hours = str_pad((string) floor($i / 60), 2, '0', STR_PAD_LEFT);
+                                    $remMins = str_pad((string) ($i % 60), 2, '0', STR_PAD_LEFT);
+                                    $timeString = "$hours:$remMins";
+                                    ?>
+                                    <option <?= $result_gtab[$tabgroup]["params2"][$tbzm]['slotMinutes'] == $timeString ? 'selected' : '' ?>>
+                                        <?= $timeString ?>
+                                    </option>";
+                                <?php
+                                endfor; ?>
+                            </select>
+                        </div>
+                    </div>
 
-                    # weekNumbers
-                    echo "<tr><td valign=\"top\">weekNumbers</td><td align=\"right\"><input type=\"checkbox\" value=\"1\" name=\"param2[weekNumbers]\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\" ";
-                    if($result_gtab[$tabgroup]["params2"][$tbzm]['weekNumbers']){echo 'checked';}
-                    echo "></td><td>&nbsp;</td>";
-                    # weekends
-                    echo "<td valign=\"top\">weekends</td><td align=\"right\"><input type=\"checkbox\" value=\"1\" name=\"param2[weekends]\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\" ";
-                    if($result_gtab[$tabgroup]["params2"][$tbzm]['weekends']){echo 'checked';}
-                    echo "></td></tr>";
+                <div class="row row-cols-4 pt-2">
+                            <?php /* editable */ ?>
+                                <div class="col">editable</div>
+                                <div class="col d-flex justify-content-end">
+                                    <input type="checkbox" value="1" name="param2[editable]" onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')" <?= $result_gtab[$tabgroup]["params2"][$tbzm]['editable'] ? 'checked' : '' ?>>
+                                </div>
 
-                    # repetition
-                    echo "<tr><td valign=\"top\">repetition</td><td align=\"right\"><input type=\"checkbox\" value=\"1\" name=\"param2[repetition]\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\" ";
-                    if($result_gtab[$tabgroup]["params2"][$tbzm]['repetition']){echo 'checked';}
-                    echo "></td><td>&nbsp;</td>";
-                    # allDayDefault
-                    echo "<td valign=\"top\">allDayDefault</td><td align=\"right\"><input type=\"checkbox\" value=\"1\" name=\"param2[allDayDefault]\" onchange=\"ajaxEditTable(this,'$tabid','$tabgroup','params2')\" ";
-                    if($result_gtab[$tabgroup]["params2"][$tbzm]['allDayDefault']){echo 'checked';}
-                    echo "></td></tr>";
-                    echo "</table></td></tr>";
+                                <?php /* selectable */ ?>
+                                <div class="col">selectable</div>
+                                <div class="col d-flex justify-content-end">
+                                    <input type="checkbox" value="1" name="param2[selectable]" onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')" <?= $result_gtab[$tabgroup]["params2"][$tbzm]['selectable'] ? 'checked' : '' ?>>
+                                </div>
 
-                }
+                            <?php /* weekNumbers */ ?>
+                                <div class="col">weekNumbers</div>
+                                <div class="col d-flex justify-content-end">
+                                    <input type="checkbox" value="1" name="param2[weekNumbers]" onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')" <?= $result_gtab[$tabgroup]["params2"][$tbzm]['weekNumbers'] ? 'checked' : '' ?>>
+                                </div>
+
+                                <?php /* weekends */ ?>
+                                <div class="col">weekends</div>
+                                <div class="col d-flex justify-content-end">
+                                    <input type="checkbox" value="1" name="param2[weekends]" onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')" <?= $result_gtab[$tabgroup]["params2"][$tbzm]['weekends'] ? 'checked' : '' ?>>
+                                </div>
+
+                            <?php /* repetition */ ?>
+                                <div class="col">repetition</div>
+                                <div class="col d-flex justify-content-end">
+                                    <input type="checkbox" value="1" name="param2[repetition]" onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')" <?= $result_gtab[$tabgroup]["params2"][$tbzm]['repetition'] ? 'checked' : '' ?>>
+                                </div>
+
+                                <?php /* defaultAllDay */ ?>
+                                <div class="col">defaultAllDay</div>
+                                <div class="col d-flex justify-content-end">
+                                    <input type="checkbox" value="1" name="param2[defaultAllDay]" onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')" <?= $result_gtab[$tabgroup]["params2"][$tbzm]['defaultAllDay'] ? 'checked' : '' ?>>
+                                </div>
+
+                    <?php /* nowIndicator */ ?>
+                    <div class="col">nowIndicator</div>
+                    <div class="col d-flex justify-content-end">
+                        <input type="checkbox" value="1" name="param2[nowIndicator]" onchange="ajaxEditTable(this,'<?= $tabid ?>','<?= $tabgroup ?>','params2')" <?= $result_gtab[$tabgroup]["params2"][$tbzm]['nowIndicator'] ? 'checked' : '' ?>>
+                    </div>
+
+                </div>
+                <?php endif;
+
+
 
                 /* --------------------------------------------------------- */
                 /* ----------------- Kanban settings --------------------- */
@@ -451,15 +497,30 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
                             ?>
                         </small>)</div>
                     </div>
-
                 </div>
-                
+
+                <?php if($result_gtab[$tabgroup]['checksum'][$tbzm]){  // rebuild data hash ?>
+                <div class="mb-3 row">
+                    <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[3156]?></label>
+                    <div class="col-sm-8">
+                        <i class="lmb-icon lmb-refresh cursor-pointer" onclick="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','rebuild_checksum')"></i>
+                        <?php if($rebuild_checksum): ?>
+                            <i class="lmb-icon lmb-aktiv"></i>
+                        <?php endif; ?>
+                        <small class="form-text text-muted"><?=$lang[3156]?> <?=$lang[1038]?></small>
+                    </div>
+                </div>
+                <?php } ?>
+
+
+
+
                 <?php endif; ?>
             </div>
             <div class="col-6">
 
                 <?php if (!$isview): ?>
-                
+
                 <?php // spelling ?>
                 <div class="mb-3 row">
                     <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[1779]?></label>
@@ -523,6 +584,15 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
                         </div>
                     </div>
 
+                    <?php // archive recursiv ?>
+                    <div class="mb-3 row">
+                        <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[3173]?></label>
+                        <div class="col-sm-8">
+                            <input type="checkbox" value="1" <?=($result_gtab[$tabgroup]['recursiv_archive'][$tbzm] == 1)?'checked':''?> onchange="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','recursiv_archive')">
+                            <small class="form-text text-muted"><?=$lang[3174]?></small>
+                        </div>
+                    </div>
+
                     <?php // validity ?>
                     <div class="mb-3 row">
                         <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[3000]?></label>
@@ -544,7 +614,16 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
                             <small class="form-text text-muted"><?=$lang[2963]?></small>
                         </div>
                     </div>
-                
+
+                <?php // data hash ?>
+                <div class="mb-3 row">
+                    <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[3156]?></label>
+                    <div class="col-sm-8">
+                        <input type="checkbox" value="1" <?=($result_gtab[$tabgroup]['checksum'][$tbzm] == 1)?'checked':''?> onchange="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','checksum')">
+                        <small class="form-text text-muted"><?=$lang[3154]?></small>
+                    </div>
+                </div>
+
                 
                 
                 <?php endif; ?>
@@ -558,6 +637,48 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
                         <small class="form-text text-muted"><?=$lang[2964]?></small>
                     </div>
                 </div>
+
+
+                <?php if (!$isview && $gtrigger[$tabid]): // trigger ?>
+                <div class="mb-3 row">
+
+                    <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2451]?></label>
+                    <div class="col-sm-8">
+                    <select style="width:100%" class="form-select form-select-sm select2-selection" multiple="multiple" data-tabid="<?=$tabid?>" id="table_trigger">
+                        <option value=""></option>
+                    <?php
+                    foreach($gtrigger[$tabid]["id"] as $trid => $trval):
+                        if(in_array($trid,$result_gtab[$tabgroup]['trigger'][$tbzm])){$SELECTED = "SELECTED";}else{$SELECTED = "";} ?>
+                        <option value="<?=$trid?>" <?=$SELECTED?>><?=$gtrigger[$tabid]["trigger_name"][$trid]?> (<?=$gtrigger[$tabid]["type"][$trid]?>)</option>
+                    <?php endforeach; ?>
+                    </select>
+                    <small class="form-text text-muted"><?=$lang[2825]?></small>
+                    </div>
+                </div>
+                <?php endif; ?>
+
+
+                <?php
+                    // global filter
+                    $gfilter = getFunctionsFromFile('ext_globalFilter');
+                    if(is_array($gfilter)){
+                    ?>
+                    <div class="mb-3 row">
+                        <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[3163]?></label>
+                        <div class="col-sm-8">
+                        <select style="width:100%" class="form-select form-select-sm select2-selection" multiple="multiple" data-tabid="<?=$tabid?>" id="table_globalfilter">
+                            <option value=""></option>
+                            <?php
+                            foreach($gfilter as $gfkey => $gfname):
+                                if(in_array($gfname,$result_gtab[$tabgroup]['globalfilter'][$tbzm])){$SELECTED = "SELECTED";}else{$SELECTED = "";} ?>
+                                <option value="<?=$gfname?>" <?=$SELECTED?>><?=$gfname?></option>
+                            <?php endforeach; ?>
+                        </select>
+                        <small class="form-text text-muted"><?=$lang[3164]?></small>
+                        </div>
+                    </div>
+
+                <?php } ?>
 
             </div>
         </div>

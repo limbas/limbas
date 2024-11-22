@@ -98,7 +98,7 @@ abstract class Report
             return false;
         }
 
-        return trim(str_replace($umgvar['pfad'], '', $generatedReport), '/') . '?v=' . date('U');
+        return trim(str_replace($umgvar['pfad'], '', $generatedReport), '/');
     }
 
     /**
@@ -126,7 +126,7 @@ abstract class Report
             $gtabid = $greportlist["argresult_tabid"][$reportId];
         }
         if ($gtabid <= 0) {
-            $gtabid = null;
+            $gtabid = -1;
         }
 
         $listmode = $greportlist[$gtabid]["listmode"][$reportId];
@@ -219,7 +219,7 @@ abstract class Report
 
         $generatedReport = $this->createReport(intval($report_id), $gtabid, $ID, ReportOutput::TEMP, $report_name, $gsr, $filter);
 
-        if (file_exists(lmb_utf8_encode($generatedReport))) {
+        if (file_exists($generatedReport)) {
 
             $filename = explode('/', $generatedReport);
             $filename = $filename[lmb_count($filename) - 1];
@@ -365,7 +365,7 @@ abstract class Report
                     $ps_downsample .= ' -dColorImageResolution=' . $umgvar['ps_imageresolution'];
                 }
             }
-            $sys = exec('cd ' . USERPATH . $session['user_id'] . "/temp/; gs -dNOPAUSE -dBATCH -dCompatibilityLevel=$ps_comp -dPDFSETTINGS=/$ps_output $ps_downsample -sDEVICE=pdfwrite -sOutputFile=" . lmb_utf8_encode($report_name) . " " . implode(' ', $fileList));
+            $sys = exec('cd ' . USERPATH . $session['user_id'] . "/temp/; gs -dNOPAUSE -dBATCH -dCompatibilityLevel=$ps_comp -dPDFSETTINGS=/$ps_output $ps_downsample -sDEVICE=pdfwrite -sOutputFile=" . $report_name . " " . implode(' ', $fileList));
         } else { # use fpdi
 
             if ($this->type === 'tcpdf') {
@@ -375,10 +375,10 @@ abstract class Report
             }
 
             $pdfx->concat($fileList);
-            $pdfx->Output(USERPATH . $session['user_id'] . '/temp/' . lmb_utf8_encode($report_name), 'F');
+            $pdfx->Output(USERPATH . $session['user_id'] . '/temp/' . $report_name, 'F');
         }
 
-        if (file_exists(USERPATH . $session['user_id'] . '/temp/' . lmb_utf8_encode($report_name))) {
+        if (file_exists(USERPATH . $session['user_id'] . '/temp/' . $report_name)) {
             return USERPATH . $session['user_id'] . '/temp/' . $report_name;
         } else {
             return false;
@@ -515,7 +515,7 @@ abstract class Report
 
             $forcePrint = array_key_exists('directPrint', $printerOptions) && $printerOptions['directPrint'];
             
-            $printed = lmbPrint($printerId, lmb_utf8_encode($tempFilePath), $report['archive_fileID'], $forcePrint, $printerOptions);
+            $printed = lmbPrint($printerId, $tempFilePath, $report['archive_fileID'], $forcePrint, $printerOptions);
 
             if (!$printed) {
                 return false;
@@ -543,7 +543,7 @@ abstract class Report
         $name = explode("/", $tempFilePath);
         $name = $name[lmb_count($name) - 1];
 
-        if (file_exists(lmb_utf8_encode($tempFilePath))) {
+        if (file_exists($tempFilePath)) {
 
             # ------- pdf archivieren ---------
             if (is_numeric($report["target"])) {
@@ -565,7 +565,7 @@ abstract class Report
                         $relation = array("datid" => $ID, "gtabid" => $report["referenz_tab"], "fieldid" => $field_id);
                     }
 
-                    $file["file"][0] = lmb_utf8_encode($tempFilePath);
+                    $file["file"][0] = $tempFilePath;
                     $file["file_name"][0] = $name;
                     $file["file_type"][0] = 0;
                     $file["file_archiv"][0] = 0;
@@ -605,7 +605,7 @@ abstract class Report
         # pdf name
         $name = $this->reportSaveName($report['name'] ?? '', $report['savename'] ?? '', $id, $report_rename, ($reportOutput->value >= 2) /* archive */);
         $out = USERPATH . $session['user_id'] . '/temp/' . $name;
-        $path = USERPATH . $session['user_id'] . '/temp/' . lmb_utf8_encode($name);
+        $path = USERPATH . $session['user_id'] . '/temp/' . $name;
 
         # write pdf to file
         $pdf->Output($path, 'F');
@@ -613,7 +613,7 @@ abstract class Report
         # use postscript to compress
         if ($umgvar['use_gs'] and file_exists($path)) {
             rename($path, $path . 'gs');
-            $sys = exec("cd " . USERPATH . $session["user_id"] . "/temp/; gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=\"" . lmb_utf8_encode($name) . "\" \"" . $path . "gs\"");
+            $sys = exec("cd " . USERPATH . $session["user_id"] . "/temp/; gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=\"" . $name . "\" \"" . $path . "gs\"");
             unlink($path . 'gs');
         }
 

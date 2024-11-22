@@ -407,16 +407,16 @@ class Limbas extends AbstractBackend {
 		$vevent->add ( $modified );
 		
 		switch ($gresult [$lmb_REPETITION] [0]) {
-			case lmb_utf8_decode ( 'täglich' ) :
+			case  'täglich'  :
 				$rrule = 'FREQ=DAILY';
 				break;
-			case lmb_utf8_decode ( 'wöchentlich' ) :
+			case  'wöchentlich' :
 				$rrule = 'FREQ=WEEKLY';
 				break;
-			case lmb_utf8_decode ( 'monatlich' ) :
+			case  'monatlich'  :
 				$rrule = 'FREQ=MONTHLY';
 				break;
-			case lmb_utf8_decode ( 'jährlich' ) :
+			case  'jährlich'  :
 				$rrule = 'FREQ=YEARLY';
 				break;
 		}
@@ -428,7 +428,7 @@ class Limbas extends AbstractBackend {
 		if ($rrule != null)
 		$vevent->RRULE = $rrule;
 		$vevent->SEQUENCE = 0;
-		$vevent->SUMMARY = lmb_utf8_encode ( $gresult [9] [0] );
+		$vevent->SUMMARY =  $gresult [9] [0];
 		
 		$extraData = json_decode ( $gresult [$lmb_EXTRAPROPERTIES] [0] );
 		
@@ -534,7 +534,7 @@ class Limbas extends AbstractBackend {
 		}
 		$update ["$calendarId,7,$dataId"] = convert_stamp ( $extraData ['start'] );
 		$update ["$calendarId,8,$dataId"] = convert_stamp ( $extraData ['end'] );
-		$update ["$calendarId,9,$dataId"] = lmb_utf8_decode ( parse_db_string ( $extraData ['summary'], 399 ) );
+		$update ["$calendarId,9,$dataId"] =  parse_db_string ( $extraData ['summary'], 399 );
 		$rule = null;
 		switch (lmb_strtoupper ( $extraData ['frequency'] )) {
 			case 'DAILY' :
@@ -550,7 +550,7 @@ class Limbas extends AbstractBackend {
 				$rule = 'jährlich';
 				break;
 		}
-		$update ["$calendarId,$lmb_REPETITION,$dataId"] = lmb_utf8_decode ( parse_db_string ( $rule ) );
+		$update ["$calendarId,$lmb_REPETITION,$dataId"] =  parse_db_string ( $rule ) ;
 		$update ["$calendarId,$lmb_REPEATUNTIL,$dataId"] = convert_stamp ( $extraData ['lastOccurence'] );
 		$extras = $extraData ['extras'];
 		$update ["$calendarId,$lmb_EXTRAPROPERTIES,$dataId"] = json_encode ( $extras );

@@ -10,11 +10,12 @@
 
 
 
-#header('Content-Encoding:none');
 set_time_limit(12000); #200min
 ob_implicit_flush();
 
-if(!$lang){
+global $lang;
+if(empty($lang)){
+    $lang = [];
 	$lang[770] = "deleted";
 	$lang[1010] = "wrong datatype";
 	$lang[1011] = "inserts";
@@ -36,11 +37,6 @@ if(!$lang){
 	$lang[2216] = "Trigger";
 }
 
-$phpvok = version_compare(PHP_VERSION, '5.3.0') >= 0;
-if(!$GLOBALS['umgvar']['csv_escape']){
-    $GLOBALS['umgvar']['csv_escape'] = "\\";
-    $phpvok = false;
-}
 
 $info = "
 Copyright notice
@@ -56,12 +52,6 @@ This script is distributed WITHOUT ANY WARRANTY; without even the implied warran
 This copyright notice MUST APPEAR in all copies of the script!
 
 ";
-
-
-/* -------------------- Pfadinfos------------------- */
-if($setup_path_project){
-	$umgvar["pfad"] = $setup_path_project;
-}
 
 
 if(file_exists("../tables/tab.lib")){
@@ -131,11 +121,7 @@ function import_create_fieldmapping($ifield,$import_typ,$covertfromtable,$odbc=n
 
     # decode/encode utf8
     if($txt_encode){
-    	if($umgvar["charset"] == "UTF-8"){
-    		$covertfromtable = utf8_encode($covertfromtable);
-    	}else{
-    		$covertfromtable = iconv("UTF-8",$GLOBALS["umgvar"]["charset"],$covertfromtable);
-    	}
+        $covertfromtable = lmb_utf8_encode($covertfromtable);
     }
     		
     echo "<TABLE>";
@@ -167,15 +153,8 @@ function import_create_fieldmapping($ifield,$import_typ,$covertfromtable,$odbc=n
     		
     		# decode/encode utf8
     		if($txt_encode){
-    			if($umgvar["charset"] == "UTF-8"){
-    				#$field_name = utf8_encode($field_name);
-    				$hval = utf8_encode($hval);
-    				$header2[$bzm] = utf8_encode($header2[$bzm]);
-    			}else{
-    				#$field_name = iconv("UTF-8",$GLOBALS["umgvar"]["charset"],$field_name);
-    				$hval = iconv("UTF-8",$GLOBALS["umgvar"]["charset"],$hval);
-    				$header2[$bzm] = iconv("UTF-8",$GLOBALS["umgvar"]["charset"],$header2[$bzm]);
-    			}
+                $hval = lmb_utf8_encode($hval);
+                $header2[$bzm] = lmb_utf8_encode($header2[$bzm]);
     		}
     		/* --- Feld umbenennen ------------- */
     		$field_name = parse_db_syntax($hval,0);
@@ -351,12 +330,12 @@ function import_create_filltable($import_typ, $ifield, $txt_terminate = null, $t
             if (! $txt_enclosure) {$txt_enclosure = '"';}
             
             // count of rows
-            $filelist = file($umgvar["pfad"] . "/USER/" . $session["user_id"] . "/temp/txtimport.txt");
+            $filelist = file(USERPATH . $session["user_id"] . "/temp/txtimport.txt");
             $maxline = lmb_count($filelist);
             unset($filelist);
             
             /* ---------------------- Textdatei öffnen ---------------------- */
-            $pfad = $umgvar["pfad"] . "/USER/" . $session["user_id"] . "/temp/txtimport.txt";
+            $pfad = USERPATH . $session["user_id"] . "/temp/txtimport.txt";
             
             $txtdat = fopen($pfad, "r");
             /* ---------------------- Zeilenausgabe ---------------------- */
@@ -429,7 +408,7 @@ function import_create_sqlvalue($fkey,&$ifield,&$insert_,&$value_,&$NEXTID,&$ERS
     global $lang;
     global $lmcurrency;
 
-    $value = trim($value);
+    $value = parse_db_string($value);
 
     /* ---------------------- Extension ---------------------- */
     if($ifield['extension'][$fkey]){
@@ -499,11 +478,7 @@ function import_create_sqlvalue($fkey,&$ifield,&$insert_,&$value_,&$NEXTID,&$ERS
         // decode/encode utf8
         $value = parse_db_string($value);
         if ($txt_encode) {
-            if ($umgvar["charset"] == "UTF-8") {
-                $value = utf8_encode($value);
-            } else {
-                $value = iconv("UTF-8", $GLOBALS["umgvar"]["charset"], $value);
-            }
+            $value = lmb_utf8_encode($value);
         }
         // $value = str_replace("#NEXTLINE#","\n",$value);
         if (! preg_match("/" . $ifield['rule'][$fkey] . "/", $value)) {
@@ -722,12 +697,12 @@ function import_attach_fromfile($ifield,$gtabid,$txt_terminate=null,$txt_encode=
 	if(!$txt_enclosure){$txt_enclosure = '"';}
 
 	# count of rows
-	$file = file($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/txtimport.txt");
+	$file = file(USERPATH.$session["user_id"]."/temp/txtimport.txt");
 	$maxline = lmb_count($file);
 	unset($file);
 	
 	/* ---------------------- Textdatei öffnen ---------------------- */
-	$pfad = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/txtimport.txt";
+	$pfad = USERPATH.$session["user_id"]."/temp/txtimport.txt";
 	$txtdat = fopen($pfad,"r");
 
     // header
@@ -769,11 +744,7 @@ function import_attach_fromfile($ifield,$gtabid,$txt_terminate=null,$txt_encode=
 			if($lineset[$filekey] AND $lineset[$filekey] != "NULL" AND !$listignore[$filekey]){
 				
 				if($txt_encode){
-					if($umgvar["charset"] == "UTF-8"){
-						$lineset[$filekey] = utf8_encode($lineset[$filekey]);
-					}else{
-						$lineset[$filekey] = iconv("UTF-8",$GLOBALS["umgvar"]["charset"],$lineset[$filekey]);
-					}
+                    $lineset[$filekey] = lmb_utf8_encode($lineset[$filekey]);
 				}
 
                 $history_fields["$gtabid,$gfieldid,0"] = $lineset[$filekey];
@@ -873,11 +844,7 @@ function import_attach_fromodbc($ifield,$odbc,$txt_encode=null,$verbose=1){
 			if($fieldvalue AND $fieldvalue != "NULL"){
 				
 				if($txt_encode){
-					if($umgvar["charset"] == "UTF-8"){
-						$fieldvalue = utf8_encode($fieldvalue);
-					}else{
-						$fieldvalue = iconv("UTF-8",$GLOBALS["umgvar"]["charset"],$fieldvalue);
-					}
+                    $fieldvalue = lmb_utf8_encode($fieldvalue);
 				}
 				$history_fields["$gtabid,$gfieldid,0"] = $fieldvalue;
 			}
@@ -948,14 +915,14 @@ function fill($tab,$file,$ctyp,$ktyp,$cname,$kkey,$partimport,$import_overwrite,
 	/* --- Tabelle füllen------- */
 	if($setup){
 		if($install == "install" OR $install == "reinstall"){
-			$pfad2 = $umgvar["pfad"]."/BACKUP/".$backupdir."/$file";
+			$pfad2 = BACKUPPATH.$backupdir."/$file";
 		}
 	} elseif($partimport){
-        $pfad2 = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.dat";
+        $pfad2 = USERPATH.$session["user_id"]."/temp/export.dat";
     } elseif($syncimport) {
-        $pfad2 = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/sync/export.dat";
+        $pfad2 = USERPATH.$session["user_id"]."/temp/sync/export.dat";
     } else {
-		$pfad2 = $umgvar["pfad"]."/BACKUP/".$backupdir."/$file";
+		$pfad2 = BACKUPPATH.$backupdir."/$file";
 	}
 
 	/* --- Max Zeilenanzahl auslesen für aktuellen Status ------- */
@@ -1000,29 +967,15 @@ function fill($tab,$file,$ctyp,$ktyp,$cname,$kkey,$partimport,$import_overwrite,
 			//$ccont = explode("\t",$line2);
 			$bzm3 = 0;
 			while($cheader[$bzm3]){
-				//$ccont[$bzm3] = stripslashes($ccont[$bzm3]);
-				//$ccont[$bzm3] = str_replace("#NEXTLINE#","\n",$ccont[$bzm3]);
-				//$ccont[$bzm3] = str_replace("#TAB#","\t",$ccont[$bzm3]);
-				//$ccont[$bzm3] = str_replace("#BACKSL#",LMB_DBFUNC_UMASCB,$ccont[$bzm3]);
-				//if($ctyp[$bzm3] != 4){$ccont[$bzm3] = str_replace("'","''",$ccont[$bzm3]);}
 				if(($ccont[$bzm3] OR $ccont[$bzm3] == "0" OR $ctyp[$bzm3] == 2) AND $cname[$bzm3]){
-				    
-                    // mask \"
-                    $ccont[$bzm3] = str_replace("#BSLQUT#",'\\"',$ccont[$bzm3]);
-				    
-					#if($ktyp[$bzm3] AND $hold_id != 1){$values[] = "$id";}
 
 					# decode/encode utf8
 					if($txt_encode AND ($ctyp[$bzm3] == 4 OR $ctyp[$bzm3] == 1)){
-						if($umgvar["charset"] == "UTF-8"){
-							$ccont[$bzm3] = utf8_encode($ccont[$bzm3]);
-						}else{
-							$ccont[$bzm3] = iconv("UTF-8",$GLOBALS["umgvar"]["charset"],$ccont[$bzm3]);
-						}
+                        $ccont[$bzm3] = lmb_utf8_encode($ccont[$bzm3]);
 					}
 
 					# next ID
-					if(lmb_strtoupper($cheader[$bzm3]) == "ID" AND lmb_strtoupper($tab) != "LMB_SESSION" AND lmb_strtoupper($tab) != "LMB_FORM_LIST"){
+					if(lmb_strtoupper($cheader[$bzm3]) == "ID" AND lmb_strtoupper($tab) != "LMB_SESSION"){
 						if($import_overwrite == "add_with_ID"){
 							$prepare_long["id"][$bzm4] = $ccont[$bzm3];
 							$values[] = $ccont[$bzm3];
@@ -1144,9 +1097,11 @@ function create($tab,$sqlquery,$key){
 	$sqlquery = lmb_substr($sqlquery,0,lmb_strlen($sqlquery) - 1).")";
     $rs2 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
 
+    ob_flush();
+    
 	if($rs2){
         LimbasLogger::log("create table $tab", LimbasLogger::LL_INFO);
-		if($GLOBALS["action"]){echo "<div>$lang[164] <font style=\"font-style:italic;font-weight:bold\">$tab </font>$lang[1018].</b></div>\n";}
+		if($GLOBALS["action"]){echo "<p class=\"fw-bold mt-3 mb-0\">$lang[164] $tab $lang[1018]</p>";}
 		return true;
 	}else {
         LimbasLogger::log("Could not create table $tab - Message: ".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
@@ -1201,43 +1156,41 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 	# Komplett-Import aus Backupverzeichniss
 	if($initial_setup){
 
-		if(!$umgvar["pfad"]){die("No Path defined! Check \$umgvar[\"path\"]");}
-
 		# ------ alte Verzeichnisse löschen -------
-		$path = $umgvar["pfad"]."/BACKUP/";
+		$path = BACKUPPATH;
 		$folderval = read_dir($path);
 		foreach($folderval["name"] as $key => $value){
-			if($folderval["typ"][$key] == "dir"){
+            if($folderval["typ"][$key] == "dir" && $folderval["name"] !== 'revision'){
 				rmdirr($folderval["path"][$key],1,0,1);
 			}
 		}
 
 		# ------ Archiv entpacken -------
-		$sys = system("tar -x -z -C ".$umgvar["pfad"]."/BACKUP/"." -f ".$umgvar["pfad"]."/BACKUP/".$backupdir);
+		$sys = system("tar -x -z -C ".BACKUPPATH." -f ".BACKUPPATH.$backupdir);
 
 		# ------ Archiv-Verzeichniss auswählen -------
 		$folderval = read_dir($path);
 		foreach($folderval["name"] as $key => $value){
-			if($folderval["typ"][$key] == "dir"){
+			if($folderval["typ"][$key] == "dir" && $folderval["name"] !== 'revision'){
 				$backupdir = $value;
 			}
 		}
 
 		if($install == "install" OR $install == "reinstall"){
-			$pfad = $umgvar["pfad"]."/BACKUP/".$backupdir."/export.conf";
+			$pfad = BACKUPPATH . $backupdir."/export.conf";
 		}
 	}
 	# Einzel-Import
 	elseif($partimport){
-		$pfad = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.conf";}
+		$pfad = USERPATH . $session["user_id"]."/temp/export.conf";}
         elseif($tab_name != '')
         {
             $syncimport = true;
-            $pfad = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/sync/$tab_name.conf";
+            $pfad = USERPATH . $session["user_id"]."/temp/sync/$tab_name.conf";
         }
 	else
         {
-		$pfad = $umgvar["pfad"]."/BACKUP/".$backupdir."/export.conf";
+		$pfad = BACKUPPATH . $backupdir."/export.conf";
 	}
 
 	$config_datei = fopen($pfad,"r");
@@ -1290,14 +1243,14 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 				$tab = lmb_substr($line,24);
 				$tab = lmb_substr($tab,0,lmb_strlen($tab) - 2);
                 $tab = dbf_4($tab);
-				$filename = ($tab_name != '' && $tab_name != 'export') ? '' : $tab;
+				$filename = ($tab_name != '' && $tab_name != 'export') ? '' : strtolower($tab);
 				$tabname = $prefix.$tab;
 				$oldtabname = $tabname;
 				#$tabname = parse_db_syntax($tabname,1);
 				$newtabname[lmb_strtoupper($tab)] = $tabname;
 				$tab = $tabname;
 
-				$sqlquery = "CREATE TABLE ".dbf_4($tab)." (";
+				$sqlquery = "CREATE TABLE $tab (";
 
 			} elseif(lmb_substr($line,0,20) == "<end tabledefinition"){
 
@@ -1361,18 +1314,15 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 					}elseif($cdf[1] == "TIME" AND $cdf[6] != 'TIME'){
 						$default = "DEFAULT '".$default."'";
 					// default value is real timestamp
-					}elseif($cdf[1] == "TIMESTAMP" AND $cdf[6] != 'TIMESTAMP' AND $cdf[6] != 'DATE' AND $cdf[6] != 'TIME'){
+					#}elseif($cdf[1] == "TIMESTAMP" AND $cdf[6] != 'TIMESTAMP' AND $cdf[6] != 'DEFAULT_TIMESTAMP' AND $cdf[6] != 'DATE' AND $cdf[6] != 'TIME'){
+                    }elseif($cdf[1] == "TIMESTAMP" AND is_numeric(substr($cdf[6],0,2))) {
 					    $default = "DEFAULT '".$default."'";
 					}elseif($cdf[1] == "TIMESTAMP" OR $cdf[1] == "BOOLEAN" OR $cdf[1] == "INTEGER" OR $cdf[1] == "SMALLINT" OR $cdf[1] == "BIGINT" OR $cdf[1] == "FIXED" OR $cdf[1] == "FLOAT" OR $cdf[1] == "DECIMAL" OR $cdf[1] == "NUMERIC" OR $cdf[1] == "DATE" OR $cdf[1] == "TIME"){
 						$default = "DEFAULT ".$default;
 					}else{
                         # decode/encode utf8
                         if($txt_encode){
-                            if($umgvar["charset"] == "UTF-8"){
-                                $default = utf8_encode($default);
-                            }else{
-                                $default = iconv("UTF-8",$GLOBALS["umgvar"]["charset"],$default);
-                            }
+                            $default = lmb_utf8_encode($default);
                         }
 						$default = "DEFAULT '".parse_db_string($default)."'";
 					}
@@ -1487,8 +1437,8 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 		}
 	}
 
-	if(is_dir($umgvar["pfad"]."/BACKUP/".$backupdir) AND $backupdir){
-		system("rm -r ".$umgvar["pfad"]."/BACKUP/".$backupdir);
+	if(is_dir(BACKUPPATH.$backupdir) AND $backupdir){
+		system("rm -r ".BACKUPPATH.$backupdir);
 	}
 
     return true;
@@ -1503,7 +1453,7 @@ function import_part_groupselect($fileatm,$fileatm_name){
     global $lang;
     
     // extract upload archive
-    $pfad = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/";
+    $pfad = USERPATH.$session["user_id"]."/temp/";
     $sys = system("rm ".$pfad."*");
     $copy = copy ($fileatm, $pfad.$fileatm_name);
     $sys = system("tar -x -z -C ".$pfad." -f ".$pfad."/".$fileatm_name);
@@ -1552,7 +1502,7 @@ function import_parse_txt($txt_terminate=',',$txt_calculate=100,$txt_enclosure='
 	if(!$txt_terminate){$txt_terminate = ",";}
 
 	/* ---------------------- Textdatei öffnen ---------------------- */
-	$pfad = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/";
+	$pfad = USERPATH.$session["user_id"]."/temp/";
 	
 	$filename = $_FILES["filetxt"]["name"];
 	$file_origin = $pfad.$filename;
@@ -1682,7 +1632,7 @@ function import_tab_pool($import_typ,$import_overwrite,$import_count,$partimport
 
 		/* --- falls Tabellengruppe -------------------------------------- */
 		if($import_count == "group"){
-			$pfad = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/";
+			$pfad = USERPATH.$session["user_id"]."/temp/";
 			if($folderval = read_dir($pfad)){
 				foreach($folderval["name"] as $key => $value){
 					$value_ = explode(".",$value);
@@ -1699,8 +1649,8 @@ function import_tab_pool($import_typ,$import_overwrite,$import_count,$partimport
 		}elseif($import_count == "single"){
 			$tmp = explode(".",$fileatm_name);
 			$imptabgroup[0] = lmb_strtoupper(preg_replace("/^[^0-9a-zA-z_]$/","",$tmp[0]));
-			$pfad = $umgvar["pfad"]."/USER/".$session['user_id']."/temp/";
-			rmdirr($umgvar["pfad"]."/USER/".$session['user_id']."/temp");
+			$pfad = USERPATH.$session['user_id']."/temp/";
+			rmdirr(USERPATH.$session['user_id']."/temp");
 			$copy = copy ($fileatm, $pfad.$imptabgroup[0].".tar.gz");
 		}
 
@@ -1850,11 +1800,9 @@ function import_complete($del_all,$txt_encode=null, $txt_terminate=null,$txt_enc
 		echo "<BR><BR><HR><H4>".lang('Limbas has been successfully installed').",</H4>";
         
         if($isInstaller) {
-            echo '<a class="btn btn-primary pull-right" href="../">'.lang('start Limbas now!')."</a><br>
-        <div>(default-user: <b>admin</b> | default password: <b>limbas</b>)</div><BR><BR><BR>";
+            echo '<a class="btn btn-primary pull-right" href="../">'.lang('start Limbas now!')."</a><BR><BR><BR>";
         } else {
-            echo "<a class=\"btn btn-primary pull-right\" onclick=\"top.window.location.reload();\">".lang('start Limbas now!')."</a><br>
-        <div>(default-user: <b>admin</b> | default password: <b>limbas</b>)</div><BR><BR><BR>";
+            echo "<a class=\"btn btn-primary pull-right\" onclick=\"top.window.location.reload();\">".lang('start Limbas now!')."</a></div><BR><BR><BR>";
         }
         
 		

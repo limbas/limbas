@@ -7,7 +7,7 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
+use Symfony\Component\HttpFoundation\Request;
 
 /* 
 $argv[0] = path of script
@@ -16,6 +16,8 @@ $argv[2] = username [optional]
 $argv[3] = password [optional]
 $argv[4] = additional data if $argv[1] is filename
 */
+
+global $job;
 
 define("IS_CRON",true);
 
@@ -49,6 +51,9 @@ require_once(COREPATH . 'lib/include.lib');
 require_once(COREPATH . 'lib/include_admin.lib');
 require_once(COREPATH . 'lib/db/db_wrapper.lib');
 require_once(COREPATH . 'lib/db/db_' . $DBA['DB'] . '_admin.lib');
+
+
+$request = Request::createFromGlobals();
 
 // session present
 if($auth_user){

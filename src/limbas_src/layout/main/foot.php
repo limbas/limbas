@@ -16,6 +16,8 @@
 
 <?php
 
+global $alert;
+
 // --- error_alert -----
 error_showalert($alert);
 

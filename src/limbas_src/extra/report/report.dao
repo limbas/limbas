@@ -7,7 +7,7 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
+use Limbas\admin\setup\fonts\Font;
 
 set_time_limit(1200); #20min
 ini_set('memory_limit','1024M');
@@ -22,17 +22,22 @@ if($GLOBALS["gLmbExt"]["ext_report.inc"]){
 
 
 function get_fonts(){
-	global $db;
-
-	# Fontliste
-	$sqlquery = "SELECT * FROM LMB_FONTS ORDER BY FAMILY,STYLE";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS["action"],__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	while(lmbdb_fetch_row($rs)){
-		$family = lmbdb_result($rs,"FAMILY");
-		$sysfont["family"][$family][] = lmbdb_result($rs,"FAMILY");
-		$sysfont["name"][$family][] = lmbdb_result($rs,"NAME");
-		$sysfont["style"][$family][] = lmbdb_result($rs,"STYLE");
+	$fonts = Font::all();
+    $sysfont = [
+        'family' => [],
+        'name'   => [],
+        'style'  => []
+    ];
+    /** @var Font $font */
+    foreach($fonts as $font) {
+        if(!array_key_exists($font->family, $sysfont['family'])) {
+            $sysfont['family'][$font->family] = [];
+            $sysfont['name'][$font->family] = [];
+            $sysfont['style'][$font->family] = [];
+        }
+		$sysfont['family'][$font->family][] = $font->family;
+		$sysfont['name'][$font->family][] = $font->fileName;
+		$sysfont['style'][$font->family][] = $font->style;
 	}
 
 	return $sysfont;
@@ -490,7 +495,6 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 
 	$query = get_sqlquery($referenz_tab,1,$filter,$gsr,null,$onlyfield,$single,$extension);
 	$rs1 = lmbdb_exec($db,$query["sql"]) or errorhandle(lmbdb_errormsg($db),$query['sql'],$action,__FILE__,__LINE__);
-
 	$bzm0 = 0;
 	while(lmbdb_fetch_row($rs1)) {
 	    $DBRESULT['id'][$bzm0] = lmbdb_result($rs1, 'IDALIAS_'.$gtabid);
@@ -524,18 +528,36 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 			# check if permission
 			if($gfield[$gtabid]["sort"][$fieldid]){
 
-				# long handling
-				#if($gfield[$gtabid]["data_type"][$fieldid] == 39 AND !$gfield[$gtabid]["longhandle"][$fieldid]){
-				#	$sqlquery2 = "SELECT ".$gfield[$gtabid]["field_name"][$fieldid]." FROM ".$tab." WHERE ID = $ID";
-				#	$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
-				#	$oresult = lmb_utf8_decode(lmbdb_result($rs2,$gfield[$gtabid]["field_name"][$fieldid]),1);
-				#}else{
-				#	$oresult = lmb_utf8_decode(lmbdb_result($rs1, $field),1);
-				#}
-
 				$oresult = lmbdb_result($rs1, $field);
 
-                if($data_type == 30){
+                // get image from file relation if field is "THUMB_OK"
+                if($gtab['argresult_id']['LDMS_FILES'] == $gtabid && $gfield[$gtabid]['field_name'][$fieldid] == 'THUMB_OK'){
+                    require_once(COREPATH . 'extra/explorer/filestructure.lib');
+                    $fileID = $DBRESULT['id'][$bzm0];
+
+                    // get file key from parameter
+                    if($fieldlist[$key][3] && is_numeric($fieldlist[$key][3])){ // parameter
+                        $query2 = get_sqlquery($referenz_tab,1,$filter,$gsr,null,$onlyfield,$single,$extension);
+                        $rs2 = lmbdb_exec($db,$query["sql"]) or errorhandle(lmbdb_errormsg($db),$query['sql'],$action,__FILE__,__LINE__);
+                        $bzm4 = 0;
+                        while(lmbdb_fetch_row($rs2)) {
+                            if($fieldlist[$key][3] == $bzm4) {
+                                $fileID = lmbdb_result($rs2, 'IDALIAS_' . $gtabid);
+                                break;
+                            }
+                            $bzm4++;
+                        }
+                    }
+
+                    $file = file_download($fileID);
+                    if($file){
+                        $mimetype = explode('/',$file['mimetype']);
+                        if($mimetype[0] == 'image'){
+                            $DBRESULT[$bzm3][$bzm0] = "IMAGE#*#".$file["path"];
+                        }
+                    }
+					# --- sonstige ---
+				}else if($data_type == 30){
 					if(!$symbol = get_currency_symbol(lmbdb_result($rs1, $field."_C"))){$symbol = lmbdb_result($rs1, $field."_C");}
 					if($gfield[$gtabid]["nformat"][$fieldid]){
 						$DBRESULT[$bzm3][$bzm0] = convert_NumberFormat($oresult,$gfield[$gtabid]["nformat"][$fieldid])." ".$symbol;
@@ -718,7 +740,6 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 
 	$DBRESULT["count"] = $bzm0;
 	$DBRESULT["rowid"] = $rowid-1;
-
     return $DBRESULT;
 }
 

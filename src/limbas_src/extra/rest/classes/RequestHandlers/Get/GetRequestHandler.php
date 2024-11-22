@@ -6,16 +6,21 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
-namespace limbas\rest;
+namespace Limbas\extra\rest\classes\RequestHandlers\Get;
+
+use Limbas\extra\rest\classes\Request;
+use Limbas\extra\rest\classes\RequestHandlers\RequestHandler;
+use Limbas\extra\rest\classes\RestException;
 
 abstract class GetRequestHandler extends RequestHandler {
 
-    protected $links = array();
-    protected $gresult = null;
+    protected ?array $links = array();
+    protected array $gresult;
 
-    protected abstract function getData();
+    protected abstract function getData(): array;
 
-    public function getAnswer() {
+    public function getAnswer(): ?array
+    {
         $this->links['self'] = $this->getSelfLink();
 
         $data = $this->getData();
@@ -34,7 +39,8 @@ abstract class GetRequestHandler extends RequestHandler {
      * @return array
      * @throws RestException
      */
-    protected function getResult($filter, $gsr, $verkn, $onlyfield, $single) {
+    protected function getResult($filter, $gsr, $verkn, $onlyfield, $single): array
+    {
         global $gfield;
 
         $gtabid = $this->request->table_id;
@@ -99,21 +105,7 @@ abstract class GetRequestHandler extends RequestHandler {
                     } else {
                         $fname = 'cftyp_' . $gfield[$gtabid]['funcid'][$fieldID];
                         $result = &$fname($bzm, $fieldID, $gtabid, 6, $gresult);
-
-                        // encode allways to UTF-8
-                        if($GLOBALS["umgvar"]["charset"] == "UTF-8"){
-                             $resultData[$bzm][$fieldName] = $result;
-                        }else {
-                            if (is_array($result)) {
-                                array_walk_recursive($result, array($this, 'decode_recursive'));
-                                $resultData[$bzm][$fieldName] = $result;
-                            } elseif (is_numeric($result)) {
-                                $resultData[$bzm][$fieldName] = $result;
-                            } else {
-                                $resultData[$bzm][$fieldName] = lmb_utf8_encode($result);
-                            }
-                        }
-
+                        $resultData[$bzm][$fieldName] = $result;
                     }
                 }
             }
@@ -126,19 +118,10 @@ abstract class GetRequestHandler extends RequestHandler {
     }
 
     /**
-     * @param $item
-     * @param $key
-     */
-    protected function decode_recursive(&$item, $key) {
-        if(!is_numeric($item)){
-            $item = lmb_utf8_encode($item);
-        }
-    }
-
-    /**
      * @param $filter
      */
-    protected function setPaginationFilter(&$filter) {
+    protected function setPaginationFilter(&$filter): void
+    {
         # TODO permit query before first/last page
         $queryParams = &$this->request->api_params;
 
@@ -154,7 +137,8 @@ abstract class GetRequestHandler extends RequestHandler {
         }
     }
 
-    protected function setPaginationLinks(&$filter) {
+    protected function setPaginationLinks(&$filter): void
+    {
         $pageCount = $filter['anzahl'][$this->request->table_id];
         if ($pageCount === 'all') {
             return;
@@ -200,7 +184,8 @@ abstract class GetRequestHandler extends RequestHandler {
      * @param $filter
      * @throws RestException
      */
-    protected function setSortingFilter(&$filter) {
+    protected function setSortingFilter(&$filter): void
+    {
         $queryParams = &$this->request->api_params;
 
         $paramname = Request::API_PARAMETERS['sort'];
@@ -229,7 +214,8 @@ abstract class GetRequestHandler extends RequestHandler {
      * @param $filter
      * @throws RestException
      */
-    protected function setArchivedFilter(&$filter) {
+    protected function setArchivedFilter(&$filter): void
+    {
         $queryParams = &$this->request->api_params;
         $paramname = Request::API_PARAMETERS['archived'];
 
@@ -266,7 +252,8 @@ abstract class GetRequestHandler extends RequestHandler {
      * @param $filter
      * @throws RestException
      */
-    protected function setValidityFilter(&$filter) {
+    protected function setValidityFilter(&$filter): void
+    {
         $queryParams = &$this->request->api_params;
         $paramname = Request::API_PARAMETERS['validity'];
 
@@ -286,7 +273,8 @@ abstract class GetRequestHandler extends RequestHandler {
      * @param $onlyfield
      * @throws RestException
      */
-    protected function setIncludedFields(&$onlyfield) {
+    protected function setIncludedFields(&$onlyfield): void
+    {
         global $gfield;
 
         $queryParams = &$this->request->api_params;
@@ -335,7 +323,8 @@ abstract class GetRequestHandler extends RequestHandler {
      * @param $gsr
      * @throws RestException
      */
-    protected function setFilterGsr(&$gsr) {
+    protected function setFilterGsr(&$gsr): void
+    {
         global $gfield;
 
         # TODO improve
@@ -404,7 +393,8 @@ abstract class GetRequestHandler extends RequestHandler {
      * @return string
      * @throws RestException
      */
-    private function getRelationTableLinkSelf($id, $relationFieldID) {
+    private function getRelationTableLinkSelf($id, $relationFieldID): string
+    {
         $request = new Request($this->request->router, 'GET', $this->request->table_id, $id, $relationFieldID);
         return $request->buildGetUrl();
     }
@@ -414,7 +404,8 @@ abstract class GetRequestHandler extends RequestHandler {
      * @return string
      * @throws RestException
      */
-    private function getRelationTableLinkRelated($relationFieldID) {
+    private function getRelationTableLinkRelated($relationFieldID): string
+    {
         global $gfield;
 
         $relationTableID = $gfield[$this->request->table_id]['verkntabid'][$relationFieldID];
@@ -422,7 +413,8 @@ abstract class GetRequestHandler extends RequestHandler {
         return $request->buildGetUrl();
     }
 
-    protected function getSelfLink() {
+    protected function getSelfLink(): string
+    {
         return $this->request->buildGetUrl();
     }
 
@@ -431,12 +423,14 @@ abstract class GetRequestHandler extends RequestHandler {
      * @return string
      * @throws RestException
      */
-    protected function getSelfRequestLink($id) {
+    protected function getSelfRequestLink($id): string
+    {
         $request = new Request($this->request->router, 'GET', $this->request->table_id, $id);
         return $request->buildGetUrl();
     }
 
-    protected function isValidTableID($showFieldTableID) {
+    protected function isValidTableID($showFieldTableID): bool
+    {
         global $gtab;
 
         # the fetched table?

@@ -10,6 +10,7 @@
 namespace Limbas\extra\template\select;
 
 use Limbas\extra\template\base\TemplateResolver;
+use Limbas\lib\db\Database;
 
 require_once COREPATH . 'gtab/gtab.lib';
 
@@ -40,6 +41,21 @@ abstract class TemplateSelector
         }
 
         require_once COREPATH . 'extra/template/select/html/modal.php';
+    }
+    
+    public static function resetTemplateCache(int $tabId = null): bool
+    {
+        
+        $where = [];
+        if(!empty($tabId)) {
+            $where = [
+                'TAB_ID' => $tabId
+            ];
+        }
+        
+        return Database::update('LMB_CONF_TABLES',[
+            'REPORT_RESOLVE_CACHE' => null,
+        ],$where);
     }
 
 

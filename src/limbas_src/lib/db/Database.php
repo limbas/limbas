@@ -6,6 +6,14 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
+
+namespace Limbas\lib\db;
+
+use Exception;
+use PDO;
+use PDOStatement;
+use function dbq_0;
+
 class Database
 {
 
@@ -26,7 +34,9 @@ class Database
     {
         global $DBA;
         global $db; //legacy
+        ob_start();
         $db = dbq_0($DBA['DBHOST'],$DBA['DBNAME'],$DBA['DBUSER'],$DBA['DBPASS'],$DBA['ODBCDRIVER'],$DBA['PORT']);
+        ob_end_clean();
         return $db;
     }
 
@@ -42,10 +52,22 @@ class Database
     
     public static function checkIfInstalled(): void
     {
-        $db = self::get();
+        $db = Database::get();
+        
+        if($db === false || $db === null) {
+            // config exists (checked in db_wrapper), but no connection to database
+            throw new Exception('Database connection failed', 600);
+        }
 
         $sqlquery = 'SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE lower(TABLE_NAME) = \'lmb_umgvar\'';
         $rs = lmbdb_exec($db, $sqlquery);
+        
+        if(!$rs) {
+            header('HTTP/1.1 302 Found (Moved Temporarily)');
+            header('Location: install/');
+            exit;
+        }
+        
         $data = lmbdb_fetch_array($rs);
         if (!is_array($data) || !array_key_exists('TABLE_NAME',$data) || empty($data['TABLE_NAME']) ) {
             header('HTTP/1.1 302 Found (Moved Temporarily)');
@@ -63,27 +85,12 @@ class Database
      * @param int|null $limit
      * @return bool|PDOStatement
      */
-    public static function select(string $table, array $fields = [], array $where = [], int $limit = null, array $orderBy = []): bool|PDOStatement
+    public static function select(string $table, array $fields = [], array $where = [], int $limit = null, array $orderBy = [], int $offset = null): bool|PDOStatement
     {
         $db = self::get();
 
-        $whereString = '';
         $orderString = '';
-
-        $values = [];
-        if (!empty($where)) {
-            $whereFields = [];
-            foreach($where as $field => $value) {
-                if($value === null) {
-                    $whereFields[] = strtoupper($field) . ' IS ' . LMB_DBDEF_NULL;
-                } else {
-                    $values[] = $value;
-                    $whereFields[] = strtoupper($field) . ' = ?';
-                }
-                
-            }
-            $whereString = ' WHERE ' . implode(' AND ', $whereFields);
-        }
+        [$whereString,$whereValues] = self::prepareWhereString($where);
 
         if(!empty($orderBy)) {
             $orderString = ' ORDER BY ' . implode(', ', array_map(
@@ -96,7 +103,10 @@ class Database
 
         $limitString = '';
         if (!empty($limit)) {
-            $limitString = ' LIMIT ' .$limit;
+            $limitString = ' LIMIT ' . $limit;
+            if (!empty($offset)) {
+                $limitString .= ' OFFSET ' . $offset;
+            }
         }
         
         $fieldString = empty($fields) ? '*' : implode(',',array_map('strtoupper', $fields));
@@ -104,7 +114,7 @@ class Database
         $sql = 'SELECT ' . $fieldString . ' FROM ' . $table . $whereString . $orderString . $limitString;
 
         $stmt = lmbdb_prepare($db,$sql);
-        lmbdb_execute($stmt, $values);
+        lmbdb_execute($stmt, $whereValues);
         return $stmt;
     }
     
@@ -124,7 +134,6 @@ class Database
         $valueString = '?' . str_repeat(',?', $fieldCount - 1);
 
         $sql = 'INSERT INTO ' . $table . ' (' . implode(',', array_map('strtoupper', $fields)) . ') VALUES (' . $valueString  . ')';
-        
         return lmbdb_execute(lmbdb_prepare($db,$sql), $values);
     }
 
@@ -144,28 +153,11 @@ class Database
             $fields[] = $field . ' = ?';
             $values[] = $value;
         }
-
-        $whereString = '';
-        if(!empty($where)) {
-            $whereArray = [];
-            foreach($where as $field => $value) {
-                if($value === null) {
-                    $whereArray[] = strtoupper($field) . ' IS ' . LMB_DBDEF_NULL;
-                } else {
-                    $values[] = $value;
-                    $whereArray[] = strtoupper($field) . ' = ?';
-                }
-                $whereString = ' WHERE ' . implode(' AND ', $whereArray);
-            }
-        }
+        [$whereString,$whereValues] = self::prepareWhereString($where);
+        $values = array_merge($values,$whereValues);
         
 
         $sql = 'UPDATE ' . $table . ' SET ' . implode(',', $fields) . $whereString;
-
-        /*
-        UPDATE LMB_MAIL_ACCOUNTS SET USER_ID = ?,TENANT_ID = ?,NAME = ?,EMAIL = ?,IS_ACTIVE = ?,IS_HIDDEN = ?,TRANSPORT_TYPE = ?,IMAP_HOST = ?,IMAP_PORT = ?,IMAP_USER = ?,SMTP_HOST = ?,SMTP_PORT = ?,SMTP_USER = ? WHERE ID = ?
-        UPDATE LMB_MAIL_ACCOUNTS SET IS_DEFAULT = ? WHERE USER_ID IS NULL AND TENANT_ID IS NULL
-        UPDATE LMB_MAIL_ACCOUNTS SET IS_DEFAULT = ? WHERE ID = ?*/
 
         return lmbdb_execute(lmbdb_prepare($db,$sql), $values);
     }
@@ -175,19 +167,65 @@ class Database
      * @param array $where
      * @return bool
      */
-    public static function delete(string $table, array $where): bool
+    public static function delete(string $table, array $where = [], bool $all = false): bool
     {
         $db = self::get();
+        [$whereString,$whereValues] = self::prepareWhereString($where);
 
-        $values = [];
-        $whereString = [];
-        foreach($where as $field => $value) {
-            $values[] = $value;
-            $whereString[] = strtoupper($field) . ' = ?';
+        if($all === true) {
+            $sql = 'DELETE FROM ' . $table  . ' WHERE ' . LMB_DBDEF_TRUE;   
+        }
+        elseif(empty($where)) {
+            return false;
+        }
+        else {
+            $sql = 'DELETE FROM ' . $table . $whereString;
         }
 
-        $sql = 'DELETE FROM ' . $table . ' WHERE ' . implode(' AND ', $whereString);
+        return lmbdb_execute(lmbdb_prepare($db,$sql), $whereValues);
+    }
 
-        return lmbdb_execute(lmbdb_prepare($db,$sql), $values);
+
+    /**
+     * @param string $table
+     * @param array $where
+     * @return int
+     */
+    public static function count(string $table, array $where): int
+    {
+        $db = self::get();
+        [$whereString,$whereValues] = self::prepareWhereString($where);
+
+        $sql = 'SELECT COUNT(*) as C FROM ' . $table . ' ' . $whereString;
+
+        $stmt = lmbdb_prepare($db,$sql);
+        lmbdb_execute($stmt, $whereValues);
+        if($stmt) {
+            lmbdb_fetch_row($stmt);
+            $count = intval(lmbdb_result($stmt,'C'));
+        } else {
+            $count = 0;
+        }
+        
+        return $count;
+    }
+    
+    protected static function prepareWhereString(array $where): array
+    {
+        $whereValues = [];
+        $whereString = '';
+        if(!empty($where)) {
+            $whereArray = [];
+            foreach($where as $field => $value) {
+                if($value === null) {
+                    $whereArray[] = strtoupper($field) . ' IS ' . LMB_DBDEF_NULL;
+                } else {
+                    $whereValues[] = $value;
+                    $whereArray[] = strtoupper($field) . ' = ?';
+                }
+            }
+            $whereString = ' WHERE ' . implode(' AND ', $whereArray);
+        }
+        return [$whereString, $whereValues];
     }
 }

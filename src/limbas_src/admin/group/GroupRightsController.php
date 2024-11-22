@@ -29,7 +29,7 @@ class GroupRightsController extends LimbasController
         $ID = $request["ID"];
         $ismodal = true;
         $isview = false;
-        require_once(COREPATH . 'admin/group/group_tab.dao');
+        require_once(COREPATH . 'admin/group/group_tab_detail.dao');
         require_once(COREPATH . 'admin/group/group_tabrows.php');
     }
 }

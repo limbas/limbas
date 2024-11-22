@@ -126,11 +126,21 @@ color[10] = "<?=$farbschema['WEB10']?>";
 <TR id="menu_multi_text_bild_chart_templ_datum_dbdat_dbdesc_rect_line_ellipse_tab_snr_formel_" STYLE="display:none"><TD><?php pop_line();?></TD></TR>
 <TR id="menu_text_bild_datum_dbdat_dbdesc_rect_line_ellipse_tab_snr_formel_" STYLE="display:none"><TD><?php pop_submenu2($lang[1464],"document.form1.report_copy.value='1';document.form1.submit();",$lang[1464]);?></TD></TR>
 <TR id="menu_text_datum_dbdat_dbdesc_tab_snr_formel_" STYLE="display:none"><TD><?php pop_line();?></TD></TR>
-<?php
-$opt["val"] = $sysfont;
-$opt["desc"] = $sysfont;
-?>
-<TR id="menu_text_chart_templ_datum_dbdat_dbdesc_snr_formel_" STYLE="display:none"><TD><?php pop_select("fill_style('0','fontFamily',this.value);",$opt,"",1,"input_fontface","Font",60);?></TD></TR>
+<TR id="menu_text_chart_templ_datum_dbdat_dbdesc_snr_formel_" STYLE="display:none">
+    <TD>
+        <div class="lmbContextRow">
+            <div class="lmbContextItem" style="text-align:right">
+                <div style="display:inline-block;vertical-align:middle;">Font</div>&nbsp;
+                <select class="contextmenu" name="input_fontface" id="input_fontface" size="1" onchange="fill_style('0','fontFamily',this.value);" style="vertical-align:middle;width:84px;" autocomplete="off">
+                    <option value=""></option>
+                    <?php foreach ($fonts as $font): ?>
+                        <option value="<?=e($font->family)?>"><?=e($font->family)?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+        </div>
+    </TD>
+</TR>
 <?php $opt['val'] = array("5px","6px","7px","8px","9px","10px","11px","12px","13px","14px","15px","16px","17px","18px","19px","20px","21px","22px","23px","24px","25px","26px","27px","28px","29px","30px","35px","40px","45px","50px","55px","60px","70px","80px","90px");
 $opt['desc'] = array("5","6","7","8","9","10","11","12","13","14","15","16","17","18","19","20","21","22","23","24","25","26","27","28","29","30","35","40","45","50","55","60","70","80","90");?>
 <TR id="menu_multi_text_chart_templ_datum_dbdat_dbdesc_snr_formel_" STYLE="display:none"><TD><?php pop_select("fill_style('3','fontSize',this.value);",$opt,"",1,"input_fontsize",$lang[210],60);?></TD></TR>
@@ -788,7 +798,10 @@ function printBerichtElement($report,$key){
 
 		$size1 = "width=\"".$report_width."\" height=\"".$report_height."\"";
 		$size = ";width:".$report_width."; height:".$report_height;
-		$path = TEMPPATH . 'thumpnails/report/'.$report_picthumb;
+
+        // thumbnail
+        $path = lmb_getDownloadHash(TEMPPATH . 'thumpnails/report/',$report_picthumb,$GLOBALS['umgvar']['thumbnail_type']);
+
 		if($st[32]){$opacity = ";opacity:0.3";}
 
 		if($tab_el){

@@ -8,7 +8,6 @@
  */
 
 
-
 /*
 Typ 1 = public-files
 Typ 2 = messgages
@@ -48,6 +47,10 @@ if($gtabid AND $ID){
 
 
 
+# --- Für Feldinhalte(Suchbegriffe) ------
+use Limbas\lib\globals\SearchRequest;
+
+SearchRequest::fillFromRequest();
 
 # ----- zeige Felder ------
 get_userShow($LID,1,$ffilter);
@@ -55,18 +58,6 @@ get_userShow($LID,1,$ffilter);
 # --- Default Anzahl ----
 if(!$ffilter['anzahl'][$LID] AND $ffilter['anzahl']['def']){
 	$ffilter['anzahl'][$LID] = $ffilter['anzahl']['def'];
-}
-
-# ----------- Filterkriterien zurücksetzen ---------------
-if($reset){
-	$_ffilter['tabsize'] = $ffilter['tabsize'];
-	$_ffilter['rowsize'] = $ffilter['rowsize'];
-	$_ffilter['anzahl'] = $ffilter['anzahl'];
-	unset($ffilter);
-	$ffilter['tabsize'] = $_ffilter['tabsize'];
-	$ffilter['rowsize'] = $_ffilter['rowsize'];
-	$ffilter['anzahl'] = $_ffilter['anzahl'];
-	$gsr = null;
 }
 
 # ----- Spaltenbreite ---
@@ -199,30 +190,49 @@ if($ffilter_content_andor){
 # ---------------------------- Suchkriterien -------------------------
 
 # ---------------- Detail - Suchformular ----------------------
+/*
 if($supersearch AND $gs){
 	$gsr = $gs;
+    lmb_clean_gsr($gtabid,$gsr);
 }
+*/
 
 # ------------- Schnellsuche -------------------------------
-foreach ($gfile['id'] as $key => $val){
-	if($gfile['field_type'][$key] != 100){
-		if(isset($fs[$key][$fid][0]) AND $fs[$key][$fid][0] != $ffilter[$key][$fid][0] AND !$supersearch AND $ffilter["prev_lid"] == $LID){
-			$ffilter[$key][$fid] = $fs[$key][$fid];
-			$gsr[$gfile["tabid"][$key]][$gfile["fid"][$key]] = $ffilter[$key][$fid];
-		}elseif($gs[$gfile["tabid"][$key]][$gfile["fid"][$key]][0]){
-			$ffilter[$key][$fid] = $gs[$gfile["tabid"][$key]][$gfile["fid"][$key]];
-		}
-		if($ffilter[$key][$fid] != $gsr[$gfile["tabid"][$key]][$gfile["fid"][$key]]){
-			$gsr[$gfile["tabid"][$key]][$gfile["fid"][$key]] = $ffilter[$key][$fid];
-		}
-	}
+foreach ($gfile['id'] as $key => $val) {
+    if ($gfile['field_type'][$key] == 100) {
+        continue;
+    }
+
+    // create searchvalues from quicksearch
+    if (isset($fs[$key][$fid][0]) and $fs[$key][$fid][0] != $ffilter[$key][$fid][0] and !$supersearch and $ffilter["prev_lid"] == $LID) {
+        $ffilter[$key][$fid] = $fs[$key][$fid];
+        #$gsr[$gfile["tabid"][$key]][$gfile["fid"][$key]] = $ffilter[$key][$fid];
+    // create searchvalues from search modal
+    } elseif ($supersearch && isset($gsr[$gfile["tabid"][$key]][$gfile["fid"][$key]][0])) {
+        $ffilter[$key][$fid] = $gsr[$gfile["tabid"][$key]][$gfile["fid"][$key]];
+    // drop empty searchvalues from search modal
+    }elseif($supersearch && !$gsr[$gfile["tabid"][$key]][$gfile["fid"][$key]]){
+        unset($ffilter[$key][$fid]);
+    }
+
+    $ffilter['gsr'][$gfile["tabid"][$key]][$gfile["fid"][$key]] = $ffilter[$key][$fid];
+
+    if($filter_reset) {
+        unset($ffilter['gsr'][$gfile["tabid"][$key]][$gfile["fid"][$key]]);
+        unset($ffilter[$key][$fid]);
+    }
+
 }
 
-if($gsr) {
-    $ffilter["gsr"] = $gsr;
+# ----------- Filterkriterien zurücksetzen ---------------
+if($filter_reset){
+	$_ffilter['tabsize'] = $ffilter['tabsize'];
+	$_ffilter['rowsize'] = $ffilter['rowsize'];
+	$_ffilter['anzahl'] = $ffilter['anzahl'];
+	$ffilter['tabsize'] = $_ffilter['tabsize'];
+	$ffilter['rowsize'] = $_ffilter['rowsize'];
+	$ffilter['anzahl'] = $_ffilter['anzahl'];
 }
-
-# -------------------------------------------------------------------------
 
 
 # ---------------- Symbolleiste ----------------------
@@ -347,16 +357,16 @@ if($copy_file AND $LINK[129]){
 /* --- Actionliste Dateien --------------------------------------------- */
 #$files = $files[$LID];
 $files = $activelist["d"][$LID];
-
 if($files){
 	if(in_array("1",$files)){
-		if($ffilter["force_delete"]){$forceDelnm = array("#all#");}else{$forceDelnm = null;}
+		if($ffilter["force_delete"]){$delete_recursive = array("#all#");}else{$delete_recursive = null;}
 		foreach($files as $key => $value){
 			if($value){
 				if($value == 1){
 					# --- Datei löschen ----
 					if($del_file AND $LINK[171] AND $filestruct["del"][$LID]){
-						lmb_deleteFile($key,$forceDelnm);
+						lmb_deleteFile($key,$delete_recursive);
+                        lmb_alert($lang[116]);
 					}
 					# --- Datei in Favoriten ----
 					elseif($favorite_file AND $LINK[247]){
@@ -392,14 +402,14 @@ if($files){
 $files = $activelist["f"][$LID];
 if($files){
 	if(in_array("1",$files)){
-        if($ffilter["force_delete"]){$forceDelnm = array("#all#");}else{$forceDelnm = null;}
+        if($ffilter["force_delete"]){$delete_recursive = array("#all#");}else{$delete_recursive = null;}
 		foreach($files as $key => $value){
 			if($value){
 				lmb_StartTransaction();
 				if($value == 1){
 					# --- Ordner löschen ----
 					if($del_file AND $LINK[171] AND $filestruct["del"][$key]){
-						if(delete_dir($key,$forceDelnm)){lmb_EndTransaction(1);}else{lmb_EndTransaction(0);}
+						if(delete_dir($key,$delete_recursive)){lmb_EndTransaction(1);}else{lmb_EndTransaction(0);}
 					}
 					# --- Datei in Favoriten ----
 					elseif($favorite_file AND $LINK[247]){
@@ -408,7 +418,7 @@ if($files){
 					# --- ocr ----
 					elseif($ocr_file AND $LINK[262] AND $umgvar["ocr_enable"]){
 						require_once(COREPATH . 'extra/explorer/explorer_ocr.lib');
-						$flist = get_file_list($LEVEL,0);
+						$flist = lmb_getFilesFromLevel($LEVEL);
 						foreach ($flist as $key0 => $value0){
 							if(LmEntGenerate_ocr($key0,$LID,$ocr_destination,$ocr_format)){lmb_EndTransaction(1);}else{lmb_EndTransaction(0);}
 						}
@@ -466,7 +476,6 @@ if($favorite_file){
 if($query = get_fwhere($LID,$ffilter,$typ)){
 	$ffile = get_ffile($query,$ffilter,$LID,$typ);
 }
-
 
 
 $ffilter["prev_lid"] = $LID;

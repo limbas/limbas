@@ -60,8 +60,8 @@ function limbasCollectiveReplaceRefresh(gtabid,gfieldid,ID,gformid,formid){
 
 // Ajax Versionierung Diff
 function limbasVersionDiff(gtabid,formid,ID,VID,pdf){
-	if(pdf == 1){fct = "versionDiffPdf";}else{fct = "versionDiff";}
-	actid = "actid="+fct + "&gtabid=" + gtabid + "&formid=" + formid + "&ID=" + ID + "&VID=" + VID + "&pdf=" + pdf;
+	const fct = "versionDiff";
+	actid = "actid="+fct + "&gtabid=" + gtabid + "&formid=" + formid + "&ID=" + ID + "&VID=" + VID;
 
 	$.ajax({
 		type: "GET",
@@ -69,13 +69,7 @@ function limbasVersionDiff(gtabid,formid,ID,VID,pdf){
 		async: false,
 		data: actid,
 		success: function(data){
-			document.getElementById("lmbAjaxContainer").innerHTML = data;
-			$("#lmbAjaxContainer").css({'position':'relative','left':'0','top':'0'}).dialog({
-				resizable: true,
-				modal: true,
-				title: jsvar['lng_2354'],
-				width:'auto'
-			});
+			showFullPageModal(jsvar['lng_2354'],  $(data), 'lg');
 		}
 	});
 }
@@ -394,6 +388,7 @@ function confirm_form(id,ajax,wclose) {
 		if(id == 1){document.form1.change_ok.value='1';}
 
 		// ---- Elternelement von neuen Verkn. Datensatz ----------
+        /*
 		if(document.form1.verkn_addfrom.value && (document.form1.action.value == 'gtab_change' || document.form1.action.value == 'gtab_deterg')){
 			var addfrom = new Array();
 			var arrel = new Array();
@@ -406,7 +401,8 @@ function confirm_form(id,ajax,wclose) {
 			document.form1.verknpf.value = "";
 			document.form1.verkn_addfrom.value = addfrom.join(";");
 		}
-		
+        */
+
 		if(wclose){document.form1.wind_force_close.value = 1;}
 		document.getElementsByName("form"+id)[0].submit();
 	}
@@ -423,8 +419,19 @@ function jump_to_addfrom(KEY) {
 		for(var i=0; i<=KEY; i++){
 			new_addfrom[i] = addfrom[i];
 		}
-
 		document.form1.verkn_addfrom.value = new_addfrom.join(";");
+
+        var addfrom = new Array();
+        var arrel = new Array();
+        addfrom = document.form1.verkn_addfrom.value.split(";");
+        arrel = addfrom[addfrom.length-1].split(",");
+        document.form1.gtabid.value = arrel[0];
+        document.form1.ID.value = arrel[1];
+        document.form1.form_id.value = arrel[2];
+        addfrom.pop();
+        document.form1.verknpf.value = "";
+        document.form1.verkn_addfrom.value = addfrom.join(";");
+
 		send_form(1);
 	}
 }
@@ -540,9 +547,7 @@ function gtabSetTablePosition(reset,scrolltoY){
 	
 		return;
 	}
-	//legacy
-	
-	       
+
 
     lmb_setAutoHeight(document.getElementById("GtabTableBody"), 20 /* px margin-bottom */, reset);
 
@@ -683,6 +688,13 @@ function lmbRelationContextMenu(evt,el,ID,gtabid,custmenu) {
 
     divclose();
     evt.preventDefault();
+
+    // use data attribute
+    if(!custmenu) {
+        var custmenu = $(evt.target).closest('.element-cell').attr("data-custmenu");
+    }
+    if(!custmenu){return;}
+
     var child = 'lmb_custmenu_'+custmenu;
 
 	if(!document.getElementById(child)){
@@ -760,19 +772,24 @@ function limbasChangeCurrency(el,formname,fieldid){
         curr = numbval[1];
 	}
 
-	var currencies = Object.keys(jsvar["currency_id"]).filter(jsvar["currency_id"].hasOwnProperty.bind(jsvar["currency_id"])).reduce(function(obj, key) { obj[jsvar["currency_id"][key]] = key; return obj; }, {});
+    if(jsvar["currency_id"]) {
+        var currencies = Object.keys(jsvar["currency_id"]).filter(jsvar["currency_id"].hasOwnProperty.bind(jsvar["currency_id"])).reduce(function (obj, key) {
+            obj[jsvar["currency_id"][key]] = key;
+            return obj;
+        }, {});
 
 
-    var newHtml = '';
-    for (const [id, rate] of Object.entries(jsvar["currency_rate"][curr])) {
+        var newHtml = '';
+        for (const [id, rate] of Object.entries(jsvar["currency_rate"][curr])) {
 
 
-        const calc = limbasRoundMath(rate * numbval[0]);
+            const calc = limbasRoundMath(rate * numbval[0]);
 
-        newHtml += '<a class="lmbContextLink" onclick="limbasSetNewCurrency(\''+formname+'\',\''+calc+'\',\''+currencies[id]+'\',\''+fieldid+'\')">';
-        newHtml += currencies[id] + "&nbsp;" + calc;
-        newHtml += '</a>';
+            newHtml += '<a class="lmbContextLink" onclick="limbasSetNewCurrency(\'' + formname + '\',\'' + calc + '\',\'' + currencies[id] + '\',\'' + fieldid + '\')">';
+            newHtml += currencies[id] + "&nbsp;" + calc;
+            newHtml += '</a>';
 
+        }
     }
 
     if (!newHtml) {

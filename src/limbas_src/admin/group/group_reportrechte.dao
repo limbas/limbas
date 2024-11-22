@@ -51,25 +51,15 @@ function resullist_($typ,$myrule=null){
 	if(!$rs) {$commit = 1;}
 	$bzm = 1;
 
-	if($ruletype == 5){
-		while(lmbdb_fetch_row($rs)) {
-			$key = lmbdb_result($rs, "ID");
-			if($myrule[$key] OR !$myrule){
-				$gformlist["id"][$key] = lmbdb_result($rs, "ID");
-				$gformlist["name"][$key] = lmbdb_result($rs, "NAME");
-			}
-		}
-	}else{
-		while(lmbdb_fetch_row($rs)) {
-			$key = lmbdb_result($rs, "ID");
-			$gtabid = parse_db_int(lmbdb_result($rs, "REFERENZ_TAB"));
-			if($gtabid <= 0){$gtabid = 0;}
-			if($myrule[$key] OR !$myrule){
-				$gformlist[$gtabid]["id"][$key] = lmbdb_result($rs, "ID");
-				$gformlist[$gtabid]["name"][$key] = lmbdb_result($rs, "NAME");
-			}
-		}
-	}
+    while(lmbdb_fetch_row($rs)) {
+        $key = lmbdb_result($rs, "ID");
+        $gtabid = parse_db_int(lmbdb_result($rs, "REFERENZ_TAB"));
+        if($gtabid <= 0){$gtabid = 0;}
+        if($myrule[$key] OR !$myrule){
+            $gformlist[$gtabid]["id"][$key] = lmbdb_result($rs, "ID");
+            $gformlist[$gtabid]["name"][$key] = lmbdb_result($rs, "NAME");
+        }
+    }
 
 	return $gformlist;
 }
@@ -86,57 +76,83 @@ function group_list($ID,$first,$addsubgroup,$typ){
 			group_list(lmbdb_result($rs, "GROUP_ID"),0,$addsubgroup,$typ);
 		}
 	}
-	
-	if($typ == 5){
-		set_rules5($ID,$first,$addsubgroup,$typ);
-	}else{
-		set_rules($ID,$first,$addsubgroup,$typ);
-	}
-	
+
+    set_rules($ID,$first,$addsubgroup,$typ);
+
 }
+
+
 
 function set_rules($ID,$first,$addsubgroup,$typ){
 	global $db;
 	global $setrule;
 	global $sethidden;
-	global $setedit;
+    global $setedit;
+	global $editsethidden;
+    global $editsetedit;
+    global $editsetrule;
 	global $gtab;
 
 	$rulelist = resullist_($typ);
-
 	if($rulelist){
 	foreach ($rulelist as $key => $value){
 		if($value["id"]){
 		foreach ($value["id"] as $key2 => $value2){
 			if($value2){
 				if($addsubgroup != 1 AND !$first AND ($sethidden[$value2] OR $setrule[$value2])){continue;}
-				# neu anlegen
-				$sqlquery = "SELECT ID FROM LMB_RULES_REPFORM WHERE GROUP_ID = $ID AND REPFORM_ID = $value2 AND TYP = $typ";
+
+				$sqlquery = "SELECT ID,HIDDEN,EDITABLE,1 AS PERM FROM LMB_RULES_REPFORM WHERE GROUP_ID = $ID AND REPFORM_ID = $value2 AND TYP = $typ";
 				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 				if(!$rs) {$commit = 1;}
-				if(lmbdb_fetch_row($rs)){
+                $hasrule = lmbdb_result($rs, "PERM");
+
+                if(lmbdb_result($rs, "PERM") == $setrule[$value2]){
+                    $editsetrule[$value2] = null;
+                }
+                if(lmbdb_result($rs, "HIDDEN") == $sethidden[$value2]){
+                    $editsethidden[$value2] = null;
+                }
+                if(lmbdb_result($rs, "EDITABLE") == $setedit[$value2]){
+                    $editsetedit[$value2] = null;
+                }
+
+                if(!$editsetrule[$value2] && !$editsethidden[$value2] && !$editsetedit[$value2]){continue;}
+
+				if($hasrule){
 				    if(!$setrule[$value2]) {
                         $sqlquery = "DELETE FROM LMB_RULES_REPFORM WHERE GROUP_ID = $ID AND REPFORM_ID = $value2 AND TYP = $typ";
                         $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
                         if(!$rs) {$commit = 1;}
                     }else {
-                        if($sethidden[$value2]){
-                            $sqlquery = "UPDATE LMB_RULES_REPFORM SET HIDDEN = ".LMB_DBDEF_TRUE." WHERE GROUP_ID = $ID AND REPFORM_ID = $value2 AND TYP = $typ";
-                            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                            if(!$rs) {$commit = 1;}
-                        }elseif(!$sethidden[$value2]){
-                            $sqlquery = "UPDATE LMB_RULES_REPFORM SET HIDDEN = ".LMB_DBDEF_FALSE." WHERE GROUP_ID = $ID AND REPFORM_ID = $value2 AND TYP = $typ";
-                            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                            if(!$rs) {$commit = 1;}
+                        if($editsethidden[$value2]){
+                            if ($sethidden[$value2]) {
+                                $sqlquery = "UPDATE LMB_RULES_REPFORM SET HIDDEN = " . LMB_DBDEF_TRUE . " WHERE GROUP_ID = $ID AND REPFORM_ID = $value2 AND TYP = $typ";
+                                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                                if (!$rs) {
+                                    $commit = 1;
+                                }
+                            } elseif (!$sethidden[$value2]) {
+                                $sqlquery = "UPDATE LMB_RULES_REPFORM SET HIDDEN = " . LMB_DBDEF_FALSE . " WHERE GROUP_ID = $ID AND REPFORM_ID = $value2 AND TYP = $typ";
+                                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                                if (!$rs) {
+                                    $commit = 1;
+                                }
+                            }
                         }
-                        if($setedit[$value2]){
-                            $sqlquery = "UPDATE LMB_RULES_REPFORM SET EDITABLE = ".LMB_DBDEF_TRUE." WHERE GROUP_ID = $ID AND REPFORM_ID = $value2 AND TYP = $typ";
-                            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                            if(!$rs) {$commit = 1;}
-                        }elseif(!$setedit[$value2]){
-                            $sqlquery = "UPDATE LMB_RULES_REPFORM SET EDITABLE = ".LMB_DBDEF_FALSE." WHERE GROUP_ID = $ID AND REPFORM_ID = $value2 AND TYP = $typ";
-                            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                            if(!$rs) {$commit = 1;}
+                        if($editsetedit[$value2]) {
+                            if ($setedit[$value2]) {
+                                $sqlquery = "UPDATE LMB_RULES_REPFORM SET EDITABLE = " . LMB_DBDEF_TRUE . " WHERE GROUP_ID = $ID AND REPFORM_ID = $value2 AND TYP = $typ";
+                                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                                if (!$rs) {
+                                    $commit = 1;
+                                }
+                            } elseif (!$setedit[$value2]) {
+                                $sqlquery = "UPDATE LMB_RULES_REPFORM SET EDITABLE = " . LMB_DBDEF_FALSE . " WHERE GROUP_ID = $ID AND REPFORM_ID = $value2 AND TYP = $typ";
+                                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                                if (!$rs) {
+                                    $commit = 1;
+                                }
+                            }
                         }
 					}
                 }elseif($setrule[$value2]){
@@ -148,52 +164,6 @@ function set_rules($ID,$first,$addsubgroup,$typ){
 			}
 		}}
 	}}
-}
-
-
-function set_rules5($ID,$first,$addsubgroup,$typ){
-	global $db;
-	global $setrule;
-	global $sethidden;
-	global $setedit;
-	global $gtab;
-	
-	$rulelist = resullist_($typ);
-	
-	if($rulelist){
-		foreach ($rulelist['id'] as $key => $value){
-			if($addsubgroup != 1 AND !$first AND ($sethidden[$value] OR $setrule[$value])){continue;}
-			# neu anlegen
-			$sqlquery = "SELECT ID FROM LMB_RULES_REPFORM WHERE GROUP_ID = $ID AND REPFORM_ID = $value AND TYP = $typ";
-			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			if(!$rs) {$commit = 1;}
-
-			if(lmbdb_fetch_row($rs)){
-				    if(!$setrule[$value]) {
-                        $sqlquery = "DELETE FROM LMB_RULES_REPFORM WHERE GROUP_ID = $ID AND REPFORM_ID = $value AND TYP = $typ";
-                        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                        if(!$rs) {$commit = 1;}
-                    }elseif($setrule[$value]){
-                        $sqlquery = "UPDATE LMB_RULES_REPFORM SET HIDDEN = ".LMB_DBDEF_TRUE." WHERE GROUP_ID = $ID AND REPFORM_ID = $value AND TYP = $typ";
-                        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                        if(!$rs) {$commit = 1;}
-                    }elseif(!$sethidden[$value]){
-                        $sqlquery = "UPDATE LMB_RULES_REPFORM SET HIDDEN = ".LMB_DBDEF_FALSE." WHERE GROUP_ID = $ID AND REPFORM_ID = $value AND TYP = $typ";
-                        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                        if(!$rs) {$commit = 1;}
-                    }elseif(!$setedit[$value]){
-                        $sqlquery = "UPDATE LMB_RULES_REPFORM SET EDITABLE = ".LMB_DBDEF_FALSE." WHERE GROUP_ID = $ID AND REPFORM_ID = $value AND TYP = $typ";
-                        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                        if(!$rs) {$commit = 1;}
-                    }
-            }elseif($setrule[$value]){
-				$NEXTID = next_db_id("LMB_RULES_REPFORM");
-				$sqlquery = "INSERT INTO LMB_RULES_REPFORM (ID,TYP,GROUP_ID,LMVIEW,REPFORM_ID) VALUES ($NEXTID,$typ,$ID,".LMB_DBDEF_TRUE.",$value)";
-				$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-				if(!$rs) {$commit = 1;}
-            }
-		}
-	}
 }
 
 if($change_rules){

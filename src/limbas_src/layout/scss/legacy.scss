@@ -931,11 +931,11 @@ select.gtabHeaderInputINP {
 }
 
 .gtabBodyTRColorA{
-  background-color:$bgcolor1;
+  background-color: $legacy-table-bg-a-color;
 }
 
 .gtabBodyTRColorB{
-  background-color:none;
+  background-color: $legacy-table-bg-b-color;
 }
 
 
@@ -1066,7 +1066,7 @@ INPUT.gtabchange, TEXTAREA.gtabchange, SELECT.gtabchange{
   margin:0px;
   font-size: $umgvarfontsize;
   opacity:0.8;
-  filter:Alpha(opacity=70);
+  filter:alpha(opacity=70);
   box-sizing: border-box;
   overflow: auto; /* fixes IE-Scrollbar-Bug */
 }
@@ -1074,8 +1074,9 @@ INPUT.gtabchange, TEXTAREA.gtabchange, SELECT.gtabchange{
 INPUT.fgtabchange, TEXTAREA.fgtabchange, SELECT.fgtabchange, TABLE.fgtabchange, TD.fgtabchange{
   background-color: $farbschemaWEB13;
   border: 1px solid $farbschemaWEB3;
+  display: inline-block;
   opacity:1;
-  filter:Alpha(opacity=100);
+  filter:alpha(opacity=100);
   font-size: $umgvarfontsize;
   padding:2px;
   color:$farbschemaWEB2;
@@ -1512,10 +1513,11 @@ body.lmbBodyDropareaActive .lmbUploadDroparea {
 }
 
 .markAsActive{
-  background-image:url(../images/legacy/ok.gif);
+  background-image:url(../../assets/images/legacy/ok.gif);
   background-position:right;
   background-repeat:no-repeat;
   padding-right: 20px;
+  background-color: $success;
 }
 
 .markAsDisabled{
@@ -1552,24 +1554,6 @@ body.lmbBodyDropareaActive .lmbUploadDroparea {
 
 
 /*Global*/
-
-
-A:link {
-  text-decoration: none;
-  color: $farbschemaWEB2;
-}
-
-A:visited {
-  text-decoration: none;
-  color: $farbschemaWEB2;
-}
-
-A:hover {
-  text-decoration: underline;
-  color: $farbschemaWEB12;
-  cursor:pointer
-}
-
 
 .link {
   text-decoration: none;
@@ -2008,7 +1992,7 @@ div.calendar tbody .rowhilite td.wn {
 .ui-widget-overlay{
   background-image:none;
   opacity: .6;
-  filter: Alpha(Opacity=60);
+  filter: alpha(Opacity=60);
 }
 
 
@@ -2690,6 +2674,12 @@ label input {
     color: $farbschemaWEB2;
   }
 
+  .lmbGtabTabulatorActive,
+  .lmbGtabSubheaderActive {
+    background-color: $bg-differ;
+    color: $body-color;
+  }
+
   .lmbGtabSubheaderInactive,
   .lmbGtabTabulatorInactive {
     border: none;
@@ -2746,7 +2736,7 @@ label input {
 
   .gtabHeaderSymbolTD,
   .gtabHeaderSymbolTR {
-    color: #fff;
+    color: $nav-center-color !important;
     background: $nav-center-background-color;
   }
 

@@ -7,15 +7,6 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
-
-$phpvok = version_compare(PHP_VERSION, '5.5.4') >= 0;
-if(!$GLOBALS['umgvar']['csv_escape']){
-    $GLOBALS['umgvar']['csv_escape'] = "\\";
-    $phpvok = false;
-}
-
-
 function lmbExport_infotext(){
 
 	$info = "
@@ -43,7 +34,7 @@ function lmbExport_infotext(){
  * @param tring $format (excel,txt,system,dump)
  * @param string $export_filter (where clausel without "WHERE")
  */
-function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_encode=null){
+function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null){
 	global $db;
     global $umgvar;
 	global $session;
@@ -53,7 +44,7 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
 	global $DBA;
 
 	/* --- Tempdir löschen -------------------------------------- */
-	$systemquery = "rm ".$umgvar["pfad"]."/USER/".$session["user_id"]."/temp/*";
+	$systemquery = "rm ".USERPATH.$session["user_id"]."/temp/*";
 	$sys = system($systemquery);
 	if($export_filter){$export_filter = stripslashes($export_filter);}
 
@@ -129,31 +120,18 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
 			$exptables[] = "LMB_REPORTS";
 			$export_filter[lmb_count($exptables)-1] = "WHERE BERICHT_ID IN(".implode(',',$exptable["report"]).")";
 		}
-		
+
+        // project export - bundle
 		if(lmbExport_ToSystem($exptables,$exptable,$export_filter,$tableprefix)){
-			$path = "USER/".$session["user_id"]."/temp";
-			if($expfile = make_fileArchive($path,"export_bundle")){
-    			/*
-			    echo  "<div>
-    			<i class=\"lmb-icon lmb-download\" style=\"font-size:20px\"></i><b> $lang[975]</b><br>
-    			&nbsp;<li><I><A NAME=\"download\" HREF=\"$path_\" style=\"color:green;\">".$path_."</A></I></li>
-    			</div>";
-    			echo '<script language="JavaScript">limbasWaitsymbol(false,false,true);</script>';
-    			*/
-			}
+            if(make_fileArchive("export_bundle")) {
+                $expfile["name"][] = 'export_bundle.tar.gz';
+                $expfile["path"][] = lmb_getDownloadHash(USERPATH . $session["user_id"] . '/temp','export_bundle.tar.gz','application/x-tar');
+            }
+
 		}
 		
 	}elseif ($format == 'sync'){
-		//$includetabs = array('lmb_action_depend',    'lmb_form_list',    'lmb_field_types',    'lmb_conf_views',    'lmb_forms',    'lmb_currency',    'lmb_trigger',    'lmb_tabletree',    'lmb_conf_viewfields',    'lmb_gtab_status_save',    'lmb_fonts',    'lmb_colorschemes',    'lmb_wfl_task',    'lmb_conf_fields',    'lmb_gtab_pattern',    'lmb_sequences',    'lmb_action',    'lmb_report_list',    'lmb_conf_tables',    'lmb_user_colors',    'lmb_reminder_list',    'lmb_reports',    'lmb_lang',    'lmb_wfl',    'lmb_charts',    'lmb_crontab',    'lmb_lang_depend'); 
-	
-		//Users Groups
-		// ,'lmb_userdb',	'lmb_usrgrp_lst',	'lmb_rules_dataset',	'lmb_groups',    'lmb_rules_tables',	'lmb_rules_fields',	'lmb_conf_groups',    'lmb_rules_repform',	'lmb_rules_action')
-	
-		
-		//Gruppen Tabellen Formulare Berichte Workflow Sonstiges
-		
-		//$includetabs['tab'] = array(s'lmb_action_depend',  f'lmb_form_list',    t'lmb_field_types',    t'lmb_conf_views',    f'lmb_forms',    s'lmb_currency',    t'lmb_trigger',    t'lmb_tabletree',    t'lmb_conf_viewfields',    s'lmb_fonts',    s'lmb_colorschemes',    w'lmb_wfl_task',    t'lmb_conf_fields',    t'lmb_gtab_pattern',    t'lmb_sequences',    s'lmb_action',    b'lmb_report_list',    t'lmb_conf_tables',    s'lmb_user_colors',    s'lmb_reminder_list',    b'lmb_reports',    s'lmb_lang',    w'lmb_wfl',    s'lmb_crontab',    s'lmb_lang_depend'); 
-		
+
 		$tosync = array();
 		
 		$exporttabs = in_array('tabs',$tableprefix);
@@ -225,7 +203,7 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
 		// snapshot
         if (in_array('snapshots',$tableprefix))
         {
-            $tosync = array_merge($tosync, array('lmb_snap','lmb_snap_shared') );
+            $tosync = array_merge($tosync, array('lmb_snap','lmb_snap_shared','lmb_snap_group') );
         }
 
 		// reminder
@@ -405,7 +383,7 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
 				$expTables[] = $table;
 			} else
             // tables for config only export
-            if (((lmb_strpos(lmb_strtolower($table),'lmb_') === false OR lmb_strtoupper($table) == 'LMB_CUSTVAR_DEPEND')) && lmb_strpos(lmb_strtolower($table),'ldms_') === false && $exporttabs)
+            if (((lmb_strpos(lmb_strtolower($table),'lmb_') === false OR lmb_strtoupper($table) == 'LMB_CUSTVAR_DEPEND')) && ( lmb_strpos(lmb_strtolower($table),'ldms_') === false) && $exporttabs)
             {
                 $expTableConf[] =  $table;
             }
@@ -421,16 +399,18 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
             }
 		}
 		
-		$path = "/USER/".$session["user_id"]."/temp";
+		$path = USERPATH.$session["user_id"]."/temp";
 
         // tables for complete export
         $exp1 = lmbExport_ToSystem($expTables);
         // tables for config only export
         $exp2 = lmbExport_ToSystem($expTableConf,null,null,null,true);
 
-		if($exp1 || $exp2 || (lmb_count($expTables) == 0 && file_exists($umgvar['pfad'] . $path.'/export.php'))){
+
+        // sync export bundle
+		if($exp1 || $exp2 || (lmb_count($expTables) == 0 && file_exists( $path.'/export.php'))){
 			//füge der bestehenden export.php das Array der nicht Systemtabellen an
-			$str=file_get_contents($umgvar['pfad'] . $path.'/export.php');
+			$str=file_get_contents( $path.'/export.php');
 			$var_str = var_export($expTableConf, true);
 			$str=str_replace('?>','$tosyn = '.$var_str.'; ?>',$str);
 			$var_str2 = var_export($tableprefix, true);
@@ -441,10 +421,13 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
             $str=str_replace('?>',"\n" . '$globalSyncTables = '.$var_str2.'; ?>',$str);
             $var_str2 = var_export($callExtensionFunctionName ? $callExtensionFunctionName : '', true);
             $str=str_replace('?>',"\n" . '$callExtensionFunctionName = '.$var_str2.'; ?>',$str);
-			file_put_contents($umgvar['pfad'] . $path.'/export.php', $str);
+			file_put_contents( $path.'/export.php', $str);
 
-			//Erstelle Package
-			$expfile = make_fileArchive(ltrim($path, "/"),"sync_export_bundle");
+			// sync export - bundle
+            if(make_fileArchive("sync_export_bundle")) {
+                $expfile['name'][] = "sync_export_bundle.tar.gz";
+                $expfile["path"][] = lmb_getDownloadHash(USERPATH . $session["user_id"] . '/temp','sync_export_bundle.tar.gz','application/x-tar');
+            }
 
 		}
 	}
@@ -469,7 +452,7 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null,$txt_
  * @param string $format (excel,txt)
  * @param string $export_filter (where clausel without "WHERE")
  */
-function lmbExport_ToText($exptable,$format,$export_filter=null,$txt_encode=null){
+function lmbExport_ToText($exptable,$format,$export_filter=null){
 	global $umgvar;
 	global $session;
 	global $db;
@@ -483,12 +466,12 @@ function lmbExport_ToText($exptable,$format,$export_filter=null,$txt_encode=null
 		$enclosure = ($umgvar['csv_enclosure'] == "") ? '"' : $umgvar['csv_enclosure'];
 		if($umgvar['csv_delimiter'] == '\t'){$delimiter = "\t";}
 		
-		if($format == "excel"){$ext = "csv";}
-		elseif($format == "txt"){$ext = "txt";}
+		if($format == "excel"){$ext = "csv";$mimetype="text/x-csv";}
+		elseif($format == "txt"){$ext = "txt";$mimetype="text/plain";}
 		
 		foreach ($exptable as $bzm0 => $value0){
 			/* --- Datei_Erstellung ----------------------------------- */
-			$path = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/".$exptable[$bzm0].".".$ext;
+			$path = USERPATH.$session["user_id"]."/temp/".$exptable[$bzm0].".".$ext;
 			$expdatei = fopen($path,"w+");
 
 			/* ------------ Inhalt ----------------------------------- */
@@ -531,14 +514,7 @@ function lmbExport_ToText($exptable,$format,$export_filter=null,$txt_encode=null
 					$bzm1++;
 				}
 
-                // fputs($expdatei,$zeile."\n");
-                if ($txt_encode) {
-                    if ($umgvar["charset"] == "UTF-8") {
-                        $zeile = array_map("lmb_utf8_decode", $zeile);
-                    } else {
-                        $zeile = array_map("lmb_utf8_encode", $zeile);
-                    }
-                }
+
 				
 				//$list[] = $zeile;
 				lmb_fputcsv($expdatei, $zeile);
@@ -546,32 +522,16 @@ function lmbExport_ToText($exptable,$format,$export_filter=null,$txt_encode=null
 				$bzm++;
 			}
 
-			/*
-			if($txt_encode)
-			{
-				if($umgvar["charset"] == "UTF-8"){
-					array_map("utf8_encode", $list );
-				}else{
-					array_map("utf8_decode", $list );
-				}
-			}
-			
-			
-			foreach ($list as $fieldsvalue) {
-                lmb_fputcsv($expdatei, $fieldsvalue);
-			}
-			
-			*/
-
 			lmbdb_free_result($rs);
 			fclose($expdatei);
-			
+
 			# return link
 			if(file_exists($path)){
 				$result_exp_tabs++;
-				#$sys = system("gzip $path");
-				$result_backup["name"][] = $exptable[$bzm0].".$ext";
-				$result_backup["path"][] = "USER/".$session["user_id"]."/temp/".$exptable[$bzm0].".$ext";
+
+                // single export to text
+                $result_backup["name"][] = $exptable[$bzm0].'.'.$ext;
+                $result_backup["path"][] = lmb_getDownloadHash(USERPATH . $session["user_id"] . '/temp',$exptable[$bzm0].'.'.$ext,$mimetype);
 			}
 		}
 		if($result_backup){
@@ -625,9 +585,9 @@ function lmbExport_ToSystem($exptable,$explist=null,$export_filter=null,$tablepr
 			unset($COLUM);
 			unset($line);
 
-			$config_datei = fopen($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.conf","w+");
-			if (!$configonly){$table_datei = fopen($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.dat","w+");}
-			$pfad = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/";
+			$config_datei = fopen(USERPATH.$session["user_id"]."/temp/export.conf","w+");
+			if (!$configonly){$table_datei = fopen(USERPATH.$session["user_id"]."/temp/export.dat","w+");}
+			$pfad = USERPATH.$session["user_id"]."/temp/";
 
 			$info = lmbExport_infotext();
 			/* ---> conf */ fputs($config_datei,$info);
@@ -675,10 +635,18 @@ function lmbExport_ToSystem($exptable,$explist=null,$export_filter=null,$tablepr
 					}
 					}*/
 
-					# mysql workaround for stupid timestamp default value
-					if($GLOBALS['DBA']['DB'] == 'mysql' AND $DEFAULT == '0000-00-00 00:00:00'){
-						$DEFAULT = '';
-					}
+					# mysql workaround for stupid mysql issues
+					if($GLOBALS['DBA']['DB'] == 'mysql') {
+                        if ($DEFAULT == '0000-00-00 00:00:00') {
+                            $DEFAULT = '';
+                        }
+                        if($DEFAULT == 'NULL'){
+                            $DEFAULT = '';
+                        }
+                        if($MODE == 'NULL'){
+                            $MODE = '';
+                        }
+                    }
 
 					/* ---> conf */
 					fputs($config_datei, "$COLUMNNAME::$DATATYPE::$CODETYPE::$LEN::$SCALE::$MODE::$DEFAULT\n");
@@ -709,13 +677,8 @@ function lmbExport_ToSystem($exptable,$explist=null,$export_filter=null,$tablepr
 					while($COLUM[$bzm2]){
 						$erg = lmbdb_result($rs, $COLUM[$bzm2]);
 
-						// mask \" for fputcsv
-						if (! $GLOBALS['phpvok']) {
-							$erg = str_replace('\\"', '#BSLQUT#', $erg);
-						}
-
 						if($GLOBALS['DBA']['DB'] == 'mysql' AND $erg == '0000-00-00 00:00:00'){$erg = '';}
-						#/* ---> tab  */ fputs($table_datei,$erg."\t");
+
 						/* ---> tab  */ $line[] = $erg;
 						$bzm2++;
 					}
@@ -764,37 +727,42 @@ function lmbExport_ToSystem($exptable,$explist=null,$export_filter=null,$tablepr
 			/* ---> conf */ fputs($config_datei,"<end keydefinition>\n\n");
 
 			fclose($config_datei);
+            $newfilename = strtolower($newtablename);
 
 			if (!$configonly)
 			{
 				fclose($table_datei);
-				$systemquery = "tar -c -z -C ".$pfad." -f ".$pfad.$newtablename.".tar.gz "."export.conf export.dat";
+				$systemquery = "tar -c -z -C ".$pfad." -f ".$pfad.$newfilename.".tar.gz "."export.conf export.dat";
 				#$sys = exec($systemquery);
 				system($systemquery,$t);
 			}
 			else if ($configonly)
 			{
-				rename($pfad."export.conf", $pfad.$newtablename.".conf");
+				rename($pfad."export.conf", $pfad.$newfilename.".conf");
 			}
 
 			# return link
-			if(file_exists($pfad.$newtablename.".tar.gz")){
+			if(file_exists($pfad.$newfilename.".tar.gz")){
 				$result_exp_tabs++;
-				$result_backup["name"][] = $newtablename.".tar.gz";
-				$result_backup["path"][] = "USER/".$session["user_id"]."/temp/".$newtablename.".tar.gz";
+                $fname = $newfilename.'.tar.gz';
+
 			}elseif ($configonly) {
 				$result_exp_tabs ++;
-				$result_backup["name"][] = $newtablename . ".conf";
-				$result_backup["path"][] = "USER/" . $session["user_id"] . "/temp/" . $newtablename . ".conf";
+                $fname = $newfilename.'.conf';
 			}
+
+            // single export to system
+            $result_backup["name"][] = $fname;
+            $result_backup["path"][] = lmb_getDownloadHash(USERPATH . $session["user_id"] . '/temp',$fname,'application/x-tar');
+
 		}
 
 		/* --- alte Dateien löschen -------------------------------------- */
-		if(file_exists($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.conf")){
-			unlink($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.conf");
+		if(file_exists(USERPATH.$session["user_id"]."/temp/export.conf")){
+			unlink(USERPATH.$session["user_id"]."/temp/export.conf");
 		}
-		if(file_exists($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.dat")){
-			unlink($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.dat");
+		if(file_exists(USERPATH.$session["user_id"]."/temp/export.dat")){
+			unlink(USERPATH.$session["user_id"]."/temp/export.dat");
 		}
 
 		/* ---------  save export params to config-file --------- */
@@ -819,9 +787,11 @@ function lmbExport_ToSystem($exptable,$explist=null,$export_filter=null,$tablepr
 			$config_export['encoding'] = $GLOBALS["umgvar"]["charset"];
 			$var_str = var_export($config_export, true);
 			$var = "<?php\n\n\$export_conf = $var_str;\n\n?>";
-			$config_export_datei = fopen($umgvar["pfad"]."/USER/".$session["user_id"]."/temp/export.php","w+");
+			$config_export_datei = fopen(USERPATH.$session["user_id"]."/temp/export.php","w+");
 			fwrite($config_export_datei,$var);
 			fclose($config_export_datei);
+
+
 
 			if($result_backup){
 				return $result_backup;
@@ -850,7 +820,7 @@ function lmbExport_Dump($format,$struct_only=false){
 	/* --- Verzeichnis Prüfen ------- */
 	unset($ext);
 	
-	if($folderval = read_dir($umgvar["pfad"]."/BACKUP")){
+	if($folderval = read_dir(BACKUPPATH)){
 		foreach($folderval["name"] as $key => $value){
 			$pfad[] = str_replace("_","",substr($value,6,2).lmb_substr($value,3,2).lmb_substr($value,0,2));
 		}
@@ -866,11 +836,11 @@ function lmbExport_Dump($format,$struct_only=false){
 	}
 
 
-	mkdir($umgvar['pfad']."/BACKUP/".date("d_m_y").$ext,0777);
+	mkdir(BACKUPPATH.date("d_m_y").$ext,0777);
 
 
 	/* --- Configurations_Datei ------- */
-	$config_datei = fopen($umgvar['pfad']."/BACKUP/".date("d_m_y").$ext."/export.conf","w+");
+	$config_datei = fopen(BACKUPPATH.date("d_m_y").$ext."/export.conf","w+");
 	$info = lmbExport_infotext();
 	/* ---> conf */ fputs($config_datei,$info);
 
@@ -880,7 +850,7 @@ function lmbExport_Dump($format,$struct_only=false){
 
 		unset($COLUM);
 		unset($line);
-		$table_datei = fopen($umgvar['pfad']."/BACKUP/".date("d_m_y").$ext."/$table","w+");
+		$table_datei = fopen(BACKUPPATH.date("d_m_y").$ext."/$table","w+");
 
 		/* ---> conf */ fputs($config_datei,"<encoding ".$umgvar['charset'].">\n\n");
 
@@ -942,17 +912,7 @@ function lmbExport_Dump($format,$struct_only=false){
                     $line = array();
                     $bzm2 = 0;
                     while (isset($COLUM[$bzm2])) {
-                        //$erg = str_replace("\t","#TAB#",lmbdb_result($rs, $COLUM[$bzm2]));
-                        //$erg = str_replace("\r\n","#NEXTLINE#",$erg);
-                        //$erg = str_replace("\n","#NEXTLINE#",$erg);
-                        //$erg = str_replace("\\","#BACKSL#",$erg);
-
                         $erg = lmbdb_result($rs, $COLUM[$bzm2]);
-
-                        // mask \" for fputcsv
-                        if (!$GLOBALS['phpvok']) {
-                            $erg = str_replace('\\"', '#BSLQUT#', $erg);
-                        }
 
                         if ($GLOBALS['DBA']['DB'] == 'mysql' AND $erg == '0000-00-00 00:00:00') {
                             $erg = '';
@@ -1039,15 +999,25 @@ function lmbExport_Dump($format,$struct_only=false){
 
 
 	/* --- Komplettexport packen -------------------------------------- */
-	$path = $umgvar["pfad"]."/BACKUP";
-	#$systemquery = "tar -c -z -C ".$path." -f ".$umgvar['pfad']."/USER/".$session['user_id']."/temp/export.tar ".date("d_m_y").$ext;
-	$systemquery = "tar -c -z -C ".$path." -f ".$path."/".date("d_m_y").$ext.".tar.gz ".date("d_m_y").$ext;
+	$path = DEPENDENTPATH."/BACKUP";
+    $name = date("d_m_y").$ext.".tar.gz";
+    $path_backup = $path."/".$name;
+	$systemquery = "tar -c -z -C ".$path." -f $path_backup ".date("d_m_y").$ext;
 	$sys = exec($systemquery);
 	rmdirr($path."/".date("d_m_y").$ext,0,1,1);
-	$path_backup = $path."/".date("d_m_y").$ext.".tar.gz";
-	
-	# return link
-	if(file_exists($path_backup)){return "BACKUP/".date("d_m_y").$ext.".tar.gz";}else{return false;}
+
+		# return link
+	if(file_exists($path_backup)){
+
+        // komplett export
+        $result_backup["name"] = $name;
+        $result_backup["url"] = lmb_getDownloadHash($path,$name,'application/x-tar');
+
+        return $result_backup;
+
+    }else{
+        return false;
+    }
 }
 
 
@@ -1138,7 +1108,7 @@ function lmbExport_remoteSync($toSync, $remoteHost, $remoteUser, $remotePass, $p
 
     # sync export /
     # create local sync_export_bundle.tar.gz
-    $exportFile = $umgvar['pfad'] . "/USER/" . $session['user_id'] . "/temp/sync_export_bundle.tar.gz";
+    $exportFile = USERPATH . $session['user_id'] . "/temp/sync_export_bundle.tar.gz";
     if(!($skiplocal AND file_exists($exportFile))) {
         if (lmbExport(null, 'sync', null, $toSync) === false) { # TODO params?
             return false;

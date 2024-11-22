@@ -32,7 +32,7 @@
  * @param int $i recursion depth
  * @return string
  */
-function parse_db_syntax($name, $typ = 0, $i = 0)
+function parse_db_syntax($name, $typ = 0, $i = 0, $rename=true)
 {
     global $db;
     global $DBA;
@@ -98,10 +98,11 @@ function parse_db_syntax($name, $typ = 0, $i = 0)
     }
     
     if (in_array(lmb_strtoupper($name), $sqlreserved) or $odbc_res) {
+        if(!$rename){return false;}
         $i = $i + 1;
         $name = parse_db_syntax($name, $typ, $i);
     }
-    
+
     return dbf_4($name);
 }
 
@@ -115,6 +116,23 @@ function lmb_get_tablename($tabid){
     if (lmbdb_fetch_row($rs)) {
         return dbf_4(lmbdb_result($rs, "TABELLE"));
     }
+}
+
+/*
+ * get relation field name for 1:n direct relations
+ */
+function lmb_get_relationFieldName($rfield,$tablename){
+    global $DBA;
+
+    // simple relation fieldname
+    $refieldname = dbf_4('LMB_' . substr($rfield['tabname'], 0, 10) . '_ID');
+    if(parse_db_syntax($refieldname, $tablename, rename:false) === false){
+        $refieldname = 'LMB_' . substr($rfield['tabname'], 0, 10) . '_' . substr($rfield['fieldname'], 0, 10) . '_ID';
+        $refieldname = dbf_4(parse_db_syntax($refieldname, $tablename));
+    }
+
+    return $refieldname;
+
 }
 
 
@@ -510,8 +528,8 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
 			# übergehe Transaktion bei Fehlern
 			$GLOBALS["lmb_transaction"] = 1;
 			
-			$forceDelnm[0] = "#all#";
-			if(!delete_dir(lmbdb_result($rs3, "ID"),$forceDelnm)){
+			$delete_recursive[0] = "#all#";
+			if(!delete_dir(lmbdb_result($rs3, "ID"),$delete_recursive)){
 				$commit = 1;
 				$md5tab_allready_deleted = 1;
 			}
@@ -1083,7 +1101,7 @@ function add_tab($gtable,$tab_group,$beschreibung,$verkn,$typ,$add_permission,$i
 	$keyfield = 'ID';
 	if($typ == 5){$keyfield = '';}
 
-	$sqlquery = "INSERT INTO LMB_CONF_TABLES (ID,TAB_ID,TAB_GROUP,SORT,TABELLE,BESCHREIBUNG,LOCKABLE,MARKCOLOR,VERKN,TYP,VERSIONING,USERRULES,KEYFIELD) VALUES ($max_id,$max_tabid,$tab_group,$max_sort,'".$gtable."',$desc_id,".LMB_DBDEF_FALSE.",'',$verkn,".parse_db_int($typ,2).",".parse_db_int($versioning,1).",".parse_db_bool($userules).",'".parse_db_string($keyfield)."')";
+	$sqlquery = "INSERT INTO LMB_CONF_TABLES (ID,TAB_ID,TAB_GROUP,SORT,TABELLE,BESCHREIBUNG,LOCKABLE,MARKCOLOR,VERKN,TYP,VERSIONING,USERRULES,KEYFIELD,RECURSIV_DELETE,RECURSIV_ARCHIVE) VALUES ($max_id,$max_tabid,$tab_group,$max_sort,'".$gtable."',$desc_id,".LMB_DBDEF_FALSE.",'',$verkn,".parse_db_int($typ,2).",".parse_db_int($versioning,1).",".parse_db_bool($userules).",'".parse_db_string($keyfield)."',".LMB_DBDEF_TRUE.",".LMB_DBDEF_TRUE.")";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
@@ -2390,8 +2408,8 @@ function lmb_set_relation_table($tabid,$fieldid,$new_verkntabid,&$rfield,$new_ve
 
     // add simple 1:n relation - add ID field in relation table
     if ($datatype == 25) {
-        $refieldname = 'LMB_' . substr($rfield['tabname'], 0, 10) . '_' . substr($rfield['fieldname'], 0, 10) . '_ID';
-        $refieldname = dbf_4(parse_db_syntax($refieldname, $verkntabname));
+        $refieldname = lmb_get_relationFieldName($rfield,$verkntabname);
+
         if (!dbf_5(array($DBA["DBSCHEMA"], $verkntabname, $refieldname))) {
             $sqlquery = dbq_29(array($DBA["DBSCHEMA"], $verkntabname, $refieldname, LMB_DBTYPE_FIXED . '(18)'));
             $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
@@ -2617,11 +2635,10 @@ function lmb_set_relation_field($fieldid,$tabid,$new_verknfieldid,&$rfield,$back
 }
 
 # --- Verknüpfungsfeld (search) in LMB_CONF_FIELDS eintragen -----------------
-function lmb_set_relation_params($fieldid,$tabid,$new_verknsearchid,$new_verknfindid,$new_verknviewid,$verknsort,$verknsortf,$viewidcut,$findidcut){
+function lmb_set_relation_params($fieldid,$tabid,$new_verknsearchid,$new_verknfindid,$new_verknviewid,$verknsort,$verknsortf,$viewidcut,$findidcut,&$rfield){
 	global $db;
 	global $umgvar;
 	global $session;
-	global $rfield;
 	global $action;
 
 	if(is_array($new_verknsearchid)){$new_verknsearchid = implode(",",$new_verknsearchid);}
@@ -2646,14 +2663,12 @@ function lmb_set_relation_params($fieldid,$tabid,$new_verknsearchid,$new_verknfi
 	}
 
 	$sqlquery =  "UPDATE LMB_CONF_FIELDS SET VERKNSEARCH = '".parse_db_string($new_verknsearchid,50)."',VERKNVIEW = '".parse_db_string($new_verknviewid,50)."',VERKNFIND = '".parse_db_string($new_verknfindid,50)."' WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
-
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}else{
         $rfield['verknsearchid'] = explode(",",$new_verknsearchid);
         $verknviewid_ = explode("?",$new_verknviewid);$rfield['verknviewid'] = explode(",",$verknviewid_[0]); $rfield['viewidcut'] = $verknviewid_[1];
         $verknfindid_ = explode("?",$new_verknfindid);$rfield['verknfindid'] = explode(",",$verknfindid_[0]); $rfield['findidcut'] = $verknfindid_[1];
 	}
-
 
 }
 
@@ -2766,10 +2781,9 @@ function createRelationParams($tabid,$fieldid,$new_vparams,&$rfield){
 
 /* --- Recusive Verknüpfung ---------------------------------------------*/
 
-function createRecRelation($tabid,$fieldid,$relationtree){
+function createRecRelation($tabid,$fieldid,$relationtree,&$rfield){
 	global $db;
 	global $DBA;
-	global $rfield;
 	global $gfield;
 	global $gtab;
 
@@ -2880,11 +2894,11 @@ function lmb_has_duplicates($array){
 /*
 * Returns array of all verkntabs from tabid to verkntabid
 */
-function recrelationtree(){
+function recrelationtree($rfield){
 	global $tabid;
 
 	// Collect data
-	$branches = recrelationsubtree(2,$tabid);
+	$branches = recrelationsubtree(2,$tabid, null, $rfield);
 	// List of verkntabs -> List of tables ids
 	$branchesFiltered = array();
 	$branchesIds = array();
@@ -2908,7 +2922,7 @@ function recrelationtree(){
 /*
 * Recursive function for recrelationtree()
 */
-function recrelationsubtree($first,$gtabid,$searched=null){
+function recrelationsubtree($first,$gtabid,$searched=null, $rfield=null){
 	global $gfield;
 	global $gtab;
 	global $rfield;
@@ -2927,7 +2941,7 @@ function recrelationsubtree($first,$gtabid,$searched=null){
 			//Wenn keine Rückwärtige Verknüpfung
 			#if($gfield[$gtabid]['verkntabletype'][$fieldid] != 2){
 			//Rekursiver Aufruf
-			$branch = recrelationsubtree($first - 1,$reltabid,$searched);
+			$branch = recrelationsubtree($first - 1,$reltabid,$searched, $rfield);
 			if(!is_array($branch)){
 				//Verknüpfte Tabelle ist die gesuchte Tabelle
 				$r = array();
@@ -2948,7 +2962,10 @@ function recrelationsubtree($first,$gtabid,$searched=null){
 /*
 * rebuild 1:n relation from fieldvalues
 */
-function lmb_rebuild_relation(){
+function lmb_rebuild_relation($rfield,$v_field1,$v_field2){
+    global $db;
+    global $session;
+    global $lang;
 
 	/* --- Transaktion START ------------------------------------------------ */
 	#lmb_StartTransaction();
@@ -2959,17 +2976,21 @@ function lmb_rebuild_relation(){
 	$sqlquery =  "SELECT ID,$v_field1 FROM ".$rfield['tabname'];
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
+    $NEXTID = 0;
 	while(lmbdb_fetch_row($rs)) {
 		$ID = lmbdb_result($rs, "ID");
 		if(lmbdb_result($rs, $v_field1)){
+
 			$sqlquery1 =  "SELECT ID FROM ".$rfield['verkntabname']." WHERE ".$v_field2." = '".lmbdb_result($rs, $v_field1)."'";
+            error_log($sqlquery1);
 			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 			$bzm1 = 0;
 			while(lmbdb_fetch_row($rs1)) {
 				$NEXTID = next_db_id($rfield['md5tab'],"KEYID",1);
 				$sqlquery3 =  "INSERT INTO ".$rfield['md5tab']." (KEYID,ERSTUSER,ID,VERKN_ID) VALUES ($NEXTID,".$session["user_id"].",".$ID.",".lmbdb_result($rs1, "ID").")";
-				$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
+
+                $rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 				if(!$rs3) {$commit = 1;}
 				$bzm1++;
 			}
@@ -2981,7 +3002,7 @@ function lmb_rebuild_relation(){
 		}
 		$bzm++;
 	}
-	$message2 = "<span class=\"fw-bold\">$NEXTID</span> {$lang[939]} <span class=\"fw-bold\">{$rfield['md5tab']}</span> {$lang[940]}!";
+    lmb_alert($NEXTID.' '.$lang[939]);
 
 	# --- Transaktion ENDE --------
 	#lmb_EndTransaction(!$commit);

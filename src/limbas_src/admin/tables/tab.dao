@@ -165,6 +165,36 @@ function set_multitenant($tabid,$tabname,$multitenant){
 
 }
 
+
+function set_checksum($tabid,$tabname,$checksum){
+    global $db;
+    global $DBA;
+    global $umgvar;
+
+    $checksum = trim($checksum);
+    if($checksum == 2){$checksum = 0;}
+    
+	$sqlquery =  "UPDATE LMB_CONF_TABLES SET CHECKSUM = ".parse_db_bool($checksum)." WHERE TAB_ID = $tabid";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+	
+	$odbc_column = dbf_5(array($DBA["DBSCHEMA"],$tabname,"LMB_CHECKSUM"));
+	if($checksum == 1 AND !$odbc_column) {
+        $new_['field'] = array('LMB_CHECKSUM');
+        $new_['type'] = array(LMB_DBTYPE_VARCHAR . '(32)');
+        $sqlquery1 = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'], $tabname, $new_['field'], $new_['type']));
+        $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+        if (!$rs1) {$commit = 1;}
+	}elseif($checksum == 0 AND $odbc_column){
+        $drop_ = array('LMB_CHECKSUM');
+        $sqlquery1 = dbq_22(array($tabname,$drop_));
+		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
+		if(!$rs1) {$commit = 1;}
+	}
+
+}
+
+
 # --- Transaktion START ------
 lmb_StartTransaction(1);
 
@@ -172,9 +202,10 @@ lmb_StartTransaction(1);
 
 // Tabelname
 if($tabid) {
-    $sqlquery = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE TAB_ID = $tabid";
+    $sqlquery = "SELECT TABELLE,TAB_GROUP FROM LMB_CONF_TABLES WHERE TAB_ID = $tabid";
     $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     $tablename = lmbdb_result($rs, "TABELLE");
+    $tabgroupid = lmbdb_result($rs, "TAB_GROUP");
 }
 
 /* ---------------------- Gruppen ------------------------ */
@@ -426,15 +457,20 @@ if($validity OR $validity_version) {
     }
 }
 
-
 /* --- datasync -------------------------------------- */
 if($datasync) {
-        set_datasync($tabid,$tablename,$datasync);
+    set_datasync($tabid,$tablename,$datasync);
 }
+
+/* --- CHECKSUM -------------------------------------- */
+if($checksum) {
+    set_checksum($tabid,$tablename,$checksum);
+}
+
 
 /* --- datasync -------------------------------------- */
 if($multitenant AND $tabid) {
-        set_multitenant($tabid,$tablename,$multitenant);
+    set_multitenant($tabid,$tablename,$multitenant);
 }
 
 /* --- ErgenisAnzahl -------------------------------------- */
@@ -442,6 +478,24 @@ if($numrowcalc) {
 	$numrowcalc = trim($numrowcalc);
 	if($numrowcalc == -1){$numrowcalc = 0;}
 	$sqlquery =  "UPDATE LMB_CONF_TABLES SET NUMROWCALC = ".parse_db_int($numrowcalc,1)." WHERE TAB_ID = $tabid";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
+/* --- detailform -------------------------------------- */
+if($detailform) {
+	$detailform = trim($detailform);
+	if($detailform == -1){$custmenu = 0;}
+	$sqlquery =  "UPDATE LMB_CONF_TABLES SET DETAILFORM = ".parse_db_int($detailform)." WHERE TAB_ID = $tabid";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
+/* --- detailform open as -------------------------------------- */
+if($detailform_opener) {
+	$detailform_opener = trim($detailform_opener);
+	if($detailform_opener == -1){$detailform_opener = 0;}
+	$sqlquery =  "UPDATE LMB_CONF_TABLES SET DETAILFORM_OPENER = ".parse_db_int($detailform_opener)." WHERE TAB_ID = $tabid";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 }
@@ -463,7 +517,7 @@ if($groupable) {
 	if(!$rs) {$commit = 1;}
 }
 
-/* --- Gruppierung -------------------------------------- */
+/* --- RECURSIV_DELETE -------------------------------------- */
 if($recursiv_delete) {
 	if($recursiv_delete == 1){$recursiv_delete = LMB_DBDEF_TRUE;}else{$recursiv_delete = LMB_DBDEF_FALSE;}
 	$sqlquery =  "UPDATE LMB_CONF_TABLES SET RECURSIV_DELETE = $recursiv_delete WHERE TAB_ID = $tabid";
@@ -471,11 +525,24 @@ if($recursiv_delete) {
 	if(!$rs) {$commit = 1;}
 }
 
+/* --- RECURSIV_ARCHIVE -------------------------------------- */
+if($recursiv_archive) {
+	if($recursiv_archive == 1){$recursiv_archive = LMB_DBDEF_TRUE;}else{$recursiv_archive = LMB_DBDEF_FALSE;}
+	$sqlquery =  "UPDATE LMB_CONF_TABLES SET RECURSIV_ARCHIVE = $recursiv_archive WHERE TAB_ID = $tabid";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
 /* --- Trigger -------------------------------------- */
-$trg = $GLOBALS['tab_trigger_'.$trigger];
-if($trigger OR is_array($trg)) {
-	if(!is_array($trg)){$trg = array();}
-	$sqlquery =  "UPDATE LMB_CONF_TABLES SET LMTRIGGER = '".parse_db_string(implode(",",$trg),20)."' WHERE TAB_ID = $tabid";
+if($trigger) {
+	$sqlquery = "UPDATE LMB_CONF_TABLES SET LMTRIGGER = '".trim(parse_db_string($trigger,20))."' WHERE TAB_ID = $tabid";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
+/* --- global filter -------------------------------------- */
+if($globalfilter) {
+	$sqlquery = "UPDATE LMB_CONF_TABLES SET GLOBALFILTER = '".trim(parse_db_string($globalfilter,250))."' WHERE TAB_ID = $tabid";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 }
@@ -542,6 +609,12 @@ if($tablesequence AND $tabid) {
 	lmb_rebuildSequences($tablename, 'ID');
 }
 
+/* --- checksum refresh -------------------------------------- */
+if($rebuild_checksum AND $tabid) {
+	if(!lmb_calculateChecksum($tabid)){
+        $rebuild_checksum = null;
+    }
+}
 
 /* --- Tabelle kopieren -------------------------------------- */
 if($copy AND $add AND $gtable) {
@@ -597,15 +670,20 @@ if(!$import){
             LMB_CONF_TABLES.TYP,
             LMB_CONF_TABLES.VERKN,
             LMB_CONF_TABLES.LMTRIGGER,
+            LMB_CONF_TABLES.GLOBALFILTER,
             LMB_CONF_TABLES.INDICATOR,
             LMB_CONF_TABLES.ORDERBY,
             LMB_CONF_TABLES.AJAXPOST,
             LMB_CONF_TABLES.VALIDATE,
             LMB_CONF_TABLES.RECURSIV_DELETE,
+            LMB_CONF_TABLES.RECURSIV_ARCHIVE,
             LMB_CONF_TABLES.NUMROWCALC,
+            LMB_CONF_TABLES.DETAILFORM,
+            LMB_CONF_TABLES.DETAILFORM_OPENER,
             LMB_CONF_TABLES.CUSTMENU,
             LMB_CONF_TABLES.RESERVEID,
             LMB_CONF_TABLES.DATASYNC,
+            LMB_CONF_TABLES.CHECKSUM,
             LMB_CONF_TABLES.VALIDITY,
             LMB_CONF_TABLES.PARAMS1,
             LMB_CONF_TABLES.PARAMS2,
@@ -656,21 +734,26 @@ if(!$import){
             $result_gtab[$tabgroupid]['typ'][$tabIndex] = lmbdb_result($rs, 'TYP');
             $result_gtab[$tabgroupid]['verknid'][$tabIndex] = lmbdb_result($rs, 'VERKN');
             $result_gtab[$tabgroupid]['trigger'][$tabIndex] = explode(',', lmbdb_result($rs, 'LMTRIGGER'));
+            $result_gtab[$tabgroupid]['globalfilter'][$tabIndex] = explode(',', lmbdb_result($rs, 'GLOBALFILTER'));
             $result_gtab[$tabgroupid]['indicator'][$tabIndex] = lmbdb_result($rs, 'INDICATOR');
             $result_gtab[$tabgroupid]['orderby'][$tabIndex] = lmbdb_result($rs, 'ORDERBY');
             $result_gtab[$tabgroupid]['ajaxpost'][$tabIndex] = lmbdb_result($rs, 'AJAXPOST');
             $result_gtab[$tabgroupid]['numrowcalc'][$tabIndex] = lmbdb_result($rs, 'NUMROWCALC');
             $result_gtab[$tabgroupid]['custmenu'][$tabIndex] = lmbdb_result($rs, 'CUSTMENU');
+            $result_gtab[$tabgroupid]['detailform'][$tabIndex] = lmbdb_result($rs, 'DETAILFORM');
+            $result_gtab[$tabgroupid]['detailform_opener'][$tabIndex] = lmbdb_result($rs, 'DETAILFORM_OPENER');
             $result_gtab[$tabgroupid]['reserveid'][$tabIndex] = lmbdb_result($rs, 'RESERVEID');
             $result_gtab[$tabgroupid]['argresult'][lmbdb_result($rs, 'TAB_ID')] = $tabIndex;
             $result_gtab[$tabgroupid]['maingroup'][$tabIndex] = $tabgroupid;
             $result_gtab[$tabgroupid]['datasync'][$tabIndex] = lmbdb_result($rs, 'DATASYNC');
+            $result_gtab[$tabgroupid]['checksum'][$tabIndex] = lmbdb_result($rs, 'CHECKSUM');
             $result_gtab[$tabgroupid]['params1'][$tabIndex] = lmbdb_result($rs, 'PARAMS1');
             $result_gtab[$tabgroupid]['params2'][$tabIndex] = unserialize(lmbdb_result($rs, 'PARAMS2'));
             $result_gtab[$tabgroupid]['keyfield'][$tabIndex] = lmbdb_result($rs, 'KEYFIELD');
             $result_gtab[$tabgroupid]['validity'][$tabIndex] = lmbdb_result($rs, 'VALIDITY');
             $result_gtab[$tabgroupid]['validate'][$tabIndex] = lmbdb_result($rs, 'VALIDATE');
             $result_gtab[$tabgroupid]['recursiv_delete'][$tabIndex] = lmbdb_result($rs, 'RECURSIV_DELETE');
+            $result_gtab[$tabgroupid]['recursiv_archive'][$tabIndex] = lmbdb_result($rs, 'RECURSIV_ARCHIVE');
 
             # count tables per group
             $tabgroup_['tabellen'][$tabgroupid]++;

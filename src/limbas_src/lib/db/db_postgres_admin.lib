@@ -1021,6 +1021,21 @@ function dbq_21($p){
 	$rs = lmbdb_exec($db,$sqlquery);
 }
 
+/**
+ * pretty print table size
+ *
+ * @param array $p [0]=schema, [1]=tablename
+ * @return array table size, order size
+ */
+function dbq_30(array $p): array{
+	global $db;
+
+
+	$sqlQuery = "SELECT pg_size_pretty(pg_table_size('{$p[1]}')) AS table_size, pg_table_size('{$p[1]}') AS order_size";
+	$rs = lmbdb_exec($db, $sqlQuery);
+	return [lmbdb_result($rs, "table_size"), lmbdb_result($rs, "order_size")];
+}
+
 
 
 

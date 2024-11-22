@@ -28,6 +28,12 @@ if($GLOBALS["gLmbExt"]["ext_gtab_erg_dao.inc"]){
 	}
 }
 
+if($GLOBALS["gLmbExt"]["ext_globalFilter.inc"]){
+	foreach ($GLOBALS["gLmbExt"]["ext_globalFilter.inc"] as $key => $extfile){
+		require_once($extfile);
+	}
+}
+
 /* -------------------------- Argument --------------------------------- */
 function arg_refresh($gtabid,$fieldid) {
 	global $session;

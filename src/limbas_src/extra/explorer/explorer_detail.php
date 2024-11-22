@@ -19,7 +19,7 @@ if($GLOBALS["gLmbExt"]["ext_explorer_detail.inc"]){
 
 ?>
 
-<script language="JavaScript">
+<script>
 
 // ---------------- Abteilungen verstecken ----------------------
 function hide_part() {
@@ -124,7 +124,7 @@ if($ffile["indize"]){
 
 # --- Vorschau ---
 $size = explode("x",$umgvar["thumbsize2"]);
-$img = IMACK_ConvertThumbs(array($ID,$ffile["secname"],$ffile["mimeid"],$ffile["thumb_ok"],null,$ffile["mid"]),$size[0],$size[1],1);
+$img = lmb_getThumbnail(array($ID,$ffile["secname"],$ffile["mimeid"],$ffile["thumb_ok"],null,$ffile["mid"]),$size[0],$size[1],1);
 if($img){
 	#$filename = $umgvar["upload_pfad"].$ffile["secname"].".".$ffile["ext"];
 	$filename = lmb_getFilePath($ID,$level,$ffile["secname"],$ffile["ext"]);

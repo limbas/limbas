@@ -52,6 +52,12 @@ function multitenant_delete(mid,name){
 
 }
 
+function multitenant_info(mid) {
+    limbasWaitsymbol(null,1,0);
+    document.form1.info_multitenant.value=mid;
+    document.form1.submit();
+}
+
 </script>
 
 
@@ -76,13 +82,14 @@ function multitenant_delete(mid,name){
 <input type="hidden" name="action" value="setup_multitenant">
 <input type="hidden" name="drop_multitenant">
 <input type="hidden" name="drop_multitenant_level">
+<input type="hidden" name="info_multitenant">
 
     <div class="container-fluid p-3">
 
         <table class="table table-sm table-striped mb-0 border bg-contrast">
             <thead>
                 <tr>
-                    <th></th>
+                    <th><i class="lmb-icon  lmb-info-circle-alt2" style="cursor:pointer;" onclick="multitenant_info()"></i></th>
                     <th><?=$lang[2235]?></th>
                     <th><?=$lang[4]?></th>
                     <th>ID</th>
@@ -92,7 +99,6 @@ function multitenant_delete(mid,name){
                     <?php if ($result_crypto_keys): ?>
                         <th>Public-Key</th>
                     <?php endif; ?>
-                    
                 </tr>
             </thead>
 
@@ -101,7 +107,10 @@ function multitenant_delete(mid,name){
                 foreach($result_multitenant['name'] as $mkey => $mval) : ?>
                     
                 <tr>
-                    <TD><i class="lmb-icon lmb-trash" style="cursor:pointer;" onclick="multitenant_delete(<?=$mkey?>,'<?=$result_multitenant['name'][$mkey]?>')"></i></TD>
+                    <TD>
+                        <i class="lmb-icon lmb-trash" style="cursor:pointer;" onclick="multitenant_delete(<?=$mkey?>,'<?=$result_multitenant['name'][$mkey]?>')"></i>
+                        <i class="lmb-icon  lmb-info-circle-alt2" style="cursor:pointer;" onclick="multitenant_info(<?=$mkey?>)"></i>
+                    </TD>
                     <TD><input type="text" class="form-control form-control-sm" value="<?=$result_multitenant['mid'][$mkey]?>" name="multitenant[mid][<?=$mkey?>]" onchange="document.getElementById('multitenant_<?=$mkey?>').value=1"></TD>
                     <TD><input type="text" class="form-control form-control-sm" value="<?=$result_multitenant['name'][$mkey]?>" name="multitenant[name][<?=$mkey?>]" onchange="document.getElementById('multitenant_<?=$mkey?>').value=1"></TD>
                     <TD><?=$mkey?></TD>

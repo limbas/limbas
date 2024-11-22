@@ -9,9 +9,9 @@
 
 namespace Limbas\admin\report;
 
-use Database;
 use Limbas\admin\templates\HasTemplateRoot;
 use Limbas\extra\template\TemplateTable;
+use Limbas\lib\db\Database;
 use Limbas\lib\LimbasModel;
 
 class Report extends LimbasModel
@@ -187,8 +187,8 @@ class Report extends LimbasModel
             'CSS' => $this->css,
             'SAVED_TEMPLATE' => $this->savedTemplate,
             'PARENT_ID' => $this->parentId,
-            'TEMPLATE_ELEMENT_ID' => $this->template_element_id,
-            'TEMPLATE_GTAB_ID' => $this->template_gtab_id,
+            #'TEMPLATE_ELEMENT_ID' => $this->template_element_id,
+            #'TEMPLATE_GTAB_ID' => $this->template_gtab_id,
             'ROOT_TEMPLATE' => $this->rootTemplateTabId,
             'ROOT_TEMPLATE_ID' => $this->rootTemplateElementId,
             'DPI' => $this->dpi,

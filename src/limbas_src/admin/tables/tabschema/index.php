@@ -25,13 +25,20 @@
                    href="main_admin.php?action=setup_tabschema&typ=2"><?= $lang[2912] ?></a>
             </li>
         <?php endif; ?>
+        <?php if (true): ?>
+            <li class="nav-item">
+                <a class="nav-link <?= ($typ == 3) ? 'active bg-contrast' : '' ?>"
+                   href="main_admin.php?action=setup_tabschema&typ=3"><?= "Größenschema" ?></a>
+            </li>
+        <?php endif; ?>
     </ul>
     <div class="tab-content border border-top-0 bg-contrast">
         <div class="tab-pane active p-3">
             <?php if ($typ == 2) {
                 require(__DIR__ . '/relations.php');
-            }
-            else {
+            } else if ($typ == 3) {
+                require(__DIR__ . '/sizeschema.php');
+            } else {
                 require(__DIR__ . '/tabschema.php');
             } ?>
         </div>

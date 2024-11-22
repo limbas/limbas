@@ -8,7 +8,8 @@
  */
 
 
-
+global $LINK;
+global $gtrigger;
 
 $fieldid = $par["fieldid"];
 $gtabid = $par["gtabid"];
@@ -23,6 +24,8 @@ if($act){
 $atid = $gtabid;
 $ftid = $fieldid;
 if($gtab["typ"][$gtabid] == 5){$isview = 1;}
+
+
 
 require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
 
@@ -141,8 +144,7 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                                 <small class="form-text text-muted"><?=$lang[2588]?></small>
                             </div>
                         </div>
-                    
-                    
+
                     <?php elseif($result_fieldtype[$table_gtab[$bzm]]["domain_admin_default"][1]): ?>
 
                         <div class="mb-3 row">
@@ -157,6 +159,37 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                     <?php
                     endif;
                     endif; ?>
+
+
+
+                    <?php // regex
+                    if(!$isview):
+                    if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] < 100
+                        AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 4
+                        AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 22
+                        AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] !=55
+                        AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 50
+                        AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 51
+                        AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 52
+                        AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 47
+                        AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 39
+                        AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 45
+                        AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 44
+                        AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 33
+                        AND $result_fieldtype[$table_gtab[$bzm]]["parse_type"][1] != 3
+                        AND $result_fieldtype[$table_gtab[$bzm]]["field_type"][1] != 11):
+
+                        ?>
+                        <div class="mb-3 row">
+                            <label class="col-sm-4 col-form-label col-form-label-sm">RegEx</label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control form-control-sm" value="<?=str_replace('"','\"',$result_fieldtype[$table_gtab[$bzm]]["regex"][1])?>" onchange="document.form2.val.value=this.value+' ';ajaxEditField('<?=$fieldid?>','regex')">
+                                <small class="form-text text-muted"><?=$lang[3179]?></small>
+                            </div>
+                        </div>
+
+                    <?php endif; ?>
+                    <?php endif; ?>
 
 
 
@@ -271,7 +304,14 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                             </div>
                         </div>
 
-                    
+                        <div class="mb-3 row">
+                            <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2813]?></label>
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control form-control-sm" value="<?=$result_fieldtype[$table_gtab[$bzm]]['listing_cut'][1]?>" onchange="document.form2.val.value=this.value;ajaxEditField('<?=$fieldid?>','relviewcut')">
+                                <small class="form-text text-muted"><?=$lang[2849]?></small>
+                            </div>
+                        </div>
+
                         <?php if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 11): ?>
                         <div class="mb-3 row">
                             <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2991]?></label>
@@ -285,15 +325,6 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                         </div>
                         <?php endif; ?>
 
-
-                        <div class="mb-3 row">
-                            <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2813]?></label>
-                            <div class="col-sm-8">
-                                <input type="text" class="form-control form-control-sm" value="<?=$result_fieldtype[$table_gtab[$bzm]]['listing_cut'][1]?>" onchange="document.form2.val.value=this.value;ajaxEditField('<?=$fieldid?>','relviewcut')">
-                                <small class="form-text text-muted"><?=$lang[2849]?></small>
-                            </div>
-                        </div>
-                    
                     <hr>
                     
                     <?php endif; ?>
@@ -468,6 +499,32 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                         endif; ?>
 
 
+                    <?php // trigger
+                    if (!$isview && $gtrigger[$bzm]):
+                        if($LINK[226] AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] < 100 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] != 22):
+                    ?>
+                    <div class="mb-3 row">
+                        <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2451]?></label>
+                        <div class="col-sm-8">
+
+                            <select style="width:100%" class="form-select form-select-sm select2-selection" data-fieldid="<?=$fieldid?>" multiple="multiple" id="field_trigger">
+                                <option value=""></option>
+                            <?php
+                            foreach($gtrigger[$bzm]["id"] as $trid => $trval):
+                                if(in_array($trid,$result_fieldtype[$table_gtab[$bzm]]["trigger"][1])){$SELECTED = "SELECTED";}else{$SELECTED = "";} ?>
+                                <option VALUE="<?=$trid?>" <?=$SELECTED?>><?=$gtrigger[$bzm]["trigger_name"][$trid]?> (<?=$gtrigger[$bzm]["type"][$trid]?>)</option>
+                                <?php endforeach; ?>
+                            </select>
+
+                            <small class="form-text text-muted"><?=$lang[2825]?></small>
+                        </div>
+                    </div>
+                    <?php
+                        endif;
+                        endif; ?>
+
+
+
                     <?php // Sparten-Event
                     if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 100):
                      ?>
@@ -583,8 +640,17 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                     
                     <?php endif; ?>
 
-
-
+                    <?php // detailsearch
+                    if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] < 100 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 16 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 6):
+                        ?>
+                        <div class="mb-3 row">
+                            <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[101]?></label>
+                            <div class="col-sm-8">
+                                <input type="checkbox" value="1" <?=($result_fieldtype[$table_gtab[$bzm]]['detailsearch'][1] == 1)?'':'checked'?> onchange="document.form2.val.value=this.checked;ajaxEditField('<?=$fieldid?>','detailsearch')">
+                                <small class="form-text text-muted"><?=$lang[3168]?></small>
+                            </div>
+                        </div>
+                    <?php endif; ?>
 
                     <?php // quick search
                     if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] < 100 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 16 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 6):
@@ -703,6 +769,18 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                                 </div>
                             </div>
                         <?php endif; ?>
+
+                        <?php // md5 checksum
+                        #if($result_fieldtype[$table_gtab[$bzm]]["sync_slave"][1] OR $result_fieldtype[$table_gtab[$bzm]]["sync_master"][1]){
+                            ?>
+                            <div class="mb-3 row">
+                                <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[3156]?></label>
+                                <div class="col-sm-8">
+                                    <input type="checkbox" value="1" <?=($result_fieldtype[$table_gtab[$bzm]]['checksum'][1] == 1)?'checked':''?> onchange="document.form2.val.value=this.checked;ajaxEditField('<?=$fieldid?>','checksum')">
+                                    <small class="form-text text-muted"><?=$lang[3154]?></small>
+                                </div>
+                            </div>
+                        <?php #}?>
 
                         <?php // in sync template
                         if($result_fieldtype[$table_gtab[$bzm]]["sync_slave"][1] OR $result_fieldtype[$table_gtab[$bzm]]["sync_master"][1]){
@@ -1098,14 +1176,17 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
 
                     
                     <?php //check dependencies
-                    if($depviews = lmb_checkViewDependency($gtab["table"][$gtabid],$result_fieldtype[$table_gtab[$bzm]]["field"][1])):
+                    $depviews = lmb_checkViewDependency($gtab["table"][$gtabid],$result_fieldtype[$table_gtab[$bzm]]["field"][1]);
+                    if(is_array($depviews)):
                         ?>
                         <div class="mb-3 row">
                             <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2912]?></label>
                             <div class="col-sm-8">
                                 <input type="checkbox" onclick="if(this.checked){document.form1.solve_dependency.value=1;document.form2.solve_dependency.value=1;}else{document.form1.solve_dependency.value='';document.form2.solve_dependency.value='';};">
                                 <small class="form-text text-muted"><?=$lang[2911]?></small>
-                                <?php echo '- '.implode('<br>- ',$depviews); ?>
+                                <?php
+                                echo '- '.implode('<br>- ',$depviews);
+                                ?>
                             </div>
                         </div>
                     <?php endif; ?>

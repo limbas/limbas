@@ -16662,8 +16662,12 @@ readers do not read off random characters that represent icons */
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 /*
-  extend or override bootstrap v4
+  extend or override bootstrap
  */
+.mh-90 {
+  height: 90%;
+  min-height: 90%;
+}
 .modal-fullscreen {
   width: 99vw;
   max-width: none;
@@ -18205,6 +18209,9 @@ img {
     transform: rotate(360deg);
   }
 }
+.lmb-image-as-icon {
+  filter: invert(0%);
+}
 /*!
  * @copyright Limbas GmbH <https://limbas.com>
  * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
@@ -18409,15 +18416,18 @@ html, body.nav {
 .lmbfringeFrameNav > ul > li {
   background-color: #706C66;
   color: #f3f3f3;
-  cursor: pointer;
   font-size: 0.9rem;
   vertical-align: top;
   line-height: 2;
   display: block;
 }
+.lmbfringeFrameNav > ul > li > .menu-side-header {
+  cursor: pointer;
+}
 .lmbfringeFrameNav > ul > li a {
   color: #f3f3f3;
   display: block;
+  cursor: pointer;
 }
 .lmbfringeFrameNav > ul > li > .menu-side-header > a {
   color: #f3f3f3;
@@ -18513,7 +18523,8 @@ html, body.nav {
   text-align: center;
   font-size: 1rem;
   padding: 0.3rem 0;
-  color: #fff;
+  color: #f3f3f3;
+  cursor: pointer;
 }
 @media (max-width: 992px) {
   .mainsidebar {
@@ -18916,7 +18927,7 @@ html, body.nav {
   border: 1px solid #d0d0d0;
 }
 .legacy-table .gtabHeaderInputINP {
-  background-image: url("../images/legacy/find.png");
+  background-image: url("../../assets/images/legacy/find.png");
   padding-left: 14px;
   background-repeat: no-repeat;
   background-position: 2px 3px;
@@ -18926,7 +18937,7 @@ html, body.nav {
   color: #44444f;
 }
 .legacy-table .gtabHeaderInputINPajax {
-  background-image: url("../images/legacy/find.png");
+  background-image: url("../../assets/images/legacy/find.png");
 }
 .legacy-table .gtabHeaderTitleTD {
   background-color: #eeeeee;
@@ -18988,10 +18999,10 @@ html, body.nav {
   overflow: hidden;
 }
 .legacy-table .gtabBodyTRColorA {
-  background-color: #fff;
+  background-color: #f9f8f3;
 }
 .legacy-table .gtabBodyTRColorB {
-  background-color: #f9f8f3;
+  background-color: #ffffff;
 }
 .legacy-table .gtabBodyTD {
   vertical-align: top;
@@ -19054,7 +19065,7 @@ html, body.nav {
   list-style-type: disc;
 }
 .legacy-table .gtabGrouping {
-  background-color: #97c5ab;
+  background-color: #97C5AB;
   padding: 2px;
 }
 .legacy-table .gtabchange {
@@ -19134,8 +19145,11 @@ html, body.nav {
 .legacy-table select.gtabHeaderInputINP {
   padding: 0.1rem 0.1rem 0.1rem 0.75rem;
 }
-.legacy-table .lmbfringeGtabBody tr:hover td {
+.legacy-table .lmbfringeGtabBody tr:hover td, .legacy-table .gtabBodyTRActive td {
   background-color: #97C5AB !important;
+  color: #444444 !important;
+}
+.legacy-table .lmbfringeGtabBody tr:hover td a, .legacy-table .gtabBodyTRActive td a {
   color: #444444 !important;
 }
 .form-legacy .form-control, .form-legacy .form-select {
@@ -19201,7 +19215,7 @@ html, body.nav {
   color: #fff;
 }
 .form-legacy .gtabHeaderSymbolTD, .form-legacy .gtabHeaderSymbolTR {
-  color: #fff;
+  color: #fff !important;
   background: #4E4E4E;
 }
 .form-legacy .lmbTableHeader {
@@ -19219,6 +19233,19 @@ html, body.nav {
 }
 .form-legacy .gtabFringeRelationBody {
   border: 1px solid #c0c0c0;
+}
+.form-legacy .lmbfringeGtabBody tr:hover td, .form-legacy .gtabBodyTRActive td {
+  background-color: #97C5AB !important;
+  color: #444444 !important;
+}
+.form-legacy .lmbfringeGtabBody tr:hover td a, .form-legacy .gtabBodyTRActive td a {
+  color: #444444 !important;
+}
+.form-legacy .gtabBodyTRColorA {
+  background-color: #f9f8f3;
+}
+.form-legacy .gtabBodyTRColorB {
+  background-color: #ffffff;
 }
 .tabTileSubform:hover .tabTileResize {
   display: block;
@@ -19281,7 +19308,7 @@ html, body.nav {
 .lmbContextMenu {
   background-color: #ffffff;
   border: 1px solid #c0c0c0;
-  border-left: 3px solid #97c5ab;
+  border-left: 3px solid #97C5AB;
   min-width: 150px;
   padding: 5px;
   position: absolute;
@@ -19370,7 +19397,29 @@ html, body.nav {
   cursor: pointer;
 }
 .lmbContextMenu .lmbContextHeader[onclick]:hover {
-  background-color: #97c5ab;
+  background-color: #97C5AB;
+}
+/*!
+ * @copyright Limbas GmbH <https://limbas.com>
+ * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
+ *
+ * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+ */
+.resizer_attributes {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+.resizer_actual {
+  resize: both;
+}
+.resizer > .resized {
+  flex-grow: 1;
+  margin: 0;
+  padding: 0;
+  border: 0;
 }
 /*!
  * @copyright Limbas GmbH <https://limbas.com>
@@ -19406,7 +19455,7 @@ table select.form-control {
   width: -moz-fit-content;
   width: fit-content;
 }
-table select.form-select {
+table select.form-select:not(.fgtabchange) {
   width: auto !important;
   min-width: 100%;
 }
@@ -19501,7 +19550,7 @@ DIV.ajax_container {
   z-index: 99999;
   background-color: #ffffff;
   border: 1px solid #c0c0c0;
-  border-left: 3px solid #97c5ab;
+  border-left: 3px solid #97C5AB;
   min-width: 150px;
   padding: 5px;
   position: absolute;
@@ -19515,7 +19564,7 @@ DIV.ajax_container {
 /*waitsymbol*/
 .lmbWaitSymbol {
   background-color: transparent;
-  background-image: url("../images/legacy/wait1.gif");
+  background-image: url("../../assets/images/legacy/wait1.gif");
   background-repeat: no-repeat;
   z-index: 99999;
   height: 150px;
@@ -19689,7 +19738,7 @@ div.calendar tbody .rowhilite td.wn {
 .ui-widget-overlay {
   background-image: none;
   opacity: .6;
-  filter: Alpha(Opacity=60);
+  filter: alpha(Opacity=60);
 }
 */
 /*!

@@ -292,6 +292,12 @@ function lmb_precheckView($viewid, $view_def): bool
         }
     }
 
+    if($GLOBALS["gLmbExt"]["ext_globalFilter.inc"]){
+        foreach ($GLOBALS["gLmbExt"]["ext_globalFilter.inc"] as $key => $extfile){
+            require_once($extfile);
+        }
+    }
+
     // replace params if exists
     $view_def = lmb_paramTransView($viewid, $view_def);
 
@@ -748,20 +754,22 @@ function show_viewFields($viewid)
     echo "</td>";
     foreach ($gviewfields["fieldname"] as $key => $value) {
         //textarea uses innerhtml for initial value, changed to value attribute in input => problem?
-        echo "<td class='border-end m-0 p-1 px-2' 
-		OnMouseUp=\"lmbAjax_EditViewfield(event,this,'move','$key',viewsortid);viewsortid=null;\">
-            <div class='row'>
-            <div class='col pe-0'><textarea class='form-control form-control-sm' name=\"view_field_$key\" 
-            oncontextmenu=\"ZoomViewField(event,this,'$key');return false;\"
-            OnMousedown=\"viewsortid=$key;iniDrag(event,document.getElementById('relationSign'),this);this.focus();return false;\" 
-            OnChange=\"lmbAjax_EditViewfield(event,this,'field','key_$key','$key')\"
-            >" . $gviewfields["fieldname"][$key] . "</textarea>
-            </div>
-            <div class='col-auto ps-1'>
-            <i class=\"lmb-icon lmb-close-alt align-middle\" OnClick=\"lmbAjax_EditViewfield(event,this,'del','key_$key')\" style=\"cursor:pointer;\"></i>
-            </div>
-            </div>
-		</td>";
+        echo <<<HTML
+            <td class='border-end m-0 p-1 px-2' 
+                onmouseup="lmbAjax_EditViewfield(event,this,'move','$key',viewsortid);viewsortid=null;">
+                <div class='row'>
+                    <div class='col pe-0'>
+                        <textarea class='form-control form-control-sm' name="view_field_$key" 
+                            onmousedown="viewsortid=$key;iniDrag(event,document.getElementById('relationSign'),this);this.focus();return false;" 
+                            onchange="lmbAjax_EditViewfield(event,this,'field','key_$key','$key')">{$gviewfields["fieldname"][$key]}</textarea>
+                    </div>
+                    <div class="d-flex flex-column col-auto align-items-center justify-content-center py-1">
+                        <i class="lmb-icon lmb-close-alt align-middle mb-1" onclick="lmbAjax_EditViewfield(event,this,'del','key_$key')" style="cursor:pointer;"></i>
+                        <i class="fa-solid fa-pen align-middle" onclick="ZoomViewField(event,document.getElementsByName('view_field_$key')[0],'$key');return false;" style="cursor:pointer;"></i>
+                    </div>
+                </div>
+            </td>
+        HTML;
     }
     echo "<td class='m-0 p-1 px-2' OnMouseUp=\"lmbAjax_EditViewfield(event,this,'add')\">";
     echo "<input class='form-control form-control-sm' name=\"view_newalias\" OnChange=\"lmbAjax_EditViewfield(event,this,'addalias')\" type=\"text\" style=\"width:100px;overflow:visible\">";

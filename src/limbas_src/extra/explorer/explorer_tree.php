@@ -139,34 +139,33 @@ function closefiles(){
 function listlmdata(ID,LEVEL,TYP){
 	closefiles();
         
-        var icon = $('#p'+ID);
-        if(icon.hasClass(icon1)){
-                icon.removeClass(icon1);
-                icon.addClass(icon2);
-        }else if(icon.hasClass(icon7)){
-                icon.removeClass(icon7);
-                icon.addClass(icon8);
-        }else if(icon.hasClass(icon9)){
-                icon.removeClass(icon9);
-                icon.addClass(icon10);
-        }else if(icon.hasClass(icon11)){
-            icon.removeClass(icon11);
-            icon.addClass(icon12);
-        }
-
+    let icon = $('#p'+ID);
+    if(icon.hasClass(icon1)){
+        icon.removeClass(icon1);
+        icon.addClass(icon2);
+    }else if(icon.hasClass(icon7)){
+        icon.removeClass(icon7);
+        icon.addClass(icon8);
+    }else if(icon.hasClass(icon9)){
+        icon.removeClass(icon9);
+        icon.addClass(icon10);
+    }else if(icon.hasClass(icon11)){
+        icon.removeClass(icon11);
+        icon.addClass(icon12);
+    }
 
     document.form2.LID.value = ID;
 	document.form2.typ.value = TYP;
-		
+
 	parent.explorer_main.location.href='main.php?action=explorer_main&LID='+ID+'&typ='+TYP;
 }
 
 
 var dspl = new Array();
 function popup(ID,LEVEL,TABID,TYP){
-	var cli;
-	cli = ".nextSibling";
-	eval("var nested = document.getElementById('f_"+ID+"').nextSibling"+cli);
+    let current = document.getElementById('f_'+ID);
+	let nested = current.nextSibling;
+
 	var picname = "i" + ID;
         if($('[name="' + picname + '"]').hasClass(icon4)) {
                 $('[name="' + picname + '"]').removeClass(icon4).addClass(icon3);
@@ -300,7 +299,7 @@ function LmEx_open_menu(evt,el,menu){
 <TABLE BORDER="0" cellspacing="0" cellpadding="0"><TR><TD WIDTH="20">&nbsp;</TD><TD>
 
 <?php
-function files1($LEVEL,$start,$only_typ){
+function files1($LEVEL,$start,$only_typ, $depth=0){
 	global $filestruct;
 	global $ffilter;
 	global $action;
@@ -310,10 +309,12 @@ function files1($LEVEL,$start,$only_typ){
 	if($start){
 		if($LEVEL){$vis = "style=\"display:none\"";}else{$vis = "";}
 		echo "<div id=\"foldinglist\" $vis>\n";
-		echo "<TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR><TD WIDTH=\"10\">&nbsp;</TD><TD>\n";
+		//echo "<TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\"><TR><TD WIDTH=\"10\">&nbsp;</TD><TD>\n";
+
 	}
 	if($filestruct["id"]){
 	foreach($filestruct["id"] as $key => $value){
+        if($filestruct['hide'][$key]){continue;}
 		if($filestruct["level"][$key] == $LEVEL AND $filestruct["view"][$key] AND ($filestruct["typ"][$key] == $typ OR $typ != $only_typ)){
 			if(in_array($filestruct["id"][$key],$filestruct["level"])){
 				$next = 1;
@@ -343,14 +344,22 @@ function files1($LEVEL,$start,$only_typ){
 			#	echo ">&nbsp;".$filestruct[name][$key]."</TD></TR></TABLE></div>\n";
 			#	# ---- Limbas-Verzeichnis ----
 			#}else{
-				echo "<div ID=\"f_".$filestruct["id"][$key]."\"><TABLE CELLPADDING=\"1\" CELLSPACING=\"0\" BORDER=\"0\"><TR TITLE=\"(".$filestruct["id"][$key].")\" STYLE=\"cursor:context-menu\" oncontextmenu=\"limbasDivClose();open_filemenu(event,'".$filestruct['name'][$key]."','".$filestruct["id"][$key]."','".$filestruct['typ'][$key]."','$LEVEL');return false;\"><TD>$pic</TD><TD><i class=\"lmb-icon lmb-folder" .$filterpic. "-closed\" ID=\"p".$filestruct["id"][$key]."\" NAME=\"p".$filestruct["id"][$key]."\"></i></TD><TD ";
-                echo "class=\"lmbFileTreeItem\" OnClick=\"listlmdata('".$filestruct["id"][$key]."','$LEVEL','".$filestruct["typ"][$key]."')\"";
-				echo ">&nbsp;".$filestruct['name'][$key]."</TD></TR></TABLE></div>\n";
+
+                echo '<div id="f_' . $filestruct["id"][$key] . '">';
+                echo '<div class="row flex-nowrap" title="(' . $filestruct["id"][$key] . ')" style="cursor:context-menu" oncontextmenu="limbasDivClose();open_filemenu(event,"' . $filestruct['name'][$key] . '","' . $filestruct["id"][$key] . '","' . $filestruct['typ'][$key] . '","' . $LEVEL . '");return false; ">';
+                for ($i = 0; $i < $depth; $i++) {
+                    echo '<div class="col-1"></div>';
+                }
+                echo '<div class="col-1">' . $pic . '</div>';
+                echo '<div class="col-1"><i class="lmb-icon lmb-folder' . $filterpic . '-closed" id="p' . $filestruct["id"][$key] . '" name="p' . $filestruct["id"][$key] . '"></i></div>';
+                echo '<div class="col"><span class="text-nowrap lmbFileTreeItem" OnClick="listlmdata(\''. $filestruct["id"][$key] .'\',\'' . $LEVEL . '\',\'' . $filestruct["typ"][$key] . '\')">' . $filestruct['name'][$key] . '</span></div>';
+                echo '</div>';
+                echo '</div>';
 			#}
 
 
 			if($next){
-				$tab = 20;files1($filestruct["id"][$key],1,$only_typ);
+				$tab = 20;files1($filestruct["id"][$key],1,$only_typ,$depth+1);
 			}else{
 				echo "<div id=\"foldinglist\" style=\"display:none\"></div>\n";
 			}
@@ -358,14 +367,16 @@ function files1($LEVEL,$start,$only_typ){
 	}
 	}
 	if($start){
-		echo "</TD></TR></TABLE>\n";
+		//echo "</TD></TR></TABLE>\n";
 		echo "</div>\n";
 	}
 }
 
 $lv = 0;
 if($typ == 2){$lv = $session['messages']['level'];}
-files1($lv,0,2);
+echo '<div class="container-fluid">';
+files1($lv,0,2, 0);
+echo '</div>';
 ?>
 
 </TD></TR></TABLE></FORM>

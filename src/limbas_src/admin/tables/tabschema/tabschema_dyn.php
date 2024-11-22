@@ -97,8 +97,8 @@ function show_linkinfo($gtabid,$fieldid,$vgtabid){
         echo "<TR><TD>&nbsp;</TD></TR></TABLE>";
 	    return;
     }else {
-        echo "<IMG SRC=\"assets/images/legacy/linkpfeil.gif\" STYLE=\"position:absolute;top:60px;left:5px;\">";
-        echo "<IMG SRC=\"assets/images/legacy/linkpfeil.gif\" STYLE=\"position:absolute;top:93px;left:233px;\">";
+        echo "<IMG class=\"lmb-image-as-icon\" SRC=\"assets/images/legacy/linkpfeil.gif\" STYLE=\"position:absolute;top:60px;left:5px;\">";
+        echo "<IMG class=\"lmb-image-as-icon\" SRC=\"assets/images/legacy/linkpfeil.gif\" STYLE=\"position:absolute;top:93px;left:233px;\">";
         echo "<TABLE cellpadding=\"0\" cellspacing=\"0\" STYLE=\"border-collapse:collapse;width:300px;\">";
         echo "<TR><TD valign=\"top\" align=\"right\" style=\"cursor:pointer;\"><i class=\"lmb-icon lmb-close\" border=\"0\" onclick=\"document.getElementById('fieldinfo').style.visibility='hidden';\"></i></TD></TR>";
         echo "<TR><TD ALIGN=\"CENTER\"><TABLE cellpadding=\"0\" cellspacing=\"0\" STYLE=\"border-collapse:collapse;width:150px;border:1px solid black;\">";

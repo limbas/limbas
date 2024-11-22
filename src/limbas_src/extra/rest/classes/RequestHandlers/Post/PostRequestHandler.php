@@ -6,14 +6,19 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
-namespace limbas\rest;
+namespace Limbas\extra\rest\classes\RequestHandlers\Post;
+
+use Limbas\extra\rest\classes\Request;
+use Limbas\extra\rest\classes\RestException;
+use Limbas\extra\rest\classes\RequestHandlers\Patch\PatchRequestHandler;
 
 abstract class PostRequestHandler extends PatchRequestHandler {
 
     /**
      * @throws RestException
      */
-    protected function createNewRecord() {
+    protected function createNewRecord(): void
+    {
         $result = new_data($this->request->table_id);
         if ($result === false) {
             throw new RestException('Could not create dataset!', 400);
@@ -28,7 +33,8 @@ abstract class PostRequestHandler extends PatchRequestHandler {
      * @return string
      * @throws RestException
      */
-    protected function getRecordLink($id) {
+    protected function getRecordLink($id): string
+    {
         $request = new Request($this->request->router, 'GET', $this->request->table_id, $id);
         return $request->buildGetUrl();
     }

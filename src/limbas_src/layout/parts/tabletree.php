@@ -96,8 +96,8 @@ if($gtabid):
                     ?>
 
                     <tr>
-                        <td style="width:18px"><img src="assets/images/legacy/outliner/join.gif"></td>
-                        <td style="width:18px"><img src="assets/images/legacy/outliner/<?=$simgpref?>.gif" style="cursor:pointer" id="lmbTreeSubPlus_<?=$treeid?>_<?=$rval?>_<?=$gval?>_<?=$rand?>" onclick="lmb_treeSubOpen('<?=$treeid?>','<?=$rval?>','<?=$gval?>','<?=$rand?>','<?=$gtabid?>','<?=$rkey?>');event.stopPropagation();"></td>
+                        <td style="width:18px"><img class="lmb-image-as-icon" src="assets/images/legacy/outliner/join.gif"></td>
+                        <td style="width:18px"><img class="lmb-image-as-icon" src="assets/images/legacy/outliner/<?=$simgpref?>.gif" style="cursor:pointer" id="lmbTreeSubPlus_<?=$treeid?>_<?=$rval?>_<?=$gval?>_<?=$rand?>" onclick="lmb_treeSubOpen('<?=$treeid?>','<?=$rval?>','<?=$gval?>','<?=$rand?>','<?=$gtabid?>','<?=$rkey?>');event.stopPropagation();"></td>
                         <td style="width:18px"><i class="lmb-icon <?=$icon?>" align="top" border="0" id="lmbTreeSubBox_<?=$treeid?>_<?=$rval?>_<?=$gval?>_<?=$rand?>"></i></td>
                         <td><b><a class="lmbFileTreeItem" onclick="event.stopPropagation();lmbTreeOpenTable('<?=$rval?>','<?=$gtabid?>','<?=$rkey?>','<?=$gval?>');"><?=$gfield[$gtabid]["spelling"][$rkey]?></a></b></td>
                     </tr>

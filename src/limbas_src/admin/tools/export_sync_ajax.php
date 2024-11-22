@@ -124,9 +124,12 @@ function lmb_syncToClient($params){
 
         }
 
-        file_put_contents($umgvar['path']."/USER/".$session["user_id"]."/temp/syncexp_$syncID.html",lmb_renderDiffToBootstrap($response));
+
+        file_put_contents(USERPATH.$session["user_id"]."/temp/syncexp_$syncID.html",lmb_renderDiffToBootstrap($response));
+        $path = lmb_getDownloadHash(USERPATH . $session["user_id"] . '/temp',"syncexp_$syncID.html",'text/html','i');
 
         $response['notice'] = $notice;
+        $response['url'] = $path;
         unset($response['output']);
         echo json_encode($response);
 

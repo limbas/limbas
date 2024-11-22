@@ -11,6 +11,8 @@ function dropMultitenantData($mid){
     global $db;
 
     #lmb_dropALLForeignKeys();
+    $commit = true;
+    $mid = parse_db_int($mid);
 
     $sqlquery = "SELECT MID FROM LMB_MULTITENANT WHERE ID = $mid";
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -18,7 +20,7 @@ function dropMultitenantData($mid){
         $mid = lmbdb_result($rs, "MID");
     }
 
-    if(!is_numeric($mid)){return false;}
+    if(!$mid OR !is_numeric($mid)){return false;}
 
     // remove or empty relations - resolve ref int
     $sqlquery = "SELECT DISTINCT MD5TAB,DATA_TYPE,
@@ -42,6 +44,7 @@ function dropMultitenantData($mid){
              WHERE ID IN 
             (SELECT $lefttab.ID FROM $md5tab,$lefttab WHERE  $lefttab.ID = $md5tab.ID AND $lefttab.LMB_MID = $mid)";
             $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            if($rs1){$commit = false;}
 
         // without relation table
         }elseif($datatype == 25){
@@ -49,18 +52,34 @@ function dropMultitenantData($mid){
              WHERE $md5tab IN 
             (SELECT $lefttab.ID FROM $lefttab WHERE $lefttab.LMB_MID = $mid)";
             $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            if($rs1){$commit = false;}
         }
+
     }
 
-    // remove dataset
-    $sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES WHERE MULTITENANT = TRUE AND TYP != 5 ORDER BY TAB_ID DESC";
+    // remove 1:1 relations datasets
+    $sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES WHERE MULTITENANT = TRUE AND TYP != 5 AND TAB_ID != VERKN ORDER BY TAB_ID DESC";
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     while(lmbdb_fetch_row($rs)) {
         // delete table data
         $table = strtoupper(lmbdb_result($rs, 'TABELLE'));
         $sqlquery1 = "DELETE FROM $table WHERE LMB_MID = $mid";
         $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+        if($rs1){$commit = false;}
     }
+
+    // remove datasets
+    $sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES WHERE MULTITENANT = TRUE AND TYP != 5 AND (TAB_ID = VERKN OR VERKN IS NULL) ORDER BY TAB_ID DESC";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs)) {
+        // delete table data
+        $table = strtoupper(lmbdb_result($rs, 'TABELLE'));
+        $sqlquery1 = "DELETE FROM $table WHERE LMB_MID = $mid";
+        $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+        if($rs1){$commit = false;}
+    }
+
+    return $commit;
 
 }
 
@@ -70,7 +89,120 @@ function dropMultitenantData($mid){
 
 
 
+function infoMultitenant($mid){
+    global $db;
 
+    #lmb_dropALLForeignKeys();
+    $mid = parse_db_int($mid);
+
+    if($mid) {
+        $sqlquery = "SELECT MID FROM LMB_MULTITENANT WHERE ID = $mid";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        if (lmbdb_fetch_row($rs)) {
+            $mid = lmbdb_result($rs, "MID");
+        }
+
+        $qu = "AND L.LMB_MID = $mid";
+    }
+
+    // remove or empty relations - resolve ref int
+    $sqlquery = "SELECT DISTINCT MD5TAB,DATA_TYPE,
+    (SELECT TABELLE FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.TAB_ID) AS LEFTTAB ,
+    (SELECT TABELLE FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.VERKNTABID) AS RIGHTTAB
+    FROM LMB_CONF_FIELDS
+    WHERE (SELECT MULTITENANT FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.TAB_ID) = TRUE
+    AND (SELECT MULTITENANT FROM LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.VERKNTABID) = TRUE
+    AND (DATA_TYPE = 27 OR DATA_TYPE = 24 OR DATA_TYPE = 25)
+    AND VERKNTABLETYPE = 1";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs)) {
+        $md5tab = strtoupper(lmbdb_result($rs, 'MD5TAB'));
+        $lefttab = strtoupper(lmbdb_result($rs, 'LEFTTAB'));
+        $righttab = strtoupper(lmbdb_result($rs, 'RIGHTTAB'));
+        $datatype = lmbdb_result($rs, 'DATA_TYPE');
+
+        // with relation table
+        if($datatype == 24 OR $datatype == 27) {
+
+            $sqlquery1 = "SELECT COUNT(L.ID) AS C,L.LMB_MID AS LMID, R.LMB_MID AS RMID
+            FROM $lefttab AS L, $righttab AS R, $md5tab
+            WHERE L.ID = $md5tab.ID AND $md5tab.VERKN_ID = R.ID AND L.LMB_MID != R.LMB_MID
+            $qu
+            GROUP BY LMID,RMID
+            ";
+            $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            if(lmbdb_result($rs1, "C") > 0) {
+                $info['count'][] = lmbdb_result($rs1, "C");
+                $info['left'][] = '('.lmbdb_result($rs1, "LMID").') '.$lefttab;
+                $info['right'][] = '('.lmbdb_result($rs1, "RMID").') '.$righttab;
+                $info['md5'][] = $md5tab;
+            }
+
+        // without relation table
+        }elseif($datatype == 25){
+
+            $sqlquery1 = "SELECT COUNT(L.ID) AS C,L.LMB_MID AS LMID, R.LMB_MID AS RMID
+            FROM $lefttab AS L, $righttab AS R
+            WHERE L.ID = R.$md5tab AND L.LMB_MID != R.LMB_MID
+            $qu
+            GROUP BY LMID,RMID
+            ";
+            $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+            if(lmbdb_result($rs1, "C") > 0) {
+                $info['count'][] = lmbdb_result($rs1, "C");
+                $info['left'][] = '('.lmbdb_result($rs1, "LMID").') '.$lefttab;
+                $info['right'][] = '('.lmbdb_result($rs1, "RMID").') '.$righttab;
+                $info['md5'][] = $md5tab;
+            }
+
+        }
+    }
+
+?>
+<div class="modal" id="multitenantInfo-modal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="multitenantInfo-modal-title"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="multitenantInfo-modal-body">
+                <table class="table">
+                <?php
+                if($info){
+                    ?>
+                    <thead><tr><th>count</th><th>left table</th><th>right table</th><th>relation table/field</th></tr></thead>
+                    <?php
+                    foreach($info['left'] as $key => $value){
+                    ?>
+                    <tr><td><?=$info['count'][$key]?></td><td><?=$info['left'][$key]?></td><td><?=$info['right'][$key]?></td><td><?=$info['md5'][$key]?></td></tr>
+                <?php
+                    }
+                }else{
+                    ?>
+                    no relation differenz found
+                    <?php
+                } ?>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-dark" data-bs-dismiss="modal">close</button>
+            </div>
+        </div>
+    </div>
+</div>
+    <script>
+$(document).ready(function() {
+    $("#multitenantInfo-modal").modal('show');
+});
+    </script>
+<?php
+
+}
+
+if($info_multitenant){
+    infoMultitenant($info_multitenant);
+}
 
 
 if($new_multitenant_name AND $add_multitenant){
@@ -87,16 +219,17 @@ if($new_multitenant_name AND $add_multitenant){
 
 if(is_numeric($drop_multitenant)){
 
-    if($drop_multitenant_level == 1 OR $drop_multitenant_level == 3){
+    $dropmt = true;
+    if($drop_multitenant_level > 1){
+        $dropmt = dropMultitenantData($drop_multitenant);
+    }
+
+    if($dropmt && ($drop_multitenant_level == 1 OR $drop_multitenant_level == 3)){
         $sqlquery = "DELETE FROM LMB_MULTITENANT WHERE ID = ".parse_db_int($drop_multitenant);
         $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
         if($drop_multitenant_level == 1){
             lmb_alert("multitenant datasets or files in " . UPLOADPATH . "/multitenant/".$drop_multitenant."\n not deleted! you must delete or copy the datasets and directory by yourself");
         }
-    }
-
-    if($drop_multitenant_level > 1){
-        dropMultitenantData($drop_multitenant);
     }
 
 }

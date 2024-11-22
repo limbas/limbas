@@ -8,8 +8,8 @@
  */
 
 
-use extra\dashboard\Dashboard;
-use extra\dashboard\WidgetFactory;
+use Limbas\extra\dashboard\Dashboard;
+use Limbas\extra\dashboard\WidgetFactory;
 
 $extensionWidgets = [];
 if($GLOBALS["gLmbExt"]["ext_dashboard.inc"]){

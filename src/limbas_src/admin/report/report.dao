@@ -7,7 +7,7 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
+use Limbas\admin\setup\fonts\Font;
 
 /*
 
@@ -437,27 +437,25 @@ $pic_type=null,$pic_compress=null,$posy=null){
 					# ----- Konvertiern in JPEG/PNG --------
 					$uplf = $umgvar["pfad"]."/USER/".$session["user_id"]."/temp/".$filename;
 					copy($file,$uplf);
-					$rupload = IMACK_ConvertThumbs($uplf,null,null,null,$pic_type,UPLOADPATH . 'report/'.$secname.".".$pic_type,null,1);
+					$rupload = lmb_getThumbnail($uplf,null,null,null,$pic_type,UPLOADPATH . 'report/'.$secname.".".$pic_type,rebuild:1, getpath: 1);
 					$uploadpath = $uplf;
 					$ext = $pic_type;
 				}
 
 				if($rupload){
-					$rupload = $umgvar["pfad"]."/".$rupload;
-					$thumb = IMACK_ConvertThumbs($rupload,$width,null,null,$pic_type,TEMPPATH . 'thumpnails/report/'.$secname.".".$pic_type,null,1);
-					if($thumb){
+					$thumb = lmb_getThumbnail($rupload,$width,null,null,$pic_type,TEMPPATH . 'thumpnails/report/'.$secname.".".$pic_type,rebuild:1,getpath: 1);
+                    if($thumb){
 						# ----- Bildinfos -------
 						$pic_size = $width."x".$height;
 						$data_type = $pic_compress;
 						$tab_size = $secname.".".$ext;
 						$pic_name = $secname.".".$pic_type;
-	
 						$img = 1;
 						$value = "Image: ".$filename."\\nFilesize: ".file_size($filesize)."\\nFormat: ".lmb_substr($meta["FORMAT"],0,lmb_strlen($meta["FORMAT"])-1)."\\nGeometry: ".$meta["GEOMETRY"]."\\nResolution: ".$meta["RESOLUTION"]."\\nDepth: ".$meta["DEPTH"]."\\nColors: ".$meta["COLORS"]."\\nType: ".$meta["TYPE"];
 						lmb_alert($value);
 					}else{
 						if($pic_type == "pdf" AND !$umgvar["imagemagickpdf"]){
-							$error .= "\\nImageMagick failed!\\nto use pdf with ImageMagick set umgvar 'imagemagickpdf' to 1";
+							$error .= "\\nImageMagick failed!\\nto use pdf with ImageMagick set umgvar 'imagemagickpdf' to 1 or set security policy to unblock conversion";
 						}else{
 							$error .= "\\nImageMagick failed!";
 						}
@@ -465,9 +463,9 @@ $pic_type=null,$pic_compress=null,$posy=null){
 				}
 				
 				if(!$thumb){
-					if(file_exists($uploadpath)){
-						unlink($uploadpath);
-					}
+					#if(file_exists($uploadpath)){
+					#	unlink($uploadpath);
+					#}
 					$commit = 1;lmb_alert("$lang[1167]!\\n$error");
 				}
 
@@ -1093,12 +1091,4 @@ $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$ac
 if(lmbdb_result($rs, "RESULT") > 0){$report["max_zindex"] = lmbdb_result($rs, "RESULT");}else{$report["max_zindex"] = 1;}
 
 # --- bestehende Fonts ---
-$sqlquery = "SELECT DISTINCT FAMILY FROM LMB_FONTS ORDER BY FAMILY";
-$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-if(!$rs) {$commit = 1;}
-$sysfont = array();
-while(lmbdb_fetch_row($rs)){
-	$sysfont[] = trim(lmbdb_result($rs,"FAMILY"));
-}
-
-?>
+$fonts = Font::getUniqueFontFamilies();

@@ -716,6 +716,17 @@ function dbq_21($p){
 	$rs = lmbdb_exec($db,$sqlquery);
 }
 
+/**
+ * pretty print table size
+ * CURRENTLY ONLY SUPPORTED IN POSTGRESQL
+ *
+ * @param array $p [0]=schema, [1]=tablename
+ * @return array table size, order size
+ */
+function dbq_30(array $p): array{
+	return ["", ""];
+}
+
 ################# BACKUP #################
 
 

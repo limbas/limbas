@@ -10,7 +10,7 @@ if ($layout_bootstrap){  //check legacy switch TODO: remove in future versions
     echo '<!doctype html>'."\n";
 }
 ?>
-<html data-bs-theme="<?=$farbschema['theme']?>">
+<html data-bs-theme="<?=$farbschema['theme']?>" lang="<?=substr($session['setlocale'] ?? 'de',0,2)?>">
 
 <head>
     <title>Limbas Enterprise Unifying Framework V <?=$umgvar['version']?></title>

@@ -8,6 +8,7 @@
  */
 
 use Limbas\lib\auth\LmbSession;
+use Limbas\lib\auth\Session;
 
     global $db;
     global $action;
@@ -610,13 +611,6 @@ use Limbas\lib\auth\LmbSession;
 				}
 			}
 		}
-
-        // include global extensions
-        if ($gLmbExt["ext_global.inc"]) {
-            foreach ($gLmbExt["ext_global.inc"] as $key => $extfile) {
-                require_once ($extfile);
-            }
-        }
 	}
 
 	/* --- gtab_array ---------------------------------------------- */
@@ -625,18 +619,17 @@ use Limbas\lib\auth\LmbSession;
 
 	/* --- temp-Verzeichnis löschen ---------------------------------------------- */
 	rmdirr(USERPATH.$session["user_id"]."/temp");
-	/* --- download-Verzeichnis löschen ---------------------------------------------- */
-	rmdirr(USERPATH.$session["user_id"]."/download");
 
 
 	/* --- Userstatistik eintragen ---------------------------------------- */
-	$sqlquery4 = "SELECT ID FROM LMB_HISTORY_USER WHERE SESSIONID = '".session_id()."' AND USERID = ".$session["user_id"]." AND IP = '".lmb_getIpAddr()."' AND LOGIN_DATE >= '".convert_stamp($session["login_date"])."'";
+    $userIP = Session::getIP();
+	$sqlquery4 = "SELECT ID FROM LMB_HISTORY_USER WHERE SESSIONID = '".session_id()."' AND USERID = ".$session["user_id"]." AND IP = '".$userIP."' AND LOGIN_DATE >= '".convert_stamp($session["login_date"])."'";
 	$rs4 = lmbdb_exec($db,$sqlquery4) or errorhandle(lmbdb_errormsg($db),$sqlquery4,$action,__FILE__,__LINE__);
 	if(!$rs4) {$commit = 1;}
 	if(!lmbdb_fetch_row($rs4)){
 		/* --- Next ID -------------------------------------------------------- */
 		$NEXTID = next_db_id('LMB_HISTORY_USER','ID');
-		$sqlquery5 = "INSERT INTO LMB_HISTORY_USER (ID,USERID,SESSIONID,IP,HOST) VALUES (".$NEXTID.",".$session["user_id"].",'".session_id()."','".lmb_getIpAddr()."','".$_SERVER['REMOTE_HOST']."')";
+		$sqlquery5 = "INSERT INTO LMB_HISTORY_USER (ID,USERID,SESSIONID,IP,HOST) VALUES (".$NEXTID.",".$session["user_id"].",'".session_id()."','".$userIP."','".$_SERVER['REMOTE_HOST']."')";
 		$rs5 = lmbdb_exec($db,$sqlquery5) or errorhandle(lmbdb_errormsg($db),$sqlquery5,$action,__FILE__,__LINE__);
 		if(!$rs5) {$commit = 1;}
 	}else{
@@ -653,7 +646,7 @@ use Limbas\lib\auth\LmbSession;
 	}
 
 	# save session variables
-	save_sessionvars($globvars);
+	Session::saveSessionVars();
 	
 
 unset($commit);

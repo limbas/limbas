@@ -1604,3 +1604,7 @@
     transform: rotate(360deg);
   }
 }
+
+.lmb-image-as-icon {
+ filter: $img-as-icon-filter;
+}

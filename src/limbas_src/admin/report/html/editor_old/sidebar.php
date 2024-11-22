@@ -334,14 +334,11 @@ function displayPanel(el,id){
 <TR><TD><?=$lang[1111]?><TD><INPUT TYPE="TEXT" NAME="border_top" VALUE="<?php if($report['page_style'][2]){echo $report['page_style'][2];}?>" OnChange="this.form.submit();" STYLE="width:40;"></TD></TR>
 <TR><TD COLSPAN="5"><div style="overflow:hidden;height:1px;width:100%;background-color:grey;"></div></TD></TR>
 <TR><TD><?=$lang[1138]?>:</TD><TD>
-<SELECT NAME="default_font" STYLE="width:70px;" OnChange="this.form.submit();"><option>
-<?php
-foreach($sysfont as $key => $value){
-	echo "<OPTION VALUE=\"".$value."\"";
-    if($report["default_font"] == $value){echo 'selected';}
-    echo ">".$value."\n";
-}
-?>
+<SELECT NAME="default_font" STYLE="width:70px;" OnChange="this.form.submit();">
+    <option value=""></option>
+    <?php foreach ($fonts as $font): ?>
+        <option value="<?=e($font->family)?>" <?=e($report['default_font'] == $font->family) ? 'selected' : '' ?>><?=e($font->family)?></option>
+    <?php endforeach; ?>
 </SELECT>
 </TD><TD><?=$lang[210]?>:</TD><TD><INPUT TYPE="TEXT" NAME="default_font_size" VALUE="<?=$report["default_font_size"]?>" STYLE="width:40;" OnChange="this.form.submit();"></TD></TR>
 <?php if($report["listmode"]){$checked="checked";}?>

@@ -6,6 +6,9 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
+
+use Limbas\admin\setup\fonts\Font;
+
 global $lang;
 global $greport;
 
@@ -115,11 +118,10 @@ if(!$greport["dpi"][$report_id]){
     <div class="col-sm-8">
         <select id="default_font" name="default_font" class="form-select form-select-sm"><option></option>
             <?php
-            $sysfonts = lmb_report_getsysfonts();
-            foreach ($sysfonts as $key => $val) {
-                echo "<option value=\"$val\" $used_font_selected[$val]>$val</option>";
-            }
-            ?>
+            /** @var Font $font */
+            foreach ($fonts as $font): ?>
+                <option value="<?=e($font->family)?>" <?=e($used_font_selected[$font->family])?>><?=e($font->family)?></option>
+            <?php endforeach; ?>
         </select>
     </div>
 </div>
@@ -130,13 +132,17 @@ if(!$greport["dpi"][$report_id]){
     <div class="col-sm-8">
         <select multiple id="extended_font" name="extended_font" class="form-select form-select-sm">
             <?php
-            foreach ($sysfonts as $key => $val) {
-                if($val == $greport["used_fonts"][$report_id][0]){continue;}
-                echo "<option value=\"$val\" ";
-                if(in_array($val,$greport["used_fonts"][$report_id])){echo "selected";}
-                echo ">$val</option>";
-            }
-            ?>
+            /** @var Font $font */
+            foreach ($fonts as $font):
+                if($font->family == $greport['used_fonts'][$report_id][0])
+                {
+                    continue;
+                }
+                ?>
+
+                <option value="<?=e($font->family)?>" <?=in_array($font->family,$greport['used_fonts'][$report_id]) ? 'selected' : ''?>><?=e($font->family)?></option>
+
+            <?php endforeach; ?>
         </select>
     </div>
 </div>

@@ -11,6 +11,7 @@ namespace Limbas\extra\template\select;
 
 use Limbas\extra\template\base\TemplateResolver;
 use Limbas\extra\template\report\ReportTemplateResolver;
+use Limbas\lib\db\Database;
 
 
 class ReportTemplateSelector extends TemplateSelector
@@ -25,9 +26,15 @@ class ReportTemplateSelector extends TemplateSelector
     protected function getElementList(int $gtabid, string $search = '', int $page = 1, int $perPage = 10): array
     {
         global $greportlist;
+        global $session;
 
-        if (!array_key_exists('resolved', $greportlist[$gtabid])) {
-            $reportlist = [];
+        $tenantId = !empty($session['mid']) ? $session['mid'] : 0;
+        
+        if(array_key_exists('resolved', $greportlist[$gtabid]) && array_key_exists($tenantId, $greportlist[$gtabid]['resolved'])) {
+            $resolvedList = $greportlist[$gtabid]['resolved'][$tenantId];
+        }
+        else {
+            $resolvedList = [];
             $duplicateFilter = [];
 
             foreach ($greportlist[$gtabid]["id"] as $key => $reportid) {
@@ -37,11 +44,11 @@ class ReportTemplateSelector extends TemplateSelector
 
                 if ($greportlist[$gtabid]["is_template"][$key]) {
 
-                    $reportlist = array_merge($reportlist, $this->getPartsListOfTemplate($key, $gtabid, intval($greportlist[$gtabid]['parent_id'][$key]), json_decode($greportlist[$gtabid]['saved_template'][$key], true) ?: [], $duplicateFilter));
+                    $resolvedList = array_merge($resolvedList, $this->getPartsListOfTemplate($key, $gtabid, intval($greportlist[$gtabid]['parent_id'][$key]), json_decode($greportlist[$gtabid]['saved_template'][$key], true) ?: [], $duplicateFilter));
 
                 } else {
 
-                    $reportlist[] = [
+                    $resolvedList[] = [
                         'id' => $reportid,
                         'name' => $greportlist[$gtabid]['name'][$key],
                         'gtabid' => $gtabid,
@@ -51,10 +58,22 @@ class ReportTemplateSelector extends TemplateSelector
 
 
             }
-            $greportlist[$gtabid]['resolved'] = $reportlist;
+
+            if(!array_key_exists('resolved', $greportlist[$gtabid])) {
+                $greportlist[$gtabid]['resolved'] = [];
+            }
+            
+            $greportlist[$gtabid]['resolved'][$tenantId] = $resolvedList;
+            
+            Database::update('LMB_CONF_TABLES',[
+                'REPORT_RESOLVE_CACHE' => json_encode($greportlist[$gtabid]['resolved']),
+            ],[
+                'TAB_ID' => $gtabid
+            ]);
+            
         }
 
-        return $this->paginateElementList($this->getFilteredElementList($greportlist[$gtabid]['resolved'], $search), $page, $perPage);
+        return $this->paginateElementList($this->getFilteredElementList($resolvedList, $search), $page, $perPage);
     }
 
 

@@ -452,13 +452,20 @@ function gftype_mselect($gtabid,$fieldid,$field_condition,$gsparams,&$gsrres){
     $andor = $gsparams['andor'];
     $nextandor = $gsparams['nextandor'];
 
+    // force hole word search if type select & artleiste
+    if($gfield[$gtabid]['artleiste'][$fieldid]) {
+        $case_sens_b = '';
+        $case_sens_e = '';
+        $style_sens_b = '';
+        $style_sens_e = '';
+    }
+
     // SELECT / ATTRIBUTE
     if ($gfield[$gtabid]["field_type"][$fieldid] == 19) {
         $mselecttype = "LMB_ATTRIBUTE";
     } else {
         $mselecttype = "LMB_SELECT";
     }
-
 
     // multilang
     $field_name = 'WERT';
@@ -472,6 +479,8 @@ function gftype_mselect($gtabid,$fieldid,$field_condition,$gsparams,&$gsrres){
             $tmpNot = '';
             if ($gsrres === '#NULL#') {
                 $tmpNot = 'NOT';
+            }else{
+                $attrtype  = 1; // default as string
             }
 
             $msel_count++;
@@ -479,17 +488,17 @@ function gftype_mselect($gtabid,$fieldid,$field_condition,$gsparams,&$gsrres){
             $whr3 = "$tablename.ID $tmpNot IN (SELECT DAT_ID FROM {$mselecttype}_D AS $msd WHERE TAB_ID = $gtabid AND FIELD_ID = $fieldid)";
 
         } else {
-            $whr = "{$style_sens_b}W.{$field_name}{$style_sens_e} {$like_neg} LIKE {$style_sens_b}'{$case_sens_b}" . parse_db_string($gsrres, 160) . "{$case_sens_e}'{$style_sens_e}";
+            $whr = "{$style_sens_b}W.{$field_name}{$style_sens_e} {$like_neg} LIKE {$style_sens_b}'{$case_sens_b}" . parse_db_string(trim($gsrres), 160) . "{$case_sens_e}'{$style_sens_e}";
 
             // open bracket - check if next search is attribute value
             if ($nextandor > 2) {
-                $sqlquery2 = "SELECT ID,TYPE FROM LMB_ATTRIBUTE_W WHERE POOL = " . $gfield[$gtabid]["select_pool"][$fieldid] . " AND LOWER(WERT) = '" . parse_db_string(lmb_strtolower($gsrres), 160) . "'";
+                $sqlquery2 = "SELECT ID,TYPE FROM LMB_ATTRIBUTE_W WHERE POOL = " . $gfield[$gtabid]["select_pool"][$fieldid] . " AND LOWER(WERT) = '" . parse_db_string(lmb_strtolower(trim($gsrres)), 160) . "'";
                 $rs2 = lmbdb_exec($GLOBALS['db'], $sqlquery2) or errorhandle(lmbdb_errormsg($GLOBALS['db']), $sqlquery2, $GLOBALS['action'], __FILE__, __LINE__);
                 $attrtype = lmbdb_result($rs2, "TYPE");
                 $openbracket = 1;
             }
         }
-        // attribute with value
+    // attribute with value
     } elseif ($andor > 2 and $gfield[$gtabid]["field_type"][$fieldid] == 19) {
 
         if ($attrtype) {
@@ -524,6 +533,9 @@ function gftype_mselect($gtabid,$fieldid,$field_condition,$gsparams,&$gsrres){
 
             }
 
+        }
+        else {
+            $whr = LMB_DBDEF_FALSE;
         }
 
     }

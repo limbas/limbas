@@ -47,7 +47,7 @@ function cftyp_events($typ,$event1,$event2,&$gresult,$gtabid,$fieldid,$datid=0){
 	global $gfield;
 	
 	if($typ == 1 AND !$event2["change"]){
-		$change = "checktyp('".$gfield[$gtabid]["data_type"][$fieldid]."','".$gfield[$gtabid]["form_name"][$fieldid]."_".$gresult[$gtabid]["id"][$datid]."','".$gfield[$gtabid]["spelling"][$fieldid]."','".$gfield[$gtabid]["field_id"][$fieldid]."','".$gtabid."',this.value,'".$gresult[$gtabid]["id"][$datid]."','".$gfield[$gtabid]["ajaxpost"][$fieldid]."','".$gfield[$gtabid]["size"][$fieldid]."',null,'".$gresult[$gtabid]['parentage']."')";
+		$change = "checktyp('".$gfield[$gtabid]["data_type"][$fieldid]."','".$gfield[$gtabid]["form_name"][$fieldid]."_".$gresult[$gtabid]["id"][$datid]."','".$gfield[$gtabid]["spelling"][$fieldid]."','".$gfield[$gtabid]["field_id"][$fieldid]."','".$gtabid."',this.value,'".$gresult[$gtabid]["id"][$datid]."','".$gfield[$gtabid]["ajaxpost"][$fieldid]."','".$gfield[$gtabid]["size"][$fieldid]."',this,'".$gresult[$gtabid]['parentage']."')";
 		if(!$event1 AND !$event2){return "OnChange=\"".$change."\"";}
 		$event2["change"] = $change;
 	}
@@ -80,11 +80,11 @@ function cftyp_2($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
         $events = cftyp_events($typ,$event,$event2,$gresult,$gtabid,$field_id,$bzm);
 
         if($typ == 1){
-        	echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%;height:100%;\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$field_id]."\" VALUE=\"".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$umgvar["charset"])."\" $events>";
+        	echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%;height:100%;\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$field_id]."\" data-regex=\"".htmlentities($gfield[$gtabid]['regex'][$field_id],ENT_QUOTES)."\" VALUE=\"".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES)."\" $events>";
         }elseif($typ == 2){
-        	echo ($events ? "<span $events>":"").htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."&nbsp;".($events ? "</span>":"");
+        	echo ($events ? "<span $events>":"").htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES)."&nbsp;".($events ? "</span>":"");
         }elseif($typ == 3 OR $typ == 4){
-        	return htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+        	return htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES);
         }else{
         	return $gresult[$gtabid][$field_id][$bzm];
         }
@@ -116,13 +116,13 @@ function cftyp_3($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$gformid=null
 	}
 
 	if($typ == 1 AND $gformid){
-        echo "<TEXTAREA CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%;height:100%;\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$field_id]."\" $events>".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$umgvar["charset"])."</TEXTAREA>";
+        echo "<TEXTAREA CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%;height:100%;\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$field_id]."\" data-regex=\"".htmlentities($gfield[$gtabid]['regex'][$field_id],ENT_QUOTES)."\" $events>".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES)."</TEXTAREA>";
     }elseif($typ == 2 OR $typ == 1){
-		echo ($events ? "<div style=\"cursor:help;width:100%;height:100%;\" $events>":"").htmlentities(lmb_substr($gresult[$gtabid][$field_id][$bzm],0,$cut),ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."... ".($events ? "</div>":"");
+		echo ($events ? "<div style=\"cursor:help;width:100%;height:100%;\" $events>":"").htmlentities(lmb_substr($gresult[$gtabid][$field_id][$bzm],0,$cut),ENT_QUOTES)."... ".($events ? "</div>":"");
 	}elseif($typ == 3){
-		return nl2br(htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$umgvar["charset"]));
+		return nl2br(htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES));
 	}elseif($typ == 4){
-		return htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$umgvar["charset"]);
+		return htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES);
 	}else{
 		return $gresult[$gtabid][$field_id][$bzm];
 	}
@@ -154,22 +154,22 @@ function cftyp_22($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$gformid=nul
 	}
 
     if($typ == 1 AND ($gformid OR $gfield[$gtabid]['argument_edit'][$field_id])){
-        echo "<TEXTAREA CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%;height:100%;resize: both;\" $events>".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$umgvar["charset"])."</TEXTAREA>";
+        echo "<TEXTAREA CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%;height:100%;resize: both;\" $events>".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES)."</TEXTAREA>";
     }elseif($typ == 2){
         if($gfield[$gtabid]["wysiwyg"][$field_id]){
             echo ($events ? "<span style=\"cursor:help;\" $events>" : "") . "<I>" . strip_tags(lmb_substr($gresult[$gtabid][$field_id][$bzm], 0, $cut)) . "... " . "</I>" . ($events ? "</span>" : "");
         }else {
-            echo ($events ? "<span style=\"cursor:help;\" $events>" : "") . "<I>" . htmlentities(lmb_substr($gresult[$gtabid][$field_id][$bzm], 0, $cut), ENT_QUOTES, $umgvar["charset"]) . "... " . "</I>" . ($events ? "</span>" : "");
+            echo ($events ? "<span style=\"cursor:help;\" $events>" : "") . "<I>" . htmlentities(lmb_substr($gresult[$gtabid][$field_id][$bzm], 0, $cut), ENT_QUOTES) . "... " . "</I>" . ($events ? "</span>" : "");
         }
 	}elseif($gfield[$gtabid]["wysiwyg"][$field_id] OR $typ == 5 OR $typ == 6){
 		return $gresult[$gtabid][$field_id][$bzm];
 	}elseif($typ == 3){
-		return nl2br(htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$umgvar["charset"]));
+		return nl2br(htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES));
     }elseif($typ == 4){
         if($gfield[$gtabid]["wysiwyg"][$field_id]){
             return $gresult[$gtabid][$field_id][$bzm];
         }else {
-            return htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$umgvar["charset"]);
+            return htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES);
         }
 	}
 }
@@ -189,7 +189,7 @@ function cftyp_1($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
 		} else {
             $result = convert_NumberFormat($gresult[$gtabid][$field_id][$bzm], $gfield[$gtabid]["nformat"][$field_id]);
         }
-		echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%;text-align:right;\" MAXLENGTH=\"".($gfield[$gtabid]["size"][$field_id]+6)."\" VALUE=\"".$result."\" $events>";
+		echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%;text-align:right;\" MAXLENGTH=\"".($gfield[$gtabid]["size"][$field_id]+6)."\" data-regex=\"".htmlentities($gfield[$gtabid]['regex'][$field_id],ENT_QUOTES)."\" VALUE=\"".$result."\" $events>";
 	}elseif($typ == 2) {
         # Potenz-Dartsellung
         if ($gfield[$gtabid]["potency"][$field_id]) {
@@ -226,13 +226,13 @@ function cftyp_28($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
 
         if($typ == 1){
         	$events = cftyp_events($typ,$event,null,$gresult,$gtabid,$field_id,$bzm);
-        	echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%;\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$field_id]."\" VALUE=\"".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$umgvar["charset"])."\" $events>";
+        	echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%;\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$field_id]."\" VALUE=\"".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES)."\" data-regex=\"".htmlentities($gfield[$gtabid]['regex'][$field_id],ENT_QUOTES)."\" $events>";
         }elseif($typ == 2){
         	$event2["click"] = "openPhone_".$session["t_setting"][0]."('".str_replace(" ","",$gresult[$gtabid][$field_id][$bzm])."')";
         	$events = cftyp_events($typ,$event,$event2,$gresult,$gtabid,$field_id,$bzm);
-        	echo "<a href=\"#\" $events>".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$umgvar["charset"])."</a>&nbsp;";
+        	echo "<a href=\"#\" $events>".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES)."</a>&nbsp;";
         }elseif($typ == 3 OR $typ == 4){
-        	return htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$umgvar["charset"]);
+        	return htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES);
         }else{
         	return $gresult[$gtabid][$field_id][$bzm];
         }
@@ -256,7 +256,7 @@ function cftyp_7($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
 	        }
         }
         if($typ == 1){
-        	echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%;text-align:right;\" TITLE=\"".$gresult[$gtabid][$field_id][$bzm]['C']."\" VALUE=\"".trim($gresult[$gtabid][$field_id][$bzm]['V']." ".$gresult[$gtabid][$field_id][$bzm]['C'])."\" MAXLENGTH=\"".($gfield[$gtabid]["size"][$field_id]+6)."\" $events>";
+        	echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%;text-align:right;\" TITLE=\"".$gresult[$gtabid][$field_id][$bzm]['C']."\" VALUE=\"".trim($gresult[$gtabid][$field_id][$bzm]['V']." ".$gresult[$gtabid][$field_id][$bzm]['C'])."\" MAXLENGTH=\"".($gfield[$gtabid]["size"][$field_id]+6)."\" data-regex=\"".htmlentities($gfield[$gtabid]['regex'][$field_id],ENT_QUOTES)."\" $events>";
         }elseif($typ == 2){
         	echo ($events ? "<span $events>":"").$result."&nbsp;".$lmcurrency["symbol"][$gresult[$gtabid][$field_id][$bzm]['C']] .($events ? "</span>":"");
         }elseif($typ == 3) {
@@ -313,7 +313,7 @@ function cftyp_4($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
         }
 
         if($typ == 1){
-        	echo "<INPUT TYPE=\"$dp\" CLASS=\"gtabBodyINP\" NAME=\"".$fieldname."\" STYLE=\"width:100%\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$field_id]."\" VALUE=\"".$value."\" $events>";
+        	echo "<INPUT TYPE=\"$dp\" CLASS=\"gtabBodyINP\" NAME=\"".$fieldname."\" STYLE=\"width:100%\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$field_id]."\" VALUE=\"".$value."\" data-regex=\"".htmlentities($gfield[$gtabid]['regex'][$field_id],ENT_QUOTES)."\" $events>";
         }elseif($typ == 2) {
             echo ($events ? "<span $events>" : "") . $value . "&nbsp;" . ($events ? "</span>" : "");
         }elseif($typ == 6) {
@@ -338,7 +338,7 @@ function cftyp_25($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
         }
 
         if($typ == 1){
-        	echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$field_id]."\" VALUE=\"".$value."\" $events>";
+        	echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$field_id]."\" VALUE=\"".$value."\" data-regex=\"".htmlentities($gfield[$gtabid]['regex'][$field_id],ENT_QUOTES)."\" $events>";
         }elseif($typ == 2){
         	echo ($events ? "<span $events>":"").$value."&nbsp;".($events ? "</span>":"");
         } elseif($typ == 7) {
@@ -404,9 +404,9 @@ function cftyp_19($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
 		$systemfield = strtoupper($gfield[$gtabid]["field_name"][$field_id]);
 
         if($typ == 1 OR $typ == 2){
-        	echo ($events ? "<span $events>":"").htmlentities($userdat["bezeichnung"][$gresult[$gtabid][$systemfield][$bzm]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]).($events ? "</span>":"");
+        	echo ($events ? "<span $events>":"").htmlentities($userdat["bezeichnung"][$gresult[$gtabid][$systemfield][$bzm]],ENT_QUOTES).($events ? "</span>":"");
         }elseif($typ == 3 OR $typ == 4){
-			return htmlentities($userdat["bezeichnung"][$gresult[$gtabid][$systemfield][$bzm]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+			return htmlentities($userdat["bezeichnung"][$gresult[$gtabid][$systemfield][$bzm]],ENT_QUOTES);
         }else{
         	return $userdat["bezeichnung"][$gresult[$gtabid][$systemfield][$bzm]];
         }
@@ -488,7 +488,7 @@ function cftyp_21($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
 	        		echo ($events ? "<span $events>":"").$gres["picdesc"][0]."&nbsp;".($events ? "</span>":"");
 	        	}
 	        }elseif($typ == 3){
-				return htmlentities(implode($br,$gres["name"]),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+				return htmlentities(implode($br,$gres["name"]),ENT_QUOTES);
 	        }elseif($typ == 4){
 	        	return $gres;
 	        }elseif($typ == 5){
@@ -559,7 +559,7 @@ function cftyp_32($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$gformid=nul
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     if(!$rs) {$commit = 1;}
     if(lmbdb_fetch_row($rs)) {
-        $filename = htmlentities(lmbdb_result($rs, "NAME"), ENT_QUOTES, $umgvar["charset"]);
+        $filename = htmlentities(lmbdb_result($rs, "NAME"), ENT_QUOTES);
         $fileid = lmbdb_result($rs, "ID");
         $size = explode('x',$umgvar['thumbsize1']);
 
@@ -572,7 +572,7 @@ function cftyp_32($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$gformid=nul
             $style = "border:1px solid black;";
         }
 
-        if ($preview_path = IMACK_ConvertThumbs(array(lmbdb_result($rs, "ID"), lmbdb_result($rs, "SECNAME"), lmbdb_result($rs, "MIMETYPE"), lmbdb_result($rs, "THUMB_OK"), lmbdb_result($rs, "LEVEL"), lmbdb_result($rs, "LMB_MID")), ($width - 2), $height, 1)) {
+        if ($preview_path = lmb_getThumbnail(array(lmbdb_result($rs, "ID"), lmbdb_result($rs, "SECNAME"), lmbdb_result($rs, "MIMETYPE"), lmbdb_result($rs, "THUMB_OK"), lmbdb_result($rs, "LEVEL"), lmbdb_result($rs, "LMB_MID")), ($width - 2), $height, 1)) {
             #$style_array = explode(";", $gform[$gformid]["style"][$formid]);
             #$style = set_style($style_array);
             return "<a href=\"main.php?action=download&ID=$fileid\" target=\"new\" title=\"$filename\"><img src=\"$preview_path\" STYLE=\"" . $style . "\"></a>";
@@ -590,11 +590,11 @@ function cftyp_18($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
 		$events = cftyp_events($typ,$event,null,$gresult,$gtabid,$field_id,$bzm);
 
         if($typ == 1){
-        	echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$field_id]."\" VALUE=\"".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" $events>";
+        	echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$field_id]."\" VALUE=\"".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES)."\" data-regex=\"".htmlentities($gfield[$gtabid]['regex'][$field_id],ENT_QUOTES)."\" $events>";
         }elseif($typ == 2){
-			echo ($events ? "<span $events>":"")."<A HREF=\"".$gresult[$gtabid][$field_id][$bzm]."\" TARGET=\"new\">".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$umgvar["charset"])."</A>&nbsp;".($events ? "</span>":"");
+			echo ($events ? "<span $events>":"")."<A HREF=\"".$gresult[$gtabid][$field_id][$bzm]."\" TARGET=\"new\">".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES)."</A>&nbsp;".($events ? "</span>":"");
         }elseif($typ == 3 OR $typ == 4){
-        	return htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+        	return htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES);
         }else{
         	return $gresult[$gtabid][$field_id][$bzm];
         }
@@ -607,13 +607,13 @@ function cftyp_17($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
 
         if($typ == 1){
         	$events = cftyp_events($typ,$event,null,$gresult,$gtabid,$field_id,$bzm);
-        	echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$field_id]."\" VALUE=\"".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\" $events>";
+        	echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$field_id]."\" VALUE=\"".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES)."\" data-regex=\"".htmlentities($gfield[$gtabid]['regex'][$field_id],ENT_QUOTES)."\" $events>";
         }elseif($typ == 2){
         	$event2["click"] = "window.location.href = 'mailto:".$gresult[$gtabid][$field_id][$bzm] . "'";
         	$events = cftyp_events($typ,$event,$event2,$gresult,$gtabid,$field_id,$bzm);
-        	echo "<a $events>".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."</a>";
+        	echo "<a $events>".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES)."</a>";
         }elseif($typ == 3 OR $typ == 4){
-        	return htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+        	return htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES);
         }else{
         	return $gresult[$gtabid][$field_id][$bzm];
         }
@@ -629,11 +629,11 @@ function cftyp_24($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
     $events = cftyp_events($typ, $event, null, $gresult, $gtabid, $field_id, $bzm);
     
     if ($typ == 1) {
-        echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"" . $gfield[$gtabid]["form_name"][$field_id] . "_" . $gresult[$gtabid]["id"][$bzm] . "\" STYLE=\"width:100%\" MAXLENGTH=\"" . $gfield[$gtabid]["size"][$field_id] . "\" VALUE=\"" . htmlentities($gresult[$gtabid][$field_id][$bzm], ENT_QUOTES, $GLOBALS["umgvar"]["charset"]) . "\" $events>";
+        echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"" . $gfield[$gtabid]["form_name"][$field_id] . "_" . $gresult[$gtabid]["id"][$bzm] . "\" STYLE=\"width:100%\" MAXLENGTH=\"" . $gfield[$gtabid]["size"][$field_id] . "\" VALUE=\"" . htmlentities($gresult[$gtabid][$field_id][$bzm], ENT_QUOTES) . "\" $events>";
     } elseif ($typ == 2) {
-        echo ($events ? "<span $events>" : "") . "<img style=\"max-height:20px;\" src=\"" . htmlentities($gresult[$gtabid][$field_id][$bzm], ENT_QUOTES, $umgvar["charset"]) . "\">" . ($events ? "</span>" : "");
+        echo ($events ? "<span $events>" : "") . "<img style=\"max-height:20px;\" src=\"" . htmlentities($gresult[$gtabid][$field_id][$bzm], ENT_QUOTES) . "\">" . ($events ? "</span>" : "");
     } elseif ($typ == 3 or $typ == 4) {
-        return htmlentities($gresult[$gtabid][$field_id][$bzm], ENT_QUOTES, $umgvar["charset"]);
+        return htmlentities($gresult[$gtabid][$field_id][$bzm], ENT_QUOTES);
     } else {
         return $gresult[$gtabid][$field_id][$bzm];
     }
@@ -650,11 +650,11 @@ function cftyp_16($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
 		$style = "background-color:".$gresult[$gtabid][$field_id][$bzm].";color:".lmbSuggestColor($gresult[$gtabid][$field_id][$bzm]);
 		
         if($typ == 1){
-        	echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%;$style\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$field_id]."\" VALUE=\"".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$umgvar["charset"])."\" $events>";
+        	echo "<INPUT TYPE=\"TEXT\" CLASS=\"gtabBodyINP\" NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" STYLE=\"width:100%;$style\" MAXLENGTH=\"".$gfield[$gtabid]["size"][$field_id]."\" VALUE=\"".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES)."\" $events>";
         }elseif($typ == 2){
-        	echo "<span $events style=\"$style\">".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."&nbsp;</span>";
+        	echo "<span $events style=\"$style\">".htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES)."&nbsp;</span>";
         }elseif($typ == 3 OR $typ == 4){
-        	return htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+        	return htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES);
         }else{
         	return $gresult[$gtabid][$field_id][$bzm];
         }
@@ -687,9 +687,9 @@ function cftyp_35($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
             echo "</SELECT>";
 
         }elseif($typ == 2){
-        	echo "<span $events>".htmlentities($lmb_sync_clients[$gresult[$gtabid][$field_id][$bzm]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."&nbsp;</span>";
+        	echo "<span $events>".htmlentities($lmb_sync_clients[$gresult[$gtabid][$field_id][$bzm]],ENT_QUOTES)."&nbsp;</span>";
         }elseif($typ == 3 OR $typ == 4){
-        	return htmlentities($lmb_sync_clients[$gresult[$gtabid][$field_id][$bzm]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+        	return htmlentities($lmb_sync_clients[$gresult[$gtabid][$field_id][$bzm]],ENT_QUOTES);
         }else{
         	return $gresult[$gtabid][$field_id][$bzm];
         }
@@ -722,10 +722,10 @@ function cftyp_36($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
 
     }elseif($typ == 2){
         echo "<DIV $pos>";
-        echo "<span $events style=\"$style\" title=\"".$gresult[$gtabid]['MID'][$bzm]."\">".htmlentities($lmmultitenants['name'][$lmmultitenants['translate'][$gresult[$gtabid]['MID'][$bzm]]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."&nbsp;</span>";
+        echo "<span $events style=\"$style\" title=\"".$gresult[$gtabid]['MID'][$bzm]."\">".htmlentities($lmmultitenants['name'][$lmmultitenants['translate'][$gresult[$gtabid]['MID'][$bzm]]],ENT_QUOTES)."&nbsp;</span>";
         echo "</DIV>";
     }elseif($typ == 3 OR $typ == 4){
-        return htmlentities($lmmultitenants['name'][$lmmultitenants['translate'][$gresult[$gtabid]['MID'][$bzm]]],ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
+        return htmlentities($lmmultitenants['name'][$lmmultitenants['translate'][$gresult[$gtabid]['MID'][$bzm]]],ENT_QUOTES);
     }else{
         return $gresult[$gtabid]['MID'][$bzm];
     }
@@ -770,29 +770,12 @@ function cftyp_9($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null) {
         	$gresult_[$gtabid][$field_id][0] = $gresult[$gtabid][$field_id][$bzm];
         	
         	dftyp_9($ID,$gresult_,$field_id,$gtabid,'gtabBodyINP','width:85%',null,$typ,'listmode',$event);
-        	
-        	/*
-			echo "<SELECT NAME=\"".$gfield[$gtabid]["form_name"][$field_id]."_".$gresult[$gtabid]["id"][$bzm]."\" CLASS=\"gtabBodyINP\" STYLE=\"width:100%\" $events>";
-            echo "<OPTION VALUE=\"\">";
-			$sqlquery = "SELECT WERT FROM LMB_SELECT_W WHERE POOL = ".$gfield[$gtabid]["select_pool"][$field_id]." ORDER BY SORT";
-            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-			$bzm2 = 1;
-			while(lmbdb_fetch_row($rs, $bzm2)) {
-				echo "<OPTION VALUE=\"".htmlentities(lmbdb_result($rs, "WERT"),ENT_QUOTES,$mgvar["charset"])."\"";
-				if( lmbdb_result($rs, "WERT") == $gresult[$gtabid][$field_id][$bzm] ){
-                	echo "SELECTED";
-                    }
-				echo ">";
-				echo htmlentities(lmbdb_result($rs, "WERT"),ENT_QUOTES,$GLOBALS["umgvar"]["charset"]);
-			$bzm2++;
-			}
-		    echo "</SELECT>";
-		    */
+
         }elseif($typ == 2){
         	$events = cftyp_events($typ,$event,null,$gresult,$gtabid,$field_id,$bzm);
-        	echo ($events ? "<span style=\"cursor:help\" $events>":"").htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$umgvar["charset"])."&nbsp;".($events ? "</span>":"");
+        	echo ($events ? "<span style=\"cursor:help\" $events>":"").htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES)."&nbsp;".($events ? "</span>":"");
         }elseif($typ == 3 OR $typ == 4){
-        	return htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES,$umgvar["charset"]);
+        	return htmlentities($gresult[$gtabid][$field_id][$bzm],ENT_QUOTES);
         }else{
         	return $gresult[$gtabid][$field_id][$bzm];
         }
@@ -868,8 +851,8 @@ function cftyp_10($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$gformid=nul
                 }
                 $row[] = $entry;
             }else{
-				$row[$skey] = htmlentities(lmbdb_result($rs, $field_name),ENT_QUOTES,$umgvar["charset"]);
-				$row['keyword'][$skey] = htmlentities(lmbdb_result($rs, "KEYWORDS"),ENT_QUOTES,$umgvar["charset"]);
+				$row[$skey] = htmlentities(lmbdb_result($rs, $field_name),ENT_QUOTES);
+				$row['keyword'][$skey] = htmlentities(lmbdb_result($rs, "KEYWORDS"),ENT_QUOTES);
                 if($pool_tagmode) {
                     $row['color'][$skey] = lmbdb_result($rs, "COLOR");
                     $row['hidetag'][$skey] = lmbdb_result($rs, "HIDETAG");
@@ -894,7 +877,7 @@ function cftyp_10($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$gformid=nul
                         } else {
                             $value_num = '';
                         }
-                        $attvalue = htmlentities(trim($value_num . ' ' . $row['value_string'][$skey]), ENT_QUOTES, $GLOBALS['umgvar']['charset']);
+                        $attvalue = htmlentities(trim($value_num . ' ' . $row['value_string'][$skey]), ENT_QUOTES);
                     }
                     $row['attrvalue'][$skey] = $attvalue;
                 }
@@ -910,16 +893,16 @@ function cftyp_10($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$gformid=nul
 		if($msingle){
 		    // Ajax
 			if($gfield[$gtabid]["data_type"][$field_id] == 32){
-				dftyp_11($ID,$gresult,$field_id,$gtabid,'gtabBodyINP',null,null,$typ,'listmode',$event);
+				dftyp_11($ID,$gresult,$field_id,$gtabid,'gtabBodyINP',null,null,$typ,'listmode',$event,$gformid,$formid);
 			}else{
-				dftyp_10($ID,$gresult,$field_id,$gtabid,'gtabBodyINP','width:85%',null,$typ,'listmode',$event);
+				dftyp_10($ID,$gresult,$field_id,$gtabid,'gtabBodyINP','width:85%',null,$typ,'listmode',$event,$gformid,$formid);
 			}
 
 		# multiple
 		}else{
 		    # show tags
 		    if($formid) {
-		        dftyp_11($ID,$gresult,$field_id,$gtabid,'gtabBodyINP',1,null,$typ,'listmode',$event);
+		        dftyp_11($ID,$gresult,$field_id,$gtabid,'gtabBodyINP',1,null,$typ,'listmode',$event,$gformid,$formid);
 
 		    # show details
             }elseif($row_ AND $gfield[$gtabid]["listing_viewmode"][$field_id] == 2){
@@ -1004,7 +987,7 @@ function cftyp_12($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$gformid=nul
 
                 // show first thumbnail
                 if(lmbdb_fetch_row($rs)) {
-                    $filename = htmlentities(lmbdb_result($rs, "NAME"), ENT_QUOTES, $umgvar["charset"]);
+                    $filename = htmlentities(lmbdb_result($rs, "NAME"), ENT_QUOTES);
                     $fileid = lmbdb_result($rs, "ID");
                     $width = $gform[$gformid]["width"][$formid];
                     $height = $gform[$gformid]["height"][$formid];
@@ -1014,7 +997,7 @@ function cftyp_12($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$gformid=nul
                         $height = $size[1];
                     }
 
-                    if($preview_path = IMACK_ConvertThumbs(array(lmbdb_result($rs, "ID"), lmbdb_result($rs, "SECNAME"), lmbdb_result($rs, "MIMETYPE"), lmbdb_result($rs, "THUMB_OK"), lmbdb_result($rs, "LEVEL"),lmbdb_result($rs1, "LMB_MID")), ($width - 2), $height, 1)) {
+                    if($preview_path = lmb_getThumbnail(array(lmbdb_result($rs, "ID"), lmbdb_result($rs, "SECNAME"), lmbdb_result($rs, "MIMETYPE"), lmbdb_result($rs, "THUMB_OK"), lmbdb_result($rs, "LEVEL"),lmbdb_result($rs1, "LMB_MID")), ($width - 2), $height, 1)) {
 
                         echo "<a href=\"main.php?action=download&ID=$fileid\" target=\"new\" title=\"$filename\">";
                         // preview for tile/list formular
@@ -1062,7 +1045,7 @@ function cftyp_12($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$gformid=nul
 		if(!$rs) {$commit = 1;}
 		$bzm2 = 1;
 		while(lmbdb_fetch_row($rs)) {
-			$csvexp_zeile[] = htmlentities(lmbdb_result($rs, "NAME"),ENT_QUOTES,$umgvar["charset"]);
+			$csvexp_zeile[] = htmlentities(lmbdb_result($rs, "NAME"),ENT_QUOTES);
 			$soap_zeile["id"][] = lmbdb_result($rs, "ID");
 			$soap_zeile["name"][] = lmbdb_result($rs, "NAME");
 			$soap_zeile["secname"][] = lmbdb_result($rs, "SECNAME");
@@ -1077,7 +1060,7 @@ function cftyp_12($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$gformid=nul
 		if($csvexp_zeile){
 			if($typ == 3){
 				if($bzm2 == 2){
-					return htmlentities($csvexp_zeile[0],ENT_QUOTES,$umgvar["charset"]);
+					return htmlentities($csvexp_zeile[0],ENT_QUOTES);
 				}else{
 					return ($bzm2-1)."&nbsp;".$lang[86];
 				}
@@ -1294,7 +1277,7 @@ function cftyp_14($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$gformid=nul
             $show_inframe = $filter["ext_RelationFields"]["show_inframe"][$vuniqueid];
 			$event2["click"] = "lmbOpenForm(event,'{$gfield[$gtabid]["verkntabid"][$field_id]}','',{action:'gtab_erg', v_tabid:'$gtabid',v_fieldid:'{$gfield[$gtabid]["field_id"][$field_id]}',v_id:'{$gresult[$gtabid]["id"][$bzm]}',inframe:'$show_inframe'});";
             $events = cftyp_events(0,$event,$event2,$gresult,$gtabid,$field_id,$bzm);
-			echo "<a $events>".$rscount."&nbsp;$lang[86]</a>";
+			echo "<a href=\"#\" $events>".$rscount."&nbsp;$lang[86]</a>";
 			// show details in dialog in editmode
 			if($typ == 1){
 				echo "&nbsp;<i border=\"0\" onclick=\"LmExt_RelationList(this,'$gtabid','$field_id','$ID')\" style=\"cursor:pointer;vertical-align:top;\" class=\"lmb-icon lmb-edit-caret\" title=\"".$gfield[$gtabid]['spelling'][$field_id].' -> '.$gresult[$gtabid][$gfield[$gtabid]["mainfield"]][$bzm]."\"></i>";
@@ -1337,7 +1320,7 @@ function cftyp_14_d(&$vgresult,$rscount,$typ,$verkn,$gtabid,$vgtabid,$bzm,$ID,$V
 		}
 	}
 	
-	echo "<table id=\"extRelationTab_".$gtabid."_".$bzm."\" data-el=\"".$gtabid."_".$bzm."\" datid=\"$ID\" class=\"lmbfringeGtabBody $resizable\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"border:none;width:100%;table-layout:fixed\">
+	echo "<table id=\"extRelationTab_".$gtabid."_".$bzm."\" data-el=\"".$gtabid."_".$bzm."\" datid=\"$ID\" class=\"legacy-table lmbfringeGtabBody $resizable\" border=\"0\" cellspacing=\"0\" cellpadding=\"0\" style=\"border:none;width:100%;table-layout:fixed\">
 	<thead>";
 	
 	# extended relation table
@@ -1358,16 +1341,23 @@ function cftyp_14_d(&$vgresult,$rscount,$typ,$verkn,$gtabid,$vgtabid,$bzm,$ID,$V
 			$filter["ext_RelationFields"][$vuniqueid] = array($linklevel["fieldid"]);
 		}
 	}
-	
+
 	# field order
 	if($filter["ext_RelationOrder"][$vuniqueid]){
 		$params["orderfield"] = $filter["ext_RelationOrder"][$vuniqueid];
 	}
 
-	// show indicator in default formular
-    if(!$gformid){ $filter["ext_RelationFields"]["indicator"][$vuniqueid] = 1;}
-    if(!$vgresult[$vgtabid]["indicator"]["width"]){$vgresult[$vgtabid]["indicator"]["width"] = 50;}
-    if(is_numeric($filter["ext_RelationFields"]["show_inframe"][$vuniqueid])){$filter["ext_RelationFields"]["show_inframe"][$vuniqueid] = 'element'.$filter["ext_RelationFields"]["show_inframe"][$vuniqueid];}
+	// show indicator always in default formular
+    // for custom formulars use $filter["ext_RelationFields"]["indicator"][$vuniqueid] = 1; # $vuniqueid = 'g_[gtabid]_[fieldid]_[formid]'
+    if(!$gformid){
+        $filter["ext_RelationFields"]["indicator"][$vuniqueid] = 1;
+    }
+    if(!$vgresult[$vgtabid]["indicator"]["width"]){
+        $vgresult[$vgtabid]["indicator"]["width"] = 50;
+    }
+    if(is_numeric($filter["ext_RelationFields"]["show_inframe"][$vuniqueid])){
+        $filter["ext_RelationFields"]["show_inframe"][$vuniqueid] = 'element'.$filter["ext_RelationFields"]["show_inframe"][$vuniqueid];
+    }
 
 	#----------------------- Field search -----------------------
 	if($filter["ext_RelationFields"]["search"][$vuniqueid] AND !$filter["ext_RelationFields"]["no_search"][$vuniqueid]){
@@ -1435,7 +1425,7 @@ function cftyp_14_d(&$vgresult,$rscount,$typ,$verkn,$gtabid,$vgtabid,$bzm,$ID,$V
 		}
 		}
 		*/
-		
+
 		####################
 		$vgtabid_ = $linklevel["tabid"];
 		if($gfield[$gtabid]["verknparams"][$bzm] AND $value1 > 1000){
@@ -1450,7 +1440,12 @@ function cftyp_14_d(&$vgresult,$rscount,$typ,$verkn,$gtabid,$vgtabid,$bzm,$ID,$V
 			continue;
 		}
 
-		if($gfield[$vgtabid_]["field_type"][$value1] == 5){$align = "right";}else{$align = "left";}
+		if($gfield[$vgtabid_]["field_type"][$value1] == 5){
+            $align = "text-align:right;padding-right:30px";
+        }else{
+            $align = "text-align:left";
+        }
+
 		# width
 		if($filter["ext_RelationFields"]["width"][$vuniqueid] AND !$resizable){
 			if($filter["ext_RelationFields"]["width"][$vuniqueid][$value1]){
@@ -1463,12 +1458,24 @@ function cftyp_14_d(&$vgresult,$rscount,$typ,$verkn,$gtabid,$vgtabid,$bzm,$ID,$V
 		$onclick = "style=\"cursor:auto;\"";
 		if(!$filter["ext_RelationFields"]["no_sort"][$vuniqueid] AND $gfield[$vgtabid_]["field_type"][$value1] != 3 AND $gfield[$vgtabid_]["data_type"][$value1] != 31 AND $gfield[$vgtabid_]["data_type"][$value1] != 32 AND $gfield[$vgtabid_]["field_type"][$value1] != 6 AND $gfield[$vgtabid_]["field_type"][$value1] != 11){
 			$onclick = "OnClick=\"LmExt_RelationFields(this,'$gtabid','$bzm','','$typ','$ID',$value1,'','','','$gformid','$formid');\"";
-			$cursor = "cursor:pointer;";
+		}
+
+        $sorticon = 'lmb-caret-down';
+		if($filter["ext_RelationFields"]["order"][$vuniqueid][0][1] == $value1 && "ASC" == $filter["ext_RelationFields"]["order"][$vuniqueid][0][2]){
+            $sorticon = 'lmb-textsort-down';
+		}else if($filter["ext_RelationFields"]["order"][$vuniqueid][0][1] == $value1 && "DESC" == $filter["ext_RelationFields"]["order"][$vuniqueid][0][2]){
+            $sorticon = 'lmb-textsort-up';
 		}
 		
 		echo "
 			<th nowrap align=\"$align\" class=\"gtabHeaderTitleTD\" valign=\"top\" style=\"cursor:auto;width:".$width."\">
-			<div class=\"gtabHeaderTitleTDItem\" $onclick style=\"width:100%;text-align:$align;$cursor\">".$gfield[$vgtabid_]["spelling"][$value1]."</div>
+			<div style=\"position:relative;\">
+			<div class=\"gtabHeaderTitleTDItem\" style=\"width:100%;$align;$cursor\">".$gfield[$vgtabid_]["spelling"][$value1]."</div>
+            <span style=\"position:absolute; padding:0px; margin:0px; right:0px; top:0px; border-left: 1px solid {$farbschema['WEB1']};\">
+                <i class=\"lmb-icon $sorticon\" STYLE=\"cursor:pointer;\" onclick=\"lmbSetColSetting(this,'$gtabid','$bzm','$ID','$value1','$gformid','$formid')\"></i>
+            </span>
+			</div>
+			
 			</th>";
 		$bzmrk++;
 	}
@@ -1513,6 +1520,7 @@ function cftyp_14_d(&$vgresult,$rscount,$typ,$verkn,$gtabid,$vgtabid,$bzm,$ID,$V
 		}
 
 		if($filter["ext_RelationFields"]["indicator"][$vuniqueid]) {
+
             # row-color from indicator
             if (is_array($vgresult[$vgtabid]["indicator"]["color"][$key])) {
                 $BGCOLOR = average_color($vgresult[$vgtabid]["indicator"]["color"][$key]);
@@ -1542,11 +1550,12 @@ function cftyp_14_d(&$vgresult,$rscount,$typ,$verkn,$gtabid,$vgtabid,$bzm,$ID,$V
             }
         }
 
-		echo "<tr id=\"elrow_".$VID."_".$vgtabid."_".$bzm."_".$vgresult[$vgtabid]["verkn_keyid"][$key]."\" data-keyid=\"".$vgresult[$vgtabid]["verkn_keyid"][$key]."\" data-id=\"$VID\" title=\"".$title."\"  class=\"gtabBodyTR $indicatorClass\" $indicatorAttribute style=\"background-color:$BGCOLOR;\" lmbbgcolor=\"$BGCOLOR\" onclick=\"lmbTableClickEvent(event,this)\" ";
+        if($BGCLASS == 'gtabBodyTRColorB'){$BGCLASS = 'gtabBodyTRColorA';}else{$BGCLASS = 'gtabBodyTRColorB';}
+		echo "<tr id=\"elrow_".$VID."_".$vgtabid."_".$bzm."_".$vgresult[$vgtabid]["verkn_keyid"][$key]."\" data-keyid=\"".$vgresult[$vgtabid]["verkn_keyid"][$key]."\" data-id=\"$VID\" title=\"".$title."\"  class=\"gtabBodyTR $BGCLASS $indicatorClass\" $indicatorAttribute style=\"background-color:$BGCOLOR;\" lmbbgcolor=\"$BGCOLOR\" onclick=\"lmbTableClickEvent(event,this)\" ";
 
         # Contextmenu
         if($GLOBALS['gcustmenu'][$vgtabid][20]['id'][0]) {
-            echo "oncontextmenu=\"lmbRelationContextMenu(event,this,$VID,$vgtabid,'" . $GLOBALS['gcustmenu'][$vgtabid][20]['id'][0] . "')\" ";
+            echo "oncontextmenu=\"lmbRelationContextMenu(event,this,$VID,$vgtabid)\" ";
         }
 
         # Explorer Zusatz
@@ -1566,7 +1575,11 @@ function cftyp_14_d(&$vgresult,$rscount,$typ,$verkn,$gtabid,$vgtabid,$bzm,$ID,$V
                 echo "ondblclick=\"lmbOpenForm(event,'{$gfield[$gtabid]["verkntabid"][$bzm]}','$VID',{v_tabid:'$gtabid',v_fieldid:'$bzm',v_id:'$ID',formid:'$dest_formid',action:document.form1.action.value,formdimension:'$dimsn',inframe:'{$filter["ext_RelationFields"]["show_inframe"][$vuniqueid]}',v_formid:'$formid',show_relationpath:'{$filter["ext_RelationFields"]["show_relationpath"][$vuniqueid]}'});\"";
 			}
 		}
-		echo " onmouseover=\"this.style.backgroundColor='".$farbschema["WEB7"]."'\" onmouseout=\"this.style.backgroundColor='$BGCOLOR'\" ";
+
+        if($BGCOLOR) {
+            echo " onmouseover=\"this.style.backgroundColor='" . $farbschema["WEB7"] . "'\" onmouseout=\"this.style.backgroundColor='$BGCOLOR'\" ";
+        }
+
 		echo ">";
 
 		if($typ == 1){
@@ -1644,6 +1657,14 @@ function cftyp_14_d(&$vgresult,$rscount,$typ,$verkn,$gtabid,$vgtabid,$bzm,$ID,$V
 						$width = $gfield[$vgtabid_]["rowsize"][$value1];
 					}
 				}
+
+                // custmenu
+                $custmenu = '';
+                if($GLOBALS['gcustmenu'][$vgtabid_][20][$value1]){          # filedbased
+                    $custmenu = $GLOBALS['gcustmenu'][$vgtabid_][20][$value1];
+                }elseif($GLOBALS['gcustmenu'][$vgtabid_][20][0]){          # tablebased
+                    $custmenu = $GLOBALS['gcustmenu'][$vgtabid_][20][0];
+                }
 				
 				# ------------------ Default ---------------------
 				$fname = "cftyp_".$gfield[$vgtabid_]["funcid"][$value1];
@@ -1655,7 +1676,7 @@ function cftyp_14_d(&$vgresult,$rscount,$typ,$verkn,$gtabid,$vgtabid,$bzm,$ID,$V
 				}
 
 				#if(!$val){$val == "--";}
-				echo "<td class=\"element-cell gtabBodyTD\" data-fieldid=\"$value1\"  align=\"$align\" style=\"width:$width\">";
+				echo "<td class=\"element-cell gtabBodyTD\" data-fieldid=\"$value1\" data-custmenu=\"$custmenu\"  align=\"$align\" style=\"width:$width\">";
 				/* ------------------ Typefunction --------------------- */
 				$retrn = $fname($key,$value1,$vgtabid_,$edittyp,$vgresult);
 				/* ------------------ /Typefunction -------------------- */

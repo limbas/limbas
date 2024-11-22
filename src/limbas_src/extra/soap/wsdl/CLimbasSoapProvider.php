@@ -391,7 +391,7 @@ function getGtabLevel($model,$gtabid,$verkn=null,$id=null,$rec=null){
 				$result = $fname($bzm,$key,$gtabid,5,$gresult,0);
 				if(is_array($result)){$result = implode(chr(13),$result);}
 				$fieldName = $gfield[$gtabid]["field_name"][$key];
-				$obj->$fieldName = lmb_utf8_encode($result);
+				$obj->$fieldName = $result;
 			}
 		}
 

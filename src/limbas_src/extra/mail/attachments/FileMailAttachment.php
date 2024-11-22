@@ -14,6 +14,9 @@ class FileMailAttachment extends MailAttachment
     public function __construct(string $path, ?string $name = null) {
         $this->name = $name;
         $this->path = $path;
+        if(empty($this->name)) {
+            $this->name = pathinfo($this->path,PATHINFO_BASENAME);
+        }
     }
 
 

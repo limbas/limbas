@@ -19,7 +19,7 @@ $farbschemaWEB4: gray !default;
 $farbschemaWEB5: gray !default;
 $farbschemaWEB6: red !default;
 $farbschemaWEB7: #74ba6a !default;
-$farbschemaWEB8: #212529 !default;
+$farbschemaWEB8: #5a5a5a !default;
 $farbschemaWEB9: #545454 !default;
 $farbschemaWEB10: #383838 !default;
 $farbschemaWEB11: gray !default;
@@ -30,6 +30,8 @@ $farbschemaWEB14: #222222 !default;
 $legacy-table-color: #e3e3e3 !default;
 $legacy-table-hover-color: $legacy-table-color !default;
 $legacy-table-hover-bg-color: $farbschemaWEB7 !default;
+$legacy-table-bg-a-color: #262a2e !default;
+$legacy-table-bg-b-color: #212529 !default;
 
 $gtab-header-bg: #343a40 !default; //same as $nav-center-background-color
 $find-icon-path: url("../images/legacy/find-dark.png") !default;
@@ -92,6 +94,7 @@ $sess-refresh-color: #e4d314 !default;
 $bg-differ: #343a40 !default;
 
 $fa-font-path: '../../assets/fonts' !default;
+$img-as-icon-filter: invert(100%) !default;
 
 //bootstrap defaults
 
@@ -167,7 +170,6 @@ $nav-left-inner-hover-color: #f18e00 !default;
 $nav-left-inner-background-color: #6c757d !default;
 $nav-left-inner-open-background-color: darken($nav-left-background-color, 12) !default;
 $nav-left-inner-border: none !default;
-$nav-left-hide-color: #e9ecef !default;
 
 $nav-left-query-icon-color: #e9ecef !default;
 $nav-left-new-data-color: #00ff00 !default;
@@ -204,7 +206,7 @@ $top-info-border-bottom: 1px solid $default-border-color !default;
 $kanban-colum-color: $default-color !default;
 $kanban-colum-background-color: $default-bg-color !default;
 $kanban-colum-header-color: $default-color !default;
-$kanban-colum-header-background-color: #ffffff !default;
+$kanban-colum-header-background-color: $bg-differ !default;
 $kanban-card-background-color: $kanban-colum-background-color !default;
 $kanban-assigned-background-color: lighten($kanban-card-background-color, 10) !default;
 $kanban-filter-background-color: $kanban-colum-background-color !default;

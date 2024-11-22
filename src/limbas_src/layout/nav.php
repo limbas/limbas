@@ -55,7 +55,7 @@ foreach($menu as $key => $val) {
 
 ?>
 
-<div class="evt-hide-frame"  data-hideshow-sidebars="nav"><i class="lmb-icon lmb-icon-8 lmb-caret-left"></i></div>
+<div class="evt-hide-frame" data-hideshow-sidebars="nav"><i class="lmb-icon lmb-icon-8 lmb-caret-left"></i></div>
 
 </div>
 </div>
@@ -68,7 +68,7 @@ if (isset($activeMenu)) {
 } else {
     # show first menu in nav frame
     foreach ($LINK["name"] as $key => $value) {
-        if ($LINK["subgroup"][$key] == 2 AND $LINK["typ"][$key] == 1) {
+        if ($LINK["subgroup"][$key] == 2 && $LINK["typ"][$key] == 1 && !str_starts_with($LINK['link_url'][$key],'dropdown')) {
             $displayMainMenu = "mainMenu(" . $key . ")";
             break;
         }

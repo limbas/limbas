@@ -393,7 +393,7 @@ function dbq_19($p){
 	if(lmb_stripos($p[1],"CREATE VIEW") !== false){
 		$qu = $p[1];
 	}else{
-		$qu = "CREATE OR REPLACE VIEW ".$p[0]." AS (".rtrim(trim($p[1]),";").")";
+		$qu = "CREATE OR REPLACE VIEW ".dbf_4($p[0])." AS (".rtrim(trim($p[1]),";").")";
 	}
 	
 	return $qu;
@@ -727,6 +727,18 @@ function dbq_21($p,$t=null,$n=null){
 
     }
 }
+
+/**
+ * pretty print table size
+ * CURRENTLY ONLY SUPPORTED IN POSTGRESQL
+ *
+ * @param array $p [0]=schema, [1]=tablename
+ * @return array table size, order size
+ */
+function dbq_30(array $p): array{
+	return ["", ""];
+}
+
 
 
 ################# BACKUP #################

@@ -10,7 +10,7 @@ namespace Limbas\admin\tools\update;
 
 require_once(COREPATH . 'lib/db/db_wrapper.lib');
 
-use Database;
+use Limbas\lib\db\Database;
 use ReflectionClass;
 use ReflectionException;
 use Throwable;

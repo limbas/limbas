@@ -15,7 +15,7 @@ if ($extsave AND $fvalue AND $fpath) {
         return;
     }
     if (file_exists($umgvar['pfad'] . $fpath)) {
-        $fvalue = lmb_utf8_encode(str_replace(chr(13), '', $fvalue));
+        $fvalue = str_replace(chr(13), '', $fvalue);
         file_put_contents($umgvar['pfad'] . $fpath, $fvalue);
     }
 }

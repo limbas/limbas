@@ -6,6 +6,9 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
+
+use Limbas\lib\db\Database;
+
 require_once(COREPATH . 'lib/db/db_wrapper.lib');
 require_once(COREPATH . 'lib/include.lib');
 //require_once("lib/session.lib");
@@ -68,7 +71,7 @@ $pageTitle = $umgvar['page_title'] ? sprintf($umgvar['page_title'], $pageTitleTe
                             </div>
     
                             <div class="d-grid">
-                                <button class="btn btn-primary btn-lg btn-block" type="submit">Login</button>
+                                <button id="btn-login" class="btn btn-primary btn-lg btn-block" type="submit" <?= isset($blocked) && $blocked ? 'disabled' : '' ?>><?= isset($blocked) && $blocked ? '15s' : 'Login' ?></button>
                             </div>
                         </form>
                     </div>
@@ -77,6 +80,7 @@ $pageTitle = $umgvar['page_title'] ? sprintf($umgvar['page_title'], $pageTitleTe
         </div>
     </div>
 </section>
-
+<script src="assets/vendor/jquery/jquery.min.js"></script>
+<script src="assets/js/user/login.js"></script>
 </body>
 </html>

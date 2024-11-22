@@ -67,16 +67,20 @@ html, body.nav {
 .lmbfringeFrameNav > ul > li {
   background-color: $nav-left-inner-background-color;
   color: $nav-left-inner-color;
-  cursor: pointer;
   font-size: 0.9rem;
   vertical-align: top;
   line-height: 2;
   display: block;
 }
 
+.lmbfringeFrameNav > ul > li > .menu-side-header {
+  cursor: pointer;
+}
+
 .lmbfringeFrameNav > ul > li a {
   color: $nav-left-inner-color;
   display: block;
+  cursor: pointer;
 }
 
 .lmbfringeFrameNav > ul > li > .menu-side-header > a {
@@ -195,7 +199,8 @@ html, body.nav {
   text-align: center;
   font-size: 1rem;
   padding: 0.3rem 0;
-  color: $nav-left-hide-color;
+  color: $nav-left-inner-color;
+  cursor: pointer;
 }
 
 @media (max-width: 992px) {

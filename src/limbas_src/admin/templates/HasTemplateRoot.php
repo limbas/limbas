@@ -9,8 +9,8 @@
 
 namespace Limbas\admin\templates;
 
-use Database;
 use Limbas\extra\template\TemplateTable;
+use Limbas\lib\db\Database;
 
 trait HasTemplateRoot
 {

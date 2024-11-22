@@ -15,8 +15,8 @@ require_once(COREPATH . 'lib/db/db_' . $DBA['DB'] . '_admin.lib');
 require_once(COREPATH . 'lib/include_admin.lib');
 require_once(COREPATH . 'admin/tools/datasync/DatasyncClient.php');
 
-use Database;
-use DatasyncClient;
+use Limbas\lib\db\Database;
+use Limbas\admin\tools\datasync\DatasyncClient;
 use Throwable;
 
 class Updater

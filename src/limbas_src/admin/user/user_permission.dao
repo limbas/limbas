@@ -1,0 +1,178 @@
+<?php
+
+
+global $gfield;
+global $gtab;
+global $userdat;
+global $lang;
+global $fieldPermType;
+global $tablePermType;
+global $reportPermType;
+global $formPermType;
+global $greportlist;
+global $gformlist;
+
+
+$fieldPermType = array('LMVIEW','EDIT','COPY');
+$tablePermType = array('LMVIEW' => array('lmb-icon lmb-eye',$lang[2303]),'EDIT' => array('lmb-icon lmb-pencil',$lang[1259]),'LMADD' => array('lmb-icon-cus lmb-page-new',$lang[571]),'DEL' => array('lmb-icon lmb-page-delete-alt',$lang[160]),'HIDE' => array('lmb-icon lmb-page-key',$lang[1257]),'TRASH' => array('lmb-icon lmb-trash',$lang[3094]));
+$reportPermType = array('LMVIEW','HIDDEN','EDITABLE');
+$formPermType = array('LMVIEW','HIDDEN');
+
+function getUserTablePerms($userid) {
+    global $db;
+    global $userdat;
+    global $tablePermType;
+
+    $subgroup = explode(';',$userdat["subgroup"][$userid]);
+
+    $sqlquery = "SELECT DISTINCT
+      TAB_ID, GROUP_ID, LMVIEW, LMADD, EDIT, DEL, HIDE, TRASH
+    FROM
+      LMB_RULES_TABLES
+    WHERE
+      LMB_RULES_TABLES.GROUP_ID IN (".implode(" , ",$subgroup).")
+    ORDER BY
+      TAB_ID
+      ";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
+
+    while (lmbdb_fetch_row($rs)) {
+        $tabid = lmbdb_result($rs, 'TAB_ID');
+
+        foreach($tablePermType as $permName => $icon) {
+            if(lmbdb_result($rs, $permName)){
+                $rule[$tabid][0][$permName] = 1;
+                $rule[$tabid][1][$permName][] = lmbdb_result($rs, 'GROUP_ID');
+            }elseif(!$rule[$tabid][0][$permName]){
+                $rule[$tabid][0][$permName] = 0;
+            }
+        }
+    }
+
+    return $rule;
+
+}
+
+
+function getUserFieldPerms($userid) {
+    global $db;
+    global $userdat;
+    global $fieldPermType;
+
+    $subgroup = explode(';',$userdat["subgroup"][$userid]);
+
+    $sqlquery = "SELECT DISTINCT
+      LMB_RULES_FIELDS.TAB_ID, LMB_RULES_FIELDS.FIELD_ID, LMVIEW, EDIT, COPY, LMB_RULES_FIELDS.GROUP_ID, LMB_CONF_FIELDS.SORT
+    FROM
+      LMB_RULES_FIELDS,
+      LMB_CONF_FIELDS
+    WHERE
+      LMB_RULES_FIELDS.FIELD_ID = LMB_CONF_FIELDS.FIELD_ID
+      AND LMB_RULES_FIELDS.TAB_ID = LMB_CONF_FIELDS.TAB_ID
+      AND LMB_RULES_FIELDS.GROUP_ID IN (".implode(" , ",$subgroup).")
+    ORDER BY
+      LMB_RULES_FIELDS.TAB_ID,
+      SORT";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
+
+    while (lmbdb_fetch_row($rs)) {
+        $tabid = lmbdb_result($rs, 'TAB_ID');
+        $fieldid = lmbdb_result($rs, 'FIELD_ID');
+
+        foreach($fieldPermType as $key => $permName) {
+            if(lmbdb_result($rs, $permName)){
+                $rule[$tabid][0][$fieldid][$permName] = 1;
+                $rule[$tabid][1][$fieldid][$permName][] = lmbdb_result($rs, 'GROUP_ID');
+            }elseif(!$rule[$tabid][0][$fieldid][$permName]){
+                $rule[$tabid][0][$fieldid][$permName] = 0;
+            }
+        }
+
+    }
+
+    return $rule;
+
+}
+
+
+function getUserReportPerms($userid) {
+    global $db;
+    global $userdat;
+    global $reportPermType;
+
+    $subgroup = explode(';',$userdat["subgroup"][$userid]);
+
+	$sqlquery = "SELECT DISTINCT
+	LMB_REPORT_LIST.ID,LMB_REPORT_LIST.NAME,LMB_REPORT_LIST.REFERENZ_TAB,
+	LMB_RULES_REPFORM.GROUP_ID,LMB_RULES_REPFORM.LMVIEW,LMB_RULES_REPFORM.HIDDEN,LMB_RULES_REPFORM.EDITABLE
+	FROM LMB_REPORT_LIST
+	LEFT OUTER JOIN LMB_RULES_REPFORM ON (LMB_REPORT_LIST.ID = LMB_RULES_REPFORM.REPFORM_ID
+	AND LMB_RULES_REPFORM.GROUP_ID IN (".implode(" , ",$subgroup).") 
+	AND LMB_RULES_REPFORM.TYP = 1)
+	ORDER BY LMB_REPORT_LIST.REFERENZ_TAB
+	";
+
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while (lmbdb_fetch_row($rs)) {
+        $tabid = lmbdb_result($rs, 'REFERENZ_TAB');
+        $reportid = lmbdb_result($rs, "ID");
+
+        foreach($reportPermType as $key => $permName) {
+            if(lmbdb_result($rs, $permName)){
+                $rule[$tabid][0][$reportid][$permName] = 1;
+                $rule[$tabid][1][$reportid][$permName][] = lmbdb_result($rs, 'GROUP_ID');
+            }elseif(!$rule[$tabid][0][$reportid][$permName]){
+                $rule[$tabid][0][$reportid][$permName] = 0;
+            }
+        }
+    }
+
+    return $rule;
+
+}
+
+
+
+
+function getUserFormPerms($userid) {
+    global $db;
+    global $userdat;
+    global $formPermType;
+
+    $subgroup = explode(';',$userdat["subgroup"][$userid]);
+
+	$sqlquery = "SELECT DISTINCT
+	LMB_FORM_LIST.ID,LMB_FORM_LIST.NAME,LMB_FORM_LIST.REFERENZ_TAB,
+	LMB_RULES_REPFORM.GROUP_ID,LMB_RULES_REPFORM.LMVIEW,LMB_RULES_REPFORM.HIDDEN
+	FROM LMB_FORM_LIST
+	LEFT OUTER JOIN LMB_RULES_REPFORM ON (LMB_FORM_LIST.ID = LMB_RULES_REPFORM.REPFORM_ID
+	AND LMB_RULES_REPFORM.GROUP_ID IN (".implode(" , ",$subgroup).") 
+	AND LMB_RULES_REPFORM.TYP = 2)
+	ORDER BY LMB_FORM_LIST.REFERENZ_TAB
+	";
+
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while (lmbdb_fetch_row($rs)) {
+        $tabid = lmbdb_result($rs, 'REFERENZ_TAB');
+        $formid = lmbdb_result($rs, "ID");
+
+        foreach($formPermType as $key => $permName) {
+            if(lmbdb_result($rs, $permName)){
+                $rule[$tabid][0][$formid][$permName] = 1;
+                $rule[$tabid][1][$formid][$permName][] = lmbdb_result($rs, 'GROUP_ID');
+            }elseif(!$rule[$tabid][0][$formid][$permName]){
+                $rule[$tabid][0][$formid][$permName] = 0;
+            }
+        }
+    }
+
+    return $rule;
+
+}
+
+
+function getGroupName($groupid){
+    global $groupdat;
+    return $groupdat['name'][$groupid].'<br>';
+}
+

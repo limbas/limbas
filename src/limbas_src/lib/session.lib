@@ -7,26 +7,17 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
-
-/*
- 
-LMB_SESSION
-
-
- */
+use Limbas\lib\auth\Auth;
+use Limbas\lib\auth\Session;
+use Limbas\lib\db\Database;
+use Limbas\lib\http\Headers;
 
 require_once(__DIR__ . '/../bootstrap.php');
 require_once(COREPATH . 'lib/db/db_wrapper.lib');
 require_once (COREPATH . 'lib/include.lib');
 
+(new Headers())->handle();
 
-require_once COREPATH . 'lib/auth/Session.php';
-require_once COREPATH . 'lib/auth/Auth.php';
-require_once COREPATH . 'lib/db/Database.php';
-
-
-$db = Database::get();
 Database::checkIfInstalled();
 
 if (!isset($DBA['CHARSET'])) {
@@ -64,11 +55,9 @@ catch(Throwable $t) {
 //extract input variables to global
 extract($_GET, EXTR_SKIP);
 extract($_POST, EXTR_SKIP);
-extract($_COOKIE, EXTR_SKIP);
-extract($_SERVER, EXTR_SKIP);
 
 // load limbas session
-Session::load();
+Session::load($request);
 
 //extract input variables to global
 extract($_SESSION, EXTR_SKIP);
@@ -77,5 +66,10 @@ foreach (Session::$globvars as $globvar) {
     global $$globvar;
 }
 
-global $globvars;
-$globvars = Session::$globvars;
+// include global extensions
+global $gLmbExt;
+if ($gLmbExt['ext_global.inc']) {
+    foreach ($gLmbExt['ext_global.inc'] as $key => $extfile) {
+        require_once ($extfile);
+    }
+}

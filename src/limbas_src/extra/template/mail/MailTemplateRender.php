@@ -16,7 +16,9 @@ class MailTemplateRender extends TemplateRender
 
     protected function getTemplateConfig(mixed $element, int $gtabid, int $id): TemplateConfig
     {
-        return new MailTemplateConfig($element, [], $gtabid, $id);
+        $mailTemplateConfig = new MailTemplateConfig($element, [], $gtabid, $id);
+        $mailTemplateConfig->noImageReplacement = true;
+        return $mailTemplateConfig;
     }
     
 }

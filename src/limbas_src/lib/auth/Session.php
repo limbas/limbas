@@ -6,12 +6,16 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
+
+namespace Limbas\lib\auth;
+
+use Limbas\lib\db\Database;
 use Limbas\admin\tools\update\Updater;
-use Limbas\lib\auth\LmbSession;
+use Symfony\Component\HttpFoundation\Request;
 
 class Session {
     
-    public static array $globvars = array('session','umgvar','custvar','userdat','groupdat','user_colors','lmcurrency','lmfieldtype','LINK','LINK_ID','LINK_ACTION','farbschema','lang','gsr','filter','mfilter','ffilter','popc','popg','gsnap','gform','gformlist','greportlist','gdiaglist','gtabletree','tabgroup','gtab','grule','gfield','gverkn','gfile','ufile','filestruct','verknpool','gmimetypes','gselectpool','gtrigger','greminder','gwfl','gLmbExt','externalStorage','gprinter','lmmultitenants','gcustmenu');
+    public static array $globvars = array('session','umgvar','custvar','userdat','groupdat','user_colors','lmcurrency','lmfieldtype','LINK','LINK_ID','LINK_ACTION','farbschema','lang','gsr','filter','mfilter','ffilter','popc','popg','gsnap','gsnapgroup','gform','gformlist','greportlist','gdiaglist','gtabletree','tabgroup','gtab','grule','gfield','gverkn','gfile','ufile','filestruct','verknpool','gmimetypes','gselectpool','gtrigger','greminder','gwfl','gLmbExt','externalStorage','gprinter','lmmultitenants','gcustmenu');
     
     
     public static function start($sess_id = null, $use_cookies = null): void
@@ -95,12 +99,11 @@ class Session {
     
     
     
-    public static function load(): void
+    public static function load(Request $request): void
     {
-        global $action;
         global $session;
-        
-        self::setAction();
+
+        $action = self::setAction($request);
         
         self::assignSessionVars();
 
@@ -117,6 +120,13 @@ class Session {
             }
             self::loadExisting();
         }
+        
+        if($action === 'sess_refresh') {
+            header('Content-Type: application/json; charset=utf-8');
+            echo json_encode(['success'=>true]);
+            exit(1);
+        }
+        
 
         if ($action !== 'setup_update' && $action !== 'maintenance' && !defined('LIMBAS_INSTALL') AND !defined('IS_CRON')) {
             Updater::checkVersion();
@@ -144,12 +154,34 @@ class Session {
         $rs5 = lmbdb_exec($db,$sqlquery5) or errorhandle(lmbdb_errormsg($db),$sqlquery5,$action,__FILE__,__LINE__);
         if(!$rs5) {$commit = 1;}
 
-        $sqlquery6 = "INSERT INTO LMB_SESSION (ID,USER_ID,GROUP_ID,LOGOUT,IP) VALUES ('".session_id()."',".$_SESSION['authId'].",0,".LMB_DBDEF_FALSE.",'".lmb_getIpAddr()."')";
+        $sqlquery6 = "INSERT INTO LMB_SESSION (ID,USER_ID,GROUP_ID,LOGOUT,IP) VALUES ('".session_id()."',".$_SESSION['authId'].",0,".LMB_DBDEF_FALSE.",'".self::getIP()."')";
         $rs6 = lmbdb_exec($db,$sqlquery6) or errorhandle(lmbdb_errormsg($db),$sqlquery6,$action,__FILE__,__LINE__);
         if(!$rs6) {$commit = 1;}
         
         require_once(COREPATH . 'lib/session_auth.lib');
     }
+
+    
+    public static function getIP(): string
+    {
+        if (isset($_SERVER['HTTP_CLIENT_IP']) && filter_var($_SERVER['HTTP_CLIENT_IP'], FILTER_VALIDATE_IP))
+        {
+            return $_SERVER['HTTP_CLIENT_IP'];
+        }
+        elseif (isset($_SERVER['HTTP_X_FORWARDED_FOR']) && filter_var($_SERVER['HTTP_X_FORWARDED_FOR'], FILTER_VALIDATE_IP))
+        {
+            return $_SERVER['HTTP_X_FORWARDED_FOR'];
+        }
+        elseif (isset($_SERVER['REMOTE_ADDR']) && filter_var($_SERVER['REMOTE_ADDR'], FILTER_VALIDATE_IP))
+        {
+            return $_SERVER['REMOTE_ADDR'];
+        }
+        else
+        {
+            return 'noip';
+        }
+    }
+    
     
     private static function loadExisting(): void
     {
@@ -185,6 +217,13 @@ class Session {
             ini_set("post_max_size",$umgvar["ini_maxsize"]."M");
         }
     }
+
+    public static function saveSessionVars(): void
+    {
+        foreach (self::$globvars as $gVar) {
+            $_SESSION[$gVar] = $GLOBALS[$gVar];
+        }
+    }
     
     
     private static function assignSessionVars(): void
@@ -196,11 +235,11 @@ class Session {
         }        
     }
     
-    private static function setAction(): array|string|null
+    private static function setAction(Request $request): array|string|null
     {
         global $action;
-        $action = '';
-        if (array_key_exists('action',$_REQUEST)) {
+        $action = $request->get('action');
+        if (!empty($action)) {
             $action = preg_replace('/[^0-9a-z]+/i','_',$_REQUEST['action']);
         }        
         return $action;
@@ -226,7 +265,7 @@ class Session {
         /* --- Prüfung ob Backend gesperrt --------------------------------- */
         if($session["lockbackend"]){
 
-            if(!defined('IS_SOAP') AND !defined('IS_WEBDAV') AND defined('IS_WSDL') AND !lmb_strpos($umgvar["allowed_proxys"],lmb_getIpAddr())){
+            if(!defined('IS_SOAP') AND !defined('IS_WEBDAV') AND defined('IS_WSDL') AND !lmb_strpos($umgvar["allowed_proxys"],self::getIP())){
                 require (COREPATH . 'lib/auth/html/lock.php');
                 Session::destroy();
                 die();

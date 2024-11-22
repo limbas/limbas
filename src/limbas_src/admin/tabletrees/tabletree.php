@@ -119,7 +119,7 @@ function lmb_subtree($treetab,$gtabid,$treeid,$sub=0){
 				if($desc){$desc = "($desc)";}
 
 				echo "
-			<tr><td style=\"width:18px\" valign=\"top\"><img src=\"assets/images/legacy/outliner/".$imgpref.".gif\" align=\"top\" border=\"0\"></td>
+			<tr><td style=\"width:18px\" valign=\"top\"><img class=\"lmb-image-as-icon\" src=\"assets/images/legacy/outliner/".$imgpref.".gif\" align=\"top\" border=\"0\"></td>
 			<td align=\"left\" nowrap>&nbsp;<a style=\"color:$color;\" onclick=\"activ_menu=1;ajaxEditTree(event,$treeid,$treetab,".$gfield[$gtabid]["verkntabid"][$fieldid].",'".$gfield[$gtabid]["md5tab"][$fieldid]."')\">".$gtab["desc"][$tabid]."</a>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;$desc</td></tr>
 			";
 
@@ -127,7 +127,7 @@ function lmb_subtree($treetab,$gtabid,$treeid,$sub=0){
 					$stb = "";
 
 					if($count != $bzm){
-						$stb = "style=\"width:18px;background-image:url(assets/images/legacy/outliner/line.gif);background-repeat:repeat-y;\"";
+						$stb = "class=\"lmb-image-as-icon\";style=\"width:18px;background-image:url(assets/images/legacy/outliner/line.gif);background-repeat:repeat-y;\"";
 					}
 
 					echo "

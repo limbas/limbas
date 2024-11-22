@@ -12,6 +12,13 @@
 //TODO: Farbauswahl und Indikator funktionieren nicht
 
 /*----------------- Farbe DIV -------------------*/?>
+
+
+<script src="assets/vendor/select2/select2.full.min.js"></script>
+<link href="assets/vendor/select2/select2.min.css" rel="stylesheet">
+
+
+
 <DIV ID="menu_color" class="lmbContextMenu" style="position:absolute;visibility:hidden;z-index:10002;">
 <FORM NAME="fcolor_form"><TABLE BORDER="0" cellspacing="0" cellpadding="0">
 <TR><TD><?php pop_top('menu_color');?></TD></TR>
@@ -122,7 +129,7 @@ function hide_trigger(){
 	var ar = document.getElementsByTagName("span");
 	for (var i = ar.length; i > 0;) {
 		cc = ar[--i];
-		if(cc.id.substring(0,11) == "tab_trigger"){
+		if(cc.id.substring(0,11) == "tab_trigger" || cc.id.substring(0,11) == "tab_gfilter"){
 			cc.style.display='none';
 		}
 	}
@@ -142,17 +149,7 @@ function extendTabTyp(el){
 // Ajax edit table
 function ajaxEditTable(el,gtabid,tabgroup,act){
 	if(el){
-		if(act == 'trigger'){
-			document.form3.val.value=gtabid;
-			var i = 0;
-			$('#triggerpool input:checked').each(function() {
-				var cel = $(this).attr('id').split('_');
-				if(cel[0] = 'trigger'){
-					$('#form3').append("<input type='hidden' name='tab_trigger_"+gtabid+"["+i+"]' value='"+cel[1]+"'>");
-					i++;
-				}
-			});
-		}else if($(el).attr('type') == 'checkbox'){
+        if($(el).attr('type') == 'checkbox'){
 			if(el.checked){
 				document.form3.val.value=1;
 			}else{
@@ -167,7 +164,6 @@ function ajaxEditTable(el,gtabid,tabgroup,act){
 		}
 	}
 
-
 	ajaxGet(null,"main_dyns_admin.php","editTable&tabid="+gtabid+"&tabgroup="+tabgroup+"&act=" + act,null,"ajaxEditTablePost","form3");
 }
 
@@ -175,8 +171,30 @@ function ajaxEditTablePost(result){
 
     ajaxEvalScript(result);
 
-    $('#tablesettingsContent').html(result);
+    $('#tablesettingsBody').html(result);
     $('#tableSettingsModal').modal('show');
+    $('.select2-selection').select2();
+
+    // multiselect trigger
+    $('#table_trigger').select2({
+        multiple:true,
+        dropdownParent: $('#tablesettingsContent')
+    });
+    $('#table_globalfilter').select2({
+        multiple:true,
+        dropdownParent: $('#tablesettingsContent')
+    });
+
+    $("#table_trigger").on('change', function() {
+        document.form3.val.value=' '+$(this).val().join(',');
+        ajaxEditTable(null,$(this).attr('data-tabid'),'<?=$tab_group?>','trigger');
+    })
+
+    $("#table_globalfilter").on('change', function() {
+        document.form3.val.value=' '+$(this).val().join(',');
+        ajaxEditTable(null,$(this).attr('data-tabid'),'<?=$tab_group?>','globalfilter');
+    })
+
     
 }
 
@@ -230,13 +248,13 @@ function tab_delete(group_bzm,tab_group,bzm,gtable,tabid){
 </div>
 
 <div class="modal fade" id="tableSettingsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content" id="tablesettingsContent">
             <div class="modal-header">
                 <h5 class="modal-title"><?=$lang[1896]?></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <div class="modal-body" id="tablesettingsContent"></div>
+            <div class="modal-body" id="tablesettingsBody"></div>
         </div>
     </div>
 </div>
@@ -401,6 +419,7 @@ else :?>
                     <th nowrap><?=$lang[2688]?></th>
                     <th nowrap><?=$lang[1255]?></th>
                     <th nowrap><?=$lang[2216]?></th>
+                    <th nowrap><?=$lang[3163]?></th>
                     <th nowrap><?=$lang[575]?></th>
                 </tr>
             </thead>
@@ -579,19 +598,43 @@ else :?>
 
                         <TD>
                             <?php if($gtrigger[$gtabid]["id"]){?>
-                                <SPAN STYLE="display:none;position:absolute" ID="tab_trigger_<?=$gtabid?>" OnClick="activ_menu=1">
-                                    <SELECT class="form-select form-select-sm" NAME="tab_trigger_<?=$gtabid?>[]" STYLE="width:200px;" MULTIPLE SIZE="5" OnChange="document.form2.tabid.value=<?= $result_gtab[$tab_group]["id"][$bzm] ?>;document.form2.tab_group.value=<?= $tab_group ?>;document.form2.trigger.value='<?=$gtabid?>';" onblur="if(document.form2.trigger.value=='<?=$gtabid?>'){document.form2.submit();}">
-                                        <OPTION VALUE="0"></OPTION>
+                                <SPAN STYLE="display:none;position:absolute;width:200px" ID="tab_trigger_<?=$gtabid?>" OnClick="activ_menu=1;ajaxEditTable(null,'<?=$gtabid?>','<?=$tab_group?>')">
+                                    <ul class="list-group w-100">
                                     <?php
+
                                     $trlist = array();
                                     foreach($gtrigger[$gtabid]["id"] as $trid => $trval){
-                                        if(in_array($trid,$result_gtab[$tab_group]["trigger"][$bzm])){$SELECTED = "SELECTED";$trlist[] = $gtrigger[$gtabid]["trigger_name"][$trid];}else{$SELECTED = "";}
-                                        echo "<OPTION VALUE=\"".$trid."\" $SELECTED>".$gtrigger[$gtabid]["trigger_name"][$trid]." (".$gtrigger[$gtabid]["type"][$trid].")</OPTION>";
+                                        if(in_array($trid,$result_gtab[$tab_group]["trigger"][$bzm])){
+                                            $trlist[] = $gtrigger[$gtabid]["trigger_name"][$trid];
+                                            ?>
+                                            <li class="list-group-item"><?=$gtrigger[$gtabid]["trigger_name"][$trid]?> <br>(<?=$gtrigger[$gtabid]["type"][$trid]?>)</li>
+                                            <?php
+                                        }
                                     }
                                     ?> 
-                                    </SELECT>
+                                    </ul>
                                 </SPAN>
                                 <INPUT class="form-control form-control-sm" TYPE="TEXT" STYLE="width:100px;" VALUE="<?=implode(";",$trlist)?>" OnClick="activ_menu=1;document.getElementById('tab_trigger_<?=$gtabid?>').style.display=''">
+                            <?php }?>
+                        </TD>
+
+                        <TD>
+                            <?php
+                            if($result_gtab[$tab_group]["globalfilter"][$bzm]){
+
+                            ?>
+                                <SPAN STYLE="display:none;position:absolute;width:200px" ID="tab_gfilter_<?=$gtabid?>" OnClick="activ_menu=1;ajaxEditTable(null,'<?=$gtabid?>','<?=$tab_group?>')">
+                                    <ul class="list-group w-100">
+                                    <?php
+                                    foreach($result_gtab[$tab_group]["globalfilter"][$bzm] as $gfkey => $gfname){
+                                        ?>
+                                        <li class="list-group-item"><?=$gfname?></li>
+                                        <?php
+                                    }
+                                    ?>
+                                    </ul>
+                                </SPAN>
+                                <INPUT class="form-control form-control-sm" TYPE="TEXT" STYLE="width:100px;" VALUE="<?=implode(";",$result_gtab[$tab_group]["globalfilter"][$bzm])?>" OnClick="activ_menu=1;document.getElementById('tab_gfilter_<?=$gtabid?>').style.display=''">
                             <?php }?>
                         </TD>
 

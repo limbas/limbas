@@ -7,7 +7,8 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
+use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 # ---- typ: 1 = public directory
 # ---- typ: 2 = messages
@@ -178,18 +179,25 @@ function get_subdir($LEVEL,$s){
  * list of files in folder
  *
  * @param unknown_type $LEVEL
+ * @param unknown_type $active
  * @param unknown_type $sub
  * @return unknown
  */
-function get_file_list($LEVEL,$sub=null){
+function lmb_getFilesFromLevel($LEVEL,$active=null){
 	global $db;
+    global $gtab;
 
 	$list = array();
 
     # if multitenant
 	$mttfilter = set_mttfilter()['where'];
 
-	$sqlquery = "SELECT ID FROM LDMS_FILES WHERE LEVEL = $LEVEL $mttfilter";
+    # get last version
+    if($active && $gtab["versioning"][ $gtab['argresult_id']['LDMS_FILES'] ]){
+        $version = ' AND VACT = TRUE';
+    }
+
+	$sqlquery = "SELECT ID FROM LDMS_FILES WHERE LEVEL = $LEVEL $mttfilter $version";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	while(lmbdb_fetch_row($rs)) {
@@ -299,29 +307,29 @@ function get_PathFromID($ID){
  * @return string
  */
 function lmb_getFilePath($ID,$LID,$filename,$ext,$mid=null,$typ=null){
-    global $filestruct;
-    global $umgvar;
-    global $session;
     global $db;
+    global $filestruct;
+    global $session;
     global $externalStorage;
     global $gmimetypes;
+    global $gtab;
+    global $lmmultitenants;
 
+    $gtabid = $gtab['argresult_id']['LDMS_FILES'];
     //$mid = $GLOBALS['lmmultitenants']['translate'][$mid]; todo - translated MID
-    #error_log($mid);
 
-    if((!$LID OR !$filename OR !$ext) AND $ID){
+    if((!$LID OR !$filename OR !isset($ext)) AND $ID){
         $sqlquery = "SELECT SECNAME,LEVEL,MIMETYPE FROM LDMS_FILES WHERE ID = $ID";
         $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
         #$mid = $GLOBALS['lmmultitenants']['translate'][lmbdb_result($rs, "LMB_MID")]; todo - translated MID
-        $LID = lmbdb_result($rs, "LEVEL");
-        $filename = lmbdb_result($rs, "SECNAME");
-        $ext = $gmimetypes['ext'][lmbdb_result($rs, 'MIMETYPE')];
+        if(!$LID){$LID = lmbdb_result($rs, "LEVEL");}
+        if(!$filename){$filename = lmbdb_result($rs, "SECNAME");}
+        if(!isset($ext)) {$ext = $gmimetypes['ext'][lmbdb_result($rs, 'MIMETYPE')];}
         #$mid = lmbdb_result($rs, "LMB_MID");
     }
 
     // if multitenant
-    if($GLOBALS['gtab']['multitenant'][$GLOBALS['gtab']['argresult_id']['LDMS_FILES']] AND $session['mid']){
-
+    if($gtab['multitenant'][$gtabid] AND $session['mid']){
         // get MID from file
         if(!$mid AND $ID){
             $sqlquery = "SELECT LMB_MID FROM LDMS_FILES WHERE ID = $ID";
@@ -331,7 +339,7 @@ function lmb_getFilePath($ID,$LID,$filename,$ext,$mid=null,$typ=null){
         // get MID from session
         }elseif(!$mid){
             #$mid = $session['mid']; todo - translated MID
-            $mid = $GLOBALS['lmmultitenants']['mid'][$session['mid']];
+            $mid = $lmmultitenants['mid'][$session['mid']];
         }
 
         $mPath = $mid . '/';
@@ -370,7 +378,6 @@ function lmb_getFilePath($ID,$LID,$filename,$ext,$mid=null,$typ=null){
             if(!$relpath_[$i]){break;}
 
             $pathsection .= $relpath_[$i].'/';
-            #error_log($pathsection);
             if(!file_exists($pathsection)){
                 mkdir($pathsection);
             }
@@ -684,7 +691,9 @@ function save_userShow($LID,$save_setting){
 		$ufile = array($gfile['show'],$ffilter['tabsize'],$ffilter['rowsize'],$ffilter['anzahl'],$ffilter['viewmode'],$ffilter['order'],$ffilter['search']);
 		# --- prepare ---
 		$prepare_string = "UPDATE LMB_USERDB SET UFILE = ? WHERE USER_ID = ".$session["user_id"];
-		if(!lmb_PrepareSQL($prepare_string,array(serialize($ufile)),__FILE__,__LINE__)){lmb_alert("Settings are not saved sucessfully!");}
+		if(!lmb_PrepareSQL($prepare_string,array(serialize($ufile)),__FILE__,__LINE__)){
+            lmb_log::error('save_userShow - settings are not saved sucessfully', 'settings are not saved sucessfully!', $GLOBALS['gtab']['argresult_id']['LDMS_FILES'], null, $LID, E_WARNING);
+        }
 
 		$ufile = 0;
 	# ---------------- User-Einstellungen Global speichern ----------------------
@@ -709,7 +718,9 @@ function save_userShow($LID,$save_setting){
 
 		# --- prepare ---
 		$prepare_string = "UPDATE LMB_USERDB SET UFILE = ? WHERE USER_ID = ".$session["user_id"];
-		if(!lmb_PrepareSQL($prepare_string,array(serialize($ufile)),__FILE__,__LINE__)){lmb_alert("Settings are not saved sucessfully!");}
+		if(!lmb_PrepareSQL($prepare_string,array(serialize($ufile)),__FILE__,__LINE__)){
+            lmb_log::error('save_userShow - settings are not saved sucessfully', 'settings are not saved sucessfully!', $GLOBALS['gtab']['argresult_id']['LDMS_FILES'], null, $LID, E_WARNING);
+        }
 
 		$ufile = 1;
 	}
@@ -760,6 +771,7 @@ function get_filestructure($reset=null){
 				LDMS_RULES.DEL,
 				LDMS_RULES.ADDF,
 				LDMS_RULES.EDIT,
+				LDMS_RULES.HIDE,
 				LDMS_RULES.LMLOCK
 			FROM LDMS_STRUCTURE
 			LEFT JOIN LDMS_RULES
@@ -817,6 +829,7 @@ function get_filestructure($reset=null){
                 if(lmbdb_result($rs, 'DEL')){$filestruct['del'][$id] = 1;}
                 if(lmbdb_result($rs, 'ADDF')){$filestruct['addf'][$id] = 1;}
                 if(lmbdb_result($rs, 'EDIT')){$filestruct['edit'][$id] = 1;}
+                if(lmbdb_result($rs, 'HIDE')){$filestruct['hide'][$id] = 1;}
                 if(lmbdb_result($rs, 'LMLOCK')){$filestruct['lock'][$id] = 1;}
             }
 
@@ -1054,6 +1067,42 @@ function checkMD5Dublicates($md5,$LID){
 	return false;
 }
 
+
+
+function lmb_getMimetype(&$fl,$validate=null){
+    global $db;
+    global $lang;
+
+    # --- Mimetype ----------------------------------------
+    if($validate && $fl['filepath']){
+        $mimetype = mime_content_type($fl['filepath']);
+    }
+    # --- Mimetype aus filetype festlegen ----------------------------------------
+    if($mimetype){
+        $sqlquery0 = "SELECT ID,EXT,MIMETYPE FROM LMB_MIMETYPES WHERE LOWER(MIMETYPE) = '".lmb_strtolower(trim($mimetype))."'";
+    # --- Mimetype aus Endung festlegen ----------------------------------------
+    }else{
+        $pos1 = lmb_strrpos($fl["filename"],'.');
+        $ext = lmb_strtolower(trim(lmb_substr($fl["filename"],$pos1+1,4)));
+        $sqlquery0 = "SELECT ID,EXT,MIMETYPE FROM LMB_MIMETYPES WHERE LOWER(EXT) = '$ext'";
+    }
+
+    $rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$GLOBAL['action'],__FILE__,__LINE__);
+    if(!$rs0 OR !lmbdb_result($rs0, "ID")) {
+        lmb_log::error("lmb_fileUpload - mimetype not found ( $ext $mimetype )", $lang[133]." ($ext . $mimetype)", $GLOBALS['gtab']['argresult_id']['LDMS_META'], $level, null , E_ERROR);
+        return false;
+    }
+
+    $fl['ext'] = lmbdb_result($rs0, "EXT");
+    $fl["mimetype"] = lmbdb_result($rs0, "MIMETYPE");
+    $fl["mimetype_id"] = lmbdb_result($rs0, "ID");
+
+
+    return $fl;
+
+}
+
+
 /**
 * simple file upload
 *
@@ -1119,6 +1168,9 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
 	require_once(COREPATH."extra/explorer/metadata.lib");
 	require_once(COREPATH."gtab/gtab.lib");
 
+    $gtabid_files = $gtab["argresult_id"]["LDMS_FILES"];
+    $gtabid_filesmeta = $gtab["argresult_id"]["LDMS_META"];
+
 	// extension pipe
     if(function_exists('lmb_extendedFileUpload')){
         if(lmb_extendedFileUpload($file,$level,$relation,$dublicate) === false){
@@ -1164,8 +1216,8 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
 
 	# --- TYP-Prüfung ----
 	if(($filestruct["typ"][$level] == 2 OR $filestruct["typ"][$level] == 3 OR $filestruct["typ"][$level] == 5) AND !$fieldid AND !$umgvar["write_systemfolders"]){
-		lmb_alert($lang[1697]);
-		return true;
+        lmb_log::error('lmb_fileUpload - write_systemfolders not allowed', $lang[114], $gtabid_files, $level, null,E_ERROR);
+		return false;
 	}
 	# --- Rechte ---
 	if(!$filestruct){get_filestructure();}
@@ -1173,13 +1225,12 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
 
     if(!$filestruct["add"][$level]) {
         $path = implode('/',array_reverse(lmb_getPathFromLevel($filestruct["level"][$level],$level)));
-        lmb_alert($lang[2310]);
-        lmb_alert(' ('.$path.')');
+        lmb_log::error('lmb_fileUpload - no add permission in folder ('.$path.')', $lang[2310], $gtabid_files, $level, null, E_ERROR);
         return false;
     }
 
     if(!is_array($filepath)) {
-        lmb_alert("empty upload path");
+        lmb_log::error('lmb_fileUpload - empty upload array', $lang[1726], $gtabid_files, $level, null, E_ERROR);
         return false;
     }
 
@@ -1194,13 +1245,8 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
             $fl['filesize'] = filesize($filevalue);
         }
 
-        # from ajax html5 upload
-        if(lmb_utf8_check($file_name[$key])){
-            $fl["filename"] = lmb_utf8_decode($file_name[$key]);
-        # from form post
-        }else{
-            $fl["filename"] = $file_name[$key];
-        }
+        $fl["filename"] = $file_name[$key];
+        $fl["filepath"] = $filevalue;
         $fl["filetype"] = $file_type[$key];
         $fl["filearchiv"] = $file_archiv[$key];
         $fl["thumb_ok"] = LMB_DBDEF_TRUE;
@@ -1218,22 +1264,20 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
         $change_subdir = 0;
 
         if( (!$filevalue OR !is_uploaded_file($filevalue) OR !file_exists($filevalue) ) AND !$noupload){
-            lmb_alert($lang[1726]);
-            lmb_alert("file: ".$fl["filename"]);
+            lmb_log::error('lmb_fileUpload - file could not be uploaded ('.$fl["filename"].')', $lang[1726], $gtabid_files, $fl["level"], null, E_ERROR);
             $commit = 1;
             break;
         }
 
         if(lmb_strlen($fl["filename"]) > 128) {
-            lmb_alert($lang[2531]);
-            lmb_alert("file: ".$fl["filename"]);
+            lmb_log::error('lmb_fileUpload - filename longer then 128 ('.$fl["filename"].')', $lang[2531], $gtabid_files, $fl["level"], null , E_ERROR);
             $commit = 1;
             break;
         }
 
         if($fl["filesize"] <= 0 OR $fl["filesize"] > $session["uploadsize"]) {
-            lmb_alert($lang[129]);
-            lmb_alert(file_size($session["uploadsize"])." | ".$fl["filename"]." (".file_size($fl["filesize"]).")");
+            $message = file_size($session["uploadsize"])." | ".$fl["filename"]." (".file_size($fl["filesize"]).")";
+            lmb_log::error('lmb_fileUpload - filesize to big - '.$message, $lang[129].' - '.$message, $gtabid_files, $fl["level"], null , E_ERROR);
             $commit = 1;
             break;
         }
@@ -1241,7 +1285,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
         # ---------- Archiv ----------------
         if($fl["filearchiv"] === 'true') {
             if (!upload_archiv(array("file" => $filevalue, "file_name" => $fl["filename"]), $fl["level"], array("datid" => $datid, "gtabid" => $gtabid, "fieldid" => $fieldid))) {
-                lmb_alert("can not upload file-archive: " . $fl["filename"]);
+                lmb_log::error('lmb_fileUpload - could not upload file to archive ('.$fl["filename"].')', $lang[1726], $gtabid_files, $fl["level"], null , E_ERROR);
                 lmb_EndTransaction(0);
                 return false;
             }
@@ -1260,7 +1304,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
             $sqlquery0 = "SELECT ID FROM LDMS_FILES WHERE ID = ".parse_db_int($existingFile['id']);
             $rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
             if(!lmbdb_result($rs0, 'ID')){
-                lmb_alert("dublicate file ID $existingFile does not exists!");
+                lmb_log::error('lmb_fileUpload - file with ID '.$existingFile['id'].' does not exists!', $lang[1726], $gtabid_files, $fl["level"], null , E_ERROR);
                 $commit = 1;
                 break;
             }
@@ -1281,14 +1325,19 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
             $fl["md5"] = md5_file($filevalue);
             if($md5res = checkMD5Dublicates($fl["md5"],$level)){
                 $md5path = implode("\\n",$md5res["path"]);
-                lmb_alert($lang[2375].":\\n".$md5path);
+                lmb_log::error('lmb_fileUpload - file already exists in ('.$md5path.')', $lang[2375].":\\n".$md5path, $gtabid_files, $fl["level"], $fl['filename'] , E_NOTICE);
             }
         }
 
         # --- Mimetype ----------------------------------------
         if($noupload AND $noupload != 3 AND $umgvar["checkmime"]){
+            $validate = 1;
             $fl["filetype"] = mime_content_type($filevalue);
         }
+
+        lmb_getMimetype($fl,$validate);
+
+        /*
         # --- Mimetype aus filetype festlegen ----------------------------------------
         if($umgvar["checkmime"]){
             $sqlquery0 = "SELECT ID,EXT,MIMETYPE FROM LMB_MIMETYPES WHERE LOWER(MIMETYPE) = '".lmb_strtolower(trim($fl["filetype"]))."'";
@@ -1301,7 +1350,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
 
         $rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
         if(!$rs0 OR !lmbdb_result($rs0, "ID")) {
-            lmb_alert($lang[133]." ($ext)");
+            lmb_log::error('lmb_fileUpload - mimetype not found ('.$ext.')', $lang[133]." ($ext)", $gtabid_files, $fl["level"], null , E_ERROR);
             $commit = 1;
             break;
         }
@@ -1309,9 +1358,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
         $fileext = lmbdb_result($rs0, "EXT");
         $fl["mimetype_id"] = lmbdb_result($rs0, "ID");
         $fl["mimetype"] = lmbdb_result($rs0, "MIMETYPE");
-
-        $gtabid_files = $gtab["argresult_id"]["LDMS_FILES"];
-        $gtabid_filesmeta = $gtab["argresult_id"]["LDMS_META"];
+        */
 
         // overwrite existing file - use old file ID
         if($existingFile AND $dublicate_type == 'overwrite'){
@@ -1325,18 +1372,17 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
         }
 
         // new filename
-        $fl["secname"] = new_filename($fl["nextid"], $fl["filename"], $fileext, $level);
+        $fl["secname"] = new_filename($fl["nextid"], $fl["filename"], $fl['ext'], $level);
         // file upload path
-        $uploadfile = lmb_getFilePath(null, $level, $fl['secname'], $fileext);
+        $uploadfile = lmb_getFilePath(null, $level, $fl['secname'], $fl['ext']);
 
         // move uploaded file from temp to UPLOAD
         if($dublicate["copymove"] != "move"){
 
             // file already exists
             if(file_exists($uploadfile)){
+                lmb_log::error('lmb_fileUpload - file already exists ('.$fl['filename'].')', $lang[2313].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                 $commit = 1;
-                lmb_alert($lang[2313]);
-                lmb_alert("file: ".$fl["filename"]);
                 break;
             }
 
@@ -1345,8 +1391,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
 
                 // file encryption
                 if($umgvar['file_encryption'] AND !lmb_EncryptFile($filevalue)){
-                    lmb_alert('file ecnryption failed!');
-                    lmb_alert("file: ".$fl["filename"]);
+                    lmb_log::error('lmb_fileUpload - file ecnryption failed ('.$fl['filename'].')', 'file ecnryption failed ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                     $commit = 1;
                     break;
                 }
@@ -1360,8 +1405,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                 // upload / copy failure
                 if(!file_exists($uploadfile)){
                     $commit = 1;
-                    lmb_alert($lang[128]);
-                    lmb_alert("file: ".$fl["filename"]);
+                    lmb_log::error('lmb_fileUpload - file could not be saved ('.$uploadfile.')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                     $commit = 1;
                     break;
                 }
@@ -1371,8 +1415,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
            // only move file from or to subdirecory
            if($dublicate["level"][$key] AND $level != $dublicate["level"][$key]){
                if(!rename($filevalue,$uploadfile)){
-                   lmb_alert("can not move uploaded file: ".$fl["filename"]);
-                   #lmb_EndTransaction(0);
+                   lmb_log::error('lmb_fileUpload - could not move uploaded file ('.$uploadfile.')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                    $commit = 1;
                    break;
                }
@@ -1408,7 +1451,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                             $nometa = 1;
                         }else{
                             $commit = 1;
-                            lmb_alert("can not delete destination file: ".$fl["filename"]);
+                            lmb_log::error('lmb_fileUpload - overwrite existing file after move - can not delete destination file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                             break;
                         }
                     # intern copy
@@ -1417,8 +1460,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                         if(lmb_deleteFile($existingFile["id"],$dublicate["forceDelnm"][$key])){
                             # copy record
                             if(!$file["forceNewID"][$key] AND !$fl["nextid"] = new_record($gtabid_files,copyid: $dublicate["copyid"][$key],forceNewID: $fl["nextid"],insertdata:array($gtabid_files => array('LEVEL' => $fl["level"])) )){
-                                lmb_alert("can not add new file dataset: ".$fl["filename"]." [".$fl["nextid"]."]");
-                                #lmb_EndTransaction(0);
+                                lmb_log::error('lmb_fileUpload - overwrite existing file after copy - can not add new file dataset ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                                 $commit = 1;
                                 break;
                             }
@@ -1429,9 +1471,9 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                         }else{
                             # delete old file
                             unlink($uploadfile);
-                            $commit = 1;
-                            lmb_alert("can not delete destination file: ".$fl["filename"]);
+                            lmb_log::error('lmb_fileUpload - overwrite existing file after move - can not delete destination file ('.$uploadfile.')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                             break;
+                            $commit = 1;
                         }
                     # upload
                     }else{
@@ -1445,7 +1487,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                 }else{
                     #unlink($umgvar['upload_pfad'].$filestruct['path'][$level].$fl['secname'].".".$gmimetypes["ext"][$fl["mimetype_id"]]);
                     unlink(lmb_getFilePath(null,$level,$fl['secname'],$gmimetypes['ext'][$fl['mimetype_id']]));
-                    lmb_alert("no edit permission for file: ".$fl["filename"]);
+                    lmb_log::error('lmb_fileUpload - overwrite existing file - no edit permission for file ('.$fl["filename"].')', $lang[114].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                     $commit = 1;
                     break;
                 }
@@ -1466,8 +1508,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                 }elseif ($dublicate["copymove"] == "copy"){
                     # copy record
                     if(!$file["forceNewID"][$key] AND !$fl["nextid"] = new_record($gtabid_files,copyid:$dublicate["copyid"][$key],forceNewID: $fl["nextid"],insertdata:array($gtabid_files => array('LEVEL' => $fl["level"])) )){
-                        lmb_alert("can not add new file dataset: ".$fl["filename"]." [".$fl["nextid"]."]");
-                        #lmb_EndTransaction(0);
+                        lmb_log::error('lmb_fileUpload - rename existing file after copy - can not add new file dataset ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                         $commit = 1;
                         break;
                     }
@@ -1480,8 +1521,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                     # new record
                     if(!$file["forceNewID"][$key] AND !$fl["nextid"] = new_record($gtabid_files,forceNewID: $fl["nextid"],insertdata:array($gtabid_files => array('LEVEL' => $fl["level"])) )){
                         unlink(lmb_getFilePath(null,$level,$fl['secname'],$gmimetypes['ext'][$fl['mimetype_id']]));
-                        lmb_alert("can not add new file dataset: ".$fl["filename"]." [".$fl["nextid"]."]");
-                        #lmb_EndTransaction(0);
+                        lmb_log::error('lmb_fileUpload - rename existing file after upload - can not add new file dataset ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                         $commit = 1;
                         break;
                     }
@@ -1506,8 +1546,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                         $nometa = 1;
                         # versioning file
                         if(!lmb_versionFile($existingFile['id'],$fl['nextid'],$dublicate["subj"][$key])){
-                            lmb_alert("can not version file: ".$fl["filename"]);
-                            #lmb_EndTransaction(0);
+                            lmb_log::error('lmb_fileUpload - versioning existing file after move - can not version file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                             $commit = 1;
                             break;
                         }
@@ -1515,8 +1554,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                     }elseif ($dublicate["copymove"] == "copy"){
                         # copy record
                         if(!$file["forceNewID"][$key] AND !$fl["nextid"] = new_record($gtabid_files,copyid: $dublicate["copyid"][$key],forceNewID: $fl["nextid"], insertdata:array($gtabid_files => array('LEVEL' => $fl["level"])) )){
-                            lmb_alert("can not add new file dataset: ".$fl["filename"]." [".$fl["nextid"]."]");
-                            #lmb_EndTransaction(0);
+                            lmb_log::error('lmb_fileUpload - versioning existing file after copy - can not add new file dataset ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                             $commit = 1;
                             break;
                         }
@@ -1524,7 +1562,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                         # versioning file
                         if(!lmb_versionFile($existingFile['id'],$fl['nextid'],$dublicate["subj"][$key])){
                             lmb_alert("can not version file: ".$fl["filename"]);
-                            #lmb_EndTransaction(0);
+                            lmb_log::error('lmb_fileUpload - versioning existing file after copy - can not version file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                             $commit = 1;
                             break;
                         }
@@ -1537,8 +1575,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                             if ($fl["nextid"] = new_record($gtabid_files, copyid: $existingFile["id"], forceNewID: $fl["nextid"], insertdata:array($gtabid_files => array('LEVEL' => $fl["level"])) )) {
                                 # versioning file
                                 if (!lmb_versionFile($existingFile['id'], $fl['nextid'], $dublicate["subj"][$key])) {
-                                    lmb_alert("can not version file: " . $fl["filename"]);
-                                    #lmb_EndTransaction(0);
+                                    lmb_log::error('lmb_fileUpload - versioning existing file after upload - can not version file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                                     $commit = 1;
                                     break;
                                 } else {
@@ -1547,8 +1584,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                                 }
                             } else {
                                 unlink(lmb_getFilePath(null, $level, $fl['secname'], $gmimetypes['ext'][$fl['mimetype_id']]));
-                                lmb_alert("can not add new file dataset: " . $fl["filename"] . " [" . $fl["nextid"] . "]");
-                                #lmb_EndTransaction(0);
+                                lmb_log::error('lmb_fileUpload - versioning existing file after upload - can not version file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                                 $commit = 1;
                                 break;
                             }
@@ -1556,17 +1592,20 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                     }
                 }else{
                     unlink(lmb_getFilePath(null,$level,$fl['secname'],$gmimetypes['ext'][$fl['mimetype_id']]));
-                    lmb_alert("no edit permission for file: ".$fl["filename"]);
+                    lmb_log::error('lmb_fileUpload - versioning existing file - no edit permission for file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                     $commit = 1;
                     break;
                 }
+
             # -------- file alredy exists and ignore --------
+
             #}elseif($existingFile AND $dublicate_type == "ignore"){
             #	$fl["nextid"] = -1;
             #	lmb_EndTransaction(0);
             #	continue;
             # -------- file not exist --------
             }else{
+
                 # intern move
                 if($dublicate["copymove"] == "move"){
                     # --- move  -------------
@@ -1582,8 +1621,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                     # copy record
                     if(!$file["forceNewID"][$key] AND !$fl["nextid"] = new_record($gtabid_files,copyid: $dublicate["copyid"][$key],forceNewID: $fl["nextid"], insertdata:array($gtabid_files => array('LEVEL' => $fl["level"])) )){
                         unlink(lmb_getFilePath(null,$level,$fl['secname'],$gmimetypes['ext'][$fl['mimetype_id']]));
-                        lmb_alert("can not add new file dataset: " . $fl["filename"] . " [" . $fl["nextid"] . "]");
-                        #lmb_EndTransaction(0);
+                        lmb_log::error('lmb_fileUpload - ignore existing file after copy - can not add new file dataset ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                         $commit = 1;
                         break;
                     }
@@ -1596,8 +1634,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                     # new record
                     if(!$file["forceNewID"][$key] AND !$fl["nextid"] = new_record($gtabid_files,forceNewID: $fl["nextid"], insertdata:array($gtabid_files => array('LEVEL' => $fl["level"])) )){
                         unlink(lmb_getFilePath(null,$level,$fl['secname'],$gmimetypes['ext'][$fl['mimetype_id']]));
-                        lmb_alert("can not add new file dataset: " . $fl["filename"] . " [" . $fl["nextid"] . "]");
-                        #lmb_EndTransaction(0);
+                        lmb_log::error('lmb_fileUpload - ignore existing file after upload - can not add new file dataset ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                         $commit = 1;
                         break;
                     }
@@ -1608,7 +1645,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
             }
 
             if(!is_numeric($fl['nextid'])){
-                lmb_alert("no primary ID exists for file: ".$fl["filename"]);
+                lmb_log::error('lmb_fileUpload - ignore existing file - no valid primary ID exists for file ('.$fl["filename"].')', $lang[1726].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], null , E_ERROR);
                 $commit = 1;
                 break;
             }
@@ -1652,8 +1689,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                                 $verkn['linkParam']['LID'] = $level;
                             }
                             if(!set_joins($relation['gtabid'][$rk], $verkn)){
-                                lmb_alert($lang[2921]);
-                                lmb_alert("file: ".$fl["filename"]);
+                                lmb_log::error('lmb_fileUpload - could not link dataset ('.$fl["filename"].')', $lang[2921].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                                 $commit = 1;
                                 break;
                             }
@@ -1662,10 +1698,12 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
 
                     # --- Metadaten auslesen ----
                     if(!$nometa AND $noupload != 3 AND !$filestruct['prevent_meta'][$level]){
-                        if($meta = getmeta_from_file(lmb_getFilePath(null,$level,$fl['secname'],$fileext),$fl['mimetype'],2)){
+                        if($meta = getmeta_from_file(lmb_getFilePath(null,$level,$fl['secname'],$fl['ext']),$fl['mimetype'],2)){
                             $GLOBALS["create_new_file"] = 1;
                             # Metadaten eintragen
-                            if(!putmeta_to_db($fl["nextid"],$meta)){lmb_alert($lang[1901]);lmb_alert("file: ".$fl["filename"]);}
+                            if(!putmeta_to_db($fl["nextid"],$meta)){
+                                lmb_log::error('lmb_fileUpload - could not write metadata to file ('.$fl["filename"].')', $lang[1901].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                            }
                         }
                     }
 
@@ -1682,11 +1720,9 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
 
                 }else{
                     if(!$dublicate["copymove"]){
-                        #unlink($umgvar['upload_pfad'].$filestruct['path'][$level].$fl['secname'].".".$gmimetypes['ext'][$fl['mimetype_id']]);
                         unlink(lmb_getFilePath(null,$level,$fl['secname'],$gmimetypes['ext'][$fl['mimetype_id']]));
                     }
-                    lmb_alert($lang[2293]);
-                    lmb_alert("file: ".$fl["filename"]);
+                    lmb_log::error('lmb_fileUpload - could not update file dataset ('.$fl["filename"].')', $lang[2293].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
                     $commit = 1;
                     break;
                 }
@@ -1696,11 +1732,6 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
         lmb_EndTransaction(!$commit);
 
         $flo[] = $fl;
-    }
-
-    # ----------- Anzahl Dateien in Datensatz ----------
-    if($filestruct["typ"][$level] == 3 AND $gtabid AND $fieldid AND $datid){
-        check_filecount($gtabid,$fieldid,$datid);
     }
 
 
@@ -1909,9 +1940,9 @@ function lmb_versionFile($ID,$VID,$note=null){
 }
 
 // lmb_deleteFile - downward compatible - deprecated
-function del_file($ID,$forceDelnm=null)
+function del_file($ID,$delete_recursive=null)
 {
-    return lmb_deleteFile($ID,$forceDelnm);
+    return lmb_deleteFile($ID,$delete_recursive);
 }
 /**
 * Datei löschen
@@ -1922,7 +1953,7 @@ function del_file($ID,$forceDelnm=null)
 * @param  num  fileversion
 * @return true on success
 */
-function lmb_deleteFile($ID,$forceDelnm=null){
+function lmb_deleteFile($ID,$delete_recursive=null){
 	global $gtab;
 	global $LINK;
 	global $lang;
@@ -1937,8 +1968,8 @@ function lmb_deleteFile($ID,$forceDelnm=null){
 	# Tabellen-ID
 	$gtabid = $gtab["argresult_id"]["LDMS_FILES"];
 	# --- Datensatz löschen ----
-	if(!$LINK[276]){$forceDelnm = 0;}
-	if(!del_data($gtabid,$ID,'delete',$forceDelnm)){
+	if(!$LINK[276]){$delete_recursive = 0;}
+	if(!del_data($gtabid,$ID,'delete',$delete_recursive)){
 		return false;
 	}
 	return true;
@@ -1951,7 +1982,7 @@ function lmb_deleteFile($ID,$forceDelnm=null){
  * @param unknown_type $ID
  * @return boolean
  */
-function del_document($ID,$ldms=null){
+function del_document($ID){
 
 	global $db;
 	global $lang;
@@ -1965,34 +1996,29 @@ function del_document($ID,$ldms=null){
 		get_filestructure();
 	}
 
-	if(!$ldms) {
-
-	    # if multitenant
-	    $mttfilter = set_mttfilter()['select'];
-
-        $sqlquery = "SELECT LEVEL,NAME,LMLOCK,LOCKUSER,LOCKDATE,SECNAME,MIMETYPE,TABID,FIELDID,DATID,TYP $mttfilter FROM LDMS_FILES WHERE ID = " . $ID;
-        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-        if (!$rs) {
-            return false;
-        }
-        $ldms['level'] = lmbdb_result($rs, 'LEVEL');
-        $ldms['name'] = lmbdb_result($rs, 'NAME');
-        $ldms['secname'] = lmbdb_result($rs, 'SECNAME');
-        $ldms['tabid'] = lmbdb_result($rs, 'TABID');
-        $ldms['fieldid'] = lmbdb_result($rs, 'FIELDID');
-        $ldms['datid'] = lmbdb_result($rs, 'DATID');
-        $ldms['typ'] = lmbdb_result($rs, 'TYP');
-        $ldms['mimetype'] = lmbdb_result($rs, 'MIMETYPE');
-        $ldms['mid'] = lmbdb_result($rs, 'LMB_MID');
-        $ldms['lmlock'] = lmbdb_result($rs1, 'LMLOCK');
-        $ldms['lockuser'] = lmbdb_result($rs1, 'LOCKUSER');
-        $ldms['lockdate'] = lmbdb_result($rs1, 'LOCKDATE');
+    # if multitenant
+    $mttfilter = set_mttfilter()['select'];
+    $sqlquery = "SELECT LEVEL,NAME,LMLOCK,LOCKUSER,LOCKDATE,SECNAME,MIMETYPE,TABID,FIELDID,DATID,TYP $mttfilter FROM LDMS_FILES WHERE ID = " . $ID;
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        return false;
     }
-
-    $level = $ldms['level'];
+    $ldms['name'] = lmbdb_result($rs, 'NAME');
+    $ldms['secname'] = lmbdb_result($rs, 'SECNAME');
+    $ldms['tabid'] = lmbdb_result($rs, 'TABID');
+    $ldms['fieldid'] = lmbdb_result($rs, 'FIELDID');
+    $ldms['datid'] = lmbdb_result($rs, 'DATID');
+    $ldms['typ'] = lmbdb_result($rs, 'TYP');
+    $ldms['mimetype'] = lmbdb_result($rs, 'MIMETYPE');
+    $ldms['lmlock'] = lmbdb_result($rs1, 'LMLOCK');
+    $ldms['lockuser'] = lmbdb_result($rs1, 'LOCKUSER');
+    $ldms['lockdate'] = lmbdb_result($rs1, 'LOCKDATE');
+    if($mttfilter){$ldms['mid'] = lmbdb_result($rs, 'LMB_MID');}
+    $level = lmbdb_result($rs, 'LEVEL');
     $ext = $gmimetypes["ext"][$ldms['mimetype']];
 
     if(!file_edit_permission(array('level' => $level,'lock'=>$ldms['lmlock'],'lockdate'=>$ldms['lockdate'],'lockuser'=>$ldms['lockuser'],'name'=>$ldms['name']))){
+        lmb_log::error('del_document - permission denied', null, $ldms['tabid'], null, $ID);
         return false;
     }
 
@@ -2011,76 +2037,52 @@ function del_document($ID,$ldms=null){
 	$rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
 	if(!$rs2) {$commit = 1;}
 
-	if(!$commit){
-
-		# --- Physische Datei löschen ----
-        # if(file_exists($umgvar['upload_pfad'].$filestruct['path'][$level]. $ldms['secname'].".".$ext)){
-        $filepath = lmb_getFilePath($ID,$level,$ldms['secname'],$ext,$ldms['mid']);
-		if(file_exists($filepath)){
-			if(!unlink($filepath)){$commit = 1;}
-		}
-
-		# --- IMG-Thumbs löschen ----
-		#foreach (glob(TEMPPATH.'thumpnails/'. $ldms['secname']."*.jpg") as $filename) {
-        $thumbpath = lmb_getFilePath($ID,$level, $ldms['secname'].'*','jpg',$ldms['mid'],2);
-		foreach (glob($thumbpath) as $filename) {
-			unlink($filename);
-		}
-
-		# --- TXT-Thumbs löschen ----
-        $thumbpath = lmb_getFilePath($ID,$level, $ldms['secname'],'txt',$ldms['mid'],3);
-		if(file_exists($thumbpath)){
-			if(!unlink($thumbpath.".txt")){$commit = 1;}
-		}
-
-		# --- History-Array ---------
-		if($session["logging"] AND !$commit){
-			$url = lmb_getUrlFromLevel($filestruct['level'][$level],$level);
-			$GLOBALS["lhist"]["val"][171][] = "/".$url."/".$ldms['name'];
-			$GLOBALS["lhist"]["gtabid"][171][] = $ldms['tabid'];
-			$GLOBALS["lhist"]["fieldid"][171][] = $ldms['fieldid'];
-			$GLOBALS["lhist"]["datid"][171][] = $ldms['datid'];
-			$GLOBALS["lhist"]["level"][171][] = 1;
-			$GLOBALS["lhist"]["linkid"][171] = 171;
-		}
-
-		# ----------- Anzahl Dateien in Datensatz ----------
-		if($ldms['typ'] == 3 AND $ldms['tabid'] AND $ldms['fieldid'] AND $ldms['datid']){
-			check_filecount($ldms['tabid'],$ldms['fieldid'],$ldms['datid'],1);
-		}
-
-	}
-
-
-	if(!$commit){return true;}else{return false;}
-
-}
-
-
-/**
- * update countview of files in gtab dataset type upload
- *
- * @param unknown_type $gtabid
- * @param unknown_type $fieldid
- * @param unknown_type $datid
- * @return boolean
- */
-function check_filecount($gtabid,$fieldid,$datid,$del=0){
-	global $db;
-	global $gtab;
-	global $gfield;
-	global $umgvar;
-
-	$sqlquery = "SELECT COUNT(*) AS ANZAHL FROM LDMS_FILES WHERE TABID = $gtabid AND FIELDID = $fieldid AND DATID = $datid AND TYP = 3";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-    $count = lmbdb_result($rs, "ANZAHL")-$del;
-
-    if($gtab["table"][$gtabid] AND $gfield[$gtabid]["field_name"][$fieldid]) {
-        $sqlquery = "UPDATE " . $gtab["table"][$gtabid] . " SET " . $gfield[$gtabid]["field_name"][$fieldid] . " = '".parse_db_int($count)."' WHERE ID = $datid";
-        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+	if($commit){
+        lmb_log::error('del_document - SQL error on delete document', null, $ldms['tabid'], null, $ID);
+        return false;
     }
 
-    return $count;
+    # --- Physische Datei löschen ----
+    $filepath = lmb_getFilePath($ID,$level,$ldms['secname'],$ext,$ldms['mid']);
+    if(is_file($filepath)){
+
+        if(!unlink($filepath)){
+            lmb_log::error('del_document - can not delete file ['.$filepath.']', null, $ldms['tabid'], null, $ID);
+            return false;
+        }
+
+        # --- IMG-Thumbs löschen ----
+        $thumbpath = lmb_getFilePath($ID,$level, $ldms['secname'].'*','',$ldms['mid'],2);
+        foreach (glob($thumbpath) as $filename) {
+            if(is_file($filename)) {
+                unlink($filename);
+            }
+        }
+
+        # --- TXT löschen ----
+        $thumbpath = lmb_getFilePath($ID,$level, $ldms['secname'].'*','',$ldms['mid'],3);
+        foreach (glob($thumbpath) as $filename) {
+            if(is_file($filename)) {
+                unlink($filename);
+            }
+        }
+
+    }
+
+
+
+    # --- History-Array ---------
+    if($session["logging"]){
+        $url = lmb_getUrlFromLevel($filestruct['level'][$level],$level);
+        $GLOBALS["lhist"]["val"][171][] = "/".$url."/".$ldms['name'];
+        $GLOBALS["lhist"]["gtabid"][171][] = $ldms['tabid'];
+        $GLOBALS["lhist"]["fieldid"][171][] = $ldms['fieldid'];
+        $GLOBALS["lhist"]["datid"][171][] = $ldms['datid'];
+        $GLOBALS["lhist"]["level"][171][] = 1;
+        $GLOBALS["lhist"]["linkid"][171] = 171;
+    }
+
+	return true;
 
 }
 
@@ -2092,7 +2094,7 @@ function check_filecount($gtabid,$fieldid,$datid,$del=0){
  * @param unknown_type $act
  * @return boolean
  */
-function favorite_file($ID,$user_id=null,$action=1,$folder=null){
+function favorite_file($ID,$user_id=null,$add=1,$folder=null){
 	global $db;
 	global $session;
 	global $filestruct;
@@ -2101,14 +2103,12 @@ function favorite_file($ID,$user_id=null,$action=1,$folder=null){
 
 	if(!$user_id){$user_id = $session['user_id'];}
 
-	if($act == 1){
+	if($add == 1){
 		if($folder){
 			if(!$filestruct["id"][$ID] ){return false;}
 		}else{
-
 		    # if multitenant
 	        $mttfilter = set_mttfilter()['where'];
-
 		    $sqlquery = "SELECT LEVEL FROM LDMS_FILES WHERE ID = $ID $mttfilter";
 			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 			if(!$filestruct["id"][lmbdb_result($rs,"LEVEL")] ){return false;}
@@ -2116,10 +2116,11 @@ function favorite_file($ID,$user_id=null,$action=1,$folder=null){
 
 		$netdbid = next_db_id('LDMS_FAVORITES');
 		$sqlquery0 = "SELECT ID FROM LDMS_FAVORITES WHERE ID = ".parse_db_int($ID,16)." AND USER_ID = ".parse_db_int($user_id,3)." AND FOLDER = ".parse_db_bool($folder);
-		$rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
+
+        $rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
 		if(!lmbdb_result($rs0,"ID")){
 			$sqlquery = "INSERT INTO LDMS_FAVORITES (ID,USER_ID,FILE_ID,FOLDER) VALUES ($netdbid,".parse_db_int($user_id,3).",".parse_db_int($ID,16).",".parse_db_bool($folder).")";
-			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		}
 	}else{
 		$sqlquery = "DELETE FROM LDMS_FAVORITES WHERE FILE_ID = ".parse_db_int($ID,16)." AND USER_ID = ".parse_db_int($user_id,3)." AND FOLDER = ".parse_db_bool($folder);
@@ -3104,8 +3105,8 @@ function preview_archive($files,$method,$searchval=null,$format=null,$save=null)
 						$newfile = LmEntGenerate_ocr($value,$level,'preview',$format);
 					# image/pdf to thumbnail
 					}elseif(($mime[0] == "image" OR ($mime[1] == "pdf" AND $umgvar["imagemagickpdf"])) AND $filestruct["view"][$level] AND $destformat != "html"){
-					    $newfile = IMACK_ConvertThumbs(array($value,$secname,$mimeid,lmbdb_result($rs,"THUMB_OK"),$level,lmbdb_result($rs,"LMB_MID")),$destsize[0],$destsize[1],$prop,$destformat);
-						$newfile = $umgvar['path'].'/'.$newfile;
+					    $newfile = lmb_getThumbnail(array($value,$secname,$mimeid,lmbdb_result($rs,"THUMB_OK"),$level,lmbdb_result($rs,"LMB_MID")),$destsize[0],$destsize[1],$prop,$destformat); // lmb_getThumbnail todo
+						#$newfile = $umgvar['path'].'/'.$newfile;
 					# pdf/word to html
 					}elseif($mime[1] == "pdf" AND $destformat == "html"){
 						$newfile = convert_to_html($secname,lmbdb_result($rs,"NAME"),$ext,$mimetype,$searchval,$level);
@@ -3618,7 +3619,7 @@ function lock_file($ID){
  * @param $ID
  * @return array|bool
  */
-function file_download($ID,$sendas=null){
+function file_download($ID,$disposition=null){
 	global $db;
 	global $session;
 	global $umgvar;
@@ -3649,23 +3650,10 @@ function file_download($ID,$sendas=null){
 	if(lmbdb_fetch_row($rs) AND $level = lmbdb_result($rs, 'LEVEL') AND $filestruct["view"][$level] == 1){
 
 		if(!lmbdb_result($rs, "VACT")){$vcount = "V".lmbdb_result($rs, "VID")."_";}else{$vcount = "";}
-		#$target = $umgvar['upload_pfad'].$filestruct['path'][$level].lmbdb_result($rs, "SECNAME").".".$gmimetypes["ext"][lmbdb_result($rs, "MIMETYPE")];
 		$target = lmb_getFilePath($ID,$level,lmbdb_result($rs, "SECNAME"),$gmimetypes["ext"][lmbdb_result($rs, "MIMETYPE")]);
-		$link = USERPATH.$session['user_id']."/download/".$vcount.lmbdb_result($rs, "NAME");
-
-		$dirlist = read_dir(USERPATH.$session["user_id"]."/download",0);
-		if($dirlist){
-			# clear directory after 30 min.
-			foreach ($dirlist["path"] as $key => $value){
-				$ltat = lstat($value.$dirlist["name"][$key]);
-				if(time() - $ltat[9] > 1800){
-					unlink($value.$dirlist["name"][$key]);
-				}
-			}
-		}
 
 		# --- is allready locked ---------
-        if($sendas == 'a'){
+        if($disposition == 'a'){
             if(!file_edit_permission(array('level' => $level,'lock'=>lmbdb_result($rs, 'LMLOCK'),'lockdate'=>lmbdb_result($rs, 'LOCKDATE'),'lockuser'=>lmbdb_result($rs, 'LOCKUSER'),'name'=>lmbdb_result($rs, 'NAME')))){
                 return false;
             }
@@ -3684,34 +3672,13 @@ function file_download($ID,$sendas=null){
 		}
 
         // download method as php
-		if($umgvar['download_method'] == 'php'){
-                $file["path"] = $target;
-                $file["name"] = lmbdb_result($rs, "NAME");
-                $file["length"] = lmbdb_result($rs, "SIZE");
-                $file["mimetype"] = $gmimetypes["mimetype"][lmbdb_result($rs, "MIMETYPE")];
-                return $file;
-        // download method as webserver symlink
-		}else {
-            if(is_link($link)){
-                unlink($link);
-            }
-
-            if (!is_link($link)) {
-                symlink($target, $link);
-            }
-
-            if (is_link($link)) {
-                $file["url"] = "USER/" . $session['user_id'] . "/download/" . rawurlencode($vcount . lmbdb_result($rs, "NAME"));
-                $file["path"] = USERPATH . $session['user_id'] . "/download/" . $vcount . lmbdb_result($rs, "NAME");
-                $file["name"] = lmbdb_result($rs, "NAME");
-                $file["length"] = lmbdb_result($rs, "SIZE");
-                $file["mimetype"] = $gmimetypes["mimetype"][lmbdb_result($rs, "MIMETYPE")];
-                return $file;
-            } else {
-                return false;
-            }
-
-        }
+		#if($umgvar['download_method'] == 'php'){
+        $file["path"] = $target;
+        $file["name"] = lmbdb_result($rs, "NAME");
+        $file["length"] = lmbdb_result($rs, "SIZE");
+        $file["mimetype"] = $gmimetypes["mimetype"][lmbdb_result($rs, "MIMETYPE")];
+        $file['level'] = $level;
+        return $file;
 	}else{
 		lmb_alert($lang[1317]." : (".lmbdb_result($rs, "NAME").")");
 		return false;
@@ -3723,9 +3690,9 @@ function file_download($ID,$sendas=null){
  * file download
  *
  * @param $ID
- * @param null $sendas
+ * @param null $disposition
  */
-function lmb_fileDownload($ID,$sendas=null){
+function lmb_fileDownload($ID,$disposition=null){
     global $lang;
     global $externalStorage;
     global $umgvar;
@@ -3733,16 +3700,12 @@ function lmb_fileDownload($ID,$sendas=null){
     require_once(COREPATH . 'extra/explorer/filestructure.lib');
 
     if (!is_numeric($ID)) {
-        header('HTTP/1.1 401 Unauthorized', true);
-        echo '<br><br>' . $lang[114];
-        die();
+		throw new AccessDeniedHttpException();
     }
 
-    $file = file_download($ID,$sendas);
+    $file = file_download($ID,$disposition);
     if (!$file) {
-        header('HTTP/1.1 401 Unauthorized', true);
-        echo '<br><br>' . $lang[114]. '<br>'. implode('<br>',$GLOBALS['alert']);
-        die();
+		throw new AccessDeniedHttpException();
     }
 
     // external file download (cloud)
@@ -3751,7 +3714,7 @@ function lmb_fileDownload($ID,$sendas=null){
         and $uniqueFileName = $file['uniqueFileName']
         and $storageConfig = lmbGetExternalStorageConfig($storageID)) {
 
-        if ($storageConfig['publicCloud'] and $downloadLink = $file['downloadLink'] and !$sendas) {
+        if ($storageConfig['publicCloud'] and $downloadLink = $file['downloadLink'] and !$disposition) {
             # redirect to cloud
             header('Location: ' . $downloadLink);
             die();
@@ -3759,7 +3722,7 @@ function lmb_fileDownload($ID,$sendas=null){
         } else if ($externalAccessUrl = $storageConfig['externalAccessUrl']) {
             # redirect to external server
             $token = lmbGenerateAuthToken();
-            header("Location: {$externalAccessUrl}download.php?ID={$ID}&authToken={$token}&sendas={$sendas}");
+            header("Location: {$externalAccessUrl}download.php?ID={$ID}&authToken={$token}&disposition={$disposition}");
             die();
 
         } else {
@@ -3772,7 +3735,7 @@ function lmb_fileDownload($ID,$sendas=null){
             }
 
             header('Content-Type: ' . $file['mimetype']);
-            if ($sendas and $sendas === 'a') {
+            if ($disposition and $disposition === 'a') {
                 header('Content-Disposition: attachement; filename="' . $file['name'] . '"');
             } else {
                 header('Content-Disposition: inline; filename="' . $file['name'] . '"');
@@ -3781,13 +3744,9 @@ function lmb_fileDownload($ID,$sendas=null){
             die();
         }
 
-    // download method as php
-    } else if ($umgvar['download_method'] == 'php' OR $sendas OR $umgvar['file_encryption']) {
-        lmb_PHPDownload($file,$sendas);
-    // download method as webserver symlink
-    } else {
-        lmb_HTMLDownload($file);
     }
+    // download method as php
+    lmb_PHPDownload($file, $disposition);
 
 }
 
@@ -3796,30 +3755,43 @@ function lmb_fileDownload($ID,$sendas=null){
  * download method as php
  *
  * @param $file
- * @param null $sendas
+ * @param null $disposition
  */
-function lmb_PHPDownload($file,$sendas=null){
+function lmb_PHPDownload($file,$disposition=null){
     global $umgvar;
 
     if ($fd = fopen($file['path'], "r")) {
+
+        if($file['disposition']){
+            $disposition = $file['disposition'];
+        }
+
+        // get filename
+        if(!$file['name']){
+            $file['name'] = end(explode('/',$file['path']));
+        }
+
+        // get mimetype
+        if(!$file['mimetype']){
+            lmb_getMimetype($file);
+        }
 
         header('Content-Type: ' . $file['mimetype']);
         #header("Cache-control: private");
 
         // open pdf and images inline
         $mt = explode($file['mimetype'], '/');
-        if ($sendas != 'a' AND ($mt[0] == 'image' OR $mt[1] == 'pdf')) {
-            $sendas = 'i';
+        if ($disposition != 'a' AND ($mt[0] == 'image' OR $mt[1] == 'pdf')) {
+            $disposition = 'i';
         }
 
         // attachement (save as..)
-        if ($sendas == 'a') {
+        if ($disposition == 'a') {
             header('Content-Disposition: attachement; filename="' . $file['name'] . '"');
         // open inline
         } else {
             header('Content-Disposition: inline; filename="' . $file['name'] . '"');
         }
-
 
         if($umgvar['file_encryption']){
             #header('Content-Length: ' . filesize($file['path']));  // todo
@@ -3836,8 +3808,7 @@ function lmb_PHPDownload($file,$sendas=null){
         fclose($fd);
 
     } else {
-        header('HTTP/1.0 404 Not Found', true);
-        echo '<br><br>File not found';
+		throw new NotFoundHttpException();
     }
 }
 
@@ -3845,6 +3816,7 @@ function lmb_PHPDownload($file,$sendas=null){
 function lmb_HTMLDownload($file){
     header('HTTP/1.1 301 Moved Permanently', true);
     header('Location: ' . $file['url'] . '?v=' . date('U'));
+	exit(1);
 }
 
 
@@ -3852,10 +3824,9 @@ function lmb_HTMLDownload($file){
  * download as archiv
  *
  * @param array $filellist is an array of IDs of files or folders (d1,f1)
- * @param int $method 1=zip 2=tgz 3=tbz2 4=7z
- * @return success
+ * @return bool success
  */
-function download_archive($filellist,$LEVEL,$method){
+function download_archive($filellist,$LEVEL){
 	global $db;
 	global $session;
 	global $umgvar;
@@ -3863,7 +3834,9 @@ function download_archive($filellist,$LEVEL,$method){
 	global $filestruct;
 	global $userdat;
 
-	function download_archive_file($ID,$path){
+	$includeMetadata = $umgvar['download_include_metadata'] ?: false; # todo put this into umgvar
+
+	function download_archive_file($ID,$path, $includeMetadata){
 		global $db;
 		global $session;
 		global $umgvar;
@@ -3891,20 +3864,21 @@ function download_archive($filellist,$LEVEL,$method){
 
                     if(!copy($filepath, $path."/".lmbdb_result($rs, "NAME"))) {
 					    return false;
-					}else{
-						$archive_list[] = lmbdb_result($rs, "NAME");
+					}
 
-						# --- History-Array ---------
-						if($session["logging"] == 2){
-							$url = lmb_getUrlFromLevel($filestruct["level"][$level],$level);
-							$GLOBALS["lhist"]["val"][190][] = "/".$url."/".lmbdb_result($rs,"NAME");
-							$GLOBALS["lhist"]["gtabid"][190][] = lmbdb_result($rs,"TABID");
-							$GLOBALS["lhist"]["fieldid"][190][] = lmbdb_result($rs,"FIELDID");
-							$GLOBALS["lhist"]["datid"][190][] = lmbdb_result($rs,"DATID");
-							$GLOBALS["lhist"]["level"][190][] = 2;
-							$GLOBALS["lhist"]["linkid"][190] = 190;
+					if ($includeMetadata) {
+						require_once COREPATH . 'extra/explorer/metadata.lib';
+						$metadataArray = getmeta_from_db($ID, false);
+
+						$metadataXml = new SimpleXMLElement('<metadata/>');
+
+						foreach ($metadataArray as $key => $value) {
+							$metadataXml->addChild(strtolower($key), trim(e($value)));
 						}
-						$bzm++;
+
+						$metadataXml = $metadataXml->asXML();
+
+						file_put_contents($path."/".lmbdb_result($rs, "NAME").".xml", $metadataXml);
 					}
 			}else{
 				lmb_alert($lang[1317]." : (".lmbdb_result($rs, "NAME").")");
@@ -3915,7 +3889,7 @@ function download_archive($filellist,$LEVEL,$method){
 	}
 
 
-	function download_archive_sub($level,$path){
+	function download_archive_sub($level,$path, $includeMetadata){
 		global $db;
 		global $filestruct;
 		global $umgvar;
@@ -3936,7 +3910,7 @@ function download_archive($filellist,$LEVEL,$method){
 		if(!$rs) {$commit = 1;}
 
 		while(lmbdb_fetch_row($rs)){
-			download_archive_file(lmbdb_result($rs, "ID"),$path);
+			download_archive_file(lmbdb_result($rs, "ID"),$path, $includeMetadata);
 		}
 	}
 
@@ -3953,7 +3927,7 @@ function download_archive($filellist,$LEVEL,$method){
 	foreach($filellist["d"] as $L => $list){
 		foreach($list as $key => $value){
 			if($value){
-				download_archive_file($key,$path);
+				download_archive_file($key,$path, $includeMetadata);
 			}
 		}
 	}}
@@ -3962,35 +3936,25 @@ function download_archive($filellist,$LEVEL,$method){
 	foreach($filellist["f"] as $L => $list){
 		foreach($list as $key => $value){
 			if($value){
-				download_archive_sub($key,$path);
+				download_archive_sub($key,$path, $includeMetadata);
 			}
 		}
 	}}
 
-
-	#$sys = exec("cd ".$umgvar["pfad"]."/USER/".$session["user_id"]."/download/; gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=../temp/pdfarchiv.pdf \"".implode("\" \"",$archive_list)."\"");
-
 	if(file_exists($path)){
-		if($method == 1){
-			# ------------- zip --------------
-			$sys = exec("cd ".USERPATH.$session["user_id"]."/temp; zip -r '".$filestruct["name"][$LEVEL]."' '".$filestruct["name"][$LEVEL]."'",$cmd);
-			$download_archive_link = "USER/".$session["user_id"]."/temp/".$filestruct["name"][$LEVEL].".zip";
-		}elseif($method == 2){
-			# ------------- tar gz --------------
-			$sys = exec("cd ".USERPATH.$session["user_id"]."/temp; tar cfz '".$filestruct["name"][$LEVEL]."'.tar.gz '".$filestruct["name"][$LEVEL]."'",$cmd);
-			$download_archive_link = "USER/".$session["user_id"]."/temp/".$filestruct["name"][$LEVEL].".tar.gz";
-		}elseif($method == 3){
-			# ------------- tar bzip --------------
-			$sys = exec("cd ".USERPATH.$session["user_id"]."/temp; tar --use-compress-program=bzip2 -cf '".$filestruct["name"][$LEVEL].".tar.bz2' '".$filestruct["name"][$LEVEL]."'",$cmd);
-			$download_archive_link = "USER/".$session["user_id"]."/temp/".$filestruct["name"][$LEVEL].".tar.bz2";
-		}elseif($method == 4){
-			# ------------- 7-zip --------------
-			$sys = exec("cd ".USERPATH.$session["user_id"]."/temp; 7z '".$filestruct["name"][$LEVEL]."' '".$filestruct["name"][$LEVEL]."'",$cmd);
-			$download_archive_link = "USER/".$session["user_id"]."/temp/".$filestruct["name"][$LEVEL].".7z";
 
-		}else{$GLOBALS["commit"] = 1;return false;}
+        # ------------- zip --------------
+        $sys = exec("cd ".USERPATH.$session["user_id"]."/temp; zip -r '".$filestruct["name"][$LEVEL]."' '".$filestruct["name"][$LEVEL]."'",$cmd);
 
-		if(file_exists($download_archive_link)){return $download_archive_link;}else{return false;}
+        $file['mimetype'] = 'application/zip';
+        $file['name'] = $filestruct['name'][$LEVEL].'.zip';
+        $file['path'] = USERPATH.$session['user_id'].'/temp/'.$filestruct['name'][$LEVEL].'.zip';
+
+		if(file_exists($file['path'])){
+            return $file;
+        }else{
+            return false;
+        }
 	}
 
 	return false;
@@ -4248,7 +4212,6 @@ function get_fwhere($LID,$ffilter,$typ,$verkn=null){
 
 	if(!$query_["value"]){return false;}
 
-	#error_log( $query_["value"]);
 	return $query_;
 }
 

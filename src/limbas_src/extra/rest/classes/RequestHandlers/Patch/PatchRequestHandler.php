@@ -6,14 +6,18 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
-namespace limbas\rest;
+namespace Limbas\extra\rest\classes\RequestHandlers\Patch;
+
+use Limbas\extra\rest\classes\RequestHandlers\RequestHandler;
+use Limbas\extra\rest\classes\RestException;
 
 abstract class PatchRequestHandler extends RequestHandler {
 
     /**
      * @throws RestException
      */
-    protected function updateRecord() {
+    protected function updateRecord(): int|bool|array
+    {
         global $gfield;
         //TODO: Transaction?
 
@@ -32,7 +36,7 @@ abstract class PatchRequestHandler extends RequestHandler {
             if ($gfield[$this->request->table_id]['field_type'][$fieldID] == 11 /* relation */) {
                 $this->handleRelation($fieldID,$fieldValue);
             } else {
-                $update["{$this->request->table_id},{$fieldID},{$this->request->id}"] = lmb_utf8_decode($fieldValue);
+                $update["{$this->request->table_id},{$fieldID},{$this->request->id}"] = $fieldValue;
             }
         }
 
@@ -48,7 +52,8 @@ abstract class PatchRequestHandler extends RequestHandler {
      * @param $fieldIdentifier
      * @throws RestException
      */
-    protected function checkFieldType(&$fieldID,&$fieldIdentifier) {
+    protected function checkFieldType(&$fieldID,&$fieldIdentifier): void
+    {
         global $gfield;
         $fieldtype = &$gfield[$this->request->table_id]['field_type'][$fieldID];
         $datatype = &$gfield[$this->request->table_id]['data_type'][$fieldID];
@@ -69,7 +74,8 @@ abstract class PatchRequestHandler extends RequestHandler {
      * @param bool $replace
      * @throws RestException
      */
-    protected function handleRelation(&$fieldID,&$relData,$replace=true) {
+    protected function handleRelation(&$fieldID,&$relData,$replace=true): void
+    {
         global $gfield;
 
         if (!array_key_exists('data', $relData)) {
@@ -92,7 +98,8 @@ abstract class PatchRequestHandler extends RequestHandler {
      * @param mixed $data
      * @throws RestException
      */
-    protected function updateUniqueRelation($fieldID,$data) {
+    protected function updateUniqueRelation($fieldID,$data): void
+    {
 
         //delete existing relation
         $rel_del_id = $this->getFieldRelations($fieldID);
@@ -131,7 +138,8 @@ abstract class PatchRequestHandler extends RequestHandler {
      * @param bool $replace
      * @throws RestException
      */
-    protected function updateManyRelation($fieldID,$data,$replace=true) {
+    protected function updateManyRelation($fieldID,$data,$replace=true): void
+    {
         if (!is_array($data)) {
             throw new RestException('Key "data" of relation must be an array!', 400);
         }

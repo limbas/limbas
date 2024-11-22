@@ -7,6 +7,7 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+global $dspl_;
 
 ?>
 <script>
@@ -97,21 +98,35 @@ function checkFiles(id,level,typ,status) {
 
 // Ajax Gruppenrechte
 function limbasShowGroups(el,level){
-	limbasDivShow(el,"","ShowGroupsInfo");
 	url = "main_dyns_admin.php";
 	actid = "fileGroupRules&level=" + level;
 	ajaxGet(null,url,actid,null,"limbasShowGroupsPost");
 }
 
 function limbasShowGroupsPost(result){
-	document.getElementById("ShowGroupsInfo").innerHTML = result;
-	if(!result){
-		document.getElementById("ShowGroupsInfo").style.visibility = 'hidden';
-	}
-	
+    $('#filepermission-modal-body').html(result);
+    $('#filepermission-modal').modal('show');
 }
 
 </script>
+
+
+<div class="modal" id="filepermission-modal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="filepermission-modal-title"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="filepermission-modal-body">
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-dark" data-bs-dismiss="modal">close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="container-fluid p-3">
     <FORM ACTION="main_admin.php" METHOD="post" name="form1">
@@ -158,6 +173,7 @@ function limbasShowGroupsPost(result){
                                     <TD><i class="lmb-icon lmb-create-folder px-0 mx-2" TITLE="<?=$lang[2297]?>"></i></TD>
                                     <TD><i class="lmb-icon lmb-pencil px-0 mx-2" TITLE="<?=$lang[2299]?>"></i></TD>
                                     <TD><i class="lmb-icon lmb-trash px-0 mx-2" TITLE="<?=$lang[2298]?>"></i></TD>
+                                    <TD><i class="lmb-icon lmb-eye-slash px-0 mx-2" TITLE="<?=$lang[3162]?>"></i></TD>
                                     <TD><i class="lmb-icon lmb-lock-file px-0 mx-2" TITLE="<?=$lang[2300]?>"></i></TD>
                                 </TR>
                             </table>
@@ -188,10 +204,10 @@ function limbasShowGroupsPost(result){
                                 if(in_array($file_struct["id"][$bzm],$file_struct["level"])){
                                     if(in_array($file_struct["id"][$bzm],$dspl_)){$pis = "plusonly.gif";}else{$pis = "minusonly.gif";}
                                     $next = 1;
-                                    $pic = '<img src="assets/images/legacy/outliner/'.$pis.'" data-bs-toggle="collapse" data-bs-target="#'.$colid.'" class="cursor-pointer">';
+                                    $pic = '<img class=\'lmb-image-as-icon\' src="assets/images/legacy/outliner/'.$pis.'" data-bs-toggle="collapse" data-bs-target="#'.$colid.'" class="cursor-pointer">';
                                 }else{
                                     $next = 0;
-                                    $pic = '<IMG SRC="assets/images/legacy/outliner/blank.gif">';
+                                    $pic = '<IMG class="lmb-image-as-icon" SRC="assets/images/legacy/outliner/blank.gif">';
                                 }
                                     
                                 
@@ -236,6 +252,11 @@ function limbasShowGroupsPost(result){
                                         echo "<TD><INPUT ID=\"fd".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2298]\" NAME=\"frule[d][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"form-check-input mx-2\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','d',this.checked)\"";
                                         if($filerules[$file_struct["id"][$bzm]]["del"]){echo " CHECKED";}
                                         echo "><INPUT TYPE=\"hidden\" ID=\"hd".$file_struct["id"][$bzm]."\" NAME=\"hhd".$file_struct["level"][$bzm]."\" VALUE=\"".$file_struct["level"][$bzm]."\"></TD>";
+
+                                        # --- hide in tree ---
+                                        echo "<TD><INPUT ID=\"fh".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2298]\" NAME=\"frule[h][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"form-check-input mx-2\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','h',this.checked)\"";
+                                        if($filerules[$file_struct["id"][$bzm]]["hide"]){echo " CHECKED";}
+                                        echo "><INPUT TYPE=\"hidden\" ID=\"hh".$file_struct["id"][$bzm]."\" NAME=\"hhh".$file_struct["level"][$bzm]."\" VALUE=\"".$file_struct["level"][$bzm]."\"></TD>";
 
                                         # --- lock ---
                                         echo "<TD><INPUT ID=\"fl".$file_struct["id"][$bzm]."\" TITLE=\"$lang[2300]\" NAME=\"frule[l][".$file_struct["id"][$bzm]."]\" TYPE=\"CHECKBOX\" CLASS=\"form-check-input mx-2\" OnClick=\"checkFiles('".$file_struct["id"][$bzm]."','".$file_struct["level"][$bzm]."','l',this.checked)\"";

@@ -9,9 +9,9 @@
 
 namespace Limbas\admin\mailTemplates;
 
-use Database;
 use Limbas\admin\templates\HasTemplateRoot;
 use Limbas\extra\template\mail\MailTemplateRender;
+use Limbas\lib\db\Database;
 use Limbas\lib\LimbasModel;
 
 class MailTemplate extends LimbasModel

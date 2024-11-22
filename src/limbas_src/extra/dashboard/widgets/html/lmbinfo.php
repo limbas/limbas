@@ -11,6 +11,7 @@ global $lang;
 global $session;
 global $DBA;
 
+use Limbas\admin\install\Installer;
 use Limbas\admin\tools\update\Updater; ?>
 
 <div class="card h-100">
@@ -204,16 +205,18 @@ use Limbas\admin\tools\update\Updater; ?>
             <?php
         } elseif ($view == 'environment_check') { ?>
             <div class="overflow-hidden">
-                <?php {
-                    $embed = true;
-                    $setup_path_project = $umgvar['path'];
+                <?php {                    
                     define('LIMBAS_INSTALL', true);
                     define('LANG', 'en');
 
-                    require_once(COREPATH . 'admin/install/Msg.php');
                     require_once(COREPATH . 'admin/install/install.lib');
-                    require_once(COREPATH . 'admin/install/steps/1_php_ini.php');
-                    require_once(COREPATH . 'admin/install/steps/2_dependencies.php');
+                    
+                    $installer = new Installer();
+                    $phpIniMessages = $installer->checkPhpIni();
+                    $writePermissionMessages = $installer->checkWritePermissions();
+                    $dependencyMessages = $installer->checkDependencies();
+                    
+                    require(COREPATH . 'admin/install/html/dependencies.php');
                 } ?>
             </div>
             <?php

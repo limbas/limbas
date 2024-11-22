@@ -7,10 +7,8 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
-
-
 require_once(COREPATH . 'extra/explorer/explorer_main.lib');
+require_once(COREPATH  . 'gtab/html/contextmenus/gtab_filter.php');
 
 #----------------- Context-Menü -------------------
 explContextDetail($LID);
@@ -232,18 +230,6 @@ pop_bottom();
 ?>
 </DIV>
 
-<DIV ID="downloadmenu" class="lmbContextMenu" style="position:absolute;visibility:hidden;top:0;z-index:4" OnClick="activ_menu = 1;">
-<?php
-pop_top('downloadmenu');
-pop_header('', $lang[1762]);
-pop_menu(0, "LmEx_download_archive('1');", "&nbsp;zip <span style=\"color:".$farbschema["WEB4"].";\"></span>");
-pop_menu(0, "LmEx_download_archive('2');", "&nbsp;tar.gz <span style=\"color:".$farbschema["WEB4"].";\"></span>");
-pop_menu(0, "LmEx_download_archive('3');", "&nbsp;tar.bz2 <span style=\"color:".$farbschema["WEB4"].";\"></span>");
-pop_menu(0, "LmEx_download_archive('4');", "&nbsp;7z <span style=\"color:".$farbschema["WEB4"].";\"></span>");
-pop_bottom();
-?>
-</DIV>
-
 <DIV ID="previewmenu" class="lmbContextMenu" style="position:absolute;visibility:hidden;top:0;z-index:99995" OnClick="activ_menu = 1;">
 <?php
 pop_top('previewmenu');
@@ -330,14 +316,14 @@ foreach ($gfile["id"] as $key => $value){
 	    pop_header(null, $gfile['title'][$key]);
 	}else{
         if($gfile['show'][$LID][$key]){
-            $color = "green";$icdis = "";
+            $color = "color: green;";$icdis = "";
         }else{
-            $color = "black";$icdis = "hidden";
+            $color = "";$icdis = "hidden";
         }
         pop_menu2(
             "&nbsp;".$gfile['title'][$key],
             $gfile["tabid"][$key]."_".$gfile["fid"][$key],
-            "dc_$key\" style=\"color: $color;",
+            "dc_$key\" style=\"$color",
             "lmb-icon lmb-check\" style=\"visibility: $icdis",
             null,
             "fieldlist('$key');"
@@ -379,7 +365,7 @@ if($onload){
 <input type="hidden" name="MID" value="<?=$MID;?>">
 <input type="hidden" name="LID" value="<?=$LID;?>">
 <input type="hidden" name="typ" value="<?=$typ;?>">
-<input type="hidden" name="reset" value="1">
+<input type="hidden" name="filter_reset" value="1">
 </form>
 
 <form enctype="multipart/form-data" action="main.php" method="post" name="form1" id="form1">
@@ -390,6 +376,7 @@ if($onload){
 <input type="hidden" name="MID" value="<?=$MID;?>">
 <input type="hidden" name="LID" value="<?=$LID;?>">
 <input type="hidden" name="typ" value="<?=$typ;?>">
+<input type="hidden" name="level" value="<?=$level;?>">
 
 <input type="hidden" name="del_file">
 <input type="hidden" name="move_file">
@@ -427,25 +414,127 @@ if($onload){
 <input type="hidden" name="view_symbolbar">
 <input type="hidden" name="ldms_foldersetting_key">
 <input type="hidden" name="ldms_foldersetting_value">
-<?php /*
-<input type="hidden" name="f_fieldid" VALUE="<?=$f_fieldid?>">
-<input type="hidden" name="f_tabid" VALUE="<?=$f_tabid?>">
-<input type="hidden" name="f_datid" VALUE="<?=$f_datid?>">
 
-<input type="hidden" name="form_id" VALUE="<?=$form_id;?>">
-<input type="hidden" name="gtabid" value="<?=$gtabid;?>">
-<input type="hidden" NAME="verknpf" VALUE="<?=$verknpf;?>">
-<input type="hidden" name="verkn_addfrom" VALUE="<?=$verkn_addfrom;?>">
-<input type="hidden" name="verkn_ID" VALUE="<?=$verkn_ID;?>">
-<input type="hidden" name="verkn_tabid" VALUE="<?=$verkn_tabid;?>">
-<input type="hidden" name="verkn_fieldid" VALUE="<?=$verkn_fieldid;?>">
-<input type="hidden" name="verkn_showonly" VALUE="<?=$verkn_showonly;?>">
-<input type="hidden" name="verkn_poolid" VALUE="<?=$verkn_poolid;?>">
-*/?>
+   <?php
+   # <div class=" mb-3 legacy-table d-inline-block flex-fill table-responsive" style="height:100%">
+   ?>
+<div class="p-3 d-flex flex-column">
+<nav class="navbar navbar-expand-sm navbar-light bg-nav mb-3 lmbGtabmenu lmbGtabmenu-list lmbGtabmenu-table-20">
+    <div class="container-fluid">
+        <div class="collapse navbar-collapse" id="lmbDetailsNavbar">
+            <ul class="navbar-nav me-auto mb-2 mb-sm-0">
 
+                <?php if($LINK[195] OR $LINK[190] OR $LINK[203] OR $LINK[221]){?>
+                <li class="nav-item lmbGtabmenu-file">
+                    <a class="nav-link " href="#"  OnClick="LmEx_open_menu(this,'filemenu');" id="edit4"><?=$lang[545]?></a>
+                </li>
+                <?php }?>
+                <?php if($viewmenu["editmenu"]){?>
+                <li class="nav-item lmbGtabmenu-edit">
+                    <a class="nav-link" href="#" OnClick="LmEx_open_menu(this,'editmenu');"><?=$lang[843]?></a>
+                </li>
+                <?php }?>
+                <?php if($LINK[202] OR $LINK[219] OR $LINK[220]){?>
+                <li class="nav-item lmbGtabmenu-view">
+                    <a class="nav-link" href="#" OnClick="LmEx_open_menu(this,'viewmenu');"><?=$lang[1625]?></a>
+                </li>
+                <?php }?>
+                <?php if($LINK[200]){?>
+                <li class="nav-item lmbGtabmenu-extra">
+                    <a class="nav-link" href="#" OnClick="LmEx_open_menu(this,'extramenu');"><?=$lang[1939]?></a>
+                </li>
+                <?php }?>
+                <?php
+                // custmenu
+                if($GLOBALS['gcustmenu'][$gtabid][2]['id'][0]):
+                    foreach($GLOBALS['gcustmenu'][$gtabid][2]['id'] as $cmkey => $cmid):?>
+                            <li class="nav-item">
+                                <a class="gtabHeaderMenuTD hoverable" onclick="limbasDivShow(this,'','limbasDivCustMenu_<?=$cmid?>');">
+                                    <?=$lang[$GLOBALS['gcustmenu'][$gtabid][2]['name'][$cmkey]]?>
+                                </a>
+                            </li>
+                    <?php
+                    endforeach;
+                endif;
+                ?>
+            </ul>
+            <?php if($session["symbolbar"]): ?>
 
-<div class="lmbfringeGtab" style="height:100%">
-<TABLE ID="filetab" CELLPADDING="0" CELLSPACING="0" BORDER="0" > <?php //style="width:<?=$ffilter["tabsize"][$LID]"? > ?>
+            <ul class="navbar-nav ms-auto">
+
+                <?php if(($level OR $level == '0') AND $LID != $gfield[$f_tabid]["file_level"][$f_fieldid] AND $level != $rootlevel){ ?>
+                    <li class="nav-item nav-link lmb-folder-up">
+                        <?php pop_picmenu(326,'', '',''); // show related ?>
+                    </li>
+                <?php } ?>
+
+                    <li class="nav-item nav-link lmbGtabmenuIcon-274">
+                        <?php pop_picmenu(274,'', ''); // show related ?>
+                    </li>
+
+                <?php if($filestruct["add"][$LID]): ?>
+                    <li class="nav-item nav-link lmbGtabmenuIcon-128">
+                        <?php pop_picmenu(128,'', '', '', "OnClick=\"LmEx_showUploadField();\""); // show related ?>
+                    </li>
+                <?php endif; ?>
+                <?php if($filestruct["del"][$LID]): ?>
+                    <li class="nav-item nav-link lmbGtabmenuIcon-171">
+                        <?php pop_picmenu(171,'','', active:1); // show related ?>
+                    </li>
+                <?php endif; ?>
+
+                    <li class="nav-item nav-link lmbGtabmenuIcon-190">
+                        <?php pop_picmenu(190,'', '', active:1); // show related ?>
+                    </li>
+                    <li class="nav-item nav-link lmbGtabmenuIcon-129">
+                        <?php pop_picmenu(129,'', '', active:1); // show related ?>
+                    </li>
+
+                <?php if($filestruct["del"][$LID]): ?>
+                    <li class="nav-item nav-link lmbGtabmenuIcon-130">
+                        <?php pop_picmenu(130,'', '', active:1); // show related ?>
+                    </li>
+                <?php endif; ?>
+                <?php if($filestruct["add"][$LID]): ?>
+                    <li class="nav-item nav-link lmbGtabmenuIcon-191">
+                        <?php pop_picmenu(191,'', '', active: $ffilter["copyContext"] ? 0 : 1); // show related ?>
+                    </li>
+                <?php endif; ?>
+
+                    <li class="nav-item nav-link lmbGtabmenuIcon-222">
+                        <?php pop_picmenu(222,'', '', active: $ffilter["viewmode"][$LID] == 1 ? 0 : 1); // show related ?>
+                    </li>
+                    <li class="nav-item nav-link lmbGtabmenuIcon-223">
+                        <?php pop_picmenu(223,'', '', active: $ffilter["viewmode"][$LID] == 2 ? 0 : 1); // show related ?>
+                    </li>
+
+                <?php if($typ == 7): ?>
+                    <li class="nav-item nav-link lmbGtabmenuIcon-264">
+                        <?php pop_picmenu(264,'', '', active: $ffilter["viewmode"][$LID] == 5 ? 0 : 1); // show related ?>
+                    </li>
+                <?php endif; ?>
+
+                    <li class="nav-item nav-link lmbGtabmenuIcon-256">
+                        <?php pop_picmenu(256,'','', active: $ffilter["viewmode"][$LID] == 3 ? 0 : 1); // show related ?>
+                    </li>
+                    <li class="nav-item nav-link lmbGtabmenuIcon-117">
+                        <?php pop_picmenu(117,'',''); // show related ?>
+                    </li>
+                    <li class="nav-item nav-link lmbGtabmenuIcon-249">
+                        <?php pop_picmenu(249,'',''); // show related ?>
+                    </li>
+                    <li class="nav-item nav-link lmbGtabmenuIcon-217">
+                        <?php pop_picmenu(217,'',''); // show related ?>
+                    </li>
+
+            </ul>
+
+            <?php
+            endif;
+            ?>
+        </div>
+    </div>
+</nav>
 
 <?php
 $headerdesc = $filestruct["name"][$LID];
@@ -454,92 +543,14 @@ if(!$headerdesc){
 }
 ?>
 
+<?php // dummy div for html injection from leagcy js ?>
+<div class="" id="lmbUploadLayer"></div>
 
-
-
-<TR><TD>
-<div class="gtabHeaderMenuTR">
-<TABLE CELLPADDING="0" CELLSPACING="0" BORDER="0" width="100%"><TR><TD>&nbsp;</TD>
-<?php if($LINK[195] OR $LINK[190] OR $LINK[203] OR $LINK[221]){?><TD class="gtabHeaderMenuTD hoverable" OnClick="LmEx_open_menu(this,'filemenu');"><?=$lang[545]?>&nbsp;</TD><td> | </td><?php }?>
-<?php if($viewmenu["editmenu"]){?><TD class="gtabHeaderMenuTD hoverable" OnClick="LmEx_open_menu(this,'editmenu');">&nbsp;<?=$lang[843]?>&nbsp;</TD><td> | </td><?php }?>
-<?php if($LINK[202] OR $LINK[219] OR $LINK[220]){?><TD class="gtabHeaderMenuTD hoverable" OnClick="LmEx_open_menu(this,'viewmenu');">&nbsp;<?=$lang[1625]?>&nbsp;</TD><td> | </td><?php }?>
-<?php if($LINK[200]){?><TD class="gtabHeaderMenuTD hoverable" OnClick="LmEx_open_menu(this,'extramenu');">&nbsp;<?=$lang[1939]?>&nbsp;</TD><?php }?>
-<?php
-// custmenu
-if($GLOBALS['gcustmenu'][$gtabid][2]['id'][0]){
-    foreach($GLOBALS['gcustmenu'][$gtabid][2]['id'] as $cmkey => $cmid){
-        echo "<td>&nbsp;|&nbsp;</td><td nowrap class=\"gtabHeaderMenuTD hoverable\" onclick=\"limbasDivShow(this,'','limbasDivCustMenu_$cmid');\">".$lang[$GLOBALS['gcustmenu'][$gtabid][2]['name'][$cmkey]]."</td>\n";
-    }
-}
-?>
-
-
-<TD WIDTH="100%">&nbsp;</TD>
-</TR></TABLE></div>
-</TD></TR>
-<?php
-
-# Symbolleiste
-if($session["symbolbar"]){
-	echo "<TR><TD><div class=\"gtabHeaderSymbolTR\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\">";
-	echo "<TR>";
-	pop_picmenu(274,'','');				# save
-	if($filestruct["add"][$LID]){pop_picmenu(128,'','','',"OnClick=\"LmEx_showUploadField();\"");} 			# upload
-	if($filestruct["del"][$LID]){pop_picmenu(171,'','',1);} 		# delete
-	pop_picmenu(190,'','',1); 			# download
-
-	echo "<TD>&nbsp;&nbsp;</TD>";
-	pop_picmenu(129,'','',1); 			# copy
-	if($filestruct["del"][$LID]){pop_picmenu(130,'','',1);} 			# cut
-	if($ffilter["copyContext"]){$a = 0;}else{$a = 1;}
-	if($filestruct["add"][$LID]){pop_picmenu(191,'','',$a);} 			# paste
-	echo "<TD>&nbsp;&nbsp;&nbsp;</TD>";
-	#pop_picmenu(219,'',''); 			# fields
-
-	if($ffilter["viewmode"][$LID] == 1){$a = 0;}else{$a = 1;}
-	pop_picmenu(222,'','',$a); 			# Datei
-	if($ffilter["viewmode"][$LID] == 2){$a = 0;}else{$a = 1;}
-	pop_picmenu(223,'','',$a); 			# Schlagwort
-	if($ffilter["viewmode"][$LID] == 5){$a = 0;}else{$a = 1;}
-	if($typ == 7){pop_picmenu(264,'','',$a);} #tablerelation view
-	if($ffilter["viewmode"][$LID] == 3){$a = 0;}else{$a = 1;}
-	pop_picmenu(256,'','',$a); 			# Bildshow
-	#if($ffilter["viewmode"][$LID] == 4){$a = 1;}else{$a = 0;}
-	#pop_picmenu(257,'','',$a); 			# Bild-Übersicht
-
-	echo "<TD>&nbsp;&nbsp;&nbsp;</TD>";
-	pop_picmenu(117,'',''); 			# Detailsuche
-	pop_picmenu(249,'',''); 			# mini-explorer
-	pop_picmenu(217,'',''); 			# zurück setzen
-
-	echo "</TR></TABLE></div></TD></TR>\n";
-}
-
-# Pfad
-?>
-<TR><TD><div class="gtabHeaderInputTR">
-
-
-<TABLE CELLPADDING="0" CELLSPACING="1" BORDER="0" width="100%">
-<TR STYLE="height:20px;"><TD>
-<INPUT TYPE="TEXT" STYLE="border:1px solid <?=$farbschema["WEB4"]?>;width:100%;height:17px;background-color:<?=$farbschema["WEB8"]?>;z-index:1;" VALUE="<?=$file_url?>" READONLY>
-</TD></TR>
-</TABLE>
-
+<div class="container-fluid p-1 border mb-3 bg-secondary-subtle">
+    <span class="w-100" ><?=$file_url?></span>
 </div>
-</TD></TR>
 
-<TR><TD ID="lmbUploadLayer" style="width:100%"></TD></TR>
-
-<tr><td>
-<div class="gtabHeaderInputTR" id="gtabExplBody">
-<?php explMainContent($ID,$LID,$MID,$fid,$typ,$level,$file_url,$ffile,$ffilter);?>
-</div>
-</td></tr>
-
-<tr><td class="lmbGtabBottom"></td></tr>
-
-</table>
+<?php explMainContentBootstrap($ID,$LID,$MID,$fid,$typ,$level,$file_url,$ffile,$ffilter);?>
 </div>
 </form>
 

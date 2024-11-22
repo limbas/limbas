@@ -7,96 +7,36 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\layout\Layout;
 
-//TODO: bootstrap popovers anpassen
 ?>
 
-<SCRIPT LANGUAGE="JavaScript">
+<script src="assets/vendor/select2/select2.full.min.js"></script>
+<script src="assets/js/admin/users/edit.js"></script>
+<link href="assets/vendor/select2/select2.min.css" rel="stylesheet">
 
-    function selected(cal, date) {
-        eval("document.form1.elements['" + elfieldname + "'].value = date;");
-    }
 
-    function closeHandler(cal) {
-        cal.hide();
-    }
 
-    function showCalendar(event, sell, fieldname, value) {
-        elfieldname = fieldname;
-        var sel = document.getElementById('diagv');
-        var cal = new Calendar(true, null, selected, closeHandler);
-        calendar = cal;
-        cal.create();
-        calendar.setDateFormat("%d.%m.%Y");
-        calendar.sel = sel;
-        if (value) {
-            calendar.parseDate(value);
-        }
-        calendar.showAtElement(sel);
-        return false;
-    }
+<div class="modal fade" id="userCompareModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><?=$lang[3153]?></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="userCompareModalContent">
 
-    function delete_user(ID, USER) {
-        del = confirm("<?=$lang[908]?> \"" + USER + "\" <?=$lang[160]?>?");
-        if (del) {
-            document.form1.user_del.value = ID;
-            document.form1.action.value = 'setup_user_erg';
-            document.form1.submit();
-        }
-    }
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
-    function gurefresh(DATA) {
-        gu = confirm("<?=$lang[896]?>");
-        if (gu) {
-            document.location.href = "main_admin.php?action=setup_grusrref&user=<?=$ID?>&datarefresh=" + DATA + "";
-        }
-    }
 
-    function lrefresh() {
-        link = confirm("<?=$lang[896]?>");
-        if (link) {
-            document.location.href = "main_admin.php?action=setup_linkref&user=<?=$ID?>";
-        }
-    }
 
-    function srefresh() {
-        link = confirm("<?=$lang[899]?>");
-        if (link) {
-            document.location.href = "main_admin.php?action=setup_user_change_admin&ID=<?=$ID?>&srefresh=1";
-        }
-    }
 
-    function createpass() {
-        var x = 0;
-        var pass = "";
-        var laenge = 8;
-        var zeichen = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        while (x != laenge) {
-            pass += zeichen.charAt(Math.random() * zeichen.length);
-            x++;
-        }
-        document.form1.elements['userdata[passwort]'].value = pass
-    }
-
-    function send(action) {
-        if (action == 'setup_user_neu') {
-            document.form1.user_add.value = '1';
-        }
-        if ((document.form1.elements['userdata[passwort]'].value.length < 5 && document.form1.elements['userdata[passwort]'].value.length > 0) || document.form1.elements['userdata[username]'].value.length < 5) {
-            lmbShowWarningMsg('<?=$lang[1315]?>');
-        } else {
-            document.form1.submit();
-        }
-    }
-
-    function newwin1(USERID) {
-        tracking = open("main_admin.php?action=setup_user_tracking&typ=1&userid=" + USERID, "Tracking", "toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=600,height=600");
-    }
-
-    function newwin2(USERID) {
-        userstat = open("main.php?action=userstat&userstat=" + USERID, "userstatistic", "toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=750,height=550");
-    }
-</SCRIPT>
 
 <div class="p-3">
     <form enctype="multipart/form-data" action="main_admin.php" method="post" name="form1">
@@ -140,18 +80,17 @@
                     </div>
 
                     <div class="row">
-                        <label class="col-sm-4 col-form-label"><?= $lang[519] ?></label>
+                        <label class="col-sm-4 col-form-label <?= (!$result_user["username"]) ? 'text-danger">* ' : '">' ?><?= $lang[519] ?></label>
                         <div class="col-sm-8">
                             <input type="text" class="form-control form-control-sm" name="userdata[username]"
                                    value="<?= $result_user["username"] ?>" <?= ($action != "setup_user_neu") ? 'OnChange="alert(\'for change username, you need to set a password again!\');"' : '' ?>>
                         </div>
                     </div>
                     <div class="row">
-                        <label class="col-sm-4 col-form-label"><?= $lang[141] ?></label>
+                        <label class="col-sm-4 col-form-label <?= (!$result_user["passwort"]) ? 'text-danger">* ' : '">' ?><?= $lang[141] ?></label>
                         <div class="col-sm-8">
                             <div class="input-group input-group-sm mb-3">
-                                <input type="password" class="form-control form-control-sm" name="userdata[passwort]"
-                                       value="<?= $pass ?>">
+                                <input type="password" class="form-control form-control-sm" name="userdata[passwort]">
                                 <span class="input-group-text"><i class="lmb-icon lmb-lock-file cursor-pointer"
                                                                   OnClick="createpass();"></i></span>
                             </div>
@@ -208,7 +147,7 @@
                     </div>
 
                     <div class="row">
-                        <label class="col-sm-4 col-form-label <?= (!$result_user["group_id"] or !$groupdat["name"][$result_user["group_id"]]) ? 'text-danger' : '' ?>"><?= $lang[900] ?></label>
+                        <label class="col-sm-4 col-form-label <?= (!$result_user["group_id"] or !$groupdat["name"][$result_user["group_id"]]) ? 'text-danger">* ' : '">' ?><?= $lang[900] ?></label>
                         <div class="col-sm-8">
                             <div class="row py-2">
                                 <div class="col-10">
@@ -218,7 +157,7 @@
                                     <?php if ($ID != 1): ?>
                                         <div class="dropdown">
                                             <i class="lmb-icon lmb-pencil cursor-pointer" data-bs-toggle="dropdown"></i>
-                                            <div class="dropdown-menu">
+                                            <div class="dropdown-menu ps-2">
 
                                                 <?php
                                                 $glitems["name"] = array("maingroup");
@@ -251,7 +190,7 @@
                                 <div class="col-2">
                                     <div class="dropdown">
                                         <i class="lmb-icon lmb-pencil cursor-pointer" data-bs-toggle="dropdown"></i>
-                                        <div class="dropdown-menu">
+                                        <div class="dropdown-menu ps-2">
 
                                             <?php
                                             $glitems["name"] = array("subgroup");
@@ -286,21 +225,17 @@
                                     <div class="col-2">
                                         <div class="dropdown">
                                             <i class="lmb-icon lmb-pencil cursor-pointer" data-bs-toggle="dropdown"></i>
-                                            <div class="dropdown-menu">
+                                            <div class="dropdown-menu ps-2">
                                                 <?php foreach ($result_multitenants['mid'] as $id => $mid):
 
                                                     $mname = $result_multitenants['name'][$id]; ?>
 
-                                                    <div class="dropdown-item" title="<?= $mid ?>">
-                                                        <div class="form-check">
-                                                            <label class="form-check-label">
-                                                                <input class="form-check-input mt-0" type="checkbox"
+                                                    <label class="dropdown-item px-0 d-flex align-items-center cursor-pointer" title="<?= $mid ?>">                                                            
+                                                                <input class="form-check-input mt-0 me-2" type="checkbox"
                                                                        value="<?= $id ?>"
                                                                        name="userdata[multitenant][]" <?= ($id && is_array($result_user["multitenant"]) && in_array($id, $result_user["multitenant"])) ? 'checked' : '' ?>>
-                                                                <?= $mname ?>
-                                                            </label>
-                                                        </div>
-                                                    </div>
+                                                            <span class="form-check-label"><?= $mname ?></span>
+                                                    </label>
 
                                                 <?php endforeach; ?>
                                             </div>
@@ -326,11 +261,6 @@
                                    value="<?= $result_user['usercolor'] ?>"
                                    style="background-color:#<?= $result_user["usercolor"] ?>; color:<?= lmbSuggestColor('#' . $result_user['usercolor']) ?>">
                         </div>
-                    </div>
-
-                    <div>
-                        <?php if (file_exists(USERPATH . "portrait/portrait_$ID.jpg")) { ?><IMG
-                            SRC="USER/portrait/portrait_<?= $ID ?>.jpg" BORDER="1"><?php } ?>
                     </div>
 
 
@@ -474,7 +404,7 @@
                     <div class="row">
                         <label class="col-sm-4 col-form-label"><?= $lang[623] ?></label>
                         <div class="col-sm-8">
-                            <SELECT name="userdata[farbe_schema]" class="form-select form-select-sm">
+                            <SELECT name="userdata[color_schema]" class="form-select form-select-sm">
                                 <?php
                                 $sqlquery = "SELECT * FROM LMB_COLORSCHEMES";
                                 $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
@@ -575,20 +505,46 @@
                             <div class="me-2">
                                 <i class="lmb-icon lmb-history cursor-pointer" onclick="newwin1('<?= $ID ?>')"></i>
                             </div>
-                            <label class="col-form-label"><a onclick="newwin1('<?= $ID ?>')"
-                                                                     href=#><?= $lang[1250] ?></a></label>
+                            <label class="col-form-label"><a onclick="newwin1('<?= $ID ?>')" href=#><?= $lang[1250] ?></a></label>
                         </div>
+
+                        <div class="col-sm-6 d-flex align-items-center">
+
+                            <div class="me-2">
+                                <i class="lmb-icon lmb-user1-1 cursor-pointer" onclick="userCompare(<?=$ID?>,null)"></i>
+                            </div>
+                            <label class="col-form-label"><a onclick="userCompare(<?=$ID?>,null)" href=#><?=$lang[3155]?></a></label>
+                        </div>
+
+
                         <div class="col-sm-6 d-flex align-items-center">
 
                             <div class="me-2">
                                 <i class="lmb-icon lmb-calendar-alt2 cursor-pointer"
                                    onclick="newwin2('<?= $ID; ?>')"></i>
                             </div>
-                            <label class="col-form-label"><a onclick="newwin2('<?= $ID; ?>')"
-                                                                     href=#><?= $lang[1791] ?></a></label>
+                            <label class="col-form-label"><a onclick="newwin2('<?= $ID; ?>')" href=#><?= $lang[1791] ?></a></label>
                         </div>
 
                         </div>
+
+
+                        <hr>
+                        <div class="row">
+                            <label class="col-sm-4 col-form-label"><?=$lang[3153]?></label>
+                            <div class="col-sm-8">
+                                <SELECT id="userCompare_select" name="userCompareModal" class="form-select form-select-sm" onchange="userCompare(<?=$ID?>,this.value)">
+                                    <option></option>
+                                    <?php
+                                    foreach ($userdat["userid"] as $key => $userid ) {
+                                        if($userid == $ID){continue;}
+                                        echo '<option value="' . $userid . '">' . $userdat["bezeichnung"][$key] . '</option>';
+                                    }
+                                    ?>
+                                </SELECT>
+                            </div>
+                        </div>
+
 
                         <?php if ($ID != 1): ?>
                             <hr>
@@ -633,8 +589,6 @@
                     </div>
                     <div class="col">
                         <?php if ($result_user["username"] != 'admin' && $session["group_id"] == 1 && $ID): ?>
-
-
                             <button type="button" class="btn btn-outline-danger btn-sm me-2"
                                     onclick="document.form1.delete_user_total.value = 1; delete_user('<?= $result_user["user_id"] ?>','<?= $result_user["username"] ?>');"><?= $lang[160] ?></button>
                             <button type="button" class="btn btn-outline-warning btn-sm me-2"

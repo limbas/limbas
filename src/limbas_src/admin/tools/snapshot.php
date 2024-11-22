@@ -8,23 +8,164 @@
  */
 
 
+
+
+
+
+function SNAP_add_group($name){
+    global $db;
+    global $gsnap;
+
+    $NEXTID = next_db_id("LMB_SNAP_GROUP");
+    $sqlquery = "INSERT INTO LMB_SNAP_GROUP (ID,NAME) VALUES ($NEXTID,'".parse_db_string($name,50)."')";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs) {return false;}
+}
+
+
+function SNAP_del_group($snapgroup_id){
+    global $db;
+    global $gsnap;
+
+    $sqlquery = "DELETE FROM LMB_SNAP_GROUP WHERE ID = ".parse_db_int($snapgroup_id);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs) {return false;}
+    $sqlquery = "UPDATE LMB_SNAP SET SNAPGROUP = NULL WHERE SNAPGROUP = ".parse_db_int($snapgroup_id);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs) {return false;}
+}
+
+function SNAP_update_group($snapgroup_id,$name,$intern){
+    global $db;
+    global $gsnap;
+
+    $qu = array();
+
+    if($name){
+        $q[] = "NAME = '".parse_db_string($name,50)."'";
+    }
+    if($intern){
+        $q[] = "INTERN = ".parse_db_bool($intern);
+    }
+
+    $qu = implode(',',$q);
+
+    $sqlquery = "UPDATE LMB_SNAP_GROUP SET $qu  WHERE ID = ".parse_db_int($snapgroup_id);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs) {return false;}
+
+}
+
+
+
+function show_snapDetail(array &$gsnap_, $tabId, $snapshotId, $group, bool $showTableName = true): void
+{
+    global $userdat;
+    global $LINK;
+    global $gtab;
+    global $lang;
+    global $gsnapgroup;
+
+    if ($tabId) {
+        $tablename = $gtab['table'][$tabId];
+    } else {
+        $tablename = 'extension only';
+    }
+    if ($gsnap_[$tabId]['type'][$snapshotId] == 2) {
+        $icon = 'fa-solid fa-magnifying-glass';
+        $title = $lang[3161];
+    } else {
+        $icon = 'fa-solid fa-filter';
+        $title = $lang[1602];
+    }
+
+    $htmlATableViewLink =
+        $tabId && $gsnap_[$tabId]['type'][$snapshotId] != 2
+            ? "<a href=\"main.php?action=gtab_erg&gtabid=$tabId&snapid=$snapshotId&snap_id=$snapshotId\" class='d-flex align-items-center' target=\"_new\"><i class=\"lmb-icon lmb-list-ul-alt\"></i></a>"
+            : "<i class=\"lmb-icon lmb-list-ul-alt invisible\"></i>";
+
+    $htmlSnapshotShare =
+        $LINK[225]
+            ? "<i class=\"lmb-icon lmb-groups\" onclick=\"limbasSnapshotShare(this,$snapshotId,'');\" STYLE=\"cursor:pointer;\"></i>"
+            : "<i class=\"lmb-icon lmb-groups invisible\"></i>";
+
+    $htmlTableName =
+        $showTableName
+            ? "<div class=\"col\">{$tablename}</div>"
+            : "";
+
+    echo <<<HTML
+    <div class="row d-flex align-items-center">
+        <div class="col-3">
+            <div class="input-group">
+                <span class="input-group-text" title="$title"><i class="$icon"></i></span>
+                <input type="text" class="form-control" value="{$gsnap_[$tabId]["name"][$snapshotId]}" onchange="edit_snap('{$tabId}','{$snapshotId}',this.value,1)">
+            </div>
+        </div>
+
+        $htmlTableName
+
+        <div class="col">
+        
+            <select title="$lang[2785]" class="form-select form-select-sm" onchange="edit_snap('$tabId','$snapshotId',this.value,2)">
+                <option value="0"></option>
+    HTML;
+                foreach ($gsnapgroup['name'] as $key => $value) {
+                    echo "<option value=\"$key\" ".($key == $group ? 'selected' : '').">$value</option>";
+                }
+    echo <<<HTML
+            </select>
+
+        </div>
+        
+        <div class="col d-flex align-items-center">
+            $htmlATableViewLink
+            <i class="lmb-icon lmb-pencil" style="cursor:pointer" border="0" onclick="lmbSnapExtension(this,{$snapshotId})"></i>
+            <input type="hidden" name="snap_extvalue[{$snapshotId}]" value="{$gsnap_[$tabId]["ext"][$snapshotId]}">
+            $htmlSnapshotShare
+            <i class="lmb-icon lmb-trash" onclick="document.form1.del.value={$snapshotId};document.form1.gtabid.value={$tabId};document.form1.submit();" style="cursor:pointer;"></i>
+        </div>
+        
+        <div class="col">
+            &nbsp; (ID {$snapshotId}) &nbsp; <i>{$userdat["bezeichnung"][$gsnap_[$tabId]["user_id"][$snapshotId]]}</i>
+        </div>
+    </div>
+    HTML;
+}
+
+
+
+
 if (!$snap_view) {
     $snap_view = 1;
 }
 
+
+
+if($new_snapgroup AND $new_snapgroupname){
+    SNAP_add_group($new_snapgroupname);
+}
+
+if($groupid){
+    if($del){
+        SNAP_del_group($groupid);
+    }
+    if($group_name OR $group_intern) {
+        SNAP_update_group($groupid, $group_name, $group_intern);
+    }
+}
+
+$gsnapgroup = SNAP_get_group();
+
 if ($newsnap and $new_snapname) {
-
     $new_snapname = preg_replace("/[^[:alnum:]_-äöüÄÖÜ]/", '', $new_snapname);
-    $new_snapgroup = preg_replace("/[^[:alnum:]äöüÄÖÜ]/", '', $new_snapgroup);
 
-    if (!$gtabid && !$new_snapgroup) {
-        $new_snapgroup = 'defaultgroup';
+    if (!$gtabid and $new_snapgroup) {
+        $snap_view = 2; // show all filter
     }
 
-    $snap_view = 2; // show all filter
-
     $NEXTID = next_db_id("LMB_SNAP");
-    $sqlquery = "INSERT INTO LMB_SNAP (ID,USER_ID,TABID,NAME,SNAPGROUP) VALUES ($NEXTID," . $session["user_id"] . "," . parse_db_int($gtabid) . ",'" . parse_db_string($new_snapname, 30) . "','" . parse_db_string($new_snapgroup, 30) . "')";
+    $sqlquery = "INSERT INTO LMB_SNAP (ID,USER_ID,TABID,NAME,SNAPGROUP,TYPE) VALUES ($NEXTID," . $session["user_id"] . "," . parse_db_int($gtabid) . ",'" . parse_db_string($new_snapname, 30) . "'," . parse_db_int($new_snapgroup) . ",1)";
     $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
 }
 
@@ -51,13 +192,13 @@ if ($del) {
 }
 
 if ($snap_edit and $snapid) {
-    if ($snap_name = trim($snap_name)) {
+    if (isset($snap_name) AND $snap_name = trim($snap_name)) {
         $update[] = "NAME = '" . parse_db_string(str_replace(";", ",", $snap_name), 50) . "'";
         $gsnap[$gtabid]['name'][$snapid] = lmb_substr(str_replace(";", ",", $snap_name), 0, 50);
     }
-    if ($snap_group) {
-        $update[] = "SNAPGROUP = '" . parse_db_string(str_replace(";", ",", $snap_group), 50) . "'";
-        $gsnap[$gtabid]['group'][$snapid] = lmb_substr(str_replace(";", ",", $snap_name), 0, 50);
+    if (isset($snap_group)) {
+        $update[] = "SNAPGROUP = " . parse_db_int( $snap_group);
+        $gsnap[$gtabid]['group'][$snapid] = parse_db_int( $snap_group);
     }
 
     if ($update) {
@@ -79,6 +220,12 @@ if ($snap_extension) {
 
 
     <script>
+
+        function edit_snapgroup(groupid, val, typ) {
+            $('#'+typ).val(val);
+            document.form1.groupid.value = groupid;
+            document.form1.submit();
+        }
 
         function edit_snap(gtabid, snapid, val, typ) {
             document.form1.gtabid.value = gtabid;
@@ -155,7 +302,9 @@ if ($snap_extension) {
         <input type="hidden" name="snap_edit">
         <input type="hidden" name="snap_extension">
         <input type="hidden" name="del">
-
+        <input type="hidden" name="groupid">
+        <input type="hidden" name="group_intern" id="group_intern">
+        <input type="hidden" name="group_name" id="group_name">
 
         <!-- Modal Extensions -->
         <div class="modal" id="modal_snapExtension">
@@ -215,6 +364,10 @@ if ($snap_extension) {
                         <a class="nav-link"
                            href="main_admin.php?action=setup_snap&snap_view=2&show_public_filter=<?= $show_public_filter ?>"><?= $lang[2498] ?> <?= $lang[102] ?> <?= $lang[2785] ?></a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           href="main_admin.php?action=setup_snap&snap_view=3"><?= $lang[2785] ?></a>
+                    </li>
 
                 <?php elseif ($snap_view == 2): ?>
                     <li class="nav-item">
@@ -225,7 +378,28 @@ if ($snap_extension) {
                         <a class="nav-link active bg-contrast"
                            href="#"><?= $lang[2498] ?> <?= $lang[102] ?> <?= $lang[2785] ?></a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           href="main_admin.php?action=setup_snap&snap_view=3"><?= $lang[2785] ?></a>
+                    </li>
+
+                <?php elseif ($snap_view == 3): ?>
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           href="main_admin.php?action=setup_snap&snap_view=1&show_public_filter=<?= $show_public_filter ?>"><?= $lang[2498] ?> <?= $lang[102] ?> <?= $lang[164] ?></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           href="main_admin.php?action=setup_snap&snap_view=2&show_public_filter=<?= $show_public_filter ?>"><?= $lang[2498] ?> <?= $lang[102] ?> <?= $lang[2785] ?></a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active bg-contrast"
+                           href="#"><?= $lang[2785] ?></a>
+                    </li>
+
                 <?php endif; ?>
+
+
             </ul>
 
 
@@ -235,17 +409,9 @@ if ($snap_extension) {
 
                     <?php
 
-                    /**
-                     * <select name="snap_view" onchange="document.form1.submit()" class="form-select form-select-sm mb-3">
-                     * <option value="1" <?php if($snap_view == 1){echo "SELECTED";}?>><?=$lang[2784]?>
-                     * <option value="2" <?php if($snap_view == 2){echo "SELECTED";}?>><?=$lang[2785]?>
-                     * <option value="3" <?php if($snap_view == 3){echo "SELECTED";}?>>Gruppiert nach Tabelle
-                     * <option value="4" <?php if($snap_view == 4){echo "SELECTED";}?>>Gruppiert nach Filter
-                     * </select>
-                     **/
+                    if ($snap_view == 1 OR $snap_view == 2) {
 
                     $show_public_filter = $show_public_filter ? 1 : 2;
-
                     $gsnap_ = SNAP_loadInSession(null, $show_public_filter);
 
                     ?>
@@ -320,7 +486,17 @@ if ($snap_extension) {
                                             }
                                             ?>
                                         </select></td>
-                                    <td><input class="form-control form-control-sm" type="text" name="new_snapgroup">
+                                    <td>
+
+                                        <select title="<?=$lang[2785]?>" class="form-select form-select-sm" name="new_snapgroup">
+                                            <option></option>
+                                            <?php
+                                            foreach ($gsnapgroup['name'] as $key => $value) {
+                                                echo "<option value=\"$key\" ".($key == $group ? 'selected' : '').">$value</option>";
+                                            }
+                                            ?>
+                                        </select>
+
                                     </td>
                                     <td>
                                         <button class="btn btn-primary btn-sm" TYPE="SUBMIT" NAME="newsnap"
@@ -336,76 +512,87 @@ if ($snap_extension) {
                         </li>
                     </ul>
                 </div>
+
+                <?php }else{ ?>
+
+                    <ul class="list-group">
+                        <li class="list-group-item border-0">
+
+
+                            <?php ?>
+
+
+                            <div class="row d-flex">
+
+                                <div class="col-1 " >
+                                    ID
+                                </div>
+
+                                <div class="col ">
+                                    Name
+                                </div>
+
+                                <div class="col-1">
+                                    intern
+                                </div>
+
+                                <div class="col-1">
+                                    delete
+                                </div>
+                            </div>
+
+
+                            <?php
+                            foreach($gsnapgroup['name'] as $groupid => $groupname){
+                            ?>
+                            <div class="row d-flex align-items-center">
+
+                                <div class="col-1" >
+                                   <?=$groupid?>
+                                </div>
+
+                                <div class="col text-start" >
+                                    <input type="text" class="form-control" value="<?=$groupname?>" onchange="edit_snapgroup(<?=$groupid?>,this.value,'group_name')">
+                                </div>
+
+                                <div class="col-1">
+                                    <input class="form-check-input" type="checkbox" onchange="edit_snapgroup(<?=$groupid?>,this.checked,'group_intern')" <?php echo ($gsnapgroup['intern'][$groupid] ? 'checked' : '') ?> >
+                                </div>
+
+                                <div class="col-1">
+                                     <i class="lmb-icon lmb-trash cursor-pointer" onclick="edit_snapgroup(<?=$groupid?>,this.checked,'del')" ></i>
+                                </div>
+
+                           </div>
+
+                            <?php }?>
+
+                            <hr>
+
+                            <div class="row d-flex">
+                                <div class="col-1 " >
+                                     Name
+                                </div>
+                            </div>
+                            <div class="row d-flex">
+
+                                <div class="col-3 " >
+                                     <input type="text" class="form-control" name="new_snapgroupname">
+                                </div>
+                                <div class="col-2">
+                                    <button class="btn btn-primary btn-sm" TYPE="SUBMIT" NAME="new_snapgroup" value="1"><?= $lang[2785] ?> <?= $lang[571] ?> </button>
+                                </div>
+                            </div>
+
+
+
+                        </li>
+                    </ul>
+
+                <?php } ?>
+
             </div>
         </div>
     </form>
 <?php
 
-function show_snapDetail(array &$gsnap_, $tabId, $snapshotId, $group, bool $showTableName = true): void
-{
-    global $userdat;
-    global $LINK;
-    global $gtab;
-    global $lang;
-
-    if ($tabId) {
-        $tablename = $gtab['table'][$tabId];
-    } else {
-        $tablename = 'extension only';
-    }
-    if ($gsnap_[$tabId]['type'][$snapshotId] == 2) {
-        $icon = 'lmb-page-find';
-    } else {
-        $icon = 'lmb-filter';
-    }
-
-    $htmlATableViewLink =
-        $tabId && $gsnap_[$tabId]['type'][$snapshotId] != 2
-            ? "<a href=\"main.php?action=gtab_erg&gtabid=$tabId&snapid=$snapshotId&snap_id=$snapshotId\" class='d-flex align-items-center' target=\"_new\"><i class=\"lmb-icon lmb-list-ul-alt\"></i></a>"
-            : "";
-
-    $htmlSnapshotShare =
-        $LINK[225]
-            ? "<i class=\"lmb-icon lmb-groups\" onclick=\"limbasSnapshotShare(this,$snapshotId,'');\" STYLE=\"cursor:pointer;\"></i>"
-            : "";
-
-    $htmlTableName =
-        $showTableName
-            ? "<div class=\"col\">{$tablename}</div>"
-            : "";
-
-    echo <<<HTML
-    <div class="row d-flex align-items-center">
-        <div class="col-3">
-            <div class="input-group">
-                <span class="input-group-text"><i class="lmb-icon $icon" title="{$lang[1602]}"></i></span>
-                <input type="text" class="form-control form-control-sm" value="{$gsnap_[$tabId]["name"][$snapshotId]}" onchange="edit_snap('{$tabId}','{$snapshotId}',this.value,1)">
-            </div>
-        </div>
-
-        $htmlTableName
-
-        <div class="col">
-            <input 
-                class="form-control form-control-sm" 
-                title="$lang[2785]"
-                type="text" 
-                value="$group" 
-                onchange="edit_snap('$tabId','$snapshotId',this.value,2)" 
-                style="width:200px;">
-        </div>
-        
-        <div class="col d-flex align-items-center">
-            $htmlATableViewLink
-            <i class="lmb-icon lmb-pencil" style="cursor:pointer" border="0" onclick="lmbSnapExtension(this,{$snapshotId})"></i>
-            <input type="hidden" name="snap_extvalue[{$snapshotId}]" value="{$gsnap_[$tabId]["ext"][$snapshotId]}">
-            $htmlSnapshotShare
-            <i class="lmb-icon lmb-trash" onclick="document.form1.del.value={$snapshotId};document.form1.gtabid.value={$tabId};document.form1.submit();" style="cursor:pointer;"></i>
-        </div>
-        
-        <div class="col">
-            &nbsp; (ID {$snapshotId}) &nbsp; <i>{$userdat["bezeichnung"][$gsnap_[$tabId]["user_id"][$snapshotId]]}</i>
-        </div>
-    </div>
-    HTML;
-}

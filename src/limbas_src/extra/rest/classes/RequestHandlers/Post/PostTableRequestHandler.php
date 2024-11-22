@@ -6,7 +6,10 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
-namespace limbas\rest;
+namespace Limbas\extra\rest\classes\RequestHandlers\Post;
+
+use Limbas\extra\rest\classes\Request;
+use Limbas\extra\rest\classes\RestException;
 
 /**
  * Class PostTableRequestHandler
@@ -16,10 +19,11 @@ namespace limbas\rest;
 class PostTableRequestHandler extends PostRequestHandler {
 
     /**
-     * @return array
+     * @return array|null
      * @throws RestException
      */
-    public function getAnswer() {
+    public function getAnswer(): ?array
+    {
         if (!array_key_exists('data', $this->request->request_data)) {
             throw new RestException('Key "data" missing!', 400);
         }
@@ -40,7 +44,8 @@ class PostTableRequestHandler extends PostRequestHandler {
      *
      * @throws RestException
      */
-    protected function checkRequirement() {
+    protected function checkRequirement(): void
+    {
         global $gfield;
 
         foreach ($gfield[$this->request->table_id]['need'] as $fieldid => $value) {

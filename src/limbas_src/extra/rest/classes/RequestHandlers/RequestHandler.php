@@ -6,16 +6,19 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
-namespace limbas\rest;
+namespace Limbas\extra\rest\classes\RequestHandlers;
+
+use Limbas\extra\rest\classes\Request;
+use Limbas\extra\rest\classes\RestException;
 
 abstract class RequestHandler {
 
-    protected $request;
+    protected Request $request;
 
-    protected $status;
-    protected $headers;
+    protected int $status;
+    protected array $headers;
 
-    public static $status_codes = array (
+    public static array $status_codes = array (
         100 => 'Continue',
         101 => 'Switching Protocols',
         102 => 'Processing',
@@ -69,26 +72,27 @@ abstract class RequestHandler {
         510 => 'Not Extended'
     );
 
-    protected $links = null;
+    protected ?array $links = null;
 
     /**
      * Request constructor.
      * @param Request $request
      */
-    public function __construct($request) {
+    public function __construct(Request $request) {
         $this->status = 200;
         $this->request = $request;
         $this->headers = array();
     }
 
-    public abstract function getAnswer();
+    public abstract function getAnswer(): ?array;
 
     /**
      * @param $identifier
      * @return int
      * @throws RestException
      */
-    public static function getTableIDFromIdentifier(&$identifier) {
+    public static function getTableIDFromIdentifier(&$identifier): int
+    {
         global $gtab;
 
         if (is_numeric($identifier) and array_key_exists($identifier, $gtab['table'])) {
@@ -96,24 +100,26 @@ abstract class RequestHandler {
         } else {
             $gtabid = $gtab['argresult_id'][lmb_strtoupper($identifier)];
             if ($gtabid) {
-                return $gtabid;
+                return intval($gtabid);
             }
         }
         throw new RestException('Unknown table ' . $identifier, 400);
     }
+    
     /**
      * @param $gtabid
      * @param $identifier
      * @return int
      * @throws RestException
      */
-    public static function getFieldIdFromIdentifier($gtabid, $identifier) {
+    public static function getFieldIdFromIdentifier($gtabid, $identifier): int
+    {
         global $gfield;
 
         if (is_numeric($identifier)) {
             $fieldID = intval($identifier);
         } else {
-            $fieldID = $gfield[$gtabid]['argresult_name'][lmb_strtoupper($identifier)];
+            $fieldID = intval($gfield[$gtabid]['argresult_name'][lmb_strtoupper($identifier)]);
         }
 
         if (!$fieldID) {
@@ -133,7 +139,8 @@ abstract class RequestHandler {
      * @return array
      * @throws RestException
      */
-    public function getTableAndFieldIDFromDottedIdentifier(&$field_identifier) {
+    public function getTableAndFieldIDFromDottedIdentifier(&$field_identifier): array
+    {
         $sortFieldParts = explode('.', $field_identifier, 2);
         if (lmb_count($sortFieldParts) > 1) {
             $tableID = self::getTableIDFromIdentifier($sortFieldParts[0]);
@@ -153,7 +160,8 @@ abstract class RequestHandler {
      * @return int
      * @throws RestException
      */
-    public static function resolveRelationField($table_id, &$identifier) {
+    public static function resolveRelationField($table_id, &$identifier): int
+    {
         global $gfield;
 
         # check table id
@@ -172,7 +180,8 @@ abstract class RequestHandler {
     }
 
 
-    protected function getFieldRelations($field_id) {
+    protected function getFieldRelations($field_id): array
+    {
 
         $onlyfield = array();
         $onlyfield[$this->request->table_id] = array($field_id);
@@ -195,7 +204,8 @@ abstract class RequestHandler {
 
 
 
-    public function sendHeader() {
+    public function sendHeader(): void
+    {
         if ($this->status !== 200) {
             header($_SERVER['SERVER_PROTOCOL'] . ' ' . $this->status . ' ' . self::$status_codes[$this->status], true, $this->status);
         }

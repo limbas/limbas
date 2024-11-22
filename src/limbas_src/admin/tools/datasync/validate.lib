@@ -10,10 +10,32 @@
 
 // generate diff reult
 
-function lmb_SyncValidate($cliID){
 
-    $local = lmb_getSyncValidate($cliID);
-    $remote = lmb_getRemoteSyncValidate($cliID);
+function lmb_SyncValidateDashboard($cliID,$filter){
+
+    if($filter['filter_count'] == 'true') {
+        $diff1 = lmb_SyncValidatePhase1($cliID, $filter);
+    }
+    if($filter['filter_checksum'] == 'true') {
+        $diff3 = lmb_SyncValidatePhase3($cliID, $filter);
+    }
+
+    if($diff1 && $diff3) {
+        return array_merge_recursive($diff1, $diff3);
+    }elseif($diff1){
+        return $diff1;
+    }elseif($diff3){
+        return $diff3;
+    }
+
+    return array();
+
+}
+
+function lmb_SyncValidatePhase1($cliID,$filter){
+
+    $local = lmb_getSyncValidatePhase1($cliID,$filter);
+    $remote = lmb_getRemoteSyncValidate($cliID,null,1,$filter);
 
     $diff = array();
 
@@ -38,10 +60,10 @@ function lmb_SyncValidate($cliID){
 
 }
 
-function lmb_SyncValidatePhase2($cliID,$table){
+function lmb_SyncValidatePhase2($cliID,$table,$filter){
 
-    $local = lmb_getSyncValidatePhase2($table,$cliID,1);
-    $remote = lmb_getRemoteSyncValidatePhase2($table,$cliID);
+    $local = lmb_getSyncValidatePhase2($cliID,$table,1,$filter);
+    $remote = lmb_getRemoteSyncValidate($cliID,$table,2,$filter);
 
     #error_log(print_r($local,1));
     #error_log(print_r($remote,1));
@@ -50,8 +72,9 @@ function lmb_SyncValidatePhase2($cliID,$table){
     $diff['client'] = array_flip(array_diff($remote,$local));
 
     // append empty lmb_sync_id to master
-    $diff['masterID'] = lmb_getRemoteSyncValidate2Phase2($table,$cliID);
+    $diff['masterID'] = lmb_getSyncValidate2Phase2($cliID,$table);
 
+    #error_log(print_r($diff,1));
 
     return $diff;
 
@@ -60,10 +83,9 @@ function lmb_SyncValidatePhase2($cliID,$table){
 
 // get full data
 
-function lmb_getSyncValidate($cliID){
+function lmb_getSyncValidatePhase1($cliID,$filter){
     global $db;
     global $gfield;
-
 
     // relations 1:n / n:m
     $sqlquery = "SELECT MD5TAB,FIELD_ID,TAB_ID,DATA_TYPE,
@@ -82,13 +104,14 @@ function lmb_getSyncValidate($cliID){
         $datatype = lmbdb_result($rs, 'DATA_TYPE');
         $fieldid = lmbdb_result($rs, 'FIELD_ID');
         $tab_id = lmbdb_result($rs, 'TAB_ID');
+        $qfilter = lmb_getSyncFilter($filter,$righttab);
 
         // select count from relation tables
         #$sqlquery1 = "SELECT COUNT($lefttab.ID) AS RESC FROM $md5tab,$lefttab WHERE  $lefttab.ID = $md5tab.ID ".(is_numeric($cliID) ? "AND $righttab.LMB_SYNC_SLAVE = $cliID" : '');
         if($datatype == 27 OR $datatype == 24) {
-            $sqlquery1 = "SELECT COUNT($md5tab.ID) AS RESC FROM $md5tab,$righttab WHERE $righttab.ID = $md5tab.VERKN_ID " . (is_numeric($cliID) ? "AND $righttab.LMB_SYNC_SLAVE = $cliID" : '');
+            $sqlquery1 = "SELECT COUNT($md5tab.ID) AS RESC FROM $md5tab,$righttab WHERE $righttab.ID = $md5tab.VERKN_ID " . (is_numeric($cliID) ? "AND $righttab.LMB_SYNC_SLAVE = $cliID" : '').$qfilter;
         }elseif($datatype == 25) {
-            $sqlquery1 = "SELECT COUNT(*) AS RESC FROM $righttab WHERE $righttab.$md5tab IS NOT NULL " . (is_numeric($cliID) ? "AND $righttab.LMB_SYNC_SLAVE = $cliID" : '');
+            $sqlquery1 = "SELECT COUNT(*) AS RESC FROM $righttab WHERE $righttab.$md5tab IS NOT NULL " . (is_numeric($cliID) ? "AND $righttab.LMB_SYNC_SLAVE = $cliID" : '').$qfilter;
         }
         $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
         $validate['resc'][$md5tab] = lmbdb_result($rs1, 'RESC');
@@ -100,8 +123,16 @@ function lmb_getSyncValidate($cliID){
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
     while(lmbdb_fetch_row($rs)) {
         // select count from tables
+        $where = '';
         $table = strtoupper(lmbdb_result($rs, 'TABELLE'));
-        $sqlquery1 = "SELECT COUNT(*) AS RESC FROM $table ".(is_numeric($cliID) ? "WHERE LMB_SYNC_SLAVE = $cliID" : '');
+        if(is_numeric($cliID)){
+            $qfilter = lmb_getSyncFilter($filter,$table);
+            $where = "WHERE LMB_SYNC_SLAVE = $cliID $qfilter";
+        }else{
+            $where = lmb_getSyncFilter($filter,$table,null,1);
+        }
+        #$sqlquery1 = "SELECT COUNT(*) AS RESC FROM $table ".(is_numeric($cliID) ? "WHERE LMB_SYNC_SLAVE = $cliID" : '');
+        $sqlquery1 = "SELECT COUNT(*) AS RESC FROM $table $where";
         $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
         $validate['resc'][$table] = lmbdb_result($rs1, 'RESC');
         $validate['table'][$table] = $table;
@@ -113,81 +144,113 @@ function lmb_getSyncValidate($cliID){
 }
 
 
-function lmb_getSyncValidatePhase2($table,$cliID=null,$master=null){
+function lmb_getSyncValidatePhase2($cliID=null,$table=null,$master=null,$filter=null){
     global $db;
     global $gtab;
-    global $reltable;
+    #global $reltable;
 
     $table = parse_db_string($table, 128);
-
+    $qfilter = lmb_getSyncFilter($filter,$table);
     $validate = array();
 
     $idfield = 'ID';
     if($master){
         // relation table 1:n / n:m
         if(strtoupper(substr($table,0,5)) == 'VERK_') {
-            $sqlquery0 = "SELECT TAB_ID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '" . strtolower($table) . "'";
+            $sqlquery0 = "SELECT TAB_ID,VERKNTABID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '" . strtolower($table) . "'";
             $rs0 = lmbdb_exec($db, $sqlquery0) or errorhandle(lmbdb_errormsg($db), $sqlquery0, $action, __FILE__, __LINE__);
-            $reltable = parse_db_string($gtab["table"][lmbdb_result($rs0, 'TAB_ID')], 128);
-            if ($reltable) {
-                $sqlquery = "SELECT DISTINCT $reltable.ID,$reltable.LMB_SYNC_ID FROM $table,$reltable WHERE $table.ID = $reltable.ID AND $reltable.LMB_SYNC_SLAVE = $cliID AND $reltable.LMB_SYNC_ID IS NOT NULL ORDER BY $reltable.LMB_SYNC_ID";
+            $lefttable = parse_db_string($gtab["table"][lmbdb_result($rs0, 'TAB_ID')], 128);
+            $righttable = parse_db_string($gtab["table"][lmbdb_result($rs0, 'VERKNTABID')], 128);
+            $qfilter = lmb_getSyncFilter($filter,$table, 'ERSTDATUM');
+            if ($lefttable) {
+                $sqlquery = "SELECT DISTINCT $lefttable.ID,$lefttable.LMB_SYNC_ID,$table.VERKN_ID,$righttable.LMB_SYNC_ID AS RIGHT_SYNC_ID 
+                FROM $table,$lefttable,$righttable 
+                WHERE $table.ID = $lefttable.ID 
+                AND $righttable.ID = $table.VERKN_ID
+                AND $lefttable.LMB_SYNC_SLAVE = $cliID 
+                AND $lefttable.LMB_SYNC_ID IS NOT NULL 
+                $qfilter
+                ORDER BY $lefttable.ID,$table.VERKN_ID";
             }
+            $is_array = 1;
+            $idk = 'ID';
+            $idv = 'RIGHT_SYNC_ID'; // use VERKN_ID instead LMB_SYNC_ID
         // relation table 1:n direct
         }elseif(strtoupper(substr($table,0,4)) == 'LMB_'){
             $md5tab = $table;
             $sqlquery0 = "SELECT TAB_ID,VERKNTABID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".strtolower($md5tab)."'";
             $rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
             $table = parse_db_string($gtab["table"][lmbdb_result($rs0, 'VERKNTABID')], 128);
-            $reltable = parse_db_string($gtab["table"][lmbdb_result($rs0, 'TAB_ID')], 128);
-            if($reltable) {
-                $sqlquery = "SELECT DISTINCT $table.ID,$table.LMB_SYNC_ID FROM $table WHERE $table.LMB_SYNC_SLAVE = $cliID AND $table.$md5tab IS NOT NULL AND $table.LMB_SYNC_ID IS NOT NULL ORDER BY $table.LMB_SYNC_ID";
+            $lefttable = parse_db_string($gtab["table"][lmbdb_result($rs0, 'TAB_ID')], 128);
+            if($lefttable) {
+                $sqlquery = "SELECT DISTINCT $table.ID,$table.LMB_SYNC_ID FROM $table WHERE $table.LMB_SYNC_SLAVE = $cliID AND $table.$md5tab IS NOT NULL AND $table.LMB_SYNC_ID IS NOT NULL $qfilter ORDER BY $table.LMB_SYNC_ID";
             }
+            $idk = 'ID';
+            $idv = 'LMB_SYNC_ID';
         // table
         }else{
-            $sqlquery = "SELECT ID,LMB_SYNC_ID FROM $table WHERE LMB_SYNC_SLAVE = $cliID ORDER BY LMB_SYNC_ID";
+            $sqlquery = "SELECT ID,LMB_SYNC_ID FROM $table WHERE LMB_SYNC_SLAVE = $cliID $qfilter ORDER BY LMB_SYNC_ID";
+            $idk = 'ID';
+            $idv = 'LMB_SYNC_ID';
         }
-        $idk = 'ID';
-        $idv = 'LMB_SYNC_ID';
+
 
     }else{
         // relation table 1:n / n:m
         if(strtoupper(substr($table,0,5)) == 'VERK_') {
-            $sqlquery = "SELECT ID FROM " . $table . " ORDER BY ID";
+            $qfilter = lmb_getSyncFilter($filter,$table, 'ERSTDATUM',1);
+            $sqlquery = "SELECT ID,VERKN_ID FROM  $table  $qfilter ORDER BY VERKN_ID";
             $idk = 'ID';
-            $idv = 'ID';
+            $idv = 'VERKN_ID';  // use VERKN_ID instead LMB_SYNC_ID
+            $is_array = 1;
             // relation table 1:n direct
         }elseif(strtoupper(substr($table,0,4)) == 'LMB_') {
             $md5tab = $table;
-            $sqlquery0 = "SELECT TAB_ID,VERKNTABID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".strtolower($md5tab)."'";
+            $sqlquery0 = "SELECT TAB_ID,VERKNTABID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".strtolower($md5tab)."' $qfilter";
             $rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
             $table = parse_db_string($gtab["table"][lmbdb_result($rs0, 'VERKNTABID')], 128);
             $sqlquery = "SELECT ID FROM " . $table . " WHERE $md5tab IS NOT NULL ORDER BY ID";
             $idk = 'ID';
             $idv = 'ID';
         }else {
+            $qfilter = lmb_getSyncFilter($filter,$table, 'EDITDATUM',1);
             $idk = 'ID';
             $idv = 'ID';
-            $sqlquery = "SELECT ID FROM " . $table . " ORDER BY ID";
+            $sqlquery = "SELECT ID FROM $table $qfilter ORDER BY ID";
         }
     }
+
 
     if($sqlquery) {
         $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         while (lmbdb_fetch_row($rs)) {
             // get all IDs
             if ($sid = lmbdb_result($rs, $idv)) {
-                $validate[lmbdb_result($rs, $idk)] = $sid;
+                if($is_array) {
+                    $validate_[lmbdb_result($rs, $idk)][] = $sid;
+                }else{
+                    $validate[lmbdb_result($rs, $idk)] = $sid;
+                }
+            }
+        }
+
+        if ($validate_) {
+            foreach ($validate_ as $key => $value) {
+                $validate[$key] = md5(serialize($value)); // make unique ID for all relations of one dataset
             }
         }
     }
+
+
 
     return $validate;
 }
 
 
-function lmb_getRemoteSyncValidate2Phase2($table,$cliID){
+// get still not synced datasets (LMB_SYNC_ID = NULL)
+function lmb_getSyncValidate2Phase2($cliID,$table){
     global $db;
-    global $reltable;
+    #global $reltable;
 
     $validate = array();
 
@@ -197,7 +260,7 @@ function lmb_getRemoteSyncValidate2Phase2($table,$cliID){
         $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         while (lmbdb_fetch_row($rs)) {
             // get all IDs
-            $validate[] = lmbdb_result($rs, 'ID');
+            $validate[lmbdb_result($rs, 'ID')] = lmbdb_result($rs, 'ID');
         }
     }
 
@@ -206,9 +269,54 @@ function lmb_getRemoteSyncValidate2Phase2($table,$cliID){
 }
 
 
+function lmb_SyncValidateRebuildPhase2($cliID,$table,$type,$filter){
+
+    // get diff
+    $diff = lmb_SyncValidatePhase2($cliID, $table,$filter);
+    #error_log(print_r($diff,1));
+
+    // send to master - send via soap and insert into client cache
+    if($type == 1) {
+        if (count($diff['client']) > 0) {
+            lmb_SyncValidateRebuildToSlave($cliID, $table, $diff['client'],$type);
+        }
+    // send to slave
+    } elseif ($type == 2) {
+        // insert into local cache - all new datasets
+        if (is_array($diff['masterID']) && count($diff['masterID']) > 0) {
+            lmb_SyncValidateRebuildCache($table, $diff['masterID'],$type);
+        // insert into local cache - all missing datasets
+        } elseif (is_array($diff['master']) && count($diff['master']) > 0) {
+            lmb_SyncValidateRebuildCache($table, $diff['master'],$type);
+        }
+    }
+
+}
+
+
+function lmb_getSyncFilter($filter,$table,$field='EDITDATUM',$start=null){
+    if($filter['filter_from']){
+        $where[] = $table.".$field >= '".convert_date( $filter['filter_from'])."'";
+    }
+    if($filter['filter_to']){
+        $where[] = $table.".$field <= '".convert_date($filter['filter_to'])."'";
+    }
+
+    if($where){
+        if($start){
+            $where = ' WHERE  ' . implode(' AND ', $where);
+        }else {
+            $where = ' AND  ' . implode(' AND ', $where);
+        }
+    }
+
+    return $where;
+}
+
+
 // get soap client values
 
-function lmb_getRemoteSyncValidate($cliID){
+function lmb_getRemoteSyncValidate($cliID,$table,$phase,$filter){
 
     $slave = lmb_GetSyncSlaves($cliID);
 
@@ -220,71 +328,191 @@ function lmb_getRemoteSyncValidate($cliID){
     );
 
     $lmpar[0]['action'] = 'validate_datasync';
-    $lmpar[0]['phase'] = 1;
-
-    return soap_call_client($lmpar, $LIM);
-
-}
-
-function lmb_getRemoteSyncValidatePhase2($table,$cliID){
-
-    $slave = lmb_GetSyncSlaves($cliID);
-
-    # config soap
-    $LIM = array(
-        'lim_url' => $slave['slave_url'][$cliID],
-        'username' => $slave['slave_username'][$cliID],
-        'pass' => $slave['slave_pass'][$cliID],
-    );
-
-    $lmpar[0]['action'] = 'validate_datasync';
-    $lmpar[0]['phase'] = 2;
+    $lmpar[0]['phase'] = $phase;
     $lmpar[0]['table'] = $table;
+    $lmpar[0]['filter'] = $filter;
+
     return soap_call_client($lmpar, $LIM);
 
 }
 
-function lmb_SyncValidateRebuildXX($cliID,$table,$type){
 
-    // get diff
-    $diff = lmb_SyncValidatePhase2($cliID,$table);
+######################## checksum validate ##############################
 
-    // send via soap and insert into client cache
-    // update relations
-    if($type == 1 && strtoupper(substr($table,0,5)) == 'VERK_' && is_array($diff['client']) && count($diff['client']) > 0) {
-        lmb_SyncValidateRebuildRelationsCache($table, $diff['client']);
-    }elseif($type == 1 && is_array($diff['client']) && count($diff['client']) > 0){
-        lmb_SyncValidateRebuildToSlave($cliID,$table,$diff['client']);
+function lmb_SyncValidatePhase3($cliID,$filter){
+
+    $local = lmb_getSyncValidatePhase3($cliID,$filter);
+    $remote = lmb_getRemoteSyncValidate($cliID,null,3,$filter);
+
+    $diff = array();
+
+    // checksum
+    if(is_array($local) AND is_array($remote)) {
+        $sum = 0;
+        foreach ($local['table'] as $key => $table) {
+            if ($local['checksum'][$key] != $remote['checksum'][$key]) {
+                $diff['checksum'][$table] = 1;
+                $diff['spelling'][$table] = $local['spelling'][$key];
+                $sum++;
+            }
+        }
     }
 
-    // insert into local cache
-    // update relations
-    if($type == 2 && strtoupper(substr($table,0,5)) == 'VERK_' && is_array($diff['master']) && count($diff['master']) > 0) {
-        lmb_SyncValidateRebuildRelationsCache($table,$diff['master']);
-    // adding tables
-    }elseif($type == 2 && is_array($diff['masterID']) && count($diff['masterID']) > 0){
-        lmb_SyncValidateRebuildCache($table,$diff['masterID']);
-    }
+    return $diff;
 
 }
 
-function lmb_SyncValidateRebuild($cliID,$table,$type)
-{
+function lmb_getSyncValidatePhase3($cliID,$filter){
+    global $db;
+    global $gfield;
 
-    // get diff
-    $diff = lmb_SyncValidatePhase2($cliID, $table);
+    $sqlquery = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE DATASYNC = 1 AND CHECKSUM = ".LMB_DBDEF_TRUE." ORDER BY ID";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    while(lmbdb_fetch_row($rs)) {
+        // select checksum from table
+        $table = strtoupper(lmbdb_result($rs, 'TABELLE'));
+        if(is_numeric($cliID)){
+            $qfilter = lmb_getSyncFilter($filter,$table);
+            $where = "WHERE LMB_SYNC_SLAVE = $cliID $qfilter";
+        }else{
+            $qfilter = lmb_getSyncFilter($filter,$table);
+            $where = lmb_getSyncFilter($filter,$table,null,1);
+        }
+        #$sqlquery1 = "SELECT sum(('x' || substring(LMB_CHECKSUM, 1, 8))::bit(32)::bigint) AS CHKS FROM $table ".(is_numeric($cliID) ? "WHERE LMB_SYNC_SLAVE = $cliID" : '').$qfilter;
+        $sqlquery1 = "SELECT sum(('x' || substring(LMB_CHECKSUM, 1, 8))::bit(32)::bigint) AS CHKS FROM $table $where";
 
-    // send via soap and insert into client cache
-    // update relations
-    if ($type == 1 && is_array($diff['masterID']) && count($diff['client']) > 0) {
-        lmb_SyncValidateRebuildToSlave($cliID,$table,$diff['client']);
-
-    // insert into local cache
-    }elseif($type == 2 && is_array($diff['masterID']) && count($diff['masterID']) > 0){
-        lmb_SyncValidateRebuildCache($table,$diff['masterID']);
+        $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+        $validate['checksum'][$table] = lmbdb_result($rs1, 'CHKS');
+        $validate['table'][$table] = $table;
+        $validate['spelling'][$table] = $table;
     }
 
+
+    return $validate;
 }
+
+
+function lmb_SyncValidatePhase4($cliID,$table,$filter){
+
+    $local = lmb_getSyncValidatePhase4($cliID, $table, 1,$filter);
+    $remote = lmb_getRemoteSyncValidate($cliID,$table,4, $filter);
+
+    $diff = array();
+
+    // checksum
+    if(is_array($local) AND is_array($remote)) {
+        $sum = 0;
+        foreach ($local['checksum'] as $ID => $checksum) {
+            if ($local['checksum'][$ID] != $remote['checksum'][$ID]) {
+                $diff['descriptor'][$ID] = ($local['descriptor'][$ID] ? $local['descriptor'][$ID] : $ID);
+                $diff['date'][$ID] = get_date($local['date'][$ID],1);
+                $diff['masterID'][$ID] = $local['masterID'][$ID];
+            }
+        }
+    }
+
+    return $diff;
+}
+
+function lmb_getSyncValidatePhase4($cliID=null,$table=null,$master=null,$filter=null){
+    global $db;
+    global $gtab;
+    global $gfield;
+
+    $validate = array();
+    $table = lmb_strtoupper(parse_db_string($table, 128));
+    $gtabid = $gtab['argresult_id'][$table];
+
+    if($gfield[$gtabid]['mainfield']){
+        $mainfield = $gfield[$gtabid]['field_name'][$gfield[$gtabid]['mainfield']];
+    }
+
+    // master
+    if($master){
+        $qfilter = lmb_getSyncFilter($filter,$table);
+        $sID = 'LMB_SYNC_ID';
+        $mID = 'ID';
+        $sqlquery = "SELECT ID, LMB_SYNC_ID ,LMB_CHECKSUM, EDITDATUM ".($mainfield ? ",$mainfield" : '')." FROM $table WHERE LMB_SYNC_SLAVE = $cliID AND LMB_SYNC_ID IS NOT NULL $qfilter ORDER BY LMB_SYNC_ID";
+    // slave
+    }else{
+        $qfilter = lmb_getSyncFilter($filter,$table,'EDITDATUM',1);
+        $sID = 'ID';
+        $mID = 'ID';
+        $sqlquery = "SELECT ID, LMB_CHECKSUM, EDITDATUM ".($mainfield ? ",$mainfield" : '')." FROM $table $qfilter ORDER BY ID";
+    }
+
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+
+    // get all CHECKSUMs
+    while (lmbdb_fetch_row($rs)) {
+        $ID = lmbdb_result($rs, $sID);
+        $validate['checksum'][$ID] = lmbdb_result($rs, 'LMB_CHECKSUM');
+        $validate['descriptor'][$ID] = lmbdb_result($rs, $mainfield);
+        $validate['date'][$ID] = lmbdb_result($rs, 'EDITDATUM');
+        $validate['masterID'][$ID] = lmbdb_result($rs, $mID);
+    }
+
+    return $validate;
+}
+
+function lmb_SyncValidatePhase5($cliID,$table,$clientID,$masterID){
+    global $gfield;
+    global $gtab;
+
+    $gtabid = $gtab['argresult_id'][$table];
+
+    $local = lmb_getSyncValidatePhase5($cliID, $table,   $masterID);
+    $remote = lmb_getRemoteSyncValidate($cliID,$table,5, $clientID);
+    if(!is_array($local) OR !is_array($remote)){return;}
+
+    $out .= '<table style="margin-left:40px;">';
+
+    foreach($local as $fieldid => $value){
+        if($value != $remote[$fieldid]){
+            # diff: <name> <left> <right>
+            $out .= "<tr>
+            <td style=\"padding-right:10px; vertical-align:top;\"><i>{$gfield[$gtabid]['field_name'][$fieldid]}:</i></td>
+            <td>" . textDiff($value, $remote[$fieldid]) . "</td>
+            </tr>";
+        }
+    }
+
+    $out .= '</table></p>';
+    #error_log($out);
+
+    return $out;
+}
+
+
+function lmb_getSyncValidatePhase5($cliID, $table, $ID){
+    global $gtab;
+    global $gfield;
+
+    require_once(COREPATH . 'gtab/gtab_type_erg.lib');
+
+    $gtabid = $gtab['argresult_id'][$table];
+    $filter['relationval'][$gtabid] = 1;
+    foreach($gfield[$gtabid]['checksum'] as $fieldid => $value){
+        $onlyfield[$gtabid][] = $fieldid;
+    }
+
+	$gresult = get_gresult($gtabid,1,$filter,null,null,$onlyfield,$ID);
+
+    foreach($gfield[$gtabid]['checksum'] as $fieldid => $value) {
+        $fname = "cftyp_" . $gfield[$gtabid]['funcid'][$fieldid];
+        $fresult[$fieldid] = $fname(0, $fieldid, $gtabid, 4, $gresult, 0);
+    }
+
+    #error_log(print_r($fresult,1));
+
+    return $fresult;
+
+}
+
+
+
+
+######################## rebuild to cache Phase 2 ##############################
 
 function lmb_SyncValidateRebuildToSlave($cliID,$table,$diff){
 
@@ -298,7 +526,7 @@ function lmb_SyncValidateRebuildToSlave($cliID,$table,$diff){
     );
 
     $lmpar[0]['action'] = 'validate_datasync';
-    $lmpar[0]['phase'] = 5;
+    $lmpar[0]['phase'] = 20; // rebuild phase 2
     $lmpar[0]['table'] = $table;
     $lmpar[0]['diff'] = $diff;
 
@@ -306,7 +534,7 @@ function lmb_SyncValidateRebuildToSlave($cliID,$table,$diff){
 
 }
 
-function lmb_SyncValidateRebuildCache($table,$diff){
+function lmb_SyncValidateRebuildCache($table,$diff,$type){
     global $db;
     global $gfield;
 
@@ -330,15 +558,16 @@ function lmb_SyncValidateRebuildCache($table,$diff){
                 }
             }
 
-            foreach($diff as $key => $ID){
+            foreach($diff as $ID => $sid){
                 // add new dataset
                 execute_sync($tabid,1,$ID,$null,null,null,2);
 
-                // update relation field
-                if(is_array($relfields)){
-                foreach($relfields as $key => $rfieldid){
-                    execute_sync($tabid,$rfieldid,$ID,$null,null,null,3);
-                }}
+                // update relation field in slave
+                if($type == 2 && is_array($relfields)){
+                    foreach($relfields as $key => $rfieldid){
+                        execute_sync($tabid,$rfieldid,$ID,$null,null,null,3);
+                    }
+                }
             }
         }
     }
@@ -361,12 +590,31 @@ function lmb_SyncValidateRebuildRelationsCache($table,$diff){
             $tabid = strtoupper(lmbdb_result($rs, 'TAB_ID'));
             if($fieldid && $tabid) {
                 // update relation field
-                foreach($diff as $key => $ID) {
-                    execute_sync($tabid, $fieldid, $key, $null, null, null, 3);
+                foreach($diff as $skey => $sval) {
+
+                    // flip array if is client
+                    $ID = $skey;
+                    if(!is_numeric($skey)){
+                        $ID = $sval;
+                    }
+
+                    execute_sync($tabid, $fieldid, $ID, $null, null, null, 3);
                 }
             }
         }
     }
 
 }
+
+
+
+######################## rebuild to cache Phase 4 ##############################
+
+
+function lmb_SyncValidateRebuildPhase4($cliID,$table,$type,$filter){  // todo
+
+
+
+}
+
 ?>

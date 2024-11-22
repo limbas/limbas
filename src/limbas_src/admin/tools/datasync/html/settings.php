@@ -20,21 +20,21 @@
 
 <script>
 
-    var saverules = new Array();
+    var saverules = [];
     function save_rules(tab,field,typ){
-        eval("saverules['"+tab+"_"+field+"_"+typ+"'] = 1;");
+        saverules[tab+"_"+field+"_"+typ] = 1;
     }
 
     function send_form(){
 
-        saval = new Array();
-        for (var e in saverules){
+        let saval = [];
+        for (const e in saverules){
             saval.push(e);
         }
         document.form1.edit_template.value = 1;
         document.form1.rules.value = saval.join('|');
 
-        var popup = new Array();
+        const popup = [];
         $.each($(".popicon"), function() {
             if($(this).attr('src') == 'assets/images/legacy/outliner/minusonly.gif'){
                 popup.push($(this).attr('tabid'));
@@ -85,8 +85,20 @@
         el.removeClass("lmb-refresh");
         el.addClass("fa-spin fa-spinner");
 
+        var filter_count = $("#filter_count").prop('checked');
+        var filter_checksum = $("#filter_checksum").prop('checked');
+        var filter_from = $("#filter_from").val();
+        var filter_to = $("#filter_to").val();
+
+        if(!filter_count && !filter_checksum){
+            el.addClass("lmb-refresh");
+            el.removeClass("fa-spin fa-spinner");
+            alert('no filter selected!');
+            return;
+        }
+
         postfunc = function(result){lmb_validatePost(result,el,syncid,recursiv);};
-        ajaxGet(null,'main_dyns_admin.php','syncValidate&syncid='+syncid,null,'postfunc',null,null,null,1);
+        ajaxGet(null,'main_dyns_admin.php','syncValidate&phase=1&syncid='+syncid+'&filter_count='+filter_count+'&filter_checksum='+filter_checksum+'&filter_from='+filter_from+'&filter_to='+filter_to,null,'postfunc',null,null,null,1);
     }
 
     var c_danger = 1000;
@@ -125,30 +137,49 @@
 
         var detailElement = $('.validate-detail').filter('div[data-id='+syncid+']');
         var text = '<div class="row row-cols-4">';
-        for (var i in result['diff']) {
+        for (var i in result['spelling']) {
             if(i == 'abs_sumdiff'){continue;}
-            var c = result['diff'][i];
+            var c = null;
+            var s = null;
 
-            if(c == 'no valid data' || c > c_danger) {
-                var color = 'danger';
-            }else if(c == 0){
-                var color = 'success';
-            }else if(c > c_warning){
-                var color = 'warning';
-            }else{
-                var color = 'info';
+            if(result['diff']) {
+                var c = result['diff'][i];
+                if (c == 'no valid data' || c > c_danger) {
+                    var color = 'danger';
+                } else if (c == 0) {
+                    var color = 'success';
+                } else if (c > c_warning) {
+                    var color = 'warning';
+                } else {
+                    var color = 'info';
+                }
             }
 
-            text += '<div class="col cursor-pointer" title="'+i+'" data-bs-toggle="modal" data-bs-target="#SynValidatePhase2Modal" onclick="lmb_validatePhase2('+syncid+',\''+i+'\')"><i class="fa fa-circle text-'+color+'" aria-hidden="true"></i> ' + result['spelling'][i] + ' </div>';
-            text += '<div class="col">' + result['diff'][i] + ' ';
-            text += '(<span class="cursor-pointer" id="validateDiff_1_'+syncid+'_'+i+'" onclick="lmb_validateRebuild('+syncid+',\''+i+'\',1)" title="sync to master">' + result['slave'][i] + '<i class="lmb-icon lmb-arrow-right" border="0"></i></span> / ';
-            text += '<span class="cursor-pointer" id="validateDiff_2_'+syncid+'_'+i+'" onclick="lmb_validateRebuild('+syncid+',\''+i+'\',2)" title="sync to slave">' + result['master'][i] + ' <i class="lmb-icon lmb-arrow-right" border="0"></i></span>)';
+            if(result['checksum']) {
+                var s = result['checksum'][i];
+            }
+
+            text += '<div class="col" title="'+i+'"><i class="fa fa-circle text-'+color+'" aria-hidden="true"></i> ' + result['spelling'][i] + ' </div>';
+            text += '<div class="col">';
+            if(c) {
+                text += '<span class="rounded-pill badge bg-primary text-wrap w-25 cursor-pointer" data-bs-html="true" data-bs-toggle="popover" data-bs-trigger="hover" title="slave:' + result['slave'][i] + ' / master:' + result['master'][i] + '"><div data-bs-toggle="modal" data-bs-target="#SynValidatePhase2Modal" onclick="lmb_validatePhase2('+syncid+',\''+i+'\')">Σ ' + result['diff'][i] + '</div></span>&nbsp;';
+            }
+            if(s) {
+                text += '<span class="rounded-pill badge bg-secondary text-wrap w-25 cursor-pointer" data-bs-html="true" data-bs-toggle="popover" data-bs-trigger="hover" title="Checksum is different!"><div data-bs-toggle="modal" data-bs-target="#SynValidatePhase4Modal" onclick="lmb_validatePhase4('+syncid+',\''+i+'\')"><i class="fa-solid fa-not-equal"></i></div></span>';
+            }
+            //text += '(<span class="cursor-pointer" id="validateDiff_1_'+syncid+'_'+i+'" onclick="lmb_validateRebuild('+syncid+',\''+i+'\',1)" title="sync to master">' + result['slave'][i] + '<i class="lmb-icon lmb-arrow-right" border="0"></i></span> / ';
+            //text += '<span class="cursor-pointer" id="validateDiff_2_'+syncid+'_'+i+'" onclick="lmb_validateRebuild('+syncid+',\''+i+'\',2)" title="sync to slave">' + result['master'][i] + ' <i class="lmb-icon lmb-arrow-right" border="0"></i></span>)';
             text += '</div>';
 
             i++;
         }
+
         text += '</div>';
         detailElement.html(text);
+
+        // tooltips
+        const popoverTriggerList = document.querySelectorAll('[data-bs-toggle="popover"]')
+        const popoverList = [...popoverTriggerList].map(popoverTriggerEl => new bootstrap.Popover(popoverTriggerEl))
     }
 
     function lmb_validatePhase2(syncid,table) {
@@ -165,8 +196,6 @@
 
     function lmb_validatePhase2Detail(result,syncid,table) {
 
-
-
         if(table.substring(0,5) == 'VERK_') {
             $('.SynValidatePhase2ModalTitleRow').html('<?=$lang[1460]?>:');
             var noticecolor = 'alert-success';
@@ -182,31 +211,98 @@
 
         var masterdiff = new Array;
         for (var id in result['master']){
-            masterdiff.push(id+'(<span title="LMB_SYNC_ID" class="'+noticecolor+'">'+result['master'][id]+'</span>)');
+            lmb_sync_id = '';
+            if(!isNaN(result['master'][id])){
+                lmb_sync_id = '(<span title="LMB_SYNC_ID" class="'+noticecolor+'">'+result['master'][id]+'</span>)';
+            }
+            masterdiff.push(id+lmb_sync_id);
         }
 
-        $('#detailMasterPhase2').html(clientdiff.join(", "));
-        $('#detailClientPhase2').html(masterIDdiff.join(", "));
-        if(masterIDdiff.length > 0){$('#detailClientPhase2').append('<br>');}
-        $('#detailClientPhase2').append(masterdiff.join(", "));
+        //$('#detailMasterPhase2').html(clientdiff.join(", "));
+        $('#detailMasterPhase2').html('<span class="badge bg-primary rounded-pill">'+clientdiff.join("</span><span class='badge bg-primary rounded-pill'>")+'</span>');
+        //$('#detailClientPhase2').html(masterIDdiff.join(", "));
+        $('#detailClientPhase2').html('<span class="badge bg-primary rounded-pill">'+masterIDdiff.join("</span><span class='badge bg-primary rounded-pill'>")+'</span>');
+        //if(masterIDdiff.length > 0){$('#detailClientPhase2').append('<br>');}
+        //$('#detailClientPhase2').append(masterdiff.join(", "));
+        $('#detailClientPhase2').append('<span class="badge bg-secondary rounded-pill">'+masterdiff.join("</span><span class='badge bg-secondary rounded-pill'>")+'</span>');
 
         $('.lmbWaitSymbol').hide();
     }
 
-
     function lmb_validateRebuildPhase2(type){
         var syncid = $('#SynValidatePhase2Modal').attr('data-syncid');
         var table = $('#SynValidatePhase2Modal').attr('data-table');
-        lmb_validateRebuild(syncid,table,type);
+        postfunc = function(result){lmb_validateRebuildPhase2Post(result,syncid,table,type);};
+        ajaxGet(null,'main_dyns_admin.php','syncValidate&phase=2&rebuild=1&type='+type+'&syncid='+syncid+'&table='+table,null,'postfunc',null,null,null,1);
     }
 
-    function lmb_validateRebuild(syncid,table,type) {
-        postfunc = function(result){lmb_validateRebuildDetail(result,syncid,table,type);};
-        ajaxGet(null,'main_dyns_admin.php','syncValidate&rebuild=1&type='+type+'&syncid='+syncid+'&table='+table,null,'postfunc',null,null,null,1);
+    function lmb_validateRebuildPhase2Post(result,syncid,table,type) {
+        lmbShowWarningMsg('added to sync process!');
     }
 
-    function lmb_validateRebuildDetail(result,syncid,table,type) {
-        $('#validateDiff_'+type+'_'+syncid+'_'+table).css({'color':'orange'});
+    function lmb_validateRebuildPhase4(type,dataID){
+        var syncid = $('#SynValidatePhase2Modal').attr('data-syncid');
+        var table = $('#SynValidatePhase2Modal').attr('data-table');
+        postfunc = function(result){lmb_validateRebuildPhase2Post(result,syncid,table,type);};
+        ajaxGet(null,'main_dyns_admin.php','syncValidate&phase=4&rebuild=1&type='+type+'&syncid='+syncid+'&table='+table+'dataID='+dataID,null,'postfunc',null,null,null,1);
+    }
+
+    function lmb_validateRebuildPhase4Post(result,syncid,table,type) {
+        lmbShowWarningMsg('added to sync process!');
+    }
+
+    function lmb_validatePhase4(syncid,table) {
+        $('.lmbWaitSymbol').show();
+        $('#SynValidatePhase4Modal').attr('data-syncid', syncid);
+        $('#SynValidatePhase4Modal').attr('data-table', table);
+        $('#SynValidatePhase4ModalTitle').html(' ('+table+')');
+        $('#detailPhase4').html('');
+
+        postfunc = function(result){lmb_validatePhase4Detail(result,syncid,table);};
+        ajaxGet(null,'main_dyns_admin.php','syncValidate&phase=4&syncid='+syncid+'&table='+table,null,'postfunc',null,null,null,1);
+    }
+
+    function lmb_validatePhase4Detail(result,syncid,table) {
+
+        result = JSON.parse(result);
+
+        $('#detailPhase4').append('<ul class="list-group w-100">');
+        for (var i in result['descriptor']) {
+            $('#detailPhase4').append('<li class="list-group-item d-flex justify-content-between align-items-center">'+result['date'][i]+' - '+result['descriptor'][i]+'<span data-bs-toggle="modal" data-bs-target="#SynValidatePhase5Modal" onclick="lmb_validatePhase5('+syncid+',\''+table+'\','+i+','+result['masterID'][i]+')" title="compare data" class="badge bg-primary rounded-pill cursor-pointer">'+i+'</span></li>');
+        }
+
+        $('#detailPhase4').append('</ul">');
+
+        $('.lmbWaitSymbol').hide();
+    }
+
+    function lmb_validatePhase5(syncid,table,clientID,masterID) {
+        postfunc = function(result){lmb_validatePhase5Detail(result,syncid,table);};
+        ajaxGet(null,'main_dyns_admin.php','syncValidate&phase=5&syncid='+syncid+'&table='+table+'&clientID='+clientID+'&masterID='+masterID,null,'postfunc',null,null,null,1);
+    }
+
+    function lmb_validatePhase5Detail(result,syncid,table) {
+        $('#detailPhase5').html(result);
+        $('.lmbWaitSymbol').hide();
+    }
+
+
+    /**
+     *
+     * @param element
+     * @param {number} tableId
+     * @param {number} column
+     */
+    function toggleAllTemplateChecks(tableId, column) {
+        const $toggleCheck = $('[id="checkToggle[' + tableId + '][' + column + ']"]');
+        const $checks = $('input[name^="templ_conf[' + tableId + ']"][name$="[' + column + ']"]');
+        // $checks.prop('checked', $toggleCheck.is(':checked'));
+
+        if($toggleCheck.is(':not(:checked)')) {
+            $checks.filter(':checked').click();
+        } else {
+            $checks.filter(':not(:checked)').click();
+        }
     }
 
 </script>
@@ -222,13 +318,67 @@
       <div class="modal-body" id="detailElementPhase2">
           <div class="row row-cols-2">
               <div class="col h5"><span class="SynValidatePhase2ModalTitleRow"><?=$lang[722]?></span> <?=$lang[3139]?> <u>Master</u>
-                  <span class="cursor-pointer" onclick="lmb_validateRebuildPhase2(1)" title="sync to master"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
+                  <span class="cursor-pointer" onclick="lmb_validateRebuildPhase2(1)" title="<?=$lang[3157]?> master"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
               </div>
               <div class="col h5"><span class="SynValidatePhase2ModalTitleRow"><?=$lang[722]?></span> <?=$lang[3139]?> <u>Client</u>
-                  <span class="cursor-pointer" onclick="lmb_validateRebuildPhase2(2)" title="sync to slave"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
+                  <span class="cursor-pointer" onclick="lmb_validateRebuildPhase2(2)" title="<?=$lang[3157]?> slave"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
               </div>
               <div class="col" id="detailMasterPhase2"></div><div id="detailClientPhase2" class="col"></div>
           </div>
+      </div>
+      <div class="modal-footer" style="justify-content: left">
+          <ul class="list-group list-group-flush">
+          <li class="list-group-item"><span class="badge bg-primary rounded-pill">&nbsp;&nbsp;</span> missing dataset on client or master</li>
+          <li class="list-group-item"><span class="badge bg-secondary rounded-pill">&nbsp;&nbsp;</span> missing relation on client OR missing dataset on client with existing sync_ID () on master</li>
+          </ul>
+        <i class='lmbWaitSymbol'></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="SynValidatePhase4Modal" tabindex="-1" data-table="" data-syncid="">
+  <div class="modal-dialog  modal-lg" >
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><?=$lang[3071]?> <span id="SynValidatePhase4ModalTitle"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="detailElementPhase4">
+          <div class="row row-cols-2">
+              <div class="col h5"><?=$lang[3157]?> <u>Master</u>
+                  <span class="cursor-pointer" onclick="lmb_validateRebuildPhase2(1)" title="<?=$lang[3157]?> master"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
+              </div>
+              <div class="col h5"><?=$lang[3157]?> <u>Client</u>
+                  <span class="cursor-pointer" onclick="lmb_validateRebuildPhase2(2)" title="<?=$lang[3157]?> slave"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
+              </div>
+          </div>
+          <div class="col" id="detailPhase4"></div>
+      </div>
+      <div class="modal-footer" style="justify-content: center">
+        <i class='lmbWaitSymbol'></i>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="SynValidatePhase5Modal" tabindex="-1" data-table="" data-syncid="">
+  <div class="modal-dialog modal-lg" >
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><?=$lang[3071]?> <span id="SynValidatePhase5ModalTitle"></span></h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body" id="detailElementPhase5">
+          <div class="row row-cols-2">
+              <div class="col h5"><?=$lang[3157]?> <u>Master</u>
+                  <span class="cursor-pointer" onclick="lmb_validateRebuildPhase2(1)" title="<?=$lang[3157]?> master"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
+              </div>
+              <div class="col h5"><?=$lang[3157]?> <u>Client</u>
+                  <span class="cursor-pointer" onclick="lmb_validateRebuildPhase2(2)" title="<?=$lang[3157]?> slave"><i class="lmb-icon lmb-arrow-right" border="0"></i></span>
+              </div>
+          </div>
+          <div class="col" id="detailPhase5"></div>
       </div>
       <div class="modal-footer" style="justify-content: center">
         <i class='lmbWaitSymbol'></i>
@@ -329,10 +479,10 @@
 
                         <tr>
                             <td></td>
-                            <td><INPUT class="form-control form-control-sm" TYPE="TEXT" NAME="new_slavename"></td>
-                            <td><INPUT class="form-control form-control-sm" TYPE="TEXT" NAME="new_slaveurl"></td>
-                            <td><INPUT class="form-control form-control-sm" TYPE="TEXT" NAME="new_slaveuser"></td>
-                            <td><INPUT class="form-control form-control-sm" TYPE="password" NAME="new_slavepass"></td>
+                            <td><input class="form-control form-control-sm" TYPE="TEXT" NAME="new_slavename"></td>
+                            <td><input class="form-control form-control-sm" TYPE="TEXT" NAME="new_slaveurl"></td>
+                            <td><input class="form-control form-control-sm" TYPE="TEXT" NAME="new_slaveuser"></td>
+                            <td><input class="form-control form-control-sm" TYPE="password" NAME="new_slavepass"></td>
                             <td><button class="btn btn-sm btn-primary" type="submit" name="add_slave" value="1"><?= $lang[540] ?></button></td>
                         </tr>
                         </tfoot>
@@ -374,9 +524,9 @@
                                     if($is_popup){if(in_array($tabid,$is_popup)){$display = "";$icon = 'minusonly';}else{$display = "none";$icon = 'plusonly';}}else{$display = "none";}
 
                                     ?>
-                                    <TR class="table-sub-section">
-                                        <TD><IMG src="assets/images/legacy/outliner/<?=$icon?>.gif" tabid="<?=$key?>" NAME="popicon_<?=$key?>" CLASS="popicon" BORDER="0" STYLE="cursor:pointer" OnClick="pops('<?=$key?>')"></TD>
-                                        <TD><?=$gtab['table'][$key]?> (<?=$gtab['desc'][$key]?>)
+                                    <tr class="table-sub-section">
+                                        <td><img src="assets/images/legacy/outliner/<?=$icon?>.gif" tabid="<?=$key?>" NAME="popicon_<?=$key?>" class="popicon" BORDER="0" STYLE="cursor:pointer" onclick="pops('<?=$key?>')"></td>
+                                        <td><?=$gtab['table'][$key]?> (<?=$gtab['desc'][$key]?>)
 
                                             <?php
                                             if($gtab['table'][$key] == 'LDMS_FILES') {
@@ -384,11 +534,40 @@
                                             }
                                             ?>
 
-                                            &nbsp;</TD>
-                                        <TD><?=$lang[1078]?>:&nbsp;<input type="text" class="form-control form-control-sm d-inline-block w-75" NAME="templ_params[<?=$tabid?>]" onchange="save_rules('<?=$tabid?>','',3)" VALUE="<?=$result_params['params'][$tabid]?>"></TD>
-                                        <TD class="text-center">master</TD>
-                                        <TD class="text-center">client</TD>
-                                    </TR>
+                                            &nbsp;</td>
+                                        <td><?=$lang[1078]?>:&nbsp;<input type="text" class="form-control form-control-sm d-inline-block w-75" NAME="templ_params[<?=$tabid?>]" onchange="save_rules('<?=$tabid?>','',3)" VALUE="<?=$result_params['params'][$tabid]?>"></td>
+                                        <?php
+                                        # check if a checked option exists, otherwise dont
+                                        $checkedMaster = false;
+                                        $checkedSlave = false;
+                                        foreach($gfield[$tabid]["sort"] as $fkey => $fid) {
+                                            if ($result_conf[$template][$tabid][$fkey]['master']) {
+                                                $checkedMaster = true;
+                                            }
+                                            if ($result_conf[$template][$tabid][$fkey]['slave']) {
+                                                $checkedSlave = true;
+                                            }
+                                            if ($checkedMaster && $checkedSlave) {
+                                                break;
+                                            }
+                                        }
+                                        $checkedMasterStr = $checkedMaster ? 'checked' : '';
+                                        $checkedSlaveStr = $checkedSlave ? 'checked' : '';
+                                        ?>
+
+                                        <td>
+                                            <div class="d-flex flex-column">
+                                            <label for="checkToggle[<?=$tabid?>][1]" class="text-center">master</label>
+                                                <input id="checkToggle[<?=$tabid?>][1]" type="checkbox" <?=$checkedMasterStr?> onclick="toggleAllTemplateChecks(<?=$tabid?>, 1)">
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex flex-column">
+                                            <label for="checkToggle[<?=$tabid?>][2]" class="text-center">client</label>
+                                                <input id="checkToggle[<?=$tabid?>][2]" type="checkbox" <?=$checkedSlaveStr?> onclick="toggleAllTemplateChecks(<?=$tabid?>, 2)">
+                                            </div>
+                                        </td>
+                                    </tr>
 
                                     <tbody id="table_<?=$tabid?>" class="border-0" style="display:<?=$display?>">
                                     <?php
@@ -484,9 +663,45 @@
                             <table class="table table-striped mb-0">
                                 <thead>
                                 <tr>
+                                    <th scope="col" colspan=3>
+
+                                    <div class="mb-2 row">
+                                        <div class="col-auto d-flex align-items-center">
+                                            <label class="">Filter nach: Anzahl</label>
+                                            <div class="p-2 px-3">
+                                                <INPUT TYPE="checkbox" id="filter_count">
+                                            </div>
+                                        </div>
+
+                                        <div class="col-auto d-flex align-items-center">
+                                            <label class="">Inhalt</label>
+                                            <div class="p-2 px-3">
+                                                <INPUT TYPE="checkbox" id="filter_checksum">
+                                            </div>
+                                        </div>
+
+                                        <div class="col-auto d-flex align-items-center">
+                                            <label class="">von</label>
+                                            <div class="p-2 px-3">
+                                                <INPUT TYPE="date" id="filter_from">
+                                            </div>
+                                        </div>
+
+                                        <div class="col-auto d-flex align-items-center">
+                                            <label class="">bis</label>
+                                            <div class="p-2 px-3">
+                                                <INPUT TYPE="date" id="filter_to">
+                                            </div>
+                                        </div>
+
+                                    </div>
+
+                                    </th>
+                                <tr>
                                     <th scope="col">Name</th>
                                     <th scope="col">Status</th>
-                                    <th scope="col"><i class="lmb-icon lmb-refresh cursor-pointer" onclick="lmb_validate_all()" ></i></th>
+                                    <th>refresh</th>
+                                    <?php //<th scope="col"><i class="lmb-icon lmb-refresh cursor-pointer" onclick="lmb_validate_all()" ></i></th> ?>
                                 </tr>
                                 </thead>
 

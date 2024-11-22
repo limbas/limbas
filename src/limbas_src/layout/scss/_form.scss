@@ -13,7 +13,7 @@ table select.form-control {
   width: fit-content;
 }
 
-table select.form-select {
+table select.form-select:not(.fgtabchange) {
   width: auto !important;
   min-width: 100%;
 }

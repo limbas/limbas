@@ -1,6 +1,7 @@
 <?php
 
 use Limbas\extra\mail\LmbMail;
+use Limbas\lib\auth\Auth;
 
 /**
  * @copyright Limbas GmbH <https://limbas.com>
@@ -54,7 +55,6 @@ function create_user($userdata){
 	global $db;
 	global $session;
 	global $umgvar;
-	global $passwort;
 	global $lang;
 
 	$username = $userdata["username"];
@@ -66,26 +66,30 @@ function create_user($userdata){
 	$group_id = $userdata["group_id"];
 	$subgroup = $userdata["subgroup"];
 	$layout = $userdata["layout"];
-	$results = $userdata["results"];
 	$uloadsize = $userdata["uloadsize"];
-	$colorschema = $userdata["usercolor"];
+	$usercolor = $userdata["usercolor"];
 	$language = $userdata["language"];
 	$dlanguage = $userdata["dlanguage"];
 	$dateformat = $userdata["dateformat"];
 	$timezone = $userdata["timezone"];
 	$setlocale = $userdata["setlocale"];
 	$loglevel = $userdata["loglevel"];
-	
+    $tel = $userdata["tel"];
+    $fax = $userdata["fax"];
+    $maxresult = $userdata["maxresult"];
+    $position = $userdata["position"];
+    $data_display = $userdata["data_display"];
+    $color_schema = $userdata["color_schema"];
+
 	if(!$layout){$layout = $umgvar['default_layout'];}
-	if(!$results){$results = $umgvar['default_results'];}
+	if(!$maxresult){$maxresult = $umgvar['default_results'];}
 	if(!$uloadsize){$uloadsize = ($umgvar['default_uloadsize']*1024*1024);}
-	if(!$colorschema){$colorschema = $umgvar['default_usercolor'];}
+	if(!$color_schema){$color_schema = $umgvar['default_usercolor'];}
 	if(!$language){$language = $umgvar['default_language'];}
 	if(!$dateformat){$dateformat = $umgvar['default_dateformat'];}
 	if(!$timezone){$timezone = $umgvar['default_timezone'];}
 	if(!$setlocale){$setlocale = $umgvar['default_setlocale'];}
 	if(!$loglevel){$loglevel = $umgvar['default_loglevel'];}
-
 	if(!$group_id OR !$username OR !$passwort){lmb_alert($lang[605]);return false;}
 
 	/* --- Tabellen Array -------------------------------------- */
@@ -128,8 +132,36 @@ function create_user($userdata){
 		/* --- Next ID ---------------------------------------- */
 		$NEXTID = next_db_id("LMB_USERDB","USER_ID");
 		$sqlquery = "INSERT INTO LMB_USERDB (ID,USER_ID,USERNAME,PASSWORT,GROUP_ID,SUB_GROUP,EMAIL,VORNAME,NAME,BESCHREIBUNG,DATA_HIDE,DATA_DISPLAY,IPRANGE,DEL,
-		 LAYOUT,MAXRESULT,UPLOADSIZE,FARBSCHEMA,LANGUAGE,DLANGUAGE,DATEFORMAT,TIME_ZONE,SETLOCAL,LOGGING) VALUES($NEXTID,$NEXTID,'$username','$hashedPass',$group_id,'$subgroup','$email','$vorname','$name','$beschreibung',1,2,'',".LMB_DBDEF_FALSE.",
-		'".parse_db_string($layout)."',".parse_db_int($results).",".parse_db_int($uloadsize).",'".parse_db_string($colorschema)."',".parse_db_int($language).",".parse_db_int($dlanguage).",".parse_db_int($dateformat).",'".parse_db_string($timezone)."','".parse_db_string($setlocale)."',".parse_db_int($loglevel).")";
+		 LAYOUT,MAXRESULT,UPLOADSIZE,FARBSCHEMA,LANGUAGE,DLANGUAGE,DATEFORMAT,TIME_ZONE,SETLOCAL,LOGGING,TEL,FAX,POSITION,USERCOLOR) VALUES(
+		 $NEXTID,
+		 $NEXTID,
+		 '$username',
+		 '$hashedPass',
+		 $group_id,
+		 '$subgroup',
+		 '$email',
+		 '$vorname',
+		 '$name',
+		 '$beschreibung',
+		 1,
+		 2,
+		 '',
+		 ".LMB_DBDEF_FALSE.",
+		'".parse_db_string($layout)."',
+		".parse_db_int($maxresult).",
+		".parse_db_int($uloadsize).",
+		'".parse_db_string($colorschema)."',
+		".parse_db_int($language).",
+		".parse_db_int($dlanguage).",
+		".parse_db_int($dateformat).",
+		'".parse_db_string($timezone)."',
+		'".parse_db_string($setlocale)."',
+		".parse_db_int($loglevel).",
+		'".parse_db_string($tel)."',
+		'".parse_db_string($fax)."',
+		".parse_db_int($position).",
+		'".parse_db_string($usercolor)."'
+		)";
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 		$ID = $NEXTID;
@@ -138,8 +170,6 @@ function create_user($userdata){
 		if(!create_user_folder($ID)){$commit = 1;}
 		# --- Standard Ordner in DMS anlegen ---------------
 		if(!create_user_dir($ID,$group_id)){$commit = 1;}
-		# --- htaccess ---------
-        lmb_htaccess($ID,$username,$passwort);
 	}
 
 	if(!$commit){return $ID;}else{$GLOBALS["commit"] = 1;return false;}
@@ -173,7 +203,6 @@ function user_change($ID,$userdata,$file=0,$user_add=0){
 		
 		$sqlquery .= "USERNAME = '".parse_db_string($userdata["username"],50)."',";
 		$sqlquery .= "PASSWORT = '".Auth::lmbPasswordHash($userdata["passwort"])."',";
-		lmb_htaccess($ID,$userdata["username"],$userdata["passwort"]);
 		if($umgvar["clear_password"]){
 			$sqlquery .= "CLEARPASS = '".$userdata["passwort"]."',";
 		}
@@ -198,9 +227,9 @@ function user_change($ID,$userdata,$file=0,$user_add=0){
 	if($userdata["layout"]){$sqlquery .= "LAYOUT = '".parse_db_string($userdata["layout"],20)."',";}
 	$sqlquery .= "LOCK_TXT = '".parse_db_string($userdata["locktxt"],500)."',";
 	if($userdata["change_pass"]){$sqlquery .= "CHANGE_PASS = ".parse_db_bool($userdata["change_pass"]).",";}
-	if($userdata["data_display"]){$sqlquery .= "DATA_DISPLAY = ".$userdata["data_display"].",";}
-	if($userdata["farbe_schema"]){$sqlquery .= "FARBSCHEMA = ".$userdata["farbe_schema"].",";}
-	if($userdata["dateformat"]){$sqlquery .= "DATEFORMAT = ".$userdata["dateformat"].",";}
+	if($userdata["data_display"]){$sqlquery .= "DATA_DISPLAY = ".parse_db_int($userdata["data_display"]).",";}
+	if($userdata["color_schema"]){$sqlquery .= "FARBSCHEMA = ".parse_db_int($userdata["color_schema"]).",";}
+	if($userdata["dateformat"]){$sqlquery .= "DATEFORMAT = ".parse_db_int($userdata["dateformat"]).",";}
 	if($userdata["timezone"]){$sqlquery .= "TIME_ZONE = '".parse_db_string($userdata["timezone"],20)."',";}
 	if($userdata["setlocale"]){$sqlquery .= "SETLOCAL = '".parse_db_string($userdata["setlocale"],15)."',";}
 	$sqlquery .= "LOGGING = ".parse_db_int($userdata["logging"]).",";
@@ -331,20 +360,6 @@ function mailUserInfo($result_user,$send_usermail,$userdata=null){
 			This email informs you about news.<br><br>
 			";
 		}
-		
-		if($userdata['passwort']){
-			$passmessage = $userdata['passwort'];
-		}
-
-		if($umgvar["password_as_image"] == 'image' AND $passmessage){
-			$passimage = paintTextToImage($passmessage,10);
-			$passmessage = "<img alt=\"\" src=\"cid:1259\">";
-		}elseif($umgvar["password_as_image"] == 'plain' AND $passmessage){
-
-		}else{
-			$plainpass = 1;
-			$passmessage = '';
-		}
 
 		$settingsmessage = "name: ".$result_user["vorname"]." ".$result_user["name"]."<br>";
 		if($result_user["erstdatum"]){$settingsmessage .= "created: ".$result_user["erstdatum"]."<br>";}
@@ -373,11 +388,6 @@ function mailUserInfo($result_user,$send_usermail,$userdata=null){
 		".nl2br($result_user["locktxt"])."<br>
 		<br><u>Your Login</u><br>
 		username: ".$result_user["username"]."<br>";
-		if($plainpass){
-			$subject .= "password: ".$passmessage."<br><br>";
-		}elseif($passimage){
-            $subject .= "Password: <img alt=\"PW\" src=\"cid:attach-1\"><br><br>";
-        }
 		$subject .= "
 		Your baselink to limbas:<A HREF=\"".$umgvar["url"]."\">".$umgvar["url"]."</A><br>
 		".nl2br($result_user["beschreibung"])."<br><br>
@@ -392,7 +402,7 @@ function mailUserInfo($result_user,$send_usermail,$userdata=null){
 
 		if($send_usermail){
             $lmbMail = new LmbMail();
-            $lmbMail->sendFromDefault($result_user["email"], "Limbas User-Information", $subject, [$passimage]);
+            $lmbMail->sendFromDefault($result_user["email"], "Limbas User-Information", $subject);
 		}
 	}
 
@@ -402,7 +412,6 @@ function mailUserInfo($result_user,$send_usermail,$userdata=null){
 
 		if($user_add){
 			$welcomemessage = "New Limbas Account by ".$session["vorname"]." ".$session["name"].".<br>";
-			$passmessage = $passwort;
 		}else{
 			$welcomemessage = "Limbas Account changed by ".$session["vorname"]." ".$session["name"]."!<br>
 			";

@@ -161,7 +161,7 @@ class importSync
                 foreach ($odbc_table['table_name'] as $tkey => $table) {
                     # stripos for case insensitivity
                     # dont include systemtables, system_files, ldms_*
-                    if ((lmb_stripos($table, 'lmb_') === false && lmb_stripos($table, 'ldms_') === false) OR lmb_strtoupper($table) == 'LMB_CUSTVAR_DEPEND') {
+                    if ((lmb_stripos($table, 'lmb_') === false && lmb_stripos($table, 'ldms_') === false) OR lmb_strtoupper($table) == 'LMB_CUSTVAR_DEPEND' OR lmb_strtoupper($table) == 'LDMS_FIELS') {
                         $expTablesConf[] = $table;
                     }
                 }
@@ -235,6 +235,7 @@ class importSync
             if (in_array('snapshots', $types)) {
                 $exptables[] = dbf_4('lmb_snap');
                 $exptables[] = dbf_4('lmb_snap_shared');
+                $exptables[] = dbf_4('lmb_snap_group');
             }
 
             // reminder
@@ -1016,20 +1017,24 @@ class importSync
                 // use extension to define import strategie
                 $import_overwrite = 'over'; // over, add, add_with_ID
                 if($extension['import_overwrite'][$table]){
-                    $import_overwrite = $ext['import_overwrite'][$table];
+                    $import_overwrite = $extension['import_overwrite'][$table];
                 }
 
-                if(deleteExistingTab($table)) {
-                    if(import(false, $import_overwrite, null, null, null, null, 'export')){
-                        LimbasLogger::log("import table $table", LimbasLogger::LL_INFO);
-                    }else{
-                        LimbasLogger::log("import table $table - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                // delete table
+                if($import_overwrite == 'over') {
+                    if (!deleteExistingTab($table)) {
+                        LimbasLogger::log("delete table $table - Message:" . lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
                         return false;
                     }
+                }
+
+               if(import(false, $import_overwrite, null, null, null, null, 'export')){
+                    LimbasLogger::log("import table $table", LimbasLogger::LL_INFO);
                 }else{
-                    LimbasLogger::log("delete table $table - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                    LimbasLogger::log("import table $table - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
                     return false;
                 }
+
             }
 
             // overwrite globalSyncTables tables
@@ -1042,19 +1047,21 @@ class importSync
 
                 // use extension to define import strategie
                 $import_overwrite = 'over'; // over, add, add_with_ID
-                if($ext['import_overwrite'][$table]){
-                    $import_overwrite = $ext['import_overwrite'][$table];
+                if($extension['import_overwrite'][$table]){
+                    $import_overwrite = $extension['import_overwrite'][$table];
                 }
 
-                if(deleteExistingTab($table)) {
-                    if(import(false, $import_overwrite, null, null, null, null, 'export')){
-                        LimbasLogger::log("import table $table", LimbasLogger::LL_INFO);
-                    }else{
-                        LimbasLogger::log("import table $table - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                if($import_overwrite == 'over') {
+                    if (!deleteExistingTab($table)) {
+                        LimbasLogger::log("delete table $table - Message:" . lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
                         return false;
                     }
+                }
+
+                if(import(false, $import_overwrite, null, null, null, null, 'export')){
+                    LimbasLogger::log("import table $table", LimbasLogger::LL_INFO);
                 }else{
-                    LimbasLogger::log("delete table $table - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
+                    LimbasLogger::log("import table $table - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
                     return false;
                 }
 
@@ -1297,7 +1304,8 @@ class importSync
             # call extension function
             if ($confirm_syncimport AND $callExtensionFunctionName AND is_callable($callExtensionFunctionName)) {
                 # call function by passed name
-                if ($callExtensionFunctionName('after') === false) {
+                $extension = array();
+                if ($callExtensionFunctionName('after',$extension) === false) {
                     LimbasLogger::log("Function '$callExtensionFunctionName' returned failure!", LimbasLogger::LL_ERROR);
                     return false;
                 } else {
@@ -1862,9 +1870,8 @@ function lmb_renderDiffToBootstrap($diff){
 
     ?>
 
-
-    <link rel="stylesheet" type="text/css" href="../../../<?=$session['css']?>?v=<?=$umgvar["version"]?>">
-    <script src="../../../assets/vendor/bootstrap/bootstrap.bundle.min.js?v=<?=$umgvar['version']?>"></script>
+    <link rel="stylesheet" type="text/css" href="<?=$session['css']?>?v=<?=$umgvar["version"]?>">
+    <script src="assets/vendor/bootstrap/bootstrap.bundle.min.js?v=<?=$umgvar['version']?>"></script>
     
     <?php
 

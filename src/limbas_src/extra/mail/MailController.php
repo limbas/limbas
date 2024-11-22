@@ -9,6 +9,7 @@
 
 namespace Limbas\extra\mail;
 
+use Limbas\extra\mail\attachments\DmsMailAttachment;
 use Limbas\extra\mail\attachments\FileMailAttachment;
 use Limbas\lib\LimbasController;
 
@@ -176,6 +177,22 @@ class MailController extends LimbasController
                 if( !empty( $tmpName ) && is_uploaded_file( $tmpName ) && file_exists( $tmpName ) )
                 {
                     $attachments[] = new FileMailAttachment( $tmpName, $fileName);
+                }
+            }
+        }
+        if( array_key_exists('attachments', $request) && is_array($request['attachments']) )
+        {
+            $request['attachments'] = array_unique($request['attachments']);
+            foreach( $request['attachments'] as $attachment ) {
+                if(is_numeric($attachment)) {
+                    $dmsId = intval($attachment);
+                    $allowed = file_download($dmsId);
+                    if($allowed !== false) {
+                        $dmsAttachment = new DmsMailAttachment( intval($attachment) );
+                        if(!empty($dmsAttachment->getName())) {
+                            $attachments[] = $dmsAttachment;
+                        }
+                    }                    
                 }
             }
         }

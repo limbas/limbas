@@ -123,7 +123,7 @@ function ZoomViewField(event,el,key) {
 	zoomKey = key;
 	zoomEl = el;
 
-    limbasDivShow(el,event,'ZoomFieldContainer');
+    limbasDivShow(el,event,'ZoomFieldContainer', "", false, false, true, false);
 
     zoomFieldCodeMirror.setValue(el.value);
     zoomFieldCodeMirror.focus();

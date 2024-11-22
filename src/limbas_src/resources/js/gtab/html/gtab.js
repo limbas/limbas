@@ -136,6 +136,9 @@ function LmExt_RelationFields(el,gtabid,gfieldid,viewmode,edittype,ID,orderfield
         gformid = $('#extRelationFieldsTab_'+gtabid+"_"+gfieldid).attr( "data-gformid" );
     }
 
+    // hide sortmenu
+    $('#limbasDivRowSetting').hide();
+
 	lmbCollReplaceSource = null;
 	if(ExtAction == "showall"){
 		var tel = document.getElementById("extRelationFieldsTab_"+gtabid+"_"+gfieldid);
@@ -171,7 +174,6 @@ function LmExt_RelationFields(el,gtabid,gfieldid,viewmode,edittype,ID,orderfield
             //for (var i in actrows) {
             //    actrows_keyid[i] = $('#'+actrows[i]).attr("data-keyid");
             //}
-
             var relationid = actrows.join(",");
             var relationkeyid = actrows_keyid.join(",");
 
@@ -319,6 +321,34 @@ function LmExt_RelationFieldsPost(result,gtabid,gfieldid,viewmode,textel,ID){
     //    info:     false
     //} );
 
+}
+
+
+var lmbCollReplaceField = '';
+function lmbSetColSetting(el,gtabid,fieldid,res_next,sortid,collreplace,gtabfieldid,gformid,formid){
+
+    if(isNaN(gformid)){gformid = '';}
+    if(isNaN(formid)){formid = '';}
+
+	lmbSetGlobVar('ActiveRow',fieldid);
+	lmbSetGlobVar('ActiveTab',gtabid);
+	lmbSetGlobVar('res_next',res_next); // pagination
+	lmbSetGlobVar('sortid',sortid); // field to sort
+    lmbSetGlobVar('gformid',gformid); // only relations
+    lmbSetGlobVar('formid',formid); // only relations
+
+	// show/hide coll replace menu
+	if(collreplace){
+		lmbCollReplaceField = collreplace;
+		$("#limbasDivRowSetting span[id='pop_menu_287']").parent().prev().css("display","");
+		$("#limbasDivRowSetting span[id='pop_menu_287']").parent().css("display","");
+	}else{
+		lmbCollReplaceField = '';
+		$("#limbasDivRowSetting span[id='pop_menu_287']").parent().prev().css("display","none");
+		$("#limbasDivRowSetting span[id='pop_menu_287']").parent().css("display","none");
+	}
+
+	limbasDivShow(el,'','limbasDivRowSetting');
 }
 
 function lmbAjax_multilang(el,gtabid,gfieldid,ID){
@@ -991,6 +1021,10 @@ function checktyp(data_type,fieldname,fielddesc,field_id,tab_id,obj,id,ajaxpost,
         regexp = regexp.replace(/xx/g,'');
 	}
 
+    if(el && el.getAttribute("data-regex")){
+        regexp = el.getAttribute("data-regex");
+    }
+
 	const reg = new RegExp(regexp);
 	if (obj != ''){
 		if (val && !reg.exec(val)){
@@ -1286,134 +1320,289 @@ function limbasReportSaveTemlpate(evt, gtabid, reportid, resolvedTemplateGroups=
 
 }
 
-
-// Ajax reminder
+/**
+ * Ajax reminder
+ * @deprecated use limbasReminder instead
+ *
+ * @param evt unused
+ * @param el unused
+ * @param add
+ * @param remove
+ * @param changeView
+ * @param change
+ * @param defaults
+ * @param gtabid
+ * @param ID
+ */
 function limbasDivShowReminder(evt,el,add,remove,changeView,change,defaults,gtabid,ID) {
-    activ_menu = 1;
-	if(el){
-		limbasDivShow(el,'limbasDivMenuExtras','lmbAjaxContainer');
+	if(!changeView) {
+		changeView = 0;
 	}
 
-	var use_records = '';
-	var verkn = '';
-	var gfrist = '';
-	var listmode = '';
-	var form_id = '';
+	limbasReminder(changeView);
+}
 
-    if(document.form1.gfrist.value){var gfrist = '&gfrist='+document.form1.gfrist.value;}
-	if(document.form1.action.value == 'gtab_erg'){var listmode = 1;}
-    if(document.form_reminder && document.form_reminder.REMINDER_CATEGORY) {
-        var category = document.form_reminder.REMINDER_CATEGORY.value;
-    }else{
-        var category = 0;
-    }
+/**
+ * Shows the reminder modal, either for a new reminder (if reminderId is 0 / null) or for an existing one
+ * @param reminderId
+ */
+function limbasReminder(reminderId = 0) {
+	const tableId = jsvar['gtabid'];
+	const dataId = jsvar['ID'];
 
-    if(!gtabid || typeof gtabid === 'undefined'){
-        var gtabid = jsvar['gtabid'];
-    }
-
-    if(!ID || typeof ID === 'undefined'){
-        var ID = jsvar['ID'];
-    }
-
-    if(document.form1.form_id.value){
-        form_id = document.form1.form_id.value;
-    }
-
-	// listmode
-        // TODO auch für change/view?
-	if(listmode && (add || remove)){
-        listmode = 1;
-        var count = countofActiveRows();
-        // use selected rows
-        if(count > 0){
-                var actrows = checkActiveRows(gtabid);
-                if(actrows.length > 0){
-                        var use_records = actrows.join(";");
-                }else{alert(jsvar["lng_2083"]);return;}
-        // use filter
-        }else{
-                var use_records = 'all';
-                // if relation
-                if(document.form1.verkn_ID){
-                        var verkn = '&verkn_tabid='+document.form1.verkn_tabid+'&verkn_fieldid='+document.form1.verkn_fieldid+'&verkn_ID='+document.form1.verkn_ID+'&verkn_showonly='+document.form1.verkn_showonly;
-                }
-                // get count from result
-                if(document.getElementById("GtabResCount")){var count = document.getElementById("GtabResCount").innerHTML;}else{var count = 'undefined'}
-        }
-
-        if(count && !confirm(jsvar['lng_2676']+' '+count+'\n'+jsvar['lng_2902'])){
-                activ_menu = 0;
-                limbasDivClose();
-                return;
-        }
+	let listmode = 0;
+	if(document.form1.action.value == 'gtab_erg') {
+		listmode = 1;
 	}
 
-    dynfunc = function(result){limbasDivShowReminderPost(result,gtabid,category);};
-
-    // add reminder
-	if(add){
-		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&add=1'+verkn+'&use_records='+use_records+'&form_id='+form_id,null,'dynfunc','form_reminder');
-	// delete reminder
-    }else if(remove){
-		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&remid='+remove+'&use_records='+use_records,null,'dynfunc','form_reminder');
-	}else if(changeView){
-		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&changeViewId='+changeView,null,'dynfunc');
-    }else if(change){
-		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&changeId='+change,null,'dynfunc','form_reminder');
-    }else {
-		ajaxGet(null,'main_dyns.php','showReminder&gtabid='+gtabid+'&ID='+ID+'&listmode='+listmode+gfrist+'&defaults='+defaults,null,'dynfunc');
+	if (!reminderId) {
+		reminderId = 0;
 	}
 
+	const data = {
+		'tableId': tableId,
+		'dataId': dataId,
+		'reminderId': reminderId,
+		'listmode': listmode,
+		'action': 'show',
+	}
+
+	sendReminderAction(data).then(result => limbasDivShowReminderPost(result, tableId));
 }
 
-// reminder post
-function limbasDivShowReminderPost(result,gtabid,category){
+function sendReminderAction(data) {
+	data['actid'] = 'handleReminder';
 
-	document.getElementById("lmbAjaxContainer").innerHTML = result;
-
-    // refresh multiframe preview
-    if($('#limbasMultiframeItemReload').val()){
-        top.limbasMultiframePreview($('#limbasMultiframeItemReload').val(),'Reminder' ,0, 0 ,gtabid,'category='+category);
-    }
+	return new Promise((resolve, reject) => {
+		$.ajax({
+			url: 'main_dyns.php',
+			type: 'POST',
+			data: data,
+			dataType: 'json',
+			success: function (data) {
+				resolve(data)
+			},
+			error: function (error) {
+				reject(error)
+			}
+		});
+	})
 }
 
-// reminder
-function lmb_reminderAddUserGroup(uid,udesc,gtabid,fieldid,ID,parameter){
-        // display groups in italic
-        if(uid.endsWith('_g')) {
-            udesc = "<i>" + udesc + "</i>";
-        }
+// reminder post / inside the modal
+function limbasDivShowReminderPost(result,tableId){
+	if (!result || result['success'] === false) {
+		return;
+	}
 
-        // append name to list of users/groups
-        if($("#contWvUGList").children("#usergroup_" + uid).length == 0) {
-            $('#contWvUGList').append("<span id=\"usergroup_" + uid + "\" style=\"cursor:pointer;\" onmouseover=\"this.className='markForDelete'\" onmouseout=\"this.className=''\" onclick=\"lmb_reminderRemoveUserGroup('" + uid + "', '" + udesc + "');\">" + udesc + "</span><br>");
+	let footer = result['footer'];
+	const $body = $(result['body']);
 
-            // append uid to hidden input for form submit
-            var hiddenInp = $('#REMINDER_USERGROUP');
-            hiddenInp.val(hiddenInp.val() + ";" + uid);
-        }
-}
+	let dataId = result['dataId'];
 
-function lmb_reminderRemoveUserGroup(uid, udesc) {
-        // remove name from list of users/groups
-        var toRemove = $('#contWvUGList').children('#usergroup_' + uid);
-        toRemove.next().remove();
-        toRemove.remove();
+	const $footer = $(footer);
 
-        // remove uid from hidden input for form submit
-        var hiddenInp = $('#REMINDER_USERGROUP');
-        hiddenInp.val(hiddenInp.val().replace(";" + uid, ""));
+	$selectReminderUnit = $body.find('#select-reminder-unit');
+	$inputReminderDeadlineFromNow = $body.find('#input-reminder-deadline-from-now');
+	$inputReminderDeadline = $body.find('#input-reminder-deadline');
+
+	let updateReminderDeadline = function () {
+		const unit = $selectReminderUnit.val();
+		let fromNow = parseInt($inputReminderDeadlineFromNow.val());
+		if (!fromNow) {
+			fromNow = 0;
+		}
+		const currentDate = new Date();
+
+		switch (unit) {
+			case 'min':
+				currentDate.setMinutes(currentDate.getMinutes() + fromNow);
+				break;
+			case 'hour':
+				currentDate.setHours(currentDate.getHours() + fromNow);
+				break;
+			case 'day':
+				currentDate.setDate(currentDate.getDate() + fromNow);
+				break;
+			case 'week':
+				currentDate.setDate(currentDate.getDate() + fromNow * 7);
+				break;
+			case 'month':
+				currentDate.setMonth(currentDate.getMonth() + fromNow);
+				break;
+			case 'year':
+				currentDate.setFullYear(currentDate.getFullYear() + fromNow);
+				break;
+			default:
+				return;
+		}
+
+		const year = currentDate.getFullYear();
+		const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+		const day = String(currentDate.getDate()).padStart(2, '0');
+		const hours = String(currentDate.getHours()).padStart(2, '0');
+		const minutes = String(currentDate.getMinutes()).padStart(2, '0');
+
+		const formattedDate = `${year}-${month}-${day}T${hours}:${minutes}`;
+		$inputReminderDeadline.val(formattedDate);
+	}
+
+	const updateMultiframe = function(multiframeUpdateId, category) {
+		top.limbasMultiframePreview(multiframeUpdateId,'Reminder' ,0, 0 ,tableId,'category='+category);
+	}
+
+	$body.find('#select-reminder-unit, #input-reminder-deadline-from-now').on('change', updateReminderDeadline);
+
+	const $modal = showFullPageModal('Reminder', $body, 'lg', $footer);
+
+	$modal.find('#btn-reminder-createmodal').on('click', function() {
+		limbasReminder();
+	});
+
+	const $btnSave = $modal.find('#btn-save-reminder');
+	const reminderId = $btnSave.data('reminderid');
+
+	const select2Options = {
+		multiple: true,
+		dropdownParent: $modal.find('.modal-content')
+	};
+
+	$btnSave.on('click', function() {
+		let $categoryInput = $body.find('input[name="reminder_category"]:checked');
+		if (!$categoryInput.length) {
+			$categoryInput = $body.find('#input-reminder-category-hidden');
+		}
+		let category = $categoryInput.val();
+
+		let selectedUsers = $body.find('#select-reminder-user').val();
+		let selectedGroups = $body.find('#select-reminder-group').val();
+
+		const userArray = selectedUsers.map(userId => ({ type: 'user', id: userId.toString() }));
+		const groupArray = selectedGroups.map(groupId => ({ type: 'group', id: groupId.toString() }));
+
+		let userOrGroupArray = userArray.concat(groupArray);
+
+		let listmode = 0;
+		if(document.form1.action.value == 'gtab_erg') {
+			listmode = 1;
+		}
+
+		// listmode
+		let selectedRowsCount = 0;
+		let reminderRows = '';
+		let verkn = {};
+
+		if(listmode){
+			selectedRowsCount = countofActiveRows();
+			// use selected rows
+			if(selectedRowsCount > 0){
+				let activeRows = checkActiveRows(tableId);
+				if(activeRows.length > 0){
+					reminderRows = activeRows;
+				}else{alert(jsvar["lng_2083"]);return;}
+				// use filter
+			}else{
+				reminderRows = 'all';
+				if(document.form1.verkn_ID){
+					verkn = {
+						verkn_tabid: document.form1.verkn_tabid.value,
+						verkn_fieldid: document.form1.verkn_fieldid.value,
+						verkn_ID: document.form1.verkn_ID.value,
+						verkn_showonly: document.form1.verkn_showonly.value
+					};
+				}
+				// get count from result
+				if(document.getElementById("GtabResCount")){
+					selectedRowsCount = document.getElementById("GtabResCount").innerHTML;
+				} else {
+					selectedRowsCount = 'undefined'
+				}
+			}
+
+			if(selectedRowsCount && !confirm(jsvar['lng_2676']+' '+selectedRowsCount+'\n'+jsvar['lng_2902'])){
+				activ_menu = 0;
+				limbasDivClose();
+				return;
+			}
+		}
+
+		let form_id = '';
+		if(document.form1.form_id.value){
+			form_id = document.form1.form_id.value;
+		}
+
+		let data = {
+			'action': 'save',
+			'reminderId': reminderId,
+			'tableId': tableId,
+			'dataId': dataId,
+			'category': category,
+			'deadline': $body.find('#input-reminder-deadline').val(),
+			'description': $body.find('#input-reminder-description').val(),
+			'userOrGroupArray': userOrGroupArray,
+			'reminderRows': reminderRows,
+			'form_id': form_id,
+		};
+
+		data = {...data, ...verkn};
+		console.log(data);
+
+		sendReminderAction(data).then(r => {
+			lmbShowSuccessMsg("Reminder saved");
+			updateMultiframe(r['multiframeUpdateId'], category);
+		}).catch(e => {
+			lmbShowErrorMsg("Error saving reminder");
+		}).finally(() => {
+			$modal.modal('hide');
+		});
+	});
+
+	$body.find('[data-reminder-changeview]').on('click', function() {
+		limbasReminder($(this).data('reminder-changeview'));
+	});
+
+	$body.find('.toggle-breakable').on('click', function() {
+		const $card = $(this).closest('.card');
+		$card.find('.breakable').find('br').toggleClass('d-none');
+	});
+
+	$body.find('[data-reminder-remove]').on('click', function() {
+		const reminderId = $(this).data('reminder-remove');
+		sendReminderAction({
+			'action': 'delete',
+			'reminderId': reminderId,
+		}).then(r => {
+			lmbShowSuccessMsg("Reminder deleted");
+			const $li = $(this).closest('li');
+			const $card = $li.closest('.card');
+			const $separator = $body.find('#div-existing-reminders-separator');
+			const $list = $body.find('#div-existing-reminders-list');
+
+			$li.remove();
+			if (!$card.find('li').length) {
+				$card.remove();
+			}
+			if (!$list.find('.card').length) {
+				$list.remove();
+				$separator.remove();
+			}
+			updateMultiframe(r['multiframeUpdateId'], r['category']);
+		}).catch(e => {
+			lmbShowErrorMsg("Error deleting reminder");
+		}).finally(() => {
+
+		});
+	});
+
+	$body.find('.breakable').find('br').toggleClass('d-none');
+	$body.find('#select-reminder-user').select2(select2Options);
+	$body.find('#select-reminder-group').select2(select2Options);
 }
 
 // timeout for same form requests
 function clear_send_form () {
 	sendFormTimeout = 0;
 }
-
-
-
-
 
 // Ajax Feldverärbung
 function limbasSearchInherit(desttabid,destgfieldid,gtabid,gfieldid,el,ID,showall){
@@ -1451,7 +1640,9 @@ function limbasInheritFromPost(json,evt,parentage){
 		for (var i in data['destId']){
 			var el = null;
 
-			if(document.getElementsByName(data['destFormname'][i])[0]){
+
+
+            if(document.getElementsByName(data['destFormname'][i])[0]){
 				var el = document.getElementsByName(data['destFormname'][i])[0];
 			}else if(document.getElementsByName(data['destFormname'][i]+'_'+data['destId'][i])[0]){
 				var el = document.getElementsByName(data['destFormname'][i]+'_'+data['destId'][i])[0];
@@ -1463,11 +1654,22 @@ function limbasInheritFromPost(json,evt,parentage){
 				var el = document.getElementsByName(data['destFormname'][i])[0];
 			}
 
-			if(el){
 
+
+			if(el){
 				// if no formelement or readonly
 				var ttype = el.nodeName.toLowerCase();
-				if(ttype != 'input' && ttype != 'textarea' && ttype != 'select'){
+                var ty = null;
+
+                // check for tiny
+                if(typeof(tinymce) == 'object' && data['destFormname'][i]){
+                    ty = tinymce.get(data['destFormname'][i]);
+                }
+
+                // is tiny
+                if(ty) {
+                    ty.setContent(data['resultval'][i]);
+                }else if(ttype != 'input' && ttype != 'textarea' && ttype != 'select'){
 					el.innerHTML = data['resultval'][i];
 					$(el).attr('name', '');
 					$( "#form1" ).append("<input type='hidden' name='"+data['destFormname'][i]+"'>");
@@ -1493,21 +1695,6 @@ function limbasInheritFromPost(json,evt,parentage){
 		}
 	}
 }
-
-// bgcolor of row
-function lmb_tableRowColor(el,color,set) {
-	prevcolor = color;
-	if(typeof el != 'object'){el = document.getElementById(el);}
-	if(set && selected_rows[el.id]){return;}
-	if(!color){color = el.getAttribute("lmbbgcolor");}
-	for (var e = 0; e < el.cells.length; e++){
-		rowcolor = color;
-		cellcolor = el.cells[e].getAttribute("lmbbgcolor");
-		if(cellcolor && !prevcolor){rowcolor = cellcolor;}
-		el.cells[e].style.backgroundColor = rowcolor;
-	}
-}
-
 
 var dyns_time = null;
 var dyns_el = null;
@@ -1673,12 +1860,11 @@ function aktivateRow(evt,id,activ){
 function aktivateSingleRow(id,activ) {
 	if(!document.getElementById(id)){return true;}
 	if(activ){
-		lmb_tableRowColor(id,jsvar["WEB7"]);
+        $('#'+id).addClass("gtabBodyTRActive");
 		selected_rows[id] = 1;
 		LmGl_edit_id = id;
 	}else{
-		var bgcolor = document.getElementById(id).getAttribute("lmbbgcolor");
-		lmb_tableRowColor(id,bgcolor);
+        $('#'+id).removeClass("gtabBodyTRActive");
 		selected_rows[id] = 0;
 	}
 }
@@ -1791,7 +1977,7 @@ function lmb_setPageTitle(title,header) {
 
 function lmbUndefToNull(value){
     if(!value || typeof value === 'undefined'){
-        return null;
+        return '';
     }
     return value;
 }
@@ -1845,6 +2031,11 @@ function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimensio
     }
 
     if((action == 'gtab_erg' || typeof id === 'undefined') && readonly == 2){readonly = 1;}else{readonly = '';} // todo
+
+    verkn_showonly = '';
+    if(action == 'gtab_erg' && v_id){
+        verkn_showonly = 1;
+    }
 
     var verknpf = '';
     if (v_tabid) {
@@ -1924,13 +2115,15 @@ function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimensio
 
     // show in new window
     if (!inframe || inframe == 'window') {
-        var wpath = "main.php?action=" + action + "&verkn_showonly=1&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "&form_id=" + formid + "&verknpf=" + verknpf + "&verkn_formid=" + v_formid + '&verkn_addfrom='+relation_path + '&readonly='+readonly+use_typ;
+        var wpath = "main.php?action=" + action + "&verkn_showonly="+verkn_showonly+"&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "&form_id=" + formid + "&verknpf=" + verknpf + "&verkn_formid=" + v_formid + '&verkn_addfrom='+relation_path + '&readonly='+readonly+use_typ;
         relationtab = open(wpath, "relationtable", "toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=" + x + ",height=" + y);
         return;
     }
 
     if (inframe == 'tab') {
-        wpath = "index.php?action=redirect&src=action=" + action + "%26verkn_showonly=1%26ID=" + id + "%26verkn_ID=" + v_id + "%26gtabid=" + gtabid + "%26verkn_tabid=" + v_tabid + "%26verkn_fieldid=" + v_fieldid + "%26form_id=" + formid + "%26verkn_formid=" + v_formid + '%26verkn_addfrom='+relation_path + '%26readonly='+readonly+use_typ+'%26verknpf=' + verknpf;
+        //wpath = "index.php?action=redirect&src=action=" + action + "%26verkn_showonly=1%26ID=" + id + "%26verkn_ID=" + v_id + "%26gtabid=" + gtabid + "%26verkn_tabid=" + v_tabid + "%26verkn_fieldid=" + v_fieldid + "%26form_id=" + formid + "%26verkn_formid=" + v_formid + '%26verkn_addfrom='+relation_path + '%26readonly='+readonly+use_typ+'%26verknpf=' + verknpf;
+        var baseurl = top.window.location.href.split("?")[0];
+        wpath = baseurl+"?action=" + action + "&verkn_showonly="+verkn_showonly+"&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "%26form_id=" + formid + "&verkn_formid=" + v_formid + '&verkn_addfrom='+relation_path + '&readonly='+readonly+use_typ+'&verknpf=' + verknpf;
         relationtab = open(wpath, "_blank");
         return;
     }
@@ -1947,7 +2140,7 @@ function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimensio
         // todo + "%26verknpf=" + verknpf // do not show close&save button but is needed for filter relations
         document.form1.verknpf.value = verknpf;
         document.form1.gtabid.value = gtabid;
-        document.form1.verkn_showonly.value = "1";
+        document.form1.verkn_showonly.value = verkn_showonly;
         document.form1.verkn_addfrom.value = relation_path;
         if (!document.form1.verkn_poolid.value) {
             document.form1.verkn_poolid.value = v_tabid;
@@ -1961,7 +2154,7 @@ function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimensio
 
     // show in same window
     }else if(inframe == 'same'){
-        var wpath = "main.php?action=" + action + "&verkn_showonly=1&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "&form_id=" + formid + "&verknpf=" + verknpf + "&verkn_formid=" + v_formid + '&verkn_addfrom='+relation_path + '&readonly='+readonly+use_typ;
+        var wpath = "main.php?action=" + action + "&verkn_showonly="+verkn_showonly+"&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "&form_id=" + formid + "&verknpf=" + verknpf + "&verkn_formid=" + v_formid + '&verkn_addfrom='+relation_path + '&readonly='+readonly+use_typ;
         window.location.href = wpath;
 
     // show in dialog as div
@@ -1973,7 +2166,7 @@ function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimensio
             url: "main_dyns.php",
             async: false,
             dataType: "html",
-            data: $('#form1 #' + layername + ' :input').add('[name=history_fields]').add('[name=filter_tabulatorKey]').add('[name=filter_groupheader]').add('[name=filter_groupheaderKey]').add('[name=old_action]').serialize()+"&actid=openSubForm&ID=" + id + "&gtabid=" + gtabid + "&gformid=" + formid + "&action=" + action +"&verkn_ID=" + v_id + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + '&verkn_addfrom='+relation_path + '&subformlayername='+layername + '&readonly='+readonly+use_typ,
+            data: $('#form1 #' + layername + ' :input').add('[name=history_fields]').add('[name=filter_tabulatorKey]').add('[name=filter_groupheader]').add('[name=filter_groupheaderKey]').add('[name=old_action]').serialize()+"&actid=openSubForm&ID=" + id + "&gtabid=" + gtabid + "&gformid=" + formid + "&action=" + action +"&verkn_ID=" + v_id + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "&verkn_showonly=" + verkn_showonly + '&verkn_addfrom='+relation_path + '&subformlayername='+layername + '&readonly='+readonly+use_typ,
             success: function (data) {
                 $("<div id='"+layername+"'></div>").html(data).css({'position': 'relative', 'left': '0', 'top': '0'}).dialog({
                     width: x,
@@ -2004,7 +2197,7 @@ function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimensio
             modal: true,
             zIndex: 99999,
             open: function (ev, ui) {
-                $('#lmb_gtabDetailIFrame').attr("src", "main.php?action=" + action + "&verkn_showonly=1&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "&form_id=" + formid + "&verknpf=" + verknpf + "&verkn_formid=" + v_formid + '&verkn_addfrom='+relation_path + '&readonly='+readonly+use_typ);
+                $('#lmb_gtabDetailIFrame').attr("src", "main.php?action=" + action + "&verkn_showonly="+verkn_showonly+"&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "&form_id=" + formid + "&verknpf=" + verknpf + "&verkn_formid=" + v_formid + '&verkn_addfrom='+relation_path + '&readonly='+readonly+use_typ);
             },
             close: function () {
                //lmb_gtabDetailIFrame.document.form1.action.value = 'gtab_change';
@@ -2034,11 +2227,11 @@ function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimensio
 
     // show in existing iframe
     }else if(document.getElementById(layername) && document.getElementById(layername).tagName.toLowerCase() == 'iframe') {
-        $('#' + layername).attr("src", "main.php?action=" + action + "&verkn_showonly=1&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "&form_id=" + formid + "&verknpf=" + verknpf + "&verkn_formid=" + v_formid + '&verkn_addfrom=' + relation_path+ '&readonly='+readonly+use_typ);
+        $('#' + layername).attr("src", "main.php?action=" + action + "&verkn_showonly="+verkn_showonly+"&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "&form_id=" + formid + "&verknpf=" + verknpf + "&verkn_formid=" + v_formid + '&verkn_addfrom=' + relation_path+ '&readonly='+readonly+use_typ);
 
     // show in parent existing iframe
     }else if(parent.document.getElementById(layername) && parent.document.getElementById(layername).tagName.toLowerCase() == 'iframe') {
-        parent.$('#' + layername).attr("src", "main.php?action=" + action + "&verkn_showonly=1&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "&form_id=" + formid + "&verknpf=" + verknpf + "&verkn_formid=" + v_formid + '&verkn_addfrom=' + relation_path+ '&readonly='+readonly+use_typ);
+        parent.$('#' + layername).attr("src", "main.php?action=" + action + "&verkn_showonly="+verkn_showonly+"&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "&form_id=" + formid + "&verknpf=" + verknpf + "&verkn_formid=" + v_formid + '&verkn_addfrom=' + relation_path+ '&readonly='+readonly+use_typ);
     }
 
 }

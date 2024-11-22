@@ -24,7 +24,7 @@ require_once('externalStorage.lib');
 require_once(COREPATH . 'lib/include.lib');
 
 try {
-    lmbExternalFileDownload($authToken, $fileID, $_REQUEST['sendas']);
+    lmbExternalFileDownload($authToken, $fileID, $_REQUEST['disposition']);
 } catch (Exception $e) {
     exit('Error: ' . $e->getMessage());
 }

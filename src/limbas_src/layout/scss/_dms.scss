@@ -6,14 +6,18 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-/* explorer */
-
-.lmbFileTreeItem {
-  cursor: pointer;
+.resizer_attributes {
+  display:flex;
+  margin:0;
+  padding:0;
+  overflow:hidden;
 }
-
-.lmbFileTreeItem:hover {
-  cursor: pointer;
-  background-color: $farbschemaWEB10;
-  text-decoration: none;
+.resizer_actual {
+  resize:both;
+}
+.resizer > .resized {
+  flex-grow:1;
+  margin:0;
+  padding:0;
+  border:0;
 }

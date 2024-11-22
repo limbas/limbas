@@ -71,11 +71,11 @@ function pool_select_list($gtabid,$field_id,$ID,$find_wert,$find_keyw,$num_resul
 
     // use Limit & Offset instead of Cursor (PDO)
     if(defined('LMB_DBFUNC_OFFSET')) {
-	    $limit = "LIMIT $num_result OFFSET ".($start -1 + LMB_DBFUNC_OFFSET_START);
+	    $limit = " LIMIT $num_result OFFSET ".($start -1 + LMB_DBFUNC_OFFSET_START);
     }
 
-	$sqlquery = "SELECT ID,KEYWORDS,$fieldname,SORT,LEVEL,HASLEVEL FROM ".$tabtyp."_W WHERE POOL = ".$gfield[$gtabid]["select_pool"][$field_id]." $where ORDER BY ".$gfield[$gtabid]["select_sort"][$field_id].' '.$limit;
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	$sqlquery = "SELECT ID,KEYWORDS,$fieldname,SORT,LEVEL,HASLEVEL FROM ".$tabtyp."_W WHERE POOL = ".$gfield[$gtabid]["select_pool"][$field_id]." $where ".($gfield[$gtabid]["select_sort"][$field_id] ? " ORDER BY ".$gfield[$gtabid]["select_sort"][$field_id] : '') . $limit;
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	$bzm1 = 1;
 
@@ -502,9 +502,12 @@ function pool_parse_attribute($tabtyp, $gtabid, $field_id, $w_id, $value) {
     $parse_type = $lmfieldtype['parse_type'][$data_type];
     $size = $lmfieldtype['size'][$data_type];
 
-    if ($parse_type == 1 OR $parse_type == 3) { # int/bool
+    if ($parse_type == 1) { # numeric
         $update['field'][] = 'VALUE_NUM';
         $update['value'][] = parse_db_int($value, $size);
+    }elseif ($parse_type == 3) { # bool
+        $update['field'][] = 'VALUE_NUM';
+        $update['value'][] = parse_bool($value);
     } elseif ($parse_type == 6) { # float
         $update['field'][] = 'VALUE_NUM';
         $update['value'][] = parse_db_float($value, $size);
@@ -718,7 +721,7 @@ function pool_select_update_old($gtabid,$field_id,$ID,$fs_sel){
                                     }
                                     $NEXTID = next_db_id("{$tabtyp}_D");
                                     $sqlquery2 = "INSERT INTO {$tabtyp}_D (ID,TAB_ID,DAT_ID,FIELD_ID,W_ID,ERSTUSER $insfield) VALUES($NEXTID,$gtabid,$ID,$field_id,$attr_wid,{$session['user_id']} $insvalue)";
-                                    $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
+                                      $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
                                     if (!$rs2) {
                                         $commit = 1;
                                     }

@@ -82,7 +82,7 @@ $( document ).ready(function() {
                 msg = msg.replace(/<script[^>]*>([\s\S]*?)<\/script>/gi, '');
             }
 			if(msg){
-                diagramm = open(msg+'?'+Date.now() ,"Diagram");
+                diagramm = open(msg,"Diagram");
 			}
 		});
 	});

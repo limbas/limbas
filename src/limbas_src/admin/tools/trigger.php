@@ -26,9 +26,8 @@ function open_definition(id){
 }
 
 function delete_definition(id){
-	document.getElementById('trigger_'+id).style.display = 'none';
-	document.getElementById('definition_'+id).style.display = 'none';
 	document.getElementById("definition_change_"+id).value='2';
+    document.getElementById("btn-trigger-change").click();
 }
 
 </Script>
@@ -116,7 +115,25 @@ function delete_definition(id){
                                     <td><i class="lmb-icon lmb-long-arrow-up" style="cursor:pointer" OnClick="document.form1.sortup_definition.value='<?=$value1["id"][$key2]?>';document.form1.submit();"></i> <i class="lmb-icon lmb-long-arrow-down" style="cursor:pointer" OnClick="document.form1.sortdown_definition.value='<?=$value1["id"][$key2]?>';document.form1.submit();"></i></td>
                                 <?php endif; ?>
                                 
-                                <td><i class="lmb-icon lmb-trash" style="cursor:pointer" OnClick="delete_definition('<?=$value1["id"][$key2]?>')"></i></td>
+                                <td><i class="lmb-icon lmb-trash" style="cursor:pointer" data-bs-toggle="modal" data-bs-target="#trigger_<?=$value1["id"][$key2]?>_DeleteModal"></i></td>
+
+                                <div class="modal fade" id="trigger_<?=$value1["id"][$key2]?>_DeleteModal" tabindex="-1">
+                                    <div class="modal-dialog">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="triggerDeleteModalTitle"><?=$lang[3171]?></h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                            </div>
+                                            <!--<div class="modal-body">
+                                                <p><?=$lang[1727]?></p>
+                                            </div> -->
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-danger" OnClick="delete_definition('<?=$value1["id"][$key2]?>')"><?=$lang[367]?></button>
+                                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><?=$lang[844]?></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 
                             </tr>
                         
@@ -143,7 +160,7 @@ function delete_definition(id){
                                     <?php endif; ?>
                                     
                                     
-                                    <button class="btn btn-sm btn-primary" type="submit" name="change" value="1"><?= $lang[842] ?></button>
+                                    <button class="btn btn-sm btn-primary" type="submit" id="btn-trigger-change" name="change" value="1"><?= $lang[842] ?></button>
                                 </td>
                             </tr>
     

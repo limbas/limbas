@@ -8,7 +8,9 @@
  */
 
 
+use Limbas\lib\auth\Session;
 
+$globvars = Session::$globvars;
 
 asort($globvars, SORT_FLAG_CASE | SORT_NATURAL);
 

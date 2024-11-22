@@ -11,15 +11,16 @@
 
 
 
-function lmb_pop_custmenu($custmenu,$gtabid,$ID,$gresult=null,$fieldid=null){
+function lmb_pop_custmenu($custmenu,$gtabid,$ID,$gresult=null,$fieldid=null,$linkonly=null){
     global $db;
     global $lang;
     global $gcustmenu;
     global $LINK;
 
-    if($fieldid AND $gcustmenu[$gtabid][1][$fieldid]){
-        $custmenu = $gcustmenu[$gtabid][1][$fieldid];
-    }
+    // change custmenu for field
+    #if($fieldid AND $gcustmenu[$gtabid][1][$fieldid]){
+    #    $custmenu = $gcustmenu[$gtabid][1][$fieldid];
+    #}
 
     $sqlquery = "SELECT * FROM LMB_CUSTMENU WHERE LINKID = ".parse_db_int($custmenu)." ORDER BY SORT";
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
@@ -46,9 +47,9 @@ function lmb_pop_custmenu($custmenu,$gtabid,$ID,$gresult=null,$fieldid=null){
         if($menuitems['typ'][$hkey] != 0){continue;}
 
         if(substr($lang[$menuitems['name'][$hkey]],0,1) == '_' OR substr($lang[$menuitems['name'][$hkey]],0,1) == '-'){
-            pop_line();
+            if(!$linkonly){pop_line();}
         }elseif($lang[$menuitems['name'][$hkey]]){
-            pop_header(null,$lang[$menuitems['name'][$hkey]]);
+            if(!$linkonly){pop_header(null,$lang[$menuitems['name'][$hkey]]);}
         }
 
         foreach($menuitems['name'] as $key => $value) {
@@ -87,11 +88,12 @@ function lmb_pop_custmenu($custmenu,$gtabid,$ID,$gresult=null,$fieldid=null){
                     $url = eval($menuitems['url'][$key].';');
                 }
 
-                pop_menu2($lang[$item], $lang[$menuitems['title'][$key]], null, $menuitems['icon'][$key], $menuitems['style'][$key], $url, $menuitems['class'][$key]);
+                if(!$linkonly){pop_menu2($lang[$item], $lang[$menuitems['title'][$key]], null, $menuitems['icon'][$key], $menuitems['style'][$key], $url, $menuitems['class'][$key]);}
             // menu
             } elseif ($menuitems['typ'][$key] == 9) {
                 if(!$LINK[$item]) {continue;}
-                pop_menu2($lang[$LINK['name'][$item]], 'open form', null, $LINK['icon_url'][$item], $menuitems['style'][$key], $LINK['link_url'][$item], $menuitems['class'][$key]);
+                $url = $LINK['link_url'][$item];
+                if(!$linkonly){pop_menu2($lang[$LINK['name'][$item]], 'open form', null, $LINK['icon_url'][$item], $menuitems['style'][$key], $LINK['link_url'][$item], $menuitems['class'][$key]);}
             // form
             } elseif ($menuitems['typ'][$key] == 10) {
                 global $gformlist;
@@ -131,7 +133,7 @@ function lmb_pop_custmenu($custmenu,$gtabid,$ID,$gresult=null,$fieldid=null){
                     #$url = "newwin7(null,'" . $gtabid . "',null,null,null,'" . $ID . "','" . $item . "','" . $gformlist[$gtabid]['dimension'][$item] . "',null,'" . $t . "');";
                     $url = "lmbOpenForm(event,'$gtabid','$ID',{formid:'$item',formdimension:'{$gformlist[$gtabid]['dimension'][$item]}',inframe:'$t'});";
                 }
-                pop_menu2($gformlist[$gformlist["argresult_id"][$item]]['name'][$item], 'open form', null, $menuitems['icon'][$key], $menuitems['style'][$key], $url, $menuitems['class'][$key]);
+                if(!$linkonly){pop_menu2($gformlist[$gformlist["argresult_id"][$item]]['name'][$item], 'open form', null, $menuitems['icon'][$key], $menuitems['style'][$key], $url, $menuitems['class'][$key]);}
             // report
             } elseif ($menuitems['typ'][$key] == 11) {
                 global $greportlist;
@@ -148,11 +150,11 @@ function lmb_pop_custmenu($custmenu,$gtabid,$ID,$gresult=null,$fieldid=null){
                 }
                 
                 
-                pop_submenu2($greportlist[$gtabid]["name"][$item], $url, '', '', 'lmb-icon lmb-' . $greportlist[$gtabid]["defformat"][$item]);
+                if(!$linkonly){pop_submenu2($greportlist[$gtabid]["name"][$item], $url, '', '', 'lmb-icon lmb-' . $greportlist[$gtabid]["defformat"][$item]);}
             // submenu
             } elseif ($menuitems['typ'][$key] == 12) {
                 $url = "lmbTableContextMenu(event,this,'$ID',$gtabid,$item,$custmenu)";
-                pop_submenu2($lang[$item], $url);
+                if(!$linkonly){pop_submenu2($lang[$item], $url);}
             // function
             } elseif ($menuitems['typ'][$key] == 13) {
                 $url = $menuitems['url'][$key];
@@ -162,6 +164,8 @@ function lmb_pop_custmenu($custmenu,$gtabid,$ID,$gresult=null,$fieldid=null){
             }
         }
     }
+
+    return $url;
 }
 
 
@@ -241,7 +245,7 @@ function pop_picmenu($id,$zl,$zv,$active=null,$evt=null,$altpic=null){
     	if($altpic){$pic = explode(".",$LINK["icon_url"][$id]);$pic = $pic[0].$altpic.".".$pic[1];}else{$pic = $LINK["icon_url"][$id];}
         $pic = $LINK["icon_url"][$id];
     	if($active){$st = "style=\"opacity:0.3;filter:Alpha(opacity=30);\"";}
-        echo "<td class=\"lmbGtabmenuIcon-$id\" align=\"center\" style=\"cursor:pointer;width:20px;height:20px\"><i id=\"conextIcon_$id\" $st class=\"lmb-icon $pic\" $evt title=\"".$lang[$LINK["desc"][$id]]."\" OnMouseDown=\"this.style.border='1px solid black';\" OnMouseUp=\"this.style.border='';\"></i></td>\n";
+        echo "<i id=\"conextIcon_$id\" $st class=\"lmb-icon $pic\" $evt title=\"".$lang[$LINK["desc"][$id]]."\"></i>";
     }
 }
 
@@ -532,6 +536,16 @@ function pop_right($width=null){
 
     #global $farbschema;
     #echo "</TD><TD STYLE=\"width:1px;background-color:$farbschema[WEB3]\"></TD><TD STYLE=\"width:1px;background-color:$farbschema[WEB2]\"></TD></TR></TABLE>\n";
+}
+
+function pop_group($val){
+    $GLOBALS['menuLine'] = 0;
+
+	echo <<<EOD
+	<a class="lmbContextLink">
+		$img<span class="lmbContextItem"><b>&nbsp;$val</b></span>
+	</a>
+EOD;
 }
 
 ?>

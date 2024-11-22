@@ -159,7 +159,7 @@ function relationtree($rfield){
     global $gfield;
     global $gtab;
 
-    if(($rfield['verkntabletype'] == 1 OR $rfield['verkntabletype'] == 3) AND $rfield['datatype'] != 25 AND $tree = recrelationtree()){
+    if(($rfield['verkntabletype'] == 1 OR $rfield['verkntabletype'] == 3) AND $rfield['datatype'] != 25 AND $tree = recrelationtree($rfield)){
         
         foreach($tree as $tkey => $path){
             $tree_identifier = md5(implode(",",$path));
@@ -319,7 +319,10 @@ function edit_relationparams($tabid,$fieldid){
 }
 
 
+if(isset($_POST['vknsave'])): ?>
+    
+<script>
+    lmbShowSuccessMsg('<?=e($lang[2006])?>');
+</script>
 
-
-
-?>
+<?php endif; ?>

@@ -368,8 +368,6 @@ function indize_create($words,&$indi){
             continue;
         }
 
-        $value = lmb_utf8_encode($value);
-
 		# check alphanumeric digits
         $value = feasible_val($value);
 		if(!$value){continue;}

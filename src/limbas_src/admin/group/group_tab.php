@@ -134,13 +134,7 @@
 
     function divclose() {
         if (!activ_menu) {
-            hide_trigger();
-            document.getElementById("element1").style.visibility = 'hidden';
-            //document.getElementById("element3").style.visibility = 'hidden';
-            document.getElementById("element4").style.visibility = 'hidden';
-            //document.getElementById("element5").style.visibility = 'hidden';
-            document.getElementById("element6").style.visibility = 'hidden';
-            document.getElementById("element7").style.visibility = 'hidden';
+            $('.lmbContextMenu').hide();
         }
         activ_menu = 0;
     }
@@ -236,10 +230,6 @@
         }
     }
 
-    function hide_trigger() {
-        $('span[id^=tab_trigger], span[id^=field_trigger]').each($(this).css('display', 'none'))
-    }
-
     /**
      * Checks all checkboxes in a column in the field view modal
      */
@@ -292,7 +282,11 @@
         <div class="row">
             <?php
             $activeTabLinkId = 100;
-            require(__DIR__ . '/group_tabs.php') ?>
+            require(__DIR__ . '/group_tabs.php');
+
+            $gfilter = getFunctionsFromFile('ext_globalFilter');
+            ?>
+
 
 
             <div class="tab-content col-9 ps-0">
@@ -341,7 +335,7 @@
                             if ($_gtab["tab_group"][$key] != $_tabgroup["id"][$bzm]) {
                                 continue;
                             }
-                            if ((!is_array($s_result[$key]["view"]) || !in_array('1', $s_result[$key]["view"])) && $session["user_id"] != 1 && !$session["superadmin"]) {
+                            if ((!is_array($s_result[$key]["view"]) || !in_array('1', $s_result[$key]["view"])) && !$session["superadmin"]) {
                                 continue;
                             }
                             $icon = 'plusonly';
@@ -363,164 +357,190 @@
                                 </td>
 
 
-                                <?php if (!$s_result[$key]["hidemenu"] or $session["superadmin"]): ?>
+                                <td colspan="2">
+                                    <div class="row">
+                                        <?php
+                                        $showER = $f_result[$key]["tabeditrule"];
+                                        $showIR = $f_result[$key]["indicator"];
+                                        $showOV = $f_result[$key]["orderby"];
+                                        ?>
+                                        <div class="col-3 d-flex flex-column">
+                                            <?php if (!$isview) { ?>
+                                                <div id="div_rules_empty_<?= $key ?>"
+                                                     class="d-flex flex-row">
+                                                    <div id="div_edit_rule_<?= $key ?>_empty"
+                                                         class="p-0 <?= $showER ? '' : 'd-flex' ?> align-items-center"
+                                                         style="min-width: 0; <?= $showER ? 'display:none;' : '' ?>">
+                                                        <i class="lmb-icon lmb-pencil cursor-pointer py-1 pe-2 me-2"
+                                                           onclick="div6(this,'<?= $key ?>')"
+                                                           style=""
+                                                           title="<?= $lang[2573] ?>"></i>
+                                                    </div>
+                                                    <div id="div_indicator_rule_<?= $key ?>_empty"
+                                                         class="p-0 <?= $showIR ? '' : 'd-flex' ?> align-items-center"
+                                                         style="min-width: 0; <?= $showIR ? 'display:none;' : '' ?>">
+                                                        <i class="lmb-icon lmb-indicator-rule cursor-pointer py-1 pe-2 me-2"
+                                                           onclick="div1(this,'<?= $key ?>')"
+                                                           title="<?= $lang[1255] ?>"></i>
+                                                    </div>
+                                                    <div id="div_orderby_value_<?= $key ?>_empty"
+                                                         class="p-0 <?= $showOV ? '' : 'd-flex' ?> align-items-center"
+                                                         style="min-width: 0; <?= $showOV ? 'display:none;' : '' ?>">
+                                                        <i class="lmb-icon lmb-textsort-up cursor-pointer py-1 pe-2 me-2"
+                                                           onclick="div7(this,'<?= $key ?>')"
+                                                           style=""
+                                                           title="<?= $lang[1837] ?>"></i>
+                                                    </div>
+                                                </div>
 
-                                    <td colspan="2">
-                                        <div class="row">
-                                            <?php
-                                            $showER = $f_result[$key]["tabeditrule"];
-                                            $showIR = $f_result[$key]["indicator"];
-                                            $showOV = $f_result[$key]["orderby"];
-                                            ?>
-                                            <div class="col-3 d-flex flex-column">
-                                                <?php if (!$isview) { ?>
-                                                    <div id="div_rules_empty_<?= $key ?>"
-                                                         class="d-flex flex-row">
-                                                        <div id="div_edit_rule_<?= $key ?>_empty"
-                                                             class="p-0 <?= $showER ? '' : 'd-flex' ?> align-items-center"
-                                                             style="min-width: 0; <?= $showER ? 'display:none;' : '' ?>">
-                                                            <i class="lmb-icon lmb-pencil cursor-pointer py-1 pe-2 me-2"
-                                                               onclick="div6(this,'<?= $key ?>')"
-                                                               style=""
-                                                               title="<?= $lang[2573] ?>"></i>
+
+                                                <div id="div_rules_<?= $key ?>" class="d-flex flex-column">
+                                                    <div id="div_edit_rule_<?= $key ?>"
+                                                         class="p-0 <?= !$showER ? '' : 'd-flex' ?> align-items-center"
+                                                         style="min-width: 0; <?= !$showER ? 'display:none;' : '' ?>">
+                                                        <i class="lmb-icon lmb-pencil cursor-pointer text-success py-1 pe-2 me-2"
+                                                           onclick="div6(this,'<?= $key ?>')"
+                                                           title="<?= $lang[2573] ?>"></i>
+                                                        <div id="t_edit_rule_<?= $key ?>"
+                                                             class=""
+                                                             style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                                            <?= e($f_result[$key]["tabeditrule"]) ?>
                                                         </div>
-                                                        <div id="div_indicator_rule_<?= $key ?>_empty"
-                                                             class="p-0 <?= $showIR ? '' : 'd-flex' ?> align-items-center"
-                                                             style="min-width: 0; <?= $showIR ? 'display:none;' : '' ?>">
-                                                            <i class="lmb-icon lmb-indicator-rule cursor-pointer py-1 pe-2 me-2"
-                                                               onclick="div1(this,'<?= $key ?>')"
-                                                               title="<?= $lang[1255] ?>"></i>
+                                                        <input
+                                                                type="hidden"
+                                                                name="edit_rule_<?= $key ?>"
+                                                                value="<?= e($f_result[$key]["tabeditrule"]) ?>">
+                                                    </div>
+                                                    <div id="div_indicator_rule_<?= $key ?>"
+                                                         class="p-0 <?= !$showIR ? '' : 'd-flex' ?> align-items-center"
+                                                         style="min-width: 0; <?= !$showIR ? 'display:none;' : '' ?>">
+                                                        <i class="lmb-icon lmb-indicator-rule cursor-pointer text-success py-1 pe-2 me-2"
+                                                           onclick="div1(this,'<?= $key ?>')"
+                                                           title="<?= $lang[1255] ?>"></i>
+                                                        <div id="t_indicator_rule_<?= $key ?>"
+                                                             class=""
+                                                             style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                                            <?= e($f_result[$key]["indicator"]) ?>
                                                         </div>
-                                                        <div id="div_orderby_value_<?= $key ?>_empty"
-                                                             class="p-0 <?= $showOV ? '' : 'd-flex' ?> align-items-center"
-                                                             style="min-width: 0; <?= $showOV ? 'display:none;' : '' ?>">
-                                                            <i class="lmb-icon lmb-textsort-up cursor-pointer py-1 pe-2 me-2"
-                                                               onclick="div7(this,'<?= $key ?>')"
-                                                               style=""
-                                                               title="<?= $lang[1837] ?>"></i>
+                                                        <input
+                                                                type="hidden"
+                                                                class="form-control-sm w-100"
+                                                                name="indicator_rule_<?= $key ?>"
+                                                                value="<?= e($f_result[$key]["indicator"]) ?>">
+                                                    </div>
+                                                    <div id="div_orderby_value_<?= $key ?>"
+                                                         class="p-0 <?= !$showOV ? '' : 'd-flex' ?> align-items-center"
+                                                         style="min-width: 0; <?= !$showOV ? 'display:none;' : '' ?>">
+                                                        <i class="lmb-icon lmb-textsort-up cursor-pointer text-success py-1 pe-2 me-2"
+                                                           onclick="div7(this,'<?= $key ?>')"
+                                                           title="<?= $lang[1837] ?>"></i>
+                                                        <div id="t_orderby_value_<?= $key ?>"
+                                                             class=""
+                                                             style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                                                            <?= e($f_result[$key]["orderby"]) ?>
+                                                        </div>
+                                                        <input
+                                                                type="hidden"
+                                                                class="form-control-sm w-100"
+                                                                name="orderby_value_<?= $key ?>"
+                                                                value="<?= e($f_result[$key]["orderby"]) ?>"
+                                                        >
+                                                    </div>
+                                                </div>
+                                            <?php } ?>
+                                        </div>
+
+                                        <div class="col-3">
+                                            <div class="row w-100 m-0">
+                                                <?php
+                                                # form selection
+                                                $sqlquery = "SELECT ID,NAME,FORM_TYP FROM LMB_FORM_LIST WHERE REFERENZ_TAB = '" . $_gtab["tab_id"][$key] . "'";
+                                                $rs1 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+                                                $form = null;
+                                                while (lmbdb_fetch_row($rs1)) {
+                                                    $id = lmbdb_result($rs1, 'ID');
+                                                    $form['name'][$id] = lmbdb_result($rs1, 'NAME');
+                                                    $form['typ'][$id] = lmbdb_result($rs1, 'FORM_TYP');
+                                                }
+
+                                                if ($form):
+                                                    ?>
+                                                    <div class="px-0 w-100">
+                                                        <div class="d-flex flex-row align-items-center">
+                                                            <div class="ps-0 pe-1 d-flex align-items-center">
+                                                                <i class="lmb-icon-cus lmb-form-alt"
+                                                                   title="<?= $lang[1169] ?>"></i>
+                                                            </div>
+                                                            <div class="px-0 w-100">
+                                                                <select class="form-select form-select-sm"
+                                                                        name="view_form_<?= $key ?>"
+                                                                        onchange="save_rules('<?= $key ?>','',22)">
+                                                                    <option VALUE=\"0\">
+                                                                        default
+                                                                    </option>
+
+                                                                    <?php
+                                                                    foreach ($form['name'] as $fid => $_value):
+                                                                        if ($form['typ'][$fid] == 1):
+                                                                            ?>
+                                                                            <option value="<?= $fid ?>" <?= $f_result[$key]["view_form"] == $fid ? "selected" : "" ?>>
+                                                                                <?= $form['name'][$fid] ?>
+                                                                            </option>
+                                                                        <?php
+                                                                        endif;
+                                                                    endforeach;
+                                                                    ?>
+                                                                </select>
+                                                            </div>
                                                         </div>
                                                     </div>
-
-
-                                                    <div id="div_rules_<?= $key ?>" class="d-flex flex-column">
-                                                        <div id="div_edit_rule_<?= $key ?>"
-                                                             class="p-0 <?= !$showER ? '' : 'd-flex' ?> align-items-center"
-                                                             style="min-width: 0; <?= !$showER ? 'display:none;' : '' ?>">
-                                                            <i class="lmb-icon lmb-pencil cursor-pointer py-1 pe-2 me-2"
-                                                               onclick="div6(this,'<?= $key ?>')"
-                                                               title="<?= $lang[2573] ?>"></i>
-                                                            <div id="t_edit_rule_<?= $key ?>"
-                                                                 class=""
-                                                                 style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
-                                                                <?= e($f_result[$key]["tabeditrule"]) ?>
-                                                            </div>
-                                                            <input
-                                                                    type="hidden"
-                                                                    name="edit_rule_<?= $key ?>"
-                                                                    value="<?= e($f_result[$key]["tabeditrule"]) ?>">
-                                                        </div>
-                                                        <div id="div_indicator_rule_<?= $key ?>"
-                                                             class="p-0 <?= !$showIR ? '' : 'd-flex' ?> align-items-center"
-                                                             style="min-width: 0; <?= !$showIR ? 'display:none;' : '' ?>">
-                                                            <i class="lmb-icon lmb-indicator-rule cursor-pointer py-1 pe-2 me-2"
-                                                               onclick="div1(this,'<?= $key ?>')"
-                                                               title="<?= $lang[1255] ?>"></i>
-                                                            <div id="t_indicator_rule_<?= $key ?>"
-                                                                 class=""
-                                                                 style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
-                                                                <?= e($f_result[$key]["indicator"]) ?>
-                                                            </div>
-                                                            <input
-                                                                    type="hidden"
-                                                                    class="form-control-sm w-100"
-                                                                    name="indicator_rule_<?= $key ?>"
-                                                                    value="<?= e($f_result[$key]["indicator"]) ?>">
-                                                        </div>
-                                                        <div id="div_orderby_value_<?= $key ?>"
-                                                             class="p-0 <?= !$showOV ? '' : 'd-flex' ?> align-items-center"
-                                                             style="min-width: 0; <?= !$showOV ? 'display:none;' : '' ?>">
-                                                            <i class="lmb-icon lmb-textsort-up cursor-pointer py-1 pe-2 me-2"
-                                                               onclick="div7(this,'<?= $key ?>')"
-                                                               title="<?= $lang[1837] ?>"></i>
-                                                            <div id="t_orderby_value_<?= $key ?>"
-                                                                 class=""
-                                                                 style="text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
-                                                                <?= e($f_result[$key]["orderby"]) ?>
-                                                            </div>
-                                                            <input
-                                                                    type="hidden"
-                                                                    class="form-control-sm w-100"
-                                                                    name="orderby_value_<?= $key ?>"
-                                                                    value="<?= e($f_result[$key]["orderby"]) ?>"
-                                                            >
-                                                        </div>
-                                                    </div>
-                                                <?php } ?>
-                                            </div>
-
-                                            <div class="col-3">
-                                                <div class="row w-100 m-0">
                                                     <?php
-                                                    # form selection
-                                                    $sqlquery = "SELECT ID,NAME,FORM_TYP FROM LMB_FORM_LIST WHERE REFERENZ_TAB = '" . $_gtab["tab_id"][$key] . "'";
-                                                    $rs1 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-                                                    $form = null;
-                                                    while (lmbdb_fetch_row($rs1)) {
-                                                        $id = lmbdb_result($rs1, 'ID');
-                                                        $form['name'][$id] = lmbdb_result($rs1, 'NAME');
-                                                        $form['typ'][$id] = lmbdb_result($rs1, 'FORM_TYP');
-                                                    }
 
-                                                    if ($form):
+                                                    //tablelist form selection
+                                                    ?>
+                                                    <div class="px-0 w-100">
+                                                        <div class="d-flex flex-row align-items-center">
+                                                            <div class="ps-0 pe-1 d-flex align-items-center">
+                                                                <i class="lmb-icon lmb-icon-cus lmb-list-edit"
+                                                                   title="<?= $lang[2756] ?>"></i>
+                                                            </div>
+                                                            <div class="px-0 w-100">
+                                                                <select class="form-select form-select-sm"
+                                                                        name="view_lform_<?= $key ?>"
+                                                                        onchange="save_rules('<?= $key ?>','',24)">
+                                                                    <option VALUE="0">
+                                                                        none
+                                                                    </option>
+                                                                    <?php foreach ($form['name'] as $fid => $_value): ?>
+                                                                        <option VALUE="<?= $fid ?>" <?= $f_result[$key]["view_lform"] == $fid ? "selected" : "" ?>>
+                                                                            <?= $form['name'][$fid] ?>
+                                                                        </option>
+                                                                    <?php endforeach; ?>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <?php
+
+
+                                                    //calendar form selection
+                                                    if ($_gtab["typ"][$key] == 2) {
                                                         ?>
                                                         <div class="px-0 w-100">
                                                             <div class="d-flex flex-row align-items-center">
                                                                 <div class="ps-0 pe-1 d-flex align-items-center">
-                                                                    <i class="lmb-icon-cus lmb-form-alt"
-                                                                       title="<?= $lang[1169] ?>"></i>
+                                                                    <i class="lmb-icon lmb-calendar"
+                                                                       title="<?= $lang[1929] ?> <?= $lang[2574] ?>"></i>
                                                                 </div>
                                                                 <div class="px-0 w-100">
                                                                     <select class="form-select form-select-sm"
-                                                                            name="view_form_<?= $key ?>"
-                                                                            onchange="save_rules('<?= $key ?>','',22)">
-                                                                        <option VALUE=\"0\">
+                                                                            name="view_tform_<?= $key ?>"
+                                                                            onchange="save_rules('<?= $key ?>','',23)">
+                                                                        <option value="0">
                                                                             default
                                                                         </option>
-
-                                                                        <?php
-                                                                        foreach ($form['name'] as $fid => $_value):
-                                                                            if ($form['typ'][$fid] == 1):
-                                                                                ?>
-                                                                                <option value="<?= $fid ?>" <?= $f_result[$key]["view_form"] == $fid ? "selected" : "" ?>>
-                                                                                    <?= $form['name'][$fid] ?>
-                                                                                </option>
-                                                                            <?php
-                                                                            endif;
-                                                                        endforeach;
-                                                                        ?>
-                                                                    </select>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                        <?php
-
-                                                        //tablelist form selection
-                                                        ?>
-                                                        <div class="px-0 w-100">
-                                                            <div class="d-flex flex-row align-items-center">
-                                                                <div class="ps-0 pe-1 d-flex align-items-center">
-                                                                    <i class="lmb-icon lmb-icon-cus lmb-list-edit"
-                                                                       title="<?= $lang[2756] ?>"></i>
-                                                                </div>
-                                                                <div class="px-0 w-100">
-                                                                    <select class="form-select form-select-sm"
-                                                                            name="view_lform_<?= $key ?>"
-                                                                            onchange="save_rules('<?= $key ?>','',24)">
-                                                                        <option VALUE="0">
-                                                                            none
-                                                                        </option>
                                                                         <?php foreach ($form['name'] as $fid => $_value): ?>
-                                                                            <option VALUE="<?= $fid ?>" <?= $f_result[$key]["view_lform"] == $fid ? "selected" : "" ?>>
+                                                                            <option value="<?= $fid ?>" <?= $f_result[$key]["view_tform"] == $fid ? "selected" : "" ?>>
                                                                                 <?= $form['name'][$fid] ?>
                                                                             </option>
                                                                         <?php endforeach; ?>
@@ -529,158 +549,165 @@
                                                             </div>
                                                         </div>
                                                         <?php
+                                                    }
 
-
-                                                        //calendar form selection
-                                                        if ($_gtab["typ"][$key] == 2) {
-                                                            ?>
-                                                            <div class="px-0 w-100">
-                                                                <div class="d-flex flex-row align-items-center">
-                                                                    <div class="ps-0 pe-1 d-flex align-items-center">
-                                                                        <i class="lmb-icon lmb-calendar"
-                                                                           title="<?= $lang[1929] ?> <?= $lang[2574] ?>"></i>
-                                                                    </div>
-                                                                    <div class="px-0 w-100">
-                                                                        <select class="form-select form-select-sm"
-                                                                                name="view_tform_<?= $key ?>"
-                                                                                onchange="save_rules('<?= $key ?>','',23)">
-                                                                            <option value="0">
-                                                                                default
-                                                                            </option>
-                                                                            <?php foreach ($form['name'] as $fid => $_value): ?>
-                                                                                <option value="<?= $fid ?>" <?= $f_result[$key]["view_tform"] == $fid ? "selected" : "" ?>>
-                                                                                    <?= $form['name'][$fid] ?>
-                                                                                </option>
-                                                                            <?php endforeach; ?>
-                                                                        </select>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                            <?php
-                                                        }
-
-                                                        //kanban form selection
-                                                        if ($_gtab["typ"][$key] == 7):
-                                                            ?>
-                                                            <div class="px-0 w-100">
-                                                                <div class="d-flex flex-row align-items-center">
-                                                                    <div class="ps-0 pe-1 d-flex align-items-center">
-                                                                        <i class="lmb-icon lmb-columns"
-                                                                           title="kanban <?php $lang[2574] ?>"></i>
-                                                                    </div>
-                                                                    <div class="px-0 w-100">
-                                                                        <select class="form-select form-select-sm"
-                                                                                NAME="view_tform_<?= $key ?>"
-                                                                                onchange="save_rules('<?= $key ?>','',23)">
-                                                                            <option VALUE="0">
-                                                                                default
-                                                                            </option>
-                                                                            <?php
-                                                                            $bzm1 = 1;
-                                                                            foreach ($form['name'] as $fid => $_value): ?>
-                                                                                <option VALUE="<?= $fid ?>" <?= $f_result[$key]["view_tform"] == $fid ? "selected" : "" ?>>
-                                                                                    <?= $form['name'][$fid] ?>
-                                                                                </option>
-                                                                            <?php endforeach; ?>
-                                                                        </select>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        <?php
-                                                        endif;
-                                                    endif;
-
-                                                    # Versioning Type
-                                                    if ($gtab["versioning"][$key] and !$isview) {
+                                                    //kanban form selection
+                                                    if ($_gtab["typ"][$key] == 7):
                                                         ?>
                                                         <div class="px-0 w-100">
                                                             <div class="d-flex flex-row align-items-center">
                                                                 <div class="ps-0 pe-1 d-flex align-items-center">
-                                                                    <i class="lmb-icon lmb-versioning-type"
-                                                                       title="<?= $lang[2565] ?>"></i>
+                                                                    <i class="lmb-icon lmb-columns"
+                                                                       title="kanban <?php $lang[2574] ?>"></i>
                                                                 </div>
                                                                 <div class="px-0 w-100">
                                                                     <select class="form-select form-select-sm"
-                                                                            NAME="versioning_type_<?= $key ?>"
-                                                                            onchange="save_rules('<?= $key ?>','',25)">
+                                                                            NAME="view_tform_<?= $key ?>"
+                                                                            onchange="save_rules('<?= $key ?>','',23)">
                                                                         <option VALUE="0">
-
+                                                                            default
                                                                         </option>
-                                                                        <option VALUE="1" <?= $f_result[$key]["versioning_type"] == 1 ? "selected" : "" ?>>
-                                                                            <?= $lang[2144] ?>
-                                                                        </option>
-                                                                        <option VALUE="2" <?= $f_result[$key]["versioning_type"] == 2 ? "selected" : "" ?>>
-                                                                            <?= $lang[2145] ?>
-                                                                        </option>
+                                                                        <?php
+                                                                        $bzm1 = 1;
+                                                                        foreach ($form['name'] as $fid => $_value): ?>
+                                                                            <option VALUE="<?= $fid ?>" <?= $f_result[$key]["view_tform"] == $fid ? "selected" : "" ?>>
+                                                                                <?= $form['name'][$fid] ?>
+                                                                            </option>
+                                                                        <?php endforeach; ?>
                                                                     </select>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    <?php
+                                                    endif;
+                                                endif;
+
+                                                # Versioning Type
+                                                if ($gtab["versioning"][$key] and !$isview) {
+                                                    ?>
+                                                    <div class="px-0 w-100">
+                                                        <div class="d-flex flex-row align-items-center">
+                                                            <div class="ps-0 pe-1 d-flex align-items-center">
+                                                                <i class="lmb-icon lmb-versioning-type"
+                                                                   title="<?= $lang[2565] ?>"></i>
+                                                            </div>
+                                                            <div class="px-0 w-100">
+                                                                <select class="form-select form-select-sm"
+                                                                        NAME="versioning_type_<?= $key ?>"
+                                                                        onchange="save_rules('<?= $key ?>','',25)">
+                                                                    <option VALUE="0">
+
+                                                                    </option>
+                                                                    <option VALUE="1" <?= $f_result[$key]["versioning_type"] == 1 ? "selected" : "" ?>>
+                                                                        <?= $lang[2144] ?>
+                                                                    </option>
+                                                                    <option VALUE="2" <?= $f_result[$key]["versioning_type"] == 2 ? "selected" : "" ?>>
+                                                                        <?= $lang[2145] ?>
+                                                                    </option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <?php
+                                                }
+
+                                                if (!$isview) {
+                                                    if ($LINK[226] and $gtrigger[$value]) {
+                                                        ?>
+
+                                                        <div class="px-0 w-100">
+                                                            <div class="d-flex flex-row align-items-center">
+                                                                <div class="ps-0 pe-1 d-flex align-items-center">
+                                                                    <i class="lmb-icon lmb-database ps-0 pe-1"
+                                                                       TITLE="trigger"
+                                                                       onclick="activ_menu=1;document.getElementById('tab_trigger_<?=$key?>').style.display=''"></i>
+                                                                </div>
+                                                                <div class="px-0 w-100">
+                                                                    <span STYLE="display:none;position:absolute" class="lmbContextMenu"
+                                                                          ID="tab_trigger_<?=$key?>"
+                                                                          OnClick="activ_menu=1">
+                                                                    <select NAME="tab_trigger_<?= $key ?>[]"
+                                                                            onchange="save_rules('<?= $key ?>','',26)"
+                                                                            multiple size="5">
+                                                                        <?php
+                                                                        $trlist = array();
+                                                                        foreach ($gtrigger[$value]["id"] as $trid => $trval):
+                                                                            if (is_array($f_result[$key]["tab_trigger"]) && in_array($trid, $f_result[$key]["tab_trigger"])) {
+                                                                                $SELECTED = "selected";
+                                                                                $trlist[] = $gtrigger[$value]["trigger_name"][$trid];
+                                                                            } else {
+                                                                                $SELECTED = "";
+                                                                            }
+                                                                            ?>
+                                                                            <option VALUE="<?= $trid ?>" <?= $SELECTED ?>>
+                                                                                    <?= $gtrigger[$value]["trigger_name"][$trid] ?> (<?= $gtrigger[$value]["type"][$trid] ?>)
+                                                                            </option>
+                                                                        <?php
+                                                                        endforeach;
+                                                                        ?>
+                                                                    </select>
+                                                                </span>
+                                                                    <input type="TEXT"
+                                                                           class="form-control form-control-sm"
+                                                                           value="<?= implode(";", $trlist) ?>"
+                                                                           onclick="activ_menu=1;document.getElementById('tab_trigger_<?=$key?>').style.display=''">
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <?php
                                                     }
 
-                                                    if (!$isview) {
-                                                        if ($LINK[226] and $gtrigger[$value]) {
-                                                            ?>
 
-                                                            <div class="px-0 w-100">
-                                                                <div class="d-flex flex-row align-items-center">
-                                                                    <div class="ps-0 pe-1 d-flex align-items-center">
-                                                                        <i class="lmb-icon lmb-database ps-0 pe-1"
-                                                                           TITLE="trigger"
-                                                                           onclick="activ_menu=1;document.getElementById('tab_trigger_$key').style.display=''"></i>
-                                                                    </div>
-                                                                    <div class="px-0 w-100">
-                                                                        <span STYLE="display:none;position:absolute"
-                                                                              ID="tab_trigger_$key"
-                                                                              OnClick="activ_menu=1">
-                                                                        <select NAME="tab_trigger_<?= $key ?>[]"
-                                                                                onchange="save_rules('<?= $key ?>','',26)"
-                                                                                multiple size="5">
-                                                                            <?php
-                                                                            $trlist = array();
-                                                                            foreach ($gtrigger[$value]["id"] as $trid => $trval):
-                                                                                if (in_array($trid, $f_result[$key]["tab_trigger"])) {
-                                                                                    $SELECTED = "selected";
-                                                                                    $trlist[] = $gtrigger[$value]["trigger_name"][$trid];
-                                                                                } else {
-                                                                                    $SELECTED = "";
-                                                                                }
-                                                                                ?>
-                                                                                <option VALUE="<?= $trid ?>" <?= $SELECTED ?>>
-                                                                                        <?= $gtrigger[$value]["trigger_name"][$trid] ?> (<?= $gtrigger[$value]["type"][$trid] ?>)
-                                                                                </option>
-                                                                            <?php
-                                                                            endforeach;
+                                                    if ($gfilter) {
+                                                        ?>
+
+                                                        <div class="px-0 w-100">
+                                                            <div class="d-flex flex-row align-items-center">
+                                                                <div class="ps-0 pe-1 d-flex align-items-center">
+                                                                    <i class="lmb-icon lmb-filter ps-0 pe-1"
+                                                                       TITLE="<?=$lang[3163]?>"
+                                                                       onclick="activ_menu=1;document.getElementById('tab_globalfilter_<?=$key?>').style.display=''"></i>
+                                                                </div>
+                                                                <div class="px-0 w-100">
+                                                                    <span STYLE="display:none;position:absolute" class="lmbContextMenu"
+                                                                          ID="tab_globalfilter_<?=$key?>"
+                                                                          OnClick="activ_menu=1">
+                                                                    <select NAME="tab_globalfilter_<?= $key ?>[]"
+                                                                            onchange="save_rules('<?= $key ?>','',35)"
+                                                                            multiple size="5">
+                                                                        <?php
+                                                                        $trlist = array();
+                                                                        foreach($gfilter as $gfkey => $gfname):
+                                                                            if (is_array($f_result[$key]["tab_globalfilter"]) && in_array($gfname, $f_result[$key]["tab_globalfilter"])) {
+                                                                                $SELECTED = "selected";
+                                                                                $trlist[] = $gfname;
+                                                                            } else {
+                                                                                $SELECTED = "";
+                                                                            }
                                                                             ?>
-                                                                        </select>
-                                                                    </span>
-                                                                        <input type="TEXT"
-                                                                               class="form-control form-control-sm"
-                                                                               value="<?= implode(";", $trlist) ?>"
-                                                                               onclick="activ_menu=1;document.getElementById('tab_trigger_$key').style.display=''">
-                                                                    </div>
+                                                                            <option VALUE="<?= $gfname ?>" <?= $SELECTED ?>><?= $gfname ?></option>
+                                                                        <?php
+                                                                        endforeach;
+                                                                        ?>
+                                                                    </select>
+                                                                </span>
+                                                                    <input type="TEXT"
+                                                                           class="form-control form-control-sm"
+                                                                           value="<?= implode(";", $trlist) ?>"
+                                                                           onclick="activ_menu=1;document.getElementById('tab_globalfilter_<?=$key?>').style.display=''">
                                                                 </div>
                                                             </div>
-                                                            <?php
-                                                        }
+                                                        </div>
+                                                        <?php
                                                     }
 
-                                                    ?>
-                                                </div>
+                                                }
+                                                ?>
+
                                             </div>
                                         </div>
-                                    </td>
-                                <?php
-
-                                else:
-                                    ?>
-                                    <td colspan="2">
-                                        &nbsp;
-                                    </td>
-                                <?php
-                                endif;
-                                ?>
+                                    </div>
+                                </td>
 
                                 </tr>
                                 <?php

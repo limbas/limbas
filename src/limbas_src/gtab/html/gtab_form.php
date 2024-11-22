@@ -7,6 +7,11 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+if(!array_key_exists($form_id, $gformlist[0]['id'])) {
+	return;
+}
+
+
 if($gformlist[0]["extension"][$form_id] AND file_exists(EXTENSIONSPATH.$gformlist[0]["extension"][$form_id])){
 	require_once(EXTENSIONSPATH.$gformlist[0]["extension"][$form_id]);
 }else{

@@ -8,7 +8,7 @@
 
 
 $(function () {
-    $('[data-delete]').on('click', deleteReport);
+    $('[data-delete]').on('click', function() {confirmDelete($(this), deleteReport)});
     $('#btn-save-report').on('click', saveReport);
     $('[data-update]').on('change', updateReport);
 
@@ -79,8 +79,8 @@ function saveReport() {
 
 }
 
-function deleteReport() {
-    let id = $(this).data('delete');
+function deleteReport($element) {
+    let id = $element.data('delete');
     sendReportAction({
         action: 'delete',
         id: id

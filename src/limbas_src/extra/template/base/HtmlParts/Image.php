@@ -10,6 +10,7 @@
 namespace Limbas\extra\template\base\HtmlParts;
 
 use Limbas\extra\template\base\HtmlParts\Traits\TraitImage;
+use Limbas\extra\template\base\TemplateConfig;
 
 /**
  * Class Image
@@ -20,21 +21,25 @@ class Image extends AbstractHtmlPart {
     
     protected array $attributes;
     
-    public function __construct($attributes) {        
+    public function __construct($attributes) {
         $this->attributes = $attributes ?? [];
         
-        $src = $this->attributes['src'];
-        
-        if(str_contains($src, 'main.php?action=download')) {
-            $fileId = intval(str_replace('main.php?action=download&ID=','',trim($this->attributes['src'])));
+        if (!TemplateConfig::$instance->noImageReplacement) {
 
-            $src = '';
-            if($fileId > 0) {
-                $src = $this->getLmbFilePath($fileId);
+            $src = $this->attributes['src'];
+
+            if(str_contains($src, 'main.php?action=download')) {
+                $fileId = intval(str_replace('main.php?action=download&ID=','',trim($this->attributes['src'])));
+
+                $src = '';
+                if($fileId > 0) {
+                    $src = $this->getLmbFilePath($fileId);
+                }
             }
-        }
 
-        $this->attributes['src'] = $src;
+            $this->attributes['src'] = $src;
+        }
+        
     }
 
     public function getAsHtmlArr(): array

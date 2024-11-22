@@ -31,7 +31,9 @@
                 }
             });
             $('.CodeMirror').css('height','auto');
-            let $cm_s = $('.CodeMirror-scroll')
+            editor.getScrollerElement().style.minHeight = '50vh';
+            editor.refresh();
+            let $cm_s = $('.CodeMirror-scroll');
             $cm_s.css('max-height','77vh');
             editor.on('blur', formatSQL);
             formatSQL();

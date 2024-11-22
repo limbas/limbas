@@ -10,39 +10,42 @@ let grid;
 
 $(function(){
     
+    GridStack.setupDragIn(
+        '.newWidget',
+        { appendTo: 'body', helper: 'clone' }
+    );
+    
     grid = GridStack.init(
         {
             acceptWidgets: '.newWidget', 
             disableOneColumnMode: true, 
-            float: true,
-            dragIn: '.newWidget',
-            dragInOptions: { appendTo: 'body', helper: 'clone' },
+            float: true
         }
     );
 
     grid.on('added', dashboardWidgetAdded);
     grid.on('change', dashboardWidgetChanged);
     
-    $('#select-dashboard').change(function(){
+    $('#select-dashboard').on('change',function(){
         window.location.href = 'main.php?action=intro&dashboardID=' + $(this).val();
     });
 
-    $('#btn-delete-dashboard').click(deleteDashboard);
+    $('#btn-delete-dashboard').on('click', deleteDashboard);
     
-    $('#btn-delete-widget').click(deleteWidget);
+    $('#btn-delete-widget').on('click', deleteWidget);
     
-    $('[data-delete-widget]').click(confirmDeleteWidget);
+    $('[data-delete-widget]').on('click', confirmDeleteWidget);
     
-    $('[data-widget-options]').click(loadWidgetsOptions);
+    $('[data-widget-options]').on('click', loadWidgetsOptions);
 
-    $('#btn-save-widget-options').click(saveWidgetsOptions);
+    $('#btn-save-widget-options').on('click', saveWidgetsOptions);
 
     init_widgets_js();
 });
 
 
 function init_widgets_js() {
-    $( '[data-widget-class]' ).each(function( index ) {
+    $( '[data-widget-class]' ).each(function(  ) {
         init_widget_js(this);
     });
 }
@@ -107,8 +110,8 @@ function dashboardWidgetAdded(e,items) {
         
         let $html = $(data['html']);
 
-        $html.find('[data-delete-widget]').click(confirmDeleteWidget);
-        $html.find('[data-widget-options]').click(loadWidgetsOptions);
+        $html.find('[data-delete-widget]').on('click', confirmDeleteWidget);
+        $html.find('[data-widget-options]').on('click', loadWidgetsOptions);
         
         $(grid.el).append($html);
 
@@ -165,7 +168,7 @@ function deleteWidget() {
             id:id
         },
         dataType: 'json'
-    }).done(function (data) {
+    }).done(function () {
         $('#gs-item-'+id).remove();
     });
 
@@ -183,8 +186,8 @@ function deleteDashboard() {
             id:id
         },
         dataType: 'json'
-    }).done(function (data) {
-        window.location.reload(true);
+    }).done(function () {
+        window.location.reload();
     });
 
     $('#deleteDashboardModal').modal('hide');
@@ -228,7 +231,7 @@ function saveWidgetsOptions() {
             options: options
         },
         dataType: 'json'
-    }).done(function (data) {
+    }).done(function () {
 
         let wObj = $('#gs-item-'+id).data('widget');
         if (wObj) {

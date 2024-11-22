@@ -527,7 +527,7 @@ class LimbasRecord extends LimbasComponent {
 					foreach($value as $vkey => $vpart) {
 						//echo 'VALUE: ' . $vkey . '  ' . print_r($vpart, true) . '<br/>';
 						if (is_array($vpart)) {
-							$gsr[$tid][$fieldid][$i] = utf8_decode($vkey);
+							$gsr[$tid][$fieldid][$i] = $vkey;
 							if (isset($vpart['operator'])) {
 								if (LimbasRecord::PT_TEXT == $this->definitions[$key]['parse_type'] && isset(LimbasRecord::$OPERATIONS['txt'][$vpart['operator']])) {
 									$gsr[$tid][$fieldid]['txt'][0] = LimbasRecord::$OPERATIONS['txt'][$vpart['operator']];
@@ -549,7 +549,7 @@ class LimbasRecord extends LimbasComponent {
 							}
 						}
 						else {
-							$gsr[$tid][$fieldid][$i] = utf8_decode($value[$vkey]);
+							$gsr[$tid][$fieldid][$i] = $value[$vkey];
 							if ($i+1 < lmb_count($value)) {
 								$gsr[$tid][$fieldid]['andor'][$i+1] = LimbasRecord::$OPERATIONS['logical']['or'];
 							}
@@ -558,7 +558,7 @@ class LimbasRecord extends LimbasComponent {
 					}
 				}
 				else {
-					$gsr[$tid][$fieldid][0] = utf8_decode($value);
+					$gsr[$tid][$fieldid][0] = $value;
 				}
 			}
 			elseif (!is_null($relfield)) {
@@ -662,18 +662,18 @@ class LimbasRecord extends LimbasComponent {
 												if (LimbasRecord::FT_UPLOAD == $reldefs[$relfieldname]['field_type'] && is_array($val)) {
 													$newvals2 = array();
 													foreach($val as $key2 => $val2) {
-														$newvals2[$key2] = utf8_encode(html_entity_decode($val2));
+														$newvals2[$key2] = html_entity_decode($val2);
 													}
 													$newvals[$key] = $newvals2;
 												}
 												else {
-													$newvals[] = utf8_encode(html_entity_decode($val));
+													$newvals[] = html_entity_decode($val);
 												}
 											}
 											$relitem->$attr = $newvals;
 										}
 										else {
-											$relitem->$attr = utf8_encode(html_entity_decode($relvalue));
+											$relitem->$attr = html_entity_decode($relvalue);
 										}
 									}
 									//echo '<pre>' . get_class($relation) . print_r($relitem, true) . '</pre>';
@@ -696,10 +696,10 @@ class LimbasRecord extends LimbasComponent {
 							// Auswahl (Single Select)
 							if (is_array($value) && 1 == lmb_count($value)) {
 								$vals =  array_values($value);
-								$item->attributes[$fieldname] = utf8_encode(html_entity_decode($vals[0]));
+								$item->attributes[$fieldname] = html_entity_decode($vals[0]);
 							}
 							else {
-								$item->attributes[$fieldname] = utf8_encode(html_entity_decode($value));
+								$item->attributes[$fieldname] = html_entity_decode($value);
 							}
 						}
 						elseif (LimbasRecord::DT_SELECTION_CHECKBOX == $this->definitions[$fieldname]['data_type'] ||
@@ -717,21 +717,21 @@ class LimbasRecord extends LimbasComponent {
 										$this->log('LimbasRecord(' . $this->refId . ').handleRecords ' . $fieldname . ' IS_ARRAY ' . var_export($val, true));
 										throw new LimbasRecordException('Array of subvalues (' . $key . ' =&gt; ' . var_export($val, true) . ') not allowed in field ' . $fieldname . ' of table ' . $this->table . '!');
 									}
-									$newvals[] = utf8_encode(html_entity_decode($val));
+									$newvals[] = html_entity_decode($val);
 								}
 								$item->attributes[$fieldname] = $newvals;
 							}
 							else {
-								$item->attributes[$fieldname] = utf8_encode(html_entity_decode($value));
+								$item->attributes[$fieldname] = html_entity_decode($value);
 							}
 						}
 						else {
-							$item->attributes[$fieldname] = utf8_encode(html_entity_decode($value));
+							$item->attributes[$fieldname] = html_entity_decode($value);
 						}
 					}
 					else {
 						// normal data
-						$item->attributes[$fieldname] = utf8_encode(html_entity_decode($value));
+						$item->attributes[$fieldname] = html_entity_decode($value);
 					}
 				}
 				$item->_new = false;
@@ -840,12 +840,12 @@ class LimbasRecord extends LimbasComponent {
 					if (is_array($this->attributes[$name])) {
 						$data = array();
 						foreach($this->attributes[$name] as $key => $value) {
-							$data[$key] = utf8_decode($value);
+							$data[$key] = $value;
 						}
 						$params[0]['gnup'][$this->definitions[$name]['id']] = $data;
 					}
 					elseif (!is_object($this->attributes[$name])) {
-						$params[0]['gnup'][$this->definitions[$name]['id']] = utf8_decode($this->attributes[$name]);
+						$params[0]['gnup'][$this->definitions[$name]['id']] = $this->attributes[$name];
 					}
 				}
 			}
@@ -900,12 +900,12 @@ class LimbasRecord extends LimbasComponent {
 					if (is_array($this->$name)) {
 						$data = array();
 						foreach($this->$name as $key => $value) {
-							$data[$key] = utf8_decode($value);
+							$data[$key] = $value;
 						}
 						$params[0]['gup'][$this->_tableId . ',' . $this->definitions[$name]['id'] . ',' . $this->_id] = $data;
 					}
 					else {
-						$params[0]['gup'][$this->_tableId . ',' . $this->definitions[$name]['id'] . ',' . $this->_id] = utf8_decode($this->$name);
+						$params[0]['gup'][$this->_tableId . ',' . $this->definitions[$name]['id'] . ',' . $this->_id] = $this->$name;
 					}
 				}
 			}

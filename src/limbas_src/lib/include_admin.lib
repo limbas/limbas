@@ -17,56 +17,46 @@ function paintTextToImageSetColor($img){
 }
 	
 	
-function paintTextToImage($text,$size=12,$font=null){
-
-	global $umgvar;
+function paintTextToImage(string $text, int $size=12, string $fontPath=null): bool|string
+{
 	global $session;
-	global $farbschema;
 	
-	if(!$font){
-		if(file_exists($umgvar["pfad"]."/inc/fonts/DejaVuSans.ttf")){
-			$font = $umgvar["pfad"]."/inc/fonts/DejaVuSans.ttf";
-		}else{
+	if(empty($fontPath))
+	{
+		$fontPath = DEPENDENTPATH . 'inc/fonts/DejaVuSans.ttf';
+		if(!file_exists($fontPath)){
 		    lmb_alert('failure in textToImage - no font (DejaVuSans) available!');
 			return false;
 		}
-	}elseif($font){
-		if(lmb_strpos($font,"/") === false){
-			$font = $umgvar["pfad"]."/inc/fonts/$font";
-		}
 	}
+	
+	$targetPath = USERPATH . $session['user_id'] . '/temp/textimage.png';
 
-	if($box = imagettfbbox($size,0,$font,$text)){
+	if($box = imagettfbbox($size,0,$fontPath,$text)){
 			$x = abs($box[2]) + 5;
 			$y = abs($box[5]) + 5;
 			$img = imagecreate($x,$y);
 			$rgb = paintTextToImageSetColor($img);
 			imagefill($img, 0, 0, $rgb[2]);
-			imagettftext($img, $size, 0, 0, ($y - 3), $rgb[0], $font, $text);
-			$ok = imagepng($img, USERPATH.$session["user_id"]."/temp/textimage.png");
+			imagettftext($img, $size, 0, 0, ($y - 3), $rgb[0], $fontPath, $text);
+			$ok = imagepng($img, $targetPath);
 			imagedestroy($img);
 	}
 	
-	if(file_exists(USERPATH.$session["user_id"]."/temp/textimage.png")){
-		return USERPATH.$session["user_id"]."/temp/textimage.png";
+	if(file_exists($targetPath)){
+		return $targetPath;
 	}else{
 		return false;
 	}
 
 }
 
-function make_fileArchive($path,$name){
+function make_fileArchive($name){
 	global $umgvar;
 	global $session;
 	
-	#$path,"export_bundle")
-	
-	if(lmb_substr($path,lmb_strlen($path),1) != "/"){
-		$path = $path."/";
-	}
-	
-	$url = $path;
-	$path = $umgvar["pfad"]."/".$path;
+
+	$path = USERPATH.$session['user_id'].'/temp/';
 
 	if($folderval = read_dir($path)){
 		foreach($folderval["name"] as $key => $value){
@@ -86,7 +76,7 @@ function make_fileArchive($path,$name){
 		}
 	}    
 	
-	if(file_exists($url.$name.".tar.gz")){return $url.$name.".tar.gz";}else{return false;}
+	if(file_exists($path.$name.".tar.gz")){return $path.$name.".tar.gz";}else{return false;}
 }
 
 # grouplist
@@ -122,122 +112,30 @@ function viewgrouptree($LEVEL,$l,$select=null){
 }
 
 
+# Type-Extensions
+function getFunctionsFromFile($file){
+	global $gLmbExt;
 
-# ------------- htaccess ---------------
-function lmb_htaccess($ID,$user,$pass){
-	global $db;
-	global $session;
-	global $umgvar;
+    $file .= '.inc';
+	if($gLmbExt){
+            foreach($gLmbExt[$file] as $key => $value){
+                    $file = fopen($value,"r");
+                    while($line = fgets($file, 100000)){
+                            if($fline = lmb_stristr($line,'function')){
+                                    $na = trim(lmb_substr($fline,9,(lmb_strpos($fline,"(")-9)));
+                                    $function[] = $na;
+                            }
+                    }
+                    fclose($file);
+            }
+        }
 
-	$sqlquery = "SELECT USERNAME,PASSWORT,CLEARPASS FROM LMB_USERDB WHERE USER_ID = $ID";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	if(lmbdb_fetch_row($rs)) {
+    if($function){
+        $function = array_unique($function);
+    }
 
-		if(!$user){$user = lmbdb_result($rs, "USERNAME");}
-		if(!$pass){$pass = lmbdb_result($rs, "CLEARPASS");}
-
-		if(!$user){return false;}
-
-		$path = USERPATH.$ID;
-
-		######## single htaccess for userdirectory ##########
-		
-		# --- htaccess ---
-		$htaccess_file = fopen($path."/.htaccess","w");
-		$value = "AuthName \"$user\"\nAuthType Basic\nAuthUserFile ".$path."/.htpasswd\nrequire valid-user\nallow from all";
-		if($htaccess_file) {
-			fputs($htaccess_file,$value);
-			fclose($htaccess_file);
-		}
-
-		# --- htpasswd ---
-		if(is_file($path."/.htpasswd") AND !$pass){
-			return file_get_contents($path."/.htpasswd");
-		}elseif(!is_file($path."/.htpasswd") AND !$pass AND file_exists($path."/.htaccess")){
-			#unlink($path."/.htaccess");
-			$htaccess_file = fopen($path."/.htaccess","w");
-			$value = "allow from all";
-			if ($htaccess_file) {
-				fputs($htaccess_file,$value);
-				fclose($htaccess_file);
-			}
-		}else{
-			if($pass){
-				$htpasswd_file = fopen($path."/.htpasswd","w");
-				$pass = password_hash($pass,PASSWORD_BCRYPT);
-				$value = "{$user}:{$pass}\n";
-				if($htpasswd_file) {
-					fputs($htpasswd_file,$value);
-					fclose($htpasswd_file);
-				}
-				return "{$user}:{$pass}";
-			}elseif(file_exists($path."/.htaccess")){
-				#unlink($path."/.htaccess");
-				$htaccess_file = fopen($path."/.htaccess","w");
-				$value = "allow from all";
-				if ($htaccess_file) {
-					fputs($htaccess_file,$value);
-					fclose($htaccess_file);
-				}
-			}
-		}
-	}
-	return false;
+	return $function;
 }
-
-
-/**
- * htpasswd for TEMP Directory
- *
- * @param unknown_type $user
- * @param unknown_type $pass
- */
-function lmb_htaccessGroup(){
-
-	global $db;
-	
-	$sqlquery = "SELECT USER_ID FROM LMB_USERDB WHERE DEL = FALSE AND LMLOCK = FALSE";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs) {$commit = 1;}
-	while(lmbdb_fetch_row($rs)) {
-		
-		$userid = lmbdb_result($rs, "ID");
-		
-		if($pass AND $user){
-			$pass = crypt($pass);
-			$passgrp[] = "{$user}:{$pass}\n";
-		}
-		
-		if($passgrp){
-			$htaccess_file = fopen(TEMPPATH.'/.htaccess',"w");
-			$value = "AuthName \"$user\"\nAuthType Basic\nAuthUserFile ".TEMPPATH."/.htpasswd\nrequire valid-user\nallow from all";
-			if ($htaccess_file) {
-				fputs($htaccess_file,$value);
-				fclose($htaccess_file);
-			}
-			
-
-			$value = implode("\n",$passgrp);
-			$htpasswd_file = fopen(TEMPPATH.'/.htpasswd',"w");
-			if($htpasswd_file) {
-				fputs($htpasswd_file,$value);
-				fclose($htpasswd_file);
-			}
-		}else{
-			$htaccess_file = fopen(TEMPPATH.'/.htaccess',"w");
-			$value = "allow from all";
-			if ($htaccess_file) {
-				fputs($htaccess_file,$value);
-				fclose($htaccess_file);
-			}
-		}
-		
-		
-	}
-		
-}
-
 
 # Type-Extensions
 function getTypeExensions(){
@@ -289,20 +187,16 @@ function GroupTreeList($name,$items,$selected,$LEVEL=0,$l=null){
 	foreach($grouptree["id"] as $key => $value){
 		if($grouptree["level"][$key] == $LEVEL){
 
-            echo '<div class="dropdown-item" title="'.$mid.'">
-					<div class="form-check">
-						<label class="form-check-label">';
+            echo '<label class="dropdown-item px-0 d-flex align-items-center cursor-pointer" title="'.$mid.'">';
 							
 
                         foreach ($items["name"] as $ikey => $ival){
                             if(!$items["typ"][$ikey]){$items["typ"][$ikey] = "checkbox";}
-                            echo '<input class="form-check-input mt-0" type="'.$items["typ"][$ikey].'" value="'.$grouptree["id"][$key].'" name="grouptreelist['.$ival.'][]" '.(is_array($selected[$ival]) && in_array($grouptree["id"][$key],$selected[$ival])?'checked':'').'>';
+                            echo '<input class="form-check-input mt-0 me-2" type="'.$items["typ"][$ikey].'" value="'.$grouptree["id"][$key].'" name="grouptreelist['.$ival.'][]" '.(is_array($selected[$ival]) && in_array($grouptree["id"][$key],$selected[$ival])?'checked':'').'>';
                         }
 			
-							echo $l.$grouptree["name"][$key].'
-						</label>
-					</div>
-                  </div>';
+							echo '<span class="form-check-label">'.$l.$grouptree["name"][$key].'</span>
+                  </label>';
 			
 			
 			
@@ -777,7 +671,8 @@ function lmb_getViewDepPath($table,$fieldname=null,$level=0){
     $table = dbf_4($table);
     $level++;
 
-    if($dep = lmb_checkViewDependency($table,$fieldname)) {
+    $dep = lmb_checkViewDependency($table,$fieldname);
+    if(is_array($dep)) {
         foreach ($dep as $k => $v) {
             $v = dbf_4($v);
             if(!$depview[$v] OR $depview[$v] < $level){
@@ -1217,7 +1112,7 @@ function lmb_rebuildSequences($tablename=null,$field=null,$rebuild=null){
 	}else{
 	
 		# system tables
-		$table = array(array('LMB_HISTORY_ACTION','ID'),array('LMB_HISTORY_UPDATE','ID'),array('LMB_HISTORY_USER','ID'),array('LMB_WFL_INST','ID'),array('LMB_REMINDER','ID'),array('LMB_CUSTVAR_DEPEND','ID'));
+		$table = array(array('LMB_HISTORY_ACTION','ID'),array('LMB_HISTORY_UPDATE','ID'),array('LMB_HISTORY_USER','ID'),array('LMB_WFL_INST','ID'),array('LMB_REMINDER','ID'),array('LMB_CUSTVAR_DEPEND','ID'),array('LMB_SYNC_CACHE','ID'));
 		
 		# project tables
 		$sqlquery = "SELECT TAB_ID,TABELLE FROM LMB_CONF_TABLES WHERE TYP != 5";
@@ -1731,14 +1626,14 @@ function lmb_parseImport($value,$domain_columns,$key1){
  * @param unknown $table_datei
  * @param unknown $line
  */
-function lmb_fgetcsv(&$handle, $length = 0, $delimiter = ",", $enclosure = '"', $escape = "\\"){
+function lmb_fgetcsv(&$handle, $length = 0, $delimiter = ",", $enclosure = '"', $escape = ""){
     
     if($delimiter == '\t'){$delimiter = chr(9);}
     
     // check if php support csv escape
     return fgetcsv($handle, $length, $delimiter, $enclosure, $escape);
 }
- 
+
 /**
  * fputcsv - for different php versions
  * 
@@ -1751,12 +1646,10 @@ function lmb_fputcsv(&$table_datei, $line, $intern=0) {
     static $csv_enclosure;
     static $csv_escape;
     
-    if(!$csv_delimiter){
-        if(!$intern){
-            $csv_delimiter = $umgvar['csv_delimiter'];
-            $csv_enclosure = $umgvar['csv_enclosure'];
-            $csv_escape = $umgvar['csv_escape'];
-        }
+    if(!$csv_delimiter && !$intern){
+        $csv_delimiter = $umgvar['csv_delimiter'];
+        $csv_enclosure = $umgvar['csv_enclosure'];
+        $csv_escape = $umgvar['csv_escape'];
         if(!$csv_delimiter){$csv_delimiter = ',';}
         if(!$csv_enclosure){$csv_enclosure = '"';}
         if(!$csv_escape){$csv_escape = '\\';}
@@ -1764,10 +1657,10 @@ function lmb_fputcsv(&$table_datei, $line, $intern=0) {
     }
 
     // check if php support csv ecape
-    if ($GLOBALS['phpvok']) {
+    if($intern) {
+        fputcsv($table_datei, $line);
+    }else{
         fputcsv($table_datei, $line, $csv_delimiter, $csv_enclosure, $csv_escape);
-    } else {
-        fputcsv($table_datei, $line, $csv_delimiter, $csv_enclosure);
     }
 }
 
@@ -1822,7 +1715,7 @@ function soap_call_client($lmpar,$LIM){
 		array(
 		"login" =>$LIM["username"], 
 		"password" => $LIM["pass"], 
-		"location" => $LIM["lim_url"]."/main_soap.php",
+		"location" => trim($LIM['lim_url'],'/') . '/main_soap.php',
 		"uri" => "urn:xmethodsSoapServer",
 		"style" => SOAP_RPC,
 		"use" => SOAP_ENCODED,
@@ -2081,4 +1974,3 @@ function lmb_rebuildIndexxx($rebuild=null){
 
 }
 
-?>

@@ -1,6 +1,6 @@
 {
   "name": "limbas",
-  "version": "5.1.9",
+  "version": "5.4.0",
   "description": "Limbas is a database framework for creating database-driven business applications. As a graphical database front-end, it enables the efficient processing of data stocks and the flexible development of comfortable low-code database applications.",
   "repository": {
     "type": "git",
@@ -13,23 +13,24 @@
   ],
   "author": "Limbas GmbH",
   "license": "GPL-2.0",
-
   "dependencies": {
-    "bootstrap": "^5.3.3",
-    "codemirror": "5.21.0",
-    "colresizable": "1.6.0",
-    "datatables.net-bs5": "2.0.1",
-    "fontawesome-legacy": "npm:font-awesome@4.7.0",
     "@fortawesome/fontawesome-free": "6.1.0",
-    "jquery": "3.2.1",
-    "jquery-ui-dist": "1.12.1",
+    "@popperjs/core": "^2.11.8",
+    "bootstrap": "^5.3.3",
+    "chart.js": "^3.9.1",
+    "codemirror": "^5.65.16",
+    "colresizable": "1.6.0",
+    "datatables.net-bs5": "^2.0.4",
+    "fontawesome-legacy": "npm:font-awesome@4.7.0",
+    "gridstack": "^10.1.2",
+    "jquery": "^3.7.1",
+    "jquery-ui-dist": "^1.13.2",
     "select2": "4.0.13",
     "spectrum-colorpicker": "^1.8.1",
-    "sql-formatter": "11.0.0",
-    "tinymce": "^6.8.3",
+    "sql-formatter": "^15.3.0",
+    "tinymce": "^7.0.1",
     "tinymce-i18n": "^22.8.26",
-    "gridstack": "^6.0.2",
-    "chart.js": "^3.9.1"
+    "fullcalendar": "5.11.5"
   },
   "scripts": {
     "clean": "rm -rf public/assets/js && rm -rf public/assets/fonts && rm -rf public/assets/images && rm -rf public/assets/vendor && rm -rf limbas_src/resources/vendor",
@@ -40,18 +41,18 @@
     "localwatch": "npm-run-all --parallel lwatch:*",
     "watch:js": "onchange -v \"./limbas_src/resources/**/*.js\" -- npm run build:js",
     "build:js": "uglifyjs-folder ./limbas_src/resources/js --output ./public/assets/js --each --keep-fnames -x .js",
-    "build:vendor": "mkdir -p public/assets/fonts && vendor-copy && sed -i 's/oB=\"CSS1Compat\"!/oB=false=/g' public/assets/vendor/tinymce/tinymce.min.js",
+    "build:vendor": "mkdir -p public/assets/fonts && vendor-copy && sed -i 's/\"CSS1Compat\"!/false/g' public/assets/vendor/tinymce/tinymce.min.js",
     "watch": "npm-run-all --parallel watch:*",
     "build": "npm-run-all clean build:*"
   },
   "devDependencies": {
     "clean-css-cli": "^5.6.2",
+    "npm-run-all": "^4.1.5",
+    "onchange": "^7.1.0",
     "pegjs": "^0.10.0",
     "phpegjs": "^1.0.0-beta7",
     "uglify-js": "^3.17.2",
     "uglifyjs-folder": "3.2.0",
-    "onchange": "^7.1.0",
-    "npm-run-all": "^4.1.5",
     "vendor-copy": "^3.0.1"
   },
   "vendorCopy": [
@@ -168,8 +169,12 @@
       "to": "limbas_src/resources/vendor/fontawesome/scss"
     },
     {
-      "from": "limbas_src/resources/legacy/fullcalendar",
-      "to": "public/assets/vendor/fullcalendar"
+      "from": "node_modules/fullcalendar/main.min.js",
+      "to": "public/assets/vendor/fullcalendar/main.min.js"
+    },
+    {
+      "from": "node_modules/fullcalendar/main.min.css",
+      "to": "public/assets/vendor/fullcalendar/main.min.css"
     },
     {
       "from": "limbas_src/resources/legacy/jsgraphics",
@@ -264,8 +269,8 @@
       "to": "public/assets/vendor/sql-formatter/sql-formatter.min.js"
     },
     {
-      "from": "node_modules/tinymce/license.txt",
-      "to": "public/assets/vendor/tinymce/license.txt"
+      "from": "node_modules/tinymce/license.md",
+      "to": "public/assets/vendor/tinymce/license.md"
     },
     {
       "from": "node_modules/tinymce/tinymce.min.js",

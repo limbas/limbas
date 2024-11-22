@@ -15,7 +15,7 @@ lmb_StartTransaction();
 # --- reaktivieren ----
 if($reactivate AND $ID){
 	/* --- SUCHE ob schon vorhanden --------------------------------------------- */
-	$sqlquery = "SELECT USERNAME,PASSWORT FROM LMB_USERDB WHERE USER_ID = $ID AND DEL = ".LMB_DBDEF_TRUE;
+	$sqlquery = "SELECT USERNAME FROM LMB_USERDB WHERE USER_ID = $ID AND DEL = ".LMB_DBDEF_TRUE;
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 	if(lmbdb_fetch_row($rs)) {
@@ -25,8 +25,6 @@ if($reactivate AND $ID){
 			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 		}
-		# --- htaccess ---------
-        lmb_htaccess($ID,lmbdb_result($rs,"USERNAME"),lmbdb_result($rs,"PASSWORT"));
 	}else{die("user does not exist!");}
 # --- neu anlegen ---
 }elseif($user_add){

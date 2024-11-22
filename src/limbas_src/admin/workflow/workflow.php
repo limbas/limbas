@@ -46,7 +46,7 @@
                             <option></option>
                             <?php
                             foreach($gtab["table"] as $tabkey => $tabval){
-                                echo '<option value="'.$tabkey.'" '.(($wfltask["tab_id"][$key] == $tabkey)?'':'').'>'.$tabval.'</option>';
+                                echo '<option value="'.$tabkey.'" '.(($wfltask["tab_id"][$key] == $tabkey)?'selected':'').'>'.$tabval.'</option>';
                             }
                             ?>
                         </select>

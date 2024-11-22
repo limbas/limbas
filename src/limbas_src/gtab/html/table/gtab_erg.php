@@ -7,6 +7,8 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\admin\form\Form;
+use Limbas\admin\form\FormType;
 use Limbas\extra\template\select\TemplateSelector;
 
 # include extensions
@@ -17,7 +19,7 @@ if($GLOBALS["gLmbExt"]["ext_gtab_erg.inc"]){
 }
 
 #if (!($gtab['theme'][$gtabid])) {
-    require(COREPATH . 'gtab/html/table/contextmenus.php');
+    require(COREPATH . 'gtab/html/table/parts/contextmenus.php');
 #}
 
 ?>
@@ -72,6 +74,8 @@ jsvar["modal_opener"] = "<?=$umgvar["modal_opener"]?>";
 <?php
 
 TemplateSelector::printTemplateSelectModal(intval($gtabid));
+
+require_once(COREPATH  . 'gtab/html/contextmenus/gtab_filter.php');
 
  ?>
 
@@ -199,77 +203,35 @@ if(!$filter["hidecols"][$gtabid][0]){
 }
 
 # ----- Formular -------
-if($form_id AND $gformlist[$gtabid]["id"][$form_id] AND $gformlist[$gtabid]["typ"][$form_id] == 2){
+if($form_id && $gformlist[$gtabid]['id'][$form_id] && ($gformlist[$gtabid]['typ'][$form_id] === FormType::LIST->value || $gformlist[$gtabid]['typ'][$form_id] === FormType::SEARCH->value)){
 
-    // display custmenu
-    if($cm = $gformlist[$gtabid]["custmenu"][$form_id]){
-        echo "
-        <script>
-        top.openMenu({$cm});
-        </script>
-        ";
-    }
-
-	if($gformlist[$gtabid]["css"][$form_id]){
-		echo"<style type=\"text/css\">@import url(".$gformlist[$gtabid]["css"][$form_id]."?v={$umgvar['version']});</style>\n";
-	}
-    echo '<div class="legacy-table">';
-	form_ergview($gtabid,$gresult,$form_id);
-    echo '</div>';
-}else{
-    if ($gtab['theme'][$gtabid]) {
-        require(COREPATH . 'gtab/html/table/new/default.php');
-    } else {
-
+    $form = Form::get(intval($form_id));
+    
+    if($form->extension === null) {
         // display custmenu
-        if($cm = $gtab["custmenu"][$gtabid]){
+        if($cm = $gformlist[$gtabid]["custmenu"][$form_id]){
             echo "
             <script>
             top.openMenu({$cm});
             </script>
             ";
         }
-
-        # ----- Gruppiert -------
-        if($popg[$gtabid][0]['null']){
-            foreach($popg[$gtabid][0]['null'] as $key => $value){
-                if($value and $gfield[$gtabid]["groupable"][$key]){$group_fields[] = $key;}
-            }
-            # --- Prüfe ob Feld ausgewählt oder auf "ohne" gesetzt
-            if($group_fields){
-                $gresult = get_gresult($gtabid,1,$filter,$gsr,$verkn);
-                lmbGlistOpen();
-                lmbGlistTabs($gtabid,$verkn_poolid,$snap_id);
-                lmbGlistMenu($gtabid);
-                lmbGlistSearch($gtabid,0,0);
-                lmbGlistHeader($gtabid,$gresult,0);
-                table_group($gtabid,$group_fields,$filter,0,$gsr,$verkn);
-                lmbGlistFooter($gtabid,$gresult,$filter);
-                lmbGlistClose();
-            }else{
-                $usedef = 1;
-                unset($popg[$gtabid]);
-            }
-        }else{
-            $usedef = 1;
+    
+        if($gformlist[$gtabid]["css"][$form_id]){
+            echo"<style type=\"text/css\">@import url(".$gformlist[$gtabid]["css"][$form_id]."?v={$umgvar['version']});</style>\n";
         }
-
-        if($usedef){
-            lmbGlistOpen();
-            lmbGlistTabs($gtabid,$verkn_poolid,$snap_id);
-            lmbGlistMenu($gtabid);
-
-            # scrolling Header X-position
-            echo "<tr><td><div id=\"GtabTableFull\" style=\"overflow-x:auto;overflow-y:hidden;\"><table cellpadding=\"0\" cellspacing=\"0\">";
-            lmbGlistSearch($gtabid,$verknpf,$verkn);
-            lmbGlistHeader($gtabid,$gresult,0);
-            lmbGlistBody($gtabid,$gresult,0,$verkn,$verknpf,$filter,0,0,0,0,1);
-            echo "</table></div></td></tr>";
-
-            lmbGlistFooter($gtabid,$gresult,$filter);
-            lmbGlistClose();
-        }
-	}
+        require_once(COREPATH  . 'gtab/html/contextmenus/gtab_filter.php');
+        echo '<div class="legacy-table">';
+        form_ergview($gtabid,$gresult,$form_id);
+        echo '</div>';
+    }
+    
+    if($form->formType === FormType::SEARCH) {
+        require(COREPATH . 'gtab/html/table/default.php');
+    }
+    
+}else{
+    require(COREPATH . 'gtab/html/table/default.php');
 }
 
 

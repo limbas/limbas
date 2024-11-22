@@ -134,7 +134,7 @@ if($GLOBALS["old_action"] == 'gtab_readonly'){$action = 'gtab_change';} # for sc
                     <div class="card-body">
 
                         <?php
-                        /** @var \gtab\forms\LMBFormElement $formElement */
+                        /** @var Limbas\gtab\lib\forms\elements\LMBFormElement $formElement */
                         foreach($this->formElements as $formElement): ?>
 
                             <?php if ($formElement->getType() === 'section'): ?>

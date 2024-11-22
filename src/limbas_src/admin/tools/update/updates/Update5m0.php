@@ -13,7 +13,7 @@ namespace Limbas\admin\tools\update\updates;
 use Limbas\admin\tools\update\Update;
 use Limbas\admin\tools\update\Updater;
 
-use Database;
+use Limbas\lib\db\Database;
 use Throwable;
 
 class Update5m0 extends Update

@@ -112,15 +112,7 @@ if($params["action"] == "loadCards"){
 }
 
 
-if($params["reload"]){
-	/*if($tresult = $lmb_calendar->lmb_getEvent($tresult,$params)){
-		$tresult = lmb_arrayDecode($tresult);
-		$GLOBALS["noencode"] = 1;
-		echo json_encode($tresult);
-	}else{
-		echo 1;
-	}*/
-}
+
 
 
 ?>

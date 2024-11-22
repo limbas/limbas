@@ -12,30 +12,22 @@
 <script src="main.php?action=syntaxcheckjs"></script>
 <script src="assets/vendor/tinymce/tinymce.min.js?v=<?=$umgvar['version']?>"></script>
 <script src="assets/js/admin/templates/editor.js?v=<?=$umgvar['version']?>"></script>
+<script src="assets/js/extra/explorer/explorer.js?v=<?=$umgvar['version']?>"></script>
 <script src="assets/js/extra/mail/mail.js?v=<?=$umgvar['version']?>"></script>
 
-<div id="mailForm" class="container-fluid h-100">
+<form id="form1">
+    <?php /* only necessary because lmbTemplate tinyMCE plugin requires it */ ?>
+    <input type="hidden" name="gtabid" value="<?=$gtabid?>">
+    <input type="hidden" name="ID" id="formid" value="<?=$id?>">
+</form>
+<div class="container-fluid h-100">
     
     <div id="mail_sending" class="text-center py-4 d-none">
         <p class="mb-2"><i class="fas fa-spinner fa-spin fa-3x"></i></p>
         <?=$lang[3130]?>...
     </div>
     
-    <form id="form1">
-        
-            <input type="hidden" name="action" value="saveTemplate">
-            <input type="hidden" name="actid" value="manageTemplates">
-            <input type="hidden" name="gtabid" value="<?=$gtabid?>">
-            <input type="hidden" name="ID" id="formid" value="<?=$id?>">
-
-            <input type="hidden" id="mail_gtabid" value="<?=$gtabid?>">
-            <input type="hidden" id="mail_id" value="<?=$id?>">
-
-            <input type="hidden" name="type" value="">
-            <input type="hidden" name="element_id" value="">
-
-
-            <input type="hidden" name="content" id="content">
+    <form id="mailForm" data-id="<?=$id?>" data-gtabid="<?=$gtabid?>">
 
         <div class="mb-3">
             <button type="button" class="btn btn-primary btn-send-mail"><i class="fa fa-paper-plane"></i> <?=$lang[3131]?></button>
@@ -86,17 +78,19 @@
                 <div class="mb-3 row">
                     <label for="mail_attachments" class="col-sm-1 col-form-label">Anhänge:</label>
                     <div class="col-sm-11">
-                        <input type="file" class="form-control" id="mail_attachments" name="mail_attachments" value="<?=$subject?>" multiple>
-                        <?php if(!empty($attachments)): ?>
-                        <div class="d-flex gap-2 mt-3 text-muted">
-                            <?php foreach($attachments as $attachment): ?>
-                            <div class="text-center border p-2 rounded-2">
-                                <i class="fas fa-file"></i><br>
-                                <?=e($attachment)?>
-                            </div>
-                            <?php endforeach; ?>
+                        <div class="d-flex align-items-center gap-3">
+                            <button type="button" class="btn btn-outline-primary text-nowrap" id="btn-open-dms">Aus DMS auswählen</button>
+                            <input type="file" class="form-control" id="mail_attachments" name="mail_attachments" multiple>
+                        </div>                        
+                        <div class="d-flex gap-2 mt-3 text-muted" id="attachments">
+                            <?php if(!empty($attachments)): ?>
+                                <?php foreach($attachments as $attachment): ?>
+                                <div class="border px-2 py-1 rounded-2">
+                                    <i class="fas fa-file"></i> <?=e($attachment)?>
+                                </div>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </div>
-                        <?php endif; ?>
                     </div>
                 </div>
                 
@@ -105,7 +99,7 @@
                     <textarea class="form-control" id="mail_message" rows="20">
                     <?=e($templateHtml)?>
                 </textarea>
-                    <?= lmb_ini_wysiwyg('mail_message',null,null,1,650, intval($gtabid)); ?>
+                    <?= lmbInitTinyMce('mail_message',650, intval($gtabid)); ?>
                 </div>
             </div>
         </div>
@@ -113,4 +107,7 @@
         
     </form>
 
+
+    <?php require(COREPATH . 'extra/explorer/mini_explorer_modal.php'); ?>
+    
 </div>

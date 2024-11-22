@@ -7,18 +7,19 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-require_once COREPATH . 'lib/auth/AuthDefault.php';
-/** 
- * Class Auth
- */
-abstract class Auth {
+namespace Limbas\lib\auth;
+
+use Limbas\lib\db\Database;
+
+abstract class Auth
+{
 
 
     /**
      * @var int id of the current user
      */
     protected $authId;
-    
+
     /**
      * @var string username of the current user
      */
@@ -26,12 +27,13 @@ abstract class Auth {
 
     /**
      * Factory to get configured authentication method class
-     * 
+     *
      * @param null $method
-     * @return false|Auth
+     * @return Auth
      */
-    public static function getAuthenticator($method=null) {
-        
+    public static function getAuthenticator($method = null): Auth
+    {
+
         if ($method === null) {
             $method = 'default';
 
@@ -50,36 +52,37 @@ abstract class Auth {
             }
 
         }
-        
-        if(!empty($method)) {
-            $class = 'Auth'.ucfirst($method);
 
-            //search internal methods
-            $file = COREPATH . 'lib/auth/'.$class.'.php';
-            if (file_exists($file)) {
-                require_once $file;
-                return new $class();
-            }
 
-            //search in extensons
-            $file = EXTENSIONSPATH . 'auth/'.$class.'.php';
+        //default methods
+        if (in_array($method, array('default', 'htaccess'))) {
+            return match ($method) {
+                'default' => new AuthDefault(),
+                'htaccess' => new AuthHtaccess(),
+            };
+        }
+
+        if (!empty($method)) {
+            $class = 'Auth' . ucfirst($method);
+            //search in extensions
+            $file = EXTENSIONSPATH . 'auth/' . $class . '.php';
             if (file_exists($file)) {
                 require_once $file;
                 return new $class();
             }
         }
-        
-        
+
         return new AuthDefault();
     }
 
 
     /**
      * Check if the user is authenticated
-     * 
+     *
      * @return bool
      */
-    public function isAuthenticated() {
+    public function isAuthenticated(): bool
+    {
         if (isset($_SESSION['authenticated']) && $_SESSION['authenticated'] === true) {
             return true;
         }
@@ -90,17 +93,19 @@ abstract class Auth {
      * Deny access to the system.
      * Calls beforeDeny as hook for specific methods
      */
-    public static function deny() {
+    public static function deny(bool $blocked = false): void
+    {
         header_remove();
         Session::destroy();
-        static::beforeDeny();
+        static::beforeDeny($blocked);
         die();
     }
 
     /**
      * Checks based on the current request if the user wants to log out
      */
-    public static function checkLogout() {
+    public static function checkLogout(): void
+    {
 
         Session::start();
         $userid = $_SESSION['authId'];
@@ -109,9 +114,7 @@ abstract class Auth {
 
         if ($loggedIn && (isset($_POST['logout']) || isset($_REQUEST['logout']))) {
             // --- temp-Verzeichnis löschen ----
-            rmdirr(USERPATH.$userid."/temp");
-            // --- download-Verzeichnis löschen ----
-            rmdirr(USERPATH.$userid."/download");
+            rmdirr(USERPATH . $userid . "/temp");
             self::deny();
         }
     }
@@ -119,36 +122,42 @@ abstract class Auth {
     /**
      * Hook for actions that should be executed before exiting the script
      */
-    protected static function beforeDeny(){
-        require_once (COREPATH . 'lib/auth/html/permission.php');
+    protected static function beforeDeny(bool $blocked = false): void
+    {
+        require_once(COREPATH . 'lib/auth/html/permission.php');
     }
 
 
     /**
      * Start the authorization flow
      */
-    public function authenticate() {
+    public function authenticate(): void
+    {
+        if (!$this->checkAttempts()) {
+            self::deny(true);
+        }
 
         $auth = $this->handleAuthentication();
-        
+
         if ($auth !== true || empty($this->authUser)) {
+            $this->setAttempt();
             $this->logAccess($this->authUser);
             self::deny();
         }
-        
+
         //if (!$this->checkIpAdress()) {
-            //self::deny();
+        //self::deny();
         //}
-        
+
         $_SESSION['authenticated'] = true;
-        
+
         if (empty($_SESSION['authId']) || $_SESSION['authUser'] !== $this->authUser) {
             $_SESSION['authId'] = $this->authId;
         }
         $_SESSION['authUser'] = $this->authUser;
-        
+
         //if previously logged out
-        if(isset($_POST['logout'])) {
+        if (isset($_POST['logout'])) {
             $redirectTo = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : 'http') . '://' . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
             header('Location: ' . $redirectTo);
             die();
@@ -157,76 +166,28 @@ abstract class Auth {
 
     /**
      * Handle the authorization flow specific to the method
-     * 
+     *
      * @return mixed
      */
-    protected abstract function handleAuthentication();
+    protected abstract function handleAuthentication(): bool;
 
 
-    /**
-     * Checks if the current IP / network has access to the system
-     * 
-     * @return bool
-     */
-    protected function checkIpAdress() {
-        global $action;
-        
-        $db = Database::get();
-        
-        $sqlquery = "SELECT * FROM LMB_USERDB WHERE USERNAME = '" . parse_db_string($this->authUser, 30) . "'";
-        if ($this->authUser !== 'admin') {
-            $sqlquery .= ' AND (VALIDDATE >= ' . LMB_DBDEF_TIMESTAMP . ' OR VALID = ' . LMB_DBDEF_FALSE . ') AND DEL = ' . LMB_DBDEF_FALSE;
-        }
-        $rs2 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-        if (!$rs2) { 
-            return false;
-        }
-
-        
-        $ipok = false;
-        if(lmbdb_fetch_row($rs2)) {
-            $ipok = true;
-            if(lmbdb_result($rs2,"IPRANGE") AND lmbdb_result($rs2,"IPRANGE") != '*.*.*.*'){
-                $rma = explode(".",lmb_getIpAddr());
-                $rmar = explode("\n",lmbdb_result($rs2,"IPRANGE"));
-                $bzm = 0;
-                while($rmar[$bzm]){
-                    unset($ipcheck);
-                    $rmau = explode(".",trim($rmar[$bzm]));
-                    $i = 0;
-                    foreach($rmau as $key => $value){
-                        if($value == $rma[$i] OR $value == "*"){$ipcheck[] = 1;}else{$ipcheck[] = 0;}
-                        $i++;
-                    }
-                    if(!in_array(0,$ipcheck)){$ipok_[] = 1;}else{$ipok_[] = 0;}
-                    $bzm++;
-                }
-                
-                if(!in_array(1,$ipok_)){
-                    $ipok = false;
-                }
-            }
-        }
-        
-        return $ipok;
-    }
-
-    
     /**
      * Log any failed attempt to log in to log file
-     * 
+     *
      * @param string $auth_user
      */
-    protected function logAccess($auth_user='') {
-        $ip = lmb_getIpAddr();
+    protected function logAccess($auth_user = ''): void
+    {
+        $ip = Session::getIP();
         $port = '';
-        if (array_key_exists('REMOTE_PORT',$_SERVER)) {
+        if (array_key_exists('REMOTE_PORT', $_SERVER)) {
             $port = $_SERVER['REMOTE_PORT'];
         }
-        
-        
+
+
         // access.log
-        if($rf = fopen(TEMPPATH . 'log/access.log', 'a')) {
+        if ($rf = fopen(TEMPPATH . 'log/access.log', 'a')) {
             fputs($rf, '[' . date('D M d H:i:s') . substr((string)microtime(), 1, 7) . " " . date('Y') . "] [auth_basic:error] [pid " . getmypid() . "] [client " . $ip . ":" . $port . "] AH01617: user $auth_user: authentication failure for \"limbas/basic/auth\": Password Mismatch, referer: limbas/basic/auth\n");
             fclose($rf);
         }
@@ -240,33 +201,27 @@ abstract class Auth {
      * @param $storedPassword
      * @return bool true if password is correct, false otherwise
      */
-    protected function lmbPasswordVerify($username, $enteredPassword, $storedPassword) {
+    protected function lmbPasswordVerify($username, $enteredPassword, $storedPassword): bool
+    {
         global $action;
-        
+
         $db = Database::get();
 
         $hashFunc = self::getHashFunction();
 
-        # use password_* functions
-        if ($hashFunc) {
-            # correct password
-            if (password_verify($enteredPassword, $storedPassword)) {
-                return true; # authenticated via password_verify
-            }
-
-            # leftover md5 string?
-            if (strlen($storedPassword) === 32 AND $storedPassword === md5($enteredPassword)) {
-                # convert from md5 to password_hash
-                $hashedPassword = password_hash($enteredPassword, $hashFunc);
-                $sqlquery = "UPDATE LMB_USERDB SET PASSWORT='$hashedPassword' WHERE USERNAME = '" . parse_db_string($username, 30) . "'";
-                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                return true; # authenticated via md5
-            }
-        } else if (strlen($storedPassword) === 32) {
-            if ($storedPassword === md5($enteredPassword)) {
-                return true; # authenticated via md5
-            }
+        # correct password
+        if (password_verify($enteredPassword, $storedPassword)) {
+            return true; # authenticated via password_verify
         }
+        # leftover md5 string?
+        elseif (strlen($storedPassword) === 32 and $storedPassword === md5($enteredPassword)) {
+            # convert from md5 to password_hash
+            $hashedPassword = password_hash($enteredPassword, $hashFunc);
+            $sqlquery = "UPDATE LMB_USERDB SET PASSWORT='$hashedPassword' WHERE USERNAME = '" . parse_db_string($username, 30) . "'";
+            lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+            return true; # authenticated via md5
+        }
+        
         return false;
     }
 
@@ -276,32 +231,66 @@ abstract class Auth {
      * @param $password
      * @return bool|string hashed password or false on failure
      */
-    public static function lmbPasswordHash($password) {
-        global $umgvar;
-
+    public static function lmbPasswordHash($password): bool|string
+    {
         $hashFunc = self::getHashFunction();
-        if ($hashFunc) {
-            return password_hash($password, intval($hashFunc));
-        } else {
-            return md5($password);
-        }
+        return password_hash($password, $hashFunc);
     }
 
     /**
      * returns the hash function to use
-     * 
-     * @return int
+     *
+     * @return string|int
      */
-    protected static function getHashFunction() {
+    protected static function getHashFunction(): string|int
+    {
         $db = Database::get();
 
         $sqlquery2 = 'SELECT ID, FORM_NAME, NORM FROM LMB_UMGVAR WHERE FORM_NAME = \'password_hash\'';
-        $rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,'',__FILE__,__LINE__);
-        $hashFunction = 1;
-        while(lmbdb_fetch_row($rs2)){
-            $hashFunction = (int) lmbdb_result($rs2,'NORM');
+        $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, '', __FILE__, __LINE__);
+        $hashFunction = PASSWORD_DEFAULT;
+        while (lmbdb_fetch_row($rs2)) {
+            $hashFunction = (int)lmbdb_result($rs2, 'NORM');
         }
-        
-        return $hashFunction;
+
+        return $hashFunction ?: PASSWORD_DEFAULT;
     }
+
+    private function checkAttempts(): bool
+    {
+        $file = TEMPPATH . 'auth/' . md5(Session::getIP());
+        if (!file_exists($file)) {
+            return true;
+        }
+        $count = file_get_contents($file);
+        if ($count >= 5) {
+            if (filemtime($file) <= strtotime('-15 Seconds')) {
+                unlink($file);
+                return true;
+            }
+            return false;
+        }
+        return true;
+    }
+
+    private function setAttempt(): void
+    {
+        $filePath = TEMPPATH . 'auth';
+        $file = $filePath . DIRECTORY_SEPARATOR . md5(Session::getIP());
+
+        if (!is_dir($filePath)) {
+            if (!mkdir($filePath, 0755, true)) {
+                return;
+            }
+        }
+
+        if (!file_exists($file)) {
+            $count = 1;
+        } else {
+            $count = file_get_contents($file);
+            $count++;
+        }
+        file_put_contents($file, $count);
+    }
+
 }

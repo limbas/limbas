@@ -10,6 +10,16 @@
 
 ?>
 
+<script>
+
+  function setrule(id){
+      $('#editsetrule_'+id).val(1);
+  }
+  function sethidden(id){
+      $('#editsethidden_'+id).val(1);
+  }
+
+</script>
 
 <div class="container-fluid p-3">
     <FORM ACTION="main_admin.php" METHOD="post" name="form1">
@@ -43,7 +53,11 @@
                     <?php
 
                     if($rulelist_){
-                        foreach ($rulelist_['id'] as $key => $rid){
+                        foreach ($rulelist_ as $key => $value){
+
+                            if($value['id']){
+                            foreach ($value['id'] as $key2 => $rid){
+
                             if($grouprule["hasview"][$rid]){$CHECKED1 = "CHECKED";}else{$CHECKED1 = "";}
                             if($grouprule["hashidden"][$rid]){$CHECKED2 = "CHECKED";}else{$CHECKED2 = "";}
 
@@ -53,21 +67,24 @@
                                 <td><?=$rulelist_["name"][$key]?></td>
                                 <td>
                                     <?php if($levelrule["hasview"][$rid] OR !$group_level): ?>
-                                        <input type="checkbox" name="setrule[<?=$rid?>]" <?=$CHECKED1?>>
+                                        <input type="checkbox" name="setrule[<?=$rid?>]" <?=$CHECKED1?> onchange="setrule('<?=$rid?>')">
+                                        <input type="hidden" name="editsetrule[<?=$rid?>]" id="editsetrule_<?=$rid?>">
                                     <?php else: ?>
                                         <input type="checkbox" <?=$CHECKED1?> readonly disabled>";
                                     <?php endif; ?>
                                 </td>
                                 <td>
                                     <?php if($CHECKED1): ?>
-                                        <input type="checkbox" name="sethidden[<?=$rid?>]" <?=$CHECKED2?>>
+                                        <input type="checkbox" name="sethidden[<?=$rid?>]" <?=$CHECKED2?> onchange="sethidden('<?=$rid?>')">
+                                        <input type="hidden" name="editsethidden[<?=$rid?>]" id="editsethidden_<?=$rid?>">
                                     <?php endif; ?>
                                 </td>
                             </tr>
 
 
                             <?php
-                            
+                            }
+                            }
                         }
                     }
 

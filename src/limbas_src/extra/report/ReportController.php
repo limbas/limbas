@@ -67,9 +67,13 @@ class ReportController extends LimbasController
         
         $reportUrl = $report->generateReport(intval($request['report_id']), $request['gtabid'], $request['ID'], $reportOutput, $request['report_rename'], $request['use_record'], intval($request['report_printer']), $request['resolvedTemplateGroups'], $request['resolvedDynamicData'], $relation, $printerOptions);
 
+        // download link
+        $downloadUrl = lmb_getDownloadHash(DEPENDENTPATH.$reportUrl,'','application/pdf',permanent:1);
+
+
         $output = [
             'success' => $reportUrl !== false,
-            'url' => $reportUrl
+            'url' => $downloadUrl
         ];
 
         if ($reportOutput === ReportOutput::ARCHIVE || $reportOutput === ReportOutput::PRINT) {

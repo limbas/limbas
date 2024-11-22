@@ -7,9 +7,9 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-namespace extra\dashboard;
+namespace Limbas\extra\dashboard;
 
-use extra\dashboard\widgets\widgetError;
+use Limbas\extra\dashboard\widgets\WidgetError;
 
 require_once(__DIR__ . DIRECTORY_SEPARATOR . 'Widget.php');
 require_once(__DIR__ . DIRECTORY_SEPARATOR . 'widgets/WidgetError.php');
@@ -22,10 +22,10 @@ abstract class WidgetFactory
      * @param int $id
      * @param string $name
      * @param array $options
-     * @return widgetError|Widget
+     * @return WidgetError|Widget
      * @global array $umgvar
      */
-    public static function create(int $id, string $name, array $options): widgetError|Widget
+    public static function create(int $id, string $name, array $options): WidgetError|Widget
     {
         global $umgvar;
 
@@ -39,11 +39,11 @@ abstract class WidgetFactory
             require_once($external);
         }
 
-        $className = '\\extra\\dashboard\\widgets\\' . $className;
+        $className = 'Limbas\\extra\\dashboard\\widgets\\' . $className;
         
         if (!class_exists($className)) {
             $options['widgetName'] = $name;
-            return new widgetError(0, $options);
+            return new WidgetError(0, $options);
         }
         
         return new $className($id, $options);
@@ -64,7 +64,7 @@ abstract class WidgetFactory
         foreach ($internalWidgets as $widget) {
             $wName = 'Widget' . $widget;
             require_once(__DIR__ . DIRECTORY_SEPARATOR . 'widgets' . DIRECTORY_SEPARATOR . $wName . '.php');
-            $className = '\\extra\\dashboard\\widgets\\' . $wName;
+            $className = 'Limbas\\extra\\dashboard\\widgets\\' . $wName;
             $widgets[] = new $className(0, null);
         }
 

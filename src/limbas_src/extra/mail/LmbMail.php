@@ -12,6 +12,7 @@ namespace Limbas\extra\mail;
 require_once(COREPATH . 'gtab/gtab.lib');
 
 use Limbas\admin\mailTemplates\MailTemplate;
+use Limbas\extra\mail\attachments\DmsMailAttachment;
 use Limbas\extra\mail\attachments\MailAttachment;
 use Symfony\Component\Mailer\Mailer;
 use Symfony\Component\Mailer\Transport;
@@ -118,6 +119,9 @@ class LmbMail
             $to = [$to];
         }
 
+        $contentImages = $this->handleContentImages($message);
+        $message = $contentImages['message'];
+        
         $textMessage = strip_tags(preg_replace('/<br(\s+)?\/?>/i', "\n", $message));
 
         $email = (new Email())
@@ -147,8 +151,21 @@ class LmbMail
                 if($attachment instanceof MailAttachment) {
                     $filePath = $attachment->getPath();
                     if(!empty($filePath) && file_exists($filePath)) {
-                        $email->addPart(new DataPart(new File($attachment->getPath()), $attachment->getName()));
+                        $email->addPart(new DataPart(new File($filePath), $attachment->getName()));
                     }
+                }
+                elseif (is_string($attachment) && file_exists($attachment)) {
+                    $email->addPart(new DataPart(new File($attachment)));
+                }                
+            }
+        }
+        
+        if(!empty($contentImages['images'])) {
+            /** @var MailAttachment $attachment */
+            foreach($contentImages['images'] as $cid => $attachment) {
+                $filePath = $attachment->getPath();
+                if(!empty($filePath) && file_exists($filePath)) {
+                    $email->addPart((new DataPart(new File($filePath), $cid))->asInline());
                 }
             }
         }
@@ -271,4 +288,37 @@ class LmbMail
     }
 
 
+    
+    private function handleContentImages(string $message): array
+    {
+        $images = [];
+        
+        
+        preg_match_all('/<img[^>]*src="([^"]+)"/i', $message, $imageTags);
+        
+        $cidCounter = 1;        
+        if(!empty($imageTags) && is_array($imageTags[0]) && !empty($imageTags[0])) {
+            foreach($imageTags[0] as $key => $imageTag) {
+                $src = $imageTags[1][$key];
+                $cid = 'lmb' . $cidCounter;
+                if(str_contains($src, 'main.php?action=download')) {
+                    $fileId = intval(preg_replace('/\D/i', '', $src));
+                    $images[$cid] = new DmsMailAttachment($fileId);
+                } else {
+                    //unsafe LFI ! $images[$cid] = new FileMailAttachment($src);
+                    continue;
+                }
+                
+                $newImageTag = preg_replace('/src="[^"]+"/', 'src="cid:' . $cid . '"', $imageTag);
+                
+                $message = str_replace($imageTag,$newImageTag,$message);
+                
+                $cidCounter++;
+            }
+        }
+        
+        
+        return compact('message', 'images');
+    }
+    
 }

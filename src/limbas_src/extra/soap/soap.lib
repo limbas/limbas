@@ -8,6 +8,7 @@
  */
 
 # ------- soap-Funktion --------
+use Limbas\admin\tools\datasync\DatasyncClientProcess;
 use Limbas\admin\tools\update\Updater;
 
 function runlmb($lmpar){
@@ -105,7 +106,7 @@ function get_gselect(){
 		if($gfield[$stab]['sort']){
 			foreach ($gfield[$stab]['sort'] as $sfield => $sfieldvalue){
 				if($gfield[$stab]['field_type'][$sfield] == 4 AND $gfield[$stab]['select_pool'][$sfield]){
-					$sqlquery = "SELECT ID,WERT,".implode(',',$sql_s).",KEYWORDS FROM LMB_SELECT_W WHERE POOL = ".$gfield[$stab]['select_pool'][$sfield]." AND HIDE = ".LMB_DBDEF_FALSE." ORDER BY ".$gfield[$stab]['select_sort'][$sfield];
+					$sqlquery = "SELECT ID,WERT".($gfield[$stab]['select_sort'][$sfield] ? ','.$gfield[$stab]['select_sort'][$sfield] : '').",".implode(',',$sql_s).",KEYWORDS FROM LMB_SELECT_W WHERE POOL = ".$gfield[$stab]['select_pool'][$sfield]." AND HIDE = ".LMB_DBDEF_FALSE." ORDER BY ".$gfield[$stab]['select_sort'][$sfield];
 					$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 					while(lmbdb_fetch_row($rs)) {
 						$gselect[$stab][$sfield]['id'][] = lmbdb_result($rs, "ID");
@@ -388,11 +389,26 @@ function parse_action($lmpar){
 				require_once(COREPATH . 'admin/tools/datasync/validate.lib');
 
                 if($lmpart['phase'] == 1){
-                    return lmb_getSyncValidate(null);
+                    // count(*) diff of all tables
+                    return lmb_getSyncValidatePhase1(null,$lmpart['filter']);
                 }elseif($lmpart['phase'] == 2){
-                    return lmb_getSyncValidatePhase2($lmpart['table']);
+                    // detail of missing datasets of one table
+                    return lmb_getSyncValidatePhase2(null, $lmpart['table'],null,$lmpart['filter']);
+                }elseif($lmpart['phase'] == 3){
+                    // checksum diff of all tables
+                    return lmb_getSyncValidatePhase3(null,$lmpart['filter']);
+                }elseif($lmpart['phase'] == 4){
+                    // detail checksum diff of one table
+                    return lmb_getSyncValidatePhase4(null, $lmpart['table'],null,$lmpart['filter']);
                 }elseif($lmpart['phase'] == 5){
-                    return lmb_SyncValidateRebuildCache($lmpart['table'],$lmpart['diff']);
+                    // detail dataset comparison
+                    return lmb_getSyncValidatePhase5(null, $lmpart['table'],$lmpart['ID']);
+                } elseif($lmpart['phase'] == 20){
+                    // rebuild sync cashe of missing datasets
+                    return lmb_SyncValidateRebuildCache($lmpart['table'],$lmpart['diff'],2);
+                } elseif($lmpart['phase'] == 40){
+                    // rebuild sync cashe of dataset comparison (fieldvalues)
+                    return lmb_SyncValidateRebuildCachePhase4($lmpart['table'],$lmpart['diff'],2);
                 }
 
 			}
@@ -952,14 +968,15 @@ function getGtabLevel(&$lmpart,&$lmb,$action,$gtabid,$verkn=null,$rec=null){
 								$fresult[$rgtabid_][$did][$rkey] =  html_entity_decode($fresult[$rgtabid_][$did][$rkey],ENT_QUOTES);
 							}
 							
-							# -- Upload Dateien ---
+							# -- Upload Dateien todo ---
 							if($gfield[$gtabid_]["field_type"][$key] == 6){
 								# --- thumbs generieren ---
 								if($lmpart[$gtabid_]["thumbsize"][$key]){
 									$size = explode("x",$lmpart[$gtabid_]["thumbsize"][$key]);
 									if($piclist = $fresult[$rgtabid_][$did][$rkey]){
 										foreach($piclist["id"] as $key1 => $value1){
-											$piclist["url"][$key1] = IMACK_ConvertThumbs(array($key1,$piclist["secname"][$key1],$piclist["mimeid"][$key1],$piclist["thumb_ok"][$key1],$piclist["level"][$key1],$piclist["mid"][$key1]),$size[0],$size[1],1);
+                                            // todo
+											$piclist["url"][$key1] = lmb_getThumbnail(array($key1,$piclist["secname"][$key1],$piclist["mimeid"][$key1],$piclist["thumb_ok"][$key1],$piclist["level"][$key1],$piclist["mid"][$key1]),$size[0],$size[1],1,geturl: 1);
 										}
 										$fresult[$rgtabid_][$did][$rkey] = $piclist;
 									}

@@ -93,7 +93,7 @@
                 <td></td>
                 <td></td>
                 <td>
-                    <input class="form-control form-control-sm" type="text" name="newDesc">
+                    <input class="form-control form-control-sm" required type="text" name="newDesc">
                 </td>
                 <td>
                     <div class="d-flex flex-column">
@@ -105,7 +105,7 @@
                             <option value="Dropbox">Dropbox</option>
                             <option value="Filesystem">Filesystem</option>
                         </select>
-                        <input type="text" id="newClass" name="newClass" class="form-control form-control-sm">
+                        <input type="text" id="newClass" name="newClass" required class="form-control form-control-sm">
                     </div>
                 </td>
                 <td>

@@ -6,7 +6,18 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
-namespace limbas\rest;
+namespace Limbas\extra\rest\classes;
+
+use Limbas\extra\rest\classes\RequestHandlers\Delete\DeleteDatasetRequestHandler;
+use Limbas\extra\rest\classes\RequestHandlers\Delete\DeleteRelationRequestHandler;
+use Limbas\extra\rest\classes\RequestHandlers\Get\GetDatasetRequestHandler;
+use Limbas\extra\rest\classes\RequestHandlers\Get\GetRelationRequestHandler;
+use Limbas\extra\rest\classes\RequestHandlers\Get\GetTableRequestHandler;
+use Limbas\extra\rest\classes\RequestHandlers\Patch\PatchDatasetRequestHandler;
+use Limbas\extra\rest\classes\RequestHandlers\Patch\PatchRelationRequestHandler;
+use Limbas\extra\rest\classes\RequestHandlers\Post\PostRelationRequestHandler;
+use Limbas\extra\rest\classes\RequestHandlers\Post\PostTableRequestHandler;
+use Limbas\extra\rest\classes\RequestHandlers\RequestHandler;
 
 class Request {
 
@@ -194,7 +205,8 @@ class Request {
     /**
      * @return string
      */
-    public function buildGetUrl() {
+    public function buildGetUrl(): string
+    {
         global $gtab;
         global $gfield;
 

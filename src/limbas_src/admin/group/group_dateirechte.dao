@@ -7,8 +7,8 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
-
+global $file_struct;
+global $filerules;
 
 
 function check_editRules($groupid){
@@ -41,6 +41,10 @@ function check_editRules($groupid){
 		if(parse_db_bool($filerules[$key]["del"]) != parse_db_bool($frule["d"][$key])){
 			if(!$frule["d"][$key]){$chsub["d"] = 1;}
 			$erule["d"][$key] = 1;
+		}
+		if(parse_db_bool($filerules[$key]["hide"]) != parse_db_bool($frule["h"][$key])){
+			if(!$frule["h"][$key]){$chsub["h"] = 1;}
+			$erule["h"][$key] = 1;
 		}
 		if(parse_db_bool($filerules[$key]["lock"]) != parse_db_bool($frule["l"][$key])){
 			if(!$frule["l"][$key]){$chsub["l"] = 1;}
@@ -78,6 +82,9 @@ function add_rules($ID,$groupid,&$frule,&$filerules,&$erule){
 		}
 		if($erule["d"][$key] AND ($chsub["d"] OR $chsub["all"] OR $ID == $groupid)){
 			if($frule["d"][$key]){$ch["DEL"] = LMB_DBDEF_TRUE;$tr = 1;}else{$ch["DEL"] = LMB_DBDEF_FALSE;}
+		}
+		if($erule["h"][$key] AND ($chsub["h"] OR $chsub["all"] OR $ID == $groupid)){
+			if($frule["h"][$key]){$ch["HIDE"] = LMB_DBDEF_TRUE;$tr = 1;}else{$ch["HIDE"] = LMB_DBDEF_FALSE;}
 		}
 		if($erule["l"][$key] AND ($chsub["l"] OR $chsub["all"] OR $ID == $groupid)){
 			if($frule["l"][$key]){$ch["LMLOCK"] = LMB_DBDEF_TRUE;$tr = 1;}else{$ch["LMLOCK"] = LMB_DBDEF_FALSE;}
@@ -123,8 +130,8 @@ function get_filerules($ID){
 	$filerules = array();
 
 	while(lmbdb_fetch_row($rs)) {
-        // delete duplicates
-		if(isset($id) && $id == lmbdb_result($rs, "FILE_ID")){
+        // delete dublicates
+		if($id && $id == lmbdb_result($rs, "FILE_ID")){
 			$sqlquery1 = "DELETE FROM LDMS_RULES WHERE GROUP_ID = $ID AND ID = ".lmbdb_result($rs, "FILE_ID");
 			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$GLOBALS['action'],__FILE__,__LINE__);
 		}
@@ -135,6 +142,7 @@ function get_filerules($ID){
 		$filerules[$id]["addf"] = lmbdb_result($rs, "ADDF");
 		$filerules[$id]["edit"] = lmbdb_result($rs, "EDIT");
 		$filerules[$id]["del"] = lmbdb_result($rs, "DEL");
+        $filerules[$id]["hide"] = lmbdb_result($rs, "HIDE");
 		$filerules[$id]["lock"] = lmbdb_result($rs, "LMLOCK");
 	}
 	
@@ -155,8 +163,6 @@ function group_list($ID,&$grouplist){
 			group_list(lmbdb_result($rs, "GROUP_ID"),$grouplist);
 		}
 	}
-
-	return $grouplist;
 }
 
 
@@ -179,18 +185,19 @@ while(lmbdb_fetch_row($rs)) {
 # Rechte schreiben
 if($change_rules){
 
-	if($change_subgroup){$chsub["all"] = 1;}
+	if($addsubgroup){$chsub["all"] = 1;}
 
 	# check for changed values
 	$erule = check_editRules($ID);
+
 	# incl Untergruppen
 	if($chsub){
-		$groupl = array($ID);
-		$grouplist = group_list($ID,$groupl);
+		$grouplist = array($ID);
+		group_list($ID,$grouplist);
 	}else{
 		$grouplist = array($ID);
 	}
-	
+
 	foreach ($grouplist as $key => $subgroup){
 		$filerules = get_filerules($subgroup);
 		add_rules($ID,$subgroup,$frule,$filerules,$erule);
@@ -198,7 +205,3 @@ if($change_rules){
 }
 	
 $filerules = get_filerules($ID);
-
-
-
-?>

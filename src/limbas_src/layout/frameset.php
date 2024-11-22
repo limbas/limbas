@@ -7,19 +7,9 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\layout\Layout;
 
-
-
-if ($umgvar['introlink']) {
-    $intro = $umgvar['introlink'];
-} else {
-    $intro = 'main.php?action=intro';
-}
-
-if ($action == 'redirect' and !empty($src)) {
-    $intro = 'main.php?' . $src;
-}
-
+global $menu_setting;
 $menu_setting = lmbGetMenuSetting();
 
 $LeftMenuSize = 200;
@@ -55,7 +45,7 @@ require_once (COREPATH . 'lib/context.lib');
 <script type="text/javascript" src="assets/js/lib/global.js?v=<?=$umgvar["version"]?>"></script>
 <script type="text/javascript" src="assets/vendor/jquery/jquery.min.js?v=<?=$umgvar["version"]?>"></script>
 <script src="assets/js/layout/nav.js?v=<?=$umgvar["version"]?>"></script>
-
+<script src="main.php?action=syntaxcheckjs"></script>
 
 <FORM ACTION="main.php" METHOD="post" NAME="form1" TARGET="main" class="d-none">
     <INPUT TYPE="hidden" NAME="ID" VALUE="<?= $session["user_id"] ?>">
@@ -67,6 +57,7 @@ require_once (COREPATH . 'lib/context.lib');
     <INPUT TYPE="hidden" NAME="gtabid">
     <INPUT TYPE="hidden" NAME="snap_id">
     <INPUT TYPE="hidden" NAME="source" VALUE="root">
+    <INPUT TYPE="hidden" NAME="mid" VALUE="<?=$session['mid']?>">
 </FORM>
 
 <FORM ACTION="main_admin.php" METHOD="post" NAME="form2" TARGET="main" class="d-none">
@@ -139,8 +130,9 @@ require_once (COREPATH . 'lib/context.lib');
                 <div class="modal-body" id="general-main-modal-body">
                     
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Schließen</button>
+                <div class="modal-footer" id="general-main-modal-footer"></div>
+                <div class="modal-footer" id="general-main-modal-footer-default">
+                    <button type="button" class="btn btn-dark" data-bs-dismiss="modal"><?=$lang[844]?></button>
                 </div>
             </div>
         </div>
@@ -160,6 +152,7 @@ require_once (COREPATH . 'lib/context.lib');
         </div>
     </div>
 
+    <?php require_once(Layout::getFilePath('parts/progress-modal.php')); ?>
 
     <script type="text/javascript" src="assets/vendor/bootstrap/bootstrap.bundle.min.js?v=<?=$umgvar["version"]?>"></script>
 </body>

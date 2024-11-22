@@ -25,6 +25,29 @@ function SNAP_invalidate(){
 }
 
 
+function filter_reset($gtabid=null){
+	#$GLOBALS['filter'] = null;
+	if($gtabid){
+    	$GLOBALS['popc'][$gtabid] = null;
+    	$GLOBALS['popg'][$gtabid] = null;
+    	$GLOBALS['gs'][$gtabid] = null;
+    	$GLOBALS['gsr'][$gtabid] = null;
+    	$GLOBALS["filter"]["hidecols"][$gtabid] = null;
+    	$GLOBALS["filter"]["order"][$gtabid] = null;
+	}else{
+    	$GLOBALS['popc'] = null;
+    	$GLOBALS['popg'] = null;
+    	$GLOBALS['gs']= null;
+    	$GLOBALS['gsr'] = null;
+    	$GLOBALS["filter"]["hidecols"] = null;
+    	$GLOBALS["filter"]["order"] = null;
+	}
+	$GLOBALS['filter']['reminder_from'] = null;
+	$GLOBALS['filter']['reminder_to'] = null;
+	$GLOBALS['filter']['reminder_create'] = null;
+	$GLOBALS['view_version_status'] = null;
+}
+
 
 # already done in gtab_array.lib (SNAP_loadInSession)
 
@@ -118,6 +141,7 @@ function SNAP_loadInSession($snap_changed=null,$admin=null){
 	global $db;
 	global $action;
 	global $gfield;
+    global $gsnapgroup;
 
 	$sqlquery = "SELECT 
 					LMB_SNAP.ID,
@@ -149,7 +173,7 @@ function SNAP_loadInSession($snap_changed=null,$admin=null){
 				foreach ($session["subgroup"] as $key => $groupid) {
 					$sqlquery = $sqlquery . " OR (LMB_SNAP_SHARED.entity_type = 'G' AND LMB_SNAP_SHARED.entity_id = ".$groupid.")";
 				}
-				$sqlquery .= "ORDER BY LMB_SNAP.NAME";
+				$sqlquery .= "ORDER BY LMB_SNAP.SNAPGROUP,LMB_SNAP.NAME";
 	}
 
 	$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -179,7 +203,7 @@ function SNAP_loadInSession($snap_changed=null,$admin=null){
         $vtabid = $gtab['argresult_id'][$md5_tab];
 
         if($gsnap[$snaptabid]["group"][$snapid]) {
-            $gsnap[-1][$gsnap[$snaptabid]["group"][$snapid]][$snapid] = $snapid;
+            $gsnap[-1][ $gsnap[$snaptabid]["group"][$snapid] ][$snapid] = $snapid;
         }
 		
 		###### check for changes/permissions #######
@@ -326,39 +350,42 @@ function SNAP_getParam($id)
 	 * @param unknown_type $id if of the snapshot
 	 * @return unknown
 	 */
-function SNAP_delete($id,$gtabid)
-{
-	global $db;
-	global $session;
-	global $gsnap;
+function SNAP_delete($id,$gtabid){
+    global $db;
+    global $session;
+    global $gsnap;
+    global $LINK;
 
-	if(($gsnap[$gtabid]["owner"][$id] OR $session['group_id'] == 1) OR $gsnap[$gtabid]["del"][$id]) {
-
-        if ($id > 0) {
-            $sqlquery = "DELETE FROM LMB_SNAP WHERE ID = " . $id;
-            $rs1 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-            if (!$rs1) {
-                $commit = 1;
-            }
-            $sqlquery = "DELETE FROM LMB_SNAP_SHARED WHERE SNAPSHOT_ID = " . $id;
-            $rs1 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-            if (!$rs1) {
-                $commit = 1;
-            }
-            unset($gsnap[$gtabid]["id"][$id]);
-            unset($gsnap[$gtabid]["name"][$id]);
-            return true;
-        } else
-            return false;
-
+    if (!$LINK[225] OR !is_numeric($id) OR (!$gsnap[$gtabid]["owner"][$id] && !$gsnap[$gtabid]["edit"][$id] && $session['group_id'] != 1)) {
+        lmb_alert("you have no permission to edit this snapshot!");
+        return false;
     }
+
+    if ($id > 0) {
+        $sqlquery = "DELETE FROM LMB_SNAP WHERE ID = " . $id;
+        $rs1 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        if (!$rs1) {
+            $commit = 1;
+        }
+        $sqlquery = "DELETE FROM LMB_SNAP_SHARED WHERE SNAPSHOT_ID = " . $id;
+        $rs1 = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        if (!$rs1) {
+            $commit = 1;
+        }
+        unset($gsnap[$gtabid]["id"][$id]);
+        unset($gsnap[$gtabid]["name"][$id]);
+        return true;
+    } else {
+        return false;
+    }
+
     return false;
 }
 
 
 //from gtab_erg.dao
 # --------Schnapschuß eintragen ------------
-function SNAP_save($gtabid,$name,$id,$snapf = "null",$type=1){
+function SNAP_save($gtabid,$name,$id,$snapf = "null",$type=1,$snapgroup=null){
 	global $db;
 	global $session;
 	global $filter;
@@ -366,11 +393,13 @@ function SNAP_save($gtabid,$name,$id,$snapf = "null",$type=1){
 	global $gfield;
 	global $gsnap;
 	global $LINK;
-	
+
 	$name = trim($name);
-	
-	if($id AND !$gsnap[$gtabid]["owner"][$id] AND !$gsnap[$gtabid]["edit"][$id]){return false;}
-	if($id == 0 AND !$LINK[188]){return false;}
+
+    if (!$LINK[225] OR ($id && (!$gsnap[$gtabid]["owner"][$id] && !$gsnap[$gtabid]["edit"][$id] && $session['group_id'] != 1))) {
+        lmb_alert("you have no permission to edit this snapshot!");
+        return false;
+    }
 
 	if($snapf == "null"){
         $snapfilter["order"] = $filter["order"][$gtabid]; //[$gtabid]
@@ -385,13 +414,13 @@ function SNAP_save($gtabid,$name,$id,$snapf = "null",$type=1){
 	}else{
         $snapf = serialize($snapf);
     }
-	
+
 	// update the snapshot
 	if($id>0)
 	{
 		$prepare_string = "UPDATE LMB_SNAP SET FILTER = ? WHERE ID = ".$id;
 		if(!lmb_PrepareSQL($prepare_string,array($snapf),__FILE__,__LINE__)){$commit = 1;}
-
+        $NEXTID = $id;
 		# invalidate Session for other users
 		SNAP_invalidate();
 	}
@@ -410,7 +439,7 @@ function SNAP_save($gtabid,$name,$id,$snapf = "null",$type=1){
 		}else{
 			lmb_StartTransaction();
 			$NEXTID = next_db_id("LMB_SNAP");
-			$sqlquery1 = "INSERT INTO LMB_SNAP (ID,USER_ID,TABID,NAME,TYPE) VALUES ($NEXTID,".$session["user_id"] . ",$gtabid,'".parse_db_string(str_replace(";",",",$name),50)."',$type)";
+			$sqlquery1 = "INSERT INTO LMB_SNAP (ID,USER_ID,TABID,NAME,TYPE,SNAPGROUP) VALUES ($NEXTID,".$session["user_id"] . ",$gtabid,'".parse_db_string(str_replace(";",",",$name),50)."',$type,".parse_db_int($snapgroup).")";
 			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 			$prepare_string = "UPDATE LMB_SNAP SET FILTER = ? WHERE ID = ".$NEXTID;
@@ -435,7 +464,7 @@ function SNAP_save($gtabid,$name,$id,$snapf = "null",$type=1){
 	{
 		lmb_StartTransaction();
 		$NEXTID = next_db_id("LMB_SNAP");
-		$sqlquery1 = "INSERT INTO LMB_SNAP (ID,USER_ID,TABID,GLOBAL) VALUES ($NEXTID,0,$gtabid,true)";
+		$sqlquery1 = "INSERT INTO LMB_SNAP (ID,USER_ID,TABID,GLOBAL,SNAPGROUP) VALUES ($NEXTID,0,$gtabid,true,".parse_db_int($snapgroup).")";
 		$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		if(!$rs1) {$commit = 1;}
 		$prepare_string = "UPDATE LMB_SNAP SET FILTER = ? WHERE ID = ".$NEXTID;
@@ -492,19 +521,36 @@ function SNAP_get_filter($snap_id,$gtabid){
 	//speichern der filter und gsr in session
 }
 
-function SNAP_get_filtergroup($gtabid=null,$groupid=null,int $type=1 ){
+function SNAP_get_filtergroup($gtabid=null,$groupid=null,int $type=1, $showall=false ){
     global $gsnap;
+    global $gsnapgroup;
 
+    // group based filter without table
     if($groupid) {
         foreach ($gsnap[-1][$groupid] as $snapid => $value) {
             $snaptabid = $gsnap["argresult_id"][$snapid];
+
+            // skip if intern snapshot
+            if($gsnapgroup['intern'][ $gsnap[$snaptabid]['group'][$snapid] ] && !$showall){
+                continue;
+            }
+
             if($type !== intval($gsnap[$snaptabid]["type"][$snapid])){
                 continue;
             }
+
             $filterlist[$snapid] = $gsnap[$snaptabid]["name"][$snapid];
         }
+    // table based filter
     }elseif($gtabid){
+
         foreach ($gsnap[$gtabid]['name'] as $snapid => $value) {
+
+            // skip if intern snapshot
+            if($gsnapgroup['intern'][ $gsnap[$gtabid]['group'][$snapid] ] && !$showall){
+                continue;
+            }
+
             if($type !== intval($gsnap[$gtabid]["type"][$snapid])){
                 continue;
             }
@@ -550,6 +596,7 @@ function SNAP_get_reminder($gtabid){
 
 function SNAP_td_size_global($rowsize,$gtabid){
     global $db;
+    global $umgvar;
 
 	$rsize = explode(";",$rowsize);
 
@@ -558,7 +605,7 @@ function SNAP_td_size_global($rowsize,$gtabid){
 
         $field_id = $element[0];
         $width = parse_db_int($element[1]);
-        if($width <= 10){$width = 10;}
+        if(!$width OR $width < 10){$width = $umgvar["default_fieldwidth"];}
 
 		$sqlquery = "UPDATE LMB_CONF_FIELDS SET ROW_SIZE = $width WHERE FIELD_ID = $field_id AND TAB_ID = $gtabid";
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -588,6 +635,41 @@ function lmb_register_snapshot($gtabid,$snap_id,$filter_reset=null){
         $filter["snapid"][$gtabid] = 0;
     }
 
+}
+
+function SNAP_get_group(){
+    global $gsnap;
+    global $db;
+
+    $sqlquery = "SELECT ID,NAME,INTERN FROM LMB_SNAP_GROUP ORDER BY NAME";
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    if(!$rs) {return false;}
+
+    $snapgroup = array();
+	while(lmbdb_fetch_row($rs)) {
+        $snapgroup['name'][lmbdb_result($rs, 'ID')] = lmbdb_result($rs, "NAME");
+        $snapgroup['intern'][lmbdb_result($rs, 'ID')] = lmbdb_result($rs, "INTERN");
+    }
+
+    return $snapgroup;
+}
+
+function SNAP_print_select($gtabid,$snap_id,$filterlist=null){
+    global $gsnap;
+    global $gsnapgroup;
+
+    if(!$filterlist) {
+        $filterlist = SNAP_get_filtergroup($gtabid);
+    }
+    foreach($filterlist as $key => $value){
+        $sg = $gsnap[$gtabid]['group'][$key];
+        $sgname = $gsnapgroup['name'][$sg];
+        if($sgp != $sg){
+            echo '<optgroup label="'.$sgname.'">';
+        }
+        $sgp = $sg;
+        echo "<option value=\"$key\" ".($key == $snap_id ? 'selected' : '').">".$value;
+    }
 }
 
 

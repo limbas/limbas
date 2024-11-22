@@ -33,6 +33,8 @@ function lmb_getCustmenu(){
         $custmenu[$LINKID]['icon'][$key] = lmbdb_result($rs, 'ICON');
         $custmenu[$LINKID]['bg'][$key] = lmbdb_result($rs, 'BG');
         $custmenu[$LINKID]['class'][$key] = lmbdb_result($rs, 'CLASS');
+        $custmenu[$LINKID]['header'][$key] = lmbdb_result($rs, 'HEADER');
+        $custmenu[$LINKID]['headericon'][$key] = lmbdb_result($rs, 'HEADERICON');
     }
 
     return $custmenu;
@@ -71,18 +73,20 @@ function lmb_buildCustmenu(&$custmenu,$parent,$menu=array()){
                 $gtabid = lmb_getGElementTabID($GLOBALS['greportlist'],$elid);
                 $menuElement = menu_get_report($gtabid, $elid);
             }elseif($typ == 5) {
-                $gtabid = lmb_getGElementTabID($GLOBALS['gformlist'],$elid);
-                $menuElement = menu_get_form($gtabid, $elid);
+                $menuElement = menu_get_form(intval($elid));
             }elseif($typ == 6) {
                 $gtabid = lmb_getGElementTabID($GLOBALS['gdiaglist'],$elid);
                 $menuElement = menu_get_diagram($gtabid, $elid);
             }elseif($typ == 7) {
                 $menuElement = menu_get_standard($elid, $ebzm);
+                if($custmenu['header'][$key]){
+                    $menuElement[$ebzm]['link'] .= '&HEADER='.urlencode($custmenu['header'][$key]);
+                }
+                if($custmenu['headericon'][$key]){
+                    $menuElement[$ebzm]['link'] .= '&HEADERICON='.urlencode($custmenu['headericon'][$key]);
+                }
             }
 
-
-            
-            
             if ($typ == 7) {
                 if($custmenu['icon'][$key]){$menuElement[$ebzm]['icon'] = $custmenu['icon'][$key];}
                 if($custmenu['class'][$key]){$menuElement[$ebzm]['class'] = $custmenu['class'][$key];}
@@ -92,12 +96,21 @@ function lmb_buildCustmenu(&$custmenu,$parent,$menu=array()){
                 }
                 $menu = array_merge($menu,$menuElement);
             } else {
+
                 if($custmenu['icon'][$key]){$menuElement['icon'] = $custmenu['icon'][$key];}
                 if($custmenu['class'][$key]){$menuElement['class'] = $custmenu['class'][$key];}
+
+                if($custmenu['header'][$key]){
+                    $menuElement['link'] .= '&HEADER='.urlencode($custmenu['header'][$key]);
+                }
+                if($custmenu['headericon'][$key]){
+                    $menuElement['link'] .= '&HEADERICON='.urlencode($custmenu['headericon'][$key]);
+                }
+
                 $menu = array_merge($menu,[$ebzm => $menuElement]);
             }
-            
-            
+
+
 
             if(in_array($id,$custmenu['parent'])) {
                 $menu[$ebzm]["child"] = lmb_buildCustmenu($custmenu,$id);

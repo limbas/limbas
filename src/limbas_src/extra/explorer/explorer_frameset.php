@@ -13,6 +13,10 @@
 /* --- Frameset ---------------------------------------------------------- */?>
 
 <div id="explorer_topset" class="frame-container">
-    <iframe src="main.php?action=explorer_tree" id="explorer_tree" name="explorer_tree" style="width: 200px;border-right:1px solid <?= $farbschema['WEB3'] ?>;"></iframe>
-    <iframe src="main.php?action=explorer_main&ID=0&typ=1&LID=<?=$LID?>" id="explorer_main" name="explorer_main" class="frame-fill"></iframe>
+    <div class="resizer_attributes resizer_actual border-end h-100">
+        <iframe src="main.php?action=explorer_tree" id="explorer_tree" name="explorer_tree" class="resized overflow-scroll"></iframe>
+    </div>
+    <div class="resizer_attributes w-100 h-100">
+        <iframe src="main.php?action=explorer_main&ID=0&typ=1&LID=<?=$LID?>" id="explorer_main" name="explorer_main" class="frame-fill"></iframe>
+    </div>
 </div>

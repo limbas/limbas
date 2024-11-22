@@ -41,7 +41,7 @@ function lmb_custmenuEdit(&$custmenu,$par){
                 $name_id =  lang_add($session["language"],4,'Custmenu: ',$value['name'],'_DEPEND');
                 $sql[] = "NAME = ".parse_db_int($name_id);
             }
-        }elseif(is_numeric($value['name'])){
+        }elseif(is_numeric($value['name'])) {
             $sql[] = "NAME = '".parse_db_int($value['name'])."'";
         }
 
@@ -88,6 +88,15 @@ function lmb_custmenuEdit(&$custmenu,$par){
         if(isset($value['disabled'])) {
              $sql[] = "DISABLED = '".parse_db_string($value['disabled'],150)."'";
         }
+        // header
+        if(isset($value['header'])) {
+             $sql[] = "HEADER = '".parse_db_string($value['header'],150)."'";
+        }
+        // header icon
+        if(isset($value['header'])) {
+             $sql[] = "HEADERICON = '".parse_db_string($value['headericon'],50)."'";
+        }
+
 
         if($sql) {
             $sql_ = implode(',',$sql);
@@ -149,10 +158,25 @@ function lmb_custmenuGet($linkid){
         $custmenu['bg'][$key] = lmbdb_result($rs, 'BG');
         $custmenu['disabled'][$key] = lmbdb_result($rs, 'DISABLED');
         $custmenu['inactive'][$key] = lmbdb_result($rs, 'INACTIVE');
+        $custmenu['header'][$key] = lmbdb_result($rs, 'HEADER');
+        $custmenu['headericon'][$key] = lmbdb_result($rs, 'HEADERICON');
     }
 
     return $custmenu;
 
+}
+
+function lmb_custmenuGetType($linkid) {
+    global $db;
+    global $lang;
+
+    $sqlquery = "SELECT TYPE FROM LMB_CUSTMENU_LIST WHERE ID = " . parse_db_int($linkid);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    if (lmbdb_fetch_row($rs)) {
+        return lmbdb_result($rs, 'TYPE');
+    }
+    return null;
 }
 
 function lmb_custmenulistEdit($listact,$linkid,$custmenulist){
@@ -322,7 +346,8 @@ function lmb_custmenuDetail(&$custmenu,$params){
         echo "</select><br>";
         echo "<tr><td>Icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
         echo "<tr><td>Class</td><td><input type=\"text\" name=\"menudetail[class]\" style=\"width:100%\" value=\"".$custmenu['class'][$id]."\"></td></tr>";
-        echo "</td></tr>";
+        echo "<tr><td>Header</td><td><input type=\"text\" name=\"menudetail[header]\" style=\"width:100%\" value=\"".$custmenu['header'][$id]."\"></td></tr>";
+        echo "<tr><td>Header-Icon</td><td><input type=\"text\" name=\"menudetail[headericon]\" style=\"width:100%\" value=\"".$custmenu['headericon'][$id]."\"></td></tr>";
         #echo "<tr><td>icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
 
     }
@@ -349,7 +374,8 @@ function lmb_custmenuDetail(&$custmenu,$params){
         echo "</select>";
         echo "<tr><td>Icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
         echo "<tr><td>Class</td><td><input type=\"text\" name=\"menudetail[class]\" style=\"width:100%\" value=\"".$custmenu['class'][$id]."\"></td></tr>";
-        echo "</td></tr>";
+        echo "<tr><td>Header</td><td><input type=\"text\" name=\"menudetail[header]\" style=\"width:100%\" value=\"".$custmenu['header'][$id]."\"></td></tr>";
+        echo "<tr><td>Header-Icon</td><td><input type=\"text\" name=\"menudetail[headericon]\" style=\"width:100%\" value=\"".$custmenu['headericon'][$id]."\"></td></tr>";
         #echo "<tr><td>icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
 
     }
@@ -376,7 +402,8 @@ function lmb_custmenuDetail(&$custmenu,$params){
         echo "</select>";
         echo "<tr><td>Icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
         echo "<tr><td>Class</td><td><input type=\"text\" name=\"menudetail[class]\" style=\"width:100%\" value=\"".$custmenu['class'][$id]."\"></td></tr>";
-        echo "</td></tr>";
+        echo "<tr><td>Header</td><td><input type=\"text\" name=\"menudetail[header]\" style=\"width:100%\" value=\"".$custmenu['header'][$id]."\"></td></tr>";
+        echo "<tr><td>Header-Icon</td><td><input type=\"text\" name=\"menudetail[headericon]\" style=\"width:100%\" value=\"".$custmenu['headericon'][$id]."\"></td></tr>";
         #echo "<tr><td>icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
     }
     // forms
@@ -406,6 +433,8 @@ function lmb_custmenuDetail(&$custmenu,$params){
         echo "</select>";
         echo "<tr><td>Icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
         echo "<tr><td>Class</td><td><input type=\"text\" name=\"menudetail[class]\" style=\"width:100%\" value=\"".$custmenu['class'][$id]."\"></td></tr>";
+        echo "<tr><td>Header</td><td><input type=\"text\" name=\"menudetail[header]\" style=\"width:100%\" value=\"".$custmenu['header'][$id]."\"></td></tr>";
+        echo "<tr><td>Header-Icon</td><td><input type=\"text\" name=\"menudetail[headericon]\" style=\"width:100%\" value=\"".$custmenu['headericon'][$id]."\"></td></tr>";
         echo "</td></tr>";
 
         if($custmenu['typ'][$id] == 10){
@@ -435,6 +464,8 @@ function lmb_custmenuDetail(&$custmenu,$params){
         echo "</select>";
         echo "<tr><td>Icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
         echo "<tr><td>Class</td><td><input type=\"text\" name=\"menudetail[class]\" style=\"width:100%\" value=\"".$custmenu['class'][$id]."\"></td></tr>";
+        echo "<tr><td>Header</td><td><input type=\"text\" name=\"menudetail[header]\" style=\"width:100%\" value=\"".$custmenu['header'][$id]."\"></td></tr>";
+        echo "<tr><td>Header-Icon</td><td><input type=\"text\" name=\"menudetail[headericon]\" style=\"width:100%\" value=\"".$custmenu['headericon'][$id]."\"></td></tr>";
         echo "</td></tr>";
         #echo "<tr><td>icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
     }
@@ -493,6 +524,8 @@ function lmb_custmenuDetail(&$custmenu,$params){
         echo "<tr><td>URL</td><td><input type=\"text\" name=\"menudetail[url]\" style=\"width:100%\" value=\"".htmlentities($custmenu['url'][$id],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])."\"></td></tr>";
         echo "<tr><td>Icon</td><td><input type=\"text\" name=\"menudetail[icon]\" style=\"width:100%\" value=\"".$custmenu['icon'][$id]."\"></td></tr>";
         echo "<tr><td>Class</td><td><input type=\"text\" name=\"menudetail[class]\" style=\"width:100%\" value=\"".$custmenu['class'][$id]."\"></td></tr>";
+        echo "<tr><td>Header</td><td><input type=\"text\" name=\"menudetail[header]\" style=\"width:100%\" value=\"".$custmenu['header'][$id]."\"></td></tr>";
+        echo "<tr><td>Header-Icon</td><td><input type=\"text\" name=\"menudetail[headericon]\" style=\"width:100%\" value=\"".$custmenu['headericon'][$id]."\"></td></tr>";
 
         echo "</td></tr>";
 
@@ -570,7 +603,6 @@ function lmb_custmenuDetail(&$custmenu,$params){
         echo "</td></tr>";
     }
 
-
     echo "<tr><td colspan=\"2\"><div style=\"height:20px\"></div></TD></TR>";
     echo "<tr><td colspan=\"2\" align=\"right\"><input type=\"button\" onclick=\"lmb_loadMenueditor(null,$id,'','update')\" name=\"menudetail[update]\" value=".$lang[33]."></TD></TR>";
 
@@ -588,6 +620,12 @@ function lmb_custmenu(&$custmenu,$linkid,$parent){
     global $gdiaglist;
     global $LINK;
     global $custmenu_list;
+
+    $custMenuType = lmb_custmenuGetType($linkid);
+    if ($custMenuType == 14 || $custMenuType == 17) {
+        lmb_custmenu_singleoption($linkid);
+        return;
+    }
 
     $types[1] = $lang[2144];
     $types[2] = $lang[577];
@@ -676,4 +714,96 @@ function lmb_custmenu(&$custmenu,$linkid,$parent){
 
 
     echo "</table>";
+}
+
+function lmb_custmenu_singleoption($linkid): void
+{
+    $id = lmb_custmenu_getSingleId($linkid);
+
+    if ($id === false) {
+        echo <<<HTML
+            <span>A menu of this type can only be created if there is a maximum of one submenu</span>
+        HTML;
+
+        lmb_alert("The menu could not be created, as there are more than one submenu", true);
+        return;
+    }
+
+    if($id) {
+        $subMenus = lmb_getExistingSubMenu($id, $linkid);
+        if (count($subMenus) == 1) {
+            $id = $subMenus[0];
+            echo <<<HTML
+                <div>
+                    <span class="align-middle pe-1">Edit action:</span>
+                    <a onclick="lmb_loadMenueDetail('$id', '');"><div style="width:15px; cursor: pointer" border="0" class="lmb-icon lmb-edit align-middle"></div></a>
+                </div>
+            HTML;
+            return;
+        } else if (count($subMenus) > 1) {
+            lmb_alert("Multiple entries found for linkid $linkid, try re-doing the menu", true);
+            return;
+        }
+
+    }
+
+    echo <<<HTML
+        <div>
+            <span class="align-middle pe-1">Create action:</span>
+            <a onclick="lmb_loadMenueditor(null, null, '$id', 'add');"><div style="width:15px; cursor: pointer" border="0" class="lmb-icon lmb-plus align-middle"></div></a>
+        </div>
+    HTML;
+}
+
+function lmb_getExistingSubMenu(int $id, $linkId): array
+{
+    global $db;
+
+    $sqlquery = "SELECT * FROM LMB_CUSTMENU WHERE PARENT = " . parse_db_int($id) . " AND LINKID = " . parse_db_int($linkId);
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    $existingSubMenu = array();
+    while (lmbdb_fetch_row($rs)) {
+        $existingSubMenu[] = lmbdb_result($rs, 'ID');
+    }
+
+    return $existingSubMenu;
+}
+
+function lmb_custmenu_getSingleId($linkid): int|false {
+    global $db;
+
+    $sqlquery = "SELECT * FROM LMB_CUSTMENU WHERE LINKID = " . parse_db_int($linkid) . " AND PARENT = 0";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+
+    $id = false;
+    $found = false;
+    $foundMultiple = false;
+
+    while (lmbdb_fetch_row($rs)) {
+        $foundMultiple = $found;
+        $id = lmbdb_result($rs, 'ID');
+        $found = true;
+    }
+
+    if (!is_int($id)) {
+        $id = false;
+    }
+
+    if ($foundMultiple) {
+        return false;
+    }
+
+    if (!$found) {
+        $id = next_db_id("LMB_CUSTMENU");
+
+        if($id === false || is_string($id)) {
+            return false;
+        }
+
+        $sqlquery = "INSERT INTO LMB_CUSTMENU (ID, NAME, LINKID, TYP, SORT, PARENT) VALUES ($id, 27, ".intval($linkid).", 0, 1, 0)";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    }
+
+    return $id;
 }

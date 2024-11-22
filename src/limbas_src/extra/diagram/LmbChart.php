@@ -7,6 +7,12 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+namespace Limbas\extra\diagram;
+
+use Limbas\admin\setup\fonts\Font;
+use pData;
+use pImage;
+use pPie;
 
 require_once(COREPATH . 'gtab/gtab.lib');
 
@@ -205,10 +211,10 @@ class LmbChart
         }
 
         /* Chart-customization constants */
-        $diagname = str_replace(lmb_utf8_decode("ä"), "ae", $diagname);
-        $diagname = str_replace(lmb_utf8_decode("ö"), "oe", $diagname);
-        $diagname = str_replace(lmb_utf8_decode("ü"), "ue", $diagname);
-        $diagname = str_replace(lmb_utf8_decode("ß"), "ss", $diagname);
+        $diagname = str_replace("ä", "ae", $diagname);
+        $diagname = str_replace("ö", "oe", $diagname);
+        $diagname = str_replace("ü", "ue", $diagname);
+        $diagname = str_replace("ß", "ss", $diagname);
         $diagname = preg_replace("/[^[:alnum:]\.]|[ ]/", "_", $diagname);
 
         $saveLocation = USERPATH . $session['user_id'] . "/temp/" . $diagname . "_$diag_id.png";
@@ -661,10 +667,8 @@ class LmbChart
      */
     private function getFontLocation(array $style): string
     {
-        global $db;
-
         // default font
-        $default = DEPENDENTPATH.'inc/fonts/DejaVuSans.ttf';
+        $default = DEPENDENTPATH . 'inc/fonts/DejaVuSans.ttf';
 
         // if no font family is specified, return default font
         if (!$style[0]) {
@@ -676,25 +680,12 @@ class LmbChart
         $b = $style[4] == 'bold' ? 'B' : '';
         $i = $style[1] == 'italic' ? 'I' : '';
 
-        // get name of font file from lmb_fonts
-        $sqlquery = "SELECT NAME FROM LMB_FONTS WHERE STYLE='$b$i' AND FAMILY='$family'";
-        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
-
-        // abort if error
-        if (!$rs) {
+        $fonts = Font::all(['STYLE'=>"$b$i",'FAMILY'=>$family]);
+        if (empty($fonts)) {
             return $default;
         }
 
-        if (lmbdb_fetch_row($rs)) {
-            $name = lmbdb_result($rs, 'NAME');
-        }
-
-        // abort if no name was found
-        if (!$name) {
-            return $default;
-        }
-
-        return DEPENDENTPATH."inc/fonts/$name.ttf";
+        return $fonts[0]->getFontFilePath();
     }
 
     /**

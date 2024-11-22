@@ -19,7 +19,7 @@ function explContextDetail($LID){
     pop_menu(195,'',''); #Info
     pop_menu2("&nbsp;".$lang[2321], null, null, 'lmb-icon-cus lmb-page-go', null, "LmEx_divclose();open('main.php?action=download&ID=' + LmEx_edit_id ,'download','toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=700,height=650');\"");
     if($filestruct['edit'][$LID] AND !$filestruct["readonly"][$LID]) {
-        pop_menu2("&nbsp;" . $lang[2322], null, null, 'lmb-pencil', null, "LmEx_divclose();document.location.href='main.php?&action=download&ID=' + LmEx_edit_id + '&sendas=a';\"");
+        pop_menu2("&nbsp;" . $lang[2322], null, null, 'lmb-pencil', null, "LmEx_divclose();document.location.href='main.php?&action=download&ID=' + LmEx_edit_id + '&disposition=a';\"");
     }
     pop_submenu(203,'','');	#konvertieren
     if ($LINK[116]) {
@@ -119,10 +119,103 @@ function explSearch($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=null) {
 				echo "<TD class=\"gtabHeaderInputTD\"><select $onchange ID=\"tabsearch_$key1\" name=\"fs[$key1][$fid][0]\" CLASS=\"gtabHeaderInputINP\" style=\"width:".$ffilter["rowsize"][$LID][$key1].";\"><option><option value=\"1\" $sel1>ja<option value=\"2\" $sel2>nein</select></TD>";
 				unset($sel1,$sel2);
 			}elseif($gfile['typ'][$key1]){
-				echo "<TD class=\"gtabHeaderInputTD\"><input type=\"text\" $onchange ID=\"tabsearch_$key1\" name=\"fs[$key1][$fid][0]\" value=\"".$ffilter[$key1][$fid][0]."\" CLASS=\"gtabHeaderInputINP\" style=\"width:".$ffilter["rowsize"][$LID][$key1].";\"></TD>";
+				echo "<TD class=\"gtabHeaderInputTD\"><input type=\"text\" $onchange ID=\"tabsearch_$key1\" name=\"fs[$key1][$fid][0]\" value=\"".$ffilter['gsr'][$key1][$fid][0]."\" CLASS=\"gtabHeaderInputINP\" style=\"width:".$ffilter["rowsize"][$LID][$key1].";\"></TD>";
 			}else{echo "<TD></TD>";}
 		}
 		echo "</TR>";
+	}
+}
+
+function explSearchBootstrap($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=null) {
+	global $lang;
+	global $umgvar;
+	global $gfile;
+	global $gtab;
+
+	if($ffilter["viewmode"][$LID] == 2){
+		# ---------------- Google Schema ------------------
+		$cols = 2 + lmb_count($gfile['show'][$LID]);
+		echo "<TR><TD COLSPAN=\"$cols\"><TABLE CELLPADDING=\"0\" CELLSPACING=\"0\" BORDER=\"0\" width=\"100%\">";
+
+		echo "<TR class=\"gtabHeaderInputTR\"><TD class=\"gtabHeaderInputTD\" nowrap><input class=\"gtabHeaderInputINP\" type=\"text\" style=\"width:300px;\" value=\"".$ffilter["content"][$fid]."\" name=\"ffilter_content\" maxlength=\"50\">&nbsp;";
+
+		if ($umgvar['postgres_use_fulltextsearch']) {
+			echo '<select name="fts_search_mode" onchange="document.form1.ffilter_fts_search_mode.value = this.value;">';
+			echo '<option value="and" ' . ($ffilter['fts_search_mode'][$fid] == 'and' ? 'selected' : '') . '>', $lang[3062], '</option>';
+			echo '<option value="or" ' . ($ffilter['fts_search_mode'][$fid] == 'or' ? 'selected' : '') . '>', $lang[3063], '</option>';
+			if (!$umgvar['postgres_strip_tsvector']) {
+				echo '<option value="phrase" ' . ($ffilter['fts_search_mode'][$fid] == 'phrase' ? 'selected' : '') . '>', $lang[3064], '</option>';
+			}
+			echo '</select>';
+
+			if($ffilter["sub"]){$checked = "checked";}else{$checked = "";}
+			echo "&nbsp;<label title=\"".$lang[1240]."\" class=\"first-letter-red\">sub<input type=\"checkbox\" style=\"border:none;\" $checked OnClick=\"document.form1.ffilter_sub.value=this.checked;\"></label>";
+		} else {
+			if($umgvar["indize_cs"]){
+				if($ffilter["content_cs"][$fid]){$checked = "checked";}else{$checked = "";}
+				echo "&nbsp;<label title=\"".$lang[1902]."\" class=\"first-letter-red\">Cs<input type=\"checkbox\" ".$checked." OnClick=\"document.form1.ffilter_content_cs.value=this.checked;\"></label>";
+			}
+
+			if($ffilter["content_ts"][$fid]){$checked = "checked";}else{$checked = "";}
+			echo "&nbsp;<label title=\"".$lang[1904]."\" class=\"first-letter-red\">Ts<input type=\"checkbox\" ".$checked." OnClick=\"document.form1.ffilter_content_ts.value=this.checked;\"></label>";
+
+			if($ffilter["content_mf"][$fid]){$checked = "checked";}else{$checked = "";}
+			echo "&nbsp;<label title=\"".$lang[2448]."\" class=\"first-letter-red\">Snd<input type=\"checkbox\" ".$checked." OnClick=\"document.form1.ffilter_content_mf.value=this.checked;\"></label>";
+
+			if($umgvar["indize_level"] == 2 /* allow sentence search */){
+				if($ffilter["content_se"][$fid]){$checked = "checked";}else{$checked = "";}
+				echo "&nbsp;<label title=\"".$lang[1903]."\" class=\"first-letter-red\">Str<input type=\"checkbox\" ".$checked." OnClick=\"document.form1.ffilter_content_se.value=this.checked;\"></label>";
+			}
+
+			if($ffilter["sub"]){$checked = "checked";}else{$checked = "";}
+			echo "&nbsp;<label title=\"".$lang[1240]."\" class=\"first-letter-red\">sub<input type=\"checkbox\" $checked OnClick=\"document.form1.ffilter_sub.value=this.checked;\"></label>";
+
+			#if($ffilter["onlymeta"]){$checked = "checked";}else{$checked = "";}
+			#echo "&nbsp;<span title=\"".$lang[1908]."\"><span style=\"color:red\">m</span>eta<input type=\"checkbox\" ".$ffilter["onlymeta"][$fid]." OnClick=\"document.form1.ffilter_onlymeta.value=this.checked;\"></span>";
+
+			if($ffilter["content_andor"][$fid] == 2){$and = "";$or = "checked";}else{$and = "checked";$or = "";}
+			echo "&nbsp;&nbsp;&nbsp;<label>".$lang[854]."<input type=\"radio\" name=\"ffilter_content_andor\" value=\"1\" ".$and."></label><label>".$lang[855]."<input type=\"radio\" name=\"ffilter_content_andor\" value=\"2\" ".$or."></label>";
+		}
+
+		echo '</TD></TR><TR class="gtabHeaderInputTR"><TD nowrap style="height:5px;"></TD></TR>';
+		echo '</TABLE></TD></TR>';
+	}else{
+		# ---------------- Suchfelder ------------------
+		if($ID){
+			$onchange = "onchange=\"LmExt_Ex_RelationFields('$gtabid','$fieldid','','','$ID','','','','','','','','',this)\"";
+		}
+
+		// name always first element
+		$key1 = $gtab["argresult_id"]["LDMS_FILES"]."_11";
+		echo "<tr class=\"w-auto\"><th><input class=\"w-100 form-control form-control-sm\" type=\"text\" $onchange ID=\"tabsearch_$key1\" name=\"fs[$key1][$fid][0]\" value=\"".$ffilter[$key1][$fid][0]."\"></th>";
+
+		foreach ($gfile['show'][$LID] as $key1 => $val1){
+			# Felder ohne Rechte
+			if(!$gfile["id"][$key1] OR $gtab["argresult_id"]["LDMS_FILES"]."_11" == $key1){continue;}
+
+			# Sonderfelder
+			if($gtab["argresult_id"]["LDMS_FILES"]."_34" == $key1 OR $gtab["argresult_id"]["LDMS_FILES"]."_36" == $key1){
+				echo "<TD></TD>";
+				continue;
+			}
+			if($ID OR !$ffilter["rowsize"][$LID][$key1]){
+				$ffilter["rowsize"][$LID][$key1] = "100%";
+			}
+			if($gfile['typ'][$key1] == 3){
+				if($ffilter[$key1][$fid][0] == "TRUE"){
+					$sel1 = "selected";
+				}
+				elseif(
+					$ffilter[$key1][$fid][0] == "FALSE"){
+					$sel2 = "selected";
+				}
+				echo "<th><select $onchange ID=\"tabsearch_$key1\" name=\"fs[$key1][$fid][0]\" class=\"w-100 form-select form-select-sm\" style=\"width:".$ffilter["rowsize"][$LID][$key1].";\"><option><option value=\"1\" $sel1>ja<option value=\"2\" $sel2>nein</select></th>";
+				unset($sel1,$sel2);
+			}elseif($gfile['typ'][$key1]){
+				echo "<th><input type=\"text\" $onchange ID=\"tabsearch_$key1\" name=\"fs[$key1][$fid][0]\" value=\"".$ffilter[$key1][$fid][0]."\" class=\"w-100 form-control form-control-sm\" style=\"width:".$ffilter["rowsize"][$LID][$key1].";\"></th>";
+			}else{echo "<TD></TD>";}
+		}
+		echo "</tr>";
 	}
 }
 
@@ -156,12 +249,49 @@ function explHeader($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=null){
 			$onmove = "onmousedown=\"LmEx_startDrag(event,'$key1');\"";
 		}
 
-		echo "<TD class=\"gtabHeaderTitleTD\" ID=\"tabheader_$key1\"  HEIGHT=\"20\" $onmove STYLE=\"cursor:e-resize;width:".$ffilter["rowsize"][$LID][$key1]."px;\" title=\"".htmlentities($lang[$gfile['desc'][$key1]],ENT_QUOTES,$umgvar["charset"])."\">";
+		echo "<TD class=\"gtabHeaderTitleTD\" ID=\"tabheader_$key1\"  HEIGHT=\"20\" $onmove title=\"".htmlentities($lang[$gfile['desc'][$key1]],ENT_QUOTES,$umgvar["charset"])."\">";
 		if($ffilter["order"][$fid][0] == $key1){$style = "text-decoration:underline;";}else{$style = "";}
 		if($gfile['typ'][$key1] AND $gfile['data_type'][$key1] != 39){echo "<span class=\"gtabHeaderTitleTDItem\" $onclick STYLE=\"cursor:pointer;white-space:nowrap;$style\">";}
 		echo "&nbsp;".htmlentities($gfile['title'][$key1],ENT_QUOTES,$umgvar["charset"])."&nbsp;</span></TD>\n";
 	}
 	echo "</TR>";
+}
+
+function explHeaderBootstrap($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=null){
+
+	global $lang;
+	global $umgvar;
+	global $gfile;
+	global $gtab;
+
+
+	// name always first element
+	$key1 = $gtab["argresult_id"]["LDMS_FILES"]."_11";
+	echo "<thead><tr>";
+	echo "<th ID=\"tabheader_$key1\" onMousedown=\"LmEx_startDrag(event,'$key1');\" $colspan>
+	<span class=\"gtabHeaderTitleTDItem\" OnClick=\"document.form1.ffilter_order.value='$key1';LmEx_send_form(1,1);\" style=\"cursor:pointer\">".$lang[209]."</span>
+	</th>";
+
+	foreach ($gfile['show'][$LID] as $key1 => $val1){
+
+		# Felder ohne Rechte / Feld "Name"
+		if(!$gfile["id"][$key1] OR $gtab["argresult_id"]["LDMS_FILES"]."_11" == $key1){continue;}
+
+		# if extrelation
+		if($ID){
+			$onclick = "onclick=\"LmExt_Ex_RelationFields('$gtabid','$fieldid','','','$ID','$key1','','','','','','','','')\"";
+			$onmove = "";
+		}else{
+			$onclick="onclick=\"document.form1.ffilter_order.value='".$key1."';LmEx_send_form(1,1);document.form1.ffilter_order.value=''\"";
+			$onmove = "onmousedown=\"LmEx_startDrag(event,'$key1');\"";
+		}
+
+		echo "<th ID=\"tabheader_$key1\" $onmove title=\"".htmlentities($lang[$gfile['desc'][$key1]],ENT_QUOTES,$umgvar["charset"])."\">";
+		if($ffilter["order"][$fid][0] == $key1){$style = "text-decoration:underline;";}else{$style = "";}
+		if($gfile['typ'][$key1] AND $gfile['data_type'][$key1] != 39){echo "<span class=\"gtabHeaderTitleTDItem\" $onclick STYLE=\"cursor:pointer;white-space:nowrap;$style\">";}
+		echo "&nbsp;".htmlentities($gfile['title'][$key1],ENT_QUOTES,$umgvar["charset"])."&nbsp;</span></th>\n";
+	}
+	echo "</tr></thead>";
 }
 
 # ---------------- Ordnerliste ------------------
@@ -180,7 +310,7 @@ function explFolders($LID,$fid,$MID,$level,&$ffilter,$redirect=null,$rootlevel=n
     $ffilter["page"][$LID] = intval($ffilter["page"][$LID]);
 	
 	if($ffilter["page"][$LID] <= 1 AND !$MID AND $ffilter["viewmode"][$LID] != 2){
-		if(($level OR $level == '0') AND $LID != $gfield[$f_tabid]["file_level"][$f_fieldid] AND $level != $rootlevel){
+		if(($level OR $level == '0') AND $redirect AND $LID != $gfield[$f_tabid]["file_level"][$f_fieldid] AND $level != $rootlevel){
 			if($redirect){$redirect_ = "LmExt_Ex_SelectFolder(".$level.",".$redirect.")";}else{$redirect_ = "LmEx_select_folder(event,'$level')";}
 			echo "<TR class=\"gtabBodyTR\" style=\"background-color:".$farbschema["WEB8"].";\" OnClick=\"$redirect_;\" OnMouseOver=\"this.style.backgroundColor='".$farbschema["WEB3"]."'\" OnMouseOut=\"this.style.backgroundColor='".$farbschema["WEB8"]."'\"><TD class=\"gtabBodyTD\" STYLE=\"cursor:pointer;\" COLSPAN=\"$colspan\"><i class=\"lmb-icon lmb-folder-back\"></i></TD></TR>";
 		}
@@ -240,7 +370,7 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 		$key2 = 1;
 		foreach($ffile["id"] as $key => $value){
 
-			echo "<TR class=\"gtabBodyTR\" ID=\"elline_d_".$LID."_".$key."\" TITLE=\"".($ffile['storageID'][$key] ? '[' . $externalStorage['desc'][$ffile['storageID'][$key]] . '] ' : '').$ffile["url"][$key]."\" style=\"cursor:context-menu;" . ($ffile['storageID'][$key] ? 'font-style: italic;' : '') . "\" 
+			echo "<TR class=\"gtabBodyTR\" ID=\"elline_d_".$LID."_".$key."\" data-name=\"".$ffile['name'][$key]."\" TITLE=\"".($ffile['storageID'][$key] ? '[' . $externalStorage['desc'][$ffile['storageID'][$key]] . '] ' : '').$ffile["url"][$key]."\" style=\"cursor:context-menu;" . ($ffile['storageID'][$key] ? 'font-style: italic;' : '') . "\" 
 			OnClick=\"LmEx_activate_file(event,'$key','".preg_replace("/\'\"\//","",$ffile["name"][$key])."','$LID','d')\" ";
 			if($gtab["tab_view_form"][$tabid_files]){
 			    echo "ondblclick=\"LmEx_open_details(event,$value,$LID,$tabid_files,'".$gtab["tab_view_form"][$tabid_files]."','".$gformlist[$tabid_files]["dimension"][$gtab["tab_view_form"][$tabid_files]]."')\"";
@@ -290,15 +420,15 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 
 				# Thumb
 				if($gfile["name"][$gkey] == "THUMB_OK"){
-					$size = explode("x",$umgvar["thumbsize1"]);
-					$img1 = IMACK_ConvertThumbs(array($value,$ffile["secname"][$key],$ffile["mimeid"][$key],$ffile["thumb_ok"][$key],$ffile["level"][$key],$ffile["mid"][$key]),$size[0],$size[1],1);
-					$size = explode("x",$umgvar["thumbsize2"]);
-					$img2 = IMACK_ConvertThumbs(array($value,$ffile["secname"][$key],$ffile["mimeid"][$key],$ffile["thumb_ok"][$key],$ffile["level"][$key],$ffile["mid"][$key]),$size[0],$size[1],1);
-					echo "<TD class=\"gtabBodyTD\" data-fieldid=\"$key1\" VALIGN=\"TOP\" ALIGN=\"$align\"><DIV ID=\"td_".$key1."_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;width:".$ffilter["rowsize"][$LID][$key1]."px;\">";
-					if($img1){
-						echo "&nbsp;<IMG SRC=\"$img1\" BORDER=\"1\" STYLE=\"margin:1px;cursor:pointer;\" ";
-						if($img2){
-							echo "OnClick=\"LmEx_preview_thumbs(event,'$img2')\"";
+                    $size = explode("x",$umgvar["thumbsize1"]);
+					$thumb1 = lmb_getThumbnail(array($value,$ffile["secname"][$key],$ffile["mimeid"][$key],$ffile["thumb_ok"][$key],$ffile["level"][$key],$ffile["mid"][$key]),$size[0],$size[1],1);
+                    $size = explode("x",$umgvar["thumbsize2"]);
+                    $thumb2 = lmb_getThumbnail(array($value,$ffile["secname"][$key],$ffile["mimeid"][$key],$ffile["thumb_ok"][$key],$ffile["level"][$key],$ffile["mid"][$key]),$size[0],$size[1],1);
+                    echo "<TD class=\"gtabBodyTD\" data-fieldid=\"$key1\" VALIGN=\"TOP\" ALIGN=\"$align\"><DIV ID=\"td_".$key1."_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;width:".$ffilter["rowsize"][$LID][$key1]."px;\">";
+					if($thumb1){
+						echo "&nbsp;<IMG SRC=\"$thumb1\" BORDER=\"1\" STYLE=\"margin:1px;cursor:pointer;\" ";
+						if($thumb2){
+							echo "OnClick=\"LmEx_preview_thumbs(event,'$thumb2')\"";
 						}
 						echo ">&nbsp;";
 					}
@@ -306,7 +436,7 @@ function explFiles($LID,$fid,$level,&$ffile,&$ffilter){
 					# Infos
 				}elseif($gfile["name"][$gkey] == "INFO"){
 					$space = "";
-					echo "<TD class=\"gtabBodyTD\" data-fieldid=\"$key1\"  VALIGN=\"TOP\" ALIGN=\"$align\"><DIV ID=\"td_".$key1."_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;width:".$ffilter["rowsize"][$LID][$key1]."px;\">&nbsp;";
+					echo "<TD class=\"gtabBodyTD\" data-fieldid=\"$key1\"  VALIGN=\"TOP\" ALIGN=\"$align\"><DIV ID=\"td_".$key1."_".$key2."\" STYLE=\"overflow:hidden;white-space:nowrap;\">&nbsp;";
 					if($ffile["indize_needtime"][$key] == -1){$icolor = "red";}elseif(!$ffile["indize_count"][$key]){$icolor = "orange";}else{$icolor = "blue";}
 					if($ffile["indize"][$key] AND $ffile["indize_needtime"][$key] != -2){echo "<SPAN OnClick=\"LmEx_dynsearchGet(event,'files_meta_$key','fileIndizeInfo','".$ffile["id"][$key]."',0)\" TITLE=\"$lang[1590]: ".get_date($ffile["indize_time"][$key],2)." (".round($ffile["indize_needtime"][$key],2)."sec. / ".$ffile["indize_count"][$key].")\"><B STYLE=\"color:$icolor;cursor:pointer\">I</B></SPAN>&nbsp;";$space = "|&nbsp;";}
 					if($ffile["ocr_needtime"][$key] == -1){$icolor = "red";}else{$icolor = "blue";}
@@ -388,8 +518,9 @@ function explFooter($LID,$fid,&$ffile,&$ffilter){
 
 	
 	echo "<TD><B style=\"color:green;\">|</B>&nbsp;$lang[89]&nbsp;</TD>";
-	
-	$maxpage = ceil($ffile["max_count"]/$ffilter["anzahl"][$LID]);
+	if($ffilter["anzahl"][$LID]) {
+        $maxpage = ceil($ffile["max_count"] / $ffilter["anzahl"][$LID]);
+    }
 	if($ffilter["page"][$LID] == 1){
 		echo "<TD class=\"gtabFooterTD\" NOWRAP style=\"width:10px;\"><i class=\"lmb-icon lmb-first\" STYLE=\"opacity:0.4;filter:Alpha(opacity=40);\" BORDER=\"0\" TITLE=\"$lang[1294]\"></i></TD>\n";
 		echo "<TD class=\"gtabFooterTD\" NOWRAP style=\"width:10px;\"><i class=\"lmb-icon lmb-previous\" STYLE=\"opacity:0.4;filter:Alpha(opacity=40);font-size:1.5em;\" BORDER=\"0\" TITLE=\"$lang[1296]\"></i></TD>\n";
@@ -433,7 +564,7 @@ function explPicShow(&$ffile,$gtabid,$field_id,$ID,$gformid,$formid,$picshow){
 			$width = $size[0];
 			$height = $size[1];
 		}
-		$pic = IMACK_ConvertThumbs(array($cfid,$ffile["secname"][$cfid],$ffile["mimeid"][$cfid],$ffile["thumb_ok"][$cfid],$ffile["level"][$cfid],$ffile["mid"][$cfid]),$width,$height,1);
+		$pic = lmb_getThumbnail(array($cfid,$ffile["secname"][$cfid],$ffile["mimeid"][$cfid],$ffile["thumb_ok"][$cfid],$ffile["level"][$cfid],$ffile["mid"][$cfid]),$width,$height,1);
 	}
 
 	echo "<TR><TD><TABLE CELLSPACING=\"0\" CELLPADDING=\"0\"><TR><TD>&nbsp;</TD><TD><i TITLE=\"$lang[857]\" class=\"lmb-icon lmb-first\" STYLE=\"cursor:pointer;\" BORDER=\"0\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$field_id,'3',$ID,'','','',1,'".$formid."','','','')\"></i></TD>";
@@ -459,9 +590,9 @@ function explPicSummery(&$ffile,$gtabid,$field_id,$ID,$gformid,$formid){
 	foreach ($ffile["id"] as $key => $value){
 
 		$size = explode("x",$umgvar["thumbsize1"]);
-		$img1 = IMACK_ConvertThumbs(array($key,$ffile["secname"][$key],$ffile["mimeid"][$key],$ffile["thumb_ok"][$key],$ffile["level"][$key],$ffile["mid"][$key]),$size[0],$size[1],1);
+		$img1 = lmb_getThumbnail(array($key,$ffile["secname"][$key],$ffile["mimeid"][$key],$ffile["thumb_ok"][$key],$ffile["level"][$key],$ffile["mid"][$key]),$size[0],$size[1],1);
 		$size = explode("x",$umgvar["thumbsize2"]);
-		$img2 = IMACK_ConvertThumbs(array($key,$ffile["secname"][$key],$ffile["mimeid"][$key],$ffile["thumb_ok"][$key],$ffile["level"][$key],$ffile["mid"][$key]),$size[0],$size[1],1);
+		$img2 = lmb_getThumbnail(array($key,$ffile["secname"][$key],$ffile["mimeid"][$key],$ffile["thumb_ok"][$key],$ffile["level"][$key],$ffile["mid"][$key]),$size[0],$size[1],1);
 		if($img1){
 			echo "<IMG SRC=\"".$img1."\" style=\"padding:5px;margin:5px;border:1px solid #CCCCCC;cursor:pointer\" OnClick=\"LmEx_preview_thumbs(event,'$img2')\" TITLE=\"".$ffile["name"][$key]."\">";
 		}else{
@@ -511,4 +642,40 @@ function explMainContent($ID,$LID,$MID,$fid,$typ,$level,$file_url,&$ffile,&$ffil
 
 }
 
+function explMainContentBootstrap($ID,$LID,$MID,$fid,$typ,$level,$file_url,&$ffile,&$ffilter) {
+	global $gfile;
+	global $farbschema;
+	global $lang;
+
+	if($typ){
+		echo "<div class='table-responsive'><table class=\"table table-sm w-100 p-0 table-striped-columns table-hover border\" id=\"GtabBodyTable\"><thead>";
+		explSearchBootstrap($LID,$fid,$ffilter);
+		explHeaderBootstrap($LID,$fid,$ffilter);
+		echo "</thead><tbody>";
+		explFolders($LID,$fid,$MID,$level,$ffilter);
+		# ---------------- Bildshow ------------------
+		#if($ffilter["viewmode"][$LID] == 4){
+		#	echo "<TR><TD COLSPAN=\"".count($gfile['show'][$LID])."\">";
+		#	explPicShow($ffile,0,0,0,0,0,0);
+		#	echo "</TD></TR></TABLE></TD></TR>";
+		if($ffilter["viewmode"][$LID] == 3){
+			echo "<TR><TD COLSPAN=\"".lmb_count($gfile['show'][$LID])."\">";
+			explPicSummery($ffile,0,0,0,0,0);
+			echo "</TD></TR>";
+		}else{
+			explFiles($LID,$fid,$level,$ffile,$ffilter);
+		}
+
+		echo '</tbody></table></div>';
+		explFooter($LID,$fid,$ffile,$ffilter);
+
+	}else{
+		echo '
+			<div class="gtabHeaderInputTR" id="gtabExplBody">';
+		if($level OR $level == '0'){
+			echo "<div STYLE=\"cursor:pointer;height:20px\" OnClick=\"document.form1.LID.value='$level';document.form1.submit();\" OnMouseOver=\"this.style.backgroundColor='{$farbschema['WEB8']}'\" OnMouseOut=\"this.style.backgroundColor='{$farbschema['WEB8']}'\"><B>..</B></div>";
+		}
+		echo "<div bgcolor=\"".$farbschema['WEB8']."\" style=\"height:20px\">&nbsp;<i class=\"lmb-icon lmb-reset\" STYLE=\"cursor:pointer;\" OnClick=\"document.form2.submit();\"></i>&nbsp;&nbsp;<span style=\"color:red;\">$lang[1472]</span></div>";
+	}
+}
 ?>

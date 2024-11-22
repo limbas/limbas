@@ -1,5 +1,4 @@
 <?php
-
 /**
  * @copyright Limbas GmbH <https://limbas.com>
  * @license https://opensource.org/licenses/GPL-2.0 GPL-2.0
@@ -7,8 +6,17 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
+
+namespace Limbas\admin\tools\datasync;
+
+use Limbas\lib\db\Database;
+use DateTime;
+use Throwable;
+
 class DatasyncClient
 {
+    protected static string $tableName = 'LMB_SYNC_CLIENTS';
+
     public int $id;
     public $name;
     public $url;
@@ -27,7 +35,7 @@ class DatasyncClient
     private $lastStatus;
 
     private $logPath;
-    
+
     private array $processLogCache;
 
     public function __construct(int $id, string $name, string $url, string $username, string $pass, string $rs_path, string $rs_user, string $rs_params, bool $active, bool $synced, int $order)
@@ -194,27 +202,32 @@ class DatasyncClient
 
     /**
      * @param bool $onlyActive
-     * @param $id
-     * @param $synced
+     * @param int|null $id
+     * @param bool|null $synced
      * @return array|mixed|null
      */
-    public static function all(bool $onlyActive = false, $id = null, $synced = null): mixed
+    public static function all(bool $onlyActive = false, int $id = null, bool $synced = null): mixed
     {
-        global $action;
-
-        $db = Database::get();
-
         $where = self::getWhere($onlyActive, $id, $synced);
-
-        $sqlquery = 'SELECT ID,NAME,SLAVE_URL,SLAVE_USERNAME,SLAVE_PASS,RS_USER,RS_PARAMS,RS_PATH,ACTIVE,SYNCED,SYNC_ORDER FROM LMB_SYNC_CLIENTS ' . (!empty($where) ? ' WHERE ' . implode(' AND ', $where) : '') . ' ORDER BY SYNC_ORDER';
-
-        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        $rs = Database::select(self::$tableName, where: $where, orderBy: ['SYNC_ORDER' => 'asc']);
 
         $output = [];
 
         while (lmbdb_fetch_row($rs)) {
 
-            $output[] = new self((int)lmbdb_result($rs, 'ID'), lmbdb_result($rs, 'NAME') ?? '', lmbdb_result($rs, 'SLAVE_URL') ?? '', lmbdb_result($rs, 'SLAVE_USERNAME') ?? '', lmbdb_result($rs, 'SLAVE_PASS') ?? '', lmbdb_result($rs, 'RS_PATH') ?? '', lmbdb_result($rs, 'RS_USER') ?? '', lmbdb_result($rs, 'RS_PARAMS') ?? '', boolval(lmbdb_result($rs, 'ACTIVE')), boolval(lmbdb_result($rs, 'ACTIVE')), (int)lmbdb_result($rs, 'ACTIVE'));
+            $output[] = new self(
+                (int)lmbdb_result($rs, 'ID'),
+                lmbdb_result($rs, 'NAME') ?? '',
+                lmbdb_result($rs, 'SLAVE_URL') ?? '',
+                lmbdb_result($rs, 'SLAVE_USERNAME') ?? '',
+                lmbdb_result($rs, 'SLAVE_PASS') ?? '',
+                lmbdb_result($rs, 'RS_PATH') ?? '',
+                lmbdb_result($rs, 'RS_USER') ?? '',
+                lmbdb_result($rs, 'RS_PARAMS') ?? '',
+                boolval(lmbdb_result($rs, 'ACTIVE')),
+                boolval(lmbdb_result($rs, 'ACTIVE')),
+                (int)lmbdb_result($rs, 'ACTIVE')
+            );
 
         }
 
@@ -234,29 +247,14 @@ class DatasyncClient
 
     /**
      * @param bool $onlyActive
-     * @param $id
-     * @param $synced
+     * @param int|null $id
+     * @param bool|null $synced
      * @return int
      */
-    public static function count(bool $onlyActive = false, $id = null, $synced = null): int
+    public static function count(bool $onlyActive = false, int $id = null, bool $synced = null): int
     {
-        $db = Database::get();
-
         $where = self::getWhere($onlyActive, $id, $synced);
-
-        $sqlquery = 'SELECT Count(ID) as CC FROM LMB_SYNC_CLIENTS ' . (!empty($where) ? ' WHERE ' . implode(' AND ', $where) : '');
-
-        $rs = lmbdb_exec($db, $sqlquery);
-
-        $count = 0;
-
-        while (lmbdb_fetch_row($rs)) {
-
-            $count = (int)lmbdb_result($rs, 'CC');
-
-        }
-
-        return $count;
+        return Database::count(self::$tableName, $where);
     }
 
 
@@ -266,22 +264,20 @@ class DatasyncClient
      * @param $synced
      * @return array
      */
-    private static function getWhere(bool $onlyActive = false, $id = null, $synced = null): array
+    private static function getWhere(bool $onlyActive = false, int $id = null, bool $synced = null): array
     {
         $where = [];
 
         if ($onlyActive) {
-            $where[] = 'ACTIVE = ' . LMB_DBDEF_TRUE;
+            $where['ACTIVE'] = 1;
         }
 
         if ($id !== null) {
-            $where[] = 'ID = ' . parse_db_int($id);
+            $where['ID'] = $id;
         }
 
-        if ($synced === true) {
-            $where[] = 'SYNCED = ' . LMB_DBDEF_TRUE;
-        } elseif ($synced === false) {
-            $where[] = 'SYNCED = ' . LMB_DBDEF_FALSE;
+        if ($synced !== null) {
+            $where['SYNCED'] = $synced ? 1 : 0;
         }
 
         return $where;
@@ -328,12 +324,12 @@ class DatasyncClient
      */
     public function getProcessLog(int $historyId, string $date): bool|string
     {
-        
+
         if (!array_key_exists($historyId, $this->processLogCache)) {
             $this->processLogCache[$historyId] = '';
-            
+
             $logFile = $this->logPath . $this->id . '-' . $date . '.log';
-            
+
             $currentId = 0;
             $handle = fopen($logFile, 'r');
             if ($handle) {
@@ -352,12 +348,12 @@ class DatasyncClient
                     if (str_contains($line, 'Start sync')) {
                         $matches = [];
                         preg_match('/\[(\d+)\]/', $line, $matches);
-                        if (array_key_exists(1,$matches)) {
-                            $currentId = (int) $matches[1];
+                        if (array_key_exists(1, $matches)) {
+                            $currentId = (int)$matches[1];
                         }
                     }
 
-                    if (!array_key_exists($currentId,$this->processLogCache)) {
+                    if (!array_key_exists($currentId, $this->processLogCache)) {
                         $this->processLogCache[$currentId] = '';
                     }
 
@@ -367,7 +363,7 @@ class DatasyncClient
                 fclose($handle);
             }
         }
-        
+
         return $this->processLogCache[$historyId];
     }
 
@@ -467,6 +463,25 @@ class DatasyncClient
         ];
 
         return $this->runSoapRequest($lmpar);
+    }
+
+
+    /**
+     * @param int $limit
+     * @param int|null $offset
+     * @return array
+     */
+    public function getSyncCache(int $limit = 15, int $offset = null): array
+    {
+        return SyncCache::all(['SLAVE_ID' => $this->id], $limit, $offset);
+    }
+
+    /**
+     * @return int
+     */
+    public function getSyncCacheCount(): int
+    {
+        return SyncCache::count(['SLAVE_ID' => $this->id]);
     }
 
 }

@@ -9,7 +9,8 @@
 
 
 
-function lmbGetLockmessage() {
+function lmbGetLockMessage(): string
+{
     global $session;
     global $action;
     global $db;
@@ -72,7 +73,7 @@ global $session;
     <div class="text-center">
         <p class="fs-3">🚧</p>
         Dear <?= $session['vorname'] ?> <?= $session['name'] ?>,
-        <br><br><?= lmbGetLockmessage() ?></div>
+        <br><br><?= lmbGetLockMessage() ?></div>
 </div>
 </body>
 </html>

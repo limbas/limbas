@@ -135,7 +135,7 @@ require_once __DIR__ . '/reportManager.dao';
                             </FORM>
     
                             <?php
-                            echo lmb_ini_wysiwyg($formname,null,null,1,650);
+                            echo lmbInitTinyMce($formname,650);
                             ?>
                             <button type="button" class="btn btn-secondary mt-3" id="btn-save" disabled><?=$lang[842]?></button>
                         </div>

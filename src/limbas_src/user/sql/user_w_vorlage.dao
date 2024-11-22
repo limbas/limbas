@@ -31,11 +31,17 @@ if($del_id){
 }
 
 foreach($reminderlist as $categoryid => $gtabid) {
+
     // filter
     $sql = array();
-
     lmb_reminderFilter($sql, category: $categoryid, valid: $valid);
     $where = implode(' AND ', $sql);
+    if($where){
+        $where = 'WHERE '.$where;
+    }else{
+        continue;
+    }
+
     $sqlquery = "SELECT DISTINCT
     LMB_REMINDER.ID,
     LMB_REMINDER.FRIST,
@@ -47,13 +53,21 @@ foreach($reminderlist as $categoryid => $gtabid) {
     LMB_REMINDER.CATEGORY,
     LMB_REMINDER.FROMUSER
     FROM LMB_REMINDER,LMB_REMINDER_GROUP
-	WHERE $where ORDER BY LMB_REMINDER.TAB_ID,LMB_REMINDER.FRIST";
+	$where 
+	ORDER BY LMB_REMINDER.TAB_ID,LMB_REMINDER.FRIST";
+
     $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     while (lmbdb_fetch_row($rs)) {
         $remtab = lmbdb_result($rs, "TAB_ID");
+
+        // permission on table
+        if(!$gtab['tab_id'][$remtab]){
+            continue;
+        }
+
         $remgr = $gtab["tab_group"][$remtab];
         $remdata["id"][$remgr][$remtab][] = lmbdb_result($rs, "ID");
-        $remdata["tab_id"][$remgr][$remtab][] = lmbdb_result($rs, "TAB_ID");
+        $remdata["tab_id"][$remgr][$remtab][] = $remtab;
         $remdata["validdate"][$remgr][$remtab][] = lmbdb_result($rs, "FRIST");
         $remdata["desc"][$remgr][$remtab][] = lmbdb_result($rs, "DESCRIPTION");
         $remdata["dat_id"][$remgr][$remtab][] = lmbdb_result($rs, "DAT_ID");

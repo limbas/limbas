@@ -105,7 +105,7 @@
                         <thead>
                         <tr>
                             <th></th>
-                            <th title="<?=$lang[2954]?>" class="text-center"><?=$lang[1825]?>&nbsp;</th>
+                            <th title="<?=$lang[2954]?>" class="text-center <?php echo (!$rfield['veknfieldid'] ? 'text-danger' : '')?>"><?=$lang[1825]?>&nbsp;</th>
                             <th title="<?=$lang[2808]?>" class="text-center">&nbsp;<?=$lang[1826]?>&nbsp;</th>
                             <th title="<?=$lang[2806]?>" class="text-center" colspan="2">&nbsp;<?=$lang[2089]?>&nbsp;</th>
                             <th title="<?=$lang[2807]?>" class="text-center" colspan="2">&nbsp;<?=$lang[1846]?>&nbsp;</th>
@@ -204,19 +204,7 @@
 
                         endwhile;
                         ?>
-                        
-                        <tfoot>
-                        <tr>
-                            <td colspan="3" class="text-end font-italic"><?=$lang[2595]?></td>
-                            <td>
-                                <input type="text" name="findidCut" class="form-control form-control-sm w-25" value="<?=$rfield['findidcut']?>">
-                            </td>
-                            <td></td>
-                            <td>
-                                <input type="text" name="viewidCut" class="form-control form-control-sm w-25" value="<?=$rfield['viewidcut']?>">
-                            </td>
-                        </tr>
-                        </tfoot>
+
                         <tr>
                         </tr>
 
@@ -228,6 +216,30 @@
 
     <?php if($rfield['verkntabletype'] == 1 AND $rfield['verkntabid'] AND $rfield['datatype'] != 23): ?>
     <hr>
+
+
+
+
+
+    <div class="mb-0 row">
+        <label class="col-sm-6 col-form-label">
+            <?=$lang[2595]?><br>
+            <small class="form-text text-muted"><?=$lang[2806]?> (string / html)</small>
+        </label>
+        <div class="col-sm-6 pt-2">
+            <input type="text" name="findidCut" class="form-control form-control-sm w-25" value="<?=$rfield['findidcut']?>">
+        </div>
+    </div>
+
+    <div class="mb-0 row">
+        <label class="col-sm-6 col-form-label">
+            <?=$lang[2595]?><br>
+            <small class="form-text text-muted"><?=$lang[2807]?> (string / html)</small>
+        </label>
+        <div class="col-sm-6 pt-2">
+            <input type="text" name="viewidCut" class="form-control form-control-sm w-25" value="<?=$rfield['viewidcut']?>">
+        </div>
+    </div>
 
 
     <div class="mb-0 row">

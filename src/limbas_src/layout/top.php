@@ -151,7 +151,7 @@ $profileMenuWrapper .= '</a><div class="dropdown-menu rounded-0 border-light py-
 <nav class="navbar navbar-expand-lg navbar-light py-0 shadow-sm bg-nav" id="lmbtopnav">
 
     <div class="container-fluid">
-        <a class="navbar-brand pe-4 pe-sm-5" href=""  title="<?php echo $lang[$LINK['name'][301]]; ?>">
+        <a class="navbar-brand pe-4 pe-sm-5" href="<?=e($logoLink)?>"  title="<?php echo $lang[$LINK['name'][301]]; ?>">
             <?php
                 $topLeft = 'assets/images/logo_topleft.png';
                 $customLogo = false;
@@ -186,7 +186,15 @@ $profileMenuWrapper .= '</a><div class="dropdown-menu rounded-0 border-light py-
     
                         if($bzm == 1){$active = 'active';}else{$active = '';}
                         
-                        echo "<li class=\"nav-item $active\" data-id=\"$key\" onclick=\"$onclick;limbasSetActiveClass(this,'#lmbtopnav','li')\" title=\"" . $value["desc"] . "\"><a class=\"nav-link h-100 d-flex flex-column justify-content-between align-items-center\">".(($value['icon']) ? '<div class="lmbMenuItemTop2Icon"><i class="lmb-icon '.$value['icon'].'"></i></div><div class="lmbMenuItemTop2Text">'.$value["name"].'</div>' : $value["name"])."</a></li>";
+                        
+                        if(str_starts_with($value['link'],'dropdown'))
+                        {
+                            require COREPATH . 'layout/parts/dropdownmenu.php';
+                        }
+                        else
+                        {
+                            echo "<li class=\"nav-item $active\" data-id=\"$key\" onclick=\"$onclick;limbasSetActiveClass(this,'#lmbtopnav','li')\" title=\"" . $value["desc"] . "\"><a class=\"nav-link h-100 d-flex flex-column justify-content-between align-items-center\">".(($value['icon']) ? '<div class="lmbMenuItemTop2Icon"><i class="lmb-icon '.$value['icon'].'"></i></div><div class="lmbMenuItemTop2Text">'.$value["name"].'</div>' : $value["name"])."</a></li>";
+                        }
                         
                         $bzm++;
                     }
@@ -222,18 +230,22 @@ $profileMenuWrapper .= '</a><div class="dropdown-menu rounded-0 border-light py-
                         if($key != 214 && $key != 21) { # not session refresh
                             $onclick .= ";limbasSetActiveClass(this,'#lmbtopnav','li')";
                         }
-    
-                        if ($key == 21) {
+
+                        if(str_starts_with($value['link'],'dropdown'))
+                        {
+                            require COREPATH . 'layout/parts/dropdownmenu.php';
+                        }
+                        elseif ($key == 21) {
                             $profilemenu .= '<a class="dropdown-item" onclick="'.$onclick.'" title="'.$value['desc'].'">
                                                 '.(($value['icon']) ? '<i class="lmb-icon '.$value['icon'].'"></i>':'').' '.$value["name"].'
                                             </a>';
-                        } else if ($key == 213) {
+                        } elseif ($key == 213) {
                             $profilemenu .= '<div class="dropdown-divider m-0"></div>
                                                 <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#modal-logout">
                                                     <i class="lmb-icon lmb-sign-out"></i> '.$value["name"].'
                                                 </a>';
     
-                        } else if ($key == 308) {
+                        } elseif ($key == 308) {
                             echo sprintf($multitenantMenuWrapper,$value["name"]);
                         } else {
                             echo "<li class=\"nav-item ps-lg-2\" id=\"lmbMenuItemInfo_$key\" onclick=\"$onclick\" title=\"" . $value["desc"] . "\"><a class=\"nav-link h-100 d-flex flex-column justify-content-between align-items-center $class\">".(($value['icon']) ? '<div class="lmbMenuItemTop2Icon"><i class="lmb-icon '.$value['icon'].'"></i></div><div class="lmbMenuItemTop2Text">'.$value["name"].'</div>' : $value["name"])."</a></li>";

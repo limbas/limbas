@@ -5,8 +5,8 @@
 About Limbas
 ============
 
-Limbas is a database framework for creating database-driven business applications.
-As a graphical database frontend, it enables the efficient processing of data stocks and the flexible development of comfortable database applications. LIMBAS is brought to you by the LIMBAS team at LIMBAS GmbH.
+Limbas is a low-code database framework for creating database-driven business applications.
+As a graphical database front-end, it enables the efficient processing of data stocks and the flexible development of comfortable database applications with hardly any programming knowledge. LIMBAS is brought to you by the LIMBAS team at LIMBAS GmbH.
 
 Supported databases
 -------------------
@@ -45,7 +45,7 @@ The Limbas framework is licensed under the [GNU GPL v2.0](https://opensource.org
 Installation
 ------------
 
-A detailed description of how to perform a new INSTALLATION is provided at [https://www.limbas.org/wiki/](https://www.limbas.org/wiki/)
+A detailed description of how to perform a new INSTALLATION is provided at [Limbas Documentation](https://limbas.org/en/documentation/get-started-en/)
 
 ### Web installer
 
@@ -55,6 +55,11 @@ It downloads the latest Limbas package and unpacks it with the right permissions
 Finally, you will be redirected to the Limbas installer. Internet connection required.
 
 After installation, change the domain root to the "public" directory.
+
+### Installation with docker
+
+Limbas can be started via Docker with just a few clicks.\
+For details see [Limbas Docker](https://github.com/limbas/limbas-docker)
 
 ### Installation from release package
 
@@ -69,9 +74,3 @@ UPDATE
 
 Make sure to **back up** the directories before updating.\
 To update an existing Limbas system, replace the "limbas_src", "vendor" and "assets" (in "public") folders.
-
-Default credentials
--------------------
-
-User: admin\
-Password: limbas

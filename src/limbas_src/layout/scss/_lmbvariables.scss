@@ -30,9 +30,11 @@ $farbschemaWEB14: #F5F5F5 !default;
 $legacy-table-color: $farbschemaWEB2 !default;
 $legacy-table-hover-color: $legacy-table-color !default;
 $legacy-table-hover-bg-color: $farbschemaWEB7 !default;
+$legacy-table-bg-a-color: #f9f8f3 !default;
+$legacy-table-bg-b-color: #ffffff !default;
 
 $gtab-header-bg: $farbschemaWEB13 !default;
-$find-icon-path: url("../images/legacy/find.png") !default;
+$find-icon-path: url("../../assets/images/legacy/find.png") !default;
 
 $fontsize07: 0.7em !default;
 $fontsize09: 0.9em !default;
@@ -41,7 +43,7 @@ $fontsize12: 1.2em !default;
 $fontsize13: 1.3em !default;
 $fontsize14: 1.4em !default;
 $fontsize15: 1.5em !default;
-$waitsymbol: "../images/legacy/wait1.gif";
+$waitsymbol: "../../assets/images/legacy/wait1.gif";
 //if($umgvar['waitsymbol']){$waitsymbol = $umgvar['waitsymbol'];}else{$waitsymbol = "assets/images/legacy/wait1.gif";}
 
 $umgvarfont: Verdana, Arial, Helvetica !default;
@@ -92,6 +94,7 @@ $sess-refresh-color: #e4d314 !default;
 $bg-differ: #ffffff !default;
 
 $fa-font-path: '../../assets/fonts' !default;
+$img-as-icon-filter: invert(0%) !default;
 
 //bootstrap defaults
 
@@ -156,7 +159,6 @@ $nav-left-inner-hover-color: #fff !default;
 $nav-left-inner-background-color: $nav-left-background-color !default;
 $nav-left-inner-open-background-color: darken($nav-left-background-color, 12) !default;
 $nav-left-inner-border: none !default;
-$nav-left-hide-color: #fff !default;
 
 $nav-left-query-icon-color: #ffca7d !default;
 $nav-left-new-data-color: #A3F401 !default;

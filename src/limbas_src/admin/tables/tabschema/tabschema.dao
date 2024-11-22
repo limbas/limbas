@@ -277,7 +277,8 @@ function lmb_make_tree($value, $callTrace = array())
         return;
     }
 
-    if ($dep = lmb_checkViewDependency($value)) {
+    $dep = lmb_checkViewDependency($value);
+    if (is_array($dep)) {
         ob_start();
         echo '<ul class="list-unstyled">';
         foreach ($dep as $k => $v) {

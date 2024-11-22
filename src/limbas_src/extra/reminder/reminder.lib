@@ -7,70 +7,23 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+# Deprecated
 
 #------------------- reminder --------------------------------
 
+use Limbas\extra\reminder\Reminder;
+use Limbas\extra\reminder\ReminderController;
 
 function lmb_reminderFilter(&$sql,$category=null,$gtabid=null,$ID=null,$valid=null){
-    global $session;
-    global $lmmultitenants;
-    global $greminder;
-    global $gtab;
-
-    // permissions
-    if($category && !$greminder["argresult_id"][$category]){return array();}
-
-    $rgtabid = $greminder["argresult_id"][$category];
-
-    // multitenat
-    if($lmmultitenants['mid'][$session['mid']]) {
-        // table based
-        if ($rgtabid){
-            if($gtab["multitenant"][$rgtabid]) {
-                $sql[] = 'LMB_REMINDER.LMB_MID = ' . parse_db_int($lmmultitenants['mid'][$session['mid']]);
-            }
-        // table independent
-        }else{
-            $sql[] = '(LMB_REMINDER.LMB_MID = ' . parse_db_int($lmmultitenants['mid'][$session['mid']]) . ' OR LMB_REMINDER.LMB_MID = 0)';
-        }
-    }
-
-    $sql[] = "LMB_REMINDER.ID = LMB_REMINDER_GROUP.REMINDER_ID";
-
-    // group based
-    if($greminder[$rgtabid]["groupbased"][$category]){
-        $sql[] = "(LMB_REMINDER_GROUP.GROUP_ID IN (".implode(",",$session["subgroup"]).") OR LMB_REMINDER_GROUP.USER_ID = ".$session["user_id"].")";
-    // user based
-    }else{
-        $sql[] = "LMB_REMINDER_GROUP.USER_ID = ".$session["user_id"];
-    }
-
-    // is valid
-    if($valid){
-        $sql[] = "LMB_REMINDER.FRIST < ".LMB_DBDEF_TIMESTAMP;
-    }
-
-    // category
-    if((($category AND $greminder[$greminder["argresult_id"][$category]]["name"][$category]) OR $category === '0')) {
-        $sql[] = "LMB_REMINDER.CATEGORY = " . parse_db_int($category);
-    // default reminder
-    }elseif($category === 0){
-        $sql[] = "LMB_REMINDER.CATEGORY = 0";
-    // all
-    }elseif($gtabid){
-        $sql[] = "LMB_REMINDER.TAB_ID = ".parse_db_int($gtabid);
-    }
-
-    if($ID){
-        $sql[] = "LMB_REMINDER.DAT_ID = ".parse_db_int($ID);
-    }
-
+    $reminder = Reminder::getReminderWhereFilter($category,$gtabid,$ID,$valid);
+    $sql = array_merge($sql, $reminder);
 }
 
 
 
 /**
  * function adds a reminder (in table lmb_reminder)
+ * @deprecated Use new instance of Reminder class instead.
  *
  * @param timestamp $gfrist field frist (date of the reminder)
  * @param varchar $gfrist_desc field description
@@ -85,184 +38,27 @@ function lmb_reminderFilter(&$sql,$category=null,$gtabid=null,$ID=null,$valid=nu
  *
  */
 function lmb_addReminder($gfrist,$gfrist_desc,$gtabid,$ID,$to=null,$category=0,$wfl_inst=null,$fielddesc=null,$sendmail=null,$form_id=null){
-    global $db;
-    global $session;
-    global $userdat;
-    global $gfield;
-    global $greminder;
-    global $lang;
-    global $umgvar;
-    global $gtab;
-    global $lmmultitenants;
 
-    # check if is category
-    if($category){
-        $gtabid_reminder = 0;
-        if($greminder["argresult_id"][$category]){
-            $gtabid_reminder = $greminder["argresult_id"][$category];
-        }
-        if($greminder[$gtabid_reminder]["groupbased"][$category]){
-            $groupbased = 1;
-        }
+    $deadline = new DateTime();
+    if ($gfrist !== null) {
+        $deadline->setTimestamp((int) $gfrist);
     }
 
-    if(is_array($to)){
-        $touser = $to;
-    }elseif($to){
-        $touser = explode(";",$to);
-    }else{
-        $touser[] = $session["user_id"]."_u";
-    }
+    $reminder = new Reminder(
+            0, $gtabid, $ID, $deadline, $gfrist_desc, null, $fielddesc, $category, $wfl_inst, $form_id
+    );
 
-    #lmmultitenants['mid'][$session['mid']]
+    $userOrGroupArray = Reminder::convertLegacyUsergroupArray($to);
 
-    # Bezeichner
-    if((!$fielddesc AND $gfield[$gtabid]["mainfield"]) OR $umgvar['multitenant']){
-        require_once(COREPATH.'gtab/gtab_type_erg.lib');
-        $onlyfield = 'ID';
-        if($gfield[$gtabid]["mainfield"]) {
-            $ffieldid = $gfield[$gtabid]["mainfield"];
-            $onlyfield = array($gtabid=>array($gtabid=>$ffieldid));
-        }
-        $gresult = get_gresult($gtabid,1,null,null,null,$onlyfield,$ID);
-        if($ffieldid) {
-            $fname = "cftyp_" . $gfield[$gtabid]["funcid"][$ffieldid];
-            $fielddesc = $fname(0, $ffieldid, $gtabid, 3, $gresult, 0);
-        }
-        // multitenant
-        $MID =  $gresult[$gtabid]['MID'][0];
-        $mid = $lmmultitenants['translate'][$MID];
-    }
-
-    foreach ($touser as $key => $to) {
-        if ($to) {
-            $to = explode("_",$to);
-            if($to[1] == "u" and is_numeric($to[0])){
-                // filter multitenants
-                if($session["multitenant"] AND $mid AND !in_array($mid,$userdat["multitenant"][$to[0]])){
-                    continue;
-                }
-                $userlist[] = $to[0];
-                $maillist[] = $to[0];
-            }elseif($to[1] == "g" and is_numeric($to[0])){
-                foreach ($userdat["userid"] as $ukey => $uval){
-                    // filter hidden user
-                    if($userdat["hidden"][$ukey]){continue;}
-
-                    // filter multitenants
-                    if($session["multitenant"] AND $mid AND !in_array($mid,$userdat["multitenant"][$ukey])){
-                        continue;
-                    }
-
-                    $subgroup = explode(",",$userdat["subgroup"][$ukey]);
-                    if(in_array($to[0],$subgroup)){
-                        $maillist[] = $uval;
-                    }
-                }
-                if($groupbased){
-                    $grouplist[] = $to[0];
-                }else{
-                    $userlist = $maillist;
-                }
-            }
-        }
-    }
-
-
-    if($gfrist){$gfrist = convert_date($gfrist);}
-    if(!$gfrist){$gfrist = convert_stamp(time());}
-
-    if($groupbased) {
-        $NEXTID_REM = next_db_id('LMB_REMINDER', 'ID', 1);
-        $sqlquery = "INSERT INTO LMB_REMINDER (ID,TAB_ID,DAT_ID,FRIST,DESCRIPTION,FROMUSER,CONTENT,CATEGORY,WFL_INST,FORM_ID,LMB_MID) VALUES ($NEXTID_REM," . $gtabid . ",$ID,'" . convert_date($gfrist) . "','" . parse_db_string($gfrist_desc, 250) . "'," . parse_db_int($session["user_id"]) . ",'" . parse_db_string($fielddesc, 160) . "'," . parse_db_int($category) . "," . parse_db_int($wfl_inst) . "," . parse_db_int($form_id) . ", " . parse_db_int($MID) . ")";
-        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
-        if(!$rs) {
-            return false;
-        }
-    }
-
-    if($userlist){
-        foreach ($userlist as $lkey => $lval){
-            if(!$groupbased) {
-                $NEXTID_REM = next_db_id('LMB_REMINDER', 'ID', 1);
-                $sqlquery = "INSERT INTO LMB_REMINDER (ID,TAB_ID,DAT_ID,FRIST,DESCRIPTION,FROMUSER,CONTENT,CATEGORY,WFL_INST,FORM_ID,LMB_MID) VALUES ($NEXTID_REM," . $gtabid . ",$ID,'" . convert_date($gfrist) . "','" . parse_db_string($gfrist_desc, 250) . "'," . parse_db_int($session["user_id"]) . ",'" . parse_db_string($fielddesc, 160) . "'," . parse_db_int($category) . "," . parse_db_int($wfl_inst) . "," . parse_db_int($form_id) . ", " . parse_db_int($MID) . ")";
-                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
-            }
-            if($rs) {
-                $sqlquery = "INSERT INTO LMB_REMINDER_GROUP (REMINDER_ID,USER_ID) VALUES ($NEXTID_REM , $lval)";
-                $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
-                $out[] = $lval;
-            }
-            #$NEXTID++;
-            if(!$rs) {$commit = 1;}
-        }}
-
-    if($grouplist){
-        foreach ($grouplist as $lkey => $lval){
-            $sqlquery = "INSERT INTO LMB_REMINDER_GROUP (REMINDER_ID,GROUP_ID) VALUES ($NEXTID_REM , $lval)";
-            $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-            $out[] = $lval;
-            #$NEXTID++;
-            if(!$rs) {$commit = 1;}
-        }
-    }
-
-
-
-    # send mail to userlist
-    if($sendmail AND $maillist){
-
-        if($category){
-            $header = $greminder[$gtabid_reminder]['name'][$category];
-        }else{
-            $header = $gtab['desc'][$gtabid];
-            $category = 0;
-        }
-
-        foreach ($maillist as $mkey => $userid){
-            if($userdat["email"][$userid]){
-
-                if($greminder[$gtabid_reminder]["message"][$category]){
-                    $fnc = $greminder[$gtabid_reminder]['message'][0];
-                    $message = $fnc($userid,$gtabid,$ID,$category,$gfrist,$gfrist_desc,$fielddesc,$wfl_inst);
-                }else{
-
-                    $message ="
-		    		<br><br>
-		    		
-		    		hallo ".$userdat["bezeichnung"][$userid]."<br><br>
-		    		".$session['vorname']." ".$session['name']." send you a $header - reminder for:<br>
-		    		<i><b><a href=\"".$umgvar['url']."/main.php?action=\"> $fielddesc </a></b></i><br><br><br>";
-
-                    if($gfrist_desc){
-                        $message .= "$gfrist_desc<br><br>";
-                    }
-
-                    $message .="
-		    		-------------------------------------------------------------------------------------<br>
-		    		This is an automatically generated email, please do not reply!<br>
-		    		-------------------------------------------------------------------------------------<br><br><br>
-		    		";
-                }
-
-                $lmbMail = new LmbMail();
-                $lmbMail->sendFromDefault($userdat["email"][$userid], "Limbas - $lang[425] für $fielddesc ".$greminder[$gtabid_reminder]['name'][$category], $message);
-
-            }
-        }
-    }
-
-    /* --- Transaktion ENDE -------------------------------------- */
-    if($commit){
-        return false;
-    } else {
-        return $out;
-    }
-
+    return $reminder->save(
+        $userOrGroupArray,
+        $sendmail
+    );
 }
 
 /**
  * function drops a reminder (in table lmb_reminder)
+ * @deprecated Use new instance of Reminder class instead.
  *
  * @param numeric $rem_id ID of the table lmb_reminder
  * @param int2 $gtabid field tabid
@@ -272,107 +68,58 @@ function lmb_addReminder($gfrist,$gfrist_desc,$gtabid,$ID,$to=null,$category=0,$
  *                this field is set when the first workflow item is set.
  * @param unknown_type $active Default null; if active is not null a where clause is set in which FRIST < timestamp
  * @param string $extension Default null; if extenstion is not null a where clause with this extension is set else a where clause with the active user_id or the active subgroup is set
- * @return true if the reminder is deleted, false if there is an error.
+ * @return bool true if the reminder is deleted, false if there is an error.
  *
  */
-function lmb_dropReminder($rem_id,$gtabid=null,$category=null,$ID=null,$wfl_inst=null,$valid=null,$extension=null){
-    global $db;
-    global $session;
-    global $gtab;
-    global $greminder;
-    global $lmmultitenants;
-    $sql = array();
-
-    if(!isset($category) && $rem_id){
-        $sqlquery = "SELECT CATEGORY FROM LMB_REMINDER WHERE ID = $rem_id";
-        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-        $category = parse_db_int(lmbdb_result($rs, 'CATEGORY'));
-    }
-
-    # check if is category
-    if($category){
-        $gtabid_reminder = 0;
-        if($greminder["argresult_id"][$category]){
-            $gtabid_reminder = $greminder["argresult_id"][$category];
-        }
-        if($greminder[$gtabid_reminder]["groupbased"][$category]){
-            $groupbased = 1;
-        }
-    }
-
-    // filter
-    lmb_reminderFilter($sql, $category,$gtabid,$ID,$valid);
-
-    if($wfl_inst){$sql[] = "LMB_REMINDER.WFL_INST = ".parse_db_int($wfl_inst);}
-    if($rem_id){$sql[] = "LMB_REMINDER.ID = ".parse_db_int($rem_id);}
-
-    $where = implode(" AND ",$sql);
-
-    // LMB_REMINDER_GROUP deleted from foreign key
-    $sqlquery = "DELETE FROM LMB_REMINDER WHERE ID IN (SELECT DISTINCT LMB_REMINDER.ID FROM LMB_REMINDER,LMB_REMINDER_GROUP WHERE " . $where . ")";
-    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-
-    if(!$rs) {return false;}else{return true;}
-
+function lmb_dropReminder($rem_id,$gtabid=null,$category=null,$ID=null,$wfl_inst=null,$valid=null){
+    return Reminder::deleteByFilter($rem_id, $gtabid, $category, $ID, $wfl_inst, $valid);
 }
 
 /**
  * function changes datetime and description of a reminder (in table lmb_reminder)
+ * @deprecated Use new instance of Reminder class instead.
  *
  * @param numeric $rem_id ID of the table lmb_reminder
  * @param timestamp $gfrist field frist (date of the reminder)
  * @param varchar $gfrist_desc field description
- * @return true if the reminder is changed, false if there is an error.
+ * @return bool true if the reminder is changed, false if there is an error.
  *
  */
 function lmb_changeReminder($rem_id, $gfrist,$gfrist_desc){
-    global $db;
-
     if($gfrist){$gfrist = convert_date($gfrist);}
     if(!$gfrist){$gfrist = convert_stamp(time());}
 
-    $sqlquery = "
-            UPDATE
-                LMB_REMINDER
-            SET 
-                FRIST = '".convert_date($gfrist)."',
-                DESCRIPTION = '".parse_db_string($gfrist_desc,250)."'
-            WHERE 
-                ID = ".parse_db_int($rem_id);
+    $deadline = new DateTime();
+    $deadline->setTimestamp($gfrist);
 
-    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-    if(!$rs) {return false;}else{return true;}
+    $reminder = Reminder::get($rem_id);
+    if (!$reminder) {
+        return false;
+    }
+
+    $reminder->deadline = $deadline;
+    $reminder->description = $gfrist_desc;
+
+    return $reminder->save();
 }
 
 
 /**
  * getter function for the active default reminder count
+ * @deprecated Use new instance of Reminder class instead.
+ *
  * @param int2 $category
  * @return $gresult resultset
  */
 function lmb_getReminderCount($category){
-    global $db;
-    global $session;
-    global $lmmultitenants;
-    global $greminder;
+    $category = intval($category);
 
-    $sql = array();
-
-    // filter
-    lmb_reminderFilter($sql,parse_db_int($category), valid: 1);
-    $where = implode(' AND ',$sql);
-    #$sqlquery = "SELECT COUNT(*) FROM LMB_REMINDER,LMB_REMINDER_GROUP WHERE ".$where;
-    $sqlquery = "SELECT COUNT(*) FROM LMB_REMINDER WHERE ID IN (SELECT DISTINCT LMB_REMINDER.ID FROM LMB_REMINDER,LMB_REMINDER_GROUP WHERE " . $where . ")";
-    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-
-    if(!$rs) {$commit = 1;}
-    if(lmbdb_fetch_row($rs)){
-        return lmbdb_result($rs, 'COUNT');
-    }
+    return Reminder::countPerCategory($category);
 }
 
 /**
  * getter function for a reminder
+ * @deprecated Use new instance of Reminder class instead.
  *
  * @param int2 $gtabid field tabid
  * @param numeric $ID field dat_id
@@ -384,440 +131,32 @@ function lmb_getReminderCount($category){
  * @return $gresult resultset or false
  */
 function lmb_getReminder($gtabid=null,$ID=null,$category=null,$wfl_inst=null,$valid=null){
-    global $db;
-    global $session;
-    global $greminder;
-
-    $sql = array();
-
-    // filter
-    lmb_reminderFilter($sql,parse_db_int($category),$gtabid,$ID,$valid);
-
-    // workflow
-    if($wfl_inst AND $category){
-        $sql[] = "LMB_REMINDER.WFL_INST = ".parse_db_int($wfl_inst);
-    }
-
-    $where = implode(" AND ",$sql);
-
-    $sqlquery = "SELECT DISTINCT
-    LMB_REMINDER.ID,
-    LMB_REMINDER.FRIST,
-    LMB_REMINDER.DESCRIPTION,
-    LMB_REMINDER.CONTENT,
-    LMB_REMINDER.TAB_ID,
-    LMB_REMINDER.DAT_ID,
-    LMB_REMINDER.FORM_ID,
-    LMB_REMINDER.WFL_INST,
-    LMB_REMINDER.CATEGORY,
-    LMB_REMINDER.FROMUSER
-    FROM LMB_REMINDER,LMB_REMINDER_GROUP
-	WHERE $where ORDER BY LMB_REMINDER.TAB_ID,LMB_REMINDER.FRIST";
-
-    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
-    if(!$rs) {$commit = 1;}
-    while(lmbdb_fetch_row($rs)){
-        $id = lmbdb_result($rs, "ID");
-        $reminder["id"][$id] = lmbdb_result($rs, "ID");
-        $reminder["validdate"][$id] = get_date(lmbdb_result($rs, "FRIST"),2);
-        $reminder["desc"][$id] = lmbdb_result($rs, "DESCRIPTION");
-        $reminder["content"][$id] = lmbdb_result($rs, "CONTENT");
-        $reminder["tab_id"][$id] = lmbdb_result($rs, "TAB_ID");
-        $reminder["dat_id"][$id] = lmbdb_result($rs, "DAT_ID");
-        $reminder["form_id"][$id] = lmbdb_result($rs, "FORM_ID");
-        $reminder["wfl_inst"][$id] = lmbdb_result($rs, "WFL_INST");
-        $reminder["category"][$id] = lmbdb_result($rs, "CATEGORY");
-        $reminder["fromuser"][$id] = lmbdb_result($rs, "FROMUSER");
-    }
-
-    if($reminder){
-        return $reminder;
-    }else{
-        return false;
-    }
+    return Reminder::allLegacy($category, $gtabid, $ID, $wfl_inst, $valid);
 }
 
 #################### main_dyns.php - ajax #####################
 
+# todo echoes
 /**
  * Manage the reminder add from xml HTTP request
+ * @deprecated Use new instance of Reminder class instead.
  *
  * @param unknown_type $params
  */
-function lmb_showReminder($params){
-    global $lang;
-    global $farbschema;
-    global $greminder;
-
-    require_once(COREPATH . 'gtab/gtab.lib');
-
-    $gtabid = $params["gtabid"];
-    $ID = $params["ID"];
-    $remid = $params["remid"];
-    $add = $params["add"];
-    $changeViewId = $params["changeViewId"];
-    $changeId = $params["changeId"];
-    $use_records = $params["use_records"];
-    $category = $params["REMINDER_CATEGORY"];
-    $gfrist = $params["gfrist"];
-    $listmode = $params["listmode"];
-    $mwidth = "";
-    $defaults = $params['defaults'] ? json_decode($params['defaults'], 1) : array();
-
-    // listmode - add & drop reminder
-    if($listmode AND $use_records){
-        // use filter
-        if($use_records == 'all'){
-            require_once(COREPATH . 'gtab/gtab.lib');
-            if($params["verkn_ID"]){
-                $verkn = set_verknpf($params["verkn_tabid"],$params["verkn_fieldid"],$params["verkn_ID"],null,null,$params["verkn_showonly"],1);
-            }
-            if($gresult = get_gresult($gtabid,1,$GLOBALS["filter"],$GLOBALS["gsr"],$verkn,'ID')){
-                $use_records = $gresult[$gtabid]['id'];
-            }
-            // use selected rows
-        }else{
-            $use_records = explode(';',$use_records);
-        }
-
-        // set reminder
-        foreach ($use_records as $key => $id){
-
-            // add reminder
-            if($add){
-                if(lmb_addReminder($params["REMINDER_DATE_TIME"],$params["REMINDER_BEMERKUNG"],$params["gtabid"],$id,$params["REMINDER_USERGROUP"],$category,null,null,$params["REMINDER_MAIL"],$params["form_id"])){
-                    $success ++;
-                    $msg = $lang[2901];
-                }
-                // drop reminder
-            }elseif($remid){
-                if(lmb_dropReminder(null,$gtabid,$remid,$id)){
-                    $success ++;
-                    $msg = $lang[2900];
-                }
-            }
-        }
-
-    // singlemode - add & drop & change reminder
-    }elseif(is_numeric($ID)){
-        // add reminder
-        if($add){
-            if(lmb_addReminder($params["REMINDER_DATE_TIME"],$params["REMINDER_BEMERKUNG"],$gtabid,$ID,$params["REMINDER_USERGROUP"],$category,null,null,$params["REMINDER_MAIL"],$params["form_id"])){
-                $success ++;
-                $msg = $lang[2901];
-            }
-            // drop reminder
-        }elseif($remid){
-            if(lmb_dropReminder($remid,$gtabid)){
-                $success ++;
-                $msg = $lang[2900];
-            }
-        }elseif($changeId){
-            if(lmb_changeReminder($changeId, $params["REMINDER_DATE_TIME"], $params["REMINDER_BEMERKUNG"])){
-                $success ++;
-                $msg = $lang[729] . " " . $lang[2006]; // TODO own lang entry
-            }
-        }
-    }
-
-    // reload & refresh multiframe Items after changes
-    if($success){
-        global $multiframeCount;
-        if(is_array($multiframeCount)){
-        foreach($multiframeCount['id'] as $mfk => $mfkID){
-            if($multiframeCount['type'][$mfk] == 'reminder' AND $multiframeCount['value'][$mfk] == $category){
-                $limbasMultiframeItem = $mfkID;
-            }
-        }}
-
-        $out = "
-        <span style=\"color:green\">$success $msg</span><center><hr></center>
-        <input type=\"hidden\" id=\"limbasMultiframeItemReload\" value=\"$limbasMultiframeItem\">
-        ";
-    }
-
-    echo "<FORM NAME=\"form_reminder\">";
-
-    pop_top('lmbAjaxContainer',$mwidth);
-
-    if($changeViewId AND $reminder = lmb_getReminder($gtabid,$ID,$category)) {
-        $changedate = $reminder["validdate"][$changeViewId];
-        $changedesc = $reminder["desc"][$changeViewId];
-    }
-
-    # date time selection
-    if($defaults['datetime']) {
-        echo "<INPUT TYPE=\"hidden\" NAME=\"REMINDER_DATE_TIME\" VALUE=\"{$defaults['datetime']}\" MAX=16>";
-    } else {
-        pop_left($mwidth);
-        echo "<TABLE width='100%'><TR><TD nowrap>
-            &nbsp;$lang[1975] <INPUT onchange='setReminderDateTime(\"REMINDER_VALUE\",\"REMINDER_UNIT\",\"REMINDER_DATE_TIME\");' TYPE=\"TEXT\" NAME=\"REMINDER_VALUE\" STYLE=\"width:25px;\" MAX=4>
-            <SELECT NAME=REMINDER_UNIT onchange='setReminderDateTime(\"REMINDER_VALUE\",\"REMINDER_UNIT\",\"REMINDER_DATE_TIME\");' >
-            <OPTION VALUE=day>$lang[1982]</OPTION>
-            <OPTION VALUE=min>$lang[1980]</OPTION>
-            <OPTION VALUE=hour>$lang[1981]</OPTION>
-            <OPTION VALUE=week>$lang[1983]</OPTION>
-            <OPTION VALUE=month>$lang[296]</OPTION>
-            <OPTION VALUE=year>$lang[1985]</OPTION>
-            </SELECT></TD>
-            <TD nowrap align='right'>$lang[1976]
-            <INPUT onchange='setReminderValue(\"REMINDER_DATE_TIME\",\"REMINDER_VALUE\",\"REMINDER_UNIT\");' TYPE=TEXT NAME=\"REMINDER_DATE_TIME\" STYLE=\"width:115px;\" VALUE=\"".($changeViewId ? $changedate : local_date(1))."\" MAX=16>
-            <i class=\"lmb-icon lmb-caret-right\" style=\"cursor:pointer\" id=\"CALENDER_DISPLAY\" onclick=\"document.getElementsByName('REMINDER_UNIT')[0][2].selected=true; lmb_datepicker(event,this,'REMINDER_DATE_TIME',document.getElementsByName('REMINDER_DATE_TIME')[0].value,'".dateStringToDatepicker(setDateFormat(0,1))."',10);\"></i>&nbsp;&nbsp;</TD></TR></TABLE>
-            <div style=\"text-align: center;\"><hr></div>";
-        pop_right();
-    }
-
-    pop_left($mwidth);
-    echo "<TABLE>";
-
-    # user group selection
-    if(!is_null($defaults['usergroups'])) {
-        echo "<tr style=\"display:none;\"><td><input type=\"hidden\" ID=\"REMINDER_USERGROUP\" NAME=\"REMINDER_USERGROUP\" VALUE=\"{$defaults['usergroups']}\"></td></tr>";
-    } else {
-        if(!$changeViewId) {
-            echo "<TR>
-                <TD valign=top>$lang[2643]:</TD>
-                <TD>
-                	<input type=\"hidden\" ID=\"REMINDER_USERGROUP\" NAME=\"REMINDER_USERGROUP\">
-                    <div class=\"fgtabchange\">
-                        <TABLE cellpadding=0 cellspacing=0 width=\"100%\">
-                            <TR>
-                                <TD nowrap>
-                                    <input type=\"text\" style=\"width:65px;\" OnKeyup=\"lmbAjax_showUserGroupsSearch(event,this.value,'".$ID."','".$gtabid."','','lmb_reminderAddUserGroup','','user','')\" OnDblClick=\"this.value='*';$(this).keyup();\">&nbsp;
-                                    <i class=\"lmb-icon lmb-user\" style=\"cursor:pointer;vertical-align:text-bottom\" OnClick=\"lmbAjax_showUserGroupsSearch(event,'*','".$ID."','".$gtabid."','','lmb_reminderAddUserGroup','','user')\"></i>
-                                </TD>
-                                <TD align=\"right\">
-                                    <input type=\"text\" style=\"width:65px;\" OnKeyup=\"lmbAjax_showUserGroupsSearch(event,this.value,'".$ID."','".$gtabid."','','lmb_reminderAddUserGroup','','group','')\" OnDblClick=\"this.value='*';$(this).keyup();\">&nbsp;
-                                    <i class=\"lmb-icon lmb-group\" style=\"cursor:pointer;vertical-align:text-bottom\" OnClick=\"lmbAjax_showUserGroupsSearch(event,'*','".$ID."','".$gtabid."','','lmb_reminderAddUserGroup','','group','')\"></i>
-                                </TD>
-                            </TR>
-                        </TABLE>
-                        <div id=\"contWvUGList\" style=\"width:100%;background-color:".$farbschema["WEB8"]."\"></div>
-                    </div>
-                    <div id=\"lmb_reminderAddUserGroupuser\" class=\"ajax_container\" style=\"display:none;position:absolute;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>
-                    <div id=\"lmb_reminderAddUserGroupgroup\" class=\"ajax_container\" style=\"text-align:left;display:none;position:absolute;border:1px solid black;padding:2px;background-color:".$farbschema["WEB11"]."\"></div>
-                </TD>
-            </TR>";
-        }
-    }
-
-    # remark
-    if(!is_null($defaults['remark'])){
-        echo "<tr style=\"display:none;\"><td><textarea name=\"REMINDER_BEMERKUNG\">{defaults['remark']}</textarea></td></tr>";
-    } else {
-        echo "<tr><td valign=\"top\">$lang[295]:</td><td><textarea name=\"REMINDER_BEMERKUNG\" style=\"width:190px;height:20px;\" onkeyup=\"limbasResizeTextArea(this,5);\">" . ($changeViewId ? $changedesc : "") . "</textarea></td></tr>";
-    }
-
-    # mail
-    if(!is_null($defaults['mail'])) {
-        echo "<tr style=\"display:none;\"><td><input type=\"hidden\" name=\"REMINDER_MAIL\" value=\"{$defaults['mail']}\"></td></tr>";
-    } else if(!$changeViewId){
-        echo "<tr title=\"".$lang[2577]."\"><td valign=\"top\">$lang[612]:</td><td><input type=\"checkbox\" name=\"REMINDER_MAIL\"></td></tr>";
-    }
-
-    # category selection
-    if(!is_null($defaults['category'])) {
-        echo "<tr style=\"display:none;\"><td><input type=\"hidden\" name=\"REMINDER_CATEGORY\" value=\"{$defaults['category']}\"></td></tr>";
-    } else {
-        if(!$changeViewId AND $greminder[$gtabid]['name'] OR $greminder[0]['name']){
-            echo "<tr><td valign=\"top\">Kategorie:</td><td colspan=\"5\">";
-
-            // all table based reminder
-            if($greminder[$gtabid]['name']){
-            foreach ($greminder[$gtabid]['name'] as $rkey => $rval){
-                echo "<input type=\"radio\" name=\"REMINDER_CATEGORY\" value=\"$rkey\"";
-                if(($category == $rkey OR ($greminder[$gtabid]['default'][$rkey] AND !$category)) AND !$s){echo 'checked';$s = 1;}
-                echo ">&nbsp;".$rval."<br>";
-            }}
-            // all independent reminder
-            foreach ($greminder[0]['name'] as $rkey => $rval){
-                echo "<input type=\"radio\" name=\"REMINDER_CATEGORY\" value=\"$rkey\"";
-                if(($category == $rkey OR ($greminder[0]['default'][$rkey] AND !$category)) AND !$s){echo 'checked';$s = 1;}
-                echo ">&nbsp;".$rval."<br>";
-            }
-
-            // default reminder
-            echo "<input type=\"radio\" name=\"REMINDER_CATEGORY\" value=\"0\"";
-            if(!$s) {echo 'checked';}
-            echo ">&nbsp;-{$lang[1219]}-<br>";
-
-            echo "</td></tr>";
-        }
-    }
-
-    # separator
-    if(is_null($defaults['remark']) AND is_null($defaults['mail']) AND is_null($defaults['category'])) {
-        echo "<tr><td colspan=\"2\"><div style=\"text-align: center;\"><hr></div><td></tr>";
-    }
-
-    # listmode
-    if($listmode AND $gfrist){
-        echo "
-			<tr><td valign=\"top\"><b>$lang[2644]:</b></td>
-			<td>".$greminder[$gtabid]["name"][$gfrist]."</td>
-			<td><i class=\"lmb-icon lmb-close-alt\" style=\"cursor:pointer;\" OnClick=\"limbasDivShowReminder(event,'','','$gfrist','','','','$gtabid','$ID');\" Title=\"".$lang[721]."\"></i></td>
-			</tr>";
-    # single mode
-    }elseif(!$changeViewId AND $reminder = lmb_getReminder($gtabid,$ID) AND !$defaults['hidecurrent']){
-        echo "
-		<tr><td valign=\"top\"><b>$lang[2644]:</b></td><td>
-		<table cellpadding=2 cellspacing=0>
-		";
-
-        # sort reminder by group
-        $groups = array();
-        foreach ($reminder["id"] as $remkey => $remval){
-            $category = $reminder['category'][$remkey];
-
-            $reminder_name = $greminder[$greminder["argresult_id"][$category]]["name"][$category];
-
-            if(!$groups[$reminder_name]) {
-                $groups[$reminder_name] = array();
-            }
-            $groups[$reminder_name][] = $remkey;
-        }
-
-        # display reminder sorted into groups
-        foreach ($groups as $groupname => $remKeyArr) {
-
-            # display group name
-            $groupname = $groupname ? $groupname : "default";
-            echo "<tr><td><i>" . $groupname . "</i></td><td></td><td></td></tr>";
-
-            # display reminders
-            foreach($remKeyArr as $notused => $remkey) {
-                $remval = $reminder["id"][$remkey];
-                echo "<tr>
-				<td></td>
-				<td><a href=\"#\" title=\"".$reminder["desc"][$remkey]."\" onclick=\"limbasDivShowReminder(event,'','','','$remval','','','$gtabid','$ID');\">".lmb_substr($reminder["validdate"][$remkey],0,16)."</a></td>
-				<td><i class=\"lmb-icon lmb-close-alt\" style=\"cursor:pointer;\" OnClick=\"limbasDivShowReminder(event,'','','$remval','','','','$gtabid','$ID');\" Title=\"".$lang[721]."\"></i></td>";
-                if($reminder["from"][$remkey]){echo "<br><i>".$userdat["bezeichnung"][$reminder["from"][$remkey]]."</i>";}
-                echo "</tr>";
-            }
-        }
-
-        echo "</table></td></tr>";
-    }
-
-    echo "</TABLE>
-		$out";
-    pop_right();
-
-
-    pop_left($mwidth);
-    echo "<CENTER><input type=button value=\"" . ($changeViewId ? $lang[2443] : $lang[1038]) . "\" onclick=\"" . ($changeViewId ? "limbasDivShowReminder(event,'','','','','$changeViewId','','$gtabid','$ID');" : "limbasDivShowReminder(event,'','1','','','','','$gtabid','$ID');") . "\">&nbsp;<input type=button value=$lang[844] onClick='activ_menu=0;divclose();'></CENTER>";
-    echo "<INPUT TYPE=HIDDEN NAME=WIEDERVORLAGENAME ID=WIEDERVORLAGEID>";
-    pop_right();
-
-    pop_left($mwidth);
-    echo "&nbsp;";
-    pop_right();
-
-    pop_bottom($mwidth);
-    echo "</FORM>";
+function lmb_showReminder(array $params){
+    $reminderController = new ReminderController();
+    $reminderController->showReminder($params);
 }
 
 
+# todo echoes
 /**
  * write the preview of the reminder for the multiframe menu
- *
- * @param unknown_type $userid
+ * @deprecated Use function in ReminderController instead
  */
-function reminderPreview($userid,$params)
+function reminderPreview($params)
 {
-    global $db;
-    global $session;
-    global $tabgroup;
-    global $gtab;
-    global $lang;
-    global $userdat;
-    global $umgvar;
-    global $greminder;
-
-    require_once(COREPATH . 'gtab/gtab.lib');
-
-    echo "<span>";
-    $dropitem = $params["dropitem"];
-    $category = $params["category"];
-    $gtabid = $params["gtabid"];
-    $elid = $params["id"];
-
-
-    if($dropitem){
-        lmb_dropReminder($dropitem,$gtabid,$category);
-    }
-
-    if(!$greminder["argresult_id"][$dropitem]){
-        $gtabid = 0;
-    }
-
-    $gresult = lmb_getReminder(category:$category,valid: 1);
-
-    if($category){$gfrist = $category;}else{$gfrist = 'true';}
-
-    $currentTabId = 0;
-
-    if($gresult["id"]){
-        echo "<TABLE width='100%'>";
-        foreach ($gresult["id"] as $key => $value){
-
-            // set formular
-            $form_id = '';
-            if($greminder[$gtabid]["formd_id"][$category] == -1 AND $gresult["form_id"][$key]){
-                $form_id = $gresult["form_id"][$key];
-            }elseif($greminder[$gtabid]["formd_id"][$category] >= 1){
-                $form_id = $greminder[$gtabid]["formd_id"][$category];
-            }
-
-            $found=true;
-            if($category AND $gtabid){
-                $gresult["tab_id"][$key] = $gtabid;
-            }elseif($currentTabId!=$gresult["tab_id"][$key]){
-                echo "<TR><TD colspan=\"2\">";
-                print_r($gtab[1]);
-                echo "<I><A TARGET=\"main\" HREF=\"main.php?&action=gtab_erg&source=root&gtabid=".$gresult["tab_id"][$key]."&gfrist=$gfrist\">".$gtab["desc"][$gresult["tab_id"][$key]]."</A></I>";
-                echo "</TD></TR>";
-                $currentTabId=$gresult["tab_id"][$key];
-            }
-            $validdate = lmb_substr(get_date($gresult["validdate"][$key],0),0,16);
-            echo "<TR><TD class=\"pb-2\" style=\"padding-left:20px\" title=\"".$gresult["content"][$key]. ($gresult["desc"][$key] ? ' - ' .strip_tags($gresult["desc"][$key]) : '')."\">";
-            echo "<A TARGET=\"main\" HREF=\"main.php?&action=gtab_change&gtabid=".$gresult["tab_id"][$key]."&ID=".$gresult["dat_id"][$key]."&gfrist=$gfrist&form_id=".$form_id."&wfl_id=".$gresult["LMBREM_WFLID"][$key]."\" style=\"color:green\">";
-            echo $validdate."</A>";
-            if($gresult["fromuser"][$key] AND $gresult["fromuser"][$key] != $session["user_id"])
-            {
-                echo "<i class=\"lmb-icon lmb-tag\" title=\"".$userdat["bezeichnung"][$gresult["fromuser"][$key]]."\"></i>";
-            }
-            if($gresult["desc"][$key]){
-                echo "<i style=\"color:grey\">".lmb_substr(strip_tags($gresult["desc"][$key]),0,25)."</i>";
-            }
-            elseif($gresult["content"][$key]){
-                echo "<span style=\"color:grey\">".lmb_substr(strip_tags($gresult["content"][$key]),0,25)."</span>";
-            }
-            echo "</TD>";
-            if(!$gresult["wfl_inst"][$key]){
-                echo "<TD VALIGN=\"TOP\" ALIGN=\"RIGHT\" STYLE=\"width:10%;overflow:hidden\"><i class=\"lmb-icon lmb-close-alt\" BORDER=\"0\"  STYLE=\"cursor:pointer\" OnClick=\"limbasMultiframePreview(".$params["id"].",'Reminder',null,'".$gresult["id"][$key]."',".$gresult["tab_id"][$key].",'category=$category');\"></i></TD>";
-            }
-            echo "</TD></TR>";
-        }
-        echo "</TABLE>";
-        $count['count'][$elid] = count($gresult["id"]);
-    }else{
-        $count['count'][$elid] = 0;
-        echo '&nbsp;'.$lang[98];
-    }
-
-    echo "</span>";
-
-    ?>
-    <script>
-        <?php
-            $count['info'][$elid] = $greminder[$greminder["argresult_id"][$category]]["notification"][$category];
-            echo "limbasMultiframeCountPost('".json_encode($count)."');";
-         ?>
-    </script>
-    <?php
-
-
+    ReminderController::previewReminderLegacy($params);
 }
 
 

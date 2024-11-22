@@ -7,6 +7,7 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+namespace Limbas\admin\tools\datasync;
 
 /*
  * Socket Flow
@@ -22,6 +23,13 @@
  * 
  */
 
+
+use Limbas\lib\db\Database;
+use DateTime;
+use Exception;
+use LimbasLogger;
+use lmb_log;
+use Throwable;
 
 abstract class Datasync
 {
@@ -264,7 +272,7 @@ abstract class Datasync
             $this->setSyncRecords($maxRecords);
 
             //ORDER: delete (1) -> created (2) -> changed (3)
-            $sqlquery = 'SELECT TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID FROM LMB_SYNC_CACHE WHERE PROCESS_KEY = ' . $this->cacheTimestamp . ' GROUP BY TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID ORDER BY TYPE';
+            $sqlquery = 'SELECT MIN(ID) as ID, TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID FROM LMB_SYNC_CACHE WHERE PROCESS_KEY = ' . $this->cacheTimestamp . ' GROUP BY TYPE, TABID, FIELDID, DATID, SLAVE_ID, SLAVE_DATID ORDER BY TYPE';
 
             $rs = lmbdb_exec($db, $sqlquery);
 
@@ -280,11 +288,12 @@ abstract class Datasync
             
             if ($rowCount > 0) {
                 while (lmbdb_fetch_row($rs)) {
+                    $id = intval(lmbdb_result($rs, 'ID'));
                     $tabid = intval(lmbdb_result($rs, 'TABID'));
                     $fieldid = lmbdb_result($rs, 'FIELDID');
                     $datid = lmbdb_result($rs, 'DATID');
                     $slave_datid = lmbdb_result($rs, 'SLAVE_DATID');
-                    $type = lmbdb_result($rs, 'TYPE');
+                    $type = intval(lmbdb_result($rs, 'TYPE'));
                     $erstdatum = lmbdb_result($rs, 'ERSTDATUM');
 
                     if ($this->template[$tabid]['global']) {
@@ -296,10 +305,17 @@ abstract class Datasync
                     $dt = new DateTime($erstdatum);
                     $erstdatum = $dt->getTimestamp();
 
-                    // no slave assigned and dataset deleted/created
-                    if ($this->is_main && $slave_datid == 0 && $type != 2 && !$this->template[$tabid]['global']) {
-                        $this->setException('error', 8, 'No slavedat', $tabid);
-                        continue;
+                    // no client record id assigned and dataset deleted/created
+                    if ($this->is_main &&  empty($slave_datid) && $type !== 2 && !$this->template[$tabid]['global']) {
+                        //try to resolve the client record id
+                        $slave_datid = $this->convertID($tabid, $datid,1);
+                        
+                        
+                        if(empty($slave_datid)) {
+                            Database::update('LMB_SYNC_CACHE',['PROCESS_KEY'=>null],['ID'=>$id]);
+                            $this->setException('error', 8, 'No slavedat', $tabid, $datid, $fieldid);
+                            continue;
+                        }
                     }
 
                     if (!array_key_exists($tabid, $data)) {
@@ -309,13 +325,13 @@ abstract class Datasync
                     }
 
                     //deleted
-                    if ($type == 1) {
+                    if ($type === 1) {
                         $data[$tabid][$slave_datid] = false;
                         if (is_array($data[$tabid]['new']) && array_key_exists($slave_datid, $data[$tabid]['new'])) {
                             unset($datid, $data[$tabid]['new'][$slave_datid]);
                         }
                     } //created & not deleted
-                    elseif ($type == 2 && $data[$tabid][$slave_datid] !== false) {
+                    elseif ($type === 2 && $data[$tabid][$slave_datid] !== false) {
 
                         $newTabIds = [$tabid];
                         $isOneOneRelation = false;
@@ -386,7 +402,7 @@ abstract class Datasync
                         
 
                     } //changed & not deleted
-                    elseif ($type == 3 && $data[$tabid][$slave_datid] !== false) {
+                    elseif ($type === 3 && $data[$tabid][$slave_datid] !== false) {
                         if (in_array($fieldid, $syncFields[$tabid]) || $fieldid == 0) {
                             if ($fieldid == 0) {
                                 $changedata = $this->getData($tabid, $datid, array(), $erstdatum);
@@ -777,11 +793,10 @@ abstract class Datasync
 
 
                         //get exsting relations
-                        $gsr[$tabid]['ID'] = $datid;
                         $filter["relationval"][$tabid] = 1;
                         $filter['status'][$tabid] = -1;
                         $filter["validity"][$tabid] = 'all';
-                        $gresult = get_gresult($tabid, 1, $filter, $gsr, null, array($tabid => array($fieldid)));
+                        $gresult = get_gresult($tabid, 1, $filter, [], null, array($tabid => array($fieldid)), $datid);
                         $existing_rel = [];
                         if ($gresult[$tabid]['res_count'] > 0) {
                             $existing_rel = array_filter($gresult[$tabid][$fieldid][0]);
@@ -846,8 +861,8 @@ abstract class Datasync
                                     if (!set_relation($relation)) {
                                         $errormsg = lmb_log::getLogMessage(true);
                                         //workaround for existing relations
-                                        if (!(strpos($errormsg, 'already joined') !== false)) {
-                                            $this->setException('error', 11, 'Add relations failed: ' . lmb_log::getLogMessage(true), $tabid, $sdatid, $fieldid);
+                                        if (!(str_contains($errormsg, 'already joined') || str_contains($errormsg, 'already exists'))) {
+                                            $this->setException('error', 11, 'Add relations failed: ' . $errormsg, $tabid, $sdatid, $fieldid);
                                         }
                                     }
                                 }
@@ -857,8 +872,8 @@ abstract class Datasync
                                 if ($verkn_add_ids && !set_relation($relation)) {
                                     $errormsg = lmb_log::getLogMessage(true);
                                     //workaround for existing relations
-                                    if (!(strpos($errormsg, 'already joined') !== false)) {
-                                        $this->setException('error', 11, 'Add relations failed: ' . lmb_log::getLogMessage(true), $tabid, $sdatid, $fieldid);
+                                    if (!(str_contains($errormsg, 'already joined') || str_contains($errormsg, 'already exists'))) {
+                                        $this->setException('error', 11, 'Add relations failed: ' . $errormsg, $tabid, $sdatid, $fieldid);
                                     }
                                 }
                             }
@@ -1189,12 +1204,12 @@ abstract class Datasync
                 if (!isset($data['sys'])) {
                     $data['sys'] = array();
                 }
-                
+
                 // convert id on master to slave id before send
                 if ($this->is_main && $fieldid === 'VPID' && !empty(trim($value[0]))) {
                     $value[0] = $this->convertID($tabid, $value[0], 1);
                 }
-                
+
                 $data['sys'][$fieldid] = $value[0];
             }
         }
@@ -1466,12 +1481,12 @@ abstract class Datasync
                     }
 
 
-                    //compare exsting values only if attribute or ajax; others are already handled by uftyp
+                    //compare existing values only if attribute or ajax; others are already handled by uftyp
                     if ($gfield[$tabid]['data_type'][$fieldid] == 32 || $gfield[$tabid]['data_type'][$fieldid] == 46) {
 
-                        $gsr[$tabid]['ID'] = $ID;
-                        $gresult = get_gresult($tabid, 1, $filter, $gsr, null, array($tabid => array($fieldid)));
+                        $gresult = get_gresult($tabid, 1, $filter, [], null, array($tabid => array($fieldid)), $ID);
 
+                        $fvalue = null;
                         if ($gresult[$tabid]['res_count'] > 0) {
                             $existing = array();
                             $this->prepareFieldType($tabid, $fieldid, $existing, $gresult, $ID);
@@ -1518,9 +1533,7 @@ abstract class Datasync
 
                 // get existing values
                 $func = 'cftyp_' . $gfield[$tabid]['funcid'][$fieldid];
-                $gsr = [];
-                $gsr[$tabid]['ID'] = $ID;
-                $gresult = get_gresult($tabid, 1, $filter, $gsr, null, array($tabid => array($fieldid)));
+                $gresult = get_gresult($tabid, 1, $filter, [], null, array($tabid => array($fieldid)), $ID);
                 $existing = $func(0, $fieldid, $tabid, 6, $gresult);
 
                 $existingValues = [];
@@ -1831,7 +1844,7 @@ abstract class Datasync
         //TODO: insert current client in global log
         //TODO: what happens if master deletes record and client has still updates?
 
-        $nextID = next_db_id('LMB_SYNC_CACHE');
+        $nextID = next_db_id('LMB_SYNC_CACHE','ID',1);
 
         if ($datid === 'new') {
             //$this->setException('warning',12,'Unexpected "new" as id',$tabid,0,$fieldid);

@@ -134,27 +134,23 @@ var lmb_uploadCount = 0;
  * @constructor
  */
 function LmbStatusBar(fp, file) {
-	this.container = $('#lmbUploadDiv_' + fp + ' table tbody').first();
+	this.container = $('#lmbUploadDiv_' + fp).first();
 	this.file = file;
 
+	this.row = $(`
+		<div class="row mt-2">
+			<div class="col">
+				<div id="lmbUploadState_${fp}" class="progress rounded-2" role="progressbar" aria-valuemin="0" aria-valuemax="100">
+				  	<div id="lmbUploadState_${fp}Bar" class="progress-bar" style="width: 0%">${this.file.name}</div>
+				</div>
+			</div>
+		</div>
+	`);
+
+	this.progressBar = this.row.find('.progress-bar');
+
 	// add progress bar
-	this.container.append('\
-		<tr>\
-			<td>\
-				<div id="lmbUploadState_' + fp + '" class="lmbUploadProgress">\
-					<div id="lmbUploadState_' + fp + 'Bar" class="lmbUploadProgressBar"></div>\
-				</div>\
-			</td>\
-		</tr>\
-	');
-
-	// add filename to progress bar
-	this.progressBar = $('#lmbUploadState_' + fp + 'Bar');
-    this.progressBar.html(this.file.name);
-
-    // add filename and progress bar to container
-    this.progressContainer = $('#lmbUploadState_' + fp);
-    this.progressContainer.html(this.file.name).show().append(this.progressBar);
+	this.container.append(this.row);
 
     // sets width of progress bar in container to simulate progress
 	this.setProgress = function(progress) {
@@ -210,42 +206,56 @@ function LmEx_createDropArea(dropArea, onDrop) {
  * @param parentID
  */
 function LmEx_showUploadField(parentID, folderID, fp, gtabid, fieldid, datid) {
-    // optional params
+	// optional params
 	parentID = parentID || 'lmbUploadLayer';
-    folderID = folderID || jsvar['LID'];
-    fp = fp || 1;
-    gtabid = gtabid || '';
-    fieldid = fieldid || '';
-    datid = datid || '';
+	folderID = folderID || jsvar['LID'];
+	fp = fp || 1;
+	gtabid = gtabid || '';
+	fieldid = fieldid || '';
+	datid = datid || '';
 
-    var html = '';
-    html += '\
-		<div class="gtabHeaderInputTR lmbUploadDiv" id="lmbUploadDiv_' + fp + '">\
-			<input type="hidden" name="f_LID" value="' + folderID + '">\
-			<input type="hidden" name="f_gtabid" value="' + gtabid + '">\
-			<input type="hidden" name="f_fieldid" value="' + fieldid + '">\
-			<input type="hidden" name="f_datid" value="' + datid + '">\
-			<table>\
-				<tr>\
-					<td nowrap id="lmbUploadLayer_' + fp + '">\
-						<input type="file" multiple id="file[' + fp + ']" name="file[0]" size="20" onchange="LmEx_UploadArchivOption(this.files, \'' + fp + '\');">\
-					</td>\
-					<td nowrap>\
-						<div id="lmbUploadLayerSubmit_' + fp + '">\
-							<span id="lmbUploadStateUnzip_' + fp + '" style="display:none; padding-left:5px; padding-right:5px; vertical-align:text-top;">\
-								' + jsvar['lng_1560'] + ':\
-								<input style="vertical-align:bottom" type="checkbox" id="file_archiv[' + fp + ']" name="file_archiv[0]">\
-							</span>\
-							<input type="button" class="submit" value="' + jsvar['lng_815'] + '" style="vertical-align:middle" onclick="activ_menu=1; LmEx_uploadFilesPrecheck($(this).closest(\'.lmbUploadDiv\').find(\'input[type=file]\').get(0).files, \'' + folderID + '\', \'' + fp + '\', \'' + gtabid + '\', \'' + fieldid + '\', \'' + datid + '\');">\
-						</div>\
-					</td>\
-				</tr>\
-			</table>\
-		</div>';
+	let html = `
+        <div class="modal fade" id="ldmsUploadModal" tabindex="-1" data-backdrop="static" data-keyboard="false">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Upload</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body overflow-visible" id="ldmsUploadModal-body">
+                        <div class="gtabHeaderInputTR lmbUploadDiv" id="lmbUploadDiv_${fp}">
+                            <input type="hidden" name="f_LID" value="${folderID}">
+                            <input type="hidden" name="f_gtabid" value="${gtabid}">
+                            <input type="hidden" name="f_fieldid" value="${fieldid}">
+                            <input type="hidden" name="f_datid" value="${datid}">
+                            <div class="row">
+								<div class="col" id="lmbUploadLayer_${fp}">
+									<input type="file" class="form-control" multiple id="file[${fp}]" name="file[0]" size="20" onchange="LmEx_UploadArchivOption(this.files, '${fp}');">
+								</div>
+								<div class="col-auto">
+									<div id="lmbUploadLayerSubmit_${fp}" class="d-flex flex-row align-items-center">
+										<div id="lmbUploadStateUnzip_${fp}" class="form-check me-2" style="display:none;">
+											<label for="file_archiv[${fp}]" class="form-check-label">${jsvar['lng_1560']}</label>
+											<input class="form-check-input" type="checkbox" id="file_archiv[${fp}]" name="file_archiv[0]">
+										</div>
+										<input type="button" class="submit btn btn-primary" value="${jsvar['lng_815']}" style="vertical-align:middle" onclick="activ_menu=1; LmEx_uploadFilesPrecheck($(this).closest('.lmbUploadDiv').find('input[type=file]').get(0).files, '${folderID}', '${fp}', '${gtabid}', '${fieldid}', '${datid}');">
+									</div>
+								</td>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-dark" data-bs-dismiss="modal">${jsvar['lng_844']}</button>
+                </div>
+            </div>
+        </div>`;
 
-    $('#' + parentID)
+	$('#' + parentID)
 		.show()
 		.html(html);
+
+	$('#ldmsUploadModal').modal('show');
 }
 
 // contains data of the current upload
@@ -356,12 +366,11 @@ function LmEx_uploadFiles(files, uploadUrl) {
             formData.append('authToken', lmbUploadData.authToken);
 		}
 
-        var status = new LmbStatusBar(lmbUploadData.fp, files[i]);
+        let status = new LmbStatusBar(lmbUploadData.fp, files[i]);
         lmb_uploadCount++;
 
 		LmEx_uploadFile(formData, uploadUrl, function(workDone, workTotal) {
-            var workPercent = Math.ceil(workDone / workTotal * 100);
-			status.setProgress(workPercent);
+			status.setProgress(Math.ceil(workDone / workTotal * 100));
         });
 	}
 
@@ -431,7 +440,7 @@ function lmb_refreshForm() {
 	}
 
     // drop all upload forms
-    $(".lmbUploadDiv").remove();
+    //$(".lmbUploadDiv").remove();
 }
 
 //endregion
@@ -664,6 +673,7 @@ function LmEx_activate_file(evt,id,filename,lid,norm){
 				if(start){
 					document.getElementById("filestatus_"+ftyp+"_"+lid+"_"+fid).value=1;
 					document.getElementById("elline_"+ftyp+"_"+lid+"_"+fid).style.backgroundColor = jsvar["WEB7"];
+					document.getElementById("elline_"+ftyp+"_"+lid+"_"+fid).classList.add("table-active");
 				}
 
 				if(fid == prev_id && !up){
@@ -689,10 +699,12 @@ function LmEx_activate_file(evt,id,filename,lid,norm){
 		if(!filelist){
 			document.getElementById(filestatus).value=0;
 			document.getElementById(elline).style.backgroundColor = '';
+			document.getElementById(elline).classList.remove("table-active");
 		}
-	}else{
+	} else{
 		document.getElementById(filestatus).value=1;
 		document.getElementById(elline).style.backgroundColor = jsvar["WEB7"];
+		document.getElementById(elline).classList.add("table-active");
 		if(document.getElementById('file_dir_rename')){document.getElementById('file_dir_rename').value = filename;}
         lastActivatedFilename = filename;
 		LmEx_edit_id = id;
@@ -722,8 +734,10 @@ function LmEx_explorerLineOver(el,id,typ,lid,norm){
 	if(document.getElementById("filestatus_"+norm+"_"+lid+"_"+id).value != 1){
 		if(typ == 1){
 			el.style.backgroundColor = jsvar["WEB7"];
+			el.classList.add("table-active");
 		}else{
 			el.style.backgroundColor = '';
+			el.classList.remove("table-active");
 		}
 	}
 }
@@ -739,9 +753,11 @@ function LmEx_check_all(val,lid){
 		if(cc.type == "hidden" && cid[0] == 'filestatus' && cid[2] == lid){
 			if(val){
 				document.getElementById("elline_"+cid[1]+"_"+cid[2]+"_"+cid[3]).style.backgroundColor = jsvar["WEB7"];
+				document.getElementById("elline_"+cid[1]+"_"+cid[2]+"_"+cid[3]).classList.add("table-active");
 				cc.value = 1;
 			}else{
 				document.getElementById("elline_"+cid[1]+"_"+cid[2]+"_"+cid[3]).style.backgroundColor = '';
+				document.getElementById("elline_"+cid[1]+"_"+cid[2]+"_"+cid[3]).classList.remove("table-active");
 				cc.value = 0;
 			}
 		}
@@ -1019,6 +1035,8 @@ var rowsize = null;
 
 function LmEx_startDrag(evt,ID) {
 
+    return;
+
 	eid = ID;
 	elh = "tabheader_"+ID;
 	els = "tabsearch_"+ID;
@@ -1248,9 +1266,31 @@ function LmEx_open_newexplorer() {
 }
 
 /* --- miniexplorer-Fenster ----------------------------------- */
-function LmEx_open_miniexplorer() {
-	LmEx_divclose();
-	miniexplorer=open("main.php?action=mini_explorer&home_level="+jsvar["LID"] ,"Datei_Browser","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=460,height=320");
+function LmEx_open_miniexplorer(LID, params, callback) {
+
+    LmEx_divclose();
+
+    if(LID === undefined){
+        LID = '';
+    }
+
+	//miniexplorer=open("main.php?action=mini_explorer&home_level="+jsvar["LID"] ,"Datei_Browser","toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=460,height=320");
+	document.getElementById('miniexplorer-manage-content').src = "main.php?action=mini_explorer&home_level="+LID;
+	$('#miniexplorer-modal').data('callback',callback).data('params',params).modal('show');
+
+}
+
+function LmEx_handle_miniexplorer(selectedFiles) {
+
+	const $miniExplorer = $('#miniexplorer-modal');
+	const callback = $miniExplorer.data('callback');
+	const params = $miniExplorer.data('params');
+
+	if (callback !== null && typeof callback === 'function') {
+		callback(selectedFiles,params);
+	}
+    //document.getElementById('miniexplorer-manage-content').src = '';
+    //$('#miniexplorer-modal').modal('hide');
 }
 
 /* --- miniexplorer-Fenster ----------------------------------- */
@@ -1269,12 +1309,6 @@ function LmEx_closeIframeDialog() {
 function LmEx_open_details(evt,ID,LID,gtab_id,form_id,dimension) {
 	LmEx_divclose();
 
-		if(!document.getElementById("LmEx_DetailFrame")){
-			$("body").append('<div id="LmEx_DetailFrame" style="position:absolute;display:none;z-index:9999;overflow:hidden;width:300px;height:300px;"><iframe id="LmEx_DetailOpen" style="width:100%;height:100%;overflow:auto;"></iframe></div>');
-		}
-		
-		if(form_id == '0'){form_id = null;}
-		
 		if(dimension){
 			var size = dimension.split('x');
 			var w_ = (parseFloat(size[0])+80);
@@ -1283,6 +1317,12 @@ function LmEx_open_details(evt,ID,LID,gtab_id,form_id,dimension) {
 			var w_ = 800;
 			var h_ = 600;
 		}
+
+		if(!document.getElementById("LmEx_DetailFrame")){
+			$("body").append('<div id="LmEx_DetailFrame" style="position:absolute;display:none;overflow:hidden;"><iframe id="LmEx_DetailOpen" style="width:100%;height:100%;overflow:auto;"></iframe></div>');
+		}
+		
+		if(form_id == '0'){form_id = null;}
 
 		// display in iframe
 		$("#LmEx_DetailFrame").css({'position':'relative','left':'0','top':'0'}).dialog({

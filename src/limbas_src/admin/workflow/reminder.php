@@ -95,7 +95,11 @@
                                 }
                                 if($tabid OR $forms){?>
                                         <select name="reminderforml[<?=$id?>]" onchange="document.form1.editid.value=<?=$id?>;document.form1.submit();" class="form-select form-select-sm">
-                                            <option></option><option value="-1" <?=($value['forml_id'][$id] == -1 ? 'selected' : '')?>><?=$lang[3142]?></option>
+                                            <option value="0" <?=(!$value['forml_id'][$id] ? 'selected' : '')?>><?=$lang[301]?></option>
+                                            <option value="-1" <?=($value['forml_id'][$id] == -1 ? 'selected' : '')?>><?=$lang[3142]?></option>
+                                            <?php if($forms){?>
+                                            <option disabled>________________</option>
+                                            <?php } ?>
                                             <?=$forms?>
                                         </select>
                                 <?php }?>

@@ -7,7 +7,8 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
+global $form;
+global $localsession;
 
 /*
 Stylebeschreibung:
@@ -66,13 +67,15 @@ Stylebeschreibung:
 */
 
 
+use Limbas\admin\setup\fonts\Font;
+
 set_time_limit(1000);
 
 if($form_typ){$form['form_typ'] = $form_typ;}
 if($form_id){$form['form_id'] = $form_id;}
 
 /* --- Styletypen --------------------------------------------- */
-$styletyp = explode(";", "font-family:;font-style:;font-variant:;font-size:;font-weight:;word-spacing:;letter-spacing:;text-decoration:;text-transform:;color:;text-shadow:;line-height:;text-align:;border:;border-style:;border-color:;border-width:;border-left:;border-right:;border-top:;border-bottom:;background-color:;padding:;vertical-align:;overflow:;opacity:;;border-radius:;margin:");
+$GLOBALS['styletyp'] = explode(";", "font-family:;font-style:;font-variant:;font-size:;font-weight:;word-spacing:;letter-spacing:;text-decoration:;text-transform:;color:;text-shadow:;line-height:;text-align:;border:;border-style:;border-color:;border-width:;border-left:;border-right:;border-top:;border-bottom:;background-color:;padding:;vertical-align:;overflow:;opacity:;;border-radius:;margin:");
 
 /* --- Elemente Positionieren --------------------------------------------- */
 if($form_possize){
@@ -358,7 +361,7 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 				# ----- Konvertiern in JPEG/PNG --------
 				$uplf = "USER/".$session["user_id"]."/temp/".$filename;
 				copy($file,$uplf);
-				$thump = IMACK_ConvertThumbs($uplf,$width,null,null,$pic_type,UPLOADPATH . 'form/'.$secname.".".$pic_type,null,1);
+				$thump = lmb_getThumbnail($uplf,$width,null,null,$pic_type,UPLOADPATH . 'form/'.$secname.".".$pic_type,null,1,1);
 
 				if(file_exists(UPLOADPATH . 'form/'.$secname.".".$pic_type)){
 					# ----- Bildinfos -------
@@ -1142,14 +1145,7 @@ if($action == 'setup_form_menu'){
 }
 
 # --- bestehende Fonts ---
-$sqlquery = "SELECT DISTINCT FAMILY FROM LMB_FONTS ORDER BY FAMILY";
-$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-if(!$rs) {$commit = 1;}
-$sysfont = array();
-$sysfont[] = "";
-while(lmbdb_fetch_row($rs)){
-	$sysfont[] = trim(lmbdb_result($rs,"FAMILY"));
-}
+$fonts = Font::getUniqueFontFamilies();
 
 # --- bestehende Klassen ---
 $cssFiles = array();

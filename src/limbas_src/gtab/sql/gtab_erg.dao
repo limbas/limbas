@@ -23,17 +23,22 @@ function set_row_size($rowsize,$gtabid){
 	global $session;
 	global $action;
 	global $filter;
-	
+    global $umgvar;
+
 	$rsize = explode(";",$rowsize);
-	
 	foreach ($rsize as $bzm => $value){
 		$element = explode(",",$rsize[$bzm]);
-		# --- falls Spalte versteckt -----
-		if($filter["hidecols"][$gtabid][$element[0]] AND $bzm){
-			$rsize[$bzm] = $element[0].",".$gfield[$gtabid]["rowsize"][$gfield[$gtabid]["field_id"][$element[0]]];
+        $width = $element[1];
+        $field = $element[0];
+		# --- falls erste Spalte versteckt -----
+		if($filter["hidecols"][$gtabid][$field] AND $bzm){
+			$rsize[$bzm] = $field.','.$gfield[$gtabid]["rowsize"][$gfield[$gtabid]["field_id"][$field]];
 		}else{
-			$gfield[$gtabid]["rowsize"][$element[0]] = $element[1];
+			$gfield[$gtabid]["rowsize"][$field] = $width;
 		}
+        if(!$width OR !is_numeric($width)) {
+            $rsize[$bzm] = $field.','.$umgvar["default_fieldwidth"];
+        }
 		$bzm++;
 	}
 	$rowsize = implode(";",$rsize);

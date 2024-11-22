@@ -6,11 +6,17 @@
  * This program is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version.
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
-class AuthDefault extends Auth {
 
-    protected function handleAuthentication()
+namespace Limbas\lib\auth;
+
+use Limbas\lib\db\Database;
+
+class AuthDefault extends Auth
+{
+
+    protected function handleAuthentication(): bool
     {
-        if( ! (defined('IS_REST') || defined('IS_WSDL') || defined('IS_WEBDAV') || !empty($auth_token))) {
+        if (!(defined('IS_REST') || defined('IS_WSDL') || defined('IS_WEBDAV') || !empty($auth_token))) {
             Session::start();
             if ($this->isAuthenticated()) {
                 $this->authId = $_SESSION['authId'];
@@ -21,19 +27,18 @@ class AuthDefault extends Auth {
 
         [$auth_user, $auth_pass, $auth_token] = $this->getCredentialsFromRequest();
 
-        if(empty($auth_user) && empty($auth_token)){
+        if (empty($auth_user) && empty($auth_token)) {
             self::deny();
         }
 
-        if(($auth_user AND $auth_pass) OR $auth_token){
+        if (($auth_user and $auth_pass) or $auth_token) {
 
             $this->authUser = $auth_user;
 
             // REST / WSDL - use credentials
-            if(defined('IS_REST') OR defined('IS_WSDL') OR defined('IS_WEBDAV')) {
+            if (defined('IS_REST') or defined('IS_WSDL') or defined('IS_WEBDAV')) {
                 return $this->apiAuth($auth_user, $auth_pass);
-            }
-            elseif ($auth_token) {
+            } elseif ($auth_token) {
                 return $this->tokenAuth($auth_token, $auth_user, $auth_pass);
             }
 
@@ -42,11 +47,11 @@ class AuthDefault extends Auth {
         }
 
 
-
         return false;
     }
 
-    protected function getCredentialsFromRequest() {
+    protected function getCredentialsFromRequest(): array
+    {
         $auth_user = '';
         $auth_pass = '';
         $auth_token = '';
@@ -70,12 +75,16 @@ class AuthDefault extends Auth {
 
 
         $this->setAuthorizationVars();
-        
-        if(empty($auth_user)){$auth_user = $_SERVER['PHP_AUTH_USER'];}
-        if(empty($auth_pass)){$auth_pass = $_SERVER['PHP_AUTH_PW'];}
-        
-        $auth_user = dbf_7(substr($auth_user,0,30));
-        $auth_pass = dbf_7(substr($auth_pass,0,30));
+
+        if (empty($auth_user)) {
+            $auth_user = $_SERVER['PHP_AUTH_USER'];
+        }
+        if (empty($auth_pass)) {
+            $auth_pass = $_SERVER['PHP_AUTH_PW'];
+        }
+
+        $auth_user = dbf_7(substr($auth_user, 0, 30));
+        $auth_pass = dbf_7(substr($auth_pass, 0, 30));
         $auth_token = dbf_7($auth_token);
 
         return [$auth_user, $auth_pass, $auth_token];
@@ -94,17 +103,17 @@ class AuthDefault extends Auth {
 
         # check token exists
         $sqlquery = 'SELECT USER_ID,PASSWORT FROM LMB_USERDB WHERE USERNAME = \'' . parse_db_string($auth_user) . '\'';
-        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         if (lmbdb_fetch_row($rs)) {
             $this->authId = lmbdb_result($rs, 'USER_ID');
             if (!$this->lmbPasswordVerify($auth_user, $auth_pass, lmbdb_result($rs, 'PASSWORT'))) {
                 return false;
             }
-        }else{
+        } else {
             return false;
         }
 
-        if(!$this->authId){
+        if (!$this->authId) {
             return false;
         }
 
@@ -121,14 +130,14 @@ class AuthDefault extends Auth {
         if (empty($authId)) {
             self::deny();
         }
-        
+
         # get session id
-        $sqlquery = 'SELECT ID FROM LMB_SESSION WHERE USER_ID='.$this->authId.' ORDER BY ERSTDATUM DESC ' . LMB_DBFUNC_LIMIT . " 1";
-        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $sqlquery = 'SELECT ID FROM LMB_SESSION WHERE USER_ID=' . $this->authId . ' ORDER BY ERSTDATUM DESC ' . LMB_DBFUNC_LIMIT . " 1";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         if (lmbdb_fetch_row($rs)) {
             # load session of user
             $session_id = lmbdb_result($rs, 'ID');
-            Session::start($session_id,false);
+            Session::start($session_id, false);
             return true;
         }
         Session::start();
@@ -146,8 +155,8 @@ class AuthDefault extends Auth {
         }
 
         # get session id
-        $sqlquery = 'SELECT LMB_SESSION.ID, LMB_USERDB.USERNAME FROM LMB_SESSION INNER JOIN LMB_USERDB ON LMB_USERDB.USER_ID = LMB_SESSION.USER_ID WHERE LMB_SESSION.USER_ID ='.$this->authId.' ORDER BY ERSTDATUM DESC ' . LMB_DBFUNC_LIMIT . " 1";
-        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $sqlquery = 'SELECT LMB_SESSION.ID, LMB_USERDB.USERNAME FROM LMB_SESSION INNER JOIN LMB_USERDB ON LMB_USERDB.USER_ID = LMB_SESSION.USER_ID WHERE LMB_SESSION.USER_ID =' . $this->authId . ' ORDER BY ERSTDATUM DESC ' . LMB_DBFUNC_LIMIT . " 1";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
 
         # load session of user
         if (lmbdb_fetch_row($rs)) {
@@ -172,40 +181,41 @@ class AuthDefault extends Auth {
             $this->authUser = $_SESSION['authUser'];
             return true;
         }
-        
+
         # check for authentication method / charset
         $sqlquery2 = "SELECT ID,FORM_NAME,NORM FROM LMB_UMGVAR WHERE FORM_NAME LIKE '%_auth' OR FORM_NAME = 'charset'";   #CATEGORY = 6 OR CATEGORY = 0
-        $rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+        $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
         $umgvar = array();
-        while(lmbdb_fetch_row($rs2)){
-            $umgvar[lmbdb_result($rs2,"FORM_NAME")] = lmbdb_result($rs2,"NORM");
+        while (lmbdb_fetch_row($rs2)) {
+            $umgvar[lmbdb_result($rs2, "FORM_NAME")] = lmbdb_result($rs2, "NORM");
         }
-        
-        
+
+
         $sqlquery2 = "SELECT ID, PASSWORT FROM LMB_USERDB WHERE USERNAME = '" . parse_db_string($auth_user, 30) . "'";
         if ($auth_user !== 'admin') {
             $sqlquery2 .= ' AND (VALIDDATE >= ' . LMB_DBDEF_TIMESTAMP . ' OR VALID = ' . LMB_DBDEF_FALSE . ') AND DEL = ' . LMB_DBDEF_FALSE;
         }
-        $rs2 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db),$sqlquery2,$action,__FILE__,__LINE__);
+        $rs2 = lmbdb_exec($db, $sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $action, __FILE__, __LINE__);
         if (!$rs2) {
             return false;
         }
 
-        
-        if(lmbdb_fetch_row($rs2)) {
+
+        if (lmbdb_fetch_row($rs2)) {
             $this->authId = lmbdb_result($rs2, 'ID');
             return $this->lmbPasswordVerify($auth_user, $auth_pass, lmbdb_result($rs2, 'PASSWORT'));
         }
-        
+
         return false;
     }
-    
 
-    protected static function beforeDeny() {
-        if((isset($_POST['username']) && !empty($_POST['username'])) || (isset($_POST['password']) && !empty($_POST['password']))) {
+
+    protected static function beforeDeny(bool $blocked = false): void
+    {
+        if (!empty($_POST['username']) || !empty($_POST['password'])) {
             $wrongCredentials = true;
         }
-        require_once (COREPATH . 'lib/auth/html/login.php');
+        require_once(COREPATH . 'lib/auth/html/login.php');
     }
 
 
@@ -213,7 +223,8 @@ class AuthDefault extends Auth {
      * set Authorization Vars - workaround for some server configurations
      *
      */
-    protected function setAuthorizationVars() {
+    protected function setAuthorizationVars(): void
+    {
         if (isset($_SERVER['PHP_AUTH_USER']) && $_SERVER['PHP_AUTH_PW']) {
             return;
         }
@@ -224,14 +235,13 @@ class AuthDefault extends Auth {
         } else if (isset($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) && (strlen($_SERVER['REDIRECT_HTTP_AUTHORIZATION']) > 0)) {
             $servfield = 'REDIRECT_HTTP_AUTHORIZATION';
         }
-        if ($servfield){
+        if ($servfield) {
             list($_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']) = explode(':', base64_decode(substr($_SERVER[$servfield], 6)));
-            if( strlen($_SERVER['PHP_AUTH_USER']) == 0 || strlen($_SERVER['PHP_AUTH_PW']) == 0 )
-            {
+            if (strlen($_SERVER['PHP_AUTH_USER']) == 0 || strlen($_SERVER['PHP_AUTH_PW']) == 0) {
                 unset($_SERVER['PHP_AUTH_USER']);
                 unset($_SERVER['PHP_AUTH_PW']);
             }
         }
     }
-    
+
 }

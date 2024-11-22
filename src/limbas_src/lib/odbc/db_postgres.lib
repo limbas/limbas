@@ -95,13 +95,8 @@ function postgres_dbf_0($value){
     $LMB_DBFUNC_VIEWGALIAS = 0;
     $LMB_DBFUNC_SEQUENCE = 1;
     $LMB_DBFUNC_VIEWDEPENDENCY = 1;
-    
-    # workaround for postgresql versions
-    if($DBA['VERSION'] AND $DBA['VERSION'] < 90100){
-    	$LMB_DBFUNC_UMASCB = '\\\\';
-    }else{
-    	$LMB_DBFUNC_UMASCB = '\\';
-    }
+
+    $LMB_DBFUNC_UMASCB = '\\';
 
     return ${$value};
     
