@@ -17,6 +17,7 @@ use Limbas\extra\report\ReportController;
 use Limbas\extra\template\select\TemplateSelectController;
 use Limbas\layout\Layout;
 use Limbas\lib\auth\Session;
+use Symfony\Component\HttpFoundation\Request;
 
 require_once(COREPATH . 'lib/context.lib');
 require_once(COREPATH . 'extra/snapshot/snapshot.lib');
@@ -1413,6 +1414,7 @@ function dyns_gtabQuickSearch($params){
 
     require_once(COREPATH . 'gtab/gtab.lib');
     require_once(COREPATH . 'gtab/gtab_type_erg.lib');
+    require_once(COREPATH . 'gtab/gtab_type.lib');
 
     $gtabid = $params["gtabid"];
     $fieldid = $params["fieldid"];
@@ -4320,7 +4322,8 @@ function dyns_handleMail($params): void
 {
     global $alert;
     $dynsController = new MailController();
-    $result = $dynsController->handleRequest($params);
+    $request = Request::createFromGlobals();
+    $result = $dynsController->handleRequest($request);
     $alert = null;
     echo json_encode($result);
 }

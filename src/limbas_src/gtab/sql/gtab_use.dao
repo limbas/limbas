@@ -223,9 +223,9 @@ elseif($use_typ == 'link' AND $use_record AND $verknpf){
 			if($verkn AND $verkn["typ"] AND $verkn["id"] AND $verkn["add_id"]){
 				if($useetecount = set_joins($gtabid,$verkn)){
 					if($useetecount['count'] > 1){
-						lmb_alert($useetecount." ".$lang[2183]);
+						lmb_alert($useetecount['count']." ".$lang[2183]);
 					}elseif($useetecount['count'] == 1){
-						lmb_alert($useetecount." ".$lang[2182]);
+						lmb_alert("1 ".$lang[2182]);
 					}
 				}
 			}

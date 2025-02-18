@@ -717,19 +717,22 @@ function lmb_getFullViewDepPathXXX(){
 }
 **/
 
-function lmb_getFullViewDepPath(){
+function lmb_getFullViewDepPath(): array
+{
     global $DBA;
 
+    $fullPath = [];
+    
     $tables = dbf_20(array($DBA['DBSCHEMA'],null,'TABLE'));
     $tables = $tables["table_name"];
     foreach($tables as $key => $table) {
 
-        if($singlepath = lmb_getViewDepPath($table)) {
+        if($singlePath = lmb_getViewDepPath($table)) {
 
-            foreach($singlepath as $view => $level){
+            foreach($singlePath as $view => $level){
 
-                if(!$fullpath[$view] OR $fullpath[$view] < $level) {
-                    $fullpath[$view] = $level;
+                if(!$fullPath[$view] || $fullPath[$view] < $level) {
+                    $fullPath[$view] = $level;
                 }
 
             }
@@ -737,7 +740,7 @@ function lmb_getFullViewDepPath(){
         }
     }
 
-    return $fullpath;
+    return $fullPath;
 
 }
 
@@ -1293,46 +1296,6 @@ function lmb_getSystemConstraints(){
 	global $DBA;
 
 	// Relation indexes
-    /*
-	foreach ($gfield as $gtabid => $value){
-		foreach ($gfield[$gtabid]["md5tab"] as $fieldid => $md5tab){
-            $md5tab = dbf_4($md5tab);
-			# only right relation
-			if($gfield[$gtabid]["verkntabletype"][$fieldid] == 1 AND $gfield[$gtabid]["field_type"][$fieldid] == 11 AND !$gfield[$gtabid]["verkntree"][$fieldid]){
-
-                if($gfield[$gtabid]["data_type"][$fieldid] != 25) {
-                    $ind_field = dbf_4('ID');
-                    $indname = lmb_getConstraintName('LMB_INDV', $md5tab, $ind_field);
-                    $index[$md5tab][$ind_field] = array('index' => $indname);
-
-                    $ind_field = dbf_4('SORT');
-                    $indname = lmb_getConstraintName('LMB_INDV', $md5tab, $ind_field);
-                    $index[$md5tab][$ind_field] = array('index' => $indname);
-                }
-
-                $ind_field = dbf_4('VERKN_ID');
-                # only n:m
-                if($gfield[$gtabid]["data_type"][$fieldid] == 24){
-                    $indname = lmb_getConstraintName('LMB_INDV',$md5tab,$ind_field);
-                    $index[$md5tab][$ind_field] = array('index'=>$indname);
-                # only 1:n
-                }elseif($gfield[$gtabid]["data_type"][$fieldid] == 27){
-                    # add unique constraint
-                    $indname = lmb_getConstraintName('LMB_CONSTR',$md5tab,$ind_field);
-                    $index[$md5tab][$ind_field] = array('constraint'=>$indname);
-                # i:n direct
-                }elseif($gfield[$gtabid]["data_type"][$fieldid] == 25){
-                    $ind_field = dbf_4($gfield[$gtabid]['md5tab'][$fieldid]);
-                    $md5tab = dbf_4($gtab['table'][$gfield[$gtabid]['verkntabid'][$fieldid]]);
-                    $indname = lmb_getConstraintName('LMB_INDV',$md5tab,$ind_field);
-                    $index[$md5tab][$ind_field] = array('index'=>$indname);
-                }
-			}
-		}
-	}
-    */
-
-	// Relation indexes
     $sqlquery = "SELECT 
     LMB_CONF_FIELDS.FIELD_NAME, 
     LMB_CONF_FIELDS.DATA_TYPE,
@@ -1447,6 +1410,11 @@ function lmb_getSystemConstraints(){
 	$systemindex[] = array('lmb_select_w'=>'sort');
 	$systemindex[] = array('lmb_select_w'=>'pool');
 	$systemindex[] = array('lmb_select_w'=>'wert');
+	$systemindex[] = array('lmb_attribute_d'=>'dat_id');
+	$systemindex[] = array('lmb_attribute_d'=>'w_id');
+	$systemindex[] = array('lmb_attribute_w'=>'sort');
+	$systemindex[] = array('lmb_attribute_w'=>'pool');
+	$systemindex[] = array('lmb_attribute_w'=>'wert');
 	$systemindex[] = array('lmb_history_action'=>'userid');
     $systemindex[] = array('lmb_history_user'=>'sessionid');
     $systemindex[] = array('lmb_reminder_group'=>'reminder_id');
@@ -1629,6 +1597,10 @@ function lmb_parseImport($value,$domain_columns,$key1){
 function lmb_fgetcsv(&$handle, $length = 0, $delimiter = ",", $enclosure = '"', $escape = ""){
     
     if($delimiter == '\t'){$delimiter = chr(9);}
+
+    #if($delimiter && $umgvar['csv_delimiter']){$delimiter = $umgvar['csv_delimiter'];}
+    #if($enclosure && $umgvar['csv_enclosure']){$enclosure = $umgvar['csv_enclosure'];}
+    #if($escape && $umgvar['csv_escape']){$escape = $umgvar['csv_escape'];}
     
     // check if php support csv escape
     return fgetcsv($handle, $length, $delimiter, $enclosure, $escape);
@@ -1658,7 +1630,7 @@ function lmb_fputcsv(&$table_datei, $line, $intern=0) {
 
     // check if php support csv ecape
     if($intern) {
-        fputcsv($table_datei, $line);
+        fputcsv($table_datei, $line, escape:false);
     }else{
         fputcsv($table_datei, $line, $csv_delimiter, $csv_enclosure, $csv_escape);
     }
@@ -1763,212 +1735,18 @@ function soap_call_client($lmpar,$LIM){
  *
  * @return boolean success
  */
-function lmb_delete_user_filesave(){
+function lmb_delete_user_filesave($userid=null){
 	global $db;
 	
-	$prepare_string = "UPDATE LMB_USERDB SET UFILE = ?,UGTAB = ?";
+	$prepare_string = "UPDATE LMB_USERDB SET UFILE = ?,UGTAB = ?".($userid ? " WHERE USER_ID = ".parse_db_int($userid) : "");
 	lmb_PrepareSQL($prepare_string, array('',''), __FILE__, __LINE__);
 
-	$sqlquery = "DELETE FROM LMB_GTAB_ROWSIZE";
+	$sqlquery = "DELETE FROM LMB_GTAB_ROWSIZE".($userid ? " WHERE USER_ID = ".parse_db_int($userid) : "");
 	$rs = lmbdb_exec($db,$sqlquery);
 
-    return true;
+    error_log($sqlquery);
 
-}
-
-
-# -------------------- indizes prüfen ---------------
-function lmb_rebuildIndexxx($rebuild=null){
-	global $db;
-	global $gtab;
-	global $gfield;
-	global $DBA;
-
-    if($rebuild) {
-        lmb_dropAllConstraints();
-    }
-
-    // existing indexes
-	$sqlquery = dbq_2(array($DBA["DBSCHEMA"],null,null,1));
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	if(!$rs){$commit = 1;}
-	while(lmbdb_fetch_row($rs)){
-		$table = dbf_4(lmbdb_result($rs,"TABLENAME"));
-		$field = dbf_4(lmbdb_result($rs,"COLUMNNAME"));
-		$ind[$table][$field] = 1;
-	}
-
-	// Relation indexes
-	foreach ($gfield as $gtabid => $value){
-		foreach ($gfield[$gtabid]["md5tab"] as $fieldid => $md5tab){
-            $md5tab = dbf_4($md5tab);
-			# only right relation
-			if($gfield[$gtabid]["verkntabletype"][$fieldid] == 1 AND $gfield[$gtabid]["field_type"][$fieldid] == 11 AND $gfield[$gtabid]["data_type"][$fieldid] != 25 AND !$gfield[$gtabid]["verkntree"][$fieldid]){
-
-                $ind_field = dbf_4('ID');
-                if(!$ind[$md5tab][$ind_field]){
-                    $indname = lmb_getConstraintName('LMB_INDV',$md5tab,$ind_field);
-					$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$md5tab,$ind_field));
-					$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-					if($rs1) {
-                        $ind[$md5tab][$ind_field] = 1;
-                        LimbasLogger::info("adding index $indname for $md5tab ($ind_field)");
-                    }else{
-                        LimbasLogger::error("adding index failed $indname for $md5tab ($ind_field) : ".lmbdb_errormsg($db));
-					}
-				}
-
-                $ind_field = dbf_4('SORT');
-				if(!$ind[$md5tab][$ind_field]){
-                    $indname = lmb_getConstraintName('LMB_INDV',$md5tab,$ind_field);
-					$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$md5tab,$ind_field));
-					$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-					if($rs1) {
-                        $ind[$md5tab][$ind_field] = 1;
-                        LimbasLogger::info("adding index $indname for $md5tab ($ind_field)");
-                    }else{
-                        LimbasLogger::error("adding index failed $indname for $md5tab ($ind_field) : ".lmbdb_errormsg($db));
-					}
-				}
-
-                $ind_field = dbf_4('VERKN_ID');
-				if(!$ind[$md5tab][$ind_field]){
-					# only n:m
-					if($gfield[$gtabid]["data_type"][$fieldid] == 24){
-                        $indname = lmb_getConstraintName('LMB_INDV',$md5tab,$ind_field);
-						$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$md5tab,$ind_field));
-						$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                        if($rs1) {
-                            $ind[$md5tab][$ind_field] = 1;
-                            LimbasLogger::info("adding index $indname for $md5tab ($ind_field)");
-                        }else{
-                            LimbasLogger::error("adding index failed $indname for $md5tab ($ind_field) : ".lmbdb_errormsg($db));
-                        }
-					# only 1:n
-					}else{
-						# add unique constraint
-                        $indname = lmb_getConstraintName('LMB_CONSTR',$md5tab,$ind_field);
-						$sqlquery =  dbq_24(array($md5tab,$ind_field,$indname));
-						$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                        if($rs1) {
-                            $ind[$md5tab][$ind_field] = 1;
-                            LimbasLogger::info("adding constraint $indname for $md5tab ($ind_field)");
-                        }else{
-                            LimbasLogger::error("adding constraint failed $indname for $md5tab ($ind_field) : ".lmbdb_errormsg($db));
-                        }
-					}
-				}
-			}
-		}
-	}
-
-    // sync indexes
-    $ind_field = dbf_4('LMB_SYNC_ID');
-    $sqlquery = "SELECT TABELLE FROM LMB_CONF_TABLES WHERE DATASYNC = 1";
-    $rs = lmbdb_exec($db,$sqlquery);
-    while(lmbdb_fetch_row($rs)){
-        $table = dbf_4(lmbdb_result($rs, "TABELLE"));
-        if(!$ind[$table][$ind_field]){
-            $indname = lmb_getConstraintName('LMB_INDS',$table,$ind_field);
-            $sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$table,$ind_field));
-            $rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-            if($rs1) {
-                $ind[$table][$ind_field] = 1;
-                LimbasLogger::info("adding index $indname for $table ($ind_field)");
-            }else{
-                LimbasLogger::error("adding index failed $indname for $table ($ind_field) : ".lmbdb_errormsg($db));
-            }
-        }
-    }
-
-    // userdefined unique contraints
-    $sqlquery = "SELECT LMB_CONF_TABLES.TABELLE, LMB_CONF_FIELDS.FIELD_NAME FROM LMB_CONF_FIELDS,LMB_CONF_TABLES 
-    WHERE LMB_CONF_FIELDS.TAB_ID = LMB_CONF_TABLES.TAB_ID 
-    AND LMB_CONF_FIELDS.FIELD_TYPE NOT IN (6,11,10,19)
-    AND LMB_CONF_FIELDS.DATA_TYPE NOT IN (18,31,32,47)
-    AND LMB_CONF_FIELDS.ISUNIQUE = ".LMB_DBDEF_TRUE;
-    $rs = lmbdb_exec($db,$sqlquery);
-    while(lmbdb_fetch_row($rs)){
-        $table = dbf_4(lmbdb_result($rs, "TABELLE"));
-        $ind_field = dbf_4(lmbdb_result($rs, "FIELD_NAME"));
-        if(!$ind[$table][$ind_field]){
-            $indname = lmb_getConstraintName('LMB_CONSTR',$table,$ind_field);
-            $sqlquery =  dbq_24(array($table,$ind_field,$indname));
-            $rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-            if($rs1) {
-                $ind[$table][$ind_field] = 1;
-                LimbasLogger::info("adding constraint $indname for $table ($ind_field)");
-            }else{
-                LimbasLogger::error("adding constraint failed $indname for $table ($ind_field) : ".lmbdb_errormsg($db));
-            }
-        }
-    }
-
-
-    // userdefined indizes
-    $sqlquery = "SELECT LMB_CONF_TABLES.TABELLE, LMB_CONF_FIELDS.FIELD_NAME FROM LMB_CONF_FIELDS,LMB_CONF_TABLES 
-    WHERE LMB_CONF_FIELDS.TAB_ID = LMB_CONF_TABLES.TAB_ID 
-    AND LMB_CONF_FIELDS.FIELD_TYPE NOT IN (6,11,10,19)
-    AND LMB_CONF_FIELDS.DATA_TYPE NOT IN (18,31,32,47)
-    AND LMB_CONF_FIELDS.INDEXED = ".LMB_DBDEF_TRUE;
-    $rs = lmbdb_exec($db,$sqlquery);
-    while(lmbdb_fetch_row($rs)){
-        $table = dbf_4(lmbdb_result($rs, "TABELLE"));
-        $ind_field = dbf_4(lmbdb_result($rs, "FIELD_NAME"));
-        if(!$ind[$table][$ind_field]){
-            $indname = lmb_getConstraintName('LMB_IND',$table,$ind_field);
-            $sqlquery1 = dbq_4(array($DBA["DBSCHEMA"],$indname,$table,$ind_field));
-            $rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-            if($rs1) {
-                $ind[$table][$ind_field] = 1;
-                LimbasLogger::info("adding index $indname for $table ($ind_field)");
-            }else{
-                LimbasLogger::error("adding index failed $indname for $table ($ind_field) : ".lmbdb_errormsg($db));
-            }
-        }
-    }
-
-	//  System Indexes
-	$systemindex[] = array('lmb_gtab_groupdat'=>'dat_id');
-	$systemindex[] = array('lmb_indize_d'=>'ref');
-	$systemindex[] = array('lmb_indize_d'=>'wid');
-	$systemindex[] = array('lmb_indize_d'=>'sid');
-	$systemindex[] = array('lmb_indize_ds'=>'wid');
-	$systemindex[] = array('lmb_indize_ds'=>'sid');
-	$systemindex[] = array('lmb_indize_ds'=>'ref');
-	$systemindex[] = array('lmb_indize_f'=>'wid');
-	$systemindex[] = array('lmb_indize_f'=>'sid');
-	$systemindex[] = array('lmb_indize_f'=>'fid');
-	$systemindex[] = array('lmb_indize_fs'=>'sid');
-	$systemindex[] = array('lmb_indize_fs'=>'fid');
-	$systemindex[] = array('lmb_indize_fs'=>'wid');
-	$systemindex[] = array('lmb_indize_w'=>'metaphone');
-	$systemindex[] = array('lmb_indize_w'=>'val');
-	$systemindex[] = array('lmb_select_d'=>'dat_id');
-	$systemindex[] = array('lmb_select_d'=>'w_id');
-	$systemindex[] = array('lmb_select_w'=>'sort');
-	$systemindex[] = array('lmb_select_w'=>'pool');
-	$systemindex[] = array('lmb_select_w'=>'wert');
-	$systemindex[] = array('lmb_history_action'=>'userid');
-    $systemindex[] = array('lmb_history_user'=>'sessionid');
-
-	foreach ($systemindex as $key => $value){
-
-		$table = dbf_4(key($value));
-		$field = dbf_4(current($value));
-
-		if(!$ind[$table][$field]){
-            $indname = lmb_getConstraintName('LMB_INDS',$table,$field);
-			$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$table,$field));
-			$rs1 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-            if($rs1) {
-                $ind[$table][$field] = 1;
-                LimbasLogger::info("adding index $indname for $table ($field)");
-            }else{
-                LimbasLogger::error("adding index failed $indname for $table ($field) : ".lmbdb_errormsg($db));
-            }
-		}
-	}
+    lmb_alert('User settings deleted successfully!');
 
     return true;
 

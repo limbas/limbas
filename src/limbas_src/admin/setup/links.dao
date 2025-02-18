@@ -144,7 +144,7 @@ if ($add) {
     $newlinkaction = preg_replace("/ {2,}/", " ", parse_db_string($new_linkaction, 50));
     $newlinkurl = preg_replace("/ {2,}/", " ", parse_db_string($new_linkurl, 240));
     $newiconurl = preg_replace("/ {2,}/", " ", parse_db_string($new_iconurl, 128));
-    $newextension = preg_replace("/ {2,}/", " ", parse_db_string($new_extension, 160));
+    $newextension = preg_replace("/ {2,}/", " ", parse_db_string($new_extension, 250));
 
     /* --- Link Eintrag ---------------------------------------- */
     if ($newmaingroup == 5 OR !$supervisor) {

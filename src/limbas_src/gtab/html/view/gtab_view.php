@@ -21,7 +21,27 @@
             <?php
             if(!$gtab["tab_id"][$gtabid]){return false;}
 
-            $sqlquery = "SELECT * FROM ".$gtab["table"][$gtabid];
+            if($gtab['useviewparams'][$gtabid]) {
+
+                // get params from extension
+                if(!$extension['params']){
+                    // get params from default view definition
+                    eval($gtab['params2'][$gtabid]);
+                }
+
+                // get view definition
+                $sqlqueryV = "SELECT LMB_CONF_VIEWS.VIEWDEF FROM LMB_CONF_VIEWS WHERE LMB_CONF_VIEWS.ID  = $gtabid";
+                $rsV = lmbdb_exec($db,$sqlqueryV) or errorhandle(lmbdb_errormsg($db),$sqlqueryV,$action,__FILE__,__LINE__);
+                if($rsV) {
+                    $view_def = lmbdb_result($rsV, "VIEWDEF");
+                }
+
+                if($view_def) {
+                    $sqlquery = eval("return \"" . $view_def . "\";");
+                }
+            }else {
+                $sqlquery = "SELECT * FROM " . $gtab["table"][$gtabid];
+            }
             $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
             $sTable = "id='lmbGlistBodyView_$gtabid' class=\"table table-sm table-bordered table-striped\" style=\"width:100%\"";
             echo ODBCResourceToHTML($rs, $sTable, '', $umgvar["resultspace"]);

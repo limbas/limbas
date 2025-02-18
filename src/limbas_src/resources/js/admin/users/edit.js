@@ -41,7 +41,7 @@ function showCalendar(event, sell, fieldname, value) {
 }
 
 function delete_user(ID, USER) {
-    del = confirm("<?=$lang[908]?> \"" + USER + "\" <?=$lang[160]?>?");
+    del = confirm(jsvar["lng_908"]+" \"" + USER + "\" " + jsvar["lng_160"] + "?");
     if (del) {
         document.form1.user_del.value = ID;
         document.form1.action.value = 'setup_user_erg';
@@ -50,23 +50,26 @@ function delete_user(ID, USER) {
 }
 
 function gurefresh(DATA) {
-    gu = confirm("<?=$lang[896]?>");
+    gu = confirm(jsvar["lng_896"]);
+    var id = document.form1.ID.value;
     if (gu) {
-        document.location.href = "main_admin.php?action=setup_grusrref&user=<?=$ID?>&datarefresh=" + DATA + "";
+        document.location.href = "main_admin.php?action=setup_grusrref&user="+id+"&datarefresh=" + DATA;
     }
 }
 
 function lrefresh() {
-    link = confirm("<?=$lang[896]?>");
+    link = confirm(jsvar["lng_896"]);
+    var id = document.form1.ID.value;
     if (link) {
-        document.location.href = "main_admin.php?action=setup_linkref&user=<?=$ID?>";
+        document.location.href = "main_admin.php?action=setup_linkref&user="+id;
     }
 }
 
 function srefresh() {
-    link = confirm("<?=$lang[899]?>");
+    link = confirm(jsvar["lng_899"]);
+    var id = document.form1.ID.value;
     if (link) {
-        document.location.href = "main_admin.php?action=setup_user_change_admin&ID=<?=$ID?>&srefresh=1";
+        document.location.href = "main_admin.php?action=setup_user_change_admin&ID="+id+"&srefresh=1";
     }
 }
 
@@ -87,7 +90,7 @@ function send(action) {
         document.form1.user_add.value = '1';
     }
     if ((document.form1.elements['userdata[passwort]'].value.length < 5 && document.form1.elements['userdata[passwort]'].value.length > 0) || document.form1.elements['userdata[username]'].value.length < 5) {
-        lmbShowWarningMsg('<?=$lang[1315]?>');
+        lmbShowWarningMsg(jsvar["lng_1315"]);
     } else {
         document.form1.submit();
     }
@@ -97,8 +100,16 @@ function newwin1(USERID) {
     tracking = open("main_admin.php?action=setup_user_tracking&typ=1&userid=" + USERID, "Tracking", "toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=600,height=600");
 }
 
-function newwin2(USERID) {
-    userstat = open("main.php?action=userstat&userstat=" + USERID, "userstatistic", "toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=750,height=550");
+//function newwin2(USERID) { //deprecated
+//    userstat = open("main.php?action=userstat&userstat=" + USERID, "userstatistic", "toolbar=0,location=0,status=0,menubar=0,scrollbars=1,resizable=1,width=750,height=550");
+//}
+
+function deleteuserfilesave(evt) {
+	link = confirm(jsvar["lng_2328"]);
+	if(link) {
+        document.form1.delete_user_filesave.value = 1;
+        document.form1.submit();
+	}
 }
 
 function userCompare(userid,compareid){

@@ -11,6 +11,8 @@ if($manual_backup) {
     lmb_backup_database($path1,$path2,$medium,$device,$art);
 }
 
+global $message;
+
 ?>
 
 

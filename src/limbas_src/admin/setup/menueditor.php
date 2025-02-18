@@ -136,19 +136,20 @@
         
                                             <optgroup label="<?=$lang[365]?>">
                                                 <option value="1" <?=$type_[1]?>><?=$lang[2983]?></option>
+                                                <option value="18" <?=$type_[18]?>><?=$lang[2983] . ' ' . $lang[3185]?></option>
                                                 <option value="3" <?=$type_[3]?>><?=$lang[545]?></option>
                                                 <option value="4" <?=$type_[4]?>><?=$lang[843]?></option>
                                                 <option value="5" <?=$type_[5]?>><?=$lang[1625]?></option>
                                                 <option value="6" <?=$type_[6]?>><?=$lang[1939]?></option>
                                                 <option value="2" <?=$type_[2]?>><?=$lang[2984]?></option>
-                                                <option value="17" <?=$type_[17]?>><?=$lang[2984] . " 2"?></option>
+                                                <option value="17" <?=$type_[17]?>><?=$lang[2984] . ' ' . $lang[3185]?></option>
                                             </optgroup>
                                             <optgroup label="<?=$lang[357]?>">
                                                 <option value="13" <?=$type_[13]?>><?=$lang[545]?></option>
                                                 <option value="15" <?=$type_[15]?>><?=$lang[1625]?></option>
                                                 <option value="16" <?=$type_[16]?>><?=$lang[1939]?></option>
                                                 <option value="12" <?=$type_[12]?>><?=$lang[2984]?></option>
-                                                <option value="14" <?=$type_[14]?>><?=$lang[2984] . " 2"?></option>
+                                                <option value="14" <?=$type_[14]?>><?=$lang[2984] . ' ' . $lang[3185]?></option>
                                             </optgroup>
                                             <optgroup label="<?=$lang[1460]?>">
                                                 <option value="20" <?=$type_[20]?>><?=$lang[2983]?></option>

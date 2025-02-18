@@ -26,18 +26,21 @@ function lmb_pop_custmenu($custmenu,$gtabid,$ID,$gresult=null,$fieldid=null,$lin
     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
     if(!$rs) {return false;}
     while (lmbdb_fetch_row($rs)) {
-        $menuitems['name'][] = lmbdb_result($rs,'NAME');
-        $menuitems['title'][] = lmbdb_result($rs,'TITLE');
-        $menuitems['typ'][] = intval(lmbdb_result($rs,'TYP'));
-        $menuitems['icon'][] = lmbdb_result($rs,'ICON');
-        $menuitems['bgcolor'][] = lmbdb_result($rs,'BG');
-        $menuitems['url'][] = lmbdb_result($rs,'URL');
-        $menuitems['disabled'][] = lmbdb_result($rs,'DISABLED');
-        $menuitems['inactive'][] = lmbdb_result($rs,'INACTIVE');
+        $id = lmbdb_result($rs,'ID');
+        $menuitems['id'][$id] = lmbdb_result($rs,'ID');
+        $menuitems['name'][$id] = lmbdb_result($rs,'NAME');
+        $menuitems['title'][$id] = lmbdb_result($rs,'TITLE');
+        $menuitems['typ'][$id] = intval(lmbdb_result($rs,'TYP'));
+        $menuitems['icon'][$id] = lmbdb_result($rs,'ICON');
+        $menuitems['bgcolor'][$id] = lmbdb_result($rs,'BG');
+        $menuitems['url'][$id] = lmbdb_result($rs,'URL');
+        $menuitems['disabled'][$id] = lmbdb_result($rs,'DISABLED');
+        $menuitems['inactive'][$id] = lmbdb_result($rs,'INACTIVE');
         #$menuitems['class'][] = lmbdb_result($rs,'CLASS');
-        $menuitems['parent'][] = lmbdb_result($rs,'PARENT');
-        $menuitems['id'][] = lmbdb_result($rs,'ID');
+        $menuitems['parent'][$id] = lmbdb_result($rs,'PARENT');
     }
+
+
 
     if(!$menuitems){return false;}
 
@@ -128,10 +131,10 @@ function lmb_pop_custmenu($custmenu,$gtabid,$ID,$gresult=null,$fieldid=null,$lin
 
                 if($menuitems['url'][$key]){
                     #$url = "newwin7(null,'" . $gformlist["argresult_id"][$item] . "',null,null,null,$('#elrow_".$ID."_".$gtabid."').attr('".$menuitems['url'][$key]."'),'" . $item . "','" . $gformlist[$gformlist["argresult_id"][$item]]['dimension'][$item] . "',null,'" . $t . "');";
-                    $url = "lmbOpenForm(event,'{$gformlist["argresult_id"][$item]}',$('#elrow_".$ID."_".$gtabid."').attr('".$menuitems['url'][$key]."'),{formid:'$item',formdimension:'{$gformlist[$gformlist["argresult_id"][$item]]['dimension'][$item]}',inframe:'$t'});";
+                    $url = "lmbOpenForm(event,'{$gformlist["argresult_id"][$item]}',$('#elrow_".$ID."_".$gtabid."').attr('".$menuitems['url'][$key]."'),{formid:'$item',formdimension:'{$gformlist[$gformlist["argresult_id"][$item]]['dimension'][$item]}',formopenas:'$t'});";
                 }else {
                     #$url = "newwin7(null,'" . $gtabid . "',null,null,null,'" . $ID . "','" . $item . "','" . $gformlist[$gtabid]['dimension'][$item] . "',null,'" . $t . "');";
-                    $url = "lmbOpenForm(event,'$gtabid','$ID',{formid:'$item',formdimension:'{$gformlist[$gtabid]['dimension'][$item]}',inframe:'$t'});";
+                    $url = "lmbOpenForm(event,'$gtabid','$ID',{formid:'$item',formdimension:'{$gformlist[$gtabid]['dimension'][$item]}',formopenas:'$t'});";
                 }
                 if(!$linkonly){pop_menu2($gformlist[$gformlist["argresult_id"][$item]]['name'][$item], 'open form', null, $menuitems['icon'][$key], $menuitems['style'][$key], $url, $menuitems['class'][$key]);}
             // report
@@ -154,7 +157,7 @@ function lmb_pop_custmenu($custmenu,$gtabid,$ID,$gresult=null,$fieldid=null,$lin
             // submenu
             } elseif ($menuitems['typ'][$key] == 12) {
                 $url = "lmbTableContextMenu(event,this,'$ID',$gtabid,$item,$custmenu)";
-                if(!$linkonly){pop_submenu2($lang[$item], $url);}
+                if(!$linkonly){pop_submenu2($lang[$gcustmenu['argresult_name'][$custmenu]], $url);}
             // function
             } elseif ($menuitems['typ'][$key] == 13) {
                 $url = $menuitems['url'][$key];
@@ -164,6 +167,9 @@ function lmb_pop_custmenu($custmenu,$gtabid,$ID,$gresult=null,$fieldid=null,$lin
             }
         }
     }
+
+
+
 
     return $url;
 }

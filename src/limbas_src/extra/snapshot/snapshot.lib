@@ -488,6 +488,7 @@ function SNAP_get_filter($snap_id,$gtabid){
 
 	//get filter from snapshot
     $snapfilter = $gsnap[$gtabid]["filter"][$snap_id];
+    if(!$snapfilter){return;}
 
     // searchselect
     if($gsnap[$gtabid]["type"][$snap_id] == 2){

@@ -15,8 +15,17 @@ global $type;
 
 $mailForm = new LmbMailForm();
 
+$bulkMail = false;
+if(is_array($_GET['id'])) {
+    $bulkMail = true;
+    $id = $_GET['id'];
+}
+else {
+    $id = intval($_GET['id'] ?? 0);
+}
+
+
 $gtabid = intval($_GET['gtabid'] ?? 0);
-$id = intval($_GET['id'] ?? 0);
 $templateId = $_GET['template_id'] ?? null;
 $resolvedTemplateGroups = json_decode($_GET['resolvedTemplateGroups'], true) ?? [];
 $resolvedDynamicData = json_decode($_GET['resolvedDynamicData'], true) ?? [];

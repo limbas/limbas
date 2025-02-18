@@ -72,7 +72,7 @@
 
                                 <tr>
                                     <td><?=e($key)?></td>
-                                    <td><?=e($value)?></td>
+                                    <td><?=is_array($value) ? '<pre>' . print_r($value,1) . '</pre>' : e($value)?></td>
                                 </tr>
 
                             <?php endforeach; ?>

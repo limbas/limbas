@@ -75,12 +75,6 @@ if(!$subtab){$cl = 'class="gtabHeaderMenuTR"';}
 
                 <ul class="navbar-nav ms-auto">
 
-                    <?php if($GLOBALS['verknpf']): ?>
-                        <li class="nav-item lmbGtabmenuIcon-243">
-                            <?= LMBAction::ren(243,'icon', boolval($GLOBALS['verkn_showonly'])); // show related ?>
-                        </li>
-                    <?php endif; ?>
-
                     <?php if($gtab['edit'][$gtabid]): ?>
                         <li class="nav-item lmbGtabmenuIcon-197">
                             <?= LMBAction::ren(197,'icon'); // speichern ?>
@@ -168,6 +162,10 @@ if(!$subtab){$cl = 'class="gtabHeaderMenuTR"';}
 
                     <?php if($GLOBALS['verknpf']): ?>
 
+                        <li class="nav-item lmbGtabmenuIcon-243">
+                            <?= LMBAction::ren(243,'icon', boolval($GLOBALS['verkn_showonly'])); // show related ?>
+                        </li>
+
                         <?php if($GLOBALS['verkn_showonly']): ?>
                             <li class="nav-item lmbGtabmenuIcon-158">
                                 <?= LMBAction::ren(158,'icon'); // verknüpfen ?>
@@ -179,10 +177,15 @@ if(!$subtab){$cl = 'class="gtabHeaderMenuTR"';}
                         <?php endif; ?>
 
                     <?php endif; ?>
-
+                    
                     <?php if($GLOBALS['greportlist_exist'] && ($LINK[175] || $LINK[176] OR $LINK[315])): ?>
                         <li class="nav-item lmbGtabmenuIcon-315">
                             <?= LMBAction::ren(315,'icon'); // Berichte neu ?>
+                        </li>
+                    <?php endif; ?>
+                    <?php if($LINK[322]): ?>
+                        <li class="nav-item lmbGtabmenuIcon-322">
+                            <?= LMBAction::ren(322,'icon'); // Mails ?>
                         </li>
                     <?php endif; ?>
 

@@ -821,7 +821,7 @@ function lmb_gdGetFromFile(string $filePath): GdImage|false {
         'jpg', 'jpeg' => imagecreatefromjpeg($filePath),
         'png' => imagecreatefrompng($filePath),
         'gif' => imagecreatefromgif($filePath),
-        'pdf' => imagecreatefromjpeg(lmb_createJpegFromPdf($filePath)),
+        'pdf' => ($jpegPath = lmb_createJpegFromPdf($filePath)) ? imagecreatefromjpeg($jpegPath) : false,
         default => false
     };
 }
@@ -829,9 +829,9 @@ function lmb_gdGetFromFile(string $filePath): GdImage|false {
 /**
  * Create a jpeg from a pdf file
  * @param string $filePath the path to the pdf file
- * @return string the path to the created jpeg file, or an empty string if conversion failed
+ * @return string|false the path to the created jpeg file, or false if conversion failed
  */
-function lmb_createJpegFromPdf(string $filePath): string {
+function lmb_createJpegFromPdf(string $filePath): string|false {
     global $session;
 
     [
@@ -840,21 +840,27 @@ function lmb_createJpegFromPdf(string $filePath): string {
     ] = pathinfo($filePath);
 
     if ($extension !== 'pdf') {
-        return "";
+        return false;
     }
 
-    $filePathNew = USERPATH . $session['user_id'] . '/temp/' . $fileName;
+    $tempPathDir = USERPATH . $session['user_id'] . '/temp/';
+    $filePathNew = $tempPathDir . $fileName;
 
     // convert first page to jpeg
     $cmd = "pdftoppm -f 1 -l 1 -jpeg -r 72 $filePath $filePathNew";
     exec($cmd);
 
-    // remove page number from filename
-    if(!rename($filePathNew . '-01.jpg', $filePathNew . '.jpg')) {
-        return "";
+    // remove page number from jpeg
+    $tempDir = new DirectoryIterator($tempPathDir);
+    foreach ($tempDir as $fileinfo) {
+        $tempFileName = $fileinfo->getFileName();
+        if (preg_match("/^$fileName-0*1\.jpg$/", $tempFileName)) {
+            rename($tempPathDir . $tempFileName, $filePathNew . '.jpg');
+            return $filePathNew . '.jpg';
+        }
     }
 
-    return $filePathNew . '.jpg';
+    return false;
 }
 
 function lmb_gdImageScaleProportional(GdImage $image, int $width, int $height): GdImage {
@@ -1041,6 +1047,9 @@ function lmb_getThumbnail($file,$width=null,$height=null,$prop=null,$dest_format
             if ($umgvar["image_processing"] == 'Imagick') {
                 if ($mime[1] == "pdf") {
                     $file_path = lmb_createJpegFromPdf($file_path);
+                    if (!$file_path) {
+                        return false;
+                    }
                 }
 
                 try {
@@ -1834,6 +1843,10 @@ function setDateFormat($format,$cl=0,$country=null){
         $country = $GLOBALS['session']["dateformat"];
     }
 
+    $format = intval($format);
+    $cl = intval($cl);
+    $country = intval($country);
+
     return match ($country) {
         // DE
         1 => match ($format) {
@@ -2583,7 +2596,7 @@ function lmbGetAuthTokenUser($auth_token) {
  * @param $file string full path to a file
  * @return bool success
  */
-function lmbPrint($printerID, $file, $fileID = false, bool $forcePrint = false, array $printerOptions = []): bool
+function lmbPrint($printerID, $file = null, $fileID = false, bool $forcePrint = false, array $printerOptions = []): bool
 {
     global $gprinter;
     global $umgvar;

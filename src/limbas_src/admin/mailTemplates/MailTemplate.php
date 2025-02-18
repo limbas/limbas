@@ -172,7 +172,7 @@ class MailTemplate extends LimbasModel
     public function getRendered(int $gtabid, int $id, array $resolvedTemplateGroups = [], array $resolvedDynamicData = []): string
     {
         $templateRender = new MailTemplateRender();
-        return $templateRender->getHtml([],$this->rootTemplateTabId,$this->rootTemplateElementId,$gtabid,$id, $resolvedTemplateGroups, $resolvedDynamicData);
+        return $templateRender->getHtml([],$this->rootTemplateTabId,$this->rootTemplateElementId,$gtabid,$id, $resolvedTemplateGroups, $resolvedDynamicData, $this->rootTemplateElementId ? null : $this->savedTemplate);
     }
     
 }

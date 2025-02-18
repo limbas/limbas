@@ -22,7 +22,7 @@ class FormDataPlaceholder extends DataPlaceholder
     // store reference to gresult to pass it to list/detail render functions
     protected $gresult = null;
 
-    protected $readOnly = false;
+    protected bool $readOnly = false;
 
     public function resolve($gresultKey = null, $key = null)
     {
@@ -139,6 +139,11 @@ class FormDataPlaceholder extends DataPlaceholder
             lmb_log::error("Data placeholder {$this->fullMatch} could not be resolved! Function not found!", 'Not all data placeholders could be resolved!');
             return array();
         }
+        
+        if($this->isLabel) {
+            return array('<label>' . $this->value . '</label>');
+        }
+        
 
         $datid = $this->gresult[$gtabid]['id'][$this->key];
 
@@ -177,7 +182,7 @@ class FormDataPlaceholder extends DataPlaceholder
         return array('<span style="display: inline-table">' . $out . '</span>');
     }
 
-    public function setReadOnly()
+    public function setReadOnly(): void
     {
         $this->readOnly = true;
     }

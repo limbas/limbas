@@ -7,6 +7,7 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Limbas\admin\report\PdfStandard;
 use Limbas\admin\setup\fonts\Font;
 
 set_time_limit(1200); #20min
@@ -56,7 +57,7 @@ function get_report($report_id,$new){
 	/* --- temp-Verzeichnis löschen ---------------------------------------------- */
 	if($new){system("rm ".USERPATH.$session['user_id']."/temp/*");}
 
-	$sqlquery = "SELECT ID,NAME,BESCHREIBUNG,ORIENTATION,USED_FONTS,ROOT_TEMPLATE,ROOT_TEMPLATE_ID,CSS,DPI,DEFFORMAT,PAGE_STYLE,SQL_STATEMENT,REFERENZ_TAB,GROUPLIST,TARGET,SAVENAME,TAGMOD,EXTENSION,INDEXORDER,LISTMODE,DEFAULT_FONT,DEFAULT_FONT_SIZE FROM LMB_REPORT_LIST WHERE ID = $report_id";
+	$sqlquery = "SELECT ID,NAME,BESCHREIBUNG,ORIENTATION,USED_FONTS,ROOT_TEMPLATE,ROOT_TEMPLATE_ID,CSS,DPI,DEFFORMAT,PAGE_STYLE,SQL_STATEMENT,REFERENZ_TAB,GROUPLIST,TARGET,SAVENAME,TAGMOD,EXTENSION,INDEXORDER,LISTMODE,DEFAULT_FONT,DEFAULT_FONT_SIZE, STANDARD, STANDARD_AUTO FROM LMB_REPORT_LIST WHERE ID = $report_id";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,'',__FILE__,__LINE__);
 	if(lmbdb_fetch_row($rs)) {
 		$report["name"] = lmbdb_result($rs, "NAME");
@@ -78,6 +79,8 @@ function get_report($report_id,$new){
         $report["orientation"] = lmbdb_result($rs, "ORIENTATION");
         $report["default_font"] = lmbdb_result($rs, "DEFAULT_FONT");
         $report["default_font_size"] = lmbdb_result($rs, "DEFAULT_FONT_SIZE");
+        $report['standard'] = PdfStandard::tryFrom(intval(lmbdb_result($rs, 'STANDARD'))) ?? PdfStandard::DEFAULT;
+        $report['standard_auto'] = boolval(lmbdb_result($rs, 'STANDARD_AUTO'));
 
 		if(lmbdb_result($rs, "GROUPLIST")){
 			$report["grouplist"] = explode(";",lmbdb_result($rs, "GROUPLIST"));

@@ -537,14 +537,13 @@ function gtabSetTablePosition(reset,scrolltoY){
 	}
 
 	// show save&close button for open in iframe
-	if((jsvar['verknpf'] || !parent.main) && parent.window.location.href.indexOf("redirect") < 1) {
+	if((jsvar['verknpf'] > 0 || !parent.main) && parent.window.location.href.indexOf("redirect") < 1) {
 		$("#lmbSbmClose_" + jsvar['gtabid'] + "_" + jsvar['ID']).show();
 	}
 	
     if(!document.getElementById("GtabTableBody")){
 		// new
 		$('body').scrollTop(scrolltoY);
-	
 		return;
 	}
 
@@ -697,8 +696,10 @@ function lmbRelationContextMenu(evt,el,ID,gtabid,custmenu) {
 
     var child = 'lmb_custmenu_'+custmenu;
 
+    limbasDivCloseTab.push(child);
+
 	if(!document.getElementById(child)){
-        $('#limbasDivMenuContext').after("<div id='"+child+"' class='lmbContextMenu' style='position:absolute;z-index:992;' onclick='activ_menu = 1;'>");
+        $('#limbasDivMenuContext').after("<div id='"+child+"' class='lmbContextMenu' style='position:absolute;z-index:994;' onclick='activ_menu = 1;'>");
     }
 
     var fieldid = $(evt.target).closest('.element-cell').attr( "data-fieldid" );

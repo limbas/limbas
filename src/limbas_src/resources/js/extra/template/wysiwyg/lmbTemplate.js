@@ -195,6 +195,14 @@ tinymce.PluginManager.add('lmbTemplate', function (editor, url) {
      * @param forTable int
      */
     function setDataTable(forTable) {
+
+        const $dataTable = $('#lmbTemplateForceDataTable');
+
+        if($dataTable.length > 0) {
+            $dataTable.val(forTable);
+            return;
+        }
+
         $.ajax({
             method: 'PATCH',
             url: `main_rest.php/${gtabid}/${ID}`,
@@ -213,16 +221,23 @@ tinymce.PluginManager.add('lmbTemplate', function (editor, url) {
      * @returns {Promise<int>}
      */
     function requireTableSet(ignoreSetTable=false, askOverwriteTable=true) {
+        
+        const $dataTable = $('#lmbTemplateForceDataTable');
+        let forceForTable = null;
+        if($dataTable.length > 0) {
+            forceForTable = parseInt($dataTable.val());
+        }   
+        
         return new Promise(function(resolve, reject) {
             // get table from dataset
             $.ajax({
-                url: `main_rest.php/${gtabid}/${ID}`,
+                url: forceForTable === null ? `main_rest.php/${gtabid}/${ID}` : null,
                 data: {
                     '$fields': 'forTable'
                 },
                 success: function (response) {
                     // table already set?
-                    const existingTable = response.data.attributes.fortable;
+                    const existingTable = forceForTable === null ? response.data.attributes.fortable : forceForTable;
                     if (!ignoreSetTable && existingTable) {
                         resolve(existingTable);
                         return;

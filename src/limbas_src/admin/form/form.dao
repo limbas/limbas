@@ -444,18 +444,18 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 		$tab_size = $form_stab_show;
 	}elseif($form_add == "menue"){
 		$value = "menue";
-		$styles = array(14=>'solid',15=>'',16=>1,24=>'auto');
+		$styles = array(14=>'solid',15=>'',16=>'1px',24=>'auto');
 		$width = "300";$height = "200";
 		$style = set_default_style($styles);
 		$pic_size = "1_2_3"; #Menu-Auswahl
 	}elseif($form_add == "tabulator"){
 		$value = "tabulator";
-		$styles = array(14=>'solid',15=>'',16=>1,24=>'auto');
+		$styles = array(14=>'solid',15=>'',16=>'1px',24=>'auto');
 		$width = "300";$height = "200";
 		$style = set_default_style($styles);
 	}elseif($form_add == "frame"){
 		$value = " ";
-		$styles = array(14=>'solid',15=>'',16=>1,24=>'auto');
+		$styles = array(14=>'solid',15=>'',16=>'1px',24=>'auto');
 		$width = "300";$height = "200";
 		$style = set_default_style($styles);
 	}elseif($form_add == "tabuItem"){
@@ -485,19 +485,19 @@ $file=null,$filename=null,$filesize=null,$pic_type=null,$pic_compress=null,$posy
 		$value = "1";
 	}elseif($form_add == "line"){
 		$value = "Linie";
-		$styles = array(0=>$default_font,1=>'normal',3=>$default_size,4=>'normal',5=>0,6=>0,7=>'none',8=>'none',9=>'',12=>'left',16=>1,24=>'visible');
+		$styles = array(0=>$default_font,1=>'normal',3=>$default_size,4=>'normal',5=>0,6=>0,7=>'none',8=>'none',9=>'',12=>'left',14=>'solid',15=>'',16=>'1px',24=>'visible');
 		$style = set_default_style($styles);
 		$width=100;
 		$height=40;
 	}elseif($form_add == "ellipse"){
 		$value = "Ellipse";
-		$styles = array(0=>$default_font,1=>'normal',3=>$default_size,4=>'normal',5=>0,6=>0,7=>'none',8=>'none',9=>'',12=>'left',16=>1,24=>'visible');
+		$styles = array(0=>$default_font,1=>'normal',3=>$default_size,4=>'normal',5=>0,6=>0,7=>'none',8=>'none',9=>'',12=>'left',14=>'solid',15=>'',16=>'1px',24=>'visible');
 		$style = set_default_style($styles);
 		$width=100;
 		$height=40;
 	}elseif($form_add == "rect"){
 		$value = "Rechteck";
-		$styles = array(0=>$default_font,1=>'normal',3=>$default_size,4=>'normal',5=>0,6=>0,7=>'none',8=>'none',9=>'',12=>'left',16=>1,24=>'visible');
+		$styles = array(0=>$default_font,1=>'normal',3=>$default_size,4=>'normal',5=>0,6=>0,7=>'none',8=>'none',9=>'',12=>'left',14=>'solid',15=>'',16=>'1px',24=>'visible');
 		$style = set_default_style($styles);
 		$width=30;
 		$height=30;
@@ -691,18 +691,38 @@ function form_delete_element($element_id,$form_id,$sub=null){
 /* --- Elemente verschieben --------------------------------------------- */
 function form_moveElement($form_id,$move_id,$aktiv_tabcontainer,$localsession){
 	global $db;
-	
+
 	# adding- subelements
 	if(is_numeric($aktiv_tabcontainer)){
 		if($localsession["adminFormTabulator"][$form_id][$aktiv_tabcontainer]){
 			$categorie = $localsession["adminFormTabulator"][$form_id][$aktiv_tabcontainer];
 		}
 	}
-	
+
+    if($aktiv_tabcontainer == 'top'){
+        $aktiv_tabcontainer = 'NULL';
+    }else{
+        $aktiv_tabcontainer = parse_db_int($aktiv_tabcontainer);
+    }
+
 	if($move_id = explode(';',$move_id)){
+
+        // get position of first element
+        $sqlquery = "SELECT POSX,POSY FROM LMB_FORMS WHERE FORM_ID = $form_id AND KEYID IN (".implode(",",$move_id).") ORDER BY POSY";
+        $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+        $px = intval(lmbdb_result($rs, "POSX")-20);
+        $py = intval(lmbdb_result($rs, "POSY")-20);
+
 		foreach ($move_id as $key => $value){
-			$sqlquery = "UPDATE LMB_FORMS SET SUBELEMENT = ".parse_db_int($aktiv_tabcontainer).", CATEGORIE = ".parse_db_int($categorie)." WHERE FORM_ID = $form_id AND KEYID = $value";
+
+            // set position relative to first element
+			$sqlquery = "SELECT POSX,POSY FROM LMB_FORMS WHERE FORM_ID = $form_id AND KEYID = $value";
 			$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+            $x = abs(intval(lmbdb_result($rs, "POSX")-$px));
+            $y = abs(intval(lmbdb_result($rs, "POSY")-$py));
+
+			$sqlquery1 = "UPDATE LMB_FORMS SET SUBELEMENT = ".parse_db_int($aktiv_tabcontainer).", CATEGORIE = ".parse_db_int($categorie).", POSX = $x, POSY = $y WHERE FORM_ID = $form_id AND KEYID = $value";
+			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 		}
 	}
 }

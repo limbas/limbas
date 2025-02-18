@@ -29,12 +29,13 @@ function drop_view() {
 	}
 }
 
-function LIM_relationTree(rel){
-	val = confirm('<?=$lang[2856]?>',' ');
+function LIM_relationTree(element, rel){
+	const val = confirm('<?=$lang[2856]?>',' ');
 	if(val){
 		document.form1.relationtree.value = rel;
 		document.form1.submit();
 	}
+    $(element).prop('checked',val);
 }
 
 
@@ -151,61 +152,6 @@ function changeorderf(el,id){
 <?php
 
 
-
-
-
-function relationtree($rfield){
-    global $lang;
-    global $gfield;
-    global $gtab;
-
-    if(($rfield['verkntabletype'] == 1 OR $rfield['verkntabletype'] == 3) AND $rfield['datatype'] != 25 AND $tree = recrelationtree($rfield)){
-        
-        foreach($tree as $tkey => $path){
-            $tree_identifier = md5(implode(",",$path));
-            $CHECKED = '';
-            if($rfield['verkntree'] == $tree_identifier){$CHECKED = 'CHECKED';}
-
-
-            echo '<div class="mb-3 form-check">';
-            echo '<label class="form-check-label">';
-            
-            
-            
-            echo "<input type=\"checkbox\" class=\"form-check-input\" onclick=\"LIM_relationTree('".implode(",",$path)."')\" $CHECKED>";
-            $tabname = array();
-
-            foreach($path as $key => $md5tab){
-                $vTabID = getTabFromMd5($md5tab);
-
-                if (isset($path[$key - 1])) {
-                    $lastTab = getTabFromMd5($path[$key - 1]);
-                } else {
-                    $lastTab = $tabid;
-                }
-
-                $fieldName = '';
-                foreach($gfield[$lastTab]['md5tab'] as $fieldKey => $md5) {
-                    if ($md5 == $md5tab) {
-                         $fieldName = $gfield[$lastTab]['field_name'][$fieldKey];
-                         break;
-                    }
-                }
-                $tabname[] = "<span title=\"{$fieldName}\">{$gtab['table'][$vTabID]}</span>";
-            }
-            echo '&rarr;' . implode(" &rarr; ",$tabname);
-            echo '</label></div>';
-        }
-        
-        if (empty($tree)) {
-            return false;
-        }
-        return true;
-    }
-    return false;
-}
-
-
 function rec_verknpf_tabs($gtabid,$verkntab){
 	static $recmd5;
 	global $gfield;
@@ -247,6 +193,7 @@ function edit_relationparams($tabid,$fieldid){
     ${'show_inframe_'.$params['show_inframe']} = 'selected';
     ${'viewmode_'.$params['viewmode']} = 'selected';
     ${'validity_'.$params['validity']} = 'selected';
+    ${'view_mode_'.$params['view_mode']} = 'selected';
 
     $show_inframe_mods = array('div','iframe','same','tab');
     if($params['show_inframe'] AND !in_array($params['show_inframe'],$show_inframe_mods)){$show_inframe_tag = 'selected';}else{$params['show_inframe'] = null;}
@@ -254,7 +201,7 @@ function edit_relationparams($tabid,$fieldid){
 
     echo "
     <table
-    <tr><td><i>{$lang[3038]}</i></td><td>
+    <tr><td><i>{$lang[3186]}</i></td><td>
         <select name=\"params[show_inframe]\" onchange=\"if(this.value == 'tag'){document.getElementById('inframe_tag').style.display='';}\"><option>
         <option value=\"window\" $show_inframe_window>new window
         <option value=\"div\" $show_inframe_div>div
@@ -264,6 +211,12 @@ function edit_relationparams($tabid,$fieldid){
         <option value=\"tag\" $show_inframe_tag>tag (Element-ID)
         </select>&nbsp;
     <input style=\"display:$inframe_tag_display\" id=\"inframe_tag\" type=\"text\" name=\"params[show_inframe_tag]\" size=\"5\" value=\"".htmlentities($params['show_inframe'],ENT_QUOTES)."\">
+    </td></tr>
+    <tr><td><i>{$lang[3038]}</i></td><td><select name=\"params[view_mode]\">
+        <option>
+        <option value=\"1\" $view_mode_1>read
+        <option value=\"2\" $view_mode_2>write
+        </select>
     </td></tr>
     <tr><td><i>{$lang[3014]}</i></td><td><select name=\"params[viewmode]\">
         <option>

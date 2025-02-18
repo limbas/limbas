@@ -1,4 +1,4 @@
-<?php use Limbas\admin\report\Report; global $gtab, $gprinter; /** @var Report $report */?>
+<?php use Limbas\admin\report\PdfStandard; use Limbas\admin\report\Report; global $gtab, $gprinter; /** @var Report $report */?>
 <tr id="report-<?=e($report->id)?>" <?=isset($isNew)?'class="table-success"':''?>>
     <td><?=e($report->id)?></td>
     <td>
@@ -13,7 +13,7 @@
     </td>
     <td><?=e($gtab['desc'][$report->gtabId])?></td>
     <td>
-        <div class="d-flex align-items-start mw-100">
+        <div class="d-flex align-items-center mw-100">
             <div class="col-8">
                 <select data-update="target" data-id="<?=e($report->id)?>" class="form-select form-select-sm">
                     <option value="0"></option>
@@ -30,6 +30,23 @@
     <td><input type="text" data-update="saveName" data-id="<?=e($report->id)?>" value="<?=e($report->saveName)?>" class="form-control form-control-sm"></td>
     <td>
         <?=e($report->defFormat)?>
+    </td>
+    <td>
+        <div class="d-flex align-items-center mw-100 gap-2">
+            <div>
+                <select data-update="standard" data-id="<?=e($report->id)?>" class="form-select form-select-sm">
+                    <?php foreach (PdfStandard::cases() as $pdfStandard): ?>
+                        <option value="<?=$pdfStandard->value?>" <?= $report->standard === $pdfStandard ? 'selected' : ''?>><?=e($pdfStandard->name())?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="form-check">
+                <label class="form-check-label">
+                    <input class="form-check-input" type="checkbox" data-update="standard_auto" data-id="<?=e($report->id)?>" value="1" <?=e($report->standardAuto ? 'checked' : '')?>>
+                    AutoFix
+                </label>
+            </div>
+        </div>
     </td>
 
     <td>

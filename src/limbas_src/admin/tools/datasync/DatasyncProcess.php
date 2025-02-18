@@ -151,7 +151,9 @@ class DatasyncProcess
      */
     private function resetGlobalCache($timestamp): bool
     {
-        $db = Database ::get();
+        global $umgvar;
+        
+        $db = Database::get();
         
         $timestamp = intval($timestamp);
         
@@ -159,7 +161,12 @@ class DatasyncProcess
             return true;
         }
 
-        $clientCount = DatasyncClient::count();
+        if($umgvar['sync_ignore_inactive']) {
+            $clientCount = DatasyncClient::count(true);
+        } else {
+            $clientCount = DatasyncClient::count();
+        }
+        
         
         $sql = 'SELECT Count(ID) as CC, CACHE_ID FROM LMB_SYNC_CACHE LEFT JOIN LMB_SYNC_GLOBAL ON LMB_SYNC_GLOBAL.CACHE_ID = LMB_SYNC_CACHE.ID WHERE SLAVE_ID = 0 AND LMB_SYNC_CACHE.PROCESS_KEY = ' . $timestamp . ' GROUP BY CACHE_ID';
         $rs = lmbdb_exec($db, $sql);

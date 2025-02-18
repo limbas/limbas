@@ -69,6 +69,7 @@ class Limbas extends HttpKernel
         } catch (Throwable $t) {
             $response = (new DefaultController())->error(500, $t, $request);
             lmb_log::error($t->getMessage());
+            #error_log("$t->getMessage(), at:\n$t->getTraceAsString()");
         }
         return $response;
     }

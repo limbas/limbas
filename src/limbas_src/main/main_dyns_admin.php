@@ -333,6 +333,7 @@ function dyns_edit_relationparams($par){
     ${'show_inframe_'.$params['show_inframe']} = 'selected';
     ${'viewmode_'.$params['viewmode']} = 'selected';
     ${'validity_'.$params['validity']} = 'selected';
+    ${'view_mode_'.$params['view_mode']} = 'selected';
 
     $show_inframe_mods = array('div','iframe','same','tab');
     if($params['show_inframe'] AND !in_array($params['show_inframe'],$show_inframe_mods)){$show_inframe_tag = 'selected';}else{$params['show_inframe'] = null;}
@@ -346,7 +347,7 @@ function dyns_edit_relationparams($par){
     <TEXTAREA name=\"relation_params[extension]\" STYLE=\"width:100%;height:150px;background-color:inherit\" Onchange=\"edit_relationparams($elid,1)\">".htmlentities($params['extension'],ENT_QUOTES)."</TEXTAREA>
     </td></tr>
     
-    <tr><td><i>{$lang[3038]}</i></td><td>
+    <tr><td><i>{$lang[3186]}</i></td><td>
         <select name=\"relation_params[show_inframe]\" Onchange=\"if(this.value == 'tag'){document.getElementById('inframe_tag').style.display='';}else{edit_relationparams($elid,1);}\"><option>
         <option value=\"window\" $show_inframe_window>new window
         <option value=\"div\" $show_inframe_div>div
@@ -355,6 +356,12 @@ function dyns_edit_relationparams($par){
         <option value=\"tab\" $show_inframe_tab>new tab
         <option value=\"tag\" $show_inframe_tag>tag (Element-ID)</select>&nbsp;
     <input style=\"display:$inframe_tag_display\" id=\"inframe_tag\" type=\"text\" name=\"relation_params[show_inframe_tag]\" size=\"5\" value=\"".htmlentities($params['show_inframe'],ENT_QUOTES)."\" Onchange=\"edit_relationparams($elid,1)\">
+    </td></tr>
+    <tr><td><i>{$lang[3038]}</i></td><td><select name=\"relation_params[view_mode]\" Onchange=\"edit_relationparams($elid,1)\">
+        <option>
+        <option value=\"1\" $view_mode_1>read
+        <option value=\"2\" $view_mode_2>write
+        </select>
     </td></tr>
     <tr><td><i>{$lang[3014]}</i></td><td><select name=\"relation_params[viewmode]\" Onchange=\"edit_relationparams($elid,1)\">
         <option>
@@ -437,6 +444,7 @@ function dyns_tabschemaInfos($par){
 function dyns_VieweditorPattern($par){
 	if(!$viewid = $par["viewid"]){
         $setdrag = $par["setdrag"];
+        $groupname = $par["groupname"];
         require_once(COREPATH . 'admin/tables/tabschema/tabschema.dao');
         require_once(COREPATH . 'admin/tables/tabschema/tabschema.php');
     } else {

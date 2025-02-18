@@ -43,6 +43,11 @@ function formListElements($action,$gtabid,$ID,&$gresult,$gformid,$ellist=null,$f
 			$tab_id = $gform[$gformid]["tab_id"][$key];
 			$stylearray = explode(";",$gform[$gformid]["style"][$key]);
 			$collapse = $stylearray[32];
+
+            // workaround for bootstrap style
+            if($stylearray[26] == 'none'){$stylearray[26] = $stylearray[26].' !important';}
+
+            // generate style string
 			$stylevalue = set_style($stylearray);
 
 			$width = $gform[$gformid]["width"][$key];
@@ -148,19 +153,21 @@ function formListElements($action,$gtabid,$ID,&$gresult,$gformid,$ellist=null,$f
                             echo "</div>";
 
                             ?>
-                            <script language='javascript'>;
+                            <script>;
                             // get activ menu ID
-                            var menuID = parent.$('ul.mainmenu:visible').attr('id');
-                            var menuContent = $('#menu-side-container').html();
-                            menuContent = menuContent.replace(/2000/g, menuID); // set new ID
-                            menuContent = menuContent.replace(/clearfix open/g, 'clearfix open form_tabmenu'); // set new class to remove item
-                            $('#menu-side-container').html(menuContent);
+                            $(function() {
+                                var menuID = parent.$('ul.mainmenu:visible').attr('id');
+                                var menuContent = $('#menu-side-container').html();
+                                menuContent = menuContent.replace(/2000/g, menuID); // set new ID
+                                menuContent = menuContent.replace(/clearfix open/g, 'clearfix open form_tabmenu'); // set new class to remove item
+                                $('#menu-side-container').html(menuContent);
 
-                            //if(parent.document.getElementById('menu-side-header-'+menuID)) {
-                                //parent.$('#menu-side-header-'+menuID).remove();
-                                //parent.$('.form_tabmenu').remove();
-                            //}
-                            $('#menu-side-container').children().clone().insertAfter(parent.$('.sidenav-quicksearch:visible'));
+                                //if(parent.document.getElementById('menu-side-header-'+menuID)) {
+                                    //parent.$('#menu-side-header-'+menuID).remove();
+                                    //parent.$('.form_tabmenu').remove();
+                                //}
+                                $('#menu-side-container').children().clone().insertAfter(parent.$('.sidenav-quicksearch:visible'));
+                            });
 
                             </script>
                             <?php
@@ -1067,7 +1074,7 @@ function form_submt($key,$gformid,$pos,$style,$class,$ID,$gtabid){
     // prevent submitting parent form1 in subforms
 	if($GLOBALS['actid'] == 'openSubForm' AND $_REQUEST['subformlayername']){
 	    #$event = "OnClick=\"newwin7('',$gtabid,'".$_REQUEST['verkn_tabid']."','".$_REQUEST['verkn_fieldid']."','".$_REQUEST['verkn_ID']."',$ID,$gformid,null,null,'".$_REQUEST['subformlayername']."','".$_REQUEST['verkn_addfrom']."')\"";
-        $event = "OnClick=\"lmbOpenForm(event,'{$gtabid}','$ID',{formid:'$gformid', v_tabid:'{$_REQUEST['verkn_tabid']}',v_fieldid:'{$_REQUEST['verkn_fieldid']}',v_id:'{$_REQUEST['verkn_ID']}',inframe:'{$_REQUEST['subformlayername']}',show_relationpath:'{$_REQUEST['verkn_addfrom']}'});\"";
+        $event = "OnClick=\"lmbOpenForm(event,'{$gtabid}','$ID',{formid:'$gformid', v_tabid:'{$_REQUEST['verkn_tabid']}',v_fieldid:'{$_REQUEST['verkn_fieldid']}',v_id:'{$_REQUEST['verkn_ID']}',formopenas:'{$_REQUEST['subformlayername']}',show_relationpath:'{$_REQUEST['verkn_addfrom']}'});\"";
     }
 
 	$style = "style=\"".$pos.$style.";cursor:pointer;\"";
@@ -1370,7 +1377,7 @@ function form_templ($key,$gformid,$pos,$style,$class,$ID,$gtabid,$action,$field_
 
     $content = $gform[$gformid]['inhalt'][$key];
     $templGtabid = $gform[$gformid]['pic_typ'][$key];
-    TemplateConfig::$instance = new FormTemplateConfig(intval($gtabid), false, $ID);
+    TemplateConfig::$instance = new FormTemplateConfig(intval($gtabid), false, $ID, $action !== 'gtab_change' && $action !== 'gtab_neu');
 
     $baseElement = TemplateConfig::$instance->getTemplateElementInstance($templGtabid, 'lmbBaseElement', $content);
     $baseElement->resolve($ID);
@@ -1478,7 +1485,7 @@ function formlist_tabrow($key,$gformid,$gtabid,$field_id,$tab_id,&$gresult,$tab_
 		lmbbgcolor=\"$BGCOLOR\"
 		onclick=\"lmbTableClickEvent(event,this,'$gtabid','".$gresult[$gtabid]["id"][$line]."')\"
 		oncontextmenu=\"document.form2.form_id.value='".$gformlist[$gtabid]["redirect"][$gformid]."';return div1(event,this,'".$gresult[$gtabid]["id"][$line]."','$gtabid','".$gresult[$gtabid]["ERSTDATUM"][$line]."','".$gresult[$gtabid]["EDITDATUM"][$line]."','".$userdat["bezeichnung"][$gresult[$gtabid]["ERSTUSER"][$line]]."','".$userdat["bezeichnung"][$gresult[$gtabid]["EDITUSER"][$line]]."','','','','');\"
-		ondblclick=\"document.form2.form_id.value='".$gformlist[$gtabid]["redirect"][$gformid]."';lmbTableDblClickEvent(event,this,'$gtabid','".$gresult[$gtabid]["id"][$line]."','','".$GLOBALS["verkn_poolid"]."','','','','','');return false; \">\n";
+		ondblclick=\"document.form2.form_id.value='".$gformlist[$gtabid]["redirect"][$gformid]."';lmbTableDblClickEvent(event,this,'$gtabid','".$gresult[$gtabid]["id"][$line]."','','','','','');return false; \">\n";
 	}else{
 		echo "<TR id=\"elrow_0_".$gtabid."\">\n";
 	}

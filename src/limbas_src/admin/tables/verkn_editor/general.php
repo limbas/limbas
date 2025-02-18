@@ -26,7 +26,9 @@
 
                     <?php
 
-                    $sqlquery = "SELECT DISTINCT LMB_CONF_FIELDS.FIELD_ID, LMB_CONF_FIELDS.FIELD_NAME,LMB_CONF_FIELDS.TAB_ID, LMB_CONF_TABLES.TABELLE  FROM LMB_CONF_FIELDS,LMB_CONF_TABLES WHERE LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.TAB_ID AND LMB_CONF_FIELDS.VERKNTABID = $tabid AND LMB_CONF_FIELDS.FIELD_TYPE = 11 AND LMB_CONF_FIELDS.VERKNTABLETYPE = 1 ORDER BY LMB_CONF_FIELDS.TAB_ID";
+                    $sqlquery = "SELECT DISTINCT LMB_CONF_FIELDS.FIELD_ID, LMB_CONF_FIELDS.FIELD_NAME,LMB_CONF_FIELDS.TAB_ID, LMB_CONF_TABLES.TABELLE 
+                    FROM LMB_CONF_FIELDS,LMB_CONF_TABLES 
+                    WHERE LMB_CONF_TABLES.TAB_ID = LMB_CONF_FIELDS.TAB_ID AND LMB_CONF_FIELDS.VERKNTABID = $tabid AND LMB_CONF_FIELDS.FIELD_TYPE = 11 AND LMB_CONF_FIELDS.VERKNTABLETYPE = 1 ORDER BY LMB_CONF_FIELDS.TAB_ID";
                     
                     $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
                     while(lmbdb_fetch_row($rs)) :
@@ -62,17 +64,24 @@
                             $bsqu = " AND LMB_CONF_TABLES.TAB_ID IN(SELECT LMB_CONF_FIELDS.TAB_ID FROM LMB_CONF_FIELDS WHERE LMB_CONF_FIELDS.VERKNTABID = $tabid AND LMB_CONF_FIELDS.FIELD_TYPE = 11 AND LMB_CONF_FIELDS.VERKNTABLETYPE = 1)";
                         }
 
-                        $sqlquery = "SELECT DISTINCT LMB_CONF_TABLES.TAB_ID,LMB_CONF_TABLES.TAB_GROUP,LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.BESCHREIBUNG,LMB_CONF_GROUPS.NAME,LMB_CONF_GROUPS.ID FROM LMB_CONF_TABLES,LMB_CONF_GROUPS WHERE LMB_CONF_TABLES.TAB_GROUP = LMB_CONF_GROUPS.ID $bsqu ORDER BY LMB_CONF_GROUPS.ID";
+                        $sqlquery = "SELECT DISTINCT LMB_CONF_TABLES.TAB_ID,LMB_CONF_TABLES.TAB_GROUP,LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.BESCHREIBUNG,LMB_CONF_GROUPS.NAME,LMB_CONF_GROUPS.ID 
+                        FROM LMB_CONF_TABLES,LMB_CONF_GROUPS 
+                        WHERE LMB_CONF_TABLES.TAB_GROUP = LMB_CONF_GROUPS.ID $bsqu 
+                        ORDER BY LMB_CONF_GROUPS.ID";
                         $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-                        while(lmbdb_fetch_row($rs)) :
+                        while(lmbdb_fetch_row($rs)) {
+
+                            // skip DMS tables if 1:n direct
+                            if($rfield['datatype'] == 25 && substr(strtoupper(lmbdb_result($rs, "TABELLE")),0,5) == 'LDMS_'){
+                                continue;
+                            }
                             
-                            if(lmbdb_result($rs, "NAME") != $temp):                               
-                                
+                            if(lmbdb_result($rs, "NAME") != $temp){
                             ?>
                             
                             <div class="table-section p-1 my-1"><?=$lang[lmbdb_result($rs, "NAME")]?></div>
                             
-                            <?php endif; ?>
+                            <?php } ?>
 
                             <div class="mb-3 form-check mb-1">
                                 <label class="form-check-label" <?=(lmbdb_result($rs, "TAB_ID") == $tabid)?'text-danger':''?>>
@@ -83,7 +92,7 @@
                         
                         <?php
                             $temp = lmbdb_result($rs, "NAME");
-                        endwhile;
+                        }
 
                         ?>
 

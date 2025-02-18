@@ -69,16 +69,32 @@ function lmb_QuestDeleteConfig($tabid, $fieldid = null)
 
 }
 
+function lmb_QuestUseParams($viewid, $options)
+{
+    global $db;
+
+    $sqlquery = "UPDATE LMB_CONF_TABLES SET USEVIEWPARAMS = " . parse_db_bool($options['useparams']) . " WHERE TAB_ID = $viewid";
+    $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+    if (!$rs) {
+        $commit = 1;
+    }
+
+}
 
 function lmb_QuestOptions($viewid, $options)
 {
     global $db;
 
-    if ($options['params']) {
-        $options['params'] = serialize($options['params']);
+    if($options['useparams']) {
+        if ($options['params']) {
+            $options['params'] = serialize($options['params']);
+            $sql = ", PARAMS2 = '" . parse_db_string($options['params']) . "'";
+        } else {
+            $sql = ", PARAMS2 = ''";
+        }
     }
 
-    $sqlquery = "UPDATE LMB_CONF_TABLES SET EVENT = '" . parse_db_string($options['event']) . "', PARAMS2 = '" . parse_db_string($options['params']) . "' WHERE TAB_ID = $viewid";
+    $sqlquery = "UPDATE LMB_CONF_TABLES SET EVENT = '" . parse_db_string($options['event']) . "' $sql WHERE TAB_ID = $viewid";
     $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     if (!$rs) {
         $commit = 1;
@@ -212,8 +228,10 @@ function lmb_paramTransView($viewid, $view_def)
         $gview = lmb_getQuestValue($viewid);
     }
 
-    if ($gview["params"]) {
-        eval($gview["params"]);
+    if ($gview["useparams"]) {
+        if ($gview["params"]) {
+            eval($gview["params"]);
+        }
         return eval("return \"" . $view_def . "\";");
     } else {
         return $view_def;
@@ -228,10 +246,10 @@ function lmb_paramTransView($viewid, $view_def)
  * @param $viewid
  * @param $view_def
  * @param null $isvalid
- * @param bool|null $setManually whether the view was stored manually
+ * @param bool|null $useparams whether the view was stored manually
  * @return bool
  */
-function lmb_saveViewDefinition($viewid, $view_def, $isvalid = null, $setManually = null)
+function lmb_saveViewDefinition($viewid, $view_def, $isvalid = null)
 {
     global $db;
     global $DBA;
@@ -244,17 +262,8 @@ function lmb_saveViewDefinition($viewid, $view_def, $isvalid = null, $setManuall
     if (!$isvalid) {
         $isvalid_ = "ISVALID = " . LMB_DBDEF_FALSE . ",";
     }
-    if ($setManually !== null) {
-        if (!$setManually) {
-            $setManually = 'SETMANUALLY = ' . LMB_DBDEF_FALSE . ',';
-        } else {
-            $setManually = 'SETMANUALLY = ' . LMB_DBDEF_TRUE . ',';
-        }
-    } else {
-        $setManually = '';
-    }
 
-    $prepare_string = "UPDATE LMB_CONF_VIEWS SET $isvalid_ $setManually VIEWDEF = ? WHERE ID = $viewid";
+    $prepare_string = "UPDATE LMB_CONF_VIEWS SET $isvalid_ VIEWDEF = ? WHERE ID = $viewid";
     if (!lmb_PrepareSQL($prepare_string, array($view_def), __FILE__, __LINE__)) {
         $commit = 1;
     }
@@ -501,7 +510,7 @@ function lmb_getQuestValue($viewid)
     global $db;
     global $DBA;
 
-    $sqlquery = "SELECT LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.EVENT,LMB_CONF_TABLES.PARAMS2,LMB_CONF_VIEWS.VIEWDEF,LMB_CONF_VIEWS.ISPUBLIC,LMB_CONF_VIEWS.HASID,LMB_CONF_VIEWS.USESYSTABS,LMB_CONF_VIEWS.RELATION,LMB_CONF_VIEWS.ISVALID,LMB_CONF_VIEWS.SETMANUALLY FROM LMB_CONF_VIEWS,LMB_CONF_TABLES WHERE LMB_CONF_VIEWS.ID = LMB_CONF_TABLES.TAB_ID AND LMB_CONF_TABLES.TAB_ID = " . parse_db_int($viewid);
+    $sqlquery = "SELECT LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.EVENT,LMB_CONF_TABLES.PARAMS2,LMB_CONF_VIEWS.VIEWDEF,LMB_CONF_VIEWS.ISPUBLIC,LMB_CONF_VIEWS.HASID,LMB_CONF_VIEWS.USESYSTABS,LMB_CONF_VIEWS.RELATION,LMB_CONF_VIEWS.ISVALID,LMB_CONF_TABLES.USEVIEWPARAMS FROM LMB_CONF_VIEWS,LMB_CONF_TABLES WHERE LMB_CONF_VIEWS.ID = LMB_CONF_TABLES.TAB_ID AND LMB_CONF_TABLES.TAB_ID = " . parse_db_int($viewid);
     $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     if (!$rs) {
         $commit = 1;
@@ -514,7 +523,7 @@ function lmb_getQuestValue($viewid)
         $gview["showsystabs"] = lmbdb_result($rs, "USESYSTABS");
         $gview["event"] = lmbdb_result($rs, "EVENT");
         $gview["isvalid"] = lmbdb_result($rs, "ISVALID");
-        $gview["setManually"] = lmbdb_result($rs, "SETMANUALLY");
+        $gview["useparams"] = lmbdb_result($rs, "USEVIEWPARAMS");
         if ($gview["params"] = lmbdb_result($rs, "PARAMS2")) {
             $gview["params"] = unserialize($gview["params"]);
         }

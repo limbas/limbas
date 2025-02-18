@@ -71,7 +71,7 @@ if ($rgsr) {
 }
 
 //load layout / choose between new and legacy based on action and template //TODO: remove legacy switch in future version
-if(in_array($action, ['sess_refresh','gtab_exp','gtab_change_col','add_select','my_workflow','use_workflow','user_check_email','explorer_detail','explorer_convert','download','explorer_upload','explorer_dublicates','userstat','userstat_set','userstat_list','userstat_main','lwf_mytask','history','report','diag_erg','user_reportmanager','user_templatemanager','syntaxcheckjs','null','gtab_search'])) {
+if(in_array($action, ['sess_refresh','gtab_exp','gtab_change_col','my_workflow','use_workflow','user_check_email','explorer_detail','explorer_convert','download','explorer_upload','explorer_dublicates','userstat','userstat_set','userstat_list','userstat_main','lwf_mytask','history','report','diag_erg','user_reportmanager','user_templatemanager','syntaxcheckjs','null','gtab_search'])) {
     $layout_bootstrap = false;
 }
 

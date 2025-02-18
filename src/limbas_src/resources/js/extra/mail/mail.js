@@ -9,6 +9,8 @@
 $(function () {
     $('#mailForm').find('.btn-send-mail').click(lmbSendMailForm);
     initAttachmentModal();
+    initRecipients();
+    $('#btn-show-mail-preview').on('click', loadMailPreview);
 });
 
 /* region send mail */
@@ -22,6 +24,7 @@ function lmbSendMailForm() {
     $('.attachment').each(function() {
         attachments.push($(this).data('id'));
     });
+    
     lmbSendMail(
         $('#mail_account').val(),
         $('#mail_receiver').val(),
@@ -30,7 +33,12 @@ function lmbSendMailForm() {
         $mailForm.data('gtabid'),
         $mailForm.data('id'),
         'mail_attachments',
-        attachments
+        attachments,
+        $('#mail_cc').val(),
+        $('#mail_bcc').val(),
+        $('#mail_template').val(),
+        $('#mail_resolvedTemplateGroups').val(),
+        $('#mail_resolvedDynamicData').val(),
     ).then(function (data) {
         if(data.success) {
             $('#mail_receiver').val('');
@@ -49,16 +57,51 @@ function lmbSendMailForm() {
     });
 }
 
-function lmbSendMail(mailAccountId, receiverMail, subject, message, gtabid = 0, id = 0, fileInput = '', attachments = []) {
+function lmbSendMail(mailAccountId, receivers, subject, message, gtabid = 0, id = 0, fileInput = '', attachments = [], cc = null, bcc = null, templateId = null,resolvedTemplateGroups='',resolvedDynamicData='') {
     return new Promise((resolve, reject) => {
 
         let formData = new FormData();
         formData.append('account', mailAccountId);
-        formData.append('receiver', receiverMail);
         formData.append('subject', subject);
         formData.append('message', message);
         formData.append('gtabid', gtabid);
-        formData.append('id', id);
+        formData.append('templateId', templateId);
+        formData.append('resolvedTemplateGroups', resolvedTemplateGroups);
+        formData.append('resolvedDynamicData', resolvedDynamicData);
+
+        if(Array.isArray(id)) {
+            for (let i = 0; i < id.length; i++) {
+                formData.append('id[]', id[i]);
+            }
+        }
+        else {
+            formData.append('id', id);
+        }
+        if(Array.isArray(receivers)) {
+            for (let i = 0; i < receivers.length; i++) {
+                formData.append('receivers[]', receivers[i]);
+            }
+        }
+        else {
+            formData.append('receivers[]', receivers);
+        }
+        if(Array.isArray(cc)) {
+            for (let i = 0; i < cc.length; i++) {
+                formData.append('cc[]', cc[i]);
+            }
+        }
+        else {
+            formData.append('cc[]', cc);
+        }
+        if(Array.isArray(bcc)) {
+            for (let i = 0; i < bcc.length; i++) {
+                formData.append('bcc[]', bcc[i]);
+            }
+        }
+        else {
+            formData.append('bcc[]', bcc);
+        }
+        
 
         $.each(attachments, function(i, dmsId) {
             formData.append('attachments[]', dmsId);
@@ -124,3 +167,111 @@ function selectAttachments(files,params) {
 }
 
 /* endregion dms attachments */
+
+/* region recipient handling */
+
+function initRecipients() {
+    
+    $('[data-add-mail-recipient]').on('click', function () {
+        const context = $(this).data('add-mail-recipient');
+        initRecipientSelect($('#mail-' + context + '-wrapper').removeClass('d-none').find('select'));
+        $(this).remove();
+    });
+    
+    $('#mail-expand-receivers').on('click', expandReceivers)
+    
+    initRecipientSelect($('select#mail_receiver'));
+}
+
+function initRecipientSelect($element) {
+    $element.select2({
+        selectOnClose: true,
+        tags: true,
+        tokenSeparators: [';', ' '],
+        createTag: function (params) {
+            if (!(/^[^@]+@[^@]+\.[^@]+$/.test(params.term))) {
+                return null;
+            }
+
+            return {
+                id: params.term,
+                text: params.term
+            }
+        }
+    });
+}
+
+function expandReceivers() {
+    const $this = $(this);
+    const $list = $('#mail-receivers-list');
+    let expanded = $this.data('expanded');
+    if(expanded === true) {
+        expanded = false;
+        $list.css('height', '2rem');
+        $this.removeClass('fa-chevron-up').addClass('fa-chevron-down');
+    }
+    else {
+        expanded = true;
+        $list.css('height', 'auto');
+        $this.removeClass('fa-chevron-down').addClass('fa-chevron-up');
+    }
+    $this.data('expanded', expanded);
+}
+
+/* endregion recipient handling */
+
+
+
+function loadMailPreview() {
+    let $mailEditor = $('#mail-editor');
+    let $mailForm = $('#mailForm');
+    let $mailPreview = $('#mail-preview');
+
+    $mailEditor.addClass('col-md-6').removeClass('col-md-12');
+    $mailPreview.removeClass('d-none');
+
+    
+    let id = $mailForm.data('id');
+    const tabId = $mailForm.data('gtabid');
+
+
+    let formData = new FormData();
+    formData.append('message', tinymce.get('mail_message').getContent());
+    formData.append('tabId', tabId);
+    formData.append('templateId', $('#mail_template').val());
+    formData.append('resolvedTemplateGroups', $('#mail_resolvedTemplateGroups').val());
+    formData.append('resolvedDynamicData', $('#mail_resolvedDynamicData').val());
+
+    if(Array.isArray(id)) {
+        for (let i = 0; i < id.length; i++) {
+            formData.append('ids[]', id[i]);
+        }
+    }
+    else {
+        formData.append('ids[]', id);
+    }
+
+    $.ajax({
+        type: 'POST',
+        contentType: false,
+        processData: false,
+        url: 'main_dyns.php?actid=handleMail&action=preview',
+        data: formData,
+        dataType: 'json',
+        success: function (data) {
+            
+            console.log(data);
+            
+            if(data.success) {
+                $mailPreview.html(data.html);
+            }
+            else {
+                lmbShowErrorMsg('Preview could not be loaded.');
+            }
+            
+        },
+        error: function (error) {
+            lmbShowErrorMsg('Preview could not be loaded.');
+        },
+    })
+}

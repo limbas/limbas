@@ -68,7 +68,8 @@ jsvar["detail_viewmode"] = "<?=$umgvar["detail_viewmode"]?>";
 jsvar["ajaxpost"] = "<?=$gtab["ajaxpost"][$gtabid]?>";
 jsvar["confirm_level"] = "<?=$umgvar["confirm_level"]?>";
 jsvar["modal_size"] = "<?=$umgvar["modal_size"]?>";
-jsvar["modal_opener"] = "<?=$umgvar["modal_opener"]?>";
+jsvar["detail_openas"] = "<?=$umgvar["detail_openas"]?>";
+jsvar["detailform_viewmode_<?=$gtabid?>"] = "<?=$gtab["detailform_viewmode"][$gtabid]?>";
 </SCRIPT>
 
 <?php

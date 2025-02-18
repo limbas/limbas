@@ -128,6 +128,7 @@ if($form["id"]){
 <TR id="menu_multi_js_php_text_datum_relpath_notice_filter_globsearch_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_menue_tabulator_" STYLE="display:none"><TD><?php pop_menu(0, "document.form1.form_copy.value='1';set_posxy();document.form1.submit();",$lang[1464]);?></TD></TR>
 <TR id="menu_multi_js_php_text_bild_chart_templ_tab_stab_datum_relpath_notice_filter_globsearch_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_tabulator" STYLE="display:none"><TD><?php pop_menu(0, "lmbCutElements(currentid)", $lang[2666]);?></TD></TR>
 <TR id="menu_multi_frame_menue_tabulator_" STYLE="display:none"><TD id="form_movemenu"><?php pop_menu(0,"document.form1.form_move.value=move_id.join(';');set_posxy();document.form1.submit();",$lang[2667]);?></TD></TR>
+<TR id="menu_multi_js_php_text_bild_chart_templ_tab_stab_datum_relpath_notice_filter_globsearch_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_tabulator"><TD id="form_movemenutop"><?php pop_menu(0,"lmbCutElements(currentid);document.form1.form_move.value=move_id.join(';');document.form1.aktiv_tabcontainer.value='top';set_posxy();document.form1.submit();",$lang[3189]);?></TD></TR>
 <TR id="menu_multi_js_php_text_bild_chart_templ_tab_stab_datum_relpath_notice_filter_globsearch_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_" STYLE="display:none"><TD><?php pop_line();?></TD></TR>
 <TR id="menu_php_text_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_submt_button_bild_chart_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_tabuItem_tabcell_" STYLE="display:none"><TD><?php pop_submenu2($lang[1763],"limbasDivShow(this,'menu','menu_events');",$lang[1763]);?></TD></TR>
 <TR id="menu_php_text_datum_dbdat_dbdesc_dbnew_dbsearch_rect_line_ellipse_bild_chart_submt_button_inptext_inphidden_inparea_inpselect_inpcheck_inpradio_frame_" STYLE="display:none"><TD><?php pop_line();?></TD></TR>
@@ -845,15 +846,15 @@ function printFormularElement($form_ID,$elementType,$printParams,$closediv=null,
 		
 		else if($elementType == "menue")
 		{
-			echo "READONLY>";
+			echo "readonly data-hassubelements=\"1\">";
 		}
 		else if($elementType == "tabulator")
 		{
-			echo "READONLY>";
+			echo "readonly data-hassubelements=\"1\">";
 		}
 		else if($elementType == "frame")
 		{
-			echo "READONLY>";
+			echo "readonly data-hassubelements=\"1\">";
 		}
 		if(!$closediv){echo "</div>\n\n";}
 		

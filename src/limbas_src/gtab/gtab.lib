@@ -8,6 +8,7 @@
  */
 
 use Limbas\extra\mail\LmbMail;
+use Limbas\extra\template\select\TemplateSelector;
 
 require_once (COREPATH . 'extra/reminder/reminder.lib');
 require_once (COREPATH . 'gtab/gtab_type_where.lib');
@@ -132,46 +133,6 @@ function set_verknpf($verkn_tabid,$verkn_fieldid,$verkn_ID,$verkn_add_ID=null,$v
     if($gfield[$verkn_tabid]['verknparams'][$verkn_fieldid]){
         $verkn['verknparams'] = 1;
     }
-
-    /*
-    if($gfield[$verkn["tabid"]]["verkntabletype"][$verkn["fieldid"]] == 2){
-        // direct 1:n relation
-        if($verkn['typ'] == 25){
-            $verkn['origin']['table'] = $gtab['table'][$verkn['tabid']];
-            $verkn['origin']['field'] = $gfield[$gfield[$verkn['tabid']]['verkntabid'][$verkn['fieldid']]]['md5tab'][$gfield[$verkn['tabid']]['hasrecverkn'][$verkn['fieldid']]];
-            $verkn['origin']['tabid'] = $gfield[$verkn['tabid']]['verkntabid'][$verkn['fieldid']];
-            $verkn['origin']['fieldid'] = $gfield[$verkn['tabid']]['hasrecverkn'][$verkn['fieldid']];
-            $verkn['origin']['md5tab'] = $gfield[$gfield[$verkn['tabid']]['verkntabid'][$verkn['fieldid']]]['md5tab'][$gfield[$verkn['tabid']]['hasrecverkn'][$verkn['fieldid']]];
-            $verkn['origin']['vtabid'] = $verkn['tabid'];
-        }else {
-            $verkn['origin']['tabid'] = $verkn["tabid"];
-            $verkn['origin']['fieldid'] = $verkn["fieldid"];
-            $verkn['origin']['md5tab'] = $verkn["md5tab"];
-            $verkn['origin']['vtabid'] = $verkn['vtabid'];
-            $verkn['origin']['table'] = $gfield[$gfield[$verkn['tabid']]['verkntabid'][$verkn['fieldid']]]['md5tab'][$gfield[$verkn['tabid']]['hasrecverkn'][$verkn['fieldid']]];
-            $verkn['origin']['vfield'] = 'VERKN_ID';
-            $verkn['origin']['field'] = 'ID';
-        }
-    # default relation table
-    }else{
-        // direct 1:n relation
-        if($verkn['typ'] == 25){
-            $verkn['origin']['table'] = $gtab['table'][$verkn['vtabid']];
-            $verkn['origin']['field'] = $verkn['md5tab'];
-            $verkn['origin']['tabid'] = $verkn['tabid'];
-            $verkn['origin']['fieldid'] = $verkn['fieldid'];
-            $verkn['origin']['md5tab'] = $verkn['md5tab'];
-            $verkn['origin']['vtabid'] = $verkn['vtabid'];
-        }else {
-            $verkn['origin']['tabid'] = $verkn["tabid"];
-            $verkn['origin']['fieldid'] = $verkn["fieldid"];
-            $verkn['origin']['md5tab'] = $verkn["md5tab"];
-            $verkn['origin']['vtabid'] = $verkn['vtabid'];
-            $verkn['origin']['table'] = $verkn['md5tab'];
-            $verkn['origin']['vfield'] = 'ID';
-            $verkn['origin']['field'] = 'VERKN_ID';
-        }
-    }    */
 
     return $verkn;
 }
@@ -647,6 +608,8 @@ function set_joins($gtabid, $verkn, $result=null){
         lmb_log::error('set_joins - ID is no number', null, $verkn["tabid"], $verkn["fieldid"], $verkn["id"]);
         return false;
     }
+    
+    $errorMessages = [];
 
     # mirror view relation table to origin relation
     $ID_LEFT = 'ID';
@@ -711,7 +674,11 @@ function set_joins($gtabid, $verkn, $result=null){
             $verkn_del_id = explode(",",$verkn["del_id"]);
         }
         foreach($verkn_del_id as $key => $value){
-            if(!$value){$commit=1;continue;}
+            if(!$value){
+                $errorMessages[] = 'verkn_del_id empty';
+                $commit=1;
+                continue;
+            }
 
             # trigger before update field
             if($gfield[$verkn["tabid"]]["trigger"][$verkn["fieldid"]]){
@@ -738,7 +705,7 @@ function set_joins($gtabid, $verkn, $result=null){
 
             // direct 1:n relation
             if($verkn['typ'] == 25){
-                $sqlquery = "UPDATE " . $verkn['origin']['table'] . " SET ".$verkn['origin']['md5tab'] ." = ".LMB_DBDEF_NULL." WHERE ID = " . ${$ID_RIGHT};
+                $sqlquery = "UPDATE " . $verkn['origin']['table'] . " SET ".$verkn['origin']['md5tab'] ." = ".LMB_DBDEF_NULL." WHERE ID = " . ${$ID_RIGHT}." AND ".$verkn['origin']['md5tab'] ." = ".$value;
                 $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
                 $err = 'SQL error on update ['.$gtab['table'][$verkn['vtabid']].']';
             }else {
@@ -835,6 +802,7 @@ function set_joins($gtabid, $verkn, $result=null){
                 global $lmmultitenants;
                 if(!$lmmultitenants['mid'][$session['mid']]){
                     lmb_alert('you can not add data without multitenant ID');
+                    lmb_log::error('you can not add data without multitenant ID');
                     return false;
                 }
                 $sql_i_d = array('LMB_MID');
@@ -848,6 +816,7 @@ function set_joins($gtabid, $verkn, $result=null){
                 if(!$value OR !is_numeric($value)){
                     #lmb_log::error('set_joins - VERKN_ID is no number ['.$value.']', null, $verkn["tabid"], $verkn["fieldid"], $value);
                     #$commit=1;
+                    $errorMessages[] = 'verkn_add_id empty';
                     continue;
                 }
 
@@ -884,6 +853,7 @@ function set_joins($gtabid, $verkn, $result=null){
                     $rs2 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$GLOBALS['action'],__FILE__,__LINE__);
                     if(!$rs2 OR $keyid = lmbdb_result($rs2,'KEYID')){
                         lmb_log::error('set_joins - referential integrity fail - dataset already joined ['.$keyid.'->'.$value.']', $lang[1285], $verkn['tabid'], $verkn['fieldid'], $value, level:E_WARNING);
+                        $errorMessages[] = 'set_joins - referential integrity fail - dataset already joined ['.$keyid.'->'.$value.']';
                         $commit=1;continue;
                     }
                 }
@@ -894,6 +864,7 @@ function set_joins($gtabid, $verkn, $result=null){
                 # --- Verknüpfung auf Endlosschleife prüfen (bei Selbstverknüpfungen) -----
                 if(willHaveRecursionLoop($verkn,$value)) {
                     lmb_log::error('set_joins - dataset recursiv joined [' . $value . ']', $lang[1285], $verkn["tabid"], $verkn["fieldid"], $value, level:E_WARNING);
+                    $errorMessages[] = 'set_joins - dataset recursiv joined [' . $value . ']';
                     $commit=1;continue;
                 }
 
@@ -983,6 +954,11 @@ function set_joins($gtabid, $verkn, $result=null){
     if($commit && !defined('LMB_SYNC_PROC')){lmb_alert($lang[2921]);}    # nicht alle Datensätze konnten verknüpft werden
 
     if($commit AND !$result){
+        
+        if(defined('LMB_SYNC_PROC') && !empty($errorMessages)) {
+            lmb_log::error(implode('; ',$errorMessages));
+        }
+        
         return false;
     }else{
         return $result;
@@ -1255,10 +1231,12 @@ function sql_14_c(&$vgtabid,$verkn,&$linklevel=array(),$gformid=null,$order=null
             #####################
             $onlyfield[$vgtabid_][] = $value;
         }
+
         // default field
-        if(!in_array($linklevel['fieldid'],$onlyfield[$vgtabid_])){
-            $onlyfield[$vgtabid_][] = $linklevel['fieldid'];
+        if(!in_array($linklevel['fieldid'],$onlyfield[$vgtabid])){
+            $onlyfield[$vgtabid][] = $linklevel['fieldid'];
         }
+
     }
     get_countFilter($vgtabid,$vuniqueid,$params,$vfilter);
 
@@ -3814,6 +3792,11 @@ function update_data_postcheck($gtabid,$dataid,&$query_dataid,&$old_gresult,&$tr
         refreshmeta_to_db($dataid);
     }
 
+    
+    if(intval($gtab['typ'][$gtabid]) === 8) {
+        TemplateSelector::resetTemplateCache(intval($gtabid));
+    }
+    
     return true;
 
 }
@@ -4366,8 +4349,8 @@ function get_where($key,$gtabid,&$gsr,$vquery = null){
         }
 
         # Schnellsuche in Zahlen & Datum
-        if ($gsrres AND !$vquery AND ($gfield[$gtabid]["parse_type"][$key] == 1 OR $gfield[$gtabid]["parse_type"][$key] == 4 OR $gfield[$gtabid]["parse_type"][$key] == 5 OR $gfield[$gtabid]["parse_type"][$key] == 6)) {
-            $gsrres = preg_replace("/>=|<=|!=|>|<|=|!/", "\\0 ", $gsrres); # Leerzeichen hinter Sonderzeichen setzen (für explode)
+        if ($gsrres && !$vquery && (($gfield[$gtabid]["parse_type"][$key] == 1 OR $gfield[$gtabid]["parse_type"][$key] == 4 OR $gfield[$gtabid]["parse_type"][$key] == 5 OR $gfield[$gtabid]["parse_type"][$key] == 6) && ($gfield[$gtabid]["field_type"][$key] != 4 && $gfield[$gtabid]["field_type"][$key] != 19 && $gfield[$gtabid]["field_type"][$key] != 11))) {
+            $gsrres = preg_replace("/^>=|^<=|^!=|^>|^<|^=|^!/", "\\0 ", $gsrres); # Leerzeichen hinter Sonderzeichen setzen (für explode)
             list($op, $searchString) = explode(" ", $gsrres, 2);
             if ($op == "!=" OR $op == "!") {
                 $gsneg = 1;
@@ -4376,7 +4359,7 @@ function get_where($key,$gtabid,&$gsr,$vquery = null){
                 $like_sens_b = $op;
                 $gsrres = trim($searchString);
             }
-        } elseif ($gsrres AND !$vquery) {
+        } elseif ($gsrres && !$vquery) {
             $gsrres = preg_replace("/^!=/", "\\0 ", $gsrres); # Leerzeichen hinter Sonderzeichen setzen (für explode)
             list($op, $searchString) = explode(" ", $gsrres, 2);
             if ($op == '!=' OR $op == '!') {
@@ -5802,10 +5785,11 @@ function get_sqlquery($gtabid,$utyp,$filter,$gsr,$verkn,$onlyfield=null,$single=
 
 
     // inject view query with params
-    if($gtab["typ"][$gtabid] == 5 AND $gtab['params2'][$gtabid]) {
+    if($gtab["typ"][$gtabid] == 5 AND $gtab['useviewparams'][$gtabid]) {
 
-        // get params from default definition
+        // get params from extension
         if(!$extension['params']){
+            // get params from default view definition
             eval($gtab['params2'][$gtabid]);
         }
 
@@ -5901,7 +5885,6 @@ function get_sqlquery($gtabid,$utyp,$filter,$gsr,$verkn,$onlyfield=null,$single=
 
     if($filter['verbose'][$gtabid]) {
         errorhandle('get_gresult query',$query["sql"],$action,__FILE__,__LINE__);
-        error_log($query["sql"]);
     }
 
     #error_log($query["count"]);

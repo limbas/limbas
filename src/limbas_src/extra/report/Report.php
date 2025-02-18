@@ -28,6 +28,8 @@ abstract class Report
     protected string $type;
 
     protected array $archivedFileIds;
+    
+    protected bool $standardApplied = false;
 
     public static function create(int $tabId, int $reportId): ?Report
     {
@@ -607,13 +609,17 @@ abstract class Report
         $out = USERPATH . $session['user_id'] . '/temp/' . $name;
         $path = USERPATH . $session['user_id'] . '/temp/' . $name;
 
+        if (function_exists('lmbBeforeReportOutput')) {
+            lmbBeforeReportOutput($pdf, $report, $id, $reportOutput, $report_rename);
+        }
+        
         # write pdf to file
         $pdf->Output($path, 'F');
 
         # use postscript to compress
-        if ($umgvar['use_gs'] and file_exists($path)) {
+        if (!$this->standardApplied && $umgvar['use_gs'] && file_exists($path)) {
             rename($path, $path . 'gs');
-            $sys = exec("cd " . USERPATH . $session["user_id"] . "/temp/; gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile=\"" . $name . "\" \"" . $path . "gs\"");
+            $sys = exec('cd ' . USERPATH . $session['user_id'] . '/temp/; gs -dNOPAUSE -dBATCH -sDEVICE=pdfwrite -sOutputFile="' . $name . '" "' . $path . 'gs"');
             unlink($path . 'gs');
         }
 

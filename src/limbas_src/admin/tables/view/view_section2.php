@@ -81,7 +81,7 @@ if ($showsystabs) {
 
 <?php
 $confirm = '';
-if ($gview['setManually']) {
+if ($gview['useparams']) {
     $text = 'Storing configuration overwrites manually edited sql! Proceed?';
     $confirm = "if (!confirm('$text')) { return; }";
 }

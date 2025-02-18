@@ -515,30 +515,6 @@ function delete_field_table($atid,$column_id,$drop_physical=true,$solve_dependen
                 $commit = 2;
 			}
 		}
-
-		/* --- Tabellen-Uploaddateien löschen -------------------------------------- */
-        // todo - deprecated
-        /*
-		$sqlquery3 = "SELECT ID FROM LDMS_STRUCTURE WHERE TAB_ID = $atid AND FIELD_ID = $column_id AND FIX = ".LMB_DBDEF_TRUE;
-		$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
-		if(!$rs3) {$commit = 1;}
-		if(lmbdb_result($rs3, "ID") AND $drop_physical){
-			$GLOBALS["filestruct"]["admin"] = 1;
-			
-			# übergehe Transaktion bei Fehlern
-			$GLOBALS["lmb_transaction"] = 1;
-			
-			$delete_recursive[0] = "#all#";
-			if(!delete_dir(lmbdb_result($rs3, "ID"),$delete_recursive)){
-				$commit = 1;
-				$md5tab_allready_deleted = 1;
-			}
-			# übergehe Transaktion
-			lmb_EndTransaction(1);
-			
-			$GLOBALS["filestruct"]["admin"] = 0;
-		}
-        */
 		
 		/* --- Spracheinträge löschen -------------------------------------- */
 		$sqlquery3 = "DELETE FROM LMB_LANG_DEPEND WHERE ELEMENT_ID = $spelling_id OR ELEMENT_ID = $beschreibung_id";
@@ -1297,9 +1273,11 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	}
 
 	lmbdb_free_result($rs);
-
-	if($newtyp == 1 OR $newtyp == 18){$newtyp = 10;}
+    $original_fieldtypeID = $newtyp;
+    if($newtyp == 73){$newtyp = 33;} // DMS -> relation 1:n
+    if($newtyp == 74){$newtyp = 34;} // DMS -> relation n:m
 	if(!$newtyp){$newtyp = 13;}
+
 	/* --- Datentyp festlegen --------------------------------------------- */
 	$sqlquery =  "SELECT * FROM LMB_FIELD_TYPES{$prefix} WHERE ID = $newtyp";
 	$rs3 = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
@@ -1462,21 +1440,23 @@ function add_field($field,$gtabid,$typ,$typ2,$typ_size,$ifield_id,$description,$
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
-	/* --- Wärung -------- */
+	/* --- Currency -------- */
 	if($datatyp == 30){
 		#$sqlquery =  "ALTER TABLE ".lmb_strtoupper($table)." ADD ".$field."_C ".LMB_DBTYPE_VARCHAR."(5)";
 		$sqlquery = dbq_29(array($GLOBALS['DBA']['DBSCHEMA'],$table,$field.'_C',LMB_DBTYPE_VARCHAR.'(5)'));
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
-		# ---- Upload Ordnerstruktur anlegen -----------------
-	}elseif($datatyp == 13){ #$datatyp == 25  ???
-		require_once(COREPATH . 'admin/tools/add_filestruct.lib');
-		require_once(COREPATH . 'extra/explorer/filestructure.lib');
-		create_fs_tab_dir($gtabid,$groupid,$field_id,$spellingf,3);
 	}
-	
 
-	
+    // add DMS relation 1:n / n:m
+    if($original_fieldtypeID == 73 OR $original_fieldtypeID == 74) {
+        $DMS_tabid = $GLOBALS['gtab']['argresult_id']['LDMS_FILES'];
+        $DMS_fieldid = $GLOBALS['gfield'][$DMS_tabid]['argresult_name']['NAME'];
+        $rfield = lmb_get_relation_setting($gtabid,$field_id);
+        lmb_set_relation_table($gtabid,$field_id,$DMS_tabid,$rfield);
+        lmb_set_relation_field($field_id,$gtabid,$DMS_fieldid,$rfield);
+    }
+
 	if($add_permission){
 		$commit = add_fieldPermission($gtabid,$field_id,$groupid);
 	}
@@ -2663,7 +2643,7 @@ function lmb_set_relation_params($fieldid,$tabid,$new_verknsearchid,$new_verknfi
 	}
 
 	$sqlquery =  "UPDATE LMB_CONF_FIELDS SET VERKNSEARCH = '".parse_db_string($new_verknsearchid,50)."',VERKNVIEW = '".parse_db_string($new_verknviewid,50)."',VERKNFIND = '".parse_db_string($new_verknfindid,50)."' WHERE FIELD_ID = $fieldid AND TAB_ID = $tabid";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+    $rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}else{
         $rfield['verknsearchid'] = explode(",",$new_verknsearchid);
         $verknviewid_ = explode("?",$new_verknviewid);$rfield['verknviewid'] = explode(",",$verknviewid_[0]); $rfield['viewidcut'] = $verknviewid_[1];
@@ -2874,91 +2854,6 @@ function createRecRelation($tabid,$fieldid,$relationtree,&$rfield){
 }
 
 
-
-/*
- * Checks if given array contains duplicates.
- * Retur
-ns boolean
- */
-function lmb_has_duplicates($array){
-	$dupe_array = array();
-	foreach($array as $val){
-		if(++$dupe_array[$val] > 1){
-			return true;
-		}
-	}
-	return false;
-}
-
-
-/*
-* Returns array of all verkntabs from tabid to verkntabid
-*/
-function recrelationtree($rfield){
-	global $tabid;
-
-	// Collect data
-	$branches = recrelationsubtree(2,$tabid, null, $rfield);
-	// List of verkntabs -> List of tables ids
-	$branchesFiltered = array();
-	$branchesIds = array();
-	foreach($branches as $branch){
-		$tabids = array();
-		array_push($tabids,$tabid);
-		foreach($branch as $key => $md5tab){
-			array_push($tabids, getTabFromMd5($md5tab));
-		}
-		if(!lmb_has_duplicates($tabids)){
-			array_shift($tabids);
-			if(!in_array($gtabid,$tabids)){
-				array_push($branchesFiltered,$branch);
-				array_push($branchesIds,$tabids);
-			}
-		}
-	}
-	return $branchesFiltered; //removeDuplicates($branchesIds,$branchesFiltered);
-}
-
-/*
-* Recursive function for recrelationtree()
-*/
-function recrelationsubtree($first,$gtabid,$searched=null, $rfield=null){
-	global $gfield;
-	global $gtab;
-	global $rfield;
-
-	if($searched==null){
-		$searched=array();
-	}
-	//Ich = gesuchte Tabelle?
-	if(($gtabid == $rfield['verkntabid'] && $first != 1) || in_array($gtabid,$searched)){
-		return;
-	}else{
-		array_push($searched,$gtabid);
-		$vtables = array();
-		//Für jede Verknüpfte Tabelle
-		foreach($gfield[$gtabid]['verkntabid'] as $fieldid => $reltabid){
-			//Wenn keine Rückwärtige Verknüpfung
-			#if($gfield[$gtabid]['verkntabletype'][$fieldid] != 2){
-			//Rekursiver Aufruf
-			$branch = recrelationsubtree($first - 1,$reltabid,$searched, $rfield);
-			if(!is_array($branch)){
-				//Verknüpfte Tabelle ist die gesuchte Tabelle
-				$r = array();
-				array_push($r,$gfield[$gtabid]['md5tab'][$fieldid]);
-				array_push($vtables, $r);
-			}else{
-				foreach($branch as $entry){
-					array_unshift($entry,$gfield[$gtabid]['md5tab'][$fieldid]);
-					array_push($vtables, $entry);
-				}
-			}
-			#}
-		}
-		return $vtables;
-	}
-}
-
 /*
 * rebuild 1:n relation from fieldvalues
 */
@@ -2982,7 +2877,6 @@ function lmb_rebuild_relation($rfield,$v_field1,$v_field2){
 		if(lmbdb_result($rs, $v_field1)){
 
 			$sqlquery1 =  "SELECT ID FROM ".$rfield['verkntabname']." WHERE ".$v_field2." = '".lmbdb_result($rs, $v_field1)."'";
-            error_log($sqlquery1);
 			$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 			if(!$rs1) {$commit = 1;}
 			$bzm1 = 0;
@@ -3006,16 +2900,6 @@ function lmb_rebuild_relation($rfield,$v_field1,$v_field2){
 
 	# --- Transaktion ENDE --------
 	#lmb_EndTransaction(!$commit);
-
-}
-
-
-function getTabFromMd5($md5tab){
-	global $db;
-
-	$sqlquery =  "SELECT VERKNTABID FROM LMB_CONF_FIELDS WHERE LOWER(MD5TAB) = '".lmb_strtolower($md5tab)."'";
-	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-	return lmbdb_result($rs, "VERKNTABID");
 
 }
 

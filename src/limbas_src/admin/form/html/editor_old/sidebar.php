@@ -366,9 +366,8 @@
                     </TR>
 
 
-
                     <TR>
-                        <TD>header</TD><TD colspan="2" align="right"><input type="text" style="width:110px" value="<?=$form['header']?>" OnChange="document.form1.default_header.value = this.value+' '; document.form1.submit();"></TD>
+                        <TD>header</TD><TD colspan="2" align="right"><input type="text" style="width:110px" value="<?=e($form['header'])?>" OnChange="document.form1.default_header.value = this.value+' '; document.form1.submit();"></TD>
                     </TR>
                     <TR>
                         <TD><?= $lang[2581] ?></TD>

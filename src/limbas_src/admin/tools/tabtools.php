@@ -118,7 +118,7 @@
                     <h3><?= $lang[2932] ?></h3>
                     <div class="row mb-2">
                         <div class="col-6">
-                            <select name="favorite" class="form-select form-select-sm">
+                            <select name="favorite" class="form-select form-select-sm"><option>
                                 <?php
                                 foreach ($sqlFavorites as $favoriteID => $favoriteName) {
                                     $selected = ($favorite == $favoriteID) ? 'selected' : '';
@@ -264,12 +264,16 @@
                             $bzm++;
                         }
                         echo '</tbody></table>';
+                    }else{
+                        $donothing = 1;
                     }
 
                     $zeit = number_format(gettime() - $zeit0, 8, ',', '.');
                     ?>
                 </div>
+                <?php if(!$donothing){?>
                 <span class='text-success'>finished execution!</span>&nbsp;(<?= $zeit ?> sec.)
+                <?php } ?>
             </div>
 
 

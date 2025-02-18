@@ -34,7 +34,7 @@ class MailTemplateSelector extends TemplateSelector
                 'skipResolve' => true,
                 'table' => '',
                 'pagination' => '',
-                'params' => $this->getFinalResolvedParameters(0, $gtabid, $id, null, null)
+                'params' => $this->getFinalResolvedParameters(0, $gtabid, $id,[], null, null)
             ];
         }
 
@@ -78,37 +78,14 @@ class MailTemplateSelector extends TemplateSelector
         return $this->paginateElementList($elementList, $page, $perPage);
     }
 
-    public function resolveSelect($params): array
+
+    protected function getFinalResolvedParameters(int $elementId, int $gtabid, ?int $id, array $ids, $use_record, $resolvedTemplateGroups): array
     {
-
-        $elementId = $params['elementId'];
-        $gtabid = $params['gtabid'];
-        $use_record = $params['use_record'];
-        $ID = $params['id'];
-
-        if (empty($elementId)) {
-
-            return [
-                'resolved' => true,
-                'html' => '',
-                'type' => $this->type,
-                'params' => $this->getFinalResolvedParameters(0, $gtabid, $ID, $use_record, '')
-            ];
-
-        }
-
-        return parent::resolveSelect($params);
-    }
-
-
-    protected function getFinalResolvedParameters(int $elementId, int $gtabid, ?int $id, $use_record, $resolvedTemplateGroups): array
-    {
-
+        $ids= array_unique($ids);
         $url = 'main.php?' . http_build_query(array(
                 'action' => 'mail_preview',
                 'gtabid' => $gtabid,
-                'id' => $id,
-                'use_record' => $use_record,
+                'id' => !empty($ids) ? $ids : $id,
                 'template_id' => $elementId,
                 'resolvedTemplateGroups' => urldecode($resolvedTemplateGroups),
             ));

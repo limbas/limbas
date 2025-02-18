@@ -940,7 +940,7 @@ function create_new_verkn(evt,gtabid,vfieldid,vgtabid,ID,tablename,fdimsn,show_r
 		}
 
 		//newwin7(evt,'gtab_neu',gtabid,vgtabid,vfieldid,ID,ID,destformid,fdimsn,formid,inframe,show_relationpath);
-        lmbOpenForm(evt,gtabid,ID,{formid:destformid,action:'gtab_neu', v_tabid:vgtabid,v_fieldid:vfieldid,v_id:ID,v_formid:formid,formdimension:fdimsn,inframe:inframe,show_relationpath:show_relationpath});
+        lmbOpenForm(evt,gtabid,ID,{formid:destformid,action:'gtab_neu', v_tabid:vgtabid,v_fieldid:vfieldid,v_id:ID,v_formid:formid,formdimension:fdimsn,formopenas:inframe,show_relationpath:show_relationpath});
 	}
 }
 
@@ -1722,29 +1722,82 @@ function lmbQuickSearchPost(result){
 function lmbQuickSearchAction(evt,gtabid,fieldid,id,val){
 	limbasDivHide(null,'limbasAjaxGtabContainer');
 	inpel = "tdinp_"+gtabid+"_"+fieldid;
-	if(!evt.shiftKey && typeof window.view_detail == 'function'){
-		view_detail(1,id);
+	if(!evt.shiftKey && typeof window.lmbOpenForm == 'function'){
+        lmbOpenForm(evt,gtabid,id);
+		//view_detail(1,id);
 	}else{
 		document.getElementById(inpel).value = val;
 	}
 	activ_menu = 0;
 }
 
-// handle context-event on row
-function lmbTableContextEvent(evt,el,ID,gtabid,contextmenu,formid,form_typ,form_dimension,ERSTDATUM,EDITDATUM,ERSTUSER,EDITUSER,V_ID,V_GID,V_FID,V_TYP) {
+// --- Editmenüsteuerung -----------------------------------
+function lmbTableContextMenu(evt,el,ID,gtabid,custmenu,parentid) {
 
-    evt.preventDefault();
+	// --------- deactivate all rows -------------
+	//aktivateRows(0);
+	// --------- activate single row -------------
+	// aktivateSingleRow('elrow_'+ID+'_'+TABID,1);
+	// activate row if not active
 
-    if(evt.ctrlKey && formid) {
-        var t = 'div';
-        if(form_typ == 1){t = 'iframe';}
-        //newwin7(evt,null,gtabid,null,null,null,ID,formid,form_dimension,null,t);
-        lmbOpenForm(evt,gtabid,ID,{formid:formid,formdimension:form_dimension,inframe:t});
-    }else{
-        lmbTableContextMenu(evt, el, ID, gtabid, contextmenu, null, formid, form_typ, form_dimension, ERSTDATUM, EDITDATUM, ERSTUSER, EDITUSER, V_ID, V_GID, V_FID, V_TYP);
+    child = 'limbasDivMenuContext';
+    parent = evt;
+
+    // use data attribute
+    if(!custmenu) {
+        var custmenu = $(evt.target).closest('.element-cell').attr("data-custmenu");
     }
 
-    return false;
+    if(parentid){
+	    parent = 'lmb_custmenu_'+parentid;
+	    child = 'lmb_custmenu_'+custmenu;
+	}else if(custmenu){
+        divclose();
+	    child = 'lmb_custmenu_'+custmenu;
+	}
+
+    //limbasDivCloseTab.push(child); //  ??
+	if(!document.getElementById(child)){
+        $('#limbasDivMenuContext').after("<div id='"+child+"' class='lmbContextMenu' style='position:absolute;z-index:994;' onclick='activ_menu = 1;'>");
+    }else{
+        divclose();
+    }
+
+    if(!parentid) {
+        const rowid = el.id;
+        if (!selected_rows[rowid]) {
+            lmbTableClickEvent(evt, el, gtabid, ID);
+        }
+    }
+
+    // use custmenu
+    if(custmenu) {
+        var fieldid = $(evt.target).closest('.element-cell').attr( "data-fieldid");
+        if(!fieldid){fieldid = '';}
+        var actrows = checkActiveRows();
+		if(actrows.length > 1) {
+            ID = actrows.join(";");
+        }
+        var actid = "gtabCustmenu&custmenu=" + custmenu + "&ID=" + ID + "&gtabid=" + gtabid + "&fieldid="+ fieldid;
+        ajaxGet(null, "main_dyns.php", actid, null, '', null, child);
+    }else {
+        document.getElementById("lmbInfoCreate").innerHTML = $(el).attr("data-createinfo");
+        document.getElementById("lmbInfoEdit").innerHTML = $(el).attr("data-editinfo");
+        if (ID > 0) {
+            document.form2.ID.value = ID;
+            document.form2.gtabid.value=gtabid;
+            document.form2.verknpf.value = $(el).attr("data-reltype");
+            document.form2.verkn_tabid.value = $(el).attr("data-reltab");
+            document.form2.verkn_fieldid.value = $(el).attr("data-relfield");
+            document.form2.verkn_ID.value = $(el).attr("data-relid");
+            document.form2.form_id.value=$(el).attr("data-formid");
+        }
+    }
+
+    limbasDivShow(el, parent, child);
+	window.setTimeout('set_activ_menu()',500);
+
+	return false;
 }
 
 // handle klick on row
@@ -1802,12 +1855,23 @@ function set_activ_menu(){
 	activ_menu=0;
 }
 
+function lmbTableClickCheckbox(el){
+    selected_rows_mem = 1;
+}
+
+
+
 // de/aktivate single row
 var LmGl_edit_id = null;
 var selected_rows = new Array();
-function aktivateRow(evt,id,activ){
+var selected_rows_mem = null;
+function aktivateRow(evt,id,activ,mem){
 
-	if(!evt.shiftKey && !evt.ctrlKey){
+    if(evt.shiftKey || evt.ctrlKey || selected_rows_mem) {
+        var memory = 1;
+    }
+
+	if(!memory){
 		aktivateRows(0);
 	}
 
@@ -1817,6 +1881,7 @@ function aktivateRow(evt,id,activ){
 	var gtabid = vids[2];
 	var fieldid = vids[3];
 
+    // select range
 	if(evt.shiftKey && prev_id){
 		var cc = null;
 		var start = null;
@@ -1854,18 +1919,24 @@ function aktivateRow(evt,id,activ){
 	}
 
 	aktivateSingleRow(id,activ);
+
+    selected_rows_mem = null;
+
+    return;
 }
 
 // de/aktivate single row
-function aktivateSingleRow(id,activ) {
-	if(!document.getElementById(id)){return true;}
+function aktivateSingleRow(elid,activ) {
+	if(!document.getElementById(elid)){return true;}
 	if(activ){
-        $('#'+id).addClass("gtabBodyTRActive");
-		selected_rows[id] = 1;
-		LmGl_edit_id = id;
+        $('#'+elid).addClass("gtabBodyTRActive");
+		selected_rows[elid] = 1;
+		LmGl_edit_id = elid;
+        $('#chkb'+elid).prop( "checked", true );
 	}else{
-        $('#'+id).removeClass("gtabBodyTRActive");
-		selected_rows[id] = 0;
+        $('#'+elid).removeClass("gtabBodyTRActive");
+		selected_rows[elid] = 0;
+        $('#chkb'+elid).prop( "checked", false );
 	}
 }
 
@@ -1985,7 +2056,7 @@ function lmbUndefToNull(value){
 // show detail in dialog or new window
 function lmbOpenForm(evt,gtabid,id,params) {
     if(!params){params = new Array();}
-    return newwin7(evt,lmbUndefToNull(params['action']),gtabid,lmbUndefToNull(params['v_tabid']) ,lmbUndefToNull(params['v_fieldid']),lmbUndefToNull(params['v_id']),id,lmbUndefToNull(params['formid']),lmbUndefToNull(params['formdimension']),lmbUndefToNull(params['v_formid']),lmbUndefToNull(params['inframe']),lmbUndefToNull(params['show_relationpath']),lmbUndefToNull(params['readonly']),lmbUndefToNull(params['dataAction']),lmbUndefToNull(params['force']));
+    return newwin7(evt,lmbUndefToNull(params['action']),gtabid,lmbUndefToNull(params['v_tabid']) ,lmbUndefToNull(params['v_fieldid']),lmbUndefToNull(params['v_id']),id,lmbUndefToNull(params['formid']),lmbUndefToNull(params['formdimension']),lmbUndefToNull(params['v_formid']),lmbUndefToNull(params['formopenas']),lmbUndefToNull(params['show_relationpath']),lmbUndefToNull(params['readonly']),lmbUndefToNull(params['dataAction']),lmbUndefToNull(params['force']));
 }
 
 
@@ -2003,7 +2074,7 @@ function lmbOpenForm(evt,gtabid,id,params) {
  * params['v_id'] : relation data ID
  * params['v_formid'] : relation formular ID
  * params['formdimension'] : formular dimension in px '123x123'
- * params['inframe'] : div / iframe / tab / same
+ * params['inframe'] : div / iframe / tab / same / window
  * params['show_relationpath'] : 0 / 1
  * params['readonly'] : 0 / 1
  * params['dataAction'] : copy / versioning
@@ -2012,8 +2083,7 @@ function lmbOpenForm(evt,gtabid,id,params) {
 function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimension,v_formid,inframe,show_relationpath,readonly,dataAction,force) {
 
     divclose();
-	
-	
+
 	if(formid === null) {
 		formid = '';
 	}
@@ -2027,7 +2097,11 @@ function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimensio
 
     // default action
     if (action != 'gtab_erg' && action != 'gtab_deterg' && action != 'gtab_neu' && action != 'gtab_form') {
-        action = 'gtab_change'
+        if(jsvar["detailform_viewmode_"+gtabid] == 1) {
+            action = 'gtab_deterg';
+        }else{
+            action = 'gtab_change';
+        }
     }
 
     if((action == 'gtab_erg' || typeof id === 'undefined') && readonly == 2){readonly = 1;}else{readonly = '';} // todo
@@ -2038,7 +2112,7 @@ function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimensio
     }
 
     var verknpf = '';
-    if (v_tabid) {
+    if (v_tabid > 0) {
         verknpf = 1;
     }
 
@@ -2064,21 +2138,29 @@ function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimensio
         var y = (parseInt(dimsn[1]) + 30);
     }
 
-    var layername = 'lmb_gtabDetailFrame';
+    // default modal opener
+    if(!inframe){
+        if(verknpf && jsvar["detail_rel_openas"]) {
+            inframe = jsvar["detail_rel_openas"];
+        }else if(jsvar["detail_openas"]) {
+            inframe = jsvar["detail_openas"];
+        }
+    }
 
+    // model == iframe
+    if (inframe == 'modal') {
+        inframe = 'iframe';
+    }
+
+    // desination is userdefined element
+    var layername = 'lmb_gtabDetailFrame';
     if(inframe && inframe != 'div' && inframe != 'iframe' && inframe != 'same'){
         layername = inframe;
     }
 
-    // default modal opener
-    if(!inframe && jsvar["modal_opener"]){
-        inframe = jsvar["modal_opener"];
-        if(inframe == 'modal'){inframe = 'iframe';}
-    }
-
     // force new win
     if(evt && evt.ctrlKey){
-        inframe = '';
+        inframe = 'window';
     }
 
     // resize window if window in window
@@ -2123,33 +2205,41 @@ function newwin7(evt,action,gtabid,v_tabid,v_fieldid,v_id,id,formid,formdimensio
     if (inframe == 'tab') {
         //wpath = "index.php?action=redirect&src=action=" + action + "%26verkn_showonly=1%26ID=" + id + "%26verkn_ID=" + v_id + "%26gtabid=" + gtabid + "%26verkn_tabid=" + v_tabid + "%26verkn_fieldid=" + v_fieldid + "%26form_id=" + formid + "%26verkn_formid=" + v_formid + '%26verkn_addfrom='+relation_path + '%26readonly='+readonly+use_typ+'%26verknpf=' + verknpf;
         var baseurl = top.window.location.href.split("?")[0];
-        wpath = baseurl+"?action=" + action + "&verkn_showonly="+verkn_showonly+"&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "%26form_id=" + formid + "&verkn_formid=" + v_formid + '&verkn_addfrom='+relation_path + '&readonly='+readonly+use_typ+'&verknpf=' + verknpf;
+        wpath = baseurl+"?action=" + action + "&verkn_showonly="+verkn_showonly+"&ID=" + id + "&verkn_ID=" + v_id + "&gtabid=" + gtabid + "&verkn_tabid=" + v_tabid + "&verkn_fieldid=" + v_fieldid + "&form_id=" + formid + "&verkn_formid=" + v_formid + '&verkn_addfrom='+relation_path + '&readonly='+readonly+use_typ+'&verknpf=' + verknpf+'&redirect=1';
         relationtab = open(wpath, "_blank");
         return;
     }
 
     // show in same window
-    if (inframe == 'same' && document.form1.gtabid) {
-        document.form1.form_id.value = formid;
-        document.form1.change_ok.value = 1;
-        document.form1.action.value = action;
-        document.form1.ID.value = id;
-        document.form1.verkn_ID.value = v_id;
-        document.form1.verkn_tabid.value = v_tabid;
-        document.form1.verkn_fieldid.value = v_fieldid;
-        // todo + "%26verknpf=" + verknpf // do not show close&save button but is needed for filter relations
-        document.form1.verknpf.value = verknpf;
-        document.form1.gtabid.value = gtabid;
-        document.form1.verkn_showonly.value = verkn_showonly;
-        document.form1.verkn_addfrom.value = relation_path;
-        if (!document.form1.verkn_poolid.value) {
-            document.form1.verkn_poolid.value = v_tabid;
+    if (inframe == 'same') {
+        
+        var formindex = 'form1';       // detail form
+        if(document.form2 && document.form2.gtabid){
+            var formindex = 'form2';   // tablelist
         }
-        if (dataAction) {
-            document.form1.use_typ.value = dataAction;
-            document.form1.use_record.value = id + '_' + gtabid;
+
+        document.forms[formindex].ID.value = id;
+        document.forms[formindex].action.value = action;
+        document.forms[formindex].gtabid.value = gtabid;
+        document.forms[formindex].form_id.value = formid;
+
+        if(document.forms[formindex].verkn_ID){document.forms[formindex].verkn_ID.value = v_id;}
+        if(document.forms[formindex].verkn_tabid){document.forms[formindex].verkn_tabid.value = v_tabid;}
+        if(document.forms[formindex].verkn_fieldid){document.forms[formindex].verkn_fieldid.value = v_fieldid;}
+        if(document.forms[formindex].verkn_showonly){document.forms[formindex].verkn_showonly.value = verkn_showonly;}
+        if(document.forms[formindex].verknpf){document.forms[formindex].verknpf.value = verknpf;}
+        // todo + "verknpf=" + verknpf // do not show close&save button but is needed for filter relations
+
+        if(formindex == 'form1') {
+            if (document.forms[formindex].verkn_addfrom) {document.forms[formindex].verkn_addfrom.value = relation_path;}
+            if (document.forms[formindex].change_ok) {document.forms[formindex].change_ok.value = 1;}
+            if (!document.forms[formindex].verkn_poolid.value && document.forms[formindex].verkn_poolid) {document.forms[formindex].verkn_poolid.value = v_tabid;}
+            if (dataAction) {
+                if (document.forms[formindex].use_typ) {document.forms[formindex].use_typ.value = dataAction;}
+                if (document.forms[formindex].use_record) {document.forms[formindex].use_record.value = id + '_' + gtabid;}
+            }
         }
-        document.form1.submit();
+        document.forms[formindex].submit();
         return;
 
     // show in same window

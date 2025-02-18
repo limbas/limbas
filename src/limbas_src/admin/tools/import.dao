@@ -908,6 +908,8 @@ function fill($tab,$file,$ctyp,$ktyp,$cname,$kkey,$partimport,$import_overwrite,
 	global $lang;
     global $syncimport;
 
+    $success = 1;
+
 	/* ---------------------- Seperator ---------------------- */
 	if(!$txt_terminate){$txt_terminate = ',';}
 	if(!$txt_enclosure){$txt_enclosure = '"';}
@@ -1038,7 +1040,8 @@ function fill($tab,$file,$ctyp,$ktyp,$cname,$kkey,$partimport,$import_overwrite,
 			if($bzm4 > 1){
 				$rs3 = lmbdb_exec($db,$sqlquery2) or errorhandle(lmbdb_errormsg($db), $sqlquery2, $GLOBALS['action'], __FILE__, __LINE__);
 				if(!$rs3) {
-					$commit = 1;
+                    LimbasLogger::log("import failure in insert statement of table $tab and ID $id", LimbasLogger::LL_ERROR);
+					$success = 0;
 					$count_false++;
 				}else{
 					if($GLOBALS["action"]){
@@ -1060,7 +1063,12 @@ function fill($tab,$file,$ctyp,$ktyp,$cname,$kkey,$partimport,$import_overwrite,
             foreach($prepare_long["field"][$bzm4] as $lkey => $lval){
                 if($prepare_long["id"][$bzm4]){
                     $prepare_string = "UPDATE ".$tab." SET ".$prepare_long["field"][$bzm4][$lkey]." = ? WHERE ID = ".$prepare_long["id"][$bzm4];
-                    lmb_PrepareSQL($prepare_string,array($prepare_long["value"][$bzm4][$lkey]),__FILE__,__LINE__);
+                    $rs4 = lmb_PrepareSQL($prepare_string,array($prepare_long["value"][$bzm4][$lkey]),__FILE__,__LINE__);
+                    if(!$rs4) {
+                        LimbasLogger::log("import failure in prepare statement of table $tab and ID $id", LimbasLogger::LL_ERROR);
+                        $success = 0;
+                        $count_false++;
+                    }
                 }
             }
         }
@@ -1082,6 +1090,8 @@ function fill($tab,$file,$ctyp,$ktyp,$cname,$kkey,$partimport,$import_overwrite,
 		if($GLOBALS["action"]){echo "<p style=\"color:green;\">&nbsp;&nbsp;$maxline $lang[1017].</p>";}
 	}
 	if($GLOBALS["action"]){import_handleProgress($tab,100);}
+
+    return $success;
 
 }
 
@@ -1152,6 +1162,7 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 	/* ---------------------- Seperator ---------------------- */
 	if(!$txt_terminate){$txt_terminate = ',';}
 	if(!$txt_enclosure){$txt_enclosure = '"';}
+    $success = 1;
 
 	# Komplett-Import aus Backupverzeichniss
 	if($initial_setup){
@@ -1278,7 +1289,9 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 				if(!$kkey){$kkey = "ID";}
 
 				/* --- Tabelle füllen------- */
-				if($filename != ''){fill($tab,$filename,$ctyp,$ktyp,$cname,$kkey,$partimport,$import_overwrite,$txt_encode,$txt_terminate,$txt_enclosure,$nosequence);}
+				if($filename != ''){
+                    $success = fill($tab,$filename,$ctyp,$ktyp,$cname,$kkey,$partimport,$import_overwrite,$txt_encode,$txt_terminate,$txt_enclosure,$nosequence);
+                }
 
 			}elseif($definition == "table"){
 				unset($columndef);
@@ -1349,9 +1362,7 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 					$ktyp[] = 0;
 					$sqlquery .= ",";
 				}
-				
-				
-				
+
 				if($cdf[1] == "LONG"){$ctyp[] = 4;}
 				elseif($cdf[1] == "TIMESTAMP"){$ctyp[] = 5;} 
 				elseif($cdf[1] == "DATE"){$ctyp[] = 6;} 
@@ -1372,7 +1383,9 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 				if($odbc_table) {
 					$sqlquery = dbq_4(array($DBA["DBSCHEMA"],$indname,$cdf[0],$cdf[1]));
 					$rs4 = lmbdb_exec($db,$sqlquery);
-					if(!$rs4) {$commit = 1;}
+					if(!$rs4) {
+                        $success = 0;
+                    }
 					if($rs4){
 						if($GLOBALS["action"]){echo "<div>$lang[164] <font style=\"font-style:italic;font-weight:bold\">".$cdf[0]." (".$cdf[1].")</FONT> <b>$lang[1024]</b>.</div>\n";
 						echo "\n<script type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";}
@@ -1393,9 +1406,10 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 				
 				if($cdf){
 					$sqlquery = dbq_19($cdf);
-					
 					$rs4 = lmbdb_exec($db,$sqlquery);
-					if(!$rs4) {echo $sqlquery;$commit = 1;}
+					if(!$rs4) {
+                        $success = 0;
+                    }
 					
 					$outdesc1 = "<div>$lang[2215] <font style=\"font-style:italic;font-weight:bold\">".$cdf[0]."</FONT> <B>$lang[1018]</B>.</div>\n".
 						"<script type=\"text/javascript\">//<!--\nscrolldown();\n//--></script>\n";
@@ -1441,7 +1455,7 @@ function import($partimport,$import_overwrite,$prefix=null,$txt_encode=null, $tx
 		system("rm -r ".BACKUPPATH.$backupdir);
 	}
 
-    return true;
+    return $success;
 
 }
 

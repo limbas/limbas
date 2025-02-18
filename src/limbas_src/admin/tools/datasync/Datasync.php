@@ -856,24 +856,39 @@ abstract class Datasync
                                     }
 
                                     $relation = init_relation($tabid, $fieldid, $datid, [$verknAddId], null, null, $params);
-
-
-                                    if (!set_relation($relation)) {
+                                    
+                                    if($relation === false) {
+                                        $errormsg = lmb_log::getLogMessage(true);
+                                        $this->setException('error', 11, 'Init relations failed (' . $verknAddId . '): ' . $errormsg, $tabid, $sdatid, $fieldid);
+                                    }
+                                    elseif (!set_relation($relation)) {
                                         $errormsg = lmb_log::getLogMessage(true);
                                         //workaround for existing relations
                                         if (!(str_contains($errormsg, 'already joined') || str_contains($errormsg, 'already exists'))) {
-                                            $this->setException('error', 11, 'Add relations failed: ' . $errormsg, $tabid, $sdatid, $fieldid);
+                                            $this->setException('error', 11, 'Add relations failed (' . $verknAddId . '): ' . $errormsg, $tabid, $sdatid, $fieldid);
                                         }
                                     }
                                 }
                             } else {
                                 $relation = init_relation($tabid, $fieldid, $datid, $verkn_add_ids);
 
-                                if ($verkn_add_ids && !set_relation($relation)) {
+                                if($relation === false) {
                                     $errormsg = lmb_log::getLogMessage(true);
+                                    $errorRelId = $verkn_add_ids;
+                                    if(is_array($verkn_add_ids)) {
+                                        $errorRelId = implode(',', $verkn_add_ids);
+                                    }
+                                    $this->setException('error', 11, 'Init relations failed (' . $errorRelId . '): ' . $errormsg, $tabid, $sdatid, $fieldid);
+                                }
+                                elseif ($verkn_add_ids && !set_relation($relation)) {
+                                    $errormsg = lmb_log::getLogMessage(true);
+                                    $errorRelId = $verkn_add_ids;
+                                    if(is_array($verkn_add_ids)) {
+                                        $errorRelId = implode(',', $verkn_add_ids);
+                                    }
                                     //workaround for existing relations
                                     if (!(str_contains($errormsg, 'already joined') || str_contains($errormsg, 'already exists'))) {
-                                        $this->setException('error', 11, 'Add relations failed: ' . $errormsg, $tabid, $sdatid, $fieldid);
+                                        $this->setException('error', 11, 'Add relations failed (' . $errorRelId . '): ' . $errormsg, $tabid, $sdatid, $fieldid);
                                     }
                                 }
                             }

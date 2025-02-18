@@ -24,7 +24,6 @@ class GroupRightsController extends LimbasController
         global $lang;
         global $f_result;
         global $l_result;
-        global $s_result;
         $gtabid = $request["tabid"];
         $ID = $request["ID"];
         $ismodal = true;

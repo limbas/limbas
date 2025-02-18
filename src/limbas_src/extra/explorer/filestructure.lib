@@ -301,12 +301,12 @@ function get_PathFromID($ID){
  * @param $ID       file ID
  * @param $level    Level ID
  * @param $filename filename
- * @param $ext      fileextension
+ * @param $ext      fileextension - use null if unknown
  * @param null $typ default=ULOAD; 2=thumbnail; 3=text
  * @param $mid  multitenant ID
  * @return string
  */
-function lmb_getFilePath($ID,$LID,$filename,$ext,$mid=null,$typ=null){
+function lmb_getFilePath($ID,$LID=null,$filename=null,$ext=null,$mid=null,$typ=null){
     global $db;
     global $filestruct;
     global $session;
@@ -324,7 +324,7 @@ function lmb_getFilePath($ID,$LID,$filename,$ext,$mid=null,$typ=null){
         #$mid = $GLOBALS['lmmultitenants']['translate'][lmbdb_result($rs, "LMB_MID")]; todo - translated MID
         if(!$LID){$LID = lmbdb_result($rs, "LEVEL");}
         if(!$filename){$filename = lmbdb_result($rs, "SECNAME");}
-        if(!isset($ext)) {$ext = $gmimetypes['ext'][lmbdb_result($rs, 'MIMETYPE')];}
+        if(!isset($ext)) {$ext = $gmimetypes['ext'][lmbdb_result($rs, 'MIMETYPE')];} // to use with *
         #$mid = lmbdb_result($rs, "LMB_MID");
     }
 
@@ -1264,20 +1264,20 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
         $change_subdir = 0;
 
         if( (!$filevalue OR !is_uploaded_file($filevalue) OR !file_exists($filevalue) ) AND !$noupload){
-            lmb_log::error('lmb_fileUpload - file could not be uploaded ('.$fl["filename"].')', $lang[1726], $gtabid_files, $fl["level"], null, E_ERROR);
+            lmb_log::error('lmb_fileUpload - file could not be uploaded ('.$fl["filename"].')', $lang[1726], $gtabid_files, $fl["level"], $filevalue, E_ERROR);
             $commit = 1;
             break;
         }
 
         if(lmb_strlen($fl["filename"]) > 128) {
-            lmb_log::error('lmb_fileUpload - filename longer then 128 ('.$fl["filename"].')', $lang[2531], $gtabid_files, $fl["level"], null , E_ERROR);
+            lmb_log::error('lmb_fileUpload - filename longer then 128 ('.$fl["filename"].')', $lang[2531], $gtabid_files, $fl["level"], $fl["filename"] , E_ERROR);
             $commit = 1;
             break;
         }
 
         if($fl["filesize"] <= 0 OR $fl["filesize"] > $session["uploadsize"]) {
             $message = file_size($session["uploadsize"])." | ".$fl["filename"]." (".file_size($fl["filesize"]).")";
-            lmb_log::error('lmb_fileUpload - filesize to big - '.$message, $lang[129].' - '.$message, $gtabid_files, $fl["level"], null , E_ERROR);
+            lmb_log::error('lmb_fileUpload - filesize to big - '.$message, $lang[129].' - '.$message, $gtabid_files, $fl["level"], $fl["filesize"].' > '.$session["uploadsize"] , E_ERROR);
             $commit = 1;
             break;
         }
@@ -1697,12 +1697,12 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
                     }}
 
                     # --- Metadaten auslesen ----
-                    if(!$nometa AND $noupload != 3 AND !$filestruct['prevent_meta'][$level]){
-                        if($meta = getmeta_from_file(lmb_getFilePath(null,$level,$fl['secname'],$fl['ext']),$fl['mimetype'],2)){
+                    if (!$nometa && $noupload != 3 && !$filestruct['prevent_meta'][$level]) {
+                        if ($meta = getmeta_from_file(lmb_getFilePath(null, $level, $fl['secname'], $fl['ext']), $fl['mimetype'], 2)) {
                             $GLOBALS["create_new_file"] = 1;
                             # Metadaten eintragen
-                            if(!putmeta_to_db($fl["nextid"],$meta)){
-                                lmb_log::error('lmb_fileUpload - could not write metadata to file ('.$fl["filename"].')', $lang[1901].' ('.$fl['filename'].')', $gtabid_files, $fl["level"], $fl["nextid"] , E_ERROR);
+                            if (!putmeta_to_db($fl["nextid"], $meta)) {
+                                lmb_log::error('lmb_fileUpload - could not write metadata to file (' . $fl["filename"] . ')', $lang[1901] . ' (' . $fl['filename'] . ')', $gtabid_files, $fl["level"], $fl["nextid"], E_ERROR);
                             }
                         }
                     }
@@ -3516,7 +3516,7 @@ function refresh_thumbnails($level){
 	while(lmbdb_fetch_row($rs)){
 		#$sys = exec("rm ".TEMPPATH.'thumpnails/'.lmbdb_result($rs,"SECNAME")."*");
         // thumbnails löschen
-		$sys = exec("rm ".lmb_getFilePath($ID,$level,lmbdb_result($rs,"SECNAME").'*',lmbdb_result($rs,'LMB_MID'),2));
+		$sys = exec("rm ".lmb_getFilePath($ID,$level,lmbdb_result($rs,"SECNAME").'*','',lmbdb_result($rs,'LMB_MID'),2));
 		$sqlquery0 = "UPDATE LDMS_FILES SET THUMB_OK = ".LMB_DBDEF_TRUE." WHERE ID = ".lmbdb_result($rs,"ID");
 		$rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
 		if(!$rs0) {$commit = 1;}
@@ -3834,7 +3834,7 @@ function download_archive($filellist,$LEVEL){
 	global $filestruct;
 	global $userdat;
 
-	$includeMetadata = $umgvar['download_include_metadata'] ?: false; # todo put this into umgvar
+	$includeMetadata = $umgvar['archive_download_metadata'] ?: false;
 
 	function download_archive_file($ID,$path, $includeMetadata){
 		global $db;
@@ -3895,13 +3895,15 @@ function download_archive($filellist,$LEVEL){
 		global $umgvar;
 		global $session;
 
-		if(!$path OR !$level){return false;}
+		if(!$path || !$level){
+			return false;
+		}
 		$path = $path."/".$filestruct["name"][$level];
 		mkdir($path);
 
 		foreach($filestruct["id"] as $key => $value){
-			if($filestruct["level"][$key] == $level AND $filestruct["view"][$key]){
-				download_archive_sub($value,$path);
+			if($filestruct["level"][$key] == $level && $filestruct["view"][$key]){
+				download_archive_sub($value,$path, $includeMetadata);
 			}
 		}
 
@@ -3914,13 +3916,16 @@ function download_archive($filellist,$LEVEL){
 		}
 	}
 
-	if(!$LEVEL OR !$filestruct){
+	if((!$LEVEL && $LEVEL!=0) || !$filestruct){
 		return false;
 	}
 
+    $levelName = $LEVEL==0 ? 'dms' : $filestruct["name"][$LEVEL];
+	$pathTempUser = USERPATH.$session["user_id"]."/temp";
+
 	# --- temp-Verzeichnis leeren -------------
-	rmdirr(USERPATH.$session["user_id"]."/temp");
-	$path = USERPATH.$session["user_id"]."/temp/".$filestruct["name"][$LEVEL];
+	rmdirr($pathTempUser);
+	$path = "$pathTempUser/$levelName";
 	mkdir($path);
 
 	if($filellist["d"]){
@@ -3944,11 +3949,11 @@ function download_archive($filellist,$LEVEL){
 	if(file_exists($path)){
 
         # ------------- zip --------------
-        $sys = exec("cd ".USERPATH.$session["user_id"]."/temp; zip -r '".$filestruct["name"][$LEVEL]."' '".$filestruct["name"][$LEVEL]."'",$cmd);
+        $sys = exec("cd $pathTempUser; zip -r '$levelName' '$levelName'",$cmd);
 
         $file['mimetype'] = 'application/zip';
-        $file['name'] = $filestruct['name'][$LEVEL].'.zip';
-        $file['path'] = USERPATH.$session['user_id'].'/temp/'.$filestruct['name'][$LEVEL].'.zip';
+        $file['name'] = "$levelName.zip";
+        $file['path'] = "$pathTempUser/$levelName.zip";
 
 		if(file_exists($file['path'])){
             return $file;

@@ -3,7 +3,6 @@
 global $farbschema;
 global $f_result;
 global $l_result;
-global $s_result;
 global $is_popup;
 global $ID;
 global $gsr;
@@ -52,7 +51,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                             if (!$isview) {
                                 # --- view versions ---
                                 if ($gtab["versioning"][$gtabid]) {
-                                    if ((($l_result[$gtabid]["viewver"] == 1 or ($group_level === 0)) and $s_result[$gtabid]["viewver"]) or ($session["superadmin"] && $group_level === 0)) {
+                                    if ($l_result[$gtabid]["viewver"] == 1 or $f_result[$gtabid]["viewver"] or $group_level === 0) {
                                         ?>
                                         <td nowrap class="p-0 pe-2 align-top">
                                             <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -69,7 +68,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                                             </div>
                                         </td>
                                         <?php
-                                    } elseif (!$l_result[$gtabid]["viewver"] and $s_result[$gtabid]["viewver"] or $session["superadmin"]) {
+                                    } else {
                                         ?>
                                         <td nowrap class="p-0 pe-2 align-top">
                                             <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -78,19 +77,22 @@ if ($gtab["typ"][$gtabid] == 5) {
                                                     <i class="<?= "lmb-icon-cus lmb-copy-eye" ?> opacity-50"
                                                        title="<?= $lang[2356] ?>"></i>
                                                 </label>
+                                                <div title="<?= $lang[3194] ?>">
                                                 <input
-                                                        class="form-check-input m-0 mt-1"
+                                                        class="form-check-input m-0 mt-1 bg-danger"
                                                         id="disabledcheckbox_<?= $lang[2356] ?>"
+                                                        title="<?= $lang[3194] ?>"
                                                         type="checkbox"
                                                         readonly
                                                         disabled
                                                         <?= $f_result[$gtabid]["viewver"] == 1 ? "checked" : "" ?>>
-                                            </div>
+                                            </div></div>
                                         </td>
                                         <?php
                                     }
 
-                                    if ((($l_result[$gtabid]["editver"] == 1 or ($group_level === 0)) and $s_result[$gtabid]["editver"]) or ($session["superadmin"] && $group_level === 0)) {
+                                    // edit version
+                                    if ($l_result[$gtabid]["editver"] == 1 or $f_result[$gtabid]["editver"] or $group_level === 0) {
                                         ?>
                                         <td nowrap class="p-0 pe-2 align-top">
                                             <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -107,7 +109,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                                             </div>
                                         </td>
                                         <?php
-                                    } elseif (!$l_result[$gtabid]["editver"] and $s_result[$gtabid]["editver"] or $session["superadmin"]) {
+                                    } else {
                                         ?>
                                         <td nowrap class="p-0 pe-2 align-top">
                                             <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -116,19 +118,21 @@ if ($gtab["typ"][$gtabid] == 5) {
                                                     <i class="<?= "lmb-icon-cus lmb-copy-edit" ?> opacity-50"
                                                        title="<?= $lang[3010] ?>"></i>
                                                 </label>
+                                                <div title="<?= $lang[3194] ?>">
                                                 <input
-                                                        class="form-check-input m-0 mt-1"
+                                                        class="form-check-input m-0 mt-1 bg-danger"
                                                         id="disabledcheckbox_<?= $lang[3010] ?>"
                                                         type="checkbox"
                                                         readonly
                                                         disabled
                                                         <?= $f_result[$gtabid]["editver"] == 1 ? "checked" : "" ?>>
-                                            </div>
+                                            </div></div>
                                         </td>
                                         <?php
                                     }
 
-                                    if ((($l_result[$gtabid]["delver"] == 1 or ($group_level === 0)) and $s_result[$gtabid]["delver"]) or ($session["superadmin"] && $group_level === 0)) {
+                                    // delete version
+                                    if ($l_result[$gtabid]["delver"] == 1 or $f_result[$gtabid]["delver"] == 1 or $group_level === 0) {
                                         ?>
                                         <td nowrap class="p-0 pe-2 align-top">
                                             <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -145,7 +149,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                                             </div>
                                         </td>
                                         <?php
-                                    } elseif (!$l_result[$gtabid]["delver"] and $s_result[$gtabid]["delver"] or $session["superadmin"]) {
+                                    } else {
                                         ?>
                                         <td nowrap class="p-0 pe-2 align-top">
                                             <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -154,22 +158,23 @@ if ($gtab["typ"][$gtabid] == 5) {
                                                     <i class="<?= "lmb-icon-cus lmb-copy-minus" ?> opacity-50"
                                                        title="<?= $lang[3009] ?>"></i>
                                                 </label>
+                                                <div title="<?= $lang[3194] ?>">
                                                 <input
-                                                        class="form-check-input m-0 mt-1"
+                                                        class="form-check-input m-0 mt-1 bg-danger"
                                                         id="disabledcheckbox_<?= $lang[3009] ?>"
                                                         type="checkbox"
                                                         readonly
                                                         disabled
                                                         <?= $f_result[$gtabid]["delver"] == 1 ? "checked" : "" ?>>
-                                            </div>
+                                            </div></div>
                                         </td>
                                         <?php
                                     }
 
                                 }
-                                # --- unlock data ---
+                                // --- unlock data ---
                                 if ($gtab["lockable"][$gtabid]) {
-                                    if ((($l_result[$gtabid]["lock"] == 1 or ($group_level === 0)) and $s_result[$gtabid]["lock"]) or ($session["superadmin"] && $group_level === 0)) {
+                                    if ($l_result[$gtabid]["lock"] == 1 or $f_result[$gtabid]["lock"] == 1 or $group_level === 0) {
                                         ?>
                                         <td nowrap class="p-0 pe-2 align-top">
                                             <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -186,7 +191,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                                             </div>
                                         </td>
                                         <?php
-                                    } elseif (!$l_result[$gtabid]["lock"] and $s_result[$gtabid]["lock"] or $session["superadmin"]) {
+                                    } else {
                                         ?>
                                         <td nowrap class="p-0 pe-2 align-top">
                                             <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -195,14 +200,15 @@ if ($gtab["typ"][$gtabid] == 5) {
                                                     <i class="<?= "lmb-icon lmb-lock" ?> opacity-50"
                                                        title="<?= $lang[2428] ?>"></i>
                                                 </label>
+                                                <div title="<?= $lang[3194] ?>">
                                                 <input
-                                                        class="form-check-input m-0 mt-1"
+                                                        class="form-check-input m-0 mt-1 bg-danger"
                                                         id="disabledcheckbox_<?= $lang[2428] ?>"
                                                         type="checkbox"
                                                         readonly
                                                         disabled
                                                         <?= $f_result[$gtabid]["lock"] == 1 ? "checked" : "" ?>>
-                                            </div>
+                                            </div></div>
                                         </td>
                                         <?php
                                     }
@@ -211,7 +217,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                                 # Dataset-Rules
                                 if ($gtab["has_userrules"][$gtabid]) {
                                     # --- set userrules for administrate datasets ---
-                                    if ((($l_result[$gtabid]["userrules"] == 1 or ($group_level === 0)) and $s_result[$gtabid]["edit_userrules"]) or ($session["superadmin"] && $group_level === 0)) {
+                                    if ($l_result[$gtabid]["userrules"] == 1 or $f_result[$gtabid]["userrules"] == 1 or $group_level === 0) {
                                         ?>
                                         <td nowrap class="p-0 pe-2 align-top">
                                             <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -228,7 +234,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                                             </div>
                                         </td>
                                         <?php
-                                    } elseif (!$l_result[$gtabid]["userrules"] and $s_result[$gtabid]["edit_userrules"] or $session["superadmin"]) {
+                                    } else {
                                         ?>
                                         <td nowrap class="p-0 pe-2 align-top">
                                             <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -237,19 +243,20 @@ if ($gtab["typ"][$gtabid] == 5) {
                                                     <i class="<?= "lmb-icon lmb-group-gear" ?> opacity-50"
                                                        title="<?= $lang[2337] ?>"></i>
                                                 </label>
+                                                <div title="<?= $lang[3194] ?>">
                                                 <input
-                                                        class="form-check-input m-0 mt-1"
+                                                        class="form-check-input m-0 mt-1 bg-danger"
                                                         id="disabledcheckbox_<?= $lang[2337] ?>"
                                                         type="checkbox"
                                                         readonly
                                                         disabled
                                                         <?= $f_result[$gtabid]["userrules"] == 1 ? "checked" : "" ?>>
-                                            </div>
+                                            </div></div>
                                         </td>
                                         <?php
                                     }
                                     # --- set userrules for manage created datasets ---
-                                    if ((($l_result[$gtabid]["userprivilege"] == 1 or ($group_level === 0)) and $s_result[$gtabid]["edit_ownuserrules"]) or ($session["superadmin"] && $group_level === 0)) {
+                                    if ($l_result[$gtabid]["userprivilege"] == 1 or $f_result[$gtabid]["userprivilege"] == 1 or $group_level === 0) {
                                         ?>
                                         <td nowrap class="p-0 pe-2 align-top">
                                             <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -266,7 +273,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                                             </div>
                                         </td>
                                         <?php
-                                    } elseif (!$l_result[$gtabid]["userprivilege"] and $s_result[$gtabid]["edit_ownuserrules"] or $session["superadmin"]) {
+                                    } else {
                                         ?>
                                         <td nowrap class="p-0 pe-2 align-top">
                                             <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -275,19 +282,20 @@ if ($gtab["typ"][$gtabid] == 5) {
                                                     <i class="<?= "lmb-icon lmb-user-gear" ?> opacity-50"
                                                        title="<?= $lang[2453] ?>"></i>
                                                 </label>
+                                                <div title="<?= $lang[3194] ?>">
                                                 <input
-                                                        class="form-check-input m-0 mt-1"
+                                                        class="form-check-input m-0 mt-1 bg-danger"
                                                         id="disabledcheckbox_<?= $lang[2453] ?>"
                                                         type="checkbox"
                                                         readonly
                                                         disabled
                                                         <?= $f_result[$gtabid]["userprivilege"] == 1 ? "checked" : "" ?>>
-                                            </div>
+                                            </div></div>
                                         </td>
                                         <?php
                                     }
                                     # --- set userrules for manage single user/groups ---
-                                    if ((($l_result[$gtabid]["hierarchicprivilege"] == 1 or ($group_level === 0)) and $s_result[$gtabid]["hierarchicprivilege"]) or ($session["superadmin"] && $group_level === 0)) {
+                                    if ($l_result[$gtabid]["hierarchicprivilege"] == 1 or $f_result[$gtabid]["hierarchicprivilege"] == 1 or $group_level === 0) {
                                         ?>
                                         <td nowrap class="p-0 pe-2 align-top">
                                             <div class="dropdown">
@@ -310,7 +318,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                                             </div>
                                         </td>
                                         <?php
-                                    } elseif (!$l_result[$gtabid]["hierarchicprivilege"] and $s_result[$gtabid]["hierarchicprivilege"] or $session["superadmin"]) {
+                                    } else {
                                         ?>
                                         <td nowrap class="p-0 pe-2 align-top">
                                             <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -319,21 +327,21 @@ if ($gtab["typ"][$gtabid] == 5) {
                                                     <i class="<?= "lmb-icon lmb-groups" ?> opacity-50"
                                                        title="<?= $lang[2516] ?>"></i>
                                                 </label>
+                                                <div title="<?= $lang[3194] ?>">
                                                 <input
-                                                        class="form-check-input m-0 mt-1"
+                                                        class="form-check-input m-0 mt-1 bg-danger"
                                                         id="disabledcheckbox_<?= $lang[2516] ?>"
                                                         type="checkbox"
                                                         readonly
                                                         disabled
                                                         <?= $f_result[$gtabid]["hierarchicprivilege"] == 1 ? "checked" : "" ?>>
-                                            </div>
+                                            </div></div>
                                         </td>
                                         <?php
                                     }
                                 }
                                 # --- add ---
-
-                                if ((($l_result[$gtabid]["add"] == 1 or ($group_level === 0)) and $s_result[$gtabid]["add"]) or ($session["superadmin"] && $group_level === 0)) {
+                                if ($l_result[$gtabid]["add"] == 1 or $f_result[$gtabid]["add"] == 1 or $group_level === 0) {
                                     ?>
                                     <td nowrap class="p-0 pe-2 align-top">
                                         <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -350,7 +358,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                                         </div>
                                     </td>
                                     <?php
-                                } elseif (!$l_result[$gtabid]["add"] and $s_result[$gtabid]["add"] or $session["superadmin"]) {
+                                } else {
                                     ?>
                                     <td nowrap class="p-0 pe-2 align-top">
                                         <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -358,21 +366,22 @@ if ($gtab["typ"][$gtabid] == 5) {
                                                 <i class="<?= "lmb-icon-cus lmb-page-new" ?> opacity-50"
                                                    title="<?= $lang[571] ?>"></i>
                                             </label>
+                                            <div title="<?= $lang[3194] ?>">
                                             <input
-                                                    class="form-check-input m-0 mt-1"
+                                                    class="form-check-input m-0 mt-1 bg-danger"
                                                     id="disabledcheckbox_<?= $lang[571] ?>"
                                                     type="checkbox"
                                                     readonly
                                                     disabled
                                                     <?= $f_result[$gtabid]["add"] == 1 ? "checked" : "" ?>>
-                                        </div>
+                                        </div></div>
                                     </td>
                                     <?php
                                 }
 
                                 # --- delete ---
 
-                                if ((($l_result[$gtabid]["delete"] == 1 or ($group_level === 0)) and $s_result[$gtabid]["delete"]) or ($session["superadmin"] && $group_level === 0)) {
+                                if ($l_result[$gtabid]["delete"] == 1 or $f_result[$gtabid]["delete"] == 1 or $group_level === 0) {
                                     ?>
                                     <td nowrap class="p-0 pe-2 align-top">
                                         <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -389,7 +398,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                                         </div>
                                     </td>
                                     <?php
-                                } elseif (!$l_result[$gtabid]["delete"] and $s_result[$gtabid]["delete"] or $session["superadmin"]) {
+                                } else {
                                     ?>
                                     <td nowrap class="p-0 pe-2 align-top">
                                         <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -397,21 +406,21 @@ if ($gtab["typ"][$gtabid] == 5) {
                                                 <i class="<?= "lmb-icon lmb-page-delete-alt" ?> opacity-50"
                                                    title="<?= $lang[160] ?>"></i>
                                             </label>
+                                            <div title="<?= $lang[3194] ?>">
                                             <input
-                                                    class="form-check-input m-0 mt-1"
+                                                    class="form-check-input m-0 mt-1 bg-danger"
                                                     id="disabledcheckbox_<?= $lang[160] ?>"
                                                     type="checkbox"
                                                     readonly
                                                     disabled
                                                     <?= $f_result[$gtabid]["delete"] == 1 ? "checked" : "" ?>>
-                                        </div>
+                                        </div></div>
                                     </td>
                                     <?php
                                 }
 
                                 # --- trash ---
-
-                                if ((($l_result[$gtabid]["trash"] == 1 or ($group_level === 0)) and $s_result[$gtabid]["trash"]) or ($session["superadmin"] && $group_level === 0)) {
+                                if ($l_result[$gtabid]["trash"] == 1 or $f_result[$gtabid]["trash"] == 1 or $group_level === 0) {
                                     ?>
                                     <td nowrap class="p-0 pe-2 align-top">
                                         <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -428,7 +437,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                                         </div>
                                     </td>
                                     <?php
-                                } elseif (!$l_result[$gtabid]["trash"] and $s_result[$gtabid]["trash"] or $session["superadmin"]) {
+                                } else {
                                     ?>
                                     <td nowrap class="p-0 pe-2 align-top">
                                         <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -436,21 +445,22 @@ if ($gtab["typ"][$gtabid] == 5) {
                                                 <i class="<?= "lmb-icon lmb-trash" ?> opacity-50"
                                                    title="<?= $lang[3094] ?>"></i>
                                             </label>
+                                            <div title="<?= $lang[3194] ?>">
                                             <input
-                                                    class="form-check-input m-0 mt-1"
+                                                    class="form-check-input m-0 mt-1 bg-danger"
                                                     id="disabledcheckbox_<?= $lang[3094] ?>"
                                                     type="checkbox"
                                                     readonly
                                                     disabled
                                                     <?= $f_result[$gtabid]["trash"] == 1 ? "checked" : "" ?>>
-                                        </div>
+                                        </div></div>
                                     </td>
                                     <?php
                                 }
 
                                 # --- archive ---
 
-                                if ((($l_result[$gtabid]["hide"] == 1 or ($group_level === 0)) and $s_result[$gtabid]["hide"]) or ($session["superadmin"] && $group_level === 0)) {
+                                if ($l_result[$gtabid]["hide"] == 1 or $f_result[$gtabid]["hide"] == 1 or $group_level === 0) {
                                     ?>
                                     <td nowrap class="p-0 pe-2 align-top">
                                         <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -467,7 +477,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                                         </div>
                                     </td>
                                     <?php
-                                } elseif (!$l_result[$gtabid]["hide"] and $s_result[$gtabid]["hide"] or $session["superadmin"]) {
+                                } else {
                                     ?>
                                     <td nowrap class="p-0 pe-2 align-top">
                                         <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
@@ -475,14 +485,15 @@ if ($gtab["typ"][$gtabid] == 5) {
                                                 <i class="<?= "lmb-icon lmb-page-key" ?> opacity-50"
                                                    title="<?= $lang[1257] ?>"></i>
                                             </label>
+                                            <div title="<?= $lang[3194] ?>">
                                             <input
-                                                    class="form-check-input m-0 mt-1"
+                                                    class="form-check-input m-0 mt-1 bg-danger"
                                                     id="disabledcheckbox_<?= $lang[1257] ?>"
                                                     type="checkbox"
                                                     readonly
                                                     disabled
                                                     <?= $f_result[$gtabid]["hide"] == 1 ? "checked" : "" ?>>
-                                        </div>
+                                        </div></div>
                                     </td>
                                     <?php
                                 }
@@ -492,14 +503,12 @@ if ($gtab["typ"][$gtabid] == 5) {
                         </tr>
                     </table>
 
-                    <?php
-                    # --- view ---
-                    ?>
 
+                <?php # --- view ---?>
                 </td>
                 <td>
                     <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
-                        <label class="form-check-label" for="checkbox_<?= "tabview" ?>_<?= $gtabid ?>">
+                        <label class="form-check-label" for="checkbox_tabview_<?= $gtabid ?>">
                             <i
                                     class="<?= "lmb-icon lmb-eye" ?>"
                                     title="<?= $lang[2303] ?>">
@@ -527,7 +536,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                     ?>
                     <td class="align-top">
                         <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
-                            <label class="form-check-label" for="checkbox_<?= "tabedit" ?>_<?= $gtabid ?>">
+                            <label class="form-check-label" for="checkbox_tabedit_<?= $gtabid ?>">
                                 <i
                                         class="<?= "lmb-icon lmb-pencil" ?>"
                                         title="<?= $lang[1259] ?>">
@@ -549,7 +558,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                     ?>
                     <td class="align-top">
                         <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
-                            <label class="form-check-label" for="checkbox_<?= "tabneed" ?>_<?= $gtabid ?>">
+                            <label class="form-check-label" for="checkbox_tabneed_<?= $gtabid ?>">
                                 <i
                                         class="<?= "lmb-icon lmb-exclamation" ?>"
                                         title="<?= $lang[1508] ?>">
@@ -571,7 +580,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                     ?>
                     <td class="align-top">
                         <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
-                            <label class="form-check-label" for="checkbox_<?= "tabcopy" ?>_<?= $gtabid ?>">
+                            <label class="form-check-label" for="checkbox_tabcopy_<?= $gtabid ?>">
                                 <i
                                         class="<?= "lmb-icon lmb-copy" ?>"
                                         title="<?= $lang[1464] ?>">
@@ -603,7 +612,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                 ?>
                 <td class="align-top">
                     <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
-                        <label class="form-check-label" for="checkbox_<?= "taboptions" ?>_<?= $gtabid ?>">
+                        <label class="form-check-label" for="checkbox_taboptions_<?= $gtabid ?>">
                             <i
                                     class="<?= "lmb-icon lmb-cog-alt" ?>"
                                     title="<?= $lang[2795] ?>">
@@ -637,7 +646,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                     ?>
                     <td class="align-top">
                         <div class="form-check d-flex flex-column p-0 align-items-center justify-content-between m-0">
-                            <label class="form-check-label" for="checkbox_<?= "versioning" ?>_<?= $gtabid ?>">
+                            <label class="form-check-label" for="checkbox_versioning_<?= $gtabid ?>">
                                 <i
                                         class="<?= "lmb-icon lmb-versioning-type" ?>"
                                         title="<?= $lang[2132] ?>">
@@ -732,12 +741,15 @@ if ($gtab["typ"][$gtabid] == 5) {
                         <td COLSPAN="2" nowrap>
                             <?= $f_result[$gtabid]["typ"][$key] ?>
                         </td>
+
+
+
                         <?php
                         # --- view ----
                         ?>
                         <td>
                             <?php
-                            if ($l_result[$gtabid]["view"][$key] or ($group_level === 0)) {
+                            if ($l_result[$gtabid]["view"][$key] or $f_result[$gtabid]["view"][$key] or $group_level === 0) {
                                 ?>
                                 <div class="form-check align-middle d-flex justify-content-center p-0 h-100">
                                     <input class="form-check-input m-0"
@@ -748,57 +760,55 @@ if ($gtab["typ"][$gtabid] == 5) {
                                 <?php
                             } else {
                                 ?>
-                                <div class="form-check align-middle d-flex justify-content-center p-0 h-100">
+                                <div class="form-check align-middle d-flex justify-content-center p-0 h-100" title="<?= $lang[3194] ?>">
                                     <input
-                                            class="form-check-input m-0"
+                                            class="form-check-input m-0 bg-danger"
                                             type="checkbox"
                                             readonly
                                             disabled
                                             <?= $f_result[$gtabid]["view"][$key] ? "checked" : "" ?>>
                                 </div>
                                 <?php
-                                echo '</td><td colspan="12"></td></tr>';
-                                continue;
                             }
                             ?>
                         </td>
                         <?php
 
-                        # --- edit ----
 
-                        if (($s_result[$gtabid]["edit"][$key] or $session["superadmin"]) and $f_result[$gtabid]["field_type"][$key] < 100) {
-                            if (!$isview) {
-                                ?>
-                                <td>
-                                    <?php
-                                    if ($l_result[$gtabid]["edit"][$key] or ($group_level === 0)) {
-                                        ?>
-                                        <div class="form-check align-middle d-flex justify-content-center p-0 h-100">
-                                            <input class="form-check-input m-0"
-                                                   type="checkbox"
-                                                   name="<?= "edit" ?>_<?= $gtabid ?>_<?= $f_result[$gtabid]["field_id"][$key] ?>"
-                                                   onclick="save_rules('<?= $gtabid ?>','<?= $f_result[$gtabid]["field_id"][$key] ?>',<?= 2 ?>)" <?= $f_result[$gtabid]["edit"][$key] ? "checked" : "" ?>>
-                                        </div>
-                                        <?php
-                                    } else {
-                                        ?>
-                                        <div class="form-check align-middle d-flex justify-content-center p-0 h-100">
-                                            <input
-                                                    class="form-check-input m-0"
-                                                    type="checkbox"
-                                                    readonly
-                                                    disabled
-                                                    <?= $f_result[$gtabid]["edit"][$key] ? "checked" : "" ?>>
-                                        </div>
-                                        <?php
-                                    }
-                                    ?>
-                                </td>
-                                <?php
-                            }
-                        } else {
+                        if ($f_result[$gtabid]["field_type"][$key] == 100 or $f_result[$gtabid]["field_type"][$key] == 101) {
                             echo '</td><td colspan="12"></td></tr>';
                             continue;
+                        }
+
+                        # --- edit ----
+                        if (!$isview) {
+                            ?>
+                            <td>
+                                <?php
+                                if ($l_result[$gtabid]["edit"][$key] or $f_result[$gtabid]["edit"][$key] or $group_level === 0) {
+                                    ?>
+                                    <div class="form-check align-middle d-flex justify-content-center p-0 h-100">
+                                        <input class="form-check-input m-0"
+                                               type="checkbox"
+                                               name="<?= "edit" ?>_<?= $gtabid ?>_<?= $f_result[$gtabid]["field_id"][$key] ?>"
+                                               onclick="save_rules('<?= $gtabid ?>','<?= $f_result[$gtabid]["field_id"][$key] ?>',<?= 2 ?>)" <?= $f_result[$gtabid]["edit"][$key] ? "checked" : "" ?>>
+                                    </div>
+                                    <?php
+                                } else {
+                                    ?>
+                                    <div class="form-check align-middle d-flex justify-content-center p-0 h-100" title="<?= $lang[3194] ?>">
+                                        <input
+                                                class="form-check-input m-0 bg-danger"
+                                                type="checkbox"
+                                                readonly
+                                                disabled
+                                                <?= $f_result[$gtabid]["edit"][$key] ? "checked" : "" ?>>
+                                    </div>
+                                    <?php
+                                }
+                                ?>
+                            </td>
+                            <?php
                         }
 
 
@@ -807,28 +817,15 @@ if ($gtab["typ"][$gtabid] == 5) {
                             ?>
                             <td>
                                 <?php
-                                if ($f_result[$gtabid]["field_type"][$key] < 100 and $f_result[$gtabid]["data_type"][$key] != 22 and $f_result[$gtabid]["field_type"][$key] != 14 and $f_result[$gtabid]["field_type"][$key] != 15 and $f_result[$gtabid]["field_type"][$key] != 16 and $f_result[$gtabid]["field_type"][$key] != 19 and $f_result[$gtabid]["field_type"][$key] != 6 and $f_result[$gtabid]["field_type"][$key] != 9 and $f_result[$gtabid]["field_type"][$key] != 17 and $f_result[$gtabid]["field_type"][$key] != 20 and !$f_result[$gtabid]["argument_typ"][$key]) {
-                                    if (!$l_result[$gtabid]["need"][$key]) {
-                                        ?>
-                                        <div class="form-check align-middle d-flex justify-content-center p-0 h-100">
-                                            <input class="form-check-input m-0"
-                                                   type="checkbox"
-                                                   name="<?= "needrule" ?>_<?= $gtabid ?>_<?= $f_result[$gtabid]['field_id'][$key] ?>"
-                                                   onclick="save_rules('<?= $gtabid ?>','<?= $f_result[$gtabid]['field_id'][$key] ?>',<?= 9 ?>)" <?= $f_result[$gtabid]["need"][$key] == 1 ? "checked" : "" ?>>
-                                        </div>
-                                        <?php
-                                    } else {
-                                        ?>
-                                        <div class="form-check align-middle d-flex justify-content-center p-0 h-100">
-                                            <input
-                                                    class="form-check-input m-0"
-                                                    type="checkbox"
-                                                    readonly
-                                                    disabled
-                                                    <?= $f_result[$gtabid]["need"][$key] == 1 ? "checked" : "" ?>>
-                                        </div>
-                                        <?php
-                                    }
+                                if ($f_result[$gtabid]["data_type"][$key] != 22 and $f_result[$gtabid]["field_type"][$key] != 14 and $f_result[$gtabid]["field_type"][$key] != 15 and $f_result[$gtabid]["field_type"][$key] != 16 and $f_result[$gtabid]["field_type"][$key] != 19 and $f_result[$gtabid]["field_type"][$key] != 6 and $f_result[$gtabid]["field_type"][$key] != 9 and $f_result[$gtabid]["field_type"][$key] != 17 and $f_result[$gtabid]["field_type"][$key] != 20 and !$f_result[$gtabid]["argument_typ"][$key]) {
+                                    ?>
+                                    <div class="form-check align-middle d-flex justify-content-center p-0 h-100">
+                                        <input class="form-check-input m-0"
+                                               type="checkbox"
+                                               name="<?= "needrule" ?>_<?= $gtabid ?>_<?= $f_result[$gtabid]['field_id'][$key] ?>"
+                                               onclick="save_rules('<?= $gtabid ?>','<?= $f_result[$gtabid]['field_id'][$key] ?>',<?= 9 ?>)" <?= $f_result[$gtabid]["need"][$key] == 1 ? "checked" : "" ?>>
+                                    </div>
+                                    <?php
                                 }
                                 ?>
                             </td>
@@ -841,7 +838,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                                 <?php
                                 # --- copy ----
                                 if ($f_result[$gtabid]["data_type"][$key] != 22 and $f_result[$gtabid]["field_type"][$key] != 14 and $f_result[$gtabid]["field_type"][$key] != 15 and $f_result[$gtabid]["field_type"][$key] < 100) {
-                                    if ($l_result[$gtabid]["copy"][$key] or ($group_level === 0)) {
+                                    if ($l_result[$gtabid]["copy"][$key] or $f_result[$gtabid]["copy"][$key] or $group_level === 0) {
                                         ?>
                                         <div class="form-check align-middle d-flex justify-content-center p-0 h-100">
                                             <input class="form-check-input m-0"
@@ -852,9 +849,9 @@ if ($gtab["typ"][$gtabid] == 5) {
                                         <?php
                                     } else {
                                         ?>
-                                        <div class="form-check align-middle d-flex justify-content-center p-0 h-100">
+                                        <div class="form-check align-middle d-flex justify-content-center p-0 h-100" title="<?= $lang[3194] ?>">
                                             <input
-                                                    class="form-check-input m-0"
+                                                    class="form-check-input m-0 bg-danger"
                                                     type="checkbox"
                                                     readonly
                                                     disabled
@@ -875,7 +872,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                                 # --- list edit ----
                                 $noListEdit = array(10, 18, 22, 31, 32, 34, 35, 36, 37, 39, 45, 46);
                                 if (!in_array($f_result[$gtabid]["data_type"][$key], $noListEdit)) {
-                                    if ($l_result[$gtabid]["listedit"][$key] or ($group_level === 0)) {
+                                    if ($l_result[$gtabid]["listedit"][$key] or $f_result[$gtabid]["listedit"][$key] or $group_level === 0) {
                                         ?>
                                         <div class="form-check align-middle d-flex justify-content-center p-0 h-100">
                                             <input class="form-check-input m-0"
@@ -886,9 +883,9 @@ if ($gtab["typ"][$gtabid] == 5) {
                                         <?php
                                     } else {
                                         ?>
-                                        <div class="form-check align-middle d-flex justify-content-center p-0 h-100">
+                                        <div class="form-check align-middle d-flex justify-content-center p-0 h-100" title="<?= $lang[3194] ?>">
                                             <input
-                                                    class="form-check-input m-0"
+                                                    class="form-check-input m-0 bg-danger"
                                                     type="checkbox"
                                                     readonly
                                                     disabled
@@ -907,7 +904,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                         <td>
                             <?php
                             if ($f_result[$gtabid]["field_type"][$key] == 2 or $f_result[$gtabid]["field_type"][$key] == 21 or $f_result[$gtabid]["data_type"][$key] == 42 or $f_result[$gtabid]["data_type"][$key] == 30 or $f_result[$gtabid]["data_type"][$key] == 28 or $f_result[$gtabid]["data_type"][$key] == 29 or $f_result[$gtabid]["field_type"][$key] == 4 or $f_result[$gtabid]["field_type"][$key] == 11 or $f_result[$gtabid]["field_type"][$key] == 19) {
-                                if ($l_result[$gtabid]["option"][$key] or ($group_level === 0)) {
+                                if ($l_result[$gtabid]["option"][$key] or $f_result[$gtabid]["option"][$key] or $group_level === 0) {
                                     ?>
                                     <div class="form-check align-middle d-flex justify-content-center p-0 h-100">
                                         <input class="form-check-input m-0"
@@ -918,9 +915,9 @@ if ($gtab["typ"][$gtabid] == 5) {
                                     <?php
                                 } else {
                                     ?>
-                                    <div class="form-check align-middle d-flex justify-content-center p-0 h-100">
+                                    <div class="form-check align-middle d-flex justify-content-center p-0 h-100" title="<?= $lang[3194] ?>">
                                         <input
-                                                class="form-check-input m-0"
+                                                class="form-check-input m-0 bg-danger"
                                                 type="checkbox"
                                                 readonly
                                                 disabled
@@ -939,7 +936,7 @@ if ($gtab["typ"][$gtabid] == 5) {
                                 <?php
                                 # --- speech recognition ----
                                 if (in_array($f_result[$gtabid]["data_type"][$key], array(1 /* add more here */))) {
-                                    if ($l_result[$gtabid]["speechrec"][$key] or ($group_level === 0)) {
+                                    if ($l_result[$gtabid]["speechrec"][$key] or $f_result[$gtabid]["speechrec"][$key] or $group_level === 0) {
                                         ?>
                                         <div class="form-check align-middle d-flex justify-content-center p-0 h-100">
                                             <input class="form-check-input m-0"
@@ -950,9 +947,9 @@ if ($gtab["typ"][$gtabid] == 5) {
                                         <?php
                                     } else {
                                         ?>
-                                        <div class="form-check align-middle d-flex justify-content-center p-0 h-100">
+                                        <div class="form-check align-middle d-flex justify-content-center p-0 h-100" title="<?= $lang[3194] ?>">
                                             <input
-                                                    class="form-check-input m-0"
+                                                    class="form-check-input m-0 bg-danger"
                                                     type="checkbox"
                                                     readonly
                                                     disabled
@@ -1088,7 +1085,7 @@ if ($gtab["typ"][$gtabid] == 5) {
 
                             <?php # --------------------- Inputfeld ------------------- ?>
                             <textarea
-                                    class=""
+                                    class="form-control form-control-sm"
                                     rows="1"
                                 <?= $st ?>
                                 type="text"
@@ -1103,11 +1100,11 @@ if ($gtab["typ"][$gtabid] == 5) {
                             ?>
                             <td>
                             <textarea
-                                    class=""
+                                    class="form-control form-control-sm"
                                     rows="1"
                                     type="text"
                                     name="editrule_<?= $gtabid ?>_<?= $f_result[$gtabid]["field_id"][$key] ?>"
-                                    onchange="save_rules(<?= $gtabid ?>,'',27)"><?= $f_result[$gtabid]["editrule"][$key] ?></textarea>
+                                    onchange="save_rules(<?= $gtabid ?>,'<?= $f_result[$gtabid]['field_id'][$key] ?>',17)"><?= $f_result[$gtabid]["editrule"][$key] ?></textarea>
                             </td>
                             <?php
                             # --- trigger ----

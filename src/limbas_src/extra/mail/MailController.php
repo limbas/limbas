@@ -9,9 +9,11 @@
 
 namespace Limbas\extra\mail;
 
+use Limbas\admin\mailTemplates\MailTemplate;
 use Limbas\extra\mail\attachments\DmsMailAttachment;
 use Limbas\extra\mail\attachments\FileMailAttachment;
 use Limbas\lib\LimbasController;
+use Symfony\Component\HttpFoundation\Request;
 
 class MailController extends LimbasController
 {
@@ -23,14 +25,16 @@ class MailController extends LimbasController
     }
 
     /**
-     * @param array $request
+     * @param array|Request $request
      * @return array|false[]
      */
-    public function handleRequest(array $request): array
+    public function handleRequest(array|Request $request): array
     {
-        return match ($request['action']) {
+        $action = is_array($request) ? $request['action'] : $request->get('action');
+        return match ($action) {
             'save' => $this->saveMailAccount($request),
             'delete' => $this->deleteMailAccount($request),
+            'preview' => $this->getMailPreview($request),
             'send' => $this->sendMail($request),
             default => ['success' => false],
         };
@@ -137,14 +141,14 @@ class MailController extends LimbasController
     }
 
     /**
-     * @param array $request
+     * @param Request $request
      * @return array
      */
-    private function sendMail(array $request): array
+    private function sendMail(Request $request): array
     {
-        $required = ['account', 'receiver', 'subject', 'message'];
+        $required = ['account', 'subject', 'message'];
         foreach ($required as $r) {
-            if (empty($request[$r])) {
+            if (empty($request->get($r))) {
                 return ['success' => false];
             }
         }
@@ -157,7 +161,7 @@ class MailController extends LimbasController
         }
         
 
-        $mailAccount = MailAccount::get(intval($request['account']));
+        $mailAccount = MailAccount::get(intval($request->get('account')));
         if (!$mailAccount || !in_array($mailAccount->id, $allowedAccountIds)) {
             return ['success' => false];
         }
@@ -180,10 +184,10 @@ class MailController extends LimbasController
                 }
             }
         }
-        if( array_key_exists('attachments', $request) && is_array($request['attachments']) )
+        if( !empty($request->get('attachments')) && is_array($request->get('attachments')) )
         {
-            $request['attachments'] = array_unique($request['attachments']);
-            foreach( $request['attachments'] as $attachment ) {
+            $requestAttachments = array_unique($request->get('attachments'));
+            foreach( $requestAttachments as $attachment ) {
                 if(is_numeric($attachment)) {
                     $dmsId = intval($attachment);
                     $allowed = file_download($dmsId);
@@ -192,15 +196,107 @@ class MailController extends LimbasController
                         if(!empty($dmsAttachment->getName())) {
                             $attachments[] = $dmsAttachment;
                         }
-                    }                    
+                    }
                 }
             }
         }
+        
+        $cc = $request->get('cc',[]);
+        $bcc = $request->get('bcc',[]);
+        
+        
+        $receivers = $request->get('receivers',[]);
+        $id = $request->get('id',[]);
+
 
         $lmbMail = new LmbMail();
-        $success = $lmbMail->sendMailToRecord($mailAccount, intval($request['gtabid']),intval($request['id']),$request['receiver'], $request['subject'], $request['message'], $attachments);
+        
+        if(is_array($id)) {
+
+            $templateId = intval($request->get('templateId'));
+            if(!empty($templateId)) {
+                $mailTemplate = MailTemplate::get($templateId);
+            }
+            else {
+                $mailTemplate = new MailTemplate(
+                    '',0,'',
+                    savedTemplate: $request->get('message'),
+                    rootTemplateTabId: 0,rootTemplateElementId: 0
+                );
+            }
+
+            $resolvedTemplateGroups = json_decode($request->get('resolvedTemplateGroups',''), true) ?? [];
+            $resolvedDynamicData = json_decode($request->get('resolvedDynamicData',''), true) ?? [];
+            
+            $lmbMail->sendMailToRecords($mailAccount, intval($request->get('gtabid')),$id, $mailTemplate,$request->get('subject'), $attachments, $cc, $bcc,$resolvedTemplateGroups,$resolvedDynamicData);
+            
+            $success = true;
+        }
+        elseif(empty($receivers)) {
+            $success = false;
+        }
+        else {
+            $success = $lmbMail->sendMailToRecord($mailAccount, intval($request->get('gtabid')),intval($request->get('id')),$receivers, $request->get('subject'), $request->get('message'), $attachments, $cc, $bcc);
+        }
+        
 
         return compact('success');
     }
 
+
+    /**
+     * @param Request $request
+     * @return array
+     */
+    private function getMailPreview(Request $request): array
+    {
+        $ids = $request->get('ids',[]);
+        $tabId = $request->get('tabId',[]);
+
+
+        $lmbMail = new LmbMail();
+
+        if(!is_array($ids) || empty($ids) || empty($tabId)) {
+            return ['success'=>false];
+        }
+
+
+        $templateId = intval($request->get('templateId'));
+        if(!empty($templateId)) {
+            $mailTemplate = MailTemplate::get($templateId);
+        }
+        else {
+            $mailTemplate = new MailTemplate(
+                '',0,'',
+                savedTemplate: $request->get('message'),
+                rootTemplateTabId: 0,rootTemplateElementId: 0
+            );
+        }
+        
+        if(!$mailTemplate) {
+            return ['success'=>false];
+        }
+        
+        $success = true;
+        $html = '';
+        foreach($ids as $id) {
+            $id = intval($id);
+            if(empty($id)) {
+                continue;
+            }
+
+            $to = $lmbMail->getReceiverAddresses($tabId,$id);
+
+            $resolvedTemplateGroups = json_decode($request->get('resolvedTemplateGroups',''), true) ?? [];
+            $resolvedDynamicData = json_decode($request->get('resolvedDynamicData',''), true) ?? [];
+
+            $templateHtml = $mailTemplate->getRendered($tabId,$id, $resolvedTemplateGroups, $resolvedDynamicData);
+
+            $html .= ($to ? $to[0] . '<br>-------------------<br><br>': '') . $templateHtml . '<hr><hr>';
+        }
+        
+
+        return compact('success','html');
+    }
+    
 }

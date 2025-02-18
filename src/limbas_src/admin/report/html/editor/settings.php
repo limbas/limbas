@@ -120,7 +120,7 @@ if(!$greport["dpi"][$report_id]){
             <?php
             /** @var Font $font */
             foreach ($fonts as $font): ?>
-                <option value="<?=e($font->family)?>" <?=e($used_font_selected[$font->family])?>><?=e($font->family)?></option>
+                <option value="<?=e($font->family)?>" <?=e($used_font_selected[$font->family])?>><?=e($font->family)?> <?=e($font->style)?></option>
             <?php endforeach; ?>
         </select>
     </div>
@@ -140,7 +140,7 @@ if(!$greport["dpi"][$report_id]){
                 }
                 ?>
 
-                <option value="<?=e($font->family)?>" <?=in_array($font->family,$greport['used_fonts'][$report_id]) ? 'selected' : ''?>><?=e($font->family)?></option>
+                <option value="<?=e($font->family)?>" <?=in_array($font->family,$greport['used_fonts'][$report_id]) ? 'selected' : ''?>><?=e($font->family)?> <?=e($font->style)?></option>
 
             <?php endforeach; ?>
         </select>

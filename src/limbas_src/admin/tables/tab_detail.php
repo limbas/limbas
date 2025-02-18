@@ -190,22 +190,37 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
                     </div>
                 </div>
 
-                <?php // detail formular open as ?>
+                <?php // detail formular open in ?>
                 <div class="mb-3 row">
                     <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2321]?></label>
                     <div class="col-sm-8">
                         <select class="form-select form-select-sm" onchange="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','detailform_opener')">
-                            <option value="-1">inframe</option>
+                            <option value="-1">
+                            <option value="1" <?=($result_gtab[$tabgroup]['detailform_opener'][$tbzm] == 1)?'selected':''?>>same</option>
                             <option value="2" <?=($result_gtab[$tabgroup]['detailform_opener'][$tbzm] == 2)?'selected':''?>>modal</option>
-                            <option value="3" <?=($result_gtab[$tabgroup]['detailform_opener'][$tbzm] == 3)?'selected':''?>>browser tabulator</option>
+                            <option value="3" <?=($result_gtab[$tabgroup]['detailform_opener'][$tbzm] == 3)?'selected':''?>>tab</option>
+                            <option value="4" <?=($result_gtab[$tabgroup]['detailform_opener'][$tbzm] == 4)?'selected':''?>>window</option>
                         </select>
-                        <small class="form-text text-muted"><?=$lang[3038]?></small>
+                        <small class="form-text text-muted"><?=$lang[3186]?></small>
+                    </div>
+                </div>
+
+                <?php // detail formular open as ?>
+                <div class="mb-3 row">
+                    <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2457]?></label>
+                    <div class="col-sm-8">
+                        <select class="form-select form-select-sm" onchange="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','detailform_viewmode')">
+                            <option value="-1">
+                            <option value="1" <?=($result_gtab[$tabgroup]['detailform_viewmode'][$tbzm] == 1)?'selected':''?>><?=$lang[2303]?></option>
+                            <option value="2" <?=($result_gtab[$tabgroup]['detailform_viewmode'][$tbzm] == 2)?'selected':''?>><?=$lang[2692]?></option>
+                        </select>
+                        <small class="form-text text-muted"><?=$lang[3188]?></small>
                     </div>
                 </div>
 
                 <?php // custmenu ?>
                 <div class="mb-3 row">
-                    <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2982]?></label>
+                    <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[3187]?></label>
                     <div class="col-sm-8">
                         <select class="form-select form-select-sm" onchange="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','custmenu')">
                             <option value="-1"></option>
@@ -572,6 +587,15 @@ $col = dbf_5(array($DBA["DBSCHEMA"],$result_gtab[$tabgroup]["tabelle"][$tbzm]));
                         <div class="col-sm-8">
                             <input type="checkbox" value="1" <?=($result_gtab[$tabgroup]['groupable'][$tbzm] == 1)?'checked':''?> onchange="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','groupable')">
                             <small class="form-text text-muted"><?=$lang[2831]?></small>
+                        </div>
+                    </div>
+
+                    <?php // groupable ?>
+                    <div class="mb-3 row">
+                        <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[3182]?></label>
+                        <div class="col-sm-8">
+                            <input type="checkbox" value="1" <?=($result_gtab[$tabgroup]['checkboxselect'][$tbzm] == 1)?'checked':''?> onchange="ajaxEditTable(this,'<?=$tabid?>','<?=$tabgroup?>','checkboxselect')">
+                            <small class="form-text text-muted"><?=$lang[3183]?></small>
                         </div>
                     </div>
 

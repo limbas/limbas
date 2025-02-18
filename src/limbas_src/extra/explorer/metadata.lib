@@ -52,7 +52,7 @@ $val .="
 function put_meta($ID,$mimetype,$absfile) {
 	global $umgvar;
 
-	if(!$umgvar['use_exif'] OR (is_array($umgvar["update_metadata"]) AND (!in_array($mimetype,$umgvar["update_metadata"]) AND $umgvar["update_metadata"][0] != 1))){return;}
+	if(!$umgvar["update_metadata"] OR !$umgvar['use_exif'] OR (is_array($umgvar["update_metadata"]) AND (!in_array($mimetype,$umgvar["update_metadata"])))){return;}
 
 	# use IPTC
     // todo - use IPTC with exiftool
@@ -93,220 +93,6 @@ function putmeta_exif($absfile,$meta){
 	if($retval){return false;}
     return true;
 }
-
-/*
-function putmeta_iptc($absfile,$meta){
-	global $umgvar;
-
-	#$meta["LANGUAGE"] = $language;
-	#$meta["FTYPE"] = $ftype;
-	#$meta["CONTRIBUTORS"] = $contributors;
-	#$meta["IDENTIFIER"] = $identifier;
-	#$meta["CLASSIFICATION"] = $classification;
-	#$meta["CREATEDATE"] = $createdate;
-
-	# ---- IPTC ----------------
-	$new_iptc_data[0]["IPTC_Type"] = "2:00";
-	$new_iptc_data[0]["RecName"] = "Record Version";
-	$new_iptc_data[0]["RecDesc"] = "Record Version - 2 byte binary number";
-	$new_iptc_data[0]["RecData"] = "";
-
-	$bzm = 1;
-	if($meta["DESCRIPTION"]){
- 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:120";
-		$new_iptc_data[$bzm]["RecName"] = "Caption/Abstract";
-		$new_iptc_data[$bzm]["RecDesc"] = "Caption/Abstract - Max 2000 Characters";
-		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["DESCRIPTION"],0,2000);
-		$present_iptc_data[] = "2:120";
-		$bzm++;
-	}
-	if($meta["CREATOR"]){
- 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:122";
-		$new_iptc_data[$bzm]["RecName"] = "Caption Writer/Editor";
-		$new_iptc_data[$bzm]["RecDesc"] = "Caption Writer/Editor - Max 32 Characters";
-		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["CREATOR"],0,32);
-		$present_iptc_data[] = "2:122";
-		$bzm++;
-	}
-	if($meta["NAME2"]){
- 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:105";
-		$new_iptc_data[$bzm]["RecName"] = "Headline";
-		$new_iptc_data[$bzm]["RecDesc"] = "Headline - Max 256 Characters";
-		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["NAME2"],0,256);
-		$present_iptc_data[] = "2:105";
-		$bzm++;
-	}
-	if($meta["INSTRUCTIONS"]){
- 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:40";
-		$new_iptc_data[$bzm]["RecName"] = "Special Instructions";
-		$new_iptc_data[$bzm]["RecDesc"] = "Special Instructions - Max 256 Characters";
-		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["INSTRUCTIONS"],0,256);
-		$present_iptc_data[] = "2:40";
-		$bzm++;
-	}
-	if($meta["PUBLISHER"]){
- 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:80";
-		$new_iptc_data[$bzm]["RecName"] = "By-Line (Author)";
-		$new_iptc_data[$bzm]["RecDesc"] = "By-Line (Author) - Max 32 Characters";
-		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["PUBLISHER"],0,32);
-		$present_iptc_data[] = "2:80";
-		$bzm++;
-	}
-	if($meta["TITLE"]){
- 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:85";
-		$new_iptc_data[$bzm]["RecName"] = "By-Line Title (Author Position) [Not used in Photoshop 7]";
-		$new_iptc_data[$bzm]["RecDesc"] = "By-Line Title (Author Position) - Max 32 characters";
-		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["TITLE"],0,32);
-		$present_iptc_data[] = "2:85";
-		$bzm++;
-	}
-	if($meta["CREDIT"]){
- 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:110";
-		$new_iptc_data[$bzm]["RecName"] = "Credit";
-		$new_iptc_data[$bzm]["RecDesc"] = "Credit - Max 32 Characters";
-		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["CREDIT"],0,32);
-		$present_iptc_data[] = "2:110";
-		$bzm++;
-	}
-	if($meta["SOURCE"]){
- 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:115";
-		$new_iptc_data[$bzm]["RecName"] = "Source";
-		$new_iptc_data[$bzm]["RecDesc"] = "Source - Max 32 Characters";
-		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["SOURCE"],0,32);
-		$present_iptc_data[] = "2:115";
-		$bzm++;
-	}
-	if($meta["ORIGINNAME"]){
- 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:05";
-		$new_iptc_data[$bzm]["RecName"] = "Object Name (Title)";
-		$new_iptc_data[$bzm]["RecDesc"] = "Object Name (Title) - Max 64 characters";
-		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["ORIGINNAME"],64);
-		$present_iptc_data[] = "2:05";
-		$bzm++;
-	}
-	if($meta["CREATEDATE"]){
-		$createdate = preg_replace("/[^0-9]/","",lmb_substr(convert_date($meta["CREATEDATE"]),0,10));
- 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:55";
-		$new_iptc_data[$bzm]["RecName"] = "Date Created";
-		$new_iptc_data[$bzm]["RecDesc"] = "Date Created - 8 numeric characters CCYYMMDD";
-		$new_iptc_data[$bzm]["RecData"] = $createdate;
-		$present_iptc_data[] = "2:55";
-		$bzm++;
-	}
-	if($meta["CITY"]){
- 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:90";
-		$new_iptc_data[$bzm]["RecName"] = "City";
-		$new_iptc_data[$bzm]["RecDesc"] = "City - Max 32 Characters";
-		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["CITY"],0,32);
-		$present_iptc_data[] = "2:90";
-		$bzm++;
-	}
-	if($meta["STATE"]){
- 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:95";
-		$new_iptc_data[$bzm]["RecName"] = "Province/State";
-		$new_iptc_data[$bzm]["RecDesc"] = "Province/State - Max 32 Characters";
-		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["STATE"],0,32);
-		$present_iptc_data[] = "2:95";
-		$bzm++;
-	}
-	if($meta["COUNTRY"]){
- 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:101";
-		$new_iptc_data[$bzm]["RecName"] = "Country/Primary Location Name";
-		$new_iptc_data[$bzm]["RecDesc"] = "Country/Primary Location Name - Max 64 characters";
-		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["COUNTRY"],0,64);
-		$present_iptc_data[] = "2:101";
-		$bzm++;
-	}
-	if($meta["TRANSMISSION"]){
- 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:103";
-		$new_iptc_data[$bzm]["RecName"] = "Original Transmission Reference";
-		$new_iptc_data[$bzm]["RecDesc"] = "Original Transmission Reference - Max 32 characters";
-		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["TRANSMISSION"],0,32);
-		$present_iptc_data[] = "2:103";
-		$bzm++;
-	}
-	if($meta["CATEGORY"]){
- 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:15";
-		$new_iptc_data[$bzm]["RecName"] = "Category";
-		$new_iptc_data[$bzm]["RecDesc"] = "Category - Max 3 characters";
-		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["CATEGORY"],0,3);
-		$present_iptc_data[] = "2:15";
-		$bzm++;
-	}
-	if($meta["SUBCATEGORY"]){
-		$subcategory = explode(";",$meta["SUBCATEGORY"]);
-		foreach($subcategory as $key => $value){
-	 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:20";
-			$new_iptc_data[$bzm]["RecName"] = "Supplemental Category";
-			$new_iptc_data[$bzm]["RecDesc"] = "Supplemental Category - Max 32 characters";
-			$new_iptc_data[$bzm]["RecData"] = lmb_substr($value,0,32);
-			$present_iptc_data[] = "2:20";
-			$bzm++;
-		}
-	}
-	if($meta["URGENCY"]){
- 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:10";
-		$new_iptc_data[$bzm]["RecName"] = "Urgency";
-		$new_iptc_data[$bzm]["RecDesc"] = "Urgency - 1 numeric character";
-		$new_iptc_data[$bzm]["RecData"] = parse_db_int($meta["URGENCY"],2);
-		$present_iptc_data[] = "2:10";
-		$bzm++;
-	}
-	if($meta["SUBJECT"]){
-		$subject = explode(";",$meta["SUBJECT"]);
-		foreach($subject as $key => $value){
-	 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:25";
-			$new_iptc_data[$bzm]["RecName"] = "Keywords";
-			$new_iptc_data[$bzm]["RecDesc"] = "Keywords - Max 64 characters";
-			$new_iptc_data[$bzm]["RecData"] = lmb_substr($value,0,64);
-			$present_iptc_data[] = "2:25";
-			$bzm++;
-		}
-	}
-	if($meta["COPYRIGHT"]){
- 		$new_iptc_data[$bzm]["IPTC_Type"] = "2:116";
-		$new_iptc_data[$bzm]["RecName"] = "Copyright Notice";
-		$new_iptc_data[$bzm]["RecDesc"] = "Copyright Notice - Max 128 Characters";
-		$new_iptc_data[$bzm]["RecData"] = lmb_substr($meta["COPYRIGHT"],128);
-		$present_iptc_data[] = "2:116";
-		$bzm++;
-	}
-
-
-		// Hide any unknown EXIF tags
-		$GLOBALS['HIDE_UNKNOWN_TAGS'] = TRUE;
-
-
-		$req = "extern/php/exif/JPEG.php"; require_once($req);
-		$req = "extern/php/exif/JFIF.php"; require_once($req);
-		$req = "extern/php/exif/PictureInfo.php"; require_once($req);
-		$req = "extern/php/exif/XMP.php"; require_once($req);
-		$req = "extern/php/exif/Photoshop_IRB.php"; require_once($req);
-		$req = "extern/php/exif/EXIF.php"; require_once($req);
-
-
-
-		$jpeg_header_data = get_jpeg_header_data($absfile);
-
-		# --- update image ------
-		if($new_iptc_data){
-			$irb_data = get_Photoshop_IRB($jpeg_header_data);
-			$iptc_data = get_Photoshop_IPTC($irb_data);
-
-			if($nirb_data = put_Photoshop_IPTC($irb_data,$new_iptc_data)){
-				if($njpeg_header_data = put_Photoshop_IRB($jpeg_header_data,$nirb_data)){
-                    if (! put_jpeg_header_data($absfile, $absfile, $njpeg_header_data)) {
-                        $GLOBALS["alert"] = "writing exifdata failed!";
-                        return false;
-                    }
-				}
-			}
-		}
-
-		return true;
-
-}
-*/
 
 /**
 * Mata-Daten auslesen
@@ -370,38 +156,39 @@ function getmeta_from_file($absfile,$mimetype,$detaillevel=1){
 
 	$mime = explode("/",$mimetype);
 
-	# IMAGE-MAGICK
+	# get basic metatada
 	if($mime[0] == "image" OR ($mime[1] == "pdf" AND ($umgvar["imagemagickpdf"] OR $detaillevel == 3))){
 		if($mime[1] == "pdf"){$page = "'[0]'";}else{$page = "";}
 		if($umgvar["ext_im_analyse"]){$ex = ",%k";}
 		$cmd = $umgvar["imagemagick"]."/identify -format %C,%g,%xx%y,%z-bit,%r,%Q\%,%b,$ex ".$umgvar["imagemagicklimit"]." ".$absfile.$page;
 		$picinf = explode(",",`$cmd`);
 		if($picinf){
-			$meta["FORMAT"] = $picinf[0]." ".$picinf[5];
+			$meta["FORMAT"] = substr(trim(str_ireplace('undefined','',$picinf[0])." ".str_ireplace('undefined','',$picinf[5])),0,128);
 			$meta["GEOMETRY"] = explode("+",$picinf[1]);
-			$meta["GEOMETRY"] = $meta["GEOMETRY"][0];
-			$meta["RESOLUTION"] = str_replace(" undefined","",$picinf[2]);
-			$meta["DEPTH"] = $picinf[3];
-			$meta["TYPE"] = $picinf[4];
-			$meta["SIZE"] = filesize($absfile);
+			$meta["GEOMETRY"] = substr($meta["GEOMETRY"][0],0,20);
+			$meta["RESOLUTION"] = substr(str_ireplace(" undefined","",$picinf[2]),0,30);
+			$meta["DEPTH"] = substr($picinf[3],0,30);
+			$meta["TYPE"] = substr($picinf[4],0,20);
+			#$meta["SIZE"] = parse_db_int(filesize($absfile),16);
 			if($umgvar["ext_im_analyse"]){
-				$meta["COLORS"] = trim($picinf[7]);
+				$meta["COLORS"] = parse_db_int(trim($picinf[7],10));
 			}
 		}
 	}
 
     // exiftool
-	if($detaillevel >= 2){
-        if((is_array($umgvar["read_metadata"]) AND in_array($mime[1],$umgvar["read_metadata"])) OR $umgvar["read_metadata"][0] == 1){
-			if($meta_ = getmeta_raw($absfile)){
-				if(is_array($meta)){
-					$meta = array_merge($meta,$meta_);
-				}else{
-					$meta = $meta_;
-				}
-			}
-		}
-	}
+	if($detaillevel >= 2) {
+        // ignore metadata
+        if ($umgvar["read_metadata"] && (is_array($umgvar["read_metadata"]) && (in_array($mime[1], $umgvar["update_metadata"])))) {
+            if ($meta_ = getmeta_raw($absfile)) {
+                if (is_array($meta)) {
+                    $meta = array_merge($meta, $meta_);
+                } else {
+                    $meta = $meta_;
+                }
+            }
+        }
+    }
 
 	if(is_array($meta)){
 		return $meta;
@@ -416,7 +203,10 @@ function putmeta_to_db($ID,$meta){
 	global $db;
 	global $gtab;
 	global $gfield;
-	
+    global $umgvar;
+
+    if(!is_array($meta)){return;}
+
 	require_once(COREPATH . 'gtab/gtab.lib');
 	$sysfields = array('id','del','mimetype');
 
@@ -484,80 +274,6 @@ function refreshmeta_to_db($ID){
 }
 
 
-# ---------------- JPEG -----------------
-/*
-function getmeta_iptc($absfile){
-	global $umgvar;
-
-	$meta = array();
-
-	// Hide any unknown EXIF tags
-	$GLOBALS['HIDE_UNKNOWN_TAGS'] = TRUE;
-
-	$req = "extern/php/exif/JPEG.php"; require_once($req);
-	$req = "extern/php/exif/JFIF.php"; require_once($req);
-	$req = "extern/php/exif/PictureInfo.php"; require_once($req);
-	$req = "extern/php/exif/XMP.php"; require_once($req);
-	$req = "extern/php/exif/Photoshop_IRB.php"; require_once($req);
-	$req = "extern/php/exif/EXIF.php"; require_once($req);
-
-	$jpeg_header_data = get_jpeg_header_data($absfile);
-	$irb_data = get_Photoshop_IRB( $jpeg_header_data );
-	$iptc_data = get_Photoshop_IPTC( $irb_data );
-
-	if($iptc_data){
-		foreach($iptc_data as $key => $value){
-			if($value["IPTC_Type"] == "2:20"){
-				$iptc_list[$value["IPTC_Type"]][] = $value["RecData"];
-			}elseif($value["IPTC_Type"] == "2:25"){
-				$iptc_list[$value["IPTC_Type"]][] = $value["RecData"];
-			}else{
-				$iptc_list[$value["IPTC_Type"]] = $value["RecData"];
-			}
-
-		}
-		if($iptc_list["2:20"]){$iptc_list["2:20"] = implode(";",$iptc_list["2:20"]);}
-		if($iptc_list["2:25"]){$iptc_list["2:25"] = implode(";",$iptc_list["2:25"]);}
-		$iptc_list["2:55"] = trim($iptc_list["2:55"]);
-
-		$createdate = substr($iptc_list["2:55"],6,2)."-".lmb_substr($iptc_list["2:55"],4,2)."-".lmb_substr($iptc_list["2:55"],0,4);
-		if($createdate = convert_date($createdate)){
-			$meta["CREATEDATE"] = $createdate;
-		}
-		$meta["URGENCY"] = $iptc_list["2:10"];
-		$meta["NAME2"] = $iptc_list["2:105"];
-		$meta["CREATOR"] = $iptc_list["2:122"];
-		$meta["SUBJECT"] = $iptc_list["2:25"];
-		$meta["DESCRIPTION"] = $iptc_list["2:120"];
-		$meta["PUBLISHER"] = $iptc_list["2:80"];
-		$meta["SOURCE"] = $iptc_list["2:115"];
-		$meta["INSTRUCTIONS"] = $iptc_list["2:40"];
-		$meta["CATEGORY"] = $iptc_list["2:15"];
-		$meta["SUBCATEGORY"] = $iptc_list["2:20"];
-		$meta["TITLE"] = $iptc_list["2:85"];
-		$meta["CREDIT"] = $iptc_list["2:110"];
-		$meta["CITY"] = $iptc_list["2:90"];
-		$meta["STATE"] = $iptc_list["2:95"];
-		$meta["COUNTRY"] = $iptc_list["2:101"];
-		$meta["TRANSMISSION"] = $iptc_list["2:103"];
-		$meta["ORIGINNAME"] = $iptc_list["2:05"];
-		$meta["COPYRIGHT"] = $iptc_list["2:116"];
-
-
-	}
-
-	if($jpeg_header_data){
-		# --- in Photoshop_IRB.php '<pre> / </pre>' entfernen / Table Border=0 / <img> auskommentieren  || IPTC.php 'border = 0'
-		$meta["IRB"] = Interpret_IRB_to_HTML( get_Photoshop_IRB( $jpeg_header_data ), $absfile );
-		$meta["XMP"] = Interpret_XMP_to_HTML( read_XMP_array_from_text( get_XMP_text( $jpeg_header_data ) ) );
-	}
-
-	# --- in EXIF.php '<pre>' entfernen / 'thumb' auskommentieren / Table Border=0
-	$meta["EXIF"] = Interpret_EXIF_to_HTML( get_EXIF_JPEG( $absfile ), $absfile );
-
-	return $meta;
-}
-*/
 
 
 # ---------------- PDf -----------------

@@ -46,6 +46,7 @@ try {
 catch (Throwable $t) {
     $response = (new DefaultController())->error($t->getCode(), $t, $request);
     lmb_log::error($t->getMessage());
+    #error_log("$t->getMessage(), at:\n$t->getTraceAsString()");
     $response->send();
     exit(1);
 }

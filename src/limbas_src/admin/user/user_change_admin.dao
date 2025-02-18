@@ -45,6 +45,9 @@ if($commit == 1){
 	lmb_EndTransaction(1);
 }
 
+if($delete_user_filesave){
+     lmb_delete_user_filesave($ID);
+}
 
 /* --- User sperren --------------------------------------------- */
 if($lock AND $ID){

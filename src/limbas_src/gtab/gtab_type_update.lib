@@ -32,7 +32,7 @@ function uftyp_1($gtab_id,$field_id,$ID,&$change_value){
 	}
 	
 	if($change_value && !preg_match("/".$gfield[$gtab_id]["regel"][$field_id]."/",$change_value)){
-        lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id);
+        lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id, $ID);
 		return false;
 	}
 
@@ -46,7 +46,7 @@ function uftyp_2($gtab_id,$field_id,$ID,&$change_value,$language=null) {
 	global $gfield;
 
 	if($change_value && !preg_match("/".$gfield[$gtab_id]["regel"][$field_id]."/",$change_value)){
-        lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id);
+        lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id, $ID);
 		return false;
 	}
 
@@ -67,7 +67,7 @@ function uftyp_3($gtab_id, $field_id, $ID, &$change_value,$language=null) {
     global $gfield;
 
 	if($change_value && !preg_match("/".$gfield[$gtab_id]["regel"][$field_id]."/",$change_value)){
-        lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id);
+        lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id, $ID);
 		return false;
 	}
 
@@ -144,6 +144,14 @@ function uftyp_9($gtab_id,$field_id,$ID,&$change_value) {
         }
 
     } else {
+        // check if value in pool
+        $sqlquery = "SELECT WERT FROM LMB_SELECT_W WHERE POOL = " . $gfield[$gtab_id]["select_pool"][$field_id] . " AND WERT = '" . parse_db_string($change_value, 160) . "'";
+        $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
+        if (!$rs) {$commit = 1;}
+        if (!lmbdb_fetch_row($rs)) {
+            lmb_log::error('update_data - value not in pool', null, $gtab_id, $field_id);
+            return false;
+        }
         return uftyp_2($gtab_id, $field_id, $ID, $change_value);
     }
 
@@ -160,7 +168,7 @@ function uftyp_4($gtab_id,$field_id,$ID,&$change_value) {
     }
 
 	if($change_value AND !preg_match("/".$gfield[$gtab_id]["regel"][$field_id]."/",$change_value)){
-        lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id);
+        lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id,$ID);
 		return false;
 	}
 
@@ -226,7 +234,7 @@ function uftyp_7($gtab_id, $field_id, $ID, &$change_value) {
         # check if value is valid
         $cval = parse_db_float($cval, $gfield[$gtab_id]['size'][$field_id], $gfield[$gtab_id]['scale'][$field_id]);
         if (!preg_match('/' . $gfield[$gtab_id]['regel'][$field_id] . '/', $cval)) {
-            lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id);
+            lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id, $ID);
             return false;
         }
         $ccur = "'" . parse_db_string($ccur, 10) . "'";
@@ -254,7 +262,7 @@ function uftyp_11($gtab_id,$field_id,$ID,&$change_value) {
 	return uftyp_23($gtab_id,$field_id,$ID,$change_value);
 }
 
-/* -------------------------- Upload --------------------------------- */
+/* -------------------------- Upload - deprecated--------------------------------- */
 function uftyp_12($gtab_id,$field_id,$ID,&$change_value) {
 	global $gfield;
 
@@ -272,16 +280,19 @@ function uftyp_12($gtab_id,$field_id,$ID,&$change_value) {
 	$file["file_type"] = $_FILES[$fformname]['type'];
 	$file["file_archiv"] = $GLOBALS[$gfield[$gtab_id]["form_name"][$field_id]."_archiv"];
 	$level = $gfield[$gtab_id]["file_level"][$field_id];
-	if(array_filter($file["file"])){
+
+    foreach($file["file"] as $key => $value){
+        if($file["file"][$key]){
+            $file_["file"][] = $file["file"][$key];
+            $file_["file_name"][] = $file["file_name"][$key];
+            $file_["file_type"][] = $file["file_type"][$key];
+            $file_["file_archiv"][] = $file["file_archiv"][$key];
+        }
+    }
+
+	if(is_array($file_["file"])){
 	    $dublicate['type'][0] = 'rename';
-		if(!$file_id = lmb_fileupload($file,$level,array("datid" => $ID,"gtabid" => $gtab_id,"fieldid" => $field_id),0,$dublicate)){return false;}
-		/*
-		# trigger
-		if($gfield[$gtab_id]["trigger"][$field_id]){
-			$triggerResult = execute_trigger("UPDATE","AFTER",$gtab_id,$field_id,$gfield[$gtab_id]["trigger"][$field_id],$ID,$file);
-			if($triggerResult === false){return false;}
-		}
-		*/
+		if(!$file_id = lmb_fileupload($file_,$level,array("datid" => $ID,"gtabid" => $gtab_id,"fieldid" => $field_id),0,$dublicate)){return false;}
 	}
 
 	return true;
@@ -323,7 +334,7 @@ function uftyp_18($gtab_id,$field_id,$ID,&$change_value) {
 	global $gfield;
 	
 	if(!preg_match("/".$gfield[$gtab_id]["regel"][$field_id]."/",$change_value)){
-		lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id);
+		lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id, $ID);
 		return false;
 	}
 
@@ -475,7 +486,7 @@ function uftyp_25($gtab_id,$field_id,$ID,&$change_value) {
 	global $gfield;
 
 	if($change_value AND !preg_match("/".$gfield[$gtab_id]["regel"][$field_id]."/",$change_value)){
-        lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id);
+        lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id, $ID);
 		return false;
 	}
 
@@ -494,7 +505,7 @@ function uftyp_29($gtab_id,$field_id,$ID,&$change_value) {
 	global $gfield;
 
 	if(!preg_match("/".$gfield[$gtab_id]["regel"][$field_id]."/",$change_value)){
-		lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id);
+		lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id, $ID);
 		return false;
 	}
 
@@ -511,7 +522,7 @@ function uftyp_30($gtab_id,$field_id,$ID,&$change_value) {
 	global $gfield;
 
 	if(!preg_match("/".$gfield[$gtab_id]["regel"][$field_id]."/",$change_value)){
-		lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id);
+		lmb_log::error('update_data - regex failed', null, $gtab_id, $field_id, $ID);
 		return false;
 	}
 

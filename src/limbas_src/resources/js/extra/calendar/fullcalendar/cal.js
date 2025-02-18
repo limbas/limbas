@@ -198,6 +198,9 @@ function lmb_calInit() {
 
     const $fcJumpToDateButton = $('.fc-jumpToDate-button');
 
+    // workaround bootstrap icons
+    $($calendar).find("span[class*='bi']").removeClass('bi-').removeClass('bi');
+
     $fcJumpToDateButton.addClass('p-1');
     $fcJumpToDateButton.html(`
                             <div>

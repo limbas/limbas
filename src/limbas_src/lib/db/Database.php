@@ -185,6 +185,19 @@ class Database
         return lmbdb_execute(lmbdb_prepare($db,$sql), $whereValues);
     }
 
+    /**
+     * @param string $sql
+     * @param array $values
+     * @return bool|PDOStatement
+     */
+    public static function query(string $sql, array $values = []): bool|PDOStatement
+    {
+        $db = self::get();
+        $stmt = lmbdb_prepare($db,$sql);
+        lmbdb_execute($stmt, $values);
+        return $stmt;
+    }
+
 
     /**
      * @param string $table

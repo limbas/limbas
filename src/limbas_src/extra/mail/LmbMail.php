@@ -180,7 +180,7 @@ class LmbMail
         try {
             $mailer->send($email);
             $this->saveMailToImap($fromAccount, $email);
-        } catch (Throwable) {
+        } catch (Throwable $t) {
             $status = false;
         }
 
@@ -248,7 +248,30 @@ class LmbMail
 
         return $this->send($fromAccount, $to, $subject, $message, $attachments, $cc, $bcc, $mailTable);
     }
-    
+
+
+    /**
+     * This functions sends an email to multiple records.
+     * @param MailAccount $fromAccount
+     * @param int $gtabid
+     * @param array $ids
+     * @param MailTemplate $mailTemplate
+     * @param string $subject
+     * @param array|null $attachments
+     * @param string|array|null $cc
+     * @param string|array|null $bcc
+     * @param array $resolvedTemplateGroups
+     * @param array $resolvedDynamicData
+     * @param MailTable|null $mailTable
+     * @return bool
+     */
+    public function sendMailToRecords(MailAccount $fromAccount, int $gtabid, array $ids, MailTemplate $mailTemplate, string $subject = '', ?array $attachments = null, string|array $cc = null, string|array $bcc = null, array $resolvedTemplateGroups = [], array $resolvedDynamicData = [], MailTable $mailTable = null): bool
+    {
+        foreach($ids as $id) {
+            $this->sendMailToRecord($fromAccount, $gtabid,$id,[], $subject, '', $attachments, $cc, $bcc, $mailTemplate, $resolvedTemplateGroups, $resolvedDynamicData, $mailTable);
+        }
+        return true;
+    }
     
     private function saveMailToTable(MailAccount $fromAccount, string|array $to, string $subject, string $message, ?array $attachments = null, string|array $cc = null, string|array $bcc = null, MailTable $mailTable = null): void
     {

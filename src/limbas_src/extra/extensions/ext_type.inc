@@ -182,7 +182,7 @@ function lmb_minimizedFileUpload($ID,$gresult,$fieldid,$gtabid,$class,$style,$po
     echo "</Script>\n";
 
     echo "<div style=\"display:none\" id=\"".$fpo."_detail\"><TABLE><TR>
-    <TD><i title=\"$lang[2318]\" class=\"lmb-icon lmb-rep-dbnew\" STYLE=\"cursor:pointer;\" onclick=\"LmEx_showUploadField('LmEx_Ex_uploadfiles_".$fe."', '$LID', '".$fe."', '$gtabid', '$fieldid', '$ID');\">
+    <TD><i title=\"$lang[2318]\" class=\"lmb-icon lmb-rep-dbnew\" STYLE=\"cursor:pointer;\" onclick=\"LmEx_showUploadField('lmbUploadLayer', '$LID', '".$fe."', '$gtabid', '$fieldid', '$ID');\">
     <TD><i title=\"$lang[2318]\" class=\"lmb-icon lmb-page-delete-alt\" STYLE=\"cursor:pointer;\" OnClick=\"LmExt_Ex_RelationUploadDelete($gtabid,$fieldid,$ID,$LID,'formpicname0_$fe','$max');\"></i></TD>";
     if($img_id[$min]){echo "<TD><i title=\"$lang[2318]\" class=\"lmb-icon lmb-download\" STYLE=\"cursor:pointer;padding-left:20px\" OnClick=\"document.location.href='main.php?&action=download&ID=".$img_id[$min]."&disposition=a';\"></i></TD>";}
 
@@ -386,7 +386,7 @@ function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$p
 			if($LINK[14]){echo "<td style=\"width:20px;\" align=\"center\" nowrap><i class=\"lmb-icon lmb-page-find\" id=\"LmEx_Ex_symbol_".$verkn["uniqueid"]."6\" TITLE=\"".$lang[$LINK["desc"][14]]."\" style=\"cursor:pointer;$st\" OnClick=\"LmExt_Ex_RelationFields($gtabid,$fieldid,'','','$ID','','','','','','','','','1');LmExt_Ex_DisplaySymbols(6,'','".$verkn["uniqueid"]."')\"></i></td><td style=\"width:5px;color:green;\" align=\"center\">|</td>";
 			echo "<td STYLE=\"width:15px;\">&nbsp;</td>";}
 			if($LINK[119] AND $LID){echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i class=\"lmb-icon-cus lmb-folder-add\" style=\"cursor:pointer;\" onclick=\"document.getElementById('LmEx_Ex_uploadfile_".$gtabid."_".$fieldid."').style.display='none';document.getElementById('LmEx_Ex_createfolder_".$gtabid."_".$fieldid."').style.display='';\" TITLE=\"".$lang[$LINK["desc"][119]]."\"></i></td><TD STYLE=\"width:5px;color:green;\" ALIGN=\"CENTER\">|</TD>";}
-			if($LINK[128] AND $LID){echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i class=\"lmb-icon lmb-file-upload\" style=\"cursor:pointer;\" onclick=\"document.getElementById('LmEx_Ex_createfolder_".$gtabid."_".$fieldid."').style.display='none';document.getElementById('LmEx_Ex_uploadfile_".$gtabid."_".$fieldid."').style.display='';LmEx_showUploadField('LmEx_Ex_uploadfiles_{$gtabid}_{$fieldid}', document.getElementById('LID_{$gtabid}_{$fieldid}').value, '{$gtabid}_{$fieldid}', '$gtabid', '$fieldid', '$ID');\" TITLE=\"".$lang[$LINK["desc"][128]]."\"></i></td><TD STYLE=\"width:5px;color:green;\" ALIGN=\"CENTER\">|</TD>";}
+			if($LINK[128] AND $LID){echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i class=\"lmb-icon lmb-file-upload\" style=\"cursor:pointer;\" onclick=\"document.getElementById('LmEx_Ex_createfolder_".$gtabid."_".$fieldid."').style.display='none';document.getElementById('LmEx_Ex_uploadfile_".$gtabid."_".$fieldid."').style.display='';LmEx_showUploadField('lmbUploadLayer', document.getElementById('LID_{$gtabid}_{$fieldid}').value, '{$gtabid}_{$fieldid}', '$gtabid', '$fieldid', '$ID');\" TITLE=\"".$lang[$LINK["desc"][128]]."\"></i></td><TD STYLE=\"width:5px;color:green;\" ALIGN=\"CENTER\">|</TD>";}
 			if($LINK[171] AND $LID){echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i class=\"lmb-icon-cus lmb-page-delete-fancy\" style=\"cursor:pointer;\" OnClick=\"LmExt_Ex_UnLinkFiles($gtabid,$fieldid,$ID,document.getElementById('LID_".$gtabid."_".$fieldid."').value,'$formid',1)\" TITLE=\"".$lang[$LINK["desc"][171]]."\"></i></td><TD STYLE=\"width:5px;color:green;\" ALIGN=\"CENTER\">|</TD>";}
 			if($LINK[158] AND $LID){echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i class=\"lmb-icon-cus lmb-rel-del\" STYLE=\"cursor:pointer;\" TITLE=\"".$lang[$LINK["desc"][158]]."\" BORDER=\"0\" OnClick=\"LmExt_Ex_UnLinkFiles($gtabid,$fieldid,$ID,document.getElementById('LID_".$gtabid."_".$fieldid."').value,'$formid',0)\"></i></TD>";}
 		}else{
@@ -520,7 +520,7 @@ function lmbd_extendedFileManager($ID,$gresult,$fieldid,$gtabid,$class,$style,$p
 		echo "
 		<script language=\"JavaScript\">
 		    LmEx_createDropArea($('#extRelationFieldsTab_{$gtabid}_{$fieldid}'), function(files) {
-                LmEx_showUploadField('LmEx_Ex_uploadfiles_{$gtabid}_{$fieldid}', $LID, '{$gtabid}_{$fieldid}', '{$gtabid}', '{$fieldid}', '{$ID}');
+                LmEx_showUploadField('lmbUploadLayer', $LID, '{$gtabid}_{$fieldid}', '{$gtabid}', '{$fieldid}', '{$ID}');
 		        LmEx_uploadFilesPrecheck(files, '{$LID}', '{$gtabid}_{$fieldid}', '{$gtabid}', '{$fieldid}', '{$ID}');
 		    });
 		</script>
@@ -627,6 +627,9 @@ function lmbd_extendedCalender($ID,&$gresult,$fieldid,$gtabid,$class,$style,$pos
 			}
 		}
 	}
+
+    // form parameter
+    $formparams = cftyp_OpenFormParams($gtabid,$gformid,$formid,$vuniqueid,$filter);
 	
 	/* --- Header ------*/
 	echo "<div $style_abs class=\"gtabFringeRelationBody form-legacy\">\n";
@@ -641,7 +644,7 @@ function lmbd_extendedCalender($ID,&$gresult,$fieldid,$gtabid,$class,$style,$pos
 		}
 	}
 	#if(!$filter["ext_RelationFields"]["no_openlist"][$vuniqueid] AND $LINK[10]){echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i class=\"lmb-icon lmb-list-ul-alt\" STYLE=\"cursor:pointer;\" title=\"".$lang[$LINK["desc"][10]]."\" BORDER=\"0\" OnClick=\"newwin5('".$verkn["vtabid"]."','".$gtabid."','".$fieldid."','".$ID."')\"></i></TD><TD STYLE=\"width:5px;color:green;\" ALIGN=\"CENTER\">|</TD>";}
-	if(!$filter["ext_RelationFields"]["no_openlist"][$vuniqueid] AND $LINK[10]){echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i class=\"lmb-icon lmb-list-ul-alt\" STYLE=\"cursor:pointer;\" title=\"".$lang[$LINK["desc"][10]]."\" BORDER=\"0\" onclick=\"lmbOpenForm(event,'{$verkn["vtabid"]}','',{action:'gtab_erg', v_tabid:'$gtabid',v_fieldid:'$fieldid',v_id:'$ID');\"></i></TD><TD STYLE=\"width:5px;color:green;\" ALIGN=\"CENTER\">|</TD>";}
+	if(!$filter["ext_RelationFields"]["no_openlist"][$vuniqueid] AND $LINK[10]){echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i class=\"lmb-icon lmb-list-ul-alt\" STYLE=\"cursor:pointer;\" title=\"".$lang[$LINK["desc"][10]]."\" BORDER=\"0\" onclick=\"lmbOpenForm(event,'{$verkn["vtabid"]}','',{action:'gtab_erg', formid:'{$formparams['formid']}',formdimension:'{$formparams['dimension']}',formopenas:'{$formparams['openas']}' v_tabid:'$gtabid',v_fieldid:'$fieldid',v_id:'$ID');\"></i></TD><TD STYLE=\"width:5px;color:green;\" ALIGN=\"CENTER\">|</TD>";}
     if(!$filter["ext_RelationFields"]["no_fieldselect"][$vuniqueid] AND $LINK[286]){echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i class=\"lmb-icon-cus lmb-select-list\" STYLE=\"cursor:pointer;\" title=\"".$lang[$LINK["desc"][286]]."\" onclick=\"lmb_relShowField(event,this,'extRelationFieldsDIV_".$gtabid."_".$fieldid."');\"></i>";
 	/* --- Fieldlist ------*/
 	echo "<DIV ID=\"extRelationFieldsDIV_".$gtabid."_".$fieldid."\" class=\"lmbContextMenu\" style=\"position:absolute;display:none;z-index:9999\" OnClick=\"activ_menu = 1\">\n";

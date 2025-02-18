@@ -215,7 +215,7 @@ function LmEx_showUploadField(parentID, folderID, fp, gtabid, fieldid, datid) {
 	datid = datid || '';
 
 	let html = `
-        <div class="modal fade" id="ldmsUploadModal" tabindex="-1" data-backdrop="static" data-keyboard="false">
+        <div class="modal fade" id="ldmsUploadModal" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content">
                     <div class="modal-header">
@@ -238,7 +238,7 @@ function LmEx_showUploadField(parentID, folderID, fp, gtabid, fieldid, datid) {
 											<label for="file_archiv[${fp}]" class="form-check-label">${jsvar['lng_1560']}</label>
 											<input class="form-check-input" type="checkbox" id="file_archiv[${fp}]" name="file_archiv[0]">
 										</div>
-										<input type="button" class="submit btn btn-primary" value="${jsvar['lng_815']}" style="vertical-align:middle" onclick="activ_menu=1; LmEx_uploadFilesPrecheck($(this).closest('.lmbUploadDiv').find('input[type=file]').get(0).files, '${folderID}', '${fp}', '${gtabid}', '${fieldid}', '${datid}');">
+										<button type="button" class="btn btn-primary" style="vertical-align:middle" onclick="activ_menu=1; LmEx_uploadFilesPrecheck($(this).closest('.lmbUploadDiv').find('input[type=file]').get(0).files, '${folderID}', '${fp}', '${gtabid}', '${fieldid}', '${datid}');">${jsvar['lng_815']}</button>
 									</div>
 								</td>
                             </div>
@@ -360,7 +360,7 @@ function LmEx_uploadFiles(files, uploadUrl) {
         formData.append('fieldid', lmbUploadData.fieldid);
         formData.append('ID', lmbUploadData.datid);
         if (files.length === 1) {
-			formData.append('file_archiv[0]', formel.elements['file_archiv['+lmbUploadData.fp+']'].checked); // TODO was only in ajax upload, not in drag
+			formData.append('file_archiv[0]', formel.elements['file_archiv['+lmbUploadData.fp+']']?.checked ?? false); // TODO was only in ajax upload, not in drag
         }
         if (lmbUploadData.authToken) {
             formData.append('authToken', lmbUploadData.authToken);
@@ -1221,8 +1221,10 @@ function LmEx_open_detail(evt,el,ID,lid,custmenu) {
         if(!fieldid){fieldid = '';}
         child = 'lmb_custmenu_' + custmenu;
 
+        limbasDivCloseTab.push(child);
+
         if (!document.getElementById(child)) {
-            $('#limbasDivMenuExplContext').after("<div id='" + child + "' class='lmbContextMenu' style='position:absolute;z-index:992;' onclick='activ_menu = 1;'>");
+            $('#limbasDivMenuExplContext').after("<div id='" + child + "' class='lmbContextMenu' style='position:absolute;z-index:994;' onclick='activ_menu = 1;'>");
         }
 
         var actid = "gtabCustmenu&custmenu=" + custmenu + "&ID=" + ID + "&gtabid=" + jsvar["gtabid"]  + "&fieldid=" + fieldid;

@@ -7,8 +7,6 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
-
-
 global $db;
 
 if (!$num_result) {
@@ -18,47 +16,33 @@ if (!$start) {
     $start = 1;
 }
 
-if ($gfield[$gtabid]["data_type"][$field_id] == 12 OR $gfield[$gtabid]["data_type"][$field_id] == 14) {
+if ($gfield[$gtabid]["data_type"][$field_id] == 12 or $gfield[$gtabid]["data_type"][$field_id] == 14) {
     $single = 1;
 } elseif ($gfield[$gtabid]["unique"][$field_id]) {
     $msingle = 1;
 }
 
 /* --- Werte hinzufügen --------------------------------------------- */
-if ($select_add AND $select_value AND $LINK[8]) {
+if ($select_add && $select_value && $LINK[8]) {
     pool_select_add($select_add, $select_value, $select_keywords, $gtabid, $field_id, $ID, $level_id);
 }
 
 /* --- Werte ändern ---------------------------------------- */
-if ($change_id AND $LINK[8]) {
+if ($change_id && $LINK[8]) {
     pool_select_change($change_id, $gtabid, $field_id, $fs_val, $fs_kw);
 }
 
 /* --- Werte sortieren --------------------------------------------- */
-if ($select_sort AND $select_sort_d AND $LINK[8]) {
+if ($select_sort && $select_sort_d && $LINK[8]) {
     pool_select_sort($select_sort, $select_sort_d, $gtabid, $field_id, $level_id);
 }
 
-/* --- Werte auswählen --------------------------------------------- */
-#if($fs_sel AND $single){
-#	if(is_numeric(lmb_substr($fs_sel,1,16))){
-#		$sqlquery = "SELECT WERT FROM LMB_SELECT_W WHERE POOL = ".$gfield[$gtabid]["select_pool"][$field_id]." AND ID = ".lmb_substr($fs_sel,1,16);
-#		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-#		if(!$rs) {$commit = 1;}
-#		$val = lmbdb_result($rs, "WERT");
-#		$sqlquery = "UPDATE ".$gtab["table"][$gtabid]." SET ".$gfield[$gtabid]["field_name"][$field_id]." = '".parse_db_string($val,160)."' WHERE ID = $ID";
-#		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
-#	}
-#}else
-
 if ($fs_sel) {
-
-    pool_select_prepare($gtabid,$field_id,$ID,$fs_sel);
-
+    pool_select_prepare($gtabid, $field_id, $ID, $fs_sel);
 }
 
 /* --- Werte löschen ---------------------------------------- */
-if ($del_id AND $LINK[8]) {
+if ($del_id && $LINK[8]) {
     pool_select_delete($del_id, $gtabid, $field_id, $level_id);
 }
 
@@ -68,11 +52,10 @@ if ($single) {
     $single_value = lmbdb_result($rs, $gfield[$gtabid]["field_name"][$field_id]);
 }
 
-
 $result_fieldselect = pool_select_list($gtabid, $field_id, $ID, $find_value, $find_keyw, $num_result, $start);
 ?>
 
-<FORM ACTION="main.php" METHOD="post" NAME="form_fs">
+<form ACTION="main.php" METHOD="post" NAME="form_fs">
     <input type="hidden" name="action" value="add_select">
     <input type="hidden" name="gtabid" value="<?= $gtabid ?>">
     <input type="hidden" name="field_id" value="<?= $field_id ?>">
@@ -84,52 +67,78 @@ $result_fieldselect = pool_select_list($gtabid, $field_id, $ID, $find_value, $fi
     <input type="hidden" name="select_sort">
     <input type="hidden" name="select_sort_d">
     <input type="hidden" name="select_cut" value="<?= $gfield[$gtabid]["select_cut"][$field_id] ?>">
-    <input type="hidden" name="level_id" value="<?= isset($level_id) ? $level_id : 0 ?>">
+    <input type="hidden" name="level_id" value="<?= $level_id ?? 0 ?>">
 
     <?php
     $parent = array();
     if (isset($result_fieldselect["parent"]) && (!empty($result_fieldselect["parent"])) && is_array($result_fieldselect["parent"])) {
-
         $result_fieldselect["parent"] = array_reverse($result_fieldselect["parent"], true);
         foreach ($result_fieldselect["parent"] as $k => $v) {
             $parent[] = "<a href=\"#\" onclick=\"document.form_fs.level_id.value=$k;lmbAjax_multiSelect();return false;\" style=\"font-weight:bold;color:blue;\" title=\"$v\">$v</a>";
         }
     }
     $parent = implode("=>", $parent);
-#echo "<pre>[".__FILE__."][".__LINE__."][".__FUNCTION__."]\n".print_r($result_fieldselect,1)."</pre>";
     ?>
 
-    <TABLE BORDER="0" cellspacing="1" cellpadding="1" WIDTH="450" class="tabfringe">
-
-        <?php if ($gfield[$gtabid]["data_type"][$field_id] != 12 OR $gfield[$gtabid]["data_type"][$field_id] != 14) {
-            $add = "<TD></TD>";
+    <div style="width: 500px" class="tabfringe w-100">
+        <?php if ($gfield[$gtabid]["data_type"][$field_id] != 12 || $gfield[$gtabid]["data_type"][$field_id] != 14) {
+            $add = "<div class=\"col-1 pe-0\"></div>";
         } ?>
 
-        <TR class="tabHeader">
-        <?= $add ?>
-            <TD class="tabHeaderItem" nowrap><div style="margin-left:30px;"><?= $lang[29] ?></div></TD>
-            <TD class="tabHeaderItem" nowrap><?= $lang[27] ?></TD>
-            <TD class="tabHeaderItem" COLSPAN="2">&nbsp;</TD>
-        </TR>
+        <div class="tabHeader row">
+            <?= $add ?>
+            <div class="tabHeaderItem col-4 pe-1"><?= $lang[29] ?></div>
+            <div class="tabHeaderItem col-4 px-1"><?= $lang[27] ?></div>
+            <div class="col-3 ps-1"></div>
+        </div>
 
-        <?php if ($LINK[8]) { ?><TR class="tabHeader"><?= $add ?><TD align="right" style="width:150px;"><INPUT TYPE="text" NAME="select_value" STYLE="width:120px;"></TD><TD><INPUT TYPE="text" STYLE="width:120px;" NAME="select_keywords"></TD><TD COLSPAN="2"><INPUT TYPE="button" onclick="lmbAjax_multiSelect()" VALUE="<?= $lang[34] ?>" NAME="select_add"></TD></TR>
-            <TR class="tabHeader"><TD COLSPAN="6">&nbsp;</TD></TR>
+        <?php if ($LINK[8]) { ?>
+            <div class="tabHeader row">
+                <?= $add ?>
+                <div class="col-4 pe-1"><input TYPE="text" class="form-control form-control-sm" NAME="select_value"></div>
+                <div class="col-4 px-1"><input class="form-control form-control-sm" TYPE="text" NAME="select_keywords"></div>
+                <div class="col-3 ps-1">
+                    <button type="button" class="btn btn-primary py-1" onclick="lmbAjax_multiSelect()" VALUE="<?= $lang[34] ?>" NAME="select_add"><?= $lang[34] ?></button>
+                </div>
+            </div>
+            <tr class="tabHeader">
+                <TD COLSPAN="6">&nbsp;</TD>
+            </tr>
         <?php } ?>
 
-        <TR class="tabSubHeader"><?= $add ?><TD COLSPAN="6"><B style="margin-left:30px;"><?= $result_fieldselect['num_ges']; ?></B>&nbsp;<?= $lang[1843] ?>,&nbsp;<?= $lang[1844] ?>&nbsp;<B><?= $result_fieldselect['num_rows']; ?></B>&nbsp;<?= $lang[1846] ?>&nbsp;<B><?= $result_fieldselect['num_sel']; ?></B>&nbsp;<?= $lang[1845] ?></TD></TR>
-        <TR class="tabSubHeader"><?php
-            echo ($gfield[$gtabid]["data_type"][$field_id] == 32 ? "<td align=\"center\"><input type=\"checkbox\" style=\"border:none;\" onclick=\"return fs_check_all(this.checked);\"></td>" : $add);
-            ?><TD nowrap align="right" style="width:150px;"><INPUT TYPE="text" STYLE="width:120px;" NAME="find_value" VALUE="<?= htmlentities($find_value, ENT_QUOTES, $GLOBALS["umgvar"]["charset"]) ?>"></TD><TD><INPUT TYPE="text" STYLE="width:120px;" NAME="find_keyw" VALUE="<?= htmlentities($find_keyw, ENT_QUOTES, $GLOBALS["umgvar"]["charset"]) ?>"></TD><TD><INPUT TYPE="TEXT" STYLE="width:40px;" NAME="num_result" OnChange="lmbAjax_multiSelect()" VALUE="<?= $num_result ?>"></TD><TD><INPUT TYPE="button" onclick="lmbAjax_multiSelect()" VALUE="<?= $lang[30] ?>"></TD></TR>
+        <div class="tabSubHeader row">
+            <?= $add ?>
+            <div class="col-8 d-flex justify-content-center"><b><?= $result_fieldselect['num_ges']; ?></b>&nbsp;<?= $lang[1843] ?>,&nbsp;<?= $lang[1844] ?>&nbsp;<b><?= $result_fieldselect['num_rows']; ?></b>&nbsp;<?= $lang[1846] ?>
+                &nbsp;<b><?= $result_fieldselect['num_sel']; ?></b>&nbsp;<?= $lang[1845] ?>
+            </div>
+        </div>
+
+        <div class="tabSubHeader row mb-3">
+            <?php if ($gfield[$gtabid]["data_type"][$field_id] == 32): ?>
+                <div class="col-1 pe-0 d-flex justify-content-center">
+                    <div class="form-check"><input class="form-check-input" type="checkbox" style="border:none;" onclick="return fs_check_all(this.checked);"></div>
+                </div>
+            <?php else: ?>
+                <?= $add ?>
+            <?php endif; ?>
+            <div class="col-4 pe-1"><INPUT class="form-control form-control-sm" TYPE="text" NAME="find_value" VALUE="<?= htmlentities($find_value, ENT_QUOTES, $GLOBALS["umgvar"]["charset"]) ?>"></div>
+            <div class="col-4 px-1"><INPUT class="form-control form-control-sm" TYPE="text" NAME="find_keyw" VALUE="<?= htmlentities($find_keyw, ENT_QUOTES, $GLOBALS["umgvar"]["charset"]) ?>"></div>
+            <div class="col-3 ps-1 d-flex">
+                <input class="form-control form-control-sm w-100 p-1" TYPE="TEXT" NAME="num_result" onchange="lmbAjax_multiSelect()" VALUE="<?= $num_result ?>">
+                <button type="button" class="btn btn-primary py-1" onclick="lmbAjax_multiSelect()" VALUE="<?= $lang[30] ?>"><?= $lang[30] ?></button>
+            </div>
+        </div>
 
         <?php
-       if (!empty($parent))
-            echo "<TR class=\"tabSubHeader\"><TD>&nbsp;</TD><TD colspan=\"4\">$parent</TD></TR>";
+        if (!empty($parent)) { ?>
+            <div class="tabSubHeader row">
+                <div class="col-2">&nbsp;</div>
+                <div class="col-8">$parent</div>
+            </div>
+        <?php }
 
         /* --- Ergebnisliste --------------------------------------- */
         if ($result_fieldselect["id"]) {
-
-            echo "<tr><td colspan=\"5\"><div style=\"overflow:auto;height:100%\"><table>";
-
             if (!$LINK[8]) {
                 $readonly = "READONLY";
             }
@@ -142,14 +151,14 @@ $result_fieldselect = pool_select_list($gtabid, $field_id, $ID, $find_value, $fi
                             $CHECKED = "";
                         }
                     }
-                    $selbox = "type=\"radio\" name=\"msrd\" value=\"" . $result_fieldselect["wert"][$key] . "\" class=\"fs_checkbox\" active=\"$CHECKED\" elid=\"$value\"";
+                    $selbox = "type=\"radio\" name=\"msrd\" value=\"" . $result_fieldselect["wert"][$key] . "\" class=\"fs_checkbox form-check-input\" active=\"$CHECKED\" elid=\"$value\"";
                 } elseif ($single) {
                     if ($single_value == $result_fieldselect["wert"][$key]) {
                         $CHECKED = "CHECKED";
                     } else {
                         $CHECKED = "";
                     }
-                    $selbox = "type=\"radio\" name=\"msrd\" value=\"" . $result_fieldselect["wert"][$key] . "\" class=\"fs_checkbox\" active=\"$CHECKED\" elid=\"$value\"";
+                    $selbox = "type=\"radio\" name=\"msrd\" value=\"" . $result_fieldselect["wert"][$key] . "\" class=\"fs_checkbox form-check-input\" active=\"$CHECKED\" elid=\"$value\"";
                 } else {
                     if ($result_fieldselect["select_id"]) {
                         if (in_array($result_fieldselect["id"][$key], $result_fieldselect["select_id"])) {
@@ -158,50 +167,62 @@ $result_fieldselect = pool_select_list($gtabid, $field_id, $ID, $find_value, $fi
                             $CHECKED = "";
                         }
                     }
-                    $selbox = "type=\"checkbox\" class=\"fs_checkbox\" active=\"$CHECKED\" elid=\"$value\" ";
+                    $selbox = "type=\"checkbox\" class=\"fs_checkbox form-check-input\" active=\"$CHECKED\" elid=\"$value\" ";
                     $multiple = 1;
-                }
-                echo "<TR class=\"tabBody\">";
-                echo "<TD class=\"tabSubHeaderItem\" ALIGN=\"CENTER\"><INPUT $selbox STYLE=\"border:none; background-color:" . $result_fieldselect["color"][$key] . ";\" onchange=\"2\" $CHECKED></TD>";
-                echo "<TD class=\"tabSubHeaderItem\" nowrap><INPUT $readonly TYPE =\"TEXT\" STYLE=\"width:120px;\" NAME=\"fs_val[" . $result_fieldselect["id"][$key] . "]\" VALUE=\"" . $result_fieldselect["wert"][$key] . "\" ID=\"fs_val_" . $result_fieldselect["id"][$key] . "\" OnChange=\"document.form_fs.change_id.value=document.form_fs.change_id.value+'" . $result_fieldselect["id"][$key] . ";';\"></TD>";
-                echo "<TD class=\"tabSubHeaderItem\" nowrap><INPUT $readonly TYPE =\"TEXT\" STYLE=\"width:120px;\" NAME=\"fs_kw[" . $result_fieldselect["id"][$key] . "]\" VALUE=\"" . $result_fieldselect["keywords"][$key] . "\" OnChange=\"document.form_fs.change_id.value=document.form_fs.change_id.value+'" . $result_fieldselect["id"][$key] . ";';\"></TD>";
-                echo "<TD class=\"tabSubHeaderItem\" nowrap ALIGN=\"LEFT\">";
-                if ($gfield[$gtabid]["select_sort"][$field_id] == "SORT" OR ! $gfield[$gtabid]["select_sort"][$field_id]) {
-                    echo "&nbsp;&nbsp;<i class=\"lmb-icon lmb-long-arrow-up\" style=\"cursor:pointer\" BORDER=\"0\" OnClick=\"document.form_fs.select_sort_d.value=1;document.form_fs.select_sort.value='" . $result_fieldselect['id'][$key] . "';lmbAjax_multiSelect();\"></i>
-	        	<i class=\"lmb-icon lmb-long-arrow-down\" style=\"cursor:pointer\" BORDER=\"0\" OnClick=\"document.form_fs.select_sort_d.value=2;document.form_fs.select_sort.value='" . $result_fieldselect['id'][$key] . "';lmbAjax_multiSelect();\"></i>";
-                }
-                echo "</TD><TD class=\"tabSubHeaderItem\" nowrap ALIGN=\"CENTER\">";
-                if ($LINK[8]) {
-                    if (in_array($gfield[$gtabid]["data_type"][$field_id], array(32 /* multiselect ajax */, 46 /* attribute */))) {
-                        if ($result_fieldselect["haslevel"][$key]) {
-                            $imgst = "";
-                        } else {
-                            $imgst = "style=\"opacity:0.3;filter:Alpha(opacity=30)\"";
-                        }
-                        echo "<a href=\"javascript:document.form_fs.level_id.value='" . $result_fieldselect["id"][$key] . "';lmbAjax_multiSelect();\">"
-                        . "<i class=\"lmb-icon lmb-connection\" $imgst border=\"0\"></i>"
-                        . "</a><img src=\"assets/images/legacy/outliner/blank.gif\" border=\"0\">";
-                    }
-                    echo "<a href=\"javascript:document.form_fs.del_id.value='" . $result_fieldselect["id"][$key] . "';lmbAjax_multiSelect();\">"
-                    . "<i class=\"lmb-icon lmb-trash\" border=\"0\"></i>"
-                    . "</a>";
-                }
-                echo "&nbsp;</TD>";
+                } ?>
 
-                echo "</TR>";
-            }
+                <div class="tabBody row">
+                    <div class="tabSubHeaderItem col-1">
+                        <div class="form-check w-100 d-flex justify-content-center">
+                        <input <?= $selbox ?> style="border:none; background-color: <?= $result_fieldselect["color"][$key] ?>;" onchange="2" <?= $CHECKED ?>>
+                        </div>
+                    </div>
+                    <div class="tabSubHeaderItem col-4 pe-1">
+                        <input class="form-control form-control-sm w-100" <?= $readonly ?> type="text" style="width:120px;" name="fs_val[<?= $result_fieldselect["id"][$key] ?>]" value="<?= $result_fieldselect["wert"][$key] ?>" id="fs_val_<?= $result_fieldselect["id"][$key] ?>"
+                               onchange="document.form_fs.change_id.value=document.form_fs.change_id.value+'<?= $result_fieldselect["id"][$key] ?>';">
+                    </div>
+                    <div class="tabSubHeaderItem col-4 px-1">
+                        <input class="form-control form-control-sm w-100" <?= $readonly ?> type="text" style="width:120px;" name="fs_kw[<?= $result_fieldselect["id"][$key] ?>]" value="<?= $result_fieldselect["keywords"][$key] ?>"
+                               onchange="document.form_fs.change_id.value=document.form_fs.change_id.value+'<?= $result_fieldselect["id"][$key] ?>';">
+                    </div>
+                    <div class="tabSubHeaderItem col-1 px-1 d-flex align-items-center">
+                        <?php if ($gfield[$gtabid]["select_sort"][$field_id] == "SORT" || !$gfield[$gtabid]["select_sort"][$field_id]) { ?>
+                            <i class="lmb-icon lmb-long-arrow-up me-1" style="cursor:pointer" border="0" onclick="document.form_fs.select_sort_d.value=1;document.form_fs.select_sort.value='<?= $result_fieldselect['id'][$key] ?>';lmbAjax_multiSelect();"></i>
+                            <i class="lmb-icon lmb-long-arrow-down" style="cursor:pointer" border="0" onclick="document.form_fs.select_sort_d.value=2;document.form_fs.select_sort.value='<?= $result_fieldselect['id'][$key] ?>';lmbAjax_multiSelect();"></i>
+                        <?php } ?>
+                    </div>
+                    <div class="tabSubHeaderItem col-1 px-0 d-flex align-items-center">
+                        <?php if ($LINK[8]) {
+                            if (in_array($gfield[$gtabid]["data_type"][$field_id], array(32 /* multiselect ajax */, 46 /* attribute */))) {
+                                $imgst = $result_fieldselect["haslevel"][$key] ? "" : "style=\"opacity:0.3;filter:Alpha(opacity=30)\"";
+                                ?>
+                                <a class="d-flex align-items-center" href="javascript:document.form_fs.level_id.value='<?= $result_fieldselect["id"][$key] ?>';lmbAjax_multiSelect();">
+                                    <i class="lmb-icon lmb-connection" <?= $imgst ?> border="0"></i>
+                                </a>
+                                <img src="assets/images/legacy/outliner/blank.gif" border="0">
+                                <?php
+                            }
+                            ?>
+                            <a class="d-flex align-items-center" href="javascript:document.form_fs.del_id.value='<?= $result_fieldselect["id"][$key] ?>';lmbAjax_multiSelect();">
+                                <i class="lmb-icon lmb-trash" border="0"></i>
+                            </a>
+                        <?php } ?>
+                        &nbsp;
+                    </div>
+                </div>
+            <?php }
+        } ?>
 
-            echo "</table></div></td></tr>";
-        }
-        ?>
-
-        <TR class="tabFooter"><?= $add ?><TD HEIGHT="30" COLSPAN="5"><INPUT TYPE="button" VALUE="<?= $lang[33] ?>" NAME="select_change" onclick="lmbAjax_multiSelect(1);">&nbsp;&nbsp;&nbsp;
+        <div class="tabFooter row mt-3">
+            <?= $add ?>
+            <div class="col d-flex align-items-center">
                 <i class="lmb-icon lmb-first" STYLE="cursor:pointer" OnClick="document.form_fs.start.value = '1';lmbAjax_multiSelect();"></i>
-                <i class="lmb-icon lmb-previous" STYLE="cursor:pointer;font-size:1.5em;"  OnClick="document.form_fs.start.value = '<?= ($start - $num_result) ?>'; lmbAjax_multiSelect();"></i>&nbsp;
-                <i class="lmb-icon lmb-next" STYLE="cursor:pointer;font-size:1.5em;"  OnClick="document.form_fs.start.value = '<?= ($start + $num_result) ?>';lmbAjax_multiSelect();"></i>
-                <i class="lmb-icon lmb-last" STYLE="cursor:pointer"  OnClick="document.form_fs.start.value = '<?= ($result_fieldselect["num_ges"] - $num_result + 1) ?>'; lmbAjax_multiSelect();"></i>
-            </TD></TR>
+                <i class="lmb-icon lmb-previous" STYLE="cursor:pointer;font-size:1.5em;" OnClick="document.form_fs.start.value = '<?= ($start - $num_result) ?>'; lmbAjax_multiSelect();"></i>&nbsp;
+                <i class="lmb-icon lmb-next" STYLE="cursor:pointer;font-size:1.5em;" OnClick="document.form_fs.start.value = '<?= ($start + $num_result) ?>';lmbAjax_multiSelect();"></i>
+                <i class="lmb-icon lmb-last" STYLE="cursor:pointer" OnClick="document.form_fs.start.value = '<?= ($result_fieldselect["num_ges"] - $num_result + 1) ?>'; lmbAjax_multiSelect();"></i>
+            </div>
+            <div class="col-auto"><button type="button" class="btn btn-primary" VALUE="<?= $lang[33] ?>" NAME="select_change" onclick="lmbAjax_multiSelect(1);"><?= $lang[33] ?></button></div>
 
-    </TABLE>
-</FORM>
-<BR><BR>
+        </div>
+    </div>
+</form>

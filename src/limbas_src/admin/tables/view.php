@@ -19,6 +19,11 @@ if($options_save){
     lmb_QuestOptions($viewid,$options);
 }
 
+# save view options
+if($useparams_save){
+    lmb_QuestUseParams($viewid,$options);
+}
+
 
 // get view infos from limbas
 $gview = lmb_getQuestValue($viewid);
@@ -29,15 +34,13 @@ if($view_section == 1 OR $view_section == 2) {
 
 
     // generate SQL from editor
-    $manually = true;
     if ($view_section == 2 AND ($act == 'view_save' OR $act == 'view_isvalid' OR $act == 'view_create' OR $act == 'view_replace')) {
         $view_def = lmb_questCreateSQL($viewid);
-        $manually = false;
     }
 
     // save view definition
     if ($act == 'view_save') {
-        lmb_saveViewDefinition($viewid, $view_def, null, $manually);
+        lmb_saveViewDefinition($viewid, $view_def, null);
     } elseif ($act == 'view_isvalid') {
         lmb_saveViewDefinition($viewid, $view_def);
         if (lmb_precheckView($viewid, $view_def)) {
@@ -177,6 +180,7 @@ $(function() {
         <input type="hidden" name="showsystabs">
         <input type="hidden" name="view_save">
         <input type="hidden" name="options_save">
+        <input type="hidden" name="useparams_save">
         <input type="hidden" name="act">        
         <input type="hidden" name="use_codemirror" value="<?=$use_codemirror?>">
         

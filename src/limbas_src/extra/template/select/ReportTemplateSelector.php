@@ -27,6 +27,7 @@ class ReportTemplateSelector extends TemplateSelector
     {
         global $greportlist;
         global $session;
+        global $umgvar;
 
         $tenantId = !empty($session['mid']) ? $session['mid'] : 0;
         
@@ -65,11 +66,13 @@ class ReportTemplateSelector extends TemplateSelector
             
             $greportlist[$gtabid]['resolved'][$tenantId] = $resolvedList;
             
-            Database::update('LMB_CONF_TABLES',[
-                'REPORT_RESOLVE_CACHE' => json_encode($greportlist[$gtabid]['resolved']),
-            ],[
-                'TAB_ID' => $gtabid
-            ]);
+            if($umgvar['report_resolve_cache']) {
+                Database::update('LMB_CONF_TABLES',[
+                    'REPORT_RESOLVE_CACHE' => json_encode($greportlist[$gtabid]['resolved']),
+                ],[
+                    'TAB_ID' => $gtabid
+                ]);
+            }
             
         }
 
@@ -148,7 +151,7 @@ class ReportTemplateSelector extends TemplateSelector
         return parent::resolveSelect($params);
     }
 
-    protected function getFinalResolvedParameters(int $elementId, int $gtabid, ?int $id, $use_record, $resolvedTemplateGroups): array
+    protected function getFinalResolvedParameters(int $elementId, int $gtabid, ?int $id, array $ids, $use_record, $resolvedTemplateGroups): array
     {
         global $greportlist;
 

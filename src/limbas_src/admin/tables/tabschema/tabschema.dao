@@ -238,7 +238,7 @@ function schema_link($gtabid)
 
     $bzm = $GLOBALS["linknr"];
     foreach ($gfield[$gtabid]["id"] as $key => $fieldid) {
-        if ($gfield[$gtabid]["field_type"][$key] == 11 and $gfield[$gtabid]["verkntabletype"][$key] == 1) {
+        if ($gfield[$gtabid]["field_type"][$key] == 11 && $gfield[$gtabid]["verkntabletype"][$key] == 1) {
             if ($gfield[$gtabid]["data_type"][$key] == 27) {
                 $dtp = "1:n";
             } elseif ($gfield[$gtabid]["data_type"][$key] == 24) {

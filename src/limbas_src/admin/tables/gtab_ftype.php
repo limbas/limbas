@@ -987,7 +987,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
 
                 <td>
                     <?php // --- Select ------  
-                    if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16):
+                    if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 100 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][$bzm1] != 16 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 25 AND $result_fieldtype[$table_gtab[$bzm]]["datatype"][$bzm1] != 27):
                         if($result_fieldtype[$table_gtab[$bzm]]["artleiste"][$bzm1] == 1){$artleistevalue = "CHECKED";}else{$artleistevalue = "";}
                         ?>
 
@@ -1098,8 +1098,7 @@ if($table_typ[$bzm] == 5){$isview = 1;}
 
                 <TR>
                     <td colspan="4"></td>
-                    <td><INPUT class="form-control form-control-sm" type="TEXT" SIZE="16" name="field_name"
-                                            onchange="this.form.spellingf.value=this.form.field_name.value; this.form.beschreibung.value=this.form.field_name.value;"></td>
+                    <td><INPUT class="form-control form-control-sm" type="TEXT" SIZE="16" name="field_name" onchange="this.form.spellingf.value=this.form.field_name.value; this.form.beschreibung.value=this.form.field_name.value;"></td>
                     <td><INPUT class="form-control form-control-sm" type="TEXT" SIZE="25" name="beschreibung"></td>
                     <td><INPUT class="form-control form-control-sm" type="TEXT" SIZE="16" name="spellingf"></td>
                     <td><SELECT class="form-select form-select-sm" name="typ" OnChange="checkfiledtype(this,0)"><option></option>

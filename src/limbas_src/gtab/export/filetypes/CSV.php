@@ -35,7 +35,7 @@ class CSV extends FiletypeExporter
             }
         }
 
-        fputcsv($outputStream, $titles);
+        fputcsv($outputStream, $titles, escape:false);
 
         // Only get results of visible rows
         if (!$onlyGetVisibleRows) {

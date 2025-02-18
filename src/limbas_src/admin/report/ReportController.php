@@ -113,12 +113,20 @@ class ReportController extends LimbasController
             return ['success' => false];
         }
         $field = $request['field'];
-        $allowedFields = ['name' => 'name', 'target' => 'dmsFolderId', 'saveName' => 'saveName', 'printer' => 'printer', 'template' => 'savedTemplate'];
+        $allowedFields = ['name' => 'name', 'target' => 'dmsFolderId', 'saveName' => 'saveName', 'printer' => 'printer', 'template' => 'savedTemplate', 'standard' => 'standard', 'standard_auto' => 'standardAuto'];
         if (!array_key_exists($field, $allowedFields)) {
             return ['success' => false];
         }
+        
+        $value = $request['value'];
+        if($field === 'standard') {
+            $value = PdfStandard::tryFrom($value) ?? PdfStandard::DEFAULT;
+        }
+        elseif($field === 'standard_auto') {
+            $value = boolval($value);
+        }
 
-        $report->{$allowedFields[$field]} = $request['value'];
+        $report->{$allowedFields[$field]} = $value;
         $success = $report->save();
 
         return compact('success');

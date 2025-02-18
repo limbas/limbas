@@ -506,7 +506,9 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                     <div class="mb-3 row">
                         <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[2451]?></label>
                         <div class="col-sm-8">
-
+                            <?php
+                            if (!($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 11 && $result_fieldtype[$table_gtab[$bzm]]["verkntabletype"][1] == 2)){
+                            ?>
                             <select style="width:100%" class="form-select form-select-sm select2-selection" data-fieldid="<?=$fieldid?>" multiple="multiple" id="field_trigger">
                                 <option value=""></option>
                             <?php
@@ -515,8 +517,10 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                                 <option VALUE="<?=$trid?>" <?=$SELECTED?>><?=$gtrigger[$bzm]["trigger_name"][$trid]?> (<?=$gtrigger[$bzm]["type"][$trid]?>)</option>
                                 <?php endforeach; ?>
                             </select>
-
-                            <small class="form-text text-muted"><?=$lang[2825]?></small>
+                            <?php
+                            }
+                            ?>
+                            <small class="form-text text-muted"><?=($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 11 && $result_fieldtype[$table_gtab[$bzm]]["verkntabletype"][1] == 2) ? $lang[2825] : $lang[2825]?></small>
                         </div>
                     </div>
                     <?php
@@ -587,6 +591,7 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                            <hr>
                         <?php endif; ?>
 
+                    <?php endif; ?>
 
                         <?php // select
                         if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] < 100 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 16 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 6):
@@ -600,6 +605,7 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                             </div>
                         <?php endif; ?>
 
+                    <?php if(!$isview): ?>
 
                         <?php // ajax search
                         if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 11  OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] == 12 OR $result_fieldtype[$table_gtab[$bzm]]["datatype"][1] == 32 AND $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] != 16):
@@ -815,6 +821,17 @@ require_once(COREPATH . 'admin/tables/gtab_ftype.dao');
                         </div>
                     <?php endif; ?>
 
+                    <?php // relation/grouping popup default
+                    if($result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 11 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 4 OR $result_fieldtype[$table_gtab[$bzm]]["fieldtype"][1] == 19):
+                        ?>
+                        <div class="mb-3 row">
+                            <label class="col-sm-4 col-form-label col-form-label-sm"><?=$lang[3180]?></label>
+                            <div class="col-sm-8">
+                                <input type="checkbox" value="1" <?=($result_fieldtype[$table_gtab[$bzm]]['inactivelink'][1] == 1)?'checked':''?> onchange="document.form2.val.value=this.checked;ajaxEditField('<?=$fieldid?>','inactivelink')">
+                                <small class="form-text text-muted"><?=$lang[3181]?></small>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                     
                     <?php // Argument
                     if($result_fieldtype[$table_gtab[$bzm]]["argument_typ"][1]):

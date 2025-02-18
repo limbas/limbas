@@ -491,11 +491,20 @@ if($detailform) {
 	if(!$rs) {$commit = 1;}
 }
 
-/* --- detailform open as -------------------------------------- */
+/* --- detailform open in -------------------------------------- */
 if($detailform_opener) {
 	$detailform_opener = trim($detailform_opener);
 	if($detailform_opener == -1){$detailform_opener = 0;}
 	$sqlquery =  "UPDATE LMB_CONF_TABLES SET DETAILFORM_OPENER = ".parse_db_int($detailform_opener)." WHERE TAB_ID = $tabid";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
+/* --- detailform open as -------------------------------------- */
+if($detailform_viewmode) {
+	$detailform_opener = trim($detailform_viewmode);
+	if($detailform_viewmode == -1){$detailform_viewmode = 0;}else{$detailform_viewmode = $detailform_viewmode;}
+	$sqlquery =  "UPDATE LMB_CONF_TABLES SET DETAILFORM_VIEWMODE = ".parse_db_int($detailform_viewmode,1)." WHERE TAB_ID = $tabid";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 }
@@ -513,6 +522,14 @@ if($custmenu) {
 if($groupable) {
 	if($groupable == 1){$groupable = 1;}else{$groupable = 0;}
 	$sqlquery =  "UPDATE LMB_CONF_TABLES SET GROUPABLE = $groupable WHERE TAB_ID = $tabid";
+	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
+	if(!$rs) {$commit = 1;}
+}
+
+/* --- Gruppierung -------------------------------------- */
+if($checkboxselect) {
+	if($checkboxselect == 1){$checkboxselect = LMB_DBDEF_TRUE;}else{$checkboxselect = LMB_DBDEF_FALSE;}
+	$sqlquery =  "UPDATE LMB_CONF_TABLES SET CHECKBOXSELECT = $checkboxselect WHERE TAB_ID = $tabid";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 }
@@ -661,6 +678,7 @@ if(!$import){
             LMB_CONF_TABLES.BESCHREIBUNG AS TABLEDESC,
             LMB_CONF_TABLES.LOCKABLE,
             LMB_CONF_TABLES.GROUPABLE,
+            LMB_CONF_TABLES.CHECKBOXSELECT,
             LMB_CONF_TABLES.MARKCOLOR,
             LMB_CONF_TABLES.LINECOLOR,
             LMB_CONF_TABLES.USERRULES,
@@ -680,6 +698,7 @@ if(!$import){
             LMB_CONF_TABLES.NUMROWCALC,
             LMB_CONF_TABLES.DETAILFORM,
             LMB_CONF_TABLES.DETAILFORM_OPENER,
+            LMB_CONF_TABLES.DETAILFORM_VIEWMODE,
             LMB_CONF_TABLES.CUSTMENU,
             LMB_CONF_TABLES.RESERVEID,
             LMB_CONF_TABLES.DATASYNC,
@@ -725,6 +744,7 @@ if(!$import){
             $result_gtab[$tabgroupid]['beschreibung'][$tabIndex] = $lang[lmbdb_result($rs, 'TABLEDESC')];
             $result_gtab[$tabgroupid]['lockable'][$tabIndex] = lmbdb_result($rs, 'LOCKABLE');
             $result_gtab[$tabgroupid]['groupable'][$tabIndex] = lmbdb_result($rs, 'GROUPABLE');
+            $result_gtab[$tabgroupid]['checkboxselect'][$tabIndex] = lmbdb_result($rs, 'CHECKBOXSELECT');
             $result_gtab[$tabgroupid]['markcolor'][$tabIndex] = lmbdb_result($rs, 'MARKCOLOR');
             $result_gtab[$tabgroupid]['linecolor'][$tabIndex] = lmbdb_result($rs, 'LINECOLOR');
             $result_gtab[$tabgroupid]['userrules'][$tabIndex] = lmbdb_result($rs, 'USERRULES');
@@ -742,6 +762,7 @@ if(!$import){
             $result_gtab[$tabgroupid]['custmenu'][$tabIndex] = lmbdb_result($rs, 'CUSTMENU');
             $result_gtab[$tabgroupid]['detailform'][$tabIndex] = lmbdb_result($rs, 'DETAILFORM');
             $result_gtab[$tabgroupid]['detailform_opener'][$tabIndex] = lmbdb_result($rs, 'DETAILFORM_OPENER');
+            $result_gtab[$tabgroupid]['detailform_viewmode'][$tabIndex] = lmbdb_result($rs, 'DETAILFORM_VIEWMODE');
             $result_gtab[$tabgroupid]['reserveid'][$tabIndex] = lmbdb_result($rs, 'RESERVEID');
             $result_gtab[$tabgroupid]['argresult'][lmbdb_result($rs, 'TAB_ID')] = $tabIndex;
             $result_gtab[$tabgroupid]['maingroup'][$tabIndex] = $tabgroupid;

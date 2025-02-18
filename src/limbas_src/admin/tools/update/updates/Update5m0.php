@@ -309,7 +309,7 @@ class Update5m0 extends Update
             return true;
         }
         $nid = next_db_id('lmb_umgvar');
-        return $this->databaseUpdate("INSERT INTO LMB_UMGVAR VALUES($nid,$nid,'modal_level','same','open modals in sublevels (same / nested)',1896)");
+        return $this->databaseUpdate("INSERT INTO LMB_UMGVAR VALUES($nid,$nid,'modal_level','same','open modals in sublevels like modals in modals (same / nested)',1896)");
     }
 
     /**

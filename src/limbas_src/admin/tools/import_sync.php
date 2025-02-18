@@ -1030,10 +1030,10 @@ class importSync
 
                if(import(false, $import_overwrite, null, null, null, null, 'export')){
                     LimbasLogger::log("import table $table", LimbasLogger::LL_INFO);
-                }else{
+               }else{
                     LimbasLogger::log("import table $table - Message:".lmbdb_errormsg($db), LimbasLogger::LL_ERROR);
                     return false;
-                }
+               }
 
             }
 

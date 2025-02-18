@@ -22,13 +22,11 @@
     if(!$isview){
         pop_submenu(9,'','');								# Infomenü
         if($gtab["logging"][$gtabid]){
-            pop_submenu(173,'','');							# History
+            pop_submenu(173,'','');						# History
         }
     }
 
-    if($gtab["tab_view_lform"][$gtabid]){
-        pop_menu(6,'view_contextDetail();return;');										# Detail
-    }
+    pop_menu(6);										            # Detail
 
     if($gtab["edit"][$gtabid]){pop_menu(3,'','');}			# bearbeiten
     if($gtab["add"][$gtabid] AND $gtab["copy"][$gtabid] AND !$readonly){pop_menu(201,'','');}			# Datensatz kopieren
@@ -74,21 +72,9 @@
         <?php #----------------- Info-Menü -------------------2
         pop_menu2('','','lmbInfoCreate',"lmb-page-new");
         pop_menu2('','','lmbInfoEdit',"lmb-page-edit");
-        pop_line();
-        pop_left();
-        echo "&nbsp;$lang[1527]:&nbsp;<span style='color: green'>[RETURN]</span>";
-        pop_right();
-        pop_left();
-        echo "&nbsp;$lang[357]:&nbsp;<span style='color: green'>[Mouse DblClick]</span>";
-        pop_right();
-        pop_left();
-        echo "&nbsp;$lang[1529]:&nbsp;<span style='color: green'>[SHIFT][Mouse DblClick]</span>";
-        pop_right();
-        pop_left();
-        echo "&nbsp;$lang[2821]:&nbsp;<span style='color: green'>[CTRL][Right Mouse Click]</span>";
-        pop_right();
         # extension
         if(function_exists($GLOBALS["gLmbExt"]["menuListCInfo"][$gtabid])){
+            pop_line();
             $GLOBALS["gLmbExt"]["menuListCInfo"][$gtabid]($gtabid,$form_id,$gresult);
         }
         pop_bottom();

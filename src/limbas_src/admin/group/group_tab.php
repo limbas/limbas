@@ -335,9 +335,6 @@
                             if ($_gtab["tab_group"][$key] != $_tabgroup["id"][$bzm]) {
                                 continue;
                             }
-                            if ((!is_array($s_result[$key]["view"]) || !in_array('1', $s_result[$key]["view"])) && !$session["superadmin"]) {
-                                continue;
-                            }
                             $icon = 'plusonly';
                             if ($is_popup and in_array($key, $is_popup)) {
                                 $icon = 'minusonly';
@@ -461,9 +458,11 @@
                                                     $id = lmbdb_result($rs1, 'ID');
                                                     $form['name'][$id] = lmbdb_result($rs1, 'NAME');
                                                     $form['typ'][$id] = lmbdb_result($rs1, 'FORM_TYP');
+                                                    if($form['typ'][$id] == 1){$form['hastyp1'] = 1;} // detailform
+                                                    if($form['typ'][$id] == 2){$form['hastyp2'] = 1;} // listform
                                                 }
 
-                                                if ($form):
+                                                if ($form['hastyp1']):
                                                     ?>
                                                     <div class="px-0 w-100">
                                                         <div class="d-flex flex-row align-items-center">
@@ -495,8 +494,10 @@
                                                         </div>
                                                     </div>
                                                     <?php
+                                                endif;
 
-                                                    //tablelist form selection
+                                                //tablelist form selection
+                                                if ($form['hastyp2']):
                                                     ?>
                                                     <div class="px-0 w-100">
                                                         <div class="d-flex flex-row align-items-center">
@@ -511,20 +512,25 @@
                                                                     <option VALUE="0">
                                                                         none
                                                                     </option>
-                                                                    <?php foreach ($form['name'] as $fid => $_value): ?>
-                                                                        <option VALUE="<?= $fid ?>" <?= $f_result[$key]["view_lform"] == $fid ? "selected" : "" ?>>
-                                                                            <?= $form['name'][$fid] ?>
-                                                                        </option>
-                                                                    <?php endforeach; ?>
+                                                                    <?php foreach ($form['name'] as $fid => $_value):
+                                                                        if ($form['typ'][$fid] == 2):
+                                                                            ?>
+                                                                            <option value="<?= $fid ?>" <?= $f_result[$key]["view_lform"] == $fid ? "selected" : "" ?>>
+                                                                                <?= $form['name'][$fid] ?>
+                                                                            </option>
+                                                                        <?php
+                                                                        endif;
+                                                                    endforeach; ?>
                                                                 </select>
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <?php
+                                                endif;
 
 
-                                                    //calendar form selection
-                                                    if ($_gtab["typ"][$key] == 2) {
+                                                //calendar form selection
+                                                if ($_gtab["typ"][$key] == 2 && $form['hastyp1']) {
                                                         ?>
                                                         <div class="px-0 w-100">
                                                             <div class="d-flex flex-row align-items-center">
@@ -552,7 +558,7 @@
                                                     }
 
                                                     //kanban form selection
-                                                    if ($_gtab["typ"][$key] == 7):
+                                                    if ($_gtab["typ"][$key] == 7 && $form['hastyp1']):
                                                         ?>
                                                         <div class="px-0 w-100">
                                                             <div class="d-flex flex-row align-items-center">
@@ -580,7 +586,7 @@
                                                         </div>
                                                     <?php
                                                     endif;
-                                                endif;
+
 
                                                 # Versioning Type
                                                 if ($gtab["versioning"][$key] and !$isview) {

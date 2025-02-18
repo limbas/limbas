@@ -240,7 +240,7 @@
 
                     <table class="table table-sm table-striped mb-0">
                         <thead>
-                            <tr>
+                            <tr class="table-primary">
                                 <td></td>
                                 <td><input type="text" name="find_wert" value="<?= htmlentities($find_wert, ENT_QUOTES, $umgvar['charset']) ?>" class="form-control form-control-sm"></td>
                                 <?= str_repeat('<td></td>', $numLangCols) ?>

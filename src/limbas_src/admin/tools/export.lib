@@ -139,7 +139,7 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null){
 		// tables
 		if ($exporttabs)
 		{
-			$tosync = array_merge($tosync, array('lmb_conf_groups','lmb_conf_tables','lmb_conf_fields','lmb_conf_views','lmb_conf_viewfields','lmb_gtab_pattern','lmb_tabletree','lmb_lang_depend','lmb_select_p','lmb_attribute_p','lmb_select_w','lmb_attribute_w','lmb_lang_depend') );
+			$tosync = array_merge($tosync, array('lmb_conf_groups','lmb_conf_tables','lmb_conf_fields','lmb_conf_views','lmb_conf_viewfields','lmb_gtab_pattern','lmb_tabletree','lmb_lang_depend','lmb_select_p','lmb_attribute_p','lmb_select_w','lmb_attribute_w') );
 			// rules
     		if (in_array('group',$tableprefix)){
     		    $tosync = array_merge($tosync, array('lmb_groups', 'lmb_rules_tables','lmb_rules_fields'));
@@ -327,7 +327,7 @@ function lmbExport($exptable,$format,$export_filter=null,$tableprefix=null){
 	    // system
         if (in_array('system',$tableprefix))
         {
-            $tosync = array_merge($tosync, array('lmb_field_types','lmb_fonts','lmb_mimetypes','lmb_lang','lmb_action') );
+            $tosync = array_merge($tosync, array('lmb_field_types','lmb_field_types_depend','lmb_fonts','lmb_mimetypes','lmb_lang','lmb_action') );
         }
 
         // === /sonst ===
@@ -1157,7 +1157,7 @@ function lmb_availableSyncModules(){
         'synchronisation'=>array('name'=>$lang[2914],'title'=>'lmb_sync_conf lmb_sync_template','group'=>2),
         'custvar'=>array('name'=>$lang[2958],'title'=>'lmb_custvar','group'=>2),
         'rules'=>array('name'=>$lang[994].' '.$lang[575].' '.$lang[854].' '.$lang[1469],'title'=>'lmb_groups, lmb_rules_action,lmb_rules_repform, lmb_rules_tables, lmb_rules_fields, ldms_rules','group'=>2),
-        'system'=>array('name'=>'Systemtables','title'=>'lmb_field_types, lmb_fonts, lmb_mimetypes, lmb_lang, lmb_action','group'=>2),
+        'system'=>array('name'=>'Systemtables','title'=>'lmb_field_types, lmb_field_types_depend, lmb_fonts, lmb_mimetypes, lmb_lang, lmb_lang_depend, lmb_action','group'=>2),
         'globalsynctables'=>array('name'=>'global sync tables','title'=>'global sync tables','group'=>2),
 
         'functmpfields'=>array('name'=>$lang[2030],'title'=>'','group'=>3),

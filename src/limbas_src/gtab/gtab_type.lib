@@ -1152,28 +1152,19 @@ function dftyp_37($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 	global $lang;
 	global $gform;
 
-	$dp = 'text';
-	if($pos){$pos = "STYLE=\"".$pos."\"";}
-	if($style){$style = "STYLE=\"".$style."\"";}
+    if($pos || $style) {
+        $style = "style=\"$style$pos\"";
+    }
+
 	$dateformat = 1;
 
-	echo "<div $pos>";
+    // write
+    $value1 = get_date($gresult[$gtabid]['LMB_VALIDFROM'][0], 1, 2);
+    $value2 = get_date($gresult[$gtabid]['LMB_VALIDTO'][0], 1, 2);
 
-	// write
-	if($typ == 1) {
-        // browser datepicker needs us fromat
-        if ($gfield[$gtabid]["select_pool"][$bzm] == 2) {
-            $dp = 'date';
-            $value1 = get_date($gresult[$gtabid]['LMB_VALIDFROM'][0], 1, 2);
-            $value2 = get_date($gresult[$gtabid]['LMB_VALIDTO'][0], 1, 2);
-        } else {
-            $value1 = get_date($gresult[$gtabid]['LMB_VALIDFROM'][0], $dateformat);
-            $value2 = get_date($gresult[$gtabid]['LMB_VALIDTO'][0], $dateformat);
-        }
-
-    // readonly
-    }elseif($typ == 2){
-	    // use numerformat to format date
+    // read/disabled
+    if($typ == 2){
+        // use numerformat to format date
         if($gfield[$gtabid]["nformat"][$bzm]){
             $value1 = get_format_date($gresult[$gtabid]['LMB_VALIDFROM'][0], $gfield[$gtabid]["nformat"][$bzm]);
             $value2 = get_format_date($gresult[$gtabid]['LMB_VALIDTO'][0], $gfield[$gtabid]["nformat"][$bzm]);
@@ -1181,6 +1172,9 @@ function dftyp_37($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
             $value1 = get_date($gresult[$gtabid]['LMB_VALIDFROM'][0], $dateformat);
             $value2 = get_date($gresult[$gtabid]['LMB_VALIDTO'][0], $dateformat);
         }
+
+        $value1 = $value1 ?: '&nbsp;';
+        $value2 = $value2 ?: '&nbsp;';
     }
 
     $countryformat = setDateFormat($dateformat, 1);
@@ -1190,36 +1184,71 @@ function dftyp_37($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
     $event_dblclick = "this.value=limbasGetDate('".$countryformat."');$event_change";
     $events = dftyp_events($typ,$event,null,$event_dblclick,null,null,$event_change,$gresult,$gtabid,$bzm);
 
-    if(preg_match('/display:none/',$style)){$sdpl="display:none;";}
-    $options = htmlspecialchars($gform[$gformid]["parameters"][$formid], ENT_COMPAT /* escape double quotes */);
-    if (!$options) {
-        $options = '{}';
+    $form_name = $gfield[$gtabid]["form_name"][$bzm];
+    $regex = e($gfield[$gtabid]["regex"][$bzm]);
+
+    echo <<<HTML
+        <div class="{$class} d-flex flex-wrap" $style>
+            <div class="d-flex flex-row align-items-center">
+                <label for="{$form_name}_from" class="form-label m-0 mx-1">{$lang[1445]}</label>
+    HTML;
+
+    if ($typ == 2) {
+        echo <<<HTML
+                <div id="{$form_name}" 
+                     name="{$form_name}" 
+                     data-regex="{$regex}"
+                     style="min-width:133px;"
+                     class="form-control mx-1" $events>
+                     $value1
+                </div>
+        HTML;
+    } else {
+        echo <<<HTML
+                <input class="form-control w-100 mx-1" style="width:80%"
+                       type="date" id="{$form_name}" 
+                       name="{$form_name}[0]" 
+                       value="{$value1}" maxlength="{$gfield[$gtabid]["size"][$bzm]}" 
+                       data-required="{$gfield[$gtabid]["need"][$bzm]}" 
+                       title="{$gfield[$gtabid]["need"][$bzm]}{$gfield[$gtabid]["beschreibung"][$bzm]}" 
+                       tabindex="$z_index" $readonly $events>
+        HTML;
     }
 
-    echo "<table class=\"" . $class . "\" $style><tr>";
-    echo "</td><td nowrap>";
-    echo "<label for=\"" . $gfield[$gtabid]["form_name"][$bzm] . "_from\" class=\"form-label\">".$lang[1445]."&nbsp;</label>";
-    if($typ == 2){
-        echo "<div id=\"".$gfield[$gtabid]["form_name"][$bzm]."\" for=\"" . $gfield[$gtabid]["form_name"][$bzm] . "_from\" name=\"".$gfield[$gtabid]["form_name"][$bzm]."\" data-regex=\"".htmlentities($gfield[$gtabid]["regex"][$bzm],ENT_QUOTES)."\" class=\"form-control " . $class . "\" $events> ".$value1."</div>";
-    }else {
-        echo "<INPUT class=\"form-control " . $class . "\" style=\"width:80%\" for=\"" . $gfield[$gtabid]["form_name"][$bzm] . "\" TYPE=\"$dp\" ID=\"" . $gfield[$gtabid]["form_name"][$bzm] . "\" NAME=\"" . $gfield[$gtabid]["form_name"][$bzm] . "[0]\" VALUE=\"" . $value1 . "\" MAXLENGTH=\"" . $gfield[$gtabid]["size"][$bzm] . "\" data-required=\"".$gfield[$gtabid]["need"][$bzm]."\" TITLE=\"" . $gfield[$gtabid]["need"][$bzm] . $gfield[$gtabid]["beschreibung"][$bzm] . "\" TABINDEX=\"$z_index\" $readonly $events>";
-    }
-    if($typ == 1 AND $gfield[$gtabid]["option"][$bzm]){
-        echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" ALIGN=\"middle\" BORDER=\"0\" TITLE=\"$lang[700]\" style=\"cursor:pointer;vertical-align:baseline;$sdpl\" Onclick=\"lmb_datepicker(event,this,'','$value1','".dateStringToDatepicker($countryformat)."',null,null,$options)\"></i>\n";
+    echo <<<HTML
+            </div>
+            <div class="d-flex flex-row align-items-center">
+                <label for="{$form_name}_to" class="form-label m-0 mx-1">{$lang[1446]}</label>
+    HTML;
+
+    if ($typ == 2) {
+        echo <<<HTML
+                <div id="{$form_name}"
+                     name="{$form_name}" 
+                     data-regex="{$regex}"
+                     style="min-width:133px;"
+                     class="form-control mx-1" $events>
+                     $value2
+                </div>
+        HTML;
+    } else {
+        // todo description states 'Gültigkeit von' even though it should be 'Gültigkeit bis'
+        echo <<<HTML
+                <input class="form-control w-100 mx-1"
+                       style="width:80%" type="date" id="{$form_name}" 
+                       name="{$form_name}[1]" 
+                       value="{$value2}" maxlength="{$gfield[$gtabid]["size"][$bzm]}" 
+                       data-required="{$gfield[$gtabid]["need"][$bzm]}" 
+                       title="{$gfield[$gtabid]["need"][$bzm]}{$gfield[$gtabid]["beschreibung"][$bzm]}" 
+                       tabindex="$z_index" $readonly $events>
+        HTML;
     }
 
-    echo "</td><td nowrap>";
-    echo "<label for=\"" . $gfield[$gtabid]["form_name"][$bzm] . "_to\" class=\"form-label\">".$lang[1446]."&nbsp;</label>";
-    if($typ == 2){
-        echo "<div id=\"".$gfield[$gtabid]["form_name"][$bzm]."\" for=\"" . $gfield[$gtabid]["form_name"][$bzm] . "_to\" name=\"".$gfield[$gtabid]["form_name"][$bzm]."\" data-regex=\"".htmlentities($gfield[$gtabid]["regex"][$bzm],ENT_QUOTES)."\" class=\"form-control " . $class . "\" $events> ".$value2."</div>";
-    }else {
-        echo "<INPUT class=\"form-control " . $class . "\" for=\"" . $gfield[$gtabid]["form_name"][$bzm] . "_to\" style=\"width:80%\" TYPE=\"$dp\" ID=\"" . $gfield[$gtabid]["form_name"][$bzm] . "\" NAME=\"" . $gfield[$gtabid]["form_name"][$bzm] . "[1]\" VALUE=\"" . $value2 . "\" MAXLENGTH=\"" . $gfield[$gtabid]["size"][$bzm] . "\" data-required=\"".$gfield[$gtabid]["need"][$bzm]."\" TITLE=\"" . $gfield[$gtabid]["need"][$bzm] . $gfield[$gtabid]["beschreibung"][$bzm] . "\" TABINDEX=\"$z_index\" $readonly $events>&nbsp;";
-    }
-    if($typ == 1 AND $gfield[$gtabid]["option"][$bzm]){echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" ALIGN=\"middle\" BORDER=\"0\" TITLE=\"$lang[700]\" style=\"cursor:pointer;vertical-align:baseline;$sdpl\" Onclick=\"lmb_datepicker(event,this,'','$value1','".dateStringToDatepicker($countryformat)."',null,null,$options)\"></i>\n";}
-    echo "</td></tr></table>";
+    echo <<<HTML
+            </div>
+        </div>
+    HTML;
 
-
-	echo "</div>\n";
 }
 
 /* -------------------------- Encryption --------------------------------- */
@@ -1376,7 +1405,7 @@ function dftyp_15($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
         if($params['width']) {
             $width = $params['width'];
         }elseif($gform[$gformid]['width'][$formid]){
-            $width = $gform[$gformid]['width'][$formid];
+            $width = ($gform[$gformid]['width'][$formid]-30);
         }elseif(!$params['notitle']){
             $width = '50';
         }
@@ -2206,24 +2235,14 @@ function dftyp_14_header($gtabid,$fieldid,$ID,$vuniqueid,$gformid,$formid,$editt
 	    $vgtabid = $gtabid;
     }
 
-    // extended destination formid
-    if($filter["ext_RelationFields"]["formid"][$vuniqueid]){
-        $dest_formid = $filter["ext_RelationFields"]["formid"][$vuniqueid];
-    }
-
-    if($filter['ext_RelationFields']['formsize'][$vuniqueid]){
-        $dimsn = $filter['ext_RelationFields']['formsize'][$vuniqueid];
-    }elseif($dest_formid){
-        $dimsn = $gformlist[$vgtabid]["dimension"][$dest_formid];
-    }else{
-        $dimsn = $gformlist[$vgtabid]["dimension"][$gtab["tab_view_form"][$vgtabid]];
-    }
+    // form params
+    $formparams = cftyp_OpenFormParams($vgtabid,$gformid,$formid,$vuniqueid,$filter);
 
 	echo "<table border=\"0\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" class=\"gtabHeaderRelationTAB\" id=\"extRelationTab_".$gtabid."_".$fieldid."menu\">\n";
 	echo "<tr class=\"gtabHeaderSymbolTR\">";
 
 	if($edittyp == 1 AND $gtab["typ"][$gtabid] != 5){
-		if(!$filter["ext_RelationFields"]["no_add"][$vuniqueid] AND $LINK[1] AND $add){echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i class=\"lmb-icon lmb-page-new\" BORDER=\"0\" title=\"".$lang[$LINK["desc"][1]]."\" STYLE=\"cursor:pointer\" OnClick=\"create_new_verkn(event,'".$verkn["vtabid"]."','$fieldid','$gtabid','$ID','".$gtab["desc"][$verkn["vtabid"]]."','".$dimsn."','".$filter["ext_RelationFields"]["show_relationpath"][$vuniqueid]."','".$dest_formid."','$formid','".$filter["ext_RelationFields"]["show_inframe"][$vuniqueid]."','".$filter["ext_RelationFields"]["layername"][$vuniqueid]."');\"></i></TD><TD STYLE=\"width:5px;color:green;\" ALIGN=\"CENTER\">|</TD>";}
+		if(!$filter["ext_RelationFields"]["no_add"][$vuniqueid] AND $LINK[1] AND $add){echo "<TD STYLE=\"width:20px;\" ALIGN=\"CENTER\" NOWRAP><i class=\"lmb-icon lmb-page-new\" BORDER=\"0\" title=\"".$lang[$LINK["desc"][1]]."\" STYLE=\"cursor:pointer\" OnClick=\"create_new_verkn(event,'".$verkn["vtabid"]."','$fieldid','$gtabid','$ID','".$gtab["desc"][$verkn["vtabid"]]."','".$formparams['dimension']."','".$filter["ext_RelationFields"]["show_relationpath"][$vuniqueid]."','".$formparams['formid']."','$formid','".$formparams['openas']."','".$filter["ext_RelationFields"]["layername"][$vuniqueid]."');\"></i></TD><TD STYLE=\"width:5px;color:green;\" ALIGN=\"CENTER\">|</TD>";}
 		if(!$filter["ext_RelationFields"]["no_delete"][$vuniqueid]){
 			echo "<td style=\"width:20px;\" align=\"center\" nowrap>";
 			if($gfield[$gtabid]["data_type"][$fieldid] == 24 AND $LINK[158]){echo "<i class=\"lmb-icon-cus lmb-rel-del\" align=\"center\" style=\"cursor:pointer;\" onclick=\"LmExt_RelationFields(this,'$gtabid','$fieldid','','$edittyp','$ID','','','unlink','".$gfield[$gtabid]["verkntabid"][$fieldid]."','$gformid','$formid');\" title=\"".$lang[$LINK["desc"][158]]."\"></i>";
@@ -2405,7 +2424,7 @@ function dftyp_14_footer(&$gresult,$gtabid,$fieldid,$ID,$gformid,$formid,$vuniqu
 }
 
 # -------------------------- Verknüpfungen ---------------------------------
-function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$typ=1,$z_index=null,$event=null,$gformid=null,$formid=null,$dest_formid=null) {
+function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$typ=1,$z_index=null,$event=null,$gformid=null,$formid=null) {
 	global $db;
 	global $gtab;
 	global $gfield;
@@ -2422,29 +2441,76 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 	$extension = null;
 	$gsr = null;
 
-	if(!$action){$action = 'gtab_change';}
-	require_once COREPATH . 'gtab/gtab_type_erg.lib';
+    require_once COREPATH . 'gtab/gtab_type_erg.lib';
 
 	$vgtabid = $gfield[$gtabid]["verkntabid"][$bzm];
 	$vuniqueid = $gfield[$gtabid]["form_name"][$bzm]."_".$gformid;
 	$verkntabletype = $gfield[$gtabid]["verkntabletype"][$bzm];
-	if($verkntabletype == 3){$typ = 2;}
-	
-	$verkn = set_verknpf($gtabid,$bzm,$ID,0,0,1,1);
 	$linklevel["tabid"] = $gfield[$gtabid]["verkntabid"][$bzm];
 	$linklevel["fieldid"] = $gfield[$gtabid]["verknfieldid"][$bzm];
-	$gsr = $filter["ext_RelationFields"]["searchval"][$vuniqueid];
+    $viewmode = $gtab["detailform_viewmode"][$vgtabid];
+	if($verkntabletype == 3){$typ = 2;}
+    if(!$action){$action = 'gtab_change';}
+
+    // init_relation
+	$verkn = set_verknpf($gtabid,$bzm,$ID,0,0,1,1);
 
 	// specific relation params & filter
     cftyp_ext_RelationFields($ID,$gtabid,$bzm,$vuniqueid,$formid,$gformid,$verkn,$gresult,$filter,$gsr,$extension);
 
-	# ------- 1:n / n:m Verknüpfung Select/Einzeldarstellung -----
-	if(($gfield[$gtabid]["artleiste"][$bzm] OR $filter["ext_RelationFields"]['viewmode'][$vuniqueid]) AND $filter["ext_RelationFields"]['viewmode'][$vuniqueid] != 'default' AND $filter["ext_RelationFields"]["viewmode"][$vuniqueid] != 'minimized'){
+    // form parameter
+    $formparams = cftyp_OpenFormParams($gtabid,$gformid,$formid,$vuniqueid,$filter);
+
+    // get specific search params
+    $gsr = $filter["ext_RelationFields"]["searchval"][$vuniqueid];
+
+    // specific formular viewmode - edit = 0 / view = 1
+    if($filter["ext_RelationFields"]["view_mode"][$vuniqueid] == 1){
+        $viewmode = 1;
+    }elseif($filter["ext_RelationFields"]["view_mode"][$vuniqueid] == 2) {
+        $viewmode = 0;
+    }
+
+    ?>
+    <script>
+        jsvar["detailform_viewmode_<?=$vgtabid?>"] = "<?=$viewmode?>";
+    </script>
+    <?php
+
+    // render modus
+    // 1:n / n:m relation view in simplified mode
+    if(($gfield[$gtabid]["artleiste"][$bzm] OR $filter["ext_RelationFields"]['viewmode'][$vuniqueid]) AND $filter["ext_RelationFields"]['viewmode'][$vuniqueid] != 'default' AND $filter["ext_RelationFields"]["viewmode"][$vuniqueid] != 'minimized') {
+        // drop-down html
+        if($filter["ext_RelationFields"]["viewmode"][$vuniqueid] == 'dropdown') {
+            $rendermode = 2;
+        // single ajax selector
+        }elseif(($gfield[$gtabid]["dynsearch"][$bzm] AND $gfield[$gtabid]["unique"][$bzm]) OR $filter["ext_RelationFields"]["viewmode"][$vuniqueid] == 'single_ajax') {
+            $rendermode = 3;
+        // multiple ajax selector
+		}elseif($gfield[$gtabid]["dynsearch"][$bzm] OR $filter["ext_RelationFields"]["viewmode"][$vuniqueid] == 'multi_ajax'){
+            $rendermode = 4;
+        // drop-down html
+		}else {
+            $rendermode = 2;
+        }
+    // 1:n / n:m relation view in detailed mode
+    }else{
+        $rendermode = 1;
+    }
+
+    // exclude relation from reserve ID read only - except pop-down html // todo - reserve ID
+    if(!$ID && $gtab['reserveid'][$gtabid] && $rendermode != 2 && $rendermode != 3){
+        echo "<div style=\"".$pos.$style."\" class=\"alert alert-light\" role=\"alert\">".$lang[3184]."</div>";
+        return;
+    }
+
+	// 1:n / n:m relation view in simplified mode
+	if($rendermode > 1){
 		if($style){$style_abs = "STYLE=\"".$pos.$style."\"";}
 		$linklevel["norecursiv"] = 1; # do not resolve recursiv relations
-		
+
 		echo "<div style=\"$pos\">";
-		
+
 		# --- zeige definierte Felder ----
 		if($gfield[$gtabid]["verknview"][$bzm]){
 			$showfields = $gfield[$gtabid]["verknview"][$bzm];
@@ -2453,25 +2519,14 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 			$showfields = array($linklevel["fieldid"]);
 			$afieldlist[$linklevel["tabid"]] = array($linklevel["fieldid"]);
 		}
-		
-		# check for formular dimension
-		if($dest_formid){
-			$dimsn = $gformlist[$gtabid]["dimension"][$dest_formid];
-		}else{
-			$dimsn = $gformlist[$gtabid]["dimension"][$gtab["tab_view_form"][$gtabid]];
-		}
-		
+
 		# editmode for tablelist extend formname
 		if($formid == -1){$fextend = '_'.$ID;}
-		
-        // exclude 1:n direct relation from reserve ID read only
-        $hideOnReserveId = $gfield[$gtabid]['data_type'][$bzm] != 25;
-        
+
 		if($typ == 1){
 
-			# --- Dynamic Ajax View Single ----
-			if(($gfield[$gtabid]["dynsearch"][$bzm] AND $gfield[$gtabid]["unique"][$bzm]) OR $filter["ext_RelationFields"]["viewmode"][$vuniqueid] == 'single_ajax'){
-                if(!$ID && $hideOnReserveId){echo "</div>";return;} // todo - reserve ID
+			// single ajax selector
+			if($rendermode == 3){
 
 				# get result
 				$vgresult = sql_14_c($vgtabid,$verkn,$linklevel,$gformid,null,$gsr,$afieldlist,$extension);
@@ -2491,7 +2546,7 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 						$retrn[] = $fname(0,$ffieldid,$vgtabid,3,$vgresult,0);
 					}
 					if(!$retrn){$retrn[] = $vid;}
-					
+
 					$retrn = implode($gfield[$gtabid]["verknviewcut"][$bzm],$retrn);
 				}
 
@@ -2501,18 +2556,17 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 				if($gfield[$gtabid]["option"][$bzm]){
 				if($vgresult[$linklevel["tabid"]]["id"][0]){
 					#echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" border=\"0\" title=\"$lang[1298]\" style=\"cursor:pointer;$sdpl\" onclick=\"newwin7('$action','".$linklevel["tabid"]."','".$gtabid."','".$bzm."','".$ID."','$vid','$dest_formid','$dimsn');\"></i><div></div>";
-                    echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" border=\"0\" title=\"$lang[1298]\" style=\"cursor:pointer;$sdpl\" onclick=\"lmbOpenForm(event,'{$linklevel["tabid"]}','$vid',{formid:'$dest_formid',action:'$action', v_tabid:'$gtabid',v_fieldid:'$bzm',v_id:'$ID',formdimension:'$dimsn'});\"></i><div></div>";
+                    echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" border=\"0\" title=\"$lang[1298]\" style=\"cursor:pointer;$sdpl\" onclick=\"lmbOpenForm(event,'{$linklevel["tabid"]}','$vid',{action:'$action',formid:'{$formparams['formid']}',formdimension:'{$formparams['dimension']}',formopenas:'{$formparams['openas']}', v_tabid:'$gtabid',v_fieldid:'$bzm',v_id:'$ID'});\"></i><div></div>";
 				}else{
 					#echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" border=\"0\" title=\"$lang[1298]\" style=\"cursor:pointer;$sdpl\" onclick=\"newwin5(event,'".$verkn["vtabid"]."','".$gtabid."','".$bzm."','".$ID."');\"></i>";
-                    echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" border=\"0\" title=\"$lang[1298]\" style=\"cursor:pointer;$sdpl\" onclick=\"lmbOpenForm(event,'{$linklevel["tabid"]}','',{action:'gtab_erg', v_tabid:'$gtabid',v_fieldid:'$bzm',v_id:'$ID'});\"></i>";
+                    echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" border=\"0\" title=\"$lang[1298]\" style=\"cursor:pointer;$sdpl\" onclick=\"lmbOpenForm(event,'{$linklevel["tabid"]}','',{action:'gtab_erg', formopenas:'{$formparams['openas']}', v_tabid:'$gtabid',v_fieldid:'$bzm',v_id:'$ID'});\"></i>";
 				}}
 				# ------ Detail der Verknüpfung -----
 				echo "<div id=\"".$gfield[$gtabid]["form_name"][$bzm]."_dsl\" class=\"ajax_container\" style=\"position:absolute;z-index:9999;display:none\"></div>
 				<input type=\"hidden\" id=\"".$gfield[$gtabid]["form_name"][$bzm].$fextend."\" name=\"".$gfield[$gtabid]["form_name"][$bzm].$fextend."\" value=\"$vid\">";
 
-			# --- Dynamic Ajax View Multiple ----
-			}elseif($gfield[$gtabid]["dynsearch"][$bzm] OR $filter["ext_RelationFields"]["viewmode"][$vuniqueid] == 'multi_ajax'){
-				if(!$ID && $hideOnReserveId){echo "</div>";return;} // todo - reserve ID
+			// multiple ajax selector
+			}elseif($rendermode == 4){
 
                 # get result
 				$vgresult = sql_14_c($vgtabid,$verkn,$linklevel,$gformid,null,$gsr,$afieldlist,$extension);
@@ -2536,7 +2590,7 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 					$vval[$vid] = implode($gfield[$gtabid]["verknviewcut"][$bzm],$retrn);
 					$bzm1++;
 				}}
-				
+
 				$events = dftyp_events($typ,$event,null,null,null,null,null,$gresult,$gtabid,$bzm);
 				echo "
 				<div class=\"" . $class . "\" style=\"float: left;\">
@@ -2546,25 +2600,25 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 
 				# show multi ajax list
 				cftyp_14_c($gtabid,$bzm,$ID,$typ,$gformid,$formid,$vgtabid,$vfieldid,$showfields,$vgresult,$vval);
-				
+
 				echo "</div></div>";
-				
+
 				if(preg_match('/display:none/',$style)){$sdpl="display:none;";}
 				if($gfield[$gtabid]["option"][$bzm]){
 				if(lmb_count($vgresult[$vgtabid]['id']) == 1){
 					#echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" border=\"0\" title=\"$lang[1298]\" style=\"cursor:pointer;margin-top:3px;$sdpl\" onclick=\"newwin7('$action','".$linklevel["tabid"]."','".$gtabid."','".$bzm."','".$ID."','$vid','$dest_formid','$dimsn');\"></i><div></div>";
-				    echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" border=\"0\" title=\"$lang[1298]\" style=\"cursor:pointer;margin-top:3px;$sdpl\" onclick=\"lmbOpenForm(event,'{$linklevel["tabid"]}','$vid',{formid:'$dest_formid',action:'$action', v_tabid:'$gtabid',v_fieldid:'$bzm',v_id:'$ID',formdimension:'$dimsn'});\"></i><div></div>";
+				    echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" border=\"0\" title=\"$lang[1298]\" style=\"cursor:pointer;margin-top:3px;$sdpl\" onclick=\"lmbOpenForm(event,'{$linklevel["tabid"]}','$vid',{action:'$action',formid:'{$formparams['formid']}', formopenas:'{$formparams['openas']}', formdimension:'{$formparams['dimension']}', v_tabid:'$gtabid',v_fieldid:'$bzm',v_id:'$ID'});\"></i><div></div>";
                 }else{
 					#echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" border=\"0\" title=\"$lang[1298]\" style=\"cursor:pointer;margin-top:3px;$sdpl\" onclick=\"newwin5(event,'".$verkn["vtabid"]."','".$gtabid."','".$bzm."','".$ID."');\"></i>";
-				    echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" border=\"0\" title=\"$lang[1298]\" style=\"cursor:pointer;margin-top:3px;$sdpl\" onclick=\"lmbOpenForm(event,'{$linklevel["tabid"]}','',{action:'gtab_erg', v_tabid:'$gtabid',v_fieldid:'$bzm',v_id:'$ID');\"></i>";
+				    echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" border=\"0\" title=\"$lang[1298]\" style=\"cursor:pointer;margin-top:3px;$sdpl\" onclick=\"lmbOpenForm(event,'{$linklevel["tabid"]}','',{action:'gtab_erg', formopenas:'{$formparams['openas']}', v_tabid:'$gtabid',v_fieldid:'$bzm',v_id:'$ID');\"></i>";
                 }}
 
 				# ------ Detail der Verknüpfung -----
 				echo "<div id=\"".$gfield[$gtabid]["form_name"][$bzm]."_dsl\" class=\"ajax_container\" style=\"position:absolute;z-index:9999;display:none\"></div>
 				<input type=\"hidden\" id=\"".$gfield[$gtabid]["form_name"][$bzm].$fextend."\" name=\"".$gfield[$gtabid]["form_name"][$bzm].$fextend."\" value=\"$vid\">";
 
-			# --- Select View / single & multiple ----
-			}else{
+			// drop-down html
+			}elseif($rendermode == 2){
 
 			    // specific relation params & filter force eval
                 cftyp_ext_RelationFields($ID,$gtabid,$bzm,$vuniqueid,$formid,$gformid,$verkn,$gresult,$filter,$gsr,$extension,1);
@@ -2572,7 +2626,7 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 				# get result
 				$vgresult = sql_14_c($vgtabid,$verkn,$linklevel,$gformid,null,$gsr,null,$extension);
 				$rscount = $vgresult[$vgtabid]["res_count"];
-				
+
 				$event_change = "checktyp('".$gfield[$gtabid]["data_type"][$bzm]."','".$gfield[$gtabid]["form_name"][$bzm].$fextend."','".$gfield[$gtabid]["spelling"][$bzm]."','".$bzm."','".$gtabid."',this[this.selectedIndex].value,'$ID','".$gfield[$gtabid]["ajaxpost"][$bzm]."')";
 				$events = dftyp_events($typ,$event,null,null,null,null,$event_change,$gresult,$gtabid,$bzm);
 
@@ -2585,7 +2639,7 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 				if(!$gfield[$gtabid]["unique"][$bzm]){
 					if($rscount < 4){$scount = 4;}else{$scount = $rscount;}
 					$multiple = "MULTIPLE SIZE=\"$scount\"";
-				# add selected value to select value list if 1:n relation 
+				# add selected value to select value list if 1:n relation
 				}elseif($gfield[$gtabid]["data_type"][$bzm] == 27 AND $vgresult[$linklevel["tabid"]]['id']){
 					foreach ($agresult[$linklevel["tabid"]] as $vkey => $vvalue){
 						if(is_array($vvalue)){
@@ -2593,10 +2647,10 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 						}
 					}
 				}
-				
+
 				echo "<SELECT $multiple class=\"form-select " . $class . "\" STYLE=\"$style\" data-required=\"".$gfield[$gtabid]["need"][$bzm]."\" TITLE=\"".$gfield[$gtabid]["need"][$bzm].$gfield[$gtabid]["beschreibung"][$bzm]."\" ID=\"".$gfield[$gtabid]["form_name"][$bzm].$fextend."\" NAME=\"".$gfield[$gtabid]["form_name"][$bzm].$fextend."[]\" TABINDEX=\"$z_index\" $events>"; // todo  name mit [] am Ende ??
 				echo "<OPTION VALUE=\"#L#delete\">";
-	
+
 				if(!$vgresultlist = $vgresult[$linklevel["tabid"]]["id"]){$vgresultlist = array();}
 				if($agresult[$linklevel["tabid"]]["id"]){
 					foreach($agresult[$linklevel["tabid"]]["id"] as $key => $value){
@@ -2619,19 +2673,17 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 					}
 				}
 				echo "</SELECT>";
-				
+
 				if(preg_match('/display:none/',$style)){$sdpl="display:none;";}
 				if($gfield[$gtabid]["option"][$bzm]){
 				if($rscount == 1){
 					# ------ Detail der Verknüpfung -----
-				    echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" BORDER=\"0\" TITLE=\"$lang[1298]\" STYLE=\"cursor:pointer;$sdpl\" onclick=\"lmbOpenForm(event,'{$linklevel["tabid"]}','{$vgresult[$linklevel["tabid"]]["id"][0]}',{formid:'$dest_formid',action:'$action', v_tabid:'$gtabid',v_fieldid:'$bzm',v_id:'$ID',formdimension:'$dimsn'});\"></i>";
+				    echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" BORDER=\"0\" TITLE=\"$lang[1298]\" STYLE=\"cursor:pointer;$sdpl\" onclick=\"lmbOpenForm(event,'{$linklevel["tabid"]}','{$vgresult[$linklevel["tabid"]]["id"][0]}',{action:'$action', formid:'{$formparams['formid']}', formopenas:'{$formparams['openas']}', formdimension:'{$formparams['dimension']}', v_tabid:'$gtabid',v_fieldid:'$bzm',v_id:'$ID'});\"></i>";
                 }else{
-				    echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" BORDER=\"0\" TITLE=\"$lang[1298]\" STYLE=\"cursor:pointer;$sdpl\" onclick=\"lmbOpenForm(event,'{$linklevel["tabid"]}','',{action:'gtab_erg', v_tabid:'$gtabid',v_fieldid:'$bzm',v_id:'$ID'});\"></i>";
+				    echo "&nbsp;<i class=\"lmb-icon lmb-edit-caret\" BORDER=\"0\" TITLE=\"$lang[1298]\" STYLE=\"cursor:pointer;$sdpl\" onclick=\"lmbOpenForm(event,'{$linklevel["tabid"]}','',{action:'gtab_erg', formopenas:'{$formparams['openas']}', v_tabid:'$gtabid',v_fieldid:'$bzm',v_id:'$ID'});\"></i>";
                 }}
 			}
 		}else{
-            if(!$ID && $hideOnReserveId){echo "</div>";return;} // todo - reserve ID
-
 			# Readonly View
 			$vgresult = sql_14_c($vgtabid,$verkn,$linklevel,$gformid,null,$gsr,null,$extension);
 			if($vgresult[$linklevel["tabid"]][$linklevel["fieldid"]]){
@@ -2650,16 +2702,15 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 				if(!$retrn){$retrn[] = $vgresult[$linklevel["tabid"]]["id"][0];}
 				$retrn = implode($gfield[$gtabid]["verknviewcut"][$bzm],$retrn);
 				#echo "<div onclick=\"newwin7('$action','".$linklevel["tabid"]."','".$gtabid."','".$bzm."','".$ID."','".$vgresult[$linklevel["tabid"]]["id"][0]."','$dest_formid','$dimsn');\" $class STYLE=\"$style;cursor:pointer\">".$retrn."</div>";
-			    echo "<div onclick=\"lmbOpenForm(event,'{$linklevel["tabid"]}','{$vgresult[$linklevel["tabid"]]["id"][0]}',{formid:'$dest_formid',action:'$action', v_tabid:'$gtabid',v_fieldid:'$bzm',v_id:'$ID',formdimension:'$dimsn'});\">".$retrn."</div>";
+			    echo "<div onclick=\"lmbOpenForm(event,'{$linklevel["tabid"]}','{$vgresult[$linklevel["tabid"]]["id"][0]}',{action:'$action', formid:'{$formparams['formid']}', formopenas:'{$formparams['openas']}', formdimension:'{$formparams['dimension']}', v_tabid:'$gtabid',v_fieldid:'$bzm',v_id:'$ID'});\">".$retrn."</div>";
             }else{
 				echo "<div class=\"" . $class . "\" STYLE=\"$style\"></div>";
 			}
 		}
 		echo "</div>";
 
-	# ------- 1:n / n:m Verknüpfung Detail-Darstellung -----
+	// 1:n / n:m relation view in detailed mode
 	}else{
-        if(!$ID && $hideOnReserveId){return;} // todo - reserve ID
 
         # --- minimized View ----
         if($filter["ext_RelationFields"]["viewmode"][$vuniqueid] == 'minimized') {
@@ -2676,14 +2727,14 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 		$rscount = $vgresult[$vgtabid]["res_count"];
 
 		if($linklevel["is_subrelation"]) {$typ = 2;}
-		
+
 		if($style){$style_abs = "STYLE=\"".$pos.$style.";overflow-x:hidden;$minimized\"";}else{$style_abs = "STYLE=\"margin-top:5px;margin-bottom:5px;$minimized\"";}
 
 		# default height
 		if(!$filter["ext_RelationFields"]["showall"][$vuniqueid]){
 			if($vgresult[$vgtabid]["res_viewcount"] > 6){$bt = "height:110px;overflow:auto;";$bh=110;}
 		}
-		
+
 		# specific formular styles
 		if($gformid AND $formid){
 			$st = explode(";",$GLOBALS["gform"][$gformid]["style"][$formid]);
@@ -2717,7 +2768,6 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
 		echo "</div>";
 	}
 }
-
 
 
 function cftyp_14_c($gtabid,$field_id,$ID,$typ,$gformid,$formid,$vgtabid,$vfieldid,&$showfields,&$vgresult,$vval=null){

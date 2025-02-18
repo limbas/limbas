@@ -267,9 +267,16 @@ function explHeaderBootstrap($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=
 
 	// name always first element
 	$key1 = $gtab["argresult_id"]["LDMS_FILES"]."_11";
+	if($ffilter["order"][$fid][0] == $key1){
+		$style = "text-decoration:underline;";
+		$order = $ffilter["order"][$fid][1] == 'DESC' ? '-down' : '-up';
+	}else{
+		$style = "";
+		$order = "";
+	}
 	echo "<thead><tr>";
-	echo "<th ID=\"tabheader_$key1\" onMousedown=\"LmEx_startDrag(event,'$key1');\" $colspan>
-	<span class=\"gtabHeaderTitleTDItem\" OnClick=\"document.form1.ffilter_order.value='$key1';LmEx_send_form(1,1);\" style=\"cursor:pointer\">".$lang[209]."</span>
+	echo "<th ID=\"tabheader_$key1\" onmousedown=\"LmEx_startDrag(event,'$key1');\" $colspan>
+	<span class=\"gtabHeaderTitleTDItem\" onclick=\"document.form1.ffilter_order.value='$key1';LmEx_send_form(1,1);\" style=\"cursor:pointer;$style\">".$lang[209]."<i class=\"fa-solid fa-sort$order float-end\"></i></span>
 	</th>";
 
 	foreach ($gfile['show'][$LID] as $key1 => $val1){
@@ -286,10 +293,16 @@ function explHeaderBootstrap($LID,$fid,&$ffilter,$gtabid=null,$fieldid=null,$ID=
 			$onmove = "onmousedown=\"LmEx_startDrag(event,'$key1');\"";
 		}
 
-		echo "<th ID=\"tabheader_$key1\" $onmove title=\"".htmlentities($lang[$gfile['desc'][$key1]],ENT_QUOTES,$umgvar["charset"])."\">";
-		if($ffilter["order"][$fid][0] == $key1){$style = "text-decoration:underline;";}else{$style = "";}
-		if($gfile['typ'][$key1] AND $gfile['data_type'][$key1] != 39){echo "<span class=\"gtabHeaderTitleTDItem\" $onclick STYLE=\"cursor:pointer;white-space:nowrap;$style\">";}
-		echo "&nbsp;".htmlentities($gfile['title'][$key1],ENT_QUOTES,$umgvar["charset"])."&nbsp;</span></th>\n";
+		echo "<th ID=\"tabheader_$key1\" $onmove title=\"".e($lang[$gfile['desc'][$key1]])."\">";
+		if($ffilter["order"][$fid][0] == $key1){
+			$style = "text-decoration:underline;";
+			$order = $ffilter["order"][$fid][1] == 'DESC' ? '-down' : '-up';
+		}else{
+			$style = "";
+			$order = "";
+		}
+		if($gfile['typ'][$key1] && $gfile['data_type'][$key1] != 39){echo "<span class=\"gtabHeaderTitleTDItem\" $onclick STYLE=\"cursor:pointer;white-space:nowrap;$style\"><i class=\"fa-solid fa-sort$order float-end\"></i>";}
+		echo e($gfile['title'][$key1])."</span></th>\n";
 	}
 	echo "</tr></thead>";
 }

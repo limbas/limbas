@@ -9,6 +9,7 @@
 
 namespace Limbas\extra\report;
 
+use Limbas\admin\report\PdfStandard;
 use Limbas\extra\template\report\ReportTemplateRender;
 use lmb_log;
 use Mpdf\MpdfException;
@@ -126,6 +127,23 @@ class ReportMpdf extends Report
         //enable watermark
         $pdf->watermark_font = $report['default_font'];
         $pdf->showWatermarkText = true;
+        
+        if($report['standard']->isA()) {
+            $pdf->PDFA = true;
+            if($report['standard_auto']) {
+                $pdf->PDFAauto = true;
+            }
+            $pdf->PDFAversion = $report['standard']->mpdfValue();
+            $this->standardApplied = true;
+        }
+        elseif($report['standard']->isX()) {
+            $pdf->PDFX = true;
+            if($report['standard_auto']) {
+                $pdf->PDFXauto = true;
+            }
+            $this->standardApplied = true;
+        }       
+        
 
         return $pdf;
     }

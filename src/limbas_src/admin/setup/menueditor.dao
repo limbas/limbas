@@ -238,7 +238,7 @@ function lmb_custmenulistGet(){
     global $db;
     global $lang;
 
-    $sqlquery = "SELECT * FROM LMB_CUSTMENU_LIST ORDER BY TABID,TYPE,NAME";
+    $sqlquery = "SELECT * FROM LMB_CUSTMENU_LIST ORDER BY TABID,NAME";
     $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
 
     while (lmbdb_fetch_row($rs)) {
@@ -622,7 +622,7 @@ function lmb_custmenu(&$custmenu,$linkid,$parent){
     global $custmenu_list;
 
     $custMenuType = lmb_custmenuGetType($linkid);
-    if ($custMenuType == 14 || $custMenuType == 17) {
+    if ($custMenuType == 14 || $custMenuType == 17 || $custMenuType == 18) {
         lmb_custmenu_singleoption($linkid);
         return;
     }

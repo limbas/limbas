@@ -20,12 +20,13 @@ $(function () {
 function updateReport() {
 
     const $this = $(this);
+    const isCheckBox = $this.is(':checkbox');
 
     sendReportAction({
         action: 'update',
         id: $this.data('id'),
         field: $this.data('update'),
-        value: $this.val()
+        value: isCheckBox ? ($this.prop('checked') ? 1 : 0) : $this.val()
     }).then(function (data) {
         if (data.success) {
             lmbShowSuccessMsg('Update successful.')

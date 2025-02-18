@@ -80,8 +80,6 @@ if ($empty AND $table) {
     $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
     if (lmbdb_fetch_row($rs)) {
         $favoriteStatement = lmbdb_result($rs, 'STATEMENT');
-        $rssql = lmbdb_exec($db, $favoriteStatement);
-        $resultMsg = '<h3>' . lmbdb_result($rs, 'NAME') . '</h3>';
     }
 }
 

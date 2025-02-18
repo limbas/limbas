@@ -903,27 +903,41 @@ function limbasSetTabulator(id){
 }
 
 function lmb_dropEl(lang,id){
-	
-	if(id){document.form1.form_edit_id.value=id;currentid=id;}
-	divclose();
-	//var sc = $(".ui-selected").filter('[id^="div"]').length;
+
+    var objid = new Array();
 	var sc = lmbGetUISelected();
 	var bzm = 0;
-	var objid = new Array();
+
+	if(id){
+        document.form1.form_edit_id.value=id;
+        objid[0]=id;
+    }
+	divclose();
+	//var sc = $(".ui-selected").filter('[id^="div"]').length;
+
+
 	$(".ui-selected").filter('[id^="div"]').each(function() {
 		objid[bzm] = $( this ).attr('id').substring(3);
 		bzm++;
 	});
+
+    var hassubelements = '';
+
+    for (const obj of objid) {
+        if($("#div"+obj).attr("data-hassubelements") == 1){
+            hassubelements = '\n\nWARNING !!! this element contains sub-elements! !!! WARNING\n';
+        }
+    }
 			
 	if(sc > 1){
-		if(confirm(lang+'?\n\n'+sc+' items!\n('+objid.join(',')+')')){
+		if(confirm(lang+'?'+hassubelements+'\n\n'+sc+' items!\n('+objid.join(',')+')')){
 			document.form1.form_edit_id.value=objid.join(',');
 			document.form1.form_del.value=1;
 			set_posxy();
 			document.form1.submit();
 		}
 	}else{
-		if(confirm(lang+'?\n\nElement: '+currentid+'\nTyp: '+currenttyp+'\n ')){
+		if(confirm(lang+'?'+hassubelements+'\n\nElement: '+currentid+'\nTyp: '+currenttyp+'\n ')){
 			document.form1.form_del.value=1;
 			set_posxy();
 			document.form1.submit();

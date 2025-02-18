@@ -34,19 +34,36 @@ $gview = lmb_getQuestValue($viewid);
 </div>
 
 <div class="mb-3 row">
-    <label class="col-sm-2">Event</label>
+    <label class="col-sm-2">enable Parameter</label>
     <div class="col-sm-10">
-        <textarea name="options[event]" class="form-control form-control-sm"><?=htmlentities($gview["event"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])?></textarea>
+        <input type="checkbox" name="options[useparams]" class="form-check-input" onclick="document.form1.useparams_save.value=1;document.form1.submit();" <?=($gview["useparams"] ? 'checked' : '')?> >
     </div>
 </div>
 
 <div class="mb-3 row">
     <label class="col-sm-2">Parameter</label>
     <div class="col-sm-10">
-        <textarea name="options[params]" class="form-control form-control-sm"><?=htmlentities($gview["params"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])?></textarea>
+        <textarea name="options[params]" class="form-control form-control-sm" <?=(!$gview["useparams"] ? 'disabled' : '')?>><?=htmlentities($gview["params"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])?></textarea>
+    </div>
+</div>
+
+<div class="mb-3 row">
+    <label class="col-sm-2">Event</label>
+    <div class="col-sm-10">
+        <textarea name="options[event]" class="form-control form-control-sm"><?=htmlentities($gview["event"],ENT_QUOTES,$GLOBALS["umgvar"]["charset"])?></textarea>
     </div>
 </div>
 
 <div class="text-end">
     <button class="btn btn-primary btn-sm" onclick="document.form1.options_save.value=1;document.form1.submit();"><?=$lang[842]?></button>
+</div>
+
+<br>
+<div class="alert alert-info" role="alert">
+  <p><i class="lmb-icon lmb-info-circle-alt2"></i>
+  Parameterized views are executed as a query.<br>
+  Parameters must be defined globally.<br>
+  Functions must be available in "ext_gtab.inc" extensions
+  </p>
+  <hr>
 </div>

@@ -265,12 +265,12 @@ function convert_stamp($stamp,$t=0){
  * @param number $typ (1=date, 2=datetime, strftime format))
  * @return date string
  */
-function get_date($db_date,$typ=0,$country=null){
-	if($typ == 2){$typ = 0;}
+function get_date($db_date,$format=0,$country=null){
+	if($format == 2){$format = 0;}
 	if(!$db_date OR $db_date == '0000-00-00 00:00:00'){return false;}
 	#$pdt = new DateTime($db_date);
 	$pdt = new DateTime(lmb_substr($db_date,0,26));
-	return stampToDate($pdt,$typ,$country);
+	return stampToDate($pdt,$format,$country);
 }
 
 

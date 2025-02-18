@@ -26,6 +26,7 @@ use Limbas\admin\report\Report;
                     <th><?=e($lang[2111])?></th>
                     <th><?=e($lang[2511])?></th>
                     <th>Report Class</th>
+                    <th>PDF Standard</th>
                     <th><?=e($lang[2935])?></th>
                 </tr>
                 </thead>

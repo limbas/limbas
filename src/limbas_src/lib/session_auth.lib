@@ -100,6 +100,8 @@ use Limbas\lib\auth\Session;
 	$session["vorname"] = lmbdb_result($rs2,"VORNAME");
 	$session["name"] = lmbdb_result($rs2,"NAME");
 	$session["email"] = lmbdb_result($rs2,"EMAIL");
+    $session["phone"] = lmbdb_result($rs2,"TEL");
+    $session["position"] = lmbdb_result($rs2,"POSITION");
 	$session["usercolor"] = lmbdb_result($rs2,"USERCOLOR");
 	$session["maxresult"] = lmbdb_result($rs2,"MAXRESULT");
 	$session["farbschema"] = lmbdb_result($rs2,"FARBSCHEMA");

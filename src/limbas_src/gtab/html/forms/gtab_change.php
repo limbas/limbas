@@ -128,7 +128,8 @@ jsvar["tablename"] = "<?=$gtab["desc"][$gtabid]?>";
 jsvar["confirm_level"] = "<?=$umgvar["confirm_level"]?>";
 jsvar["modal_size"] = "<?=$umgvar["modal_size"]?>";
 jsvar["modal_level"] = "<?=$umgvar["modal_level"]?>";
-jsvar["modal_opener"] = "<?=$umgvar["modal_opener"]?>";
+jsvar["detail_openas"] = "<?=$umgvar["detail_openas"]?>";
+jsvar["detail_rel_openas"] = "<?=$umgvar["detail_rel_openas"]?>";
 
 <?php
 if($form_id){echo "jsvar[\"is_form\"] = \"1\";\n";}
@@ -154,55 +155,51 @@ if($lmcurrency){
 
 if($action == 'gtab_neu'){$action = 'gtab_change';}
 
-// display custmenu
-if ($gtab["custmenu"][$gtabid]): ?>
-    <script>
-        alert(<?=e($gtabid)?>;
-        top.openMenu(<?=$gtab["custmenu"][$gtabid]?>);
-    </script>
-<?php endif; ?>
-
-
-<?php
-
-
 $action = $GLOBALS["action"];
 if($GLOBALS["old_action"] == 'gtab_readonly'){$action = 'gtab_change';} # for scrolling after locked or versioned readonly dataset
 
-if($useCustomForm):
+// get gresult
+if(!$useExtensionForm) {
+    require(COREPATH . 'gtab/html/forms/parts/data.php');
+}
 
 // display custmenu
-    if($cm = $gformlist[$gtabid]["custmenu"][$form_id] OR $cm = $gtab["custmenu"][$gtabid]){
+if(($useCustomForm && $cm = $gformlist[$gtabid]["custmenu"][$form_id]) OR $cm = $gtab["custmenu"][$gtabid]){
+    ?>
+    <script>
+        $(function() {
+            var hasparent = window.parent.$('#lmb_gtabDetailFrame').length;
+            if (!hasparent) {
+                top.openMenu(<?=e($cm)?>);
+            }
+        });
+    </script>
+    <?php
+}
+
+// set custom page title
+if($useCustomForm && $gformlist[$gtabid]['header'][$form_id]){
+    $title = eval('return ' . $gformlist[$gtabid]['header'][$form_id] . ";");
+
+    if(is_array($title)){
         ?>
         <script>
-            top.openMenu(<?=e($cm)?>);
+            $(function() {
+                lmb_setPageTitle('<?=e($title['document'])?>', '<?=e($title['header'])?>');
+            });
+        </script>
+        <?php
+    } elseif($title){
+        ?>
+        <script>
+            $(function() {
+                lmb_setPageTitle(null,'<?=e($title)?>');
+            });
         </script>
         <?php
     }
+}
 
-    // set custom page title
-    if($gformlist[$gtabid]['header'][$form_id]){
-        $title = eval('return ' . $gformlist[$gtabid]['header'][$form_id] . ";");
-        if(is_array($title)){
-            ?>
-            <script>
-                lmb_setPageTitle('<?=e($title['document'])?>','<?=e($title['header'])?>');
-            </script>
-            <?php
-        } elseif($title){
-            ?>
-            <script>
-                lmb_setPageTitle('<?=e($title)?>');
-            </script>
-            <?php
-        }
-    }
-
-endif;
-
-    if(!$useExtensionForm) {
-        require(COREPATH . 'gtab/html/forms/parts/data.php');
-    }
 
 ?>
 
@@ -310,3 +307,4 @@ unset($commit);
 <span id="myExtForms"></span>
 
 </form>
+<div id="lmbUploadLayer"></div>

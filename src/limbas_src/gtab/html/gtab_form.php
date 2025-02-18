@@ -7,8 +7,10 @@
  * This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
  */
 
+use Symfony\Component\HttpFoundation\Exception\BadRequestException;
+
 if(!array_key_exists($form_id, $gformlist[0]['id'])) {
-	return;
+	throw new BadRequestException('A form in table context cannot be opened as stand alone. Use gtab_change instead.');
 }
 
 

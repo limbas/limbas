@@ -105,6 +105,7 @@ abstract class DataPlaceholder extends AbstractHtmlPart {
      */
     protected $noResolve = false;
     
+    protected bool $isLabel = false;
 
     public function __construct($fieldIdentifiers, $options, $altValue, $noResolve) {
         global $gfield, $gtab;
@@ -263,11 +264,13 @@ abstract class DataPlaceholder extends AbstractHtmlPart {
             global $gfield;
             list($gtabid, $fieldid) = $this->getTabAndField();
             $this->setValue($gfield[$gtabid]['spelling'][$fieldid]);
+            $this->isLabel = true;
             return true;
         } else if ($this->options['show'] === 'title') { // show only title
             global $gfield;
             list($gtabid, $fieldid) = $this->getTabAndField();
             $this->setValue($gfield[$gtabid]['beschreibung'][$fieldid]);
+            $this->isLabel = true;
             return true;
         }
 

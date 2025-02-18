@@ -22,12 +22,16 @@ class FormTemplateConfig extends TemplateConfig implements TemplateConfigInterfa
 
     // if true, uses cftyp functions instead of dftyp
     protected $listmode;
+    
+    // force all input elements to be readonly
+    protected bool $readOnly;
 
-    public function __construct(int $gtabid, $listmode, $datID)
+    public function __construct(int $gtabid, $listmode, $datID, bool $readOnly = false)
     {
         $this->dataTabId = $gtabid;
         $this->listmode = $listmode;
         $this->datIDs[] = $datID;
+        $this->readOnly = $readOnly;
     }
 
     public function isListmode()
@@ -47,7 +51,11 @@ class FormTemplateConfig extends TemplateConfig implements TemplateConfigInterfa
 
     public function getDataPlaceholderInstance($chain, $options, $altValue): FormDataPlaceholder
     {
-        return new FormDataPlaceholder($chain, $options, $altValue, !$this->resolveDataPlaceholders);
+        $formDataPlaceholder = new FormDataPlaceholder($chain, $options, $altValue, !$this->resolveDataPlaceholders);
+        if($this->readOnly) {
+            $formDataPlaceholder->setReadOnly();
+        }
+        return $formDataPlaceholder;
     }
 
     public function getMedium(): string

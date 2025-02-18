@@ -55,6 +55,8 @@ class Report extends LimbasModel
      * @param int|null $default_font_size
      * @param string|null $default_font
      * @param int|null $printer
+     * @param PdfStandard|null $standard
+     * @param bool $standardAuto
      */
     public function __construct(
         public int     $id,
@@ -88,7 +90,9 @@ class Report extends LimbasModel
         public ?string $used_fonts = null,
         public ?int    $default_font_size = null,
         public ?string $default_font = null,
-        public ?int    $printer = null
+        public ?int    $printer = null,
+        public ?PdfStandard    $standard = null,
+        public bool    $standardAuto = false
     )
     {
 
@@ -153,7 +157,9 @@ class Report extends LimbasModel
                 lmbdb_result($rs, 'USED_FONTS') ?: null,
                 intval(lmbdb_result($rs, 'DEFAULT_FONT_SIZE')) ?: null,
                 lmbdb_result($rs, 'DEFAULT_FONT') ?: null,
-                intval(lmbdb_result($rs, 'PRINTER')) ?: null
+                intval(lmbdb_result($rs, 'PRINTER')) ?: null,
+                PdfStandard::tryFrom(intval(lmbdb_result($rs, 'STANDARD'))) ?? PdfStandard::DEFAULT,
+                boolval(lmbdb_result($rs, 'STANDARD_AUTO'))
             );
 
         }
@@ -196,7 +202,9 @@ class Report extends LimbasModel
             'USED_FONTS' => $this->used_fonts,
             'DEFAULT_FONT_SIZE' => $this->default_font_size,
             'DEFAULT_FONT' => $this->default_font,
-            'PRINTER' => $this->printer
+            'PRINTER' => $this->printer,
+            'STANDARD' => $this->standard?->value ?? 0,
+            'STANDARD_AUTO' => $this->standardAuto ? LMB_DBDEF_TRUE : LMB_DBDEF_FALSE,
         ];
 
         lmb_StartTransaction();

@@ -40,7 +40,6 @@ function lmbTemplateGetSelectedId(id) {
         }
         id = ids;
     }
-    console.log(id);
     return id;
 }
 

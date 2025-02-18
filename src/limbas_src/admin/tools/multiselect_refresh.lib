@@ -10,13 +10,22 @@
 
 
 
-function multiselectRefreshCountField($gtabid,$field_id,$tabname,$fieldname){
+function multiselectRefreshCountField($gtabid,$field_id,$tabname,$fieldname,$datatype){
 	global $db;
 	global $gtab;
-	
-	$sqlquery1 = "UPDATE $tabname SET $fieldname = (SELECT COUNT(*) FROM LMB_SELECT_D WHERE TAB_ID = $gtabid AND FIELD_ID = $field_id AND DAT_ID = ".$gtab["table"][$gtabid].".".$gtab["keyfield"][$gtabid].") WHERE ".$gtab["keyfield"][$gtabid]." = ".$gtab["keyfield"][$gtabid];
-	$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
-	if(!$rs1) {$commit = 1;}
+
+    if($datatype == 46){
+        $ms = "ATTRIBUTE";
+    }else{
+        $ms = "SELECT";
+    }
+
+    $sqlquery1 = "UPDATE $tabname SET $fieldname = (SELECT COUNT(*) FROM LMB_{$ms}_D WHERE TAB_ID = $gtabid AND FIELD_ID = $field_id AND DAT_ID = " . $gtab["table"][$gtabid] . "." . $gtab["keyfield"][$gtabid] . ") WHERE " . $gtab["keyfield"][$gtabid] . " = " . $gtab["keyfield"][$gtabid];
+    $rs1 = lmbdb_exec($db, $sqlquery1) or errorhandle(lmbdb_errormsg($db), $sqlquery1, $action, __FILE__, __LINE__);
+    if (!$rs1) {
+        $commit = 1;
+    }
+
 	
 }
 
@@ -25,10 +34,12 @@ function multiselectRefreshCount($gtabid=null,$field_id=null){
 	
 	if($gtabid){$whr = "AND LMB_CONF_TABLES.TAB_ID = $gtabid";}
 	if($field_id){$whr .= " AND LMB_CONF_FIELDS.FIELD_ID = $field_id";}
-	$sqlquery = "SELECT DISTINCT LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.TAB_ID,LMB_CONF_FIELDS.FIELD_NAME,LMB_CONF_FIELDS.FIELD_ID FROM LMB_CONF_TABLES,LMB_CONF_FIELDS WHERE LMB_CONF_FIELDS.TAB_ID = LMB_CONF_TABLES.TAB_ID AND (LMB_CONF_FIELDS.DATA_TYPE = 18 OR LMB_CONF_FIELDS.DATA_TYPE = 31 OR LMB_CONF_FIELDS.DATA_TYPE = 32) $whr";
+	$sqlquery = "SELECT DISTINCT LMB_CONF_TABLES.TABELLE,LMB_CONF_TABLES.TAB_ID,LMB_CONF_FIELDS.FIELD_NAME,LMB_CONF_FIELDS.FIELD_ID,LMB_CONF_FIELDS.DATA_TYPE
+	FROM LMB_CONF_TABLES,LMB_CONF_FIELDS 
+	WHERE LMB_CONF_FIELDS.TAB_ID = LMB_CONF_TABLES.TAB_ID AND (LMB_CONF_FIELDS.DATA_TYPE = 18 OR LMB_CONF_FIELDS.DATA_TYPE = 31 OR LMB_CONF_FIELDS.DATA_TYPE = 32 OR LMB_CONF_FIELDS.DATA_TYPE = 46) $whr";
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	while(lmbdb_fetch_row($rs)){
-		multiselectRefreshCountField(lmbdb_result($rs,"TAB_ID"),lmbdb_result($rs,"FIELD_ID"),dbf_4(lmbdb_result($rs,"TABELLE")),dbf_4(lmbdb_result($rs,"FIELD_NAME")));
+		multiselectRefreshCountField(lmbdb_result($rs,"TAB_ID"),lmbdb_result($rs,"FIELD_ID"),dbf_4(lmbdb_result($rs,"TABELLE")),dbf_4(lmbdb_result($rs,"FIELD_NAME")), dbf_4(lmbdb_result($rs,"DATA_TYPE")));
 	}
 }
 

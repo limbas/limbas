@@ -42,7 +42,7 @@ else {
 
 $readonly = check_DataPermission($gtabid,$ID,$gresult);
 
-if($umgvar['multitenant'] AND $gtab['multitenant'][$gtabid] AND $lmmultitenants['mid'][$session['mid']] != $gresult[$gtabid]['MID'][0] AND !$session["superadmin"]){
+if($umgvar['multitenant'] && $gtab['multitenant'][$gtabid] && $gresult[$gtabid]['MID'][0] && $lmmultitenants['mid'][$session['mid']] != $gresult[$gtabid]['MID'][0] AND !$session["superadmin"]){
     $action = 'gtab_deterg';
     $readonly = 1;
 }

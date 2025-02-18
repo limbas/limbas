@@ -34,7 +34,15 @@ use Limbas\layout\Layout;
     </div>
 </div>
 
-
+<script>
+    var jsvar = new Array();
+    jsvar["lng_908"] = "<?=$lang[908]?>";
+    jsvar["lng_160"] = "<?=$lang[160]?>";
+    jsvar["lng_896"] = "<?=$lang[896]?>";
+    jsvar["lng_899"] = "<?=$lang[899]?>";
+    jsvar["lng_1315"] = "<?=$lang[1315]?>";
+    jsvar["lng_2328"] = "<?=$lang[2328]?>";
+</script>
 
 
 
@@ -51,6 +59,8 @@ use Limbas\layout\Layout;
         <input type="hidden" name="lockbackend">
         <input type="hidden" name="lock">
         <input type="hidden" name="delete_user_total">
+        <input type="hidden" name="delete_user_filesave">
+
 
         <div class="container-fluid bg-contrast p-3 border">
             <div class="row">
@@ -509,22 +519,20 @@ use Limbas\layout\Layout;
                         </div>
 
                         <div class="col-sm-6 d-flex align-items-center">
+                            <div class="me-2">
+                                <i class="lmb-icon lmb-refresh" onclick="deleteuserfilesave('<?= $ID; ?>')"></i>
+                            </div>
+                            <label class="col-form-label"><a onclick="deleteuserfilesave()" href=#><?= $lang[2367] ?></a></label>
+                        </div>
 
+
+                        <div class="col-sm-6 d-flex align-items-center">
                             <div class="me-2">
                                 <i class="lmb-icon lmb-user1-1 cursor-pointer" onclick="userCompare(<?=$ID?>,null)"></i>
                             </div>
                             <label class="col-form-label"><a onclick="userCompare(<?=$ID?>,null)" href=#><?=$lang[3155]?></a></label>
                         </div>
 
-
-                        <div class="col-sm-6 d-flex align-items-center">
-
-                            <div class="me-2">
-                                <i class="lmb-icon lmb-calendar-alt2 cursor-pointer"
-                                   onclick="newwin2('<?= $ID; ?>')"></i>
-                            </div>
-                            <label class="col-form-label"><a onclick="newwin2('<?= $ID; ?>')" href=#><?= $lang[1791] ?></a></label>
-                        </div>
 
                         </div>
 

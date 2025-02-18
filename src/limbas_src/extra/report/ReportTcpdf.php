@@ -268,7 +268,13 @@ class ReportTcpdf extends Report
             $isunicode = true;
         }
 
-        $pdf = new LmbTcpdf($orientation, 'pt', array($width, $height), $isunicode, $GLOBALS['umgvar']['charset']);
+        $pdfA = false;
+        if($report['standard']->isA()) {
+            $pdfA = $report['standard']->tcpdfValue();
+            $this->standardApplied = true;
+        }
+
+        $pdf = new LmbTcpdf($orientation, 'pt', array($width, $height), $isunicode, $GLOBALS['umgvar']['charset'], pdfa: $pdfA);
 
         # Fußumbruch bei vorhandenen Fußelementen
         $this->SetPageBreak($pdf, $report['footerpos'], $report);

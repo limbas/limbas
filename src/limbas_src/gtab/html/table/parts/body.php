@@ -54,7 +54,7 @@ while($bzm < $gresult[$gtabid]['res_viewcount']) {
     # row-title from indicator
     $title = "";
     if($gresult[$gtabid]["indicator"]["title"][$bzm]){
-        $title = "title=\"".implode(", ",$gresult[$gtabid]["indicator"]["title"][$bzm])."\"";
+        $title = implode(", ",$gresult[$gtabid]["indicator"]["title"][$bzm]);
     }
     # color for grouping & left empty space by grouping
     if($filter["popups"][$gtabid][$ID][$prev_id]){
@@ -92,35 +92,50 @@ while($bzm < $gresult[$gtabid]['res_viewcount']) {
     }
 
     # klick event in views
-    if($gtab["typ"][$gtabid] == 5 AND $gtab["event"][$gtabid]){
-        $event = eval("return \"".$gtab["event"][$gtabid]."\";");
-    }elseif($gtab["detailform_opener"][$gtabid] == 2){
-        $event = "view_contextDetail('$ID','$gtabid','" . $form_id . "','" . $GLOBALS['gformlist'][$gtabid]["typ"][$form_id] . "','" . $GLOBALS['gformlist'][$gtabid]["dimension"][$form_lid] . "')";
-    }else{
-        $event = "lmbTableDblClickEvent(event,this,'$gtabid','".$ID."','$is_frame','".$GLOBALS["verkn_poolid"]."','$form_id','$prev_id','$prev_gtabid','$prev_fieldid','$prev_typ','".$gtab["detailform_opener"][$gtabid]."');return false;";
+    if($gtab["typ"][$gtabid] == 5 AND $gtab["event"][$gtabid]) {
+        $klickevent = eval("return \"" . $gtab["event"][$gtabid] . "\";");
+    }else {
+        $klickevent = "lmbTableDblClickEvent(event,this,'$gtabid','$ID');return false;";
     }
 
+    // use custom kontextmenu
+    if($GLOBALS['gcustmenu'][$gtabid][18]['directlink'][0]) {
+        $kontextevent = lmb_pop_custmenu($GLOBALS['gcustmenu'][$gtabid][18]['id'][0],$gtabid, $ID, linkonly:1);
+    }else{
+        $kontextevent = "lmbTableContextMenu(event,this,'$ID','$gtabid');";
+    }
     /* ---------------- begin row -------------------- */
     /*----------------- <TR> -------------------*/
 
     if($session["data_display"] == 2 AND $verknpf != 1){$is_frame = "1";}else{$is_frame = "0";}
-    
+
     ?>
 
     <tr
-        <?=$title?>
-        class="element-row gtabBodyTR <?=$BGCLASS?> <?=$indicatorClass?>"
-        <?=$indicatorAttribute?>
         id="elrow_<?=e($ID)?>_<?=e($gtabid)?>"
+        title="<?=$title?>"
         data-id="<?=e($gresult[$gtabid]['id'][$bzm])?>"
+        data-reltype="<?=$prev_typ?>"
+        data-relid="<?=$prev_id?>"
+        data-reltab="<?=$prev_gtabid?>"
+        data-relfield="<?=$prev_fieldid?>"
+        data-formid="<?=$form_id?>"
+        data-formdimension="<?=$GLOBALS['gformlist'][$gtabid]["detailform_dimension"][$form_lid]?>"
+        data-formopenas="<?=$gtab["detailform_opener"][$gtabid]?>"
+        data-createinfo="<?=e($gresult[$gtabid]["ERSTDATUM"][$bzm].' '.$userdat["bezeichnung"][$gresult[$gtabid]["ERSTUSER"][$bzm]])?>"
+        data-editinfo="<?=e($gresult[$gtabid]["EDITDATUM"][$bzm].' '.$userdat["bezeichnung"][$gresult[$gtabid]["EDITUSER"][$bzm]])?>"
+        <?=$indicatorAttribute?>
+        class="element-row gtabBodyTR <?=$BGCLASS?> <?=$indicatorClass?>"
         style="background-color:<?=$BGCOLOR?>;cursor:context-menu"
         lmbbgcolor="<?=$BGCOLOR?>"
-        oncontextmenu="return lmbTableContextEvent(event,this,<?=e($ID)?>,<?=e($gtabid)?>,'','<?=e($gtab["tab_view_lform"][$gtabid])?>','<?=e($GLOBALS['gformlist'][$gtabid]["typ"][$gtab["tab_view_lform"][$gtabid]])?>','<?=e($GLOBALS['gformlist'][$gtabid]["dimension"][$gtab["tab_view_lform"][$gtabid]])?>','<?=e($gresult[$gtabid]["ERSTDATUM"][$bzm])?>','<?=e($gresult[$gtabid]["EDITDATUM"][$bzm])?>','<?=e($userdat["bezeichnung"][$gresult[$gtabid]["ERSTUSER"][$bzm]])?>','<?=e($userdat["bezeichnung"][$gresult[$gtabid]["EDITUSER"][$bzm]])?>',<?=e($prev_id)?>,<?=e($prev_gtabid)?>,<?=e($prev_fieldid)?>,<?=e($prev_typ)?>);"
-        ondblclick="<?=$event?>"
+        oncontextmenu="event.preventDefault();<?=$kontextevent?>"
+        ondblclick="lmbTableClickEvent(event,this,<?=e($gtabid)?>,<?=e($ID)?>);<?=$klickevent?>"
         onclick="lmbTableClickEvent(event,this,<?=e($gtabid)?>,<?=e($ID)?>);"
     >
 
-        <td id="tdap_<?=e($ID)?>_<?=e($gtabid)?>" data-fieldid="0" class="element-cell gtabBodyTD<?=$class?>" style="width:<?=$gfield[$gtabid]["rowsize"][0]?>px;" nowrap>
+        <td id="tdap_<?=e($ID)?>_<?=e($gtabid)?>" data-fieldid="0" class="element-cell gtabBodyTD<?=$class?>" style="padding-left:4px;width:<?=$gfield[$gtabid]["rowsize"][0]?>px;" nowrap>
+
+
 
 <?php
     
@@ -135,6 +150,13 @@ while($bzm < $gresult[$gtabid]['res_viewcount']) {
         }
     }
     */
+
+    # checkbox
+    if($gtab["checkboxselect"][$gtabid]){
+        ?>
+        <input type="checkbox" id="chkbelrow_<?=e($ID)?>_<?=e($gtabid)?>" onclick="lmbTableClickCheckbox(this);">
+        <?php
+    }
 
 
     # popup symbol

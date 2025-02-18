@@ -353,7 +353,14 @@ function lmbGlistHeader($gtabid,&$gresult,$utyp,$subtab=null){
 	echo "<tr id=\"table_head\">";
 	echo "<td id=\"gtdh_".$gtabid."_0\" class=\"gtabHeaderTitleTD\" valign=\"center\" style=\"width:".$gfield[$gtabid]["rowsize"][0]."px;\" onmousedown=\"startDrag(event,'".$gtabid."','0');\">";
 
-        if(($gtab["groupable"][$gtabid] AND $gverkn[$gtabid]["id"]) OR in_array("1",$gfield[$gtabid]["groupable"])){
+    # checkbox
+    if($gtab["checkboxselect"][$gtabid]){
+        ?>
+        <input type="checkbox" onclick="aktivateRows($(this).prop('checked'));">
+        <?php
+    }
+
+    if(($gtab["groupable"][$gtabid] AND $gverkn[$gtabid]["id"]) OR in_array("1",$gfield[$gtabid]["groupable"])){
 		if(grouping_menu($gtabid,'null',0)){
 			//echo "<img src=\"assets/images/legacy/silk_icons/table_godown.gif\" title=\"$lang[865]\" alt=\"$lang[865]\" border=\"0\" height=\"14\" onclick=\"div6(event,this,'".$gtabid."','null','0');\" style=\"cursor:pointer;padding-left:2px;pointer;padding-right:2px;\">";
 			echo "<i class=\"lmb-icon lmb-table-godown\" title=\"$lang[865]\" alt=\"$lang[865]\" border=\"0\" height=\"14\" onclick=\"div6(event,this,'".$gtabid."','null','0');\" style=\"cursor:pointer;margin-left:2px;pointer;margin-right:2px;\"></i>";   
@@ -471,18 +478,23 @@ function lmbGlistNotice($gtabid,&$filter){
 
     // notice validity
     if ($gtab['validity'][$gtabid] AND $filter['validity'][$gtabid] AND !$filter['validity_all'][$gtabid]) {
-        $dateformat = setDateFormat(1, 2);
         $transl = array('all'=>$lang[3052],'allto'=>$lang[3055],'allfrom'=>$lang[3054]);
-        $validityval = $filter["validity"][$gtabid];
-        if($transl[$filter["validity"][$gtabid]]){$validityval = $transl[$filter["validity"][$gtabid]];}
+
+        $validityval = '';
+        $validityinfo = '';
+        if($transl[$filter["validity"][$gtabid]]){
+            $validityinfo = '&nbsp;('.$transl[$filter["validity"][$gtabid]].')';
+        }else{
+            // browser datepicker needs US format
+            $validityval = get_date($filter['validity'][$gtabid],1,2);
+        }
 
         $val = "<div class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice1\" id=\"lmbGlistBodyNotice1\"><div>{$lang[3008]}:&nbsp;</div>\
-         <input type=\"text\" class=\"form-control w-auto pt-0 pb-0\" id=\"lmbValidityNotice\"  value=\"{$validityval}\" onchange=\"document.form1.filter_validity.value=this.value+\' \';send_form(1,2,1,1,1,0);\" \
-         ondblclick=\"lmb_datepicker(event,this,\'lmbValidityNotice\',document.getElementById(\'lmbValidityNotice\').value,\'{$dateformat}\',10);\"> \ ";
+         <input type=\"date\" class=\"form-control w-auto pt-0 pb-0\" id=\"lmbValidityNotice\"  value=\"{$validityval}\" onblur=\"document.form1.filter_validity.value=this.value+\' \';send_form(1,2,1,1,1,0);\">";
          if($filter['validity'][$gtabid] != 'all') {
              $val .= "<i class=\"lmb-icon lmb-close-alt\" onclick=\"document.form1.filter_validity.value=\'all\';send_form(1);\"></i> \ ";
          }
-         $val .= "</div>";
+         $val .= $validityinfo.'</div>';
 
         echo "<script type=\"text/javascript\">
 	        lmbGlistBodyNotice(1,'$val');

@@ -123,12 +123,7 @@ if(!$import_typ){$import_typ = 'atm';}
 
                 <div class="row">
                     <div class="col-6">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" value="1" id="txt-encode" name="txt_encode" <?=($txt_encode)?'checked':''?>>
-                            <label class="form-check-label" for="txt-encode">
-                                utf8 en/decode
-                            </label>
-                        </div>
+
                     </div>
                     <div class="col-6 text-end">
                         <button class="btn btn-primary" type="button" onclick="document.form1.import_action.value=1;document.form1.submit();"><?=$lang[979]?></button>

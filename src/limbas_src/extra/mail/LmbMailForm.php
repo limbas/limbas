@@ -25,9 +25,29 @@ class LmbMailForm {
      * @param array $attachments array of names of the files add automatically later (via extension) 
      * @return string
      */
-    public function render(int $gtabid, int $id, ?int $templateId = null, array $resolvedTemplateGroups = [], array $resolvedDynamicData = [], array $attachments = []): string
+    public function render(int $gtabid, int|array $id, ?int $templateId = null, array $resolvedTemplateGroups = [], array $resolvedDynamicData = [], array $attachments = []): string
     {
-        global $lang;
+        global $lang, $gsr, $verkn;
+        
+        if($id === 0) {
+            # Abfrage
+            $filter['anzahl'][$gtabid] = 'all';
+            $gresult = get_gresult($gtabid, 1, $filter, $gsr, $verkn);
+
+            $ids = [];
+            foreach ($gresult[$gtabid]['id'] as $id) {
+                $ids[] = intval($id);
+            }
+            $id = $ids;
+        }
+        
+        if(is_array($id) && count($id) > 1) {
+            return $this->renderPreview($gtabid,$id,$templateId, $resolvedTemplateGroups, $resolvedDynamicData);
+        }
+        elseif(is_array($id) && !empty($id)) {
+            $id = $id[0];
+        }
+        
         
         ob_start();
 
@@ -53,8 +73,69 @@ class LmbMailForm {
         }
 
         $senderAccountCount = count($senderAccounts);
-        $receiverCount = count($receivers);
+        $bulkMail = false;
+        $readonly = false;
+        $firstId = $id;
         
+        require(__DIR__ . '/html/mailform.php');
+        return ob_get_clean() ?: '';
+    }
+
+    /**
+     * @param int $gtabid
+     * @param array $ids
+     * @param int|null $templateId
+     * @param array $resolvedTemplateGroups
+     * @param array $resolvedDynamicData
+     * @param array $attachments array of names of the files add automatically later (via extension)
+     * @return string
+     */
+    public function renderPreview(int $gtabid, array $ids, ?int $templateId = null, array $resolvedTemplateGroups = [], array $resolvedDynamicData = [], array $attachments = []): string
+    {
+        global $lang;
+
+        ob_start();
+
+        
+        $firstId = intval($ids[0]);
+        $ids = array_unique($ids);
+
+        $lmbMail = new LmbMail();
+
+        /** @var array<MailAccount> $senderAccounts */
+        $senderAccounts = MailAccount::getUserMailAccounts();
+        $receivers = [];
+        foreach($ids as $id) {
+            $id = intval($id);
+            if(empty($id)) {
+                continue;
+            }
+            $receivers = array_merge($receivers,$lmbMail->getReceiverAddresses($gtabid,$id));
+        }
+        $id = json_encode($ids);
+        
+        //$receivers = array_unique($receivers);
+        
+
+        if(function_exists('lmbBeforeMailPreviewRender')) {
+            lmbBeforeMailPreviewRender($gtabid,$ids,$senderAccounts,$receivers,$templateId,$resolvedTemplateGroups,$resolvedDynamicData,$attachments);
+        }
+
+        $templateHtml = '';
+        $subject = '';
+        $readonly = false;
+        if(!empty($templateId)) {
+            $readonly = true;
+            $mailTemplate = MailTemplate::get($templateId);
+            if($mailTemplate) {
+                $subject = $mailTemplate->name;
+                $templateHtml = $mailTemplate->getRendered($gtabid,$firstId, $resolvedTemplateGroups, $resolvedDynamicData);
+            }
+        }
+
+        $senderAccountCount = count($senderAccounts);
+        $bulkMail = true;
+
         require(__DIR__ . '/html/mailform.php');
         return ob_get_clean() ?: '';
     }

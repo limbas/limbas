@@ -14,30 +14,33 @@ global $filter;
 global $session;
 
 $hasAnyNotices = false;
-
 $noticeOutput = '';
 
 // notice validity
 if ($gtab['validity'][$gtabid] AND $filter['validity'][$gtabid]) {
-    $dateformat = setDateFormat(1, 2);
-    $validity = $filter['validity'][$gtabid];
-    if($filter['validity'][$gtabid] == 'all') {$validity = $GLOBALS['lang'][994];}
+
+    $transl = array('all'=>$lang[3052],'allto'=>$lang[3055],'allfrom'=>$lang[3054]);
+
+    $validityval = '';
+    $validityinfo = '';
+    if($transl[$filter["validity"][$gtabid]]){
+        $validityinfo = '&nbsp;('.$transl[$filter["validity"][$gtabid]].')';
+    }else{
+        // browser datepicker needs US format
+        $validityval = get_date($filter['validity'][$gtabid],1,2);
+    }
+
     $noticeOutput .= "<div class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice1\">{$lang[3008]}:&nbsp;
-         <input type=\"text\" id=\"lmbValidityNotice\" style=\"height:19px;width:100px;background-color:inherit\" value=\"{$validity}\" 
-         onchange=\"document.form1.filter_validity.value=this.value+' ';send_form(1);\"
-         ondblclick=\"lmb_datepicker(event,this,'lmbValidityNotice',document.getElementById('lmbValidityNotice').value,'{$dateformat}',10);\">&nbsp;";
+         <input type=\"date\" id=\"lmbValidityNotice\" class=\"form-control w-auto pt-0 pb-0\" value=\"{$validityval}\" 
+         onblur=\"document.form1.filter_validity.value=this.value+' ';send_form(1);\" >&nbsp;";
     if($filter['validity'][$gtabid] != 'all') {
         $noticeOutput .= "<i class=\"lmb-icon lmb-close-alt\" onclick=\"document.form1.filter_validity.value='all';send_form(1);\"></i>";
     }
-    #echo "</div>";
-
-    #echo "<div id=\"notice_validity_line\" class=\"gtabHeaderBodyTR lmbGlistBodyNotice notice1\" style=\"width:100%;\">";
     // validity versioning
     if($gtab['validity'][$gtabid] == 2) {
         $noticeOutput .= show_validity_line($gtabid, $ID, $gresult[$gtabid]['VPID'][0]);
     }
-    #echo "</div>";
-    $noticeOutput .= "</div>";
+    $noticeOutput .= $validityinfo.'</div>';
 }
 
 // notice archive

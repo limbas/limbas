@@ -264,18 +264,18 @@ function lmbAjax_resultGtabPost(result){
 		result = result.split("#LMBSPLIT#");
 		if(result[0] && result[0].trim() && document.getElementById("GtabTableSearch")){document.getElementById("GtabTableSearch").innerHTML = result[0];}
 		if(result[1] && result[1].trim() && document.getElementById("GtabTableHeader")){document.getElementById("GtabTableHeader").innerHTML = result[1];}
+		// if for adding new tab rows while scrolling
 		if(result[2] && result[2].trim()){
 		    if(pagination_s) {
 		        n1 = result[2].search('LMB_STARTTAB') + 13;
 		        n2 = result[2].search('LMB_ENDTAB') - 9;
                 result[2] = result[2].substring(n1, n2);
-				
-				const $html = $(result[2]).find('[data-decrypt]').click(lmbAjax_decryptField);
-				
-                $('#lmbGlistBodyTab').append($html);
+
+                $('#lmbGlistBodyTab').append(result[2]);
+				$('#GtabTableBody').find('[data-decrypt]').on('click', lmbAjax_decryptField);
             }else{
 		        document.getElementById("GtabTableBody").innerHTML = result[2];
-				$('#GtabTableBody').find('[data-decrypt]').click(lmbAjax_decryptField);
+				$('#GtabTableBody').find('[data-decrypt]').on('click', lmbAjax_decryptField);
 		    }
 		}
 
@@ -525,38 +525,75 @@ function create_new() {
 	}
 }
 
-//----------------- Bearbeitungsansicht -------------------
-function view_detail(newwin,id) {
-	if(this.gtabDetailIframe){document.form2.target='gtabDetailIframe';}else{document.form2.target='_self';}
 
-	document.form2.action.value='gtab_change';
+function lmbGetTableRowData(el) {
 
-	if(id){
-		document.form2.ID.value=id;
-	}else{
-        var actrows = checkActiveRows();
-        if(actrows.length > 0){
-            var id = actrows[0].split("_");
-            document.form2.ID.value=id[0];
-        }
+    return data = {
+        ID:document.form2.ID.value,
+        gtabid:document.form2.gtabid.value,
+        formid:$(el).attr("data-formid"),
+        formopenas:$(el).attr("data-formopenas"),
+        formdimension: $(el).attr("data-formdimension"),
+        v_tabid:$(el).attr("data-reltab"),
+        v_fieldid:$(el).attr("data-relfield"),
+        v_id:$(el).attr("data-relid")
+    };
+}
+
+
+// handle dblclick on row
+function lmbTableDblClickEvent(evt,el,gtabid,ID) {
+
+    var params = lmbGetTableRowData(el);
+
+    // open in new window
+    formopener = params['formopener'];
+    if(evt && evt.shiftKey){formopener = 'window';}
+    if(evt && evt.altKey){formopener = 'tab';}
+
+    params['formopener'] = formopener;
+    lmbOpenForm(evt, gtabid, ID, params);
+
+    aktivateRows(0);
+    return false;
+}
+
+// open details from cached ID LmGl_edit_id (contextmenu)
+function view_detail(action) {
+	divclose();
+
+    if(!action){action = 'gtab_deterg';}
+
+    if(LmGl_edit_id){
+        el = document.getElementById(LmGl_edit_id);
+        var params = lmbGetTableRowData(el);
+
+        params['action'] = action;
+        lmbOpenForm(null, params['gtabid'], params['ID'],params);
     }
 
-    if(!id){return false;}
-
-	if(newwin){
-		document.form2.target='_new';
-	}
-
-	send_form(2);
-	document.form2.action.value='gtab_erg';
-	document.form2.target='';
 }
 
 function view_change() {
-    view_detail();
+    view_detail('gtab_change');
 }
 
-//----------------- Bearbeitungsansicht -------------------
+// menu function for "new win"
+function lmbNewwin(ID) {
+	divclose();
+    if(!ID){
+        ID = LmGl_edit_id;
+    }
+    if(ID) {
+        el = document.getElementById(ID);
+        var params = lmbGetTableRowData(el);
+
+        params['formopenas'] = 'tab';
+        lmbOpenForm(null, params['gtabid'], params['ID'],params);
+    }
+}
+
+
 function view_copychange(id,gtabid) {
 	if(parent.detail){
 		document.form2.target='detail';
@@ -568,27 +605,6 @@ function view_copychange(id,gtabid) {
 		document.form2.ID.value='';
 		document.form2.gtabid.value=jsvar["gtabid"];
 	}
-}
-
-// ---------------- Sendkeypress----------------------
-function view_contextDetail(id,tab_id,form_id,form_typ,form_dimension) {
-
-    if(tab_id){gtabid = tab_id;}else{gtabid = document.form2.gtabid.value;}
-    if(id){ID = id;}else{ID = document.form2.ID.value;}
-    if(form_id){formid = form_id;}else{formid = tmp_form_id}
-    if(form_typ){formtyp = form_typ;}else{formtyp = tmp_form_typ}
-    if(form_dimension){formdimension = form_dimension;}else{formdimension = tmp_form_dimension}
-
-    if(formid) {
-        var t = 'div';
-        if (formtyp == 1) {
-            t = 'iframe';
-        }
-        newwin7(null,null, gtabid, null, null, null, ID, formid, formdimension, null, t);
-    }else{
-        view_detail();
-    }
-
 }
 
 // ---------------- Sendkeypress----------------------
@@ -1075,29 +1091,6 @@ function noLimit(){
 	}
 }
 
-// handle klick on row
-function lmbTableDblClickEvent(evt,el,gtabid,ID,frame,poolid,form_id,V_ID,V_GID,V_FID,V_TYP,newwin) {
-
-	if(evt.ctrlKey){return;}
-
-	// --------- open Detail -------------
-	if(V_ID>0){var vid = "&verkn_ID="+V_ID;document.form2.ID.value=ID;}else{var vid = "&verkn_ID="+document.form2.verkn_ID.value;}
-	if(V_GID>0){var vgid = "&verkn_tabid="+V_GID;document.form2.verkn_tabid.value=V_GID;}else{var vgid = "&verkn_tabid="+document.form2.verkn_tabid.value;}
-	if(V_FID>0){var vfid = "&verkn_fieldid="+V_FID;document.form2.verkn_fieldid.value=V_FID;}else{var vfid = "&verkn_fieldid="+document.form2.verkn_fieldid.value;}
-	if(V_TYP>0){var vtyp = "&verknpf="+V_TYP;document.form2.verknpf.value=V_TYP;}else{var vtyp = "&verknpf="+document.form2.verknpf.value;}
-	if(gtabid > 0){document.form2.gtabid.value=gtabid;}
-	if(form_id > 0){document.form2.form_id.value=form_id;}
-
-	aktivateRows(0);
-	if(evt.shiftKey || newwin == 3){
-		view_detail(1,ID);
-	}else{
-		view_detail(0,ID);
-	}
-	return false;
-
-}
-
 
 // --- Export -----
 function gtab_export(typ,medium) {
@@ -1112,10 +1105,10 @@ function gtab_export(typ,medium) {
 
 // --- Setze Farbhintergründe -----------------------------------
 var td_color = new Array();
+var cell_id = null;
 function set_color(COLOR) {
 
 	if(!COLOR){COLOR = 'transparent';}
-
 	//Zeile -------------
 	if(document.fcolor_form.ctyp && document.fcolor_form.ctyp[0].checked == true){
 		var line = cell_id.split("_");
@@ -1127,13 +1120,13 @@ function set_color(COLOR) {
 			var ln = cc.id.split("_");
 			if(ln[0] == "td"){
 				if(ln[1] == line[1] || selected_rows['elrow_'+ln[1]+'_'+ln[3]]){
-					cc.style.backgroundColor = COLOR;
+                    cc.style.setProperty('background-color', COLOR, 'important');
                     document.getElementById('elrow_'+ln[1]+'_'+ln[3]).style.backgroundColor = '';
 					document.getElementById('elrow_'+ln[1]+'_'+ln[3]).setAttribute("lmbbgcolor", COLOR);
 				}
 			} else if(ln[0] == "tdap") {
                 if(ln[1] == line[1] || selected_rows['elrow_'+ln[1]+'_'+ln[2]]){
-                    cc.style.backgroundColor = COLOR;
+                    cc.style.setProperty('background-color', COLOR, 'important');
                     document.getElementById('elrow_'+ln[1]+'_'+ln[2]).style.backgroundColor = '';
                     document.getElementById('elrow_'+ln[1]+'_'+ln[2]).setAttribute("lmbbgcolor", COLOR);
                 }
@@ -1366,94 +1359,7 @@ function div_menu(evt,el,divid){
 	document.getElementById(divid).style.visibility='visible';
 }
 
-var cell_id = null;
-var tmp_form_id = null;
-var tmp_form_typ = null;
-var tmp_form_dimension = null;
 
-// --- Editmenüsteuerung -----------------------------------
-function lmbTableContextMenu(evt,el,ID,gtabid,custmenu,parentid,form_id,form_typ,form_dimension,ERSTDATUM,EDITDATUM,ERSTUSER,EDITUSER,V_ID,V_GID,V_FID,V_TYP) {
-
-	// --------- deactivate all rows -------------
-	//aktivateRows(0);
-	// --------- activate single row -------------
-	// aktivateSingleRow('elrow_'+ID+'_'+TABID,1);
-	// activate row if not active
-
-    child = 'limbasDivMenuContext';
-    parent = evt;
-
-    // use data attribute
-    if(!custmenu) {
-        var custmenu = $(evt.target).closest('.element-cell').attr("data-custmenu");
-    }
-
-    if(parentid){
-	    parent = 'lmb_custmenu_'+parentid;
-	    child = 'lmb_custmenu_'+custmenu;
-	}else if(custmenu){
-        divclose();
-	    child = 'lmb_custmenu_'+custmenu;
-	}
-
-	if(!document.getElementById(child)){
-        $('#limbasDivMenuContext').after("<div id='"+child+"' class='lmbContextMenu' style='position:absolute;z-index:992;' onclick='activ_menu = 1;'>");
-    }
-
-    if(!parentid) {
-        const rowid = el.id;
-        if (!selected_rows[rowid]) {
-            lmbTableClickEvent(evt, el);
-        }
-    }
-
-
-
-    // use custmenu
-    if(custmenu) {
-        var fieldid = $(evt.target).closest('.element-cell').attr( "data-fieldid" );
-        if(!fieldid){fieldid = '';}
-        var actrows = checkActiveRows();
-		if(actrows.length > 1) {
-            ID = actrows.join(";");
-        }
-        var actid = "gtabCustmenu&custmenu=" + custmenu + "&ID=" + ID + "&gtabid=" + gtabid + "&fieldid="+ fieldid;
-        ajaxGet(null, "main_dyns.php", actid, null, '', null, child);
-    }else {
-        document.getElementById("lmbInfoCreate").innerHTML = ERSTUSER + "\n" + ERSTDATUM;
-        document.getElementById("lmbInfoEdit").innerHTML = EDITUSER + "\n" + EDITDATUM;
-
-        document.form1.ID.value = ID;
-
-        if (ID > 0) {
-            document.form2.ID.value = ID;
-        }
-        if (V_TYP > 0) {
-            document.form2.verknpf.value = V_TYP;
-        }
-        if (V_ID > 0) {
-            document.form2.verkn_ID.value = V_ID;
-        }
-        if (V_GID > 0) {
-            document.form2.verkn_tabid.value = V_GID;
-        }
-        if (V_FID > 0) {
-            document.form2.verkn_fieldid.value = V_FID;
-        }
-        if (gtabid > 0) {
-            document.form2.gtabid.value = gtabid;
-        }
-
-        tmp_form_id = form_id;
-        tmp_form_typ = form_typ;
-        tmp_form_dimension = form_dimension;
-    }
-
-    limbasDivShow(el, parent, child);
-	window.setTimeout('set_activ_menu()',500);
-
-	return false;
-}
 
 // --- Infomenüsteuerung -----------------------------------
 function div2(el) {
@@ -1485,13 +1391,6 @@ function div6(evt,el,ID,GVAL,EBENE) {
 
 	activ_menu = 1;
 	validEnter = true;
-}
-
-
-// --- neues Popupfenster -----------------------------------
-function lmbNewwin() {
-	divclose();
-	open("main.php?action=gtab_change&gtabid="+document.form2.gtabid.value+"&ID="+document.form2.ID.value,"tab_"+document.form2.gtabid.value+"_"+document.form2.ID.value);
 }
 
 /* --- Fenster fuer Kalender ------------------------------------------ */
