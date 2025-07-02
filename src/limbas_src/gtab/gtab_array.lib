@@ -632,10 +632,11 @@ function gfield_array(&$gtab,&$gfield,$gtabid){
 				$rs1 = lmbdb_exec($db,$sqlquery1) or errorhandle(lmbdb_errormsg($db),$sqlquery1,$action,__FILE__,__LINE__);
 				if(!$rs1) {$commit = 1;}
 				if(lmbdb_result($rs1,"MD5TAB")){
-                    if(lmbdb_result($rs1,"MD5TAB")) {
+                    // workaround for missing md5tab
+                    $gfield[$gtabid]["md5tabBD"][$bzm0] = lmb_strtoupper(lmbdb_result($rs1,"MD5TAB"));
+                    // select query
                         $gfield[$gtabid]["select"][$bzm0] = $gtab["table"][$gtabid] . "." . lmb_strtoupper(lmbdb_result($rs1, "MD5TAB"))." AS ".$gfield[$gtabid]["form_name"][$bzm0];
                     }
-				}
                 #$gfield[$gtabid]["select"][$bzm0] = $gtab["table"][$gtabid] . "." . $gfield[ $gfield[$gtabid]['verkntabid'][$bzm0] ]['md5tab'][ $gfield[$gtabid]['hasrecverkn'][$bzm0] ] . " AS " . $gfield[$gtabid]["form_name"][$bzm0];
             # default
             }elseif($gfield[$gtabid]['field_type'][$bzm0] != 14 AND $gfield[$gtabid]['field_type'][$bzm0] != 15 AND $gfield[$gtabid]['field_type'][$bzm0] != 100 AND ($data_type != 39 OR $gfield[$gtabid]["longhandle"][$bzm0])){

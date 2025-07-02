@@ -1734,6 +1734,7 @@ function dyns_fileMainContent($params){
 # ---- Explorer Upload --------
 function dyns_fileUpload($params){
     global $LINK;
+    global $alert;
 
     $LID = $params['LID'];
     $dublicate = $params['dublicate'];
@@ -1829,9 +1830,12 @@ function dyns_fileUploadCheck($params){
     global $lang;
     global $filestruct;
     global $externalStorage;
+    global $alert;
 
     require_once(COREPATH . 'extra/explorer/filestructure.lib');
     require_once(COREPATH . 'gtab/gtab.lib');
+
+    header('Content-Type: application/json; charset=utf-8');
 
     $files = explode(";",$params["name"]);
     $size = explode(";",$params["size"]);
@@ -1839,13 +1843,15 @@ function dyns_fileUploadCheck($params){
     foreach ($files as $key => $filename){
         # check for mimetype
         $ext = lmb_strtolower(trim(lmb_substr($filename,lmb_strrpos($filename,'.')+1,4)));
-        if(!in_array($ext,$gmimetypes["ext"])){
+        if(!$gmimetypes['active'][array_search($ext,$gmimetypes["ext"])]){
             lmb_alert($lang[133]."\\n- ".$filename." (.".$ext.")");
+            $commit = 1;
             # check for uploadsize
         }elseif(file_size_convert(ini_get('post_max_size')) < $size[$key] OR file_size_convert(ini_get('upload_max_filesize')) < $size[$key] OR $session["uploadsize"] < $size[$key]){
             $maxs = array(ini_get('post_max_size'), file_size_convert(ini_get('upload_max_filesize')), $session["uploadsize"]);
             sort($maxs);
             lmb_alert($lang[716]." ".file_size($maxs[0])."\\n- ".$filename." (".file_size($size[$key]).")");
+            $commit = 1;
             # check for dublicates
         }else{
             if($dublicateFile = check_duplicateFile($filename,$params["level"],$params["ID"])){
@@ -1891,8 +1897,9 @@ function dyns_fileUploadCheck($params){
 
 	$GLOBALS["noencode"] = 1;
 
-	if($result){
+	if(!$commit){
 		echo json_encode($result);
+        $alert = false;
 	}else{
 		echo "false";
 	}
@@ -1997,8 +2004,7 @@ function print_dublicateMenu($filelist,$fp=null){
 
     pop_top(0,250);
     pop_left(250);
-    echo "<table style=\"background-color:\" border=0 align=\"center\" width=\"90%\" cellpadding=0 cellspacing=0>
-	<tr><td align=\"center\" colspan=\"5\"><hr></td></tr>";
+    echo "<table style=\"background-color:\" border=0 align=\"center\" width=\"90%\" cellpadding=0 cellspacing=0>";
 	$sum = lmb_count($filelist["id"]);
 	$i = 0;
 	$bzm = 0;
@@ -2046,7 +2052,7 @@ function print_dublicateMenu($filelist,$fp=null){
 	}
 	echo "</table>";
 
-    echo "<table align=\"center\" width=\"90%\"><tr><td align=\"center\">&nbsp;<input type=\"button\" value=\"OK\" OnClick=\"selectDublicateUploads($sum)\">&nbsp;<input type=\"button\" value=\"abbrechen\" OnClick=\"$('#dublicateCheckLayer').dialog('destroy');\"></td></tr></table>";
+    echo "<table align=\"center\" width=\"90%\"><tr><td align=\"center\">&nbsp;<input type=\"button\" value=\"OK\" OnClick=\"selectDublicateUploads($sum)\">&nbsp;<input type=\"button\" value=\"abbrechen\" OnClick=\"$('#ldmsUploadDublicateModal').modal('hide');$('#ldmsUploadModal').modal('hide');\"></td></tr></table>";
 
     pop_right(250);
     pop_bottom(250);
@@ -4397,10 +4403,11 @@ if($actid AND function_exists("dyns_".$actid)){
 }
 
 # --- Fehlermeldungen -----
+global $alert;
 if(is_array($alert)){
     if($alert AND !is_array($alert)){$alert = array($alert);}
     $alert = array_unique($alert);
-    echo "<script language=\"JavaScript\">\n showAlert('".implode("\\n",$alert)."');\n</script>\n";
+    echo "<script language=\"JavaScript\">\n showAlert('".implode("\\n",$alert)."');\n</script>";
 }
 
 # Puffersteuerung Ausgabe

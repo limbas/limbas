@@ -28,11 +28,11 @@ $maxpage = ceil($gresult[$gtabid]['max_count']/$filter['anzahl'][$gtabid]);
 <div class="d-flex flex-row align-items-center" id="GtabTableFooter">
 
     <?php if($gresult[$gtabid]['over_limit'] == 1): ?>
-        <span class="text-danger" onclick="lmbGetResultlimit();"> <span id="GtabResCount">&gt; <?=$gresult[$gtabid]['res_count']?></span><?=$lang[93]?></span>
+        <span class="text-danger" onclick="lmbGetResultlimit();"> <span id="GtabResCount">&gt; <?=$gresult[$gtabid]['res_count']?></span>&nbsp;<?=$lang[93]?></span>
     <?php elseif($gresult[$gtabid]['over_limit'] == 2): ?>
-        <span class="text-danger" onclick="lmbGetResultlimit();"> <span id="GtabResCount"></span>? <?=$lang[93]?> </span>
+        <span class="text-danger" onclick="lmbGetResultlimit();"> <span id="GtabResCount"></span>?&nbsp;<?=$lang[93]?> </span>
     <?php else: ?>
-        <span><span id="GtabResCount" class="me-1"><?=$gresult[$gtabid]['res_count']?></span> <?=$lang[93]?></span>
+        <span><span id="GtabResCount" class="me-1"><?=$gresult[$gtabid]['res_count']?></span>&nbsp;<?=$lang[93]?></span>
     <?php endif; ?>
     
     <span class="ms-3 me-2"><?=$lang[89]?></span>

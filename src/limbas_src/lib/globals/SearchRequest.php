@@ -35,12 +35,13 @@ class SearchRequest
         $historySearch = $request->get('history_search',[]);
         $superSearch = boolval($request->get('supersearch'));
         $gsSearch = boolval($request->get('gssearch'));
-        
+
         if(!empty($historySearch)){
             $historySearch = explode(';',$historySearch);
             $filter['page'][$tabId] = 1;
-            foreach($historySearch as $key => $value){
-                $search_el = explode(',',$historySearch[$key]);
+            foreach ($historySearch as $value) {
+                if(empty($value)){continue;}
+                $search_el = explode(',', $value);
                 $gsr[$search_el[0]][$search_el[1]][0] = $gs[$search_el[0]][$search_el[1]][0];
             }
 
@@ -64,6 +65,9 @@ class SearchRequest
      */
     private static function cleanGsr(int $tabId, array &$gsr): void
     {
+
+        global $gfield;
+
         if(empty($gsr[$tabId])){
             $gsr[$tabId] = [];
         }
@@ -80,6 +84,14 @@ class SearchRequest
                     continue;
                 }
 
+                // recursive relation handling
+                if(is_array($gsr[$tabId][$fieldId][1]) && $gfield[$tabId]['field_type'][$fieldId] == 11){
+                    self::cleanGsr(key($gsr[$tabId][$fieldId][1]), $gsr[$tabId][$fieldId][1]);
+                    if(!$gsr[$tabId][$fieldId][1]){
+                        unset($gsr[$tabId][$fieldId]);
+                    }
+                }
+
                 if (!$value and $value !== '0' and !$gsr[$tabId][$fieldId]['txt'][$key] >= 7 and !$gsr[$tabId][$fieldId]['num'][$key] >= 7) { // not unset 0, IS NULL, IS NOT NULL
                     self::cleanGsrAttribute($gsr[$tabId][$fieldId],$key,$attr);
                 }
@@ -89,7 +101,7 @@ class SearchRequest
                 }
             }
 
-            if(is_array($gsr[$tabId]) AND !is_numeric(key($gsr[$tabId])) ){
+            if (is_array($gsr[$tabId]) and !is_numeric(key($gsr[$tabId]))) {
                 unset($gsr[$tabId]['andor']);
             }
 

@@ -316,6 +316,10 @@ function form_gresult($ID,$gtabid,$form_id,&$gresult,$self=null,$verkn=null){
 		    $onlyfield = null;
 			$gtabid_ = $gfield[$gtabid]['verkntabid'][$fieldid];
 			$parelts = $gform[$form_id]['parentrel'][$gfield[$gtabid]['md5tab'][$fieldid]];
+            // backward 1:n direct relation - workaround for missing md5tab
+            if($gfield[$gtabid]['data_type'][$fieldid] == 25 && $gfield[$gtabid]["verkntabletype"][$fieldid] == 2){
+                $parelts = $gform[$form_id]['parentrel'][$gfield[$gtabid]['md5tabBD'][$fieldid].'_BD'];
+            }
 
 			$verkn = null;
 			if($parelts){

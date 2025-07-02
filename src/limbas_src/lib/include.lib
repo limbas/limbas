@@ -1345,19 +1345,19 @@ function history_update($tabid,$fieldid,$datid,$actionid,$value,$oldvalue){
 
 	
 
-	# ------- Verknüpfung --------
+	// relation
 	if($field_typ == 11){
 		
 	}
-	# ------- Textarea --------
+	// textarea
 	elseif($field_typ == 3){
 		$value = textDiff($value,$oldvalue,"short");
 	}
-	# ------- Boolean --------
+	// boolean
 	elseif($data_typ == 20){
 		if($value){$value = $lang[1506];}else{$value = $lang[1507];}
 	}
-	# ------- User/Gruppen --------
+	// user/Group
 	elseif($data_typ == 38){
 		$guid = lmb_substr($value,1,6);
 		if(lmb_substr($value,0,1) == "u"){
@@ -1367,22 +1367,46 @@ function history_update($tabid,$fieldid,$datid,$actionid,$value,$oldvalue){
 			$guname = "G:".$groupdat["beschreibung"][$guid];
 			$value = $groupdat['name'][$guid];
 		}
-	}elseif(is_array($value) AND ($data_typ == 31 OR $data_typ == 32 OR $data_typ == 18)){
+    }
+    // Validity
+    elseif(is_array($value) && $data_typ == 53) {
+        if ($value[0] or $value[1]) {
+            $value = $value[0] . ' > ' . $value[1];
+        }else{
+            $value = '';
+        }
+    }
+    // multiselect
+	elseif(is_array($value) && ($data_typ == 31 OR $data_typ == 32 OR $data_typ == 18 OR $data_typ == 46)) {
 		$value_ = array();
 		foreach($value as $key => $val){
 			if($val)
 			$value_[] = $val;
 		}
+        if (is_array($value_)) {
 		$value = implode("\n",$value_);
-	}elseif(is_array($value)){
+        } else {
+            $value = '';
+        }
+    }
+    // is Array
+	elseif(is_array($value)){
 		foreach($value as $key => $val){
 			if($val)
 			$value_[] = "> ".$val;
 		}
+        if(is_array($value_)) {
 		$value = implode("\n",$value_);
+        }else{
+            $value = '';
+	}
 	}
 
-	if($data_typ == 31 AND is_array($value)){$value = implode("\n",$value);}
+
+    if(!is_string($value)){
+        $value = '';
+    }
+
 
 	# --- History-Eintrag (LMB_HISTORY_UPDATE) --------------
 	$NEXTID = next_db_id('LMB_HISTORY_UPDATE','ID',1);

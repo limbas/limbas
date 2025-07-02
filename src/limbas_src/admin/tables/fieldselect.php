@@ -306,7 +306,7 @@
                                     # multilang
                                     if ($hasMultiLang) {
                                         foreach ($umgvar['multi_language'] as $lkey => $langid) {
-                                            echo "<td><input type=\"text\" name=\"select_wert_{$langid}[{$entryID}]\" value=\"{$result_fieldselect['wert_'.$langid][$key]}\" onchange=\"document.form1.select_change.value=document.form1.select_change.value+';{$entryID}';\"  class=\"form-control form-control-sm\"></td>";
+                                            echo "<td><input type=\"text\" name=\"select_wert_{$langid}[{$entryID}]\" value=\"{$result_fieldselect['wert_'.$langid][$key]}\" onchange=\"document.form1.select_change.value=document.form1.select_change.value+';{$entryID}_{$langid}';\"  class=\"form-control form-control-sm\"></td>";
                                         }
                                     }
                                     ?>

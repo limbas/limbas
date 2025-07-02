@@ -120,7 +120,7 @@ while($bzm < $gresult[$gtabid]['res_viewcount']) {
         data-reltab="<?=$prev_gtabid?>"
         data-relfield="<?=$prev_fieldid?>"
         data-formid="<?=$form_id?>"
-        data-formdimension="<?=$GLOBALS['gformlist'][$gtabid]["detailform_dimension"][$form_lid]?>"
+        data-formdimension="<?=$GLOBALS['gformlist'][$gtabid]["dimension"][$form_id]?>"
         data-formopenas="<?=$gtab["detailform_opener"][$gtabid]?>"
         data-createinfo="<?=e($gresult[$gtabid]["ERSTDATUM"][$bzm].' '.$userdat["bezeichnung"][$gresult[$gtabid]["ERSTUSER"][$bzm]])?>"
         data-editinfo="<?=e($gresult[$gtabid]["EDITDATUM"][$bzm].' '.$userdat["bezeichnung"][$gresult[$gtabid]["EDITUSER"][$bzm]])?>"

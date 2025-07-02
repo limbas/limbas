@@ -1069,27 +1069,33 @@ function checkMD5Dublicates($md5,$LID){
 
 
 
-function lmb_getMimetype(&$fl,$validate=null){
+function lmb_getMimetype(&$fl){
     global $db;
     global $lang;
+    global $umgvar;
 
-    # --- Mimetype ----------------------------------------
-    if($validate && $fl['filepath']){
+    // file extension
+    $ext = end(explode(".",$fl["filename"]));
+
+    # --- get real mimetype from file ----------------------------------------
+    #$noupload AND $noupload != 3 AND
+
+    if($umgvar["checkmime"] && $fl['filepath']){
         $mimetype = mime_content_type($fl['filepath']);
-    }
-    # --- Mimetype aus filetype festlegen ----------------------------------------
     if($mimetype){
-        $sqlquery0 = "SELECT ID,EXT,MIMETYPE FROM LMB_MIMETYPES WHERE LOWER(MIMETYPE) = '".lmb_strtolower(trim($mimetype))."'";
-    # --- Mimetype aus Endung festlegen ----------------------------------------
-    }else{
-        $pos1 = lmb_strrpos($fl["filename"],'.');
-        $ext = lmb_strtolower(trim(lmb_substr($fl["filename"],$pos1+1,4)));
-        $sqlquery0 = "SELECT ID,EXT,MIMETYPE FROM LMB_MIMETYPES WHERE LOWER(EXT) = '$ext'";
+            $sqlquery0 = "SELECT ID,EXT,MIMETYPE FROM LMB_MIMETYPES WHERE LOWER(MIMETYPE) = '".lmb_strtolower(trim($mimetype))."' AND ACTIVE = ".LMB_DBDEF_TRUE;
+            $rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$GLOBAL['action'],__FILE__,__LINE__);
+        }
+    # --- get LMB_MIMETYPES from mimetype  ----------------------------------------
+    }elseif($ext){
+        $sqlquery0 = "SELECT ID,EXT,MIMETYPE FROM LMB_MIMETYPES WHERE LOWER(EXT) = '$ext' AND ACTIVE = ".LMB_DBDEF_TRUE;
     }
 
+    if($sqlquery0) {
     $rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$GLOBAL['action'],__FILE__,__LINE__);
+    }
     if(!$rs0 OR !lmbdb_result($rs0, "ID")) {
-        lmb_log::error("lmb_fileUpload - mimetype not found ( $ext $mimetype )", $lang[133]." ($ext . $mimetype)", $GLOBALS['gtab']['argresult_id']['LDMS_META'], $level, null , E_ERROR);
+        Log::error("lmb_fileUpload - mimetype not found or allowed ( .$ext / $mimetype )", $lang[133]." ( .$ext / $mimetype )", null, null, null , LogLevel::ERROR);
         return false;
     }
 
@@ -1097,8 +1103,7 @@ function lmb_getMimetype(&$fl,$validate=null){
     $fl["mimetype"] = lmbdb_result($rs0, "MIMETYPE");
     $fl["mimetype_id"] = lmbdb_result($rs0, "ID");
 
-
-    return $fl;
+    return true;
 
 }
 
@@ -1247,7 +1252,7 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
 
         $fl["filename"] = $file_name[$key];
         $fl["filepath"] = $filevalue;
-        $fl["filetype"] = $file_type[$key];
+        $fl["mimetype"] = $file_type[$key];
         $fl["filearchiv"] = $file_archiv[$key];
         $fl["thumb_ok"] = LMB_DBDEF_TRUE;
         $fl["lock"] = LMB_DBDEF_FALSE;
@@ -1329,36 +1334,10 @@ function lmb_fileUpload($file,$level,$relation=null,$noupload=false,$dublicate=a
             }
         }
 
-        # --- Mimetype ----------------------------------------
-        if($noupload AND $noupload != 3 AND $umgvar["checkmime"]){
-            $validate = 1;
-            $fl["filetype"] = mime_content_type($filevalue);
+        // get mimetype
+        if(lmb_getMimetype($fl) == false){
+            continue;
         }
-
-        lmb_getMimetype($fl,$validate);
-
-        /*
-        # --- Mimetype aus filetype festlegen ----------------------------------------
-        if($umgvar["checkmime"]){
-            $sqlquery0 = "SELECT ID,EXT,MIMETYPE FROM LMB_MIMETYPES WHERE LOWER(MIMETYPE) = '".lmb_strtolower(trim($fl["filetype"]))."'";
-        # --- Mimetype aus Endung festlegen ----------------------------------------
-        }else{
-            $pos1 = lmb_strrpos($fl["filename"],'.');
-            $ext = lmb_strtolower(trim(lmb_substr($fl["filename"],$pos1+1,4)));
-            $sqlquery0 = "SELECT ID,EXT,MIMETYPE FROM LMB_MIMETYPES WHERE LOWER(EXT) = '$ext'";
-        }
-
-        $rs0 = lmbdb_exec($db,$sqlquery0) or errorhandle(lmbdb_errormsg($db),$sqlquery0,$action,__FILE__,__LINE__);
-        if(!$rs0 OR !lmbdb_result($rs0, "ID")) {
-            lmb_log::error('lmb_fileUpload - mimetype not found ('.$ext.')', $lang[133]." ($ext)", $gtabid_files, $fl["level"], null , E_ERROR);
-            $commit = 1;
-            break;
-        }
-
-        $fileext = lmbdb_result($rs0, "EXT");
-        $fl["mimetype_id"] = lmbdb_result($rs0, "ID");
-        $fl["mimetype"] = lmbdb_result($rs0, "MIMETYPE");
-        */
 
         // overwrite existing file - use old file ID
         if($existingFile AND $dublicate_type == 'overwrite'){
@@ -3646,8 +3625,7 @@ function file_download($ID,$disposition=null){
 	$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 	if(!$rs) {$commit = 1;}
 
-
-	if(lmbdb_fetch_row($rs) AND $level = lmbdb_result($rs, 'LEVEL') AND $filestruct["view"][$level] == 1){
+	if(lmbdb_fetch_row($rs) AND $level = lmbdb_result($rs, 'LEVEL') AND $filestruct["view"][$level] == 1 AND $gmimetypes["ext"][lmbdb_result($rs, "MIMETYPE")]){
 
 		if(!lmbdb_result($rs, "VACT")){$vcount = "V".lmbdb_result($rs, "VID")."_";}else{$vcount = "";}
 		$target = lmb_getFilePath($ID,$level,lmbdb_result($rs, "SECNAME"),$gmimetypes["ext"][lmbdb_result($rs, "MIMETYPE")]);
@@ -3680,7 +3658,7 @@ function file_download($ID,$disposition=null){
         $file['level'] = $level;
         return $file;
 	}else{
-		lmb_alert($lang[1317]." : (".lmbdb_result($rs, "NAME").")");
+		#lmb_alert($lang[1317]." : (".lmbdb_result($rs, "NAME").")");
 		return false;
 	}
 }
@@ -3772,8 +3750,9 @@ function lmb_PHPDownload($file,$disposition=null){
         }
 
         // get mimetype
-        if(!$file['mimetype']){
-            lmb_getMimetype($file);
+        if(!$file['mimetype'] && lmb_getMimetype($file) == false){
+            Log::error("lmb_fileDownload - mimetype not found or allowed ( ".$file['path']." )", null, null, null, null , LogLevel::ERROR);
+            throw new NotFoundHttpException();
         }
 
         header('Content-Type: ' . $file['mimetype']);

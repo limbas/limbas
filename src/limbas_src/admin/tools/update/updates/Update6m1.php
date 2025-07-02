@@ -188,6 +188,13 @@ class Update6m1 extends Update
         return $this->databaseUpdate($sqlQueries);
     }
 
-
+    /**
+     * bugfixes
+     * @return bool
+     */
+    protected function patch13(): bool
+    {
+        return true;
+    }
 }
 

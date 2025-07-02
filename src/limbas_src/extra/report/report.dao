@@ -556,8 +556,11 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
                     if($file){
                         $mimetype = explode('/',$file['mimetype']);
                         if($mimetype[0] == 'image'){
+                            $DBRESULT[$bzm3][$bzm0] = $file["path"];
+                            if($report["defformat"] == 'tcpdf') {
                             $DBRESULT[$bzm3][$bzm0] = "IMAGE#*#".$file["path"];
                         }
+                    }
                     }
 					# --- sonstige ---
 				}else if($data_type == 30){
@@ -700,7 +703,10 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 					}
 					# --- long ---
 				}elseif($data_type == 39 AND $gfield[$gtabid]["wysiwyg"][$fieldid]){
+					$DBRESULT[$bzm3][$bzm0] = $oresult;
+                    if($report["defformat"] == 'tcpdf') {
 					$DBRESULT[$bzm3][$bzm0] = "HTML#*#".$oresult;
+                    }
 					# --- Upload ---
 				}elseif($data_type == 13){
 					$sqlquery2 = "SELECT DISTINCT LDMS_FILES.ID,LDMS_FILES.SECNAME,LDMS_FILES.LEVEL,LDMS_FILES.SORT,LDMS_FILES.NAME,LMB_MIMETYPES.EXT,LDMS_FILES.SIZE,LMB_MIMETYPES.PIC,LMB_MIMETYPES.MIMETYPE FROM LDMS_FILES,LMB_MIMETYPES WHERE LDMS_FILES.MIMETYPE = LMB_MIMETYPES.ID AND LDMS_FILES.TABID = $gtabid AND LDMS_FILES.FIELDID = $fieldid AND LDMS_FILES.DATID = ".lmbdb_result($rs1, "IDALIAS_".$gtabid)." AND TYP = 3  AND VID = 1 AND DEL = ".LMB_DBDEF_FALSE." ORDER BY LDMS_FILES.SORT";
@@ -711,11 +717,15 @@ function get_dataArray($ID,$report_id,$report_tab,&$report,$report_tab_cells,$bz
 					    $level = lmbdb_result($rs2, "LEVEL");
 						$mime = explode("/",lmbdb_result($rs2, "MIMETYPE"));
 						if($mime[0] == "image"){
-							#$DBRESULT[$bzm3][$bzm0] = "IMAGE#*#".$umgvar["upload_pfad"].$filestruct['path'][$level].lmbdb_result($rs2, "SECNAME").".".lmbdb_result($rs2, "EXT");
-						    $DBRESULT[$bzm3][$bzm0] = "IMAGE#*#".lmb_getFilePath(lmbdb_result($rs2, "ID"),$level,lmbdb_result($rs2, "SECNAME"),lmbdb_result($rs2, "EXT"));
+						    $DBRESULT[$bzm3][$bzm0] = lmb_getFilePath(lmbdb_result($rs2, "ID"),$level,lmbdb_result($rs2, "SECNAME"),lmbdb_result($rs2, "EXT"));
+                            if($report["defformat"] == 'tcpdf') {
+                                $DBRESULT[$bzm3][$bzm0] = "IMAGE#*#".$DBRESULT[$bzm3][$bzm0];
+                            }
 						}elseif($mime[1] == "pdf"){
-							#$DBRESULT[$bzm3][$bzm0] = "PDF#*#".$umgvar["upload_pfad"].$filestruct['path'][$level].lmbdb_result($rs2, "SECNAME").".".lmbdb_result($rs2, "EXT");
-						    $DBRESULT[$bzm3][$bzm0] = "PDF#*#".lmb_getFilePath(lmbdb_result($rs2, "ID"),$level,lmbdb_result($rs2, "SECNAME"),lmbdb_result($rs2, "EXT"));
+						    $DBRESULT[$bzm3][$bzm0] = lmb_getFilePath(lmbdb_result($rs2, "ID"),$level,lmbdb_result($rs2, "SECNAME"),lmbdb_result($rs2, "EXT"));
+                            if($report["defformat"] == 'tcpdf') {
+                                $DBRESULT[$bzm3][$bzm0] = "PDF#*#".$DBRESULT[$bzm3][$bzm0];
+                            }
 						}
 					}
 					# --- sonstige ---

@@ -75,7 +75,7 @@ function cftyp_OpenFormParams($gtabid,$gformid,$formid,$vuniqueid,&$filter){
     }elseif($gformid && $formid && $gform[$gformid]['pic_size'][$formid]){
         $dest_formid = $gform[$gformid]['pic_size'][$formid];
     }else{
-        $dest_formid = $gtab["tab_view_form"][$vgtabid];
+        $dest_formid = $gtab["tab_view_form"][$gtabid];
     }
 
     # form dimension
@@ -90,7 +90,7 @@ function cftyp_OpenFormParams($gtabid,$gformid,$formid,$vuniqueid,&$filter){
     if($filter["ext_RelationFields"]["show_inframe"][$vuniqueid]){
         $formopenas = $filter["ext_RelationFields"]["show_inframe"][$vuniqueid];
     }elseif($gtab["detailform_opener"][$gtabid]){
-        $formopenas = $gtab["detailform_opener"][$vgtabid];
+        $formopenas = $gtab["detailform_opener"][$gtabid];
     }
 
     return array('dimension'=>$dimsn,'openas'=>$formopenas,'formid'=>$dest_formid);
@@ -864,12 +864,21 @@ function cftyp_10($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$gformid=nul
 		$sqlquery = "SELECT " . $hidetag . $attribute . $field_name . "," . $tabtyp . "_W.KEYWORDS,".$tabtyp."_W.ID FROM ".$tabtyp."_D,".$tabtyp."_W WHERE ".$tabtyp."_D.W_ID = ".$tabtyp."_W.ID AND ".$tabtyp."_D.TAB_ID = ".$gtabid." AND ".$tabtyp."_D.FIELD_ID = ".$field_id." AND ".$tabtyp."_D.DAT_ID = ".$gresult[$gtabid]["id"][$bzm] . $sort;
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		while(lmbdb_fetch_row($rs)) {
+            $attributeValueField = null;
+            if($attribute) {
+                $attributeType = intval(lmbdb_result($rs, 'TYPE'));
+                $attributeValueField = match ($attributeType) {
+                    16,49,20 => 'VALUE_NUM',
+                    40 => 'VALUE_DATE',
+                    default => 'VALUE_STRING'
+                };
+            }
 			$skey = lmbdb_result($rs, "ID");
 			if($typ == 5){
 				$row[$skey] = lmbdb_result($rs, $field_name);
 				$row['keyword'][$skey] = lmbdb_result($rs, "KEYWORDS");
                 if($attribute) {
-                    $row['attrvalue'][$skey] = lmbdb_result($rs, "VALUE_STRING");
+                    $row['attrvalue'][$skey] = lmbdb_result($rs, $attributeValueField);
                 }
 			}elseif ($typ == 6) {
                 $keyword = lmbdb_result($rs, "KEYWORDS");
@@ -880,7 +889,7 @@ function cftyp_10($bzm,$field_id,$gtabid,$typ,&$gresult,$event=null,$gformid=nul
                 );
                 // attribute -> get value
                 if($attribute) {
-                    $entry['attrvalue'] = lmbdb_result($rs, 'VALUE_STRING');
+                    $entry['attrvalue'] = lmbdb_result($rs, $attributeValueField);
                 }
                 $row[] = $entry;
             }else{

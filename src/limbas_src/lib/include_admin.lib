@@ -279,7 +279,7 @@ function lmb_dropAllDBTrigger($triggername=null,$delData=false){
 	# delete limbas trigger
 	if($delData){
 		if($triggername){$where = "AND NAME LIKE '$triggername'";}
-		$sqlquery = "DELETE FROM LMB_TRIGGER WHERE INTERN = ".LMB_DBDEF_FALSE." AND (DESCRIPTION LIKE 'INSERT_VERK_%' OR DESCRIPTION LIKE 'DELETE_VERK_%') ".$where;
+		$sqlquery = "DELETE FROM LMB_TRIGGER WHERE INTERN = ".LMB_DBDEF_FALSE." AND (UPPER(DESCRIPTION) LIKE 'INSERT_VERK_%' OR UPPER(DESCRIPTION) LIKE 'DELETE_VERK_%') ".$where;
 		$rs = lmbdb_exec($db,$sqlquery) or errorhandle(lmbdb_errormsg($db),$sqlquery,$action,__FILE__,__LINE__);
 		if(!$rs) {$commit = 1;}
 	}

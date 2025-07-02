@@ -361,9 +361,9 @@ elseif($params['save_search_selection'] && $params['gs']) {
     $or = '';
     $and = '';
     if ($gsr[$gtabid]['andor'] == 2) {
-        $or = "CHECKED";
+        $or = "selected";
     } else {
-        $and = "CHECKED";
+        $and = "selected";
     }
     ?>
 

@@ -90,7 +90,8 @@ function selectDublicateUploads(fileCount){
         }
 
         // destroy duplicate dialog
-        $('#dublicateCheckLayer.ui-dialog-content').dialog('destroy');
+        $('#ldmsUploadDublicateModal').modal('hide');
+        $('#ldmsUploadModal').modal('hide');
 
 		if (LmEx_pasteTyp === 'copy') {
 			LmEx_copy_file(LmEx_pasteFilelist,duplicateTypes,versionNames);
@@ -316,22 +317,37 @@ function LmEx_uploadFilesPrecheckInner(files) {
  */
 function LmEx_handleDuplicates(result) {
 
-    $("<div id='dublicateCheckLayer'></div>")
-    //$('#dublicateCheckLayer')
-		.html(result)
-		.css({'position':'relative','left':'0','top':'0'})
-		.dialog({
-			title: jsvar["lng_1683"],
-			width: 300,
-			height: 200,
-			resizable: false,
-			modal: true,
-			zIndex: 90000,
-			close: function(){
-                $('#dublicateCheckLayer').dialog('destroy');
-				$('.lmbUploadDiv').hide();
+    // use upload modal
+    if(document.getElementById('ldmsUploadModal')){
+        $('#ldmsUploadModal').modal('show');
+        $('#ldmsUploadModal-body').html(result);
+    // use dublicate modal
+    }else if(document.getElementById('ldmsUploadDublicateModal')){
+        $('#ldmsUploadDublicateModal').modal('show');
+        $('#ldmsUploadDublicateModal-body').html(result);
+    // create new dublicate modal
+    }else{
+        let html = `
+        <div class="modal fade" id="ldmsUploadDublicateModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">Upload</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body overflow-visible" id="ldmsUploadDublicateModal-body">
+
+                    </div>
+                </div>
+            </div>
+        </div>`;
+
+        $('#form1').append(html);
+        $('#ldmsUploadDublicateModal').modal('show');
+        $('#ldmsUploadDublicateModal-body').html(result);
+
 			}
-		});
+
 }
 
 /**

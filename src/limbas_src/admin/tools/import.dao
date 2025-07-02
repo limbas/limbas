@@ -1087,7 +1087,7 @@ function fill($tab,$file,$ctyp,$ktyp,$cname,$kkey,$partimport,$import_overwrite,
 	if($count_false){
 		if($GLOBALS["action"]){echo "<p style=\"color:red;\">&nbsp;&nbsp;$count_false $lang[1016]!</p>";}
 	}else{
-		if($GLOBALS["action"]){echo "<p style=\"color:green;\">&nbsp;&nbsp;$maxline $lang[1017].</p>";}
+		if($GLOBALS["action"]){echo "<p style=\"color:green;\">&nbsp;&nbsp;$count_ok $lang[1017].</p>";}
 	}
 	if($GLOBALS["action"]){import_handleProgress($tab,100);}
 

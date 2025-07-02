@@ -585,13 +585,15 @@ use Limbas\lib\auth\Session;
 	}
 
 	#----------------- Mimetypes -------------------
-	$sqlquery3 = "SELECT * FROM LMB_MIMETYPES WHERE ACTIVE = ".LMB_DBDEF_TRUE.' ORDER BY MIMETYPE';
+	#$sqlquery3 = "SELECT * FROM LMB_MIMETYPES WHERE ACTIVE = ".LMB_DBDEF_TRUE.' ORDER BY MIMETYPE';
+    $sqlquery3 = "SELECT * FROM LMB_MIMETYPES ORDER BY MIMETYPE";
 	$rs3 = lmbdb_exec($db,$sqlquery3) or errorhandle(lmbdb_errormsg($db),$sqlquery3,$action,__FILE__,__LINE__);
 	while(lmbdb_fetch_row($rs3)) {
 		$key = lmbdb_result($rs3, "ID");
 		$gmimetypes["mimetype"][$key] = lmbdb_result($rs3, "MIMETYPE");
 		$gmimetypes["ext"][$key] = lmbdb_result($rs3, "EXT");
 		$gmimetypes["pic"][$key] = lmbdb_result($rs3, "PIC");
+        $gmimetypes["active"][$key] = lmbdb_result($rs3, "ACTIVE");
 		$gmimetypes["resolve"][$gmimetypes["ext"][$key]] = $gmimetypes["mimetype"][$key];
 	}
 

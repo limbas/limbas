@@ -705,7 +705,7 @@ function set_joins($gtabid, $verkn, $result=null){
 
             // direct 1:n relation
             if($verkn['typ'] == 25){
-                $sqlquery = "UPDATE " . $verkn['origin']['table'] . " SET ".$verkn['origin']['md5tab'] ." = ".LMB_DBDEF_NULL." WHERE ID = " . ${$ID_RIGHT}." AND ".$verkn['origin']['md5tab'] ." = ".$value;
+                $sqlquery = "UPDATE " . $verkn['origin']['table'] . " SET ".$verkn['origin']['md5tab'] ." = ".LMB_DBDEF_NULL." WHERE ID = " . ${$ID_RIGHT}." AND ".$verkn['origin']['md5tab'] ." = ".${$ID_LEFT};
                 $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $GLOBALS['action'], __FILE__, __LINE__);
                 $err = 'SQL error on update ['.$gtab['table'][$verkn['vtabid']].']';
             }else {
@@ -1197,6 +1197,11 @@ function sql_14_c(&$vgtabid,$verkn,&$linklevel=array(),$gformid=null,$order=null
         if (is_array($extension) && is_array($extension_)) {
             $extension = array_merge_recursive($extension,$extension_);
         }
+    }
+
+    // pagination
+    if($filter['ext_RelationFields']['page'][$vuniqueid]){
+        $vfilter['page'][$vgtabid] = $filter['ext_RelationFields']['page'][$vuniqueid];
     }
 
     // get full long text
@@ -5154,6 +5159,7 @@ function get_sqlquery($gtabid,$utyp,$filter,$gsr,$verkn,$onlyfield=null,$single=
         if($utyp AND $gsr[$fgtabid]){
 
             foreach($gsr[$fgtabid] as $key => $val){
+                if(!$key){continue;}
                 $qu = get_where($key,$fgtabid,$gsr);
 
                 # falls Suchkriterium

@@ -1848,6 +1848,7 @@ function dftyp_tags($gtabid,$bzm,$ID,$form_name,$field_name,$pool_multimode,$typ
             if ($type) {
                 echo "
                 $formtype 
+                style=\"background-color:$color;color:" . lmbSuggestColor($color) . "\"
                 NAME = \"" . $form_tagname . "\" 
                 ID=\"" . $form_tagname . "\" 
                 VALUE=\"" . $attvalue . "\" STYLE=\"overflow:initial;width:100%;\" class=\"" . $class . "\" 
@@ -2188,10 +2189,8 @@ function dftyp_32($ID,&$gresult,$bzm,$gtabid,$class,$style,$pos,$typ,$z_index,$e
 	global $umgvar;
 	global $filestruct;
 
-    if(!$filestruct){
-        require_once(COREPATH . 'extra/explorer/filestructure.lib');
-        get_filestructure();
-    }
+    require_once(COREPATH . 'extra/explorer/filestructure.lib');
+    get_filestructure();
 
 	$secname_id = $gfield[$gtabid]["argresult_name"]["SECNAME"];
 	$mimetype_id = $gfield[$gtabid]["argresult_name"]["MIMETYPE"];
@@ -2455,14 +2454,14 @@ function dftyp_14($ID,&$gresult,$bzm,$gtabid,$class=null,$style=null,$pos=null,$
     // init_relation
 	$verkn = set_verknpf($gtabid,$bzm,$ID,0,0,1,1);
 
+    // get specific search params
+    $gsr = $filter["ext_RelationFields"]["searchval"][$vuniqueid];
+
 	// specific relation params & filter
     cftyp_ext_RelationFields($ID,$gtabid,$bzm,$vuniqueid,$formid,$gformid,$verkn,$gresult,$filter,$gsr,$extension);
 
     // form parameter
     $formparams = cftyp_OpenFormParams($gtabid,$gformid,$formid,$vuniqueid,$filter);
-
-    // get specific search params
-    $gsr = $filter["ext_RelationFields"]["searchval"][$vuniqueid];
 
     // specific formular viewmode - edit = 0 / view = 1
     if($filter["ext_RelationFields"]["view_mode"][$vuniqueid] == 1){

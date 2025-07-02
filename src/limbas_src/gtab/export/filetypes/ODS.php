@@ -81,6 +81,16 @@ class ODS extends FiletypeExporter
                     if (is_array($formattedField)) {
                         if ($fieldType == 11 && is_array($formattedField["value"])) {
                             $formattedField = implode("; ", $formattedField["value"]);
+                        } elseif ($fieldType == 19) {
+                            $output = [];
+                            foreach($formattedField as $key => $value) {
+                                if($key === 'attrvalue' || $key === 'keyword') {
+                                    continue;
+                                }
+
+                                $output[] = $value . (is_array($formattedField['attrvalue']) && array_key_exists($key,$formattedField['attrvalue']) && !empty($formattedField['attrvalue'][$key]) ? ' (' . $formattedField['attrvalue'][$key] . ')' : '');
+                            }
+                            $formattedField = implode("; ", $output);
                         } else {
                             $formattedField = implode("; ", $formattedField);
                         }

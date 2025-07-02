@@ -145,12 +145,14 @@ function uftyp_9($gtab_id,$field_id,$ID,&$change_value) {
 
     } else {
         // check if value in pool
+        if($change_value) {
         $sqlquery = "SELECT WERT FROM LMB_SELECT_W WHERE POOL = " . $gfield[$gtab_id]["select_pool"][$field_id] . " AND WERT = '" . parse_db_string($change_value, 160) . "'";
         $rs = lmbdb_exec($db, $sqlquery) or errorhandle(lmbdb_errormsg($db), $sqlquery, $action, __FILE__, __LINE__);
         if (!$rs) {$commit = 1;}
         if (!lmbdb_fetch_row($rs)) {
             lmb_log::error('update_data - value not in pool', null, $gtab_id, $field_id);
             return false;
+        }
         }
         return uftyp_2($gtab_id, $field_id, $ID, $change_value);
     }

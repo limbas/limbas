@@ -357,8 +357,8 @@ require_once(COREPATH  . 'gtab/html/contextmenus/gtab_filter.php');
 <DIV ID="limbasDivRowSetting" class="lmbContextMenu lmbGtabmenu-list lmbGtabmenu-table-<?=$gtabid?>" style="display:none;z-index:993" OnClick="activ_menu = 1;">
     <?php #----------------- SubMenü - Rowsetting -------------------
     pop_top('limbasDivRowSetting');
-    pop_menu2($lang[861],null,null,"lmb-textsort-up",null,"LmExt_RelationFields(this,lmbGlobVar['ActiveTab'],lmbGlobVar['ActiveRow'],'','1','$ID',lmbGlobVar['sortid'],'','ASC','',lmbGlobVar['gformid'],lmbGlobVar['formid'])");
-    pop_menu2($lang[862],null,null,"lmb-textsort-down",null,"LmExt_RelationFields(this,lmbGlobVar['ActiveTab'],lmbGlobVar['ActiveRow'],'','1','$ID',lmbGlobVar['sortid'],'','DESC','',lmbGlobVar['gformid'],lmbGlobVar['formid'])");
+    pop_menu2($lang[861],null,null,"lmb-textsort-up",null,"LmExt_RelationFields(this,lmbGlobVar['ActiveTab'],lmbGlobVar['ActiveRow'],'','1',lmbGlobVar['res_next'],lmbGlobVar['sortid'],'','ASC','',lmbGlobVar['gformid'],lmbGlobVar['formid'])");
+    pop_menu2($lang[862],null,null,"lmb-textsort-down",null,"LmExt_RelationFields(this,lmbGlobVar['ActiveTab'],lmbGlobVar['ActiveRow'],'','1',lmbGlobVar['res_next'],lmbGlobVar['sortid'],'','DESC','',lmbGlobVar['gformid'],lmbGlobVar['formid'])");
     pop_bottom();
     ?>
 </DIV>

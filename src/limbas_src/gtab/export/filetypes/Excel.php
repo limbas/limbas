@@ -7,6 +7,7 @@ use OpenSpout\Common\Entity\Row;
 use OpenSpout\Common\Entity\Style\Style;
 use OpenSpout\Common\Exception\IOException;
 use OpenSpout\Writer\Exception\WriterNotOpenedException;
+use OpenSpout\Writer\XLSX\Writer;
 
 class Excel extends FiletypeExporter
 {
@@ -25,7 +26,7 @@ class Excel extends FiletypeExporter
 
         $sortKeys = array_keys($gfield[$gtabid]["sort"]);
 
-        $writer = new \OpenSpout\Writer\XLSX\Writer();
+        $writer = new Writer();
 
         $writer->openToFile("php://output");
 
@@ -66,11 +67,15 @@ class Excel extends FiletypeExporter
                 $fieldType = $gfield[$gtabid]["field_type"][$fieldId];
                 $hideCols = $filter["hidecols"][$gtabid][$fieldId];
 
+                if($gfield[$gtabid]['col_hide'][$fieldId]){continue;}
+
                 if (!$hideCols && $fieldType < 100 && $fieldType != 20) {
                     $fieldFunctionName = "cftyp_" . $gfield[$gtabid]["funcid"][$fieldId];
 
                     $parseType = $gfield[$gtabid]["parse_type"][$fieldId];
                     $dataType = $gfield[$gtabid]["data_type"][$fieldId];
+
+                    $fieldStyle = null;
 
                     # check for implemented typ 7 in cftyp, if not use typ 5
                     if (in_array($parseType, [6, 3, 4]) || in_array($dataType, [16, 21])) {
@@ -81,6 +86,16 @@ class Excel extends FiletypeExporter
                     if (is_array($formattedField)) {
                         if ($fieldType == 11 && is_array($formattedField["value"])) {
                             $formattedField = implode("; ", $formattedField["value"]);
+                        } elseif ($fieldType == 19) {
+                            $output = [];
+                            foreach($formattedField as $key => $value) {
+                                if($key === 'attrvalue' || $key === 'keyword') {
+                                    continue;
+                                }
+
+                                $output[] = $value . (is_array($formattedField['attrvalue']) && array_key_exists($key,$formattedField['attrvalue']) && !empty($formattedField['attrvalue'][$key]) ? ' (' . $formattedField['attrvalue'][$key] . ')' : '');
+                            }
+                            $formattedField = implode("; ", $output);
                         } else {
                             $formattedField = implode("; ", $formattedField);
                         }
@@ -128,18 +143,20 @@ class Excel extends FiletypeExporter
                             default => setDateFormat(5, 2),         // date with time and seconds
                         };
 
-                        if ($formattedField == '') {
-                            $row[] = '';
-                        } else {
-                            $row[] = $dateTime;
+                        $formattedField = $formattedField == '' ? '' : $dateTime;
+
+                        $fieldStyle = (new Style())->setFormat($formatCode);
                         }
 
-                        $styles[] = (new Style())->setFormat($formatCode);
+                    # max length of chars excel accepts
+                    $maxLengthExcel = 32767;
 
-                    } else {
-                        $row[] = $formattedField;
-                        $styles[] = null;
+                    if (is_string($formattedField) && strlen($formattedField) > $maxLengthExcel) {
+                        $formattedField = substr($formattedField, 0, $maxLengthExcel);
                     }
+
+                        $row[] = $formattedField;
+                    $styles[] = $fieldStyle;
                 }
             }
 

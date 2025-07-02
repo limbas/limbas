@@ -150,6 +150,10 @@ function dyns_formTabFieldList($para){
 	$parentrel = $gfield[$parent_tab]["md5tab"][$parent_field];
 	$parentrelpath = $para["parentrelpath"];
 
+    // backward 1:n direct relation - workaround for missing md5tab
+    if($gfield[$parent_tab]['data_type'][$parent_field] == 25 && $gfield[$parent_tab]["verkntabletype"][$parent_field] == 2){
+        $parentrel = $gfield[$parent_tab]["md5tabBD"][$parent_field].'_BD';
+    }
 
 	echo "
     <style>
@@ -171,7 +175,8 @@ function dyns_formTabFieldList($para){
 		
 		if($gfield[$gtabid]["field_type"][$key] == 11 AND $gfield[$gtabid]["verkntabid"][$key]){
 		
-			foreach ($gtab["raverkn"][$gfield[$gtabid]["verkntabid"][$key]] as $keyskn => $valueskn){
+            // 1:1 relation list
+			foreach ($gtab["raverkn"][$gtab["verkn"][$gfield[$gtabid]["verkntabid"][$key]]] as $keyskn => $valueskn){
 			
 				$globid = rand(1,10000);
 				

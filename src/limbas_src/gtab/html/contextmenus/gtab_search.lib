@@ -36,9 +36,11 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
 
     $originBrackets = '';
     $originReadable = '';
+    $originGtabID = $gtabid;
     if ($originStr) {
         // 22_14_0 => [22][14][0]
         $originParts = explode('_', $originStr);
+        $originGtabID = $originParts[0];
         $originBrackets = array_map(function ($id) {
             return "[$id]";
         }, $originParts);
@@ -135,7 +137,7 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
         echo '<td>';
 
         if (!$gsrresParent['string'][0]) {
-            echo "<select class='form-select form-select-sm' name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][andor][{$filterIndex}]\" onchange=\"limbasDetailSearch(event,this,{$gtabid},null,null,null,null,1);\">";
+            echo "<select class='form-select form-select-sm' name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][andor][{$filterIndex}]\" onchange=\"limbasDetailSearch(event,this,{$originGtabID},null,null,null,null,1);\">";
             echo "<option value=\"1\"" . ($gsrresParent["andor"][$filterIndex] == 1 ? " selected" : "") . ">" . $lang[854];
             echo "<option value=\"2\"" . ($gsrresParent["andor"][$filterIndex] == 2 ? " selected" : "") . ">" . $lang[855];
 
@@ -255,11 +257,11 @@ function printFilterRow($originStr, $gtabid, $fieldid, $filterIndex, $gsrres, &$
         $selectTable = 'LMB_SELECT_W';
         $onclick = "";
         if($gfield[$gtabid]['field_type'][$fieldid] == 19){
-            $onclick = "limbasDetailSearch(event,this,{$gtabid},null,null,null,null,1);stopPropagation();return false;\"";
+            $onclick = "limbasDetailSearch(event,this,{$originGtabID},null,null,null,null,1);stopPropagation();return false;\"";
             $selectTable = 'LMB_ATTRIBUTE_W';
         }
 
-        echo "<select class='form-select form-select-sm w-100 align-middle' id=\"gds_{$originStr}{$gtabid}_{$fieldid}_{$filterIndex}\" name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][{$filterIndex}]\" onchange=\"$onclick\"'><option>";
+        echo "<select class=\"form-select form-select-sm w-100 align-middle\" id=\"gds_{$originStr}{$gtabid}_{$fieldid}_{$filterIndex}\" name=\"gs{$originBrackets}[{$gtabid}][{$fieldid}][{$filterIndex}]\" onchange=\"$onclick\"><option>";
         if (!$gfield[$gtabid]['select_sort'][$fieldid]) {
             $gfield[$gtabid]['select_sort'][$fieldid] = "SORT";
         }

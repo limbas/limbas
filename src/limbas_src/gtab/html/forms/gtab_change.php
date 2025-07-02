@@ -185,7 +185,7 @@ if($useCustomForm && $gformlist[$gtabid]['header'][$form_id]){
         ?>
         <script>
             $(function() {
-                lmb_setPageTitle('<?=e($title['document'])?>', '<?=e($title['header'])?>');
+                lmb_setPageTitle('<?=$title['document']?>', '<?=$title['header']?>');
             });
         </script>
         <?php
@@ -193,7 +193,7 @@ if($useCustomForm && $gformlist[$gtabid]['header'][$form_id]){
         ?>
         <script>
             $(function() {
-                lmb_setPageTitle(null,'<?=e($title)?>');
+                lmb_setPageTitle(null,'<?=$title?>');
             });
         </script>
         <?php
